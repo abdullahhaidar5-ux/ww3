@@ -1,0 +1,280 @@
+<title>World War 3</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: full-height war room — map canvas left, tabbed command sidebar right (stacks below on phones) */
+:root{
+  --bg:#0e1311; --panel:#161d1a; --panel2:#1d2622; --line:#2c3833; --fg:#dde5df; --dim:#8a9a92;
+  --accent:#e3b341; --warn:#ea5a40; --ok:#74d08f; --info:#7fb8e6;
+  --display:'Saira Condensed','Arial Narrow',sans-serif; --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);overflow:hidden}
+#app{height:100%;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 284px;gap:10px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+@media (max-width:760px){#app{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 46%}}
+#stage{position:relative;min-width:0;min-height:0;border:1px solid var(--line);background:#1a1c14;overflow:hidden}
+#cv{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}
+#hud{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#hint{position:absolute;left:10px;bottom:8px;right:10px;color:var(--dim);font-size:11px;pointer-events:none;text-shadow:0 1px 2px #000}
+#wxchip{position:absolute;top:44px;left:50%;transform:translateX(-50%);background:rgba(10,14,12,.72);border:1px solid #6f8f99;color:#cfe3ea;padding:3px 10px;font-size:11px;letter-spacing:.06em;pointer-events:none;white-space:nowrap}
+#mode{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--accent);color:var(--accent);padding:4px 12px;font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;pointer-events:none;white-space:nowrap}
+#net{position:absolute;top:10px;right:10px;background:rgba(14,19,17,.85);border:1px solid var(--line);padding:3px 9px;font-size:11px;color:var(--dim);pointer-events:none}
+#net b{color:var(--ok);font-weight:500}
+#side>*{flex-shrink:0}
+#side{min-height:0;overflow-y:auto;background:var(--panel);border:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:9px}
+.hdr{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+#facname{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.03em;text-transform:uppercase;line-height:1}
+#credits{color:var(--accent);font-size:18px;font-weight:500;font-variant-numeric:tabular-nums}
+  .sqbar{display:flex;flex-direction:column;gap:5px}.sqh{display:flex;justify-content:space-between;align-items:center}.sqh button{background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:500 11px var(--mono);padding:3px 8px;cursor:pointer}.sqh button:disabled{opacity:.4;cursor:not-allowed}
+.sqs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.sqs button{background:var(--panel2);border:1px solid var(--line);color:var(--fg);padding:4px 2px;font:600 15px var(--display);cursor:pointer;line-height:1.05}.sqs button small{display:block;font:400 10px var(--mono);color:var(--dim)}.sqs button.on{border-color:var(--accent);color:var(--accent)}.sqs button.empty{color:var(--dim)}
+.audio{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.audio.gctl{grid-template-columns:1fr 1fr 1fr;margin-top:4px}.cmdrow{display:flex;gap:4px;margin-top:6px}.cmdrow button{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:600 11px var(--mono);padding:5px 4px;cursor:pointer}.cmdrow button:hover{border-color:#3d5a45}.cmdrow button.on{background:#244232;border-color:#74d08f;color:#c9f5d6;box-shadow:0 0 0 1px #74d08f inset}.audio.gctl button{font-weight:600;padding:6px 2px}#aQuit:hover{border-color:#8a3a30;color:#ffb4a8}.audio button{background:var(--panel2);border:1px solid var(--line);color:var(--dim);font:500 11px var(--mono);padding:4px 2px;cursor:pointer}.audio button.on{color:var(--fg);border-color:#3d5a45}
+#sideTop{position:sticky;top:-10px;z-index:3;margin:-10px -10px 0;padding:10px 10px 8px;background:var(--panel);display:flex;flex-direction:column;gap:9px;border-bottom:1px solid var(--line);box-shadow:0 6px 10px -6px rgba(0,0,0,.6)}
+  .morale{display:flex;align-items:center;gap:6px;margin-top:5px;font:500 11px var(--mono)}.morale .ml{color:var(--dim)}.morale .mbar{flex:1;height:5px;background:#0b0f0d;border:1px solid #2a3a32}.morale .mbar i{display:block;height:100%}.morale .mt{white-space:nowrap}
+  .sqs .sqm{display:block;height:3px;margin:3px 4px 0;background:#0b0f0d}.sqs .sqm i{display:block;height:100%}.sqs button.rout{border-color:#ea5a40}
+  #allyBox .ar{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:4px;align-items:center;font:500 12px var(--mono)}#allyBox .ar b{font:600 14px var(--display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#allyBox .ar small{color:var(--dim)}#allyBox button{background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:600 11px var(--mono);padding:3px 6px;cursor:pointer}#allyBox button:disabled{opacity:.4;cursor:not-allowed}
+  .tunlist{margin-top:6px;padding:6px 8px;background:var(--panel2);border:1px solid #3d5a45;font:500 12px var(--mono);line-height:1.5;color:var(--fg)}.tunlist b{font:600 14px var(--display);color:var(--ok)}
+#mm{width:min(100%,calc(32vh*32/22));margin-inline:auto;height:auto;aspect-ratio:32/22;max-width:100%;border:1px solid #3d5247;box-shadow:0 0 0 1px #0a0f0c,0 0 14px rgba(120,255,170,.08) inset;background:#14201a;cursor:pointer;display:block}
+h3{margin:0;font:600 12px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.sup{display:flex;flex-direction:column;gap:5px;background:var(--panel2);border:1px solid var(--line);padding:8px}
+.sup .lbl{display:flex;justify-content:space-between;font-family:var(--display);font-weight:600;font-size:15px}
+#supt,#rankt{font-family:var(--mono);font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
+.bar{height:5px;background:#0b0f0d}
+.bar i{display:block;height:100%;width:0;background:var(--warn)}
+#rankbar{background:var(--accent)}
+.tabs{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line)}
+.tabs button{background:transparent;border:0;border-right:1px solid var(--line);color:var(--dim);padding:6px 2px;font:600 13px var(--display);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;position:relative}
+.tabs button:last-child{border-right:0}
+.tabs button.on{background:var(--panel2);color:var(--fg);box-shadow:inset 0 -2px 0 var(--accent)}
+.tabs button .dot{position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.sub{grid-column:1/-1;font:600 11px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:4px}
+.btn{position:relative;text-align:left;background:var(--panel2);border:1px solid var(--line);color:var(--fg);padding:7px 8px 9px;font:inherit;cursor:pointer;min-width:0}
+.btn:hover:not(:disabled){border-color:var(--accent)}
+.btn:focus-visible,.fac:focus-visible,.seg button:focus-visible,.big:focus-visible,.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.btn:disabled{opacity:.38;cursor:not-allowed}
+.btn .n{display:block;font:600 14px/1.1 var(--display);overflow-wrap:anywhere}
+.btn .c{color:var(--accent);font-size:11px;font-variant-numeric:tabular-nums}
+.btn .d{display:block;color:var(--dim);font-size:10.5px;line-height:1.3;margin-top:2px}
+.btn .q{position:absolute;top:4px;right:5px;font-size:11px;color:var(--ok)}
+.btn .p{position:absolute;left:0;bottom:0;height:3px;background:var(--ok);width:0}
+.btn.on{border-color:var(--accent);background:#2a2716}
+.btn.done{border-color:#3d5a45}
+.btn.done .c{color:var(--ok)}
+.wide{grid-column:1/-1}
+#supbtn{background:var(--warn);color:#160806;border:0;padding:6px;font:700 14px var(--display);letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+#supbtn:disabled{background:#3a2a26;color:#7d6660;cursor:not-allowed}
+#info{font-size:12px;color:var(--dim);min-height:34px}
+#info b{color:var(--fg);font-family:var(--display);font-size:15px;font-weight:600}
+#info .tip{display:block;color:var(--info);margin-top:3px}
+#log{font-size:11px;display:flex;flex-direction:column;gap:2px;min-height:60px}
+#log div{color:var(--dim)} #log div.w{color:var(--warn)} #log div.g{color:var(--ok)}
+.overlay{position:fixed;inset:0;background:rgba(8,11,10,.93);display:grid;place-items:center;overflow-y:auto;z-index:20;padding-block:20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.card{width:100%;max-width:940px;display:flex;flex-direction:column;gap:14px}
+.card h1{margin:0;font:700 clamp(36px,7vw,64px)/.9 var(--display);letter-spacing:.02em;text-transform:uppercase;text-wrap:balance}
+.card h1 span{color:var(--accent)}
+.card p{margin:0;color:var(--dim);max-width:66ch}
+.label{font:600 12px var(--display);letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+.facs{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.maps{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.mapsel{display:grid;grid-template-columns:minmax(0,256px) minmax(0,1fr);gap:12px;align-items:start;background:var(--panel);border:1px solid var(--line);padding:10px;max-width:640px}
+.mapsel canvas{width:100%;height:auto;aspect-ratio:32/22;border:1px solid var(--line);display:block;max-width:100%;cursor:pointer}
+@media (max-width:560px){.mapsel{grid-template-columns:minmax(0,1fr)}}
+.mapsel select,.trow select{background:var(--panel2);color:var(--fg);border:1px solid var(--line);padding:7px;font:inherit;width:100%}
+.sethd{margin:18px 0 2px;font:700 18px/1.2 var(--display,inherit);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}.sv{color:var(--accent);font-size:12px}
+.mapsel .rndmap{margin-top:6px;background:var(--panel2);color:var(--fg);border:1px solid var(--line);padding:5px 9px;font:inherit;font-size:12px;cursor:pointer}.mapsel .rndmap:hover{border-color:var(--accent)}
+.mapsel .pl{font-size:12px;color:var(--accent);margin-top:6px}
+.mapsel .dc{font-size:12px;color:var(--dim);margin-top:3px}
+.teams{display:flex;flex-direction:column;gap:4px}
+.trow{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px;align-items:center;background:var(--panel2);border:1px solid var(--line);padding:4px 8px;font-size:12px}
+.trow select{padding:4px}
+.thint{font-size:11px;color:var(--dim)}
+.lobby .trow{margin-top:4px}
+.mapc{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;text-align:left;background:var(--panel);border:1px solid var(--line);color:var(--fg);padding:8px;font:inherit;cursor:pointer;align-items:start}
+.mapc.on{border-color:var(--accent);background:#211f14}
+.mapc canvas{width:64px;height:44px;display:block;border:1px solid var(--line)}
+.mapc .nm{font:600 16px/1.1 var(--display)}
+.mapc .pl{font-size:11px;color:var(--accent);margin-top:2px}
+.mapc .dc{font-size:11px;color:var(--dim);margin-top:3px}
+.seg button:disabled{opacity:.35;cursor:not-allowed}
+.fac{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;text-align:left;background:var(--panel);border:1px solid var(--line);color:var(--fg);padding:9px;font:inherit;cursor:pointer}
+.fac.on{border-color:var(--accent);background:#211f14}
+.fac .ins{width:38px;height:38px;display:grid;place-items:center;font:700 15px var(--display);color:#0e1311}
+.fac .nm{font:600 17px/1.1 var(--display)}
+.fac .dc{font-size:11px;color:var(--dim);margin-top:3px}
+.fac .full{display:none;font-size:11px;line-height:1.45;color:var(--fg);margin-top:4px}.fac.on .full{display:block}.fac.on{grid-column:1/-1}
+.fac .sw{font-size:11px;color:var(--warn);margin-top:3px}
+.fac .sp{font-size:11px;color:var(--info);margin-top:2px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{background:var(--panel);border:1px solid var(--line);color:var(--fg);padding:7px 14px;font:600 15px var(--display);cursor:pointer}
+.seg button.on{border-color:var(--accent);color:var(--accent)}
+.big{align-self:flex-start;background:var(--accent);color:#17130a;border:0;padding:11px 28px;font:700 20px var(--display);letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.big:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.mode{background:var(--panel);border:1px solid var(--line);padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.mode h2{margin:0;font:700 24px var(--display);text-transform:uppercase;letter-spacing:.04em}
+.mode .big{font-size:17px;padding:9px 20px}
+#games{display:flex;flex-direction:column;gap:6px}
+.game{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--panel2);border:1px solid var(--line);padding:8px 10px}
+.game b{font-family:var(--display);font-size:16px;font-weight:600}
+.game span{color:var(--dim);font-size:12px}
+.game button{background:var(--ok);color:#0b1a10;border:0;padding:6px 14px;font:700 14px var(--display);letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+.empty{color:var(--dim);font-size:12px}
+input[type=range]{width:100%;accent-color:var(--accent)}
+#mpstatus{color:var(--info);font-size:12px;min-height:18px}
+.credits{font-size:11px!important;color:var(--dim)}
+.code{font:700 22px var(--mono);letter-spacing:.2em;color:var(--accent)}
+.sbx{border:1px solid var(--accent);padding:8px;display:flex;flex-direction:column;gap:6px;background:rgba(227,179,65,.06)}.sbt{font-weight:700;letter-spacing:.14em;color:var(--accent);font-size:12px}.sbr{display:flex;gap:6px}.sbx button{flex:1;background:var(--panel2);color:var(--fg);border:1px solid var(--line);padding:6px;font:inherit;font-size:12px;cursor:pointer}.sbx button:hover{border-color:var(--accent)}.sbx button.on{border-color:#ea5a40;color:#ea5a40}.sbc{font-size:11px;color:var(--dim)}
+.myrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.btn2{display:inline-block;background:var(--panel);border:1px solid var(--line);color:var(--fg);padding:7px 14px;font:600 15px var(--display);cursor:pointer}.btn2:hover{border-color:var(--fg)}
+.joinrow{display:flex;gap:6px;margin-top:6px}.joinrow input,.invite input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);color:var(--fg);padding:8px 10px;font:14px var(--mono,monospace)}.invite{display:flex;gap:6px;margin:8px 0}.invite button{white-space:nowrap}
+.startbtn{width:100%;margin:4px 0 8px}
+.lob{display:flex;flex-direction:column;gap:8px;margin-top:8px;background:var(--panel);border:1px solid var(--line);padding:12px}
+.lobhd{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}.lobk{font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.lobcode{font:700 30px var(--mono);letter-spacing:.18em;color:var(--accent);line-height:1.1}.lobr{text-align:right}.lobmap{font:600 15px var(--display);color:var(--fg)}.lobn{font:12px var(--mono);color:var(--dim)}
+.pips{display:flex;gap:3px;justify-content:flex-end;margin-top:4px}.pips i{width:10px;height:10px;border:1px solid var(--line);display:block}.pips i.on{background:var(--ok);border-color:var(--ok)}
+.lob .startbtn{width:100%;margin:2px 0 0}.lob .startbtn:disabled{opacity:.45;cursor:not-allowed}.lobwhy{font-size:12px;color:var(--dim)}
+.lobsec{display:flex;justify-content:space-between;align-items:center;gap:8px;font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:6px;border-top:1px solid var(--line);padding-top:8px}
+.presets{display:flex;gap:4px;flex-wrap:wrap}.chip{background:var(--panel2);color:var(--fg);border:1px solid var(--line);padding:3px 8px;font:12px var(--display);letter-spacing:.04em;text-transform:none;cursor:pointer}.chip:hover{border-color:var(--fg)}
+.seats{display:flex;flex-direction:column;gap:4px}.seat{display:grid;grid-template-columns:22px minmax(0,1fr) auto 96px;gap:8px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--tc,var(--line));padding:5px 8px;font-size:13px}
+.seat .sn{font:600 12px var(--mono);color:var(--dim)}.seat .who{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.seat .tag{margin-left:6px;font:600 10px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);border:1px solid var(--accent);padding:0 4px}
+.seat .sfac{display:flex;gap:6px;align-items:center;white-space:nowrap}.seat .fcode{font:700 11px var(--mono);background:var(--bg);border:1px solid var(--line);padding:1px 4px}.seat .fname{color:var(--dim);font-size:12px}
+.seat select{background:var(--panel);color:var(--fg);border:1px solid var(--line);padding:4px;font:inherit;font-size:12px}
+.seat.open{grid-template-columns:22px 1fr;border-style:dashed;border-left:4px dashed var(--line);background:transparent}.seat.open .who{color:var(--dim);font-style:italic}
+.steps{margin:0;padding-left:20px;font-size:12px;color:var(--fg);display:flex;flex-direction:column;gap:3px}.steps li::marker{color:var(--accent);font-family:var(--mono)}
+@media(max-width:520px){.seat{grid-template-columns:18px minmax(0,1fr) auto 84px;gap:6px}.seat .sfac .fname{display:none}.lobcode{font-size:24px}}
+#fpsHud{position:absolute;left:8px;top:8px;z-index:6;font:600 12px var(--mono);color:var(--ok);background:rgba(0,0,0,.45);padding:2px 6px;pointer-events:none}
+</style>
+
+<div id="app">
+  <div id="stage">
+    <div id="fpsHud" hidden></div><canvas id="cv"></canvas>
+    <canvas id="hud"></canvas>
+    <div id="mode" hidden></div>
+    <div id="wxchip" hidden></div>
+    <div id="net" hidden></div>
+    <div id="hint">Left-click or drag: select (click empty ground to deselect) · Right-click: move / attack · Right-drag: line formation · R: retreat · Left-click to place buildings and aim powers · F then click: attack-move · G then click: defend area · Q: army · H: home · Wheel or +/−: zoom · WASD/arrows: scroll · Esc: cancel / deselect</div>
+  </div>
+  <aside id="side">
+    <div id="sideTop">
+    <div class="hdr"><div id="facname">—</div><div id="credits">$0</div></div>
+    <div class="audio"><button id="aMus">Music on</button><button id="aSfx">Sound on</button><button id="aVoc">Voices on</button><button id="aSet" class="on">Settings</button></div>
+    <div class="audio gctl"><button id="aPause" class="on" title="Pause the battle (P)">❚❚ Pause</button><button id="aRestart" class="on" title="Start this battle over">↻ Restart</button><button id="aQuit" class="on" title="Leave this battle">✕ Quit</button></div>
+    <canvas id="mm" width="384" height="264" aria-label="Tactical map"></canvas>
+    </div>
+    <div id="sbx" class="sbx" hidden><div class="sbt">TEST RANGE</div><div class="sbr"><button id="sbTargets">Send new targets</button><button id="sbClear">Clear targets</button></div><button id="sbFight" class="sbw">Enemy fights back: OFF</button><div id="sbCount" class="sbc"></div></div>
+    <div class="sup">
+      <div class="lbl"><span id="supname">Strike</span><span id="supt">needs Strike Center</span></div>
+      <div class="bar"><i id="supbar"></i></div>
+      <button id="supbtn" disabled>Launch</button>
+    </div>
+    <div class="sup">
+      <div class="lbl"><span id="rankname">General rank 1</span><span id="rankt"></span></div>
+      <div class="bar"><i id="rankbar"></i></div>
+    </div>
+    <div id="allyBox" class="sup" hidden></div>
+    <div class="sqbar"><div class="sqh"><h3>Squads</h3><button id="sqMake" title="Group the selected units into a squad. Squads keep formation and move at the pace of their slowest unit.">Group selected</button></div><div class="sqs" id="sqs"></div></div>
+    <div class="tabs" role="tablist">
+      <button data-tab="build" class="on">Build</button><button data-tab="units">Units</button><button data-tab="upg">Upgrade</button><button data-tab="pow">Powers</button>
+    </div>
+    <div class="grid" id="panel"></div>
+    <div id="info"></div>
+    <div id="log"></div>
+  </aside>
+</div>
+
+<div id="menu" class="overlay">
+  <div class="card">
+    <h1>World War <span>3</span></h1>
+    <div class="row"><button class="big ghost" id="openSettings" style="font-size:15px;padding:7px 16px">Settings</button></div>
+    <p>Build a base, harvest supply, capture oil derricks, research upgrades and level the enemy's base by land, sea and air. Units earn ranks from kills, and your general earns points to spend on battlefield powers.</p>
+    <div class="label">Your nation</div><div class="facs" id="pickP"></div>
+    <div class="label">Battlefield</div><div class="maps" id="pickMap"></div>
+    <div class="modes">
+      <div class="mode">
+        <h2>Skirmish</h2>
+        <div class="label">Main opponent</div>
+        <select id="aiFac" style="background:var(--panel2);color:var(--fg);border:1px solid var(--line);padding:7px;font:inherit"></select>
+        <div class="label">AI opponents</div>
+        <div class="seg" id="aiN"><button data-n="1" class="on">1</button><button data-n="2">2</button><button data-n="3">3</button><button data-n="5">5</button><button data-n="7">7</button></div>
+        <div class="label">Teams</div><div class="teams" id="teamList"></div><div class="thint">Players on the same team are allies: they share vision, never fight each other and win together.</div>
+        <div class="label">Difficulty</div>
+        <div class="seg" id="diff"><button data-d="0" title="Slow to build and attack, small waves, no tricks">Easy</button><button data-d="1" class="on" title="A fair fight">Medium</button><button data-d="2" title="Fast, rich and cunning: early attacks, flanking, focus fire, pulls back damaged units">Hard</button></div>
+        <div class="label">Conditions</div>
+        <div class="seg" id="wx"><button data-w="0" class="on">Clear day</button><button data-w="1">Golden hour</button><button data-w="2">Overcast</button></div>
+        <button class="big" id="start">Deploy vs AI</button>
+        <button class="big ghost" id="sandbox" title="Unlimited money, every unit and building unlocked and fast to build, against a passive target enemy">Test Range</button>
+      </div>
+      <div class="mode">
+        <h2>Multiplayer</h2>
+        <div class="label">Open games</div>
+        <div id="games"><div class="empty">Looking for games…</div></div>
+        <div class="row"><button class="big" id="host">Host a game</button><button class="big ghost" id="cancelHost" hidden>Cancel</button></div>
+        <div class="row joinrow"><input id="jcode" maxlength="40" placeholder="Game code or invite link" aria-label="Game code or invite link" autocomplete="off" spellcheck="false"><button class="big ghost" id="jbtn">Join by code</button></div>
+        <div id="mpstatus"></div>
+      </div>
+    </div>
+    <p class="credits">Orchestral score played on the FluidR3 GM instrument samples by Frank Wen (MIT), via midi-js-soundfonts by Benjamin Gleitzman (MIT). <p class="credits">Unit voices generated with open neural voices: Kokoro (Apache-2.0), Piper voices (Rhasspy/NabuCasa) and Meta MMS-TTS (CC BY-NC 4.0, non-commercial). <p class="credits">3D models: T-90 by Yantung77, Toyota Hilux by David_Holiday, Caterpillar D7R by RolandoGarroMena, AH-64 Apache by araon, Mi-24 by anastasia.d, F-15 by salphytheunemployed, F/A-18 and Su-35 by manilov.ap, Rafale by harway, Eurofighter Typhoon by nestor_d, J-10 by td991, MiG-29 by Usman1684, F-16 by Carlos.Maciel, G6 by desertfox2, Wiesel 2 Ozelot by Adityakm (CC-BY, via Sketchfab/Objaverse); Quaternius, Kenney and Kay Lousberg (public domain); Zsky, KolosStudios, Alex Safayan, angelo raffaele Catalano, jeremy, Jarlan Perez, Poly by Google, J-Toastie, Paul Spooner and sftwr314r8 (CC BY), via Poly Pizza.</p>
+  </div>
+</div>
+<div id="settings" class="overlay" hidden style="z-index:30">
+  <div class="card" style="max-width:560px;max-height:92vh;overflow-y:auto">
+    <h1 style="font-size:clamp(30px,6vw,44px)">Settings</h1>
+    <h2 class="sethd">Display &amp; sound</h2>
+    <div class="label">Graphics quality</div><div class="seg" id="sGfx"><button data-v="auto">Auto</button><button data-v="high">High</button><button data-v="med">Medium</button><button data-v="low">Low</button></div>
+    <div class="label"><label for="sMus">Music volume</label></div><input type="range" id="sMus" min="0" max="100" step="5">
+    <div class="label">Soundtrack</div><div class="seg" id="sTrk"><button data-v="score">Orchestral score (adapts to the battle)</button><button data-v="mine">My music</button></div>
+    <div class="myrow"><label class="btn2" for="myF">&#43; Import music&hellip;</label><input type="file" id="myF" accept="audio/*,.mp3,.m4a,.ogg,.opus,.wav,.flac" multiple hidden><button id="myNx" class="btn2">&#9197; Next track</button><button id="myCl" class="btn2">Remove all</button></div><div class="sv" id="myN" style="margin:4px 0 6px;opacity:.8">No tracks imported yet</div>
+    <div class="label"><label for="sFx">Effects volume</label></div><input type="range" id="sFx" min="0" max="100" step="5">
+    <div class="label"><label for="sVo">Unit voice volume</label></div><input type="range" id="sVo" min="0" max="100" step="5">
+    <div class="label">Frame-rate target (the game lowers resolution and effects to hold it; your screen's refresh rate is the ceiling)</div><div class="seg" id="sFpsT"><button data-v="60">60</button><button data-v="120">120</button><button data-v="144">144</button><button data-v="240">240</button></div>
+    <div class="label">Show FPS &amp; ping</div><div class="seg" id="sFpsS"><button data-v="1">On</button><button data-v="0">Off</button></div>
+    <div class="label">Health bars</div><div class="seg" id="sHp"><button data-v="dmg">When damaged</button><button data-v="all">Always</button></div>
+    <div class="label">Scroll when the mouse touches the screen edge</div><div class="seg" id="sEdge"><button data-v="1">On</button><button data-v="0">Off</button></div>
+    <div class="label">Combat text (flank and rear hits)</div><div class="seg" id="sTxt"><button data-v="1">On</button><button data-v="0">Off</button></div>
+    <div id="relayBox" hidden><div class="label">Online relay (optional, for friends whose network blocks direct connections)</div>
+      <div class="joinrow"><input id="relayU" placeholder="turn:relay.example.com:443" aria-label="Relay address"><input id="relayN" placeholder="username" aria-label="Relay username"><input id="relayP" placeholder="password" aria-label="Relay password" type="password"></div>
+      <div class="label">Hide my IP address (all game traffic goes through the relay, like a VPN)</div><div class="seg" id="sHideIp"><button data-v="1">On</button><button data-v="0">Off</button></div><div class="sv" id="relayS" style="opacity:.8;margin:4px 0">Leave empty unless a player can never connect. Free relays: Metered (Open Relay) or Cloudflare Calls TURN.</div></div>
+    <h2 class="sethd">Mouse</h2>
+    <div class="label"><label for="sScr">Camera scroll speed (edge, keys, middle-drag)</label> <span class="sv" id="sScrV"></span></div><input type="range" id="sScr" min="40" max="250" step="10">
+    <div class="label"><label for="sZm">Wheel zoom speed</label> <span class="sv" id="sZmV"></span></div><input type="range" id="sZm" min="30" max="250" step="10">
+    <div class="label">Wheel zoom direction</div><div class="seg" id="sInv"><button data-v="0">Normal</button><button data-v="1">Inverted</button></div>
+    <div class="label">Double-click to select all of a type</div><div class="seg" id="sDbl"><button data-v="500">Slow</button><button data-v="350">Normal</button><button data-v="250">Fast</button><button data-v="0">Off</button></div>
+    <div class="label">Click tolerance before a drag becomes a selection box</div><div class="seg" id="sTol"><button data-v="5">Small</button><button data-v="8">Normal</button><button data-v="16">Large (trackpad / touch)</button></div>
+    <div class="label">Clicking the minimap</div><div class="seg" id="sMmc"><button data-v="cam">Moves the camera</button><button data-v="units">Sends selected units</button></div>
+    <div class="label">Hold the middle button (wheel) and drag to pan</div><div class="seg" id="sMpan"><button data-v="1">On</button><button data-v="0">Off</button></div>
+    <div class="row"><button class="big" id="sDone">Done</button></div>
+  </div>
+</div>
+<div id="pauseOv" class="overlay" hidden style="background:rgba(8,11,10,.72)">
+  <div class="card">
+    <h1>Paused</h1>
+    <p id="pauseSub">The battle is on hold. Nothing moves until you resume.</p>
+    <div class="row"><button class="big" id="resumeBtn">Resume</button><button class="big ghost" id="pRestart">Restart</button><button class="big ghost" id="pQuit">Quit battle</button></div>
+  </div>
+</div>
+<div id="quitOv" class="overlay" hidden style="background:rgba(8,11,10,.78)">
+  <div class="card">
+    <h1>Quit this battle?</h1>
+    <p id="quitSub">The battle will end and you'll return to the main menu.</p>
+    <div class="row"><button class="big ghost" id="quitNo">Keep playing</button><button class="big" id="quitYes">Quit to main menu</button></div>
+  </div>
+</div>
+<div id="end" class="overlay" hidden>
+  <div class="card">
+    <h1 id="endt">Victory</h1>
+    <p id="ends"></p>
+    <div class="row"><button class="big" id="watch" hidden>Keep watching</button><button class="big" id="again">Play again</button><button class="big ghost" id="change">Main menu</button></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>/*GLTF*/</script>
+<script>/*SKEL*/</script>
+<script>/*PACK*/</script>
+<script>
+/*SCRIPT*/
+</script>
