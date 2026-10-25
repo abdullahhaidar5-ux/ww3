@@ -50,14 +50,21 @@ function Is-Admin {
 
 # Reads the current plugged-in (AC) value of a power setting. powercfg's labels are translated on non-English Windows,
 # so this takes the numbers instead: the last two 0x######## values printed are the AC and DC settings.
+# Runs powercfg without letting its error text stop the script (Windows PowerShell 5.1 turns a native program's error
+# output into a stopping error when $ErrorActionPreference is Stop).
+function Invoke-PowerCfg {
+  $old = $ErrorActionPreference; $ErrorActionPreference = 'Continue'
+  try { $o = & powercfg.exe @args 2>&1 | ForEach-Object { "$_" } } finally { $ErrorActionPreference = $old }
+  return $o
+}
 function Get-AcValue($sub, $setting) {
-  $out = (& powercfg /query SCHEME_CURRENT $sub $setting 2>$null) -join "`n"
+  $out = (Invoke-PowerCfg /query SCHEME_CURRENT $sub $setting) -join "`n"
   $vals = [regex]::Matches($out, '0x[0-9a-fA-F]{8}') | ForEach-Object { [Convert]::ToInt64($_.Value, 16) }
   if (@($vals).Count -ge 2) { return [int]$vals[-2] }
   return $null   # this PC doesn't have that setting (e.g. no lid, or the Wi-Fi setting is hidden by the driver)
 }
 function Set-AcValue($sub, $setting, $value) {
-  & powercfg /setacvalueindex SCHEME_CURRENT $sub $setting $value | Out-Null
+  Invoke-PowerCfg /setacvalueindex SCHEME_CURRENT $sub $setting $value | Out-Null
   if ($LASTEXITCODE -ne 0) { throw "powercfg couldn't set $setting" }
 }
 
@@ -159,7 +166,7 @@ function Do-Apply {
     if ($backup) { $backup.power[$k] = $cur }
     if ($cur -ne $s[3]) { Set-AcValue $s[0] $s[1] $s[3]; Say "  Set: $($s[2]) = $($s[4])" 'Green' }
   }
-  & powercfg /setactive SCHEME_CURRENT | Out-Null
+  Invoke-PowerCfg /setactive SCHEME_CURRENT | Out-Null
 
   foreach ($n in Get-Nics) {
     try {
@@ -202,7 +209,7 @@ function Do-Undo {
   foreach ($p in $b.power.PSObject.Properties) {
     $s = $PW[$p.Name]; if ($s) { Set-AcValue $s[0] $s[1] ([int]$p.Value); Say "  Restored: $($s[2])" 'Green' }
   }
-  & powercfg /setactive SCHEME_CURRENT | Out-Null
+  Invoke-PowerCfg /setactive SCHEME_CURRENT | Out-Null
   foreach ($p in $b.nicPower.PSObject.Properties) {
     if ($p.Value -eq 'Enabled') {
       try { Set-NetAdapterPowerManagement -Name $p.Name -AllowComputerToTurnOffDevice Enabled -NoRestart -ErrorAction Stop; Say "  Restored: '$($p.Name)' power saving" 'Green' }
@@ -224,13 +231,24 @@ function Do-Undo {
 
 # ---------------------------------------------------------------- main
 Say 'World War 3 - host PC tune-up' 'White'
-if (($Apply -or $Undo) -and -not (Is-Admin)) {
-  Say 'Please run this as administrator: right-click Windows PowerShell > Run as administrator, then run the command again.' 'Red'
-  exit 1
-}
 if ($Apply -and $Undo) { Say 'Use either -Apply or -Undo, not both.' 'Red'; exit 1 }
+if (($Apply -or $Undo) -and -not (Is-Admin)) {
+  # Ask Windows for administrator permission and run this same script again in a new window that stays open.
+  $mode = if ($Apply) { '-Apply' } else { '-Undo' }
+  Say 'Asking Windows for administrator permission (click Yes)...' 'White'
+  try {
+    Start-Process -FilePath 'powershell.exe' -Verb RunAs -ArgumentList @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-NoExit', '-File', ('"' + $PSCommandPath + '"'), $mode) | Out-Null
+    Say 'The changes are being made in the new window that just opened.' 'Green'
+  } catch {
+    Say 'Administrator permission was not given, so nothing was changed.' 'Yellow'
+  }
+  exit 0
+}
+# Keep a copy of everything this run prints, next to the script, so problems are easy to check afterwards.
+try { Start-Transcript -Path (Join-Path $PSScriptRoot 'last-run-log.txt') -Force | Out-Null } catch {}
+trap { Say ("Something went wrong: " + $_.Exception.Message) 'Red'; Say ("  at line " + $_.InvocationInfo.ScriptLineNumber) 'Red'; try { Stop-Transcript | Out-Null } catch {}; exit 1 }
 
-if ($Undo) { Do-Undo; exit 0 }
+if ($Undo) { Do-Undo; try { Stop-Transcript | Out-Null } catch {}; exit 0 }
 Show-Plan
 Show-Checks
 if ($Apply) {
@@ -241,3 +259,4 @@ if ($Apply) {
   Say ''; Say 'Nothing was changed. To make the [FIX] changes, run again with -Apply (as administrator).' 'White'
 }
 Say 'Also: Settings > System > Power & battery > Power mode > Best performance (one click, while hosting).' 'Gray'
+try { Stop-Transcript | Out-Null } catch {}
