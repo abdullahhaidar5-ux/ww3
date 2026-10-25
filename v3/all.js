@@ -2271,7 +2271,8 @@ function wireHost(g){
       if(MODE==='host'&&NET.peers&&pr.hi&&typeof pr.hi.tok==='string'&&NET.peers.indexOf(q.peer)<0)hostRejoin(q.peer,pr.hi.tok.slice(0,16));
       if(pr.hi&&(MODE==='single'||MODE==='host')&&(NET.lastHi||{})[q.peer]!==pr.hi.n){(NET.lastHi=NET.lastHi||{})[q.peer]=pr.hi.n;hostHello(q.peer,q.by,pr.hi.f,typeof pr.hi.tok==='string'?pr.hi.tok.slice(0,16):null);}
       if(typeof pr.pg==='number'&&(NET.lastPg||{})[q.peer]!==pr.pg){(NET.lastPg=NET.lastPg||{})[q.peer]=pr.pg;NET.game.emit('pong',{to:q.peer,t:pr.pg}).catch(()=>{});if(typeof pr.pi==='number')(NET.pings=NET.pings||{})[q.peer]=pr.pi;}
-      if(Array.isArray(pr.cq)&&MODE==='host'){let last=NET.cseq[q.peer]||0;for(const c of pr.cq){if(!c||typeof c.s!=='number'||c.s<=last)continue;last=c.s;hostCmd(q.peer,c.a);}NET.cseq[q.peer]=last;}}});
+      if(Array.isArray(pr.cq)&&MODE==='host'){let last=NET.cseq[q.peer]||0;for(const c of pr.cq){if(!c||typeof c.s!=='number'||c.s<=last)continue;last=c.s;hostCmd(q.peer,c.a);}NET.cseq[q.peer]=last;const ix=NET.peers?NET.peers.indexOf(q.peer):-1;if(ix>0)(NET.cseqSlot=NET.cseqSlot||[])[ix]=Math.max((NET.cseqSlot||[])[ix]|0,last);}
+      if(typeof pr.kr==='number'&&MODE==='host'&&NET.peers&&(NET.lastKr||{})[q.peer]!==pr.kr){(NET.lastKr=NET.lastKr||{})[q.peer]=pr.kr;const ix=NET.peers.indexOf(q.peer);if(ix>0&&NET.kf)NET.kf[ix]=0;}}});
   g.onPeers(ch=>{for(const q of ch.left){if(MODE==='single'){NET.lobby=NET.lobby.filter(p=>p.peer!==q.peer);renderLobby();}else if(MODE==='host'&&NET.peers){const ix=NET.peers.indexOf(q.peer);if(ix>0)playerLeft(ix);}}});
 }
 async function hostGame(){if(!NET.room||NET.code)return;const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];$('host').hidden=true;$('cancelHost').hidden=false;
@@ -2316,10 +2317,10 @@ async function renderLobby(){if(!NET.code||NET.code==='join'||MODE!=='single')re
   el.append(L);
   NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,m:setup.map||'strait',mx}}).catch(()=>{});}
 function launchMP(){if(MODE!=='single'||!NET.lobby.length)return;const seed=(Math.random()*1e9)|0;const facs=[setup.p,...NET.lobby.map(p=>p.f)];NET.peers=[null,...NET.lobby.map(p=>p.peer)];NET.toks=[null,...NET.lobby.map(p=>p.tok||null)];NET.opp=NET.peers[1];
-  const map=setup.map||'strait';const tm=(NET.tm||[]).slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',{seed,facs,slot:i+1,to:p.peer,map,tm}).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length}}).catch(()=>{});NET.startInfo={seed,facs,map,tm};startMP('host',seed,facs,0,map,tm);}
+  const map=setup.map||'strait';const tm=(NET.tm||[]).slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',{pv:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm}).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length}}).catch(()=>{});NET.startInfo={seed,facs,map,tm};startMP('host',seed,facs,0,map,tm);}
 // A dropped player gets 30 s to reconnect (same team, same units) before the AI takes over their side.
 function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=NET.toks.indexOf(tok);if(ix<1)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,(NET.cseqSlot||[])[ix]|0);
-  const T=G.teams[ix];T.discT=0;if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',{seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm}).catch(()=>{});
+  const T=G.teams[ix];T.discT=0;if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',{pv:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm}).catch(()=>{});
   for(const O of G.teams)log(O.id,`${T.F.name}'s commander reconnected.`,'g');}
 function discTick(){if(!NET.peers||!G)return;const now=performance.now();for(let k=0;k<NET.peers.length;k++){const p=NET.peers[k];if(k===ME||!p)continue;const ls=(NET.seen||{})[p];if(ls&&now-ls>8000&&!G.teams[k].discT&&!G.teams[k].ai){NET.peers[k]=null;playerLeft(k);}}for(let k=1;k<NET.peers.length;k++){const T=G.teams[k];if(T&&T.discT&&G.t-T.discT>30&&!T.out){T.discT=0;T.ai=mkAI(1);T.aiTook=1;for(const O of G.teams)log(O.id,`${T.F.name}'s commander did not come back. The AI has taken over (they can still rejoin).`,'w');}}}
 function playerLeft(ix){if(!G||G.over)return;const T=G.teams[ix];if(!T||T.out||T.ai)return;T.discT=G.t;for(const O of G.teams)log(O.id,`${T.F.name}'s commander lost connection. Waiting up to 30 s for them to reconnect…`,'w');return;
@@ -2331,7 +2332,7 @@ function joinTok(code){const k='ww3_tok_'+code;let t=null;try{t=sessionStorage.g
 function wireClient(g){
   g.on('hello',m=>{if(m.sameTab)NET.myPeer=m.peer;});
   g.on('lobby',m=>{if(m.peer===NET.hostPeer&&m.data&&m.data.to===NET.myPeer&&MODE==='single'){if(m.data.full){clearInterval(NET.helloI);$('mpstatus').textContent='That game is full.';leaveNet();return;}$('mpstatus').textContent=`Joined. ${m.data.n} players in the lobby. Waiting for the host to start the battle…`;}});
-  g.on('start',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<1||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;startMP('client',d.seed|0,d.facs,sl,map,tm);});
+  g.on('start',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV){$('mpstatus').textContent='You and the host have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<1||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;startMP('client',d.seed|0,d.facs,sl,map,tm);});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
   g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();applySnap(m.data);}});
   g.on('evt',m=>{if(ok(m)){NET.lastRx=performance.now();applyEvents(m.data);}});
@@ -2347,12 +2348,12 @@ async function clientReconnect(){if(NET.recon||!NET.jcode)return;NET.recon=true;
     let g=null;try{g=await NET.room.join('tc-'+room,NET.via?{via:NET.via}:undefined);}catch(e){continue;}NET.game=g;NET.myPeer=null;
     if(window.WW3_P2P)NET.hostPeer='ww3-'+room;else if(gen>0){NET.hostPeer=null;NET.findHost=true;}wireClient(g);
     if(NET.findHost){const h=g.peers().find(q=>!q.sameTab&&q.presence&&q.presence.h);if(h){NET.hostPeer=h.peer;NET.findHost=false;}}
-    NET.lastSnapT=0;const t0=performance.now();for(let k=0;k<8&&NET.lastRx<t0;k++){if(!NET.myPeer){const me=g.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1},cq:NET.cq||[]}).catch(()=>{});await new Promise(r=>setTimeout(r,900));}
-    if(NET.lastRx>=t0){NET.recon=false;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Connected to the new host.':'Reconnected to the host.','g');return;}}
+    NET.lastSnapT=0;NET.prevT=0;NET.rxW=0;NET.ia=0;const t0=performance.now();for(let k=0;k<8&&NET.lastRx<t0;k++){if(!NET.myPeer){const me=g.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1},cq:NET.cq||[]}).catch(()=>{});await new Promise(r=>setTimeout(r,900));}
+    if(NET.lastRx>=t0){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Connected to the new host.':'Reconnected to the host.','g');return;}}
   NET.recon=false;if(MODE==='client')oppLeft();}
 async function joinGame(p){if(NET.game)return;const code=p.presence.g.c;$('mpstatus').textContent='Joining…';
   try{NET.game=await NET.room.join('tc-'+code);}catch(e){$('mpstatus').textContent=window.WW3_P2P?'No open game with code '+code.toUpperCase()+' was found. Check the code and make sure the host still has the lobby open.':'Could not join that game.';NET.game=null;return;}
-  NET.hostPeer=p.peer;NET.code='join';NET.jcode=code;NET.baseCode=code;NET.gen=0;NET.via=NET.game.via||null;NET.tok=joinTok(code);NET.lastRx=0;wireClient(NET.game);NET.cq=[];NET.cs=0;
+  NET.hostPeer=p.peer;NET.code='join';NET.jcode=code;NET.baseCode=code;NET.gen=0;NET.via=NET.game.via||null;NET.tok=joinTok(code);NET.lastRx=0;wireClient(NET.game);NET.cq=[];NET.cs=Math.floor(Date.now()/10);
   clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}if(MODE==='client'&&!NET.recon&&NET.lastRx&&performance.now()-NET.lastRx>5000){clientReconnect();return;}if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null}).catch(()=>{});},1000);
   let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The host did not answer. The game may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}NET.game.presence({hi:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',{f:setup.p}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
   hello();NET.helloI=setInterval(hello,1500);$('mpstatus').textContent='Connecting to the host…';}
@@ -2362,6 +2363,9 @@ const CMD_T=['go','atk','atkOil','fld','q','dq','bld','bldGo','tun','unl','board
 function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;
   if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
   if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
+const NET_PV=2;
+// a keep-alive list named units this client doesn't have (a missed update): ask the host for a full copy (at most every 2 s)
+function askKeyframe(){const w=performance.now();if(NET.krW&&w-NET.krW<2000)return;NET.krW=w;if(NET.game)NET.game.presence({kr:Math.round(w)}).catch(()=>{});}
 function doAct(a){if(MODE==='client'){if(!NET.game)return;
     // orders travel in this player's presence (any invited player may set it): a rolling, numbered queue the host
     // reads and de-duplicates, trimmed to the presence size limit
@@ -2374,7 +2378,7 @@ function encEnt(e,mem){let f=0,x=0;if(e.isB){if(e.built<1){f|=FLG.built;x=Math.r
   return[e.id,KINDS.indexOf(e.kind),e.team,Math.round(e.x),Math.round(e.y),Math.round((e.va||0)*100),Math.round((e.tang||0)*100),Math.round(e.hp),Math.round(e.max),f,x];}
 function sendSnap(key,to,items,bit){NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+(bit?4+((key|0)%8)*.25:2);let c=NET.sc[key];if(!c||full)c=NET.sc[key]=new Map();
   // the keep-alive list (ids of unchanged entities) only needs to beat the client's expiry, so it goes out every 0.5 s, not every tick
-  const sendKeep=full||!(NET.kt[key]>G.t);if(sendKeep)NET.kt[key]=G.t+.4;
+  const sendKeep=full||!(NET.kt[key]>G.t);if(sendKeep)NET.kt[key]=G.t+(bit?.4:0);
   const ch=[],keep=[],seen=new Set();for(const a of items){seen.add(a[0]);const s=a.join(',');if(c.get(a[0])===s){if(sendKeep){if(bit)keep.push(a[0]);else keep.push(a[0],a[11]|a[12]);}}else{c.set(a[0],s);ch.push(a);}}
   for(const id of c.keys())if(!seen.has(id))c.delete(id);
   const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
@@ -2385,7 +2389,7 @@ function sendChunks(topic,base,items){let cur=[],len=0;const flush=()=>{if(cur.l
   for(const it of items){const s=JSON.stringify(it).length+1;if(len+s>3500)flush();cur.push(it);len+=s;}flush();}
 function teamMsg(T){const q={};for(const c of CATS)q[c]=T.q[c].map(i=>[i.kind,+(i.t/prodTime(T,stats(T.fac,i.kind))).toFixed(2)]);const rq={};for(const c in T.rq)if(T.rq[c])rq[c]=[T.rq[c].key,+(T.rq[c].t/UPG[T.rq[c].key].time).toFixed(2)];
   const pw={};for(const k in T.pw)pw[k]=[Math.ceil(T.pw[k].cd),T.pw[k].lv||1];
-  return{c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,fa:G.fields.map(f=>f.amt|0),oil:G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out:G.teams.map(O=>O.out?1:0),tn:T.tun.length,tk:tunKinds(T),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?NET.cseq[NET.peers[T.id]]|0:0,to:NET.peers[T.id]};}
+  return{c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,fa:G.fields.map(f=>f.amt|0),oil:G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out:G.teams.map(O=>O.out?1:0),tn:T.tun.length,tk:tunKinds(T),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min(NET.cseq[NET.peers[T.id]]|0,NET.ckAk?NET.ckAk[T.id]|0:0):0,to:NET.peers[T.id]};}
 function netTick(dt){if(MODE!=='host'||!NET.game||!G||!NET.peers)return;discTick();NET.snapT-=dt;NET.evT-=dt;NET.teamT-=dt;NET.bT-=dt;const live=[];for(let k=0;k<NET.peers.length;k++)if(k!==ME&&NET.peers[k]&&!G.teams[k].ai)live.push(k);if(!live.length)return;try{ckTick(dt,live);}catch(e){}
   // The room allows each sender about 40 messages a second, so with many players the host BROADCASTS one snapshot and
   // one event stream to everyone (each entity tagged with which players can see it, each client keeps only its own)
@@ -2406,20 +2410,22 @@ function netTick(dt){if(MODE!=='host'||!NET.game||!G||!NET.peers)return;discTick
 
 /* ---------- client: receive ---------- */
 function applySnap(d){if(!G||!Array.isArray(d.e))return;const now=G.t;if(typeof d.t==='number'){if(d.t+1e-6<(NET.lastSnapT||0)&&!d.f)return;NET.lastSnapT=Math.max(NET.lastSnapT||0,d.t);}if(d.iv>0)NET.iv=Math.min(3,+d.iv);
-  {const w=performance.now()/1000;if(NET.rxW&&!(d.e.length===0&&d.k)){const gap=Math.min(1.5,w-NET.rxW);if(gap>.02)NET.ia=NET.ia?NET.ia*.85+gap*.15:gap;}if(!(d.e.length===0&&d.k))NET.rxW=w;}NET.snapAt=now;
-  if(Array.isArray(d.k)&&d.kb){for(const id of d.k){const e=G.byId.get(id);if(e)e.seenAt=now;}}
-  else if(Array.isArray(d.k)){const b=1<<ME;for(let i=0;i+1<d.k.length;i+=2){if(!((d.k[i+1]|0)&b))continue;const e=G.byId.get(d.k[i]);if(e)e.seenAt=now;}}
+  const st=typeof d.t==='number'?d.t:(NET.lastSnapT||0);
+  // arrival-interval estimate (for smooth interpolation): only between consecutive host ticks
+  {const w=performance.now()/1000;if(!(d.e.length===0&&d.k)&&st>(NET.prevT||0)){if(NET.rxW&&st-(NET.prevT||0)<=1.5*Math.max(.1,NET.iv||.1)){const gap=Math.min(1.5,w-NET.rxW);if(gap>.02)NET.ia=NET.ia?NET.ia*.85+gap*.15:gap;}NET.rxW=w;NET.prevT=st;}}
+  if(Array.isArray(d.k)&&d.kb){let miss=0;for(const id of d.k){const e=G.byId.get(id);if(e){e.seenAt=st;e.seenL=now;}else miss++;}if(miss)askKeyframe();}
+  else if(Array.isArray(d.k)){const b=1<<ME;for(let i=0;i+1<d.k.length;i+=2){if(!((d.k[i+1]|0)&b))continue;const e=G.byId.get(d.k[i]);if(e){e.seenAt=st;e.seenL=now;}}}
   for(const a of d.e){if(!Array.isArray(a)||a.length<11)continue;if(a.length>=13){const b=1<<ME;if(!(a[11]&b)&&!(a[12]&b))continue;a[9]=(a[11]&b)?(a[9]&~FLG.mem):(a[9]|FLG.mem);}const [id,ki,team,x,y,va,ta,hp,mx_,f,ex]=a;const kind=KINDS[ki];if(!kind||!(team>=0&&team<G.teams.length))continue;
     let e=G.byId.get(id);const isB=!!STRUCT[kind];
     if(!e){const T=G.teams[team];const s=isB?bstats(T.fac,kind):stats(T.fac,kind);e={id,isB,team,kind,s,x,y,va:va/100,tang:ta/100,hp,max:mx_,r:isB?s.size/2:s.r,size:isB?s.size:0,vs:new Array(G.teams.length).fill(true),fx:x,fy:y,tx:x,ty:y,it:1};G.ents.push(e);G.byId.set(id,e);}
     else{e.fx=e.x;e.fy=e.y;e.tx=x;e.ty=y;e.it=0;if(e.team!==team&&!isB){e.team=team;const T=G.teams[team];try{e.s=stats(T.fac,kind);}catch(err){}}}
-    e.tva=va/100;e.tta=ta/100;e.hp=hp;e.max=mx_;e.seenAt=now;e.vis=true;
+    e.tva=va/100;e.tta=ta/100;e.hp=hp;e.max=mx_;e.seenAt=st;e.seenL=now;e.ut=st;e.vis=true;
     if(isB){e.built=f&FLG.built?ex/100:1;e.disv=!!(f&FLG.dis);e.dis=0;e.chv=!!(f&FLG.chg);e.mem=!!(f&FLG.mem);e.busy=!!(f&FLG.busy);e.nd=!!(f&FLG.nd);e.stall=!!(f&FLG.stall);if(kind==='uplink')e.chg=ex/100;if(kind==='garrison'){e.occN=ex>>4;e.capN=ex&15;e.built=1;}e.ang=e.tta;e.x=x;e.y=y;}
     else{e.cargo=f&FLG.cargo?1:0;e.hacking=!!(f&FLG.hack);e.planting=!!(f&FLG.plant);e.landed=!!(f&FLG.land);e.hid=!!(f&FLG.hid);e.mvC=f&FLG.mov?1:0;e.building=!!(f&FLG.busy);e.supp=f&FLG.supp?1:0;e.routV=!!(f&FLG.rout);e.shakV=!!(f&FLG.shak);e.markV=!!(f&FLG.mark);e.lastV=!!(f&FLG.last);e.aband=f&FLG.aband?1:0;e.rank=(f>>9)&3;e.mor=ex;}}}
 function clientTick(dt){G.t+=dt;const now=G.t;
   const P=Math.max(.1,Math.min(.6,Math.max(NET.iv||.1,(NET.ia||NET.iv||.2)*1.15)));
-  for(const e of G.ents){if(e.isB)continue;const it=(e.it||0)+dt/P;e.it=it;if(it<=1){e.x=e.fx+(e.tx-e.fx)*it;e.y=e.fy+(e.ty-e.fy)*it;}else if(e.mvC){const o=Math.min(it-1,.25/P);e.x=e.tx+(e.tx-e.fx)*o;e.y=e.ty+(e.ty-e.fy)*o;}else{e.x=e.tx;e.y=e.ty;}e.va=lerpA(e.va,e.tva,dt*10);e.tang=lerpA(e.tang,e.tta,dt*10);if(e.mvC)e.mv=now;}
-  const ttl=Math.max(.9,(NET.iv||.2)*2.6),ref=Math.min(now,NET.snapAt||now);for(const e of G.ents){if(e.isB){if(!e.mem&&(ref-e.seenAt>Math.max(3.2,ttl*2)||now-e.seenAt>12))e.gone=true;}else if(ref-e.seenAt>ttl||now-e.seenAt>8)e.gone=true;}
+  for(const e of G.ents){if(e.isB)continue;const it=(e.it||0)+dt/P;e.it=it;if(it<=1){e.x=e.fx+(e.tx-e.fx)*it;e.y=e.fy+(e.ty-e.fy)*it;}else if(e.mvC&&e.ut===NET.lastSnapT){const o=Math.min(it-1,.25/P);e.x=e.tx+(e.tx-e.fx)*o;e.y=e.ty+(e.ty-e.fy)*o;}else{e.x=e.tx;e.y=e.ty;}e.va=lerpA(e.va,e.tva,dt*10);e.tang=lerpA(e.tang,e.tta,dt*10);if(e.mvC)e.mv=now;}
+  const ttl=Math.max(.9,(NET.iv||.2)*2.6),ref=NET.lastSnapT||0;for(const e of G.ents){const sl=now-(e.seenL==null?now:e.seenL);if(e.isB){if(!e.mem&&(ref-e.seenAt>Math.max(3.2,ttl*2)||sl>12))e.gone=true;}else if(ref-e.seenAt>ttl||sl>8)e.gone=true;}
   if(G.ents.some(e=>e.gone)){for(const e of G.ents)if(e.gone){G.byId.delete(e.id);}G.ents=G.ents.filter(e=>!e.gone);G.sel=G.sel.filter(e=>!e.gone);}}
 function applyEvents(d){if(!d||!Array.isArray(d.e))return;for(const v of d.e){if(!Array.isArray(v))continue;const [type,...args]=v;if(!FXH[type]||type==='end'&&false)continue;
   if(type==='die'){const e=G.byId.get(args[0]);if(e){e.dead=true;G.byId.delete(e.id);G.ents=G.ents.filter(x=>x!==e);G.sel=G.sel.filter(x=>x!==e);}}
@@ -2450,7 +2456,7 @@ function ckEncode(){const ids=new Map();for(const e of G.ents)ids.set(e,e.id);co
   const fields=G.fields.map(f=>({amt:f.amt,owner:f.owner}));
   const oil=G.oil.map(o=>{const r={};for(const k in o){if(k==='tg')continue;const y=enc(o[k],1);if(y!==undefined&&(typeof y!=='object'||Array.isArray(y)||y===null||y.$e!=null))r[k]=y;}return r;});
   const civ=(G.civ||[]).map(c=>{const r={};for(const k in c){if(k==='obj'||k==='mesh')continue;const y=enc(c[k],2);if(y!==undefined)r[k]=y;}return r;});
-  return {v:1,ents,S:S.map(s=>enc(s,1)),teams,g,fields,oil,civ,toks:NET.toks||null,start:NET.startInfo||null,me:ME,cs:NET.peers?NET.peers.map(p=>p&&NET.cseq?NET.cseq[p]|0:0):null};}
+  return {v:1,ents,S:S.map(s=>enc(s,1)),teams,g,fields,oil,civ,toks:NET.toks||null,start:NET.startInfo||null,me:ME,cs:NET.peers?NET.peers.map((p,i)=>Math.max(p&&NET.cseq?NET.cseq[p]|0:0,(NET.cseqSlot||[])[i]|0)):null};}
 function ckDecode(ck){const byId=new Map();const S=ck.S;const ents=ck.ents.map(o=>Object.assign({},o));for(const e of ents)byId.set(e.id,e);
   const dec=v=>{if(v==null||typeof v!=='object')return v;if(Array.isArray(v))return v.map(dec);if(v.$e!=null)return byId.get(v.$e)||null;if(v.$f!=null)return G.fields[v.$f]||null;if(v.$o!=null)return G.oil[v.$o]||null;if(v.$c!=null)return (G.civ||[])[v.$c]||null;
     const o={};for(const k in v)o[k]=dec(v[k]);return o;};
@@ -2482,13 +2488,13 @@ function migRoom(gen){return gen>0?NET.baseCode+'-m'+gen:NET.baseCode;}
 function ckTick(dt,live){NET.ckT=(NET.ckT==null?4:NET.ckT)-dt;if(NET.ckT>0||NET.ckBusy||!live.length||!NET.game)return;NET.ckT=8;
   const sb=live.find(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(sb==null)return;const to=NET.peers[sb];NET.ckBusy=true;
   let ck;try{ck=ckEncode();ck.gen=NET.gen||0;}catch(e){console.warn('checkpoint',e);NET.ckBusy=false;return;}
-  ckPack(ck).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);for(let i=0;i<n;i++)NET.game.emit('ck',{to,id,i,n,d:s.slice(i*3000,(i+1)*3000)}).catch(()=>{});}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
+  ckPack(ck).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);for(let i=0;i<n;i++)NET.game.emit('ck',{to,id,i,n,d:s.slice(i*3000,(i+1)*3000)}).catch(()=>{});NET.ckAk=ck.cs;}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
 function ckReceive(d){if(!d||typeof d.d!=='string'||!(d.n>0)||d.n>400)return;const P=NET.ckParts||(NET.ckParts={});let e=P[d.id];if(!e){e=P[d.id]={n:d.n,got:0,a:new Array(d.n)};for(const k in P)if(+k<d.id-2)delete P[k];}
   if(e.a[d.i]==null){e.a[d.i]=d.d;e.got++;}if(e.got===e.n){NET.lastCk=e.a.join('');NET.isStandby=true;delete P[d.id];}}
 async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e){console.warn('checkpoint unpack',e);return false;}
   const gen=(ck.gen||0)+1,code2=migRoom(gen),me=ME;
   try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);return false;}
-  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs:[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};
+  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};
   const oldHost=ck.me|0;for(let k=0;k<G.teams.length;k++){const T=G.teams[k];if(k===ME){T.ai=null;T.discT=0;continue;}if(k===oldHost){if(!T.ai){T.ai=mkAI(1);T.aiTook=1;}continue;}if(!T.ai&&!T.out)T.discT=G.t;}
   try{if(NET.game)NET.game.leave().catch(()=>{});}catch(e){}NET.game=null;NET.code=code2;
   try{NET.game=await NET.room.join('tc-'+code2);}catch(e){pushLog('Could not open the new game room.','w');return false;}
@@ -2687,7 +2693,7 @@ function startSingle(){if(!MODELS.ready&&MODELS.loading&&!startSingle.w){startSi
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 function startSandbox(){if(!MODELS.ready&&MODELS.loading){MODELS.loading.then(startSandbox);return;}MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US';
   newGame({seed:setup.seed||((Math.random()*1e9)|0),facs:[setup.p,setup.a&&setup.a!==setup.p?setup.a:en],ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});afterStart();}
-function startMP(mode,seed,facs,slot,map,tm){if(!MODELS.ready&&MODELS.loading){MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};MODE=mode;ME=slot|0;newGame({seed,facs,ai:facs.map(()=>false),map,tm});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm){if(!MODELS.ready&&MODELS.loading){MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;newGame({seed,facs,ai:facs.map(()=>false),map,tm});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');
