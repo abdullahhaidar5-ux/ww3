@@ -7545,7 +7545,7 @@ let last=performance.now();
 // FPS and ping readout (Settings > Show FPS & ping)
 let _fpsT=0;function fpsHud(){const now=performance.now();if(now-_fpsT<500)return;_fpsT=now;const el=$('fpsHud');if(!el)return;let on=false;try{on=localStorage.getItem('ww3_fpsShow')==='1';}catch(e){}el.hidden=!on||!G;if(el.hidden)return;
   el.textContent=Math.round(QUAL.fps)+' FPS'+(QUAL.lv?' · detail −'+QUAL.lv:'')+(MODE==='client'&&NET.ping?' · ping '+Math.round(NET.ping)+' ms':MODE==='host'&&NET.pings&&Object.keys(NET.pings).length?' · ping '+Object.values(NET.pings).map(v=>Math.round(v)).join('/')+' ms':'');}
-function loop(now){if(window.__stopLoop)return;const _w0=performance.now();const rawDt=(now-last)/1000;const dt=Math.min(.05,rawDt);last=now;if(G&&!document.hidden&&rawDt<.5)qualTick(rawDt);
+function loop(now){if(window.__stopLoop)return;const _w0=performance.now();const rawDt=Math.max(0,(now-last)/1000);const dt=Math.min(.05,rawDt);last=now;if(G&&!document.hidden&&rawDt<.5)qualTick(rawDt);
   try{if(G&&!G.over&&!G.paused){if(MODE==='client')clientTick(dt);else{const sd=dt*GSPD;
     // fixed 60 Hz simulation: it used to run once per rendered frame (144-240x a second on high-refresh monitors, all of it
     // host CPU in multiplayer); drawing interpolates unit positions between steps so motion stays smooth at any refresh rate
@@ -7556,6 +7556,29 @@ function loop(now){if(window.__stopLoop)return;const _w0=performance.now();const
     if(G){scroll(dt);renderFrame(dt);}}catch(err){console.error(err);}
   QUAL.cost+=((performance.now()-_w0)/1000-QUAL.cost)*.05;fpsHud();
   requestAnimationFrame(loop);}
+// Hosting from a hidden or minimized window. Browsers stop drawing frames for a page you can't see (requestAnimationFrame
+// pauses completely, and ordinary timers slow to about once a second), and the host's browser runs the whole battle, so
+// switching to another window used to freeze the match for every player until they dropped. While the host's page is
+// hidden, a tiny background worker ticks the battle about 30 times a second instead: the simulation and the network keep
+// running in real time and only the drawing is skipped. Solo games still pause when hidden, as before.
+const HBG={w:null,iv:null,t:0};
+function hbgNeeded(){return !!(G&&!G.over&&MODE==='host'&&NET.game&&NET.peers&&NET.peers.some((p,k)=>k!==ME&&p));}
+function hbgStep(){if(!document.hidden||window.__stopLoop||!G){hbgStop();return;}const now=performance.now();const rawDt=Math.min(1,Math.max(0,(now-HBG.t)/1000));HBG.t=now;if(rawDt<=0)return;
+  try{if(!G.over&&!G.paused&&MODE!=='client'){const ST=1/60;G.acc=Math.min(1,(G.acc||0)+rawDt*GSPD);let n=0;
+      while(G.acc>=ST-1e-6&&n<80){for(const e of G.ents)if(!e.isB){e.ox=e.x;e.oy=e.y;}simUpdate(ST);G.acc-=ST;n++;}G.alpha=1;}
+    netTick(rawDt);}catch(err){console.error(err);}}
+function hbgStart(){if(HBG.w||HBG.iv)return;HBG.t=Math.max(last,performance.now()-50);
+  try{HBG.w=new Worker(URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'],{type:'text/javascript'})));HBG.w.onmessage=hbgStep;HBG.w.onerror=()=>{try{HBG.w.terminate();}catch(e){}HBG.w=null;if(!HBG.iv)HBG.iv=setInterval(hbgStep,33);};}
+  catch(e){HBG.w=null;HBG.iv=setInterval(hbgStep,33);}}
+function hbgStop(){const was=!!(HBG.w||HBG.iv);if(HBG.w){try{HBG.w.terminate();}catch(e){}HBG.w=null;}if(HBG.iv){clearInterval(HBG.iv);HBG.iv=null;}if(was){last=performance.now();if(G)G.acc=Math.min(.1,G.acc||0);}}
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&hbgNeeded())hbgStart();else hbgStop();});
+// Keep the screen, and with it the PC, awake during an online match (host or player), so a laptop doesn't drift off to
+// sleep mid-battle and drop everyone. The browser only grants this while the game is on screen; it is let go after the match.
+const WAKE={s:null,busy:false};
+setInterval(async()=>{if(document.hidden&&hbgNeeded())hbgStart();
+  const want=!!(G&&!G.over&&(MODE==='host'||MODE==='client')&&!document.hidden);
+  if(want&&!WAKE.s&&!WAKE.busy&&navigator.wakeLock){WAKE.busy=true;try{const s=await navigator.wakeLock.request('screen');WAKE.s=s;s.addEventListener('release',()=>{if(WAKE.s===s)WAKE.s=null;});}catch(e){}WAKE.busy=false;}
+  else if(!want&&WAKE.s){const s=WAKE.s;WAKE.s=null;try{await s.release();}catch(e){}}},2000);
 new ResizeObserver(()=>resize()).observe(cv);
 requestAnimationFrame(loop);netInit();
 
