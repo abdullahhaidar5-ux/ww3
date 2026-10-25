@@ -1108,7 +1108,7 @@ function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!w
   for(let i=0;i<S.n;i++){const a=rnd(0,6.28),r=S.n>1?rnd(0,S.spread):0,tx=x+Math.cos(a)*r,ty=y+Math.sin(a)*r,t=3+i*.28;G.strikes.push({x:tx,y:ty,t,r:S.r,dmg:S.dmg,team,kind:'sup'});FXE('strike',[tx|0,ty|0,+t.toFixed(2),S.r|0,1,arc?1:0]);
     if(arc)FXE('bmis',[(up.x+rnd(-14,14))|0,(up.y+rnd(-14,14))|0,tx|0,ty|0,+t.toFixed(2),i]);}
   T.charge=0;log(team,`${S.name} launched.`,'g');for(const O of G.teams)if(O.id!==team)log(O.id,`Warning: enemy ${S.name} inbound. Move your units!`,'w');return true;}
-function addStrike(x,y,t,r,dmg,team,kind){G.strikes.push({x,y,t,r,dmg,team,kind});FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,kind==='sup'?1:0]);}
+function addStrike(x,y,t,r,dmg,team,kind){G.strikes.push({x,y,t,r,dmg,team,kind});FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,kind==='sup'?1:0],team);}
 function updStrikes(dt){for(const s of G.strikes){s.t-=dt;if(s.t<=0){s.done=true;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?'super':'shell',s.kind);}}G.strikes=G.strikes.filter(s=>!s.done);}
 
 /* ---------- general's powers ---------- */
@@ -1117,21 +1117,21 @@ function natPower(team,P,x,y){const T=G.teams[team],hq=hqOf(team),en=e=>!e.dead&
   switch(P.type){
     case 'strafe':{const a=Math.atan2(y-(hq?hq.y:y),x-(hq?hq.x:x)),c=Math.cos(a),s=Math.sin(a);for(let i=0;i<9;i++){const d=-160+i*40;addStrike(x+c*d,y+s*d,1.2+i*.12,i%3===1?70:45,(i%3===1?380:200)*P.M,team,'bar');}FXE('plane',[(x-c*1200)|0,(y-s*1200)|0,x|0,y|0,team]);return true;}
     case 'drones':{if(!hq)return false;for(let i=0;i<P.n+2*(P.lv-1);i++){const u=addUnit(team,'drone',hq.x+rnd(-40,40),hq.y+rnd(-40,40));setMove(u,x+rnd(-60,60),y+rnd(-60,60),'amove');}return true;}
-    case 'intel':{for(const O of G.teams)if(!ally(O.id,team))for(const b of G.ents)if(b.isB&&b.team===O.id&&!b.dead)T.reveals.push({x:b.x,y:b.y,r:90,t:20+5*P.lv});for(const e of G.ents)if(en(e)&&!e.isB&&Math.hypot(e.x-x,e.y-y)<P.r)e.mark=G.t+25;FXE('ping',[x|0,y|0,P.r]);return true;}
-    case 'supply':{T.credits+=Math.round(1200*P.M);for(const e of G.ents)if(e.team===team&&Math.hypot(e.x-x,e.y-y)<P.r)e.hp=Math.min(e.max,e.hp+e.max*.4);FXE('heal',[x|0,y|0,P.r]);return true;}
+    case 'intel':{for(const O of G.teams)if(!ally(O.id,team))for(const b of G.ents)if(b.isB&&b.team===O.id&&!b.dead)T.reveals.push({x:b.x,y:b.y,r:90,t:20+5*P.lv});for(const e of G.ents)if(en(e)&&!e.isB&&Math.hypot(e.x-x,e.y-y)<P.r)e.mark=G.t+25;FXE('ping',[x|0,y|0,P.r],team);return true;}
+    case 'supply':{T.credits+=Math.round(1200*P.M);for(const e of G.ents)if(e.team===team&&Math.hypot(e.x-x,e.y-y)<P.r)e.hp=Math.min(e.max,e.hp+e.max*.4);FXE('heal',[x|0,y|0,P.r],team);return true;}
     case 'partisans':{const p=nearestPassXY('ground',x,y);if(!p)return false;for(let i=0;i<P.n+3*(P.lv-1);i++){const q=nearestPassXY('ground',p[0]+rnd(-50,50),p[1]+rnd(-50,50))||p;const u=addUnit(team,i%3===2?'at':'inf',q[0],q[1]);u.guard={x:q[0],y:q[1]};}return true;}
     case 'thermo':{addStrike(x,y,3,P.r,900*P.M,team,'sup');return true;}
     case 'cash':{T.credits+=Math.round(2000*P.M);return true;}
     case 'mercs':{if(!hq)return false;for(const k of ['tank','tank','aa','aa','tank','arty','tank','aa'].slice(0,4+2*(P.lv-1))){const q=nearestPassXY('ground',hq.x+rnd(-140,140),hq.y+rnd(-140,140))||[hq.x,hq.y];addUnit(team,k,q[0],q[1]);}return true;}
-    case 'emp':{addStrike(x,y,2.2,90,420,team,'sup');G.timers.push({t:2.3,fn:()=>{for(const e of G.ents){if(!en(e)||Math.hypot(e.x-x,e.y-y)>P.r)continue;if(e.isB)e.dis=Math.max(e.dis||0,G.t+10*P.M);else if(isVeh(e.s)||e.s.dom!=='ground')e.stun=G.t+10*P.M;}FXE('heal',[x|0,y|0,P.r]);}});return true;}
-    case 'shield':{(G.shields=G.shields||[]).push({team,x,y,r:P.r,t:G.t+20*P.M});FXE('heal',[x|0,y|0,P.r]);return true;}
-    case 'cyber':{for(const e of G.ents)if(en(e)&&e.isB&&Math.hypot(e.x-x,e.y-y)<P.r)e.dis=Math.max(e.dis||0,G.t+18*P.M);T.reveals.push({x,y,r:P.r,t:18*P.M});FXE('ping',[x|0,y|0,P.r]);return true;}
+    case 'emp':{addStrike(x,y,2.2,90,420,team,'sup');G.timers.push({t:2.3,fn:()=>{for(const e of G.ents){if(!en(e)||Math.hypot(e.x-x,e.y-y)>P.r)continue;if(e.isB)e.dis=Math.max(e.dis||0,G.t+10*P.M);else if(isVeh(e.s)||e.s.dom!=='ground')e.stun=G.t+10*P.M;}FXE('heal',[x|0,y|0,P.r],team);}});return true;}
+    case 'shield':{(G.shields=G.shields||[]).push({team,x,y,r:P.r,t:G.t+20*P.M});FXE('heal',[x|0,y|0,P.r],team);return true;}
+    case 'cyber':{for(const e of G.ents)if(en(e)&&e.isB&&Math.hypot(e.x-x,e.y-y)<P.r)e.dis=Math.max(e.dis||0,G.t+18*P.M);T.reveals.push({x,y,r:P.r,t:18*P.M});FXE('ping',[x|0,y|0,P.r],team);return true;}
     case 'wave':{if(!hq)return false;for(let i=0;i<Math.round(P.n*P.M);i++){const q=nearestPassXY('ground',hq.x+rnd(-120,120),hq.y+rnd(-120,120))||[hq.x,hq.y];const u=addUnit(team,'inf',q[0],q[1]);setMove(u,x+rnd(-80,80),y+rnd(-80,80),'amove');}return true;}
     case 'precise':{for(let i=0;i<Math.round(8*P.M);i++){const a=rnd(0,6.28),r=rnd(0,P.r);addStrike(x+Math.cos(a)*r,y+Math.sin(a)*r,1.4+i*.25,55,260,team,'bar');}return true;}
-    case 'smoke':{(G.smokes=G.smokes||[]).push({team,x,y,r:P.r,t:G.t+20*P.M});FXE('smoke',[x|0,y|0,P.r]);return true;}
+    case 'smoke':{(G.smokes=G.smokes||[]).push({team,x,y,r:P.r,t:G.t+20*P.M});FXE('smoke',[x|0,y|0,P.r],team);return true;}
     case 'fervor':{T.fervor=G.t+25*P.M;T.fervK=1.1+.05*P.lv;return true;}
     case 'labbayk':{T.fervor=G.t+25*P.M;T.fervK=1.15+.05*P.lv;T.fervInf=1;for(const e of G.ents)if(e.team===team&&!e.isB&&isInf(e.s))e.hp=Math.min(e.max,e.hp+e.max*.5);return true;}
-    case 'raid':{T.raidT=G.t+25*P.M;T.reveals.push({x,y,r:P.r,t:25*P.M});FXE('ping',[x|0,y|0,P.r]);return true;}}
+    case 'raid':{T.raidT=G.t+25*P.M;T.reveals.push({x,y,r:P.r,t:25*P.M});FXE('ping',[x|0,y|0,P.r],team);return true;}}
   return false;}
 function powCost(T,key){const w=T.pw[key];return !w?1:(w.lv||1)>=3?99:(w.lv||1)+1;}
 function buyPower(team,key){const T=G.teams[team];if(!POWERS[key])return false;const c=powCost(T,key);if(T.rank-T.spent<c)return false;T.spent+=c;if(!T.pw[key]){T.pw[key]={cd:0,lv:1};log(team,`${powInfo(key,T.fac).name} unlocked.`,'g');}else{T.pw[key].lv=(T.pw[key].lv||1)+1;log(team,`${powInfo(key,T.fac).name} upgraded to level ${T.pw[key].lv}.`,'g');}return true;}
@@ -1139,18 +1139,18 @@ function buyPower(team,key){const T=G.teams[team];if(!POWERS[key])return false;c
 function gpowFx(team,P,x,y,dur){const fx=P.fx,inR=e=>Math.hypot(e.x-x,e.y-y)<P.r;
   if(fx==='mark'){for(const e of G.ents)if(!e.dead&&!e.isB&&!ally(e.team,team)&&inR(e))e.mark=G.t+dur;}
   else if(fx==='detect'){for(const e of G.ents)if(!e.dead&&!ally(e.team,team)&&inR(e))e.detT=G.t+dur;}
-  else if(fx==='fire'){let n=0;const tick=()=>{for(const e of G.ents)if(!e.dead&&!ally(e.team,team)&&!(e.s&&e.s.dom==='air')&&inR(e))applyDmg(e,(e.isB?14:22)*P.M,'boom',team,null,1);for(let q=0;q<3;q++){const a=Math.random()*6.28,r=Math.sqrt(Math.random())*P.r*.85;FXE('boom',[(x+Math.cos(a)*r)|0,(y+Math.sin(a)*r)|0,5,0]);}if(n%3===0)FXE('smoke',[x|0,y|0,(P.r*.7)|0]);if(++n<8)G.timers.push({t:1,fn:tick});};G.timers.push({t:4,fn:tick});}
+  else if(fx==='fire'){let n=0;const tick=()=>{for(const e of G.ents)if(!e.dead&&!ally(e.team,team)&&!(e.s&&e.s.dom==='air')&&inR(e))applyDmg(e,(e.isB?14:22)*P.M,'boom',team,null,1);for(let q=0;q<3;q++){const a=Math.random()*6.28,r=Math.sqrt(Math.random())*P.r*.85;FXE('boom',[(x+Math.cos(a)*r)|0,(y+Math.sin(a)*r)|0,5,0],team);}if(n%3===0)FXE('smoke',[x|0,y|0,(P.r*.7)|0],team);if(++n<8)G.timers.push({t:1,fn:tick});};G.timers.push({t:4,fn:tick});}
   else if(fx==='emp'){G.timers.push({t:3.5,fn:()=>{for(const e of G.ents)if(!e.dead&&!e.isB&&e.s&&isVeh(e.s)&&!ally(e.team,team)&&inR(e))e.stun=Math.max(e.stun||0,G.t+4*P.M);}});}
-  else if(fx==='smoke'){(G.smokes=G.smokes||[]).push({team,x,y,r:P.r,t:G.t+14*P.M});G.timers.push({t:3,fn:()=>FXE('smoke',[x|0,y|0,P.r|0])});}
+  else if(fx==='smoke'){(G.smokes=G.smokes||[]).push({team,x,y,r:P.r,t:G.t+14*P.M});G.timers.push({t:3,fn:()=>FXE('smoke',[x|0,y|0,P.r|0],team)});}
   else if(fx==='rearm'){for(const e of G.ents)if(!e.dead&&!e.isB&&e.team===team&&inR(e))e.rofT=G.t+12*P.M;}
   else if(fx==='rally'){for(const e of G.ents)if(!e.dead&&!e.isB&&e.team===team&&inR(e)){e.fear=0;e.rout=0;e.last=G.t+15*P.M;e.supp=0;}}
   else if(fx==='shield'){(G.shields=G.shields||[]).push({team,x,y,r:P.r,t:G.t+12*P.M,k:.75});}}
 function usePower(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T.pw[key];if(!P0||P0.passive||!w||w.cd>0)return false;const L=Math.max(1,Math.min(3,w.lv||1)),M=PLV[L-1],P=Object.assign({},P0,{lv:L,M,cd:Math.round(P0.cd*PCD[L-1]),r:P0.r?Math.round(P0.r*(1+.2*(L-1))):P0.r});
   if(key==='nat'){if(!natPower(team,P,x,y))return false;w.cd=P.cd;log(team,`${P.name}!`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} used ${P.name}.`,'w');return true;}
   const dur=(25+10*(L-1))*(P.tm||1);if(P.fx)gpowFx(team,P,x,y,dur);
-  if(key==='recon'){T.reveals.push({x,y,r:P.r,t:dur});FXE('ping',[x|0,y|0,P.r]);}
+  if(key==='recon'){T.reveals.push({x,y,r:P.r,t:dur});FXE('ping',[x|0,y|0,P.r],team);}
   else if(key==='barrage'){const nS=Math.max(3,Math.round(10*M*(P.nm||1)));for(let i=0;i<nS;i++){const a=rnd(0,6.28),r=rnd(0,P.r);addStrike(x+Math.cos(a)*r,y+Math.sin(a)*r,1.5+i*.3*Math.min(1,10/nS*1.2),60,Math.round(230*(P.dm||1)),team,'bar');}for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+300))log(O.id,'Warning: incoming artillery barrage!','w');}
-  else if(key==='repair'){for(const e of G.ents)if(e.team===team&&Math.hypot(e.x-x,e.y-y)<P.r)e.hp=Math.min(e.max,e.hp+e.max*(.4+.2*L)*(P.pm||1));FXE('heal',[x|0,y|0,P.r]);}
+  else if(key==='repair'){for(const e of G.ents)if(e.team===team&&Math.hypot(e.x-x,e.y-y)<P.r)e.hp=Math.min(e.max,e.hp+e.max*(.4+.2*L)*(P.pm||1));FXE('heal',[x|0,y|0,P.r],team);}
   else if(key==='para'){const p=nearestPassXY('ground',x,y);if(!p)return false;const bb=BASES[team]||BASES[0],sx=bb[0]<MAPW/2?-100:MAPW+100,sy=bb[1]<MAPH/2?-100:MAPH+100;FXE('plane',[sx,sy,p[0]|0,p[1]|0,team]);
     G.timers.push({t:2.6,fn:()=>{const R=roster(T.fac).barracks;(()=>{const mx=P.mix||['inf','inf','inf','at','at','inf','at','inf','inf','at','inf'],nP=Math.max(2,Math.round((2+3*L)*(P.nm||1)));return Array.from({length:nP},(_,i)=>mx[i%mx.length]);})().forEach((k,i)=>{const q=nearestPassXY('ground',p[0]+rnd(-40,40),p[1]+rnd(-40,40))||p;const n=addUnit(team,k,q[0],q[1]);if(n&&P.fx==='vet'){n.rank=Math.max(n.rank||0,1);n.xp=Math.max(300,n.s.cost);}if(n&&P.fx==='dig')n.digT=1;if(n&&P.fx==='stealth')n.stlT=1;});log(team,'Paratroopers have landed.','g');}});}
   w.cd=P.cd;log(team,`${P.name} used.`);return true;}
@@ -1896,10 +1896,15 @@ const FXH={
   elim(team){if(team===ME&&G&&!G.over)showElim();},
   oilDry(i){const o=G.oil&&G.oil[i];if(!o)return;if(MODE==='client'){o.res=0;}if(o.owner===ME||MODE==='client')try{pushLog('An oil derrick has run dry.','w');}catch(_){}},
   give(f,t,a){if(t===ME&&typeof sfxUI==='function')sfxUI(880);},
-  civd(i){const c=G.civ&&G.civ[i];if(!c)return;if(c.ruin&&c.obj){c.obj.visible=false;if(typeof scorch==='function')scorch(c.x,c.y,30);}if(MODE==='client'){c.dead=true;if(G.grid[c.k]===3)G.grid[c.k]=0;}G.civDirty=true;const g=groundH(c.x,c.y);try{FXH.boom(c.x|0,c.y|0,26,1);chunks(c.x,c.y,48,'#cfc6b2',12);}catch(_){}},
+  civd(i,q){const c=G.civ&&G.civ[i];if(!c)return;if(c.ruin&&c.obj){c.obj.visible=false;if(typeof scorch==='function')scorch(c.x,c.y,30);}if(MODE==='client'){c.dead=true;if(G.grid[c.k]===3)G.grid[c.k]=0;}G.civDirty=true;const g=groundH(c.x,c.y);if(!q)try{FXH.boom(c.x|0,c.y|0,26,1);chunks(c.x,c.y,48,'#cfc6b2',12);}catch(_){}},
+  // P2P: a remembered enemy building that was destroyed out of this player's sight - removed silently (leaving rubble)
+  // when they next see the spot, instead of an explosion that would give the fight away
+  gone(id,x,y,ki){const k=KINDS[ki];if(k&&STRUCT[k])try{rubble(x,y,STRUCT[k].size);}catch(_){}},
   txt(x,y,str,team,vic){if(!SET.txt||team!==ME&&vic!==ME&&vic!==-2)return;FLOATS.push({x,y,s:str,t0:performance.now(),c:vic===-2?(ally(team,ME)?(str==='RALLIED'?'#74d08f':'#ea5a40'):'#f2c94c'):team===ME?'#f2c94c':'#ea5a40'});if(FLOATS.length>14)FLOATS.shift();},
 };
-function FXE(type,args){if(MODE==='host'&&G&&G.out)G.out.push([type,...args]);if(FXH[type]&&!G.headless)FXH[type](...args);}
+// own: optional team that caused the effect (a general's power): its side always gets it, even into the fog. Kept as a
+// property of the event array, so JSON drops it and it costs nothing on the wire.
+function FXE(type,args,own){if(MODE==='host'&&G&&G.out){const v=[type,...args];if(own!=null)v.own=own;G.out.push(v);}if(FXH[type]&&!G.headless)FXH[type](...args);}
 // Burnt-out wrecks keep their shape and panel detail: patchy soot, rust-brown scorched paint and grey ash with the
 // original surface showing faintly through, glowing embers that die down over ~20 seconds, and a slight list.
 const WRECK_HEAT={value:1};let WRECKM=null;const WRECKQ=[],BURNT=new Map();
@@ -2321,7 +2326,9 @@ function launchMP(){if(MODE!=='single'||!NET.lobby.length)return;const seed=(Mat
 // A dropped player gets 30 s to reconnect (same team, same units) before the AI takes over their side.
 function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=NET.toks.indexOf(tok);if(ix<1)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,(NET.cseqSlot||[])[ix]|0);
   const T=G.teams[ix];T.discT=0;if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',{pv:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm}).catch(()=>{});
-  for(const O of G.teams)log(O.id,`${T.F.name}'s commander reconnected.`,'g');}
+  for(const O of G.teams)log(O.id,`${T.F.name}'s commander reconnected.`,'g');
+  // P2P: the rejoined player starts from a fresh map, so collapsed city blocks are re-sent as they come into view
+  if(window.WW3_P2P){(NET.gq=NET.gq||[])[ix]=[];(NET.civQ=NET.civQ||[])[ix]=(G.civ||[]).map((c,i)=>c.dead?i:-1).filter(i=>i>=0);}}
 function discTick(){if(!NET.peers||!G)return;const now=performance.now();for(let k=0;k<NET.peers.length;k++){const p=NET.peers[k];if(k===ME||!p)continue;const ls=(NET.seen||{})[p];if(ls&&now-ls>8000&&!G.teams[k].discT&&!G.teams[k].ai){NET.peers[k]=null;playerLeft(k);}}for(let k=1;k<NET.peers.length;k++){const T=G.teams[k];if(T&&T.discT&&G.t-T.discT>30&&!T.out){T.discT=0;T.ai=mkAI(1);T.aiTook=1;for(const O of G.teams)log(O.id,`${T.F.name}'s commander did not come back. The AI has taken over (they can still rejoin).`,'w');}}}
 function playerLeft(ix){if(!G||G.over)return;const T=G.teams[ix];if(!T||T.out||T.ai)return;T.discT=G.t;for(const O of G.teams)log(O.id,`${T.F.name}'s commander lost connection. Waiting up to 30 s for them to reconnect…`,'w');return;
   if(NET.peers.slice(1).every((p,k)=>!p||G.teams[k+1].ai))pushLog('All other players have left. The AI controls their forces.','w');}
@@ -2390,23 +2397,96 @@ function sendChunks(topic,base,items){let cur=[],len=0;const flush=()=>{if(cur.l
 function teamMsg(T){const q={};for(const c of CATS)q[c]=T.q[c].map(i=>[i.kind,+(i.t/prodTime(T,stats(T.fac,i.kind))).toFixed(2)]);const rq={};for(const c in T.rq)if(T.rq[c])rq[c]=[T.rq[c].key,+(T.rq[c].t/UPG[T.rq[c].key].time).toFixed(2)];
   const pw={};for(const k in T.pw)pw[k]=[Math.ceil(T.pw[k].cd),T.pw[k].lv||1];
   return{c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,fa:G.fields.map(f=>f.amt|0),oil:G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out:G.teams.map(O=>O.out?1:0),tn:T.tun.length,tk:tunKinds(T),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min(NET.cseq[NET.peers[T.id]]|0,NET.ckAk?NET.ckAk[T.id]|0:0):0,to:NET.peers[T.id]};}
-function netTick(dt){if(MODE!=='host'||!NET.game||!G||!NET.peers)return;discTick();NET.snapT-=dt;NET.evT-=dt;NET.teamT-=dt;NET.bT-=dt;const live=[];for(let k=0;k<NET.peers.length;k++)if(k!==ME&&NET.peers[k]&&!G.teams[k].ai)live.push(k);if(!live.length)return;try{ckTick(dt,live);}catch(e){}
+function netTick(dt){if(MODE!=='host'||!NET.game||!G||!NET.peers)return;discTick();NET.snapT-=dt;NET.evT-=dt;NET.teamT-=dt;NET.bT-=dt;const live=[];for(let k=0;k<NET.peers.length;k++)if(k!==ME&&NET.peers[k]&&!G.teams[k].ai)live.push(k);if(!live.length){if(G.out.length>400)G.out.length=0;return;}try{ckTick(dt,live);}catch(e){}
   // The room allows each sender about 40 messages a second, so with many players the host BROADCASTS one snapshot and
   // one event stream to everyone (each entity tagged with which players can see it, each client keeps only its own)
   // instead of one copy per player; team panels go out round-robin.
   // Delta snapshots: an entity whose state has not changed since the last copy that player got is listed only by id
   // (keeps it alive on their screen); full copies go out only for what changed, plus a full keyframe every 2 s that
   // also repairs anything a dropped message missed. Typical armies are mostly idle, so this cuts traffic several-fold.
-  if(NET.snapT<=0){const items=[];
+  if(NET.snapT<=0){const items=[],SK=window.WW3_P2P?(NET.sk=NET.sk||new Map()):null;
     for(const e of G.ents){if(e.dead)continue;let vm=0,mm=0;for(const k of live){const v=e.team===k||(e.vs&&e.vs[k]);if(e.isB){if(v)vm|=1<<k;else if((e.sn|0)&(1<<k))mm|=1<<k;}else if(v)vm|=1<<k;}
-      if(!vm&&!mm)continue;const a=encEnt(e,false);a.push(vm,mm);items.push(a);}
+      if(!vm&&!mm)continue;if(SK)skNote(SK,e,vm,mm,live);const a=encEnt(e,false);a.push(vm,mm);items.push(a);}
     NET.snapT=window.WW3_P2P?.1:Math.max(.2,Math.min(.6,Math.ceil(items.length/150)*.1));
-    if(window.WW3_P2P){for(const k of live){const to=NET.peers[k];if(NET.game.buffered&&NET.game.buffered(to)>48000)continue;sendSnap(k,to,forPlayer(items,k),1<<k);}}else sendSnap('all',null,items);}
-  if(NET.evT<=0&&G.out.length){NET.evT=.15;let evs=G.out;G.out=[];
-    let len=JSON.stringify(evs).length;if(len>3400){const imp=evs.filter(v=>v[0]!=='muz'&&v[0]!=='tr');const lo=evs.filter(v=>v[0]==='muz'||v[0]==='tr');evs=imp;len=JSON.stringify(evs).length;for(const v of lo){const s=JSON.stringify(v).length+1;if(len+s>3400)break;evs.push(v);len+=s;}}
-    if(JSON.stringify(evs).length>3400)sendChunks('evt',{},evs);else if(evs.length)NET.game.emit('evt',{e:evs}).catch(()=>{});}
-  else if(NET.evT<=0)NET.evT=.15;
+    if(window.WW3_P2P){for(const k of live){const to=NET.peers[k];if(NET.game.buffered&&NET.game.buffered(to)>48000)continue;sendSnap(k,to,forPlayer(items,k),1<<k);(NET.snapTo=NET.snapTo||[])[k]=G.t;}}else sendSnap('all',null,items);}
+  if(NET.evT<=0){NET.evT=.15;let evs=G.out;G.out=[];
+    // P2P: one filtered stream per player (sendEvtP2P); room mode: one broadcast stream as before
+    if(window.WW3_P2P)sendEvtP2P(evs,live);else if(evs.length){let len=JSON.stringify(evs).length;if(len>3400){const imp=evs.filter(v=>v[0]!=='muz'&&v[0]!=='tr');const lo=evs.filter(v=>v[0]==='muz'||v[0]==='tr');evs=imp;len=JSON.stringify(evs).length;for(const v of lo){const s=JSON.stringify(v).length+1;if(len+s>3400)break;evs.push(v);len+=s;}}
+    if(JSON.stringify(evs).length>3400)sendChunks('evt',{},evs);else if(evs.length)NET.game.emit('evt',{e:evs}).catch(()=>{});}}
   if(NET.teamT<=0){NET.teamT=.25;const per=window.WW3_P2P?live.length:Math.min(live.length,3);NET.trr=NET.trr||0;for(let n=0;n<per;n++){const k=live[(NET.trr++)%live.length];NET.game.emit('team',teamMsg(G.teams[k])).catch(()=>{});}}}
+
+/* ---------- host: per-player event streams (P2P only) ----------
+   In P2P every player is sent their own copy of the event stream anyway, so each copy carries only what that player
+   could perceive: effects inside their own or an ally's vision, messages addressed to them, their side's general's
+   powers, and the few global announcements. Fights in the fog no longer reach (or give away) anyone who cannot see
+   them. Vision is a coarse grid of team bitmasks rebuilt at each 0.15 s flush from the same sources as updateVis:
+   every unit's and building's sight radius (shared with allies), each team's own reveals, plus the cell of anything a
+   team currently sees (counter-battery reveals and the like). One lookup answers for all players at once. */
+const VG={c:64,w:0,h:0,a:null,t:-1,AM:[]};
+function visGrid(){if(VG.t===G.t&&VG.a)return;const c=VG.c,w=Math.ceil(MAPW/c)+1,h=Math.ceil(MAPH/c)+1,N=G.teams.length;
+  if(!VG.a||VG.w!==w||VG.h!==h){VG.a=new Uint8Array(w*h);VG.w=w;VG.h=h;}else VG.a.fill(0);const a=VG.a,AM=VG.AM;AM.length=N;
+  for(let i=0;i<N;i++){let m=0;for(let j=0;j<N;j++)if(ally(i,j))m|=1<<j;AM[i]=m;}
+  // a cell counts as seen when its centre is within sight radius + half a cell (the client's own fog hole is drawn 8%
+  // wider than the sight radius with a soft edge, so this matches what the player actually sees within a few metres)
+  const disc=(x,y,R,m)=>{if(!m||!(R>0))return;const R2=(R+c*.5)**2,x0=Math.max(0,Math.floor((x-R)/c)),x1=Math.min(w-1,Math.floor((x+R)/c)),y0=Math.max(0,Math.floor((y-R)/c)),y1=Math.min(h-1,Math.floor((y+R)/c));
+    for(let cy=y0;cy<=y1;cy++){const dy=(cy+.5)*c-y,dy2=dy*dy;if(dy2>R2)continue;const row=cy*w;for(let cx=x0;cx<=x1;cx++){const dx=(cx+.5)*c-x;if(dx*dx+dy2<=R2)a[row+cx]|=m;}}};
+  for(const e of G.ents){if(e.dead||!(e.team>=0&&e.team<N))continue;disc(e.x,e.y,e._vr||visR(e),AM[e.team]);
+    if(e.vs){let m=0;for(let k=0;k<N;k++)if(e.vs[k])m|=1<<k;const cx=Math.floor(e.x/c),cy=Math.floor(e.y/c);if(m&&cx>=0&&cy>=0&&cx<w&&cy<h)a[cy*w+cx]|=m;}}
+  for(const T of G.teams)for(const r of T.reveals||[])disc(r.x,r.y,r.r,1<<T.id);VG.t=G.t;}
+// bitmask of the teams that see any part of the circle (x,y,m)
+function visAt(x,y,m){const c=VG.c,w=VG.w,h=VG.h,a=VG.a,cx=Math.floor(x/c),cy=Math.floor(y/c);
+  if(!(m>c*.5))return cx>=0&&cy>=0&&cx<w&&cy<h?a[cy*w+cx]:0;
+  const r=Math.ceil(m/c),M2=(m+c*.5)**2;let o=0;
+  for(let j=Math.max(0,cy-r),j1=Math.min(h-1,cy+r);j<=j1;j++)for(let i=Math.max(0,cx-r),i1=Math.min(w-1,cx+r);i<=i1;i++){const dx=(i+.5)*c-x,dy=(j+.5)*c-y;if(dx*dx+dy*dy<=M2)o|=a[j*w+i];}return o;}
+// who gets each kind of event (v = [type,...FXH args]); anything not listed (end, elim, oilDry, new types) goes to all
+function evWho(v){const AM=VG.AM,own=v.own!=null?AM[v.own]|0:0;
+  switch(v[0]){
+    case 'muz':return visAt(v[1],v[2],v[5]>=13?60:20);                     // gun position; big guns throw smoke and dust
+    case 'tr':case 'pj':return visAt(v[1],v[2],16)|visAt(v[4],v[5],16);     // either end in sight: you see it fly in/out
+    case 'salvo':return visAt(v[1],v[2],30)|visAt(v[4],v[5],60);
+    case 'boom':return own|visAt(v[1],v[2],Math.min(400,20+(+v[3]||0)*(v[4]?2.5:1.5)));  // fireball, smoke column and flash reach past the fog edge
+    case 'hack':return visAt(v[1],v[2],40);
+    case 'ping':case 'heal':case 'smoke':return own|visAt(v[1],v[2],+v[3]||0);
+    case 'strike':return v[5]?255:own|visAt(v[1],v[2],(+v[4]||0)+40);      // superweapon-class warnings are global (alarm + "inbound" log)
+    case 'bmis':return visAt(v[1],v[2],120);                                 // only where the launch is seen: never hands out the silo's position
+    case 'plane':{const sx=v[1],sy=v[2],tx=v[3],ty=v[4],L=Math.hypot(tx-sx,ty-sy)||1,E=L*6/2.6,n=Math.min(24,Math.ceil(E/200));let m=AM[v[5]]|0;
+      for(let i=0;i<=n;i++){const u=i/n*E/L;m|=visAt(sx+(tx-sx)*u,sy+(ty-sy)*u,150);}return m;}   // its whole flight path
+    case 'toss':{const e=G.byId.get(v[1]);if(!e||e.dead||!e.vs)return 0;let m=AM[e.team]|0;for(let k=0;k<e.vs.length;k++)if(e.vs[k])m|=1<<k;return m;}
+    case 'txt':{const t=v[4],w=v[5];let m=(t>=0?1<<t:0)|(w>=0?1<<w:0);if(w===-2)m|=(AM[t]|0)|visAt(v[1],v[2],0);return m;}
+    case 'log':return v[1]>=0?1<<v[1]:0;
+    case 'give':return (1<<v[1])|(1<<v[2]);
+    default:return 255;}}
+// what each player was last sent of an entity: r.t[k] = when it was last in k's snapshot as visible, r.m = players
+// that hold it as a remembered (fogged) building
+function skNote(SK,e,vm,mm,live){let r=SK.get(e.id);if(!r)SK.set(e.id,r={t:[],m:0,s:0});for(const k of live)if(vm&(1<<k))r.t[k]=G.t;r.m|=mm;r.s=G.t;}
+// 'die' goes to everyone who sees the spot, and to anyone who may still have that entity on screen. A client drops a
+// unit after ~0.9 s of snapshots without it (clientTick ttl; unchanged units are only refreshed by the 0.4 s keep-alive
+// list), so a unit that was in a player's snapshots within 1.6 s of the latest one they were sent is still there
+// (snapshots skipped for a congested link count as 'still there'; 8.5 s covers the client's absolute expiry). A
+// remembered building never expires on the client, so if it dies out of sight it is queued as a silent 'gone'.
+function dieWho(v,live){const id=v[1],x=v[2],y=v[3],ki=v[4],isB=v[5];let m=visAt(x,y,isB?120:30);const r=NET.sk&&NET.sk.get(id);
+  if(r){NET.sk.delete(id);const st=NET.snapTo||[];for(const k of live){const b=1<<k;if(m&b)continue;const t=r.t[k];
+    if(t!=null&&(st[k]||0)-t<=1.6&&G.t-t<=8.5)m|=b;
+    else if(isB&&(r.m&b)){const q=NET.gq[k]=NET.gq[k]||[];q.push([id,x,y,ki]);if(q.length>300)q.shift();}}}
+  return m;}
+// a city block collapsing changes the map (passability, cover), so every player must get it eventually: now if they see
+// it, otherwise quietly (no explosion) once they do
+function civWho(v,live){const c=G.civ&&G.civ[v[1]];if(!c)return 255;const m=visAt(c.x,c.y,60);for(const k of live)if(!(m&(1<<k)))(NET.civQ[k]=NET.civQ[k]||[]).push(v[1]);return m;}
+function sendEvtP2P(evs,live){const gq=NET.gq=NET.gq||[],vq=NET.civQ=NET.civQ||[];let lm=0,pend=evs.length;
+  for(const k of live){lm|=1<<k;pend+=(gq[k]||[]).length+(vq[k]||[]).length;}if(!pend)return;
+  visGrid();const per=[];for(const k of live)per[k]=[];
+  for(const v of evs){if(!Array.isArray(v))continue;const m=(v[0]==='die'?dieWho(v,live):v[0]==='civd'?civWho(v,live):evWho(v))&lm;if(!m)continue;
+    const s=JSON.stringify(v);for(const k of live)if(m&(1<<k))per[k].push([v,s]);}
+  for(const k of live){const b=1<<k,L=per[k],add=v=>L.push([v,JSON.stringify(v)]);
+    if(gq[k]&&gq[k].length)gq[k]=gq[k].filter(g=>{if(!(visAt(g[1],g[2],40)&b))return true;add(['gone',...g]);return false;});
+    if(vq[k]&&vq[k].length)vq[k]=vq[k].filter(i=>{const c=G.civ&&G.civ[i];if(!c)return false;if(!(visAt(c.x,c.y,60)&b))return true;add(['civd',i,1]);return false;});
+    if(!L.length)continue;const to=NET.peers[k];
+    // same budget per player as the broadcast had: ~3.4 KB per 0.15 s, muzzle flashes and tracers dropped first
+    let len=1;for(const x of L)len+=x[1].length+1;let out=L;
+    if(len>3400){out=[];len=1;const lo=[];for(const x of L){if(x[0][0]==='muz'||x[0][0]==='tr')lo.push(x);else{out.push(x);len+=x[1].length+1;}}
+      for(const x of lo){if(len+x[1].length+1>3400)break;out.push(x);len+=x[1].length+1;}}
+    const e=out.map(x=>x[0]);if(len>3400)sendChunks('evt',{to},e);else NET.game.emit('evt',{e,to}).catch(()=>{});}
+  if(NET.sk&&!(NET.skP>G.t)){NET.skP=G.t+5;for(const [id,r] of NET.sk)if(G.t-r.s>15&&!G.byId.has(id))NET.sk.delete(id);}}
 
 /* ---------- client: receive ---------- */
 function applySnap(d){if(!G||!Array.isArray(d.e))return;const now=G.t;if(typeof d.t==='number'){if(d.t+1e-6<(NET.lastSnapT||0)&&!d.f)return;NET.lastSnapT=Math.max(NET.lastSnapT||0,d.t);}if(d.iv>0)NET.iv=Math.min(3,+d.iv);
@@ -2428,7 +2508,7 @@ function clientTick(dt){G.t+=dt;const now=G.t;
   const ttl=Math.max(.9,(NET.iv||.2)*2.6),ref=NET.lastSnapT||0;for(const e of G.ents){const sl=now-(e.seenL==null?now:e.seenL);if(e.isB){if(!e.mem&&(ref-e.seenAt>Math.max(3.2,ttl*2)||sl>12))e.gone=true;}else if(ref-e.seenAt>ttl||sl>8)e.gone=true;}
   if(G.ents.some(e=>e.gone)){for(const e of G.ents)if(e.gone){G.byId.delete(e.id);}G.ents=G.ents.filter(e=>!e.gone);G.sel=G.sel.filter(e=>!e.gone);}}
 function applyEvents(d){if(!d||!Array.isArray(d.e))return;for(const v of d.e){if(!Array.isArray(v))continue;const [type,...args]=v;if(!FXH[type]||type==='end'&&false)continue;
-  if(type==='die'){const e=G.byId.get(args[0]);if(e){e.dead=true;G.byId.delete(e.id);G.ents=G.ents.filter(x=>x!==e);G.sel=G.sel.filter(x=>x!==e);}}
+  if(type==='die'||type==='gone'){const e=G.byId.get(args[0]);if(e){e.dead=true;G.byId.delete(e.id);G.ents=G.ents.filter(x=>x!==e);G.sel=G.sel.filter(x=>x!==e);}}
   if(type==='log'&&args[0]!==ME)continue;try{FXH[type](...args);}catch(e){}}}
 function applyTeam(d){if(!G||!d)return;if(typeof d.ak==='number'&&NET.cq&&NET.cq.length&&NET.cq[0].s<=d.ak){NET.cq=NET.cq.filter(c=>c.s>d.ak);if(NET.game)NET.game.presence({cq:NET.cq}).catch(()=>{});}if(typeof d.mg==='number')NET.gen=Math.max(NET.gen||0,d.mg|0);const T=G.teams[ME];T.credits=d.c|0;for(const c of CATS)T.q[c]=(d.q&&d.q[c]||[]).map(([k,p])=>({kind:k,t:p*prodTime(T,stats(T.fac,k)),p}));
   T.rq={};for(const c in (d.rq||{})){const [k,p]=d.rq[c];if(UPG[k])T.rq[c]={key:k,t:p*UPG[k].time};}T.upg={};for(const k of d.u||[])if(UPG[k])T.upg[k]=true;T.charge=+d.ch||0;T.tunN=d.tn|0;if(Array.isArray(d.ac))for(const [i,c] of d.ac)if(G.teams[i])G.teams[i].credits=+c||0;T.tunK=d.tk&&typeof d.tk==='object'?d.tk:{};if(WEATHER[d.wx]){G.wx=G.wx||{t:0,next:1e9};G.wx.k=d.wx;}if(Array.isArray(d.mn))G.mines=d.mn.map(([x,y])=>({x,y,team:ME,arm:0}));T.gxp=d.gx|0;T.rank=d.rk|0||1;T.spent=d.sp|0;
@@ -2494,7 +2574,7 @@ function ckReceive(d){if(!d||typeof d.d!=='string'||!(d.n>0)||d.n>400)return;con
 async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e){console.warn('checkpoint unpack',e);return false;}
   const gen=(ck.gen||0)+1,code2=migRoom(gen),me=ME;
   try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);return false;}
-  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};
+  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};
   const oldHost=ck.me|0;for(let k=0;k<G.teams.length;k++){const T=G.teams[k];if(k===ME){T.ai=null;T.discT=0;continue;}if(k===oldHost){if(!T.ai){T.ai=mkAI(1);T.aiTook=1;}continue;}if(!T.ai&&!T.out)T.discT=G.t;}
   try{if(NET.game)NET.game.leave().catch(()=>{});}catch(e){}NET.game=null;NET.code=code2;
   try{NET.game=await NET.room.join('tc-'+code2);}catch(e){pushLog('Could not open the new game room.','w');return false;}
@@ -2693,7 +2773,7 @@ function startSingle(){if(!MODELS.ready&&MODELS.loading&&!startSingle.w){startSi
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 function startSandbox(){if(!MODELS.ready&&MODELS.loading){MODELS.loading.then(startSandbox);return;}MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US';
   newGame({seed:setup.seed||((Math.random()*1e9)|0),facs:[setup.p,setup.a&&setup.a!==setup.p?setup.a:en],ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});afterStart();}
-function startMP(mode,seed,facs,slot,map,tm){if(!MODELS.ready&&MODELS.loading){MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;newGame({seed,facs,ai:facs.map(()=>false),map,tm});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm){if(!MODELS.ready&&MODELS.loading){MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;newGame({seed,facs,ai:facs.map(()=>false),map,tm});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');

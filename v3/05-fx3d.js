@@ -110,10 +110,15 @@ const FXH={
   elim(team){if(team===ME&&G&&!G.over)showElim();},
   oilDry(i){const o=G.oil&&G.oil[i];if(!o)return;if(MODE==='client'){o.res=0;}if(o.owner===ME||MODE==='client')try{pushLog('An oil derrick has run dry.','w');}catch(_){}},
   give(f,t,a){if(t===ME&&typeof sfxUI==='function')sfxUI(880);},
-  civd(i){const c=G.civ&&G.civ[i];if(!c)return;if(c.ruin&&c.obj){c.obj.visible=false;if(typeof scorch==='function')scorch(c.x,c.y,30);}if(MODE==='client'){c.dead=true;if(G.grid[c.k]===3)G.grid[c.k]=0;}G.civDirty=true;const g=groundH(c.x,c.y);try{FXH.boom(c.x|0,c.y|0,26,1);chunks(c.x,c.y,48,'#cfc6b2',12);}catch(_){}},
+  civd(i,q){const c=G.civ&&G.civ[i];if(!c)return;if(c.ruin&&c.obj){c.obj.visible=false;if(typeof scorch==='function')scorch(c.x,c.y,30);}if(MODE==='client'){c.dead=true;if(G.grid[c.k]===3)G.grid[c.k]=0;}G.civDirty=true;const g=groundH(c.x,c.y);if(!q)try{FXH.boom(c.x|0,c.y|0,26,1);chunks(c.x,c.y,48,'#cfc6b2',12);}catch(_){}},
+  // P2P: a remembered enemy building that was destroyed out of this player's sight - removed silently (leaving rubble)
+  // when they next see the spot, instead of an explosion that would give the fight away
+  gone(id,x,y,ki){const k=KINDS[ki];if(k&&STRUCT[k])try{rubble(x,y,STRUCT[k].size);}catch(_){}},
   txt(x,y,str,team,vic){if(!SET.txt||team!==ME&&vic!==ME&&vic!==-2)return;FLOATS.push({x,y,s:str,t0:performance.now(),c:vic===-2?(ally(team,ME)?(str==='RALLIED'?'#74d08f':'#ea5a40'):'#f2c94c'):team===ME?'#f2c94c':'#ea5a40'});if(FLOATS.length>14)FLOATS.shift();},
 };
-function FXE(type,args){if(MODE==='host'&&G&&G.out)G.out.push([type,...args]);if(FXH[type]&&!G.headless)FXH[type](...args);}
+// own: optional team that caused the effect (a general's power): its side always gets it, even into the fog. Kept as a
+// property of the event array, so JSON drops it and it costs nothing on the wire.
+function FXE(type,args,own){if(MODE==='host'&&G&&G.out){const v=[type,...args];if(own!=null)v.own=own;G.out.push(v);}if(FXH[type]&&!G.headless)FXH[type](...args);}
 // Burnt-out wrecks keep their shape and panel detail: patchy soot, rust-brown scorched paint and grey ash with the
 // original surface showing faintly through, glowing embers that die down over ~20 seconds, and a slight list.
 const WRECK_HEAT={value:1};let WRECKM=null;const WRECKQ=[],BURNT=new Map();

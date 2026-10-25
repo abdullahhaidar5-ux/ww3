@@ -56,7 +56,7 @@ function ckReceive(d){if(!d||typeof d.d!=='string'||!(d.n>0)||d.n>400)return;con
 async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e){console.warn('checkpoint unpack',e);return false;}
   const gen=(ck.gen||0)+1,code2=migRoom(gen),me=ME;
   try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);return false;}
-  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};
+  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};
   const oldHost=ck.me|0;for(let k=0;k<G.teams.length;k++){const T=G.teams[k];if(k===ME){T.ai=null;T.discT=0;continue;}if(k===oldHost){if(!T.ai){T.ai=mkAI(1);T.aiTook=1;}continue;}if(!T.ai&&!T.out)T.discT=G.t;}
   try{if(NET.game)NET.game.leave().catch(()=>{});}catch(e){}NET.game=null;NET.code=code2;
   try{NET.game=await NET.room.join('tc-'+code2);}catch(e){pushLog('Could not open the new game room.','w');return false;}

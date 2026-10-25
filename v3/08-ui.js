@@ -190,7 +190,7 @@ function startSingle(){if(!MODELS.ready&&MODELS.loading&&!startSingle.w){startSi
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 function startSandbox(){if(!MODELS.ready&&MODELS.loading){MODELS.loading.then(startSandbox);return;}MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US';
   newGame({seed:setup.seed||((Math.random()*1e9)|0),facs:[setup.p,setup.a&&setup.a!==setup.p?setup.a:en],ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});afterStart();}
-function startMP(mode,seed,facs,slot,map,tm){if(!MODELS.ready&&MODELS.loading){MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;newGame({seed,facs,ai:facs.map(()=>false),map,tm});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm){if(!MODELS.ready&&MODELS.loading){MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;newGame({seed,facs,ai:facs.map(()=>false),map,tm});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');
