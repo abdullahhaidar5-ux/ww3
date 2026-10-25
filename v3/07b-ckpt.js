@@ -18,7 +18,7 @@ function ckEncode(){const ids=new Map();for(const e of G.ents)ids.set(e,e.id);co
   const fields=G.fields.map(f=>({amt:f.amt,owner:f.owner}));
   const oil=G.oil.map(o=>{const r={};for(const k in o){if(k==='tg')continue;const y=enc(o[k],1);if(y!==undefined&&(typeof y!=='object'||Array.isArray(y)||y===null||y.$e!=null))r[k]=y;}return r;});
   const civ=(G.civ||[]).map(c=>{const r={};for(const k in c){if(k==='obj'||k==='mesh')continue;const y=enc(c[k],2);if(y!==undefined)r[k]=y;}return r;});
-  return {v:1,ents,S:S.map(s=>enc(s,1)),teams,g,fields,oil,civ,toks:NET.toks||null,start:NET.startInfo||null,me:ME};}
+  return {v:1,ents,S:S.map(s=>enc(s,1)),teams,g,fields,oil,civ,toks:NET.toks||null,start:NET.startInfo||null,me:ME,cs:NET.peers?NET.peers.map(p=>p&&NET.cseq?NET.cseq[p]|0:0):null};}
 function ckDecode(ck){const byId=new Map();const S=ck.S;const ents=ck.ents.map(o=>Object.assign({},o));for(const e of ents)byId.set(e.id,e);
   const dec=v=>{if(v==null||typeof v!=='object')return v;if(Array.isArray(v))return v.map(dec);if(v.$e!=null)return byId.get(v.$e)||null;if(v.$f!=null)return G.fields[v.$f]||null;if(v.$o!=null)return G.oil[v.$o]||null;if(v.$c!=null)return (G.civ||[])[v.$c]||null;
     const o={};for(const k in v)o[k]=dec(v[k]);return o;};
@@ -56,7 +56,7 @@ function ckReceive(d){if(!d||typeof d.d!=='string'||!(d.n>0)||d.n>400)return;con
 async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e){console.warn('checkpoint unpack',e);return false;}
   const gen=(ck.gen||0)+1,code2=migRoom(gen),me=ME;
   try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);return false;}
-  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.sc={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};
+  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs:[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};
   const oldHost=ck.me|0;for(let k=0;k<G.teams.length;k++){const T=G.teams[k];if(k===ME){T.ai=null;T.discT=0;continue;}if(k===oldHost){if(!T.ai){T.ai=mkAI(1);T.aiTook=1;}continue;}if(!T.ai&&!T.out)T.discT=G.t;}
   try{if(NET.game)NET.game.leave().catch(()=>{});}catch(e){}NET.game=null;NET.code=code2;
   try{NET.game=await NET.room.join('tc-'+code2);}catch(e){pushLog('Could not open the new game room.','w');return false;}

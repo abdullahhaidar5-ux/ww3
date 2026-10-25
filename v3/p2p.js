@@ -40,7 +40,7 @@ window.WW3_P2P=true;
       const pjOpts=Object.assign({},OPTS,{config:cfg});
       // --- PeerJS transport ---
       const pjHost=()=>new Promise((res,rej)=>{let p;try{p=new Peer(hostId,pjOpts);}catch(e){rej(e);return;}peer=p;
-        p.on('open',()=>{p.on('connection',c=>{c.on('open',()=>{links.set(c.peer,{send:m=>{if(c.open)c.send(m);}});if(!peers.has(c.peer))upd(c.peer,{},true);});c.on('data',m=>onMsg(c.peer,m));c.on('close',()=>gone(c.peer));c.on('error',()=>gone(c.peer));});res();});
+        p.on('open',()=>{p.on('connection',c=>{c.on('open',()=>{links.set(c.peer,{buf:()=>c.dataChannel?c.dataChannel.bufferedAmount:0,send:m=>{if(c.open)c.send(m);}});if(!peers.has(c.peer))upd(c.peer,{},true);});c.on('data',m=>onMsg(c.peer,m));c.on('close',()=>gone(c.peer));c.on('error',()=>gone(c.peer));});res();});
         p.on('error',e=>{const t=e&&e.type;if(['unavailable-id','network','server-error','browser-incompatible','socket-error'].includes(t))rej(e);else console.warn('p2p',t);});
         p.on('disconnected',()=>{try{if(!p.destroyed)p.reconnect();}catch(e){}});});
       const pjJoin=()=>new Promise((res,rej)=>{let p;try{p=new Peer(rid(),pjOpts);}catch(e){rej(e);return;}peer=p;const to=setTimeout(()=>rej(Object.assign(new Error('connect timeout'),{type:'timeout'})),via?6000:14000);
@@ -65,7 +65,7 @@ window.WW3_P2P=true;
         for(const f of (H[t]||[]))try{f({peer:myId,by:null,isMe:true,sameTab:true,kind:'viewer',guest:false,topic:t,data:d});}catch(e){}return Promise.resolve();},
       on:(t,f)=>{(H[t]=H[t]||[]).push(f);return()=>{H[t]=(H[t]||[]).filter(x=>x!==f);};},
       presence:p=>{for(const k in p){if(p[k]===null)delete myPres[k];else myPres[k]=p[k];}const msg={k:'p',p:myPres};for(const l of links.values())try{l.send(msg);}catch(e){}return Promise.resolve();},
-      peers:list,onPeers:f=>{PH.push(f);return()=>{};},connected:()=>!!myId,onConnection:f=>{setTimeout(()=>f(!!myId),0);return()=>{};},
+      buffered:to=>{const l=links.get(to);return l&&l.buf?l.buf():0;},peers:list,onPeers:f=>{PH.push(f);return()=>{};},connected:()=>!!myId,onConnection:f=>{setTimeout(()=>f(!!myId),0);return()=>{};},
       leave:()=>{try{if(peer)peer.destroy();}catch(e){}try{if(troom)troom.leave();}catch(e){}return Promise.resolve();}});
     return ready.then(()=>R,e=>{R.leave();throw e;});}
   const LOBBY={emit:()=>Promise.resolve(),on:()=>()=>{},presence:()=>Promise.resolve(),peers:()=>[],onPeers:f=>{setTimeout(()=>f({peers:[],joined:[],left:[],updated:[]}),0);return()=>{};},
