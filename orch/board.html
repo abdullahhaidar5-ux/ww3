@@ -1,0 +1,207 @@
+<title>WW3 Command Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  /* Layout: ops board — status header, jump bar, stacked bands; one column on phones, two-column squad detail on wide screens */
+  --bg:#eef1ec;--panel:#ffffff;--panel2:#e3e8e2;--line:#c9d2ca;--fg:#18201c;--dim:#56635c;
+  --accent:#9a6f00;--accentbg:#f5e7c2;--warn:#b2402b;--warnbg:#f8e1db;--ok:#2f7a48;--info:#2d5f8a;
+  --display:'Saira Condensed','Arial Narrow',sans-serif;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1311;--panel:#161d1a;--panel2:#1d2622;--line:#2c3833;--fg:#dde5df;--dim:#8a9a92;--accent:#e3b341;--accentbg:#2a2716;--warn:#ea5a40;--warnbg:#2b1712;--ok:#74d08f;--info:#7fb8e6;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1311;--panel:#161d1a;--panel2:#1d2622;--line:#2c3833;--fg:#dde5df;--dim:#8a9a92;--accent:#e3b341;--accentbg:#2a2716;--warn:#ea5a40;--warnbg:#2b1712;--ok:#74d08f;--info:#7fb8e6;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:14px/1.55 var(--mono)}
+.wrap{max-width:1100px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+a{color:var(--info)}
+code{font:12px var(--mono);background:var(--panel2);padding:1px 4px;border-radius:2px;overflow-wrap:anywhere}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:clamp(40px,9vw,72px);line-height:.9;text-transform:uppercase;letter-spacing:.02em}
+h2{font-size:26px;text-transform:uppercase;letter-spacing:.04em}
+h3{font-size:14px;text-transform:uppercase;letter-spacing:.14em;color:var(--dim);margin-bottom:8px}
+.top{background:var(--panel);border-bottom:1px solid var(--line)}
+.top .wrap{padding-block:28px 22px;display:flex;flex-direction:column;gap:14px}
+.eyebrow{margin:0;font:600 12px var(--display);letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+.lede{margin:0;max-width:66ch}
+.meta{margin:0;font-size:12px;color:var(--dim)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1px;background:var(--line);border:1px solid var(--line)}
+.stat{background:var(--panel);padding:10px 12px;display:flex;flex-direction:column}
+.stat b{font:700 32px/1 var(--display);color:var(--accent);font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+.links{display:flex;flex-wrap:wrap;gap:8px}
+.btn{display:inline-block;background:var(--accent);color:var(--bg);font:700 15px var(--display);letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;text-decoration:none}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+.btn:focus-visible,.jump a:focus-visible,.node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.jump{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.jump .wrap{display:flex;gap:4px;overflow-x:auto;padding-block:8px;scrollbar-width:none}
+.jump a{flex:none;font:600 13px var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-decoration:none;padding:4px 10px;border:1px solid var(--line)}
+.jump a:hover{color:var(--fg);border-color:var(--fg)}
+main{display:flex;flex-direction:column;gap:34px;padding-block:26px 60px}
+section{display:flex;flex-direction:column;gap:12px;scroll-margin-top:60px}
+.sub{margin:-6px 0 0;color:var(--dim);font-size:13px}
+.band.warn{background:var(--warnbg);border:1px solid var(--line);border-left:4px solid var(--warn);padding:14px 16px}
+.hint{margin:0;font-size:12px;color:var(--dim)}
+.empty{margin:0;color:var(--dim)}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.list li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;background:var(--panel);border:1px solid var(--line);padding:9px 11px}
+.band .list li{background:transparent;border-color:transparent;padding:4px 0;grid-template-columns:minmax(0,1fr)}
+ol.next{counter-reset:n}
+ol.next li{counter-increment:n;grid-template-columns:28px auto minmax(0,1fr)}
+ol.next li::before{content:counter(n);font:700 20px/1 var(--display);color:var(--accent)}
+.chips{display:flex;flex-direction:column;gap:3px;min-width:74px}
+.chip{font:600 10px var(--mono);text-transform:uppercase;letter-spacing:.06em;padding:1px 6px;border:1px solid var(--line);color:var(--dim);text-align:center;white-space:nowrap}
+.chip.p1,.chip.req{border-color:var(--accent);color:var(--accent);background:var(--accentbg)}
+.chip.t-ask{border-color:var(--warn);color:var(--warn)}
+.chip.t-check{border-color:var(--info);color:var(--info)}
+.chip.t-open{border-color:var(--ok);color:var(--ok)}
+.chip.sq{color:var(--fg)}
+.txt{min-width:0;overflow-wrap:anywhere}
+.org{display:flex;flex-direction:column;gap:8px}
+.node{display:flex;flex-direction:column;gap:3px;background:var(--panel);border:1px solid var(--line);padding:10px 12px;color:var(--fg);text-decoration:none;min-width:0}
+.node b{font:700 18px var(--display);letter-spacing:.04em;text-transform:uppercase}
+.node span{font-size:12px;color:var(--dim)}
+.node code{align-self:flex-start;font-size:11px}
+.node.orch{border:1px solid var(--accent);background:var(--accentbg)}
+.node.orch b{font-size:24px;color:var(--accent)}
+.node.sqd:hover{border-color:var(--accent)}
+.squads{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;position:relative;padding-left:14px;border-left:2px solid var(--accent);margin-left:12px}
+.tablewrap{overflow-x:auto;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;min-width:520px;background:var(--panel);font-size:13px}
+th,td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+th{font:600 12px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;background:var(--dim);vertical-align:1px}
+.dot.live{background:var(--ok)}
+.squad{border-top:2px solid var(--line);padding-top:16px}
+.sqhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:10px}
+.cols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:18px}
+.cols>div{min-width:0}
+.cols>div:only-child{grid-column:1/-1}
+.shipped{margin:0;font-size:13px;color:var(--fg);background:var(--panel2);padding:10px 12px;border-left:3px solid var(--ok)}
+.shipped i{color:var(--ok);font-style:normal;font-weight:600}
+@media (max-width:760px){.cols{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:560px){.stats{grid-template-columns:1fr 1fr}.stat:last-child:nth-child(odd){grid-column:1/-1}
+  .list li{grid-template-columns:minmax(0,1fr);gap:6px}ol.next li{grid-template-columns:22px minmax(0,1fr)}ol.next li>.txt{grid-column:2}
+  .chips{flex-direction:row;flex-wrap:wrap;min-width:0}}
+.more{margin-top:6px;background:transparent;border:0;padding:0}.more summary{font:600 12px var(--mono);color:var(--info)}
+details{background:var(--panel);border:1px solid var(--line);padding:8px 12px}
+summary{cursor:pointer;font:600 16px var(--display);letter-spacing:.04em}
+.plain{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:13px}
+.plain li{overflow-wrap:anywhere}
+.mt{margin-top:10px}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+<header class="top"><div class="wrap">
+<p class="eyebrow">World War 3 · development</p><h1>Command Board</h1>
+<p class="lede">One orchestrator, <b>ORCH</b>, runs all development: every 4 hours it picks the top of the backlog, sends up to four squad agents, tests their work in a real AI battle and ships to the live game.</p>
+<div class="stats">
+<div class="stat"><b>1</b><span>standing agent: ORCH</span></div>
+<div class="stat"><b>7</b><span>squads it dispatches</span></div>
+<div class="stat"><b>29</b><span>open items</span></div>
+<div class="stat"><b>8</b><span>shipped by ORCH</span></div>
+<div class="stat"><b>1</b><span>need your answer</span></div>
+</div>
+<div class="links"><a class="btn" href="https://abdullahhaidar5-ux.github.io/ww3/" target="_blank" rel="noopener">Play (GitHub Pages)</a><a class="btn ghost" href="https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi" target="_blank" rel="noopener">claude.ai version</a><a class="btn ghost" href="https://claude.ai/artifact/NqbVv2hseRUctmafy3AFC2" target="_blank" rel="noopener">Clips</a><a class="btn ghost" href="https://github.com/abdullahhaidar5-ux/ww3/blob/main/orch/BACKLOG.md" target="_blank" rel="noopener">Backlog on GitHub</a></div>
+<p class="meta">Last cycle: 2026-10-26 07:50 — sweep (Abdullah: "find all agents and improvements across my chats and organize them") · board built Mon Oct 26, 7:49 AM Chicago</p>
+</div></header>
+<nav class="jump"><div class="wrap">
+<a href="#needs">Needs you</a>
+<a href="#next">Next up</a>
+<a href="#agents">Agents</a>
+<a href="#visuals">Visuals</a>
+<a href="#battlefield">Battlefield</a>
+<a href="#maps">Maps</a>
+<a href="#audio">Audio</a>
+<a href="#netcode">Netcode</a>
+<a href="#interface">Interface</a>
+<a href="#qa">QA & ORCH</a>
+<a href="#cycles">Cycles</a>
+</div></nav><main class="wrap">
+<section id="needs" class="band warn"><h2>Needs you</h2>
+<ul class="list"><li><div class="txt">Cloudflare relay: needs Abdullah's Cloudflare account to deploy <code>relay-worker.js</code> and set <code>RELAY_CF_URL</code>.</div></li></ul>
+<p class="hint">To ask for anything, tell Claude in any chat: “add to the WW3 backlog: …”. ORCH does your requests first.</p></section>
+<section id="next"><h2>Next up</h2><p class="sub">What ORCH takes next cycle, top first: your requests, then P1.</p><ol class="list next">
+<li><div class="chips"><span class="chip req">your request</span></div><div class="txt"><b>Keep the claude.ai artifact in sync with GitHub Pages</b> (Abdullah, 2026-10-26).<details class="more"><summary>Details</summary>Artifact: <a href="https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi" target="_blank" rel="noopener">https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi</a> (7 MB page + 20 published files). It is NOT a copy of <code>index.html</code>: it loads Three.js from cdnjs and its multiplayer runs over the artifact <code>room</code> capability (topics cmd/evt/hello/lobby/snap/start/team) instead of PeerJS. Needed: <code>orch/build.py --artifact</code> that emits the artifact variant from <code>src/</code> (room transport in place of PeerJS, <code>vo/</code>+<code>mus/</code> as published files, no SW/manifest), verify with smoke, then ORCH republishes it with the Artifact tool at every ship (step 8). Netcode squad + QA. Gap as of 2026-10-26 07:50: the artifact lacks rotor wash, boat wakes, menu music and the always-a-winner fix. Starting points on <code>testbed</code>: <code>v3/shell.html</code> (artifact-style page shell) and <code>v3/p2p.js</code> (the PeerJS layer that was written to stand in for the room capability — the artifact build is that swap in reverse).</details></div></li>
+<li><div class="chips"><span class="chip sq">Visuals</span><span class="chip t-open">to do</span></div><div class="txt">Measure rotor-wash FPS cost on a real phone with many helicopters.</div></li>
+<li><div class="chips"><span class="chip sq">Battlefield</span><span class="chip t-open">to do</span></div><div class="txt">"Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping below 30 FPS on mid hardware (pathfinding, <code>nearby()</code> hash, render instancing).</div></li>
+<li><div class="chips"><span class="chip sq">Audio</span><span class="chip t-open">to do</span></div><div class="txt">Full native-language unit responses per nation (select / move / attack / under fire / unit lost), recorded quality, not browser text-to-speech. <code>vo/</code> holds one clip per nation today.</div></li>
+<li><div class="chips"><span class="chip sq">QA</span><span class="chip t-open">to do</span></div><div class="txt">Extend <code>orch/mpsync.mjs</code>: 3+ human players, packet loss/latency, host migration (<code>07b-ckpt</code>), real WebRTC. Don't start from scratch — port the surviving old harnesses on the <code>testbed</code> branch: <code>tw8b.py</code> (host in Chicago + 1–7 clients with real-world one-way delays, jitter and lag spikes; measures order latency, drift, bandwidth) and <code>p2pmig.py</code> (3 players over a local PeerJS server, host leaves, checks migration). <code>probe.py</code> = load-time probe.</div></li>
+<li><div class="chips"><span class="chip sq">Visuals</span><span class="chip t-open">to do</span></div><div class="txt">AI almost never builds boats, so naval wakes (and navy) are rarely seen — make AI use navy on water maps.</div></li>
+<li><div class="chips"><span class="chip sq">Battlefield</span><span class="chip t-check">verify</span></div><div class="txt">AI uses flanking and cover (DIFF has <code>flank</code>/<code>retreat</code> params) — verify in battles, strengthen on Hard.</div></li>
+</ol></section>
+<section id="agents"><h2>Agents</h2><div class="org">
+<div class="node orch"><b>ORCH</b><span>scheduled task · every 4 h at :24 · plans, dispatches, tests, ships, reports</span></div>
+<div class="squads">
+<a class="node sqd" href="#visuals"><b>Visuals</b><span>Company of Heroes / Broken Arrow realism in real battles</span><code>04-gfx · 05-fx3d · 10-post · 11-models</code></a>
+<a class="node sqd" href="#battlefield"><b>Battlefield</b><span>Massive, intense, tactical battles: AI, combat, balance</span><code>03-sim · 01-data</code></a>
+<a class="node sqd" href="#maps"><b>Maps</b><span>Theatres, terrain, pathfinding, map select</span><code>02-map</code></a>
+<a class="node sqd" href="#audio"><b>Audio</b><span>Pro military sound, native voices, latmiyas &amp; national scores</span><code>09-audio · vo/ · mus/</code></a>
+<a class="node sqd" href="#netcode"><b>Netcode</b><span>Smooth 8-player multiplayer that never desyncs</span><code>07-net · 07b-ckpt · relay · sw.js</code></a>
+<a class="node sqd" href="#interface"><b>Interface</b><span>Controls, HUD, menus, phone-playability</span><code>08-ui · 06-view</code></a>
+<a class="node sqd" href="#qa"><b>QA & ORCH</b><span>The test gate, harnesses and ORCH itself</span><code>orch/</code></a>
+</div></div>
+<div class="tablewrap"><table><thead><tr><th>Agent</th><th>Status</th></tr></thead><tbody>
+<tr><td><b>ORCH</b> (scheduled task, every 4 h at :24 Chicago time)</td><td><span class="dot live"></span><b>Active — the only standing game agent.</b> Spawns ≤4 squad agents + 1 reviewer per cycle; they end with the cycle.</td></tr>
+<tr><td>Squad agents: Visuals, Battlefield, Maps, Audio, Netcode, Interface, QA</td><td><span class="dot live"></span>Spawned by ORCH per cycle (see <code>ORCH.md</code>)</td></tr>
+<tr><td>≈45 "WW3 graphics/dev round" one-shot tasks, runs #0–#5 (Oct 18–23), old dev chat on LAPTOP-26MKDH7J</td><td><span class="dot off"></span>Retired — all fired and disabled; that chat is gone</td></tr>
+<tr><td><code>testbed</code> branch work (Oct 25)</td><td><span class="dot off"></span>Retired — ~95% merged; review queued in backlog</td></tr>
+<tr><td>Daily World News Briefing, Daily Email Briefer</td><td><span class="dot off"></span>Not game agents — untouched</td></tr>
+</tbody></table></div>
+</section>
+<section id="visuals" class="squad"><div class="sqhead"><h2>Visuals</h2><code>04-gfx · 05-fx3d · 10-post · 11-models</code></div>
+<p class="sub">Company of Heroes / Broken Arrow realism in real battles</p><div class="cols">
+<div><h3>Open · 12</h3>
+<ul class="list"><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">Measure rotor-wash FPS cost on a real phone with many helicopters.</div></li><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">AI almost never builds boats, so naval wakes (and navy) are rarely seen — make AI use navy on water maps.</div></li><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">Ricochet sparks when small arms hit armour.</div></li><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">Dust trails behind fast vehicles on dry maps (old-run idea, not in the code).</div></li><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-check">verify</span></div><div class="txt">Time-of-day/lighting variety: the skirmish menu already has Conditions (Clear day / Golden hour / Overcast, <code>#wx</code> in <code>08-ui</code>). Verify each looks right in battle and that multiplayer matches use it too; consider dusk and a "random" option.</div></li><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-check">verify</span></div><div class="txt">Muzzle-flash and impact-spark polish.</div></li><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-check">verify</span></div><div class="txt">Battlefield debris near roads: shell casings, burnt patches (some debris exists).</div></li><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-check">verify</span></div><div class="txt">Bridge guard rails and lamp posts look too modern.</div></li><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-check">verify</span></div><div class="txt">Tree canopies a little faceted up close.</div></li><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-check">verify</span></div><div class="txt">Shoreline foam variation on water.</div></li><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-check">verify</span></div><div class="txt">Sandbags/props around buildings (sandbag model exists — check placement).</div></li><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-check">verify</span></div><div class="txt">Infantry helmet/kit variety beyond v68 tone variation.</div></li></ul>
+</div>
+<div><h3>In the game</h3><p class="shipped"><i>Terrain:</i> fine grass tufts and stones, sun-bleached sand, weathered rocks, low ridges and gentle dunes, pale sandstone slopes, finer terrain mesh, two-track dirt roads with ruts, windblown sand on base pads (v58–v70). <i>Vegetation:</i> broken-up, dappled acacia canopies; green blob shrubs removed (v59–v73). <i>Water:</i> teal river with turquoise shallows (v71), boat/ship foam wakes (ORCH c2), rotor-wash spray (ORCH c1). <i>Smoke &amp; fire:</i> realistic grey/brown smoke, sunlit dust, rising damage smoke, ragged puffs (v60–v70); burning damaged buildings with sparks and firelight (v77). <i>Vehicles:</i> camo, stowage, antennas, national paint and camo, realistic motion (v58–v76). <i>Infantry:</i> tone variation, national uniforms, fallen soldiers stay down ~15 s (v68–v78). <i>Buildings &amp; bridges:</i> weathered walls, regional tints, cracked bridge deck (v62–v67). <i>Weapons:</i> warm tracers (v63), helicopter rocket salvos and walking cannon bursts (v79), rotor-wash dust (ORCH c1). <i>Light:</i> cloud shadows, warm bounce light, neutral fog of war, Clear / Golden hour / Overcast conditions.</p></div>
+</div></section>
+<section id="battlefield" class="squad"><div class="sqhead"><h2>Battlefield</h2><code>03-sim · 01-data</code></div>
+<p class="sub">Massive, intense, tactical battles: AI, combat, balance</p><div class="cols">
+<div><h3>Open · 3</h3>
+<ul class="list"><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">"Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping below 30 FPS on mid hardware (pathfinding, <code>nearby()</code> hash, render instancing).</div></li><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-check">verify</span></div><div class="txt">AI uses flanking and cover (DIFF has <code>flank</code>/<code>retreat</code> params) — verify in battles, strengthen on Hard.</div></li><li><div class="chips"><span class="chip p3">P3</span></div><div class="txt">Campaign or scenario missions; tutorial; replays; spectator mode for MP.</div></li></ul>
+</div>
+<div><h3>In the game</h3><p class="shipped">national specials, doctrines, per-nation upgrades and national powers, general ranks, unit veterancy, courage/morale and suppression, flank/rear hits, garrisoning, squads, the Ayatollah for Shia factions, weather that changes vision/accuracy/speed/air, destructible oil derricks (v75), Construction Vehicle + build anywhere + buildable HQ (v84), teams and allies, AI difficulty with flanking/focus fire/retreat on Hard, a match always has a winner (ORCH c2).</p></div>
+</div></section>
+<section id="maps" class="squad"><div class="sqhead"><h2>Maps</h2><code>02-map</code></div>
+<p class="sub">Theatres, terrain, pathfinding, map select</p><div class="cols">
+<div><h3>Open · 1</h3>
+<ul class="list"><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-check">verify</span></div><div class="txt">Map-select previews: the picker already draws a thumbnail per map (<code>.mapc</code> canvas) and a large preview (<code>.mapsel</code>). Verify all 10 render correctly at phone width; mark done if so.</div></li></ul>
+</div>
+<div><h3>In the game</h3><p class="shipped">10 theatres (Strait, Rivers, Delta, Oasis, Gulf, Plateau, Hormuz, Arctic, Islands, Zagros), map picker with thumbnails, map size scales with player count, deterministic seeds, weather per theatre (v84 and runs #4–5).</p></div>
+</div></section>
+<section id="audio" class="squad"><div class="sqhead"><h2>Audio</h2><code>09-audio · vo/ · mus/</code></div>
+<p class="sub">Pro military sound, native voices, latmiyas &amp; national scores</p><div class="cols">
+<div><h3>Open · 3</h3>
+<ul class="list"><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">Full native-language unit responses per nation (select / move / attack / under fire / unit lost), recorded quality, not browser text-to-speech. <code>vo/</code> holds one clip per nation today.</div></li><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">Real recorded war scores for the 15 non-Shia nations (today all music is synthesized live per nation from <code>09-audio.js</code> STYLES + instrument samples in <code>mus/smp.mp3</code>). Meanwhile: give US, EU, RU, KP a signature instrument (only snare today); IR and RS share santur+dammam backing — differentiate; tracks named "Battle Theme I/II".</div></li><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">Menu music: test iOS audio unlock on a real iPhone; soft fade-in on first note; it loads the 3.3 MB <code>mus/smp.mp3</code> on first tap.</div></li></ul>
+</div>
+<div><h3>In the game</h3><p class="shipped">native-language unit voices (v75), slogans, unique synthesized national scores and latmiyas for IR/RS/DW (v84), natural-voice preference, "My music" import, calm menu/lobby music (ORCH c2).</p></div>
+</div></section>
+<section id="netcode" class="squad"><div class="sqhead"><h2>Netcode</h2><code>07-net · 07b-ckpt · relay · sw.js</code></div>
+<p class="sub">Smooth 8-player multiplayer that never desyncs</p><div class="cols">
+<div><h3>Open · 3</h3>
+<ul class="list"><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-open">to do</span></div><div class="txt">Intermittent MPSYNC fail (1 of 3 runs, 2026-10-26): at the final settle check the client still showed 4 host infantry (team 0) that had left its vision — stale units not removed on the client when they leave sight. Find and fix.</div></li><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-open">to do</span></div><div class="txt">Review the ~5% of <code>testbed</code> netcode lines not in live; merge what's still useful, then mark <code>testbed</code> superseded (don't delete it).</div></li><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-ask">needs you</span></div><div class="txt">Cloudflare relay: needs Abdullah's Cloudflare account to deploy <code>relay-worker.js</code> and set <code>RELAY_CF_URL</code>.</div></li></ul>
+</div>
+<div><h3>In the game</h3><p class="shipped">8-player multiplayer (v75), direct P2P via PeerJS with per-player event filtering and host-migration checkpoints, host keeps running in the background, battery and wake-lock handling, Cloudflare relay worker, optional TURN relay settings (Oct 25).</p></div>
+</div></section>
+<section id="interface" class="squad"><div class="sqhead"><h2>Interface</h2><code>08-ui · 06-view</code></div>
+<p class="sub">Controls, HUD, menus, phone-playability</p><div class="cols">
+<div><h3>Open · 2</h3>
+<ul class="list"><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-open">to do</span></div><div class="txt">Phone-playability pass: touch select/move/attack, sidebar layout at phone width, mobile GPU performance.</div></li><li><div class="chips"><span class="chip p2">P2</span><span class="chip t-check">verify</span></div><div class="txt">Settings menu completeness (graphics, volumes, speed, HUD).</div></li></ul>
+</div>
+<div><h3>In the game</h3><p class="shipped">left-click control scheme with right-click as optional shortcut (v72, 2026-10-26 decision), full Settings (graphics, volumes, FPS target, health bars, edge scroll, mouse), pause/restart/quit, Test Range sandbox, FPS/ping readout, installable app with offline solo play (Oct 25), renamed factions (v84).</p></div>
+</div></section>
+<section id="qa" class="squad"><div class="sqhead"><h2>QA & ORCH</h2><code>orch/</code></div>
+<p class="sub">The test gate, harnesses and ORCH itself</p><div class="cols">
+<div><h3>Open · 5</h3>
+<ul class="list"><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">Extend <code>orch/mpsync.mjs</code>: 3+ human players, packet loss/latency, host migration (<code>07b-ckpt</code>), real WebRTC. Don't start from scratch — port the surviving old harnesses on the <code>testbed</code> branch: <code>tw8b.py</code> (host in Chicago + 1–7 clients with real-world one-way delays, jitter and lag spikes; measures order latency, drift, bandwidth) and <code>p2pmig.py</code> (3 players over a local PeerJS server, host leaves, checks migration). <code>probe.py</code> = load-time probe.</div></li><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">Smoke runs share <code>orch/out/</code>: two runs back to back overwrite each other's screenshots — per-run subfolder.</div></li><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">Map sweep: smoke every map in <code>MAPS</code> at 2, 4 and 8 players; fix any that fail.</div></li><li><div class="chips"><span class="chip p1">P1</span><span class="chip t-open">to do</span></div><div class="txt">AI-vs-AI tournament harness (all 18 factions, headless, sim-only) → win-rate table for balance.</div></li><li><div class="chips"><span class="chip p3">P3</span></div><div class="txt">Clip/showcase pipeline rebuilt in <code>orch/</code> so ORCH can post short phone-friendly clips of new features.</div></li></ul>
+</div>
+<div><h3>In the game</h3><p class="shipped"><code>build.py</code> (src ↔ index.html), <code>smoke.mjs</code> (headless AI battle + screenshots), <code>mpsync.mjs</code> (host/client sync, ORCH c1), machine-wide browser lock (ORCH c2).</p></div>
+</div></section>
+<section id="cycles"><h2>Recent ORCH cycles</h2>
+<details><summary>2026-10-26 07:50 — sweep (Abdullah: "find all agents and improvements across my chats and organize them")</summary><ul class="plain"><li>Swept every scheduled task, artifact, branch and the repo history. Only ORCH is active; ≈45 old round tasks all retired; Daily News/Email briefers are not game agents. Indexed it all by squad at the end of <code>HISTORY.md</code>.</li><li>Corrections: Golden hour/Overcast conditions and map thumbnails already exist (backlog items → [check]); <code>tw8b.py</code>, <code>p2pmig.py</code>, <code>probe.py</code> survive on <code>testbed</code> (linked from the mpsync item); claude.ai artifact is 4 features behind <code>main</code>. Added "dust trails" item.</li><li>New: Command Board (<code>orch/board.py</code> → claude.ai/artifact/UENjCQzdzHCzYmqQQEuJLx), refreshed by ORCH every cycle (ORCH.md step 9). No game code touched.</li></ul></details>
+<details><summary>2026-10-26 — cycle 2</summary><ul class="plain"><li>Baseline: build in sync, <code>SMOKE PASS</code>. No requests waiting at plan time; Abdullah's answers + the artifact-sync request landed on <code>main</code> mid-cycle (docs only) and were merged in.</li><li>Shipped: always-a-winner fix (Battlefield), naval wakes (Visuals, small hook in <code>06-view</code>), menu music (Audio), browser lock for the test gate (QA).</li><li>Review (03-sim): no issues.</li><li>Gate: <code>--check</code> OK, smoke 2p PASS after each merge, smoke 4p PASS. MPSYNC failed once (4 stale host infantry on the client after leaving its vision; no net code touched this cycle), passed on baseline and on rerun → logged as a Netcode item, not treated as fixed.</li><li>Not done: claude.ai artifact sync — needs <code>build.py --artifact</code> (room transport instead of PeerJS) first; top request for next cycle. Artifact NOT republished this cycle.</li></ul></details>
+<details><summary>2026-10-26 — cycle 1</summary><ul class="plain"><li>Baseline: build in sync with live, <code>SMOKE PASS</code>. No requests from Abdullah waiting.</li><li>Shipped: multiplayer sync test <code>orch/mpsync.mjs</code> (QA) now in the gate; helicopter rotor wash (Visuals; one-line hook in <code>06-view</code>).</li><li>Checked, no change needed: stuck/idle units in long games (Battlefield), per-nation music (Audio).</li><li>Gate on shipped main: <code>--check</code> OK, smoke 2p PASS, smoke 4p PASS, MPSYNC PASS. No sim/net code touched → no review.</li><li>New backlog: Rivers all-surrender draw, music polish/recorded scores, menu music, mpsync extensions, gate OOM.</li></ul></details>
+<h3 class="mt">Shipped by ORCH</h3><ul class="plain"><li>2026-10-26 (cycle 2) — A match always has a winner: if the last sides collapse on the same tick, the strongest is spared (fixes Rivers 4-player all-surrender draw). <code>checkEnd</code> in <code>03-sim</code>, host-only, reviewed: no desync risk.</li><li>2026-10-26 (cycle 2) — Naval wakes: white foam V, stern stripe and bow wave behind moving boats/ships (<code>05-fx3d</code>).</li><li>2026-10-26 (cycle 2) — Menu music: calm version of the picked nation's score (latmiya for IR/RS/DW) on menu, lobby and victory/defeat; crossfades into battle music.</li><li>2026-10-26 (cycle 2) — Gate memory: <code>smoke.mjs</code>/<code>mpsync.mjs</code> take a machine-wide lock (<code>orch/browserlock.mjs</code>), print peak memory; <code>--no-lock</code> escape hatch.</li><li>2026-10-26 — Multiplayer sync test <code>orch/mpsync.mjs</code> (host + client pages, loopback PeerJS stand-in, 4 game-min, compares units/credits) added to the ship gate.</li><li>2026-10-26 — Helicopter rotor wash: rolling dust ring on land, powder snow on snow maps, white spray on water.</li><li>2026-10-26 — [check] Stuck/idle units after long games: six 16–20 min 4-player AI battles on 6 maps, ~0 stuck; no change needed.</li><li>2026-10-26 — [check] Per-nation music: all 18 nations already have distinct synthesized scores; IR/RS/DW latmiyas.</li></ul>
+<p class="hint">Before ORCH: 10 development runs, Oct 18–25 (v58–v84), recorded in <code>orch/HISTORY.md</code>.</p>
+</section></main>

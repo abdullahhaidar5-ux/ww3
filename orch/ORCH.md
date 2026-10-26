@@ -51,7 +51,11 @@ A task that truly spans two squads goes to one agent that owns both rows for tha
    `git fetch origin main`, rebase if needed, rerun the gate if anything came in, and push to `main`. If pushing
    to `main` is impossible, push `orch/<date>` and say so in the report. Never force-push.
 9. **Record.** Move finished items to "Done" in `BACKLOG.md` (date + one line each). Add anything the agents
-   discovered as new items under the right squad. Append the cycle to `orch/LOG.md`. Commit and push these too.
+   discovered as new items under the right squad. Append the cycle to `orch/LOG.md`. Then refresh the **Command
+   Board** (Abdullah's phone view of everything): `python3 orch/board.py`, then with the Artifact tool `action:
+   "read"` url `https://claude.ai/artifact/UENjCQzdzHCzYmqQQEuJLx`, then publish `file_path` = the absolute path of
+   `orch/board.html` with that same `url` (no `icon`). Commit and push these too. The board is generated only from
+   BACKLOG/HISTORY/LOG — never edit `board.html` by hand; fix the source file or `board.py` instead.
 10. **Report.** Send Abdullah one short phone-sized message with `SendUserMessage`: what changed, in player terms
     (3–6 bullets); anything that failed or was rolled back; questions, if any. Attach 1–2 screenshots from
     `orch/out/` with `SendUserFile` when the change is visible. If nothing shipped, say why in one line.

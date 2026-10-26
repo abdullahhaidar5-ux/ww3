@@ -2,6 +2,16 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-26 07:50 — sweep (Abdullah: "find all agents and improvements across my chats and organize them")
+
+- Swept every scheduled task, artifact, branch and the repo history. Only ORCH is active; ≈45 old round tasks all
+  retired; Daily News/Email briefers are not game agents. Indexed it all by squad at the end of `HISTORY.md`.
+- Corrections: Golden hour/Overcast conditions and map thumbnails already exist (backlog items → [check]);
+  `tw8b.py`, `p2pmig.py`, `probe.py` survive on `testbed` (linked from the mpsync item); claude.ai artifact is 4
+  features behind `main`. Added "dust trails" item.
+- New: Command Board (`orch/board.py` → claude.ai/artifact/UENjCQzdzHCzYmqQQEuJLx), refreshed by ORCH every cycle
+  (ORCH.md step 9). No game code touched.
+
 ## 2026-10-26 — cycle 2
 
 - Baseline: build in sync, `SMOKE PASS`. No requests waiting at plan time; Abdullah's answers + the artifact-sync
