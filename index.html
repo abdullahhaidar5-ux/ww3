@@ -7288,29 +7288,37 @@ function orderFeedback(a){if(!G||!a||!Array.isArray(a.ids)||!(a.t==='go'||a.t===
 function encEnt(e,mem){let f=0,x=0;if(e.isB){if(e.built<1){f|=FLG.built;x=Math.round(e.built*100);}if(e.dis>G.t)f|=FLG.dis;if(e.charge)f|=FLG.chg;if(e.kind==='uplink'){x=Math.round(G.teams[e.team].charge/G.teams[e.team].sup.charge*100);}if(e.kind==='garrison'&&e.civ){x=e.civ.occ.length*16+e.civ.cap;}if(e.kind==='factory'&&G.teams[e.team].q.factory.length)f|=FLG.busy;if(mem)f|=FLG.mem;if(e.nd&&e.built<1)f|=FLG.nd;if(e.stall&&e.built<1)f|=FLG.stall;}
   else{if(e.cargo)f|=FLG.cargo;if(e.hacking)f|=FLG.hack;if(e.planting)f|=FLG.plant;if(e.landed)f|=FLG.land;if(e.hid)f|=FLG.hid;if(G.t-(e.mv||-9)<.25)f|=FLG.mov;if(e.building)f|=FLG.busy;if((e.supp||0)>.5)f|=FLG.supp;if(e.rout>G.t)f|=FLG.rout;else if(e.s&&canRout(e)&&(e.fear||0)>courageOf(e)*.65)f|=FLG.shak;if(e.mark>G.t)f|=FLG.mark;if(e.last>G.t)f|=FLG.last;if(e.aband)f|=FLG.aband;f|=(e.rank||0)<<9;{const m=moraleOf(e);x=m?(m.st==='fearless'?101:Math.round(m.v*20)*5):-1;}}
   return[e.id,KINDS.indexOf(e.kind),e.team,Math.round(e.x),Math.round(e.y),Math.round((e.va||0)*100),Math.round((e.tang||0)*100),Math.round(e.hp),Math.round(e.max),f,x];}
-function sendSnap(key,to,items,bit){NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+(bit?4+((key|0)%8)*.25:2);let c=NET.sc[key];if(!c||full)c=NET.sc[key]=new Map();
+function sendSnap(key,to,items,bit){NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+(bit?4+((key|0)%8)*.25:2);const old=NET.sc[key];let c=old;if(!c||full)c=NET.sc[key]=new Map();
   // the keep-alive list (ids of unchanged entities) only needs to beat the client's expiry, so it goes out every 0.5 s, not every tick
   const sendKeep=full||!(NET.kt[key]>G.t);if(sendKeep)NET.kt[key]=G.t+(bit?.4:0);
   const ch=[],keep=[],seen=new Set();for(const a of items){seen.add(a[0]);const s=a.join(',');if(c.get(a[0])===s){if(sendKeep){if(bit)keep.push(a[0]);else keep.push(a[0],a[11]|a[12]);}}else{c.set(a[0],s);ch.push(a);}}
-  for(const id of c.keys())if(!seen.has(id))c.delete(id);
+  const dr=[];if(old)for(const id of old.keys())if(!seen.has(id)){if(old===c)c.delete(id);dr.push(id);}
   const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
-  if(ch.length||!keep.length&&sendKeep)sendChunks('snap',base,ch);const per=bit?1400:700;for(let i=0;i<keep.length;i+=per)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+per)},bit?{kb:1}:{})).catch(()=>{});}
+  if(ch.length||!keep.length&&sendKeep||dr.length)sendChunks('snap',base,ch,snapDrops(dr));const per=bit?1400:700;for(let i=0;i<keep.length;i+=per)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+per)},bit?{kb:1}:{})).catch(()=>{});}
 // P2P: each entity's state is encoded and compared ONCE per tick (a version number per entity), then each player's
 // cache only stores version*2+remembered-bit - no per-player strings, so the host's cost barely grows with player count.
 function verItems(items){const V=NET.ver||(NET.ver=new Map());const st=NET.verSt=(NET.verSt|0)+1;
   for(const a of items){const s=a.slice(0,11).join(',');let r=V.get(a[0]);if(!r){r=[s,1,st];V.set(a[0],r);}else{if(r[0]!==s){r[0]=s;r[1]++;}r[2]=st;}a._v=r[1];}
   if(V.size>items.length*1.5+64)for(const [id,r] of V)if(r[2]!==st)V.delete(id);}
-function sendSnapP(k,to,items){const b=1<<k,key=k;NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+4+(k%8)*.25;let c=NET.sc[key];if(!c||full)c=NET.sc[key]=new Map();
+function sendSnapP(k,to,items){const b=1<<k,key=k;NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+4+(k%8)*.25;const old=NET.sc[key];let c=old;if(!c||full)c=NET.sc[key]=new Map();
   const sendKeep=full||!(NET.kt[key]>G.t);if(sendKeep)NET.kt[key]=G.t+.4;const ch=[],keep=[];let n=0;
   for(const a of items){if(!((a[11]|a[12])&b))continue;n++;const mem=!(a[11]&b),code=a._v*2+(mem?1:0);if(c.get(a[0])===code){if(sendKeep)keep.push(a[0]);continue;}
     c.set(a[0],code);const r=a.slice(0,11);r[9]=mem?(r[9]|FLG.mem):(r[9]&~FLG.mem);ch.push(r);}
-  if(c.size>n){const seen=new Set();for(const a of items)if((a[11]|a[12])&b)seen.add(a[0]);for(const id of c.keys())if(!seen.has(id))c.delete(id);}
+  const dr=[];if(old&&(old!==c||c.size>n)){const seen=new Set();for(const a of items)if((a[11]|a[12])&b)seen.add(a[0]);for(const id of old.keys())if(!seen.has(id)){if(old===c)c.delete(id);dr.push(id);}}
   const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
-  if(ch.length||!keep.length&&sendKeep)sendChunks('snap',base,ch);for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});}
+  // a remembered building that died out of this player's sight stays on their map until they see the spot ('gone' queue)
+  if(dr.length&&NET.gq&&NET.gq[k]&&NET.gq[k].length){const q=new Set(NET.gq[k].map(g=>g[0]));for(let i=dr.length-1;i>=0;i--)if(q.has(dr[i]))dr.splice(i,1);}
+  if(ch.length||!keep.length&&sendKeep||dr.length)sendChunks('snap',base,ch,snapDrops(dr));for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});}
 // P2P: one copy per player, so the two visibility masks are folded into that player's 'remembered' flag and dropped
 function forPlayer(items,k){const b=1<<k,out=[];for(const a of items){if(!((a[11]|a[12])&b))continue;const c=a.slice(0,11);c[9]=(a[11]&b)?(c[9]&~FLG.mem):(c[9]|FLG.mem);out.push(c);}return out;}
-function sendChunks(topic,base,items){let cur=[],len=0;const flush=()=>{if(cur.length){NET.game.emit(topic,{...base,e:cur}).catch(()=>{});cur=[];len=0;}};
-  for(const it of items){const s=JSON.stringify(it).length+1;if(len+s>3500)flush();cur.push(it);len+=s;}flush();}
+// first (optional): extra fields carried by the first message only (a snapshot's drop list); sent even with no items
+function sendChunks(topic,base,items,first){let cur=[],len=first?JSON.stringify(first).length:0;const flush=()=>{if(cur.length||first){NET.game.emit(topic,first?{...base,...first,e:cur}:{...base,e:cur}).catch(()=>{});first=null;cur=[];len=0;}};
+  for(const it of items){const s=JSON.stringify(it).length+1;if(len+s>3500&&cur.length)flush();cur.push(it);len+=s;}flush();}
+// Units that leave a player's view are named in that player's next snapshot ('dr': ids only, no position) so their
+// screen drops them at once - before, they lingered up to ~1 s until the client's own expiry noticed the silence.
+// Anything that just died is left out: its 'die' event (explosion, wreck) is still on its way and removes it.
+function snapDrops(dr){if(!dr.length)return null;const dy=new Set();for(const v of G.out)if(Array.isArray(v)&&v[0]==='die')dy.add(v[1]);
+  const o=dr.filter(id=>!dy.has(id));return o.length?{dr:o.slice(0,400)}:null;}
 // map-wide state (resource fields, oil derricks, who is out) is built once per flush and sent to a player only when it
 // changed since what they last got, or once a second as a refresh - it was resent to everyone 4x a second
 function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0);NET.tgC={t:G.t,v:{fa,oil,out},js:JSON.stringify([fa,oil,out])};}
@@ -7421,10 +7429,11 @@ function applySnap(d){if(!G||!Array.isArray(d.e))return;const now=G.t;if(typeof 
   {const w=performance.now()/1000;if(!(d.e.length===0&&d.k)&&st>(NET.prevT||0)){if(NET.rxW&&st-(NET.prevT||0)<=1.5*Math.max(.1,NET.iv||.1)){const gap=Math.min(1.5,w-NET.rxW);if(gap>.02){NET.iaDev=NET.ia?(NET.iaDev||0)*.85+Math.abs(gap-NET.ia)*.15:0;NET.ia=NET.ia?NET.ia*.85+gap*.15:gap;}}NET.rxW=w;NET.prevT=st;}}
   if(Array.isArray(d.k)&&d.kb){let miss=0;for(const id of d.k){const e=G.byId.get(id);if(e){e.seenAt=st;e.seenL=now;}else miss++;}if(miss)askKeyframe();}
   else if(Array.isArray(d.k)){const b=1<<ME;for(let i=0;i+1<d.k.length;i+=2){if(!((d.k[i+1]|0)&b))continue;const e=G.byId.get(d.k[i]);if(e){e.seenAt=st;e.seenL=now;}}}
-  for(const a of d.e){if(!Array.isArray(a)||a.length<11)continue;if(a.length>=13){const b=1<<ME;if(!(a[11]&b)&&!(a[12]&b))continue;a[9]=(a[11]&b)?(a[9]&~FLG.mem):(a[9]|FLG.mem);}const [id,ki,team,x,y,va,ta,hp,mx_,f,ex]=a;const kind=KINDS[ki];if(!kind||!(team>=0&&team<G.teams.length))continue;
+  if(Array.isArray(d.dr))for(const id of d.dr){const e=G.byId.get(id);if(e&&!e.dead)e.gone=true;}
+  for(const a of d.e){if(!Array.isArray(a)||a.length<11)continue;if(a.length>=13){const b=1<<ME;if(!(a[11]&b)&&!(a[12]&b)){const o=G.byId.get(a[0]);if(o&&!o.dead)o.gone=true;continue;}a[9]=(a[11]&b)?(a[9]&~FLG.mem):(a[9]|FLG.mem);}const [id,ki,team,x,y,va,ta,hp,mx_,f,ex]=a;const kind=KINDS[ki];if(!kind||!(team>=0&&team<G.teams.length))continue;
     let e=G.byId.get(id);const isB=!!STRUCT[kind];
     if(!e){const T=G.teams[team];const s=isB?bstats(T.fac,kind):stats(T.fac,kind);e={id,isB,team,kind,s,x,y,va:va/100,tang:ta/100,hp,max:mx_,r:isB?s.size/2:s.r,size:isB?s.size:0,vs:new Array(G.teams.length).fill(true),fx:x,fy:y,tx:x,ty:y,it:1};G.ents.push(e);G.byId.set(id,e);}
-    else{e.fx=e.x;e.fy=e.y;e.tx=x;e.ty=y;e.it=0;if(e.team!==team&&!isB){e.team=team;const T=G.teams[team];try{e.s=stats(T.fac,kind);}catch(err){}}}
+    else{e.gone=false;e.fx=e.x;e.fy=e.y;e.tx=x;e.ty=y;e.it=0;if(e.team!==team&&!isB){e.team=team;const T=G.teams[team];try{e.s=stats(T.fac,kind);}catch(err){}}}
     if(!(e.fbT>G.t))e.tva=va/100;e.tta=ta/100;e.hp=hp;e.max=mx_;e.seenAt=st;e.seenL=now;e.ut=st;e.vis=true;
     if(isB){e.built=f&FLG.built?ex/100:1;e.disv=!!(f&FLG.dis);e.dis=0;e.chv=!!(f&FLG.chg);e.mem=!!(f&FLG.mem);e.busy=!!(f&FLG.busy);e.nd=!!(f&FLG.nd);e.stall=!!(f&FLG.stall);if(kind==='uplink')e.chg=ex/100;if(kind==='garrison'){e.occN=ex>>4;e.capN=ex&15;e.built=1;}e.ang=e.tta;e.x=x;e.y=y;}
     else{e.cargo=f&FLG.cargo?1:0;e.hacking=!!(f&FLG.hack);e.planting=!!(f&FLG.plant);e.landed=!!(f&FLG.land);e.hid=!!(f&FLG.hid);e.mvC=f&FLG.mov?1:0;e.building=!!(f&FLG.busy);e.supp=f&FLG.supp?1:0;e.routV=!!(f&FLG.rout);e.shakV=!!(f&FLG.shak);e.markV=!!(f&FLG.mark);e.lastV=!!(f&FLG.last);e.aband=f&FLG.aband?1:0;e.rank=(f>>9)&3;e.mor=ex;}}}
@@ -7432,7 +7441,7 @@ function clientTick(dt){G.t+=dt;const now=G.t;
   const P=Math.max(.1,Math.min(.6,Math.max(NET.iv||.1,(NET.ia||NET.iv||.2)+2*(NET.iaDev||0))));
   for(const e of G.ents){if(e.isB)continue;const it=(e.it||0)+dt/P;e.it=it;if(it<=1){e.x=e.fx+(e.tx-e.fx)*it;e.y=e.fy+(e.ty-e.fy)*it;}else if(e.mvC&&e.ut===NET.lastSnapT){const o=Math.min(it-1,.25/P);e.x=e.tx+(e.tx-e.fx)*o;e.y=e.ty+(e.ty-e.fy)*o;}else{e.x=e.tx;e.y=e.ty;}e.va=lerpA(e.va,e.tva,dt*10);e.tang=lerpA(e.tang,e.tta,dt*10);if(e.mvC)e.mv=now;}
   const ttl=Math.max(.9,(NET.iv||.2)*2.6),ref=NET.lastSnapT||0;for(const e of G.ents){const sl=now-(e.seenL==null?now:e.seenL);if(e.isB){if(!e.mem&&(ref-e.seenAt>Math.max(3.2,ttl*2)||sl>12))e.gone=true;}else if(ref-e.seenAt>ttl||sl>8)e.gone=true;}
-  if(G.ents.some(e=>e.gone)){for(const e of G.ents)if(e.gone){G.byId.delete(e.id);}G.ents=G.ents.filter(e=>!e.gone);G.sel=G.sel.filter(e=>!e.gone);}}
+  if(G.ents.some(e=>e.gone)){for(const e of G.ents)if(e.gone&&G.byId.get(e.id)===e){G.byId.delete(e.id);}G.ents=G.ents.filter(e=>!e.gone);G.sel=G.sel.filter(e=>!e.gone);}}
 function applyEvents(d){if(!d||!Array.isArray(d.e))return;for(const v of d.e){if(!Array.isArray(v))continue;const [type,...args]=v;if(!FXH[type]||type==='end'&&false)continue;
   if(type==='die'||type==='gone'){const e=G.byId.get(args[0]);if(e){e.dead=true;e.gone=true;G.byId.delete(e.id);if(G.sel.includes(e))G.sel=G.sel.filter(x=>x!==e);}}
   if(type==='log'&&args[0]!==ME)continue;try{FXH[type](...args);}catch(e){}}}
