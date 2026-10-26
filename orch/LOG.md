@@ -2,6 +2,17 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-26 15:10 — side lane (Abdullah: "proceed with everything that doesn't need my input")
+
+- Ran beside ORCH cycles 3–4 on squads they couldn't reach this round: Interface (phone-playability + settings) and
+  Maps (map sweep + previews). Added continuous mode + run-lock to ORCH.md; extended cycle 3's lock one hour.
+- Shipped: phones can play end to end; bases always on dry ground, Fulda river fix, faster 8-player map load;
+  `orch/mapsweep.mjs`; minimap "send units" setting fixed.
+- Gate on the combined build: `--check` OK, smoke 4p PASS, MPSYNC PASS. Maps-only build: MPSYNC failed once with the
+  known stale-infantry issue (10 host infantry left on the client) — same symptom as the open Netcode item.
+- Found: AI blowouts (losing AI stalls at ~$300), desktop left-click deselects instead of moving, 28 maps not 10.
+- Cycle 3 (fired 08:40) never pushed or logged; cause unknown.
+
 ## 2026-10-26 07:50 — sweep (Abdullah: "find all agents and improvements across my chats and organize them")
 
 - Swept every scheduled task, artifact, branch and the repo history. Only ORCH is active; ≈45 old round tasks all

@@ -53,7 +53,8 @@ A task that truly spans two squads goes to one agent that owns both rows for tha
 7. **Review risky changes.** If the merged work touched `03-sim`, `07-net` or `07b-ckpt`, spawn one fresh agent
    that hasn't seen the work to review the combined diff for desync risks (randomness outside `srand`, client-only
    state affecting the sim, message format changes) and obvious bugs. Fix or revert what it finds.
-8. **Ship.** Final gate: `python3 orch/build.py --check` and `node orch/smoke.mjs --players 4` and `node orch/mpsync.mjs` (multiplayer sync) all pass.
+8. **Ship.** Final gate: `python3 orch/build.py --check` and `node orch/smoke.mjs --players 4` and `node orch/mpsync.mjs` (multiplayer sync) all pass, plus
+   `node orch/mapsweep.mjs --minutes 1` when `02-map` changed.
    Browser tests queue themselves one at a time (machine-wide lock; `--no-lock` skips it), so no outer `flock` is needed. Then
    `git fetch origin main`, rebase if needed, rerun the gate if anything came in, and push to `main`. If pushing
    to `main` is impossible, push `orch/<date>` and say so in the report. Never force-push.

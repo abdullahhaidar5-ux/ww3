@@ -127,3 +127,7 @@ FPS/ping readout, installable app with offline solo play (Oct 25), renamed facti
 
 **QA (ORCH's gate)** — `build.py` (src ↔ index.html), `smoke.mjs` (headless AI battle + screenshots), `mpsync.mjs`
 (host/client sync, ORCH c1), machine-wide browser lock (ORCH c2).
+
+**Correction (2026-10-26 evening):** the game has **28 maps** in `MAPS`, not 10 — runs #4–5 added 18 more
+(e.g. Bosphorus, Fulda Gap, Caribbean, Golan, Korean DMZ, Heartland). The map picker is now a dropdown with one large
+preview, not per-map thumbnail cards.
