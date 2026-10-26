@@ -30,6 +30,8 @@
 //   node orch/mpsync.mjs --break               # self-test: the client stops receiving at 1 min; must print MPSYNC FAIL
 //   node orch/mpsync.mjs --verbose             # print both pages' network state every 5 s while connecting
 //   node orch/mpsync.mjs --no-lock             # skip the machine-wide browser lock (see browserlock.mjs)
+//   node orch/mpsync.mjs --reconnect           # at 1 min the client "loses" the host for 6 s and must reconnect and
+//                                              # keep its army (the AI must not take over after 30 s)
 //   node orch/mpsync.mjs --artifact            # the claude.ai artifact edition (python3 orch/build.py --artifact
 //                                              # first): pages talk over a stand-in for the artifact `room`
 //                                              # capability (orch/artifact-harness.mjs) instead of PeerJS
@@ -47,7 +49,7 @@ const OUT = path.join(ROOT, 'orch', 'out');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? Number(process.argv[i + 1]) : d; };
 const MINUTES = arg('minutes', 4), AIS = Math.max(0, Math.min(6, arg('ais', 0))), BREAK = process.argv.includes('--break');
 const ART = process.argv.includes('--artifact') ? { html: artifactHtml(), three: threeJs() } : null;
-const PFX = ART ? 'art-' : '';
+const PFX = ART ? 'art-' : '', RECON = process.argv.includes('--reconnect');
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -311,13 +313,18 @@ async function main() {
   await host.waitForTimeout(1500); // orders travel in the client's presence: give it real time to arrive
 
   const STEP = 5, total = Math.round(MINUTES * 600), checks = new Set([600, 1500, total].filter(x => x <= total));
-  let ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
+  let lagLogged = false, ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
   while (ticks < total) {
     const w0 = Date.now();
     const h = await hostRun(STEP); if (h.err) { fail('host simulation threw: ' + h.err.split('\n').slice(0, 4).join(' | ')); break; }
     const c = await clientRun(STEP); if (c.err) { fail('client tick threw: ' + c.err.split('\n').slice(0, 4).join(' | ')); break; }
     ticks += STEP; chunkMs.push(Date.now() - w0);
     if (ticks >= 100) behindMax = Math.max(behindMax, h.t - c.snapT);
+    if (ticks >= 100 && h.t - c.snapT > 1.5 && !lagLogged) { lagLogged = true; // say when, and in what state, the client first fell behind
+      const o = await host.evaluate(() => G.teams.map(T => T.fac + (T.out ? ' out' : '')).join(', '));
+      console.log(`[${secs()}] client first fell ${(h.t - c.snapT).toFixed(1)} s behind at host t=${h.t.toFixed(1)}s (${o})`); }
+    if (RECON && ticks === 650) { await client.evaluate(() => { NET.lastRx = performance.now() - 6000; });
+      console.log(`[${secs()}] --reconnect: the client thinks it lost the host and reconnects`); }
     if (ticks === breakAt) { await client.evaluate(() => { window.__fpDrop = true; }); console.log(`[${secs()}] --break: the client stops receiving from now on`); }
     if (!orderChecked && ticks >= 250 && order.n) {
       orderChecked = true;
@@ -341,6 +348,9 @@ async function main() {
   if ((live.bad || 0) > Math.max(1, live.n * .1)) fail(`client view diverged from the host in ${live.bad}/${live.n} live checks, e.g. ${live.worst}`);
   if (behindMax > 1.5) fail(`client fell ${behindMax.toFixed(1)} game-seconds behind the host (it should trail by at most a few 0.1 s snapshots)`);
   if (!st.rx) fail('client never received anything from the host');
+  if (RECON) { const r = await host.evaluate((k) => ({ ai: !!G.teams[k].ai, disc: G.teams[k].discT || 0, out: !!G.teams[k].out, t: G.t }), CK);
+    console.log(`[${secs()}] --reconnect: at t=${r.t.toFixed(0)}s the client's side is ${r.ai ? 'run by the AI' : 'still the player\'s'}${r.disc ? ', still marked disconnected' : ''}`);
+    if (!r.out && (r.ai || r.disc)) fail('after reconnecting, the client did not get its army back (AI took over / still marked disconnected)'); }
   if (ART) for (const [tag, s] of [['host', hs], ['client', st]]) { const j = judgeRoomStats(tag, s); j.fails.forEach(fail); warns.push(...j.warns);
     console.log(`[${secs()}] ${tag} room sends: ${s.tx} messages, peak ${s.peakRate} in one game-second`); }
 

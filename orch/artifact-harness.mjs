@@ -78,8 +78,10 @@ export function roomStub(opts) {
         if (n > 4096) { stats.big[topic] = Math.max(stats.big[topic] || 0, n); return Promise.reject(err('invalid_argument', `data ${n} bytes > 4 KiB`)); }
         if (TOPICS && !TOPICS.includes(topic)) { stats.denied[topic] = (stats.denied[topic] || 0) + 1; return Promise.reject(err('not_permitted', topic)); }
         // send budget (~40/s shared by emits + presence): counted per game-second, the clock the host's netTick runs on
-        const sec = Math.floor((window.G && window.G.t) || performance.now() / 1000); stats.perSec[sec] = (stats.perSec[sec] || 0) + 1;
-        if (stats.perSec[sec] > stats.peakRate) { stats.peakRate = stats.perSec[sec]; stats.peakAt = sec; }
+        // (G is the game's top-level `let`, reachable by name from this init script once the game has loaded)
+        const gt = (typeof G !== 'undefined' && G && G.t) || 0, sec = Math.floor(gt);
+        if (gt > 0) { const B = stats.perSec[sec] = stats.perSec[sec] || { n: 0 }; B.n++; B[topic] = (B[topic] || 0) + 1;
+          if (B.n > stats.peakRate) { stats.peakRate = B.n; stats.peakAt = sec; stats.peakMix = B; } }
         stats.tx++; stats.txB += s.length;
         const m = { k: 'e', room: name, from: me, topic, s }; BC.postMessage(m); setTimeout(() => R.onMsg(m), 0); return Promise.resolve();
       },
@@ -125,6 +127,6 @@ export function judgeRoomStats(tag, s) {
   for (const [t, n] of Object.entries(s.big || {})) fails.push(`${tag}: a '${t}' message was ${n} bytes; the room refuses anything over 4096`);
   for (const [t, n] of Object.entries(s.denied || {})) fails.push(`${tag}: ${n} '${t}' message(s) refused - topic not opened in the publish capabilities (build.py ROOM_TOPICS)`);
   if (s.bigPres) fails.push(`${tag}: presence grew to ${s.bigPres} bytes; the room refuses anything over 4096`);
-  if (s.peakRate > 40) warns.push(`${tag}: peak ${s.peakRate} room messages in one game-second (t=${s.peakAt}s); the room drops sends past ~40/s (burst 80)`);
+  if (s.peakRate > 40) warns.push(`${tag}: peak ${s.peakRate} room messages in one game-second (t=${s.peakAt}s: ${JSON.stringify(s.peakMix)}); the room drops sends past ~40/s (burst 80)`);
   return { fails, warns };
 }
