@@ -32,16 +32,20 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   1–7 clients with real-world one-way delays, jitter and lag spikes; measures order latency, drift, bandwidth) and
   `p2pmig.py` (3 players over a local PeerJS server, host leaves, checks migration). `probe.py` = load-time probe.
 - [open] Smoke runs share `orch/out/`: two runs back to back overwrite each other's screenshots — per-run subfolder.
-- [open] Map sweep: smoke every map in `MAPS` at 2, 4 and 8 players; fix any that fail.
 - [open] AI-vs-AI tournament harness (all 18 factions, headless, sim-only) → win-rate table for balance.
 
 **Battlefield & AI** (`03-sim`, `01-data`)
+- [open] **AI blowouts:** in 2-player AI games Ukraine fields 6–8 combat units within 10 s and wipes the other side
+  in 1.4–2.9 min (Rivers, Heartland, Fulda); the losing AI never builds a combat unit and its money sits near $300.
+  Also seen in a 4-player smoke (one side gone by minute 4). Find out why the losing AI stalls (economy, build order,
+  a faction-specific cost?) and whether UA's start is out of line. Repro: `node orch/mapsweep.mjs --players 2`.
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
   below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
 - [check] AI uses flanking and cover (DIFF has `flank`/`retreat` params) — verify in battles, strengthen on Hard.
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
-- [open] Measure rotor-wash FPS cost on a real phone with many helicopters.
+- [open] Measure FPS on a real phone (needs a real device, not emulation): busy 4-player late game, many helicopters
+  (rotor wash), and the new phone layout.
 - [open] AI almost never builds boats, so naval wakes (and navy) are rarely seen — make AI use navy on water maps.
 - [open] Ricochet sparks when small arms hit armour.
 - [check] Time-of-day/lighting variety: the skirmish menu already has Conditions (Clear day / Golden hour /
@@ -69,8 +73,11 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [check] Infantry helmet/kit variety beyond v68 tone variation.
 
 **UI/UX & controls** (`08-ui`, `06-view`)
-- [open] Phone-playability pass: touch select/move/attack, sidebar layout at phone width, mobile GPU performance.
-- [check] Settings menu completeness (graphics, volumes, speed, HUD).
+- [open] **Desktop left-click move:** with units selected, a mouse left-click on empty ground deselects instead of
+  moving them — contradicts the standing decision in `CLAUDE.md` (left-click ground = move, left-click enemy =
+  attack). Touch already does this right since 2026-10-26. Make mouse match; deselect via Esc or clicking the
+  selected unit/empty area with nothing selected; update the hint text. Keep right-click shortcuts.
+- [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers.
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
 - [open] Intermittent MPSYNC fail (1 of 3 runs, 2026-10-26): at the final settle check the client still showed 4 host
@@ -80,8 +87,6 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [ask] Cloudflare relay: needs Abdullah's Cloudflare account to deploy `relay-worker.js` and set `RELAY_CF_URL`.
 
 **Maps** (`02-map`)
-- [check] Map-select previews: the picker already draws a thumbnail per map (`.mapc` canvas) and a large preview
-  (`.mapsel`). Verify all 10 render correctly at phone width; mark done if so.
 
 ## P3 — later
 
@@ -92,6 +97,14 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
 
+- 2026-10-26 (side lane) — **Phones can play:** build tabs no longer hidden behind the small map (it moves to the
+  battlefield corner); two-finger pan and pinch zoom; touch placement with a Cancel button; bigger buttons; touch
+  hints; "All army" button; Settings "Done" always visible. 38 emulated-phone checks pass in portrait and landscape.
+- 2026-10-26 (side lane) — [check] Settings: all options work; fixed "Clicking the minimap: Sends selected units".
+- 2026-10-26 (side lane) — **Maps:** bases always start on dry ground (Caribbean could spawn a base in the sea;
+  Bosphorus/Fulda/Caribbean bases were partly under water), Fulda's river bends around the main bases, 8-player maps
+  load ~2.4x faster. New `orch/mapsweep.mjs` (all 28 maps x 2/4/8 players, ~21 min; `--maps/--players/--minutes`).
+- 2026-10-26 (side lane) — [check] Map previews: all 28 render right at phone and desktop width.
 - 2026-10-26 (cycle 2) — A match always has a winner: if the last sides collapse on the same tick, the strongest is
   spared (fixes Rivers 4-player all-surrender draw). `checkEnd` in `03-sim`, host-only, reviewed: no desync risk.
 - 2026-10-26 (cycle 2) — Naval wakes: white foam V, stern stripe and bow wave behind moving boats/ships (`05-fx3d`).
