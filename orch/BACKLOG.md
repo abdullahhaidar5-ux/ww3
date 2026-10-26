@@ -75,10 +75,9 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [check] Infantry helmet/kit variety beyond v68 tone variation.
 
 **UI/UX & controls** (`08-ui`, `06-view`)
-- [open] **Desktop left-click move:** with units selected, a mouse left-click on empty ground deselects instead of
-  moving them — contradicts the standing decision in `CLAUDE.md` (left-click ground = move, left-click enemy =
-  attack). Touch already does this right since 2026-10-26. Make mouse match; deselect via Esc or clicking the
-  selected unit/empty area with nothing selected; update the hint text. Keep right-click shortcuts.
+- [open] **IN PROGRESS (side lane, 2026-10-26 17:40) — Generals mouse controls.** Abdullah: "ensure mouse clicking
+  follows Command & Conquer Generals mechanics". Being built on branch `orch/generals-mouse`; ORCH: don't take this
+  item, don't edit `08-ui`/`06-view` input code until it lands.
 - [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers.
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
