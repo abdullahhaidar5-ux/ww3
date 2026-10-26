@@ -26,19 +26,20 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## P1 — now
 
 **Foundation (ORCH itself)**
-- [open] Multiplayer sync test in the gate: host + client in two headless pages over a local transport, assert no
-  errors and matching unit positions (replaces old `t8.py`). Highest-risk area with no automated check today.
+- [open] Extend `orch/mpsync.mjs`: 3+ human players, packet loss/latency, host migration (`07b-ckpt`), real WebRTC.
+- [open] Gate memory: parallel agents' headless browsers can OOM-kill each other's runs; stagger or cap browser runs.
 - [open] Map sweep: smoke every map in `MAPS` at 2, 4 and 8 players; fix any that fail.
 - [open] AI-vs-AI tournament harness (all 18 factions, headless, sim-only) → win-rate table for balance.
 
 **Battlefield & AI** (`03-sim`, `01-data`)
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
   below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
+- [open] Rivers 4-player FFA: all 4 sides surrendered at ~16 min and nobody won — surrender check may let the last
+  two sides lose on the same tick.
 - [check] AI uses flanking and cover (DIFF has `flank`/`retreat` params) — verify in battles, strengthen on Hard.
-- [check] Stuck/idle units after long games (old `aiall.py` checked this).
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
-- [open] Helicopter rotor-wash dust when hovering low.
+- [open] Measure rotor-wash FPS cost on a real phone with many helicopters.
 - [open] Naval wakes behind boats and ships.
 - [open] Ricochet sparks when small arms hit armour.
 - [open] Time-of-day/lighting variety per match (golden hour, overcast, dusk) — recordings had it, the game doesn't.
@@ -46,8 +47,10 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 **Audio & voice** (`09-audio`, `vo/`, `mus/`)
 - [open] Full native-language unit responses per nation (select / move / attack / under fire / unit lost), recorded
   quality, not browser text-to-speech. `vo/` holds one clip per nation today.
-- [check] Latmiyas for IR, RS, DW and a distinct war score for every other nation — `mus/` has one file; verify each
-  nation really gets its own track and upgrade quality.
+- [open] Real recorded war scores for the 15 non-Shia nations (today all music is synthesized live per nation from
+  `09-audio.js` STYLES + instrument samples in `mus/smp.mp3`). Meanwhile: give US, EU, RU, KP a signature instrument
+  (only snare today); IR and RS share santur+dammam backing — differentiate; tracks named "Battle Theme I/II".
+- [open] No menu music — music only starts in battle.
 
 ## P2 — next
 
@@ -81,3 +84,10 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## Done
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
+
+- 2026-10-26 — Multiplayer sync test `orch/mpsync.mjs` (host + client pages, loopback PeerJS stand-in, 4 game-min,
+  compares units/credits) added to the ship gate.
+- 2026-10-26 — Helicopter rotor wash: rolling dust ring on land, powder snow on snow maps, white spray on water.
+- 2026-10-26 — [check] Stuck/idle units after long games: six 16–20 min 4-player AI battles on 6 maps, ~0 stuck; no
+  change needed.
+- 2026-10-26 — [check] Per-nation music: all 18 nations already have distinct synthesized scores; IR/RS/DW latmiyas.
