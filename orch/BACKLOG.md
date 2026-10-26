@@ -8,20 +8,18 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
-- _(none waiting)_
+- [open] **Keep the claude.ai artifact in sync with GitHub Pages** (Abdullah, 2026-10-26). Artifact:
+  https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi (7 MB page + 20 published files). It is NOT a copy of
+  `index.html`: it loads Three.js from cdnjs and its multiplayer runs over the artifact `room` capability (topics
+  cmd/evt/hello/lobby/snap/start/team) instead of PeerJS. Needed: `orch/build.py --artifact` that emits the artifact
+  variant from `src/` (room transport in place of PeerJS, `vo/`+`mus/` as published files, no SW/manifest), verify
+  with smoke, then ORCH republishes it with the Artifact tool at every ship (step 8). Netcode squad + QA.
 
 ## Questions for Abdullah
 
-1. **[ask] Right-click.** Old runs were told "left-click only, never reintroduce right-click", but the live build
-   still has right-click move/attack, line formation and special-action hints ("Right-click an enemy building…").
-   Keep right-click as an optional shortcut, or remove it everywhere?
-2. **[ask] 18 or 19 factions?** Memory says 19; the live game has 18 (IM was removed in v84). Is a 19th planned?
-3. **[ask] Old session's files.** The run #5 backlog (ROUNDS.md), the model `assets/` and the test harnesses live
-   only in the old development chat. If it still exists, ask it: "push ROUNDS.md, assets/ and all test scripts to
-   the ww3 repo under orch/legacy/". Without `assets/`, 3D models can't be re-packed (ORCH can still edit all code).
-4. **[ask] Two copies of the game.** GitHub Pages (`main`) is what friends play; the old artifact
-   (claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi) was the runs' publish target. ORCH ships to Pages. Keep the artifact
-   in sync too, or retire it?
+- _(none open)_ — 2026-10-26 answers: keep right-click as an optional shortcut; stay at 18 factions; the old
+  development chat is gone (its `assets/`, ROUNDS.md and test scripts are lost — harnesses get rebuilt in `orch/`,
+  3D models can't be re-packed from source); keep the claude.ai artifact in sync with Pages.
 
 ## P1 — now
 
@@ -65,7 +63,6 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 
 **UI/UX & controls** (`08-ui`, `06-view`)
 - [open] Phone-playability pass: touch select/move/attack, sidebar layout at phone width, mobile GPU performance.
-- [open] Control hints match whatever is decided in Question 1.
 - [check] Settings menu completeness (graphics, volumes, speed, HUD).
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)

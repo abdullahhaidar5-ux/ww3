@@ -39,11 +39,10 @@ Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the ve
 - **No decorative or ambient aircraft or drones.** They were removed because they confused players. Only real,
   controllable aircraft fly.
 - **Controls:** left-click is the primary scheme (left-click select; with units selected, left-click ground = move,
-  left-click enemy = attack). Earlier runs were told "LEFT-CLICK ONLY — never reintroduce right-click controls";
-  the live build still has right-click shortcuts and right-click hints. Open question for Abdullah — don't add
-  more right-click-only actions meanwhile.
+  left-click enemy = attack). Right-click move/attack and right-drag line formation stay as optional shortcuts
+  (Abdullah, 2026-10-26) — every action must still be doable with left-click/touch alone.
 - **Factions (18 live):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
-  **DW "Coffee Shias"**. The IM faction was removed on purpose. Shia factions = IR, RS, DW.
+  **DW "Coffee Shias"**. The IM faction was removed on purpose; 18 is the intended count (no 19th planned). Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
 - **Audio:** real, professional military audio; top-quality unit voice acting in each nation's native language,
   including war slogans like "Labbaik ya Hussein". **Shia factions (IR, RS, DW) use latmiyas as their music**;
@@ -51,6 +50,8 @@ Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the ve
 - Multiplayer: up to 8 players, host's browser runs the battle. Never break multiplayer sync — host and clients
   must agree.
 - Must stay smooth and **phone-playable**.
+- **Two live copies:** GitHub Pages (`main`) and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi). Keep both in sync
+  on every ship (see BACKLOG request for the artifact build).
 - Abdullah reads updates on his phone: short summaries, and send screenshots/clips as links or images that open on
   a phone (attached video files didn't open for him).
 
