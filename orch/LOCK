@@ -1,0 +1,3 @@
+started: 2026-10-26T13:40:41Z
+expires: 2026-10-26T17:40:41Z
+by: ORCH cycle 3 (scheduled run fired 13:40 UTC; it predates the lock rule, so this lock was written for it and simply expires)

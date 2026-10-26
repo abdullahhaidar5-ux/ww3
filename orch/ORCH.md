@@ -28,6 +28,13 @@ A task that truly spans two squads goes to one agent that owns both rows for tha
 
 1. **Set up.** Attach the repo with push access (`add_repo` abdullahhaidar5-ux/ww3), clone it, `cd` into it.
    Read `CLAUDE.md`, this file, `orch/BACKLOG.md`, and the last few entries of `orch/LOG.md`.
+   **Take the run-lock** so two cycles never overlap: if `orch/LOCK` exists on `origin/main` and its `expires`
+   time (UTC) is still in the future, another cycle is running — check again every 5 minutes (Monitor with an
+   until-loop on `git fetch -q origin main && git cat-file -e origin/main:orch/LOCK`) for up to 90 minutes; if it is
+   still locked after that, append one line to `LOG.md` ("skipped: cycle already running"), push, and end without
+   messaging Abdullah. Otherwise write `orch/LOCK` (three lines: `started: <UTC ISO>`, `expires: <started + 4 h>`,
+   `by: ORCH cycle`), commit "ORCH: take run-lock", push. If the push is rejected, fetch and re-check the lock.
+   Delete `orch/LOCK` in the same commit as step 9's records (and on any early exit).
 2. **Absorb outside changes.** Run `python3 orch/build.py --check`. If it fails, someone edited `index.html`
    directly (another chat or a manual commit): run `python3 orch/build.py --split` so `src/` matches what's live,
    commit that as "Absorb live index.html into src/", and note it in the log.
@@ -82,5 +89,11 @@ chose). Do the preparatory work, put the question in the report and under "Quest
 
 - Runs as the scheduled task **ORCH**. Each run is a fresh session with no memory except this repo — anything worth
   remembering goes in `BACKLOG.md` or `LOG.md`.
+- **Continuous mode** (Abdullah, 2026-10-26: "proceed with everything that doesn't need my input"). After step 10,
+  if `BACKLOG.md` still has items that are not **[ask]**, start the next cycle right away: load the scheduled-task
+  tools with ToolSearch (`list_triggers`, `fire_trigger`), find the task named **ORCH**, and fire it. The 4-hourly
+  schedule stays on as a backstop in case a chain breaks. Stop chaining (and say so in the report) when only
+  **[ask]** items remain, when two cycles in a row shipped nothing, when the baseline gate fails twice in a row,
+  or when Abdullah says to stop or slow down.
 - ≤ 4 worker agents per cycle; one review agent when step 7 applies.
 - Keep `LOG.md` short: newest at the top, roll entries older than two weeks into a one-line-per-day summary.
