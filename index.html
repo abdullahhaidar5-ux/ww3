@@ -6468,7 +6468,7 @@ function initFX(){PN_=mkPoints(THREE.NormalBlending);PA_=mkPoints(THREE.Additive
   const tg=new THREE.BufferGeometry();tg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(800*6),3).setUsage(THREE.DynamicDrawUsage));tg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(800*6),3).setUsage(THREE.DynamicDrawUsage));
   TRC=new THREE.LineSegments(tg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));TRC.frustumCulled=false;SCN.add(TRC);
   {const rg=new THREE.RingGeometry(.72,1,48).rotateX(-Math.PI/2);for(let i=0;i<10;i++){const m=new THREE.Mesh(rg,new THREE.MeshBasicMaterial({color:0xd8ccb4,transparent:true,opacity:0,depthWrite:false}));m.scale.setScalar(.001);m.position.set(0,-500,0);m.renderOrder=2;m.frustumCulled=false;SCN.add(m);SHOCKS.push({m,t:9,d:1,r0:1,r1:1,a0:0,x:0,y:0});}}
-  initWash();
+  initWash();initWake();
   for(let i=0;i<4;i++){const l=new THREE.PointLight(0xffa860,0,320,2);l.position.set(-999,-999,-999);SCN.add(l);LIGHTS.push(l);}for(let i=0;i<3;i++){const l=new THREE.PointLight(0xff8a3a,0,170,2);l.position.set(-999,-999,-999);SCN.add(l);WLIGHTS.push(l);}}
 function radTex(stops,n=64){const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d'),g=x.createRadialGradient(n/2,n/2,0,n/2,n/2,n/2);stops.forEach(([o,s])=>g.addColorStop(o,s));x.fillStyle=g;x.fillRect(0,0,n,n);return new THREE.CanvasTexture(c);}
 function buildDecals(){for(const d of [SCORCH,TRACKS,CRATER])if(d){SCN.remove(d);}
@@ -6629,7 +6629,7 @@ function fxUpdate(dt){
       if(Math.random()<.75)part({x:fx,y:fy,h:F.g+rnd(1,4),vh:rnd(14,30),rise:rnd(4,10),add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(5,9)*(.6+.4*life),g:3,d:rnd(.35,.7),a:.75});
       else if(PARTS.length<pBudget()*.6)part({x:fx,y:fy,h:F.g+rnd(6,12),vx:rnd(-4,4),vy:rnd(-4,4),rise:rnd(14,F.big?34:24),c:Math.random()<.6?C_DARK:C_SMOKE,c2:[.45,.43,.4],ck:.35,s:rnd(8,13)*(F.big?1.35:1),g:F.big?9:5,d:rnd(2,F.big?4.5:3.2),a:.4});}}
   for(const p of PINGS)p.t+=dt;for(let i=PINGS.length-1;i>=0;i--)if(PINGS[i].t>=PINGS[i].d)PINGS.splice(i,1);
-  washTick();
+  washTick();wakeTick(dt);
   gpuGcHook();gcT-=dt;if(gcT<=0){gcT=15;try{gpuGc();}catch(e){console.warn('gpu gc',e);}}
   if(G&&G.map&&G.map.theme==='snow'&&CAM&&typeof cam!=='undefined'){const n=Math.min(30,dt*Math.min(150,cam.dist*.16))|0;const R=Math.max(500,cam.dist*1.1);for(let i=0;i<n+(Math.random()<dt*20?1:0);i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(60,260),vx:rnd(8,22),vy:rnd(-4,6),vh:-rnd(26,40),f:1,c:[1.05,1.08,1.12],s:rnd(1.4,2.4),d:rnd(4,6.5),a:.85});}}
   try{weatherFX(dt);}catch(e){}
@@ -6680,6 +6680,70 @@ function rotorWash(e,o,dt){if(!e||e.landed||!o||!G||!G.map||!WASH.length||!inVie
     else{const c=snow?[.94,.96,1]:M.theme==='green'?[.68,.63,.52]:C_DUST;part({x,y,h:sh+rnd(9,17),vx:ca*v,vy:sa*v,vh:rnd(4,14),f:.38,c,s:rnd(10,16),g:rnd(18,28),d:rnd(1.2,1.9),a:.4+.22*low});}}
   if(n>=6)ud.wacc=0;}
 function washTick(){for(const w of WASH)if(w.fr!==washFr&&w.m.visible){w.m.visible=false;w.id=-1;}washFr++;}
+/* ---------- Naval wakes ----------
+   A moving boat or ship leaves a white V of foam on the water that spreads out and fades behind it, a churned
+   white trail straight behind the stern and a curl of bow wave at the front. Faster boats throw a wider, brighter
+   wake; a stopped boat leaves none. The V is built from foam "bars" laid across the boat's path: each bar widens
+   with age at the speed the boat was doing (the real ~19 degree wake angle), so the ends of older bars trace the two
+   arms of the V. Purely visual: it reads where the boat is drawn and never touches the battle or its random numbers.
+   All of it is one pooled mesh (one draw call, nothing allocated during a battle); phones get shorter, fewer marks. */
+const NWAKE={n:0,m:null,pos:null,uv:null,al:null,Q:[],qi:0,fr:0,NB:12};
+function initWake(){const NQ=NWAKE.NB+300;NWAKE.n=NQ;
+  const W=512,H=128,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const blob=(cx,cy,r,a)=>{const g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,`rgba(255,255,255,${a})`);g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(cx-r,cy-r,r*2,r*2);};
+  // cell 0 (u 0-.25): the two V arms, thin broken foam lines at either end of the bar
+  for(let i=0;i<70;i++){const sd=i&1,v=6+Math.random()*116;blob(sd?128-9+Math.random()*-6:9+Math.random()*6,v,3+Math.random()*5,.35+Math.random()*.4);}
+  for(let i=0;i<40;i++){const sd=i&1,v=Math.random()*128;blob(sd?128-22-Math.random()*14:22+Math.random()*14,v,2+Math.random()*4,.12+Math.random()*.15);}
+  // cell 1: churned foam straight behind the stern, dense in the middle, broken at the edges
+  for(let i=0;i<150;i++){const u=128+64+(Math.random()+Math.random()+Math.random()-1.5)*60,v=8+Math.random()*112;blob(u,v,3+Math.random()*7,.18+Math.random()*.35);}
+  // cell 2: bow wave, two curling foam arcs meeting at the front (v=0 is the back of the quad, top of canvas = front)
+  for(let i=0;i<120;i++){const t=Math.random(),sd=Math.random()<.5?-1:1,u=256+64+sd*(4+58*Math.pow(t,.8)),v=6+t*112;blob(u+(Math.random()-.5)*6,v,2.5+Math.random()*4*(.5+t),.3+Math.random()*.45*(1-t*.5));}
+  // soften every cell towards its front/back edges so overlapping marks blend into one continuous trail
+  // (done on the pixels: 'destination-in' would wipe the other cells, since it clears everything outside what it draws)
+  const id=x.getImageData(0,0,W,H),D=id.data,ss=t=>t<=0?0:t>=1?1:t*t*(3-2*t);
+  for(let py=0;py<H;py++){const v=1-py/(H-1),kt=Math.min(ss(v/.18),ss((1-v)/.18)),kb=Math.min(.45+.55*ss((1-v)/.15),ss(v/.25));
+    for(let px=0;px<W;px++){const o=(py*W+px)*4+3;D[o]=D[o]*(px<256?kt:kb);}}
+  x.putImageData(id,0,0);
+  const tex=new THREE.CanvasTexture(c);
+  const g=new THREE.BufferGeometry();NWAKE.pos=new Float32Array(NQ*12);NWAKE.uv=new Float32Array(NQ*8);NWAKE.al=new Float32Array(NQ*4);const idx=new Uint16Array(NQ*6);
+  for(let i=0;i<NQ;i++){idx.set([i*4,i*4+2,i*4+1,i*4+1,i*4+2,i*4+3],i*6);NWAKE.Q.push({on:0,t:0,L:1,x:0,z:0,ca:1,sa:0,w0:1,sp:0,len:1,a0:0,c:0,f:0,id:-1,fr:-9});}
+  g.setIndex(new THREE.BufferAttribute(idx,1));g.setAttribute('position',new THREE.BufferAttribute(NWAKE.pos,3).setUsage(THREE.DynamicDrawUsage));g.setAttribute('uv',new THREE.BufferAttribute(NWAKE.uv,2).setUsage(THREE.DynamicDrawUsage));g.setAttribute('wa',new THREE.BufferAttribute(NWAKE.al,1).setUsage(THREE.DynamicDrawUsage));
+  const mat=new THREE.ShaderMaterial({uniforms:THREE.UniformsUtils.merge([THREE.UniformsLib.fog,{map:{value:null},ice:{value:0}}]),transparent:true,depthWrite:false,fog:true,side:THREE.DoubleSide,
+    vertexShader:`attribute float wa;varying float va;varying vec2 vu;
+#include <fog_pars_vertex>
+void main(){va=wa;vu=uv;vec4 mvPosition=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mvPosition;
+#include <fog_vertex>
+}`,
+    fragmentShader:`uniform sampler2D map;uniform float ice;varying float va;varying vec2 vu;
+#include <fog_pars_fragment>
+void main(){float a=texture2D(map,vu).a*va*1.5;if(a<.004)discard;gl_FragColor=vec4(mix(vec3(.9,.95,.97),vec3(.75,.78,.8),ice),min(1.,a));
+#include <fog_fragment>
+}`});
+  mat.uniforms.map.value=tex;mat.uniforms.ice.value=G&&G.map&&G.map.theme==='snow'?1:0;
+  NWAKE.m=new THREE.Mesh(g,mat);NWAKE.m.frustumCulled=false;NWAKE.m.renderOrder=2;NWAKE.m.visible=false;SCN.add(NWAKE.m);}
+function wakeQ(x,z,ca,sa,w0,sp,len,a0,c,L){const N=NWAKE.n-NWAKE.NB,q=NWAKE.Q[NWAKE.NB+(NWAKE.qi++%N)];q.on=1;q.t=0;q.L=L;q.x=x;q.z=z;q.ca=ca;q.sa=sa;q.w0=w0;q.sp=sp;q.len=len;q.a0=a0;q.c=c;q.f=Math.random()<.5?1:0;}
+function shipWake(e,o,dt){if(!NWAKE.m||!o||!o.visible||!(dt>0)||!e.s)return;const ud=o.userData,px=o.position.x,pz=o.position.z;
+  const raw=ud.kpx==null?0:Math.min(300,Math.hypot(px-ud.kpx,pz-ud.kpz)/dt);ud.kpx=px;ud.kpz=pz;ud.ksp=(ud.ksp||0)+(raw-(ud.ksp||0))*Math.min(1,dt*3);
+  const sp=ud.ksp,top=Math.max(30,e.s.spd||60),k=Math.max(0,Math.min(1,(sp/top-.08)/.55));if(k<=0){ud.kod=0;return;}
+  const a=e.va||0,ca=Math.cos(a),sa=Math.sin(a),r=e.r||14,big=r>20,lv=(typeof QUAL!=='undefined'&&QUAL.lv)||0,near=inView(px,pz,.35);
+  // bow wave: a pooled slot that follows this boat (the same one each frame)
+  if(near){let B=null;for(let i=0;i<NWAKE.NB;i++){const q=NWAKE.Q[i];if(q.id===e.id&&q.fr!==NWAKE.fr){B=q;break;}}if(!B)for(let i=0;i<NWAKE.NB;i++){const q=NWAKE.Q[i];if(q.fr<NWAKE.fr-1){B=q;break;}}
+    if(B){B.id=e.id;B.fr=NWAKE.fr;B.on=1;B.c=2;B.f=0;B.t=0;B.L=1e9;B.sp=0;const bl=r*(1.05+.35*k);B.x=px+ca*(r*.95-bl*.5);B.z=pz+sa*(r*.95-bl*.5);B.ca=ca;B.sa=sa;B.w0=r*(.95+.5*k);B.len=bl;B.a0=(.45+.4*k)*(.9+.1*Math.sin(G.t*9+e.id));}}
+  // trail: a foam bar (V arms) and a churned patch every ds of travel, laid at the stern
+  const ds=r*(big?.8:.9);ud.kod=(ud.kod||0)+sp*dt;if(ud.kod<ds)return;ud.kod%=ds;if(!near&&!inView(px,pz,.8))return;
+  const L=(big?4.6:3.4)*(lv>=3?.6:lv>=1?.8:1),sx=px-ca*r*.85,sz=pz-sa*r*.85;
+  wakeQ(sx,sz,ca,sa,r*.85,sp*.72+4,ds*2,.62*k,0,L);
+  wakeQ(sx-ca*ds*.3,sz-sa*ds*.3,ca,sa,r*.7,sp*.09+3,ds*2.3,.55*(.4+.6*k),1,L*.7);}
+function wakeTick(dt){if(!NWAKE.m)return;const P=NWAKE.pos,U=NWAKE.uv,A=NWAKE.al,h=WL+.35;let any=false;
+  for(let i=0;i<NWAKE.n;i++){const q=NWAKE.Q[i];if(i<NWAKE.NB&&q.on&&q.fr<NWAKE.fr-1){q.on=0;q.id=-1;}if(q.on&&i>=NWAKE.NB){q.t+=dt;if(q.t>=q.L)q.on=0;}
+    if(!q.on){if(A[i*4]!==0){A[i*4]=A[i*4+1]=A[i*4+2]=A[i*4+3]=0;P.fill(0,i*12,i*12+12);}continue;}any=true;
+    const u=q.t/q.L,w=(q.w0+q.sp*q.t)*.5,l=q.len*.5*(1+u*.35),fa=q.a0*Math.min(1,q.t/.12+(i<NWAKE.NB?1:0))*Math.pow(1-u,1.6)*(q.c===0?1/(1+q.sp*q.t/(q.w0*16)):1);
+    const fx=q.ca*l,fz=q.sa*l,sx=-q.sa*w,sz=q.ca*w,o=i*12;
+    // corners: back-left, back-right, front-left, front-right (u across the path, v along it)
+    P[o]=q.x-fx-sx;P[o+1]=h;P[o+2]=q.z-fz-sz;P[o+3]=q.x-fx+sx;P[o+4]=h;P[o+5]=q.z-fz+sz;P[o+6]=q.x+fx-sx;P[o+7]=h;P[o+8]=q.z+fz-sz;P[o+9]=q.x+fx+sx;P[o+10]=h;P[o+11]=q.z+fz+sz;
+    const u0=q.c*.25+.002,u1=u0+.246,v0=q.f?1:0,v1=1-v0,b=i*8;U[b]=u0;U[b+1]=v0;U[b+2]=u1;U[b+3]=v0;U[b+4]=u0;U[b+5]=v1;U[b+6]=u1;U[b+7]=v1;
+    A[i*4]=A[i*4+1]=A[i*4+2]=A[i*4+3]=fa;}
+  NWAKE.fr++;NWAKE.m.visible=any;if(any){const g=NWAKE.m.geometry;g.attributes.position.needsUpdate=true;g.attributes.uv.needsUpdate=true;g.attributes.wa.needsUpdate=true;}}
 /* ---------- Shader warm-up ----------
    The first time a new kind of object is drawn (a missile, a burnt-out wreck, an aircraft...) the graphics driver has to
    compile its shader, which can stall the game for a moment - several at once during a big strike felt like a freeze.
@@ -6785,6 +6849,7 @@ function syncScene(dt){const live=new Set();
         const hv=e.v||0,ha=(hv-(ud.phv??hv))/Math.max(dt,1e-3);ud.phv=hv;ud.pt=(ud.pt||0)+((e.landed?0:Math.max(-.22,Math.min(.3,.04+hv/Math.max(60,e.s.spd)*.24-ha*.003)))-(ud.pt||0))*Math.min(1,dt*1.8);ud.rl=(ud.rl||0)+((e.landed?0:Math.max(-.32,Math.min(.32,tr*.35)))-(ud.rl||0))*Math.min(1,dt*2.5);
         o.rotation.z=-ud.pt;o.rotation.x=ud.rl;if(!e.landed){o.position.y+=Math.sin(G.t*1.3+e.id)*1.2;}}
       if(s.cls==='heli'&&!e.landed)rotorWash(e,o,dt);
+      if(s.dom==='naval')shipWake(e,o,dt);
       if(P.props){for(const p of P.props)p.m.rotation[p.ax]+=dt*(p.ax==='x'?55:70);if(e.kind==='drone'){const ud=o.userData,prev=ud.pyd??ud.yaw;let tr=angDiff(prev,ud.yaw)/Math.max(dt,1e-3);ud.pyd=ud.yaw;const t=e.target,d=t&&!t.dead?Math.hypot(t.x-e.x,t.y-e.y):1e9;
           const dsp=Math.hypot(e.x-(ud.dpx??e.x),e.y-(ud.dpy??e.y))/Math.max(dt,1e-3);ud.dpx=e.x;ud.dpy=e.y;ud.dsv=(ud.dsv||0)+(Math.min(1,dsp/Math.max(40,e.s.spd))-(ud.dsv||0))*Math.min(1,dt*3);
           ud.dp=(ud.dp||0)+(((d<170?.55*(1-d/170):0)+(ud.dtype==='delta'?.04:.04+.26*ud.dsv))-(ud.dp||0))*Math.min(1,dt*4);if(ud.dtype==='delta'&&inView(e.x,e.y,.1)&&Math.random()<dt*10){const bx=e.x-Math.cos(ud.yaw)*12,by=e.y-Math.sin(ud.yaw)*12;part({x:bx,y:by,h:o.position.y,c:[.6,.6,.58],s:rnd(2.5,3.5),g:0,d:rnd(.8,1.3),a:.22,rise:.5});}o.rotation.order='YZX';o.rotation.z=-ud.dp;o.rotation.x=Math.max(-.75,Math.min(.75,tr*(ud.dtype==='delta'?.55:.15)));
@@ -6810,7 +6875,7 @@ function syncScene(dt){const live=new Set();
         if(s.dom==='ground'&&s.armor==='heavy'&&Math.floor(e.odo/8)!==Math.floor((e.odo-dd)/8)){const ca=Math.cos(e.va),sa=Math.sin(e.va),w=e.r*.68;track(e.x-sa*w,e.y+ca*w,e.va);track(e.x+sa*w,e.y-ca*w,e.va);for(let q=0;q<2;q++)part({x:e.x-ca*e.r*1.1+rnd(-4,4),y:e.y-sa*e.r*1.1+rnd(-4,4),h:gh+3,vx:rnd(-8,8)-ca*14,vy:rnd(-8,8)-sa*14,f:.4,rise:rnd(4,9),c:Math.random()<.5?[.72,.6,.45]:[.6,.5,.38],s:rnd(9,14),g:15,d:rnd(2.2,3.4),a:.42});if(Math.random()<.4)for(let q=0;q<3;q++)part({x:e.x-ca*e.r,y:e.y-sa*e.r,h:gh+2,vx:-ca*rnd(20,50)+rnd(-15,15),vy:-sa*rnd(20,50)+rnd(-15,15),vh:rnd(40,90),c:[.25,.2,.14],s:rnd(1.2,2.2),f:.8,grav:1,d:rnd(.5,.9)});}
         if(s.dom==='ground'&&s.armor==='heavy'&&Math.random()<dt*6){const ca=Math.cos(e.va),sa=Math.sin(e.va);part({x:e.x-ca*e.r*1.1,y:e.y-sa*e.r*1.1,h:gh+7,vx:-ca*10,vy:-sa*10,rise:14,c:[.3,.29,.27],c2:[.5,.48,.45],ck:.3,s:rnd(2,3.2),g:6,d:rnd(.6,.9),a:.28});}
         if(s.dom==='naval'&&dd>0&&Math.random()<dt*25){const ca=Math.cos(e.va),sa=Math.sin(e.va),sp=Math.min(1,dd/Math.max(dt,1e-3)/60),big=e.r>18?1.6:1;for(const sd of [-1,1])part({x:e.x-ca*e.r+sa*sd*e.r*.4,y:e.y-sa*e.r-ca*sd*e.r*.4,h:WL+1,vx:sa*sd*14,vy:-ca*sd*14,c:[.85,.92,.95],s:rnd(3,5)*big,g:8,d:1.2,a:.7});
-          part({x:e.x-ca*e.r*1.05+rnd(-2,2),y:e.y-sa*e.r*1.05+rnd(-2,2),h:WL+.6,vx:-ca*8,vy:-sa*8,f:.6,c:[.8,.88,.9],s:rnd(5,8)*big,g:9*big,d:rnd(2.6,3.6),a:.32*(.4+sp*.6)});
+          part({x:e.x-ca*e.r*1.05+rnd(-2,2),y:e.y-sa*e.r*1.05+rnd(-2,2),h:WL+.6,vx:-ca*8,vy:-sa*8,f:.6,c:[.8,.88,.9],s:rnd(3,5)*big,g:3*big,d:rnd(.7,1.1),a:.24*(.4+sp*.6)});
           if(sp>.4)for(const sd of [-1,1])part({x:e.x+ca*e.r*.75+sa*sd*e.r*.25,y:e.y+sa*e.r*.75-ca*sd*e.r*.25,h:WL+2,vx:sa*sd*rnd(20,40)+ca*10,vy:-ca*sd*rnd(20,40)+sa*10,vh:rnd(10,30),grav:1,f:.7,c:[.92,.96,1],s:rnd(2,3.5)*big,g:6,d:rnd(.4,.7),a:.6});}}
       e.lx=e.x;e.ly=e.y;}}catch(err){if(!e._drawErr){e._drawErr=1;console.warn('draw skipped',e.kind,err);}}}
   for(const [id,o] of OBJ)if(!live.has(id)){SCN.remove(o);OBJ.delete(id);}
