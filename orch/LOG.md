@@ -2,6 +2,19 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-26 — cycle 2
+
+- Baseline: build in sync, `SMOKE PASS`. No requests waiting at plan time; Abdullah's answers + the artifact-sync
+  request landed on `main` mid-cycle (docs only) and were merged in.
+- Shipped: always-a-winner fix (Battlefield), naval wakes (Visuals, small hook in `06-view`), menu music (Audio),
+  browser lock for the test gate (QA).
+- Review (03-sim): no issues.
+- Gate: `--check` OK, smoke 2p PASS after each merge, smoke 4p PASS. MPSYNC failed once (4 stale host infantry on
+  the client after leaving its vision; no net code touched this cycle), passed on baseline and on rerun → logged as
+  a Netcode item, not treated as fixed.
+- Not done: claude.ai artifact sync — needs `build.py --artifact` (room transport instead of PeerJS) first; top
+  request for next cycle. Artifact NOT republished this cycle.
+
 ## 2026-10-26 — cycle 1
 
 - Baseline: build in sync with live, `SMOKE PASS`. No requests from Abdullah waiting.
