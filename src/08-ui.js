@@ -1,5 +1,7 @@
 /* ================= UI: sidebar, input, menu, main loop ================= */
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
+// Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
+let TOUCHUI=false,PICKMIN=10,LASTPT='mouse';
 function log(team,msg,kind){FXE('log',[team,msg,kind||'']);}
 function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);const el=$('log');el.innerHTML='';for(const x of G.msgs){const d=document.createElement('div');d.className=x.k||'';d.textContent=x.m;el.append(d);}}
 function endGame(winner,reason){if(!G||G.over)return;if(MODE==='host'&&G.out){G.out.push(['end',winner]);NET.evT=0;}showEnd(winner,reason);}
@@ -44,20 +46,21 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('supbar').style.width=(up?f*100:0)+'%';
   $('supt').textContent=!up?'needs Strike Center':f>=1?'READY':`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;$('supbtn').disabled=!(up&&f>=1);
   const nx=RANKS[T.rank]||null,pr=RANKS[T.rank-1];$('rankname').textContent=`General rank ${T.rank}`+(pts>0?` · ${pts} point${pts>1?'s':''} to spend`:'');$('rankbar').style.width=(nx?Math.min(1,(T.gxp-pr)/(nx-pr))*100:100)+'%';$('rankt').textContent=nx?`${T.gxp}/${nx} XP`:'Max rank';
-  const md=$('mode');if(G.place){md.hidden=false;md.textContent=`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+' · Esc cancels';}else if(G.aim){md.hidden=false;md.textContent=`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`;}else if(G.amove){md.hidden=false;md.textContent='Attack-move: click a destination';}else if(G.defm){md.hidden=false;md.textContent='Defend area: click the spot to hold';}else md.hidden=true;
+  const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+' · Esc cancels');}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
   const s=G.sel.filter(e=>!e.dead);const el=$('info');el.innerHTML='';const b=document.createElement('b'),sp=document.createElement('span'),tip=document.createElement('span');tip.className='tip';
   if(s.length===1){const e=s[0];b.textContent=e.s.name+(e.rank?` · ${VET[e.rank]}`:'');sp.textContent=` ${Math.ceil(e.hp)} / ${e.max} HP`+(e.isB&&e.built<1?` · building ${Math.floor(e.built*100)}%`:'')+((e.dis>G.t||e.disv)?' · HACKED':'')+(e.kind==='jet'?` · ${e.landed?'parked':'airborne'}`:'');
     tip.textContent=e.kind==='hacker'?'Right-click an enemy building to disable it. Idle hackers earn cash.':e.s.demo?'Stealthed. Right-click an enemy building to plant explosives.':e.kind==='hero'?'Stealthed until it fires. Snipes infantry from long range.':e.kind==='jet'?'Right-click a target to strike. Jets return to the airfield to rearm.':e.kind==='harv'?'Right-click a supply field to send it there.':e.kind==='dozer'?'Builds everything: pick a building under Build, then click the map. Right-click an unfinished building to help. Repairs buildings it stands next to.':e.isB&&e.kind==='tunnel'&&e.team===ME?`Units inside: ${MODE==='client'?(T.tunN|0):T.tun.length} of 12. Select units and right-click a tunnel to send them in; they heal inside and can come out of any tunnel.`:e.isB&&e.nd&&e.built<1?(e.stall?'Waiting for a Construction Vehicle to arrive and build it.':'A Construction Vehicle is building this.'):e.isB&&e.team===ME&&CATS.includes(e.kind)?'Right-click the ground to set the rally point.':'';}
   else if(s.length){const c={};for(const e of s)c[e.s.name]=(c[e.s.name]||0)+1;b.textContent=`${s.length} selected`;sp.textContent=' '+Object.entries(c).map(([n,v])=>`${v}× ${n}`).join(' · ');}
-  else{sp.textContent='Click to select units or a building. Double-click selects all of a type on screen.';}
+  else{sp.textContent=TOUCHUI?'Tap a unit or building to select it. Double-tap a unit to select all of that type on screen.':'Click to select units or a building. Double-click selects all of a type on screen.';}
   if(s.length===1&&!s[0].isB&&s[0].aband)tip.textContent=ally(s[0].team,ME)?'Abandoned - the crew bailed out. Select infantry and right-click it to re-crew it before the enemy captures it.':'Abandoned enemy vehicle - select infantry and right-click it to capture it.';
   if(s.length===1&&!s[0].isB&&!s[0].aband&&SPECIAL_TIP[s[0].kind]&&s[0].kind===G.teams[s[0].team].F.special)tip.textContent=SPECIAL_TIP[s[0].kind](s[0].s);
   if(s.length===1&&!s[0].isB&&(COUNTER[s[0].s.cls]||COUNTER[s[0].kind])&&!tip.textContent)tip.textContent=COUNTER[s[0].kind]||COUNTER[s[0].s.cls];
   {const ms=s.filter(e=>!e.isB).map(moraleOf).filter(Boolean);if(ms.length){const avg=ms.reduce((a,m)=>a+m.v,0)/ms.length,fl=ms.every(m=>m.st==='fearless'),ls=ms.filter(m=>m.st==='last').length,rt=ms.filter(m=>m.st==='routing').length;const T0=G.teams[s[0].team],why=NOBREAK[T0.fac]?'never break':T0.clr?'Ayatollah':(T0.mart||0)>G.t?'martyrdom':'fervor';const st=fl?'fearless':ls>ms.length/2?'last':rt>ms.length/2?'routing':avg>.66?'steady':avg>.35?'shaken':'breaking';
     const mb=document.createElement('div');mb.className='morale';mb.innerHTML=`<span class="ml">Morale</span><span class="mbar"><i style="width:${Math.round(avg*100)}%;background:${MOR_COL[st]}"></i></span><span class="mt" style="color:${MOR_COL[st]}">${fl?'Fearless ('+why+')':MOR_TXT[st]+(st==='last'?'':' '+Math.round(avg*100)+'%')}${rt&&!fl?' · '+rt+' routing':''}${ls&&st!=='last'?' · '+ls+' last stand':''}</span>`;
     mb.title='Morale falls when units take fire, see comrades die or are outnumbered, and recovers out of combat. At zero they break and run back to base, ignoring orders, and take 25% extra damage while running. They rally fast near their HQ, an Ayatollah, a friendly-held building or an officer. Surrounded troops make a last stand instead (fearless but pinned). Crews bail out of badly damaged vehicles, which infantry can re-crew or capture. '+(fl?(NOBREAK[T0.fac]?'North Korean troops never break.':'While the Ayatollah lives, these troops never break.'):'Veterans, heroes, officers and cover help.');sp.after(mb);}}
+  if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   el.append(b,sp);if(tip.textContent)el.append(tip);
-  if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent='⚔ Attack: click map…';}bd.textContent=G.defm?'🛡 Defend: click map…':'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
+  if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.';el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1){const n=MODE==='client'?(T.tunN|0):T.tun.length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>In the tunnel network: '+n+' / '+TUN_CAP+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. Right-click a tunnel with units selected to send them in.');el.append(d);}
@@ -76,10 +79,12 @@ let sqLast={i:0,t:0};function sqSelect(i){const L=sqList(i);if(!L.length)return;
 function renderSquads(){const el=$('sqs');if(!el||!G)return;if(!el.children.length)for(let i=1;i<=SQN;i++){const b=document.createElement('button');b.dataset.i=i;b.onclick=e=>{const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(e.shiftKey||e.ctrlKey||(!sqList(i).length&&own.length))sqAssign(i);else sqSelect(i);};el.append(b);}
   const cur=sqOfSel();G.sqOf={};for(let i=1;i<=SQN;i++){const L=sqList(i);if(G.sq)G.sq[i]=L.map(u=>u.id);for(const u of L)G.sqOf[u.id]=i;const b=el.children[i-1];b.innerHTML='';b.append(String(i));const sm=document.createElement('small');sm.textContent=L.length?`${L.length} unit${L.length>1?'s':''}`:'empty';b.append(sm);{const ms=L.map(moraleOf).filter(Boolean);if(ms.length){const avg=ms.reduce((a,m)=>a+m.v,0)/ms.length,fl=ms.every(m=>m.st==='fearless'),rt=ms.some(m=>m.st==='routing');const st=fl?'fearless':rt?'routing':avg>.66?'steady':avg>.35?'shaken':'breaking';const q=document.createElement('span');q.className='sqm';q.innerHTML=`<i style="width:${Math.round(avg*100)}%;background:${MOR_COL[st]}"></i>`;q.title='Squad morale: '+MOR_TXT[st];b.append(q);if(rt)b.classList.add('rout');else b.classList.remove('rout');}}b.classList.toggle('on',cur===i);b.classList.toggle('empty',!L.length);b.title=L.length?`Squad ${i}: click to select, click again to find it. Shift+click to replace it with the selection.`:'Empty: select units, then click here to make them squad '+i+'.';}
   const mk=$('sqMake');if(mk)mk.disabled=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).length<1;}
+function selectArmy(){if(!G)return;G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);if(G.sel.length)speak(0);updateUI();}
+{const mk=$('sqMake');if(mk&&!$('sqAll')){const w=document.createElement('span');w.className='sqbtns';const a=document.createElement('button');a.id='sqAll';a.textContent='All army';a.title='Select every combat unit you have (Q)';a.onclick=selectArmy;mk.replaceWith(w);w.append(a,mk);}}
 if($('sqMake'))$('sqMake').onclick=()=>{if(!G)return;let i=0;for(let k=1;k<=SQN;k++)if(!sqList(k).length){i=k;break;}if(!i)i=1;sqAssign(i);};
 /* ---------- input ---------- */
 function mpos(e){const r=cv.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;}
-function pickAt(sx,sy,own){let best=null,bd=1e9;for(const e of G.ents){if(e.dead||!vis(e))continue;if(own&&e.team!==ME)continue;if(e.team!==ME&&e.hid)continue;const p=toScreen(e.x,unitH(e)+entHeightMid(e)*.6,e.y);const rad=Math.max(10,(e.isB?e.size*.55:e.r+3)*PPU);const d=Math.hypot(p.x-sx,p.y-sy);if(d<rad&&d<bd){bd=d;best=e;}}return best;}
+function pickAt(sx,sy,own){let best=null,bd=1e9;for(const e of G.ents){if(e.dead||!vis(e))continue;if(own&&e.team!==ME)continue;if(e.team!==ME&&e.hid)continue;const p=toScreen(e.x,unitH(e)+entHeightMid(e)*.6,e.y);const rad=Math.max(PICKMIN,(e.isB?e.size*.55:e.r+3)*PPU);const d=Math.hypot(p.x-sx,p.y-sy);if(d<rad&&d<bd){bd=d;best=e;}}return best;}
 function fieldAt(w){const i=G.fields.findIndex(f=>Math.hypot(f.x-w.x,f.y-w.y)<f.r+10);return i;}
 cv.addEventListener('mouseenter',e=>{mpos(e);mouse.in=true;});cv.addEventListener('mouseleave',()=>{mouse.in=false;});
 cv.addEventListener('mousemove',e=>{mpos(e);});
@@ -145,15 +150,38 @@ function rightRelease(d){if(!G)return;
     if(d.pt!=='mouse'&&(mine||bsel)&&!d.shift&&(!(t&&t.team===ME)||dzHelp)){const w=screenToWorld(mouse.x,mouse.y);if(w&&issueCmd(w,t,bsel)){updateUI();return;}}
     selectClick(t,d.shift);}
   if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);updateUI();}
-let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
+// Touch screens (phones, tablets). One finger works like the left mouse button: tap selects, tap the ground or an enemy
+// with units selected moves or attacks, drag draws a selection box. Two fingers move the camera: slide to pan, pinch to
+// zoom. With a building or power chosen, touch the map, slide to adjust and lift to build or fire there (a two-finger
+// pan in between cancels nothing), so the camera can be moved without placing by accident.
+const TCH=new Map(),TIGN=new Set();let PINCH=null,TPEND=null;
+function tMid(){const a=[...TCH.values()],r=cv.getBoundingClientRect();return{x:(a[0].x+a[1].x)/2-r.left,y:(a[0].y+a[1].y)/2-r.top,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};}
+function placeOrAim(w,shift){
+  if(G.place){const m=validSpot(ME,G.place,w.x,w.y);if(m){const dz=G.sel.find(u=>u.kind==='dozer'&&u.team===ME&&!u.dead);doAct({t:'bld',k:G.place,x:w.x,y:w.y,dz:dz?dz.id:0});speak(1);if(!shift)G.place=null;}else pushLog(validSpot.why||'Cannot build there.','w');}
+  else if(G.aim){if(G.aim==='sup')doAct({t:'sup',x:w.x,y:w.y});else doAct({t:'pow',k:G.aim,x:w.x,y:w.y});G.aim=null;}
+  updateUI();}
+function touchDown(e){TCH.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cv.setPointerCapture(e.pointerId);}catch(_){}
+  if(TCH.size>=2){drag=null;RDRAG=null;TPEND=null;for(const id of TCH.keys())TIGN.add(id);if(!PINCH)PINCH=tMid();return true;}
+  if(G.place||G.aim){mpos(e);TPEND={id:e.pointerId};return true;}
+  return false;}
+function touchMove(e){if(!TCH.has(e.pointerId))return false;TCH.set(e.pointerId,{x:e.clientX,y:e.clientY});if(!PINCH||TCH.size<2)return false;
+  const m=tMid(),P=PINCH;camTarget();
+  if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(1800,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
+  const a=screenToWorld(P.x,P.y),b=screenToWorld(m.x,m.y);if(a&&b){cam.tx+=a.x-b.x;cam.ty+=a.y-b.y;}
+  PINCH={x:m.x,y:m.y,d:m.d};return true;}
+function touchUp(e){TCH.delete(e.pointerId);if(TCH.size<2)PINCH=null;
+  if(TIGN.has(e.pointerId)){TIGN.delete(e.pointerId);if(drag&&drag.id===e.pointerId)drag=null;return true;}
+  if(TPEND&&TPEND.id===e.pointerId){TPEND=null;if(!G||G.over)return true;mpos(e);if(mouse.x<0||mouse.y<0||mouse.x>VW||mouse.y>VH)return true;const w=screenToWorld(mouse.x,mouse.y);if(w&&(G.place||G.aim))placeOrAim(w,false);return true;}
+  return false;}
+function touchCancel(e){TCH.delete(e.pointerId);TIGN.delete(e.pointerId);if(TCH.size<2)PINCH=null;if(TPEND&&TPEND.id===e.pointerId)TPEND=null;}
+let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
-  if(G.place){const m=validSpot(ME,G.place,w.x,w.y);if(m){const dz=G.sel.find(u=>u.kind==='dozer'&&u.team===ME&&!u.dead);doAct({t:'bld',k:G.place,x:w.x,y:w.y,dz:dz?dz.id:0});speak(1);if(!e.shiftKey)G.place=null;}else pushLog(validSpot.why||'Cannot build there.','w');return;}
-  if(G.aim){if(G.aim==='sup')doAct({t:'sup',x:w.x,y:w.y});else doAct({t:'pow',k:G.aim,x:w.x,y:w.y});G.aim=null;return;}
+  if(G.place||G.aim){placeOrAim(w,e.shiftKey);return;}
   if(!rightPress(e))return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:e.pointerType||'mouse'};});
-cv.addEventListener('pointermove',e=>{mpos(e);if(RDRAG&&e.pointerId===RDRAG.id){if(Math.hypot(mouse.x-RDRAG.x0,mouse.y-RDRAG.y0)>22)RDRAG.moved=true;return;}if(mpan&&e.pointerId===mpan.id){const k=cam.dist/700*(SET.scr||100)/100;cam.x-=(e.clientX-mpan.x)*k;cam.y-=(e.clientY-mpan.y)*k*1.4;mpan.x=e.clientX;mpan.y=e.clientY;return;}if(drag&&Math.hypot(mouse.x-drag.x0,mouse.y-drag.y0)>(SET.tol||8))drag.box=true;});
-window.addEventListener('pointerup',e=>{if(mpan&&e.pointerId===mpan.id){mpan=null;return;}if(RDRAG&&e.pointerId===RDRAG.id){const r=RDRAG;RDRAG=null;const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(r.moved&&w1&&ids.length){doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);PINGS.push({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}else orderClick(r.shift);return;}if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;rightRelease(d);});
-window.addEventListener('pointercancel',e=>{if(drag&&e.pointerId===drag.id)drag=null;});
+cv.addEventListener('pointermove',e=>{if(e.pointerType==='mouse')LASTPT='mouse';else if(e.pointerType==='touch'&&touchMove(e))return;mpos(e);if(RDRAG&&e.pointerId===RDRAG.id){if(Math.hypot(mouse.x-RDRAG.x0,mouse.y-RDRAG.y0)>22)RDRAG.moved=true;return;}if(mpan&&e.pointerId===mpan.id){const k=cam.dist/700*(SET.scr||100)/100;cam.x-=(e.clientX-mpan.x)*k;cam.y-=(e.clientY-mpan.y)*k*1.4;mpan.x=e.clientX;mpan.y=e.clientY;return;}if(drag&&Math.hypot(mouse.x-drag.x0,mouse.y-drag.y0)>(drag.pt==='touch'?Math.max(SET.tol||8,16):(SET.tol||8)))drag.box=true;});
+window.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e))return;if(mpan&&e.pointerId===mpan.id){mpan=null;return;}if(RDRAG&&e.pointerId===RDRAG.id){const r=RDRAG;RDRAG=null;const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(r.moved&&w1&&ids.length){doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);PINGS.push({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}else orderClick(r.shift);return;}if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;rightRelease(d);});
+window.addEventListener('pointercancel',e=>{touchCancel(e);if(drag&&e.pointerId===drag.id)drag=null;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;if(!G||$('menu').hidden===false)return;
   if(/^Digit[1-5]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
@@ -171,15 +199,69 @@ function mmJump(e){const r=mm.getBoundingClientRect();centerOn((e.clientX-r.left
 // Minimap: left-click / tap / drag moves the view there; right-click sends the selected units there.
 // Pointer events so it works the same with a mouse, trackpad, touch screen or pen.
 let mmDown=null;mm.style.touchAction='none';mm.style.cursor='crosshair';
+function mmSend(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!ids.length)return false;doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0});speak(1);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0x74d08f});return true;}
 function mmWorld(e){const r=mm.getBoundingClientRect();return{x:Math.max(0,Math.min(MAPW,(e.clientX-r.left)/r.width*MAPW)),y:Math.max(0,Math.min(MAPH,(e.clientY-r.top)/r.height*MAPH))};}
 mm.addEventListener('pointerdown',e=>{if(!G)return;e.preventDefault();const w=mmWorld(e);
-  if(e.button===2){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(ids.length){doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0});speak(1);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0x74d08f});}return;}
-  if(e.button!==0)return;mmDown=e.pointerId;try{mm.setPointerCapture(e.pointerId);}catch(_){}centerOn(w.x,w.y);});
+  if(e.button===2){mmSend(w);return;}
+  if(e.button!==0)return;if(SET.mmc==='units'&&mmSend(w))return;mmDown=e.pointerId;try{mm.setPointerCapture(e.pointerId);}catch(_){}centerOn(w.x,w.y);});
 mm.addEventListener('pointermove',e=>{if(mmDown!==e.pointerId)return;const w=mmWorld(e);centerOn(w.x,w.y);});
 mm.addEventListener('pointerup',e=>{if(mmDown===e.pointerId)mmDown=null;});mm.addEventListener('pointercancel',()=>{mmDown=null;});
 mm.addEventListener('contextmenu',e=>e.preventDefault());
+/* ---------- phones and touch screens ---------- */
+// Small screens (portrait phones, or any screen under 520 px tall such as a phone held sideways): the tactical map
+// moves onto the battlefield's top-left corner, the sidebar keeps only the money and battle buttons pinned, and the
+// selection info, tabs and build buttons come right after them so they are visible without scrolling. Touch screens get
+// finger-sized buttons and touch wording. Desktop-sized windows are unchanged.
+{const st=document.createElement('style');st.id='phoneCss';st.textContent=`
+#app,.overlay button,.overlay select{touch-action:manipulation}
+#app{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+#stage>#mm{position:absolute;left:6px;top:6px;z-index:4;width:min(36%,170px);margin:0;opacity:.95;box-shadow:0 2px 10px rgba(0,0,0,.65)}
+#stage.mmIn #fpsHud{left:auto;right:8px;top:auto;bottom:8px}
+.sqbtns{display:flex;gap:4px}
+#settings .card>.row:last-child{position:sticky;bottom:-1px;z-index:2;background:linear-gradient(rgba(8,11,10,0),rgba(8,11,10,.97) 30%);padding:14px 0 4px}
+body.touchui #mode{white-space:normal;text-align:left;width:max-content;max-width:calc(100% - 20px);box-sizing:border-box;font-size:13px;line-height:1.2;padding:5px 6px 5px 10px;display:flex;align-items:center;gap:8px;z-index:5}
+body.touchui #mode[hidden]{display:none}
+#mode .mcx{pointer-events:auto;cursor:pointer;flex:none;background:var(--warn);color:#160806;border:0;font:700 13px var(--display);letter-spacing:.06em;text-transform:uppercase;padding:0 10px;min-height:34px}
+#stage.mmIn #mode{left:auto;right:6px;top:6px;transform:none;max-width:calc(64% - 18px)}
+body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);padding:4px 6px;left:6px;right:6px;bottom:6px}
+@media (max-width:760px),(max-height:520px){
+  #app{gap:6px;padding-block:6px}
+  #side{padding:8px;gap:7px}
+  #sideTop{top:-8px;margin:-8px -8px 0;padding:8px 8px 6px;gap:6px}
+  #facname{font-size:18px}#credits{font-size:16px}
+  #side>#info{order:1}#side>.tabs{order:2}#side>#panel{order:3}#side>#sbx{order:4}#side>.sup{order:5}#side>#allyBox{order:6}#side>.sqbar{order:7}#side>#log{order:8}
+  #side>*{scroll-margin-top:118px}
+  #info{min-height:0}
+  #wxchip{top:6px;left:auto;right:6px;transform:none;white-space:normal;text-align:right;max-width:calc(62% - 16px);font-size:10px;padding:3px 7px}
+  #net{top:auto;bottom:6px;right:6px;font-size:10px;padding:2px 6px}
+}
+@media (max-width:560px){
+  .facs{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+  .fac{grid-template-columns:30px minmax(0,1fr);gap:8px;padding:8px 7px}
+  .fac .ins{width:30px;height:30px;font-size:12px}.fac .ins canvas{width:30px!important;height:30px!important}
+  .fac .nm{font-size:15px}
+  .fac:not(.on) .dc,.fac:not(.on) .sp,.fac:not(.on) .sw{display:none}
+  .card h1{font-size:clamp(34px,11vw,48px)}
+  #pauseOv .row .big,#quitOv .row .big,#end .row .big{flex:1 1 auto}
+}
+@media (pointer:coarse){
+  .audio button,.cmdrow button,.sqh button,#allyBox button,#supbtn,.tabs button,.sbx button{min-height:36px}
+  .sqs button{min-height:40px}.btn{min-height:44px}
+  .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
+  .cmdrow{flex-wrap:wrap}.cmdrow button{flex:1 1 40%}
+}`;document.body.append(st);}
+const PHQ=matchMedia('(max-width:760px),(max-height:520px)');
+function placeMM(){const st=$('stage'),top=$('sideTop');if(!st||!top)return;if(PHQ.matches){if(mm.parentNode!==st){st.append(mm);st.classList.add('mmIn');}}else if(mm.parentNode!==top){top.append(mm);st.classList.remove('mmIn');}}
+try{PHQ.addEventListener('change',placeMM);}catch(e){try{PHQ.addListener(placeMM);}catch(_){}}placeMM();
+function touchUI(){TOUCHUI=true;document.body.classList.add('touchui');const h=$('hint');if(h)h.textContent='Tap a unit to select it · with units selected, tap the ground to move or an enemy to attack · drag to box-select · two fingers: slide to pan, pinch to zoom · tap the small map to jump there';try{updateUI();}catch(e){}}
+// on touch: the banner says how to place, and tapping it cancels; the long hint steps aside after the opening
+function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: touch the map, slide, lift to build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target'):(md.dataset.d||'').replace(/click/g,'tap');
+    if(md.dataset.t!==t){md.dataset.t=t;md.innerHTML='<span></span><button class="mcx" type="button">✕ Cancel</button>';md.firstChild.textContent=t;}}else md.dataset.t='';
+  const h=$('hint');if(h)h.hidden=!md.hidden||G.t>40;}
+$('mode').onclick=e=>{if(!G||!e.target.closest('.mcx'))return;G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();};
+try{if(matchMedia('(hover:none) and (pointer:coarse)').matches)touchUI();}catch(e){}
 function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100;if(keys.ArrowLeft||keys.a)cam.tx-=sp;if(keys.ArrowRight||keys.d)cam.tx+=sp;if(keys.ArrowUp||keys.w)cam.ty-=sp;if(keys.ArrowDown||keys.s)cam.ty+=sp;
-  if(mouse.in&&!drag&&SET.edge){if(mouse.x<14)cam.tx-=sp;if(mouse.x>VW-14)cam.tx+=sp;if(mouse.y<14)cam.ty-=sp;if(mouse.y>VH-14)cam.ty+=sp;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
+  if(mouse.in&&!drag&&SET.edge&&LASTPT!=='touch'){if(mouse.x<14)cam.tx-=sp;if(mouse.x>VW-14)cam.tx+=sp;if(mouse.y<14)cam.ty-=sp;if(mouse.y>VH-14)cam.ty+=sp;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
 
 /* ---------- game start / reset ---------- */
 function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
