@@ -254,7 +254,7 @@ function washTick(){for(const w of WASH)if(w.fr!==washFr&&w.m.visible){w.m.visib
    A slow or stopped vehicle leaves none. Purely visual: it reads where the vehicle is drawn and never touches the
    battle or its random numbers. It uses the shared particle pool (like rotor wash) with a cap per frame, spawns fewer
    on phones / low quality and backs off when the screen is already full of smoke. */
-const DUSTC={desert:[[.78,.67,.5],[.7,.59,.43],[.84,.75,.6]],green:[[.6,.55,.45],[.53,.49,.41],[.66,.62,.54]],snow:[[.95,.97,1],[.9,.93,.97],[.97,.98,1]]};
+const DUSTC={desert:[[.86,.76,.6],[.8,.69,.53],[.9,.83,.7]],green:[[.6,.55,.45],[.53,.49,.41],[.66,.62,.54]],snow:[[.95,.97,1],[.9,.93,.97],[.97,.98,1]]};
 let dustN=0;
 function dustTrail(e,o,dt){if(!o||!o.visible||!(dt>0)||!e.s||!G||!G.map)return;const ud=o.userData,px=o.position.x,pz=o.position.z;
   const raw=ud.tdx==null?0:Math.min(300,Math.hypot(px-ud.tdx,pz-ud.tdz)/dt);ud.tdx=px;ud.tdz=pz;ud.tsp=(ud.tsp||0)+(raw-(ud.tsp||0))*Math.min(1,dt*3);
@@ -266,7 +266,7 @@ function dustTrail(e,o,dt){if(!o||!o.visible||!(dt>0)||!e.s||!G||!G.map)return;c
   const r=e.r||12,sc=Math.min(1.5,Math.max(.8,r/12));ud.tacc=(ud.tacc||0)+dt*16*k*amp*busy*Math.min(1.2,B/1400)*sc;
   const a=ud.yaw??e.va??0,ca=Math.cos(a),sa=Math.sin(a),C=DUSTC[th],gh=groundH(px,pz),cap=B>=1100?28:16;let n=0;
   while(ud.tacc>=1&&n<3&&dustN<cap){ud.tacc-=1;n++;dustN++;const sd=(ud.tsd=-(ud.tsd||1)),w=r*rnd(.45,.65),bk=r*rnd(.75,1.05),x=px-ca*bk-sa*sd*w,y=pz-sa*bk+ca*sd*w,ov=rnd(4,12),bv=rnd(8,20)*(.5+k);
-    part({x,y,h:gh+rnd(4,8),vx:-ca*bv-sa*sd*ov,vy:-sa*bv+ca*sd*ov,vh:rnd(2,6),f:.3,rise:rnd(1.5,4.5),c:C[n&1],c2:C[2],ck:.6,s:rnd(6,9)*sc*(th==='snow'?.8:1),g:rnd(8,13)*sc,d:rnd(1.8,3)*(th==='snow'?.7:1),a:(th==='snow'?.24:.36)*(.55+.45*k)});}
+    part({x,y,h:gh+rnd(4,8),vx:-ca*bv-sa*sd*ov,vy:-sa*bv+ca*sd*ov,vh:rnd(2,6),f:.3,rise:rnd(1.5,4.5),c:C[n&1],c2:C[2],ck:.6,s:rnd(7,10)*sc*(th==='snow'?.8:1),g:rnd(9,14)*sc,d:rnd(2.2,3.4)*(th==='snow'?.7:1),a:(th==='snow'?.26:.46)*(.55+.45*k)});}
   if(ud.tacc>1)ud.tacc=1;}
 /* ---------- Ricochet sparks ----------
    Rifle and machine-gun rounds striking a tank or other armoured vehicle throw a few bright, short-lived sparks off
