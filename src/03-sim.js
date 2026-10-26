@@ -662,6 +662,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
 //    under 12% of its largest army) -> 30 s warning, then it capitulates unless it recovers in time;
 //  - cut off: no buildings and no bulldozer left to rebuild -> its remaining army has 45 s before it surrenders;
 //  - wiped out: nothing left at all -> immediately.
+// A war always has a winner: if the last sides would all fall on the same tick, the strongest of them is spared.
 // The warning goes to everyone so the attacker knows to keep up the pressure and the defender knows to rebuild.
 function forceOf(T){let bv=0,bn=0,uv=0,un=0,dz=0;for(const e of G.ents){if(e.dead||e.team!==T.id)continue;
     if(e.isB){if(e.kind==='garrison'||e.built<1)continue;bv+=e.kind==='hq'?2000:Math.max(300,e.s.cost||0);bn++;}
@@ -672,15 +673,25 @@ function forceOf(T){let bv=0,bn=0,uv=0,un=0,dz=0;for(const e of G.ents){if(e.dea
 function capitulate(T,why){T.out=true;T.whyOut=why;for(const O of G.teams)log(O.id,O.id===T.id?`We have capitulated: ${why}`:`${T.F.name} has capitulated - ${why}`,O.id===T.id?'bad':'w');
   for(const e of G.ents)if(!e.dead&&e.team===T.id&&e.kind!=='garrison'){if(e.isB)kill(e,null);else{e.dead=true;G.byId.delete(e.id);FXE('die',[e.id,e.x|0,e.y|0,KINDS.indexOf(e.kind),0,e.team]);}}
   if(T.tun)for(const u of T.tun)u.dead=true;if(G.civ)for(const c of G.civ)if(c.occ&&c.occ.some(u=>u.team===T.id)){for(const u of c.occ)if(u.team===T.id)u.dead=true;c.occ=c.occ.filter(u=>!u.dead);}FXE('elim',[T.id]);G.lastWhy=why;}
-function checkEnd(){if(G.sandbox)return;
-  for(const T of G.teams){if(T.out)continue;const F=forceOf(T);T.pkB=Math.max(T.pkB||0,F.bv);T.pkU=Math.max(T.pkU||0,F.uv);
-    if(!F.bn&&!F.dz&&!F.un){capitulate(T,'every unit and building has been destroyed.');continue;}
+function checkEnd(){if(G.sandbox)return;const fall=[];
+  for(const T of G.teams){if(T.out)continue;const F=forceOf(T);T.lastF=F;T.pkB=Math.max(T.pkB||0,F.bv);T.pkU=Math.max(T.pkU||0,F.uv);
+    if(!F.bn&&!F.dz&&!F.un){fall.push([T,'every unit and building has been destroyed.']);continue;}
     const baseGone=(T.pkB||0)>=2000&&F.bv<=T.pkB*.1,armyGone=F.un<=4||F.uv<=(T.pkU||0)*.12;
     let cond=null,limit=0;if(!F.bn&&!F.dz){cond=`no base left and no way to rebuild - its last ${F.un} unit${F.un===1?'':'s'} ran out of supplies.`;limit=45;}
     else if(baseGone&&armyGone){cond=`${Math.round(100-F.bv/T.pkB*100)}% of its base destroyed and only ${F.un} combat unit${F.un===1?'':'s'} left.`;limit=30;}
     if(cond){if(T.colT==null){T.colT=G.t;for(const O of G.teams)log(O.id,O.id===T.id?(F.bn||F.dz?`Our nation is collapsing! 90% of our base is destroyed and our army is nearly gone - rebuild and reinforce within ${limit} seconds or we capitulate.`:`We have lost every building and bulldozer! Our army will surrender in ${limit} seconds.`):`${T.F.name} is collapsing and will capitulate in ${limit} seconds unless it recovers.`,O.id===T.id?'bad':'w');}
-      else{const left=limit-(G.t-T.colT);if(T.id===ME&&left>0&&left<=10&&Math.abs(left-Math.round(left/5)*5)<.6&&T.colW!==Math.round(left)){T.colW=Math.round(left);log(T.id,`Capitulation in ${Math.round(left)} seconds!`,'bad');}if(left<=0)capitulate(T,cond);}}
+      else{const left=limit-(G.t-T.colT);if(T.id===ME&&left>0&&left<=10&&Math.abs(left-Math.round(left/5)*5)<.6&&T.colW!==Math.round(left)){T.colW=Math.round(left);log(T.id,`Capitulation in ${Math.round(left)} seconds!`,'bad');}if(left<=0)fall.push([T,cond]);}}
     else if(T.colT!=null){T.colT=null;T.colW=null;for(const O of G.teams)log(O.id,O.id===T.id?'We have recovered - the collapse is averted.':`${T.F.name} has recovered from the brink.`,O.id===T.id?'g':'w');}}
+  // Decide every fall first, then apply them. If the last sides standing would all go down on the same tick (two
+  // armies bleeding out together, both 45 s timers expiring at once), nobody may lose the war together: the side with
+  // the most left on the field (base + army value, then kills, then the bigger peak force, then slot order) holds on
+  // and wins. Pure sim state, no RNG, so host and every client agree.
+  if(fall.length&&!G.teams.some(T=>!T.out&&!fall.some(f=>f[0]===T))){
+    const sc=T=>{const F=T.lastF||{bv:0,uv:0,dz:0};return F.bv+F.uv+F.dz*500;};
+    const better=(a,b)=>sc(a)!==sc(b)?sc(a)>sc(b):(a.kills|0)!==(b.kills|0)?(a.kills|0)>(b.kills|0):((a.pkB||0)+(a.pkU||0))>((b.pkB||0)+(b.pkU||0));
+    let best=fall[0][0];for(const [T] of fall)if(better(T,best))best=T;
+    for(const f of fall)if(ally(f[0].id,best.id)){f[2]=1;f[0].colT=null;f[0].colW=null;}}
+  for(const [T,why,spared] of fall)if(!spared)capitulate(T,why);
   const alive=G.teams.filter(T=>!T.out).map(T=>T.id);
   if(alive.length<=1||alive.every(t=>ally(t,alive[0])))endGame(alive.length?alive[0]:-1,G.lastWhy?`The last enemy capitulated: ${G.lastWhy}`:'');}
 
