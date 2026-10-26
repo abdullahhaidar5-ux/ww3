@@ -8,6 +8,8 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+- [open] **Merge branch `orch/2026-10-26-parallel-v2` first** — gated, ready work (artifact build `--artifact`,
+  MP reconnect fix, AI navy, dust trails/ricochet sparks) held back only by the run-lock. See LOG 16:20 entry.
 - [open] **Keep the claude.ai artifact in sync with GitHub Pages** (Abdullah, 2026-10-26). Artifact:
   https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi (7 MB page + 20 published files). It is NOT a copy of
   `index.html`: it loads Three.js from cdnjs and its multiplayer runs over the artifact `room` capability (topics

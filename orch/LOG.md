@@ -2,6 +2,16 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-26 16:20 — parallel cycle (fired 08:24, before the run-lock existed) — NOT shipped, waiting on branch
+
+- Skipped shipping: cycle 4 holds the run-lock. Finished, gated work is on branch `orch/2026-10-26-parallel-v2`
+  (based on ff17ba8): `build.py --artifact` + `orch/ARTIFACT.md` (artifact edition from `src/`, Abdullah's top
+  request), reconnecting MP player gets their army back (`07-net` one line), AI builds and uses a navy on water maps,
+  dust trails behind fast vehicles + ricochet sparks on armour. Fresh review of 03-sim/07-net: no desync; 2 navy-AI
+  bugs found and fixed. Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS (1 known stale-infantry fail, pass on rerun),
+  artifact smoke + MPSYNC PASS. Its phone pass was dropped — the side lane shipped the same.
+- Next cycle: merge that branch first (fast-forward-able onto ff17ba8), then republish the artifact per ARTIFACT.md.
+
 ## 2026-10-26 15:10 — side lane (Abdullah: "proceed with everything that doesn't need my input")
 
 - Ran beside ORCH cycles 3–4 on squads they couldn't reach this round: Interface (phone-playability + settings) and
