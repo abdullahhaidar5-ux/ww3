@@ -6,17 +6,22 @@
 //   node orch/smoke.mjs            # default: 4 game-minutes, 2 factions
 //   node orch/smoke.mjs --minutes 8 --players 4
 //   node orch/smoke.mjs --no-lock  # skip the machine-wide browser lock (see browserlock.mjs)
+//   node orch/smoke.mjs --artifact # test the claude.ai artifact edition instead (python3 orch/build.py --artifact
+//                                  # first): Three.js "from cdnjs", room capability stubbed, screenshots art-*.png
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
+import { artifactHtml, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? Number(process.argv[i + 1]) : d; };
 const MINUTES = arg('minutes', 4), PLAYERS = Math.max(2, Math.min(8, arg('players', 2)));
+const ART = process.argv.includes('--artifact') ? { html: artifactHtml(), three: threeJs() } : null;
+const PFX = ART ? 'art-' : '';
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -47,6 +52,7 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/jav
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
+  if (ART && p === '/index.html') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(ART.html); }
   const f = path.join(ROOT, p);
   if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' });
@@ -58,7 +64,7 @@ const URL0 = `http://127.0.0.1:${server.address().port}/index.html`;
 const fails = [], warns = [];
 // SwiftShader (CPU WebGL) can take minutes per frame in a busy battle; a slow screenshot is not a game bug.
 async function shot(page, name) {
-  try { await page.screenshot({ path: path.join(OUT, name), timeout: 180000 }); }
+  try { await page.screenshot({ path: path.join(OUT, PFX + name), timeout: 180000 }); }
   catch (e) { warns.push(`screenshot ${name} skipped: ${String(e.message || e).split('\n')[0]}`); }
 }
 const { chromium } = await loadPlaywright();
@@ -66,7 +72,9 @@ const browser = await chromium.launch({ executablePath: findChromium(),
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
 const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
 // Network to other hosts (PeerJS signalling, fonts, relays) is not part of the test.
-await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue() : r.abort());
+await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue()
+  : ART && r.request().url() === THREE_CDN ? r.fulfill({ status: 200, contentType: 'text/javascript', body: ART.three }) : r.abort());
+if (ART) await page.addInitScript(roomStub, { topics: roomTopics() });
 page.on('pageerror', e => fails.push('page error: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')));
 page.on('console', m => {
   if (m.type() !== 'error') return;
@@ -82,6 +90,14 @@ try {
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => warns.push('3D models still loading after 180s'));
   await shot(page, 'menu.png');
+  if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
+    const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));
+      return { room: !!NET.room, peer: typeof Peer, p2p: !!window.WW3_P2P, three: THREE.REVISION, host: !document.getElementById('host').disabled }; });
+    console.log(`artifact edition: room ${a.room}, three r${a.three}, PeerJS ${a.peer}, P2P shim ${a.p2p}`);
+    if (!a.room || !a.host) fails.push('artifact: the game did not pick up the room capability (multiplayer would be off)');
+    if (a.peer !== 'undefined' || a.p2p) fails.push('artifact: PeerJS / online-edition shim is still in the artifact page');
+    if (a.three !== '128') fails.push('artifact: Three.js is r' + a.three + ', expected r128');
+  }
 
   // Start a skirmish against the AI the same way the Deploy button does, with the requested number of players.
   const start = await page.evaluate((n) => {
@@ -131,8 +147,9 @@ try {
   await shot(page, 'battle-later.png');
 } catch (e) {
   fails.push(String(e && e.message || e));
-  try { await page.screenshot({ path: path.join(OUT, 'failure.png') }); } catch {}
+  try { await page.screenshot({ path: path.join(OUT, PFX + 'failure.png') }); } catch {}
 }
+if (ART) { const j = judgeRoomStats('artifact', await page.evaluate(() => window.__fpStats).catch(() => null)); fails.push(...j.fails); warns.push(...j.warns); }
 await browser.close();
 server.close();
 
@@ -144,4 +161,4 @@ if (uniq.length) {
   for (const f of uniq.slice(0, 25)) console.log('  ✗ ' + f);
   process.exit(1);
 }
-console.log(`\nSMOKE PASS (${((Date.now() - t0) / 1000).toFixed(0)}s) — screenshots in orch/out/`);
+console.log(`\nSMOKE PASS${ART ? ' (artifact edition)' : ''} (${((Date.now() - t0) / 1000).toFixed(0)}s) — screenshots in orch/out/${PFX}*.png`);

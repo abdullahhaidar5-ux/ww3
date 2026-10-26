@@ -30,6 +30,11 @@
 //   node orch/mpsync.mjs --break               # self-test: the client stops receiving at 1 min; must print MPSYNC FAIL
 //   node orch/mpsync.mjs --verbose             # print both pages' network state every 5 s while connecting
 //   node orch/mpsync.mjs --no-lock             # skip the machine-wide browser lock (see browserlock.mjs)
+//   node orch/mpsync.mjs --reconnect           # at 1 min the client "loses" the host for 6 s and must reconnect and
+//                                              # keep its army (the AI must not take over after 30 s)
+//   node orch/mpsync.mjs --artifact            # the claude.ai artifact edition (python3 orch/build.py --artifact
+//                                              # first): pages talk over a stand-in for the artifact `room`
+//                                              # capability (orch/artifact-harness.mjs) instead of PeerJS
 // Prints MPSYNC PASS / MPSYNC FAIL: reason (exit 0 / 1). Screenshots: orch/out/mp-host.png, orch/out/mp-client.png
 import http from 'node:http';
 import fs from 'node:fs';
@@ -37,11 +42,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
+import { artifactHtml, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? Number(process.argv[i + 1]) : d; };
 const MINUTES = arg('minutes', 4), AIS = Math.max(0, Math.min(6, arg('ais', 0))), BREAK = process.argv.includes('--break');
+const ART = process.argv.includes('--artifact') ? { html: artifactHtml(), three: threeJs() } : null;
+const PFX = ART ? 'art-' : '', RECON = process.argv.includes('--reconnect');
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -72,6 +80,7 @@ const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/jav
 const server = http.createServer((req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
+  if (ART && p === '/index.html') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(ART.html); }
   const f = path.join(ROOT, p);
   if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' });
@@ -137,7 +146,7 @@ const fail = m => { fails.push(m); };
 // a crashed page leaves playwright calls hanging: abort the whole run instead
 let crashed = () => {}; const crash = new Promise((_, rej) => { crashed = () => rej(new Error('a page crashed')); }); crash.catch(() => {});
 async function shot(page, name) {
-  try { await page.screenshot({ path: path.join(OUT, name), timeout: 240000 }); }
+  try { await page.screenshot({ path: path.join(OUT, PFX + name), timeout: 240000 }); }
   catch (e) { warns.push(`screenshot ${name} skipped: ${String(e.message || e).split('\n')[0]}`); }
 }
 const { chromium } = await loadPlaywright();
@@ -146,8 +155,9 @@ const browser = await chromium.launch({ executablePath: findChromium(),
     // both pages in one renderer process: saves a few hundred MB (the test drives them one after the other anyway)
     '--renderer-process-limit=1'] });
 const ctx = await browser.newContext({ viewport: { width: 1024, height: 576 } });
-await ctx.addInitScript(fakePeerShim);
-await ctx.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue() : r.abort());
+if (ART) await ctx.addInitScript(roomStub, { topics: roomTopics() }); else await ctx.addInitScript(fakePeerShim);
+await ctx.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue()
+  : ART && r.request().url() === THREE_CDN ? r.fulfill({ status: 200, contentType: 'text/javascript', body: ART.three }) : r.abort());
 async function openPage(tag) {
   const page = await ctx.newPage();
   page.on('crash', () => { fail(`${tag} page crashed (renderer killed - out of memory?)`); crashed(); });
@@ -303,13 +313,20 @@ async function main() {
   await host.waitForTimeout(1500); // orders travel in the client's presence: give it real time to arrive
 
   const STEP = 5, total = Math.round(MINUTES * 600), checks = new Set([600, 1500, total].filter(x => x <= total));
-  let ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
+  let lagLogged = false, ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
   while (ticks < total) {
     const w0 = Date.now();
     const h = await hostRun(STEP); if (h.err) { fail('host simulation threw: ' + h.err.split('\n').slice(0, 4).join(' | ')); break; }
     const c = await clientRun(STEP); if (c.err) { fail('client tick threw: ' + c.err.split('\n').slice(0, 4).join(' | ')); break; }
     ticks += STEP; chunkMs.push(Date.now() - w0);
     if (ticks >= 100) behindMax = Math.max(behindMax, h.t - c.snapT);
+    if (ticks >= 100 && h.t - c.snapT > 1.5 && !lagLogged) { lagLogged = true; // say when, and in what state, the client first fell behind
+      const o = await host.evaluate(() => G.teams.map(T => T.fac + (T.out ? ' out' : '')).join(', '));
+      console.log(`[${secs()}] client first fell ${(h.t - c.snapT).toFixed(1)} s behind at host t=${h.t.toFixed(1)}s (${o})`); }
+    if (RECON && ticks === 650) { await client.evaluate(() => { NET.lastRx = performance.now() - 6000; });
+      console.log(`[${secs()}] --reconnect: the client thinks it lost the host and reconnects`); }
+    if (RECON && ticks === 1100) { const r = await host.evaluate((k) => ({ ai: !!G.teams[k].ai, disc: G.teams[k].discT || 0, out: !!G.teams[k].out }), CK);
+      if (!r.out && (r.ai || r.disc)) fail('45 s after reconnecting, the host still treats the client as gone (AI took over / marked disconnected)'); }
     if (ticks === breakAt) { await client.evaluate(() => { window.__fpDrop = true; }); console.log(`[${secs()}] --break: the client stops receiving from now on`); }
     if (!orderChecked && ticks >= 250 && order.n) {
       orderChecked = true;
@@ -333,6 +350,11 @@ async function main() {
   if ((live.bad || 0) > Math.max(1, live.n * .1)) fail(`client view diverged from the host in ${live.bad}/${live.n} live checks, e.g. ${live.worst}`);
   if (behindMax > 1.5) fail(`client fell ${behindMax.toFixed(1)} game-seconds behind the host (it should trail by at most a few 0.1 s snapshots)`);
   if (!st.rx) fail('client never received anything from the host');
+  if (RECON) { const r = await host.evaluate((k) => ({ ai: !!G.teams[k].ai, disc: G.teams[k].discT || 0, out: !!G.teams[k].out, t: G.t }), CK);
+    console.log(`[${secs()}] --reconnect: at t=${r.t.toFixed(0)}s the client's side is ${r.ai ? 'run by the AI' : 'still the player\'s'}${r.disc ? ', still marked disconnected' : ''}`);
+    if (!r.out && (r.ai || r.disc)) fail('after reconnecting, the client did not get its army back (AI took over / still marked disconnected)'); }
+  if (ART) for (const [tag, s] of [['host', hs], ['client', st]]) { const j = judgeRoomStats(tag, s); j.fails.forEach(fail); warns.push(...j.warns);
+    console.log(`[${secs()}] ${tag} room sends: ${s.tx} messages, peak ${s.peakRate} in one game-second`); }
 
   if (!shotsTaken) await screenshots();
 }
@@ -363,5 +385,5 @@ if (uniq.length) {
   for (const f of uniq.slice(1, 20)) console.log('  ✗ ' + f);
   process.exit(1);
 }
-console.log(`\nMPSYNC PASS (${secs()}) — screenshots orch/out/mp-host.png, orch/out/mp-client.png`);
+console.log(`\nMPSYNC PASS${ART ? ' (artifact edition)' : ''} (${secs()}) — screenshots orch/out/${PFX}mp-host.png, orch/out/${PFX}mp-client.png`);
 process.exit(0);

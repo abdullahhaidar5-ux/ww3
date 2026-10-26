@@ -4,9 +4,9 @@ let G=null,MODE='single',ME=0;
 const BATTLE=1.75;
 // AI difficulty: Easy is slow to build and attack with small waves and no tricks; Hard earns more, thinks faster,
 // attacks early with flanking columns, focuses fire on weakened targets and pulls damaged units back.
-const DIFF=[{wave:4,inc:.7,first:420,think:1.6,flank:0,retreat:0,focus:0,maxWave:10,q:1},
-  {wave:6,inc:1,first:270,think:1,flank:1,retreat:1,focus:0,maxWave:22,q:2},
-  {wave:7,inc:1.35,first:170,think:.6,flank:1,retreat:1,focus:1,maxWave:32,q:3}];
+const DIFF=[{wave:4,inc:.7,first:420,think:1.6,flank:0,retreat:0,focus:0,maxWave:10,q:1,nvAt:480,nvCap:1,nvShare:.08,nvShip:0,nvSortie:2},
+  {wave:6,inc:1,first:270,think:1,flank:1,retreat:1,focus:0,maxWave:22,q:2,nvAt:240,nvCap:4,nvShare:.15,nvShip:1,nvSortie:2},
+  {wave:7,inc:1.35,first:170,think:.6,flank:1,retreat:1,focus:1,maxWave:32,q:3,nvAt:140,nvCap:8,nvShare:.22,nvShip:1,nvSortie:3}];
 function mkAI(d){d=Math.max(0,Math.min(2,d|0));const D=DIFF[d];return{bi:0,wave:D.wave,inc:D.inc,t:0,d};}
 const setup={p:'IR',a:'US',d:1,n:1,bs:BATTLE};
 function mkTeam(id,fac,ai){const F=FACTIONS[fac];return{id,fac,F,sup:F.sup,credits:3000,charge:0,tun:[],q:{hq:[],barracks:[],factory:[],airfield:[],shipyard:[]},rq:{},upg:{},rally:null,
@@ -604,13 +604,60 @@ function aiExpand(T,mine,hq){const id=T.id,dz=mine.filter(e=>e.kind==='dozer'),h
   for(const f of opts.slice(0,4)){for(let k=0;k<30;k++){const a=rnd(0,6.28),r=rnd(150,260),x=f.x+Math.cos(a)*r,y=f.y+Math.sin(a)*r;if(validSpot(id,'hq',x,y)===2){placeBld(id,'hq',x,y,dzr.id);T.ai.exp=(T.ai.exp||0)+1;return;}}}}
 function aiCluster(team){const P=G.ents.filter(e=>e.team===team&&!e.dead);let best=null,bs=-1;for(const a of P){let s=0;for(const b of P)if(Math.hypot(a.x-b.x,a.y-b.y)<170)s+=b.isB?3:1;if(s>bs){bs=s;best=a;}}return best;}
 function aiFoe(T,anchor){const alive=G.teams.filter(O=>!ally(O.id,T.id)&&G.ents.some(e=>e.team===O.id&&e.isB&&!e.dead));if(!alive.length)return T.id===0?1:0;if(T.ai.foe!=null&&alive.some(O=>O.id===T.ai.foe)&&T.ai.t%20)return T.ai.foe;let best=alive[0].id,bd=1e9;for(const O of alive){const b=G.ents.find(e=>e.team===O.id&&e.isB&&!e.dead);const d=b?Math.hypot(b.x-anchor.x,b.y-anchor.y):1e9;if(d<bd){bd=d;best=O.id;}}return T.ai.foe=best;}
+// ---- AI navy ----
+// On maps with real water the AI builds a Shipyard on its own coast (earlier and bigger on Hard, a single patrol boat
+// on Easy), keeps a fleet sized to its land army, and uses it: hunt enemy vessels on the same water, guard its own
+// shoreline, and once the flotilla is big enough sail out to shell coastal enemy buildings. Water bodies come from the
+// pathfinder's naval regions, so a fleet is never sent to water it cannot sail to.
+const NV_MINW=110,NV_SEA=600;
+function navSizes(){const a=regions('naval');if(G._nvs&&G._nvs.a===a)return G._nvs;const n=[];for(let i=0;i<a.length;i++)if(a[i])n[a[i]]=(n[a[i]]||0)+1;return G._nvs={a,n};}
+function bodyAt(x,y){const a=regions('naval'),cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);for(let r=0;r<=2;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const X=cx+dx,Y=cy+dy;if(X<0||Y<0||X>=GW||Y>=GH)continue;const l=a[Y*GW+X];if(l)return l;}return 0;}
+// nearest open-water point of body b within R of (x,y), or null
+function coastSpot(b,x,y,R){const a=regions('naval'),rc=Math.ceil(R/CELL),cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);let best=null,bd=R*R;
+  for(let Y=Math.max(0,cy-rc);Y<=Math.min(GH-1,cy+rc);Y++)for(let X=Math.max(0,cx-rc);X<=Math.min(GW-1,cx+rc);X++){const i=Y*GW+X;if(a[i]!==b||G.grid[i]!==1)continue;const px=X*CELL+CELL/2,py=Y*CELL+CELL/2,d=(px-x)**2+(py-y)**2;if(d<bd){bd=d;best=[px,py];}}return best;}
+function aiNavyPlan(T,anchor){const C=G._nvp||(G._nvp={});let P=C[T.id];if(P&&T.ai.t-P.t<30&&P.ax===anchor.x&&P.ay===anchor.y)return P;
+  const S=navSizes(),gr=regions('ground'),R=2100*WK,rc=Math.ceil(R/CELL),cx0=Math.floor(anchor.x/CELL),cy0=Math.floor(anchor.y/CELL),gh=nearestPassXY('ground',anchor.x,anchor.y),home=gh?gr[Math.floor(gh[1]/CELL)*GW+Math.floor(gh[0]/CELL)]:0,spots=[];
+  for(let cy=Math.max(2,cy0-rc);cy<=Math.min(GH-3,cy0+rc);cy++)for(let cx=Math.max(2,cx0-rc);cx<=Math.min(GW-3,cx0+rc);cx++){const i=cy*GW+cx;if(G.grid[i]!==0||(home&&gr[i]!==home))continue;
+    const px=cx*CELL+CELL/2,py=cy*CELL+CELL/2,d=Math.hypot(px-anchor.x,py-anchor.y);if(d>R)continue;let b=0;
+    for(let dy=-2;dy<=2&&!b;dy++)for(let dx=-2;dx<=2;dx++){const k=(cy+dy)*GW+cx+dx;if(G.grid[k]===1&&S.n[S.a[k]]>=NV_MINW){b=S.a[k];break;}}
+    if(b)spots.push([d,px,py,b]);}
+  spots.sort((p,q)=>p[0]-q[0]);const b=spots.length?spots[0][3]:0,size=b?S.n[b]:0;
+  let reach=false;if(b)for(const e of G.ents){if(e.dead||!e.isB||ally(e.team,T.id))continue;if(coastSpot(b,e.x,e.y,520)){reach=true;break;}}
+  return C[T.id]={t:T.ai.t,ax:anchor.x,ay:anchor.y,b,big:size>=NV_SEA,ok:!!b&&(reach||size>=NV_SEA)&&!(P&&P.fail>4),fail:P?P.fail:0,
+    spots:spots.filter(s=>s[3]===b).slice(0,90).map(s=>[s[1],s[2]]),home:b?coastSpot(b,anchor.x,anchor.y,2300*WK):null};}
+function aiNavyBuild(T,mine,anchor){T.ai.nvW=false;const D=DIFF[T.ai.d??1],id=T.id;if(!G.map.hasWater||!D.nvCap||!bldAllowed(T.fac,'shipyard')||G.t<D.nvAt)return;
+  if(mine.some(e=>e.kind==='shipyard')||!reqMet(id,'shipyard')||!mine.some(e=>e.kind==='dozer'))return;const P=aiNavyPlan(T,anchor);if(!P.ok)return;
+  T.ai.nvW=true;if(mine.some(e=>e.isB&&e.built<1)||T.credits<bstats(T.fac,'shipyard').cost||T.ai.t%3)return;
+  for(const [x,y] of P.spots)if(validSpot(id,'shipyard',x,y)){placeBld(id,'shipyard',x,y);return;}if(++P.fail>4)P.ok=false;}
+// what the Shipyard should build next (null = fleet is big enough)
+function aiNavyPick(T,mine,opts,anchor){const D=DIFF[T.ai.d??1],P=(G._nvp||{})[T.id]||aiNavyPlan(T,anchor);
+  const fleet=mine.filter(e=>!e.isB&&e.s.dom==='naval'&&!e.s.noAttack),land=mine.filter(e=>!e.isB&&e.s.dom==='ground'&&!e.s.noAttack&&e.kind!=='harv').length;
+  const cap=Math.max(1,Math.floor(Math.min(D.nvCap*(P.big?1:.5)*(G.bs||1),1+land*D.nvShare)));if(fleet.length+T.q.shipyard.length>=cap)return null;
+  const foeNav=G.ents.filter(e=>!e.dead&&!e.isB&&e.s.dom==='naval'&&!e.s.noAttack&&!ally(e.team,T.id)).length,ships=fleet.filter(e=>e.s.cls==='ship').length+T.q.shipyard.filter(i=>i.kind==='ship').length;
+  return [D.nvShip&&opts.includes('ship')&&ships<Math.floor((fleet.length+1)*(foeNav>fleet.length?.25:.45))?'ship':'boat'];}
+function aiNavyAct(T,mine){if(T.ai.t%2)return;const fleet=mine.filter(e=>!e.isB&&e.s.dom==='naval'&&!e.s.noAttack);if(!fleet.length)return;
+  const D=DIFF[T.ai.d??1],id=T.id,P=(G._nvp||{})[id],go=(u,x,y)=>{if(u.target)return;const o=u.order;if(o&&!o.nv)return;if(o&&Math.hypot(o.x-x,o.y-y)<160)return;if(!o&&Math.hypot(u.x-x,u.y-y)<120)return;setMove(u,x+rnd(-40,40),y+rnd(-40,40),'amove');u.order.nv=1;};
+  const myB=mine.filter(m=>m.isB),byB=new Map();for(const u of fleet){const b=bodyAt(u.x,u.y);if(!b)continue;if(!byB.has(b))byB.set(b,[]);byB.get(b).push(u);}
+  for(const [b,F] of byB){let cx=0,cy=0;for(const u of F){cx+=u.x;cy+=u.y;}cx/=F.length;cy/=F.length;
+    // 1) enemy vessels on this water: go get them
+    let foe=null,fd=1e18;for(const e of G.ents){if(e.dead||e.isB||e.s.dom!=='naval'||ally(e.team,id))continue;const d=(e.x-cx)**2+(e.y-cy)**2;if(d<fd&&bodyAt(e.x,e.y)===b){fd=d;foe=e;}}
+    if(foe&&(F.length>=2||fd<900*900||foe.s.noAttack)){for(const u of F)go(u,foe.x,foe.y);continue;}
+    // 2) enemies hitting our coastline: defend it
+    let thr=null;if(P&&P.b===b)for(const e of G.ents){if(e.dead||e.isB||ally(e.team,id)||e.s.dom==='air')continue;if(!myB.some(m=>Math.abs(m.x-e.x)<600&&Math.abs(m.y-e.y)<600))continue;const w=coastSpot(b,e.x,e.y,240);if(w){thr=w;break;}}
+    if(thr){for(const u of F)go(u,thr[0],thr[1]);continue;}
+    // 3) flotilla strong enough: shell the nearest coastal enemy structure
+    if(F.length>=D.nvSortie){if(!T.ai.nvTg||T.ai.nvTg.dead||T.ai.nvTb!==b||T.ai.t%20===0){T.ai.nvTg=null;const tg=G.ents.filter(e=>e.isB&&!e.dead&&!ally(e.team,id)).sort((p,q)=>((p.x-cx)**2+(p.y-cy)**2)-((q.x-cx)**2+(q.y-cy)**2));
+        for(const e of tg.slice(0,40))if(coastSpot(b,e.x,e.y,470)){T.ai.nvTg=e;T.ai.nvTb=b;break;}}
+      const t=T.ai.nvTg;if(t){const far=coastSpot(b,t.x,t.y,470),near=coastSpot(b,t.x,t.y,200);for(const u of F){const w=u.s.rng>=400?far:(near||far);if(w)go(u,w[0],w[1]);}continue;}}
+    // 4) otherwise hold on our own coast
+    if(P&&P.b===b&&P.home)for(const u of F)go(u,P.home[0],P.home[1]);}}
 // AI sends the nearest infantry to re-crew its own abandoned vehicles or capture the enemy's
 function aiSalvage(T,mine){if(T.ai.t%3)return;for(const v of G.ents){if(v.dead||!v.aband)continue;let best=null,bd=650*650;for(const u of mine){if(u.isB||u.dead||!isInf(u.s)||u.s.noAttack||u.kind==='hacker'||u.rout>G.t||u.inTun)continue;const d=(u.x-v.x)**2+(u.y-v.y)**2;if(d<bd){bd=d;best=u;}}if(best&&!(best.order&&best.order.salv===v.id)){setMove(best,v.x,v.y,'move');best.order.salv=v.id;}}}
 function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);const hq=mine.find(e=>e.kind==='hq');const anchor=hq||mine.find(e=>e.isB);if(!anchor)return;T.ai.t++;aiSalvage(T,mine);const en=aiFoe(T,anchor);
   const harvs=mine.filter(e=>e.kind==='harv').length;if(hq&&harvs<3+(G.t>300?1:0)&&!T.q.hq.length)enqueue(id,'harv');
   aiExpand(T,mine,hq);
   {const fnd=mine.filter(e=>e.isB&&e.nd&&e.built<1);const dzs=mine.filter(e=>e.kind==='dozer');for(const b of fnd){if(dzs.some(u=>u.order&&u.order.type==='build'&&u.order.target===b))continue;const fr=dzs.filter(u=>!u.order||u.order.type!=='build').sort((p,q)=>dist(p,b)-dist(q,b))[0];if(fr){fr.order={type:'build',target:b};fr.path=null;}}}
-  while(AIORDER[T.ai.bi]&&!bldAllowed(T.fac,AIORDER[T.ai.bi]))T.ai.bi++;
+  while(AIORDER[T.ai.bi]&&(!bldAllowed(T.fac,AIORDER[T.ai.bi])||AIORDER[T.ai.bi]==='shipyard'))T.ai.bi++;
   if(T.ai.bi>1&&!mine.some(e=>e.kind==='barracks'))T.ai.re='barracks';else if(T.ai.bi>2&&!mine.some(e=>e.kind==='factory'))T.ai.re='factory';else T.ai.re=null;
   if(T.ai.re&&!mine.some(e=>e.isB&&e.built<1)){const s=bstats(T.fac,T.ai.re);if(T.credits>=s.cost){const p=aiFindSpot(id,T.ai.re,anchor);if(p)placeBld(id,T.ai.re,p[0],p[1]);}}
   {const dps=mine.filter(e=>e.kind==='depot'||e.kind==='hq');if(T.ai.t%11===5&&dps.length&&mine.filter(e=>e.kind==='depot').length<3&&T.credits>bstats(T.fac,'depot').cost+400&&!mine.some(e=>e.isB&&e.built<1)&&mine.some(e=>e.kind==='harv')){
@@ -618,14 +665,15 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   {const ec=mine.filter(e=>e.kind==='econ').length,left=G.fields.reduce((a,f)=>a+Math.max(0,f.amt),0)/Math.max(1,G.fields.length*9000);
    if(T.ai.t%13===7&&ec<4&&reqMet(id,'econ')&&!mine.some(e=>e.isB&&e.built<1)&&(G.t>480+ec*240||left<.35)&&T.credits>bstats(T.fac,'econ').cost+(left<.35?200:900)){const p=aiFindSpot(id,'econ',anchor);if(p)placeBld(id,'econ',p[0],p[1]);}}
   if(T.ai.t%15===8&&T.credits>2500){const poor=G.teams.filter(O=>O.id!==id&&!O.out&&ally(O.id,id)&&O.credits<500).sort((a,b)=>(a.ai?1:0)-(b.ai?1:0))[0];if(poor)giveMoney(id,poor.id,Math.min(1500,Math.round(T.credits*.3)));}
+  aiNavyBuild(T,mine,anchor);
   const nk=T.ai.re?null:AIORDER[T.ai.bi];if(nk&&!reqMet(id,nk)){if(++T.ai.rq>45){T.ai.bi++;T.ai.rq=0;}}else T.ai.rq=0;if(nk&&reqMet(id,nk)&&!mine.some(e=>e.isB&&e.built<1)){const s=bstats(T.fac,nk);if(T.credits>=s.cost){const p=aiFindSpot(id,nk,anchor);if(p){placeBld(id,nk,p[0],p[1]);T.ai.bi++;T.ai.nf=0;}else if(STRUCT[nk].shore||++T.ai.nf>8){T.ai.bi++;T.ai.nf=0;}}}
-  const reserve=Math.max((nk&&reqMet(id,nk))?bstats(T.fac,nk).cost*(T.ai.bi<6?1:.6):0,T.ai.saveHq?bstats(T.fac,'hq').cost*.8:0);
+  const reserve=Math.max((nk&&reqMet(id,nk))?bstats(T.fac,nk).cost*(T.ai.bi<6?1:.6):0,T.ai.saveHq?bstats(T.fac,'hq').cost*.8:0,T.ai.nvW?bstats(T.fac,'shipyard').cost*.8:0);
   const R=roster(T.fac),enemyAir=G.ents.filter(e=>e.team===en&&!e.isB&&e.s.dom==='air').length;
-  for(const cat of ['barracks','factory','airfield','shipyard']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
+  for(const cat of ['shipyard','barracks','factory','airfield']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
     if(cat==='factory'){opts=enemyAir>=2?['aa','aa',...opts]:opts.filter(k=>k!=='aa'||Math.random()<.2);}
-    if(cat==='airfield'&&Math.random()<.5)continue;if(cat==='shipyard'&&Math.random()<.6)continue;
+    if(cat==='airfield'&&Math.random()<.5)continue;if(cat==='shipyard'){opts=aiNavyPick(T,mine,opts,anchor)||[];}
     if(cat==='factory')opts=opts.filter(k=>k!=='drone'||Math.random()<.35);if(!opts.length)continue;
-    const k=opts[Math.floor(Math.random()*opts.length)];if(k&&T.credits-reserve>=stats(T.fac,k).cost)enqueue(id,k);}
+    const k=opts[Math.floor(Math.random()*opts.length)];const sv=cat!=='shipyard'&&T.ai.nvSv>G.t-25?stats(T.fac,'ship').cost*.7:0;if(k&&T.credits-reserve-sv>=stats(T.fac,k).cost)enqueue(id,k);else if(k==='ship')T.ai.nvSv=G.t;}
   if(T.credits>1700&&T.ai.t%5===0){const ups=upgList(T.fac).filter(k=>!T.upg[k]&&done(id,UPG[k].at)&&!T.rq[UPG[k].at]);if(ups.length)startResearch(id,ups[Math.floor(Math.random()*ups.length)]);}
   if(T.rank-T.spent>0){{let did=false;for(const k of ['nat','bounty','barrage','repair','para','recon'])if(!T.pw[k]){did=buyPower(id,k);break;}if(!did)for(const k of ['nat','barrage','repair'])if(T.pw[k]&&buyPower(id,k))break;}}
   if(T.pw.nat&&T.pw.nat.cd<=0&&T.ai.t%5===2){const N=natPow(T.fac);const c=aiCluster(en);const army=mine.filter(e=>!e.isB);
@@ -635,7 +683,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
     else if(c&&(N.type!=='cyber'&&N.type!=='intel'||true))usePower(id,'nat',c.x,c.y);}
   if(T.pw.barrage&&T.pw.barrage.cd<=0&&T.ai.t%7===0){const c=aiCluster(en);if(c&&G.ents.some(e=>e.team===id&&Math.hypot(e.x-c.x,e.y-c.y)<900))usePower(id,'barrage',c.x,c.y);}
   if(T.pw.repair&&T.pw.repair.cd<=0){const hurt=mine.filter(e=>!e.isB&&e.hp<e.max*.45);if(hurt.length>=4)usePower(id,'repair',hurt[0].x,hurt[0].y);}
-  const army=mine.filter(e=>!e.isB&&!['harv','hacker','jet','dozer'].includes(e.kind));const pb=G.ents.filter(e=>e.team===en&&e.isB&&!e.dead);
+  const army=mine.filter(e=>!e.isB&&e.s.dom!=='naval'&&!['harv','hacker','jet','dozer'].includes(e.kind));const pb=G.ents.filter(e=>e.team===en&&e.isB&&!e.dead);
   let threat=null;for(const e of G.ents){if(ally(e.team,id)||e.dead||e.isB)continue;if(mine.some(b=>b.isB&&Math.hypot(b.x-e.x,b.y-e.y)<560)){threat=e;break;}}
   if(threat)for(const u of army)if(!u.order&&Math.hypot(u.x-anchor.x,u.y-anchor.y)<1100&&canTarget(u.s,threat))setMove(u,threat.x,threat.y,'amove');
   const idle=army.filter(u=>!u.order&&!u.target);
@@ -646,7 +694,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
       const fx=anchor.x+Math.cos(ang)*D*.62+Math.cos(ang+side*1.57)*Math.min(650,D*.35),fy=anchor.y+Math.sin(ang)*D*.62+Math.sin(ang+side*1.57)*Math.min(650,D*.35);
       for(const u of fl){setMove(u,fx+rnd(-50,50),fy+rnd(-50,50),'amove');u.flank=G.t;}const main=home.filter(u=>!fl.includes(u));const gnd=main.filter(u=>u.s.dom==='ground'),oth=main.filter(u=>u.s.dom!=='ground');if(gnd.length)formMove(gnd,t.x,t.y,'amove',1,4);for(const u of oth)setMove(u,t.x+rnd(-60,60),t.y+rnd(-60,60),'amove');
       if(fl.length)T.ai.flanks=(T.ai.flanks||0)+1;T.ai.wave=Math.min(T.ai.wave+Math.round(2*(G.bs||1)),Math.round(DIFF[T.ai.d??1].maxWave*(G.bs||1)));log(en,'Enemy attack force spotted moving out.','w');}
-  for(const u of mine)if(u.s.dom==='naval'&&!u.order&&!u.target&&pb.length){const t=pb.reduce((a,b)=>dist(a,u)<dist(b,u)?a:b);const w=nearestPassXY('naval',t.x,t.y);if(w)setMove(u,w[0],w[1],'amove');}
+  aiNavyAct(T,mine);
   if(T.ai.t%6===0)for(const u of mine)if(u.kind==='jet'&&u.state==='park'&&u.ammo>=u.s.ammo&&pb.length){const t=pb[Math.floor(Math.random()*pb.length)];u.order={type:'attack',target:t};u.state='fly';u.landed=false;}
   if(T.ai.t%4===0){const free=G.oil.filter(o=>!ally(o.owner,id)).sort((a,b)=>dist(a,anchor)-dist(b,anchor))[0];if(free){const inf=mine.find(u=>!u.isB&&u.kind==='inf'&&!u.order&&!u.target);if(inf&&Math.hypot(free.x-anchor.x,free.y-anchor.y)<1700)setMove(inf,free.x,free.y,'move');}}
   if(T.ai.t%9===0){const tgt=G.oil.filter(o=>!o.dead&&o.owner>=0&&!ally(o.owner,id)).sort((p,q)=>dist(p,anchor)-dist(q,anchor))[0];if(tgt&&dist(tgt,anchor)<1500){const sq=army.filter(u=>!u.order&&!u.target&&u.s.dom==='ground'&&canTarget(u.s,tgt.tg)).slice(0,4);for(const u of sq){u.order={type:'attack',target:tgt.tg};u.path=null;}}}
