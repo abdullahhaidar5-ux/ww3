@@ -1,5 +1,45 @@
 /* ================= UI: sidebar, input, menu, main loop ================= */
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
+/* ---------- Phones: layout + touch sizing (desktop untouched; only applies to small screens / touch pointers) ----------
+   Small screens: the sidebar's big sticky top (name, sound buttons, minimap) used to cover the build tabs, so the
+   minimap moves onto the map's corner and the sidebar reorders to put Pause/Quit, the tabs and the build grid first.
+   Touch pointers: buttons, toggles and sliders grow to finger size (40px). */
+const COARSE=matchMedia('(pointer:coarse)').matches;
+const PHONE_MQ='(max-width:760px), (max-height:520px) and (orientation:landscape)';
+(function phoneCss(){const s=document.createElement('style');s.id='phoneCss';s.textContent=`
+@media (max-height:520px) and (orientation:landscape){
+  #app{grid-template-columns:minmax(0,1fr) 236px;gap:6px;padding-block:6px;padding-left:max(6px,env(safe-area-inset-left,0px));padding-right:max(6px,env(safe-area-inset-right,0px))}
+  #side{padding:8px;gap:7px}
+  #facname{font-size:16px}#credits{font-size:15px}
+}
+@media ${PHONE_MQ}{
+  #sideTop{display:contents}
+  #sideTop>.hdr{order:-6}
+  #sideTop>.gctl{order:-5}
+  #side>.tabs{order:-4;position:sticky;top:-8px;z-index:3;background:var(--panel);box-shadow:0 6px 8px -6px rgba(0,0,0,.7)}
+  #panel{order:-3}#info{order:-2}
+  #sideTop>.audio:not(.gctl){order:5}
+  #log{order:6}
+  #stage>#mm{position:absolute;left:6px;bottom:6px;z-index:4;width:min(46%,200px);height:auto;max-height:36%;margin:0;opacity:.94}
+  #hint{left:auto;right:6px;bottom:6px;max-width:48%;text-align:right;font-size:10px;line-height:1.35;background:rgba(10,14,12,.6);padding:4px 6px;transition:opacity .7s}
+  #hint.gone{opacity:0}
+}
+@media (pointer:coarse){
+  .seg button,.audio button,.tabs button,.sqh button,.cmdrow button,#allyBox button,.sbx button,.btn2,.chip,.rndmap,#supbtn,#openSettings,.game button,.seatx,.sqs button{min-height:40px}
+  .seg button{min-width:44px}
+  select{min-height:40px}
+  input[type=range]{min-height:40px;flex:none}
+  input[type=text],input:not([type]),input[type=password]{min-height:40px}
+  .btn,.big{min-height:44px}
+}`;document.head.appendChild(s);})();
+// The minimap sits on the map's corner on phones (absolute inside #stage) and back in the sidebar otherwise.
+function phoneLayout(){const ph=matchMedia(PHONE_MQ).matches,st=$('stage'),top=$('sideTop');if(!st||!top||typeof mm==='undefined')return;
+  if(ph&&mm.parentElement!==st)st.appendChild(mm);else if(!ph&&mm.parentElement!==top)top.appendChild(mm);
+  if(COARSE&&$('hint')&&!$('hint').dataset.touch){$('hint').dataset.touch=1;
+    $('hint').textContent='Tap: select · Tap ground: move · Tap enemy: attack · Drag: select area · Two fingers: pan & pinch zoom';
+    let taps=0;cv.addEventListener('pointerup',()=>{if(++taps>=3)$('hint').classList.add('gone');});}
+  try{resize();}catch(_){}}
+phoneLayout();try{matchMedia(PHONE_MQ).addEventListener('change',phoneLayout);}catch(_){}
 function log(team,msg,kind){FXE('log',[team,msg,kind||'']);}
 function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);const el=$('log');el.innerHTML='';for(const x of G.msgs){const d=document.createElement('div');d.className=x.k||'';d.textContent=x.m;el.append(d);}}
 function endGame(winner,reason){if(!G||G.over)return;if(MODE==='host'&&G.out){G.out.push(['end',winner]);NET.evT=0;}showEnd(winner,reason);}
@@ -145,15 +185,27 @@ function rightRelease(d){if(!G)return;
     if(d.pt!=='mouse'&&(mine||bsel)&&!d.shift&&(!(t&&t.team===ME)||dzHelp)){const w=screenToWorld(mouse.x,mouse.y);if(w&&issueCmd(w,t,bsel)){updateUI();return;}}
     selectClick(t,d.shift);}
   if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);updateUI();}
-let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
+// Touch camera: two fingers on the map pan it, and pinching zooms in and out. While two fingers are down the game
+// issues no orders at all, and the taps that end the gesture are ignored, so panning never moves your units.
+const TOUCH=new Map();let GEST=null,gestHold=0;
+const gestDist=()=>{const p=[...TOUCH.values()];return Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);};
+const gestMid=()=>{const p=[...TOUCH.values()];return{x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2};};
+function gestStart(){if(TOUCH.size!==2)return;drag=null;RDRAG=null;mpan=null;GEST={d:gestDist(),m:gestMid()};gestHold=1;}
+function gestMove(){if(!GEST||TOUCH.size!==2)return;const d=gestDist(),m=gestMid();
+  const k=cam.dist/700*(SET.scr||100)/100;cam.x-=(m.x-GEST.m.x)*k;cam.y-=(m.y-GEST.m.y)*k*1.4;
+  if(GEST.d>8&&d>8){camTarget();cam.td=Math.max(200,Math.min(1800,cam.td*(GEST.d/d)));}
+  GEST.m=m;GEST.d=d;}
+let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;mpos(e);
+  if(e.pointerType==='touch'){TOUCH.set(e.pointerId,{x:e.clientX,y:e.clientY});if(TOUCH.size>=2){e.preventDefault();gestStart();return;}}if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.place){const m=validSpot(ME,G.place,w.x,w.y);if(m){const dz=G.sel.find(u=>u.kind==='dozer'&&u.team===ME&&!u.dead);doAct({t:'bld',k:G.place,x:w.x,y:w.y,dz:dz?dz.id:0});speak(1);if(!e.shiftKey)G.place=null;}else pushLog(validSpot.why||'Cannot build there.','w');return;}
   if(G.aim){if(G.aim==='sup')doAct({t:'sup',x:w.x,y:w.y});else doAct({t:'pow',k:G.aim,x:w.x,y:w.y});G.aim=null;return;}
   if(!rightPress(e))return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:e.pointerType||'mouse'};});
-cv.addEventListener('pointermove',e=>{mpos(e);if(RDRAG&&e.pointerId===RDRAG.id){if(Math.hypot(mouse.x-RDRAG.x0,mouse.y-RDRAG.y0)>22)RDRAG.moved=true;return;}if(mpan&&e.pointerId===mpan.id){const k=cam.dist/700*(SET.scr||100)/100;cam.x-=(e.clientX-mpan.x)*k;cam.y-=(e.clientY-mpan.y)*k*1.4;mpan.x=e.clientX;mpan.y=e.clientY;return;}if(drag&&Math.hypot(mouse.x-drag.x0,mouse.y-drag.y0)>(SET.tol||8))drag.box=true;});
-window.addEventListener('pointerup',e=>{if(mpan&&e.pointerId===mpan.id){mpan=null;return;}if(RDRAG&&e.pointerId===RDRAG.id){const r=RDRAG;RDRAG=null;const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(r.moved&&w1&&ids.length){doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);PINGS.push({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}else orderClick(r.shift);return;}if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;rightRelease(d);});
-window.addEventListener('pointercancel',e=>{if(drag&&e.pointerId===drag.id)drag=null;});
+cv.addEventListener('pointermove',e=>{mpos(e);if(TOUCH.has(e.pointerId)){TOUCH.set(e.pointerId,{x:e.clientX,y:e.clientY});if(GEST){e.preventDefault();gestMove();return;}}if(RDRAG&&e.pointerId===RDRAG.id){if(Math.hypot(mouse.x-RDRAG.x0,mouse.y-RDRAG.y0)>22)RDRAG.moved=true;return;}if(mpan&&e.pointerId===mpan.id){const k=cam.dist/700*(SET.scr||100)/100;cam.x-=(e.clientX-mpan.x)*k;cam.y-=(e.clientY-mpan.y)*k*1.4;mpan.x=e.clientX;mpan.y=e.clientY;return;}if(drag&&Math.hypot(mouse.x-drag.x0,mouse.y-drag.y0)>(SET.tol||8))drag.box=true;});
+window.addEventListener('pointerup',e=>{if(TOUCH.has(e.pointerId)){TOUCH.delete(e.pointerId);if(GEST&&TOUCH.size<2)GEST=null;if(gestHold){if(!TOUCH.size)gestHold=0;if(drag&&e.pointerId===drag.id)drag=null;return;}}
+  if(mpan&&e.pointerId===mpan.id){mpan=null;return;}if(RDRAG&&e.pointerId===RDRAG.id){const r=RDRAG;RDRAG=null;const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(r.moved&&w1&&ids.length){doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);PINGS.push({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}else orderClick(r.shift);return;}if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;rightRelease(d);});
+window.addEventListener('pointercancel',e=>{if(TOUCH.has(e.pointerId)){TOUCH.delete(e.pointerId);if(GEST&&TOUCH.size<2)GEST=null;if(!TOUCH.size)gestHold=0;}if(drag&&e.pointerId===drag.id)drag=null;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;if(!G||$('menu').hidden===false)return;
   if(/^Digit[1-5]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
@@ -179,7 +231,7 @@ mm.addEventListener('pointermove',e=>{if(mmDown!==e.pointerId)return;const w=mmW
 mm.addEventListener('pointerup',e=>{if(mmDown===e.pointerId)mmDown=null;});mm.addEventListener('pointercancel',()=>{mmDown=null;});
 mm.addEventListener('contextmenu',e=>e.preventDefault());
 function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100;if(keys.ArrowLeft||keys.a)cam.tx-=sp;if(keys.ArrowRight||keys.d)cam.tx+=sp;if(keys.ArrowUp||keys.w)cam.ty-=sp;if(keys.ArrowDown||keys.s)cam.ty+=sp;
-  if(mouse.in&&!drag&&SET.edge){if(mouse.x<14)cam.tx-=sp;if(mouse.x>VW-14)cam.tx+=sp;if(mouse.y<14)cam.ty-=sp;if(mouse.y>VH-14)cam.ty+=sp;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
+  if(mouse.in&&!drag&&SET.edge&&!COARSE){if(mouse.x<14)cam.tx-=sp;if(mouse.x>VW-14)cam.tx+=sp;if(mouse.y<14)cam.ty-=sp;if(mouse.y>VH-14)cam.ty+=sp;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
 
 /* ---------- game start / reset ---------- */
 function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
