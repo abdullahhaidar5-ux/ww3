@@ -21,7 +21,7 @@ const PHONE_MQ='(max-width:760px), (max-height:520px) and (orientation:landscape
   #sideTop>.audio:not(.gctl){order:5}
   #log{order:6}
   #stage>#mm{position:absolute;left:6px;bottom:6px;z-index:4;width:min(46%,200px);height:auto;max-height:36%;margin:0;opacity:.94}
-  #hint{left:auto;right:6px;bottom:6px;max-width:48%;text-align:right;font-size:10px;line-height:1.35;background:rgba(10,14,12,.6);padding:4px 6px;transition:opacity .7s}
+  #hint{left:52%;right:6px;bottom:6px;text-align:right;font-size:10px;line-height:1.35;background:rgba(10,14,12,.6);padding:4px 6px;transition:opacity .7s}
   #hint.gone{opacity:0}
 }
 @media (pointer:coarse){
