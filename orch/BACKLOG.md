@@ -83,6 +83,8 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
 - [open] Intermittent MPSYNC fail (1 of 3 runs, 2026-10-26): at the final settle check the client still showed 4 host
   infantry (team 0) that had left its vision — stale units not removed on the client when they leave sight. Find and fix.
+  Confirmed pre-existing (2026-10-26 evening): unchanged live build failed 1 of 2 runs the same way (4 host
+  infantry stale on the client); the maps build failed 1 of 1, the phone+maps build passed. ~40-50% of runs.
 - [open] Review the ~5% of `testbed` netcode lines not in live; merge what's still useful, then mark `testbed`
   superseded (don't delete it).
 - [ask] Cloudflare relay: needs Abdullah's Cloudflare account to deploy `relay-worker.js` and set `RELAY_CF_URL`.
