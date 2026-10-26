@@ -8,17 +8,7 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
-- [open] **Merge branch `orch/2026-10-26-parallel-v2` first** — gated, ready work (artifact build `--artifact`,
-  MP reconnect fix, AI navy, dust trails/ricochet sparks) held back only by the run-lock. See LOG 16:20 entry.
-- [open] **Keep the claude.ai artifact in sync with GitHub Pages** (Abdullah, 2026-10-26). Artifact:
-  https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi (7 MB page + 20 published files). It is NOT a copy of
-  `index.html`: it loads Three.js from cdnjs and its multiplayer runs over the artifact `room` capability (topics
-  cmd/evt/hello/lobby/snap/start/team) instead of PeerJS. Needed: `orch/build.py --artifact` that emits the artifact
-  variant from `src/` (room transport in place of PeerJS, `vo/`+`mus/` as published files, no SW/manifest), verify
-  with smoke, then ORCH republishes it with the Artifact tool at every ship (step 8). Netcode squad + QA.
-  Gap as of 2026-10-26 07:50: the artifact lacks rotor wash, boat wakes, menu music and the always-a-winner fix.
-  Starting points on `testbed`: `v3/shell.html` (artifact-style page shell) and `v3/p2p.js` (the PeerJS layer that
-  was written to stand in for the room capability — the artifact build is that swap in reverse).
+- _(none open — cycle 4 shipped the artifact build and republished it)_
 
 ## Questions for Abdullah
 
@@ -43,29 +33,29 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   a faction-specific cost?) and whether UA's start is out of line. Repro: `node orch/mapsweep.mjs --players 2`.
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
   below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
+- [open] AI navy arrives late (~6 game-min on Normal; buildings come first) and never uses landing craft.
 - [check] AI uses flanking and cover (DIFF has `flank`/`retreat` params) — verify in battles, strengthen on Hard.
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
 - [open] Measure FPS on a real phone (needs a real device, not emulation): busy 4-player late game, many helicopters
   (rotor wash), and the new phone layout.
-- [open] AI almost never builds boats, so naval wakes (and navy) are rarely seen — make AI use navy on water maps.
-- [open] Ricochet sparks when small arms hit armour.
 - [check] Time-of-day/lighting variety: the skirmish menu already has Conditions (Clear day / Golden hour /
   Overcast, `#wx` in `08-ui`). Verify each looks right in battle and that multiplayer matches use it too; consider
   dusk and a "random" option.
-- [open] Dust trails behind fast vehicles on dry maps (old-run idea, not in the code).
 
 **Audio & voice** (`09-audio`, `vo/`, `mus/`)
 - [open] Full native-language unit responses per nation (select / move / attack / under fire / unit lost), recorded
   quality, not browser text-to-speech. `vo/` holds one clip per nation today.
 - [open] Real recorded war scores for the 15 non-Shia nations (today all music is synthesized live per nation from
-  `09-audio.js` STYLES + instrument samples in `mus/smp.mp3`). Meanwhile: give US, EU, RU, KP a signature instrument
-  (only snare today); IR and RS share santur+dammam backing — differentiate; tracks named "Battle Theme I/II".
+  `09-audio.js` STYLES + instrument samples in `mus/smp.mp3`).
+- [open] Listen on a phone: the new signature layers (US bugles, EU strings, RU choir/bells, KP brass, RS qanun/daf)
+  were tuned headless — check they're audible but not too loud next to the main mix.
 - [open] Menu music: test iOS audio unlock on a real iPhone; soft fade-in on first note; it loads the 3.3 MB `mus/smp.mp3` on first tap.
 
 ## P2 — next
 
 **Visuals**
+- [open] Ricochet sparks may also show on infantry standing right next to a vehicle — filter by actual target.
 - [check] Muzzle-flash and impact-spark polish.
 - [check] Battlefield debris near roads: shell casings, burnt patches (some debris exists).
 - [check] Bridge guard rails and lamp posts look too modern.
@@ -87,6 +77,9 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   infantry stale on the client); the maps build failed 1 of 1, the phone+maps build passed. ~40-50% of runs.
 - [open] Review the ~5% of `testbed` netcode lines not in live; merge what's still useful, then mark `testbed`
   superseded (don't delete it).
+- [open] Artifact: next republish pass `capabilities` once (from `orch/out/artifact/publish.json`) to open the `ck`
+  and `pong` room topics; cycle 4 republished without it (stored declaration carried forward). Untested on the real
+  claude.ai room: latency, ~40 msg/s cap, drops, host migration.
 - [ask] Cloudflare relay: needs Abdullah's Cloudflare account to deploy `relay-worker.js` and set `RELAY_CF_URL`.
 
 **Maps** (`02-map`)
@@ -99,6 +92,14 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## Done
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
+
+- 2026-10-26 (cycle 4) — **claude.ai artifact back in sync with Pages:** `build.py --artifact` builds it from `src/`
+  (`orch/ARTIFACT.md`), artifact smoke + MPSYNC in a stand-in room pass; republished (version 155).
+- 2026-10-26 (cycle 4) — A multiplayer player whose connection blips gets their army back on reconnect (`07-net`).
+- 2026-10-26 (cycle 4) — AI builds a shipyard and fields a navy (12/18/26% of army by difficulty) on water maps.
+- 2026-10-26 (cycle 4) — Dust trails behind fast vehicles (by terrain; none on water) + ricochet sparks on armour.
+- 2026-10-26 (cycle 4) — National music identity: US bugles + field snare, EU strings/horns/harp, RU male choir +
+  low brass + bells, KP brass-band march, RS qanun/daf/violin (still latmiyas); nation-specific track titles.
 
 - 2026-10-26 (side lane) — **Phones can play:** build tabs no longer hidden behind the small map (it moves to the
   battlefield corner); two-finger pan and pinch zoom; touch placement with a Cancel button; bigger buttons; touch

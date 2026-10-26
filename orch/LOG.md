@@ -2,6 +2,18 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-26 18:00 — cycle 4
+
+- Waited 80 min on cycle 3's lock (expired 18:40 UTC, no commits), then took it. Baseline: `--check` OK, SMOKE PASS.
+- Dispatched 4 squads (artifact build, AI navy, dust/ricochet, national music). Three duplicated the parallel cycle's
+  gated branch `orch/2026-10-26-parallel-v2`, which landed meanwhile; shipped that reviewed branch instead and kept
+  cycle 4's duplicates only as local worktree branches (not pushed). Audio work was unique → merged.
+- Shipped: parallel-v2 (artifact build, MP reconnect fix, AI navy, dust trails + ricochet sparks) + national music.
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, artifact smoke PASS, artifact MPSYNC PASS. Sim/net diff was
+  already fresh-reviewed on parallel-v2 (2 navy bugs fixed there); audio is client-only → no new review.
+- claude.ai artifact republished (v155) without `capabilities` (ck/pong topics still to open — backlog).
+- Lesson: overlapping cycles wasted ~3 agent-hours. ORCH.md step 8 now includes the artifact gate.
+
 ## 2026-10-26 16:20 — parallel cycle (fired 08:24, before the run-lock existed) — NOT shipped, waiting on branch
 
 - Skipped shipping: cycle 4 holds the run-lock. Finished, gated work is on branch `orch/2026-10-26-parallel-v2`
