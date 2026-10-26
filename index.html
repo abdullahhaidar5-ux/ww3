@@ -5893,14 +5893,14 @@ function aiNavyPlan(T,anchor){const C=G._nvp||(G._nvp={});let P=C[T.id];if(P&&T.
     if(b)spots.push([d,px,py,b]);}
   spots.sort((p,q)=>p[0]-q[0]);const b=spots.length?spots[0][3]:0,size=b?S.n[b]:0;
   let reach=false;if(b)for(const e of G.ents){if(e.dead||!e.isB||ally(e.team,T.id))continue;if(coastSpot(b,e.x,e.y,520)){reach=true;break;}}
-  return C[T.id]={t:T.ai.t,ax:anchor.x,ay:anchor.y,b,big:size>=NV_SEA,ok:!!b&&(reach||size>=NV_SEA),fail:0,
+  return C[T.id]={t:T.ai.t,ax:anchor.x,ay:anchor.y,b,big:size>=NV_SEA,ok:!!b&&(reach||size>=NV_SEA)&&!(P&&P.fail>4),fail:P?P.fail:0,
     spots:spots.filter(s=>s[3]===b).slice(0,90).map(s=>[s[1],s[2]]),home:b?coastSpot(b,anchor.x,anchor.y,2300*WK):null};}
 function aiNavyBuild(T,mine,anchor){T.ai.nvW=false;const D=DIFF[T.ai.d??1],id=T.id;if(!G.map.hasWater||!D.nvCap||!bldAllowed(T.fac,'shipyard')||G.t<D.nvAt)return;
   if(mine.some(e=>e.kind==='shipyard')||!reqMet(id,'shipyard')||!mine.some(e=>e.kind==='dozer'))return;const P=aiNavyPlan(T,anchor);if(!P.ok)return;
   T.ai.nvW=true;if(mine.some(e=>e.isB&&e.built<1)||T.credits<bstats(T.fac,'shipyard').cost||T.ai.t%3)return;
   for(const [x,y] of P.spots)if(validSpot(id,'shipyard',x,y)){placeBld(id,'shipyard',x,y);return;}if(++P.fail>4)P.ok=false;}
 // what the Shipyard should build next (null = fleet is big enough)
-function aiNavyPick(T,mine,opts){const D=DIFF[T.ai.d??1],P=(G._nvp||{})[T.id];if(!P||!P.ok)return null;
+function aiNavyPick(T,mine,opts,anchor){const D=DIFF[T.ai.d??1],P=(G._nvp||{})[T.id]||aiNavyPlan(T,anchor);
   const fleet=mine.filter(e=>!e.isB&&e.s.dom==='naval'&&!e.s.noAttack),land=mine.filter(e=>!e.isB&&e.s.dom==='ground'&&!e.s.noAttack&&e.kind!=='harv').length;
   const cap=Math.max(1,Math.floor(Math.min(D.nvCap*(P.big?1:.5)*(G.bs||1),1+land*D.nvShare)));if(fleet.length+T.q.shipyard.length>=cap)return null;
   const foeNav=G.ents.filter(e=>!e.dead&&!e.isB&&e.s.dom==='naval'&&!e.s.noAttack&&!ally(e.team,T.id)).length,ships=fleet.filter(e=>e.s.cls==='ship').length+T.q.shipyard.filter(i=>i.kind==='ship').length;
@@ -5941,7 +5941,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   const R=roster(T.fac),enemyAir=G.ents.filter(e=>e.team===en&&!e.isB&&e.s.dom==='air').length;
   for(const cat of ['shipyard','barracks','factory','airfield']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
     if(cat==='factory'){opts=enemyAir>=2?['aa','aa',...opts]:opts.filter(k=>k!=='aa'||Math.random()<.2);}
-    if(cat==='airfield'&&Math.random()<.5)continue;if(cat==='shipyard'){opts=aiNavyPick(T,mine,opts)||[];}
+    if(cat==='airfield'&&Math.random()<.5)continue;if(cat==='shipyard'){opts=aiNavyPick(T,mine,opts,anchor)||[];}
     if(cat==='factory')opts=opts.filter(k=>k!=='drone'||Math.random()<.35);if(!opts.length)continue;
     const k=opts[Math.floor(Math.random()*opts.length)];const sv=cat!=='shipyard'&&T.ai.nvSv>G.t-25?stats(T.fac,'ship').cost*.7:0;if(k&&T.credits-reserve-sv>=stats(T.fac,k).cost)enqueue(id,k);else if(k==='ship')T.ai.nvSv=G.t;}
   if(T.credits>1700&&T.ai.t%5===0){const ups=upgList(T.fac).filter(k=>!T.upg[k]&&done(id,UPG[k].at)&&!T.rq[UPG[k].at]);if(ups.length)startResearch(id,ups[Math.floor(Math.random()*ups.length)]);}
