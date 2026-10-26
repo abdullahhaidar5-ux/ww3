@@ -35,6 +35,7 @@ function initFX(){PN_=mkPoints(THREE.NormalBlending);PA_=mkPoints(THREE.Additive
   const tg=new THREE.BufferGeometry();tg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(800*6),3).setUsage(THREE.DynamicDrawUsage));tg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(800*6),3).setUsage(THREE.DynamicDrawUsage));
   TRC=new THREE.LineSegments(tg,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));TRC.frustumCulled=false;SCN.add(TRC);
   {const rg=new THREE.RingGeometry(.72,1,48).rotateX(-Math.PI/2);for(let i=0;i<10;i++){const m=new THREE.Mesh(rg,new THREE.MeshBasicMaterial({color:0xd8ccb4,transparent:true,opacity:0,depthWrite:false}));m.scale.setScalar(.001);m.position.set(0,-500,0);m.renderOrder=2;m.frustumCulled=false;SCN.add(m);SHOCKS.push({m,t:9,d:1,r0:1,r1:1,a0:0,x:0,y:0});}}
+  initWash();
   for(let i=0;i<4;i++){const l=new THREE.PointLight(0xffa860,0,320,2);l.position.set(-999,-999,-999);SCN.add(l);LIGHTS.push(l);}for(let i=0;i<3;i++){const l=new THREE.PointLight(0xff8a3a,0,170,2);l.position.set(-999,-999,-999);SCN.add(l);WLIGHTS.push(l);}}
 function radTex(stops,n=64){const c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d'),g=x.createRadialGradient(n/2,n/2,0,n/2,n/2,n/2);stops.forEach(([o,s])=>g.addColorStop(o,s));x.fillStyle=g;x.fillRect(0,0,n,n);return new THREE.CanvasTexture(c);}
 function buildDecals(){for(const d of [SCORCH,TRACKS,CRATER])if(d){SCN.remove(d);}
@@ -195,6 +196,7 @@ function fxUpdate(dt){
       if(Math.random()<.75)part({x:fx,y:fy,h:F.g+rnd(1,4),vh:rnd(14,30),rise:rnd(4,10),add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(5,9)*(.6+.4*life),g:3,d:rnd(.35,.7),a:.75});
       else if(PARTS.length<pBudget()*.6)part({x:fx,y:fy,h:F.g+rnd(6,12),vx:rnd(-4,4),vy:rnd(-4,4),rise:rnd(14,F.big?34:24),c:Math.random()<.6?C_DARK:C_SMOKE,c2:[.45,.43,.4],ck:.35,s:rnd(8,13)*(F.big?1.35:1),g:F.big?9:5,d:rnd(2,F.big?4.5:3.2),a:.4});}}
   for(const p of PINGS)p.t+=dt;for(let i=PINGS.length-1;i>=0;i--)if(PINGS[i].t>=PINGS[i].d)PINGS.splice(i,1);
+  washTick();
   gpuGcHook();gcT-=dt;if(gcT<=0){gcT=15;try{gpuGc();}catch(e){console.warn('gpu gc',e);}}
   if(G&&G.map&&G.map.theme==='snow'&&CAM&&typeof cam!=='undefined'){const n=Math.min(30,dt*Math.min(150,cam.dist*.16))|0;const R=Math.max(500,cam.dist*1.1);for(let i=0;i<n+(Math.random()<dt*20?1:0);i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(60,260),vx:rnd(8,22),vy:rnd(-4,6),vh:-rnd(26,40),f:1,c:[1.05,1.08,1.12],s:rnd(1.4,2.4),d:rnd(4,6.5),a:.85});}}
   try{weatherFX(dt);}catch(e){}
@@ -214,6 +216,37 @@ function weatherFX(dt){if(!G||!G.map||!CAM)return;const k=(G.wx&&G.wx.k)||'clear
     for(let i=0;i<D.length;i++){const d=D[i];d[2]-=dt*1.6;if(d[2]<0){d[2]+=1;d[0]=rnd(-1,1);d[1]=rnd(-1,1);}const x=cam.x+d[0]*R,y=cam.y+d[1]*R*.7,gh=groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y))),h=gh+d[2]*H;p.set([x,h,y,x+3,h+14,y],i*6);}
     RAIN.geometry.attributes.position.needsUpdate=true;}else if(RAIN)RAIN.visible=false;
   const el=document.getElementById('wxchip');if(el){const W=WEATHER[k];const on=k!=='clear';el.hidden=!on;if(on){const txt=`${W.name.toUpperCase()} · vision ${Math.round((W.vis-1)*100)}% · accuracy ${Math.round((W.acc-1)*100)}%${W.air===0?' · jets grounded':''}`;if(el.textContent!==txt)el.textContent=txt;}}}
+/* ---------- Helicopter rotor wash ----------
+   A helicopter's downwash blasts whatever is under it: a ring of dust rolls outward on land (powder snow on snow maps),
+   white spray and a flattened, swirling ring on water. Strongest when the helicopter hovers low and slow; a fast pass
+   leaves a thinner trail. Purely visual: it reads the unit and where it is drawn and never touches the battle.
+   It uses the shared particle pool plus 6 ground rings made once at start-up and reused, so a long battle allocates
+   nothing new on the GPU. On phones / low quality it spawns fewer particles and backs off when the screen is busy. */
+const WASH=[];let washFr=0;
+function initWash(){WASH.length=0;const n=128,c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');
+  const g=x.createRadialGradient(64,64,0,64,64,63);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.35,'rgba(255,255,255,.12)');g.addColorStop(.62,'rgba(255,255,255,.6)');g.addColorStop(.8,'rgba(255,255,255,.28)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,n,n);
+  x.globalCompositeOperation='destination-out';for(let i=0;i<46;i++){const a=Math.random()*6.283,w=.03+Math.random()*.07;x.fillStyle=`rgba(0,0,0,${.25+Math.random()*.5})`;x.beginPath();x.moveTo(64,64);x.arc(64,64,64,a,a+w);x.closePath();x.fill();}
+  const tex=new THREE.CanvasTexture(c),geo=new THREE.PlaneGeometry(1,1).rotateX(-Math.PI/2);
+  for(let i=0;i<6;i++){const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({map:tex,color:0xffffff,transparent:true,opacity:0,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));m.visible=false;m.renderOrder=2;m.frustumCulled=false;SCN.add(m);WASH.push({m,fr:-9,id:-1});}}
+function rotorWash(e,o,dt){if(!e||e.landed||!o||!G||!G.map||!WASH.length||!inView(e.x,e.y,.15))return;
+  // what is underneath: a bridge deck counts as land (same deck height the units drive on), open water gets spray
+  const M=G.map,ud=o.userData,gc=G.grid?G.grid[Math.floor(e.y/CELL)*GW+Math.floor(e.x/CELL)]:0,deck=gc===2,wet=!deck&&!!(M.isWater&&M.isWater(e.x,e.y)),gh=groundH(e.x,e.y),sh=deck?Math.max(gh,4):wet?Math.max(gh,WL):gh,snow=M.theme==='snow',ice=wet&&snow;
+  const px=o.position.x,pz=o.position.z,sp=ud.wpx==null?0:Math.min(400,Math.hypot(px-ud.wpx,pz-ud.wpz)/Math.max(dt,1e-3));ud.wpx=px;ud.wpz=pz;ud.wsp=(ud.wsp||0)+(sp-(ud.wsp||0))*Math.min(1,dt*4);
+  const agl=o.position.y-sh,low=Math.max(0,Math.min(1,(115-agl)/75));if(low<=0)return;
+  const fast=Math.min(1,ud.wsp/Math.max(60,(e.s&&e.s.spd)||95)),k=low*(1-.55*fast),R0=Math.max(12,(e.r||14)*1.25);
+  // ground ring: one pooled disc follows this helicopter (the same one each frame), spinning and breathing with the rotor
+  let D=null;for(const w of WASH)if(w.id===e.id&&w.fr!==washFr){D=w;break;}if(!D)for(const w of WASH)if(w.fr<washFr-1){D=w;break;}
+  if(D){D.id=e.id;D.fr=washFr;const m=D.m,col=wet&&!ice?[.92,.96,1]:snow?[.95,.97,1]:M.theme==='green'?[.78,.72,.58]:[.86,.75,.56];m.material.color.setRGB(col[0],col[1],col[2]);
+    m.visible=true;m.material.opacity=(wet&&!ice?.45:.55)*k;m.position.set(px,sh+(wet?.6:1),pz);m.scale.setScalar(R0*(3+.18*Math.sin(G.t*6+e.id))*(1-.25*fast));m.rotation.y+=dt*(wet?2.4:3.2);}
+  // particles: spawn rate follows the quality budget and backs off when the screen is already full of smoke. They start
+  // ~10 above the surface because soft particles fade out where they touch the ground and would vanish at ground level
+  const B=pBudget(),busy=PARTS.length>B*.75?.3:PARTS.length>B*.5?.65:1;ud.wacc=(ud.wacc||0)+dt*(wet?30:32)*k*busy*(B/1400);
+  let n=0;while(ud.wacc>=1&&n<6){ud.wacc-=1;n++;const a=rnd(0,6.283),ca=Math.cos(a),sa=Math.sin(a),r=R0*rnd(.45,1),v=rnd(55,100)*(.55+.45*low),x=px+ca*r,y=pz+sa*r;
+    if(wet&&!ice){part({x,y,h:sh+rnd(6,12),vx:ca*v,vy:sa*v,vh:rnd(3,9),f:.4,c:[.88,.92,.95],s:rnd(5,9),g:rnd(16,24),d:rnd(.9,1.4),a:.26+.16*low});
+      if(Math.random()<.6)part({x,y,h:sh+1,vx:ca*v*.7,vy:sa*v*.7,vh:rnd(25,55),f:.85,grav:1,c:[1,1,1],s:rnd(1.2,2),d:rnd(.35,.6),a:.85});}
+    else{const c=snow?[.94,.96,1]:M.theme==='green'?[.68,.63,.52]:C_DUST;part({x,y,h:sh+rnd(9,17),vx:ca*v,vy:sa*v,vh:rnd(4,14),f:.38,c,s:rnd(10,16),g:rnd(18,28),d:rnd(1.2,1.9),a:.4+.22*low});}}
+  if(n>=6)ud.wacc=0;}
+function washTick(){for(const w of WASH)if(w.fr!==washFr&&w.m.visible){w.m.visible=false;w.id=-1;}washFr++;}
 /* ---------- Shader warm-up ----------
    The first time a new kind of object is drawn (a missile, a burnt-out wreck, an aircraft...) the graphics driver has to
    compile its shader, which can stall the game for a moment - several at once during a big strike felt like a freeze.
@@ -229,6 +262,7 @@ function warmShaders(){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0
   for(const op of [.8,.12])add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
   // shockwave rings: drawn once, faintly and in view, so the GPU has their exact drawing state ready too
   const shk=SHOCKS.map(S=>[S.m.position.clone(),S.m.scale.x,S.m.material.opacity]);for(const S of SHOCKS){S.m.position.set(bx,groundH(bx,by)+2.5,by);S.m.scale.setScalar(60);S.m.material.opacity=.01;}
+  const W0=WASH[0];if(W0){W0.m.visible=true;W0.m.material.opacity=.01;W0.m.position.set(bx,groundH(bx,by)+2.5,by);W0.m.scale.setScalar(60);}
   SCN.add(grp);try{if(typeof placeCam==='function')placeCam();R3.compile(SCN,CAM);if(typeof renderPost==='function'){CAM.updateMatrixWorld();renderPost();}R3.setRenderTarget(null);R3.render(SCN,CAM);}catch(e){console.warn('shader warm-up',e);}SCN.remove(grp);SHOCKS.forEach((S,i)=>{S.m.position.copy(shk[i][0]);S.m.scale.setScalar(shk[i][1]);S.m.material.opacity=shk[i][2];});
   console.log('shader warm-up',Math.round(performance.now()-t0)+' ms, '+grp.children.length+' objects');}
 
