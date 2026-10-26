@@ -39,14 +39,12 @@ Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the ve
   Most tactical/realistic gameplay possible: flanking, cover, suppression.
 - **No decorative or ambient aircraft or drones.** They were removed because they confused players. Only real,
   controllable aircraft fly.
-- **Controls = C&C Generals mechanics** (Abdullah, 2026-10-26 evening: "ensure mouse clicking follows Command &
-  Conquer Generals mechanics"). Default mouse scheme is Generals' default: left-click selects and gives orders
-  (ground = move, enemy = attack, own unit = select), Shift+click adds, double-click selects that type on screen,
-  Ctrl+click force-fire, A+click attack-move, G+click guard, Alt+click waypoints, right-click deselects/cancels,
-  right-drag draws the infantry line formation when units are selected (Abdullah, 2026-10-26) and rapid-scrolls
-  when nothing is selected, left-click ground with a production building selected sets its rally point. The old
-  right-click move/attack + right-drag line formation live on as Settings > "Alternate mouse setup" (Generals' own
-  name for it). Every action must also work with touch alone.
+- **Controls are frozen as they are live** (Abdullah, 2026-10-26 late: "Keep the live mouse controls and don't plan
+  on any changes"). This replaces the earlier same-day "follow C&C Generals mechanics" request: don't change, remap
+  or add mouse controls, and don't merge the `orch/generals-mouse` branch (leave it in place, don't delete it).
+  Live scheme: left-click select (drag = box), right-click move/attack, right-drag line formation, F+click
+  attack-move, G+click defend area, R retreat. Only touch input for phones may be added, without changing the
+  mouse.
 - **Factions (18 live):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
   **DW "Coffee Shias"**. The IM faction was removed on purpose; 18 is the intended count (no 19th planned). Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.

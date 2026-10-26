@@ -13,6 +13,7 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
   already fresh-reviewed on parallel-v2 (2 navy bugs fixed there); audio is client-only → no new review.
 - claude.ai artifact republished (v155) without `capabilities` (ck/pong topics still to open — backlog).
 - Lesson: overlapping cycles wasted ~3 agent-hours. ORCH.md step 8 now includes the artifact gate.
+- 2026-10-26 17:55 — skipped: cycle already running (cycle 4 held the run-lock, extended to 00:41 UTC; waited 90 min from 16:25).
 
 ## 2026-10-26 16:20 — parallel cycle (fired 08:24, before the run-lock existed) — NOT shipped, waiting on branch
 
