@@ -75,9 +75,9 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [check] Infantry helmet/kit variety beyond v68 tone variation.
 
 **UI/UX & controls** (`08-ui`, `06-view`)
-- [open] **IN PROGRESS (side lane, 2026-10-26 17:40) — Generals mouse controls.** Abdullah: "ensure mouse clicking
-  follows Command & Conquer Generals mechanics". Being built on branch `orch/generals-mouse`; ORCH: don't take this
-  item, don't edit `08-ui`/`06-view` input code until it lands.
+- **CANCELLED by Abdullah (2026-10-26 late) — Generals mouse controls.** "Keep the live mouse controls and don't
+  plan on any changes." Don't merge `orch/generals-mouse` (if it was pushed — don't delete it either) and don't
+  plan any mouse-control changes. See CLAUDE.md.
 - [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers.
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
