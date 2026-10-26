@@ -65,6 +65,11 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [check] Infantry helmet/kit variety beyond v68 tone variation.
 
 **UI/UX & controls** (`08-ui`, `06-view`)
+- [open] **IN PROGRESS (side lane, 2026-10-26 18:50) — intuitive phone controls.** Abdullah: "make the mobile
+  controls more intuitive". One-finger drag scrolls (Maps-app style), long-press+drag box-selects, tap selects/orders
+  with order markers, long-press+drag with units = infantry line, touch command bar (attack-move, guard, stop, line,
+  same type, all army, deselect), collapsible panel, better landscape, first-time guide. Starts after the Generals
+  mouse work lands; ORCH: don't take it.
 - **CANCELLED by Abdullah (2026-10-26 late) — Generals mouse controls.** "Keep the live mouse controls and don't
   plan on any changes." Don't merge `orch/generals-mouse` (if it was pushed — don't delete it either) and don't
   plan any mouse-control changes. See CLAUDE.md.
