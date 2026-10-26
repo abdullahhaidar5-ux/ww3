@@ -81,7 +81,7 @@ function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.
 const FXH={
   muz(x,y,h,a,s){sfxShot(x,y,s);if(s>=13){const gh=groundH(x,y),ca=Math.cos(a),sa=Math.sin(a);for(let i=0;i<10;i++){const b=a+rnd(-1.3,1.3),v=rnd(30,90);part({x:x+ca*4,y:y+sa*4,h:h+rnd(-1,2),vx:Math.cos(b)*v+ca*40,vy:Math.sin(b)*v+sa*40,vh:rnd(4,18),f:.25,rise:rnd(6,14),c:i%3?C_SMOKE:[.62,.6,.56],c2:[.55,.53,.5],ck:.3,s:rnd(8,13),g:16,d:rnd(1.8,2.8),a:.62});}for(let i=0;i<12;i++){const b=rnd(0,6.28),v=rnd(40,80);part({x,y,h:gh+2,vx:Math.cos(b)*v,vy:Math.sin(b)*v,f:.1,c:C_DUST,s:rnd(5,8),g:10,d:rnd(.8,1.3),a:.35});}part({x:x+ca*8,y:y+sa*8,h,s:s*3.2,d:.09,add:true,c:[3.2,1.8,.6]});}part({x,y,h,s:s*2.4,d:.07,add:true,c:[3,2,.9]});part({x:x+Math.cos(a)*s*.9,y:y+Math.sin(a)*s*.9,h,s:s*1.4,d:.05,add:true,c:[2.6,1.4,.5]});if(s>9&&inView(x,y,.1)){const L=LIGHTS[lightI++%LIGHTS.length];L.position.set(x,h+6,y);L.intensity=2.2;L.distance=160;L.userData.d=.08;L.userData.t=0;}if(s>9)for(let i=0;i<3;i++)part({x,y,h,vx:Math.cos(a)*rnd(20,50),vy:Math.sin(a)*rnd(20,50),c:C_SMOKE,s:rnd(4,7),g:12,d:rnd(.5,.9),a:.5});},
   tr(x1,y1,h1,x2,y2,h2,flak){TRACERS.push({a:[x1,h1,y1],b:[x2,h2,y2],t:0,d:.09,c:flak?[3,1.5,.5]:[3,1.9,.7]});if(flak){part({x:x2,y:y2,h:h2,s:7,d:.12,add:true,c:C_FIRE});part({x:x2,y:y2,h:h2,s:5,g:7,d:.8,c:[.3,.29,.27],c2:[.5,.48,.45],ck:.3,a:.5});}
-    else if(h2<10&&Math.random()<.4)part({x:x2,y:y2,h:groundH(x2,y2)+1,vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(10,30),c:C_DUST,s:3,g:6,d:.4,a:.6});},
+    else if(h2<10){if(ricoHit(x2,y2))ricochet(x1,y1,x2,y2);else if(Math.random()<.4)part({x:x2,y:y2,h:groundH(x2,y2)+1,vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(10,30),c:C_DUST,s:3,g:6,d:.4,a:.6});}},
   salvo(x,y,h,tx,ty,ang){const sx=Math.cos(ang),sy=Math.sin(ang),px=-sy,py=sx;
     for(let i=0;i<3;i++){const side=i%2?1:-1,ox=x+px*side*5,oy=y+py*side*5,ix=tx+rnd(-18,18)+sx*rnd(-10,20),iy=ty+rnd(-18,18)+sy*rnd(-10,20);const len=Math.max(1,Math.hypot(ix-ox,iy-oy));VPROJ.push({x:ox,y:oy,h,sx:ox,sy:oy,sh:h,tx:ix,ty:iy,th:groundH(ix,iy)+1,spd:520,wpn:'missile',rocket:1,len,p:-i*55,vis:1});}
     for(let i=0;i<6;i++){const k=i/5,gx=tx-sx*40+sx*80*k+rnd(-8,8),gy=ty-sy*40+sy*80*k+rnd(-8,8);setTimeout(()=>{TRACERS.push({a:[x,h-3,y],b:[gx,groundH(gx,gy)+1,gy],t:0,d:.09,c:[3,1.9,.7]});part({x:gx,y:gy,h:groundH(gx,gy)+2,vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(20,50),c:C_DUST,s:rnd(3,5),g:8,d:rnd(.5,.9),a:.55});part({x:gx,y:gy,h:groundH(gx,gy)+2,add:true,c:C_SPARK,s:2.2,d:.08});},80+i*55);}},
@@ -196,7 +196,7 @@ function fxUpdate(dt){
       if(Math.random()<.75)part({x:fx,y:fy,h:F.g+rnd(1,4),vh:rnd(14,30),rise:rnd(4,10),add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(5,9)*(.6+.4*life),g:3,d:rnd(.35,.7),a:.75});
       else if(PARTS.length<pBudget()*.6)part({x:fx,y:fy,h:F.g+rnd(6,12),vx:rnd(-4,4),vy:rnd(-4,4),rise:rnd(14,F.big?34:24),c:Math.random()<.6?C_DARK:C_SMOKE,c2:[.45,.43,.4],ck:.35,s:rnd(8,13)*(F.big?1.35:1),g:F.big?9:5,d:rnd(2,F.big?4.5:3.2),a:.4});}}
   for(const p of PINGS)p.t+=dt;for(let i=PINGS.length-1;i>=0;i--)if(PINGS[i].t>=PINGS[i].d)PINGS.splice(i,1);
-  washTick();wakeTick(dt);
+  washTick();wakeTick(dt);dustN=0;
   gpuGcHook();gcT-=dt;if(gcT<=0){gcT=15;try{gpuGc();}catch(e){console.warn('gpu gc',e);}}
   if(G&&G.map&&G.map.theme==='snow'&&CAM&&typeof cam!=='undefined'){const n=Math.min(30,dt*Math.min(150,cam.dist*.16))|0;const R=Math.max(500,cam.dist*1.1);for(let i=0;i<n+(Math.random()<dt*20?1:0);i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(60,260),vx:rnd(8,22),vy:rnd(-4,6),vh:-rnd(26,40),f:1,c:[1.05,1.08,1.12],s:rnd(1.4,2.4),d:rnd(4,6.5),a:.85});}}
   try{weatherFX(dt);}catch(e){}
@@ -247,6 +247,36 @@ function rotorWash(e,o,dt){if(!e||e.landed||!o||!G||!G.map||!WASH.length||!inVie
     else{const c=snow?[.94,.96,1]:M.theme==='green'?[.68,.63,.52]:C_DUST;part({x,y,h:sh+rnd(9,17),vx:ca*v,vy:sa*v,vh:rnd(4,14),f:.38,c,s:rnd(10,16),g:rnd(18,28),d:rnd(1.2,1.9),a:.4+.22*low});}}
   if(n>=6)ud.wacc=0;}
 function washTick(){for(const w of WASH)if(w.fr!==washFr&&w.m.visible){w.m.visible=false;w.id=-1;}washFr++;}
+/* ---------- Vehicle dust trails ----------
+   Tanks, trucks and other ground vehicles moving at speed kick a low, rolling plume of dust off their tracks/wheels
+   that drifts and fades out behind them. Desert ground throws the thickest, sand-coloured dust; green maps a thinner
+   earthy haze; snow maps a faint white powder. Nothing on water, on bridge decks or while it rains (wet ground).
+   A slow or stopped vehicle leaves none. Purely visual: it reads where the vehicle is drawn and never touches the
+   battle or its random numbers. It uses the shared particle pool (like rotor wash) with a cap per frame, spawns fewer
+   on phones / low quality and backs off when the screen is already full of smoke. */
+const DUSTC={desert:[[.78,.67,.5],[.7,.59,.43],[.84,.75,.6]],green:[[.6,.55,.45],[.53,.49,.41],[.66,.62,.54]],snow:[[.95,.97,1],[.9,.93,.97],[.97,.98,1]]};
+let dustN=0;
+function dustTrail(e,o,dt){if(!o||!o.visible||!(dt>0)||!e.s||!G||!G.map)return;const ud=o.userData,px=o.position.x,pz=o.position.z;
+  const raw=ud.tdx==null?0:Math.min(300,Math.hypot(px-ud.tdx,pz-ud.tdz)/dt);ud.tdx=px;ud.tdz=pz;ud.tsp=(ud.tsp||0)+(raw-(ud.tsp||0))*Math.min(1,dt*3);
+  const top=Math.max(35,e.s.spd||60),k=Math.max(0,Math.min(1,(ud.tsp/top-.3)/.45));if(k<=0||!inView(px,pz,.2)){ud.tacc=0;return;}
+  // what is underfoot: water and bridge decks throw no dust; rain wets the ground (snow maps keep their powder)
+  const M=G.map,th=M.theme==='snow'?'snow':M.theme==='green'?'green':'desert',gc=G.grid?G.grid[Math.floor(pz/CELL)*GW+Math.floor(px/CELL)]:0;
+  if(gc===2||(M.isWater&&M.isWater(px,pz))||(G.wx&&G.wx.k==='rain'&&th!=='snow')){ud.tacc=0;return;}
+  const B=pBudget(),n0=PARTS.length;if(n0>B*.7)return;const busy=n0>B*.45?.5:1,amp=th==='desert'?1:th==='green'?.6:.45;
+  const r=e.r||12,sc=Math.min(1.5,Math.max(.8,r/12));ud.tacc=(ud.tacc||0)+dt*16*k*amp*busy*Math.min(1.2,B/1400)*sc;
+  const a=ud.yaw??e.va??0,ca=Math.cos(a),sa=Math.sin(a),C=DUSTC[th],gh=groundH(px,pz),cap=B>=1100?28:16;let n=0;
+  while(ud.tacc>=1&&n<3&&dustN<cap){ud.tacc-=1;n++;dustN++;const sd=(ud.tsd=-(ud.tsd||1)),w=r*rnd(.45,.65),bk=r*rnd(.75,1.05),x=px-ca*bk-sa*sd*w,y=pz-sa*bk+ca*sd*w,ov=rnd(4,12),bv=rnd(8,20)*(.5+k);
+    part({x,y,h:gh+rnd(4,8),vx:-ca*bv-sa*sd*ov,vy:-sa*bv+ca*sd*ov,vh:rnd(2,6),f:.3,rise:rnd(1.5,4.5),c:C[n&1],c2:C[2],ck:.6,s:rnd(6,9)*sc*(th==='snow'?.8:1),g:rnd(8,13)*sc,d:rnd(1.8,3)*(th==='snow'?.7:1),a:(th==='snow'?.24:.36)*(.55+.45*k)});}
+  if(ud.tacc>1)ud.tacc=1;}
+/* ---------- Ricochet sparks ----------
+   Rifle and machine-gun rounds striking a tank or other armoured vehicle throw a few bright, short-lived sparks off
+   the hull (back toward the shooter) instead of a puff of dirt. Visual only: it looks up which vehicle is at the impact
+   point without changing anything. */
+const RICO_NB=[];
+function ricoHit(x,y){if(!G||!G.ents||!inView(x,y,.05))return false;let hit=false;try{nearby(x,y,30,RICO_NB);for(let i=0;i<RICO_NB.length;i++){const e=RICO_NB[i];if(e.dead||e.isB||!e.s||e.s.dom!=='ground'||e.s.armor!=='heavy')continue;const R=(e.r||12)+5;if((e.x-x)*(e.x-x)+(e.y-y)*(e.y-y)<R*R){hit=true;break;}}}catch(err){}RICO_NB.length=0;return hit;}
+const C_RICO=[3,2.5,1.5];
+function ricochet(x1,y1,x,y){const h=groundH(x,y)+rnd(5,10),b=Math.atan2(y1-y,x1-x);part({x,y,h,s:2.4,d:.045,add:true,c:C_RICO});
+  const n=3+(Math.random()*3|0);for(let i=0;i<n;i++){const a=b+rnd(-1.4,1.4),v=rnd(60,150);part({x,y,h,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(15,80),add:true,c:i&1?C_SPARK:C_RICO,s:rnd(.7,1.2),f:.5,grav:1,d:rnd(.1,.26)});}}
 /* ---------- Naval wakes ----------
    A moving boat or ship leaves a white V of foam on the water that spreads out and fades behind it, a churned
    white trail straight behind the stern and a curl of bow wave at the front. Faster boats throw a wider, brighter
