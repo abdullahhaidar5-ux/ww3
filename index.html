@@ -7637,9 +7637,10 @@ mm.addEventListener('contextmenu',e=>e.preventDefault());
 #stage.mmIn #fpsHud{left:auto;right:8px;top:auto;bottom:8px}
 .sqbtns{display:flex;gap:4px}
 #settings .card>.row:last-child{position:sticky;bottom:-1px;z-index:2;background:linear-gradient(rgba(8,11,10,0),rgba(8,11,10,.97) 30%);padding:14px 0 4px}
-body.touchui #mode{white-space:normal;text-align:left;width:max-content;max-width:calc(100% - 20px);box-sizing:border-box;font-size:13px;line-height:1.2;padding:5px 6px 5px 10px;display:flex;align-items:center;gap:8px;z-index:5}
+body.touchui #mode{white-space:normal;text-align:left;width:max-content;max-width:calc(100% - 20px);box-sizing:border-box;font-size:12px;letter-spacing:.02em;line-height:1.2;padding:5px;display:flex;align-items:center;gap:6px;z-index:5}
+body.touchui #mode>span{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;padding-left:4px}
 body.touchui #mode[hidden]{display:none}
-#mode .mcx{pointer-events:auto;cursor:pointer;flex:none;background:var(--warn);color:#160806;border:0;font:700 13px var(--display);letter-spacing:.06em;text-transform:uppercase;padding:0 10px;min-height:34px}
+#mode .mcx{pointer-events:auto;cursor:pointer;flex:none;background:var(--warn);color:#160806;border:0;font:700 13px var(--display);letter-spacing:.04em;text-transform:uppercase;padding:0 8px;min-height:34px}
 #stage.mmIn #mode{left:auto;right:6px;top:6px;transform:none;max-width:calc(64% - 18px)}
 body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);padding:4px 6px;left:6px;right:6px;bottom:6px}
 @media (max-width:760px),(max-height:520px){
@@ -7667,6 +7668,7 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   .sqs button{min-height:40px}.btn{min-height:44px}
   .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
   .cmdrow{flex-wrap:wrap}.cmdrow button{flex:1 1 40%}
+  .game button,.joinrow .big,.joinrow input{min-height:40px}
 }`;document.body.append(st);}
 const PHQ=matchMedia('(max-width:760px),(max-height:520px)');
 function placeMM(){const st=$('stage'),top=$('sideTop');if(!st||!top)return;if(PHQ.matches){if(mm.parentNode!==st){st.append(mm);st.classList.add('mmIn');}}else if(mm.parentNode!==top){top.append(mm);st.classList.remove('mmIn');}}
