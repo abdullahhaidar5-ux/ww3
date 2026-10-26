@@ -5002,7 +5002,10 @@ const MAPS={
   fulda:{name:'Fulda Gap',min:2,max:8,sym:'point',theme:'green',home:['EU'],desc:'Rolling German farmland, forests and half-timbered towns on the old Cold War invasion route. A winding river with four bridges.',
     slots:[[400,1100],[2800,1100],[500,300],[2700,1900],[500,1900],[2700,300],[1200,1980],[2000,220]],
     cities:[[1150,700,120,'europe'],[2050,1500,120,'europe'],[1600,1100,95,'europe'],[700,1500,70,'europe'],[2500,700,70,'europe']],
-    water(M,R){const ph=R()*6.28;const pts=[];for(let x=-200;x<=MAPW+200;x+=40)pts.push([x,1100+260*Math.sin(x*.0024+ph)+50*Math.sin(x*.009)]);M.rivers.push({pts,hw:()=>52});M.bridgeAt=[[0,.2],[0,.42],[0,.6],[0,.82]];M.bridgeFrac=true;
+    water(M,R){const ph=R()*6.28;const pts=[];for(let x=-200;x<=MAPW+200;x+=40)pts.push([x,1100+260*Math.sin(x*.0024+ph)+50*Math.sin(x*.009)]);
+      // the river bends around the two main bases (slots 1 and 2 sit on its mid-line), keeping 400 clear of each
+      for(const [sx,sy] of [[400,1100],[2800,1100]]){const y0=1100+260*Math.sin(sx*.0024+ph)+50*Math.sin(sx*.009),s=y0>=sy?1:-1;for(const p of pts){const w=Math.exp(-Math.pow((p[0]-sx)/420,2));p[1]+=s*Math.max(0,400-s*(p[1]-sy))*w;}}
+      M.rivers.push({pts,hw:()=>52});M.bridgeAt=[[0,.2],[0,.42],[0,.6],[0,.82]];M.bridgeFrac=true;
       M.peaks.push({x:1600,y:500,r:80,rx:1.6,rot:.2},{x:1600,y:1700,r:80,rx:1.6,rot:.2});}},
   dnipro:{name:'Dnipro Front',min:2,max:8,sym:'none',theme:'green',home:['UA'],desc:'The wide Dnipro splits Ukraine: a great city on both banks, river islands and long bridges under fire.',
     slots:[[380,1100],[2820,1100],[500,300],[2700,1900],[500,1900],[2700,300],[300,700],[2900,1500]],
@@ -5078,6 +5081,10 @@ function mkMap(seed,mk){
       if(bi<0)continue;const qx=P[bi][0]+(P[bi+1][0]-P[bi][0])*bt;const e=rv.hw((acc[bi]+(acc[bi+1]-acc[bi])*bt)/rv.len,qx)-bd;const k2=j*EF_W+i;if(e>EF[k2])EF[k2]=e;}}}
   for(const L of M.lakes){for(let j=0;j<EF_H;j++){const y=j*EF_R;for(let i=0;i<EF_W;i++){const x=i*EF_R,dx=(x-L.x)/L.rx,dy=y-L.y,d=Math.hypot(dx,dy);if(d>L.r*1.6+600)continue;const a=Math.atan2(dy,dx);const e=(L.r*(1+L.wob(a))-d)*Math.min(1,L.rx*.9);const k2=j*EF_W+i;if(e>EF[k2])EF[k2]=e;}}}
   for(const I of M.islands){const c=Math.cos(-I.rot),sn=Math.sin(-I.rot);for(let j=0;j<EF_H;j++){const y=j*EF_R;for(let i=0;i<EF_W;i++){const x=i*EF_R,qx=x-I.x,qy=y-I.y,lx=(qx*c-qy*sn)/I.rx,ly=qx*sn+qy*c,d=Math.hypot(lx,ly);if(d>I.r*1.6+400)continue;const e=(I.r*(1+I.wob(Math.atan2(ly,lx)))-d)*Math.min(1,I.rx*.9);const k2=j*EF_W+i;if(-e<EF[k2])EF[k2]=-e;}}}
+  // every start position keeps dry ground for its base: no shore comes within ~300 of a slot, so a wobbly coastline
+  // or lake edge (they vary with the seed) can't swallow part of a base. Uses all slots, so it doesn't depend on who picked which.
+  for(const [sx,sy] of BASE_SLOTS){const r0=300,i0=Math.max(0,Math.floor((sx-r0)/EF_R)),i1=Math.min(EF_W-1,Math.ceil((sx+r0)/EF_R)),j0=Math.max(0,Math.floor((sy-r0)/EF_R)),j1=Math.min(EF_H-1,Math.ceil((sy+r0)/EF_R));
+    for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const d=Math.hypot(i*EF_R-sx,j*EF_R-sy);if(d>=r0)continue;const k2=j*EF_W+i;if(EF[k2]>d-r0)EF[k2]=d-r0;}}
   M.EF=EF;
   // mountains: positive inside a ridge or peak (distance in from its foot)
   const MF=new Float32Array(EF_W*EF_H).fill(-1000);
@@ -5227,7 +5234,14 @@ function paintTerrain(M){const TEXMAX=Math.min(3072,(typeof R3!=='undefined'&&R3
   for(const [bx,by] of BASES){const R=276;
     // worn dirt apron blending pad into terrain
     const ap=t.createRadialGradient(bx,by,R*.9,bx,by,R*1.45);ap.addColorStop(0,'rgba(122,108,80,.75)');ap.addColorStop(1,'rgba(122,108,80,0)');t.fillStyle=ap;t.fillRect(bx-R*1.5,by-R*1.5,R*3,R*3);
-    {t.fillStyle=M.theme==='green'?'#9b9a92':'#a3967f';t.beginPath();const cr=70,N=96;for(let q=0;q<=N;q++){const a=q/N*6.2832,ca=Math.cos(a),sa=Math.sin(a);const sq=Math.pow(Math.pow(Math.abs(ca),5)+Math.pow(Math.abs(sa),5),-1/5);const rr=(R-cr*.25)*sq*(1+.025*Math.sin(a*7+bx)+.015*Math.sin(a*13+by));const x=bx+ca*rr,y=by+sa*rr;q?t.lineTo(x,y):t.moveTo(x,y);}t.closePath();t.fill();{const fc=t.fillStyle;t.save();try{t.filter='blur('+Math.max(4,Math.round(14*TS))+'px)';}catch(e){}t.strokeStyle=fc;t.globalAlpha=.55;t.lineWidth=34;t.stroke();t.globalAlpha=.3;t.lineWidth=64;t.stroke();t.restore();}
+    {t.fillStyle=M.theme==='green'?'#9b9a92':'#a3967f';const cr=70,N=96,PP=[];for(let q=0;q<=N;q++){const a=q/N*6.2832,ca=Math.cos(a),sa=Math.sin(a);const sq=Math.pow(Math.pow(Math.abs(ca),5)+Math.pow(Math.abs(sa),5),-1/5);const rr=(R-cr*.25)*sq*(1+.025*Math.sin(a*7+bx)+.015*Math.sin(a*13+by));PP.push([bx+ca*rr,by+sa*rr]);}
+     const pad=(g)=>{g.beginPath();PP.forEach(([x,y],q)=>q?g.lineTo(x,y):g.moveTo(x,y));g.closePath();};pad(t);t.fill();
+     // soft blurred rim: drawn on a small canvas around this base, not the whole terrain (a blur filter on the full
+     // 3000px canvas cost ~3 s per base on a CPU renderer, most of an 8-player map's load time)
+     {const fc=t.fillStyle,H=R*1.3+130,X0=Math.floor((bx-H)*TS),Y0=Math.floor((by-H)*TS),SZ=Math.ceil(2*H*TS)+2,oc=document.createElement('canvas');oc.width=oc.height=SZ;const o=oc.getContext('2d');
+      o.setTransform(TS,0,0,TS,-X0,-Y0);try{o.filter='blur('+Math.max(4,Math.round(14*TS))+'px)';}catch(e){}pad(o);o.strokeStyle=fc;o.globalAlpha=.55;o.lineWidth=34;o.stroke();o.globalAlpha=.3;o.lineWidth=64;o.stroke();
+      t.save();t.setTransform(1,0,0,1,0,0);t.drawImage(oc,X0,Y0);t.restore();}
+     pad(t);
      t.save();t.clip();
     // slab tone variation
     for(let k=0;k<70;k++){const x=bx+srnd(-R,R),y=by+srnd(-R,R),r=srnd(20,70),v=srnd(-8,8);const g=t.createRadialGradient(x,y,0,x,y,r);const gC=M.theme==='green'?`${150+v|0},${149+v|0},${144+v|0}`:`${156+v|0},${143+v|0},${120+v|0}`;g.addColorStop(0,`rgba(${gC},.22)`);g.addColorStop(1,`rgba(${gC},0)`);t.fillStyle=g;t.fillRect(x-r,y-r,2*r,2*r);}
