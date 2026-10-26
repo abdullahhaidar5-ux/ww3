@@ -43,7 +43,8 @@ Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the ve
   Conquer Generals mechanics"). Default mouse scheme is Generals' default: left-click selects and gives orders
   (ground = move, enemy = attack, own unit = select), Shift+click adds, double-click selects that type on screen,
   Ctrl+click force-fire, A+click attack-move, G+click guard, Alt+click waypoints, right-click deselects/cancels,
-  right-drag rapid-scrolls, left-click ground with a production building selected sets its rally point. The old
+  right-drag draws the infantry line formation when units are selected (Abdullah, 2026-10-26) and rapid-scrolls
+  when nothing is selected, left-click ground with a production building selected sets its rally point. The old
   right-click move/attack + right-drag line formation live on as Settings > "Alternate mouse setup" (Generals' own
   name for it). Every action must also work with touch alone.
 - **Factions (18 live):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
