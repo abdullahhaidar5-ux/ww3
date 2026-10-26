@@ -25,7 +25,8 @@ Pages-only code would leak through. Audio loads from `vo/XX.mp3` and `mus/smp.mp
 ```
 python3 orch/build.py --artifact             # writes orch/out/artifact/index.html + publish.json
 node orch/smoke.mjs --artifact               # must print SMOKE PASS (artifact edition)
-node orch/mpsync.mjs --artifact              # optional: host + client over a stand-in room, must print MPSYNC PASS
+node orch/mpsync.mjs --artifact              # host + client over a stand-in room, must print MPSYNC PASS
+                                             # (add --reconnect to also test a client dropping out and rejoining)
 ```
 
 Then publish with the Artifact tool:
