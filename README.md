@@ -17,3 +17,7 @@ The host's browser runs the battle, so the host's PC and connection matter most.
 - **Use a cable, not Wi-Fi, and disconnect any VPN** while hosting.
 - **Relay for strict networks:** some players' networks block direct connections. Set up the free Cloudflare relay in [`relay-worker.js`](relay-worker.js) (instructions at the top) and put its address in `RELAY_CF_URL` in `index.html`; those players then connect through Cloudflare automatically.
 
+
+## Development
+
+The game source is in [`src/`](src); `index.html` is built from it. All work is coordinated by ORCH, the orchestrator — see [`CLAUDE.md`](CLAUDE.md) and [`orch/`](orch) (backlog, history, build and test tools).
