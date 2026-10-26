@@ -29,12 +29,14 @@
 //   node orch/mpsync.mjs --minutes 5 --ais 1   # longer, with a computer player added in the lobby
 //   node orch/mpsync.mjs --break               # self-test: the client stops receiving at 1 min; must print MPSYNC FAIL
 //   node orch/mpsync.mjs --verbose             # print both pages' network state every 5 s while connecting
+//   node orch/mpsync.mjs --no-lock             # skip the machine-wide browser lock (see browserlock.mjs)
 // Prints MPSYNC PASS / MPSYNC FAIL: reason (exit 0 / 1). Screenshots: orch/out/mp-host.png, orch/out/mp-client.png
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
+import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
@@ -59,6 +61,10 @@ function findChromium() {
   } catch {}
   return undefined;
 }
+
+// one headless browser at a time on this machine (parallel agents' runs OOM-kill each other); --no-lock skips
+await acquireBrowserLock();
+const peakMB = watchPeakMemory();
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json',
   '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg',
@@ -349,6 +355,7 @@ try { await Promise.race([main(), crash]); } catch (e) {
 await browser.close().catch(() => {});
 server.close();
 
+{ const mb = peakMB(); if (mb) console.log(`peak memory (node + browser, summed RSS): ${mb} MB`); }
 for (const w of [...new Set(warns)].slice(0, 12)) console.log('  warn: ' + w);
 const uniq = [...new Set(fails)];
 if (uniq.length) {

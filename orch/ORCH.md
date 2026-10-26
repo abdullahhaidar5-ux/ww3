@@ -38,6 +38,8 @@ A task that truly spans two squads goes to one agent that owns both rows for tha
    and leave the rest in the backlog. For **[check]** items the agent verifies first and may simply mark them done.
 5. **Dispatch.** One `Agent` per item, all in one message so they run in parallel, each with
    `isolation: "worktree"`. Use the brief template below. Wait for every agent to report.
+   Browser tests lock themselves: `smoke.mjs`/`mpsync.mjs` take a machine-wide lock
+   (`/tmp/ww3-browser-gate.lock`) and wait their turn, so parallel agents can't OOM-kill each other's runs.
 6. **Integrate.** On local `main`, merge each finished branch one at a time. After each merge:
    `python3 orch/build.py` then `node orch/smoke.mjs`. If it fails and the fix isn't obvious, revert that merge,
    put the item back in the backlog with what went wrong, and continue with the next branch.
@@ -45,7 +47,7 @@ A task that truly spans two squads goes to one agent that owns both rows for tha
    that hasn't seen the work to review the combined diff for desync risks (randomness outside `srand`, client-only
    state affecting the sim, message format changes) and obvious bugs. Fix or revert what it finds.
 8. **Ship.** Final gate: `python3 orch/build.py --check` and `node orch/smoke.mjs --players 4` and `node orch/mpsync.mjs` (multiplayer sync) all pass.
-   Run browser tests one at a time — parallel headless browsers can run the machine out of memory. Then
+   Browser tests queue themselves one at a time (machine-wide lock; `--no-lock` skips it), so no outer `flock` is needed. Then
    `git fetch origin main`, rebase if needed, rerun the gate if anything came in, and push to `main`. If pushing
    to `main` is impossible, push `orch/<date>` and say so in the report. Never force-push.
 9. **Record.** Move finished items to "Done" in `BACKLOG.md` (date + one line each). Add anything the agents
