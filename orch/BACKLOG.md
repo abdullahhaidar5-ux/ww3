@@ -14,6 +14,9 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   cmd/evt/hello/lobby/snap/start/team) instead of PeerJS. Needed: `orch/build.py --artifact` that emits the artifact
   variant from `src/` (room transport in place of PeerJS, `vo/`+`mus/` as published files, no SW/manifest), verify
   with smoke, then ORCH republishes it with the Artifact tool at every ship (step 8). Netcode squad + QA.
+  Gap as of 2026-10-26 07:50: the artifact lacks rotor wash, boat wakes, menu music and the always-a-winner fix.
+  Starting points on `testbed`: `v3/shell.html` (artifact-style page shell) and `v3/p2p.js` (the PeerJS layer that
+  was written to stand in for the room capability — the artifact build is that swap in reverse).
 
 ## Questions for Abdullah
 
@@ -25,6 +28,9 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 
 **Foundation (ORCH itself)**
 - [open] Extend `orch/mpsync.mjs`: 3+ human players, packet loss/latency, host migration (`07b-ckpt`), real WebRTC.
+  Don't start from scratch — port the surviving old harnesses on the `testbed` branch: `tw8b.py` (host in Chicago +
+  1–7 clients with real-world one-way delays, jitter and lag spikes; measures order latency, drift, bandwidth) and
+  `p2pmig.py` (3 players over a local PeerJS server, host leaves, checks migration). `probe.py` = load-time probe.
 - [open] Smoke runs share `orch/out/`: two runs back to back overwrite each other's screenshots — per-run subfolder.
 - [open] Map sweep: smoke every map in `MAPS` at 2, 4 and 8 players; fix any that fail.
 - [open] AI-vs-AI tournament harness (all 18 factions, headless, sim-only) → win-rate table for balance.
@@ -38,7 +44,10 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] Measure rotor-wash FPS cost on a real phone with many helicopters.
 - [open] AI almost never builds boats, so naval wakes (and navy) are rarely seen — make AI use navy on water maps.
 - [open] Ricochet sparks when small arms hit armour.
-- [open] Time-of-day/lighting variety per match (golden hour, overcast, dusk) — recordings had it, the game doesn't.
+- [check] Time-of-day/lighting variety: the skirmish menu already has Conditions (Clear day / Golden hour /
+  Overcast, `#wx` in `08-ui`). Verify each looks right in battle and that multiplayer matches use it too; consider
+  dusk and a "random" option.
+- [open] Dust trails behind fast vehicles on dry maps (old-run idea, not in the code).
 
 **Audio & voice** (`09-audio`, `vo/`, `mus/`)
 - [open] Full native-language unit responses per nation (select / move / attack / under fire / unit lost), recorded
@@ -71,7 +80,8 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [ask] Cloudflare relay: needs Abdullah's Cloudflare account to deploy `relay-worker.js` and set `RELAY_CF_URL`.
 
 **Maps** (`02-map`)
-- [open] Map-select screen previews (thumbnail per map).
+- [check] Map-select previews: the picker already draws a thumbnail per map (`.mapc` canvas) and a large preview
+  (`.mapsel`). Verify all 10 render correctly at phone width; mark done if so.
 
 ## P3 — later
 

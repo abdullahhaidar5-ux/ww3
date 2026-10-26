@@ -65,3 +65,65 @@ Windows host tune-up scripts; Cloudflare relay worker; "Radwan Training" restore
 (sandbox), `maptest.py` (maps), `shotf.py`/`shot2.py` (screenshots), `rec.py`/`rec2.py` + `raudio.py` + `mix.py` +
 `phone.sh` (clips). ORCH replaces the core of these with `orch/smoke.mjs`; the rest should be recovered from that
 session if it still exists, or rebuilt in `orch/`.
+
+---
+
+## 2026-10-26 — Full sweep and index by area (added by ORCH on Abdullah's request)
+
+**Sweep covered:** every scheduled task on the account, every claude.ai artifact, both GitHub branches, the repo
+history, ORCH's cycles 1–2. Running Claude sessions: none besides ORCH's own runs.
+
+**Agents, all of them:**
+
+| Agent | Status |
+|---|---|
+| **ORCH** (scheduled task, every 4 h at :24 Chicago time) | **Active — the only standing game agent.** Spawns ≤4 squad agents + 1 reviewer per cycle; they end with the cycle. |
+| Squad agents: Visuals, Battlefield, Maps, Audio, Netcode, Interface, QA | Spawned by ORCH per cycle (see `ORCH.md`) |
+| ≈45 "WW3 graphics/dev round" one-shot tasks, runs #0–#5 (Oct 18–23), old dev chat on LAPTOP-26MKDH7J | Retired — all fired and disabled; that chat is gone |
+| `testbed` branch work (Oct 25) | Retired — ~95% merged; review queued in backlog |
+| Daily World News Briefing, Daily Email Briefer | Not game agents — untouched |
+
+**Correction:** three old test harnesses are *not* lost — they are on `testbed`: `tw8b.py` (worldwide-latency
+multiplayer test, 1–7 clients), `p2pmig.py` (3-player host-migration test over a local PeerJS server), `probe.py`
+(load-time probe), plus `v3/shell.html` and `v3/p2p.js`. Lost for good: `audit.py`, `aiall.py`, `t8.py`, `sbtest.py`,
+`maptest.py`, the clip pipeline (`rec2.py`, `raudio.py`, `mix.py`, `phone.sh`) and the source 3D model files.
+
+**Other places the game lives:** GitHub Pages (`main`, current) · claude.ai artifact "World War 3"
+(Qt3bimPhr31eZEUpqndGUi — behind `main` by rotor wash, boat wakes, menu music, always-a-winner) · claude.ai artifact
+"World War 3 Clips" (NqbVv2hseRUctmafy3AFC2, showcase clips from runs 3–4, last updated Oct 22).
+
+### Everything shipped, by area
+
+**Visuals** — *Terrain:* fine grass tufts and stones, sun-bleached sand, weathered rocks, low ridges and gentle dunes,
+pale sandstone slopes, finer terrain mesh, two-track dirt roads with ruts, windblown sand on base pads (v58–v70).
+*Vegetation:* broken-up, dappled acacia canopies; green blob shrubs removed (v59–v73). *Water:* teal river with
+turquoise shallows (v71), boat/ship foam wakes (ORCH c2), rotor-wash spray (ORCH c1). *Smoke & fire:* realistic
+grey/brown smoke, sunlit dust, rising damage smoke, ragged puffs (v60–v70); burning damaged buildings with sparks and
+firelight (v77). *Vehicles:* camo, stowage, antennas, national paint and camo, realistic motion (v58–v76).
+*Infantry:* tone variation, national uniforms, fallen soldiers stay down ~15 s (v68–v78). *Buildings & bridges:*
+weathered walls, regional tints, cracked bridge deck (v62–v67). *Weapons:* warm tracers (v63), helicopter rocket
+salvos and walking cannon bursts (v79), rotor-wash dust (ORCH c1). *Light:* cloud shadows, warm bounce light, neutral
+fog of war, Clear / Golden hour / Overcast conditions.
+
+**Battlefield** — national specials, doctrines, per-nation upgrades and national powers, general ranks, unit
+veterancy, courage/morale and suppression, flank/rear hits, garrisoning, squads, the Ayatollah for Shia factions,
+weather that changes vision/accuracy/speed/air, destructible oil derricks (v75), Construction Vehicle + build
+anywhere + buildable HQ (v84), teams and allies, AI difficulty with flanking/focus fire/retreat on Hard, a match
+always has a winner (ORCH c2).
+
+**Maps** — 10 theatres (Strait, Rivers, Delta, Oasis, Gulf, Plateau, Hormuz, Arctic, Islands, Zagros), map picker
+with thumbnails, map size scales with player count, deterministic seeds, weather per theatre (v84 and runs #4–5).
+
+**Audio** — native-language unit voices (v75), slogans, unique synthesized national scores and latmiyas for IR/RS/DW
+(v84), natural-voice preference, "My music" import, calm menu/lobby music (ORCH c2).
+
+**Netcode** — 8-player multiplayer (v75), direct P2P via PeerJS with per-player event filtering and host-migration
+checkpoints, host keeps running in the background, battery and wake-lock handling, Cloudflare relay worker, optional
+TURN relay settings (Oct 25).
+
+**Interface** — left-click control scheme with right-click as optional shortcut (v72, 2026-10-26 decision), full
+Settings (graphics, volumes, FPS target, health bars, edge scroll, mouse), pause/restart/quit, Test Range sandbox,
+FPS/ping readout, installable app with offline solo play (Oct 25), renamed factions (v84).
+
+**QA (ORCH's gate)** — `build.py` (src ↔ index.html), `smoke.mjs` (headless AI battle + screenshots), `mpsync.mjs`
+(host/client sync, ORCH c1), machine-wide browser lock (ORCH c2).
