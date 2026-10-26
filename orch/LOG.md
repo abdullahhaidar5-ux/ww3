@@ -2,6 +2,8 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+- 2026-10-26 17:55 — skipped: cycle already running (cycle 4 held the run-lock, extended to 00:41 UTC; waited 90 min from 16:25).
+
 ## 2026-10-26 16:20 — parallel cycle (fired 08:24, before the run-lock existed) — NOT shipped, waiting on branch
 
 - Skipped shipping: cycle 4 holds the run-lock. Finished, gated work is on branch `orch/2026-10-26-parallel-v2`
