@@ -53,7 +53,8 @@ A task that truly spans two squads goes to one agent that owns both rows for tha
 7. **Review risky changes.** If the merged work touched `03-sim`, `07-net` or `07b-ckpt`, spawn one fresh agent
    that hasn't seen the work to review the combined diff for desync risks (randomness outside `srand`, client-only
    state affecting the sim, message format changes) and obvious bugs. Fix or revert what it finds.
-8. **Ship.** Final gate: `python3 orch/build.py --check` and `node orch/smoke.mjs --players 4` and `node orch/mpsync.mjs` (multiplayer sync) all pass, plus
+8. **Ship.** Final gate: `python3 orch/build.py --check` and `node orch/smoke.mjs --players 4` and `node orch/mpsync.mjs` (multiplayer sync) all pass, plus `node orch/migrate.mjs` (host leaves mid-battle) when
+   `07-net` or `07b-ckpt` changed, plus
    `node orch/mapsweep.mjs --minutes 1` when `02-map` changed.
    Then the artifact edition: `python3 orch/build.py --artifact`, `node orch/smoke.mjs --artifact`,
    `node orch/mpsync.mjs --artifact` all pass, and after pushing `main` republish it per `orch/ARTIFACT.md`.
