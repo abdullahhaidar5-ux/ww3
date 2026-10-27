@@ -4,8 +4,8 @@
 the game's code. Played side by side from the same seed, Node and the real game in Chromium produce exactly the same
 battle, checked every few game-seconds down to the last bit of every unit's position. An 8-player battle at its busiest
 used about a third of one CPU core on this machine, so a PC dedicated server has plenty of headroom. Cloudflare's free
-plan can host roughly 45–55 thirty-minute battles a day: what limits it is how long the server is awake, not the
-size of the battle.
+plan can host about 45 thirty-minute battles a day under the existing 80% guard (57 at the hard limit). What limits it
+is how long the server is awake, not the size of the battle.
 
 What was built (branch `orch/stage2-headless`):
 
@@ -27,8 +27,8 @@ What was built (branch `orch/stage2-headless`):
   the test gives both sides the same math routines.
 - Cost: a big 8-player fight takes roughly a quarter to a third of one CPU core on this machine. A home PC can run
   several such battles at once.
-- Cloudflare free plan: about **45–55 thirty-minute battles a day** with the current 80% safety guard, whatever the
-  number of players. A PC dedicated server has no daily limit.
+- Cloudflare free plan: about **45 thirty-minute battles a day** under the current 80% safety guard (57 at the
+  hard limit), whatever the number of players. A PC dedicated server has no daily limit.
 
 ## 1. What in the battle code touches the browser, and how each is handled
 
@@ -147,7 +147,7 @@ e.g. `07a-hostsnap.js`). `orch/headless.mjs` already produces that bundle (`simS
 |---|---|
 | `--compare` (default: 2 players, Desert Strait, seed 1, 5 min, every 10 s) | **HEADLESS PASS**, 31/31 hashes identical (map plan + battle) |
 | `--compare --players 8 --map fulda --seed 3 --minutes 12 --every 60` (Normal AI, 4 nations eliminated along the way) | **HEADLESS PASS**, 13/13 identical, 166 entities at the end |
-| `--compare --render --map oasis --seed 5` (3D world built, all effects on, frames drawn) | RENDER_RESULT |
+| `--compare --render --map oasis --seed 5 --minutes 2 --every 30 --render-every 10` (3D world built with the real models, all effects on, frames drawn; screenshot `orch/out/headless-render.png`) | **HEADLESS PASS**, 5/5 identical. An earlier run drawing a frame *every* game-second also matched all 6 hashes up to 150 s; it was stopped there because SwiftShader drawing was holding the shared browser lock for too long |
 | `--compare --native-math` (each engine's own `Math.sin/cos/atan2/exp/pow`) | **HEADLESS FAIL** as expected: the map plan differs at t=0 (supply fields), and unit positions differ in the last digit at t=20 s, e.g. a supply truck at x = 792.5361476389876 (Node) vs …877 (Chromium) |
 
 Sim speed seen in the same runs (Node: process CPU time; page: wall-clock time of the sim steps):
