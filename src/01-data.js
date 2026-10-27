@@ -218,6 +218,10 @@ const POWERS={
 };
 // Every nation's own signature general power (unlocked like the others). Effects differ; cooldowns balance them.
 POWERS.nat={name:'National Power',desc:'',cd:200,r:150,nat:true};
+// Opening lull: no general power can be fired in the first 3 minutes of a battle. A power unlocked before then starts
+// charging until 3:00 (the button shows "Ready in …"). Stops game-deciding first-second strikes on a base that has
+// nothing but a truck and two riflemen (Partisan Uprising, Human Wave, Shahed/Bayraktar swarms, thermobaric strike).
+const POW_OPEN=180;
 const NATPOW={US:{name:'Shock and Awe',type:'strafe',cd:200,r:140,desc:'A-10 gun run: a line of cannon fire and bombs across the target'},
   TR:{name:'Bayraktar Swarm',type:'drones',n:4,cd:190,r:120,desc:'Four Kargu drones launch from your base and hunt around the target'},
   IL:{name:'Mossad Intelligence',type:'intel',cd:180,r:650,desc:'Reveal every enemy building for 25s and laser-mark enemies near the target (+25% damage taken)'},

@@ -129,6 +129,27 @@ old_runs = len(re.findall(r'^\| \d+b? \|', hist, re.M))
 # ---------- LOG ----------
 cycles = [(t, [x for x in items(l) if isinstance(x, str)]) for t, l in sections(read('LOG.md'))][:3]
 
+# ---------- ROADMAP (progress) ----------
+ST_ORDER = ['doing', 'you', 'next', 'todo', 'paused', 'done']
+ST_TXT = {'done': 'done', 'doing': 'in progress', 'next': 'next up', 'you': 'needs you', 'paused': 'paused', 'todo': 'planned'}
+roadmap = []
+try:
+    for title, lines in sections(read('ROADMAP.md')):
+        its = []
+        for x in items(lines):
+            if isinstance(x, str):
+                m = re.match(r'\[(done|doing|next|you|paused|todo)\]\s*(.*)', x)
+                if m:
+                    its.append((m.group(1), m.group(2)))
+        if its:
+            roadmap.append((title, its))
+except FileNotFoundError:
+    pass
+rm_all = [st for _, its in roadmap for st, _ in its]
+rm_done = rm_all.count('done')
+rm_doing = rm_all.count('doing')
+rm_you = [b for _, its in roadmap for st, b in its if st == 'you']
+
 # ---------- render ----------
 now = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-5)))
 n_open = sum(len(v) for v in open_by.values())
@@ -153,7 +174,7 @@ w('<p class="lede">One orchestrator, <b>ORCH</b>, runs all development: every 4 
   'sends up to four squad agents, tests their work in a real AI battle and ships to the live game.</p>')
 w('<div class="stats">')
 for v, k in [('1', 'standing agent: ORCH'), ('7', 'squads it dispatches'), (str(n_open), 'open items'),
-             (str(n_done), 'shipped by ORCH'), (str(len(questions) + len(asks)), 'need your answer')]:
+             (str(n_done), 'shipped by ORCH'), (str(len(questions) + len(asks) + len(rm_you)), 'need your answer')]:
     w(f'<div class="stat"><b>{v}</b><span>{k}</span></div>')
 w('</div>')
 w('<div class="links"><a class="btn" href="https://abdullahhaidar5-ux.github.io/ww3/" target="_blank" rel="noopener">Play (GitHub Pages)</a>'
@@ -164,14 +185,30 @@ w(f'<p class="meta">Last cycle: {inline(last_cycle)} · board built {now:%a %b %
 w('</div></header>')
 
 w('<nav class="jump"><div class="wrap">')
-for lab, href in [('Needs you', 'needs'), ('Next up', 'next'), ('Agents', 'agents')] + [(l, k.lower()) for k, l, *_ in SQUADS] + [('Cycles', 'cycles')]:
+for lab, href in [('Progress', 'progress'), ('Needs you', 'needs'), ('Next up', 'next'), ('Agents', 'agents')] + [(l, k.lower()) for k, l, *_ in SQUADS] + [('Cycles', 'cycles')]:
     w(f'<a href="#{href}">{lab}</a>')
 w('</div></nav><main class="wrap">')
 
+# Progress (from ROADMAP.md)
+if roadmap:
+    pct = round(100 * rm_done / max(1, len(rm_all)))
+    w(f'<section id="progress"><h2>Progress</h2><p class="sub">{rm_done} of {len(rm_all)} items done · {rm_doing} in progress right now · {len(rm_you)} waiting on you</p>')
+    w(f'<div class="pbar big" role="img" aria-label="{pct}% done"><i style="width:{pct}%"></i><span>{pct}%</span></div>')
+    w('<div class="streams">')
+    for title, its in roadmap:
+        n = len(its); d = sum(1 for st, _ in its if st == 'done'); g = sum(1 for st, _ in its if st == 'doing')
+        w(f'<div class="stream"><div class="sthead"><h3>{html.escape(title)}</h3><span class="cnt">{d}/{n}</span></div>')
+        segs = ''.join(f'<i class="seg s-{st}" style="width:{100*sum(1 for x,_ in its if x==st)/n:.1f}%"></i>' for st in ['done','doing','you','next','paused','todo'] if any(x==st for x,_ in its))
+        w(f'<div class="pbar">{segs}</div><ul class="rm">')
+        for st, body in sorted(its, key=lambda t: ST_ORDER.index(t[0])):
+            w(f'<li class="r-{st}"><span class="chip st-{st}">{ST_TXT[st]}</span><span class="txt">{inline(body)}</span></li>')
+        w('</ul></div>')
+    w('</div><p class="hint">Built from <code>orch/ROADMAP.md</code>; ORCH updates it every cycle.</p></section>')
+
 # Needs you
 w('<section id="needs" class="band warn"><h2>Needs you</h2>')
-if questions or asks:
-    w('<ul class="list">' + ''.join(f'<li><div class="txt">{inline(q)}</div></li>' for q in questions + asks) + '</ul>')
+if questions or asks or rm_you:
+    w('<ul class="list">' + ''.join(f'<li><div class="txt">{inline(q)}</div></li>' for q in rm_you + questions + asks) + '</ul>')
 else:
     w('<p class="empty">Nothing waiting on you.</p>')
 w('<p class="hint">To ask for anything, tell Claude in any chat: “add to the WW3 backlog: …”. ORCH does your requests first.</p></section>')
@@ -318,6 +355,24 @@ summary{cursor:pointer;font:600 16px var(--display);letter-spacing:.04em}
 .plain{margin:8px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:13px}
 .plain li{overflow-wrap:anywhere}
 .mt{margin-top:10px}
+
+.pbar{display:flex;height:10px;background:var(--panel2);border:1px solid var(--line);overflow:hidden;position:relative}
+.pbar.big{height:22px}.pbar.big i{background:var(--ok)}
+.pbar.big span{position:absolute;right:8px;top:0;font:600 13px/22px var(--mono);color:var(--fg)}
+.pbar i{display:block;height:100%}
+.seg.s-done{background:var(--ok)}.seg.s-doing{background:var(--accent)}.seg.s-you{background:var(--warn)}
+.seg.s-next{background:var(--info)}.seg.s-paused{background:var(--dim)}.seg.s-todo{background:transparent}
+.streams{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px}
+.stream{background:var(--panel);border:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.sthead{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.sthead h3{margin:0;color:var(--fg);font-size:16px;letter-spacing:.06em}
+.cnt{font:600 13px var(--mono);color:var(--dim);font-variant-numeric:tabular-nums}
+.rm{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px}
+.rm li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px;align-items:start;font-size:13px}
+.rm li.r-done .txt{color:var(--dim)}
+.chip.st-done{border-color:var(--ok);color:var(--ok)}.chip.st-doing{border-color:var(--accent);color:var(--accent);background:var(--accentbg)}
+.chip.st-you{border-color:var(--warn);color:var(--warn)}.chip.st-next{border-color:var(--info);color:var(--info)}
+.chip.st-paused{color:var(--dim)}.chip.st-todo{color:var(--dim);border-style:dashed}
+@media (max-width:560px){.rm li{grid-template-columns:minmax(0,1fr);gap:2px}.rm .chip{justify-self:start}}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 """
 

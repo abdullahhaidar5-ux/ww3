@@ -17,7 +17,7 @@ const alive = pid => { try { process.kill(pid, 0); return true; } catch (e) { re
 const readPid = f => { try { return parseInt(fs.readFileSync(f, 'utf8'), 10) || 0; } catch { return -1; } }; // -1: gone
 const ageMs = f => { try { return Date.now() - fs.statSync(f).mtimeMs; } catch { return 0; } };
 
-let held = false;
+let held = false, hooked = false;
 function release() {
   if (!held) return;
   held = false;
@@ -27,9 +27,12 @@ function release() {
 // Waits until this process holds the lock. Returns immediately if `--no-lock` is on the command line.
 export async function acquireBrowserLock(tag = path.basename(process.argv[1] || 'test')) {
   if (process.argv.includes('--no-lock')) { console.log(`browser lock: skipped (--no-lock)`); return; }
-  process.on('exit', release);
-  for (const [sig, code] of [['SIGINT', 130], ['SIGTERM', 143], ['SIGHUP', 129]])
-    process.on(sig, () => { release(); process.exit(code); });
+  if (!hooked) {
+    hooked = true;
+    process.on('exit', release);
+    for (const [sig, code] of [['SIGINT', 130], ['SIGTERM', 143], ['SIGHUP', 129]])
+      process.on(sig, () => { release(); process.exit(code); });
+  }
   const t0 = Date.now();
   let lastMsg = -Infinity, lastHolder = 0;
   for (;;) {
@@ -62,6 +65,10 @@ export async function acquireBrowserLock(tag = path.basename(process.argv[1] || 
     await sleep(1000 + Math.random() * 500);
   }
 }
+
+// Gives the lock back early so other tests can run (a long job like tourney.mjs closes its browser, releases, waits a
+// moment and calls acquireBrowserLock() again). Released automatically on exit anyway.
+export function releaseBrowserLock() { release(); }
 
 // Peak resident memory of this process plus all its descendants (the Chromium processes), sampled every 2 s from
 // /proc. Linux only; returns null elsewhere. Call the returned function at the end for the peak in MB.

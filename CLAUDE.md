@@ -16,6 +16,7 @@ anything.
 | `orch/BACKLOG.md` | Everything open, by squad, prioritized | ORCH maintains |
 | `orch/HISTORY.md` | Every past agent run and what it shipped | Append only |
 | `orch/LOG.md` | ORCH's cycle log | ORCH appends |
+| `orch/ROADMAP.md` | Progress of all big workstreams, status-tagged; drives the board's Progress section | ORCH + anyone shipping |
 | `orch/board.py` → `orch/board.html` | Command Board (claude.ai/artifact/UENjCQzdzHCzYmqQQEuJLx), built from the three files above | Generated |
 | `vo/`, `mus/` | Voice lines per nation (`vo/<CODE>.mp3`), music | Audio squad |
 | `sw.js`, `manifest.webmanifest`, icons | Offline/PWA install | Rarely |
@@ -52,15 +53,21 @@ Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the ve
   **DW "Coffee Shias"**. The IM faction was removed on purpose; 18 is the intended count (no 19th planned). Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
 - **Audio:** real, professional military audio; top-quality unit voice acting in each nation's native language,
-  including war slogans like "Labbaik ya Hussein". **Shia factions (IR, RS, DW) use latmiyas as their music**;
-  every other nation gets its own country-specific war score.
+  including war slogans like "Labbaik ya Hussein". **Shia factions (IR, RS, DW) use latmiyas as their music** — real recorded latmiyas only: the synthesized
+  latmiyas stay until real replacements are ready, then get swapped out; replacements may also be real military
+  music, e.g. public-domain military band recordings (Abdullah, 2026-10-26);
+  every other nation gets its own country-specific war score — **region-specific** for all 18 (its own scales,
+  rhythms and instruments; Abdullah, 2026-10-26).
 - Multiplayer: up to 8 players, host's browser runs the battle. Never break multiplayer sync — host and clients
   must agree.
-- Must stay smooth and **phone-playable**.
+- Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
+  (Abdullah, 2026-10-26).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
   (Abdullah connected it 2026-10-26; Cloudflare builds the repo root from `main` automatically on every push — nothing
   to do at ship except check it serves the new version), and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi, republish
   per `orch/ARTIFACT.md`). Everything in the repo is served publicly by both Pages and the `ww3` Worker.
+- **Art is free only** (Abdullah, 2026-10-26): CC0 or CC-BY models/textures/sounds, every author credited in the menu
+  credits; no paid assets, no ripped game assets.
 - Abdullah reads updates on his phone: short summaries, and send screenshots/clips as links or images that open on
   a phone (attached video files didn't open for him).
 

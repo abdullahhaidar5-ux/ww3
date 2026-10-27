@@ -2,6 +2,16 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-26 17:56 → 21:40 — cycle 5
+
+- Took the run-lock (extended once to 05:19 UTC). Baseline: `--check` OK, SMOKE PASS.
+- Shipped 4 squads: Battlefield (AI blowout fix: 3-min power lull + AI build fixes), Netcode (units leaving sight
+  dropped at once — fixes stale-infantry MPSYNC flake), Visuals (Dusk + Random conditions, haze reset), QA
+  (`orch/tourney.mjs`). Fresh review of 01-data/03-sim/07-net: nothing blocking; fixed its perf note (snapDrops
+  'just died' set built once per update); fog-leak + AI-migration notes → backlog.
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS (×2), artifact smoke PASS, artifact MPSYNC PASS. Artifact republished
+  v157 with ck/pong topics. Outside commits meanwhile (side lanes: servers, audio plan, board) were docs/plans only.
+
 ## 2026-10-26 18:00 — cycle 4
 
 - Waited 80 min on cycle 3's lock (expired 18:40 UTC, no commits), then took it. Baseline: `--check` OK, SMOKE PASS.
