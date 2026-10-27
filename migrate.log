@@ -1,0 +1,38 @@
+game servers running locally at http://127.0.0.1:34389
+[2s] three pages loaded
+[2s] host lobby open, code l8e5oq
+[33s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+[101s] before: client A @1 min t=60s: host 30 entities, slot 1 sees 12 (own 12); its screen has 0; missing 12, extra 0, off-position 0, mismatched 0; credits host 55 client 4800
+[102s] before: client B @1 min t=60s: host 30 entities, slot 2 sees 15 (own 15); its screen has 0; missing 15, extra 0, off-position 0, mismatched 0; credits host 680 client 4800
+    trace client A (screenshot stall):  || now: client via=pjd ws=false rxAgo=256
+    trace client B (screenshot stall):  || now: client via=pjd ws=false rxAgo=257
+[108s] host leaves at t=135.2s; standby checkpoint from t=134.5s (12 KB, 46 entities); armies US 3, RU 21, CN 22
+    +0.5s client A: client reconnecting room=ww3-l8e5oq gen=0 (no room)
+[109s] client A noticed the host was gone after 0.5 s
+    +0.5s client B: client reconnecting room=ww3-l8e5oq gen=0 (no room)
+[110s] client A is the new host after 1.5 s (room l8e5oq-m1, battle resumed from t=134.5s)
+    +1.5s client A: host room=l8e5oq-m1 gen=1
+    +2.1s client B: client reconnecting room=ww3-l8e5oq-m1 gen=1
+    +2.3s client B: client room=ww3-l8e5oq-m1 gen=1
+[111s] client B reconnected to the new host 2.5 s after the host left
+    trace client A: 0.0 clientReconnect | 0.3 join tc-l8e5oq | 1.3 join failed tc-l8e5oq: peer-unavailable | 1.3 promoteToHost | 1.3 join tc-l8e5oq-m1 | 1.4 joined tc-l8e5oq-m1 via undefined | 1.4 promoteToHost -> true | 1.4 clientReconnect done, mode host
+    trace client B: 0.0 clientReconnect | 0.3 join tc-l8e5oq | 1.3 join failed tc-l8e5oq: peer-unavailable | 1.8 join tc-l8e5oq-m1 | 1.9 joined tc-l8e5oq-m1 via pjd | 2.0 snapshot t=135.1 while reconnecting | 2.1 snapshot t=135.2 while reconnecting | 2.2 snapshot t=135.3 while reconnecting | 2.2 clientReconnect done, mode client
+[116s]   US (slot 0): 3/3 of its pre-takeover entities are on the new host, 5 in all; AI-run (took over)
+[116s]   RU (slot 1): 21/21 of its pre-takeover entities are on the new host, 21 in all; player-run
+[116s]   CN (slot 2): 22/22 of its pre-takeover entities are on the new host, 22 in all; player-run
+[117s] after: client B right after the takeover t=141s: host 48 entities, slot 2 sees 25 (own 22); its screen has 25; missing 0, extra 0, off-position 0, mismatched 0; credits host 2310 client 2310
+[119s] client B order after the takeover: 12/12 of its units moved on the new host
+[120s] old host's side after 45 game-s under the AI: build step 1 -> 4, 14 new entities, 0 in production, $433
+[121s] after: client B 45 game-s after the takeover t=186s: host 62 entities, slot 2 sees 25 (own 22); its screen has 26; missing 0, extra 0, off-position 0, mismatched 0; credits host 4305 client 4305
+peak memory (node + browser, summed RSS): 3814 MB
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MIGRATE FAIL: before: client A @1 min: 12 of slot 1's own entities are missing on its screen: hq#6(team 1), harv#7(team 1), dozer#8(team 1), inf#9(team 1) (+8 more) (132s)
+  ✗ before: client A @1 min: slot 1 credits differ: host 55, client 4800
+  ✗ before: client A @1 min: slot 1's latest state is 59.5 s behind the host after settling
+  ✗ before: client B @1 min: 15 of slot 2's own entities are missing on its screen: hq#11(team 2), harv#12(team 2), dozer#13(team 2), inf#14(team 2) (+11 more)
+  ✗ before: client B @1 min: slot 2 credits differ: host 680, client 4800
+  ✗ before: client B @1 min: slot 2's latest state is 59.5 s behind the host after settling
+  ✗ before the host left, a client fell 119.5 game-s behind
