@@ -1,0 +1,23 @@
+desktop (1600×900, mouse)
+  ok   default mouse scheme is Generals
+  ok   on-screen hint describes the Generals controls
+  ok   test units are on screen
+  FAIL open ground to click on  — [{"x":536.3817988972562,"y":729.2265632806278,"ok":false},{"x":1062.8931767100405,"y":731.788133031721,"ok":false},{"x":800,"y":950.7308453831976,"ok":false},{"x":384.84130419047835,"y":589.427111550351,"ok":true},{"x":1214.9134924321686,"y":590.0597802168917,"ok":true}]
+ Generals scheme
+  ok   left-click own unit selects it
+  ok   Shift+click adds to the selection
+  ok   left-click ground with units selected = move order
+  ok   …and keeps the selection
+  ok   left-click enemy with units selected = attack order
+  ok   left-click another own unit selects it (no order)
+  ok   double-click selects every unit of that type on screen
+  ok   Ctrl+click enemy = force-fire on it
+  ok   Ctrl+click empty ground does not move the units
+  ok   A arms attack-move
+  ok   A then click ground = attack-move order
+  ok   …selection kept after attack-move
+  ok   G arms guard
+  FAIL TypeError: Cannot read properties of undefined (reading 'x') |     at file:///home/runner/work/ww3/ww3/orch/controls.mjs:182:31
+
+CONTROLS FAIL — 16/18 checks (49s); screenshots orch/out/controls-*.png
+SKIP controls (no test)
