@@ -193,7 +193,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);ove
 #log div.w,#log div.bad{color:#ffb4a8;border-left-color:var(--warn)} #log div.g{color:#c9f5d6;border-left-color:var(--ok)}
 @keyframes logf{0%{opacity:0;transform:translateY(-3px)}4%{opacity:1;transform:none}78%{opacity:1}100%{opacity:0}}
 #mode:not([hidden])~#log{top:calc(max(10px,env(safe-area-inset-top,0px)) + 40px)}
-#app:has(#side.min.mmOn) #log{top:calc(max(8px,env(safe-area-inset-top,0px)) + 112px)}
+#app.mmpeek #log{top:calc(max(8px,env(safe-area-inset-top,0px)) + 112px)}
 /* ---------- Command bar: docked along the bottom like Generals. Left: minimap · centre: command card · right: money, strike, rank, selection ---------- */
 #side{--bh:clamp(150px,19vh,180px);--bw:126px;--rows:3;position:relative;z-index:6;box-sizing:border-box;height:var(--bh);min-width:0;display:grid;
   grid-template-columns:auto minmax(0,1fr) clamp(260px,22vw,360px);grid-template-rows:minmax(0,1fr);gap:8px;
@@ -272,7 +272,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);ove
 /* unit orders (attack, defend, stop, retreat) float over the battlefield just above the bar, bottom right */
 #info .cmdrow{position:fixed;z-index:7;right:max(8px,env(safe-area-inset-right,0px));bottom:calc(var(--barh,170px) + 8px);margin:0;gap:4px;width:min(460px,calc(100vw - 16px));box-sizing:border-box}
 #info .cmdrow button{min-height:30px;font-size:12px;background:rgba(29,38,34,.94);box-shadow:0 2px 8px rgba(0,0,0,.5)}
-#app:has(#info .cmdrow) #hint{visibility:hidden}
+#app.orders #hint{visibility:hidden}
 .tunlist{margin-top:4px;padding:4px 6px;background:var(--panel2);border:1px solid #3d5a45;font:500 11.5px var(--mono);line-height:1.45;color:var(--fg)}.tunlist b{font:600 13px var(--display);color:var(--ok)}
 /* ☰ menu: sound, voices, music, settings, restart, quit */
 #amenu{position:absolute;z-index:12;bottom:calc(100% + 6px);right:max(8px,env(safe-area-inset-right,0px));min-width:200px;display:flex;flex-direction:column;gap:2px;padding:5px;background:rgba(18,24,21,.98);border:1px solid #3d4d44;box-shadow:0 8px 24px rgba(0,0,0,.6)}
@@ -387,7 +387,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   #credits{align-self:center;text-align:center;font:600 16px var(--display);letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #side .sw{display:none}
   #side.hasUp .sw{display:grid;position:fixed;z-index:7;left:max(6px,env(safe-area-inset-left,0px));bottom:calc(var(--barh,220px) + 6px);width:min(200px,calc(50vw - 12px));box-sizing:border-box;padding:4px 6px;background:rgba(18,24,21,.94);border:1px solid #3d4d44;box-shadow:0 2px 10px rgba(0,0,0,.55)}
-  #app:has(#info .cmdrow) #side.hasUp .sw{bottom:calc(var(--barh,220px) + 54px)}
+  #app.orders #side.hasUp .sw{bottom:calc(var(--barh,220px) + 54px)}
   #side .sw .lbl{font-size:12px;flex-direction:column;align-items:flex-start;gap:0}
   #supbtn{min-height:40px;padding:0 10px}
 }
@@ -7818,6 +7818,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   el.append(b,sp);if(tip.textContent)el.append(tip);
   if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
+  {const ap=$('app'),o=!!el.querySelector('.cmdrow');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.';el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1){const n=MODE==='client'?(T.tunN|0):T.tun.length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>In the tunnel network: '+n+' / '+TUN_CAP+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. Right-click a tunnel with units selected to send them in.');el.append(d);}
@@ -8323,7 +8324,7 @@ try{new ResizeObserver(barH).observe($('side'));}catch(e){addEventListener('resi
 function barMin(v){const sd=$('side');if(!sd)return false;if(v==null)return sd.classList.contains('min');v=!!v;sd.classList.toggle('min',v);if(!v)mapPeek(false);
   const g=$('barGrip');if(g){g.textContent=v?'▴':'▾';g.setAttribute('aria-expanded',v?'false':'true');g.title=v?'Show the command bar':'Fold the command bar down';}
   try{localStorage.setItem('ww3_barMin',v?'1':'0');}catch(e){}ctipHide();barH();return v;}
-function mapPeek(v){const sd=$('side'),b=$('mmBtn');if(!sd)return;if(v==null)v=!sd.classList.contains('mmOn');sd.classList.toggle('mmOn',!!v);if(b)b.setAttribute('aria-pressed',v?'true':'false');}
+function mapPeek(v){const sd=$('side'),b=$('mmBtn');if(!sd)return;if(v==null)v=!sd.classList.contains('mmOn');sd.classList.toggle('mmOn',!!v);$('app').classList.toggle('mmpeek',!!v);if(b)b.setAttribute('aria-pressed',v?'true':'false');}
 if($('barGrip'))$('barGrip').onclick=()=>barMin(!barMin());
 if($('mmBtn'))$('mmBtn').onclick=()=>mapPeek();
 {let m=false;try{m=localStorage.getItem('ww3_barMin')==='1';}catch(e){}if(m)barMin(true);}
