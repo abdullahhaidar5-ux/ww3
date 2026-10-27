@@ -30,7 +30,11 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [ask] **Graphics overhaul plan** (2026-10-26 21:10): https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ — 6 phases
   (1 foundations: art out of the page onto Cloudflare + Three.js upgrade · 2 real models · 3 terrain/world · 4 light &
   effects · 5 massive columns · 6 device tiers). **Decided: free art only** (CC0/CC-BY, credited; no paid models — Abdullah 21:08). Still waiting on: start
-  Phase 1; units/terrain/effects first; lighter phone look OK. Don't start Phase 1 until he approves.
+  Phase 1; units/terrain/effects first; lighter phone look OK.
+  **Audio and music overhaul folded in (Abdullah 21:09):** real recorded weapons/battle/ambience (CC0/CC-BY), real
+  national scores (public-domain recordings), full native-language voice lines (volunteers, TTS fallback), proper
+  mix; **synthesized latmiyas to be removed**, replaced only by freely licensed or permitted real recordings. Open
+  question in the doc: remove the synth latmiyas now, or keep until replacements are ready. Don't start Phase 1 until he approves.
 
 - _(none open)_ — 2026-10-26 answers: keep right-click as an optional shortcut; stay at 18 factions; the old
   development chat is gone (its `assets/`, ROUNDS.md and test scripts are lost — harnesses get rebuilt in `orch/`,
