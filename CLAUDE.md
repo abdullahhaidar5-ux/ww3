@@ -16,6 +16,7 @@ anything.
 | `orch/BACKLOG.md` | Everything open, by squad, prioritized | ORCH maintains |
 | `orch/HISTORY.md` | Every past agent run and what it shipped | Append only |
 | `orch/LOG.md` | ORCH's cycle log | ORCH appends |
+| `orch/ROADMAP.md` | Progress of all big workstreams, status-tagged; drives the board's Progress section | ORCH + anyone shipping |
 | `orch/board.py` → `orch/board.html` | Command Board (claude.ai/artifact/UENjCQzdzHCzYmqQQEuJLx), built from the three files above | Generated |
 | `vo/`, `mus/` | Voice lines per nation (`vo/<CODE>.mp3`), music | Audio squad |
 | `sw.js`, `manifest.webmanifest`, icons | Offline/PWA install | Rarely |
