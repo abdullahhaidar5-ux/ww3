@@ -7477,17 +7477,10 @@ function wireHost(g){
   NET.cseq=NET.cseq||{};const hostHello=(peer,by,f,tok)=>{if(MODE==='host'){hostRejoin(peer,tok);return;}if(MODE!=='single')return;const cf=FKEYS.includes(f)?f:'US';const m={peer,by};const p=NET.lobby.find(q=>q.peer===m.peer);if(p){p.f=cf;if(tok)p.tok=tok;}else{const mxS=(MAPS[setup.map]||MAPS.strait).max;NET.ais=NET.ais||[];if(NET.lobby.length+1+NET.ais.length>=mxS&&NET.ais.length)NET.ais.pop();if(NET.lobby.length>=mxS-1){NET.game.emit('lobby',{n:NET.lobby.length+1,to:m.peer,full:1}).catch(()=>{});return;}NET.lobby.push({peer:m.peer,by:m.by,f:cf,tok:tok||null});}
     NET.game.emit('lobby',{n:NET.lobby.length+1,to:m.peer}).catch(()=>{});renderLobby();};
   g.on('hello',m=>{if(m.sameTab)return;hostHello(m.peer,m.by,m.data&&m.data.f);});
-  const hostCmd=(peer,data)=>{if(MODE!=='host')return;const ix=NET.peers?NET.peers.indexOf(peer):-1;if(ix<1)return;if(G&&G.teams[ix]&&G.teams[ix].out)return;const a=cleanCmd(data);if(a)act(ix,a);};
   g.on('cmd',m=>hostCmd(m.peer,m.data));
-  g.onPeers(ch=>{for(const q of ch.joined.concat(ch.updated)){if(q.sameTab||!q.presence)continue;const pr=q.presence;(NET.seen=NET.seen||{})[q.peer]=performance.now();
-      if(pr.hi&&pr.hi.ed!=null)(NET.edOf=NET.edOf||{})[q.peer]=pr.hi.ed?1:0;
-      // a player the heartbeat marked as gone (e.g. their PC stalled while loading) is linked back as soon as they are heard from again
-      if(MODE==='host'&&NET.peers&&pr.hi&&typeof pr.hi.tok==='string'&&NET.peers.indexOf(q.peer)<0)hostRejoin(q.peer,pr.hi.tok.slice(0,16));
-      if(pr.hi&&(MODE==='single'||MODE==='host')&&(NET.lastHi||{})[q.peer]!==pr.hi.n){(NET.lastHi=NET.lastHi||{})[q.peer]=pr.hi.n;hostHello(q.peer,q.by,pr.hi.f,typeof pr.hi.tok==='string'?pr.hi.tok.slice(0,16):null);}
-      if(typeof pr.pg==='number'&&(NET.lastPg||{})[q.peer]!==pr.pg){(NET.lastPg=NET.lastPg||{})[q.peer]=pr.pg;NET.game.emit('pong',{to:q.peer,t:pr.pg}).catch(()=>{});if(typeof pr.pi==='number')(NET.pings=NET.pings||{})[q.peer]=pr.pi;}
-      if(Array.isArray(pr.cq)&&MODE==='host'){let last=NET.cseq[q.peer]||0;for(const c of pr.cq){if(!c||typeof c.s!=='number'||c.s<=last)continue;last=c.s;hostCmd(q.peer,c.a);}NET.cseq[q.peer]=last;const ix=NET.peers?NET.peers.indexOf(q.peer):-1;if(ix>0)(NET.cseqSlot=NET.cseqSlot||[])[ix]=Math.max((NET.cseqSlot||[])[ix]|0,last);}
-      if(typeof pr.kr==='number'&&MODE==='host'&&NET.peers&&(NET.lastKr||{})[q.peer]!==pr.kr){(NET.lastKr=NET.lastKr||{})[q.peer]=pr.kr;const ix=NET.peers.indexOf(q.peer);if(ix>0&&NET.kf)NET.kf[ix]=0;}}});
-  g.onPeers(ch=>{for(const q of ch.left){if(MODE==='single'){NET.lobby=NET.lobby.filter(p=>p.peer!==q.peer);renderLobby();}else if(MODE==='host'&&NET.peers){const ix=NET.peers.indexOf(q.peer);if(ix>0){NET.peers[ix]=null;playerLeft(ix);}}}});
+  // the battle half (orders, pings, reconnects, keyframe requests) is shared with the server host (07a-hostsnap)
+  g.onPeers(ch=>{for(const q of ch.joined.concat(ch.updated)){if(q.sameTab||!q.presence)continue;hostPres(q,hostHello);}});
+  g.onPeers(ch=>{for(const q of ch.left){if(MODE==='single'){NET.lobby=NET.lobby.filter(p=>p.peer!==q.peer);renderLobby();}else hostGone(q.peer);}});
 }
 async function hostGame(){if(!NET.room||NET.code)return;NET.ais=[];const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];$('host').hidden=true;$('cancelHost').hidden=false;
   $('mpstatus').textContent='Opening your game…';
@@ -7663,13 +7656,30 @@ function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return nul
   if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
 const NET_PV=6;
 // A dropped player gets 30 s to reconnect (same team, same units) before the AI takes over their side.
-function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=NET.toks.indexOf(tok);if(ix<1)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,(NET.cseqSlot||[])[ix]|0);
-  const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',{pv:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm,w:S.w|0}).catch(()=>{});
+function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=NET.toks.indexOf(tok);if(ix<0||ix===ME)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,(NET.cseqSlot||[])[ix]|0);
+  const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',Object.assign({pv:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm,w:S.w|0},S.sv?{sv:1}:{})).catch(()=>{});
   for(const O of G.teams)log(O.id,`${T.F.name}'s commander reconnected.`,'g');
   // P2P: the rejoined player starts from a fresh map, so collapsed city blocks are re-sent as they come into view
   if(hostP2P()){(NET.gq=NET.gq||[])[ix]=[];(NET.civQ=NET.civQ||[])[ix]=(G.civ||[]).map((c,i)=>c.dead?i:-1).filter(i=>i>=0);}}
-function discTick(){if(!NET.peers||!G)return;const now=performance.now();for(let k=0;k<NET.peers.length;k++){const p=NET.peers[k];if(k===ME||!p)continue;const ls=(NET.seen||{})[p];if(ls&&now-ls>8000&&!G.teams[k].discT&&!G.teams[k].ai){NET.peers[k]=null;playerLeft(k);}}for(let k=1;k<NET.peers.length;k++){const T=G.teams[k];if(T&&T.discT&&G.t-T.discT>30&&!T.out){T.discT=0;T.ai=mkAI(1);T.aiTook=1;for(const O of G.teams)log(O.id,`${T.F.name}'s commander did not come back. The AI has taken over (they can still rejoin).`,'w');}}}
+function discTick(){if(!NET.peers||!G)return;const now=performance.now();for(let k=0;k<NET.peers.length;k++){const p=NET.peers[k];if(k===ME||!p)continue;const ls=(NET.seen||{})[p];if(ls&&now-ls>8000&&!G.teams[k].discT&&!G.teams[k].ai){NET.peers[k]=null;playerLeft(k);}}for(let k=0;k<NET.peers.length;k++){const T=G.teams[k];if(k!==ME&&T&&T.discT&&G.t-T.discT>30&&!T.out){T.discT=0;T.ai=mkAI(1);T.aiTook=1;for(const O of G.teams)log(O.id,`${T.F.name}'s commander did not come back. The AI has taken over (they can still rejoin).`,'w');}}}
 function playerLeft(ix){if(!G||G.over)return;const T=G.teams[ix];if(!T||T.out||T.ai)return;T.discT=G.t;for(const O of G.teams)log(O.id,`${T.F.name}'s commander lost connection. Waiting up to 30 s for them to reconnect…`,'w');}
+/* ---------- host: what players send (shared by the browser host's wireHost and the server host) ----------
+   A server-hosted battle has no side of its own (ME=-1), so every slot is a player; a browser host is slot ME=0. */
+// a player's order (their presence order queue, or a 'cmd' message): only for their own side, while it is in the battle
+function hostCmd(peer,data){if(MODE!=='host')return;const ix=NET.peers?NET.peers.indexOf(peer):-1;if(ix<0||ix===ME)return;if(G&&G.teams[ix]&&G.teams[ix].out)return;const a=cleanCmd(data);if(a)act(ix,a);}
+// one player's presence (q: {peer,by,presence}): heard-from time, may-host flag, reconnects, the hello (hello(peer,by,
+// nation,token): the lobby greeting, or a reconnect once the battle runs), ping answers, the numbered order queue
+// (de-duplicated), and requests for a full snapshot
+function hostPres(q,hello){const pr=q.presence;(NET.seen=NET.seen||{})[q.peer]=performance.now();
+  if(pr.hi&&pr.hi.ed!=null)(NET.edOf=NET.edOf||{})[q.peer]=pr.hi.ed?1:0;
+  // a player the heartbeat marked as gone (e.g. their PC stalled while loading) is linked back as soon as they are heard from again
+  if(MODE==='host'&&NET.peers&&pr.hi&&typeof pr.hi.tok==='string'&&NET.peers.indexOf(q.peer)<0)hostRejoin(q.peer,pr.hi.tok.slice(0,16));
+  if(pr.hi&&(MODE==='single'||MODE==='host')&&(NET.lastHi||{})[q.peer]!==pr.hi.n){(NET.lastHi=NET.lastHi||{})[q.peer]=pr.hi.n;hello(q.peer,q.by,pr.hi.f,typeof pr.hi.tok==='string'?pr.hi.tok.slice(0,16):null);}
+  if(typeof pr.pg==='number'&&(NET.lastPg||{})[q.peer]!==pr.pg){(NET.lastPg=NET.lastPg||{})[q.peer]=pr.pg;NET.game.emit('pong',{to:q.peer,t:pr.pg}).catch(()=>{});if(typeof pr.pi==='number')(NET.pings=NET.pings||{})[q.peer]=pr.pi;}
+  if(Array.isArray(pr.cq)&&MODE==='host'){let last=NET.cseq[q.peer]||0;for(const c of pr.cq){if(!c||typeof c.s!=='number'||c.s<=last)continue;last=c.s;hostCmd(q.peer,c.a);}NET.cseq[q.peer]=last;const ix=NET.peers?NET.peers.indexOf(q.peer):-1;if(ix>=0&&ix!==ME)(NET.cseqSlot=NET.cseqSlot||[])[ix]=Math.max((NET.cseqSlot||[])[ix]|0,last);}
+  if(typeof pr.kr==='number'&&MODE==='host'&&NET.peers&&(NET.lastKr||{})[q.peer]!==pr.kr){(NET.lastKr=NET.lastKr||{})[q.peer]=pr.kr;const ix=NET.peers.indexOf(q.peer);if(ix>=0&&ix!==ME&&NET.kf)NET.kf[ix]=0;}}
+// a player's connection closed during the battle: 30 s to come back before the AI takes their side (playerLeft)
+function hostGone(peer){if(MODE!=='host'||!NET.peers)return;const ix=NET.peers.indexOf(peer);if(ix>=0&&ix!==ME){NET.peers[ix]=null;playerLeft(ix);}}
 /* ---------- host: send ---------- */
 function encEnt(e,mem){let f=0,x=0;if(e.isB){if(e.built<1){f|=FLG.built;x=Math.round(e.built*100);}if(e.dis>G.t)f|=FLG.dis;if(e.charge)f|=FLG.chg;if(e.kind==='uplink'){x=Math.round(G.teams[e.team].charge/G.teams[e.team].sup.charge*100);}if(e.kind==='garrison'&&e.civ){x=e.civ.occ.length*16+e.civ.cap;}if(e.kind==='factory'&&G.teams[e.team].q.factory.length)f|=FLG.busy;if(mem)f|=FLG.mem;if(e.nd&&e.built<1)f|=FLG.nd;if(e.stall&&e.built<1)f|=FLG.stall;}
   else{if(e.cargo)f|=FLG.cargo;if(e.hacking)f|=FLG.hack;if(e.planting)f|=FLG.plant;if(e.landed)f|=FLG.land;if(e.hid)f|=FLG.hid;if(G.t-(e.mv||-9)<.25)f|=FLG.mov;if(e.building)f|=FLG.busy;if((e.supp||0)>.5)f|=FLG.supp;if(e.rout>G.t)f|=FLG.rout;else if(e.s&&canRout(e)&&(e.fear||0)>courageOf(e)*.65)f|=FLG.shak;if(e.mark>G.t)f|=FLG.mark;if(e.last>G.t)f|=FLG.last;if(e.aband)f|=FLG.aband;f|=(e.rank||0)<<9;{const m=moraleOf(e);x=m?(m.st==='fearless'?101:Math.round(m.v*20)*5):-1;}}
