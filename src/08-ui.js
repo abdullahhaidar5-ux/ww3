@@ -45,13 +45,13 @@ function btnAt(x,y){for(const b of $('panel').children){if(!b.classList.contains
   pn.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const b=btnAt(e.clientX,e.clientY);if(b&&b!==CTIP.b)ctipShow(b);else if(!b&&CTIP.b)ctipHide();});
   pn.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')ctipHide();});
   // touch: a long press shows the full description without pressing the button; a tap presses it and shows it briefly
-  pn.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;const b=btnAt(e.clientX,e.clientY);if(!b)return;clearTimeout(CTIP.lp&&CTIP.lp.t);CTIP.lp={x:e.clientX,y:e.clientY,b,t:setTimeout(()=>{CTIP.eat=performance.now();ctipShow(b);try{navigator.vibrate&&navigator.vibrate(12);}catch(_){}},450)};});
+  pn.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;const b=btnAt(e.clientX,e.clientY);if(!b)return;clearTimeout(CTIP.lp&&CTIP.lp.t);const L={x:e.clientX,y:e.clientY,b,fired:false};L.t=setTimeout(()=>{L.fired=true;ctipShow(b);try{navigator.vibrate&&navigator.vibrate(12);}catch(_){}},450);CTIP.lp=L;});
   pn.addEventListener('pointermove',e=>{const L=CTIP.lp;if(L&&e.pointerType!=='mouse'&&Math.hypot(e.clientX-L.x,e.clientY-L.y)>10){clearTimeout(L.t);CTIP.lp=null;}});
-  const up=e=>{const L=CTIP.lp;if(!L||e.pointerType==='mouse')return;clearTimeout(L.t);CTIP.lp=null;if(CTIP.eat&&performance.now()-CTIP.eat<2000){if(CTIP.b)CTIP.hideT=setTimeout(ctipHide,2500);}else if(e.type==='pointerup'&&L.b)ctipShow(L.b,2600);};
+  const up=e=>{const L=CTIP.lp;if(!L||e.pointerType==='mouse')return;clearTimeout(L.t);CTIP.lp=null;if(L.fired){CTIP.eat=performance.now();if(CTIP.b)CTIP.hideT=setTimeout(ctipHide,2500);}else if(e.type==='pointerup'&&L.b)ctipShow(L.b,2600);};
   pn.addEventListener('pointerup',up);pn.addEventListener('pointercancel',up);
   // after a long press the finger lifts: swallow the click (and the long-press context menu) so nothing is bought
-  pn.addEventListener('click',e=>{if(CTIP.eat&&performance.now()-CTIP.eat<2000){CTIP.eat=0;e.stopPropagation();e.preventDefault();}},true);
-  pn.addEventListener('contextmenu',e=>{if(CTIP.eat&&performance.now()-CTIP.eat<2000){e.stopPropagation();e.preventDefault();}},true);
+  pn.addEventListener('click',e=>{if(CTIP.eat&&performance.now()-CTIP.eat<1000){CTIP.eat=0;e.stopPropagation();e.preventDefault();}},true);
+  pn.addEventListener('contextmenu',e=>{if((CTIP.lp&&CTIP.lp.fired)||CTIP.eat&&performance.now()-CTIP.eat<1000){e.stopPropagation();e.preventDefault();}},true);
   // mouse wheel scrolls the command grid sideways
   pn.addEventListener('wheel',e=>{if(pn.scrollWidth<=pn.clientWidth+1||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;e.preventDefault();pn.scrollLeft+=(e.deltaMode===1?e.deltaY*33:e.deltaY);},{passive:false});
   pn.addEventListener('scroll',()=>{if(CTIP.b&&!CTIP.lp)ctipHide();},{passive:true});}
