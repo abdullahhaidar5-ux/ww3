@@ -92,6 +92,9 @@ try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => warns.push('3D models still loading after 180s'));
+  { const m = await page.evaluate(() => ({ n: Object.keys(MODELS.proto).length, ready: MODELS.ready, err: MODELS.err || '', t: Math.round(performance.now()) }));
+    console.log(`3D models: ${m.n} ready=${m.ready} ${m.err} (page open to models ready: ${(m.t / 1000).toFixed(1)}s)`);
+    if (!m.ready) warns.push('3D models did not load: ' + m.err); }
   await shot(page, 'menu.png');
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));

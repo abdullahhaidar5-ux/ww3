@@ -20,13 +20,23 @@ for(const f of ['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP'
 const MIL_TANK={RS:{m:'technical',fit:'z',size:29},DW:{m:'technical',fit:'z',size:29},IM:{m:'toontank',fit:'z',size:32}};
 for(const f of ['US','IL','EU','SA','AE','EG','KR','TR','CN','PK','IN'])MIL_TANK[f]={m:'tankE',fit:'long',size:37};
 const PROPS={container:{fit:'x',size:28},containerG:{fit:'x',size:30},crate:{fit:'y',size:8},barrel:{fit:'y',size:8},sandbag:{fit:'x',size:16},watertower:{fit:'y',size:56},tent:{fit:'x',size:50},pallet:{fit:'x',size:10},fence:{fit:'x',size:24},missile:{fit:'y',size:26},sam:{fit:'y',size:24}};
-function b64u8(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
+// The models are separate files next to the page (models/<key>.<hash>.glb.gz, listed in MODEL_FILES by orch/build.py),
+// fetched in parallel while the menu is up. A file that fails to arrive just leaves that model out (units fall back to
+// a stand-in model or simple shapes); a file that stalls is given up on after two minutes.
+let PAKO=null;function gunzipU8(u){if(typeof DecompressionStream!=='undefined')return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+  PAKO=PAKO||new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});
+  return PAKO.then(()=>{const o=pako.ungzip(u);return o.buffer.slice(o.byteOffset,o.byteOffset+o.byteLength);});}
+function fetchModel(url){const ac=typeof AbortController!=='undefined'?new AbortController():null,tm=setTimeout(()=>{if(ac)ac.abort();},120000);
+  return fetch(url,ac?{signal:ac.signal}:undefined).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status+' '+url);return r.arrayBuffer();})
+    .then(b=>{const u=new Uint8Array(b);return u[0]===0x1f&&u[1]===0x8b?gunzipU8(u):b;}).finally(()=>clearTimeout(tm));}
 function loadModels(){if(MODELS.loading)return MODELS.loading;MODELS.loading=(async()=>{try{
-    if(typeof MODEL_PACK==='undefined'||!THREE.GLTFLoader)return false;
-    const gz=b64u8(MODEL_PACK);let txt;
-    if(typeof DecompressionStream!=='undefined'){txt=await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).text();}
-    else{await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});txt=pako.ungzip(gz,{to:'string'});}const pack=JSON.parse(txt);const ld=new THREE.GLTFLoader();
-    await Promise.all(Object.keys(pack).map(k=>new Promise(res=>{try{ld.parse(b64u8(pack[k]).buffer,'',g=>{MODELS.proto[k]={scene:g.scene,anims:g.animations};res();},()=>res());}catch(e){res();}})));
+    if(typeof MODEL_FILES==='undefined'||!THREE.GLTFLoader)return false;
+    const ld=new THREE.GLTFLoader(),keys=Object.keys(MODEL_FILES),got={},T0=performance.now();let done=0,bad=0;
+    const tick=()=>{done++;MODELS.prog=done/keys.length;if(window.LOADING&&!MODELS.ready&&typeof loadStep==='function')try{loadStep('Loading 3D models… '+done+' of '+keys.length,.04+.04*MODELS.prog);}catch(e){}};
+    await Promise.all(keys.map(async k=>{const url=MODEL_FILES[k];try{const b=await(got[url]=got[url]||fetchModel(url));
+        await new Promise(res=>{try{ld.parse(b.slice(0),'',g=>{MODELS.proto[k]={scene:g.scene,anims:g.animations};res();},e=>{bad++;console.warn('model',k,e);res();});}catch(e){bad++;console.warn('model',k,e);res();}});}
+      catch(e){bad++;MODELS.err=String(e&&e.message||e);console.warn('model',k,e);}tick();}));
+    MODELS.loadMs=Math.round(performance.now()-T0);if(bad)console.warn('3D models: '+bad+' of '+keys.length+' failed to load');
     for(const k in MODELS.proto)MODELS.proto[k].scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.encoding=THREE.sRGBEncoding;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);}}});
     for(const k in MODELS.proto){try{mergeProto(MODELS.proto[k]);}catch(e){console.warn('merge',k,e);}}
     MODELS.ready=Object.keys(MODELS.proto).length>0;if(!MODELS.ready)MODELS.err='no models parsed';return MODELS.ready;}catch(e){console.warn('models',e);MODELS.err=String(e&&e.message||e);return false;}})();return MODELS.loading;}
