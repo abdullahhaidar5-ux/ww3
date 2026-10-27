@@ -1,0 +1,37 @@
+game servers running locally at http://127.0.0.1:35647
+[2s] three pages loaded
+[2s] host lobby open, code e26irq
+[37s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+[68s] before: client A @1 min t=60s: host 13 entities, slot 1 sees 5 (own 5); its screen has 5; missing 0, extra 0, off-position 0, mismatched 0; credits host 5920 client 5920
+[69s] before: client B @1 min t=60s: host 13 entities, slot 2 sees 3 (own 3); its screen has 3; missing 0, extra 0, off-position 0, mismatched 0; credits host 5920 client 5920
+    trace client A (screenshot stall):  || now: client via=pjd ws=false rxAgo=256
+    trace client B (screenshot stall):  || now: client via=pjd ws=false rxAgo=257
+[99s] host leaves at t=120.2s; standby checkpoint from t=111.8s (5 KB, 10 entities); armies US 4, RU 3, CN 3
+    +0.4s client A: client room=ww3-e26irq gen=0
+    +0.4s client B: client room=ww3-e26irq gen=0
+    +5.1s client B: client reconnecting room=ww3-e26irq gen=0
+    +5.3s client B: client reconnecting room=ww3-e26irq gen=0 (no room)
+[105s] client A noticed the host was gone after 5.3 s (abrupt: no goodbye)
+    +5.5s client A: client reconnecting room=ww3-e26irq gen=0
+    +5.7s client A: client reconnecting room=ww3-e26irq gen=0 (no room)
+    +6.5s client A: client reconnecting room=e26irq-m1 gen=0 (no room)
+    +6.7s client A: host room=e26irq-m1 gen=1
+[106s] client A is the new host after 6.8 s (room e26irq-m1, battle resumed from t=120.1s)
+    +6.9s client B: client reconnecting room=ww3-e26irq-m1 gen=1
+    +7.3s client B: client room=ww3-e26irq-m1 gen=1
+[107s] client B reconnected to the new host 7.4 s after the host left
+    trace client A: 5.3 clientReconnect | 5.6 join tc-e26irq | 6.5 join failed tc-e26irq: peer-unavailable | 6.5 promoteToHost | 6.5 join tc-e26irq-m1 | 6.7 joined tc-e26irq-m1 via undefined | 6.7 promoteToHost -> true | 6.7 clientReconnect done, mode host
+    trace client B: 5.0 clientReconnect | 5.3 join tc-e26irq | 6.2 join failed tc-e26irq: peer-unavailable | 6.7 join tc-e26irq-m1 | 6.9 joined tc-e26irq-m1 via pjd | 6.9 snapshot t=120.2 while reconnecting | 7.2 clientReconnect done, mode client
+[112s]   US (slot 0): 4/4 of its pre-takeover entities are on the new host, 6 in all; AI-run (took over)
+[112s]   RU (slot 1): 3/3 of its pre-takeover entities are on the new host, 3 in all; player-run
+[112s]   CN (slot 2): 3/3 of its pre-takeover entities are on the new host, 3 in all; player-run
+[113s] after: client B right after the takeover t=126s: host 12 entities, slot 2 sees 4 (own 3); its screen has 4; missing 0, extra 0, off-position 0, mismatched 0; credits host 7040 client 7040
+[114s] client B order after the takeover: 1/1 of its units moved on the new host
+[115s] old host's side after 45 game-s under the AI: build step 1 -> 4, 13 new entities, 0 in production, $1285
+[116s] after: client B 45 game-s after the takeover t=171s: host 24 entities, slot 2 sees 4 (own 2); its screen has 4; missing 0, extra 0, off-position 0, mismatched 0; credits host 7880 client 7880
+peak memory (node + browser, summed RSS): 3626 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MIGRATE PASS (abrupt host loss), local game servers (125s) — screenshots orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png (this run: orch/out/runs/20261027-232330-migrate-abrupt/)
