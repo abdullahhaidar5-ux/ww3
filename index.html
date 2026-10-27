@@ -212,10 +212,10 @@ body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);ove
 .tabs button .dot{position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
 .tabs .ts{display:none}
 /* squads: a slim row of chips (All · 1-5 · Group) */
-.sqbar{flex:1 1 auto;min-width:0;display:flex;gap:3px;justify-content:flex-end;align-items:stretch;overflow-x:auto;scrollbar-width:none}
+.sqbar{flex:1 1 auto;min-width:0;display:flex;gap:3px;justify-content:flex-start;align-items:stretch;overflow-x:auto;scrollbar-width:none}
 .sqbar::-webkit-scrollbar{display:none}
 .sqh,.sqbtns{display:contents}
-#sqAll{order:0}#sqs{order:1}#sqMake{order:2}
+#sqAll{order:0;margin-left:auto}#sqs{order:1}#sqMake{order:2}
 .sqs{display:flex;gap:3px}
 .sqbar button{flex:none;background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:600 12px var(--display);letter-spacing:.04em;padding:0 8px;cursor:pointer;white-space:nowrap}
 .sqbar button:hover:not(:disabled){border-color:var(--accent)}
@@ -399,7 +399,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   #sideTop{align-items:center}
   .cardhd{height:40px;gap:6px}
   #side .ccard,#side .stat{gap:3px}
-  .tabs button{padding:0 9px;font-size:12px}
+  .tabs button{padding:0 8px;font-size:12px}#side .tabs .tl{display:none}#side .tabs .ts{display:inline}
   #side .hdr{min-height:40px;gap:3px}
   #facname{display:none}
   #credits{flex:1 1 auto;min-width:0;text-align:center;font:600 16px var(--display);overflow:hidden;text-overflow:ellipsis}
