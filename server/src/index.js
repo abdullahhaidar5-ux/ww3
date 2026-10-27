@@ -680,7 +680,7 @@ export class BattleRoom extends DurableObject {
     }
     const info = h.phase === 'battle' || h.phase === 'over' ? sim.info() : null;
     return json({ phase: h.phase, go: !!h.go, steps: h.steps, code: h.code, owner: h.owner, map: h.map, w: h.w, ais: h.ais, tm: h.tm,
-      humans: h.order.map(id => ({ id, f: h.players.get(id) && h.players.get(id).f, rd: !!(h.players.get(id) && h.players.get(id).rd) })),
+      humans: h.order.map((id, k) => ({ id, f: h.players.get(id) ? h.players.get(id).f : h.facs && h.facs[k], rd: !!(h.rd && h.rd[k]) })),
       t: info && info.t, over: info && info.over, ents: info && info.ents, ck: info ? sim.test.ck() : null, peers: info ? sim.test.peers() : null,
       ev: this.evStats || null });
   }
