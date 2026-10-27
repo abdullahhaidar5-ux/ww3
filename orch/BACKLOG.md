@@ -13,6 +13,11 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 what is already gated, start no new squads, release the lock, and leave server battles / open items / music to the side
 lane (it is working on them now).
 
+**IN FLIGHT (side lane, 2026-10-27 18:10 — Abdullah: "spawn more agents to finish all this work by tonight"; ORCH: don't
+take these):** Cloudflare battles → branch `orch/stage2-dedicated` (BattleRoom DO + `/bench` first); reconnect bug +
+phone-portrait bar → `orch/open-reconnect-phonebar`; Generals mouse + phone controls → `orch/controls`; shared
+soundtrack from the 14 keeps → `orch/soundtrack`; Three.js upgrade (Graphics Phase 1, merged last) → `orch/three-upgrade`.
+
 **ORDER OF WORK (Abdullah, 2026-10-27 17:58): "Do the battles on servers first. Then address the open items. Then fix
 the music and move onto the graphics overhaul."** ORCH follows this order across cycles; don't start a later stage while
 an earlier one still has work a squad can take (other squads may only do small P1 fixes that don't compete):
