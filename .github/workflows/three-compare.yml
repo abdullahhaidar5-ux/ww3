@@ -1,0 +1,30 @@
+name: Three.js before/after (throwaway)
+on:
+  push:
+    branches: ['three-compare/**']
+jobs:
+  cmp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [a, b]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Tools
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright install --with-deps chromium >/dev/null
+          python3 -m pip install -q pillow || true
+      - name: Compare
+        env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+        run: |
+          if [ "${{ matrix.part }}" = a ]; then A="--maps strait,arctic,fulda,gulf"; else A="--maps zagros,emirates,dmz,caribbean --close 0 --perf 0"; fi
+          node orch/three/compare.mjs --html orch/three/before.html --tag before --no-lock $A 2>&1 | tail -40
+          node orch/three/compare.mjs --tag after --no-lock $A 2>&1 | tail -40
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'three-${{ matrix.part }}', path: 'orch/out/three/**', if-no-files-found: ignore, retention-days: 3 }
