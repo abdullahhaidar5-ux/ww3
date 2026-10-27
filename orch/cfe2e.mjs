@@ -59,7 +59,7 @@ function blockedPeerShim(url) {
 }
 
 if (!process.argv.includes('--no-lock')) await acquireBrowserLock();
-const SRV = await startServer({ vars: { TEST_HOOKS: '1' } });
+const SRV = await startServer({ vars: { TEST_HOOKS: '1' }, quiet: !process.env.CFE2E_DEBUG });
 const WS = SRV.url.replace(/^http/, 'ws');
 console.log(`local game server (wrangler dev, TEST_HOOKS) ${SRV.url}`);
 // the server's view of a battle (test hooks)
@@ -195,10 +195,13 @@ async function main() {
   await shot(B, 'cfe2e-friend.png');
 
   // ---- 4. reconnect ----
-  await B.evaluate(() => { NET.game._ws.close(); });
+  await B.evaluate(() => { window.__oldWs = NET.game._ws; NET.game._ws.close(); });
   say('4. the friend\'s connection to the server is cut');
   const r0 = Date.now();
-  while (Date.now() - r0 < 25000) { await tick(3); if (await B.evaluate(() => !NET.recon && !!(NET.game && NET.game._ws) && performance.now() - NET.lastRx < 1000)) break; }
+  while (Date.now() - r0 < 25000) { await tick(3);
+    const b = await B.evaluate(w0 => ({ ok: !NET.recon && !!(NET.game && NET.game._ws) && NET.game._ws !== window.__oldWs && performance.now() - NET.lastRx < 1000, recon: !!NET.recon, rx: performance.now() - NET.lastRx }));
+    if (process.env.CFE2E_DEBUG) say(`     friend ${JSON.stringify(b)} server ${JSON.stringify(await H(code, 'team', { k: 1 }))} peers ${JSON.stringify((await SB()).peers)}`);
+    if (b.ok) break; }
   const rs = await B.evaluate(() => ({ recon: !!NET.recon, via: NET.game && NET.game.via }));
   say(`   after ${((Date.now() - r0) / 1000).toFixed(1)} s the friend is ${rs.recon ? 'STILL reconnecting' : 'reconnected'} via ${rs.via}`);
   if (rs.recon || rs.via !== 'wsb') fail('the friend did not reconnect to the Cloudflare battle');
@@ -286,6 +289,7 @@ await browser.close().catch(() => {});
 server.close(); SRV.stop();
 for (const w of [...new Set(warns)].slice(0, 10)) console.log('  warn: ' + w);
 const uniq = [...new Set(fails)];
+if (uniq.length && process.env.CFE2E_DEBUG) console.log('server log:\n' + SRV.log().slice(-4000));
 if (uniq.length) { console.log(`\nCFE2E FAIL: ${uniq[0]} (${secs()})`); for (const f of uniq.slice(1, 15)) console.log('  ✗ ' + f); process.exit(1); }
 console.log(`\nCFE2E PASS (${secs()}) — battle hosted by the real BattleRoom (wrangler dev): busy fallback, lobby, start, sync, orders, reconnect, server restart, budget hand-over all OK`);
 process.exit(0);
