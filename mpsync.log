@@ -1,0 +1,20 @@
+[2s] both pages loaded
+[2s] host lobby open, code r22vu9
+[2s] client joining
+[23s] battle: US vs RU on strait; client is slot 1
+[65s] both pages finished loading
+[65s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[67s] client order: 0/2 of the client's units moved on the host
+[69s] check @1.0 min t=60s: host 23 entities, client side sees 6 (own 6); client has 6 (own 6); missing 0, extra 0, off-position 0, mismatched 0; credits host 5575 client 5575
+[71s] check @2.5 min t=150s: host 34 entities, client side sees 10 (own 7); client has 10 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 9580 client 9580
+[85s] check @4.0 min t=240s: host 37 entities, client side sees 5 (own 4); client has 5 (own 4); missing 0, extra 0, off-position 0, mismatched 0; credits host 12465 client 12465
+[95s] traffic host->client 1210 KB in 2503 messages, client->host 44 KB in 78; client lag max 0.30 game-s; 8 ms per 0.5 s step
+[95s] 24 live checks, 0 out of tolerance; up to 5 enemy entities were in the client's view at once
+peak memory (node + browser, summed RSS): 2686 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/r22vu9?role=host&key=is09g7tok2rsz7l3ug' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MPSYNC FAIL: an order given on the client never reached the host (none of its units moved) (95s)
