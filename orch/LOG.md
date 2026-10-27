@@ -2,6 +2,34 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-27 08:20 — side lane: servers live; page shell restored
+
+- Abdullah's `ww3-servers` Worker is live (root `server`, production branch `servers-live`, previews off; PR #1 merged
+  with his go-ahead). `/health` ok, `servertest --url` PASS against production.
+- Found: the cycle-6 merge (ff0853d) had dropped the page shell's server client code (srvUrl/wsOpen/relay) and the
+  Middle Eastern instrument credits from `index.html`. Restored both from 6eeafe2 (shell hunks only; game span untouched),
+  servers still off. Gate: `--check` OK, smoke 4p, MPSYNC, MIGRATE, artifact smoke + MPSYNC all PASS.
+- Switch-over (`orch/servers-on`) held back: with servers on, MIGRATE fails (client B self-promotes; server says
+  `taken`). Netcode side lane fixing on `orch/servers-on-mig`; tests also must stop reaching the production server.
+- Lesson: when merging a branch built from an older base, resolve `index.html` by rebuilding from merged `src/` on the
+  newer shell — never take the branch's whole shell. A shell-marker check in `build.py --check` is in the backlog.
+
+## 2026-10-27 04:24 → 07:27 — cycle 8
+
+- Waited 5 min on cycle 7's lock (released 09:29 UTC), took it; extended once. Baseline: `--check` OK, SMOKE PASS.
+  Side lanes held 02-map, 04-gfx, 05-fx3d, 08-ui, 10-post, 11-models, smoke/mpsync → dispatched 3 squads.
+- Shipped: Audio (region music for US, TR, IL, EU, UA, RU, CU + US/EU Navy Band anthems, `mus/we.mp3`), Battlefield
+  (balance round 2: AI vehicle share, prices, `tourney.mjs --swap`), Netcode (faster host takeover, own Conditions
+  restored). Fresh review: no blockers; fixed its should-fix (standby gave up takeover for good after a brief network
+  error) and bumped NET_PV 5 → 6 for the price changes. Other notes → backlog.
+- Side lane shipped bottom bar + phone speed onto main mid-cycle; merged it, reran the gate. `migrate.mjs` then failed
+  2/3 at "clients did not settle after the pre-takeover screenshot" (the test freezing the host) → gave it the same
+  watchdog guard `mpsync.mjs` got; passes both modes.
+- Gate (after merge): `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, MIGRATE --abrupt PASS, artifact smoke
+  PASS, artifact MPSYNC PASS. Artifact republished v161 (+`mus/we.mp3`, `an_US.mp3`, `an_EU.mp3`).
+- Chaining the next cycle was blocked (permission denied for running the scheduled task on demand); the 4-hourly
+  schedule (next 13:24 UTC) picks it up.
+
 ## 2026-10-27 07:40 — side lane: bottom command bar + faster phone start shipped
 
 - Merged `orch/bottom-bar` (3d854c4, includes `orch/speed-ship`) onto main (cycles 6–7 + servers); one conflict in

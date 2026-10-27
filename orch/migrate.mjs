@@ -344,7 +344,12 @@ async function main() {
   if (ck.err) { fail('client A\'s checkpoint cannot be unpacked: ' + ck.err); return; }
   if (ckB) warns.push('client B also holds a checkpoint (only one standby expected)');
   for (const p of [cA, cB]) await traceOn(p, false);
+  // the test (not the game) freezes the host while it draws and photographs the page; a real host never stops sending.
+  // Keep the clients' 'host lost' watchdog (5 s without word -> reconnect) from mistaking that freeze for a lost host
+  // (same as mpsync.mjs), then let it count normally again.
+  for (const p of [cA, cB]) await p.evaluate(() => { NET.lastRx = performance.now() + 120000; });
   await screenshot(host, 'mig-before-host.png');
+  for (const p of [cA, cB]) await p.evaluate(() => { NET.lastRx = performance.now(); });
   // the slow screenshot frame stalls the host for several real seconds, which the clients take for a lost host (they
   // start reconnecting after 5 s of silence). Play on until both are settled again, so the host leaves a calm battle.
   let calm = false;
