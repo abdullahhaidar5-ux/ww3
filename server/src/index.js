@@ -666,6 +666,7 @@ export class BattleRoom extends DurableObject {
       return json({ ok: true });
     }
     if (!h) return json({ host: null, ck: !!(await this.ctx.storage.get('ck')) });
+    if (op === 'close') { h.shut('closed by test'); this.stop(); return json({ ok: true }); }
     if (op === 'pause') { h.paused = u.searchParams.get('v') === '1'; return json({ ok: true }); }
     if (op === 'settle') { sim.test.keyframe(k); sim.net(0.1); h.flush(); return json({ ok: true }); }
     if (op === 'view') return json(sim.test.view(k));
