@@ -112,6 +112,11 @@ try {
   }, PLAYERS);
   if (!start.ok) throw new Error('skirmish failed to start: ' + (start.err || 'G is null'));
   console.log(`battle: ${start.n} players ${start.facs.join(' vs ')} on ${start.map}`);
+  // the battle starts behind a loading screen (ground, 3D world and shaders are prepared in steps, with the battle
+  // clock held); wait for it to finish before checking that the clock runs
+  const tLoad = Date.now();
+  await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('loading screen did not finish within 10 minutes'));
+  console.log(`loading screen finished after ${((Date.now() - tLoad) / 1000).toFixed(1)}s`);
 
   await page.waitForTimeout(4000); // a few real rendered frames
   const tReal = await page.evaluate(() => G.t);
