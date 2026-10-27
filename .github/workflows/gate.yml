@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        t: [migrate, migrate-abrupt, mpsync, mpsync-server]
+        t: [migrate, migrate-abrupt, migrate-down, mpsync]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
