@@ -47,7 +47,15 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   crossfade and ≥60 s dwell, each track streamed only when about to play (phones), menu credits per track;
   (3) anthem at battle start + victory for nations that have a PD recording (8 today; find more); (4) remove
   `mus/smp.mp3` (3.3 MB), `me/as/we` sample sheets and the score generator once nothing uses them (keep "My music").
-  `build.py --check` credit checks must follow. Step 1 can start now.
+  `build.py --check` credit checks must follow.
+  **Step 1 DONE 2026-10-27:** 32 licence-checked candidates (menu 4, calm 8, combat 14, victory 3, defeat 3; Kevin MacLeod
+  CC-BY 4.0, OpenGameArt CC-BY/CC0, Musopen PD on archive.org, US Marine Band PD) in `mus/new/candidates.json`
+  (titles, licences, source + download URLs, preview start points). Listening page:
+  https://claude.ai/artifact/24sKTTjkx1pfPxVzt3si8f — Abdullah's picks land in its database, collection `picks`
+  (doc id = track id, `{v: "keep"|"drop"}`; read with ArtifactData `list`). **[ask] waiting on his picks**; once
+  there are keeps in every pool, do step 2 (re-download the kept tracks from `download_url`, encode for phones).
+  Left out as doubtful: Jonathan Shaw "RPG Orchestral Essentials" (own non-CC licence in the zip), Holst "Mars" on
+  Commons (generic "Attribution" licence). Victory pool is thin.
 - [open] **Audio and music overhaul** (Abdullah, 2026-10-26 21:09–21:15; same plan doc; **music part superseded
   2026-10-27 by the shared-soundtrack item above** — don't add more per-nation music). Free only (CC0/CC-BY or public
   domain, credited). Real recorded weapons/battle/ambience; full native-language voice lines (volunteers, TTS fallback);
