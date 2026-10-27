@@ -4,7 +4,8 @@ and the short US Navy Band anthem excerpts mus/an_<CODE>.mp3.
 
 we.mp3 is loaded by 09-audio.js only when US, Turkey, Israel, Europe, Ukraine, Russia or Cuba's music starts
 (TR and IL also load the Middle Eastern sheet me.mp3 for darbuka, frame drum, ney, kanun and kemence). Each anthem
-excerpt is loaded only for its own nation.
+excerpt is loaded only for its own nation (also India, China and Egypt, whose scores live in the Asian and Middle
+Eastern packs but whose anthems are cut here with the others).
 
 Sources (all free; credited in the menu credits):
   * Versilian Community Sample Library (VCSL) by Versilian Studios / Sam Gossner, CC0 1.0  https://github.com/sgossner/VCSL
@@ -18,13 +19,14 @@ Sources (all free; credited in the menu credits):
       kroshe - "davul.wav" (#468506, CC0 1.0): davul (the big mallet's dum)
   * United States Navy Band national-anthem recordings (works of the US federal government: public domain), via
     Wikimedia Commons (US, EU) and the Internet Archive's mirror of navyband.navy.mil/media/ceremonial
-    (https://archive.org/details/us-navy-band-national-anthems-public-domain: IL, UA, CU). Compositions, all public domain: "The Star-Spangled Banner" (John Stafford Smith, d. 1836),
+    (https://archive.org/details/us-navy-band-national-anthems-public-domain: IL, UA, CU, IN, CN, EG). Compositions, all public domain: "The Star-Spangled Banner" (John Stafford Smith, d. 1836),
     "Hatikvah" (melody arr. Samuel Cohen, d. 1940), "Shche ne vmerla Ukrainy" (Mykhailo Verbytskyi, d. 1870), the
     Anthem of Europe (Beethoven, "Ode to Joy", 1823; the Navy Band's own arrangement), "La Bayamesa" (Perucho
-    Figueredo, d. 1870). Skipped: Turkey's Istiklal Marsi (music by Osman Zeki Ungor, d. 1958: still in copyright in
+    Figueredo, d. 1870), "Jana Gana Mana" (Rabindranath Tagore, d. 1941), "March of the Volunteers" (Nie Er, d. 1935),
+    "Bilady, Bilady, Bilady" (Sayed Darwish, d. 1923). Skipped: Turkey's Istiklal Marsi (music by Osman Zeki Ungor, d. 1958: still in copyright in
     Turkey) and Russia's anthem (Alexandrov, 1944; public-domain status rests on a state-symbol exemption, not clear-cut).
 
-usage: python3 mus/we_pack.py <download-dir>
+usage: python3 mus/we_pack.py <download-dir> [anthems]   ('anthems' re-cuts only the anthem excerpts whose source is there)
   <download-dir>/vcsl/<VCSL path>, <download-dir>/fs/<id>.mp3 (Freesound hq previews) and <download-dir>/an/<CODE>.(ogg|mp3) must exist (see SOURCES / ANTHEMS).
 Writes mus/we.mp3 and mus/an_<CODE>.mp3 and prints the WE_META JSON to paste into src/09-audio.js.
 """
@@ -86,7 +88,8 @@ SOURCES = {
     'dvd': [('fs/468506.mp3', 1.72, .95, 0, 0), ('fs/468506.mp3', .22, .5, 0, 0), ('fs/468506.mp3', 1.22, .5, 0, 0)],
 }
 # anthem excerpts: nation -> (file, start s, length s)
-ANTHEMS = {'US': ('an/US.ogg', 0, 26), 'IL': ('an/IL.mp3', 0, 26), 'UA': ('an/UA.mp3', 0, 26), 'EU': ('an/EU.ogg', 0, 26), 'CU': ('an/CU.mp3', 0, 26)}
+ANTHEMS = {'US': ('an/US.ogg', 0, 26), 'IL': ('an/IL.mp3', 0, 26), 'UA': ('an/UA.mp3', 0, 26), 'EU': ('an/EU.ogg', 0, 26), 'CU': ('an/CU.mp3', 0, 26),
+           'IN': ('an/IN.mp3', 0, 26), 'CN': ('an/CN.mp3', 0, 26), 'EG': ('an/EG.mp3', 0, 26)}
 
 
 def sheet():
@@ -135,5 +138,6 @@ def anthems():
 
 
 if __name__ == '__main__':
-    sheet()
+    if sys.argv[2:3] != ['anthems']:
+        sheet()
     anthems()
