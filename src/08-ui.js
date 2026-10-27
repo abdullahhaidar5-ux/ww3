@@ -453,12 +453,11 @@ function loadStep(label,p){const el=LOAD.el;if(!el)return;const s=el.querySelect
 function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.hidden=true;window.LOADING=false;}
 // wait until the browser has painted (falls back to a timer when the tab is in the background and frames stop)
 function loadFrame(){return new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,document.hidden?0:300);});}
-function loadModelsWait(o){loadShow(o);loadStep('Loading 3D models…',.04);}
-// true while the 3D models are still loading (false once they have finished, even if they failed: then the battle
-// starts with simple shapes instead of waiting forever)
-function modelsPending(){if(MODELS.ready||!MODELS.loading||LOAD.mdone)return false;if(!LOAD.mw){LOAD.mw=1;MODELS.loading.then(()=>{LOAD.mdone=1;},()=>{LOAD.mdone=1;});}return true;}
 async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
-  setTimeout(()=>{if(!MODELS.ready&&typeof pushLog==='function')pushLog('Detailed 3D models could not load on this device ('+(MODELS.err||'unknown')+'). Showing simple shapes.','bad');},500);
+  // the 3D models of the shared scenery and of the nations in this battle (only those) download while the ground is painted
+  const mp=modelsFor(g.teams.map(T=>T.fac),(d,n)=>{if(tok===LOAD.tok)loadStep('Loading 3D models… '+d+' of '+n,.08+.3*d/n);});
+  mp.then(r=>setTimeout(()=>{if(G!==g||typeof pushLog!=='function')return;if(!MODELS.ready)pushLog('Detailed 3D models could not load on this device ('+(MODELS.err||'unknown')+'). Showing simple shapes.','bad');
+    else if(r.bad.length)pushLog(r.bad.length+' of '+r.n+' 3D models did not load ('+r.bad.join(', ')+'). Those units show simpler shapes.','bad');},500));
   initAudio();loadFromG(mode);g.paused=true;
   const live=()=>tok===LOAD.tok&&G===g;let tc=null;
   // [label, progress, work, is3dStart]; the battle clock stays held through every step
@@ -467,6 +466,7 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
       // bake the tactical map's ground now, while the GPU is idle: baked on the first battle frame it has to read pixels
       // back after all the 3D work queued ahead of it, which froze that frame for seconds on phones and slow PCs
       try{if(G===g&&g.thumb&&!g.mmBase)g.mmBase=mmBase();}catch(e){}}],
+    ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
     ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
     ['Preparing graphics…',.78,()=>{try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
@@ -476,7 +476,7 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
     ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
   const T0=performance.now(),TL=LOAD.times=[];
   for(const [label,p,fn,gl] of steps){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;const t1=performance.now();
-    try{fn();TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
+    try{const r=fn();if(r&&r.then)await r;TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
       R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
   g.terrain=tc;loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
   TL.push(['total',Math.round(performance.now()-T0)]);console.log('battle start: '+TL.map(([a,b])=>a.replace('…','')+' '+b+' ms').join(', '));
@@ -487,12 +487,12 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
   pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
   // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
   setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}},0);}
-function startSingle(){if(modelsPending()&&!startSingle.w){startSingle.w=1;$('start').textContent='Loading 3D models…';{const f=rollAis();loadModelsWait({mode:'single',map:setup.map,facs:f,tm:setup.tm,me:0});}MODELS.loading.then(()=>{startSingle.w=0;$('start').textContent='Deploy vs AI';startSingle();});return;}if(modelsPending())return;MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot});}finally{TERR_DEFER=false;}afterStart();}
+function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot});}finally{TERR_DEFER=false;}afterStart();}
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
-  if(modelsPending()){if(!startSandbox.w){startSandbox.w=1;loadModelsWait({mode:'sandbox',map:setup.map,facs,tm:[0,1],me:0});MODELS.loading.then(()=>{startSandbox.w=0;startSandbox();});}return;}MODE='single';ME=0;
+  MODE='single';ME=0;
   TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
-function startMP(mode,seed,facs,slot,map,tm,aiD){if(modelsPending()){loadModelsWait({mode,map,facs,tm,me:slot|0,ai:facs.map((_,i)=>Array.isArray(aiD)&&aiD[i]!=null)});MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm,aiD));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm});}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm,aiD){NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm});}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');
