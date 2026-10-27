@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Build index.html from the game sources in src/.
 
-index.html = shell + vendored libraries (PeerJS, Three.js, GLTFLoader, SkeletonUtils) + MODEL_FILES + the game script.
+index.html = shell + vendored libraries (PeerJS, Three.js bundle with GLTFLoader + SkeletonUtils, see orch/three/vendor.mjs)
++ MODEL_FILES + the game script.
 Only the game script is ours to edit; it lives in src/NN-*.js. This script swaps the game <script> in index.html for
 the concatenation of src/*.js (in file-name order) and leaves every other byte alone.
 
@@ -357,7 +358,8 @@ def build(check=False):
 #  1. No PeerJS / Trystero / "online edition" shim / service worker: those two vendored <script>s stand in for the
 #     artifact runtime's `room` capability on GitHub Pages. On claude.ai the page gets the real claude.use('room'),
 #     which 07-net.js was written against, so the game script itself is byte-for-byte the Pages one.
-#  2. Three.js r128 from cdnjs (artifact pages may only load scripts from cdnjs/jsdelivr/unpkg) instead of inline.
+#  2. Three.js stays inline, exactly as on Pages (the bundle orch/three/vendor.mjs writes; r128 used to come from cdnjs,
+#     but current Three.js releases are ES modules only and GLTFLoader/SkeletonUtils are not on cdnjs at all).
 #  3. No <!doctype>/<html>/<head>/<body> or manifest/icon links: the Artifact publisher wraps the page itself.
 #  4. The 3D models as base64 text files: the artifact host refuses .glb.gz / application/gzip (it serves only html css
 #     js mjs wasm json txt, images, fonts, audio/video, pdf), so each models/<key>.<hash>.glb.gz is published as
@@ -367,7 +369,7 @@ def build(check=False):
 # Audio stays at vo/XX.mp3 and mus/*.mp3, published as files next to the page. See orch/ARTIFACT.md.
 ARTIFACT_URL = 'https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi'
 ARTIFACT_OUT = os.path.join(ROOT, 'orch', 'out', 'artifact')
-THREE_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'
+THREE_MARK = 'WW3_THREE="'  # first lines of the vendored Three.js bundle (orch/three/vendor.mjs)
 # Every room topic 07-net/07b-ckpt send in room mode, opened to Contributors ("interact"). 'b' (bundles) is P2P-only.
 ROOM_TOPICS = ['cmd', 'evt', 'hello', 'lobby', 'snap', 'start', 'team', 'ck', 'pong']
 CAPABILITIES = {'room': {'topics': {t: 'interact' for t in ROOM_TOPICS}}, 'user': {'scopes': ['profile']}}
@@ -422,11 +424,10 @@ def artifact():
     if names != ['PeerJS', 'online-edition shim']:
         sys.exit(f'artifact: expected PeerJS + online-edition shim before <title>, found {names} — update build.py')
     three = [s for s in blocks if s[0] > t and 'Three.js Authors' in s[2][:300]]
-    if len(three) != 1 or 'const e="128"' not in three[0][2]:
-        sys.exit('artifact: vendored Three.js r128 <script> not found — CDN URL would not match; update build.py')
-    a, b, _ = three[0]
+    if len(three) != 1 or THREE_MARK not in three[0][2][:400]:
+        sys.exit('artifact: vendored Three.js bundle <script> (orch/three/vendor.mjs) not found in index.html; update build.py')
     end = html.rindex('</body>')
-    page = html[t:a] + f'<script src="{THREE_CDN}"></script>' + html[b:end].rstrip() + '\n'
+    page = html[t:end].rstrip() + '\n'
     # guards: nothing Pages-only may leak into the artifact
     # (the World War 3 servers backend - relay rooms, server game list - lives in the shim, so it is dropped with it)
     for bad in ('window.WW3_P2P=true', 'window.claude=', 'serviceWorker.register', '<!doctype', '<body',
@@ -434,7 +435,7 @@ def artifact():
         if bad.lower() in page.lower():
             sys.exit(f'artifact: Pages-only code {bad!r} still in the artifact page — update build.py')
     srcs = re.findall(r'<script[^>]+src="([^"]+)"', page)
-    if srcs != [THREE_CDN]:
+    if srcs:
         sys.exit(f'artifact: unexpected external scripts {srcs}')
     os.makedirs(ARTIFACT_OUT, exist_ok=True)
     out = os.path.join(ARTIFACT_OUT, 'index.html')
