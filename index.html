@@ -7382,7 +7382,7 @@ function sendSnap(key,to,items,bit){NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=N
   const ch=[],keep=[],seen=new Set();for(const a of items){seen.add(a[0]);const s=a.join(',');if(c.get(a[0])===s){if(sendKeep){if(bit)keep.push(a[0]);else keep.push(a[0],a[11]|a[12]);}}else{c.set(a[0],s);ch.push(a);}}
   for(const id of c.keys())if(!seen.has(id))c.delete(id);
   const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
-  if(ch.length||!keep.length&&sendKeep)sendChunks('snap',base,ch);const per=bit?1400:700;for(let i=0;i<keep.length;i+=per)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+per)},bit?{kb:1}:{})).catch(()=>{});}
+  if(ch.length||!keep.length&&sendKeep)snapOut(base,ch);const per=bit?1400:700;for(let i=0;i<keep.length;i+=per)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+per)},bit?{kb:1}:{})).catch(()=>{});}
 // P2P: each entity's state is encoded and compared ONCE per tick (a version number per entity), then each player's
 // cache only stores version*2+remembered-bit - no per-player strings, so the host's cost barely grows with player count.
 function verItems(items){const V=NET.ver||(NET.ver=new Map());const st=NET.verSt=(NET.verSt|0)+1;
@@ -7394,9 +7394,12 @@ function sendSnapP(k,to,items){const b=1<<k,key=k;NET.sc=NET.sc||{};NET.kf=NET.k
     c.set(a[0],code);const r=a.slice(0,11);r[9]=mem?(r[9]|FLG.mem):(r[9]&~FLG.mem);ch.push(r);}
   if(c.size>n){const seen=new Set();for(const a of items)if((a[11]|a[12])&b)seen.add(a[0]);for(const id of c.keys())if(!seen.has(id))c.delete(id);}
   const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
-  if(ch.length||!keep.length&&sendKeep)sendChunks('snap',base,ch);for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});}
+  if(ch.length||!keep.length&&sendKeep)snapOut(base,ch);for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});}
 // P2P: one copy per player, so the two visibility masks are folded into that player's 'remembered' flag and dropped
 function forPlayer(items,k){const b=1<<k,out=[];for(const a of items){if(!((a[11]|a[12])&b))continue;const c=a.slice(0,11);c[9]=(a[11]&b)?(c[9]&~FLG.mem):(c[9]|FLG.mem);out.push(c);}return out;}
+// a player who sees nothing at all (their side was wiped out) still gets an empty snapshot every 0.4 s: it moves their
+// clock on, so enemies that were in sight fade out instead of lingering as stale ghosts (it was sent as nothing)
+function snapOut(base,ch){if(ch.length)sendChunks('snap',base,ch);else NET.game.emit('snap',{...base,e:[]}).catch(()=>{});}
 function sendChunks(topic,base,items){let cur=[],len=0;const flush=()=>{if(cur.length){NET.game.emit(topic,{...base,e:cur}).catch(()=>{});cur=[];len=0;}};
   for(const it of items){const s=JSON.stringify(it).length+1;if(len+s>3500)flush();cur.push(it);len+=s;}flush();}
 // map-wide state (resource fields, oil derricks, who is out) is built once per flush and sent to a player only when it
