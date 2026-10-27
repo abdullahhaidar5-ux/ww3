@@ -6,7 +6,9 @@
 // "ww3-<code>|<json>" records; <json> = {"k":"e","t":topic,"d":data} (emit) or {"k":"p","p":presence}.
 
 export const STEP = 1 / 60;                  // the battle steps at 60 Hz, as in the browser
-export const MAX_STEPS_PER_TICK = 2;         // one timer callback runs at most this many steps (keeps CPU per event small)
+export const MAX_STEPS_PER_TICK = 1;         // one timer callback runs one 1/60 s step (keeps CPU per event small); when
+                                             // behind, the next callback comes at once (timers are not billed)
+export const READY_MAX_MS = 20000;           // after Start, wait this long at most for every player's loading screen (rd)
 export const LOBBY_MAX_MS = 30 * 60000;      // an unstarted lobby closes after 30 minutes
 export const EMPTY_MS = 60000;               // no player connected for this long: the room closes
 export const AFTER_END_MS = 120000;          // battle over: the room closes this much later
@@ -97,6 +99,7 @@ export class BattleHost {
   presence(id, p) {
     if (!p || typeof p !== 'object') return;
     const P = this.players.get(id); P.pres = p;
+    if (p.rd) P.rd = 1;                      // this player's loading screen has closed (kept for the rest of the battle)
     this.sim.pres(id, p, (peer, by, f, tok) => this.hello(peer, f, tok));
   }
   event(id, t, d) {
@@ -175,6 +178,7 @@ export class BattleHost {
     this.flush();
     this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
+    this.go = false; this.goBy = this.now() + READY_MAX_MS;   // hold until every player is past the loading screen
     this.log(`battle ${this.code} started: ${facs.join(' ')} on ${this.map}`);
     this.list();
   }
@@ -190,6 +194,12 @@ export class BattleHost {
     if (this.phase === 'over') return now >= this.endAt ? this.shut('battle over') : 1000;
     if (this.emptySince && now - this.emptySince > EMPTY_MS) return this.shut('everyone left');
     if (now - this.startedAt > MAX_BATTLE_MS) return this.shut('time limit');
+    if (!this.go) {   // after Start: no steps, no snapshots until every human seat's page says rd (at most 20 s)
+      if (now < this.goBy && !this.order.every(id => { const P = this.players.get(id); return !P || P.rd; })) return 100;   // (a player who dropped meanwhile does not hold it)
+      this.go = true; this.lastStep = now; this.acc = 0;
+      this.log(`battle ${this.code} running (${((now - this.startedAt) / 1000).toFixed(1)} s after Start)`);
+    }
+    if (this.paused) { this.lastStep = now; return 50; }   // test hook only (orch/cfe2e.mjs)
     const real = Math.min(1, Math.max(0, (now - this.lastStep) / 1000)); this.lastStep = now;
     this.acc = Math.min(0.25, this.acc + real);   // more than 0.25 s behind: the battle slows down rather than spiking
     let n = 0;
@@ -208,7 +218,7 @@ export class BattleHost {
     const h = new BattleHost({ ...opts, code: rec.code, ownKey: rec.own });
     await h.sim.restore(rec.si, rec.s);
     h.si = rec.si; h.facs = rec.si.facs.slice(); h.map = rec.si.map; h.w = rec.si.w | 0;
-    h.phase = 'battle'; h.startedAt = h.lastStep = h.emptySince = h.now(); h.acc = 0;
+    h.phase = 'battle'; h.startedAt = h.lastStep = h.emptySince = h.now(); h.acc = 0; h.go = true;
     h.log(`battle ${rec.code} picked up from its checkpoint (${Math.round((h.now() - rec.at) / 1000)} s old)`);
     h.list(true);
     return h;

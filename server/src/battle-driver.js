@@ -74,5 +74,18 @@ export function BATTLE_DRIVER() {
     try { netTick(dt); } finally { B.bots.forEach((k, j) => { G.teams[k].ai = ai[j]; }); }
   };
   B.ckBusy = () => !!NET.ckBusy;
+  // Test views (reached only through the local test hooks, /battle-test/, which exist only with TEST_HOOKS=1 in
+  // `wrangler dev`; never on Cloudflare): what slot k may see, as orch/mpsync.mjs compares a page with its host.
+  B.test = {
+    keyframe: k => { if (NET.kf) NET.kf[k] = 0; NET.snapT = 0; NET.teamT = 0; },
+    team: k => { const T = G && G.teams[k]; return T ? { ai: !!T.ai, disc: T.discT || 0, out: !!T.out, credits: Math.floor(T.credits), fac: T.fac } : null; },
+    view: k => { const out = []; for (const e of G.ents) { if (e.dead) continue; const own = e.team === k, vis = own || !!(e.vs && e.vs[k]);
+        if (!vis && !(e.isB && ((e.sn | 0) & (1 << k)))) continue; out.push([e.id, e.kind, e.team, Math.round(e.x), Math.round(e.y), Math.round(e.hp), e.isB ? 1 : 0, vis ? 1 : 0]); }
+      return { t: G.t, list: out, credits: Math.floor(G.teams[k].credits), all: G.ents.filter(e => !e.dead).length }; },
+    pos: ids => ids.map(id => { const e = G.byId.get(id); return e ? [e.x, e.y] : null; }),
+    base: k => { const b = G.ents.filter(e => e.team === k && e.isB && !e.dead); return b.length ? [b.reduce((s, e) => s + e.x, 0) / b.length, b.reduce((s, e) => s + e.y, 0) / b.length] : [MAPW / 2, MAPH / 2]; },
+    ck: () => ({ sb: NET.sbSlot, id: NET.ckId || 0 }),
+    peers: () => (NET.peers || []).slice(),
+  };
   return B;
 }

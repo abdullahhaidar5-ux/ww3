@@ -119,6 +119,15 @@ export default {
       const fwd = new URL('https://battle/bench'); fwd.search = url.search;
       return battles(env).get(battles(env).idFromName('bench:')).fetch(new Request(fwd, { headers: req.headers }));
     }
+    if (p.startsWith('/battle-test/')) {
+      // local test controls for orch/cfe2e.mjs (pause, look at a side, evict, spend budget). They exist only when the
+      // TEST_HOOKS var is "1", which only orch/serverdev.mjs sets for a local `wrangler dev`; never set it on Cloudflare.
+      if (env.TEST_HOOKS !== '1') return json({ error: 'not found' }, 404, cors);
+      const code = decodeURIComponent(p.slice(13)).toLowerCase();
+      if (!BATTLE_CODE_RE.test(code)) return json({ error: 'bad game code' }, 400, cors);
+      const fwd = new URL('https://battle/test'); fwd.search = url.search;
+      return battles(env).get(battles(env).idFromName(code)).fetch(new Request(fwd));
+    }
     if (p.startsWith('/battle/')) {
       if (!isWs) return json({ error: 'expected a WebSocket' }, 426, cors);
       if (!ok) return json({ error: 'origin not allowed' }, 403, cors);
@@ -549,6 +558,7 @@ export class BattleRoom extends DurableObject {
     this.usage.event(false);
     const u = new URL(req.url);
     if (u.pathname === '/bench') return this.bench(u);
+    if (u.pathname === '/test') return this.env.TEST_HOOKS === '1' ? this.test(u) : json({ error: 'not found' }, 404);
     const code = u.searchParams.get('code'), id = u.searchParams.get('id'), own = u.searchParams.get('own') || '', ip = ipOf(req);
     if (!allow(this.ipBuckets, ip, RATE.ipConnect)) return refuse('limit');
     if (this.host && this.host.phase === 'closed') this.stop();
@@ -614,7 +624,10 @@ export class BattleRoom extends DurableObject {
       this.timer = null;
       if (!this.host) return;
       let next;
+      const t0 = performance.now();
       try { next = this.host.tick(); } catch (e) { console.log('battle tick: ' + (e && e.stack || e)); next = this.host.shut('server error'); }
+      { // time per timer callback (on Cloudflare the clock stands still while code runs, so this reads 0 there)
+        const E = this.evStats || (this.evStats = { n: 0, ms: 0, max: 0 }), d = performance.now() - t0; E.n++; E.ms += d; if (d > E.max) E.max = d; }
       this.usage.wake();
       const now = Date.now();
       // every minute: usage to the Budget object, renew the battle slot, and hand the battle over if the day is at 75%
@@ -643,6 +656,33 @@ export class BattleRoom extends DurableObject {
     this.lastList = Date.now();
     if (!this.code) return;
     lobby(this.env).fetch('https://lobby/battle', { method: 'POST', body: JSON.stringify({ id: 'b-' + this.code, g }) }).catch(() => {});
+  }
+
+  // Local test controls (TEST_HOOKS=1 in `wrangler dev` only; see the Worker's /battle-test/ route)
+  async test(u) {
+    const op = u.searchParams.get('op'), k = Number(u.searchParams.get('k') || 0), h = this.host, sim = h && h.sim;
+    if (op === 'evict') {   // as if Cloudflare evicted the object (redeploy, crash): memory gone, storage kept
+      setTimeout(() => this.ctx.abort('evicted by test'), 10);
+      return json({ ok: true });
+    }
+    if (!h) return json({ host: null, ck: !!(await this.ctx.storage.get('ck')) });
+    if (op === 'close') { h.shut('closed by test'); this.stop(); return json({ ok: true }); }
+    if (op === 'pause') { h.paused = u.searchParams.get('v') === '1'; return json({ ok: true }); }
+    if (op === 'settle') { sim.test.keyframe(k); sim.net(0.1); h.flush(); return json({ ok: true }); }
+    if (op === 'view') return json(sim.test.view(k));
+    if (op === 'team') return json(sim.test.team(k));
+    if (op === 'base') return json(sim.test.base(k));
+    if (op === 'pos') return json(sim.test.pos(JSON.parse(u.searchParams.get('ids') || '[]')));
+    if (op === 'spend') {   // put this much of today's free allowance on the books, reported at the next loop turn
+      const fg = +this.env.FREE_GBS || FREE_GBS;
+      this.usage.awakeMs += Number(u.searchParams.get('pct') || 0) * fg / GB_PER_OBJECT * 1000; this.lastRep = 0;
+      return json({ ok: true });
+    }
+    const info = h.phase === 'battle' || h.phase === 'over' ? sim.info() : null;
+    return json({ phase: h.phase, go: !!h.go, steps: h.steps, code: h.code, owner: h.owner, map: h.map, w: h.w, ais: h.ais, tm: h.tm,
+      humans: h.order.map(id => ({ id, f: h.players.get(id) && h.players.get(id).f, rd: !!(h.players.get(id) && h.players.get(id).rd) })),
+      t: info && info.t, over: info && info.over, ents: info && info.ents, ck: info ? sim.test.ck() : null, peers: info ? sim.test.peers() : null,
+      ev: this.evStats || null });
   }
 
   // GET /battle-bench: one AI battle as fast as the object can run it, streamed as text, then "RESULT {json}"
