@@ -28,6 +28,11 @@
 // closed (as WebRTC does when a tab closes). With --abrupt it does not (power cut / network gone): the clients must
 // notice from the silence (5 s) instead. Trystero (Nostr backup network) is switched off.
 //
+// The game servers (WW3_SERVER_URL, a Cloudflare Worker) are configured in the game, so like a real player's page each
+// page uses them (game list, the host's relay room) besides PeerJS - but the test pages never reach the live servers:
+// by default they talk to a LOCAL copy (`wrangler dev`, orch/serverdev.mjs; `npm ci` in server/ once), and any
+// WebSocket to another host fails (serverdev.mjs guardContext).
+//
 // How it stays fast under SwiftShader: render loops are stopped; before the host leaves, the test drives the clocks in
 // 0.1 s steps (host: 6 sim steps + netTick, then each client's clientTick). The takeover itself is real-time (timers,
 // reconnect tries), so during it each page drives itself every 100 ms; once it is done the test goes back to stepping.
@@ -37,6 +42,9 @@
 //   node orch/migrate.mjs --after 90       # play 90 game-s after the takeover
 //   node orch/migrate.mjs --abrupt         # the host disappears without a goodbye (clients must time out)
 //   node orch/migrate.mjs --no-lock        # skip the machine-wide browser lock (see browserlock.mjs)
+//   node orch/migrate.mjs --server         # local game servers, P2P working (the default), plus checks on the server
+//                                          # side: the old host's and the new host's relay rooms are open on it
+//   node orch/migrate.mjs --server-down    # servers configured but unreachable (as when the Worker is down)
 // Prints MIGRATE PASS / MIGRATE FAIL: reason (exit 0 / 1). Runtime ~5-8 min (mostly three pages building the map).
 // Screenshots: orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png
 import http from 'node:http';
@@ -45,11 +53,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
+import { startServer, guardContext, DEAD_SERVER } from './serverdev.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? Number(process.argv[i + 1]) : d; };
 const MINUTES = arg('minutes', 2), AFTER = arg('after', 45), ABRUPT = process.argv.includes('--abrupt');
+const SRV_DOWN = process.argv.includes('--server-down'), SRV_CHECK = process.argv.includes('--server') && !SRV_DOWN;
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -72,6 +82,8 @@ function findChromium() {
 
 await acquireBrowserLock();
 const peakMB = watchPeakMemory();
+const SRV = SRV_DOWN ? null : await startServer();
+console.log(SRV ? `game servers running locally at ${SRV.url}` : `game servers configured but down (${DEAD_SERVER})`);
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json',
   '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg',
@@ -155,8 +167,9 @@ const browser = await chromium.launch({ executablePath: findChromium(),
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required',
     '--renderer-process-limit=1'] });
 const ctx = await browser.newContext({ viewport: { width: 1024, height: 576 } });
+await guardContext(ctx, SRV ? SRV.url : DEAD_SERVER);
 await ctx.addInitScript(fakePeerShim);
-await ctx.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue() : r.abort());
+await ctx.route('**/*', r => r.request().url().startsWith(ORIGIN) || SRV && r.request().url().startsWith(SRV.url) ? r.continue() : r.abort());
 let hostClosed = false;
 async function openPage(tag) {
   const page = await ctx.newPage();
@@ -330,6 +343,9 @@ async function main() {
     calm = r[0] && r[1] && h; }
   if (!calm) fail('after the pre-takeover screenshot the clients did not settle back onto the host within ~10 s');
   const pre = await armies(host);
+  if (SRV_CHECK) { const w = await host.evaluate(() => !!(NET.game && NET.game._ws && NET.game._ws.readyState === 1));
+    console.log(`[${secs()}] --server: the host's relay room on the local server is ${w ? 'open' : 'NOT open'}`);
+    if (!w) fail('--server: the host never opened its relay room on the (local) game server'); }
   console.log(`[${secs()}] host leaves at t=${pre.t.toFixed(1)}s; standby checkpoint from t=${ck.t.toFixed(1)}s (${ck.kb} KB, ${ck.n} entities); ` +
     `armies ${pre.teams.map((T, i) => `${facs[i]} ${T.ids.length}`).join(', ')}`);
 
@@ -371,6 +387,9 @@ async function main() {
   tl.on = false;
   for (const [p, n] of [[cA, 'A'], [cB, 'B']]) console.log(`    trace client ${n}: ` + (await p.evaluate(() => window.__trace.join(' | '))));
   await cA.waitForTimeout(5000); // a few real seconds of the new host running on its own
+  if (SRV_CHECK) { const w = await cA.waitForFunction(() => !!(NET.game && NET.game._ws && NET.game._ws.readyState === 1), null, { timeout: 20000, polling: 250 }).then(() => true, () => false);
+    console.log(`[${secs()}] --server: the new host's relay room ${restored.code} on the local server is ${w ? 'open' : 'NOT open'}`);
+    if (!w) fail(`--server: the new host did not open its relay room ${restored.code} on the (local) game server`); }
   for (const p of [cA, cB]) await selfDrive(p, false);
   for (const [p, n] of [[cA, 'new host (client A)'], [cB, 'client B']]) { const e = await p.evaluate(() => window.__driveErr || null); if (e) fail(`${n} threw while running during the takeover: ${e}`); }
 
@@ -429,14 +448,16 @@ try { await Promise.race([main(), crash]); } catch (e) {
 }
 await browser.close().catch(() => {});
 server.close();
+if (SRV) SRV.stop();
 
 { const mb = peakMB(); if (mb) console.log(`peak memory (node + browser, summed RSS): ${mb} MB`); }
 for (const w of [...new Set(warns)].slice(0, 12)) console.log('  warn: ' + w);
+const MODE_TXT = SRV_DOWN ? ', game servers down' : ', local game servers';
 const uniq = [...new Set(fails)];
 if (uniq.length) {
   console.log(`\nMIGRATE FAIL: ${uniq[0]} (${secs()})`);
   for (const f of uniq.slice(1, 20)) console.log('  ✗ ' + f);
   process.exit(1);
 }
-console.log(`\nMIGRATE PASS${ABRUPT ? ' (abrupt host loss)' : ''} (${secs()}) — screenshots orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png`);
+console.log(`\nMIGRATE PASS${ABRUPT ? ' (abrupt host loss)' : ''}${MODE_TXT} (${secs()}) — screenshots orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png`);
 process.exit(0);

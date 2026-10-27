@@ -44,3 +44,29 @@ export async function startServer({ quiet = true, vars = {} } = {}) {
   }
   return { url, port, stop, log: () => log };
 }
+
+// ---- keeping test pages off the live servers ----
+// Test pages must never reach Abdullah's live game servers (or any other outside host). The game is built with
+// WW3_SERVER_URL pointing at production, and Playwright's ctx.route does not see WebSockets, so every harness that
+// loads the page calls guardContext(ctx, serverUrl): the page is pointed at `serverUrl` (a local `wrangler dev` from
+// startServer(), or DEAD_SERVER = "servers configured but down"), and any WebSocket to a host other than this machine
+// fails at once, as if that server were unreachable.
+export const DEAD_SERVER = 'http://127.0.0.1:9';
+const isLocalUrl = u => { try { const h = new URL(String(u)).hostname; return h === '127.0.0.1' || h === 'localhost' || h === '[::1]'; } catch { return false; } };
+// runs inside the page (addInitScript): must be self-contained
+export function localOnlyShim(server) {
+  if (window.__ww3LocalOnly) return; window.__ww3LocalOnly = true;
+  if (server) window.WW3_SERVER = server;
+  const W = window.WebSocket; if (!W) return;
+  const local = u => { try { const h = new URL(String(u), location.href).hostname; return h === '127.0.0.1' || h === 'localhost' || h === '[::1]'; } catch (e) { return false; } };
+  const blocked = window.__ww3BlockedWs = [];
+  function LocalOnlyWebSocket(u, p) { if (!local(u)) { blocked.push(String(u)); u = 'ws://127.0.0.1:9/blocked'; } return p === undefined ? new W(u) : new W(u, p); }
+  LocalOnlyWebSocket.prototype = W.prototype;
+  for (const k of ['CONNECTING', 'OPEN', 'CLOSING', 'CLOSED']) LocalOnlyWebSocket[k] = W[k];
+  window.WebSocket = LocalOnlyWebSocket;
+}
+export async function guardContext(ctx, server = DEAD_SERVER) {
+  await ctx.addInitScript(localOnlyShim, server);
+  // second line of defence: Playwright's own WebSocket routing (1.48+) closes anything non-local that slipped through
+  if (typeof ctx.routeWebSocket === 'function') await ctx.routeWebSocket(u => !isLocalUrl(u), ws => ws.close({ code: 1008, reason: 'blocked by test harness' }));
+}
