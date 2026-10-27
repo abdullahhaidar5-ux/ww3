@@ -128,7 +128,7 @@ function wireClient(g){
   g.on('lobby',m=>{if(m.peer===NET.hostPeer&&m.data&&m.data.to===NET.myPeer&&MODE==='single'){if(m.data.full){clearInterval(NET.helloI);$('mpstatus').textContent='That game is full.';leaveNet();return;}$('mpstatus').textContent=`Joined${NET.via==='ws'?' (through the game server)':''}. ${m.data.n} players in the lobby. Waiting for the host to start the battle…`;}});
   g.on('start',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV){$('mpstatus').textContent='You and the host have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<1||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
   // An old host sends no 'w': the player's own menu choice stays, as before.
-  if(typeof d.w==='number'&&d.w>=-1&&d.w<WX.length){setup.w=d.w|0;const W=$('wx');if(W)W.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.w===setup.w));}
+  if(typeof d.w==='number'&&d.w>=-1&&d.w<WX.length){if(NET.ownW==null)NET.ownW=setup.w;wxSet(d.w|0);}
   startMP('client',d.seed|0,d.facs,sl,map,tm);});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
   g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();applySnap(m.data);}});
@@ -137,25 +137,48 @@ function wireClient(g){
   g.on('b',m=>{if(!ok(m)||!Array.isArray(m.data.m))return;NET.lastRx=performance.now();for(const x of m.data.m){if(!Array.isArray(x))continue;const [t,d]=x;if(!d)continue;try{if(t==='snap')applySnap(d);else if(t==='evt')applyEvents(d);else if(t==='team')applyTeam(d);}catch(e){console.warn('bundle',t,e);}}});
   g.on('ck',m=>{if(m.peer===NET.hostPeer&&m.data&&m.data.to===NET.myPeer)ckReceive(m.data);});
   g.on('pong',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer)return;const rtt=Date.now()-(+m.data.t||0);if(rtt>=0&&rtt<20000)NET.ping=NET.ping?NET.ping*.7+rtt*.3:rtt;});
-  g.onPeers(ch=>{if(!NET.myPeer){const me=ch.peers.find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}if(NET.findHost){const h=ch.peers.find(q=>!q.sameTab&&q.presence&&q.presence.h);if(h){NET.hostPeer=h.peer;NET.findHost=false;}}if(ch.left.some(q=>q.peer===NET.hostPeer)){if(MODE==='client')clientReconnect();else if(MODE==='single'&&NET.code==='join'){clearInterval(NET.helloI);$('mpstatus').textContent='The host closed the game.';leaveNet();}}});}
-async function clientReconnect(){if(NET.recon||!NET.jcode)return;NET.recon=true;pushLog('Connection to the host lost. Reconnecting…','w');const code=NET.jcode;
-  for(let tries=0;tries<12&&MODE==='client'&&!(G&&G.over);tries++){await new Promise(r=>setTimeout(r,tries?1500:1000));
-    if(tries>=1&&NET.isStandby&&NET.lastCk){if(await promoteToHost()){NET.recon=false;return;}}
-    const gen=(NET.gen||0)+(tries%2===1?1:0),room=migRoom(gen);
-    try{if(NET.game)NET.game.leave().catch(()=>{});}catch(e){}NET.game=null;
-    let g=null;try{g=await NET.room.join('tc-'+room,NET.via?{via:NET.via}:undefined);}catch(e){continue;}NET.game=g;NET.myPeer=null;
+  g.onPeers(ch=>{if(!NET.myPeer){const me=ch.peers.find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}if(NET.findHost){const h=ch.peers.find(q=>!q.sameTab&&q.presence&&q.presence.h);if(h){NET.hostPeer=h.peer;NET.findHost=false;}}if(g===NET.game&&ch.left.some(q=>q.peer===NET.hostPeer)){if(MODE==='client')clientReconnect();else if(MODE==='single'&&NET.code==='join'){clearInterval(NET.helloI);$('mpstatus').textContent='The host closed the game.';leaveNet();}}});}
+// Host lost: get back into the battle as fast as possible.
+//  1. Rejoin the same room once (a short network blip: the host is still there).
+//  2. If that fails, the standby player (holding a checkpoint) takes over at once (promoteToHost). Everyone else keeps
+//     knocking on the follow-up room "<code>-m<gen+1>" every ~0.3 s until the new host opens it, instead of waiting a
+//     fixed time and then going back to the dead old room. Only when the old room's answer was unclear (e.g. a
+//     timeout rather than "nobody is hosting this") do we look back there now and then.
+//  3. If the host of the room we just reached leaves while we wait for its first update, we stop waiting at once
+//     (NET.reconKick) instead of sitting out the full wait.
+function joinT(name,ms){const p=NET.room.join(name,NET.via?{via:NET.via}:undefined);let late=false;
+  return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>{late=true;rej(Object.assign(new Error('timeout'),{type:'timeout'}));},ms))]).catch(e=>{if(late)p.then(g=>{try{g.leave().catch(()=>{});}catch(_){}},()=>{});throw e;});}
+async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NET.jcode)return;NET.recon=true;NET.reconKick=false;pushLog('Connection to the host lost. Reconnecting…','w');
+  const gen0=NET.gen||0,t0=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let gone=false,n=0,newTries=0;
+  while(MODE==='client'&&!(G&&G.over)&&performance.now()-t0<60000){
+    if(n>0&&NET.isStandby&&NET.lastCk){if(await promoteToHost()){NET.recon=false;NET.reconKick=false;return;}NET.isStandby=false;}
+    if(MODE!=='client'||(G&&G.over))break;
+    // which room: the old one first; then the follow-up room (with an occasional look back at the old room while it
+    // is not certain that its host is gone)
+    const old=n===0||(!gone&&newTries>0&&newTries%4===0),gen=old?gen0:gen0+1,room=migRoom(gen);
+    await slp(n===0?250:!old&&newTries===0?500:300);n++;if(!old)newTries++;if(MODE!=='client'||(G&&G.over))break;
+    {const og=NET.game;NET.game=null;try{if(og)og.leave().catch(()=>{});}catch(e){}}
+    let g=null;try{g=await joinT('tc-'+room,old?4000:6000);}catch(e){if(old&&e&&e.type==='peer-unavailable')gone=true;continue;}
+    if(MODE!=='client'||(G&&G.over)){try{g.leave().catch(()=>{});}catch(e){}break;}
+    NET.game=g;NET.myPeer=null;NET.reconKick=false;
     if(window.WW3_P2P)NET.hostPeer='ww3-'+room;else if(gen>0){NET.hostPeer=null;NET.findHost=true;}wireClient(g);
     if(NET.findHost){const h=g.peers().find(q=>!q.sameTab&&q.presence&&q.presence.h);if(h){NET.hostPeer=h.peer;NET.findHost=false;}}
-    NET.lastSnapT=0;NET.prevT=0;NET.rxW=0;NET.ia=0;NET.iaDev=0;const t0=performance.now();for(let k=0;k<8&&NET.lastRx<t0;k++){if(!NET.myPeer){const me=g.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1},cq:NET.cq||[]}).catch(()=>{});await new Promise(r=>setTimeout(r,900));}
-    if(NET.lastRx>=t0){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Connected to the new host.':'Reconnected to the host.','g');return;}}
-  NET.recon=false;if(MODE==='client')oppLeft();}
+    NET.lastSnapT=0;NET.prevT=0;NET.rxW=0;NET.ia=0;NET.iaDev=0;const t1=performance.now();
+    for(let k=0;k<24&&NET.lastRx<t1&&!NET.reconKick&&MODE==='client';k++){if(!NET.myPeer){const me=g.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}
+      if(k%3===0)g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1},cq:NET.cq||[]}).catch(()=>{});await slp(300);}
+    if(NET.lastRx>=t1&&!NET.reconKick){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Connected to the new host.':'Reconnected to the host.','g');return;}
+    if(old&&NET.reconKick)gone=true;NET.reconKick=false;}
+  NET.recon=false;NET.reconKick=false;if(MODE==='client')oppLeft();}
 async function joinGame(p){if(NET.game)return;const code=p.presence.g.c;$('mpstatus').textContent='Joining…';
   try{NET.game=await NET.room.join('tc-'+code);}catch(e){$('mpstatus').textContent=window.WW3_P2P?'No open game with code '+code.toUpperCase()+' was found. Check the code and make sure the host still has the lobby open.':'Could not join that game.';NET.game=null;return;}
   NET.hostPeer=p.peer;NET.code='join';NET.jcode=code;NET.baseCode=code;NET.gen=0;NET.via=NET.game.via||null;NET.tok=joinTok(code);NET.lastRx=0;wireClient(NET.game);NET.cq=[];NET.cs=Math.floor(Date.now()/10);
   clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}if(MODE==='client'&&!NET.recon&&NET.lastRx&&performance.now()-NET.lastRx>5000){clientReconnect();return;}if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null}).catch(()=>{});},1000);
   let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The host did not answer. The game may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}NET.game.presence({hi:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',{f:setup.p}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
   hello();NET.helloI=setInterval(hello,1500);$('mpstatus').textContent='Connecting to the host…';}
-function leaveNet(){clearInterval(NET.helloI);clearInterval(NET.pingI);NET.ping=0;NET.pings={};if(NET.game)NET.game.leave().catch(()=>{});NET.game=null;NET.code=null;NET.opp=null;NET.hostPeer=null;NET.lobby=[];NET.peers=null;if(NET.room)NET.room.presence({g:null}).catch(()=>{});$('host').hidden=false;$('cancelHost').hidden=true;}
+// Set the Conditions choice and light up its menu button. The host's choice is used only for that battle: the player's
+// own menu choice (NET.ownW) comes back when they leave the battle, so their next solo battle uses their own Conditions.
+function wxSet(w){setup.w=w;const W=$('wx');if(W)W.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.w===w));}
+function leaveNet(){if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}clearInterval(NET.helloI);clearInterval(NET.pingI);NET.ping=0;NET.pings={};if(NET.game)NET.game.leave().catch(()=>{});NET.game=null;NET.code=null;NET.opp=null;NET.hostPeer=null;NET.lobby=[];NET.peers=null;if(NET.room)NET.room.presence({g:null}).catch(()=>{});$('host').hidden=false;$('cancelHost').hidden=true;}
 function oppLeft(){if(!G||G.over)return;pushLog('The host left the game.','w');showEnd(-1,'The host left the game, so the battle has ended.');}
 const CMD_T=['go','atk','atkOil','fld','q','dq','bld','bldGo','tun','unl','board','up','sup','buy','pow','rally','stop','gar','atkCiv','ungar','give','def','line','ret'];
 function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;

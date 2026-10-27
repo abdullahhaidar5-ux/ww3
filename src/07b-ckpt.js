@@ -57,11 +57,13 @@ function ckReceive(d){if(!d||typeof d.d!=='string'||!(d.n>0)||d.n>400)return;con
   if(e.a[d.i]==null){e.a[d.i]=d.d;e.got++;}if(e.got===e.n){NET.lastCk=e.a.join('');NET.isStandby=true;delete P[d.id];}}
 async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e){console.warn('checkpoint unpack',e);return false;}
   const gen=(ck.gen||0)+1,code2=migRoom(gen),me=ME;
-  try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);return false;}
+  // open the follow-up room first, while still a client: if another player already opened it (two players held a
+  // checkpoint), this page stays a client and simply joins that room instead of restoring and splitting the battle
+  {const og=NET.game;NET.game=null;try{if(og)og.leave().catch(()=>{});}catch(e){}}NET.code=code2;
+  let g;try{g=await NET.room.join('tc-'+code2);}catch(e){NET.code='join';console.warn('new host room',e&&e.type||e);return false;}
+  if(MODE!=='client'||!G||G.over){NET.code='join';try{g.leave().catch(()=>{});}catch(e){}return false;}
+  try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);NET.code='join';try{g.leave().catch(()=>{});}catch(_){}return false;}
   MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.ckOut=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};try{if(NET.room&&NET.startInfo)NET.room.presence({g:{c:NET.baseCode||NET.jcode,f:G.teams[me].fac,s:'full',n:G.teams.length,m:NET.startInfo.map}}).catch(()=>{});}catch(e){}
   const oldHost=ck.me|0;for(let k=0;k<G.teams.length;k++){const T=G.teams[k];if(k===ME){T.ai=null;T.discT=0;continue;}if(k===oldHost){if(!T.ai){T.ai=mkAI(1);T.aiTook=1;}continue;}if(!T.ai&&!T.out)T.discT=G.t;}
-  try{if(NET.game)NET.game.leave().catch(()=>{});}catch(e){}NET.game=null;NET.code=code2;
-  try{NET.game=await NET.room.join('tc-'+code2);}catch(e){pushLog('Could not open the new game room.','w');return false;}
-  wireHost(NET.game);NET.game.presence({h:1}).catch(()=>{});
+  NET.game=g;wireHost(g);g.presence({h:1}).catch(()=>{});
   for(const O of G.teams)log(O.id,`The host left. ${G.teams[ME].F.name} is now hosting the battle; the other commanders are reconnecting.`,'w');return true;}
-
