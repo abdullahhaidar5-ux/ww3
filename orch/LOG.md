@@ -17,7 +17,9 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
   to the refactor (`BORROW = {}`, `showEnd` stand-in). Gate on the merge: `--check` OK, SERVERTEST, HEADLESS --compare,
   smoke 4p, MPSYNC, MPSYNC --server, MIGRATE, MIGRATE --abrupt, artifact smoke + MPSYNC all PASS.
 - **Artifact NOT republished:** the claude.ai host refuses `.glb.gz` supporting files (not a served type); it stays
-  on v161 (inline models, works). Fix queued at the top of P1. Board republished (v12).
+  on v161 (inline models, works). Fix queued at the top of P1. Board republished (v13).
+- Chaining the next cycle was blocked again (permission denied for running the scheduled task on demand); the 4-hourly
+  schedule (next 17:24 UTC) picks it up.
 
 ## 2026-10-27 11:40 — side lane: multiplayer switched onto Abdullah's servers
 
