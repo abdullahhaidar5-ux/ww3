@@ -7353,7 +7353,7 @@ function sendChunks(topic,base,items,first){let cur=[],len=first?JSON.stringify(
 // Units that leave a player's view are named in that player's next snapshot ('dr': ids only, no position) so their
 // screen drops them at once - before, they lingered up to ~1 s until the client's own expiry noticed the silence.
 // Anything that just died is left out: its 'die' event (explosion, wreck) is still on its way and removes it.
-function snapDrops(dr){if(!dr.length)return null;const dy=new Set();for(const v of G.out)if(Array.isArray(v)&&v[0]==='die')dy.add(v[1]);
+function snapDrops(dr){if(!dr.length)return null;let c=NET.dyC;if(!c||c.t!==G.t||c.n!==G.out.length){const s=new Set();for(const v of G.out)if(Array.isArray(v)&&v[0]==='die')s.add(v[1]);c=NET.dyC={t:G.t,n:G.out.length,s};}const dy=c.s;
   const o=dr.filter(id=>!dy.has(id));return o.length?{dr:o.slice(0,400)}:null;}
 // map-wide state (resource fields, oil derricks, who is out) is built once per flush and sent to a player only when it
 // changed since what they last got, or once a second as a refresh - it was resent to everyone 4x a second
