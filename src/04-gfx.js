@@ -30,17 +30,7 @@ function initGfx(){
   SCN.add(SUN);SCN.add(SUN.target);
   initFX();initPost();
 }
-// Ground height is sampled once onto a 10-unit grid after the map is painted, then read back bilinearly: the full
-// formula (shoreline, base pads, mesas, roads, mountains) is far too slow to evaluate thousands of times a frame.
-function groundH(x,y){const H=G&&G.hgrid;if(!H)return groundH0(x,y);const fx=Math.max(0,Math.min(H.w-1.001,x/H.R)),fy=Math.max(0,Math.min(H.h-1.001,y/H.R)),i=fx|0,j=fy|0,tx=fx-i,ty=fy-j,k=j*H.w+i,a=H.a;
-  return (a[k]*(1-tx)+a[k+1]*tx)*(1-ty)+(a[k+H.w]*(1-tx)+a[k+H.w+1]*tx)*ty;}
-function buildHGrid(){const R=10,w=Math.ceil(MAPW/R)+2,h=Math.ceil(MAPH/R)+2,a=new Float32Array(w*h);G.hgrid=null;for(let j=0;j<h;j++)for(let i=0;i<w;i++)a[j*w+i]=groundH0(i*R,j*R);G.hgrid={a,w,h,R};}
-function groundH0(x,y){if(!G||!G.map)return 0;const M=G.map,ed=-M.edge(x,y);
-  let h=0;if(ed<50){const k=Math.max(0,Math.min(1,(ed+30)/80));h=-18+18*k*k*(3-2*k);}
-  const far=Math.max(0,Math.min(1,(ed-90)/260));let bf=1;for(const [bx,by] of BASES){bf=Math.min(bf,Math.max(0,Math.min(1,(Math.hypot(x-bx,y-by)-330)/250)));}
-  h+=far*bf*(5+7*Math.sin(x*.0042+1.3)*Math.cos(y*.0051+.4)+4*Math.sin(x*.011+y*.007));
-  {const rm=G.roadMask;let onR=0;if(rm){const i=(y/rm.C|0)*rm.w+(x/rm.C|0);onR=rm.f?rm.f[i]||0:(rm.d[i]?1:0);}const n1=Math.sin(x*.0031+y*.0017+.7)*Math.cos(y*.0043-x*.0012+2.1),rr=1-Math.pow(Math.abs(Math.sin(x*.009+y*.004+n1*2.4)),1.8);let mask=Math.max(0,Math.min(1,(n1+.25)*2.4));for(const q of (G.map.oil||[]))mask*=Math.max(0,Math.min(1,(Math.hypot(x-q.x,y-q.y)-70)/90));for(const q of (G.map.fields||[]))mask*=Math.max(0,Math.min(1,(Math.hypot(x-q.x,y-q.y)-q.r-50)/90));const sm=(a,b,v)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};const n2=.5+.5*Math.sin(x*.021+y*.013)*Math.cos(x*.011-y*.019);const e=rr*(.75+.25*n2);
-  const mesa=(sm(.2,.9,e)*13+sm(.55,1.05,e)*5)*(M.rough||1);const cap=sm(.4,.75,e)*.6*(Math.sin(x*.07+y*.05)*1.5+Math.sin(x*.13-y*.09));const gate=sm(.5,.8,far*bf*mask);h+=gate*(1-onR)*(mesa+cap+sm(.3,.5,e)*5);}if(ed>=50)h=Math.max(h,-1);if(M.hasMtn){const m=M.mf(x,y);if(m>-90){const k=Math.max(0,Math.min(1,(m+90)/130)),sk=k*k*(3-2*k);const nn=.82+.12*Math.sin(x*.021+y*.017)+.08*Math.sin(x*.057-y*.049);const cr=1-Math.abs(Math.sin(x*.034+Math.sin(y*.021)*2.2)),cr2=1-Math.abs(Math.sin(y*.047+Math.sin(x*.029)*1.8));h+=sk*(48+.5*Math.min(Math.max(m,0),220))*nn+sk*(cr*cr*16+cr2*cr2*9)+Math.max(0,m)*.06*Math.abs(Math.sin(x*.09+y*.07));}}return h;}
+// groundH/groundH0/buildHGrid (ground height) live in 02-map.js: the server-side battle needs them too.
 function unitH(e){if(e.isB)return groundH(e.x,e.y);const s=e.s;if(s.dom==='naval')return WL+.5+Math.sin(G.t*1.6+e.id)*.6;
   const g=G.grid?G.grid[Math.floor(e.y/CELL)*GW+Math.floor(e.x/CELL)]:0;const base=g===2?4:Math.max(groundH(e.x,e.y),g===1?WL:-99);
   if(s.dom==='air'){if(e.landed)return base+1;let h=base+(s.alt==='high'?110:55)+Math.sin(G.t*2+e.id)*2;
