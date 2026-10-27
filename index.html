@@ -177,7 +177,7 @@ window.WW3_P2P=true;
 }
 html,body{height:100%}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);overflow:hidden}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);overflow:hidden}
 #app{height:100%;height:100dvh;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
 #stage{position:relative;min-width:0;min-height:0;background:#1a1c14;overflow:hidden}
 #cv{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}
@@ -242,6 +242,7 @@ body{background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);overflow:hid
 .btn.done .c{color:var(--ok)}
 .btn.rdy{border-color:var(--ok);box-shadow:inset 0 0 0 1px rgba(116,208,143,.35)}
 .wide{grid-column:1/-1}
+#panel>.wide{grid-column:auto}
 #info .btn.wide{width:100%;margin-top:4px;min-height:28px;display:block;font:600 13px var(--display)}
 /* right side: nation and money, pause and menu, strike, general rank, selection */
 #side .stat{display:flex;flex-direction:column;gap:3px;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3d4d44 transparent}
@@ -268,6 +269,9 @@ body{background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);overflow:hid
 #info .tip{display:block;color:var(--info);margin-top:2px}
 .morale{display:flex;align-items:center;gap:6px;margin-top:3px;font:500 11px var(--mono)}.morale .ml{color:var(--dim)}.morale .mbar{flex:1;height:5px;background:#0b0f0d;border:1px solid #2a3a32}.morale .mbar i{display:block;height:100%}.morale .mt{white-space:nowrap}
 .cmdrow{display:flex;gap:3px;margin-top:4px}.cmdrow button{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:600 11px var(--mono);padding:3px 2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cmdrow button:hover{border-color:#3d5a45}.cmdrow button.on{background:#244232;border-color:#74d08f;color:#c9f5d6;box-shadow:0 0 0 1px #74d08f inset}
+/* unit orders (attack, defend, stop, retreat) float over the battlefield just above the bar, bottom right */
+#info .cmdrow{position:fixed;z-index:7;right:max(8px,env(safe-area-inset-right,0px));bottom:calc(var(--barh,170px) + 8px);margin:0;gap:4px;width:min(460px,calc(100vw - 16px));box-sizing:border-box}
+#info .cmdrow button{min-height:30px;font-size:12px;background:rgba(29,38,34,.94);box-shadow:0 2px 8px rgba(0,0,0,.5)}
 .tunlist{margin-top:4px;padding:4px 6px;background:var(--panel2);border:1px solid #3d5a45;font:500 11.5px var(--mono);line-height:1.45;color:var(--fg)}.tunlist b{font:600 13px var(--display);color:var(--ok)}
 /* ☰ menu: sound, voices, music, settings, restart, quit */
 #amenu{position:absolute;z-index:12;bottom:calc(100% + 6px);right:max(8px,env(safe-area-inset-right,0px));min-width:200px;display:flex;flex-direction:column;gap:2px;padding:5px;background:rgba(18,24,21,.98);border:1px solid #3d4d44;box-shadow:0 8px 24px rgba(0,0,0,.6)}
@@ -402,6 +406,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   #barGrip,#mmBtn{display:block}#mmBtn{display:none}
   .hdr button,#barGrip,#aPause,#aMenu{height:40px;min-width:40px;padding:0;font-size:15px}
   #aPause{font-size:0}#aPause::before{content:"❚❚";font-size:14px;letter-spacing:-.05em}
+  #aPause.pz::before{content:"▶";letter-spacing:0;color:var(--ok)}
   #barGrip{font-size:18px;color:var(--accent)}
   .tabs{height:40px}.tabs button{flex:1 1 0;min-width:40px;padding:0 3px}
   .sqbar button{min-width:40px;min-height:40px;font-size:13px}.sqs button.empty:not(:first-child){display:none}
@@ -437,6 +442,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   #side.min{grid-template-columns:minmax(0,1fr) clamp(196px,28vw,250px)}
   #side.min .ccard{grid-column:1}#side.min .stat{grid-column:2}
 }
+/* touch screens big enough for the desktop bar (tablets): two taller rows of command buttons */
+@media (pointer:coarse) and (min-width:761px) and (min-height:521px){#side{--rows:2}.tabs button,.hdr button,.sqbar button{min-height:36px}}
 </style>
 
 <div id="app">
