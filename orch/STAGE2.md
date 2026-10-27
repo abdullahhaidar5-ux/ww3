@@ -348,7 +348,7 @@ room), `!l ww3-<code>` the battle closed, `!e <why>` refused, then the socket cl
 
 | `!e` | Meaning | Page should |
 |---|---|---|
-| `busy` | Free-plan guard: today's Cloudflare use is at 70% (battles stop before relay rooms at 80%) | create: host in the browser instead. join: "server busy" |
+| `busy` | Free-plan guard: today's Cloudflare use is at 70% (battles stop before relay rooms at 80%), or 3 battles are already running | create: host in the browser instead. join: "server busy" |
 | `nohost` | No battle with that code (never created, ended, or the server restarted) | join: try `/room/<code>`; reconnect: host migration (below) |
 | `taken` | create: code in use by someone else's lobby; join: this `id` is already connected | create: new code; join: new id |
 | `full` | 8 players already (or the map's maximum) | "That game is full." |
@@ -378,8 +378,10 @@ normal join chain.
   `start:1` starts the battle if `ok`; otherwise the server answers with a `blob` whose `why` says why.
 - If the owner leaves the lobby, the next human becomes the owner. When no human is connected for 60 s, the room
   closes. A lobby lasts at most 30 minutes.
-- The game list: the server publishes the battle in `/lobby` like a host page does, with an extra field **`cf:1`**:
-  `{c, f (owner's nation), s:'open'|'full', n, m, mx, cf:1}`. A page joins a `cf` game through `/battle/<code>`.
+- The game list: the server publishes the battle in `/lobby`, but in **its own frame** so today's pages (which only read
+  `l|`) never show it: `b|[["b-<code>",{"g":{c, f (owner's nation), s:'open'|'full', n, m, mx, cf:1}}],…]`, sent on
+  connect (when there are any) and whenever a battle entry changes. `GET /games` → `{games, battles}`. A page joins a
+  `b|` game through `/battle/<code>`. Entries lapse 150 s after their battle stops refreshing them.
 
 ### Start and the battle
 
@@ -393,6 +395,13 @@ normal join chain.
 - The server runs the sim at 60 Hz from a timer loop inside the object (one or two 1/60 s steps per timer callback;
   no alarms per tick). Battle over (`end` event) → the room closes 2 minutes later. All players gone for 60 s → the
   battle stops and the room closes.
+- **Free-plan limits:** at most **3 battles at once** (benches included); a battle lasts at most **45 minutes**; every
+  minute a running battle reports its awake time and, if the day has reached **75%**, it hands itself over. Handing
+  over = the room closes (`!l ww3-<code>`, socket closed) exactly as if the server had gone (next section), so the
+  standby player carries the battle on as a browser host.
+- **Restart recovery:** the server also keeps the latest checkpoint (every 8 s while a player is connected). After a
+  redeploy or eviction, the first player who reconnects to `/battle/<code>` (within 5 minutes) wakes the battle up
+  from it (up to 8 s rewound); the others reconnect as usual. Only if that fails does the standby take over.
 
 ### Server gone (crash, eviction, redeploy)
 
@@ -403,10 +412,12 @@ the AI on takeover (only players who don't come back are).
 
 ### Endpoints
 
-- `GET /battle-bench?players=2..8&minutes=1..10[&map=strait&seed=1&diff=1&batch=1]`: runs one AI battle inside a
-  BattleRoom (all sides AI, with the full host netcode sending to N simulated players) as fast as it can and streams
-  one line per game-minute (`ms per game-second`, entities), then a JSON summary. One bench at a time (`busy` while one
-  runs); counted in the daily budget; refused at the guard.
+- `GET /battle-bench?players=2..8&minutes=0.25..10[&map=strait&seed=1&diff=1&batch=1..60][&key=…]`: runs one AI
+  battle inside a BattleRoom (all sides AI, with the full host netcode sending to N simulated players) as fast as it
+  can and streams one line per game-minute (`ms per game-second`, entities), then `RESULT {json}`. `batch` = 1/60 s
+  steps per event (1 = the real loop's size). With a `BENCH_KEY` secret on the Worker, `key` must match (up to 10
+  game-minutes); without one, anyone may run **one bench of up to 3 game-minutes per hour**. One at a time; takes a
+  battle slot; counted in the daily budget; refused at the guard.
 - `GET /health` adds `battles: true|false` (whether new battles are allowed right now).
 
 ## How to run

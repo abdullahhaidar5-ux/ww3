@@ -33,8 +33,24 @@ export function BATTLE_DRIVER() {
     NET.startInfo = { seed: o.seed, facs: o.facs.slice(), map: o.map, tm: o.tm.slice(), w: o.w | 0, sv: 1 };
     return B.info();
   };
+  // The checkpoint the host netcode just packed for its standby player (07b ckTick, every 8 s while a player is
+  // connected), once per checkpoint: the server also keeps it, to pick the battle up again after a restart.
+  // (it is noted before each send loop: a small one can go out whole, and be dropped from NET.ckOut, within one loop)
+  const ckNote = () => { const O = NET.ckOut; if (O && O.id !== B.ckSeen) { B.ckSeen = O.id; B.ckPend = O.s; } };
+  B.ckFresh = () => { ckNote(); const s = B.ckPend || null; B.ckPend = null; return s; };
+  // Pick a battle up from a kept checkpoint (si: the start info). Like promoteToHost (07b) on a page, except that no
+  // side is the host's: every human side waits up to 30 s for its player to reconnect, then the AI takes it over.
+  B.restore = async (si, s) => {
+    const ck = await ckUnpack(s);
+    const st = ck.start || si, n = st.facs.length;
+    B.start({ seed: st.seed, facs: st.facs, map: st.map, tm: st.tm, w: st.w, aiD: st.facs.map(() => null), peers: st.facs.map(() => null), toks: Array.isArray(ck.toks) ? ck.toks.slice(0, n) : st.facs.map(() => null), code: si.code });
+    ckRestore(ck);
+    NET.cseqSlot = Array.isArray(ck.cs) ? ck.cs.slice() : []; NET.gen = ck.gen || 0;
+    for (const T of G.teams) if (!T.ai && !T.out) T.discT = G.t;
+    return B.info();
+  };
   B.step = dt => { if (G && !G.over) simUpdate(dt); };
-  B.net = dt => { if (G) netTick(dt); };
+  B.net = dt => { if (G) { ckNote(); netTick(dt); } };
   B.info = () => {
     if (!G) return null;
     const per = G.teams.map(T => ({ fac: T.fac, units: 0, blds: 0, credits: Math.round(T.credits), out: !!T.out, ai: !!T.ai }));

@@ -17,11 +17,12 @@ export const SERVER_DIR = path.join(ROOT, 'server');
 const freePort = () => new Promise((res, rej) => { const s = net.createServer(); s.on('error', rej);
   s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); }); });
 
-export async function startServer({ quiet = true, vars = {} } = {}) {
+// state: a folder for the servers' stored data, kept on stop (to restart a server with its data, e.g. battletest.mjs)
+export async function startServer({ quiet = true, vars = {}, state: keepDir = null } = {}) {
   const bin = path.join(SERVER_DIR, 'node_modules', '.bin', 'wrangler');
   if (!fs.existsSync(bin)) throw new Error('wrangler is not installed: run `npm ci` in server/ first');
   const port = await freePort(), inspector = await freePort();
-  const state = fs.mkdtempSync(path.join(os.tmpdir(), 'ww3-wrangler-'));
+  const state = keepDir || fs.mkdtempSync(path.join(os.tmpdir(), 'ww3-wrangler-'));
   const args = ['dev', '--ip', '127.0.0.1', '--port', String(port), '--inspector-port', String(inspector),
     '--persist-to', state, '--show-interactive-dev-session=false', '--log-level', quiet ? 'warn' : 'log'];
   for (const [k, v] of Object.entries(vars)) args.push('--var', `${k}:${v}`);
@@ -32,7 +33,7 @@ export async function startServer({ quiet = true, vars = {} } = {}) {
   child.stdout.on('data', keep); child.stderr.on('data', keep);
   let exited = null; child.on('exit', c => { exited = c; });
   const url = `http://127.0.0.1:${port}`;
-  const stop = () => { try { process.kill(-child.pid, 'SIGTERM'); } catch {} try { fs.rmSync(state, { recursive: true, force: true }); } catch {} };
+  const stop = () => { try { process.kill(-child.pid, 'SIGTERM'); } catch {} if (!keepDir) try { fs.rmSync(state, { recursive: true, force: true }); } catch {} };
   process.on('exit', stop);
   for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) if (!process.listenerCount(sig)) process.on(sig, () => process.exit(128));
   const t0 = Date.now();

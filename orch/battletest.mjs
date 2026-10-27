@@ -11,6 +11,8 @@
 //
 //   node orch/battletest.mjs                       # needs `npm ci` in server/ once
 //   node orch/battletest.mjs --bench 2,4,8 --minutes 3 [--map fulda]   # Node cost table only (no server)
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { startServer } from './serverdev.mjs';
@@ -35,7 +37,8 @@ async function nodeBench(players, minutes, map, write = () => {}) {
   const r = await runBench(sim, { players, minutes, map, seed: 1, diff: 1, batch: 60, facs: FACS },
     { now: () => performance.now(), yieldFn: () => new Promise(res => setImmediate(res)), write, cpu: cpuMs });
   if (global.gc) global.gc();
-  r.heapMB = +((process.memoryUsage().heapUsed - h0) / 1048576).toFixed(1);
+  r.heapMB = +((process.memoryUsage().heapUsed - h0) / 1048576).toFixed(1);   // the battle is still alive here
+  r.endEnts = sim.info().ents;
   return r;
 }
 
@@ -58,8 +61,10 @@ console.log('1. Node: the bundled battle runs the bench');
   check(r.msgs > 100, 'the host netcode sent snapshots/events/team panels to every side');
 }
 
-const srv = await startServer();
-const HTTP = srv.url, WS = HTTP.replace(/^http/, 'ws'), ORIGIN = 'http://localhost:8000';
+const STATE = fs.mkdtempSync(path.join(os.tmpdir(), 'ww3-battletest-'));   // kept across the restart test
+let srv = await startServer({ state: STATE });
+let HTTP = srv.url, WS = HTTP.replace(/^http/, 'ws');
+const ORIGIN = 'http://localhost:8000';
 let srv2 = null;
 try {
   // ---- 2. wrangler dev bench
@@ -71,6 +76,8 @@ try {
     let j = null; try { j = JSON.parse(res.slice(7)); } catch {}
     for (const l of txt.split('\n').filter(l => l && !l.startsWith('RESULT'))) console.log('       ' + l);
     check(r.ok && j && j.gameSeconds >= 29 && j.endEnts > 5 && j.msgs > 50, `/battle-bench ran a 2-player battle inside a BattleRoom: ${j && j.wallMsPerGameS} ms per game-second (wall), slowest event ${j && j.maxEventMs} ms`);
+    const r2 = await fetch(HTTP + '/battle-bench?players=2&minutes=0.25');
+    check(r2.status === 429, 'without a BENCH_KEY, a second bench within the hour is refused');
     const h = await (await fetch(HTTP + '/health')).json();
     check(h.battles === true && h.budget && h.budget.gbs > 0, `/health says battles are allowed, and the bench's awake time is in today's budget (${h.budget && h.budget.gbs} GB-s)`);
   }
@@ -124,8 +131,14 @@ try {
   {
     await sleep(300);
     const g = await (await fetch(HTTP + '/games')).json();
-    const e = (g.games || []).find(([id]) => id === 'b-' + code);
-    check(!!(e && e[1].g.cf === 1 && e[1].g.c === code && e[1].g.s === 'open' && e[1].g.n === 3), 'the game list shows the battle (cf:1, open, 3 players)');
+    const e = (g.battles || []).find(([id]) => id === 'b-' + code);
+    check(!!(e && e[1].g.cf === 1 && e[1].g.c === code && e[1].g.s === 'open' && e[1].g.n === 3), 'the game list has the battle in its own list ("b|" frame / battles: cf:1, open, 3 players)');
+    check(!(g.games || []).some(([id]) => id === 'b-' + code), '...and not in the list today\'s pages show (they could not join it yet)');
+    const lw = new WebSocket(WS + '/lobby', { headers: { Origin: ORIGIN, 'CF-Connecting-IP': '10.0.3.1' } }); const lf = [];
+    lw.onmessage = ev => lf.push(String(ev.data)); lw.onerror = () => {};
+    const t = Date.now(); while (lf.length < 3 && Date.now() - t < 4000) await sleep(100);
+    check(lf.some(m => m.startsWith('b|') && m.includes('b-' + code)) && lf.some(m => m.startsWith('l|') && !m.includes('b-' + code)), 'a page on the menu gets the battle in a "b|" frame, not in "l|"');
+    lw.close();
   }
   A.emit('bset', { start: 1 });
   const sA = await A.wait(([t]) => t === 'start', 15000), sB = await Bp.wait(([t]) => t === 'start', 15000);
@@ -169,23 +182,49 @@ try {
   const lost = await A.wait(([t, d]) => t === 'b' && (d.m || []).some(([tt, dd]) => tt === 'evt' && (dd.e || []).some(v => v[0] === 'log' && /lost connection/.test(v[2] || ''))), 12000);
   check(flat(A).some(([t]) => t === 'evt'), 'event streams arrive');
   check(!!lost, 'a player who leaves: the others are told "commander lost connection" (the AI takes over after 30 s)');
-  A.ws.close();
+  // the server restarts mid-battle (a redeploy or an evicted object): the battle is picked up from its kept checkpoint
+  {
+    const t0 = Math.max(0, ...flat(A).filter(([t]) => t === 'team').map(([, d]) => d.gt || 0));
+    srv.stop(); await sleep(2500);
+    srv = await startServer({ state: STATE }); HTTP = srv.url; WS = HTTP.replace(/^http/, 'ws');
+    check(A.closed !== null, 'server restarted: the players\' sockets closed');
+    const A2 = player(code, 'ww3p-alice02');
+    check(!!(await A2.waitCtl(m => m === '!w ww3-' + code, 15000)), 'the first player back (same /battle/ address) finds the battle again');
+    A2.hello('US', 'tokalice01');
+    const st = await A2.wait(([t, d]) => t === 'start' || (t === 'b' && (d.m || []).some(([tt]) => tt === 'start')), 8000);
+    const tp = await A2.wait(([t, d]) => t === 'b' && (d.m || []).some(([tt, dd]) => tt === 'team' && dd.gt > 0), 8000);
+    const gt = tp ? Math.max(...tp[1].m.filter(([tt]) => tt === 'team').map(([, dd]) => dd.gt)) : 0;
+    check(!!st && !!tp && gt >= 3 && gt > t0 - 12, `...picked up from its checkpoint: "start" again and the battle goes on from ${gt.toFixed(0)} s (it was at ${t0.toFixed(0)} s)`);
+    // at most 3 battles at once (the resumed one holds a slot until it closes)
+    const more = [];
+    for (let k = 0; k < 3; k++) {
+      const P = player('s' + k + code.slice(2), 'ww3p-slot000' + k, 'ownslotkey' + k);
+      more.push(await Promise.race([P.waitCtl(m => m.startsWith('!w ') || m.startsWith('!e '), 8000)]));
+      P.ws.close && setTimeout(() => P.ws.close(), 200);
+    }
+    check(more[0] && more[0].startsWith('!w') && more[1] && more[1].startsWith('!w') && more[2] === '!e busy', `at most 3 battles run at once: the 4th is refused with "busy" (${more.join(', ')})`);
+    A2.ws.close();
+  }
   await sleep(500);
 
   // ---- 4. budget guard
   console.log('4. budget guard');
-  srv2 = await startServer({ vars: { FREE_GBS: '0.001' } });
+  srv2 = await startServer({ vars: { FREE_GBS: '0.001', BENCH_KEY: 'benchtestkey1' } });
   { // put some usage on the books: a bench reports its awake time
-    const r = await fetch(srv2.url + '/battle-bench?players=2&minutes=0.25&batch=60'); await r.text();
+    const r0 = await fetch(srv2.url + '/battle-bench?players=2&minutes=0.25');
+    check(r0.status === 403, 'with a BENCH_KEY set, a bench without the key is refused');
+    const r = await fetch(srv2.url + '/battle-bench?players=2&minutes=0.25&batch=60&key=benchtestkey1'); const tx = await r.text();
+    check(r.ok && tx.includes('RESULT '), '...and runs with it');
     await sleep(500);
     const ws = new WebSocket(`${srv2.url.replace(/^http/, 'ws')}/battle/zz${code.slice(2)}?role=client&id=ww3p-late0001&own=ownkeylate01`, { headers: { Origin: ORIGIN } });
     const got = await new Promise(res => { ws.onmessage = ev => res(String(ev.data)); ws.onerror = () => res('error'); setTimeout(() => res('timeout'), 6000); });
     check(got === '!e busy', `over the guard, a new battle is refused with "!e busy" (got ${got})`);
-    const r2 = await fetch(srv2.url + '/battle-bench?players=2&minutes=0.25');
+    const r2 = await fetch(srv2.url + '/battle-bench?players=2&minutes=0.25&key=benchtestkey1');
     check(r2.status === 503, 'over the guard, /battle-bench is refused too');
   }
 } catch (e) { fails.push(String(e && e.stack || e)); console.log(e); }
 srv.stop(); if (srv2) srv2.stop();
+try { fs.rmSync(STATE, { recursive: true, force: true }); } catch {}
 if (fails.length) { console.log('\nBATTLETEST FAIL'); for (const f of fails) console.log('  x ' + f); process.exit(1); }
 console.log('\nBATTLETEST PASS');
 process.exit(0);

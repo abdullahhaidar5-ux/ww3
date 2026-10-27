@@ -69,6 +69,12 @@ const SWEEP_MS = 5 * 60000;             // while a room/lobby has sockets: drop 
 // free-tier guard
 const FREE_REQ = 100000, FREE_GBS = 13000;
 const STOP_RELAY = 0.8, STOP_LOBBY = 0.9, STOP_BATTLE = 0.7;   // battles stop first: each keeps an object awake
+// A running battle that finds the day at 75% hands itself to a player (closes; the standby player takes over as a
+// browser host), so battles can never push the relay rooms and the game list the live game uses to their limits.
+const END_BATTLE = 0.75;
+const MAX_BATTLES = 3;                  // battles (and benches) running at once
+const SLOT_TTL_MS = 3 * 60000;          // a battle slot lapses unless renewed (a crashed battle frees its slot)
+const BATTLE_REPORT_MS = 60000;         // a battle reports its usage, renews its slot and re-checks the guard this often
 const GB_PER_OBJECT = 0.125;            // Durable Objects are billed as 128 MB each while awake
 const AWAKE_TAIL_MS = 10000;            // an object stays awake ~10 s after its last event before it may hibernate
 
@@ -111,13 +117,13 @@ export default {
     if (p === '/battle-bench') {
       // one bench at a time, in one fixed object; counted in the daily budget and refused at the guard
       const fwd = new URL('https://battle/bench'); fwd.search = url.search;
-      return battles(env).get(battles(env).idFromName('bench')).fetch(new Request(fwd, { headers: req.headers }));
+      return battles(env).get(battles(env).idFromName('bench:')).fetch(new Request(fwd, { headers: req.headers }));
     }
     if (p.startsWith('/battle/')) {
       if (!isWs) return json({ error: 'expected a WebSocket' }, 426, cors);
       if (!ok) return json({ error: 'origin not allowed' }, 403, cors);
       const code = decodeURIComponent(p.slice(8)).toLowerCase();
-      if (!BATTLE_CODE_RE.test(code)) return json({ error: 'bad game code' }, 400, cors);
+      if (!BATTLE_CODE_RE.test(code) || RESERVED_CODES.has(code)) return json({ error: 'bad game code' }, 400, cors);
       const id = url.searchParams.get('id') || '', own = url.searchParams.get('own') || '';
       if (url.searchParams.get('role') !== 'client') return json({ error: 'bad role' }, 400, cors);
       if (!ID_RE.test(id) || id.startsWith('ww3-')) return json({ error: 'bad id' }, 400, cors);
@@ -153,6 +159,7 @@ export default {
 const lobby = env => env.LOBBY.get(env.LOBBY.idFromName('lobby'));
 const battles = env => env.BATTLES;
 const BATTLE_CODE_RE = /^[a-z0-9]{4,8}$/;      // a migrated battle ("-m1") is an ordinary browser-hosted relay room
+const RESERVED_CODES = new Set(['bench', 'budget', 'lobby', 'admin', 'test']);
 const budgetObj = env => env.BUDGET.get(env.BUDGET.idFromName('budget'));
 const turnConfigured = env => !!(env.TURN_KEY_ID && env.TURN_KEY_API_TOKEN);
 
@@ -213,10 +220,16 @@ class Usage {
     this.req = 0; this.msgs = 0; this.awakeMs = 0;
     return r;
   }
-  async report() {
+  async report(extra) {
     const u = this.take();
-    if (!u.req && !u.gbs) return;
-    try { this.setStatus(await (await budgetObj(this.env).fetch('https://budget/add', { method: 'POST', body: JSON.stringify(u) })).json()); } catch (e) {}
+    if (!u.req && !u.gbs && !extra) return;
+    try { this.setStatus(await (await budgetObj(this.env).fetch('https://budget/add', { method: 'POST', body: JSON.stringify({ ...u, ...extra }) })).json()); } catch (e) {}
+  }
+  // today's use as of the last answer from the Budget object (0..1+)
+  pct() { return this.status ? Math.max(this.status.reqPct, this.status.gbsPct) / 100 : 0; }
+  // claim one of the MAX_BATTLES battle slots (key: the battle's code); false = all taken
+  async claim(key) {
+    try { const s = await (await budgetObj(this.env).fetch('https://budget/claim', { method: 'POST', body: JSON.stringify({ bat: key }) })).json(); this.setStatus(s); return s.claimed === true; } catch (e) { return false; }
   }
   setStatus(s) { if (s && typeof s.reqPct === 'number') { this.status = s; this.statusAt = Date.now(); } }
   // share of today's free allowance used (0..1+), refreshed at most every 5 minutes per object (one request)
@@ -382,20 +395,32 @@ export class Lobby extends DurableObject {
     this.ipBuckets = new Map();
     this.usage = new Usage(env);
     this.cache = null;                  // "l|[...]" frame, rebuilt only when a game changes
-    this.cacheExp = Infinity;           // ...or when a battle entry in it expires
-    this.bat = {};                      // battles hosted on Cloudflare: 'b-<code>' -> {g, exp} (they have no socket here)
+    // Battles hosted on Cloudflare: 'b-<code>' -> {g, exp} (they have no socket here). They go out in their own frame,
+    // "b|[[id,{g}],...]", which today's pages ignore, so they never show up as games those pages can't join.
+    this.bat = {};
+    this.bcache = null; this.bcacheExp = Infinity;
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
     ctx.blockConcurrencyWhile(async () => { this.bat = (await ctx.storage.get('bat')) || {}; });
   }
   att(w) { try { return w.deserializeAttachment() || {}; } catch (e) { return {}; } }
-  frame() {
-    if (this.cache && Date.now() < this.cacheExp) return this.cache;
+  bframe() {
+    if (this.bcache && Date.now() < this.bcacheExp) return this.bcache;
     const out = [], now = Date.now();
-    this.cacheExp = Infinity;
+    this.bcacheExp = Infinity;
     for (const [id, b] of Object.entries(this.bat)) {
       if (!b || b.exp <= now) { delete this.bat[id]; continue; }
-      out.push([id, { g: b.g }]); this.cacheExp = Math.min(this.cacheExp, b.exp);
+      out.push([id, { g: b.g }]); this.bcacheExp = Math.min(this.bcacheExp, b.exp);
     }
+    return (this.bcache = 'b|' + JSON.stringify(out));
+  }
+  bbroadcast() {
+    this.bcache = null;
+    const s = this.bframe();
+    for (const w of this.ctx.getWebSockets()) if (isOpen(w)) safeSend(w, s);
+  }
+  frame() {
+    if (this.cache) return this.cache;
+    const out = [];
     for (const w of this.ctx.getWebSockets()) {
       if (!isOpen(w)) continue;
       const a = this.att(w);
@@ -412,14 +437,14 @@ export class Lobby extends DurableObject {
   async fetch(req) {
     this.usage.event(false);
     const path = new URL(req.url).pathname;
-    if (path === '/games') return json({ games: JSON.parse(this.frame().slice(2)) });
+    if (path === '/games') return json({ games: JSON.parse(this.frame().slice(2)), battles: JSON.parse(this.bframe().slice(2)) });
     if (path === '/battle' && req.method === 'POST') {   // a BattleRoom (re)publishes its game, or removes it (g: null)
       const b = await req.json().catch(() => ({}));
       if (typeof b.id !== 'string' || !/^b-[a-z0-9]{4,8}$/.test(b.id)) return json({ ok: false }, 400);
       const g = b.g ? cleanGame({ ...b.g, cf: 1 }) : null, old = this.bat[b.id];
       if (g) this.bat[b.id] = { g, exp: Date.now() + BATTLE_ENTRY_TTL }; else delete this.bat[b.id];
       await this.ctx.storage.put('bat', this.bat);
-      if (JSON.stringify((old && old.g) || null) !== JSON.stringify(g)) this.broadcast(); else this.cache = null;
+      if (JSON.stringify((old && old.g) || null) !== JSON.stringify(g)) this.bbroadcast(); else this.bcache = null;
       return json({ ok: true });
     }
     const ip = ipOf(req);
@@ -433,6 +458,7 @@ export class Lobby extends DurableObject {
     s.serializeAttachment({ id, g: null, ip, at: Date.now() });
     s.send('!w ' + id);
     s.send(this.frame());
+    if (Object.keys(this.bat).length) s.send(this.bframe());
     if (!(await this.ctx.storage.getAlarm())) await this.ctx.storage.setAlarm(Date.now() + SWEEP_MS);
     return new Response(null, { status: 101, webSocket: c });
   }
@@ -458,6 +484,7 @@ export class Lobby extends DurableObject {
     const now = Date.now();
     sweep(this.ctx, w => this.att(w), now);
     this.cache = null;
+    { const b0 = this.bcache; this.bcache = null; if (this.bframe() !== b0 && b0) this.bbroadcast(); }   // lapsed battles
     await this.usage.report();
     if (this.ctx.getWebSockets().some(isOpen)) await this.ctx.storage.setAlarm(now + SWEEP_MS);
   }
@@ -465,23 +492,32 @@ export class Lobby extends DurableObject {
 
 // ---------------------------------------------------------------------------------------------------------------
 // Today's estimated free-tier use (UTC day), reported by rooms and the lobby every few minutes. One small row a day.
+// It also hands out the battle slots: at most MAX_BATTLES battles (and benches) run at once. A BattleRoom claims a slot
+// before it starts (/claim), renews it with every usage report (/add with "bat"), and frees it when it closes ("off").
 export class Budget extends DurableObject {
   async fetch(req) {
-    const day = new Date().toISOString().slice(0, 10);
+    const day = new Date().toISOString().slice(0, 10), path = new URL(req.url).pathname, now = Date.now();
     let d = (await this.ctx.storage.get('d')) || { day, req: 0, gbs: 0 };
     if (d.day !== day) d = { day, req: 0, gbs: 0 };
     d.req += 1;                                             // this call itself
-    if (new URL(req.url).pathname === '/add' && req.method === 'POST') {
-      const u = await req.json().catch(() => ({}));
-      d.req += Math.max(0, Math.min(1e6, +u.req || 0)); d.gbs += Math.max(0, Math.min(1e6, +u.gbs || 0));
-    }
+    let u = {};
+    if ((path === '/add' || path === '/claim') && req.method === 'POST') u = await req.json().catch(() => ({}));
+    if (path === '/add') { d.req += Math.max(0, Math.min(1e6, +u.req || 0)); d.gbs += Math.max(0, Math.min(1e6, +u.gbs || 0)); }
     await this.ctx.storage.put('d', d);
+    let slots = (await this.ctx.storage.get('slots')) || {}, claimed = null;
+    for (const k in slots) if (!(slots[k] > now)) delete slots[k];
+    const key = typeof u.bat === 'string' ? u.bat.slice(0, 20) : null;
+    if (key && u.off) delete slots[key];
+    else if (key && path === '/claim') { claimed = !!slots[key] || Object.keys(slots).length < MAX_BATTLES; if (claimed) slots[key] = now + SLOT_TTL_MS; }
+    else if (key && slots[key]) slots[key] = now + SLOT_TTL_MS;
+    if (key) await this.ctx.storage.put('slots', slots);
     // FREE_REQ / FREE_GBS vars exist only so the local test can shrink the allowance; never set them in Cloudflare
     const fr = +this.env.FREE_REQ || FREE_REQ, fg = +this.env.FREE_GBS || FREE_GBS;
     const reqPct = Math.round(d.req / fr * 1000) / 10, gbsPct = Math.round(d.gbs / fg * 1000) / 10;
     return json({ day, req: Math.round(d.req), gbs: Math.round(d.gbs), reqPct, gbsPct,
       relay: Math.max(reqPct, gbsPct) < STOP_RELAY * 100, lobby: Math.max(reqPct, gbsPct) < STOP_LOBBY * 100,
-      battle: Math.max(reqPct, gbsPct) < STOP_BATTLE * 100 });
+      battle: Math.max(reqPct, gbsPct) < STOP_BATTLE * 100, battles: Object.keys(slots).length, maxBattles: MAX_BATTLES,
+      ...(claimed !== null ? { claimed } : {}) });
   }
 }
 
@@ -495,6 +531,8 @@ export class Budget extends DurableObject {
 const BENCH_FACS = ['US', 'RU', 'IR', 'CN', 'TR', 'IL', 'EU', 'PK'];
 const MAX_BATTLE_SOCKETS_PER_IP = 8;
 const LIST_REFRESH_MS = 60000;
+const RESUME_MAX_MS = 5 * 60000;
+const BENCH_EVERY_MS = 60 * 60000;      // without a BENCH_KEY: one bench an hour        // a kept checkpoint older than this is not picked up again
 export class BattleRoom extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
@@ -514,15 +552,15 @@ export class BattleRoom extends DurableObject {
     const code = u.searchParams.get('code'), id = u.searchParams.get('id'), own = u.searchParams.get('own') || '', ip = ipOf(req);
     if (!allow(this.ipBuckets, ip, RATE.ipConnect)) return refuse('limit');
     if (this.host && this.host.phase === 'closed') this.stop();
+    // after a restart (redeploy, eviction) the first player to come back picks the battle up from its kept checkpoint
+    if (!this.host) await this.resume();
     if (!this.host) {
       if (!own) return refuse('nohost');
       if (await this.usage.used() >= STOP_BATTLE) return refuse('busy');
+      if (!this.host && !(await this.usage.claim(code))) return refuse('busy');   // all battle slots taken
       if (!this.host) {                 // (another creator may have got in while the budget was being checked)
-        this.code = code;
-        this.host = new BattleHost({ sim: createBattleSim(), code, ownKey: own, now: () => Date.now(),
-          send: (pid, f) => { const w = this.socks.get(pid); if (w) safeSend(w, f); },
-          close: (pid, c, why) => { const w = this.socks.get(pid); this.socks.delete(pid); this.ips.delete(pid); if (w) safeClose(w, c, why); },
-          publish: g => this.publish(g), log: m => console.log(m) });
+        this.code = code; this.slot = code; this.lastRep = Date.now();
+        this.host = new BattleHost({ ...this.hostOpts(), sim: createBattleSim(), code, ownKey: own });
         this.loop(0);
       }
     }
@@ -546,6 +584,29 @@ export class BattleRoom extends DurableObject {
     return new Response(null, { status: 101, webSocket: c });
   }
 
+  hostOpts() {
+    return { now: () => Date.now(), log: m => console.log(m), publish: g => this.publish(g),
+      send: (pid, f) => { const w = this.socks.get(pid); if (w) safeSend(w, f); },
+      close: (pid, c, why) => { const w = this.socks.get(pid); this.socks.delete(pid); this.ips.delete(pid); if (w) safeClose(w, c, why); },
+      // the latest checkpoint (every 8 s while players are connected; ~10-40 KB): one storage write each
+      save: rec => { (rec ? this.ctx.storage.put('ck', rec) : this.ctx.storage.delete('ck')).catch(() => {}); } };
+  }
+  async resume() {
+    if (this.resuming) { await this.resuming; return; }
+    this.resuming = (async () => {
+      const rec = await this.ctx.storage.get('ck').catch(() => null);
+      if (!rec || this.host) return;
+      if (Date.now() - rec.at > RESUME_MAX_MS || await this.usage.used() >= END_BATTLE || !(await this.usage.claim(rec.code))) { await this.ctx.storage.delete('ck').catch(() => {}); return; }
+      if (this.host) return;
+      try {
+        this.code = rec.code; this.slot = rec.code; this.lastRep = Date.now();
+        this.host = await BattleHost.restore({ ...this.hostOpts(), sim: createBattleSim() }, rec);
+        this.loop(0);
+      } catch (e) { console.log('battle resume: ' + (e && e.stack || e)); this.host = null; await this.ctx.storage.delete('ck').catch(() => {}); }
+    })();
+    try { await this.resuming; } finally { this.resuming = null; }
+  }
+
   // the battle loop: BattleHost.tick() says when the next step is due (about every 16 ms during a battle)
   loop(ms) {
     if (this.timer) return;
@@ -556,7 +617,13 @@ export class BattleRoom extends DurableObject {
       try { next = this.host.tick(); } catch (e) { console.log('battle tick: ' + (e && e.stack || e)); next = this.host.shut('server error'); }
       this.usage.wake();
       const now = Date.now();
-      if (now - this.lastRep > SWEEP_MS) { this.lastRep = now; this.usage.report().catch(() => {}); }
+      // every minute: usage to the Budget object, renew the battle slot, and hand the battle over if the day is at 75%
+      if (now - this.lastRep > BATTLE_REPORT_MS) {
+        this.lastRep = now;
+        this.usage.report({ bat: this.slot }).then(() => {
+          if (this.host && this.host.phase !== 'closed' && this.usage.pct() >= END_BATTLE) { console.log('battle ' + this.code + ': free-plan guard reached, handing over'); this.host.shut('server busy'); }
+        }).catch(() => {});
+      }
       if (next >= 0 && now - this.lastList > LIST_REFRESH_MS) this.host.list(true);
       if (next < 0) { this.stop(); return; }
       this.loop(next);
@@ -568,7 +635,8 @@ export class BattleRoom extends DurableObject {
     for (const w of this.socks.values()) safeClose(w, 4002, 'closed');
     this.socks.clear(); this.ips.clear();
     this.host = null;
-    this.usage.wake(); this.usage.report().catch(() => {});
+    this.usage.wake(); this.usage.report(this.slot ? { bat: this.slot, off: 1 } : undefined).catch(() => {});
+    this.slot = null;
   }
   // the game list (Lobby object): this battle's entry, or null to remove it
   publish(g) {
@@ -578,13 +646,24 @@ export class BattleRoom extends DurableObject {
   }
 
   // GET /battle-bench: one AI battle as fast as the object can run it, streamed as text, then "RESULT {json}"
+  // With a BENCH_KEY secret set on the Worker, ?key= must match it (up to 10 game-minutes). Without one, anyone may run
+  // one bench of up to 3 game-minutes per hour.
   async bench(u) {
-    if (this.benching) return json({ error: 'busy: a bench is already running, try again in a few minutes' }, 429);
-    if (await this.usage.used() >= STOP_BATTLE) return json({ error: 'busy: today\'s free-plan guard is reached' }, 503);
     const q = k => u.searchParams.get(k);
+    const keyed = !!this.env.BENCH_KEY;
+    if (keyed && q('key') !== this.env.BENCH_KEY) return json({ error: 'a bench needs ?key=<BENCH_KEY>' }, 403);
+    if (this.benching) return json({ error: 'busy: a bench is already running, try again in a few minutes' }, 429);
+    if (!keyed) {
+      const last = await this.ctx.storage.get('benchAt');
+      if (last && Date.now() - last < BENCH_EVERY_MS) return json({ error: `busy: one bench per hour without a key; next one in ${Math.ceil((BENCH_EVERY_MS - (Date.now() - last)) / 60000)} min` }, 429);
+    }
+    if (await this.usage.used() >= STOP_BATTLE) return json({ error: 'busy: today\'s free-plan guard is reached' }, 503);
+    if (!(await this.usage.claim('bench'))) return json({ error: 'busy: the battle slots are all in use' }, 503);
+    if (!keyed) await this.ctx.storage.put('benchAt', Date.now());
+    this.slot = 'bench';
     const num = (k, lo, hi, d) => { const v = Number(q(k)); return q(k) != null && q(k) !== '' && isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; };
     const sim = createBattleSim();
-    const o = { players: Math.round(num('players', 2, 8, 2)), minutes: num('minutes', 0.25, 10, 2), seed: Math.round(num('seed', 0, 1e9, 1)),
+    const o = { players: Math.round(num('players', 2, 8, 2)), minutes: num('minutes', 0.25, keyed ? 10 : 3, 2), seed: Math.round(num('seed', 0, 1e9, 1)),
       diff: Math.round(num('diff', 0, 2, 1)), batch: Math.round(num('batch', 1, 60, 1)), facs: BENCH_FACS };
     o.map = sim.mapOk(q('map') || '') && sim.mapMax(q('map')) >= o.players ? q('map') : 'strait';
     const { readable, writable } = new TransformStream();
@@ -596,12 +675,12 @@ export class BattleRoom extends DurableObject {
       try {
         write(`World War 3 battle bench on Cloudflare (Durable Object, ${new Date().toISOString()})`);
         const r = await runBench(sim, o, { now: () => Date.now(), write,
-          yieldFn: () => new Promise(res => setTimeout(() => { this.usage.wake(); res(); }, 0)) });
+          yieldFn: () => new Promise(res => setTimeout(() => { this.usage.wake(); if (Date.now() - this.lastRep > BATTLE_REPORT_MS) { this.lastRep = Date.now(); this.usage.report({ bat: 'bench' }).catch(() => {}); } res(); }, 0)) });
         r.totalWallMs = Date.now() - t0;
         write(`done: ${r.gameSeconds} game-seconds in ${r.totalWallMs} ms; ${r.wallMsPerGameS} ms per game-second (wall time of the steps, an upper bound on CPU); slowest event ${r.maxEventMs} ms; sent ${r.kbPerGameS} KB per game-second to ${r.players} players`);
         write('RESULT ' + JSON.stringify(r));
       } catch (e) { write('ERROR ' + String(e && e.stack || e)); }
-      finally { this.benching = false; this.usage.wake(); await this.usage.report().catch(() => {}); w.close().catch(() => {}); }
+      finally { this.benching = false; this.slot = null; this.usage.wake(); await this.usage.report({ bat: 'bench', off: 1 }).catch(() => {}); w.close().catch(() => {}); }
     })();
     this.ctx.waitUntil(work);
     return new Response(readable, { headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
