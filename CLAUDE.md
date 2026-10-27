@@ -60,7 +60,8 @@ Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the ve
   rhythms and instruments; Abdullah, 2026-10-26).
 - Multiplayer: up to 8 players, host's browser runs the battle. Never break multiplayer sync — host and clients
   must agree.
-- Must stay smooth and **phone-playable**.
+- Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
+  (Abdullah, 2026-10-26).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
   (Abdullah connected it 2026-10-26; Cloudflare builds the repo root from `main` automatically on every push — nothing
   to do at ship except check it serves the new version), and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi, republish

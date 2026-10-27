@@ -35,13 +35,12 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [todo] Proper mix: voices duck music, distance fade, even loudness
 
 ## Graphics overhaul
-- [you] Approve Phase 1 and pick what comes first (units, terrain or effects); is a lighter phone look OK
-- [todo] Phase 1 Foundations: art out of the game page onto Cloudflare, engine upgrade
-- [todo] Phase 2 Real models: detailed units and buildings with national variants (free art)
+- [next] Phase 1 Foundations: art out of the game page onto Cloudflare, engine upgrade (approved; starts after the bottom bar ships)
+- [todo] Phase 2 Real models (first look to improve): detailed units and buildings with national variants (free art)
 - [todo] Phase 3 Terrain and world: sculpted ground, water, roads, craters
 - [todo] Phase 4 Light and effects: shadows, smoke, fire, explosions, theatre colour
 - [todo] Phase 5 Massive columns: hundreds of units at a smooth frame rate
-- [todo] Phase 6 Device tiers: art and effects sized to each phone and PC
+- [todo] Phase 6 Device tiers: phones stay smooth with a lighter look, PCs get everything
 
 ## Battlefield and maps
 - [done] Bases always start on dry ground; all 28 maps checked by an automatic sweep
