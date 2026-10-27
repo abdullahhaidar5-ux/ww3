@@ -8,9 +8,11 @@
   "licence": "CC-BY 3.0",
   "licence_url": "https://creativecommons.org/licenses/by/3.0/",
   "source_url": "https://opengameart.org/content/the-fall-of-arcana-epic-game-theme-music",
-  "duration_s": 146.7,
-  "bytes": 1760175,
-  "attribution": "\"The Fall of Arcana\" by Matthew Pablo (www.matthewpablo.com), CC-BY 3.0"
+  "duration_s": 147.4,
+  "bytes": 2064501,
+  "attribution": "\"The Fall of Arcana\" by Matthew Pablo (www.matthewpablo.com), CC-BY 3.0",
+  "kbps": 112,
+  "loudness_lufs": -18
  },
  {
   "id": "menu-04",
@@ -21,9 +23,11 @@
   "licence": "CC-BY 4.0",
   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
   "source_url": "https://opengameart.org/content/epic-orchestral-fantasy-theme",
-  "duration_s": 100.8,
-  "bytes": 1210036,
-  "attribution": "\"Epic Orchestral Fantasy Theme\" by Markus Lindner, CC-BY 4.0"
+  "duration_s": 101.4,
+  "bytes": 1419747,
+  "attribution": "\"Epic Orchestral Fantasy Theme\" by Markus Lindner, CC-BY 4.0",
+  "kbps": 112,
+  "loudness_lufs": -18
  },
  {
   "id": "calm-01",
@@ -35,8 +39,10 @@
   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
   "source_url": "https://opengameart.org/content/conflict",
   "duration_s": 220.7,
-  "bytes": 2649174,
-  "attribution": "\"Conflict\" by Alexandr Zhelanov (youtube.com/c/AlexandrZhelanovsMusic), CC-BY 4.0"
+  "bytes": 3090695,
+  "attribution": "\"Conflict\" by Alexandr Zhelanov (youtube.com/c/AlexandrZhelanovsMusic), CC-BY 4.0",
+  "kbps": 112,
+  "loudness_lufs": -20
  },
  {
   "id": "calm-02",
@@ -47,9 +53,11 @@
   "licence": "CC-BY 3.0",
   "licence_url": "https://creativecommons.org/licenses/by/3.0/",
   "source_url": "https://opengameart.org/content/enemy-spotted",
-  "duration_s": 167.7,
-  "bytes": 2012518,
-  "attribution": "\"Enemy Spotted\" by Alexandr Zhelanov (soundcloud.com/alexandr-zhelanov), CC-BY 3.0"
+  "duration_s": 168.0,
+  "bytes": 2351953,
+  "attribution": "\"Enemy Spotted\" by Alexandr Zhelanov (soundcloud.com/alexandr-zhelanov), CC-BY 3.0",
+  "kbps": 112,
+  "loudness_lufs": -20
  },
  {
   "id": "calm-03",
@@ -60,9 +68,11 @@
   "licence": "CC-BY 4.0",
   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
   "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100818",
-  "duration_s": 155.9,
-  "bytes": 1871457,
-  "attribution": "\"Tabuk\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/"
+  "duration_s": 156.5,
+  "bytes": 2191770,
+  "attribution": "\"Tabuk\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/",
+  "kbps": 112,
+  "loudness_lufs": -20
  },
  {
   "id": "calm-05",
@@ -73,22 +83,26 @@
   "licence": "CC-BY 4.0",
   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
   "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100198",
-  "duration_s": 153.3,
-  "bytes": 1840110,
-  "attribution": "\"Impending Boom\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/"
+  "duration_s": 153.9,
+  "bytes": 2154467,
+  "attribution": "\"Impending Boom\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/",
+  "kbps": 112,
+  "loudness_lufs": -20
  },
  {
   "id": "combat-01",
   "pool": "combat",
   "file": "mus/st/combat-01.mp3",
-  "title": "Dream Raid (full version)",
+  "title": "Dream Raid",
   "author": "Matthew Pablo",
   "licence": "CC-BY 3.0",
   "licence_url": "https://creativecommons.org/licenses/by/3.0/",
   "source_url": "https://opengameart.org/content/dream-raid-cinematic-action-soundtrack",
-  "duration_s": 234.2,
-  "bytes": 2810298,
-  "attribution": "\"Dream Raid\" by Matthew Pablo (www.matthewpablo.com), CC-BY 3.0"
+  "duration_s": 235.4,
+  "bytes": 3296227,
+  "attribution": "\"Dream Raid\" by Matthew Pablo (www.matthewpablo.com), CC-BY 3.0",
+  "kbps": 112,
+  "loudness_lufs": -18
  },
  {
   "id": "combat-02",
@@ -99,9 +113,11 @@
   "licence": "CC-BY 3.0",
   "licence_url": "https://creativecommons.org/licenses/by/3.0/",
   "source_url": "https://opengameart.org/content/tactical-pursuit",
-  "duration_s": 126.6,
-  "bytes": 1520058,
-  "attribution": "\"Tactical Pursuit\" by Matthew Pablo (www.matthewpablo.com), CC-BY 3.0"
+  "duration_s": 127.4,
+  "bytes": 1783633,
+  "attribution": "\"Tactical Pursuit\" by Matthew Pablo (www.matthewpablo.com), CC-BY 3.0",
+  "kbps": 112,
+  "loudness_lufs": -18
  },
  {
   "id": "combat-05",
@@ -113,8 +129,10 @@
   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
   "source_url": "https://opengameart.org/content/howitzer",
   "duration_s": 144.1,
-  "bytes": 1729455,
-  "attribution": "\"Howitzer\" by joeBaxterWebb (opengameart.org/users/joebaxterwebb), CC-BY 4.0"
+  "bytes": 2017690,
+  "attribution": "\"Howitzer\" by joeBaxterWebb (opengameart.org/users/joebaxterwebb), CC-BY 4.0",
+  "kbps": 112,
+  "loudness_lufs": -18
  },
  {
   "id": "combat-06",
@@ -125,9 +143,11 @@
   "licence": "CC-BY 3.0",
   "licence_url": "https://creativecommons.org/licenses/by/3.0/",
   "source_url": "https://opengameart.org/content/act-of-war",
-  "duration_s": 95.8,
-  "bytes": 1149537,
-  "attribution": "\"Act of War\" by Alexandr Zhelanov (soundcloud.com/alexandr-zhelanov), CC-BY 3.0"
+  "duration_s": 96.1,
+  "bytes": 1345873,
+  "attribution": "\"Act of War\" by Alexandr Zhelanov (soundcloud.com/alexandr-zhelanov), CC-BY 3.0",
+  "kbps": 112,
+  "loudness_lufs": -18
  },
  {
   "id": "combat-09",
@@ -138,9 +158,11 @@
   "licence": "CC-BY 4.0",
   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
   "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1300037",
-  "duration_s": 166.4,
-  "bytes": 1997158,
-  "attribution": "\"Black Vortex\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/"
+  "duration_s": 166.9,
+  "bytes": 2336593,
+  "attribution": "\"Black Vortex\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/",
+  "kbps": 112,
+  "loudness_lufs": -18
  },
  {
   "id": "combat-11",
@@ -151,9 +173,11 @@
   "licence": "CC-BY 4.0",
   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
   "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1600014",
-  "duration_s": 324.9,
-  "bytes": 3898977,
-  "attribution": "\"Curse of the Scarab\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/"
+  "duration_s": 325.5,
+  "bytes": 4557210,
+  "attribution": "\"Curse of the Scarab\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/",
+  "kbps": 112,
+  "loudness_lufs": -18
  },
  {
   "id": "victory-01",
@@ -164,9 +188,11 @@
   "licence": "CC-BY 4.0",
   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
   "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1200070",
-  "duration_s": 99.4,
-  "bytes": 1193736,
-  "attribution": "\"Egmont Overture Finale\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/"
+  "duration_s": 100.3,
+  "bytes": 1404753,
+  "attribution": "\"Egmont Overture Finale\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/",
+  "kbps": 112,
+  "loudness_lufs": -18
  },
  {
   "id": "defeat-02",
@@ -177,8 +203,10 @@
   "licence": "CC-BY 4.0",
   "licence_url": "https://creativecommons.org/licenses/by/4.0/",
   "source_url": "https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1100876",
-  "duration_s": 143.0,
-  "bytes": 1716916,
-  "attribution": "\"Death of Kings\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/"
+  "duration_s": 143.7,
+  "bytes": 2011838,
+  "attribution": "\"Death of Kings\" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/",
+  "kbps": 112,
+  "loudness_lufs": -18
  }
 ]
