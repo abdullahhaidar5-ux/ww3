@@ -35,6 +35,13 @@
 //   node orch/mpsync.mjs --artifact            # the claude.ai artifact edition (python3 orch/build.py --artifact
 //                                              # first): pages talk over a stand-in for the artifact `room`
 //                                              # capability (orch/artifact-harness.mjs) instead of PeerJS
+//   node orch/mpsync.mjs --server              # through the World War 3 servers (server/, run locally with
+//                                              # wrangler dev; `npm ci` in server/ once): browser-to-browser is
+//                                              # blocked in both pages, so the game's own fallback must pick the
+//                                              # server relay; also checks the server game list (the client must see
+//                                              # the host's game before joining by code). Runs the battle in real
+//                                              # time (~4 min). With --reconnect the client's server connection is
+//                                              # really cut at 1 min. Writes relay traffic to orch/out/srv-traffic*.json
 // Prints MPSYNC PASS / MPSYNC FAIL: reason (exit 0 / 1). Screenshots: orch/out/mp-host.png, orch/out/mp-client.png
 import http from 'node:http';
 import fs from 'node:fs';
@@ -43,13 +50,16 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
 import { artifactHtml, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
+import { startServer } from './serverdev.mjs';
+import zlib from 'node:zlib';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? Number(process.argv[i + 1]) : d; };
 const MINUTES = arg('minutes', 4), AIS = Math.max(0, Math.min(6, arg('ais', 0))), BREAK = process.argv.includes('--break');
 const ART = process.argv.includes('--artifact') ? { html: artifactHtml(), three: threeJs() } : null;
-const PFX = ART ? 'art-' : '', RECON = process.argv.includes('--reconnect');
+const SRV_MODE = process.argv.includes('--server') && !ART;
+const PFX = ART ? 'art-' : SRV_MODE ? 'srv-' : '', RECON = process.argv.includes('--reconnect');
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -73,6 +83,8 @@ function findChromium() {
 // one headless browser at a time on this machine (parallel agents' runs OOM-kill each other); --no-lock skips
 await acquireBrowserLock();
 const peakMB = watchPeakMemory();
+const SRV = SRV_MODE ? await startServer() : null;
+if (SRV) console.log(`game servers running locally at ${SRV.url}`);
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json',
   '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg',
@@ -141,6 +153,18 @@ function fakePeerShim() {
   Object.defineProperty(window, 'Trystero', { configurable: false, get: () => undefined, set: () => {} });
 }
 
+// --server: PeerJS is replaced by one that can never connect (as on a network that blocks browser-to-browser links),
+// the Nostr backup is off, and the page is pointed at the local game servers
+function blockedPeerShim(url) {
+  window.WW3_SERVER = url;
+  class BlockedPeer { constructor() { this._h = {}; this.destroyed = false; this.open = false;
+      setTimeout(() => this._emit('error', Object.assign(new Error('browser-to-browser blocked (test)'), { type: 'network' })), 50); }
+    on(t, f) { (this._h[t] = this._h[t] || []).push(f); return this; } _emit(t, ...a) { for (const f of (this._h[t] || []).slice()) try { f(...a); } catch (e) {} }
+    connect() { return { on() {}, open: false, send() {} }; } destroy() { this.destroyed = true; } disconnect() {} reconnect() {} }
+  Object.defineProperty(window, 'Peer', { configurable: false, get: () => BlockedPeer, set: () => {} });
+  Object.defineProperty(window, 'Trystero', { configurable: false, get: () => undefined, set: () => {} });
+}
+
 const fails = [], warns = [];
 const fail = m => { fails.push(m); };
 // a crashed page leaves playwright calls hanging: abort the whole run instead
@@ -155,8 +179,8 @@ const browser = await chromium.launch({ executablePath: findChromium(),
     // both pages in one renderer process: saves a few hundred MB (the test drives them one after the other anyway)
     '--renderer-process-limit=1'] });
 const ctx = await browser.newContext({ viewport: { width: 1024, height: 576 } });
-if (ART) await ctx.addInitScript(roomStub, { topics: roomTopics() }); else await ctx.addInitScript(fakePeerShim);
-await ctx.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue()
+if (ART) await ctx.addInitScript(roomStub, { topics: roomTopics() }); else if (SRV) await ctx.addInitScript(blockedPeerShim, SRV.url); else await ctx.addInitScript(fakePeerShim);
+await ctx.route('**/*', r => r.request().url().startsWith(ORIGIN) || SRV && r.request().url().startsWith(SRV.url) ? r.continue()
   : ART && r.request().url() === THREE_CDN ? r.fulfill({ status: 200, contentType: 'text/javascript', body: ART.three }) : r.abort());
 async function openPage(tag) {
   const page = await ctx.newPage();
@@ -180,6 +204,8 @@ const secs = () => ((Date.now() - t0) / 1000).toFixed(0) + 's';
 let host, client;
 async function main() {
   [host, client] = await Promise.all([openPage('host'), openPage('client')]);
+  if (SRV) client.on('websocket', w => { if (!w.url().includes('/room/')) return; // every relay frame the client gets / sends
+    w.on('framereceived', f => cap.rx.push(String(f.payload))); w.on('framesent', f => cap.tx.push(String(f.payload))); });
   await Promise.all([host, client].map(p => p.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 240000 }).catch(() => warns.push('3D models still loading after 240s'))));
   console.log(`[${secs()}] both pages loaded`);
 
@@ -200,10 +226,19 @@ async function main() {
       s.on('Debugger.paused', ev => { console.log('  BUSY STACK:', ev.callFrames.slice(0, 8).map(f => `${f.functionName}@${f.location.lineNumber}:${f.location.columnNumber}`).join(' < ')); s.send('Debugger.resume').catch(() => {}); });
       await s.send('Debugger.pause'); }
   }, 5000).unref();
+  if (SRV) { // matchmaking: the host's game must show up in the client's game list (pushed by the server)
+    await waitFor(client, (c) => NET.room.peers().some(p => !p.sameTab && p.presence && p.presence.g && p.presence.g.c === c) &&
+      document.getElementById('games').textContent.includes(c.toUpperCase()), code, 20000, "the host's game to appear in the client's game list");
+    const ls = await client.evaluate(() => JSON.stringify(window.WW3_SDIR.state()));
+    console.log(`[${secs()}] client's game list (from the server) shows game ${code.toUpperCase()}: ${ls}`);
+  }
   await client.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'RU'; joinByCode(c); }, code);
   console.log(`[${secs()}] client joining`);
   await waitFor(host, () => NET.lobby && NET.lobby.length === 1, null, 60000, 'the client to appear in the host lobby');
   await waitFor(client, () => /Joined/.test(document.getElementById('mpstatus').textContent), null, 30000, 'the client to see "Joined"');
+  if (SRV) { const v = await client.evaluate(() => ({ via: NET.via, ws: !!(NET.game && NET.game._ws), st: document.getElementById('mpstatus').textContent }));
+    console.log(`[${secs()}] client connected via ${v.via}: "${v.st.slice(0, 80)}"`);
+    if (v.via !== 'ws' || !v.ws) fail(`client should have fallen back to the server relay, but connected via ${v.via}`); }
   // Stop both render loops BEFORE the battle starts: the test drives the clocks itself, and nothing is drawn (so no
   // GPU textures are uploaded) until the screenshots at the end - two full game pages are heavy under SwiftShader.
   await client.evaluate(() => { window.__stopLoop = true; });
@@ -225,6 +260,7 @@ async function main() {
     await waitFor(p, () => typeof G !== 'undefined' && G && G.terrain && !window.LOADING, null, 600000, `the ${who} to finish its loading screen`);
   console.log(`[${secs()}] both pages finished loading`);
   if (cInfo.me !== 1) fail('client got slot ' + cInfo.me + ', expected 1');
+  if (SRV) { cap.rx.length = 0; cap.tx.length = 0; cap.g0 = await host.evaluate(() => G.t); cap.w0 = Date.now(); }
 
   // ---- take over the clocks: stop both render loops; the host's own side plays as an easy AI ----
   await host.evaluate(() => { if (!G.teams[0].ai) G.teams[0].ai = mkAI(1); });
@@ -238,13 +274,17 @@ async function main() {
     // delta snapshots then carry nothing for them, so their latest-snapshot clock legitimately stops)
     const k = 1; let sees = false; for (const e of G.ents) if (!e.dead && (e.team === k || (e.vs && e.vs[k]))) { sees = true; break; }
     return { t: G.t, over: G.over, sees };
-  }, n);
+  }, n).then(r => { if (r && typeof r.t === 'number') lastHostT = r.t; return r; });
   // client: let queued messages land, then advance its clock the same amount
-  const clientRun = (n) => client.evaluate(async (n) => {
+  // --server: the test runs ~25x faster than real time, so a few tens of ms through the local server would read as
+  // seconds of game lag; the client first waits (real time, up to 400 ms) for the host's latest update, as in a match
+  const clientRun = (n) => client.evaluate(async ([n, srv, hostT]) => {
     await new Promise(r => setTimeout(r, 0));
+    if (srv) { const w0 = performance.now(); while (performance.now() - w0 < 400 && (NET.lastSnapT || 0) < hostT - 0.6) await new Promise(r => setTimeout(r, 4)); }
     try { for (let i = 0; i < n && G; i++) clientTick(0.1); } catch (e) { return { err: String(e && e.stack || e) }; }
     return { t: G.t, snapT: NET.lastSnapT || 0, rx: performance.now() - (NET.lastRx || 0), ents: G.ents.length };
-  }, n);
+  }, [n, !!SRV, lastHostT]);
+  let lastHostT = 0;
   // what the client's side may see on the host: own entities and everything currently in its vision
   const hostView = () => host.evaluate((k) => {
     const out = [];
@@ -321,23 +361,39 @@ async function main() {
   const before = order.n ? await host.evaluate((ids) => ids.map(id => { const e = G.byId.get(id); return e ? [e.x, e.y] : null; }), order.ids) : [];
   await host.waitForTimeout(1500); // orders travel in the client's presence: give it real time to arrive
 
-  const STEP = 5, total = Math.round(MINUTES * 600), checks = new Set([600, 1500, total].filter(x => x <= total));
-  let blindAt = 0, lagLogged = false, ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
+  // --server: real time (one network tick per 0.1 s, each flushed on its own, like a real match), so the relay sees
+  // real message rates (its rate limits are sized for those) and the traffic numbers are per real minute
+  const STEP = SRV ? 1 : 5, total = Math.round(MINUTES * 600), checks = new Set([600, 1500, total].filter(x => x <= total));
+  let blindAt = 0, lagSkip = 0, lagLog = 0, lagLogged = false, ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
   while (ticks < total) {
     const w0 = Date.now();
     const h = await hostRun(STEP); if (h.err) { fail('host simulation threw: ' + h.err.split('\n').slice(0, 4).join(' | ')); break; }
     const c = await clientRun(STEP); if (c.err) { fail('client tick threw: ' + c.err.split('\n').slice(0, 4).join(' | ')); break; }
     ticks += STEP; chunkMs.push(Date.now() - w0);
+    if (SRV) { const left = 100 * STEP - (Date.now() - w0); if (left > 0) await host.waitForTimeout(left); }
     if (!h.sees && !blindAt) { blindAt = h.t; console.log(`[${secs()}] the client's side sees nothing from host t=${h.t.toFixed(1)}s (wiped out): its clock is no longer checked`); }
-    if (ticks >= 100 && h.sees) behindMax = Math.max(behindMax, h.t - c.snapT);
-    if (ticks >= 100 && h.sees && h.t - c.snapT > 1.5 && !lagLogged) { lagLogged = true; // say when, and in what state, the client first fell behind
+    if (ticks >= 100 && ticks > lagSkip && h.sees) behindMax = Math.max(behindMax, h.t - c.snapT);
+    if (SRV && ticks >= 100 && ticks > lagSkip && h.sees && h.t - c.snapT > 1.5 && lagLog < 6) { lagLog++;
+      const b = await host.evaluate(() => ({ buf: NET.game && NET.game._ws ? NET.game._ws.bufferedAmount : -1, kf: NET.kf && NET.kf[1] }));
+      console.log(`[${secs()}] lag ${(h.t - c.snapT).toFixed(1)} s at host t=${h.t.toFixed(1)} (host socket backlog ${b.buf} B, client rx ${(c.rx / 1000).toFixed(1)} s ago)`); }
+    if (ticks >= 100 && ticks > lagSkip && h.sees && h.t - c.snapT > 1.5 && !lagLogged) { lagLogged = true; // say when, and in what state, the client first fell behind
       const o = await host.evaluate(() => G.teams.map(T => T.fac + (T.out ? ' out' : '')).join(', '));
       console.log(`[${secs()}] client first fell ${(h.t - c.snapT).toFixed(1)} s behind at host t=${h.t.toFixed(1)}s (${o})`); }
-    if (RECON && ticks === 650) { await client.evaluate(() => { NET.lastRx = performance.now() - 6000; });
+    if (RECON && ticks === 650 && SRV) { await client.evaluate(() => { NET.game._ws.close(); });
+      console.log(`[${secs()}] --reconnect: the client's connection to the server is cut; it must reconnect`);
+      // the reconnect needs real time (and the host must keep running so it hears the client's hello)
+      const r0 = Date.now(); while (Date.now() - r0 < 20000) { await hostRun(2); await clientRun(2); await host.waitForTimeout(150);
+        if (await client.evaluate(() => !NET.recon && !!(NET.game && NET.game._ws) && performance.now() - NET.lastRx < 1000)) break; }
+      const rs = await client.evaluate(() => ({ recon: !!NET.recon, via: NET.game && NET.game.via, ws: !!(NET.game && NET.game._ws) }));
+      console.log(`[${secs()}] --reconnect: after ${((Date.now() - r0) / 1000).toFixed(1)} s the client is ${rs.recon ? 'STILL reconnecting' : 'reconnected'} via ${rs.via}`);
+      if (rs.recon || !rs.ws) fail('client did not reconnect through the server after its connection was cut');
+      lagSkip = ticks + 50; } // a real outage: the client may trail while it catches up
+    else if (RECON && ticks === 650) { await client.evaluate(() => { NET.lastRx = performance.now() - 6000; });
       console.log(`[${secs()}] --reconnect: the client thinks it lost the host and reconnects`); }
     if (RECON && ticks === 1100) { const r = await host.evaluate((k) => ({ ai: !!G.teams[k].ai, disc: G.teams[k].discT || 0, out: !!G.teams[k].out }), CK);
       if (!r.out && (r.ai || r.disc)) fail('45 s after reconnecting, the host still treats the client as gone (AI took over / marked disconnected)'); }
-    if (ticks === breakAt) { await client.evaluate(() => { window.__fpDrop = true; }); console.log(`[${secs()}] --break: the client stops receiving from now on`); }
+    if (ticks === breakAt && SRV) { warns.push('--break is not supported with --server'); }
+    else if (ticks === breakAt) { await client.evaluate(() => { window.__fpDrop = true; }); console.log(`[${secs()}] --break: the client stops receiving from now on`); }
     if (!orderChecked && ticks >= 250 && order.n) {
       orderChecked = true;
       const after = await host.evaluate((ids) => ids.map(id => { const e = G.byId.get(id); return e ? [e.x, e.y] : null; }), order.ids);
@@ -353,9 +409,10 @@ async function main() {
       try { const R = roster(G.teams[ME].fac); for (const c of CATS) if (R[c] && R[c][0] && !G.teams[ME].q[c].length) doAct({ t: 'q', k: R[c][0] }); } catch (e) {} });
   }
   if (!order.n) warns.push('client had no units at the start, so the order round-trip was not tested');
-  const st = await client.evaluate(() => window.__fpStats), hs = await host.evaluate(() => window.__fpStats);
+  const stK = SRV ? '__ww3WsStats' : '__fpStats';
+  const st = await client.evaluate(k => window[k], stK), hs = await host.evaluate(k => window[k], stK);
   console.log(`[${secs()}] traffic host->client ${(st.rxB / 1024).toFixed(0)} KB in ${st.rx} messages, client->host ${(hs.rxB / 1024).toFixed(0)} KB in ${hs.rx}; ` +
-    `client lag max ${behindMax.toFixed(2)} game-s; ${(chunkMs.reduce((a, b) => a + b, 0) / Math.max(1, chunkMs.length)).toFixed(0)} ms per 0.5 s step`);
+    `client lag max ${behindMax.toFixed(2)} game-s; ${(chunkMs.reduce((a, b) => a + b, 0) / Math.max(1, chunkMs.length)).toFixed(0)} ms per ${STEP / 10} s step`);
   console.log(`[${secs()}] ${live.n} live checks, ${live.bad || 0} out of tolerance; up to ${enemySeen} enemy entities were in the client's view at once`);
   if ((live.bad || 0) > Math.max(1, live.n * .1)) fail(`client view diverged from the host in ${live.bad}/${live.n} live checks, e.g. ${live.worst}`);
   if (behindMax > 1.5) fail(`client fell ${behindMax.toFixed(1)} game-seconds behind the host (it should trail by at most a few 0.1 s snapshots)`);
@@ -363,6 +420,7 @@ async function main() {
   if (RECON) { const r = await host.evaluate((k) => ({ ai: !!G.teams[k].ai, disc: G.teams[k].discT || 0, out: !!G.teams[k].out, t: G.t }), CK);
     console.log(`[${secs()}] --reconnect: at t=${r.t.toFixed(0)}s the client's side is ${r.ai ? 'run by the AI' : 'still the player\'s'}${r.disc ? ', still marked disconnected' : ''}`);
     if (!r.out && (r.ai || r.disc)) fail('after reconnecting, the client did not get its army back (AI took over / still marked disconnected)'); }
+  if (SRV) await trafficReport().catch(e => warns.push('traffic report: ' + e.message));
   if (ART) for (const [tag, s] of [['host', hs], ['client', st]]) { const j = judgeRoomStats(tag, s); j.fails.forEach(fail); warns.push(...j.warns);
     console.log(`[${secs()}] ${tag} room sends: ${s.tx} messages, peak ${s.peakRate} in one game-second`); }
 
@@ -370,6 +428,29 @@ async function main() {
 }
 // one real frame on each page, mid-battle (right after the 2.5 min check) or at the end
 let shotsTaken = false;
+// --server: relay traffic seen by the client page, for orch/out/srv-traffic.json (read by orch/serverbench.mjs)
+const cap = { rx: [], tx: [], g0: 0, w0: 0 };
+function deflated(frames) { // size on the wire with permessage-deflate (context takeover, one sync flush per frame)
+  const d = zlib.createDeflateRaw({ level: 6 }); let n = 0; d.on('data', b => { n += b.length; });
+  for (const f of frames) { d.write(f); d.flush(zlib.constants.Z_SYNC_FLUSH); }
+  return new Promise(r => d.end(() => setTimeout(() => r(n), 0)));
+}
+async function trafficReport() {
+  const g = await host.evaluate(() => G.t), gameMin = Math.max(.01, (g - cap.g0) / 60), realMin = Math.max(.01, (Date.now() - cap.w0) / 60000);
+  const rx = cap.rx.filter(f => f !== 'pong' && f[0] !== '!'), tx = cap.tx.filter(f => f !== 'ping');
+  const recs = a => a.reduce((n, f) => n + f.split('\n').length, 0), bytes = a => a.reduce((n, f) => n + Buffer.byteLength(f), 0);
+  const out = { gameMin: +gameMin.toFixed(2), realMin: +realMin.toFixed(2), ais: AIS,
+    hostToPlayer: { framesPerGameMin: Math.round(rx.length / gameMin), recordsPerGameMin: Math.round(recs(rx) / gameMin),
+      bytesPerGameMin: Math.round(bytes(rx) / gameMin), wireBytesPerGameMin: Math.round(await deflated(rx) / gameMin) },
+    playerToHost: { framesPerRealMin: Math.round(tx.length / realMin), recordsPerRealMin: Math.round(recs(tx) / realMin),
+      bytesPerRealMin: Math.round(bytes(tx) / realMin), wireBytesPerRealMin: Math.round(await deflated(tx) / realMin) } };
+  const tf = AIS ? `srv-traffic-ais${AIS}.json` : 'srv-traffic.json'; cap.file = tf;
+  fs.writeFileSync(path.join(OUT, tf), JSON.stringify(out, null, 2));
+  const h = out.hostToPlayer, p = out.playerToHost;
+  console.log(`[${secs()}] relay traffic per player: host->player ${h.framesPerGameMin} frames (${h.recordsPerGameMin} records), ` +
+    `${(h.bytesPerGameMin / 1024).toFixed(0)} KB raw / ${(h.wireBytesPerGameMin / 1024).toFixed(0)} KB compressed per game-minute; ` +
+    `player->host ${p.framesPerRealMin} frames, ${(p.wireBytesPerRealMin / 1024).toFixed(1)} KB compressed per minute (orch/out/${cap.file})`);
+}
 async function screenshots() {
   shotsTaken = true;
   // the test (not the game) freezes the host while it draws and photographs both pages; a real host never stops
@@ -391,6 +472,7 @@ try { await Promise.race([main(), crash]); } catch (e) {
 }
 await browser.close().catch(() => {});
 server.close();
+if (SRV) SRV.stop();
 
 { const mb = peakMB(); if (mb) console.log(`peak memory (node + browser, summed RSS): ${mb} MB`); }
 for (const w of [...new Set(warns)].slice(0, 12)) console.log('  warn: ' + w);
@@ -400,5 +482,5 @@ if (uniq.length) {
   for (const f of uniq.slice(1, 20)) console.log('  ✗ ' + f);
   process.exit(1);
 }
-console.log(`\nMPSYNC PASS${ART ? ' (artifact edition)' : ''} (${secs()}) — screenshots orch/out/${PFX}mp-host.png, orch/out/${PFX}mp-client.png`);
+console.log(`\nMPSYNC PASS${ART ? ' (artifact edition)' : SRV ? ' (through the game servers)' : ''} (${secs()}) — screenshots orch/out/${PFX}mp-host.png, orch/out/${PFX}mp-client.png`);
 process.exit(0);

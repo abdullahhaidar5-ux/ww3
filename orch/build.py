@@ -150,8 +150,9 @@ def artifact():
     end = html.rindex('</body>')
     page = html[t:a] + f'<script src="{THREE_CDN}"></script>' + html[b:end].rstrip() + '\n'
     # guards: nothing Pages-only may leak into the artifact
+    # (the World War 3 servers backend - relay rooms, server game list - lives in the shim, so it is dropped with it)
     for bad in ('window.WW3_P2P=true', 'window.claude=', 'serviceWorker.register', '<!doctype', '<body',
-                'manifest.webmanifest'):
+                'manifest.webmanifest', 'WW3_SDIR', '__ww3WsStats', "'/room/'"):
         if bad.lower() in page.lower():
             sys.exit(f'artifact: Pages-only code {bad!r} still in the artifact page — update build.py')
     srcs = re.findall(r'<script[^>]+src="([^"]+)"', page)
@@ -161,7 +162,7 @@ def artifact():
     out = os.path.join(ARTIFACT_OUT, 'index.html')
     with open(out, 'w', encoding='utf-8', newline='') as f:
         f.write(page)
-    rels = sorted('vo/' + n for n in os.listdir(os.path.join(ROOT, 'vo')) if n.endswith('.mp3')) + ['mus/smp.mp3']
+    rels = sorted('vo/' + n for n in os.listdir(os.path.join(ROOT, 'vo')) if n.endswith('.mp3')) + sorted('mus/' + n for n in os.listdir(os.path.join(ROOT, 'mus')) if n.endswith('.mp3'))
     files = {rel: rel for rel in rels}  # published path -> source path, relative to the repo root (ORCH's cwd)
     for rel in rels:
         if not os.path.isfile(os.path.join(ROOT, rel)):

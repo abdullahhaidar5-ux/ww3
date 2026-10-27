@@ -19,14 +19,15 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 
 ## Multiplayer in the cloud
 - [done] Game live on Cloudflare (ww3.abdullah-haidar5.workers.dev), updated automatically
-- [doing] Matchmaking + relay servers with automatic fallback (final tests)
+- [done] Matchmaking + relay servers with automatic fallback (built and tested; switched off until they're live)
 - [you] Put the servers live: one-time Cloudflare import, then tap Merge
 - [todo] Battles run on a server (or a dedicated PC) instead of the host's device
 - [done] Fix: stale enemy soldiers left on a player's screen
 
 ## Audio and music overhaul
-- [doing] Authentic Middle Eastern music: Iran, Mountain Shias, Coffee Shias, Saudi Arabia, UAE, Egypt
-- [next] Region-specific music for the other 12 nations
+- [done] Authentic Middle Eastern music: Iran, Mountain Shias, Coffee Shias, Saudi Arabia, UAE, Egypt (real maqam/dastgah, regional rhythms, recorded percussion)
+- [done] Asian music: Pakistan, India, China, North Korea, South Korea (regional instruments and rhythms)
+- [next] Region-specific music for the other 7 nations (US, TR, IL, EU, UA, RU, CU)
 - [next] Military band layer: each nation's public-domain US Navy Band anthem recording
 - [todo] Recorded weapons, explosions, engines and aircraft (near and far, echo per theatre)
 - [todo] Battlefield ambience per map and weather
