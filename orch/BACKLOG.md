@@ -8,7 +8,7 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
-- [open] **IN PROGRESS (side lane, 2026-10-26 19:25 — Abdullah: "do this now"; ORCH: don't take it) — Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
+- [open] **IN PROGRESS (side lane, restarted 19:36 — Abdullah: "do this now"; ORCH: don't take it; deploy via Cloudflare Workers Builds + merge-to-approve, no tokens) — Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
   multiplayer"). Target: Cloudflare free tier (Workers + Durable Objects), deployed by a GitHub Actions workflow that Abdullah
   approves from his phone (see the [ask] item under Multiplayer; no secrets in chat or repo). Build and test everything locally first; deployment itself is the only [ask]. Account exists (19:11).
   **Stage 1 — relay + signalling:** WebSocket relay rooms in a Durable Object (game code = room) that carry all game
@@ -80,12 +80,15 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [check] Infantry helmet/kit variety beyond v68 tone variation.
 
 **UI/UX & controls** (`08-ui`, `06-view`)
-- [open] **IN PROGRESS (side lane, 2026-10-26 18:50) — intuitive phone controls.** Abdullah: "make the mobile
+- [open] **PAUSED by Abdullah 2026-10-26 19:35 (work saved on branch `orch/wip-loading-screen`, unbuilt/untested;
+  ORCH: don't take until he says) — Generals-style loading screen with progress, faster battle start (Test Range is
+  slow), and documented military quotes matched to each of the 18 factions.**
+- [open] **PAUSED by Abdullah 2026-10-26 19:35 (not started; ORCH: don't take until he says) — intuitive phone controls.** Abdullah: "make the mobile
   controls more intuitive". One-finger drag scrolls (Maps-app style), long-press+drag box-selects, tap selects/orders
   with order markers, long-press+drag with units = infantry line, touch command bar (attack-move, guard, stop, line,
   same type, all army, deselect), collapsible panel, better landscape, first-time guide. Starts after the Generals
   mouse work lands; ORCH: don't take it.
-- [open] **IN PROGRESS (side lane) — Generals mouse controls.** Re-confirmed by Abdullah 2026-10-26 18:55 over
+- [open] **PAUSED by Abdullah 2026-10-26 19:35 (work saved on branch `orch/wip-generals-mouse`, unbuilt/untested; ORCH: don't take until he says) — Generals mouse controls + per-function Mouse settings.** Re-confirmed by Abdullah 2026-10-26 18:55 over
   the 17:55 "freeze" note (see CLAUDE.md). Being built and shipped by the side lane; ORCH: don't take this item and
   don't edit `08-ui`/`06-view` input code until it lands.
 - [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers.
