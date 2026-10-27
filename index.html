@@ -8829,7 +8829,7 @@ function stHeat(x,y,a){try{if(G&&!G.over&&Math.hypot(x-cam.x,y-cam.y)<cam.dist*2
 // iPhones only let an <audio> element play after a tap has played it once: bless both decks on the first taps
 function stBless(){if(!IOSLIKE)return;for(const i of [0,1]){const d=stDeck(i);if(!d||d.blessed||d.id)continue;d.blessed=1;const tok=++d.tok;
   try{d.el.src=silentURI();const p=d.el.play();if(p&&p.then)p.then(()=>{if(d.tok===tok&&!d.id){d.el.pause();d.el.removeAttribute('src');}},()=>{d.blessed=0;});}catch(e){d.blessed=0;}}}
-function stTick(){AU.heat=Math.max(0,AU.heat-.006);if(!AU.ctx)return;
+function stTick(){AU.heat=Math.max(0,AU.heat-.006);if(!AU.ctx)return;if(ST.ctx&&ST.ctx!==AU.ctx)stBus();// engine rebuilt: fresh decks
   const hold=audioHeld()||document.hidden;// a paused battle or a hidden page stops the stream (and the phone's data use)
   if(hold!==ST.hold){ST.hold=hold;for(const d of ST.decks)if(d.id){if(hold)d.el.pause();else if(d===ST.cur||d.fading)stResume(d);}}
   if(myMode()==='mine'&&MYM.list.length){if(!MYM.on&&!MYM.busy&&ST.tapped&&ST.scene){MYM.busy=1;myStart().finally(()=>{MYM.busy=0;});}}else if(MYM.on)myStop();
