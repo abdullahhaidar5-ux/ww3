@@ -18,6 +18,7 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
 - Artifact republished v164 (page + 50 model `.txt` + all `mus/`). Its `vo/*.mp3` differ from every `vo/` in repo
   history (unknown origin) → left as they are, not overwritten (backlog item). Board republished.
 - Not done: real ney (Freesound 403 from the sandbox). Board republished v14; artifact v164.
+- Chaining blocked again (permission denied for running the scheduled task on demand); 4-hourly schedule (next 21:24 UTC).
 
 ## 2026-10-27 08:36 → 10:25 — cycle 9
 
