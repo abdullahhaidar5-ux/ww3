@@ -228,7 +228,10 @@ async function main() {
   const hostRun = (n) => host.evaluate((n) => {
     try { for (let i = 0; i < n && G && !G.over; i++) { for (let s = 0; s < 6; s++) simUpdate(1 / 60); netTick(0.1); } }
     catch (e) { return { err: String(e && e.stack || e) }; }
-    return { t: G.t, over: G.over };
+    // does the client's side see anything at all? (a player whose side is wiped out sees nothing, and the host's
+    // delta snapshots then carry nothing for them, so their latest-snapshot clock legitimately stops)
+    const k = 1; let sees = false; for (const e of G.ents) if (!e.dead && (e.team === k || (e.vs && e.vs[k]))) { sees = true; break; }
+    return { t: G.t, over: G.over, sees };
   }, n);
   // client: let queued messages land, then advance its clock the same amount
   const clientRun = (n) => client.evaluate(async (n) => {
@@ -274,7 +277,7 @@ async function main() {
     if (wrong.length > Math.max(1, vis * .02)) fail(`${label}: ${wrong.length} entities differ (kind/team/health): ${sample(wrong)}`);
     if (extra.length > Math.max(2, vis * .03)) fail(`${label}: ${extra.length} entities on the client that the host no longer has in view: ${sample(extra)}`);
     if (Math.abs(H.credits - C.credits) > 1) fail(`${label}: credits differ: host ${H.credits}, client ${C.credits}`);
-    if (H.t - C.t > .3) fail(`${label}: client's latest state is ${(H.t - C.t).toFixed(1)} s behind the host after settling`);
+    if (H.t - C.t > .3 && vis) fail(`${label}: client's latest state is ${(H.t - C.t).toFixed(1)} s behind the host after settling`);
     return { H, C };
   }
 
@@ -313,14 +316,15 @@ async function main() {
   await host.waitForTimeout(1500); // orders travel in the client's presence: give it real time to arrive
 
   const STEP = 5, total = Math.round(MINUTES * 600), checks = new Set([600, 1500, total].filter(x => x <= total));
-  let lagLogged = false, ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
+  let blindAt = 0, lagLogged = false, ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
   while (ticks < total) {
     const w0 = Date.now();
     const h = await hostRun(STEP); if (h.err) { fail('host simulation threw: ' + h.err.split('\n').slice(0, 4).join(' | ')); break; }
     const c = await clientRun(STEP); if (c.err) { fail('client tick threw: ' + c.err.split('\n').slice(0, 4).join(' | ')); break; }
     ticks += STEP; chunkMs.push(Date.now() - w0);
-    if (ticks >= 100) behindMax = Math.max(behindMax, h.t - c.snapT);
-    if (ticks >= 100 && h.t - c.snapT > 1.5 && !lagLogged) { lagLogged = true; // say when, and in what state, the client first fell behind
+    if (!h.sees && !blindAt) { blindAt = h.t; console.log(`[${secs()}] the client's side sees nothing from host t=${h.t.toFixed(1)}s (wiped out): its clock is no longer checked`); }
+    if (ticks >= 100 && h.sees) behindMax = Math.max(behindMax, h.t - c.snapT);
+    if (ticks >= 100 && h.sees && h.t - c.snapT > 1.5 && !lagLogged) { lagLogged = true; // say when, and in what state, the client first fell behind
       const o = await host.evaluate(() => G.teams.map(T => T.fac + (T.out ? ' out' : '')).join(', '));
       console.log(`[${secs()}] client first fell ${(h.t - c.snapT).toFixed(1)} s behind at host t=${h.t.toFixed(1)}s (${o})`); }
     if (RECON && ticks === 650) { await client.evaluate(() => { NET.lastRx = performance.now() - 6000; });
