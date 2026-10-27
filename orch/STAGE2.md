@@ -323,6 +323,92 @@ cost ~14 ms per game-second, on top of ~130 ms for the battle.
 5. Checkpoints: on a server, `ckEncode` → disk/Durable Object storage gives restart recovery. The standby-player
    hand-off still works as a fallback.
 
+## 8. Cloudflare battle protocol (step 3: "Host on Cloudflare")
+
+Abdullah, 2026-10-27 18:02: battles are hosted **on Cloudflare**, not on a PC. The server side (branch
+`orch/stage2-dedicated`) is a new Durable Object class **`BattleRoom`** in `server/` that runs the battle (01+02+03 +
+07a + 07b, bundled into the Worker at build time) and is itself the room the players connect to. The browser side
+(branch `orch/cf-battle-client`) builds against this section. Design rule: **a player joins a Cloudflare battle
+exactly like a relay room today**; only the URL path differs.
+
+### Connecting
+
+`wss://<servers>/battle/<code>?role=client&id=<id>[&own=<key>]` (WebSocket; same origin allow-list as `/room/`)
+
+- `code`: the game code, 6 letters/digits (`[a-z0-9]{4,8}`). **Never** with `-m<n>`: a migrated battle (after the
+  server disappeared) is an ordinary browser-hosted room on `/room/<code>-m<n>`.
+- `id`: the player's id, exactly as for `/room/` (`[A-Za-z0-9_-]{4,40}`, not starting with `ww3-`).
+- `own=<key>` (8–40 letters/digits, random, kept by the creating page): **creates** the battle. If the room is empty, a
+  new battle lobby opens with this player as its owner. The same key later reconnects as owner. A key that doesn't
+  match the existing lobby's owner gets `!e taken` (pick a new code and try again).
+- Without `own`, an empty room answers `!e nohost` (same as a relay room without a host).
+
+Server control frames, identical to `/room/`: `!w ww3-<code>` welcome (the host id is `ww3-<code>`, as in a relay
+room), `!l ww3-<code>` the battle closed, `!e <why>` refused, then the socket closes. Reasons:
+
+| `!e` | Meaning | Page should |
+|---|---|---|
+| `busy` | Free-plan guard: today's Cloudflare use is at 70% (battles stop before relay rooms at 80%) | create: host in the browser instead. join: "server busy" |
+| `nohost` | No battle with that code (never created, ended, or the server restarted) | join: try `/room/<code>`; reconnect: host migration (below) |
+| `taken` | create: code in use by someone else's lobby; join: this `id` is already connected | create: new code; join: new id |
+| `full` | 8 players already (or the map's maximum) | "That game is full." |
+| `limit` | too many connections from one address / too fast | retry later |
+| `version` | (create) — not used; version is checked at Start, see `pv` below | |
+
+Data frames are byte-for-byte the relay format: player → server `|<json>` (records joined by `\n`), server → player
+`ww3-<code>|<json>` (records joined by `\n`); `<json>` is `{"k":"e","t":topic,"d":data}` (an emit) or
+`{"k":"p","p":presence}` (presence). The page's `namedRoom` relay client works unchanged with the path swapped
+(`/battle/` for `/room/`), `R.via` e.g. `'wsb'`; a reconnect to the same code reuses `/battle/`; `-m` rooms use the
+normal join chain.
+
+### Lobby (before Start)
+
+- Every player (owner included) greets exactly as `joinGame` does today: presence `hi:{f,n,tok,ed}` (re-sent with a
+  new `n` to change nation) and emit `hello {f}`. The server answers today's `lobby {n,to}` ("Joined. N players…").
+- The server sends **`blob`** (battle lobby) to every player whenever the lobby changes (and to a newcomer at once):
+  `{to, c, pv, own, you, map, mx, w, seats:[…], ok, why}`
+  - `pv`: the server's `NET_PV`. If it differs from the page's, show "different versions, reload" and leave.
+  - `own`: 1 if this player is the owner (may configure and start). `you`: this player's seat index.
+  - `seats`: in slot order. Humans first in join order (owner first): `{h:1,f,tm}`. Then computer players:
+    `{ai:1,f,d,tm}` (`d` 0 Easy, 1 Normal, 2 Hard). The seat count never exceeds `mx` (the map's maximum).
+  - `ok`: 1 if Start is allowed now; `why`: plain-words reason when not (fewer than 2 humans, everyone on one team).
+- The owner configures with emit **`bset`** (any subset; the server clamps and validates, then sends `blob` to all):
+  `{map, w, tm:[team per human seat], ais:[{f,d,tm}…], start:1}`. `map` = a `MAPS` key (seats beyond its max are
+  dropped, AIs first); `w` = battle Conditions as today (-1..WX.length-1); `ais` replaces the computer seats.
+  `start:1` starts the battle if `ok`; otherwise the server answers with a `blob` whose `why` says why.
+- If the owner leaves the lobby, the next human becomes the owner. When no human is connected for 60 s, the room
+  closes. A lobby lasts at most 30 minutes.
+- The game list: the server publishes the battle in `/lobby` like a host page does, with an extra field **`cf:1`**:
+  `{c, f (owner's nation), s:'open'|'full', n, m, mx, cf:1}`. A page joins a `cf` game through `/battle/<code>`.
+
+### Start and the battle
+
+- On Start the server sends today's **`start`** to each human with one extra field: `{pv, seed, facs, slot, to, map,
+  tm, w, sv:1}`. **`sv:1` means the host has no side: `slot` may be 0** (today's client rejects slot 0; with `sv:1`
+  it must accept 0..facs.length-1). Computer seats are run by the server's AI.
+- From then on the server is an ordinary host (07a/07b code, `NET.p2p` style): `b` bundles (snap/evt/team), `ck`
+  checkpoints to one standby player, `pong`; orders via presence `cq`, `kr` keyframe requests, `pg` pings, as today.
+  Reconnect = same `/battle/` URL with a new id and the same `hi.tok`: the server re-sends `start` (as `hostRejoin`
+  does). A player gone for 30 s is replaced by the AI (they can still rejoin).
+- The server runs the sim at 60 Hz from a timer loop inside the object (one or two 1/60 s steps per timer callback;
+  no alarms per tick). Battle over (`end` event) → the room closes 2 minutes later. All players gone for 60 s → the
+  battle stops and the room closes.
+
+### Server gone (crash, eviction, redeploy)
+
+Sockets close → clients run `clientReconnect` as for a browser host: one try at `/battle/<code>` (now `!e nohost`),
+then the standby player (who holds the latest checkpoint) takes over as a **browser host** in `<code>-m1` (relay
+`/room/<code>-m1` + PeerJS, as today) and everyone else joins it. The checkpoint's `me` is -1, so no side is handed to
+the AI on takeover (only players who don't come back are).
+
+### Endpoints
+
+- `GET /battle-bench?players=2..8&minutes=1..10[&map=strait&seed=1&diff=1&batch=1]`: runs one AI battle inside a
+  BattleRoom (all sides AI, with the full host netcode sending to N simulated players) as fast as it can and streams
+  one line per game-minute (`ms per game-second`, entities), then a JSON summary. One bench at a time (`busy` while one
+  runs); counted in the daily budget; refused at the guard.
+- `GET /health` adds `battles: true|false` (whether new battles are allowed right now).
+
 ## How to run
 
 ```
