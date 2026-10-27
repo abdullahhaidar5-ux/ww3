@@ -36,6 +36,7 @@ export class BattleHost {
     this.created = now(); this.emptySince = now(); this.endAt = 0;
     this.out = new Map();                    // id -> records queued this turn ('' = everyone)
     this.lastStep = 0; this.acc = 0; this.steps = 0; this.lastPub = '';
+    this.rd = [];                            // sides whose page is past the loading screen (presence rd)
     sim.room({ emit: (t, d) => { this.emit(t, d); return Promise.resolve(); }, buffered: () => 0 });
   }
 
@@ -99,8 +100,9 @@ export class BattleHost {
   presence(id, p) {
     if (!p || typeof p !== 'object') return;
     const P = this.players.get(id); P.pres = p;
-    if (p.rd) P.rd = 1;                      // this player's loading screen has closed (kept for the rest of the battle)
     this.sim.pres(id, p, (peer, by, f, tok) => this.hello(peer, f, tok));
+    // this player's loading screen has closed: noted for their side (a page that reconnected keeps its side)
+    if (p.rd && this.phase === 'battle') { const k = this.sim.teamOf(id); if (k >= 0) this.rd[k] = 1; }
   }
   event(id, t, d) {
     if (t === 'hello') { if (d && typeof d === 'object') this.hello(id, d.f, null); }
@@ -178,7 +180,7 @@ export class BattleHost {
     this.flush();
     this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
-    this.go = false; this.goBy = this.now() + READY_MAX_MS;   // hold until every player is past the loading screen
+    this.go = false; this.goBy = this.now() + READY_MAX_MS; this.rd = [];   // hold until every player is past the loading screen
     this.log(`battle ${this.code} started: ${facs.join(' ')} on ${this.map}`);
     this.list();
   }
@@ -195,7 +197,8 @@ export class BattleHost {
     if (this.emptySince && now - this.emptySince > EMPTY_MS) return this.shut('everyone left');
     if (now - this.startedAt > MAX_BATTLE_MS) return this.shut('time limit');
     if (!this.go) {   // after Start: no steps, no snapshots until every human seat's page says rd (at most 20 s)
-      if (now < this.goBy && !this.order.every(id => { const P = this.players.get(id); return !P || P.rd; })) return 100;   // (a player who dropped meanwhile does not hold it)
+      // (a side whose player dropped meanwhile does not hold it)
+      if (now < this.goBy && !this.order.every((id, k) => this.rd[k] || !this.sim.test.peers()[k])) return 100;
       this.go = true; this.lastStep = now; this.acc = 0;
       this.log(`battle ${this.code} running (${((now - this.startedAt) / 1000).toFixed(1)} s after Start)`);
     }
