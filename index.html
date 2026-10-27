@@ -470,7 +470,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   #info{grid-area:info;min-height:0;padding:0 0 0 6px;border-top:0;overflow-y:auto;font-size:11px;line-height:1.25}
   #info b{font-size:13px}#info .tip{display:none}#info .morale{margin-top:1px}
   #side .sqbar{grid-area:sq;padding-left:6px;justify-content:flex-start}#side .sqbar #sqAll{margin-left:0}
-  #panel.grid{grid-area:pan;grid-template-rows:repeat(2,40px)}
+  #panel.grid{grid-area:pan;grid-template-rows:repeat(2,40px);scroll-snap-type:x proximity}
+  /* exactly four whole columns across the phone's width, so no button is cut off at the edge; swiping snaps to whole columns */
+  #side{--cols:4;--bw:calc((100vw - max(6px,env(safe-area-inset-left,0px)) - max(6px,env(safe-area-inset-right,0px)) - (var(--cols) - 1)*3px)/var(--cols) - .5px)}
+  @media (min-width:561px){#side{--cols:6}}
+  #panel .btn{padding:2px 5px 4px;scroll-snap-align:start}#panel .btn .n{padding-right:9px;font-size:12px;letter-spacing:-.01em}
   #facname{display:none}
   #credits{align-self:center;text-align:center;font:600 16px var(--display);letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #side .sw{display:none}
