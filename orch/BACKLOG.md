@@ -35,9 +35,23 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   battle; build-time compression; upgrade Three.js r128 → current on a branch with side-by-side screenshots of every
   map and nation. Decisions: **units first** (Phase 2 next: detailed models, national variants), **phones stay smooth**
   (lighter phone look OK, PCs get everything), **free art only**. Audio overhaul runs alongside (next item).
-- [open] **Audio and music overhaul** (Abdullah, 2026-10-26 21:09–21:15; same plan doc). Free only (CC0/CC-BY or public
+- [open] **Redo the whole soundtrack: one shared real soundtrack** (Abdullah, 2026-10-27: "they suck… redo the entire
+  soundtrack and not do faction specific"; chose "shared + anthems", Shia factions on the shared soundtrack too).
+  Why today's music is weak: every track is generated live from a ~10-note motif over one 8-chord loop on 2000s GM
+  soundfont samples + raw oscillators; per nation ~2.5 min of material looped all battle (the `_b` track is the motif
+  reversed); random-note "improvised" battle lead; stand-in instruments; latmiya vocals are a formant synth.
+  Plan: (1) Audio agent builds a shortlist of ~25 free tracks (CC0 / CC-BY credited / PD military band; NOT Pixabay or
+  other non-CC licences) in a C&C / Company of Heroes style with source + licence links, published as a phone-friendly
+  listening page (artifact) where Abdullah taps keep/drop — **[ask] he picks**; (2) after his picks: replace the
+  generator with a track player — pools menu / calm / combat / victory / defeat, calm↔combat on `AU.heat` with
+  crossfade and ≥60 s dwell, each track streamed only when about to play (phones), menu credits per track;
+  (3) anthem at battle start + victory for nations that have a PD recording (8 today; find more); (4) remove
+  `mus/smp.mp3` (3.3 MB), `me/as/we` sample sheets and the score generator once nothing uses them (keep "My music").
+  `build.py --check` credit checks must follow. Step 1 can start now.
+- [open] **Audio and music overhaul** (Abdullah, 2026-10-26 21:09–21:15; same plan doc; **music part superseded
+  2026-10-27 by the shared-soundtrack item above** — don't add more per-nation music). Free only (CC0/CC-BY or public
   domain, credited). Real recorded weapons/battle/ambience; full native-language voice lines (volunteers, TTS fallback);
-  proper mix. **Every nation gets region-specific music**: the region's scales, rhythms and instruments on free recorded
+  proper mix. ~~Every nation gets region-specific music~~ (old): the region's scales, rhythms and instruments on free recorded
   samples, plus its public-domain US Navy Band anthem recording as a military-band layer (check each composition's
   status). Middle Eastern six done (side lane); Asian five (PK, IN, CN, KP, KR) done cycle 7; Western seven (US, TR, IL, EU, UA, RU, CU) done cycle 8 — **all 18 now have region music**; next: real recordings for the stand-in instruments, remaining PD anthems, recorded weapons/ambience.
   **Latmiyas:** keep the synthesized ones until real replacements are ready, then swap; replacements may be military

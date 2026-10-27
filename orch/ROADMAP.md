@@ -25,6 +25,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Fix: stale enemy soldiers left on a player's screen
 
 ## Audio and music overhaul
+- [next] New soundtrack: one shared set of ~10–12 real recorded tracks (calm while building, combat when fighting), picked by you; each nation's anthem at start and on victory
 - [done] Authentic Middle Eastern music: Iran, Mountain Shias, Coffee Shias, Saudi Arabia, UAE, Egypt (real maqam/dastgah, regional rhythms, recorded percussion)
 - [done] Asian music: Pakistan, India, China, North Korea, South Korea (regional instruments and rhythms)
 - [done] Region-specific music for the other 7 nations (US, TR, IL, EU, UA, RU, CU) — all 18 done
@@ -32,7 +33,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [todo] Recorded weapons, explosions, engines and aircraft (near and far, echo per theatre)
 - [todo] Battlefield ambience per map and weather
 - [todo] Full native-language unit voice lines per nation
-- [todo] Real latmiyas found in free archives (synthesized ones stay until then)
+- [todo] Real latmiyas added to the shared soundtrack if freely licensed ones are found
 - [todo] Proper mix: voices duck music, distance fade, even loudness
 
 ## Graphics overhaul

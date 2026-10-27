@@ -55,11 +55,12 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   **DW "Coffee Shias"**. The IM faction was removed on purpose; 18 is the intended count (no 19th planned). Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
 - **Audio:** real, professional military audio; top-quality unit voice acting in each nation's native language,
-  including war slogans like "Labbaik ya Hussein". **Shia factions (IR, RS, DW) use latmiyas as their music** — real recorded latmiyas only: the synthesized
-  latmiyas stay until real replacements are ready, then get swapped out; replacements may also be real military
-  music, e.g. public-domain military band recordings (Abdullah, 2026-10-26);
-  every other nation gets its own country-specific war score — **region-specific** for all 18 (its own scales,
-  rhythms and instruments; Abdullah, 2026-10-26).
+  including war slogans like "Labbaik ya Hussein". **Music = one shared soundtrack of real recorded tracks for all 18
+  nations** (Abdullah, 2026-10-27, replacing the per-nation/region scores and the synthesized latmiyas): ~10–12 free
+  tracks (CC0/CC-BY credited, or public-domain military band) — menu, calm, combat, victory/defeat — switching calm ↔
+  combat with the fighting; Abdullah picks the tracks from a shortlist. Nation identity = its anthem at battle start
+  and on victory. Shia factions (IR, RS, DW) use the shared soundtrack too; real recorded latmiyas may be added later
+  if freely licensed ones are found.
 - Multiplayer: up to 8 players, host's browser runs the battle. Never break multiplayer sync — host and clients
   must agree.
 - Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
