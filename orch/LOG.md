@@ -2,7 +2,7 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
-## 2026-10-27 08:36 → 09:50 — cycle 9
+## 2026-10-27 08:36 → 10:25 — cycle 9
 
 - No lock on main; took it. Baseline: `--check` OK, SMOKE PASS. Stage 2 step 1 still unlanded on the side lane's
   `orch/stage2-headless` (last push 08:20, report has a RESULTS_TABLE placeholder) → didn't duplicate it.
@@ -14,7 +14,8 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
   loader's pako-from-cdnjs fallback (CLAUDE.md: no new outside hosts).
 - Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MAPSWEEP PASS (71 battles), artifact smoke PASS, artifact MPSYNC PASS.
 - Before shipping, merged main's side-lane work (servers switched on, Stage 2 step 1 landed); adapted `headless.mjs`
-  to the refactor; reran the full gate on the merge (see below).
+  to the refactor (`BORROW = {}`, `showEnd` stand-in). Gate on the merge: `--check` OK, SERVERTEST, HEADLESS --compare,
+  smoke 4p, MPSYNC, MPSYNC --server, MIGRATE, MIGRATE --abrupt, artifact smoke + MPSYNC all PASS.
 
 ## 2026-10-27 11:40 — side lane: multiplayer switched onto Abdullah's servers
 
