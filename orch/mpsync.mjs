@@ -30,7 +30,7 @@
 //   node orch/mpsync.mjs --break               # self-test: the client stops receiving at 1 min; must print MPSYNC FAIL
 //   node orch/mpsync.mjs --verbose             # print both pages' network state every 5 s while connecting
 //   node orch/mpsync.mjs --no-lock             # skip the machine-wide browser lock (see browserlock.mjs)
-//   node orch/mpsync.mjs --reconnect           # at 1 min the client's connection is cut both ways for 12 game-s, then
+//   node orch/mpsync.mjs --reconnect           # (default in the plain run; --no-reconnect skips it) at 1 min the client's connection is cut both ways for 12 game-s, then
 //                                              # it must reconnect and keep its army (the AI must not take over after
 //                                              # 30 s); right after, a strict check: own units, what it sees of the
 //                                              # enemy and its credits match the host exactly
@@ -63,7 +63,8 @@ const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ?
 const MINUTES = arg('minutes', 4), AIS = Math.max(0, Math.min(6, arg('ais', 0))), BREAK = process.argv.includes('--break');
 const ART = process.argv.includes('--artifact') ? { html: artifactHtml(), three: threeJs() } : null;
 const SRV_MODE = process.argv.includes('--server') && !ART;
-const PFX = ART ? 'art-' : SRV_MODE ? 'srv-' : '', RECON = process.argv.includes('--reconnect');
+// the reconnect check runs by default in the plain (browser-to-browser) run, so the ship gate always covers it
+const PFX = ART ? 'art-' : SRV_MODE ? 'srv-' : '', RECON = process.argv.includes('--reconnect') || (!ART && !SRV_MODE && !BREAK && !process.argv.includes('--no-reconnect'));
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
