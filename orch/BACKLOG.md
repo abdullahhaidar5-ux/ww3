@@ -36,7 +36,9 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   mix; **synthesized latmiyas to be removed**, replaced only by freely licensed or permitted real recordings. **Keep
   the synth latmiyas until real replacements are ready, then swap** (Abdullah 21:12). Replacements may be **military music** too
   (Abdullah 21:12): US Navy Band national-anthem recordings are public domain (US government work; check each
-  composition) and cover every nation; real latmiyas via friends' recordings or written permission. Religious and
+  composition) and cover every nation; Abdullah can't record latmiyas (21:14) — so: military band music for
+  Shia factions in battle; keep searching free archives (Commons, Internet Archive, Freesound, folk archives) for freely
+  licensed real latmiyas; optionally draft a permission request he can send to a reciter. Religious and
   traditional pieces only — no armed-group anthems. Likely mix: real latmiya for menu/calm, military band for battle. Don't start Phase 1 until he approves.
 
 - _(none open)_ — 2026-10-26 answers: keep right-click as an optional shortcut; stay at 18 factions; the old
