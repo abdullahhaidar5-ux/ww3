@@ -13,12 +13,13 @@ every ship (ORCH.md step 8), right after pushing `main`.
    the artifact runtime: the shim sets `window.claude.use('room')` over PeerJS. On claude.ai the real
    `claude.use('room')` is there, and `07-net.js` was written for it. The game script is byte-for-byte the same.
 2. **Three.js r128 comes from cdnjs** (`https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`), because
-   artifact pages may only load scripts from cdnjs/jsdelivr/unpkg. GLTFLoader, SkeletonUtils and `MODEL_PACK` stay inline.
+   artifact pages may only load scripts from cdnjs/jsdelivr/unpkg. GLTFLoader, SkeletonUtils and the short `MODEL_FILES` list stay inline.
 3. **No `<!doctype>/<html>/<head>/<body>` and no manifest/icon links.** The publisher adds its own wrapper. The page
    starts at `<title>World War 3</title>`.
 
 The build refuses to write the page if any of these swaps can't be made, for example when the shell changed shape or
-Pages-only code would leak through. Audio loads from `vo/XX.mp3` and `mus/smp.mp3`, published next to the page.
+Pages-only code would leak through. Audio loads from `vo/XX.mp3` and `mus/*.mp3`, and the 3D models from `models/<key>.<hash>.glb.gz`, all published
+next to the page at the same paths as on Pages.
 
 ## Steps (ORCH)
 
@@ -35,8 +36,11 @@ Then publish with the Artifact tool:
    session hasn't read is refused.
 2. `action: "publish"`, `url` = that URL, `file_path` = the absolute path of `orch/out/artifact/index.html`. Leave
    out `icon`. `orch/out/artifact/publish.json` contains every argument, ready to copy.
-   - **`files`**: pass these only when something under `vo/` or `mus/` changed, or on the first publish from this
-     pipeline. Files you leave out stay published. Keys are published paths, values are repo-relative source paths
+   - **`files`**: pass these only when something under `vo/`, `mus/` or `models/` changed, or on the first publish
+     from this pipeline (the first publish after 2026-10-27 must pass them: that is when the models moved out of the
+     page into `models/`; without them the artifact shows simple shapes instead of 3D models). Copy the `files` object
+     from `publish.json`, which is always complete: model files go as `{"from": ..., "contentType": "application/gzip"}`.
+     A changed model gets a new file name (its hash), so the old one can be removed by mapping its path to `null`. Files you leave out stay published. Keys are published paths, values are repo-relative source paths
      (run from the repo root):
      ```json
      {"vo/AE.mp3":"vo/AE.mp3","vo/CN.mp3":"vo/CN.mp3","vo/CU.mp3":"vo/CU.mp3","vo/DW.mp3":"vo/DW.mp3",

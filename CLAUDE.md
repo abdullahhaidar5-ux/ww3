@@ -10,8 +10,9 @@ anything.
 | Path | What it is | Edit? |
 |---|---|---|
 | `src/NN-*.js` | **The game.** 12 modules, the single source of truth (see map below) | Yes — only here |
-| `index.html` | Build output: shell + vendored PeerJS/Three.js/GLTF + `MODEL_PACK` + `src/` concatenated | Never by hand |
-| `orch/build.py` | Rebuilds `index.html` from `src/` (`--check` verifies they match) | |
+| `index.html` | Build output: shell + vendored PeerJS/Three.js/GLTF + `MODEL_FILES` list + `src/` concatenated | Never by hand |
+| `models/` | The 3D models, one gzipped `.glb` per model (`<key>.<hash>.glb.gz`), fetched by the game at startup | Via `build.py --add-model` |
+| `orch/build.py` | Rebuilds `index.html` (and the model lists in it and `sw.js`) from `src/` + `models/` (`--check` verifies they match) | |
 | `orch/smoke.mjs` | Headless Chromium test gate: boots the game, runs an AI battle, screenshots | |
 | `orch/BACKLOG.md` | Everything open, by squad, prioritized | ORCH maintains |
 | `orch/HISTORY.md` | Every past agent run and what it shipped | Append only |
@@ -29,9 +30,10 @@ host-migration checkpoints · `08-ui` sidebar, input, menus, main loop · `09-au
 `10-post` post-processing · `11-models` 3D model loading/animation.
 
 **Every change:** edit `src/` → `python3 orch/build.py` (syntax-checks, refuses to write on error) →
-`node orch/smoke.mjs` must print `SMOKE PASS` → commit `src/` **and** `index.html` together.
-Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the vendored libraries or the
-`MODEL_PACK` line in `index.html`.
+`node orch/smoke.mjs` must print `SMOKE PASS` → commit `src/` **and** `index.html` (and `sw.js` + `models/` if they
+changed) together. Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the vendored libraries
+or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace a model with
+`python3 orch/build.py --add-model KEY file.glb`, never by renaming files in `models/` (the name carries its hash).
 
 ## Abdullah's standing decisions (do not reverse without him asking)
 
