@@ -366,10 +366,15 @@ async function main() {
 let shotsTaken = false;
 async function screenshots() {
   shotsTaken = true;
+  // the test (not the game) freezes the host while it draws and photographs both pages; a real host never stops
+  // sending. Keep the client's 'host lost' watchdog (5 s without word -> reconnect) from mistaking that freeze for a
+  // dropped connection, then let it count normally again.
+  await client.evaluate(() => { NET.lastRx = performance.now() + 120000; });
   for (const [p, n] of [[host, 'mp-host.png'], [client, 'mp-client.png']]) {
     await p.evaluate(() => { try { updateUI(); renderFrame(0.016); } catch (e) { console.warn(e); } });
     await shot(p, n);
   }
+  await client.evaluate(() => { NET.lastRx = performance.now(); });
   // a slow frame can block the pages for a while: let the client's keep-alive presence reach the host before the next
   // netTick, so the host's disconnect detector (8 s without word) does not mistake the pause for a dropped player
   await host.waitForTimeout(1500);
