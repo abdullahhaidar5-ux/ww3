@@ -366,23 +366,30 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .steps{margin:0;padding-left:20px;font-size:12px;color:var(--fg);display:flex;flex-direction:column;gap:3px}.steps li::marker{color:var(--accent);font-family:var(--mono)}
 @media(max-width:520px){.seat{grid-template-columns:18px minmax(0,1fr) auto 84px;gap:6px}.seat .sfac .fname{display:none}.lobcode{font-size:24px}}
 #fpsHud{position:absolute;left:max(8px,env(safe-area-inset-left,0px));bottom:30px;z-index:6;font:600 12px var(--mono);color:var(--ok);background:rgba(0,0,0,.45);padding:2px 6px;pointer-events:none}
-/* phones held upright (and other narrow windows): a strip (hide/show handle, money, tabs, pause, menu) over minimap +
-   strike on the left and selection, squads and the command grid on the right; the handle folds the bar down to the strip */
+/* phones held upright (and other narrow windows): a strip on top (fold handle, money, tabs, pause, menu), then the
+   tactical map beside the selection and squad chips, then the command grid across the full width (scrolls sideways).
+   The strike button floats over the battlefield just above the bar once there is a Strike Center, like the Generals
+   special-power shortcuts; the handle folds the bar down to its strip */
 @media (max-width:560px),(max-width:760px) and (min-height:521px){
-  #side{--rows:2;--bw:104px;height:clamp(196px,34vh,280px);grid-template-columns:40px 72px auto minmax(0,1fr) 40px 40px;grid-template-rows:40px 36px 40px minmax(0,1fr);
-    grid-template-areas:"grip cred mmb tabs pz mn" "mm mm mm info info info" "mm mm mm sq sq sq" "sw sw sw pan pan pan";gap:5px 0;
+  #side{--rows:2;--bw:104px;height:clamp(200px,34vh,280px);grid-template-columns:40px 72px 0 minmax(0,1fr) 40px 40px;grid-template-rows:40px minmax(0,1fr) 40px 83px;
+    grid-template-areas:"grip cred mmb tabs pz mn" "mm mm mm info info info" "mm mm mm sq sq sq" "pan pan pan pan pan pan";gap:5px 0;
     padding:6px max(6px,env(safe-area-inset-right,0px)) max(6px,env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
-  #side .ccard,#side .ccardhd,#side .stat,#side .hdr{display:contents}
-  #barGrip{grid-area:grip}#credits{grid-area:cred}#mmBtn{grid-area:mmb}#side .tabs{grid-area:tabs;margin:0 5px}#aPause{grid-area:pz}#aMenu{grid-area:mn;margin-left:4px}
-  #sideTop{grid-area:mm;align-items:flex-start;padding-right:6px}#side .sw{grid-area:sw;padding-right:6px}#info{grid-area:info;padding-left:6px}#side .sqbar{grid-area:sq;padding-left:6px;justify-content:flex-start}#panel.grid{grid-area:pan;margin-left:6px}
-  #mm{width:100%;height:auto}
+  #side .ccard,#side .cardhd,#side .stat,#side .hdr{display:contents}
+  #barGrip{grid-area:grip}#credits{grid-area:cred}#mmBtn{grid-area:mmb}#side .tabs{grid-area:tabs;margin:0 4px;min-width:0}#aPause{grid-area:pz}#aMenu{grid-area:mn;margin-left:4px}
+  #side .tabs .tl{display:none}#side .tabs .ts{display:inline}#side .tabs button{font-size:12.5px;letter-spacing:.03em}
+  #sideTop{grid-area:mm;display:block;min-width:0;min-height:0;overflow:hidden}
+  #mm{width:100%;height:100%;max-width:none;aspect-ratio:auto;box-sizing:border-box}
+  #info{grid-area:info;min-height:0;padding:0 0 0 6px;border-top:0;overflow-y:auto;font-size:11px;line-height:1.25}
+  #info b{font-size:13px}#info .tip{display:none}#info .morale{margin-top:1px}
+  #side .sqbar{grid-area:sq;padding-left:6px;justify-content:flex-start}
+  #panel.grid{grid-area:pan;grid-template-rows:repeat(2,40px)}
   #facname{display:none}
-  #credits{align-self:center;text-align:center;font:600 16px var(--display);letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis}
-  #side .sw{display:flex;flex-direction:column;justify-content:flex-end;gap:3px}
-  #side .sw .lbl{font-size:12px;flex-wrap:wrap;gap:0 6px}
-  #supbtn{min-height:40px;width:100%}
-  #info{border-top:0;padding-top:0;overflow-y:auto;font-size:11px}
-  #info b{font-size:13px}
+  #credits{align-self:center;text-align:center;font:600 16px var(--display);letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #side .sw{display:none}
+  #side.hasUp .sw{display:grid;position:fixed;z-index:7;left:max(6px,env(safe-area-inset-left,0px));bottom:calc(var(--barh,220px) + 6px);width:min(200px,calc(50vw - 12px));box-sizing:border-box;padding:4px 6px;background:rgba(18,24,21,.94);border:1px solid #3d4d44;box-shadow:0 2px 10px rgba(0,0,0,.55)}
+  #app:has(#info .cmdrow) #side.hasUp .sw{bottom:calc(var(--barh,220px) + 54px)}
+  #side .sw .lbl{font-size:12px;flex-direction:column;align-items:flex-start;gap:0}
+  #supbtn{min-height:40px;padding:0 10px}
 }
 /* phones held sideways (short windows): one short bar, the command grid scrolls sideways */
 @media (max-height:520px) and (min-width:561px){
@@ -438,6 +445,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 @media (max-width:560px),(max-width:760px) and (min-height:521px){
   #side.min{grid-template-columns:40px 58px 40px minmax(0,1fr) 40px 40px;padding-top:5px}
   #side.min #mmBtn{margin-left:2px}
+  #side.min.hasUp .sw{display:grid}
 }
 @media (max-height:520px) and (min-width:561px){
   #side.min{grid-template-columns:minmax(0,1fr) clamp(196px,28vw,250px)}
@@ -7791,7 +7799,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   const pts=T.rank-T.spent;for(const k in POWERS){const P=powInfo(k,T.fac),w=T.pw[k];const lv=w?(w.lv||1):0;setBtn('p_'+k,{dis:w?(P.passive||w.cd>0):pts<1,done:!!w,on:G.aim===k,cost:w?('Lv '+lv+' · '+(P.passive?'Active':w.cd>0?`Ready in ${Math.ceil(w.cd)}s`:(P.self?'Ready · click to use':'Ready · click, then pick a spot'))):`Unlock · 1 point`});
     {const b=$('pu_'+k);if(b){const c=lv>=1&&lv<3?lv+1:0;b.style.display=c?'':'none';if(c)setBtn('pu_'+k,{dis:pts<c,cost:`To level ${lv+1} · ${c} points`});}}}
   const dot=$('pdot');const tb=document.querySelector('.tabs button[data-tab="pow"]');if(tb){let d=tb.querySelector('.dot');if(pts>0&&!d){d=document.createElement('span');d.className='dot';tb.append(d);}else if(pts<=0&&d)d.remove();}
-  const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('supbar').style.width=(up?f*100:0)+'%';
+  const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('side').classList.toggle('hasUp',!!up);$('supbar').style.width=(up?f*100:0)+'%';
   $('supt').textContent=!up?'needs Strike Center':f>=1?'READY':`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;$('supbtn').disabled=!(up&&f>=1);
   const nx=RANKS[T.rank]||null,pr=RANKS[T.rank-1];$('rankname').textContent=`General rank ${T.rank}`+(pts>0?` · ${pts} point${pts>1?'s':''} to spend`:'');$('rankbar').style.width=(nx?Math.min(1,(T.gxp-pr)/(nx-pr))*100:100)+'%';$('rankt').textContent=nx?`${T.gxp}/${nx} XP`:'Max rank';
   const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+' · Esc cancels');}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
