@@ -153,7 +153,46 @@ including the garbage collector's threads, per **game-second**. The sim steps at
 tick, so this is an upper bound for that part. The machine was shared with other agents' browser tests during the
 runs, so expect ±20% noise.
 
-BENCH_TABLE
+| Battle (map, seed) | early 0–3 min | mid 8–11 min | late 18–21 min | busiest minute | peak entities | JS heap (whole process) |
+|---|---|---|---|---|---|---|
+| 2 players, Desert Strait, 1 | 34 ms (45 ent.) | 55 ms (83) | ended 8.8 min | 55 ms | 83 | 11 MB |
+| 2 players, Desert Strait, 2 | 26 ms (54) | ended 8.0 min | – | 62 ms | 65 | 11 MB |
+| 2 players, Fulda Gap, 1 | 35 ms (47) | 57 ms (65) | ended 9.3 min | 61 ms | 83 | 11 MB |
+| 2 players, Fulda Gap, 2 | 26 ms (42) | 44 ms (57) | ended 10.2 min | 44 ms | 65 | 12 MB |
+| 4 players, Desert Strait, 1 | 56 ms (93) | 88 ms (111) | ended 15.7 min | 151 ms | 153 | 12 MB |
+| 4 players, Desert Strait, 2 | 32 ms (70) | 81 ms (98) | ended 16.3 min | 102 ms | 129 | 11 MB |
+| 4 players, Fulda Gap, 1 | 37 ms (80) | 111 ms (123) | ended 10.4 min | 129 ms | 150 | 13 MB |
+| 4 players, Fulda Gap, 2 | 28 ms (75) | 62 ms (77) | ended 9.1 min | 65 ms | 87 | 13 MB |
+| 8 players, Desert Strait, 1 | 76 ms (161) | 282 ms (251) | 152 ms (126) | 300 ms | 266 | 13 MB |
+| 8 players, Desert Strait, 2 | 79 ms (155) | 230 ms (228) | ended 16.2 min | 294 ms | 247 | 13 MB |
+| 8 players, Fulda Gap, 1 | 83 ms (176) | 230 ms (224) | ended 17.5 min | 271 ms | 266 | 13 MB |
+| 8 players, Fulda Gap, 2 | 92 ms (186) | 295 ms (259) | ended 17.7 min | **356 ms** | 317 | 13 MB |
+| 8 players, Desert Strait, 1, Easy AI | 94 ms (131) | 245 ms (244) | ended 16.9 min | 263 ms | 256 | 12 MB |
+| 8 players, Desert Strait, 2, Easy AI | 75 ms (129) | 188 ms (219) | ended 16.1 min | 241 ms | 245 | 11 MB |
+
+Other figures from the same runs:
+
+- A bare Node process running the script used 6.4 MB of JS heap before any battle.
+- Battle setup (`newGame`: map generation and terrain plan) took 1.2–4.6 s of wall-clock time on the busy machine,
+  about 2–2.5 s for 8 players.
+- A CPU profile of a 4-player battle splits the time like this:
+  - unit updates (movement, targeting, morale) ~42%, of which route following (`navTo`) is ~16%
+  - `simUpdate`'s own loops (auras, healing, cleanup) ~21%
+  - unit separation (`separate`) ~15%
+  - garbage collection ~6%
+  - vision ~3%
+  - AI thinking ~2%
+  - route searches (`findPath`) only ~1%
+- Speed check: the same 8-player Fulda battle cost Node ~130 ms of CPU per game-second over its first 3 minutes.
+  Chromium 153 took 66–119 ms of wall-clock time for the same minutes. The newer V8 is somewhat faster, but they are
+  in the same range. Wrapping the sim in one function (as the runner does) costs nothing measurable compared with
+  loading it as a classic global script (130 vs 135 ms).
+- **Scaling is worse than linear in entities.** About 0.6 ms per entity per game-second at ~80 entities, ~1.1 ms at
+  ~250.
+
+Extrapolating to "massive columns" (1,000+ entities) is uncertain. It would likely need 1.5–3 s of CPU per
+game-second, beyond one core at real time. Bigger battles need sim optimisation (separation, unit updates)
+whichever machine runs them.
 
 How to read it:
 
