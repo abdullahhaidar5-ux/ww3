@@ -23,7 +23,7 @@ function initPost(){try{
         vec2 q=vUv-.5;c*=1.-dot(q,q)*.75;
         c+=(h(vUv*res+t*61.)-.5)*.022;
         gl_FragColor=vec4(clamp(c,0.,1.),1.);}`});
-  POST.mAO=new THREE.ShaderMaterial({uniforms:{dep:{value:null},near:{value:10},far:{value:9000},tanF:{value:new THREE.Vector2(1,1)},res:{value:new THREE.Vector2(1,1)},rad:{value:22},pm:{value:1},cw:{value:new THREE.Matrix4()},tt:{value:0},fogT:{value:null},mapS:{value:new THREE.Vector2(1,1)},cloudK:{value:1}},vertexShader:FSV,depthTest:false,depthWrite:false,extensions:{derivatives:true},
+  POST.mAO=new THREE.ShaderMaterial({uniforms:{dep:{value:null},near:{value:10},far:{value:9000},tanF:{value:new THREE.Vector2(1,1)},res:{value:new THREE.Vector2(1,1)},rad:{value:22},pm:{value:1},cw:{value:new THREE.Matrix4()},tt:{value:0},fogT:{value:null},mapS:{value:new THREE.Vector2(1,1)},cloudK:{value:1}},vertexShader:FSV,depthTest:false,depthWrite:false,
     fragmentShader:`uniform sampler2D dep;uniform float near,far,rad,pm,tt,cloudK;uniform mat4 cw;uniform vec2 tanF,res,mapS;uniform sampler2D fogT;varying vec2 vUv;
       float h2(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h2(i),h2(i+vec2(1,0)),f.x),mix(h2(i+vec2(0,1)),h2(i+vec2(1,1)),f.x),f.y);}
       float vz(vec2 uv){float d=texture2D(dep,uv).x;return (near*far)/((far-near)*d-far);}
@@ -44,7 +44,8 @@ function sizePost(){const w=Math.max(2,Math.round(VW*dpr)),h=Math.max(2,Math.rou
   for(const k of ['rt','bA','bB','bC','bD','dRT','aA','aB'])if(POST[k])POST[k].dispose();
   const opt={type:THREE.HalfFloatType,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:true};
   // edge smoothing: 4 samples; phones on Auto/Medium/Low use 2 below the top detail level and none from level 3 down
-  const wgl2=true,ms=POST.phone?(QUAL.lv<1?4:QUAL.lv<3?2:0):4;POST.rt=new THREE.WebGLRenderTarget(w,h,Object.assign({samples:wgl2&&ms?ms:0},opt));
+  // r138+: any render target takes `samples` (WebGLMultisampleRenderTarget is gone); r163+ is WebGL2-only (no isWebGL2 flag)
+  const wgl2=R3.capabilities.isWebGL2!==false,ms=POST.phone?(QUAL.lv<1?4:QUAL.lv<3?2:0):4;POST.rt=new THREE.WebGLRenderTarget(w,h,wgl2&&ms?Object.assign({samples:ms},opt):opt);
   const s={type:THREE.HalfFloatType,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false};
   POST.dRT=new THREE.WebGLRenderTarget(w>>1,h>>1,{minFilter:THREE.NearestFilter,magFilter:THREE.NearestFilter,depthBuffer:true});POST.dRT.depthTexture=new THREE.DepthTexture(w>>1,h>>1);POST.dRT.depthTexture.type=THREE.UnsignedIntType;
   const s2={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false};POST.aA=new THREE.WebGLRenderTarget(w>>1,h>>1,s2);POST.aB=new THREE.WebGLRenderTarget(w>>1,h>>1,s2);

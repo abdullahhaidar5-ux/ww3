@@ -6910,6 +6910,8 @@ function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){W
 const PMAX=3500;const SHOCKS=[],FIRES=[];let shockI=0;
 let PN_=null,PA_=null,TRC=null,SCORCH=null,TRACKS=null,CRATER=null,crI=0,LIGHTS=[],WLIGHTS=[];
 const BMIS=[],DEBRIS=[];
+// only the live part of a dynamic buffer is uploaded each frame (r159+: addUpdateRange replaces updateRange)
+function fxUpd(A,count){if(A.clearUpdateRanges){A.clearUpdateRanges();A.addUpdateRange(0,count);}else{A.updateRange.offset=0;A.updateRange.count=count;}A.needsUpdate=true;}
 // chunks of a destroyed structure thrown out by the blast, tumbling and bouncing until they settle
 let CHUNKG=null;function chunks(x,y,size,col,n){if(!inView(x,y,.3))return;if(!CHUNKG)CHUNKG=new THREE.BoxGeometry(1,1,1);const g0=groundH(x,y);for(let i=0;i<n&&DEBRIS.length<90;i++){const s=rnd(.08,.2)*size,mm=new THREE.MeshStandardMaterial({color:new THREE.Color(col).multiplyScalar(rnd(.7,1.05)),roughness:.95});const m=new THREE.Mesh(CHUNKG,mm);m.scale.set(s,s*rnd(.4,.9),s*rnd(.6,1.2));m.castShadow=true;const a=Math.random()*6.28,r=Math.random()*size*.3;m.position.set(x+Math.cos(a)*r,g0+rnd(4,size*.5),y+Math.sin(a)*r);SCN.add(m);const sp=rnd(30,90);DEBRIS.push({m,vx:Math.cos(a)*sp,vz:Math.sin(a)*sp,vh:rnd(50,130),wx:rnd(-6,6),wy:rnd(-6,6),wz:rnd(-6,6),t:0,rest:0,chunk:1});}}
 function debrisTick(dt){if(!DEBRIS.length)return;let w=0;for(const d of DEBRIS){d.t+=dt;const m=d.m;if(!d.rest){d.vh-=220*dt;m.position.x+=d.vx*dt;m.position.z+=d.vz*dt;m.position.y+=d.vh*dt;m.rotation.x+=d.wx*dt;m.rotation.y+=d.wy*dt;m.rotation.z+=d.wz*dt;
@@ -7066,10 +7068,10 @@ function fxUpdate(dt){
   for(let i=PARTS.length-1;i>=0;i--)if(PARTS[i].t>=PARTS[i].d){PARTS[i]=PARTS[PARTS.length-1];PARTS.pop();}
   let nN=0,nA=0;for(const p of PARTS){const P=p.add?PA_:PN_;let i=p.add?nA++:nN++;if(i>=PMAX)continue;const k=p.t/p.d;
     P.pos[i*3]=p.x;P.pos[i*3+1]=p.h;P.pos[i*3+2]=p.y;if(p.c2){const m=Math.min(1,k/(p.ck||.3));P.col[i*3]=p.c[0]+(p.c2[0]-p.c[0])*m;P.col[i*3+1]=p.c[1]+(p.c2[1]-p.c[1])*m;P.col[i*3+2]=p.c[2]+(p.c2[2]-p.c[2])*m;}else{P.col[i*3]=p.c[0];P.col[i*3+1]=p.c[1];P.col[i*3+2]=p.c[2];}P.sz[i]=p.s*2;P.al[i]=p.add?p.a*(1-k)*(1-k):p.a*(1-k)*Math.min(1,k*5+.3);}
-  for(const [P,n] of [[PN_,nN],[PA_,nA]]){const m=Math.min(n,PMAX);P.g.setDrawRange(0,m);if(m||P.lastN)for(const k of ['position','pcol','size','alpha']){const A=P.g.attributes[k];A.clearUpdateRanges();A.addUpdateRange(0,Math.max(m,1)*A.itemSize);A.needsUpdate=true;}P.lastN=m;   /* only the live part of the buffers is uploaded (it was all 3,500 slots per layer every frame) */P.m.uniforms.scale.value=VH*dpr/(2*Math.tan(CAM.fov*Math.PI/360));}
+  for(const [P,n] of [[PN_,nN],[PA_,nA]]){const m=Math.min(n,PMAX);P.g.setDrawRange(0,m);if(m||P.lastN)for(const k of ['position','pcol','size','alpha']){const A=P.g.attributes[k];fxUpd(A,Math.max(m,1)*A.itemSize);}P.lastN=m;   /* only the live part of the buffers is uploaded (it was all 3,500 slots per layer every frame) */P.m.uniforms.scale.value=VH*dpr/(2*Math.tan(CAM.fov*Math.PI/360));}
   for(const t of TRACERS){t.t+=dt;const k=Math.min(1,t.t/t.d*1.25);for(let q=0;q<3;q++){const u=Math.max(0,k-q*.05);part({x:t.a[0]+(t.b[0]-t.a[0])*u,h:t.a[1]+(t.b[1]-t.a[1])*u,y:t.a[2]+(t.b[2]-t.a[2])*u,s:3.4-q*.7,d:.05,add:true,c:[t.c[0]*.9,t.c[1]*.8,t.c[2]*.7],a:.9-q*.2});}}for(let i=TRACERS.length-1;i>=0;i--)if(TRACERS[i].t>=TRACERS[i].d)TRACERS.splice(i,1);
   const tp=TRC.geometry.attributes.position.array,tc=TRC.geometry.attributes.color.array;let n=0;for(const t of TRACERS){if(n>=800)break;const L=Math.hypot(t.b[0]-t.a[0],t.b[1]-t.a[1],t.b[2]-t.a[2])||1,u=Math.min(1,t.t/t.d*1.25),u0=Math.max(0,u-Math.min(.14,20/L));for(let j=0;j<3;j++){tp[n*6+j]=t.a[j]+(t.b[j]-t.a[j])*u0;tp[n*6+3+j]=t.a[j]+(t.b[j]-t.a[j])*u;}for(let j=0;j<3;j++){tc[n*6+j]=t.c[j]*.1;tc[n*6+3+j]=t.c[j]*(j?.72:.95);}n++;}
-  TRC.geometry.setDrawRange(0,n*2);if(n||TRC.lastN)for(const k of ['position','color']){const A=TRC.geometry.attributes[k];A.clearUpdateRanges();A.addUpdateRange(0,Math.max(n,1)*6);A.needsUpdate=true;}TRC.lastN=n;
+  TRC.geometry.setDrawRange(0,n*2);if(n||TRC.lastN)for(const k of ['position','color']){const A=TRC.geometry.attributes[k];fxUpd(A,Math.max(n,1)*6);}TRC.lastN=n;
   bmTick(dt);debrisTick(dt);
   for(const p of VPROJ){const ox=p.x,oy=p.y,oh=p.h;p.p+=p.spd*dt;const k=Math.min(1,p.p/p.len);p.x=p.sx+(p.tx-p.sx)*k;p.y=p.sy+(p.ty-p.sy)*k;const arc=p.wpn==='shell'?Math.sin(k*Math.PI)*p.len*.22:0;p.h=p.sh+(p.th-p.sh)*k+arc;
     if(p.p<0){p.x=p.sx;p.y=p.sy;p.h=p.sh;continue;}
@@ -9989,7 +9991,7 @@ function initPost(){try{
         vec2 q=vUv-.5;c*=1.-dot(q,q)*.75;
         c+=(h(vUv*res+t*61.)-.5)*.022;
         gl_FragColor=vec4(clamp(c,0.,1.),1.);}`});
-  POST.mAO=new THREE.ShaderMaterial({uniforms:{dep:{value:null},near:{value:10},far:{value:9000},tanF:{value:new THREE.Vector2(1,1)},res:{value:new THREE.Vector2(1,1)},rad:{value:22},pm:{value:1},cw:{value:new THREE.Matrix4()},tt:{value:0},fogT:{value:null},mapS:{value:new THREE.Vector2(1,1)},cloudK:{value:1}},vertexShader:FSV,depthTest:false,depthWrite:false,extensions:{derivatives:true},
+  POST.mAO=new THREE.ShaderMaterial({uniforms:{dep:{value:null},near:{value:10},far:{value:9000},tanF:{value:new THREE.Vector2(1,1)},res:{value:new THREE.Vector2(1,1)},rad:{value:22},pm:{value:1},cw:{value:new THREE.Matrix4()},tt:{value:0},fogT:{value:null},mapS:{value:new THREE.Vector2(1,1)},cloudK:{value:1}},vertexShader:FSV,depthTest:false,depthWrite:false,
     fragmentShader:`uniform sampler2D dep;uniform float near,far,rad,pm,tt,cloudK;uniform mat4 cw;uniform vec2 tanF,res,mapS;uniform sampler2D fogT;varying vec2 vUv;
       float h2(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float vn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h2(i),h2(i+vec2(1,0)),f.x),mix(h2(i+vec2(0,1)),h2(i+vec2(1,1)),f.x),f.y);}
       float vz(vec2 uv){float d=texture2D(dep,uv).x;return (near*far)/((far-near)*d-far);}
@@ -10010,7 +10012,8 @@ function sizePost(){const w=Math.max(2,Math.round(VW*dpr)),h=Math.max(2,Math.rou
   for(const k of ['rt','bA','bB','bC','bD','dRT','aA','aB'])if(POST[k])POST[k].dispose();
   const opt={type:THREE.HalfFloatType,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:true};
   // edge smoothing: 4 samples; phones on Auto/Medium/Low use 2 below the top detail level and none from level 3 down
-  const wgl2=true,ms=POST.phone?(QUAL.lv<1?4:QUAL.lv<3?2:0):4;POST.rt=new THREE.WebGLRenderTarget(w,h,Object.assign({samples:wgl2&&ms?ms:0},opt));
+  // r138+: any render target takes `samples` (WebGLMultisampleRenderTarget is gone); r163+ is WebGL2-only (no isWebGL2 flag)
+  const wgl2=R3.capabilities.isWebGL2!==false,ms=POST.phone?(QUAL.lv<1?4:QUAL.lv<3?2:0):4;POST.rt=new THREE.WebGLRenderTarget(w,h,wgl2&&ms?Object.assign({samples:ms},opt):opt);
   const s={type:THREE.HalfFloatType,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false};
   POST.dRT=new THREE.WebGLRenderTarget(w>>1,h>>1,{minFilter:THREE.NearestFilter,magFilter:THREE.NearestFilter,depthBuffer:true});POST.dRT.depthTexture=new THREE.DepthTexture(w>>1,h>>1);POST.dRT.depthTexture.type=THREE.UnsignedIntType;
   const s2={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false};POST.aA=new THREE.WebGLRenderTarget(w>>1,h>>1,s2);POST.aB=new THREE.WebGLRenderTarget(w>>1,h>>1,s2);
