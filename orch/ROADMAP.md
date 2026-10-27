@@ -14,8 +14,8 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] iPhone sound works, even on silent, with a Sound check in Settings
 - [done] Faster battle start on phones + loading screen with each nation's quotes
 - [done] Generals-style bottom command bar replacing the side menu
-- [paused] Generals mouse controls + Mouse settings (work saved on a branch)
-- [paused] More intuitive phone controls (one-finger scroll, command bar for touch)
+- [next] Generals mouse controls + Mouse settings (after server battles)
+- [next] More intuitive phone controls (one-finger scroll, command bar for touch; after server battles)
 
 ## Multiplayer in the cloud
 - [done] Game live on Cloudflare (ww3.abdullah-haidar5.workers.dev), updated automatically

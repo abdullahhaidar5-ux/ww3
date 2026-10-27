@@ -8,6 +8,18 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+**ORDER OF WORK (Abdullah, 2026-10-27 17:58): "Do the battles on servers first. Then address the open items. Then fix
+the music and move onto the graphics overhaul."** ORCH follows this order across cycles; don't start a later stage while
+an earlier one still has work a squad can take (other squads may only do small P1 fixes that don't compete):
+1. **Server-hosted battles** (TOP PRIORITY item below): PC dedicated server, "Host on Cloudflare", lobby choice.
+2. **Open items:** client reconnect state wrong (Multiplayer P1); phone-portrait bar clipping (UI); then the two
+   items Abdullah had paused — **Generals mouse controls + Mouse settings** (branch `orch/wip-generals-mouse`) and
+   **intuitive phone controls** — now unpaused by this instruction (side lane read "open items" to include them; he
+   can say otherwise).
+3. **Music:** the shared real soundtrack (step 2+), using the keeps on the listening page (14 keeps pre-filled by ORCH
+   at 22:50 UTC as suggestions — Abdullah may still change them; read the page's `picks` when starting).
+4. **Graphics overhaul** (Phase 1 engine upgrade onward).
+
 - [open] **TOP PRIORITY — Server-hosted battles (Stage 2)** (Abdullah, 2026-10-27 07:07: "yes" to making it ORCH's
   top priority, ahead of Graphics Phase 1). Battles run on a server instead of the host's browser: no host advantage,
   phones never host big battles, host leaving doesn't disturb the match, bigger battles. Plan (agreed 2026-10-26 19:09):
@@ -145,12 +157,12 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 **UI/UX & controls** (`08-ui`, `06-view`)
 - [open] Phone portrait bottom bar: the 4th build column (Defense Gun, SAM Site…) is cut off at the right edge and
   the hint text under the tabs is clipped mid-line — make the grid fit or scroll visibly (side lane, 2026-10-27).
-- [open] **PAUSED by Abdullah 2026-10-26 19:35 (not started; ORCH: don't take until he says) — intuitive phone controls.** Abdullah: "make the mobile
+- [open] **UNPAUSED 2026-10-27 17:58 (order step 2, after server battles) — intuitive phone controls.** Abdullah: "make the mobile
   controls more intuitive". One-finger drag scrolls (Maps-app style), long-press+drag box-selects, tap selects/orders
   with order markers, long-press+drag with units = infantry line, touch command bar (attack-move, guard, stop, line,
   same type, all army, deselect), collapsible panel, better landscape, first-time guide. Starts after the Generals
   mouse work lands; ORCH: don't take it.
-- [open] **PAUSED by Abdullah 2026-10-26 19:35 (work saved on branch `orch/wip-generals-mouse`, unbuilt/untested; ORCH: don't take until he says) — Generals mouse controls + per-function Mouse settings.** Re-confirmed by Abdullah 2026-10-26 18:55 over
+- [open] **UNPAUSED 2026-10-27 17:58 (order step 2, after server battles; work saved on branch `orch/wip-generals-mouse`, unbuilt/untested) — Generals mouse controls + per-function Mouse settings.** Re-confirmed by Abdullah 2026-10-26 18:55 over
   the 17:55 "freeze" note (see CLAUDE.md). Being built and shipped by the side lane; ORCH: don't take this item and
   don't edit `08-ui`/`06-view` input code until it lands.
 - [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers.
