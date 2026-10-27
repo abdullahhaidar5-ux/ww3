@@ -43,15 +43,17 @@
 //                                              # time (~4 min). With --reconnect the client's server connection is
 //                                              # really cut at 1 min. Writes relay traffic to orch/out/srv-traffic*.json
 // Prints MPSYNC PASS / MPSYNC FAIL: reason (exit 0 / 1). Screenshots: orch/out/mp-host.png, orch/out/mp-client.png
+// (latest run; each run also keeps its own in orch/out/runs/<timestamp>-mpsync*/, see runs.mjs)
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
-import { artifactHtml, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
-import { startServer } from './serverdev.mjs';
+import { artifactHtml, artifactHandler, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
+import { startServer, guardContext, DEAD_SERVER } from './serverdev.mjs';
 import zlib from 'node:zlib';
+import { newRun } from './runs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
@@ -89,10 +91,9 @@ if (SRV) console.log(`game servers running locally at ${SRV.url}`);
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json',
   '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg',
   '.glb': 'model/gltf-binary', '.wasm': 'application/wasm' };
-const server = http.createServer((req, res) => {
+const server = http.createServer(ART ? artifactHandler(ART.html) : (req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
-  if (ART && p === '/index.html') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(ART.html); }
   const f = path.join(ROOT, p);
   if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' });
@@ -170,7 +171,7 @@ const fail = m => { fails.push(m); };
 // a crashed page leaves playwright calls hanging: abort the whole run instead
 let crashed = () => {}; const crash = new Promise((_, rej) => { crashed = () => rej(new Error('a page crashed')); }); crash.catch(() => {});
 async function shot(page, name) {
-  try { await page.screenshot({ path: path.join(OUT, PFX + name), timeout: 240000 }); }
+  try { await RUN.save(page, PFX + name, { timeout: 240000 }); }
   catch (e) { warns.push(`screenshot ${name} skipped: ${String(e.message || e).split('\n')[0]}`); }
 }
 const { chromium } = await loadPlaywright();
@@ -179,6 +180,8 @@ const browser = await chromium.launch({ executablePath: findChromium(),
     // both pages in one renderer process: saves a few hundred MB (the test drives them one after the other anyway)
     '--renderer-process-limit=1'] });
 const ctx = await browser.newContext({ viewport: { width: 1024, height: 576 } });
+// never the live game servers: --server uses the local one, otherwise the page sees its servers as down
+await guardContext(ctx, SRV ? SRV.url : DEAD_SERVER);
 if (ART) await ctx.addInitScript(roomStub, { topics: roomTopics() }); else if (SRV) await ctx.addInitScript(blockedPeerShim, SRV.url); else await ctx.addInitScript(fakePeerShim);
 await ctx.route('**/*', r => r.request().url().startsWith(ORIGIN) || SRV && r.request().url().startsWith(SRV.url) ? r.continue()
   : ART && r.request().url() === THREE_CDN ? r.fulfill({ status: 200, contentType: 'text/javascript', body: ART.three }) : r.abort());
@@ -199,6 +202,7 @@ async function openPage(tag) {
 const waitFor = (page, fn, arg, ms, what) => page.waitForFunction(fn, arg, { timeout: ms, polling: 250 }).catch(() => { throw new Error('timed out waiting for ' + what); });
 
 fs.mkdirSync(OUT, { recursive: true });
+const RUN = newRun(ART ? 'mpsync-art' : SRV ? 'mpsync-srv' : 'mpsync');
 const t0 = Date.now();
 const secs = () => ((Date.now() - t0) / 1000).toFixed(0) + 's';
 let host, client;
@@ -259,6 +263,11 @@ async function main() {
   for (const [p, who] of [[host, 'host'], [client, 'client']])
     await waitFor(p, () => typeof G !== 'undefined' && G && G.terrain && !window.LOADING, null, 600000, `the ${who} to finish its loading screen`);
   console.log(`[${secs()}] both pages finished loading`);
+  // every model this battle's nations need must have arrived on both pages (the artifact edition publishes them differently)
+  for (const [tag, p] of [['host', host], ['client', client]]) {
+    const m = await p.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.map(T => T.fac)) : Object.keys(MODEL_FILES);
+      return { of: ks.length, miss: ks.filter(k => !MODELS.proto[k]), err: MODELS.err || '' }; });
+    if (m.miss.length) fail(`${ART ? 'artifact ' : ''}${tag}: ${m.miss.length} of ${m.of} 3D models for this battle missing (${m.miss.slice(0, 5).join(', ')}) ${m.err}`); }
   if (cInfo.me !== 1) fail('client got slot ' + cInfo.me + ', expected 1');
   if (SRV) { cap.rx.length = 0; cap.tx.length = 0; cap.g0 = await host.evaluate(() => G.t); cap.w0 = Date.now(); }
 
@@ -482,5 +491,5 @@ if (uniq.length) {
   for (const f of uniq.slice(1, 20)) console.log('  ✗ ' + f);
   process.exit(1);
 }
-console.log(`\nMPSYNC PASS${ART ? ' (artifact edition)' : SRV ? ' (through the game servers)' : ''} (${secs()}) — screenshots orch/out/${PFX}mp-host.png, orch/out/${PFX}mp-client.png`);
+console.log(`\nMPSYNC PASS${ART ? ' (artifact edition)' : SRV ? ' (through the game servers)' : ''} (${secs()}) — screenshots orch/out/${PFX}mp-host.png, orch/out/${PFX}mp-client.png (this run: ${RUN.rel}/)`);
 process.exit(0);

@@ -124,12 +124,11 @@ const FXH={
   gone(id,x,y,ki){const k=KINDS[ki];if(k&&STRUCT[k])try{rubble(x,y,STRUCT[k].size);}catch(_){}},
   txt(x,y,str,team,vic){if(!SET.txt||team!==ME&&vic!==ME&&vic!==-2)return;FLOATS.push({x,y,s:str,t0:performance.now(),c:vic===-2?(ally(team,ME)?(str==='RALLIED'?'#74d08f':'#ea5a40'):'#f2c94c'):team===ME?'#f2c94c':'#ea5a40'});if(FLOATS.length>14)FLOATS.shift();},
 };
-// own: optional team that caused the effect (a general's power): its side always gets it, even into the fog. Kept as a
-// property of the event array, so JSON drops it and it costs nothing on the wire.
 // An effect must never throw into the simulation (that stopped the whole battle): the battle can run before the 3D
 // world exists (behind the loading screen, or in headless tests), so a failing effect is skipped and the battle goes on.
 let FXERR=0;
-function FXE(type,args,own){if(MODE==='host'&&G&&G.out){const v=[type,...args];if(own!=null)v.own=own;G.out.push(v);}if(FXH[type]&&!G.headless)try{FXH[type](...args);}catch(e){if(FXERR++<5)console.warn('effect '+type+' skipped: '+(e&&e.message));}}
+// Plays one battle effect on this screen. FXE (03-sim.js) calls it after queuing the effect for the clients.
+function fxPlay(type,args){if(FXH[type]&&!G.headless)try{FXH[type](...args);}catch(e){if(FXERR++<5)console.warn('effect '+type+' skipped: '+(e&&e.message));}}
 // Burnt-out wrecks keep their shape and panel detail: patchy soot, rust-brown scorched paint and grey ash with the
 // original surface showing faintly through, glowing embers that die down over ~20 seconds, and a slight list.
 const WRECK_HEAT={value:1};let WRECKM=null;const WRECKQ=[],BURNT=new Map();

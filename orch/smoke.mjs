@@ -1,7 +1,8 @@
 // ORCH smoke test: the gate every change must pass before it goes live on GitHub Pages.
 // Serves the repo locally, opens the game in headless Chromium, starts a skirmish vs AI, fast-forwards the battle
 // several game-minutes through the real simulation, and fails on any page error, console error, stalled sim or
-// empty battlefield. Saves screenshots to orch/out/ so ORCH (and you) can look at what the game actually renders.
+// empty battlefield. Saves screenshots to orch/out/ so ORCH (and you) can look at what the game actually renders
+// (each run keeps its own copy in orch/out/runs/<timestamp>-smoke/, see runs.mjs).
 //
 //   node orch/smoke.mjs            # default: 4 game-minutes, 2 factions
 //   node orch/smoke.mjs --minutes 8 --players 4
@@ -14,7 +15,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
-import { artifactHtml, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
+import { guardContext } from './serverdev.mjs';
+import { artifactHtml, artifactHandler, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
+import { newRun } from './runs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
@@ -49,10 +52,9 @@ const peakMB = watchPeakMemory();
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json',
   '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg',
   '.glb': 'model/gltf-binary', '.wasm': 'application/wasm' };
-const server = http.createServer((req, res) => {
+const server = http.createServer(ART ? artifactHandler(ART.html) : (req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
-  if (ART && p === '/index.html') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(ART.html); }
   const f = path.join(ROOT, p);
   if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' });
@@ -64,13 +66,15 @@ const URL0 = `http://127.0.0.1:${server.address().port}/index.html`;
 const fails = [], warns = [];
 // SwiftShader (CPU WebGL) can take minutes per frame in a busy battle; a slow screenshot is not a game bug.
 async function shot(page, name) {
-  try { await page.screenshot({ path: path.join(OUT, PFX + name), timeout: 180000 }); }
+  try { await RUN.save(page, PFX + name, { timeout: 180000 }); }
   catch (e) { warns.push(`screenshot ${name} skipped: ${String(e.message || e).split('\n')[0]}`); }
 }
 const { chromium } = await loadPlaywright();
 const browser = await chromium.launch({ executablePath: findChromium(),
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+const bctx = await browser.newContext({ viewport: { width: 1600, height: 900 } });
+await guardContext(bctx); // never the live game servers (WebSockets escape page.route)
+const page = await bctx.newPage();
 // Network to other hosts (PeerJS signalling, fonts, relays) is not part of the test.
 await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue()
   : ART && r.request().url() === THREE_CDN ? r.fulfill({ status: 200, contentType: 'text/javascript', body: ART.three }) : r.abort());
@@ -84,11 +88,16 @@ page.on('console', m => {
 });
 
 fs.mkdirSync(OUT, { recursive: true });
+const RUN = newRun(ART ? 'smoke-art' : 'smoke');
 const t0 = Date.now();
 try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => warns.push('3D models still loading after 180s'));
+  { const m = await page.evaluate(() => ({ n: Object.keys(MODELS.proto).length, of: typeof MODEL_FILES === 'object' ? Object.keys(MODEL_FILES).length : 0,
+      ready: MODELS.ready, err: MODELS.err || '', t: Math.round(performance.now()) }));
+    console.log(`3D models: ${m.n} of ${m.of} ready=${m.ready} ${m.err} (page open to models ready: ${(m.t / 1000).toFixed(1)}s)`);
+    if (!m.ready) warns.push('3D models did not load at the menu: ' + m.err); }
   await shot(page, 'menu.png');
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));
@@ -117,6 +126,11 @@ try {
   const tLoad = Date.now();
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('loading screen did not finish within 10 minutes'));
   console.log(`loading screen finished after ${((Date.now() - tLoad) / 1000).toFixed(1)}s`);
+  // every model this battle's nations need must have arrived (in the artifact edition they come in a different published form)
+  { const m = await page.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.map(T => T.fac)) : Object.keys(MODEL_FILES);
+      return { of: ks.length, miss: ks.filter(k => !MODELS.proto[k]), err: MODELS.err || '' }; });
+    console.log(`3D models for this battle: ${m.of - m.miss.length} of ${m.of}`);
+    if (m.miss.length) fails.push(`${ART ? 'artifact: ' : ''}${m.miss.length} of ${m.of} 3D models for this battle missing (${m.miss.slice(0, 5).join(', ')}) ${m.err} (players would see simple shapes)`); }
 
   await page.waitForTimeout(4000); // a few real rendered frames
   const tReal = await page.evaluate(() => G.t);
@@ -152,7 +166,7 @@ try {
   await shot(page, 'battle-later.png');
 } catch (e) {
   fails.push(String(e && e.message || e));
-  try { await page.screenshot({ path: path.join(OUT, PFX + 'failure.png') }); } catch {}
+  try { await RUN.save(page, PFX + 'failure.png'); } catch {}
 }
 if (ART) { const j = judgeRoomStats('artifact', await page.evaluate(() => window.__fpStats).catch(() => null)); fails.push(...j.fails); warns.push(...j.warns); }
 await browser.close();
@@ -166,4 +180,4 @@ if (uniq.length) {
   for (const f of uniq.slice(0, 25)) console.log('  ✗ ' + f);
   process.exit(1);
 }
-console.log(`\nSMOKE PASS${ART ? ' (artifact edition)' : ''} (${((Date.now() - t0) / 1000).toFixed(0)}s) — screenshots in orch/out/${PFX}*.png`);
+console.log(`\nSMOKE PASS${ART ? ' (artifact edition)' : ''} (${((Date.now() - t0) / 1000).toFixed(0)}s) — screenshots in orch/out/${PFX}*.png (this run: ${RUN.rel}/)`);

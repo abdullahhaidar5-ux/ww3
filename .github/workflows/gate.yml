@@ -1,0 +1,74 @@
+# Parallel ship gate on GitHub's free runners (public repo). Push any commit to a branch named gate/<anything> and every
+# browser test runs at once on its own machine; each test reports PASS/FAIL as a commit status "gate/<test>" on that
+# commit (read with: gh api repos/<owner>/<repo>/commits/<sha>/statuses, or orch/cigate.sh). Changes nothing else.
+name: Ship gate (parallel)
+on:
+  push:
+    branches: ['gate/**']
+permissions:
+  contents: write
+  statuses: write
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down,
+            art-smoke, art-mpsync, mapsweep, controls, touch, audio, cfclient]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Tools
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright install --with-deps chromium >/dev/null
+          (cd server && npm ci --no-audit --no-fund >/dev/null)
+          sudo apt-get install -y -qq ffmpeg >/dev/null 2>&1 || true
+      - name: Run ${{ matrix.t }}
+        env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+        run: |
+          set +e
+          T='${{ matrix.t }}'
+          case "$T" in
+            check)          python3 orch/build.py --check ;;
+            servertest)     node orch/servertest.mjs ;;
+            headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --compare || echo "SKIP headless" ;;
+            smoke4)         node orch/smoke.mjs --players 4 ;;
+            mpsync)         node orch/mpsync.mjs ;;
+            mpsync-server)  node orch/mpsync.mjs --server ;;
+            migrate)        node orch/migrate.mjs ;;
+            migrate-abrupt) node orch/migrate.mjs --abrupt ;;
+            migrate-down)   node orch/migrate.mjs --server-down ;;
+            art-smoke)      python3 orch/build.py --artifact && node orch/smoke.mjs --artifact ;;
+            art-mpsync)     python3 orch/build.py --artifact && node orch/mpsync.mjs --artifact ;;
+            mapsweep)       node orch/mapsweep.mjs --minutes 1 ;;
+            controls)       [ -f orch/controls.mjs ] && node orch/controls.mjs || echo "SKIP controls (no test)" ;;
+            touch)          [ -f orch/touch.mjs ] && node orch/touch.mjs || echo "SKIP touch (no test)" ;;
+            audio)          f=$(ls orch/audio*.mjs 2>/dev/null | head -1); [ -n "$f" ] && node "$f" || echo "SKIP audio (no test)" ;;
+            cfclient)       f=$(ls orch/cfbattle*.mjs orch/cfclient*.mjs 2>/dev/null | head -1); [ -n "$f" ] && node "$f" || echo "SKIP cfclient (no test)" ;;
+          esac > out.log 2>&1
+          rc=$?
+          tail -40 out.log
+          line=$(grep -E "^(SMOKE|MPSYNC|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|TOUCH|AUDIO|CF[A-Z]*) (PASS|FAIL)|^SKIP|index.html is up to date|is out of date|Error" out.log | tail -1 | cut -c1-130)
+          state=failure; [ $rc -eq 0 ] && state=success
+          grep -qE "^(SMOKE|MPSYNC|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|TOUCH|AUDIO|CF[A-Z]*) FAIL" out.log && state=failure
+          desc=$(printf '%s' "${line:-exit $rc}" | sed 's/"/'"'"'/g')
+          curl -s -o /dev/null -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -d "{\"state\":\"$state\",\"context\":\"gate/$T\",\"description\":\"$desc\",\"target_url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+          # full log on a branch of its own, readable with: git fetch origin gate-logs/<sha10>-<test>
+          mkdir -p /tmp/lg && cp out.log /tmp/lg/$T.log && cd /tmp/lg && git init -q && git checkout -q -b log \
+            && git add . && git -c user.name=gate -c user.email=gate@users.noreply.github.com commit -qm "gate log $T $state" \
+            && git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+               "log:refs/heads/gate-logs/${GITHUB_SHA:0:10}-$T" || true
+          cd "$GITHUB_WORKSPACE"
+          [ "$state" = success ]
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: 'out-${{ matrix.t }}', path: 'orch/out/**', if-no-files-found: ignore, retention-days: 3 }

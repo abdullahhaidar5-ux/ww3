@@ -19,6 +19,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
+import { guardContext } from './serverdev.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out', 'maps');
@@ -77,6 +78,7 @@ const { chromium } = await loadPlaywright();
 const browser = await chromium.launch({ executablePath: findChromium(),
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
 const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
+await guardContext(page.context()); // never the live game servers (WebSockets escape page.route)
 await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue() : r.abort());
 const addFail = m => (cur ? cur.fails : globalFails).push(m);
 page.on('pageerror', e => addFail('page error: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')));

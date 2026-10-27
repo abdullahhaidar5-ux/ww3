@@ -27,6 +27,49 @@ export function artifactHtml() {
   return SKELETON + fs.readFileSync(f, 'utf8') + '</body></html>';
 }
 
+// File types the claude.ai artifact host serves (keep in step with ARTIFACT_TYPES in orch/build.py). It refuses the
+// rest at publish time (e.g. .glb.gz / application/gzip), so the test server refuses them too.
+export const SERVED_TYPES = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript',
+  '.wasm': 'application/wasm', '.json': 'application/json', '.txt': 'text/plain', '.mp3': 'audio/mpeg', '.wav': 'audio/wav',
+  '.ogg': 'audio/ogg', '.mp4': 'video/mp4', '.webm': 'video/webm', '.png': 'image/png', '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml', '.avif': 'image/avif',
+  '.woff': 'font/woff', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.otf': 'font/otf', '.pdf': 'application/pdf' };
+const SERVED_CT = new Set(Object.values(SERVED_TYPES).concat(['audio/mp3', 'text/javascript', 'application/javascript']));
+
+// The published file set, as the real host would hold it: { 'vo/US.mp3': { file, type } } from publish.json's `files`.
+// Throws on any entry the host would refuse (type not served, or a source file that is missing).
+export function artifactFiles() {
+  const pj = path.join(ART_DIR, 'publish.json');
+  if (!fs.existsSync(pj)) throw new Error('orch/out/artifact/publish.json missing - run: python3 orch/build.py --artifact');
+  const out = {}, bad = [];
+  for (const [rel, v] of Object.entries(JSON.parse(fs.readFileSync(pj, 'utf8')).files || {})) {
+    if (v === null) continue;
+    const from = typeof v === 'string' ? v : v.from, ext = path.extname(rel).toLowerCase();
+    const type = (typeof v === 'object' && v.contentType) || SERVED_TYPES[ext];
+    const file = path.resolve(ROOT, from);
+    if (!SERVED_TYPES[ext] || !SERVED_CT.has(type)) bad.push(`${rel} (${type || ext})`);
+    else if (!fs.existsSync(file)) bad.push(`${rel} (source ${from} missing)`);
+    else out[rel] = { file, type };
+  }
+  if (bad.length) throw new Error('publish.json lists files the artifact host refuses: ' + bad.join(', '));
+  return out;
+}
+
+// HTTP handler for the test server: the page at /index.html, then ONLY the published files (404 for anything else,
+// e.g. models/*.glb.gz straight from the repo), each with its published content type.
+export function artifactHandler(html) {
+  const files = artifactFiles();
+  return (req, res) => {
+    let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+    if (p.endsWith('/')) p += 'index.html';
+    if (p === '/index.html') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(html); }
+    const f = files[p.slice(1)];
+    if (!f) { res.writeHead(404); return res.end(); }
+    res.writeHead(200, { 'content-type': f.type });
+    fs.createReadStream(f.file).pipe(res);
+  };
+}
+
 export function threeJs() {
   const h = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
   const a = h.indexOf('Three.js Authors'), s = h.lastIndexOf('<script>', a), e = h.indexOf('</script>', a);

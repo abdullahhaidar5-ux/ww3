@@ -22,7 +22,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // a socket that records every frame, with helpers to wait for one
 function sock(path, origin = ORIGIN, ip = '10.0.0.1', base = WS) {
-  const ws = new WebSocket(base + path, { headers: { Origin: origin, 'CF-Connecting-IP': ip } });
+  // the live server sits behind Cloudflare, which refuses a client-set CF-Connecting-IP: send it only to the local one
+  const ws = new WebSocket(base + path, { headers: argUrl ? { Origin: origin } : { Origin: origin, 'CF-Connecting-IP': ip } });
   const got = [], waiters = [];
   ws.closed = null; ws.got = got;
   ws.onmessage = ev => { got.push(String(ev.data)); for (const w of waiters.splice(0)) w(); };

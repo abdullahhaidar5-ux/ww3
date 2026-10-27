@@ -75,7 +75,8 @@ function sfxShot(x,y,s){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!s
   if(s<=5){if(!limit('gun',6))return;const b=bus(sp);const n=1+(Math.random()*3|0);for(let i=0;i<n;i++){const ti=t+i*.075;nz(b,ti,.05,'highpass',1600,0,.5,.7);nz(b,ti,.09,'bandpass',900+Math.random()*400,300,.35,1.2);osc(b,ti,'sine',190,70,.05,.25);}}
   else if(s<=8){if(!limit('msl',3))return;const b=bus(sp);nz(b,t,.08,'highpass',2500,0,.4);nz(b,t,.9,'bandpass',350,3200,.32,1.6);osc(b,t,'sawtooth',90,40,.5,.06);}
   else{if(!limit('can',3))return;const b=bus(sp);nz(b,t,.025,'highpass',3000,0,.8);osc(b,t,'sine',95,30,.55,.9);nz(b,t,.5,'lowpass',2200,180,.7,1);nz(b,t+.02,1.2,'lowpass',600,90,.25,.5,AU.brown);}}
-function sfxBoom(x,y,s,big){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('boom',big?3:4,.15))return;const t=AU.ctx.currentTime,k=Math.min(1,.3+s/40)*(big?1.3:1),d=Math.min(3,.6+s/22);const b=bus(sp);
+function sfxBoom(x,y,s,big){if(auOn()&&!AU.sfxOn){const sp=spatial(x,y);if(sp&&sp.v>=.02)AU.heat=Math.min(1,AU.heat+(big?.25:.06));return;}if(!auOn())return; // with sound effects off, nearby explosions still tell the music the fighting started
+  const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('boom',big?3:4,.15))return;const t=AU.ctx.currentTime,k=Math.min(1,.3+s/40)*(big?1.3:1),d=Math.min(3,.6+s/22);const b=bus(sp);
   nz(b,t,.04,'highpass',2000,0,.9*k);osc(b,t,'sine',big?62:85,24,d*.9,1.1*k,.006);nz(b,t,d,'lowpass',big?1600:2400,120,.9*k,.7);nz(b,t+.03,d*1.4,'lowpass',500,60,.5*k,.5,AU.brown);
   for(let i=0;i<(big?14:6);i++){const ti=t+.08+Math.random()*d*.6;nz(b,ti,.03+Math.random()*.04,'bandpass',1500+Math.random()*3000,0,.12*k*Math.random(),3);}
   AU.heat=Math.min(1,AU.heat+(big?.25:.06));}
@@ -800,7 +801,10 @@ function meScore(t,i,bar,sec,ch,hz,S,sp,intense){const X=S.mx||{},lat=!!S.cr,bi=
   // Egypt: the military band takes up the theme in the battle sections, over a snare
   if(X.brass&&battle&&i===0&&bar%8===4){let st=t;for(const [d,l] of S.motif.slice(0,8)){meInst('m_brass',hz(d),st,sp*l*.9,.13*lv);st+=sp*l;}}
   if(X.brass&&battle&&(i===4||i===12))drum(t,'S',.9*lv);
-  if(S.as)asScore(t,tq,i,bar,sec,ch,hz,S,sp,battle,lv);}
+  // the nation's anthem by a military band over the finale (first bar of section 4), for every nation with one in mus/
+  if(sec===3&&bi===0&&i===0&&!AU.calm&&X.an!==0&&AN_FAC[AU.fac]){anLoad(AU.fac);anPlay(t,sp*16*8-.1);}
+  if(S.as)asScore(t,tq,i,bar,sec,ch,hz,S,sp,battle,lv);
+  if(S.we)weScore(t,tq,i,bar,sec,ch,hz,S,sp,battle,lv);}
 
 // ===== South and East Asian instruments and scores =====
 // Pakistan, India, China and the two Koreas (PK, IN, CN, KP, KR) play their music on real recorded regional
@@ -1004,6 +1008,242 @@ for(const [k,v] of Object.entries({PK:[1.42,1.93],PK_b:[1.58,1.9],IN:[1.41,1.67]
   p.textContent='South and East Asian instruments: tabla bols by sankalp (CC BY 4.0), tabla by afleetingspeck and subodh3012 (CC0), dhol by Johnny Kalsi / Johnnydhol (CC BY 3.0), tanpura by iluppai (CC0), bass bansuri (Wikimedia Commons, public domain), erhu by tarane468 (CC0), dizi by Gorgoroth6669 (CC0), suona by jiemojiemo (CC0), Beijing-opera gongs, cymbals and bangu by Ajay Srinivasamurthy / ajaysm (CC BY 4.0), temple blocks by sazanami12 (CC0) and Korean gong by cdrk (CC BY 4.0), all via Freesound unless noted; dan tranh zither, gong, snare, bass drum, tom, claps and finger cymbals from the Versilian Community Sample Library by Versilian Studios / Sam Gossner (CC0).';
   me.insertAdjacentElement('afterend',p);}catch(e){}})();
 
+// ===== Western, Slavic, Turkish, Israeli and Cuban instruments and scores =====
+// The United States, Turkey, Israel, Europe, Ukraine, Russia and Cuba (US, TR, IL, EU, UA, RU, CU) play their music on
+// real recorded instruments from a fourth small sample sheet, mus/we.mp3 (about 0.42 MB), fetched only when one of
+// these nations' music starts (see mus/we_pack.py for every source). All from VCSL by Versilian Studios (CC0):
+//  - soprano recorder for the fife of the fife-and-drum corps and the Ukrainian sopilka; folk harp for the bandura;
+//    strumstick (a three-string fretted folk lute) for the balalaika, domra and Cuban tres; plucked psaltery for the
+//    Russian gusli; grand piano (montuno), glockenspiel, tubular bells (Orthodox church bells);
+//  - rope-tension field snare, concert bass drum (also the mehter davul), clash cymbals (zil), timpani roll (kos),
+//    congas, bongos, claves, guiro, cowbell, maracas and tambourine (the bubon's jingles).
+// The main sheet adds trumpets, horns, trombones, tuba, choir, clarinet, violin, accordion (bayan) and the shehnai (our
+// zurna); Turkey and Israel also load the Middle Eastern sheet (darbuka, def, ney, kanun, kemence, oud, santur as the
+// klezmer tsimbl). The zurna and davul are real recordings (Freesound: cdrk's Turkish zurna, CC BY 4.0; kroshe's
+// davul, CC0). No clean free recording was found for the bandura, balalaika, domra, tres, bayan or sopilka, so those
+// are the stand-ins above, each played the way the real instrument is (balalaika and bandura tremolo, the tres's
+// doubled courses, two zurnas in heterophony, the klezmer clarinet's sobbing krekhts).
+// In the finale of each battle piece the nation's own anthem plays as a real military band: public-domain US Navy Band
+// recordings of the Star-Spangled Banner, the Anthem of Europe (Beethoven's Ode to Joy), Hatikvah, Shche ne vmerla
+// Ukrainy and La Bayamesa (and India's Jana Gana Mana, China's March of the Volunteers and Egypt's Bilady, Bilady,
+// Bilady over the Asian and Middle Eastern scores), with the score ducked underneath (AN_FAC lists the nations whose
+// excerpt is in mus/; meScore starts it).
+// Turkey's and Russia's anthems are left out: their compositions are not clearly public domain.
+const WE_META=/*WEMETA*/{"fif":[{"m":72.02,"o":0.18,"n":0.4,"r":0.344},{"m":78.0,"o":0.76,"n":0.4,"r":0.291},{"m":81.95,"o":1.34,"n":0.4,"r":0.195}],"sop":[{"m":74.01,"o":1.92,"n":1.88,"r":0.463,"l":[0.76,1.88]},{"m":79.03,"o":3.98,"n":1.88,"r":0.251,"l":[0.76,1.88]}],"bnd":[{"m":46.0,"o":6.04,"n":1.6,"r":0.228},{"m":50.0,"o":7.82,"n":1.6,"r":0.303},{"m":53.95,"o":9.6,"n":1.5,"r":0.277},{"m":58.03,"o":11.28,"n":1.4,"r":0.123},{"m":62.02,"o":12.86,"n":1.3,"r":0.218}],"blk":[{"m":50.06,"o":14.34,"n":1.0,"r":0.088},{"m":55.01,"o":15.52,"n":1.0,"r":0.146},{"m":61.02,"o":16.7,"n":0.9,"r":0.101},{"m":66.98,"o":17.78,"n":0.8,"r":0.056}],"psl":[{"m":59.99,"o":18.76,"n":1.3,"r":0.182},{"m":66.01,"o":20.24,"n":1.2,"r":0.196},{"m":72.0,"o":21.62,"n":1.1,"r":0.179}],"pno":[{"m":58.0,"o":22.9,"n":1.3,"r":0.157},{"m":70.0,"o":24.38,"n":1.2,"r":0.149}],"glk":[{"m":79.11,"o":25.76,"n":1.1,"r":0.167},{"m":84.16,"o":27.04,"n":1.0,"r":0.17}],"bel":[{"m":60.17,"o":28.22,"n":2.8,"r":0.188},{"m":66.82,"o":31.2,"n":2.5,"r":0.177},{"m":72.26,"o":33.88,"n":2.3,"r":0.198}],"snr":[{"m":0,"o":36.36,"n":0.4,"r":0.108},{"m":0,"o":36.94,"n":0.35,"r":0.131},{"m":0,"o":37.47,"n":0.3,"r":0.21}],"rim":[{"m":0,"o":37.95,"n":0.22,"r":0.058}],"sno":[{"m":0,"o":38.35,"n":0.3,"r":0.14}],"bdm":[{"m":0,"o":38.83,"n":1.0,"r":0.175},{"m":0,"o":40.01,"n":0.9,"r":0.216}],"cym":[{"m":0,"o":41.09,"n":1.4,"r":0.147}],"tro":[{"m":0,"o":42.67,"n":2.2,"r":0.271}],"tam":[{"m":0,"o":45.05,"n":0.4,"r":0.115}],"cga":[{"m":0,"o":45.63,"n":0.45,"r":0.142},{"m":0,"o":46.26,"n":0.4,"r":0.207},{"m":0,"o":46.84,"n":0.5,"r":0.141}],"cgm":[{"m":0,"o":47.52,"n":0.3,"r":0.158},{"m":0,"o":48.0,"n":0.3,"r":0.154}],"bgo":[{"m":0,"o":48.48,"n":0.3,"r":0.11},{"m":0,"o":48.96,"n":0.35,"r":0.134},{"m":0,"o":49.49,"n":0.2,"r":0.117}],"clv":[{"m":0,"o":49.87,"n":0.25,"r":0.084}],"gui":[{"m":0,"o":50.3,"n":0.35,"r":0.122},{"m":0,"o":50.83,"n":0.2,"r":0.088}],"cow":[{"m":0,"o":51.21,"n":0.45,"r":0.083},{"m":0,"o":51.84,"n":0.2,"r":0.107}],"mar":[{"m":0,"o":52.22,"n":0.2,"r":0.116},{"m":0,"o":52.6,"n":0.2,"r":0.147}],"zrn":[{"m":66.95,"o":52.98,"n":0.78,"r":0.176,"l":[0.32,0.78]},{"m":67.24,"o":53.94,"n":0.78,"r":0.249,"l":[0.32,0.78]}],"dvd":[{"m":0,"o":54.9,"n":0.95,"r":0.268},{"m":0,"o":56.03,"n":0.5,"r":0.213},{"m":0,"o":56.71,"n":0.5,"r":0.257}]};
+const WEP={st:null,ok:null,tries:0};
+const WE_FAC={US:1,TR:1,IL:1,EU:1,UA:1,RU:1,CU:1};
+function weLoad(){if(!AU.ctx||!WE_META.fif)return;if(WEP.st==='fail'&&(WEP.tries||0)<2)WEP.st=null;if(WEP.st)return;WEP.st='loading';WEP.tries=(WEP.tries||0)+1;
+  fetch('mus/we.mp3').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>{let dc=null;
+    if(PHONE){try{const O=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(O)dc=new O(1,1,22050);}catch(e){dc=null;}}
+    if(!dc)return decodeAB(AU.ctx,b);const keep=b.slice(0);return decodeAB(dc,b).catch(()=>decodeAB(AU.ctx,keep));})
+    .then(buf=>{WEP.ok=sheetSlice(buf,WE_META);WEP.st='ok';}).catch(e=>{WEP.st='fail';audioErr('Western instruments',e);});}
+function wP(k,f,t,dur,gain,o){return xPlay(WEP.ok&&WEP.ok[k],f,t,dur,gain,o);}
+// the national anthem excerpts (one small file per nation, fetched only for that nation)
+const AN_FAC=/*ANFAC*/{US:1,EU:1,IL:1,UA:1,CU:1,IN:1,CN:1,EG:1};
+const ANB={};
+function anLoad(fac){if(!AU.ctx||!AN_FAC[fac])return;const s=ANB[fac];if(s&&(s.st==='ok'||s.st==='loading'||(s.tries||0)>=2))return;const e=ANB[fac]={st:'loading',tries:((s&&s.tries)||0)+1};
+  fetch('mus/an_'+fac+'.mp3').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>decodeAB(AU.ctx,b)).then(buf=>{e.buf=buf;e.st='ok';}).catch(err=>{e.st='fail';audioErr('anthem',err);});}
+function anStop(fade){const a=AU.an;if(!a||!AU.ctx)return;AU.an=null;const c=AU.ctx;try{a.g.gain.cancelScheduledValues(c.currentTime);a.g.gain.setTargetAtTime(.0001,c.currentTime,(fade||.4)/3);a.src.stop(c.currentTime+(fade||.4)+.1);}catch(e){}
+  try{const og=AU.mus&&AU.mus.og,S=AU.style;if(og&&S){og.gain.cancelScheduledValues(c.currentTime);og.gain.setTargetAtTime((S.og||1)*(AU.calm&&S.ogc?S.ogc:1),c.currentTime,.4);}}catch(e){}}
+// the band plays the anthem over the finale; the score drops back underneath it and comes up again for the last bars
+function anPlay(t,len){const e=ANB[AU.fac];if(!e||e.st!=='ok'||!AU.mus||!AU.mus.og)return false;const c=AU.ctx,S=AU.style,base=(S.og||1);anStop(.2);
+  const src=c.createBufferSource(),g=c.createGain();src.buffer=e.buf;const L=Math.min(len,e.buf.duration);g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(WECAL.an,t+.08);
+  g.gain.setValueAtTime(WECAL.an,t+L-3);g.gain.linearRampToValueAtTime(.0001,t+L);src.connect(g);g.connect(AU.musBus);src.start(t);src.stop(t+L+.05);
+  const og=AU.mus.og.gain;og.cancelScheduledValues(t);og.setTargetAtTime(base*.32,t,.25);og.setTargetAtTime(base,t+L-2.5,.8);
+  AU.an={src,g,end:t+L};src.onended=()=>{if(AU.an&&AU.an.src===src)AU.an=null;};return true;}
+// loudness trims (headless renders, matched to the other regional scores)
+const WECAL={zrn:2.2,fif:1.5,sop:2,bnd:2.3,blk:2.6,psl:2.3,pno:1.6,glk:1.2,bel:1.3,cla:2,vln:2.4,acc:1.8,shn:2,band:1.2,cho:1.6,an:3};
+const WE_INST={m_fife:1,m_sop:1,m_bandura:1,m_balalaika:1,m_domra:1,m_tres:1,m_piano:1,m_gusli:1,m_bell:1,m_glock:1,m_clar:1,m_fiddle:1,m_accord:1,m_zurna:1,m_boru:1,m_mehter:1,m_choir:1,m_horn:1,m_trp:1,m_cornet:1};
+// the scale note a diatonic third below f (for the second fife, the trumpets' harmony)
+function third(f){const b=scaleBelow(f,2);return b[1]||f*.8;}
+function weInst(kind,f,t,dur,gain){const L=AU.mL||(AU.mL={}),from=L[kind],M=SMP.ok;let fo=f;
+  const trem=(k,ff,step,gg,o)=>{for(let n=1;n*step<dur-.06&&n<24;n++)wP(k,ff,t+n*step,step*1.6,gg*(n%2?.62:.75),Object.assign({},o,{from:0,rel:.06}));};
+  switch(kind){
+    case 'm_fife':{// fife and drum corps: two fifes a third apart, staccato tonguing, a quick vibrato on held notes
+      fo=fold(f*8,520,1900);gain*=WECAL.fif;const k=dur>.4?'sop':'fif',o={from,glide:.04,vib:dur>.4?14:0,vr:6.2,att:.01,rel:.07,hp:420,lp:7500};
+      if(!wP(k,fo,t,dur,gain,Object.assign({pan:-.15},o))){flute(fo,t,dur,gain*.6);break;}
+      wP(k,third(fo),t+.006,dur,gain*.55,Object.assign({pan:.2},o,{from:0}));nz(AU.mus,t,Math.min(.06,dur),'bandpass',fo*2,0,gain*.03,3);break;}
+    case 'm_sop':{// sopilka: an end-blown folk flute, grace notes from above and a warm, wide vibrato
+      fo=fold(f*8,520,1700);gain*=WECAL.sop;if(dur>.5)wP('fif',fo*1.12,t-.05,.06,gain*.4,{rel:.03,pan:-.1});
+      if(!wP('sop',fo,t,dur,gain,{from,glide:.09,vib:24,vr:5.4,att:.05,rel:.2,pan:-.1,hp:300}))flute(fo,t,dur,gain*.6,1);
+      else nz(AU.mus,t,Math.max(.12,dur*.7),'bandpass',fo*1.4,0,gain*.03,2.5);break;}
+    case 'm_bandura':{// bandura: bright plucked strings with the player's tremolo on held notes and a bass string under the phrase
+      fo=fold(f*4,150,560);gain*=WECAL.bnd;const o={pan:-.1,rel:.4,hp:90,pk:[2400,1,4]};if(!wP('bnd',fo,t,Math.max(.4,Math.min(dur,1.4)),gain,o)){inst('bandura',fo/2,t,dur,gain*.5);break;}
+      if(dur>.7){trem('bnd',fo,.085,gain*.7,o);wP('bnd',fold(fo/2,90,200),t,1.2,gain*.45,{pan:.15,rel:.5});}break;}
+    case 'm_balalaika':case 'm_domra':{// balalaika / domra: tremolo is the instrument's voice on every held note
+      const dm=kind==='m_domra';fo=fold(f*4,dm?260:200,dm?900:700);gain*=WECAL.blk;const o={pan:dm?-.15:.12,rel:.12,hp:dm?260:180,pk:[2600,1.2,5]};
+      if(!wP('blk',fo,t,Math.min(dur,.5),gain,o)){pluck(fo,t,dur,gain*1.2,.7,.995,4500);break;}
+      if(dur>.25)trem('blk',fo,dm?.06:.07,gain*.85,o);break;}
+    case 'm_tres':{// Cuban tres: three doubled courses (unison and octave pairs), bright and percussive
+      fo=fold(f*4,180,620);gain*=WECAL.blk;const d=Math.max(.2,Math.min(dur,.7));if(!wP('blk',fo,t,d,gain,{pan:.15,rel:.1,hp:160,pk:[2200,1,4]})){inst('tres',fo/2,t,dur,gain);break;}
+      wP('blk',fo*2,t+.01,d*.8,gain*.45,{pan:-.15,rel:.1,hp:300,det:6});break;}
+    case 'm_piano':{fo=fold(f*4,190,800);gain*=WECAL.pno;const d=Math.max(.25,Math.min(dur,1.2));if(!wP('pno',fo,t,d,gain,{pan:-.1,rel:.25}))pianoLow(fo/2,t,gain*.5);else wP('pno',fo*2,t+.004,d,gain*.55,{pan:.15,rel:.25});break;}
+    case 'm_gusli':{fo=fold(f*8,260,1000);gain*=WECAL.psl;if(!wP('psl',fo,t,Math.max(.6,Math.min(dur,1.3)),gain,{pan:-.2,rel:.5,hp:150}))inst('harp',fo/2,t,dur,gain);break;}
+    case 'm_bell':{fo=fold(f*4,170,560);gain*=WECAL.bel;if(!wP('bel',fo,t,2.6,gain,{rel:1.2,pan:(Math.random()-.5)*.4}))bell(fo,t,gain*.5);break;}
+    case 'm_glock':{fo=fold(f*16,700,2300);gain*=WECAL.glk;if(!wP('glk',fo,t,1,gain,{rel:.6,pan:.25}))bell(fo,t,gain*.3);break;}
+    case 'm_clar':{// klezmer clarinet: notes scooped from below, a sobbing krekhts dropping off the end of long notes
+      fo=fold(f*4,220,950);gain*=WECAL.cla;if(M&&M.cla){const s=xPlay(M.cla,fo,t,dur,gain,{from:from||(Math.random()<.4?fo*.94:0),glide:.07,vib:dur>.5?30:0,vr:5.6,att:.03,rel:.12,pan:-.12,pk:[1400,1.2,3]});
+        if(s&&dur>.7&&s.detune&&Math.random()<.6){s.detune.setValueAtTime(0,t+dur*.72);s.detune.linearRampToValueAtTime(-130,t+dur*.9);s.detune.linearRampToValueAtTime(0,t+dur);}}
+      else reed(fo,t,dur,gain*.6,'clarinet');break;}
+    case 'm_fiddle':{fo=fold(f*4,260,1200);gain*=WECAL.vln;if(M&&M.vln)xPlay(M.vln,fo,t,dur,gain,{from,glide:.12,vib:26,vr:6,att:.05,rel:.18,pan:.15,pk:[1800,1.3,3]});else bowed(fo,t,dur,gain*.6,from);break;}
+    case 'm_accord':{fo=fold(f*4,200,800);gain*=WECAL.acc;if(M&&M.acc){xPlay(M.acc,fo,t,dur,gain,{att:.03,rel:.08,lp:3800});xPlay(M.acc,fo*2,t+.005,dur,gain*.35,{att:.03,rel:.08,lp:4200,pan:.15});}else reed(fo,t,dur,gain*.55,'harmonium');break;}
+    case 'm_zurna':{// two zurnas in heterophony, each note entered with a grace note from above, wide shake on held notes
+      fo=fold(f*8,420,1300);const Z=WEP.ok&&WEP.ok.zrn&&WEP.ok.zrn.length?WEP.ok.zrn:(M&&M.shn);gain*=Z&&Z!==(M&&M.shn)?WECAL.zrn:WECAL.shn;if(Z){for(const [dt,dd,pn,gg] of [[0,-8,-.25,1],[.014,9,.25,.8]]){xPlay(Z,fo,t+dt,dur,gain*gg,{from:fo*1.08,glide:.06,det:dd,vib:dur>.5?32:0,vr:6.5,att:.012,rel:.1,pan:pn,pk:[1500,1.2,4]});}}
+      else reed(fo,t,dur,gain*.55,'zurna');break;}
+    case 'm_boru':{fo=fold(f*4,180,620);gain*=WECAL.band;brass(fo,t,dur,gain,2600);brass(fo*1.004,t+.012,dur,gain*.6,2600);break;}// the mehter's natural trumpet
+    case 'm_mehter':{// the whole mehter in unison: zurnas on top, borus an octave below
+      weInst('m_zurna',f,t,dur,gain*.8);weInst('m_boru',f,t+.01,dur,gain*.55);return true;}
+    case 'm_choir':{// a deep male choir in unison and octaves (the basso profundo underneath)
+      gain*=WECAL.cho;const ff=fold(f*2,110,250);choir(ff,t,Math.max(dur,.35),gain);choir(ff*1.004,t+.02,Math.max(dur,.35),gain*.6);if(M&&M.cbs&&dur>.5)xPlay(M.cbs,fold(ff/2,55,110),t,dur,gain*.3,{att:.15,rel:.3,lp:600});break;}
+    case 'm_horn':{fo=fold(f*2,110,420);gain*=WECAL.band;hornsec(fo,t,dur,gain*.8);break;}
+    case 'm_trp':{// trumpets in thirds, the European fanfare sound
+      fo=fold(f*4,230,900);gain*=WECAL.band;brass(fo,t,dur,gain*.9,3200);brass(third(fo),t+.008,dur,gain*.55,3000);break;}
+    case 'm_cornet':{// the American march band's cornets, the glockenspiel doubling the tune an octave up
+      fo=fold(f*4,230,900);gain*=WECAL.band;brass(fo,t,dur,gain*.85,3200);brass(fo*1.003,t+.01,dur,gain*.5,3200);if(dur<.9)weInst('m_glock',f,t,dur,gain*.35);break;}
+    default:return false;}
+  L[kind]=fo;AU.lastF=f*2;return true;}
+{const _me2=meInst;meInst=function(kind,f,t,dur,gain,syl){if(WE_INST[kind])return weInst(kind,f,t,dur,gain);return _me2(kind,f,t,dur,gain,syl);};}
+// Percussion letters (only inside these nations' scores; Turkey and Israel also use the darbuka letters of meDrum):
+// field drum / band: S snare, s ghost note, R ruff (drag), h side-stick, K bass drum, C crash cymbals, P timpani,
+// X timpani roll; mehter: U davul (dum), u davul's thin stick (tek), n nakkare, O kos (great kettledrum), Y zil;
+// Afro-Cuban: V claves, c conga open, q slap, m muted / heel-tip, l tumba, i bongo high, I bongo low, v bongo muted,
+// g guiro, a maracas, E cowbell (campana), J muted cowbell; Ukrainian bubon A, tambourine N. b / B big drum by nation.
+const WE_DR={S:'S',s:'s',R:'s',h:'R',K:'K',C:'Z',P:'P',X:'P',U:'B',u:'T',n:'c',O:'B',Y:'Z',V:'R',c:'C',q:'c',m:'C',l:'C',i:'c',I:'C',v:'c',g:'H',a:'H',E:'R',J:'R',A:'F',N:'H',b:'B',B:'B'};
+function weDrum(t,k,g){const X=(AU.style&&AU.style.mx)||{},P=(s,gg,o)=>wP(s,0,t+((o&&o.dt)||0),(o&&o.d)||1,g*gg,Object.assign({pan:(Math.random()-.5)*.3,rate:.97+Math.random()*.06,att:.001,rel:.1},o||{}));
+  switch(k){
+    case 'S':P('snr',.8,{d:.4,v:0});break;
+    case 's':P('snr',.36,{d:.3,v:2});break;
+    case 'R':P('snr',.25,{dt:-.05,d:.1,v:2});P('snr',.3,{dt:-.025,d:.1,v:2});P('snr',.8,{d:.4,v:0});break;
+    case 'h':P('rim',.6,{d:.22});break;
+    case 'K':P('bdm',.85,{d:.9,v:1});break;
+    case 'C':P('cym',.5,{d:1.4,rel:.4});break;
+    case 'P':if(SMP.ok&&SMP.ok.tim)sPlay('tim',(AU.style?AU.style.root:55)*2,t,1.2,g*.6,0,.002,.5);else return false;break;
+    case 'X':P('tro',.55,{d:2,rel:.5,rate:1});break;
+    case 'U':if(WEP.ok.dvd&&WEP.ok.dvd.length){P('dvd',.95,{d:.95,v:0});P('sno',.2,{rate:.7,d:.2});}else{P('bdm',1,{d:1,v:0,rate:.92});P('sno',.35,{rate:.7,d:.25});}break;
+    case 'u':P('sno',.5,{d:.25,rate:1.15});P('rim',.25,{d:.2});break;
+    case 'n':P('bgo',.5,{d:.3,v:Math.random()<.5?0:1,rate:.72});break;
+    case 'O':P('tro',.5,{d:1.4,rate:.8,rel:.5});P('bdm',.7,{d:1,v:0,rate:.75});break;
+    case 'Y':P('cym',.32,{d:.5,rel:.15,rate:1.1});break;
+    case 'V':P('clv',.5,{d:.22});break;
+    case 'c':P('cga',.6,{d:.4,v:0});break;
+    case 'q':P('cga',.6,{d:.3,v:1,rate:1.05});P('cgm',.25,{d:.2,v:1});break;
+    case 'm':P('cgm',.4,{d:.25,v:0});break;
+    case 'l':P('cga',.65,{d:.5,v:2});break;
+    case 'i':P('bgo',.5,{d:.25,v:0});break;
+    case 'I':P('bgo',.5,{d:.3,v:1});break;
+    case 'v':P('bgo',.32,{d:.18,v:2});break;
+    case 'g':P('gui',.45,{d:.3,v:0});break;
+    case 'a':P('mar',.35,{d:.18,v:Math.random()<.5?0:1});break;
+    case 'E':P('cow',.4,{d:.4,v:0});break;
+    case 'J':P('cow',.4,{d:.2,v:1});break;
+    case 'A':P('bdm',.55,{d:.6,v:1,rate:1.5});P('tam',.3,{d:.35});break;
+    case 'N':P('tam',.4,{d:.35});break;
+    case 'b':case 'B':{const gg=k==='B'?1.1:1;
+      if(X.big==='davul'){if(WEP.ok.dvd&&WEP.ok.dvd.length)P('dvd',.95*gg,{d:.95,v:k==='B'?0:1+(Math.random()*2|0)});else P('bdm',1*gg,{d:1,v:0,rate:.9});P('tro',.3*gg,{d:.8,rate:.75});}
+      else if(X.big==='conga'){P('cga',.8*gg,{d:.5,v:2});P('bdm',.35*gg,{d:.6,v:1,rate:1.3});}
+      else if(X.big==='timp'){P('bdm',.6*gg,{d:.9,v:0});if(SMP.ok&&SMP.ok.tim)sPlay('tim',(AU.style?AU.style.root:55)*1.5,t,1.2,g*.55*gg,0,.002,.5);}
+      else{P('bdm',.95*gg,{d:1,v:0});if(X.big==='band')P('cym',.3*gg,{d:1.2,rel:.3});}break;}
+    default:return false;}
+  return true;}
+{const _d2=drum;drum=function(t,k,g=1){if(AU.style&&AU.style.we&&WE_DR[k]){if(WEP.ok&&weDrum(t,k,g))return;return _d2(t,WE_DR[k],g*.8);}return _d2(t,k,g);};}
+// The regional layer on top of meScore for these nations: brass-band oom-pah (tuba on the beat, chords off it),
+// accordion, balalaika or bandura off-beat chords, a walking pizzicato bass, Orthodox church bells, piccolo
+// obbligato, the tres guajeo, piano montuno and baby-bass tumbao, mambo brass, and the anthem in the finale.
+function weChord(kind,ch,hz,t,dur,gain){for(const d of [0,2,4])weInst(kind,hz(ch+d),t+(kind==='m_balalaika'||kind==='m_bandura'?d*.012:0),dur,gain);}
+function weScore(t,tq,i,bar,sec,ch,hz,S,sp,battle,lv){const X=S.mx||{},bi=bar%8,nx=S.prog[Math.floor((bar+1)/2)%S.prog.length];
+  if(X.oom&&(sec>=1||bi>=4)){const on=battle?1:.8;
+    if(i===0||i===8){const r=hz(i===0?ch:ch+4);if(X.oom==='band'||X.oom==='klez')tuba(r*2,t,sp*3,.24*lv*on);else weBass(r,t,sp*3,.2*lv*on);}
+    if(i===4||i===12){const d=sp*(X.oom==='klez'?1.4:1.6);if(X.oom==='band'){for(const k of [0,2,4])brass(hz(ch+k)*4,t,d,.055*lv*on,1500);}
+      else if(X.oom==='klez')weChord('m_accord',ch,hz,t,d,.05*lv*on);else if(X.oom==='bal')weChord('m_balalaika',ch,hz,t,sp*.8,.05*lv*on);else if(X.oom==='bnd')weChord('m_bandura',ch,hz,t,sp*1.2,.05*lv*on);}
+    if(X.oom==='bal'&&battle&&(i===6||i===14))weChord('m_balalaika',ch,hz,t,sp*.6,.04*lv);}
+  if(X.walk&&sec>=1&&i%4===0&&SMP.ok&&SMP.ok.piz){const d=ch+[0,2,4,5][i/4];xPlay(SMP.ok.piz,fold(hz(d),55,140),t,sp*3.5,.11*lv,{rel:.2});}
+  if(X.timp&&i===0&&bar%2===0&&sec>=1)drum(t,'P',(battle?.8:.55)*lv);
+  if(X.timp&&bi===7&&i===8&&sec>=1)drum(t,'X',.6*lv);
+  if(X.bells){if(i===0&&(bar%2===0&&sec>=1||bar%4===0))weInst('m_bell',hz(0),t,2.5,(sec===0?.1:.14)*lv);
+    if(battle&&(i===4||i===6||i===10||i===12)&&Math.random()<.75)weInst('m_bell',hz(ch+[4,2,7,4][(i===4?0:i===6?1:i===10?2:3)])*2,t,1.5,.06*lv);}
+  if(X.picc&&sec===3&&i%2===0){const seq=[0,2,4,7,4,2,4,2];weInst('m_fife',hz(ch+seq[(i/2)%8])*2,t,sp*.9,.045*lv);}
+  if(X.glk&&sec>=1&&i===0&&bar%2===0)weInst('m_glock',hz(ch+4),t,1,.08*lv);
+  if(X.arp&&sec>=1&&sec<=2&&i%2===0&&!(i%8===6)){const seq=[0,2,4,2,3,1,2,4];if(sec===2||i%4===0)meInst(X.arp,hz(ch+seq[(i/2)%8])*(X.arp==='m_bandura'?1:2),tq,sp*2,(sec===2?.06:.05)*lv);}
+  // Cuban son: the tres guajeo, the bass's anticipated tumbao, piano montuno and the brass mambo riff
+  if(X.guajeo&&sec>=1){const G=[[0,0],[3,2],[4,4],[6,2],[8,4],[10,0],[11,2],[14,4]];for(const [st,d] of G)if(i===st)weInst('m_tres',hz((bar%2?nx:ch)+d)*2,t,sp*1.5,(battle?.07:.06)*lv);}
+  if(X.tumbao&&(sec>=1||bi>=4)&&(i===6||i===12)){const r=hz(i===12?nx:ch);if(!weBass(r,t,sp*(i===6?6:4),.24*lv))mnote(r,t,sp*3,'triangle',.4,800,.005,sp*2);}
+  if(X.montuno&&battle&&[0,3,6,8,10,12,14].includes(i)){const d=[0,4,2,4,0,4,2][[0,3,6,8,10,12,14].indexOf(i)];weInst('m_piano',hz(ch+d)*2,t,sp*1.2,.05*lv);}
+  if(X.mambo&&battle&&bar%2===0&&[0,3,6,10].includes(i)){const d=[4,4,2,4][[0,3,6,10].indexOf(i)];for(const k of [0,-2])brass(fold(hz(ch+d+k)*4,230,900),t,sp*1.4,.07*lv,3200);brass(fold(hz(ch)*2,100,260),t,sp*1.4,.06*lv,1300);}}
+// a plucked bass note (the Cuban baby bass, the bass under the balalaika and bandura) from the main sheet
+function weBass(f,t,dur,gain){const M=SMP.ok;if(!M||!M.piz)return false;xPlay(M.piz,fold(f,45,130),t,Math.min(dur,1.2),gain,{rel:.25,lp:1800});if(M.cbs)xPlay(M.cbs,fold(f,45,130),t,Math.min(dur,.8),gain*.35,{att:.01,rel:.2,lp:900});return true;}
+// scales: Turkish makams in cents (53-comma tuning: the Hicaz 2nd is 113 cents, the Ussak 2nd 181), klezmer freygish
+// (Ahava Rabbah), the Ukrainian Dorian with its raised 4th, Russian minor
+const TURK={hicaz:[0,113,384,498,702,792,996],ussak:[0,181,294,498,702,792,996]};
+const FREYGISH=[0,1,4,5,7,8,10],UADOR=[0,2,3,6,7,9,10],MAJ=[0,2,4,5,7,9,11],MIN=[0,2,3,5,7,8,10],HMIN=[0,2,3,5,7,8,11];
+const CLAVE32='V..V..V...V.V...',RUMBA32='V..V...V..V.V...',SONB='i.v.i.I.i.v.i.I.',TUMB='m.m.q.m.m.m.c.c.';
+Object.assign(STYLES,{
+  // United States: a fife-and-drum corps on Yankee Doodle (18th-century, public domain), the cavalry charge on the
+  // bugle in battle; then a Sousa-style march band with cornets, glockenspiel, tuba oom-pah and piccolo obbligato
+  US:{me:1,we:1,name:'Bugles of Liberty',scale:MAJ,root:58.27,bpm:112,prog:[0,3,4,0,0,3,4,0],lead:'m_fife',lead2:'m_cornet',pad:'none',bass:'drone',
+    perc:['K.sSR.s.K.sSR.S.','KsSsRsSsKsSsRSSS'],motif:[[0,2],[0,2],[1,2],[2,2],[0,2],[2,2],[1,4],[0,2],[0,2],[1,2],[2,2],[0,4],[-1,4]],
+    mx:{big:'field',roll:'R',lay:{1:['K.......K.......'],2:['K...K...K...K...','h.h.h.h.h.h.h.h.']},call:'m_cornet',cg:.14,cm:[[0,2],[2,2],[4,2],[7,4],[4,2],[7,8]]}},
+  US_b:{me:1,we:1,name:'Eagle Charge',scale:MAJ,root:58.27,bpm:120,prog:[0,0,4,4,3,0,4,0],lead:'m_cornet',lead2:'m_horn',pad:'strings',bass:'drone',
+    perc:['K.s.S.s.K.s.S.s.','KsSsKsSsKsSsKRSS'],motif:[[0,2],[2,2],[4,4],[7,4],[6,2],[4,2],[5,4],[4,2],[2,2],[3,4],[2,2],[1,2],[0,8]],
+    mx:{big:'band',oom:'band',picc:1,glk:1,roll:'R',lay:{2:['C.......C.......']},call:'m_trp',cg:.12,cm:[[4,1],[4,1],[4,2],[7,4],[4,2],[7,6]]}},
+  // Turkey: the Ottoman mehter (zurnas and borus over davul, kos, nakkare and zil, makam Hicaz, the march usul), then an
+  // Anatolian piece in makam Ussak: a ney taksim, kanun and kemence over darbuka and def, and a zurna-davul halay in battle
+  TR:{me:1,we:1,name:'Mehter Advance',scale:TURK.hicaz.map(c=>c/100),root:55,bpm:92,prog:[0,0,3,0,4,3,0,0],lead:'m_zurna',lead2:'m_mehter',pad:'none',bass:'drone',
+    perc:['U...u.u.U...u...','U.u.u.u.U.uuu.u.'],motif:[[0,2],[1,2],[2,4],[3,2],[4,4],[3,2],[2,2],[1,4],[2,2],[1,2],[0,8]],
+    mx:{big:'davul',roll:'n',lay:{1:['n...n...n...n...'],2:['n.nnn.nnn.nnn.nn','Y.......Y.......']},call:'m_boru',rows:1,cg:.15,cm:[[0,2],[4,2],[0,2],[4,2],[7,8]],an:0}},
+  TR_b:{me:1,we:1,name:'Anatolian Storm',scale:TURK.ussak.map(c=>c/100),root:55,bpm:104,prog:[0,0,3,0,4,3,0,0],lead:'m_qanun',lead2:'m_kam',pad:'none',bass:'drone',
+    perc:['d...t.k.d.t.t...','d.ktt.ktd.ktt.kt'],motif:[[1,2],[2,2],[3,4],[2,2],[1,2],[2,2],[0,2],[1,4],[3,2],[4,2],[3,2],[2,2],[1,2],[0,6]],
+    mx:{dr:'cel',tq:'m_ney',big:'davul',lay:{1:['f.......f.......'],2:['U.......U...U...','f...f...f...f...']},roll:'tk',call:'m_zurna',rows:1,cg:.16,cm:[[4,3],[3,1],[2,2],[1,2],[0,6]],an:0}},
+  // Israel: klezmer in freygish (a clarinet doina, then a freylekhs with fiddle, accordion off-beats and tsimbl), and a
+  // Mizrahi hora in maqam Hijaz on oud, kanun and darbuka with group claps; Hatikvah by the band in the finale
+  IL:{me:1,we:1,name:'Negev Watch',scale:FREYGISH,root:58.27,bpm:104,prog:[0,0,6,0,5,5,1,0],lead:'m_clar',lead2:'m_fiddle',pad:'none',bass:'drone',
+    perc:['K..s..s.K..s..s.','K.sK.sS.K.sK.sSS'],motif:[[4,2],[5,2],[4,2],[3,2],[2,2],[1,2],[2,4],[1,1],[2,1],[1,2],[0,2],[-1,2],[0,8]],
+    mx:{tq:'m_clar',oom:'klez',arp:'m_santur',roll:'s',lay:{2:['....C.......C...']},call:'m_fiddle',cg:.15,cm:[[4,2],[4,2],[5,2],[4,1],[3,1],[2,4],[1,2],[0,6]]}},
+  IL_b:{me:1,we:1,name:'Hora of Steel',scale:mq('hijaz'),root:58.27,bpm:118,prog:[0,0,3,0,4,3,0,0],lead:'m_fiddle',lead2:'m_qanun',pad:'none',bass:'drone',
+    perc:[MAQSUM,'d.tkd.tkd.tkdttt'],motif:[[0,2],[1,2],[2,2],[3,2],[4,4],[5,2],[4,2],[3,2],[2,2],[1,4],[2,2],[1,2],[0,8]],
+    mx:{dr:'cel',tq:'m_oud',lay:{1:[RIQ],2:[RIQ,'w..w..w.w..w..w.']},roll:'tk',call:'m_clar',rows:1,cg:.16,cm:[[4,2],[3,2],[4,4],[2,2],[1,2],[0,6]]}},
+  // Europe: a baroque fanfare (trumpets in thirds, timpani, strings, walking pizzicato bass), then a European military
+  // march on Beethoven's Ode to Joy (the EU anthem) with snare, bass drum, cymbals and glockenspiel
+  EU:{me:1,we:1,name:'Concert of Europe',scale:MAJ,root:49,bpm:100,prog:[0,4,5,3,0,3,4,0],lead:'m_trp',lead2:'m_horn',pad:'strings',bass:'drone',
+    perc:['P.......s.......','P..PS..PP..PS.SS'],motif:[[0,2],[0,1],[0,1],[2,2],[4,2],[4,2],[4,1],[4,1],[7,4],[6,2],[5,2],[4,4],[2,2],[3,2],[1,4],[0,8]],
+    mx:{big:'timp',timp:1,walk:1,arp:'m_gusli',lay:{2:['S...s.s.S...s.ss']},roll:'S',call:'m_trp',cg:.13,cm:[[0,1],[0,1],[0,2],[4,2],[7,6]]}},
+  EU_b:{me:1,we:1,name:'Rhine Line',scale:MAJ,root:49,bpm:116,prog:[0,4,0,4,0,4,3,0],lead:'m_horn',lead2:'m_cornet',pad:'strings',bass:'drone',
+    perc:['K.s.S.s.K.s.S.s.','KsSsKsSsKsSsKRSS'],motif:[[2,2],[2,2],[3,2],[4,2],[4,2],[3,2],[2,2],[1,2],[0,2],[0,2],[1,2],[2,2],[2,3],[1,1],[1,4]],
+    mx:{big:'band',oom:'band',glk:1,picc:1,timp:1,roll:'R',lay:{2:['C.......C.......']},call:'m_trp',cg:.12,cm:[[2,2],[2,2],[3,2],[4,2],[4,2],[3,2],[2,2],[1,2]]}},
+  // Ukraine: a kobzar's duma on bandura (with its tremolo) and sopilka over a male choir, in the Ukrainian Dorian; then
+  // a Cossack march: sopilka and choir, bandura strummed on the off-beats, bubon, snare and tambourine
+  UA:{me:1,we:1,name:'Steppe Duma',scale:UADOR,root:55,bpm:84,prog:[0,5,2,6,0,3,4,0],lead:'m_bandura',lead2:'m_sop',pad:'choir',bass:'drone',
+    perc:['A.......A.......','A...A.s.A...A.ss'],motif:[[0,2],[2,2],[3,2],[4,2],[3,4],[2,2],[1,2],[0,4],[4,4],[5,2],[4,2],[3,8]],
+    mx:{tq:'m_bandura',arp:'m_bandura',lay:{2:['N.N.N.N.N.N.N.N.']},roll:'s',call:'m_choir',cg:.14,cm:[[4,4],[5,2],[4,2],[3,4],[2,4],[0,8]]}},
+  UA_b:{me:1,we:1,name:'Kozak March',scale:HMIN,root:55,bpm:120,prog:[0,3,4,0,0,3,4,0],lead:'m_sop',lead2:'m_choir',pad:'none',bass:'drone',
+    perc:['A...s...A.s.s...','A.sSA.sSA.sSAsSS'],motif:[[0,2],[0,1],[0,1],[2,2],[4,2],[4,2],[3,2],[2,4],[3,2],[3,2],[2,2],[1,2],[0,8]],
+    mx:{oom:'bnd',lay:{1:['N...N...N...N...'],2:['N.N.N.N.N.N.N.N.']},roll:'R',call:'m_choir',rows:1,cg:.14,cm:[[4,2],[4,2],[5,2],[4,2],[2,4],[0,8]]}},
+  // Russia: an Orthodox choir with church bells (big bell on the tonic, a peal in battle), gusli and balalaika tremolo;
+  // then a soldiers' choir march with balalaika strumming and bayan, brass band, snare and bass drum
+  RU:{me:1,we:1,name:'Bells of the Kremlin',scale:MIN,root:46.25,bpm:76,prog:[0,5,3,4,0,5,2,4],lead:'m_balalaika',lead2:'m_choir',pad:'choir',bass:'drone',
+    perc:['K.......K.......','K...X...K.s.K.ss'],motif:[[0,4],[0,2],[2,2],[3,4],[2,4],[0,4],[-1,4],[0,8]],
+    mx:{tq:'m_gusli',bells:1,arp:'m_domra',roll:'s',call:'m_choir',cg:.16,cm:[[4,4],[3,2],[2,2],[3,4],[0,8]],an:0}},
+  RU_b:{me:1,we:1,name:'Volga Thunder',scale:HMIN,root:46.25,bpm:112,prog:[0,3,4,0,5,3,4,0],lead:'m_choir',lead2:'m_band',pad:'none',bass:'drone',
+    perc:['K.s.S.s.K.s.S.s.','KsSsKsSsKsSsKRSS'],motif:[[0,2],[2,2],[4,4],[4,2],[3,2],[2,4],[3,2],[4,2],[5,4],[4,2],[2,2],[3,4],[2,2],[1,2],[0,8]],
+    mx:{big:'band',oom:'bal',bells:0,lay:{2:['C.......C.......']},roll:'R',call:'m_tpt',cg:.12,cm:[[0,2],[4,2],[7,4],[4,2],[7,6]],an:0}},
+  // Cuba: son cubano (3-2 son clave, tres guajeo, bongo martillo, guiro, maracas, the baby bass's anticipated tumbao,
+  // trumpet), then a mambo charge on rumba clave with congas, cowbell, piano montuno and brass riffs
+  CU:{me:1,we:1,name:'Sierra Maestra Son',scale:MAJ,root:55,bpm:104,prog:[0,3,4,3,0,3,4,4],lead:'m_tres',lead2:'m_tpt',pad:'none',bass:'drone',
+    perc:[CLAVE32,CLAVE32],motif:[[4,2],[4,1],[5,1],[4,2],[2,2],[0,4],[1,2],[2,2],[4,2],[2,6]],
+    mx:{big:'conga',guajeo:1,tumbao:1,lay:{0:['a.a.a.a.a.a.a.a.'],1:[SONB,'g...g.g.g...g.g.','a.a.a.a.a.a.a.a.'],2:[SONB,TUMB,'g...g.g.g...g.g.','E.J.E.E.E.J.E.E.']},roll:'c',call:'m_tpt',cg:.14,cm:[[4,2],[4,1],[5,1],[4,2],[2,2],[0,6]]}},
+  CU_b:{me:1,we:1,name:'Havana Charge',scale:MIN,root:55,bpm:124,prog:[0,3,4,0,0,3,4,4],lead:'m_tpt',lead2:'m_band',pad:'none',bass:'drone',
+    perc:[RUMBA32,RUMBA32],motif:[[0,2],[2,2],[3,2],[4,4],[3,1],[4,1],[6,2],[4,2],[3,2],[2,2],[0,6]],
+    mx:{big:'conga',guajeo:1,tumbao:1,montuno:1,mambo:1,lay:{1:[TUMB,'a.a.a.a.a.a.a.a.'],2:[TUMB,'E.J.E.E.E.J.E.E.','l.....l.l.....l.']},roll:'q',call:'m_tpt',rows:1,cg:.13,cm:[[4,2],[3,1],[4,1],[6,2],[4,2],[0,6]]}},
+});
+Object.assign(PLAYLIST,{US:['US','US_b'],TR:['TR','TR_b'],IL:['IL','IL_b'],EU:['EU','EU_b'],UA:['UA','UA_b'],RU:['RU','RU_b'],CU:['CU','CU_b']});
+Object.assign(STYLES,{west:STYLES.US,slavic:STYLES.RU,latin:STYLES.CU});
+// measured output levels (headless renders of the music bus): battle and menu matched to the Arabic and Asian scores
+for(const [k,v] of Object.entries({US:[1.38,1.78],US_b:[1.38,1.78],TR:[1.62,1.51],TR_b:[1.62,1.51],CU:[1.66,1.76],CU_b:[1.66,1.76],IL:[1.48,1.95],IL_b:[1.48,1.95],EU:[1.43,1.68],EU_b:[1.43,1.68],UA:[1.86,1.46],UA_b:[1.86,1.46],RU:[1.58,1.28],RU_b:[1.58,1.28]}))Object.assign(STYLES[k],{og:v[0],ogc:v[1]});
+// menu credits for the instrument recordings and anthems (the credits list lives in the page shell, so it is added from here)
+(function weCredits(){try{if(document.getElementById('weCred'))return;const ps=[...document.querySelectorAll('p.credits')],pr=document.getElementById('asCred')||ps.find(p=>/Middle Eastern instruments/.test(p.textContent))||ps[0];if(!pr)return;
+  const p=document.createElement('p');p.className='credits';p.id='weCred';
+  p.textContent='American, Turkish, Israeli, European, Ukrainian, Russian and Cuban instruments: recorder (fife, sopilka), folk harp (bandura), strumstick (balalaika, domra, tres), psaltery (gusli), grand piano, glockenspiel, tubular bells, field snare, bass drum, cymbals, timpani, congas, bongos, claves, guiro, cowbell, shaker and tambourine from the Versilian Community Sample Library by Versilian Studios / Sam Gossner (CC0). Turkish zurna by cdrk (Freesound #18661, CC BY 4.0); davul by kroshe (Freesound #468506, CC0). National anthems performed by the United States Navy Band (public domain, via Wikimedia Commons and the Internet Archive): The Star-Spangled Banner, the Anthem of Europe (Beethoven), Hatikvah, Shche ne vmerla Ukrainy, La Bayamesa, Jana Gana Mana (Tagore), March of the Volunteers (Nie Er) and Bilady, Bilady, Bilady (Sayed Darwish).';
+  pr.insertAdjacentElement('afterend',p);}catch(e){}})();
+
 // ===== Your own music =====
 // Players can import their own tracks (mp3, m4a, ogg, wav, flac...). They are kept in this browser (IndexedDB)
 // and play through the music bus, so the music volume, the music toggle and the voice ducking all apply.
@@ -1027,8 +1267,8 @@ async function myStart(){MYM.list=await myList();if(myMode()==='mine'&&MYM.list.
 function myUI(){const n=$('myN');if(n)n.textContent=MYM.list.length?(MYM.list.length+' track'+(MYM.list.length>1?'s':'')+' imported'+(MYM.on&&MYM.list[MYM.i]?' · now playing: '+MYM.list[MYM.i].name:'')):'No tracks imported yet';
   const s=$('sTrk');if(s)for(const b of s.querySelectorAll('button'))b.classList.toggle('on',b.dataset.v===myMode());}
 const _startMusic=startMusic,_stopMusic=stopMusic;
-stopMusic=function(){_stopMusic();if(!MYM.keep)myStop();};
-startMusic=function(style,calm){if(!AU.ctx)return;AU.menuKey=null;smpLoad();if(ME_FAC[style])meLoad();if(AS_FAC[style])asLoad();myStop();_startMusic(style,calm);if(myMode()==='mine')myStart();};
+stopMusic=function(){_stopMusic();try{anStop(1);}catch(e){}if(!MYM.keep)myStop();};
+startMusic=function(style,calm){if(!AU.ctx)return;AU.menuKey=null;smpLoad();if(ME_FAC[style]||style==='TR'||style==='IL')meLoad();if(AS_FAC[style])asLoad();if(WE_FAC[style])weLoad();if(AN_FAC[style]&&!calm)anLoad(style);try{anStop(1.5);}catch(e){}myStop();_startMusic(style,calm);if(myMode()==='mine')myStart();};
 
 // ===== Menu music =====
 // The main menu, lobby and Victory/Defeat screens play a calm version of the score of the nation picked in the menu
@@ -1069,7 +1309,7 @@ function sndStatus(){const c=AU.ctx,p=[],C=window.AudioContext||window.webkitAud
   p.push('Engine: '+(c?c.state+' ('+c.sampleRate+' Hz)':C?'not started yet (tap anywhere)':'not supported by this browser'));
   if(IOSLIKE){let s='';try{const a=navigator.audioSession;if(a)s='session '+a.type+', ';}catch(e){}p.push('Silent-switch bypass: '+s+'loop '+(SIL.el&&!SIL.el.paused?'playing':'off'));}
   else p.push('Playback session: normal');
-  p.push('Instruments: '+(SMP.st==='ok'?'loaded':SMP.st==='loading'?'loading':SMP.st==='fail'?'failed, using synth':'not loaded yet')+(MEP.st?', regional '+(MEP.st==='ok'?'loaded':MEP.st):'')+(ASP.st?', Asian '+(ASP.st==='ok'?'loaded':ASP.st):''));
+  p.push('Instruments: '+(SMP.st==='ok'?'loaded':SMP.st==='loading'?'loading':SMP.st==='fail'?'failed, using synth':'not loaded yet')+(MEP.st?', regional '+(MEP.st==='ok'?'loaded':MEP.st):'')+(ASP.st?', Asian '+(ASP.st==='ok'?'loaded':ASP.st):'')+(WEP.st?', Western '+(WEP.st==='ok'?'loaded':WEP.st):''));
   const f=(G&&G.teams&&G.teams[ME]&&G.teams[ME].fac)||(typeof setup!=='undefined'&&setup&&setup.p)||'US',vb=VOB[f];
   p.push('Voices: '+f+' clips '+(vb&&typeof vb!=='string'?'ready':vb==='loading'?'loading':vb==='fail'?'failed':'not loaded')+', device voices '+(window.speechSynthesis?(AU.voices.length||speechSynthesis.getVoices().length):'none'));
   p.push('Music '+(AU.musicOn?SET.mus+'%':'off')+', Sound '+(AU.sfxOn?SET.fx+'%':'off')+', Voices '+(AU.voiceOn?SET.vo+'%':'off'));
@@ -1088,4 +1328,115 @@ function testSound(){audioUnlock();const c=AU.ctx;if(!c){sndShow();return;}
   w.innerHTML='<div class="label">Sound check</div>'+
     '<div class="myrow"><button id="sndTest" class="btn2" type="button">Test sound</button></div><div style="font-size:12px;opacity:.7;margin-top:6px">You should hear a radio beep, then a voice. No sound? Send us this line:</div><div class="sv" id="sndSt" style="margin:2px 0 6px;opacity:.85;word-break:break-word"></div>';
   vo.insertAdjacentElement('afterend',w);$('sndTest').addEventListener('click',testSound);sndShow();}catch(e){}})();
+
+// ===== Shared soundtrack =====
+// One set of real recorded tracks for every nation (Abdullah, 2026-10-27), built by mus/st_pack.py into
+// mus/st/<id>.mp3. Pools: menu (main menu, lobby, after the end-screen sting), calm and combat (in battle, switched on
+// AU.heat, the fighting-intensity signal), victory and defeat. Tracks stream through two <audio> decks routed into the
+// music bus, so the Music volume, the music toggle, voice ducking and the iOS unlock all still apply, and only the
+// track about to play is downloaded (never the whole set: phones). At battle start the player's nation's anthem
+// (mus/an_XX.mp3, where there is one) plays first and the score fades in after it; on victory the anthem follows the
+// victory track. If a track can't load (offline, error) the generated score takes over, so there's never silence.
+// "My music" still replaces all of this when chosen. Purely local: nothing here touches the battle or the network game.
+const ST_TR={'menu-02':['The Fall of Arcana','Matthew Pablo'],'menu-04':['Epic Orchestral Fantasy Theme','Markus Lindner'],
+  'calm-01':['Conflict','Alexandr Zhelanov'],'calm-02':['Enemy Spotted','Alexandr Zhelanov'],'calm-03':['Tabuk','Kevin MacLeod'],'calm-05':['Impending Boom','Kevin MacLeod'],
+  'combat-01':['Dream Raid','Matthew Pablo'],'combat-02':['Tactical Pursuit','Matthew Pablo'],'combat-05':['Howitzer','joeBaxterWebb'],'combat-06':['Act of War','Alexandr Zhelanov'],
+  'combat-09':['Black Vortex','Kevin MacLeod'],'combat-11':['Curse of the Scarab','Kevin MacLeod'],'victory-01':['Egmont Overture Finale','Kevin MacLeod'],'defeat-02':['Death of Kings','Kevin MacLeod']};
+const ST_POOL={};for(const k in ST_TR){const p=k.split('-')[0];(ST_POOL[p]=ST_POOL[p]||[]).push(k);}
+// gain: deck level into the music bus (tracks are mastered to -18 LUFS, calm ones -20); anGain: the anthem's level.
+// hot/cool: AU.heat thresholds into / out of the combat pool; dwell: least time (ms) in a pool before leaving it.
+const ST={decks:[],cur:-1,pool:null,id:null,since:0,last:{},mode:null,fac:null,fail:0,failAt:0,errs:0,an:null,anWait:null,anG:null,endG:null,endK:null,off:0,
+  gain:2.6,anGain:3,fade:3,hot:.35,cool:.1,dwell:{calm:30000,combat:60000},req:[]};
+function stDeck(){const c=AU.ctx,el=new Audio(),d={el,ctx:c,g:c.createGain(),src:null,id:null,on:false,started:false,t0:0,adv:false,tok:0};
+  el.crossOrigin='anonymous';el.preload='none';try{el.setAttribute('playsinline','');}catch(e){}
+  d.g.gain.value=.0001;d.g.connect(AU.musBus);d.src=c.createMediaElementSource(el);d.src.connect(d.g);
+  el.addEventListener('ended',()=>{if(d.on&&ST.decks[ST.cur]===d)stNext(d);});
+  el.addEventListener('error',()=>{if(d.on&&!/^data:/.test(el.src||''))stErr(d,'track '+d.id+' media error '+(el.error?el.error.code:''));});
+  return d;}
+// a rebuilt audio engine (iOS) needs new decks: the old ones belong to the closed engine
+function stCtx(){if(!ST.decks.length||ST.decks[0].ctx===AU.ctx)return;for(const d of ST.decks){d.on=false;try{d.el.pause();}catch(e){}}ST.decks=[];ST.cur=-1;ST.mode=null;ST.an=null;ST.anWait=null;ST.blessed=0;}
+function stDecks(){stCtx();if(!ST.decks.length){ST.decks=[stDeck(),stDeck()];ST.cur=-1;}return ST.decks;}
+function stFadeTo(d,v,sec){const c=AU.ctx,t=c.currentTime,g=d.g.gain;g.cancelScheduledValues(t);g.setValueAtTime(Math.max(.0001,g.value),t);g.linearRampToValueAtTime(Math.max(.0001,v),t+Math.max(.05,sec));}
+function stOff(d,sec){if(!d||!d.on)return;d.on=false;sec=sec==null?ST.fade:sec;try{stFadeTo(d,0,sec);}catch(e){}const tok=++d.tok;setTimeout(()=>{if(d.tok===tok&&!d.on){try{d.el.pause();}catch(e){}}},(sec+.3)*1000);}
+function stPick(pool){const L=ST_POOL[pool]||[];let c=L.filter(k=>k!==ST.id&&k!==ST.last[pool]);if(!c.length)c=L.filter(k=>k!==ST.id);if(!c.length)c=L;return c[Math.random()*c.length|0];}
+function stBattlePool(){ST.mode='battle';return AU.heat>ST.hot?'combat':'calm';}
+// crossfade into a new track from a pool: the new deck fades in (and the old one out) once it actually starts playing
+function stPlay(pool,fade){if(!AU.ctx)return;let D;try{D=stDecks();}catch(e){audioErr('soundtrack',e);return stFallback();}
+  if(!AU.musicOn){ST.pool=pool;ST.off=1;for(const d of D)if(d.on)stOff(d,.3);return;}
+  const id=stPick(pool);if(!id)return;const old=D[ST.cur],d=D[ST.cur===0?1:0],c=AU.ctx;
+  d.tok++;d.on=true;d.started=false;d.adv=false;d.id=id;d.pool=pool;d.fade=fade==null?ST.fade:fade;d.t0=performance.now();d.tryAt=0;d.held=0;d.blocked=0;d.old=old&&old.on?old:null;
+  d.g.gain.cancelScheduledValues(c.currentTime);d.g.gain.setValueAtTime(.0001,c.currentTime);
+  const url='mus/st/'+id+'.mp3';ST.req.push(url);d.el.preload='auto';d.el.src=url;
+  if(pool!==ST.pool)ST.since=performance.now();ST.cur=D.indexOf(d);ST.pool=pool;ST.id=id;ST.last[pool]=id;stStart(d);
+  const T=ST_TR[id];try{if(T&&typeof pushLog==='function'&&G&&!G.over)pushLog('♪ '+T[0]+' — '+T[1]);}catch(e){}}
+function stStart(d){if(AU.ctx.state!=='running')return;const tok=d.tok;let p;try{p=d.el.play();}catch(e){p=Promise.reject(e);}
+  Promise.resolve(p).then(()=>{if(d.tok!==tok||!d.on||d.started)return;d.started=true;ST.errs=0;stFadeTo(d,ST.gain,d.fade);if(d.old){stOff(d.old,d.fade);d.old=null;}})
+    .catch(e=>{if(d.tok!==tok||!d.on)return;if(e&&(e.name==='NotAllowedError'||e.name==='AbortError')){d.blocked=1;return;}stErr(d,e);});}
+// the current track is about to end: what comes next
+function stNext(d){if(d.adv)return;d.adv=true;
+  if(d.pool==='victory'){if(AN_FAC[ST.fac]){stAnthemQ(ST.fac,()=>{ST.mode='menu';return 'menu';});return;}ST.mode='menu';return stPlay('menu');}
+  if(d.pool==='defeat'){if(G&&!G.over&&G.teams&&G.teams[ME])return stPlay(stBattlePool());ST.mode='menu';return stPlay('menu');}
+  stPlay(d.pool);}
+// a track that fails to load: try another one once; if nothing plays, the generated score takes over
+function stErr(d,e){audioErr('soundtrack',e);if(!d.on)return;d.on=false;try{d.el.pause();}catch(x){}ST.errs++;
+  const o=ST.decks.find(x=>x!==d&&x.on&&x.started);
+  if(o&&ST.errs<3){ST.cur=ST.decks.indexOf(o);if(o.pool!==ST.pool)ST.since=performance.now();ST.pool=o.pool;ST.id=o.id;return;}
+  if(ST.errs<2&&ST.mode&&ST.pool){stPlay(ST.pool);return;}
+  stFallback();}
+function stFallback(){ST.fail=1;ST.failAt=performance.now();stHalt();try{AU.musRev.gain.value=.6;}catch(e){}
+  try{if(G&&!G.over&&G.teams&&G.teams[ME])_stGen(G.teams[ME].fac,false);else{AU.menuKey=null;_stMenu();}}catch(e){audioErr('fallback score',e);}}
+function stUse(){if(ST.fail&&performance.now()-ST.failAt>120000)ST.fail=0;return !ST.fail;}// back online: try again
+function stAnthemQ(fac,then){anLoad(fac);ST.anWait={fac,then,until:performance.now()+15000};}
+function stAnthem(buf,then){const c=AU.ctx,src=c.createBufferSource(),g=c.createGain(),t=c.currentTime+.05,L=buf.duration;src.buffer=buf;
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(ST.anGain,t+.1);g.gain.setValueAtTime(ST.anGain,t+Math.max(.2,L-2));g.gain.linearRampToValueAtTime(.0001,t+L);
+  src.connect(g);g.connect(AU.musBus);src.start(t);src.stop(t+L+.05);const d=ST.decks[ST.cur];if(d&&d.on)stOff(d,1.5);ST.an={src,g,end:t+L,then,next:0};}
+function stAnStop(){ST.anWait=null;const a=ST.an;ST.an=null;if(!a||!AU.ctx)return;const c=AU.ctx;try{a.g.gain.cancelScheduledValues(c.currentTime);a.g.gain.setTargetAtTime(.0001,c.currentTime,.2);a.src.stop(c.currentTime+.8);}catch(e){}}
+function stHalt(){ST.mode=null;stAnStop();for(const d of ST.decks)if(d.on)stOff(d,.8);ST.id=null;ST.pool=null;ST.off=0;}
+function stGo(style,calm){stCtx();AU.menuKey=null;try{AU.musRev.gain.setTargetAtTime(.08,AU.ctx.currentTime,.2);}catch(e){}// recorded tracks bring their own hall
+  if(calm){if((ST.mode==='menu'||ST.mode==='end')&&(ST.decks.some(d=>d.on)||ST.an||ST.anWait||ST.off))return;ST.mode='menu';stAnStop();return stPlay('menu');}
+  if(ST.mode==='battle'&&ST.fac===style&&(ST.decks.some(d=>d.on)||ST.an||ST.anWait||ST.off))return;
+  ST.mode='battle';ST.fac=style;AU.heat=0;stAnStop();
+  if(AN_FAC[style]&&ST.anG!==G&&AU.musicOn){ST.anG=G;stAnthemQ(style,stBattlePool);}else stPlay(stBattlePool());}
+function stEnd(won,elim){if(!AU.ctx||!G||myMode()==='mine'||ST.fail)return;const k=won?'v':'d';if(ST.endG===G&&ST.endK===k)return;ST.endG=G;ST.endK=k;
+  stCtx();stAnStop();ST.mode=elim?'battle':'end';stPlay(won?'victory':'defeat',1.5);}
+function stTick(){try{if(!AU.ctx||ST.fail)return;stCtx();if(!AU.timer)AU.heat=Math.max(0,AU.heat-.006);if(!ST.mode)return;const c=AU.ctx,now=performance.now();
+  if(!AU.musicOn){if(!ST.off){ST.off=1;for(const d of ST.decks)if(d.on)stOff(d,.3);stAnStop();}return;}
+  if(ST.off){ST.off=0;if(ST.mode==='end')ST.mode='menu';stPlay(ST.mode==='menu'?'menu':stBattlePool(),1);return;}
+  const run=c.state==='running';
+  for(const d of ST.decks){if(!d.on)continue;
+    if(!run){if(!d.el.paused){try{d.el.pause();}catch(e){}d.held=1;}continue;}
+    if(d.el.paused&&(d.held||d.blocked||!d.started)&&now-(d.tryAt||0)>1500){d.tryAt=now;d.held=0;d.blocked=0;if(d.started)d.el.play().catch(()=>{});else stStart(d);}
+    if(!d.started&&now-d.t0>25000)stErr(d,'track '+d.id+' did not start (slow or no connection)');}
+  if(!run)return;
+  if(ST.anWait){const w=ST.anWait,e=ANB[w.fac];if(e&&e.st==='ok'){ST.anWait=null;stAnthem(e.buf,w.then);}else if(!e||e.st==='fail'||now>w.until){ST.anWait=null;stPlay(w.then(),2);}return;}
+  if(ST.an){if(!ST.an.next&&c.currentTime>=ST.an.end-ST.fade){ST.an.next=1;stPlay(ST.an.then(),ST.fade);}if(c.currentTime>ST.an.end+.5)ST.an=null;return;}
+  if(ST.mode==='battle'&&(ST.pool==='calm'||ST.pool==='combat')){const want=ST.pool==='calm'?(AU.heat>ST.hot?'combat':'calm'):(AU.heat<ST.cool?'calm':'combat');
+    if(want!==ST.pool&&now-ST.since>=ST.dwell[ST.pool]){stPlay(want);return;}}
+  const d=ST.decks[ST.cur];if(d&&d.on&&d.started&&!d.adv&&isFinite(d.el.duration)&&d.el.duration>0&&d.el.currentTime>d.el.duration-ST.fade-.25)stNext(d);
+}catch(e){audioErr('soundtrack',e);}}
+setInterval(stTick,250);
+// iOS lets an <audio> element play later without a tap only if it first played during one: bless both decks then
+function stBless(){try{if(!IOSLIKE||!AU.ctx||ST.blessed||ST.fail)return;const D=stDecks();for(const d of D){if(d.on)continue;d.el.src=silentURI();const p=d.el.play();if(p&&p.then)p.then(()=>{if(!d.on)d.el.pause();}).catch(()=>{});}ST.blessed=1;}catch(e){}}
+for(const ev of ['touchend','click','keydown'])window.addEventListener(ev,stBless,{capture:true,passive:true});
+const _stGen=startMusic,_stStop=stopMusic,_stMenu=menuMusic;
+startMusic=function(style,calm){if(!AU.ctx)return;
+  if(!stUse()){stHalt();return _stGen(style,calm);}
+  if(myMode()==='mine'){stHalt();_stStop();myList().then(l=>{MYM.list=l;if(myMode()!=='mine')return;if(l.length&&AU.ctx){if(!MYM.on)myNext();}else stGo(style,calm);});return;}
+  _stStop();stGo(style,calm);};
+stopMusic=function(){_stStop();stHalt();};
+menuMusic=function(){if(!AU.ctx||AU.ctx.state==='suspended'&&G&&G.paused)return;stCtx();
+  if(myMode()==='mine'||ST.fail){if(ST.mode)stHalt();return _stMenu();}
+  if(!onMenu()){AU.menuKey=null;return;}
+  if(ST.mode==='menu'||ST.mode==='end')return;
+  startMusic((typeof setup!=='undefined'&&setup.p)||'US',true);};
+myStart=async function(){MYM.list=await myList();if(myMode()==='mine'&&MYM.list.length&&AU.ctx){stHalt();MYM.keep=1;_stStop();MYM.keep=0;myNext();return true;}
+  myStop();if(G&&!G.over&&G.teams&&G.teams[ME]&&!AU.timer)startMusic(G.teams[ME].fac);return false;};
+{const _se=showEnd,_sl=showElim;
+  showEnd=function(winner){const r=_se.apply(this,arguments);try{stEnd(winner>=0&&ally(winner,ME),false);}catch(e){audioErr('soundtrack',e);}return r;};
+  showElim=function(){const r=_sl.apply(this,arguments);try{stEnd(false,true);}catch(e){audioErr('soundtrack',e);}return r;};}
+{const _ss=sndStatus;sndStatus=function(){return _ss()+' · Soundtrack: '+(ST.fail?'could not load, playing the generated score':ST.id&&ST_TR[ST.id]?ST_TR[ST.id][0]+' ('+ST.pool+')':ST.an?'anthem':'idle');};}
+(function stCredits(){try{if(document.getElementById('stCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
+  const p=document.createElement('p');p.className='credits';p.id='stCred';
+  p.textContent='Soundtrack: The Fall of Arcana, Dream Raid and Tactical Pursuit by Matthew Pablo (www.matthewpablo.com, CC BY 3.0); Epic Orchestral Fantasy Theme by Markus Lindner (CC BY 4.0); Conflict (CC BY 4.0), Enemy Spotted and Act of War (CC BY 3.0) by Alexandr Zhelanov; Howitzer by joeBaxterWebb (CC BY 4.0); all via OpenGameArt.org. Tabuk, Impending Boom, Black Vortex, Curse of the Scarab, Egmont Overture Finale and Death of Kings by Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/';
+  ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
 

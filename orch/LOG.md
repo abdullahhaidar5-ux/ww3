@@ -2,6 +2,104 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-27 18:20 — side lane (this chat): shared soundtrack shipped
+
+- Abdullah: "keep what you think is best and proceed". ORCH picked 14 of the 32 candidates (2 menu, 4 calm, 6 combat,
+  1 victory, 1 defeat); Audio agent built the track player + anthems; sound-effects-off heat fix added.
+- Gate (merged on current main): `--check` OK, MUSICCHECK PASS, smoke 4p PASS, MPSYNC PASS, artifact smoke PASS.
+- Note: another side lane (`orch/soundtrack`) had only encoded files; backlog tells it this supersedes its step 2.
+
+## 2026-10-27 12:24 → 14:20 — cycle 10
+
+- No lock on main; took it. Baseline: `--check` OK, SMOKE PASS.
+- Shipped 4 squads: Netcode (Stage 2: host-to-player netcode in browser-free `src/07a-hostsnap.js`; `headless.mjs
+  --hostsnap --compare` identical 4,265/4,265 messages), Visuals (Graphics Phase 1 slice 2: battles load only their
+  nations' models; throttled 4 Mbit/s Start → first frame 61 → 40 s), QA (artifact edition publishes models as base64
+  `.txt`; harness serves only host-accepted types), Audio (IN/CN/EG Navy Band anthems in the finale; IL confirmed).
+- Fresh review of 07-net/07a/07b + models: no blockers. Applied its should-fix (a failed model is retried next battle).
+  Its second note (smoke's model wait weak after per-battle loading) — and the artifact gate failing "2 of 51 models"
+  because it counted all models at the menu — fixed: smoke/mpsync now fail if any model the battle's nations need is
+  missing after the loading screen (40/40 in all editions).
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MPSYNC --server PASS, MIGRATE PASS (failed once: client 59 game-s
+  behind before host left; passed on rerun → backlog watch item), HEADLESS --compare PASS, artifact smoke + MPSYNC PASS.
+- Artifact republished v164 (page + 50 model `.txt` + all `mus/`). Its `vo/*.mp3` differ from every `vo/` in repo
+  history (unknown origin) → left as they are, not overwritten (backlog item). Board republished.
+- Not done: real ney (Freesound 403 from the sandbox). Board republished v14; artifact v164.
+- Chaining blocked again (permission denied for running the scheduled task on demand); 4-hourly schedule (next 21:24 UTC).
+
+## 2026-10-27 08:36 → 10:25 — cycle 9
+
+- No lock on main; took it. Baseline: `--check` OK, SMOKE PASS. Stage 2 step 1 still unlanded on the side lane's
+  `orch/stage2-headless` (last push 08:20, report has a RESULTS_TABLE placeholder) → didn't duplicate it.
+- Shipped 4 squads: Visuals (Graphics Phase 1 slice 1: models out of `index.html` into `models/*.glb.gz`, 8.3 → 1.8 MB),
+  Battlefield (STAGE2 §2 refactor: 01–03 self-contained in Node), Audio (IL/UA/CU Navy Band anthems, real zurna/davul),
+  QA (`check_shell()` in `build.py --check`, per-run screenshot folders).
+- Integration: one conflict in `orch/build.py` (check_shell vs model files) resolved keeping both. Fresh review of the
+  sim/model diff: no blockers; applied its should-fix (stalled model timeout 120 → 30 s). ORCH also removed the
+  loader's pako-from-cdnjs fallback (CLAUDE.md: no new outside hosts).
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MAPSWEEP PASS (71 battles), artifact smoke PASS, artifact MPSYNC PASS.
+- Before shipping, merged main's side-lane work (servers switched on, Stage 2 step 1 landed); adapted `headless.mjs`
+  to the refactor (`BORROW = {}`, `showEnd` stand-in). Gate on the merge: `--check` OK, SERVERTEST, HEADLESS --compare,
+  smoke 4p, MPSYNC, MPSYNC --server, MIGRATE, MIGRATE --abrupt, artifact smoke + MPSYNC all PASS.
+- **Artifact NOT republished:** the claude.ai host refuses `.glb.gz` supporting files (not a served type); it stays
+  on v161 (inline models, works). Fix queued at the top of P1. Board republished (v13).
+- Chaining the next cycle was blocked again (permission denied for running the scheduled task on demand); the 4-hourly
+  schedule (next 17:24 UTC) picks it up.
+
+## 2026-10-27 18:50 — side lane: Cloudflare battle bench shipped (needs Abdullah's servers-live merge)
+
+- `orch/stage2-dedicated` @ b6b0b39: BattleRoom Durable Object (runs the sim, bundled from src/ by server/build-sim.mjs),
+  `/battle-bench`, free-plan limits (3 battles, 45 min, hand-over at 75%), `b|` battle list frame (today's game ignores
+  it), restart recovery; 07-net → 07a host message handling move (browser host unchanged; fresh review: no blockers,
+  its 3 should-fixes applied). Not used by the game yet.
+- Gate (GitHub parallel, orch/cigate.sh): all PASS except migrate-abrupt/-down, which fail on main too on CI runners
+  (being fixed on `orch/open-reconnect-phonebar`); MAPSWEEP PASS (71 battles).
+- PR `main → servers-live` "Battle bench on your servers" for Abdullah to merge; then measure /battle-bench.
+
+## 2026-10-27 11:40 — side lane: multiplayer switched onto Abdullah's servers
+
+- `WW3_SERVER_URL` = https://ww3-servers.abdullah-haidar5.workers.dev. Game list from the server; joiners try direct
+  P2P → TURN (if configured) → server relay → Nostr backup (when the relay is unavailable).
+- Host-migration fixes (netcode side lane, `orch/servers-on-mig`): host tells each player whether it is the standby
+  (`sb` in the team message; a stale checkpoint is dropped), the taking-over player opens the new room before restoring
+  (losing the race leaves it a client), shell handles the server's `taken`. Fresh review: no blockers; its 3
+  should-fixes applied (standby flag moves only when the new standby holds a full checkpoint; Nostr as last step;
+  6 s game-list socket timeout, 2.5 s `/turn` wait).
+- Tests never reach the production server any more (WebSockets leaving the machine are blocked); `migrate.mjs` runs
+  against a local server by default (`--server`, `--server-down`). **Gate needs `npm ci` in `server/` once per
+  worktree**, else servertest/migrate/mpsync --server print nothing.
+- Gate: `--check` OK, SERVERTEST PASS, smoke 4p PASS, MPSYNC PASS, MPSYNC --server PASS, MIGRATE PASS ×2,
+  MIGRATE --server-down PASS, MIGRATE --abrupt PASS, artifact smoke + MPSYNC PASS.
+- Rollback: set `WW3_SERVER_URL=''` and ship.
+
+## 2026-10-27 08:20 — side lane: servers live; page shell restored
+
+- Abdullah's `ww3-servers` Worker is live (root `server`, production branch `servers-live`, previews off; PR #1 merged
+  with his go-ahead). `/health` ok, `servertest --url` PASS against production.
+- Found: the cycle-6 merge (ff0853d) had dropped the page shell's server client code (srvUrl/wsOpen/relay) and the
+  Middle Eastern instrument credits from `index.html`. Restored both from 6eeafe2 (shell hunks only; game span untouched),
+  servers still off. Gate: `--check` OK, smoke 4p, MPSYNC, MIGRATE, artifact smoke + MPSYNC all PASS.
+- Switch-over (`orch/servers-on`) held back: with servers on, MIGRATE fails (client B self-promotes; server says
+  `taken`). Netcode side lane fixing on `orch/servers-on-mig`; tests also must stop reaching the production server.
+- Lesson: when merging a branch built from an older base, resolve `index.html` by rebuilding from merged `src/` on the
+  newer shell — never take the branch's whole shell. A shell-marker check in `build.py --check` is in the backlog.
+
+## 2026-10-27 04:24 → 07:27 — cycle 8
+
+- Waited 5 min on cycle 7's lock (released 09:29 UTC), took it; extended once. Baseline: `--check` OK, SMOKE PASS.
+  Side lanes held 02-map, 04-gfx, 05-fx3d, 08-ui, 10-post, 11-models, smoke/mpsync → dispatched 3 squads.
+- Shipped: Audio (region music for US, TR, IL, EU, UA, RU, CU + US/EU Navy Band anthems, `mus/we.mp3`), Battlefield
+  (balance round 2: AI vehicle share, prices, `tourney.mjs --swap`), Netcode (faster host takeover, own Conditions
+  restored). Fresh review: no blockers; fixed its should-fix (standby gave up takeover for good after a brief network
+  error) and bumped NET_PV 5 → 6 for the price changes. Other notes → backlog.
+- Side lane shipped bottom bar + phone speed onto main mid-cycle; merged it, reran the gate. `migrate.mjs` then failed
+  2/3 at "clients did not settle after the pre-takeover screenshot" (the test freezing the host) → gave it the same
+  watchdog guard `mpsync.mjs` got; passes both modes.
+- Gate (after merge): `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, MIGRATE --abrupt PASS, artifact smoke
+  PASS, artifact MPSYNC PASS. Artifact republished v161 (+`mus/we.mp3`, `an_US.mp3`, `an_EU.mp3`).
+- Chaining the next cycle was blocked (permission denied for running the scheduled task on demand); the 4-hourly
+  schedule (next 13:24 UTC) picks it up.
+
 ## 2026-10-27 07:40 — side lane: bottom command bar + faster phone start shipped
 
 - Merged `orch/bottom-bar` (3d854c4, includes `orch/speed-ship`) onto main (cycles 6–7 + servers); one conflict in

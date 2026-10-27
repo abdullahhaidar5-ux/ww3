@@ -20,16 +20,64 @@ for(const f of ['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP'
 const MIL_TANK={RS:{m:'technical',fit:'z',size:29},DW:{m:'technical',fit:'z',size:29},IM:{m:'toontank',fit:'z',size:32}};
 for(const f of ['US','IL','EU','SA','AE','EG','KR','TR','CN','PK','IN'])MIL_TANK[f]={m:'tankE',fit:'long',size:37};
 const PROPS={container:{fit:'x',size:28},containerG:{fit:'x',size:30},crate:{fit:'y',size:8},barrel:{fit:'y',size:8},sandbag:{fit:'x',size:16},watertower:{fit:'y',size:56},tent:{fit:'x',size:50},pallet:{fit:'x',size:10},fence:{fit:'x',size:24},missile:{fit:'y',size:26},sam:{fit:'y',size:24}};
-function b64u8(s){const b=atob(s),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u;}
-function loadModels(){if(MODELS.loading)return MODELS.loading;MODELS.loading=(async()=>{try{
-    if(typeof MODEL_PACK==='undefined'||!THREE.GLTFLoader)return false;
-    const gz=b64u8(MODEL_PACK);let txt;
-    if(typeof DecompressionStream!=='undefined'){txt=await new Response(new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'))).text();}
-    else{await new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});txt=pako.ungzip(gz,{to:'string'});}const pack=JSON.parse(txt);const ld=new THREE.GLTFLoader();
-    await Promise.all(Object.keys(pack).map(k=>new Promise(res=>{try{ld.parse(b64u8(pack[k]).buffer,'',g=>{MODELS.proto[k]={scene:g.scene,anims:g.animations};res();},()=>res());}catch(e){res();}})));
-    for(const k in MODELS.proto)MODELS.proto[k].scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.encoding=THREE.sRGBEncoding;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);}}});
-    for(const k in MODELS.proto){try{mergeProto(MODELS.proto[k]);}catch(e){console.warn('merge',k,e);}}
-    MODELS.ready=Object.keys(MODELS.proto).length>0;if(!MODELS.ready)MODELS.err='no models parsed';return MODELS.ready;}catch(e){console.warn('models',e);MODELS.err=String(e&&e.message||e);return false;}})();return MODELS.loading;}
+// The models are separate files next to the page (models/<key>.<hash>.glb.gz, listed in MODEL_FILES by orch/build.py).
+// A battle only waits for the models it can show: the shared ones (buildings, props, trees, infantry, generic vehicles)
+// and the national hardware of the nations actually in it (modelsFor, called from the battle's loading screen). While
+// the menu is up the rest are downloaded quietly in the background (two at a time, paused whenever a battle needs
+// files or is being played) and only unpacked when a battle needs them. A file that fails to arrive just leaves that
+// model out (units fall back to a stand-in model or simple shapes, and the battle log says so); a stalled file is
+// given up on after 30 seconds. Nothing in the simulation reads model state, so host and clients stay in sync.
+// Unzipping uses the browser's own DecompressionStream (all current browsers). Very old browsers without it skip the
+// models and use the simple shapes (no extra library is loaded from another host).
+function gunzipU8(u){if(typeof DecompressionStream==='undefined')return Promise.reject(new Error('no DecompressionStream'));
+  return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}
+function fetchModel(url){const ac=typeof AbortController!=='undefined'?new AbortController():null,tm=setTimeout(()=>{if(ac)ac.abort();},30000);
+  return fetch(url,ac?{signal:ac.signal}:undefined).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status+' '+url);return r.arrayBuffer();})
+    .finally(()=>clearTimeout(tm));}
+// a failed file is forgotten, so the next battle tries it again (flaky phone connections)
+// MQ: per file, the download (bytes, still zipped) and the unpacked model; need = battles currently waiting for files
+const MQ={bytes:{},parsed:{},need:0,ld:null,bg:[],bgRun:0};MODELS.failed=[];
+// a nation's own hardware: its tank, militia technical, helicopter, jet and bulldozer models
+function nationModelKeys(f){const s=new Set();for(const kind in RMAP){const rk=RMAP[kind][f];if(rk&&RMOD[rk])s.add(RMOD[rk].m);}
+  if(MIL_TANK[f])s.add(MIL_TANK[f].m);if(f==='RS'||f==='DW')s.add(RMOD.zu.m);return s;}
+// every model that belongs to some nation (or to no unit yet, like the spare realistic models) is loaded only for a
+// battle with that nation; everything else is shared and always loaded
+function modelKeysFor(facs){if(typeof MODEL_FILES==='undefined')return[];const nat=new Set();
+  for(const f of Object.keys(FLOOK))for(const k of nationModelKeys(f))nat.add(k);
+  const want=new Set();for(const f of facs||[])for(const k of nationModelKeys(f))want.add(k);
+  return Object.keys(MODEL_FILES).filter(k=>want.has(k)||!nat.has(k)&&!/^m_/.test(k));}
+function modelBytes(k){const url=MODEL_FILES[k];return MQ.bytes[url]=MQ.bytes[url]||fetchModel(url);}
+function parseModel(k){if(MQ.parsed[k])return MQ.parsed[k];return MQ.parsed[k]=(async()=>{try{
+    if(!THREE.GLTFLoader)throw new Error('no GLTFLoader');const ld=MQ.ld=MQ.ld||new THREE.GLTFLoader();
+    let b=await modelBytes(k);const u=new Uint8Array(b);if(u[0]===0x1f&&u[1]===0x8b)b=await gunzipU8(u);
+    const g=await new Promise((res,rej)=>{try{ld.parse(b,'',res,rej);}catch(e){rej(e);}});const P={scene:g.scene,anims:g.animations};
+    P.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.encoding=THREE.sRGBEncoding;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);}}});
+    try{mergeProto(P);}catch(e){console.warn('merge',k,e);}
+    MODELS.proto[k]=P;MODELS.ready=true;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
+    // the effects module keeps a list of model geometry it must never free; a model added later must join it
+    try{GC_PROTO=null;}catch(e){}return true;}
+  catch(e){MODELS.err=String(e&&e.message||e);if(!MODELS.failed.includes(k))MODELS.failed.push(k);delete MQ.bytes[MODEL_FILES[k]];setTimeout(()=>{delete MQ.parsed[k];},0);console.warn('3D model '+k+' failed to load:',e);return false;}})();}
+// Load (download if needed, then unpack) every model a battle with these nations shows. Resolves with {n, bad} once
+// they are all in or have failed, or after maxMs at the latest (a late model then shows on units built after it lands).
+// onProg(done,total) reports progress for the loading screen.
+function modelsFor(facs,onProg,maxMs){const ks=modelKeysFor(facs);let done=0;MQ.need++;const T0=performance.now();
+  const all=Promise.all(ks.map(k=>parseModel(k).then(ok=>{done++;if(onProg)try{onProg(done,ks.length);}catch(e){}return ok?null:k;})));
+  return Promise.race([all,new Promise(r=>setTimeout(()=>r(null),maxMs||40000))]).then(res=>{MQ.need=Math.max(0,MQ.need-1);setTimeout(bgPump,0);
+    const bad=res?res.filter(Boolean):ks.filter(k=>!MODELS.proto[k]);MODELS.loadMs=Math.round(performance.now()-T0);
+    console.log('3D models for '+(facs||[]).join('/')+': '+(ks.length-bad.length)+' of '+ks.length+' ready in '+MODELS.loadMs+' ms'+(bad.length?' (missing: '+bad.join(', ')+')':''));
+    return{n:ks.length,bad};});}
+// background downloads while the menu is up: shared models first (unpacked straight away, since every battle uses
+// them), then the player's nation, then the rest (downloaded only)
+function bgBusy(){const mn=document.getElementById('menu');return MQ.need>0||!!window.LOADING||typeof G!=='undefined'&&!!G&&!G.over&&!!mn&&mn.hidden;}
+function bgPump(){if(bgBusy()){clearTimeout(MQ.bgT);MQ.bgT=setTimeout(bgPump,2000);return;}
+  while(MQ.bgRun<2&&MQ.bg.length){const [k,parse]=MQ.bg.shift();if(MODELS.proto[k]||MQ.parsed[k]||!parse&&MQ.bytes[MODEL_FILES[k]])continue;MQ.bgRun++;
+    (parse?parseModel(k):modelBytes(k)).catch(()=>{}).then(()=>{MQ.bgRun--;bgPump();});}
+  if(!MQ.bg.length&&!MQ.bgRun&&MQ.bgDone){const d=MQ.bgDone;MQ.bgDone=null;d();}}
+function loadModels(){if(MODELS.loading)return MODELS.loading;if(typeof MODEL_FILES==='undefined'||!THREE.GLTFLoader)return MODELS.loading=Promise.resolve(false);
+  const shared=modelKeysFor([]),me=typeof setup!=='undefined'&&setup&&setup.p?[...nationModelKeys(setup.p)].filter(k=>MODEL_FILES[k]):[];
+  MQ.bg=[...shared.map(k=>[k,1]),...me.map(k=>[k,0]),...Object.keys(MODEL_FILES).filter(k=>!shared.includes(k)&&!me.includes(k)).map(k=>[k,0])];
+  // MODELS.loading settles once the background queue has drained (the test scripts wait on it); battles never wait on it
+  MODELS.loading=new Promise(r=>{MQ.bgDone=()=>{if(!MODELS.ready&&!MODELS.err)MODELS.err='no models parsed';r(MODELS.ready);};});setTimeout(bgPump,0);return MODELS.loading;}
 // Imported models arrive as dozens to hundreds of separate pieces (the militia technical 328, the Mi-24 157), and every
 // piece is its own draw call in every pass - the biggest rendering cost in a large battle. At load time the pieces of each
 // model that never move on their own are baked into one mesh per material. Animated (skinned) models and named moving
