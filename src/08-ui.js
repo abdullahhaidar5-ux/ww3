@@ -46,7 +46,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('supbar').style.width=(up?f*100:0)+'%';
   $('supt').textContent=!up?'needs Strike Center':f>=1?'READY':`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;$('supbtn').disabled=!(up&&f>=1);
   const nx=RANKS[T.rank]||null,pr=RANKS[T.rank-1];$('rankname').textContent=`General rank ${T.rank}`+(pts>0?` · ${pts} point${pts>1?'s':''} to spend`:'');$('rankbar').style.width=(nx?Math.min(1,(T.gxp-pr)/(nx-pr))*100:100)+'%';$('rankt').textContent=nx?`${T.gxp}/${nx} XP`:'Max rank';
-  const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+' · Esc cancels');}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
+  const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+(altMouse()?' · Esc cancels':' · right-click or Esc cancels'));}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
   const s=G.sel.filter(e=>!e.dead);const el=$('info');el.innerHTML='';const b=document.createElement('b'),sp=document.createElement('span'),tip=document.createElement('span');tip.className='tip';
   if(s.length===1){const e=s[0];b.textContent=e.s.name+(e.rank?` · ${VET[e.rank]}`:'');sp.textContent=` ${Math.ceil(e.hp)} / ${e.max} HP`+(e.isB&&e.built<1?` · building ${Math.floor(e.built*100)}%`:'')+((e.dis>G.t||e.disv)?' · HACKED':'')+(e.kind==='jet'?` · ${e.landed?'parked':'airborne'}`:'');
     tip.textContent=e.kind==='hacker'?'Right-click an enemy building to disable it. Idle hackers earn cash.':e.s.demo?'Stealthed. Right-click an enemy building to plant explosives.':e.kind==='hero'?'Stealthed until it fires. Snipes infantry from long range.':e.kind==='jet'?'Right-click a target to strike. Jets return to the airfield to rearm.':e.kind==='harv'?'Right-click a supply field to send it there.':e.kind==='dozer'?'Builds everything: pick a building under Build, then click the map. Right-click an unfinished building to help. Repairs buildings it stands next to.':e.isB&&e.kind==='tunnel'&&e.team===ME?`Units inside: ${MODE==='client'?(T.tunN|0):T.tun.length} of 12. Select units and right-click a tunnel to send them in; they heal inside and can come out of any tunnel.`:e.isB&&e.nd&&e.built<1?(e.stall?'Waiting for a Construction Vehicle to arrive and build it.':'A Construction Vehicle is building this.'):e.isB&&e.team===ME&&CATS.includes(e.kind)?'Right-click the ground to set the rally point.':'';}
@@ -59,11 +59,12 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
     const mb=document.createElement('div');mb.className='morale';mb.innerHTML=`<span class="ml">Morale</span><span class="mbar"><i style="width:${Math.round(avg*100)}%;background:${MOR_COL[st]}"></i></span><span class="mt" style="color:${MOR_COL[st]}">${fl?'Fearless ('+why+')':MOR_TXT[st]+(st==='last'?'':' '+Math.round(avg*100)+'%')}${rt&&!fl?' · '+rt+' routing':''}${ls&&st!=='last'?' · '+ls+' last stand':''}</span>`;
     mb.title='Morale falls when units take fire, see comrades die or are outnumbered, and recovers out of combat. At zero they break and run back to base, ignoring orders, and take 25% extra damage while running. They rally fast near their HQ, an Ayatollah, a friendly-held building or an officer. Surrounded troops make a last stand instead (fearless but pinned). Crews bail out of badly damaged vehicles, which infantry can re-crew or capture. '+(fl?(NOBREAK[T0.fac]?'North Korean troops never break.':'While the Ayatollah lives, these troops never break.'):'Veterans, heroes, officers and cover help.');sp.after(mb);}}
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
+  else if(leftOrders()&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Click').replace(/right-click/g,'click');
   el.append(b,sp);if(tip.textContent)el.append(tip);
-  if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
+  if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack ('+(SET.mAK==='a'?'A':'F')+')';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop ('+(SET.mAK==='a'?'S':'X')+')';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.';el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
-  if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1){const n=MODE==='client'?(T.tunN|0):T.tun.length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>In the tunnel network: '+n+' / '+TUN_CAP+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. Right-click a tunnel with units selected to send them in.');el.append(d);}
+  if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1){const n=MODE==='client'?(T.tunN|0):T.tun.length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>In the tunnel network: '+n+' / '+TUN_CAP+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. '+(TOUCHUI?'Tap':leftOrders()?'Click':'Right-click')+' a tunnel with units selected to send them in.');el.append(d);}
   if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1&&(MODE==='client'?T.tunN:T.tun.length)){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring units out here';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   const net=$('net');if(MODE!=='single'){net.hidden=false;net.innerHTML=`<b>●</b> Online · ${MODE==='host'?'hosting':'connected'} · vs ${vsText()}`;}else net.hidden=true;}
 $('supbtn').onclick=()=>{G.place=null;G.aim='sup';};
@@ -93,60 +94,147 @@ function issueCmd(w,t,rally){
     const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
     if(rally&&!units.length&&G.sel.some(b=>b.isB&&b.team===ME)){doAct({t:'rally',x:w.x,y:w.y});pushLog('Rally point set.');return true;}
     if(!units.length)return false;const ids=units.map(u=>u.id);
-    if(!t){const oi=G.oil.findIndex(o=>!o.dead&&!ally(o.owner,ME)&&o.owner>=0&&Math.hypot(o.x-w.x,o.y-w.y)<38);if(oi>=0){doAct({t:'atkOil',ids,fi:oi});speak(2);FXH.ping(G.oil[oi].x,G.oil[oi].y,30);return true;}}
-    if(t&&t.team===ME&&!t.isB&&t.s.cap&&units.some(u=>u!==t&&canBoard(t,u))){doAct({t:'board',ids:units.filter(u=>u!==t&&canBoard(t,u)).map(u=>u.id),tid:t.id});speak(1);FXH.ping(t.x,t.y,30);return true;}
-    if(t&&t.team===ME&&t.isB&&t.kind==='tunnel'&&t.built>=1&&units.some(u=>u.s.dom==='ground'&&u.kind!=='harv')){doAct({t:'tun',ids:units.filter(u=>u.s.dom==='ground'&&u.kind!=='harv').map(u=>u.id),tid:t.id});speak(1);FXH.ping(t.x,t.y,30);return true;}
-    if(t&&t.team===ME&&t.isB&&t.built<1&&units.some(u=>u.kind==='dozer')){doAct({t:'bldGo',ids:units.filter(u=>u.kind==='dozer').map(u=>u.id),tid:t.id});speak(1);FXH.ping(t.x,t.y,30);return true;}
-    if(t&&!ally(t.team,ME)&&t.aband&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){const inf=units.filter(u=>isInf(u.s)&&!u.s.noAttack);doAct({t:'go',ids:inf.map(u=>u.id),x:t.x,y:t.y,mode:'move'});const rest=units.filter(u=>!inf.includes(u));if(rest.length)doAct({t:'go',ids:rest.map(u=>u.id),x:t.x,y:t.y,mode:'amove'});speak(1);FXH.ping(t.x,t.y,30);pushLog('Infantry moving to capture the abandoned vehicle.');return true;}
-    if(t&&ally(t.team,ME)&&t.aband&&!t.isB&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){doAct({t:'go',ids:units.filter(u=>isInf(u.s)&&!u.s.noAttack).map(u=>u.id),x:t.x,y:t.y,mode:'move'});speak(1);FXH.ping(t.x,t.y,30);return true;}
-    if(t&&!ally(t.team,ME)){doAct({t:'atk',ids,tid:t.id});speak(2);FXH.ping(t.x,t.y,24);return true;}
+    if(!t){const oi=G.oil.findIndex(o=>!o.dead&&!ally(o.owner,ME)&&o.owner>=0&&Math.hypot(o.x-w.x,o.y-w.y)<38);if(oi>=0){doAct({t:'atkOil',ids,fi:oi});speak(2);markT(G.oil[oi].x,G.oil[oi].y,30);return true;}}
+    if(t&&t.team===ME&&!t.isB&&t.s.cap&&units.some(u=>u!==t&&canBoard(t,u))){doAct({t:'board',ids:units.filter(u=>u!==t&&canBoard(t,u)).map(u=>u.id),tid:t.id});speak(1);markT(t.x,t.y,30);return true;}
+    if(t&&t.team===ME&&t.isB&&t.kind==='tunnel'&&t.built>=1&&units.some(u=>u.s.dom==='ground'&&u.kind!=='harv')){doAct({t:'tun',ids:units.filter(u=>u.s.dom==='ground'&&u.kind!=='harv').map(u=>u.id),tid:t.id});speak(1);markT(t.x,t.y,30);return true;}
+    if(t&&t.team===ME&&t.isB&&t.built<1&&units.some(u=>u.kind==='dozer')){doAct({t:'bldGo',ids:units.filter(u=>u.kind==='dozer').map(u=>u.id),tid:t.id});speak(1);markT(t.x,t.y,30);return true;}
+    if(t&&!ally(t.team,ME)&&t.aband&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){const inf=units.filter(u=>isInf(u.s)&&!u.s.noAttack);doAct({t:'go',ids:inf.map(u=>u.id),x:t.x,y:t.y,mode:'move'});const rest=units.filter(u=>!inf.includes(u));if(rest.length)doAct({t:'go',ids:rest.map(u=>u.id),x:t.x,y:t.y,mode:'amove'});speak(1);markT(t.x,t.y,30);pushLog('Infantry moving to capture the abandoned vehicle.');return true;}
+    if(t&&ally(t.team,ME)&&t.aband&&!t.isB&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){doAct({t:'go',ids:units.filter(u=>isInf(u.s)&&!u.s.noAttack).map(u=>u.id),x:t.x,y:t.y,mode:'move'});speak(1);markT(t.x,t.y,30);return true;}
+    if(t&&!ally(t.team,ME)){doAct({t:'atk',ids,tid:t.id});speak(2);markT(t.x,t.y,24);return true;}
     {const c=(!t||(t.kind==='garrison'&&ally(t.team,ME)))?(t&&t.kind==='garrison'?civAtXYAny(t.x,t.y):civUnder(mouse.x,mouse.y,w)):null;
      if(c&&!c.dead){const inf=units.filter(u=>canGarrison(u));const rest=units.filter(u=>!canGarrison(u)&&u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker');
-       if(inf.length){doAct({t:'gar',ids:inf.map(u=>u.id),ci:c.i});speak(1);FXH.ping(c.x,c.y,30);if(!rest.length)return true;}
-       if(rest.length&&!(t&&t.kind==='garrison')){doAct({t:'atkCiv',ids:rest.map(u=>u.id),ci:c.i});speak(2);FXH.ping(c.x,c.y,24);return true;}
+       if(inf.length){doAct({t:'gar',ids:inf.map(u=>u.id),ci:c.i});speak(1);markT(c.x,c.y,30);if(!rest.length)return true;}
+       if(rest.length&&!(t&&t.kind==='garrison')){doAct({t:'atkCiv',ids:rest.map(u=>u.id),ci:c.i});speak(2);markT(c.x,c.y,24);return true;}
        if(inf.length)return true;}}
     const fi=fieldAt(w);if(fi>=0&&units.some(u=>u.kind==='harv')){doAct({t:'fld',ids,fi});const rest=units.filter(u=>u.kind!=='harv').map(u=>u.id);if(rest.length)doAct({t:'go',ids:rest,x:w.x,y:w.y,mode:'move'});return true;}
-    doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0,q:G.qShift?1:0});speak(1);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:G.qShift?0xe3b341:0x74d08f});return true;
+    doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0,q:G.qShift?1:0});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:G.qShift?0xe3b341:0x74d08f});return true;
 }
-// Controls (mouse): LEFT selects - click a unit or building, drag a box, double-click for all of a type, click empty
-// ground to deselect; with a building or power chosen the left click places or aims it. RIGHT gives orders - move to
-// the spot, attack the enemy under the cursor, board/enter/garrison/capture, or set a rally point for a selected
-// building; right-click also cancels a pending placement. Touch and pen have no right button, so a tap there still
-// selects or orders as before. Esc cancels.
+// Controls (mouse) follow Command & Conquer Generals (default scheme):
+//   LEFT does everything - click a unit to select it (Shift+click adds/removes, double-click selects all of that type
+//   on screen, drag a box to select units); with units selected, click the ground to move, an enemy to attack, a
+//   friendly unit to select it instead (or, for infantry, a transport, tunnel or building they can enter to go in).
+//   Ctrl+click force-fires, Alt+click adds a waypoint, A then click attack-moves, G then click guards an area. With a
+//   production building selected, clicking the ground sets the rally point. A building or power chosen from the
+//   sidebar is placed or aimed with a left click.
+//   RIGHT click (without dragging) deselects, or first cancels placement, power targeting or A/G mode. Right-drag with
+//   units selected draws the infantry line formation; with nothing selected it rapid-scrolls the camera.
+// Settings > Mouse lets each function be chosen (saved in SET): mLG left-click on the ground with units selected
+// (move | desel), mRC right-click (cancel = deselect & cancel | order = move & attack), mRDU right-drag with units
+// (line | scroll), mRDN right-drag with nothing selected (scroll | box | none), mAK attack-move key (a: A attack-move and
+// S stop while units are selected | f: F and X, WASD always scrolls), mRS rapid-scroll speed, mCur contextual cursor,
+// mPing order markers. Two presets: Generals (default) and "Alternate mouse setup" (Generals' own name for its
+// right-click-orders option = the older scheme: left selects, right-click moves/attacks, right-drag draws a line).
+// Touch and pen have no right button, so a tap selects or orders as before. The cursor shows what a click will do.
 let lastR={t:0,id:0},rDown=0;
+const MDEF={mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll',mAK:'a',mRS:100,mCur:1,mPing:1};
+const MPRE={gen:{mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll',mAK:'a'},alt:{mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f'}};
+if(SET.mLG==null&&SET.alt===1)Object.assign(SET,MPRE.alt);for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];delete SET.alt;
+function mPreset(){for(const p in MPRE)if(Object.keys(MPRE[p]).every(k=>SET[k]===MPRE[p][k]))return p;return 'custom';}
+function altMouse(){return mPreset()==='alt';}
+function leftOrders(){return SET.mLG==='move';}
+function rightOrders(){return SET.mRC==='order';}
+// order markers (ground pings for move / attack orders), Settings > Mouse > Order markers
+function mark(o){if(SET.mPing!==0)PINGS.push(o);}
+function markT(x,y,r){if(SET.mPing!==0)FXH.ping(x,y,r);}
+const MODK={ctrl:false,alt:false,shift:false};
+function selfSel(){return G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);}
+function prodSel(){return G.sel.some(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)&&b.built>=1);}
 function selectClick(t,shift){if(t&&t.team===ME){if(shift&&!t.isB){const i=G.sel.indexOf(t);i>=0?G.sel.splice(i,1):G.sel.push(t);}else G.sel=[t];}else if(t&&!shift)G.sel=[t];else if(!shift)G.sel=[];}
-const CUR=(svg,x,y,fb)=>`url("data:image/svg+xml,${encodeURIComponent(svg)}") ${x} ${y}, ${fb}`;
-const CURS={attack:CUR('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><g fill="none" stroke="#000" stroke-width="4"><circle cx="14" cy="14" r="8"/><path d="M14 1v7M14 20v7M1 14h7M20 14h7"/></g><g fill="none" stroke="#ff4a3a" stroke-width="2"><circle cx="14" cy="14" r="8"/><path d="M14 1v7M14 20v7M1 14h7M20 14h7"/></g></svg>',14,14,'crosshair'),
-  move:CUR('<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M13 2l7 9h-4v6h-6v-6H6z" fill="#7be08f" stroke="#0b1a10" stroke-width="1.5"/><ellipse cx="13" cy="22" rx="8" ry="2.6" fill="none" stroke="#7be08f" stroke-width="1.6"/></svg>',13,22,'pointer'),
-  enter:CUR('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><path d="M5 13l9-8 9 8v11H5z" fill="#6fb2ff" stroke="#08121e" stroke-width="1.6"/><path d="M11 24v-7h6v7" fill="#08121e"/></svg>',14,14,'pointer'),
-  capture:CUR('<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M6 24V3" stroke="#111" stroke-width="3"/><path d="M6 24V3" stroke="#ffd166" stroke-width="1.6"/><path d="M7 4h13l-3 4 3 4H7z" fill="#ffd166" stroke="#111"/></svg>',6,24,'pointer'),
-  sel:CUR('<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M3 3h6M3 3v6M23 3h-6M23 3v6M3 23h6M3 23v-6M23 23h-6M23 23v-6" stroke="#000" stroke-width="3.4"/><path d="M3 3h6M3 3v6M23 3h-6M23 3v6M3 23h6M3 23v-6M23 23h-6M23 23v-6" stroke="#cfead6" stroke-width="1.6"/></svg>',13,13,'pointer')};
-setInterval(()=>{try{if(!G||G.over||!mouse.in){cv.style.cursor='';return;}if(G.amove||G.defm||G.aim){cv.style.cursor=G.amove?CURS.attack:'crosshair';return;}if(G.place){cv.style.cursor='copy';return;}
-  const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead),t=pickAt(mouse.x,mouse.y,false);
-  if(!units.length){cv.style.cursor=t&&t.team===ME?CURS.sel:'';return;}
-  if(t&&!ally(t.team,ME))cv.style.cursor=t.aband&&units.some(u=>isInf(u.s))?CURS.capture:CURS.attack;
-  else if(t&&t.team===ME&&((t.kind==='tunnel'&&t.isB)||(t.s&&t.s.cap&&!t.isB)||t.kind==='garrison'))cv.style.cursor=CURS.enter;
-  else if(t&&t.team===ME)cv.style.cursor=CURS.sel;
-  else{const c=units.some(u=>canGarrison(u))?civUnder(mouse.x,mouse.y,null):null;cv.style.cursor=c&&!c.dead?CURS.enter:CURS.move;}}catch(_){}},120);
-function defendAt(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);G.defm=false;if(!ids.length)return;doAct({t:'def',ids,x:w.x,y:w.y});speak(1);PINGS.push({x:w.x,y:w.y,r:300,t:0,d:1.1,c:0x6fb2ff});pushLog('Units moving to defend the area.');}
+// a click on one of your own units/buildings that the selection can use (board, enter, garrison, build, re-crew) instead of selecting it
+function helpOn(t,sel){return !!t&&t.team===ME&&((t.isB&&((t.built<1&&sel.some(u=>u.kind==='dozer'&&u.team===ME&&!u.dead))||(t.kind==='tunnel'&&t.built>=1&&sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&u.s.dom==='ground'))))||(!t.isB&&t.s&&t.s.cap&&sel.some(u=>u!==t&&!u.isB&&canBoard(t,u)))||(t.kind==='garrison'&&sel.some(u=>u.team===ME&&canGarrison(u)))||(!t.isB&&t.aband&&sel.some(u=>!u.isB&&u.team===ME&&isInf(u.s)&&!u.s.noAttack)));}
+function oilAt(w,neutralToo){return G.oil.findIndex(o=>!o.dead&&!ally(o.owner,ME)&&(neutralToo||o.owner>=0)&&Math.hypot(o.x-w.x,o.y-w.y)<38);}
+// nowhere any selected unit can go (water for tanks, cliffs and mountains for everything on the ground)
+function noGo(units,w){return units.length>0&&units.every(u=>!passXY(u.s.dom,w.x,w.y));}
+// Ctrl+click: fire on what is under the cursor even if the unit would not pick it. The battle supports forcing an attack on
+// enemies, enemy or neutral oil derricks and empty city buildings; firing at the ground or at friendly units is not available.
+function forceTarget(t,w){if(t&&!t.dead)return ally(t.team,ME)?null:{t:'atk',tid:t.id,x:t.x,y:t.y};
+  const oi=oilAt(w,true);if(oi>=0)return{t:'atkOil',fi:oi,x:G.oil[oi].x,y:G.oil[oi].y};
+  const c=civUnder(mouse.x,mouse.y,w);if(c&&!c.dead){if(c.g&&!c.g.dead)return ally(c.g.team,ME)?null:{t:'atk',tid:c.g.id,x:c.x,y:c.y};return{t:'atkCiv',ci:c.i,x:c.x,y:c.y};}return null;}
+function forceFire(w,t,units){const f=forceTarget(t,w);if(!f){pushLog(t?'Force-fire on your own or allied units is not available.':'Force-fire on empty ground is not available - Ctrl+click an enemy, a derrick or a building.','w');try{sfxUI(220);}catch(_){}return false;}
+  const ids=units.map(u=>u.id),a={t:f.t,ids};if(f.tid!=null)a.tid=f.tid;if(f.fi!=null)a.fi=f.fi;if(f.ci!=null)a.ci=f.ci;doAct(a);speak(2);markT(f.x,f.y,24);return true;}
+// Alt+click: add a waypoint (units finish their current move first)
+function waypoint(w,units){if(noGo(units,w)){try{sfxUI(220);}catch(_){}return false;}doAct({t:'go',ids:units.map(u=>u.id),x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0,q:1});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xe3b341});return true;}
+/* ---------- contextual cursor ---------- */
+// small cursors drawn once on a canvas (no image files); `CURS[key]` is a ready CSS cursor value
+const CURD={
+  sel:[3,2,'default',c=>{c.beginPath();c.moveTo(3,2);c.lineTo(3,24);c.lineTo(9,19);c.lineTo(13,28);c.lineTo(17,26);c.lineTo(13,17.5);c.lineTo(21,17.5);c.closePath();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#000';c.stroke();c.fillStyle='#e9f5ec';c.fill();
+    c.lineWidth=3.4;c.strokeStyle='#000';const br=()=>{c.beginPath();c.moveTo(20,23);c.lineTo(20,29);c.lineTo(26,29);c.moveTo(30,23);c.lineTo(30,29);c.lineTo(24,29);c.stroke();};br();c.lineWidth=1.6;c.strokeStyle='#7be08f';br();}],
+  move:[16,27,'pointer',c=>{const arrow=()=>{c.beginPath();c.moveTo(16,23);c.lineTo(25,12);c.lineTo(19.5,12);c.lineTo(19.5,3);c.lineTo(12.5,3);c.lineTo(12.5,12);c.lineTo(7,12);c.closePath();};arrow();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#04140a';c.stroke();c.fillStyle='#7be08f';c.fill();
+    c.beginPath();c.ellipse(16,27,11,3.6,0,0,7);c.lineWidth=3.6;c.strokeStyle='#04140a';c.stroke();c.lineWidth=1.8;c.strokeStyle='#7be08f';c.stroke();}],
+  attack:[16,16,'crosshair',c=>ring(c,'#ff4a3a',false)],
+  force:[16,16,'crosshair',c=>{ring(c,'#ffb02e',true);c.font='bold 9px sans-serif';c.textAlign='center';c.lineWidth=3;c.strokeStyle='#000';c.strokeText('F',26,30);c.fillStyle='#ffb02e';c.fillText('F',26,30);}],
+  amove:[16,16,'crosshair',c=>{ring(c,'#ff4a3a',false);c.beginPath();c.moveTo(21,3);c.lineTo(30,3);c.lineTo(30,12);c.moveTo(30,3);c.lineTo(22,11);c.lineCap='round';c.lineWidth=4;c.strokeStyle='#000';c.stroke();c.lineWidth=2;c.strokeStyle='#ffd166';c.stroke();}],
+  nogo:[16,16,'not-allowed',c=>{c.beginPath();c.arc(16,16,11,0,7);c.moveTo(8.2,8.2);c.lineTo(23.8,23.8);c.lineWidth=6;c.strokeStyle='#000';c.stroke();c.lineWidth=3.4;c.strokeStyle='#ff3b30';c.stroke();}],
+  guard:[16,16,'crosshair',c=>{c.beginPath();c.moveTo(16,3);c.lineTo(27,7);c.quadraticCurveTo(27,22,16,29);c.quadraticCurveTo(5,22,5,7);c.closePath();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#06101c';c.stroke();c.fillStyle='#6fb2ff';c.fill();c.beginPath();c.moveTo(16,8);c.lineTo(16,24);c.moveTo(10,14);c.lineTo(22,14);c.lineWidth=2;c.strokeStyle='#06101c';c.stroke();}],
+  rally:[5,30,'pointer',c=>flag(c,'#7be08f')],
+  way:[5,30,'pointer',c=>{flag(c,'#e3b341');c.fillStyle='#000';c.beginPath();c.arc(24,26,4.6,0,7);c.fill();c.fillStyle='#e3b341';c.beginPath();c.arc(24,26,3,0,7);c.fill();c.fillStyle='#000';c.beginPath();c.arc(14,29,2.6,0,7);c.fill();c.fillStyle='#e3b341';c.beginPath();c.arc(14,29,1.5,0,7);c.fill();}],
+  capture:[5,30,'pointer',c=>flag(c,'#ffd166')],
+  enter:[16,16,'pointer',c=>{c.beginPath();c.moveTo(4,15);c.lineTo(16,4);c.lineTo(28,15);c.lineTo(28,29);c.lineTo(4,29);c.closePath();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#06101c';c.stroke();c.fillStyle='#6fb2ff';c.fill();c.fillStyle='#06101c';c.fillRect(12,19,8,10);c.beginPath();c.moveTo(16,11);c.lineTo(16,18);c.moveTo(12.5,14.5);c.lineTo(16,18);c.lineTo(19.5,14.5);c.lineWidth=2;c.stroke();}],
+  place:[16,16,'copy',c=>{c.lineWidth=3.6;c.strokeStyle='#000';c.strokeRect(6,6,20,20);c.lineWidth=1.8;c.strokeStyle='#ffd166';c.setLineDash([4,3]);c.strokeRect(6,6,20,20);c.setLineDash([]);c.beginPath();c.moveTo(16,10);c.lineTo(16,22);c.moveTo(10,16);c.lineTo(22,16);c.lineWidth=4;c.strokeStyle='#000';c.stroke();c.lineWidth=2;c.strokeStyle='#ffd166';c.stroke();}],
+  aim:[16,16,'crosshair',c=>{for(const [r,w] of [[13,2],[7,2]]){c.beginPath();c.arc(16,16,r,0,7);c.lineWidth=w+2.2;c.strokeStyle='#000';c.stroke();c.lineWidth=w;c.strokeStyle='#ff6a3a';c.stroke();}c.fillStyle='#000';c.fillRect(14,14,4,4);c.fillStyle='#ff6a3a';c.fillRect(15,15,2,2);}],
+  scroll:[16,16,'all-scroll',c=>{const tri=(x,y,dx,dy)=>{c.beginPath();c.moveTo(x+dx*7,y+dy*7);c.lineTo(x-dy*6,y+dx*6);c.lineTo(x+dy*6,y-dx*6);c.closePath();c.lineWidth=2.6;c.strokeStyle='#000';c.stroke();c.fillStyle='#f2f5f3';c.fill();};tri(16,7,0,-1);tri(16,25,0,1);tri(7,16,-1,0);tri(25,16,1,0);c.fillStyle='#000';c.beginPath();c.arc(16,16,3.4,0,7);c.fill();c.fillStyle='#f2f5f3';c.beginPath();c.arc(16,16,2,0,7);c.fill();}],
+  line:[16,16,'crosshair',c=>{c.beginPath();c.moveTo(3,24);c.lineTo(29,8);c.lineWidth=4.4;c.strokeStyle='#000';c.stroke();c.lineWidth=2.2;c.strokeStyle='#7be08f';c.stroke();for(const [x,y] of [[6,22],[12,18.3],[18,14.6],[24,11]]){c.beginPath();c.arc(x,y,3.2,0,7);c.fillStyle='#000';c.fill();c.beginPath();c.arc(x,y,2,0,7);c.fillStyle='#d6f7de';c.fill();}}]};
+function ring(c,col,dot){const g=()=>{c.beginPath();c.arc(16,16,8,0,7);c.moveTo(16,2);c.lineTo(16,9);c.moveTo(16,23);c.lineTo(16,30);c.moveTo(2,16);c.lineTo(9,16);c.moveTo(23,16);c.lineTo(30,16);};g();c.lineWidth=4.4;c.strokeStyle='#000';c.stroke();g();c.lineWidth=2.2;c.strokeStyle=col;c.stroke();if(dot){c.fillStyle='#000';c.beginPath();c.arc(16,16,3,0,7);c.fill();c.fillStyle=col;c.beginPath();c.arc(16,16,1.8,0,7);c.fill();}}
+function flag(c,col){c.beginPath();c.moveTo(5,30);c.lineTo(5,3);c.lineWidth=4;c.strokeStyle='#000';c.stroke();c.lineWidth=2;c.strokeStyle='#d9d9d2';c.stroke();c.beginPath();c.moveTo(6,4);c.lineTo(25,4);c.lineTo(20,10);c.lineTo(25,16);c.lineTo(6,16);c.closePath();c.lineJoin='round';c.lineWidth=2.4;c.strokeStyle='#000';c.stroke();c.fillStyle=col;c.fill();}
+const CURS={},CURIMG={};
+function curCss(k){if(!k||!CURD[k])return '';if(!CURS[k]){const [hx,hy,fb,draw]=CURD[k];try{const c=document.createElement('canvas');c.width=c.height=32;const x=c.getContext('2d');draw(x);CURIMG[k]=c.toDataURL('image/png');CURS[k]=`url("${CURIMG[k]}") ${hx} ${hy}, ${fb}`;}catch(e){CURS[k]=fb;}}return CURS[k];}
+// what a click on the battlefield would do right now (left click in the Generals scheme, right click in the alternate one)
+function cursorIntent(){if(!G||G.over)return '';const lo=leftOrders(),ro=rightOrders();
+  if(RDRAG&&RDRAG.moved)return !RDRAG.gen||RDRAG.line?'line':RDRAG.mode==='scroll'?'scroll':'';
+  if(G.place)return 'place';if(G.aim)return 'aim';if(G.amove)return 'amove';if(G.defm)return 'guard';
+  const units=selfSel(),t=pickAt(mouse.x,mouse.y,false);
+  if(!units.length){if(t)return t.team===ME?'sel':'';if((lo||ro)&&prodSel())return 'rally';return '';}
+  if(!lo&&!ro)return t&&t.team===ME?'sel':'';
+  const w=screenToWorld(mouse.x,mouse.y);
+  if(lo&&MODK.ctrl)return w&&forceTarget(t,w)?'force':'nogo';
+  if(lo&&MODK.alt)return w&&!noGo(units,w)?'way':'nogo';
+  if(t&&t.team===ME)return helpOn(t,units)?(t.aband?'capture':'enter'):'sel';
+  if(t&&!ally(t.team,ME))return t.aband&&units.some(u=>isInf(u.s))?'capture':'attack';
+  if(t&&t.aband&&!t.isB&&units.some(u=>isInf(u.s)))return 'capture';
+  if(!w)return '';
+  return t?'move':groundIntent(units,w);}
+// empty ground (or a city building / derrick / supply field) under the cursor with units selected
+function groundIntent(units,w){const c=civUnder(mouse.x,mouse.y,w);if(c&&!c.dead&&(!c.g||ally(c.g.team,ME))){if(units.some(u=>canGarrison(u)))return 'enter';if(!c.g&&units.some(u=>u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker'))return 'attack';}
+  if(oilAt(w,false)>=0)return 'attack';if(fieldAt(w)>=0&&units.some(u=>u.kind==='harv'))return 'move';
+  return noGo(units,w)?'nogo':'move';}
+const CURST={k:null,t:0,x:-1,y:-1,m:''};
+function cursorTick(force){const now=performance.now();if(!force&&now-CURST.t<50)return;
+  if(!G||G.over||!mouse.in||LASTPT==='touch'||SET.mCur===0){if(CURST.k!==''){CURST.k='';cv.style.cursor='';cv.dataset.cur='';}return;}
+  const m=(G.place||'')+(G.aim||'')+(+!!G.amove)+(+!!G.defm)+(+MODK.ctrl)+(+MODK.alt)+G.sel.length+(RDRAG?(RDRAG.moved?2:1):0);
+  if(!force&&mouse.x===CURST.x&&mouse.y===CURST.y&&m===CURST.m&&now-CURST.t<250)return;
+  CURST.t=now;CURST.x=mouse.x;CURST.y=mouse.y;CURST.m=m;let k='';try{k=cursorIntent();}catch(_){k='';}
+  if(k!==CURST.k){CURST.k=k;cv.style.cursor=curCss(k);cv.dataset.cur=k;}}
+setInterval(()=>cursorTick(false),50);
+function defendAt(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);G.defm=false;if(!ids.length)return;doAct({t:'def',ids,x:w.x,y:w.y});speak(1);mark({x:w.x,y:w.y,r:300,t:0,d:1.1,c:0x6fb2ff});pushLog('Units moving to defend the area.');}
 function rightPress(e){const w=screenToWorld(mouse.x,mouse.y);if(!w)return false;rDown=performance.now();if(G.defm){defendAt(w);return false;}
   if(G.place||G.aim){G.place=null;G.aim=null;return false;}
-  if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;return false;}
+  if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;return false;}
   return true;}
 function orderClick(sh){if(!G||G.over)return;G.qShift=!!sh;const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.place||G.aim){G.place=null;G.aim=null;updateUI();return;}if(G.defm){defendAt(w);return;}
   const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
-  if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;return;}
+  if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;return;}
   G.amove=false;const bsel=!units.length&&G.sel.some(b=>b.isB&&b.team===ME);if(!units.length&&!bsel)return;
   const t=pickAt(mouse.x,mouse.y,false);if(issueCmd(w,t,bsel))updateUI();}
+// Generals scheme, a left click with the mouse: orders for the selection, or a rally point for a production building.
+// Returns false when the click should simply select what is under the cursor.
+function genClick(d,t){const units=selfSel(),w=screenToWorld(mouse.x,mouse.y);if(!w)return false;
+  if(units.length){if(d.ctrl){forceFire(w,t,units);updateUI();return true;}
+    if(d.alt){waypoint(w,units);updateUI();return true;}
+    if(t&&t.team===ME&&!helpOn(t,units))return false;
+    if(!t&&groundIntent(units,w)==='nogo'){try{sfxUI(220);}catch(_){}return true;}
+    G.qShift=!!d.shift;const ok=issueCmd(w,t,false);G.qShift=false;if(ok){updateUI();return true;}return false;}
+  if(!t&&!d.shift&&prodSel()){issueCmd(w,null,true);updateUI();return true;}
+  return false;}
 function rightRelease(d){if(!G)return;
   if(d.box){const x0=Math.min(d.x0,mouse.x),x1=Math.max(d.x0,mouse.x),y0=Math.min(d.y0,mouse.y),y1=Math.max(d.y0,mouse.y);
     const got=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u)+4,u.y);return p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1;})());G.sel=d.shift?[...new Set([...G.sel,...got])]:got;}
   else{const t=pickAt(mouse.x,mouse.y,false),now=performance.now();
-    if(t&&t.team===ME&&!t.isB&&SET.dbl>0&&lastR.id===t.id&&now-lastR.t<SET.dbl){G.sel=G.ents.filter(u=>u.team===ME&&u.kind===t.kind&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u),u.y);return p.x>0&&p.y>0&&p.x<VW&&p.y<VH;})());lastR={t:0,id:0};updateUI();return;}
+    if(t&&t.team===ME&&!t.isB&&SET.dbl>0&&lastR.id===t.id&&now-lastR.t<SET.dbl&&!d.ctrl&&!d.alt){G.sel=G.ents.filter(u=>u.team===ME&&u.kind===t.kind&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u),u.y);return p.x>0&&p.y>0&&p.x<VW&&p.y<VH;})());lastR={t:0,id:0};updateUI();return;}
     lastR={t:now,id:t?t.id:0};
     const mine=G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead),bsel=!mine&&G.sel.some(b=>b.isB&&b.team===ME);
     const dzHelp=t&&t.team===ME&&t.isB&&((t.built<1&&G.sel.some(u=>u.kind==='dozer'&&u.team===ME&&!u.dead))||(t.kind==='tunnel'&&t.built>=1&&G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&u.s.dom==='ground')))||(t&&t.team===ME&&!t.isB&&t.s&&t.s.cap&&G.sel.some(u=>u!==t&&!u.isB&&canBoard(t,u)))||(t&&t.kind==='garrison'&&t.team===ME&&G.sel.some(u=>u.team===ME&&canGarrison(u)));
+    if(d.pt==='mouse'&&leftOrders()&&genClick(d,t))return;
     if(d.pt!=='mouse'&&(mine||bsel)&&!d.shift&&(!(t&&t.team===ME)||dzHelp)){const w=screenToWorld(mouse.x,mouse.y);if(w&&issueCmd(w,t,bsel)){updateUI();return;}}
     selectClick(t,d.shift);}
   if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);updateUI();}
@@ -174,16 +262,22 @@ function touchUp(e){TCH.delete(e.pointerId);if(TCH.size<2)PINCH=null;
   if(TPEND&&TPEND.id===e.pointerId){TPEND=null;if(!G||G.over)return true;mpos(e);if(mouse.x<0||mouse.y<0||mouse.x>VW||mouse.y>VH)return true;const w=screenToWorld(mouse.x,mouse.y);if(w&&(G.place||G.aim))placeOrAim(w,false);return true;}
   return false;}
 function touchCancel(e){TCH.delete(e.pointerId);TIGN.delete(e.pointerId);if(TCH.size<2)PINCH=null;if(TPEND&&TPEND.id===e.pointerId)TPEND=null;}
-let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
+// Generals scheme, right button: a click without dragging cancels the current mode (placement, power, attack-move,
+// guard) or, if there is none, deselects everything. Right-drag with units selected draws the line formation.
+function rightCancel(){if(!G||G.over)return;if(G.place||G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;}else G.sel=[];updateUI();}
+function rightClickAct(sh){if(rightOrders())orderClick(sh);else rightCancel();}
+function lineOrder(r){const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!w1||!ids.length)return;doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);mark({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}
+let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(LASTPT==='mouse'){let mode=own.length?SET.mRDU:SET.mRDN;if(mode==='line'&&!(own.length>=(rightOrders()?2:1)&&w0&&!G.place&&!G.aim&&!G.defm))mode='none';try{cv.setPointerCapture(e.pointerId);}catch(_){}if(mode==='box'){drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:'mouse',rb:1};return;}RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false,gen:1,mode,line:mode==='line'};return;}if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.place||G.aim){placeOrAim(w,e.shiftKey);return;}
   if(!rightPress(e))return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
-  drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:e.pointerType||'mouse'};});
-cv.addEventListener('pointermove',e=>{if(e.pointerType==='mouse')LASTPT='mouse';else if(e.pointerType==='touch'&&touchMove(e))return;mpos(e);if(RDRAG&&e.pointerId===RDRAG.id){if(Math.hypot(mouse.x-RDRAG.x0,mouse.y-RDRAG.y0)>22)RDRAG.moved=true;return;}if(mpan&&e.pointerId===mpan.id){const k=cam.dist/700*(SET.scr||100)/100;cam.x-=(e.clientX-mpan.x)*k;cam.y-=(e.clientY-mpan.y)*k*1.4;mpan.x=e.clientX;mpan.y=e.clientY;return;}if(drag&&Math.hypot(mouse.x-drag.x0,mouse.y-drag.y0)>(drag.pt==='touch'?Math.max(SET.tol||8,16):(SET.tol||8)))drag.box=true;});
-window.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e))return;if(mpan&&e.pointerId===mpan.id){mpan=null;return;}if(RDRAG&&e.pointerId===RDRAG.id){const r=RDRAG;RDRAG=null;const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(r.moved&&w1&&ids.length){doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);PINGS.push({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}else orderClick(r.shift);return;}if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;rightRelease(d);});
+  drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,ctrl:e.ctrlKey||e.metaKey,alt:e.altKey,id:e.pointerId,pt:e.pointerType||'mouse'};});
+cv.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){LASTPT='mouse';mouse.in=true;MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;}else if(e.pointerType==='touch'&&touchMove(e))return;mpos(e);if(RDRAG&&e.pointerId===RDRAG.id){if(Math.hypot(mouse.x-RDRAG.x0,mouse.y-RDRAG.y0)>(RDRAG.gen&&!RDRAG.line?(SET.tol||8):22))RDRAG.moved=true;return;}if(mpan&&e.pointerId===mpan.id){const k=cam.dist/700*(SET.scr||100)/100;cam.x-=(e.clientX-mpan.x)*k;cam.y-=(e.clientY-mpan.y)*k*1.4;mpan.x=e.clientX;mpan.y=e.clientY;return;}if(drag&&Math.hypot(mouse.x-drag.x0,mouse.y-drag.y0)>(drag.pt==='touch'?Math.max(SET.tol||8,16):(SET.tol||8)))drag.box=true;});
+window.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e))return;if(mpan&&e.pointerId===mpan.id){mpan=null;return;}if(RDRAG&&e.pointerId===RDRAG.id&&RDRAG.gen){const r=RDRAG;RDRAG=null;if(r.moved&&r.line)lineOrder(r);else if(!(r.moved&&r.mode==='scroll'))rightClickAct(r.shift);cursorTick(true);return;}if(RDRAG&&e.pointerId===RDRAG.id){const r=RDRAG;RDRAG=null;const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(r.moved&&w1&&ids.length){doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);mark({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}else orderClick(r.shift);return;}if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;if(d.rb&&!d.box){rightClickAct(d.shift);return;}rightRelease(d);});
 window.addEventListener('pointercancel',e=>{touchCancel(e);if(drag&&e.pointerId===drag.id)drag=null;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
-window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;if(!G||$('menu').hidden===false)return;
+window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;MODK.ctrl=e.ctrlKey||e.metaKey||k==='Control'||k==='Meta';MODK.alt=e.altKey||k==='Alt';MODK.shift=e.shiftKey;if(!G||$('menu').hidden===false)return;if(k==='Alt')e.preventDefault();
+  const gk=genKeys()&&!e.ctrlKey&&!e.metaKey&&!e.altKey;if(gk&&k==='a'&&!e.repeat){G.amove=true;G.defm=false;}if(gk&&k==='s'&&!e.repeat){const ids=selfSel().map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
   if(/^Digit[1-5]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
   if(k==='p'&&!G.over){e.preventDefault();togglePause();return;}
   if(k==='Escape'){if(G.defm){G.defm=false;return;}if(G.paused){togglePause(false);return;}if(!G.place&&!G.aim&&!G.amove&&!G.sel.length&&!G.over){togglePause(true);return;}if(!G.place&&!G.aim&&!G.amove)G.sel=[];G.place=null;G.aim=null;G.amove=false;}
@@ -194,12 +288,16 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
   if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(1800,cam.td*1.15);}
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();updateUI();});
-window.addEventListener('keyup',e=>{keys[e.key.length===1?e.key.toLowerCase():e.key]=false;});
+window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
+window.addEventListener('blur',()=>{MODK.ctrl=MODK.alt=MODK.shift=false;});
+// Generals keys: with your own units selected, A arms attack-move and S stops them (instead of scrolling); with nothing
+// selected WASD scrolls. Arrow keys always scroll. The Alternate mouse setup keeps the older keys (F attack, X stop).
+function genKeys(){return !!G&&SET.mAK==='a'&&G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead);}
 function mmJump(e){const r=mm.getBoundingClientRect();centerOn((e.clientX-r.left)/r.width*MAPW,(e.clientY-r.top)/r.height*MAPH);}
 // Minimap: left-click / tap / drag moves the view there; right-click sends the selected units there.
 // Pointer events so it works the same with a mouse, trackpad, touch screen or pen.
 let mmDown=null;mm.style.touchAction='none';mm.style.cursor='crosshair';
-function mmSend(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!ids.length)return false;doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0});speak(1);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0x74d08f});return true;}
+function mmSend(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!ids.length)return false;doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0x74d08f});return true;}
 function mmWorld(e){const r=mm.getBoundingClientRect();return{x:Math.max(0,Math.min(MAPW,(e.clientX-r.left)/r.width*MAPW)),y:Math.max(0,Math.min(MAPH,(e.clientY-r.top)/r.height*MAPH))};}
 mm.addEventListener('pointerdown',e=>{if(!G)return;e.preventDefault();const w=mmWorld(e);
   if(e.button===2){mmSend(w);return;}
@@ -262,7 +360,10 @@ function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].na
   const h=$('hint');if(h)h.hidden=!md.hidden||G.t>40;}
 $('mode').onclick=e=>{if(!G||!e.target.closest('.mcx'))return;G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();};
 try{if(matchMedia('(hover:none) and (pointer:coarse)').matches)touchUI();}catch(e){}
-function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100;if(keys.ArrowLeft||keys.a)cam.tx-=sp;if(keys.ArrowRight||keys.d)cam.tx+=sp;if(keys.ArrowUp||keys.w)cam.ty-=sp;if(keys.ArrowDown||keys.s)cam.ty+=sp;
+setTimeout(setHint,0);
+function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=genKeys();if(keys.ArrowLeft||(keys.a&&!gk))cam.tx-=sp;if(keys.ArrowRight||keys.d)cam.tx+=sp;if(keys.ArrowUp||keys.w)cam.ty-=sp;if(keys.ArrowDown||(keys.s&&!gk))cam.ty+=sp;
+  // Generals rapid scroll: right-drag with nothing selected pans toward the drag, faster the further you drag
+  if(RDRAG&&RDRAG.gen&&RDRAG.mode==='scroll'&&RDRAG.moved){const dx=mouse.x-RDRAG.x0,dy=mouse.y-RDRAG.y0,d=Math.hypot(dx,dy);if(d>4){const v=sp*Math.min(6,.6+d/70)*(SET.mRS||100)/100;cam.tx+=dx/d*v;cam.ty+=dy/d*v;}}
   if(mouse.in&&!drag&&SET.edge&&LASTPT!=='touch'){if(mouse.x<14)cam.tx-=sp;if(mouse.x>VW-14)cam.tx+=sp;if(mouse.y<14)cam.ty-=sp;if(mouse.y>VH-14)cam.ty+=sp;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
 
 /* ---------- game start / reset ---------- */
@@ -332,7 +433,42 @@ function applyGfx(){if(typeof QUAL==='undefined')return;if(SET.gfx==='auto'){QUA
 const GSPD=1.2;
 function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number]];
   for(const [id,k,cv] of segs){const el=$(id);if(!el)continue;el.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',cv(b.dataset.v)===SET[k]);b.onclick=()=>{SET[k]=cv(b.dataset.v);saveSet();syncSettings();if(k==='gfx')applyGfx();};});}
-  for(const [id,k] of [['sMus','mus'],['sFx','fx'],['sVo','vo'],['sScr','scr'],['sZm','zm']]){const el=$(id);if(!el)continue;el.value=SET[k];const out=$(id+'V');if(out)out.textContent=SET[k]+'%';el.oninput=()=>{SET[k]=+el.value;if(out)out.textContent=SET[k]+'%';saveSet();if(k!=='scr'&&k!=='zm')applyAudio();};}}
+  for(const [id,k] of [['sMus','mus'],['sFx','fx'],['sVo','vo'],['sScr','scr'],['sZm','zm']]){const el=$(id);if(!el)continue;el.value=SET[k];const out=$(id+'V');if(out)out.textContent=SET[k]+'%';el.oninput=()=>{SET[k]=+el.value;if(out)out.textContent=SET[k]+'%';saveSet();if(k!=='scr'&&k!=='zm')applyAudio();};}
+  syncMouseUI();}
+// Settings > Mouse: a scheme preset (Generals / Alternate mouse setup / Custom) and a choice for each mouse function
+const MOPT=[['sMpre','Mouse scheme',null,[['gen','Generals'],['alt','Alternate'],['custom','Custom']]],
+  ['sMLG','Left-click on the ground with units selected','mLG',[['move','Move'],['desel','Deselect']]],
+  ['sMRC','Right-click','mRC',[['cancel','Deselect & cancel'],['order','Move & attack']]],
+  ['sMRDU','Right-drag with units selected','mRDU',[['line','Infantry line'],['scroll','Rapid scroll']]],
+  ['sMRDN','Right-drag with nothing selected','mRDN',[['scroll','Rapid scroll'],['box','Box select'],['none','Nothing']]],
+  ['sMAK','Attack-move key (F always works)','mAK',[['a','A (S stops)'],['f','F (X stops)']]],
+  ['sMCur','Cursor shows what a click will do','mCur',[['1','On'],['0','Off']]],
+  ['sMPing','Order markers on the ground','mPing',[['1','On'],['0','Off']]]];
+{const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sMpre')){const els=[];
+  for(const [id,txt,,opts] of MOPT){const lb=document.createElement('div');lb.className='label';lb.textContent=txt;const sg=document.createElement('div');sg.className='seg';sg.id=id;for(const [v,t] of opts){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}els.push(lb,sg);
+    if(id==='sMpre'){const n=document.createElement('div');n.className='sv';n.id='sMpreN';n.style.cssText='opacity:.8;margin:2px 0 4px';els.push(n);}
+    if(id==='sMRDN'){const lr=document.createElement('div');lr.className='label';lr.innerHTML='<label for="sMRS">Rapid-scroll speed</label> <span class="sv" id="sMRSV"></span>';const r=document.createElement('input');r.type='range';r.id='sMRS';r.min=40;r.max=300;r.step=10;els.push(lr,r);}}
+  const wn=document.createElement('div');wn.className='sv';wn.id='sMwarn';wn.style.cssText='color:var(--warn);margin:4px 0';wn.hidden=true;wn.textContent='Neither mouse button gives move orders now - set Left-click to Move or Right-click to Move & attack.';els.push(wn);
+  hd.after(...els);
+  const rs=document.createElement('button');rs.className='btn2';rs.id='sMreset';rs.type='button';rs.textContent='Reset mouse settings to defaults';rs.style.margin='10px 0 4px';const last=$('settings').querySelector('.card>.row:last-child');if(last)last.before(rs);}}
+function syncMouseUI(){const pre=mPreset();
+  for(const [id,,k] of MOPT){const el=$(id);if(!el)continue;for(const b of el.querySelectorAll('button')){const v=b.dataset.v;b.classList.toggle('on',k?String(SET[k])===v:v===pre);if(id==='sMpre'&&v==='custom')b.disabled=pre!=='custom';
+      b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing')?+v:v;else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
+  const n=$('sMpreN');if(n)n.textContent=pre==='gen'?'Command & Conquer Generals controls: left-click selects and gives orders, right-click deselects.':pre==='alt'?'Alternate mouse setup: left-click selects, right-click moves and attacks, right-drag draws a line.':'Custom: your own mix of the choices below.';
+  const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
+  const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
+  const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
+const HINT_ALT=($('hint')&&$('hint').textContent)||'';
+// the on-screen hint follows the chosen mouse functions (the Alternate preset shows the original text word for word)
+function hintText(){if(altMouse())return HINT_ALT;const L=leftOrders(),R=rightOrders(),P=[];
+  P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
+  P.push('Double-click: all of a type');if(L)P.push('Ctrl+click: force-fire · Alt+click: waypoint');
+  P.push(SET.mAK==='a'?'A / G then click: attack-move / guard · S: stop':'F then click: attack-move · G then click: defend area · X: stop');P.push('R: retreat');
+  P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
+  const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
+  P.push('Q: army · H: home · Wheel: zoom · Arrows/WASD: scroll');return P.join(' · ');}
+function setHint(){if(TOUCHUI)return;const h=$('hint');if(h)h.textContent=hintText();}
+function mouseScheme(){setHint();CURST.k=null;try{cursorTick(true);}catch(_){}if(G)updateUI();}
 function openSettings(){try{myUI();}catch(e){}syncSettings();$('settings').hidden=false;}
 if($('openSettings'))$('openSettings').onclick=openSettings;if($('aSet'))$('aSet').onclick=openSettings;if($('sDone'))$('sDone').onclick=()=>{$('settings').hidden=true;};
 syncSettings();setTimeout(applyGfx,0);
