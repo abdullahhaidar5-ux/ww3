@@ -1,0 +1,39 @@
+server at http://127.0.0.1:40435
+  ok   GET /health answers ok, with today's budget use
+  ok   GET /turn says "not configured" when no TURN key is set
+  ok   /turn refuses other websites
+  ok   /turn allows the ww3 Worker site
+  ok   /turn allows GitHub Pages
+  ok   sockets from other websites are refused
+  ok   joining a game nobody hosts is refused (nohost)
+  ok   host is welcomed with its id
+  ok   a second host for the same code is refused (taken)
+  ok   players are welcomed with the host id
+  ok   host is told each player joined
+  ok   a duplicate player id is refused
+  ok   player -> host arrives with the sender id
+  ok   players can only talk to the host (no player -> player)
+  ok   host -> everyone reaches every player
+  ok   host -> one player reaches that player
+  ok   ... and nobody else
+  ok   keep-alive ping is answered
+  ok   a batched host frame is regrouped: each player gets one frame with only its records
+  ok   a batched player frame reaches the host tagged with the sender
+  ok   a host coming back after a blip gets its players back
+  ok   players stay connected through a short host blip
+  ok   relay works through the new host connection
+  ok   an oversized player message closes that socket (1009)
+  ok   host is told the player left
+  ok   rate limit: 92 of 400 burst frames passed (expect ~90-120)
+  ok   one address may hold 8 sockets in a room, the 9th is refused (limit)
+  ok   room refuses a 12th player/spectator (full)
+  ok   players are told when the host leaves for good
+  ok   ... and their sockets are closed
+  ok   lobby welcomes viewers and sends the game list
+  ok   a hosted game shows up for other players (and only known fields are kept)
+  ok   GET /games lists it
+  ok   invalid game codes are dropped
+  ok   the game disappears when the host leaves the menu
+  ok   with a tiny allowance new relay rooms are refused ("busy" after 9 rooms, budget 90% used)
+
+SERVERTEST PASS
