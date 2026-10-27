@@ -1,0 +1,44 @@
+game servers configured but down (http://127.0.0.1:9)
+[2s] three pages loaded
+[3s] host lobby open, code 5o2mbd
+[21s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+[68s] before: client A @1 min t=60s: host 19 entities, slot 1 sees 6 (own 6); its screen has 6; missing 0, extra 0, off-position 0, mismatched 0; credits host 5140 client 5140
+[69s] before: client B @1 min t=60s: host 19 entities, slot 2 sees 10 (own 10); its screen has 0; missing 10, extra 0, off-position 0, mismatched 0; credits host 255 client 4800
+    trace client A (screenshot stall):  || now: client via=pjd ws=false rxAgo=258
+    trace client B (screenshot stall): 5.7 join tc-5o2mbd-m1 | 9.1 join failed tc-5o2mbd-m1: network | 9.4 join tc-5o2mbd | 9.5 joined tc-5o2mbd via pjd | 9.7 snapshot t=125.3 while reconnecting | 9.7 snapshot t=125.4 while reconnecting || now: client via=pjd ws=false rxAgo=259
+[79s] host leaves at t=125.4s; standby checkpoint from t=118.9s (8 KB, 23 entities); armies US 3, RU 4, CN 19
+    +0.4s client A: client reconnecting room=ww3-5o2mbd gen=0 (no room)
+[80s] client A noticed the host was gone after 0.4 s
+    +0.4s client B: client reconnecting room=ww3-5o2mbd gen=0 (no room)
+    +4.4s client A: host room=5o2mbd-m1 gen=1
+    +4.6s client B: client reconnecting room=ww3-5o2mbd-m1 gen=1
+[84s] client A is the new host after 4.6 s (room 5o2mbd-m1, battle resumed from t=119.1s)
+    +4.8s client B: client room=ww3-5o2mbd-m1 gen=1
+[84s] client B reconnected to the new host 4.9 s after the host left
+    trace client A: 0.0 clientReconnect | 0.3 join tc-5o2mbd | 4.3 promoteToHost | 4.3 join tc-5o2mbd-m1 | 4.4 joined tc-5o2mbd-m1 via undefined | 4.4 promoteToHost -> true | 4.4 clientReconnect done, mode host
+    trace client B: 0.0 clientReconnect | 0.3 join tc-5o2mbd | 3.8 join failed tc-5o2mbd: network | 4.3 join tc-5o2mbd-m1 | 4.4 joined tc-5o2mbd-m1 via pjd | 4.5 snapshot t=119 while reconnecting | 4.7 clientReconnect done, mode client
+[89s]   US (slot 0): 3/3 of its pre-takeover entities are on the new host, 4 in all; AI-run (took over)
+[89s]   RU (slot 1): 4/4 of its pre-takeover entities are on the new host, 4 in all; player-run
+[89s]   CN (slot 2): 16/19 of its pre-takeover entities are on the new host, 16 in all; player-run
+[90s] after: client B right after the takeover t=124s: host 24 entities, slot 2 sees 19 (own 16); its screen has 19; missing 0, extra 0, off-position 0, mismatched 0; credits host 1990 client 1990
+[92s] client B order after the takeover: 7/7 of its units moved on the new host
+[92s] old host's side after 45 game-s under the AI: build step 1 -> 4, 13 new entities, 1 in production, $460
+[93s] after: client B 45 game-s after the takeover t=169s: host 42 entities, slot 2 sees 21 (own 21); its screen has 22; missing 0, extra 0, off-position 0, mismatched 0; credits host 3715 client 3715
+peak memory (node + browser, summed RSS): 3062 MB
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/5o2mbd?role=host&key=pgsfcuof2iz2fy19u8' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/5o2mbd?role=client&id=ww3p-uod97pju' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/5o2mbd-m1?role=client&id=ww3p-wokypm6a' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/5o2mbd-m1?role=client&id=ww3p-jqg6t8qf' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/5o2mbd-m1?role=client&id=ww3p-pc9d4q7x' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/5o2mbd-m1?role=client&id=ww3p-34g1q1ik' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MIGRATE FAIL: before: client B @1 min: 10 of slot 2's own entities are missing on its screen: hq#11(team 2), harv#12(team 2), dozer#13(team 2), inf#14(team 2) (+6 more) (98s)
+  ✗ before: client B @1 min: slot 2 credits differ: host 255, client 4800
+  ✗ before: client B @1 min: slot 2's latest state is 59.5 s behind the host after settling
+  ✗ before the host left, a client fell 119.5 game-s behind
