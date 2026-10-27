@@ -15,7 +15,9 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
   missing after the loading screen (40/40 in all editions).
 - Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MPSYNC --server PASS, MIGRATE PASS (failed once: client 59 game-s
   behind before host left; passed on rerun → backlog watch item), HEADLESS --compare PASS, artifact smoke + MPSYNC PASS.
-- Not done: real ney (Freesound 403 from the sandbox).
+- Artifact republished v164 (page + 50 model `.txt` + all `mus/`). Its `vo/*.mp3` differ from every `vo/` in repo
+  history (unknown origin) → left as they are, not overwritten (backlog item). Board republished.
+- Not done: real ney (Freesound 403 from the sandbox). Board republished v14; artifact v164.
 
 ## 2026-10-27 08:36 → 10:25 — cycle 9
 

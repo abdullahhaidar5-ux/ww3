@@ -71,6 +71,8 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 
 **Foundation (ORCH itself)**
 
+- [open] claude.ai artifact's published `vo/*.mp3` (18) don't match any `vo/` version in repo history — someone published
+  other voice files there. Find out which is newer/better before the next republish passes `vo/` (cycle 10 left them).
 - [open] Extend `orch/mpsync.mjs`: packet loss/latency, real WebRTC (3-player host migration is now covered by
   `orch/migrate.mjs`, cycle 6; its `--abrupt` mode — host vanishes without goodbye — is untested).
   Don't start from scratch — port the surviving old harnesses on the `testbed` branch: `tw8b.py` (host in Chicago +
