@@ -70,6 +70,11 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## P1 — now
 
 **Foundation (ORCH itself)**
+- [open] **claude.ai artifact edition can't take the new model files:** the artifact host refuses `.glb.gz`/`application/gzip`
+  (served types: html css js mjs wasm json txt … images, fonts, mp3/wav/ogg/mp4/webm, pdf). Cycle 9 therefore did NOT
+  republish it (it stays on v161, still fine: models inline). Fix in `build.py --artifact` + `11-models`: e.g. inline
+  MODEL_FILES data for the artifact edition again, or publish each model as base64 `.txt`/`.json` and decode; then
+  rerun artifact smoke/MPSYNC and republish with the 4 new `mus/` files (`an_IL/UA/CU.mp3`, new `we.mp3`).
 - [open] Extend `orch/mpsync.mjs`: packet loss/latency, real WebRTC (3-player host migration is now covered by
   `orch/migrate.mjs`, cycle 6; its `--abrupt` mode — host vanishes without goodbye — is untested).
   Don't start from scratch — port the surviving old harnesses on the `testbed` branch: `tw8b.py` (host in Chicago +
