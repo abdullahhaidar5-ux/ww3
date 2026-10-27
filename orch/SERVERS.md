@@ -8,11 +8,14 @@ never uses them: the backend lives in the online-edition shim, which `build.py -
 
 ## Putting the servers live (ORCH)
 
+0. **Prerequisite:** `server/` has shipped to `main` in a normal cycle (with `WW3_SERVER_URL` still `''`). Abdullah's
+   dashboard import builds `server/` from `main` once, so it must exist there first.
 1. **Make the approval branch (once).** Point `servers-live` at the last commit **before** `server/` existed, so the
    go-live PR contains the whole server:
    `git push origin "$(git rev-list -1 "$(git log --diff-filter=A --format=%H -- server/wrangler.toml | tail -1)^")":refs/heads/servers-live`
    (creating a branch only; never force-push it afterwards).
-2. **Ask Abdullah to do the one-time dashboard setup** in `server/README.md` → "One-time setup". In short:
+2. **Ask Abdullah to do the one-time dashboard setup** in `server/README.md` → "One-time setup" (8 taps-and-types;
+   send him that section as it is, or link https://github.com/abdullahhaidar5-ux/ww3/blob/main/server/README.md). In short:
    Workers & Pages → Create → Import a repository → `abdullahhaidar5-ux/ww3` → name `ww3-servers`, root directory
    `server`, deploy command `npx wrangler deploy` → then Settings → Build → Branch control: production branch
    `servers-live`, preview builds off. (Creating it deploys once from `main`. That's harmless, because the game isn't
@@ -20,13 +23,19 @@ never uses them: the backend lives in the online-edition shim, which `build.py -
 3. **Open the approval PR**, in plain words:
    `gh pr create --base servers-live --head main --title "Put multiplayer servers live" --body "Tap Merge to switch on World War 3's own multiplayer servers on your Cloudflare account (free plan). Nothing changes for players until the next game update points the game at them."`
    Abdullah taps **Merge** in the GitHub app. Cloudflare builds `server/` from `servers-live` (about a minute).
-4. **Check it:** `curl -s https://ww3-servers.abdullah-haidar5.workers.dev/health` must show `"ok":true` and
-   `"version":2`. Then `node orch/servertest.mjs --url https://ww3-servers.abdullah-haidar5.workers.dev` must print
-   `SERVERTEST PASS` (it skips the checks that need a local server).
+   Confirm the merge with `gh pr view --json state,mergedAt` (state `MERGED`) before going on.
+4. **Check it** (after the merge, wait ~2 min): `curl -s https://ww3-servers.abdullah-haidar5.workers.dev/health` must
+   show `"ok":true`, `"service":"ww3-servers"` and `"version":2`. (The dashboard's first deploy from `main` already
+   answers this, so the check proves the server is up, and the `MERGED` state proves the approval.) Then
+   `node orch/servertest.mjs --url https://ww3-servers.abdullah-haidar5.workers.dev` must print `SERVERTEST PASS` (it
+   skips the checks that need a local server). If /health doesn't answer: ask Abdullah for a screenshot of
+   ww3-servers → Deployments; don't switch the game over.
 5. **The one-line change, in a normal ship:** in `src/07-net.js`,
-   `const WW3_SERVER_URL='https://ww3-servers.abdullah-haidar5.workers.dev';`. Then the usual gate plus
-   `node orch/servertest.mjs` and `node orch/mpsync.mjs --server`. Tell Abdullah: "Multiplayer now uses your own
-   servers: game list, and a backup route for friends whose internet blocks direct connections."
+   `const WW3_SERVER_URL='https://ww3-servers.abdullah-haidar5.workers.dev';`, `python3 orch/build.py`. Then the usual
+   gate plus `node orch/servertest.mjs` and `node orch/mpsync.mjs --server`, push `main` (Pages and the `ww3` Worker
+   pick it up; check https://ww3.abdullah-haidar5.workers.dev serves the new `index.html`). The artifact edition is
+   unaffected (its build strips the server code) but republish it as usual. Tell Abdullah: "Multiplayer now uses your
+   own servers: game list, and a backup route for friends whose internet blocks direct connections."
 6. **Later server changes:** each one is a PR `main → servers-live` with a plain title ("Update multiplayer servers:
    …"), approved by Merge. Workers Builds deploys nothing else.
 
