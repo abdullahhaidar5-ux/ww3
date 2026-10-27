@@ -105,10 +105,10 @@ async function renderLobby(){if(!NET.code||NET.code==='join'||MODE!=='single')re
 function lobbyTeams(){const nh=NET.lobby.length+1;return [...(NET.tm||[]).slice(0,nh),...(NET.ais||[]).map(a=>a.tm|0)];}
 function launchMP(){if(MODE!=='single'||!NET.lobby.length)return;const seed=(Math.random()*1e9)|0;const ais=(NET.ais||[]).slice(0,Math.max(0,(MAPS[setup.map]||MAPS.strait).max-1-NET.lobby.length)).map(a=>({f:FKEYS.includes(a.f)?a.f:FKEYS[0],d:Math.max(0,Math.min(2,a.d|0)),tm:Math.max(0,Math.min(7,a.tm|0))}));const facs=[setup.p,...NET.lobby.map(p=>p.f),...ais.map(a=>a.f)];NET.peers=[null,...NET.lobby.map(p=>p.peer),...ais.map(()=>null)];NET.toks=[null,...NET.lobby.map(p=>p.tok||null),...ais.map(()=>null)];
   const aiD=[null,...NET.lobby.map(()=>null),...ais.map(a=>a.d|0)];NET.opp=NET.peers[1];
-  const map=setup.map||'strait';const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',{pv:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm}).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map}}).catch(()=>{});NET.startInfo={seed,facs,map,tm};startMP('host',seed,facs,0,map,tm,aiD);}
+  const map=setup.map||'strait';const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',{pv:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0}).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map}}).catch(()=>{});NET.startInfo={seed,facs,map,tm,w:setup.w|0};startMP('host',seed,facs,0,map,tm,aiD);}
 // A dropped player gets 30 s to reconnect (same team, same units) before the AI takes over their side.
 function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=NET.toks.indexOf(tok);if(ix<1)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,(NET.cseqSlot||[])[ix]|0);
-  const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',{pv:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm}).catch(()=>{});
+  const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',{pv:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm,w:S.w|0}).catch(()=>{});
   for(const O of G.teams)log(O.id,`${T.F.name}'s commander reconnected.`,'g');
   // P2P: the rejoined player starts from a fresh map, so collapsed city blocks are re-sent as they come into view
   if(window.WW3_P2P){(NET.gq=NET.gq||[])[ix]=[];(NET.civQ=NET.civQ||[])[ix]=(G.civ||[]).map((c,i)=>c.dead?i:-1).filter(i=>i>=0);}}
@@ -122,7 +122,10 @@ function joinTok(code){const k='ww3_tok_'+code;let t=null;try{t=sessionStorage.g
 function wireClient(g){
   g.on('hello',m=>{if(m.sameTab)NET.myPeer=m.peer;});
   g.on('lobby',m=>{if(m.peer===NET.hostPeer&&m.data&&m.data.to===NET.myPeer&&MODE==='single'){if(m.data.full){clearInterval(NET.helloI);$('mpstatus').textContent='That game is full.';leaveNet();return;}$('mpstatus').textContent=`Joined. ${m.data.n} players in the lobby. Waiting for the host to start the battle…`;}});
-  g.on('start',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV){$('mpstatus').textContent='You and the host have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<1||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;startMP('client',d.seed|0,d.facs,sl,map,tm);});
+  g.on('start',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV){$('mpstatus').textContent='You and the host have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<1||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
+  // An old host sends no 'w': the player's own menu choice stays, as before.
+  if(typeof d.w==='number'&&d.w>=-1&&d.w<WX.length){setup.w=d.w|0;const W=$('wx');if(W)W.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.w===setup.w));}
+  startMP('client',d.seed|0,d.facs,sl,map,tm);});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
   g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();applySnap(m.data);}});
   g.on('evt',m=>{if(ok(m)){NET.lastRx=performance.now();applyEvents(m.data);}});
@@ -192,7 +195,10 @@ function sendSnapP(k,to,items){const b=1<<k,key=k;NET.sc=NET.sc||{};NET.kf=NET.k
   const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
   // a remembered building that died out of this player's sight stays on their map until they see the spot ('gone' queue)
   if(dr.length&&NET.gq&&NET.gq[k]&&NET.gq[k].length){const q=new Set(NET.gq[k].map(g=>g[0]));for(let i=dr.length-1;i>=0;i--)if(q.has(dr[i]))dr.splice(i,1);}
-  if(ch.length||!keep.length&&sendKeep||dr.length)sendChunks('snap',base,ch,snapDrops(dr));for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});}
+  if(ch.length||!keep.length&&sendKeep||dr.length)sendChunks('snap',base,ch,snapDrops(dr));for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});
+  // just-died units left out of the drop list are still on this player's screen until their 'die' arrives (dieWho)
+  if(dr.length&&NET.dyC){const dy=NET.dyC.s;for(const id of dr)if(dy.has(id))dhSet(k).add(id);}}
+function dhSet(k){if(NET.dhG!==G){NET.dhG=G;NET.dh=[];}const D=NET.dh;return D[k]||(D[k]=new Set());}
 // P2P: one copy per player, so the two visibility masks are folded into that player's 'remembered' flag and dropped
 function forPlayer(items,k){const b=1<<k,out=[];for(const a of items){if(!((a[11]|a[12])&b))continue;const c=a.slice(0,11);c[9]=(a[11]&b)?(c[9]&~FLG.mem):(c[9]|FLG.mem);out.push(c);}return out;}
 // first (optional): extra fields carried by the first message only (a snapshot's drop list); sent even with no items
@@ -277,14 +283,15 @@ function evWho(v){const AM=VG.AM,own=v.own!=null?AM[v.own]|0:0;
 // what each player was last sent of an entity: r.t[k] = when it was last in k's snapshot as visible, r.m = players
 // that hold it as a remembered (fogged) building
 function skNote(SK,e,vm,mm,live){let r=SK.get(e.id);if(!r)SK.set(e.id,r={t:[],m:0,s:0});for(const k of live)if(vm&(1<<k))r.t[k]=G.t;r.m|=mm;r.s=G.t;}
-// 'die' goes to everyone who sees the spot, and to anyone who may still have that entity on screen. A client drops a
-// unit after ~0.9 s of snapshots without it (clientTick ttl; unchanged units are only refreshed by the 0.4 s keep-alive
-// list), so a unit that was in a player's snapshots within 1.6 s of the latest one they were sent is still there
-// (snapshots skipped for a congested link count as 'still there'; 8.5 s covers the client's absolute expiry). A
-// remembered building never expires on the client, so if it dies out of sight it is queued as a silent 'gone'.
+// 'die' goes to everyone who sees the spot, and to anyone who still has that entity on screen: it is in the last
+// snapshot cache for that player (NET.sc[k]; a snapshot skipped for a congested link leaves it there), or it was
+// dropped from that cache only because it had just died (dhSet). A unit that walked out of sight was already named in
+// that player's drop list, so it dying later in the fog shows them nothing (8.5 s covers the client's absolute expiry).
+// A remembered building never expires on the client, so if it dies out of sight it is queued as a silent 'gone'.
 function dieWho(v,live){const id=v[1],x=v[2],y=v[3],ki=v[4],isB=v[5];let m=visAt(x,y,isB?120:30);const r=NET.sk&&NET.sk.get(id);
-  if(r){NET.sk.delete(id);const st=NET.snapTo||[];for(const k of live){const b=1<<k;if(m&b)continue;const t=r.t[k];
-    if(t!=null&&(st[k]||0)-t<=1.6&&G.t-t<=8.5)m|=b;
+  const dh=NET.dhG===G?NET.dh:null;let held=0;if(dh)for(const k of live)if(dh[k]&&dh[k].delete(id))held|=1<<k;
+  if(r){NET.sk.delete(id);const sc=NET.sc||{};for(const k of live){const b=1<<k;if(m&b)continue;const t=r.t[k];
+    if(t!=null&&((held&b)||sc[k]&&sc[k].has(id))&&G.t-t<=8.5)m|=b;
     else if(isB&&(r.m&b)){const q=NET.gq[k]=NET.gq[k]||[];q.push([id,x,y,ki]);if(q.length>300)q.shift();}}}
   return m;}
 // a city block collapsing changes the map (passability, cover), so every player must get it eventually: now if they see
