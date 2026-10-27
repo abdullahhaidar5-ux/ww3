@@ -20,6 +20,10 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   `01-data`/`02-map` touches DOM/THREE/window, and a headless sim runner (`orch/headless.mjs`) that plays an AI battle
   in plain Node and matches the browser's state hash for the same seed. Netcode + QA squads; never break current
   P2P play — servers are an extra path, P2P stays the default until Abdullah says otherwise.
+  **Where battles run (Abdullah, 19:09, agreed plan):** write the headless battle server once so it runs both on
+  Cloudflare and on a PC as a "dedicated server" (Node, `tools/Dedicated server.cmd`, no window); lobby lets the host
+  pick "Host on my PC (browser)" / "Dedicated PC server" / "Cloudflare". Cloudflare always does matchmaking + relays.
+  Benchmark the largest battle each can sustain (8 players, late game) and report it.
 - _(none open — cycle 4 shipped the artifact build and republished it)_
 
 ## Questions for Abdullah
