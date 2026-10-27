@@ -1,0 +1,48 @@
+game servers running locally at http://127.0.0.1:37343
+[2s] three pages loaded
+[2s] host lobby open, code zq5gla
+[35s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+    [net battle start] host: {"t":0,"loading":true,"paused":true,"fp":{"tx":11,"rx":9,"txB":819,"rxB":616,"dropped":0},"slots":[{"k":1,"peer":"ww3p-d7lxsgc9","seenAgo":317,"disc":0,"ai":false,"aiTook":false,"buf":0},{"k":2,"peer":"ww3p-42ggmtml","seenAgo":409,"disc":0,"ai":false,"aiTook":false,"buf":0}],"sb":null,"ckOut":false}
+    [net battle start] client A: {"me":1,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-d7lxsgc9","hostPeer":"ww3-zq5gla","sb":false,"ck":false,"ents":0,"fp":{"tx":5,"rx":6,"txB":356,"rxB":442,"dropped":0},"trace":[]}
+    [net battle start] client B: {"me":2,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-42ggmtml","hostPeer":"ww3-zq5gla","sb":false,"ck":false,"ents":0,"fp":{"tx":5,"rx":5,"txB":352,"rxB":377,"dropped":0},"trace":[]}
+    [net t=5s] host: {"t":5,"loading":true,"paused":true,"fp":{"tx":106,"rx":16,"txB":28224,"rxB":1260,"dropped":0},"slots":[{"k":1,"peer":"ww3p-d7lxsgc9","seenAgo":141,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988},{"k":2,"peer":"ww3p-42ggmtml","seenAgo":140,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988}],"sb":1,"ckOut":false}
+    [net t=5s] client A: {"me":1,"mode":"client","loading":true,"paused":true,"t":5,"snapT":4.9,"rxAgo":6,"recon":false,"myPeer":"ww3p-d7lxsgc9","hostPeer":"ww3-zq5gla","sb":true,"ck":true,"ents":5,"fp":{"tx":8,"rx":54,"txB":632,"rxB":16421,"dropped":0},"trace":[]}
+    [net t=5s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":5,"snapT":5,"rxAgo":8,"recon":false,"myPeer":"ww3p-42ggmtml","hostPeer":"ww3-zq5gla","sb":false,"ck":false,"ents":5,"fp":{"tx":8,"rx":52,"txB":628,"rxB":11803,"dropped":0},"trace":[]}
+    [net t=10s] host: {"t":10,"loading":false,"paused":false,"fp":{"tx":106,"rx":30,"txB":28224,"rxB":5598,"dropped":0},"slots":[{"k":1,"peer":null,"seenAgo":null,"disc":5.099999999999987,"ai":false,"aiTook":false,"buf":null,"snapTo":4.999999999999988},{"k":2,"peer":null,"seenAgo":null,"disc":5.099999999999987,"ai":false,"aiTook":false,"buf":null,"snapTo":4.999999999999988}],"sb":1,"ckOut":false}
+    [net t=10s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":10,"snapT":4.9,"rxAgo":25118,"recon":true,"myPeer":"ww3p-d7lxsgc9","hostPeer":"ww3-zq5gla","sb":true,"ck":true,"ents":5,"fp":{"tx":15,"rx":54,"txB":2800,"rxB":16421,"dropped":0},"trace":["62.5 clientReconnect"]}
+    [net t=10s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":10,"snapT":5,"rxAgo":25120,"recon":true,"myPeer":"ww3p-42ggmtml","hostPeer":"ww3-zq5gla","sb":false,"ck":false,"ents":5,"fp":{"tx":15,"rx":52,"txB":2798,"rxB":11803,"dropped":0},"trace":["62.4 clientReconnect"]}
+    [net t=30s] host: {"t":30,"loading":false,"paused":false,"fp":{"tx":322,"rx":33,"txB":120322,"rxB":6988,"dropped":0},"slots":[{"k":1,"peer":"ww3p-8u5zrxwn","seenAgo":376,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577},{"k":2,"peer":"ww3p-ryui5u38","seenAgo":153,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577}],"sb":1,"ckOut":false}
+    [net t=30s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":30,"snapT":30,"rxAgo":5,"recon":false,"myPeer":"ww3p-8u5zrxwn","hostPeer":"ww3-zq5gla","sb":true,"ck":true,"ents":6,"fp":{"tx":16,"rx":168,"txB":3261,"rxB":66991,"dropped":0},"trace":["62.7 join tc-zq5gla","62.9 joined tc-zq5gla via pjd","62.9 snapshot t=19.1 while reconnecting","62.9 snapshot t=19.2 while reconnecting","62.9 snapshot t=19.3 while reconnecting","63.2 clientReconnect done, mode client"]}
+    [net t=30s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":30,"snapT":30,"rxAgo":6,"recon":false,"myPeer":"ww3p-ryui5u38","hostPeer":"ww3-zq5gla","sb":false,"ck":false,"ents":9,"fp":{"tx":17,"rx":154,"txB":3727,"rxB":53331,"dropped":0},"trace":["62.6 join tc-zq5gla","62.8 joined tc-zq5gla via pjd","62.8 snapshot t=20.1 while reconnecting","62.8 snapshot t=20.2 while reconnecting","62.8 snapshot t=20.3 while reconnecting","63.1 clientReconnect done, mode client"]}
+[100s] before: client A @1 min t=60s: host 21 entities, slot 1 sees 5 (own 5); its screen has 5; missing 0, extra 0, off-position 0, mismatched 0; credits host 5140 client 5140
+[101s] before: client B @1 min t=60s: host 21 entities, slot 2 sees 13 (own 13); its screen has 13; missing 0, extra 0, off-position 0, mismatched 0; credits host 2320 client 2320
+    trace client A (screenshot stall): 62.5 clientReconnect | 62.7 join tc-zq5gla | 62.9 joined tc-zq5gla via pjd | 62.9 snapshot t=19.1 while reconnecting | 62.9 snapshot t=19.2 while reconnecting | 62.9 snapshot t=19.3 while reconnecting | 63.2 clientReconnect done, mode client || now: client via=pjd ws=false rxAgo=255
+    trace client B (screenshot stall): 62.4 clientReconnect | 62.6 join tc-zq5gla | 62.8 joined tc-zq5gla via pjd | 62.8 snapshot t=20.1 while reconnecting | 62.8 snapshot t=20.2 while reconnecting | 62.8 snapshot t=20.3 while reconnecting | 63.1 clientReconnect done, mode client || now: client via=pjd ws=false rxAgo=256
+[109s] host leaves at t=120.2s; standby checkpoint from t=114.7s (11 KB, 32 entities); armies US 3, RU 4, CN 25
+    +0.6s client A: client room=ww3-zq5gla gen=0
+    +0.6s client B: client room=ww3-zq5gla gen=0
+[114s] client A noticed the host was gone after 4.8 s (abrupt: no goodbye)
+    +4.9s client A: client reconnecting room=ww3-zq5gla gen=0
+    +5.1s client A: client reconnecting room=ww3-zq5gla gen=0 (no room)
+    +5.3s client B: client reconnecting room=ww3-zq5gla gen=0
+    +5.5s client B: client reconnecting room=ww3-zq5gla gen=0 (no room)
+    +6.1s client A: client reconnecting room=zq5gla-m1 gen=0 (no room)
+    +6.3s client A: host room=zq5gla-m1 gen=1
+[115s] client A is the new host after 6.3 s (room zq5gla-m1, battle resumed from t=114.9s)
+    +7.1s client B: client reconnecting room=ww3-zq5gla-m1 gen=1
+[116s] client B reconnected to the new host 7.4 s after the host left
+    trace client A: 4.8 clientReconnect | 5.1 join tc-zq5gla | 6.0 join failed tc-zq5gla: peer-unavailable | 6.0 promoteToHost | 6.0 join tc-zq5gla-m1 | 6.2 joined tc-zq5gla-m1 via undefined | 6.2 promoteToHost -> true | 6.2 clientReconnect done, mode host
+    trace client B: 5.2 clientReconnect | 5.4 join tc-zq5gla | 6.4 join failed tc-zq5gla: peer-unavailable | 6.9 join tc-zq5gla-m1 | 7.1 joined tc-zq5gla-m1 via pjd | 7.1 snapshot t=115.7 while reconnecting | 7.2 snapshot t=115.8 while reconnecting | 7.3 snapshot t=115.9 while reconnecting | 7.4 clientReconnect done, mode client
+[121s]   US (slot 0): 3/3 of its pre-takeover entities are on the new host, 5 in all; AI-run (took over)
+[121s]   RU (slot 1): 4/4 of its pre-takeover entities are on the new host, 4 in all; player-run
+[121s]   CN (slot 2): 25/25 of its pre-takeover entities are on the new host, 27 in all; player-run
+[122s] after: client B right after the takeover t=121s: host 36 entities, slot 2 sees 30 (own 27); its screen has 30; missing 0, extra 0, off-position 0, mismatched 0; credits host 860 client 860
+[124s] client B order after the takeover: 20/22 of its units moved on the new host
+[125s] old host's side after 45 game-s under the AI: build step 1 -> 4, 12 new entities, 1 in production, $1010
+[126s] after: client B 45 game-s after the takeover t=166s: host 51 entities, slot 2 sees 34 (own 32); its screen has 34; missing 0, extra 0, off-position 0, mismatched 0; credits host 1775 client 1775
+peak memory (node + browser, summed RSS): 3719 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MIGRATE FAIL: before the host left, a client fell 20.0 game-s behind (137s)
