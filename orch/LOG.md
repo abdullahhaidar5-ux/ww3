@@ -46,6 +46,16 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
 - Chaining the next cycle was blocked again (permission denied for running the scheduled task on demand); the 4-hourly
   schedule (next 17:24 UTC) picks it up.
 
+## 2026-10-27 18:50 — side lane: Cloudflare battle bench shipped (needs Abdullah's servers-live merge)
+
+- `orch/stage2-dedicated` @ b6b0b39: BattleRoom Durable Object (runs the sim, bundled from src/ by server/build-sim.mjs),
+  `/battle-bench`, free-plan limits (3 battles, 45 min, hand-over at 75%), `b|` battle list frame (today's game ignores
+  it), restart recovery; 07-net → 07a host message handling move (browser host unchanged; fresh review: no blockers,
+  its 3 should-fixes applied). Not used by the game yet.
+- Gate (GitHub parallel, orch/cigate.sh): all PASS except migrate-abrupt/-down, which fail on main too on CI runners
+  (being fixed on `orch/open-reconnect-phonebar`); MAPSWEEP PASS (71 battles).
+- PR `main → servers-live` "Battle bench on your servers" for Abdullah to merge; then measure /battle-bench.
+
 ## 2026-10-27 11:40 — side lane: multiplayer switched onto Abdullah's servers
 
 - `WW3_SERVER_URL` = https://ww3-servers.abdullah-haidar5.workers.dev. Game list from the server; joiners try direct
