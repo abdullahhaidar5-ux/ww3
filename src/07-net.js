@@ -161,7 +161,7 @@ const CMD_T=['go','atk','atkOil','fld','q','dq','bld','bldGo','tun','unl','board
 function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;
   if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
   if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
-const NET_PV=4;
+const NET_PV=5;
 // a keep-alive list named units this client doesn't have (a missed update): ask the host for a full copy (at most every 2 s)
 function askKeyframe(){const w=performance.now();if(NET.krW&&w-NET.krW<2000)return;NET.krW=w;if(NET.game)NET.game.presence({kr:Math.round(w)}).catch(()=>{});}
 function doAct(a){if(MODE==='client'){if(!NET.game)return;
@@ -192,16 +192,16 @@ function verItems(items){const V=NET.ver||(NET.ver=new Map());const st=NET.verSt
   for(const a of items){const s=a.slice(0,11).join(',');let r=V.get(a[0]);if(!r){r=[s,1,st];V.set(a[0],r);}else{if(r[0]!==s){r[0]=s;r[1]++;}r[2]=st;}a._v=r[1];}
   if(V.size>items.length*1.5+64)for(const [id,r] of V)if(r[2]!==st)V.delete(id);}
 function sendSnapP(k,to,items){const b=1<<k,key=k;NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+4+(k%8)*.25;const old=NET.sc[key];let c=old;if(!c||full)c=NET.sc[key]=new Map();
-  const sendKeep=full||!(NET.kt[key]>G.t);if(sendKeep)NET.kt[key]=G.t+.4;const ch=[],keep=[];let n=0;
+  const sendKeep=full||!(NET.kt[key]>G.t);if(sendKeep)NET.kt[key]=G.t+.4;const ch=[],keep=[];let n=0,dv=null;
   for(const a of items){if(!((a[11]|a[12])&b))continue;n++;const mem=!(a[11]&b),code=a._v*2+(mem?1:0);if(c.get(a[0])===code){if(sendKeep)keep.push(a[0]);continue;}
     c.set(a[0],code);const r=a.slice(0,11);r[9]=mem?(r[9]|FLG.mem):(r[9]&~FLG.mem);ch.push(r);}
-  const dr=[];if(old&&(old!==c||c.size>n)){const seen=new Set();for(const a of items)if((a[11]|a[12])&b)seen.add(a[0]);for(const id of old.keys())if(!seen.has(id)){if(old===c)c.delete(id);dr.push(id);}}
+  const dr=[];if(old&&(old!==c||c.size>n)){const seen=new Set();for(const a of items)if((a[11]|a[12])&b)seen.add(a[0]);for(const [id,cv] of old)if(!seen.has(id)){if(old===c)c.delete(id);dr.push(id);if(cv%2===0)(dv||(dv=new Set())).add(id);}}
   const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
   // a remembered building that died out of this player's sight stays on their map until they see the spot ('gone' queue)
   if(dr.length&&NET.gq&&NET.gq[k]&&NET.gq[k].length){const q=new Set(NET.gq[k].map(g=>g[0]));for(let i=dr.length-1;i>=0;i--)if(q.has(dr[i]))dr.splice(i,1);}
   if(ch.length||!keep.length&&sendKeep||dr.length)snapOut(base,ch,snapDrops(dr));for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});
   // just-died units left out of the drop list are still on this player's screen until their 'die' arrives (dieWho)
-  if(dr.length&&NET.dyC){const dy=NET.dyC.s;for(const id of dr)if(dy.has(id))dhSet(k).add(id);}}
+  if(dr.length&&NET.dyC){const dy=NET.dyC.s;for(const id of dr)if(dy.has(id)&&dv&&dv.has(id))dhSet(k).add(id);}}
 function dhSet(k){if(NET.dhG!==G){NET.dhG=G;NET.dh=[];}const D=NET.dh;return D[k]||(D[k]=new Set());}
 // P2P: one copy per player, so the two visibility masks are folded into that player's 'remembered' flag and dropped
 function forPlayer(items,k){const b=1<<k,out=[];for(const a of items){if(!((a[11]|a[12])&b))continue;const c=a.slice(0,11);c[9]=(a[11]&b)?(c[9]&~FLG.mem):(c[9]|FLG.mem);out.push(c);}return out;}
@@ -298,7 +298,7 @@ function skNote(SK,e,vm,mm,live){let r=SK.get(e.id);if(!r)SK.set(e.id,r={t:[],m:
 function dieWho(v,live){const id=v[1],x=v[2],y=v[3],ki=v[4],isB=v[5];let m=visAt(x,y,isB?120:30);const r=NET.sk&&NET.sk.get(id);
   const dh=NET.dhG===G?NET.dh:null;let held=0;if(dh)for(const k of live)if(dh[k]&&dh[k].delete(id))held|=1<<k;
   if(r){NET.sk.delete(id);const sc=NET.sc||{};for(const k of live){const b=1<<k;if(m&b)continue;const t=r.t[k];
-    if(t!=null&&((held&b)||sc[k]&&sc[k].has(id))&&G.t-t<=8.5)m|=b;
+    if(t!=null&&((held&b)||sc[k]&&sc[k].get(id)%2===0)&&G.t-t<=8.5)m|=b;
     else if(isB&&(r.m&b)){const q=NET.gq[k]=NET.gq[k]||[];q.push([id,x,y,ki]);if(q.length>300)q.shift();}}}
   return m;}
 // a city block collapsing changes the map (passability, cover), so every player must get it eventually: now if they see
