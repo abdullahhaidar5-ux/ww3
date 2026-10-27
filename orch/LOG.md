@@ -2,6 +2,22 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-27 11:40 — side lane: multiplayer switched onto Abdullah's servers
+
+- `WW3_SERVER_URL` = https://ww3-servers.abdullah-haidar5.workers.dev. Game list from the server; joiners try direct
+  P2P → TURN (if configured) → server relay → Nostr backup (when the relay is unavailable).
+- Host-migration fixes (netcode side lane, `orch/servers-on-mig`): host tells each player whether it is the standby
+  (`sb` in the team message; a stale checkpoint is dropped), the taking-over player opens the new room before restoring
+  (losing the race leaves it a client), shell handles the server's `taken`. Fresh review: no blockers; its 3
+  should-fixes applied (standby flag moves only when the new standby holds a full checkpoint; Nostr as last step;
+  6 s game-list socket timeout, 2.5 s `/turn` wait).
+- Tests never reach the production server any more (WebSockets leaving the machine are blocked); `migrate.mjs` runs
+  against a local server by default (`--server`, `--server-down`). **Gate needs `npm ci` in `server/` once per
+  worktree**, else servertest/migrate/mpsync --server print nothing.
+- Gate: `--check` OK, SERVERTEST PASS, smoke 4p PASS, MPSYNC PASS, MPSYNC --server PASS, MIGRATE PASS ×2,
+  MIGRATE --server-down PASS, MIGRATE --abrupt PASS, artifact smoke + MPSYNC PASS.
+- Rollback: set `WW3_SERVER_URL=''` and ship.
+
 ## 2026-10-27 08:20 — side lane: servers live; page shell restored
 
 - Abdullah's `ww3-servers` Worker is live (root `server`, production branch `servers-live`, previews off; PR #1 merged

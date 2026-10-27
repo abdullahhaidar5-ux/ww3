@@ -20,7 +20,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 ## Multiplayer in the cloud
 - [done] Game live on Cloudflare (ww3.abdullah-haidar5.workers.dev), updated automatically
 - [done] Matchmaking + relay servers with automatic fallback (built and tested; switched off until they're live)
-- [done] Servers live on Cloudflare (ww3-servers), approved by Abdullah
+- [done] Servers live on Cloudflare (ww3-servers), approved by Abdullah; multiplayer uses them (game list, relay for blocked networks)
 - [doing] Battles run on a server (or a dedicated PC) instead of the host's device — top priority (step 1 done: battle runs without graphics, identical to the browser; next: PC server + Cloudflare option)
 - [done] Fix: stale enemy soldiers left on a player's screen
 
