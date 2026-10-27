@@ -25,7 +25,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Fix: stale enemy soldiers left on a player's screen
 
 ## Audio and music overhaul
-- [doing] Authentic Middle Eastern music: Iran, Mountain Shias, Coffee Shias, Saudi Arabia, UAE, Egypt
+- [done] Authentic Middle Eastern music: Iran, Mountain Shias, Coffee Shias, Saudi Arabia, UAE, Egypt (real maqam/dastgah, regional rhythms, recorded percussion)
 - [next] Region-specific music for the other 12 nations
 - [next] Military band layer: each nation's public-domain US Navy Band anthem recording
 - [todo] Recorded weapons, explosions, engines and aircraft (near and far, echo per theatre)
