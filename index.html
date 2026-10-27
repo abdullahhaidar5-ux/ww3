@@ -5422,6 +5422,17 @@ function findPath(dom,sx,sy,tx,ty){
 // pixels to paint and upload; the ground is a little softer up close). Only the picture changes: everything the battle
 // reads (roads, trees and cover, ground heights) and the order of the map's random numbers are worked out at the
 // fixed 3072 reference size, so every device builds the same battlefield from the same seed.
+// Ground height is sampled once onto a 10-unit grid after the map is painted, then read back bilinearly: the full
+// formula (shoreline, base pads, mesas, roads, mountains) is far too slow to evaluate thousands of times a frame.
+function groundH(x,y){const H=G&&G.hgrid;if(!H)return groundH0(x,y);const fx=Math.max(0,Math.min(H.w-1.001,x/H.R)),fy=Math.max(0,Math.min(H.h-1.001,y/H.R)),i=fx|0,j=fy|0,tx=fx-i,ty=fy-j,k=j*H.w+i,a=H.a;
+  return (a[k]*(1-tx)+a[k+1]*tx)*(1-ty)+(a[k+H.w]*(1-tx)+a[k+H.w+1]*tx)*ty;}
+function buildHGrid(){const R=10,w=Math.ceil(MAPW/R)+2,h=Math.ceil(MAPH/R)+2,a=new Float32Array(w*h);G.hgrid=null;for(let j=0;j<h;j++)for(let i=0;i<w;i++)a[j*w+i]=groundH0(i*R,j*R);G.hgrid={a,w,h,R};}
+function groundH0(x,y){if(!G||!G.map)return 0;const M=G.map,ed=-M.edge(x,y);
+  let h=0;if(ed<50){const k=Math.max(0,Math.min(1,(ed+30)/80));h=-18+18*k*k*(3-2*k);}
+  const far=Math.max(0,Math.min(1,(ed-90)/260));let bf=1;for(const [bx,by] of BASES){bf=Math.min(bf,Math.max(0,Math.min(1,(Math.hypot(x-bx,y-by)-330)/250)));}
+  h+=far*bf*(5+7*Math.sin(x*.0042+1.3)*Math.cos(y*.0051+.4)+4*Math.sin(x*.011+y*.007));
+  {const rm=G.roadMask;let onR=0;if(rm){const i=(y/rm.C|0)*rm.w+(x/rm.C|0);onR=rm.f?rm.f[i]||0:(rm.d[i]?1:0);}const n1=Math.sin(x*.0031+y*.0017+.7)*Math.cos(y*.0043-x*.0012+2.1),rr=1-Math.pow(Math.abs(Math.sin(x*.009+y*.004+n1*2.4)),1.8);let mask=Math.max(0,Math.min(1,(n1+.25)*2.4));for(const q of (G.map.oil||[]))mask*=Math.max(0,Math.min(1,(Math.hypot(x-q.x,y-q.y)-70)/90));for(const q of (G.map.fields||[]))mask*=Math.max(0,Math.min(1,(Math.hypot(x-q.x,y-q.y)-q.r-50)/90));const sm=(a,b,v)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};const n2=.5+.5*Math.sin(x*.021+y*.013)*Math.cos(x*.011-y*.019);const e=rr*(.75+.25*n2);
+  const mesa=(sm(.2,.9,e)*13+sm(.55,1.05,e)*5)*(M.rough||1);const cap=sm(.4,.75,e)*.6*(Math.sin(x*.07+y*.05)*1.5+Math.sin(x*.13-y*.09));const gate=sm(.5,.8,far*bf*mask);h+=gate*(1-onR)*(mesa+cap+sm(.3,.5,e)*5);}if(ed>=50)h=Math.max(h,-1);if(M.hasMtn){const m=M.mf(x,y);if(m>-90){const k=Math.max(0,Math.min(1,(m+90)/130)),sk=k*k*(3-2*k);const nn=.82+.12*Math.sin(x*.021+y*.017)+.08*Math.sin(x*.057-y*.049);const cr=1-Math.abs(Math.sin(x*.034+Math.sin(y*.021)*2.2)),cr2=1-Math.abs(Math.sin(y*.047+Math.sin(x*.029)*1.8));h+=sk*(48+.5*Math.min(Math.max(m,0),220))*nn+sk*(cr*cr*16+cr2*cr2*9)+Math.max(0,m)*.06*Math.abs(Math.sin(x*.09+y*.07));}}return h;}
 function terrTexMax(){let m=3072;try{const s=typeof SET!=='undefined'&&SET?SET.gfx:'auto';if(s==='low'||s==='med'||(s!=='high'&&matchMedia('(pointer:coarse)').matches))m=2048;}catch(e){}
   return Math.min(m,(typeof R3!=='undefined'&&R3&&R3.capabilities)?R3.capabilities.maxTextureSize:4096);}
 // Battle start splits the terrain in two: paintTerrain() inside newGame only plans it (everything the simulation needs,
@@ -5532,12 +5543,22 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
   if(draw){const CW=c.width,CH=c.height,id=t.getImageData(0,0,CW,CH),d=id.data;const SN=M.theme==='snow',GR=M.theme==='green';const WS=new Float32Array(CW);for(let x=0;x<CW;x++)WS[x]=Math.sin(x/TS*.0021);for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*16;if(GR&&!(d[i+2]>d[i]+10)){const gy=Math.max(Math.abs(d[i]-d[i+1]),Math.abs(d[i+1]-d[i+2])*.72),gk=Math.max(0,Math.min(1,(gy-5)/13));if(gk>0){const px=(i>>2)%CW,py=((i>>2)/CW)|0;const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,w=WS[px]*Math.cos(py/TS*.0017)*.5+.5;d[i]=d[i]*(1-gk)+(l*.42+30+18*w+n)*gk;d[i+1]=d[i+1]*(1-gk)+(l*.52+56+10*w+n)*gk;d[i+2]=d[i+2]*(1-gk)+(l*.3+22+n*.6)*gk;continue;}}if(SN&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=l*.42+128+n*.6;d[i+1]=l*.44+134+n*.6;d[i+2]=l*.45+146+n*.6;continue;}d[i]+=n;d[i+1]+=n;d[i+2]+=n*.8;}t.putImageData(id,0,0);
   const e=t.createRadialGradient(MAPW/2,MAPH/2,MAPH*.55,MAPW/2,MAPH/2,MAPW*.72);e.addColorStop(0,'rgba(0,0,0,0)');e.addColorStop(1,'rgba(0,0,0,.35)');t.fillStyle=e;t.fillRect(0,0,MAPW,MAPH);
   G.terrain=c;G.tctx=t;const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;th.getContext('2d').drawImage(c,0,0,th.width,th.height);G.thumb=th;}
-  if(sim){buildHGrid();if(!draw){const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;const q=th.getContext('2d');q.fillStyle='#a8825a';q.fillRect(0,0,th.width,th.height);G.thumb=th;}}
+  if(sim){buildHGrid();if(!draw&&typeof document!=='undefined'){const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;const q=th.getContext('2d');q.fillStyle='#a8825a';q.fillRect(0,0,th.width,th.height);G.thumb=th;}}
   srand=Math.random;
 }
 
 /* ================= SIMULATION (authoritative; runs in single-player and on the host) ================= */
 let G=null,MODE='single',ME=0;
+// Battle events and the end of a battle, kept here so the simulation runs on its own (a server needs only 01-03).
+// FXE: in host mode every effect is queued for the clients (own: optional team that caused it, e.g. a general's power;
+// its side always gets it, even into the fog; kept as a property of the event array, so JSON drops it). fxPlay (05-fx3d)
+// then plays it on this screen; it is missing on a server.
+function FXE(type,args,own){if(MODE==='host'&&G&&G.out){const v=[type,...args];if(own!=null)v.own=own;G.out.push(v);}if(typeof fxPlay==='function')fxPlay(type,args);}
+function log(team,msg,kind){FXE('log',[team,msg,kind||'']);}
+// Battle over: the host tells the clients right away; showEnd (08-ui) shows the result screen in a browser.
+function endGame(winner,reason){if(!G||G.over)return;if(MODE==='host'&&G.out){G.out.push(['end',winner]);if(typeof NET!=='undefined')NET.evT=0;}G.over=true;if(typeof showEnd==='function')showEnd(winner,reason);}
+// '#rrggbb' -> {r,g,b} in 0..1, the same values THREE.Color gives (no Three.js needed by the simulation)
+function hexRGB(h){const n=parseInt(String(h).slice(1),16);return{r:(n>>16&255)/255,g:(n>>8&255)/255,b:(n&255)/255};}
 // One battle scale for every game (the old Standard/Large/Massive choice is gone); AI strength comes from difficulty.
 const BATTLE=1.75;
 // AI difficulty: Easy is slow to build and attack with small waves and no tricks; Hard earns more, thinks faster,
@@ -5560,7 +5581,7 @@ function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&N<=MAPS[o.map].m
   G={t:0,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
      map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};initCiv();G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});
   G.bs=BATTLE;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));G.teams.forEach(T=>{T.credits=Math.round(3000*(1+(G.bs-1)*.8)/100)*100;});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
-  {const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'];const cd=(p,q)=>{const a=new THREE.Color(p),b=new THREE.Color(q);return Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);};
+  {const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'];const cd=(p,q)=>{const a=hexRGB(p),b=hexRGB(q);return Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);};
    for(let i=1;i<N;i++){const T=G.teams[i];if(G.teams.slice(0,i).some(P=>cd(P.color,T.color)<.45)){const c=ALT.find(c=>G.teams.slice(0,i).every(P=>cd(P.color,c)>=.45))||ALT[i%ALT.length];T.color=c;T.dark=shade(c,.45);}}}
   paintTerrain(M);
   G.cover=new Uint8Array(GW*GH);for(const [x,y] of (G.treePos||[])){const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);if(cx>=0&&cy>=0&&cx<GW&&cy<GH)G.cover[cy*GW+cx]=Math.min(255,G.cover[cy*GW+cx]+1);}
@@ -6453,17 +6474,7 @@ function initGfx(){
   SCN.add(SUN);SCN.add(SUN.target);
   initFX();initPost();
 }
-// Ground height is sampled once onto a 10-unit grid after the map is painted, then read back bilinearly: the full
-// formula (shoreline, base pads, mesas, roads, mountains) is far too slow to evaluate thousands of times a frame.
-function groundH(x,y){const H=G&&G.hgrid;if(!H)return groundH0(x,y);const fx=Math.max(0,Math.min(H.w-1.001,x/H.R)),fy=Math.max(0,Math.min(H.h-1.001,y/H.R)),i=fx|0,j=fy|0,tx=fx-i,ty=fy-j,k=j*H.w+i,a=H.a;
-  return (a[k]*(1-tx)+a[k+1]*tx)*(1-ty)+(a[k+H.w]*(1-tx)+a[k+H.w+1]*tx)*ty;}
-function buildHGrid(){const R=10,w=Math.ceil(MAPW/R)+2,h=Math.ceil(MAPH/R)+2,a=new Float32Array(w*h);G.hgrid=null;for(let j=0;j<h;j++)for(let i=0;i<w;i++)a[j*w+i]=groundH0(i*R,j*R);G.hgrid={a,w,h,R};}
-function groundH0(x,y){if(!G||!G.map)return 0;const M=G.map,ed=-M.edge(x,y);
-  let h=0;if(ed<50){const k=Math.max(0,Math.min(1,(ed+30)/80));h=-18+18*k*k*(3-2*k);}
-  const far=Math.max(0,Math.min(1,(ed-90)/260));let bf=1;for(const [bx,by] of BASES){bf=Math.min(bf,Math.max(0,Math.min(1,(Math.hypot(x-bx,y-by)-330)/250)));}
-  h+=far*bf*(5+7*Math.sin(x*.0042+1.3)*Math.cos(y*.0051+.4)+4*Math.sin(x*.011+y*.007));
-  {const rm=G.roadMask;let onR=0;if(rm){const i=(y/rm.C|0)*rm.w+(x/rm.C|0);onR=rm.f?rm.f[i]||0:(rm.d[i]?1:0);}const n1=Math.sin(x*.0031+y*.0017+.7)*Math.cos(y*.0043-x*.0012+2.1),rr=1-Math.pow(Math.abs(Math.sin(x*.009+y*.004+n1*2.4)),1.8);let mask=Math.max(0,Math.min(1,(n1+.25)*2.4));for(const q of (G.map.oil||[]))mask*=Math.max(0,Math.min(1,(Math.hypot(x-q.x,y-q.y)-70)/90));for(const q of (G.map.fields||[]))mask*=Math.max(0,Math.min(1,(Math.hypot(x-q.x,y-q.y)-q.r-50)/90));const sm=(a,b,v)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};const n2=.5+.5*Math.sin(x*.021+y*.013)*Math.cos(x*.011-y*.019);const e=rr*(.75+.25*n2);
-  const mesa=(sm(.2,.9,e)*13+sm(.55,1.05,e)*5)*(M.rough||1);const cap=sm(.4,.75,e)*.6*(Math.sin(x*.07+y*.05)*1.5+Math.sin(x*.13-y*.09));const gate=sm(.5,.8,far*bf*mask);h+=gate*(1-onR)*(mesa+cap+sm(.3,.5,e)*5);}if(ed>=50)h=Math.max(h,-1);if(M.hasMtn){const m=M.mf(x,y);if(m>-90){const k=Math.max(0,Math.min(1,(m+90)/130)),sk=k*k*(3-2*k);const nn=.82+.12*Math.sin(x*.021+y*.017)+.08*Math.sin(x*.057-y*.049);const cr=1-Math.abs(Math.sin(x*.034+Math.sin(y*.021)*2.2)),cr2=1-Math.abs(Math.sin(y*.047+Math.sin(x*.029)*1.8));h+=sk*(48+.5*Math.min(Math.max(m,0),220))*nn+sk*(cr*cr*16+cr2*cr2*9)+Math.max(0,m)*.06*Math.abs(Math.sin(x*.09+y*.07));}}return h;}
+// groundH/groundH0/buildHGrid (ground height) live in 02-map.js: the server-side battle needs them too.
 function unitH(e){if(e.isB)return groundH(e.x,e.y);const s=e.s;if(s.dom==='naval')return WL+.5+Math.sin(G.t*1.6+e.id)*.6;
   const g=G.grid?G.grid[Math.floor(e.y/CELL)*GW+Math.floor(e.x/CELL)]:0;const base=g===2?4:Math.max(groundH(e.x,e.y),g===1?WL:-99);
   if(s.dom==='air'){if(e.landed)return base+1;let h=base+(s.alt==='high'?110:55)+Math.sin(G.t*2+e.id)*2;
@@ -6924,12 +6935,11 @@ const FXH={
   gone(id,x,y,ki){const k=KINDS[ki];if(k&&STRUCT[k])try{rubble(x,y,STRUCT[k].size);}catch(_){}},
   txt(x,y,str,team,vic){if(!SET.txt||team!==ME&&vic!==ME&&vic!==-2)return;FLOATS.push({x,y,s:str,t0:performance.now(),c:vic===-2?(ally(team,ME)?(str==='RALLIED'?'#74d08f':'#ea5a40'):'#f2c94c'):team===ME?'#f2c94c':'#ea5a40'});if(FLOATS.length>14)FLOATS.shift();},
 };
-// own: optional team that caused the effect (a general's power): its side always gets it, even into the fog. Kept as a
-// property of the event array, so JSON drops it and it costs nothing on the wire.
 // An effect must never throw into the simulation (that stopped the whole battle): the battle can run before the 3D
 // world exists (behind the loading screen, or in headless tests), so a failing effect is skipped and the battle goes on.
 let FXERR=0;
-function FXE(type,args,own){if(MODE==='host'&&G&&G.out){const v=[type,...args];if(own!=null)v.own=own;G.out.push(v);}if(FXH[type]&&!G.headless)try{FXH[type](...args);}catch(e){if(FXERR++<5)console.warn('effect '+type+' skipped: '+(e&&e.message));}}
+// Plays one battle effect on this screen. FXE (03-sim.js) calls it after queuing the effect for the clients.
+function fxPlay(type,args){if(FXH[type]&&!G.headless)try{FXH[type](...args);}catch(e){if(FXERR++<5)console.warn('effect '+type+' skipped: '+(e&&e.message));}}
 // Burnt-out wrecks keep their shape and panel detail: patchy soot, rust-brown scorched paint and grey ash with the
 // original surface showing faintly through, glowing embers that die down over ~20 seconds, and a slight list.
 const WRECK_HEAT={value:1};let WRECKM=null;const WRECKQ=[],BURNT=new Map();
@@ -7860,12 +7870,10 @@ async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse';
-function log(team,msg,kind){FXE('log',[team,msg,kind||'']);}
 function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
   // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
   // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
   const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},7000);el.append(d);while(el.children.length>4)el.firstChild.remove();}
-function endGame(winner,reason){if(!G||G.over)return;if(MODE==='host'&&G.out){G.out.push(['end',winner]);NET.evT=0;}showEnd(winner,reason);}
 function rivals(){return G.teams.filter(T=>!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
 function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams,me=T[ME],m=Math.floor(G.t/60),s=Math.floor(G.t%60);
