@@ -15,6 +15,8 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
   watchdog guard `mpsync.mjs` got; passes both modes.
 - Gate (after merge): `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, MIGRATE --abrupt PASS, artifact smoke
   PASS, artifact MPSYNC PASS. Artifact republished v161 (+`mus/we.mp3`, `an_US.mp3`, `an_EU.mp3`).
+- Chaining the next cycle was blocked (permission denied for running the scheduled task on demand); the 4-hourly
+  schedule (next 13:24 UTC) picks it up.
 
 ## 2026-10-27 07:40 — side lane: bottom command bar + faster phone start shipped
 
