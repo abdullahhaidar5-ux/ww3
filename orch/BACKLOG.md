@@ -62,8 +62,6 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 
 ## Questions for Abdullah
 
-- [ask] (cycle 10) The claude.ai copy's 18 voice clips (`vo/*.mp3`) differ from every version in the repo — did someone
-  upload newer voices there? Until answered, artifact republishes leave `vo/` as published.
 
 - _(none open)_ — 2026-10-26 answers: keep right-click as an optional shortcut; stay at 18 factions; the old
   development chat is gone (its `assets/`, ROUNDS.md and test scripts are lost — harnesses get rebuilt in `orch/`,
@@ -73,8 +71,6 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 
 **Foundation (ORCH itself)**
 
-- [open] claude.ai artifact's published `vo/*.mp3` (18) don't match any `vo/` version in repo history — someone published
-  other voice files there. Find out which is newer/better before the next republish passes `vo/` (cycle 10 left them).
 - [open] Extend `orch/mpsync.mjs`: packet loss/latency, real WebRTC (3-player host migration is now covered by
   `orch/migrate.mjs`, cycle 6; its `--abrupt` mode — host vanishes without goodbye — is untested).
   Don't start from scratch — port the surviving old harnesses on the `testbed` branch: `tw8b.py` (host in Chicago +
@@ -160,6 +156,9 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## Done
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
+
+- 2026-10-27 (after cycle 10) — claude.ai copy's voice clips replaced with the repo's `vo/` (Abdullah: he didn't upload
+  other voices); artifact v165. Republishes may pass `vo/` again.
 
 - 2026-10-27 (cycle 10) — **Faster battle start:** a battle downloads only the models of the nations in it (others
   fetch quietly in the menu); throttled 4 Mbit/s Start → first frame 61 → 40 s; the log names any model that failed,
