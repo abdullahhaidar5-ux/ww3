@@ -275,6 +275,16 @@ const selfDrive = (pg, on) => pg.evaluate((on) => {
     catch (e) { window.__driveErr = window.__driveErr || String(e && e.stack || e).split('\n').slice(0, 4).join(' | '); } }, 100);
 }, on);
 
+// trace a client page's reconnect steps (room joins and their outcome); reset=true starts a fresh trace
+const traceOn = (pg, reset) => pg.evaluate((reset) => {
+  if (!window.__trace) { const T = window.__trace = []; window.__traceT0 = performance.now(); const at = () => ((performance.now() - window.__traceT0) / 1000).toFixed(1);
+    const rj = NET.room.join; NET.room.join = async (n, o) => { T.push(at() + ' join ' + n); try { const r = await rj(n, o); T.push(at() + ' joined ' + n + ' via ' + r.via); return r; } catch (e) { T.push(at() + ' join failed ' + n + ': ' + (e && e.type || e)); throw e; } };
+    const cr = clientReconnect; clientReconnect = async () => { T.push(at() + ' clientReconnect' + (NET.recon ? ' (already running)' : '')); const r = await cr(); T.push(at() + ' clientReconnect done, mode ' + MODE); return r; };
+    const ph = promoteToHost; promoteToHost = async () => { T.push(at() + ' promoteToHost'); const r = await ph(); T.push(at() + ' promoteToHost -> ' + r); return r; };
+    const ap = applySnap; let n = 0; applySnap = (d) => { if (!NET.recon) n = 0; else if (n++ < 3) T.push(at() + ' snapshot t=' + d.t + ' while reconnecting'); return ap(d); }; }
+  if (reset) { window.__trace.length = 0; window.__traceT0 = performance.now(); }
+}, reset);
+
 async function main() {
   [host, cA, cB] = await Promise.all([openPage('host'), openPage('clientA'), openPage('clientB')]);
   await Promise.all([host, cA, cB].map(p => p.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 240000 }).catch(() => warns.push('3D models still loading after 240s'))));
@@ -333,6 +343,7 @@ async function main() {
   if (!ck) { fail('client A (the standby) never received a checkpoint from the host, so nobody can take over'); return; }
   if (ck.err) { fail('client A\'s checkpoint cannot be unpacked: ' + ck.err); return; }
   if (ckB) warns.push('client B also holds a checkpoint (only one standby expected)');
+  for (const p of [cA, cB]) await traceOn(p, false);
   await screenshot(host, 'mig-before-host.png');
   // the slow screenshot frame stalls the host for several real seconds, which the clients take for a lost host (they
   // start reconnecting after 5 s of silence). Play on until both are settled again, so the host leaves a calm battle.
@@ -341,7 +352,11 @@ async function main() {
     const r = await Promise.all([cA, cB].map(p => p.evaluate(() => !NET.recon && performance.now() - (NET.lastRx || 0) < 1000)));
     const h = await host.evaluate(() => [1, 2].every(k => !G.teams[k].discT && !G.teams[k].ai && NET.peers[k]));
     calm = r[0] && r[1] && h; }
-  if (!calm) fail('after the pre-takeover screenshot the clients did not settle back onto the host within ~10 s');
+  for (const [p, n] of [[cA, 'A'], [cB, 'B']]) console.log(`    trace client ${n} (screenshot stall): ` + (await p.evaluate(() => window.__trace.join(' | ') +
+      ` || now: ${MODE}${NET.recon ? ' reconnecting' : ''} via=${NET.game && NET.game.via} ws=${!!(NET.game && NET.game._ws)} rxAgo=${Math.round(performance.now() - (NET.lastRx || 0))}`)));
+  if (!calm) { fail('after the pre-takeover screenshot the clients did not settle back onto the host within ~10 s');
+    console.log('    host sees: ' + await host.evaluate(() => JSON.stringify([1, 2].map(k => ({ peer: NET.peers[k], disc: G.teams[k].discT || 0, ai: !!G.teams[k].ai })))));
+    return; }
   const pre = await armies(host);
   if (SRV_CHECK) { const w = await host.evaluate(() => !!(NET.game && NET.game._ws && NET.game._ws.readyState === 1));
     console.log(`[${secs()}] --server: the host's relay room on the local server is ${w ? 'open' : 'NOT open'}`);
@@ -353,12 +368,7 @@ async function main() {
   await selfDrive(cA, true); await selfDrive(cB, true);
   // closing a tab closes its WebRTC data channels, which the other side notices at once: say goodbye explicitly (a
   // message posted from pagehide is not reliably delivered while the page is torn down). --abrupt: no goodbye.
-  // trace each remaining page's reconnect steps (room joins and their outcome), printed after the takeover
-  for (const p of [cA, cB]) await p.evaluate(() => { const T = window.__trace = [], t0 = performance.now(), at = () => ((performance.now() - t0) / 1000).toFixed(1);
-    const rj = NET.room.join; NET.room.join = async (n, o) => { T.push(at() + ' join ' + n); try { const r = await rj(n, o); T.push(at() + ' joined ' + n); return r; } catch (e) { T.push(at() + ' join failed ' + n + ': ' + (e && e.type || e)); throw e; } };
-    const cr = clientReconnect; clientReconnect = async () => { T.push(at() + ' clientReconnect' + (NET.recon ? ' (already running)' : '')); const r = await cr(); T.push(at() + ' clientReconnect done, mode ' + MODE); return r; };
-    const ph = promoteToHost; promoteToHost = async () => { T.push(at() + ' promoteToHost'); const r = await ph(); T.push(at() + ' promoteToHost -> ' + r); return r; };
-    const ap = applySnap; let n = 0; applySnap = (d) => { if (NET.recon && n++ < 3) T.push(at() + ' snapshot t=' + d.t + ' while reconnecting'); return ap(d); }; });
+  for (const p of [cA, cB]) await traceOn(p, true);
   hostClosed = true; const tc = Date.now();
   await host.evaluate((abrupt) => window.__fpGone(!abrupt), ABRUPT);
   await host.waitForTimeout(300); // let the goodbye leave before the page is torn down
