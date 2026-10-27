@@ -61,7 +61,7 @@ an earlier one still has work a squad can take (other squads may only do small P
   battle; build-time compression; upgrade Three.js r128 → current on a branch with side-by-side screenshots of every
   map and nation. Decisions: **units first** (Phase 2 next: detailed models, national variants), **phones stay smooth**
   (lighter phone look OK, PCs get everything), **free art only**. Audio overhaul runs alongside (next item).
-- [open] **Redo the whole soundtrack: one shared real soundtrack** (Abdullah, 2026-10-27: "they suck… redo the entire
+- [open] **NOTE 2026-10-27 18:55: steps 1–3 SHIPPED on main (5e5015b + 1d90339, 14 kept tracks in `mus/st/`, anthems, `orch/musiccheck.mjs`). Only step 4 is left (remove `mus/smp.mp3`, `me/as/we` sample sheets and the generator once the fallback isn't needed). Soundtrack agent on `orch/soundtrack`: rebase your work onto main's version, keep main's player, do only step 4.**  **Redo the whole soundtrack: one shared real soundtrack** (Abdullah, 2026-10-27: "they suck… redo the entire
   soundtrack and not do faction specific"; chose "shared + anthems", Shia factions on the shared soundtrack too).
   Why today's music is weak: every track is generated live from a ~10-note motif over one 8-chord loop on 2000s GM
   soundfont samples + raw oscillators; per nation ~2.5 min of material looped all battle (the `_b` track is the motif
