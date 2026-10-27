@@ -214,7 +214,6 @@ SHELL_BANNED = [
 ]
 # Credits for assets that have no mus/*_pack.py script listing their sources: (asset glob, credit phrase).
 CREDIT_FALLBACK = [
-    ('mus/smp.mp3', 'Orchestral score played on the FluidR3 GM'),
     ('vo/*.mp3', 'Unit voices'),
 ]
 CREDIT_ALWAYS = ['3D models:']  # the model credits (wherever MODEL_PACK lives)
@@ -254,6 +253,42 @@ def pack_sources(script):
         if a:   # a recording's author handle (Freesound / Wikimedia style: 'name - "title" (licence)')
             together.append(a.group(1))
     return outs, together, people
+
+
+def check_soundtrack(html, i, j, paras):
+    """The shared soundtrack, mus/st/: every file is in mus/st/manifest.json, every manifest track is played by the game
+    (ST_TRACKS in 09-audio.js) and has its own menu credits line naming its title, author and licence."""
+    import html as H
+    probs = []
+    d = os.path.join(ROOT, 'mus', 'st')
+    if not os.path.isdir(d):
+        return probs
+    try:
+        man = json.load(open(os.path.join(d, 'manifest.json'), encoding='utf-8'))
+    except Exception as e:
+        return [f'mus/st/manifest.json unreadable: {e}']
+    ids = {t['id'] for t in man}
+    for f in sorted(os.listdir(d)):
+        if f.endswith('.mp3') and f[:-4] not in ids:
+            probs.append(f'mus/st/{f} is not in mus/st/manifest.json (no title/author/licence to credit)')
+    game = html[i:j]
+    m = re.search(r'const ST_TRACKS=\{(.*?)\};', game, re.S)
+    used = set(re.findall(r"'([\w-]+)'", m.group(1))) if m else set()
+    if not m:
+        probs.append('src/09-audio.js has no ST_TRACKS list (the soundtrack player is gone)')
+    plain = [H.unescape(p) for p in paras]
+    for t in man:
+        if not os.path.isfile(os.path.join(ROOT, t['file'])):
+            probs.append(f"soundtrack track {t['id']}: file {t['file']} missing")
+        if m and t['id'] not in used:
+            probs.append(f"soundtrack track {t['id']} is in the manifest but the game never plays it (ST_TRACKS)")
+        lic = t['licence'].replace('CC-BY', 'CC BY')
+        if not any(t['title'] in p and t['author'] in p and lic in p for p in plain):
+            probs.append(f"menu credits missing for soundtrack track {t['id']}: no credits line with "
+                         f"{t['title']!r}, {t['author']!r} and {lic!r}")
+    for u in sorted(used - ids):
+        probs.append(f'ST_TRACKS plays {u!r}, which is not in mus/st/manifest.json')
+    return probs
 
 
 def check_shell(html, i, j):
@@ -298,6 +333,7 @@ def check_shell(html, i, j):
     for phrase in CREDIT_ALWAYS:
         if phrase.lower() not in allc:
             probs.append(f'menu credits missing: no credits text containing {phrase!r}')
+    probs += check_soundtrack(html, i, j, paras)
     for f in sorted(os.listdir(os.path.join(ROOT, 'mus'))):
         if f.endswith('.mp3') and f not in covered:
             probs.append(f'mus/{f} has no credit rule: give it a mus/*_pack.py with a "Sources" list, '
@@ -443,6 +479,8 @@ def artifact():
     with open(out, 'w', encoding='utf-8', newline='') as f:
         f.write(page)
     rels = sorted('vo/' + n for n in os.listdir(os.path.join(ROOT, 'vo')) if n.endswith('.mp3')) + sorted('mus/' + n for n in os.listdir(os.path.join(ROOT, 'mus')) if n.endswith('.mp3'))
+    if os.path.isdir(os.path.join(ROOT, 'mus', 'st')):  # the shared soundtrack, streamed track by track
+        rels += sorted('mus/st/' + n for n in os.listdir(os.path.join(ROOT, 'mus', 'st')) if n.endswith('.mp3'))
     files = {rel: rel for rel in rels}  # published path -> source path, relative to the repo root (ORCH's cwd)
     for rel in rels:
         if not os.path.isfile(os.path.join(ROOT, rel)):
