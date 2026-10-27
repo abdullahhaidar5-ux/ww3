@@ -82,6 +82,14 @@ an earlier one still has work a squad can take (other squads may only do small P
   there are keeps in every pool, do step 2 (re-download the kept tracks from `download_url`, encode for phones).
   Left out as doubtful: Jonathan Shaw "RPG Orchestral Essentials" (own non-CC licence in the zip), Holst "Mars" on
   Commons (generic "Attribution" licence). Victory pool is thin.
+  **Steps 2–3 SHIPPED 2026-10-27 (this chat, Abdullah: "keep what you think is best and proceed")** — ORCH chose the 14
+  keeps (in the page's `picks`, `by: "orch"`); player in `09-audio.js` (calm↔combat on `AU.heat` ≥0.35, 3 s crossfade,
+  dwell combat 60 s / calm 30 s, streamed one file at a time, falls back to the generated score if a track can't load),
+  anthem at battle start + after victory, credits, `sw.js` never stores `mus/st/`, `orch/musiccheck.mjs` (in the gate
+  for audio changes). `mus/st/` 32 MB at 112 kbps. **Side lane on `orch/soundtrack`: this replaces your step 2 —
+  don't merge your `mus/st/` re-encode over it (same file names).** Remaining (step 4): remove the old generator,
+  `mus/smp.mp3` and the me/as/we sheets (offline play still uses them today); if Abdullah changes picks on the page,
+  swap files to match.
 - [open] **Audio and music overhaul** (Abdullah, 2026-10-26 21:09–21:15; same plan doc; **music part superseded
   2026-10-27 by the shared-soundtrack item above** — don't add more per-nation music). Free only (CC0/CC-BY or public
   domain, credited). Real recorded weapons/battle/ambience; full native-language voice lines (volunteers, TTS fallback);
