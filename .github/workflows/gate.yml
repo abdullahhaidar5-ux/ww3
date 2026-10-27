@@ -6,7 +6,7 @@ on:
   push:
     branches: ['gate/**']
 permissions:
-  contents: read
+  contents: write
   statuses: write
 concurrency:
   group: gate-${{ github.ref }}
@@ -62,6 +62,12 @@ jobs:
           curl -s -o /dev/null -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -d "{\"state\":\"$state\",\"context\":\"gate/$T\",\"description\":\"$desc\",\"target_url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+          # full log on a branch of its own, readable with: git fetch origin gate-logs/<sha10>-<test>
+          mkdir -p /tmp/lg && cp out.log /tmp/lg/$T.log && cd /tmp/lg && git init -q && git checkout -q -b log \
+            && git add . && git -c user.name=gate -c user.email=gate@users.noreply.github.com commit -qm "gate log $T $state" \
+            && git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+               "log:refs/heads/gate-logs/${GITHUB_SHA:0:10}-$T" || true
+          cd "$GITHUB_WORKSPACE"
           [ "$state" = success ]
       - uses: actions/upload-artifact@v4
         if: always()
