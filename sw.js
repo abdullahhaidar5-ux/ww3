@@ -11,7 +11,9 @@ self.addEventListener('activate',e=>{const keep=new Set(MODELS.map(u=>new URL(u,
   e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k))))
     .then(()=>caches.open(CACHE)).then(c=>c.keys().then(rs=>Promise.all(rs.filter(r=>/\/models\//.test(new URL(r.url).pathname)&&!keep.has(r.url)).map(r=>c.delete(r)))))
     .then(()=>self.clients.claim()));});
-self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin)return;
+// The soundtrack (mus/st/*.mp3, ~32 MB) is never saved here: each track streams when it is about to play (the browser's
+// own cache keeps it); offline, the game falls back to its generated score.
+self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin||/\/mus\/st\//.test(u.pathname))return;
   const page=e.request.mode==='navigate'||u.pathname.endsWith('/index.html')||u.pathname.endsWith('/');
   e.respondWith(caches.open(CACHE).then(async c=>{const key=page?'./index.html':e.request;
     // a model file never changes under its name: a saved copy is served without asking the network again
