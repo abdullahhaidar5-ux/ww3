@@ -125,10 +125,10 @@ let traffic = null;
 for (const f of ['srv-traffic-ais6.json', 'srv-traffic.json']) { if (traffic) break; try { traffic = JSON.parse(fs.readFileSync(path.join(OUT, f), 'utf8')); traffic.file = f; } catch {} }
 const T = traffic || { source: 'defaults', hostToPlayer: { framesPerGameMin: 700, bytesPerGameMin: 900000, wireBytesPerGameMin: 250000 },
   playerToHost: { framesPerRealMin: 75, bytesPerRealMin: 40000, wireBytesPerRealMin: 12000 } };
-// In a real match the host sends one batched frame per network tick (0.1 s), carrying one record per relayed player;
-// the test harness runs several ticks per step, so frames there are merged: records per minute for ONE player = the
-// real-time host frame rate. A player sends its presence (ping, orders) at least once a second.
-const Fh = T.hostToPlayer.recordsPerGameMin || T.hostToPlayer.framesPerGameMin, Fp = Math.max(60, T.playerToHost.framesPerRealMin);
+// The host sends one batched frame per network tick that has anything to send (mpsync --server runs in real time, so
+// its frame count is the real one); with more relayed players each frame just carries more records. A player sends
+// its presence (ping, orders) about once a second.
+const Fh = T.hostToPlayer.framesPerGameMin, Fp = Math.max(60, T.playerToHost.framesPerRealMin);
 const B = T.hostToPlayer.bytesPerGameMin, Bw = T.hostToPlayer.wireBytesPerGameMin, Bp = T.playerToHost.wireBytesPerRealMin;
 const MATCH_MIN = 30, GBS_PER_MIN = 60 * 0.125;
 // relayed = how many of the players (besides the host) go through the server

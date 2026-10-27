@@ -39,8 +39,9 @@
 //                                              # wrangler dev; `npm ci` in server/ once): browser-to-browser is
 //                                              # blocked in both pages, so the game's own fallback must pick the
 //                                              # server relay; also checks the server game list (the client must see
-//                                              # the host's game before joining by code). With --reconnect the
-//                                              # client's server connection is really cut at 1 min.
+//                                              # the host's game before joining by code). Runs the battle in real
+//                                              # time (~4 min). With --reconnect the client's server connection is
+//                                              # really cut at 1 min. Writes relay traffic to orch/out/srv-traffic*.json
 // Prints MPSYNC PASS / MPSYNC FAIL: reason (exit 0 / 1). Screenshots: orch/out/mp-host.png, orch/out/mp-client.png
 import http from 'node:http';
 import fs from 'node:fs';
@@ -351,13 +352,16 @@ async function main() {
   const before = order.n ? await host.evaluate((ids) => ids.map(id => { const e = G.byId.get(id); return e ? [e.x, e.y] : null; }), order.ids) : [];
   await host.waitForTimeout(1500); // orders travel in the client's presence: give it real time to arrive
 
-  const STEP = 5, total = Math.round(MINUTES * 600), checks = new Set([600, 1500, total].filter(x => x <= total));
+  // --server: real time (one network tick per 0.1 s, each flushed on its own, like a real match), so the relay sees
+  // real message rates (its rate limits are sized for those) and the traffic numbers are per real minute
+  const STEP = SRV ? 1 : 5, total = Math.round(MINUTES * 600), checks = new Set([600, 1500, total].filter(x => x <= total));
   let lagSkip = 0, lagLog = 0, lagLogged = false, ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
   while (ticks < total) {
     const w0 = Date.now();
     const h = await hostRun(STEP); if (h.err) { fail('host simulation threw: ' + h.err.split('\n').slice(0, 4).join(' | ')); break; }
     const c = await clientRun(STEP); if (c.err) { fail('client tick threw: ' + c.err.split('\n').slice(0, 4).join(' | ')); break; }
     ticks += STEP; chunkMs.push(Date.now() - w0);
+    if (SRV) { const left = 100 * STEP - (Date.now() - w0); if (left > 0) await host.waitForTimeout(left); }
     if (ticks >= 100 && ticks > lagSkip) behindMax = Math.max(behindMax, h.t - c.snapT);
     if (SRV && ticks >= 100 && ticks > lagSkip && h.t - c.snapT > 1.5 && lagLog < 6) { lagLog++;
       const b = await host.evaluate(() => ({ buf: NET.game && NET.game._ws ? NET.game._ws.bufferedAmount : -1, kf: NET.kf && NET.kf[1] }));
@@ -398,7 +402,7 @@ async function main() {
   const stK = SRV ? '__ww3WsStats' : '__fpStats';
   const st = await client.evaluate(k => window[k], stK), hs = await host.evaluate(k => window[k], stK);
   console.log(`[${secs()}] traffic host->client ${(st.rxB / 1024).toFixed(0)} KB in ${st.rx} messages, client->host ${(hs.rxB / 1024).toFixed(0)} KB in ${hs.rx}; ` +
-    `client lag max ${behindMax.toFixed(2)} game-s; ${(chunkMs.reduce((a, b) => a + b, 0) / Math.max(1, chunkMs.length)).toFixed(0)} ms per 0.5 s step`);
+    `client lag max ${behindMax.toFixed(2)} game-s; ${(chunkMs.reduce((a, b) => a + b, 0) / Math.max(1, chunkMs.length)).toFixed(0)} ms per ${STEP / 10} s step`);
   console.log(`[${secs()}] ${live.n} live checks, ${live.bad || 0} out of tolerance; up to ${enemySeen} enemy entities were in the client's view at once`);
   if ((live.bad || 0) > Math.max(1, live.n * .1)) fail(`client view diverged from the host in ${live.bad}/${live.n} live checks, e.g. ${live.worst}`);
   if (behindMax > 1.5) fail(`client fell ${behindMax.toFixed(1)} game-seconds behind the host (it should trail by at most a few 0.1 s snapshots)`);

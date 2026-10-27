@@ -34,6 +34,7 @@ export async function startServer({ quiet = true, vars = {} } = {}) {
   const url = `http://127.0.0.1:${port}`;
   const stop = () => { try { process.kill(-child.pid, 'SIGTERM'); } catch {} try { fs.rmSync(state, { recursive: true, force: true }); } catch {} };
   process.on('exit', stop);
+  for (const sig of ['SIGINT', 'SIGTERM', 'SIGHUP']) if (!process.listenerCount(sig)) process.on(sig, () => process.exit(128));
   const t0 = Date.now();
   for (;;) {
     if (exited !== null) throw new Error('wrangler dev exited (' + exited + '):\n' + log.slice(-3000));
