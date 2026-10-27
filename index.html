@@ -202,7 +202,7 @@ body{background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);overflow:hid
 #side h3{display:none}
 #sideTop{display:flex;align-items:center;min-height:0}
 #mm{display:block;height:calc(var(--bh) - 14px);width:auto;aspect-ratio:32/22;max-width:none;margin:0;border:1px solid #3d5247;box-shadow:0 0 0 1px #0a0f0c,0 0 14px rgba(120,255,170,.08) inset;background:#14201a;cursor:pointer}
-#side .card{display:flex;flex-direction:column;gap:4px;min-width:0;min-height:0}
+#side .ccard{display:flex;flex-direction:column;gap:4px;min-width:0;min-height:0}
 .cardhd{display:flex;gap:8px;align-items:stretch;min-width:0;height:28px;flex:none}
 .tabs{display:flex;flex:none;border:1px solid var(--line);background:#0f1513}
 .tabs button{background:transparent;border:0;border-right:1px solid var(--line);color:var(--dim);padding:0 13px;font:600 13px var(--display);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;position:relative;white-space:nowrap}
@@ -367,7 +367,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   #side{--rows:2;--bw:104px;height:clamp(196px,34vh,280px);grid-template-columns:40px 72px auto minmax(0,1fr) 40px 40px;grid-template-rows:40px 36px 40px minmax(0,1fr);
     grid-template-areas:"grip cred mmb tabs pz mn" "mm mm mm info info info" "mm mm mm sq sq sq" "sw sw sw pan pan pan";gap:5px 0;
     padding:6px max(6px,env(safe-area-inset-right,0px)) max(6px,env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
-  #side .card,#side .cardhd,#side .stat,#side .hdr{display:contents}
+  #side .ccard,#side .ccardhd,#side .stat,#side .hdr{display:contents}
   #barGrip{grid-area:grip}#credits{grid-area:cred}#mmBtn{grid-area:mmb}#side .tabs{grid-area:tabs;margin:0 5px}#aPause{grid-area:pz}#aMenu{grid-area:mn;margin-left:4px}
   #sideTop{grid-area:mm;align-items:flex-start;padding-right:6px}#side .sw{grid-area:sw;padding-right:6px}#info{grid-area:info;padding-left:6px}#side .sqbar{grid-area:sq;padding-left:6px;justify-content:flex-start}#panel.grid{grid-area:pan;margin-left:6px}
   #mm{width:100%;height:auto}
@@ -386,7 +386,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   #mm{height:calc(var(--bh) - 30px)}
   #sideTop{align-items:center}
   .cardhd{height:40px;gap:6px}
-  #side .card,#side .stat{gap:3px}
+  #side .ccard,#side .stat{gap:3px}
   .tabs button{padding:0 9px;font-size:12px}
   #side .hdr{min-height:40px;gap:3px}
   #facname{display:none}
@@ -435,7 +435,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 }
 @media (max-height:520px) and (min-width:561px){
   #side.min{grid-template-columns:minmax(0,1fr) clamp(196px,28vw,250px)}
-  #side.min .card{grid-column:1}#side.min .stat{grid-column:2}
+  #side.min .ccard{grid-column:1}#side.min .stat{grid-column:2}
 }
 </style>
 
@@ -453,7 +453,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
   <aside id="side" aria-label="Command bar">
     <div id="sideTop"><canvas id="mm" width="384" height="264" aria-label="Tactical map"></canvas></div>
-    <div class="card">
+    <div class="ccard">
       <div class="cardhd">
         <div class="tabs" role="tablist">
           <button data-tab="build" class="on"><span class="tl">Build</span><span class="ts">Build</span></button><button data-tab="units"><span class="tl">Units</span><span class="ts">Units</span></button><button data-tab="upg"><span class="tl">Upgrade</span><span class="ts">Upg</span></button><button data-tab="pow"><span class="tl">Powers</span><span class="ts">Pow</span></button>
@@ -7926,6 +7926,7 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;if(!G||$('menu').hidden===false)return;
   if(/^Digit[1-5]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
   if(k==='p'&&!G.over){e.preventDefault();togglePause();return;}
+  if(k==='Escape'&&menuOpen()){menuOpen(false);return;}
   if(k==='Escape'){if(G.defm){G.defm=false;return;}if(G.paused){togglePause(false);return;}if(!G.place&&!G.aim&&!G.amove&&!G.sel.length&&!G.over){togglePause(true);return;}if(!G.place&&!G.aim&&!G.amove)G.sel=[];G.place=null;G.aim=null;G.amove=false;}
   if(k==='q')G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);
   if(k==='f'&&G.sel.some(u=>!u.isB)){G.amove=true;G.defm=false;}if(k==='g'&&G.sel.some(u=>!u.isB&&u.team===ME)){G.defm=true;G.amove=false;}
@@ -7948,31 +7949,18 @@ mm.addEventListener('pointermove',e=>{if(mmDown!==e.pointerId)return;const w=mmW
 mm.addEventListener('pointerup',e=>{if(mmDown===e.pointerId)mmDown=null;});mm.addEventListener('pointercancel',()=>{mmDown=null;});
 mm.addEventListener('contextmenu',e=>e.preventDefault());
 /* ---------- phones and touch screens ---------- */
-// Small screens (portrait phones, or any screen under 520 px tall such as a phone held sideways): the tactical map
-// moves onto the battlefield's top-left corner, the sidebar keeps only the money and battle buttons pinned, and the
-// selection info, tabs and build buttons come right after them so they are visible without scrolling. Touch screens get
-// finger-sized buttons and touch wording. Desktop-sized windows are unchanged.
+// The command bar's own phone layouts (portrait strip + fold handle, short landscape bar) live with its styles in the
+// page shell; here: touch wording, finger-sized buttons, and small-screen placement of the battlefield chips.
 {const st=document.createElement('style');st.id='phoneCss';st.textContent=`
 #app,.overlay button,.overlay select{touch-action:manipulation}
 #app{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
-#stage>#mm{position:absolute;left:6px;top:6px;z-index:4;width:min(36%,170px);margin:0;opacity:.95;box-shadow:0 2px 10px rgba(0,0,0,.65)}
-#stage.mmIn #fpsHud{left:auto;right:8px;top:auto;bottom:8px}
-.sqbtns{display:flex;gap:4px}
 #settings .card>.row:last-child{position:sticky;bottom:-1px;z-index:2;background:linear-gradient(rgba(8,11,10,0),rgba(8,11,10,.97) 30%);padding:14px 0 4px}
 body.touchui #mode{white-space:normal;text-align:left;width:max-content;max-width:calc(100% - 20px);box-sizing:border-box;font-size:12px;letter-spacing:.02em;line-height:1.2;padding:5px;display:flex;align-items:center;gap:6px;z-index:5}
 body.touchui #mode>span{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;padding-left:4px}
 body.touchui #mode[hidden]{display:none}
 #mode .mcx{pointer-events:auto;cursor:pointer;flex:none;background:var(--warn);color:#160806;border:0;font:700 13px var(--display);letter-spacing:.04em;text-transform:uppercase;padding:0 8px;min-height:34px}
-#stage.mmIn #mode{left:auto;right:6px;top:6px;transform:none;max-width:calc(64% - 18px)}
 body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);padding:4px 6px;left:6px;right:6px;bottom:6px}
 @media (max-width:760px),(max-height:520px){
-  #app{gap:6px;padding-block:6px}
-  #side{padding:8px;gap:7px}
-  #sideTop{top:-8px;margin:-8px -8px 0;padding:8px 8px 6px;gap:6px}
-  #facname{font-size:18px}#credits{font-size:16px}
-  #side>#info{order:1}#side>.tabs{order:2}#side>#panel{order:3}#side>#sbx{order:4}#side>.sup{order:5}#side>#allyBox{order:6}#side>.sqbar{order:7}#side>#log{order:8}
-  #side>*{scroll-margin-top:118px}
-  #info{min-height:0}
   #wxchip{top:6px;left:auto;right:6px;transform:none;white-space:normal;text-align:right;max-width:calc(62% - 16px);font-size:10px;padding:3px 7px}
   #net{top:auto;bottom:6px;right:6px;font-size:10px;padding:2px 6px}
 }
@@ -7986,15 +7974,10 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   #pauseOv .row .big,#quitOv .row .big,#end .row .big{flex:1 1 auto}
 }
 @media (pointer:coarse){
-  .audio button,.cmdrow button,.sqh button,#allyBox button,#supbtn,.tabs button,.sbx button{min-height:36px}
-  .sqs button{min-height:40px}.btn{min-height:44px}
+  #allyBox button,.sbx button{min-height:36px}
   .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
-  .cmdrow{flex-wrap:wrap}.cmdrow button{flex:1 1 40%}
   .game button,.joinrow .big,.joinrow input{min-height:40px}
 }`;document.body.append(st);}
-const PHQ=matchMedia('(max-width:760px),(max-height:520px)');
-function placeMM(){const st=$('stage'),top=$('sideTop');if(!st||!top)return;if(PHQ.matches){if(mm.parentNode!==st){st.append(mm);st.classList.add('mmIn');}}else if(mm.parentNode!==top){top.append(mm);st.classList.remove('mmIn');}}
-try{PHQ.addEventListener('change',placeMM);}catch(e){try{PHQ.addListener(placeMM);}catch(_){}}placeMM();
 function touchUI(){TOUCHUI=true;document.body.classList.add('touchui');const h=$('hint');if(h)h.textContent='Tap a unit to select it · with units selected, tap the ground to move or an enemy to attack · drag to box-select · two fingers: slide to pan, pinch to zoom · tap the small map to jump there';try{updateUI();}catch(e){}}
 // on touch: the banner says how to place, and tapping it cancels; the long hint steps aside after the opening
 function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: touch the map, slide, lift to build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target'):(md.dataset.d||'').replace(/click/g,'tap');
@@ -8301,12 +8284,35 @@ function togglePause(on){if(!G||G.over||window.LOADING)return;const mp=MODE!=='s
   if(on){if(!mp){G.paused=true;try{if(AU.ctx&&AU.ctx.state==='running')AU.ctx.suspend();}catch(e){}try{if(window.speechSynthesis)speechSynthesis.pause();}catch(e){}}
     $('pauseSub').textContent=mp?'Multiplayer battles cannot be paused - the battle continues while this menu is open.':'The battle is on hold. Nothing moves until you resume. (P or Esc to resume)';$('resumeBtn').textContent=mp?'Back to battle':'Resume';$('pauseOv').hidden=false;}
   else{G.paused=false;$('pauseOv').hidden=true;try{if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();}catch(e){}try{if(window.speechSynthesis)speechSynthesis.resume();}catch(e){}last=performance.now();}
-  $('aPause').textContent=G.paused?'▶ Resume':'❚❚ Pause';}
+  syncPause();}
 function askRestart(){if(!G)return;if(MODE!=='single'){pushLog('Multiplayer battles cannot be restarted - quit and host a new one.','w');return;}askQuit();G.restartAsk=true;$('quitOv').querySelector('h1').textContent='Restart this battle?';$('quitSub').textContent='The battle starts over with the same nations, map and settings.';$('quitYes').textContent='Restart';}
 function askQuit(){if(!G)return;G.restartAsk=false;$('quitOv').querySelector('h1').textContent='Quit this battle?';$('quitYes').textContent='Quit to main menu';if(MODE==='single'&&!G.over&&!G.paused){G.paused=true;G.qPause=true;try{if(AU.ctx&&AU.ctx.state==='running')AU.ctx.suspend();}catch(e){}}$('pauseOv').hidden=true;$('quitSub').textContent=MODE==='single'?"The battle will end and you'll return to the main menu.":'You will leave the multiplayer battle; your army will be left without a commander.';$('quitOv').hidden=false;}
 function quitGame(){$('quitOv').hidden=true;$('pauseOv').hidden=true;$('end').hidden=true;try{if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();}catch(e){}try{if(window.speechSynthesis){speechSynthesis.cancel();}}catch(e){}
-  if(G){G.over=true;G.paused=false;}$('aPause').textContent='❚❚ Pause';$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;renderGames();}
+  if(G){G.over=true;G.paused=false;}menuOpen(false);syncPause();$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;renderGames();}
 $('aPause').onclick=()=>togglePause();$('aQuit').onclick=askQuit;$('resumeBtn').onclick=()=>togglePause(false);$('pQuit').onclick=askQuit;$('quitYes').onclick=()=>{const rs=G&&G.restartAsk;quitGame();if(rs){initAudio();startSingle();}};$('aRestart').onclick=askRestart;$('pRestart').onclick=askRestart;
+/* ---------- command bar: ☰ menu, fold handle (phones), tactical-map button while folded ---------- */
+function syncPause(){const p=!!(G&&G.paused&&!G.over);for(const id of ['aPause','aPauseM']){const b=$(id);if(!b)continue;b.textContent=p?'▶ Resume':'❚❚ Pause';b.classList.toggle('pz',p);b.title=p?'Resume the battle (P)':'Pause the battle (P)';}}
+function menuOpen(v){const m=$('amenu'),b=$('aMenu');if(!m)return false;if(v==null)return !m.hidden;m.hidden=!v;if(b)b.setAttribute('aria-expanded',v?'true':'false');if(v){syncPause();ctipHide();}return !!v;}
+if($('aMenu')){$('aMenu').onclick=e=>{e.stopPropagation();menuOpen(!menuOpen());};
+  // a tap or click anywhere outside the menu closes it (and does nothing else, so a stray tap can't order units)
+  document.addEventListener('pointerdown',e=>{if(!menuOpen())return;const m=$('amenu');if(m.contains(e.target)||$('aMenu').contains(e.target))return;menuOpen(false);if(e.target===cv){e.stopPropagation();e.preventDefault();}},true);
+  // Pause, Settings, Restart and Quit close the menu; the sound switches keep it open to flip several in a row
+  for(const id of ['aSet','aRestart','aQuit'])$(id).addEventListener('click',()=>menuOpen(false));
+  $('aPauseM').onclick=()=>{menuOpen(false);togglePause();};}
+// the bar's height, for things that float just above it (unit orders on phones, button descriptions)
+function barH(){const sd=$('side');if(!sd)return;const h=sd.hidden?0:Math.round(sd.getBoundingClientRect().height);document.documentElement.style.setProperty('--barh',h+'px');}
+try{new ResizeObserver(barH).observe($('side'));}catch(e){addEventListener('resize',barH);}
+// phones: the handle folds the bar down to its top strip (money, tabs, pause, menu) and back; remembered on this device
+function barMin(v){const sd=$('side');if(!sd)return false;if(v==null)return sd.classList.contains('min');v=!!v;sd.classList.toggle('min',v);if(!v)mapPeek(false);
+  const g=$('barGrip');if(g){g.textContent=v?'▴':'▾';g.setAttribute('aria-expanded',v?'false':'true');g.title=v?'Show the command bar':'Fold the command bar down';}
+  try{localStorage.setItem('ww3_barMin',v?'1':'0');}catch(e){}ctipHide();barH();return v;}
+function mapPeek(v){const sd=$('side'),b=$('mmBtn');if(!sd)return;if(v==null)v=!sd.classList.contains('mmOn');sd.classList.toggle('mmOn',!!v);if(b)b.setAttribute('aria-pressed',v?'true':'false');}
+if($('barGrip'))$('barGrip').onclick=()=>barMin(!barMin());
+if($('mmBtn'))$('mmBtn').onclick=()=>mapPeek();
+{let m=false;try{m=localStorage.getItem('ww3_barMin')==='1';}catch(e){}if(m)barMin(true);}
+// Test Range controls fold to their title so they don't cover the battlefield
+if($('sbFold')){const sb=$('sbx'),f=v=>{sb.classList.toggle('fold',v);$('sbFold').setAttribute('aria-expanded',v?'false':'true');};let v=false;try{v=localStorage.getItem('ww3_sbFold')==='1';}catch(e){}f(v);
+  $('sbFold').onclick=()=>{const n=!sb.classList.contains('fold');f(n);try{localStorage.setItem('ww3_sbFold',n?'1':'0');}catch(e){}};}
 $('quitNo').onclick=()=>{$('quitOv').hidden=true;if(G&&G.qPause){G.qPause=false;togglePause(false);}};
 $('again').onclick=()=>{initAudio();startSingle();};$('change').onclick=()=>{$('end').hidden=true;$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;renderGames();};
 
