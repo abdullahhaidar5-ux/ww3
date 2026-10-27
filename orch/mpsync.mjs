@@ -30,8 +30,10 @@
 //   node orch/mpsync.mjs --break               # self-test: the client stops receiving at 1 min; must print MPSYNC FAIL
 //   node orch/mpsync.mjs --verbose             # print both pages' network state every 5 s while connecting
 //   node orch/mpsync.mjs --no-lock             # skip the machine-wide browser lock (see browserlock.mjs)
-//   node orch/mpsync.mjs --reconnect           # at 1 min the client "loses" the host for 6 s and must reconnect and
-//                                              # keep its army (the AI must not take over after 30 s)
+//   node orch/mpsync.mjs --reconnect           # at 1 min the client's connection is cut both ways for 12 game-s, then
+//                                              # it must reconnect and keep its army (the AI must not take over after
+//                                              # 30 s); right after, a strict check: own units, what it sees of the
+//                                              # enemy and its credits match the host exactly
 //   node orch/mpsync.mjs --artifact            # the claude.ai artifact edition (python3 orch/build.py --artifact
 //                                              # first): pages talk over a stand-in for the artifact `room`
 //                                              # capability (orch/artifact-harness.mjs) instead of PeerJS
@@ -116,7 +118,7 @@ function fakePeerShim() {
   class Conn extends Em {
     constructor(cid, owner, remote) { super(); this.cid = cid; this.owner = owner; this.peer = remote; this.open = false; this.reliable = true;
       this.serialization = 'json'; this.dataChannel = { bufferedAmount: 0 }; this.peerConnection = null; conns.set(cid + '@' + owner.id, this); }
-    send(m) { if (!this.open) return; const s = JSON.stringify(m); stats.tx++; stats.txB += s.length; post({ k: 'd', cid: this.cid, to: this.peer, s }); }
+    send(m) { if (!this.open) return; if (window.__fpCut) { stats.dropped++; return; } const s = JSON.stringify(m); stats.tx++; stats.txB += s.length; post({ k: 'd', cid: this.cid, to: this.peer, s }); }
     close() { this._closed(true); }
     _closed(tell) { if (!conns.has(this.cid + '@' + this.owner.id)) return; conns.delete(this.cid + '@' + this.owner.id); const was = this.open; this.open = false;
       if (tell) post({ k: 'x', cid: this.cid, to: this.peer }); if (was || tell) this._emit('close'); }
@@ -144,7 +146,7 @@ function fakePeerShim() {
     else if (m.k === 'conn') { const p = local.get(m.to); if (!p || p.destroyed) return; const c = new Conn(m.cid, p, m.from); c.open = true;
       p._emit('connection', c); post({ k: 'ack', cid: m.cid, to: m.from }); setTimeout(() => c._emit('open'), 0); }
     else if (m.k === 'ack') { const f = pending.get('c' + m.cid); if (f) f(); }
-    else if (m.k === 'd') { const c = conns.get(m.cid + '@' + m.to); if (!c || !c.open) return; if (window.__fpDrop) { stats.dropped++; return; }
+    else if (m.k === 'd') { const c = conns.get(m.cid + '@' + m.to); if (!c || !c.open) return; if (window.__fpDrop || window.__fpCut) { stats.dropped++; return; }
       stats.rx++; stats.rxB += m.s.length; c._emit('data', JSON.parse(m.s)); }
     else if (m.k === 'x') { const c = conns.get(m.cid + '@' + m.to); if (c) c._closed(false); }
   }
@@ -396,9 +398,25 @@ async function main() {
       const rs = await client.evaluate(() => ({ recon: !!NET.recon, via: NET.game && NET.game.via, ws: !!(NET.game && NET.game._ws) }));
       console.log(`[${secs()}] --reconnect: after ${((Date.now() - r0) / 1000).toFixed(1)} s the client is ${rs.recon ? 'STILL reconnecting' : 'reconnected'} via ${rs.via}`);
       if (rs.recon || !rs.ws) fail('client did not reconnect through the server after its connection was cut');
-      lagSkip = ticks + 50; } // a real outage: the client may trail while it catches up
-    else if (RECON && ticks === 650) { await client.evaluate(() => { NET.lastRx = performance.now() - 6000; });
-      console.log(`[${secs()}] --reconnect: the client thinks it lost the host and reconnects`); }
+      lagSkip = ticks + 50; // a real outage: the client may trail while it catches up
+      await settleCheck('right after reconnecting'); }
+    else if (RECON && ticks === 650) {
+      // a real outage: nothing gets through either way for 12 game-s while the battle goes on (the client's screen
+      // expires what it no longer hears about), then the client notices the silence and rejoins the same host
+      await client.evaluate(() => { window.__fpCut = true; NET.lastRx = performance.now() + 120000; });
+      console.log(`[${secs()}] --reconnect: the client's connection is cut for 12 game-s`);
+      for (let i = 0; i < 120; i += STEP) { await hostRun(STEP); await clientRun(STEP); } ticks += 120;
+      const pre = await client.evaluate(() => ({ own: G.ents.filter(e => e.team === ME).length, all: G.ents.length }));
+      await client.evaluate(() => { window.__fpCut = false; NET.lastRx = performance.now() - 6000; });
+      console.log(`[${secs()}] --reconnect: the client (now showing ${pre.all} entities, ${pre.own} own) thinks it lost the host and reconnects`);
+      const r0 = Date.now(); while (Date.now() - r0 < 30000) { await hostRun(2); await clientRun(2); await host.waitForTimeout(150);
+        if (await client.evaluate(() => !NET.recon && performance.now() - NET.lastRx < 1000)) break; }
+      const rs = await client.evaluate(() => ({ recon: !!NET.recon }));
+      console.log(`[${secs()}] --reconnect: after ${((Date.now() - r0) / 1000).toFixed(1)} s the client is ${rs.recon ? 'STILL reconnecting' : 'reconnected'}`);
+      if (rs.recon) fail('client did not reconnect to the host after its connection came back');
+      lagSkip = ticks + 50;
+      // the client's own army, what it can see of the enemy and its money must match the host's exactly again
+      await settleCheck('right after reconnecting'); }
     if (RECON && ticks === 1100) { const r = await host.evaluate((k) => ({ ai: !!G.teams[k].ai, disc: G.teams[k].discT || 0, out: !!G.teams[k].out }), CK);
       if (!r.out && (r.ai || r.disc)) fail('45 s after reconnecting, the host still treats the client as gone (AI took over / marked disconnected)'); }
     if (ticks === breakAt && SRV) { warns.push('--break is not supported with --server'); }
