@@ -444,9 +444,10 @@ export function runNode(o, { log = true, dumps = false } = {}) {
   if (log) console.log(`  t=   0s  ${seq[0].h}`);
   let ms = 0, r = null;
   for (let t = o.every; t <= o.minutes * 60 + 1e-9; t += o.every) {
-    r = W.step(o.every); ms += r.ms;
+    const c0 = process.cpuUsage();
+    r = W.step(o.every); const cu = process.cpuUsage(c0); r.ms = (cu.user + cu.system) / 1000; ms += r.ms; // CPU time
     const h = W.hash(); seq.push({ t: Math.round(r.t), h, d: dumps ? W.dump() : null });
-    if (log) { const i = W.info(); console.log(`  t=${String(Math.round(r.t)).padStart(4)}s  ${h}  ents ${String(i.ents).padStart(4)}  ${(r.ms / (r.steps / 60 || 1)).toFixed(1).padStart(6)} ms/game-s  ${i.per.map(p => p.units + 'u' + p.blds + 'b').join(' ')}`); }
+    if (log) { const i = W.info(); console.log(`  t=${String(Math.round(r.t)).padStart(4)}s  ${h}  ents ${String(i.ents).padStart(4)}  ${(r.ms / (r.steps / 60 || 1)).toFixed(1).padStart(6)} ms CPU/game-s  ${i.per.map(p => p.units + 'u' + p.blds + 'b').join(' ')}`); }
     if (r.over) break;
   }
   const info = W.info();
@@ -457,7 +458,7 @@ function summary(res, o) {
   const { info } = res;
   console.log(`\nfinal after ${(info.t / 60).toFixed(1)} game-min${info.over ? ` (battle over, winner slot ${info.winner})` : ''}: ${info.ents} entities, ${info.proj} projectiles in flight`);
   for (const [i, p] of info.per.entries()) console.log(`  slot ${i} ${p.fac}: ${p.units} units, ${p.blds} buildings, $${p.credits}, built ${p.built}, lost ${p.lost}, kills ${p.kills}${p.out ? ', OUT' : ''}`);
-  console.log(`  sim cost: ${(res.ms / Math.max(1, info.t)).toFixed(1)} ms of CPU per game-second on average (${o.realClock ? 'real' : 'frozen'} pathfinding clock)`);
+  console.log(`  sim cost: ${(res.ms / Math.max(1, info.t)).toFixed(1)} ms of CPU per game-second on average (process CPU time; ${o.realClock ? 'real' : 'frozen'} pathfinding clock)`);
   console.log(`  final hash ${res.seq[res.seq.length - 1].h}`);
 }
 
@@ -603,7 +604,7 @@ async function compare(o) {
   { const mb = peakMB(); if (mb) console.log(`peak memory (node + browser, summed RSS): ${mb} MB`); }
   if (!fails.length && browserSeq.length !== node.seq.length) fails.push(`browser produced ${browserSeq.length} hashes, node ${node.seq.length}`);
   if (fails.length) { console.log(`\nHEADLESS FAIL`); for (const f of [...new Set(fails)]) console.log('  x ' + f); process.exit(1); }
-  console.log(`sim cost: Node ${(node.ms / Math.max(1, node.info.t)).toFixed(1)} ms per game-second, Chromium ${(bms / Math.max(1e-9, bsec)).toFixed(1)} ms per game-second (wall clock, busy machine)`);
+  console.log(`sim cost: Node ${(node.ms / Math.max(1, node.info.t)).toFixed(1)} ms of CPU per game-second; Chromium ${(bms / Math.max(1e-9, bsec)).toFixed(1)} ms of wall-clock time per game-second in the page`);
   console.log(`\nHEADLESS PASS — ${node.seq.length} state hashes identical (Node ${process.version} vs Chromium${RENDER ? ' with rendering' : ''}), ${(binfo.t / 60).toFixed(1)} game-min, ${binfo.ents} entities at the end`);
 }
 
