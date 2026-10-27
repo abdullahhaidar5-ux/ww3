@@ -2,6 +2,14 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-27 07:40 — side lane: bottom command bar + faster phone start shipped
+
+- Merged `orch/bottom-bar` (3d854c4, includes `orch/speed-ship`) onto main (cycles 6–7 + servers); one conflict in
+  `orch/mpsync.mjs` resolved keeping both sides (wait for loading screens + wiped-out client skip, and `--server` mode).
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MAPSWEEP PASS (71 battles), artifact smoke PASS, artifact MPSYNC PASS.
+- Follow-ups → backlog: client reconnect state wrong (Multiplayer P1), phone portrait build grid clipped (UI).
+- Graphics Phase 1 is now unblocked.
+
 ## 2026-10-27 01:24 → 04:30 — cycle 7
 
 - Waited 76 min on cycle 6's lock; it expired 06:40 UTC with no commits, so took it. Baseline: `--check` OK, SMOKE PASS.
