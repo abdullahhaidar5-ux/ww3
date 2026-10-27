@@ -61,6 +61,8 @@ Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the ve
   (Abdullah connected it 2026-10-26; Cloudflare builds the repo root from `main` automatically on every push — nothing
   to do at ship except check it serves the new version), and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi, republish
   per `orch/ARTIFACT.md`). Everything in the repo is served publicly by both Pages and the `ww3` Worker.
+- **Art is free only** (Abdullah, 2026-10-26): CC0 or CC-BY models/textures/sounds, every author credited in the menu
+  credits; no paid assets, no ripped game assets.
 - Abdullah reads updates on his phone: short summaries, and send screenshots/clips as links or images that open on
   a phone (attached video files didn't open for him).
 
