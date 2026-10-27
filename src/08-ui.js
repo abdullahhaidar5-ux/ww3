@@ -450,7 +450,10 @@ function loadModelsWait(o){loadShow(o);loadStep('Loading 3D models…',.04);}
 function modelsPending(){if(MODELS.ready||!MODELS.loading||LOAD.mdone)return false;if(!LOAD.mw){LOAD.mw=1;MODELS.loading.then(()=>{LOAD.mdone=1;},()=>{LOAD.mdone=1;});}return true;}
 async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
   setTimeout(()=>{if(!MODELS.ready&&typeof pushLog==='function')pushLog('Detailed 3D models could not load on this device ('+(MODELS.err||'unknown')+'). Showing simple shapes.','bad');},500);
-  initAudio();loadFromG(mode);g.paused=true;
+  // solo and Test Range: a step-by-step start under the loading screen (the battle clock held until it is ready).
+  // Multiplayer keeps the proven one-go start (no clock hold), so host and players stay in step from the first tick.
+  const stepped=MODE==='single';
+  initAudio();if(stepped){loadFromG(mode);g.paused=true;}
   const live=()=>tok===LOAD.tok&&G===g;let tc=null;
   // [label, progress, work, is3dStart]; the battle clock stays held through every step
   // (the painted ground is held back from G.terrain until the end: the view draws nothing while G.terrain is unset)
@@ -463,15 +466,15 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
     // of the battle: draw it here, under the loading screen, so the battle appears already running
     ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
   const T0=performance.now(),TL=LOAD.times=[];
-  for(const [label,p,fn,gl] of steps){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;const t1=performance.now();
+  for(const [label,p,fn,gl] of steps){if(stepped){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;}const t1=performance.now();
     try{fn();TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
       R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
-  g.terrain=tc;loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
+  g.terrain=tc;if(stepped)loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
   TL.push(['total',Math.round(performance.now()-T0)]);console.log('battle start: '+TL.map(([a,b])=>a.replace('…','')+' '+b+' ms').join(', '));
   // multiplayer client: its battle clock stood still under the loading screen while the host's kept running; catch up
   // to the host's latest snapshot time so this player isn't permanently behind (host snapshots arrived meanwhile)
   if(MODE==='client'&&(NET.lastSnapT||0)>g.t)g.t=NET.lastSnapT;
-  g.paused=false;last=performance.now();g.acc=0;qualReset();try{applyQual();}catch(e){}loadHide();
+  if(stepped){g.paused=false;last=performance.now();g.acc=0;}qualReset();try{applyQual();}catch(e){}loadHide();
   pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
   // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
   setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}},0);}
