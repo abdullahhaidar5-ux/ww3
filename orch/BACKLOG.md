@@ -62,6 +62,8 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 
 ## Questions for Abdullah
 
+- [ask] (cycle 10) The claude.ai copy's 18 voice clips (`vo/*.mp3`) differ from every version in the repo — did someone
+  upload newer voices there? Until answered, artifact republishes leave `vo/` as published.
 
 - _(none open)_ — 2026-10-26 answers: keep right-click as an optional shortcut; stay at 18 factions; the old
   development chat is gone (its `assets/`, ROUNDS.md and test scripts are lost — harnesses get rebuilt in `orch/`,
