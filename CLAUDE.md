@@ -53,7 +53,7 @@ Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the ve
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
 - **Audio:** real, professional military audio; top-quality unit voice acting in each nation's native language,
   including war slogans like "Labbaik ya Hussein". **Shia factions (IR, RS, DW) use latmiyas as their music** — real recorded latmiyas only: the synthesized
-  latmiyas are to be removed (Abdullah, 2026-10-26; timing pending his answer);
+  latmiyas stay until real replacements are ready, then get swapped out (Abdullah, 2026-10-26);
   every other nation gets its own country-specific war score.
 - Multiplayer: up to 8 players, host's browser runs the battle. Never break multiplayer sync — host and clients
   must agree.
