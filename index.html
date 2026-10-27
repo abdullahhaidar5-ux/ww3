@@ -7991,15 +7991,21 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
   initAudio();loadFromG(mode);g.paused=true;
   const live=()=>tok===LOAD.tok&&G===g;let tc=null;
   // [label, progress, work, is3dStart]; the battle clock stays held through every step
-  const steps=[['Generating terrain…',.08,()=>{if(paintTerrainNow()){tc=g.terrain;g.terrain=null;loadMap(g.mapKey,BASES.slice(0,g.teams.length),g.teams.map(T=>T.color),ME,g.thumb);}}],
+  // (the painted ground is held back from G.terrain until the end: the view draws nothing while G.terrain is unset)
+  const steps=[['Generating terrain…',.08,()=>{paintTerrainNow();tc=g.terrain;g.terrain=null;loadMap(g.mapKey,BASES.slice(0,g.teams.length),g.teams.map(T=>T.color),ME,g.thumb);}],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
     ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
     ['Preparing graphics…',.78,()=>{try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
-    ['Deploying forces…',.97,()=>{buildPanels();}]];
-  for(const [label,p,fn,gl] of steps){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;
-    try{fn();}catch(err){if(!gl){console.error(err);continue;}
+    ['Deploying forces…',.9,()=>{buildPanels();}],
+    // the first battle frame creates every unit, building, town and the fog of war on the GPU, by far the slowest frame
+    // of the battle: draw it here, under the loading screen, so the battle appears already running
+    ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
+  const T0=performance.now(),TL=LOAD.times=[];
+  for(const [label,p,fn,gl] of steps){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;const t1=performance.now();
+    try{fn();TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
       R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
-  if(tc)g.terrain=tc;loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
+  g.terrain=tc;loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
+  TL.push(['total',Math.round(performance.now()-T0)]);console.log('battle start: '+TL.map(([a,b])=>a.replace('…','')+' '+b+' ms').join(', '));
   g.paused=false;last=performance.now();g.acc=0;qualReset();try{applyQual();}catch(e){}loadHide();
   pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
   // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
