@@ -2,8 +2,10 @@
 // browser, everything the game relies on: health, TURN "not configured", origin allow-list, relay rooms (welcome,
 // join/leave notices, player -> host, host -> everyone, host -> one player, a host coming back after a blip keeps its
 // players, a host that leaves for good releases them), refusals (no host, code taken, room full, message too big),
-// per-socket rate limit, keep-alive ping, and the live game list (a hosted game appears for other players and
-// disappears when the host leaves). ~20 s. Prints SERVERTEST PASS / SERVERTEST FAIL.
+// per-socket rate limit, per-address limit, keep-alive ping, batched frames (several records in one frame, regrouped
+// per player), the live game list (a hosted game appears for other players and disappears when the host leaves), and
+// the daily free-tier guard (a second server with a tiny allowance must start refusing new relay rooms with "busy").
+// ~30 s. Prints SERVERTEST PASS / SERVERTEST FAIL.
 //
 //   node orch/servertest.mjs            # needs `npm ci` in server/ once
 //   node orch/servertest.mjs --url http://127.0.0.1:8787   # test an already running server instead
@@ -18,8 +20,8 @@ const check = (ok, what) => { console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${what}`); 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // a socket that records every frame, with helpers to wait for one
-function sock(path, origin = ORIGIN) {
-  const ws = new WebSocket(WS + path, { headers: { Origin: origin } });
+function sock(path, origin = ORIGIN, ip = '10.0.0.1', base = WS) {
+  const ws = new WebSocket(base + path, { headers: { Origin: origin, 'CF-Connecting-IP': ip } });
   const got = [], waiters = [];
   ws.closed = null; ws.got = got;
   ws.onmessage = ev => { got.push(String(ev.data)); for (const w of waiters.splice(0)) w(); };
@@ -33,12 +35,13 @@ function sock(path, origin = ORIGIN) {
   return ws;
 }
 const KEY = 'k' + Math.random().toString(36).slice(2, 12) + 'xyz';
-const room = (code, role, id = '', key = KEY) => sock(`/room/${code}?role=${role}&id=${id}&key=${key}`);
+let ipN = 0; // each test player on its own address unless a test says otherwise (the room allows 8 per address)
+const room = (code, role, id = '', key = KEY, ip) => sock(`/room/${code}?role=${role}&id=${id}&key=${key}`, ORIGIN, ip || '10.0.1.' + (++ipN));
 
 try {
   console.log('server at ' + HTTP);
   let r = await fetch(HTTP + '/health'); let j = await r.json();
-  check(r.ok && j.ok === true && j.service === 'ww3-servers', 'GET /health answers ok');
+  check(r.ok && j.ok === true && j.service === 'ww3-servers' && j.budget && typeof j.budget.reqPct === 'number', 'GET /health answers ok, with today\'s budget use');
   r = await fetch(HTTP + '/turn', { headers: { Origin: ORIGIN } }); j = await r.json();
   check(r.ok && j.configured === false && Array.isArray(j.iceServers) && !j.iceServers.length, 'GET /turn says "not configured" when no TURN key is set');
   r = await fetch(HTTP + '/turn', { headers: { Origin: 'https://evil.example' } });
@@ -73,6 +76,12 @@ try {
   check(await b.wait(m => m.includes('"snap"')) !== null, 'host -> one player reaches that player');
   await sleep(300); check(!a.got.some(m => m.includes('"snap"')), '... and nobody else');
   a.send('ping'); check(await a.wait(m => m === 'pong') !== null, 'keep-alive ping is answered');
+  // batching: one host frame with three records -> each player gets ONE frame with just its records
+  host.send('ww3p-aaaa1|{"n":1}\n|{"n":2}\nww3p-bbbb2|{"n":3}');
+  check(await a.wait(m => m === `${HID}|{"n":1}\n${HID}|{"n":2}`) !== null && await b.wait(m => m === `${HID}|{"n":2}\n${HID}|{"n":3}`) !== null,
+    'a batched host frame is regrouped: each player gets one frame with only its records');
+  a.send('|{"x":1}\n|{"x":2}');
+  check(await host.wait(m => m === 'ww3p-aaaa1|{"x":1}\nww3p-aaaa1|{"x":2}') !== null, 'a batched player frame reaches the host tagged with the sender');
 
   // host blip: the same host (same key) reconnects, gets its players back, players are not told anything
   host.close(); await sleep(400);
@@ -90,7 +99,13 @@ try {
   for (let i = 0; i < 400; i++) a.send('|{"k":"e","t":"spam","d":' + i + '}');
   await sleep(1500);
   const n = host2.got.slice(n0).filter(m => m.includes('spam')).length;
-  check(n >= 100 && n <= 200, `rate limit: ${n} of 400 burst messages passed (expect ~120-180)`);
+  check(n >= 70 && n <= 140, `rate limit: ${n} of 400 burst frames passed (expect ~90-120)`);
+  { const same = []; for (let i = 0; i < 7; i++) same.push(room(code, 'client', 'ww3p-same' + i, KEY, '10.9.9.9'));
+    await Promise.all(same.map(w => w.wait(m => m.startsWith('!w') || m.startsWith('!e'))));
+    const n8 = room(code, 'client', 'ww3p-same8', KEY, '10.9.9.9'), n9 = room(code, 'client', 'ww3p-same9', KEY, '10.9.9.9');
+    const ok8 = await n8.wait(m => m.startsWith('!w')) !== null, lim9 = await n9.wait(m => m === '!e limit') !== null;
+    check(ok8 && lim9, 'one address may hold 8 sockets in a room, the 9th is refused (limit)');
+    for (const w of [...same, n8]) w.close(); await sleep(500); }
   const extra = [];
   for (let i = 0; i < 10; i++) extra.push(room(code, 'client', 'ww3p-fill' + i));
   await Promise.all(extra.map(w => w.wait(m => m.startsWith('!w'))));
@@ -118,6 +133,19 @@ try {
   v1.close();
   check(await v2.wait(m => m === 'l|[]', 5000) !== null, 'the game disappears when the host leaves the menu');
   v2.close();
+
+  // free-tier guard: a server whose daily allowance is only 30 requests must refuse new relay rooms ("busy") once ~80%
+  // is used, while the page falls back to peer-to-peer
+  const tiny = await startServer({ vars: { FREE_REQ: '30' } }); const TW = tiny.url.replace(/^http/, 'ws');
+  let busyAt = 0;
+  for (let i = 1; i <= 40 && !busyAt; i++) {
+    const h = sock(`/room/bud${String(i).padStart(3, '0')}?role=host&key=${KEY}`, ORIGIN, '10.7.0.' + i, TW);
+    const m = await h.wait(x => x.startsWith('!w') || x.startsWith('!e'));
+    if (m === '!e busy') busyAt = i; h.close(); await h.waitClose(2000);
+  }
+  const hb = await (await fetch(tiny.url + '/health')).json();
+  check(busyAt > 0 && !hb.budget.relay, `with a tiny allowance new relay rooms are refused ("busy" after ${busyAt} rooms, budget ${hb.budget.reqPct}% used)`);
+  tiny.stop();
 } catch (e) { fails.push('crashed: ' + (e && e.stack || e)); }
 srv.stop();
 if (fails.length) { console.log(`\nSERVERTEST FAIL: ${fails[0]}` + (fails.length > 1 ? ` (+${fails.length - 1} more)` : '')); process.exit(1); }

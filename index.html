@@ -63,7 +63,11 @@ window.WW3_P2P=true;
     // --- server relay: one WebSocket to this game's room on the World War 3 servers. The host's socket carries all of
     // its relayed players ("<to>|msg", empty to = everyone); a player's socket talks only to the host. ---
     let ws=null,wsKA=null,wsBye=false;const wsKey=Math.random().toString(36).slice(2,12)+Math.random().toString(36).slice(2,10);
-    const wsTx=s=>{if(ws&&ws.readyState===1){ws.send(s);WSS.tx++;WSS.txB+=s.length;}};const wsBuf=()=>ws?ws.bufferedAmount:0;
+    // everything sent in one go (a whole host tick: every player's bundle) leaves as ONE frame, records joined by "\n"
+    let wq=[],wqN=0,wqT=false;const WQ_MAX=hosting?96000:12000;
+    const wsFlush=()=>{wqT=false;if(!wq.length)return;const f=wq.join('\n');wq=[];wqN=0;if(ws&&ws.readyState===1){ws.send(f);WSS.tx++;WSS.txB+=f.length;}};
+    const wsTx=s=>{if(!ws||ws.readyState!==1)return;if(wqN+s.length+1>WQ_MAX)wsFlush();wq.push(s);wqN+=s.length+1;WSS.rec=(WSS.rec||0)+1;if(!wqT){wqT=true;queueMicrotask(wsFlush);}};
+    const wsBuf=()=>ws?ws.bufferedAmount:0;
     const wsLink=a=>{links.set(a,{ws:1,send:x=>wsTx(a+'|'+JSON.stringify(x)),buf:wsBuf});if(!peers.has(a))upd(a,{},true);};
     const wsOpen=(role,id)=>new Promise((res,rej)=>{let s,done=false;const q=role==='host'?'role=host&key='+wsKey:'role=client&id='+encodeURIComponent(id);
       const fail=(t,msg)=>{if(done)return;done=true;clearTimeout(to);try{s.close();}catch(e){}rej(Object.assign(new Error(msg||t),{type:t}));};
@@ -72,16 +76,16 @@ window.WW3_P2P=true;
       s.onmessage=ev=>{const m=ev.data;if(typeof m!=='string'||m==='pong')return;WSS.rx++;WSS.rxB+=m.length;
         if(m[0]==='!'){const c=m[1],a=m.slice(3);
           if(c==='w'){if(done)return;done=true;clearTimeout(to);ws=s;clearInterval(wsKA);wsKA=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);res(a);}
-          else if(c==='e')fail(a==='nohost'?'peer-unavailable':a==='taken'?'unavailable-id':'server-error','server: '+a);
+          else if(c==='e')fail(a==='nohost'?'peer-unavailable':a==='taken'?'unavailable-id':a==='busy'||a==='limit'?'refused':'server-error','server: '+a);
           else if(c==='j'&&role==='host'&&ws===s)wsLink(a);
           else if(c==='l'&&ws===s){if(role==='host'){const l=links.get(a);if(l&&l.ws)gone(a);}else gone(hostId);}
           return;}
-        if(ws!==s)return;const i=m.indexOf('|');if(i<0)return;let d;try{d=JSON.parse(m.slice(i+1));}catch(e){return;}onMsg(role==='host'?m.slice(0,i):hostId,d);};
+        if(ws!==s)return;for(const r of m.indexOf('\n')<0?[m]:m.split('\n')){const i=r.indexOf('|');if(i<0)continue;let d;try{d=JSON.parse(r.slice(i+1));}catch(e){continue;}onMsg(role==='host'?r.slice(0,i):hostId,d);}};
       s.onerror=()=>fail('network','server unreachable');
       s.onclose=()=>{fail('network','server closed the connection');if(ws!==s)return;ws=null;clearInterval(wsKA);if(wsBye)return;
         // host: its relayed players count as gone until the socket is back (the server hands them back on reconnect)
         if(role==='host'){for(const [pid,l] of [...links])if(l.ws)gone(pid);wsRetry(0);}else gone(hostId);};});
-    const wsRetry=n=>{if(wsBye||n>30)return;setTimeout(()=>{if(wsBye||ws)return;wsOpen('host').catch(e=>{if(!(e&&e.type==='unavailable-id'))wsRetry(n+1);});},n?Math.min(5000,400*n):100);};
+    const wsRetry=n=>{if(wsBye||n>30)return;setTimeout(()=>{if(wsBye||ws)return;wsOpen('host').catch(e=>{if(!(e&&(e.type==='unavailable-id'||e.type==='refused')))wsRetry(n+1);});},n?Math.min(5000,400*n):100);};
     const wsJoin=async()=>{const id=rid();await wsOpen('client',id);myId=id;links.set(hostId,{ws:1,send:x=>wsTx('|'+JSON.stringify(x)),buf:wsBuf});upd(hostId,{},true);};
     Object.defineProperty(R,'_ws',{get:()=>ws});
     const ready=(async()=>{
@@ -107,7 +111,7 @@ window.WW3_P2P=true;
         troom.onPeerLeave(pid=>{if(pid===hp)gone(hostId);});});
       if(hosting){myId=hostId;
         // the host also opens its relay room on the servers; it never waits for that once P2P hosting works
-        const wsP=srvUrl()?wsOpen('host').then(()=>true,e=>{if(e&&e.type==='unavailable-id')throw e;wsRetry(1);return false;}):null;
+        const wsP=srvUrl()?wsOpen('host').then(()=>true,e=>{if(e&&e.type==='unavailable-id')throw e;if(!(e&&e.type==='refused'))wsRetry(1);return false;}):null;
         const r=await Promise.allSettled([pjHost(),Promise.resolve().then(trHost)]);const p2p=r.some(x=>x.status==='fulfilled');
         if(r[0].status==='rejected'&&r[0].reason&&r[0].reason.type==='unavailable-id')throw r[0].reason;
         if(wsP&&!p2p){R.srv=await wsP;if(!R.srv)throw r[0].reason;}else if(wsP)wsP.then(v=>{R.srv=v;},()=>{});else if(!p2p)throw r[0].reason;}
@@ -176,8 +180,9 @@ window.WW3_P2P=true;
     function connect(){if(dead)return;let s;try{s=new WebSocket(wsBase()+'/lobby');}catch(e){again();return;}
       s.onmessage=ev=>{const m=ev.data;if(typeof m!=='string')return;
         if(m.startsWith('!w ')){myId=m.slice(3);ws=s;everOk=true;fails=0;last='';tell();clearInterval(ka);ka=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);}
-        else if(m.startsWith('l|')){try{const l=JSON.parse(m.slice(2));if(Array.isArray(l)){list=l;fire();}}catch(e){}}};
-      s.onerror=()=>{};s.onclose=()=>{if(ws===s){ws=null;clearInterval(ka);list=[];fire();}again();};}
+        else if(m.startsWith('l|')){try{const l=JSON.parse(m.slice(2));if(Array.isArray(l)){list=l;fire();}}catch(e){}}
+        else if(m.startsWith('!e ')&&!dead)giveUp();};   // refused (server over its daily budget): use the P2P list
+      s.onerror=()=>{};s.onclose=()=>{if(ws===s){ws=null;clearInterval(ka);list=[];fire();}if(!dead)again();};}
     return{failed:()=>dead,peers,onPeers:f=>{PH.push(f);if(!started){started=true;connect();}setTimeout(()=>f({peers:peers(),joined:[],left:[],updated:[]}),0);return()=>{};},
       presence:p=>{for(const k in p){if(p[k]===null)delete myPres[k];else myPres[k]=p[k];}tell();fire();return Promise.resolve();},
       state:()=>({role:'server',n:list.length,id:myId,ok:!!ws})};})();
