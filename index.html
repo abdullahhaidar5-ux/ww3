@@ -5976,11 +5976,18 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   const armyN=mine.filter(e=>!e.isB&&!e.s.noAttack&&e.s.dom!=='naval'&&!['harv','hacker','dozer'].includes(e.kind)).length,thin=armyN<Math.max(6,Math.round(T.ai.wave*.5));
   const reserve=Math.max((nk&&reqMet(id,nk)&&(!thin||nk==='barracks'||nk==='factory'))?bstats(T.fac,nk).cost*(T.ai.bi<6?1:.6):0,T.ai.saveHq&&!thin?bstats(T.fac,'hq').cost*.8:0,T.ai.nvW&&!thin?bstats(T.fac,'shipyard').cost*.8:0);
   const R=roster(T.fac),enemyAir=G.ents.filter(e=>e.team===en&&!e.isB&&e.s.dom==='air').length;
-  for(const cat of ['shipyard','barracks','factory','airfield']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
+  // Combined arms: the barracks used to spend every dollar first (riflemen are always affordable), so the AI fielded
+  // almost nothing but infantry and nations whose strength is armour (Merkava, Leclerc, Abrams) never used it. Once the
+  // War Factory is up and there is a core army, the AI keeps about a third of its land army's value in vehicles: while
+  // short, the factory picks first and the barracks leaves that vehicle's price in the bank. Pure sim state, no RNG.
+  let vV=0,lV=0;for(const e of mine)if(!e.isB&&e.s.dom==='ground'&&!e.s.noAttack&&e.kind!=='harv'&&e.kind!=='dozer'&&e.kind!=='hacker'){lV+=e.s.cost;if(isVeh(e.s))vV+=e.s.cost;}
+  for(const c of ['barracks','factory'])for(const it of T.q[c]){const s=stats(T.fac,it.kind);if(s.dom!=='ground'||s.noAttack)continue;lV+=s.cost;if(isVeh(s))vV+=s.cost;}
+  const wantVeh=!thin&&done(id,'factory')&&vV<lV*.33;let vSv=0;
+  for(const cat of wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
     if(cat==='factory'){opts=enemyAir>=2?['aa','aa',...opts]:opts.filter(k=>k!=='aa'||Math.random()<.2);}
     if(cat==='airfield'&&Math.random()<.5)continue;if(cat==='shipyard'){opts=aiNavyPick(T,mine,opts,anchor)||[];}
     if(cat==='factory')opts=opts.filter(k=>k!=='drone'||Math.random()<.35);if(!opts.length)continue;
-    const k=opts[Math.floor(Math.random()*opts.length)];const sv=cat!=='shipyard'&&T.ai.nvSv>G.t-25?stats(T.fac,'ship').cost*.7:0;if(k&&T.credits-reserve-sv>=stats(T.fac,k).cost)enqueue(id,k);else if(k==='ship')T.ai.nvSv=G.t;}
+    const k=opts[Math.floor(Math.random()*opts.length)];const sv=(cat!=='shipyard'&&T.ai.nvSv>G.t-25?stats(T.fac,'ship').cost*.7:0)+(cat==='barracks'||cat==='airfield'?vSv:0);if(k&&T.credits-reserve-sv>=stats(T.fac,k).cost)enqueue(id,k);else if(k==='ship')T.ai.nvSv=G.t;else if(wantVeh&&cat==='factory'&&isVeh(stats(T.fac,k)))vSv=stats(T.fac,k).cost;}
   if(T.credits>1700&&T.ai.t%5===0){const ups=upgList(T.fac).filter(k=>!T.upg[k]&&done(id,UPG[k].at)&&!T.rq[UPG[k].at]);if(ups.length)startResearch(id,ups[Math.floor(Math.random()*ups.length)]);}
   if(T.rank-T.spent>0){{let did=false;for(const k of ['nat','bounty','barrage','repair','para','recon'])if(!T.pw[k]){did=buyPower(id,k);break;}if(!did)for(const k of ['nat','barrage','repair'])if(T.pw[k]&&buyPower(id,k))break;}}
   if(T.pw.nat&&T.pw.nat.cd<=0&&T.ai.t%5===2){const N=natPow(T.fac);const c=aiCluster(en);const army=mine.filter(e=>!e.isB);

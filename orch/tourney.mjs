@@ -9,6 +9,8 @@
 //   node orch/tourney.mjs --full                   # full round robin: every pair once (153 games for 18 factions)
 //   node orch/tourney.mjs --factions UA,RU,US --games 4 --maps strait,fulda --diff hard --seed 7
 //   node orch/tourney.mjs --jobs 2                 # two battles at once (one tab each; default = CPU count, max 4)
+//   node orch/tourney.mjs --swap                   # play every pairing both ways: same map and seed, slots swapped
+//                                                  # (doubles the match count; cancels any slot/start-spot advantage)
 //   node orch/tourney.mjs --dry                    # print the schedule and the runtime estimate, play nothing
 //   node orch/tourney.mjs --match 5                # replay only match #5 of the schedule (same seed => same game)
 //   node orch/tourney.mjs --no-lock                # skip the machine-wide browser lock (see browserlock.mjs)
@@ -42,6 +44,7 @@ const DIFF = (d => ({ easy: 0, normal: 1, hard: 2 })[String(d).toLowerCase()] ??
 const DIFF_NAME = ['Easy', 'Normal', 'Hard'][DIFF];
 const MAPS_ARG = String(argS('maps', 'strait,oasis,plateau')).split(',').map(s => s.trim()).filter(Boolean);
 const FAC_ARG = argS('factions', '') ? argS('factions', '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : null;
+const SWAP = has('swap');
 const FULL = has('full'), DRY = has('dry'), REAL_CLOCK = has('real-clock');
 const ONLY = argS('match', '') !== '' ? Number(argS('match', '')) : null;
 const ADJ = Number(argS('adj', 1.5));
@@ -94,7 +97,9 @@ function schedule(facs, maps) {
       }
     }
   }
-  return pairs.map(([a, b], i) => ({ i, a, b, map: maps[i % maps.length], seed: matchSeed(i) }));
+  if (!SWAP) return pairs.map(([a, b], i) => ({ i, a, b, map: maps[i % maps.length], seed: matchSeed(i) }));
+  // --swap: each pairing twice in a row, same map and seed, slots swapped (match numbers stay unique for --match)
+  return pairs.flatMap(([a, b], k) => [[a, b], [b, a]].map(([x, y], j) => ({ i: 2 * k + j, a: x, b: y, map: maps[k % maps.length], seed: matchSeed(k) })));
 }
 
 // ---------------------------------------------------------------- in-page tournament helpers
@@ -229,7 +234,7 @@ try { const P = JSON.parse(fs.readFileSync(prevFile, 'utf8')); if (P.perf && P.p
 const estimate = (n, j = jobs) => n * (startS + avgMin * secPerMin) / j;
 const fmtT = s => s >= 3600 ? `${(s / 3600).toFixed(1)} h` : s >= 90 ? `${Math.round(s / 60)} min` : `${Math.round(s)} s`;
 const perFac = {}; for (const m of sched) { perFac[m.a] = (perFac[m.a] || 0) + 1; perFac[m.b] = (perFac[m.b] || 0) + 1; }
-console.log(`tourney: ${facs.length} factions, ${sched.length} matches (${FULL ? 'full round robin' : GAMES + ' per faction'}), maps ${maps.join('/')}, ${DIFF_NAME} AI, cap ${MINUTES} game-min, seed ${SEED}, ${jobs} job(s) (boot ${bootS.toFixed(0)}s)`);
+console.log(`tourney: ${facs.length} factions, ${sched.length} matches (${FULL ? 'full round robin' : GAMES + ' per faction'}${SWAP ? ', both ways' : ''}), maps ${maps.join('/')}, ${DIFF_NAME} AI, cap ${MINUTES} game-min, seed ${SEED}, ${jobs} job(s) (boot ${bootS.toFixed(0)}s)`);
 console.log(`estimated runtime ≈ ${fmtT(estimate(sched.length))} (${estSrc}); full round robin of ${facs.length} would be ${facs.length * (facs.length - 1) / 2} matches ≈ ${fmtT(estimate(facs.length * (facs.length - 1) / 2, JOBS))}`);
 if (DRY) {
   for (const m of sched) console.log(`  #${String(m.i).padStart(3)} ${m.a} vs ${m.b} on ${m.map} seed ${m.seed}`);
@@ -341,13 +346,13 @@ for (const e of [...new Set(errs)].slice(0, 5)) console.log('  ✗ ' + e);
 console.log(`runtime ${fmtT(totalS)} (${perf.secPerSimMin ? `per match ${perf.startS.toFixed(0)}s start + ${perf.secPerSimMin.toFixed(1)}s per game-minute, ${jobs} at a time, ` : ''}sim ${perf.msPerStep.toFixed(2)} ms/step${mb ? ', peak memory ' + mb + ' MB' : ''})`);
 
 // ---------------------------------------------------------------- files
-const cfg = { date: new Date().toISOString(), factions: facs, maps, games: GAMES, full: FULL, minutes: MINUTES, diff: DIFF_NAME, seed: SEED, adj: ADJ, jobs, realClock: REAL_CLOCK, match: ONLY };
+const cfg = { date: new Date().toISOString(), factions: facs, maps, games: GAMES, full: FULL, swap: SWAP, minutes: MINUTES, diff: DIFF_NAME, seed: SEED, adj: ADJ, jobs, realClock: REAL_CLOCK, match: ONLY };
 fs.writeFileSync(prevFile, JSON.stringify({ config: cfg, perf, table: rows.map(({ winMin, ...t }) => t), flags,
   matches: results.map(r => ({ i: r.i, a: r.a, b: r.b, map: r.map, seed: r.seed, startS: r.startS != null ? +r.startS.toFixed(1) : null, result: r.result, winner: r.winner >= 0 && r.sides ? r.sides[r.winner].fac : null,
     min: r.t ? +(r.t / 60).toFixed(2) : null, why: r.end ? r.end.why : '', real: +r.real.toFixed(1), msPerStep: r.msPerStep ? +r.msPerStep.toFixed(3) : null, errs: r.errs, sides: r.sides, trace: r.trace })) }, null, 1));
 const md = [];
 md.push(`# AI tournament — ${cfg.date.slice(0, 16).replace('T', ' ')} UTC`, '');
-md.push(`${facs.length} factions · ${results.length} 1v1 matches (${FULL ? 'full round robin' : GAMES + ' per faction'}) · maps ${maps.join(', ')} · ${DIFF_NAME} AI both sides · ${MINUTES}-minute cap · seed ${SEED} · runtime ${fmtT(totalS)}`, '');
+md.push(`${facs.length} factions · ${results.length} 1v1 matches (${FULL ? 'full round robin' : GAMES + ' per faction'}${SWAP ? ', both ways' : ''}) · maps ${maps.join(', ')} · ${DIFF_NAME} AI both sides · ${MINUTES}-minute cap · seed ${SEED} · runtime ${fmtT(totalS)}`, '');
 md.push(`Replay: \`node orch/tourney.mjs ${process.argv.slice(2).join(' ')}\`  (same seed => same battles; \`--match N\` replays one)`, '');
 md.push('| ' + head.join(' | ') + ' |', '|' + head.map((_, i) => i ? '---:' : '---').join('|') + '|');
 for (const t of rows) md.push('| ' + line(t).join(' | ') + ' |');
