@@ -1328,3 +1328,114 @@ function testSound(){audioUnlock();const c=AU.ctx;if(!c){sndShow();return;}
     '<div class="myrow"><button id="sndTest" class="btn2" type="button">Test sound</button></div><div style="font-size:12px;opacity:.7;margin-top:6px">You should hear a radio beep, then a voice. No sound? Send us this line:</div><div class="sv" id="sndSt" style="margin:2px 0 6px;opacity:.85;word-break:break-word"></div>';
   vo.insertAdjacentElement('afterend',w);$('sndTest').addEventListener('click',testSound);sndShow();}catch(e){}})();
 
+// ===== Shared soundtrack =====
+// One set of real recorded tracks for every nation (Abdullah, 2026-10-27), built by mus/st_pack.py into
+// mus/st/<id>.mp3. Pools: menu (main menu, lobby, after the end-screen sting), calm and combat (in battle, switched on
+// AU.heat, the fighting-intensity signal), victory and defeat. Tracks stream through two <audio> decks routed into the
+// music bus, so the Music volume, the music toggle, voice ducking and the iOS unlock all still apply, and only the
+// track about to play is downloaded (never the whole set: phones). At battle start the player's nation's anthem
+// (mus/an_XX.mp3, where there is one) plays first and the score fades in after it; on victory the anthem follows the
+// victory track. If a track can't load (offline, error) the generated score takes over, so there's never silence.
+// "My music" still replaces all of this when chosen. Purely local: nothing here touches the battle or the network game.
+const ST_TR={'menu-02':['The Fall of Arcana','Matthew Pablo'],'menu-04':['Epic Orchestral Fantasy Theme','Markus Lindner'],
+  'calm-01':['Conflict','Alexandr Zhelanov'],'calm-02':['Enemy Spotted','Alexandr Zhelanov'],'calm-03':['Tabuk','Kevin MacLeod'],'calm-05':['Impending Boom','Kevin MacLeod'],
+  'combat-01':['Dream Raid','Matthew Pablo'],'combat-02':['Tactical Pursuit','Matthew Pablo'],'combat-05':['Howitzer','joeBaxterWebb'],'combat-06':['Act of War','Alexandr Zhelanov'],
+  'combat-09':['Black Vortex','Kevin MacLeod'],'combat-11':['Curse of the Scarab','Kevin MacLeod'],'victory-01':['Egmont Overture Finale','Kevin MacLeod'],'defeat-02':['Death of Kings','Kevin MacLeod']};
+const ST_POOL={};for(const k in ST_TR){const p=k.split('-')[0];(ST_POOL[p]=ST_POOL[p]||[]).push(k);}
+// gain: deck level into the music bus (tracks are mastered to -18 LUFS, calm ones -20); anGain: the anthem's level.
+// hot/cool: AU.heat thresholds into / out of the combat pool; dwell: least time (ms) in a pool before leaving it.
+const ST={decks:[],cur:-1,pool:null,id:null,since:0,last:{},mode:null,fac:null,fail:0,failAt:0,errs:0,an:null,anWait:null,anG:null,endG:null,endK:null,off:0,
+  gain:2.6,anGain:3,fade:3,hot:.35,cool:.1,dwell:{calm:30000,combat:60000},req:[]};
+function stDeck(){const c=AU.ctx,el=new Audio(),d={el,ctx:c,g:c.createGain(),src:null,id:null,on:false,started:false,t0:0,adv:false,tok:0};
+  el.crossOrigin='anonymous';el.preload='none';try{el.setAttribute('playsinline','');}catch(e){}
+  d.g.gain.value=.0001;d.g.connect(AU.musBus);d.src=c.createMediaElementSource(el);d.src.connect(d.g);
+  el.addEventListener('ended',()=>{if(d.on&&ST.decks[ST.cur]===d)stNext(d);});
+  el.addEventListener('error',()=>{if(d.on&&!/^data:/.test(el.src||''))stErr(d,'track '+d.id+' media error '+(el.error?el.error.code:''));});
+  return d;}
+// a rebuilt audio engine (iOS) needs new decks: the old ones belong to the closed engine
+function stCtx(){if(!ST.decks.length||ST.decks[0].ctx===AU.ctx)return;for(const d of ST.decks){d.on=false;try{d.el.pause();}catch(e){}}ST.decks=[];ST.cur=-1;ST.mode=null;ST.an=null;ST.anWait=null;ST.blessed=0;}
+function stDecks(){stCtx();if(!ST.decks.length){ST.decks=[stDeck(),stDeck()];ST.cur=-1;}return ST.decks;}
+function stFadeTo(d,v,sec){const c=AU.ctx,t=c.currentTime,g=d.g.gain;g.cancelScheduledValues(t);g.setValueAtTime(Math.max(.0001,g.value),t);g.linearRampToValueAtTime(Math.max(.0001,v),t+Math.max(.05,sec));}
+function stOff(d,sec){if(!d||!d.on)return;d.on=false;sec=sec==null?ST.fade:sec;try{stFadeTo(d,0,sec);}catch(e){}const tok=++d.tok;setTimeout(()=>{if(d.tok===tok&&!d.on){try{d.el.pause();}catch(e){}}},(sec+.3)*1000);}
+function stPick(pool){const L=ST_POOL[pool]||[];let c=L.filter(k=>k!==ST.id&&k!==ST.last[pool]);if(!c.length)c=L.filter(k=>k!==ST.id);if(!c.length)c=L;return c[Math.random()*c.length|0];}
+function stBattlePool(){ST.mode='battle';return AU.heat>ST.hot?'combat':'calm';}
+// crossfade into a new track from a pool: the new deck fades in (and the old one out) once it actually starts playing
+function stPlay(pool,fade){if(!AU.ctx)return;let D;try{D=stDecks();}catch(e){audioErr('soundtrack',e);return stFallback();}
+  if(!AU.musicOn){ST.pool=pool;ST.off=1;for(const d of D)if(d.on)stOff(d,.3);return;}
+  const id=stPick(pool);if(!id)return;const old=D[ST.cur],d=D[ST.cur===0?1:0],c=AU.ctx;
+  d.tok++;d.on=true;d.started=false;d.adv=false;d.id=id;d.pool=pool;d.fade=fade==null?ST.fade:fade;d.t0=performance.now();d.tryAt=0;d.held=0;d.blocked=0;d.old=old&&old.on?old:null;
+  d.g.gain.cancelScheduledValues(c.currentTime);d.g.gain.setValueAtTime(.0001,c.currentTime);
+  const url='mus/st/'+id+'.mp3';ST.req.push(url);d.el.preload='auto';d.el.src=url;
+  if(pool!==ST.pool)ST.since=performance.now();ST.cur=D.indexOf(d);ST.pool=pool;ST.id=id;ST.last[pool]=id;stStart(d);
+  const T=ST_TR[id];try{if(T&&typeof pushLog==='function'&&G&&!G.over)pushLog('♪ '+T[0]+' — '+T[1]);}catch(e){}}
+function stStart(d){if(AU.ctx.state!=='running')return;const tok=d.tok;let p;try{p=d.el.play();}catch(e){p=Promise.reject(e);}
+  Promise.resolve(p).then(()=>{if(d.tok!==tok||!d.on||d.started)return;d.started=true;ST.errs=0;stFadeTo(d,ST.gain,d.fade);if(d.old){stOff(d.old,d.fade);d.old=null;}})
+    .catch(e=>{if(d.tok!==tok||!d.on)return;if(e&&(e.name==='NotAllowedError'||e.name==='AbortError')){d.blocked=1;return;}stErr(d,e);});}
+// the current track is about to end: what comes next
+function stNext(d){if(d.adv)return;d.adv=true;
+  if(d.pool==='victory'){if(AN_FAC[ST.fac]){stAnthemQ(ST.fac,()=>{ST.mode='menu';return 'menu';});return;}ST.mode='menu';return stPlay('menu');}
+  if(d.pool==='defeat'){if(G&&!G.over&&G.teams&&G.teams[ME])return stPlay(stBattlePool());ST.mode='menu';return stPlay('menu');}
+  stPlay(d.pool);}
+// a track that fails to load: try another one once; if nothing plays, the generated score takes over
+function stErr(d,e){audioErr('soundtrack',e);if(!d.on)return;d.on=false;try{d.el.pause();}catch(x){}ST.errs++;
+  const o=ST.decks.find(x=>x!==d&&x.on&&x.started);
+  if(o&&ST.errs<3){ST.cur=ST.decks.indexOf(o);if(o.pool!==ST.pool)ST.since=performance.now();ST.pool=o.pool;ST.id=o.id;return;}
+  if(ST.errs<2&&ST.mode&&ST.pool){stPlay(ST.pool);return;}
+  stFallback();}
+function stFallback(){ST.fail=1;ST.failAt=performance.now();stHalt();try{AU.musRev.gain.value=.6;}catch(e){}
+  try{if(G&&!G.over&&G.teams&&G.teams[ME])_stGen(G.teams[ME].fac,false);else{AU.menuKey=null;_stMenu();}}catch(e){audioErr('fallback score',e);}}
+function stUse(){if(ST.fail&&performance.now()-ST.failAt>120000)ST.fail=0;return !ST.fail;}// back online: try again
+function stAnthemQ(fac,then){anLoad(fac);ST.anWait={fac,then,until:performance.now()+15000};}
+function stAnthem(buf,then){const c=AU.ctx,src=c.createBufferSource(),g=c.createGain(),t=c.currentTime+.05,L=buf.duration;src.buffer=buf;
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(ST.anGain,t+.1);g.gain.setValueAtTime(ST.anGain,t+Math.max(.2,L-2));g.gain.linearRampToValueAtTime(.0001,t+L);
+  src.connect(g);g.connect(AU.musBus);src.start(t);src.stop(t+L+.05);const d=ST.decks[ST.cur];if(d&&d.on)stOff(d,1.5);ST.an={src,g,end:t+L,then,next:0};}
+function stAnStop(){ST.anWait=null;const a=ST.an;ST.an=null;if(!a||!AU.ctx)return;const c=AU.ctx;try{a.g.gain.cancelScheduledValues(c.currentTime);a.g.gain.setTargetAtTime(.0001,c.currentTime,.2);a.src.stop(c.currentTime+.8);}catch(e){}}
+function stHalt(){ST.mode=null;stAnStop();for(const d of ST.decks)if(d.on)stOff(d,.8);ST.id=null;ST.pool=null;ST.off=0;}
+function stGo(style,calm){stCtx();AU.menuKey=null;try{AU.musRev.gain.setTargetAtTime(.08,AU.ctx.currentTime,.2);}catch(e){}// recorded tracks bring their own hall
+  if(calm){if((ST.mode==='menu'||ST.mode==='end')&&(ST.decks.some(d=>d.on)||ST.an||ST.anWait||ST.off))return;ST.mode='menu';stAnStop();return stPlay('menu');}
+  if(ST.mode==='battle'&&ST.fac===style&&(ST.decks.some(d=>d.on)||ST.an||ST.anWait||ST.off))return;
+  ST.mode='battle';ST.fac=style;AU.heat=0;stAnStop();
+  if(AN_FAC[style]&&ST.anG!==G&&AU.musicOn){ST.anG=G;stAnthemQ(style,stBattlePool);}else stPlay(stBattlePool());}
+function stEnd(won,elim){if(!AU.ctx||!G||myMode()==='mine'||ST.fail)return;const k=won?'v':'d';if(ST.endG===G&&ST.endK===k)return;ST.endG=G;ST.endK=k;
+  stCtx();stAnStop();ST.mode=elim?'battle':'end';stPlay(won?'victory':'defeat',1.5);}
+function stTick(){try{if(!AU.ctx||ST.fail)return;stCtx();if(!AU.timer)AU.heat=Math.max(0,AU.heat-.006);if(!ST.mode)return;const c=AU.ctx,now=performance.now();
+  if(!AU.musicOn){if(!ST.off){ST.off=1;for(const d of ST.decks)if(d.on)stOff(d,.3);stAnStop();}return;}
+  if(ST.off){ST.off=0;if(ST.mode==='end')ST.mode='menu';stPlay(ST.mode==='menu'?'menu':stBattlePool(),1);return;}
+  const run=c.state==='running';
+  for(const d of ST.decks){if(!d.on)continue;
+    if(!run){if(!d.el.paused){try{d.el.pause();}catch(e){}d.held=1;}continue;}
+    if(d.el.paused&&(d.held||d.blocked||!d.started)&&now-(d.tryAt||0)>1500){d.tryAt=now;d.held=0;d.blocked=0;if(d.started)d.el.play().catch(()=>{});else stStart(d);}
+    if(!d.started&&now-d.t0>25000)stErr(d,'track '+d.id+' did not start (slow or no connection)');}
+  if(!run)return;
+  if(ST.anWait){const w=ST.anWait,e=ANB[w.fac];if(e&&e.st==='ok'){ST.anWait=null;stAnthem(e.buf,w.then);}else if(!e||e.st==='fail'||now>w.until){ST.anWait=null;stPlay(w.then(),2);}return;}
+  if(ST.an){if(!ST.an.next&&c.currentTime>=ST.an.end-ST.fade){ST.an.next=1;stPlay(ST.an.then(),ST.fade);}if(c.currentTime>ST.an.end+.5)ST.an=null;return;}
+  if(ST.mode==='battle'&&(ST.pool==='calm'||ST.pool==='combat')){const want=ST.pool==='calm'?(AU.heat>ST.hot?'combat':'calm'):(AU.heat<ST.cool?'calm':'combat');
+    if(want!==ST.pool&&now-ST.since>=ST.dwell[ST.pool]){stPlay(want);return;}}
+  const d=ST.decks[ST.cur];if(d&&d.on&&d.started&&!d.adv&&isFinite(d.el.duration)&&d.el.duration>0&&d.el.currentTime>d.el.duration-ST.fade-.25)stNext(d);
+}catch(e){audioErr('soundtrack',e);}}
+setInterval(stTick,250);
+// iOS lets an <audio> element play later without a tap only if it first played during one: bless both decks then
+function stBless(){try{if(!IOSLIKE||!AU.ctx||ST.blessed||ST.fail)return;const D=stDecks();for(const d of D){if(d.on)continue;d.el.src=silentURI();const p=d.el.play();if(p&&p.then)p.then(()=>{if(!d.on)d.el.pause();}).catch(()=>{});}ST.blessed=1;}catch(e){}}
+for(const ev of ['touchend','click','keydown'])window.addEventListener(ev,stBless,{capture:true,passive:true});
+const _stGen=startMusic,_stStop=stopMusic,_stMenu=menuMusic;
+startMusic=function(style,calm){if(!AU.ctx)return;
+  if(!stUse()){stHalt();return _stGen(style,calm);}
+  if(myMode()==='mine'){stHalt();_stStop();myList().then(l=>{MYM.list=l;if(myMode()!=='mine')return;if(l.length&&AU.ctx){if(!MYM.on)myNext();}else stGo(style,calm);});return;}
+  _stStop();stGo(style,calm);};
+stopMusic=function(){_stStop();stHalt();};
+menuMusic=function(){if(!AU.ctx||AU.ctx.state==='suspended'&&G&&G.paused)return;stCtx();
+  if(myMode()==='mine'||ST.fail){if(ST.mode)stHalt();return _stMenu();}
+  if(!onMenu()){AU.menuKey=null;return;}
+  if(ST.mode==='menu'||ST.mode==='end')return;
+  startMusic((typeof setup!=='undefined'&&setup.p)||'US',true);};
+myStart=async function(){MYM.list=await myList();if(myMode()==='mine'&&MYM.list.length&&AU.ctx){stHalt();MYM.keep=1;_stStop();MYM.keep=0;myNext();return true;}
+  myStop();if(G&&!G.over&&G.teams&&G.teams[ME]&&!AU.timer)startMusic(G.teams[ME].fac);return false;};
+{const _se=showEnd,_sl=showElim;
+  showEnd=function(winner){const r=_se.apply(this,arguments);try{stEnd(winner>=0&&ally(winner,ME),false);}catch(e){audioErr('soundtrack',e);}return r;};
+  showElim=function(){const r=_sl.apply(this,arguments);try{stEnd(false,true);}catch(e){audioErr('soundtrack',e);}return r;};}
+{const _ss=sndStatus;sndStatus=function(){return _ss()+' · Soundtrack: '+(ST.fail?'could not load, playing the generated score':ST.id&&ST_TR[ST.id]?ST_TR[ST.id][0]+' ('+ST.pool+')':ST.an?'anthem':'idle');};}
+(function stCredits(){try{if(document.getElementById('stCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
+  const p=document.createElement('p');p.className='credits';p.id='stCred';
+  p.textContent='Soundtrack: The Fall of Arcana, Dream Raid and Tactical Pursuit by Matthew Pablo (www.matthewpablo.com, CC BY 3.0); Epic Orchestral Fantasy Theme by Markus Lindner (CC BY 4.0); Conflict (CC BY 4.0), Enemy Spotted and Act of War (CC BY 3.0) by Alexandr Zhelanov; Howitzer by joeBaxterWebb (CC BY 4.0); all via OpenGameArt.org. Tabuk, Impending Boom, Black Vortex, Curse of the Scarab, Egmont Overture Finale and Death of Kings by Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/';
+  ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
+

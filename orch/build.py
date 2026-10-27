@@ -237,7 +237,7 @@ def pack_sources(script):
     'Sources' section of a mus/*_pack.py docstring."""
     doc = re.match(r'(?:#[^\n]*\n)*\s*"""(.*?)"""', open(script, encoding='utf-8').read(), re.S)
     doc = doc.group(1) if doc else ''
-    outs = set(re.findall(r'mus/([\w<>]+\.mp3)', doc))
+    outs = set(re.findall(r'mus/((?:st/)?[\w<>-]+\.mp3)', doc))
     sec = re.search(r'\nSources[^\n]*\n(.*?)(?:\n\s*\n|\nusage:)', doc, re.S)
     sec = sec.group(1) if sec else ''
     together, people = [], []
@@ -252,6 +252,13 @@ def pack_sources(script):
         if a:   # a recording's author handle (Freesound / Wikimedia style: 'name - "title" (licence)')
             together.append(a.group(1))
     return outs, together, people
+
+
+def mus_files():
+    """Every .mp3 under mus/, relative to mus/ ('smp.mp3', 'st/calm-01.mp3'; the soundtrack lives in mus/st/)."""
+    base = os.path.join(ROOT, 'mus')
+    return sorted(os.path.relpath(os.path.join(dp, f), base).replace(os.sep, '/')
+                  for dp, _, fs in os.walk(base) for f in fs if f.endswith('.mp3'))
 
 
 def check_shell(html, i, j):
@@ -275,8 +282,8 @@ def check_shell(html, i, j):
         name = os.path.relpath(script, ROOT)
         outs, together, people = pack_sources(script)
         for o in outs:
-            rx = '^' + re.escape(o).replace(re.escape('<CODE>'), r'\w+') + '$'
-            covered |= {f for f in os.listdir(os.path.join(ROOT, 'mus')) if re.match(rx, f)}
+            rx = '^' + re.escape(o).replace(re.escape('<CODE>'), r'\w+').replace(re.escape('<ID>'), r'[\w-]+') + '$'
+            covered |= {f for f in mus_files() if re.match(rx, f)}
         if not together:
             probs.append(f'{name}: no "Sources" list in its docstring — cannot tell which credits it needs')
             continue
@@ -296,8 +303,8 @@ def check_shell(html, i, j):
     for phrase in CREDIT_ALWAYS:
         if phrase.lower() not in allc:
             probs.append(f'menu credits missing: no credits text containing {phrase!r}')
-    for f in sorted(os.listdir(os.path.join(ROOT, 'mus'))):
-        if f.endswith('.mp3') and f not in covered:
+    for f in mus_files():
+        if f not in covered:
             probs.append(f'mus/{f} has no credit rule: give it a mus/*_pack.py with a "Sources" list, '
                          f'or add it to CREDIT_FALLBACK in orch/build.py')
     return probs
@@ -440,7 +447,7 @@ def artifact():
     out = os.path.join(ARTIFACT_OUT, 'index.html')
     with open(out, 'w', encoding='utf-8', newline='') as f:
         f.write(page)
-    rels = sorted('vo/' + n for n in os.listdir(os.path.join(ROOT, 'vo')) if n.endswith('.mp3')) + sorted('mus/' + n for n in os.listdir(os.path.join(ROOT, 'mus')) if n.endswith('.mp3'))
+    rels = sorted('vo/' + n for n in os.listdir(os.path.join(ROOT, 'vo')) if n.endswith('.mp3')) + ['mus/' + n for n in mus_files()]
     files = {rel: rel for rel in rels}  # published path -> source path, relative to the repo root (ORCH's cwd)
     for rel in rels:
         if not os.path.isfile(os.path.join(ROOT, rel)):
