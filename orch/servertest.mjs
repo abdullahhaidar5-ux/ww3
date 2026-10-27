@@ -8,7 +8,8 @@
 // ~30 s. Prints SERVERTEST PASS / SERVERTEST FAIL.
 //
 //   node orch/servertest.mjs            # needs `npm ci` in server/ once
-//   node orch/servertest.mjs --url http://127.0.0.1:8787   # test an already running server instead
+//   node orch/servertest.mjs --url https://ww3-servers.abdullah-haidar5.workers.dev   # check the live server (skips
+//                                       # the per-address, room-full and budget checks, which need a local server)
 import { startServer } from './serverdev.mjs';
 
 const ORIGIN = 'http://localhost:8000';
@@ -100,18 +101,19 @@ try {
   await sleep(1500);
   const n = host2.got.slice(n0).filter(m => m.includes('spam')).length;
   check(n >= 70 && n <= 140, `rate limit: ${n} of 400 burst frames passed (expect ~90-120)`);
-  { const same = []; for (let i = 0; i < 7; i++) same.push(room(code, 'client', 'ww3p-same' + i, KEY, '10.9.9.9'));
+  // (--url: a live server sees each socket's real address, so the per-address and room-full checks are skipped)
+  if (!argUrl) { const same = []; for (let i = 0; i < 7; i++) same.push(room(code, 'client', 'ww3p-same' + i, KEY, '10.9.9.9'));
     await Promise.all(same.map(w => w.wait(m => m.startsWith('!w') || m.startsWith('!e'))));
     const n8 = room(code, 'client', 'ww3p-same8', KEY, '10.9.9.9'), n9 = room(code, 'client', 'ww3p-same9', KEY, '10.9.9.9');
     const ok8 = await n8.wait(m => m.startsWith('!w')) !== null, lim9 = await n9.wait(m => m === '!e limit') !== null;
     check(ok8 && lim9, 'one address may hold 8 sockets in a room, the 9th is refused (limit)');
     for (const w of [...same, n8]) w.close(); await sleep(500); }
-  const extra = [];
-  for (let i = 0; i < 10; i++) extra.push(room(code, 'client', 'ww3p-fill' + i));
-  await Promise.all(extra.map(w => w.wait(m => m.startsWith('!w'))));
-  const over = room(code, 'client', 'ww3p-over1');
-  check(await over.wait(m => m === '!e full') !== null, 'room refuses a 12th player/spectator (full)');
-  for (const w of extra) w.close();
+  if (!argUrl) { const extra = [];
+    for (let i = 0; i < 10; i++) extra.push(room(code, 'client', 'ww3p-fill' + i));
+    await Promise.all(extra.map(w => w.wait(m => m.startsWith('!w'))));
+    const over = room(code, 'client', 'ww3p-over1');
+    check(await over.wait(m => m === '!e full') !== null, 'room refuses a 12th player/spectator (full)');
+    for (const w of extra) w.close(); }
 
   // host leaves for good: players are released after the grace period
   host2.close();
@@ -130,12 +132,15 @@ try {
   v1.send('p|{"g":{"c":"<script>","f":"US"}}'); await sleep(300);
   check(!(await (await fetch(HTTP + '/games')).json()).games.some(([, p]) => /script/.test(p.g.c)), 'invalid game codes are dropped');
   v1.send('p|' + JSON.stringify({ g: { c: code, f: 'US', s: 'full', n: 2 } }));
-  v1.close();
-  check(await v2.wait(m => m === 'l|[]', 5000) !== null, 'the game disappears when the host leaves the menu');
+  await v2.wait(m => m.startsWith('l|') && m.includes('"full"'));
+  const seen = v2.got.length; v1.close();
+  let goneOk = false; for (let t = 0; t < 50 && !goneOk; t++) { goneOk = v2.got.slice(seen).some(m => m.startsWith('l|') && !m.includes(code)); if (!goneOk) await sleep(100); }
+  check(goneOk, 'the game disappears when the host leaves the menu');
   v2.close();
 
   // free-tier guard: a server whose daily allowance is only 30 requests must refuse new relay rooms ("busy") once ~80%
-  // is used, while the page falls back to peer-to-peer
+  // is used, while the page falls back to peer-to-peer (local only)
+  if (!argUrl) {
   const tiny = await startServer({ vars: { FREE_REQ: '30' } }); const TW = tiny.url.replace(/^http/, 'ws');
   let busyAt = 0;
   for (let i = 1; i <= 40 && !busyAt; i++) {
@@ -145,7 +150,7 @@ try {
   }
   const hb = await (await fetch(tiny.url + '/health')).json();
   check(busyAt > 0 && !hb.budget.relay, `with a tiny allowance new relay rooms are refused ("busy" after ${busyAt} rooms, budget ${hb.budget.reqPct}% used)`);
-  tiny.stop();
+  tiny.stop(); }
 } catch (e) { fails.push('crashed: ' + (e && e.stack || e)); }
 srv.stop();
 if (fails.length) { console.log(`\nSERVERTEST FAIL: ${fails[0]}` + (fails.length > 1 ? ` (+${fails.length - 1} more)` : '')); process.exit(1); }

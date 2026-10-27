@@ -1,3 +1,6 @@
+// SUPERSEDED (2026-10-26): the World War 3 servers in server/ include this as their /turn route, together with the
+// game list and relay rooms (see server/README.md). Kept only for reference; don't deploy this file.
+//
 // Cloudflare Worker: hands out short-lived Cloudflare TURN relay logins to the World War 3 game, so players whose
 // networks block direct browser-to-browser connections (strict NATs, mobile data, some ISPs, schools, offices) can
 // still join, by relaying through Cloudflare's network. Free up to 1,000 GB of relayed traffic a month.
