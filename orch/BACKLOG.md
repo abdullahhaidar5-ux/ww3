@@ -8,6 +8,22 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+- [open] **Graphics overhaul — Phase 1 approved** (Abdullah, 2026-10-26 21:24). Plan:
+  https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ. **Start only after the phone-speed fix (`orch/speed-ship`) and the
+  bottom command bar have landed on `main`** (both touch graphics/UI files). Phase 1 = move `MODEL_PACK` art out of
+  `index.html` into compressed per-unit/per-nation files served next to the page (Cloudflare `ww3` + Pages), loaded per
+  battle; build-time compression; upgrade Three.js r128 → current on a branch with side-by-side screenshots of every
+  map and nation. Decisions: **units first** (Phase 2 next: detailed models, national variants), **phones stay smooth**
+  (lighter phone look OK, PCs get everything), **free art only**. Audio overhaul runs alongside (next item).
+- [open] **Audio and music overhaul** (Abdullah, 2026-10-26 21:09–21:15; same plan doc). Free only (CC0/CC-BY or public
+  domain, credited). Real recorded weapons/battle/ambience; full native-language voice lines (volunteers, TTS fallback);
+  proper mix. **Every nation gets region-specific music**: the region's scales, rhythms and instruments on free recorded
+  samples, plus its public-domain US Navy Band anthem recording as a military-band layer (check each composition's
+  status). Middle Eastern six (IR, RS, DW, SA, AE, EG) in progress in the side lane (21:14); the other 12 next.
+  **Latmiyas:** keep the synthesized ones until real replacements are ready, then swap; replacements may be military
+  band music; Abdullah can't record — search free archives (Commons, Internet Archive, Freesound, folk archives) for
+  freely licensed real latmiyas; optionally draft a permission request he can send to a reciter. Likely mix: real
+  latmiya for menu/calm, military band for battle. Religious and traditional pieces only — no armed-group anthems.
 - [open] **IN PROGRESS (side lane, restarted 19:36 — Abdullah: "do this now"; ORCH: don't take it; deploy via Cloudflare Workers Builds + merge-to-approve, no tokens) — Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
   multiplayer"). Target: Cloudflare free tier (Workers + Durable Objects), deployed by a GitHub Actions workflow that Abdullah
   approves from his phone (see the [ask] item under Multiplayer; no secrets in chat or repo). Build and test everything locally first; deployment itself is the only [ask]. Account exists (19:11).
@@ -27,22 +43,6 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 
 ## Questions for Abdullah
 
-- [ask] **Graphics overhaul plan** (2026-10-26 21:10): https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ — 6 phases
-  (1 foundations: art out of the page onto Cloudflare + Three.js upgrade · 2 real models · 3 terrain/world · 4 light &
-  effects · 5 massive columns · 6 device tiers). **Decided: free art only** (CC0/CC-BY, credited; no paid models — Abdullah 21:08). Still waiting on: start
-  Phase 1; units/terrain/effects first; lighter phone look OK.
-  **Audio and music overhaul folded in (Abdullah 21:09):** real recorded weapons/battle/ambience (CC0/CC-BY), real
-  national scores (public-domain recordings), full native-language voice lines (volunteers, TTS fallback), proper
-  mix; **synthesized latmiyas to be removed**, replaced only by freely licensed or permitted real recordings. **Keep
-  the synth latmiyas until real replacements are ready, then swap** (Abdullah 21:12). Replacements may be **military music** too
-  (Abdullah 21:12): US Navy Band national-anthem recordings are public domain (US government work; check each
-  composition) and cover every nation; Abdullah can't record latmiyas (21:14) — so: military band music for
-  Shia factions in battle; keep searching free archives (Commons, Internet Archive, Freesound, folk archives) for freely
-  licensed real latmiyas; optionally draft a permission request he can send to a reciter.
-  **Every nation gets region-specific music (Abdullah 21:15)** — region's scales, rhythms and instruments on free
-  recorded samples, plus its public-domain US Navy Band anthem as a military-band layer. Per-nation table in the plan
-  doc. ME six (IR, RS, DW, SA, AE, EG) in progress in the side lane (21:14); the other 12 next, Audio squad. Religious and
-  traditional pieces only — no armed-group anthems. Likely mix: real latmiya for menu/calm, military band for battle. Don't start Phase 1 until he approves.
 
 - _(none open)_ — 2026-10-26 answers: keep right-click as an optional shortcut; stay at 18 factions; the old
   development chat is gone (its `assets/`, ROUNDS.md and test scripts are lost — harnesses get rebuilt in `orch/`,
