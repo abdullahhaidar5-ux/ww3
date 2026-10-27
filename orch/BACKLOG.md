@@ -114,6 +114,10 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
 
+- 2026-10-26 (side lane) — **iPhone sound:** plays with the silent switch on (playback audio session + silent
+  keep-alive), unlocks on a real tap, recovers after calls/Siri/app switches, low-memory sample decode with synth
+  fallback, voice problems can't silence music/SFX, broken saved volumes reset. Settings > Sound check > Test sound
+  shows the engine status. Needs Abdullah's real-iPhone confirmation.
 - 2026-10-26 (cycle 4) — **claude.ai artifact back in sync with Pages:** `build.py --artifact` builds it from `src/`
   (`orch/ARTIFACT.md`), artifact smoke + MPSYNC in a stand-in room pass; republished (version 155).
 - 2026-10-26 (cycle 4) — A multiplayer player whose connection blips gets their army back on reconnect (`07-net`).
