@@ -2,6 +2,21 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-27 12:24 → 14:20 — cycle 10
+
+- No lock on main; took it. Baseline: `--check` OK, SMOKE PASS.
+- Shipped 4 squads: Netcode (Stage 2: host-to-player netcode in browser-free `src/07a-hostsnap.js`; `headless.mjs
+  --hostsnap --compare` identical 4,265/4,265 messages), Visuals (Graphics Phase 1 slice 2: battles load only their
+  nations' models; throttled 4 Mbit/s Start → first frame 61 → 40 s), QA (artifact edition publishes models as base64
+  `.txt`; harness serves only host-accepted types), Audio (IN/CN/EG Navy Band anthems in the finale; IL confirmed).
+- Fresh review of 07-net/07a/07b + models: no blockers. Applied its should-fix (a failed model is retried next battle).
+  Its second note (smoke's model wait weak after per-battle loading) — and the artifact gate failing "2 of 51 models"
+  because it counted all models at the menu — fixed: smoke/mpsync now fail if any model the battle's nations need is
+  missing after the loading screen (40/40 in all editions).
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MPSYNC --server PASS, MIGRATE PASS (failed once: client 59 game-s
+  behind before host left; passed on rerun → backlog watch item), HEADLESS --compare PASS, artifact smoke + MPSYNC PASS.
+- Not done: real ney (Freesound 403 from the sandbox).
+
 ## 2026-10-27 08:36 → 10:25 — cycle 9
 
 - No lock on main; took it. Baseline: `--check` OK, SMOKE PASS. Stage 2 step 1 still unlanded on the side lane's

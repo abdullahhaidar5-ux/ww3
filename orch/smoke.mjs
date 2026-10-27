@@ -97,9 +97,7 @@ try {
   { const m = await page.evaluate(() => ({ n: Object.keys(MODELS.proto).length, of: typeof MODEL_FILES === 'object' ? Object.keys(MODEL_FILES).length : 0,
       ready: MODELS.ready, err: MODELS.err || '', t: Math.round(performance.now()) }));
     console.log(`3D models: ${m.n} of ${m.of} ready=${m.ready} ${m.err} (page open to models ready: ${(m.t / 1000).toFixed(1)}s)`);
-    // the artifact edition gets its models in a different published form: every one of them must arrive
-    if (ART && (!m.ready || m.n < m.of)) fails.push(`artifact: only ${m.n} of ${m.of} 3D models loaded ${m.err} (players would see simple shapes)`);
-    else if (!m.ready) warns.push('3D models did not load: ' + m.err); }
+    if (!m.ready) warns.push('3D models did not load at the menu: ' + m.err); }
   await shot(page, 'menu.png');
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));
@@ -128,6 +126,11 @@ try {
   const tLoad = Date.now();
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('loading screen did not finish within 10 minutes'));
   console.log(`loading screen finished after ${((Date.now() - tLoad) / 1000).toFixed(1)}s`);
+  // every model this battle's nations need must have arrived (in the artifact edition they come in a different published form)
+  { const m = await page.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.map(T => T.fac)) : Object.keys(MODEL_FILES);
+      return { of: ks.length, miss: ks.filter(k => !MODELS.proto[k]), err: MODELS.err || '' }; });
+    console.log(`3D models for this battle: ${m.of - m.miss.length} of ${m.of}`);
+    if (m.miss.length) fails.push(`${ART ? 'artifact: ' : ''}${m.miss.length} of ${m.of} 3D models for this battle missing (${m.miss.slice(0, 5).join(', ')}) ${m.err} (players would see simple shapes)`); }
 
   await page.waitForTimeout(4000); // a few real rendered frames
   const tReal = await page.evaluate(() => G.t);

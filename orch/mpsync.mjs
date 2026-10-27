@@ -211,9 +211,6 @@ async function main() {
   if (SRV) client.on('websocket', w => { if (!w.url().includes('/room/')) return; // every relay frame the client gets / sends
     w.on('framereceived', f => cap.rx.push(String(f.payload))); w.on('framesent', f => cap.tx.push(String(f.payload))); });
   await Promise.all([host, client].map(p => p.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 240000 }).catch(() => warns.push('3D models still loading after 240s'))));
-  if (ART) for (const [tag, p] of [['host', host], ['client', client]]) {
-    const m = await p.evaluate(() => ({ n: Object.keys(MODELS.proto).length, of: Object.keys(MODEL_FILES).length, err: MODELS.err || '' }));
-    if (m.n < m.of) fail(`artifact ${tag}: only ${m.n} of ${m.of} 3D models loaded ${m.err}`); }
   console.log(`[${secs()}] both pages loaded`);
 
   // ---- lobby: host opens a game, client joins by its code, host adds computer players and starts ----
@@ -266,6 +263,11 @@ async function main() {
   for (const [p, who] of [[host, 'host'], [client, 'client']])
     await waitFor(p, () => typeof G !== 'undefined' && G && G.terrain && !window.LOADING, null, 600000, `the ${who} to finish its loading screen`);
   console.log(`[${secs()}] both pages finished loading`);
+  // every model this battle's nations need must have arrived on both pages (the artifact edition publishes them differently)
+  for (const [tag, p] of [['host', host], ['client', client]]) {
+    const m = await p.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.map(T => T.fac)) : Object.keys(MODEL_FILES);
+      return { of: ks.length, miss: ks.filter(k => !MODELS.proto[k]), err: MODELS.err || '' }; });
+    if (m.miss.length) fail(`${ART ? 'artifact ' : ''}${tag}: ${m.miss.length} of ${m.of} 3D models for this battle missing (${m.miss.slice(0, 5).join(', ')}) ${m.err}`); }
   if (cInfo.me !== 1) fail('client got slot ' + cInfo.me + ', expected 1');
   if (SRV) { cap.rx.length = 0; cap.tx.length = 0; cap.g0 = await host.evaluate(() => G.t); cap.w0 = Date.now(); }
 
