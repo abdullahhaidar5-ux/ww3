@@ -226,11 +226,11 @@ let secPerMin = 3.5, startS = 15, avgMin = MINUTES * .75, estSrc = 'first-run gu
 try { const P = JSON.parse(fs.readFileSync(prevFile, 'utf8')); if (P.perf && P.perf.secPerSimMin > 0) {
   secPerMin = P.perf.secPerSimMin; startS = P.perf.startS || startS; if (P.config && P.config.minutes === MINUTES && P.perf.avgGameMin) avgMin = P.perf.avgGameMin;
   estSrc = `last run on this machine: ${startS.toFixed(0)}s start + ${secPerMin.toFixed(1)}s per game-minute per match`; } } catch {}
-const estimate = n => n * (startS + avgMin * secPerMin) / jobs;
+const estimate = (n, j = jobs) => n * (startS + avgMin * secPerMin) / j;
 const fmtT = s => s >= 3600 ? `${(s / 3600).toFixed(1)} h` : s >= 90 ? `${Math.round(s / 60)} min` : `${Math.round(s)} s`;
 const perFac = {}; for (const m of sched) { perFac[m.a] = (perFac[m.a] || 0) + 1; perFac[m.b] = (perFac[m.b] || 0) + 1; }
 console.log(`tourney: ${facs.length} factions, ${sched.length} matches (${FULL ? 'full round robin' : GAMES + ' per faction'}), maps ${maps.join('/')}, ${DIFF_NAME} AI, cap ${MINUTES} game-min, seed ${SEED}, ${jobs} job(s) (boot ${bootS.toFixed(0)}s)`);
-console.log(`estimated runtime ≈ ${fmtT(estimate(sched.length))} (${estSrc}); full round robin of ${facs.length} would be ${facs.length * (facs.length - 1) / 2} matches ≈ ${fmtT(estimate(facs.length * (facs.length - 1) / 2))}`);
+console.log(`estimated runtime ≈ ${fmtT(estimate(sched.length))} (${estSrc}); full round robin of ${facs.length} would be ${facs.length * (facs.length - 1) / 2} matches ≈ ${fmtT(estimate(facs.length * (facs.length - 1) / 2, JOBS))}`);
 if (DRY) {
   for (const m of sched) console.log(`  #${String(m.i).padStart(3)} ${m.a} vs ${m.b} on ${m.map} seed ${m.seed}`);
   await browser.close(); server.close(); process.exit(0);
@@ -322,9 +322,11 @@ for (const r of results) {
   if (!r.sides) continue;
   r.sides.forEach((s, i) => {
     const o = r.sides[1 - i];
-    if (r.winner === 1 - i && s.built < 8) flags.push(`#${r.i} ${s.fac} lost to ${o.fac} on ${r.map} in ${(r.t / 60).toFixed(1)} min after building only ${s.built} units (peak ${s.peakU} combat units) — AI stall?`);
+    const maxB = Math.max(0, ...(r.trace || []).map(x => x[1 + i][1])), combat = Object.entries(s.made || {}).filter(([k]) => k !== 'harv' && k !== 'dozer').reduce((a, [, n]) => a + n, 0);
+    if (r.winner === 1 - i && (combat < 6 || (maxB <= 2 && r.t >= 180) || s.credits >= 8000))
+      flags.push(`#${r.i} ${s.fac} lost to ${o.fac} on ${r.map} in ${(r.t / 60).toFixed(1)} min: trained ${combat} combat units, at most ${maxB} buildings, $${s.credits} unspent — AI stall?`);
   });
-  if (r.result === 'win' && r.t < 6 * 60) flags.push(`#${r.i} ${r.sides[r.winner].fac} beat ${r.sides[1 - r.winner].fac} on ${r.map} in only ${(r.t / 60).toFixed(1)} min`);
+  if (r.result === 'win' && r.t < 3 * 60) flags.push(`#${r.i} ${r.sides[r.winner].fac} beat ${r.sides[1 - r.winner].fac} on ${r.map} in only ${(r.t / 60).toFixed(1)} min`);
   if (r.errs.length) flags.push(`#${r.i} ${r.a} vs ${r.b}: ${r.errs.length} error(s), first: ${r.errs[0]}`);
 }
 const decisive = results.filter(r => r.result === 'win').length, timeouts = results.filter(r => r.result === 'timeout').length, draws = results.filter(r => r.result === 'draw').length;
