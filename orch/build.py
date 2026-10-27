@@ -14,7 +14,7 @@ offline precache list). The game fetches them at startup (src/11-models.js).
   python3 orch/build.py --check   # exit 1 if index.html / sw.js are out of date with src/ + models/, or the page shell
                                   # lost server code / credits or got install buttons back (check_shell; nothing written)
   python3 orch/build.py --split   # one-off: regenerate src/ from the game script inside index.html
-  python3 orch/build.py --artifact  # write the claude.ai artifact edition to orch/out/artifact/ (see orch/ARTIFACT.md)
+  python3 orch/build.py --artifact  # write the claude.ai artifact edition (page, models as .txt, publish.json) to orch/out/artifact/
   python3 orch/build.py --add-model KEY FILE.glb   # add or replace model KEY (gzips it into models/, drops the old one)
 """
 import glob, gzip, hashlib, json, os, re, subprocess, sys
@@ -358,13 +358,27 @@ def build(check=False):
 #     which 07-net.js was written against, so the game script itself is byte-for-byte the Pages one.
 #  2. Three.js r128 from cdnjs (artifact pages may only load scripts from cdnjs/jsdelivr/unpkg) instead of inline.
 #  3. No <!doctype>/<html>/<head>/<body> or manifest/icon links: the Artifact publisher wraps the page itself.
-# Audio stays at vo/XX.mp3 and mus/smp.mp3, published as files next to the page. See orch/ARTIFACT.md.
+#  4. The 3D models as base64 text files: the artifact host refuses .glb.gz / application/gzip (it serves only html css
+#     js mjs wasm json txt, images, fonts, audio/video, pdf), so each models/<key>.<hash>.glb.gz is published as
+#     models/<key>.<hash>.txt (text/plain, base64 of the same gzip bytes; written to orch/out/artifact/models/), the
+#     page's MODEL_FILES points at those, and a small fetch hook (MODEL_TXT_HOOK, before the game script) turns them
+#     back into the gzip bytes 11-models.js expects. src/ is untouched; the Pages build never sees any of this.
+# Audio stays at vo/XX.mp3 and mus/*.mp3, published as files next to the page. See orch/ARTIFACT.md.
 ARTIFACT_URL = 'https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi'
 ARTIFACT_OUT = os.path.join(ROOT, 'orch', 'out', 'artifact')
 THREE_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'
 # Every room topic 07-net/07b-ckpt send in room mode, opened to Contributors ("interact"). 'b' (bundles) is P2P-only.
 ROOM_TOPICS = ['cmd', 'evt', 'hello', 'lobby', 'snap', 'start', 'team', 'ck', 'pong']
 CAPABILITIES = {'room': {'topics': {t: 'interact' for t in ROOM_TOPICS}}, 'user': {'scopes': ['profile']}}
+# File types the artifact host serves (by extension). publish.json may only list these; the test harness
+# (orch/artifact-harness.mjs) serves only these too, so a refused type fails the artifact tests.
+ARTIFACT_TYPES = {'.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript',
+                  '.wasm': 'application/wasm', '.json': 'application/json', '.txt': 'text/plain', '.mp3': 'audio/mpeg'}
+# Artifact-only: fetch('models/<key>.<hash>.txt') answers with the decoded bytes (the gzip 11-models.js unzips).
+MODEL_TXT_HOOK = ('<script>(()=>{const F=window.fetch.bind(window),RX=/^models\\/[\\w.]+\\.txt$/;'
+                  'window.fetch=function(u,o){if(typeof u!==\'string\'||!RX.test(u))return F(u,o);'
+                  'return F(u,o).then(r=>r.ok?r.text().then(t=>{const s=atob(t.replace(/\\s+/g,\'\')),b=new Uint8Array(s.length);'
+                  'for(let i=0;i<s.length;i++)b[i]=s.charCodeAt(i);return new Response(b,{status:200,headers:{\'content-type\':\'application/gzip\'}});}):r);};})();</script>')
 
 
 def scripts(html):
@@ -391,6 +405,12 @@ def artifact():
     if PACK_RE.search(html):
         sys.exit('artifact: index.html still has the inline MODEL_PACK — run python3 orch/build.py first')
     html, models = with_models(html)
+    # models as base64 .txt files (see 4. above): rewrite the MODEL_FILES line to point at them, hook in front of it
+    txt = {k: re.sub(r'\.glb\.gz$', '.txt', v) for k, v in models.items()}
+    line = '<script>const MODEL_FILES=' + json.dumps(txt, separators=(',', ':')) + ';</script>'
+    if len(FILES_RE.findall(html)) != 1:
+        sys.exit('artifact: expected exactly one MODEL_FILES line')
+    html = FILES_RE.sub(lambda _: MODEL_TXT_HOOK + line, html)
     t = html.find('<title>')
     if t < 0:
         sys.exit('artifact: no <title> in index.html shell')
@@ -424,14 +444,32 @@ def artifact():
     for rel in rels:
         if not os.path.isfile(os.path.join(ROOT, rel)):
             sys.exit(f'artifact: missing published file {rel}')
-    # the 3D models, published next to the page at the same paths as on Pages (hash in the name: new model = new path)
-    mrels = sorted(set(models.values()))
-    for rel in mrels:
-        files[rel] = {'from': rel, 'contentType': 'application/gzip'}
+    # the 3D models as base64 text, models/<key>.<hash>.txt (hash in the name: new model = new path), written to
+    # orch/out/artifact/models/ (old ones removed) and published from there
+    import base64
+    mdir = os.path.join(ARTIFACT_OUT, 'models')
+    os.makedirs(mdir, exist_ok=True)
+    mrels = sorted(set(txt.values()))
+    for n in os.listdir(mdir):
+        if 'models/' + n not in mrels:
+            os.remove(os.path.join(mdir, n))
+    for src_rel in sorted(set(models.values())):
+        rel = re.sub(r'\.glb\.gz$', '.txt', src_rel)
+        b64 = base64.b64encode(open(os.path.join(ROOT, src_rel), 'rb').read()).decode('ascii')
+        p = os.path.join(ARTIFACT_OUT, rel)
+        if not os.path.exists(p) or open(p, encoding='ascii').read() != b64:
+            with open(p, 'w', encoding='ascii', newline='') as f:
+                f.write(b64)
+        files[rel] = {'from': os.path.relpath(p, ROOT), 'contentType': 'text/plain'}
+    for rel, v in files.items():
+        src_rel = v if isinstance(v, str) else v['from']
+        ext = os.path.splitext(rel)[1].lower()
+        if ext not in ARTIFACT_TYPES or os.path.splitext(src_rel)[1].lower() != ext:
+            sys.exit(f'artifact: {rel} is a file type the artifact host refuses ({ext}) — publish it in a served form')
     publish = {'url': ARTIFACT_URL, 'file_path': out, 'files': files, 'capabilities': CAPABILITIES}
     with open(os.path.join(ARTIFACT_OUT, 'publish.json'), 'w', encoding='utf-8') as f:
         json.dump(publish, f, indent=2)
-    msize = sum(os.path.getsize(os.path.join(ROOT, r)) for r in mrels)
+    msize = sum(os.path.getsize(os.path.join(ARTIFACT_OUT, r)) for r in mrels)
     print(f'artifact page written: {os.path.relpath(out, ROOT)} ({len(page)} bytes, game {len(game)} chars), '
           f'{len(rels)} audio files + {len(mrels)} model files ({msize / 1e6:.1f} MB); publish arguments in orch/out/artifact/publish.json')
 

@@ -50,7 +50,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
-import { artifactHtml, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
+import { artifactHtml, artifactHandler, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
 import { startServer, guardContext, DEAD_SERVER } from './serverdev.mjs';
 import zlib from 'node:zlib';
 import { newRun } from './runs.mjs';
@@ -91,10 +91,9 @@ if (SRV) console.log(`game servers running locally at ${SRV.url}`);
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json',
   '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg',
   '.glb': 'model/gltf-binary', '.wasm': 'application/wasm' };
-const server = http.createServer((req, res) => {
+const server = http.createServer(ART ? artifactHandler(ART.html) : (req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
-  if (ART && p === '/index.html') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(ART.html); }
   const f = path.join(ROOT, p);
   if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' });
@@ -212,6 +211,9 @@ async function main() {
   if (SRV) client.on('websocket', w => { if (!w.url().includes('/room/')) return; // every relay frame the client gets / sends
     w.on('framereceived', f => cap.rx.push(String(f.payload))); w.on('framesent', f => cap.tx.push(String(f.payload))); });
   await Promise.all([host, client].map(p => p.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 240000 }).catch(() => warns.push('3D models still loading after 240s'))));
+  if (ART) for (const [tag, p] of [['host', host], ['client', client]]) {
+    const m = await p.evaluate(() => ({ n: Object.keys(MODELS.proto).length, of: Object.keys(MODEL_FILES).length, err: MODELS.err || '' }));
+    if (m.n < m.of) fail(`artifact ${tag}: only ${m.n} of ${m.of} 3D models loaded ${m.err}`); }
   console.log(`[${secs()}] both pages loaded`);
 
   // ---- lobby: host opens a game, client joins by its code, host adds computer players and starts ----
