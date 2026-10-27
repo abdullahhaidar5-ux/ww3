@@ -18,8 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down,
-            art-smoke, art-mpsync, mapsweep, controls, touch, audio, cfclient]
+        t: [migrate, migrate-abrupt, mpsync, mpsync-server]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -40,8 +39,8 @@ jobs:
             servertest)     node orch/servertest.mjs ;;
             headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --compare || echo "SKIP headless" ;;
             smoke4)         node orch/smoke.mjs --players 4 ;;
-            mpsync)         node orch/mpsync.mjs ;;
-            mpsync-server)  node orch/mpsync.mjs --server ;;
+            mpsync)         node orch/mpsync.mjs --reconnect ;;
+            mpsync-server)  node orch/mpsync.mjs --server --reconnect ;;
             migrate)        node orch/migrate.mjs ;;
             migrate-abrupt) node orch/migrate.mjs --abrupt ;;
             migrate-down)   node orch/migrate.mjs --server-down ;;

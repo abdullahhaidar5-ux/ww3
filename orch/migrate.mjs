@@ -312,6 +312,10 @@ async function main() {
   const slots = [await cA.evaluate(() => ME), await cB.evaluate(() => ME)], map = await host.evaluate(() => G.mapKey);
   console.log(`[${secs()}] battle: ${facs.join(' vs ')} on ${map}; client A is slot ${slots[0]}, client B slot ${slots[1]}`);
   if (slots[0] !== 1 || slots[1] !== 2) throw new Error(`unexpected slots ${slots} (expected client A = 1, client B = 2)`);
+  for (const p of [cA, cB]) { await traceOn(p, false); await p.evaluate(() => { const pl = pushLog; pushLog = (m, c) => { window.__trace.push(((performance.now() - window.__traceT0) / 1000).toFixed(1) + ' log ' + m); return pl(m, c); }; }); }
+  const dbg = async (tag) => { for (const [p, n] of [[cA, 'A'], [cB, 'B']]) console.log(`  DBG ${tag} client ${n}: ` + await p.evaluate(() => JSON.stringify({ mode: MODE, recon: !!NET.recon, hp: NET.hostPeer, me: NET.myPeer, rxAgo: Math.round(performance.now() - (NET.lastRx || 0)), lastRx: Math.round(NET.lastRx || 0), snapT: NET.lastSnapT, gt: G.t, ents: G.ents.length, via: NET.game && NET.game.via, game: !!NET.game, loading: !!window.LOADING, peers: NET.game ? NET.game.peers().map(q => q.peer + (q.sameTab ? '*' : '')) : null }) + ' TRACE ' + window.__trace.join(' | ')));
+    console.log(`  DBG ${tag} host: ` + await host.evaluate(() => JSON.stringify({ peers: NET.peers, toks: NET.toks, gpeers: NET.game.peers().map(q => q.peer + (q.sameTab ? '*' : '')), seen: Object.fromEntries(Object.entries(NET.seen || {}).map(([k, v]) => [k, Math.round(performance.now() - v)])), disc: G.teams.map(T => T.discT || 0), ai: G.teams.map(T => !!T.ai), kf: NET.kf, loading: !!window.LOADING, t: G.t }))); };
+  globalThis.__dbg = dbg; await dbg('start');
 
   // ---- phase 1: ~MINUTES game-minutes, three human-style sides, test-stepped ----
   for (let i = 0; i < 10; i++) if (!await step(host, [cA, cB])) return;
@@ -336,6 +340,7 @@ async function main() {
     if (s.over) throw new Error(`the battle ended before the host left (t=${s.t.toFixed(0)}s); nothing to migrate`);
     if (ticks === 400) await build('factory');
     if (ticks % 150 === 0) await orders();
+    if (ticks % 100 === 0) await globalThis.__dbg('t' + ticks);
     if (ticks === 600) { await settleCheck(host, cA, 1, 'before: client A @1 min'); await settleCheck(host, cB, 2, 'before: client B @1 min'); }
   }
   if (lagMax > 1.5) fail(`before the host left, a client fell ${lagMax.toFixed(1)} game-s behind`);
