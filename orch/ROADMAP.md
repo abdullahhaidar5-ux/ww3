@@ -22,7 +22,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [doing] Matchmaking + relay servers with automatic fallback (final tests)
 - [you] Put the servers live: one-time Cloudflare import, then tap Merge
 - [todo] Battles run on a server (or a dedicated PC) instead of the host's device
-- [todo] Fix: stale enemy soldiers left on a player's screen (about half of test runs)
+- [done] Fix: stale enemy soldiers left on a player's screen
 
 ## Audio and music overhaul
 - [doing] Authentic Middle Eastern music: Iran, Mountain Shias, Coffee Shias, Saudi Arabia, UAE, Egypt
@@ -45,5 +45,5 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 ## Battlefield and maps
 - [done] Bases always start on dry ground; all 28 maps checked by an automatic sweep
 - [done] AI builds and uses a navy on water maps
-- [todo] Fix AI blowouts: losing AI stops building and gets wiped in about two minutes
+- [done] Fix AI blowouts: no general powers in the first 3 minutes, AI always builds an army
 - [todo] Fix map picker calling Fulda Gap, Golan and Korean DMZ "open land"

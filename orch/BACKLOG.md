@@ -56,13 +56,15 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   1–7 clients with real-world one-way delays, jitter and lag spikes; measures order latency, drift, bandwidth) and
   `p2pmig.py` (3 players over a local PeerJS server, host leaves, checks migration). `probe.py` = load-time probe.
 - [open] Smoke runs share `orch/out/`: two runs back to back overwrite each other's screenshots — per-run subfolder.
-- [open] AI-vs-AI tournament harness (all 18 factions, headless, sim-only) → win-rate table for balance.
 
 **Battlefield & AI** (`03-sim`, `01-data`)
-- [open] **AI blowouts:** in 2-player AI games Ukraine fields 6–8 combat units within 10 s and wipes the other side
-  in 1.4–2.9 min (Rivers, Heartland, Fulda); the losing AI never builds a combat unit and its money sits near $300.
-  Also seen in a 4-player smoke (one side gone by minute 4). Find out why the losing AI stalls (economy, build order,
-  a faction-specific cost?) and whether UA's start is out of line. Repro: `node orch/mapsweep.mjs --players 2`.
+- [open] **Faction balance** (`node orch/tourney.mjs --full`, 153 games, cycle 5, BEFORE the blowout fix): win% KP 88,
+  SA 76, UA 76, DW 65, RS 65, EG 59, EU 53, CU/IN/PK 47, IR/TR/US 41, AE/KR 35, CN/IL 29, RU 24. Re-run on the
+  current build first (the 3-min power lull changes everything), then tune outliers. Slot 1 won 84/153 — check
+  start-position fairness.
+- [open] Fulda: a few supply trucks still go ~60 s without delivering late in a game.
+- [open] AI host migration: `mkAI` resets `T.ai.wave` without the `G.bs` scaling, so a rebuilt AI's "thin army"
+  threshold differs slightly (review, cycle 5).
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
   below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
 - [open] AI navy arrives late (~6 game-min on Normal; buildings come first) and never uses landing craft.
@@ -71,9 +73,8 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
 - [open] Measure FPS on a real phone (needs a real device, not emulation): busy 4-player late game, many helicopters
   (rotor wash), and the new phone layout.
-- [check] Time-of-day/lighting variety: the skirmish menu already has Conditions (Clear day / Golden hour /
-  Overcast, `#wx` in `08-ui`). Verify each looks right in battle and that multiplayer matches use it too; consider
-  dusk and a "random" option.
+- [open] Multiplayer clients don't get the host's battle Conditions: `start` in `07-net.js` has no `w`, so each
+  player sees their own menu choice. Send `w:setup.w` and apply it before `newGame` (Random is seeded → matches).
 
 **Audio & voice** (`09-audio`, `vo/`, `mus/`)
 - [open] Full native-language unit responses per nation (select / move / attack / under fire / unit lost), recorded
@@ -111,15 +112,12 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers.
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
-- [open] Intermittent MPSYNC fail (1 of 3 runs, 2026-10-26): at the final settle check the client still showed 4 host
-  infantry (team 0) that had left its vision — stale units not removed on the client when they leave sight. Find and fix.
-  Confirmed pre-existing (2026-10-26 evening): unchanged live build failed 1 of 2 runs the same way (4 host
-  infantry stale on the client); the maps build failed 1 of 1, the phone+maps build passed. ~40-50% of runs.
+- [open] Small fog leak: `dieWho` (07-net) still sends `die` to players who saw a unit within 1.6 s, so a unit
+  that leaves sight and dies in the fog shows its explosion. Tighten to the last snapshot sent, or to players who
+  still hold it in `NET.sc[k]` (review, cycle 5).
 - [open] Review the ~5% of `testbed` netcode lines not in live; merge what's still useful, then mark `testbed`
   superseded (don't delete it).
-- [open] Artifact: next republish pass `capabilities` once (from `orch/out/artifact/publish.json`) to open the `ck`
-  and `pong` room topics; cycle 4 republished without it (stored declaration carried forward). Untested on the real
-  claude.ai room: latency, ~40 msg/s cap, drops, host migration.
+- [open] Artifact edition untested on the real claude.ai room: latency, ~40 msg/s cap, drops, host migration.
 - [ask] Cloudflare deploy — **approved from Abdullah's phone** (Abdullah, 19:12). He has a free Cloudflare account
   (19:11). Deploy with GitHub Actions: `.github/workflows/deploy-servers.yml` runs `wrangler deploy` for the server
   code, using GitHub environment **`cloudflare`** (required reviewer: abdullahhaidar5-ux) with environment secrets
@@ -133,6 +131,16 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## Done
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
+
+- 2026-10-27 (cycle 5) — **No more 2-minute blowouts:** general powers can't fire in the first 3 minutes (button
+  shows "Ready in …"); AI rebuilds a lost bulldozer first, trains troops before saving for Strike Center/airfield,
+  doesn't wall off its trucks. 24-game test: wins under 3 min 4 → 0, sides with no army 5 → 0.
+- 2026-10-27 (cycle 5) — **Multiplayer: enemies leaving your sight vanish at once** (ids only, no positions) —
+  fixes the intermittent stale-infantry MPSYNC fail (6/6 + 2/2 artifact passes).
+- 2026-10-27 (cycle 5) — **Dusk and Random battle conditions**; each condition now tints sky, water, smoke and the
+  final image; fixed haze keeping the first battle's colour.
+- 2026-10-27 (cycle 5) — `orch/tourney.mjs`: AI-vs-AI round robin for balance (default ~6 min, `--full` ~35 min).
+- 2026-10-27 (cycle 5) — Artifact republished (v157) with `ck`/`pong` room topics opened.
 
 - 2026-10-26 (side lane) — **iPhone sound:** plays with the silent switch on (playback audio session + silent
   keep-alive), unlocks on a real tap, recovers after calls/Siri/app switches, low-memory sample decode with synth
