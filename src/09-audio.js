@@ -3,16 +3,66 @@ const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,
 try{const v=JSON.parse(localStorage.getItem('ww3_audio')||'{}');if(v.m===false)AU.musicOn=false;if(v.s===false)AU.sfxOn=false;if(v.v===false)AU.voiceOn=false;}catch(e){}
 function saveAudio(){try{localStorage.setItem('ww3_audio',JSON.stringify({m:AU.musicOn,s:AU.sfxOn,v:AU.voiceOn}));}catch(e){}}
 function impulse(c,sec,decay){const n=c.sampleRate*sec,b=c.createBuffer(2,n,c.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<n;i++){const t=i/n;d[i]=(Math.random()*2-1)*Math.pow(1-t,decay)*(t<.003?t/.003:1);}}return b;}
-function initAudio(){try{if(!AU.ctx){const C=window.AudioContext||window.webkitAudioContext;if(!C)return;let c0;try{c0=new C({latencyHint:'playback'});}catch(e){c0=new C();}const c=AU.ctx=c0;
+// ----- Phone-proof sound start -----
+// Phones only allow sound after a real tap, iPhones mute Web Audio when the ringer switch is on silent, and calls, Siri
+// or switching apps "interrupt" the sound engine. Everything below makes sound start on the first tap, ignore the
+// silent switch like any game or video does, and come back by itself after an interruption. Purely local audio.
+// A fresh or damaged save never leaves the game silent: missing or broken volume values fall back to the defaults.
+try{for(const [k,d] of [['mus',70],['fx',100],['vo',100]]){const v=Number(SET[k]);SET[k]=(SET[k]===''||SET[k]==null||!Number.isFinite(v))?d:Math.max(0,Math.min(100,v));}}catch(e){}
+const IOSLIKE=(()=>{try{const u=navigator.userAgent||'';return /iP(hone|ad|od)/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1);}catch(e){return false;}})();
+const PHONE=(()=>{try{return IOSLIKE||(matchMedia('(pointer:coarse)').matches&&!matchMedia('(pointer:fine)').matches);}catch(e){return IOSLIKE;}})();
+function audioErr(where,e){AU.err=where+': '+((e&&(e.name||e.message))||e||'error');}
+function audioHeld(){return !!(G&&G.paused);}// a paused battle keeps its sound paused until the player resumes
+function audioCtor(){const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;
+  // some Android phones reject a latency hint; never assume a sample rate
+  for(const o of [{latencyHint:'playback'},{latencyHint:'interactive'},null]){try{const c=o?new C(o):new C();if(c)return c;}catch(e){audioErr('engine',e);}}return null;}
+// decodeAudioData: older WebKit only has the callback form, newer browsers return a promise; support both, never throw
+function decodeAB(c,ab){return new Promise((res,rej)=>{let done=0;const ok=b=>{if(!done){done=1;res(b);}},no=e=>{if(!done){done=1;rej(e||new Error('decode failed'));}};
+  try{const p=c.decodeAudioData(ab,ok,no);if(p&&typeof p.then==='function')p.then(ok,no);}catch(e){no(e);}});}
+// iPhone silent switch: ask for the "playback" audio session (Safari 17+), and as a fallback keep a silent looping
+// <audio> element playing, which switches iOS to the same media session that videos use.
+const SIL={el:null,ok:false,want:false,uri:null};
+function silentURI(){if(SIL.uri)return SIL.uri;const n=8000,b=new Uint8Array(44+n),v=new DataView(b.buffer),s=(o,t)=>{for(let i=0;i<t.length;i++)b[o+i]=t.charCodeAt(i);};
+  s(0,'RIFF');v.setUint32(4,36+n,true);s(8,'WAVE');s(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,8000,true);v.setUint32(28,16000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);s(36,'data');v.setUint32(40,n,true);
+  let bin='';for(let i=0;i<b.length;i++)bin+=String.fromCharCode(b[i]);return SIL.uri='data:audio/wav;base64,'+btoa(bin);}
+function silPlay(){if(!IOSLIKE)return;SIL.want=true;try{if(!SIL.el){const a=document.createElement('audio');a.setAttribute('playsinline','');a.setAttribute('webkit-playsinline','');a.setAttribute('x-webkit-airplay','deny');
+      a.preload='auto';a.loop=true;a.controls=false;try{a.disableRemotePlayback=true;}catch(e){}a.src=silentURI();SIL.el=a;}
+    const a=SIL.el;if(!a.paused){SIL.ok=true;return;}const p=a.play();
+    if(p&&typeof p.then==='function')p.then(()=>{SIL.ok=true;},e=>{SIL.ok=false;if(e&&e.name!=='NotAllowedError'){audioErr('silent loop',e);SIL.el=null;}});else SIL.ok=!a.paused;}catch(e){SIL.ok=false;SIL.el=null;audioErr('silent loop',e);}}
+function sessionOn(){try{const s=navigator.audioSession;if(s&&s.type!=='playback')s.type='playback';}catch(e){}silPlay();}
+// Device speech (used when a recorded voice can't load): iOS needs its first speak() inside a tap; retry until it takes.
+function speechUnlock(){try{const S=window.speechSynthesis;if(!S)return;if(!AU.voices.length)AU.voices=S.getVoices()||[];if(!AU.spHook){AU.spHook=1;S.onvoiceschanged=()=>{AU.voices=S.getVoices()||[];};}
+  if(AU.spOK||(AU.spTry||0)>=6)return;AU.spTry=(AU.spTry||0)+1;const u=new SpeechSynthesisUtterance(' ');u.volume=0;u.onstart=u.onend=()=>{AU.spOK=1;};S.speak(u);}catch(e){}}
+// Called synchronously inside touchend / click / keydown / pointerup: create or resume the engine, start a tiny silent
+// buffer (what iOS needs to really open the audio path), start the playback session. Retried on every tap until running.
+function audioUnlock(){if(AU.ctx&&audioHeld())return;sessionOn();initAudio();const c=AU.ctx;if(!c)return;
+  if(c.state!=='running'||!AU.warm){try{const b=c.createBuffer(1,1,22050),s=c.createBufferSource();s.buffer=b;s.connect(c.destination);s.start(0);AU.warm=1;}catch(e){audioErr('warm-up',e);}}
+  speechUnlock();try{const f=(G&&G.teams&&G.teams[ME]&&G.teams[ME].fac)||(typeof setup!=='undefined'&&setup&&setup.p);if(f)voLoad(f);}catch(e){}}
+function audioState(){const c=AU.ctx;if(!c)return;if(c.state==='closed'){setTimeout(audioRebuild,0);return;}
+  if(c.state!=='running'&&c.state!=='suspended'&&!document.hidden&&!audioHeld())setTimeout(()=>{try{if(AU.ctx===c&&c.state!=='running'&&c.state!=='closed'){const p=c.resume();if(p&&p.catch)p.catch(()=>{});}}catch(e){}},250);
+  sndShow();}
+// back from a call, Siri, an alarm or another app: resume (if that needs a tap, the next tap does it)
+function audioWake(){if(document.hidden)return;if(SIL.want)silPlay();const c=AU.ctx;if(!c)return;if(c.state==='closed'){audioRebuild();return;}
+  if(c.state!=='running'&&!audioHeld()){try{const p=c.resume();if(p&&p.catch)p.catch(()=>{});}catch(e){}}}
+// a closed engine (rare, iOS) is rebuilt from scratch; recorded voices and instrument samples are kept
+function audioRebuild(){const old=AU.ctx;if(!old||old.state!=='closed'||(AU.rebuilt||0)>=5)return;AU.rebuilt=(AU.rebuilt||0)+1;
+  AU.ctx=null;AU.warm=0;clearInterval(AU.timer);AU.timer=null;try{DRS.clear();KSC.clear();}catch(e){}
+  try{if(MYM.el){MYM.el.pause();MYM.el=null;MYM.src=null;}}catch(e){}
+  if(SMP.st!=='ok'){SMP.st=null;}for(const k in VOB)if(typeof VOB[k]==='string')delete VOB[k];
+  initAudio();if(!AU.ctx)return;AU.menuKey=null;try{if(G&&!G.over&&G.teams&&G.teams[ME])startMusic(G.teams[ME].fac);else menuMusic();}catch(e){}}
+function initAudio(){try{if(AU.ctx&&AU.ctx.state==='closed')audioRebuild();if(!AU.ctx){const c=audioCtor();if(!c)return;AU.ctx=c;
+    try{if(c.addEventListener)c.addEventListener('statechange',audioState);else c.onstatechange=audioState;}catch(e){}
     AU.master=c.createGain();AU.master.gain.value=.75;const comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;comp.attack.value=.004;comp.release.value=.25;AU.master.connect(comp);comp.connect(c.destination);
     AU.rev=c.createConvolver();AU.rev.buffer=impulse(c,1.8,3.2);AU.revIn=c.createGain();AU.revIn.gain.value=.55;AU.revIn.connect(AU.rev);AU.rev.connect(AU.master);
     AU.sfx=c.createGain();AU.sfx.connect(AU.master);AU.sfxRev=c.createGain();AU.sfxRev.gain.value=.35;AU.sfx.connect(AU.sfxRev);AU.sfxRev.connect(AU.revIn);
     AU.mus=c.createGain();AU.mus.gain.value=.19;{const lo=c.createBiquadFilter();lo.type='lowshelf';lo.frequency.value=110;lo.gain.value=3;const mid=c.createBiquadFilter();mid.type='peaking';mid.frequency.value=420;mid.Q.value=.8;mid.gain.value=-2.5;const hi=c.createBiquadFilter();hi.type='highshelf';hi.frequency.value=7000;hi.gain.value=2.5;const gl=c.createDynamicsCompressor();gl.threshold.value=-18;gl.ratio.value=2.5;gl.attack.value=.02;gl.release.value=.3;AU.mus.connect(lo);lo.connect(mid);mid.connect(hi);hi.connect(gl);gl.connect(AU.master);}AU.musRev=c.createGain();AU.musRev.gain.value=.6;AU.mus.connect(AU.musRev);AU.musRev.connect(AU.revIn);AU.musBus=AU.mus;AU.mus=musLane(0);
     const b=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;AU.noise=b;
     const pb=c.createBuffer(1,c.sampleRate*2,c.sampleRate),pd=pb.getChannelData(0);let l=0;for(let i=0;i<pd.length;i++){l=(l+.02*(Math.random()*2-1))/1.02;pd[i]=l*3.5;}AU.brown=pb;}
-  if(AU.ctx.state==='suspended')AU.ctx.resume();applyAudio();}catch(e){}
-  try{if(window.speechSynthesis){AU.voices=speechSynthesis.getVoices();speechSynthesis.onvoiceschanged=()=>{AU.voices=speechSynthesis.getVoices();};
-    if(!AU.spUnlock){AU.spUnlock=1;const u=new SpeechSynthesisUtterance(' ');u.volume=0;try{speechSynthesis.speak(u);}catch(e){}}}}catch(e){}}
+  // resume from suspended and also from iOS "interrupted"
+  if(AU.ctx.state!=='running'&&AU.ctx.state!=='closed'){const p=AU.ctx.resume();if(p&&p.catch)p.catch(e=>audioErr('resume',e));}applyAudio();}catch(e){audioErr('start',e);}
+  speechUnlock();}
+// sounds are only scheduled while the engine runs, so an interrupted phone doesn't pile up a burst of queued shots
+function auOn(){return !!(AU.ctx&&AU.ctx.state==='running');}
 function musBase(){return .19*(SET.mus/70);}
 function applyAudio(){if(AU.ctx){AU.sfx.gain.value=AU.sfxOn?SET.fx/100:0;AU.musBus.gain.value=AU.musicOn?musBase():0;}const set=(id,on,l)=>{const b=$(id);if(b){b.textContent=l+(on?' on':' off');b.classList.toggle('on',on);}};set('aMus',AU.musicOn,'Music');set('aSfx',AU.sfxOn,'Sound');set('aVoc',AU.voiceOn,'Voices');}
 function spatial(x,y){if(!G||!CAM)return null;const d=Math.hypot(x-cam.x,y-cam.y),r=cam.dist*1.25;if(d>r*1.8)return null;const v=Math.max(0,1-d/(r*1.8))*Math.pow(900/cam.dist,.5);TMP.set(x,0,y).project(CAM);return{v,pan:Math.max(-1,Math.min(1,TMP.x*.8)),far:Math.min(1,d/(r*1.8))};}
@@ -21,11 +71,11 @@ function limit(k,n,win=.12){const t=AU.ctx.currentTime;const a=AU.rate[k]=(AU.ra
 function nz(dst,t,dur,type,f1,f2,gain,q=.8,src){const c=AU.ctx,s=c.createBufferSource();s.buffer=src||AU.noise;s.loop=true;const f=c.createBiquadFilter();f.type=type;f.frequency.setValueAtTime(f1,t);if(f2)f.frequency.exponentialRampToValueAtTime(f2,t+dur);f.Q.value=q;
   const g=c.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(gain,t+.004);g.gain.exponentialRampToValueAtTime(.0005,t+dur);s.connect(f);f.connect(g);g.connect(dst);s.start(t,Math.random()*1.5);s.stop(t+dur+.05);}
 function osc(dst,t,type,f1,f2,dur,gain,att=.003){const c=AU.ctx,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f1,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(gain,t+att);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g);g.connect(dst);o.start(t);o.stop(t+dur+.05);}
-function sfxShot(x,y,s){if(!AU.ctx||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02)return;const t=AU.ctx.currentTime+Math.random()*.01;
+function sfxShot(x,y,s){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02)return;const t=AU.ctx.currentTime+Math.random()*.01;
   if(s<=5){if(!limit('gun',6))return;const b=bus(sp);const n=1+(Math.random()*3|0);for(let i=0;i<n;i++){const ti=t+i*.075;nz(b,ti,.05,'highpass',1600,0,.5,.7);nz(b,ti,.09,'bandpass',900+Math.random()*400,300,.35,1.2);osc(b,ti,'sine',190,70,.05,.25);}}
   else if(s<=8){if(!limit('msl',3))return;const b=bus(sp);nz(b,t,.08,'highpass',2500,0,.4);nz(b,t,.9,'bandpass',350,3200,.32,1.6);osc(b,t,'sawtooth',90,40,.5,.06);}
   else{if(!limit('can',3))return;const b=bus(sp);nz(b,t,.025,'highpass',3000,0,.8);osc(b,t,'sine',95,30,.55,.9);nz(b,t,.5,'lowpass',2200,180,.7,1);nz(b,t+.02,1.2,'lowpass',600,90,.25,.5,AU.brown);}}
-function sfxBoom(x,y,s,big){if(!AU.ctx||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('boom',big?3:4,.15))return;const t=AU.ctx.currentTime,k=Math.min(1,.3+s/40)*(big?1.3:1),d=Math.min(3,.6+s/22);const b=bus(sp);
+function sfxBoom(x,y,s,big){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('boom',big?3:4,.15))return;const t=AU.ctx.currentTime,k=Math.min(1,.3+s/40)*(big?1.3:1),d=Math.min(3,.6+s/22);const b=bus(sp);
   nz(b,t,.04,'highpass',2000,0,.9*k);osc(b,t,'sine',big?62:85,24,d*.9,1.1*k,.006);nz(b,t,d,'lowpass',big?1600:2400,120,.9*k,.7);nz(b,t+.03,d*1.4,'lowpass',500,60,.5*k,.5,AU.brown);
   for(let i=0;i<(big?14:6);i++){const ti=t+.08+Math.random()*d*.6;nz(b,ti,.03+Math.random()*.04,'bandpass',1500+Math.random()*3000,0,.12*k*Math.random(),3);}
   AU.heat=Math.min(1,AU.heat+(big?.25:.06));}
@@ -47,8 +97,8 @@ function droneAudio(dt){if(!AU.ctx||!G)return;drT-=dt;if(drT>0)return;drT=.1;con
     for(let k=0;k<n.os.length;k++){const o=n.os[k];if(o.type==='sawtooth'){const r=n.delta?[1,2,3.02][k]||1:(1+k*.017);o.frequency.setTargetAtTime(n.base*r*dive,now,.15);}}
     if(n.pan){TMP.set(e.x,0,e.y).project(CAM);n.pan.pan.setTargetAtTime(Math.max(-1,Math.min(1,TMP.x*.8)),now,.1);}}}
 function droneTypeA(fac){return fac==='IR'||fac==='RS'?'delta':fac==='TR'?'kargu':'fpv';}
-function sfxUI(f){if(!AU.ctx||!AU.sfxOn)return;const t=AU.ctx.currentTime;osc(AU.sfx,t,'sine',f||880,0,.07,.08);osc(AU.sfx,t+.05,'sine',(f||880)*1.5,0,.08,.05);}
-function sfxAlarm(){if(!AU.ctx||!AU.sfxOn)return;const c=AU.ctx,t=c.currentTime;for(let i=0;i<5;i++){const o=c.createOscillator(),g=c.createGain();o.type='sawtooth';o.frequency.setValueAtTime(480,t+i*.6);o.frequency.linearRampToValueAtTime(900,t+i*.6+.5);const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=2200;g.gain.setValueAtTime(.0001,t+i*.6);g.gain.linearRampToValueAtTime(.08,t+i*.6+.05);g.gain.linearRampToValueAtTime(0,t+i*.6+.55);o.connect(f);f.connect(g);g.connect(AU.sfx);o.start(t+i*.6);o.stop(t+i*.6+.6);}}
+function sfxUI(f){if(!auOn()||!AU.sfxOn)return;const t=AU.ctx.currentTime;osc(AU.sfx,t,'sine',f||880,0,.07,.08);osc(AU.sfx,t+.05,'sine',(f||880)*1.5,0,.08,.05);}
+function sfxAlarm(){if(!auOn()||!AU.sfxOn)return;const c=AU.ctx,t=c.currentTime;for(let i=0;i<5;i++){const o=c.createOscillator(),g=c.createGain();o.type='sawtooth';o.frequency.setValueAtTime(480,t+i*.6);o.frequency.linearRampToValueAtTime(900,t+i*.6+.5);const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=2200;g.gain.setValueAtTime(.0001,t+i*.6);g.gain.linearRampToValueAtTime(.08,t+i*.6+.05);g.gain.linearRampToValueAtTime(0,t+i*.6+.55);o.connect(f);f.connect(g);g.connect(AU.sfx);o.start(t+i*.6);o.stop(t+i*.6+.6);}}
 /* ---------- voices ---------- */
 const PHR={
   en:[['Ready.','Awaiting orders.','Standing by.'],['Moving out.','On my way.','Roger that.'],['Engaging!','Target acquired.','Weapons free!'],['Unit ready.','Reporting for duty.'],['Our base is under attack!']],
@@ -154,8 +204,11 @@ function pickVoice(vs,L){const low=L.toLowerCase(),base=low.split('-')[0];const 
 const VO_MAP={"RS":{"l":[[[0.0,1.972],[2.092,1.251],[3.464,1.609]],[[5.193,0.793],[6.106,0.858],[7.085,1.461]],[[8.665,1.412],[10.197,1.535],[11.852,0.765]],[[12.737,1.918]],[[14.775,1.972]]],"c":[[[16.867,1.026],[18.013,1.5]],[[19.633,1.389]],[[21.141,1.548],[22.81,1.733],[24.663,1.133]],[[25.915,1.552]],[]]},"DW":{"l":[[[0.0,1.766],[1.886,1.78],[3.786,1.831]],[[5.737,0.995],[6.851,0.684],[7.655,2.469]],[[10.244,0.632],[10.996,1.639],[12.755,0.651]],[[13.526,1.755]],[[15.4,2.951]]],"c":[[[18.471,1.047]],[[19.638,1.236]],[[20.994,1.453],[22.567,1.417],[24.104,1.297]],[[25.522,0.985]],[]]},"SA":{"l":[[[0.0,1.964],[2.084,0.614]],[[2.818,1.357],[4.296,1.393]],[[5.809,0.873],[6.802,1.403]],[[8.325,2.69]],[[11.135,1.445]]],"c":[[[12.699,1.428]],[[14.247,1.142]],[[15.509,1.255],[16.884,1.413]],[[18.417,1.528]],[]]},"AE":{"l":[[[0.0,1.13],[1.25,1.067]],[[2.438,1.612],[4.169,1.344]],[[5.633,0.786],[6.54,1.488]],[[8.148,1.458]],[[9.726,2.233]]],"c":[[[12.079,1.373]],[[13.572,1.152]],[[14.844,1.339],[16.303,1.488]],[[17.912,1.346]],[]]},"EG":{"l":[[[0.0,1.718],[1.838,1.414]],[[3.372,0.789],[4.281,1.498]],[[5.9,0.541],[6.56,1.378]],[[8.058,2.236]],[[10.414,1.932]]],"c":[[[12.466,1.065]],[[13.65,1.583]],[[15.354,1.377],[16.851,1.077]],[[18.047,1.048]],[]]},"IR":{"l":[[[0.0,1.477],[1.597,1.193]],[[2.911,1.113],[4.144,1.415]],[[5.679,1.042],[6.842,1.056]],[[8.018,1.249]],[[9.386,1.682]]],"c":[[[11.189,1.042],[12.351,1.41]],[[13.88,1.586]],[[15.586,1.552],[17.258,1.248],[18.627,1.373]],[[20.12,1.385]],[]]},"KP":{"l":[[[0.0,2.481],[2.601,1.685]],[[4.406,1.133],[5.66,0.717]],[[6.497,0.72],[7.337,1.503]],[[8.959,1.421]],[[10.5,2.012]]],"c":[[[12.632,1.862]],[[14.614,0.937]],[[15.672,1.666],[17.457,1.229]],[[18.806,1.873]],[]]},"KR":{"l":[[[0.0,1.179],[1.299,1.375]],[[2.793,0.745],[3.658,1.023]],[[4.801,0.966],[5.887,1.019]],[[7.026,1.504]],[[8.65,1.967]]],"c":[[[10.738,0.783]],[[11.641,0.843]],[[12.604,1.274],[13.997,0.825]],[[14.943,1.567]],[]]},"CU":{"l":[[[0.0,1.528],[1.648,1.056]],[[2.825,1.274],[4.218,0.854]],[[5.192,0.863],[6.176,0.996]],[[7.292,1.72]],[[9.132,2.228]]],"c":[[[11.48,1.423]],[[13.023,1.113]],[[14.255,1.177],[15.552,1.758]],[[17.429,1.423]],[]]},"US":{"l":[[[0.0,1.301],[1.421,1.446],[2.987,1.373]],[[4.48,1.041],[5.641,1.186],[6.946,0.99]],[[8.056,1.116],[9.292,1.247],[10.659,1.13]],[[11.909,1.09],[13.119,1.641]],[[14.88,1.835]]],"c":[[[16.835,0.848],[17.803,0.831]],[[18.754,0.975],[19.849,1.181]],[[21.15,1.291],[22.561,1.131]],[[23.812,1.901]],[]]},"RU":{"l":[[[0.0,0.783],[0.903,1.324]],[[2.347,1.168],[3.634,0.971]],[[4.726,0.722],[5.567,1.349]],[[7.036,1.489]],[[8.644,1.121]]],"c":[[[9.885,1.091]],[[11.096,0.738]],[[11.954,0.701],[12.775,0.891]],[[13.786,1.015]],[]]},"UA":{"l":[[[0.0,0.954],[1.074,2.51]],[[3.704,1.202],[5.025,1.262]],[[6.407,0.9],[7.427,1.859]],[[9.407,1.584]],[[11.111,1.577]]],"c":[[[12.808,2.072]],[[14.999,1.519]],[[16.638,1.824],[18.583,1.676]],[[20.379,2.733]],[]]},"IL":{"l":[[[0.0,1.025],[1.145,1.5]],[[2.765,1.028],[3.913,0.963]],[[4.996,0.854],[5.97,1.701]],[[7.791,1.492]],[[9.403,2.209]]],"c":[[[11.732,0.838]],[[12.691,0.94]],[[13.75,1.546],[15.416,1.49]],[[17.026,1.51]],[]]},"TR":{"l":[[[0.0,1.33],[1.45,0.84]],[[2.409,0.726],[3.255,0.93]],[[4.305,0.732],[5.156,1.912]],[[7.188,1.089]],[[8.397,1.379]]],"c":[[[9.895,1.266],[11.281,1.648]],[[13.05,1.624]],[[14.793,0.98],[15.893,2.135]],[[18.149,1.613]],[]]},"EU":{"l":[[[0.0,0.699],[0.819,0.929]],[[1.868,0.71],[2.698,0.945]],[[3.763,0.702],[4.584,1.284]],[[5.988,1.022]],[[7.13,1.269]]],"c":[[[8.519,0.92]],[[9.56,0.766]],[[10.446,1.594],[12.16,0.908]],[[13.188,1.567]],[]]},"PK":{"l":[[[0.0,1.216],[1.336,0.94]],[[2.396,1.028],[3.544,0.817]],[[4.481,0.7],[5.302,1.326]],[[6.747,1.223]],[[8.091,1.879]]],"c":[[[10.089,1.972]],[[12.181,1.089]],[[13.391,2.418],[15.929,0.753]],[[16.802,1.9]],[]]},"IN":{"l":[[[0.0,1.468],[1.588,1.408]],[[3.116,1.235],[4.472,1.268]],[[5.86,0.926],[6.906,1.844]],[[8.87,1.566]],[[10.557,2.005]]],"c":[[[12.681,1.238]],[[14.04,1.236]],[[15.395,1.818],[17.333,1.422]],[[18.875,1.246]],[]]},"CN":{"l":[[[0.0,1.367],[1.487,1.282]],[[2.889,1.045],[4.054,0.893]],[[5.067,0.894],[6.081,1.729]],[[7.931,1.335]],[[9.386,1.551]]],"c":[[[11.057,1.292]],[[12.469,1.383]],[[13.971,0.847],[14.939,1.315]],[[16.373,1.292]],[]]}};const VOB={};
 // clips are already processed to natural depth and pace (tts/proc2.py); playback speed stays at 1
 const VO_PITCH=1;
-function voLoad(fac){if(!AU.ctx||VOB[fac]||!VO_MAP[fac])return;VOB[fac]='loading';fetch(window.VO_INLINE&&VO_INLINE[fac]?'data:audio/mpeg;base64,'+VO_INLINE[fac]:'vo/'+fac+'.mp3').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(b=>new Promise((res,rej)=>AU.ctx.decodeAudioData(b,res,rej))).then(buf=>{VOB[fac]=buf;}).catch(()=>{VOB[fac]='fail';});}
-function voPlay(fac,kind){const buf=VOB[fac],M=VO_MAP[fac];if(!buf||typeof buf==='string'||!M)return false;let set=(M.l[kind]&&M.l[kind].length)?M.l[kind]:M.l[0];const cr=M.c&&M.c[kind];if(cr&&cr.length&&Math.random()<(kind===2?.5:.38))set=cr;if(!set||!set.length)return false;
+// a failed clip sheet is retried once (a dropped connection); device speech covers until then, and music/effects never wait on it
+const VOP={},VOT={};
+function voLoad(fac){if(!AU.ctx||!VO_MAP[fac])return null;if(VOB[fac]==='fail'&&(VOT[fac]||0)<2)delete VOB[fac];if(VOB[fac])return VOP[fac]||null;VOB[fac]='loading';VOT[fac]=(VOT[fac]||0)+1;
+  return VOP[fac]=fetch(window.VO_INLINE&&VO_INLINE[fac]?'data:audio/mpeg;base64,'+VO_INLINE[fac]:'vo/'+fac+'.mp3').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>decodeAB(AU.ctx,b)).then(buf=>{VOB[fac]=buf;return buf;}).catch(e=>{VOB[fac]='fail';audioErr('voice '+fac,e);return null;});}
+function voPlay(fac,kind){const buf=VOB[fac],M=VO_MAP[fac];if(!buf||typeof buf==='string'||!M||!auOn())return false;let set=(M.l[kind]&&M.l[kind].length)?M.l[kind]:M.l[0];const cr=M.c&&M.c[kind];if(cr&&cr.length&&Math.random()<(kind===2?.5:.38))set=cr;if(!set||!set.length)return false;
   const c=AU.ctx;// one line at a time: a new line never talks over (and seems to cut off) the one still playing
   if(AU.voEnd&&c.currentTime<AU.voEnd-.05)return true;
   const [o,d]=set[Math.floor(Math.random()*set.length)],src=c.createBufferSource(),g=c.createGain();src.buffer=buf;src.playbackRate.value=VO_PITCH;const vol=Math.max(0,Math.min(1.5,SET.vo/100*1.25)),t0=c.currentTime+.02,dur=d/VO_PITCH;
@@ -489,13 +542,18 @@ function musicTick(){if(!AU.ctx||!AU.style)return;const S=AU.style,sp=60/(S.bpm*
 const SMP_META={"acc":[{"m":48,"o":0.0,"n":2.75,"l":[1.0,2.75],"r":0.229},{"m":54,"o":2.95,"n":2.75,"l":[1.0,2.75],"r":0.221},{"m":60,"o":5.9,"n":2.75,"l":[1.0,2.75],"r":0.204},{"m":66,"o":8.8501,"n":2.75,"l":[1.0,2.75],"r":0.233},{"m":72,"o":11.8001,"n":2.75,"l":[1.0,2.75],"r":0.159}],"pno":[{"m":24,"o":14.7501,"n":3.1,"l":null,"r":0.322},{"m":30,"o":18.0501,"n":3.1,"l":null,"r":0.321},{"m":36,"o":21.3501,"n":3.1,"l":null,"r":0.246},{"m":42,"o":24.6501,"n":3.1,"l":null,"r":0.3},{"m":48,"o":27.9501,"n":3.1,"l":null,"r":0.199}],"gtr":[{"m":36,"o":31.2501,"n":2.2,"l":null,"r":0.308},{"m":42,"o":33.6501,"n":2.2,"l":null,"r":0.302},{"m":48,"o":36.0501,"n":2.2,"l":null,"r":0.267},{"m":54,"o":38.4501,"n":2.2,"l":null,"r":0.294},{"m":60,"o":40.8501,"n":2.2,"l":null,"r":0.198},{"m":66,"o":43.2501,"n":2.2,"l":null,"r":0.152}],"cel":[{"m":36,"o":45.6501,"n":2.75,"l":[1.0,2.75],"r":0.157},{"m":42,"o":48.6001,"n":2.75,"l":[1.0,2.75],"r":0.199},{"m":48,"o":51.5502,"n":2.75,"l":[1.0,2.75],"r":0.219},{"m":54,"o":54.5002,"n":2.75,"l":[1.0,2.75],"r":0.328},{"m":60,"o":57.4502,"n":2.75,"l":[1.0,2.75],"r":0.274}],"cho":[{"m":48,"o":60.4002,"n":2.75,"l":[1.0,2.75],"r":0.188},{"m":54,"o":63.3502,"n":2.75,"l":[1.0,2.75],"r":0.173},{"m":60,"o":66.3003,"n":2.75,"l":[1.0,2.75],"r":0.184},{"m":66,"o":69.2503,"n":2.75,"l":[1.0,2.75],"r":0.246},{"m":72,"o":72.2003,"n":2.75,"l":[1.0,2.75],"r":0.215}],"cla":[{"m":54,"o":75.1503,"n":2.75,"l":[1.0,2.75],"r":0.289},{"m":60,"o":78.1004,"n":2.75,"l":[1.0,2.75],"r":0.362},{"m":66,"o":81.0504,"n":2.75,"l":[1.0,2.75],"r":0.32},{"m":72,"o":84.0004,"n":2.75,"l":[1.0,2.75],"r":0.449},{"m":78,"o":86.9504,"n":2.75,"l":[1.0,2.75],"r":0.451}],"cbs":[{"m":36,"o":89.9005,"n":2.75,"l":[1.0,2.75],"r":0.363},{"m":42,"o":92.8505,"n":2.75,"l":[1.0,2.75],"r":0.328},{"m":48,"o":95.8005,"n":2.75,"l":[1.0,2.75],"r":0.297}],"flt":[{"m":60,"o":98.7505,"n":2.75,"l":[1.0,2.75],"r":0.326},{"m":66,"o":101.7005,"n":2.75,"l":[1.0,2.75],"r":0.362},{"m":72,"o":104.6506,"n":2.75,"l":[1.0,2.75],"r":0.354},{"m":78,"o":107.6006,"n":2.75,"l":[1.0,2.75],"r":0.418},{"m":84,"o":110.5506,"n":2.75,"l":[1.0,2.75],"r":0.477}],"hrn":[{"m":36,"o":113.5006,"n":2.75,"l":[1.0,2.75],"r":0.232},{"m":42,"o":116.4507,"n":2.75,"l":[1.0,2.75],"r":0.262},{"m":48,"o":119.4007,"n":2.75,"l":[1.0,2.75],"r":0.217},{"m":54,"o":122.3507,"n":2.75,"l":[1.0,2.75],"r":0.247},{"m":60,"o":125.3007,"n":2.75,"l":[1.0,2.75],"r":0.284},{"m":66,"o":128.2507,"n":2.75,"l":[1.0,2.75],"r":0.326}],"kot":[{"m":48,"o":131.2008,"n":3.1,"l":null,"r":0.146},{"m":54,"o":134.5008,"n":3.1,"l":null,"r":0.123},{"m":60,"o":137.8008,"n":3.1,"l":null,"r":0.105},{"m":66,"o":141.1008,"n":3.1,"l":null,"r":0.096},{"m":72,"o":144.4008,"n":3.1,"l":null,"r":0.115},{"m":78,"o":147.7008,"n":3.1,"l":null,"r":0.094}],"hrp":[{"m":36,"o":151.0008,"n":3.1,"l":null,"r":0.243},{"m":42,"o":154.3008,"n":3.1,"l":null,"r":0.206},{"m":48,"o":157.6008,"n":3.1,"l":null,"r":0.249},{"m":54,"o":160.9008,"n":3.1,"l":null,"r":0.268},{"m":60,"o":164.2008,"n":3.1,"l":null,"r":0.32},{"m":66,"o":167.5008,"n":3.1,"l":null,"r":0.189},{"m":72,"o":170.8008,"n":3.1,"l":null,"r":0.156}],"pfl":[{"m":60,"o":174.1008,"n":2.75,"l":[1.0,2.75],"r":0.388},{"m":66,"o":177.0508,"n":2.75,"l":[1.0,2.75],"r":0.391},{"m":72,"o":180.0008,"n":2.75,"l":[1.0,2.75],"r":0.383},{"m":78,"o":182.9508,"n":2.75,"l":[1.0,2.75],"r":0.401},{"m":84,"o":185.9009,"n":2.75,"l":[1.0,2.75],"r":0.421}],"piz":[{"m":36,"o":188.8509,"n":2.2,"l":null,"r":0.226},{"m":42,"o":191.2509,"n":2.2,"l":null,"r":0.244},{"m":48,"o":193.6509,"n":2.2,"l":null,"r":0.236},{"m":54,"o":196.0509,"n":2.2,"l":null,"r":0.18},{"m":60,"o":198.4509,"n":2.2,"l":null,"r":0.213},{"m":66,"o":200.8509,"n":2.2,"l":null,"r":0.151},{"m":72,"o":203.2509,"n":2.2,"l":null,"r":0.149}],"shn":[{"m":60,"o":205.6509,"n":2.75,"l":[1.0,2.75],"r":0.262},{"m":66,"o":208.6009,"n":2.75,"l":[1.0,2.75],"r":0.275},{"m":72,"o":211.5509,"n":2.75,"l":[1.0,2.75],"r":0.233},{"m":78,"o":214.501,"n":2.75,"l":[1.0,2.75],"r":0.335}],"sit":[{"m":48,"o":217.451,"n":3.1,"l":null,"r":0.223},{"m":54,"o":220.751,"n":3.1,"l":null,"r":0.202},{"m":60,"o":224.051,"n":3.1,"l":null,"r":0.176},{"m":66,"o":227.351,"n":3.1,"l":null,"r":0.16},{"m":72,"o":230.651,"n":3.1,"l":null,"r":0.131}],"str":[{"m":48,"o":233.951,"n":2.75,"l":[1.0,2.75],"r":0.237},{"m":54,"o":236.901,"n":2.75,"l":[1.0,2.75],"r":0.188},{"m":60,"o":239.851,"n":2.75,"l":[1.0,2.75],"r":0.236},{"m":66,"o":242.801,"n":2.75,"l":[1.0,2.75],"r":0.236},{"m":72,"o":245.7511,"n":2.75,"l":[1.0,2.75],"r":0.177},{"m":78,"o":248.7011,"n":2.75,"l":[1.0,2.75],"r":0.226}],"tai":[{"m":36,"o":251.6511,"n":3.1,"l":null,"r":0.256},{"m":48,"o":254.9511,"n":3.1,"l":null,"r":0.223}],"tim":[{"m":36,"o":258.2511,"n":3.1,"l":null,"r":0.159},{"m":42,"o":261.5511,"n":3.1,"l":null,"r":0.201},{"m":48,"o":264.8511,"n":3.1,"l":null,"r":0.124}],"tbn":[{"m":36,"o":268.1511,"n":2.75,"l":[1.0,2.75],"r":0.161},{"m":42,"o":271.1011,"n":2.75,"l":[1.0,2.75],"r":0.157},{"m":48,"o":274.0512,"n":2.75,"l":[1.0,2.75],"r":0.253},{"m":54,"o":277.0012,"n":2.75,"l":[1.0,2.75],"r":0.347},{"m":60,"o":279.9512,"n":2.75,"l":[1.0,2.75],"r":0.451}],"tpt":[{"m":54,"o":282.9012,"n":2.75,"l":[1.0,2.75],"r":0.162},{"m":60,"o":285.8512,"n":2.75,"l":[1.0,2.75],"r":0.164},{"m":66,"o":288.8013,"n":2.75,"l":[1.0,2.75],"r":0.167},{"m":72,"o":291.7513,"n":2.75,"l":[1.0,2.75],"r":0.213},{"m":78,"o":294.7013,"n":2.75,"l":[1.0,2.75],"r":0.248}],"tba":[{"m":24,"o":297.6513,"n":2.75,"l":[1.0,2.75],"r":0.186},{"m":30,"o":300.6014,"n":2.75,"l":[1.0,2.75],"r":0.243},{"m":36,"o":303.5514,"n":2.75,"l":[1.0,2.75],"r":0.264},{"m":42,"o":306.5014,"n":2.75,"l":[1.0,2.75],"r":0.353}],"vln":[{"m":55,"o":309.4514,"n":2.75,"l":[1.0,2.75],"r":0.258},{"m":61,"o":312.4015,"n":2.75,"l":[1.0,2.75],"r":0.279},{"m":67,"o":315.3515,"n":2.75,"l":[1.0,2.75],"r":0.28},{"m":73,"o":318.3015,"n":2.75,"l":[1.0,2.75],"r":0.236},{"m":79,"o":321.2515,"n":2.75,"l":[1.0,2.75],"r":0.245},{"m":85,"o":324.2015,"n":2.75,"l":[1.0,2.75],"r":0.234}]};const SMP={st:null,ok:null};
 const CAL={str:1,cbs:1,cel:1,vln:1,cho:1,hrn:1,tbn:1,tpt:1,tba:1,tim:1,tai:1,pno:1,flt:1,pfl:1,shn:1,cla:1,acc:1,sit:1,kot:1,hrp:1,gtr:1,piz:1};/*SMPCAL*/
 const FCAL={"strings": 0.603, "choir": 1.85, "horn": 2.762, "trumpet": 3.183, "trombone": 2.486, "hornsec": 1.6, "braam": 1.453, "spicc": 1.716, "taiko": 1.595, "pianoLow": 1.167, "zurna": 2.486, "clarinet": 1.973, "harmonium": 1.896, "bowed": 3.249, "flute": 2.272, "ney": 2.049, "i_oud": 1.171, "i_tres": 1.297, "i_qanun": 1.254, "i_guzheng": 1.078, "i_gayageum": 1.591, "i_sitar": 1.141, "i_bandura": 1.455, "i_strings": 0.938};
-function smpLoad(){if(!AU.ctx||SMP.st||!SMP_META.str)return;SMP.st='loading';
-  fetch('mus/smp.mp3').then(r=>{if(!r.ok)throw 0;return r.arrayBuffer();}).then(b=>new Promise((res,rej)=>AU.ctx.decodeAudioData(b,res,rej))).then(buf=>{
+// On phones the 3.3 MB sheet is decoded at its own 22 kHz rate (a quarter of the memory of decoding at 48 kHz); if that
+// path isn't supported it falls back to the normal decode, and if decoding fails altogether (low memory) the score keeps
+// playing on the synthesized instruments instead of going silent. One retry, in case the download was cut off.
+function smpLoad(){if(!AU.ctx||!SMP_META.str)return;if(SMP.st==='fail'&&(SMP.tries||0)<2)SMP.st=null;if(SMP.st)return;SMP.st='loading';SMP.tries=(SMP.tries||0)+1;
+  fetch('mus/smp.mp3').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>{let dc=null;
+    if(PHONE){try{const O=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(O)dc=new O(1,1,22050);}catch(e){dc=null;}}
+    if(!dc)return decodeAB(AU.ctx,b);const keep=b.slice(0);return decodeAB(dc,b).catch(()=>decodeAB(AU.ctx,keep));}).then(buf=>{
     const sr=buf.sampleRate,d=buf.getChannelData(0),ok={};
     for(const k in SMP_META){ok[k]=[];for(const s of SMP_META[k]){let o=Math.floor(s.o*sr);const a=Math.max(0,o-Math.floor(.1*sr)),z=Math.min(d.length,o+Math.floor(.25*sr));
       let on=-1;for(let i=a;i<z;i++)if(Math.abs(d[i])>.004){on=i;break;}if(on>=0)o=Math.max(0,on-Math.floor(.004*sr));// mp3 decoder delay
       const n=Math.min(d.length-o,Math.floor(s.n*sr));if(n<200)continue;const b2=AU.ctx.createBuffer(1,n,sr);b2.getChannelData(0).set(d.subarray(o,o+n));ok[k].push({m:s.m,buf:b2,l:s.l,r:s.r});}}
-    SMP.ok=ok;SMP.st='ok';}).catch(()=>{SMP.st='fail';});}
+    SMP.ok=ok;SMP.st='ok';}).catch(e=>{SMP.st='fail';audioErr('instruments',e);});}
 function m2f(m){return 440*Math.pow(2,(m-69)/12);}
 function sPlay(k,f,t,dur,gain,pan,att,rel,from){const L=SMP.ok&&SMP.ok[k];if(!L||!L.length||!(f>0))return null;const m=69+12*Math.log2(f/440);let b=L[0];for(const s of L)if(Math.abs(s.m-m)<Math.abs(b.m-m))b=s;
   const c=AU.ctx,src=c.createBufferSource();src.buffer=b.buf;const rt=Math.pow(2,(m-b.m)/12);
@@ -586,8 +644,48 @@ function menuMusic(){if(!AU.ctx||AU.ctx.state==='suspended'&&G&&G.paused)return;
   if(AU.menuFac!==fac){AU.menuFac=fac;AU.menuPick=performance.now();}
   if(AU.menuKey&&performance.now()-AU.menuPick<1200)return;// let the player finish browsing nations before switching
   startMusic(fac,true);AU.menuKey=key;}
-// first tap/click/key unlocks sound (but never un-pauses a paused battle's sound)
-{const kick=()=>{try{if(!AU.ctx||AU.ctx.state!=='running'&&!(G&&G.paused))initAudio();menuMusic();}catch(e){}};
-  for(const ev of ['pointerdown','touchend','click','keydown'])window.addEventListener(ev,kick,{capture:true,passive:true});
-  setInterval(()=>{try{menuMusic();}catch(e){}},500);}
+// first tap/click/key unlocks sound (but never un-pauses a paused battle's sound). touchend, click, keydown, pointerup
+// and mousedown count as a real tap for the browser, so the unlock runs there; pointerdown only prepares the engine.
+// The listeners sit on window in the capture phase, so no game handler (or preventDefault) can stop them.
+{const ACT={touchend:1,click:1,keydown:1,pointerup:1,mousedown:1};
+  const kick=ev=>{try{if(ACT[ev.type]){if(!AU.ctx||AU.ctx.state!=='running'||(IOSLIKE&&SIL.el&&SIL.el.paused)||!SIL.ok&&IOSLIKE||!AU.spOK)audioUnlock();}
+      else if(!AU.ctx||AU.ctx.state!=='running'&&!audioHeld())initAudio();menuMusic();}catch(e){}};
+  for(const ev of ['pointerdown','pointerup','touchend','mousedown','click','keydown'])window.addEventListener(ev,kick,{capture:true,passive:true});
+  document.addEventListener('visibilitychange',()=>{try{if(document.hidden){if(SIL.el&&!SIL.el.paused)SIL.el.pause();}else audioWake();}catch(e){}});
+  window.addEventListener('pageshow',()=>{try{audioWake();}catch(e){}});window.addEventListener('focus',()=>{try{audioWake();}catch(e){}});
+  let wt=0;setInterval(()=>{try{menuMusic();}catch(e){}
+    // watchdog: an engine left interrupted (call, Siri, alarm) is nudged every 2 s while the page is visible
+    try{const c=AU.ctx;if(c&&++wt%4===0&&!document.hidden&&!audioHeld()){if(c.state==='closed')audioRebuild();else if(c.state==='interrupted'){const p=c.resume();if(p&&p.catch)p.catch(()=>{});}}}catch(e){}
+    try{const s=$('settings');if(s&&!s.hidden)sndShow();}catch(e){}},500);}
+// A broken sound call must never break the battle or the interface: every sound entry point used by other modules
+// swallows its own errors (the last one is shown in Settings > Sound check).
+{const safe=(f,n)=>function(){try{return f.apply(this,arguments);}catch(e){audioErr(n,e);}};
+  sfxShot=safe(sfxShot,'shot');sfxBoom=safe(sfxBoom,'boom');sfxUI=safe(sfxUI,'ui');sfxAlarm=safe(sfxAlarm,'alarm');speak=safe(speak,'voice');droneAudio=safe(droneAudio,'drones');}
+
+// ===== Sound check (Settings) =====
+// One button that plays a radio beep and one voice line, and a status line saying exactly what this device reports,
+// so a player whose phone stays silent can tell us why. Built from here so it needs no change to the page shell.
+function sndStatus(){const c=AU.ctx,p=[],C=window.AudioContext||window.webkitAudioContext;
+  p.push('Engine: '+(c?c.state+' ('+c.sampleRate+' Hz)':C?'not started yet (tap anywhere)':'not supported by this browser'));
+  if(IOSLIKE){let s='';try{const a=navigator.audioSession;if(a)s='session '+a.type+', ';}catch(e){}p.push('Silent-switch bypass: '+s+'loop '+(SIL.el&&!SIL.el.paused?'playing':'off'));}
+  else p.push('Playback session: normal');
+  p.push('Instruments: '+(SMP.st==='ok'?'loaded':SMP.st==='loading'?'loading':SMP.st==='fail'?'failed, using synth':'not loaded yet'));
+  const f=(G&&G.teams&&G.teams[ME]&&G.teams[ME].fac)||(typeof setup!=='undefined'&&setup&&setup.p)||'US',vb=VOB[f];
+  p.push('Voices: '+f+' clips '+(vb&&typeof vb!=='string'?'ready':vb==='loading'?'loading':vb==='fail'?'failed':'not loaded')+', device voices '+(window.speechSynthesis?(AU.voices.length||speechSynthesis.getVoices().length):'none'));
+  p.push('Music '+(AU.musicOn?SET.mus+'%':'off')+', Sound '+(AU.sfxOn?SET.fx+'%':'off')+', Voices '+(AU.voiceOn?SET.vo+'%':'off'));
+  if(AU.err)p.push('Last error: '+AU.err);return p.join(' · ');}
+function sndShow(){const el=$('sndSt');if(el)el.textContent=sndStatus();}
+function testSound(){audioUnlock();const c=AU.ctx;if(!c){sndShow();return;}
+  try{const t=c.currentTime+.06;// radio beep straight to the speakers (plays even with Sound switched off, so the test is honest)
+    osc(AU.master,t,'sine',1000,0,.11,.22);osc(AU.master,t+.15,'sine',1400,0,.11,.22);nz(AU.master,t+.29,.16,'bandpass',2200,0,.1,2);}catch(e){audioErr('test beep',e);}
+  const f=(G&&G.teams&&G.teams[ME]&&G.teams[ME].fac)||(typeof setup!=='undefined'&&setup&&setup.p&&VO_MAP[setup.p]?setup.p:'US');
+  const say=buf=>{try{const M=VO_MAP[f];if(!buf||!M||!AU.ctx)return sayDevice();const k=AU.ctx,[o,d]=M.l[0][0],s=k.createBufferSource(),g=k.createGain(),t0=Math.max(k.currentTime+.05,(AU.testT||0));
+      g.gain.value=1;s.buffer=buf;s.connect(g);g.connect(k.destination);s.start(t0,o,d);}catch(e){audioErr('test voice',e);}setTimeout(sndShow,200);};
+  const sayDevice=()=>{try{if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance('Radio check. Sound is working.');u.lang='en-US';speechSynthesis.speak(u);}catch(e){}};
+  AU.testT=c.currentTime+.55;const vb=VOB[f];if(vb&&typeof vb!=='string')say(vb);else{const pr=voLoad(f);if(pr)pr.then(say);else sayDevice();}
+  sndShow();setTimeout(sndShow,800);setTimeout(sndShow,2500);}
+(function sndCheckUI(){try{const vo=$('sVo');if(!vo||$('sndChk'))return;const w=document.createElement('div');w.id='sndChk';
+  w.innerHTML='<div class="label">Sound check</div>'+
+    '<div class="myrow"><button id="sndTest" class="btn2" type="button">Test sound</button></div><div style="font-size:12px;opacity:.7;margin-top:6px">You should hear a radio beep, then a voice. No sound? Send us this line:</div><div class="sv" id="sndSt" style="margin:2px 0 6px;opacity:.85;word-break:break-word"></div>';
+  vo.insertAdjacentElement('afterend',w);$('sndTest').addEventListener('click',testSound);sndShow();}catch(e){}})();
 
