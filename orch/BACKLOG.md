@@ -12,13 +12,14 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   top priority, ahead of Graphics Phase 1). Battles run on a server instead of the host's browser: no host advantage,
   phones never host big battles, host leaving doesn't disturb the match, bigger battles. Plan (agreed 2026-10-26 19:09):
   1. **Headless battle sim** — `03-sim`/`01-data`/`02-map` run with no DOM/Three.js; `orch/headless.mjs` plays an AI
-     battle in plain Node and matches the browser's state hash for the same seed. **Side lane doing this now
-     (2026-10-27 07:10, branch `orch/stage2-headless`); ORCH: don't duplicate step 1, take steps 2–4 after it lands.**
-     Cycle 9 did STAGE2.md §2's src refactor on `main` (01+02+03 now load in plain Node with no stand-ins). **The
-     side lane's `headless.mjs` must adapt before it lands:** `BORROW = {}` (its extractor fails on the moved names),
-     drop the `FXH`/`FXERR`/`THREE`/`endGame` stand-ins; keep `mm`/`R3` only while it fakes `document`.
-     Next for ORCH (step 2): DOM-free host-netcode slice (`07a-hostsnap.js`: `sendSnapP`'s `cv`, `netTick`'s
-     `window.WW3_P2P`, `ckPack`'s `Blob`), then the Node dedicated server.
+     battle in plain Node and matches the browser's state hash for the same seed. **DONE 2026-10-27 (side lane):**
+     `node orch/headless.mjs` (+ `--compare` → `HEADLESS PASS`, identical hashes vs Chromium at 2 and 8 players, with and
+     without rendering); report + measured costs in `orch/STAGE2.md` (8 players: ~0.2–0.3 s CPU per game-second mid
+     game; ~45 thirty-minute matches/day on the free plan; no blockers). Node and Chromium differ in the last digit of
+     Math.sin/cos/atan2/exp/pow: fine while one machine decides everything. **ORCH: steps 2–4 next** (split the
+     host-side snapshot code out of `07-net`, move the borrowed helpers into the sim modules — see STAGE2.md). **Helpers moved in cycle 9** (01+02+03 load in
+     plain Node with no stand-ins; `headless.mjs` adapted). Next: DOM-free host-netcode slice (`07a-hostsnap.js`:
+     `sendSnapP`'s `cv`, `netTick`'s `window.WW3_P2P`, `ckPack`'s `Blob`), then the Node dedicated server.
   2. **Dedicated PC server** (Node, `tools/Dedicated server.cmd`, no window) for the biggest battles; all players are
      clients over the existing relay/P2P paths.
   3. **"Host on Cloudflare"** lobby option in `server/` (Durable Object runs the sim): measure GB-s, requests and

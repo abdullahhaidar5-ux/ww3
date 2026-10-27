@@ -15,6 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
+import { guardContext } from './serverdev.mjs';
 import { artifactHtml, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
 import { newRun } from './runs.mjs';
 
@@ -72,7 +73,9 @@ async function shot(page, name) {
 const { chromium } = await loadPlaywright();
 const browser = await chromium.launch({ executablePath: findChromium(),
   args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'] });
-const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+const bctx = await browser.newContext({ viewport: { width: 1600, height: 900 } });
+await guardContext(bctx); // never the live game servers (WebSockets escape page.route)
+const page = await bctx.newPage();
 // Network to other hosts (PeerJS signalling, fonts, relays) is not part of the test.
 await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue()
   : ART && r.request().url() === THREE_CDN ? r.fulfill({ status: 200, contentType: 'text/javascript', body: ART.three }) : r.abort());

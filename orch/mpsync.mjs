@@ -51,7 +51,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
 import { artifactHtml, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
-import { startServer } from './serverdev.mjs';
+import { startServer, guardContext, DEAD_SERVER } from './serverdev.mjs';
 import zlib from 'node:zlib';
 import { newRun } from './runs.mjs';
 
@@ -181,6 +181,8 @@ const browser = await chromium.launch({ executablePath: findChromium(),
     // both pages in one renderer process: saves a few hundred MB (the test drives them one after the other anyway)
     '--renderer-process-limit=1'] });
 const ctx = await browser.newContext({ viewport: { width: 1024, height: 576 } });
+// never the live game servers: --server uses the local one, otherwise the page sees its servers as down
+await guardContext(ctx, SRV ? SRV.url : DEAD_SERVER);
 if (ART) await ctx.addInitScript(roomStub, { topics: roomTopics() }); else if (SRV) await ctx.addInitScript(blockedPeerShim, SRV.url); else await ctx.addInitScript(fakePeerShim);
 await ctx.route('**/*', r => r.request().url().startsWith(ORIGIN) || SRV && r.request().url().startsWith(SRV.url) ? r.continue()
   : ART && r.request().url() === THREE_CDN ? r.fulfill({ status: 200, contentType: 'text/javascript', body: ART.three }) : r.abort());

@@ -37,10 +37,10 @@ window.WW3_P2P=true;
   const wsBase=()=>srvUrl().replace(/^http/,'ws');
   const WSS=window.__ww3WsStats={tx:0,rx:0,txB:0,rxB:0};
   let hideIp=false;try{hideIp=localStorage.getItem('ww3_hideip')==='1';}catch(e){}
-  const getJ=async u=>{try{const ctl=new AbortController();setTimeout(()=>ctl.abort(),5000);const r=await fetch(u,{signal:ctl.signal});return r.ok?await r.json():null;}catch(e){return null;}};
+  const getJ=async(u,ms)=>{try{const ctl=new AbortController();setTimeout(()=>ctl.abort(),ms||5000);const r=await fetch(u,{signal:ctl.signal});return r.ok?await r.json():null;}catch(e){return null;}};
   let relayP=null,relayAt=0;
   function relayServers(){if(relayP&&Date.now()<relayAt)return relayP;relayAt=Date.now()+60000;const S=srvUrl();
-    return relayP=Promise.all([RELAY_APP&&RELAY_KEY?getJ('https://'+RELAY_APP+'.metered.live/api/v1/turn/credentials?apiKey='+encodeURIComponent(RELAY_KEY)):null,RELAY_CF_URL?getJ(RELAY_CF_URL):null,S?getJ(S+'/turn'):null]).then(([m,c,t])=>{
+    return relayP=Promise.all([RELAY_APP&&RELAY_KEY?getJ('https://'+RELAY_APP+'.metered.live/api/v1/turn/credentials?apiKey='+encodeURIComponent(RELAY_KEY)):null,RELAY_CF_URL?getJ(RELAY_CF_URL):null,S?getJ(S+'/turn',2500):null]).then(([m,c,t])=>{
     const out=[];if(Array.isArray(m))out.push(...m);for(const x of [c,t])if(x){const s=x.iceServers||x;if(Array.isArray(s))out.push(...s);else if(s&&s.urls)out.push(s);}
     if(out.length)relayAt=Date.now()+30*60000;return out;});}
   window.WW3_RELAY_BUILTIN=!!((RELAY_APP&&RELAY_KEY)||RELAY_CF_URL);
@@ -76,7 +76,7 @@ window.WW3_P2P=true;
       try{s=new WebSocket(wsBase()+'/room/'+encodeURIComponent(code)+'?'+q);}catch(e){fail('network',String(e&&e.message||e));return;}
       s.onmessage=ev=>{const m=ev.data;if(typeof m!=='string'||m==='pong')return;WSS.rx++;WSS.rxB+=m.length;
         if(m[0]==='!'){const c=m[1],a=m.slice(3);
-          if(c==='w'){if(done)return;done=true;clearTimeout(to);ws=s;clearInterval(wsKA);wsKA=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);res(a);}
+          if(c==='w'){if(done)return;if(wsBye){fail('network','room left');return;}done=true;clearTimeout(to);ws=s;clearInterval(wsKA);wsKA=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);res(a);}
           else if(c==='e')fail(a==='nohost'?'peer-unavailable':a==='taken'?'unavailable-id':a==='busy'||a==='limit'?'refused':'server-error','server: '+a);
           else if(c==='j'&&role==='host'&&ws===s)wsLink(a);
           else if(c==='l'&&ws===s){if(role==='host'){const l=links.get(a);if(l&&l.ws)gone(a);}else gone(hostId);}
@@ -86,7 +86,9 @@ window.WW3_P2P=true;
       s.onclose=()=>{fail('network','server closed the connection');if(ws!==s)return;ws=null;clearInterval(wsKA);if(wsBye)return;
         // host: its relayed players count as gone until the socket is back (the server hands them back on reconnect)
         if(role==='host'){for(const [pid,l] of [...links])if(l.ws)gone(pid);wsRetry(0);}else gone(hostId);};});
-    const wsRetry=n=>{if(wsBye||n>30)return;setTimeout(()=>{if(wsBye||ws)return;wsOpen('host').catch(e=>{if(!(e&&(e.type==='unavailable-id'||e.type==='refused')))wsRetry(n+1);});},n?Math.min(5000,400*n):100);};
+    // own: this browser holds the game's id on the P2P network, so a relay room someone else still holds ('taken') is a
+    // leftover that goes away (e.g. a player who lost the race to take over): keep trying for a while
+    const wsRetry=(n,own)=>{if(wsBye||n>30)return;setTimeout(()=>{if(wsBye||ws)return;wsOpen('host').then(()=>{R.srv=true;},e=>{const t=e&&e.type;if(t==='refused'||t==='unavailable-id'&&!(own&&n<12))return;wsRetry(n+1,own);});},n?Math.min(5000,400*n):100);};
     const wsJoin=async()=>{const id=rid();await wsOpen('client',id);myId=id;links.set(hostId,{ws:1,send:x=>wsTx('|'+JSON.stringify(x)),buf:wsBuf});upd(hostId,{},true);};
     Object.defineProperty(R,'_ws',{get:()=>ws});
     const ready=(async()=>{
@@ -113,9 +115,10 @@ window.WW3_P2P=true;
       if(hosting){myId=hostId;
         // the host also opens its relay room on the servers; it never waits for that once P2P hosting works
         const wsP=srvUrl()?wsOpen('host').then(()=>true,e=>{if(e&&e.type==='unavailable-id')throw e;if(!(e&&e.type==='refused'))wsRetry(1);return false;}):null;
+        if(wsP)wsP.catch(()=>{});   // a refusal ('taken') is handled below; it must never surface as an uncaught page error
         const r=await Promise.allSettled([pjHost(),Promise.resolve().then(trHost)]);const p2p=r.some(x=>x.status==='fulfilled');
         if(r[0].status==='rejected'&&r[0].reason&&r[0].reason.type==='unavailable-id')throw r[0].reason;
-        if(wsP&&!p2p){R.srv=await wsP;if(!R.srv)throw r[0].reason;}else if(wsP)wsP.then(v=>{R.srv=v;},()=>{});else if(!p2p)throw r[0].reason;}
+        if(wsP&&!p2p){R.srv=await wsP;if(!R.srv)throw r[0].reason;}else if(wsP)wsP.then(v=>{R.srv=v;},()=>{wsRetry(1,true);});else if(!p2p)throw r[0].reason;}
       else if(via==='ws'){await wsJoin();R.via='ws';}
       else if(via==='pjd'||via==='pjt'){await pjJoin();R.via=via;}
       else if(via==='pj'){await pjJoin();R.via='pj';}else if(via==='tr'){await trJoin();R.via='tr';}
@@ -179,8 +182,9 @@ window.WW3_P2P=true;
     function giveUp(){dead=true;console.warn('servers: game list unreachable, using the peer-to-peer game list');for(const f of PH)DIR.onPeers(f);DIR.presence(Object.assign({},myPres));}
     const again=()=>{fails++;if(!everOk&&fails>=2){giveUp();return;}setTimeout(connect,Math.min(15000,500*2**Math.min(fails,5)));};
     function connect(){if(dead)return;let s;try{s=new WebSocket(wsBase()+'/lobby');}catch(e){again();return;}
+      const cto=setTimeout(()=>{if(ws!==s)try{s.close();}catch(e){}},6000);   // a network that silently drops the server: don't wait for the browser's own timeout
       s.onmessage=ev=>{const m=ev.data;if(typeof m!=='string')return;
-        if(m.startsWith('!w ')){myId=m.slice(3);ws=s;everOk=true;fails=0;last='';tell();clearInterval(ka);ka=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);}
+        if(m.startsWith('!w ')){clearTimeout(cto);myId=m.slice(3);ws=s;everOk=true;fails=0;last='';tell();clearInterval(ka);ka=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);}
         else if(m.startsWith('l|')){try{const l=JSON.parse(m.slice(2));if(Array.isArray(l)){list=l;fire();}}catch(e){}}
         else if(m.startsWith('!e ')&&!dead)giveUp();};   // refused (server over its daily budget): use the P2P list
       s.onerror=()=>{};s.onclose=()=>{if(ws===s){ws=null;clearInterval(ka);list=[];fire();}if(!dead)again();};}
@@ -196,7 +200,12 @@ window.WW3_P2P=true;
     const turn=relay||(await relayServers()).length>0;
     if(turn&&(hideIp||(e1&&e1.type==='timeout'))){try{return await namedRoom(name,true,'pjt');}catch(e){}}
     console.warn('p2p: no direct connection ('+(e1&&(e1.type||e1.message)||'skipped')+'), using the server relay');
-    return namedRoom(name,false,'ws');}
+    try{return await namedRoom(name,false,'ws');}catch(e3){
+      // the server answered "no such game": the host isn't there, so don't wait on the Nostr network either
+      if(e3&&e3.type==='peer-unavailable')throw e3;
+      // server unreachable, over its daily budget or refusing: the Nostr backup network, as before the servers existed
+      console.warn('p2p: server relay unavailable ('+(e3&&(e3.type||e3.message))+'), trying the Nostr network');
+      try{return await namedRoom(name,false,'tr');}catch(e4){throw e1&&e1.type==='peer-unavailable'?e1:e3;}}}
   const LOBBY={emit:()=>Promise.resolve(),on:()=>()=>{},presence:p=>DL().presence(p),peers:()=>DL().peers(),onPeers:f=>DL().onPeers(f),
     connected:()=>true,onConnection:f=>{setTimeout(()=>f(true),0);return()=>{};},
     join:async(name,o)=>{const via=o&&o.via,S=srvUrl(),hosting=!!(NET.code&&NET.code!=='join');
@@ -7427,7 +7436,7 @@ function renderFrame(dt){if(!G||!G.terrain||!R3||window.GLLOST)return;if(WRECKQ.
 // Address of the World War 3 servers (server/ in the repo, Cloudflare), e.g. 'https://ww3-servers.<name>.workers.dev'.
 // Empty = no servers: the online edition works exactly as before (public PeerJS broker, P2P only). Read by the
 // online-edition shim in the page shell (game list, relay rooms, TURN logins); unused in the claude.ai artifact.
-const WW3_SERVER_URL='';
+const WW3_SERVER_URL='https://ww3-servers.abdullah-haidar5.workers.dev';
 const NET={room:null,user:null,game:null,code:null,opp:null,hostPeer:null,myPeer:null,snapT:0,bT:0,evT:0,teamT:0,helloI:null,names:{}};
 const FLG={built:1,cargo:2,dis:4,chg:8,hack:16,plant:32,land:64,hid:128,mem:256,mov:2048,busy:4096,nd:8192,stall:16384,supp:32768,mark:65536,rout:131072,shak:262144,last:524288,aband:1048576};
 // Multiplayer messages need at least Contributor access to this game: anyone the owner invited from the Share menu
@@ -7670,7 +7679,7 @@ function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(
   const C=NET.tgC,S=NET.tgS||(NET.tgS={}),last=S[k];if(last&&last.js===C.js&&G.t-last.t<1)return {};S[k]={js:C.js,t:G.t};return C.v;}
 function teamMsg(T){const q={};for(const c of CATS)q[c]=T.q[c].map(i=>[i.kind,+(i.t/prodTime(T,stats(T.fac,i.kind))).toFixed(2)]);const rq={};for(const c in T.rq)if(T.rq[c])rq[c]=[T.rq[c].key,+(T.rq[c].t/UPG[T.rq[c].key].time).toFixed(2)];
   const pw={};for(const k in T.pw)pw[k]=[Math.ceil(T.pw[k].cd),T.pw[k].lv||1];
-  return{c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),tn:T.tun.length,tk:tunKinds(T),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min(NET.cseq[NET.peers[T.id]]|0,NET.ckAk?NET.ckAk[T.id]|0:0):0,to:NET.peers[T.id]};}
+  return{c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),tn:T.tun.length,tk:tunKinds(T),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min(NET.cseq[NET.peers[T.id]]|0,NET.ckAk?NET.ckAk[T.id]|0:0):0,to:NET.peers[T.id]};}
 // P2P: everything a player gets in one tick (snapshot chunks, effects, panel) travels as ONE bundle ('b') - about 10
 // messages a second per connection instead of ~17-24, less per-message overhead, and effects arrive with their snapshot.
 function netTick(dt){if(!window.WW3_P2P||MODE!=='host'||!NET.game||!NET.peers)return netTick0(dt);const g=NET.game,real=g.emit,B=new Map();
@@ -7791,7 +7800,7 @@ function clientTick(dt){G.t+=dt;const now=G.t;
 function applyEvents(d){if(!d||!Array.isArray(d.e))return;for(const v of d.e){if(!Array.isArray(v))continue;const [type,...args]=v;if(!FXH[type]||type==='end'&&false)continue;
   if(type==='die'||type==='gone'){const e=G.byId.get(args[0]);if(e){e.dead=true;e.gone=true;G.byId.delete(e.id);if(G.sel.includes(e))G.sel=G.sel.filter(x=>x!==e);}}
   if(type==='log'&&args[0]!==ME)continue;try{FXH[type](...args);}catch(e){}}}
-function applyTeam(d){if(!G||!d)return;if(typeof d.ak==='number'&&NET.cq&&NET.cq.length&&NET.cq[0].s<=d.ak){NET.cq=NET.cq.filter(c=>c.s>d.ak);if(NET.game)NET.game.presence({cq:NET.cq}).catch(()=>{});}if(typeof d.mg==='number')NET.gen=Math.max(NET.gen||0,d.mg|0);const T=G.teams[ME];T.credits=d.c|0;for(const c of CATS)T.q[c]=(d.q&&d.q[c]||[]).map(([k,p])=>({kind:k,t:p*prodTime(T,stats(T.fac,k)),p}));
+function applyTeam(d){if(!G||!d)return;if(typeof d.ak==='number'&&NET.cq&&NET.cq.length&&NET.cq[0].s<=d.ak){NET.cq=NET.cq.filter(c=>c.s>d.ak);if(NET.game)NET.game.presence({cq:NET.cq}).catch(()=>{});}if(typeof d.mg==='number')NET.gen=Math.max(NET.gen||0,d.mg|0);if(d.sb===0&&NET.isStandby){NET.isStandby=false;NET.lastCk=null;}const T=G.teams[ME];T.credits=d.c|0;for(const c of CATS)T.q[c]=(d.q&&d.q[c]||[]).map(([k,p])=>({kind:k,t:p*prodTime(T,stats(T.fac,k)),p}));
   T.rq={};for(const c in (d.rq||{})){const [k,p]=d.rq[c];if(UPG[k])T.rq[c]={key:k,t:p*UPG[k].time};}T.upg={};for(const k of d.u||[])if(UPG[k])T.upg[k]=true;upgReset(T);T.charge=+d.ch||0;T.tunN=d.tn|0;if(Array.isArray(d.ac))for(const [i,c] of d.ac)if(G.teams[i])G.teams[i].credits=+c||0;T.tunK=d.tk&&typeof d.tk==='object'?d.tk:{};if(WEATHER[d.wx]){G.wx=G.wx||{t:0,next:1e9};G.wx.k=d.wx;}if(Array.isArray(d.mn))G.mines=d.mn.map(([x,y])=>({x,y,team:ME,arm:0}));T.gxp=d.gx|0;T.rank=d.rk|0||1;T.spent=d.sp|0;
   T.pw={};for(const k in (d.pw||{}))if(POWERS[k]){const v=d.pw[k];T.pw[k]=Array.isArray(v)?{cd:+v[0]||0,lv:+v[1]||1}:{cd:+v||0,lv:1};}T.reveals=(d.rv||[]).map(([x,y,r,t])=>({x,y,r,t}));T.rally=d.rl?{x:d.rl[0],y:d.rl[1]}:null;
   if(Array.isArray(d.oil))d.oil.forEach((v,i)=>{const o=G.oil[i];if(o&&Array.isArray(v)){o.owner=v[0];if(Array.isArray(v[1]))o.cp=v[1].map(x=>+x||0);o.dead=!!v[2];o.hp=+v[3]||0;}});if(Array.isArray(d.out))d.out.forEach((x,i)=>{if(G.teams[i]&&x&&!G.teams[i].out){G.teams[i].out=true;if(i===ME)showElim();}});
@@ -7849,9 +7858,9 @@ function migRoom(gen){return gen>0?NET.baseCode+'-m'+gen:NET.baseCode;}
 function ckTick(dt,live){NET.ckT=(NET.ckT==null?4:NET.ckT)-dt;if(NET.ckT>0||NET.ckBusy||NET.ckOut||!live.length||!NET.game)return;NET.ckT=8;
   const sb=live.find(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(sb==null)return;const to=NET.peers[sb];NET.ckBusy=true;
   let ck;try{ck=ckEncode();ck.gen=NET.gen||0;}catch(e){console.warn('checkpoint',e);NET.ckBusy=false;return;}
-  ckPack(ck).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
+  ckPack(ck).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,sb,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
 // the checkpoint trickles out 2 chunks per tick (it used to go in one ~30 KB burst that delayed that player's snapshots)
-function ckFlush(){const O=NET.ckOut;if(!O||!NET.game){NET.ckOut=null;return;}if(NET.game.buffered&&NET.game.buffered(O.to)>12000)return;for(let k=0;k<2&&O.i<O.n;k++,O.i++)NET.game.emit('ck',{to:O.to,id:O.id,i:O.i,n:O.n,d:O.s.slice(O.i*3000,(O.i+1)*3000)}).catch(()=>{});if(O.i>=O.n){NET.ckAk=O.cs;NET.ckOut=null;}}
+function ckFlush(){const O=NET.ckOut;if(!O||!NET.game){NET.ckOut=null;return;}if(NET.game.buffered&&NET.game.buffered(O.to)>12000)return;for(let k=0;k<2&&O.i<O.n;k++,O.i++)NET.game.emit('ck',{to:O.to,id:O.id,i:O.i,n:O.n,d:O.s.slice(O.i*3000,(O.i+1)*3000)}).catch(()=>{});if(O.i>=O.n){NET.ckAk=O.cs;NET.sbSlot=O.sb;NET.ckOut=null;}}  // the standby flag moves only once the new standby holds a whole checkpoint
 function ckReceive(d){if(!d||typeof d.d!=='string'||!(d.n>0)||d.n>400)return;const P=NET.ckParts||(NET.ckParts={});let e=P[d.id];if(!e){e=P[d.id]={n:d.n,got:0,a:new Array(d.n)};for(const k in P)if(+k<d.id-2)delete P[k];}
   if(e.a[d.i]==null){e.a[d.i]=d.d;e.got++;}if(e.got===e.n){NET.lastCk=e.a.join('');NET.isStandby=true;delete P[d.id];}}
 async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e){console.warn('checkpoint unpack',e);return false;}
@@ -7862,7 +7871,7 @@ async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e
   let g;try{g=await NET.room.join('tc-'+code2);}catch(e){NET.code='join';console.warn('new host room',e&&e.type||e);return e&&e.type==='unavailable-id'?false:'retry';}
   if(MODE!=='client'||!G||G.over){NET.code='join';try{g.leave().catch(()=>{});}catch(e){}return false;}
   try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);NET.code='join';try{g.leave().catch(()=>{});}catch(_){}return false;}
-  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.ckOut=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};try{if(NET.room&&NET.startInfo)NET.room.presence({g:{c:NET.baseCode||NET.jcode,f:G.teams[me].fac,s:'full',n:G.teams.length,m:NET.startInfo.map}}).catch(()=>{});}catch(e){}
+  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};try{if(NET.room&&NET.startInfo)NET.room.presence({g:{c:NET.baseCode||NET.jcode,f:G.teams[me].fac,s:'full',n:G.teams.length,m:NET.startInfo.map}}).catch(()=>{});}catch(e){}
   const oldHost=ck.me|0;for(let k=0;k<G.teams.length;k++){const T=G.teams[k];if(k===ME){T.ai=null;T.discT=0;continue;}if(k===oldHost){if(!T.ai){T.ai=mkAI(1);T.aiTook=1;}continue;}if(!T.ai&&!T.out)T.discT=G.t;}
   NET.game=g;wireHost(g);g.presence({h:1}).catch(()=>{});
   for(const O of G.teams)log(O.id,`The host left. ${G.teams[ME].F.name} is now hosting the battle; the other commanders are reconnecting.`,'w');return true;}
@@ -8360,7 +8369,7 @@ function startSingle(){if(modelsPending()&&!startSingle.w){startSingle.w=1;$('st
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
   if(modelsPending()){if(!startSandbox.w){startSandbox.w=1;loadModelsWait({mode:'sandbox',map:setup.map,facs,tm:[0,1],me:0});MODELS.loading.then(()=>{startSandbox.w=0;startSandbox();});}return;}MODE='single';ME=0;
   TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
-function startMP(mode,seed,facs,slot,map,tm,aiD){if(modelsPending()){loadModelsWait({mode,map,facs,tm,me:slot|0,ai:facs.map((_,i)=>Array.isArray(aiD)&&aiD[i]!=null)});MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm,aiD));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm});}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm,aiD){if(modelsPending()){loadModelsWait({mode,map,facs,tm,me:slot|0,ai:facs.map((_,i)=>Array.isArray(aiD)&&aiD[i]!=null)});MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm,aiD));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm});}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');

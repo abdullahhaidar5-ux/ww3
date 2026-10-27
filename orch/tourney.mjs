@@ -32,6 +32,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, releaseBrowserLock, watchPeakMemory } from './browserlock.mjs';
+import { guardContext } from './serverdev.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
@@ -195,6 +196,7 @@ await launch();
 const errs = [];
 async function openWorker(id) {
   const ctx = await browser.newContext({ viewport: { width: 800, height: 600 } }); // own context => own renderer process
+  await guardContext(ctx); // never the live game servers (WebSockets escape page.route)
   const page = await ctx.newPage();
   await page.addInitScript(() => { window.__stopLoop = true; });
   await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue() : r.abort());
