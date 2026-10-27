@@ -14,6 +14,11 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   1. **Headless battle sim** — `03-sim`/`01-data`/`02-map` run with no DOM/Three.js; `orch/headless.mjs` plays an AI
      battle in plain Node and matches the browser's state hash for the same seed. **Side lane doing this now
      (2026-10-27 07:10, branch `orch/stage2-headless`); ORCH: don't duplicate step 1, take steps 2–4 after it lands.**
+     Cycle 9 did STAGE2.md §2's src refactor on `main` (01+02+03 now load in plain Node with no stand-ins). **The
+     side lane's `headless.mjs` must adapt before it lands:** `BORROW = {}` (its extractor fails on the moved names),
+     drop the `FXH`/`FXERR`/`THREE`/`endGame` stand-ins; keep `mm`/`R3` only while it fakes `document`.
+     Next for ORCH (step 2): DOM-free host-netcode slice (`07a-hostsnap.js`: `sendSnapP`'s `cv`, `netTick`'s
+     `window.WW3_P2P`, `ckPack`'s `Blob`), then the Node dedicated server.
   2. **Dedicated PC server** (Node, `tools/Dedicated server.cmd`, no window) for the biggest battles; all players are
      clients over the existing relay/P2P paths.
   3. **"Host on Cloudflare"** lobby option in `server/` (Durable Object runs the sim): measure GB-s, requests and
@@ -23,7 +28,8 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
      current P2P play; host and clients must agree (mpsync/migrate in the gate). Server changes go live only via a
      PR `main → servers-live` that Abdullah merges.
 - [open] **Graphics overhaul — Phase 1 approved** (Abdullah, 2026-10-26 21:24; second after server-hosted battles). Plan:
-  https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ. **Unblocked: the phone-speed fix and the bottom command bar landed on `main` 2026-10-27** — start it now. Phase 1 = move `MODEL_PACK` art out of
+  https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ. **Slice 1 shipped cycle 9 (models in `models/*.glb.gz`).
+  Next slices: load only the battle's nations' models (needs `08-ui`), then Three.js upgrade.** **Unblocked: the phone-speed fix and the bottom command bar landed on `main` 2026-10-27** — start it now. Phase 1 = move `MODEL_PACK` art out of
   `index.html` into compressed per-unit/per-nation files served next to the page (Cloudflare `ww3` + Pages), loaded per
   battle; build-time compression; upgrade Three.js r128 → current on a branch with side-by-side screenshots of every
   map and nation. Decisions: **units first** (Phase 2 next: detailed models, national variants), **phones stay smooth**
@@ -63,15 +69,12 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## P1 — now
 
 **Foundation (ORCH itself)**
-- [open] `build.py --check` should also verify the page shell still has its known parts (server client `srvUrl`/`wsOpen`,
-  credits lines for every music/voice/model pack, no install buttons), so a merge that drops shell code fails the gate
-  (the cycle-6 merge silently dropped the server code and Middle Eastern credits; restored 2026-10-27).
 - [open] Extend `orch/mpsync.mjs`: packet loss/latency, real WebRTC (3-player host migration is now covered by
   `orch/migrate.mjs`, cycle 6; its `--abrupt` mode — host vanishes without goodbye — is untested).
   Don't start from scratch — port the surviving old harnesses on the `testbed` branch: `tw8b.py` (host in Chicago +
   1–7 clients with real-world one-way delays, jitter and lag spikes; measures order latency, drift, bandwidth) and
   `p2pmig.py` (3 players over a local PeerJS server, host leaves, checks migration). `probe.py` = load-time probe.
-- [open] Smoke runs share `orch/out/`: two runs back to back overwrite each other's screenshots — per-run subfolder.
+- [open] Check `mpsync.mjs`/`migrate.mjs` per-run screenshot folders in a real run (cycle 9 only syntax-checked migrate).
 
 **Battlefield & AI** (`03-sim`, `01-data`)
 - [open] **Faction balance round 3** (round 2 shipped cycle 8: AI keeps ~1/3 of army value in vehicles; 72-game
@@ -86,6 +89,10 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [check] AI uses flanking and cover (DIFF has `flank`/`retreat` params) — verify in battles, strengthen on Hard.
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
+- [open] Models (review, cycle 9): battle start waits for every model file (now max 30 s); consider starting at once
+  and swapping models in late. Warn when only some models fail. Very old Safari (<16.4, no DecompressionStream) now
+  gets simple shapes. Check after ship that Pages + the `ww3` Worker serve `models/*.glb.gz` (loader also accepts
+  already-unzipped bytes) and that the artifact publish with `application/gzip` files works.
 - [open] Measure FPS on a real phone (needs a real device, not emulation): busy 4-player late game, many helicopters
   (rotor wash), and the new phone layout.
 
@@ -127,9 +134,11 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] **P1:** after a client reconnects mid-battle its state is wrong (own units missing, enemy base visible, money
   off) — found by the side-lane agent 2026-10-27 while testing the bottom bar. Reproduce, fix, add to `orch/migrate.mjs`.
 - [open] Asian music stand-ins (no free recording found yet): janggu, haegeum, piri, taepyeongso, gayageum, guzheng, sitar, shehnai — swap in real free recordings when found (`mus/as_pack.py`). Check the new credit line shows in the menu.
-- [open] Western music follow-ups: add the public-domain Hatikvah, Ukraine and Cuba anthem recordings (downloads were
-  rate-limited; `mus/we_pack.py`, then `AN_FAC`); TR/RU anthems skipped (not clearly PD). Stand-ins needing real free
-  recordings: zurna, davul, bandura, balalaika/domra, tres, bayan, sopilka.
+- [open] Music follow-ups: IN, CN, EG PD Navy Band anthems need finale code in those scores; real ney (Freesound
+  #580759 CC0, #328744 CC BY); gayageum/guzheng/sitar blocked by Wikimedia rate limits; no clean bandura/balalaika
+  found; still stand-ins: bandura, balalaika/domra, tres, bayan, sopilka. TR/RU anthems skipped (not clearly PD).
+  Confirm the IL anthem plays in a battle finale (cycle 9 test played menu music instead). No freely licensed real
+  latmiya found yet (cycle 9 search).
 - [open] Host migration (review, cycle 8): in shared-room (non-P2P) mode two standbys could both take over if PeerJS
   fails but Trystero succeeds; the host-room join has no timeout; waiting clients create a new PeerJS peer every
   ~0.3 s for up to 60 s (broker rate limits with 7 clients?); consider a shorter 5 s silence timeout. "Play again"
@@ -144,6 +153,15 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## Done
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
+
+- 2026-10-27 (cycle 9) — **Faster page load:** the 3D models are separate files (`models/`, 50 gzipped .glb) fetched
+  while the menu is up; `index.html` 8.3 → 1.8 MB; menu ready at 3 Mbit/s 16 s → 2 s; offline cache includes them.
+- 2026-10-27 (cycle 9) — **Anthems + real Turkish instruments:** IL, UA, CU anthem by the US Navy Band (PD) in the battle
+  finale; zurna (cdrk, CC BY 4.0) and davul (kroshe, CC0) are real recordings now.
+- 2026-10-27 (cycle 9) — **Server battles prep:** battle code (`01`–`03`) runs on its own in plain Node (ground height,
+  effect queue, log, end-of-battle core moved into the sim; no THREE use). No change for players; headless hashes match.
+- 2026-10-27 (cycle 9) — `build.py --check` now fails if the page shell loses server code, a music/voice/model credit,
+  or gets install buttons back; smoke/mpsync/migrate keep each run's screenshots in `orch/out/runs/` (last 10).
 
 - 2026-10-27 (cycle 8) — **Region music for the last seven nations:** US fife & drum + Sousa march, TR Ottoman mehter +
   halay, IL klezmer + Mizrahi hora, EU baroque fanfare + Ode to Joy march, UA bandura duma + Cossack march, RU Orthodox

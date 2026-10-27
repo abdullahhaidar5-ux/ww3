@@ -2,6 +2,19 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-27 08:36 → 09:50 — cycle 9
+
+- No lock on main; took it. Baseline: `--check` OK, SMOKE PASS. Stage 2 step 1 still unlanded on the side lane's
+  `orch/stage2-headless` (last push 08:20, report has a RESULTS_TABLE placeholder) → didn't duplicate it.
+- Shipped 4 squads: Visuals (Graphics Phase 1 slice 1: models out of `index.html` into `models/*.glb.gz`, 8.3 → 1.8 MB),
+  Battlefield (STAGE2 §2 refactor: 01–03 self-contained in Node), Audio (IL/UA/CU Navy Band anthems, real zurna/davul),
+  QA (`check_shell()` in `build.py --check`, per-run screenshot folders).
+- Integration: one conflict in `orch/build.py` (check_shell vs model files) resolved keeping both. Fresh review of the
+  sim/model diff: no blockers; applied its should-fix (stalled model timeout 120 → 30 s). ORCH also removed the
+  loader's pako-from-cdnjs fallback (CLAUDE.md: no new outside hosts).
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MAPSWEEP PASS (71 battles), artifact smoke PASS, artifact MPSYNC PASS.
+- Side lane's `headless.mjs` must set `BORROW = {}` etc. before landing (backlog).
+
 ## 2026-10-27 08:20 — side lane: servers live; page shell restored
 
 - Abdullah's `ww3-servers` Worker is live (root `server`, production branch `servers-live`, previews off; PR #1 merged

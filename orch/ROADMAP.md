@@ -21,14 +21,14 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Game live on Cloudflare (ww3.abdullah-haidar5.workers.dev), updated automatically
 - [done] Matchmaking + relay servers with automatic fallback (built and tested; switched off until they're live)
 - [done] Servers live on Cloudflare (ww3-servers), approved by Abdullah
-- [doing] Battles run on a server (or a dedicated PC) instead of the host's device — top priority (step 1: battle code without graphics)
+- [doing] Battles run on a server (or a dedicated PC) instead of the host's device — top priority (battle code now runs without graphics; step 1 report finishing, dedicated PC server next)
 - [done] Fix: stale enemy soldiers left on a player's screen
 
 ## Audio and music overhaul
 - [done] Authentic Middle Eastern music: Iran, Mountain Shias, Coffee Shias, Saudi Arabia, UAE, Egypt (real maqam/dastgah, regional rhythms, recorded percussion)
 - [done] Asian music: Pakistan, India, China, North Korea, South Korea (regional instruments and rhythms)
 - [done] Region-specific music for the other 7 nations (US, TR, IL, EU, UA, RU, CU) — all 18 done
-- [doing] Military band layer: each nation's public-domain US Navy Band anthem recording (US, EU done)
+- [doing] Military band layer: each nation's public-domain US Navy Band anthem recording (US, EU, IL, UA, CU done)
 - [todo] Recorded weapons, explosions, engines and aircraft (near and far, echo per theatre)
 - [todo] Battlefield ambience per map and weather
 - [todo] Full native-language unit voice lines per nation
@@ -36,7 +36,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [todo] Proper mix: voices duck music, distance fade, even loudness
 
 ## Graphics overhaul
-- [next] Phase 1 Foundations: art out of the game page onto Cloudflare, engine upgrade (approved; unblocked, starts next)
+- [doing] Phase 1 Foundations: 3D models moved out of the game page into separate files (done: page 8.3 → 1.8 MB); next per-battle loading, engine upgrade
 - [todo] Phase 2 Real models (first look to improve): detailed units and buildings with national variants (free art)
 - [todo] Phase 3 Terrain and world: sculpted ground, water, roads, craters
 - [todo] Phase 4 Light and effects: shadows, smoke, fire, explosions, theatre colour
