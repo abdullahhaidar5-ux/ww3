@@ -15,7 +15,8 @@ lane (it is working on them now).
 
 **IN FLIGHT (side lane, 2026-10-27 18:10 — Abdullah: "spawn more agents to finish all this work by tonight"; ORCH: don't
 take these):** Cloudflare battles → branch `orch/stage2-dedicated` (BattleRoom DO + `/bench` first); reconnect bug +
-phone-portrait bar → `orch/open-reconnect-phonebar`; Generals mouse + phone controls → `orch/controls`; shared
+phone-portrait bar → `orch/open-reconnect-phonebar`; Generals mouse → `orch/controls`; phone touch controls → `orch/touch-controls`; Cloudflare battles browser side
+(lobby choice, fallback) → `orch/cf-battle-client`; shared
 soundtrack from the 14 keeps → `orch/soundtrack`; Three.js upgrade (Graphics Phase 1, merged last) → `orch/three-upgrade`.
 
 **ORDER OF WORK (Abdullah, 2026-10-27 17:58): "Do the battles on servers first. Then address the open items. Then fix
