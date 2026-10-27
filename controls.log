@@ -1,0 +1,49 @@
+desktop (1600×900, mouse)
+  ok   default mouse scheme is Generals
+  ok   on-screen hint describes the Generals controls
+  ok   test units are on screen
+  ok   open ground to click on
+ Generals scheme
+  ok   left-click own unit selects it
+  ok   Shift+click adds to the selection
+  ok   left-click ground with units selected = move order
+  ok   …and keeps the selection
+  ok   left-click enemy with units selected = attack order
+  ok   left-click another own unit selects it (no order)
+  ok   double-click selects every unit of that type on screen
+  ok   Ctrl+click enemy = force-fire on it
+  ok   Ctrl+click empty ground does not move the units
+  ok   A arms attack-move
+  ok   A then click ground = attack-move order
+  ok   …selection kept after attack-move
+  ok   G arms guard
+  ok   G then click ground = guard-area order
+  ok   Alt+click = waypoint (queued move)
+  ok   S stops the selected units
+  ok   right-click cancels attack-move first (selection kept, no order)
+  ok   right-click deselects
+  ok   right-click cancels building placement
+  ok   right-drag with units selected = infantry line formation
+  ok   …selection kept after the line order
+  ok   left-drag draws a selection box
+  ok   right-drag with nothing selected rapid-scrolls the camera
+  ok   left-click own building selects it
+  ok   rally-point ground is clickable
+  ok   left-click ground with a production building selected sets its rally point
+  ok   …and the building stays selected
+ Alternate mouse setup (chosen in Settings > Mouse)
+  ok   Settings > Mouse switches to the Alternate mouse setup and saves it
+  ok   hint shows the Alternate controls
+  ok   alt: left-click ground deselects (no order)
+  ok   alt: right-click ground = move order
+  ok   alt: right-click enemy = attack order
+  ok   alt: right-drag = line formation
+  ok   alt: F then right-click = attack-move
+  ok   per-function choice works (custom mix)
+  ok   Reset mouse settings returns to Generals
+phone (390×844, touch)
+  ok   phone: test units and open ground are on screen
+  ok   phone: tap a unit selects it
+  ok   phone: tap the ground with units selected = move order
+
+CONTROLS PASS — 43/43 checks (370s); screenshots orch/out/controls-*.png
