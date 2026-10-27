@@ -157,10 +157,11 @@ window.WW3_P2P=true;
         edge?'1️⃣ Click the <b>…</b> at the top right<br>2️⃣ Click <b>Apps</b><br>3️⃣ Click <b>Install this site as an app</b> ✅':
         chrome?'1️⃣ Look at the top right, next to the address<br>2️⃣ Click the little <b>computer with arrow</b> 🖥️⬇️<br>3️⃣ Click <b>Install</b> ✅':
         '1️⃣ Open this page in <b>Google Chrome</b> or <b>Microsoft Edge</b><br>2️⃣ Press the yellow button again ✅';};}
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();ev=e;btn();});
+  // No install buttons anywhere (Abdullah, 2026-10-26): the game is played in the browser. Browsers' own menus can
+  // still install it; the service worker above keeps it fast and playable offline for solo games.
   // No first-visit welcome card: players go straight to the menu; installing is optional (small link only).
   window.addEventListener('appinstalled',()=>{const b=document.getElementById('installBtn');if(b)b.remove();});
-  window.addEventListener('load',()=>{if(!standalone())setTimeout(btn,2500);});
+
 })();
 </script><title>World War 3</title>
 <meta name="claude:viewport-fit-sides" content="cover">

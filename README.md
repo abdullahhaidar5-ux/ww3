@@ -8,7 +8,7 @@ iPhone, iPad or Android.
 - Skirmish against the AI, or the Test Range.
 - Online multiplayer for up to 8 players: one player opens **Multiplayer → Host a game** and shares the 6-character code; others enter it under **Join by code**. Players connect directly to the host's browser.
 
-**Optional desktop icon:** open the link in Chrome or Edge and click **Optional: add a desktop icon** (top right of the menu), or use the browser menu → *Install World War 3*. The game then opens from a desktop / Start-menu icon in its own window, loads instantly, and works offline for solo play.
+**No install:** the game runs in any modern browser. (If someone really wants a desktop icon, Chrome/Edge can still install it from the browser's own menu.)
 
 ## Hosting for players around the world
 
