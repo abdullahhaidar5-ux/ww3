@@ -11,7 +11,7 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] **Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
   multiplayer"). Target: Cloudflare free tier (Workers + Durable Objects), deployed by Abdullah with a one-click
   `tools/Deploy servers.cmd` (runs `npx wrangler login` in his browser + `wrangler deploy`; no secrets in chat or
-  repo). Build and test everything locally first; deployment itself is the only [ask].
+  repo). Build and test everything locally first; deployment itself is the only [ask]. Account exists (19:11).
   **Stage 1 — relay + signalling:** WebSocket relay rooms in a Durable Object (game code = room) that carry all game
   traffic for players whose networks block WebRTC, plus our own signalling to replace the public PeerJS broker, plus
   short-lived TURN credentials (existing `relay-worker.js`). Game auto-falls back: direct P2P → TURN → WebSocket relay.
@@ -101,7 +101,9 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] Artifact: next republish pass `capabilities` once (from `orch/out/artifact/publish.json`) to open the `ck`
   and `pong` room topics; cycle 4 republished without it (stored declaration carried forward). Untested on the real
   claude.ai room: latency, ~40 msg/s cap, drops, host migration.
-- [ask] Cloudflare account: Abdullah creates a free account and runs `tools/Deploy servers.cmd` once Stage 1 is ready (see Requests).
+- [ask] Cloudflare deploy: Abdullah **has a free Cloudflare account (created 2026-10-26 19:11)**. When Stage 1 is built and
+  tested, tell him in the report to double-click `tools/Deploy servers.cmd` on his Windows laptop (it logs in through
+  his browser; never ask for passwords or API tokens in chat). Then wire the deployed URL in and verify live.
 
 **Maps** (`02-map`)
 
