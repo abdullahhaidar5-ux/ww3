@@ -9951,11 +9951,12 @@ for(const f of ['US','IL','EU','SA','AE','EG','KR','TR','CN','PK','IN'])MIL_TANK
 const PROPS={container:{fit:'x',size:28},containerG:{fit:'x',size:30},crate:{fit:'y',size:8},barrel:{fit:'y',size:8},sandbag:{fit:'x',size:16},watertower:{fit:'y',size:56},tent:{fit:'x',size:50},pallet:{fit:'x',size:10},fence:{fit:'x',size:24},missile:{fit:'y',size:26},sam:{fit:'y',size:24}};
 // The models are separate files next to the page (models/<key>.<hash>.glb.gz, listed in MODEL_FILES by orch/build.py),
 // fetched in parallel while the menu is up. A file that fails to arrive just leaves that model out (units fall back to
-// a stand-in model or simple shapes); a file that stalls is given up on after two minutes.
-let PAKO=null;function gunzipU8(u){if(typeof DecompressionStream!=='undefined')return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
-  PAKO=PAKO||new Promise((res,rej)=>{const sc=document.createElement('script');sc.src='https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js';sc.onload=res;sc.onerror=rej;document.head.appendChild(sc);});
-  return PAKO.then(()=>{const o=pako.ungzip(u);return o.buffer.slice(o.byteOffset,o.byteOffset+o.byteLength);});}
-function fetchModel(url){const ac=typeof AbortController!=='undefined'?new AbortController():null,tm=setTimeout(()=>{if(ac)ac.abort();},120000);
+// a stand-in model or simple shapes); a file that stalls is given up on after 30 seconds.
+// Unzipping uses the browser's own DecompressionStream (all current browsers). Very old browsers without it skip the
+// models and use the simple shapes (no extra library is loaded from another host).
+function gunzipU8(u){if(typeof DecompressionStream==='undefined')return Promise.reject(new Error('no DecompressionStream'));
+  return new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}
+function fetchModel(url){const ac=typeof AbortController!=='undefined'?new AbortController():null,tm=setTimeout(()=>{if(ac)ac.abort();},30000);
   return fetch(url,ac?{signal:ac.signal}:undefined).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status+' '+url);return r.arrayBuffer();})
     .then(b=>{const u=new Uint8Array(b);return u[0]===0x1f&&u[1]===0x8b?gunzipU8(u):b;}).finally(()=>clearTimeout(tm));}
 function loadModels(){if(MODELS.loading)return MODELS.loading;MODELS.loading=(async()=>{try{
