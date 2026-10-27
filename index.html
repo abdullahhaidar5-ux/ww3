@@ -29,20 +29,10 @@ window.WW3_P2P=true;
   const RELAY_APP='',RELAY_KEY='';
   // Optional second relay: Cloudflare TURN through a tiny Cloudflare Worker that hands out short-lived logins (see relay-worker.js)
   const RELAY_CF_URL='';
-  // World War 3 servers (server/ in the repo, a Cloudflare Worker): their address is WW3_SERVER_URL in src/07-net.js.
-  // While it is empty nothing here changes. When set: the public game list comes from the server, every host also
-  // opens a relay room there, and a joiner tries direct P2P, then P2P through TURN (logins from the server), then the
-  // server relay. (window.WW3_SERVER overrides the address, for the local test harness.)
-  const srvUrl=()=>{let u='';try{u=window.WW3_SERVER||(typeof WW3_SERVER_URL!=='undefined'?WW3_SERVER_URL:'');}catch(e){}return String(u||'').replace(/\/+$/,'');};
-  const wsBase=()=>srvUrl().replace(/^http/,'ws');
-  const WSS=window.__ww3WsStats={tx:0,rx:0,txB:0,rxB:0};
   let hideIp=false;try{hideIp=localStorage.getItem('ww3_hideip')==='1';}catch(e){}
   const getJ=async u=>{try{const ctl=new AbortController();setTimeout(()=>ctl.abort(),5000);const r=await fetch(u,{signal:ctl.signal});return r.ok?await r.json():null;}catch(e){return null;}};
-  let relayP=null,relayAt=0;
-  function relayServers(){if(relayP&&Date.now()<relayAt)return relayP;relayAt=Date.now()+60000;const S=srvUrl();
-    return relayP=Promise.all([RELAY_APP&&RELAY_KEY?getJ('https://'+RELAY_APP+'.metered.live/api/v1/turn/credentials?apiKey='+encodeURIComponent(RELAY_KEY)):null,RELAY_CF_URL?getJ(RELAY_CF_URL):null,S?getJ(S+'/turn'):null]).then(([m,c,t])=>{
-    const out=[];if(Array.isArray(m))out.push(...m);for(const x of [c,t])if(x){const s=x.iceServers||x;if(Array.isArray(s))out.push(...s);else if(s&&s.urls)out.push(s);}
-    if(out.length)relayAt=Date.now()+30*60000;return out;});}
+  async function relayServers(){const [m,c]=await Promise.all([RELAY_APP&&RELAY_KEY?getJ('https://'+RELAY_APP+'.metered.live/api/v1/turn/credentials?apiKey='+encodeURIComponent(RELAY_KEY)):null,RELAY_CF_URL?getJ(RELAY_CF_URL):null]);
+    const out=[];if(Array.isArray(m))out.push(...m);if(c){const s=c.iceServers||c;if(Array.isArray(s))out.push(...s);else if(s&&s.urls)out.push(s);}return out;}
   window.WW3_RELAY_BUILTIN=!!((RELAY_APP&&RELAY_KEY)||RELAY_CF_URL);
   const OPTS=Object.assign({debug:0,config:{iceServers:ice}},window.P2P_SERVER||{});
   const rid=()=>'ww3p-'+Math.random().toString(36).slice(2,10);
@@ -52,7 +42,6 @@ window.WW3_P2P=true;
   function namedRoom(name,forceRelay,via){
     const code=String(name).replace(/^tc-/,''),hosting=!!(NET.code&&NET.code!=='join'),hostId='ww3-'+code;
     const H={},PH=[],peers=new Map(),links=new Map();let myId=null,myPres={},peer=null,troom=null;const R={};
-    if(via==='pjt')forceRelay=true;
     const me=()=>({peer:myId,by:null,isMe:true,sameTab:true,kind:'viewer',guest:false,presence:myPres,updatedAt:Date.now()});
     const list=()=>[me(),...peers.values()];
     const fire=ch=>{for(const f of PH)try{f(ch);}catch(e){console.error(e);}};
@@ -60,37 +49,8 @@ window.WW3_P2P=true;
     const upd=(pid,pres,joined)=>{const p={peer:pid,by:null,isMe:false,sameTab:false,kind:'viewer',guest:false,presence:pres||{},updatedAt:Date.now()};peers.set(pid,p);fire({peers:list(),joined:joined?[p]:[],updated:joined?[]:[p],left:[]});};
     const gone=pid=>{links.delete(pid);const p=peers.get(pid);if(!p)return;peers.delete(pid);fire({peers:list(),joined:[],updated:[],left:[p]});};
     const onMsg=(pid,m)=>{if(!m||typeof m!=='object')return;if(m.k==='e')deliver(pid,m.t,m.d);else if(m.k==='p')upd(pid,m.p,!peers.has(pid));};
-    // --- server relay: one WebSocket to this game's room on the World War 3 servers. The host's socket carries all of
-    // its relayed players ("<to>|msg", empty to = everyone); a player's socket talks only to the host. ---
-    let ws=null,wsKA=null,wsBye=false;const wsKey=Math.random().toString(36).slice(2,12)+Math.random().toString(36).slice(2,10);
-    // everything sent in one go (a whole host tick: every player's bundle) leaves as ONE frame, records joined by "\n"
-    let wq=[],wqN=0,wqT=false;const WQ_MAX=hosting?96000:12000;
-    const wsFlush=()=>{wqT=false;if(!wq.length)return;const f=wq.join('\n');wq=[];wqN=0;if(ws&&ws.readyState===1){ws.send(f);WSS.tx++;WSS.txB+=f.length;}};
-    const wsTx=s=>{if(!ws||ws.readyState!==1)return;if(wqN+s.length+1>WQ_MAX)wsFlush();wq.push(s);wqN+=s.length+1;WSS.rec=(WSS.rec||0)+1;if(!wqT){wqT=true;queueMicrotask(wsFlush);}};
-    // relayed players share the host's one socket: each player's share of its backlog stands in for its own channel's
-    const wsBuf=()=>{if(!ws)return 0;let n=0;for(const l of links.values())if(l.ws)n++;return ws.bufferedAmount/Math.max(1,n);};
-    const wsLink=a=>{links.set(a,{ws:1,send:x=>wsTx(a+'|'+JSON.stringify(x)),buf:wsBuf});if(!peers.has(a))upd(a,{},true);};
-    const wsOpen=(role,id)=>new Promise((res,rej)=>{let s,done=false;const q=role==='host'?'role=host&key='+wsKey:'role=client&id='+encodeURIComponent(id);
-      const fail=(t,msg)=>{if(done)return;done=true;clearTimeout(to);try{s.close();}catch(e){}rej(Object.assign(new Error(msg||t),{type:t}));};
-      const to=setTimeout(()=>fail('network','server timeout'),9000);
-      try{s=new WebSocket(wsBase()+'/room/'+encodeURIComponent(code)+'?'+q);}catch(e){fail('network',String(e&&e.message||e));return;}
-      s.onmessage=ev=>{const m=ev.data;if(typeof m!=='string'||m==='pong')return;WSS.rx++;WSS.rxB+=m.length;
-        if(m[0]==='!'){const c=m[1],a=m.slice(3);
-          if(c==='w'){if(done)return;done=true;clearTimeout(to);ws=s;clearInterval(wsKA);wsKA=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);res(a);}
-          else if(c==='e')fail(a==='nohost'?'peer-unavailable':a==='taken'?'unavailable-id':a==='busy'||a==='limit'?'refused':'server-error','server: '+a);
-          else if(c==='j'&&role==='host'&&ws===s)wsLink(a);
-          else if(c==='l'&&ws===s){if(role==='host'){const l=links.get(a);if(l&&l.ws)gone(a);}else gone(hostId);}
-          return;}
-        if(ws!==s)return;for(const r of m.indexOf('\n')<0?[m]:m.split('\n')){const i=r.indexOf('|');if(i<0)continue;let d;try{d=JSON.parse(r.slice(i+1));}catch(e){continue;}onMsg(role==='host'?r.slice(0,i):hostId,d);}};
-      s.onerror=()=>fail('network','server unreachable');
-      s.onclose=()=>{fail('network','server closed the connection');if(ws!==s)return;ws=null;clearInterval(wsKA);if(wsBye)return;
-        // host: its relayed players count as gone until the socket is back (the server hands them back on reconnect)
-        if(role==='host'){for(const [pid,l] of [...links])if(l.ws)gone(pid);wsRetry(0);}else gone(hostId);};});
-    const wsRetry=n=>{if(wsBye||n>30)return;setTimeout(()=>{if(wsBye||ws)return;wsOpen('host').catch(e=>{if(!(e&&(e.type==='unavailable-id'||e.type==='refused')))wsRetry(n+1);});},n?Math.min(5000,400*n):100);};
-    const wsJoin=async()=>{const id=rid();await wsOpen('client',id);myId=id;links.set(hostId,{ws:1,send:x=>wsTx('|'+JSON.stringify(x)),buf:wsBuf});upd(hostId,{},true);};
-    Object.defineProperty(R,'_ws',{get:()=>ws});
     const ready=(async()=>{
-      const extra=via==='ws'?[]:await relayServers();const cfg=Object.assign({},OPTS.config,{iceServers:(OPTS.config.iceServers||[]).concat(via==='pjd'?[]:extra)});
+      const extra=await relayServers();const cfg=Object.assign({},OPTS.config,{iceServers:(OPTS.config.iceServers||[]).concat(extra)});
       if((hideIp||forceRelay)&&(extra.length||relay))cfg.iceTransportPolicy='relay';
       const pjOpts=Object.assign({},OPTS,{config:cfg});
       // --- PeerJS transport ---
@@ -98,7 +58,7 @@ window.WW3_P2P=true;
         p.on('open',()=>{p.on('connection',c=>{c.on('open',()=>{links.set(c.peer,{buf:()=>c.dataChannel?c.dataChannel.bufferedAmount:0,send:m=>{if(c.open)c.send(m);}});if(!peers.has(c.peer))upd(c.peer,{},true);});c.on('data',m=>onMsg(c.peer,m));c.on('close',()=>gone(c.peer));c.on('error',()=>gone(c.peer));});res();});
         p.on('error',e=>{const t=e&&e.type;if(['unavailable-id','network','server-error','browser-incompatible','socket-error'].includes(t))rej(e);else console.warn('p2p',t);});
         p.on('disconnected',()=>{try{if(!p.destroyed)p.reconnect();}catch(e){}});});
-      const pjJoin=()=>new Promise((res,rej)=>{let p;try{p=new Peer(rid(),pjOpts);}catch(e){rej(e);return;}peer=p;const to=setTimeout(()=>rej(Object.assign(new Error('connect timeout'),{type:'timeout'})),via==='pjd'||via==='pjt'?9000:via?6000:14000);
+      const pjJoin=()=>new Promise((res,rej)=>{let p;try{p=new Peer(rid(),pjOpts);}catch(e){rej(e);return;}peer=p;const to=setTimeout(()=>rej(Object.assign(new Error('connect timeout'),{type:'timeout'})),via?6000:14000);
         p.on('open',id=>{const c=p.connect(hostId,{reliable:true,serialization:'json'});c.on('data',m=>onMsg(hostId,m));c.on('close',()=>gone(hostId));c.on('error',()=>gone(hostId));
           c.on('open',()=>{clearTimeout(to);myId=id;links.set(hostId,{send:m=>{if(c.open)c.send(m);}});upd(hostId,{},true);res();});});
         p.on('error',e=>{const t=e&&e.type;if(['peer-unavailable','network','server-error','browser-incompatible','socket-error'].includes(t)){clearTimeout(to);rej(e);}});});
@@ -110,25 +70,18 @@ window.WW3_P2P=true;
         const to=setTimeout(()=>rej(Object.assign(new Error('host not found'),{type:'peer-unavailable'})),via?10000:22000);
         get((m,pid)=>{if(m&&m.k==='hst'&&!hp){hp=pid;clearTimeout(to);myId=TR.selfId;links.set(hostId,{send:x=>send(x,{target:pid})});upd(hostId,{},true);res();return;}if(pid===hp)onMsg(hostId,m);});
         troom.onPeerLeave(pid=>{if(pid===hp)gone(hostId);});});
-      if(hosting){myId=hostId;
-        // the host also opens its relay room on the servers; it never waits for that once P2P hosting works
-        const wsP=srvUrl()?wsOpen('host').then(()=>true,e=>{if(e&&e.type==='unavailable-id')throw e;if(!(e&&e.type==='refused'))wsRetry(1);return false;}):null;
-        const r=await Promise.allSettled([pjHost(),Promise.resolve().then(trHost)]);const p2p=r.some(x=>x.status==='fulfilled');
-        if(r[0].status==='rejected'&&r[0].reason&&r[0].reason.type==='unavailable-id')throw r[0].reason;
-        if(wsP&&!p2p){R.srv=await wsP;if(!R.srv)throw r[0].reason;}else if(wsP)wsP.then(v=>{R.srv=v;},()=>{});else if(!p2p)throw r[0].reason;}
-      else if(via==='ws'){await wsJoin();R.via='ws';}
-      else if(via==='pjd'||via==='pjt'){await pjJoin();R.via=via;}
+      if(hosting){myId=hostId;const r=await Promise.allSettled([pjHost(),Promise.resolve().then(trHost)]);
+        if(r.every(x=>x.status==='rejected'))throw r[0].reason;if(r[0].status==='rejected'&&r[0].reason&&r[0].reason.type==='unavailable-id')throw r[0].reason;}
       else if(via==='pj'){await pjJoin();R.via='pj';}else if(via==='tr'){await trJoin();R.via='tr';}
       else{try{await pjJoin();R.via='pj';}catch(e){try{if(peer)peer.destroy();}catch(_){}peer=null;console.warn('p2p: PeerJS join failed ('+(e&&e.type||e)+'), trying the Nostr network');await trJoin();R.via='tr';}}
     })();
     Object.assign(R,{name,
-      emit:(t,d)=>{const msg={k:'e',t,d};const to=d&&typeof d==='object'&&d.to;if(to&&links.has(to)){try{links.get(to).send(msg);}catch(e){}}else if(!to)bcast(msg);
+      emit:(t,d)=>{const msg={k:'e',t,d};const to=d&&typeof d==='object'&&d.to;if(to&&links.has(to)){try{links.get(to).send(msg);}catch(e){}}else if(!to)for(const l of links.values())try{l.send(msg);}catch(e){}
         for(const f of (H[t]||[]))try{f({peer:myId,by:null,isMe:true,sameTab:true,kind:'viewer',guest:false,topic:t,data:d});}catch(e){}return Promise.resolve();},
       on:(t,f)=>{(H[t]=H[t]||[]).push(f);return()=>{H[t]=(H[t]||[]).filter(x=>x!==f);};},
-      presence:p=>{for(const k in p){if(p[k]===null)delete myPres[k];else myPres[k]=p[k];}bcast({k:'p',p:myPres});return Promise.resolve();},
+      presence:p=>{for(const k in p){if(p[k]===null)delete myPres[k];else myPres[k]=p[k];}const msg={k:'p',p:myPres};for(const l of links.values())try{l.send(msg);}catch(e){}return Promise.resolve();},
       buffered:to=>{const l=links.get(to);return l&&l.buf?l.buf():0;},peers:list,onPeers:f=>{PH.push(f);return()=>{};},connected:()=>!!myId,onConnection:f=>{setTimeout(()=>f(!!myId),0);return()=>{};},
-      leave:()=>{wsBye=true;clearInterval(wsKA);try{if(ws)ws.close(1000,'leave');}catch(e){}ws=null;try{if(peer)peer.destroy();}catch(e){}try{if(troom)troom.leave();}catch(e){}return Promise.resolve();}});
-    function bcast(msg){let all=false;for(const l of links.values()){if(l.ws&&hosting){if(!all){all=true;wsTx('|'+JSON.stringify(msg));}continue;}try{l.send(msg);}catch(e){}}}
+      leave:()=>{try{if(peer)peer.destroy();}catch(e){}try{if(troom)troom.leave();}catch(e){}return Promise.resolve();}});
     return ready.then(()=>R,e=>{R.leave();throw e;});}
   // Public game list. One browser at a time acts as the directory (it claims a fixed id on the PeerJS broker); every
   // other player on the menu connects to it, tells it about the game they host, and gets back the list of all games -
@@ -168,42 +121,9 @@ window.WW3_P2P=true;
       presence:p=>{for(const k in p){if(p[k]===null)delete myPres[k];else myPres[k]=p[k];}if(role==='cli'&&conn&&conn.open){try{conn.send({k:'p',p:myPres});}catch(e){}}else if(role==='srv')bcast();fire();return Promise.resolve();},
       state:()=>({role,n:list.size,id:peer&&peer.id})};})();
   window.WW3_DIR=DIR;
-  // Game list on the World War 3 servers: one WebSocket per browser on the menu; the server pushes the list whenever a
-  // game opens, fills or closes. If the server can't be reached at all, the peer-to-peer directory above takes over.
-  const SDIR=(()=>{const PH=[];let ws=null,myId=null,myPres={},list=[],started=false,fails=0,everOk=false,dead=false,ka=null,tT=null,last='';
-    const ent=(id,pres,me)=>({peer:pres&&pres.g&&pres.g.c?'ww3-'+pres.g.c:id,by:null,isMe:!!me,sameTab:!!me,kind:'viewer',guest:false,presence:pres||{},updatedAt:Date.now()});
-    const peers=()=>[ent('me',myPres,true),...list.filter(([id])=>id!==myId).map(([id,p])=>ent(id,p))];
-    const fire=()=>{const ps=peers();for(const f of PH)try{f({peers:ps,joined:[],left:[],updated:[]});}catch(e){console.error(e);}};
-    // what this browser hosts, at most ~3 times a second (the server's limit), always ending on the latest state
-    const tell=()=>{if(tT)return;tT=setTimeout(()=>{tT=null;const s='p|'+JSON.stringify({g:myPres.g||null});if(s!==last&&ws&&ws.readyState===1){try{ws.send(s);last=s;}catch(e){}}},350);};
-    function giveUp(){dead=true;console.warn('servers: game list unreachable, using the peer-to-peer game list');for(const f of PH)DIR.onPeers(f);DIR.presence(Object.assign({},myPres));}
-    const again=()=>{fails++;if(!everOk&&fails>=2){giveUp();return;}setTimeout(connect,Math.min(15000,500*2**Math.min(fails,5)));};
-    function connect(){if(dead)return;let s;try{s=new WebSocket(wsBase()+'/lobby');}catch(e){again();return;}
-      s.onmessage=ev=>{const m=ev.data;if(typeof m!=='string')return;
-        if(m.startsWith('!w ')){myId=m.slice(3);ws=s;everOk=true;fails=0;last='';tell();clearInterval(ka);ka=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);}
-        else if(m.startsWith('l|')){try{const l=JSON.parse(m.slice(2));if(Array.isArray(l)){list=l;fire();}}catch(e){}}
-        else if(m.startsWith('!e ')&&!dead)giveUp();};   // refused (server over its daily budget): use the P2P list
-      s.onerror=()=>{};s.onclose=()=>{if(ws===s){ws=null;clearInterval(ka);list=[];fire();}if(!dead)again();};}
-    return{failed:()=>dead,peers,onPeers:f=>{PH.push(f);if(!started){started=true;connect();}setTimeout(()=>f({peers:peers(),joined:[],left:[],updated:[]}),0);return()=>{};},
-      presence:p=>{for(const k in p){if(p[k]===null)delete myPres[k];else myPres[k]=p[k];}tell();fire();return Promise.resolve();},
-      state:()=>({role:'server',n:list.length,id:myId,ok:!!ws})};})();
-  window.WW3_SDIR=SDIR;
-  const DL=()=>srvUrl()&&!SDIR.failed()?SDIR:DIR;
-  // joining with the servers configured: direct P2P (STUN only), then P2P forced through TURN (only when TURN logins
-  // exist and the direct attempt timed out), then the server relay. "Hide my IP address" skips the direct step.
-  async function chainJoin(name){let e1=null;
-    if(!hideIp){try{return await namedRoom(name,false,'pjd');}catch(e){e1=e;}}
-    const turn=relay||(await relayServers()).length>0;
-    if(turn&&(hideIp||(e1&&e1.type==='timeout'))){try{return await namedRoom(name,true,'pjt');}catch(e){}}
-    console.warn('p2p: no direct connection ('+(e1&&(e1.type||e1.message)||'skipped')+'), using the server relay');
-    return namedRoom(name,false,'ws');}
-  const LOBBY={emit:()=>Promise.resolve(),on:()=>()=>{},presence:p=>DL().presence(p),peers:()=>DL().peers(),onPeers:f=>DL().onPeers(f),
+  const LOBBY={emit:()=>Promise.resolve(),on:()=>()=>{},presence:DIR.presence,peers:DIR.peers,onPeers:DIR.onPeers,
     connected:()=>true,onConnection:f=>{setTimeout(()=>f(true),0);return()=>{};},
-    join:async(name,o)=>{const via=o&&o.via,S=srvUrl(),hosting=!!(NET.code&&NET.code!=='join');
-      // a reconnect reuses the way that worked; if it fails and the servers are configured, the relay is the backstop
-      if(via){if(!S||via==='ws')return namedRoom(name,false,via);try{return await namedRoom(name,false,via);}catch(e){return namedRoom(name,false,'ws');}}
-      if(S&&!hosting)return chainJoin(name);
-      try{return await namedRoom(name,false);}catch(e){if(e&&e.type==='peer-unavailable')throw e;if(window.WW3_RELAY_BUILTIN||relay){console.warn('p2p: direct connection failed, retrying through the relay');return namedRoom(name,true);}throw e;}}};
+    join:async(name,o)=>{const via=o&&o.via;if(via)return namedRoom(name,false,via);try{return await namedRoom(name,false);}catch(e){if(e&&e.type==='peer-unavailable')throw e;if(window.WW3_RELAY_BUILTIN||relay){console.warn('p2p: direct connection failed, retrying through the relay');return namedRoom(name,true);}throw e;}}};
   window.claude={use:async n=>(n==='room'&&typeof Peer!=='undefined')?LOBBY:null};
 })();
 /* Installable app: on a website (https) the game registers a service worker so it can be installed as a desktop /
@@ -462,7 +382,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div id="mpstatus"></div>
       </div>
     </div>
-    <p class="credits">Orchestral score played on the FluidR3 GM instrument samples by Frank Wen (MIT), via midi-js-soundfonts by Benjamin Gleitzman (MIT). <p class="credits">Middle Eastern instruments: darbuka, frame drums (daf, tar), chest-beat and hand strokes, claps, riq, finger cymbals, sanj and tabl from the Versilian Community Sample Library by Versilian Studios / Sam Gossner (CC0); santur, ney, kamancheh and qanbus voices from FluidR3 GM by Frank Wen (MIT). <p class="credits">Unit voices generated with open neural voices: Kokoro (Apache-2.0), Piper voices (Rhasspy/NabuCasa) and Meta MMS-TTS (CC BY-NC 4.0, non-commercial). <p class="credits">3D models: T-90 by Yantung77, Toyota Hilux by David_Holiday, Caterpillar D7R by RolandoGarroMena, AH-64 Apache by araon, Mi-24 by anastasia.d, F-15 by salphytheunemployed, F/A-18 and Su-35 by manilov.ap, Rafale by harway, Eurofighter Typhoon by nestor_d, J-10 by td991, MiG-29 by Usman1684, F-16 by Carlos.Maciel, G6 by desertfox2, Wiesel 2 Ozelot by Adityakm (CC-BY, via Sketchfab/Objaverse); Quaternius, Kenney and Kay Lousberg (public domain); Zsky, KolosStudios, Alex Safayan, angelo raffaele Catalano, jeremy, Jarlan Perez, Poly by Google, J-Toastie, Paul Spooner and sftwr314r8 (CC BY), via Poly Pizza.</p>
+    <p class="credits">Orchestral score played on the FluidR3 GM instrument samples by Frank Wen (MIT), via midi-js-soundfonts by Benjamin Gleitzman (MIT). <p class="credits">Unit voices generated with open neural voices: Kokoro (Apache-2.0), Piper voices (Rhasspy/NabuCasa) and Meta MMS-TTS (CC BY-NC 4.0, non-commercial). <p class="credits">3D models: T-90 by Yantung77, Toyota Hilux by David_Holiday, Caterpillar D7R by RolandoGarroMena, AH-64 Apache by araon, Mi-24 by anastasia.d, F-15 by salphytheunemployed, F/A-18 and Su-35 by manilov.ap, Rafale by harway, Eurofighter Typhoon by nestor_d, J-10 by td991, MiG-29 by Usman1684, F-16 by Carlos.Maciel, G6 by desertfox2, Wiesel 2 Ozelot by Adityakm (CC-BY, via Sketchfab/Objaverse); Quaternius, Kenney and Kay Lousberg (public domain); Zsky, KolosStudios, Alex Safayan, angelo raffaele Catalano, jeremy, Jarlan Perez, Poly by Google, J-Toastie, Paul Spooner and sftwr314r8 (CC BY), via Poly Pizza.</p>
   </div>
 </div>
 <div id="settings" class="overlay" hidden style="z-index:30">
@@ -7341,10 +7261,10 @@ async function renderLobby(){if(!NET.code||NET.code==='join'||MODE!=='single')re
 function lobbyTeams(){const nh=NET.lobby.length+1;return [...(NET.tm||[]).slice(0,nh),...(NET.ais||[]).map(a=>a.tm|0)];}
 function launchMP(){if(MODE!=='single'||!NET.lobby.length)return;const seed=(Math.random()*1e9)|0;const ais=(NET.ais||[]).slice(0,Math.max(0,(MAPS[setup.map]||MAPS.strait).max-1-NET.lobby.length)).map(a=>({f:FKEYS.includes(a.f)?a.f:FKEYS[0],d:Math.max(0,Math.min(2,a.d|0)),tm:Math.max(0,Math.min(7,a.tm|0))}));const facs=[setup.p,...NET.lobby.map(p=>p.f),...ais.map(a=>a.f)];NET.peers=[null,...NET.lobby.map(p=>p.peer),...ais.map(()=>null)];NET.toks=[null,...NET.lobby.map(p=>p.tok||null),...ais.map(()=>null)];
   const aiD=[null,...NET.lobby.map(()=>null),...ais.map(a=>a.d|0)];NET.opp=NET.peers[1];
-  const map=setup.map||'strait';const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',{pv:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm}).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map}}).catch(()=>{});NET.startInfo={seed,facs,map,tm};startMP('host',seed,facs,0,map,tm,aiD);}
+  const map=setup.map||'strait';const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',{pv:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0}).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map}}).catch(()=>{});NET.startInfo={seed,facs,map,tm,w:setup.w|0};startMP('host',seed,facs,0,map,tm,aiD);}
 // A dropped player gets 30 s to reconnect (same team, same units) before the AI takes over their side.
 function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=NET.toks.indexOf(tok);if(ix<1)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,(NET.cseqSlot||[])[ix]|0);
-  const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',{pv:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm}).catch(()=>{});
+  const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',{pv:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm,w:S.w|0}).catch(()=>{});
   for(const O of G.teams)log(O.id,`${T.F.name}'s commander reconnected.`,'g');
   // P2P: the rejoined player starts from a fresh map, so collapsed city blocks are re-sent as they come into view
   if(window.WW3_P2P){(NET.gq=NET.gq||[])[ix]=[];(NET.civQ=NET.civQ||[])[ix]=(G.civ||[]).map((c,i)=>c.dead?i:-1).filter(i=>i>=0);}}
@@ -7358,7 +7278,10 @@ function joinTok(code){const k='ww3_tok_'+code;let t=null;try{t=sessionStorage.g
 function wireClient(g){
   g.on('hello',m=>{if(m.sameTab)NET.myPeer=m.peer;});
   g.on('lobby',m=>{if(m.peer===NET.hostPeer&&m.data&&m.data.to===NET.myPeer&&MODE==='single'){if(m.data.full){clearInterval(NET.helloI);$('mpstatus').textContent='That game is full.';leaveNet();return;}$('mpstatus').textContent=`Joined${NET.via==='ws'?' (through the game server)':''}. ${m.data.n} players in the lobby. Waiting for the host to start the battle…`;}});
-  g.on('start',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV){$('mpstatus').textContent='You and the host have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<1||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;startMP('client',d.seed|0,d.facs,sl,map,tm);});
+  g.on('start',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV){$('mpstatus').textContent='You and the host have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<1||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
+  // An old host sends no 'w': the player's own menu choice stays, as before.
+  if(typeof d.w==='number'&&d.w>=-1&&d.w<WX.length){setup.w=d.w|0;const W=$('wx');if(W)W.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.w===setup.w));}
+  startMP('client',d.seed|0,d.facs,sl,map,tm);});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
   g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();applySnap(m.data);}});
   g.on('evt',m=>{if(ok(m)){NET.lastRx=performance.now();applyEvents(m.data);}});
@@ -7428,7 +7351,10 @@ function sendSnapP(k,to,items){const b=1<<k,key=k;NET.sc=NET.sc||{};NET.kf=NET.k
   const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
   // a remembered building that died out of this player's sight stays on their map until they see the spot ('gone' queue)
   if(dr.length&&NET.gq&&NET.gq[k]&&NET.gq[k].length){const q=new Set(NET.gq[k].map(g=>g[0]));for(let i=dr.length-1;i>=0;i--)if(q.has(dr[i]))dr.splice(i,1);}
-  if(ch.length||!keep.length&&sendKeep||dr.length)snapOut(base,ch,snapDrops(dr));for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});}
+  if(ch.length||!keep.length&&sendKeep||dr.length)snapOut(base,ch,snapDrops(dr));for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});
+  // just-died units left out of the drop list are still on this player's screen until their 'die' arrives (dieWho)
+  if(dr.length&&NET.dyC){const dy=NET.dyC.s;for(const id of dr)if(dy.has(id))dhSet(k).add(id);}}
+function dhSet(k){if(NET.dhG!==G){NET.dhG=G;NET.dh=[];}const D=NET.dh;return D[k]||(D[k]=new Set());}
 // P2P: one copy per player, so the two visibility masks are folded into that player's 'remembered' flag and dropped
 function forPlayer(items,k){const b=1<<k,out=[];for(const a of items){if(!((a[11]|a[12])&b))continue;const c=a.slice(0,11);c[9]=(a[11]&b)?(c[9]&~FLG.mem):(c[9]|FLG.mem);out.push(c);}return out;}
 // a player who sees nothing at all (their side was wiped out) still gets an empty snapshot every 0.4 s: it moves their
@@ -7516,14 +7442,15 @@ function evWho(v){const AM=VG.AM,own=v.own!=null?AM[v.own]|0:0;
 // what each player was last sent of an entity: r.t[k] = when it was last in k's snapshot as visible, r.m = players
 // that hold it as a remembered (fogged) building
 function skNote(SK,e,vm,mm,live){let r=SK.get(e.id);if(!r)SK.set(e.id,r={t:[],m:0,s:0});for(const k of live)if(vm&(1<<k))r.t[k]=G.t;r.m|=mm;r.s=G.t;}
-// 'die' goes to everyone who sees the spot, and to anyone who may still have that entity on screen. A client drops a
-// unit after ~0.9 s of snapshots without it (clientTick ttl; unchanged units are only refreshed by the 0.4 s keep-alive
-// list), so a unit that was in a player's snapshots within 1.6 s of the latest one they were sent is still there
-// (snapshots skipped for a congested link count as 'still there'; 8.5 s covers the client's absolute expiry). A
-// remembered building never expires on the client, so if it dies out of sight it is queued as a silent 'gone'.
+// 'die' goes to everyone who sees the spot, and to anyone who still has that entity on screen: it is in the last
+// snapshot cache for that player (NET.sc[k]; a snapshot skipped for a congested link leaves it there), or it was
+// dropped from that cache only because it had just died (dhSet). A unit that walked out of sight was already named in
+// that player's drop list, so it dying later in the fog shows them nothing (8.5 s covers the client's absolute expiry).
+// A remembered building never expires on the client, so if it dies out of sight it is queued as a silent 'gone'.
 function dieWho(v,live){const id=v[1],x=v[2],y=v[3],ki=v[4],isB=v[5];let m=visAt(x,y,isB?120:30);const r=NET.sk&&NET.sk.get(id);
-  if(r){NET.sk.delete(id);const st=NET.snapTo||[];for(const k of live){const b=1<<k;if(m&b)continue;const t=r.t[k];
-    if(t!=null&&(st[k]||0)-t<=1.6&&G.t-t<=8.5)m|=b;
+  const dh=NET.dhG===G?NET.dh:null;let held=0;if(dh)for(const k of live)if(dh[k]&&dh[k].delete(id))held|=1<<k;
+  if(r){NET.sk.delete(id);const sc=NET.sc||{};for(const k of live){const b=1<<k;if(m&b)continue;const t=r.t[k];
+    if(t!=null&&((held&b)||sc[k]&&sc[k].has(id))&&G.t-t<=8.5)m|=b;
     else if(isB&&(r.m&b)){const q=NET.gq[k]=NET.gq[k]||[];q.push([id,x,y,ki]);if(q.length>300)q.shift();}}}
   return m;}
 // a city block collapsing changes the map (passability, cover), so every player must get it eventually: now if they see
