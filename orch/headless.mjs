@@ -472,14 +472,14 @@ function bench() {
   const cfgs = String(argS('players-list', '2,4,8')).split(',').map(Number);
   const seeds = String(argS('seeds', '1')).split(',').map(Number);
   const map = argS('map', 'strait');
-  const END = Number(argS('minutes', 21));
-  console.log(`bench: Node ${process.version}, ${os.cpus()[0].model} x${os.cpus().length}, map ${map}, seeds ${seeds.join(',')}, ${has('real-clock') ? 'real' : 'frozen (reproducible; no ms cap on route searches)'} pathfinding clock, ${END} game-min per battle; costs are process CPU time (incl. GC threads)`);
+  const END = Number(argS('minutes', 21)), DIFFB = Number(argS('diff', 1));
+  console.log(`bench: AI difficulty ${DIFFB}, Node ${process.version}, ${os.cpus()[0].model} x${os.cpus().length}, map ${map}, seeds ${seeds.join(',')}, ${has('real-clock') ? 'real' : 'frozen (reproducible; no ms cap on route searches)'} pathfinding clock, ${END} game-min per battle; costs are process CPU time (incl. GC threads)`);
+  gc(); const base0 = process.memoryUsage().heapUsed;
   const rows = [];
   for (const N of cfgs) for (const seed of seeds) {
     gc();
-    const base = process.memoryUsage().heapUsed;
     const { W } = makeSim();
-    const st = W.start({ seed, map, facs: DEFAULT_FACS.slice(0, N), diff: 1, realClock: has('real-clock') });
+    const st = W.start({ seed, map, facs: DEFAULT_FACS.slice(0, N), diff: DIFFB, realClock: has('real-clock') });
     const acc = {}; let peakMs = 0, peakEnts = 0, heap = 0;
     for (let m = 0; m < END; m++) {
       const c0 = process.cpuUsage();
@@ -489,23 +489,24 @@ function bench() {
       const ph = Object.keys(PH).find(k => m >= PH[k][0] && m < PH[k][1]);
       if (ph) { const a = acc[ph] || (acc[ph] = { ms: 0, s: 0, ents: 0, n: 0 }); a.ms += r.ms; a.s += r.steps / 60; a.ents += i.ents; a.n++; }
       peakMs = Math.max(peakMs, r.ms / Math.max(1, r.steps / 60)); peakEnts = Math.max(peakEnts, i.ents);
-      if (m % 3 === 2 || r.over) { gc(); heap = Math.max(heap, process.memoryUsage().heapUsed - base); }
+      if (m % 3 === 2 || r.over) { gc(); heap = Math.max(heap, process.memoryUsage().heapUsed); }
       process.stdout.write(`\r  ${N}p seed ${seed}: game-min ${m + 1}/${END}, ${i.ents} entities, ${(r.ms / Math.max(1, r.steps / 60)).toFixed(1)} ms/game-s      `);
       if (r.over) break;
     }
     process.stdout.write('\n');
-    const row = { N, seed, setupMs: st.ms, peakMs, peakEnts, heapMB: heap / 1048576, end: W.info() };
+    const row = { N, seed, map, diff: DIFFB, setupMs: st.ms, peakMs, peakEnts, heapMB: heap / 1048576, end: W.info() };
     for (const k of Object.keys(PH)) row[k] = acc[k] ? { msPerS: acc[k].ms / acc[k].s, ents: acc[k].ents / acc[k].n } : null;
     rows.push(row);
   }
-  console.log('\nms of CPU per game-second (avg entities)        early 0-3 min     mid 8-11 min     late 18-21 min   worst minute   peak heap');
+  console.log('\nms of CPU per game-second (avg entities)        early 0-3 min     mid 8-11 min     late 18-21 min   worst minute   JS heap after GC (whole process)');
   for (const r of rows) {
     const c = k => r[k] ? `${r[k].msPerS.toFixed(1).padStart(6)} (${Math.round(r[k].ents).toString().padStart(4)})` : '     (ended)';
-    console.log(`  ${r.N} players, seed ${r.seed}${' '.repeat(26)}${c('early')}    ${c('mid')}    ${c('late')}    ${r.peakMs.toFixed(1).padStart(6)} ms     ${r.heapMB.toFixed(1)} MB${r.end.over ? `  (ended at ${(r.end.t / 60).toFixed(1)} min)` : ''}`);
+    console.log(`  ${r.N} players, seed ${r.seed}, peak ${String(r.peakEnts).padStart(4)} ents${' '.repeat(10)}${c('early')}    ${c('mid')}    ${c('late')}    ${r.peakMs.toFixed(1).padStart(6)} ms     ${r.heapMB.toFixed(1)} MB${r.end.over ? `  (ended at ${(r.end.t / 60).toFixed(1)} min)` : ''}`);
   }
+  console.log(`  JS heap of a bare Node process running this script, before any battle: ${(base0 / 1048576).toFixed(1)} MB`);
   console.log(`  battle setup (newGame: map + terrain plan): ${rows.map(r => `${r.N}p ${r.setupMs.toFixed(0)} ms`).join(', ')}`);
   fs.mkdirSync(path.join(ROOT, 'orch', 'out'), { recursive: true });
-  fs.writeFileSync(path.join(ROOT, 'orch', 'out', 'headless-bench.json'), JSON.stringify({ node: process.version, cpu: os.cpus()[0].model, map, rows }, null, 1));
+  fs.writeFileSync(path.join(ROOT, 'orch', 'out', `headless-bench-${map}-d${DIFFB}.json`), JSON.stringify({ node: process.version, cpu: os.cpus()[0].model, map, rows }, null, 1));
 }
 
 // ------------------------------------------------------------------------------------------------ --compare
@@ -546,7 +547,7 @@ async function compare(o) {
   const browser = await chromium.launch({ executablePath: findChromium(),
     args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--mute-audio', '--autoplay-policy=no-user-gesture-required'] });
   const fails = [];
-  let browserSeq = [], bmap = null, binfo = null;
+  let browserSeq = [], bmap = null, binfo = null, bms = 0, bsec = 0;
   try {
     const page = await browser.newPage({ viewport: RENDER ? { width: 960, height: 540 } : { width: 800, height: 600 } });
     await page.addInitScript(() => { window.__stopLoop = true; }); // the harness drives simUpdate itself
@@ -569,17 +570,17 @@ async function compare(o) {
       const bp = await page.evaluate(() => __W3.mapParts()), np = node.mapParts;
       fails.push(`map/terrain plan differs: node ${node.mapHash} vs browser ${bmap} (parts that differ: ${Object.keys(np).filter(k => np[k] !== bp[k]).join(', ')})`);
     }
-    const show = (t, h, ok) => console.log(`  t=${String(t).padStart(4)}s  ${h}  ${ok ? 'same' : 'DIFFERENT'}`);
+    const show = (t, h, ok, ms) => console.log(`  t=${String(t).padStart(4)}s  ${h}  ${ok ? 'same' : 'DIFFERENT'}${ms != null ? `  ${ms.toFixed(1).padStart(6)} ms/game-s in the page` : ''}`);
     show(0, browserSeq[0].h, browserSeq[0].h === node.seq[0].h);
     for (let k = 1; k < node.seq.length; k++) {
       const r = await page.evaluate(([sec, render]) => {
         const out = []; // with --render: draw a frame every game-second (effects and render state live), else one chunk
-        if (render) { let last = null; for (let i = 0; i < sec; i++) { last = __W3.step(1); try { renderFrame(1 / 60); } catch (e) { out.push(String(e)); } if (last.over) break; } return { r: last, h: __W3.hash(), errs: out }; }
+        if (render) { let last = null, ms = 0, steps = 0; for (let i = 0; i < sec; i++) { last = __W3.step(1); ms += last.ms; steps += last.steps; try { renderFrame(1 / 60); } catch (e) { out.push(String(e)); } if (last.over) break; } return { r: Object.assign(last, { ms, steps }), h: __W3.hash(), errs: out }; }
         return { r: __W3.step(sec), h: __W3.hash(), errs: out };
       }, [o.every, RENDER]);
       browserSeq.push({ t: Math.round(r.r.t), h: r.h });
       const same = r.h === node.seq[k].h && Math.round(r.r.t) === node.seq[k].t;
-      show(Math.round(r.r.t), r.h, same);
+      bms += r.r.ms; bsec += r.r.steps / 60; show(Math.round(r.r.t), r.h, same, r.r.ms / Math.max(1e-9, r.r.steps / 60));
       if (r.errs.length) fails.push('render error: ' + r.errs[0]);
       if (!same) {
         fails.push(`state hash differs at t=${Math.round(r.r.t)}s (node ${node.seq[k].h}, browser ${r.h})`);
@@ -602,6 +603,7 @@ async function compare(o) {
   { const mb = peakMB(); if (mb) console.log(`peak memory (node + browser, summed RSS): ${mb} MB`); }
   if (!fails.length && browserSeq.length !== node.seq.length) fails.push(`browser produced ${browserSeq.length} hashes, node ${node.seq.length}`);
   if (fails.length) { console.log(`\nHEADLESS FAIL`); for (const f of [...new Set(fails)]) console.log('  x ' + f); process.exit(1); }
+  console.log(`sim cost: Node ${(node.ms / Math.max(1, node.info.t)).toFixed(1)} ms per game-second, Chromium ${(bms / Math.max(1e-9, bsec)).toFixed(1)} ms per game-second (wall clock, busy machine)`);
   console.log(`\nHEADLESS PASS — ${node.seq.length} state hashes identical (Node ${process.version} vs Chromium${RENDER ? ' with rendering' : ''}), ${(binfo.t / 60).toFixed(1)} game-min, ${binfo.ents} entities at the end`);
 }
 
