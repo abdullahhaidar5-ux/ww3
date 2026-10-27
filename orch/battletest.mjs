@@ -52,6 +52,22 @@ if (has('bench')) {
   process.exit(0);
 }
 
+// --cfbench 2,4,8: the same bench inside a BattleRoom on a local wrangler dev (workerd, Cloudflare's runtime)
+if (has('cfbench')) {
+  const map = argS('map', 'strait'), minutes = Number(argS('minutes', 3)), batch = Number(argS('batch', 60));
+  const s = await startServer({ vars: { BENCH_KEY: 'localbenchkey' } });
+  try {
+    console.log(`local workerd (wrangler dev): /battle-bench, ${map}, ${minutes} game-min, ${batch} step(s) per event`);
+    for (const n of String(argS('cfbench', '2,4,8')).split(',').map(Number)) {
+      const txt = await (await fetch(`${s.url}/battle-bench?players=${n}&minutes=${minutes}&map=${map}&batch=${batch}&key=localbenchkey`)).text();
+      const line = txt.split('\n').find(l => l.startsWith('RESULT ')); const r = line ? JSON.parse(line.slice(7)) : null;
+      if (!r) { console.log(txt); continue; }
+      console.log(`  ${n} players: ${r.wallMsPerGameS} ms per game-second (wall, avg), worst minute ${Math.max(...r.rows.map(x => x.wallMsPerGameS))} ms, slowest event ${r.maxEventMs} ms, peak ${r.peakEnts} entities, ${r.kbPerGameS} KB/s sent${r.over ? ' (ended)' : ''}`);
+    }
+  } finally { s.stop(); }
+  process.exit(0);
+}
+
 // ---- 1. Node
 console.log('1. Node: the bundled battle runs the bench');
 {

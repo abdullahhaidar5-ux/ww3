@@ -16,6 +16,7 @@ export function BATTLE_DRIVER() {
   B.cmd = (peer, d) => hostCmd(peer, d);
   B.gone = peer => hostGone(peer);
   B.rejoin = (peer, tok) => hostRejoin(peer, tok);
+  B.hasTok = tok => !!(tok && NET.toks && NET.toks.indexOf(tok) >= 0);
   B.forget = peer => { for (const k of ['seen', 'lastHi', 'lastPg', 'lastKr', 'edOf']) if (NET[k]) delete NET[k][peer]; };
   // Start the battle as a host that has no side of its own (ME = -1): every slot is a player or a computer player.
   // Same steps as startMP('host', ...) in the page (08-ui), minus the drawing.

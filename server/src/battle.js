@@ -108,7 +108,10 @@ export class BattleHost {
   hello(id, f, tok) {
     const P = this.players.get(id); if (!P) return;
     if (tok) P.tok = String(tok).slice(0, 16);
-    if (this.phase === 'battle') { if (P.tok) this.sim.rejoin(id, P.tok); return; }
+    if (this.phase === 'battle') {   // a reconnect; anyone else is told the game is full (it has started)
+      if (P.tok && this.sim.hasTok(P.tok)) this.sim.rejoin(id, P.tok); else this.emit('lobby', { n: 0, to: id, full: 1 });
+      return;
+    }
     if (this.phase !== 'lobby') return;
     if (typeof f === 'string' && this.sim.facs.includes(f)) P.f = f; else if (!P.f) P.f = this.sim.facs[0];
     if (!this.order.includes(id)) {
