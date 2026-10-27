@@ -33,6 +33,7 @@ MODULES = [
     ('05-fx3d.js', '/* ================= 3D EFFECTS: particles, tracers, project'),
     ('06-view.js', '/* ================= VIEW: scene sync, camera, HUD, fog, min'),
     ('07-net.js', '/* ================= MULTIPLAYER: lobby + host-authoritative'),
+    ('07a-hostsnap.js', '/* ================= HOST NETCODE: snapshots, events, team pa'),
     ('07b-ckpt.js', '/* ---------- Battle checkpoints (for host migration) ------'),
     ('08-ui.js', '/* ================= UI: sidebar, input, menu, main loop ==='),
     ('09-audio.js', '/* ================= AUDIO ENGINE: layered weapons, reverb, '),

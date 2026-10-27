@@ -24,6 +24,12 @@
 //   node orch/headless.mjs --compare --native-math          # compare with each engine's own Math.sin/cos/atan2/exp/pow
 //                                                           # (fails: Node 22 and Chromium 153 differ in the last bit)
 //   node orch/headless.mjs --portable-math                  # plain run with the portable math --compare uses
+//   node orch/headless.mjs --hostsnap                       # server bundle: battle + host netcode (07a-hostsnap,
+//                                                           # 07b-ckpt) with no window; hosts N-1 connected players
+//                                                           # and checks what it sends them -> HOSTSNAP PASS / FAIL
+//   node orch/headless.mjs --hostsnap --compare             # same, and the real game hosting in Chromium must send
+//                                                           # identical messages every --every seconds
+//        [--room]                                           # claude.ai-artifact style broadcast instead of bundles
 //
 // Determinism: the battle's Math.random is a generator seeded from --seed while the simulation runs (newGame and every
 // simUpdate), and performance.now is frozen inside the simulation (the pathfinding time budget otherwise depends on
@@ -50,6 +56,9 @@ const PORTABLE = ['sin', 'cos', 'atan2', 'exp', 'pow'];
 // ------------------------------------------------------------------------------------------------ loading the sim
 // Modules that ARE the simulation (loaded whole).
 export const SIM_FILES = ['01-data.js', '02-map.js', '03-sim.js'];
+// The host netcode a server adds on top (--hostsnap): snapshots/events/team panels, and battle checkpoints. Loaded whole
+// and verbatim, with no window in scope (they must not need one).
+export const HOST_FILES = ['07a-hostsnap.js', '07b-ckpt.js'];
 // Functions the simulation calls that live in rendering/UI modules. Since cycle 9 there are none: ground height, the
 // effect queue (FXE), log and the end-of-battle core live in 02-map/03-sim. Kept so a future borrow fails loudly.
 export const BORROW = {};
@@ -111,10 +120,10 @@ export function extractFn(src, name) {
   return src.slice(start, scanGroup(src, b));
 }
 // The whole headless simulation as one script (also what a server would load).
-export function simSource(srcDir = SRC) {
+export function simSource(srcDir = SRC, { host = false } = {}) {
   const read = f => fs.readFileSync(path.join(srcDir, f), 'utf8');
   let code = '';
-  for (const f of SIM_FILES) code += `\n/* ===== src/${f} ===== */\n` + read(f);
+  for (const f of host ? [...SIM_FILES, ...HOST_FILES] : SIM_FILES) code += `\n/* ===== src/${f} ===== */\n` + read(f);
   for (const [f, names] of Object.entries(BORROW)) {
     const text = read(f);
     code += `\n/* ===== borrowed from src/${f}: ${names.join(', ')} ===== */\n` + names.map(n => extractFn(text, n)).join('\n') + '\n';
@@ -128,7 +137,7 @@ export function simSource(srcDir = SRC) {
 // independent simulation with its own G, caches and driver.
 const BROWSER_NAMES = ['window', 'self', 'document', 'localStorage', 'matchMedia', 'navigator', 'performance'];
 let compiled = null;
-export function makeSim(srcDir = SRC) {
+export function makeSim(srcDir = SRC, { host = false } = {}) {
   const noop = () => {};
   const ctx2d = new Proxy({}, { get: (t, k) => (k in t ? t[k] : noop), set: () => true });
   const canvas = () => ({ width: 0, height: 0, style: {}, getContext: () => ctx2d });
@@ -141,10 +150,10 @@ export function makeSim(srcDir = SRC) {
     navigator: { userAgent: 'node', hardwareConcurrency: os.cpus().length },
     performance: perf,
   };
-  env.window = env.self = env;
-  if (!compiled || compiled.dir !== srcDir) {
-    const body = simSource(srcDir) + `\n/* ===== driver ===== */\nreturn (${DRIVER.toString()})();\n//# sourceURL=ww3-sim.js`;
-    compiled = { dir: srcDir, fn: new vm.Script(`(function(${BROWSER_NAMES.join(',')}){\n${body}\n})`, { filename: 'ww3-sim.js' }).runInThisContext() };
+  env.window = env.self = host ? undefined : env; // the server bundle runs with no window at all
+  if (!compiled || compiled.dir !== srcDir || compiled.host !== host) {
+    const body = simSource(srcDir, { host }) + `\n/* ===== driver ===== */\nreturn (${DRIVER.toString()})();\n//# sourceURL=ww3-sim.js`;
+    compiled = { dir: srcDir, host, fn: new vm.Script(`(function(${BROWSER_NAMES.join(',')}){\n${body}\n})`, { filename: 'ww3-sim.js' }).runInThisContext() };
   }
   return { W: compiled.fn(...BROWSER_NAMES.map(k => env[k])) };
 }
@@ -414,6 +423,51 @@ function DRIVER() {
     ents: G.ents.map(e => [e.id, e.kind, e.team, e.x, e.y, e.hp, e.isB ? e.built : e.state, e.order ? e.order.type : '', e.target ? e.target.id : 0]),
   });
   W.facs = () => FKEYS.slice();
+  // ---- --hostsnap: the host netcode (src/07a-hostsnap.js, 07b-ckpt.js) on top of the battle, as a server would run it.
+  // Slot 0 is the host; every other slot is a "connected player" whose side the AI plays (like a bot client). The host
+  // netcode sees them as humans: their AI is hidden from it while netTick runs. Everything sent goes to a recording room.
+  W.hostStart = o => {
+    const r = W.start(Object.assign({}, o, { mode: 'host' }));
+    const msgs = W.msgs = [];
+    NET.p2p = o.p2p !== false;
+    NET.game = { emit(t, d) { msgs.push([t, JSON.stringify(d)]); return Promise.resolve(); }, buffered: () => 0 };
+    NET.peers = G.teams.map((_, k) => (k === ME ? null : 'p' + k)); NET.toks = G.teams.map((_, k) => (k === ME ? null : 't' + k));
+    NET.startInfo = { seed: o.seed, facs: o.facs, map: o.map, tm: G.teams.map((_, k) => k), w: 0 }; NET.gen = 0; NET.room = null;
+    Object.assign(NET, { snapT: 0, evT: 0, teamT: 0, bT: 0, sc: {}, kf: {}, kt: {}, cseq: {}, cseqSlot: [], ver: null, verSt: 0, sk: null, skP: 0, gq: [], civQ: [], snapTo: [], tgC: null, tgS: null, dhG: null, dh: null, dyC: null, trr: 0, seen: {}, edOf: {}, ckT: null, ckOut: null, ckBusy: false, ckAk: null, ckId: 0, sbSlot: null });
+    W.bots = G.teams.map((_, k) => k).filter(k => k !== ME);
+    return r;
+  };
+  W.hostStep = sec => {
+    const n = Math.round(sec * 60); let done = 0; const t0 = realNow(); let netMs = 0;
+    for (let i = 0; i < n && G && !G.over; i++) {
+      sim(() => { simUpdate(1 / 60); }); S.clock += 1000 / 60; done++;
+      const ai = W.bots.map(k => G.teams[k].ai); const n0 = realNow();
+      for (const k of W.bots) G.teams[k].ai = null;
+      try { netTick(1 / 60); } finally { W.bots.forEach((k, j) => { G.teams[k].ai = ai[j]; }); }
+      netMs += realNow() - n0;
+    }
+    const ms = realNow() - t0;
+    return { t: G.t, over: !!G.over, ms, netMs, steps: done };
+  };
+  // a checkpoint is packed asynchronously (gzip): let it finish at the same point on every engine
+  W.settle = async () => { for (let i = 0; i < 2000 && NET.ckBusy; i++) await new Promise(r => setTimeout(r, 1)); return !NET.ckBusy; };
+  // hash + per-player tally of what was sent since the last call. 'ck' (checkpoint) chunks hold gzip bytes, which may
+  // differ between zlib builds, so they are counted but kept out of the hash.
+  W.takeMsgs = () => {
+    const { s, out } = H(); const L = W.msgs.splice(0); const per = {}; let bytes = 0, ck = 0, bad = 0;
+    const P = to => per[to] || (per[to] = { msgs: 0, bytes: 0, snap: 0, ents: 0, keep: 0, drops: 0, evt: 0, evs: 0, team: 0 });
+    const one = (t, d, p) => {
+      if (t === 'snap') { p.snap++; p.ents += d.e.length; p.keep += (d.k || []).length; p.drops += (d.dr || []).length; for (const a of d.e) if (!Array.isArray(a) || (a.length !== 11 && a.length !== 13) || !KINDS[a[1]] || !(a[2] >= 0 && a[2] < G.teams.length)) bad++; }
+      else if (t === 'evt') { p.evt++; p.evs += d.e.length; } else if (t === 'team') { p.team++; if (typeof d.c !== 'number' || !d.q) bad++; }
+    };
+    for (const [t, js] of L) {
+      bytes += js.length; const d = JSON.parse(js); const to = d.to || 'all'; const p = P(to); p.msgs++; p.bytes += js.length;
+      if (t === 'ck') { ck++; continue; }
+      s(t); s(js);
+      if (t === 'b') for (const [tt, dd] of d.m) one(tt, dd, p); else one(t, d, p);
+    }
+    return { h: out(), n: L.length, bytes, ck, bad, per };
+  };
   return W;
 }
 
@@ -601,9 +655,89 @@ async function compare(o) {
   console.log(`\nHEADLESS PASS — ${node.seq.length} state hashes identical (Node ${process.version} vs Chromium${RENDER ? ' with rendering' : ''}), ${(binfo.t / 60).toFixed(1)} game-min, ${binfo.ents} entities at the end`);
 }
 
+// ------------------------------------------------------------------------------------------------ --hostsnap
+// The server bundle: battle (01+02+03) + host netcode (07a-hostsnap + 07b-ckpt), loaded verbatim in plain Node with no
+// window, playing an AI battle as the host of N-1 connected players and recording everything it sends them.
+// With --compare, the real index.html in Chromium does the same as host and every tick's messages must match.
+function hostStatic() { // the host slice must not name browser-only things (comments stripped; one guarded window read allowed)
+  const probs = [];
+  for (const f of HOST_FILES) {
+    const code = fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:'"\\])\/\/.*$/gm, '$1');
+    for (const n of ['document', 'localStorage', 'sessionStorage', 'matchMedia', 'navigator', 'location', 'THREE', 'requestAnimationFrame', 'cv', 'hud', 'R3', 'SCN', 'CAM', 'showEnd', 'pushLog', 'renderLobby', 'renderGames'])
+      if (new RegExp('(^|[^\\w$.])' + n + '(?![\\w$])').test(code)) probs.push(`${f} names ${n}`);
+    const w = (code.match(/\bwindow\b/g) || []).length, wg = (code.match(/typeof window!=='undefined'&&!!window\.WW3_P2P/g) || []).length;
+    if (w !== wg * 2) probs.push(`${f} uses window outside hostP2P()'s guarded read`);
+  }
+  return probs;
+}
+async function hostsnap(o) {
+  const CMP = has('compare'), every = o.every, P2P = !has('room');
+  const fails = hostStatic();
+  if (fails.length) console.log('static check: ' + fails.join('; ')); else console.log(`static check: ${HOST_FILES.join(', ')} name no DOM, canvas, Three.js or UI functions`);
+  const { W } = makeSim(SRC, { host: true });
+  const st = W.hostStart(Object.assign({}, o, { p2p: P2P }));
+  console.log(`node host (no window; ${SIM_FILES.concat(HOST_FILES).join(' + ')}): ${st.per.map(p => p.fac).join(' vs ')} on ${st.mapName}, seed ${o.seed}; ${st.per.length - 1} connected players, ${P2P ? 'per-player bundles (online edition / server)' : 'one broadcast room (claude.ai artifact)'}${o.portMath.length ? ', portable math' : ''}`);
+  const seq = []; const tot = {}; let msgs = 0, bytes = 0, ck = 0, bad = 0, netMs = 0, simMs = 0;
+  for (let t = every; t <= o.minutes * 60 + 1e-9; t += every) {
+    const r = W.hostStep(every); await W.settle();
+    const m = W.takeMsgs(); seq.push({ t: Math.round(r.t), s: W.hash(), m: m.h });
+    msgs += m.n; bytes += m.bytes; ck += m.ck; bad += m.bad; netMs += r.netMs; simMs += r.ms - r.netMs;
+    for (const [to, p] of Object.entries(m.per)) { const a = tot[to] || (tot[to] = {}); for (const k in p) a[k] = (a[k] || 0) + p[k]; }
+    const sn = Object.values(m.per).reduce((a, p) => a + p.ents, 0);
+    console.log(`  t=${String(Math.round(r.t)).padStart(4)}s  state ${seq[seq.length - 1].s}  sent ${m.h}  ${String(m.n).padStart(4)} msgs ${String((m.bytes / 1024).toFixed(1)).padStart(6)} KB  ${String(sn).padStart(5)} entity rows${m.ck ? `  ${m.ck} checkpoint chunks` : ''}`);
+    if (r.over) break;
+  }
+  const secs = Math.max(1e-9, W.info().t);
+  console.log(`\nsent to players over ${(secs / 60).toFixed(1)} game-min: ${msgs} messages, ${(bytes / 1024).toFixed(0)} KB (${(bytes / 1024 / secs).toFixed(1)} KB/s), ${ck} checkpoint chunks`);
+  for (const [to, p] of Object.entries(tot).sort()) console.log(`  ${to.padEnd(4)} ${String(p.msgs).padStart(5)} msgs ${(p.bytes / 1024).toFixed(0).padStart(5)} KB: ${p.snap} snapshots (${p.ents} entity rows, ${p.keep} keep-alive ids, ${p.drops} drops), ${p.evt} event batches (${p.evs} events), ${p.team} team panels`);
+  console.log(`  host netcode cost: ${(netMs / secs).toFixed(1)} ms per game-second (battle: ${(simMs / secs).toFixed(1)} ms), wall-clock`);
+  const players = Object.keys(tot).filter(k => k !== 'all');
+  if (bad) fails.push(`${bad} malformed snapshot rows / team panels`);
+  if (P2P && players.length !== st.per.length - 1) fails.push(`only ${players.length} of ${st.per.length - 1} players were sent anything`);
+  if (P2P) for (const k of players) if (!tot[k].ents || !tot[k].team || !tot[k].evs) fails.push(`${k} got no ${!tot[k].ents ? 'snapshot rows' : !tot[k].team ? 'team panels' : 'events'}`);
+  if (!P2P && !(tot.all && tot.all.ents)) fails.push('no broadcast snapshots');
+  if (secs >= 12 && !ck) fails.push('no checkpoint was sent to the standby player');
+  if (CMP && !fails.length) await hostsnapCompare(o, P2P, seq, fails);
+  if (fails.length) { console.log('\nHOSTSNAP FAIL'); for (const f of fails) console.log('  x ' + f); process.exit(1); }
+  console.log(`\nHOSTSNAP PASS — the server bundle (no window) built ${msgs} messages for ${st.per.length - 1} player${st.per.length === 2 ? '' : 's'}${CMP ? `; identical to the real game hosting in Chromium at all ${seq.length} checkpoints (state and every message sent, checkpoint gzip bytes excepted)` : ''}`);
+}
+async function hostsnapCompare(o, P2P, seq, fails) {
+  const { acquireBrowserLock } = await import('./browserlock.mjs');
+  if (!has('no-lock')) await acquireBrowserLock();
+  const server = http.createServer((req, res) => {
+    let p = decodeURIComponent(new URL(req.url, 'http://x').pathname); if (p.endsWith('/')) p += 'index.html';
+    const f = path.join(ROOT, p);
+    if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
+    res.writeHead(200, { 'content-type': p.endsWith('.html') ? 'text/html' : p.endsWith('.js') ? 'text/javascript' : 'application/octet-stream' }); fs.createReadStream(f).pipe(res);
+  });
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  const URL0 = `http://127.0.0.1:${server.address().port}/index.html`;
+  const { chromium } = await loadPlaywright();
+  const browser = await chromium.launch({ executablePath: findChromium(), args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--mute-audio'] });
+  try {
+    const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
+    await page.addInitScript(() => { window.__stopLoop = true; });
+    await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue() : r.abort());
+    page.on('pageerror', e => fails.push('page error: ' + (e.stack || e.message).split('\n')[0]));
+    await page.goto(URL0, { waitUntil: 'load', timeout: 180000 });
+    await page.waitForFunction(() => typeof newGame === 'function' && typeof netTick === 'function', null, { timeout: 120000 });
+    await page.addScriptTag({ content: `window.__W3=(${DRIVER.toString()})();` });
+    await page.evaluate(o => { __W3.hostStart(o); }, { seed: o.seed, map: o.map, facs: o.facs, diff: o.diff, portMath: o.portMath, p2p: P2P });
+    console.log(`\nbrowser host (Chromium, real index.html):`);
+    for (const q of seq) {
+      const b = await page.evaluate(async sec => { const r = __W3.hostStep(sec); await __W3.settle(); return { t: Math.round(r.t), s: __W3.hash(), m: __W3.takeMsgs().h }; }, o.every);
+      const same = b.t === q.t && b.s === q.s && b.m === q.m;
+      console.log(`  t=${String(b.t).padStart(4)}s  state ${b.s}  sent ${b.m}  ${same ? 'same' : 'DIFFERENT'}`);
+      if (!same) { fails.push(`at t=${q.t}s ${b.s !== q.s ? 'battle state' : 'messages sent'} differ (node ${b.s !== q.s ? q.s : q.m}, browser ${b.s !== q.s ? b.s : b.m})`); break; }
+    }
+  } catch (e) { fails.push(String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
+  await browser.close(); server.close();
+}
+
 // ------------------------------------------------------------------------------------------------ main
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (has('bench')) bench();
+  else if (has('hostsnap')) { const o = opts(); if (has('compare')) { o.realClock = false; o.portMath = has('native-math') ? [] : PORTABLE; } await hostsnap(o); }
   else if (has('compare')) { const o = opts(); o.realClock = false; o.portMath = has('native-math') ? [] : PORTABLE; await compare(o); }
   else { const o = opts(); const res = runNode(o); summary(res, o); }
 }
