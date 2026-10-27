@@ -13,10 +13,19 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 what is already gated, start no new squads, release the lock, and leave server battles / open items / music to the side
 lane (it is working on them now).
 
+**IN FLIGHT (side lane, 2026-10-27 18:10 — Abdullah: "spawn more agents to finish all this work by tonight"; ORCH: don't
+take these):** Cloudflare battles → branch `orch/stage2-dedicated` (BattleRoom DO + `/bench` first); reconnect bug +
+phone-portrait bar → `orch/open-reconnect-phonebar`; Generals mouse → `orch/controls`; phone touch controls → `orch/touch-controls`; Cloudflare battles browser side
+(lobby choice, fallback) → `orch/cf-battle-client`; shared
+soundtrack from the 14 keeps → `orch/soundtrack`; Three.js upgrade (Graphics Phase 1, merged last) → `orch/three-upgrade`.
+
 **ORDER OF WORK (Abdullah, 2026-10-27 17:58): "Do the battles on servers first. Then address the open items. Then fix
 the music and move onto the graphics overhaul."** ORCH follows this order across cycles; don't start a later stage while
 an earlier one still has work a squad can take (other squads may only do small P1 fixes that don't compete):
-1. **Server-hosted battles** (TOP PRIORITY item below): PC dedicated server, "Host on Cloudflare", lobby choice.
+1. **Server-hosted battles** (TOP PRIORITY item below) — **on Cloudflare** (Abdullah, 18:02: "I want the hosting of
+   battles to be on Cloudflare"): BattleRoom Durable Object running the sim; lobby "Host on Cloudflare" with "Host in my
+   browser" as default/fallback; PC dedicated server dropped. First measure CPU on the real free plan (`/bench`, via a
+   `servers-live` PR Abdullah merges); if the free plan's CPU limit can't hold a battle, ask him about Workers Paid.
 2. **Open items:** client reconnect state wrong (Multiplayer P1); phone-portrait bar clipping (UI); then the two
    items Abdullah had paused — **Generals mouse controls + Mouse settings** (branch `orch/wip-generals-mouse`) and
    **intuitive phone controls** — now unpaused by this instruction (side lane read "open items" to include them; he
