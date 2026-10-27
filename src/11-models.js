@@ -34,6 +34,7 @@ function gunzipU8(u){if(typeof DecompressionStream==='undefined')return Promise.
 function fetchModel(url){const ac=typeof AbortController!=='undefined'?new AbortController():null,tm=setTimeout(()=>{if(ac)ac.abort();},30000);
   return fetch(url,ac?{signal:ac.signal}:undefined).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status+' '+url);return r.arrayBuffer();})
     .finally(()=>clearTimeout(tm));}
+// a failed file is forgotten, so the next battle tries it again (flaky phone connections)
 // MQ: per file, the download (bytes, still zipped) and the unpacked model; need = battles currently waiting for files
 const MQ={bytes:{},parsed:{},need:0,ld:null,bg:[],bgRun:0};MODELS.failed=[];
 // a nation's own hardware: its tank, militia technical, helicopter, jet and bulldozer models
@@ -52,10 +53,10 @@ function parseModel(k){if(MQ.parsed[k])return MQ.parsed[k];return MQ.parsed[k]=(
     const g=await new Promise((res,rej)=>{try{ld.parse(b,'',res,rej);}catch(e){rej(e);}});const P={scene:g.scene,anims:g.animations};
     P.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.encoding=THREE.sRGBEncoding;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);}}});
     try{mergeProto(P);}catch(e){console.warn('merge',k,e);}
-    MODELS.proto[k]=P;MODELS.ready=true;delete MQ.bytes[MODEL_FILES[k]];
+    MODELS.proto[k]=P;MODELS.ready=true;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
     // the effects module keeps a list of model geometry it must never free; a model added later must join it
     try{GC_PROTO=null;}catch(e){}return true;}
-  catch(e){MODELS.err=String(e&&e.message||e);if(!MODELS.failed.includes(k))MODELS.failed.push(k);console.warn('3D model '+k+' failed to load:',e);return false;}})();}
+  catch(e){MODELS.err=String(e&&e.message||e);if(!MODELS.failed.includes(k))MODELS.failed.push(k);delete MQ.bytes[MODEL_FILES[k]];setTimeout(()=>{delete MQ.parsed[k];},0);console.warn('3D model '+k+' failed to load:',e);return false;}})();}
 // Load (download if needed, then unpack) every model a battle with these nations shows. Resolves with {n, bad} once
 // they are all in or have failed, or after maxMs at the latest (a late model then shows on units built after it lands).
 // onProg(done,total) reports progress for the loading screen.
