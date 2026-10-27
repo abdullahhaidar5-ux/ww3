@@ -201,6 +201,8 @@ SHELL_CODE = [
     ('relay fallback when a direct connection fails', "return namedRoom(name,true)"),
     ('server-relay fallback on reconnect', "return namedRoom(name,false,'ws')"),
     ('room API window.claude for the game script', 'window.claude={use:'),
+    ('Cloudflare-hosted battle room URL', "'/battle/'"),
+    ('Cloudflare-hosted battle join (via wsb)', "namedRoom(name,false,'wsb',o.own)"),
 ]
 # Install buttons were removed on purpose (orch/no-install, 11aa2e7): nothing may show or wire them up again.
 # The old btn()/welcome() function bodies may stay as dead code; calling them, or listening for the install prompt, may not.
