@@ -161,7 +161,7 @@ def artifact():
     out = os.path.join(ARTIFACT_OUT, 'index.html')
     with open(out, 'w', encoding='utf-8', newline='') as f:
         f.write(page)
-    rels = sorted('vo/' + n for n in os.listdir(os.path.join(ROOT, 'vo')) if n.endswith('.mp3')) + ['mus/smp.mp3']
+    rels = sorted('vo/' + n for n in os.listdir(os.path.join(ROOT, 'vo')) if n.endswith('.mp3')) + sorted('mus/' + n for n in os.listdir(os.path.join(ROOT, 'mus')) if n.endswith('.mp3'))
     files = {rel: rel for rel in rels}  # published path -> source path, relative to the repo root (ORCH's cwd)
     for rel in rels:
         if not os.path.isfile(os.path.join(ROOT, rel)):

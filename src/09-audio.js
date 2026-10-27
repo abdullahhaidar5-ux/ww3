@@ -48,7 +48,7 @@ function audioWake(){if(document.hidden)return;if(SIL.want)silPlay();const c=AU.
 function audioRebuild(){const old=AU.ctx;if(!old||old.state!=='closed'||(AU.rebuilt||0)>=5)return;AU.rebuilt=(AU.rebuilt||0)+1;
   AU.ctx=null;AU.warm=0;clearInterval(AU.timer);AU.timer=null;try{DRS.clear();KSC.clear();}catch(e){}
   try{if(MYM.el){MYM.el.pause();MYM.el=null;MYM.src=null;}}catch(e){}
-  if(SMP.st!=='ok'){SMP.st=null;}for(const k in VOB)if(typeof VOB[k]==='string')delete VOB[k];
+  if(SMP.st!=='ok'){SMP.st=null;}if(MEP.st!=='ok')MEP.st=null;for(const k in VOB)if(typeof VOB[k]==='string')delete VOB[k];
   initAudio();if(!AU.ctx)return;AU.menuKey=null;try{if(G&&!G.over&&G.teams&&G.teams[ME])startMusic(G.teams[ME].fac);else menuMusic();}catch(e){}}
 function initAudio(){try{if(AU.ctx&&AU.ctx.state==='closed')audioRebuild();if(!AU.ctx){const c=audioCtor();if(!c)return;AU.ctx=c;
     try{if(c.addEventListener)c.addEventListener('statechange',audioState);else c.onstatechange=audioState;}catch(e){}
@@ -280,6 +280,51 @@ const TITLES={US:['Bugles of Liberty','Eagle Charge'],TR:['Mehter Advance','Anat
 for(const k of ['US','TR','IL','EU','UA','RU','SA','AE','PK','IN','CN','KP','KR','EG','CU']){const S=STYLES[k];if(!S)continue;const m=S.motif.slice().reverse();const T=TITLES[k];
   const mo=m.map(([d,l],i)=>[i===m.length-1?0:d,l]);STYLES[k+'_b']=Object.assign({},S,{bpm:Math.round(S.bpm*1.08),prog:S.prog.slice(4).concat(S.prog.slice(0,4)),motif:mo,name:T[1]});if(!S.name)S.name=T[0];}
 const PLAYLIST={IR:['IR','IR_b','IR_c'],RS:['RS','RS_b','RS_c'],DW:['DW','DW_b','DW_c']};
+// ----- Middle Eastern scores: real maqamat / dastgah, regional instruments and rhythms (see "Middle Eastern
+// instruments" below). Scales are in cents: 150 = a quarter-tone above a semitone (Arabic), 140 = the Persian koron.
+const MAQ={bayati:[0,150,300,500,700,800,1000],hijaz:[0,110,390,500,700,800,1000],saba:[0,150,300,400,700,800,1000],
+  rast:[0,200,350,500,700,900,1050],nahawand:[0,200,300,500,700,800,1100],shur:[0,140,300,500,700,800,1000],
+  homayoun:[0,140,400,500,700,800,1000],chahargah:[0,140,400,500,700,840,1100]};
+const mq=k=>MAQ[k].map(c=>c/100);
+// Rhythm layers per section (1 theme, 2 battle, 3 finale), one 16-step bar each, letters as in meDrum.
+// Khaleeji: doum-tek with the Gulf's syncopated group claps; ardah / ayala: tabl and tar frame drums (+ tus cymbals
+// in the Emirates); Saidi: D T - D D - T - with riq; maqsum: D T - T D - T -; Yemeni 3+3+2 with claps.
+const KHAL='d..t.dt.d..t.dt.',KCLAP='...w..w....w..w.',MAQSUM='d.t...t.d...t...',SAIDI='d.t...d.d...t...',RIQ='r.j.r.j.r.j.r.jj';
+Object.assign(STYLES,{
+  SA:{me:1,name:'Najd Ardah',scale:mq('bayati'),root:49,bpm:84,prog:[0,0,3,0,0,4,3,0],lead:'m_takht',lead2:'m_kam',pad:'none',bass:'drone',lv:1,
+    perc:['f.......e...f...','b...e.e.b.b.e.ee'],motif:[[0,2],[1,1],[2,1],[3,3],[2,1],[3,2],[4,2],[3,2],[2,1],[1,1],[2,2],[1,2],[0,6]],
+    mx:{tq:'m_oud',dr:'cel',ens:['m_oud','m_kam'],lay:{1:[KHAL,KCLAP],2:['e.e.f.e.e.e.f.ee',KCLAP]},roll:'e',call:'m_chant',rows:1,cg:.24,cm:[[2,4],[2,2],[3,2],[2,3],[1,1],[0,6]]}},
+  SA_b:{me:1,name:'Sands of Arabia',scale:mq('hijaz'),root:49,bpm:96,prog:[0,0,3,0,4,3,0,0],lead:'m_oud',lead2:'m_qanun',pad:'none',bass:'drone',lv:1,
+    perc:['d.....t.d..t....','b..e..e.b..e..e.'],motif:[[0,2],[1,2],[2,3],[3,1],[4,4],[3,2],[2,2],[1,3],[2,1],[1,2],[0,6]],
+    mx:{tq:'m_kam',dr:'cel',ens:['m_oud','m_qanun'],lay:{1:['w..w..w.w..w..w.','d..t..t.d..t..t.'],2:['w..w..w.w..w..w.','e..e..e.e.e.e.ee']},roll:'tk',call:'m_chant',rows:1,cg:.24,cm:[[4,3],[3,1],[2,2],[1,2],[0,6]]}},
+  AE:{me:1,name:'Falcon Ayala',scale:mq('rast'),root:51.91,bpm:100,prog:[0,0,3,0,4,3,0,0],lead:'m_takht',lead2:'m_oud',pad:'none',bass:'drone',lv:1,
+    perc:[KHAL,'b..e.eb.b.ee.e.e'],motif:[[0,2],[1,2],[2,2],[3,2],[4,4],[5,2],[4,1],[3,1],[2,2],[3,2],[2,2],[1,2],[0,6]],
+    mx:{tq:'m_qanun',dr:'cel',ens:['m_qanun','m_oud'],lay:{1:[KCLAP,RIQ],2:['..y...y...y...y.',KCLAP]},roll:'tk',cym:1,call:'m_chant',rows:1,cg:.24,cm:[[4,2],[4,2],[5,2],[4,2],[3,2],[2,2],[0,6]]}},
+  AE_b:{me:1,name:'Gulf Storm',scale:mq('bayati'),root:51.91,bpm:112,prog:[0,0,3,0,0,4,3,0],lead:'m_oud',lead2:'m_qanun',pad:'none',bass:'drone',lv:1,
+    perc:[KHAL,'b.eeb.e.b.eeb.ee'],motif:[[3,2],[2,1],[1,1],[2,2],[0,2],[1,2],[2,2],[3,4],[4,2],[3,2],[2,2],[1,2],[0,6]],
+    mx:{tq:'m_oud',dr:'cel',ens:['m_oud','m_qanun'],lay:{1:[KCLAP,'..r...r...r...r.'],2:['..y...y...y...y.',KCLAP,'d..t.dt.d..t.dt.']},roll:'tk',cym:1,call:'m_chant',rows:1,cg:.24,cm:[[0,2],[2,2],[3,4],[2,2],[1,2],[0,4]]}},
+  EG:{me:1,name:'Nile Maqam',scale:mq('rast'),root:43.65,bpm:104,prog:[0,0,3,0,4,3,0,0],lead:'m_takht',lead2:'m_ney',pad:'none',bass:'drone',lv:1,
+    perc:[SAIDI,'d.t..dd.t.t.d.tt'],motif:[[4,2],[5,1],[4,1],[3,2],[2,2],[3,2],[4,4],[2,2],[1,1],[2,1],[1,2],[0,6]],
+    mx:{tq:'m_ney',dr:'cel',ens:['m_qanun','m_ney'],lay:{1:[RIQ],2:[RIQ,'....k...k.k.k...']},roll:'tk',roll2:'d',call:'m_miz',cg:.2,brass:1,cm:[[4,1],[5,1],[6,2],[5,1],[4,1],[3,2],[4,4],[2,2],[0,4]]}},
+  EG_b:{me:1,name:'Sinai Storm',scale:mq('hijaz'),root:43.65,bpm:112,prog:[0,0,3,0,4,3,0,0],lead:'m_miz',lead2:'m_qanun',pad:'none',bass:'drone',lv:1,
+    perc:[MAQSUM,'d.t.k.t.d.k.t.kk'],motif:[[0,2],[1,1],[2,1],[3,4],[4,2],[5,1],[4,1],[3,2],[2,2],[1,2],[0,6]],
+    mx:{tq:'m_qanun',dr:'cel',ens:['m_qanun','m_ney'],lay:{1:[RIQ],2:[RIQ,'f.......f...f...']},roll:'tk',roll2:'d',call:'m_miz',cg:.2,brass:1,cm:[[4,2],[5,2],[4,1],[3,1],[2,2],[1,2],[0,6]]}},
+});
+// Latmiyas stay voice-led (a radood calls, the crowd answers and beats their chests on the beat); the regional
+// instruments only open each piece with a taqsim, fill the gaps between lines and join in the battle sections.
+for(const [k,o] of Object.entries({
+  IR:{scale:mq('shur'),fill:'m_ney',resp:[[0,2],[1,2],[2,4],[1,2],[0,6]],mx:{tq:'m_santur',lay:{2:['o..pp.o.o..pp.o.']},roll:'p'}},
+  IR_b:{scale:mq('homayoun'),fill:'m_kam',resp:[[2,4],[1,2],[2,2],[1,2],[0,6]],perc:['Q...L...Q.Z.L...','Q.ZLQ.ZLQ.ZLQZZL'],mx:{tq:'m_kam',lay:{1:['..y...y...y...y.'],2:['b.....b...b.....','..y...y...y...y.']},roll:'Q',call:'m_boogh',cg:.16,cm:[[4,8],[3,4],[4,12]]}},
+  IR_c:{scale:mq('shur'),fill:'m_kam',resp:[[3,2],[2,2],[1,2],[0,6]],mx:{tq:'m_ney',lay:{2:['o..pp.o.o..pp.o.','f.......f...f...']},roll:'p'}},
+  RS:{scale:mq('saba'),fill:'m_qanun',resp:[[2,2],[3,2],[2,2],[1,2],[0,6]],mx:{tq:'m_oud',lay:{2:['f...e.e.f...e.e.','d..t..t.d..t..t.']},roll:'tk'}},
+  RS_b:{scale:mq('bayati'),fill:'m_ney',resp:[[1,2],[2,2],[1,2],[0,6]],mx:{tq:'m_ney',lay:{2:['f.......f.e.e...']},roll:'e'}},
+  RS_c:{scale:mq('hijaz'),fill:'m_oud',resp:[[0,2],[1,2],[2,4],[1,2],[0,6]],mx:{tq:'m_qanun',lay:{2:[MAQSUM,'r.r.r.r.r.r.r.r.','f.......f...f...']},roll:'tk'}},
+  DW:{scale:mq('bayati'),fill:'m_qnb',resp:[[2,2],[1,2],[0,4]],mx:{tq:'m_qnb',lay:{2:['d..x..d.t..x..t.','w..w..w.w..w..w.']},roll:'tx'}},
+  DW_b:{scale:mq('rast'),fill:'m_miz',resp:[[4,2],[3,2],[2,2],[0,4]],mx:{tq:'m_qnb',lay:{1:['w..w..w.w..w..w.'],2:['w..w..w.w..w..w.','d..t..d.t..d..t.']},roll:'tx'}},
+  DW_c:{scale:mq('hijaz'),fill:'m_miz',resp:[[1,2],[2,2],[1,2],[0,4]],mx:{tq:'m_qnb',lay:{2:['d.....t.d..t....','w.......w...w...']},roll:'t'}},
+}))Object.assign(STYLES[k],{me:1},o);
+// measured output levels (orch renders): every nation's battle music lands near -22 LUFS and its menu music near -26
+for(const [k,v] of Object.entries({SA:[1.45,1.43],SA_b:[1.46,1.4],AE:[1.3,1.05],AE_b:[1.15,1.1],EG:[1.32,1.16],EG_b:[1.32,1.16],IR:[1.46,1.24],IR_b:[1.06,1.3],IR_c:[0.94,1.3],RS:[1.43,1.33],RS_b:[1.8,1.3],RS_c:[1.22,1.3],DW:[1.08,1.32],DW_b:[0.94,1.3],DW_c:[1.41,1.3]}))Object.assign(STYLES[k],{og:v[0],ogc:v[1]});
 Object.assign(STYLES,{west:STYLES.US,slavic:STYLES.RU,mideast:STYLES.SA,southasia:STYLES.IN,eastasia:STYLES.CN,latin:STYLES.CU});
 function panTo(n,p){const c=AU.ctx;if(p&&c.createStereoPanner){const sp=c.createStereoPanner();sp.pan.value=p;n.connect(sp);sp.connect(AU.mus);}else n.connect(AU.mus);}
 function mnote(f,t,dur,type,gain,cut,att=.02,rel=null,det=0,pan=0){const c=AU.ctx,o=c.createOscillator(),g=c.createGain(),fl=c.createBiquadFilter();o.type=type;o.frequency.value=f;o.detune.value=det;fl.type='lowpass';fl.frequency.value=cut;
@@ -321,12 +366,13 @@ const PH={a:{F:[760,1230,2650],A:[1,.62,.34],v:1},i:{F:[290,2250,3010],A:[1,.4,.
   h:{F:[700,1220,2600],A:[.08,.05,.04],v:0,nf:1500,nq:.7,ng:.5},s:{F:[400,1700,2600],A:[0,0,0],v:0,nf:6200,nq:1.2,ng:.75},k:{F:[400,1700,2600],A:[0,0,0],v:0,nf:2400,nq:1.6,ng:.7}};
 // syllable -> [phone, start] with start as seconds from the onset (negative = seconds before the end of the note)
 const SYL={ya:[['y',0],['a',.07]],a:[['a',0]],li:[['l',0],['i',.07]],al:[['a',0],['l',-.09]],lah:[['l',0],['a',.06],['h',-.13]],hu:[['h',0],['u',.08]],
-  sein:[['s',0],['e',.1],['i',.62],['n',-.16]],'~a':[['a',0]],'~i':[['i',0]],'~u':[['u',0]],lab:[['l',0],['a',.06],['b',-.06]],baik:[['b',0],['a',.05],['i',.55],['k',-.05]],ya2:[['y',0],['a',.07]]};
+  sein:[['s',0],['e',.1],['i',.62],['n',-.16]],'~a':[['a',0]],'~e':[['e',0]],'~i':[['i',0]],'~u':[['u',0]],lab:[['l',0],['a',.06],['b',-.06]],baik:[['b',0],['a',.05],['i',.55],['k',-.05]],ya2:[['y',0],['a',.07]],hey:[['h',0],['e',.07],['i',-.14]],lel:[['l',0],['e',.06],['l',-.09]],wa:[['u',0],['a',.06]]};
 const LYR={lead:['ya','a','li','ya','a','li','al','lah','ya','hu','sein','lab','baik','ya','hu','sein','ya','a','li','al','lah'],chorus:['a','li','a','li','lab','baik','ya','hu','sein','al','lah']};
 // Whole lines sung per phrase, so words never split across phrases; spare notes become held vowels (melisma)
 const LINES={lead:[[['ya','a','li'],['ya','a','li'],['al','lah']],[['lab','baik'],['ya','hu','sein']],[['ya','hu','sein'],['ya','a','li']],[['al','lah'],['al','lah'],['ya','a','li']]],
-  chorus:[[['a','li'],['a','li']],[['lab','baik'],['ya','hu','sein']],[['ya','hu','sein']],[['al','lah'],['a','li']]]};
-const HOLD={ya:'~a',a:'~a',li:'~i',al:'~a',lah:'~a',hu:'~u',sein:'~i',lab:'~a',baik:'~i'};
+  chorus:[[['a','li'],['a','li']],[['lab','baik'],['ya','hu','sein']],[['ya','hu','sein']],[['al','lah'],['a','li']]],
+  chant:[[['ya','lel'],['ya','lel']],[['hey'],['ya','a']],[['wa','hey'],['ya','lel']]]};
+const HOLD={hey:'~i',lel:'~e',wa:'~a',ya:'~a',a:'~a',li:'~i',al:'~a',lah:'~a',hu:'~u',sein:'~i',lab:'~a',baik:'~i'};
 function lyricFor(n,role,motif){const L=LINES[role][((role==='lead'?AU.ln:AU.cln)||0)%LINES[role].length];if(role==='lead')AU.ln=(AU.ln||0)+1;else AU.cln=(AU.cln||0)+1;
   const out=[];let w=0;const words=[];while(words.flat().length<n*2)words.push(...L);
   // fit whole words; when the next word doesn't fit in the notes left, hold the last vowel over the longest notes
@@ -495,18 +541,20 @@ function epic(t,i,bar,sec,ch,hz,S,sp,intense){const lat=!!S.cr,g=lat?.75:1;
   if(!lat&&sec===3&&i===0&&bar%2===0){brass(hz(ch+4)*2,t,sp*30,.055,1400);brass(hz(ch+2)*4,t,sp*30,.035,1800);}}
 // Each piece plays on its own lane into the music bus. Starting a new piece fades the old lane out while the new one
 // fades in, so notes already scheduled (and long pad tails) don't clash with the next tune.
-function musLane(fade){const c=AU.ctx,g=c.createGain();g.connect(AU.musBus);if(fade>0){g.gain.setValueAtTime(.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(1,c.currentTime+fade);}else g.gain.value=1;return g;}
+function musLane(fade){const c=AU.ctx,g=c.createGain(),og=c.createGain();g.connect(og);og.connect(AU.musBus);g.og=og;if(fade>0){g.gain.setValueAtTime(.0001,c.currentTime);g.gain.exponentialRampToValueAtTime(1,c.currentTime+fade);}else g.gain.value=1;return g;}
 function musXfade(){const c=AU.ctx,o=AU.mus;if(!o||o===AU.musBus)return;o.gain.cancelScheduledValues(c.currentTime);o.gain.setValueAtTime(Math.max(.0001,o.gain.value),c.currentTime);o.gain.exponentialRampToValueAtTime(.0001,c.currentTime+2.2);
   setTimeout(()=>{try{o.disconnect();}catch(e){}},9000);AU.mus=musLane(AU.timer?1.6:.4);}
-function startMusic(style,calm){if(!AU.ctx)return;musXfade();AU.calm=!!calm;AU.pl=PLAYLIST[style]||(!calm&&STYLES[style+'_b']?[style,style+'_b']:[style]);AU.fac=style;AU.pi=0;AU.syl=0;AU.csyl=0;AU.style=STYLES[AU.pl[0]]||STYLES.US;AU.step=4*16;AU.next=AU.ctx.currentTime+.3;AU.mi=4;AU.bar=0;AU.mq=[];AU.lastF=0;clearInterval(AU.timer);AU.timer=setInterval(musicTick,50);}
+function startMusic(style,calm){if(!AU.ctx)return;musXfade();AU.calm=!!calm;AU.pl=PLAYLIST[style]||(!calm&&STYLES[style+'_b']?[style,style+'_b']:[style]);AU.fac=style;AU.pi=0;AU.syl=0;AU.csyl=0;AU.style=STYLES[AU.pl[0]]||STYLES.US;AU.step=4*16;AU.next=AU.ctx.currentTime+.3;AU.mi=4;AU.bar=0;AU.mq=[];AU.lastF=0;AU.mL={};musOG();clearInterval(AU.timer);AU.timer=setInterval(musicTick,50);}
+// each piece's own output level (regional scores are sparser than the orchestral ones, so they're lifted to match)
+function musOG(){try{const S=AU.style,og=AU.mus&&AU.mus.og;if(!og||!S)return;og.gain.setTargetAtTime((S.og||1)*(AU.calm&&S.ogc?S.ogc:1),AU.ctx.currentTime,.3);}catch(e){}}
 function stopMusic(){clearInterval(AU.timer);AU.timer=null;}
-function queueMotif(at,S,instr,oct,gain,sp){let st=at;const ly=S.cr&&(instr==='chanter'||instr==='chorus')?lyricFor(S.motif.length,instr==='chanter'?'lead':'chorus',S.motif):null;S.motif.forEach(([d,l],k)=>{AU.mq.push({st,d,l,instr,oct,gain,syl:ly?ly[k]:null});st+=l;});return st;}
+function queueMotif(at,S,instr,oct,gain,mo){mo=mo||S.motif;let st=at;const ly=S.cr&&(instr==='chanter'||instr==='chorus')?lyricFor(mo.length,instr==='chanter'?'lead':'chorus',mo):null;mo.forEach(([d,l],k)=>{AU.mq.push({st,d,l,instr,oct,gain,syl:ly?ly[k]:null});st+=l;});return st;}
 function musicTick(){if(!AU.ctx||!AU.style)return;const S=AU.style,sp=60/(S.bpm*(AU.calm?.9:1))/4,n=S.scale.length;AU.heat=Math.max(0,AU.heat-.0012);
   const hz=deg=>S.root*Math.pow(2,(S.scale[((deg%n)+n)%n]+12*Math.floor(deg/n))/12);
   {const now=AU.ctx.currentTime;if(AU.next<now-.05){const miss=Math.ceil((now+.05-AU.next)/sp);AU.next+=miss*sp;AU.step+=miss;}}
   while(AU.next<AU.ctx.currentTime+1){
     // after each full piece (4 sections of 8 bars) move on to the faction's next track
-    if(AU.step%512===0&&AU.step>64&&AU.pl&&AU.pl.length>1&&AU.swAt!==AU.step){AU.swAt=AU.step;AU.pi=(AU.pi+1)%AU.pl.length;AU.style=STYLES[AU.pl[AU.pi]]||AU.style;AU.mq=[];
+    if(AU.step%512===0&&AU.step>64&&AU.pl&&AU.pl.length>1&&AU.swAt!==AU.step){AU.swAt=AU.step;AU.pi=(AU.pi+1)%AU.pl.length;AU.style=STYLES[AU.pl[AU.pi]]||AU.style;AU.mq=[];musOG();
       try{if(typeof pushLog==='function'&&AU.musicOn&&!AU.calm&&AU.style.name)pushLog('♪ '+AU.style.name);}catch(e){}return musicTick();}
     const t=AU.next,i=AU.step%16,bar=Math.floor(AU.step/16),sec=Math.floor(bar/8)%(AU.calm?2:4),intense=!AU.calm&&(sec===2||sec===3||AU.heat>.35);
     const ch=S.prog[Math.floor(bar/2)%S.prog.length];
@@ -514,15 +562,15 @@ function musicTick(){if(!AU.ctx||!AU.style)return;const S=AU.style,sp=60/(S.bpm*
     if(i===0&&bar%2===0){const dur=sp*32;if(S.pad==='strings'){strings(hz(ch)*2,t,dur,.38);strings(hz(ch+4)*2,t,dur,.26);strings(hz(ch+2)*4,t,dur,.2);if(!S.cr)strings(hz(ch)*4,t,dur,.12);}else if(S.pad==='choir'){choir(hz(ch)*2,t,dur,.1);choir(hz(ch+2)*2,t,dur,.07);choir(hz(ch+4)*2,t,dur,.07);}
       if(S.bass!=='drone')mnote(hz(ch),t,dur,'sine',.32,300,.4);}
     if(S.drone==='hum'){if(i===0&&bar%4===0){choir(S.root*2,t,sp*64,.09);choir(S.root*3,t,sp*64,.045);}}
-    else if(S.drone){if(S.lead==='sitar'||S.lead==='harmonium'){if(i%4===0){const k=(i/4)|0;pluck(S.root*(k===0?1.5:1)*2,t,sp*4,.32,.4,.999,2400);}}else if(i===0&&bar%4===0){mnote(S.root,t,sp*64,'sawtooth',.13,380,1.5,sp*20,-4);mnote(S.root*1.5,t,sp*64,'sawtooth',.07,420,1.5,sp*20,4);mnote(S.root*2,t,sp*64,'sine',.16,600,1.5,sp*20);}}
+    else if(S.drone&&!S.me){if(S.lead==='sitar'||S.lead==='harmonium'){if(i%4===0){const k=(i/4)|0;pluck(S.root*(k===0?1.5:1)*2,t,sp*4,.32,.4,.999,2400);}}else if(i===0&&bar%4===0){mnote(S.root,t,sp*64,'sawtooth',.13,380,1.5,sp*20,-4);mnote(S.root*1.5,t,sp*64,'sawtooth',.07,420,1.5,sp*20,4);mnote(S.root*2,t,sp*64,'sine',.16,600,1.5,sp*20);}}
     // percussion
-    const pat=S.perc[intense?1:0];const k=pat[i];if(k!=='.')drum(t,k,intense?1:.7);if(intense&&i%2===1&&(S.bass==='ost'||S.bass==='walk'))drum(t,'H',.5);if(intense&&i===0&&bar%8===0)drum(t,S.perc[0][0]==='G'?'G':'B',.8);
+    const pat=S.perc[intense?1:0];const k=pat[i];if(k!=='.')drum(t,k,intense?1:S.me&&!S.cr&&sec===0?.4:.7);if(intense&&i%2===1&&(S.bass==='ost'||S.bass==='walk'))drum(t,'H',.5);if(intense&&i===0&&bar%8===0)drum(t,S.perc[0][0]==='G'?'G':'B',.8);
     // bass lines
     if(S.bass==='ost'&&AU.big===false&&(intense||sec===1)&&i%2===0){const d=(i%8===6)?ch+4:ch;mnote(hz(d),t,sp*1.6,'sawtooth',.15,520,.005,sp*1.2);}
     else if(S.bass==='walk'&&sec>0&&i%4===0){mnote(hz(ch+[0,2,4,5][i/4])*.5*2,t,sp*3.6,'triangle',.3,700,.01,sp*2);}
     else if(S.bass==='tumbao'&&(i===6||i===12||i===15&&intense)){mnote(hz(i===12?ch+4:ch),t,sp*3,'triangle',.4,800,.005,sp*2);mnote(hz(i===12?ch+4:ch)*2,t,sp*2,'sine',.12,1500,.005,sp*1.5);}
     // signature melody: theme section on the lead, anthem section on the second instrument with the lead doubling
-    if(i===0&&(sec===1&&bar%4===0||sec===3&&bar%4===0||sec===0&&bar===6)){const mlen=S.motif.reduce((a,m)=>a+m[1],0);if(!AU.mq.some(q=>q.st>=AU.step)){if(S.cr){const e=queueMotif(AU.step,S,S.lead,1,sec===0?.17:.22);if(sec!==0)queueMotif(e,S,S.lead2,1,.2);}else if(sec===3){queueMotif(AU.step,S,S.lead2,1,.2);queueMotif(AU.step,S,S.lead,2,.12);}else queueMotif(AU.step,S,S.lead,1,sec===0?.15:.21);}}
+    if(i===0&&(sec===1&&bar%4===0||sec===3&&bar%4===0||sec===0&&bar===6)){const mlen=S.motif.reduce((a,m)=>a+m[1],0);if(!AU.mq.some(q=>q.st>=AU.step)){if(S.cr){const e=queueMotif(AU.step,S,S.lead,1,sec===0?.17:.22);if(sec!==0){const e2=queueMotif(e,S,S.lead2,1,.2,S.resp);if(S.resp)queueMotif(e2,S,S.lead2,1,.2,S.resp);}}else if(sec===3){queueMotif(AU.step,S,S.lead2,1,.2);queueMotif(AU.step,S,S.lead,2,.12);}else queueMotif(AU.step,S,S.lead,1,sec===0?.15:.21);}}
     let motifNow=false;for(const q of AU.mq){if(q.st===AU.step){motifNow=true;if(q.d!=null){inst(q.instr,hz(q.d)*(q.oct===2?2:1),t,sp*q.l*(q.syl&&q.syl[0]==='~'?1.02:.95),q.gain,q.syl);if(q.instr==='chorus'&&q.syl&&q.syl[0]!=='~'&&S.perc[0][i]==='.')drum(t,'L',.6);}}else if(q.st<AU.step&&q.st+q.l>AU.step)motifNow=true;}
     AU.mq=AU.mq.filter(q=>q.st+q.l>AU.step);
     if(S.cr&&!motifNow&&(i===4||i===10)&&Math.random()<(sec===0?.75:.4)){const top=4+(Math.random()*2|0);const fi=S.fill||'ney';inst(fi,hz(top),t,sp*3.5,.13);inst(fi,hz(top-1),t+sp*3.5,sp*5,.12);}
@@ -530,7 +578,7 @@ function musicTick(){if(!AU.ctx||!AU.style)return;const S=AU.style,sp=60/(S.bpm*
     if(!motifNow&&sec===2){const on=(i===0||i===6||i===8||i===12)?.7:(i%2===0?.22:0);if(Math.random()<on){AU.mi=Math.max(-1,Math.min(11,AU.mi+[-2,-1,-1,0,1,1,2,3][Math.random()*8|0]));if(Math.random()<.35){const m=S.motif[Math.random()*S.motif.length|0];AU.mi=m[0];}
       const len=(i===0||i===8)?sp*(Math.random()<.5?6:4):sp*2;inst(S.lead,hz(AU.mi),t,len,intense?.2:.16);}}
     if(intense&&i===0&&bar%4===0&&S.bass==='ost'){for(const d of [0,2,4])mnote(hz(ch+d)*2,t,sp*3,'sawtooth',.13,2200,.01,sp*2.5);}
-    if(AU.big!==false)bigScore(t,i,bar,sec,ch,hz,S,sp,intense);else epic(t,i,bar,sec,ch,hz,S,sp,intense);
+    if(S.me)meScore(t,i,bar,sec,ch,hz,S,sp,intense);else if(AU.big!==false)bigScore(t,i,bar,sec,ch,hz,S,sp,intense);else epic(t,i,bar,sec,ch,hz,S,sp,intense);
     AU.next+=sp;AU.step++;}}
 
 // ===== Sampled orchestra =====
@@ -604,6 +652,152 @@ function natColour(t,i,bar,sec,ch,hz,S,sp,lv){const f=AU.fac,bi=bar%4;
       if(i===4||i===12){for(const d of [0,2,4])brass(hz(ch+d)*4,t,sp*1.6,.07*lv,1500);}
       if(sec>=2&&i===0&&bar%2===0)crash(t,.45*lv);}}}
 
+// ===== Middle Eastern instruments and maqam scores =====
+// Iran, the Arab nations and the Shia factions (IR, SA, AE, EG, RS, DW) play their music on real recorded regional
+// instruments from a second, small sample sheet, mus/me.mp3 (about 0.55 MB), fetched only when one of these factions'
+// music starts, so other nations and phones never download it:
+//  - VCSL by Versilian Studios (CC0): darbuka doum/tek/ka/slap, large and small frame drums (daf, tar, bendir), muted
+//    frame-drum and hand strokes (chest-beats of the matam/sineh-zani), group hand-claps, tambourine (riq jingles),
+//    finger cymbals (sagat), clash cymbals (sanj / tus) and a bass drum (tabl, dammam);
+//  - FluidR3 GM by Frank Wen (MIT): hammered dulcimer (santur), shakuhachi (end-blown, breathy: the ney), fiddle
+//    (kamancheh / rebab) and shamisen (a skin-topped lute like Yemen's qanbus).
+// No free oud recording was found, so the oud is built from the nylon-string guitar sample: darker and shorter, a
+// woody body resonance, a risha (plectrum) click, double courses and fretless slides. The mizmar/zurna is the
+// shehnai sample, the qanun the koto sample (both from the main sheet).
+// Melodies follow real maqamat and Persian dastgah with their microtones (quarter-tones, koron), written in cents.
+const ME_META=/*MEMETA*/{"san":[{"m":52,"o":0.25,"n":2.0,"r":0.194},{"m":58,"o":2.5,"n":2.0,"r":0.163},{"m":64,"o":4.75,"n":2.0,"r":0.127},{"m":70,"o":7.0,"n":2.0,"r":0.119},{"m":76,"o":9.25,"n":2.0,"r":0.127},{"m":82,"o":11.5,"n":2.0,"r":0.12}],"kam":[{"m":55,"o":13.75,"n":2.38,"r":0.247,"l":[1.0,2.38]},{"m":61,"o":16.38,"n":2.38,"r":0.237,"l":[1.0,2.38]},{"m":67,"o":19.01,"n":2.38,"r":0.274,"l":[1.0,2.38]},{"m":73,"o":21.64,"n":2.38,"r":0.223,"l":[1.0,2.38]},{"m":79,"o":24.27,"n":2.38,"r":0.239,"l":[1.0,2.38]}],"ney":[{"m":60,"o":26.9,"n":2.38,"r":0.413,"l":[1.0,2.38]},{"m":66,"o":29.53,"n":2.38,"r":0.349,"l":[1.0,2.38]},{"m":72,"o":32.16,"n":2.38,"r":0.308,"l":[1.0,2.38]},{"m":78,"o":34.79,"n":2.38,"r":0.285,"l":[1.0,2.38]}],"qnb":[{"m":48,"o":37.42,"n":1.5,"r":0.132},{"m":54,"o":39.17,"n":1.5,"r":0.133},{"m":60,"o":40.92,"n":1.5,"r":0.119},{"m":66,"o":42.67,"n":1.5,"r":0.113},{"m":72,"o":44.42,"n":1.5,"r":0.12}],"dum":[{"m":0,"o":46.17,"n":0.8,"r":0.2},{"m":0,"o":47.22,"n":0.8,"r":0.222}],"tek":[{"m":0,"o":48.27,"n":0.4,"r":0.068},{"m":0,"o":48.92,"n":0.4,"r":0.072}],"ka":[{"m":0,"o":49.57,"n":0.35,"r":0.079},{"m":0,"o":50.17,"n":0.35,"r":0.078}],"slp":[{"m":0,"o":50.77,"n":0.45,"r":0.068}],"fdl":[{"m":0,"o":51.47,"n":1.2,"r":0.185},{"m":0,"o":52.92,"n":1.2,"r":0.194}],"fdm":[{"m":0,"o":54.37,"n":0.5,"r":0.07},{"m":0,"o":55.12,"n":0.5,"r":0.078},{"m":0,"o":55.87,"n":0.5,"r":0.128}],"fds":[{"m":0,"o":56.62,"n":0.7,"r":0.084},{"m":0,"o":57.57,"n":0.7,"r":0.062}],"hnd":[{"m":0,"o":58.52,"n":0.4,"r":0.117},{"m":0,"o":59.17,"n":0.4,"r":0.083}],"clp":[{"m":0,"o":59.82,"n":0.28,"r":0.085},{"m":0,"o":60.35,"n":0.28,"r":0.066},{"m":0,"o":60.88,"n":0.28,"r":0.063},{"m":0,"o":61.41,"n":0.28,"r":0.033},{"m":0,"o":61.94,"n":0.28,"r":0.035}],"tmb":[{"m":0,"o":62.47,"n":0.5,"r":0.103},{"m":0,"o":63.22,"n":0.5,"r":0.092}],"zil":[{"m":0,"o":63.97,"n":1.2,"r":0.097}],"snj":[{"m":0,"o":65.42,"n":1.1,"r":0.104},{"m":0,"o":66.77,"n":1.1,"r":0.093}],"bdr":[{"m":0,"o":68.12,"n":1.2,"r":0.151},{"m":0,"o":69.57,"n":1.2,"r":0.144}]};
+const MEP={st:null,ok:null,tries:0};
+const ME_FAC={IR:1,SA:1,AE:1,EG:1,RS:1,DW:1};
+// cut a decoded sample sheet into one buffer per slice (skips the mp3 decoder delay at each slice start)
+function sheetSlice(buf,META){const sr=buf.sampleRate,d=buf.getChannelData(0),ok={};
+  for(const k in META){ok[k]=[];for(const s of META[k]){let o=Math.floor(s.o*sr);const a=Math.max(0,o-Math.floor(.1*sr)),z=Math.min(d.length,o+Math.floor(.2*sr));
+    let on=-1;for(let i=a;i<z;i++)if(Math.abs(d[i])>.004){on=i;break;}if(on>=0)o=Math.max(0,on-Math.floor(.003*sr));
+    const n=Math.min(d.length-o,Math.floor(s.n*sr));if(n<200)continue;const b2=AU.ctx.createBuffer(1,n,sr);b2.getChannelData(0).set(d.subarray(o,o+n));ok[k].push({m:s.m,buf:b2,l:s.l,r:s.r});}}
+  return ok;}
+function meLoad(){if(!AU.ctx||!ME_META.san)return;if(MEP.st==='fail'&&(MEP.tries||0)<2)MEP.st=null;if(MEP.st)return;MEP.st='loading';MEP.tries=(MEP.tries||0)+1;
+  fetch('mus/me.mp3').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>{let dc=null;
+    if(PHONE){try{const O=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(O)dc=new O(1,1,22050);}catch(e){dc=null;}}
+    if(!dc)return decodeAB(AU.ctx,b);const keep=b.slice(0);return decodeAB(dc,b).catch(()=>decodeAB(AU.ctx,keep));})
+    .then(buf=>{MEP.ok=sheetSlice(buf,ME_META);MEP.st='ok';}).catch(e=>{MEP.st='fail';audioErr('regional instruments',e);});}
+// play one slice: pitched slices pick the nearest recorded note and retune it (microtones included); unpitched ones
+// pick a variant. Options: pan, att, rel, from (slide in from the previous note), glide, rate, det (cents), vib
+// (vibrato depth in cents) and vr (rate), hp / lp / pk [Hz, Q, dB] filters, v (variant).
+function xPlay(L,f,t,dur,gain,o){o=o||{};if(!L||!L.length||!AU.ctx)return null;const c=AU.ctx;let b=L[0],rt=o.rate||1;
+  if(f>0){const m=69+12*Math.log2(f/440);for(const s of L)if(Math.abs(s.m-m)<Math.abs(b.m-m))b=s;rt*=Math.pow(2,(m-b.m)/12);}
+  else b=L[o.v!=null?o.v%L.length:(Math.random()*L.length|0)];
+  const src=c.createBufferSource();src.buffer=b.buf;
+  if(o.from&&f>0&&Math.abs(o.from/f-1)<.45){src.playbackRate.setValueAtTime(rt*o.from/f,t);src.playbackRate.exponentialRampToValueAtTime(rt,t+(o.glide||.08));}else src.playbackRate.value=rt;
+  if(o.det&&src.detune)src.detune.value=o.det;
+  if(b.l){src.loop=true;src.loopStart=b.l[0];src.loopEnd=b.l[1];}
+  if(o.vib&&src.detune&&dur>.3){const l=c.createOscillator(),lg=c.createGain();l.frequency.value=o.vr||5.5;lg.gain.setValueAtTime(0,t);lg.gain.setValueAtTime(0,t+Math.min(.2,dur*.3));lg.gain.linearRampToValueAtTime(o.vib,t+Math.min(dur,.6));l.connect(lg);lg.connect(src.detune);l.start(t);l.stop(t+dur+.6);}
+  let n=src;const fl=(type,fq,q,gn)=>{const x=c.createBiquadFilter();x.type=type;x.frequency.value=fq;if(q)x.Q.value=q;if(gn)x.gain.value=gn;n.connect(x);n=x;};
+  if(o.hp)fl('highpass',o.hp,.7);if(o.lp)fl('lowpass',o.lp,.7);if(o.pk)fl('peaking',o.pk[0],o.pk[1],o.pk[2]);
+  const att=o.att||.003,rel=o.rel||.2,g=c.createGain(),v=Math.max(0,gain*(.2/Math.max(.05,b.r))),end=t+Math.max(att+.01,dur);
+  g.gain.setValueAtTime(.0001,t);g.gain.linearRampToValueAtTime(v,t+att);g.gain.setValueAtTime(v,end);g.gain.setTargetAtTime(.0001,end,rel/3.5);
+  n.connect(g);panTo(g,o.pan||0);src.start(t);src.stop(end+rel*1.4+.05);return src;}
+function mP(k,f,t,dur,gain,o){return xPlay(MEP.ok&&MEP.ok[k],f,t,dur,gain,o);}
+// loudness trims per instrument (measured with orch renders so every nation sits at the same level)
+const MECAL={oud:2.78,qanun:3.85,santur:3.46,kam:4.2,ney:4.7,qnb:4.26,miz:3.9,brass:1.36,chant:1.27,drum:1};
+// The regional instruments. f is the score's note in its low register; each instrument plays it in its own octave.
+function meInst(kind,f,t,dur,gain,syl){const L=AU.mL||(AU.mL={}),from=L[kind];let fo=f;
+  switch(kind){
+    case 'm_oud':{fo=f*4;gain*=MECAL.oud;const d=Math.max(.25,Math.min(dur,1.3)),o={from,lp:2400,pk:[230,1.1,5],rel:.16,glide:.07,att:.002};
+      if(SMP.ok&&SMP.ok.gtr){xPlay(SMP.ok.gtr,fo,t,d,gain*.85,Object.assign({pan:-.1},o));xPlay(SMP.ok.gtr,fo,t+.008,d,gain*.5,Object.assign({pan:.12,det:5},o));}
+      else pluck(fo,t,d,gain*1.3,.3,.994,2200);
+      pluck(fo,t,Math.min(d,.5),gain*.3,.55,.99,3400,0,0,.05);nz(AU.mus,t,.016,'bandpass',3300,0,gain*.22,2.4);
+      // long notes: the oud player's tremolo (rish), quick repeated strokes of the risha
+      if(dur>.8){for(let k=1;k*.12<dur-.12&&k<12;k++){const tk=t+k*.12;if(SMP.ok&&SMP.ok.gtr)xPlay(SMP.ok.gtr,fo,tk,.18,gain*(k%2?.42:.5),{lp:2200,pk:[230,1.1,5],rel:.08});else pluck(fo,tk,.15,gain*.5,.3,.99,2200);}}
+      break;}
+    case 'm_qanun':{fo=f*4;gain*=MECAL.qanun;const d=Math.max(.3,dur);
+      if(SMP.ok&&SMP.ok.kot){sPlay('kot',fo,t,d,gain*1.05,-.15,.002,.3);sPlay('kot',fo*2,t+.006,d,gain*.42,.2,.002,.3);}else{pluck(fo,t,d,gain*1.1,.75,.996,5200);pluck(fo*2,t,d,gain*.4,.6,.996,5200);}
+      // riyash: the qanun's fast alternating-octave tremolo on held notes
+      if(dur>.6){for(let k=1;k*.075<dur-.1&&k<16;k++){const tk=t+k*.075,ff=k%2?fo*2:fo;if(SMP.ok&&SMP.ok.kot)sPlay('kot',ff,tk,.12,gain*(k%2?.32:.4),k%2?.2:-.15,.002,.1);else pluck(ff,tk,.12,gain*.4,.75,.99,5200);}}
+      break;}
+    case 'm_santur':{fo=f*8;gain*=MECAL.santur;const hit=(tt,gg,pn)=>{if(!mP('san',fo,tt,1.6,gg,{pan:pn,rel:.4}))pluck(fo,tt,.25,gg*1.4,.85,.997,7000);};
+      hit(t,gain,-.1);
+      // riz: the two mallets alternate fast on long notes
+      if(dur>.4){for(let k=1;k*.068<dur-.05&&k<20;k++)hit(t+k*.068,gain*(k%2?.48:.62)*(1-.25*k*.068/dur),k%2?.12:-.1);}
+      break;}
+    case 'm_kam':{fo=f*8;gain*=MECAL.kam;if(!mP('kam',fo,t,dur,gain,{from,glide:.11,vib:24,vr:5.6,hp:200,pk:[1700,1.3,4],att:.07,rel:.25,pan:.12}))bowed(fo,t,dur,gain*.6,from);break;}
+    case 'm_ney':{fo=f*8;gain*=MECAL.ney;if(mP('ney',fo,t,dur,gain,{from,glide:.13,vib:16,vr:5,att:.09,rel:.3,pan:-.15,lp:5200}))nz(AU.mus,t,Math.max(.2,dur*.85),'bandpass',fo*1.6,0,gain*.07,2.5);else flute(fo,t,dur,gain,1);break;}
+    case 'm_qnb':{fo=f*4;gain*=MECAL.qnb;const d=Math.max(.25,Math.min(dur,1.1));if(!mP('qnb',fo,t,d,gain,{from,glide:.06,lp:3600,pk:[320,1,3],rel:.14,pan:-.05}))pluck(fo,t,d,gain*1.2,.6,.993,3600);
+      if(dur>.7){for(let k=1;k*.13<dur-.12&&k<10;k++)mP('qnb',fo,t+k*.13,.16,gain*.42,{lp:3400,rel:.08});}break;}
+    case 'm_miz':{fo=f*8;gain*=MECAL.miz;// two mizmars in heterophony, each note entered with a grace note from above
+      if(SMP.ok&&SMP.ok.shn){for(const [dt,dd,pn,gg] of [[0,-9,-.25,1],[.012,10,.25,.75]]){const s=sPlay('shn',fo,t+dt,dur,gain*gg,pn,.015,.12,fo*1.09);if(s&&s.detune)s.detune.value=dd;}}
+      else reed(fo,t,dur,gain*.55,'zurna');break;}
+    case 'm_brass':{gain*=MECAL.brass;brass(f*4,t,dur,gain,3200);brass(f*2,t,dur,gain*.55,1500);break;}
+    case 'm_boogh':{gain*=MECAL.brass;brass(f*2,t,dur,gain,900);break;}// the Bushehri boogh horn
+    case 'm_chant':{gain*=MECAL.chant;const d=Math.max(dur,.35),sy=syl||'ya',j=()=>Math.random()*.03;// a row of men chanting in unison
+      voice(f*2,t+j(),d,gain*.55,0,sy,3);voice(f*2,t+j(),d,gain*.5,0,sy,3);voice(f,t+j(),d,gain*.6,0,sy,3);break;}
+    case 'm_takht':{const E=(AU.style&&AU.style.mx&&AU.style.mx.ens)||['m_oud','m_qanun'];// the takht ensemble plays the tune together, each a hair apart
+      E.forEach((k,n)=>meInst(k,f,t+n*.011,dur,gain*(n?.6:.9)));return;}
+    default:return;}
+  L[kind]=fo;AU.lastF=f*2;}
+// Regional percussion. Letters: d darbuka doum, t tek, k ka, x slap, r riq, j riq shake, f daf, e small frame drum
+// (tar / bendir), b tabl / dammam, y sanj / tus cymbals, z finger cymbals (sagat), w group claps, o tombak tom,
+// p tombak pelang. With the sheet loaded the latmiya letters become recorded too: L group chest-beat (matam /
+// sineh-zani), M light chest-beat, W claps, Q dammam, Z sanj; and D/T/F/B doum, tek, frame drum, big drum.
+const ME_DR={d:'D',t:'T',k:'T',x:'T',r:'R',j:'H',f:'F',e:'F',b:'B',y:'Z',z:'Z',w:'W',o:'D',p:'T'};
+function meDrum(t,k,g){g*=MECAL.drum;const P=(s,gg,o)=>mP(s,0,t+((o&&o.dt)||0),(o&&o.d)||1.2,g*gg,Object.assign({pan:(Math.random()-.5)*.3,rate:.97+Math.random()*.06,att:.001,rel:.12},o||{}));
+  switch(k){
+    case 'd':case 'D':P('dum',1,{v:Math.random()<.7?0:1});break;
+    case 't':case 'T':P('tek',.75);break;
+    case 'k':P('ka',.45);break;
+    case 'x':P('slp',.7);break;
+    case 'r':P('tmb',.5,{v:0,d:.45});P('tek',.18,{rate:1.3});break;
+    case 'j':P('tmb',.32,{v:1,d:.4});break;
+    case 'f':case 'F':P('fdl',.7,{v:0,d:.7,rel:.25});P('tmb',.16,{v:1,d:.45});break;
+    case 'e':P('fds',.55,{v:Math.random()<.6?0:1,d:.5});break;
+    case 'b':case 'B':P('bdr',1,{v:0,rate:.9+Math.random()*.06,d:1.2});P('fdl',.3,{rate:.8});break;
+    case 'Q':P('bdr',1.05,{v:1,rate:.86,d:1.2});P('fdm',.35,{rate:.75});break;
+    case 'y':case 'Z':P('snj',.5,{v:0,d:.9});P('zil',.12,{d:.6});break;
+    case 'z':P('zil',.32,{d:1});break;
+    case 'w':case 'W':for(let n=0;n<6;n++)P('clp',.45,{dt:Math.random()*.03,v:n%5});break;
+    case 'o':P('dum',.85,{rate:.78});P('fdm',.28,{rate:.92});break;
+    case 'p':P('tek',.55,{rate:.9});break;
+    // a crowd beating their chests together: many muted, fleshy thumps a few milliseconds apart, plus palm slaps
+    case 'L':for(let n=0;n<8;n++){P('fdm',.36,{dt:Math.random()*.045,rate:.8+Math.random()*.28,v:n%3,d:.45});if(n<3)P('hnd',.32,{dt:Math.random()*.04,v:0,d:.35});}break;
+    case 'M':for(let n=0;n<4;n++)P('fdm',.28,{dt:Math.random()*.03,rate:.9+Math.random()*.2,v:n%3,d:.4});P('hnd',.2,{v:0,d:.3});break;
+    default:return false;}
+  return true;}
+{const _inst=inst,_drum=drum;
+  inst=function(kind,f,t,dur,gain,syl){if(kind&&kind[0]==='m'&&kind[1]==='_')return meInst(kind,f,t,dur,gain,syl);return _inst(kind,f,t,dur,gain,syl);};
+  drum=function(t,k,g=1){if(ME_DR[k]){if(MEP.ok&&meDrum(t,k,g))return;return _drum(t,ME_DR[k],g*.8);}
+    if(MEP.ok&&AU.style&&AU.style.me&&'LMWQZDTFB'.includes(k)&&meDrum(t,k,g))return;return _drum(t,k,g);};}
+// Taqsim: a free-time solo that opens each piece over the drone. It climbs the maqam's lower jins step by step with
+// small turns back, rests and ornaments on the ghammaz (the 4th or 5th degree), then sinks back to the tonic.
+function taqsim(t,kind,hz,S,sp,len,gain){const top=(S.mx&&S.mx.gh)||(Math.random()<.5?3:4),seq=[[0,4]];let d=0;
+  while(d<top){d+=Math.random()<.22&&d>0?-1:1;seq.push([d,Math.random()<.5?1:2]);}
+  seq.push([top,6]);seq.push([top+1,1]);seq.push([top,1]);seq.push([top-1,2]);seq.push([top,3]);
+  while(d>0){d-=Math.random()<.2?0:1;seq.push([Math.max(0,d),Math.random()<.4?2:1]);}
+  seq.push([1,1]);seq.push([0,6]);
+  // free time: every note is stretched or rushed a little, the way a soloist breathes through a taqsim
+  let tt=0;for(const [dg,l] of seq){const dd=sp*l*(.75+Math.random()*.6);if(tt+dd>len*sp)break;meInst(kind,hz(dg),t+tt,dd*1.05,gain*(l>=4?1:.85));tt+=dd;}}
+function meCall(t,S,X,hz,sp,gain){let st=0;const mo=X.cm||S.motif.slice(0,6),syl=X.call==='m_chant'?lyricFor(mo.length,'chant',mo):null;
+  mo.forEach(([d,l],k)=>{meInst(X.call,hz(d)*(X.coct||1),t+st*sp,sp*l*.92,gain,syl&&syl[k]);st+=l;});return st;}
+// The regional "war layer" that replaces the orchestral one for these nations: a modal drone instead of chords,
+// a taqsim intro, layered national rhythms that thicken as the fighting heats up, drum rolls into each section,
+// frame-drum and tabl hits on the downbeats, and battle calls (mizmar, the two chanting rows of the ardah and ayala,
+// the zamil, Egypt's military brass, Bushehr's boogh horn).
+function meScore(t,i,bar,sec,ch,hz,S,sp,intense){const X=S.mx||{},lat=!!S.cr,bi=bar%8,lv=S.lv||1,battle=intense||sec>=2;
+  // drone on the tonic (with a soft fifth): maqam music is modal, so no chord changes underneath
+  if(i===0&&bar%4===0&&X.dr==='cel'){const r=hz(0);if(SMP.ok&&SMP.ok.cel){const C=SMP.ok.cel,o={att:1.2,rel:1.5,lp:700};xPlay(C,r*2,t,sp*64,.09*lv,Object.assign({pan:-.2},o));xPlay(C,r*3,t+.05,sp*64,.045*lv,Object.assign({pan:.2},o));if(battle&&SMP.ok.cbs)xPlay(SMP.ok.cbs,r,t,sp*64,.08*lv,o);}
+    else{mnote(r*2,t,sp*64,'sawtooth',.05*lv,500,1.5,sp*20);mnote(r*3,t,sp*64,'sawtooth',.025*lv,600,1.5,sp*20);}}
+  if(i===0&&bar%4===0&&battle)mnote(S.root,t,sp*64,'sine',.22*lv,140,1,sp*16);
+  // taqsim intro (not over the theme's entry in bars 6-7)
+  if(sec===0&&X.tq&&i===0&&bar%2===0&&bi<6)taqsim(t,X.tq,hz,S,sp,30,(lat?.12:.17)*lv);
+  // layered rhythms
+  const Ly=X.lay&&(battle?(sec===3&&X.lay[3])||X.lay[2]:X.lay[sec]);
+  if(Ly){const gg=(battle?.85:AU.calm?.45:.6)*lv;for(const p of Ly){const k=p[i];if(k&&k!=='.')drum(t,k,gg*(k==='w'||k==='y'?.8:1));}}
+  // a roll into each new section, and a heavy downbeat when it lands
+  if(sec>=1&&bi===7&&i>=8&&X.roll){const k=X.roll[i%X.roll.length];drum(t,k,(.3+.07*(i-8))*lv);if(i>=12&&battle&&X.roll2)drum(t,X.roll2,.5*lv);}
+  if(i===0&&bi===0&&sec>=1){drum(t,'b',(battle?1:.7)*lv);if(X.cym&&battle)drum(t,'y',.8*lv);}
+  // battle calls, answered by a second row/instrument when the style has one
+  if(battle&&X.call&&i===0&&bar%4===2){const g=(X.cg||.2)*lv,e=meCall(t,S,X,hz,sp,g);if(X.rows)meCall(t+e*sp,S,X,hz,sp,g*.9);}
+  // Egypt: the military band takes up the theme in the battle sections, over a snare
+  if(X.brass&&battle&&i===0&&bar%8===4){let st=t;for(const [d,l] of S.motif.slice(0,8)){meInst('m_brass',hz(d),st,sp*l*.9,.13*lv);st+=sp*l;}}
+  if(X.brass&&battle&&(i===4||i===12))drum(t,'S',.9*lv);}
+
 // ===== Your own music =====
 // Players can import their own tracks (mp3, m4a, ogg, wav, flac...). They are kept in this browser (IndexedDB)
 // and play through the music bus, so the music volume, the music toggle and the voice ducking all apply.
@@ -628,7 +822,7 @@ function myUI(){const n=$('myN');if(n)n.textContent=MYM.list.length?(MYM.list.le
   const s=$('sTrk');if(s)for(const b of s.querySelectorAll('button'))b.classList.toggle('on',b.dataset.v===myMode());}
 const _startMusic=startMusic,_stopMusic=stopMusic;
 stopMusic=function(){_stopMusic();if(!MYM.keep)myStop();};
-startMusic=function(style,calm){if(!AU.ctx)return;AU.menuKey=null;smpLoad();myStop();_startMusic(style,calm);if(myMode()==='mine')myStart();};
+startMusic=function(style,calm){if(!AU.ctx)return;AU.menuKey=null;smpLoad();if(ME_FAC[style])meLoad();myStop();_startMusic(style,calm);if(myMode()==='mine')myStart();};
 
 // ===== Menu music =====
 // The main menu, lobby and Victory/Defeat screens play a calm version of the score of the nation picked in the menu
@@ -669,7 +863,7 @@ function sndStatus(){const c=AU.ctx,p=[],C=window.AudioContext||window.webkitAud
   p.push('Engine: '+(c?c.state+' ('+c.sampleRate+' Hz)':C?'not started yet (tap anywhere)':'not supported by this browser'));
   if(IOSLIKE){let s='';try{const a=navigator.audioSession;if(a)s='session '+a.type+', ';}catch(e){}p.push('Silent-switch bypass: '+s+'loop '+(SIL.el&&!SIL.el.paused?'playing':'off'));}
   else p.push('Playback session: normal');
-  p.push('Instruments: '+(SMP.st==='ok'?'loaded':SMP.st==='loading'?'loading':SMP.st==='fail'?'failed, using synth':'not loaded yet'));
+  p.push('Instruments: '+(SMP.st==='ok'?'loaded':SMP.st==='loading'?'loading':SMP.st==='fail'?'failed, using synth':'not loaded yet')+(MEP.st?', regional '+(MEP.st==='ok'?'loaded':MEP.st):''));
   const f=(G&&G.teams&&G.teams[ME]&&G.teams[ME].fac)||(typeof setup!=='undefined'&&setup&&setup.p)||'US',vb=VOB[f];
   p.push('Voices: '+f+' clips '+(vb&&typeof vb!=='string'?'ready':vb==='loading'?'loading':vb==='fail'?'failed':'not loaded')+', device voices '+(window.speechSynthesis?(AU.voices.length||speechSynthesis.getVoices().length):'none'));
   p.push('Music '+(AU.musicOn?SET.mus+'%':'off')+', Sound '+(AU.sfxOn?SET.fx+'%':'off')+', Voices '+(AU.voiceOn?SET.vo+'%':'off'));
