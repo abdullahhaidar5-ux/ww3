@@ -284,27 +284,23 @@ const LOAD_TIPS=['Armour is thickest at the front: hits on a vehicle\'s side do 
   'Infantry can garrison city buildings and turn them into strongholds.',
   'Every nation has its own special unit and its own strike power. Check the sidebar.'];
 // Loading-screen quotes, one set per nation: the player always sees a line from their own nation's history.
-// q: English, a: who and where, o: the original line (only where it is certain), l: its language, at: 1 when the
-// source is tradition rather than a document ("attributed to"). Only well-sourced lines; no living leaders.
+// q: English, a: who and where, o: the original line (only where it is certain), l: its language. Only lines with a
+// documented source (lines known only by tradition were left out); no living leaders.
 const LOAD_QUOTES={
  US:[{q:'In war there is no substitute for victory.',a:'Douglas MacArthur, address to Congress, 1951'},
   {q:'Wars may be fought with weapons, but they are won by men. It is the spirit of the men who follow and of the man who leads that gains the victory.',a:'George S. Patton, Cavalry Journal, 1933'},
   {q:'I propose to fight it out on this line if it takes all summer.',a:'Ulysses S. Grant, dispatch from Spotsylvania, 1864'},
   {q:'These are the times that try men\'s souls.',a:'Thomas Paine, The American Crisis, 1776'},
   {q:'To be prepared for war is one of the most effectual means of preserving peace.',a:'George Washington, first annual address to Congress, 1790'},
-  {q:'Nuts!',a:'Brig. Gen. Anthony McAuliffe, reply to the German surrender demand at Bastogne, 1944'},
-  {q:'I have not yet begun to fight!',a:'John Paul Jones, off Flamborough Head, 1779',at:1}],
+  {q:'Nuts!',a:'Brig. Gen. Anthony McAuliffe, reply to the German surrender demand at Bastogne, 1944'}],
  TR:[{q:'Armies! Your first objective is the Mediterranean. Forward!',a:'Mustafa Kemal Atatürk, order of 1 September 1922',o:'Ordular! İlk hedefiniz Akdeniz\'dir. İleri!',l:'tr'},
   {q:'I do not order you to attack. I order you to die. In the time it takes us to die, other troops and commanders can come and take our places.',a:'Mustafa Kemal, Gallipoli, 1915',o:'Ben size taarruzu emretmiyorum, ölmeyi emrediyorum.',l:'tr'},
   {q:'There is no line of defence, there is a surface of defence. That surface is the whole homeland.',a:'Mustafa Kemal Atatürk, Battle of Sakarya, 1921',o:'Hatt-ı müdafaa yoktur, sath-ı müdafaa vardır. O satıh bütün vatandır.',l:'tr'},
-  {q:'Peace at home, peace in the world.',a:'Mustafa Kemal Atatürk, 1931',o:'Yurtta sulh, cihanda sulh.',l:'tr'},
-  {q:'Either I take Istanbul, or Istanbul takes me.',a:'Sultan Mehmed II, before the siege of Constantinople, 1453',o:'Ya ben İstanbul\'u alırım, ya İstanbul beni.',l:'tr',at:1}],
+  {q:'Peace at home, peace in the world.',a:'Mustafa Kemal Atatürk, 1931',o:'Yurtta sulh, cihanda sulh.',l:'tr'}],
  IL:[{q:'A time to love, and a time to hate; a time of war, and a time of peace.',a:'Ecclesiastes 3:8',o:'עֵת לֶאֱהֹב וְעֵת לִשְׂנֹא, עֵת מִלְחָמָה וְעֵת שָׁלוֹם',l:'he'},
   {q:'Masada shall not fall again.',a:'Yitzhak Lamdan, "Masada", 1927',o:'שֵׁנִית מְצָדָה לֹא תִּפֹּל',l:'he'},
   {q:'We shall fight the war as if there were no White Paper, and the White Paper as if there were no war.',a:'David Ben-Gurion, 1939'},
-  {q:'We are a generation of settlement, and without the steel helmet and the cannon\'s muzzle we will not be able to plant a tree and build a house.',a:'Moshe Dayan, eulogy for Roi Rotberg, 1956'},
-  {q:'It is good to die for our country.',a:'Joseph Trumpeldor, Tel Hai, 1920',o:'טוב למות בעד ארצנו',l:'he',at:1},
-  {q:'In Israel, in order to be a realist you must believe in miracles.',a:'David Ben-Gurion',at:1}],
+  {q:'We are a generation of settlement, and without the steel helmet and the cannon\'s muzzle we will not be able to plant a tree and build a house.',a:'Moshe Dayan, eulogy for Roi Rotberg, 1956'}],
  EU:[{q:'We shall fight on the beaches, we shall fight on the landing grounds, we shall fight in the fields and in the streets, we shall fight in the hills; we shall never surrender.',a:'Winston Churchill, House of Commons, 4 June 1940'},
   {q:'Never in the field of human conflict was so much owed by so many to so few.',a:'Winston Churchill, House of Commons, 20 August 1940'},
   {q:'War is merely the continuation of policy by other means.',a:'Carl von Clausewitz, On War',o:'Der Krieg ist eine bloße Fortsetzung der Politik mit anderen Mitteln.',l:'de'},
@@ -312,7 +308,7 @@ const LOAD_QUOTES={
   {q:'Let him who desires peace prepare for war.',a:'Vegetius, Epitoma rei militaris, Book III',o:'Igitur qui desiderat pacem, praeparet bellum.',l:'la'},
   {q:'In war, three quarters turns on morale; the balance of manpower and materiel counts only for the remaining quarter.',a:'Napoleon Bonaparte, 1808',o:'À la guerre, les trois quarts sont des affaires morales ; la balance des forces réelles n\'est que pour un autre quart.',l:'fr'},
   {q:'Whatever happens, the flame of French resistance must not and shall not die.',a:'Charles de Gaulle, Appeal of 18 June 1940',o:'Quoi qu\'il arrive, la flamme de la résistance française ne doit pas s\'éteindre et ne s\'éteindra pas.',l:'fr'},
-  {q:'Nothing except a battle lost can be half so melancholy as a battle won.',a:'The Duke of Wellington, letter from Waterloo, 1815'}],
+  {q:'Nothing except a battle lost can be half so melancholy as a battle won.',a:'The Duke of Wellington, after Waterloo, 1815'}],
  UA:[{q:'Fight, and you will win!',a:'Taras Shevchenko, "The Caucasus", 1845',o:'Борітеся — поборете!',l:'uk'},
   {q:'Bury me, then rise up and break your heavy chains.',a:'Taras Shevchenko, "Testament", 1845',o:'Поховайте та вставайте, кайдани порвіте',l:'uk'},
   {q:'Soul and body we shall lay down for our freedom.',a:'Pavlo Chubynsky, "Ukraine Has Not Yet Perished", 1862',o:'Душу й тіло ми положим за нашу свободу',l:'uk'},
@@ -321,20 +317,15 @@ const LOAD_QUOTES={
   {q:'Glory to Ukraine! Glory to the heroes!',a:'Traditional Ukrainian salute',o:'Слава Україні! Героям слава!',l:'uk'}],
  RU:[{q:'Hard in training, easy on the march.',a:'Alexander Suvorov, The Science of Victory',o:'Тяжело в ученье — легко в походе.',l:'ru'},
   {q:'The bullet is a fool, the bayonet a fine fellow.',a:'Alexander Suvorov, The Science of Victory',o:'Пуля — дура, штык — молодец.',l:'ru'},
-  {q:'Where a deer can pass, a Russian soldier can pass.',a:'Alexander Suvorov, crossing the Alps, 1799',o:'Где олень пройдёт, там и русский солдат пройдёт.',l:'ru',at:1},
-  {q:'With the loss of Moscow, Russia is not yet lost.',a:'Mikhail Kutuzov, council at Fili, 1812',o:'С потерею Москвы не потеряна ещё Россия.',l:'ru',at:1},
-  {q:'Our cause is just. The enemy will be defeated. Victory will be ours.',a:'Radio address of 22 June 1941',o:'Наше дело правое. Враг будет разбит. Победа будет за нами.',l:'ru'},
-  {q:'Russia is vast, but there is nowhere to retreat: Moscow is behind us.',a:'Vasily Klochkov, defence of Moscow, 1941',o:'Велика Россия, а отступать некуда — позади Москва!',l:'ru',at:1},
+  {q:'Our cause is just. The enemy will be defeated. Victory will be ours.',a:'Vyacheslav Molotov, radio address, 22 June 1941',o:'Наше дело правое. Враг будет разбит. Победа будет за нами.',l:'ru'},
   {q:'Whoever comes to us with the sword shall perish by the sword.',a:'Alexander Nevsky (1938 film), after Matthew 26:52',o:'Кто с мечом к нам придёт, от меча и погибнет.',l:'ru'}],
  IR:[{q:'Humiliation is far from us!',a:'Imam Hussein ibn Ali, Karbala, 680',o:'هيهات منا الذلة',l:'ar'},
   {q:'I see death as nothing but happiness, and life with oppressors as nothing but misery.',a:'Imam Hussein ibn Ali, on the road to Karbala, 680',o:'إني لا أرى الموت إلا سعادة، ولا الحياة مع الظالمين إلا برما',l:'ar'},
   {q:'Mountains may move, but you must not. Grit your teeth. Lend your skull to God. Plant your feet firmly in the earth.',a:'Imam Ali ibn Abi Talib, to his son at the Battle of the Camel, Nahj al-Balagha, Sermon 11',o:'تَزُولُ الْجِبَالُ وَلَا تَزُلْ، عَضَّ عَلَى نَاجِذِكَ، أَعِرِ اللَّهَ جُمْجُمَتَكَ، تِدْ فِي الْأَرْضِ قَدَمَكَ',l:'ar'},
   {q:'Mighty is he who is wise.',a:'Ferdowsi, Shahnameh',o:'توانا بود هر که دانا بود',l:'fa'},
-  {q:'If Iran is not to be, let my body not be.',a:'Ferdowsi, Shahnameh',o:'چو ایران نباشد تن من مباد',l:'fa',at:1},
   {q:'Death lies in living as the conquered, and life lies in dying as the victors.',a:'Imam Ali ibn Abi Talib, at Siffin, Nahj al-Balagha, Sermon 51',o:'فَالْمَوْتُ فِي حَيَاتِكُمْ مَقْهُورِينَ، وَالْحَيَاةُ فِي مَوْتِكُمْ قَاهِرِينَ',l:'ar'}],
  RS:[{q:'Here I am, O Hussein!',a:'Pledge of the mourners of Karbala',o:'لبيك يا حسين',l:'ar'},
   {q:'Plot your plots, strive your utmost, spare no effort: by God, you will never erase our remembrance.',a:'Sayyida Zaynab bint Ali, to Yazid in Damascus, 680',o:'فكِدْ كيدك، واسعَ سعيك، وناصب جهدك، فوالله لا تمحو ذكرنا',l:'ar'},
-  {q:'Death with dignity is better than life in humiliation.',a:'Imam Hussein ibn Ali',o:'موت في عز خير من حياة في ذل',l:'ar',at:1},
   {q:'If the religion of Muhammad stands only by my death, then, O swords, take me!',a:'Shaykh Muhsin Abu al-Hab, in the voice of Imam Hussein',o:'إن كان دين محمد لم يستقم إلا بقتلي فيا سيوف خذيني',l:'ar'},
   {q:'Death lies in living as the conquered, and life lies in dying as the victors.',a:'Imam Ali ibn Abi Talib, at Siffin, Nahj al-Balagha, Sermon 51',o:'فَالْمَوْتُ فِي حَيَاتِكُمْ مَقْهُورِينَ، وَالْحَيَاةُ فِي مَوْتِكُمْ قَاهِرِينَ',l:'ar'},
   {q:'I am the son of Mecca and Mina; I am the son of Zamzam and Safa.',a:'Imam Ali Zayn al-Abidin (al-Sajjad), sermon in Damascus, 680',o:'أنا ابن مكة ومنى، أنا ابن زمزم والصفا',l:'ar'},
@@ -342,36 +333,27 @@ const LOAD_QUOTES={
  DW:[{q:'I did not rise out of arrogance or vanity, nor to spread corruption or oppression. I rose to seek reform in the nation of my grandfather.',a:'Imam Hussein ibn Ali, testament, 680',o:'إني لم أخرج أشِرًا ولا بطِرًا ولا مفسدًا ولا ظالمًا، وإنما خرجت لطلب الإصلاح في أمة جدي',l:'ar'},
   {q:'By God, never was a people attacked in the heart of their homes but they were humiliated.',a:'Imam Ali ibn Abi Talib, Nahj al-Balagha, Sermon 27',o:'فَوَاللَّهِ مَا غُزِيَ قَوْمٌ قَطُّ فِي عُقْرِ دَارِهِمْ إِلَّا ذَلُّوا',l:'ar'},
   {q:'Opportunity passes like the passing of clouds.',a:'Imam Ali ibn Abi Talib, Nahj al-Balagha, Saying 21',o:'الْفُرْصَةُ تَمُرُّ مَرَّ السَّحَابِ',l:'ar'},
-  {q:'Whoever loves life lives in humiliation.',a:'Imam Zayd ibn Ali, Kufa, 740',o:'من أحب الحياة عاش ذليلا',l:'ar',at:1},
-  {q:'Never did a people shrink from the heat of the swords without being humbled.',a:'Imam Zayd ibn Ali, Kufa, 740',o:'ما كره قوم قط حر السيوف إلا ذلوا',l:'ar',at:1},
   {q:'I saw nothing but beauty.',a:'Sayyida Zaynab bint Ali, to Ibn Ziyad in Kufa, 680',o:'ما رأيت إلا جميلا',l:'ar'}],
  SA:[{q:'I have come to you with men who love death as you love life.',a:'Khalid ibn al-Walid, letter to the Persian commanders, 633',o:'جئتكم بقوم يحبون الموت كما تحبون الحياة',l:'ar'},
-  {q:'May the eyes of cowards never sleep.',a:'Khalid ibn al-Walid, on his deathbed, 642',o:'فلا نامت أعين الجبناء',l:'ar',at:1},
-  {q:'Since when have you enslaved people, when their mothers bore them free?',a:'Umar ibn al-Khattab',o:'متى استعبدتم الناس وقد ولدتهم أمهاتهم أحرارا',l:'ar',at:1},
   {q:'The horse, the night and the desert know me; and the sword, the lance, the paper and the pen.',a:'Al-Mutanabbi',o:'الخيل والليل والبيداء تعرفني، والسيف والرمح والقرطاس والقلم',l:'ar'},
-  {q:'Do not kill a child, a woman or an old man. Do not cut down fruit-bearing trees, and do not destroy a dwelling.',a:'Abu Bakr al-Siddiq, orders to the army marching to Syria, 634',l:'ar'}],
- AE:[{q:'A nation without a past is a nation without a present or a future.',a:'Sheikh Zayed bin Sultan Al Nahyan',o:'من ليس له ماضٍ ليس له حاضر ولا مستقبل',l:'ar',at:1},
-  {q:'When you see the lion\'s fangs bared, do not think the lion is smiling.',a:'Al-Mutanabbi',o:'إذا رأيتَ نُيوبَ اللّيثِ بارِزَةً فَلا تَظُنّنّ أنّ اللّيثَ يَبْتَسِمُ',l:'ar'},
+  {q:'Do not kill a child, a woman or an old man. Do not cut down fruit-bearing trees, and do not destroy a dwelling.',a:'Abu Bakr al-Siddiq, orders to the army marching to Syria, 634'}],
+ AE:[{q:'When you see the lion\'s fangs bared, do not think the lion is smiling.',a:'Al-Mutanabbi',o:'إذا رأيتَ نُيوبَ اللّيثِ بارِزَةً فَلا تَظُنّنّ أنّ اللّيثَ يَبْتَسِمُ',l:'ar'},
   {q:'Great resolves come in the measure of the resolute.',a:'Al-Mutanabbi',o:'على قَدْرِ أهْلِ العَزْمِ تأتي العَزائِمُ',l:'ar'},
   {q:'I have come to you with men who love death as you love life.',a:'Khalid ibn al-Walid, letter to the Persian commanders, 633',o:'جئتكم بقوم يحبون الموت كما تحبون الحياة',l:'ar'},
   {q:'Do not kill a child, a woman or an old man. Do not cut down fruit-bearing trees, and do not destroy a dwelling.',a:'Abu Bakr al-Siddiq, orders to the army marching to Syria, 634'}],
- PK:[{q:'Unity, Faith, Discipline.',a:'Muhammad Ali Jinnah',o:'اتحاد، ایمان، تنظیم',l:'ur'},
+ PK:[{q:'Unity, Faith, Discipline.',a:'Muhammad Ali Jinnah'},
   {q:'There is no power on earth that can undo Pakistan.',a:'Muhammad Ali Jinnah, Lahore, 30 October 1947'},
-  {q:'Better to live one day as a lion than a hundred years as a jackal.',a:'Tipu Sultan',at:1},
   {q:'You are a falcon: flight is your calling. There are other skies before you.',a:'Allama Muhammad Iqbal, Bal-e-Jibril, 1935',o:'تو شاہیں ہے، پرواز ہے کام تیرا — ترے سامنے آسماں اور بھی ہیں',l:'ur'},
   {q:'Raise your selfhood so high that before every decree, God Himself asks you: tell me, what is your will?',a:'Allama Muhammad Iqbal, Bal-e-Jibril, 1935',o:'خودی کو کر بلند اتنا کہ ہر تقدیر سے پہلے — خدا بندے سے خود پوچھے بتا تیری رضا کیا ہے',l:'ur'}],
  IN:[{q:'Slain, you will win heaven; victorious, you will enjoy the earth. So rise, son of Kunti, resolved to fight.',a:'Bhagavad Gita 2.37',o:'हतो वा प्राप्स्यसि स्वर्गं जित्वा वा भोक्ष्यसे महीम्। तस्मादुत्तिष्ठ कौन्तेय युद्धाय कृतनिश्चयः॥',l:'sa'},
   {q:'You have a right to your actions, but never to their fruits.',a:'Bhagavad Gita 2.47',o:'कर्मण्येवाधिकारस्ते मा फलेषु कदाचन',l:'sa'},
   {q:'Truth alone triumphs.',a:'Mundaka Upanishad 3.1.6',o:'सत्यमेव जयते',l:'sa'},
-  {q:'An arrow shot by an archer may kill one man or may not; but intellect applied by a wise man can kill even those in the womb.',a:'Kautilya (Chanakya), Arthashastra, Book 10'},
-  {q:'If a man says he is not afraid of dying, he is either lying or he is a Gurkha.',a:'Field Marshal Sam Manekshaw',at:1},
-  {q:'If death strikes before I prove my blood, I swear I will kill death.',a:'Captain Manoj Kumar Pandey, Kargil, 1999',at:1}],
+  {q:'An arrow shot by an archer may kill one man or may not; but intellect applied by a wise man can kill even those in the womb.',a:'Kautilya (Chanakya), Arthashastra, Book 10'}],
  CN:[{q:'Know the enemy and know yourself; in a hundred battles you will never be in peril.',a:'Sun Tzu, The Art of War',o:'知彼知己，百战不殆',l:'zh'},
   {q:'All warfare is based on deception.',a:'Sun Tzu, The Art of War',o:'兵者，诡道也',l:'zh'},
   {q:'To subdue the enemy without fighting is the supreme excellence.',a:'Sun Tzu, The Art of War',o:'不战而屈人之兵，善之善者也',l:'zh'},
   {q:'Swift as the wind, silent as the forest, fierce as fire, immovable as the mountain.',a:'Sun Tzu, The Art of War',o:'其疾如风，其徐如林，侵掠如火，不动如山',l:'zh'},
   {q:'In war, let your great object be victory, not lengthy campaigns.',a:'Sun Tzu, The Art of War',o:'兵贵胜，不贵久',l:'zh'},
-  {q:'I will bend my back to the task until my dying day.',a:'Zhuge Liang, Second Memorial on the Northern Expedition',o:'鞠躬尽瘁，死而后已',l:'zh',at:1},
   {q:'Political power grows out of the barrel of a gun.',a:'Mao Zedong, 1927',o:'枪杆子里面出政权',l:'zh'}],
  KP:[{q:'Your divine plans have plumbed the heavens; your subtle reckoning has spanned the earth. You have won every battle and your merit is great. Now be content, and stop.',a:'General Eulji Mundeok, poem to the Sui general Yu Zhongwen, 612',o:'神策究天文 妙算窮地理 戰勝功旣高 知足願云止',l:'zh-Hant'},
   {q:'Seeing profit, think of what is right; seeing danger, offer your life.',a:'Ahn Jung-geun, calligraphy written in prison, 1910',o:'見利思義 見危授命',l:'zh-Hant'},
@@ -382,15 +364,13 @@ const LOAD_QUOTES={
   {q:'One man holding a narrow pass can strike fear into a thousand.',a:'Admiral Yi Sun-sin, war diary, 1597',o:'一夫當逕 足懼千夫',l:'zh-Hant'},
   {q:'The battle is at its height. Do not announce my death.',a:'Admiral Yi Sun-sin, Battle of Noryang, 1598',o:'戰方急 愼勿言我死',l:'zh-Hant'},
   {q:'To give one\'s life for one\'s country is the duty of a soldier.',a:'Ahn Jung-geun, calligraphy written in prison, 1910',o:'爲國獻身 軍人本分',l:'zh-Hant'}],
- EG:[{q:'God created us free, and did not make us an inheritance or property. By God, we will not be inherited or enslaved after this day.',a:'Ahmed Urabi, Abdeen Square, 1881',o:'لقد خلقنا الله أحرارًا، ولم يخلقنا تراثًا أو عقارًا، فوالله لا نُورَّث ولا نُستعبَد بعد اليوم',l:'ar',at:1},
-  {q:'What was taken by force can only be restored by force.',a:'Gamal Abdel Nasser, 1967',o:'ما أُخذ بالقوة لا يُسترد بغير القوة',l:'ar'},
+ EG:[{q:'What was taken by force can only be restored by force.',a:'Gamal Abdel Nasser, 1967',o:'ما أُخذ بالقوة لا يُسترد بغير القوة',l:'ar'},
   {q:'Goals are not won by wishing; the world is taken by struggle.',a:'Ahmed Shawqi',o:'وما نيلُ المطالبِ بالتمنّي، ولكن تؤخَذُ الدنيا غِلابا',l:'ar'},
   {q:'All creation stood watching how I alone lay the foundations of glory.',a:'Hafez Ibrahim, "Egypt Speaks of Herself"',o:'وقف الخلقُ ينظرون جميعًا كيف أبني قواعدَ المجدِ وحدي',l:'ar'},
   {q:'I have come to you with men who love death as you love life.',a:'Khalid ibn al-Walid, letter to the Persian commanders, 633',o:'جئتكم بقوم يحبون الموت كما تحبون الحياة',l:'ar'}],
  CU:[{q:'Trenches of ideas are worth more than trenches of stone.',a:'José Martí, "Our America", 1891',o:'Trincheras de ideas valen más que trincheras de piedra.',l:'es'},
   {q:'To die for the homeland is to live.',a:'Pedro Figueredo, "La Bayamesa", 1868',o:'Morir por la patria es vivir.',l:'es'},
   {q:'Whoever tries to seize Cuba will gather only the dust of her soil drenched in blood, if he does not perish in the struggle.',a:'Antonio Maceo',o:'Quien intente apropiarse de Cuba recogerá el polvo de su suelo anegado en sangre, si no perece en la lucha.',l:'es'},
-  {q:'Freedom is not begged for; it is won with the edge of the machete.',a:'Antonio Maceo',o:'La libertad no se mendiga, se conquista con el filo del machete.',l:'es',at:1},
   {q:'Homeland is humanity.',a:'José Martí',o:'Patria es humanidad.',l:'es'}],
  _:[{q:'Let him who desires peace prepare for war.',a:'Vegetius, Epitoma rei militaris, Book III',o:'Igitur qui desiderat pacem, praeparet bellum.',l:'la'},
   {q:'Know the enemy and know yourself; in a hundred battles you will never be in peril.',a:'Sun Tzu, The Art of War'},
@@ -482,7 +462,7 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
     try{fn();}catch(err){if(!gl){console.error(err);continue;}
       R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
   if(tc)g.terrain=tc;loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
-  g.paused=false;last=performance.now();g.acc=0;loadHide();
+  g.paused=false;last=performance.now();g.acc=0;qualReset();try{applyQual();}catch(e){}loadHide();
   pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
   // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
   setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}},0);}
@@ -544,7 +524,20 @@ if(window.WW3_P2P&&$('relayBox')){$('relayBox').hidden=false;let r={};try{r=JSON
 {const seg=(id,key,def)=>{const el=$(id);if(!el)return;let v=def;try{v=localStorage.getItem(key)||def;}catch(e){}const paint=()=>{for(const b of el.querySelectorAll('button'))b.classList.toggle('on',b.dataset.v===v);};paint();for(const b of el.querySelectorAll('button'))b.onclick=()=>{v=b.dataset.v;try{localStorage.setItem(key,v);}catch(e){}paint();QUAL.bad=QUAL.good=0;};};seg('sFpsT','ww3_fpsT','120');seg('sHideIp','ww3_hideip','0');seg('sFpsS','ww3_fpsShow','0');}
 $('aMus').onclick=()=>{initAudio();AU.musicOn=!AU.musicOn;saveAudio();applyAudio();};$('aSfx').onclick=()=>{initAudio();AU.sfxOn=!AU.sfxOn;saveAudio();applyAudio();};$('aVoc').onclick=()=>{initAudio();AU.voiceOn=!AU.voiceOn;saveAudio();applyAudio();};$('cancelHost').onclick=cancelHost;
 // settings panel (main menu and in game)
-function applyGfx(){if(typeof QUAL==='undefined')return;if(SET.gfx==='auto'){QUAL.lock=0;}else{QUAL.lock=1;QUAL.lv={high:0,med:1,low:3}[SET.gfx]??0;}try{applyQual();}catch(e){}}
+// Phones (touch screen, no mouse): render at most 1.5 pixels per screen point instead of the full 2 (a 3x iPhone drew
+// 2.4 million pixels a frame, now about 1.3 million at the start level), ambient occlusion only at the top level, and
+// Auto starts one level down so the battle is smooth from its first frame; Auto still steps up when frames have time
+// to spare and down when they don't. Desktop and the High setting are unchanged.
+const GFX_PHONE=(()=>{try{return matchMedia('(pointer:coarse)').matches&&!matchMedia('(pointer:fine)').matches;}catch(e){return false;}})();
+const QCAPS0=QUAL.caps.slice();
+function gfxPhone(){return GFX_PHONE&&SET.gfx!=='high';}
+function qualStartLv(){return SET.gfx==='auto'?(gfxPhone()?1:0):({high:0,med:1,low:3}[SET.gfx]??0);}
+// a fresh start for the frame-rate governor (a new battle, or a settings change): the long frames of the loading
+// screen must not count as stutter
+function qualReset(){QUAL.lv=qualStartLv();QUAL.bad=QUAL.good=0;QUAL.ema=1/60;QUAL.dts.length=0;}
+function applyGfx(){if(typeof QUAL==='undefined')return;const ph=gfxPhone(),base=Math.min(2,window.devicePixelRatio||1);
+  QUAL.caps=ph?QCAPS0.map((c,i)=>Math.min(c,[1.5,1.35,1.25,1.1,1,.9][i]/base)):QCAPS0.slice();POST.aoLv=ph?1:2;
+  QUAL.lock=SET.gfx==='auto'?0:1;qualReset();try{applyQual();}catch(e){}}
 // One game speed for everyone, a little brisker than real time so battles keep moving.
 const GSPD=1.2;
 function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number]];
@@ -555,7 +548,7 @@ if($('openSettings'))$('openSettings').onclick=openSettings;if($('aSet'))$('aSet
 syncSettings();setTimeout(applyGfx,0);
 // Pause and quit. Single player and skirmish vs AI pause the whole battle; in multiplayer the battle keeps running for
 // everyone else, so the menu opens without stopping time and says so.
-function togglePause(on){if(!G||G.over)return;const mp=MODE!=='single';if(on==null)on=!(G.paused||!$('pauseOv').hidden);
+function togglePause(on){if(!G||G.over||window.LOADING)return;const mp=MODE!=='single';if(on==null)on=!(G.paused||!$('pauseOv').hidden);
   if(on){if(!mp){G.paused=true;try{if(AU.ctx&&AU.ctx.state==='running')AU.ctx.suspend();}catch(e){}try{if(window.speechSynthesis)speechSynthesis.pause();}catch(e){}}
     $('pauseSub').textContent=mp?'Multiplayer battles cannot be paused - the battle continues while this menu is open.':'The battle is on hold. Nothing moves until you resume. (P or Esc to resume)';$('resumeBtn').textContent=mp?'Back to battle':'Resume';$('pauseOv').hidden=false;}
   else{G.paused=false;$('pauseOv').hidden=true;try{if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();}catch(e){}try{if(window.speechSynthesis)speechSynthesis.resume();}catch(e){}last=performance.now();}

@@ -291,17 +291,14 @@ function paintTerrainNow(){const P=TERR_PEND;TERR_PEND=null;if(!P||P.g!==G||!G)r
 const TERR_NOP=(()=>{const f=()=>{},gr={addColorStop:f},o={createRadialGradient:()=>gr,createLinearGradient:()=>gr};for(const k of ['setTransform','fillRect','beginPath','moveTo','lineTo','quadraticCurveTo','closePath','ellipse','arc','fill','stroke','save','restore','clip','drawImage','putImageData'])o[k]=f;return o;})();
 function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
   srand=mulberry(M.seed*7+3);
-  const TS0=Math.min(1,3072/MAPW,3072/MAPH),TS=draw?Math.min(TS0,TEXMAX/MAPW,TEXMAX/MAPH):TS0,TA=Math.max(1,MAPW*MAPH*TS0*TS0/(3200*2200));const lite=window.__LITE!=null?window.__LITE:TS<TS0;const c=draw?document.createElement('canvas'):null;if(c){c.width=Math.round(MAPW*TS);c.height=Math.round(MAPH*TS);}const t=c?c.getContext('2d',{willReadFrequently:true}):TERR_NOP;t.setTransform(TS,0,0,TS,0,0);
+  const TS0=Math.min(1,3072/MAPW,3072/MAPH),TS=draw?Math.min(TS0,TEXMAX/MAPW,TEXMAX/MAPH):TS0,TA=Math.max(1,MAPW*MAPH*TS0*TS0/(3200*2200));const lite=TS<TS0;const c=draw?document.createElement('canvas'):null;if(c){c.width=Math.round(MAPW*TS);c.height=Math.round(MAPH*TS);}const t=c?c.getContext('2d',{willReadFrequently:true}):TERR_NOP;t.setTransform(TS,0,0,TS,0,0);
   t.fillStyle='#a8825a';t.fillRect(0,0,MAPW,MAPH);
   const blotch=(cells,cols,al)=>{const w=Math.ceil(MAPW/cells)+1,h=Math.ceil(MAPH/cells)+1;if(!draw){for(let i=0;i<w*h*2;i++)srand();return;}const s=document.createElement('canvas');s.width=w;s.height=h;const sx=s.getContext('2d'),id=sx.createImageData(w,h);
     for(let i=0;i<w*h;i++){const q=cols[Math.floor(srand()*cols.length)];id.data.set([q[0],q[1],q[2],255*al*srand()],i*4);}sx.putImageData(id,0,0);t.imageSmoothingEnabled=true;t.imageSmoothingQuality='high';t.drawImage(s,0,0,MAPW+cells,MAPH+cells);};
-  if(window.__TT&&draw)window.__TT('blotch',t);
   blotch(260,[[178,138,96],[164,120,82],[190,152,108],[150,108,74],[172,134,92]],1);blotch(90,[[184,146,102],[154,114,80],[198,164,118],[140,104,72]],.7);blotch(30,[[172,146,104],[154,130,92],[128,112,78]],.45);blotch(9,[[140,120,84],[200,178,134]],.2);
-  if(window.__TT&&draw)window.__TT('P',t);
   {const P=(n,col,rmin,rmax,al)=>{for(let k=0;k<n;k++){const x=srand()*MAPW,y=srand()*MAPH,r=srnd(rmin,rmax);for(let q=0;q<5;q++){const qx=x+srnd(-r,r)*.6,qy=y+srnd(-r,r)*.6,qr=r*srnd(.4,.8);const g=t.createRadialGradient(qx,qy,0,qx,qy,qr);g.addColorStop(0,`rgba(${col},${al})`);g.addColorStop(.6,`rgba(${col},${al*.5})`);g.addColorStop(1,`rgba(${col},0)`);t.fillStyle=g;t.beginPath();t.ellipse(qx,qy,qr,qr*srnd(.5,1),srnd(0,3),0,7);t.fill();}}};
    P(140*TA|0,'126,104,72',20,70,.4);P(220*TA|0,'112,108,70',10,40,.3);P(160*TA|0,'206,186,140',8,26,.35);
    for(let k=0;k<26000*TA;k++){const x=srand()*MAPW,y=srand()*MAPH,v=srand();t.fillStyle=v<.4?'rgba(96,80,56,.35)':v<.8?'rgba(214,196,152,.35)':'rgba(120,104,76,.4)';t.fillRect(x,y,srnd(1,2.6),srnd(1,2.6));}}
-  if(window.__TT&&draw)window.__TT('cracks',t);
   const CK=draw&&lite?[[],[]]:null;
   for(let k=0;k<70*TA;k++){const cx=srand()*MAPW,cy=srand()*MAPH,R=srnd(70,170);const pts=[];for(let i=0;i<55;i++){const a=srand()*6.283,r=Math.sqrt(srand())*R;pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r*.8]);}
     for(const [ax,ay] of pts){const nb=pts.map(q=>[q,(q[0]-ax)**2+(q[1]-ay)**2]).sort((u,v)=>u[1]-v[1]).slice(1,4);for(const [[bx,by]] of nb){const fade=1-Math.hypot(ax-cx,ay-cy)/R;if(fade<=0)continue;
@@ -309,7 +306,6 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
       t.strokeStyle=`rgba(86,66,44,${.4*fade})`;t.lineWidth=1.3;t.beginPath();t.moveTo(ax,ay);t.lineTo((ax+bx)/2+srnd(-3,3),(ay+by)/2+srnd(-3,3));t.lineTo(bx,by);t.stroke();t.strokeStyle=`rgba(226,208,166,${.22*fade})`;t.lineWidth=1;t.beginPath();t.moveTo(ax+1,ay+1);t.lineTo(bx+1,by+1);t.stroke();}}}
   // phones: the ~25,000 hairline cracks are gathered into 8 shades and drawn in 16 strokes instead of one by one
   if(CK)for(let q=1;q<=8;q++){if(CK[0][q]){t.strokeStyle=`rgba(86,66,44,${.4*q/8})`;t.lineWidth=1.3;t.stroke(CK[0][q]);}if(CK[1][q]){t.strokeStyle=`rgba(226,208,166,${.22*q/8})`;t.lineWidth=1;t.stroke(CK[1][q]);}}
-  if(window.__TT&&draw)window.__TT('water',t);
   // water and shore, painted from the edge field at half resolution then scaled up smoothly
   if(draw&&M.hasWater){const SP=2/TS,W2=Math.ceil(MAPW/SP),H2=Math.ceil(MAPH/SP),wc=document.createElement('canvas');wc.width=W2;wc.height=H2;const wx=wc.getContext('2d'),wi=wx.createImageData(W2,H2),wd=wi.data;
     const ss=(a,b,v)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};const L=[[-60,[214,192,140],.45],[-30,[201,174,124],1],[-16,[156,133,96],1],[-7,[122,102,73],1]];
@@ -320,7 +316,6 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
       over([28,66,80],.55*ss(25,55,e));over([18,50,66],.55*ss(75,115,e));over([12,40,56],.5*ss(125,160,e));
       const k=(j*W2+i)*4;wd[k]=r;wd[k+1]=g;wd[k+2]=b;wd[k+3]=al*255;}
     wx.putImageData(wi,0,0);t.imageSmoothingEnabled=true;t.imageSmoothingQuality='high';t.drawImage(wc,0,0,W2*SP,H2*SP);}
-  if(window.__TT&&draw)window.__TT('mtn',t);
   // mountains: rock faces, scree at the foot, snow on the peaks
   if(draw&&M.hasMtn){const SP=2/TS,W2=Math.ceil(MAPW/SP),H2=Math.ceil(MAPH/SP),mc=document.createElement('canvas');mc.width=W2;mc.height=H2;const mx2=mc.getContext('2d'),mi=mx2.createImageData(W2,H2),md=mi.data;const snow=M.theme==='snow';
     for(let j=0;j<H2;j++)for(let i=0;i<W2;i++){const x=i*SP+SP/2,y=j*SP+SP/2,m=M.mf(x,y);if(m<-70)continue;const n=Math.sin(x*.05+y*.031)*.5+Math.sin(x*.13-y*.11)*.3+Math.sin(x*.37+y*.29)*.2;const str=Math.sin((x*.6+y*.25)*.09+n*3);
@@ -328,7 +323,6 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
       const cap=snow?20:75;if(m>cap){const k=Math.min(1,(m-cap)/30)*(.75+.25*Math.max(0,str));r=r*(1-k)+236*k;g=g*(1-k)+240*k;b=b*(1-k)+246*k;}
       const q=(j*W2+i)*4;md[q]=r;md[q+1]=g;md[q+2]=b;md[q+3]=a*255;}
     mx2.putImageData(mi,0,0);t.imageSmoothingEnabled=true;t.drawImage(mc,0,0,W2*SP,H2*SP);}
-  if(window.__TT&&draw)window.__TT('roads',t);
   // base pads
   // roads
   const RP=[];const road=(pts,w)=>{for(let i=0;i<pts.length-1;i++){const [ax,ay]=pts[i],[bx,by]=pts[i+1],n=Math.ceil(Math.hypot(bx-ax,by-ay)/40);for(let j=0;j<=n;j++)RP.push([ax+(bx-ax)*j/n,ay+(by-ay)*j/n]);}
@@ -346,7 +340,6 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
    BASES.forEach((B,i)=>{if(linked.has(i))return;const c=ends.filter(e=>!crosses(B,e)).sort((p,q)=>Math.hypot(p[0]-B[0],p[1]-B[1])-Math.hypot(q[0]-B[0],q[1]-B[1]));if(c.length){road([B,mid(B,c[0]),c[0]],34);return;}
      let hx=MAPW/2,hy=MAPH/2;const a=Math.atan2(hy-B[1],hx-B[0]);const L=Math.hypot(hx-B[0],hy-B[1]);for(let r=300;r<L;r+=20){const x=B[0]+Math.cos(a)*r,y=B[1]+Math.sin(a)*r;if(M.edge(x,y)>-170||M.mtn(x,y)>-120){hx=B[0]+Math.cos(a)*(r-40);hy=B[1]+Math.sin(a)*(r-40);break;}}
      if(!crosses(B,[hx,hy]))road([B,mid(B,[hx,hy]),[hx,hy]],34);});}
-  if(window.__TT&&draw)window.__TT('bases',t);
   for(const [bx,by] of BASES){const R=276;
     // worn dirt apron blending pad into terrain
     const ap=t.createRadialGradient(bx,by,R*.9,bx,by,R*1.45);ap.addColorStop(0,'rgba(122,108,80,.75)');ap.addColorStop(1,'rgba(122,108,80,0)');t.fillStyle=ap;t.fillRect(bx-R*1.5,by-R*1.5,R*3,R*3);
@@ -358,35 +351,26 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
       o.setTransform(TS,0,0,TS,-X0,-Y0);try{o.filter='blur('+Math.max(4,Math.round(14*TS))+'px)';}catch(e){}pad(o);o.strokeStyle=fc;o.globalAlpha=.55;o.lineWidth=34;o.stroke();o.globalAlpha=.3;o.lineWidth=64;o.stroke();
       t.save();t.setTransform(1,0,0,1,0,0);t.drawImage(oc,X0,Y0);t.restore();}
      pad(t);
-     t.save();if(!window.__NOCLIP)t.clip();
-    if(window.__TT&&draw)window.__TT('b:apron+pad+blur',t);
+     t.save();t.clip();
     // slab tone variation
     for(let k=0;k<70;k++){const x=bx+srnd(-R,R),y=by+srnd(-R,R),r=srnd(20,70),v=srnd(-8,8);const g=t.createRadialGradient(x,y,0,x,y,r);const gC=M.theme==='green'?`${150+v|0},${149+v|0},${144+v|0}`:`${156+v|0},${143+v|0},${120+v|0}`;g.addColorStop(0,`rgba(${gC},.22)`);g.addColorStop(1,`rgba(${gC},0)`);t.fillStyle=g;t.fillRect(x-r,y-r,2*r,2*r);}
-    if(window.__TT&&draw)window.__TT('b:slab',t);
     // fine aggregate speckle
     // (one random number per pixel at the 3072 reference size, whatever size is actually painted)
     {const X0=Math.round((bx-R)*TS),Y0=Math.round((by-R)*TS),RW=Math.max(1,Math.round(2*R*TS)),N0=Math.max(1,Math.round(2*R*TS0))**2;let k0=0;
      if(draw){const sp=t.getImageData(X0,Y0,RW,RW),d=sp.data,m=Math.min(d.length>>2,N0);for(let k=0;k<m*4;k+=4){const n=(srand()-.5)*14;d[k]+=n;d[k+1]+=n;d[k+2]+=n*.9;}k0=m;t.putImageData(sp,X0,Y0);}for(let k=k0;k<N0;k++)srand();}
-    if(window.__TT&&draw)window.__TT('b:speckle',t);
     // grime, oil stains and weathering
     for(let k=0;k<60;k++){const x=bx+srnd(-R,R),y=by+srnd(-R,R),r=srnd(6,34);const g=t.createRadialGradient(x,y,0,x,y,r);const dk=srand()<.4;g.addColorStop(0,dk?'rgba(34,30,26,.35)':(M.theme==='green'?'rgba(90,89,85,.22)':'rgba(96,88,72,.22)'));g.addColorStop(1,'rgba(40,36,30,0)');t.fillStyle=g;t.beginPath();t.ellipse(x,y,r,r*srnd(.5,1),srnd(0,3),0,7);t.fill();}
-    if(window.__TT&&draw)window.__TT('b:grime',t);
     // expansion joints (thin, sealed)
     // cracks
     t.strokeStyle='rgba(50,46,40,.45)';t.lineWidth=.8;for(let k=0;k<40;k++){let x=bx+srnd(-R,R),y=by+srnd(-R,R),a=srnd(0,6.3);t.beginPath();t.moveTo(x,y);for(let q=0;q<6;q++){a+=srnd(-.7,.7);x+=Math.cos(a)*srnd(3,9);y+=Math.sin(a)*srnd(3,9);t.lineTo(x,y);}t.stroke();}
-    if(window.__TT&&draw)window.__TT('b:cracks',t);
     // windblown sand drifting over the slab, heavier at the edges
     {const wa=.6,GRn=M.theme==='green',DC1=GRn?'146,144,138':'178,142,100',DC2=GRn?'146,144,138':'176,142,102',DA=GRn?.35:1;for(let k=0;k<220;k++){const side=srand()*4|0,u=srnd(-R,R),inn=Math.pow(srand(),2.2)*R*.9;let x,y;if(side===0){x=bx+u;y=by-R+inn;}else if(side===1){x=bx+u;y=by+R-inn;}else if(side===2){x=bx-R+inn;y=by+u;}else{x=bx+R-inn;y=by+u;}const r=srnd(10,48)*(1.2-inn/R*.6),al=.85*(1-inn/R*.6)*srnd(.45,1);const g=t.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(${DC1},${al*DA})`);g.addColorStop(.6,`rgba(${DC2},${al*.45*DA})`);g.addColorStop(1,`rgba(${DC2},0)`);t.fillStyle=g;t.beginPath();t.ellipse(x,y,r*1.8,r*.55,wa+srnd(-.2,.2),0,7);t.fill();}
      for(let k=0;k<70;k++){const x=bx+srnd(-R,R),y=by+srnd(-R,R),r=srnd(10,30);t.fillStyle=GRn?`rgba(146,144,138,${srnd(.05,.1)})`:`rgba(170,138,98,${srnd(.08,.18)})`;t.beginPath();t.ellipse(x,y,r*2.4,r*.35,wa+srnd(-.15,.15),0,7);t.fill();}}
-    if(window.__TT&&draw)window.__TT('b:sand',t);
     // tyre tracks
     for(let k=0;k<7;k++){const x0=bx+srnd(-R*.8,R*.8),y0=by+srnd(-R*.8,R*.8),a=srnd(0,6.3),L=srnd(80,200),c=srnd(-.004,.004);t.strokeStyle='rgba(40,36,30,.13)';t.lineWidth=4;for(const off of [-7,7]){t.beginPath();for(let q=0;q<=20;q++){const u=q/20*L,aa=a+c*u;const x=x0+Math.cos(a)*u-Math.sin(aa)*off,y=y0+Math.sin(a)*u+Math.cos(aa)*off;q?t.lineTo(x,y):t.moveTo(x,y);}t.stroke();}}
-    if(window.__TT&&draw)window.__TT('b:tyre',t);
     // painted markings, faded
 
-    if(window.__TT&&draw)window.__TT('b:restore',t);
     t.restore();}}
-  if(window.__TT&&draw)window.__TT('fields+rocks',t);
   for(const f of M.fields){const g=t.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r*1.8);g.addColorStop(0,'rgba(120,96,60,.6)');g.addColorStop(1,'rgba(120,96,60,0)');t.fillStyle=g;t.beginPath();t.arc(f.x,f.y,f.r*1.8,0,7);t.fill();}
   if(sim){const C=16,w=Math.ceil(MAPW/C),h=Math.ceil(MAPH/C),d=new Uint8Array(w*h);for(const [a,b] of RP){const r=2;const ci=a/C|0,cj=b/C|0;for(let i=-r;i<=r;i++)for(let j=-r;j<=r;j++){const x=ci+i,y=cj+j;if(x>=0&&y>=0&&x<w&&y<h&&Math.hypot(i,j)<=r)d[y*w+x]=1;}}const f=new Float32Array(w*h),R2=7;for(const [a,b] of RP){const ci=a/C|0,cj=b/C|0;for(let i=-R2;i<=R2;i++)for(let j=-R2;j<=R2;j++){const x=ci+i,y=cj+j;if(x<0||y<0||x>=w||y>=h)continue;const v=1-Math.max(0,(Math.hypot(i,j)-2)/(R2-2));if(v>f[y*w+x])f[y*w+x]=v;}}G.roadMask={C,w,h,d,f};}
   const roadD=(x,y)=>{let m=1e12;for(const [a,b] of RP){const d=(a-x)**2+(b-y)**2;if(d<m)m=d;}return Math.sqrt(m);};
@@ -394,24 +378,18 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
   const AR=Math.min(3,Math.max(1,MAPW*MAPH/(3200*2200)));for(let i=0;i<26*TA;i++){const x=srnd(0,MAPW),y=srnd(0,MAPH);if(!clear(x,y))continue;const r=srnd(14,34);const g=t.createRadialGradient(x,y,r*.2,x,y,r);g.addColorStop(0,'rgba(40,34,22,.35)');g.addColorStop(.8,'rgba(40,34,22,.1)');g.addColorStop(.9,'rgba(170,150,110,.25)');g.addColorStop(1,'rgba(170,150,110,0)');t.fillStyle=g;t.beginPath();t.arc(x,y,r,0,7);t.fill();}
   for(let i=0;i<480*TA;i++){const x=srnd(0,MAPW),y=srnd(0,MAPH);if(!clear(x,y))continue;const n=2+srand()*4|0,sz=srnd(4,9);
     for(let j=0;j<n;j++){const ox=x+srnd(-sz*1.4,sz*1.4),oy=y+srnd(-sz,sz),r=sz*srnd(.6,1.1);const g=t.createRadialGradient(ox,oy,0,ox,oy,r*1.3);g.addColorStop(0,'rgba(104,92,60,.32)');g.addColorStop(.7,'rgba(118,104,70,.16)');g.addColorStop(1,'rgba(118,104,70,0)');t.fillStyle=g;t.beginPath();t.arc(ox,oy,r*1.3,0,7);t.fill();}}
-  if(window.__TT&&draw)window.__TT('trees',t);
   // forests
   const trees=[];
   for(let i=0;i<70*AR;i++){const cx=srnd(80,MAPW-80),cy=srnd(80,MAPH-80);if(!clear(cx,cy,40)||roadD(cx,cy)<150)continue;const n=10+srand()*26|0;for(let j=0;j<n;j++){const x=cx+srnd(-150,150),y=cy+srnd(-100,100);if(clear(x,y)&&roadD(x,y)>70)trees.push([x,y]);}}
   {const tp=trees.map(([x,y])=>[x,y,srnd(.75,1.35),srnd(0,6.28)]);if(sim)G.treePos=tp;}
-  if(window.__TT&&draw)window.__TT('rockpoly',t);
   for(let i=0;i<90*TA;i++){const x=srnd(0,MAPW),y=srnd(0,MAPH);if(!clear(x,y)||roadD(x,y)<40)continue;const m=1+srand()*3|0;
     for(let j=0;j<m;j++){const cx=x+srnd(-18,18),cy=y+srnd(-12,12),r=srnd(7,20),pts=[],k=7+srand()*4|0;for(let q=0;q<k;q++){const a=q/k*6.28,rr=r*srnd(.7,1.1);pts.push([cx+Math.cos(a)*rr,cy+Math.sin(a)*rr*.75]);}
       const poly=(dx,dy)=>{t.beginPath();pts.forEach((p,q)=>q?t.lineTo(p[0]+dx,p[1]+dy):t.moveTo(p[0]+dx,p[1]+dy));t.closePath();};poly(r*.35,r*.3);t.fillStyle='rgba(25,22,14,.4)';t.fill();poly(0,0);const g=t.createLinearGradient(cx-r,cy-r,cx+r,cy+r);g.addColorStop(0,'#a59c86');g.addColorStop(.55,'#7a725f');g.addColorStop(1,'#4d473a');t.fillStyle=g;t.fill();t.strokeStyle='rgba(40,36,28,.5)';t.lineWidth=1;t.stroke();}}
-  if(window.__TT&&draw)window.__TT('cities',t);
   for(const c of M.cities){const g=t.createRadialGradient(c.x,c.y,0,c.x,c.y,c.r*1.15);g.addColorStop(0,'rgba(120,112,98,.55)');g.addColorStop(.85,'rgba(126,116,98,.35)');g.addColorStop(1,'rgba(126,116,98,0)');t.fillStyle=g;t.beginPath();t.arc(c.x,c.y,c.r*1.15,0,7);t.fill();}
   for(const b of M.cityBlds){t.fillStyle=b.style==='russia'?'#77736c':b.style==='america'?'#8a8278':'#b8a888';t.fillRect(b.x-b.w/2,b.y-b.d/2,b.w,b.d);}
-  if(window.__TT&&draw)window.__TT('final',t);
   if(draw){const CW=c.width,CH=c.height,id=t.getImageData(0,0,CW,CH),d=id.data;const SN=M.theme==='snow',GR=M.theme==='green';const WS=new Float32Array(CW);for(let x=0;x<CW;x++)WS[x]=Math.sin(x/TS*.0021);for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*16;if(GR&&!(d[i+2]>d[i]+10)){const gy=Math.max(Math.abs(d[i]-d[i+1]),Math.abs(d[i+1]-d[i+2])*.72),gk=Math.max(0,Math.min(1,(gy-5)/13));if(gk>0){const px=(i>>2)%CW,py=((i>>2)/CW)|0;const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,w=WS[px]*Math.cos(py/TS*.0017)*.5+.5;d[i]=d[i]*(1-gk)+(l*.42+30+18*w+n)*gk;d[i+1]=d[i+1]*(1-gk)+(l*.52+56+10*w+n)*gk;d[i+2]=d[i+2]*(1-gk)+(l*.3+22+n*.6)*gk;continue;}}if(SN&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=l*.42+128+n*.6;d[i+1]=l*.44+134+n*.6;d[i+2]=l*.45+146+n*.6;continue;}d[i]+=n;d[i+1]+=n;d[i+2]+=n*.8;}t.putImageData(id,0,0);
-  if(window.__TT&&draw)window.__TT('vignette',t);
   const e=t.createRadialGradient(MAPW/2,MAPH/2,MAPH*.55,MAPW/2,MAPH/2,MAPW*.72);e.addColorStop(0,'rgba(0,0,0,0)');e.addColorStop(1,'rgba(0,0,0,.35)');t.fillStyle=e;t.fillRect(0,0,MAPW,MAPH);
   G.terrain=c;G.tctx=t;const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;th.getContext('2d').drawImage(c,0,0,th.width,th.height);G.thumb=th;}
-  if(window.__TT&&draw)window.__TT('thumb',t);
   if(sim){buildHGrid();if(!draw){const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;const q=th.getContext('2d');q.fillStyle='#a8825a';q.fillRect(0,0,th.width,th.height);G.thumb=th;}}
   srand=Math.random;
 }
