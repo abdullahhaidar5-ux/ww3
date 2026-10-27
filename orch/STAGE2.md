@@ -274,6 +274,55 @@ Nothing blocks it. Things to handle in steps 2–4:
 5. **Uncertainties to measure on Cloudflare:** CPU tolerance for a continuously busy object, isolate sharing,
    snapshot-encoding cost.
 
+## 7. Step 2b: the host netcode slice (`src/07a-hostsnap.js`, 2026-10-27)
+
+**Done.** Everything the host sends to players now lives in its own module, `src/07a-hostsnap.js`, moved out of
+`07-net` unchanged: the shared `NET` state and `FLG`/`NET_PV`, order checking (`CMD_T`, `cleanCmd`), reconnects
+(`hostRejoin`, `discTick`, `playerLeft`), snapshots (`encEnt`, `sendSnap`, `verItems`, `sendSnapP`, `forPlayer`,
+`snapOut`, `sendChunks`, `snapDrops`, `dhSet`), team panels (`teamGlobals`, `teamMsg`), per-player event streams
+(`VG`, `visGrid`, `visAt`, `evWho`, `skNote`, `dieWho`, `civWho`, `sendEvtP2P`) and the send loop (`netTick`,
+`netTick0`). `07-net` keeps the lobby, joining, the client side and `wireHost`. `build.py` picks the file up by name
+order (07-net, 07a, 07b), and its `--split` list has the new boundary.
+
+The three browser ties are gone:
+
+- `sendSnapP`'s `cv` was a local loop variable that happened to share the 3D canvas's name. It is renamed `ov`.
+- `window.WW3_P2P` (8 places) is now `hostP2P()`. That uses `NET.p2p` when it is set (a server sets it to true) and
+  otherwise the page's `window.WW3_P2P`, exactly as before.
+- `ckPack` already worked in Node (Node and Workers have `Blob`, `CompressionStream`, `Response` and `btoa`). It now also
+  falls back to plain JSON if `Blob` is missing.
+
+One unreachable line (a `pushLog` after a `return` in `playerLeft`) was dropped. Nothing players get changed: the
+messages, their timing and `NET_PV` are the same.
+
+**Proof:** `node orch/headless.mjs --hostsnap` loads `01 + 02 + 03 + 07a + 07b` verbatim in plain Node with **no
+`window`**, hosts N-1 connected players (their sides are played by the AI, hidden from the netcode so it treats them as
+humans), and records everything sent. It checks that every player gets snapshots, events and team panels, that every
+row is well formed, and that the standby player receives checkpoints. It also scans 07a/07b for DOM, canvas,
+Three.js or UI names. `--hostsnap --compare` runs the same host in the real `index.html` in Chromium and requires the
+same battle state and **identical messages** (hash of every message, checkpoint gzip bytes aside) at each interval.
+`--room` tests the claude.ai-artifact broadcast style.
+
+Result 2026-10-27: `--hostsnap --compare --players 4 --minutes 2 --every 20` → **HOSTSNAP PASS**, state and all
+4,265 messages identical between Node and Chromium at all 6 checks. Measured (Node 22, 8 players, Fulda, 5 game-min): 24,800 messages, ~59 KB/s in total to 7 players. The host netcode
+cost ~14 ms per game-second, on top of ~130 ms for the battle.
+
+**What remains for the dedicated server (step 3, not started):**
+
+1. A Node entry point (`server/` or `tools/`) that concatenates `01+02+03+07a+07b` (as `simSource({host:true})` does)
+   and runs the loop: `simUpdate(1/60)` at 60 Hz plus `netTick(dt)`, `MODE='host'`, no host player of its own
+   (`ME` = a spectator slot or -1; check `netTick0`'s `k!==ME` and `teamMsg`), and `NET.p2p = true`.
+2. A room adapter for `NET.game`: `emit(topic, data)` → send to the player named by `data.to` (or everyone), plus
+   `buffered(to)`. Incoming player presence (`hi`, `cq` orders, `pg` pings, `kr` keyframe requests) has to be fed the
+   way `wireHost`'s `onPeers` handler does. That handler lives in `07-net` and also drives the lobby UI, so split its
+   battle half (`hostCmd`, order queue de-duplication, pong, keyframe reset) into 07a next.
+3. Lobby/start: the server must send `start` (`pv`, `seed`, `facs`, `slot`, `map`, `tm`, `w`) to each player, as
+   `launchMP` does, and accept players over the existing relay (WebSocket room) path.
+4. Battle randomness still uses the global `Math.random`. That's fine on a server that runs one battle per process.
+   Several battles in one isolate need `G.rng` (§3).
+5. Checkpoints: on a server, `ckEncode` → disk/Durable Object storage gives restart recovery. The standby-player
+   hand-off still works as a fallback.
+
 ## How to run
 
 ```
@@ -283,4 +332,6 @@ node orch/headless.mjs --compare                         # HEADLESS PASS / HEADL
 node orch/headless.mjs --compare --render                # with 3D world, effects and drawing in the page
 node orch/headless.mjs --compare --native-math           # shows the cross-engine math divergence
 node orch/headless.mjs --bench --seeds 1,2 --map strait  # cost table -> orch/out/headless-bench-*.json
+node orch/headless.mjs --hostsnap --players 8           # server bundle hosts 7 players in Node -> HOSTSNAP PASS
+node orch/headless.mjs --hostsnap --compare             # ...and the browser host must send identical messages
 ```

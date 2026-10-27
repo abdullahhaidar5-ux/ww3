@@ -42,7 +42,7 @@ function ckRestore(ck){const N=G.teams.length;const {ents,byId}=ckDecode(ck);
    the same room; after two failed tries the standby restores the checkpoint and opens the follow-up room
    "<code>-m1"; the other players move there automatically and rejoin as their own commanders. The old host's army is
    handed to the AI. */
-async function ckPack(ck){const js=JSON.stringify(ck);if(typeof CompressionStream==='undefined')return 'J'+js;
+async function ckPack(ck){const js=JSON.stringify(ck);if(typeof CompressionStream==='undefined'||typeof Blob==='undefined')return 'J'+js;
   const buf=new Uint8Array(await new Response(new Blob([js]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());let b='';for(let i=0;i<buf.length;i+=32768)b+=String.fromCharCode.apply(null,buf.subarray(i,i+32768));return 'Z'+btoa(b);}
 async function ckUnpack(s){if(s[0]==='J')return JSON.parse(s.slice(1));const bin=atob(s.slice(1)),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
   return JSON.parse(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text());}
