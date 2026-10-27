@@ -8,6 +8,32 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+**ROUND PAUSED (Abdullah, 2026-10-27 18:00: "Pause the current round and do these first and then continue").** The
+4-hourly ORCH schedule is switched off until the side lane finishes order steps 1–3. A cycle already running: ship only
+what is already gated, start no new squads, release the lock, and leave server battles / open items / music to the side
+lane (it is working on them now).
+
+**IN FLIGHT (side lane, 2026-10-27 18:10 — Abdullah: "spawn more agents to finish all this work by tonight"; ORCH: don't
+take these):** Cloudflare battles → branch `orch/stage2-dedicated` (BattleRoom DO + `/bench` first); reconnect bug +
+phone-portrait bar → `orch/open-reconnect-phonebar`; Generals mouse → `orch/controls`; phone touch controls → `orch/touch-controls`; Cloudflare battles browser side
+(lobby choice, fallback) → `orch/cf-battle-client`; shared
+soundtrack from the 14 keeps → `orch/soundtrack`; Three.js upgrade (Graphics Phase 1, merged last) → `orch/three-upgrade`.
+
+**ORDER OF WORK (Abdullah, 2026-10-27 17:58): "Do the battles on servers first. Then address the open items. Then fix
+the music and move onto the graphics overhaul."** ORCH follows this order across cycles; don't start a later stage while
+an earlier one still has work a squad can take (other squads may only do small P1 fixes that don't compete):
+1. **Server-hosted battles** (TOP PRIORITY item below) — **on Cloudflare** (Abdullah, 18:02: "I want the hosting of
+   battles to be on Cloudflare"): BattleRoom Durable Object running the sim; lobby "Host on Cloudflare" with "Host in my
+   browser" as default/fallback; PC dedicated server dropped. First measure CPU on the real free plan (`/bench`, via a
+   `servers-live` PR Abdullah merges); if the free plan's CPU limit can't hold a battle, ask him about Workers Paid.
+2. **Open items:** client reconnect state wrong (Multiplayer P1); phone-portrait bar clipping (UI); then the two
+   items Abdullah had paused — **Generals mouse controls + Mouse settings** (branch `orch/wip-generals-mouse`) and
+   **intuitive phone controls** — now unpaused by this instruction (side lane read "open items" to include them; he
+   can say otherwise).
+3. **Music:** the shared real soundtrack (step 2+), using the keeps on the listening page (14 keeps pre-filled by ORCH
+   at 22:50 UTC as suggestions — Abdullah may still change them; read the page's `picks` when starting).
+4. **Graphics overhaul** (Phase 1 engine upgrade onward).
+
 - [open] **TOP PRIORITY — Server-hosted battles (Stage 2)** (Abdullah, 2026-10-27 07:07: "yes" to making it ORCH's
   top priority, ahead of Graphics Phase 1). Battles run on a server instead of the host's browser: no host advantage,
   phones never host big battles, host leaving doesn't disturb the match, bigger battles. Plan (agreed 2026-10-26 19:09):
@@ -66,7 +92,7 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   band music; Abdullah can't record — search free archives (Commons, Internet Archive, Freesound, folk archives) for
   freely licensed real latmiyas; optionally draft a permission request he can send to a reciter. Likely mix: real
   latmiya for menu/calm, military band for battle. Religious and traditional pieces only — no armed-group anthems.
-- [open] **Stage 1 SHIPPED to main 2026-10-27 (off until live; see [ask] Put the servers live). Stage 2 open. (side lane, restarted 19:36 — Abdullah: "do this now"; ORCH: don't take it; deploy via Cloudflare Workers Builds + merge-to-approve, no tokens) — Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
+- [open] **Stage 1 SHIPPED to main 2026-10-27 (off until live; see [ask] Put the servers live). Stage 2 open. (side lane, restarted 19:36 — Abdullah: "do this now"; stage 1 done; deploy via Cloudflare Workers Builds + merge-to-approve, no tokens) — Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
   multiplayer"). Target: Cloudflare free tier (Workers + Durable Objects), deployed by a GitHub Actions workflow that Abdullah
   approves from his phone (see the [ask] item under Multiplayer; no secrets in chat or repo). Build and test everything locally first; deployment itself is the only [ask]. Account exists (19:11).
   **Stage 1 — relay + signalling:** WebSocket relay rooms in a Durable Object (game code = room) that carry all game
@@ -145,14 +171,13 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 **UI/UX & controls** (`08-ui`, `06-view`)
 - [open] Phone portrait bottom bar: the 4th build column (Defense Gun, SAM Site…) is cut off at the right edge and
   the hint text under the tabs is clipped mid-line — make the grid fit or scroll visibly (side lane, 2026-10-27).
-- [open] **PAUSED by Abdullah 2026-10-26 19:35 (not started; ORCH: don't take until he says) — intuitive phone controls.** Abdullah: "make the mobile
+- [open] **UNPAUSED 2026-10-27 17:58 (order step 2, after server battles) — intuitive phone controls.** Abdullah: "make the mobile
   controls more intuitive". One-finger drag scrolls (Maps-app style), long-press+drag box-selects, tap selects/orders
   with order markers, long-press+drag with units = infantry line, touch command bar (attack-move, guard, stop, line,
   same type, all army, deselect), collapsible panel, better landscape, first-time guide. Starts after the Generals
-  mouse work lands; ORCH: don't take it.
-- [open] **PAUSED by Abdullah 2026-10-26 19:35 (work saved on branch `orch/wip-generals-mouse`, unbuilt/untested; ORCH: don't take until he says) — Generals mouse controls + per-function Mouse settings.** Re-confirmed by Abdullah 2026-10-26 18:55 over
-  the 17:55 "freeze" note (see CLAUDE.md). Being built and shipped by the side lane; ORCH: don't take this item and
-  don't edit `08-ui`/`06-view` input code until it lands.
+  mouse work lands.
+- [open] **UNPAUSED 2026-10-27 17:58 (order step 2, after server battles; work saved on branch `orch/wip-generals-mouse`, unbuilt/untested) — Generals mouse controls + per-function Mouse settings.** Re-confirmed by Abdullah 2026-10-26 18:55 over
+  the 17:55 "freeze" note (see CLAUDE.md). ORCH takes it at order step 2.
 - [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers.
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
