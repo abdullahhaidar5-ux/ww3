@@ -8317,14 +8317,14 @@ function tcStartDrag(g){const own=tcOwn();
   else{g.mode='pan';g.lt=performance.now();TC.vel={x:0,y:0};}
   tcHold();}
 function tcLong(){const g=TC.g;if(!g||g.mode!=='tap')return;g.mode='hold';tcHold(g.x,g.y);try{navigator.vibrate&&navigator.vibrate(15);}catch(_){}}
-window.addEventListener('pointerdown',e=>{TC.touch=e.pointerType==='touch';if(e.pointerType!=='touch'||e.target!==cv)return;
+window.addEventListener('pointerdown',e=>{TC.touch=e.pointerType==='touch';TC.nd=(TC.nd||0)+1;TC.lastDown=e.pointerType+':'+(e.target&&(e.target.id||e.target.tagName));if(e.pointerType!=='touch'||e.target!==cv)return;
   if(typeof menuOpen==='function'&&menuOpen())return; // the menu's own handler closes it and swallows the tap
   e.stopPropagation();e.preventDefault();if(!G||G.over)return;
   LASTPT='touch';if(!TOUCHUI)touchUI();PICKMIN=20;mouse.in=false;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   TC.glide=false;const p=tcXY(e);TC.ids.set(e.pointerId,p);
   if(TC.ids.size>=2){tcAbort();if(!TC.pinch&&TC.ids.size===2)TC.pinch=tcMid();return;}
   TC.g={id:e.pointerId,x0:p.x,y0:p.y,x:p.x,y:p.y,mode:'tap'};clearTimeout(TC.lpT);TC.lpT=setTimeout(tcLong,TC_LP);},true);
-window.addEventListener('pointermove',e=>{if(e.pointerType!=='touch'||!TC.ids.has(e.pointerId))return;e.stopPropagation();if(!G)return;
+window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')TC.nm=(TC.nm||0)+1;if(e.pointerType!=='touch'||!TC.ids.has(e.pointerId))return;e.stopPropagation();if(!G)return;
   const p=tcXY(e),q=TC.ids.get(e.pointerId);TC.ids.set(e.pointerId,p);
   if(TC.pinch&&TC.ids.size>=2){const m=tcMid(),P=TC.pinch;camTarget();
     if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(1800,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
@@ -8372,7 +8372,8 @@ function tcStrip(force){const now=performance.now();if(!force&&now-TC.stripT<120
   const mk=(k,ic,tx,ti,cl)=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.title=ti;b.setAttribute('aria-label',ti);if(cl)b.className=cl;const i=document.createElement('i');i.textContent=ic;const t=document.createElement('span');t.textContent=tx;b.append(i,t);s.append(b);return b;};
   if(mode==='conf'){const b=mk('ok','✓',G.place?'Build here':'Fire here',G.place?'Build it at the marked spot':'Fire at the marked spot','go');b.disabled=!ok;mk('no','✕','Cancel','Cancel','cx');return;}
   for(const [k,ic,tx,ti] of TC_BTN){const b=mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}}
-/* ---- first-time guide: three steps, shown once, remembered; ☰ > Touch controls shows it again ---- */
+/* ---- first-time guide: three steps, shown once, remembered; ☰ > Touch controls shows it again. A card near the top,
+   not a full-screen cover: the battle keeps running (multiplayer can't pause) and stays playable around it ---- */
 const TC_GUIDE=[['☝','Move the map','Drag one finger to scroll the battlefield; flick to glide. Pinch with two fingers to zoom.'],
   ['◉','Select and command','Tap a unit to select it, then tap the ground to move or an enemy to attack: a ring shows where the order went. Double-tap a unit to select all of that type on screen.'],
   ['▭','Hold, then drag','Hold a finger still for a moment, then drag to box-select a group. With units selected, hold and drag to draw a battle line. The buttons above the bar give attack-move, guard, stop and more.']];
@@ -8384,11 +8385,11 @@ function tcGuide(show){let o=$('tguide');if(show===false){if(o)o.hidden=true;ret
 function tcGuideStep(i){const o=$('tguide'),[ic,h,p]=TC_GUIDE[i];o.dataset.i=i;o.querySelector('.tgn').textContent=`${i+1} / ${TC_GUIDE.length}`;o.querySelector('.tgi').textContent=ic;o.querySelector('b').textContent=h;o.querySelector('p').textContent=p;o.querySelector('.tgx').textContent=i===TC_GUIDE.length-1?'Got it':'Next';}
 {const m=$('amenu'),s=$('aSet');if(m&&s&&!$('aGuide')){const b=document.createElement('button');b.id='aGuide';b.className='on';b.setAttribute('role','menuitem');b.textContent='☝ Touch controls';b.title='Show the touch controls guide';b.onclick=()=>{menuOpen(false);tcGuide(true);};s.after(b);}}
 /* ---- every frame: flick glide, the build / fire marker stays on its spot while the map scrolls, strip, guide ---- */
-(function tcLoop(){requestAnimationFrame(tcLoop);const now=performance.now(),dt=Math.min(.05,(now-TC.last)/1000);TC.last=now;if(!G)return;
+(function tcLoop(){requestAnimationFrame(tcLoop);const now=performance.now(),dt=Math.min(.05,(now-TC.last)/1000);TC.last=now;TC.frames=(TC.frames||0)+1;if(!G)return;
   try{if(TC.glide){if(!tcCam(TC.vel.x*dt,TC.vel.y*dt))TC.glide=false;const k=Math.exp(-dt*4.2);TC.vel.x*=k;TC.vel.y*=k;if(Math.hypot(TC.vel.x,TC.vel.y)<cam.dist*.04)TC.glide=false;}
     if((G.place||G.aim)&&TC.touch&&!G.over){if(!TC.pick)TC.pick=screenToWorld(VW/2,VH*.42);if(TC.pick){const p=toScreen(TC.pick.x,0,TC.pick.y);mouse.x=p.x;mouse.y=p.y;}}else TC.pick=null;
     tcStrip(false);
-    if(TOUCHUI&&TC.touch&&!G.over&&!window.LOADING&&$('menu').hidden&&!tcGuideSeen())tcGuide(true);}catch(e){}})();
+    if(TOUCHUI&&TC.touch&&!G.over&&!window.LOADING&&$('menu').hidden&&!tcGuideSeen())tcGuide(true);}catch(e){TC.err=String(e&&e.stack||e).slice(0,300);}})();
 {const st=document.createElement('style');st.id='touchCss';st.textContent=`
 .tmark{position:fixed;z-index:7;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #7be08f;box-shadow:0 0 0 2px rgba(0,0,0,.55),inset 0 0 0 2px rgba(0,0,0,.4);pointer-events:none;animation:tmk .7s ease-out forwards}
 .tmark::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:currentColor;color:inherit}
@@ -8407,9 +8408,9 @@ function tcGuideStep(i){const o=$('tguide'),[ic,h,p]=TC_GUIDE[i];o.dataset.i=i;o
 #tstrip.conf button.go{border-color:var(--ok,#7be08f);color:var(--ok,#7be08f)}#tstrip.conf button.go:disabled{opacity:.45}
 #tstrip.conf button.cx{border-color:var(--warn,#ea5a40);color:var(--warn,#ea5a40)}
 body.tstripOn #info .cmdrow{display:none!important}
-#tguide{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;background:rgba(4,7,6,.62);padding:16px}
+#tguide{position:fixed;left:0;right:0;top:max(44px,calc(env(safe-area-inset-top,0px) + 38px));z-index:30;display:flex;justify-content:center;padding:0 10px;pointer-events:none}
 #tguide[hidden]{display:none}
-#tguide .tgc{width:min(360px,100%);box-sizing:border-box;background:rgba(18,24,21,.98);border:1px solid #3d4d44;box-shadow:0 10px 30px rgba(0,0,0,.6);padding:16px 16px 12px;color:var(--fg,#e9f5ec);font:14px/1.4 system-ui,sans-serif}
+#tguide .tgc{pointer-events:auto;width:min(360px,100%);box-sizing:border-box;background:rgba(18,24,21,.98);border:1px solid #3d4d44;box-shadow:0 10px 30px rgba(0,0,0,.6);padding:16px 16px 12px;color:var(--fg,#e9f5ec);font:14px/1.4 system-ui,sans-serif}
 #tguide .tgn{font:600 11px var(--mono,monospace);color:var(--dim,#9aa8a0);letter-spacing:.08em}
 #tguide .tgi{font-size:34px;line-height:1.2;margin:4px 0;color:var(--accent,#7be08f)}
 #tguide b{display:block;font:700 18px var(--display,system-ui);letter-spacing:.03em;margin-bottom:4px}

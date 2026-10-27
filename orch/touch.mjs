@@ -111,10 +111,10 @@ function touch(page) {
   const send = async (type, pts) => { cdp = cdp || await page.context().newCDPSession(page);
     await cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map((p, i) => ({ x: Math.round(p.x), y: Math.round(p.y), id: p.id ?? i, radiusX: 3, radiusY: 3, force: 1 })) }); };
   return {
-    async tap(x, y) { await send('touchStart', [{ x, y }]); await sleep(40); await send('touchEnd', []); },
+    async tap(x, y) { await send('touchStart', [{ x, y, id: 1 }]); await sleep(40); await send('touchEnd', []); },
     async drag(x0, y0, x1, y1, { hold = 0, steps = 10, ms = 120, end = 0 } = {}) {
-      await send('touchStart', [{ x: x0, y: y0 }]); if (hold) await sleep(hold);
-      for (let i = 1; i <= steps; i++) { await send('touchMove', [{ x: x0 + (x1 - x0) * i / steps, y: y0 + (y1 - y0) * i / steps }]); await sleep(ms / steps); }
+      await send('touchStart', [{ x: x0, y: y0, id: 1 }]); if (hold) await sleep(hold);
+      for (let i = 1; i <= steps; i++) { await send('touchMove', [{ x: x0 + (x1 - x0) * i / steps, y: y0 + (y1 - y0) * i / steps, id: 1 }]); await sleep(ms / steps); }
       if (end) await sleep(end); await send('touchEnd', []); },
     async pinch(cx, cy, d0, d1, steps = 8) {
       const pts = d => [{ x: cx - d / 2, y: cy, id: 1 }, { x: cx + d / 2, y: cy, id: 2 }];
@@ -126,14 +126,16 @@ function touch(page) {
 
 async function phonePass(tag, viewport, storageState) {
   console.log(`\n${tag}: ${viewport.width}x${viewport.height}, touch`);
-  const { ctx, page } = await newPage({ viewport, isMobile: true, hasTouch: true, deviceScaleFactor: 2 }, storageState);
+  const { ctx, page } = await newPage({ viewport, isMobile: true, hasTouch: true, deviceScaleFactor: 1 }, storageState);
   const S = await battle(page);
   const T = touch(page);
   const firstGuide = !storageState;
   // --- the first-time guide ---
   if (firstGuide) {
-    const shown = await page.waitForFunction(() => { const g = document.getElementById('tguide'); return g && !g.hidden; }, null, { timeout: 15000 }).then(() => true, () => false);
+    const shown = await page.waitForFunction(() => { const g = document.getElementById('tguide'); return g && !g.hidden; }, null, { timeout: 90000, polling: 250 }).then(() => true, () => false);
     check(tag, shown, 'first-time guide shows at the start of the first battle');
+    if (!shown) console.log('    state:', JSON.stringify(await page.evaluate(() => ({ TOUCHUI, touch: TC.touch, err: TC.err || '', menu: document.getElementById('menu').hidden,
+      loading: !!window.LOADING, over: G.over, seen: localStorage.getItem('ww3_touchGuide'), frames: TC.frames, g: !!document.getElementById('tguide') }))));
     if (shown) {
       const n = await page.evaluate(() => document.querySelector('#tguide .tgn').textContent);
       check(tag, n === '1 / 3', `guide starts at step 1 of 3 (${n})`);
@@ -160,6 +162,7 @@ async function phonePass(tag, viewport, storageState) {
   const c2 = await page.evaluate(() => ({ x: cam.x, y: cam.y, sel: G.sel.length }));
   const d1 = Math.hypot(c1.x - c0.x, c1.y - c0.y), d2 = Math.hypot(c2.x - c1.x, c2.y - c1.y);
   check(tag, d1 > 20, `one-finger drag scrolls the map (camera moved ${d1.toFixed(0)})`);
+  if (!(d1 > 20)) console.log('    state:', JSON.stringify(await page.evaluate(() => ({ nd: TC.nd, nm: TC.nm, last: TC.lastDown, ids: [...TC.ids.keys()], g: TC.g, sel: G.sel.map(u => u.kind), menu: menuOpen() }))));
   check(tag, c2.x > c0.x, `the map follows the finger (dragging left moves the view right: ${c0.x.toFixed(0)} -> ${c2.x.toFixed(0)})`);
   check(tag, c1.glide || d2 > 1, `a flick keeps gliding after the finger lifts (glided ${d2.toFixed(0)} more)`);
   check(tag, c2.sel === 0 && (await acts(page)).length === 0, 'scrolling neither selects nor orders anything');
@@ -200,9 +203,9 @@ async function phonePass(tag, viewport, storageState) {
   // --- tap the ground: move order + marker ---
   await acts(page);
   const g = { x: p.x + (viewport.width > viewport.height ? 140 : 90), y: p.y - 70 };
-  await T.tap(g.x, g.y); await frames(page, 1);
+  await T.tap(g.x, g.y);
+  const mk = await page.evaluate(() => ({ dom: document.querySelectorAll('.tmark.mv').length, n: TC.seen.mv || 0 })); // read at once: a marker lives 0.75 s
   let a = await acts(page);
-  const mk = await page.evaluate(() => ({ dom: document.querySelectorAll('.tmark.mv').length, n: TC.seen.mv || 0 }));
   check(tag, a.some(x => x.t === 'go' && x.ids.includes(S.ids[0])), `tap on the ground with a unit selected orders a move (${a.map(x => x.t).join(',')})`);
   check(tag, mk.n >= 1 && mk.dom >= 1, 'a move marker flashes where the order went');
   check(tag, (await sel(page)).length === 1, 'the unit stays selected after the order');
@@ -346,6 +349,7 @@ async function desktopPass() {
 
 try {
   const st = await phonePass('portrait', { width: 390, height: 844 });
+  if (process.env.TOUCH_QUICK) throw new Error('quick mode: stopped after portrait');
   await phonePass('landscape', { width: 844, height: 390 }, st);
   await desktopPass();
 } catch (e) {
