@@ -107,8 +107,14 @@ async function view(page, at) {
     const free = (wx, wy) => { const p = toScreen(wx, groundH(wx, wy), wy); const x = R.left + p.x, y = R.top + p.y;
       return { x, y, ok: document.elementFromPoint(x, y) === cv && !pickAt(p.x, p.y, false) }; };
     const out = { U: window.__U.map(id => sc(G.byId.get(id))), E: sc(G.byId.get(window.__E)), HQ: sc(G.byId.get(window.__HQ)),
-      ground: [free(P.x - 90, P.y + 120), free(P.x + 90, P.y + 120), free(P.x, P.y + 190), free(P.x - 160, P.y + 60), free(P.x + 160, P.y + 60)],
-      hqGround: null, onScreen: true };
+      ground: [], line: null, hqGround: null, onScreen: true };
+    // open ground on screen (not under the command bar or a unit), nearest to the test units first; the layout differs
+    // between screens and machines, so search instead of using fixed spots
+    const cand = [];
+    for (let dy = -220; dy <= 220; dy += 40) for (let dx = -240; dx <= 240; dx += 60) if (Math.abs(dy) >= 60 || Math.abs(dx) > 150) cand.push([dx, dy]);
+    cand.sort((a, b) => Math.hypot(a[0], a[1] * 1.3) - Math.hypot(b[0], b[1] * 1.3));
+    for (const [dx, dy] of cand) { const f = free(P.x + dx, P.y + dy); if (f.ok && out.ground.every(q => Math.hypot(q.x - f.x, q.y - f.y) > 40)) out.ground.push(f); if (out.ground.length >= 4) break; }
+    for (const dy of [60, -60, 100, -100, 140, 180, -180]) { const a = free(P.x - 160, P.y + dy), b = free(P.x + 160, P.y + dy); if (a.ok && b.ok) { out.line = [a, b]; break; } }
     const hq = G.byId.get(window.__HQ); out.hqGround = free(hq.x + (P.x - hq.x) * .35, hq.y + (P.y - hq.y) * .35);
     for (const p of [...out.U, out.E]) if (document.elementFromPoint(p.x, p.y) !== cv) out.onScreen = false;
     return out;
@@ -136,8 +142,8 @@ try {
   check('on-screen hint describes the Generals controls', /Left-click: select/.test(scheme.hint) && /Right-click: deselect/.test(scheme.hint), scheme.hint.slice(0, 120));
   let V = await view(page);
   check('test units are on screen', V.onScreen, JSON.stringify(V.U));
-  const g = V.ground.filter(p => p.ok);
-  check('open ground to click on', g.length >= 3, JSON.stringify(V.ground));
+  const g = V.ground;
+  check('open ground to click on', g.length >= 3 && V.line, JSON.stringify(V.ground));
   const [A, B, C] = await page.evaluate(() => window.__U.slice().sort((a, b) => a - b));
   const E = await page.evaluate(() => window.__E);
   let a, s;
@@ -203,8 +209,8 @@ try {
   check('right-click cancels building placement', await page.evaluate(() => !G.place));
   // right-drag line
   await page.evaluate(ids => { G.sel = ids.map(i => G.byId.get(i)); updateUI(); }, [A, B, C]); await acts(page);
-  await page.mouse.move(V.ground[3].x, V.ground[3].y); await page.mouse.down({ button: 'right' });
-  await page.mouse.move((V.ground[3].x + V.ground[4].x) / 2, V.ground[3].y + 4, { steps: 4 }); await page.mouse.move(V.ground[4].x, V.ground[4].y, { steps: 4 });
+  await page.mouse.move(V.line[0].x, V.line[0].y); await page.mouse.down({ button: 'right' });
+  await page.mouse.move((V.line[0].x + V.line[1].x) / 2, V.line[0].y + 4, { steps: 4 }); await page.mouse.move(V.line[1].x, V.line[1].y, { steps: 4 });
   await page.evaluate(() => renderFrame(0.016)); await wait(300);
   try { await page.screenshot({ path: path.join(OUT, 'controls-line.png'), timeout: 120000 }); } catch (e) { console.log('  (screenshot skipped: ' + String(e.message).split('\n')[0] + ')'); }
   await page.mouse.up({ button: 'right' });
@@ -263,7 +269,7 @@ try {
   await page.mouse.click(V.E.x, V.E.y, { button: 'right' });
   a = await acts(page);
   check('alt: right-click enemy = attack order', a.some(x => x.t === 'atk' && x.tid === E), JSON.stringify(a));
-  await rdrag(page, V.ground[3], V.ground[4]);
+  await rdrag(page, V.line[0], V.line[1]);
   a = await acts(page);
   check('alt: right-drag = line formation', a.some(x => x.t === 'line'), JSON.stringify(a));
   await page.keyboard.press('f');
@@ -286,7 +292,7 @@ try {
   const T = await openGame({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   const tp = T.page;
   V = await view(tp);
-  const tg = V.ground.filter(p => p.ok);
+  const tg = V.ground;
   check('phone: test units and open ground are on screen', V.onScreen && tg.length >= 1, JSON.stringify({ U: V.U, g: V.ground }));
   await clear(tp);
   await tp.touchscreen.tap(V.U[1].x, V.U[1].y);
