@@ -2,6 +2,13 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-27 18:20 — side lane (this chat): shared soundtrack shipped
+
+- Abdullah: "keep what you think is best and proceed". ORCH picked 14 of the 32 candidates (2 menu, 4 calm, 6 combat,
+  1 victory, 1 defeat); Audio agent built the track player + anthems; sound-effects-off heat fix added.
+- Gate (merged on current main): `--check` OK, MUSICCHECK PASS, smoke 4p PASS, MPSYNC PASS, artifact smoke PASS.
+- Note: another side lane (`orch/soundtrack`) had only encoded files; backlog tells it this supersedes its step 2.
+
 ## 2026-10-27 12:24 → 14:20 — cycle 10
 
 - No lock on main; took it. Baseline: `--check` OK, SMOKE PASS.
