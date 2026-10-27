@@ -50,20 +50,18 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## P1 — now
 
 **Foundation (ORCH itself)**
-- [open] Extend `orch/mpsync.mjs`: 3+ human players, packet loss/latency, host migration (`07b-ckpt`), real WebRTC.
+- [open] Extend `orch/mpsync.mjs`: packet loss/latency, real WebRTC (3-player host migration is now covered by
+  `orch/migrate.mjs`, cycle 6; its `--abrupt` mode — host vanishes without goodbye — is untested).
   Don't start from scratch — port the surviving old harnesses on the `testbed` branch: `tw8b.py` (host in Chicago +
   1–7 clients with real-world one-way delays, jitter and lag spikes; measures order latency, drift, bandwidth) and
   `p2pmig.py` (3 players over a local PeerJS server, host leaves, checks migration). `probe.py` = load-time probe.
 - [open] Smoke runs share `orch/out/`: two runs back to back overwrite each other's screenshots — per-run subfolder.
 
 **Battlefield & AI** (`03-sim`, `01-data`)
-- [open] **Faction balance** (`node orch/tourney.mjs --full`, 153 games, cycle 5, BEFORE the blowout fix): win% KP 88,
-  SA 76, UA 76, DW 65, RS 65, EG 59, EU 53, CU/IN/PK 47, IR/TR/US 41, AE/KR 35, CN/IL 29, RU 24. Re-run on the
-  current build first (the 3-min power lull changes everything), then tune outliers. Slot 1 won 84/153 — check
-  start-position fairness.
+- [open] **Faction balance round 2** (round 1 shipped cycle 6; full round robin after: SA 71, KP 71, RS 71, EG 65 high;
+  CN 24, IN 29, AE 29, KR 35 low; runs swing ±12 points). Add a tourney option to play each pairing both ways (slot
+  swap) and more games per pair before tuning further. Slot fairness checked: no real bias (slot 1 won 73/153).
 - [open] Fulda: a few supply trucks still go ~60 s without delivering late in a game.
-- [open] AI host migration: `mkAI` resets `T.ai.wave` without the `G.bs` scaling, so a rebuilt AI's "thin army"
-  threshold differs slightly (review, cycle 5).
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
   below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
 - [open] AI navy arrives late (~6 game-min on Normal; buildings come first) and never uses landing craft.
@@ -72,8 +70,6 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
 - [open] Measure FPS on a real phone (needs a real device, not emulation): busy 4-player late game, many helicopters
   (rotor wash), and the new phone layout.
-- [open] Multiplayer clients don't get the host's battle Conditions: `start` in `07-net.js` has no `w`, so each
-  player sees their own menu choice. Send `w:setup.w` and apply it before `newGame` (Random is seeded → matches).
 
 **Audio & voice** (`09-audio`, `vo/`, `mus/`)
 - [open] Full native-language unit responses per nation (select / move / attack / under fire / unit lost), recorded
@@ -111,9 +107,10 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers.
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
-- [open] Small fog leak: `dieWho` (07-net) still sends `die` to players who saw a unit within 1.6 s, so a unit
-  that leaves sight and dies in the fog shows its explosion. Tighten to the last snapshot sent, or to players who
-  still hold it in `NET.sc[k]` (review, cycle 5).
+- [open] Host migration polish (found by `orch/migrate.mjs`): client B retries the new room 0.1 s too early and
+  wastes ~5 s on the dead old room; a client already reconnecting when the host leaves ignores the disconnect and
+  waits for the 5 s timeout (`clientReconnect`, 07-net).
+- [open] Add a Conditions check (host Overcast → client shows Overcast) to `orch/mpsync.mjs` permanently.
 - [open] Review the ~5% of `testbed` netcode lines not in live; merge what's still useful, then mark `testbed`
   superseded (don't delete it).
 - [open] Artifact edition untested on the real claude.ai room: latency, ~40 msg/s cap, drops, host migration.
@@ -128,6 +125,14 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## Done
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
+
+- 2026-10-27 (cycle 6) — **Balance round 1:** SA/DW/KP/EG/RS reined in, IL/AE/KR/IR/CN lifted (data only); typical
+  gap from 50% win rate 20 → 14 points; no start-slot bias. Migrated/lobby AIs now use the same attack-wave size as
+  a fresh AI. Protocol version 5 (old cached copies are told to refresh).
+- 2026-10-27 (cycle 6) — **Multiplayer:** every player sees the host's Conditions (incl. Random); units and
+  remembered buildings that die in the fog no longer show their explosion.
+- 2026-10-27 (cycle 6) — New gate test `orch/migrate.mjs`: 3 players, host leaves, new host takes over, AI takes
+  the old host's army, remaining players stay in sync (3/3 + 1 gate run PASS).
 
 - 2026-10-26 (side lane) — **Middle Eastern music:** IR, RS, DW latmiyas and SA, AE, EG scores in real maqam/dastgah
   with quarter-tones, regional rhythms (ardah, ayala, Saidi, Yemeni 3+3+2, Bushehri), recorded CC0 percussion (VCSL),
