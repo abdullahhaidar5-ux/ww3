@@ -121,10 +121,14 @@ srv.stop();
 
 // ---- 3. projection ----
 let traffic = null;
-try { traffic = JSON.parse(fs.readFileSync(path.join(OUT, 'srv-traffic.json'), 'utf8')); } catch {}
+// prefer the 8-side battle (mpsync --server --ais 6): one human player's stream in an 8-player match
+for (const f of ['srv-traffic-ais6.json', 'srv-traffic.json']) { if (traffic) break; try { traffic = JSON.parse(fs.readFileSync(path.join(OUT, f), 'utf8')); traffic.file = f; } catch {} }
 const T = traffic || { source: 'defaults', hostToPlayer: { framesPerGameMin: 700, bytesPerGameMin: 900000, wireBytesPerGameMin: 250000 },
   playerToHost: { framesPerRealMin: 75, bytesPerRealMin: 40000, wireBytesPerRealMin: 12000 } };
-const Fh = T.hostToPlayer.framesPerGameMin, Fp = T.playerToHost.framesPerRealMin;
+// In a real match the host sends one batched frame per network tick (0.1 s), carrying one record per relayed player;
+// the test harness runs several ticks per step, so frames there are merged: records per minute for ONE player = the
+// real-time host frame rate. A player sends its presence (ping, orders) at least once a second.
+const Fh = T.hostToPlayer.recordsPerGameMin || T.hostToPlayer.framesPerGameMin, Fp = Math.max(60, T.playerToHost.framesPerRealMin);
 const B = T.hostToPlayer.bytesPerGameMin, Bw = T.hostToPlayer.wireBytesPerGameMin, Bp = T.playerToHost.wireBytesPerRealMin;
 const MATCH_MIN = 30, GBS_PER_MIN = 60 * 0.125;
 // relayed = how many of the players (besides the host) go through the server
@@ -136,7 +140,7 @@ function match(players, relayed) {
   return { players, relayed, framesPerMin: incomingPerMin, req: Math.round(req), gbs: Math.round(gbs),
     hostUpKBPerMin: Math.round(relayed * Bw / 1024), playerDownKBPerMin: Math.round(Bw / 1024), rawPlayerDownKBPerMin: Math.round(B / 1024) };
 }
-result.traffic = traffic ? 'measured (orch/out/srv-traffic.json)' : 'built-in defaults (run node orch/mpsync.mjs --server first)';
+result.traffic = traffic ? `measured (orch/out/${traffic.file})` : 'built-in defaults (run node orch/mpsync.mjs --server first)';
 result.perPlayer = { hostToPlayerFramesPerMin: Fh, hostToPlayerRawKBPerMin: Math.round(B / 1024), hostToPlayerWireKBPerMin: Math.round(Bw / 1024),
   playerToHostFramesPerMin: Fp, playerToHostWireKBPerMin: +(Bp / 1024).toFixed(1) };
 result.matches = [match(2, 1), match(4, 3), match(8, 7), match(8, 1), match(8, 0)];

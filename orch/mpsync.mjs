@@ -264,13 +264,17 @@ async function main() {
     try { for (let i = 0; i < n && G && !G.over; i++) { for (let s = 0; s < 6; s++) simUpdate(1 / 60); netTick(0.1); } }
     catch (e) { return { err: String(e && e.stack || e) }; }
     return { t: G.t, over: G.over };
-  }, n);
+  }, n).then(r => { if (r && typeof r.t === 'number') lastHostT = r.t; return r; });
   // client: let queued messages land, then advance its clock the same amount
-  const clientRun = (n) => client.evaluate(async (n) => {
+  // --server: the test runs ~25x faster than real time, so a few tens of ms through the local server would read as
+  // seconds of game lag; the client first waits (real time, up to 400 ms) for the host's latest update, as in a match
+  const clientRun = (n) => client.evaluate(async ([n, srv, hostT]) => {
     await new Promise(r => setTimeout(r, 0));
+    if (srv) { const w0 = performance.now(); while (performance.now() - w0 < 400 && (NET.lastSnapT || 0) < hostT - 0.6) await new Promise(r => setTimeout(r, 4)); }
     try { for (let i = 0; i < n && G; i++) clientTick(0.1); } catch (e) { return { err: String(e && e.stack || e) }; }
     return { t: G.t, snapT: NET.lastSnapT || 0, rx: performance.now() - (NET.lastRx || 0), ents: G.ents.length };
-  }, n);
+  }, [n, !!SRV, lastHostT]);
+  let lastHostT = 0;
   // what the client's side may see on the host: own entities and everything currently in its vision
   const hostView = () => host.evaluate((k) => {
     const out = [];
@@ -426,11 +430,12 @@ async function trafficReport() {
       bytesPerGameMin: Math.round(bytes(rx) / gameMin), wireBytesPerGameMin: Math.round(await deflated(rx) / gameMin) },
     playerToHost: { framesPerRealMin: Math.round(tx.length / realMin), recordsPerRealMin: Math.round(recs(tx) / realMin),
       bytesPerRealMin: Math.round(bytes(tx) / realMin), wireBytesPerRealMin: Math.round(await deflated(tx) / realMin) } };
-  fs.writeFileSync(path.join(OUT, 'srv-traffic.json'), JSON.stringify(out, null, 2));
+  const tf = AIS ? `srv-traffic-ais${AIS}.json` : 'srv-traffic.json'; cap.file = tf;
+  fs.writeFileSync(path.join(OUT, tf), JSON.stringify(out, null, 2));
   const h = out.hostToPlayer, p = out.playerToHost;
   console.log(`[${secs()}] relay traffic per player: host->player ${h.framesPerGameMin} frames (${h.recordsPerGameMin} records), ` +
     `${(h.bytesPerGameMin / 1024).toFixed(0)} KB raw / ${(h.wireBytesPerGameMin / 1024).toFixed(0)} KB compressed per game-minute; ` +
-    `player->host ${p.framesPerRealMin} frames, ${(p.wireBytesPerRealMin / 1024).toFixed(1)} KB compressed per minute (orch/out/srv-traffic.json)`);
+    `player->host ${p.framesPerRealMin} frames, ${(p.wireBytesPerRealMin / 1024).toFixed(1)} KB compressed per minute (orch/out/${cap.file})`);
 }
 async function screenshots() {
   shotsTaken = true;
