@@ -1,0 +1,151 @@
+map sweep: 28 maps, players 2/4/8, 1 game-min each, seed 1234 (boot 2s)
+
+STATIC  648 map/player-count/seed combinations (4 seeds), 0 with issues
+  strait       2p ok   1.0min 0.19ms/step peak 19/18 earn 1920/1600 1st 13/14s (15s, start 14s)
+  strait       4p ok   1.0min 0.35ms/step peak 19/17/16/18 earn 1600/1760/1728/1600 1st 14/14/14/14s (31s, start 30s)
+  strait       8p ok   1.0min 0.43ms/step peak 15/17/16/16/17/15/16/18 earn 1696/1720/1600/1728/1600/1720/1600/1919 1st 14/14/14/14/13/14/14/13s (13s, start 12s)
+  rivers       2p ok   1.0min 0.13ms/step peak 18/19 earn 1760/1600 1st 14/14s (8s, start 8s)
+  rivers       4p ok   1.0min 0.21ms/step peak 19/23/18/18 earn 1952/1600/1720/1600 1st 13/14/14/14s (10s, start 9s)
+  delta        2p ok   1.0min 0.08ms/step peak 16/19 earn 1760/1600 1st 14/14s (8s, start 7s)
+  delta        4p ok   1.0min 0.17ms/step peak 16/17/16/18 earn 1720/1696/1760/1720 1st 14/14/14/14s (9s, start 8s)
+  oasis        2p ok   1.0min 0.12ms/step peak 18/16 earn 1920/1600 1st 13/14s (8s, start 7s)
+  oasis        4p ok   1.0min 0.16ms/step peak 16/17/17/18 earn 1919/1600/1600/1760 1st 13/13/15/15s (9s, start 8s)
+  oasis        8p ok   1.0min 0.43ms/step peak 15/20/18/18/19/17/20/19 earn 1696/1600/1720/1600/1760/1600/1600/1600 1st 14/14/14/15/13/13/13/14s (13s, start 11s)
+  gulf         2p ok   1.0min 0.13ms/step peak 18/17 earn 1760/1919 1st 14/13s (8s, start 8s)
+  gulf         4p ok   1.0min 0.20ms/step peak 17/18/18/17 earn 1760/1728/1600/1600 1st 14/14/14/14s (9s, start 9s)
+  plateau      2p ok   1.0min 0.08ms/step peak 18/14 earn 1600/1600 1st 13/14s (7s, start 7s)
+  plateau      4p ok   1.0min 0.20ms/step peak 18/17/12/17 earn 1600/1600/1760/1600 1st 14/14/14/14s (9s, start 8s)
+  plateau      8p ok   1.0min 0.39ms/step peak 19/15/18/15/17/16/17/17 earn 1760/1600/1600/1760/1720/1600/1600/1600 1st 14/14/15/15/13/14/14/14s (12s, start 11s)
+  hormuz       2p ok   1.0min 0.14ms/step peak 23/18 earn 1600/1600 1st 13/14s (8s, start 7s)
+  hormuz       4p ok   1.0min 0.15ms/step peak 18/16/8/15 earn 1720/1720/1584/1600 1st 14/14/14/14s (9s, start 9s)
+  hormuz       8p ok   1.0min 0.42ms/step peak 17/17/20/17/16/16/15/19 earn 1600/1760/1760/1728/1600/1560/1600/1760 1st 14/14/13/14/14/14/14/14s (13s, start 11s)
+  arctic       2p ok   1.0min 0.10ms/step peak 14/15 earn 1760/1728 1st 14/14s (8s, start 8s)
+  arctic       4p ok   1.0min 0.19ms/step peak 19/19/16/20 earn 1600/1600/1696/1600 1st 14/14/14/12s (10s, start 10s)
+  arctic       8p ok   1.0min 0.32ms/step peak 15/19/18/8/8/17/16/16 earn 1936/1600/1760/1600/1600/1696/1720/1600 1st 14/14/14/14/14/14/14/14s (13s, start 12s)
+  islands      2p ok   1.0min 0.09ms/step peak 18/8 earn 1600/1920 1st 13/13s (8s, start 8s)
+  islands      4p ok   1.0min 0.17ms/step peak 18/17/8/18 earn 1760/1696/1892/1600 1st 14/14/14/14s (9s, start 9s)
+  zagros       2p ok   1.0min 0.09ms/step peak 17/15 earn 1720/1696 1st 14/14s (8s, start 8s)
+  zagros       4p ok   1.0min 0.16ms/step peak 17/16/12/18 earn 1720/1600/1720/1952 1st 14/14/14/13s (10s, start 9s)
+  zagros       8p ok   1.0min 0.42ms/step peak 19/20/16/16/16/18/18/24 earn 1600/1920/1600/1728/1720/1600/1760/1760 1st 13/13/14/14/14/14/13/13s (14s, start 12s)
+  lebanon      2p ok   1.0min 0.09ms/step peak 15/18 earn 1600/1760 1st 14/14s (9s, start 9s)
+  lebanon      4p ok   1.0min 0.20ms/step peak 17/17/18/17 earn 1760/1600/1600/1600 1st 14/14/15/14s (11s, start 10s)
+  persia       2p ok   1.0min 0.08ms/step peak 18/16 earn 1600/1600 1st 14/14s (8s, start 8s)
+  persia       4p ok   1.0min 0.22ms/step peak 15/17/15/17 earn 1760/1919/1440/1720 1st 13/13/14/14s (10s, start 9s)
+  persia       8p ok   1.0min 0.42ms/step peak 18/21/15/18/20/17/15/18 earn 1600/1600/1720/1720/1600/1919/1600/1760 1st 14/14/14/14/14/13/14/13s (13s, start 12s)
+  mesopotamia  2p ok   1.0min 0.09ms/step peak 18/18 earn 1600/1760 1st 14/14s (8s, start 8s)
+  mesopotamia  4p ok   1.0min 0.18ms/step peak 17/16/17/13 earn 1536/1696/1600/1720 1st 21/13/14/14s (10s, start 9s)
+  yemen        2p ok   1.0min 0.08ms/step peak 17/11 earn 1760/1696 1st 14/14s (9s, start 8s)
+  yemen        4p ok   1.0min 0.17ms/step peak 19/18/17/15 earn 1720/1600/1696/1760 1st 14/14/13/14s (10s, start 9s)
+  volga        2p ok   1.0min 0.11ms/step peak 15/16 earn 1696/1760 1st 14/13s (8s, start 7s)
+  volga        4p ok   1.0min 0.18ms/step peak 18/18/17/19 earn 1600/1760/1600/1600 1st 14/14/14/15s (9s, start 9s)
+  volga        8p ok   1.0min 0.41ms/step peak 19/19/15/16/16/20/18/16 earn 1760/1600/1600/1696/1600/1600/1600/1600 1st 13/14/14/15/14/14/14/14s (13s, start 11s)
+  heartland    2p ok   1.0min 0.16ms/step peak 19/24 earn 1760/1600 1st 14/14s (9s, start 8s)
+  heartland    4p ok   1.0min 0.20ms/step peak 20/18/19/18 earn 1720/1600/1600/1600 1st 14/14/14/14s (10s, start 9s)
+  heartland    8p ok   1.0min 0.41ms/step peak 15/17/18/18/18/16/17/18 earn 1696/1760/1536/1600/1760/1720/1600/1600 1st 14/13/14/14/14/14/14/14s (13s, start 12s)
+  bosphorus    2p ok   1.0min 0.13ms/step peak 22/21 earn 1600/1760 1st 14/14s (8s, start 8s)
+  bosphorus    4p ok   1.0min 0.20ms/step peak 18/18/15/18 earn 1600/1600/1440/1720 1st 14/14/14/14s (10s, start 9s)
+  bosphorus    8p ok   1.0min 0.41ms/step peak 17/17/16/18/18/20/17/17 earn 1600/1600/1760/1728/1888/1600/1600/1760 1st 14/14/14/14/14/14/14/13s (13s, start 12s)
+  golan        2p ok   1.0min 0.13ms/step peak 17/19 earn 1600/1600 1st 14/14s (8s, start 8s)
+  golan        4p ok   1.0min 0.17ms/step peak 14/17/18/23 earn 1696/1760/1696/1720 1st 14/14/14/15s (10s, start 9s)
+  fulda        2p ok   1.0min 0.09ms/step peak 17/19 earn 1760/1600 1st 14/14s (8s, start 8s)
+  fulda        4p ok   1.0min 0.20ms/step peak 16/15/18/16 earn 1720/1600/1600/1600 1st 14/14/14/14s (11s, start 10s)
+  fulda        8p ok   1.0min 0.41ms/step peak 17/19/17/18/12/18/14/16 earn 1696/1760/1600/1720/1560/1440/1760/1600 1st 13/13/14/14/14/14/14/14s (14s, start 13s)
+  dnipro       2p ok   1.0min 0.10ms/step peak 18/18 earn 1600/1600 1st 14/14s (8s, start 8s)
+  dnipro       4p ok   1.0min 0.17ms/step peak 15/18/18/17 earn 1892/1720/1600/1760 1st 14/14/14/13s (10s, start 9s)
+  dnipro       8p ok   1.0min 0.42ms/step peak 18/13/15/18/16/19/12/13 earn 1600/1600/1919/1600/1440/1440/1120/1600 1st 14/14/14/14/14/14/14/14s (13s, start 12s)
+  rubalkhali   2p ok   1.0min 0.10ms/step peak 17/19 earn 1600/1600 1st 13/13s (8s, start 8s)
+  rubalkhali   4p ok   1.0min 0.21ms/step peak 16/17/17/20 earn 1600/1600/1600/1600 1st 14/14/15/15s (9s, start 9s)
+  rubalkhali   8p ok   1.0min 0.38ms/step peak 17/16/18/18/16/17/17/18 earn 1720/1600/1600/1600/1600/1600/1696/1600 1st 14/14/15/15/13/14/14/13s (13s, start 12s)
+  emirates     2p ok   1.0min 0.09ms/step peak 15/18 earn 1720/1728 1st 13/14s (8s, start 7s)
+  emirates     4p ok   1.0min 0.19ms/step peak 17/21/15/19 earn 1936/1600/1720/1920 1st 14/14/13/13s (9s, start 9s)
+  indus        2p ok   1.0min 0.09ms/step peak 16/18 earn 1600/1696 1st 14/13s (9s, start 8s)
+  indus        4p ok   1.0min 0.20ms/step peak 15/15/21/16 earn 1696/1600/1720/1600 1st 14/13/14/14s (11s, start 10s)
+  kashmir      2p ok   1.0min 0.08ms/step peak 18/20 earn 1600/1720 1st 14/14s (9s, start 8s)
+  kashmir      4p ok   1.0min 0.20ms/step peak 17/16/15/19 earn 1919/1720/1760/1600 1st 13/13/14/14s (10s, start 9s)
+  taiwan       2p ok   1.0min 0.10ms/step peak 19/20 earn 1696/1920 1st 13/13s (8s, start 8s)
+  taiwan       4p ok   1.0min 0.18ms/step peak 21/18/16/20 earn 1600/1600/1600/1920 1st 14/14/14/13s (10s, start 9s)
+  dmz          2p ok   1.0min 0.10ms/step peak 15/16 earn 1600/1696 1st 14/13s (8s, start 8s)
+  dmz          4p ok   1.0min 0.18ms/step peak 18/22/16/17 earn 1952/1720/1728/1600 1st 13/14/14/14s (10s, start 9s)
+  dmz          8p ok   1.0min 0.36ms/step peak 16/13/18/17/18/18/16/17 earn 1728/1760/1600/1728/1600/1760/1892/1760 1st 14/14/14/14/14/15/13/16s (13s, start 12s)
+  nile         2p ok   1.0min 0.13ms/step peak 20/19 earn 1720/1600 1st 14/14s (8s, start 8s)
+  nile         4p ok   1.0min 0.18ms/step peak 16/16/18/18 earn 1600/1600/1952/1760 1st 13/13/13/14s (9s, start 9s)
+  nile         8p ok   1.0min 0.39ms/step peak 18/15/8/18/16/20/17/21 earn 1760/1919/1600/1720/1600/1600/1720/1920 1st 13/13/14/14/14/14/14/13s (13s, start 12s)
+  caribbean    2p ok   1.0min 0.09ms/step peak 17/18 earn 1728/1600 1st 14/13s (8s, start 8s)
+  caribbean    4p ok   1.0min 0.18ms/step peak 15/16/18/17 earn 1600/1696/1600/1440 1st 14/13/14/14s (9s, start 9s)
+
+BATTLES
+map          pl  min  ms/st  peak ents         harvest earned        result
+strait        2  1.0   0.19  19/18             2k/2k                 ok
+strait        4  1.0   0.35  19/17/16/18       2k/2k/2k/2k           ok
+strait        8  1.0   0.43  15/17/16/16/17/15/16/18 2k/2k/2k/2k/2k/2k/2k/2k ok
+rivers        2  1.0   0.13  18/19             2k/2k                 ok
+rivers        4  1.0   0.21  19/23/18/18       2k/2k/2k/2k           ok
+delta         2  1.0   0.08  16/19             2k/2k                 ok
+delta         4  1.0   0.17  16/17/16/18       2k/2k/2k/2k           ok
+oasis         2  1.0   0.12  18/16             2k/2k                 ok
+oasis         4  1.0   0.16  16/17/17/18       2k/2k/2k/2k           ok
+oasis         8  1.0   0.43  15/20/18/18/19/17/20/19 2k/2k/2k/2k/2k/2k/2k/2k ok
+gulf          2  1.0   0.13  18/17             2k/2k                 ok
+gulf          4  1.0   0.20  17/18/18/17       2k/2k/2k/2k           ok
+plateau       2  1.0   0.08  18/14             2k/2k                 ok
+plateau       4  1.0   0.20  18/17/12/17       2k/2k/2k/2k           ok
+plateau       8  1.0   0.39  19/15/18/15/17/16/17/17 2k/2k/2k/2k/2k/2k/2k/2k ok
+hormuz        2  1.0   0.14  23/18             2k/2k                 ok
+hormuz        4  1.0   0.15  18/16/8/15        2k/2k/2k/2k           ok
+hormuz        8  1.0   0.42  17/17/20/17/16/16/15/19 2k/2k/2k/2k/2k/2k/2k/2k ok
+arctic        2  1.0   0.10  14/15             2k/2k                 ok
+arctic        4  1.0   0.19  19/19/16/20       2k/2k/2k/2k           ok
+arctic        8  1.0   0.32  15/19/18/8/8/17/16/16 2k/2k/2k/2k/2k/2k/2k/2k ok
+islands       2  1.0   0.09  18/8              2k/2k                 ok
+islands       4  1.0   0.17  18/17/8/18        2k/2k/2k/2k           ok
+zagros        2  1.0   0.09  17/15             2k/2k                 ok
+zagros        4  1.0   0.16  17/16/12/18       2k/2k/2k/2k           ok
+zagros        8  1.0   0.42  19/20/16/16/16/18/18/24 2k/2k/2k/2k/2k/2k/2k/2k ok
+lebanon       2  1.0   0.09  15/18             2k/2k                 ok
+lebanon       4  1.0   0.20  17/17/18/17       2k/2k/2k/2k           ok
+persia        2  1.0   0.08  18/16             2k/2k                 ok
+persia        4  1.0   0.22  15/17/15/17       2k/2k/1k/2k           ok
+persia        8  1.0   0.42  18/21/15/18/20/17/15/18 2k/2k/2k/2k/2k/2k/2k/2k ok
+mesopotamia   2  1.0   0.09  18/18             2k/2k                 ok
+mesopotamia   4  1.0   0.18  17/16/17/13       2k/2k/2k/2k           ok
+yemen         2  1.0   0.08  17/11             2k/2k                 ok
+yemen         4  1.0   0.17  19/18/17/15       2k/2k/2k/2k           ok
+volga         2  1.0   0.11  15/16             2k/2k                 ok
+volga         4  1.0   0.18  18/18/17/19       2k/2k/2k/2k           ok
+volga         8  1.0   0.41  19/19/15/16/16/20/18/16 2k/2k/2k/2k/2k/2k/2k/2k ok
+heartland     2  1.0   0.16  19/24             2k/2k                 ok
+heartland     4  1.0   0.20  20/18/19/18       2k/2k/2k/2k           ok
+heartland     8  1.0   0.41  15/17/18/18/18/16/17/18 2k/2k/2k/2k/2k/2k/2k/2k ok
+bosphorus     2  1.0   0.13  22/21             2k/2k                 ok
+bosphorus     4  1.0   0.20  18/18/15/18       2k/2k/1k/2k           ok
+bosphorus     8  1.0   0.41  17/17/16/18/18/20/17/17 2k/2k/2k/2k/2k/2k/2k/2k ok
+golan         2  1.0   0.13  17/19             2k/2k                 ok
+golan         4  1.0   0.17  14/17/18/23       2k/2k/2k/2k           ok
+fulda         2  1.0   0.09  17/19             2k/2k                 ok
+fulda         4  1.0   0.20  16/15/18/16       2k/2k/2k/2k           ok
+fulda         8  1.0   0.41  17/19/17/18/12/18/14/16 2k/2k/2k/2k/2k/1k/2k/2k ok
+dnipro        2  1.0   0.10  18/18             2k/2k                 ok
+dnipro        4  1.0   0.17  15/18/18/17       2k/2k/2k/2k           ok
+dnipro        8  1.0   0.42  18/13/15/18/16/19/12/13 2k/2k/2k/2k/1k/1k/1k/2k ok
+rubalkhali    2  1.0   0.10  17/19             2k/2k                 ok
+rubalkhali    4  1.0   0.21  16/17/17/20       2k/2k/2k/2k           ok
+rubalkhali    8  1.0   0.38  17/16/18/18/16/17/17/18 2k/2k/2k/2k/2k/2k/2k/2k ok
+emirates      2  1.0   0.09  15/18             2k/2k                 ok
+emirates      4  1.0   0.19  17/21/15/19       2k/2k/2k/2k           ok
+indus         2  1.0   0.09  16/18             2k/2k                 ok
+indus         4  1.0   0.20  15/15/21/16       2k/2k/2k/2k           ok
+kashmir       2  1.0   0.08  18/20             2k/2k                 ok
+kashmir       4  1.0   0.20  17/16/15/19       2k/2k/2k/2k           ok
+taiwan        2  1.0   0.10  19/20             2k/2k                 ok
+taiwan        4  1.0   0.18  21/18/16/20       2k/2k/2k/2k           ok
+dmz           2  1.0   0.10  15/16             2k/2k                 ok
+dmz           4  1.0   0.18  18/22/16/17       2k/2k/2k/2k           ok
+dmz           8  1.0   0.36  16/13/18/17/18/18/16/17 2k/2k/2k/2k/2k/2k/2k/2k ok
+nile          2  1.0   0.13  20/19             2k/2k                 ok
+nile          4  1.0   0.18  16/16/18/18       2k/2k/2k/2k           ok
+nile          8  1.0   0.39  18/15/8/18/16/20/17/21 2k/2k/2k/2k/2k/2k/2k/2k ok
+caribbean     2  1.0   0.09  17/18             2k/2k                 ok
+caribbean     4  1.0   0.18  15/16/18/17       2k/2k/2k/1k           ok
+peak memory (node + browser): 2880 MB
+
+MAPSWEEP PASS (838s): 648 static checks, 71 battles — overviews in orch/out/maps/
