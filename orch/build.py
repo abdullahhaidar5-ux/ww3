@@ -6,7 +6,8 @@ Only the game script is ours to edit; it lives in src/NN-*.js. This script swaps
 the concatenation of src/*.js (in file-name order) and leaves every other byte alone, so no model assets are needed.
 
   python3 orch/build.py           # rebuild index.html from src/
-  python3 orch/build.py --check   # exit 1 if index.html is out of date with src/ (nothing written)
+  python3 orch/build.py --check   # exit 1 if index.html is out of date with src/, or its page shell lost server code /
+                                  # credits or got install buttons back (check_shell; nothing written)
   python3 orch/build.py --split   # one-off: regenerate src/ from the game script inside index.html
   python3 orch/build.py --artifact  # write the claude.ai artifact edition to orch/out/artifact/ (see orch/ARTIFACT.md)
 """
@@ -74,6 +75,129 @@ def syntax_check(game, what):
         sys.exit(f'syntax error in src/ — {what} NOT written:\n' + r.stderr[-2000:])
 
 
+# ---------------------------------------------------------------------------------------------------------------
+# Page-shell guard (run by --check). The shell (everything in index.html outside the src/ game span) is hand-kept and
+# merges have silently dropped parts of it before (cycle 6 lost the server code and the Middle Eastern music credits;
+# restored in f8df059). check_shell() lists what is missing, so a bad merge fails --check by name.
+# Self-contained on purpose: it does not care where MODEL_PACK lives.
+
+# Server client code in the online-edition shim: each entry is (what it is, a string that must be in the shell).
+SHELL_CODE = [
+    ('server address helper srvUrl()', 'const srvUrl='),
+    ('server WebSocket address wsBase()', 'const wsBase='),
+    ('server relay socket wsOpen()', 'const wsOpen='),
+    ('server relay reconnect wsRetry()', 'const wsRetry='),
+    ('server relay join wsJoin()', 'const wsJoin='),
+    ('join fallback chain chainJoin() (direct P2P -> TURN -> server relay)', 'async function chainJoin('),
+    ('server game list WW3_SDIR', 'window.WW3_SDIR='),
+    ('server relay room URL', "'/room/'"),
+    ('server game list URL', "'/lobby'"),
+    ('TURN relay logins relayServers()', 'function relayServers('),
+    ('relay fallback when a direct connection fails', "return namedRoom(name,true)"),
+    ('server-relay fallback on reconnect', "return namedRoom(name,false,'ws')"),
+    ('room API window.claude for the game script', 'window.claude={use:'),
+]
+# Install buttons were removed on purpose (orch/no-install, 11aa2e7): nothing may show or wire them up again.
+# The old btn()/welcome() function bodies may stay as dead code; calling them, or listening for the install prompt, may not.
+SHELL_BANNED = [
+    ('install prompt listener (beforeinstallprompt)', r'beforeinstallprompt'),
+    ('install button call btn()', r'(?<!function )(?<![\w.])btn\('),
+    ('first-visit install card call welcome()', r'(?<!function )(?<![\w.])welcome\('),
+    ('install button label', r'Install app \(desktop icon\)'),
+]
+# Credits for assets that have no mus/*_pack.py script listing their sources: (asset glob, credit phrase).
+CREDIT_FALLBACK = [
+    ('mus/smp.mp3', 'Orchestral score played on the FluidR3 GM'),
+    ('vo/*.mp3', 'Unit voices'),
+]
+CREDIT_ALWAYS = ['3D models:']  # the model credits (wherever MODEL_PACK lives)
+
+
+def credit_paragraphs(html):
+    """Menu credit texts: the shell's <p class="credits"> paragraphs and the ones the game script adds at runtime."""
+    paras = []
+    for m in re.finditer(r'<p class="credits"[^>]*>', html):
+        rest = html[m.end():]
+        end = min([k for k in (rest.find('</p>'), rest.find('<p'), rest.find('</div>')) if k >= 0] or [len(rest)])
+        paras.append(re.sub(r'<[^>]+>', '', rest[:end]))
+    for m in re.finditer(r"className='credits'", html):
+        t = re.search(r"textContent='((?:[^'\\]|\\.)*)'", html[m.end():m.end() + 4000])
+        if t:
+            paras.append(t.group(1))
+    return paras
+
+
+def pack_sources(script):
+    """(assets the pack writes, source names it must credit together, people it must credit anywhere), from the
+    'Sources' section of a mus/*_pack.py docstring."""
+    doc = re.match(r'(?:#[^\n]*\n)*\s*"""(.*?)"""', open(script, encoding='utf-8').read(), re.S)
+    doc = doc.group(1) if doc else ''
+    outs = set(re.findall(r'mus/([\w<>]+\.mp3)', doc))
+    sec = re.search(r'\nSources[^\n]*\n(.*?)(?:\n\s*\n|\nusage:)', doc, re.S)
+    sec = sec.group(1) if sec else ''
+    together, people = [], []
+    for line in sec.splitlines():
+        b = re.match(r'\s*\*\s+(.*)', line)
+        if b:   # a source collection: its first two words (e.g. "Versilian Community", "FluidR3 GM", "Freesound")
+            head = re.split(r' \(| by |[:,]', b.group(1))[0]
+            together.append(' '.join(head.split()[:2]))
+            people += [n.strip() for n in re.findall(r' by ([A-Z][\w.]*(?: [A-Z][\w.]*)*)', b.group(1))]
+            continue
+        a = re.match(r'\s+([\w.]+)(?: \([^)]*\))? - ["\w]', line)
+        if a:   # a recording's author handle (Freesound / Wikimedia style: 'name - "title" (licence)')
+            together.append(a.group(1))
+    return outs, together, people
+
+
+def check_shell(html, i, j):
+    """Return a list of human-readable problems with the page shell (empty = fine)."""
+    shell = html[:i] + html[j:]
+    probs = []
+    for what, s in SHELL_CODE:
+        if s not in shell:
+            probs.append(f'server code missing from the page shell: {what} (looked for {s!r})')
+    for what, rx in SHELL_BANNED:
+        m = re.search(rx, shell)
+        if m:
+            line = shell.count('\n', 0, m.start()) + 1
+            probs.append(f'install button is back in the page shell: {what} (shell line ~{line})')
+    paras = credit_paragraphs(html)
+    if '<p class="credits"' not in shell:
+        probs.append('page shell has no <p class="credits"> paragraphs (the menu credits list is gone)')
+    allc = '\n'.join(paras).lower()
+    covered = set()
+    for script in sorted(glob.glob(os.path.join(ROOT, 'mus', '*_pack.py'))):
+        name = os.path.relpath(script, ROOT)
+        outs, together, people = pack_sources(script)
+        for o in outs:
+            rx = '^' + re.escape(o).replace(re.escape('<CODE>'), r'\w+') + '$'
+            covered |= {f for f in os.listdir(os.path.join(ROOT, 'mus')) if re.match(rx, f)}
+        if not together:
+            probs.append(f'{name}: no "Sources" list in its docstring — cannot tell which credits it needs')
+            continue
+        if not any(all(t.lower() in p.lower() for t in together) for p in paras):
+            best = max(paras, key=lambda p: sum(t.lower() in p.lower() for t in together), default='')
+            miss = [t for t in together if t.lower() not in best.lower()]
+            probs.append(f'menu credits missing for {name} (outputs {", ".join(sorted(outs))}): no credits paragraph '
+                         f'names all of its sources; closest one lacks {miss}')
+        for p in people:
+            if p.lower() not in allc:
+                probs.append(f'menu credits missing for {name}: source author {p!r}')
+    for pat, phrase in CREDIT_FALLBACK:
+        files = [os.path.relpath(f, ROOT) for f in glob.glob(os.path.join(ROOT, pat))]
+        covered |= {os.path.basename(f) for f in files if f.startswith('mus/')}
+        if files and phrase.lower() not in allc:
+            probs.append(f'menu credits missing for {pat}: no credits text containing {phrase!r}')
+    for phrase in CREDIT_ALWAYS:
+        if phrase.lower() not in allc:
+            probs.append(f'menu credits missing: no credits text containing {phrase!r}')
+    for f in sorted(os.listdir(os.path.join(ROOT, 'mus'))):
+        if f.endswith('.mp3') and f not in covered:
+            probs.append(f'mus/{f} has no credit rule: give it a mus/*_pack.py with a "Sources" list, '
+                         f'or add it to CREDIT_FALLBACK in orch/build.py')
+    return probs
+
+
 def build(check=False):
     html = open(HTML, encoding='utf-8', newline='').read()
     i, j = game_span(html)
@@ -82,10 +206,22 @@ def build(check=False):
         sys.exit('src/ contains "</script" — escape it as "<\\/script" or the page breaks')
     out = html[:i] + game + html[j:]
     if check:
+        bad = False
         if out != html:
             print('index.html is OUT OF DATE with src/ — run python3 orch/build.py')
+            bad = True
+        else:
+            print('index.html is up to date with src/')
+        probs = check_shell(html, i, j)
+        if probs:
+            print(f'index.html page shell is BROKEN ({len(probs)} problem{"s" * (len(probs) > 1)}) — restore it from git history:')
+            for p in probs:
+                print('  ✗ ' + p)
+            bad = True
+        else:
+            print('index.html page shell OK (server code, credits for every music/voice/model pack, no install buttons)')
+        if bad:
             sys.exit(1)
-        print('index.html is up to date with src/')
         return
     # syntax check before writing
     syntax_check(game, 'index.html')

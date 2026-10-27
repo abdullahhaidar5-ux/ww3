@@ -43,6 +43,7 @@
 //                                              # time (~4 min). With --reconnect the client's server connection is
 //                                              # really cut at 1 min. Writes relay traffic to orch/out/srv-traffic*.json
 // Prints MPSYNC PASS / MPSYNC FAIL: reason (exit 0 / 1). Screenshots: orch/out/mp-host.png, orch/out/mp-client.png
+// (latest run; each run also keeps its own in orch/out/runs/<timestamp>-mpsync*/, see runs.mjs)
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -52,6 +53,7 @@ import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
 import { artifactHtml, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
 import { startServer } from './serverdev.mjs';
 import zlib from 'node:zlib';
+import { newRun } from './runs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
@@ -170,7 +172,7 @@ const fail = m => { fails.push(m); };
 // a crashed page leaves playwright calls hanging: abort the whole run instead
 let crashed = () => {}; const crash = new Promise((_, rej) => { crashed = () => rej(new Error('a page crashed')); }); crash.catch(() => {});
 async function shot(page, name) {
-  try { await page.screenshot({ path: path.join(OUT, PFX + name), timeout: 240000 }); }
+  try { await RUN.save(page, PFX + name, { timeout: 240000 }); }
   catch (e) { warns.push(`screenshot ${name} skipped: ${String(e.message || e).split('\n')[0]}`); }
 }
 const { chromium } = await loadPlaywright();
@@ -199,6 +201,7 @@ async function openPage(tag) {
 const waitFor = (page, fn, arg, ms, what) => page.waitForFunction(fn, arg, { timeout: ms, polling: 250 }).catch(() => { throw new Error('timed out waiting for ' + what); });
 
 fs.mkdirSync(OUT, { recursive: true });
+const RUN = newRun(ART ? 'mpsync-art' : SRV ? 'mpsync-srv' : 'mpsync');
 const t0 = Date.now();
 const secs = () => ((Date.now() - t0) / 1000).toFixed(0) + 's';
 let host, client;
@@ -482,5 +485,5 @@ if (uniq.length) {
   for (const f of uniq.slice(1, 20)) console.log('  ✗ ' + f);
   process.exit(1);
 }
-console.log(`\nMPSYNC PASS${ART ? ' (artifact edition)' : SRV ? ' (through the game servers)' : ''} (${secs()}) — screenshots orch/out/${PFX}mp-host.png, orch/out/${PFX}mp-client.png`);
+console.log(`\nMPSYNC PASS${ART ? ' (artifact edition)' : SRV ? ' (through the game servers)' : ''} (${secs()}) — screenshots orch/out/${PFX}mp-host.png, orch/out/${PFX}mp-client.png (this run: ${RUN.rel}/)`);
 process.exit(0);

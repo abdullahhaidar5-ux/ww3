@@ -39,12 +39,14 @@
 //   node orch/migrate.mjs --no-lock        # skip the machine-wide browser lock (see browserlock.mjs)
 // Prints MIGRATE PASS / MIGRATE FAIL: reason (exit 0 / 1). Runtime ~5-8 min (mostly three pages building the map).
 // Screenshots: orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png
+// (latest run; each run also keeps its own in orch/out/runs/<timestamp>-migrate*/, see runs.mjs)
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
+import { newRun } from './runs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
@@ -147,7 +149,7 @@ const fails = [], warns = [];
 const fail = m => { fails.push(m); };
 let crashed = () => {}; const crash = new Promise((_, rej) => { crashed = () => rej(new Error('a page crashed')); }); crash.catch(() => {});
 async function shot(page, name) {
-  try { await page.screenshot({ path: path.join(OUT, name), timeout: 240000 }); }
+  try { await RUN.save(page, name, { timeout: 240000 }); }
   catch (e) { warns.push(`screenshot ${name} skipped: ${String(e.message || e).split('\n')[0]}`); }
 }
 const { chromium } = await loadPlaywright();
@@ -177,6 +179,7 @@ async function openPage(tag) {
 const waitFor = (page, fn, arg, ms, what) => page.waitForFunction(fn, arg, { timeout: ms, polling: 250 }).catch(() => { throw new Error('timed out waiting for ' + what); });
 
 fs.mkdirSync(OUT, { recursive: true });
+const RUN = newRun(ABRUPT ? 'migrate-abrupt' : 'migrate');
 const t0 = Date.now();
 const secs = () => ((Date.now() - t0) / 1000).toFixed(0) + 's';
 const sample = a => a.slice(0, 4).join(', ') + (a.length > 4 ? ` (+${a.length - 4} more)` : '');
@@ -443,5 +446,5 @@ if (uniq.length) {
   for (const f of uniq.slice(1, 20)) console.log('  ✗ ' + f);
   process.exit(1);
 }
-console.log(`\nMIGRATE PASS${ABRUPT ? ' (abrupt host loss)' : ''} (${secs()}) — screenshots orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png`);
+console.log(`\nMIGRATE PASS${ABRUPT ? ' (abrupt host loss)' : ''} (${secs()}) — screenshots orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png (this run: ${RUN.rel}/)`);
 process.exit(0);

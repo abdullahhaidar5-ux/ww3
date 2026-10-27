@@ -1,7 +1,8 @@
 // ORCH smoke test: the gate every change must pass before it goes live on GitHub Pages.
 // Serves the repo locally, opens the game in headless Chromium, starts a skirmish vs AI, fast-forwards the battle
 // several game-minutes through the real simulation, and fails on any page error, console error, stalled sim or
-// empty battlefield. Saves screenshots to orch/out/ so ORCH (and you) can look at what the game actually renders.
+// empty battlefield. Saves screenshots to orch/out/ so ORCH (and you) can look at what the game actually renders
+// (each run keeps its own copy in orch/out/runs/<timestamp>-smoke/, see runs.mjs).
 //
 //   node orch/smoke.mjs            # default: 4 game-minutes, 2 factions
 //   node orch/smoke.mjs --minutes 8 --players 4
@@ -15,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
 import { artifactHtml, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
+import { newRun } from './runs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
@@ -64,7 +66,7 @@ const URL0 = `http://127.0.0.1:${server.address().port}/index.html`;
 const fails = [], warns = [];
 // SwiftShader (CPU WebGL) can take minutes per frame in a busy battle; a slow screenshot is not a game bug.
 async function shot(page, name) {
-  try { await page.screenshot({ path: path.join(OUT, PFX + name), timeout: 180000 }); }
+  try { await RUN.save(page, PFX + name, { timeout: 180000 }); }
   catch (e) { warns.push(`screenshot ${name} skipped: ${String(e.message || e).split('\n')[0]}`); }
 }
 const { chromium } = await loadPlaywright();
@@ -84,6 +86,7 @@ page.on('console', m => {
 });
 
 fs.mkdirSync(OUT, { recursive: true });
+const RUN = newRun(ART ? 'smoke-art' : 'smoke');
 const t0 = Date.now();
 try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
@@ -152,7 +155,7 @@ try {
   await shot(page, 'battle-later.png');
 } catch (e) {
   fails.push(String(e && e.message || e));
-  try { await page.screenshot({ path: path.join(OUT, PFX + 'failure.png') }); } catch {}
+  try { await RUN.save(page, PFX + 'failure.png'); } catch {}
 }
 if (ART) { const j = judgeRoomStats('artifact', await page.evaluate(() => window.__fpStats).catch(() => null)); fails.push(...j.fails); warns.push(...j.warns); }
 await browser.close();
@@ -166,4 +169,4 @@ if (uniq.length) {
   for (const f of uniq.slice(0, 25)) console.log('  ✗ ' + f);
   process.exit(1);
 }
-console.log(`\nSMOKE PASS${ART ? ' (artifact edition)' : ''} (${((Date.now() - t0) / 1000).toFixed(0)}s) — screenshots in orch/out/${PFX}*.png`);
+console.log(`\nSMOKE PASS${ART ? ' (artifact edition)' : ''} (${((Date.now() - t0) / 1000).toFixed(0)}s) — screenshots in orch/out/${PFX}*.png (this run: ${RUN.rel}/)`);
