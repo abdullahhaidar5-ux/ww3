@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
 import { guardContext } from './serverdev.mjs';
-import { artifactHtml, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
+import { artifactHtml, artifactHandler, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
 import { newRun } from './runs.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -52,10 +52,9 @@ const peakMB = watchPeakMemory();
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json',
   '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg',
   '.glb': 'model/gltf-binary', '.wasm': 'application/wasm' };
-const server = http.createServer((req, res) => {
+const server = http.createServer(ART ? artifactHandler(ART.html) : (req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
-  if (ART && p === '/index.html') { res.writeHead(200, { 'content-type': 'text/html' }); return res.end(ART.html); }
   const f = path.join(ROOT, p);
   if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
   res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' });
@@ -95,9 +94,12 @@ try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => warns.push('3D models still loading after 180s'));
-  { const m = await page.evaluate(() => ({ n: Object.keys(MODELS.proto).length, ready: MODELS.ready, err: MODELS.err || '', t: Math.round(performance.now()) }));
-    console.log(`3D models: ${m.n} ready=${m.ready} ${m.err} (page open to models ready: ${(m.t / 1000).toFixed(1)}s)`);
-    if (!m.ready) warns.push('3D models did not load: ' + m.err); }
+  { const m = await page.evaluate(() => ({ n: Object.keys(MODELS.proto).length, of: typeof MODEL_FILES === 'object' ? Object.keys(MODEL_FILES).length : 0,
+      ready: MODELS.ready, err: MODELS.err || '', t: Math.round(performance.now()) }));
+    console.log(`3D models: ${m.n} of ${m.of} ready=${m.ready} ${m.err} (page open to models ready: ${(m.t / 1000).toFixed(1)}s)`);
+    // the artifact edition gets its models in a different published form: every one of them must arrive
+    if (ART && (!m.ready || m.n < m.of)) fails.push(`artifact: only ${m.n} of ${m.of} 3D models loaded ${m.err} (players would see simple shapes)`);
+    else if (!m.ready) warns.push('3D models did not load: ' + m.err); }
   await shot(page, 'menu.png');
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));

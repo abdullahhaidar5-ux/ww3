@@ -6,8 +6,9 @@ every ship (ORCH.md step 8), right after pushing `main`.
 
 ## What differs from index.html
 
-`python3 orch/build.py --artifact` writes `orch/out/artifact/index.html` (gitignored, ~7.3 MB) from the current
-`src/` and the `index.html` shell. It makes three changes and touches nothing else:
+`python3 orch/build.py --artifact` writes `orch/out/artifact/` (gitignored): `index.html` (~1 MB), `models/*.txt` and
+`publish.json`, from the current `src/`, `models/` and the `index.html` shell. It makes four changes and touches nothing
+else:
 
 1. **No PeerJS, Trystero, online-edition shim or install/service-worker script.** On Pages those scripts stand in for
    the artifact runtime: the shim sets `window.claude.use('room')` over PeerJS. On claude.ai the real
@@ -16,15 +17,26 @@ every ship (ORCH.md step 8), right after pushing `main`.
    artifact pages may only load scripts from cdnjs/jsdelivr/unpkg. GLTFLoader, SkeletonUtils and the short `MODEL_FILES` list stay inline.
 3. **No `<!doctype>/<html>/<head>/<body>` and no manifest/icon links.** The publisher adds its own wrapper. The page
    starts at `<title>World War 3</title>`.
+4. **The 3D models are published as base64 text.** The artifact host refuses `.glb.gz` / `application/gzip` (it serves
+   only html css js mjs wasm json txt, images, fonts, audio/video and pdf). So each `models/<key>.<hash>.glb.gz` is
+   written as `orch/out/artifact/models/<key>.<hash>.txt` (base64 of the same gzip bytes) and published at
+   `models/<key>.<hash>.txt` as `text/plain`. The page's `MODEL_FILES` points at the `.txt` paths, and a small
+   `fetch` hook placed just before it (`MODEL_TXT_HOOK` in `build.py`) turns those answers back into the gzip bytes
+   that `src/11-models.js` unzips. `src/` is untouched; the Pages build never contains the hook.
 
 The build refuses to write the page if any of these swaps can't be made, for example when the shell changed shape or
-Pages-only code would leak through. Audio loads from `vo/XX.mp3` and `mus/*.mp3`, and the 3D models from `models/<key>.<hash>.glb.gz`, all published
-next to the page at the same paths as on Pages.
+Pages-only code would leak through, and refuses a `publish.json` that lists a file type the host won't serve
+(`ARTIFACT_TYPES` in `build.py`). Audio loads from `vo/XX.mp3` and `mus/*.mp3`, published next to the page at the same
+paths as on Pages.
+
+The test server in `orch/artifact-harness.mjs` (used by `smoke`/`mpsync --artifact`) serves **only** the page and the
+files in `publish.json`, with their published content types, and fails if `publish.json` lists a type the host refuses.
+Both tests fail if any 3D model doesn't load in the artifact edition.
 
 ## Steps (ORCH)
 
 ```
-python3 orch/build.py --artifact             # writes orch/out/artifact/index.html + publish.json
+python3 orch/build.py --artifact             # writes orch/out/artifact/ index.html, models/*.txt, publish.json
 node orch/smoke.mjs --artifact               # must print SMOKE PASS (artifact edition)
 node orch/mpsync.mjs --artifact              # host + client over a stand-in room, must print MPSYNC PASS
                                              # (add --reconnect to also test a client dropping out and rejoining)
@@ -36,19 +48,19 @@ Then publish with the Artifact tool:
    session hasn't read is refused.
 2. `action: "publish"`, `url` = that URL, `file_path` = the absolute path of `orch/out/artifact/index.html`. Leave
    out `icon`. `orch/out/artifact/publish.json` contains every argument, ready to copy.
-   - **`files`**: pass these only when something under `vo/`, `mus/` or `models/` changed, or on the first publish
-     from this pipeline (the first publish after 2026-10-27 must pass them: that is when the models moved out of the
-     page into `models/`; without them the artifact shows simple shapes instead of 3D models). Copy the `files` object
-     from `publish.json`, which is always complete: model files go as `{"from": ..., "contentType": "application/gzip"}`.
-     A changed model gets a new file name (its hash), so the old one can be removed by mapping its path to `null`. Files you leave out stay published. Keys are published paths, values are repo-relative source paths
-     (run from the repo root):
-     ```json
-     {"vo/AE.mp3":"vo/AE.mp3","vo/CN.mp3":"vo/CN.mp3","vo/CU.mp3":"vo/CU.mp3","vo/DW.mp3":"vo/DW.mp3",
-      "vo/EG.mp3":"vo/EG.mp3","vo/EU.mp3":"vo/EU.mp3","vo/IL.mp3":"vo/IL.mp3","vo/IN.mp3":"vo/IN.mp3",
-      "vo/IR.mp3":"vo/IR.mp3","vo/KP.mp3":"vo/KP.mp3","vo/KR.mp3":"vo/KR.mp3","vo/PK.mp3":"vo/PK.mp3",
-      "vo/RS.mp3":"vo/RS.mp3","vo/RU.mp3":"vo/RU.mp3","vo/SA.mp3":"vo/SA.mp3","vo/TR.mp3":"vo/TR.mp3",
-      "vo/UA.mp3":"vo/UA.mp3","vo/US.mp3":"vo/US.mp3","mus/smp.mp3":"mus/smp.mp3"}
-     ```
+   - **`files`**: pass them when something under `vo/`, `mus/` or `models/` changed, and on the first publish from
+     this pipeline (the first publish after 2026-10-27 must pass them: the models moved out of the page then; without
+     them the artifact shows simple shapes instead of 3D models). Copy the `files` object from `publish.json`, which is
+     always complete (77 entries as of 2026-10-27). Keys are published paths; values are source paths relative to the
+     repo root (run the publish from the repo root, or use the absolute paths):
+     - `vo/<CODE>.mp3` → `vo/<CODE>.mp3` (18 files, `audio/mpeg`, type from the extension)
+     - `mus/<name>.mp3` → `mus/<name>.mp3` (every `mus/*.mp3`: `smp`, `me`, `as`, `we`, `an_US/EU/IL/UA/CU`; `audio/mpeg`)
+     - `models/<key>.<hash>.txt` → `{"from": "orch/out/artifact/models/<key>.<hash>.txt", "contentType": "text/plain"}`
+       (50 files, ~5.3 MB in all; one per file in `models/`, the `inf` alias shares `soldier`'s file)
+
+     A changed model gets a new file name (its hash): map the old `models/<key>.<oldhash>.txt` path to `null` to remove
+     it. Files you leave out stay published. The first publish after this change may also remove any
+     `models/*.glb.gz` entries a failed earlier attempt might have left (map them to `null`); none should exist.
    - **`capabilities`**: on a normal republish, **leave it out**, so the stored declaration (and the runtime contract
      pin) carries forward. Pass it once, on the first publish from this pipeline, to make sure every topic the game
      sends is open to Contributors. Pass it again whenever `ROOM_TOPICS` in `build.py` changes. It is a full-set
