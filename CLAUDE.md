@@ -19,7 +19,7 @@ anything.
 | `orch/LOG.md` | ORCH's cycle log | ORCH appends |
 | `orch/ROADMAP.md` | Progress of all big workstreams, status-tagged; drives the board's Progress section | ORCH + anyone shipping |
 | `orch/board.py` → `orch/board.html` | Command Board (claude.ai/artifact/UENjCQzdzHCzYmqQQEuJLx), built from the three files above | Generated |
-| `vo/`, `mus/` | Voice lines per nation (`vo/<CODE>.mp3`), music | Audio squad |
+| `vo/`, `mus/` | Voice lines per nation (`vo/<CODE>.mp3`); music: the shared soundtrack `mus/st/` (tracks + `manifest.json`, made by `mus/st/encode.py`) and anthem excerpts `mus/an_<CODE>.mp3` | Audio squad |
 | `sw.js`, `manifest.webmanifest`, icons | Offline/PWA install | Rarely |
 | `relay-worker.js`, `tools/` | Cloudflare relay for strict networks; Windows host tune-up scripts | Netcode squad |
 

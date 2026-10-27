@@ -212,7 +212,6 @@ SHELL_BANNED = [
 ]
 # Credits for assets that have no mus/*_pack.py script listing their sources: (asset glob, credit phrase).
 CREDIT_FALLBACK = [
-    ('mus/smp.mp3', 'Orchestral score played on the FluidR3 GM'),
     ('vo/*.mp3', 'Unit voices'),
 ]
 CREDIT_ALWAYS = ['3D models:']  # the model credits (wherever MODEL_PACK lives)
