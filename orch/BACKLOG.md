@@ -63,6 +63,9 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## P1 — now
 
 **Foundation (ORCH itself)**
+- [open] `build.py --check` should also verify the page shell still has its known parts (server client `srvUrl`/`wsOpen`,
+  credits lines for every music/voice/model pack, no install buttons), so a merge that drops shell code fails the gate
+  (the cycle-6 merge silently dropped the server code and Middle Eastern credits; restored 2026-10-27).
 - [open] Extend `orch/mpsync.mjs`: packet loss/latency, real WebRTC (3-player host migration is now covered by
   `orch/migrate.mjs`, cycle 6; its `--abrupt` mode — host vanishes without goodbye — is untested).
   Don't start from scratch — port the surviving old harnesses on the `testbed` branch: `tw8b.py` (host in Chicago +

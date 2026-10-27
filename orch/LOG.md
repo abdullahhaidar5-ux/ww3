@@ -2,6 +2,18 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-27 08:20 — side lane: servers live; page shell restored
+
+- Abdullah's `ww3-servers` Worker is live (root `server`, production branch `servers-live`, previews off; PR #1 merged
+  with his go-ahead). `/health` ok, `servertest --url` PASS against production.
+- Found: the cycle-6 merge (ff0853d) had dropped the page shell's server client code (srvUrl/wsOpen/relay) and the
+  Middle Eastern instrument credits from `index.html`. Restored both from 6eeafe2 (shell hunks only; game span untouched),
+  servers still off. Gate: `--check` OK, smoke 4p, MPSYNC, MIGRATE, artifact smoke + MPSYNC all PASS.
+- Switch-over (`orch/servers-on`) held back: with servers on, MIGRATE fails (client B self-promotes; server says
+  `taken`). Netcode side lane fixing on `orch/servers-on-mig`; tests also must stop reaching the production server.
+- Lesson: when merging a branch built from an older base, resolve `index.html` by rebuilding from merged `src/` on the
+  newer shell — never take the branch's whole shell. A shell-marker check in `build.py --check` is in the backlog.
+
 ## 2026-10-27 04:24 → 07:27 — cycle 8
 
 - Waited 5 min on cycle 7's lock (released 09:29 UTC), took it; extended once. Baseline: `--check` OK, SMOKE PASS.
