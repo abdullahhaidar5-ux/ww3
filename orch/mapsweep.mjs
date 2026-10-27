@@ -149,7 +149,7 @@ const HELPERS = () => {
     return out;
   };
   // ---- battle run
-  SW.start = (k, n, seed, p, a) => {
+  SW.start = async (k, n, seed, p, a) => {
     window.__stopLoop = true; // the sweep drives the sim itself; no rendering between chunks
     if (G) G.over = true;
     setup.map = k; setup.n = n - 1; setup.p = p; setup.a = a; setup.others = []; setup.tm = []; setup.slot = -1; setup.seed = seed;
@@ -159,7 +159,10 @@ const HELPERS = () => {
     // First battle goes through startSingle() exactly like the Deploy button (builds the 3D world too). Later ones call
     // newGame() the same way startSingle does but skip rebuilding the 3D scene, which nothing in the simulation reads
     // and which costs most of a minute per map under SwiftShader. --full-start rebuilds it every time.
-    if (!SW.started || SW.full) { SW.started = true; startSingle(); }
+    // (the Deploy button's start finishes behind a loading screen: wait for it, as a player would, before the sweep
+    // drives the battle clock itself)
+    if (!SW.started || SW.full) { SW.started = true; startSingle(); const w0 = performance.now();
+      while (window.LOADING && performance.now() - w0 < 600000) await new Promise(r => setTimeout(r, 100)); }
     else { MODE = 'single'; ME = 0; const facs = rollAis(); if (new Set(setup.tm).size < 2) setup.tm = facs.map((_, i) => i);
       newGame({ seed, facs, ai: facs.map((_, i) => i > 0), map: k, tm: setup.tm.slice(), bs: setup.bs, slot: -1 }); }
     if (!G || G.mapKey !== k || G.teams.length !== n) return { err: `started ${G && G.mapKey} with ${G && G.teams.length} players` };

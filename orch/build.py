@@ -150,8 +150,9 @@ def artifact():
     end = html.rindex('</body>')
     page = html[t:a] + f'<script src="{THREE_CDN}"></script>' + html[b:end].rstrip() + '\n'
     # guards: nothing Pages-only may leak into the artifact
+    # (the World War 3 servers backend - relay rooms, server game list - lives in the shim, so it is dropped with it)
     for bad in ('window.WW3_P2P=true', 'window.claude=', 'serviceWorker.register', '<!doctype', '<body',
-                'manifest.webmanifest'):
+                'manifest.webmanifest', 'WW3_SDIR', '__ww3WsStats', "'/room/'"):
         if bad.lower() in page.lower():
             sys.exit(f'artifact: Pages-only code {bad!r} still in the artifact page — update build.py')
     srcs = re.findall(r'<script[^>]+src="([^"]+)"', page)

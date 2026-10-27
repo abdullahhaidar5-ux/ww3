@@ -12,21 +12,22 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Phones can play: reachable build buttons, two-finger pan and pinch zoom, touch placement
 - [done] No install buttons: just open the link and play
 - [done] iPhone sound works, even on silent, with a Sound check in Settings
-- [doing] Faster battle start on phones + loading screen with each nation's quotes (final multiplayer checks)
-- [doing] Generals-style bottom command bar replacing the side menu
+- [done] Faster battle start on phones + loading screen with each nation's quotes
+- [done] Generals-style bottom command bar replacing the side menu
 - [paused] Generals mouse controls + Mouse settings (work saved on a branch)
 - [paused] More intuitive phone controls (one-finger scroll, command bar for touch)
 
 ## Multiplayer in the cloud
 - [done] Game live on Cloudflare (ww3.abdullah-haidar5.workers.dev), updated automatically
-- [doing] Matchmaking + relay servers with automatic fallback (final tests)
+- [done] Matchmaking + relay servers with automatic fallback (built and tested; switched off until they're live)
 - [you] Put the servers live: one-time Cloudflare import, then tap Merge
 - [todo] Battles run on a server (or a dedicated PC) instead of the host's device
 - [done] Fix: stale enemy soldiers left on a player's screen
 
 ## Audio and music overhaul
 - [done] Authentic Middle Eastern music: Iran, Mountain Shias, Coffee Shias, Saudi Arabia, UAE, Egypt (real maqam/dastgah, regional rhythms, recorded percussion)
-- [next] Region-specific music for the other 12 nations
+- [done] Asian music: Pakistan, India, China, North Korea, South Korea (regional instruments and rhythms)
+- [next] Region-specific music for the other 7 nations (US, TR, IL, EU, UA, RU, CU)
 - [next] Military band layer: each nation's public-domain US Navy Band anthem recording
 - [todo] Recorded weapons, explosions, engines and aircraft (near and far, echo per theatre)
 - [todo] Battlefield ambience per map and weather
@@ -35,7 +36,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [todo] Proper mix: voices duck music, distance fade, even loudness
 
 ## Graphics overhaul
-- [next] Phase 1 Foundations: art out of the game page onto Cloudflare, engine upgrade (approved; starts after the bottom bar ships)
+- [next] Phase 1 Foundations: art out of the game page onto Cloudflare, engine upgrade (approved; unblocked, starts next)
 - [todo] Phase 2 Real models (first look to improve): detailed units and buildings with national variants (free art)
 - [todo] Phase 3 Terrain and world: sculpted ground, water, roads, craters
 - [todo] Phase 4 Light and effects: shadows, smoke, fire, explosions, theatre colour

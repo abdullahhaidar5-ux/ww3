@@ -133,7 +133,7 @@ const PAGE = () => {
     const ms0 = realNow();
     sim(() => newGame({ seed: m.seed, facs: [m.a, m.b], ai: [true, true], map: m.map, tm: [0, 1], bs: setup.bs, slot: -1 }));
     G.headless = true; // FXE skips every visual/audio effect handler
-    G.teams.forEach(T => { T.ai = mkAI(diff); T.ai.wave = Math.round(T.ai.wave * G.bs); }); // same as newGame does for AI slots
+    G.teams.forEach(T => { T.ai = mkAI(diff); }); // mkAI scales the wave by G.bs itself (same as a fresh AI slot)
     return { facs: G.teams.map(T => T.fac), map: G.mapKey, ms: realNow() - ms0 };
   };
   const sample = () => {

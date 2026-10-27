@@ -2,6 +2,47 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-27 07:40 — side lane: bottom command bar + faster phone start shipped
+
+- Merged `orch/bottom-bar` (3d854c4, includes `orch/speed-ship`) onto main (cycles 6–7 + servers); one conflict in
+  `orch/mpsync.mjs` resolved keeping both sides (wait for loading screens + wiped-out client skip, and `--server` mode).
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MAPSWEEP PASS (71 battles), artifact smoke PASS, artifact MPSYNC PASS.
+- Follow-ups → backlog: client reconnect state wrong (Multiplayer P1), phone portrait build grid clipped (UI).
+- Graphics Phase 1 is now unblocked.
+
+## 2026-10-27 01:24 → 04:30 — cycle 7
+
+- Waited 76 min on cycle 6's lock; it expired 06:40 UTC with no commits, so took it. Baseline: `--check` OK, SMOKE PASS.
+- Dispatched 3 squads (Audio, Netcode, Battlefield; side lanes held the rest). Cycle 6 was in fact still running and
+  landed a gated branch doing the same Netcode + balance items → shipped cycle 6's reviewed branch
+  (`orch/2026-10-27-cycle6`) and dropped cycle 7's duplicate Netcode/Battlefield branches (local only, not pushed).
+  Audio was unique → merged: Asian war music for PK, IN, CN, KP, KR.
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, artifact smoke PASS, artifact MPSYNC PASS.
+  Sim/net diff already fresh-reviewed in cycle 6; audio is client-only. Artifact republished v159 (+`mus/as.mp3`).
+- Lesson (again): an expired lock isn't proof the holder stopped. Holders should extend `expires` when a run goes long.
+
+## 2026-10-26 21:40 → 2026-10-27 03:05 — cycle 6 — NOT shipped, gated on branch `orch/2026-10-27-cycle6`
+
+- Waited 75 min on cycle 5's lock, took it 02:40 UTC. Baseline: `--check` OK, SMOKE PASS. Side lanes held 02-map,
+  04-gfx, 05-fx3d, 08-ui, 10-post, 11-models, 09-audio, mpsync/smoke → dispatched 3 squads only.
+- The balance agent's full tourneys ran ~4.8 h, so the lock expired and cycle 7 took it (06:40 UTC); didn't ship over it.
+- Branch `orch/2026-10-27-cycle6` (on top of 14e53a0): balance round 1 (01-data, mkAI wave fix), host's Conditions
+  reach clients + no fog explosions (07-net, review fixes applied, NET_PV 5), new `orch/migrate.mjs`, backlog
+  Done/new items, ORCH.md gate adds migrate. Fresh review: no blockers. Gate on the branch: `--check` OK, smoke 4p
+  PASS, MPSYNC PASS, MIGRATE PASS, artifact smoke PASS, artifact MPSYNC PASS.
+- **Next cycle (or cycle 7 before it ships):** merge `orch/2026-10-27-cycle6` first (conflicts only in BACKLOG if
+  any), rerun the gate, push, republish the artifact. Don't redo balance round 1 / Conditions / fog leak.
+- Lesson: cap tourney runs in a brief at ~90 min (`--games`, `--jobs`) so a cycle fits inside its 4 h lock.
+
+## 2026-10-27 00:10 — side lane: cloud servers code shipped (switched off)
+
+- Merged `orch/servers-ready` (be6a1a8) onto main: `server/` Worker `ww3-servers` (game list, relay rooms placed near
+  the host, optional TURN logins, `/health`, free-plan guard) + game-side fallback direct → TURN → relay.
+  `WW3_SERVER_URL` stays empty, so players see no change until the servers are live.
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, artifact smoke PASS, artifact MPSYNC PASS.
+- Created branch `servers-live` at a986fb6 and opened PR "Put multiplayer servers live" (`main` → `servers-live`);
+  Abdullah does the one-time Cloudflare import, then taps Merge (backlog [ask]).
+
 ## 2026-10-26 17:56 → 21:40 — cycle 5
 
 - Took the run-lock (extended once to 05:19 UTC). Baseline: `--check` OK, SMOKE PASS.

@@ -9,8 +9,7 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
 - [open] **Graphics overhaul — Phase 1 approved** (Abdullah, 2026-10-26 21:24). Plan:
-  https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ. **Start only after the phone-speed fix (`orch/speed-ship`) and the
-  bottom command bar have landed on `main`** (both touch graphics/UI files). Phase 1 = move `MODEL_PACK` art out of
+  https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ. **Unblocked: the phone-speed fix and the bottom command bar landed on `main` 2026-10-27** — start it now. Phase 1 = move `MODEL_PACK` art out of
   `index.html` into compressed per-unit/per-nation files served next to the page (Cloudflare `ww3` + Pages), loaded per
   battle; build-time compression; upgrade Three.js r128 → current on a branch with side-by-side screenshots of every
   map and nation. Decisions: **units first** (Phase 2 next: detailed models, national variants), **phones stay smooth**
@@ -19,12 +18,12 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   domain, credited). Real recorded weapons/battle/ambience; full native-language voice lines (volunteers, TTS fallback);
   proper mix. **Every nation gets region-specific music**: the region's scales, rhythms and instruments on free recorded
   samples, plus its public-domain US Navy Band anthem recording as a military-band layer (check each composition's
-  status). Middle Eastern six (IR, RS, DW, SA, AE, EG) in progress in the side lane (21:14); the other 12 next.
+  status). Middle Eastern six done (side lane); Asian five (PK, IN, CN, KP, KR) done cycle 7; **next: US, TR, IL, EU, UA, RU, CU**.
   **Latmiyas:** keep the synthesized ones until real replacements are ready, then swap; replacements may be military
   band music; Abdullah can't record — search free archives (Commons, Internet Archive, Freesound, folk archives) for
   freely licensed real latmiyas; optionally draft a permission request he can send to a reciter. Likely mix: real
   latmiya for menu/calm, military band for battle. Religious and traditional pieces only — no armed-group anthems.
-- [open] **IN PROGRESS (side lane, restarted 19:36 — Abdullah: "do this now"; ORCH: don't take it; deploy via Cloudflare Workers Builds + merge-to-approve, no tokens) — Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
+- [open] **Stage 1 SHIPPED to main 2026-10-27 (off until live; see [ask] Put the servers live). Stage 2 open. (side lane, restarted 19:36 — Abdullah: "do this now"; ORCH: don't take it; deploy via Cloudflare Workers Builds + merge-to-approve, no tokens) — Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
   multiplayer"). Target: Cloudflare free tier (Workers + Durable Objects), deployed by a GitHub Actions workflow that Abdullah
   approves from his phone (see the [ask] item under Multiplayer; no secrets in chat or repo). Build and test everything locally first; deployment itself is the only [ask]. Account exists (19:11).
   **Stage 1 — relay + signalling:** WebSocket relay rooms in a Durable Object (game code = room) that carry all game
@@ -50,20 +49,18 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 ## P1 — now
 
 **Foundation (ORCH itself)**
-- [open] Extend `orch/mpsync.mjs`: 3+ human players, packet loss/latency, host migration (`07b-ckpt`), real WebRTC.
+- [open] Extend `orch/mpsync.mjs`: packet loss/latency, real WebRTC (3-player host migration is now covered by
+  `orch/migrate.mjs`, cycle 6; its `--abrupt` mode — host vanishes without goodbye — is untested).
   Don't start from scratch — port the surviving old harnesses on the `testbed` branch: `tw8b.py` (host in Chicago +
   1–7 clients with real-world one-way delays, jitter and lag spikes; measures order latency, drift, bandwidth) and
   `p2pmig.py` (3 players over a local PeerJS server, host leaves, checks migration). `probe.py` = load-time probe.
 - [open] Smoke runs share `orch/out/`: two runs back to back overwrite each other's screenshots — per-run subfolder.
 
 **Battlefield & AI** (`03-sim`, `01-data`)
-- [open] **Faction balance** (`node orch/tourney.mjs --full`, 153 games, cycle 5, BEFORE the blowout fix): win% KP 88,
-  SA 76, UA 76, DW 65, RS 65, EG 59, EU 53, CU/IN/PK 47, IR/TR/US 41, AE/KR 35, CN/IL 29, RU 24. Re-run on the
-  current build first (the 3-min power lull changes everything), then tune outliers. Slot 1 won 84/153 — check
-  start-position fairness.
+- [open] **Faction balance round 2** (round 1 shipped cycle 6; full round robin after: SA 71, KP 71, RS 71, EG 65 high;
+  CN 24, IN 29, AE 29, KR 35 low; runs swing ±12 points). Add a tourney option to play each pairing both ways (slot
+  swap) and more games per pair before tuning further. Slot fairness checked: no real bias (slot 1 won 73/153).
 - [open] Fulda: a few supply trucks still go ~60 s without delivering late in a game.
-- [open] AI host migration: `mkAI` resets `T.ai.wave` without the `G.bs` scaling, so a rebuilt AI's "thin army"
-  threshold differs slightly (review, cycle 5).
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
   below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
 - [open] AI navy arrives late (~6 game-min on Normal; buildings come first) and never uses landing craft.
@@ -72,8 +69,6 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
 - [open] Measure FPS on a real phone (needs a real device, not emulation): busy 4-player late game, many helicopters
   (rotor wash), and the new phone layout.
-- [open] Multiplayer clients don't get the host's battle Conditions: `start` in `07-net.js` has no `w`, so each
-  player sees their own menu choice. Send `w:setup.w` and apply it before `newGame` (Random is seeded → matches).
 
 **Audio & voice** (`09-audio`, `vo/`, `mus/`)
 - [open] Full native-language unit responses per nation (select / move / attack / under fire / unit lost), recorded
@@ -97,9 +92,8 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [check] Infantry helmet/kit variety beyond v68 tone variation.
 
 **UI/UX & controls** (`08-ui`, `06-view`)
-- [open] **IN PROGRESS (side lane, resumed 19:46 — Abdullah: "Test range on mobile is way too slow, fix now"; from branch
-  `orch/wip-loading-screen`; ORCH: don't take) — phone speed first: Generals-style loading screen with progress, faster battle start (Test Range is
-  slow), and documented military quotes matched to each of the 18 factions.**
+- [open] Phone portrait bottom bar: the 4th build column (Defense Gun, SAM Site…) is cut off at the right edge and
+  the hint text under the tabs is clipped mid-line — make the grid fit or scroll visibly (side lane, 2026-10-27).
 - [open] **PAUSED by Abdullah 2026-10-26 19:35 (not started; ORCH: don't take until he says) — intuitive phone controls.** Abdullah: "make the mobile
   controls more intuitive". One-finger drag scrolls (Maps-app style), long-press+drag box-selects, tap selects/orders
   with order markers, long-press+drag with units = infantry line, touch command bar (attack-move, guard, stop, line,
@@ -111,25 +105,44 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers.
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
-- [open] Small fog leak: `dieWho` (07-net) still sends `die` to players who saw a unit within 1.6 s, so a unit
-  that leaves sight and dies in the fog shows its explosion. Tighten to the last snapshot sent, or to players who
-  still hold it in `NET.sc[k]` (review, cycle 5).
+- [open] **P1:** after a client reconnects mid-battle its state is wrong (own units missing, enemy base visible, money
+  off) — found by the side-lane agent 2026-10-27 while testing the bottom bar. Reproduce, fix, add to `orch/migrate.mjs`.
+- [open] Host migration polish (found by `orch/migrate.mjs`): client B retries the new room 0.1 s too early and
+  wastes ~5 s on the dead old room; a client already reconnecting when the host leaves ignores the disconnect and
+  waits for the 5 s timeout (`clientReconnect`, 07-net).
+- [open] Asian music stand-ins (no free recording found yet): janggu, haegeum, piri, taepyeongso, gayageum, guzheng, sitar, shehnai — swap in real free recordings when found (`mus/as_pack.py`). Check the new credit line shows in the menu.
+- [open] After an MP battle, "Play again" reuses the host's Conditions until the player opens the menu (cycle 7 netcode note).
+- [open] Israel and UAE stayed weak in every cycle-7 tourney sample (13–30%) even with price cuts — likely a unit-mix/AI cause, not cost. Cap tourney runs at ~90 min.
+- [open] Add a Conditions check (host Overcast → client shows Overcast) to `orch/mpsync.mjs` permanently.
 - [open] Review the ~5% of `testbed` netcode lines not in live; merge what's still useful, then mark `testbed`
   superseded (don't delete it).
 - [open] Artifact edition untested on the real claude.ai room: latency, ~40 msg/s cap, drops, host migration.
-- [ask] Cloudflare deploy — **approved from Abdullah's phone** (Abdullah, 19:12). He has a free Cloudflare account
-  (19:11). Deploy with GitHub Actions: `.github/workflows/deploy-servers.yml` runs `wrangler deploy` for the server
-  code, using GitHub environment **`cloudflare`** (required reviewer: abdullahhaidar5-ux) with environment secrets
-  `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`. Trigger: push to `main` touching the server folder, plus manual
-  run. GitHub then notifies his phone → "Review deployments" → Approve. He sets up the environment + secrets once on
-  his phone (steps given in chat 19:13); check with `gh` whether the run is waiting/failed and tell him exactly what's
-  missing. Never ask for tokens or passwords in chat. Keep `tools/Deploy servers.cmd` only as a PC fallback.
+- [ask] Put the servers live (Abdullah, phone): one-time Cloudflare import of repo `ww3` as Worker `ww3-servers`
+  (root `server`, production branch `servers-live`; steps in `server/README.md`), then tap **Merge** on the PR
+  "Put multiplayer servers live" (`main` → `servers-live`). No tokens or GitHub secrets anywhere (the old
+  Actions/secrets plan is superseded). After the merge: check `/health`, set `WW3_SERVER_URL` in `src/07-net.js`,
+  full gate + `node orch/mpsync.mjs --server`, ship.
 - Campaign or scenario missions; tutorial; replays; spectator mode for MP.
 - Clip/showcase pipeline rebuilt in `orch/` so ORCH can post short phone-friendly clips of new features.
 
 ## Done
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
+
+- 2026-10-27 (side lane) — **Bottom command bar + faster phone start:** Generals-style bar along the bottom
+  (minimap left; Build/Units/Upgrade/Powers centre; money, strike and rank right; one ☰ menu; Pause one tap; fold
+  handle on phones; ≥40 px buttons; descriptions on hover/long-press). Step-by-step loading screen with each nation's
+  documented military quotes; no seconds-long freeze drawing the minimap. iPhone 13 (4× CPU) Test Range: tap → response
+  ~80 s → 2.1 s, first battle frame ~81 s → 46 s. `orch/mpsync.mjs` waits for both loading screens and stops checking
+  a client whose side is wiped out.
+- 2026-10-27 (cycle 7) — **Asian war music:** Pakistan (qawwali march, bhangra charge), India (sitar/bansuri over tanpura+tabla, dhol-tasha), China (guzheng/erhu, suona/dizi march), North Korea (brass band), South Korea (gayageum/daegeum in 12/8, taepyeongso). `mus/as.mp3` (484 KB) loads only for those five; CC0/CC-BY/PD, credited.
+- 2026-10-27 (cycle 6) — **Balance round 1:** SA/DW/KP/EG/RS reined in, IL/AE/KR/IR/CN lifted (data only); typical
+  gap from 50% win rate 20 → 14 points; no start-slot bias. Migrated/lobby AIs now use the same attack-wave size as
+  a fresh AI. Protocol version 5 (old cached copies are told to refresh).
+- 2026-10-27 (cycle 6) — **Multiplayer:** every player sees the host's Conditions (incl. Random); units and
+  remembered buildings that die in the fog no longer show their explosion.
+- 2026-10-27 (cycle 6) — New gate test `orch/migrate.mjs`: 3 players, host leaves, new host takes over, AI takes
+  the old host's army, remaining players stay in sync (3/3 + 1 gate run PASS).
 
 - 2026-10-26 (side lane) — **Middle Eastern music:** IR, RS, DW latmiyas and SA, AE, EG scores in real maqam/dastgah
   with quarter-tones, regional rhythms (ardah, ayala, Saidi, Yemeni 3+3+2, Bushehri), recorded CC0 percussion (VCSL),
