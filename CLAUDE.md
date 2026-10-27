@@ -55,7 +55,8 @@ Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the ve
   including war slogans like "Labbaik ya Hussein". **Shia factions (IR, RS, DW) use latmiyas as their music** — real recorded latmiyas only: the synthesized
   latmiyas stay until real replacements are ready, then get swapped out; replacements may also be real military
   music, e.g. public-domain military band recordings (Abdullah, 2026-10-26);
-  every other nation gets its own country-specific war score.
+  every other nation gets its own country-specific war score — **region-specific** for all 18 (its own scales,
+  rhythms and instruments; Abdullah, 2026-10-26).
 - Multiplayer: up to 8 players, host's browser runs the battle. Never break multiplayer sync — host and clients
   must agree.
 - Must stay smooth and **phone-playable**.

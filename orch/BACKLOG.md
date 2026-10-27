@@ -38,7 +38,10 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   (Abdullah 21:12): US Navy Band national-anthem recordings are public domain (US government work; check each
   composition) and cover every nation; Abdullah can't record latmiyas (21:14) — so: military band music for
   Shia factions in battle; keep searching free archives (Commons, Internet Archive, Freesound, folk archives) for freely
-  licensed real latmiyas; optionally draft a permission request he can send to a reciter. Religious and
+  licensed real latmiyas; optionally draft a permission request he can send to a reciter.
+  **Every nation gets region-specific music (Abdullah 21:15)** — region's scales, rhythms and instruments on free
+  recorded samples, plus its public-domain US Navy Band anthem as a military-band layer. Per-nation table in the plan
+  doc. ME six (IR, RS, DW, SA, AE, EG) in progress in the side lane (21:14); the other 12 next, Audio squad. Religious and
   traditional pieces only — no armed-group anthems. Likely mix: real latmiya for menu/calm, military band for battle. Don't start Phase 1 until he approves.
 
 - _(none open)_ — 2026-10-26 answers: keep right-click as an optional shortcut; stay at 18 factions; the old
