@@ -9,9 +9,8 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
 - [open] **Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
-  multiplayer"). Target: Cloudflare free tier (Workers + Durable Objects), deployed by Abdullah with a one-click
-  `tools/Deploy servers.cmd` (runs `npx wrangler login` in his browser + `wrangler deploy`; no secrets in chat or
-  repo). Build and test everything locally first; deployment itself is the only [ask]. Account exists (19:11).
+  multiplayer"). Target: Cloudflare free tier (Workers + Durable Objects), deployed by a GitHub Actions workflow that Abdullah
+  approves from his phone (see the [ask] item under Multiplayer; no secrets in chat or repo). Build and test everything locally first; deployment itself is the only [ask]. Account exists (19:11).
   **Stage 1 — relay + signalling:** WebSocket relay rooms in a Durable Object (game code = room) that carry all game
   traffic for players whose networks block WebRTC, plus our own signalling to replace the public PeerJS broker, plus
   short-lived TURN credentials (existing `relay-worker.js`). Game auto-falls back: direct P2P → TURN → WebSocket relay.
@@ -101,14 +100,13 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] Artifact: next republish pass `capabilities` once (from `orch/out/artifact/publish.json`) to open the `ck`
   and `pong` room topics; cycle 4 republished without it (stored declaration carried forward). Untested on the real
   claude.ai room: latency, ~40 msg/s cap, drops, host migration.
-- [ask] Cloudflare deploy: Abdullah **has a free Cloudflare account (created 2026-10-26 19:11)**. When Stage 1 is built and
-  tested, tell him in the report to double-click `tools/Deploy servers.cmd` on his Windows laptop (it logs in through
-  his browser; never ask for passwords or API tokens in chat). Then wire the deployed URL in and verify live.
-
-**Maps** (`02-map`)
-
-## P3 — later
-
+- [ask] Cloudflare deploy — **approved from Abdullah's phone** (Abdullah, 19:12). He has a free Cloudflare account
+  (19:11). Deploy with GitHub Actions: `.github/workflows/deploy-servers.yml` runs `wrangler deploy` for the server
+  code, using GitHub environment **`cloudflare`** (required reviewer: abdullahhaidar5-ux) with environment secrets
+  `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`. Trigger: push to `main` touching the server folder, plus manual
+  run. GitHub then notifies his phone → "Review deployments" → Approve. He sets up the environment + secrets once on
+  his phone (steps given in chat 19:13); check with `gh` whether the run is waiting/failed and tell him exactly what's
+  missing. Never ask for tokens or passwords in chat. Keep `tools/Deploy servers.cmd` only as a PC fallback.
 - Campaign or scenario missions; tutorial; replays; spectator mode for MP.
 - Clip/showcase pipeline rebuilt in `orch/` so ORCH can post short phone-friendly clips of new features.
 
