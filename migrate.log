@@ -1,0 +1,19 @@
+game servers running locally at http://127.0.0.1:36423
+[2s] three pages loaded
+[3s] host lobby open, code l9p3u5
+[32s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+[108s] before: client A @1 min t=60s: host 28 entities, slot 1 sees 12 (own 12); its screen has 0; missing 12, extra 0, off-position 0, mismatched 0; credits host 280 client 4800
+[109s] before: client B @1 min t=60s: host 28 entities, slot 2 sees 13 (own 13); its screen has 0; missing 13, extra 0, off-position 0, mismatched 0; credits host 455 client 4800
+peak memory (node + browser, summed RSS): 3794 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MIGRATE FAIL: before: client A @1 min: 12 of slot 1's own entities are missing on its screen: hq#6(team 1), harv#7(team 1), dozer#8(team 1), inf#9(team 1) (+8 more) (111s)
+  ✗ before: client A @1 min: slot 1 credits differ: host 280, client 4800
+  ✗ before: client A @1 min: slot 1's latest state is 59.0 s behind the host after settling
+  ✗ before: client B @1 min: 13 of slot 2's own entities are missing on its screen: hq#11(team 2), harv#12(team 2), dozer#13(team 2), inf#14(team 2) (+9 more)
+  ✗ before: client B @1 min: slot 2 credits differ: host 455, client 4800
+  ✗ before: client B @1 min: slot 2's latest state is 59.5 s behind the host after settling
+  ✗ before the host left, a client fell 119.5 game-s behind
+  ✗ client A (the standby) never received a checkpoint from the host, so nobody can take over
