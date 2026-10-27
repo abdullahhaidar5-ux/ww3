@@ -37,10 +37,10 @@ window.WW3_P2P=true;
   const wsBase=()=>srvUrl().replace(/^http/,'ws');
   const WSS=window.__ww3WsStats={tx:0,rx:0,txB:0,rxB:0};
   let hideIp=false;try{hideIp=localStorage.getItem('ww3_hideip')==='1';}catch(e){}
-  const getJ=async u=>{try{const ctl=new AbortController();setTimeout(()=>ctl.abort(),5000);const r=await fetch(u,{signal:ctl.signal});return r.ok?await r.json():null;}catch(e){return null;}};
+  const getJ=async(u,ms)=>{try{const ctl=new AbortController();setTimeout(()=>ctl.abort(),ms||5000);const r=await fetch(u,{signal:ctl.signal});return r.ok?await r.json():null;}catch(e){return null;}};
   let relayP=null,relayAt=0;
   function relayServers(){if(relayP&&Date.now()<relayAt)return relayP;relayAt=Date.now()+60000;const S=srvUrl();
-    return relayP=Promise.all([RELAY_APP&&RELAY_KEY?getJ('https://'+RELAY_APP+'.metered.live/api/v1/turn/credentials?apiKey='+encodeURIComponent(RELAY_KEY)):null,RELAY_CF_URL?getJ(RELAY_CF_URL):null,S?getJ(S+'/turn'):null]).then(([m,c,t])=>{
+    return relayP=Promise.all([RELAY_APP&&RELAY_KEY?getJ('https://'+RELAY_APP+'.metered.live/api/v1/turn/credentials?apiKey='+encodeURIComponent(RELAY_KEY)):null,RELAY_CF_URL?getJ(RELAY_CF_URL):null,S?getJ(S+'/turn',2500):null]).then(([m,c,t])=>{
     const out=[];if(Array.isArray(m))out.push(...m);for(const x of [c,t])if(x){const s=x.iceServers||x;if(Array.isArray(s))out.push(...s);else if(s&&s.urls)out.push(s);}
     if(out.length)relayAt=Date.now()+30*60000;return out;});}
   window.WW3_RELAY_BUILTIN=!!((RELAY_APP&&RELAY_KEY)||RELAY_CF_URL);
@@ -182,8 +182,9 @@ window.WW3_P2P=true;
     function giveUp(){dead=true;console.warn('servers: game list unreachable, using the peer-to-peer game list');for(const f of PH)DIR.onPeers(f);DIR.presence(Object.assign({},myPres));}
     const again=()=>{fails++;if(!everOk&&fails>=2){giveUp();return;}setTimeout(connect,Math.min(15000,500*2**Math.min(fails,5)));};
     function connect(){if(dead)return;let s;try{s=new WebSocket(wsBase()+'/lobby');}catch(e){again();return;}
+      const cto=setTimeout(()=>{if(ws!==s)try{s.close();}catch(e){}},6000);   // a network that silently drops the server: don't wait for the browser's own timeout
       s.onmessage=ev=>{const m=ev.data;if(typeof m!=='string')return;
-        if(m.startsWith('!w ')){myId=m.slice(3);ws=s;everOk=true;fails=0;last='';tell();clearInterval(ka);ka=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);}
+        if(m.startsWith('!w ')){clearTimeout(cto);myId=m.slice(3);ws=s;everOk=true;fails=0;last='';tell();clearInterval(ka);ka=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);}
         else if(m.startsWith('l|')){try{const l=JSON.parse(m.slice(2));if(Array.isArray(l)){list=l;fire();}}catch(e){}}
         else if(m.startsWith('!e ')&&!dead)giveUp();};   // refused (server over its daily budget): use the P2P list
       s.onerror=()=>{};s.onclose=()=>{if(ws===s){ws=null;clearInterval(ka);list=[];fire();}if(!dead)again();};}
@@ -199,7 +200,12 @@ window.WW3_P2P=true;
     const turn=relay||(await relayServers()).length>0;
     if(turn&&(hideIp||(e1&&e1.type==='timeout'))){try{return await namedRoom(name,true,'pjt');}catch(e){}}
     console.warn('p2p: no direct connection ('+(e1&&(e1.type||e1.message)||'skipped')+'), using the server relay');
-    return namedRoom(name,false,'ws');}
+    try{return await namedRoom(name,false,'ws');}catch(e3){
+      // the server answered "no such game": the host isn't there, so don't wait on the Nostr network either
+      if(e3&&e3.type==='peer-unavailable')throw e3;
+      // server unreachable, over its daily budget or refusing: the Nostr backup network, as before the servers existed
+      console.warn('p2p: server relay unavailable ('+(e3&&(e3.type||e3.message))+'), trying the Nostr network');
+      try{return await namedRoom(name,false,'tr');}catch(e4){throw e1&&e1.type==='peer-unavailable'?e1:e3;}}}
   const LOBBY={emit:()=>Promise.resolve(),on:()=>()=>{},presence:p=>DL().presence(p),peers:()=>DL().peers(),onPeers:f=>DL().onPeers(f),
     connected:()=>true,onConnection:f=>{setTimeout(()=>f(true),0);return()=>{};},
     join:async(name,o)=>{const via=o&&o.via,S=srvUrl(),hosting=!!(NET.code&&NET.code!=='join');
@@ -7840,11 +7846,11 @@ async function ckUnpack(s){if(s[0]==='J')return JSON.parse(s.slice(1));const bin
   return JSON.parse(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text());}
 function migRoom(gen){return gen>0?NET.baseCode+'-m'+gen:NET.baseCode;}
 function ckTick(dt,live){NET.ckT=(NET.ckT==null?4:NET.ckT)-dt;if(NET.ckT>0||NET.ckBusy||NET.ckOut||!live.length||!NET.game)return;NET.ckT=8;
-  const sb=live.find(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(sb==null)return;const to=NET.peers[sb];NET.sbSlot=sb;NET.ckBusy=true;
+  const sb=live.find(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(sb==null)return;const to=NET.peers[sb];NET.ckBusy=true;
   let ck;try{ck=ckEncode();ck.gen=NET.gen||0;}catch(e){console.warn('checkpoint',e);NET.ckBusy=false;return;}
-  ckPack(ck).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
+  ckPack(ck).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,sb,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
 // the checkpoint trickles out 2 chunks per tick (it used to go in one ~30 KB burst that delayed that player's snapshots)
-function ckFlush(){const O=NET.ckOut;if(!O||!NET.game){NET.ckOut=null;return;}if(NET.game.buffered&&NET.game.buffered(O.to)>12000)return;for(let k=0;k<2&&O.i<O.n;k++,O.i++)NET.game.emit('ck',{to:O.to,id:O.id,i:O.i,n:O.n,d:O.s.slice(O.i*3000,(O.i+1)*3000)}).catch(()=>{});if(O.i>=O.n){NET.ckAk=O.cs;NET.ckOut=null;}}
+function ckFlush(){const O=NET.ckOut;if(!O||!NET.game){NET.ckOut=null;return;}if(NET.game.buffered&&NET.game.buffered(O.to)>12000)return;for(let k=0;k<2&&O.i<O.n;k++,O.i++)NET.game.emit('ck',{to:O.to,id:O.id,i:O.i,n:O.n,d:O.s.slice(O.i*3000,(O.i+1)*3000)}).catch(()=>{});if(O.i>=O.n){NET.ckAk=O.cs;NET.sbSlot=O.sb;NET.ckOut=null;}}  // the standby flag moves only once the new standby holds a whole checkpoint
 function ckReceive(d){if(!d||typeof d.d!=='string'||!(d.n>0)||d.n>400)return;const P=NET.ckParts||(NET.ckParts={});let e=P[d.id];if(!e){e=P[d.id]={n:d.n,got:0,a:new Array(d.n)};for(const k in P)if(+k<d.id-2)delete P[k];}
   if(e.a[d.i]==null){e.a[d.i]=d.d;e.got++;}if(e.got===e.n){NET.lastCk=e.a.join('');NET.isStandby=true;delete P[d.id];}}
 async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e){console.warn('checkpoint unpack',e);return false;}
@@ -8355,7 +8361,7 @@ function startSingle(){if(modelsPending()&&!startSingle.w){startSingle.w=1;$('st
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
   if(modelsPending()){if(!startSandbox.w){startSandbox.w=1;loadModelsWait({mode:'sandbox',map:setup.map,facs,tm:[0,1],me:0});MODELS.loading.then(()=>{startSandbox.w=0;startSandbox();});}return;}MODE='single';ME=0;
   TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
-function startMP(mode,seed,facs,slot,map,tm,aiD){if(modelsPending()){loadModelsWait({mode,map,facs,tm,me:slot|0,ai:facs.map((_,i)=>Array.isArray(aiD)&&aiD[i]!=null)});MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm,aiD));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm});}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm,aiD){if(modelsPending()){loadModelsWait({mode,map,facs,tm,me:slot|0,ai:facs.map((_,i)=>Array.isArray(aiD)&&aiD[i]!=null)});MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm,aiD));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm});}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');
