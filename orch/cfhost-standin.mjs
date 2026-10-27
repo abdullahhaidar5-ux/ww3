@@ -142,7 +142,7 @@ class Battle {
     const mx = S.maxOf(this.map), hs = this.humans.slice(0, mx), as = this.ais.slice(0, mx - hs.length);
     const facs = [...hs.map(h => h.f), ...as.map(a => a.f)], tm = [...hs.map(h => h.tm | 0), ...as.map(a => a.tm | 0)];
     const aiD = [...hs.map(() => null), ...as.map(a => a.d | 0)];
-    this.started = true; this.slots = hs.map(h => h.id);
+    this.started = true; this.slots = hs.map(h => h.id); this.t0 = performance.now(); this.go = false; this.rd = this.rd || {};
     const r = S.start(this.room(), { seed, facs, tm, aiD, map: this.map, w: this.w, peers: hs.map(h => h.id), toks: hs.map(h => h.tok) });
     for (const [i, h] of hs.entries()) this.emit('start', { pv: S.pv, seed, facs, slot: i, to: h.id, map: r.map, tm, w: this.w, sv: 1 }, h.id);
     this.log.push(`started: ${facs.join(' vs ')} on ${r.map}, seed ${seed}`);
@@ -151,6 +151,8 @@ class Battle {
     this.loop = setInterval(() => {
       const now = performance.now(), dt = Math.min(0.25, (now - last) / 1000); last = now;
       if (this.pause || this.dead) return;
+      // hold the battle until every player is past the loading screen (presence rd:1), at most 20 s
+      if (!this.go) { if (this.slots.every(id => this.rd[id]) || performance.now() - this.t0 > 20000) { this.go = true; this.log.push(`battle running after ${((performance.now() - this.t0) / 1000).toFixed(1)} s`); } else return; }
       acc += dt; let n = 0;
       try { while (acc >= 1 / 60 && n < 8) { S.step(1 / 60); acc -= 1 / 60; n++; } if (acc > 0.1) acc = 0; S.net(dt); }
       catch (e) { this.log.push('sim error: ' + (e && e.stack || e)); console.error('cfhost-standin: battle error', e); }
@@ -176,6 +178,7 @@ class Battle {
         if (typeof p.pg === 'number' && (this.lastPg || (this.lastPg = {}))[id] !== p.pg) { this.lastPg[id] = p.pg; this.emit('pong', { to: id, t: p.pg }, id); }
         return;
       }
+      if (p.rd) (this.rd = this.rd || {})[id] = 1;
       this.sim.pres(id, p);
     } else if (m.k === 'e') {
       if (m.t === 'bset') this.bset(id, m.d);
