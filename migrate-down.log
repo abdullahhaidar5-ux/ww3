@@ -1,0 +1,27 @@
+game servers configured but down (http://127.0.0.1:9)
+[3s] three pages loaded
+[3s] host lobby open, code tasj6c
+[34s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+[99s] before: client A @1 min t=60s: host 25 entities, slot 1 sees 14 (own 14); its screen has 0; missing 14, extra 0, off-position 0, mismatched 0; credits host 755 client 4800
+[100s] before: client B @1 min t=60s: host 25 entities, slot 2 sees 8 (own 8); its screen has 0; missing 8, extra 0, off-position 0, mismatched 0; credits host 2930 client 4800
+peak memory (node + browser, summed RSS): 3232 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/tasj6c?role=host&key=lg4adiug4jk9t3cxa6' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/tasj6c?role=client&id=ww3p-tf56gdtg' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/tasj6c?role=client&id=ww3p-tvdb7vuk' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/tasj6c-m1?role=client&id=ww3p-zop551pi' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/tasj6c-m1?role=client&id=ww3p-mnikhbay' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MIGRATE FAIL: before: client A @1 min: 14 of slot 1's own entities are missing on its screen: hq#6(team 1), harv#7(team 1), dozer#8(team 1), inf#9(team 1) (+10 more) (104s)
+  ✗ before: client A @1 min: slot 1 credits differ: host 755, client 4800
+  ✗ before: client A @1 min: slot 1's latest state is 59.5 s behind the host after settling
+  ✗ before: client B @1 min: 8 of slot 2's own entities are missing on its screen: hq#11(team 2), harv#12(team 2), dozer#13(team 2), inf#14(team 2) (+4 more)
+  ✗ before: client B @1 min: slot 2 credits differ: host 2930, client 4800
+  ✗ before: client B @1 min: slot 2's latest state is 59.5 s behind the host after settling
+  ✗ before the host left, a client fell 119.5 game-s behind
+  ✗ client A (the standby) never received a checkpoint from the host, so nobody can take over
