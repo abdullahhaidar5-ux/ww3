@@ -67,7 +67,8 @@ window.WW3_P2P=true;
     let wq=[],wqN=0,wqT=false;const WQ_MAX=hosting?96000:12000;
     const wsFlush=()=>{wqT=false;if(!wq.length)return;const f=wq.join('\n');wq=[];wqN=0;if(ws&&ws.readyState===1){ws.send(f);WSS.tx++;WSS.txB+=f.length;}};
     const wsTx=s=>{if(!ws||ws.readyState!==1)return;if(wqN+s.length+1>WQ_MAX)wsFlush();wq.push(s);wqN+=s.length+1;WSS.rec=(WSS.rec||0)+1;if(!wqT){wqT=true;queueMicrotask(wsFlush);}};
-    const wsBuf=()=>ws?ws.bufferedAmount:0;
+    // relayed players share the host's one socket: each player's share of its backlog stands in for its own channel's
+    const wsBuf=()=>{if(!ws)return 0;let n=0;for(const l of links.values())if(l.ws)n++;return ws.bufferedAmount/Math.max(1,n);};
     const wsLink=a=>{links.set(a,{ws:1,send:x=>wsTx(a+'|'+JSON.stringify(x)),buf:wsBuf});if(!peers.has(a))upd(a,{},true);};
     const wsOpen=(role,id)=>new Promise((res,rej)=>{let s,done=false;const q=role==='host'?'role=host&key='+wsKey:'role=client&id='+encodeURIComponent(id);
       const fail=(t,msg)=>{if(done)return;done=true;clearTimeout(to);try{s.close();}catch(e){}rej(Object.assign(new Error(msg||t),{type:t}));};

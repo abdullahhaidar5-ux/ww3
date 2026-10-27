@@ -28,6 +28,7 @@
 // Lobby wire format: player -> server "p|{"g":{...}|null}" (the game this browser hosts, or none);
 //   server -> players "!w <id>" then "l|[[id,{g}],...]" whenever the list changes.
 import { DurableObject } from 'cloudflare:workers';
+import { routeHost, routePlayer } from './route.js';
 
 const VERSION = 2;
 const HOME = 'https://abdullahhaidar5-ux.github.io';
@@ -276,35 +277,9 @@ export class GameRoom extends DurableObject {
     }
     if (this.usage.msgs >= 20000) this.ctx.waitUntil(this.usage.report());
     this.index();
-    if (!isHost) {
-      // a player's frame goes to the host as-is, each record tagged with the player's id instead of its empty "to"
-      const h = this.liveHost();
-      if (!h) return;
-      if (msg.indexOf('\n') < 0) { const i = msg.indexOf('|'); if (i >= 0) safeSend(h, m.id + (i ? msg.slice(i) : msg)); return; }
-      const out = [];
-      for (const r of msg.split('\n')) { const i = r.indexOf('|'); if (i >= 0) out.push(m.id + r.slice(i)); }
-      if (out.length) safeSend(h, out.join('\n'));
-      return;
-    }
-    // host: one record (the common case) is forwarded without copying it into a list
-    if (msg.indexOf('\n') < 0) {
-      const i = msg.indexOf('|');
-      if (i < 0 || i > 40) return;
-      const frame = m.id + msg.slice(i);
-      if (i === 0) { for (const w of this.byId.values()) safeSend(w, frame); }
-      else { const w = this.byId.get(msg.slice(0, i)); if (w) safeSend(w, frame); }
-      return;
-    }
-    // a batch: group the records per receiving player, so each gets one frame
-    const per = new Map();
-    for (const r of msg.split('\n')) {
-      const i = r.indexOf('|');
-      if (i < 0 || i > 40) continue;
-      const rec = m.id + r.slice(i);
-      if (i === 0) { for (const w of this.byId.values()) { let a = per.get(w); if (!a) per.set(w, a = []); a.push(rec); } }
-      else { const w = this.byId.get(r.slice(0, i)); if (w) { let a = per.get(w); if (!a) per.set(w, a = []); a.push(rec); } }
-    }
-    for (const [w, a] of per) safeSend(w, a.join('\n'));
+    if (isHost) { routeHost(msg, m.id, this.byId, safeSend); return; }
+    const h = this.liveHost(), f = h && routePlayer(msg, m.id);
+    if (f) safeSend(h, f);
   }
 
   async webSocketClose(ws) { await this.gone(ws); safeClose(ws, 1000, 'bye'); }
