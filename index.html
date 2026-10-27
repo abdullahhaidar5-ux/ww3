@@ -272,6 +272,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);ove
 /* unit orders (attack, defend, stop, retreat) float over the battlefield just above the bar, bottom right */
 #info .cmdrow{position:fixed;z-index:7;right:max(8px,env(safe-area-inset-right,0px));bottom:calc(var(--barh,170px) + 8px);margin:0;gap:4px;width:min(460px,calc(100vw - 16px));box-sizing:border-box}
 #info .cmdrow button{min-height:30px;font-size:12px;background:rgba(29,38,34,.94);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+#app:has(#info .cmdrow) #hint{visibility:hidden}
 .tunlist{margin-top:4px;padding:4px 6px;background:var(--panel2);border:1px solid #3d5a45;font:500 11.5px var(--mono);line-height:1.45;color:var(--fg)}.tunlist b{font:600 13px var(--display);color:var(--ok)}
 /* ☰ menu: sound, voices, music, settings, restart, quit */
 #amenu{position:absolute;z-index:12;bottom:calc(100% + 6px);right:max(8px,env(safe-area-inset-right,0px));min-width:200px;display:flex;flex-direction:column;gap:2px;padding:5px;background:rgba(18,24,21,.98);border:1px solid #3d4d44;box-shadow:0 8px 24px rgba(0,0,0,.6)}
