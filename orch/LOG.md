@@ -2,6 +2,17 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-27 01:24 → 04:30 — cycle 7
+
+- Waited 76 min on cycle 6's lock; it expired 06:40 UTC with no commits, so took it. Baseline: `--check` OK, SMOKE PASS.
+- Dispatched 3 squads (Audio, Netcode, Battlefield; side lanes held the rest). Cycle 6 was in fact still running and
+  landed a gated branch doing the same Netcode + balance items → shipped cycle 6's reviewed branch
+  (`orch/2026-10-27-cycle6`) and dropped cycle 7's duplicate Netcode/Battlefield branches (local only, not pushed).
+  Audio was unique → merged: Asian war music for PK, IN, CN, KP, KR.
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, artifact smoke PASS, artifact MPSYNC PASS.
+  Sim/net diff already fresh-reviewed in cycle 6; audio is client-only. Artifact republished v159 (+`mus/as.mp3`).
+- Lesson (again): an expired lock isn't proof the holder stopped. Holders should extend `expires` when a run goes long.
+
 ## 2026-10-26 21:40 → 2026-10-27 03:05 — cycle 6 — NOT shipped, gated on branch `orch/2026-10-27-cycle6`
 
 - Waited 75 min on cycle 5's lock, took it 02:40 UTC. Baseline: `--check` OK, SMOKE PASS. Side lanes held 02-map,

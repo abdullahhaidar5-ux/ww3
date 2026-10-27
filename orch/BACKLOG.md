@@ -19,7 +19,7 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   domain, credited). Real recorded weapons/battle/ambience; full native-language voice lines (volunteers, TTS fallback);
   proper mix. **Every nation gets region-specific music**: the region's scales, rhythms and instruments on free recorded
   samples, plus its public-domain US Navy Band anthem recording as a military-band layer (check each composition's
-  status). Middle Eastern six (IR, RS, DW, SA, AE, EG) in progress in the side lane (21:14); the other 12 next.
+  status). Middle Eastern six done (side lane); Asian five (PK, IN, CN, KP, KR) done cycle 7; **next: US, TR, IL, EU, UA, RU, CU**.
   **Latmiyas:** keep the synthesized ones until real replacements are ready, then swap; replacements may be military
   band music; Abdullah can't record — search free archives (Commons, Internet Archive, Freesound, folk archives) for
   freely licensed real latmiyas; optionally draft a permission request he can send to a reciter. Likely mix: real
@@ -110,6 +110,9 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] Host migration polish (found by `orch/migrate.mjs`): client B retries the new room 0.1 s too early and
   wastes ~5 s on the dead old room; a client already reconnecting when the host leaves ignores the disconnect and
   waits for the 5 s timeout (`clientReconnect`, 07-net).
+- [open] Asian music stand-ins (no free recording found yet): janggu, haegeum, piri, taepyeongso, gayageum, guzheng, sitar, shehnai — swap in real free recordings when found (`mus/as_pack.py`). Check the new credit line shows in the menu.
+- [open] After an MP battle, "Play again" reuses the host's Conditions until the player opens the menu (cycle 7 netcode note).
+- [open] Israel and UAE stayed weak in every cycle-7 tourney sample (13–30%) even with price cuts — likely a unit-mix/AI cause, not cost. Cap tourney runs at ~90 min.
 - [open] Add a Conditions check (host Overcast → client shows Overcast) to `orch/mpsync.mjs` permanently.
 - [open] Review the ~5% of `testbed` netcode lines not in live; merge what's still useful, then mark `testbed`
   superseded (don't delete it).
@@ -126,6 +129,7 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
 
+- 2026-10-27 (cycle 7) — **Asian war music:** Pakistan (qawwali march, bhangra charge), India (sitar/bansuri over tanpura+tabla, dhol-tasha), China (guzheng/erhu, suona/dizi march), North Korea (brass band), South Korea (gayageum/daegeum in 12/8, taepyeongso). `mus/as.mp3` (484 KB) loads only for those five; CC0/CC-BY/PD, credited.
 - 2026-10-27 (cycle 6) — **Balance round 1:** SA/DW/KP/EG/RS reined in, IL/AE/KR/IR/CN lifted (data only); typical
   gap from 50% win rate 20 → 14 points; no start-slot bias. Migrated/lobby AIs now use the same attack-wave size as
   a fresh AI. Protocol version 5 (old cached copies are told to refresh).

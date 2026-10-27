@@ -26,7 +26,8 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 
 ## Audio and music overhaul
 - [done] Authentic Middle Eastern music: Iran, Mountain Shias, Coffee Shias, Saudi Arabia, UAE, Egypt (real maqam/dastgah, regional rhythms, recorded percussion)
-- [next] Region-specific music for the other 12 nations
+- [done] Asian music: Pakistan, India, China, North Korea, South Korea (regional instruments and rhythms)
+- [next] Region-specific music for the other 7 nations (US, TR, IL, EU, UA, RU, CU)
 - [next] Military band layer: each nation's public-domain US Navy Band anthem recording
 - [todo] Recorded weapons, explosions, engines and aircraft (near and far, echo per theatre)
 - [todo] Battlefield ambience per map and weather
