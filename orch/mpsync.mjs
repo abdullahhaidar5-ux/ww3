@@ -253,6 +253,12 @@ async function main() {
   await waitFor(client, () => MODE === 'client' && G && G.teams && G.teams.length > 1, null, 300000, 'the client to enter the battle');
   const cInfo = await client.evaluate(() => ({ me: ME, n: G.teams.length, map: G.mapKey }));
   console.log(`[${secs()}] battle: ${facs.join(' vs ')} on ${cInfo.map}; client is slot ${cInfo.me}`);
+  // the battle starts behind a loading screen (terrain, shader warm-up, first frame drawn underneath): wait for both
+  // pages to finish it, as players would, before the test drives the clocks (otherwise the client's last loading steps
+  // land at a random point inside the measured window and it looks like a lagging client)
+  for (const [p, who] of [[host, 'host'], [client, 'client']])
+    await waitFor(p, () => typeof G !== 'undefined' && G && G.terrain && !window.LOADING, null, 600000, `the ${who} to finish its loading screen`);
+  console.log(`[${secs()}] both pages finished loading`);
   if (cInfo.me !== 1) fail('client got slot ' + cInfo.me + ', expected 1');
   if (SRV) { cap.rx.length = 0; cap.tx.length = 0; cap.g0 = await host.evaluate(() => G.t); cap.w0 = Date.now(); }
 
@@ -264,7 +270,10 @@ async function main() {
   const hostRun = (n) => host.evaluate((n) => {
     try { for (let i = 0; i < n && G && !G.over; i++) { for (let s = 0; s < 6; s++) simUpdate(1 / 60); netTick(0.1); } }
     catch (e) { return { err: String(e && e.stack || e) }; }
-    return { t: G.t, over: G.over };
+    // does the client's side see anything at all? (a player whose side is wiped out sees nothing, and the host's
+    // delta snapshots then carry nothing for them, so their latest-snapshot clock legitimately stops)
+    const k = 1; let sees = false; for (const e of G.ents) if (!e.dead && (e.team === k || (e.vs && e.vs[k]))) { sees = true; break; }
+    return { t: G.t, over: G.over, sees };
   }, n).then(r => { if (r && typeof r.t === 'number') lastHostT = r.t; return r; });
   // client: let queued messages land, then advance its clock the same amount
   // --server: the test runs ~25x faster than real time, so a few tens of ms through the local server would read as
@@ -314,7 +323,7 @@ async function main() {
     if (wrong.length > Math.max(1, vis * .02)) fail(`${label}: ${wrong.length} entities differ (kind/team/health): ${sample(wrong)}`);
     if (extra.length > Math.max(2, vis * .03)) fail(`${label}: ${extra.length} entities on the client that the host no longer has in view: ${sample(extra)}`);
     if (Math.abs(H.credits - C.credits) > 1) fail(`${label}: credits differ: host ${H.credits}, client ${C.credits}`);
-    if (H.t - C.t > .3) fail(`${label}: client's latest state is ${(H.t - C.t).toFixed(1)} s behind the host after settling`);
+    if (H.t - C.t > .3 && vis) fail(`${label}: client's latest state is ${(H.t - C.t).toFixed(1)} s behind the host after settling`);
     return { H, C };
   }
 
@@ -355,18 +364,19 @@ async function main() {
   // --server: real time (one network tick per 0.1 s, each flushed on its own, like a real match), so the relay sees
   // real message rates (its rate limits are sized for those) and the traffic numbers are per real minute
   const STEP = SRV ? 1 : 5, total = Math.round(MINUTES * 600), checks = new Set([600, 1500, total].filter(x => x <= total));
-  let lagSkip = 0, lagLog = 0, lagLogged = false, ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
+  let blindAt = 0, lagSkip = 0, lagLog = 0, lagLogged = false, ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
   while (ticks < total) {
     const w0 = Date.now();
     const h = await hostRun(STEP); if (h.err) { fail('host simulation threw: ' + h.err.split('\n').slice(0, 4).join(' | ')); break; }
     const c = await clientRun(STEP); if (c.err) { fail('client tick threw: ' + c.err.split('\n').slice(0, 4).join(' | ')); break; }
     ticks += STEP; chunkMs.push(Date.now() - w0);
     if (SRV) { const left = 100 * STEP - (Date.now() - w0); if (left > 0) await host.waitForTimeout(left); }
-    if (ticks >= 100 && ticks > lagSkip) behindMax = Math.max(behindMax, h.t - c.snapT);
-    if (SRV && ticks >= 100 && ticks > lagSkip && h.t - c.snapT > 1.5 && lagLog < 6) { lagLog++;
+    if (!h.sees && !blindAt) { blindAt = h.t; console.log(`[${secs()}] the client's side sees nothing from host t=${h.t.toFixed(1)}s (wiped out): its clock is no longer checked`); }
+    if (ticks >= 100 && ticks > lagSkip && h.sees) behindMax = Math.max(behindMax, h.t - c.snapT);
+    if (SRV && ticks >= 100 && ticks > lagSkip && h.sees && h.t - c.snapT > 1.5 && lagLog < 6) { lagLog++;
       const b = await host.evaluate(() => ({ buf: NET.game && NET.game._ws ? NET.game._ws.bufferedAmount : -1, kf: NET.kf && NET.kf[1] }));
       console.log(`[${secs()}] lag ${(h.t - c.snapT).toFixed(1)} s at host t=${h.t.toFixed(1)} (host socket backlog ${b.buf} B, client rx ${(c.rx / 1000).toFixed(1)} s ago)`); }
-    if (ticks >= 100 && h.t - c.snapT > 1.5 && !lagLogged) { lagLogged = true; // say when, and in what state, the client first fell behind
+    if (ticks >= 100 && ticks > lagSkip && h.sees && h.t - c.snapT > 1.5 && !lagLogged) { lagLogged = true; // say when, and in what state, the client first fell behind
       const o = await host.evaluate(() => G.teams.map(T => T.fac + (T.out ? ' out' : '')).join(', '));
       console.log(`[${secs()}] client first fell ${(h.t - c.snapT).toFixed(1)} s behind at host t=${h.t.toFixed(1)}s (${o})`); }
     if (RECON && ticks === 650 && SRV) { await client.evaluate(() => { NET.game._ws.close(); });
@@ -443,10 +453,15 @@ async function trafficReport() {
 }
 async function screenshots() {
   shotsTaken = true;
+  // the test (not the game) freezes the host while it draws and photographs both pages; a real host never stops
+  // sending. Keep the client's 'host lost' watchdog (5 s without word -> reconnect) from mistaking that freeze for a
+  // dropped connection, then let it count normally again.
+  await client.evaluate(() => { NET.lastRx = performance.now() + 120000; });
   for (const [p, n] of [[host, 'mp-host.png'], [client, 'mp-client.png']]) {
     await p.evaluate(() => { try { updateUI(); renderFrame(0.016); } catch (e) { console.warn(e); } });
     await shot(p, n);
   }
+  await client.evaluate(() => { NET.lastRx = performance.now(); });
   // a slow frame can block the pages for a while: let the client's keep-alive presence reach the host before the next
   // netTick, so the host's disconnect detector (8 s without word) does not mistake the pause for a dropped player
   await host.waitForTimeout(1500);

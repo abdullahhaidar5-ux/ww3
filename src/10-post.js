@@ -43,7 +43,8 @@ function initPost(){try{
 function sizePost(){const w=Math.max(2,Math.round(VW*dpr)),h=Math.max(2,Math.round(VH*dpr));if(w===POST.w&&h===POST.h&&POST.rt)return;POST.w=w;POST.h=h;
   for(const k of ['rt','bA','bB','bC','bD','dRT','aA','aB'])if(POST[k])POST[k].dispose();
   const opt={type:THREE.HalfFloatType,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:true};
-  const wgl2=R3.capabilities.isWebGL2;POST.rt=wgl2&&THREE.WebGLMultisampleRenderTarget?new THREE.WebGLMultisampleRenderTarget(w,h,Object.assign({samples:4},opt)):new THREE.WebGLRenderTarget(w,h,opt);
+  // edge smoothing: 4 samples; phones on Auto/Medium/Low use 2 below the top detail level and none from level 3 down
+  const wgl2=R3.capabilities.isWebGL2,ms=POST.phone?(QUAL.lv<1?4:QUAL.lv<3?2:0):4;POST.rt=wgl2&&ms&&THREE.WebGLMultisampleRenderTarget?new THREE.WebGLMultisampleRenderTarget(w,h,Object.assign({samples:ms},opt)):new THREE.WebGLRenderTarget(w,h,opt);
   const s={type:THREE.HalfFloatType,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false};
   POST.dRT=new THREE.WebGLRenderTarget(w>>1,h>>1,{minFilter:THREE.NearestFilter,magFilter:THREE.NearestFilter,depthBuffer:true});POST.dRT.depthTexture=new THREE.DepthTexture(w>>1,h>>1);POST.dRT.depthTexture.type=THREE.UnsignedIntType;
   const s2={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false};POST.aA=new THREE.WebGLRenderTarget(w>>1,h>>1,s2);POST.aB=new THREE.WebGLRenderTarget(w>>1,h>>1,s2);
@@ -53,7 +54,7 @@ function pass(mat,target){POST.quad.material=mat;R3.setRenderTarget(target);R3.r
 function renderPost(){if(!POST.on||!POST.mFinal){softP(false);R3.setRenderTarget(null);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);return;}
   sizePost();
   const fogWas=FOGM?FOGM.visible:false;let postFog=false;
-  if(POST.mAO&&POST.aoOn!==false){if(FOGM&&FOGT){postFog=fogWas;FOGM.visible=false;}const hid=[];SCN.traverse(o=>{if(!o.visible)return;const m=o.material;if(o.userData.noDepth||o.isPoints||o.isLine||o.isSprite||(m&&(Array.isArray(m)?m[0].transparent:m.transparent))){o.visible=false;hid.push(o);}});
+  if(POST.mAO&&POST.aoOn!==false&&!(POST.aoLv!=null&&QUAL.lv>=POST.aoLv)){if(FOGM&&FOGT){postFog=fogWas;FOGM.visible=false;}const hid=[];SCN.traverse(o=>{if(!o.visible)return;const m=o.material;if(o.userData.noDepth||o.isPoints||o.isLine||o.isSprite||(m&&(Array.isArray(m)?m[0].transparent:m.transparent))){o.visible=false;hid.push(o);}});
     const bg=SCN.background;SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.clear();R3.render(SCN,CAM);SCN.overrideMaterial=null;for(const o of hid)o.visible=true;
     const A=POST.mAO.uniforms;A.dep.value=POST.dRT.depthTexture;A.near.value=CAM.near;A.far.value=CAM.far;const ty=Math.tan(CAM.fov*Math.PI/360);A.tanF.value.set(ty*CAM.aspect,ty);A.res.value.set(POST.dRT.width,POST.dRT.height);A.pm.value=POST.dRT.height/(2*ty);A.cw.value.copy(CAM.matrixWorld);A.tt.value=performance.now()/1000;A.fogT.value=FOGT;A.cloudK.value=POST.cloud??1;A.mapS.value.set(MAPW,MAPH);POST.mFinal.uniforms.fogK.value=postFog?1:0;
     pass(POST.mAO,POST.aA);const ab=(src,dst,x,y)=>{POST.mBlur.uniforms.tex.value=src.texture;POST.mBlur.uniforms.dir.value.set(x/src.width,y/src.height);pass(POST.mBlur,dst);};ab(POST.aA,POST.aB,1,0);ab(POST.aB,POST.aA,0,1);

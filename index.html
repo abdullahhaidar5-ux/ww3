@@ -168,7 +168,7 @@ window.WW3_P2P=true;
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: full-height war room — map canvas left, tabbed command sidebar right (stacks below on phones) */
+/* Layout: the battlefield fills the screen; a compact Generals-style command bar is docked along the bottom */
 :root{
   --bg:#0e1311; --panel:#161d1a; --panel2:#1d2622; --line:#2c3833; --fg:#dde5df; --dim:#8a9a92;
   --accent:#e3b341; --warn:#ea5a40; --ok:#74d08f; --info:#7fb8e6;
@@ -177,65 +177,118 @@ window.WW3_P2P=true;
 }
 html,body{height:100%}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);overflow:hidden}
-#app{height:100%;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 284px;gap:10px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-@media (max-width:760px){#app{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 46%}}
-#stage{position:relative;min-width:0;min-height:0;border:1px solid var(--line);background:#1a1c14;overflow:hidden}
+body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);overflow:hidden}
+#app{height:100%;height:100dvh;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto}
+#stage{position:relative;min-width:0;min-height:0;background:#1a1c14;overflow:hidden}
 #cv{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}
 #hud{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-#hint{position:absolute;left:10px;bottom:8px;right:10px;color:var(--dim);font-size:11px;pointer-events:none;text-shadow:0 1px 2px #000}
+#hint{position:absolute;left:max(10px,env(safe-area-inset-left,0px));bottom:8px;right:max(10px,env(safe-area-inset-right,0px));color:var(--dim);font-size:11px;pointer-events:none;text-shadow:0 1px 2px #000}
 #wxchip{position:absolute;top:44px;left:50%;transform:translateX(-50%);background:rgba(10,14,12,.72);border:1px solid #6f8f99;color:#cfe3ea;padding:3px 10px;font-size:11px;letter-spacing:.06em;pointer-events:none;white-space:nowrap}
-#mode{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--accent);color:var(--accent);padding:4px 12px;font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;pointer-events:none;white-space:nowrap}
-#net{position:absolute;top:10px;right:10px;background:rgba(14,19,17,.85);border:1px solid var(--line);padding:3px 9px;font-size:11px;color:var(--dim);pointer-events:none}
+#mode{position:absolute;top:max(10px,env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);background:var(--panel);border:1px solid var(--accent);color:var(--accent);padding:4px 12px;font-family:var(--display);font-weight:600;letter-spacing:.06em;text-transform:uppercase;pointer-events:none;white-space:nowrap}
+#net{position:absolute;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));background:rgba(14,19,17,.85);border:1px solid var(--line);padding:3px 9px;font-size:11px;color:var(--dim);pointer-events:none}
 #net b{color:var(--ok);font-weight:500}
-#side>*{flex-shrink:0}
-#side{min-height:0;overflow-y:auto;background:var(--panel);border:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:9px}
-.hdr{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
-#facname{font-family:var(--display);font-weight:700;font-size:20px;letter-spacing:.03em;text-transform:uppercase;line-height:1}
-#credits{color:var(--accent);font-size:18px;font-weight:500;font-variant-numeric:tabular-nums}
-  .sqbar{display:flex;flex-direction:column;gap:5px}.sqh{display:flex;justify-content:space-between;align-items:center}.sqh button{background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:500 11px var(--mono);padding:3px 8px;cursor:pointer}.sqh button:disabled{opacity:.4;cursor:not-allowed}
-.sqs{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}.sqs button{background:var(--panel2);border:1px solid var(--line);color:var(--fg);padding:4px 2px;font:600 15px var(--display);cursor:pointer;line-height:1.05}.sqs button small{display:block;font:400 10px var(--mono);color:var(--dim)}.sqs button.on{border-color:var(--accent);color:var(--accent)}.sqs button.empty{color:var(--dim)}
-.audio{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.audio.gctl{grid-template-columns:1fr 1fr 1fr;margin-top:4px}.cmdrow{display:flex;gap:4px;margin-top:6px}.cmdrow button{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:600 11px var(--mono);padding:5px 4px;cursor:pointer}.cmdrow button:hover{border-color:#3d5a45}.cmdrow button.on{background:#244232;border-color:#74d08f;color:#c9f5d6;box-shadow:0 0 0 1px #74d08f inset}.audio.gctl button{font-weight:600;padding:6px 2px}#aQuit:hover{border-color:#8a3a30;color:#ffb4a8}.audio button{background:var(--panel2);border:1px solid var(--line);color:var(--dim);font:500 11px var(--mono);padding:4px 2px;cursor:pointer}.audio button.on{color:var(--fg);border-color:#3d5a45}
-#sideTop{position:sticky;top:-10px;z-index:3;margin:-10px -10px 0;padding:10px 10px 8px;background:var(--panel);display:flex;flex-direction:column;gap:9px;border-bottom:1px solid var(--line);box-shadow:0 6px 10px -6px rgba(0,0,0,.6)}
-  .morale{display:flex;align-items:center;gap:6px;margin-top:5px;font:500 11px var(--mono)}.morale .ml{color:var(--dim)}.morale .mbar{flex:1;height:5px;background:#0b0f0d;border:1px solid #2a3a32}.morale .mbar i{display:block;height:100%}.morale .mt{white-space:nowrap}
-  .sqs .sqm{display:block;height:3px;margin:3px 4px 0;background:#0b0f0d}.sqs .sqm i{display:block;height:100%}.sqs button.rout{border-color:#ea5a40}
-  #allyBox .ar{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:4px;align-items:center;font:500 12px var(--mono)}#allyBox .ar b{font:600 14px var(--display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#allyBox .ar small{color:var(--dim)}#allyBox button{background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:600 11px var(--mono);padding:3px 6px;cursor:pointer}#allyBox button:disabled{opacity:.4;cursor:not-allowed}
-  .tunlist{margin-top:6px;padding:6px 8px;background:var(--panel2);border:1px solid #3d5a45;font:500 12px var(--mono);line-height:1.5;color:var(--fg)}.tunlist b{font:600 14px var(--display);color:var(--ok)}
-#mm{width:min(100%,calc(32vh*32/22));margin-inline:auto;height:auto;aspect-ratio:32/22;max-width:100%;border:1px solid #3d5247;box-shadow:0 0 0 1px #0a0f0c,0 0 14px rgba(120,255,170,.08) inset;background:#14201a;cursor:pointer;display:block}
-h3{margin:0;font:600 12px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
-.sup{display:flex;flex-direction:column;gap:5px;background:var(--panel2);border:1px solid var(--line);padding:8px}
-.sup .lbl{display:flex;justify-content:space-between;font-family:var(--display);font-weight:600;font-size:15px}
-#supt,#rankt{font-family:var(--mono);font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
-.bar{height:5px;background:#0b0f0d}
-.bar i{display:block;height:100%;width:0;background:var(--warn)}
-#rankbar{background:var(--accent)}
-.tabs{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line)}
-.tabs button{background:transparent;border:0;border-right:1px solid var(--line);color:var(--dim);padding:6px 2px;font:600 13px var(--display);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;position:relative}
+/* Battle messages: a short feed over the battlefield's top-left corner; each line fades out on its own */
+#log{position:absolute;z-index:4;left:max(8px,env(safe-area-inset-left,0px));top:max(8px,env(safe-area-inset-top,0px));max-width:min(30vw,400px);display:flex;flex-direction:column;align-items:flex-start;gap:2px;font-size:11.5px;line-height:1.3;pointer-events:none}
+#log div{color:#c6d1cb;background:rgba(8,11,10,.62);border-left:2px solid #4a5a52;padding:2px 7px;text-shadow:0 1px 2px #000;transition:opacity .6s ease-out}#log div.out{opacity:0}
+#log div.w,#log div.bad{color:#ffb4a8;border-left-color:var(--warn)} #log div.g{color:#c9f5d6;border-left-color:var(--ok)}
+#mode:not([hidden])~#log{top:calc(max(10px,env(safe-area-inset-top,0px)) + 40px)}
+#app.mmpeek #log{top:calc(max(8px,env(safe-area-inset-top,0px)) + 112px)}
+/* ---------- Command bar: docked along the bottom like Generals. Left: minimap · centre: command card · right: money, strike, rank, selection ---------- */
+#side{--bh:clamp(150px,19vh,180px);--bw:126px;--rows:3;position:relative;z-index:6;box-sizing:border-box;height:var(--bh);min-width:0;display:grid;
+  grid-template-columns:auto minmax(0,1fr) clamp(260px,22vw,360px);grid-template-rows:minmax(0,1fr);gap:8px;
+  padding:6px max(8px,env(safe-area-inset-right,0px)) max(6px,env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));
+  background:linear-gradient(180deg,#1c2521,#121815 60%);border-top:1px solid #3d4d44;box-shadow:0 -1px 0 #090c0b,0 -6px 16px rgba(0,0,0,.45)}
+#side h3{display:none}
+#sideTop{display:flex;align-items:center;min-height:0}
+#mm{display:block;height:calc(var(--bh) - 14px);width:auto;aspect-ratio:32/22;max-width:none;margin:0;border:1px solid #3d5247;box-shadow:0 0 0 1px #0a0f0c,0 0 14px rgba(120,255,170,.08) inset;background:#14201a;cursor:pointer}
+#side .ccard{display:flex;flex-direction:column;gap:4px;min-width:0;min-height:0}
+.cardhd{display:flex;gap:8px;align-items:stretch;min-width:0;height:28px;flex:none}
+.tabs{display:flex;flex:none;border:1px solid var(--line);background:#0f1513}
+.tabs button{background:transparent;border:0;border-right:1px solid var(--line);color:var(--dim);padding:0 13px;font:600 13px var(--display);letter-spacing:.06em;text-transform:uppercase;cursor:pointer;position:relative;white-space:nowrap}
 .tabs button:last-child{border-right:0}
+.tabs button:hover{color:var(--fg)}
 .tabs button.on{background:var(--panel2);color:var(--fg);box-shadow:inset 0 -2px 0 var(--accent)}
-.tabs button .dot{position:absolute;top:3px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.sub{grid-column:1/-1;font:600 11px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-top:4px}
-.btn{position:relative;text-align:left;background:var(--panel2);border:1px solid var(--line);color:var(--fg);padding:7px 8px 9px;font:inherit;cursor:pointer;min-width:0}
+.tabs button .dot{position:absolute;top:3px;right:3px;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.tabs .ts{display:none}
+/* squads: a slim row of chips (All · 1-5 · Group) */
+.sqbar{flex:1 1 auto;min-width:0;display:flex;gap:3px;justify-content:flex-start;align-items:stretch;overflow-x:auto;scrollbar-width:none}
+.sqbar::-webkit-scrollbar{display:none}
+.sqh,.sqbtns{display:contents}
+#sqAll{order:0;margin-left:auto}#sqs{order:1}#sqMake{order:2}
+.sqs{display:flex;gap:3px}
+.sqbar button{flex:none;background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:600 12px var(--display);letter-spacing:.04em;padding:0 8px;cursor:pointer;white-space:nowrap}
+.sqbar button:hover:not(:disabled){border-color:var(--accent)}
+.sqbar button:disabled{opacity:.4;cursor:not-allowed}
+.sqs button{position:relative;min-width:30px;padding:0 6px;font:600 14px var(--display);line-height:1;display:flex;align-items:center;justify-content:center;gap:3px}
+.sqs button small{font:500 10px var(--mono);color:var(--dim)}
+.sqs button.on{border-color:var(--accent);color:var(--accent)}.sqs button.empty{color:var(--dim)}.sqs button.rout{border-color:var(--warn)}
+.sqs .sqm{position:absolute;left:3px;right:3px;bottom:2px;height:2px;background:#0b0f0d}.sqs .sqm i{display:block;height:100%}
+/* the command grid: same-size buttons in columns, scrolls sideways when a tab has more than fits */
+#panel.grid{flex:1 1 auto;min-height:0;display:grid;grid-auto-flow:column;grid-template-rows:repeat(var(--rows),minmax(0,1fr));grid-auto-columns:max-content;gap:3px;overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;scrollbar-color:#3d4d44 transparent;overscroll-behavior-x:contain;align-content:stretch;justify-content:start;padding-bottom:1px}
+.sub{grid-row:1/-1;writing-mode:vertical-rl;transform:rotate(180deg);text-align:center;font:600 10px var(--display);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);padding:0 1px;border-right:1px solid var(--line);overflow:hidden;white-space:nowrap;max-height:100%}
+.btn{position:relative;width:var(--bw);min-width:0;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:1px;text-align:left;background:linear-gradient(180deg,#222d28,#1a2320);border:1px solid var(--line);color:var(--fg);padding:2px 7px 4px;font:inherit;cursor:pointer;overflow:hidden}
 .btn:hover:not(:disabled){border-color:var(--accent)}
 .btn:focus-visible,.fac:focus-visible,.seg button:focus-visible,.big:focus-visible,.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
-.btn:disabled{opacity:.38;cursor:not-allowed}
-.btn .n{display:block;font:600 14px/1.1 var(--display);overflow-wrap:anywhere}
-.btn .c{color:var(--accent);font-size:11px;font-variant-numeric:tabular-nums}
-.btn .d{display:block;color:var(--dim);font-size:10.5px;line-height:1.3;margin-top:2px}
-.btn .q{position:absolute;top:4px;right:5px;font-size:11px;color:var(--ok)}
+.btn:disabled{opacity:.42;cursor:not-allowed}
+#panel .btn:disabled{pointer-events:none}
+.btn .n{display:block;font:600 13px/1.1 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px}
+.btn .c{display:block;color:var(--accent);font-size:10.5px;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btn .d{display:none}
+.btn .q{position:absolute;top:2px;right:4px;font:600 11px var(--mono);color:var(--ok)}
 .btn .p{position:absolute;left:0;bottom:0;height:3px;background:var(--ok);width:0}
 .btn.on{border-color:var(--accent);background:#2a2716}
 .btn.done{border-color:#3d5a45}
 .btn.done .c{color:var(--ok)}
+.btn.rdy{border-color:var(--ok);box-shadow:inset 0 0 0 1px rgba(116,208,143,.35)}
 .wide{grid-column:1/-1}
-#supbtn{background:var(--warn);color:#160806;border:0;padding:6px;font:700 14px var(--display);letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+#panel>.wide{grid-column:auto}
+#info .btn.wide{width:100%;margin-top:4px;min-height:28px;display:block;font:600 13px var(--display)}
+/* right side: nation and money, pause and menu, strike, general rank, selection */
+#side .stat{display:flex;flex-direction:column;gap:3px;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3d4d44 transparent}
+#side .hdr{display:flex;align-items:center;gap:5px;flex:none;min-height:26px}
+#facname{flex:1 1 auto;min-width:0;font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:.03em;text-transform:uppercase;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#credits{flex:none;color:var(--accent);font-size:17px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hdr button{flex:none;height:26px;min-width:30px;background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:600 12px var(--display);letter-spacing:.04em;padding:0 8px;cursor:pointer;white-space:nowrap}
+.hdr button:hover{border-color:var(--accent)}
+#aMenu{font-size:16px;padding:0 7px}#aMenu[aria-expanded=true]{border-color:var(--accent);color:var(--accent)}
+#barGrip,#mmBtn{display:none}
+.sup{display:flex;flex-direction:column;gap:2px;flex:none}
+.sup .lbl{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-family:var(--display);font-weight:600;font-size:13px;line-height:1.15;min-width:0}
+.sup .lbl>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sw{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l b" "r b";gap:2px 6px;align-items:center}
+.sw .lbl{grid-area:l}.sw .bar{grid-area:r}.sw #supbtn{grid-area:b}
+#supt,#rankt{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar{height:4px;background:#0b0f0d}
+.bar i{display:block;height:100%;width:0;background:var(--warn)}
+#rankbar{background:var(--accent)}
+#supbtn{background:var(--warn);color:#160806;border:0;padding:3px 12px;min-height:24px;font:700 13px var(--display);letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
 #supbtn:disabled{background:#3a2a26;color:#7d6660;cursor:not-allowed}
-#info{font-size:12px;color:var(--dim);min-height:34px}
-#info b{color:var(--fg);font-family:var(--display);font-size:15px;font-weight:600}
-#info .tip{display:block;color:var(--info);margin-top:3px}
-#log{font-size:11px;display:flex;flex-direction:column;gap:2px;min-height:60px}
-#log div{color:var(--dim)} #log div.w{color:var(--warn)} #log div.g{color:var(--ok)}
+#info{flex:1 0 auto;font-size:11.5px;line-height:1.3;color:var(--dim);min-height:0;border-top:1px solid var(--line);padding-top:3px}
+#info b{color:var(--fg);font-family:var(--display);font-size:14px;font-weight:600}
+#info .tip{display:block;color:var(--info);margin-top:2px}
+.morale{display:flex;align-items:center;gap:6px;margin-top:3px;font:500 11px var(--mono)}.morale .ml{color:var(--dim)}.morale .mbar{flex:1;height:5px;background:#0b0f0d;border:1px solid #2a3a32}.morale .mbar i{display:block;height:100%}.morale .mt{white-space:nowrap}
+.cmdrow{display:flex;gap:3px;margin-top:4px}.cmdrow button{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:600 11px var(--mono);padding:3px 2px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cmdrow button:hover{border-color:#3d5a45}.cmdrow button.on{background:#244232;border-color:#74d08f;color:#c9f5d6;box-shadow:0 0 0 1px #74d08f inset}
+/* unit orders (attack, defend, stop, retreat) float over the battlefield just above the bar, bottom right */
+#info .cmdrow{position:fixed;z-index:7;right:max(8px,env(safe-area-inset-right,0px));bottom:calc(var(--barh,170px) + 8px);margin:0;gap:4px;width:min(460px,calc(100vw - 16px));box-sizing:border-box}
+#info .cmdrow button{min-height:30px;font-size:12px;background:rgba(29,38,34,.94);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+#app.orders #hint{visibility:hidden}
+.tunlist{margin-top:4px;padding:4px 6px;background:var(--panel2);border:1px solid #3d5a45;font:500 11.5px var(--mono);line-height:1.45;color:var(--fg)}.tunlist b{font:600 13px var(--display);color:var(--ok)}
+/* ☰ menu: sound, voices, music, settings, restart, quit */
+#amenu{position:absolute;z-index:12;bottom:calc(100% + 6px);right:max(8px,env(safe-area-inset-right,0px));min-width:200px;display:flex;flex-direction:column;gap:2px;padding:5px;background:rgba(18,24,21,.98);border:1px solid #3d4d44;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+#amenu button{display:flex;align-items:center;gap:8px;text-align:left;background:transparent;border:1px solid transparent;color:var(--dim);font:600 14px var(--display);letter-spacing:.04em;padding:7px 10px;cursor:pointer;white-space:nowrap}
+#amenu button:hover{background:var(--panel2);border-color:var(--line);color:var(--fg)}
+#amenu button.on{color:var(--fg)}
+#amenu hr{border:0;border-top:1px solid var(--line);margin:3px 2px;width:auto}
+#aQuit:hover{border-color:#8a3a30!important;color:#ffb4a8!important}
+/* full description of a command button: tooltip on hover, and on tap / long-press on touch screens */
+#ctip{position:fixed;z-index:13;bottom:calc(var(--barh,160px) + 8px);left:8px;max-width:min(340px,calc(100vw - 16px));box-sizing:border-box;padding:7px 10px;background:rgba(14,19,17,.97);border:1px solid #4a5a52;border-left:3px solid var(--accent);box-shadow:0 6px 18px rgba(0,0,0,.55);font-size:11.5px;line-height:1.4;color:var(--fg);pointer-events:none}
+#ctip b{display:block;font:700 15px/1.15 var(--display);letter-spacing:.02em}
+#ctip .tc{display:block;color:var(--accent);font:500 11px var(--mono);margin:1px 0 3px}
+#ctip .tw{display:block;color:var(--dim);margin-top:3px}
+/* allies and the Test Range controls float over the battlefield's top-right corner */
+#allyBox,#sbx{position:absolute;z-index:5;top:calc(max(10px,env(safe-area-inset-top,0px)) + 30px);right:max(8px,env(safe-area-inset-right,0px));width:min(250px,calc(100% - 16px));box-sizing:border-box}
+#allyBox{background:rgba(22,29,26,.92);border:1px solid var(--line);padding:6px 8px;gap:4px}
+#allyBox .ar{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:4px;align-items:center;font:500 12px var(--mono)}#allyBox .ar b{font:600 14px var(--display);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#allyBox .ar small{color:var(--dim)}#allyBox button{background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:600 11px var(--mono);padding:3px 6px;cursor:pointer}#allyBox button:disabled{opacity:.4;cursor:not-allowed}
 .overlay{position:fixed;inset:0;background:rgba(8,11,10,.93);display:grid;place-items:center;overflow-y:auto;z-index:20;padding-block:20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .card{width:100%;max-width:940px;display:flex;flex-direction:column;gap:14px}
 .card h1{margin:0;font:700 clamp(36px,7vw,64px)/.9 var(--display);letter-spacing:.02em;text-transform:uppercase;text-wrap:balance}
@@ -293,7 +346,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 #mpstatus{color:var(--info);font-size:12px;min-height:18px}
 .credits{font-size:11px!important;color:var(--dim)}
 .code{font:700 22px var(--mono);letter-spacing:.2em;color:var(--accent)}
-.sbx{border:1px solid var(--accent);padding:8px;display:flex;flex-direction:column;gap:6px;background:rgba(227,179,65,.06)}.sbt{font-weight:700;letter-spacing:.14em;color:var(--accent);font-size:12px}.sbr{display:flex;gap:6px}.sbx button{flex:1;background:var(--panel2);color:var(--fg);border:1px solid var(--line);padding:6px;font:inherit;font-size:12px;cursor:pointer}.sbx button:hover{border-color:var(--accent)}.sbx button.on{border-color:#ea5a40;color:#ea5a40}.sbc{font-size:11px;color:var(--dim)}
+.sbx{border:1px solid var(--accent);padding:6px 7px;display:flex;flex-direction:column;gap:5px;background:rgba(24,25,15,.92);box-shadow:0 4px 14px rgba(0,0,0,.5)}.sbx .sbt{flex:none;text-align:left;background:none;border:0;padding:0;font:700 12px var(--mono);letter-spacing:.14em;color:var(--accent);cursor:pointer}.sbx .sbt::after{content:"  ▾";letter-spacing:0}.sbx.fold .sbt::after{content:"  ▸"}.sbx.fold>:not(.sbt){display:none}.sbr{display:flex;gap:5px}.sbx button:not(.sbt){flex:1;background:var(--panel2);color:var(--fg);border:1px solid var(--line);padding:5px;font:inherit;font-size:12px;cursor:pointer}.sbx button:not(.sbt):hover{border-color:var(--accent)}.sbx button.on{border-color:#ea5a40;color:#ea5a40}.sbc{font-size:11px;color:var(--dim)}
 .myrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.btn2{display:inline-block;background:var(--panel);border:1px solid var(--line);color:var(--fg);padding:7px 14px;font:600 15px var(--display);cursor:pointer}.btn2:hover{border-color:var(--fg)}
 .joinrow{display:flex;gap:6px;margin-top:6px}.joinrow input,.invite input{flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);color:var(--fg);padding:8px 10px;font:14px var(--mono,monospace)}.invite{display:flex;gap:6px;margin:8px 0}.invite button{white-space:nowrap}
 .startbtn{width:100%;margin:4px 0 8px}
@@ -311,7 +364,95 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .seat.ai{grid-template-columns:22px minmax(0,1fr) 96px}.seat.ai .who{display:flex;flex-direction:column;gap:4px;white-space:normal;overflow:visible}.seat.ai .aitop{display:flex;align-items:center;gap:6px}.seat.ai .aitop .seatx{margin-left:auto}.seat.ai .aictl{display:flex;gap:6px;flex-wrap:wrap}.seat.ai .aictl select{padding:2px 4px;min-width:0}.seat .sfacsel{flex:1 1 120px;max-width:170px}.seatx{background:none;border:1px solid var(--line);color:var(--dim);padding:0 6px;cursor:pointer;font:inherit}.seatx:hover{color:var(--fg);border-color:var(--fg)}.seat.open .addai{justify-self:end;margin-left:auto}.seat.open{grid-template-columns:22px 1fr auto;border-style:dashed;border-left:4px dashed var(--line);background:transparent}.seat.open .who{color:var(--dim);font-style:italic}
 .steps{margin:0;padding-left:20px;font-size:12px;color:var(--fg);display:flex;flex-direction:column;gap:3px}.steps li::marker{color:var(--accent);font-family:var(--mono)}
 @media(max-width:520px){.seat{grid-template-columns:18px minmax(0,1fr) auto 84px;gap:6px}.seat .sfac .fname{display:none}.lobcode{font-size:24px}}
-#fpsHud{position:absolute;left:8px;top:8px;z-index:6;font:600 12px var(--mono);color:var(--ok);background:rgba(0,0,0,.45);padding:2px 6px;pointer-events:none}
+#fpsHud{position:absolute;left:max(8px,env(safe-area-inset-left,0px));bottom:30px;z-index:6;font:600 12px var(--mono);color:var(--ok);background:rgba(0,0,0,.45);padding:2px 6px;pointer-events:none}
+/* phones held upright (and other narrow windows): a strip on top (fold handle, money, tabs, pause, menu), then the
+   tactical map beside the selection and squad chips, then the command grid across the full width (scrolls sideways).
+   The strike button floats over the battlefield just above the bar once there is a Strike Center, like the Generals
+   special-power shortcuts; the handle folds the bar down to its strip */
+@media (max-width:560px),(max-width:760px) and (min-height:521px){
+  #side{--rows:2;--bw:104px;height:clamp(200px,34vh,280px);grid-template-columns:40px 72px 0 minmax(0,1fr) 40px 40px;grid-template-rows:40px minmax(0,1fr) 40px 83px;
+    grid-template-areas:"grip cred mmb tabs pz mn" "mm mm mm info info info" "mm mm mm sq sq sq" "pan pan pan pan pan pan";gap:5px 0;
+    padding:6px max(6px,env(safe-area-inset-right,0px)) max(6px,env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+  #side .ccard,#side .cardhd,#side .stat,#side .hdr{display:contents}
+  #barGrip{grid-area:grip}#credits{grid-area:cred}#mmBtn{grid-area:mmb}#side .tabs{grid-area:tabs;margin:0 4px;min-width:0}#aPause{grid-area:pz}#aMenu{grid-area:mn;margin-left:4px}
+  #side .tabs .tl{display:none}#side .tabs .ts{display:inline}#side .tabs button{font-size:12.5px;letter-spacing:.03em}
+  #sideTop{grid-area:mm;display:block;min-width:0;min-height:0;overflow:hidden}
+  #mm{width:100%;height:100%;max-width:none;aspect-ratio:auto;box-sizing:border-box}
+  #info{grid-area:info;min-height:0;padding:0 0 0 6px;border-top:0;overflow-y:auto;font-size:11px;line-height:1.25}
+  #info b{font-size:13px}#info .tip{display:none}#info .morale{margin-top:1px}
+  #side .sqbar{grid-area:sq;padding-left:6px;justify-content:flex-start}#side .sqbar #sqAll{margin-left:0}
+  #panel.grid{grid-area:pan;grid-template-rows:repeat(2,40px)}
+  #facname{display:none}
+  #credits{align-self:center;text-align:center;font:600 16px var(--display);letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #side .sw{display:none}
+  #side.hasUp .sw{display:grid;position:fixed;z-index:7;left:max(6px,env(safe-area-inset-left,0px));bottom:calc(var(--barh,220px) + 6px);width:min(200px,calc(50vw - 12px));box-sizing:border-box;padding:4px 6px;background:rgba(18,24,21,.94);border:1px solid #3d4d44;box-shadow:0 2px 10px rgba(0,0,0,.55)}
+  #app.orders #side.hasUp .sw{bottom:calc(var(--barh,220px) + 54px)}
+  #side .sw .lbl{font-size:12px;flex-direction:column;align-items:flex-start;gap:0}
+  #supbtn{min-height:40px;padding:0 10px}
+}
+/* phones held sideways (short windows): one short bar, the command grid scrolls sideways */
+@media (max-height:520px) and (min-width:561px){
+  #side{--bh:132px;--rows:2;--bw:100px;grid-template-columns:auto minmax(0,1fr) clamp(196px,28vw,250px);gap:6px;
+    padding:3px max(6px,env(safe-area-inset-right,0px)) max(3px,env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-left,0px))}
+  #mm{height:calc(var(--bh) - 30px)}
+  #sideTop{align-items:center}
+  .cardhd{height:40px;gap:6px}
+  #side .ccard,#side .stat{gap:3px}
+  .tabs button{padding:0 8px;font-size:12px}#side .tabs .tl{display:none}#side .tabs .ts{display:inline}
+  #side .hdr{min-height:40px;gap:3px}
+  #facname{display:none}
+  #credits{flex:1 1 auto;min-width:0;text-align:center;font:600 16px var(--display);overflow:hidden;text-overflow:ellipsis}
+  #side .sw{grid-template-columns:minmax(0,1fr) auto}
+  #side .sw .lbl{font-size:12px;flex-direction:column;gap:0}
+  #supbtn{min-height:40px;padding:0 10px}
+  #info{border-top:0;padding-top:0;overflow-y:auto;font-size:11px;flex:1 1 0}
+  #info b{font-size:13px}
+}
+@media (max-width:560px),(max-width:760px) and (min-height:521px),(max-height:520px){
+  #side .rk{position:absolute;left:0;right:0;top:-1px;z-index:2;pointer-events:none}#side .rk .lbl{display:none}#side .rk .bar{height:3px;background:rgba(0,0,0,.5)}
+  #barGrip,#mmBtn{display:block}#mmBtn{display:none}
+  .hdr button,#barGrip,#aPause,#aMenu{height:40px;min-width:40px;padding:0;font-size:15px}
+  #aPause{font-size:0}#aPause::before{content:"❚❚";font-size:14px;letter-spacing:-.05em}
+  #aPause.pz::before{content:"▶";letter-spacing:0;color:var(--ok)}
+  #barGrip{font-size:18px;color:var(--accent)}
+  .tabs{height:40px}.tabs button{flex:1 1 0;min-width:40px;padding:0 3px}
+  .sqbar button{min-width:40px;min-height:40px;font-size:13px}.sqs button.empty:not(:first-child){display:none}
+  .sqs button small{display:none}
+  .btn{min-height:40px}.btn .n{font-size:12.5px}
+  #panel.grid{grid-template-rows:repeat(var(--rows),minmax(40px,1fr))}
+  .sub{font-size:9px}
+  /* unit orders (attack, defend, stop, retreat) float just above the bar, within thumb reach */
+  #info .cmdrow{position:fixed;z-index:7;right:max(6px,env(safe-area-inset-right,0px));bottom:calc(var(--barh,200px) + 6px);margin:0;gap:4px;width:min(360px,calc(100vw - 12px));box-sizing:border-box}
+  #info .cmdrow button{min-height:40px;font-size:11.5px;background:rgba(29,38,34,.94);box-shadow:0 2px 8px rgba(0,0,0,.5)}
+  #info .btn.wide{min-height:40px}
+  #amenu button{min-height:44px;font-size:15px}
+  #allyBox button,.sbx button{min-height:40px}
+  #allyBox,#sbx{top:calc(max(6px,env(safe-area-inset-top,0px)) + 30px);right:max(6px,env(safe-area-inset-right,0px))}
+  #log{max-width:min(62vw,340px);font-size:11px}
+  #fpsHud{bottom:auto;top:max(6px,env(safe-area-inset-top,0px));left:auto;right:max(6px,env(safe-area-inset-right,0px))}
+  /* folded: just the strip */
+  #side.min{height:auto;grid-template-rows:40px}
+  #side.min #sideTop,#side.min .sw,#side.min #panel,#side.min .sqbar{display:none}
+  #side.min #info{position:absolute;width:0;height:0;overflow:visible;visibility:hidden;padding:0}
+  #side.min #info .cmdrow{visibility:visible}
+  #side.min #mmBtn{display:block}
+  #side.min.mmOn #sideTop{display:block;position:fixed;z-index:8;top:max(6px,env(safe-area-inset-top,0px));left:max(6px,env(safe-area-inset-left,0px));width:150px;padding:0}
+  #side.min.mmOn #sideTop #mm{width:100%;height:auto;box-shadow:0 2px 12px rgba(0,0,0,.7)}
+  #side.min.mmOn #mmBtn{border-color:var(--accent);color:var(--accent)}
+  #side.min .tabs .tl{display:none}#side.min .tabs .ts{display:inline}
+}
+@media (max-width:560px),(max-width:760px) and (min-height:521px){
+  #side.min{grid-template-columns:40px 52px 40px minmax(0,1fr) 40px 40px;padding-top:5px}#side.min #credits{font-size:15px}#side.min #aMenu{margin-left:0}
+  #side.min #mmBtn{margin-left:2px}
+  #side.min.hasUp .sw{display:grid}
+  #side.min .tabs{margin:0 2px}#side.min .tabs button{font-size:11px;letter-spacing:0;padding:0 1px;min-width:40px}
+}
+@media (max-height:520px) and (min-width:561px){
+  #side.min{grid-template-columns:minmax(0,1fr) clamp(196px,28vw,250px)}
+  #side.min .ccard{grid-column:1}#side.min .stat{grid-column:2}
+}
+/* touch screens big enough for the desktop bar (tablets): two taller rows of command buttons */
+@media (pointer:coarse) and (min-width:761px) and (min-height:521px){#side{--rows:2}.tabs button,.hdr button,.sqbar button{min-height:36px}}
 </style>
 
 <div id="app">
@@ -319,35 +460,38 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div id="fpsHud" hidden></div><canvas id="cv"></canvas>
     <canvas id="hud"></canvas>
     <div id="mode" hidden></div>
+    <div id="log" aria-live="polite"></div>
     <div id="wxchip" hidden></div>
     <div id="net" hidden></div>
     <div id="hint">Left-click or drag: select (click empty ground to deselect) · Right-click: move / attack · Right-drag: line formation · R: retreat · Left-click to place buildings and aim powers · F then click: attack-move · G then click: defend area · Q: army · H: home · Wheel or +/−: zoom · WASD/arrows: scroll · Esc: cancel / deselect</div>
-  </div>
-  <aside id="side">
-    <div id="sideTop">
-    <div class="hdr"><div id="facname">—</div><div id="credits">$0</div></div>
-    <div class="audio"><button id="aMus">Music on</button><button id="aSfx">Sound on</button><button id="aVoc">Voices on</button><button id="aSet" class="on">Settings</button></div>
-    <div class="audio gctl"><button id="aPause" class="on" title="Pause the battle (P)">❚❚ Pause</button><button id="aRestart" class="on" title="Start this battle over">↻ Restart</button><button id="aQuit" class="on" title="Leave this battle">✕ Quit</button></div>
-    <canvas id="mm" width="384" height="264" aria-label="Tactical map"></canvas>
-    </div>
-    <div id="sbx" class="sbx" hidden><div class="sbt">TEST RANGE</div><div class="sbr"><button id="sbTargets">Send new targets</button><button id="sbClear">Clear targets</button></div><button id="sbFight" class="sbw">Enemy fights back: OFF</button><div id="sbCount" class="sbc"></div></div>
-    <div class="sup">
-      <div class="lbl"><span id="supname">Strike</span><span id="supt">needs Strike Center</span></div>
-      <div class="bar"><i id="supbar"></i></div>
-      <button id="supbtn" disabled>Launch</button>
-    </div>
-    <div class="sup">
-      <div class="lbl"><span id="rankname">General rank 1</span><span id="rankt"></span></div>
-      <div class="bar"><i id="rankbar"></i></div>
-    </div>
+    <div id="sbx" class="sbx" hidden><button class="sbt" id="sbFold" type="button" aria-expanded="true">TEST RANGE</button><div class="sbr"><button id="sbTargets">Send new targets</button><button id="sbClear">Clear targets</button></div><button id="sbFight" class="sbw">Enemy fights back: OFF</button><div id="sbCount" class="sbc"></div></div>
     <div id="allyBox" class="sup" hidden></div>
-    <div class="sqbar"><div class="sqh"><h3>Squads</h3><button id="sqMake" title="Group the selected units into a squad. Squads keep formation and move at the pace of their slowest unit.">Group selected</button></div><div class="sqs" id="sqs"></div></div>
-    <div class="tabs" role="tablist">
-      <button data-tab="build" class="on">Build</button><button data-tab="units">Units</button><button data-tab="upg">Upgrade</button><button data-tab="pow">Powers</button>
+  </div>
+  <aside id="side" aria-label="Command bar">
+    <div id="sideTop"><canvas id="mm" width="384" height="264" aria-label="Tactical map"></canvas></div>
+    <div class="ccard">
+      <div class="cardhd">
+        <div class="tabs" role="tablist">
+          <button data-tab="build" class="on"><span class="tl">Build</span><span class="ts">Build</span></button><button data-tab="units"><span class="tl">Units</span><span class="ts">Units</span></button><button data-tab="upg"><span class="tl">Upgrade</span><span class="ts">Upg</span></button><button data-tab="pow"><span class="tl">Powers</span><span class="ts">Pow</span></button>
+        </div>
+        <div class="sqbar"><div class="sqh"><h3>Squads</h3><button id="sqMake" title="Group the selected units into a squad. Squads keep formation and move at the pace of their slowest unit.">+ Squad</button></div><div class="sqs" id="sqs"></div></div>
+      </div>
+      <div class="grid" id="panel"></div>
     </div>
-    <div class="grid" id="panel"></div>
-    <div id="info"></div>
-    <div id="log"></div>
+    <div class="stat">
+      <div class="hdr"><button id="barGrip" type="button" aria-expanded="true" title="Fold the command bar down">▾</button><div id="facname">—</div><div id="credits">$0</div><button id="mmBtn" type="button" aria-pressed="false" title="Show the tactical map">▦</button><button id="aPause" class="on" title="Pause the battle (P)">❚❚ Pause</button><button id="aMenu" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="amenu" title="Menu: music, sound, voices, settings, restart, quit">☰</button></div>
+      <div class="sup sw">
+        <div class="lbl"><span id="supname">Strike</span><span id="supt">needs Strike Center</span></div>
+        <div class="bar"><i id="supbar"></i></div>
+        <button id="supbtn" disabled>Launch</button>
+      </div>
+      <div class="sup rk">
+        <div class="lbl"><span id="rankname">General rank 1</span><span id="rankt"></span></div>
+        <div class="bar"><i id="rankbar"></i></div>
+      </div>
+      <div id="info"></div>
+    </div>
+    <div id="amenu" role="menu" hidden><button id="aPauseM" role="menuitem">❚❚ Pause</button><hr><button id="aMus" role="menuitem">Music on</button><button id="aSfx" role="menuitem">Sound on</button><button id="aVoc" role="menuitem">Voices on</button><button id="aSet" class="on" role="menuitem">⚙ Settings</button><hr><button id="aRestart" class="on" role="menuitem" title="Start this battle over">↻ Restart</button><button id="aQuit" class="on" role="menuitem" title="Leave this battle">✕ Quit battle</button></div>
   </aside>
 </div>
 
@@ -5194,20 +5338,38 @@ function findPath(dom,sx,sy,tx,ty){
   return out;
 }
 
-function paintTerrain(M){const TEXMAX=Math.min(3072,(typeof R3!=='undefined'&&R3&&R3.capabilities)?R3.capabilities.maxTextureSize:4096);
+// Ground texture size: up to 3072 px a side on desktop; 2048 on phones and on Medium/Low graphics (less than half the
+// pixels to paint and upload; the ground is a little softer up close). Only the picture changes: everything the battle
+// reads (roads, trees and cover, ground heights) and the order of the map's random numbers are worked out at the
+// fixed 3072 reference size, so every device builds the same battlefield from the same seed.
+function terrTexMax(){let m=3072;try{const s=typeof SET!=='undefined'&&SET?SET.gfx:'auto';if(s==='low'||s==='med'||(s!=='high'&&matchMedia('(pointer:coarse)').matches))m=2048;}catch(e){}
+  return Math.min(m,(typeof R3!=='undefined'&&R3&&R3.capabilities)?R3.capabilities.maxTextureSize:4096);}
+// Battle start splits the terrain in two: paintTerrain() inside newGame only plans it (everything the simulation needs,
+// no drawing, a fraction of a second) and paintTerrainNow() draws the picture afterwards behind the loading screen.
+// It replays the same random numbers in the same order, so the drawing is exactly what one pass would have made.
+let TERR_DEFER=false,TERR_PEND=null;
+function paintTerrain(M){if(TERR_DEFER){TERR_PEND={M,g:G};terrPaint(M,false,true);}else{TERR_PEND=null;terrPaint(M,true,true);}}
+function paintTerrainNow(){const P=TERR_PEND;TERR_PEND=null;if(!P||P.g!==G||!G)return false;terrPaint(P.M,true,false);return true;}
+const TERR_NOP=(()=>{const f=()=>{},gr={addColorStop:f},o={createRadialGradient:()=>gr,createLinearGradient:()=>gr};for(const k of ['setTransform','fillRect','beginPath','moveTo','lineTo','quadraticCurveTo','closePath','ellipse','arc','fill','stroke','save','restore','clip','drawImage','putImageData'])o[k]=f;return o;})();
+function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
   srand=mulberry(M.seed*7+3);
-  const TS=Math.min(1,TEXMAX/MAPW,TEXMAX/MAPH),TA=Math.max(1,MAPW*MAPH*TS*TS/(3200*2200));const c=document.createElement('canvas');c.width=Math.round(MAPW*TS);c.height=Math.round(MAPH*TS);const t=c.getContext('2d',{willReadFrequently:true});t.setTransform(TS,0,0,TS,0,0);
+  const TS0=Math.min(1,3072/MAPW,3072/MAPH),TS=draw?Math.min(TS0,TEXMAX/MAPW,TEXMAX/MAPH):TS0,TA=Math.max(1,MAPW*MAPH*TS0*TS0/(3200*2200));const lite=TS<TS0;const c=draw?document.createElement('canvas'):null;if(c){c.width=Math.round(MAPW*TS);c.height=Math.round(MAPH*TS);}const t=c?c.getContext('2d',{willReadFrequently:true}):TERR_NOP;t.setTransform(TS,0,0,TS,0,0);
   t.fillStyle='#a8825a';t.fillRect(0,0,MAPW,MAPH);
-  const blotch=(cells,cols,al)=>{const w=Math.ceil(MAPW/cells)+1,h=Math.ceil(MAPH/cells)+1,s=document.createElement('canvas');s.width=w;s.height=h;const sx=s.getContext('2d'),id=sx.createImageData(w,h);
+  const blotch=(cells,cols,al)=>{const w=Math.ceil(MAPW/cells)+1,h=Math.ceil(MAPH/cells)+1;if(!draw){for(let i=0;i<w*h*2;i++)srand();return;}const s=document.createElement('canvas');s.width=w;s.height=h;const sx=s.getContext('2d'),id=sx.createImageData(w,h);
     for(let i=0;i<w*h;i++){const q=cols[Math.floor(srand()*cols.length)];id.data.set([q[0],q[1],q[2],255*al*srand()],i*4);}sx.putImageData(id,0,0);t.imageSmoothingEnabled=true;t.imageSmoothingQuality='high';t.drawImage(s,0,0,MAPW+cells,MAPH+cells);};
   blotch(260,[[178,138,96],[164,120,82],[190,152,108],[150,108,74],[172,134,92]],1);blotch(90,[[184,146,102],[154,114,80],[198,164,118],[140,104,72]],.7);blotch(30,[[172,146,104],[154,130,92],[128,112,78]],.45);blotch(9,[[140,120,84],[200,178,134]],.2);
   {const P=(n,col,rmin,rmax,al)=>{for(let k=0;k<n;k++){const x=srand()*MAPW,y=srand()*MAPH,r=srnd(rmin,rmax);for(let q=0;q<5;q++){const qx=x+srnd(-r,r)*.6,qy=y+srnd(-r,r)*.6,qr=r*srnd(.4,.8);const g=t.createRadialGradient(qx,qy,0,qx,qy,qr);g.addColorStop(0,`rgba(${col},${al})`);g.addColorStop(.6,`rgba(${col},${al*.5})`);g.addColorStop(1,`rgba(${col},0)`);t.fillStyle=g;t.beginPath();t.ellipse(qx,qy,qr,qr*srnd(.5,1),srnd(0,3),0,7);t.fill();}}};
    P(140*TA|0,'126,104,72',20,70,.4);P(220*TA|0,'112,108,70',10,40,.3);P(160*TA|0,'206,186,140',8,26,.35);
    for(let k=0;k<26000*TA;k++){const x=srand()*MAPW,y=srand()*MAPH,v=srand();t.fillStyle=v<.4?'rgba(96,80,56,.35)':v<.8?'rgba(214,196,152,.35)':'rgba(120,104,76,.4)';t.fillRect(x,y,srnd(1,2.6),srnd(1,2.6));}}
+  const CK=draw&&lite?[[],[]]:null;
   for(let k=0;k<70*TA;k++){const cx=srand()*MAPW,cy=srand()*MAPH,R=srnd(70,170);const pts=[];for(let i=0;i<55;i++){const a=srand()*6.283,r=Math.sqrt(srand())*R;pts.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r*.8]);}
-    for(const [ax,ay] of pts){const nb=pts.map(q=>[q,(q[0]-ax)**2+(q[1]-ay)**2]).sort((u,v)=>u[1]-v[1]).slice(1,4);for(const [[bx,by]] of nb){const fade=1-Math.hypot(ax-cx,ay-cy)/R;if(fade<=0)continue;t.strokeStyle=`rgba(86,66,44,${.4*fade})`;t.lineWidth=1.3;t.beginPath();t.moveTo(ax,ay);t.lineTo((ax+bx)/2+srnd(-3,3),(ay+by)/2+srnd(-3,3));t.lineTo(bx,by);t.stroke();t.strokeStyle=`rgba(226,208,166,${.22*fade})`;t.lineWidth=1;t.beginPath();t.moveTo(ax+1,ay+1);t.lineTo(bx+1,by+1);t.stroke();}}}
+    for(const [ax,ay] of pts){const nb=pts.map(q=>[q,(q[0]-ax)**2+(q[1]-ay)**2]).sort((u,v)=>u[1]-v[1]).slice(1,4);for(const [[bx,by]] of nb){const fade=1-Math.hypot(ax-cx,ay-cy)/R;if(fade<=0)continue;
+      if(CK){const q=Math.max(1,Math.round(fade*8)),D=CK[0][q]||(CK[0][q]=new Path2D()),L=CK[1][q]||(CK[1][q]=new Path2D());D.moveTo(ax,ay);D.lineTo((ax+bx)/2+srnd(-3,3),(ay+by)/2+srnd(-3,3));D.lineTo(bx,by);L.moveTo(ax+1,ay+1);L.lineTo(bx+1,by+1);continue;}
+      t.strokeStyle=`rgba(86,66,44,${.4*fade})`;t.lineWidth=1.3;t.beginPath();t.moveTo(ax,ay);t.lineTo((ax+bx)/2+srnd(-3,3),(ay+by)/2+srnd(-3,3));t.lineTo(bx,by);t.stroke();t.strokeStyle=`rgba(226,208,166,${.22*fade})`;t.lineWidth=1;t.beginPath();t.moveTo(ax+1,ay+1);t.lineTo(bx+1,by+1);t.stroke();}}}
+  // phones: the ~25,000 hairline cracks are gathered into 8 shades and drawn in 16 strokes instead of one by one
+  if(CK)for(let q=1;q<=8;q++){if(CK[0][q]){t.strokeStyle=`rgba(86,66,44,${.4*q/8})`;t.lineWidth=1.3;t.stroke(CK[0][q]);}if(CK[1][q]){t.strokeStyle=`rgba(226,208,166,${.22*q/8})`;t.lineWidth=1;t.stroke(CK[1][q]);}}
   // water and shore, painted from the edge field at half resolution then scaled up smoothly
-  if(M.hasWater){const SP=2/TS,W2=Math.ceil(MAPW/SP),H2=Math.ceil(MAPH/SP),wc=document.createElement('canvas');wc.width=W2;wc.height=H2;const wx=wc.getContext('2d'),wi=wx.createImageData(W2,H2),wd=wi.data;
+  if(draw&&M.hasWater){const SP=2/TS,W2=Math.ceil(MAPW/SP),H2=Math.ceil(MAPH/SP),wc=document.createElement('canvas');wc.width=W2;wc.height=H2;const wx=wc.getContext('2d'),wi=wx.createImageData(W2,H2),wd=wi.data;
     const ss=(a,b,v)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};const L=[[-60,[214,192,140],.45],[-30,[201,174,124],1],[-16,[156,133,96],1],[-7,[122,102,73],1]];
     for(let j=0;j<H2;j++)for(let i=0;i<W2;i++){const x=i*SP+SP/2,y=j*SP+SP/2,e=M.edge(x,y);if(e<-62)continue;let r=0,g=0,b=0,al=0;
       const over=(c,a)=>{if(a<=0)return;const na=a+al*(1-a);r=(c[0]*a+r*al*(1-a))/na;g=(c[1]*a+g*al*(1-a))/na;b=(c[2]*a+b*al*(1-a))/na;al=na;};
@@ -5217,7 +5379,7 @@ function paintTerrain(M){const TEXMAX=Math.min(3072,(typeof R3!=='undefined'&&R3
       const k=(j*W2+i)*4;wd[k]=r;wd[k+1]=g;wd[k+2]=b;wd[k+3]=al*255;}
     wx.putImageData(wi,0,0);t.imageSmoothingEnabled=true;t.imageSmoothingQuality='high';t.drawImage(wc,0,0,W2*SP,H2*SP);}
   // mountains: rock faces, scree at the foot, snow on the peaks
-  if(M.hasMtn){const SP=2/TS,W2=Math.ceil(MAPW/SP),H2=Math.ceil(MAPH/SP),mc=document.createElement('canvas');mc.width=W2;mc.height=H2;const mx2=mc.getContext('2d'),mi=mx2.createImageData(W2,H2),md=mi.data;const snow=M.theme==='snow';
+  if(draw&&M.hasMtn){const SP=2/TS,W2=Math.ceil(MAPW/SP),H2=Math.ceil(MAPH/SP),mc=document.createElement('canvas');mc.width=W2;mc.height=H2;const mx2=mc.getContext('2d'),mi=mx2.createImageData(W2,H2),md=mi.data;const snow=M.theme==='snow';
     for(let j=0;j<H2;j++)for(let i=0;i<W2;i++){const x=i*SP+SP/2,y=j*SP+SP/2,m=M.mf(x,y);if(m<-70)continue;const n=Math.sin(x*.05+y*.031)*.5+Math.sin(x*.13-y*.11)*.3+Math.sin(x*.37+y*.29)*.2;const str=Math.sin((x*.6+y*.25)*.09+n*3);
       let r,g,b,a;if(m<0){const k=(m+70)/70;r=120+20*n;g=106+16*n;b=86+12*n;a=k*k*.7;}else{const v=.75+.18*n+.1*str;r=110*v;g=100*v;b=88*v;a=.95;if(snow){r=r*.6+60;g=g*.6+66;b=b*.6+78;}}
       const cap=snow?20:75;if(m>cap){const k=Math.min(1,(m-cap)/30)*(.75+.25*Math.max(0,str));r=r*(1-k)+236*k;g=g*(1-k)+240*k;b=b*(1-k)+246*k;}
@@ -5247,7 +5409,7 @@ function paintTerrain(M){const TEXMAX=Math.min(3072,(typeof R3!=='undefined'&&R3
      const pad=(g)=>{g.beginPath();PP.forEach(([x,y],q)=>q?g.lineTo(x,y):g.moveTo(x,y));g.closePath();};pad(t);t.fill();
      // soft blurred rim: drawn on a small canvas around this base, not the whole terrain (a blur filter on the full
      // 3000px canvas cost ~3 s per base on a CPU renderer, most of an 8-player map's load time)
-     {const fc=t.fillStyle,H=R*1.3+130,X0=Math.floor((bx-H)*TS),Y0=Math.floor((by-H)*TS),SZ=Math.ceil(2*H*TS)+2,oc=document.createElement('canvas');oc.width=oc.height=SZ;const o=oc.getContext('2d');
+     if(draw){const fc=t.fillStyle,H=R*1.3+130,X0=Math.floor((bx-H)*TS),Y0=Math.floor((by-H)*TS),SZ=Math.ceil(2*H*TS)+2,oc=document.createElement('canvas');oc.width=oc.height=SZ;const o=oc.getContext('2d');
       o.setTransform(TS,0,0,TS,-X0,-Y0);try{o.filter='blur('+Math.max(4,Math.round(14*TS))+'px)';}catch(e){}pad(o);o.strokeStyle=fc;o.globalAlpha=.55;o.lineWidth=34;o.stroke();o.globalAlpha=.3;o.lineWidth=64;o.stroke();
       t.save();t.setTransform(1,0,0,1,0,0);t.drawImage(oc,X0,Y0);t.restore();}
      pad(t);
@@ -5255,7 +5417,9 @@ function paintTerrain(M){const TEXMAX=Math.min(3072,(typeof R3!=='undefined'&&R3
     // slab tone variation
     for(let k=0;k<70;k++){const x=bx+srnd(-R,R),y=by+srnd(-R,R),r=srnd(20,70),v=srnd(-8,8);const g=t.createRadialGradient(x,y,0,x,y,r);const gC=M.theme==='green'?`${150+v|0},${149+v|0},${144+v|0}`:`${156+v|0},${143+v|0},${120+v|0}`;g.addColorStop(0,`rgba(${gC},.22)`);g.addColorStop(1,`rgba(${gC},0)`);t.fillStyle=g;t.fillRect(x-r,y-r,2*r,2*r);}
     // fine aggregate speckle
-    {const X0=Math.round((bx-R)*TS),Y0=Math.round((by-R)*TS),RW=Math.max(1,Math.round(2*R*TS));const sp=t.getImageData(X0,Y0,RW,RW),d=sp.data;for(let k=0;k<d.length;k+=4){const n=(srand()-.5)*14;d[k]+=n;d[k+1]+=n;d[k+2]+=n*.9;}t.putImageData(sp,X0,Y0);}
+    // (one random number per pixel at the 3072 reference size, whatever size is actually painted)
+    {const X0=Math.round((bx-R)*TS),Y0=Math.round((by-R)*TS),RW=Math.max(1,Math.round(2*R*TS)),N0=Math.max(1,Math.round(2*R*TS0))**2;let k0=0;
+     if(draw){const sp=t.getImageData(X0,Y0,RW,RW),d=sp.data,m=Math.min(d.length>>2,N0);for(let k=0;k<m*4;k+=4){const n=(srand()-.5)*14;d[k]+=n;d[k+1]+=n;d[k+2]+=n*.9;}k0=m;t.putImageData(sp,X0,Y0);}for(let k=k0;k<N0;k++)srand();}
     // grime, oil stains and weathering
     for(let k=0;k<60;k++){const x=bx+srnd(-R,R),y=by+srnd(-R,R),r=srnd(6,34);const g=t.createRadialGradient(x,y,0,x,y,r);const dk=srand()<.4;g.addColorStop(0,dk?'rgba(34,30,26,.35)':(M.theme==='green'?'rgba(90,89,85,.22)':'rgba(96,88,72,.22)'));g.addColorStop(1,'rgba(40,36,30,0)');t.fillStyle=g;t.beginPath();t.ellipse(x,y,r,r*srnd(.5,1),srnd(0,3),0,7);t.fill();}
     // expansion joints (thin, sealed)
@@ -5270,7 +5434,7 @@ function paintTerrain(M){const TEXMAX=Math.min(3072,(typeof R3!=='undefined'&&R3
 
     t.restore();}}
   for(const f of M.fields){const g=t.createRadialGradient(f.x,f.y,0,f.x,f.y,f.r*1.8);g.addColorStop(0,'rgba(120,96,60,.6)');g.addColorStop(1,'rgba(120,96,60,0)');t.fillStyle=g;t.beginPath();t.arc(f.x,f.y,f.r*1.8,0,7);t.fill();}
-  {const C=16,w=Math.ceil(MAPW/C),h=Math.ceil(MAPH/C),d=new Uint8Array(w*h);for(const [a,b] of RP){const r=2;const ci=a/C|0,cj=b/C|0;for(let i=-r;i<=r;i++)for(let j=-r;j<=r;j++){const x=ci+i,y=cj+j;if(x>=0&&y>=0&&x<w&&y<h&&Math.hypot(i,j)<=r)d[y*w+x]=1;}}const f=new Float32Array(w*h),R2=7;for(const [a,b] of RP){const ci=a/C|0,cj=b/C|0;for(let i=-R2;i<=R2;i++)for(let j=-R2;j<=R2;j++){const x=ci+i,y=cj+j;if(x<0||y<0||x>=w||y>=h)continue;const v=1-Math.max(0,(Math.hypot(i,j)-2)/(R2-2));if(v>f[y*w+x])f[y*w+x]=v;}}G.roadMask={C,w,h,d,f};}
+  if(sim){const C=16,w=Math.ceil(MAPW/C),h=Math.ceil(MAPH/C),d=new Uint8Array(w*h);for(const [a,b] of RP){const r=2;const ci=a/C|0,cj=b/C|0;for(let i=-r;i<=r;i++)for(let j=-r;j<=r;j++){const x=ci+i,y=cj+j;if(x>=0&&y>=0&&x<w&&y<h&&Math.hypot(i,j)<=r)d[y*w+x]=1;}}const f=new Float32Array(w*h),R2=7;for(const [a,b] of RP){const ci=a/C|0,cj=b/C|0;for(let i=-R2;i<=R2;i++)for(let j=-R2;j<=R2;j++){const x=ci+i,y=cj+j;if(x<0||y<0||x>=w||y>=h)continue;const v=1-Math.max(0,(Math.hypot(i,j)-2)/(R2-2));if(v>f[y*w+x])f[y*w+x]=v;}}G.roadMask={C,w,h,d,f};}
   const roadD=(x,y)=>{let m=1e12;for(const [a,b] of RP){const d=(a-x)**2+(b-y)**2;if(d<m)m=d;}return Math.sqrt(m);};
   const clear=(x,y,pad=0)=>!M.cityNear(x,y,30+pad)&&Math.abs(M.depth(x,y))>M.hw(x)+60+pad&&M.mtn(x,y)<-30-pad&&BASES.every(([bx,by])=>Math.hypot(x-bx,y-by)>340)&&M.fields.every(f=>Math.hypot(f.x-x,f.y-y)>f.r+60)&&M.oil.every(o=>Math.hypot(o.x-x,o.y-y)>70);
   const AR=Math.min(3,Math.max(1,MAPW*MAPH/(3200*2200)));for(let i=0;i<26*TA;i++){const x=srnd(0,MAPW),y=srnd(0,MAPH);if(!clear(x,y))continue;const r=srnd(14,34);const g=t.createRadialGradient(x,y,r*.2,x,y,r);g.addColorStop(0,'rgba(40,34,22,.35)');g.addColorStop(.8,'rgba(40,34,22,.1)');g.addColorStop(.9,'rgba(170,150,110,.25)');g.addColorStop(1,'rgba(170,150,110,0)');t.fillStyle=g;t.beginPath();t.arc(x,y,r,0,7);t.fill();}
@@ -5279,15 +5443,16 @@ function paintTerrain(M){const TEXMAX=Math.min(3072,(typeof R3!=='undefined'&&R3
   // forests
   const trees=[];
   for(let i=0;i<70*AR;i++){const cx=srnd(80,MAPW-80),cy=srnd(80,MAPH-80);if(!clear(cx,cy,40)||roadD(cx,cy)<150)continue;const n=10+srand()*26|0;for(let j=0;j<n;j++){const x=cx+srnd(-150,150),y=cy+srnd(-100,100);if(clear(x,y)&&roadD(x,y)>70)trees.push([x,y]);}}
-  G.treePos=trees.map(([x,y])=>[x,y,srnd(.75,1.35),srnd(0,6.28)]);
+  {const tp=trees.map(([x,y])=>[x,y,srnd(.75,1.35),srnd(0,6.28)]);if(sim)G.treePos=tp;}
   for(let i=0;i<90*TA;i++){const x=srnd(0,MAPW),y=srnd(0,MAPH);if(!clear(x,y)||roadD(x,y)<40)continue;const m=1+srand()*3|0;
     for(let j=0;j<m;j++){const cx=x+srnd(-18,18),cy=y+srnd(-12,12),r=srnd(7,20),pts=[],k=7+srand()*4|0;for(let q=0;q<k;q++){const a=q/k*6.28,rr=r*srnd(.7,1.1);pts.push([cx+Math.cos(a)*rr,cy+Math.sin(a)*rr*.75]);}
       const poly=(dx,dy)=>{t.beginPath();pts.forEach((p,q)=>q?t.lineTo(p[0]+dx,p[1]+dy):t.moveTo(p[0]+dx,p[1]+dy));t.closePath();};poly(r*.35,r*.3);t.fillStyle='rgba(25,22,14,.4)';t.fill();poly(0,0);const g=t.createLinearGradient(cx-r,cy-r,cx+r,cy+r);g.addColorStop(0,'#a59c86');g.addColorStop(.55,'#7a725f');g.addColorStop(1,'#4d473a');t.fillStyle=g;t.fill();t.strokeStyle='rgba(40,36,28,.5)';t.lineWidth=1;t.stroke();}}
   for(const c of M.cities){const g=t.createRadialGradient(c.x,c.y,0,c.x,c.y,c.r*1.15);g.addColorStop(0,'rgba(120,112,98,.55)');g.addColorStop(.85,'rgba(126,116,98,.35)');g.addColorStop(1,'rgba(126,116,98,0)');t.fillStyle=g;t.beginPath();t.arc(c.x,c.y,c.r*1.15,0,7);t.fill();}
   for(const b of M.cityBlds){t.fillStyle=b.style==='russia'?'#77736c':b.style==='america'?'#8a8278':'#b8a888';t.fillRect(b.x-b.w/2,b.y-b.d/2,b.w,b.d);}
-  const CW=c.width,CH=c.height,id=t.getImageData(0,0,CW,CH),d=id.data;const SN=M.theme==='snow',GR=M.theme==='green';const WS=new Float32Array(CW);for(let x=0;x<CW;x++)WS[x]=Math.sin(x/TS*.0021);for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*16;if(GR&&!(d[i+2]>d[i]+10)){const gy=Math.max(Math.abs(d[i]-d[i+1]),Math.abs(d[i+1]-d[i+2])*.72),gk=Math.max(0,Math.min(1,(gy-5)/13));if(gk>0){const px=(i>>2)%CW,py=((i>>2)/CW)|0;const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,w=WS[px]*Math.cos(py/TS*.0017)*.5+.5;d[i]=d[i]*(1-gk)+(l*.42+30+18*w+n)*gk;d[i+1]=d[i+1]*(1-gk)+(l*.52+56+10*w+n)*gk;d[i+2]=d[i+2]*(1-gk)+(l*.3+22+n*.6)*gk;continue;}}if(SN&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=l*.42+128+n*.6;d[i+1]=l*.44+134+n*.6;d[i+2]=l*.45+146+n*.6;continue;}d[i]+=n;d[i+1]+=n;d[i+2]+=n*.8;}t.putImageData(id,0,0);
+  if(draw){const CW=c.width,CH=c.height,id=t.getImageData(0,0,CW,CH),d=id.data;const SN=M.theme==='snow',GR=M.theme==='green';const WS=new Float32Array(CW);for(let x=0;x<CW;x++)WS[x]=Math.sin(x/TS*.0021);for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*16;if(GR&&!(d[i+2]>d[i]+10)){const gy=Math.max(Math.abs(d[i]-d[i+1]),Math.abs(d[i+1]-d[i+2])*.72),gk=Math.max(0,Math.min(1,(gy-5)/13));if(gk>0){const px=(i>>2)%CW,py=((i>>2)/CW)|0;const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,w=WS[px]*Math.cos(py/TS*.0017)*.5+.5;d[i]=d[i]*(1-gk)+(l*.42+30+18*w+n)*gk;d[i+1]=d[i+1]*(1-gk)+(l*.52+56+10*w+n)*gk;d[i+2]=d[i+2]*(1-gk)+(l*.3+22+n*.6)*gk;continue;}}if(SN&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=l*.42+128+n*.6;d[i+1]=l*.44+134+n*.6;d[i+2]=l*.45+146+n*.6;continue;}d[i]+=n;d[i+1]+=n;d[i+2]+=n*.8;}t.putImageData(id,0,0);
   const e=t.createRadialGradient(MAPW/2,MAPH/2,MAPH*.55,MAPW/2,MAPH/2,MAPW*.72);e.addColorStop(0,'rgba(0,0,0,0)');e.addColorStop(1,'rgba(0,0,0,.35)');t.fillStyle=e;t.fillRect(0,0,MAPW,MAPH);
-  G.terrain=c;G.tctx=t;buildHGrid();const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;th.getContext('2d').drawImage(c,0,0,th.width,th.height);G.thumb=th;
+  G.terrain=c;G.tctx=t;const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;th.getContext('2d').drawImage(c,0,0,th.width,th.height);G.thumb=th;}
+  if(sim){buildHGrid();if(!draw){const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;const q=th.getContext('2d');q.fillStyle='#a8825a';q.fillRect(0,0,th.width,th.height);G.thumb=th;}}
   srand=Math.random;
 }
 
@@ -6185,13 +6350,16 @@ const cam={x:600,y:1500,z:1,dist:560,yaw:0};
 const TMP=new THREE.Vector3(),TMPM=new THREE.Matrix4(),TMPQ=new THREE.Quaternion(),RAY=new THREE.Raycaster(),GPLANE=new THREE.Plane(new THREE.Vector3(0,1,0),0);
 const lin=hex=>new THREE.Color(hex).convertSRGBToLinear();
 function initGfx(){
-  R3=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
+  // phones on Auto/Medium/Low: no multisampled screen buffer (the picture is already smoothed in the post-processing pass,
+  // which draws into its own multisampled target), a 1024 shadow map instead of 2048 and plain (not soft) shadow edges
+  const PH=typeof gfxPhone==='function'&&gfxPhone();
+  R3=new THREE.WebGLRenderer({canvas:cv,antialias:!PH,powerPreference:'high-performance'});
 // One object that cannot be drawn must never stop the whole frame (that froze the picture while the battle went on):
 // skip it, hide it and keep drawing everything else.
 {const rbd=R3.renderBufferDirect.bind(R3);let nErr=0;R3.renderBufferDirect=function(cam,scene,geo,mat,obj,grp){try{return rbd(cam,scene,geo,mat,obj,grp);}catch(e){if(obj)obj.visible=false;if(nErr++<5){let q=obj,path=[];while(q&&path.length<6){path.push((q.name||'')+':'+q.type);q=q.parent;}console.warn('skipped an object that failed to draw: '+(e&&e.message)+' | '+(mat&&mat.type)+' '+(mat&&mat.name||'')+' map='+!!(mat&&mat.map)+' env='+!!(mat&&mat.envMap)+' ud='+Object.keys((mat&&mat.userData)||{}).join('/')+' | '+path.join(' < ')+' @ '+String(e&&e.stack||'').split('\n').slice(1,4).map(x=>x.trim()).join(' / '));}}};}
   cv.addEventListener('webglcontextlost',e=>{e.preventDefault();window.GLLOST=1;try{pushLog('Graphics were reset by the browser; restoring…','w');}catch(_){}},false);
   cv.addEventListener('webglcontextrestored',()=>{window.GLLOST=0;try{for(const o of OBJ.values())SCN.remove(o);OBJ.clear();for(const k in GEO)delete GEO[k];if(G&&G.terrain)buildWorld();}catch(err){console.warn(err);}},false);
-  R3.outputEncoding=THREE.sRGBEncoding;R3.toneMapping=THREE.NoToneMapping;R3.shadowMap.enabled=true;R3.shadowMap.autoUpdate=false;/* shadows are drawn once per frame, for the main pass only (renderPost) - not again for the depth pre-pass */R3.shadowMap.type=THREE.PCFSoftShadowMap;R3.autoClear=true;
+  R3.outputEncoding=THREE.sRGBEncoding;R3.toneMapping=THREE.NoToneMapping;R3.shadowMap.enabled=true;R3.shadowMap.autoUpdate=false;/* shadows are drawn once per frame, for the main pass only (renderPost) - not again for the depth pre-pass */R3.shadowMap.type=PH?THREE.PCFShadowMap:THREE.PCFSoftShadowMap;R3.autoClear=true;
   SCN=new THREE.Scene();SCN.background=lin('#c7b493');SCN.fog=new THREE.Fog(lin('#8f8a70'),1800,6200);
   window.SKY=new THREE.Mesh(new THREE.SphereGeometry(7600,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{t:{value:0},hor:{value:new THREE.Vector3(.86,.78,.64)},zen:{value:new THREE.Vector3(.30,.50,.80)}},
     vertexShader:`varying vec3 vd;void main(){vd=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
@@ -6201,7 +6369,7 @@ function initGfx(){
         gl_FragColor=vec4(pow(c,vec3(2.2))*1.6,1.);}`}));SKY.renderOrder=-10;SKY.frustumCulled=false;SCN.add(SKY);
   CAM=new THREE.PerspectiveCamera(38,1,40,9000);
   HEMI=new THREE.HemisphereLight(lin('#b4cbef'),lin('#4d3f2c'),1.0);SCN.add(HEMI);
-  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7);SUN.castShadow=true;const sm=2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
+  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7);SUN.castShadow=true;const sm=PH?1024:2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
   SCN.add(SUN);SCN.add(SUN.target);
   initFX();initPost();
 }
@@ -6304,10 +6472,11 @@ function borderLand(dtex){const M=G.map,BX=Math.max(MAPW,MAPH)*.7,W2=MAPW+2*BX,H
     p.setY(i,y);const fade=Math.min(1,d/700),sl=Math.max(0,Math.min(1,(y-90)/120));c.copy(tc).lerp(base,fade*.75).lerp(rock,sl*.5*fade);c.multiplyScalar(.94+.12*n2(x*4.1,z*3.7));col.set([c.r,c.g,c.b],i*3);FD[i]=Math.min(1,d/1100);}
   g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setAttribute('fd',new THREE.BufferAttribute(FD,1));g.computeVertexNormals();
   const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:4});if(dtex)m.onBeforeCompile=sh=>{sh.uniforms.dmap={value:dtex};sh.uniforms.ttex={value:BORDER_TEX};sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vWP;attribute float fd;varying float vFD;').replace('#include <begin_vertex>','#include <begin_vertex>\nvWP=position.xz;vFD=fd;');sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vWP;varying float vFD;uniform sampler2D dmap;uniform sampler2D ttex;').replace('#include <color_fragment>','#include <color_fragment>\n{vec2 mu=vWP/vec2('+MAPW.toFixed(1)+','+MAPH.toFixed(1)+');mu=1.-abs(mod(mu,2.)-1.);vec3 tl=pow(texture2D(ttex,vec2(mu.x,1.-mu.y)).rgb,vec3(2.2));float k=smoothstep(0.,1.,vFD);diffuseColor.rgb=mix(tl,diffuseColor.rgb,k*.85);float lu=dot(diffuseColor.rgb,vec3(.3,.59,.11));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(lu),k*.35)*(1.-.28*k);}\n{vec2 tU=vWP/3200.;float dn=texture2D(dmap,tU*90.).r*.6+texture2D(dmap,tU*17.).r*.4;diffuseColor.rgb*=mix(.78,1.18,dn);float m1=texture2D(dmap,tU*.9+.21).r;diffuseColor.rgb*=.9+.2*m1;float fine=texture2D(dmap,tU*1400.).r;diffuseColor.rgb*=1.+(fine-.5)*.2;}');};const mesh2=new THREE.Mesh(g,m);mesh2.receiveShadow=true;mesh2.renderOrder=-1;WORLD.add(mesh2);}
-function buildWorld(){
+// tc: the painted ground canvas (the battle start passes it in before it is handed to the view as G.terrain)
+function buildWorld(tc){
   if(WORLD){SCN.remove(WORLD);WORLD.traverse(o=>{if(o.geometry)o.geometry.dispose();});}
   WORLD=new THREE.Group();SCN.add(WORLD);
-  const tex=new THREE.CanvasTexture(G.terrain);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=R3.capabilities.getMaxAnisotropy();
+  const tex=new THREE.CanvasTexture(tc||G.terrain);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=R3.capabilities.getMaxAnisotropy();
   const TSG=Math.min(1.8,Math.max(1.3,WK*.85)),g=new THREE.PlaneGeometry(MAPW,MAPH,Math.round(320*TSG),Math.round(220*TSG));g.rotateX(-Math.PI/2);const p=g.attributes.position;
   for(let i=0;i<p.count;i++){const x=p.getX(i)+MAPW/2,z=p.getZ(i)+MAPH/2;p.setY(i,groundH(x,z));}g.computeVertexNormals();
   {const nn=g.attributes.normal,cols=new Float32Array(p.count*3),AOA=new Float32Array(p.count);for(let i=0;i<p.count;i++){const sl=1-nn.getY(i),k=Math.max(0,Math.min(1,(sl-.12)*3.2)),st=.78+.22*Math.sin(p.getY(i)*1.3);const x=p.getX(i)+MAPW/2,z=p.getZ(i)+MAPH/2,hy=p.getY(i),cv=hy-(groundH(x+24,z)+groundH(x-24,z)+groundH(x,z+24)+groundH(x,z-24))*.25,ao=Math.max(.8,Math.min(1.08,1+cv*.025));AOA[i]=ao;cols[i*3]=1-k*.1*(2-st);cols[i*3+1]=1-k*.13*(2-st);cols[i*3+2]=1-k*.16*(2-st);}g.setAttribute('ao',new THREE.BufferAttribute(AOA,1));g.setAttribute('color',new THREE.BufferAttribute(cols,3));}g.translate(MAPW/2,0,MAPH/2);
@@ -6627,10 +6796,10 @@ function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.
   // pressure wave: a pale ring of dust racing outward along the ground; heavy hits leave a fire burning for a few seconds
   if(gr&&s>=14&&SHOCKS.length&&inView(x,y,.4)){const S=SHOCKS[shockI++%SHOCKS.length];S.t=0;S.d=big?.75:.45;S.r0=s*.5;S.r1=s*(big?6.5:4.2);S.a0=big?.6:.42;S.x=x;S.y=y;S.m.position.set(x,g+2.5,y);}
   if(gr&&(s>=20||big)&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9)){if(FIRES.length>=10)FIRES.shift();FIRES.push({x,y,g,t:0,d:big?9:rnd(4,6.5),r:Math.min(30,s*.45),big:!!big,acc:0});}
-  if(s>12){const L=LIGHTS[lightI++%LIGHTS.length];L.position.set(x,g+20,y);L.intensity=(big?7:3.2)*WXFX;L.distance=big?600:300;L.userData.d=big?.8:.35;L.userData.t=0;}
+  if(s>12&&LIGHTS.length){const L=LIGHTS[lightI++%LIGHTS.length];L.position.set(x,g+20,y);L.intensity=(big?7:3.2)*WXFX;L.distance=big?600:300;L.userData.d=big?.8:.35;L.userData.t=0;}
   if(inView(x,y,.3)){if(s>14)shake=Math.min(18,shake+s/(big?5:13));if(big)flash=Math.min(.2,flash+.1);}}
 const FXH={
-  muz(x,y,h,a,s){sfxShot(x,y,s);if(s>=13){const gh=groundH(x,y),ca=Math.cos(a),sa=Math.sin(a);for(let i=0;i<10;i++){const b=a+rnd(-1.3,1.3),v=rnd(30,90);part({x:x+ca*4,y:y+sa*4,h:h+rnd(-1,2),vx:Math.cos(b)*v+ca*40,vy:Math.sin(b)*v+sa*40,vh:rnd(4,18),f:.25,rise:rnd(6,14),c:i%3?C_SMOKE:[.62,.6,.56],c2:[.55,.53,.5],ck:.3,s:rnd(8,13),g:16,d:rnd(1.8,2.8),a:.62});}for(let i=0;i<12;i++){const b=rnd(0,6.28),v=rnd(40,80);part({x,y,h:gh+2,vx:Math.cos(b)*v,vy:Math.sin(b)*v,f:.1,c:C_DUST,s:rnd(5,8),g:10,d:rnd(.8,1.3),a:.35});}part({x:x+ca*8,y:y+sa*8,h,s:s*3.2,d:.09,add:true,c:[3.2,1.8,.6]});}part({x,y,h,s:s*2.4,d:.07,add:true,c:[3,2,.9]});part({x:x+Math.cos(a)*s*.9,y:y+Math.sin(a)*s*.9,h,s:s*1.4,d:.05,add:true,c:[2.6,1.4,.5]});if(s>9&&inView(x,y,.1)){const L=LIGHTS[lightI++%LIGHTS.length];L.position.set(x,h+6,y);L.intensity=2.2*WXFX;L.distance=160;L.userData.d=.08;L.userData.t=0;}if(s>9)for(let i=0;i<3;i++)part({x,y,h,vx:Math.cos(a)*rnd(20,50),vy:Math.sin(a)*rnd(20,50),c:C_SMOKE,s:rnd(4,7),g:12,d:rnd(.5,.9),a:.5});},
+  muz(x,y,h,a,s){sfxShot(x,y,s);if(s>=13){const gh=groundH(x,y),ca=Math.cos(a),sa=Math.sin(a);for(let i=0;i<10;i++){const b=a+rnd(-1.3,1.3),v=rnd(30,90);part({x:x+ca*4,y:y+sa*4,h:h+rnd(-1,2),vx:Math.cos(b)*v+ca*40,vy:Math.sin(b)*v+sa*40,vh:rnd(4,18),f:.25,rise:rnd(6,14),c:i%3?C_SMOKE:[.62,.6,.56],c2:[.55,.53,.5],ck:.3,s:rnd(8,13),g:16,d:rnd(1.8,2.8),a:.62});}for(let i=0;i<12;i++){const b=rnd(0,6.28),v=rnd(40,80);part({x,y,h:gh+2,vx:Math.cos(b)*v,vy:Math.sin(b)*v,f:.1,c:C_DUST,s:rnd(5,8),g:10,d:rnd(.8,1.3),a:.35});}part({x:x+ca*8,y:y+sa*8,h,s:s*3.2,d:.09,add:true,c:[3.2,1.8,.6]});}part({x,y,h,s:s*2.4,d:.07,add:true,c:[3,2,.9]});part({x:x+Math.cos(a)*s*.9,y:y+Math.sin(a)*s*.9,h,s:s*1.4,d:.05,add:true,c:[2.6,1.4,.5]});if(s>9&&LIGHTS.length&&inView(x,y,.1)){const L=LIGHTS[lightI++%LIGHTS.length];L.position.set(x,h+6,y);L.intensity=2.2*WXFX;L.distance=160;L.userData.d=.08;L.userData.t=0;}if(s>9)for(let i=0;i<3;i++)part({x,y,h,vx:Math.cos(a)*rnd(20,50),vy:Math.sin(a)*rnd(20,50),c:C_SMOKE,s:rnd(4,7),g:12,d:rnd(.5,.9),a:.5});},
   tr(x1,y1,h1,x2,y2,h2,flak){TRACERS.push({a:[x1,h1,y1],b:[x2,h2,y2],t:0,d:.09,c:flak?[3,1.5,.5]:[3,1.9,.7]});if(flak){part({x:x2,y:y2,h:h2,s:7,d:.12,add:true,c:C_FIRE});part({x:x2,y:y2,h:h2,s:5,g:7,d:.8,c:[.3,.29,.27],c2:[.5,.48,.45],ck:.3,a:.5});}
     else if(h2<10){if(ricoHit(x2,y2))ricochet(x1,y1,x2,y2);else if(Math.random()<.4)part({x:x2,y:y2,h:groundH(x2,y2)+1,vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(10,30),c:C_DUST,s:3,g:6,d:.4,a:.6});}},
   salvo(x,y,h,tx,ty,ang){const sx=Math.cos(ang),sy=Math.sin(ang),px=-sy,py=sx;
@@ -6677,7 +6846,10 @@ const FXH={
 };
 // own: optional team that caused the effect (a general's power): its side always gets it, even into the fog. Kept as a
 // property of the event array, so JSON drops it and it costs nothing on the wire.
-function FXE(type,args,own){if(MODE==='host'&&G&&G.out){const v=[type,...args];if(own!=null)v.own=own;G.out.push(v);}if(FXH[type]&&!G.headless)FXH[type](...args);}
+// An effect must never throw into the simulation (that stopped the whole battle): the battle can run before the 3D
+// world exists (behind the loading screen, or in headless tests), so a failing effect is skipped and the battle goes on.
+let FXERR=0;
+function FXE(type,args,own){if(MODE==='host'&&G&&G.out){const v=[type,...args];if(own!=null)v.own=own;G.out.push(v);}if(FXH[type]&&!G.headless)try{FXH[type](...args);}catch(e){if(FXERR++<5)console.warn('effect '+type+' skipped: '+(e&&e.message));}}
 // Burnt-out wrecks keep their shape and panel detail: patchy soot, rust-brown scorched paint and grey ash with the
 // original surface showing faintly through, glowing embers that die down over ~20 seconds, and a slight list.
 const WRECK_HEAT={value:1};let WRECKM=null;const WRECKQ=[],BURNT=new Map();
@@ -6908,7 +7080,9 @@ function warmShaders(){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0
   // shockwave rings: drawn once, faintly and in view, so the GPU has their exact drawing state ready too
   const shk=SHOCKS.map(S=>[S.m.position.clone(),S.m.scale.x,S.m.material.opacity]);for(const S of SHOCKS){S.m.position.set(bx,groundH(bx,by)+2.5,by);S.m.scale.setScalar(60);S.m.material.opacity=.01;}
   const W0=WASH[0];if(W0){W0.m.visible=true;W0.m.material.opacity=.01;W0.m.position.set(bx,groundH(bx,by)+2.5,by);W0.m.scale.setScalar(60);}
-  SCN.add(grp);try{if(typeof placeCam==='function')placeCam();R3.compile(SCN,CAM);if(typeof renderPost==='function'){CAM.updateMatrixWorld();renderPost();}R3.setRenderTarget(null);R3.render(SCN,CAM);}catch(e){console.warn('shader warm-up',e);}SCN.remove(grp);SHOCKS.forEach((S,i)=>{S.m.position.copy(shk[i][0]);S.m.scale.setScalar(shk[i][1]);S.m.material.opacity=shk[i][2];});
+  // With post-processing on, the battle is only ever drawn into the post-processing target, never straight to the
+  // screen (which needs different shader variants), so the warm-up prepares those variants only: one scene draw, not two.
+  SCN.add(grp);try{if(typeof placeCam==='function')placeCam();const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}R3.compile(SCN,CAM);if(typeof renderPost==='function'){CAM.updateMatrixWorld();renderPost();}R3.setRenderTarget(null);if(!post)R3.render(SCN,CAM);}catch(e){console.warn('shader warm-up',e);}SCN.remove(grp);SHOCKS.forEach((S,i)=>{S.m.position.copy(shk[i][0]);S.m.scale.setScalar(shk[i][1]);S.m.material.opacity=shk[i][2];});
   console.log('shader warm-up',Math.round(performance.now()-t0)+' ms, '+grp.children.length+' objects');}
 
 /* ---------- GPU memory clean-up ----------
@@ -7607,7 +7781,10 @@ const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse';
 function log(team,msg,kind){FXE('log',[team,msg,kind||'']);}
-function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);const el=$('log');el.innerHTML='';for(const x of G.msgs){const d=document.createElement('div');d.className=x.k||'';d.textContent=x.m;el.append(d);}}
+function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
+  // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
+  // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
+  const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},7000);el.append(d);while(el.children.length>4)el.firstChild.remove();}
 function endGame(winner,reason){if(!G||G.over)return;if(MODE==='host'&&G.out){G.out.push(['end',winner]);NET.evT=0;}showEnd(winner,reason);}
 function rivals(){return G.teams.filter(T=>!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
@@ -7620,26 +7797,50 @@ function showElim(){if(!G)return;const left=G.teams.filter(T=>!T.out&&T.id!==ME)
 /* ---------- panels ---------- */
 function btnHTML(id,name,cost,desc){return `<button class="btn" id="${id}"><span class="n"></span><span class="c"></span>${desc!=null?'<span class="d"></span>':''}<span class="q"></span><span class="p"></span></button>`;}
 function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const mk=(tab,id,name,cost,desc,on,onR,wide)=>{const b=document.createElement('button');b.className='btn'+(wide?' wide':'');b.id=id;b.dataset.tab=tab;
-    b.innerHTML=`<span class="n"></span><span class="c"></span>${desc?'<span class="d"></span>':''}<span class="q"></span><span class="p"></span>`;b.querySelector('.n').textContent=name;b.querySelector('.c').textContent=cost;if(desc)b.querySelector('.d').textContent=desc;
+    b.innerHTML=`<span class="n"></span><span class="c"></span>${desc?'<span class="d"></span>':''}<span class="q"></span><span class="p"></span>`;b.querySelector('.n').textContent=name;b.querySelector('.c').textContent=cost;if(desc)b.querySelector('.d').textContent=desc;b.dataset.nm=name;if(desc)b.dataset.desc=desc;
     b.onclick=on;if(onR)b.oncontextmenu=e=>{e.preventDefault();onR();};el.append(b);return b;};
   const sub=(tab,txt)=>{const d=document.createElement('div');d.className='sub';d.dataset.tab=tab;d.textContent=txt;el.append(d);};
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k);mk('build','b_'+k,s.name,'$'+s.cost,null,()=>{if(T.credits<s.cost||!reqMet(ME,k))return;G.aim=null;G.place=G.place===k?null:k;});}
   const R=roster(T.fac);for(const c of CATS){sub('units',STRUCT[c].name);for(const k of R[c]){const s=stats(T.fac,k);mk('units','u_'+k,s.name,'$'+s.cost,null,()=>{if(!(MODE==='client'?true:enqueue(ME,k)))pushLog('Not enough credits or missing building.','w');else if(MODE==='client')doAct({t:'q',k});},()=>doAct({t:'dq',k}));}}
   const ups=upgList(T.fac);for(const c of CATS){const list=ups.filter(k=>UPG[k].at===c);if(!list.length)continue;sub('upg',STRUCT[c].name);for(const k of list){const U=UPG[k];mk('upg','g_'+k,upgName(T.fac,k)+(U.sp?' ★':''),'$'+U.cost,U.desc,()=>doAct({t:'up',k}),null,true);}}
   for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});return;}if(P.passive||T.pw[k].cd>0)return;if(P.self){doAct({t:'pow',k,x:0,y:0});return;}G.place=null;G.aim=k;},null,true);}
-  sub('pow','Upgrade powers (more points each level)');for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
+  sub('pow','Level up');for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
   showTab(TAB);updateUI();}
-function showTab(t){TAB=t;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('#panel>[data-tab]').forEach(b=>b.hidden=b.dataset.tab!==t);}
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function showTab(t){TAB=t;const pn=$('panel');if(pn)pn.scrollLeft=0;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('#panel>[data-tab]').forEach(b=>b.hidden=b.dataset.tab!==t);}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(barMin())barMin(false);showTab(b.dataset.tab);});
 function specLock(T,k){return k===T.F.special&&T.rank<SPEC_RANK;}
-function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=null)b.querySelector('.c').textContent=o.cost;b.querySelector('.q').textContent=o.q||'';b.querySelector('.p').style.width=(o.p||0)*100+'%';b.classList.toggle('on',!!o.on);b.classList.toggle('done',!!o.done);b.title=o.title||'';}
+// the full text of a button (what it does, what it needs, what it counters) lives in data-tip and shows in the command
+// tooltip (hover with a mouse; tap or long-press on a touch screen) instead of on the button itself
+function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=null)b.querySelector('.c').textContent=o.cost;b.querySelector('.q').textContent=o.q||'';b.querySelector('.p').style.width=(o.p||0)*100+'%';b.classList.toggle('on',!!o.on);b.classList.toggle('done',!!o.done);b.classList.toggle('rdy',!!o.rdy);const t=o.title||'';if(b.dataset.tip!==t){b.dataset.tip=t;b.setAttribute('aria-label',[b.dataset.nm,b.dataset.desc,t].filter(Boolean).join('. '));}if(CTIP.b===b)ctipFill(b);}
+const CTIP={el:null,b:null,hideT:0,lp:null,eat:0};
+function ctipEl(){if(!CTIP.el){const d=document.createElement('div');d.id='ctip';d.hidden=true;d.setAttribute('role','tooltip');document.body.append(d);CTIP.el=d;}return CTIP.el;}
+function ctipFill(b){const d=ctipEl();d.innerHTML='';const n=document.createElement('b');n.textContent=b.dataset.nm||b.querySelector('.n').textContent;const c=document.createElement('span');c.className='tc';c.textContent=[b.querySelector('.c').textContent,b.querySelector('.q').textContent?'queued '+b.querySelector('.q').textContent:''].filter(Boolean).join(' · ');d.append(n,c);
+  if(b.dataset.desc){const s=document.createElement('span');s.textContent=b.dataset.desc;d.append(s);}if(b.dataset.tip){const s=document.createElement('span');s.className='tw';s.textContent=TOUCHUI?b.dataset.tip.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap'):b.dataset.tip;d.append(s);}}
+function ctipShow(b,ms){const d=ctipEl();clearTimeout(CTIP.hideT);CTIP.b=b;ctipFill(b);d.hidden=false;const r=b.getBoundingClientRect(),w=d.offsetWidth;d.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2))+'px';if(ms)CTIP.hideT=setTimeout(ctipHide,ms);}
+function ctipHide(){clearTimeout(CTIP.hideT);CTIP.b=null;if(CTIP.el)CTIP.el.hidden=true;}
+// which command button is under a point (disabled buttons let events through to the grid, so look them up by position)
+function btnAt(x,y){for(const b of $('panel').children){if(!b.classList.contains('btn')||b.hidden||b.style.display==='none')continue;const r=b.getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return b;}return null;}
+{const pn=$('panel');
+  pn.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const b=btnAt(e.clientX,e.clientY);if(b&&b!==CTIP.b)ctipShow(b);else if(!b&&CTIP.b)ctipHide();});
+  pn.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')ctipHide();});
+  // touch: a long press shows the full description without pressing the button; a tap presses it and shows it briefly
+  pn.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;const b=btnAt(e.clientX,e.clientY);if(!b)return;clearTimeout(CTIP.lp&&CTIP.lp.t);const L={x:e.clientX,y:e.clientY,b,fired:false};L.t=setTimeout(()=>{L.fired=true;ctipShow(b);try{navigator.vibrate&&navigator.vibrate(12);}catch(_){}},450);CTIP.lp=L;});
+  pn.addEventListener('pointermove',e=>{const L=CTIP.lp;if(L&&e.pointerType!=='mouse'&&Math.hypot(e.clientX-L.x,e.clientY-L.y)>10){clearTimeout(L.t);CTIP.lp=null;}});
+  const up=e=>{const L=CTIP.lp;if(!L||e.pointerType==='mouse')return;clearTimeout(L.t);CTIP.lp=null;if(L.fired){CTIP.eat=performance.now();if(CTIP.b)CTIP.hideT=setTimeout(ctipHide,2500);}else if(e.type==='pointerup'&&L.b)ctipShow(L.b,2600);};
+  pn.addEventListener('pointerup',up);pn.addEventListener('pointercancel',up);
+  // after a long press the finger lifts: swallow the click (and the long-press context menu) so nothing is bought
+  pn.addEventListener('click',e=>{if(CTIP.eat&&performance.now()-CTIP.eat<1000){CTIP.eat=0;e.stopPropagation();e.preventDefault();}},true);
+  pn.addEventListener('contextmenu',e=>{if((CTIP.lp&&CTIP.lp.fired)||CTIP.eat&&performance.now()-CTIP.eat<1000){e.stopPropagation();e.preventDefault();}},true);
+  // mouse wheel scrolls the command grid sideways
+  pn.addEventListener('wheel',e=>{if(pn.scrollWidth<=pn.clientWidth+1||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;e.preventDefault();pn.scrollLeft+=(e.deltaMode===1?e.deltaY*33:e.deltaY);},{passive:false});
+  pn.addEventListener('scroll',()=>{if(CTIP.b&&!CTIP.lp)ctipHide();},{passive:true});}
 function renderAllies(){const el=$('allyBox');if(!el||!G)return;const T=G.teams[ME];const A=G.teams.filter(O=>O.id!==ME&&ally(O.id,ME)&&!O.out);el.hidden=!A.length||!!G.sandbox;if(el.hidden)return;
   const key=A.map(O=>O.id).join(',');if(el.dataset.k!==key){el.dataset.k=key;el.innerHTML='<div class="lbl"><span>Allies</span><span id="allyt" style="font:12px var(--mono);color:var(--dim)">send money</span></div>';
     for(const O of A){const r=document.createElement('div');r.className='ar';r.innerHTML=`<b style="color:${O.color}">${O.F.name}</b>`;const sm=document.createElement('small');sm.dataset.c=O.id;r.append(sm);
       for(const v of [250,1000,'½']){const b=document.createElement('button');b.textContent=v==='½'?'Half':'+$'+v;b.dataset.v=v;b.title=v==='½'?'Send half of your money':`Send $${v}`;b.onpointerdown=ev=>{ev.preventDefault();const amt=v==='½'?Math.floor(G.teams[ME].credits/2):v;doAct({t:'give',to:O.id,amt});};r.append(b);}el.append(r);}}
   for(const sm of el.querySelectorAll('small[data-c]')){const O=G.teams[+sm.dataset.c];sm.textContent='$'+Math.floor(O.credits);}
   for(const b of el.querySelectorAll('button'))b.disabled=b.dataset.v==='½'?T.credits<100:T.credits<+b.dataset.v;}
-function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[ME];sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?'∞ Unlimited':'$'+Math.floor(T.credits).toLocaleString();
+function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[ME];sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k),ok=reqMet(ME,k);if(!bldAllowed(T.fac,k)){setBtn('b_'+k,{dis:true,cost:'Not available',title:'This faction has no air force'});continue;}const lim=s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===ME&&e.kind===k).length>=s.limit;setBtn('b_'+k,{dis:!ok||T.credits<s.cost||lim,cost:lim?'Max '+s.limit:'$'+s.cost,on:G.place===k,title:ok?(STRUCT[k].desc||(STRUCT[k].shore?'Place on the shoreline':'')):`Requires ${STRUCT[STRUCT[k].req].name}`});}
   for(const k of allUnits(T.fac)){const s=stats(T.fac,k),q=T.q[s.from]||[],n=q.filter(x=>x.kind===k).length,has=done(ME,s.from);const first=q[0]&&q[0].kind===k?(q[0].p!=null?q[0].p:q[0].t/prodTime(T,s)):0;
     const lk=specLock(T,k);setBtn('u_'+k,{dis:lk||!has||(T.credits<s.cost&&!n),cost:lk?`General rank ${SPEC_RANK}`:k===T.F.special?'$'+s.cost+(T.rank>=6?' · Elite':T.rank>=4?' · Veteran':''):'$'+s.cost,q:n?'×'+n:'',p:first,title:(lk?`Unlocks at general rank ${SPEC_RANK}; gets Veteran (+20%) at rank 4 and Elite (+40%) at rank 6. `:'')+(has?'':`Requires ${STRUCT[s.from].name}. `)+(k===T.F.special&&SPECIAL_TIP[k]?SPECIAL_TIP[k](s)+' ':'')+(COUNTER[k]||COUNTER[s.cls]||'')});}
@@ -7647,7 +7848,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   const pts=T.rank-T.spent;for(const k in POWERS){const P=powInfo(k,T.fac),w=T.pw[k];const lv=w?(w.lv||1):0;setBtn('p_'+k,{dis:w?(P.passive||w.cd>0):pts<1,done:!!w,on:G.aim===k,cost:w?('Lv '+lv+' · '+(P.passive?'Active':w.cd>0?`Ready in ${Math.ceil(w.cd)}s`:(P.self?'Ready · click to use':'Ready · click, then pick a spot'))):`Unlock · 1 point`});
     {const b=$('pu_'+k);if(b){const c=lv>=1&&lv<3?lv+1:0;b.style.display=c?'':'none';if(c)setBtn('pu_'+k,{dis:pts<c,cost:`To level ${lv+1} · ${c} points`});}}}
   const dot=$('pdot');const tb=document.querySelector('.tabs button[data-tab="pow"]');if(tb){let d=tb.querySelector('.dot');if(pts>0&&!d){d=document.createElement('span');d.className='dot';tb.append(d);}else if(pts<=0&&d)d.remove();}
-  const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('supbar').style.width=(up?f*100:0)+'%';
+  const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('side').classList.toggle('hasUp',!!up);$('supbar').style.width=(up?f*100:0)+'%';
   $('supt').textContent=!up?'needs Strike Center':f>=1?'READY':`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;$('supbtn').disabled=!(up&&f>=1);
   const nx=RANKS[T.rank]||null,pr=RANKS[T.rank-1];$('rankname').textContent=`General rank ${T.rank}`+(pts>0?` · ${pts} point${pts>1?'s':''} to spend`:'');$('rankbar').style.width=(nx?Math.min(1,(T.gxp-pr)/(nx-pr))*100:100)+'%';$('rankt').textContent=nx?`${T.gxp}/${nx} XP`:'Max rank';
   const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+' · Esc cancels');}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
@@ -7665,6 +7866,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   el.append(b,sp);if(tip.textContent)el.append(tip);
   if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
+  {const ap=$('app'),o=!!el.querySelector('.cmdrow');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.';el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1){const n=MODE==='client'?(T.tunN|0):T.tun.length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>In the tunnel network: '+n+' / '+TUN_CAP+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. Right-click a tunnel with units selected to send them in.');el.append(d);}
@@ -7790,6 +7992,7 @@ cv.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;if(!G||$('menu').hidden===false)return;
   if(/^Digit[1-5]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
   if(k==='p'&&!G.over){e.preventDefault();togglePause();return;}
+  if(k==='Escape'&&menuOpen()){menuOpen(false);return;}
   if(k==='Escape'){if(G.defm){G.defm=false;return;}if(G.paused){togglePause(false);return;}if(!G.place&&!G.aim&&!G.amove&&!G.sel.length&&!G.over){togglePause(true);return;}if(!G.place&&!G.aim&&!G.amove)G.sel=[];G.place=null;G.aim=null;G.amove=false;}
   if(k==='q')G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);
   if(k==='f'&&G.sel.some(u=>!u.isB)){G.amove=true;G.defm=false;}if(k==='g'&&G.sel.some(u=>!u.isB&&u.team===ME)){G.defm=true;G.amove=false;}
@@ -7812,31 +8015,18 @@ mm.addEventListener('pointermove',e=>{if(mmDown!==e.pointerId)return;const w=mmW
 mm.addEventListener('pointerup',e=>{if(mmDown===e.pointerId)mmDown=null;});mm.addEventListener('pointercancel',()=>{mmDown=null;});
 mm.addEventListener('contextmenu',e=>e.preventDefault());
 /* ---------- phones and touch screens ---------- */
-// Small screens (portrait phones, or any screen under 520 px tall such as a phone held sideways): the tactical map
-// moves onto the battlefield's top-left corner, the sidebar keeps only the money and battle buttons pinned, and the
-// selection info, tabs and build buttons come right after them so they are visible without scrolling. Touch screens get
-// finger-sized buttons and touch wording. Desktop-sized windows are unchanged.
+// The command bar's own phone layouts (portrait strip + fold handle, short landscape bar) live with its styles in the
+// page shell; here: touch wording, finger-sized buttons, and small-screen placement of the battlefield chips.
 {const st=document.createElement('style');st.id='phoneCss';st.textContent=`
 #app,.overlay button,.overlay select{touch-action:manipulation}
 #app{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
-#stage>#mm{position:absolute;left:6px;top:6px;z-index:4;width:min(36%,170px);margin:0;opacity:.95;box-shadow:0 2px 10px rgba(0,0,0,.65)}
-#stage.mmIn #fpsHud{left:auto;right:8px;top:auto;bottom:8px}
-.sqbtns{display:flex;gap:4px}
 #settings .card>.row:last-child{position:sticky;bottom:-1px;z-index:2;background:linear-gradient(rgba(8,11,10,0),rgba(8,11,10,.97) 30%);padding:14px 0 4px}
 body.touchui #mode{white-space:normal;text-align:left;width:max-content;max-width:calc(100% - 20px);box-sizing:border-box;font-size:12px;letter-spacing:.02em;line-height:1.2;padding:5px;display:flex;align-items:center;gap:6px;z-index:5}
 body.touchui #mode>span{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;padding-left:4px}
 body.touchui #mode[hidden]{display:none}
 #mode .mcx{pointer-events:auto;cursor:pointer;flex:none;background:var(--warn);color:#160806;border:0;font:700 13px var(--display);letter-spacing:.04em;text-transform:uppercase;padding:0 8px;min-height:34px}
-#stage.mmIn #mode{left:auto;right:6px;top:6px;transform:none;max-width:calc(64% - 18px)}
 body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);padding:4px 6px;left:6px;right:6px;bottom:6px}
 @media (max-width:760px),(max-height:520px){
-  #app{gap:6px;padding-block:6px}
-  #side{padding:8px;gap:7px}
-  #sideTop{top:-8px;margin:-8px -8px 0;padding:8px 8px 6px;gap:6px}
-  #facname{font-size:18px}#credits{font-size:16px}
-  #side>#info{order:1}#side>.tabs{order:2}#side>#panel{order:3}#side>#sbx{order:4}#side>.sup{order:5}#side>#allyBox{order:6}#side>.sqbar{order:7}#side>#log{order:8}
-  #side>*{scroll-margin-top:118px}
-  #info{min-height:0}
   #wxchip{top:6px;left:auto;right:6px;transform:none;white-space:normal;text-align:right;max-width:calc(62% - 16px);font-size:10px;padding:3px 7px}
   #net{top:auto;bottom:6px;right:6px;font-size:10px;padding:2px 6px}
 }
@@ -7850,15 +8040,10 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   #pauseOv .row .big,#quitOv .row .big,#end .row .big{flex:1 1 auto}
 }
 @media (pointer:coarse){
-  .audio button,.cmdrow button,.sqh button,#allyBox button,#supbtn,.tabs button,.sbx button{min-height:36px}
-  .sqs button{min-height:40px}.btn{min-height:44px}
+  #allyBox button,.sbx button{min-height:36px}
   .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
-  .cmdrow{flex-wrap:wrap}.cmdrow button{flex:1 1 40%}
   .game button,.joinrow .big,.joinrow input{min-height:40px}
 }`;document.body.append(st);}
-const PHQ=matchMedia('(max-width:760px),(max-height:520px)');
-function placeMM(){const st=$('stage'),top=$('sideTop');if(!st||!top)return;if(PHQ.matches){if(mm.parentNode!==st){st.append(mm);st.classList.add('mmIn');}}else if(mm.parentNode!==top){top.append(mm);st.classList.remove('mmIn');}}
-try{PHQ.addEventListener('change',placeMM);}catch(e){try{PHQ.addListener(placeMM);}catch(_){}}placeMM();
 function touchUI(){TOUCHUI=true;document.body.classList.add('touchui');const h=$('hint');if(h)h.textContent='Tap a unit to select it · with units selected, tap the ground to move or an enemy to attack · drag to box-select · two fingers: slide to pan, pinch to zoom · tap the small map to jump there';try{updateUI();}catch(e){}}
 // on touch: the banner says how to place, and tapping it cancels; the long hint steps aside after the opening
 function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: touch the map, slide, lift to build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target'):(md.dataset.d||'').replace(/click/g,'tap');
@@ -7872,13 +8057,222 @@ function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100;if(key
 /* ---------- game start / reset ---------- */
 function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
   for(const p of PINGS)if(p.m)SCN.remove(p.m);PINGS.length=0;if(typeof FIRES!=='undefined'){FIRES.length=0;for(const S of SHOCKS){S.t=S.d;S.m.material.opacity=0;S.m.scale.setScalar(.001);}}PARTS.length=0;TRACERS.length=0;VPROJ.length=0;for(const r of RINGS)SCN.remove(r);RINGS=[];if(GHOST){SCN.remove(GHOST);GHOST=null;GHOSTK=null;}if(RALLY){SCN.remove(RALLY);RALLY=null;}for(const l of LIGHTS)l.intensity=0;}
-function afterStart(){setTimeout(()=>{if(!MODELS.ready&&typeof pushLog==='function')pushLog('Detailed 3D models could not load on this device ('+(MODELS.err||'unknown')+'). Showing simple shapes.','bad');},500);setTimeout(()=>{if(!MODELS.ready&&typeof pushLog==='function')pushLog('Detailed 3D models could not load on this device ('+(MODELS.err||'unknown')+'). Showing simple shapes.','bad');},500);initAudio();startMusic(G.teams[ME].fac);try{voLoad(G.teams[ME].fac);}catch(_){}if(!R3){try{initGfx();}catch(err){R3=null;$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}else resetScene();buildWorld();resize();const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;try{warmShaders();}catch(e){console.warn('warm-up',e);}buildPanels();$('menu').hidden=true;$('end').hidden=true;
-  pushLog(`${G.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');}
-function startSingle(){if(!MODELS.ready&&MODELS.loading&&!startSingle.w){startSingle.w=1;$('start').textContent='Loading 3D models…';MODELS.loading.then(()=>{startSingle.w=0;$('start').textContent='Deploy vs AI';startSingle();});return;}MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot});afterStart();}
+/* ---------- loading screen: shown the moment a battle starts (Test Range, Deploy vs AI, Play again, multiplayer) ---------- */
+// The battle itself (map, bases, units, AI) is set up at once and exactly as before; the slow drawing work (ground
+// texture, 3D world, shader warm-up) then runs in steps with a frame in between, so the screen shows the theatre, the
+// nations, a progress bar and a tip instead of freezing. The battle clock is held until the battlefield is on screen.
+const LOAD={tok:0,tipI:0,tipT:null,cv:null};
+const LOAD_TIPS=['Armour is thickest at the front: hits on a vehicle\'s side do 20% more damage, from behind 60% more. Flank them.',
+  'Infantry in woods or beside buildings take less damage. Fight from cover.',
+  'Firing downhill helps and firing uphill hurts. Take the high ground.',
+  'Infantry under heavy fire get suppressed: they shoot and move slower until it wears off.',
+  'Moving targets are harder to hit. Keep your vehicles moving under fire.',
+  'Capture oil derricks with infantry or vehicles for extra income.',
+  'Your Construction Vehicle builds everything. Start with a Barracks, then a War Factory.',
+  'Pull damaged units back instead of losing them. Survivors gain rank and fight better.',
+  'Infantry can garrison city buildings and turn them into strongholds.',
+  'Every nation has its own special unit and its own strike power. Check the sidebar.'];
+// Loading-screen quotes, one set per nation: the player always sees a line from their own nation's history.
+// q: English, a: who and where, o: the original line (only where it is certain), l: its language. Only lines with a
+// documented source (lines known only by tradition were left out); no living leaders.
+const LOAD_QUOTES={
+ US:[{q:'In war there is no substitute for victory.',a:'Douglas MacArthur, address to Congress, 1951'},
+  {q:'Wars may be fought with weapons, but they are won by men. It is the spirit of the men who follow and of the man who leads that gains the victory.',a:'George S. Patton, Cavalry Journal, 1933'},
+  {q:'I propose to fight it out on this line if it takes all summer.',a:'Ulysses S. Grant, dispatch from Spotsylvania, 1864'},
+  {q:'These are the times that try men\'s souls.',a:'Thomas Paine, The American Crisis, 1776'},
+  {q:'To be prepared for war is one of the most effectual means of preserving peace.',a:'George Washington, first annual address to Congress, 1790'},
+  {q:'Nuts!',a:'Brig. Gen. Anthony McAuliffe, reply to the German surrender demand at Bastogne, 1944'}],
+ TR:[{q:'Armies! Your first objective is the Mediterranean. Forward!',a:'Mustafa Kemal Atatürk, order of 1 September 1922',o:'Ordular! İlk hedefiniz Akdeniz\'dir. İleri!',l:'tr'},
+  {q:'I do not order you to attack. I order you to die. In the time it takes us to die, other troops and commanders can come and take our places.',a:'Mustafa Kemal, Gallipoli, 1915',o:'Ben size taarruzu emretmiyorum, ölmeyi emrediyorum.',l:'tr'},
+  {q:'There is no line of defence, there is a surface of defence. That surface is the whole homeland.',a:'Mustafa Kemal Atatürk, Battle of Sakarya, 1921',o:'Hatt-ı müdafaa yoktur, sath-ı müdafaa vardır. O satıh bütün vatandır.',l:'tr'},
+  {q:'Peace at home, peace in the world.',a:'Mustafa Kemal Atatürk, 1931',o:'Yurtta sulh, cihanda sulh.',l:'tr'}],
+ IL:[{q:'A time to love, and a time to hate; a time of war, and a time of peace.',a:'Ecclesiastes 3:8',o:'עֵת לֶאֱהֹב וְעֵת לִשְׂנֹא, עֵת מִלְחָמָה וְעֵת שָׁלוֹם',l:'he'},
+  {q:'Masada shall not fall again.',a:'Yitzhak Lamdan, "Masada", 1927',o:'שֵׁנִית מְצָדָה לֹא תִּפֹּל',l:'he'},
+  {q:'We shall fight the war as if there were no White Paper, and the White Paper as if there were no war.',a:'David Ben-Gurion, 1939'},
+  {q:'We are a generation of settlement, and without the steel helmet and the cannon\'s muzzle we will not be able to plant a tree and build a house.',a:'Moshe Dayan, eulogy for Roi Rotberg, 1956'}],
+ EU:[{q:'We shall fight on the beaches, we shall fight on the landing grounds, we shall fight in the fields and in the streets, we shall fight in the hills; we shall never surrender.',a:'Winston Churchill, House of Commons, 4 June 1940'},
+  {q:'Never in the field of human conflict was so much owed by so many to so few.',a:'Winston Churchill, House of Commons, 20 August 1940'},
+  {q:'War is merely the continuation of policy by other means.',a:'Carl von Clausewitz, On War',o:'Der Krieg ist eine bloße Fortsetzung der Politik mit anderen Mitteln.',l:'de'},
+  {q:'Everything in war is very simple, but the simplest thing is difficult.',a:'Carl von Clausewitz, On War',o:'Es ist im Kriege alles sehr einfach, aber das Einfachste ist schwierig.',l:'de'},
+  {q:'Let him who desires peace prepare for war.',a:'Vegetius, Epitoma rei militaris, Book III',o:'Igitur qui desiderat pacem, praeparet bellum.',l:'la'},
+  {q:'In war, three quarters turns on morale; the balance of manpower and materiel counts only for the remaining quarter.',a:'Napoleon Bonaparte, 1808',o:'À la guerre, les trois quarts sont des affaires morales ; la balance des forces réelles n\'est que pour un autre quart.',l:'fr'},
+  {q:'Whatever happens, the flame of French resistance must not and shall not die.',a:'Charles de Gaulle, Appeal of 18 June 1940',o:'Quoi qu\'il arrive, la flamme de la résistance française ne doit pas s\'éteindre et ne s\'éteindra pas.',l:'fr'},
+  {q:'Nothing except a battle lost can be half so melancholy as a battle won.',a:'The Duke of Wellington, after Waterloo, 1815'}],
+ UA:[{q:'Fight, and you will win!',a:'Taras Shevchenko, "The Caucasus", 1845',o:'Борітеся — поборете!',l:'uk'},
+  {q:'Bury me, then rise up and break your heavy chains.',a:'Taras Shevchenko, "Testament", 1845',o:'Поховайте та вставайте, кайдани порвіте',l:'uk'},
+  {q:'Soul and body we shall lay down for our freedom.',a:'Pavlo Chubynsky, "Ukraine Has Not Yet Perished", 1862',o:'Душу й тіло ми положим за нашу свободу',l:'uk'},
+  {q:'The eternal revolutionary: the spirit that drives the body into battle.',a:'Ivan Franko, "The Eternal Revolutionary", 1880',o:'Вічний революцьонер — дух, що тіло рве до бою',l:'uk'},
+  {q:'Without hope, I hope.',a:'Lesya Ukrainka, "Contra spem spero", 1890',o:'Без надії сподіваюсь!',l:'uk'},
+  {q:'Glory to Ukraine! Glory to the heroes!',a:'Traditional Ukrainian salute',o:'Слава Україні! Героям слава!',l:'uk'}],
+ RU:[{q:'Hard in training, easy on the march.',a:'Alexander Suvorov, The Science of Victory',o:'Тяжело в ученье — легко в походе.',l:'ru'},
+  {q:'The bullet is a fool, the bayonet a fine fellow.',a:'Alexander Suvorov, The Science of Victory',o:'Пуля — дура, штык — молодец.',l:'ru'},
+  {q:'Our cause is just. The enemy will be defeated. Victory will be ours.',a:'Vyacheslav Molotov, radio address, 22 June 1941',o:'Наше дело правое. Враг будет разбит. Победа будет за нами.',l:'ru'},
+  {q:'Whoever comes to us with the sword shall perish by the sword.',a:'Alexander Nevsky (1938 film), after Matthew 26:52',o:'Кто с мечом к нам придёт, от меча и погибнет.',l:'ru'}],
+ IR:[{q:'Humiliation is far from us!',a:'Imam Hussein ibn Ali, Karbala, 680',o:'هيهات منا الذلة',l:'ar'},
+  {q:'I see death as nothing but happiness, and life with oppressors as nothing but misery.',a:'Imam Hussein ibn Ali, on the road to Karbala, 680',o:'إني لا أرى الموت إلا سعادة، ولا الحياة مع الظالمين إلا برما',l:'ar'},
+  {q:'Mountains may move, but you must not. Grit your teeth. Lend your skull to God. Plant your feet firmly in the earth.',a:'Imam Ali ibn Abi Talib, to his son at the Battle of the Camel, Nahj al-Balagha, Sermon 11',o:'تَزُولُ الْجِبَالُ وَلَا تَزُلْ، عَضَّ عَلَى نَاجِذِكَ، أَعِرِ اللَّهَ جُمْجُمَتَكَ، تِدْ فِي الْأَرْضِ قَدَمَكَ',l:'ar'},
+  {q:'Mighty is he who is wise.',a:'Ferdowsi, Shahnameh',o:'توانا بود هر که دانا بود',l:'fa'},
+  {q:'Death lies in living as the conquered, and life lies in dying as the victors.',a:'Imam Ali ibn Abi Talib, at Siffin, Nahj al-Balagha, Sermon 51',o:'فَالْمَوْتُ فِي حَيَاتِكُمْ مَقْهُورِينَ، وَالْحَيَاةُ فِي مَوْتِكُمْ قَاهِرِينَ',l:'ar'}],
+ RS:[{q:'Here I am, O Hussein!',a:'Pledge of the mourners of Karbala',o:'لبيك يا حسين',l:'ar'},
+  {q:'Plot your plots, strive your utmost, spare no effort: by God, you will never erase our remembrance.',a:'Sayyida Zaynab bint Ali, to Yazid in Damascus, 680',o:'فكِدْ كيدك، واسعَ سعيك، وناصب جهدك، فوالله لا تمحو ذكرنا',l:'ar'},
+  {q:'If the religion of Muhammad stands only by my death, then, O swords, take me!',a:'Shaykh Muhsin Abu al-Hab, in the voice of Imam Hussein',o:'إن كان دين محمد لم يستقم إلا بقتلي فيا سيوف خذيني',l:'ar'},
+  {q:'Death lies in living as the conquered, and life lies in dying as the victors.',a:'Imam Ali ibn Abi Talib, at Siffin, Nahj al-Balagha, Sermon 51',o:'فَالْمَوْتُ فِي حَيَاتِكُمْ مَقْهُورِينَ، وَالْحَيَاةُ فِي مَوْتِكُمْ قَاهِرِينَ',l:'ar'},
+  {q:'I am the son of Mecca and Mina; I am the son of Zamzam and Safa.',a:'Imam Ali Zayn al-Abidin (al-Sajjad), sermon in Damascus, 680',o:'أنا ابن مكة ومنى، أنا ابن زمزم والصفا',l:'ar'},
+  {q:'Humiliation is far from us!',a:'Imam Hussein ibn Ali, Karbala, 680',o:'هيهات منا الذلة',l:'ar'}],
+ DW:[{q:'I did not rise out of arrogance or vanity, nor to spread corruption or oppression. I rose to seek reform in the nation of my grandfather.',a:'Imam Hussein ibn Ali, testament, 680',o:'إني لم أخرج أشِرًا ولا بطِرًا ولا مفسدًا ولا ظالمًا، وإنما خرجت لطلب الإصلاح في أمة جدي',l:'ar'},
+  {q:'By God, never was a people attacked in the heart of their homes but they were humiliated.',a:'Imam Ali ibn Abi Talib, Nahj al-Balagha, Sermon 27',o:'فَوَاللَّهِ مَا غُزِيَ قَوْمٌ قَطُّ فِي عُقْرِ دَارِهِمْ إِلَّا ذَلُّوا',l:'ar'},
+  {q:'Opportunity passes like the passing of clouds.',a:'Imam Ali ibn Abi Talib, Nahj al-Balagha, Saying 21',o:'الْفُرْصَةُ تَمُرُّ مَرَّ السَّحَابِ',l:'ar'},
+  {q:'I saw nothing but beauty.',a:'Sayyida Zaynab bint Ali, to Ibn Ziyad in Kufa, 680',o:'ما رأيت إلا جميلا',l:'ar'}],
+ SA:[{q:'I have come to you with men who love death as you love life.',a:'Khalid ibn al-Walid, letter to the Persian commanders, 633',o:'جئتكم بقوم يحبون الموت كما تحبون الحياة',l:'ar'},
+  {q:'The horse, the night and the desert know me; and the sword, the lance, the paper and the pen.',a:'Al-Mutanabbi',o:'الخيل والليل والبيداء تعرفني، والسيف والرمح والقرطاس والقلم',l:'ar'},
+  {q:'Do not kill a child, a woman or an old man. Do not cut down fruit-bearing trees, and do not destroy a dwelling.',a:'Abu Bakr al-Siddiq, orders to the army marching to Syria, 634'}],
+ AE:[{q:'When you see the lion\'s fangs bared, do not think the lion is smiling.',a:'Al-Mutanabbi',o:'إذا رأيتَ نُيوبَ اللّيثِ بارِزَةً فَلا تَظُنّنّ أنّ اللّيثَ يَبْتَسِمُ',l:'ar'},
+  {q:'Great resolves come in the measure of the resolute.',a:'Al-Mutanabbi',o:'على قَدْرِ أهْلِ العَزْمِ تأتي العَزائِمُ',l:'ar'},
+  {q:'I have come to you with men who love death as you love life.',a:'Khalid ibn al-Walid, letter to the Persian commanders, 633',o:'جئتكم بقوم يحبون الموت كما تحبون الحياة',l:'ar'},
+  {q:'Do not kill a child, a woman or an old man. Do not cut down fruit-bearing trees, and do not destroy a dwelling.',a:'Abu Bakr al-Siddiq, orders to the army marching to Syria, 634'}],
+ PK:[{q:'Unity, Faith, Discipline.',a:'Muhammad Ali Jinnah'},
+  {q:'There is no power on earth that can undo Pakistan.',a:'Muhammad Ali Jinnah, Lahore, 30 October 1947'},
+  {q:'You are a falcon: flight is your calling. There are other skies before you.',a:'Allama Muhammad Iqbal, Bal-e-Jibril, 1935',o:'تو شاہیں ہے، پرواز ہے کام تیرا — ترے سامنے آسماں اور بھی ہیں',l:'ur'},
+  {q:'Raise your selfhood so high that before every decree, God Himself asks you: tell me, what is your will?',a:'Allama Muhammad Iqbal, Bal-e-Jibril, 1935',o:'خودی کو کر بلند اتنا کہ ہر تقدیر سے پہلے — خدا بندے سے خود پوچھے بتا تیری رضا کیا ہے',l:'ur'}],
+ IN:[{q:'Slain, you will win heaven; victorious, you will enjoy the earth. So rise, son of Kunti, resolved to fight.',a:'Bhagavad Gita 2.37',o:'हतो वा प्राप्स्यसि स्वर्गं जित्वा वा भोक्ष्यसे महीम्। तस्मादुत्तिष्ठ कौन्तेय युद्धाय कृतनिश्चयः॥',l:'sa'},
+  {q:'You have a right to your actions, but never to their fruits.',a:'Bhagavad Gita 2.47',o:'कर्मण्येवाधिकारस्ते मा फलेषु कदाचन',l:'sa'},
+  {q:'Truth alone triumphs.',a:'Mundaka Upanishad 3.1.6',o:'सत्यमेव जयते',l:'sa'},
+  {q:'An arrow shot by an archer may kill one man or may not; but intellect applied by a wise man can kill even those in the womb.',a:'Kautilya (Chanakya), Arthashastra, Book 10'}],
+ CN:[{q:'Know the enemy and know yourself; in a hundred battles you will never be in peril.',a:'Sun Tzu, The Art of War',o:'知彼知己，百战不殆',l:'zh'},
+  {q:'All warfare is based on deception.',a:'Sun Tzu, The Art of War',o:'兵者，诡道也',l:'zh'},
+  {q:'To subdue the enemy without fighting is the supreme excellence.',a:'Sun Tzu, The Art of War',o:'不战而屈人之兵，善之善者也',l:'zh'},
+  {q:'Swift as the wind, silent as the forest, fierce as fire, immovable as the mountain.',a:'Sun Tzu, The Art of War',o:'其疾如风，其徐如林，侵掠如火，不动如山',l:'zh'},
+  {q:'In war, let your great object be victory, not lengthy campaigns.',a:'Sun Tzu, The Art of War',o:'兵贵胜，不贵久',l:'zh'},
+  {q:'Political power grows out of the barrel of a gun.',a:'Mao Zedong, 1927',o:'枪杆子里面出政权',l:'zh'}],
+ KP:[{q:'Your divine plans have plumbed the heavens; your subtle reckoning has spanned the earth. You have won every battle and your merit is great. Now be content, and stop.',a:'General Eulji Mundeok, poem to the Sui general Yu Zhongwen, 612',o:'神策究天文 妙算窮地理 戰勝功旣高 知足願云止',l:'zh-Hant'},
+  {q:'Seeing profit, think of what is right; seeing danger, offer your life.',a:'Ahn Jung-geun, calligraphy written in prison, 1910',o:'見利思義 見危授命',l:'zh-Hant'},
+  {q:'Even if the sky falls, there is a hole to rise through.',a:'Korean proverb',o:'하늘이 무너져도 솟아날 구멍이 있다',l:'ko'},
+  {q:'Even a sheet of paper is lighter when two lift it together.',a:'Korean proverb',o:'백지장도 맞들면 낫다',l:'ko'}],
+ KR:[{q:'Those who seek to die shall live; those who seek to live shall die.',a:'Admiral Yi Sun-sin, before the Battle of Myeongnyang, 1597',o:'必死則生 必生則死',l:'zh-Hant'},
+  {q:'Your servant still has twelve warships.',a:'Admiral Yi Sun-sin, report to King Seonjo, 1597',o:'今臣戰船 尙有十二',l:'zh-Hant'},
+  {q:'One man holding a narrow pass can strike fear into a thousand.',a:'Admiral Yi Sun-sin, war diary, 1597',o:'一夫當逕 足懼千夫',l:'zh-Hant'},
+  {q:'The battle is at its height. Do not announce my death.',a:'Admiral Yi Sun-sin, Battle of Noryang, 1598',o:'戰方急 愼勿言我死',l:'zh-Hant'},
+  {q:'To give one\'s life for one\'s country is the duty of a soldier.',a:'Ahn Jung-geun, calligraphy written in prison, 1910',o:'爲國獻身 軍人本分',l:'zh-Hant'}],
+ EG:[{q:'What was taken by force can only be restored by force.',a:'Gamal Abdel Nasser, 1967',o:'ما أُخذ بالقوة لا يُسترد بغير القوة',l:'ar'},
+  {q:'Goals are not won by wishing; the world is taken by struggle.',a:'Ahmed Shawqi',o:'وما نيلُ المطالبِ بالتمنّي، ولكن تؤخَذُ الدنيا غِلابا',l:'ar'},
+  {q:'All creation stood watching how I alone lay the foundations of glory.',a:'Hafez Ibrahim, "Egypt Speaks of Herself"',o:'وقف الخلقُ ينظرون جميعًا كيف أبني قواعدَ المجدِ وحدي',l:'ar'},
+  {q:'I have come to you with men who love death as you love life.',a:'Khalid ibn al-Walid, letter to the Persian commanders, 633',o:'جئتكم بقوم يحبون الموت كما تحبون الحياة',l:'ar'}],
+ CU:[{q:'Trenches of ideas are worth more than trenches of stone.',a:'José Martí, "Our America", 1891',o:'Trincheras de ideas valen más que trincheras de piedra.',l:'es'},
+  {q:'To die for the homeland is to live.',a:'Pedro Figueredo, "La Bayamesa", 1868',o:'Morir por la patria es vivir.',l:'es'},
+  {q:'Whoever tries to seize Cuba will gather only the dust of her soil drenched in blood, if he does not perish in the struggle.',a:'Antonio Maceo',o:'Quien intente apropiarse de Cuba recogerá el polvo de su suelo anegado en sangre, si no perece en la lucha.',l:'es'},
+  {q:'Homeland is humanity.',a:'José Martí',o:'Patria es humanidad.',l:'es'}],
+ _:[{q:'Let him who desires peace prepare for war.',a:'Vegetius, Epitoma rei militaris, Book III',o:'Igitur qui desiderat pacem, praeparet bellum.',l:'la'},
+  {q:'Know the enemy and know yourself; in a hundred battles you will never be in peril.',a:'Sun Tzu, The Art of War'},
+  {q:'Everything in war is very simple, but the simplest thing is difficult.',a:'Carl von Clausewitz, On War'}]};
+function loadQuote(fac){const set=(LOAD_QUOTES[fac]&&LOAD_QUOTES[fac].length?LOAD_QUOTES[fac]:LOAD_QUOTES._);let last=-1;try{const v=JSON.parse(localStorage.getItem('ww3_lastq')||'null');if(v&&v.f===fac)last=v.i|0;}catch(e){}
+  let i=Math.floor(Math.random()*set.length);if(set.length>1&&i===last)i=(i+1+Math.floor(Math.random()*(set.length-1)))%set.length;try{localStorage.setItem('ww3_lastq',JSON.stringify({f:fac,i}));}catch(e){}return set[i];}
+function loadUI(){if(LOAD.el)return LOAD.el;const st=document.createElement('style');st.textContent=`
+#loadOv{position:fixed;inset:0;z-index:45;display:flex;align-items:center;justify-content:center;overflow:hidden;background:#0a0e0c;color:var(--fg);
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+#loadOv::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 38%,rgba(227,179,65,.09),transparent 62%),repeating-linear-gradient(135deg,rgba(255,255,255,.018) 0 2px,transparent 2px 9px);pointer-events:none}
+#loadOv .lo{position:relative;width:min(560px,100%);display:flex;flex-direction:column;gap:12px}
+#loadOv .lo-k{font:600 12px var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}
+#loadOv .lo-t{margin:0;font:700 clamp(28px,7vw,44px)/1 var(--display);letter-spacing:.04em;text-transform:uppercase}
+#loadOv .lo-d{color:var(--dim);font-size:12px;line-height:1.45;margin-top:-4px}
+#loadOv .lo-map{display:block;width:100%;aspect-ratio:384/264;height:auto;border:1px solid #3d5247;background:#141a16;box-shadow:0 0 0 1px #050807,0 10px 30px rgba(0,0,0,.55)}
+#loadOv .lo-v{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+#loadOv .lo-tm{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1 1 0}
+#loadOv .lo-tm:last-child .lo-f{flex-direction:row-reverse;text-align:right}
+#loadOv .lo-f{display:flex;align-items:center;gap:8px;min-width:0;padding:5px 8px;background:rgba(22,29,26,.92);border:1px solid var(--line);border-left:3px solid var(--c)}
+#loadOv .lo-tm:last-child .lo-f{border-left-width:1px;border-right:3px solid var(--c)}
+#loadOv .lo-f i{flex:none;display:grid;place-items:center;width:30px;height:30px;background:var(--c);color:#0b0f0d;font:700 13px var(--display);font-style:normal;overflow:hidden}
+#loadOv .lo-f i canvas{width:30px;height:30px}
+#loadOv .lo-f b{font:700 17px/1.05 var(--display);letter-spacing:.03em;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#loadOv .lo-f small{display:block;font:500 10px var(--mono);color:var(--accent);letter-spacing:.12em}
+#loadOv .lo-vs{flex:none;font:800 22px var(--display);color:var(--warn);letter-spacing:.06em}
+#loadOv .lo-bar{height:14px;border:1px solid #4a5a3a;background:#0b0f0d;padding:2px;box-sizing:border-box}
+#loadOv .lo-bar i{display:block;height:100%;width:0;background:repeating-linear-gradient(90deg,var(--accent) 0 10px,transparent 10px 13px);transition:width .35s ease-out}
+#loadOv .lo-s{display:flex;justify-content:space-between;gap:10px;font:500 12px var(--mono);color:var(--fg);text-transform:uppercase;letter-spacing:.08em;margin-top:-6px}
+#loadOv .lo-s span:last-child{color:var(--accent);font-variant-numeric:tabular-nums}
+#loadOv .lo-q{margin:4px 0 2px;padding:6px 6px 0 30px;position:relative;opacity:0}
+#loadOv .lo-q.in{animation:loQ 1.1s ease-out forwards}
+@keyframes loQ{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#loadOv .lo-q::before{content:"\\201C";position:absolute;left:-2px;top:-14px;font:700 74px/1 var(--display);color:var(--accent);opacity:.35}
+#loadOv .lo-qt{margin:0;font:600 clamp(19px,4.8vw,27px)/1.18 var(--display);letter-spacing:.01em;color:#f1ece0;text-wrap:balance}
+#loadOv .lo-qo{margin-top:6px;font:500 clamp(14px,3.6vw,17px)/1.45 var(--display);color:#c9c2b0;unicode-bidi:plaintext}
+#loadOv .lo-qo[dir=rtl]{text-align:right;font-family:'Noto Naskh Arabic','Geeza Pro','Segoe UI',Tahoma,sans-serif}
+#loadOv .lo-qa{display:block;margin-top:7px;font:600 12px/1.35 var(--mono);font-style:normal;letter-spacing:.08em;font-variant:small-caps;color:var(--accent)}
+#loadOv .lo-qa::before{content:"\\2014\\00a0"}
+#loadOv .lo-tip{min-height:2.6em;padding:6px 10px;border:1px solid var(--line);background:rgba(22,29,26,.85);font-size:11px;line-height:1.45;color:var(--fg)}
+#loadOv .lo-tip b{color:var(--accent);font:700 13px var(--display);letter-spacing:.1em;margin-right:6px}
+#loadOv{overflow-y:auto;align-items:safe center}
+@media (max-width:600px){#loadOv .lo{gap:9px}#loadOv .lo-map{max-height:24vh;width:auto;max-width:100%;margin-inline:auto}#loadOv .lo-f b{font-size:15px}#loadOv .lo-d{display:none}}
+@media (max-height:640px){#loadOv .lo-map{max-height:28vh;width:auto;margin-inline:auto}#loadOv .lo{gap:8px}}`;document.head.append(st);
+  const o=document.createElement('div');o.id='loadOv';o.hidden=true;o.setAttribute('role','status');o.setAttribute('aria-live','polite');
+  o.innerHTML='<div class="lo"><div class="lo-k"></div><h1 class="lo-t"></h1><div class="lo-d"></div><canvas class="lo-map" width="384" height="264" aria-hidden="true"></canvas><div class="lo-v"></div><blockquote class="lo-q"><p class="lo-qt"></p><div class="lo-qo"></div><cite class="lo-qa"></cite></blockquote><div class="lo-bar"><i></i></div><div class="lo-s"><span></span><span></span></div><div class="lo-tip"><b>TIP</b><span></span></div></div>';
+  document.body.append(o);LOAD.el=o;LOAD.cv=o.querySelector('.lo-map');return o;}
+// draw the theatre: the real ground once it is painted, else the menu's map preview; start positions in each side's colour
+function loadMap(mk,bases,cols,me,thumb){const cv=LOAD.cv;if(!cv)return;const c=cv.getContext('2d'),W=cv.width,H=cv.height;c.fillStyle='#141a16';c.fillRect(0,0,W,H);
+  try{if(thumb)c.drawImage(thumb,0,0,W,H);else if(PREV[mk])c.putImageData(PREV[mk].img,0,0);}catch(e){}
+  c.fillStyle='rgba(0,0,0,.18)';c.fillRect(0,0,W,H);
+  (bases||[]).forEach(([x,y],i)=>{const X=x/MAPW*W,Y=y/MAPH*H,r=i===me?9:7;c.beginPath();c.arc(X,Y,r+3,0,7);c.fillStyle='rgba(8,10,9,.8)';c.fill();c.beginPath();c.arc(X,Y,r,0,7);c.fillStyle=cols[i]||'#888';c.fill();
+    if(i===me){c.font='bold 11px sans-serif';c.textAlign='center';const tw=c.measureText('YOU').width+8;c.fillStyle='#e3b341';c.fillRect(X-tw/2,Y-r-19,tw,13);c.fillStyle='#111';c.textBaseline='middle';c.fillText('YOU',X,Y-r-12.5);}});}
+// o: {mode, map, facs, tm, me, cols?, bases?}
+function loadShow(o){const el=loadUI(),D=MAPS[o.map]||MAPS.strait;
+  el.querySelector('.lo-k').textContent='World War 3 · '+({sandbox:'Test Range',single:'Skirmish vs AI',host:'Multiplayer battle',client:'Multiplayer battle'}[o.mode]||'Battle');
+  el.querySelector('.lo-t').textContent=D.name;el.querySelector('.lo-d').textContent=D.desc||'';
+  const v=el.querySelector('.lo-v');v.innerHTML='';const tms=[];o.facs.forEach((f,i)=>{const t=o.tm&&o.tm[i]!=null?o.tm[i]:i;let g=tms.find(q=>q.t===t);if(!g)tms.push(g={t,m:[]});g.m.push(i);});
+  tms.sort((a,b)=>(b.m.includes(o.me)?1:0)-(a.m.includes(o.me)?1:0));
+  tms.forEach((g,k)=>{if(k){const vs=document.createElement('div');vs.className='lo-vs';vs.textContent='VS';v.append(vs);}const col=document.createElement('div');col.className='lo-tm';
+    for(const i of g.m){const f=o.facs[i],F=FACTIONS[f]||{name:f,color:'#888'},row=document.createElement('div');row.className='lo-f';row.style.setProperty('--c',(o.cols&&o.cols[i])||F.color);
+      const ic=document.createElement('i');if(f==='RS'||f==='DW'){try{ic.append(emblemCanvas(f,30));}catch(e){ic.textContent=f;}}else ic.textContent=f;
+      const tx=document.createElement('span');tx.style.minWidth='0';const b=document.createElement('b');b.textContent=F.name;const s=document.createElement('small');s.textContent=i===o.me?'YOU':o.mode==='sandbox'?'TARGETS':o.mode==='single'||o.ai&&o.ai[i]?'AI':'PLAYER';tx.append(b,s);row.append(ic,tx);col.append(row);}
+    v.append(col);});
+  loadMap(o.map,o.bases||null,o.cols||[],o.me);
+  {const fac=o.facs[o.me];if(el.hidden||LOAD.qf!==fac){LOAD.qf=fac;const Q=loadQuote(fac),qe=el.querySelector('.lo-q');qe.classList.remove('in');el.querySelector('.lo-qt').textContent=Q.q;
+    const og=el.querySelector('.lo-qo');og.textContent=Q.o||'';og.hidden=!Q.o;og.lang=Q.l||'';og.dir=/^(ar|fa|he|ur)$/.test(Q.l||'')?'rtl':'ltr';el.querySelector('.lo-qa').textContent=(Q.at?'attributed to ':'')+Q.a;void qe.offsetWidth;qe.classList.add('in');}}
+  if(el.hidden){LOAD.tipI=Math.floor(Math.random()*LOAD_TIPS.length);clearInterval(LOAD.tipT);const tip=()=>{el.querySelector('.lo-tip span').textContent=LOAD_TIPS[LOAD.tipI++%LOAD_TIPS.length];};tip();LOAD.tipT=setInterval(tip,4500);}
+  el.hidden=false;window.LOADING=true;}
+function loadFromG(mode){if(!G)return;loadShow({mode,map:G.mapKey,facs:G.teams.map(T=>T.fac),tm:G.teams.map(T=>T.tm),me:ME,cols:G.teams.map(T=>T.color),ai:G.teams.map(T=>!!T.ai),bases:BASES.slice(0,G.teams.length)});}
+function loadStep(label,p){const el=LOAD.el;if(!el)return;const s=el.querySelectorAll('.lo-s span');s[0].textContent=label;s[1].textContent=Math.round(p*100)+'%';el.querySelector('.lo-bar i').style.width=(p*100).toFixed(1)+'%';}
+function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.hidden=true;window.LOADING=false;}
+// wait until the browser has painted (falls back to a timer when the tab is in the background and frames stop)
+function loadFrame(){return new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,document.hidden?0:300);});}
+function loadModelsWait(o){loadShow(o);loadStep('Loading 3D models…',.04);}
+// true while the 3D models are still loading (false once they have finished, even if they failed: then the battle
+// starts with simple shapes instead of waiting forever)
+function modelsPending(){if(MODELS.ready||!MODELS.loading||LOAD.mdone)return false;if(!LOAD.mw){LOAD.mw=1;MODELS.loading.then(()=>{LOAD.mdone=1;},()=>{LOAD.mdone=1;});}return true;}
+async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
+  setTimeout(()=>{if(!MODELS.ready&&typeof pushLog==='function')pushLog('Detailed 3D models could not load on this device ('+(MODELS.err||'unknown')+'). Showing simple shapes.','bad');},500);
+  initAudio();loadFromG(mode);g.paused=true;
+  const live=()=>tok===LOAD.tok&&G===g;let tc=null;
+  // [label, progress, work, is3dStart]; the battle clock stays held through every step
+  // (the painted ground is held back from G.terrain until the end: the view draws nothing while G.terrain is unset)
+  const steps=[['Generating terrain…',.08,()=>{paintTerrainNow();tc=g.terrain;g.terrain=null;loadMap(g.mapKey,BASES.slice(0,g.teams.length),g.teams.map(T=>T.color),ME,g.thumb);
+      // bake the tactical map's ground now, while the GPU is idle: baked on the first battle frame it has to read pixels
+      // back after all the 3D work queued ahead of it, which froze that frame for seconds on phones and slow PCs
+      try{if(G===g&&g.thumb&&!g.mmBase)g.mmBase=mmBase();}catch(e){}}],
+    ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
+    ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
+    ['Preparing graphics…',.78,()=>{try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
+    ['Deploying forces…',.9,()=>{buildPanels();}],
+    // the first battle frame creates every unit, building, town and the fog of war on the GPU, by far the slowest frame
+    // of the battle: draw it here, under the loading screen, so the battle appears already running
+    ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
+  const T0=performance.now(),TL=LOAD.times=[];
+  for(const [label,p,fn,gl] of steps){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;const t1=performance.now();
+    try{fn();TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
+      R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
+  g.terrain=tc;loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
+  TL.push(['total',Math.round(performance.now()-T0)]);console.log('battle start: '+TL.map(([a,b])=>a.replace('…','')+' '+b+' ms').join(', '));
+  // multiplayer client: its battle clock stood still under the loading screen while the host's kept running; catch up
+  // to the host's latest snapshot time so this player isn't permanently behind (host snapshots arrived meanwhile)
+  if(MODE==='client'&&(NET.lastSnapT||0)>g.t)g.t=NET.lastSnapT;
+  g.paused=false;last=performance.now();g.acc=0;qualReset();try{applyQual();}catch(e){}loadHide();
+  pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
+  // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
+  setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}},0);}
+function startSingle(){if(modelsPending()&&!startSingle.w){startSingle.w=1;$('start').textContent='Loading 3D models…';{const f=rollAis();loadModelsWait({mode:'single',map:setup.map,facs:f,tm:setup.tm,me:0});}MODELS.loading.then(()=>{startSingle.w=0;$('start').textContent='Deploy vs AI';startSingle();});return;}if(modelsPending())return;MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot});}finally{TERR_DEFER=false;}afterStart();}
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
-function startSandbox(){if(!MODELS.ready&&MODELS.loading){MODELS.loading.then(startSandbox);return;}MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US';
-  newGame({seed:setup.seed||((Math.random()*1e9)|0),facs:[setup.p,setup.a&&setup.a!==setup.p?setup.a:en],ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});afterStart();}
-function startMP(mode,seed,facs,slot,map,tm,aiD){if(!MODELS.ready&&MODELS.loading){MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm,aiD));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;newGame({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm});if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
+function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
+  if(modelsPending()){if(!startSandbox.w){startSandbox.w=1;loadModelsWait({mode:'sandbox',map:setup.map,facs,tm:[0,1],me:0});MODELS.loading.then(()=>{startSandbox.w=0;startSandbox();});}return;}MODE='single';ME=0;
+  TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
+function startMP(mode,seed,facs,slot,map,tm,aiD){if(modelsPending()){loadModelsWait({mode,map,facs,tm,me:slot|0,ai:facs.map((_,i)=>Array.isArray(aiD)&&aiD[i]!=null)});MODELS.loading.then(()=>startMP(mode,seed,facs,slot,map,tm,aiD));return;}NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm});}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');
@@ -7931,7 +8325,20 @@ if(window.WW3_P2P&&$('relayBox')){$('relayBox').hidden=false;let r={};try{r=JSON
 {const seg=(id,key,def)=>{const el=$(id);if(!el)return;let v=def;try{v=localStorage.getItem(key)||def;}catch(e){}const paint=()=>{for(const b of el.querySelectorAll('button'))b.classList.toggle('on',b.dataset.v===v);};paint();for(const b of el.querySelectorAll('button'))b.onclick=()=>{v=b.dataset.v;try{localStorage.setItem(key,v);}catch(e){}paint();QUAL.bad=QUAL.good=0;};};seg('sFpsT','ww3_fpsT','120');seg('sHideIp','ww3_hideip','0');seg('sFpsS','ww3_fpsShow','0');}
 $('aMus').onclick=()=>{initAudio();AU.musicOn=!AU.musicOn;saveAudio();applyAudio();};$('aSfx').onclick=()=>{initAudio();AU.sfxOn=!AU.sfxOn;saveAudio();applyAudio();};$('aVoc').onclick=()=>{initAudio();AU.voiceOn=!AU.voiceOn;saveAudio();applyAudio();};$('cancelHost').onclick=cancelHost;
 // settings panel (main menu and in game)
-function applyGfx(){if(typeof QUAL==='undefined')return;if(SET.gfx==='auto'){QUAL.lock=0;}else{QUAL.lock=1;QUAL.lv={high:0,med:1,low:3}[SET.gfx]??0;}try{applyQual();}catch(e){}}
+// Phones (touch screen, no mouse): render at most 1.5 pixels per screen point instead of the full 2 (about half the
+// pixels to shade at the start level), ambient occlusion only at the top level, lighter edge smoothing below it, and
+// Auto starts one level down so the battle is smooth from its first frame; Auto still steps up when frames have time
+// to spare and down when they don't. Desktop and the High setting are unchanged.
+const GFX_PHONE=(()=>{try{return matchMedia('(pointer:coarse)').matches&&!matchMedia('(pointer:fine)').matches;}catch(e){return false;}})();
+const QCAPS0=QUAL.caps.slice();
+function gfxPhone(){return GFX_PHONE&&SET.gfx!=='high';}
+function qualStartLv(){return SET.gfx==='auto'?(gfxPhone()?1:0):({high:0,med:1,low:3}[SET.gfx]??0);}
+// a fresh start for the frame-rate governor (a new battle, or a settings change): the long frames of the loading
+// screen must not count as stutter
+function qualReset(){QUAL.lv=qualStartLv();QUAL.bad=QUAL.good=0;QUAL.ema=1/60;QUAL.dts.length=0;}
+function applyGfx(){if(typeof QUAL==='undefined')return;const ph=gfxPhone(),base=Math.min(2,window.devicePixelRatio||1);
+  QUAL.caps=ph?QCAPS0.map((c,i)=>Math.min(c,[1.5,1.35,1.25,1.1,1,.9][i]/base)):QCAPS0.slice();POST.aoLv=ph?1:2;POST.phone=ph;
+  QUAL.lock=SET.gfx==='auto'?0:1;qualReset();try{applyQual();}catch(e){}}
 // One game speed for everyone, a little brisker than real time so battles keep moving.
 const GSPD=1.2;
 function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number]];
@@ -7942,16 +8349,39 @@ if($('openSettings'))$('openSettings').onclick=openSettings;if($('aSet'))$('aSet
 syncSettings();setTimeout(applyGfx,0);
 // Pause and quit. Single player and skirmish vs AI pause the whole battle; in multiplayer the battle keeps running for
 // everyone else, so the menu opens without stopping time and says so.
-function togglePause(on){if(!G||G.over)return;const mp=MODE!=='single';if(on==null)on=!(G.paused||!$('pauseOv').hidden);
+function togglePause(on){if(!G||G.over||window.LOADING)return;const mp=MODE!=='single';if(on==null)on=!(G.paused||!$('pauseOv').hidden);
   if(on){if(!mp){G.paused=true;try{if(AU.ctx&&AU.ctx.state==='running')AU.ctx.suspend();}catch(e){}try{if(window.speechSynthesis)speechSynthesis.pause();}catch(e){}}
     $('pauseSub').textContent=mp?'Multiplayer battles cannot be paused - the battle continues while this menu is open.':'The battle is on hold. Nothing moves until you resume. (P or Esc to resume)';$('resumeBtn').textContent=mp?'Back to battle':'Resume';$('pauseOv').hidden=false;}
   else{G.paused=false;$('pauseOv').hidden=true;try{if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();}catch(e){}try{if(window.speechSynthesis)speechSynthesis.resume();}catch(e){}last=performance.now();}
-  $('aPause').textContent=G.paused?'▶ Resume':'❚❚ Pause';}
+  syncPause();}
 function askRestart(){if(!G)return;if(MODE!=='single'){pushLog('Multiplayer battles cannot be restarted - quit and host a new one.','w');return;}askQuit();G.restartAsk=true;$('quitOv').querySelector('h1').textContent='Restart this battle?';$('quitSub').textContent='The battle starts over with the same nations, map and settings.';$('quitYes').textContent='Restart';}
 function askQuit(){if(!G)return;G.restartAsk=false;$('quitOv').querySelector('h1').textContent='Quit this battle?';$('quitYes').textContent='Quit to main menu';if(MODE==='single'&&!G.over&&!G.paused){G.paused=true;G.qPause=true;try{if(AU.ctx&&AU.ctx.state==='running')AU.ctx.suspend();}catch(e){}}$('pauseOv').hidden=true;$('quitSub').textContent=MODE==='single'?"The battle will end and you'll return to the main menu.":'You will leave the multiplayer battle; your army will be left without a commander.';$('quitOv').hidden=false;}
 function quitGame(){$('quitOv').hidden=true;$('pauseOv').hidden=true;$('end').hidden=true;try{if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();}catch(e){}try{if(window.speechSynthesis){speechSynthesis.cancel();}}catch(e){}
-  if(G){G.over=true;G.paused=false;}$('aPause').textContent='❚❚ Pause';$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;renderGames();}
+  if(G){G.over=true;G.paused=false;}menuOpen(false);syncPause();$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;renderGames();}
 $('aPause').onclick=()=>togglePause();$('aQuit').onclick=askQuit;$('resumeBtn').onclick=()=>togglePause(false);$('pQuit').onclick=askQuit;$('quitYes').onclick=()=>{const rs=G&&G.restartAsk;quitGame();if(rs){initAudio();startSingle();}};$('aRestart').onclick=askRestart;$('pRestart').onclick=askRestart;
+/* ---------- command bar: ☰ menu, fold handle (phones), tactical-map button while folded ---------- */
+function syncPause(){const p=!!(G&&G.paused&&!G.over);for(const id of ['aPause','aPauseM']){const b=$(id);if(!b)continue;b.textContent=p?'▶ Resume':'❚❚ Pause';b.classList.toggle('pz',p);b.title=p?'Resume the battle (P)':'Pause the battle (P)';}}
+function menuOpen(v){const m=$('amenu'),b=$('aMenu');if(!m)return false;if(v==null)return !m.hidden;m.hidden=!v;if(b)b.setAttribute('aria-expanded',v?'true':'false');if(v){syncPause();ctipHide();}return !!v;}
+if($('aMenu')){$('aMenu').onclick=e=>{e.stopPropagation();menuOpen(!menuOpen());};
+  // a tap or click anywhere outside the menu closes it (and does nothing else, so a stray tap can't order units)
+  document.addEventListener('pointerdown',e=>{if(!menuOpen())return;const m=$('amenu');if(m.contains(e.target)||$('aMenu').contains(e.target))return;menuOpen(false);if(e.target===cv){e.stopPropagation();e.preventDefault();}},true);
+  // Pause, Settings, Restart and Quit close the menu; the sound switches keep it open to flip several in a row
+  for(const id of ['aSet','aRestart','aQuit'])$(id).addEventListener('click',()=>menuOpen(false));
+  $('aPauseM').onclick=()=>{menuOpen(false);togglePause();};}
+// the bar's height, for things that float just above it (unit orders on phones, button descriptions)
+function barH(){const sd=$('side');if(!sd)return;const h=sd.hidden?0:Math.round(sd.getBoundingClientRect().height);document.documentElement.style.setProperty('--barh',h+'px');}
+try{new ResizeObserver(barH).observe($('side'));}catch(e){addEventListener('resize',barH);}
+// phones: the handle folds the bar down to its top strip (money, tabs, pause, menu) and back; remembered on this device
+function barMin(v){const sd=$('side');if(!sd)return false;if(v==null)return sd.classList.contains('min');v=!!v;sd.classList.toggle('min',v);if(!v)mapPeek(false);
+  const g=$('barGrip');if(g){g.textContent=v?'▴':'▾';g.setAttribute('aria-expanded',v?'false':'true');g.title=v?'Show the command bar':'Fold the command bar down';}
+  try{localStorage.setItem('ww3_barMin',v?'1':'0');}catch(e){}ctipHide();barH();return v;}
+function mapPeek(v){const sd=$('side'),b=$('mmBtn');if(!sd)return;if(v==null)v=!sd.classList.contains('mmOn');sd.classList.toggle('mmOn',!!v);$('app').classList.toggle('mmpeek',!!v);if(b)b.setAttribute('aria-pressed',v?'true':'false');}
+if($('barGrip'))$('barGrip').onclick=()=>barMin(!barMin());
+if($('mmBtn'))$('mmBtn').onclick=()=>mapPeek();
+{let m=false;try{m=localStorage.getItem('ww3_barMin')==='1';}catch(e){}if(m)barMin(true);}
+// Test Range controls fold to their title so they don't cover the battlefield
+if($('sbFold')){const sb=$('sbx'),f=v=>{sb.classList.toggle('fold',v);$('sbFold').setAttribute('aria-expanded',v?'false':'true');};let v=false;try{v=localStorage.getItem('ww3_sbFold')==='1';}catch(e){}f(v);
+  $('sbFold').onclick=()=>{const n=!sb.classList.contains('fold');f(n);try{localStorage.setItem('ww3_sbFold',n?'1':'0');}catch(e){}};}
 $('quitNo').onclick=()=>{$('quitOv').hidden=true;if(G&&G.qPause){G.qPause=false;togglePause(false);}};
 $('again').onclick=()=>{initAudio();startSingle();};$('change').onclick=()=>{$('end').hidden=true;$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;renderGames();};
 
@@ -9384,7 +9814,8 @@ function initPost(){try{
 function sizePost(){const w=Math.max(2,Math.round(VW*dpr)),h=Math.max(2,Math.round(VH*dpr));if(w===POST.w&&h===POST.h&&POST.rt)return;POST.w=w;POST.h=h;
   for(const k of ['rt','bA','bB','bC','bD','dRT','aA','aB'])if(POST[k])POST[k].dispose();
   const opt={type:THREE.HalfFloatType,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:true};
-  const wgl2=R3.capabilities.isWebGL2;POST.rt=wgl2&&THREE.WebGLMultisampleRenderTarget?new THREE.WebGLMultisampleRenderTarget(w,h,Object.assign({samples:4},opt)):new THREE.WebGLRenderTarget(w,h,opt);
+  // edge smoothing: 4 samples; phones on Auto/Medium/Low use 2 below the top detail level and none from level 3 down
+  const wgl2=R3.capabilities.isWebGL2,ms=POST.phone?(QUAL.lv<1?4:QUAL.lv<3?2:0):4;POST.rt=wgl2&&ms&&THREE.WebGLMultisampleRenderTarget?new THREE.WebGLMultisampleRenderTarget(w,h,Object.assign({samples:ms},opt)):new THREE.WebGLRenderTarget(w,h,opt);
   const s={type:THREE.HalfFloatType,minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false};
   POST.dRT=new THREE.WebGLRenderTarget(w>>1,h>>1,{minFilter:THREE.NearestFilter,magFilter:THREE.NearestFilter,depthBuffer:true});POST.dRT.depthTexture=new THREE.DepthTexture(w>>1,h>>1);POST.dRT.depthTexture.type=THREE.UnsignedIntType;
   const s2={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,depthBuffer:false};POST.aA=new THREE.WebGLRenderTarget(w>>1,h>>1,s2);POST.aB=new THREE.WebGLRenderTarget(w>>1,h>>1,s2);
@@ -9394,7 +9825,7 @@ function pass(mat,target){POST.quad.material=mat;R3.setRenderTarget(target);R3.r
 function renderPost(){if(!POST.on||!POST.mFinal){softP(false);R3.setRenderTarget(null);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);return;}
   sizePost();
   const fogWas=FOGM?FOGM.visible:false;let postFog=false;
-  if(POST.mAO&&POST.aoOn!==false){if(FOGM&&FOGT){postFog=fogWas;FOGM.visible=false;}const hid=[];SCN.traverse(o=>{if(!o.visible)return;const m=o.material;if(o.userData.noDepth||o.isPoints||o.isLine||o.isSprite||(m&&(Array.isArray(m)?m[0].transparent:m.transparent))){o.visible=false;hid.push(o);}});
+  if(POST.mAO&&POST.aoOn!==false&&!(POST.aoLv!=null&&QUAL.lv>=POST.aoLv)){if(FOGM&&FOGT){postFog=fogWas;FOGM.visible=false;}const hid=[];SCN.traverse(o=>{if(!o.visible)return;const m=o.material;if(o.userData.noDepth||o.isPoints||o.isLine||o.isSprite||(m&&(Array.isArray(m)?m[0].transparent:m.transparent))){o.visible=false;hid.push(o);}});
     const bg=SCN.background;SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.clear();R3.render(SCN,CAM);SCN.overrideMaterial=null;for(const o of hid)o.visible=true;
     const A=POST.mAO.uniforms;A.dep.value=POST.dRT.depthTexture;A.near.value=CAM.near;A.far.value=CAM.far;const ty=Math.tan(CAM.fov*Math.PI/360);A.tanF.value.set(ty*CAM.aspect,ty);A.res.value.set(POST.dRT.width,POST.dRT.height);A.pm.value=POST.dRT.height/(2*ty);A.cw.value.copy(CAM.matrixWorld);A.tt.value=performance.now()/1000;A.fogT.value=FOGT;A.cloudK.value=POST.cloud??1;A.mapS.value.set(MAPW,MAPH);POST.mFinal.uniforms.fogK.value=postFog?1:0;
     pass(POST.mAO,POST.aA);const ab=(src,dst,x,y)=>{POST.mBlur.uniforms.tex.value=src.texture;POST.mBlur.uniforms.dir.value.set(x/src.width,y/src.height);pass(POST.mBlur,dst);};ab(POST.aA,POST.aB,1,0);ab(POST.aB,POST.aA,0,1);
@@ -9592,7 +10023,9 @@ function plainStd(m){if(!m||!m.isMeshStandardMaterial||!(m.isGLTFSpecularGlossin
     alphaMap:m.alphaMap||null,transparent:m.transparent,opacity:m.opacity,side:m.side,alphaTest:m.alphaTest||0,vertexColors:!!m.vertexColors,skinning:!!m.skinning,roughness:m.glossiness!=null?Math.min(1,Math.max(.35,1-m.glossiness*.7)):.75,metalness:.15});
   if(m.normalScale&&n.normalScale)n.normalScale.copy(m.normalScale);n.userData=Object.assign({},m.userData);return n;}
 function instModel(key,team,fit,size,ys,kk){const T=tintedProto(key,team,kk);if(!T)return null;const src=T.scene;const skinned=!!src.getObjectByProperty('type','SkinnedMesh');
-  const inner=skinned&&THREE.SkeletonUtils?THREE.SkeletonUtils.clone(src):src.clone(true);const n=normScale(src,fit,size);const wrap=new THREE.Group();const sy=n.s*(ys||1);inner.scale.set(n.s,sy,n.s);inner.position.set(-n.cx*n.s,-n.my*sy,-n.cz*n.s);if(fit==='long'&&n.xl){const r=new THREE.Group();r.rotation.y=(MODELS.flipX&&MODELS.flipX[key])?-Math.PI/2:Math.PI/2;r.add(inner);wrap.add(r);}else wrap.add(inner);wrap.userData.anims=T.anims;wrap.userData.inner=inner;return wrap;}
+  const inner=skinned&&THREE.SkeletonUtils?THREE.SkeletonUtils.clone(src):src.clone(true);const n=normScale(src,fit,size);const wrap=new THREE.Group();const sy=n.s*(ys||1);inner.scale.set(n.s,sy,n.s);inner.position.set(-n.cx*n.s,-n.my*sy,-n.cz*n.s);if(fit==='long'&&n.xl){const r=new THREE.Group();r.rotation.y=(MODELS.flipX&&MODELS.flipX[key])?-Math.PI/2:Math.PI/2;r.add(inner);wrap.add(r);}else wrap.add(inner);// (kept out of JSON: Object3D.clone() deep-copies userData through JSON, which serialised the whole model, its
+  // textures and animations every time a model was cloned, about 2 s of the battle start on a phone)
+  for(const [k,v] of [['anims',T.anims],['inner',inner]])Object.defineProperty(wrap.userData,k,{value:v,writable:true,configurable:true,enumerable:false});return wrap;}
 const TANKBOX={};function tankBox(key,yaw){if(TANKBOX[key]!==undefined)return TANKBOX[key];yaw.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(yaw.matrixWorld).invert(),v=new THREE.Vector3(),M=new THREE.Matrix4();let mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9],sm=[0,0,0],n=0;
   yaw.traverse(o=>{if(!o.isMesh||!o.geometry||!o.geometry.attributes.position)return;M.multiplyMatrices(inv,o.matrixWorld);const p=o.geometry.attributes.position;for(let i=0;i<p.count;i+=1){v.fromBufferAttribute(p,i).applyMatrix4(M);const a=[v.x,v.y,v.z];for(let k=0;k<3;k++){mn[k]=Math.min(mn[k],a[k]);mx[k]=Math.max(mx[k],a[k]);sm[k]+=a[k];}n++;}});
   if(!n)return TANKBOX[key]=null;const ax=(mx[0]-mn[0])>=(mx[2]-mn[2])?'x':'z',i=ax==='x'?0:2,j=2-i,c=sm[i]/n;const rear=(c-mn[i])<(mx[i]-c)?mx[i]:mn[i];

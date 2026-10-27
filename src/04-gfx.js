@@ -7,13 +7,16 @@ const cam={x:600,y:1500,z:1,dist:560,yaw:0};
 const TMP=new THREE.Vector3(),TMPM=new THREE.Matrix4(),TMPQ=new THREE.Quaternion(),RAY=new THREE.Raycaster(),GPLANE=new THREE.Plane(new THREE.Vector3(0,1,0),0);
 const lin=hex=>new THREE.Color(hex).convertSRGBToLinear();
 function initGfx(){
-  R3=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});
+  // phones on Auto/Medium/Low: no multisampled screen buffer (the picture is already smoothed in the post-processing pass,
+  // which draws into its own multisampled target), a 1024 shadow map instead of 2048 and plain (not soft) shadow edges
+  const PH=typeof gfxPhone==='function'&&gfxPhone();
+  R3=new THREE.WebGLRenderer({canvas:cv,antialias:!PH,powerPreference:'high-performance'});
 // One object that cannot be drawn must never stop the whole frame (that froze the picture while the battle went on):
 // skip it, hide it and keep drawing everything else.
 {const rbd=R3.renderBufferDirect.bind(R3);let nErr=0;R3.renderBufferDirect=function(cam,scene,geo,mat,obj,grp){try{return rbd(cam,scene,geo,mat,obj,grp);}catch(e){if(obj)obj.visible=false;if(nErr++<5){let q=obj,path=[];while(q&&path.length<6){path.push((q.name||'')+':'+q.type);q=q.parent;}console.warn('skipped an object that failed to draw: '+(e&&e.message)+' | '+(mat&&mat.type)+' '+(mat&&mat.name||'')+' map='+!!(mat&&mat.map)+' env='+!!(mat&&mat.envMap)+' ud='+Object.keys((mat&&mat.userData)||{}).join('/')+' | '+path.join(' < ')+' @ '+String(e&&e.stack||'').split('\n').slice(1,4).map(x=>x.trim()).join(' / '));}}};}
   cv.addEventListener('webglcontextlost',e=>{e.preventDefault();window.GLLOST=1;try{pushLog('Graphics were reset by the browser; restoring…','w');}catch(_){}},false);
   cv.addEventListener('webglcontextrestored',()=>{window.GLLOST=0;try{for(const o of OBJ.values())SCN.remove(o);OBJ.clear();for(const k in GEO)delete GEO[k];if(G&&G.terrain)buildWorld();}catch(err){console.warn(err);}},false);
-  R3.outputEncoding=THREE.sRGBEncoding;R3.toneMapping=THREE.NoToneMapping;R3.shadowMap.enabled=true;R3.shadowMap.autoUpdate=false;/* shadows are drawn once per frame, for the main pass only (renderPost) - not again for the depth pre-pass */R3.shadowMap.type=THREE.PCFSoftShadowMap;R3.autoClear=true;
+  R3.outputEncoding=THREE.sRGBEncoding;R3.toneMapping=THREE.NoToneMapping;R3.shadowMap.enabled=true;R3.shadowMap.autoUpdate=false;/* shadows are drawn once per frame, for the main pass only (renderPost) - not again for the depth pre-pass */R3.shadowMap.type=PH?THREE.PCFShadowMap:THREE.PCFSoftShadowMap;R3.autoClear=true;
   SCN=new THREE.Scene();SCN.background=lin('#c7b493');SCN.fog=new THREE.Fog(lin('#8f8a70'),1800,6200);
   window.SKY=new THREE.Mesh(new THREE.SphereGeometry(7600,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{t:{value:0},hor:{value:new THREE.Vector3(.86,.78,.64)},zen:{value:new THREE.Vector3(.30,.50,.80)}},
     vertexShader:`varying vec3 vd;void main(){vd=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
@@ -23,7 +26,7 @@ function initGfx(){
         gl_FragColor=vec4(pow(c,vec3(2.2))*1.6,1.);}`}));SKY.renderOrder=-10;SKY.frustumCulled=false;SCN.add(SKY);
   CAM=new THREE.PerspectiveCamera(38,1,40,9000);
   HEMI=new THREE.HemisphereLight(lin('#b4cbef'),lin('#4d3f2c'),1.0);SCN.add(HEMI);
-  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7);SUN.castShadow=true;const sm=2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
+  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7);SUN.castShadow=true;const sm=PH?1024:2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
   SCN.add(SUN);SCN.add(SUN.target);
   initFX();initPost();
 }
@@ -126,10 +129,11 @@ function borderLand(dtex){const M=G.map,BX=Math.max(MAPW,MAPH)*.7,W2=MAPW+2*BX,H
     p.setY(i,y);const fade=Math.min(1,d/700),sl=Math.max(0,Math.min(1,(y-90)/120));c.copy(tc).lerp(base,fade*.75).lerp(rock,sl*.5*fade);c.multiplyScalar(.94+.12*n2(x*4.1,z*3.7));col.set([c.r,c.g,c.b],i*3);FD[i]=Math.min(1,d/1100);}
   g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setAttribute('fd',new THREE.BufferAttribute(FD,1));g.computeVertexNormals();
   const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0,polygonOffset:true,polygonOffsetFactor:2,polygonOffsetUnits:4});if(dtex)m.onBeforeCompile=sh=>{sh.uniforms.dmap={value:dtex};sh.uniforms.ttex={value:BORDER_TEX};sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vWP;attribute float fd;varying float vFD;').replace('#include <begin_vertex>','#include <begin_vertex>\nvWP=position.xz;vFD=fd;');sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vWP;varying float vFD;uniform sampler2D dmap;uniform sampler2D ttex;').replace('#include <color_fragment>','#include <color_fragment>\n{vec2 mu=vWP/vec2('+MAPW.toFixed(1)+','+MAPH.toFixed(1)+');mu=1.-abs(mod(mu,2.)-1.);vec3 tl=pow(texture2D(ttex,vec2(mu.x,1.-mu.y)).rgb,vec3(2.2));float k=smoothstep(0.,1.,vFD);diffuseColor.rgb=mix(tl,diffuseColor.rgb,k*.85);float lu=dot(diffuseColor.rgb,vec3(.3,.59,.11));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(lu),k*.35)*(1.-.28*k);}\n{vec2 tU=vWP/3200.;float dn=texture2D(dmap,tU*90.).r*.6+texture2D(dmap,tU*17.).r*.4;diffuseColor.rgb*=mix(.78,1.18,dn);float m1=texture2D(dmap,tU*.9+.21).r;diffuseColor.rgb*=.9+.2*m1;float fine=texture2D(dmap,tU*1400.).r;diffuseColor.rgb*=1.+(fine-.5)*.2;}');};const mesh2=new THREE.Mesh(g,m);mesh2.receiveShadow=true;mesh2.renderOrder=-1;WORLD.add(mesh2);}
-function buildWorld(){
+// tc: the painted ground canvas (the battle start passes it in before it is handed to the view as G.terrain)
+function buildWorld(tc){
   if(WORLD){SCN.remove(WORLD);WORLD.traverse(o=>{if(o.geometry)o.geometry.dispose();});}
   WORLD=new THREE.Group();SCN.add(WORLD);
-  const tex=new THREE.CanvasTexture(G.terrain);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=R3.capabilities.getMaxAnisotropy();
+  const tex=new THREE.CanvasTexture(tc||G.terrain);tex.encoding=THREE.sRGBEncoding;tex.anisotropy=R3.capabilities.getMaxAnisotropy();
   const TSG=Math.min(1.8,Math.max(1.3,WK*.85)),g=new THREE.PlaneGeometry(MAPW,MAPH,Math.round(320*TSG),Math.round(220*TSG));g.rotateX(-Math.PI/2);const p=g.attributes.position;
   for(let i=0;i<p.count;i++){const x=p.getX(i)+MAPW/2,z=p.getZ(i)+MAPH/2;p.setY(i,groundH(x,z));}g.computeVertexNormals();
   {const nn=g.attributes.normal,cols=new Float32Array(p.count*3),AOA=new Float32Array(p.count);for(let i=0;i<p.count;i++){const sl=1-nn.getY(i),k=Math.max(0,Math.min(1,(sl-.12)*3.2)),st=.78+.22*Math.sin(p.getY(i)*1.3);const x=p.getX(i)+MAPW/2,z=p.getZ(i)+MAPH/2,hy=p.getY(i),cv=hy-(groundH(x+24,z)+groundH(x-24,z)+groundH(x,z+24)+groundH(x,z-24))*.25,ao=Math.max(.8,Math.min(1.08,1+cv*.025));AOA[i]=ao;cols[i*3]=1-k*.1*(2-st);cols[i*3+1]=1-k*.13*(2-st);cols[i*3+2]=1-k*.16*(2-st);}g.setAttribute('ao',new THREE.BufferAttribute(AOA,1));g.setAttribute('color',new THREE.BufferAttribute(cols,3));}g.translate(MAPW/2,0,MAPH/2);

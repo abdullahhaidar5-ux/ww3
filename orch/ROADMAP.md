@@ -12,8 +12,8 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Phones can play: reachable build buttons, two-finger pan and pinch zoom, touch placement
 - [done] No install buttons: just open the link and play
 - [done] iPhone sound works, even on silent, with a Sound check in Settings
-- [doing] Faster battle start on phones + loading screen with each nation's quotes (final multiplayer checks)
-- [doing] Generals-style bottom command bar replacing the side menu
+- [done] Faster battle start on phones + loading screen with each nation's quotes
+- [done] Generals-style bottom command bar replacing the side menu
 - [paused] Generals mouse controls + Mouse settings (work saved on a branch)
 - [paused] More intuitive phone controls (one-finger scroll, command bar for touch)
 
@@ -36,7 +36,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [todo] Proper mix: voices duck music, distance fade, even loudness
 
 ## Graphics overhaul
-- [next] Phase 1 Foundations: art out of the game page onto Cloudflare, engine upgrade (approved; starts after the bottom bar ships)
+- [next] Phase 1 Foundations: art out of the game page onto Cloudflare, engine upgrade (approved; unblocked, starts next)
 - [todo] Phase 2 Real models (first look to improve): detailed units and buildings with national variants (free art)
 - [todo] Phase 3 Terrain and world: sculpted ground, water, roads, craters
 - [todo] Phase 4 Light and effects: shadows, smoke, fire, explosions, theatre colour
