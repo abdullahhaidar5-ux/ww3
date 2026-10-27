@@ -8,7 +8,7 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
-- [open] **Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
+- [open] **IN PROGRESS (side lane, 2026-10-26 19:25 — Abdullah: "do this now"; ORCH: don't take it) — Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
   multiplayer"). Target: Cloudflare free tier (Workers + Durable Objects), deployed by a GitHub Actions workflow that Abdullah
   approves from his phone (see the [ask] item under Multiplayer; no secrets in chat or repo). Build and test everything locally first; deployment itself is the only [ask]. Account exists (19:11).
   **Stage 1 — relay + signalling:** WebSocket relay rooms in a Durable Object (game code = room) that carry all game
