@@ -130,6 +130,13 @@ const T = traffic || { source: 'defaults', hostToPlayer: { framesPerGameMin: 700
 // its presence (ping, orders) about once a second.
 const Fh = T.hostToPlayer.framesPerGameMin, Fp = Math.max(60, T.playerToHost.framesPerRealMin);
 const B = T.hostToPlayer.bytesPerGameMin, Bw = T.hostToPlayer.wireBytesPerGameMin, Bp = T.playerToHost.wireBytesPerRealMin;
+// per match size, when measured: 2 sides = srv-traffic.json, 4 sides = --ais 2, 8 sides = --ais 6 (one human player's stream)
+const bySize = {};
+for (const [n, f] of [[2, 'srv-traffic.json'], [4, 'srv-traffic-ais2.json'], [8, 'srv-traffic-ais6.json']]) {
+  try { const t = JSON.parse(fs.readFileSync(path.join(OUT, f), 'utf8')); bySize[n] = { file: f, framesPerMin: t.hostToPlayer.framesPerGameMin,
+    downRawKBPerMin: Math.round(t.hostToPlayer.bytesPerGameMin / 1024), downWireKBPerMin: Math.round(t.hostToPlayer.wireBytesPerGameMin / 1024),
+    upWireKBPerMin: +(t.playerToHost.wireBytesPerRealMin / 1024).toFixed(1), Bw: t.hostToPlayer.wireBytesPerGameMin, B: t.hostToPlayer.bytesPerGameMin }; } catch {}
+}
 const MATCH_MIN = 30, GBS_PER_MIN = 60 * 0.125;
 // relayed = how many of the players (besides the host) go through the server
 function match(players, relayed) {
@@ -137,12 +144,14 @@ function match(players, relayed) {
   const conns = 1 + players + (relayed ? relayed : 0) + 2;          // lobby sockets, host relay socket, relayed players, migration slack
   const req = incomingPerMin * MATCH_MIN / 20 + conns + (relayed ? MATCH_MIN / 5 * 2 : 1);   // + sweep alarms & budget reports
   const gbs = relayed ? MATCH_MIN * GBS_PER_MIN : 1;                // awake the whole match while it relays; else ~asleep
+  const S = bySize[players] || { Bw, B };
   return { players, relayed, framesPerMin: incomingPerMin, req: Math.round(req), gbs: Math.round(gbs),
-    hostUpKBPerMin: Math.round(relayed * Bw / 1024), playerDownKBPerMin: Math.round(Bw / 1024), rawPlayerDownKBPerMin: Math.round(B / 1024) };
+    hostUpKBPerMin: Math.round(relayed * S.Bw / 1024), playerDownKBPerMin: Math.round(S.Bw / 1024), rawPlayerDownKBPerMin: Math.round(S.B / 1024) };
 }
 result.traffic = traffic ? `measured (orch/out/${traffic.file})` : 'built-in defaults (run node orch/mpsync.mjs --server first)';
 result.perPlayer = { hostToPlayerFramesPerMin: Fh, hostToPlayerRawKBPerMin: Math.round(B / 1024), hostToPlayerWireKBPerMin: Math.round(Bw / 1024),
   playerToHostFramesPerMin: Fp, playerToHostWireKBPerMin: +(Bp / 1024).toFixed(1) };
+result.bySize = Object.fromEntries(Object.entries(bySize).map(([n, v]) => [n, { file: v.file, framesPerMin: v.framesPerMin, downRawKBPerMin: v.downRawKBPerMin, downWireKBPerMin: v.downWireKBPerMin, upWireKBPerMin: v.upWireKBPerMin }]));
 result.matches = [match(2, 1), match(4, 3), match(8, 7), match(8, 1), match(8, 0)];
 const evening = (relayedPerMatch) => { const m = match(8, relayedPerMatch); return { matches: 10, players: 8, minutes: MATCH_MIN, relayedPerMatch,
   req: m.req * 10, reqPctOfFree: +(m.req * 10 / 1000).toFixed(1), gbs: m.gbs * 10, gbsPctOfFree: +(m.gbs * 10 / 130).toFixed(1) }; };
@@ -155,6 +164,7 @@ console.log(`latency (local): relay round trip p50 ${L.relayRttP50} ms / p95 ${L
 console.log(`cpu: ${C.frames} frames in ${C.rooms} rooms (${C.frameBytes} B, 3 records each; ${C.recordsDelivered}/${C.recordsExpected} records delivered) in ${C.wallMs} ms wall, ${C.cpuMs} ms runtime CPU -> ${C.cpuMsPer1000Frames} ms per 1,000 frames (${C.cpuUsPerFrame} us each, upper bound)`);
 { const R = result.roomCode; console.log(`room code alone: ${R.usPerHostBatchFrame7Players} us per host frame batching 7 players (${(R.batchFrameBytes / 1024).toFixed(0)} KB), ${R.usPerHostSingleRecordFrame} us per single-record frame, ${R.usPerPlayerFrame} us per player frame -> ~${(R.usPerHostBatchFrame7Players).toFixed(0)} ms CPU per 1,000 host frames`); }
 console.log(`traffic per relayed player (${result.traffic}): host->player ${Fh} frames, ${result.perPlayer.hostToPlayerRawKBPerMin} KB raw / ${result.perPlayer.hostToPlayerWireKBPerMin} KB on the wire per minute; player->host ${Fp} frames, ${result.perPlayer.playerToHostWireKBPerMin} KB per minute`);
+for (const [n, v] of Object.entries(result.bySize)) console.log(`  measured ${n}-side match (orch/out/${v.file}): per relayed player ${v.framesPerMin} frames, ${v.downRawKBPerMin} KB raw / ${v.downWireKBPerMin} KB on the wire down, ${v.upWireKBPerMin} KB up per minute`);
 for (const m of result.matches) console.log(`  ${m.players} players, ${m.relayed} relayed: ${m.framesPerMin} billed frames/min, 30-min match = ${m.req} requests, ${m.gbs} GB-s; host upload ${m.hostUpKBPerMin} KB/min`);
 for (const e of result.evening) console.log(`evening (10 x 8 players x 30 min, ${e.relayedPerMatch} relayed per match): ${e.req} requests (${e.reqPctOfFree}% of 100k/day), ${e.gbs} GB-s (${e.gbsPctOfFree}% of 13,000/day)`);
 console.log('SERVERBENCH DONE (orch/out/serverbench.json)');
