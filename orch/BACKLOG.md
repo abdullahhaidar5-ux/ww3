@@ -8,6 +8,11 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+**ROUND PAUSED (Abdullah, 2026-10-27 18:00: "Pause the current round and do these first and then continue").** The
+4-hourly ORCH schedule is switched off until the side lane finishes order steps 1–3. A cycle already running: ship only
+what is already gated, start no new squads, release the lock, and leave server battles / open items / music to the side
+lane (it is working on them now).
+
 **ORDER OF WORK (Abdullah, 2026-10-27 17:58): "Do the battles on servers first. Then address the open items. Then fix
 the music and move onto the graphics overhaul."** ORCH follows this order across cycles; don't start a later stage while
 an earlier one still has work a squad can take (other squads may only do small P1 fixes that don't compete):
