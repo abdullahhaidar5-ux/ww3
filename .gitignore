@@ -1,3 +1,4 @@
 orch/out/
 *.log
 .claude/worktrees/
+server/gen/
