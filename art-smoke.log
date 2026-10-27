@@ -1,0 +1,12 @@
+artifact page written: orch/out/artifact/index.html (1740055 bytes, game 901065 chars), 30 audio files + 50 model files (5.3 MB); publish arguments in orch/out/artifact/publish.json
+3D models: 3 of 51 ready=true  (page open to models ready: 1.3s)
+artifact edition: room true, three r186, PeerJS undefined, P2P shim false
+battle: 2 players IR vs US on strait
+loading screen finished after 40.6s
+3D models for this battle: 40 of 40
+after 4.0 game-min: 61 units, 14 structures, per team 23/52 (peak 29/52), last chunk 1550 ms
+peak memory (node + browser, summed RSS): 2384 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+SMOKE FAIL (116s)
+  ✗ artifact: Three.js is r186, expected r128
