@@ -11,31 +11,40 @@ Abdullah's own multiplayer servers on Cloudflare (free plan). Battles still run 
 Address once deployed: **https://ww3-servers.abdullah-haidar5.workers.dev** (check: open `/health` on it).
 This is a separate Worker from **`ww3`** (the game website, https://ww3.abdullah-haidar5.workers.dev). Never rename it.
 
-## One-time setup (Cloudflare dashboard, works from a phone)
+## One-time setup (Cloudflare dashboard, about 5 minutes on a phone)
 
-ORCH first creates a branch called `servers-live` in the repo. After that:
+**Before you start:** wait until ORCH says it's ready (the servers' code is on `main` and a branch called
+`servers-live` exists). Doing it earlier makes step 7 fail.
 
-1. **Workers & Pages → Create → Import a repository → `abdullahhaidar5-ux/ww3`.**
-2. On the setup screen:
-   - **Project name:** `ww3-servers` (must be exactly this, or the build fails)
+1. On your phone, open **dash.cloudflare.com** in the browser and sign in (the same account that runs `ww3`).
+2. Tap the **menu** (three lines, top left) → **Compute (Workers)** → **Workers & Pages**.
+3. Tap **Create** (blue button). On the "Workers" tab, tap **Import a repository** (it may say *Get started* next to
+   it).
+4. Pick **GitHub** → **abdullahhaidar5-ux** → tap the repository **ww3**. (GitHub is already connected because of the
+   `ww3` site. If it asks for access anyway, allow the `ww3` repository.)
+5. On the "Set up your application" screen, fill in only these:
+   - **Project name:** `ww3-servers` (exactly this: it must match the server's settings file, or the build fails)
    - **Build command:** leave empty
-   - **Deploy command:** `npx wrangler deploy`
-   - **Advanced settings → Path / Root directory:** `server`
-   - If a "Builds for non-production branches" box is shown, untick it.
-   - Leave API token and variables as they are, then **Create and deploy**.
+   - **Deploy command:** `npx wrangler deploy` (usually already filled in)
+   - Tap **Advanced settings** → **Path** (also called *Root directory*): `server`
+   - If you see a box "Builds for non-production branches", untick it.
+   - Leave everything else (API token, variables) as it is.
+6. Tap **Create and deploy**. Wait for the green "Success" (about a minute). This first deploy comes from `main`;
+   that's expected and harmless, because the game isn't pointed at the servers yet and an idle server costs nothing.
+7. Tap **Settings** (tab at the top of the `ww3-servers` page) → scroll to **Build** → **Branch control** → tap the
+   pencil (edit) icon:
+   - **Production branch:** pick `servers-live`
+   - **Builds for non-production branches** (or *Enable Preview Builds*): off
+   - Tap **Save**.
+8. Check it: open **https://ww3-servers.abdullah-haidar5.workers.dev/health**. You should see a short line of text
+   starting with `{"ok":true`. Then tell ORCH "servers set up".
 
-   Cloudflare deploys once straight away from `main`. That's expected and harmless: nobody uses the servers until the
-   game is pointed at them, and an idle server costs nothing.
-3. Open **ww3-servers → Settings → Build → Branch control**:
-   - **Production branch:** `servers-live`
-   - **Enable Preview Builds:** off
-   - Save.
+From now on, server changes go live only when the `servers-live` branch changes, which happens only when you tap
+**Merge** on a pull request (see below).
 
-   From now on, server changes go live only when the `servers-live` branch changes, which happens only when you tap
-   **Merge** on a pull request (see below).
-4. *(Optional, for players behind very strict networks)* **Realtime → TURN Server → Create**, then copy the Key ID and
-   API token into **ww3-servers → Settings → Variables and Secrets** as two **secrets** named `TURN_KEY_ID` and
-   `TURN_KEY_API_TOKEN`. Without them the game skips TURN and uses the relay rooms instead.
+*(Optional, for players behind very strict networks)* **Realtime → TURN Server → Create**, then copy the Key ID and
+API token into **ww3-servers → Settings → Variables and Secrets** as two **secrets** (tap *Add*, type *Secret*) named
+`TURN_KEY_ID` and `TURN_KEY_API_TOKEN`. Without them the game skips TURN and uses the relay rooms instead.
 
 No API tokens or GitHub secrets are needed anywhere. Cloudflare's Git connection does the deploying.
 
