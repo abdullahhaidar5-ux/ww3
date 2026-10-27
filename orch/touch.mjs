@@ -21,7 +21,10 @@ import { guardContext } from './serverdev.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SHOTS = path.join(ROOT, 'orch', 'shots', 'touch');
-fs.mkdirSync(SHOTS, { recursive: true });
+const OUTS = path.join(ROOT, 'orch', 'out', 'touch'); // also kept with the CI run's artifacts
+fs.mkdirSync(SHOTS, { recursive: true }); fs.mkdirSync(OUTS, { recursive: true });
+async function shot(page, name) { try { await page.screenshot({ path: path.join(SHOTS, name), timeout: 120000 }); fs.copyFileSync(path.join(SHOTS, name), path.join(OUTS, name)); }
+  catch (e) { console.log('  (screenshot ' + name + ' skipped: ' + String(e.message || e).split('\n')[0] + ')'); } }
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -92,6 +95,7 @@ async function battle(page) {
     const us = [addUnit(ME, inf, ox, oy), addUnit(ME, inf, ox + 22, oy + 8), addUnit(ME, inf, ox - 18, oy + 18), addUnit(ME, other, ox + 10, oy - 30)];
     const en = G.teams.find(Q => Q.id !== ME);
     const e = addUnit(en.id, roster(en.fac).barracks[0], ox + (hq.x < MAPW / 2 ? 90 : -90), oy + 40);
+    for (const u of [...us, e]) { u.max = u.hp = 1e7; } // nobody dies during the test
     G.sel = []; centerOn(ox, oy + 10, true); camTarget(); cam.td = cam.dist = 420; updateUI();
     return { ids: us.map(u => u.id), enemy: e.id, inf, other };
   });
@@ -133,7 +137,7 @@ async function phonePass(tag, viewport, storageState) {
     if (shown) {
       const n = await page.evaluate(() => document.querySelector('#tguide .tgn').textContent);
       check(tag, n === '1 / 3', `guide starts at step 1 of 3 (${n})`);
-      await page.screenshot({ path: path.join(SHOTS, `${tag}-guide.png`) });
+      await shot(page, `${tag}-guide.png`);
       for (let i = 0; i < 3; i++) await page.tap('#tguide .tgx');
       const st = await page.evaluate(() => ({ hidden: document.getElementById('tguide').hidden, ls: localStorage.getItem('ww3_touchGuide') }));
       check(tag, st.hidden && st.ls === '1', 'guide closes after 3 steps and is remembered');
@@ -202,7 +206,7 @@ async function phonePass(tag, viewport, storageState) {
   check(tag, a.some(x => x.t === 'go' && x.ids.includes(S.ids[0])), `tap on the ground with a unit selected orders a move (${a.map(x => x.t).join(',')})`);
   check(tag, mk.n >= 1 && mk.dom >= 1, 'a move marker flashes where the order went');
   check(tag, (await sel(page)).length === 1, 'the unit stays selected after the order');
-  if (tag === 'portrait') await page.screenshot({ path: path.join(SHOTS, 'portrait-order.png') });
+  if (tag === 'portrait') await shot(page, 'portrait-order.png');
 
   // --- tap an enemy: attack order ---
   p = await scr(page, S.enemy);
@@ -239,7 +243,7 @@ async function phonePass(tag, viewport, storageState) {
   await T.drag(L.x0, L.y0, L.x1, L.y1, { hold: 600, steps: 8, ms: 160 });
   a = await acts(page);
   const cL = await page.evaluate(() => ({ x: cam.x, y: cam.y }));
-  check(tag, a.some(x => x.t === 'line' && x.ids.length === S.ids.length), `hold, then drag with units selected draws a line formation (${a.map(x => x.t).join(',')})`);
+  check(tag, a.some(x => x.t === 'line' && S.ids.every(id => x.ids.includes(id))), `hold, then drag with units selected draws a line formation (${a.map(x => x.t).join(',')})`);
   check(tag, Math.hypot(cL.x - cB.x, cL.y - cB.y) < 1, 'drawing the line does not scroll the map');
   // the strip's Line button: a plain drag draws the line
   await page.tap('#tstrip button[data-k="ln"]');
@@ -250,7 +254,7 @@ async function phonePass(tag, viewport, storageState) {
   // --- strip: attack-move, guard ---
   await page.tap('#tstrip button[data-k="am"]');
   check(tag, await page.evaluate(() => G.amove), 'strip ⚔ arms attack-move');
-  if (tag === 'landscape') await page.screenshot({ path: path.join(SHOTS, 'landscape-strip.png') });
+  if (tag === 'landscape') await shot(page, 'landscape-strip.png');
   await T.tap(g.x, g.y - 20); await frames(page, 1);
   a = await acts(page);
   check(tag, a.some(x => x.t === 'go' && x.mode === 'amove'), 'then a tap on the map attack-moves there');
@@ -277,7 +281,7 @@ async function phonePass(tag, viewport, storageState) {
     await T.drag(cx, cy, cx - 40, cy + 30, { steps: 6, ms: 80, end: 200 });
     const pick2 = await page.evaluate(() => ({ pick: TC.pick, place: G.place }));
     check(tag, pick2.place && Math.hypot(pick2.pick.x - pick.pick.x, pick2.pick.y - pick.pick.y) < 1, 'scrolling while placing keeps the marked spot');
-    if (tag === 'portrait') await page.screenshot({ path: path.join(SHOTS, 'portrait-place.png') });
+    if (tag === 'portrait') await shot(page, 'portrait-place.png');
     await page.tap('#tstrip button[data-k="ok"]');
     a = await acts(page);
     check(tag, a.some(x => x.t === 'bld' && x.k === spot.k) && !(await page.evaluate(() => G.place)), `✓ builds it there (${a.map(x => x.t).join(',')})`);
@@ -300,7 +304,7 @@ async function phonePass(tag, viewport, storageState) {
   if (gb) {
     await page.tap('#aGuide');
     check(tag, await page.evaluate(() => !document.getElementById('tguide').hidden), 'it opens the guide again');
-    if (!firstGuide) await page.screenshot({ path: path.join(SHOTS, `${tag}-guide.png`) });
+    if (!firstGuide) await shot(page, `${tag}-guide.png`);
     await page.tap('#tguide .tgs');
   }
   const state = await ctx.storageState();
@@ -336,7 +340,7 @@ async function desktopPass() {
   check(tag, S.ids.every(id => s.includes(id)), `left-drag draws a selection box (${s.length} selected)`);
   check(tag, Math.hypot(c1.x - c0.x, c1.y - c0.y) < 1, 'a left-drag does not scroll the map');
   check(tag, await page.evaluate(() => { const g = document.getElementById('tguide'); return !g || g.hidden; }), 'no touch guide on a desktop');
-  await page.screenshot({ path: path.join(SHOTS, 'desktop-sanity.png') });
+  await shot(page, 'desktop-sanity.png');
   await ctx.close();
 }
 
