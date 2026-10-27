@@ -16,8 +16,10 @@
 //                                                           # the state-hash sequences must be identical ->
 //                                                           # HEADLESS PASS / HEADLESS FAIL
 //   node orch/headless.mjs --compare --render               # same, but the browser also builds the 3D world, runs
-//                                                           # every visual/audio effect and draws frames in between
-//                                                           # (proves nothing render-side feeds back into the battle)
+//                                                           # every visual/audio effect and draws a frame every
+//                                                           # --render-every game-seconds (default 5; SwiftShader is
+//                                                           # slow, keep --minutes short): nothing render-side may
+//                                                           # feed back into the battle
 //   node orch/headless.mjs --compare --no-lock              # skip the machine-wide browser lock (browserlock.mjs)
 //   node orch/headless.mjs --compare --native-math          # compare with each engine's own Math.sin/cos/atan2/exp/pow
 //                                                           # (fails: Node 22 and Chromium 153 differ in the last bit)
@@ -33,7 +35,6 @@ import os from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
 import http from 'node:http';
-import v8 from 'node:v8';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
@@ -528,7 +529,7 @@ function findChromium() {
 }
 
 async function compare(o) {
-  const RENDER = has('render');
+  const RENDER = has('render'), RENDER_EVERY = Math.max(1, Number(argS('render-every', 5)));
   const node = runNode(o, { dumps: true });
   summary(node, o);
 
@@ -550,7 +551,7 @@ async function compare(o) {
   const fails = [];
   let browserSeq = [], bmap = null, binfo = null, bms = 0, bsec = 0;
   try {
-    const page = await browser.newPage({ viewport: RENDER ? { width: 960, height: 540 } : { width: 800, height: 600 } });
+    const page = await browser.newPage({ viewport: RENDER ? { width: 640, height: 360 } : { width: 800, height: 600 } });
     await page.addInitScript(() => { window.__stopLoop = true; }); // the harness drives simUpdate itself
     await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue() : r.abort());
     page.on('pageerror', e => fails.push('page error: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')));
@@ -576,9 +577,9 @@ async function compare(o) {
     for (let k = 1; k < node.seq.length; k++) {
       const r = await page.evaluate(([sec, render]) => {
         const out = []; // with --render: draw a frame every game-second (effects and render state live), else one chunk
-        if (render) { let last = null, ms = 0, steps = 0; for (let i = 0; i < sec; i++) { last = __W3.step(1); ms += last.ms; steps += last.steps; try { renderFrame(1 / 60); } catch (e) { out.push(String(e)); } if (last.over) break; } return { r: Object.assign(last, { ms, steps }), h: __W3.hash(), errs: out }; }
+        if (render) { let last = null, ms = 0, steps = 0; for (let i = 0; i < sec; i += render) { last = __W3.step(Math.min(render, sec - i)); ms += last.ms; steps += last.steps; try { renderFrame(1 / 60); } catch (e) { out.push(String(e)); } if (last.over) break; } return { r: Object.assign(last, { ms, steps }), h: __W3.hash(), errs: out }; }
         return { r: __W3.step(sec), h: __W3.hash(), errs: out };
-      }, [o.every, RENDER]);
+      }, [o.every, RENDER ? RENDER_EVERY : 0]);
       browserSeq.push({ t: Math.round(r.r.t), h: r.h });
       const same = r.h === node.seq[k].h && Math.round(r.r.t) === node.seq[k].t;
       bms += r.r.ms; bsec += r.r.steps / 60; show(Math.round(r.r.t), r.h, same, r.r.ms / Math.max(1e-9, r.r.steps / 60));
