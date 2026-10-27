@@ -8,6 +8,18 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+- [open] **Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
+  multiplayer"). Target: Cloudflare free tier (Workers + Durable Objects), deployed by Abdullah with a one-click
+  `tools/Deploy servers.cmd` (runs `npx wrangler login` in his browser + `wrangler deploy`; no secrets in chat or
+  repo). Build and test everything locally first; deployment itself is the only [ask].
+  **Stage 1 — relay + signalling:** WebSocket relay rooms in a Durable Object (game code = room) that carry all game
+  traffic for players whose networks block WebRTC, plus our own signalling to replace the public PeerJS broker, plus
+  short-lived TURN credentials (existing `relay-worker.js`). Game auto-falls back: direct P2P → TURN → WebSocket relay.
+  **Stage 2 — server-hosted battles:** run the authoritative simulation headless (no DOM/Three.js) inside the Durable
+  Object (or Node for local tests); all players become clients. Step 1 is a feasibility report: what in `03-sim`/
+  `01-data`/`02-map` touches DOM/THREE/window, and a headless sim runner (`orch/headless.mjs`) that plays an AI battle
+  in plain Node and matches the browser's state hash for the same seed. Netcode + QA squads; never break current
+  P2P play — servers are an extra path, P2P stays the default until Abdullah says otherwise.
 - _(none open — cycle 4 shipped the artifact build and republished it)_
 
 ## Questions for Abdullah
@@ -85,7 +97,7 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] Artifact: next republish pass `capabilities` once (from `orch/out/artifact/publish.json`) to open the `ck`
   and `pong` room topics; cycle 4 republished without it (stored declaration carried forward). Untested on the real
   claude.ai room: latency, ~40 msg/s cap, drops, host migration.
-- [ask] Cloudflare relay: needs Abdullah's Cloudflare account to deploy `relay-worker.js` and set `RELAY_CF_URL`.
+- [ask] Cloudflare account: Abdullah creates a free account and runs `tools/Deploy servers.cmd` once Stage 1 is ready (see Requests).
 
 **Maps** (`02-map`)
 
