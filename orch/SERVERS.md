@@ -101,9 +101,27 @@ allowance (100,000 requests, 13,000 GB-s) new relay rooms and relay joins are re
 playing P2P. At **90%** the game list refuses new connections and the page switches to its P2P game list. Matches in
 progress are never cut off. `/health` shows the day's numbers.
 
-## Measurements (2026-10-26, local: wrangler dev 4.153.0 / workerd, headless Chromium)
+## Measurements (2026-10-27, local: wrangler dev 4.153.0 / workerd, headless Chromium)
 
-MEASUREMENTS_PLACEHOLDER
+Measured with `node orch/serverbench.mjs` (logs: `/home/claude/logs/servers-serverbench.txt`) on the per-player traffic
+that `node orch/mpsync.mjs --server` captured in real-time battles through the local server (2 sides; `--ais 2` = 4 sides;
+`--ais 6` = 8 sides). Re-run both to refresh.
+
+| What | Measured |
+|---|---|
+| **Added relay latency** | ~1 ms per pass in the room (local round trip through a relay room p50 3.2 ms / p95 9.2 ms vs 0.65 ms for a bare socket). In the real world a relayed player also pays the detour to the room's region (it sits beside the host, so roughly the player→nearest-edge hop plus Cloudflare's backbone); not measurable before the first deploy. Players who connect directly pay nothing. |
+| **DO CPU per 1,000 messages** | Room code alone: **~1 ms** per 1,000 host frames batching 7 players (1.3 µs each), 0.13 µs per single-record frame, 0.04 µs per player frame. Whole local runtime incl. socket framing and compression: 415 ms per 1,000 frames of 5 KB to 3 players (upper bound). Free-plan Durable Objects bill awake time (GB-s), not CPU, so this only shows the server is never the bottleneck. |
+| **Per relayed player, 2-side match** | down 657 frames/min, 404 KB raw → **113 KB/min** on the wire; up 1.4 KB/min |
+| **Per relayed player, 4-side match** | down 659 frames/min, 523 KB raw → **155 KB/min**; up 1.3 KB/min |
+| **Per relayed player, 8-side match** | down 657 frames/min, 636 KB raw → **229 KB/min**; up 1.3 KB/min. Host upload through the relay with all 7 others relayed: 1.6 MB/min. |
+| **One 30-min match** | 8 players, all direct: 12 requests, ~1 GB-s. 1 relayed: 1,100 requests (1.1%), 225 GB-s (1.7%). 7 relayed: 1,646 requests (1.6%), 225 GB-s (1.7%). |
+| **Evening: 10 × 8-player × 30-min matches** | all direct: 120 requests (0.1%), 10 GB-s (0.1%). One relayed player per match: 11,000 requests (**11%** of 100k/day), 2,250 GB-s (**17%** of 13,000/day). Everyone relayed: 16,460 requests (16.5%), 2,250 GB-s (17%). Well inside the free plan; the 80% guard would trip only after ~45 relayed matches in one UTC day. |
+
+Billed frames don't grow much with players because the host sends one batched frame per tick (~657/min) whatever the
+number of relayed players; each relayed player adds only its own ~60 presence frames a minute.
+
+Gate runs on this branch (2026-10-27): `servertest` PASS; `mpsync --server` 2/2 PASS (+ `--ais 2` and `--ais 6` PASS);
+plain `mpsync` 3/3 PASS; `smoke --players 4` PASS; artifact build + `smoke --artifact` + `mpsync --artifact` PASS.
 
 ## Known limits and follow-ups
 
