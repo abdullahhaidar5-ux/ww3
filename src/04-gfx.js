@@ -18,11 +18,11 @@ function initGfx(){
   cv.addEventListener('webglcontextrestored',()=>{window.GLLOST=0;try{for(const o of OBJ.values())SCN.remove(o);OBJ.clear();for(const k in GEO)delete GEO[k];if(G&&G.terrain)buildWorld();}catch(err){console.warn(err);}},false);
   R3.outputEncoding=THREE.sRGBEncoding;R3.toneMapping=THREE.NoToneMapping;R3.shadowMap.enabled=true;R3.shadowMap.autoUpdate=false;/* shadows are drawn once per frame, for the main pass only (renderPost) - not again for the depth pre-pass */R3.shadowMap.type=PH?THREE.PCFShadowMap:THREE.PCFSoftShadowMap;R3.autoClear=true;
   SCN=new THREE.Scene();SCN.background=lin('#c7b493');SCN.fog=new THREE.Fog(lin('#8f8a70'),1800,6200);
-  window.SKY=new THREE.Mesh(new THREE.SphereGeometry(7600,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{t:{value:0}},
+  window.SKY=new THREE.Mesh(new THREE.SphereGeometry(7600,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{t:{value:0},hor:{value:new THREE.Vector3(.86,.78,.64)},zen:{value:new THREE.Vector3(.30,.50,.80)}},
     vertexShader:`varying vec3 vd;void main(){vd=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-    fragmentShader:`uniform float t;varying vec3 vd;float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
-      void main(){float y=max(vd.y,0.);vec3 hor=vec3(.86,.78,.64),zen=vec3(.30,.50,.80);vec3 c=mix(hor,zen,pow(y,.55));
-        vec2 uv=vd.xz/(vd.y+.18)*1.6+vec2(t*.004,0.);float cl=n(uv)*.5+n(uv*2.1)*.3+n(uv*4.7)*.2;cl=smoothstep(.5,.78,cl)*smoothstep(.0,.25,y);c=mix(c,vec3(.97,.96,.93),cl*.85);c=mix(c,hor*.92,smoothstep(.12,0.,y));
+    fragmentShader:`uniform float t;uniform vec3 hor,zen;varying vec3 vd;float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+      void main(){float y=max(vd.y,0.);vec3 c=mix(hor,zen,pow(y,.55));
+        vec2 uv=vd.xz/(vd.y+.18)*1.6+vec2(t*.004,0.);float cl=n(uv)*.5+n(uv*2.1)*.3+n(uv*4.7)*.2;cl=smoothstep(.5,.78,cl)*smoothstep(.0,.25,y);c=mix(c,mix(vec3(.97,.96,.93),hor,.3)*(.45+.55*smoothstep(.1,.45,zen.b)),cl*.85);c=mix(c,hor*.92,smoothstep(.12,0.,y));
         gl_FragColor=vec4(pow(c,vec3(2.2))*1.6,1.);}`}));SKY.renderOrder=-10;SKY.frustumCulled=false;SCN.add(SKY);
   CAM=new THREE.PerspectiveCamera(38,1,40,9000);
   HEMI=new THREE.HemisphereLight(lin('#b4cbef'),lin('#4d3f2c'),1.0);SCN.add(HEMI);
@@ -87,14 +87,14 @@ function buildCity(){if(!G.map.cityBlds||!G.map.cityBlds.length)return;
 // shader from each building's base and top so they line up storey by storey.
 let CWMAT=null;function cityWallMat(){if(CWMAT)return CWMAT;const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.88});
   m.onBeforeCompile=sh=>{sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute vec4 bt;varying vec4 vBT;varying vec3 vCW;varying vec3 vCN;').replace('#include <begin_vertex>','#include <begin_vertex>\nvBT=bt;vCW=(modelMatrix*vec4(position,1.)).xyz;vCN=normalize(mat3(modelMatrix)*normal);');
-    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec4 vBT;varying vec3 vCW;varying vec3 vCN;float ch(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}').replace('#include <color_fragment>',`#include <color_fragment>
-      float vt=1.-abs(vCN.y);float y=vCW.y-vBT.x,H=vBT.y-vBT.x;
+    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform float cityW;float litW;varying vec4 vBT;varying vec3 vCW;varying vec3 vCN;float ch(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}').replace('#include <color_fragment>',`#include <color_fragment>
+      litW=0.;float vt=1.-abs(vCN.y);float y=vCW.y-vBT.x,H=vBT.y-vBT.x;
       if(vt>.5&&y>.2&&y<H-.4){vec2 tn=normalize(vec2(-vCN.z,vCN.x));float u=dot(vCW.xz,tn);bool tower=vBT.z>.5&&vBT.z<1.5,house=vBT.z>1.5&&vBT.z<2.5,arch=vBT.z>2.5;
         float FH=tower?8.:10.,WS=tower?6.:9.;float fy=floor(y/FH),fx=floor(u/WS);vec2 f=vec2(fract(u/WS),fract(y/FH));float h=ch(vec2(fx,fy)+vBT.w*91.);
         float wx=tower?.12:.26,wy0=tower?.18:.3,wy1=tower?.92:.82;if(arch){wx=.34;wy0=.35;wy1=.78;}
         float win=step(wx,f.x)*step(f.x,1.-wx)*step(wy0,f.y)*step(f.y,wy1);float fr=step(wx-.06,f.x)*step(f.x,1.-wx+.06)*step(wy0-.07,f.y)*step(f.y,wy1+.05)*(1.-win);
         float gnd=1.-step(FH,y);if(gnd>.5&&!tower){float door=step(.36,fract(u/(WS*3.)))*step(fract(u/(WS*3.)),.5)*step(y,7.5);win=max(win*step(2.,y),0.);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.16,.12,.09),door*.95);}
-        vec3 glass=mix(vec3(.07,.09,.11),vec3(.32,.38,.44),h*h)*(tower?1.15:1.);{vec3 Vg=normalize(cameraPosition-vCW);vec3 Rg=reflect(-Vg,normalize(vCN));float fg=.08+.92*pow(1.-clamp(dot(Vg,normalize(vCN)),0.,1.),4.);vec3 sk=mix(vec3(.55,.6,.66),vec3(.3,.45,.7),smoothstep(0.,.6,Rg.y));glass=mix(glass,sk*(tower?1.05:.9),fg*.75)+vec3(1.,.9,.7)*pow(max(dot(Rg,vec3(-.66,.57,-.46)),0.),90.)*.6;}if(h>.93)glass=vec3(.85,.7,.42);
+        vec3 glass=mix(vec3(.07,.09,.11),vec3(.32,.38,.44),h*h)*(tower?1.15:1.);{vec3 Vg=normalize(cameraPosition-vCW);vec3 Rg=reflect(-Vg,normalize(vCN));float fg=.08+.92*pow(1.-clamp(dot(Vg,normalize(vCN)),0.,1.),4.);vec3 sk=mix(vec3(.55,.6,.66),vec3(.3,.45,.7),smoothstep(0.,.6,Rg.y));glass=mix(glass,sk*(tower?1.05:.9),fg*.75)+vec3(1.,.9,.7)*pow(max(dot(Rg,vec3(-.66,.57,-.46)),0.),90.)*.6;}if(h>.93)glass=vec3(.85,.7,.42);litW=win*step(.5,fract(h*7.31))*(.6+.4*h);
         vec3 base=diffuseColor.rgb;diffuseColor.rgb=mix(diffuseColor.rgb,base*1.18+.04,fr*.8);diffuseColor.rgb=mix(diffuseColor.rgb,glass,win*.95);
         if(!tower&&h<.18)diffuseColor.rgb=mix(diffuseColor.rgb,base*.62+vec3(.05,.07,.04),win);
         float sill=step(wx-.04,f.x)*step(f.x,1.-wx+.04)*step(wy0-.1,f.y)*step(f.y,wy0-.03);diffuseColor.rgb=mix(diffuseColor.rgb,base*1.3+.05,sill*.9);
@@ -103,8 +103,8 @@ let CWMAT=null;function cityWallMat(){if(CWMAT)return CWMAT;const m=new THREE.Me
       else if(vt<.5){vec2 q=vCW.xz/9.,i0=floor(q),fq=fract(q);fq=fq*fq*(3.-2.*fq);float n=mix(mix(ch(i0),ch(i0+vec2(1,0)),fq.x),mix(ch(i0+vec2(0,1)),ch(i0+vec2(1,1)),fq.x),fq.y);
         vec2 q2=vCW.xz/2.3,j0=floor(q2),fj=fract(q2);fj=fj*fj*(3.-2.*fj);float n2=mix(mix(ch(j0),ch(j0+vec2(1,0)),fj.x),mix(ch(j0+vec2(0,1)),ch(j0+vec2(1,1)),fj.x),fj.y);
         vec3 roof=mix(diffuseColor.rgb,vec3(.6,.58,.55),.42);diffuseColor.rgb=roof*(.8+.14*n+.06*n2)*(1.-.18*smoothstep(.62,.8,n));}
-      if(vt>.5){diffuseColor.rgb*=.93;}`);};
-  m.customProgramCacheKey=()=>'citywall3';return CWMAT=m;}
+      if(vt>.5){diffuseColor.rgb*=.93;}`).replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\ntotalEmissiveRadiance+=vec3(1.,.62,.3)*litW*cityW*1.3;');sh.uniforms.cityW=WXCITY;};
+  m.customProgramCacheKey=()=>'citywall4';return CWMAT=m;}
 
 // Beyond the playable area the land carries on: the edge heights and colours are continued outward and roll up into
 // soft hills (or stay as open sea where the map edge is water), fading into the haze, so the map has no hard border.
@@ -149,18 +149,18 @@ function buildWorld(tc){
 
   // water
   const BX=Math.max(MAPW,MAPH)*.7,wg=new THREE.PlaneGeometry(MAPW+2*BX,MAPH+2*BX,1,1).rotateX(-Math.PI/2);wg.translate(MAPW/2,WL,MAPH/2);
-  WATER=new THREE.Mesh(wg,new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{t:{value:0},sun:{value:new THREE.Vector3(-.55,.55,-.4).normalize()},cpos:{value:new THREE.Vector3()},etex:{value:edgeTex()},esz:{value:new THREE.Vector2(EF_W,EF_H)},ice:{value:G.map.theme==='snow'?1:0}},
+  WATER=new THREE.Mesh(wg,new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{t:{value:0},sun:{value:new THREE.Vector3(-.55,.55,-.4).normalize()},cpos:{value:new THREE.Vector3()},etex:{value:edgeTex()},esz:{value:new THREE.Vector2(EF_W,EF_H)},ice:{value:G.map.theme==='snow'?1:0},wl:{value:new THREE.Vector3(1,1,1)},wsky:{value:new THREE.Vector3(.6,.72,.8)},wsp:{value:new THREE.Color(1,.93,.8)}},
     vertexShader:`varying vec3 wp;void main(){vec4 w=modelMatrix*vec4(position,1.);wp=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`,
-    fragmentShader:`uniform float t;uniform vec3 sun;uniform vec3 cpos;uniform sampler2D etex;uniform vec2 esz;uniform float ice;varying vec3 wp;
+    fragmentShader:`uniform float t;uniform vec3 sun;uniform vec3 cpos;uniform sampler2D etex;uniform vec2 esz;uniform float ice;uniform vec3 wl,wsky,wsp;varying vec3 wp;
       float edgeAt(vec2 p){vec2 uv=(p/${EF_R.toFixed(1)}+.5)/esz;return texture2D(etex,uv).r*255.-128.;}
       vec2 W(vec2 p,vec2 d,float f,float s){float ph=dot(p,d)*f+t*s;return d*cos(ph)*f;}
       void main(){vec2 p=wp.xz;vec2 g=W(p,normalize(vec2(1.,.4)),.045,1.3)*.7+W(p,normalize(vec2(-.3,1.)),.07,1.9)*.45+W(p,normalize(vec2(.7,-.6)),.13,2.6)*.3+W(p,normalize(vec2(-.9,-.2)),.21,3.4)*.18+W(p,normalize(vec2(.2,.98)),.37,4.1)*.1+W(p,normalize(vec2(-.6,.8)),.53,5.3)*.07+W(p,normalize(vec2(.95,-.3)),.71,6.2)*.05+W(p,normalize(vec2(-.4,-.92)),.97,7.4)*.035;
         vec3 n=normalize(vec3(-g.x*2.2,1.,-g.y*2.2));vec3 v=normalize(cpos-wp);float fr=pow(1.-max(dot(n,v),0.),3.);
-        vec3 deep=vec3(.07,.24,.28),shal=vec3(.16,.42,.42),sky=vec3(.6,.72,.8);vec3 c=mix(deep,shal,.45+.3*n.x)+sky*fr*.55;
-        vec3 h=normalize(sun+v);float sp=pow(max(dot(n,h),0.),900.)*.32+pow(max(dot(n,h),0.),90.)*.05;c+=vec3(1.,.93,.8)*sp;float lv=sin(p.x*.011+p.y*.007+t*.1)*sin(p.y*.013-p.x*.004)*.5+.5;c*=.9+.16*lv;
+        vec3 deep=vec3(.07,.24,.28),shal=vec3(.16,.42,.42),sky=wsky;vec3 c=mix(deep,shal,.45+.3*n.x)+sky*fr*.55;
+        vec3 h=normalize(sun+v);float sp=pow(max(dot(n,h),0.),900.)*.32+pow(max(dot(n,h),0.),90.)*.05;c+=wsp*sp;float lv=sin(p.x*.011+p.y*.007+t*.1)*sin(p.y*.013-p.x*.004)*.5+.5;c*=.9+.16*lv;
         float edge=edgeAt(wp.xz);if(edge<-60.)discard;float fn=sin(wp.x*.11+t*.9)*sin(wp.z*.13-t*.7)*.5+.5;float sw=sin(edge*.3-t*1.4+fn*2.)*.5+.5;float br=fract(sin(dot(floor(wp.xz*.12),vec2(12.9,78.2)))*437.5);float foam=smoothstep(14.,0.,edge)*(.55+.45*fn)+smoothstep(34.,12.,edge)*smoothstep(.7,.95,sw)*(.55+.45*br)+smoothstep(22.,12.,edge)*smoothstep(8.,12.,edge)*.18*fn;float dp=smoothstep(0.,120.,edge);
         c=mix(vec3(.3,.5,.44),c,smoothstep(0.,150.,edge));c=mix(vec3(.5,.56,.44),c,smoothstep(0.,22.,edge)*.7+.3);c=mix(c,vec3(.9,.92,.9),clamp(foam,0.,1.)*.8);if(ice>0.){vec2 q=p+vec2(sin(p.y*.006)*90.,sin(p.x*.005)*90.);float fl=sin(q.x*.0105+sin(q.y*.0071)*2.3)*sin(q.y*.0123+sin(q.x*.0083)*2.1)*.6+sin(q.x*.027-q.y*.021+sin(q.y*.019)*1.7)*.3+sin(q.x*.061+q.y*.053)*.1;float cr=(smoothstep(.99,1.,abs(sin(q.x*.05+fl*7.)))+smoothstep(.99,1.,abs(sin(q.y*.043-fl*6.))))*.25;float shore=smoothstep(60.,6.,edge+fl*25.);float k=clamp(shore+smoothstep(.22,.32,fl),0.,1.);c=mix(c,vec3(.78,.86,.9)-cr*.12,k*.85);foam=max(foam,k*1.5);}
-        gl_FragColor=vec4(pow(c,vec3(2.2)),mix(.45,.88,dp)+fr*.1+foam*.3);}`}));
+        gl_FragColor=vec4(pow(c*wl,vec3(2.2)),mix(.45,.88,dp)+fr*.1+foam*.3);}`}));
   WATER.renderOrder=1;WATER.visible=!!G.map.hasWater;WORLD.add(WATER);
   // bridges
   const bm=new THREE.MeshStandardMaterial({color:lin('#8b8880'),roughness:.9}),rm=new THREE.MeshStandardMaterial({color:lin('#5e625f'),roughness:.55,metalness:.4}),pm=new THREE.MeshStandardMaterial({color:lin('#7d7a72'),roughness:.95});
@@ -353,11 +353,25 @@ function makeObj(e){mats();if(e.kind==='cleric')return clericModel(e);if(!e.isB)
 function makeGhost(kind){mats();const T=G.teams[ME],o=new THREE.Group();const g=geoFor(kind,T.fac,T,'main');o.add(new THREE.Mesh(g,MAT.ghostOk));if(kind==='turret'||kind==='sam'){const m=new THREE.Mesh(geoFor(kind,T.fac,T,'gun'),MAT.ghostOk);m.position.y=6;o.add(m);}
   const ring=new THREE.Mesh(new THREE.RingGeometry(1,1.02,64).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x74d08f,transparent:true,opacity:.6}));o.add(ring);o.userData.ring=ring;SCN.add(o);return o;}
 
-const WX=[{sun:'#ffeccc',si:2.7,off:[-900,860,-620],sky:'#a9c4ec',gnd:'#9c8058',hi:1.2,fog:'#c4ae86',expo:.9,cl:.6,sr:2},
-  {sun:'#ffc283',si:3.0,off:[-1150,470,-520],sky:'#9fb2d4',gnd:'#7a5a3c',hi:1.12,fog:'#c09a72',expo:1.04,cl:.7,sr:2},
-  {sun:'#e4e9ef',si:1.15,off:[-450,1150,-300],sky:'#b7bfc8',gnd:'#625d51',hi:1.6,fog:'#a2a7a9',expo:.98,cl:0,sr:6}];
-function applyWeather(i){const w=WX[i]||WX[0];if(!SUN)return;SUN.color.copy(lin(w.sun));SUN.intensity=w.si;SUNOFF=w.off;HEMI.color.copy(lin(w.sky));HEMI.groundColor.copy(lin(w.gnd));HEMI.intensity=w.hi;
-  SCN.fog.color.copy(lin(w.fog));SUN.shadow.radius=w.sr;if(POST.mFinal)POST.mFinal.uniforms.expo.value=w.expo;POST.cloud=w.cl;
-  if(WATER&&WATER.material.uniforms.sun)WATER.material.uniforms.sun.value.set(-w.off[0],w.off[1],-w.off[2]).normalize().multiply(new THREE.Vector3(-1,1,-1));}
-const _applyW=applyWeather;applyWeather=function(i){_applyW(i);if(typeof G!=='undefined'&&G&&G.map&&G.map.theme==='snow'&&SUN){SUN.color.lerp(lin('#f4f7ff'),.6);HEMI.color.copy(lin('#c2d0e2'));HEMI.groundColor.copy(lin('#a3abb5'));SCN.fog.color.copy(lin(i==1?'#d9c9bd':'#cfd8e2'));HEMI.intensity*=1.08;}};
+// Battle conditions (skirmish menu "Conditions"): 0 clear day, 1 golden hour, 2 overcast, 3 dusk; -1 = random.
+// Each sets the sun (colour, strength, angle -> shadow length), the sky/ground ambient, the distance haze, the sky dome,
+// the water, and the final colour grade (gr = tint, sat = saturation). fx scales muzzle-flash/explosion light,
+// lamp lights street lamps, win lights city windows. Purely visual: nothing here touches the simulation.
+const WX=[{n:'Clear day',sun:'#ffeccc',si:2.7,off:[-900,860,-620],sky:'#a9c4ec',gnd:'#9c8058',hi:1.2,fog:'#c4ae86',fn:1800,ff:6200,expo:.9,cl:.6,sr:2,hor:[.86,.78,.64],zen:[.30,.50,.80],gr:[1,1,1],sat:1,wl:[1,1,1],ws:[.6,.72,.8],fx:1,lamp:.55,win:0,amb:[1,1,1]},
+  {n:'Golden hour',sun:'#ffc283',si:3.0,off:[-1150,470,-520],sky:'#9fb2d4',gnd:'#7a5a3c',hi:1.12,fog:'#c09a72',fn:1700,ff:6000,expo:1.04,cl:.7,sr:2,hor:[.98,.74,.48],zen:[.36,.48,.72],gr:[1.05,1,.9],sat:1.08,wl:[1,.9,.78],ws:[.85,.68,.5],fx:1.1,lamp:.6,win:0,amb:[1.03,.95,.86]},
+  {n:'Overcast',sun:'#e4e9ef',si:1.15,off:[-450,1150,-300],sky:'#b7bfc8',gnd:'#625d51',hi:1.6,fog:'#a2a7a9',fn:1300,ff:5200,expo:.98,cl:0,sr:6,hor:[.7,.72,.74],zen:[.52,.56,.62],gr:[.97,.99,1.03],sat:.82,wl:[.78,.82,.86],ws:[.62,.66,.7],fx:1.15,lamp:.6,win:0,amb:[.9,.92,.95]},
+  {n:'Dusk',sun:'#ffa868',si:2.5,off:[-1320,290,-560],sky:'#6a7aa8',gnd:'#40352f',hi:.95,fog:'#6c5a68',fn:1400,ff:5400,expo:1.08,cl:.4,sr:3,hor:[.95,.5,.32],zen:[.13,.18,.36],gr:[1,.95,.98],sat:.92,wl:[.5,.42,.5],ws:[.75,.45,.38],fx:2.1,lamp:1.6,win:1,amb:[.5,.48,.55]}];
+let WXI=0,WXG=null,WXFX=1;const WXCITY={value:0},WXAMB={value:new THREE.Vector3(1,1,1)};
+// "Random" is decided by the battle's seed, so it stays the same for the whole battle (and would match on every
+// machine of a multiplayer game if the condition is ever sent with the match start).
+function wxPick(i){i=i|0;if(i>=0&&i<WX.length)return i;if(i<0){const s=((typeof G!=='undefined'&&G&&G.seed)|0)>>>0;return (Math.imul(s^0x9e3779b9,2654435761)>>>16)%WX.length;}return 0;}
+function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){WXG=G;WXI=wxPick(i);}else if(typeof G==='undefined'||!G)WXI=wxPick(i);i=WXI;const w=WX[i];
+  SUN.color.copy(lin(w.sun));SUN.intensity=w.si;SUNOFF=w.off;HEMI.color.copy(lin(w.sky));HEMI.groundColor.copy(lin(w.gnd));HEMI.intensity=w.hi;
+  SCN.fog.color.copy(lin(w.fog));SCN.fog.near=w.fn;SCN.fog.far=w.ff;SUN.shadow.radius=w.sr;POST.cloud=w.cl;WXFX=w.fx;WXCITY.value=w.win;WXAMB.value.set(w.amb[0],w.amb[1],w.amb[2]);if(LAMPM)LAMPM.emissiveIntensity=w.lamp;
+  if(POST.mFinal){const F=POST.mFinal.uniforms;F.expo.value=w.expo;if(F.gr)F.gr.value.set(w.gr[0],w.gr[1],w.gr[2]);if(F.sat)F.sat.value=w.sat;}
+  if(window.SKY&&SKY.material.uniforms.hor){SKY.material.uniforms.hor.value.set(w.hor[0],w.hor[1],w.hor[2]);SKY.material.uniforms.zen.value.set(w.zen[0],w.zen[1],w.zen[2]);}
+  if(WATER&&WATER.material.uniforms.sun){const U=WATER.material.uniforms;U.sun.value.set(w.off[0],w.off[1],w.off[2]).normalize();if(U.wl){U.wl.value.set(w.wl[0],w.wl[1],w.wl[2]);U.wsky.value.set(w.ws[0],w.ws[1],w.ws[2]);U.wsp.value.copy(new THREE.Color(w.sun)).multiplyScalar(3/(w.wl[0]+w.wl[1]+w.wl[2]));}}
+  if(typeof G!=='undefined'&&G&&G.map&&G.map.theme==='snow'){const dk=i===3;SUN.color.lerp(lin('#f4f7ff'),dk?.2:.6);HEMI.color.copy(lin(dk?'#7486ad':'#c2d0e2'));HEMI.groundColor.copy(lin(dk?'#6a7286':'#a3abb5'));SCN.fog.color.copy(lin(i==1?'#d9c9bd':dk?'#8f8296':'#cfd8e2'));HEMI.intensity*=1.08;}
+  // the weather effects (rain, fog banks...) blend from this battle's haze, not from the previous battle's
+  if(typeof WXV!=='undefined'){WXV.base=null;WXV.k='clear';WXV.m=0;}}
 

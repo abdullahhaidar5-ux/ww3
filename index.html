@@ -369,7 +369,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div class="label">Difficulty</div>
         <div class="seg" id="diff"><button data-d="0" title="Slow to build and attack, small waves, no tricks">Easy</button><button data-d="1" class="on" title="A fair fight">Medium</button><button data-d="2" title="Fast, rich and cunning: early attacks, flanking, focus fire, pulls back damaged units">Hard</button></div>
         <div class="label">Conditions</div>
-        <div class="seg" id="wx"><button data-w="0" class="on">Clear day</button><button data-w="1">Golden hour</button><button data-w="2">Overcast</button></div>
+        <div class="seg" id="wx"><button data-w="0" class="on">Clear day</button><button data-w="1">Golden hour</button><button data-w="2">Overcast</button><button data-w="3" title="Low red sun, long shadows; gunfire and explosions light up the field">Dusk</button><button data-w="-1" title="A surprise: one of the conditions is picked when the battle starts">Random</button></div>
         <button class="big" id="start">Deploy vs AI</button>
         <button class="big ghost" id="sandbox" title="Unlimited money, every unit and building unlocked and fast to build, against a passive target enemy">Test Range</button>
       </div>
@@ -4806,6 +4806,10 @@ const POWERS={
 };
 // Every nation's own signature general power (unlocked like the others). Effects differ; cooldowns balance them.
 POWERS.nat={name:'National Power',desc:'',cd:200,r:150,nat:true};
+// Opening lull: no general power can be fired in the first 3 minutes of a battle. A power unlocked before then starts
+// charging until 3:00 (the button shows "Ready in …"). Stops game-deciding first-second strikes on a base that has
+// nothing but a truck and two riflemen (Partisan Uprising, Human Wave, Shahed/Bayraktar swarms, thermobaric strike).
+const POW_OPEN=180;
 const NATPOW={US:{name:'Shock and Awe',type:'strafe',cd:200,r:140,desc:'A-10 gun run: a line of cannon fire and bombs across the target'},
   TR:{name:'Bayraktar Swarm',type:'drones',n:4,cd:190,r:120,desc:'Four Kargu drones launch from your base and hunt around the target'},
   IL:{name:'Mossad Intelligence',type:'intel',cd:180,r:650,desc:'Reveal every enemy building for 25s and laser-mark enemies near the target (+25% damage taken)'},
@@ -5814,7 +5818,7 @@ function natPower(team,P,x,y){const T=G.teams[team],hq=hqOf(team),en=e=>!e.dead&
     case 'raid':{T.raidT=G.t+25*P.M;T.reveals.push({x,y,r:P.r,t:25*P.M});FXE('ping',[x|0,y|0,P.r],team);return true;}}
   return false;}
 function powCost(T,key){const w=T.pw[key];return !w?1:(w.lv||1)>=3?99:(w.lv||1)+1;}
-function buyPower(team,key){const T=G.teams[team];if(!POWERS[key])return false;const c=powCost(T,key);if(T.rank-T.spent<c)return false;T.spent+=c;if(!T.pw[key]){T.pw[key]={cd:0,lv:1};log(team,`${powInfo(key,T.fac).name} unlocked.`,'g');}else{T.pw[key].lv=(T.pw[key].lv||1)+1;log(team,`${powInfo(key,T.fac).name} upgraded to level ${T.pw[key].lv}.`,'g');}return true;}
+function buyPower(team,key){const T=G.teams[team];if(!POWERS[key])return false;const c=powCost(T,key);if(T.rank-T.spent<c)return false;T.spent+=c;if(!T.pw[key]){T.pw[key]={cd:Math.max(0,POW_OPEN-G.t),lv:1};log(team,`${powInfo(key,T.fac).name} unlocked.`,'g');}else{T.pw[key].lv=(T.pw[key].lv||1)+1;log(team,`${powInfo(key,T.fac).name} upgraded to level ${T.pw[key].lv}.`,'g');}return true;}
 // unique per-nation effects layered on the shared general powers (GPOW .fx)
 function gpowFx(team,P,x,y,dur){const fx=P.fx,inR=e=>Math.hypot(e.x-x,e.y-y)<P.r;
   if(fx==='mark'){for(const e of G.ents)if(!e.dead&&!e.isB&&!ally(e.team,team)&&inR(e))e.mark=G.t+dur;}
@@ -5903,7 +5907,13 @@ function updateVis(){buildHash();const N=G.teams.length;for(const e of G.ents)if
 const AIORDER=['barracks','factory','turret','tunnel','airfield','sam','uplink','shipyard','tunnel','turret','factory','barracks','sam','turret','turret'];
 function aiFindSpot(id,kind,anchor){const s=bstats(G.teams[id].fac,kind);
   if(STRUCT[kind].shore){for(let k=0;k<160;k++){const x=anchor.x+rnd(-1200,1200),y=anchor.y+rnd(-1200,1200);if(validSpot(id,kind,x,y))return[x,y];}return null;}
-  for(let k=0;k<110;k++){const a=rnd(0,6.28),r=rnd(130,k<50?430:720),x=anchor.x+Math.cos(a)*r,y=anchor.y+Math.sin(a)*r;if(validSpot(id,kind,x,y))return[x,y];}return null;}
+  // Keep the supply lanes open: the AI used to drop barracks/factories/turrets between its HQ and its supply field with
+  // only a 14 px gap between them, walling the trucks off (they ground against the wall and income stopped). For the
+  // first 80 tries a spot must stay clear of every HQ/depot-to-field lane and leave a truck-wide gap to its other
+  // buildings; after that any valid spot will do.
+  const h=s.size/2,lanes=[],own=[];for(const e of G.ents){if(e.dead||!e.isB||e.team!==id)continue;own.push(e);if(e.kind==='hq'||e.kind==='depot')for(const f of G.fields)if(f.amt>0&&dist(e,f)<750)lanes.push([e.x,e.y,f.x,f.y]);}
+  const roomy=(x,y)=>{for(const L of lanes)if(segDist(x,y,L[0],L[1],L[2],L[3])[0]<h+40)return false;for(const e of own){const g=(e.size+s.size)/2+44;if(Math.abs(e.x-x)<g&&Math.abs(e.y-y)<g)return false;}return true;};
+  for(let k=0;k<110;k++){const a=rnd(0,6.28),r=rnd(130,k<50?430:720),x=anchor.x+Math.cos(a)*r,y=anchor.y+Math.sin(a)*r;if((k>=80||roomy(x,y))&&validSpot(id,kind,x,y))return[x,y];}return null;}
 function aiExpand(T,mine,hq){const id=T.id,dz=mine.filter(e=>e.kind==='dozer'),hqs=mine.filter(e=>e.kind==='hq');
   if(hq&&dz.length<(G.t>150?2:1)&&T.credits>(dz.length?1400:800)&&!T.q.hq.some(i=>i.kind==='dozer')&&T.ai.t%4===0)enqueue(id,'dozer');
   T.ai.saveHq=false;if(mine.some(e=>e.isB&&e.nd&&e.built<1))return;const want=1+(G.t>230?1:0)+(G.t>700?1:0);
@@ -5963,7 +5973,11 @@ function aiNavyAct(T,mine){if(T.ai.t%2)return;const fleet=mine.filter(e=>!e.isB&
 // AI sends the nearest infantry to re-crew its own abandoned vehicles or capture the enemy's
 function aiSalvage(T,mine){if(T.ai.t%3)return;for(const v of G.ents){if(v.dead||!v.aband)continue;let best=null,bd=650*650;for(const u of mine){if(u.isB||u.dead||!isInf(u.s)||u.s.noAttack||u.kind==='hacker'||u.rout>G.t||u.inTun)continue;const d=(u.x-v.x)**2+(u.y-v.y)**2;if(d<bd){bd=d;best=u;}}if(best&&!(best.order&&best.order.salv===v.id)){setMove(best,v.x,v.y,'move');best.order.salv=v.id;}}}
 function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);const hq=mine.find(e=>e.kind==='hq');const anchor=hq||mine.find(e=>e.isB);if(!anchor)return;T.ai.t++;aiSalvage(T,mine);const en=aiFoe(T,anchor);
-  const harvs=mine.filter(e=>e.kind==='harv').length;if(hq&&harvs<3+(G.t>300?1:0)&&!T.q.hq.length)enqueue(id,'harv');
+  // HQ queue priorities: a supply truck if it has none, then a bulldozer if it has none (without one it can never build a
+  // barracks again: a raid that killed its dozer used to leave it buying trucks forever and never fielding an army),
+  // then trucks up to 3-4.
+  const harvs=mine.filter(e=>e.kind==='harv').length,dzN=mine.filter(e=>e.kind==='dozer').length;
+  if(hq&&!T.q.hq.length){if(!harvs)enqueue(id,'harv');else if(!dzN)enqueue(id,'dozer');else if(harvs<3+(G.t>300?1:0))enqueue(id,'harv');}
   aiExpand(T,mine,hq);
   {const fnd=mine.filter(e=>e.isB&&e.nd&&e.built<1);const dzs=mine.filter(e=>e.kind==='dozer');for(const b of fnd){if(dzs.some(u=>u.order&&u.order.type==='build'&&u.order.target===b))continue;const fr=dzs.filter(u=>!u.order||u.order.type!=='build').sort((p,q)=>dist(p,b)-dist(q,b))[0];if(fr){fr.order={type:'build',target:b};fr.path=null;}}}
   while(AIORDER[T.ai.bi]&&(!bldAllowed(T.fac,AIORDER[T.ai.bi])||AIORDER[T.ai.bi]==='shipyard'))T.ai.bi++;
@@ -5976,7 +5990,11 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   if(T.ai.t%15===8&&T.credits>2500){const poor=G.teams.filter(O=>O.id!==id&&!O.out&&ally(O.id,id)&&O.credits<500).sort((a,b)=>(a.ai?1:0)-(b.ai?1:0))[0];if(poor)giveMoney(id,poor.id,Math.min(1500,Math.round(T.credits*.3)));}
   aiNavyBuild(T,mine,anchor);
   const nk=T.ai.re?null:AIORDER[T.ai.bi];if(nk&&!reqMet(id,nk)){if(++T.ai.rq>45){T.ai.bi++;T.ai.rq=0;}}else T.ai.rq=0;if(nk&&reqMet(id,nk)&&!mine.some(e=>e.isB&&e.built<1)){const s=bstats(T.fac,nk);if(T.credits>=s.cost){const p=aiFindSpot(id,nk,anchor);if(p){placeBld(id,nk,p[0],p[1]);T.ai.bi++;T.ai.nf=0;}else if(STRUCT[nk].shore||++T.ai.nf>8){T.ai.bi++;T.ai.nf=0;}}}
-  const reserve=Math.max((nk&&reqMet(id,nk))?bstats(T.fac,nk).cost*(T.ai.bi<6?1:.6):0,T.ai.saveHq?bstats(T.fac,'hq').cost*.8:0,T.ai.nvW?bstats(T.fac,'shipyard').cost*.8:0);
+  // Saving up for the next building holds back unit purchases - but only for the Barracks and War Factory while the
+  // army is thin. A poor AI used to hoard for its Strike Center/airfield/expansion with an empty field and get wiped
+  // out; now it keeps fielding troops until it has a real army, and builds the extras from the surplus.
+  const armyN=mine.filter(e=>!e.isB&&!e.s.noAttack&&e.s.dom!=='naval'&&!['harv','hacker','dozer'].includes(e.kind)).length,thin=armyN<Math.max(6,Math.round(T.ai.wave*.5));
+  const reserve=Math.max((nk&&reqMet(id,nk)&&(!thin||nk==='barracks'||nk==='factory'))?bstats(T.fac,nk).cost*(T.ai.bi<6?1:.6):0,T.ai.saveHq&&!thin?bstats(T.fac,'hq').cost*.8:0,T.ai.nvW&&!thin?bstats(T.fac,'shipyard').cost*.8:0);
   const R=roster(T.fac),enemyAir=G.ents.filter(e=>e.team===en&&!e.isB&&e.s.dom==='air').length;
   for(const cat of ['shipyard','barracks','factory','airfield']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
     if(cat==='factory'){opts=enemyAir>=2?['aa','aa',...opts]:opts.filter(k=>k!=='aa'||Math.random()<.2);}
@@ -6190,11 +6208,11 @@ function initGfx(){
   cv.addEventListener('webglcontextrestored',()=>{window.GLLOST=0;try{for(const o of OBJ.values())SCN.remove(o);OBJ.clear();for(const k in GEO)delete GEO[k];if(G&&G.terrain)buildWorld();}catch(err){console.warn(err);}},false);
   R3.outputEncoding=THREE.sRGBEncoding;R3.toneMapping=THREE.NoToneMapping;R3.shadowMap.enabled=true;R3.shadowMap.autoUpdate=false;/* shadows are drawn once per frame, for the main pass only (renderPost) - not again for the depth pre-pass */R3.shadowMap.type=PH?THREE.PCFShadowMap:THREE.PCFSoftShadowMap;R3.autoClear=true;
   SCN=new THREE.Scene();SCN.background=lin('#c7b493');SCN.fog=new THREE.Fog(lin('#8f8a70'),1800,6200);
-  window.SKY=new THREE.Mesh(new THREE.SphereGeometry(7600,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{t:{value:0}},
+  window.SKY=new THREE.Mesh(new THREE.SphereGeometry(7600,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{t:{value:0},hor:{value:new THREE.Vector3(.86,.78,.64)},zen:{value:new THREE.Vector3(.30,.50,.80)}},
     vertexShader:`varying vec3 vd;void main(){vd=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-    fragmentShader:`uniform float t;varying vec3 vd;float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
-      void main(){float y=max(vd.y,0.);vec3 hor=vec3(.86,.78,.64),zen=vec3(.30,.50,.80);vec3 c=mix(hor,zen,pow(y,.55));
-        vec2 uv=vd.xz/(vd.y+.18)*1.6+vec2(t*.004,0.);float cl=n(uv)*.5+n(uv*2.1)*.3+n(uv*4.7)*.2;cl=smoothstep(.5,.78,cl)*smoothstep(.0,.25,y);c=mix(c,vec3(.97,.96,.93),cl*.85);c=mix(c,hor*.92,smoothstep(.12,0.,y));
+    fragmentShader:`uniform float t;uniform vec3 hor,zen;varying vec3 vd;float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+      void main(){float y=max(vd.y,0.);vec3 c=mix(hor,zen,pow(y,.55));
+        vec2 uv=vd.xz/(vd.y+.18)*1.6+vec2(t*.004,0.);float cl=n(uv)*.5+n(uv*2.1)*.3+n(uv*4.7)*.2;cl=smoothstep(.5,.78,cl)*smoothstep(.0,.25,y);c=mix(c,mix(vec3(.97,.96,.93),hor,.3)*(.45+.55*smoothstep(.1,.45,zen.b)),cl*.85);c=mix(c,hor*.92,smoothstep(.12,0.,y));
         gl_FragColor=vec4(pow(c,vec3(2.2))*1.6,1.);}`}));SKY.renderOrder=-10;SKY.frustumCulled=false;SCN.add(SKY);
   CAM=new THREE.PerspectiveCamera(38,1,40,9000);
   HEMI=new THREE.HemisphereLight(lin('#b4cbef'),lin('#4d3f2c'),1.0);SCN.add(HEMI);
@@ -6259,14 +6277,14 @@ function buildCity(){if(!G.map.cityBlds||!G.map.cityBlds.length)return;
 // shader from each building's base and top so they line up storey by storey.
 let CWMAT=null;function cityWallMat(){if(CWMAT)return CWMAT;const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.88});
   m.onBeforeCompile=sh=>{sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute vec4 bt;varying vec4 vBT;varying vec3 vCW;varying vec3 vCN;').replace('#include <begin_vertex>','#include <begin_vertex>\nvBT=bt;vCW=(modelMatrix*vec4(position,1.)).xyz;vCN=normalize(mat3(modelMatrix)*normal);');
-    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying vec4 vBT;varying vec3 vCW;varying vec3 vCN;float ch(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}').replace('#include <color_fragment>',`#include <color_fragment>
-      float vt=1.-abs(vCN.y);float y=vCW.y-vBT.x,H=vBT.y-vBT.x;
+    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform float cityW;float litW;varying vec4 vBT;varying vec3 vCW;varying vec3 vCN;float ch(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}').replace('#include <color_fragment>',`#include <color_fragment>
+      litW=0.;float vt=1.-abs(vCN.y);float y=vCW.y-vBT.x,H=vBT.y-vBT.x;
       if(vt>.5&&y>.2&&y<H-.4){vec2 tn=normalize(vec2(-vCN.z,vCN.x));float u=dot(vCW.xz,tn);bool tower=vBT.z>.5&&vBT.z<1.5,house=vBT.z>1.5&&vBT.z<2.5,arch=vBT.z>2.5;
         float FH=tower?8.:10.,WS=tower?6.:9.;float fy=floor(y/FH),fx=floor(u/WS);vec2 f=vec2(fract(u/WS),fract(y/FH));float h=ch(vec2(fx,fy)+vBT.w*91.);
         float wx=tower?.12:.26,wy0=tower?.18:.3,wy1=tower?.92:.82;if(arch){wx=.34;wy0=.35;wy1=.78;}
         float win=step(wx,f.x)*step(f.x,1.-wx)*step(wy0,f.y)*step(f.y,wy1);float fr=step(wx-.06,f.x)*step(f.x,1.-wx+.06)*step(wy0-.07,f.y)*step(f.y,wy1+.05)*(1.-win);
         float gnd=1.-step(FH,y);if(gnd>.5&&!tower){float door=step(.36,fract(u/(WS*3.)))*step(fract(u/(WS*3.)),.5)*step(y,7.5);win=max(win*step(2.,y),0.);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.16,.12,.09),door*.95);}
-        vec3 glass=mix(vec3(.07,.09,.11),vec3(.32,.38,.44),h*h)*(tower?1.15:1.);{vec3 Vg=normalize(cameraPosition-vCW);vec3 Rg=reflect(-Vg,normalize(vCN));float fg=.08+.92*pow(1.-clamp(dot(Vg,normalize(vCN)),0.,1.),4.);vec3 sk=mix(vec3(.55,.6,.66),vec3(.3,.45,.7),smoothstep(0.,.6,Rg.y));glass=mix(glass,sk*(tower?1.05:.9),fg*.75)+vec3(1.,.9,.7)*pow(max(dot(Rg,vec3(-.66,.57,-.46)),0.),90.)*.6;}if(h>.93)glass=vec3(.85,.7,.42);
+        vec3 glass=mix(vec3(.07,.09,.11),vec3(.32,.38,.44),h*h)*(tower?1.15:1.);{vec3 Vg=normalize(cameraPosition-vCW);vec3 Rg=reflect(-Vg,normalize(vCN));float fg=.08+.92*pow(1.-clamp(dot(Vg,normalize(vCN)),0.,1.),4.);vec3 sk=mix(vec3(.55,.6,.66),vec3(.3,.45,.7),smoothstep(0.,.6,Rg.y));glass=mix(glass,sk*(tower?1.05:.9),fg*.75)+vec3(1.,.9,.7)*pow(max(dot(Rg,vec3(-.66,.57,-.46)),0.),90.)*.6;}if(h>.93)glass=vec3(.85,.7,.42);litW=win*step(.5,fract(h*7.31))*(.6+.4*h);
         vec3 base=diffuseColor.rgb;diffuseColor.rgb=mix(diffuseColor.rgb,base*1.18+.04,fr*.8);diffuseColor.rgb=mix(diffuseColor.rgb,glass,win*.95);
         if(!tower&&h<.18)diffuseColor.rgb=mix(diffuseColor.rgb,base*.62+vec3(.05,.07,.04),win);
         float sill=step(wx-.04,f.x)*step(f.x,1.-wx+.04)*step(wy0-.1,f.y)*step(f.y,wy0-.03);diffuseColor.rgb=mix(diffuseColor.rgb,base*1.3+.05,sill*.9);
@@ -6275,8 +6293,8 @@ let CWMAT=null;function cityWallMat(){if(CWMAT)return CWMAT;const m=new THREE.Me
       else if(vt<.5){vec2 q=vCW.xz/9.,i0=floor(q),fq=fract(q);fq=fq*fq*(3.-2.*fq);float n=mix(mix(ch(i0),ch(i0+vec2(1,0)),fq.x),mix(ch(i0+vec2(0,1)),ch(i0+vec2(1,1)),fq.x),fq.y);
         vec2 q2=vCW.xz/2.3,j0=floor(q2),fj=fract(q2);fj=fj*fj*(3.-2.*fj);float n2=mix(mix(ch(j0),ch(j0+vec2(1,0)),fj.x),mix(ch(j0+vec2(0,1)),ch(j0+vec2(1,1)),fj.x),fj.y);
         vec3 roof=mix(diffuseColor.rgb,vec3(.6,.58,.55),.42);diffuseColor.rgb=roof*(.8+.14*n+.06*n2)*(1.-.18*smoothstep(.62,.8,n));}
-      if(vt>.5){diffuseColor.rgb*=.93;}`);};
-  m.customProgramCacheKey=()=>'citywall3';return CWMAT=m;}
+      if(vt>.5){diffuseColor.rgb*=.93;}`).replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\ntotalEmissiveRadiance+=vec3(1.,.62,.3)*litW*cityW*1.3;');sh.uniforms.cityW=WXCITY;};
+  m.customProgramCacheKey=()=>'citywall4';return CWMAT=m;}
 
 // Beyond the playable area the land carries on: the edge heights and colours are continued outward and roll up into
 // soft hills (or stay as open sea where the map edge is water), fading into the haze, so the map has no hard border.
@@ -6321,18 +6339,18 @@ function buildWorld(tc){
 
   // water
   const BX=Math.max(MAPW,MAPH)*.7,wg=new THREE.PlaneGeometry(MAPW+2*BX,MAPH+2*BX,1,1).rotateX(-Math.PI/2);wg.translate(MAPW/2,WL,MAPH/2);
-  WATER=new THREE.Mesh(wg,new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{t:{value:0},sun:{value:new THREE.Vector3(-.55,.55,-.4).normalize()},cpos:{value:new THREE.Vector3()},etex:{value:edgeTex()},esz:{value:new THREE.Vector2(EF_W,EF_H)},ice:{value:G.map.theme==='snow'?1:0}},
+  WATER=new THREE.Mesh(wg,new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{t:{value:0},sun:{value:new THREE.Vector3(-.55,.55,-.4).normalize()},cpos:{value:new THREE.Vector3()},etex:{value:edgeTex()},esz:{value:new THREE.Vector2(EF_W,EF_H)},ice:{value:G.map.theme==='snow'?1:0},wl:{value:new THREE.Vector3(1,1,1)},wsky:{value:new THREE.Vector3(.6,.72,.8)},wsp:{value:new THREE.Color(1,.93,.8)}},
     vertexShader:`varying vec3 wp;void main(){vec4 w=modelMatrix*vec4(position,1.);wp=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`,
-    fragmentShader:`uniform float t;uniform vec3 sun;uniform vec3 cpos;uniform sampler2D etex;uniform vec2 esz;uniform float ice;varying vec3 wp;
+    fragmentShader:`uniform float t;uniform vec3 sun;uniform vec3 cpos;uniform sampler2D etex;uniform vec2 esz;uniform float ice;uniform vec3 wl,wsky,wsp;varying vec3 wp;
       float edgeAt(vec2 p){vec2 uv=(p/${EF_R.toFixed(1)}+.5)/esz;return texture2D(etex,uv).r*255.-128.;}
       vec2 W(vec2 p,vec2 d,float f,float s){float ph=dot(p,d)*f+t*s;return d*cos(ph)*f;}
       void main(){vec2 p=wp.xz;vec2 g=W(p,normalize(vec2(1.,.4)),.045,1.3)*.7+W(p,normalize(vec2(-.3,1.)),.07,1.9)*.45+W(p,normalize(vec2(.7,-.6)),.13,2.6)*.3+W(p,normalize(vec2(-.9,-.2)),.21,3.4)*.18+W(p,normalize(vec2(.2,.98)),.37,4.1)*.1+W(p,normalize(vec2(-.6,.8)),.53,5.3)*.07+W(p,normalize(vec2(.95,-.3)),.71,6.2)*.05+W(p,normalize(vec2(-.4,-.92)),.97,7.4)*.035;
         vec3 n=normalize(vec3(-g.x*2.2,1.,-g.y*2.2));vec3 v=normalize(cpos-wp);float fr=pow(1.-max(dot(n,v),0.),3.);
-        vec3 deep=vec3(.07,.24,.28),shal=vec3(.16,.42,.42),sky=vec3(.6,.72,.8);vec3 c=mix(deep,shal,.45+.3*n.x)+sky*fr*.55;
-        vec3 h=normalize(sun+v);float sp=pow(max(dot(n,h),0.),900.)*.32+pow(max(dot(n,h),0.),90.)*.05;c+=vec3(1.,.93,.8)*sp;float lv=sin(p.x*.011+p.y*.007+t*.1)*sin(p.y*.013-p.x*.004)*.5+.5;c*=.9+.16*lv;
+        vec3 deep=vec3(.07,.24,.28),shal=vec3(.16,.42,.42),sky=wsky;vec3 c=mix(deep,shal,.45+.3*n.x)+sky*fr*.55;
+        vec3 h=normalize(sun+v);float sp=pow(max(dot(n,h),0.),900.)*.32+pow(max(dot(n,h),0.),90.)*.05;c+=wsp*sp;float lv=sin(p.x*.011+p.y*.007+t*.1)*sin(p.y*.013-p.x*.004)*.5+.5;c*=.9+.16*lv;
         float edge=edgeAt(wp.xz);if(edge<-60.)discard;float fn=sin(wp.x*.11+t*.9)*sin(wp.z*.13-t*.7)*.5+.5;float sw=sin(edge*.3-t*1.4+fn*2.)*.5+.5;float br=fract(sin(dot(floor(wp.xz*.12),vec2(12.9,78.2)))*437.5);float foam=smoothstep(14.,0.,edge)*(.55+.45*fn)+smoothstep(34.,12.,edge)*smoothstep(.7,.95,sw)*(.55+.45*br)+smoothstep(22.,12.,edge)*smoothstep(8.,12.,edge)*.18*fn;float dp=smoothstep(0.,120.,edge);
         c=mix(vec3(.3,.5,.44),c,smoothstep(0.,150.,edge));c=mix(vec3(.5,.56,.44),c,smoothstep(0.,22.,edge)*.7+.3);c=mix(c,vec3(.9,.92,.9),clamp(foam,0.,1.)*.8);if(ice>0.){vec2 q=p+vec2(sin(p.y*.006)*90.,sin(p.x*.005)*90.);float fl=sin(q.x*.0105+sin(q.y*.0071)*2.3)*sin(q.y*.0123+sin(q.x*.0083)*2.1)*.6+sin(q.x*.027-q.y*.021+sin(q.y*.019)*1.7)*.3+sin(q.x*.061+q.y*.053)*.1;float cr=(smoothstep(.99,1.,abs(sin(q.x*.05+fl*7.)))+smoothstep(.99,1.,abs(sin(q.y*.043-fl*6.))))*.25;float shore=smoothstep(60.,6.,edge+fl*25.);float k=clamp(shore+smoothstep(.22,.32,fl),0.,1.);c=mix(c,vec3(.78,.86,.9)-cr*.12,k*.85);foam=max(foam,k*1.5);}
-        gl_FragColor=vec4(pow(c,vec3(2.2)),mix(.45,.88,dp)+fr*.1+foam*.3);}`}));
+        gl_FragColor=vec4(pow(c*wl,vec3(2.2)),mix(.45,.88,dp)+fr*.1+foam*.3);}`}));
   WATER.renderOrder=1;WATER.visible=!!G.map.hasWater;WORLD.add(WATER);
   // bridges
   const bm=new THREE.MeshStandardMaterial({color:lin('#8b8880'),roughness:.9}),rm=new THREE.MeshStandardMaterial({color:lin('#5e625f'),roughness:.55,metalness:.4}),pm=new THREE.MeshStandardMaterial({color:lin('#7d7a72'),roughness:.95});
@@ -6525,13 +6543,27 @@ function makeObj(e){mats();if(e.kind==='cleric')return clericModel(e);if(!e.isB)
 function makeGhost(kind){mats();const T=G.teams[ME],o=new THREE.Group();const g=geoFor(kind,T.fac,T,'main');o.add(new THREE.Mesh(g,MAT.ghostOk));if(kind==='turret'||kind==='sam'){const m=new THREE.Mesh(geoFor(kind,T.fac,T,'gun'),MAT.ghostOk);m.position.y=6;o.add(m);}
   const ring=new THREE.Mesh(new THREE.RingGeometry(1,1.02,64).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x74d08f,transparent:true,opacity:.6}));o.add(ring);o.userData.ring=ring;SCN.add(o);return o;}
 
-const WX=[{sun:'#ffeccc',si:2.7,off:[-900,860,-620],sky:'#a9c4ec',gnd:'#9c8058',hi:1.2,fog:'#c4ae86',expo:.9,cl:.6,sr:2},
-  {sun:'#ffc283',si:3.0,off:[-1150,470,-520],sky:'#9fb2d4',gnd:'#7a5a3c',hi:1.12,fog:'#c09a72',expo:1.04,cl:.7,sr:2},
-  {sun:'#e4e9ef',si:1.15,off:[-450,1150,-300],sky:'#b7bfc8',gnd:'#625d51',hi:1.6,fog:'#a2a7a9',expo:.98,cl:0,sr:6}];
-function applyWeather(i){const w=WX[i]||WX[0];if(!SUN)return;SUN.color.copy(lin(w.sun));SUN.intensity=w.si;SUNOFF=w.off;HEMI.color.copy(lin(w.sky));HEMI.groundColor.copy(lin(w.gnd));HEMI.intensity=w.hi;
-  SCN.fog.color.copy(lin(w.fog));SUN.shadow.radius=w.sr;if(POST.mFinal)POST.mFinal.uniforms.expo.value=w.expo;POST.cloud=w.cl;
-  if(WATER&&WATER.material.uniforms.sun)WATER.material.uniforms.sun.value.set(-w.off[0],w.off[1],-w.off[2]).normalize().multiply(new THREE.Vector3(-1,1,-1));}
-const _applyW=applyWeather;applyWeather=function(i){_applyW(i);if(typeof G!=='undefined'&&G&&G.map&&G.map.theme==='snow'&&SUN){SUN.color.lerp(lin('#f4f7ff'),.6);HEMI.color.copy(lin('#c2d0e2'));HEMI.groundColor.copy(lin('#a3abb5'));SCN.fog.color.copy(lin(i==1?'#d9c9bd':'#cfd8e2'));HEMI.intensity*=1.08;}};
+// Battle conditions (skirmish menu "Conditions"): 0 clear day, 1 golden hour, 2 overcast, 3 dusk; -1 = random.
+// Each sets the sun (colour, strength, angle -> shadow length), the sky/ground ambient, the distance haze, the sky dome,
+// the water, and the final colour grade (gr = tint, sat = saturation). fx scales muzzle-flash/explosion light,
+// lamp lights street lamps, win lights city windows. Purely visual: nothing here touches the simulation.
+const WX=[{n:'Clear day',sun:'#ffeccc',si:2.7,off:[-900,860,-620],sky:'#a9c4ec',gnd:'#9c8058',hi:1.2,fog:'#c4ae86',fn:1800,ff:6200,expo:.9,cl:.6,sr:2,hor:[.86,.78,.64],zen:[.30,.50,.80],gr:[1,1,1],sat:1,wl:[1,1,1],ws:[.6,.72,.8],fx:1,lamp:.55,win:0,amb:[1,1,1]},
+  {n:'Golden hour',sun:'#ffc283',si:3.0,off:[-1150,470,-520],sky:'#9fb2d4',gnd:'#7a5a3c',hi:1.12,fog:'#c09a72',fn:1700,ff:6000,expo:1.04,cl:.7,sr:2,hor:[.98,.74,.48],zen:[.36,.48,.72],gr:[1.05,1,.9],sat:1.08,wl:[1,.9,.78],ws:[.85,.68,.5],fx:1.1,lamp:.6,win:0,amb:[1.03,.95,.86]},
+  {n:'Overcast',sun:'#e4e9ef',si:1.15,off:[-450,1150,-300],sky:'#b7bfc8',gnd:'#625d51',hi:1.6,fog:'#a2a7a9',fn:1300,ff:5200,expo:.98,cl:0,sr:6,hor:[.7,.72,.74],zen:[.52,.56,.62],gr:[.97,.99,1.03],sat:.82,wl:[.78,.82,.86],ws:[.62,.66,.7],fx:1.15,lamp:.6,win:0,amb:[.9,.92,.95]},
+  {n:'Dusk',sun:'#ffa868',si:2.5,off:[-1320,290,-560],sky:'#6a7aa8',gnd:'#40352f',hi:.95,fog:'#6c5a68',fn:1400,ff:5400,expo:1.08,cl:.4,sr:3,hor:[.95,.5,.32],zen:[.13,.18,.36],gr:[1,.95,.98],sat:.92,wl:[.5,.42,.5],ws:[.75,.45,.38],fx:2.1,lamp:1.6,win:1,amb:[.5,.48,.55]}];
+let WXI=0,WXG=null,WXFX=1;const WXCITY={value:0},WXAMB={value:new THREE.Vector3(1,1,1)};
+// "Random" is decided by the battle's seed, so it stays the same for the whole battle (and would match on every
+// machine of a multiplayer game if the condition is ever sent with the match start).
+function wxPick(i){i=i|0;if(i>=0&&i<WX.length)return i;if(i<0){const s=((typeof G!=='undefined'&&G&&G.seed)|0)>>>0;return (Math.imul(s^0x9e3779b9,2654435761)>>>16)%WX.length;}return 0;}
+function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){WXG=G;WXI=wxPick(i);}else if(typeof G==='undefined'||!G)WXI=wxPick(i);i=WXI;const w=WX[i];
+  SUN.color.copy(lin(w.sun));SUN.intensity=w.si;SUNOFF=w.off;HEMI.color.copy(lin(w.sky));HEMI.groundColor.copy(lin(w.gnd));HEMI.intensity=w.hi;
+  SCN.fog.color.copy(lin(w.fog));SCN.fog.near=w.fn;SCN.fog.far=w.ff;SUN.shadow.radius=w.sr;POST.cloud=w.cl;WXFX=w.fx;WXCITY.value=w.win;WXAMB.value.set(w.amb[0],w.amb[1],w.amb[2]);if(LAMPM)LAMPM.emissiveIntensity=w.lamp;
+  if(POST.mFinal){const F=POST.mFinal.uniforms;F.expo.value=w.expo;if(F.gr)F.gr.value.set(w.gr[0],w.gr[1],w.gr[2]);if(F.sat)F.sat.value=w.sat;}
+  if(window.SKY&&SKY.material.uniforms.hor){SKY.material.uniforms.hor.value.set(w.hor[0],w.hor[1],w.hor[2]);SKY.material.uniforms.zen.value.set(w.zen[0],w.zen[1],w.zen[2]);}
+  if(WATER&&WATER.material.uniforms.sun){const U=WATER.material.uniforms;U.sun.value.set(w.off[0],w.off[1],w.off[2]).normalize();if(U.wl){U.wl.value.set(w.wl[0],w.wl[1],w.wl[2]);U.wsky.value.set(w.ws[0],w.ws[1],w.ws[2]);U.wsp.value.copy(new THREE.Color(w.sun)).multiplyScalar(3/(w.wl[0]+w.wl[1]+w.wl[2]));}}
+  if(typeof G!=='undefined'&&G&&G.map&&G.map.theme==='snow'){const dk=i===3;SUN.color.lerp(lin('#f4f7ff'),dk?.2:.6);HEMI.color.copy(lin(dk?'#7486ad':'#c2d0e2'));HEMI.groundColor.copy(lin(dk?'#6a7286':'#a3abb5'));SCN.fog.color.copy(lin(i==1?'#d9c9bd':dk?'#8f8296':'#cfd8e2'));HEMI.intensity*=1.08;}
+  // the weather effects (rain, fog banks...) blend from this battle's haze, not from the previous battle's
+  if(typeof WXV!=='undefined'){WXV.base=null;WXV.k='clear';WXV.m=0;}}
 
 /* ================= 3D EFFECTS: particles, tracers, projectiles, decals, wrecks ================= */
 const PMAX=3500;const SHOCKS=[],FIRES=[];let shockI=0;
@@ -6555,9 +6587,9 @@ const FLOATS=[],PARTS=[],TRACERS=[],VPROJ=[],MARKERS=[],PLANES=[],WRECKS=[],PING
 function mkPoints(blend){const g=new THREE.BufferGeometry(),pos=new Float32Array(PMAX*3),col=new Float32Array(PMAX*3),sz=new Float32Array(PMAX),al=new Float32Array(PMAX);
   g.setAttribute('position',new THREE.BufferAttribute(pos,3).setUsage(THREE.DynamicDrawUsage));g.setAttribute('pcol',new THREE.BufferAttribute(col,3).setUsage(THREE.DynamicDrawUsage));
   g.setAttribute('size',new THREE.BufferAttribute(sz,1).setUsage(THREE.DynamicDrawUsage));g.setAttribute('alpha',new THREE.BufferAttribute(al,1).setUsage(THREE.DynamicDrawUsage));
-  const m=new THREE.ShaderMaterial({uniforms:{scale:{value:600},smk:{value:smokeTex()},hot:{value:blend===THREE.AdditiveBlending?1.:0.},dep:{value:null},sres:{value:new THREE.Vector2(1,1)},nf:{value:new THREE.Vector2(40,9000)},soft:{value:0}},transparent:true,depthWrite:false,blending:blend,
+  const m=new THREE.ShaderMaterial({uniforms:{scale:{value:600},smk:{value:smokeTex()},hot:{value:blend===THREE.AdditiveBlending?1.:0.},dep:{value:null},sres:{value:new THREE.Vector2(1,1)},nf:{value:new THREE.Vector2(40,9000)},soft:{value:0},amb:WXAMB},transparent:true,depthWrite:false,blending:blend,
     vertexShader:`uniform float scale;attribute float size;attribute float alpha;attribute vec3 pcol;varying float va;varying vec3 vc;varying float vr;void main(){va=alpha;vc=pcol;vr=fract(position.x*.137+position.z*.291);vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=min(220.,size*scale/-mv.z);gl_Position=projectionMatrix*mv;}`,
-    fragmentShader:`uniform sampler2D smk,dep;uniform float hot,soft;uniform vec2 sres,nf;float lz(float d){return nf.x*nf.y/(nf.y-(nf.y-nf.x)*d);}varying float va;varying vec3 vc;varying float vr;void main(){vec2 d=gl_PointCoord-.5;float an=vr*6.283;vec2 q=vec2(cos(an)*d.x-sin(an)*d.y,sin(an)*d.x+cos(an)*d.y)+.5;vec2 cell=vec2(step(.5,fract(vr*7.)),step(.5,fract(vr*13.)))*.5;float s=texture2D(smk,cell+clamp(q,0.,1.)*.5).r;float r=length(d)*2.;float a=va*smoothstep(.08,.62,s)*smoothstep(1.,.2,r+(s-.5)*.5);if(soft>.5){float sz=lz(texture2D(dep,gl_FragCoord.xy/sres).x),fz=lz(gl_FragCoord.z);a*=clamp((sz-fz)/16.,0.,1.);}vec3 c=vc*(hot>.5?(1.05+s*.9):(.62+s*.55)*1.5);gl_FragColor=vec4(pow(max(c,0.),vec3(2.2)),a);}`});
+    fragmentShader:`uniform sampler2D smk,dep;uniform float hot,soft;uniform vec2 sres,nf;uniform vec3 amb;float lz(float d){return nf.x*nf.y/(nf.y-(nf.y-nf.x)*d);}varying float va;varying vec3 vc;varying float vr;void main(){vec2 d=gl_PointCoord-.5;float an=vr*6.283;vec2 q=vec2(cos(an)*d.x-sin(an)*d.y,sin(an)*d.x+cos(an)*d.y)+.5;vec2 cell=vec2(step(.5,fract(vr*7.)),step(.5,fract(vr*13.)))*.5;float s=texture2D(smk,cell+clamp(q,0.,1.)*.5).r;float r=length(d)*2.;float a=va*smoothstep(.08,.62,s)*smoothstep(1.,.2,r+(s-.5)*.5);if(soft>.5){float sz=lz(texture2D(dep,gl_FragCoord.xy/sres).x),fz=lz(gl_FragCoord.z);a*=clamp((sz-fz)/16.,0.,1.);}vec3 c=vc*(hot>.5?vec3(1.05+s*.9):(.62+s*.55)*1.5*amb);gl_FragColor=vec4(pow(max(c,0.),vec3(2.2)),a);}`});
   const p=new THREE.Points(g,m);p.frustumCulled=false;p.renderOrder=5;SCN.add(p);return{g,pos,col,sz,al,p,m};}
 function smokeTex(){if(smokeTex.t)return smokeTex.t;const n=256,c=document.createElement('canvas');c.width=c.height=n;const x=c.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,n,n);
   const id=x.createImageData(n,n);let rn;const mkRn=()=>{rn=[];for(let o=0;o<5;o++){const S=4<<o,a=[];for(let i=0;i<(S+1)*(S+1);i++)a.push(Math.random());rn.push([S,a]);}};
@@ -6611,10 +6643,10 @@ function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.
   // pressure wave: a pale ring of dust racing outward along the ground; heavy hits leave a fire burning for a few seconds
   if(gr&&s>=14&&SHOCKS.length&&inView(x,y,.4)){const S=SHOCKS[shockI++%SHOCKS.length];S.t=0;S.d=big?.75:.45;S.r0=s*.5;S.r1=s*(big?6.5:4.2);S.a0=big?.6:.42;S.x=x;S.y=y;S.m.position.set(x,g+2.5,y);}
   if(gr&&(s>=20||big)&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9)){if(FIRES.length>=10)FIRES.shift();FIRES.push({x,y,g,t:0,d:big?9:rnd(4,6.5),r:Math.min(30,s*.45),big:!!big,acc:0});}
-  if(s>12&&LIGHTS.length){const L=LIGHTS[lightI++%LIGHTS.length];L.position.set(x,g+20,y);L.intensity=big?7:3.2;L.distance=big?600:300;L.userData.d=big?.8:.35;L.userData.t=0;}
+  if(s>12&&LIGHTS.length){const L=LIGHTS[lightI++%LIGHTS.length];L.position.set(x,g+20,y);L.intensity=(big?7:3.2)*WXFX;L.distance=big?600:300;L.userData.d=big?.8:.35;L.userData.t=0;}
   if(inView(x,y,.3)){if(s>14)shake=Math.min(18,shake+s/(big?5:13));if(big)flash=Math.min(.2,flash+.1);}}
 const FXH={
-  muz(x,y,h,a,s){sfxShot(x,y,s);if(s>=13){const gh=groundH(x,y),ca=Math.cos(a),sa=Math.sin(a);for(let i=0;i<10;i++){const b=a+rnd(-1.3,1.3),v=rnd(30,90);part({x:x+ca*4,y:y+sa*4,h:h+rnd(-1,2),vx:Math.cos(b)*v+ca*40,vy:Math.sin(b)*v+sa*40,vh:rnd(4,18),f:.25,rise:rnd(6,14),c:i%3?C_SMOKE:[.62,.6,.56],c2:[.55,.53,.5],ck:.3,s:rnd(8,13),g:16,d:rnd(1.8,2.8),a:.62});}for(let i=0;i<12;i++){const b=rnd(0,6.28),v=rnd(40,80);part({x,y,h:gh+2,vx:Math.cos(b)*v,vy:Math.sin(b)*v,f:.1,c:C_DUST,s:rnd(5,8),g:10,d:rnd(.8,1.3),a:.35});}part({x:x+ca*8,y:y+sa*8,h,s:s*3.2,d:.09,add:true,c:[3.2,1.8,.6]});}part({x,y,h,s:s*2.4,d:.07,add:true,c:[3,2,.9]});part({x:x+Math.cos(a)*s*.9,y:y+Math.sin(a)*s*.9,h,s:s*1.4,d:.05,add:true,c:[2.6,1.4,.5]});if(s>9&&LIGHTS.length&&inView(x,y,.1)){const L=LIGHTS[lightI++%LIGHTS.length];L.position.set(x,h+6,y);L.intensity=2.2;L.distance=160;L.userData.d=.08;L.userData.t=0;}if(s>9)for(let i=0;i<3;i++)part({x,y,h,vx:Math.cos(a)*rnd(20,50),vy:Math.sin(a)*rnd(20,50),c:C_SMOKE,s:rnd(4,7),g:12,d:rnd(.5,.9),a:.5});},
+  muz(x,y,h,a,s){sfxShot(x,y,s);if(s>=13){const gh=groundH(x,y),ca=Math.cos(a),sa=Math.sin(a);for(let i=0;i<10;i++){const b=a+rnd(-1.3,1.3),v=rnd(30,90);part({x:x+ca*4,y:y+sa*4,h:h+rnd(-1,2),vx:Math.cos(b)*v+ca*40,vy:Math.sin(b)*v+sa*40,vh:rnd(4,18),f:.25,rise:rnd(6,14),c:i%3?C_SMOKE:[.62,.6,.56],c2:[.55,.53,.5],ck:.3,s:rnd(8,13),g:16,d:rnd(1.8,2.8),a:.62});}for(let i=0;i<12;i++){const b=rnd(0,6.28),v=rnd(40,80);part({x,y,h:gh+2,vx:Math.cos(b)*v,vy:Math.sin(b)*v,f:.1,c:C_DUST,s:rnd(5,8),g:10,d:rnd(.8,1.3),a:.35});}part({x:x+ca*8,y:y+sa*8,h,s:s*3.2,d:.09,add:true,c:[3.2,1.8,.6]});}part({x,y,h,s:s*2.4,d:.07,add:true,c:[3,2,.9]});part({x:x+Math.cos(a)*s*.9,y:y+Math.sin(a)*s*.9,h,s:s*1.4,d:.05,add:true,c:[2.6,1.4,.5]});if(s>9&&LIGHTS.length&&inView(x,y,.1)){const L=LIGHTS[lightI++%LIGHTS.length];L.position.set(x,h+6,y);L.intensity=2.2*WXFX;L.distance=160;L.userData.d=.08;L.userData.t=0;}if(s>9)for(let i=0;i<3;i++)part({x,y,h,vx:Math.cos(a)*rnd(20,50),vy:Math.sin(a)*rnd(20,50),c:C_SMOKE,s:rnd(4,7),g:12,d:rnd(.5,.9),a:.5});},
   tr(x1,y1,h1,x2,y2,h2,flak){TRACERS.push({a:[x1,h1,y1],b:[x2,h2,y2],t:0,d:.09,c:flak?[3,1.5,.5]:[3,1.9,.7]});if(flak){part({x:x2,y:y2,h:h2,s:7,d:.12,add:true,c:C_FIRE});part({x:x2,y:y2,h:h2,s:5,g:7,d:.8,c:[.3,.29,.27],c2:[.5,.48,.45],ck:.3,a:.5});}
     else if(h2<10){if(ricoHit(x2,y2))ricochet(x1,y1,x2,y2);else if(Math.random()<.4)part({x:x2,y:y2,h:groundH(x2,y2)+1,vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(10,30),c:C_DUST,s:3,g:6,d:.4,a:.6});}},
   salvo(x,y,h,tx,ty,ang){const sx=Math.cos(ang),sy=Math.sin(ang),px=-sy,py=sx;
@@ -6722,7 +6754,7 @@ function fxUpdate(dt){
     if(burn&&!w.light&&LIGHTS.length){w.light=1;}
     if(w.t>50)w.o.position.y-=dt*4;if(w.t>56){w.done=true;SCN.remove(w.o);}}
   for(let i=WRECKS.length-1;i>=0;i--)if(WRECKS[i].done)WRECKS.splice(i,1);
-  {let k=0;const now=performance.now()/1000;for(const w of WRECKS){if(k>=WLIGHTS.length)break;if(w.t>=(w.big?30:24)||!inView(w.x,w.y,.1))continue;const L=WLIGHTS[k++],fl=.75+.25*Math.sin(now*17+w.x)*Math.sin(now*11.3+w.y),fade=Math.min(1,w.t*2)*Math.min(1,((w.big?30:24)-w.t)/6);L.position.set(w.x,groundH(w.x,w.y)+16,w.y);L.intensity=(w.big?3.2:2.2)*fl*fade;}for(;k<WLIGHTS.length;k++)WLIGHTS[k].intensity=0;}
+  {let k=0;const now=performance.now()/1000;for(const w of WRECKS){if(k>=WLIGHTS.length)break;if(w.t>=(w.big?30:24)||!inView(w.x,w.y,.1))continue;const L=WLIGHTS[k++],fl=.75+.25*Math.sin(now*17+w.x)*Math.sin(now*11.3+w.y),fade=Math.min(1,w.t*2)*Math.min(1,((w.big?30:24)-w.t)/6);L.position.set(w.x,groundH(w.x,w.y)+16,w.y);L.intensity=(w.big?3.2:2.2)*fl*fade*WXFX;}for(;k<WLIGHTS.length;k++)WLIGHTS[k].intensity=0;}
   for(const b of BODIES){b.t+=dt;for(const g of b.figs){const k=Math.max(0,Math.min(1,(b.t-g.dl)/.45));const e=k*k*(3-2*k);g.f.rotation.z=g.dir*1.5*e;g.f.rotation.x=g.rx*e;g.f.position.y=g.base.y-e*.6;if(k>0&&k<1&&!g.dust&&e>.9){g.dust=1;part({x:b.x,y:b.y,h:groundH(b.x,b.y)+1,vx:rnd(-12,12),vy:rnd(-12,12),c:C_DUST,s:rnd(4,6),g:6,d:.7,a:.4});}}
     if(b.t>14)b.o.position.y-=dt*2.5;if(b.t>17){b.done=true;SCN.remove(b.o);}}
   for(let i=BODIES.length-1;i>=0;i--)if(BODIES[i].done)BODIES.splice(i,1);
@@ -7322,29 +7354,37 @@ function orderFeedback(a){if(!G||!a||!Array.isArray(a.ids)||!(a.t==='go'||a.t===
 function encEnt(e,mem){let f=0,x=0;if(e.isB){if(e.built<1){f|=FLG.built;x=Math.round(e.built*100);}if(e.dis>G.t)f|=FLG.dis;if(e.charge)f|=FLG.chg;if(e.kind==='uplink'){x=Math.round(G.teams[e.team].charge/G.teams[e.team].sup.charge*100);}if(e.kind==='garrison'&&e.civ){x=e.civ.occ.length*16+e.civ.cap;}if(e.kind==='factory'&&G.teams[e.team].q.factory.length)f|=FLG.busy;if(mem)f|=FLG.mem;if(e.nd&&e.built<1)f|=FLG.nd;if(e.stall&&e.built<1)f|=FLG.stall;}
   else{if(e.cargo)f|=FLG.cargo;if(e.hacking)f|=FLG.hack;if(e.planting)f|=FLG.plant;if(e.landed)f|=FLG.land;if(e.hid)f|=FLG.hid;if(G.t-(e.mv||-9)<.25)f|=FLG.mov;if(e.building)f|=FLG.busy;if((e.supp||0)>.5)f|=FLG.supp;if(e.rout>G.t)f|=FLG.rout;else if(e.s&&canRout(e)&&(e.fear||0)>courageOf(e)*.65)f|=FLG.shak;if(e.mark>G.t)f|=FLG.mark;if(e.last>G.t)f|=FLG.last;if(e.aband)f|=FLG.aband;f|=(e.rank||0)<<9;{const m=moraleOf(e);x=m?(m.st==='fearless'?101:Math.round(m.v*20)*5):-1;}}
   return[e.id,KINDS.indexOf(e.kind),e.team,Math.round(e.x),Math.round(e.y),Math.round((e.va||0)*100),Math.round((e.tang||0)*100),Math.round(e.hp),Math.round(e.max),f,x];}
-function sendSnap(key,to,items,bit){NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+(bit?4+((key|0)%8)*.25:2);let c=NET.sc[key];if(!c||full)c=NET.sc[key]=new Map();
+function sendSnap(key,to,items,bit){NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+(bit?4+((key|0)%8)*.25:2);const old=NET.sc[key];let c=old;if(!c||full)c=NET.sc[key]=new Map();
   // the keep-alive list (ids of unchanged entities) only needs to beat the client's expiry, so it goes out every 0.5 s, not every tick
   const sendKeep=full||!(NET.kt[key]>G.t);if(sendKeep)NET.kt[key]=G.t+(bit?.4:0);
   const ch=[],keep=[],seen=new Set();for(const a of items){seen.add(a[0]);const s=a.join(',');if(c.get(a[0])===s){if(sendKeep){if(bit)keep.push(a[0]);else keep.push(a[0],a[11]|a[12]);}}else{c.set(a[0],s);ch.push(a);}}
-  for(const id of c.keys())if(!seen.has(id))c.delete(id);
+  const dr=[];if(old)for(const id of old.keys())if(!seen.has(id)){if(old===c)c.delete(id);dr.push(id);}
   const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
-  if(ch.length||!keep.length&&sendKeep)sendChunks('snap',base,ch);const per=bit?1400:700;for(let i=0;i<keep.length;i+=per)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+per)},bit?{kb:1}:{})).catch(()=>{});}
+  if(ch.length||!keep.length&&sendKeep||dr.length)sendChunks('snap',base,ch,snapDrops(dr));const per=bit?1400:700;for(let i=0;i<keep.length;i+=per)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+per)},bit?{kb:1}:{})).catch(()=>{});}
 // P2P: each entity's state is encoded and compared ONCE per tick (a version number per entity), then each player's
 // cache only stores version*2+remembered-bit - no per-player strings, so the host's cost barely grows with player count.
 function verItems(items){const V=NET.ver||(NET.ver=new Map());const st=NET.verSt=(NET.verSt|0)+1;
   for(const a of items){const s=a.slice(0,11).join(',');let r=V.get(a[0]);if(!r){r=[s,1,st];V.set(a[0],r);}else{if(r[0]!==s){r[0]=s;r[1]++;}r[2]=st;}a._v=r[1];}
   if(V.size>items.length*1.5+64)for(const [id,r] of V)if(r[2]!==st)V.delete(id);}
-function sendSnapP(k,to,items){const b=1<<k,key=k;NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+4+(k%8)*.25;let c=NET.sc[key];if(!c||full)c=NET.sc[key]=new Map();
+function sendSnapP(k,to,items){const b=1<<k,key=k;NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+4+(k%8)*.25;const old=NET.sc[key];let c=old;if(!c||full)c=NET.sc[key]=new Map();
   const sendKeep=full||!(NET.kt[key]>G.t);if(sendKeep)NET.kt[key]=G.t+.4;const ch=[],keep=[];let n=0;
   for(const a of items){if(!((a[11]|a[12])&b))continue;n++;const mem=!(a[11]&b),code=a._v*2+(mem?1:0);if(c.get(a[0])===code){if(sendKeep)keep.push(a[0]);continue;}
     c.set(a[0],code);const r=a.slice(0,11);r[9]=mem?(r[9]|FLG.mem):(r[9]&~FLG.mem);ch.push(r);}
-  if(c.size>n){const seen=new Set();for(const a of items)if((a[11]|a[12])&b)seen.add(a[0]);for(const id of c.keys())if(!seen.has(id))c.delete(id);}
+  const dr=[];if(old&&(old!==c||c.size>n)){const seen=new Set();for(const a of items)if((a[11]|a[12])&b)seen.add(a[0]);for(const id of old.keys())if(!seen.has(id)){if(old===c)c.delete(id);dr.push(id);}}
   const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
-  if(ch.length||!keep.length&&sendKeep)sendChunks('snap',base,ch);for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});}
+  // a remembered building that died out of this player's sight stays on their map until they see the spot ('gone' queue)
+  if(dr.length&&NET.gq&&NET.gq[k]&&NET.gq[k].length){const q=new Set(NET.gq[k].map(g=>g[0]));for(let i=dr.length-1;i>=0;i--)if(q.has(dr[i]))dr.splice(i,1);}
+  if(ch.length||!keep.length&&sendKeep||dr.length)sendChunks('snap',base,ch,snapDrops(dr));for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});}
 // P2P: one copy per player, so the two visibility masks are folded into that player's 'remembered' flag and dropped
 function forPlayer(items,k){const b=1<<k,out=[];for(const a of items){if(!((a[11]|a[12])&b))continue;const c=a.slice(0,11);c[9]=(a[11]&b)?(c[9]&~FLG.mem):(c[9]|FLG.mem);out.push(c);}return out;}
-function sendChunks(topic,base,items){let cur=[],len=0;const flush=()=>{if(cur.length){NET.game.emit(topic,{...base,e:cur}).catch(()=>{});cur=[];len=0;}};
-  for(const it of items){const s=JSON.stringify(it).length+1;if(len+s>3500)flush();cur.push(it);len+=s;}flush();}
+// first (optional): extra fields carried by the first message only (a snapshot's drop list); sent even with no items
+function sendChunks(topic,base,items,first){let cur=[],len=first?JSON.stringify(first).length:0;const flush=()=>{if(cur.length||first){NET.game.emit(topic,first?{...base,...first,e:cur}:{...base,e:cur}).catch(()=>{});first=null;cur=[];len=0;}};
+  for(const it of items){const s=JSON.stringify(it).length+1;if(len+s>3500&&cur.length)flush();cur.push(it);len+=s;}flush();}
+// Units that leave a player's view are named in that player's next snapshot ('dr': ids only, no position) so their
+// screen drops them at once - before, they lingered up to ~1 s until the client's own expiry noticed the silence.
+// Anything that just died is left out: its 'die' event (explosion, wreck) is still on its way and removes it.
+function snapDrops(dr){if(!dr.length)return null;let c=NET.dyC;if(!c||c.t!==G.t||c.n!==G.out.length){const s=new Set();for(const v of G.out)if(Array.isArray(v)&&v[0]==='die')s.add(v[1]);c=NET.dyC={t:G.t,n:G.out.length,s};}const dy=c.s;
+  const o=dr.filter(id=>!dy.has(id));return o.length?{dr:o.slice(0,400)}:null;}
 // map-wide state (resource fields, oil derricks, who is out) is built once per flush and sent to a player only when it
 // changed since what they last got, or once a second as a refresh - it was resent to everyone 4x a second
 function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0);NET.tgC={t:G.t,v:{fa,oil,out},js:JSON.stringify([fa,oil,out])};}
@@ -7455,10 +7495,11 @@ function applySnap(d){if(!G||!Array.isArray(d.e))return;const now=G.t;if(typeof 
   {const w=performance.now()/1000;if(!(d.e.length===0&&d.k)&&st>(NET.prevT||0)){if(NET.rxW&&st-(NET.prevT||0)<=1.5*Math.max(.1,NET.iv||.1)){const gap=Math.min(1.5,w-NET.rxW);if(gap>.02){NET.iaDev=NET.ia?(NET.iaDev||0)*.85+Math.abs(gap-NET.ia)*.15:0;NET.ia=NET.ia?NET.ia*.85+gap*.15:gap;}}NET.rxW=w;NET.prevT=st;}}
   if(Array.isArray(d.k)&&d.kb){let miss=0;for(const id of d.k){const e=G.byId.get(id);if(e){e.seenAt=st;e.seenL=now;}else miss++;}if(miss)askKeyframe();}
   else if(Array.isArray(d.k)){const b=1<<ME;for(let i=0;i+1<d.k.length;i+=2){if(!((d.k[i+1]|0)&b))continue;const e=G.byId.get(d.k[i]);if(e){e.seenAt=st;e.seenL=now;}}}
-  for(const a of d.e){if(!Array.isArray(a)||a.length<11)continue;if(a.length>=13){const b=1<<ME;if(!(a[11]&b)&&!(a[12]&b))continue;a[9]=(a[11]&b)?(a[9]&~FLG.mem):(a[9]|FLG.mem);}const [id,ki,team,x,y,va,ta,hp,mx_,f,ex]=a;const kind=KINDS[ki];if(!kind||!(team>=0&&team<G.teams.length))continue;
+  if(Array.isArray(d.dr))for(const id of d.dr){const e=G.byId.get(id);if(e&&!e.dead)e.gone=true;}
+  for(const a of d.e){if(!Array.isArray(a)||a.length<11)continue;if(a.length>=13){const b=1<<ME;if(!(a[11]&b)&&!(a[12]&b)){const o=G.byId.get(a[0]);if(o&&!o.dead)o.gone=true;continue;}a[9]=(a[11]&b)?(a[9]&~FLG.mem):(a[9]|FLG.mem);}const [id,ki,team,x,y,va,ta,hp,mx_,f,ex]=a;const kind=KINDS[ki];if(!kind||!(team>=0&&team<G.teams.length))continue;
     let e=G.byId.get(id);const isB=!!STRUCT[kind];
     if(!e){const T=G.teams[team];const s=isB?bstats(T.fac,kind):stats(T.fac,kind);e={id,isB,team,kind,s,x,y,va:va/100,tang:ta/100,hp,max:mx_,r:isB?s.size/2:s.r,size:isB?s.size:0,vs:new Array(G.teams.length).fill(true),fx:x,fy:y,tx:x,ty:y,it:1};G.ents.push(e);G.byId.set(id,e);}
-    else{e.fx=e.x;e.fy=e.y;e.tx=x;e.ty=y;e.it=0;if(e.team!==team&&!isB){e.team=team;const T=G.teams[team];try{e.s=stats(T.fac,kind);}catch(err){}}}
+    else{e.gone=false;e.fx=e.x;e.fy=e.y;e.tx=x;e.ty=y;e.it=0;if(e.team!==team&&!isB){e.team=team;const T=G.teams[team];try{e.s=stats(T.fac,kind);}catch(err){}}}
     if(!(e.fbT>G.t))e.tva=va/100;e.tta=ta/100;e.hp=hp;e.max=mx_;e.seenAt=st;e.seenL=now;e.ut=st;e.vis=true;
     if(isB){e.built=f&FLG.built?ex/100:1;e.disv=!!(f&FLG.dis);e.dis=0;e.chv=!!(f&FLG.chg);e.mem=!!(f&FLG.mem);e.busy=!!(f&FLG.busy);e.nd=!!(f&FLG.nd);e.stall=!!(f&FLG.stall);if(kind==='uplink')e.chg=ex/100;if(kind==='garrison'){e.occN=ex>>4;e.capN=ex&15;e.built=1;}e.ang=e.tta;e.x=x;e.y=y;}
     else{e.cargo=f&FLG.cargo?1:0;e.hacking=!!(f&FLG.hack);e.planting=!!(f&FLG.plant);e.landed=!!(f&FLG.land);e.hid=!!(f&FLG.hid);e.mvC=f&FLG.mov?1:0;e.building=!!(f&FLG.busy);e.supp=f&FLG.supp?1:0;e.routV=!!(f&FLG.rout);e.shakV=!!(f&FLG.shak);e.markV=!!(f&FLG.mark);e.lastV=!!(f&FLG.last);e.aband=f&FLG.aband?1:0;e.rank=(f>>9)&3;e.mor=ex;}}}
@@ -7466,7 +7507,7 @@ function clientTick(dt){G.t+=dt;const now=G.t;
   const P=Math.max(.1,Math.min(.6,Math.max(NET.iv||.1,(NET.ia||NET.iv||.2)+2*(NET.iaDev||0))));
   for(const e of G.ents){if(e.isB)continue;const it=(e.it||0)+dt/P;e.it=it;if(it<=1){e.x=e.fx+(e.tx-e.fx)*it;e.y=e.fy+(e.ty-e.fy)*it;}else if(e.mvC&&e.ut===NET.lastSnapT){const o=Math.min(it-1,.25/P);e.x=e.tx+(e.tx-e.fx)*o;e.y=e.ty+(e.ty-e.fy)*o;}else{e.x=e.tx;e.y=e.ty;}e.va=lerpA(e.va,e.tva,dt*10);e.tang=lerpA(e.tang,e.tta,dt*10);if(e.mvC)e.mv=now;}
   const ttl=Math.max(.9,(NET.iv||.2)*2.6),ref=NET.lastSnapT||0;for(const e of G.ents){const sl=now-(e.seenL==null?now:e.seenL);if(e.isB){if(!e.mem&&(ref-e.seenAt>Math.max(3.2,ttl*2)||sl>12))e.gone=true;}else if(ref-e.seenAt>ttl||sl>8)e.gone=true;}
-  if(G.ents.some(e=>e.gone)){for(const e of G.ents)if(e.gone){G.byId.delete(e.id);}G.ents=G.ents.filter(e=>!e.gone);G.sel=G.sel.filter(e=>!e.gone);}}
+  if(G.ents.some(e=>e.gone)){for(const e of G.ents)if(e.gone&&G.byId.get(e.id)===e){G.byId.delete(e.id);}G.ents=G.ents.filter(e=>!e.gone);G.sel=G.sel.filter(e=>!e.gone);}}
 function applyEvents(d){if(!d||!Array.isArray(d.e))return;for(const v of d.e){if(!Array.isArray(v))continue;const [type,...args]=v;if(!FXH[type]||type==='end'&&false)continue;
   if(type==='die'||type==='gone'){const e=G.byId.get(args[0]);if(e){e.dead=true;e.gone=true;G.byId.delete(e.id);if(G.sel.includes(e))G.sel=G.sel.filter(x=>x!==e);}}
   if(type==='log'&&args[0]!==ME)continue;try{FXH[type](...args);}catch(e){}}}
@@ -8871,8 +8912,8 @@ function initPost(){try{
     fragmentShader:`uniform sampler2D tex;varying vec2 vUv;void main(){vec3 c=texture2D(tex,vUv).rgb;if(!(c.r==c.r&&c.g==c.g&&c.b==c.b)||max(c.r,max(c.g,c.b))>1e4)c=vec3(0.);c=min(c,vec3(60.));float l=dot(c,vec3(.2126,.7152,.0722));gl_FragColor=vec4(c*smoothstep(.95,2.6,l),1.);}`});
   POST.mBlur=new THREE.ShaderMaterial({uniforms:{tex:{value:null},dir:{value:new THREE.Vector2()}},vertexShader:FSV,depthTest:false,depthWrite:false,
     fragmentShader:`uniform sampler2D tex;uniform vec2 dir;varying vec2 vUv;void main(){vec4 c=texture2D(tex,vUv)*.227;c+=texture2D(tex,vUv+dir*1.385)*.316;c+=texture2D(tex,vUv-dir*1.385)*.316;c+=texture2D(tex,vUv+dir*3.231)*.07;c+=texture2D(tex,vUv-dir*3.231)*.07;gl_FragColor=c;}`});
-  POST.mFinal=new THREE.ShaderMaterial({uniforms:{tex:{value:null},b1:{value:null},b2:{value:null},t:{value:0},flash:{value:0},res:{value:new THREE.Vector2(1,1)},expo:{value:.92}},vertexShader:FSV,depthTest:false,depthWrite:false,
-    fragmentShader:`uniform sampler2D tex,b1,b2,ao;uniform float t,flash,expo,aoK,fogK;uniform vec2 res;varying vec2 vUv;
+  POST.mFinal=new THREE.ShaderMaterial({uniforms:{tex:{value:null},b1:{value:null},b2:{value:null},t:{value:0},flash:{value:0},res:{value:new THREE.Vector2(1,1)},expo:{value:.92},gr:{value:new THREE.Vector3(1,1,1)},sat:{value:1}},vertexShader:FSV,depthTest:false,depthWrite:false,
+    fragmentShader:`uniform sampler2D tex,b1,b2,ao;uniform float t,flash,expo,aoK,fogK,sat;uniform vec3 gr;uniform vec2 res;varying vec2 vUv;
       vec3 aces(vec3 x){x*=.6;return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
       float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
       vec3 okc(vec3 c){return (c.r==c.r&&c.g==c.g&&c.b==c.b&&max(c.r,max(c.g,c.b))<1e4)?c:vec3(.5);}
@@ -8880,8 +8921,8 @@ function initPost(){try{
         vec3 n=texture2D(tex,vUv+vec2(px.x,0.)).rgb+texture2D(tex,vUv-vec2(px.x,0.)).rgb+texture2D(tex,vUv+vec2(0.,px.y)).rgb+texture2D(tex,vUv-vec2(0.,px.y)).rgb;
         c=c+(c-n*.25)*.35;vec4 oc4=texture2D(ao,vUv);vec3 oc=oc4.rgb;c*=mix(1.,oc.r,aoK)*mix(1.,oc.g,step(.01,aoK));float fgv=smoothstep(.05,.8,oc.b)*fogK;float lf=dot(c,vec3(.2126,.7152,.0722));c=mix(c,mix(vec3(lf),c,.55)*vec3(.58,.57,.58),fgv*.9);c=mix(c,vec3(.62,.5,.36)*(.8+.4*lf),smoothstep(.32,.95,oc4.a)*.42*step(.01,aoK));
         vec3 bl=okc(texture2D(b1,vUv).rgb)*.75+okc(texture2D(b2,vUv).rgb)*.9;bl=min(bl,vec3(8.));c+=bl*.5;
-        c*=expo*(1.+flash*1.5);c=aces(c);
-        float l=dot(c,vec3(.299,.587,.114));c=mix(vec3(l),c,.78);c=mix(c*vec3(.95,.98,1.04),c,smoothstep(.05,.45,l));c=mix(c,c*vec3(1.02,1.,.95),.6);
+        c*=expo*gr*(1.+flash*1.5);c=aces(c);
+        float l=dot(c,vec3(.299,.587,.114));c=mix(vec3(l),c,.78*sat);c=mix(c*vec3(.95,.98,1.04),c,smoothstep(.05,.45,l));c=mix(c,c*vec3(1.02,1.,.95),.6);
         c=pow(c,vec3(1./2.2));
         c=(c-.5)*1.1+.5;c+=vec3(.012,.004,-.012)*(1.-l)+vec3(.03,.012,-.02)*l;
         vec2 q=vUv-.5;c*=1.-dot(q,q)*.75;

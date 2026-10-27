@@ -61,7 +61,8 @@ A task that truly spans two squads goes to one agent that owns both rows for tha
    `git fetch origin main`, rebase if needed, rerun the gate if anything came in, and push to `main`. If pushing
    to `main` is impossible, push `orch/<date>` and say so in the report. Never force-push.
 9. **Record.** Move finished items to "Done" in `BACKLOG.md` (date + one line each). Add anything the agents
-   discovered as new items under the right squad. Append the cycle to `orch/LOG.md`. Then refresh the **Command
+   discovered as new items under the right squad. Append the cycle to `orch/LOG.md`. Update the status tags in `orch/ROADMAP.md` (shipped → [done], started →
+   [doing], new big items added in player terms). Then refresh the **Command
    Board** (Abdullah's phone view of everything): `python3 orch/board.py`, then with the Artifact tool `action:
    "read"` url `https://claude.ai/artifact/UENjCQzdzHCzYmqQQEuJLx`, then publish `file_path` = the absolute path of
    `orch/board.html` with that same `url` (no `icon`). Commit and push these too. The board is generated only from
