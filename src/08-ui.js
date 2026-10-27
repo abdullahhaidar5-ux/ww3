@@ -4,8 +4,9 @@ const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse';
 function log(team,msg,kind){FXE('log',[team,msg,kind||'']);}
 function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
-  // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line fades by itself
-  const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;d.addEventListener('animationend',()=>d.remove());el.append(d);while(el.children.length>4)el.firstChild.remove();}
+  // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
+  // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
+  const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},7000);el.append(d);while(el.children.length>4)el.firstChild.remove();}
 function endGame(winner,reason){if(!G||G.over)return;if(MODE==='host'&&G.out){G.out.push(['end',winner]);NET.evT=0;}showEnd(winner,reason);}
 function rivals(){return G.teams.filter(T=>!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}

@@ -189,9 +189,8 @@ body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);ove
 #net b{color:var(--ok);font-weight:500}
 /* Battle messages: a short feed over the battlefield's top-left corner; each line fades out on its own */
 #log{position:absolute;z-index:4;left:max(8px,env(safe-area-inset-left,0px));top:max(8px,env(safe-area-inset-top,0px));max-width:min(30vw,400px);display:flex;flex-direction:column;align-items:flex-start;gap:2px;font-size:11.5px;line-height:1.3;pointer-events:none}
-#log div{color:#c6d1cb;background:rgba(8,11,10,.62);border-left:2px solid #4a5a52;padding:2px 7px;text-shadow:0 1px 2px #000;animation:logf 9s ease-out forwards}
+#log div{color:#c6d1cb;background:rgba(8,11,10,.62);border-left:2px solid #4a5a52;padding:2px 7px;text-shadow:0 1px 2px #000;transition:opacity .6s ease-out}#log div.out{opacity:0}
 #log div.w,#log div.bad{color:#ffb4a8;border-left-color:var(--warn)} #log div.g{color:#c9f5d6;border-left-color:var(--ok)}
-@keyframes logf{0%{opacity:0;transform:translateY(-3px)}4%{opacity:1;transform:none}78%{opacity:1}100%{opacity:0}}
 #mode:not([hidden])~#log{top:calc(max(10px,env(safe-area-inset-top,0px)) + 40px)}
 #app.mmpeek #log{top:calc(max(8px,env(safe-area-inset-top,0px)) + 112px)}
 /* ---------- Command bar: docked along the bottom like Generals. Left: minimap · centre: command card · right: money, strike, rank, selection ---------- */
@@ -7735,8 +7734,9 @@ const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse';
 function log(team,msg,kind){FXE('log',[team,msg,kind||'']);}
 function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
-  // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line fades by itself
-  const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;d.addEventListener('animationend',()=>d.remove());el.append(d);while(el.children.length>4)el.firstChild.remove();}
+  // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
+  // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
+  const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},7000);el.append(d);while(el.children.length>4)el.firstChild.remove();}
 function endGame(winner,reason){if(!G||G.over)return;if(MODE==='host'&&G.out){G.out.push(['end',winner]);NET.evT=0;}showEnd(winner,reason);}
 function rivals(){return G.teams.filter(T=>!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
