@@ -39,7 +39,6 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   Cloudflare and on a PC as a "dedicated server" (Node, `tools/Dedicated server.cmd`, no window); lobby lets the host
   pick "Host on my PC (browser)" / "Dedicated PC server" / "Cloudflare". Cloudflare always does matchmaking + relays.
   Benchmark the largest battle each can sustain (8 players, late game) and report it.
-- _(none open — cycle 4 shipped the artifact build and republished it)_
 
 ## Questions for Abdullah
 
