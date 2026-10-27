@@ -80,8 +80,8 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [check] Infantry helmet/kit variety beyond v68 tone variation.
 
 **UI/UX & controls** (`08-ui`, `06-view`)
-- [open] **PAUSED by Abdullah 2026-10-26 19:35 (work saved on branch `orch/wip-loading-screen`, unbuilt/untested;
-  ORCH: don't take until he says) — Generals-style loading screen with progress, faster battle start (Test Range is
+- [open] **IN PROGRESS (side lane, resumed 19:46 — Abdullah: "Test range on mobile is way too slow, fix now"; from branch
+  `orch/wip-loading-screen`; ORCH: don't take) — phone speed first: Generals-style loading screen with progress, faster battle start (Test Range is
   slow), and documented military quotes matched to each of the 18 factions.**
 - [open] **PAUSED by Abdullah 2026-10-26 19:35 (not started; ORCH: don't take until he says) — intuitive phone controls.** Abdullah: "make the mobile
   controls more intuitive". One-finger drag scrolls (Maps-app style), long-press+drag box-selects, tap selects/orders
