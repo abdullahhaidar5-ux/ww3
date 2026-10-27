@@ -2,7 +2,7 @@
 // Address of the World War 3 servers (server/ in the repo, Cloudflare), e.g. 'https://ww3-servers.<name>.workers.dev'.
 // Empty = no servers: the online edition works exactly as before (public PeerJS broker, P2P only). Read by the
 // online-edition shim in the page shell (game list, relay rooms, TURN logins); unused in the claude.ai artifact.
-const WW3_SERVER_URL='';
+const WW3_SERVER_URL='https://ww3-servers.abdullah-haidar5.workers.dev';
 const NET={room:null,user:null,game:null,code:null,opp:null,hostPeer:null,myPeer:null,snapT:0,bT:0,evT:0,teamT:0,helloI:null,names:{}};
 const FLG={built:1,cargo:2,dis:4,chg:8,hack:16,plant:32,land:64,hid:128,mem:256,mov:2048,busy:4096,nd:8192,stall:16384,supp:32768,mark:65536,rout:131072,shak:262144,last:524288,aband:1048576};
 // Multiplayer messages need at least Contributor access to this game: anyone the owner invited from the Share menu
