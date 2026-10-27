@@ -139,6 +139,9 @@ try {
   Bp.hello('RU', 'tokbobby01');
   check(!!(await A.wait(([t, d]) => t === 'blob' && d.seats.length === 2 && d.seats[1].f === 'RU')), 'the owner sees the new player and their nation');
   check(!!(await Bp.wait(([t, d]) => t === 'blob' && d.own === 0 && d.you === 1)), 'the joiner gets the lobby state too (not owner, seat 1)');
+  { const n0 = Bp.got.filter(([t]) => t === 'blob').length; Bp.hello('RU', 'tokbobby01');
+    await Bp.wait(() => Bp.got.filter(([t]) => t === 'blob').length > n0, 3000);
+    check(Bp.got.filter(([t]) => t === 'blob').length > n0, 'every new greeting (hi with a new n) is answered with the lobby state again'); }
   Bp.emit('bset', { ais: [{ f: 'CN', d: 2, tm: 0 }], start: 1 });
   await sleep(500);
   check(!Bp.got.some(([t]) => t === 'start') && (A.last('blob') || {}).seats.length === 2, 'only the owner can configure or start');
@@ -159,6 +162,12 @@ try {
   A.emit('bset', { start: 1 });
   const sA = await A.wait(([t]) => t === 'start', 15000), sB = await Bp.wait(([t]) => t === 'start', 15000);
   check(!!(sA && sB && sA[1].sv === 1 && sA[1].slot === 0 && sB[1].slot === 1 && sA[1].facs.join() === 'US,RU,CN' && sA[1].seed === sB[1].seed), 'Start: each player gets "start" with sv:1 and their slot (0 and 1), same seed, nations US RU CN');
+  // the battle is held until every player's loading screen has closed (presence rd:1), at most 20 s
+  await sleep(1200);
+  check(!flat(A).some(([t]) => t === 'snap') && !flat(Bp).some(([t]) => t === 'snap'), 'after Start the battle waits for the players\' loading screens (no snapshots before rd:1)');
+  A.presence({ rd: 1 }); await sleep(600);
+  check(!flat(A).some(([t]) => t === 'snap'), '...still waiting while one player is loading');
+  Bp.presence({ rd: 1 });
   // battle traffic
   const tb = await A.wait(([t, d]) => t === 'b' && (d.m || []).some(([tt]) => tt === 'team'), 15000);
   check(!!tb, 'the server sends bundles ("b") with team panels');
