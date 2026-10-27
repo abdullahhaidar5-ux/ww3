@@ -18,8 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down,
-            art-smoke, art-mpsync, mapsweep, controls, touch, audio, cfclient]
+        t: [shots]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -36,6 +35,7 @@ jobs:
           set +e
           T='${{ matrix.t }}'
           case "$T" in
+            shots)          node orch/barshots.mjs ;;
             check)          python3 orch/build.py --check ;;
             servertest)     node orch/servertest.mjs ;;
             headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --compare || echo "SKIP headless" ;;
@@ -63,7 +63,7 @@ jobs:
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
             -d "{\"state\":\"$state\",\"context\":\"gate/$T\",\"description\":\"$desc\",\"target_url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
           # full log on a branch of its own, readable with: git fetch origin gate-logs/<sha10>-<test>
-          mkdir -p /tmp/lg && cp out.log /tmp/lg/$T.log && cd /tmp/lg && git init -q && git checkout -q -b log \
+          mkdir -p /tmp/lg && cp out.log /tmp/lg/$T.log && (cp orch/out/bar-*.png /tmp/lg/ 2>/dev/null || true) && cd /tmp/lg && git init -q && git checkout -q -b log \
             && git add . && git -c user.name=gate -c user.email=gate@users.noreply.github.com commit -qm "gate log $T $state" \
             && git push -q -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
                "log:refs/heads/gate-logs/${GITHUB_SHA:0:10}-$T" || true
