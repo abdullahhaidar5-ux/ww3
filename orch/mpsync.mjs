@@ -218,6 +218,12 @@ async function main() {
   await waitFor(client, () => MODE === 'client' && G && G.teams && G.teams.length > 1, null, 300000, 'the client to enter the battle');
   const cInfo = await client.evaluate(() => ({ me: ME, n: G.teams.length, map: G.mapKey }));
   console.log(`[${secs()}] battle: ${facs.join(' vs ')} on ${cInfo.map}; client is slot ${cInfo.me}`);
+  // the battle starts behind a loading screen (terrain, shader warm-up, first frame drawn underneath): wait for both
+  // pages to finish it, as players would, before the test drives the clocks (otherwise the client's last loading steps
+  // land at a random point inside the measured window and it looks like a lagging client)
+  for (const [p, who] of [[host, 'host'], [client, 'client']])
+    await waitFor(p, () => typeof G !== 'undefined' && G && G.terrain && !window.LOADING, null, 600000, `the ${who} to finish its loading screen`);
+  console.log(`[${secs()}] both pages finished loading`);
   if (cInfo.me !== 1) fail('client got slot ' + cInfo.me + ', expected 1');
 
   // ---- take over the clocks: stop both render loops; the host's own side plays as an easy AI ----
