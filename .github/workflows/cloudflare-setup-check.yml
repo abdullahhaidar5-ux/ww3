@@ -1,0 +1,25 @@
+# Checks that Abdullah's Cloudflare connection is set up, through the same phone approval the server deploys use.
+# Changes nothing: it only asks Cloudflare "is this token valid, and does this account exist?".
+name: Cloudflare setup check
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/cloudflare-setup-check.yml']
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    environment: cloudflare
+    steps:
+      - name: Check the Cloudflare token and account
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CF_TOKEN" ];   then echo "::error::Missing secret CLOUDFLARE_API_TOKEN in the 'cloudflare' environment"; exit 1; fi
+          if [ -z "$CF_ACCOUNT" ]; then echo "::error::Missing secret CLOUDFLARE_ACCOUNT_ID in the 'cloudflare' environment"; exit 1; fi
+          t=$(curl -s -H "Authorization: Bearer $CF_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify)
+          echo "$t" | grep -q '"status":"active"' || { echo "::error::Cloudflare says the API token is not valid/active"; exit 1; }
+          a=$(curl -s -H "Authorization: Bearer $CF_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT")
+          echo "$a" | grep -q '"success":true' || { echo "::error::The token works but can't see account $CF_ACCOUNT - check the Account ID"; exit 1; }
+          echo "Cloudflare setup OK: token active, account found. Server deploys are ready to approve."
