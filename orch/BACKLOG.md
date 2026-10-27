@@ -24,7 +24,7 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
   band music; Abdullah can't record — search free archives (Commons, Internet Archive, Freesound, folk archives) for
   freely licensed real latmiyas; optionally draft a permission request he can send to a reciter. Likely mix: real
   latmiya for menu/calm, military band for battle. Religious and traditional pieces only — no armed-group anthems.
-- [open] **IN PROGRESS (side lane, restarted 19:36 — Abdullah: "do this now"; ORCH: don't take it; deploy via Cloudflare Workers Builds + merge-to-approve, no tokens) — Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
+- [open] **Stage 1 SHIPPED to main 2026-10-27 (off until live; see [ask] Put the servers live). Stage 2 open. (side lane, restarted 19:36 — Abdullah: "do this now"; ORCH: don't take it; deploy via Cloudflare Workers Builds + merge-to-approve, no tokens) — Servers to assist multiplayer** (Abdullah, 2026-10-26 19:06: "make virtual servers assist with
   multiplayer"). Target: Cloudflare free tier (Workers + Durable Objects), deployed by a GitHub Actions workflow that Abdullah
   approves from his phone (see the [ask] item under Multiplayer; no secrets in chat or repo). Build and test everything locally first; deployment itself is the only [ask]. Account exists (19:11).
   **Stage 1 — relay + signalling:** WebSocket relay rooms in a Durable Object (game code = room) that carry all game
@@ -117,13 +117,11 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] Review the ~5% of `testbed` netcode lines not in live; merge what's still useful, then mark `testbed`
   superseded (don't delete it).
 - [open] Artifact edition untested on the real claude.ai room: latency, ~40 msg/s cap, drops, host migration.
-- [ask] Cloudflare deploy — **approved from Abdullah's phone** (Abdullah, 19:12). He has a free Cloudflare account
-  (19:11). Deploy with GitHub Actions: `.github/workflows/deploy-servers.yml` runs `wrangler deploy` for the server
-  code, using GitHub environment **`cloudflare`** (required reviewer: abdullahhaidar5-ux) with environment secrets
-  `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID`. Trigger: push to `main` touching the server folder, plus manual
-  run. GitHub then notifies his phone → "Review deployments" → Approve. He sets up the environment + secrets once on
-  his phone (steps given in chat 19:13); check with `gh` whether the run is waiting/failed and tell him exactly what's
-  missing. Never ask for tokens or passwords in chat. Keep `tools/Deploy servers.cmd` only as a PC fallback.
+- [ask] Put the servers live (Abdullah, phone): one-time Cloudflare import of repo `ww3` as Worker `ww3-servers`
+  (root `server`, production branch `servers-live`; steps in `server/README.md`), then tap **Merge** on the PR
+  "Put multiplayer servers live" (`main` → `servers-live`). No tokens or GitHub secrets anywhere (the old
+  Actions/secrets plan is superseded). After the merge: check `/health`, set `WW3_SERVER_URL` in `src/07-net.js`,
+  full gate + `node orch/mpsync.mjs --server`, ship.
 - Campaign or scenario missions; tutorial; replays; spectator mode for MP.
 - Clip/showcase pipeline rebuilt in `orch/` so ORCH can post short phone-friendly clips of new features.
 

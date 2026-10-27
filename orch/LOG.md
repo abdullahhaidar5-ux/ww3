@@ -2,6 +2,15 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-27 00:10 — side lane: cloud servers code shipped (switched off)
+
+- Merged `orch/servers-ready` (be6a1a8) onto main: `server/` Worker `ww3-servers` (game list, relay rooms placed near
+  the host, optional TURN logins, `/health`, free-plan guard) + game-side fallback direct → TURN → relay.
+  `WW3_SERVER_URL` stays empty, so players see no change until the servers are live.
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, artifact smoke PASS, artifact MPSYNC PASS.
+- Created branch `servers-live` at a986fb6 and opened PR "Put multiplayer servers live" (`main` → `servers-live`);
+  Abdullah does the one-time Cloudflare import, then taps Merge (backlog [ask]).
+
 ## 2026-10-26 17:56 → 21:40 — cycle 5
 
 - Took the run-lock (extended once to 05:19 UTC). Baseline: `--check` OK, SMOKE PASS.

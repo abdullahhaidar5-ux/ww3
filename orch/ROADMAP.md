@@ -19,7 +19,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 
 ## Multiplayer in the cloud
 - [done] Game live on Cloudflare (ww3.abdullah-haidar5.workers.dev), updated automatically
-- [doing] Matchmaking + relay servers with automatic fallback (final tests)
+- [done] Matchmaking + relay servers with automatic fallback (built and tested; switched off until they're live)
 - [you] Put the servers live: one-time Cloudflare import, then tap Merge
 - [todo] Battles run on a server (or a dedicated PC) instead of the host's device
 - [done] Fix: stale enemy soldiers left on a player's screen
