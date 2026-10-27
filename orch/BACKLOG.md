@@ -9,8 +9,7 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
 - [open] **Graphics overhaul — Phase 1 approved** (Abdullah, 2026-10-26 21:24). Plan:
-  https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ. **Start only after the phone-speed fix (`orch/speed-ship`) and the
-  bottom command bar have landed on `main`** (both touch graphics/UI files). Phase 1 = move `MODEL_PACK` art out of
+  https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ. **Unblocked: the phone-speed fix and the bottom command bar landed on `main` 2026-10-27** — start it now. Phase 1 = move `MODEL_PACK` art out of
   `index.html` into compressed per-unit/per-nation files served next to the page (Cloudflare `ww3` + Pages), loaded per
   battle; build-time compression; upgrade Three.js r128 → current on a branch with side-by-side screenshots of every
   map and nation. Decisions: **units first** (Phase 2 next: detailed models, national variants), **phones stay smooth**
@@ -93,9 +92,8 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [check] Infantry helmet/kit variety beyond v68 tone variation.
 
 **UI/UX & controls** (`08-ui`, `06-view`)
-- [open] **IN PROGRESS (side lane, resumed 19:46 — Abdullah: "Test range on mobile is way too slow, fix now"; from branch
-  `orch/wip-loading-screen`; ORCH: don't take) — phone speed first: Generals-style loading screen with progress, faster battle start (Test Range is
-  slow), and documented military quotes matched to each of the 18 factions.**
+- [open] Phone portrait bottom bar: the 4th build column (Defense Gun, SAM Site…) is cut off at the right edge and
+  the hint text under the tabs is clipped mid-line — make the grid fit or scroll visibly (side lane, 2026-10-27).
 - [open] **PAUSED by Abdullah 2026-10-26 19:35 (not started; ORCH: don't take until he says) — intuitive phone controls.** Abdullah: "make the mobile
   controls more intuitive". One-finger drag scrolls (Maps-app style), long-press+drag box-selects, tap selects/orders
   with order markers, long-press+drag with units = infantry line, touch command bar (attack-move, guard, stop, line,
@@ -107,6 +105,8 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 - [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers.
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
+- [open] **P1:** after a client reconnects mid-battle its state is wrong (own units missing, enemy base visible, money
+  off) — found by the side-lane agent 2026-10-27 while testing the bottom bar. Reproduce, fix, add to `orch/migrate.mjs`.
 - [open] Host migration polish (found by `orch/migrate.mjs`): client B retries the new room 0.1 s too early and
   wastes ~5 s on the dead old room; a client already reconnecting when the host leaves ignores the disconnect and
   waits for the 5 s timeout (`clientReconnect`, 07-net).
@@ -129,6 +129,12 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
 
+- 2026-10-27 (side lane) — **Bottom command bar + faster phone start:** Generals-style bar along the bottom
+  (minimap left; Build/Units/Upgrade/Powers centre; money, strike and rank right; one ☰ menu; Pause one tap; fold
+  handle on phones; ≥40 px buttons; descriptions on hover/long-press). Step-by-step loading screen with each nation's
+  documented military quotes; no seconds-long freeze drawing the minimap. iPhone 13 (4× CPU) Test Range: tap → response
+  ~80 s → 2.1 s, first battle frame ~81 s → 46 s. `orch/mpsync.mjs` waits for both loading screens and stops checking
+  a client whose side is wiped out.
 - 2026-10-27 (cycle 7) — **Asian war music:** Pakistan (qawwali march, bhangra charge), India (sitar/bansuri over tanpura+tabla, dhol-tasha), China (guzheng/erhu, suona/dizi march), North Korea (brass band), South Korea (gayageum/daegeum in 12/8, taepyeongso). `mus/as.mp3` (484 KB) loads only for those five; CC0/CC-BY/PD, credited.
 - 2026-10-27 (cycle 6) — **Balance round 1:** SA/DW/KP/EG/RS reined in, IL/AE/KR/IR/CN lifted (data only); typical
   gap from 50% win rate 20 → 14 points; no start-slot bias. Migrated/lobby AIs now use the same attack-wave size as
