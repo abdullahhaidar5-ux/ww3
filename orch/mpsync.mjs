@@ -245,7 +245,7 @@ async function main() {
     return { t: G.t, list: out, credits: Math.floor(G.teams[k].credits), all: G.ents.filter(e => !e.dead).length };
   }, CK);
   const clientView = () => client.evaluate(() => ({ t: NET.lastSnapT || 0, credits: G.teams[ME].credits,
-    list: G.ents.filter(e => !e.dead && !e.gone).map(e => [e.id, e.kind, e.team, !e.isB && e.tx != null ? e.tx : e.x, !e.isB && e.ty != null ? e.ty : e.y, Math.round(e.hp), e.isB ? 1 : 0, e.mem ? 1 : 0]) }));
+    list: G.ents.filter(e => !e.dead && !e.gone).map(e => [e.id, e.kind, e.team, !e.isB && e.tx != null ? e.tx : e.x, !e.isB && e.ty != null ? e.ty : e.y, Math.round(e.hp), e.isB ? 1 : 0, e.mem ? 1 : 0, +((NET.lastSnapT || 0) - (e.seenAt || 0)).toFixed(2)]) }));
 
   // ---- strict comparison with the host paused and one full keyframe flushed ----
   async function settleCheck(label) {
@@ -262,7 +262,7 @@ async function main() {
       if (d > 2) moved.push(`${h[1]}#${h[0]} off by ${d.toFixed(1)}`);
       if (c[2] !== h[2] || c[1] !== h[1] || Math.abs(c[5] - h[5]) > 1) wrong.push(`${h[1]}#${h[0]} client ${c[1]}/team ${c[2]}/hp ${c[5]} vs host ${h[1]}/team ${h[2]}/hp ${h[5]}`);
     }
-    for (const c of C.list) if (!hm.has(c[0]) && !c[7]) extra.push(`${c[1]}#${c[0]}(team ${c[2]})`);
+    for (const c of C.list) if (!hm.has(c[0]) && !c[7]) extra.push(`${c[1]}#${c[0]}(team ${c[2]}, last seen ${c[8]} s before)`);
     const own = H.list.filter(h => h[2] === CK).length, cOwn = C.list.filter(c => c[2] === CK).length;
     console.log(`[${secs()}] ${label} t=${H.t.toFixed(0)}s: host ${H.all} entities, client side sees ${vis} (own ${own}); client has ${C.list.length} (own ${cOwn}); ` +
       `missing ${missing.length}, extra ${extra.length}, off-position ${moved.length}, mismatched ${wrong.length}; credits host ${H.credits} client ${C.credits}`);
