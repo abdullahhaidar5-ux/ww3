@@ -143,7 +143,21 @@ e.g. `07a-hostsnap.js`). `orch/headless.mjs` already produces that bundle (`simS
 `node orch/headless.mjs --compare` (default: 2 players US vs RU, Desert Strait, seed 1, 5 game-minutes, hash every
 10 s). Runs on this machine, 2026-10-27:
 
-RESULTS_TABLE
+| Run | Result |
+|---|---|
+| `--compare` (default: 2 players, Desert Strait, seed 1, 5 min, every 10 s) | **HEADLESS PASS**, 31/31 hashes identical (map plan + battle) |
+| `--compare --players 8 --map fulda --seed 3 --minutes 12 --every 60` (Normal AI, 4 nations eliminated along the way) | **HEADLESS PASS**, 13/13 identical, 166 entities at the end |
+| `--compare --render --map oasis --seed 5` (3D world built, all effects on, frames drawn) | RENDER_RESULT |
+| `--compare --native-math` (each engine's own `Math.sin/cos/atan2/exp/pow`) | **HEADLESS FAIL** as expected: the map plan differs at t=0 (supply fields), and unit positions differ in the last digit at t=20 s, e.g. a supply truck at x = 792.5361476389876 (Node) vs …877 (Chromium) |
+
+Sim speed seen in the same runs (Node: process CPU time; page: wall-clock time of the sim steps):
+
+- **2 players:** Node 42 ms per game-second, Chromium 16 ms.
+- **8 players, Fulda:** Node 171 ms, Chromium 133 ms.
+
+The newer V8 in Chromium 153 is faster, especially on small battles. Cloudflare's runtime (workerd) tracks Chrome's V8,
+so a Durable Object should land nearer the Chromium figures. A PC server should use a current Node LTS for the same
+reason. The Node 22 figures in §5 are therefore on the pessimistic side.
 
 ## 5. Measured cost (Node 22, Intel Xeon @ 2.10 GHz, shared 2-core VM)
 
