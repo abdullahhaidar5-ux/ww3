@@ -151,7 +151,7 @@ function joinT(name,ms){const p=NET.room.join(name,NET.via?{via:NET.via}:undefin
 async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NET.jcode)return;NET.recon=true;NET.reconKick=false;pushLog('Connection to the host lost. Reconnecting…','w');
   const gen0=NET.gen||0,t0=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let gone=false,n=0,newTries=0;
   while(MODE==='client'&&!(G&&G.over)&&performance.now()-t0<60000){
-    if(n>0&&NET.isStandby&&NET.lastCk){if(await promoteToHost()){NET.recon=false;NET.reconKick=false;return;}NET.isStandby=false;}
+    if(n>0&&NET.isStandby&&NET.lastCk){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
     if(MODE!=='client'||(G&&G.over))break;
     // which room: the old one first; then the follow-up room (with an occasional look back at the old room while it
     // is not certain that its host is gone)
@@ -184,7 +184,7 @@ const CMD_T=['go','atk','atkOil','fld','q','dq','bld','bldGo','tun','unl','board
 function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;
   if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
   if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
-const NET_PV=5;
+const NET_PV=6;
 // a keep-alive list named units this client doesn't have (a missed update): ask the host for a full copy (at most every 2 s)
 function askKeyframe(){const w=performance.now();if(NET.krW&&w-NET.krW<2000)return;NET.krW=w;if(NET.game)NET.game.presence({kr:Math.round(w)}).catch(()=>{});}
 function doAct(a){if(MODE==='client'){if(!NET.game)return;
