@@ -62,6 +62,20 @@ daily requests and 1.7% of the daily GB-s. The server stops opening new relay ro
 game list stops at 90%), so a match never breaks because the free plan ran out. Players then connect directly, as
 before. Details and measurements: `orch/SERVERS.md`.
 
+## Battles hosted on Cloudflare (being built)
+
+The servers can also **run a battle themselves** (a `BattleRoom`), so no player's browser has to host it. The game
+doesn't offer this yet. For now there is only a measuring tool, to check what the free plan can carry:
+
+- Open **https://ww3-servers.abdullah-haidar5.workers.dev/battle-bench?players=8&minutes=3** in a browser. It plays a
+  computer-only battle on the server and prints how long each game-second took. Without a key, it allows one run per
+  hour of up to 3 game-minutes.
+- *(Optional)* To allow more runs: **ww3-servers → Settings → Variables and Secrets → Add → Secret** named
+  `BENCH_KEY` with any long password, then add `&key=<that password>` to the address.
+
+Free-plan safety: at most 3 battles at once, each at most 45 minutes. No new battles once today's use reaches 70%.
+At 75% a running battle hands itself to one of its players (it carries on in that player's browser).
+
 ## For developers
 
 ```
@@ -72,5 +86,9 @@ node ../orch/serverbench.mjs   # latency / CPU / usage projection
 node ../orch/mpsync.mjs --server   # real game, host + client forced onto the relay
 ```
 
-Files: `src/index.js` (Worker, GameRoom, Lobby, Budget), `src/route.js` (relay routing), `wrangler.toml`.
+Files: `src/index.js` (Worker, GameRoom, Lobby, Budget, BattleRoom), `src/route.js` (relay routing),
+`src/battle.js` (battle host: lobby, start, loop; runtime-neutral), `src/battle-driver.js` (the server's handle on the
+game's code), `build-sim.mjs` (bundles `../src` into `gen/battle-sim.js` before every `wrangler dev`/`deploy`; the file
+is generated, not committed), `wrangler.toml`. Battle tests: `node ../orch/battletest.mjs` (also `--bench 2,4,8` in
+Node, `--cfbench 2,4,8` in local workerd). Protocol: `../orch/STAGE2.md` section 8.
 Never put secrets in these files; set them in the dashboard.
