@@ -13,15 +13,19 @@ Sources (all free; credited in the menu credits):
       (montuno), glockenspiel, tubular bells (church bells), rope-tension field snare (snares on and off, side-stick),
       concert bass drum (davul / band bass drum), clash cymbals (zil), timpani roll (kos), congas (conga, quinto,
       tumba), bongos, claves, guiro, cowbell (cencerro / campana), shaker (maracas), tambourine (bubon jingles).
+  * Freesound (https://freesound.org), recordings of the real instruments:
+      cdrk - "zurna_0001_[turkish]_4_shots_mono" (#18661, CC BY 4.0): Turkish zurna
+      kroshe - "davul.wav" (#468506, CC0 1.0): davul (the big mallet's dum)
   * United States Navy Band national-anthem recordings (works of the US federal government: public domain), via
-    Wikimedia Commons. Compositions, all public domain: "The Star-Spangled Banner" (John Stafford Smith, d. 1836),
+    Wikimedia Commons (US, EU) and the Internet Archive's mirror of navyband.navy.mil/media/ceremonial
+    (https://archive.org/details/us-navy-band-national-anthems-public-domain: IL, UA, CU). Compositions, all public domain: "The Star-Spangled Banner" (John Stafford Smith, d. 1836),
     "Hatikvah" (melody arr. Samuel Cohen, d. 1940), "Shche ne vmerla Ukrainy" (Mykhailo Verbytskyi, d. 1870), the
     Anthem of Europe (Beethoven, "Ode to Joy", 1823; the Navy Band's own arrangement), "La Bayamesa" (Perucho
     Figueredo, d. 1870). Skipped: Turkey's Istiklal Marsi (music by Osman Zeki Ungor, d. 1958: still in copyright in
     Turkey) and Russia's anthem (Alexandrov, 1944; public-domain status rests on a state-symbol exemption, not clear-cut).
 
 usage: python3 mus/we_pack.py <download-dir>
-  <download-dir>/vcsl/<VCSL path> and <download-dir>/an/<CODE>.(ogg|mp3) must exist (see SOURCES / ANTHEMS).
+  <download-dir>/vcsl/<VCSL path>, <download-dir>/fs/<id>.mp3 (Freesound hq previews) and <download-dir>/an/<CODE>.(ogg|mp3) must exist (see SOURCES / ANTHEMS).
 Writes mus/we.mp3 and mus/an_<CODE>.mp3 and prints the WE_META JSON to paste into src/09-audio.js.
 """
 import json, os, subprocess, sys
@@ -77,9 +81,12 @@ SOURCES = {
     'gui': [(I + 'Guiro/Guiro_Fast_rr1_Mid.wav', 0, .35, 0, 0), (I + 'Guiro/Guiro_Hit_rr1_Mid.wav', 0, .2, 0, 0)],
     'cow': [(I + 'Cowbells/Cowbell1_Hit_v3_rr1_Mid.wav', 0, .45, 0, 0), (I + 'Cowbells/Cowbell1_Muted_v3_rr1_Mid.wav', 0, .2, 0, 0)],
     'mar': [(I + 'Shaker, Small/Mid_ShakerDouble_Down_rr1.wav', 0, .2, 0, 0), (I + 'Shaker, Small/Mid_ShakerDouble_Up_rr1.wav', 0, .2, 0, 0)],
+    # --- real Turkish zurna (two of the four held shots, looped) and davul ---
+    'zrn': [('fs/18661.mp3', .32, .8, 67, 1), ('fs/18661.mp3', 4.12, .8, 67, 1)],
+    'dvd': [('fs/468506.mp3', 1.72, .95, 0, 0), ('fs/468506.mp3', .22, .5, 0, 0), ('fs/468506.mp3', 1.22, .5, 0, 0)],
 }
 # anthem excerpts: nation -> (file, start s, length s)
-ANTHEMS = {'US': ('an/US.ogg', 0, 26), 'IL': ('an/IL.ogg', 0, 26), 'UA': ('an/UA.mp3', 0, 26), 'EU': ('an/EU.ogg', 0, 26), 'CU': ('an/CU.ogg', 0, 26)}
+ANTHEMS = {'US': ('an/US.ogg', 0, 26), 'IL': ('an/IL.mp3', 0, 26), 'UA': ('an/UA.mp3', 0, 26), 'EU': ('an/EU.ogg', 0, 26), 'CU': ('an/CU.mp3', 0, 26)}
 
 
 def sheet():

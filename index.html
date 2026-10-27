@@ -9539,15 +9539,15 @@ for(const [k,v] of Object.entries({PK:[1.42,1.93],PK_b:[1.58,1.9],IN:[1.41,1.67]
 //    congas, bongos, claves, guiro, cowbell, maracas and tambourine (the bubon's jingles).
 // The main sheet adds trumpets, horns, trombones, tuba, choir, clarinet, violin, accordion (bayan) and the shehnai (our
 // zurna); Turkey and Israel also load the Middle Eastern sheet (darbuka, def, ney, kanun, kemence, oud, santur as the
-// klezmer tsimbl). No free recording was reachable for the zurna, davul, bandura, balalaika, domra, tres, bayan or
-// sopilka themselves, so those are the stand-ins above, each played the way the real instrument is (balalaika and
-// bandura tremolo, the tres's doubled courses, two zurnas in heterophony, the klezmer clarinet's sobbing krekhts).
+// klezmer tsimbl). The zurna and davul are real recordings (Freesound: cdrk's Turkish zurna, CC BY 4.0; kroshe's
+// davul, CC0). No clean free recording was found for the bandura, balalaika, domra, tres, bayan or sopilka, so those
+// are the stand-ins above, each played the way the real instrument is (balalaika and bandura tremolo, the tres's
+// doubled courses, two zurnas in heterophony, the klezmer clarinet's sobbing krekhts).
 // In the finale of each battle piece the nation's own anthem plays as a real military band: public-domain US Navy Band
-// recordings (Wikimedia Commons) of the Star-Spangled Banner and the Anthem of Europe (Beethoven's Ode to Joy), with the
-// score ducked underneath (AN_FAC lists the nations whose excerpt is in mus/). Israel, Ukraine and Cuba's Navy Band
-// recordings are public domain too and only need adding with mus/we_pack.py; Turkey's and Russia's anthems are left
-// out: their compositions are not clearly public domain.
-const WE_META=/*WEMETA*/{"fif":[{"m":72.02,"o":0.18,"n":0.4,"r":0.344},{"m":78.0,"o":0.76,"n":0.4,"r":0.291},{"m":81.95,"o":1.34,"n":0.4,"r":0.195}],"sop":[{"m":74.01,"o":1.92,"n":1.88,"r":0.463,"l":[0.76,1.88]},{"m":79.03,"o":3.98,"n":1.88,"r":0.251,"l":[0.76,1.88]}],"bnd":[{"m":46.0,"o":6.04,"n":1.6,"r":0.228},{"m":50.0,"o":7.82,"n":1.6,"r":0.303},{"m":53.95,"o":9.6,"n":1.5,"r":0.277},{"m":58.03,"o":11.28,"n":1.4,"r":0.123},{"m":62.02,"o":12.86,"n":1.3,"r":0.218}],"blk":[{"m":50.06,"o":14.34,"n":1.0,"r":0.088},{"m":55.01,"o":15.52,"n":1.0,"r":0.146},{"m":61.02,"o":16.7,"n":0.9,"r":0.101},{"m":66.98,"o":17.78,"n":0.8,"r":0.056}],"psl":[{"m":59.99,"o":18.76,"n":1.3,"r":0.182},{"m":66.01,"o":20.24,"n":1.2,"r":0.196},{"m":72.0,"o":21.62,"n":1.1,"r":0.179}],"pno":[{"m":58.0,"o":22.9,"n":1.3,"r":0.157},{"m":70.0,"o":24.38,"n":1.2,"r":0.149}],"glk":[{"m":79.11,"o":25.76,"n":1.1,"r":0.167},{"m":84.16,"o":27.04,"n":1.0,"r":0.17}],"bel":[{"m":60.17,"o":28.22,"n":2.8,"r":0.188},{"m":66.82,"o":31.2,"n":2.5,"r":0.177},{"m":72.26,"o":33.88,"n":2.3,"r":0.198}],"snr":[{"m":0,"o":36.36,"n":0.4,"r":0.108},{"m":0,"o":36.94,"n":0.35,"r":0.131},{"m":0,"o":37.47,"n":0.3,"r":0.21}],"rim":[{"m":0,"o":37.95,"n":0.22,"r":0.058}],"sno":[{"m":0,"o":38.35,"n":0.3,"r":0.14}],"bdm":[{"m":0,"o":38.83,"n":1.0,"r":0.175},{"m":0,"o":40.01,"n":0.9,"r":0.216}],"cym":[{"m":0,"o":41.09,"n":1.4,"r":0.147}],"tro":[{"m":0,"o":42.67,"n":2.2,"r":0.271}],"tam":[{"m":0,"o":45.05,"n":0.4,"r":0.115}],"cga":[{"m":0,"o":45.63,"n":0.45,"r":0.142},{"m":0,"o":46.26,"n":0.4,"r":0.207},{"m":0,"o":46.84,"n":0.5,"r":0.141}],"cgm":[{"m":0,"o":47.52,"n":0.3,"r":0.158},{"m":0,"o":48.0,"n":0.3,"r":0.154}],"bgo":[{"m":0,"o":48.48,"n":0.3,"r":0.11},{"m":0,"o":48.96,"n":0.35,"r":0.134},{"m":0,"o":49.49,"n":0.2,"r":0.117}],"clv":[{"m":0,"o":49.87,"n":0.25,"r":0.084}],"gui":[{"m":0,"o":50.3,"n":0.35,"r":0.122},{"m":0,"o":50.83,"n":0.2,"r":0.088}],"cow":[{"m":0,"o":51.21,"n":0.45,"r":0.083},{"m":0,"o":51.84,"n":0.2,"r":0.107}],"mar":[{"m":0,"o":52.22,"n":0.2,"r":0.116},{"m":0,"o":52.6,"n":0.2,"r":0.147}]};
+// recordings of the Star-Spangled Banner, the Anthem of Europe (Beethoven's Ode to Joy), Hatikvah, Shche ne vmerla
+// Ukrainy and La Bayamesa, with the score ducked underneath (AN_FAC lists the nations whose excerpt is in mus/).
+// Turkey's and Russia's anthems are left out: their compositions are not clearly public domain.
+const WE_META=/*WEMETA*/{"fif":[{"m":72.02,"o":0.18,"n":0.4,"r":0.344},{"m":78.0,"o":0.76,"n":0.4,"r":0.291},{"m":81.95,"o":1.34,"n":0.4,"r":0.195}],"sop":[{"m":74.01,"o":1.92,"n":1.88,"r":0.463,"l":[0.76,1.88]},{"m":79.03,"o":3.98,"n":1.88,"r":0.251,"l":[0.76,1.88]}],"bnd":[{"m":46.0,"o":6.04,"n":1.6,"r":0.228},{"m":50.0,"o":7.82,"n":1.6,"r":0.303},{"m":53.95,"o":9.6,"n":1.5,"r":0.277},{"m":58.03,"o":11.28,"n":1.4,"r":0.123},{"m":62.02,"o":12.86,"n":1.3,"r":0.218}],"blk":[{"m":50.06,"o":14.34,"n":1.0,"r":0.088},{"m":55.01,"o":15.52,"n":1.0,"r":0.146},{"m":61.02,"o":16.7,"n":0.9,"r":0.101},{"m":66.98,"o":17.78,"n":0.8,"r":0.056}],"psl":[{"m":59.99,"o":18.76,"n":1.3,"r":0.182},{"m":66.01,"o":20.24,"n":1.2,"r":0.196},{"m":72.0,"o":21.62,"n":1.1,"r":0.179}],"pno":[{"m":58.0,"o":22.9,"n":1.3,"r":0.157},{"m":70.0,"o":24.38,"n":1.2,"r":0.149}],"glk":[{"m":79.11,"o":25.76,"n":1.1,"r":0.167},{"m":84.16,"o":27.04,"n":1.0,"r":0.17}],"bel":[{"m":60.17,"o":28.22,"n":2.8,"r":0.188},{"m":66.82,"o":31.2,"n":2.5,"r":0.177},{"m":72.26,"o":33.88,"n":2.3,"r":0.198}],"snr":[{"m":0,"o":36.36,"n":0.4,"r":0.108},{"m":0,"o":36.94,"n":0.35,"r":0.131},{"m":0,"o":37.47,"n":0.3,"r":0.21}],"rim":[{"m":0,"o":37.95,"n":0.22,"r":0.058}],"sno":[{"m":0,"o":38.35,"n":0.3,"r":0.14}],"bdm":[{"m":0,"o":38.83,"n":1.0,"r":0.175},{"m":0,"o":40.01,"n":0.9,"r":0.216}],"cym":[{"m":0,"o":41.09,"n":1.4,"r":0.147}],"tro":[{"m":0,"o":42.67,"n":2.2,"r":0.271}],"tam":[{"m":0,"o":45.05,"n":0.4,"r":0.115}],"cga":[{"m":0,"o":45.63,"n":0.45,"r":0.142},{"m":0,"o":46.26,"n":0.4,"r":0.207},{"m":0,"o":46.84,"n":0.5,"r":0.141}],"cgm":[{"m":0,"o":47.52,"n":0.3,"r":0.158},{"m":0,"o":48.0,"n":0.3,"r":0.154}],"bgo":[{"m":0,"o":48.48,"n":0.3,"r":0.11},{"m":0,"o":48.96,"n":0.35,"r":0.134},{"m":0,"o":49.49,"n":0.2,"r":0.117}],"clv":[{"m":0,"o":49.87,"n":0.25,"r":0.084}],"gui":[{"m":0,"o":50.3,"n":0.35,"r":0.122},{"m":0,"o":50.83,"n":0.2,"r":0.088}],"cow":[{"m":0,"o":51.21,"n":0.45,"r":0.083},{"m":0,"o":51.84,"n":0.2,"r":0.107}],"mar":[{"m":0,"o":52.22,"n":0.2,"r":0.116},{"m":0,"o":52.6,"n":0.2,"r":0.147}],"zrn":[{"m":66.95,"o":52.98,"n":0.78,"r":0.176,"l":[0.32,0.78]},{"m":67.24,"o":53.94,"n":0.78,"r":0.249,"l":[0.32,0.78]}],"dvd":[{"m":0,"o":54.9,"n":0.95,"r":0.268},{"m":0,"o":56.03,"n":0.5,"r":0.213},{"m":0,"o":56.71,"n":0.5,"r":0.257}]};
 const WEP={st:null,ok:null,tries:0};
 const WE_FAC={US:1,TR:1,IL:1,EU:1,UA:1,RU:1,CU:1};
 function weLoad(){if(!AU.ctx||!WE_META.fif)return;if(WEP.st==='fail'&&(WEP.tries||0)<2)WEP.st=null;if(WEP.st)return;WEP.st='loading';WEP.tries=(WEP.tries||0)+1;
@@ -9557,7 +9557,7 @@ function weLoad(){if(!AU.ctx||!WE_META.fif)return;if(WEP.st==='fail'&&(WEP.tries
     .then(buf=>{WEP.ok=sheetSlice(buf,WE_META);WEP.st='ok';}).catch(e=>{WEP.st='fail';audioErr('Western instruments',e);});}
 function wP(k,f,t,dur,gain,o){return xPlay(WEP.ok&&WEP.ok[k],f,t,dur,gain,o);}
 // the national anthem excerpts (one small file per nation, fetched only for that nation)
-const AN_FAC=/*ANFAC*/{US:1,EU:1};
+const AN_FAC=/*ANFAC*/{US:1,EU:1,IL:1,UA:1,CU:1};
 const ANB={};
 function anLoad(fac){if(!AU.ctx||!AN_FAC[fac])return;const s=ANB[fac];if(s&&(s.st==='ok'||s.st==='loading'||(s.tries||0)>=2))return;const e=ANB[fac]={st:'loading',tries:((s&&s.tries)||0)+1};
   fetch('mus/an_'+fac+'.mp3').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>decodeAB(AU.ctx,b)).then(buf=>{e.buf=buf;e.st='ok';}).catch(err=>{e.st='fail';audioErr('anthem',err);});}
@@ -9570,7 +9570,7 @@ function anPlay(t,len){const e=ANB[AU.fac];if(!e||e.st!=='ok'||!AU.mus||!AU.mus.
   const og=AU.mus.og.gain;og.cancelScheduledValues(t);og.setTargetAtTime(base*.32,t,.25);og.setTargetAtTime(base,t+L-2.5,.8);
   AU.an={src,g,end:t+L};src.onended=()=>{if(AU.an&&AU.an.src===src)AU.an=null;};return true;}
 // loudness trims (headless renders, matched to the other regional scores)
-const WECAL={fif:1.5,sop:2,bnd:2.3,blk:2.6,psl:2.3,pno:1.6,glk:1.2,bel:1.3,cla:2,vln:2.4,acc:1.8,shn:2,band:1.2,cho:1.6,an:3};
+const WECAL={zrn:2.2,fif:1.5,sop:2,bnd:2.3,blk:2.6,psl:2.3,pno:1.6,glk:1.2,bel:1.3,cla:2,vln:2.4,acc:1.8,shn:2,band:1.2,cho:1.6,an:3};
 const WE_INST={m_fife:1,m_sop:1,m_bandura:1,m_balalaika:1,m_domra:1,m_tres:1,m_piano:1,m_gusli:1,m_bell:1,m_glock:1,m_clar:1,m_fiddle:1,m_accord:1,m_zurna:1,m_boru:1,m_mehter:1,m_choir:1,m_horn:1,m_trp:1,m_cornet:1};
 // the scale note a diatonic third below f (for the second fife, the trumpets' harmony)
 function third(f){const b=scaleBelow(f,2);return b[1]||f*.8;}
@@ -9606,7 +9606,7 @@ function weInst(kind,f,t,dur,gain){const L=AU.mL||(AU.mL={}),from=L[kind],M=SMP.
     case 'm_fiddle':{fo=fold(f*4,260,1200);gain*=WECAL.vln;if(M&&M.vln)xPlay(M.vln,fo,t,dur,gain,{from,glide:.12,vib:26,vr:6,att:.05,rel:.18,pan:.15,pk:[1800,1.3,3]});else bowed(fo,t,dur,gain*.6,from);break;}
     case 'm_accord':{fo=fold(f*4,200,800);gain*=WECAL.acc;if(M&&M.acc){xPlay(M.acc,fo,t,dur,gain,{att:.03,rel:.08,lp:3800});xPlay(M.acc,fo*2,t+.005,dur,gain*.35,{att:.03,rel:.08,lp:4200,pan:.15});}else reed(fo,t,dur,gain*.55,'harmonium');break;}
     case 'm_zurna':{// two zurnas in heterophony, each note entered with a grace note from above, wide shake on held notes
-      fo=fold(f*8,420,1300);gain*=WECAL.shn;if(M&&M.shn){for(const [dt,dd,pn,gg] of [[0,-8,-.25,1],[.014,9,.25,.8]]){xPlay(M.shn,fo,t+dt,dur,gain*gg,{from:fo*1.08,glide:.06,det:dd,vib:dur>.5?32:0,vr:6.5,att:.012,rel:.1,pan:pn,pk:[1500,1.2,4]});}}
+      fo=fold(f*8,420,1300);const Z=WEP.ok&&WEP.ok.zrn&&WEP.ok.zrn.length?WEP.ok.zrn:(M&&M.shn);gain*=Z&&Z!==(M&&M.shn)?WECAL.zrn:WECAL.shn;if(Z){for(const [dt,dd,pn,gg] of [[0,-8,-.25,1],[.014,9,.25,.8]]){xPlay(Z,fo,t+dt,dur,gain*gg,{from:fo*1.08,glide:.06,det:dd,vib:dur>.5?32:0,vr:6.5,att:.012,rel:.1,pan:pn,pk:[1500,1.2,4]});}}
       else reed(fo,t,dur,gain*.55,'zurna');break;}
     case 'm_boru':{fo=fold(f*4,180,620);gain*=WECAL.band;brass(fo,t,dur,gain,2600);brass(fo*1.004,t+.012,dur,gain*.6,2600);break;}// the mehter's natural trumpet
     case 'm_mehter':{// the whole mehter in unison: zurnas on top, borus an octave below
@@ -9637,7 +9637,7 @@ function weDrum(t,k,g){const X=(AU.style&&AU.style.mx)||{},P=(s,gg,o)=>wP(s,0,t+
     case 'C':P('cym',.5,{d:1.4,rel:.4});break;
     case 'P':if(SMP.ok&&SMP.ok.tim)sPlay('tim',(AU.style?AU.style.root:55)*2,t,1.2,g*.6,0,.002,.5);else return false;break;
     case 'X':P('tro',.55,{d:2,rel:.5,rate:1});break;
-    case 'U':P('bdm',1,{d:1,v:0,rate:.92});P('sno',.35,{rate:.7,d:.25});break;
+    case 'U':if(WEP.ok.dvd&&WEP.ok.dvd.length){P('dvd',.95,{d:.95,v:0});P('sno',.2,{rate:.7,d:.2});}else{P('bdm',1,{d:1,v:0,rate:.92});P('sno',.35,{rate:.7,d:.25});}break;
     case 'u':P('sno',.5,{d:.25,rate:1.15});P('rim',.25,{d:.2});break;
     case 'n':P('bgo',.5,{d:.3,v:Math.random()<.5?0:1,rate:.72});break;
     case 'O':P('tro',.5,{d:1.4,rate:.8,rel:.5});P('bdm',.7,{d:1,v:0,rate:.75});break;
@@ -9657,7 +9657,7 @@ function weDrum(t,k,g){const X=(AU.style&&AU.style.mx)||{},P=(s,gg,o)=>wP(s,0,t+
     case 'A':P('bdm',.55,{d:.6,v:1,rate:1.5});P('tam',.3,{d:.35});break;
     case 'N':P('tam',.4,{d:.35});break;
     case 'b':case 'B':{const gg=k==='B'?1.1:1;
-      if(X.big==='davul'){P('bdm',1*gg,{d:1,v:0,rate:.9});P('tro',.3*gg,{d:.8,rate:.75});}
+      if(X.big==='davul'){if(WEP.ok.dvd&&WEP.ok.dvd.length)P('dvd',.95*gg,{d:.95,v:k==='B'?0:1+(Math.random()*2|0)});else P('bdm',1*gg,{d:1,v:0,rate:.9});P('tro',.3*gg,{d:.8,rate:.75});}
       else if(X.big==='conga'){P('cga',.8*gg,{d:.5,v:2});P('bdm',.35*gg,{d:.6,v:1,rate:1.3});}
       else if(X.big==='timp'){P('bdm',.6*gg,{d:.9,v:0});if(SMP.ok&&SMP.ok.tim)sPlay('tim',(AU.style?AU.style.root:55)*1.5,t,1.2,g*.55*gg,0,.002,.5);}
       else{P('bdm',.95*gg,{d:1,v:0});if(X.big==='band')P('cym',.3*gg,{d:1.2,rel:.3});}break;}
@@ -9761,7 +9761,7 @@ for(const [k,v] of Object.entries({US:[1.38,1.78],US_b:[1.38,1.78],TR:[1.62,1.51
 // menu credits for the instrument recordings and anthems (the credits list lives in the page shell, so it is added from here)
 (function weCredits(){try{if(document.getElementById('weCred'))return;const ps=[...document.querySelectorAll('p.credits')],pr=document.getElementById('asCred')||ps.find(p=>/Middle Eastern instruments/.test(p.textContent))||ps[0];if(!pr)return;
   const p=document.createElement('p');p.className='credits';p.id='weCred';
-  p.textContent='American, Turkish, Israeli, European, Ukrainian, Russian and Cuban instruments: recorder (fife, sopilka), folk harp (bandura), strumstick (balalaika, domra, tres), psaltery (gusli), grand piano, glockenspiel, tubular bells, field snare, bass drum, cymbals, timpani, congas, bongos, claves, guiro, cowbell, shaker and tambourine from the Versilian Community Sample Library by Versilian Studios / Sam Gossner (CC0). National anthems performed by the United States Navy Band (public domain, via Wikimedia Commons): The Star-Spangled Banner and the Anthem of Europe (Beethoven).';
+  p.textContent='American, Turkish, Israeli, European, Ukrainian, Russian and Cuban instruments: recorder (fife, sopilka), folk harp (bandura), strumstick (balalaika, domra, tres), psaltery (gusli), grand piano, glockenspiel, tubular bells, field snare, bass drum, cymbals, timpani, congas, bongos, claves, guiro, cowbell, shaker and tambourine from the Versilian Community Sample Library by Versilian Studios / Sam Gossner (CC0). Turkish zurna by cdrk (Freesound #18661, CC BY 4.0); davul by kroshe (Freesound #468506, CC0). National anthems performed by the United States Navy Band (public domain, via Wikimedia Commons and the Internet Archive): The Star-Spangled Banner, the Anthem of Europe (Beethoven), Hatikvah, Shche ne vmerla Ukrainy and La Bayamesa.';
   pr.insertAdjacentElement('afterend',p);}catch(e){}})();
 
 // ===== Your own music =====
