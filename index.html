@@ -7717,7 +7717,9 @@ const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse';
 function log(team,msg,kind){FXE('log',[team,msg,kind||'']);}
-function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);const el=$('log');el.innerHTML='';for(const x of G.msgs){const d=document.createElement('div');d.className=x.k||'';d.textContent=x.m;el.append(d);}}
+function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
+  // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line fades by itself
+  const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;d.addEventListener('animationend',()=>d.remove());el.append(d);while(el.children.length>4)el.firstChild.remove();}
 function endGame(winner,reason){if(!G||G.over)return;if(MODE==='host'&&G.out){G.out.push(['end',winner]);NET.evT=0;}showEnd(winner,reason);}
 function rivals(){return G.teams.filter(T=>!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
@@ -7730,19 +7732,43 @@ function showElim(){if(!G)return;const left=G.teams.filter(T=>!T.out&&T.id!==ME)
 /* ---------- panels ---------- */
 function btnHTML(id,name,cost,desc){return `<button class="btn" id="${id}"><span class="n"></span><span class="c"></span>${desc!=null?'<span class="d"></span>':''}<span class="q"></span><span class="p"></span></button>`;}
 function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const mk=(tab,id,name,cost,desc,on,onR,wide)=>{const b=document.createElement('button');b.className='btn'+(wide?' wide':'');b.id=id;b.dataset.tab=tab;
-    b.innerHTML=`<span class="n"></span><span class="c"></span>${desc?'<span class="d"></span>':''}<span class="q"></span><span class="p"></span>`;b.querySelector('.n').textContent=name;b.querySelector('.c').textContent=cost;if(desc)b.querySelector('.d').textContent=desc;
+    b.innerHTML=`<span class="n"></span><span class="c"></span>${desc?'<span class="d"></span>':''}<span class="q"></span><span class="p"></span>`;b.querySelector('.n').textContent=name;b.querySelector('.c').textContent=cost;if(desc)b.querySelector('.d').textContent=desc;b.dataset.nm=name;if(desc)b.dataset.desc=desc;
     b.onclick=on;if(onR)b.oncontextmenu=e=>{e.preventDefault();onR();};el.append(b);return b;};
   const sub=(tab,txt)=>{const d=document.createElement('div');d.className='sub';d.dataset.tab=tab;d.textContent=txt;el.append(d);};
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k);mk('build','b_'+k,s.name,'$'+s.cost,null,()=>{if(T.credits<s.cost||!reqMet(ME,k))return;G.aim=null;G.place=G.place===k?null:k;});}
   const R=roster(T.fac);for(const c of CATS){sub('units',STRUCT[c].name);for(const k of R[c]){const s=stats(T.fac,k);mk('units','u_'+k,s.name,'$'+s.cost,null,()=>{if(!(MODE==='client'?true:enqueue(ME,k)))pushLog('Not enough credits or missing building.','w');else if(MODE==='client')doAct({t:'q',k});},()=>doAct({t:'dq',k}));}}
   const ups=upgList(T.fac);for(const c of CATS){const list=ups.filter(k=>UPG[k].at===c);if(!list.length)continue;sub('upg',STRUCT[c].name);for(const k of list){const U=UPG[k];mk('upg','g_'+k,upgName(T.fac,k)+(U.sp?' ★':''),'$'+U.cost,U.desc,()=>doAct({t:'up',k}),null,true);}}
   for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});return;}if(P.passive||T.pw[k].cd>0)return;if(P.self){doAct({t:'pow',k,x:0,y:0});return;}G.place=null;G.aim=k;},null,true);}
-  sub('pow','Upgrade powers (more points each level)');for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
+  sub('pow','Level up');for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
   showTab(TAB);updateUI();}
-function showTab(t){TAB=t;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('#panel>[data-tab]').forEach(b=>b.hidden=b.dataset.tab!==t);}
-document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function showTab(t){TAB=t;const pn=$('panel');if(pn)pn.scrollLeft=0;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('#panel>[data-tab]').forEach(b=>b.hidden=b.dataset.tab!==t);}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(barMin())barMin(false);showTab(b.dataset.tab);});
 function specLock(T,k){return k===T.F.special&&T.rank<SPEC_RANK;}
-function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=null)b.querySelector('.c').textContent=o.cost;b.querySelector('.q').textContent=o.q||'';b.querySelector('.p').style.width=(o.p||0)*100+'%';b.classList.toggle('on',!!o.on);b.classList.toggle('done',!!o.done);b.title=o.title||'';}
+// the full text of a button (what it does, what it needs, what it counters) lives in data-tip and shows in the command
+// tooltip (hover with a mouse; tap or long-press on a touch screen) instead of on the button itself
+function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=null)b.querySelector('.c').textContent=o.cost;b.querySelector('.q').textContent=o.q||'';b.querySelector('.p').style.width=(o.p||0)*100+'%';b.classList.toggle('on',!!o.on);b.classList.toggle('done',!!o.done);b.classList.toggle('rdy',!!o.rdy);const t=o.title||'';if(b.dataset.tip!==t){b.dataset.tip=t;b.setAttribute('aria-label',[b.dataset.nm,b.dataset.desc,t].filter(Boolean).join('. '));}if(CTIP.b===b)ctipFill(b);}
+const CTIP={el:null,b:null,hideT:0,lp:null,eat:0};
+function ctipEl(){if(!CTIP.el){const d=document.createElement('div');d.id='ctip';d.hidden=true;d.setAttribute('role','tooltip');document.body.append(d);CTIP.el=d;}return CTIP.el;}
+function ctipFill(b){const d=ctipEl();d.innerHTML='';const n=document.createElement('b');n.textContent=b.dataset.nm||b.querySelector('.n').textContent;const c=document.createElement('span');c.className='tc';c.textContent=[b.querySelector('.c').textContent,b.querySelector('.q').textContent?'queued '+b.querySelector('.q').textContent:''].filter(Boolean).join(' · ');d.append(n,c);
+  if(b.dataset.desc){const s=document.createElement('span');s.textContent=b.dataset.desc;d.append(s);}if(b.dataset.tip){const s=document.createElement('span');s.className='tw';s.textContent=TOUCHUI?b.dataset.tip.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap'):b.dataset.tip;d.append(s);}}
+function ctipShow(b,ms){const d=ctipEl();clearTimeout(CTIP.hideT);CTIP.b=b;ctipFill(b);d.hidden=false;const r=b.getBoundingClientRect(),w=d.offsetWidth;d.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2))+'px';if(ms)CTIP.hideT=setTimeout(ctipHide,ms);}
+function ctipHide(){clearTimeout(CTIP.hideT);CTIP.b=null;if(CTIP.el)CTIP.el.hidden=true;}
+// which command button is under a point (disabled buttons let events through to the grid, so look them up by position)
+function btnAt(x,y){for(const b of $('panel').children){if(!b.classList.contains('btn')||b.hidden||b.style.display==='none')continue;const r=b.getBoundingClientRect();if(x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom)return b;}return null;}
+{const pn=$('panel');
+  pn.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse')return;const b=btnAt(e.clientX,e.clientY);if(b&&b!==CTIP.b)ctipShow(b);else if(!b&&CTIP.b)ctipHide();});
+  pn.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse')ctipHide();});
+  // touch: a long press shows the full description without pressing the button; a tap presses it and shows it briefly
+  pn.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;const b=btnAt(e.clientX,e.clientY);if(!b)return;clearTimeout(CTIP.lp&&CTIP.lp.t);CTIP.lp={x:e.clientX,y:e.clientY,b,t:setTimeout(()=>{CTIP.eat=performance.now();ctipShow(b);try{navigator.vibrate&&navigator.vibrate(12);}catch(_){}},450)};});
+  pn.addEventListener('pointermove',e=>{const L=CTIP.lp;if(L&&e.pointerType!=='mouse'&&Math.hypot(e.clientX-L.x,e.clientY-L.y)>10){clearTimeout(L.t);CTIP.lp=null;}});
+  const up=e=>{const L=CTIP.lp;if(!L||e.pointerType==='mouse')return;clearTimeout(L.t);CTIP.lp=null;if(CTIP.eat&&performance.now()-CTIP.eat<2000){if(CTIP.b)CTIP.hideT=setTimeout(ctipHide,2500);}else if(e.type==='pointerup'&&L.b)ctipShow(L.b,2600);};
+  pn.addEventListener('pointerup',up);pn.addEventListener('pointercancel',up);
+  // after a long press the finger lifts: swallow the click (and the long-press context menu) so nothing is bought
+  pn.addEventListener('click',e=>{if(CTIP.eat&&performance.now()-CTIP.eat<2000){CTIP.eat=0;e.stopPropagation();e.preventDefault();}},true);
+  pn.addEventListener('contextmenu',e=>{if(CTIP.eat&&performance.now()-CTIP.eat<2000){e.stopPropagation();e.preventDefault();}},true);
+  // mouse wheel scrolls the command grid sideways
+  pn.addEventListener('wheel',e=>{if(pn.scrollWidth<=pn.clientWidth+1||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;e.preventDefault();pn.scrollLeft+=(e.deltaMode===1?e.deltaY*33:e.deltaY);},{passive:false});
+  pn.addEventListener('scroll',()=>{if(CTIP.b&&!CTIP.lp)ctipHide();},{passive:true});}
 function renderAllies(){const el=$('allyBox');if(!el||!G)return;const T=G.teams[ME];const A=G.teams.filter(O=>O.id!==ME&&ally(O.id,ME)&&!O.out);el.hidden=!A.length||!!G.sandbox;if(el.hidden)return;
   const key=A.map(O=>O.id).join(',');if(el.dataset.k!==key){el.dataset.k=key;el.innerHTML='<div class="lbl"><span>Allies</span><span id="allyt" style="font:12px var(--mono);color:var(--dim)">send money</span></div>';
     for(const O of A){const r=document.createElement('div');r.className='ar';r.innerHTML=`<b style="color:${O.color}">${O.F.name}</b>`;const sm=document.createElement('small');sm.dataset.c=O.id;r.append(sm);
