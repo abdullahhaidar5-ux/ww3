@@ -76,7 +76,7 @@ window.WW3_P2P=true;
       try{s=new WebSocket(wsBase()+'/room/'+encodeURIComponent(code)+'?'+q);}catch(e){fail('network',String(e&&e.message||e));return;}
       s.onmessage=ev=>{const m=ev.data;if(typeof m!=='string'||m==='pong')return;WSS.rx++;WSS.rxB+=m.length;
         if(m[0]==='!'){const c=m[1],a=m.slice(3);
-          if(c==='w'){if(done)return;done=true;clearTimeout(to);ws=s;clearInterval(wsKA);wsKA=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);res(a);}
+          if(c==='w'){if(done)return;if(wsBye){fail('network','room left');return;}done=true;clearTimeout(to);ws=s;clearInterval(wsKA);wsKA=setInterval(()=>{if(ws===s&&s.readyState===1)s.send('ping');},25000);res(a);}
           else if(c==='e')fail(a==='nohost'?'peer-unavailable':a==='taken'?'unavailable-id':a==='busy'||a==='limit'?'refused':'server-error','server: '+a);
           else if(c==='j'&&role==='host'&&ws===s)wsLink(a);
           else if(c==='l'&&ws===s){if(role==='host'){const l=links.get(a);if(l&&l.ws)gone(a);}else gone(hostId);}
@@ -86,7 +86,9 @@ window.WW3_P2P=true;
       s.onclose=()=>{fail('network','server closed the connection');if(ws!==s)return;ws=null;clearInterval(wsKA);if(wsBye)return;
         // host: its relayed players count as gone until the socket is back (the server hands them back on reconnect)
         if(role==='host'){for(const [pid,l] of [...links])if(l.ws)gone(pid);wsRetry(0);}else gone(hostId);};});
-    const wsRetry=n=>{if(wsBye||n>30)return;setTimeout(()=>{if(wsBye||ws)return;wsOpen('host').catch(e=>{if(!(e&&(e.type==='unavailable-id'||e.type==='refused')))wsRetry(n+1);});},n?Math.min(5000,400*n):100);};
+    // own: this browser holds the game's id on the P2P network, so a relay room someone else still holds ('taken') is a
+    // leftover that goes away (e.g. a player who lost the race to take over): keep trying for a while
+    const wsRetry=(n,own)=>{if(wsBye||n>30)return;setTimeout(()=>{if(wsBye||ws)return;wsOpen('host').then(()=>{R.srv=true;},e=>{const t=e&&e.type;if(t==='refused'||t==='unavailable-id'&&!(own&&n<12))return;wsRetry(n+1,own);});},n?Math.min(5000,400*n):100);};
     const wsJoin=async()=>{const id=rid();await wsOpen('client',id);myId=id;links.set(hostId,{ws:1,send:x=>wsTx('|'+JSON.stringify(x)),buf:wsBuf});upd(hostId,{},true);};
     Object.defineProperty(R,'_ws',{get:()=>ws});
     const ready=(async()=>{
@@ -113,9 +115,10 @@ window.WW3_P2P=true;
       if(hosting){myId=hostId;
         // the host also opens its relay room on the servers; it never waits for that once P2P hosting works
         const wsP=srvUrl()?wsOpen('host').then(()=>true,e=>{if(e&&e.type==='unavailable-id')throw e;if(!(e&&e.type==='refused'))wsRetry(1);return false;}):null;
+        if(wsP)wsP.catch(()=>{});   // a refusal ('taken') is handled below; it must never surface as an uncaught page error
         const r=await Promise.allSettled([pjHost(),Promise.resolve().then(trHost)]);const p2p=r.some(x=>x.status==='fulfilled');
         if(r[0].status==='rejected'&&r[0].reason&&r[0].reason.type==='unavailable-id')throw r[0].reason;
-        if(wsP&&!p2p){R.srv=await wsP;if(!R.srv)throw r[0].reason;}else if(wsP)wsP.then(v=>{R.srv=v;},()=>{});else if(!p2p)throw r[0].reason;}
+        if(wsP&&!p2p){R.srv=await wsP;if(!R.srv)throw r[0].reason;}else if(wsP)wsP.then(v=>{R.srv=v;},()=>{wsRetry(1,true);});else if(!p2p)throw r[0].reason;}
       else if(via==='ws'){await wsJoin();R.via='ws';}
       else if(via==='pjd'||via==='pjt'){await pjJoin();R.via=via;}
       else if(via==='pj'){await pjJoin();R.via='pj';}else if(via==='tr'){await trJoin();R.via='tr';}
@@ -7629,7 +7632,7 @@ function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(
   const C=NET.tgC,S=NET.tgS||(NET.tgS={}),last=S[k];if(last&&last.js===C.js&&G.t-last.t<1)return {};S[k]={js:C.js,t:G.t};return C.v;}
 function teamMsg(T){const q={};for(const c of CATS)q[c]=T.q[c].map(i=>[i.kind,+(i.t/prodTime(T,stats(T.fac,i.kind))).toFixed(2)]);const rq={};for(const c in T.rq)if(T.rq[c])rq[c]=[T.rq[c].key,+(T.rq[c].t/UPG[T.rq[c].key].time).toFixed(2)];
   const pw={};for(const k in T.pw)pw[k]=[Math.ceil(T.pw[k].cd),T.pw[k].lv||1];
-  return{c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),tn:T.tun.length,tk:tunKinds(T),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min(NET.cseq[NET.peers[T.id]]|0,NET.ckAk?NET.ckAk[T.id]|0:0):0,to:NET.peers[T.id]};}
+  return{c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),tn:T.tun.length,tk:tunKinds(T),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min(NET.cseq[NET.peers[T.id]]|0,NET.ckAk?NET.ckAk[T.id]|0:0):0,to:NET.peers[T.id]};}
 // P2P: everything a player gets in one tick (snapshot chunks, effects, panel) travels as ONE bundle ('b') - about 10
 // messages a second per connection instead of ~17-24, less per-message overhead, and effects arrive with their snapshot.
 function netTick(dt){if(!window.WW3_P2P||MODE!=='host'||!NET.game||!NET.peers)return netTick0(dt);const g=NET.game,real=g.emit,B=new Map();
@@ -7750,7 +7753,7 @@ function clientTick(dt){G.t+=dt;const now=G.t;
 function applyEvents(d){if(!d||!Array.isArray(d.e))return;for(const v of d.e){if(!Array.isArray(v))continue;const [type,...args]=v;if(!FXH[type]||type==='end'&&false)continue;
   if(type==='die'||type==='gone'){const e=G.byId.get(args[0]);if(e){e.dead=true;e.gone=true;G.byId.delete(e.id);if(G.sel.includes(e))G.sel=G.sel.filter(x=>x!==e);}}
   if(type==='log'&&args[0]!==ME)continue;try{FXH[type](...args);}catch(e){}}}
-function applyTeam(d){if(!G||!d)return;if(typeof d.ak==='number'&&NET.cq&&NET.cq.length&&NET.cq[0].s<=d.ak){NET.cq=NET.cq.filter(c=>c.s>d.ak);if(NET.game)NET.game.presence({cq:NET.cq}).catch(()=>{});}if(typeof d.mg==='number')NET.gen=Math.max(NET.gen||0,d.mg|0);const T=G.teams[ME];T.credits=d.c|0;for(const c of CATS)T.q[c]=(d.q&&d.q[c]||[]).map(([k,p])=>({kind:k,t:p*prodTime(T,stats(T.fac,k)),p}));
+function applyTeam(d){if(!G||!d)return;if(typeof d.ak==='number'&&NET.cq&&NET.cq.length&&NET.cq[0].s<=d.ak){NET.cq=NET.cq.filter(c=>c.s>d.ak);if(NET.game)NET.game.presence({cq:NET.cq}).catch(()=>{});}if(typeof d.mg==='number')NET.gen=Math.max(NET.gen||0,d.mg|0);if(d.sb===0&&NET.isStandby){NET.isStandby=false;NET.lastCk=null;}const T=G.teams[ME];T.credits=d.c|0;for(const c of CATS)T.q[c]=(d.q&&d.q[c]||[]).map(([k,p])=>({kind:k,t:p*prodTime(T,stats(T.fac,k)),p}));
   T.rq={};for(const c in (d.rq||{})){const [k,p]=d.rq[c];if(UPG[k])T.rq[c]={key:k,t:p*UPG[k].time};}T.upg={};for(const k of d.u||[])if(UPG[k])T.upg[k]=true;upgReset(T);T.charge=+d.ch||0;T.tunN=d.tn|0;if(Array.isArray(d.ac))for(const [i,c] of d.ac)if(G.teams[i])G.teams[i].credits=+c||0;T.tunK=d.tk&&typeof d.tk==='object'?d.tk:{};if(WEATHER[d.wx]){G.wx=G.wx||{t:0,next:1e9};G.wx.k=d.wx;}if(Array.isArray(d.mn))G.mines=d.mn.map(([x,y])=>({x,y,team:ME,arm:0}));T.gxp=d.gx|0;T.rank=d.rk|0||1;T.spent=d.sp|0;
   T.pw={};for(const k in (d.pw||{}))if(POWERS[k]){const v=d.pw[k];T.pw[k]=Array.isArray(v)?{cd:+v[0]||0,lv:+v[1]||1}:{cd:+v||0,lv:1};}T.reveals=(d.rv||[]).map(([x,y,r,t])=>({x,y,r,t}));T.rally=d.rl?{x:d.rl[0],y:d.rl[1]}:null;
   if(Array.isArray(d.oil))d.oil.forEach((v,i)=>{const o=G.oil[i];if(o&&Array.isArray(v)){o.owner=v[0];if(Array.isArray(v[1]))o.cp=v[1].map(x=>+x||0);o.dead=!!v[2];o.hp=+v[3]||0;}});if(Array.isArray(d.out))d.out.forEach((x,i)=>{if(G.teams[i]&&x&&!G.teams[i].out){G.teams[i].out=true;if(i===ME)showElim();}});
@@ -7806,23 +7809,25 @@ async function ckUnpack(s){if(s[0]==='J')return JSON.parse(s.slice(1));const bin
   return JSON.parse(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text());}
 function migRoom(gen){return gen>0?NET.baseCode+'-m'+gen:NET.baseCode;}
 function ckTick(dt,live){NET.ckT=(NET.ckT==null?4:NET.ckT)-dt;if(NET.ckT>0||NET.ckBusy||NET.ckOut||!live.length||!NET.game)return;NET.ckT=8;
-  const sb=live.find(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(sb==null)return;const to=NET.peers[sb];NET.ckBusy=true;
+  const sb=live.find(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(sb==null)return;const to=NET.peers[sb];NET.sbSlot=sb;NET.ckBusy=true;
   let ck;try{ck=ckEncode();ck.gen=NET.gen||0;}catch(e){console.warn('checkpoint',e);NET.ckBusy=false;return;}
   ckPack(ck).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
 // the checkpoint trickles out 2 chunks per tick (it used to go in one ~30 KB burst that delayed that player's snapshots)
 function ckFlush(){const O=NET.ckOut;if(!O||!NET.game){NET.ckOut=null;return;}if(NET.game.buffered&&NET.game.buffered(O.to)>12000)return;for(let k=0;k<2&&O.i<O.n;k++,O.i++)NET.game.emit('ck',{to:O.to,id:O.id,i:O.i,n:O.n,d:O.s.slice(O.i*3000,(O.i+1)*3000)}).catch(()=>{});if(O.i>=O.n){NET.ckAk=O.cs;NET.ckOut=null;}}
 function ckReceive(d){if(!d||typeof d.d!=='string'||!(d.n>0)||d.n>400)return;const P=NET.ckParts||(NET.ckParts={});let e=P[d.id];if(!e){e=P[d.id]={n:d.n,got:0,a:new Array(d.n)};for(const k in P)if(+k<d.id-2)delete P[k];}
   if(e.a[d.i]==null){e.a[d.i]=d.d;e.got++;}if(e.got===e.n){NET.lastCk=e.a.join('');NET.isStandby=true;delete P[d.id];}}
-async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e){console.warn('checkpoint unpack',e);return false;}
+async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e){console.warn('checkpoint unpack',e);NET.isStandby=false;NET.lastCk=null;return false;}
   const gen=(ck.gen||0)+1,code2=migRoom(gen),me=ME;
-  try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);return false;}
-  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.ckOut=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};try{if(NET.room&&NET.startInfo)NET.room.presence({g:{c:NET.baseCode||NET.jcode,f:G.teams[me].fac,s:'full',n:G.teams.length,m:NET.startInfo.map}}).catch(()=>{});}catch(e){}
+  // open the follow-up room BEFORE touching the battle: if another player already hosts it (it took over first, e.g. it
+  // held a newer checkpoint), this player stays a client and simply joins that room on its next try
+  try{if(NET.game)NET.game.leave().catch(()=>{});}catch(e){}NET.game=null;NET.code=code2;let g;
+  try{g=await NET.room.join('tc-'+code2);}catch(e){NET.code='join';if(e&&e.type==='unavailable-id'){NET.isStandby=false;NET.lastCk=null;console.warn('checkpoint: '+code2+' is already hosted by another player; joining it');}else pushLog('Could not open the new game room.','w');return false;}
+  if(MODE!=='client'||!G||G.over){NET.code='join';g.leave().catch(()=>{});return false;}
+  try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);NET.code='join';g.leave().catch(()=>{});return false;}
+  MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};try{if(NET.room&&NET.startInfo)NET.room.presence({g:{c:NET.baseCode||NET.jcode,f:G.teams[me].fac,s:'full',n:G.teams.length,m:NET.startInfo.map}}).catch(()=>{});}catch(e){}
   const oldHost=ck.me|0;for(let k=0;k<G.teams.length;k++){const T=G.teams[k];if(k===ME){T.ai=null;T.discT=0;continue;}if(k===oldHost){if(!T.ai){T.ai=mkAI(1);T.aiTook=1;}continue;}if(!T.ai&&!T.out)T.discT=G.t;}
-  try{if(NET.game)NET.game.leave().catch(()=>{});}catch(e){}NET.game=null;NET.code=code2;
-  try{NET.game=await NET.room.join('tc-'+code2);}catch(e){pushLog('Could not open the new game room.','w');return false;}
-  wireHost(NET.game);NET.game.presence({h:1}).catch(()=>{});
+  NET.game=g;wireHost(g);g.presence({h:1}).catch(()=>{});
   for(const O of G.teams)log(O.id,`The host left. ${G.teams[ME].F.name} is now hosting the battle; the other commanders are reconnecting.`,'w');return true;}
-
 /* ================= UI: sidebar, input, menu, main loop ================= */
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
