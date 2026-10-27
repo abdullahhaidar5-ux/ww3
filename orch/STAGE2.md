@@ -303,7 +303,8 @@ Three.js or UI names. `--hostsnap --compare` runs the same host in the real `ind
 same battle state and **identical messages** (hash of every message, checkpoint gzip bytes aside) at each interval.
 `--room` tests the claude.ai-artifact broadcast style.
 
-Measured (Node 22, 8 players, Fulda, 5 game-min): 24,800 messages, ~59 KB/s in total to 7 players. The host netcode
+Result 2026-10-27: `--hostsnap --compare --players 4 --minutes 2 --every 20` → **HOSTSNAP PASS**, state and all
+4,265 messages identical between Node and Chromium at all 6 checks. Measured (Node 22, 8 players, Fulda, 5 game-min): 24,800 messages, ~59 KB/s in total to 7 players. The host netcode
 cost ~14 ms per game-second, on top of ~130 ms for the battle.
 
 **What remains for the dedicated server (step 3, not started):**
