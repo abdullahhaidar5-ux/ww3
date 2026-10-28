@@ -21,8 +21,9 @@
 //   6. budget hand-over: today's use passes 75% of the free plan; the server hands the battle over (closes it), the
 //      standby page takes over as a browser host in "<code>-m1" and the other page follows
 //
-//   node orch/cfe2e.mjs [--no-lock] [--minutes 1.5]
-// Prints CFE2E PASS / CFE2E FAIL: reason. Screenshots: orch/out/cfe2e-*.png
+//   node orch/cfbattle.mjs [--no-lock] [--minutes 1.5]
+// Prints CFE2E PASS / CFE2E FAIL: reason. Screenshots: orch/out/cfe2e-*.png. The ship gate runs it as "cfclient"
+// (gate.yml picks orch/cfbattle*.mjs first). On a build without the browser client it prints SKIP and passes.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -58,6 +59,10 @@ function blockedPeerShim(url) {
   Object.defineProperty(window, 'Trystero', { configurable: false, get: () => undefined, set: () => {} });
 }
 
+if (!/function hostCF\(/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'))) {
+  console.log('SKIP cfbattle: this build has no "Host on Cloudflare" browser client (branch orch/cf-battle-client) yet');
+  process.exit(0);
+}
 if (!process.argv.includes('--no-lock')) await acquireBrowserLock();
 const SRV = await startServer({ vars: { TEST_HOOKS: '1', BATTLE_READY_MS: '240000' }, quiet: !process.env.CFE2E_DEBUG });
 const WS = SRV.url.replace(/^http/, 'ws');

@@ -120,7 +120,7 @@ export default {
       return battles(env).get(battles(env).idFromName('bench:')).fetch(new Request(fwd, { headers: req.headers }));
     }
     if (p.startsWith('/battle-test/')) {
-      // local test controls for orch/cfe2e.mjs (pause, look at a side, evict, spend budget). They exist only when the
+      // local test controls for orch/cfbattle.mjs (pause, look at a side, evict, spend budget). They exist only when the
       // TEST_HOOKS var is "1", which only orch/serverdev.mjs sets for a local `wrangler dev`; never set it on Cloudflare.
       if (env.TEST_HOOKS !== '1') return json({ error: 'not found' }, 404, cors);
       const code = decodeURIComponent(p.slice(13)).toLowerCase();

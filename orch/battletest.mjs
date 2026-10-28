@@ -62,7 +62,7 @@ if (has('cfbench')) {
       const txt = await (await fetch(`${s.url}/battle-bench?players=${n}&minutes=${minutes}&map=${map}&batch=${batch}&key=localbenchkey`)).text();
       const line = txt.split('\n').find(l => l.startsWith('RESULT ')); const r = line ? JSON.parse(line.slice(7)) : null;
       if (!r) { console.log(txt); continue; }
-      console.log(`  ${n} players: ${r.wallMsPerGameS} ms per game-second (wall, avg), worst minute ${Math.max(...r.rows.map(x => x.wallMsPerGameS))} ms, slowest event ${r.maxEventMs} ms, peak ${r.peakEnts} entities, ${r.kbPerGameS} KB/s sent${r.over ? ' (ended)' : ''}`);
+      console.log(`  ${n} players: ${r.wallMsPerGameS} ms per game-second (wall, avg), per event p50 ${r.p50EventMs} / p90 ${r.p90EventMs} / p99 ${r.p99EventMs} ms, worst minute ${Math.max(...r.rows.map(x => x.wallMsPerGameS))} ms, slowest event ${r.maxEventMs} ms, peak ${r.peakEnts} entities, ${r.kbPerGameS} KB/s sent${r.over ? ' (ended)' : ''}`);
     }
   } finally { s.stop(); }
   process.exit(0);
