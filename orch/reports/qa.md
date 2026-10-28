@@ -47,15 +47,16 @@ build → train → select/order → powers → battle to the end → Play again
   they're unlocking without hovering.
 - Screenshot: `orch/shots/qa/hd-RS-zagros-1-powers.png`
 
-### Q3b · Phone landscape (844×390): build grid's last column is cut off under the right-hand panel — Medium
+### Q3b · Phone landscape (844×390): build grid's last column is cut off under the right-hand panel — Medium (still on 8e5ad4d)
 - Steps: phone held sideways, start any skirmish (seen: Coffee Shias, Golan Heights, 3 AI) → Build tab.
 - Expected: whole buttons (the portrait bar was fixed to show exactly 4 whole columns on 2026-10-27).
 - Actual: a 5th column ("Tu…", "Lo…" = Tunnel / …) peeks out and disappears under the strike/"LAUNCH" panel; the
   layout audit finds the Command HQ button underneath the LAUNCH button. Names in the visible columns are also cut
   ("Coffee Ro…", "Defense …", "Supply D…").
-- Screenshot: `orch/shots/qa/phoneL-DW-golan-3-start.png`
+- Screenshot: `orch/shots/qa/phoneL-DW-golan-3-start.png`; re-check on main 8e5ad4d (names now wrap, but the
+  5th column "Tur… $57…", "Mo… Ro… $23…" is still cut under the LAUNCH panel): `orch/shots/qa/phoneL-RS-dmz-recheck-start.png`
 
-### Q3c · Phone portrait: most build/unit/power names are cut to a few letters — Low
+### Q3c · Phone portrait: most build/unit/power names are cut to a few letters — Low · FIXED on main 8e5ad4d (names wrap to two lines)
 - 390×844, Iran: "Saffron B…", "Defense G…", "Supply De…", "IRGC Fiel…", "Construct…", "Spoils of …", "Takavar D…",
   "Missile Sa…", "Shahed S…", and the cost line "Unlock · 1 …". Players have to guess what a button builds.
 - Screenshot: `orch/shots/qa/phoneP-IR-strait-1-powers.png`, `orch/shots/qa/phoneP-IR-strait-1-units.png`
@@ -98,3 +99,4 @@ build → train → select/order → powers → battle to the end → Play again
 
 ## Re-checks of origin/main
 - 08:23 UTC: no new commits on main since 1639dab.
+- 09:52 UTC: main at 8e5ad4d (phone button names wrap; map picker terrain line; gate mpsync-server reconnect). Merged into orch/qa. Re-checked phone landscape: Q3b still there, Q3c fixed in landscape too; phone ❚❚ → Quit battle → menu works.
