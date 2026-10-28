@@ -45,6 +45,18 @@
 //   node orch/migrate.mjs --server         # local game servers, P2P working (the default), plus checks on the server
 //                                          # side: the old host's and the new host's relay rooms are open on it
 //   node orch/migrate.mjs --server-down    # servers configured but unreachable (as when the Worker is down)
+//   node orch/migrate.mjs --artifact       # the claude.ai artifact edition (python3 orch/build.py --artifact first): the
+//                                          # pages share rooms through a stand-in for the artifact `room` capability
+//                                          # (orch/artifact-harness.mjs) instead of PeerJS
+//   node orch/migrate.mjs --dual-claim     # TWO standbys claim the battle at once (artifact edition, implies --artifact:
+//                                          # there rooms are shared, so the claim decides; on PeerJS the room id itself is
+//                                          # exclusive). Client B holds the newest checkpoint, client A an older one, so
+//                                          # B must win ("newest backup wins", over "lowest side wins" on a tie). For
+//                                          # --blind s (default 3) game-room seconds the two cannot see each other's
+//                                          # claims, as on a slow network: both restore and start hosting, and the one
+//                                          # with the older checkpoint (A) must step down and rejoin B as a player.
+//                                          # --blind 0: they see each other's claims and A backs off before restoring.
+//                                          # Then the usual checks, with B as the new host and A as the player.
 // Prints MIGRATE PASS / MIGRATE FAIL: reason (exit 0 / 1). Runtime ~5-8 min (mostly three pages building the map).
 // Screenshots: orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png
 // (latest run; each run also keeps its own in orch/out/runs/<timestamp>-migrate*/, see runs.mjs)
@@ -56,12 +68,16 @@ import { createRequire } from 'node:module';
 import { acquireBrowserLock, watchPeakMemory } from './browserlock.mjs';
 import { newRun } from './runs.mjs';
 import { startServer, guardContext, DEAD_SERVER } from './serverdev.mjs';
+import { artifactHtml, artifactHandler, threeJs, THREE_CDN, roomStub, roomTopics, judgeRoomStats } from './artifact-harness.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? Number(process.argv[i + 1]) : d; };
 const MINUTES = arg('minutes', 2), AFTER = arg('after', 45), ABRUPT = process.argv.includes('--abrupt');
 const SRV_DOWN = process.argv.includes('--server-down'), SRV_CHECK = process.argv.includes('--server') && !SRV_DOWN;
+const DUAL = process.argv.includes('--dual-claim'), ARTF = DUAL || process.argv.includes('--artifact'), BLIND = arg('blind', DUAL ? 3 : 0);
+if (ARTF && (ABRUPT || SRV_DOWN || SRV_CHECK)) { console.log('MIGRATE FAIL: --artifact / --dual-claim cannot be combined with --abrupt or the --server modes'); process.exit(2); }
+const ART = ARTF ? { html: artifactHtml(), three: threeJs() } : null;
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -84,13 +100,13 @@ function findChromium() {
 
 await acquireBrowserLock();
 const peakMB = watchPeakMemory();
-const SRV = SRV_DOWN ? null : await startServer();
-console.log(SRV ? `game servers running locally at ${SRV.url}` : `game servers configured but down (${DEAD_SERVER})`);
+const SRV = SRV_DOWN || ART ? null : await startServer();
+console.log(ART ? 'claude.ai artifact edition (shared rooms; no game servers)' : SRV ? `game servers running locally at ${SRV.url}` : `game servers configured but down (${DEAD_SERVER})`);
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json',
   '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.mp3': 'audio/mpeg', '.ogg': 'audio/ogg',
   '.glb': 'model/gltf-binary', '.wasm': 'application/wasm' };
-const server = http.createServer((req, res) => {
+const server = http.createServer(ART ? artifactHandler(ART.html) : (req, res) => {
   let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   if (p.endsWith('/')) p += 'index.html';
   const f = path.join(ROOT, p);
@@ -170,9 +186,10 @@ const browser = await chromium.launch({ executablePath: findChromium(),
     '--renderer-process-limit=1'] });
 const ctx = await browser.newContext({ viewport: { width: 1024, height: 576 } });
 await guardContext(ctx, SRV ? SRV.url : DEAD_SERVER);
-await ctx.addInitScript(fakePeerShim);
-await ctx.route('**/*', r => r.request().url().startsWith(ORIGIN) || SRV && r.request().url().startsWith(SRV.url) ? r.continue() : r.abort());
-let hostClosed = false;
+if (ART) await ctx.addInitScript(roomStub, { topics: roomTopics() }); else await ctx.addInitScript(fakePeerShim);
+await ctx.route('**/*', r => r.request().url().startsWith(ORIGIN) || SRV && r.request().url().startsWith(SRV.url) ? r.continue()
+  : ART && r.request().url() === THREE_CDN ? r.fulfill({ status: 200, contentType: 'text/javascript', body: ART.three }) : r.abort());
+let hostClosed = false, tcAt = 0; const takeNotes = {};
 async function openPage(tag) {
   const page = await ctx.newPage();
   page.on('crash', () => { fail(`${tag} page crashed (renderer killed - out of memory?)`); crashed(); });
@@ -185,6 +202,8 @@ async function openPage(tag) {
     else fail(`${tag} console error: ` + t.slice(0, 300));
   });
   page.on('console', m => { if (m.type() === 'warning' && /checkpoint|p2p/i.test(m.text())) warns.push(`${tag} console warning: ` + m.text().slice(0, 200)); });
+  // the takeover's own notes ("takeover: another player ...") say which way a contested claim was settled
+  page.on('console', m => { if (/^takeover:/.test(m.text())) (takeNotes[tag] = takeNotes[tag] || []).push(`+${((Date.now() - (tcAt || Date.now())) / 1000).toFixed(1)}s ${m.text()}`); });
   await page.goto(URL0, { waitUntil: 'load', timeout: 180000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined' && typeof hostGame === 'function', null, { timeout: 120000 });
   return page;
@@ -192,7 +211,7 @@ async function openPage(tag) {
 const waitFor = (page, fn, arg, ms, what) => page.waitForFunction(fn, arg, { timeout: ms, polling: 250 }).catch(() => { throw new Error('timed out waiting for ' + what); });
 
 fs.mkdirSync(OUT, { recursive: true });
-const RUN = newRun(ABRUPT ? 'migrate-abrupt' : 'migrate');
+const RUN = newRun(DUAL ? 'migrate-dual' : ART ? 'migrate-art' : ABRUPT ? 'migrate-abrupt' : 'migrate');
 const t0 = Date.now();
 const secs = () => ((Date.now() - t0) / 1000).toFixed(0) + 's';
 const sample = a => a.slice(0, 4).join(', ') + (a.length > 4 ? ` (+${a.length - 4} more)` : '');
@@ -297,13 +316,27 @@ const selfDrive = (pg, on) => pg.evaluate((on) => {
 
 // trace a client page's reconnect steps (room joins and their outcome); reset=true starts a fresh trace
 const traceOn = (pg, reset) => pg.evaluate((reset) => {
-  if (!window.__trace) { const T = window.__trace = []; window.__traceT0 = performance.now(); const at = () => ((performance.now() - window.__traceT0) / 1000).toFixed(1);
+  if (!window.__trace) { if (Object.isFrozen(NET.room)) NET.room = Object.assign({}, NET.room); const T = window.__trace = []; window.__traceT0 = performance.now(); const at = () => ((performance.now() - window.__traceT0) / 1000).toFixed(1);
     const rj = NET.room.join; NET.room.join = async (n, o) => { T.push(at() + ' join ' + n); try { const r = await rj(n, o); T.push(at() + ' joined ' + n + ' via ' + r.via); return r; } catch (e) { T.push(at() + ' join failed ' + n + ': ' + (e && e.type || e)); throw e; } };
     const cr = clientReconnect; clientReconnect = async () => { T.push(at() + ' clientReconnect' + (NET.recon ? ' (already running)' : '')); const r = await cr(); T.push(at() + ' clientReconnect done, mode ' + MODE); return r; };
     const ph = promoteToHost; promoteToHost = async () => { T.push(at() + ' promoteToHost'); const r = await ph(); T.push(at() + ' promoteToHost -> ' + r); return r; };
     const ap = applySnap; let n = 0; applySnap = (d) => { if (!NET.recon) n = 0; else if (n++ < 3) T.push(at() + ' snapshot t=' + d.t + ' while reconnecting'); return ap(d); }; }
   if (reset) { window.__trace.length = 0; window.__traceT0 = performance.now(); }
 }, reset);
+
+// --dual-claim: keep the checkpoint before the latest one (client A gets that older one when the host leaves)
+const keepPrevCk = (pg) => pg.evaluate(() => { const cr = ckReceive;
+  ckReceive = (d) => { const was = NET.lastCk; cr(d); if (was && NET.lastCk !== was) window.__prevCk = was; }; });
+// --dual-claim --blind s: for s seconds after this page first enters the follow-up room "<code>-m1", the other players'
+// claims (cl) and host flags (h) in that room are hidden from it (they reach it late, as on a slow network)
+const blindClaims = (pg, s) => pg.evaluate((ms) => { if (Object.isFrozen(NET.room)) NET.room = Object.assign({}, NET.room);
+  const j = NET.room.join;
+  NET.room.join = async (n, o) => { const g = await j(n, o); if (!/-m1$/.test(n) || window.__blinded) return g; window.__blinded = 1; const until = performance.now() + ms;
+    const strip = q => { if (q.sameTab || !q.presence || performance.now() > until || !(q.presence.h || q.presence.cl)) return q;
+      const p = Object.assign({}, q.presence); delete p.h; delete p.cl; return Object.assign({}, q, { presence: p }); };
+    return Object.assign({}, g, { peers: () => g.peers().map(strip),
+      onPeers: f => g.onPeers(ch => f(Object.assign({}, ch, { peers: ch.peers.map(strip), joined: ch.joined.map(strip), updated: ch.updated.map(strip) }))) }); };
+}, s * 1000);
 
 async function main() {
   [host, cA, cB] = await Promise.all([openPage('host'), openPage('clientA'), openPage('clientB')]);
@@ -330,6 +363,7 @@ async function main() {
   const slots = [await cA.evaluate(() => ME), await cB.evaluate(() => ME)], map = await host.evaluate(() => G.mapKey);
   console.log(`[${secs()}] battle: ${facs.join(' vs ')} on ${map}; client A is slot ${slots[0]}, client B slot ${slots[1]}`);
   if (slots[0] !== 1 || slots[1] !== 2) throw new Error(`unexpected slots ${slots} (expected client A = 1, client B = 2)`);
+  if (DUAL) { await keepPrevCk(cA); if (BLIND > 0) for (const p of [cA, cB]) await blindClaims(p, BLIND); }
   for (const p of [cA, cB]) await traceOn(p, false);
   await netDiag('battle start');
 
@@ -347,7 +381,8 @@ async function main() {
   await build('barracks');
   // the clients fight each other; the host builds up and holds the middle, so it still has an army when it leaves
   const mid = bases[0] && bases[1] && bases[2] ? [(bases[0][0] * 2 + bases[1][0] + bases[2][0]) / 4, (bases[0][1] * 2 + bases[1][1] + bases[2][1]) / 4] : null;
-  const orders = async () => { await playSide(host, mid); await playSide(cA, bases[2]); await playSide(cB, bases[1]); };
+  // (--dual-claim: everyone only builds up, so both claimants still have an army to command after the takeover)
+  const orders = async () => { await playSide(host, mid); await playSide(cA, DUAL ? null : bases[2]); await playSide(cB, DUAL ? null : bases[1]); };
   await orders();
   await host.waitForTimeout(1200);
   const total = Math.round(MINUTES * 600); let ticks = 50, lagMax = 0;
@@ -362,7 +397,8 @@ async function main() {
   }
   if (lagMax > 1.5) fail(`before the host left, a client fell ${lagMax.toFixed(1)} game-s behind`);
   // make sure the standby holds a checkpoint newer than ~8 s (one is sent every 8 game-s)
-  for (let i = 0; i < 40; i++) { const ok = await cA.evaluate(() => !!(NET.isStandby && NET.lastCk)); if (ok) break; if (!await step(host, [cA, cB])) return; ticks += 5; }
+  for (let i = 0; i < 60; i++) { const ok = await cA.evaluate((dual) => !!(NET.isStandby && NET.lastCk && (!dual || window.__prevCk)), DUAL); if (ok) break; if (!await step(host, [cA, cB])) return; ticks += 5; }
+  if (DUAL && !await cA.evaluate(() => !!window.__prevCk)) { fail('--dual-claim: client A never received a second checkpoint (one is needed for each standby)'); return; }
   const ck = await cA.evaluate(async () => { if (!NET.lastCk) return null; try { const c = await ckUnpack(NET.lastCk); return { t: c.g.t, kb: Math.round(NET.lastCk.length / 1024), n: c.ents.length }; } catch (e) { return { err: String(e) }; } });
   const ckB = await cB.evaluate(() => !!NET.lastCk);
   if (!ck) { await netDiag('no checkpoint'); fail('client A (the standby) never received a checkpoint from the host, so nobody can take over'); return; }
@@ -398,43 +434,76 @@ async function main() {
   await selfDrive(cA, true); await selfDrive(cB, true);
   // closing a tab closes its WebRTC data channels, which the other side notices at once: say goodbye explicitly (a
   // message posted from pagehide is not reliably delivered while the page is torn down). --abrupt: no goodbye.
+  // (artifact edition: the room stand-in leaves its rooms on pagehide, as the real runtime does when a tab closes)
   for (const p of [cA, cB]) await traceOn(p, true);
-  hostClosed = true; const tc = Date.now();
-  await host.evaluate((abrupt) => window.__fpGone(!abrupt), ABRUPT);
+  hostClosed = true; const tc = tcAt = Date.now();
+  if (ART) await host.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+  else await host.evaluate((abrupt) => window.__fpGone(!abrupt), ABRUPT);
   await host.waitForTimeout(300); // let the goodbye leave before the page is torn down
   await host.close({ runBeforeUnload: false });
   host = null;
-  // timeline of the takeover as each remaining page sees it (printed on change)
-  const tl = { on: true, last: {} }, tlState = (p) => p.evaluate(() => `${MODE}${NET.recon ? ' reconnecting' : ''} room=${NET.code === 'join' ? (NET.hostPeer || '?') : NET.code} gen=${NET.gen || 0}${NET.game ? '' : ' (no room)'}`).catch(() => null);
-  (async () => { while (tl.on) { for (const [p, n] of [[cA, 'A'], [cB, 'B']]) { const v = await tlState(p); if (v && v !== tl.last[n]) { tl.last[n] = v; console.log(`    +${((Date.now() - tc) / 1000).toFixed(1)}s client ${n}: ${v}`); } }
+  // --dual-claim: both clients now hold a checkpoint, B the newest one and A the one before it (given only now: while the
+  // host was there, its updates would have told B it is not the standby and wiped B's copy)
+  let ckA = null, ckBn = null;
+  if (DUAL) {
+    const newest = await cA.evaluate(() => { const s = NET.lastCk; NET.lastCk = window.__prevCk; NET.isStandby = true; return s; });
+    await cB.evaluate((s) => { NET.lastCk = s; NET.isStandby = true; }, newest);
+    const ckT = (p) => p.evaluate(async () => { try { return (await ckUnpack(NET.lastCk)).g.t; } catch (e) { return null; } });
+    ckA = await ckT(cA); ckBn = await ckT(cB);
+    console.log(`[${secs()}] --dual-claim: client A holds the checkpoint from t=${ckA && ckA.toFixed(1)}s, client B the newer one from t=${ckBn && ckBn.toFixed(1)}s` +
+      (BLIND > 0 ? `; for ${BLIND} s in the takeover room neither sees the other's claim` : ''));
+    if (!(ckA < ckBn)) { fail(`--dual-claim: the two checkpoints are not older/newer (A t=${ckA}, B t=${ckBn})`); return; }
+  }
+  // who must end up hosting: the standby (A); with two, the one holding the newest checkpoint (B)
+  const [NH, NC, nhS, ncS, nhN, ncN] = DUAL ? [cB, cA, 2, 1, 'client B', 'client A'] : [cA, cB, 1, 2, 'client A', 'client B'];
+  // timeline of the takeover as each remaining page sees it (printed on change); also how long both were hosting at once
+  const tl = { on: true, last: {}, both: 0, bothMax: 0, hosts: {} }, tlState = (p) => p.evaluate(() => `${MODE}${NET.recon ? ' reconnecting' : ''} room=${NET.code === 'join' ? (NET.hostPeer || '?') : NET.code} gen=${NET.gen || 0}${NET.game ? '' : ' (no room)'}`).catch(() => null);
+  const tlDone = (async () => { while (tl.on) { let nh = 0;
+    for (const [p, n] of [[cA, 'A'], [cB, 'B']]) { const v = await tlState(p); if (v && /^host/.test(v)) { nh++; tl.hosts[n] = 1; }
+      if (v && v !== tl.last[n]) { tl.last[n] = v; console.log(`    +${((Date.now() - tc) / 1000).toFixed(1)}s client ${n}: ${v}`); } }
+    if (nh > 1) { tl.both = tl.both || Date.now(); tl.bothMax = Math.max(tl.bothMax, (Date.now() - tl.both) / 1000); } else tl.both = 0;
     await new Promise(r => setTimeout(r, 200)); } })();
   const noticed = await cA.waitForFunction(() => NET.recon || MODE === 'host', null, { timeout: 30000, polling: 100 }).then(() => (Date.now() - tc) / 1000, () => null);
   console.log(`[${secs()}] client A noticed the host was gone after ${noticed == null ? 'more than 30' : noticed.toFixed(1)} s${ABRUPT ? ' (abrupt: no goodbye)' : ''}`);
   if (!ABRUPT && noticed != null && noticed > 3) warns.push(`the clients took ${noticed.toFixed(1)} s to notice a closed host tab (expected ~0 s from the closed connection)`);
-  try { await waitFor(cA, () => MODE === 'host', null, 60000, 'client A to take over as host'); }
-  catch (e) { const st = await cA.evaluate(() => ({ mode: MODE, recon: !!NET.recon, sb: !!NET.isStandby, ck: !!NET.lastCk, gen: NET.gen, err: window.__driveErr || null })).catch(() => null);
-    fail(`client A did not become the host within 60 s after the host left (${JSON.stringify(st)})`); return; }
+  try { await waitFor(NH, () => MODE === 'host', null, 60000, nhN + ' to take over as host'); }
+  catch (e) { const st = await Promise.all([NH, NC].map(p => p.evaluate(() => ({ mode: MODE, recon: !!NET.recon, sb: !!NET.isStandby, ck: !!NET.lastCk, gen: NET.gen, err: window.__driveErr || null })).catch(() => null)));
+    fail(`${nhN} did not become the host within 60 s after the host left (${nhN} ${JSON.stringify(st[0])}, ${ncN} ${JSON.stringify(st[1])})`); return; }
   const tHost = (Date.now() - tc) / 1000;
-  const restored = await cA.evaluate(() => ({ t: G.t, code: NET.code, gen: NET.gen }));
-  console.log(`[${secs()}] client A is the new host after ${tHost.toFixed(1)} s (room ${restored.code}, battle resumed from t=${restored.t.toFixed(1)}s)`);
+  const restored = await NH.evaluate(() => ({ t: G.t, code: NET.code, gen: NET.gen, peer: (NET.game.peers().find(q => q.sameTab) || {}).peer || null }));
+  console.log(`[${secs()}] ${nhN} is the new host after ${tHost.toFixed(1)} s (room ${restored.code}, battle resumed from t=${restored.t.toFixed(1)}s)`);
   const roll = pre.t - restored.t;
   if (roll > 12.5) fail(`the takeover rolled the battle back ${roll.toFixed(1)} game-s (checkpoints should be at most ~8 s old)`);
-  try { await waitFor(cB, (room) => MODE === 'client' && !NET.recon && NET.hostPeer === 'ww3-' + room && performance.now() - (NET.lastRx || 0) < 2000, restored.code, 90000, 'client B to reconnect to the new host'); }
-  catch (e) { const st = await cB.evaluate(() => ({ mode: MODE, recon: !!NET.recon, hostPeer: NET.hostPeer, gen: NET.gen, rxAgo: Math.round(performance.now() - (NET.lastRx || 0)) })).catch(() => null);
-    fail(`client B did not reconnect to the new host within 90 s (${JSON.stringify(st)})`); return; }
+  if (DUAL && Math.abs(restored.t - ckBn) > 6) warns.push(`the new host's clock ${restored.t.toFixed(1)} s is far from its checkpoint's ${ckBn.toFixed(1)} s`);
+  try { await waitFor(NC, (hp) => MODE === 'client' && !NET.recon && NET.hostPeer === hp && performance.now() - (NET.lastRx || 0) < 2000, restored.peer, 90000, ncN + ' to reconnect to the new host'); }
+  catch (e) { const st = await NC.evaluate(() => ({ mode: MODE, recon: !!NET.recon, hostPeer: NET.hostPeer, gen: NET.gen, rxAgo: Math.round(performance.now() - (NET.lastRx || 0)) })).catch(() => null);
+    fail(`${ncN} did not reconnect to the new host within 90 s (${JSON.stringify(st)}; new host is ${restored.peer})`); return; }
   const tB = (Date.now() - tc) / 1000;
-  console.log(`[${secs()}] client B reconnected to the new host ${tB.toFixed(1)} s after the host left`);
-  tl.on = false;
+  console.log(`[${secs()}] ${ncN} reconnected to the new host ${tB.toFixed(1)} s after the host left`);
+  await NH.waitForTimeout(5000); // a few real seconds of the new host running on its own
+  tl.on = false; await tlDone;
   for (const [p, n] of [[cA, 'A'], [cB, 'B']]) console.log(`    trace client ${n}: ` + (await p.evaluate(() => window.__trace.join(' | '))));
-  await cA.waitForTimeout(5000); // a few real seconds of the new host running on its own
-  if (SRV_CHECK) { const w = await cA.waitForFunction(() => !!(NET.game && NET.game._ws && NET.game._ws.readyState === 1), null, { timeout: 20000, polling: 250 }).then(() => true, () => false);
+  for (const [n, l] of Object.entries(takeNotes)) console.log(`    takeover notes ${n}: ${l.join(' | ')}`);
+  if (DUAL) {
+    // exactly one host in the end, and never two for longer than the step-down takes (it looks once a second)
+    const modes = await Promise.all([cA, cB].map(p => p.evaluate(() => MODE)));
+    console.log(`[${secs()}] --dual-claim: now A is ${modes[0]}, B is ${modes[1]}; both were hosting at once for ${tl.bothMax.toFixed(1)} s at most; ` +
+      `A ${tl.hosts.A ? 'hosted for a while' : 'never hosted'}`);
+    if (modes.filter(m => m === 'host').length !== 1) fail(`--dual-claim: ${modes.filter(m => m === 'host').length} hosts after the takeover (A ${modes[0]}, B ${modes[1]})`);
+    if (tl.bothMax > 4) fail(`--dual-claim: two players hosted the battle at the same time for ${tl.bothMax.toFixed(1)} s (the one with the older checkpoint should step down within ~1-2 s once it sees the other)`);
+    const notesA = (takeNotes.clientA || []).join(' ');
+    if (BLIND > 0 && !tl.hosts.A) warns.push('--dual-claim: client A never hosted, so the step-down was not exercised (it saw B\'s claim in time)');
+    if (BLIND > 0 && tl.hosts.A && !/took over first/.test(notesA)) fail('--dual-claim: client A hosted but never stepped down for the better claim');
+    if (BLIND === 0 && tl.hosts.A) fail('--dual-claim --blind 0: client A started hosting although it could see B\'s better claim');
+  }
+  if (SRV_CHECK) { const w = await NH.waitForFunction(() => !!(NET.game && NET.game._ws && NET.game._ws.readyState === 1), null, { timeout: 20000, polling: 250 }).then(() => true, () => false);
     console.log(`[${secs()}] --server: the new host's relay room ${restored.code} on the local server is ${w ? 'open' : 'NOT open'}`);
     if (!w) fail(`--server: the new host did not open its relay room ${restored.code} on the (local) game server`); }
   for (const p of [cA, cB]) await selfDrive(p, false);
-  for (const [p, n] of [[cA, 'new host (client A)'], [cB, 'client B']]) { const e = await p.evaluate(() => window.__driveErr || null); if (e) fail(`${n} threw while running during the takeover: ${e}`); }
+  for (const [p, n] of [[NH, `new host (${nhN})`], [NC, ncN]]) { const e = await p.evaluate(() => window.__driveErr || null); if (e) fail(`${n} threw while running during the takeover: ${e}`); }
 
   // ---- phase 3: back to test-stepping; check armies, ownership, orders and sync ----
-  const post = await armies(cA);
+  const post = await armies(NH);
   if (!(post.t > restored.t)) fail(`the battle clock did not advance after the takeover (t=${post.t.toFixed(1)})`);
   if (post.t < pre.t - 12.5) warns.push(`new host clock ${post.t.toFixed(1)} s is behind the old host's ${pre.t.toFixed(1)} s`);
   for (let k = 0; k < 3; k++) {
@@ -443,44 +512,45 @@ async function main() {
       `${post.teams[k].ai ? 'AI-run' + (post.teams[k].aiTook ? ' (took over)' : '') : 'player-run'}${post.teams[k].disc ? ', marked disconnected' : ''}`);
     if (!pre.teams[k].out && kept < before.size * .6) fail(`${facs[k]} (slot ${k}) lost its army in the takeover: only ${kept} of ${before.size} entities made it to the new host`);
   }
-  const T0 = post.teams[0], T2 = post.teams[2], T1 = post.teams[1];
+  const T0 = post.teams[0], TC = post.teams[ncS], TH = post.teams[nhS];
   if (!T0.out && !(T0.ai && T0.aiTook)) fail(`the old host's side (${facs[0]}) is not handed to the AI on the new host (ai=${T0.ai}, aiTook=${T0.aiTook})`);
-  if (T1.ai || T1.disc) fail(`the new host's own side is AI-run or marked disconnected (ai=${T1.ai}, disc=${T1.disc})`);
-  if (T2.ai || T2.disc) fail(`client B's side is not back under client B's command (ai=${T2.ai}, marked disconnected at t=${T2.disc})`);
-  const ok2 = await cA.evaluate(() => ({ peers: NET.peers, live: NET.peers.filter(Boolean).length }));
-  if (!ok2.peers[2]) fail('the new host has no connection recorded for client B (NET.peers[2] empty)');
+  if (TH.ai || TH.disc) fail(`the new host's own side is AI-run or marked disconnected (ai=${TH.ai}, disc=${TH.disc})`);
+  if (TC.ai || TC.disc) fail(`${ncN}'s side is not back under ${ncN}'s command (ai=${TC.ai}, marked disconnected at t=${TC.disc})`);
+  const ok2 = await NH.evaluate(() => ({ peers: NET.peers, live: NET.peers.filter(Boolean).length }));
+  if (!ok2.peers[ncS]) fail(`the new host has no connection recorded for ${ncN} (NET.peers[${ncS}] empty)`);
 
-  await settleCheck(cA, cB, 2, 'after: client B right after the takeover');
-  // client B gives an order on its own screen; it must reach the new host
-  const target = bases[1] || bases[0]; // toward client A, the new host
-  const ord = await cB.evaluate((t) => { let us = G.ents.filter(e => e.team === ME && !e.isB && !e.dead && e.kind !== 'dozer' && e.kind !== 'harv');
+  await settleCheck(NH, NC, ncS, `after: ${ncN} right after the takeover`);
+  // the remaining player gives an order on its own screen; it must reach the new host
+  const target = bases[nhS] || bases[0]; // toward the new host
+  const ord = await NC.evaluate((t) => { let us = G.ents.filter(e => e.team === ME && !e.isB && !e.dead && e.kind !== 'dozer' && e.kind !== 'harv');
     if (!us.length) us = G.ents.filter(e => e.team === ME && !e.isB && !e.dead && e.kind === 'dozer' && !e.building);
     if (!us.length) return { n: 0 }; doAct({ t: 'go', ids: us.map(e => e.id), x: t[0], y: t[1], mode: 'move' }); return { n: us.length, ids: us.map(e => e.id) }; }, target);
-  const posOf = (ids) => cA.evaluate((ids) => ids.map(id => { const e = G.byId.get(id); return e ? [e.x, e.y] : null; }), ids);
+  const posOf = (ids) => NH.evaluate((ids) => ids.map(id => { const e = G.byId.get(id); return e ? [e.x, e.y] : null; }), ids);
   const before = ord.n ? await posOf(ord.ids) : [];
-  await cA.waitForTimeout(1500);
+  await NH.waitForTimeout(1500);
   const aiT0 = { bi: T0.bi, ids: new Set(T0.ids) };
   const steps = Math.round(AFTER * 2); let lag2 = 0, orderChecked = false;
   for (let i = 0; i < steps; i++) {
-    const s = await step(cA, [cB]); if (!s) return; if (i > 10) lag2 = Math.max(lag2, s.lag);
+    const s = await step(NH, [NC]); if (!s) return; if (i > 10) lag2 = Math.max(lag2, s.lag);
     if (!orderChecked && i >= 40 && ord.n) { orderChecked = true; const after = await posOf(ord.ids);
       const moved = after.filter((a, j) => a && before[j] && Math.hypot(a[0] - before[j][0], a[1] - before[j][1]) > 15).length;
-      console.log(`[${secs()}] client B order after the takeover: ${moved}/${ord.n} of its units moved on the new host`);
-      if (!moved) fail('an order given on client B after the takeover never reached the new host (none of its units moved)'); }
+      console.log(`[${secs()}] ${ncN} order after the takeover: ${moved}/${ord.n} of its units moved on the new host`);
+      if (!moved) fail(`an order given on ${ncN} after the takeover never reached the new host (none of its units moved)`); }
     if (s.over) { console.log(`[${secs()}] battle ended at t=${s.t.toFixed(0)}s`); break; }
-    if (i % 60 === 59) await playSide(cB, bases[1]);
+    if (i % 60 === 59) await playSide(NC, bases[nhS]);
   }
-  if (!ord.n) warns.push('client B had no units after the takeover, so the order round-trip was not tested');
-  if (lag2 > 1.5) fail(`after the takeover, client B fell ${lag2.toFixed(1)} game-s behind the new host`);
+  if (!ord.n) warns.push(`${ncN} had no units after the takeover, so the order round-trip was not tested`);
+  if (lag2 > 1.5) fail(`after the takeover, ${ncN} fell ${lag2.toFixed(1)} game-s behind the new host`);
   // the AI must actually be playing the old host's side
-  const end = await armies(cA), E0 = end.teams[0];
+  const end = await armies(NH), E0 = end.teams[0];
   const fresh = E0.ids.filter(id => !aiT0.ids.has(id)).length;
   console.log(`[${secs()}] old host's side after ${AFTER} game-s under the AI: build step ${aiT0.bi} -> ${E0.bi}, ${fresh} new entities, ${E0.q} in production, $${E0.credits}`);
   if (!E0.out && E0.ai && E0.bi === aiT0.bi && !fresh && !E0.q) fail(`the AI took over the old host's side but did nothing with it in ${AFTER} game-s (no building, no production, no new units)`);
-  if (end.teams[2].ai || end.teams[2].disc) fail(`by the end client B's side was AI-run / marked disconnected (ai=${end.teams[2].ai}, disc=${end.teams[2].disc})`);
-  await settleCheck(cA, cB, 2, `after: client B ${AFTER} game-s after the takeover`);
-  await screenshot(cA, 'mig-after-newhost.png');
-  await screenshot(cB, 'mig-after-client.png');
+  if (end.teams[ncS].ai || end.teams[ncS].disc) fail(`by the end ${ncN}'s side was AI-run / marked disconnected (ai=${end.teams[ncS].ai}, disc=${end.teams[ncS].disc})`);
+  await settleCheck(NH, NC, ncS, `after: ${ncN} ${AFTER} game-s after the takeover`);
+  if (ART) for (const [p, n] of [[NH, 'new host'], [NC, ncN]]) { const j = judgeRoomStats(n, await p.evaluate(() => window.__fpStats)); j.fails.forEach(fail); warns.push(...j.warns); }
+  await screenshot(NH, 'mig-after-newhost.png');
+  await screenshot(NC, 'mig-after-client.png');
 }
 try { await Promise.race([main(), crash]); } catch (e) {
   fail(String(e && e.message || e));
@@ -492,12 +562,12 @@ if (SRV) SRV.stop();
 
 { const mb = peakMB(); if (mb) console.log(`peak memory (node + browser, summed RSS): ${mb} MB`); }
 for (const w of [...new Set(warns)].slice(0, 12)) console.log('  warn: ' + w);
-const MODE_TXT = SRV_DOWN ? ', game servers down' : ', local game servers';
+const MODE_TXT = ART ? ', artifact edition' : SRV_DOWN ? ', game servers down' : ', local game servers';
 const uniq = [...new Set(fails)];
 if (uniq.length) {
   console.log(`\nMIGRATE FAIL: ${uniq[0]} (${secs()})`);
   for (const f of uniq.slice(1, 20)) console.log('  ✗ ' + f);
   process.exit(1);
 }
-console.log(`\nMIGRATE PASS${ABRUPT ? ' (abrupt host loss)' : ''}${MODE_TXT} (${secs()}) — screenshots orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png (this run: ${RUN.rel}/)`);
+console.log(`\nMIGRATE PASS${DUAL ? ` (two standbys claimed at once${BLIND > 0 ? `, blind for ${BLIND} s` : ''})` : ''}${ABRUPT ? ' (abrupt host loss)' : ''}${MODE_TXT} (${secs()}) — screenshots orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png (this run: ${RUN.rel}/)`);
 process.exit(0);
