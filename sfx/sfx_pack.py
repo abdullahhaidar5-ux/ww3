@@ -91,7 +91,9 @@ for k, (f, a, n, db) in LOOPS.items():
     man['loops'][k] = round(n, 2); man['bytes'][k + '.mp3'] = os.path.getsize(os.path.join(OUT, k + '.mp3'))
 man['credits'] = [
     {'who': 'Bart (bart)', 'what': 'The Free Firearm Sound Library', 'lic': 'CC0'},
-    {'who': 'Michel Baradari (apollo-music.de)', 'what': 'Chaingun/rifle shots, 4 projectile launches, 2 High Quality Explosions', 'lic': 'CC-BY 3.0'},
+    {'who': 'Michel Baradari (apollo-music.de)', 'what': 'Chaingun, pistol, rifle, shotgun shots', 'lic': 'CC-BY 3.0'},
+    {'who': 'Michel Baradari (apollo-music.de)', 'what': '4 projectile launches', 'lic': 'CC-BY 3.0'},
+    {'who': 'Michel Baradari (apollo-music.de)', 'what': '2 High Quality Explosions', 'lic': 'CC-BY 3.0'},
     {'who': 'Thimras', 'what': 'Cannon fire', 'lic': 'CC0'},
     {'who': 'EZduzziteh', 'what': 'Explosions', 'lic': 'CC0'},
     {'who': 'Lamoot', 'what': 'Big Explosion', 'lic': 'CC-BY 3.0'},
