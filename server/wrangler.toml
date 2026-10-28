@@ -18,10 +18,24 @@ class_name = "Lobby"
 name = "BUDGET"
 class_name = "Budget"
 
+# Battles hosted on Cloudflare (the server runs the battle; see ../orch/STAGE2.md section 8)
+[[durable_objects.bindings]]
+name = "BATTLES"
+class_name = "BattleRoom"
+
 # SQLite-backed Durable Objects: the kind the Workers Free plan allows.
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["GameRoom", "Lobby", "Budget"]
+
+[[migrations]]
+tag = "v2"
+new_sqlite_classes = ["BattleRoom"]
+
+# Bundles the game's battle code (../src) into gen/battle-sim.js before every `wrangler dev` / `wrangler deploy`.
+[build]
+command = "node build-sim.mjs"
+watch_dir = ["src", "../src"]
 
 # Optional, set in the Cloudflare dashboard (Worker > Settings > Variables and Secrets), never in this file:
 #   TURN_KEY_ID, TURN_KEY_API_TOKEN  (secrets)  Cloudflare TURN key, for players behind strict networks
