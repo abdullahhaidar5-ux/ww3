@@ -30,6 +30,7 @@ const PERF = argS('perf', '1') !== '0';
 const FRAMES = Number(argS('frames', 20));
 const AIR = argS('air', '1') !== '0'; // Apache + F-16 close-up (US vs IL: US flies the Apache, IL the F-16)
 const SEED = 4242;
+const PHONEONLY = argS('phoneonly', '0') === '1'; // skip the desktop shots, phone frame times only
 
 if (process.argv.includes('--sheet')) { sheet(); process.exit(0); }
 
@@ -81,13 +82,16 @@ async function battle(page, map, p, a, simSec) {
   const r = await page.evaluate(async ([map, p, a, seed]) => {
     if (G) G.over = true;
     Object.assign(setup, { map, n: 1, p, a, others: [], tm: [], slot: -1, seed });
-    startSingle(); const w0 = performance.now();
+    // the sim draws from Math.random: seed it (one stream for setup, one for the fast-forward) so both builds play the
+    // same battle; rendering in between gets the normal Math.random back
+    const R0 = Math.random; window.__R0 = R0; window.__simR = mulberry(seed * 7 + 1);
+    Math.random = mulberry(seed); try { startSingle(); } finally { Math.random = R0; } const w0 = performance.now();
     while (window.LOADING && performance.now() - w0 < 900000) await new Promise(r => setTimeout(r, 100));
-    G.teams.forEach(T => { if (!T.ai) T.ai = mkAI(1); }); G.paused = false;
+    Math.random = window.__simR; try { G.teams.forEach(T => { if (!T.ai) T.ai = mkAI(1); }); } finally { Math.random = R0; } G.paused = false;
     return { map: G.mapKey, facs: G.teams.map(T => T.fac), rev: THREE.REVISION, W: MAPW, H: MAPH };
   }, [map, p, a, SEED]);
   for (let done = 0; done < simSec * 60; done += 1800)
-    await page.evaluate(k => { for (let i = 0; i < k && G && !G.over; i++) simUpdate(1 / 60); for (const e of G.ents) { e.ox = e.x; e.oy = e.y; } G.alpha = 1; }, Math.min(1800, simSec * 60 - done));
+    await page.evaluate(k => { Math.random = window.__simR; try { for (let i = 0; i < k && G && !G.over; i++) simUpdate(1 / 60); } finally { Math.random = window.__R0; } for (const e of G.ents) { e.ox = e.x; e.oy = e.y; } G.alpha = 1; }, Math.min(1800, simSec * 60 - done));
   return r;
 }
 // camera: 'overview' (zoomed all the way out over the middle of the map) or 'close' (the busiest fight, zoomed in)
@@ -114,6 +118,7 @@ async function snap(page, name) { await page.screenshot({ path: path.join(dir, n
 
 const perf = { tag: TAG, html: path.relative(ROOT, HTML), when: new Date().toISOString() };
 try {
+  if (!PHONEONLY) {
   const { ctx, page } = await open({ viewport: { width: 1280, height: 720 } });
   perf.rev = await page.evaluate(() => THREE.REVISION);
   console.log(`[${secs()}] booted three r${perf.rev}`);
@@ -142,6 +147,7 @@ try {
     }
   }
   await ctx.close();
+  }
   if (PERF && CLOSE.length) {
     const [k, p, a] = CLOSE[0];
     const { ctx: c2, page: m } = await open({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true,
@@ -152,6 +158,9 @@ try {
     const q = await m.evaluate(() => ({ phone: gfxPhone(), lv: QUAL.lv, dpr, w: Math.round(VW * dpr), h: Math.round(VH * dpr) }));
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
     perf.phone = { scene: `close-up ${k} @${at.x},${at.y}, 390x844 x3, 4x CPU throttle, phone look=${q.phone} level ${q.lv}, ${q.w}x${q.h} px`, ...stats(await frames(m, FRAMES)) };
+    // same picture in both builds whatever the battle did: the player's own base, fixed camera
+    await m.evaluate(() => { const [bx, by] = BASES[0]; cam.dist = cam.td = 330; cam.x = cam.tx = bx; cam.y = cam.ty = by + 60; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; });
+    await frames(m, 2); perf.phoneBase = { scene: `own base, fixed camera, same phone setup`, ...stats(await frames(m, FRAMES)) };
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
     await snap(m, `phone-${k}`);
     await c2.close();
@@ -160,7 +169,7 @@ try {
 await browser.close(); server.close();
 perf.errors = [...new Set(errs)].slice(0, 40);
 fs.writeFileSync(path.join(dir, PERF ? 'perf.json' : 'errors-' + Date.now() + '.json'), JSON.stringify(perf, null, 2));
-console.log(JSON.stringify({ desktop: perf.desktop, desktopOverview: perf.desktopOverview, phone: perf.phone }, null, 1));
+console.log(JSON.stringify({ desktop: perf.desktop, desktopOverview: perf.desktopOverview, phone: perf.phone, phoneBase: perf.phoneBase }, null, 1));
 for (const e of perf.errors) console.log('  ! ' + e);
 console.log(`done in ${secs()}: orch/out/three/${TAG}/`);
 
