@@ -1,0 +1,44 @@
+game servers running locally at http://127.0.0.1:35715
+[2s] three pages loaded
+[2s] host lobby open, code 2sin2g
+[33s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+[86s] before: client A @1 min t=60s: host 33 entities, slot 1 sees 15 (own 15); its screen has 0; missing 15, extra 0, off-position 0, mismatched 0; credits host 355 client 4800
+[87s] before: client B @1 min t=60s: host 33 entities, slot 2 sees 16 (own 15); its screen has 0; missing 16, extra 0, off-position 0, mismatched 0; credits host 1030 client 4800
+    trace client A (screenshot stall):  || now: client via=pjd ws=false rxAgo=257
+    trace client B (screenshot stall):  || now: client via=pjd ws=false rxAgo=258
+[106s] host leaves at t=129.7s; standby checkpoint from t=129.0s (12 KB, 44 entities); armies US 1, RU 23, CN 20
+    +0.5s client A: client room=ww3-2sin2g gen=0
+    +0.5s client B: client room=ww3-2sin2g gen=0
+[112s] client A noticed the host was gone after 5.3 s (abrupt: no goodbye)
+    +5.3s client A: client reconnecting room=ww3-2sin2g gen=0
+    +5.5s client A: client reconnecting room=ww3-2sin2g gen=0 (no room)
+    +5.8s client B: client reconnecting room=ww3-2sin2g gen=0
+    +6.0s client B: client reconnecting room=ww3-2sin2g gen=0 (no room)
+    +6.6s client A: client reconnecting room=2sin2g-m1 gen=0 (no room)
+    +6.8s client A: host room=2sin2g-m1 gen=1
+[113s] client A is the new host after 6.8 s (room 2sin2g-m1, battle resumed from t=129.2s)
+    +7.6s client B: client reconnecting room=ww3-2sin2g-m1 gen=1
+    +7.8s client B: client room=ww3-2sin2g-m1 gen=1
+[114s] client B reconnected to the new host 7.8 s after the host left
+    trace client A: 5.3 clientReconnect | 5.5 join tc-2sin2g | 6.5 join failed tc-2sin2g: peer-unavailable | 6.5 promoteToHost | 6.5 join tc-2sin2g-m1 | 6.6 joined tc-2sin2g-m1 via undefined | 6.6 promoteToHost -> true | 6.6 clientReconnect done, mode host
+    trace client B: 5.6 clientReconnect | 5.8 join tc-2sin2g | 6.8 join failed tc-2sin2g: peer-unavailable | 7.3 join tc-2sin2g-m1 | 7.5 joined tc-2sin2g-m1 via pjd | 7.5 snapshot t=129.9 while reconnecting | 7.6 snapshot t=130 while reconnecting | 7.7 snapshot t=130.1 while reconnecting | 7.8 clientReconnect done, mode client
+[119s]   US (slot 0): 0/1 of its pre-takeover entities are on the new host, 0 in all; AI-run (took over)
+[119s]   RU (slot 1): 23/23 of its pre-takeover entities are on the new host, 23 in all; player-run
+[119s]   CN (slot 2): 20/20 of its pre-takeover entities are on the new host, 20 in all; player-run
+[120s] after: client B right after the takeover t=135s: host 43 entities, slot 2 sees 20 (own 20); its screen has 20; missing 0, extra 0, off-position 0, mismatched 0; credits host 2305 client 2305
+[122s] client B order after the takeover: 9/10 of its units moved on the new host
+[123s] old host's side after 45 game-s under the AI: build step 0 -> 0, 0 new entities, 1 in production, $6785
+[124s] after: client B 45 game-s after the takeover t=180s: host 36 entities, slot 2 sees 18 (own 17); its screen has 18; missing 0, extra 0, off-position 0, mismatched 0; credits host 3775 client 3775
+peak memory (node + browser, summed RSS): 3669 MB
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MIGRATE FAIL: before: client A @1 min: 15 of slot 1's own entities are missing on its screen: hq#6(team 1), harv#7(team 1), dozer#8(team 1), inf#9(team 1) (+11 more) (133s)
+  ✗ before: client A @1 min: slot 1 credits differ: host 355, client 4800
+  ✗ before: client A @1 min: slot 1's latest state is 59.5 s behind the host after settling
+  ✗ before: client B @1 min: 15 of slot 2's own entities are missing on its screen: harv#2(team 0), hq#11(team 2), harv#12(team 2), dozer#13(team 2) (+12 more)
+  ✗ before: client B @1 min: slot 2 credits differ: host 1030, client 4800
+  ✗ before: client B @1 min: slot 2's latest state is 59.0 s behind the host after settling
+  ✗ before the host left, a client fell 119.5 game-s behind
+  ✗ US (slot 0) lost its army in the takeover: only 0 of 1 entities made it to the new host
