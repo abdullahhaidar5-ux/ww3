@@ -21,8 +21,9 @@
 //   6. budget hand-over: today's use passes 75% of the free plan; the server hands the battle over (closes it), the
 //      standby page takes over as a browser host in "<code>-m1" and the other page follows
 //
-//   node orch/cfe2e.mjs [--no-lock] [--minutes 1.5]
-// Prints CFE2E PASS / CFE2E FAIL: reason. Screenshots: orch/out/cfe2e-*.png
+//   node orch/cfbattle.mjs [--no-lock] [--minutes 1.5]
+// Prints CFE2E PASS / CFE2E FAIL: reason. Screenshots: orch/out/cfe2e-*.png. The ship gate runs it as "cfclient"
+// (gate.yml picks orch/cfbattle*.mjs first). On a build without the browser client it prints SKIP and passes.
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -58,8 +59,12 @@ function blockedPeerShim(url) {
   Object.defineProperty(window, 'Trystero', { configurable: false, get: () => undefined, set: () => {} });
 }
 
+if (!/function hostCF\(/.test(fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8'))) {
+  console.log('SKIP cfbattle: this build has no "Host on Cloudflare" browser client (branch orch/cf-battle-client) yet');
+  process.exit(0);
+}
 if (!process.argv.includes('--no-lock')) await acquireBrowserLock();
-const SRV = await startServer({ vars: { TEST_HOOKS: '1' }, quiet: !process.env.CFE2E_DEBUG });
+const SRV = await startServer({ vars: { TEST_HOOKS: '1', BATTLE_READY_MS: '240000' }, quiet: !process.env.CFE2E_DEBUG });
 const WS = SRV.url.replace(/^http/, 'ws');
 console.log(`local game server (wrangler dev, TEST_HOOKS) ${SRV.url}`);
 // the server's view of a battle (test hooks)
@@ -167,11 +172,13 @@ async function main() {
   const s0 = await SB();
   say(`3. battle started on the server (${s0.phase}, held for loading screens: ${!s0.go}); creator is slot ${slots[0]}, friend slot ${slots[1]}`);
   if (slots[0] !== 0 || slots[1] !== 1) fail(`expected slots 0 and 1, got ${slots}`);
-  for (const [p, who] of [[A, 'creator'], [B, 'friend']]) await waitFor(p, () => G && G.terrain && !window.LOADING, null, 600000, `the ${who} to finish loading`);
+  for (const [p, who] of [[A, 'creator'], [B, 'friend']]) await waitFor(p, () => G && window.LOADING === false, null, 600000, `the ${who} to finish loading`);
   let st = await SB();
   for (let i = 0; i < 100 && !(st.go && st.humans.every(h => h.rd)); i++) { await A.waitForTimeout(200); st = await SB(); }
   say(`   both pages past the loading screen (rd: ${st.humans.map(h => h.rd).join(', ')}); battle running: ${st.go}`);
+  if (process.env.CFE2E_DEBUG) for (const p of [A, B]) say('     page ' + JSON.stringify(await p.evaluate(() => { const me = NET.game && NET.game.peers().find(q => q.sameTab); return { mode: MODE, sv: NET.sv, me: me && me.peer, rd: me && me.presence && me.presence.rd, peers: NET.peers, recon: !!NET.recon }; })) + ' server ' + JSON.stringify(st.conn) + ' ' + JSON.stringify(st.peers));
   if (!st.go || !st.humans.every(h => h.rd)) fail('the server did not start the battle after both loading screens closed');
+  if (s0.go) fail('the server did not wait for the players\' loading screens');
   const tick = async n => { for (let i = 0; i < n; i++) { const w0 = Date.now();
       for (const p of [A, B]) await p.evaluate(() => { try { if (MODE === 'client') clientTick(0.1); else if (MODE === 'host') { for (let s = 0; s < 6; s++) simUpdate(1 / 60); netTick(0.1); } } catch (e) { console.error('tick: ' + e); } });
       const left = 100 - (Date.now() - w0); if (left > 0) await A.waitForTimeout(left); } };

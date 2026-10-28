@@ -24,8 +24,8 @@ export class BattleHost {
   // sim: createBattleSim(); code: game code; ownKey: the creator's key; send(id, frame); close(id, code, why);
   // now(): ms clock; publish(entry|null): the game-list entry changed; save(record|null): keep (or drop) the battle's
   // latest checkpoint so it can be picked up after a server restart (BattleHost.restore); log(msg)
-  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed }) {
-    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log });
+  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed, readyMs = READY_MAX_MS }) {
+    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log, readyMs });
     this.hostId = 'ww3-' + code;
     this.phase = 'lobby';                    // lobby -> battle -> over -> closed
     this.players = new Map();                // id -> {id, pres, f, tok, at, seat}
@@ -180,7 +180,7 @@ export class BattleHost {
     this.flush();
     this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
-    this.go = false; this.goBy = this.now() + READY_MAX_MS; this.rd = [];   // hold until every player is past the loading screen
+    this.go = false; this.goBy = this.now() + this.readyMs; this.rd = [];   // hold until every player is past the loading screen
     this.log(`battle ${this.code} started: ${facs.join(' ')} on ${this.map}`);
     this.list();
   }
@@ -203,7 +203,7 @@ export class BattleHost {
       this.go = true; this.lastStep = now; this.acc = 0;
       this.log(`battle ${this.code} running (${((now - this.startedAt) / 1000).toFixed(1)} s after Start)`);
     }
-    if (this.paused) { this.lastStep = now; return 50; }   // test hook only (orch/cfe2e.mjs)
+    if (this.paused) { this.lastStep = now; return 50; }   // test hook only (orch/cfbattle.mjs)
     const real = Math.min(1, Math.max(0, (now - this.lastStep) / 1000)); this.lastStep = now;
     this.acc = Math.min(0.25, this.acc + real);   // more than 0.25 s behind: the battle slows down rather than spiking
     let n = 0;
@@ -212,7 +212,7 @@ export class BattleHost {
     this.flush();
     const ck = this.sim.ckFresh();
     if (ck) this.save({ code: this.code, own: this.ownKey, si: this.si, s: ck, at: now });
-    const info = n ? this.sim.info() : null;
+    const info = n && this.sim.over() ? this.sim.info() : null;   // (info() walks every entity: only once, at the end)
     if (info && info.over) { this.phase = 'over'; this.endAt = now + AFTER_END_MS; this.save(null); this.log(`battle ${this.code} over, winner slot ${info.winner}`); this.list(); }
     return Math.max(0, Math.ceil((STEP - this.acc) * 1000));
   }

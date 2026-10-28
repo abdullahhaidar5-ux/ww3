@@ -120,7 +120,7 @@ export default {
       return battles(env).get(battles(env).idFromName('bench:')).fetch(new Request(fwd, { headers: req.headers }));
     }
     if (p.startsWith('/battle-test/')) {
-      // local test controls for orch/cfe2e.mjs (pause, look at a side, evict, spend budget). They exist only when the
+      // local test controls for orch/cfbattle.mjs (pause, look at a side, evict, spend budget). They exist only when the
       // TEST_HOOKS var is "1", which only orch/serverdev.mjs sets for a local `wrangler dev`; never set it on Cloudflare.
       if (env.TEST_HOOKS !== '1') return json({ error: 'not found' }, 404, cors);
       const code = decodeURIComponent(p.slice(13)).toLowerCase();
@@ -598,7 +598,9 @@ export class BattleRoom extends DurableObject {
   }
 
   hostOpts() {
-    return { now: () => Date.now(), log: m => console.log(m), publish: g => this.publish(g),
+    // (the local end-to-end test waits longer for its slow software-rendered pages: BATTLE_READY_MS, test hooks only)
+    const readyMs = this.env.TEST_HOOKS === '1' && +this.env.BATTLE_READY_MS > 0 ? +this.env.BATTLE_READY_MS : undefined;
+    return { now: () => Date.now(), log: m => console.log(m), publish: g => this.publish(g), readyMs,
       send: (pid, f) => { const w = this.socks.get(pid); if (w) safeSend(w, f); },
       close: (pid, c, why) => { const w = this.socks.get(pid); this.socks.delete(pid); this.ips.delete(pid); if (w) safeClose(w, c, why); },
       // the latest checkpoint (every 8 s while players are connected; ~10-40 KB): one storage write each
@@ -685,7 +687,7 @@ export class BattleRoom extends DurableObject {
     return json({ phase: h.phase, go: !!h.go, steps: h.steps, code: h.code, owner: h.owner, map: h.map, w: h.w, ais: h.ais, tm: h.tm,
       humans: h.order.map((id, k) => ({ id, f: h.players.get(id) ? h.players.get(id).f : h.facs && h.facs[k], rd: !!(h.rd && h.rd[k]) })),
       t: info && info.t, over: info && info.over, ents: info && info.ents, ck: info ? sim.test.ck() : null, peers: info ? sim.test.peers() : null,
-      ev: this.evStats || null });
+      ev: this.evStats || null, conn: [...h.players.values()].map(P => [P.id, P.rd ? 1 : 0]) });
   }
 
   // GET /battle-bench: one AI battle as fast as the object can run it, streamed as text, then "RESULT {json}"

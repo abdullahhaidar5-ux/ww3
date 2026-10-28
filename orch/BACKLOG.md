@@ -19,6 +19,22 @@ phone-portrait bar → `orch/open-reconnect-phonebar`; Generals mouse → `orch/
 (lobby choice, fallback) → `orch/cf-battle-client`; shared
 soundtrack from the 14 keeps → `orch/soundtrack`; Three.js upgrade (Graphics Phase 1, merged last) → `orch/three-upgrade`.
 
+**CLOUDFLARE BENCH RESULT (2026-10-27 19:21, real free plan):** 8 players Fulda 3 min ran fully (no 10 ms cap), 63 ms
+wall per game-second, but single events up to **1.6 s** — find what spikes (AI/pathfinding bursts? GC?) and spread it
+across ticks before switching players to Cloudflare hosting. Server deploys now go through GitHub
+(`.github/workflows/deploy-servers.yml`) on Abdullah's servers-live merge.
+
+**DECISION (Abdullah, 2026-10-27 19:28): "Host on Cloudflare" is the only hosting choice players see — hide "Host in my
+browser"; keep browser hosting purely as the automatic fallback.** **19:30 update: no hosting button or wording at all — one "Play online" button: join an open battle if there is one,
+otherwise start a new battle on Cloudflare with the player's map/nation (listed for others; invite code/link still works).
+Browser hosting only as the silent fallback.**
+**Password-protected games (Abdullah, 2026-10-27 19:30: "make it so games can be password protected"):** when starting a
+battle, an optional password; the game list shows a 🔒 on protected battles; joiners (from the list or by invite
+code/link) are asked for it; the SERVER checks it (BattleRoom / relay room — never only in the page), stores only a salted
+hash, never puts it in the public game list, and rate-limits wrong guesses; the invite link may carry the password so
+friends join in one tap. Must also work on the browser-hosted fallback (host checks it). Build right after the Cloudflare
+battle client/server branches land (same files).
+
 **ORDER OF WORK (Abdullah, 2026-10-27 17:58): "Do the battles on servers first. Then address the open items. Then fix
 the music and move onto the graphics overhaul."** ORCH follows this order across cycles; don't start a later stage while
 an earlier one still has work a squad can take (other squads may only do small P1 fixes that don't compete):
