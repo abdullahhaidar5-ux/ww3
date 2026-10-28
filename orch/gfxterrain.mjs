@@ -118,22 +118,23 @@ async function snap(page, name) { await page.screenshot({ path: path.join(dir, n
 
 
 async function ground(page) { // medium zoom over open land between base 0 and the map centre
-  return page.evaluate(() => { const [bx, by] = BASES[0]; let x = bx + (MAPW / 2 - bx) * .45, y = by + (MAPH / 2 - by) * .45;
+  return page.evaluate(DIST => { const [bx, by] = BASES[0]; let x = bx + (MAPW / 2 - bx) * .45, y = by + (MAPH / 2 - by) * .45;
     for (let k = 0; k < 40 && groundH(x, y) < WL + 2; k++) { x += (bx - x) * .15; y += (by - y) * .15; }
-    cam.dist = cam.td = 420; cam.x = cam.tx = x; cam.y = cam.ty = y; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; return { x: x | 0, y: y | 0 }; });
+    cam.dist = cam.td = DIST; cam.x = cam.tx = x; cam.y = cam.ty = y; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; return { x: x | 0, y: y | 0 }; }, DIST);
 }
 async function boom(page) { // a few big explosions near the ground shot so craters/scorch show (rendering only)
   await page.evaluate(() => { const x = cam.x, y = cam.y; for (let i = 0; i < 4; i++) { try { boomFX(x - 120 + i * 70, y - 40 + (i % 2) * 70, 30, false); } catch (e) {} } for (let i = 0; i < 6; i++) renderFrame(1.5); });
 }
+const DIST = Number(argS('dist', 420)), EVAL = argS('eval', ''), VWW = Number(argS('w', 1280)), VHH = Number(argS('h', 720)), SIM = Number(argS('sim', 90)), OV = argS('overview', '1') !== '0';
 const perf = { tag: TAG, html: path.relative(ROOT, HTML), when: new Date().toISOString(), maps: {} };
 try {
-  const { ctx, page } = await open({ viewport: { width: 1280, height: 720 } });
+  const { ctx, page } = await open({ viewport: { width: VWW, height: VHH } });
   perf.rev = await page.evaluate(() => THREE.REVISION);
   for (const k of MAPS) {
-    const r = await battle(page, k, 'US', 'RU', 90);
-    await aim(page, 'overview'); await frames(page, 3); await snap(page, `map-${k}`);
-    const ov = stats(await frames(page, FRAMES));
+    const r = await battle(page, k, 'US', 'RU', SIM); let ov = null;
+    if (OV) { await aim(page, 'overview'); await frames(page, 3); await snap(page, `map-${k}`); ov = stats(await frames(page, FRAMES)); }
     await ground(page); await boom(page); await frames(page, 3); await snap(page, `ground-${k}`);
+    if (EVAL) console.log('eval:', JSON.stringify(await page.evaluate(EVAL)));
     perf.maps[k] = { overview: ov, ground: stats(await frames(page, FRAMES)) };
     console.log(`  ${r.map} ${r.W}x${r.H}`, JSON.stringify(perf.maps[k]));
   }
