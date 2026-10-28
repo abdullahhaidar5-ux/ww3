@@ -115,6 +115,38 @@ cases.spectator = () => {
   check(after.every(r => !(r[3] < 200 && r[4] < 200)), 'units of slot 0 did not obey the late joiner');
 };
 
+// 4. (batch 3) a socket that connected while the lobby was open but never greeted (no seat): after Start it is not
+//    marked "full", so it keeps a battle running AI vs AI after every real player left (R3 again, via the lobby)
+cases.lobbyGhost = () => {
+  console.log('lobbyGhost: an ungreeted socket joins the lobby, the battle starts, both players leave, the ghost keeps pinging');
+  const R = mkRoom();
+  R.connect('owner1', 'ownerkey123'); R.hi('owner1', 'US', 'TOKowner0000001');
+  R.connect('friend1'); R.hi('friend1', 'RU', 'TOKfriend000001');
+  R.connect('ghost01');                       // no greeting, just keep-alives
+  R.say('owner1', [{ k: 'e', t: 'bset', d: { tm: [0, 1], start: 1 } }]);
+  for (const id of ['owner1', 'friend1']) R.say(id, [{ k: 'p', p: { rd: 1 } }]);
+  R.run(3); R.h.leave('owner1'); R.h.leave('friend1');
+  let r = 0; for (let s = 0; s < 120 && r >= 0; s++) { r = R.run(1, 50); if (!R.closed.has('ghost01')) R.h.heard('ghost01'); }
+  console.log(`    after 120 s: phase ${R.h.phase}, ghost closed: ${R.closed.get('ghost01') || 'no'}`);
+  check(R.h.phase === 'closed' || r < 0, 'a battle whose players all left closes even if a socket that sat ungreeted in the lobby keeps pinging');
+};
+// 5. (batch 3) what a socket without a side receives during the battle (passwords are no longer checked once it runs)
+cases.unseatedRx = () => {
+  console.log('unseatedRx: a socket with no side (told "full") during the battle: does it get battle updates?');
+  const R = mkRoom();
+  R.connect('owner1', 'ownerkey123'); R.hi('owner1', 'US', 'TOKowner0000001');
+  R.connect('friend1'); R.hi('friend1', 'RU', 'TOKfriend000001');
+  R.say('owner1', [{ k: 'e', t: 'bset', d: { tm: [0, 1], start: 1 } }]);
+  for (const id of ['owner1', 'friend1']) R.say(id, [{ k: 'p', p: { rd: 1 } }]);
+  R.run(2);
+  R.connect('peek001'); R.hi('peek001', 'US', 'nottoken000000');
+  R.inbox.set('peek001', []); R.run(10);
+  const got = R.inbox.get('peek001') || [], kinds = {};
+  for (const m of got) { const k = m.ctl ? 'ctl' : (m.k + ':' + (m.t || '')); kinds[k] = (kinds[k] || 0) + 1; }
+  console.log(`    received in 10 s: ${JSON.stringify(kinds)}`);
+  check(!got.some(m => m.k === 'e' && (m.t === 'b' || m.t === 'snap' || m.t === 'evt' || m.t === 'ck')), 'a socket without a side gets no battle updates or checkpoints');
+};
+
 for (const [k, f] of Object.entries(cases)) { if (ONLY && ONLY !== k) continue; try { await f(); } catch (e) { check(false, `${k} threw: ${e && e.stack || e}`); } }
 console.log(fails.length ? `REVIEW-UNIT FAIL (${fails.length}): ${fails.join('; ')}` : 'REVIEW-UNIT PASS');
 process.exit(fails.length ? 1 : 0);

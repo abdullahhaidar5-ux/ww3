@@ -1,3 +1,7 @@
+**Ship cf-final d5ae2ca** (reviewed 2026-10-28 ~09:55 UTC): R1–R9 fixed (all repro scripts pass; build --check + SMOKE PASS), no hosting wording, no new desync or password leak found.
+Two new non-blocking findings: R11 (MEDIUM) a standby whose own network is down for 40 s+ still splits the battle; R12 (LOW) an ungreeted lobby socket keeps an abandoned battle (and 1 of the 3 battle slots) alive for 45 min.
+Fix R11 next (promote on silence only after the server is asked once more once the standby's own network works); R12 is a one-line `full` flag at Start.
+
 # Review: Cloudflare-hosted battles (independent reviewer)
 
 Reviewer: independent agent (did not write this code). Scope: `orch/stage2-dedicated` (server), `orch/cf-battle-client`
@@ -10,6 +14,71 @@ Test scripts on this branch (run them against a checkout of the branch under rev
 node orch/review-cf-unit.mjs --root <checkout>              # BattleHost in plain Node, scripted players, manual clock
 node orch/review-cf-ws.mjs   --root <checkout> [--only ghost,flood,squat]   # real sockets, local wrangler dev
 ```
+
+---
+
+## Batch 3 — `orch/cf-final` @ d5ae2ca (final head, with orch/reports/cf-final.md), ~09:55 UTC
+
+### Status of R1–R10 on d5ae2ca
+
+| | Status | Checked with |
+|---|---|---|
+| R1 token theft via checkpoint | **FIXED** (ce948cb: checkpoints carry `h:`+hash) | unit `tokSteal` ok |
+| R2 idle lobbies lock out battles | **FIXED** (f22a065: slot claimed at Start; ungreeted lobby closes in 20 s) | ws `squat` ok |
+| R3 ghost socket keeps battle alive | **FIXED** for sockets that join after Start (ws `ghost` ok) — but see **R12** for one that joined in the lobby |
+| R4 more sides than seats | **FIXED** (ce948cb: Start refused, "Too many players for this battlefield") | unit `mapShrink`: start refused ok; the lobby still *lists* 5 seats on a 4-seat map until someone leaves (cosmetic, not a bug) |
+| R5 floods | **FIXED** (f22a065: close after 200 dropped frames / frames > 16 KB) | ws `flood` ok |
+| R6 standby splits after 15 s blip | **FIXED** for blips < 40 s (6bddce7) | split `--blip 15` PASS, `--blip 25` PASS; `--blip 45` FAIL → **R11** |
+| R7 pwlimit locks out reconnects | **FIXED** (no password check once the battle runs; known-good addresses only hit the per-game limit) | ws `pwshared` ok. Residual, LOW: in the *lobby*, 6+ addresses mistyping still empty the per-game bucket and block everyone's correct password for a while — inherent in a per-game limit, acceptable |
+| R8 hosting wording / password not wired | **FIXED** (6a95434); grep of every visible string in src/: no "host"/"hosting" text left (only comments and code keys) | |
+| R9 NET.lobby undefined | **FIXED** (6a95434) | no page error in the split runs |
+| R10 zombie relay host | reported handled; not re-tested | |
+
+### R11. [MEDIUM] A standby whose own network is down for 40 s or more still splits the battle in two
+
+- **Where:** `src/07-net.js` `clientReconnect`: `svBlip()` stops holding the standby back after 40 s measured from the
+  start of *its own* reconnect. Silence for 40 s is taken as "the server is gone for everyone", but the standby can't
+  tell that apart from its own network being down.
+- **Scenario:** the creator (standby) on a phone goes through a tunnel / metro / dead Wi-Fi for ~45 s. At 40 s its page
+  promotes itself; the takeover keeps retrying until the network returns, then opens `<code>-m1` and runs its own
+  copy from its last checkpoint. The friend was never disconnected and stays on the server battle, now fighting the
+  creator's AI. Both see "the other commander's AI"; nobody is told.
+- **Reproduced:** `node orch/review-cf-split.mjs --root <cf-final> --blip 45` → `standby page: {"mode":"host","gen":1};
+  other page: {"mode":"client","gen":0,"via":"wsb"}; server: phase battle, sides held by [null,"ww3p-…"]` →
+  **REVIEW-SPLIT FAIL**. (15 s and 25 s: PASS.)
+- **Why it matters:** promoting while one's own network is down can never help anyone (no other player can reach the
+  new room either), so the silence rule only causes harm in exactly the case it fires most often.
+- **Suggested fix:** when the 40 s silence rule fires, don't promote yet: first get *any* answer from Cloudflare (e.g.
+  the game list or the relay join itself succeeding = this page's network works), then ask `/battle/<code>` once more;
+  promote only if that answer is "nohost" or it still fails while the relay works. Keep the 60 s overall budget
+  running from when the network came back (as `NET.stW` already does for a frozen page).
+
+### R12. [LOW] A socket that sat ungreeted in the lobby keeps an abandoned battle running for 45 minutes (holding 1 of the 3 battle slots)
+
+- **Where:** `server/src/battle.js`: `join()` sets `full: this.phase === 'battle' ? 1 : 0`; `startBattle()` doesn't mark
+  the lobby sockets that have no seat (never greeted, or told "full" because the lobby was full) as `full`. During the
+  battle `tick()` keeps `emptySince = 0` while any socket has `!P.full`, and `sweep()` closes only sockets told "full"
+  or silent for 150 s. So such a socket that keeps sending keep-alives keeps the battle going AI vs AI after every
+  player left, until `MAX_BATTLE_MS` (45 min), with one of the `MAX_BATTLES = 3` slots and the CPU budget.
+- **Realistic?** Mostly deliberate: the game's own page greets at once and leaves when told "full". But it is cheap
+  (one socket) and each one takes a third of Cloudflare battle capacity for 45 min (everyone else then quietly falls
+  back to browser battles).
+- **Reproduced:** `node orch/review-cf-unit.mjs --root <cf-final> --only lobbyGhost` → `after 120 s: phase battle,
+  ghost closed: no` → **FAIL**.
+- **Suggested fix:** in `startBattle()`, set `P.full = 1` for every player not in `this.order` (they then get the
+  30 s `UNSEATED_MS` close like late joiners).
+
+### Checked, no problem found
+
+- An unseated socket (wrong/no password once the battle runs, or a late joiner) receives nothing: no snapshots,
+  events or checkpoints (`--only unseatedRx` ok) — skipping the password gate in the battle phase leaks nothing.
+- Token hashes in checkpoints: tokens are 10 base-36 chars from `Math.random` (~50 bits) hashed to 64 bits —
+  not reversible within a battle; a reconnect replaces the hash by the raw token only on the host.
+- `index.html` matches `src/` (`build.py --check`), `node orch/smoke.mjs` → SMOKE PASS on d5ae2ca.
+- Minor, not filed: a battle picked up after a server restart reuses its slot without re-claiming it, so in a rare
+  race 4 battles can run at once for a few minutes; the slot TTL corrects it.
+- Cost: with `MAX_BATTLES = 3`, anyone can hold all three slots by just playing (or with R12 ghosts); the result is the
+  designed fallback to browser battles, not an outage.
 
 ---
 
