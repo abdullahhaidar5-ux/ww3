@@ -6988,14 +6988,14 @@ function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.
   for(let i=0;i<n;i++){const a=rnd(0,6.28),v=rnd(90,260)*(.5+s/60);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(40,200),add:true,c:C_SPARK,s:1.4,f:.6,grav:1,d:rnd(.3,.7)});}
   if(s>10)for(let i=0;i<Math.min(12,s/3|0);i++){const a=rnd(0,6.28),v=rnd(30,130);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(80,220),c:C_DARK,s:rnd(1.4,2.8),f:.85,grav:1,bounce:1,d:rnd(1.2,2.2)});}
   // the fireball lingers and rolls upward, cooling from orange to dark red before the smoke takes over
-  if(s>=14){const nb=fxPH()?2:5;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.2,s*.6),vx:Math.cos(a)*rnd(3,s*.5),vy:Math.sin(a)*rnd(3,s*.5),vh:rnd(10,s*1.1),f:.2,rise:rnd(6,14),add:true,c:[3,1.35,.35],c2:[.55,.14,.03],ck:.7,s:rnd(s*.5,s*.8),g:s*1.1,d:rnd(.55,.95),a:.8});}}
+  if(s>=14&&!fxPH()){const nb=5;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.2,s*.6),vx:Math.cos(a)*rnd(3,s*.5),vy:Math.sin(a)*rnd(3,s*.5),vh:rnd(10,s*1.1),f:.2,rise:rnd(6,14),add:true,c:[3,1.35,.35],c2:[.55,.14,.03],ck:.7,s:rnd(s*.5,s*.8),g:s*1.1,d:rnd(.55,.95),a:.8});}}
   // lingering dust: a low, wide cloud of ground-coloured dust that hangs over the impact and drifts off for several seconds
-  if(gr&&s>=14){const th=G&&G.map?(G.map.theme==='snow'?'snow':G.map.theme==='green'?'green':'desert'):'desert',C=DUSTC[th],nd=fxPH()?2:Math.min(7,3+(s/10|0));
-    for(let i=0;i<nd;i++){const a=rnd(0,6.28),r=rnd(s*.2,s*.8);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(4,s*.35),vx:Math.cos(a)*rnd(4,14),vy:Math.sin(a)*rnd(4,14),vh:rnd(0,4),f:.5,rise:rnd(1,4),c:C[i&1],c2:C[2],ck:.5,s:rnd(s*.9,s*1.4),g:rnd(s*.25,s*.4),d:rnd(6,9),a:th==='snow'?.22:.28});}}
+  if(gr&&s>=14&&!fxPH()){const th=G&&G.map?(G.map.theme==='snow'?'snow':G.map.theme==='green'?'green':'desert'):'desert',C=DUSTC[th],nd=Math.min(8,4+(s/10|0)),dk=th==='snow'?.92:.78;
+    for(let i=0;i<nd;i++){const a=rnd(0,6.28),r=rnd(s*.2,s*.8);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(4,s*.35),vx:Math.cos(a)*rnd(4,14),vy:Math.sin(a)*rnd(4,14),vh:rnd(0,4),f:.5,rise:rnd(1,4),c:[C[i&1][0]*dk,C[i&1][1]*dk,C[i&1][2]*dk],c2:C[2],ck:.6,s:rnd(s*.9,s*1.4),g:rnd(s*.3,s*.45),d:rnd(6,9),a:th==='snow'?.3:.4});}}
   // heavy ground hits throw a few tumbling chunks of debris (PC only)
   if(gr&&s>=18&&!big&&!fxPH())chunks(x,y,s*2.2,'#3e3a34',4);
   // a column of dark smoke keeps climbing from the biggest blasts long after the fire is out
-  if(gr&&(s>=20||big)&&inView(x,y,.3)){if(COLS.length>=12)COLS.shift();COLS.push({x,y,g,t:0,d:big?16:rnd(7,10),big:!!big,acc:0,G0:G});}
+  if(gr&&(big||s>=20&&!fxPH())&&inView(x,y,.3)){if(COLS.length>=12)COLS.shift();COLS.push({x,y,g,t:0,d:big?16:rnd(7,10),big:!!big,acc:0,G0:G});}
   scorch(x,y,s);if(gr&&s>=16&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9))crater(x,y,s*1.5);
   // pressure wave: a pale ring of dust racing outward along the ground; heavy hits leave a fire burning for a few seconds
   if(gr&&s>=14&&SHOCKS.length&&inView(x,y,.4)){const S=SHOCKS[shockI++%SHOCKS.length];S.t=0;S.d=big?.75:.45;S.r0=s*.5;S.r1=s*(big?6.5:4.2);S.a0=big?.6:.42;S.x=x;S.y=y;S.m.position.set(x,g+2.5,y);}
@@ -7125,7 +7125,7 @@ function fxUpdate(dt){
   // smoke columns: thick at the base, spreading and leaning downwind as they climb (rate halves on phones and when busy)
   {const PH=fxPH(),B=pBudget();for(let i=COLS.length-1;i>=0;i--){const C=COLS[i];C.t+=dt;if(C.t>=C.d||C.G0!==G){COLS.splice(i,1);continue;}if(!inView(C.x,C.y,.35)||PARTS.length>B*.8)continue;
     const life=1-C.t/C.d;C.acc+=dt*(C.big?9:5)*(PH?.5:1)*(.35+.65*life)*(PARTS.length>B*.55?.5:1);
-    while(C.acc>=1){C.acc-=1;const fx=C.x+rnd(-6,6),fy=C.y+rnd(-6,6);part({x:fx,y:fy,h:C.g+rnd(6,14),vx:rnd(6,12),vy:rnd(-3,3),vh:rnd(4,10),f:.4,rise:rnd(28,42)*(C.big?1.15:1),c:Math.random()<.65?C_DARK:[.2,.19,.18],c2:[.42,.4,.37],ck:.35,s:PH?rnd(7,10):rnd(9,14),g:PH?8:rnd(9,14),d:PH?rnd(3.5,5):rnd(5,7.5),a:.42*life+.12});}}}
+    while(C.acc>=1){C.acc-=1;const fx=C.x+rnd(-6,6),fy=C.y+rnd(-6,6);part({x:fx,y:fy,h:C.g+rnd(6,14),vx:rnd(6,12),vy:rnd(-3,3),vh:rnd(4,10),f:.4,rise:rnd(28,42)*(C.big?1.15:1),c:Math.random()<.65?C_DARK:[.2,.19,.18],c2:[.42,.4,.37],ck:.35,s:PH?rnd(7,10):rnd(12,18),g:PH?8:rnd(12,18),d:PH?rnd(3.5,5):rnd(5,7.5),a:.5*life+.15});}}}
   for(const p of PINGS)p.t+=dt;for(let i=PINGS.length-1;i>=0;i--)if(PINGS[i].t>=PINGS[i].d)PINGS.splice(i,1);
   washTick();wakeTick(dt);dustN=0;
   gpuGcHook();gcT-=dt;if(gcT<=0){gcT=15;try{gpuGc();}catch(e){console.warn('gpu gc',e);}}

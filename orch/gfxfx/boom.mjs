@@ -42,7 +42,7 @@ async function snap(name) { const p = path.join(OUTD, `${TAG}-${name}.png`); awa
 await battle(0);
 await step(2);
 await page.evaluate(() => { PARTS.length = 0; TRACERS.length = 0; const [bx, by] = BASES[0]; const x = Math.max(700, Math.min(MAPW - 700, bx + 260)), y = Math.max(700, Math.min(MAPH - 700, by + 120));
-  cam.x = x; cam.y = y + 260; cam.dist = 380; boomFX(x, y, 40, true); });
+  cam.x = x; cam.y = y + 150; cam.dist = 340; boomFX(x, y, 40, true); });
 await step(5); await snap('boom-1-fireball');            // ~0.08 s: flash and fireball
 await step(9, 1 / 15); await snap('boom-2-debris');      // ~0.7 s: debris and dirt in the air, fireball rolling up
 await step(36, 1 / 15); await snap('boom-3-dust');       // ~3.1 s: lingering dust and the smoke column
