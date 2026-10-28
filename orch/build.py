@@ -14,6 +14,7 @@ offline precache list). The game fetches them at startup (src/11-models.js).
   python3 orch/build.py           # rebuild index.html (and the model lists in index.html + sw.js) from src/ + models/
   python3 orch/build.py --check   # exit 1 if index.html / sw.js are out of date with src/ + models/, or the page shell
                                   # lost server code / credits or got install buttons back (check_shell; nothing written)
+                                  # (both refuse to run while index.html, sw.js or src/*.js hold git conflict markers)
   python3 orch/build.py --split   # one-off: regenerate src/ from the game script inside index.html
   python3 orch/build.py --artifact  # write the claude.ai artifact edition (page, models as .txt, publish.json) to orch/out/artifact/
   python3 orch/build.py --add-model KEY FILE.glb   # add or replace model KEY (gzips it into models/, drops the old one)
@@ -350,7 +351,42 @@ def check_shell(html, i, j):
     return probs
 
 
+CONFLICT_START, CONFLICT_END = '<<<<<<< ', '>>>>>>> '
+
+
+def conflict_markers():
+    """'file:line: text' for every git conflict marker left by a bad merge in index.html, sw.js or src/*.js.
+    A line starting with '<<<<<<< ' or '>>>>>>> ' is always flagged; a bare '=======' line only between the two."""
+    out = []
+    for f in [HTML, SW] + sorted(glob.glob(os.path.join(SRC, '*.js'))):
+        if not os.path.exists(f):
+            continue
+        inside = False
+        with open(f, encoding='utf-8', errors='replace', newline='') as fh:
+            for n, line in enumerate(fh, 1):
+                s = line.rstrip('\r\n')
+                hit = s.startswith(CONFLICT_START) or s.startswith(CONFLICT_END) or (inside and s == '=======')
+                if s.startswith(CONFLICT_START):
+                    inside = True
+                elif s.startswith(CONFLICT_END):
+                    inside = False
+                if hit:
+                    out.append(f'{os.path.relpath(f, ROOT)}:{n}: {s[:70]}')
+    return out
+
+
+def refuse_conflicts(what):
+    bad = conflict_markers()
+    if bad:
+        print(f'git CONFLICT MARKERS found ({len(bad)} line{"s" * (len(bad) > 1)}) — a merge was left unfinished; '
+              f'resolve them (keep the right side, delete the marker lines). {what}')
+        for b in bad[:20]:
+            print('  ✗ ' + b)
+        sys.exit(1)
+
+
 def build(check=False):
+    refuse_conflicts('Nothing checked.' if check else 'index.html NOT written.')
     html = open(HTML, encoding='utf-8', newline='').read()
     i, j = game_span(html)
     game = concat()
@@ -444,6 +480,7 @@ def scripts(html):
 
 
 def artifact():
+    refuse_conflicts('Artifact NOT written.')
     html = open(HTML, encoding='utf-8', newline='').read()
     i, j = game_span(html)
     game = concat()
