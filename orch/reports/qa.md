@@ -9,6 +9,22 @@ build → train → select/order → powers → battle to the end → Play again
 
 ## Findings (most severe first)
 
+### Q-1 · Pasting the host's invite message into "Join by code" joins game "BATTLE" — High
+- Steps: host presses Host a game → COPY INVITE → sends it on Discord. Friend opens the game (GitHub Pages edition),
+  Multiplayer, pastes the message into the "Game code or invite link" box, presses JOIN BY CODE.
+- Expected: joins the host's game (the message contains "enter game code K7P2XQ").
+- Actual: "No open game with code BATTLE was found." Two causes (`07-net.js codeFrom` + the input in `index.html`):
+  1. the box has `maxlength="40"`, so the pasted message is cut to "Join my World War 3 battle! Open http://";
+  2. even the full text parses wrong: `codeFrom` takes the first 6-letter word, which is "battle" (from "Join my World
+     War 3 battle!"), before ever reaching the real code.
+  A pasted invite *link* has the same problem: `https://abdullahhaidar5-ux.github.io/ww3/#join=abc123` is cut at 40
+  characters, then "github" is taken as the code ("No open game with code GITHUB"). The error message itself tells
+  players to "Paste the invite", so this is exactly what friends will do. Clicking a `#join=` link still works.
+- Fix idea: drop/raise the maxlength, and prefer `join=…` or the token after "code" (or an all-caps 6-char token)
+  over any 6-letter word.
+- Repro: `node orch/qa-paste.mjs` (prints the parsed code), `node orch/qa-joincode.mjs` (status texts on a phone).
+- Screenshot: `orch/shots/qa/joincode-wrong-phoneP.png`
+
 ### Q0 · Multiplayer: a phone that reloads mid-battle gets no Rejoin — only works if they know the game code — Medium
 - Steps: friend A hosts (desktop), friend B (phone, 390×844) joins from Open games, battle starts, B's page reloads
   (phone browsers do this when the tab is backgrounded or memory is low; or B pulls to refresh).
@@ -96,6 +112,13 @@ build → train → select/order → powers → battle to the end → Play again
   3/3 from slot 0, lost 2/3 from slot 1. Might be a start-position edge on Strait (or AI update order); for the
   Battlefield squad to check, not a confirmed bug.
 - Anthems: only 8 of 18 nations have one (US EU IL UA CU IN CN EG); the others start silently — known (BACKLOG).
+
+- Settings in battle via ☰ (hd): graphics Low/High/Auto keep drawing; Music on/off toggles; Generals left-click
+  ground moves; Alternate mouse setup → right-click moves (left-click ground deselects); back to Generals works;
+  ☰ Restart → confirm → fresh battle; Test Range opens with ∞ money and its panel; ☰ Quit → menu.
+- All 18 nations in 4-player AI battles on 8 maps (headless, 12 game-min): no errors, every battle progressed
+  (7 ended with a winner, DMZ still 2 sides fighting).
+- Join by code: empty box and a wrong code give clear messages.
 
 ## Re-checks of origin/main
 - 08:23 UTC: no new commits on main since 1639dab.
