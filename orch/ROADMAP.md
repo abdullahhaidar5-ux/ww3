@@ -41,7 +41,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 
 ## Graphics overhaul
 - [doing] Phase 1 Foundations: 3D models moved out of the game page into separate files (done: page 8.3 → 1.8 MB; battles load only their nations' models); next engine upgrade
-- [todo] Phase 2 Real models (first look to improve): detailed units and buildings with national variants (free art)
+- [doing] Phase 2 Real models: real tanks (Abrams, Merkava, KF51 Panther), trucks (M35, Ural), SPGs (G6, Msta), Humvee and transport helicopters (UH-60, Mi-8) per nation on branch orch/gfx-models; next: infantry, buildings
 - [todo] Phase 3 Terrain and world: sculpted ground, water, roads, craters
 - [todo] Phase 4 Light and effects: shadows, smoke, fire, explosions, theatre colour
 - [todo] Phase 5 Massive columns: hundreds of units at a smooth frame rate
