@@ -420,7 +420,7 @@ function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.aband)return updAband(u
 const AE_N=[],AV_N=[];function hqCached(team){const C=G.hqC||(G.hqC={});const c=C[team];if(c&&G.t-c.t<1&&!(c.h&&c.h.dead))return c.h;const h=G.ents.find(e=>e.team===team&&e.kind==='hq'&&!e.dead)||null;C[team]={t:G.t,h};return h;}
 function effOn(s,e){if(!s.wpn)return 0;const ar=e.isB?'bld':(e.landed?'heavy':e.s.armor);return (VS[s.wpn]||{})[ar]||0;}
 function friendsUnderFire(u){for(const o of nearby(u.x,u.y,320,AE_N)){if(o.dead||o.isB||o===u||o.team!==u.team)continue;if(o.lastHit>G.t-2.5&&Math.hypot(o.x-u.x,o.y-u.y)<320)return true;}return false;}
-function autoEngage(u,o,T){const s=u.s;if(s.noAttack||u.rout>G.t||u.retreat)return;if(u.amb&&!o){const e=nearestEnemy(u,rngOf(u)+10);if(e){u.target=e;if(!u.guard)u.guard={x:u.x,y:u.y};}return;}/* lying in ambush: hold still, fire only at what is in range */if(u.stlT&&!(u.lastHit>G.t-1.5)&&!(o&&o.type==='amove'))return;const base=s.aggro*upgK(T,u.kind,'rng'),hit=u.lastHit>G.t-1.5,odds=u.odds||0;
+function autoEngage(u,o,T){const s=u.s;if(s.noAttack||u.rout>G.t||u.retreat)return;if(u.amb&&!(T&&T.ai))u.amb=undefined;/* a player took back their side: no AI posts left */if(u.amb&&!o){const e=nearestEnemy(u,rngOf(u)+10);if(e){u.target=e;if(!u.guard)u.guard={x:u.x,y:u.y};}return;}/* lying in ambush: hold still, fire only at what is in range */if(u.stlT&&!(u.lastHit>G.t-1.5)&&!(o&&o.type==='amove'))return;const base=s.aggro*upgK(T,u.kind,'rng'),hit=u.lastHit>G.t-1.5,odds=u.odds||0;
   if(o&&o.type==='move'){if(o.hold||isVeh(s)&&u.hp<u.max*.3)return;
     // ambushed and clearly stronger: return fire at whoever is shooting
     if(hit&&odds<=.9){const e=nearestEnemy(u,rngOf(u));if(e&&effOn(s,e)>=.4)u.target=e;return;}
@@ -748,7 +748,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
     else if(c&&(N.type!=='cyber'&&N.type!=='intel'||true))usePower(id,'nat',c.x,c.y);}
   // Artillery Barrage: fired at the enemy's densest spot when our forces are near it. Barrage-doctrine nations also shell
   // any big enemy troop concentration, and if none shows up within 40 s of the barrage being ready, the enemy base.
-  if(T.pw.barrage&&T.pw.barrage.cd<=0&&T.ai.t%(DC.barrage?3:7)===0){const c=aiCluster(en);if(c&&G.ents.some(e=>e.team===id&&Math.hypot(e.x-c.x,e.y-c.y)<900))usePower(id,'barrage',c.x,c.y);
+  if(T.pw.barrage&&T.pw.barrage.cd>0)T.ai.bw=null;/* the 40 s wait restarts whenever the barrage was used */if(T.pw.barrage&&T.pw.barrage.cd<=0&&T.ai.t%(DC.barrage?3:7)===0){const c=aiCluster(en);if(c&&G.ents.some(e=>e.team===id&&Math.hypot(e.x-c.x,e.y-c.y)<900))usePower(id,'barrage',c.x,c.y);
     else if(DC.barrage){if(T.ai.bw==null)T.ai.bw=G.t;const u=aiTroops(en);if(u)usePower(id,'barrage',u.x,u.y);else if(c&&G.t-T.ai.bw>40)usePower(id,'barrage',c.x,c.y);if(T.pw.barrage.cd>0)T.ai.bw=null;}}
   if(T.pw.repair&&T.pw.repair.cd<=0){const hurt=mine.filter(e=>!e.isB&&e.hp<e.max*.45);if(hurt.length>=4)usePower(id,'repair',hurt[0].x,hurt[0].y);}
   const army=mine.filter(e=>!e.isB&&e.s.dom!=='naval'&&!['harv','hacker','jet','dozer'].includes(e.kind));const pb=G.ents.filter(e=>e.team===en&&e.isB&&!e.dead);
