@@ -28,6 +28,7 @@ const MAPS = argS('maps', 'strait,arctic,fulda,gulf,zagros,emirates,dmz').split(
 const CLOSE = argS('close', '1') === '0' ? [] : [['fulda', 'US', 'RU'], ['golan', 'IR', 'IL'], ['dmz', 'RS', 'CN']];
 const PERF = argS('perf', '1') !== '0';
 const FRAMES = Number(argS('frames', 20));
+const AIR = argS('air', '1') !== '0'; // Apache + F-16 close-up (US vs IL: US flies the Apache, IL the F-16)
 const SEED = 4242;
 
 if (process.argv.includes('--sheet')) { sheet(); process.exit(0); }
@@ -127,6 +128,15 @@ try {
     if (PERF && k === CLOSE[0][0]) { perf.desktop = { scene: `close-up ${k} ${p} vs ${a} @${at.x},${at.y}, 1280x720 dpr1`, ...stats(await frames(page, FRAMES)) };
       await aim(page, 'overview'); perf.desktopOverview = { scene: `overview ${k}`, ...stats(await frames(page, FRAMES)) }; }
   }
+  if (AIR) {
+    await battle(page, 'golan', 'US', 'IL', 30);
+    await page.evaluate(() => { G.paused = true; const [bx, by] = BASES[0]; const x = Math.max(600, Math.min(MAPW - 600, bx + 220)), y = Math.max(600, Math.min(MAPH - 600, by + 60));
+      const h = addUnit(0, 'heli', x - 40, y), j = addUnit(1, 'jet', x + 50, y - 20); h.ox = h.x; h.oy = h.y; j.ox = j.x; j.oy = j.y; h.ang = h.va = .6; j.ang = j.va = 2.4;
+      boomFX(x + 20, y + 110, 26, false); FXH.smoke(x - 120, y + 60, 40);
+      for (let i = 0; i < 5; i++) FXH.tr(x - 40, y, 30, x + 140 + i * 8, y + 120, 2, false);
+      cam.dist = cam.td = 240; cam.x = cam.tx = x; cam.y = cam.ty = y + 50; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; });
+    await frames(page, 4); await snap(page, 'air-apache-f16');
+  }
   await ctx.close();
   if (PERF && CLOSE.length) {
     const [k, p, a] = CLOSE[0];
@@ -145,7 +155,7 @@ try {
 } catch (e) { errs.push('harness: ' + String(e && e.stack || e).split('\n').slice(0, 4).join(' | ')); }
 await browser.close(); server.close();
 perf.errors = [...new Set(errs)].slice(0, 40);
-fs.writeFileSync(path.join(dir, 'perf.json'), JSON.stringify(perf, null, 2));
+fs.writeFileSync(path.join(dir, PERF ? 'perf.json' : 'errors-' + Date.now() + '.json'), JSON.stringify(perf, null, 2));
 console.log(JSON.stringify({ desktop: perf.desktop, desktopOverview: perf.desktopOverview, phone: perf.phone }, null, 1));
 for (const e of perf.errors) console.log('  ! ' + e);
 console.log(`done in ${secs()}: orch/out/three/${TAG}/`);
