@@ -251,6 +251,23 @@ async function settleCheck(hp, cp, k, label) {
   if (extra.length > Math.max(2, vis * .03)) fail(`${label}: ${extra.length} entities on slot ${k}'s screen that the host no longer has in view: ${sample(extra)}`);
   if (Math.abs(H.credits - C.credits) > 1) fail(`${label}: slot ${k} credits differ: host ${H.credits}, client ${C.credits}`);
   if (H.t - C.t > .3) fail(`${label}: slot ${k}'s latest state is ${(H.t - C.t).toFixed(1)} s behind the host after settling`);
+  if (H.t - C.t > .3 || ownMissing || Math.abs(H.credits - C.credits) > 1) await netDiag(label);
+}
+// ---- network diagnostics: what the host thinks of each client, and what each client has received (printed at key
+// moments and whenever a check fails, so a failure says WHY the clients fell behind) ----
+const hostNet = (hp) => hp.evaluate(() => { const now = performance.now();
+  return { t: +G.t.toFixed(1), loading: !!window.LOADING, paused: !!G.paused, fp: window.__fpStats, slots: [1, 2].map(k => { const p = NET.peers && NET.peers[k];
+    return { k, peer: p || null, seenAgo: p && NET.seen && NET.seen[p] ? Math.round(now - NET.seen[p]) : null, disc: G.teams[k].discT || 0, ai: !!G.teams[k].ai,
+      aiTook: !!G.teams[k].aiTook, buf: p && NET.game && NET.game.buffered ? NET.game.buffered(p) : null, snapTo: NET.snapTo ? NET.snapTo[k] : null }; }),
+    sb: NET.sbSlot, ckOut: !!NET.ckOut }; });
+const clientNet = (cp) => cp.evaluate(() => ({ me: typeof ME !== 'undefined' ? ME : null, mode: MODE, loading: !!window.LOADING, paused: !!(G && G.paused), t: G ? +G.t.toFixed(1) : null,
+  snapT: NET.lastSnapT || 0, rxAgo: NET.lastRx ? Math.round(performance.now() - NET.lastRx) : null, recon: !!NET.recon, myPeer: NET.myPeer, hostPeer: NET.hostPeer,
+  sb: !!NET.isStandby, ck: !!NET.lastCk, ents: G ? G.ents.length : 0, fp: window.__fpStats, trace: (window.__trace || []).slice(-6) })).catch(e => ({ err: String(e).slice(0, 120) }));
+async function netDiag(label) {
+  try {
+    if (host) console.log(`    [net ${label}] host: ` + JSON.stringify(await hostNet(host)));
+    for (const [p, n] of [[cA, 'A'], [cB, 'B']]) if (p) console.log(`    [net ${label}] client ${n}: ` + JSON.stringify(await clientNet(p)));
+  } catch (e) { console.log(`    [net ${label}] diagnostics failed: ${String(e).split('\n')[0]}`); }
 }
 // a side plays like a person: units attack-move on an enemy base, production kept busy (doAct = the click path)
 const playSide = (pg, target) => pg.evaluate((target) => {
@@ -296,7 +313,8 @@ async function main() {
   // ---- lobby: host opens a game, both clients join by its code, host starts a 3-way free-for-all ----
   await waitFor(host, () => !!NET.room, null, 30000, 'the host page to set up its network room');
   const code = await host.evaluate(async () => { try { initAudio(); } catch (e) {} setup.p = 'US';
-    await Promise.race([hostGame(), new Promise(r => setTimeout(r, 20000))]); return NET.game ? NET.code : null; });
+    // a battle hosted in this browser (with the servers, "Play online" goes to Cloudflare)
+    await Promise.race([typeof hostBrowser === 'function' ? hostBrowser() : hostGame(), new Promise(r => setTimeout(r, 20000))]); return NET.game ? NET.code : null; });
   if (!code) throw new Error('host could not open a game (NET.code empty; fake transport not picked up?)');
   console.log(`[${secs()}] host lobby open, code ${code}`);
   await cA.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'RU'; joinByCode(c); }, code);
@@ -312,9 +330,12 @@ async function main() {
   const slots = [await cA.evaluate(() => ME), await cB.evaluate(() => ME)], map = await host.evaluate(() => G.mapKey);
   console.log(`[${secs()}] battle: ${facs.join(' vs ')} on ${map}; client A is slot ${slots[0]}, client B slot ${slots[1]}`);
   if (slots[0] !== 1 || slots[1] !== 2) throw new Error(`unexpected slots ${slots} (expected client A = 1, client B = 2)`);
+  for (const p of [cA, cB]) await traceOn(p, false);
+  await netDiag('battle start');
 
   // ---- phase 1: ~MINUTES game-minutes, three human-style sides, test-stepped ----
   for (let i = 0; i < 10; i++) if (!await step(host, [cA, cB])) return;
+  await netDiag('t=5s');
   const bases = [await baseOf(host, 0), await baseOf(host, 1), await baseOf(host, 2)];
   // each side's dozer builds a barracks and then a war factory near its HQ (spots asked from the host, read-only)
   const spotNear = (k, kind) => host.evaluate(([k, kind]) => { const hq = G.ents.find(e => e.team === k && e.isB && !e.dead); if (!hq) return null;
@@ -334,6 +355,7 @@ async function main() {
     const s = await step(host, [cA, cB]); if (!s) return; ticks += 5;
     if (ticks >= 100) lagMax = Math.max(lagMax, s.lag);
     if (s.over) throw new Error(`the battle ended before the host left (t=${s.t.toFixed(0)}s); nothing to migrate`);
+    if (ticks === 100 || ticks === 300) await netDiag(`t=${s.t.toFixed(0)}s`);
     if (ticks === 400) await build('factory');
     if (ticks % 150 === 0) await orders();
     if (ticks === 600) { await settleCheck(host, cA, 1, 'before: client A @1 min'); await settleCheck(host, cB, 2, 'before: client B @1 min'); }
@@ -343,7 +365,7 @@ async function main() {
   for (let i = 0; i < 40; i++) { const ok = await cA.evaluate(() => !!(NET.isStandby && NET.lastCk)); if (ok) break; if (!await step(host, [cA, cB])) return; ticks += 5; }
   const ck = await cA.evaluate(async () => { if (!NET.lastCk) return null; try { const c = await ckUnpack(NET.lastCk); return { t: c.g.t, kb: Math.round(NET.lastCk.length / 1024), n: c.ents.length }; } catch (e) { return { err: String(e) }; } });
   const ckB = await cB.evaluate(() => !!NET.lastCk);
-  if (!ck) { fail('client A (the standby) never received a checkpoint from the host, so nobody can take over'); return; }
+  if (!ck) { await netDiag('no checkpoint'); fail('client A (the standby) never received a checkpoint from the host, so nobody can take over'); return; }
   if (ck.err) { fail('client A\'s checkpoint cannot be unpacked: ' + ck.err); return; }
   if (ckB) warns.push('client B also holds a checkpoint (only one standby expected)');
   for (const p of [cA, cB]) await traceOn(p, false);

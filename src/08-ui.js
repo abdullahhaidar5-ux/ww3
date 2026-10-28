@@ -26,7 +26,12 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
   for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});return;}if(P.passive||T.pw[k].cd>0)return;if(P.self){doAct({t:'pow',k,x:0,y:0});return;}G.place=null;G.aim=k;},null,true);}
   sub('pow','Level up');for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
   showTab(TAB);updateUI();}
-function showTab(t){TAB=t;const pn=$('panel');if(pn)pn.scrollLeft=0;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('#panel>[data-tab]').forEach(b=>b.hidden=b.dataset.tab!==t);}
+function showTab(t){TAB=t;const pn=$('panel');if(pn)pn.scrollLeft=0;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('#panel>[data-tab]').forEach(b=>b.hidden=b.dataset.tab!==t);fitBtnNames();}
+// phones: a command-button name that still doesn't fit in two lines gets a smaller font (down to 8.5 px) instead of "…"
+const PHONE_BAR=typeof matchMedia==='function'?matchMedia('(max-width:560px),(max-width:760px) and (min-height:521px),(max-height:520px)'):null;
+function fitBtnNames(){const pn=$('panel');if(!pn)return;const on=PHONE_BAR&&PHONE_BAR.matches;for(const n of pn.querySelectorAll('.btn:not([hidden]) .n')){n.style.fontSize='';n.style.overflowWrap='';const b=n.parentNode;if(b.dataset.nm&&n.textContent!==b.dataset.nm)n.textContent=b.dataset.nm;if(!on||!n.clientWidth)continue;let f=parseFloat(getComputedStyle(n).fontSize)||11;while(f>8.5&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1)){f-=.5;n.style.fontSize=f+'px';}const sh=PHONE_NM[n.textContent];if(sh&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1))n.textContent=sh;if(n.scrollWidth>n.clientWidth+1)n.style.overflowWrap='anywhere';}}
+const PHONE_NM={'Hetman Sahaidachny Frigate':'Sahaidachny Frigate'}; // phones only, when even the smallest font can't fit the full name (the tooltip keeps it)
+addEventListener('resize',()=>{clearTimeout(fitBtnNames.t);fitBtnNames.t=setTimeout(fitBtnNames,150);});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(barMin())barMin(false);showTab(b.dataset.tab);});
 function specLock(T,k){return k===T.F.special&&T.rank<SPEC_RANK;}
 // the full text of a button (what it does, what it needs, what it counters) lives in data-tip and shows in the command
@@ -35,7 +40,7 @@ function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=n
 const CTIP={el:null,b:null,hideT:0,lp:null,eat:0};
 function ctipEl(){if(!CTIP.el){const d=document.createElement('div');d.id='ctip';d.hidden=true;d.setAttribute('role','tooltip');document.body.append(d);CTIP.el=d;}return CTIP.el;}
 function ctipFill(b){const d=ctipEl();d.innerHTML='';const n=document.createElement('b');n.textContent=b.dataset.nm||b.querySelector('.n').textContent;const c=document.createElement('span');c.className='tc';c.textContent=[b.querySelector('.c').textContent,b.querySelector('.q').textContent?'queued '+b.querySelector('.q').textContent:''].filter(Boolean).join(' · ');d.append(n,c);
-  if(b.dataset.desc){const s=document.createElement('span');s.textContent=b.dataset.desc;d.append(s);}if(b.dataset.tip){const s=document.createElement('span');s.className='tw';s.textContent=TOUCHUI?b.dataset.tip.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap'):b.dataset.tip;d.append(s);}}
+  if(b.dataset.desc){const s=document.createElement('span');s.textContent=b.dataset.desc;d.append(s);}if(b.dataset.tip){const s=document.createElement('span');s.className='tw';s.textContent=TOUCHUI?b.dataset.tip.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap'):leftOrders()?b.dataset.tip.replace(/Right-click/g,'Click').replace(/right-click/g,'click'):b.dataset.tip;d.append(s);}}
 function ctipShow(b,ms){const d=ctipEl();clearTimeout(CTIP.hideT);CTIP.b=b;ctipFill(b);d.hidden=false;const r=b.getBoundingClientRect(),w=d.offsetWidth;d.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2))+'px';if(ms)CTIP.hideT=setTimeout(ctipHide,ms);}
 function ctipHide(){clearTimeout(CTIP.hideT);CTIP.b=null;if(CTIP.el)CTIP.el.hidden=true;}
 // which command button is under a point (disabled buttons let events through to the grid, so look them up by position)
@@ -66,12 +71,12 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
     const lk=specLock(T,k);setBtn('u_'+k,{dis:lk||!has||(T.credits<s.cost&&!n),cost:lk?`General rank ${SPEC_RANK}`:k===T.F.special?'$'+s.cost+(T.rank>=6?' · Elite':T.rank>=4?' · Veteran':''):'$'+s.cost,q:n?'×'+n:'',p:first,title:(lk?`Unlocks at general rank ${SPEC_RANK}; gets Veteran (+20%) at rank 4 and Elite (+40%) at rank 6. `:'')+(has?'':`Requires ${STRUCT[s.from].name}. `)+(k===T.F.special&&SPECIAL_TIP[k]?SPECIAL_TIP[k](s)+' ':'')+(COUNTER[k]||COUNTER[s.cls]||'')});}
   for(const k of upgList(T.fac)){const U=UPG[k],r=T.rq[U.at],mine=r&&r.key===k;setBtn('g_'+k,{dis:T.upg[k]||!done(ME,U.at)||(!!r&&!mine)||T.credits<U.cost&&!mine,done:T.upg[k],cost:T.upg[k]?'Researched':mine?'Researching…':'$'+U.cost,p:mine?r.t/U.time:0,title:done(ME,U.at)?'':`Requires ${STRUCT[U.at].name}`});}
   const pts=T.rank-T.spent;for(const k in POWERS){const P=powInfo(k,T.fac),w=T.pw[k];const lv=w?(w.lv||1):0;setBtn('p_'+k,{dis:w?(P.passive||w.cd>0):pts<1,done:!!w,on:G.aim===k,cost:w?('Lv '+lv+' · '+(P.passive?'Active':w.cd>0?`Ready in ${Math.ceil(w.cd)}s`:(P.self?'Ready · click to use':'Ready · click, then pick a spot'))):`Unlock · 1 point`});
-    {const b=$('pu_'+k);if(b){const c=lv>=1&&lv<3?lv+1:0;b.style.display=c?'':'none';if(c)setBtn('pu_'+k,{dis:pts<c,cost:`To level ${lv+1} · ${c} points`});}}}
+    {const b=$('pu_'+k);if(b){const c=lv>=1&&lv<3?lv+1:0;const dv=c?'':'none';if(b.style.display!==dv){b.style.display=dv;if(c)fitBtnNames();}if(c)setBtn('pu_'+k,{dis:pts<c,cost:`To level ${lv+1} · ${c} points`});}}}
   const dot=$('pdot');const tb=document.querySelector('.tabs button[data-tab="pow"]');if(tb){let d=tb.querySelector('.dot');if(pts>0&&!d){d=document.createElement('span');d.className='dot';tb.append(d);}else if(pts<=0&&d)d.remove();}
   const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('side').classList.toggle('hasUp',!!up);$('supbar').style.width=(up?f*100:0)+'%';
   $('supt').textContent=!up?'needs Strike Center':f>=1?'READY':`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;$('supbtn').disabled=!(up&&f>=1);
   const nx=RANKS[T.rank]||null,pr=RANKS[T.rank-1];$('rankname').textContent=`General rank ${T.rank}`+(pts>0?` · ${pts} point${pts>1?'s':''} to spend`:'');$('rankbar').style.width=(nx?Math.min(1,(T.gxp-pr)/(nx-pr))*100:100)+'%';$('rankt').textContent=nx?`${T.gxp}/${nx} XP`:'Max rank';
-  const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+' · Esc cancels');}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
+  const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+(altMouse()?' · Esc cancels':' · right-click or Esc cancels'));}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
   const s=G.sel.filter(e=>!e.dead);const el=$('info');el.innerHTML='';const b=document.createElement('b'),sp=document.createElement('span'),tip=document.createElement('span');tip.className='tip';
   if(s.length===1){const e=s[0];b.textContent=e.s.name+(e.rank?` · ${VET[e.rank]}`:'');sp.textContent=` ${Math.ceil(e.hp)} / ${e.max} HP`+(e.isB&&e.built<1?` · building ${Math.floor(e.built*100)}%`:'')+((e.dis>G.t||e.disv)?' · HACKED':'')+(e.kind==='jet'?` · ${e.landed?'parked':'airborne'}`:'');
     tip.textContent=e.kind==='hacker'?'Right-click an enemy building to disable it. Idle hackers earn cash.':e.s.demo?'Stealthed. Right-click an enemy building to plant explosives.':e.kind==='hero'?'Stealthed until it fires. Snipes infantry from long range.':e.kind==='jet'?'Right-click a target to strike. Jets return to the airfield to rearm.':e.kind==='harv'?'Right-click a supply field to send it there.':e.kind==='dozer'?'Builds everything: pick a building under Build, then click the map. Right-click an unfinished building to help. Repairs buildings it stands next to.':e.isB&&e.kind==='tunnel'&&e.team===ME?`Units inside: ${MODE==='client'?(T.tunN|0):T.tun.length} of 12. Select units and right-click a tunnel to send them in; they heal inside and can come out of any tunnel.`:e.isB&&e.nd&&e.built<1?(e.stall?'Waiting for a Construction Vehicle to arrive and build it.':'A Construction Vehicle is building this.'):e.isB&&e.team===ME&&CATS.includes(e.kind)?'Right-click the ground to set the rally point.':'';}
@@ -84,14 +89,15 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
     const mb=document.createElement('div');mb.className='morale';mb.innerHTML=`<span class="ml">Morale</span><span class="mbar"><i style="width:${Math.round(avg*100)}%;background:${MOR_COL[st]}"></i></span><span class="mt" style="color:${MOR_COL[st]}">${fl?'Fearless ('+why+')':MOR_TXT[st]+(st==='last'?'':' '+Math.round(avg*100)+'%')}${rt&&!fl?' · '+rt+' routing':''}${ls&&st!=='last'?' · '+ls+' last stand':''}</span>`;
     mb.title='Morale falls when units take fire, see comrades die or are outnumbered, and recovers out of combat. At zero they break and run back to base, ignoring orders, and take 25% extra damage while running. They rally fast near their HQ, an Ayatollah, a friendly-held building or an officer. Surrounded troops make a last stand instead (fearless but pinned). Crews bail out of badly damaged vehicles, which infantry can re-crew or capture. '+(fl?(NOBREAK[T0.fac]?'North Korean troops never break.':'While the Ayatollah lives, these troops never break.'):'Veterans, heroes, officers and cover help.');sp.after(mb);}}
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
+  else if(leftOrders()&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Click').replace(/right-click/g,'click');
   el.append(b,sp);if(tip.textContent)el.append(tip);
-  if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
+  if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack ('+(SET.mAK==='a'?'A':'F')+')';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop ('+(SET.mAK==='a'?'S':'X')+')';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
   {const ap=$('app'),o=!!el.querySelector('.cmdrow');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.';el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
-  if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1){const n=MODE==='client'?(T.tunN|0):T.tun.length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>In the tunnel network: '+n+' / '+TUN_CAP+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. Right-click a tunnel with units selected to send them in.');el.append(d);}
+  if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1){const n=MODE==='client'?(T.tunN|0):T.tun.length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>In the tunnel network: '+n+' / '+TUN_CAP+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. '+(TOUCHUI?'Tap':leftOrders()?'Click':'Right-click')+' a tunnel with units selected to send them in.');el.append(d);}
   if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1&&(MODE==='client'?T.tunN:T.tun.length)){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring units out here';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
-  const net=$('net');if(MODE!=='single'){net.hidden=false;net.innerHTML=`<b>●</b> Online · ${MODE==='host'?'hosting':'connected'} · vs ${vsText()}`;}else net.hidden=true;}
+  const net=$('net');if(MODE!=='single'){net.hidden=false;net.innerHTML=`<b>●</b> Online · vs ${vsText()}`;}else net.hidden=true;}
 $('supbtn').onclick=()=>{G.place=null;G.aim='sup';};
 
 
@@ -119,60 +125,147 @@ function issueCmd(w,t,rally){
     const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
     if(rally&&!units.length&&G.sel.some(b=>b.isB&&b.team===ME)){doAct({t:'rally',x:w.x,y:w.y});pushLog('Rally point set.');return true;}
     if(!units.length)return false;const ids=units.map(u=>u.id);
-    if(!t){const oi=G.oil.findIndex(o=>!o.dead&&!ally(o.owner,ME)&&o.owner>=0&&Math.hypot(o.x-w.x,o.y-w.y)<38);if(oi>=0){doAct({t:'atkOil',ids,fi:oi});speak(2);FXH.ping(G.oil[oi].x,G.oil[oi].y,30);return true;}}
-    if(t&&t.team===ME&&!t.isB&&t.s.cap&&units.some(u=>u!==t&&canBoard(t,u))){doAct({t:'board',ids:units.filter(u=>u!==t&&canBoard(t,u)).map(u=>u.id),tid:t.id});speak(1);FXH.ping(t.x,t.y,30);return true;}
-    if(t&&t.team===ME&&t.isB&&t.kind==='tunnel'&&t.built>=1&&units.some(u=>u.s.dom==='ground'&&u.kind!=='harv')){doAct({t:'tun',ids:units.filter(u=>u.s.dom==='ground'&&u.kind!=='harv').map(u=>u.id),tid:t.id});speak(1);FXH.ping(t.x,t.y,30);return true;}
-    if(t&&t.team===ME&&t.isB&&t.built<1&&units.some(u=>u.kind==='dozer')){doAct({t:'bldGo',ids:units.filter(u=>u.kind==='dozer').map(u=>u.id),tid:t.id});speak(1);FXH.ping(t.x,t.y,30);return true;}
-    if(t&&!ally(t.team,ME)&&t.aband&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){const inf=units.filter(u=>isInf(u.s)&&!u.s.noAttack);doAct({t:'go',ids:inf.map(u=>u.id),x:t.x,y:t.y,mode:'move'});const rest=units.filter(u=>!inf.includes(u));if(rest.length)doAct({t:'go',ids:rest.map(u=>u.id),x:t.x,y:t.y,mode:'amove'});speak(1);FXH.ping(t.x,t.y,30);pushLog('Infantry moving to capture the abandoned vehicle.');return true;}
-    if(t&&ally(t.team,ME)&&t.aband&&!t.isB&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){doAct({t:'go',ids:units.filter(u=>isInf(u.s)&&!u.s.noAttack).map(u=>u.id),x:t.x,y:t.y,mode:'move'});speak(1);FXH.ping(t.x,t.y,30);return true;}
-    if(t&&!ally(t.team,ME)){doAct({t:'atk',ids,tid:t.id});speak(2);FXH.ping(t.x,t.y,24);return true;}
+    if(!t){const oi=G.oil.findIndex(o=>!o.dead&&!ally(o.owner,ME)&&o.owner>=0&&Math.hypot(o.x-w.x,o.y-w.y)<38);if(oi>=0){doAct({t:'atkOil',ids,fi:oi});speak(2);markT(G.oil[oi].x,G.oil[oi].y,30);return true;}}
+    if(t&&t.team===ME&&!t.isB&&t.s.cap&&units.some(u=>u!==t&&canBoard(t,u))){doAct({t:'board',ids:units.filter(u=>u!==t&&canBoard(t,u)).map(u=>u.id),tid:t.id});speak(1);markT(t.x,t.y,30);return true;}
+    if(t&&t.team===ME&&t.isB&&t.kind==='tunnel'&&t.built>=1&&units.some(u=>u.s.dom==='ground'&&u.kind!=='harv')){doAct({t:'tun',ids:units.filter(u=>u.s.dom==='ground'&&u.kind!=='harv').map(u=>u.id),tid:t.id});speak(1);markT(t.x,t.y,30);return true;}
+    if(t&&t.team===ME&&t.isB&&t.built<1&&units.some(u=>u.kind==='dozer')){doAct({t:'bldGo',ids:units.filter(u=>u.kind==='dozer').map(u=>u.id),tid:t.id});speak(1);markT(t.x,t.y,30);return true;}
+    if(t&&!ally(t.team,ME)&&t.aband&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){const inf=units.filter(u=>isInf(u.s)&&!u.s.noAttack);doAct({t:'go',ids:inf.map(u=>u.id),x:t.x,y:t.y,mode:'move'});const rest=units.filter(u=>!inf.includes(u));if(rest.length)doAct({t:'go',ids:rest.map(u=>u.id),x:t.x,y:t.y,mode:'amove'});speak(1);markT(t.x,t.y,30);pushLog('Infantry moving to capture the abandoned vehicle.');return true;}
+    if(t&&ally(t.team,ME)&&t.aband&&!t.isB&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){doAct({t:'go',ids:units.filter(u=>isInf(u.s)&&!u.s.noAttack).map(u=>u.id),x:t.x,y:t.y,mode:'move'});speak(1);markT(t.x,t.y,30);return true;}
+    if(t&&!ally(t.team,ME)){doAct({t:'atk',ids,tid:t.id});speak(2);markT(t.x,t.y,24);return true;}
     {const c=(!t||(t.kind==='garrison'&&ally(t.team,ME)))?(t&&t.kind==='garrison'?civAtXYAny(t.x,t.y):civUnder(mouse.x,mouse.y,w)):null;
      if(c&&!c.dead){const inf=units.filter(u=>canGarrison(u));const rest=units.filter(u=>!canGarrison(u)&&u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker');
-       if(inf.length){doAct({t:'gar',ids:inf.map(u=>u.id),ci:c.i});speak(1);FXH.ping(c.x,c.y,30);if(!rest.length)return true;}
-       if(rest.length&&!(t&&t.kind==='garrison')){doAct({t:'atkCiv',ids:rest.map(u=>u.id),ci:c.i});speak(2);FXH.ping(c.x,c.y,24);return true;}
+       if(inf.length){doAct({t:'gar',ids:inf.map(u=>u.id),ci:c.i});speak(1);markT(c.x,c.y,30);if(!rest.length)return true;}
+       if(rest.length&&!(t&&t.kind==='garrison')){doAct({t:'atkCiv',ids:rest.map(u=>u.id),ci:c.i});speak(2);markT(c.x,c.y,24);return true;}
        if(inf.length)return true;}}
     const fi=fieldAt(w);if(fi>=0&&units.some(u=>u.kind==='harv')){doAct({t:'fld',ids,fi});const rest=units.filter(u=>u.kind!=='harv').map(u=>u.id);if(rest.length)doAct({t:'go',ids:rest,x:w.x,y:w.y,mode:'move'});return true;}
-    doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0,q:G.qShift?1:0});speak(1);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:G.qShift?0xe3b341:0x74d08f});return true;
+    doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0,q:G.qShift?1:0});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:G.qShift?0xe3b341:0x74d08f});return true;
 }
-// Controls (mouse): LEFT selects - click a unit or building, drag a box, double-click for all of a type, click empty
-// ground to deselect; with a building or power chosen the left click places or aims it. RIGHT gives orders - move to
-// the spot, attack the enemy under the cursor, board/enter/garrison/capture, or set a rally point for a selected
-// building; right-click also cancels a pending placement. Touch and pen have no right button, so a tap there still
-// selects or orders as before. Esc cancels.
+// Controls (mouse) follow Command & Conquer Generals (default scheme):
+//   LEFT does everything - click a unit to select it (Shift+click adds/removes, double-click selects all of that type
+//   on screen, drag a box to select units); with units selected, click the ground to move, an enemy to attack, a
+//   friendly unit to select it instead (or, for infantry, a transport, tunnel or building they can enter to go in).
+//   Ctrl+click force-fires, Alt+click adds a waypoint, A then click attack-moves, G then click guards an area. With a
+//   production building selected, clicking the ground sets the rally point. A building or power chosen from the
+//   sidebar is placed or aimed with a left click.
+//   RIGHT click (without dragging) deselects, or first cancels placement, power targeting or A/G mode. Right-drag with
+//   units selected draws the infantry line formation; with nothing selected it rapid-scrolls the camera.
+// Settings > Mouse lets each function be chosen (saved in SET): mLG left-click on the ground with units selected
+// (move | desel), mRC right-click (cancel = deselect & cancel | order = move & attack), mRDU right-drag with units
+// (line | scroll), mRDN right-drag with nothing selected (scroll | box | none), mAK attack-move key (a: A attack-move and
+// S stop while units are selected | f: F and X, WASD always scrolls), mRS rapid-scroll speed, mCur contextual cursor,
+// mPing order markers. Two presets: Generals (default) and "Alternate mouse setup" (Generals' own name for its
+// right-click-orders option = the older scheme: left selects, right-click moves/attacks, right-drag draws a line).
+// Touch and pen have no right button, so a tap selects or orders as before. The cursor shows what a click will do.
 let lastR={t:0,id:0},rDown=0;
+const MDEF={mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll',mAK:'a',mRS:100,mCur:1,mPing:1};
+const MPRE={gen:{mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll',mAK:'a'},alt:{mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f'}};
+if(SET.mLG==null&&SET.alt===1)Object.assign(SET,MPRE.alt);for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];delete SET.alt;
+function mPreset(){for(const p in MPRE)if(Object.keys(MPRE[p]).every(k=>SET[k]===MPRE[p][k]))return p;return 'custom';}
+function altMouse(){return mPreset()==='alt';}
+function leftOrders(){return SET.mLG==='move';}
+function rightOrders(){return SET.mRC==='order';}
+// order markers (ground pings for move / attack orders), Settings > Mouse > Order markers
+function mark(o){if(SET.mPing!==0)PINGS.push(o);}
+function markT(x,y,r){if(SET.mPing!==0)FXH.ping(x,y,r);}
+const MODK={ctrl:false,alt:false,shift:false};
+function selfSel(){return G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);}
+function prodSel(){return G.sel.some(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)&&b.built>=1);}
 function selectClick(t,shift){if(t&&t.team===ME){if(shift&&!t.isB){const i=G.sel.indexOf(t);i>=0?G.sel.splice(i,1):G.sel.push(t);}else G.sel=[t];}else if(t&&!shift)G.sel=[t];else if(!shift)G.sel=[];}
-const CUR=(svg,x,y,fb)=>`url("data:image/svg+xml,${encodeURIComponent(svg)}") ${x} ${y}, ${fb}`;
-const CURS={attack:CUR('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><g fill="none" stroke="#000" stroke-width="4"><circle cx="14" cy="14" r="8"/><path d="M14 1v7M14 20v7M1 14h7M20 14h7"/></g><g fill="none" stroke="#ff4a3a" stroke-width="2"><circle cx="14" cy="14" r="8"/><path d="M14 1v7M14 20v7M1 14h7M20 14h7"/></g></svg>',14,14,'crosshair'),
-  move:CUR('<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M13 2l7 9h-4v6h-6v-6H6z" fill="#7be08f" stroke="#0b1a10" stroke-width="1.5"/><ellipse cx="13" cy="22" rx="8" ry="2.6" fill="none" stroke="#7be08f" stroke-width="1.6"/></svg>',13,22,'pointer'),
-  enter:CUR('<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28"><path d="M5 13l9-8 9 8v11H5z" fill="#6fb2ff" stroke="#08121e" stroke-width="1.6"/><path d="M11 24v-7h6v7" fill="#08121e"/></svg>',14,14,'pointer'),
-  capture:CUR('<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M6 24V3" stroke="#111" stroke-width="3"/><path d="M6 24V3" stroke="#ffd166" stroke-width="1.6"/><path d="M7 4h13l-3 4 3 4H7z" fill="#ffd166" stroke="#111"/></svg>',6,24,'pointer'),
-  sel:CUR('<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26"><path d="M3 3h6M3 3v6M23 3h-6M23 3v6M3 23h6M3 23v-6M23 23h-6M23 23v-6" stroke="#000" stroke-width="3.4"/><path d="M3 3h6M3 3v6M23 3h-6M23 3v6M3 23h6M3 23v-6M23 23h-6M23 23v-6" stroke="#cfead6" stroke-width="1.6"/></svg>',13,13,'pointer')};
-setInterval(()=>{try{if(!G||G.over||!mouse.in){cv.style.cursor='';return;}if(G.amove||G.defm||G.aim){cv.style.cursor=G.amove?CURS.attack:'crosshair';return;}if(G.place){cv.style.cursor='copy';return;}
-  const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead),t=pickAt(mouse.x,mouse.y,false);
-  if(!units.length){cv.style.cursor=t&&t.team===ME?CURS.sel:'';return;}
-  if(t&&!ally(t.team,ME))cv.style.cursor=t.aband&&units.some(u=>isInf(u.s))?CURS.capture:CURS.attack;
-  else if(t&&t.team===ME&&((t.kind==='tunnel'&&t.isB)||(t.s&&t.s.cap&&!t.isB)||t.kind==='garrison'))cv.style.cursor=CURS.enter;
-  else if(t&&t.team===ME)cv.style.cursor=CURS.sel;
-  else{const c=units.some(u=>canGarrison(u))?civUnder(mouse.x,mouse.y,null):null;cv.style.cursor=c&&!c.dead?CURS.enter:CURS.move;}}catch(_){}},120);
-function defendAt(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);G.defm=false;if(!ids.length)return;doAct({t:'def',ids,x:w.x,y:w.y});speak(1);PINGS.push({x:w.x,y:w.y,r:300,t:0,d:1.1,c:0x6fb2ff});pushLog('Units moving to defend the area.');}
+// a click on one of your own units/buildings that the selection can use (board, enter, garrison, build, re-crew) instead of selecting it
+function helpOn(t,sel){return !!t&&t.team===ME&&((t.isB&&((t.built<1&&sel.some(u=>u.kind==='dozer'&&u.team===ME&&!u.dead))||(t.kind==='tunnel'&&t.built>=1&&sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&u.s.dom==='ground'))))||(!t.isB&&t.s&&t.s.cap&&sel.some(u=>u!==t&&!u.isB&&canBoard(t,u)))||(t.kind==='garrison'&&sel.some(u=>u.team===ME&&canGarrison(u)))||(!t.isB&&t.aband&&sel.some(u=>!u.isB&&u.team===ME&&isInf(u.s)&&!u.s.noAttack)));}
+function oilAt(w,neutralToo){return G.oil.findIndex(o=>!o.dead&&!ally(o.owner,ME)&&(neutralToo||o.owner>=0)&&Math.hypot(o.x-w.x,o.y-w.y)<38);}
+// nowhere any selected unit can go (water for tanks, cliffs and mountains for everything on the ground)
+function noGo(units,w){return units.length>0&&units.every(u=>!passXY(u.s.dom,w.x,w.y));}
+// Ctrl+click: fire on what is under the cursor even if the unit would not pick it. The battle supports forcing an attack on
+// enemies, enemy or neutral oil derricks and empty city buildings; firing at the ground or at friendly units is not available.
+function forceTarget(t,w){if(t&&!t.dead)return ally(t.team,ME)?null:{t:'atk',tid:t.id,x:t.x,y:t.y};
+  const oi=oilAt(w,true);if(oi>=0)return{t:'atkOil',fi:oi,x:G.oil[oi].x,y:G.oil[oi].y};
+  const c=civUnder(mouse.x,mouse.y,w);if(c&&!c.dead){if(c.g&&!c.g.dead)return ally(c.g.team,ME)?null:{t:'atk',tid:c.g.id,x:c.x,y:c.y};return{t:'atkCiv',ci:c.i,x:c.x,y:c.y};}return null;}
+function forceFire(w,t,units){const f=forceTarget(t,w);if(!f){pushLog(t?'Force-fire on your own or allied units is not available.':'Force-fire on empty ground is not available - Ctrl+click an enemy, a derrick or a building.','w');try{sfxUI(220);}catch(_){}return false;}
+  const ids=units.map(u=>u.id),a={t:f.t,ids};if(f.tid!=null)a.tid=f.tid;if(f.fi!=null)a.fi=f.fi;if(f.ci!=null)a.ci=f.ci;doAct(a);speak(2);markT(f.x,f.y,24);return true;}
+// Alt+click: add a waypoint (units finish their current move first)
+function waypoint(w,units){if(noGo(units,w)){try{sfxUI(220);}catch(_){}return false;}doAct({t:'go',ids:units.map(u=>u.id),x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0,q:1});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xe3b341});return true;}
+/* ---------- contextual cursor ---------- */
+// small cursors drawn once on a canvas (no image files); `CURS[key]` is a ready CSS cursor value
+const CURD={
+  sel:[3,2,'default',c=>{c.beginPath();c.moveTo(3,2);c.lineTo(3,24);c.lineTo(9,19);c.lineTo(13,28);c.lineTo(17,26);c.lineTo(13,17.5);c.lineTo(21,17.5);c.closePath();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#000';c.stroke();c.fillStyle='#e9f5ec';c.fill();
+    c.lineWidth=3.4;c.strokeStyle='#000';const br=()=>{c.beginPath();c.moveTo(20,23);c.lineTo(20,29);c.lineTo(26,29);c.moveTo(30,23);c.lineTo(30,29);c.lineTo(24,29);c.stroke();};br();c.lineWidth=1.6;c.strokeStyle='#7be08f';br();}],
+  move:[16,27,'pointer',c=>{const arrow=()=>{c.beginPath();c.moveTo(16,23);c.lineTo(25,12);c.lineTo(19.5,12);c.lineTo(19.5,3);c.lineTo(12.5,3);c.lineTo(12.5,12);c.lineTo(7,12);c.closePath();};arrow();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#04140a';c.stroke();c.fillStyle='#7be08f';c.fill();
+    c.beginPath();c.ellipse(16,27,11,3.6,0,0,7);c.lineWidth=3.6;c.strokeStyle='#04140a';c.stroke();c.lineWidth=1.8;c.strokeStyle='#7be08f';c.stroke();}],
+  attack:[16,16,'crosshair',c=>ring(c,'#ff4a3a',false)],
+  force:[16,16,'crosshair',c=>{ring(c,'#ffb02e',true);c.font='bold 9px sans-serif';c.textAlign='center';c.lineWidth=3;c.strokeStyle='#000';c.strokeText('F',26,30);c.fillStyle='#ffb02e';c.fillText('F',26,30);}],
+  amove:[16,16,'crosshair',c=>{ring(c,'#ff4a3a',false);c.beginPath();c.moveTo(21,3);c.lineTo(30,3);c.lineTo(30,12);c.moveTo(30,3);c.lineTo(22,11);c.lineCap='round';c.lineWidth=4;c.strokeStyle='#000';c.stroke();c.lineWidth=2;c.strokeStyle='#ffd166';c.stroke();}],
+  nogo:[16,16,'not-allowed',c=>{c.beginPath();c.arc(16,16,11,0,7);c.moveTo(8.2,8.2);c.lineTo(23.8,23.8);c.lineWidth=6;c.strokeStyle='#000';c.stroke();c.lineWidth=3.4;c.strokeStyle='#ff3b30';c.stroke();}],
+  guard:[16,16,'crosshair',c=>{c.beginPath();c.moveTo(16,3);c.lineTo(27,7);c.quadraticCurveTo(27,22,16,29);c.quadraticCurveTo(5,22,5,7);c.closePath();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#06101c';c.stroke();c.fillStyle='#6fb2ff';c.fill();c.beginPath();c.moveTo(16,8);c.lineTo(16,24);c.moveTo(10,14);c.lineTo(22,14);c.lineWidth=2;c.strokeStyle='#06101c';c.stroke();}],
+  rally:[5,30,'pointer',c=>flag(c,'#7be08f')],
+  way:[5,30,'pointer',c=>{flag(c,'#e3b341');c.fillStyle='#000';c.beginPath();c.arc(24,26,4.6,0,7);c.fill();c.fillStyle='#e3b341';c.beginPath();c.arc(24,26,3,0,7);c.fill();c.fillStyle='#000';c.beginPath();c.arc(14,29,2.6,0,7);c.fill();c.fillStyle='#e3b341';c.beginPath();c.arc(14,29,1.5,0,7);c.fill();}],
+  capture:[5,30,'pointer',c=>flag(c,'#ffd166')],
+  enter:[16,16,'pointer',c=>{c.beginPath();c.moveTo(4,15);c.lineTo(16,4);c.lineTo(28,15);c.lineTo(28,29);c.lineTo(4,29);c.closePath();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#06101c';c.stroke();c.fillStyle='#6fb2ff';c.fill();c.fillStyle='#06101c';c.fillRect(12,19,8,10);c.beginPath();c.moveTo(16,11);c.lineTo(16,18);c.moveTo(12.5,14.5);c.lineTo(16,18);c.lineTo(19.5,14.5);c.lineWidth=2;c.stroke();}],
+  place:[16,16,'copy',c=>{c.lineWidth=3.6;c.strokeStyle='#000';c.strokeRect(6,6,20,20);c.lineWidth=1.8;c.strokeStyle='#ffd166';c.setLineDash([4,3]);c.strokeRect(6,6,20,20);c.setLineDash([]);c.beginPath();c.moveTo(16,10);c.lineTo(16,22);c.moveTo(10,16);c.lineTo(22,16);c.lineWidth=4;c.strokeStyle='#000';c.stroke();c.lineWidth=2;c.strokeStyle='#ffd166';c.stroke();}],
+  aim:[16,16,'crosshair',c=>{for(const [r,w] of [[13,2],[7,2]]){c.beginPath();c.arc(16,16,r,0,7);c.lineWidth=w+2.2;c.strokeStyle='#000';c.stroke();c.lineWidth=w;c.strokeStyle='#ff6a3a';c.stroke();}c.fillStyle='#000';c.fillRect(14,14,4,4);c.fillStyle='#ff6a3a';c.fillRect(15,15,2,2);}],
+  scroll:[16,16,'all-scroll',c=>{const tri=(x,y,dx,dy)=>{c.beginPath();c.moveTo(x+dx*7,y+dy*7);c.lineTo(x-dy*6,y+dx*6);c.lineTo(x+dy*6,y-dx*6);c.closePath();c.lineWidth=2.6;c.strokeStyle='#000';c.stroke();c.fillStyle='#f2f5f3';c.fill();};tri(16,7,0,-1);tri(16,25,0,1);tri(7,16,-1,0);tri(25,16,1,0);c.fillStyle='#000';c.beginPath();c.arc(16,16,3.4,0,7);c.fill();c.fillStyle='#f2f5f3';c.beginPath();c.arc(16,16,2,0,7);c.fill();}],
+  line:[16,16,'crosshair',c=>{c.beginPath();c.moveTo(3,24);c.lineTo(29,8);c.lineWidth=4.4;c.strokeStyle='#000';c.stroke();c.lineWidth=2.2;c.strokeStyle='#7be08f';c.stroke();for(const [x,y] of [[6,22],[12,18.3],[18,14.6],[24,11]]){c.beginPath();c.arc(x,y,3.2,0,7);c.fillStyle='#000';c.fill();c.beginPath();c.arc(x,y,2,0,7);c.fillStyle='#d6f7de';c.fill();}}]};
+function ring(c,col,dot){const g=()=>{c.beginPath();c.arc(16,16,8,0,7);c.moveTo(16,2);c.lineTo(16,9);c.moveTo(16,23);c.lineTo(16,30);c.moveTo(2,16);c.lineTo(9,16);c.moveTo(23,16);c.lineTo(30,16);};g();c.lineWidth=4.4;c.strokeStyle='#000';c.stroke();g();c.lineWidth=2.2;c.strokeStyle=col;c.stroke();if(dot){c.fillStyle='#000';c.beginPath();c.arc(16,16,3,0,7);c.fill();c.fillStyle=col;c.beginPath();c.arc(16,16,1.8,0,7);c.fill();}}
+function flag(c,col){c.beginPath();c.moveTo(5,30);c.lineTo(5,3);c.lineWidth=4;c.strokeStyle='#000';c.stroke();c.lineWidth=2;c.strokeStyle='#d9d9d2';c.stroke();c.beginPath();c.moveTo(6,4);c.lineTo(25,4);c.lineTo(20,10);c.lineTo(25,16);c.lineTo(6,16);c.closePath();c.lineJoin='round';c.lineWidth=2.4;c.strokeStyle='#000';c.stroke();c.fillStyle=col;c.fill();}
+const CURS={},CURIMG={};
+function curCss(k){if(!k||!CURD[k])return '';if(!CURS[k]){const [hx,hy,fb,draw]=CURD[k];try{const c=document.createElement('canvas');c.width=c.height=32;const x=c.getContext('2d');draw(x);CURIMG[k]=c.toDataURL('image/png');CURS[k]=`url("${CURIMG[k]}") ${hx} ${hy}, ${fb}`;}catch(e){CURS[k]=fb;}}return CURS[k];}
+// what a click on the battlefield would do right now (left click in the Generals scheme, right click in the alternate one)
+function cursorIntent(){if(!G||G.over)return '';const lo=leftOrders(),ro=rightOrders();
+  if(RDRAG&&RDRAG.moved)return !RDRAG.gen||RDRAG.line?'line':RDRAG.mode==='scroll'?'scroll':'';
+  if(G.place)return 'place';if(G.aim)return 'aim';if(G.amove)return 'amove';if(G.defm)return 'guard';
+  const units=selfSel(),t=pickAt(mouse.x,mouse.y,false);
+  if(!units.length){if(t)return t.team===ME?'sel':'';if((lo||ro)&&prodSel())return 'rally';return '';}
+  if(!lo&&!ro)return t&&t.team===ME?'sel':'';
+  const w=screenToWorld(mouse.x,mouse.y);
+  if(lo&&MODK.ctrl)return w&&forceTarget(t,w)?'force':'nogo';
+  if(lo&&MODK.alt)return w&&!noGo(units,w)?'way':'nogo';
+  if(t&&t.team===ME)return helpOn(t,units)?(t.aband?'capture':'enter'):'sel';
+  if(t&&!ally(t.team,ME))return t.aband&&units.some(u=>isInf(u.s))?'capture':'attack';
+  if(t&&t.aband&&!t.isB&&units.some(u=>isInf(u.s)))return 'capture';
+  if(!w)return '';
+  return t?'move':groundIntent(units,w);}
+// empty ground (or a city building / derrick / supply field) under the cursor with units selected
+function groundIntent(units,w){const c=civUnder(mouse.x,mouse.y,w);if(c&&!c.dead&&(!c.g||ally(c.g.team,ME))){if(units.some(u=>canGarrison(u)))return 'enter';if(!c.g&&units.some(u=>u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker'))return 'attack';}
+  if(oilAt(w,false)>=0)return 'attack';if(fieldAt(w)>=0&&units.some(u=>u.kind==='harv'))return 'move';
+  return noGo(units,w)?'nogo':'move';}
+const CURST={k:null,t:0,x:-1,y:-1,m:''};
+function cursorTick(force){const now=performance.now();if(!force&&now-CURST.t<50)return;
+  if(!G||G.over||!mouse.in||LASTPT==='touch'||SET.mCur===0){if(CURST.k!==''){CURST.k='';cv.style.cursor='';cv.dataset.cur='';}return;}
+  const m=(G.place||'')+(G.aim||'')+(+!!G.amove)+(+!!G.defm)+(+MODK.ctrl)+(+MODK.alt)+G.sel.length+(RDRAG?(RDRAG.moved?2:1):0);
+  if(!force&&mouse.x===CURST.x&&mouse.y===CURST.y&&m===CURST.m&&now-CURST.t<250)return;
+  CURST.t=now;CURST.x=mouse.x;CURST.y=mouse.y;CURST.m=m;let k='';try{k=cursorIntent();}catch(_){k='';}
+  if(k!==CURST.k){CURST.k=k;cv.style.cursor=curCss(k);cv.dataset.cur=k;}}
+setInterval(()=>cursorTick(false),50);
+function defendAt(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);G.defm=false;if(!ids.length)return;doAct({t:'def',ids,x:w.x,y:w.y});speak(1);mark({x:w.x,y:w.y,r:300,t:0,d:1.1,c:0x6fb2ff});pushLog('Units moving to defend the area.');}
 function rightPress(e){const w=screenToWorld(mouse.x,mouse.y);if(!w)return false;rDown=performance.now();if(G.defm){defendAt(w);return false;}
   if(G.place||G.aim){G.place=null;G.aim=null;return false;}
-  if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;return false;}
+  if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;return false;}
   return true;}
 function orderClick(sh){if(!G||G.over)return;G.qShift=!!sh;const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.place||G.aim){G.place=null;G.aim=null;updateUI();return;}if(G.defm){defendAt(w);return;}
   const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
-  if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;return;}
+  if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;return;}
   G.amove=false;const bsel=!units.length&&G.sel.some(b=>b.isB&&b.team===ME);if(!units.length&&!bsel)return;
   const t=pickAt(mouse.x,mouse.y,false);if(issueCmd(w,t,bsel))updateUI();}
+// Generals scheme, a left click with the mouse: orders for the selection, or a rally point for a production building.
+// Returns false when the click should simply select what is under the cursor.
+function genClick(d,t){const units=selfSel(),w=screenToWorld(mouse.x,mouse.y);if(!w)return false;
+  if(units.length){if(d.ctrl){forceFire(w,t,units);updateUI();return true;}
+    if(d.alt){waypoint(w,units);updateUI();return true;}
+    if(t&&t.team===ME&&!helpOn(t,units))return false;
+    if(!t&&groundIntent(units,w)==='nogo'){try{sfxUI(220);}catch(_){}return true;}
+    G.qShift=!!d.shift;const ok=issueCmd(w,t,false);G.qShift=false;if(ok){updateUI();return true;}return false;}
+  if(!t&&!d.shift&&prodSel()){issueCmd(w,null,true);updateUI();return true;}
+  return false;}
 function rightRelease(d){if(!G)return;
   if(d.box){const x0=Math.min(d.x0,mouse.x),x1=Math.max(d.x0,mouse.x),y0=Math.min(d.y0,mouse.y),y1=Math.max(d.y0,mouse.y);
     const got=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u)+4,u.y);return p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1;})());G.sel=d.shift?[...new Set([...G.sel,...got])]:got;}
   else{const t=pickAt(mouse.x,mouse.y,false),now=performance.now();
-    if(t&&t.team===ME&&!t.isB&&SET.dbl>0&&lastR.id===t.id&&now-lastR.t<SET.dbl){G.sel=G.ents.filter(u=>u.team===ME&&u.kind===t.kind&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u),u.y);return p.x>0&&p.y>0&&p.x<VW&&p.y<VH;})());lastR={t:0,id:0};updateUI();return;}
+    if(t&&t.team===ME&&!t.isB&&SET.dbl>0&&lastR.id===t.id&&now-lastR.t<SET.dbl&&!d.ctrl&&!d.alt){G.sel=G.ents.filter(u=>u.team===ME&&u.kind===t.kind&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u),u.y);return p.x>0&&p.y>0&&p.x<VW&&p.y<VH;})());lastR={t:0,id:0};updateUI();return;}
     lastR={t:now,id:t?t.id:0};
     const mine=G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead),bsel=!mine&&G.sel.some(b=>b.isB&&b.team===ME);
     const dzHelp=t&&t.team===ME&&t.isB&&((t.built<1&&G.sel.some(u=>u.kind==='dozer'&&u.team===ME&&!u.dead))||(t.kind==='tunnel'&&t.built>=1&&G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&u.s.dom==='ground')))||(t&&t.team===ME&&!t.isB&&t.s&&t.s.cap&&G.sel.some(u=>u!==t&&!u.isB&&canBoard(t,u)))||(t&&t.kind==='garrison'&&t.team===ME&&G.sel.some(u=>u.team===ME&&canGarrison(u)));
+    if(d.pt==='mouse'&&leftOrders()&&genClick(d,t))return;
     if(d.pt!=='mouse'&&(mine||bsel)&&!d.shift&&(!(t&&t.team===ME)||dzHelp)){const w=screenToWorld(mouse.x,mouse.y);if(w&&issueCmd(w,t,bsel)){updateUI();return;}}
     selectClick(t,d.shift);}
   if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);updateUI();}
@@ -200,16 +293,22 @@ function touchUp(e){TCH.delete(e.pointerId);if(TCH.size<2)PINCH=null;
   if(TPEND&&TPEND.id===e.pointerId){TPEND=null;if(!G||G.over)return true;mpos(e);if(mouse.x<0||mouse.y<0||mouse.x>VW||mouse.y>VH)return true;const w=screenToWorld(mouse.x,mouse.y);if(w&&(G.place||G.aim))placeOrAim(w,false);return true;}
   return false;}
 function touchCancel(e){TCH.delete(e.pointerId);TIGN.delete(e.pointerId);if(TCH.size<2)PINCH=null;if(TPEND&&TPEND.id===e.pointerId)TPEND=null;}
-let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
+// Generals scheme, right button: a click without dragging cancels the current mode (placement, power, attack-move,
+// guard) or, if there is none, deselects everything. Right-drag with units selected draws the line formation.
+function rightCancel(){if(!G||G.over)return;if(G.place||G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;}else G.sel=[];updateUI();}
+function rightClickAct(sh){if(rightOrders())orderClick(sh);else rightCancel();}
+function lineOrder(r){const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!w1||!ids.length)return;doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);mark({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}
+let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(LASTPT==='mouse'){let mode=own.length?SET.mRDU:SET.mRDN;if(mode==='line'&&!(own.length>=(rightOrders()?2:1)&&w0&&!G.place&&!G.aim&&!G.defm))mode='none';try{cv.setPointerCapture(e.pointerId);}catch(_){}if(mode==='box'){drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:'mouse',rb:1};return;}RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false,gen:1,mode,line:mode==='line'};return;}if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.place||G.aim){placeOrAim(w,e.shiftKey);return;}
   if(!rightPress(e))return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
-  drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:e.pointerType||'mouse'};});
-cv.addEventListener('pointermove',e=>{if(e.pointerType==='mouse')LASTPT='mouse';else if(e.pointerType==='touch'&&touchMove(e))return;mpos(e);if(RDRAG&&e.pointerId===RDRAG.id){if(Math.hypot(mouse.x-RDRAG.x0,mouse.y-RDRAG.y0)>22)RDRAG.moved=true;return;}if(mpan&&e.pointerId===mpan.id){const k=cam.dist/700*(SET.scr||100)/100;cam.x-=(e.clientX-mpan.x)*k;cam.y-=(e.clientY-mpan.y)*k*1.4;mpan.x=e.clientX;mpan.y=e.clientY;return;}if(drag&&Math.hypot(mouse.x-drag.x0,mouse.y-drag.y0)>(drag.pt==='touch'?Math.max(SET.tol||8,16):(SET.tol||8)))drag.box=true;});
-window.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e))return;if(mpan&&e.pointerId===mpan.id){mpan=null;return;}if(RDRAG&&e.pointerId===RDRAG.id){const r=RDRAG;RDRAG=null;const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(r.moved&&w1&&ids.length){doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);PINGS.push({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}else orderClick(r.shift);return;}if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;rightRelease(d);});
+  drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,ctrl:e.ctrlKey||e.metaKey,alt:e.altKey,id:e.pointerId,pt:e.pointerType||'mouse'};});
+cv.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'){LASTPT='mouse';mouse.in=true;MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;}else if(e.pointerType==='touch'&&touchMove(e))return;mpos(e);if(RDRAG&&e.pointerId===RDRAG.id){if(Math.hypot(mouse.x-RDRAG.x0,mouse.y-RDRAG.y0)>(RDRAG.gen&&!RDRAG.line?(SET.tol||8):22))RDRAG.moved=true;return;}if(mpan&&e.pointerId===mpan.id){const k=cam.dist/700*(SET.scr||100)/100;cam.x-=(e.clientX-mpan.x)*k;cam.y-=(e.clientY-mpan.y)*k*1.4;mpan.x=e.clientX;mpan.y=e.clientY;return;}if(drag&&Math.hypot(mouse.x-drag.x0,mouse.y-drag.y0)>(drag.pt==='touch'?Math.max(SET.tol||8,16):(SET.tol||8)))drag.box=true;});
+window.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e))return;if(mpan&&e.pointerId===mpan.id){mpan=null;return;}if(RDRAG&&e.pointerId===RDRAG.id&&RDRAG.gen){const r=RDRAG;RDRAG=null;if(r.moved&&r.line)lineOrder(r);else if(!(r.moved&&r.mode==='scroll'))rightClickAct(r.shift);cursorTick(true);return;}if(RDRAG&&e.pointerId===RDRAG.id){const r=RDRAG;RDRAG=null;const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(r.moved&&w1&&ids.length){doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);mark({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}else orderClick(r.shift);return;}if(!drag||e.pointerId!==drag.id)return;const d=drag;drag=null;if(d.rb&&!d.box){rightClickAct(d.shift);return;}rightRelease(d);});
 window.addEventListener('pointercancel',e=>{touchCancel(e);if(drag&&e.pointerId===drag.id)drag=null;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
-window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;if(!G||$('menu').hidden===false)return;
+window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;MODK.ctrl=e.ctrlKey||e.metaKey||k==='Control'||k==='Meta';MODK.alt=e.altKey||k==='Alt';MODK.shift=e.shiftKey;if(!G||$('menu').hidden===false)return;if(k==='Alt')e.preventDefault();
+  const gk=genKeys()&&!e.ctrlKey&&!e.metaKey&&!e.altKey;if(gk&&k==='a'&&!e.repeat){G.amove=true;G.defm=false;}if(gk&&k==='s'&&!e.repeat){const ids=selfSel().map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
   if(/^Digit[1-5]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
   if(k==='p'&&!G.over){e.preventDefault();togglePause();return;}
   if(k==='Escape'&&menuOpen()){menuOpen(false);return;}
@@ -221,12 +320,16 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
   if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(1800,cam.td*1.15);}
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();updateUI();});
-window.addEventListener('keyup',e=>{keys[e.key.length===1?e.key.toLowerCase():e.key]=false;});
+window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
+window.addEventListener('blur',()=>{MODK.ctrl=MODK.alt=MODK.shift=false;});
+// Generals keys: with your own units selected, A arms attack-move and S stops them (instead of scrolling); with nothing
+// selected WASD scrolls. Arrow keys always scroll. The Alternate mouse setup keeps the older keys (F attack, X stop).
+function genKeys(){return !!G&&SET.mAK==='a'&&G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead);}
 function mmJump(e){const r=mm.getBoundingClientRect();centerOn((e.clientX-r.left)/r.width*MAPW,(e.clientY-r.top)/r.height*MAPH);}
 // Minimap: left-click / tap / drag moves the view there; right-click sends the selected units there.
 // Pointer events so it works the same with a mouse, trackpad, touch screen or pen.
 let mmDown=null;mm.style.touchAction='none';mm.style.cursor='crosshair';
-function mmSend(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!ids.length)return false;doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0});speak(1);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0x74d08f});return true;}
+function mmSend(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!ids.length)return false;doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0x74d08f});return true;}
 function mmWorld(e){const r=mm.getBoundingClientRect();return{x:Math.max(0,Math.min(MAPW,(e.clientX-r.left)/r.width*MAPW)),y:Math.max(0,Math.min(MAPH,(e.clientY-r.top)/r.height*MAPH))};}
 mm.addEventListener('pointerdown',e=>{if(!G)return;e.preventDefault();const w=mmWorld(e);
   if(e.button===2){mmSend(w);return;}
@@ -250,6 +353,12 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   #wxchip{top:6px;left:auto;right:6px;transform:none;white-space:normal;text-align:right;max-width:calc(62% - 16px);font-size:10px;padding:3px 7px}
   #net{top:auto;bottom:6px;right:6px;font-size:10px;padding:2px 6px}
 }
+/* phone bar: command-button names wrap onto two lines instead of ending in "…" (fitBtnNames shrinks the longest) */
+@media (max-width:560px),(max-width:760px) and (min-height:521px),(max-height:520px){
+  #panel .btn{padding:2px 4px 3px;gap:0}
+  #panel .btn .n{white-space:normal;overflow-wrap:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;text-overflow:clip;font-size:11px;line-height:1.05;letter-spacing:-.015em;padding-right:7px}
+  #panel .btn .c{font-size:9.5px;line-height:1.05}
+}
 @media (max-width:560px){
   .facs{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
   .fac{grid-template-columns:30px minmax(0,1fr);gap:8px;padding:8px 7px}
@@ -264,14 +373,186 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
   .game button,.joinrow .big,.joinrow input{min-height:40px}
 }`;document.body.append(st);}
-function touchUI(){TOUCHUI=true;document.body.classList.add('touchui');const h=$('hint');if(h)h.textContent='Tap a unit to select it · with units selected, tap the ground to move or an enemy to attack · drag to box-select · two fingers: slide to pan, pinch to zoom · tap the small map to jump there';try{updateUI();}catch(e){}}
+function touchUI(){TOUCHUI=true;document.body.classList.add('touchui');const h=$('hint');if(h)h.textContent='Drag to scroll · pinch to zoom · tap a unit to select it, then tap the ground to move or an enemy to attack · double-tap: all of that type · hold, then drag: box-select (or a battle line with units selected)';try{updateUI();}catch(e){}}
 // on touch: the banner says how to place, and tapping it cancels; the long hint steps aside after the opening
-function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: touch the map, slide, lift to build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target'):(md.dataset.d||'').replace(/click/g,'tap');
+function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: tap a spot (drag scrolls), then ✓ Build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target')+', then ✓ Fire':(md.dataset.d||'').replace(/click/g,'tap');
     if(md.dataset.t!==t){md.dataset.t=t;md.innerHTML='<span></span><button class="mcx" type="button">✕ Cancel</button>';md.firstChild.textContent=t;}}else md.dataset.t='';
   const h=$('hint');if(h)h.hidden=!md.hidden||G.t>40;}
 $('mode').onclick=e=>{if(!G||!e.target.closest('.mcx'))return;G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();};
 try{if(matchMedia('(hover:none) and (pointer:coarse)').matches)touchUI();}catch(e){}
-function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100;if(keys.ArrowLeft||keys.a)cam.tx-=sp;if(keys.ArrowRight||keys.d)cam.tx+=sp;if(keys.ArrowUp||keys.w)cam.ty-=sp;if(keys.ArrowDown||keys.s)cam.ty+=sp;
+/* ================= TOUCH CONTROLS (phones, tablets) — touch only ================= */
+// Everything in this block acts only on touch (pointerType 'touch'). Touches on the battlefield are taken here in the
+// capture phase and stopped, so they never reach the mouse handlers above, and a mouse or pen never reaches this code:
+// the desktop mouse scheme is unchanged. (touchDown/touchMove/touchUp above are the older touch code, no longer reached.)
+//   one finger drag ........ scrolls the map like a maps app (it follows the finger and glides on after a flick)
+//   two fingers ............ pinch to zoom, slide to pan
+//   tap .................... selects a unit or building; with units selected, tap the ground to move, an enemy to
+//                            attack, or your own transport / tunnel / building they can use to go in. A production
+//                            building selected: tap the ground for its rally point. A ring flashes where the order went.
+//   double-tap a unit ...... selects all of that type on screen
+//   hold, then drag ........ box-select; with units selected it draws the infantry line formation instead
+//   command strip .......... above the bar while units are selected: attack-move, guard, stop, line, same type, all army,
+//                            retreat, deselect
+//   building or power ...... tap to choose the spot (one finger still scrolls), then ✓ to build / fire or ✕ to cancel
+//   first battle ........... a 3-step guide shows once (remembered on this device); ☰ > Touch controls shows it again
+const TC={ids:new Map(),g:null,pinch:null,vel:{x:0,y:0},glide:false,lastTap:null,pick:null,lineArm:false,lpT:0,last:performance.now(),
+  touch:false,stripK:'',stripT:0,marks:0,seen:{}};
+try{TC.touch=matchMedia('(hover:none) and (pointer:coarse)').matches;}catch(e){}
+const TC_LP=380,TC_SLOP=10,TC_DBL=420;
+function tcOwn(){return G?G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead):[];}
+function tcXY(e){const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+function tcMid(){const a=[...TC.ids.values()];return{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};}
+function tcOnScreen(u,h){const p=toScreen(u.x,unitH(u)+(h||0),u.y);return p.x>0&&p.y>0&&p.x<VW&&p.y<VH;}
+// move the camera by a world offset, at once (no easing), kept on the map
+function tcCam(dx,dy){camTarget();const ox=cam.tx,oy=cam.ty;cam.tx=Math.max(0,Math.min(MAPW,cam.tx+dx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty+dy));
+  const mx=cam.tx-ox,my=cam.ty-oy;cam.x+=mx;cam.y+=my;cam._xl=cam.x;cam._yl=cam.y;return Math.abs(mx)+Math.abs(my)>1e-3;}
+// a ring that flashes where an order went (move green, attack red, attack-move orange, guard blue, rally, line, blocked)
+function tcMark(x,y,k){TC.marks++;TC.seen[k]=(TC.seen[k]||0)+1;if(SET.mPing===0)return;const r=cv.getBoundingClientRect(),d=document.createElement('div');d.className='tmark '+k;d.style.left=(x+r.left)+'px';d.style.top=(y+r.top)+'px';document.body.append(d);setTimeout(()=>d.remove(),750);}
+function tcHold(x,y){let h=$('thold');if(x==null){if(h)h.hidden=true;return;}if(!h){h=document.createElement('div');h.id='thold';document.body.append(h);}const r=cv.getBoundingClientRect();h.style.left=(x+r.left)+'px';h.style.top=(y+r.top)+'px';h.hidden=false;}
+// your own unit or building that the selection can use (board, enter a tunnel, garrison, help build, re-crew)
+function tcUse(t,own){if(!t||t.team!==ME||t.dead)return false;
+  if(t.kind==='garrison'&&own.some(u=>canGarrison(u)))return true;
+  if(t.isB)return(t.built<1&&own.some(u=>u.kind==='dozer'))||(t.kind==='tunnel'&&t.built>=1&&own.some(u=>u.s.dom==='ground'&&u.kind!=='harv'));
+  return!!(t.s&&t.s.cap&&own.some(u=>u!==t&&canBoard(t,u)))||(!!t.aband&&own.some(u=>isInf(u.s)&&!u.s.noAttack));}
+function tcProd(){return G.sel.some(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)&&b.built>=1);}
+function tcSelSound(){if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);}
+function tcAbort(){clearTimeout(TC.lpT);tcHold();const g=TC.g;TC.g=null;if(!g)return;if(drag&&drag.id===g.id)drag=null;if(RDRAG&&RDRAG.id===g.id)RDRAG=null;}
+function tcTap(x,y,ts){if(ts==null)ts=performance.now();mouse.x=x;mouse.y=y;const w=screenToWorld(x,y);if(!w)return;
+  if(G.place||G.aim){TC.pick=w;sfxUI(520);updateUI();return;}
+  const own=tcOwn();
+  if(G.defm){if(own.length){defendAt(w);tcMark(x,y,'gd');}G.defm=false;updateUI();return;}
+  if(G.amove&&own.length){const ids=own.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);if(ids.length){doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});tcMark(x,y,'am');}G.amove=false;updateUI();return;}
+  G.amove=false;
+  const t=pickAt(x,y,false),now=ts,L=TC.lastTap;
+  TC.tapLog={x:Math.round(x),y:Math.round(y),t:t?t.kind+'/'+t.team:null,own:own.length};
+  if(t&&t.team===ME&&!t.isB&&L&&now-L.t<TC_DBL&&L.kind===t.kind&&Math.hypot(x-L.x,y-L.y)<60){TC.lastTap=null;
+    G.sel=G.ents.filter(u=>u.team===ME&&u.kind===t.kind&&!u.dead&&tcOnScreen(u));tcMark(x,y,'sel');tcSelSound();updateUI();return;}
+  TC.lastTap=t&&t.team===ME&&!t.isB?{t:now,kind:t.kind,x,y}:null;
+  if(own.length&&!(t&&t.team===ME&&!tcUse(t,own))){
+    if(!t&&typeof noGo==='function'&&noGo(own,w)){try{sfxUI(220);}catch(_){}tcMark(x,y,'no');return;}
+    if(issueCmd(w,t,false)){tcMark(x,y,t&&!ally(t.team,ME)?'atk':'mv');updateUI();return;}}
+  if(!t&&!own.length&&tcProd()){issueCmd(w,null,true);tcMark(x,y,'rl');updateUI();return;}
+  selectClick(t,false);if(t)tcMark(x,y,'sel');tcSelSound();updateUI();}
+function tcBox(g){const x0=Math.min(g.x0,g.x),x1=Math.max(g.x0,g.x),y0=Math.min(g.y0,g.y),y1=Math.max(g.y0,g.y);
+  G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u)+4,u.y);return p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1;})());tcSelSound();updateUI();}
+function tcLine(g){const w0=g.w0,w1=screenToWorld(g.x,g.y),ids=tcOwn().map(u=>u.id);TC.lineArm=false;if(!w0||!w1||!ids.length)return;
+  doAct({t:'line',ids,x:w0.x,y:w0.y,x2:w1.x,y2:w1.y,mode:G.amove?'amove':'move'});G.amove=false;speak(1);PINGS.push({x:(w0.x+w1.x)/2,y:(w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});
+  tcMark(g.x0,g.y0,'ln');tcMark(g.x,g.y,'ln');updateUI();}
+function tcStartDrag(g,ts){const own=tcOwn();
+  if(own.length&&!G.place&&!G.aim&&(g.mode==='hold'||TC.lineArm)){g.mode='line';g.w0=screenToWorld(g.x0,g.y0);RDRAG={x0:g.x0,y0:g.y0,w0:g.w0,id:g.id,am:G.amove,moved:true,line:true,tc:1};}
+  else if(g.mode==='hold'&&!G.place&&!G.aim){g.mode='box';drag={x0:g.x0,y0:g.y0,box:true,shift:false,id:g.id,pt:'touch',tc:1};}
+  else{g.mode='pan';g.lt=ts;TC.vel={x:0,y:0};}
+  tcHold();}
+function tcLong(){const g=TC.g;if(!g||g.mode!=='tap')return;g.mode='hold';tcHold(g.x,g.y);try{navigator.vibrate&&navigator.vibrate(15);}catch(_){}}
+window.addEventListener('pointerdown',e=>{TC.touch=e.pointerType==='touch';TC.nd=(TC.nd||0)+1;TC.lastDown=e.pointerType+':'+(e.target&&(e.target.id||e.target.tagName));if(e.pointerType!=='touch'||e.target!==cv)return;
+  if(typeof menuOpen==='function'&&menuOpen())return; // the menu's own handler closes it and swallows the tap
+  e.stopPropagation();e.preventDefault();if(!G||G.over)return;
+  LASTPT='touch';if(!TOUCHUI)touchUI();PICKMIN=20;mouse.in=false;try{cv.setPointerCapture(e.pointerId);}catch(_){}
+  TC.glide=false;const p=tcXY(e);TC.ids.set(e.pointerId,p);
+  if(TC.ids.size>=2){tcAbort();if(!TC.pinch&&TC.ids.size===2)TC.pinch=tcMid();return;}
+  TC.g={id:e.pointerId,x0:p.x,y0:p.y,x:p.x,y:p.y,mode:'tap',t0:e.timeStamp};clearTimeout(TC.lpT);TC.lpT=setTimeout(tcLong,TC_LP);},true);
+window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')TC.nm=(TC.nm||0)+1;if(e.pointerType!=='touch'||!TC.ids.has(e.pointerId))return;e.stopPropagation();if(!G)return;
+  const p=tcXY(e),q=TC.ids.get(e.pointerId);TC.ids.set(e.pointerId,p);
+  if(TC.pinch&&TC.ids.size>=2){const m=tcMid(),P=TC.pinch;camTarget();
+    if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(1800,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
+    const a=screenToWorld(P.x,P.y),b=screenToWorld(m.x,m.y);if(a&&b){cam.tx+=a.x-b.x;cam.ty+=a.y-b.y;}TC.pinch={x:m.x,y:m.y,d:m.d};return;}
+  const g=TC.g;if(!g||g.id!==e.pointerId)return;g.x=p.x;g.y=p.y;
+  if(g.mode==='tap'||g.mode==='hold'){if(Math.hypot(p.x-g.x0,p.y-g.y0)<=TC_SLOP)return;clearTimeout(TC.lpT);
+    // held or not is decided by how long the finger rested before it moved (event times), not by when the timer ran
+    g.mode=e.timeStamp-g.t0>=TC_LP?'hold':'tap';tcStartDrag(g,e.timeStamp);if(g.mode==='pan')q.x=g.x0,q.y=g.y0;}
+  if(g.mode==='pan'){const a=screenToWorld(q.x,q.y),b=screenToWorld(p.x,p.y);if(!a||!b)return;let dx=a.x-b.x,dy=a.y-b.y;const cap=cam.dist*1.5,n=Math.hypot(dx,dy);if(n>cap){dx*=cap/n;dy*=cap/n;}
+    tcCam(dx,dy);const now=e.timeStamp,dt=Math.max(.004,(now-g.lt)/1000);g.lt=now;const ix=dx/dt,iy=dy/dt;
+    TC.vel=dt>.1?{x:ix,y:iy}:{x:TC.vel.x*.45+ix*.55,y:TC.vel.y*.45+iy*.55};return;}
+  mouse.x=p.x;mouse.y=p.y;},true);
+function tcEnd(e,cancel){if(e.pointerType!=='touch'||!TC.ids.has(e.pointerId))return;e.stopPropagation();TC.ids.delete(e.pointerId);if(TC.ids.size<2)TC.pinch=null;
+  const g=TC.g;if(!g||g.id!==e.pointerId)return;clearTimeout(TC.lpT);tcHold();TC.g=null;TC.endLog={mode:g.mode,ms:Math.round(e.timeStamp-g.t0),d:Math.round(Math.hypot(g.x-g.x0,g.y-g.y0))};
+  if(g.mode==='line'&&RDRAG&&RDRAG.id===g.id)RDRAG=null;if(g.mode==='box'&&drag&&drag.id===g.id)drag=null;
+  if(cancel||!G||G.over)return;
+  if(g.mode==='tap'||g.mode==='hold')tcTap(g.x0,g.y0,e.timeStamp);
+  else if(g.mode==='box')tcBox(g);
+  else if(g.mode==='line')tcLine(g);
+  else if(g.mode==='pan'){const sp=Math.hypot(TC.vel.x,TC.vel.y),cap=cam.dist*4;if(e.timeStamp-g.lt<90&&sp>cam.dist*.35){if(sp>cap){TC.vel.x*=cap/sp;TC.vel.y*=cap/sp;}TC.glide=true;}}}
+window.addEventListener('pointerup',e=>tcEnd(e,false),true);
+window.addEventListener('pointercancel',e=>tcEnd(e,true),true);
+/* ---- command strip (touch only, while units are selected) and build / fire confirm ---- */
+const TC_BTN=[['am','⚔','Attack','Attack-move: tap a spot, they fight everything on the way'],['gd','🛡','Guard','Guard: tap the spot to hold'],['st','■','Stop','Stop'],
+  ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all units of the selected types on screen'],['all','★','Army','Select your whole army'],
+  ['rt','↩','Retreat','Retreat to the nearest base building'],['ds','✕','Clear','Deselect']];
+function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
+  if(k==='am'){G.amove=!G.amove;G.defm=false;TC.lineArm=false;}
+  else if(k==='gd'){G.defm=!G.defm;G.amove=false;TC.lineArm=false;}
+  else if(k==='st'){if(ids.length)doAct({t:'stop',ids});sfxUI(520);}
+  else if(k==='ln'){TC.lineArm=!TC.lineArm;G.amove=false;G.defm=false;}
+  else if(k==='ty'){const ks=new Set(own.map(u=>u.kind));G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&ks.has(u.kind)&&tcOnScreen(u));tcSelSound();}
+  else if(k==='all'){selectArmy();}
+  else if(k==='rt'){if(ids.length){doAct({t:'ret',ids});speak(2);}}
+  else if(k==='ds'){G.sel=[];G.amove=false;G.defm=false;TC.lineArm=false;}
+  else if(k==='ok'){if(TC.pick&&(G.place||G.aim)){const p=toScreen(TC.pick.x,0,TC.pick.y);placeOrAim(TC.pick,false);if(!G.place&&!G.aim){tcMark(p.x,p.y,'am');TC.pick=null;}}}
+  else if(k==='no'){G.place=null;G.aim=null;TC.pick=null;}
+  TC.stripK='';updateUI();tcStrip(true);}
+function tcStrip(force){const now=performance.now();if(!force&&now-TC.stripT<120)return;TC.stripT=now;
+  let s=$('tstrip');if(!s){s=document.createElement('div');s.id='tstrip';s.hidden=true;s.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled)tcCmd(b.dataset.k);});document.body.append(s);}
+  const on=TOUCHUI&&TC.touch&&G&&!G.over&&!window.LOADING&&$('menu').hidden;const own=on?tcOwn():[];
+  const mode=!on?'':(G.place||G.aim)?'conf':own.length?'cmd':'';
+  const ok=mode==='conf'&&!!TC.pick&&(G.aim||!!validSpot(ME,G.place,TC.pick.x,TC.pick.y));
+  const key=mode+'|'+(mode==='cmd'?[G.amove,G.defm,TC.lineArm,own.some(u=>u.retreat)].join():mode==='conf'?(G.place?'b':'f')+ok:'');
+  document.body.classList.toggle('tstripOn',mode==='cmd');document.body.classList.toggle('tconfOn',mode==='conf');
+  if(key===TC.stripK)return;TC.stripK=key;s.hidden=!mode;s.className=mode;s.innerHTML='';if(!mode)return;
+  const mk=(k,ic,tx,ti,cl)=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.title=ti;b.setAttribute('aria-label',ti);if(cl)b.className=cl;const i=document.createElement('i');i.textContent=ic;const t=document.createElement('span');t.textContent=tx;b.append(i,t);s.append(b);return b;};
+  if(mode==='conf'){const b=mk('ok','✓',G.place?'Build here':'Fire here',G.place?'Build it at the marked spot':'Fire at the marked spot','go');b.disabled=!ok;mk('no','✕','Cancel','Cancel','cx');return;}
+  for(const [k,ic,tx,ti] of TC_BTN){const b=mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}}
+/* ---- first-time guide: three steps, shown once, remembered; ☰ > Touch controls shows it again. A card near the top,
+   not a full-screen cover: the battle keeps running (multiplayer can't pause) and stays playable around it ---- */
+const TC_GUIDE=[['☝','Move the map','Drag one finger to scroll the battlefield; flick to glide. Pinch with two fingers to zoom.'],
+  ['◉','Select and command','Tap a unit to select it, then tap the ground to move or an enemy to attack: a ring shows where the order went. Double-tap a unit to select all of that type on screen.'],
+  ['▭','Hold, then drag','Hold a finger still for a moment, then drag to box-select a group. With units selected, hold and drag to draw a battle line. The buttons above the bar give attack-move, guard, stop and more.']];
+function tcGuideSeen(){try{return localStorage.getItem('ww3_touchGuide')==='1';}catch(e){return false;}}
+function tcGuide(show){let o=$('tguide');if(show===false){if(o)o.hidden=true;return;}
+  if(!o){o=document.createElement('div');o.id='tguide';o.setAttribute('role','dialog');o.setAttribute('aria-label','Touch controls');o.innerHTML='<div class="tgc"><div class="tgn"></div><div class="tgi"></div><b></b><p></p><div class="tgb"><button type="button" class="tgs">Skip</button><button type="button" class="tgx">Next</button></div></div>';document.body.append(o);
+    o.querySelector('.tgs').onclick=()=>tcGuide(false);o.querySelector('.tgx').onclick=()=>{if(o.dataset.i>=TC_GUIDE.length-1)tcGuide(false);else tcGuideStep(+o.dataset.i+1);};}
+  try{localStorage.setItem('ww3_touchGuide','1');}catch(e){}TC.guideShown=(TC.guideShown||0)+1;o.hidden=false;tcGuideStep(0);}
+function tcGuideStep(i){const o=$('tguide'),[ic,h,p]=TC_GUIDE[i];o.dataset.i=i;o.querySelector('.tgn').textContent=`${i+1} / ${TC_GUIDE.length}`;o.querySelector('.tgi').textContent=ic;o.querySelector('b').textContent=h;o.querySelector('p').textContent=p;o.querySelector('.tgx').textContent=i===TC_GUIDE.length-1?'Got it':'Next';}
+{const m=$('amenu'),s=$('aSet');if(m&&s&&!$('aGuide')){const b=document.createElement('button');b.id='aGuide';b.className='on';b.setAttribute('role','menuitem');b.textContent='☝ Touch controls';b.title='Show the touch controls guide';b.onclick=()=>{menuOpen(false);tcGuide(true);};s.after(b);}}
+/* ---- every frame: flick glide, the build / fire marker stays on its spot while the map scrolls, strip, guide ---- */
+(function tcLoop(){requestAnimationFrame(tcLoop);const now=performance.now(),dt=Math.min(.05,(now-TC.last)/1000);TC.last=now;TC.frames=(TC.frames||0)+1;if(!G)return;
+  try{if(TC.glide){if(!tcCam(TC.vel.x*dt,TC.vel.y*dt))TC.glide=false;const k=Math.exp(-dt*4.2);TC.vel.x*=k;TC.vel.y*=k;if(Math.hypot(TC.vel.x,TC.vel.y)<cam.dist*.04)TC.glide=false;}
+    if((G.place||G.aim)&&TC.touch&&!G.over){if(!TC.pick)TC.pick=screenToWorld(VW/2,VH*.42);if(TC.pick){const p=toScreen(TC.pick.x,0,TC.pick.y);mouse.x=p.x;mouse.y=p.y;}}else TC.pick=null;
+    tcStrip(false);
+    if(TOUCHUI&&TC.touch&&!G.over&&!window.LOADING&&$('menu').hidden&&!tcGuideSeen())tcGuide(true);}catch(e){TC.err=String(e&&e.stack||e).slice(0,300);}})();
+{const st=document.createElement('style');st.id='touchCss';st.textContent=`
+.tmark{position:fixed;z-index:7;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #7be08f;box-shadow:0 0 0 2px rgba(0,0,0,.55),inset 0 0 0 2px rgba(0,0,0,.4);pointer-events:none;animation:tmk .7s ease-out forwards}
+.tmark::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:currentColor;color:inherit}
+.tmark.mv{border-color:#7be08f;color:#7be08f}.tmark.atk{border-color:#ff4a3a;color:#ff4a3a}.tmark.am{border-color:#ffb02e;color:#ffb02e}.tmark.gd{border-color:#6fb2ff;color:#6fb2ff}
+.tmark.rl{border-color:#7be08f;color:#7be08f;border-style:dashed}.tmark.ln{border-color:#d6f7de;color:#d6f7de;width:30px;height:30px;margin:-15px}.tmark.sel{border-color:#e9f5ec;color:transparent;border-radius:6px}.tmark.no{border-color:#ff3b30;color:#ff3b30}
+@keyframes tmk{from{transform:scale(.35);opacity:1}60%{opacity:1}to{transform:scale(1.35);opacity:0}}
+#thold{position:fixed;z-index:7;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:2px solid rgba(233,245,236,.9);background:rgba(123,224,143,.14);pointer-events:none}
+#thold[hidden]{display:none}
+#tstrip{position:fixed;z-index:7;left:max(6px,env(safe-area-inset-left,0px));right:max(6px,env(safe-area-inset-right,0px));bottom:calc(var(--barh,180px) + 6px);display:flex;justify-content:center;gap:4px;pointer-events:none}
+#tstrip[hidden]{display:none}
+#tstrip button{pointer-events:auto;flex:1 1 0;min-width:40px;max-width:76px;min-height:44px;padding:2px 1px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:rgba(24,32,28,.94);border:1px solid #3d4d44;color:var(--fg,#e9f5ec);font:600 10px var(--display,system-ui);letter-spacing:.02em;box-shadow:0 2px 8px rgba(0,0,0,.5);touch-action:manipulation;cursor:pointer}
+#tstrip button i{font-style:normal;font-size:16px;line-height:1}
+#tstrip button.on{border-color:var(--accent,#7be08f);color:var(--accent,#7be08f);background:rgba(40,60,46,.96)}
+#tstrip.conf{justify-content:flex-end}
+#tstrip.conf button{flex:0 1 96px;max-width:none;font-size:12px}
+#tstrip.conf button.go{border-color:var(--ok,#7be08f);color:var(--ok,#7be08f)}#tstrip.conf button.go:disabled{opacity:.45}
+#tstrip.conf button.cx{border-color:var(--warn,#ea5a40);color:var(--warn,#ea5a40)}
+body.tstripOn #info .cmdrow{display:none!important}
+#tguide{position:fixed;left:0;right:0;top:max(44px,calc(env(safe-area-inset-top,0px) + 38px));z-index:30;display:flex;justify-content:center;padding:0 10px;pointer-events:none}
+#tguide[hidden]{display:none}
+#tguide .tgc{pointer-events:auto;width:min(360px,100%);box-sizing:border-box;background:rgba(18,24,21,.98);border:1px solid #3d4d44;box-shadow:0 10px 30px rgba(0,0,0,.6);padding:16px 16px 12px;color:var(--fg,#e9f5ec);font:14px/1.4 system-ui,sans-serif}
+#tguide .tgn{font:600 11px var(--mono,monospace);color:var(--dim,#9aa8a0);letter-spacing:.08em}
+#tguide .tgi{font-size:34px;line-height:1.2;margin:4px 0;color:var(--accent,#7be08f)}
+#tguide b{display:block;font:700 18px var(--display,system-ui);letter-spacing:.03em;margin-bottom:4px}
+#tguide p{margin:0 0 12px;color:#c9d4ce}
+#tguide .tgb{display:flex;gap:8px;justify-content:flex-end}
+#tguide .tgb button{min-height:44px;min-width:88px;padding:0 14px;background:var(--panel2,#1d2622);border:1px solid #3d4d44;color:var(--fg,#e9f5ec);font:600 14px var(--display,system-ui);cursor:pointer}
+#tguide .tgx{border-color:var(--accent,#7be08f)!important;color:var(--accent,#7be08f)!important}
+body:not(.touchui) #aGuide{display:none}
+@media (max-height:520px){#tguide .tgi{font-size:26px}#tguide .tgc{padding:10px 14px 8px}#tguide p{margin-bottom:8px}}`;document.body.append(st);}
+setTimeout(setHint,0);
+function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=genKeys();if(keys.ArrowLeft||(keys.a&&!gk))cam.tx-=sp;if(keys.ArrowRight||keys.d)cam.tx+=sp;if(keys.ArrowUp||keys.w)cam.ty-=sp;if(keys.ArrowDown||(keys.s&&!gk))cam.ty+=sp;
+  // Generals rapid scroll: right-drag with nothing selected pans toward the drag, faster the further you drag
+  if(RDRAG&&RDRAG.gen&&RDRAG.mode==='scroll'&&RDRAG.moved){const dx=mouse.x-RDRAG.x0,dy=mouse.y-RDRAG.y0,d=Math.hypot(dx,dy);if(d>4){const v=sp*Math.min(6,.6+d/70)*(SET.mRS||100)/100;cam.tx+=dx/d*v;cam.ty+=dy/d*v;}}
   if(mouse.in&&!drag&&SET.edge&&LASTPT!=='touch'){if(mouse.x<14)cam.tx-=sp;if(mouse.x>VW-14)cam.tx+=sp;if(mouse.y<14)cam.ty-=sp;if(mouse.y>VH-14)cam.ty+=sp;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
 
 /* ---------- game start / reset ---------- */
@@ -450,7 +731,11 @@ function loadShow(o){const el=loadUI(),D=MAPS[o.map]||MAPS.strait;
   el.hidden=false;window.LOADING=true;}
 function loadFromG(mode){if(!G)return;loadShow({mode,map:G.mapKey,facs:G.teams.map(T=>T.fac),tm:G.teams.map(T=>T.tm),me:ME,cols:G.teams.map(T=>T.color),ai:G.teams.map(T=>!!T.ai),bases:BASES.slice(0,G.teams.length)});}
 function loadStep(label,p){const el=LOAD.el;if(!el)return;const s=el.querySelectorAll('.lo-s span');s[0].textContent=label;s[1].textContent=Math.round(p*100)+'%';el.querySelector('.lo-bar i').style.width=(p*100).toFixed(1)+'%';}
-function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.hidden=true;window.LOADING=false;}
+function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.hidden=true;window.LOADING=false;
+  // a battle hosted on Cloudflare waits (up to 20 s) until every player is past the loading screen ('rd' in their presence)
+  // (the presence carries the player's token, so a server that gave up on a player who was silent while loading links
+  // them back at once)
+  if(MODE==='client'&&NET.sv&&NET.game)NET.game.presence({rd:1}).catch(()=>{});}
 // wait until the browser has painted (falls back to a timer when the tab is in the background and frames stop)
 function loadFrame(){return new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,document.hidden?0:300);});}
 async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
@@ -518,8 +803,8 @@ function mapCards(){const el=$('pickMap');if(!el)return;if(!setup.map)setup.map=
   const cv=document.createElement('canvas');cv.id='mapCv';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Map preview: click a numbered position to choose your start');cv.onclick=e=>{const P=PREV[setup.map];if(!P)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)/r.width*MAPW,my=(e.clientY-r.top)/r.height*MAPH;let best=-1,bd=1e9;P.sl.forEach(([x,y],i)=>{const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=i;}});setup.slot=bd<MAPW*.09?best:-1;try{sfxUI(700);}catch(_){}prevMarks();};const right=document.createElement('div');const sel=document.createElement('select');sel.id='mapSel';sel.setAttribute('aria-label','Battlefield');
   for(const k of MAP_KEYS){const o=document.createElement('option');o.value=k;const hm=(MAPS[k].home||[]).map(f=>FACTIONS[f]&&FACTIONS[f].name).filter(Boolean);o.textContent=`${MAPS[k].name}${hm.length?' · home of '+hm.join(' & '):''} (${MAPS[k].min}–${MAPS[k].max} players)`;sel.append(o);}sel.value=setup.map;
   const pl=document.createElement('div');pl.className='pl';const dc=document.createElement('div');dc.className='dc';const sn=document.createElement('div');sn.className='dc';sn.id='slotNote';right.append(sel,pl,dc,sn);box.append(cv,right);el.append(box);
-  const show=()=>{const D=MAPS[setup.map];const base=`${D.min}–${D.max} players`+(D.theme==='snow'?' · snow & ice':'');pl.textContent=base;dc.textContent=D.desc;
-    setTimeout(()=>{try{const r=mapPreview(setup.map,cv);if(r){const t=[base];if(r.water>.28)t.push('naval-heavy');else if(r.water>.06)t.push('rivers & coast');else t.push('open land');if(r.mtn>.05)t.push('mountain passes');if(r.bridges)t.push(r.bridges+(r.bridges>1?' bridges':' bridge'));pl.textContent=t.join(' · ');}}catch(e){}},20);};
+  const show=()=>{const D=MAPS[setup.map];const base=`${D.min}–${D.max} players`+(D.theme==='snow'?' · snow & ice':'');pl.textContent=base+(D.tag?' · '+D.tag:'');dc.textContent=D.desc;
+    setTimeout(()=>{try{const r=mapPreview(setup.map,cv);if(r){const t=[base];if(D.tag)t.push(D.tag);else if(r.water>.28)t.push('naval-heavy');else if(r.water>.06)t.push('rivers & coast');else t.push('open land');if(!D.tag&&r.mtn>.05)t.push('mountain passes');if(r.bridges)t.push(r.bridges+(r.bridges>1?' bridges':' bridge'));pl.textContent=t.join(' · ');}}catch(e){}},20);};
   const rb=document.createElement('button');rb.type='button';rb.className='rndmap';rb.textContent='Random battlefield';rb.onclick=()=>{const need=(setup.n||1)+1;const ks=MAP_KEYS.filter(k=>k!==setup.map&&MAPS[k].max>=Math.min(need,8));const k=ks[Math.floor(Math.random()*ks.length)]||setup.map;sel.value=k;sel.onchange();};right.insertBefore(rb,pl);
   sel.onchange=()=>{setup.map=sel.value;setup.slot=-1;try{SET.map=setup.map;saveSet();}catch(e){}show();syncAiN();renderTeams();if(typeof renderLobby==='function')renderLobby();};show();syncAiN();}
 // Skirmish roster: you, the main opponent and the other AIs (rolled once so you can see who they are), each with a team.
@@ -535,13 +820,13 @@ mapCards();
 facCards();const sel=$('aiFac');for(const k of FKEYS){const o=document.createElement('option');o.value=k;o.textContent=FACTIONS[k].name;sel.append(o);}sel.value=setup.a;setTimeout(renderTeams,0);sel.onchange=()=>{setup.a=sel.value;renderTeams();};if($('aiN'))$('aiN').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.n=+b.dataset.n;setTimeout(prevMarks,0);$('aiN').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));$('start').textContent=setup.n>1?`Deploy vs ${setup.n} AI`:'Deploy vs AI';renderTeams();});if($('watch'))$('watch').onclick=()=>{$('end').hidden=true;};
 if($('wx'))$('wx').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.w=+b.dataset.w;$('wx').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
 $('diff').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.d=+b.dataset.d;$('diff').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
-$('start').onclick=()=>{initAudio();startSingle();};if($('sandbox'))$('sandbox').onclick=()=>{initAudio();startSandbox();};$('host').onclick=()=>{initAudio();hostGame();};
+$('start').onclick=()=>{initAudio();startSingle();};if($('sandbox'))$('sandbox').onclick=()=>{initAudio();startSandbox();};$('host').onclick=()=>{initAudio();newBattle();};if($('playOnline'))$('playOnline').onclick=()=>{initAudio();playOnline();};
 {const tk=$('sTrk');if(tk)for(const b of tk.querySelectorAll('button'))b.onclick=()=>{initAudio();setMyMode(b.dataset.v);myUI();if(G&&!G.over)myStart();};
   const f=$('myF');if(f)f.onchange=async()=>{initAudio();const n=await myAdd(f.files);f.value='';if(n){setMyMode('mine');if(G&&!G.over)myStart();}myUI();};
   if($('myNx'))$('myNx').onclick=()=>{initAudio();if(myMode()==='mine'&&MYM.list.length&&G&&!G.over)myNext();};if($('myCl'))$('myCl').onclick=async()=>{await myClear();setMyMode('score');if(G&&!G.over)myStart();myUI();};
   myList().then(l=>{MYM.list=l;myUI();});}
 if(window.WW3_P2P&&$('relayBox')){$('relayBox').hidden=false;let r={};try{r=JSON.parse(localStorage.getItem('ww3_relay')||'{}')||{};}catch(e){}$('relayU').value=r.urls||'';$('relayN').value=r.username||'';$('relayP').value=r.credential||'';
-  const sv=()=>{try{const u=$('relayU').value.trim();if(u)localStorage.setItem('ww3_relay',JSON.stringify({urls:u,username:$('relayN').value.trim(),credential:$('relayP').value}));else localStorage.removeItem('ww3_relay');$('relayS').textContent='Saved. Takes effect for the next game you host or join (reload the page).';}catch(e){}};for(const id of ['relayU','relayN','relayP'])$(id).onchange=sv;}
+  const sv=()=>{try{const u=$('relayU').value.trim();if(u)localStorage.setItem('ww3_relay',JSON.stringify({urls:u,username:$('relayN').value.trim(),credential:$('relayP').value}));else localStorage.removeItem('ww3_relay');$('relayS').textContent='Saved. Takes effect for the next battle you start or join (reload the page).';}catch(e){}};for(const id of ['relayU','relayN','relayP'])$(id).onchange=sv;}
 {const seg=(id,key,def)=>{const el=$(id);if(!el)return;let v=def;try{v=localStorage.getItem(key)||def;}catch(e){}const paint=()=>{for(const b of el.querySelectorAll('button'))b.classList.toggle('on',b.dataset.v===v);};paint();for(const b of el.querySelectorAll('button'))b.onclick=()=>{v=b.dataset.v;try{localStorage.setItem(key,v);}catch(e){}paint();QUAL.bad=QUAL.good=0;};};seg('sFpsT','ww3_fpsT','120');seg('sHideIp','ww3_hideip','0');seg('sFpsS','ww3_fpsShow','0');}
 $('aMus').onclick=()=>{initAudio();AU.musicOn=!AU.musicOn;saveAudio();applyAudio();};$('aSfx').onclick=()=>{initAudio();AU.sfxOn=!AU.sfxOn;saveAudio();applyAudio();};$('aVoc').onclick=()=>{initAudio();AU.voiceOn=!AU.voiceOn;saveAudio();applyAudio();};$('cancelHost').onclick=cancelHost;
 // settings panel (main menu and in game)
@@ -563,7 +848,42 @@ function applyGfx(){if(typeof QUAL==='undefined')return;const ph=gfxPhone(),base
 const GSPD=1.2;
 function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number]];
   for(const [id,k,cv] of segs){const el=$(id);if(!el)continue;el.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',cv(b.dataset.v)===SET[k]);b.onclick=()=>{SET[k]=cv(b.dataset.v);saveSet();syncSettings();if(k==='gfx')applyGfx();};});}
-  for(const [id,k] of [['sMus','mus'],['sFx','fx'],['sVo','vo'],['sScr','scr'],['sZm','zm']]){const el=$(id);if(!el)continue;el.value=SET[k];const out=$(id+'V');if(out)out.textContent=SET[k]+'%';el.oninput=()=>{SET[k]=+el.value;if(out)out.textContent=SET[k]+'%';saveSet();if(k!=='scr'&&k!=='zm')applyAudio();};}}
+  for(const [id,k] of [['sMus','mus'],['sFx','fx'],['sVo','vo'],['sScr','scr'],['sZm','zm']]){const el=$(id);if(!el)continue;el.value=SET[k];const out=$(id+'V');if(out)out.textContent=SET[k]+'%';el.oninput=()=>{SET[k]=+el.value;if(out)out.textContent=SET[k]+'%';saveSet();if(k!=='scr'&&k!=='zm')applyAudio();};}
+  syncMouseUI();}
+// Settings > Mouse: a scheme preset (Generals / Alternate mouse setup / Custom) and a choice for each mouse function
+const MOPT=[['sMpre','Mouse scheme',null,[['gen','Generals (default)'],['alt','Alternate mouse setup'],['custom','Custom']]],
+  ['sMLG','Left-click on the ground with units selected','mLG',[['move','Move'],['desel','Deselect']]],
+  ['sMRC','Right-click','mRC',[['cancel','Deselect & cancel'],['order','Move & attack']]],
+  ['sMRDU','Right-drag with units selected','mRDU',[['line','Infantry line'],['scroll','Rapid scroll']]],
+  ['sMRDN','Right-drag with nothing selected','mRDN',[['scroll','Rapid scroll'],['box','Box select'],['none','Nothing']]],
+  ['sMAK','Attack-move key (F always works)','mAK',[['a','A (S stops)'],['f','F (X stops)']]],
+  ['sMCur','Cursor shows what a click will do','mCur',[['1','On'],['0','Off']]],
+  ['sMPing','Order markers on the ground','mPing',[['1','On'],['0','Off']]]];
+{const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sMpre')){const els=[];
+  for(const [id,txt,,opts] of MOPT){const lb=document.createElement('div');lb.className='label';lb.textContent=txt;const sg=document.createElement('div');sg.className='seg';sg.id=id;for(const [v,t] of opts){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}els.push(lb,sg);
+    if(id==='sMpre'){const n=document.createElement('div');n.className='sv';n.id='sMpreN';n.style.cssText='opacity:.8;margin:2px 0 4px';els.push(n);}
+    if(id==='sMRDN'){const lr=document.createElement('div');lr.className='label';lr.innerHTML='<label for="sMRS">Rapid-scroll speed</label> <span class="sv" id="sMRSV"></span>';const r=document.createElement('input');r.type='range';r.id='sMRS';r.min=40;r.max=300;r.step=10;els.push(lr,r);}}
+  const wn=document.createElement('div');wn.className='sv';wn.id='sMwarn';wn.style.cssText='color:var(--warn);margin:4px 0';wn.hidden=true;wn.textContent='Neither mouse button gives move orders now - set Left-click to Move or Right-click to Move & attack.';els.push(wn);
+  hd.after(...els);
+  const rs=document.createElement('button');rs.className='btn2';rs.id='sMreset';rs.type='button';rs.textContent='Reset mouse settings to defaults';rs.style.margin='10px 0 4px';const last=$('settings').querySelector('.card>.row:last-child');if(last)last.before(rs);}}
+function syncMouseUI(){const pre=mPreset();
+  for(const [id,,k] of MOPT){const el=$(id);if(!el)continue;for(const b of el.querySelectorAll('button')){const v=b.dataset.v;b.classList.toggle('on',k?String(SET[k])===v:v===pre);if(id==='sMpre'&&v==='custom')b.disabled=pre!=='custom';
+      b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing')?+v:v;else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
+  const n=$('sMpreN');if(n)n.textContent=pre==='gen'?'Command & Conquer Generals controls: left-click selects and gives orders, right-click deselects.':pre==='alt'?'Alternate mouse setup: left-click selects, right-click moves and attacks, right-drag draws a line.':'Custom: your own mix of the choices below.';
+  const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
+  const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
+  const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
+const HINT_ALT='Left-click or drag: select (click empty ground to deselect) · Right-click: move / attack · Right-drag: line formation · R: retreat · Left-click to place buildings and aim powers · F then click: attack-move · G then click: defend area · Q: army · H: home · Wheel or +/−: zoom · WASD/arrows: scroll · Esc: cancel / deselect';
+// the on-screen hint follows the chosen mouse functions (the Alternate preset shows the original text word for word)
+function hintText(){if(altMouse())return HINT_ALT;const L=leftOrders(),R=rightOrders(),P=[];
+  P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
+  P.push('Double-click: all of a type');if(L)P.push('Ctrl+click: force-fire · Alt+click: waypoint');
+  P.push(SET.mAK==='a'?'A / G then click: attack-move / guard · S: stop':'F then click: attack-move · G then click: defend area · X: stop');P.push('R: retreat');
+  P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
+  const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
+  P.push('Q: army · H: home · Wheel: zoom · Arrows/WASD: scroll');return P.join(' · ');}
+function setHint(){if(TOUCHUI)return;const h=$('hint');if(h)h.textContent=hintText();}
+function mouseScheme(){setHint();CURST.k=null;try{cursorTick(true);}catch(_){}if(G)updateUI();}
 function openSettings(){try{myUI();}catch(e){}syncSettings();$('settings').hidden=false;}
 if($('openSettings'))$('openSettings').onclick=openSettings;if($('aSet'))$('aSet').onclick=openSettings;if($('sDone'))$('sDone').onclick=()=>{$('settings').hidden=true;};
 syncSettings();setTimeout(applyGfx,0);
@@ -574,7 +894,7 @@ function togglePause(on){if(!G||G.over||window.LOADING)return;const mp=MODE!=='s
     $('pauseSub').textContent=mp?'Multiplayer battles cannot be paused - the battle continues while this menu is open.':'The battle is on hold. Nothing moves until you resume. (P or Esc to resume)';$('resumeBtn').textContent=mp?'Back to battle':'Resume';$('pauseOv').hidden=false;}
   else{G.paused=false;$('pauseOv').hidden=true;try{if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();}catch(e){}try{if(window.speechSynthesis)speechSynthesis.resume();}catch(e){}last=performance.now();}
   syncPause();}
-function askRestart(){if(!G)return;if(MODE!=='single'){pushLog('Multiplayer battles cannot be restarted - quit and host a new one.','w');return;}askQuit();G.restartAsk=true;$('quitOv').querySelector('h1').textContent='Restart this battle?';$('quitSub').textContent='The battle starts over with the same nations, map and settings.';$('quitYes').textContent='Restart';}
+function askRestart(){if(!G)return;if(MODE!=='single'){pushLog('Multiplayer battles cannot be restarted - quit and start a new one.','w');return;}askQuit();G.restartAsk=true;$('quitOv').querySelector('h1').textContent='Restart this battle?';$('quitSub').textContent='The battle starts over with the same nations, map and settings.';$('quitYes').textContent='Restart';}
 function askQuit(){if(!G)return;G.restartAsk=false;$('quitOv').querySelector('h1').textContent='Quit this battle?';$('quitYes').textContent='Quit to main menu';if(MODE==='single'&&!G.over&&!G.paused){G.paused=true;G.qPause=true;try{if(AU.ctx&&AU.ctx.state==='running')AU.ctx.suspend();}catch(e){}}$('pauseOv').hidden=true;$('quitSub').textContent=MODE==='single'?"The battle will end and you'll return to the main menu.":'You will leave the multiplayer battle; your army will be left without a commander.';$('quitOv').hidden=false;}
 function quitGame(){$('quitOv').hidden=true;$('pauseOv').hidden=true;$('end').hidden=true;try{if(AU.ctx&&AU.ctx.state==='suspended')AU.ctx.resume();}catch(e){}try{if(window.speechSynthesis){speechSynthesis.cancel();}}catch(e){}
   if(G){G.over=true;G.paused=false;}menuOpen(false);syncPause();$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;renderGames();}
@@ -643,7 +963,7 @@ function hbatCheck(){if(!(G&&!G.over&&hbgNeeded()))return;const b=HBAT.b;
   if(!b){if(!HBAT.asked&&navigator.getBattery){HBAT.asked=true;navigator.getBattery().then(x=>{HBAT.b=x;x.addEventListener('chargingchange',hbatCheck);hbatCheck();}).catch(()=>{});}return;}
   if(b.charging){if(HBAT.warned===G)HBAT.warned=null;return;}
   if(HBAT.warned===G)return;HBAT.warned=G;
-  try{pushLog("You're hosting on battery. Plug your laptop in so it stays fast and awake for everyone in the match.",'w');}catch(e){}}
+  try{pushLog("Your device is running this battle on battery. Plug your laptop in so it stays fast and awake for everyone in the match.",'w');}catch(e){}}
 setInterval(hbatCheck,5000);
 // Keep the screen, and with it the PC, awake during an online match (host or player), so a laptop doesn't drift off to
 // sleep mid-battle and drop everyone. The browser only grants this while the game is on screen; it is let go after the match.

@@ -18,13 +18,14 @@ const freePort = () => new Promise((res, rej) => { const s = net.createServer();
   s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); }); });
 
 // state: a folder for the servers' stored data, kept on stop (to restart a server with its data, e.g. battletest.mjs)
-export async function startServer({ quiet = true, vars = {}, state: keepDir = null } = {}) {
+// logLevel: wrangler's own (default 'warn' when quiet); log() returns the tail either way
+export async function startServer({ quiet = true, vars = {}, state: keepDir = null, logLevel = null } = {}) {
   const bin = path.join(SERVER_DIR, 'node_modules', '.bin', 'wrangler');
   if (!fs.existsSync(bin)) throw new Error('wrangler is not installed: run `npm ci` in server/ first');
   const port = await freePort(), inspector = await freePort();
   const state = keepDir || fs.mkdtempSync(path.join(os.tmpdir(), 'ww3-wrangler-'));
   const args = ['dev', '--ip', '127.0.0.1', '--port', String(port), '--inspector-port', String(inspector),
-    '--persist-to', state, '--show-interactive-dev-session=false', '--log-level', quiet ? 'warn' : 'log'];
+    '--persist-to', state, '--show-interactive-dev-session=false', '--log-level', logLevel || (quiet ? 'warn' : 'log')];
   for (const [k, v] of Object.entries(vars)) args.push('--var', `${k}:${v}`);
   const child = spawn(bin, args, { cwd: SERVER_DIR, stdio: ['ignore', 'pipe', 'pipe'], detached: true,
     env: { ...process.env, WRANGLER_SEND_METRICS: 'false', CI: '1', NO_COLOR: '1' } });

@@ -34,7 +34,7 @@ async function nodeBench(players, minutes, map, write = () => {}) {
   if (global.gc) global.gc();
   const h0 = process.memoryUsage().heapUsed;
   const sim = createBattleSim();
-  const r = await runBench(sim, { players, minutes, map, seed: 1, diff: 1, batch: 60, facs: FACS },
+  const r = await runBench(sim, { players, minutes, map, seed: 1, diff: 1, batch: Number(argS('batch', 60)), facs: FACS },
     { now: () => performance.now(), yieldFn: () => new Promise(res => setImmediate(res)), write, cpu: cpuMs });
   if (global.gc) global.gc();
   r.heapMB = +((process.memoryUsage().heapUsed - h0) / 1048576).toFixed(1);   // the battle is still alive here
@@ -47,8 +47,24 @@ if (has('bench')) {
   console.log(`Node ${process.version}: battle server cost (battle + host netcode sending to every side), ${map}, ${minutes} game-min, Normal AI`);
   for (const n of String(argS('bench', '2,4,8')).split(',').map(Number)) {
     const r = await nodeBench(n, minutes, map, s => console.log('    ' + s));
-    console.log(`  ${n} players: ${r.cpuMsPerGameS} ms CPU per game-second (avg), worst minute ${Math.max(...r.rows.map(x => x.cpuMsPerGameS))} ms, peak ${r.peakEnts} entities, ${r.kbPerGameS} KB/s sent, battle heap ~${r.heapMB} MB${r.over ? ' (ended)' : ''}`);
+    console.log(`  ${n} players: ${r.cpuMsPerGameS} ms CPU per game-second (avg), per event (${r.batch} step${r.batch > 1 ? "s" : ""}) p50 ${r.p50EventMs} / p90 ${r.p90EventMs} / p99 ${r.p99EventMs} / max ${r.maxEventMs} ms, worst minute ${Math.max(...r.rows.map(x => x.cpuMsPerGameS))} ms, peak ${r.peakEnts} entities, ${r.kbPerGameS} KB/s sent, battle heap ~${r.heapMB} MB${r.over ? ' (ended)' : ''}`);
   }
+  process.exit(0);
+}
+
+// --cfbench 2,4,8: the same bench inside a BattleRoom on a local wrangler dev (workerd, Cloudflare's runtime)
+if (has('cfbench')) {
+  const map = argS('map', 'strait'), minutes = Number(argS('minutes', 3)), batch = Number(argS('batch', 60));
+  const s = await startServer({ vars: { BENCH_KEY: 'localbenchkey' } });
+  try {
+    console.log(`local workerd (wrangler dev): /battle-bench, ${map}, ${minutes} game-min, ${batch} step(s) per event`);
+    for (const n of String(argS('cfbench', '2,4,8')).split(',').map(Number)) {
+      const txt = await (await fetch(`${s.url}/battle-bench?players=${n}&minutes=${minutes}&map=${map}&batch=${batch}&key=localbenchkey`)).text();
+      const line = txt.split('\n').find(l => l.startsWith('RESULT ')); const r = line ? JSON.parse(line.slice(7)) : null;
+      if (!r) { console.log(txt); continue; }
+      console.log(`  ${n} players: ${r.wallMsPerGameS} ms per game-second (wall, avg), per event p50 ${r.p50EventMs} / p90 ${r.p90EventMs} / p99 ${r.p99EventMs} ms, worst minute ${Math.max(...r.rows.map(x => x.wallMsPerGameS))} ms, slowest event ${r.maxEventMs} ms, peak ${r.peakEnts} entities, ${r.kbPerGameS} KB/s sent${r.over ? ' (ended)' : ''}`);
+    }
+  } finally { s.stop(); }
   process.exit(0);
 }
 
@@ -123,6 +139,9 @@ try {
   Bp.hello('RU', 'tokbobby01');
   check(!!(await A.wait(([t, d]) => t === 'blob' && d.seats.length === 2 && d.seats[1].f === 'RU')), 'the owner sees the new player and their nation');
   check(!!(await Bp.wait(([t, d]) => t === 'blob' && d.own === 0 && d.you === 1)), 'the joiner gets the lobby state too (not owner, seat 1)');
+  { const n0 = Bp.got.filter(([t]) => t === 'blob').length; Bp.hello('RU', 'tokbobby01');
+    await Bp.wait(() => Bp.got.filter(([t]) => t === 'blob').length > n0, 3000);
+    check(Bp.got.filter(([t]) => t === 'blob').length > n0, 'every new greeting (hi with a new n) is answered with the lobby state again'); }
   Bp.emit('bset', { ais: [{ f: 'CN', d: 2, tm: 0 }], start: 1 });
   await sleep(500);
   check(!Bp.got.some(([t]) => t === 'start') && (A.last('blob') || {}).seats.length === 2, 'only the owner can configure or start');
@@ -143,6 +162,12 @@ try {
   A.emit('bset', { start: 1 });
   const sA = await A.wait(([t]) => t === 'start', 15000), sB = await Bp.wait(([t]) => t === 'start', 15000);
   check(!!(sA && sB && sA[1].sv === 1 && sA[1].slot === 0 && sB[1].slot === 1 && sA[1].facs.join() === 'US,RU,CN' && sA[1].seed === sB[1].seed), 'Start: each player gets "start" with sv:1 and their slot (0 and 1), same seed, nations US RU CN');
+  // the battle is held until every player's loading screen has closed (presence rd:1), at most 20 s
+  await sleep(1200);
+  check(!flat(A).some(([t]) => t === 'snap') && !flat(Bp).some(([t]) => t === 'snap'), 'after Start the battle waits for the players\' loading screens (no snapshots before rd:1)');
+  A.presence({ rd: 1 }); await sleep(600);
+  check(!flat(A).some(([t]) => t === 'snap'), '...still waiting while one player is loading');
+  Bp.presence({ rd: 1 });
   // battle traffic
   const tb = await A.wait(([t, d]) => t === 'b' && (d.m || []).some(([tt]) => tt === 'team'), 15000);
   check(!!tb, 'the server sends bundles ("b") with team panels');
@@ -195,14 +220,21 @@ try {
     const tp = await A2.wait(([t, d]) => t === 'b' && (d.m || []).some(([tt, dd]) => tt === 'team' && dd.gt > 0), 8000);
     const gt = tp ? Math.max(...tp[1].m.filter(([tt]) => tt === 'team').map(([, dd]) => dd.gt)) : 0;
     check(!!st && !!tp && gt >= 3 && gt > t0 - 12, `...picked up from its checkpoint: "start" again and the battle goes on from ${gt.toFixed(0)} s (it was at ${t0.toFixed(0)} s)`);
-    // at most 3 battles at once (the resumed one holds a slot until it closes)
-    const more = [];
-    for (let k = 0; k < 3; k++) {
-      const P = player('s' + k + code.slice(2), 'ww3p-slot000' + k, 'ownslotkey' + k);
-      more.push(await Promise.race([P.waitCtl(m => m.startsWith('!w ') || m.startsWith('!e '), 8000)]));
-      P.ws.close && setTimeout(() => P.ws.close(), 200);
+    // at most 3 battles at once (the resumed one holds a slot until it closes). A lobby holds no slot (review R2): it
+    // claims one at Start, so two more battles start and then a 4th new battle is refused with "busy"
+    const more = [], held = [];
+    for (let k = 0; k < 2; k++) {
+      const c = 's' + k + code.slice(2), P = player(c, 'ww3p-slot000' + k, 'ownslotkey' + k);
+      await P.waitCtl(m => m.startsWith('!w ') || m.startsWith('!e '), 8000);
+      const Q = player(c, 'ww3p-slotq00' + k); await Q.waitCtl(m => m.startsWith('!w ') || m.startsWith('!e '), 8000);
+      P.hello('US', 'tokslot' + k + 'aa'); Q.hello('RU', 'tokslot' + k + 'bb'); await sleep(400);
+      P.emit('bset', { tm: [0, 1], start: 1 });
+      const st = await P.wait(([t, d]) => t === 'start' || (t === 'b' && (d.m || []).some(([tt]) => tt === 'start')), 8000);
+      more.push(st ? 'started' : 'no start'); held.push(P, Q);
     }
-    check(more[0] && more[0].startsWith('!w') && more[1] && more[1].startsWith('!w') && more[2] === '!e busy', `at most 3 battles run at once: the 4th is refused with "busy" (${more.join(', ')})`);
+    { const P3 = player('s2' + code.slice(2), 'ww3p-slot0002', 'ownslotkey2'); more.push(await P3.waitCtl(m => m.startsWith('!w ') || m.startsWith('!e '), 8000)); held.push(P3); }
+    check(more[0] === 'started' && more[1] === 'started' && more[2] === '!e busy', `at most 3 battles run at once: the 4th is refused with "busy" (${more.join(', ')})`);
+    for (const P of held) try { P.ws.close(); } catch {}
     A2.ws.close();
   }
   await sleep(500);

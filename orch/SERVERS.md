@@ -101,6 +101,16 @@ allowance (100,000 requests, 13,000 GB-s) new relay rooms and relay joins are re
 playing P2P. At **90%** the game list refuses new connections and the page switches to its P2P game list. Matches in
 progress are never cut off. `/health` shows the day's numbers.
 
+**Password-protected games** (Abdullah, 2026-10-27 19:30; `server/src/password.js`): the page offers the password as a
+WebSocket subprotocol pair `ww3` + `pw.<base64url UTF-8>` on `/room/<code>` (host and players) and `/battle/<code>` (never
+in the URL; the Worker answers `ww3`). The server keeps only a salted PBKDF2-SHA256 hash (4,000 rounds; relay room: on
+the host's socket attachment; battle: in memory and in its kept checkpoint), compares in constant time, and refuses with
+`!e needpw` (none given), `!e badpw` (wrong) or `!e pwlimit` (5 wrong guesses from one address, then one per 20 s; 30 per
+game, then one per 2 s). One guess per connection. A battle's owner key gets back in without it. The game list carries
+only `pw:1` (the page shows a 🔒). A browser host also checks the password itself for players who reach it directly
+(P2P), 10 wrong a minute. Invite links carry it in the fragment: `#join=<code>&pw=<password>`. Tests: `servertest.mjs`,
+`cfclient-password.mjs`.
+
 ## Measurements (2026-10-27, local: wrangler dev 4.153.0 / workerd, headless Chromium)
 
 Measured with `node orch/serverbench.mjs` (logs: `/home/claude/logs/servers-serverbench.txt`) on the per-player traffic
@@ -134,4 +144,18 @@ plain `mpsync` 3/3 PASS; `smoke --players 4` PASS; artifact build + `smoke --art
   threshold. Cloudflare's own limit is the backstop.
 - Compression was verified in local workerd only. On first deploy, check in a browser's devtools (Network → WS →
   headers: `Sec-WebSocket-Extensions: permessage-deflate`).
-- Stage 2 (server-hosted battles) is not started.
+- Stage 2 (battles hosted on Cloudflare): `BattleRoom` at `/battle/<code>` and `/battle-bench` are in `server/`
+  (branch `orch/stage2-dedicated`, not yet used by the game). Protocol, limits and measurements: `STAGE2.md` §8–9;
+  test: `node orch/battletest.mjs`.
+
+## Test copy on real Cloudflare (staging)
+
+Abdullah OK'd a separate test Worker on 2026-10-27 19:37: **`ww3-servers-staging`** at
+https://ww3-servers-staging.abdullah-haidar5.workers.dev, with its own Durable Objects. It never touches the live
+`ww3-servers` Worker or its game list. To test a commit on real Cloudflare, push it to any `staging/<name>` branch
+(`git push origin HEAD:staging/<name>`). `.github/workflows/staging-servers.yml` deploys `server/` from that commit,
+runs `orch/servertest.mjs --url` against it, and runs one battle bench (8 players, fulda, 2 game-minutes) when the
+commit message contains `[bench]`. Results are commit statuses `staging/deploy|servertest|bench`; the full log is on
+branch `staging-logs/<sha10>`. One deploy runs at a time, so agents share it. A page served from localhost may use it
+(the origin rules allow localhost). The free plan's daily allowance is shared with the live servers, so bench only
+when server or battle code changed.

@@ -25,6 +25,8 @@ Sources (all credited in the menu credits; licences CC-BY 3.0 / 4.0):
 usage: python3 mus/st_pack.py <download-dir>
   <download-dir>/<file> must exist for every track below (the full-length downloads; download_url in
   mus/new/candidates.json). Writes mus/st/<ID>.mp3 and prints each file's size and the total.
+  Titles, authors, licences, sizes and loudness per track are listed in mus/st/manifest.json (orch/build.py --check
+  checks it against the game's track list and the menu credits).
 """
 import json, os, re, subprocess, sys
 

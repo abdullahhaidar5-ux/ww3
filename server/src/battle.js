@@ -6,9 +6,16 @@
 // "ww3-<code>|<json>" records; <json> = {"k":"e","t":topic,"d":data} (emit) or {"k":"p","p":presence}.
 
 export const STEP = 1 / 60;                  // the battle steps at 60 Hz, as in the browser
-export const MAX_STEPS_PER_TICK = 2;         // one timer callback runs at most this many steps (keeps CPU per event small)
+export const MAX_STEPS_PER_TICK = 1;         // one timer callback runs one 1/60 s step (keeps CPU per event small); when
+                                             // behind, the next callback comes at once (timers are not billed)
+export const READY_MAX_MS = 20000;           // after Start, wait this long at most for every player's loading screen (rd)
 export const LOBBY_MAX_MS = 30 * 60000;      // an unstarted lobby closes after 30 minutes
-export const EMPTY_MS = 60000;               // no player connected for this long: the room closes
+export const EMPTY_MS = 60000;               // no player connected for this long: the room closes (during the battle:
+                                             // no socket that holds a side; review R3)
+export const NO_GREET_MS = 20000;            // a lobby nobody has greeted (no human seat) closes after 20 s (review R2)
+export const UNSEATED_MS = 30000;            // during the battle a socket without a side (told "full") is closed after 30 s
+export const SILENT_MS = 150000;             // a socket silent this long is closed (pages send a keep-alive every 1 s;
+                                             // not while the battle waits for loading screens, which can freeze a page)
 export const AFTER_END_MS = 120000;          // battle over: the room closes this much later
 export const MAX_BATTLE_MS = 45 * 60000;     // free-plan cap: after 45 minutes the server hands the battle to a player
                                              // (it closes; the standby player takes over as a browser host, as when a
@@ -22,8 +29,11 @@ export class BattleHost {
   // sim: createBattleSim(); code: game code; ownKey: the creator's key; send(id, frame); close(id, code, why);
   // now(): ms clock; publish(entry|null): the game-list entry changed; save(record|null): keep (or drop) the battle's
   // latest checkpoint so it can be picked up after a server restart (BattleHost.restore); log(msg)
-  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed }) {
-    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log });
+  // pw: a password-protected battle's salted hash ({s,h,i}, server/src/password.js), checked by the caller at connect
+  // claim(): async, true when one of the battle slots is free for this battle; asked at Start (a lobby holds no slot, so
+  // idle lobbies can't lock everyone out of battles: review R2). Without it Start is immediate (tests).
+  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed, readyMs = READY_MAX_MS, pw = null, claim = null }) {
+    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log, readyMs, pw, claim });
     this.hostId = 'ww3-' + code;
     this.phase = 'lobby';                    // lobby -> battle -> over -> closed
     this.players = new Map();                // id -> {id, pres, f, tok, at, seat}
@@ -34,6 +44,7 @@ export class BattleHost {
     this.created = now(); this.emptySince = now(); this.endAt = 0;
     this.out = new Map();                    // id -> records queued this turn ('' = everyone)
     this.lastStep = 0; this.acc = 0; this.steps = 0; this.lastPub = '';
+    this.rd = [];                            // sides whose page is past the loading screen (presence rd)
     sim.room({ emit: (t, d) => { this.emit(t, d); return Promise.resolve(); }, buffered: () => 0 });
   }
 
@@ -64,7 +75,7 @@ export class BattleHost {
     return null;
   }
   join(id, own) {
-    const p = { id, pres: {}, f: null, tok: null, at: this.now(), own: !!own && own === this.ownKey };
+    const p = { id, pres: {}, f: null, tok: null, at: this.now(), heard: this.now(), own: !!own && own === this.ownKey, full: this.phase === 'battle' ? 1 : 0 };   // full: no side (yet)
     this.players.set(id, p);
     if (p.own) this.owner = id;
     this.emptySince = 0;
@@ -81,11 +92,13 @@ export class BattleHost {
       if (this.owner === id) this.owner = this.order[0] || null;
       this.sendLobby();
     } else if (this.phase === 'battle') this.sim.gone(id);
-    if (!this.players.size) this.emptySince = this.now();
+    if (!this.players.size && !this.emptySince) this.emptySince = this.now();
   }
+  heard(id) { const P = this.players.get(id); if (P) P.heard = this.now(); }   // a keep-alive ('ping') from the socket
   // a frame from a player: "|<json>" records joined by "\n"
   frame(id, msg) {
     if (typeof msg !== 'string' || msg.length > MAX_FRAME || !this.players.has(id)) return;
+    this.players.get(id).heard = this.now();
     for (const r of msg.indexOf('\n') < 0 ? [msg] : msg.split('\n')) {
       const i = r.indexOf('|'); if (i < 0) continue;
       let m; try { m = JSON.parse(r.slice(i + 1)); } catch (e) { continue; }
@@ -98,6 +111,8 @@ export class BattleHost {
     if (!p || typeof p !== 'object') return;
     const P = this.players.get(id); P.pres = p;
     this.sim.pres(id, p, (peer, by, f, tok) => this.hello(peer, f, tok));
+    // this player's loading screen has closed: noted for their side (a page that reconnected keeps its side)
+    if (p.rd) { P.rd = 1; if (this.phase === 'battle') { const k = this.sim.teamOf(id); if (k >= 0) this.rd[k] = 1; } }
   }
   event(id, t, d) {
     if (t === 'hello') { if (d && typeof d === 'object') this.hello(id, d.f, null); }
@@ -108,11 +123,15 @@ export class BattleHost {
   hello(id, f, tok) {
     const P = this.players.get(id); if (!P) return;
     if (tok) P.tok = String(tok).slice(0, 16);
-    if (this.phase === 'battle') { if (P.tok) this.sim.rejoin(id, P.tok); return; }
+    if (this.phase === 'battle') {   // a reconnect; anyone else is told the game is full (it has started)
+      if (P.tok && this.sim.hasTok(P.tok)) { P.full = 0; this.sim.rejoin(id, P.tok); } else { P.full = 1; this.emit('lobby', { n: 0, to: id, full: 1 }); }
+      return;
+    }
     if (this.phase !== 'lobby') return;
     if (typeof f === 'string' && this.sim.facs.includes(f)) P.f = f; else if (!P.f) P.f = this.sim.facs[0];
     if (!this.order.includes(id)) {
       if (this.order.length >= this.mx()) { this.emit('lobby', { n: 0, to: id, full: 1 }); return; }
+      this.greeted = this.now();
       if (P.own) { this.order.unshift(id); this.tm.unshift(0); } else { this.order.push(id); this.tm.push(this.order.length - 1); }
       if (!this.owner) this.owner = id;
       // a joining human takes a computer seat if the map is full
@@ -130,6 +149,7 @@ export class BattleHost {
   check() {
     const s = this.seats();
     if (this.order.length < 2) return 'Waiting for at least one more player to join.';
+    if (this.order.length > this.mx()) return 'Too many players for this battlefield: pick a bigger one.';   // review R4
     if (new Set(s.map(x => x.tm)).size < 2) return 'Everyone is on one team: put someone on another team to start.';
     return '';
   }
@@ -140,13 +160,26 @@ export class BattleHost {
     if (Array.isArray(d.tm)) this.tm = this.order.map((_, i) => int(d.tm[i], 0, 7, this.tm[i] | 0));
     const mx = this.mx();
     if (this.order.length + this.ais.length > mx) this.ais.splice(Math.max(0, mx - this.order.length));
-    if (d.start) { const why = this.check(); if (!why) { this.startBattle(); return; } }
+    if (d.start) { const why = this.check(); if (!why) { if (!this.claim) { this.startBattle(); return; } this.askStart(); return; } }
     this.sendLobby();
+  }
+  // Start on the server: first a battle slot (claim); if all are in use, the leader is told and can press Start again
+  askStart() {
+    if (this.claiming) return;
+    this.claiming = true;
+    const done = ok => {
+      this.claiming = false;
+      if (this.phase !== 'lobby') return;
+      if (ok && !this.check()) { this.note = ''; this.startBattle(); this.flush(); return; }
+      if (!ok) this.note = 'The game\'s servers are full right now. Press Start again in a minute.';
+      this.sendLobby();
+    };
+    Promise.resolve().then(() => this.claim()).then(ok => done(ok === true), () => done(false));
   }
   sendLobby() {
     const seats = this.seats(), why = this.check();
     for (const id of this.players.keys()) {
-      this.emit('blob', { to: id, c: this.code, pv: this.sim.pv, own: id === this.owner ? 1 : 0, you: this.order.indexOf(id), map: this.map, mx: this.mx(), w: this.w, seats, ok: why ? 0 : 1, why });
+      this.emit('blob', { to: id, c: this.code, pv: this.sim.pv, own: id === this.owner ? 1 : 0, you: this.order.indexOf(id), map: this.map, mx: this.mx(), w: this.w, seats, ok: why ? 0 : 1, why: why || this.note || '' });
     }
     this.flush();
     this.list();
@@ -155,9 +188,19 @@ export class BattleHost {
   entry() {
     if (this.phase === 'closed' || this.phase === 'over') return null;
     const o = this.owner && this.players.get(this.owner), n = this.phase === 'battle' ? this.facs.length : this.seats().length;
-    return { c: this.code, f: (o && o.f) || (this.facs && this.facs[0]) || 'US', s: this.phase === 'lobby' && n < this.mx() ? 'open' : 'full', n: Math.max(1, n), m: this.map, mx: this.mx(), cf: 1 };
+    return { c: this.code, f: (o && o.f) || (this.facs && this.facs[0]) || 'US', s: this.phase === 'lobby' && n < this.mx() ? 'open' : 'full', n: Math.max(1, n), m: this.map, mx: this.mx(), cf: 1, ...(this.pw ? { pw: 1 } : {}) };
   }
   list(force) { const e = this.entry(), s = JSON.stringify(e); if (force || s !== this.lastPub) { this.lastPub = s; this.publish(e); } }
+
+  // close sockets gone silent (a phone that dropped off the network without closing), and during the battle sockets
+  // that hold no side (told "full"; a real reconnect greets with its token and gets its side back at once)
+  sweep(now) {
+    this.swept = now;
+    for (const [id, P] of [...this.players]) {
+      const unseated = this.phase === 'battle' && P.full && now - P.at > UNSEATED_MS;
+      if ((now - P.heard > SILENT_MS && (this.phase !== 'battle' || this.go)) || unseated) { this.closeRaw(id, 4003, unseated ? 'full' : 'silent'); this.leave(id); }
+    }
+  }
 
   // ---- battle
   startBattle() {
@@ -172,6 +215,7 @@ export class BattleHost {
     this.flush();
     this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
+    this.go = false; this.goBy = this.now() + this.readyMs; this.rd = [];   // hold until every player is past the loading screen
     this.log(`battle ${this.code} started: ${facs.join(' ')} on ${this.map}`);
     this.list();
   }
@@ -182,11 +226,25 @@ export class BattleHost {
     if (this.phase === 'closed') return -1;
     if (this.phase === 'lobby') {
       if (now - this.created > LOBBY_MAX_MS || (this.emptySince && now - this.emptySince > EMPTY_MS)) return this.shut('lobby closed');
+      if (!this.order.length && now - (this.greeted || this.created) > NO_GREET_MS) return this.shut('lobby closed');
+      this.sweep(now);
       return 1000;
     }
     if (this.phase === 'over') return now >= this.endAt ? this.shut('battle over') : 1000;
+    if (now - (this.swept || 0) > 1000) {   // once a second: sockets told "full" (no side) don't keep the battle going
+      this.sweep(now);
+      if ([...this.players.values()].some(P => !P.full)) this.emptySince = 0; else if (!this.emptySince) this.emptySince = now;
+    }
     if (this.emptySince && now - this.emptySince > EMPTY_MS) return this.shut('everyone left');
     if (now - this.startedAt > MAX_BATTLE_MS) return this.shut('time limit');
+    if (!this.go) {   // after Start: no steps, no snapshots until every human seat's page says rd (at most 20 s)
+      // (a side whose player dropped meanwhile does not hold it)
+      const pr = this.sim.test.peers(), ready = k => { const q = pr[k], P = q && this.players.get(q); return this.rd[k] || !q || (P && P.rd); };
+      if (now < this.goBy && !this.order.every((id, k) => ready(k))) return 100;
+      this.go = true; this.lastStep = now; this.acc = 0;
+      this.log(`battle ${this.code} running (${((now - this.startedAt) / 1000).toFixed(1)} s after Start)`);
+    }
+    if (this.paused) { this.lastStep = now; return 50; }   // test hook only (orch/cfbattle.mjs)
     const real = Math.min(1, Math.max(0, (now - this.lastStep) / 1000)); this.lastStep = now;
     this.acc = Math.min(0.25, this.acc + real);   // more than 0.25 s behind: the battle slows down rather than spiking
     let n = 0;
@@ -194,18 +252,18 @@ export class BattleHost {
     if (real > 0) this.sim.net(real);
     this.flush();
     const ck = this.sim.ckFresh();
-    if (ck) this.save({ code: this.code, own: this.ownKey, si: this.si, s: ck, at: now });
-    const info = n ? this.sim.info() : null;
+    if (ck) this.save({ code: this.code, own: this.ownKey, si: this.si, s: ck, at: now, pw: this.pw });
+    const info = n && this.sim.over() ? this.sim.info() : null;   // (info() walks every entity: only once, at the end)
     if (info && info.over) { this.phase = 'over'; this.endAt = now + AFTER_END_MS; this.save(null); this.log(`battle ${this.code} over, winner slot ${info.winner}`); this.list(); }
     return Math.max(0, Math.ceil((STEP - this.acc) * 1000));
   }
   // A battle picked up from its last kept checkpoint after the server restarted (rec: what save() was given). Players
   // reconnect as usual (same /battle/ address, their token); each human side has 30 s before the AI takes over.
   static async restore(opts, rec) {
-    const h = new BattleHost({ ...opts, code: rec.code, ownKey: rec.own });
+    const h = new BattleHost({ ...opts, code: rec.code, ownKey: rec.own, pw: rec.pw || null });
     await h.sim.restore(rec.si, rec.s);
     h.si = rec.si; h.facs = rec.si.facs.slice(); h.map = rec.si.map; h.w = rec.si.w | 0;
-    h.phase = 'battle'; h.startedAt = h.lastStep = h.emptySince = h.now(); h.acc = 0;
+    h.phase = 'battle'; h.startedAt = h.lastStep = h.emptySince = h.now(); h.acc = 0; h.go = true;
     h.log(`battle ${rec.code} picked up from its checkpoint (${Math.round((h.now() - rec.at) / 1000)} s old)`);
     h.list(true);
     return h;
@@ -226,6 +284,9 @@ export class BattleHost {
 // (yieldFn), and times each event by the clock reading at the start of the next one: on Cloudflare the clock stands
 // still while code runs and moves on between events, so this is the event's wall time (CPU + scheduling).
 // write(line) gets a progress line every game-minute. Returns the summary.
+// per-event time percentiles (ms): p50, p90, p99
+const pctl = a => { if (!a.length) return {}; const s = a.slice().sort((x, y) => x - y), q = f => +s[Math.min(s.length - 1, Math.floor(f * s.length))].toFixed(3);
+  return { p50EventMs: q(0.5), p90EventMs: q(0.9), p99EventMs: q(0.99) }; };
 export async function runBench(sim, o, { now, yieldFn, write = () => {}, cpu = null }) {
   const facs = o.facs.slice(0, o.players);
   let msgs = 0, bytes = 0;
@@ -237,12 +298,13 @@ export async function runBench(sim, o, { now, yieldFn, write = () => {}, cpu = n
   write(`setup: ${facs.length} sides (${facs.join(' ')}) on ${o.map}, seed ${o.seed}, AI difficulty ${o.diff}, ${o.batch} step(s) per event; battle set up in ${setupMs} ms`);
   const steps = Math.round(o.minutes * 60 / STEP), per = Math.max(1, o.batch | 0);
   const rows = []; let minute = { wall: 0, cpu: 0, events: 0, maxEv: 0, steps: 0 }, total = { wall: 0, cpu: 0, events: 0, steps: 0 }, maxEv = 0;
-  let done = 0, last = now(), c0 = cpu ? cpu() : 0;
+  let done = 0, last = now(), c0 = cpu ? cpu() : 0; const evs = [], worst = [];   // worst: [ms, game-s] of the slowest events
   while (done < steps) {
     const evStart = now();
     for (let k = 0; k < per && done < steps; k++) { sim.step(STEP); sim.benchNet(STEP); done++; minute.steps++; }
     await yieldFn();
-    const t = now(), ev = t - evStart; last = t;
+    const t = now(), ev = t - evStart; last = t; evs.push(ev);
+    if (ev >= 20) { worst.push([ev, +(done * STEP).toFixed(2)]); worst.sort((x, y) => y[0] - x[0]); worst.length = Math.min(worst.length, 12); }
     minute.wall += ev; minute.events++; if (ev > minute.maxEv) minute.maxEv = ev;
     const info = done % 3600 === 0 || done >= steps ? sim.info() : null;
     if (info) {
@@ -259,6 +321,8 @@ export async function runBench(sim, o, { now, yieldFn, write = () => {}, cpu = n
   const info = sim.info(), gs = total.steps * STEP;
   return { players: facs.length, map: o.map, seed: o.seed, diff: o.diff, batch: per, setupMs, gameSeconds: +gs.toFixed(1), wallMs: total.wall,
     wallMsPerGameS: +(total.wall / Math.max(1e-9, gs)).toFixed(1), cpuMsPerGameS: cpu ? +(total.cpu / Math.max(1e-9, gs)).toFixed(1) : null,
-    maxEventMs: maxEv, events: total.events, peakEnts: Math.max(0, ...rows.map(r => r.ents)), endEnts: info.ents, over: info.over,
-    msgs, kbSent: Math.round(bytes / 1024), kbPerGameS: +(bytes / 1024 / Math.max(1e-9, gs)).toFixed(1), rows };
+    // zeroShare: events whose clock reading did not move. On Cloudflare the clock advances only with I/O, so a run of
+    // events reads 0 ms each and their summed time lands on one event: maxEventMs there is an upper bound, not one step
+    maxEventMs: maxEv, events: total.events, zeroShare: +(evs.filter(v => v === 0).length / Math.max(1, evs.length)).toFixed(3), ...pctl(evs), peakEnts: Math.max(0, ...rows.map(r => r.ents)), endEnts: info.ents, over: info.over,
+    msgs, kbSent: Math.round(bytes / 1024), kbPerGameS: +(bytes / 1024 / Math.max(1e-9, gs)).toFixed(1), worst, rows };
 }

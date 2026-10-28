@@ -33,6 +33,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { routeHost, routePlayer } from './route.js';
 import { BattleHost, runBench } from './battle.js';
+import { pwOf, pwHash, pwGate, offersProto, PwGuard } from './password.js';
 import { createBattleSim } from '../gen/battle-sim.js';   // the game's battle code, bundled by build-sim.mjs
 
 const VERSION = 2;
@@ -119,6 +120,21 @@ export default {
       const fwd = new URL('https://battle/bench'); fwd.search = url.search;
       return battles(env).get(battles(env).idFromName('bench:')).fetch(new Request(fwd, { headers: req.headers }));
     }
+    if (p.startsWith('/battle-test/')) {
+      // local test controls for orch/cfbattle.mjs (pause, look at a side, evict, spend budget). They exist only when the
+      // TEST_HOOKS var is "1", which only orch/serverdev.mjs sets for a local `wrangler dev`; never set it on Cloudflare.
+      if (env.TEST_HOOKS !== '1') return json({ error: 'not found' }, 404, cors);
+      const code = decodeURIComponent(p.slice(13)).toLowerCase();
+      if (!BATTLE_CODE_RE.test(code)) return json({ error: 'bad game code' }, 400, cors);
+      const fwd = new URL('https://battle/test'); fwd.search = url.search;
+      return battles(env).get(battles(env).idFromName(code)).fetch(new Request(fwd));
+    }
+    if (p.startsWith('/room-test/')) {   // local test controls for relay rooms (servertest.mjs): TEST_HOOKS=1 only
+      if (env.TEST_HOOKS !== '1') return json({ error: 'not found' }, 404, cors);
+      const code = decodeURIComponent(p.slice(11)).toLowerCase();
+      if (!CODE_RE.test(code)) return json({ error: 'bad game code' }, 400, cors);
+      return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch(new Request('https://room/test'));
+    }
     if (p.startsWith('/battle/')) {
       if (!isWs) return json({ error: 'expected a WebSocket' }, 426, cors);
       if (!ok) return json({ error: 'origin not allowed' }, 403, cors);
@@ -133,7 +149,7 @@ export default {
       const room = battles(env).get(battles(env).idFromName(code), hint ? { locationHint: hint } : undefined);
       const fwd = new URL('https://battle/');
       for (const [k, v] of [['code', code], ['id', id], ['own', own]]) fwd.searchParams.set(k, v);
-      return room.fetch(new Request(fwd, req));
+      return withProto(await room.fetch(new Request(fwd, req)), req);
     }
     if (p === '/lobby' || p.startsWith('/room/')) {
       if (!isWs) return json({ error: 'expected a WebSocket' }, 426, cors);
@@ -150,13 +166,19 @@ export default {
       const room = env.ROOMS.get(env.ROOMS.idFromName(code), hint ? { locationHint: hint } : undefined);
       const fwd = new URL('https://room/');
       for (const [k, v] of [['code', code], ['role', role], ['id', id], ['key', key]]) fwd.searchParams.set(k, v);
-      return room.fetch(new Request(fwd, req));
+      return withProto(await room.fetch(new Request(fwd, req)), req);
     }
     return json({ error: 'not found' }, 404, cors);
   },
 };
 
 const lobby = env => env.LOBBY.get(env.LOBBY.idFromName('lobby'));
+// A page that sent a password offers the subprotocols "ww3" + "pw.<…>" (password.js) and drops the connection unless
+// the server picks one: answer "ww3" on every upgrade (accepted or refused) for such a page.
+function withProto(r, req) {
+  if (r.status !== 101 || !r.webSocket || !offersProto(req)) return r;
+  return new Response(null, { status: 101, webSocket: r.webSocket, headers: { 'Sec-WebSocket-Protocol': 'ww3' } });
+}
 const battles = env => env.BATTLES;
 const BATTLE_CODE_RE = /^[a-z0-9]{4,8}$/;      // a migrated battle ("-m1") is an ordinary browser-hosted relay room
 const RESERVED_CODES = new Set(['bench', 'budget', 'lobby', 'admin', 'test']);
@@ -253,6 +275,7 @@ export class GameRoom extends DurableObject {
     this.usage = new Usage(env);
     this.host = undefined;              // cached host socket (undefined = rebuild from the sockets on next use)
     this.byId = null;                   // cached player id -> socket
+    this.pwGuard = new PwGuard();       // wrong-password guesses (password.js)
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
   }
   info(ws) { let m = this.meta.get(ws); if (!m) { try { m = ws.deserializeAttachment(); } catch (e) {} m = m || {}; this.meta.set(ws, m); } return m; }
@@ -271,6 +294,10 @@ export class GameRoom extends DurableObject {
   async fetch(req) {
     this.usage.event(false);
     const u = new URL(req.url), code = u.searchParams.get('code'), role = u.searchParams.get('role'), ip = ipOf(req);
+    if (u.pathname === '/test') {   // TEST_HOOKS only (the Worker's /room-test/ route): what the room keeps about its host
+      if (this.env.TEST_HOOKS !== '1') return json({ error: 'not found' }, 404);
+      return json({ host: this.ctx.getWebSockets().filter(isOpen).map(w => this.info(w)).filter(m => m.role === 'host') });
+    }
     if (!allow(this.ipBuckets, ip, RATE.ipConnect)) return refuse('limit');
     if (await this.usage.used() >= STOP_RELAY) return refuse('busy');
     const hostId = 'ww3-' + code;
@@ -281,9 +308,11 @@ export class GameRoom extends DurableObject {
       const key = u.searchParams.get('key');
       const old = all.filter(w => this.info(w).role === 'host');
       if (old.some(w => this.info(w).key !== key)) return refuse('taken');
+      // a password-protected game: the host's password, kept only as a salted hash on its socket (survives hibernation)
+      const hpw = pwOf(req), pw = hpw ? await pwHash(hpw) : undefined;
       const [c, s] = Object.values(new WebSocketPair());
       this.ctx.acceptWebSocket(s, ['host']);
-      const m = { role: 'host', id: hostId, key, ip, at: Date.now() };
+      const m = { role: 'host', id: hostId, key, ip, at: Date.now(), pw };
       s.serializeAttachment(m); this.meta.set(s, m);
       // the same host coming back after a blip replaces its old connection and gets its players back
       for (const w of old) { this.info(w).replaced = 1; safeClose(w, 4001, 'replaced'); }
@@ -296,8 +325,15 @@ export class GameRoom extends DurableObject {
       return new Response(null, { status: 101, webSocket: c });
     }
     const id = u.searchParams.get('id');
-    const host = this.liveHost();
+    let host = this.liveHost();
     if (!host) return refuse('nohost');
+    // password-protected game: the right password, or no way in (checked here, not only by the host's page)
+    if (this.info(host).pw) {
+      const why = await pwGate(this.pwGuard, this.info(host).pw, req, ip);
+      if (why) return refuse(why);
+      host = this.liveHost();
+      if (!host) return refuse('nohost');
+    }
     if (this.byId.size >= MAX_CLIENTS) return refuse('full');
     if (this.byId.has(id)) return refuse('taken');
     const [c, s] = Object.values(new WebSocketPair());
@@ -384,7 +420,7 @@ const str = (v, n) => typeof v === 'string' ? v.slice(0, n) : undefined;
 const int = (v, lo, hi) => typeof v === 'number' && isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : undefined;
 function cleanGame(g) {
   if (!g || typeof g !== 'object' || typeof g.c !== 'string' || !CODE_RE.test(g.c)) return null;
-  const o = { c: g.c, f: str(g.f, 4), s: g.s === 'full' ? 'full' : 'open', n: int(g.n, 0, 16), m: str(g.m, 24), mx: int(g.mx, 1, 16), cf: g.cf ? 1 : undefined };
+  const o = { c: g.c, f: str(g.f, 4), s: g.s === 'full' ? 'full' : 'open', n: int(g.n, 0, 16), m: str(g.m, 24), mx: int(g.mx, 1, 16), cf: g.cf ? 1 : undefined, pw: g.pw ? 1 : undefined };
   for (const k in o) if (o[k] === undefined) delete o[k];
   return o;
 }
@@ -543,28 +579,44 @@ export class BattleRoom extends DurableObject {
     this.buckets = new WeakMap();
     this.ipBuckets = new Map();
     this.timer = null; this.lastRep = Date.now(); this.lastList = 0; this.benching = false;
+    this.pwGuard = new PwGuard();       // wrong-password guesses (password.js)
   }
 
   async fetch(req) {
     this.usage.event(false);
     const u = new URL(req.url);
     if (u.pathname === '/bench') return this.bench(u);
+    if (u.pathname === '/test') return this.env.TEST_HOOKS === '1' ? this.test(u) : json({ error: 'not found' }, 404);
     const code = u.searchParams.get('code'), id = u.searchParams.get('id'), own = u.searchParams.get('own') || '', ip = ipOf(req);
     if (!allow(this.ipBuckets, ip, RATE.ipConnect)) return refuse('limit');
     if (this.host && this.host.phase === 'closed') this.stop();
     // after a restart (redeploy, eviction) the first player to come back picks the battle up from its kept checkpoint
     if (!this.host) await this.resume();
+    let made = false;
     if (!this.host) {
       if (!own) return refuse('nohost');
       if (await this.usage.used() >= STOP_BATTLE) return refuse('busy');
-      if (!this.host && !(await this.usage.claim(code))) return refuse('busy');   // all battle slots taken
+      // all battle slots in use by running battles: busy now (the page starts the battle in the player's browser). A lobby
+      // itself holds no slot; it claims one at Start (hostOpts claim), so idle lobbies can't lock everyone out (review R2)
+      if (this.usage.status && this.usage.status.battles >= (this.usage.status.maxBattles || MAX_BATTLES)) return refuse('busy');
+      // a password-protected battle: the creator's password, kept only as a salted hash (password.js)
+      const cpw = pwOf(req), pw = cpw ? await pwHash(cpw) : null;
       if (!this.host) {                 // (another creator may have got in while the budget was being checked)
-        this.code = code; this.slot = code; this.lastRep = Date.now();
-        this.host = new BattleHost({ ...this.hostOpts(), sim: createBattleSim(), code, ownKey: own });
+        made = true;
+        this.code = code; this.slot = null; this.lastRep = Date.now();
+        this.host = new BattleHost({ ...this.hostOpts(), sim: createBattleSim(), code, ownKey: own, pw });
         this.loop(0);
       }
     }
     if ([...this.ips.values()].filter(x => x === ip).length >= MAX_BATTLE_SOCKETS_PER_IP) return refuse('limit');
+    // password-protected: everyone but the battle's owner (its key) needs the right password. Not once the battle runs:
+    // then a socket gets a side only with its player's reconnect token (anyone else is told "full"), so reconnects are
+    // never held up by someone else's wrong guesses (review R7)
+    if (!made && this.host.pw && this.host.phase === 'lobby' && !(own && own === this.host.ownKey)) {
+      const why = await pwGate(this.pwGuard, this.host.pw, req, ip);
+      if (why) return refuse(why);
+      if (!this.host || this.host.phase === 'closed') return refuse('nohost');
+    }
     const why = this.host.admit(id, own);
     if (why) return refuse(why);
     const [c, s] = Object.values(new WebSocketPair());
@@ -574,18 +626,26 @@ export class BattleRoom extends DurableObject {
       this.usage.event(true);
       const m = ev.data;
       if (typeof m !== 'string' || this.socks.get(id) !== s || !this.host) return;
-      if (m === 'ping') { safeSend(s, 'pong'); return; }
-      if (!allow(this.buckets, s, RATE.c)) { if (this.buckets.get(s).drop > 2000) safeClose(s, 1008, 'too many messages'); return; }
+      if (m === 'ping') { safeSend(s, 'pong'); this.host.heard(id); return; }
+      // a flood or an oversized frame closes the socket soon (every frame is billed before it is dropped: review R5)
+      if (m.length > 16 * 1024) { safeClose(s, 1009, 'frame too big'); return; }
+      if (!allow(this.buckets, s, RATE.c)) { if (this.buckets.get(s).drop > 200) safeClose(s, 1008, 'too many messages'); return; }
       this.host.frame(id, m);
     });
     const bye = () => { if (this.socks.get(id) !== s) return; this.socks.delete(id); this.ips.delete(id); if (this.host) this.host.leave(id); };
-    s.addEventListener('close', bye); s.addEventListener('error', bye);
+    // answer the player's close at once (ordinary sockets don't do it by themselves at this compatibility date), so the
+    // page sees its connection end now and reconnects, instead of waiting 5 s of silence
+    s.addEventListener('close', ev => { safeClose(s, 1000, 'bye'); bye(); });
+    s.addEventListener('error', bye);
     this.host.join(id, own);
     return new Response(null, { status: 101, webSocket: c });
   }
 
   hostOpts() {
-    return { now: () => Date.now(), log: m => console.log(m), publish: g => this.publish(g),
+    // (the local end-to-end test waits longer for its slow software-rendered pages: BATTLE_READY_MS, test hooks only)
+    const readyMs = this.env.TEST_HOOKS === '1' && +this.env.BATTLE_READY_MS > 0 ? +this.env.BATTLE_READY_MS : undefined;
+    return { now: () => Date.now(), log: m => console.log(m), publish: g => this.publish(g), readyMs,
+      claim: async () => { if (await this.usage.used() >= STOP_BATTLE || !this.code || !(await this.usage.claim(this.code))) return false; this.slot = this.code; return true; },
       send: (pid, f) => { const w = this.socks.get(pid); if (w) safeSend(w, f); },
       close: (pid, c, why) => { const w = this.socks.get(pid); this.socks.delete(pid); this.ips.delete(pid); if (w) safeClose(w, c, why); },
       // the latest checkpoint (every 8 s while players are connected; ~10-40 KB): one storage write each
@@ -614,7 +674,10 @@ export class BattleRoom extends DurableObject {
       this.timer = null;
       if (!this.host) return;
       let next;
+      const t0 = performance.now();
       try { next = this.host.tick(); } catch (e) { console.log('battle tick: ' + (e && e.stack || e)); next = this.host.shut('server error'); }
+      { // time per timer callback (on Cloudflare the clock stands still while code runs, so this reads 0 there)
+        const E = this.evStats || (this.evStats = { n: 0, ms: 0, max: 0 }), d = performance.now() - t0; E.n++; E.ms += d; if (d > E.max) E.max = d; }
       this.usage.wake();
       const now = Date.now();
       // every minute: usage to the Budget object, renew the battle slot, and hand the battle over if the day is at 75%
@@ -643,6 +706,34 @@ export class BattleRoom extends DurableObject {
     this.lastList = Date.now();
     if (!this.code) return;
     lobby(this.env).fetch('https://lobby/battle', { method: 'POST', body: JSON.stringify({ id: 'b-' + this.code, g }) }).catch(() => {});
+  }
+
+  // Local test controls (TEST_HOOKS=1 in `wrangler dev` only; see the Worker's /battle-test/ route)
+  async test(u) {
+    const op = u.searchParams.get('op'), k = Number(u.searchParams.get('k') || 0), h = this.host, sim = h && h.sim;
+    if (op === 'evict') {   // as if Cloudflare evicted the object (redeploy, crash): memory gone, storage kept
+      setTimeout(() => this.ctx.abort('evicted by test'), 10);
+      return json({ ok: true });
+    }
+    if (!h) return json({ host: null, ck: !!(await this.ctx.storage.get('ck')) });
+    if (op === 'close') { h.shut('closed by test'); this.stop(); return json({ ok: true }); }
+    if (op === 'pause') { h.paused = u.searchParams.get('v') === '1'; return json({ ok: true }); }
+    if (op === 'settle') { sim.test.keyframe(k); sim.net(0.1); h.flush(); return json({ ok: true }); }
+    if (op === 'view') return json(sim.test.view(k));
+    if (op === 'pw') { const ck = await this.ctx.storage.get('ck').catch(() => null); return json({ mem: h.pw || null, kept: ck ? ck.pw || null : null }); }
+    if (op === 'team') return json(sim.test.team(k));
+    if (op === 'base') return json(sim.test.base(k));
+    if (op === 'pos') return json(sim.test.pos(JSON.parse(u.searchParams.get('ids') || '[]')));
+    if (op === 'spend') {   // put this much of today's free allowance on the books, reported at the next loop turn
+      const fg = +this.env.FREE_GBS || FREE_GBS;
+      this.usage.awakeMs += Number(u.searchParams.get('pct') || 0) * fg / GB_PER_OBJECT * 1000; this.lastRep = 0;
+      return json({ ok: true });
+    }
+    const info = h.phase === 'battle' || h.phase === 'over' ? sim.info() : null;
+    return json({ phase: h.phase, go: !!h.go, steps: h.steps, code: h.code, owner: h.owner, map: h.map, w: h.w, ais: h.ais, tm: h.tm,
+      humans: h.order.map((id, k) => ({ id, f: h.players.get(id) ? h.players.get(id).f : h.facs && h.facs[k], rd: !!(h.rd && h.rd[k]) })),
+      t: info && info.t, over: info && info.over, ents: info && info.ents, ck: info ? sim.test.ck() : null, peers: info ? sim.test.peers() : null,
+      ev: this.evStats || null, conn: [...h.players.values()].map(P => [P.id, P.rd ? 1 : 0]) });
   }
 
   // GET /battle-bench: one AI battle as fast as the object can run it, streamed as text, then "RESULT {json}"

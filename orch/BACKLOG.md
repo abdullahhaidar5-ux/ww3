@@ -13,11 +13,31 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 what is already gated, start no new squads, release the lock, and leave server battles / open items / music to the side
 lane (it is working on them now).
 
+**2026-10-28 01:45 (Chicago):** all 8 cloud agents of 19:36 stopped at ~20:00 on the account's USAGE LIMIT (too many at once). Shipped touch controls (a1bdcb3, CIGATE 16/16). Restarted as TWO agents only: `orch/cf-final` (merges stage2-dedicated + play-online + passwords + battle-spikes, fixes review-cf R1–R9, staging bench) and `orch/three-upgrade` (finish). 01:45 Abdullah: "Bring all 9 and continue" → 9 cloud agents: cf-final, three-upgrade, battle-spikes, review-cf (re-review cf-final), small-fixes, gfx-models (Phase 2), gfx-terrain (Phase 3), gfx-fx (Phase 4), qa (playtester, report only). Gfx branches build on three-upgrade, which ships first. If they hit the usage limit again, restart from their branches.
+
+**SHIPPED 2026-10-27 19:50:** reconnect + host-takeover fix + phone portrait bar (`orch/open-reconnect-phonebar`, CIGATE 16/16 incl. all three migrate tests). **ADDED 19:36:** cloud agents `orch/passwords`, `orch/play-online` (one Play online button, replaces cf-battle-client's hosting choice), `orch/review-cf` (independent review), `orch/assembler` (merges + gates finished branches → `orch/ready-<name>`, READY.md), `orch/battle-spikes`. **Test copy of the servers on real Cloudflare:** `ww3-servers-staging` — push to `staging/<name>` (see orch/SERVERS.md).
+
 **IN FLIGHT — moved 2026-10-27 18:39 to one-off cloud scheduled tasks (each on its own machine; local agents were killed by a container restart), same branches, each writes `orch/reports/<name>.md` when done.** **IN FLIGHT (side lane, 2026-10-27 18:10 — Abdullah: "spawn more agents to finish all this work by tonight"; ORCH: don't
 take these):** Cloudflare battles → branch `orch/stage2-dedicated` (BattleRoom DO + `/bench` first); reconnect bug +
 phone-portrait bar → `orch/open-reconnect-phonebar`; Generals mouse → `orch/controls`; phone touch controls → `orch/touch-controls`; Cloudflare battles browser side
 (lobby choice, fallback) → `orch/cf-battle-client`; shared
 soundtrack from the 14 keeps → `orch/soundtrack`; Three.js upgrade (Graphics Phase 1, merged last) → `orch/three-upgrade`.
+
+**CLOUDFLARE BENCH RESULT (2026-10-27 19:21, real free plan):** 8 players Fulda 3 min ran fully (no 10 ms cap), 63 ms
+wall per game-second, but single events up to **1.6 s** — find what spikes (AI/pathfinding bursts? GC?) and spread it
+across ticks before switching players to Cloudflare hosting. Server deploys now go through GitHub
+(`.github/workflows/deploy-servers.yml`) on Abdullah's servers-live merge.
+
+**DECISION (Abdullah, 2026-10-27 19:28): "Host on Cloudflare" is the only hosting choice players see — hide "Host in my
+browser"; keep browser hosting purely as the automatic fallback.** **19:30 update: no hosting button or wording at all — one "Play online" button: join an open battle if there is one,
+otherwise start a new battle on Cloudflare with the player's map/nation (listed for others; invite code/link still works).
+Browser hosting only as the silent fallback.**
+**Password-protected games (Abdullah, 2026-10-27 19:30: "make it so games can be password protected"):** when starting a
+battle, an optional password; the game list shows a 🔒 on protected battles; joiners (from the list or by invite
+code/link) are asked for it; the SERVER checks it (BattleRoom / relay room — never only in the page), stores only a salted
+hash, never puts it in the public game list, and rate-limits wrong guesses; the invite link may carry the password so
+friends join in one tap. Must also work on the browser-hosted fallback (host checks it). Build right after the Cloudflare
+battle client/server branches land (same files).
 
 **ORDER OF WORK (Abdullah, 2026-10-27 17:58): "Do the battles on servers first. Then address the open items. Then fix
 the music and move onto the graphics overhaul."** ORCH follows this order across cycles; don't start a later stage while
