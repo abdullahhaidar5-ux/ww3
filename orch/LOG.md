@@ -2,6 +2,19 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-28 12:26 → 14:45 — cycle 12
+
+- No lock on main; took it. Baseline: `--check` OK, SMOKE PASS. Side lane pushed c8d50dc (site deploy workflow) mid-cycle;
+  fast-forwarded. PR #5 (main → servers-live, lobby-ghost fix) still waits on Abdullah.
+- Shipped 4 squads: QA (conflict-marker check, mpsync model wait, Conditions check), Battlefield (barrage own-troop
+  check, picket leash), Visuals (muzzle flashes, armour-only sparks, sandbags), Netcode (single-winner takeover, join
+  timeouts, PeerJS backoff). All merges clean.
+- Fresh review of 03-sim/07-net/07b: no blockers. Applied all 3 should-fixes (claim window 2 s off PeerJS + fresh host
+  steps down for a better claim — by the Netcode agent; cancelled browser battle leaves a late-opening room; picket
+  leash +50 to stop edge flicker).
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, MIGRATE --abrupt PASS, HEADLESS --compare PASS,
+  artifact smoke PASS, artifact MPSYNC PASS (passes locally again). Artifact republished v175 (page only).
+
 ## 2026-10-28 08:36 → 11:30 — cycle 11
 
 - Lock expired (cycle of 10-27 21:25 never cleared it); took it. Baseline: `--check` OK, SMOKE PASS. Side lane's

@@ -25,6 +25,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Battles run on Cloudflare: one Play online button, optional passwords, quiet fallback to a player's browser (Abdullah merged 2026-10-28)
 - [done] Fix: stale enemy soldiers left on a player's screen
 - [done] Rejoining mid-battle restores your army, fog and money; short freezes no longer drop anyone; host takeover waits for a slow host
+- [done] Only one player takes over when a browser host drops; no endless 'Connecting…' hang
 
 ## Audio and music overhaul
 - [done] New soundtrack: 14 real recorded tracks for every nation (calm while building, combat when fighting); each nation's anthem at start and on victory
@@ -43,6 +44,8 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [doing] Phase 2 Real models: real tanks (Abrams, Merkava, KF51 Panther), trucks (M35, Ural), SPGs (G6, Msta), Humvee, transport helicopters (UH-60, Mi-8), plus T-84 Oplot (UA), T-72 (IR), T-62 (KP), T-55 (CU), Leopard 2 (TR) live; next: infantry, buildings
 - [done] Phase 3 Terrain and world: real ground textures, gravel roads, wet shores, surf, lasting craters (PC; phones keep the light look)
 - [done] Phase 4 Light and effects: rolling fireballs, dust, smoke columns, lit muzzle flashes, theatre colour, steady shadows
+- [done] Realistic muzzle flashes, sparks only off armour, sandbagged defences
+- [todo] Big explosions: replace the flat yellow first-instant ball
 - [todo] Phase 5 Massive columns: hundreds of units at a smooth frame rate
 - [todo] Phase 6 Device tiers: phones stay smooth with a lighter look, PCs get everything
 
@@ -54,3 +57,4 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Faster takeover when the host leaves a multiplayer battle (about 2 s)
 - [done] Map picker describes every map correctly
 - [done] AI fights by its doctrine: artillery barrages (RU, CN, KP), camouflaged ambushes (IL, AE), rebuilds lost radars
+- [done] AI barrages never aim at their own troops; ambush pickets hold their posts
