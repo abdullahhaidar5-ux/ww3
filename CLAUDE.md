@@ -72,6 +72,10 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   (Abdullah connected it 2026-10-26; since 2026-10-28 `.github/workflows/deploy-site.yml` also sends it from `main` on every
   push, status `deploy/site`, because Cloudflare's own builder got stuck — nothing to do at ship except check it serves the new version), and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi, republish
   per `orch/ARTIFACT.md`). Everything in the repo is served publicly by both Pages and the `ww3` Worker.
+- **Targets (Abdullah, 2026-10-28 18:33):** a big battle shows **~300 units on screen** (all sides) and stays smooth;
+  phones may draw far-away units simpler. **Unit voices:** every nation gets native-language lines now with the best
+  free computer voice available (real recordings may replace them later). **Weapon/explosion sound: cinematic and
+  punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all 18 nations about equally strong.**
 - **Art is free only** (Abdullah, 2026-10-26): CC0 or CC-BY models/textures/sounds, every author credited in the menu
   credits; no paid assets, no ripped game assets.
 - Abdullah reads updates on his phone: short summaries, and send screenshots/clips as links or images that open on
