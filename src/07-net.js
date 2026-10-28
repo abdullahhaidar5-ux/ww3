@@ -13,7 +13,7 @@ async function netInit(){
   if(!NET.room){$('games').innerHTML='<div class="empty">Multiplayer works when this game is opened from its claude.ai link. Skirmish works everywhere.</div>';$('host').disabled=true;return;}
   try{NET.user=await claude.use('user');}catch(e){}
   NET.room.onPeers(()=>renderGames(),()=>{$('games').innerHTML='<div class="empty">Multiplayer is unavailable for this viewer.</div>';$('host').disabled=true;});
-  renderGames();
+  renderGames();hostChoice();
   if($('jbtn')){$('jbtn').onclick=()=>{initAudio();joinByCode($('jcode').value);};$('jcode').onkeydown=e=>{if(e.key==='Enter'){initAudio();joinByCode($('jcode').value);}};}
   try{const h=(location.hash||'')+' '+(document.referrer||'');const c=codeFrom(h.includes('join=')?h:'');if(c){$('jcode').value=c.toUpperCase();setTimeout(()=>joinByCode(c,true),1500);}}catch(e){}
 }
@@ -24,17 +24,18 @@ async function renderGames(){if(!NET.room)return;const el=$('games');const all=N
   let names={};try{if(NET.user){const ids=all.map(p=>p.by).filter(Boolean);if(ids.length)names=await NET.user.profiles(ids);}}catch(e){}
   el.innerHTML='';const hd=document.createElement('div');hd.className='empty';hd.textContent=`${ps.length} open game${ps.length===1?'':'s'} · ${busy.length} battle${busy.length===1?'':'s'} in progress`;el.append(hd);
   for(const p of [...ps,...busy]){const g=p.presence.g,row=document.createElement('div');row.className='game';const nm=(p.by&&names[p.by]&&names[p.by].name)||(p.isMe?'You (other tab)':window.WW3_P2P&&g.c?'game '+String(g.c).toUpperCase():'A player');
-    const info=document.createElement('div');const b=document.createElement('b');b.textContent=FACTIONS[g.f].name;const s=document.createElement('span');s.textContent=` · ${window.WW3_P2P?'':'hosted by '}${nm} · ${(MAPS[g.m]||MAPS.strait).name} · ${g.n||1}${g.s==='full'?'':'/'+(g.mx||8)} players`;info.append(b,s);
+    const info=document.createElement('div');const b=document.createElement('b');b.textContent=FACTIONS[g.f].name;const s=document.createElement('span');s.textContent=` · ${g.cf?'on Cloudflare':(window.WW3_P2P?'':'hosted by ')+nm} · ${(MAPS[g.m]||MAPS.strait).name} · ${g.n||1}${g.s==='full'?'':'/'+(g.mx||8)} players`;info.append(b,s);
     const btn=document.createElement('button');btn.textContent=g.s==='full'?'In battle':'Join';btn.disabled=!!NET.code||g.s==='full';btn.onclick=()=>{initAudio();joinGame(p);};row.append(info,btn);el.append(row);}}
 const GAME_URL=window.WW3_P2P?(()=>{try{const r=document.referrer||'';if(/itch\.io/.test(r))return r.split('#')[0];}catch(e){}return location.href.split('#')[0];})():'https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi';
-function inviteText(){if(window.WW3_P2P&&location.protocol==='file:')return `Join my World War 3 battle! Open the World War 3 game file (ww3.html, from Discord) in Chrome or Edge, go to Multiplayer and enter game code ${NET.code.toUpperCase()} in "Join by code".`;return window.WW3_P2P?`Join my World War 3 battle! Open ${GAME_URL} , go to Multiplayer and enter game code ${NET.code.toUpperCase()} in "Join by code".`:`Join my World War 3 battle: ${GAME_URL}#join=${NET.code} (game code ${NET.code.toUpperCase()}). Open the link signed in to claude.ai, go to Multiplayer and press Join, or type the code into "Join by code".`;}
+function lobbyCode(){return (NET.code&&NET.code!=='join'?NET.code:NET.jcode)||'';}
+function inviteText(){const NETc=lobbyCode();if(window.WW3_P2P&&location.protocol==='file:')return `Join my World War 3 battle! Open the World War 3 game file (ww3.html, from Discord) in Chrome or Edge, go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code".`;return window.WW3_P2P?`Join my World War 3 battle! Open ${GAME_URL} , go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code".`:`Join my World War 3 battle: ${GAME_URL}#join=${NETc} (game code ${NETc.toUpperCase()}). Open the link signed in to claude.ai, go to Multiplayer and press Join, or type the code into "Join by code".`;}
 function copyText(t,btn){const done=()=>{if(btn){const o=btn.textContent;btn.textContent='Copied ✓';setTimeout(()=>btn.textContent=o,1600);}};
   try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,()=>fallback());return;}}catch(e){}fallback();
   function fallback(){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();if(ok)done();else if(btn)btn.textContent='Select the text and copy it';}}
 // join a hosted game from its code (typed, pasted invite text, or the #join= part of an invite link)
 function codeFrom(s){const m=String(s||'').toLowerCase().match(/join=([a-z0-9]{4,8})/)||String(s||'').toLowerCase().match(/\b([a-z0-9]{6})\b/);return m?m[1]:null;}
 function joinByCode(raw,quiet){if(!NET.room||NET.game)return;const code=codeFrom(raw);if(!code){if(!quiet)$('mpstatus').textContent='That is not a game code. Paste the invite or type the 6-character code.';return;}
-  if(window.WW3_P2P){joinGame({peer:'ww3-'+code,presence:{g:{c:code,s:'open'}}});return;}
+  if(window.WW3_P2P){const q=NET.room.peers().find(q=>!q.sameTab&&q.presence&&q.presence.g&&q.presence.g.c===code);joinGame({peer:'ww3-'+code,presence:{g:{c:code,s:'open',cf:q&&q.presence.g.cf?1:0}}});return;}
   let tries=0;const look=()=>{const p=NET.room.peers().find(q=>!q.sameTab&&q.presence&&q.presence.g&&q.presence.g.c===code);if(p){if(p.presence.g.s==='full'){$('mpstatus').textContent='That game is full or has already started.';return;}joinGame(p);return;}
     if(++tries<14){$('mpstatus').textContent='Looking for game '+code.toUpperCase()+'…';setTimeout(look,700);return;}
     $('mpstatus').textContent='Game '+code.toUpperCase()+' was not found. Check that the host still has the lobby open and has invited you from the game\'s Share menu, and that you are signed in to claude.ai.';};look();}
@@ -48,28 +49,64 @@ function wireHost(g){
   g.onPeers(ch=>{for(const q of ch.joined.concat(ch.updated)){if(q.sameTab||!q.presence)continue;hostPres(q,hostHello);}});
   g.onPeers(ch=>{for(const q of ch.left){if(MODE==='single'){NET.lobby=NET.lobby.filter(p=>p.peer!==q.peer);renderLobby();}else hostGone(q.peer);}});
 }
-async function hostGame(){if(!NET.room||NET.code)return;NET.ais=[];const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];$('host').hidden=true;$('cancelHost').hidden=false;
+async function hostGame(){if(!NET.room||NET.code||NET.game)return;NET.hostNote='';if(hostOn()==='cf')return hostCF();return hostBrowser();}
+// Host in this browser (today's way; also the fallback when Cloudflare can't host). note: shown at the top of the lobby
+async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hostNote=note||'';NET.ais=[];const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];$('host').hidden=true;$('cancelHost').hidden=false;
   $('mpstatus').textContent='Opening your game…';
   try{NET.game=await NET.room.join('tc-'+code);}catch(e){$('mpstatus').textContent=window.WW3_P2P?'Could not reach the online matchmaking service. Check your internet connection and try again.':'Could not open a game room. Try again in a moment.';cancelHost();return;}
   wireHost(NET.game);
   try{await NET.game.emit('lobby',{n:1,probe:1});}catch(e){if(e&&e.code==='not_permitted'){noPerm();cancelHost();return;}}
   await NET.room.presence({g:{c:code,f:setup.p,s:'open',n:1}}).catch(()=>{});renderLobby();renderGames();}
+/* ---------- "Host on Cloudflare" (Stage 2: the battle runs on the World War 3 servers) ----------
+   The creating player's page opens a battle room on the servers with its own key and sends its setup there; the
+   server (a BattleRoom) becomes the host, and every human - the creator included - plays as an ordinary client: the
+   same snapshots, orders, reconnects and host migration as with a browser host. Lobby edits (teams, computer players,
+   map, Conditions, Start) go to the server as 'bset'; the server answers with the whole lobby ('blob'). Protocol:
+   orch/STAGE2.md "Cloudflare battle protocol". Offered only in the online edition with the servers configured. */
+function cfOK(){try{return !!(NET.room&&typeof NET.room.cf==='function'&&NET.room.cf());}catch(e){return false;}}
+function hostOn(){let v='';try{v=localStorage.getItem('ww3_hostOn')||'';}catch(e){}return v==='cf'&&cfOK()?'cf':'browser';}
+function hostChoice(){const h=$('host');if(!h||!cfOK()||$('hostOn'))return;const row=h.parentNode,d=document.createElement('div');d.id='hostOn';d.className='row hoston';d.setAttribute('role','radiogroup');d.setAttribute('aria-label','Where your battle runs');
+  const paint=()=>{const v=hostOn();for(const b of d.querySelectorAll('button')){const on=b.dataset.v===v;b.setAttribute('aria-checked',on?'true':'false');b.style.borderColor=on?'var(--accent)':'';b.style.color=on?'var(--accent)':'';}};
+  for(const [v,t,tip] of [['browser','Host in my browser','Your browser runs the battle. Works everywhere.'],['cf','Host on Cloudflare','The game\'s server runs the battle: no host advantage, and your phone or PC does not have to run it. If the server is busy, your browser hosts instead.']]){
+    const b=document.createElement('button');b.className='chip';b.type='button';b.dataset.v=v;b.textContent=t;b.title=tip;b.setAttribute('role','radio');b.onclick=()=>{try{localStorage.setItem('ww3_hostOn',v);}catch(e){}paint();};d.append(b);}
+  row.parentNode.insertBefore(d,row);paint();}
+async function hostCF(again){if(!NET.room||NET.code||NET.game)return;const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a'),key=Math.random().toString(36).slice(2,12)+Math.random().toString(36).slice(2,10);
+  NET.cf={own:1,key,blob:null,pend:null};$('host').hidden=true;$('cancelHost').hidden=false;
+  const r=await joinGame({peer:'ww3-'+code,presence:{g:{c:code,s:'open',cf:1}}},{via:'wsb',own:key});
+  if(r===true){NET.ais=[];NET.tm=[0];cfPush(true);return;}
+  NET.cf=null;$('host').hidden=false;$('cancelHost').hidden=true;
+  if(r&&r.why==='taken'&&!again)return hostCF(1);
+  // the server is over today's free allowance, unreachable or refusing: this browser hosts, as before
+  const why=r&&r.why==='busy'?'Cloudflare is busy right now':r&&(r.type==='network'||r.type==='timeout')?'Cloudflare could not be reached':'Cloudflare could not host this battle';
+  return hostBrowser(why+', so your browser is hosting this battle instead.');}
+// the owner's lobby settings as the server wants them ('bset')
+function cfCfg(){const nh=NET.lobby.length+1;return {map:setup.map||'strait',w:setup.w|0,tm:(NET.tm||[]).slice(0,nh).map(v=>v|0),ais:(NET.ais||[]).map(a=>({f:a.f,d:a.d|0,tm:a.tm|0}))};}
+function cfCfgOf(b){const hs=(b.seats||[]).filter(s=>s.h),as=(b.seats||[]).filter(s=>s.ai);return {map:b.map,w:b.w|0,tm:hs.map(s=>s.tm|0),ais:as.map(s=>({f:s.f,d:s.d|0,tm:s.tm|0}))};}
+// send the owner's edits (only real changes); until the server's answer reflects them, older lobby states are ignored
+function cfPush(force){const C=NET.cf;if(!C||!C.own||!NET.game)return;const js=JSON.stringify(cfCfg());if(!force&&(C.blob&&JSON.stringify(cfCfgOf(C.blob))===js||C.pend&&C.pend.js===js))return;
+  C.pend={js,until:performance.now()+2500};NET.game.emit('bset',JSON.parse(js)).catch(()=>{});}
+// the lobby from the server: mirror it into the lobby the host screen draws (NET.lobby / NET.tm / NET.ais)
+function cfApply(){const C=NET.cf,b=C&&C.blob;if(!b)return false;const js=JSON.stringify(cfCfgOf(b));if(C.pend){if(C.pend.js!==js&&performance.now()<C.pend.until)return false;C.pend=null;}
+  const hs=(b.seats||[]).filter(s=>s.h);NET.lobby=hs.slice(1).map((s,i)=>({peer:'seat'+(i+1),by:null,f:FKEYS.includes(s.f)?s.f:'US'}));NET.tm=hs.map(s=>s.tm|0);NET.ais=(b.seats||[]).filter(s=>s.ai).map(s=>({f:FKEYS.includes(s.f)?s.f:FKEYS[0],d:s.d|0,tm:s.tm|0}));return true;}
+// "Hosted on Cloudflare · ping 42 ms" (lobby; the in-battle readout is in fpsHud)
+function cfNetText(){return 'Hosted on Cloudflare'+(NET.ping?` · ping ${Math.round(NET.ping)} ms`:'');}
 const TEAM_COL=['#7fb8e6','#ea5a40','#74d08f','#e3b341','#c58af0','#f08ab4','#6fe0d0','#c9c9c9'];
 // Host lobby: game code and player count at the top, the Start button right under it, one row per seat (taken or
 // open) with each player's nation and team, quick team presets, and the invite steps at the bottom.
-async function renderLobby(){if(!NET.code||NET.code==='join'||MODE!=='single')return;const mx=(MAPS[setup.map]||MAPS.strait).max,mapN=(MAPS[setup.map]||MAPS.strait).name;
+async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=='single'||!cfb&&(!NET.code||NET.code==='join'))return;const mk=cfb&&MAPS[cfb.map]?cfb.map:setup.map,mx=cfb&&cfb.mx>1?Math.min(cfb.mx|0,(MAPS[mk]||MAPS.strait).max):(MAPS[mk]||MAPS.strait).max,mapN=(MAPS[mk]||MAPS.strait).name;
   NET.ais=NET.ais||[];if(NET.lobby.length+1+NET.ais.length>mx)NET.ais.splice(Math.max(0,mx-1-NET.lobby.length));
-  if(NET.lobby.length+1>mx){const drop=NET.lobby.splice(mx-1);for(const p of drop)NET.game.emit('lobby',{n:0,to:p.peer,full:1}).catch(()=>{});}
+  if(NET.lobby.length+1>mx&&!cfb){const drop=NET.lobby.splice(mx-1);for(const p of drop)NET.game.emit('lobby',{n:0,to:p.peer,full:1}).catch(()=>{});}
   let names={};try{if(NET.user){const ids=NET.lobby.map(p=>p.by).filter(Boolean);if(ids.length)names=await NET.user.profiles(ids);}}catch(e){}
   const nh=NET.lobby.length+1,nn=nh+NET.ais.length;NET.tm=(NET.tm||[]).slice(0,nh);while(NET.tm.length<nh)NET.tm.push(NET.tm.length%Math.max(2,nn));const tmAll=lobbyTeams();const teamsOk=new Set(tmAll).size>1;
   const E=(t,c,txt)=>{const d=document.createElement(t);if(c)d.className=c;if(txt!=null)d.textContent=txt;return d;};
   const el=$('mpstatus');el.innerHTML='';const L=E('div','lob');
   // header
-  const hd=E('div','lobhd');const l=E('div');l.append(E('div','lobk','Your game · code'),E('div','lobcode',NET.code.toUpperCase()));
+  const hd=E('div','lobhd');const l=E('div');l.append(E('div','lobk','Your game · code'),E('div','lobcode',lobbyCode().toUpperCase()));if(cfb){const c=E('div','lobk',cfNetText());c.id='cfNet';l.append(c);}
   const r=E('div','lobr');r.append(E('div','lobmap',mapN),E('div','lobn',`${nn} / ${mx} players`));const pips=E('div','pips');for(let i=0;i<mx;i++){const d=E('i');if(i<nn)d.className='on';pips.append(d);}r.append(pips);hd.append(l,r);L.append(hd);
   // start
-  const sb=E('button','big startbtn',nn>=2?`▶ Start ${nn}-player battle`:'▶ Start battle');sb.disabled=nh<2||!teamsOk;sb.onclick=()=>launchMP();L.append(sb);
-  L.append(E('div','lobwhy',nh<2?(NET.ais.length?'Waiting for at least one friend to join (to play only against the computer, use Deploy vs AI on the main menu).':'Waiting for at least one more player to join. You can also add computer players below.'):!teamsOk?'Everyone is on one team: put someone on another team to start.':'Everyone ready? Press Start. Players can still join until you do.'));
+  if(NET.hostNote)L.append(E('div','lobwhy',NET.hostNote));
+  const sb=E('button','big startbtn',nn>=2?`▶ Start ${nn}-player battle`:'▶ Start battle');sb.disabled=nh<2||!teamsOk||!!cfb&&!cfb.ok&&!(NET.cf.pend);sb.onclick=()=>launchMP();L.append(sb);
+  L.append(E('div','lobwhy',cfb&&!cfb.ok&&cfb.why&&!NET.cf.pend?String(cfb.why):nh<2?(NET.ais.length?'Waiting for at least one friend to join (to play only against the computer, use Deploy vs AI on the main menu).':'Waiting for at least one more player to join. You can also add computer players below.'):!teamsOk?'Everyone is on one team: put someone on another team to start.':'Everyone ready? Press Start. Players can still join until you do.'));
   // seats
   const sh=E('div','lobsec');sh.append(E('span','','Players'));const pre=E('span','presets');
   const pb=(lab,fn)=>{const b=E('button','chip',lab);b.onclick=()=>{NET.tm=NET.tm.map((_,i)=>fn(i));NET.ais.forEach((a,j)=>a.tm=fn(nh+j));renderLobby();};pre.append(b);};
@@ -78,7 +115,8 @@ async function renderLobby(){if(!NET.code||NET.code==='join'||MODE!=='single')re
   const seat=(i,nm,f,host)=>{const row=E('div','seat');row.style.setProperty('--tc',TEAM_COL[NET.tm[i]%8]);row.append(E('span','sn',String(i+1)));const who=E('div','who');who.append(E('b','',nm));if(host)who.append(E('span','tag','host'));row.append(who);
     const fc=E('span','sfac');fc.append(E('span','fcode',f),E('span','fname',FACTIONS[f].name));row.append(fc);
     const s=document.createElement('select');s.setAttribute('aria-label','Team for '+nm);for(let t=0;t<Math.max(2,nn);t++){const o=document.createElement('option');o.value=t;o.textContent='Team '+(t+1);s.append(o);}s.value=NET.tm[i];s.onchange=()=>{NET.tm[i]=+s.value;renderLobby();};row.append(s);seats.append(row);};
-  seat(0,'You',setup.p,true);NET.lobby.forEach((p,k)=>seat(k+1,(p.by&&names[p.by]&&names[p.by].name)||'Player '+(k+2),p.f,false));
+  if(cfb){const hs=(cfb.seats||[]).filter(s=>s.h),you=cfb.you|0;hs.forEach((s,k)=>seat(k,k===you?'You':'Player '+(k+1),FKEYS.includes(s.f)?s.f:'US',false));}
+  else{seat(0,'You',setup.p,true);NET.lobby.forEach((p,k)=>seat(k+1,(p.by&&names[p.by]&&names[p.by].name)||'Player '+(k+2),p.f,false));}
   // computer players: faction, difficulty and team are the host's to set; a joining human takes a computer seat if the map is full
   NET.ais.forEach((a,j)=>{const i=nh+j;const row=E('div','seat ai');row.style.setProperty('--tc',TEAM_COL[a.tm%8]);row.append(E('span','sn',String(i+1)));
     const who=E('div','who');const top=E('div','aitop');top.append(E('b','','Computer'),E('span','tag','AI'));const ctl=E('div','aictl');who.append(top,ctl);const ds=document.createElement('select');ds.setAttribute('aria-label','Difficulty of computer player '+(i+1));
@@ -96,9 +134,12 @@ async function renderLobby(){if(!NET.code||NET.code==='join'||MODE!=='single')re
   st.append(E('li','','When everyone shows up in the seats above, press Start.'));L.append(st);
   const iv=E('div','invite');const inp=document.createElement('input');inp.readOnly=true;inp.value=inviteText();inp.setAttribute('aria-label','Invite to share');inp.onfocus=()=>inp.select();const cb=E('button','big','Copy invite');cb.onclick=()=>copyText(inviteText(),cb);iv.append(inp,cb);L.append(iv);
   el.append(L);
+  // a Cloudflare battle is listed in the game list by the server itself; the owner's edits go to the server
+  if(cfb){cfPush();return;}
   NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,m:setup.map||'strait',mx}}).catch(()=>{});}
 function lobbyTeams(){const nh=NET.lobby.length+1;return [...(NET.tm||[]).slice(0,nh),...(NET.ais||[]).map(a=>a.tm|0)];}
-function launchMP(){if(MODE!=='single'||!NET.lobby.length)return;const seed=(Math.random()*1e9)|0;const ais=(NET.ais||[]).slice(0,Math.max(0,(MAPS[setup.map]||MAPS.strait).max-1-NET.lobby.length)).map(a=>({f:FKEYS.includes(a.f)?a.f:FKEYS[0],d:Math.max(0,Math.min(2,a.d|0)),tm:Math.max(0,Math.min(7,a.tm|0))}));const facs=[setup.p,...NET.lobby.map(p=>p.f),...ais.map(a=>a.f)];NET.peers=[null,...NET.lobby.map(p=>p.peer),...ais.map(()=>null)];NET.toks=[null,...NET.lobby.map(p=>p.tok||null),...ais.map(()=>null)];
+function launchMP(){if(NET.cf&&NET.cf.own){if(MODE!=='single'||!NET.game)return;const c=cfCfg();NET.cf.pend=null;NET.game.emit('bset',Object.assign(c,{seed:(Math.random()*1e9)|0,start:1})).catch(()=>{});$('mpstatus').querySelectorAll('.startbtn').forEach(b=>{b.disabled=true;b.textContent='Starting…';});return;}
+  if(MODE!=='single'||!NET.lobby.length)return;const seed=(Math.random()*1e9)|0;const ais=(NET.ais||[]).slice(0,Math.max(0,(MAPS[setup.map]||MAPS.strait).max-1-NET.lobby.length)).map(a=>({f:FKEYS.includes(a.f)?a.f:FKEYS[0],d:Math.max(0,Math.min(2,a.d|0)),tm:Math.max(0,Math.min(7,a.tm|0))}));const facs=[setup.p,...NET.lobby.map(p=>p.f),...ais.map(a=>a.f)];NET.peers=[null,...NET.lobby.map(p=>p.peer),...ais.map(()=>null)];NET.toks=[null,...NET.lobby.map(p=>p.tok||null),...ais.map(()=>null)];
   const aiD=[null,...NET.lobby.map(()=>null),...ais.map(a=>a.d|0)];NET.opp=NET.peers[1];
   const map=setup.map||'strait';const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',{pv:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0}).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map}}).catch(()=>{});NET.startInfo={seed,facs,map,tm,w:setup.w|0};startMP('host',seed,facs,0,map,tm,aiD);}
 // Joining: each player has a reconnect token for this game (kept for the browser tab), so if the link drops - or the
@@ -107,11 +148,17 @@ function launchMP(){if(MODE!=='single'||!NET.lobby.length)return;const seed=(Mat
 function joinTok(code){const k='ww3_tok_'+code;let t=null;try{t=sessionStorage.getItem(k);}catch(e){}if(!t){t=Math.random().toString(36).slice(2,12);try{sessionStorage.setItem(k,t);}catch(e){}}return t;}
 function wireClient(g){
   g.on('hello',m=>{if(m.sameTab)NET.myPeer=m.peer;});
-  g.on('lobby',m=>{if(m.peer===NET.hostPeer&&m.data&&m.data.to===NET.myPeer&&MODE==='single'){if(m.data.full){clearInterval(NET.helloI);$('mpstatus').textContent='That game is full.';leaveNet();return;}$('mpstatus').textContent=`Joined${NET.via==='ws'?' (through the game server)':''}. ${m.data.n} players in the lobby. Waiting for the host to start the battle…`;}});
-  g.on('start',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV){$('mpstatus').textContent='You and the host have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<1||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
+  g.on('lobby',m=>{if(m.peer===NET.hostPeer&&m.data&&m.data.to===NET.myPeer&&MODE==='single'){NET.joined=1;if(m.data.full){clearInterval(NET.helloI);$('mpstatus').textContent='That game is full.';leaveNet();return;}if(NET.cf&&NET.cf.own)return;$('mpstatus').textContent=`Joined${NET.via==='ws'?' (through the game server)':NET.via==='wsb'?' (hosted on Cloudflare)':''}. ${m.data.n} players in the lobby. Waiting for ${NET.via==='wsb'?'the game\'s creator':'the host'} to start the battle…`;}});
+  // a battle hosted on Cloudflare: the whole lobby, from the server ('own': this player sets it up and starts it)
+  g.on('blob',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;const b=m.data;NET.joined=1;
+    if((b.pv|0)!==NET_PV){$('mpstatus').textContent='You and the game server have different versions of the game. Close the game and open it again to update, then try again.';leaveNet();return;}
+    NET.cf=NET.cf||{};NET.cf.blob=b;if(b.own){NET.cf.own=1;$('host').hidden=true;$('cancelHost').hidden=false;if(cfApply())renderLobby();return;}NET.cf.own=0;
+    const n=(b.seats||[]).filter(s=>s.h).length;$('mpstatus').textContent=`Joined (hosted on Cloudflare). ${n} player${n===1?'':'s'} in the lobby. Waiting for the game's creator to start the battle…`;});
+  g.on('start',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV){$('mpstatus').textContent='You and the host have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<(d.sv?0:1)||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
   // An old host sends no 'w': the player's own menu choice stays, as before.
   if(typeof d.w==='number'&&d.w>=-1&&d.w<WX.length){if(NET.ownW==null)NET.ownW=setup.w;wxSet(d.w|0);}
-  startMP('client',d.seed|0,d.facs,sl,map,tm);});
+  // sv: the host is the game server (Cloudflare), which has no side of its own, so this player may be slot 0
+  NET.sv=d.sv?1:0;startMP('client',d.seed|0,d.facs,sl,map,tm);if(NET.sv)pushLog('This battle is hosted on Cloudflare.','g');});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
   g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();applySnap(m.data);}});
   g.on('evt',m=>{if(ok(m)){NET.lastRx=performance.now();applyEvents(m.data);}});
@@ -119,7 +166,7 @@ function wireClient(g){
   g.on('b',m=>{if(!ok(m)||!Array.isArray(m.data.m))return;NET.lastRx=performance.now();for(const x of m.data.m){if(!Array.isArray(x))continue;const [t,d]=x;if(!d)continue;try{if(t==='snap')applySnap(d);else if(t==='evt')applyEvents(d);else if(t==='team')applyTeam(d);}catch(e){console.warn('bundle',t,e);}}});
   g.on('ck',m=>{if(m.peer===NET.hostPeer&&m.data&&m.data.to===NET.myPeer)ckReceive(m.data);});
   g.on('pong',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer)return;const rtt=Date.now()-(+m.data.t||0);if(rtt>=0&&rtt<20000)NET.ping=NET.ping?NET.ping*.7+rtt*.3:rtt;});
-  g.onPeers(ch=>{if(!NET.myPeer){const me=ch.peers.find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}if(NET.findHost){const h=ch.peers.find(q=>!q.sameTab&&q.presence&&q.presence.h);if(h){NET.hostPeer=h.peer;NET.findHost=false;}}if(g===NET.game&&ch.left.some(q=>q.peer===NET.hostPeer)){if(MODE==='client')clientReconnect();else if(MODE==='single'&&NET.code==='join'){clearInterval(NET.helloI);$('mpstatus').textContent='The host closed the game.';leaveNet();}}});}
+  g.onPeers(ch=>{if(!NET.myPeer){const me=ch.peers.find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}if(NET.findHost){const h=ch.peers.find(q=>!q.sameTab&&q.presence&&q.presence.h);if(h){NET.hostPeer=h.peer;NET.findHost=false;}}if(g===NET.game&&ch.left.some(q=>q.peer===NET.hostPeer)){if(MODE==='client')clientReconnect();else if(MODE==='single'&&NET.code==='join'){clearInterval(NET.helloI);$('mpstatus').textContent=NET.via==='wsb'?'The connection to the game server was lost. Host or join the game again.':'The host closed the game.';leaveNet();}}});}
 // Host lost: get back into the battle as fast as possible.
 //  1. Rejoin the same room once (a short network blip: the host is still there).
 //  2. If that fails, the standby player (holding a checkpoint) takes over at once (promoteToHost). Everyone else keeps
@@ -132,13 +179,16 @@ function joinT(name,ms){const p=NET.room.join(name,NET.via?{via:NET.via}:undefin
   return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>{late=true;rej(Object.assign(new Error('timeout'),{type:'timeout'}));},ms))]).catch(e=>{if(late)p.then(g=>{try{g.leave().catch(()=>{});}catch(_){}},()=>{});throw e;});}
 async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NET.jcode)return;NET.recon=true;NET.reconKick=false;pushLog('Connection to the host lost. Reconnecting…','w');
   const gen0=NET.gen||0,t0=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let gone=false,n=0,newTries=0;
+  // a battle hosted on Cloudflare: a short server blip (restart, redeploy) is ridden out on the server, which picks the
+  // battle up again from its kept checkpoint; only "no such battle" there (or 8 s of no answer) hands it to a player
+  const svBlip=()=>NET.sv&&!(gen0>0)&&!gone&&performance.now()-t0<8000;
   while(MODE==='client'&&!(G&&G.over)&&performance.now()-t0<60000){
-    if(n>0&&NET.isStandby&&NET.lastCk){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
+    if(n>0&&NET.isStandby&&NET.lastCk&&!svBlip()){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
     if(MODE!=='client'||(G&&G.over))break;
     // which room: the old one first; then the follow-up room (with an occasional look back at the old room while it
     // is not certain that its host is gone)
-    const old=n===0||(!gone&&newTries>0&&newTries%4===0),gen=old?gen0:gen0+1,room=migRoom(gen);
-    await slp(n===0?250:!old&&newTries===0?500:300);n++;if(!old)newTries++;if(MODE!=='client'||(G&&G.over))break;
+    const old=n===0||svBlip()||(!gone&&newTries>0&&newTries%4===0),gen=old?gen0:gen0+1,room=migRoom(gen);
+    await slp(n===0?250:!old&&newTries===0?500:old&&svBlip()?700:300);n++;if(!old)newTries++;if(MODE!=='client'||(G&&G.over))break;
     {const og=NET.game;NET.game=null;try{if(og)og.leave().catch(()=>{});}catch(e){}}
     let g=null;try{g=await joinT('tc-'+room,old?4000:6000);}catch(e){if(old&&e&&e.type==='peer-unavailable')gone=true;continue;}
     if(MODE!=='client'||(G&&G.over)){try{g.leave().catch(()=>{});}catch(e){}break;}
@@ -151,16 +201,17 @@ async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NE
     if(NET.lastRx>=t1&&!NET.reconKick){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Connected to the new host.':'Reconnected to the host.','g');return;}
     if(old&&NET.reconKick)gone=true;NET.reconKick=false;}
   NET.recon=false;NET.reconKick=false;if(MODE==='client')oppLeft();}
-async function joinGame(p){if(NET.game)return;const code=p.presence.g.c;$('mpstatus').textContent='Joining…';
-  try{NET.game=await NET.room.join('tc-'+code);}catch(e){$('mpstatus').textContent=window.WW3_P2P?'No open game with code '+code.toUpperCase()+' was found. Check the code and make sure the host still has the lobby open.':'Could not join that game.';NET.game=null;return;}
+// o: {via:'wsb', own} = a battle hosted on Cloudflare (own: create it). Returns true, or the error when joining failed.
+async function joinGame(p,o){if(NET.game)return;const code=p.presence.g.c,jo=o||(p.presence.g.cf?{via:'wsb'}:undefined),own=!!(o&&o.own);$('mpstatus').textContent=own?'Opening your game on Cloudflare…':'Joining…';NET.joined=0;
+  try{NET.game=await NET.room.join('tc-'+code,jo);}catch(e){NET.game=null;if(own)return e||{};$('mpstatus').textContent=e&&e.why==='busy'?'The game server is busy right now. Try again later.':e&&e.why==='full'?'That game is full.':window.WW3_P2P?'No open game with code '+code.toUpperCase()+' was found. Check the code and make sure the host still has the lobby open.':'Could not join that game.';NET.game=null;return e||{};}
   NET.hostPeer=p.peer;NET.code='join';NET.jcode=code;NET.baseCode=code;NET.gen=0;NET.via=NET.game.via||null;NET.tok=joinTok(code);NET.lastRx=0;wireClient(NET.game);NET.cq=[];NET.cs=Math.floor(Date.now()/10);
-  clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}if(MODE==='client'&&!NET.recon&&NET.lastRx&&performance.now()-NET.lastRx>5000){clientReconnect();return;}if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null}).catch(()=>{});},1000);
-  let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The host did not answer. The game may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}NET.game.presence({hi:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',{f:setup.p}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
-  hello();NET.helloI=setInterval(hello,1500);$('mpstatus').textContent='Connecting to the host…';}
+  clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}if(MODE==='client'&&!NET.recon&&NET.lastRx&&performance.now()-NET.lastRx>5000&&!(NET.sv&&window.LOADING)){clientReconnect();return;}if($('cfNet'))$('cfNet').textContent=cfNetText();if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null}).catch(()=>{});},1000);
+  let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!NET.joined&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The host did not answer. The game may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}NET.game.presence({hi:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',{f:setup.p}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
+  hello();NET.helloI=setInterval(hello,1500);if(!own)$('mpstatus').textContent='Connecting to the host…';return true;}
 // Set the Conditions choice and light up its menu button. The host's choice is used only for that battle: the player's
 // own menu choice (NET.ownW) comes back when they leave the battle, so their next solo battle uses their own Conditions.
 function wxSet(w){setup.w=w;const W=$('wx');if(W)W.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.w===w));}
-function leaveNet(){if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}clearInterval(NET.helloI);clearInterval(NET.pingI);NET.ping=0;NET.pings={};if(NET.game)NET.game.leave().catch(()=>{});NET.game=null;NET.code=null;NET.opp=null;NET.hostPeer=null;NET.lobby=[];NET.peers=null;if(NET.room)NET.room.presence({g:null}).catch(()=>{});$('host').hidden=false;$('cancelHost').hidden=true;}
+function leaveNet(){if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}NET.cf=null;NET.joined=0;NET.sv=0;NET.hostNote='';clearInterval(NET.helloI);clearInterval(NET.pingI);NET.ping=0;NET.pings={};if(NET.game)NET.game.leave().catch(()=>{});NET.game=null;NET.code=null;NET.opp=null;NET.hostPeer=null;NET.lobby=[];NET.peers=null;if(NET.room)NET.room.presence({g:null}).catch(()=>{});$('host').hidden=false;$('cancelHost').hidden=true;}
 function oppLeft(){if(!G||G.over)return;pushLog('The host left the game.','w');showEnd(-1,'The host left the game, so the battle has ended.');}
 // a keep-alive list named units this client doesn't have (a missed update): ask the host for a full copy (at most every 2 s)
 function askKeyframe(){const w=performance.now();if(NET.krW&&w-NET.krW<2000)return;NET.krW=w;if(NET.game)NET.game.presence({kr:Math.round(w)}).catch(()=>{});}
