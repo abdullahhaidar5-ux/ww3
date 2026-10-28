@@ -76,6 +76,12 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   phones may draw far-away units simpler. **Unit voices:** every nation gets native-language lines now with the best
   free computer voice available (real recordings may replace them later). **Weapon/explosion sound: cinematic and
   punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all 18 nations about equally strong.**
+- **Priorities (Abdullah, 2026-10-28 18:34):** his group plays the **Shia factions (IR, RS, DW) most** — do their voices,
+  uniforms and buildings first, in a **realistic military** style (IRGC/Hezbollah-style fatigues, Middle Eastern
+  compounds and bunkers). The group plays on **recent iPhones (12 or newer)** — that is the phone target. Biggest pain:
+  **looks and performance** — better looks only where it stays smooth. Next focus after current work: **graphics
+  realism**. Abdullah will test on his iPhone: when something visible ships, ask him in the report to try one specific
+  thing for 2 minutes (with the link).
 - **Art is free only** (Abdullah, 2026-10-26): CC0 or CC-BY models/textures/sounds, every author credited in the menu
   credits; no paid assets, no ripped game assets.
 - Abdullah reads updates on his phone: short summaries, and send screenshots/clips as links or images that open on
