@@ -230,7 +230,7 @@ function speak(kind){if(!AU.voiceOn||!G)return;const now=performance.now();if(no
 
 /* ---------- anthems ---------- */
 // the national anthem excerpts (one small file per nation, fetched only for that nation)
-const AN_FAC=/*ANFAC*/{US:1,EU:1,IL:1,UA:1,CU:1,IN:1,CN:1,EG:1};
+const AN_FAC=/*ANFAC*/{US:1,EU:1,IL:1,UA:1,CU:1,IN:1,CN:1,EG:1,PK:1,KR:1,RU:1};
 const ANB={};
 function anLoad(fac){if(!AU.ctx||!AN_FAC[fac])return;const s=ANB[fac];if(s&&(s.st==='ok'||s.st==='loading'||(s.tries||0)>=2))return;const e=ANB[fac]={st:'loading',tries:((s&&s.tries)||0)+1};
   fetch('mus/an_'+fac+'.mp3').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>decodeAB(AU.ctx,b)).then(buf=>{e.buf=buf;e.st='ok';}).catch(err=>{e.st='fail';audioErr('anthem',err);});}

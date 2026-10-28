@@ -12,11 +12,33 @@ const MCFG={
 // Realistic models (Objaverse / Sketchfab, CC-BY - authors credited in the menu): each nation fields the hardware it
 // actually flies and drives where a licensed model exists.
 const RMOD={t90:{m:'m_t90',fit:'z',size:40},hilux:{m:'m_hilux',fit:'z',size:30,extra:'dshk'},d7r:{m:'m_d7r',fit:'z',size:34},jd550:{m:'m_jd550',fit:'z',size:33},apache:{m:'m_apache',fit:'z',size:58},mi24:{m:'m_mi24',fit:'z',size:62},
-  f15:{m:'m_f15',fit:'z',size:50},f18:{m:'m_f18',fit:'z',size:48},su35:{m:'m_su35',fit:'z',size:54},rafale:{m:'m_rafale',fit:'z',size:46},typhoon:{m:'m_typhoon',fit:'z',size:46},j10:{m:'m_j10',fit:'z',size:46},mig29:{m:'m_mig29',fit:'z',size:48},f16:{m:'m_f16',fit:'z',size:46},g6:{m:'m_g6',fit:'z',size:40},ozelot:{m:'m_ozelot',fit:'z',size:34},zu:{m:'m_hilux',fit:'z',size:30,extra:'zu23'}};
+  f15:{m:'m_f15',fit:'z',size:50},f18:{m:'m_f18',fit:'z',size:48},su35:{m:'m_su35',fit:'z',size:54},rafale:{m:'m_rafale',fit:'z',size:46},typhoon:{m:'m_typhoon',fit:'z',size:46},j10:{m:'m_j10',fit:'z',size:46},mig29:{m:'m_mig29',fit:'z',size:48},f16:{m:'m_f16',fit:'z',size:46},g6:{m:'m_g6',fit:'z',size:40},ozelot:{m:'m_ozelot',fit:'z',size:34},zu:{m:'m_hilux',fit:'z',size:30,extra:'zu23'},
+  abrams:{m:'m_abrams',fit:'z',size:40},merkava:{m:'m_merkava',fit:'z',size:41},kf51:{m:'m_kf51',fit:'z',size:41},msta:{m:'m_msta',fit:'z',size:42},
+  oplot:{m:'m_oplot',fit:'z',size:40},t72:{m:'m_t72',fit:'z',size:40},t62:{m:'m_t62',fit:'z',size:39},t55:{m:'m_t55',fit:'z',size:37},leo2:{m:'m_leo2',fit:'z',size:41},
+  ural:{m:'m_ural',fit:'z',size:36},m35:{m:'m_m35',fit:'z',size:36},humvee:{m:'m_humvee',fit:'z',size:27},uh60:{m:'m_uh60',fit:'z',size:70},mi8:{m:'m_mi8',fit:'z',size:76}};
 const RMAP={tank:{RU:'t90',KP:'t90',IR:'t90',UA:'t90',CN:'t90',IN:'t90',EG:'t90',PK:'t90',CU:'t90',RS:'hilux',DW:'hilux'},dozer:{},
   heli:{US:'apache',IL:'apache',EU:'apache',SA:'apache',AE:'apache',EG:'apache',KR:'apache',TR:'apache',IN:'apache',PK:'apache',RU:'mi24',KP:'mi24',IR:'mi24',CN:'mi24',UA:'mi24',CU:'mi24',RS:'mi24',DW:'mi24'},
   jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',CU:'mig29'}};
 for(const f of ['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','CU','RS','DW'])RMAP.dozer[f]='jd550';
+// Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
+// tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
+// and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
+const WESTVEH=['US','TR','IL','EU','SA','AE','KR','EG'],EASTVEH=['RU','KP','IR','UA','CN','IN','CU','PK','RS','DW'];
+Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IL:'merkava',EU:'kf51',TR:'kf51'});
+// Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
+// Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
+// China keeps the T-90, South Korea the Abrams-like K1 stand-in)
+Object.assign(RMAP.tank,{UA:'oplot',IR:'t72',KP:'t62',CU:'t55',TR:'leo2'});
+RMAP.arty={};RMAP.airlift={};RMAP.jeep={SA:'humvee'};RMAP.raidlead={DW:'hilux'};
+for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k]={};
+for(const f of WESTVEH){RMAP.arty[f]='g6';RMAP.airlift[f]='uh60';for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k][f]='m35';}
+for(const f of EASTVEH){if(f!=='RS'&&f!=='DW')RMAP.arty[f]='msta';RMAP.airlift[f]='mi8';for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k][f]='ural';}
+// the nation's own truck model, if it has arrived (AA trucks and rocket launchers are built on it)
+// their paint textures are dark (woodland camo, weathering): brightened so the national paint reads like the other vehicles'
+const TEXB={m_abrams:2,m_merkava:2,m_kf51:1.6,m_msta:2.2,m_ural:1.9,m_m35:2.2,m_oplot:2.2,m_t72:1.3};
+// untextured models in a light primer (the T-62, Leopard 2A4) would come out pale under the paint: toned down to match
+const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
+function truckKey(f){const rk=RMAP.harv[f];return rk&&MODELS.proto[RMOD[rk].m]?RMOD[rk].m:'truck';}
 const MIL_TANK={RS:{m:'technical',fit:'z',size:29},DW:{m:'technical',fit:'z',size:29},IM:{m:'toontank',fit:'z',size:32}};
 for(const f of ['US','IL','EU','SA','AE','EG','KR','TR','CN','PK','IN'])MIL_TANK[f]={m:'tankE',fit:'long',size:37};
 const PROPS={container:{fit:'x',size:28},containerG:{fit:'x',size:30},crate:{fit:'y',size:8},barrel:{fit:'y',size:8},sandbag:{fit:'x',size:16},watertower:{fit:'y',size:56},tent:{fit:'x',size:50},pallet:{fit:'x',size:10},fence:{fit:'x',size:24},missile:{fit:'y',size:26},sam:{fit:'y',size:24}};
@@ -47,11 +69,20 @@ function modelKeysFor(facs){if(typeof MODEL_FILES==='undefined')return[];const n
   const want=new Set();for(const f of facs||[])for(const k of nationModelKeys(f))want.add(k);
   return Object.keys(MODEL_FILES).filter(k=>want.has(k)||!nat.has(k)&&!/^m_/.test(k));}
 function modelBytes(k){const url=MODEL_FILES[k];return MQ.bytes[url]=MQ.bytes[url]||fetchModel(url);}
+// Older spec/gloss materials (the Apache): Three.js dropped them from GLTFLoader after r128. Read them as plain standard
+// materials (diffuse colour + texture, roughness from glossiness: what plainStd() made of them before), so the model
+// keeps its paint. Glass with "transmission" (F-16 canopy) becomes see-through glass in parseModel: real transmission
+// would draw the whole scene a second time every frame.
+class SpecGloss{constructor(p){this.parser=p;this.name='KHR_materials_pbrSpecularGlossiness';}
+  extendMaterialParams(i,P){const d=this.parser.json.materials[i],x=d&&d.extensions&&d.extensions[this.name];if(!x)return Promise.resolve();
+    const f=x.diffuseFactor;if(Array.isArray(f)){P.color=new THREE.Color(f[0],f[1],f[2]);P.opacity=f[3];}
+    P.userData=Object.assign(P.userData||{},{sgGloss:x.glossinessFactor!=null?x.glossinessFactor:1});
+    return x.diffuseTexture?this.parser.assignTexture(P,'map',x.diffuseTexture,THREE.SRGBColorSpace):Promise.resolve();}}
 function parseModel(k){if(MQ.parsed[k])return MQ.parsed[k];return MQ.parsed[k]=(async()=>{try{
-    if(!THREE.GLTFLoader)throw new Error('no GLTFLoader');const ld=MQ.ld=MQ.ld||new THREE.GLTFLoader();
+    if(!THREE.GLTFLoader)throw new Error('no GLTFLoader');const ld=MQ.ld=MQ.ld||new THREE.GLTFLoader().register(p=>new SpecGloss(p));
     let b=await modelBytes(k);const u=new Uint8Array(b);if(u[0]===0x1f&&u[1]===0x8b)b=await gunzipU8(u);
     const g=await new Promise((res,rej)=>{try{ld.parse(b,'',res,rej);}catch(e){rej(e);}});const P={scene:g.scene,anims:g.animations};
-    P.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.encoding=THREE.sRGBEncoding;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);}}});
+    P.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);if(m.userData.sgGloss!=null){m.roughness=Math.min(1,Math.max(.35,1-m.userData.sgGloss*.7));m.metalness=.15;}if(m.transmission>0){m.opacity*=1-m.transmission;m.transmission=0;}}}});
     try{mergeProto(P);}catch(e){console.warn('merge',k,e);}
     MODELS.proto[k]=P;MODELS.ready=true;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
     // the effects module keeps a list of model geometry it must never free; a model added later must join it
@@ -64,6 +95,7 @@ function modelsFor(facs,onProg,maxMs){const ks=modelKeysFor(facs);let done=0;MQ.
   const all=Promise.all(ks.map(k=>parseModel(k).then(ok=>{done++;if(onProg)try{onProg(done,ks.length);}catch(e){}return ok?null:k;})));
   return Promise.race([all,new Promise(r=>setTimeout(()=>r(null),maxMs||40000))]).then(res=>{MQ.need=Math.max(0,MQ.need-1);setTimeout(bgPump,0);
     const bad=res?res.filter(Boolean):ks.filter(k=>!MODELS.proto[k]);MODELS.loadMs=Math.round(performance.now()-T0);
+    try{navigator.serviceWorker.ready.then(g=>{if(g.active)g.active.postMessage({t:'models',urls:ks.filter(k=>MODELS.proto[k]).map(k=>MODEL_FILES[k])});}).catch(()=>{});}catch(e){} // keep this battle's models for offline play (sw.js)
     console.log('3D models for '+(facs||[]).join('/')+': '+(ks.length-bad.length)+' of '+ks.length+' ready in '+MODELS.loadMs+' ms'+(bad.length?' (missing: '+bad.join(', ')+')':''));
     return{n:ks.length,bad};});}
 // background downloads while the menu is up: shared models first (unpacked straight away, since every battle uses
@@ -208,7 +240,7 @@ function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=doc
     case 'IM':rect('#4d5a3a',0,0,W,H);x.fillStyle='#e8e6dc';x.beginPath();x.moveTo(30,54);x.lineTo(55,20);x.lineTo(66,36);x.lineTo(76,26);x.lineTo(92,54);x.closePath();x.fill();break;
     default:rect('#888',0,0,W,H);}
   x.fillStyle='rgba(0,0,0,.08)';for(let i=0;i<W;i+=6)x.fillRect(i,0,3,H);
-  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return FLAGTEX[fac]=t;}
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return FLAGTEX[fac]=t;}
 // A soft sky/ground environment for reflections on painted metal (vehicles, aircraft, ships) and glass/steel on
 // buildings, so they pick up a sheen and catch the light instead of looking flat.
 let ENVT=null;function envTex(){if(window.NOENV)return null;if(ENVT||typeof R3==='undefined'||!R3||!THREE.PMREMGenerator)return ENVT;try{const sc=new THREE.Scene();const g=new THREE.SphereGeometry(50,32,16);
@@ -219,7 +251,7 @@ function tintedProto(key,team,kk){camoFreq(key);const LK=team&&team.fac?FLOOK[te
   const tc=team?new THREE.Color(team.color).convertSRGBToLinear():null;const map=new Map();const root=P.scene;
   const k=kk||(key==='soldier'?.0:key==='inf'||key==='hero'?.1:.16);
   const clone=(THREE.SkeletonUtils&&root.getObjectByProperty('type','SkinnedMesh'))?THREE.SkeletonUtils.clone(root):root.clone(true);
-  clone.traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];const nm=ms.map(m=>{if(!map.has(m)){const c=plainStd(m.clone());if(key==='heli'&&/Gray_Aircraft/.test(m.name||'')){c.visible=false;}const isB=/^b_/.test(key);if(isB&&c.color){const hs={};c.color.getHSL(hs);c.color.setHSL(hs.h,hs.s*.55,hs.l*.95);}weather(c,['tree1','tree2','tree3','tree4'].includes(key)?.5:(key==='boat'||key==='ship')?.15:isB?1.35:1,CAMOK[key]?CAMOK[key]:0);const VK=['tank','tankE','tankW','truck','technical','toontank','m_t90','m_hilux','m_ozelot'];if(isB)c.userData.refl=.35;{const LV={m_su35:.7,m_j10:.75,m_f18:.45,m_typhoon:.15,m_f15:.2,m_f16:.15,m_rafale:.15,m_mig29:.2};const lv=LV[key];if(lv&&c.color){const l=c.color.r*.3+c.color.g*.59+c.color.b*.11;c.color.lerp(new THREE.Color(.18,.2,.22).multiplyScalar(.7+l*1.6),lv);}}if(VK.includes(key)||/^m_|^(jet|heli|drone|boat|ship)$/.test(key))c.userData.refl=/^m_(f|su|ra|ty|j1|mig)|^jet$/.test(key)?1:.75;if(LK&&c.color){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.012){if(key==='soldier')c.color.lerp(new THREE.Color(LK.uni).convertSRGBToLinear(),.6);else if(VK.includes(key)){const tgt=new THREE.Color(LK.veh).convertSRGBToLinear().multiplyScalar(Math.min(1.6,.55+lum*2.2));c.color.lerp(tgt,.85);}}if(VK.includes(key)){const X=CAMOX[team.fac]||{};c.userData.camoA=new THREE.Color(LK.ca).convertSRGBToLinear();c.userData.camoB=new THREE.Color(LK.cb).convertSRGBToLinear();c.userData.camoP=X.p!=null?X.p:(LK.pat||0);c.userData.camoS=X.s||1;c.userData.camoC=new THREE.Color(X.c||LK.ca).convertSRGBToLinear();}}if(tc&&c.color&&!['tree1','tree2','tree3','tree4'].includes(key))c.color.lerp(tc,LK&&(key==='soldier'||VK.includes(key))?Math.min(k,.06):k);if(isB&&c.color){c.color.multiply(new THREE.Color(1.08,1.0,.84));const rg=team&&team.fac&&FACTIONS[team.fac]?FACTIONS[team.fac].music:null,BW={west:'#9aa3a8',mideast:'#d2b48a',slavic:'#8f9686',southasia:'#c9a27a',eastasia:'#a8a196',latin:'#d9c9a8'}[rg];if(BW){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.05&&lum<.85)c.color.lerp(new THREE.Color(BW).convertSRGBToLinear().multiplyScalar(.6+lum*.9),.32);}}{if(c.isMeshStandardMaterial&&['tank','tankE','tankW','truck','technical','toontank','heli','jet','ship','boat','drone','sam'].includes(key)){c.metalness=Math.min(Math.max(c.metalness||0,.12),.3);c.roughness=Math.min(Math.max(c.roughness??.7,.5),.7);c.userData.sheen=1;}}
+  clone.traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];const nm=ms.map(m=>{if(!map.has(m)){const c=plainStd(m.clone());if(key==='heli'&&/Gray_Aircraft/.test(m.name||'')){c.visible=false;}const isB=/^b_/.test(key);if(isB&&c.color){const hs={};c.color.getHSL(hs);c.color.setHSL(hs.h,hs.s*.55,hs.l*.95);}weather(c,['tree1','tree2','tree3','tree4'].includes(key)?.5:(key==='boat'||key==='ship')?.15:isB?1.35:1,CAMOK[key]?CAMOK[key]:0);const VK=['tank','tankE','tankW','truck','technical','toontank','m_t90','m_hilux','m_ozelot','m_abrams','m_merkava','m_kf51','m_msta','m_g6','m_ural','m_m35','m_humvee','m_oplot','m_t72','m_t62','m_t55','m_leo2'];if(isB)c.userData.refl=.35;{const LV={m_su35:.7,m_j10:.75,m_f18:.45,m_typhoon:.15,m_f15:.2,m_f16:.15,m_rafale:.15,m_mig29:.2};const lv=LV[key];if(lv&&c.color){const l=c.color.r*.3+c.color.g*.59+c.color.b*.11;c.color.lerp(new THREE.Color(.18,.2,.22).multiplyScalar(.7+l*1.6),lv);}}if(VK.includes(key)||/^m_|^(jet|heli|drone|boat|ship)$/.test(key))c.userData.refl=/^m_(f|su|ra|ty|j1|mig)|^jet$/.test(key)?1:.75;if(LK&&c.color){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.012){if(key==='soldier')c.color.lerp(new THREE.Color(LK.uni).convertSRGBToLinear(),.6);else if(VK.includes(key)){const tgt=new THREE.Color(LK.veh).convertSRGBToLinear().multiplyScalar(Math.min(1.6,.55+lum*2.2));c.color.lerp(tgt,.85);if(c.map&&TEXB[key])c.color.multiplyScalar(TEXB[key]);else if(!c.map&&UNTEX[key])c.color.multiplyScalar(UNTEX[key]);}}if(VK.includes(key)){const X=CAMOX[team.fac]||{};c.userData.camoA=new THREE.Color(LK.ca).convertSRGBToLinear();c.userData.camoB=new THREE.Color(LK.cb).convertSRGBToLinear();c.userData.camoP=X.p!=null?X.p:(LK.pat||0);c.userData.camoS=X.s||1;c.userData.camoC=new THREE.Color(X.c||LK.ca).convertSRGBToLinear();}}if(tc&&c.color&&!['tree1','tree2','tree3','tree4'].includes(key))c.color.lerp(tc,LK&&(key==='soldier'||VK.includes(key))?Math.min(k,.06):k);if(isB&&c.color){c.color.multiply(new THREE.Color(1.08,1.0,.84));const rg=team&&team.fac&&FACTIONS[team.fac]?FACTIONS[team.fac].music:null,BW={west:'#9aa3a8',mideast:'#d2b48a',slavic:'#8f9686',southasia:'#c9a27a',eastasia:'#a8a196',latin:'#d9c9a8'}[rg];if(BW){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.05&&lum<.85)c.color.lerp(new THREE.Color(BW).convertSRGBToLinear().multiplyScalar(.6+lum*.9),.32);}}{if(c.isMeshStandardMaterial&&['tank','tankE','tankW','truck','technical','toontank','heli','jet','ship','boat','drone','sam'].includes(key)){c.metalness=Math.min(Math.max(c.metalness||0,.12),.3);c.roughness=Math.min(Math.max(c.roughness??.7,.5),.7);c.userData.sheen=1;}}
       if(isB&&team&&team.fac&&CAMOX[team.fac]){const X=CAMOX[team.fac];c.userData.trimC=new THREE.Color(X.t).convertSRGBToLinear();c.userData.wall=X.w||0;}map.set(m,c);}return map.get(m);});o.material=Array.isArray(o.material)?nm:nm[0];});
   MODELS.tinted[id]={scene:clone,anims:P.anims};return MODELS.tinted[id];}
 // Some models (the Apache) use the older spec/gloss material type, which works only through its own shader hook; the
@@ -227,7 +259,7 @@ function tintedProto(key,team,kk){camoFreq(key);const LK=team&&team.fac?FLOOK[te
 // (only the tinted canopy and the shadow showed). Such materials become plain standard ones before weathering.
 function plainStd(m){if(!m||!m.isMeshStandardMaterial||!(m.isGLTFSpecularGlossinessMaterial||'glossiness' in m||m.specularMap!==undefined&&m.specularMap!==null))return m;
   const n=new THREE.MeshStandardMaterial({name:m.name,color:m.color?m.color.clone():0xffffff,map:m.map||null,normalMap:m.normalMap||null,aoMap:m.aoMap||null,emissive:m.emissive?m.emissive.clone():0x000000,emissiveMap:m.emissiveMap||null,
-    alphaMap:m.alphaMap||null,transparent:m.transparent,opacity:m.opacity,side:m.side,alphaTest:m.alphaTest||0,vertexColors:!!m.vertexColors,skinning:!!m.skinning,roughness:m.glossiness!=null?Math.min(1,Math.max(.35,1-m.glossiness*.7)):.75,metalness:.15});
+    alphaMap:m.alphaMap||null,transparent:m.transparent,opacity:m.opacity,side:m.side,alphaTest:m.alphaTest||0,vertexColors:!!m.vertexColors,roughness:m.glossiness!=null?Math.min(1,Math.max(.35,1-m.glossiness*.7)):.75,metalness:.15});
   if(m.normalScale&&n.normalScale)n.normalScale.copy(m.normalScale);n.userData=Object.assign({},m.userData);return n;}
 function instModel(key,team,fit,size,ys,kk){const T=tintedProto(key,team,kk);if(!T)return null;const src=T.scene;const skinned=!!src.getObjectByProperty('type','SkinnedMesh');
   const inner=skinned&&THREE.SkeletonUtils?THREE.SkeletonUtils.clone(src):src.clone(true);const n=normScale(src,fit,size);const wrap=new THREE.Group();const sy=n.s*(ys||1);inner.scale.set(n.s,sy,n.s);inner.position.set(-n.cx*n.s,-n.my*sy,-n.cz*n.s);if(fit==='long'&&n.xl){const r=new THREE.Group();r.rotation.y=(MODELS.flipX&&MODELS.flipX[key])?-Math.PI/2:Math.PI/2;r.add(inner);wrap.add(r);}else wrap.add(inner);// (kept out of JSON: Object3D.clone() deep-copies userData through JSON, which serialised the whole model, its
@@ -355,8 +387,9 @@ function clericModel(e){const T=G.teams[e.team],o=new THREE.Group(),yaw=new THRE
   const glow=new THREE.Mesh(new THREE.RingGeometry(5.2,6.2,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x5fd38a,transparent:true,opacity:.18,depthWrite:false}));glow.position.y=1.3;glow.renderOrder=2;o.add(glow);
   SCN.add(o);return o;}
 function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
-  if(e.kind==='aa'&&MODELS.proto.truck&&MODELS.proto.sam)c={m:'truck',fit:'z',size:34,extra:'samtruck'};
-  if(e.kind==='arty'){if(e.s&&e.s.rocket||!MIL_TANK[T.fac]&&!MODELS.proto.tank)c={m:'truck',fit:'z',size:34,extra:'mlrs'};else{const tc=MIL_TANK[T.fac]&&MIL_TANK[T.fac].m!=='technical'&&MIL_TANK[T.fac].m!=='toontank'?MIL_TANK[T.fac]:MCFG.tank;c=Object.assign({},tc,{size:tc.size*1.08,extra:'gun'});if(MIL_TANK[T.fac]&&(MIL_TANK[T.fac].m==='technical'||MIL_TANK[T.fac].m==='toontank'))c={m:'truck',fit:'z',size:34,extra:'mlrs'};}}
+  if(e.kind==='aa'&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
+  if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
+  else if(e.kind==='arty'){if(e.s&&e.s.rocket||!MIL_TANK[T.fac]&&!MODELS.proto.tank)c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};else{const tc=MIL_TANK[T.fac]&&MIL_TANK[T.fac].m!=='technical'&&MIL_TANK[T.fac].m!=='toontank'?MIL_TANK[T.fac]:MCFG.tank;c=Object.assign({},tc,{size:tc.size*1.08,extra:'gun'});if(MIL_TANK[T.fac]&&(MIL_TANK[T.fac].m==='technical'||MIL_TANK[T.fac].m==='toontank'))c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};}}
   if(c&&!MODELS.proto[c.m]){const alt={soldier:'inf',tankE:'tank',tankW:'tank',drone:null,technical:'tank',toontank:'tank'}[c.m];if(alt&&MODELS.proto[alt])c=Object.assign({},c,{m:alt});}
   if(!c||!MODELS.proto[c.m])return null;
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
@@ -367,8 +400,8 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   // soft contact shadow so ground vehicles sit in the terrain instead of floating on it
   if(T&&e.s&&e.s.dom==='ground'&&!isInf(e.s)){if(!window.BLOBTEX){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,4,32,32,31);g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(.6,'rgba(0,0,0,.25)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);window.BLOBTEX=new THREE.CanvasTexture(c);}
     const bs=(c.size||30)*.62,bl=new THREE.Mesh(new THREE.PlaneGeometry(bs*1.5,bs).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:BLOBTEX,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));bl.position.y=.35;bl.renderOrder=1;yaw.add(bl);}
-  const ownRotor=e.kind==='heli'?yaw.getObjectByName('main_rotor'):null;if(ownRotor){o.userData.parts.blades=ownRotor;const tr0=yaw.getObjectByName('tail_rotor');if(tr0)o.userData.parts.tailR0=tr0;}
-  if(e.kind==='heli'&&!ownRotor){
+  const rotary=e.kind==='heli'||e.kind==='airlift'&&/^m_/.test(c.m),ownRotor=rotary?yaw.getObjectByName('main_rotor'):null;if(ownRotor){o.userData.parts.blades=ownRotor;const tr0=yaw.getObjectByName('tail_rotor');if(tr0)o.userData.parts.tailR0=tr0;}
+  if(rotary&&!ownRotor){
     // main rotor on a mast just above the cabin roof and a tail rotor on the tail boom, both placed from the model's
     // real bounding box so every nation's helicopter gets correctly sized, visibly spinning rotors
     o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(yaw),ok=isFinite(bb.max.y)&&bb.max.y>2,top=ok?bb.max.y:13,L=ok?Math.max(bb.max.x-bb.min.x,bb.max.z-bb.min.z):50,alongX=!ok||(bb.max.x-bb.min.x)>=(bb.max.z-bb.min.z);

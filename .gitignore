@@ -1,4 +1,5 @@
 orch/out/
 *.log
 .claude/worktrees/
+orch/three/node_modules/
 server/gen/

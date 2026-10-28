@@ -60,7 +60,7 @@ cases.mapShrink = () => {
     for (let k = 0; k < 5; k++) { const b = R.h.sim.test.base(k), v = R.h.sim.test.view(k); console.log(`    side ${k} (${R.h.facs[k]}): base at ${b.map(Math.round)}, ${v.list.filter(r => r[2] === k).length} own entities`); }
   }
   check(!(starts.length && R.h.phase !== 'battle'), "players are never sent 'start' for a battle the server did not start (stuck loading screens)");
-  check(!(R.h.phase === 'battle' && R.h.facs.length > 4), 'a battle never starts with more sides than the map has seats');
+  check(!(R.h.phase === 'battle' && R.h.facs.length > R.h.mx()), `a battle never starts with more sides than the map has seats (${R.h.map}: ${R.h.mx()})`);   // the server may refuse the smaller map instead
 };
 
 // 2. the standby player's checkpoint carries every player's reconnect token: a third socket using a stolen token takes
@@ -113,6 +113,38 @@ cases.spectator = () => {
   R.run(2);
   const after = R.h.sim.test.view(0).list.filter(r => !r[6]);
   check(after.every(r => !(r[3] < 200 && r[4] < 200)), 'units of slot 0 did not obey the late joiner');
+};
+
+// 4. (batch 3) a socket that connected while the lobby was open but never greeted (no seat): after Start it is not
+//    marked "full", so it keeps a battle running AI vs AI after every real player left (R3 again, via the lobby)
+cases.lobbyGhost = () => {
+  console.log('lobbyGhost: an ungreeted socket joins the lobby, the battle starts, both players leave, the ghost keeps pinging');
+  const R = mkRoom();
+  R.connect('owner1', 'ownerkey123'); R.hi('owner1', 'US', 'TOKowner0000001');
+  R.connect('friend1'); R.hi('friend1', 'RU', 'TOKfriend000001');
+  R.connect('ghost01');                       // no greeting, just keep-alives
+  R.say('owner1', [{ k: 'e', t: 'bset', d: { tm: [0, 1], start: 1 } }]);
+  for (const id of ['owner1', 'friend1']) R.say(id, [{ k: 'p', p: { rd: 1 } }]);
+  R.run(3); R.h.leave('owner1'); R.h.leave('friend1');
+  let r = 0; for (let s = 0; s < 120 && r >= 0; s++) { r = R.run(1, 50); if (!R.closed.has('ghost01')) R.h.heard('ghost01'); }
+  console.log(`    after 120 s: phase ${R.h.phase}, ghost closed: ${R.closed.get('ghost01') || 'no'}`);
+  check(R.h.phase === 'closed' || r < 0, 'a battle whose players all left closes even if a socket that sat ungreeted in the lobby keeps pinging');
+};
+// 5. (batch 3) what a socket without a side receives during the battle (passwords are no longer checked once it runs)
+cases.unseatedRx = () => {
+  console.log('unseatedRx: a socket with no side (told "full") during the battle: does it get battle updates?');
+  const R = mkRoom();
+  R.connect('owner1', 'ownerkey123'); R.hi('owner1', 'US', 'TOKowner0000001');
+  R.connect('friend1'); R.hi('friend1', 'RU', 'TOKfriend000001');
+  R.say('owner1', [{ k: 'e', t: 'bset', d: { tm: [0, 1], start: 1 } }]);
+  for (const id of ['owner1', 'friend1']) R.say(id, [{ k: 'p', p: { rd: 1 } }]);
+  R.run(2);
+  R.connect('peek001'); R.hi('peek001', 'US', 'nottoken000000');
+  R.inbox.set('peek001', []); R.run(10);
+  const got = R.inbox.get('peek001') || [], kinds = {};
+  for (const m of got) { const k = m.ctl ? 'ctl' : (m.k + ':' + (m.t || '')); kinds[k] = (kinds[k] || 0) + 1; }
+  console.log(`    received in 10 s: ${JSON.stringify(kinds)}`);
+  check(!got.some(m => m.k === 'e' && (m.t === 'b' || m.t === 'snap' || m.t === 'evt' || m.t === 'ck')), 'a socket without a side gets no battle updates or checkpoints');
 };
 
 for (const [k, f] of Object.entries(cases)) { if (ONLY && ONLY !== k) continue; try { await f(); } catch (e) { check(false, `${k} threw: ${e && e.stack || e}`); } }

@@ -32,18 +32,27 @@ async function renderGames(){if(!NET.room)return;const el=$('games');const all=N
   el.innerHTML='';const hd=document.createElement('div');hd.className='empty';hd.textContent=`${ps.length} open battle${ps.length===1?'':'s'} · ${busy.length} in progress`;el.append(hd);
   for(const p of [...ps,...busy]){const g=p.presence.g,row=document.createElement('div');row.className='game';const nm=(p.by&&names[p.by]&&names[p.by].name)||(p.isMe?'You (other tab)':window.WW3_P2P&&g.c?'game '+String(g.c).toUpperCase():'A player');
     const info=document.createElement('div');const b=document.createElement('b');b.textContent=(g.pw?'🔒 ':'')+FACTIONS[g.f].name;if(g.pw)b.title='Password protected: you need the password to join';const s=document.createElement('span');s.textContent=` · ${nm} · ${(MAPS[g.m]||MAPS.strait).name} · ${g.n||1}${g.s==='full'?'':'/'+(g.mx||8)} players`;info.append(b,s);
-    const btn=document.createElement('button');btn.textContent=g.s==='full'?'In battle':'Join';btn.disabled=!!NET.code||!!NET.game||g.s==='full';btn.onclick=()=>{initAudio();if(g.pw)askPw(p);else joinGame(p);};row.append(info,btn);el.append(row);}}
+    // a battle under way that this tab was playing in (its reconnect token survives a page reload): Rejoin gets the army back
+    let mine=false;if(g.s==='full'&&window.WW3_P2P&&g.c)try{mine=!!sessionStorage.getItem('ww3_tok_'+g.c);}catch(e){}
+    const btn=document.createElement('button');btn.textContent=mine?'Rejoin':g.s==='full'?'In battle':'Join';btn.disabled=!!NET.code||!!NET.game||(g.s==='full'&&!mine);btn.onclick=()=>{initAudio();if(mine){joinByCode(g.c,false,'');return;}if(g.pw)askPw(p);else joinGame(p);};row.append(info,btn);el.append(row);}}
 const GAME_URL=window.WW3_P2P?(()=>{try{const r=document.referrer||'';if(/itch\.io/.test(r))return r.split('#')[0];}catch(e){}return location.href.split('#')[0];})():'https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi';
 function lobbyCode(){return (NET.code&&NET.code!=='join'?NET.code:NET.jcode)||'';}
 // a password-protected game's invite carries the password in the link's fragment (#…&pw=, never sent to any server),
 // so a friend joins in one tap; the text also spells it out for anyone typing the code
 function inviteLink(){const c=lobbyCode();return GAME_URL+'#join='+c+(NET.pw?'&pw='+encodeURIComponent(NET.pw):'');}
-function inviteText(){const NETc=lobbyCode(),pwT=NET.pw?` and the password ${NET.pw}`:'';if(window.WW3_P2P&&location.protocol==='file:')return `Join my World War 3 battle! Open the World War 3 game file (ww3.html, from Discord) in Chrome or Edge, go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code"${pwT}.`;return window.WW3_P2P?(NET.pw?`Join my World War 3 battle (password protected)! Tap ${inviteLink()} , or open ${GAME_URL} , go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code"${pwT}.`:`Join my World War 3 battle! Open ${GAME_URL} , go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code".`):`Join my World War 3 battle: ${GAME_URL}#join=${NETc} (game code ${NETc.toUpperCase()}). Open the link signed in to claude.ai, go to Multiplayer and press Join, or type the code into "Join by code".`;}
+function inviteText(){const NETc=lobbyCode(),pwT=NET.pw?` and the password ${NET.pw}`:'';if(window.WW3_P2P&&location.protocol==='file:')return `Join my World War 3 battle! Open the World War 3 game file (ww3.html, from Discord) in Chrome or Edge, go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code"${pwT}.`;return window.WW3_P2P?(NET.pw?`Join my World War 3 battle (password protected)! Tap ${inviteLink()} , or open ${GAME_URL} , go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code"${pwT}.`:`Join my World War 3 battle! Tap ${inviteLink()} , or open ${GAME_URL} , go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code".`):`Join my World War 3 battle: ${GAME_URL}#join=${NETc} (game code ${NETc.toUpperCase()}). Open the link signed in to claude.ai, go to Multiplayer and press Join, or type the code into "Join by code".`;}
 function copyText(t,btn){const done=()=>{if(btn){const o=btn.textContent;btn.textContent='Copied ✓';setTimeout(()=>btn.textContent=o,1600);}};
   try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,()=>fallback());return;}}catch(e){}fallback();
   function fallback(){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();if(ok)done();else if(btn)btn.textContent='Select the text and copy it';}}
 // join a hosted game from its code (typed, pasted invite text, or the #join= part of an invite link)
-function codeFrom(s){const m=String(s||'').toLowerCase().match(/join=([a-z0-9]{4,8})/)||String(s||'').toLowerCase().match(/\b([a-z0-9]{6})\b/);return m?m[1]:null;}
+// pasted invites: the #join= part of a link wins, then the word after "code", then a bare code, then a capitalised
+// 6-character token outside any web address (codes are shown in capitals), and only last any 6-character word
+function codeFrom(s){s=String(s||'');let m=s.toLowerCase().match(/join=([a-z0-9]{4,8})/);if(m)return m[1];
+  m=s.match(/\bcode\s*[:#]?\s*([a-z0-9]{6})\b/i);if(m)return m[1].toLowerCase();
+  const t=s.trim();if(/^[a-z0-9]{4,8}$/i.test(t))return t.toLowerCase();
+  const w=s.replace(/\S*(\/\/|www\.|\.[a-z]{2,6}\/)\S*/gi,' ');
+  m=w.match(/\b(?=[A-Z]*[0-9])[A-Z0-9]{6}\b/)||w.match(/\b[A-Z0-9]{6}\b/);if(m)return m[0].toLowerCase();
+  const STOP=/^(battle|online|github|invite|friend|please|thanks|server)$/;for(const x of w.toLowerCase().match(/\b[a-z0-9]{6}\b/g)||[])if(!STOP.test(x))return x;return null;}
 function joinByCode(raw,quiet,pw){if(!NET.room||NET.game)return;const code=codeFrom(raw);if(!code){if(!quiet)$('mpstatus').textContent='That is not a game code. Paste the invite or type the 6-character code.';return;}
   if(window.WW3_P2P){if(pw==null)pw=pwFrom(raw);const q=NET.room.peers().find(q=>!q.sameTab&&q.presence&&q.presence.g&&q.presence.g.c===code);const p={peer:'ww3-'+code,presence:{g:{c:code,s:'open',cf:q&&q.presence.g.cf?1:0,pw:q&&q.presence.g.pw?1:0}}};
     // a listed game that needs a password: ask for it first (a game not in the list asks when its host or the server does)
@@ -207,15 +216,28 @@ function wireClient(g){
 //     (NET.reconKick) instead of sitting out the full wait.
 function joinT(name,ms){const p=NET.room.join(name,NET.via?{via:NET.via}:undefined);let late=false;
   return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>{late=true;rej(Object.assign(new Error('timeout'),{type:'timeout'}));},ms))]).catch(e=>{if(late)p.then(g=>{try{g.leave().catch(()=>{});}catch(_){}},()=>{});throw e;});}
+// is a Cloudflare battle still running? 'up' (the server lists it), 'gone' (the network works but the server doesn't run
+// it, or can't be reached while this page's own site can), 'down' (this device has no network)
+async function svAsk(code){const sig=ms=>{try{const c=new AbortController();setTimeout(()=>c.abort(),ms);return c.signal;}catch(e){return undefined;}};
+  const srv=String(window.WW3_SERVER||(typeof WW3_SERVER_URL!=='undefined'?WW3_SERVER_URL:'')).replace(/\/+$/,'');
+  if(srv)try{const r=await fetch(srv+'/games',{cache:'no-store',signal:sig(5000)});const j=await r.json();return ((j&&j.battles)||[]).some(x=>Array.isArray(x)&&x[0]==='b-'+code)?'up':'gone';}catch(e){}
+  if(location.protocol==='file:')return 'gone';
+  try{await fetch(location.href.split('#')[0],{method:'HEAD',cache:'no-store',signal:sig(5000)});return 'gone';}catch(e){return 'down';}}
 async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NET.jcode)return;NET.recon=true;NET.reconKick=false;pushLog('Connection lost. Reconnecting…','w');
-  const gen0=NET.gen||0,p0=NET.myPeer,t0=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let gone=false,here=false,n=0,newTries=0;
+  const gen0=NET.gen||0,p0=NET.myPeer,tA=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let t0=tA,gone=false,here=false,n=0,newTries=0;
   // a battle hosted on Cloudflare: a server blip (restart, redeploy) or this player's own network drop is ridden out on
   // the server, which keeps the battle (and the side, 30 s) or picks it up again from its kept checkpoint. Only the
   // server's own "no such battle" (it handed the battle over, or could not pick it up) lets the standby take over: a
   // standby that merely can't reach the server must not start a second copy of the battle (review R6). If nobody hears
   // from the server for 40 s, it is gone for everyone and the standby takes over.
+  // But 40 s of silence can just as well be this page's own network (a phone in a tunnel): then a takeover helps nobody and
+  // splits the battle (review R11). So when the 40 s are up, ask once more (svAsk): while this page has no network, or
+  // the server still lists the battle, keep riding it out (the 60 s budget counts from then on); take over only when
+  // the network works and the server no longer runs the battle, or can't be reached while other sites can. 5 min at most.
   const svBlip=()=>NET.sv&&!(gen0>0)&&!gone&&performance.now()-t0<40000;
   while(MODE==='client'&&!(G&&G.over)&&performance.now()-t0<60000){
+    if(n>0&&NET.sv&&!(gen0>0)&&!gone&&performance.now()-t0>=40000&&performance.now()-tA<300000){const st=await svAsk(NET.baseCode||NET.jcode);
+      if(MODE!=='client'||(G&&G.over))break;if(st!=='gone'){t0=performance.now()-35000;if(st==='down'&&!NET.svDownSaid){NET.svDownSaid=1;pushLog('No network on this device. Waiting for it to come back…','w');}}}
     if(n>0&&NET.isStandby&&NET.lastCk&&(!here||performance.now()-t0>15000)&&!svBlip()){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
     if(MODE!=='client'||(G&&G.over))break;
     // which room: the old one first; then the follow-up room (with an occasional look back at the old room while it
@@ -235,7 +257,7 @@ async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NE
     const back=()=>gen>gen0?NET.lastRx>=t1:(NET.ackW>=t1||NET.lastRxMe>=t1||(NET.lastRx>=t1&&!!p0&&NET.myPeer===p0));
     for(let k=0;k<24&&!back()&&!NET.reconKick&&MODE==='client';k++){if(!NET.myPeer){const me=g.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}
       if(k%3===0)g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1},cq:NET.cq||[]}).catch(()=>{});await slp(300);}
-    if(back()&&!NET.reconKick){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Reconnected.':'Reconnected.','g');return;}
+    if(back()&&!NET.reconKick){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.svDownSaid=0;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Reconnected.':'Reconnected.','g');return;}
     // the host is not in its room any more (closed the game / lost its connection): it is gone, the standby takes over now.
     // While it is still there (it was just slow), keep knocking at its room, and the standby holds off for up to 15 s
     // instead of starting a second battle beside it. If its room can't be reached at all, the standby takes over at once.

@@ -1,0 +1,9 @@
+{
+  "name": "ww3-three-vendor",
+  "private": true,
+  "description": "Build-time only: bundles Three.js + GLTFLoader + SkeletonUtils into the classic script vendored in index.html (node orch/three/vendor.mjs)",
+  "devDependencies": {
+    "three": "0.186.1",
+    "esbuild": "0.25.10"
+  }
+}

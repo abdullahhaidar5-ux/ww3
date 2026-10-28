@@ -3,7 +3,8 @@
 //
 //  - artifactHtml(): the built artifact page wrapped in the same <!doctype>/<head>/<body> skeleton the claude.ai
 //    Artifact publisher adds, so the test loads exactly what a player's browser gets.
-//  - threeJs(): the vendored Three.js r128 from index.html, served in place of the cdnjs request (no network in tests).
+//  - threeJs(): the vendored Three.js bundle from index.html (the artifact page carries it inline since the r186 upgrade;
+//    THREE_CDN is only still answered in case an old artifact build asks for r128 from cdnjs).
 //  - roomStub(opts): an in-page stand-in for the artifact runtime's window.claude.use('room') / use('user'), carried
 //    between test pages over a BroadcastChannel. It follows the runtime contract (orch/ARTIFACT.md): lobby + join(name)
 //    named rooms, emit/on, presence/peers/onPeers, Sender fields (peer/by/isMe/sameTab), 4 KiB limits on emit data and

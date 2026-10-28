@@ -2,6 +2,20 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-28 08:36 → 11:30 — cycle 11
+
+- Lock expired (cycle of 10-27 21:25 never cleared it); took it. Baseline: `--check` OK, SMOKE PASS. Side lane's
+  `orch/followups` (CIGATE 16/16) landed on main mid-cycle via `orch/ship-fu`; merged.
+- Shipped 4 squads: Visuals (5 national tanks), Battlefield (CBR rebuild, barrage/covert doctrines), Audio (PK/KR/RU
+  anthems), Netcode (`sw.js` no longer downloads every model at install).
+- Integration: two merges committed with conflict markers in the `index.html` credits shell and `sw.js` (build/smoke
+  didn't catch it) → fixed in 024b624; QA item added. Fresh review of the AI diff: no blockers; applied both should-fixes
+  (ambush posts cleared when a player takes back their side; barrage wait reset).
+- Gate: smoke 4p PASS, MPSYNC PASS, HEADLESS --compare PASS, artifact smoke PASS. Local artifact MPSYNC failed
+  (models "aborted a request") — identical on the untouched base → used the CI gate (`orch/cigate.sh`) for the ship.
+- CIGATE 16/16 PASS on b29152b. Artifact republished v174 (page + 5 tank models + 3 anthems); board v17. Server part of
+  the follow-ups waits on PR #5 (main → servers-live). Chaining denied again; 4-hourly schedule picks up the next cycle.
+
 ## 2026-10-27 18:20 — side lane (this chat): shared soundtrack shipped
 
 - Abdullah: "keep what you think is best and proceed". ORCH picked 14 of the 32 candidates (2 menu, 4 calm, 6 combat,
@@ -241,3 +255,4 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
 
 - 2026-10-27 19:50 side lane: shipped reconnect/host-takeover/phone-bar (CIGATE 16/16 on 6b29922, migrate fixed on GitHub runners). Abdullah OK'd a staging Worker (19:37) → `ww3-servers-staging` via `.github/workflows/staging-servers.yml` (first deploy + servertest PASS). New cloud agents: passwords, play-online, review-cf, assembler.
 - 2026-10-28 01:45 side lane: cloud agents hit the usage limit ~20:00 (8 at once). Shipped touch controls (a1bdcb3, 16/16), artifact v169. Restarted 2 agents: cf-final, three-upgrade.
+- 2026-10-28 06:55 side lane: shipped small-fixes, Cloudflare battles (PR #4 merged by Abdullah, servers deployed), graphics Phases 1–4. Artifact v171+.
