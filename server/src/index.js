@@ -33,6 +33,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { routeHost, routePlayer } from './route.js';
 import { BattleHost, runBench } from './battle.js';
+import { pwOf, pwHash, pwGate, offersProto, PwGuard } from './password.js';
 import { createBattleSim } from '../gen/battle-sim.js';   // the game's battle code, bundled by build-sim.mjs
 
 const VERSION = 2;
@@ -128,6 +129,12 @@ export default {
       const fwd = new URL('https://battle/test'); fwd.search = url.search;
       return battles(env).get(battles(env).idFromName(code)).fetch(new Request(fwd));
     }
+    if (p.startsWith('/room-test/')) {   // local test controls for relay rooms (servertest.mjs): TEST_HOOKS=1 only
+      if (env.TEST_HOOKS !== '1') return json({ error: 'not found' }, 404, cors);
+      const code = decodeURIComponent(p.slice(11)).toLowerCase();
+      if (!CODE_RE.test(code)) return json({ error: 'bad game code' }, 400, cors);
+      return env.ROOMS.get(env.ROOMS.idFromName(code)).fetch(new Request('https://room/test'));
+    }
     if (p.startsWith('/battle/')) {
       if (!isWs) return json({ error: 'expected a WebSocket' }, 426, cors);
       if (!ok) return json({ error: 'origin not allowed' }, 403, cors);
@@ -142,7 +149,7 @@ export default {
       const room = battles(env).get(battles(env).idFromName(code), hint ? { locationHint: hint } : undefined);
       const fwd = new URL('https://battle/');
       for (const [k, v] of [['code', code], ['id', id], ['own', own]]) fwd.searchParams.set(k, v);
-      return room.fetch(new Request(fwd, req));
+      return withProto(await room.fetch(new Request(fwd, req)), req);
     }
     if (p === '/lobby' || p.startsWith('/room/')) {
       if (!isWs) return json({ error: 'expected a WebSocket' }, 426, cors);
@@ -159,13 +166,19 @@ export default {
       const room = env.ROOMS.get(env.ROOMS.idFromName(code), hint ? { locationHint: hint } : undefined);
       const fwd = new URL('https://room/');
       for (const [k, v] of [['code', code], ['role', role], ['id', id], ['key', key]]) fwd.searchParams.set(k, v);
-      return room.fetch(new Request(fwd, req));
+      return withProto(await room.fetch(new Request(fwd, req)), req);
     }
     return json({ error: 'not found' }, 404, cors);
   },
 };
 
 const lobby = env => env.LOBBY.get(env.LOBBY.idFromName('lobby'));
+// A page that sent a password offers the subprotocols "ww3" + "pw.<…>" (password.js) and drops the connection unless
+// the server picks one: answer "ww3" on every upgrade (accepted or refused) for such a page.
+function withProto(r, req) {
+  if (r.status !== 101 || !r.webSocket || !offersProto(req)) return r;
+  return new Response(null, { status: 101, webSocket: r.webSocket, headers: { 'Sec-WebSocket-Protocol': 'ww3' } });
+}
 const battles = env => env.BATTLES;
 const BATTLE_CODE_RE = /^[a-z0-9]{4,8}$/;      // a migrated battle ("-m1") is an ordinary browser-hosted relay room
 const RESERVED_CODES = new Set(['bench', 'budget', 'lobby', 'admin', 'test']);
@@ -262,6 +275,7 @@ export class GameRoom extends DurableObject {
     this.usage = new Usage(env);
     this.host = undefined;              // cached host socket (undefined = rebuild from the sockets on next use)
     this.byId = null;                   // cached player id -> socket
+    this.pwGuard = new PwGuard();       // wrong-password guesses (password.js)
     ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('ping', 'pong'));
   }
   info(ws) { let m = this.meta.get(ws); if (!m) { try { m = ws.deserializeAttachment(); } catch (e) {} m = m || {}; this.meta.set(ws, m); } return m; }
@@ -280,6 +294,10 @@ export class GameRoom extends DurableObject {
   async fetch(req) {
     this.usage.event(false);
     const u = new URL(req.url), code = u.searchParams.get('code'), role = u.searchParams.get('role'), ip = ipOf(req);
+    if (u.pathname === '/test') {   // TEST_HOOKS only (the Worker's /room-test/ route): what the room keeps about its host
+      if (this.env.TEST_HOOKS !== '1') return json({ error: 'not found' }, 404);
+      return json({ host: this.ctx.getWebSockets().filter(isOpen).map(w => this.info(w)).filter(m => m.role === 'host') });
+    }
     if (!allow(this.ipBuckets, ip, RATE.ipConnect)) return refuse('limit');
     if (await this.usage.used() >= STOP_RELAY) return refuse('busy');
     const hostId = 'ww3-' + code;
@@ -290,9 +308,11 @@ export class GameRoom extends DurableObject {
       const key = u.searchParams.get('key');
       const old = all.filter(w => this.info(w).role === 'host');
       if (old.some(w => this.info(w).key !== key)) return refuse('taken');
+      // a password-protected game: the host's password, kept only as a salted hash on its socket (survives hibernation)
+      const hpw = pwOf(req), pw = hpw ? await pwHash(hpw) : undefined;
       const [c, s] = Object.values(new WebSocketPair());
       this.ctx.acceptWebSocket(s, ['host']);
-      const m = { role: 'host', id: hostId, key, ip, at: Date.now() };
+      const m = { role: 'host', id: hostId, key, ip, at: Date.now(), pw };
       s.serializeAttachment(m); this.meta.set(s, m);
       // the same host coming back after a blip replaces its old connection and gets its players back
       for (const w of old) { this.info(w).replaced = 1; safeClose(w, 4001, 'replaced'); }
@@ -305,8 +325,15 @@ export class GameRoom extends DurableObject {
       return new Response(null, { status: 101, webSocket: c });
     }
     const id = u.searchParams.get('id');
-    const host = this.liveHost();
+    let host = this.liveHost();
     if (!host) return refuse('nohost');
+    // password-protected game: the right password, or no way in (checked here, not only by the host's page)
+    if (this.info(host).pw) {
+      const why = await pwGate(this.pwGuard, this.info(host).pw, req, ip);
+      if (why) return refuse(why);
+      host = this.liveHost();
+      if (!host) return refuse('nohost');
+    }
     if (this.byId.size >= MAX_CLIENTS) return refuse('full');
     if (this.byId.has(id)) return refuse('taken');
     const [c, s] = Object.values(new WebSocketPair());
@@ -393,7 +420,7 @@ const str = (v, n) => typeof v === 'string' ? v.slice(0, n) : undefined;
 const int = (v, lo, hi) => typeof v === 'number' && isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : undefined;
 function cleanGame(g) {
   if (!g || typeof g !== 'object' || typeof g.c !== 'string' || !CODE_RE.test(g.c)) return null;
-  const o = { c: g.c, f: str(g.f, 4), s: g.s === 'full' ? 'full' : 'open', n: int(g.n, 0, 16), m: str(g.m, 24), mx: int(g.mx, 1, 16), cf: g.cf ? 1 : undefined };
+  const o = { c: g.c, f: str(g.f, 4), s: g.s === 'full' ? 'full' : 'open', n: int(g.n, 0, 16), m: str(g.m, 24), mx: int(g.mx, 1, 16), cf: g.cf ? 1 : undefined, pw: g.pw ? 1 : undefined };
   for (const k in o) if (o[k] === undefined) delete o[k];
   return o;
 }
@@ -552,6 +579,7 @@ export class BattleRoom extends DurableObject {
     this.buckets = new WeakMap();
     this.ipBuckets = new Map();
     this.timer = null; this.lastRep = Date.now(); this.lastList = 0; this.benching = false;
+    this.pwGuard = new PwGuard();       // wrong-password guesses (password.js)
   }
 
   async fetch(req) {
@@ -564,17 +592,27 @@ export class BattleRoom extends DurableObject {
     if (this.host && this.host.phase === 'closed') this.stop();
     // after a restart (redeploy, eviction) the first player to come back picks the battle up from its kept checkpoint
     if (!this.host) await this.resume();
+    let made = false;
     if (!this.host) {
       if (!own) return refuse('nohost');
       if (await this.usage.used() >= STOP_BATTLE) return refuse('busy');
       if (!this.host && !(await this.usage.claim(code))) return refuse('busy');   // all battle slots taken
+      // a password-protected battle: the creator's password, kept only as a salted hash (password.js)
+      const cpw = pwOf(req), pw = cpw ? await pwHash(cpw) : null;
       if (!this.host) {                 // (another creator may have got in while the budget was being checked)
+        made = true;
         this.code = code; this.slot = code; this.lastRep = Date.now();
-        this.host = new BattleHost({ ...this.hostOpts(), sim: createBattleSim(), code, ownKey: own });
+        this.host = new BattleHost({ ...this.hostOpts(), sim: createBattleSim(), code, ownKey: own, pw });
         this.loop(0);
       }
     }
     if ([...this.ips.values()].filter(x => x === ip).length >= MAX_BATTLE_SOCKETS_PER_IP) return refuse('limit');
+    // password-protected: everyone but the battle's owner (its key) needs the right password
+    if (!made && this.host.pw && !(own && own === this.host.ownKey)) {
+      const why = await pwGate(this.pwGuard, this.host.pw, req, ip);
+      if (why) return refuse(why);
+      if (!this.host || this.host.phase === 'closed') return refuse('nohost');
+    }
     const why = this.host.admit(id, own);
     if (why) return refuse(why);
     const [c, s] = Object.values(new WebSocketPair());
@@ -675,6 +713,7 @@ export class BattleRoom extends DurableObject {
     if (op === 'pause') { h.paused = u.searchParams.get('v') === '1'; return json({ ok: true }); }
     if (op === 'settle') { sim.test.keyframe(k); sim.net(0.1); h.flush(); return json({ ok: true }); }
     if (op === 'view') return json(sim.test.view(k));
+    if (op === 'pw') { const ck = await this.ctx.storage.get('ck').catch(() => null); return json({ mem: h.pw || null, kept: ck ? ck.pw || null : null }); }
     if (op === 'team') return json(sim.test.team(k));
     if (op === 'base') return json(sim.test.base(k));
     if (op === 'pos') return json(sim.test.pos(JSON.parse(u.searchParams.get('ids') || '[]')));
