@@ -16,7 +16,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Generals-style bottom command bar replacing the side menu
 - [done] Generals mouse controls + Mouse settings
 - [done] Phone held upright: the build grid shows 4 whole columns, nothing cut off
-- [doing] More intuitive phone controls (one-finger scroll, command bar for touch)
+- [done] Phone controls: drag scrolls the map, hold+drag selects or draws a line, tap gives orders with a marker, touch command strip, first-time guide
 
 ## Multiplayer in the cloud
 - [done] Game live on Cloudflare (ww3.abdullah-haidar5.workers.dev), updated automatically

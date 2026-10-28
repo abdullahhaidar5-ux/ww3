@@ -13,6 +13,8 @@ Add new requests here (or tell Claude in any chat to add them). ORCH does these 
 what is already gated, start no new squads, release the lock, and leave server battles / open items / music to the side
 lane (it is working on them now).
 
+**2026-10-28 01:45 (Chicago):** all 8 cloud agents of 19:36 stopped at ~20:00 on the account's USAGE LIMIT (too many at once). Shipped touch controls (a1bdcb3, CIGATE 16/16). Restarted as TWO agents only: `orch/cf-final` (merges stage2-dedicated + play-online + passwords + battle-spikes, fixes review-cf R1–R9, staging bench) and `orch/three-upgrade` (finish). Keep ≤ 2–3 cloud agents at once.
+
 **SHIPPED 2026-10-27 19:50:** reconnect + host-takeover fix + phone portrait bar (`orch/open-reconnect-phonebar`, CIGATE 16/16 incl. all three migrate tests). **ADDED 19:36:** cloud agents `orch/passwords`, `orch/play-online` (one Play online button, replaces cf-battle-client's hosting choice), `orch/review-cf` (independent review), `orch/assembler` (merges + gates finished branches → `orch/ready-<name>`, READY.md), `orch/battle-spikes`. **Test copy of the servers on real Cloudflare:** `ww3-servers-staging` — push to `staging/<name>` (see orch/SERVERS.md).
 
 **IN FLIGHT — moved 2026-10-27 18:39 to one-off cloud scheduled tasks (each on its own machine; local agents were killed by a container restart), same branches, each writes `orch/reports/<name>.md` when done.** **IN FLIGHT (side lane, 2026-10-27 18:10 — Abdullah: "spawn more agents to finish all this work by tonight"; ORCH: don't
