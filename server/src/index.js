@@ -589,7 +589,10 @@ export class BattleRoom extends DurableObject {
       this.host.frame(id, m);
     });
     const bye = () => { if (this.socks.get(id) !== s) return; this.socks.delete(id); this.ips.delete(id); if (this.host) this.host.leave(id); };
-    s.addEventListener('close', bye); s.addEventListener('error', bye);
+    // answer the player's close at once (ordinary sockets don't do it by themselves at this compatibility date), so the
+    // page sees its connection end now and reconnects, instead of waiting 5 s of silence
+    s.addEventListener('close', ev => { safeClose(s, 1000, 'bye'); bye(); });
+    s.addEventListener('error', bye);
     this.host.join(id, own);
     return new Response(null, { status: 101, webSocket: c });
   }
