@@ -46,6 +46,18 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
 - Chaining the next cycle was blocked again (permission denied for running the scheduled task on demand); the 4-hourly
   schedule (next 17:24 UTC) picks it up.
 
+## 2026-10-27 19:25 — side lane: Generals mouse controls + music clean-up shipped; Cloudflare battle bench measured
+
+- Shipped `orch/controls` (Generals mouse controls, Settings > Mouse incl. "Alternate mouse setup"; controls.mjs 43/43)
+  and `orch/soundtrack` step 4 (score generator, mus/smp.mp3 and me/as/we sheets removed, −4.8 MB; AUDIO PASS).
+  CIGATE: all PASS except migrate ×3 (same as main on CI; fix on `orch/open-reconnect-phonebar`).
+- Cloudflare Workers Builds stuck in "Queued" (Cloudflare-side); added `.github/workflows/deploy-servers.yml` (deploys
+  server/ on push to servers-live; secret CLOUDFLARE_API_TOKEN added by Abdullah). PR #3 merged → deployed.
+- **Real free-plan bench** (`/battle-bench?players=8&minutes=3&map=fulda&batch=1`): all 10,800 events ran (no 10 ms
+  cap on the Durable Object), 63 ms wall per game-second (≈6% of a core in real time), 64 KB/s to 8 players, peak 167
+  entities. **Slowest single event 1.6 s** (742/1569/1608 ms per minute) → would be a visible hitch; must be found and
+  split before players use Cloudflare hosting (backlog P1 under server battles).
+
 ## 2026-10-27 18:50 — side lane: Cloudflare battle bench shipped (needs Abdullah's servers-live merge)
 
 - `orch/stage2-dedicated` @ b6b0b39: BattleRoom Durable Object (runs the sim, bundled from src/ by server/build-sim.mjs),
