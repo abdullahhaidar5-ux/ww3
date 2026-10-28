@@ -9,14 +9,17 @@ build → train → select/order → powers → battle to the end → Play again
 
 ## Findings (most severe first)
 
-### Q0 · Multiplayer: a phone that reloads the page mid-battle can't get back in from the menu — High (pending re-test)
+### Q0 · Multiplayer: a phone that reloads mid-battle gets no Rejoin — only works if they know the game code — Medium
 - Steps: friend A hosts (desktop), friend B (phone, 390×844) joins from Open games, battle starts, B's page reloads
   (phone browsers do this when the tab is backgrounded or memory is low; or B pulls to refresh).
 - Expected: B sees "Rejoin battle" (or the battle in Open games with a Join button) and gets their army back.
 - Actual: B lands on the main menu; Open games shows the battle as "IN BATTLE" with a disabled button; the only
   other option is "Join by code" (B has to ask the host for the code). Nothing in the page remembers the battle across
   a reload (no session storage of the code/slot). The 2026-10-27 reconnect work covers dropped *connections*
-  (page still open), not a reloaded page. Re-test running with Join-by-code — result below when done.
+  (page still open), not a reloaded page. Re-test: typing the battle's code into Join by code DOES put B back into
+  the running battle — so it's recoverable, but only if B knows to ask the host for the code (the invite link with
+  #join= would also work if B still has it). Suggest: remember the last battle's code for the session and show
+  "Rejoin battle", or make the "IN BATTLE" row's button rejoin for a player whose slot is still theirs.
 - Run: `node orch/qa-mplobby.mjs --client phoneP` (local wrangler server, browser-to-browser blocked).
 - Screenshot: `orch/shots/qa/mp-client-after-reload-phoneP.png`
 
