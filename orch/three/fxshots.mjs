@@ -45,14 +45,15 @@ const stage = () => page.evaluate(() => {
   for (let i = 0; i < 6; i++) FXH.tr(x - 300, y + 160 + i * 6, 12, x + 40 + i * 9, y - 20, 4, false);
   FXH.muz(x - 300, y + 160, 12, 0, 14);
 });
-const step = (n) => page.evaluate((n) => { for (let i = 0; i < n; i++) renderFrame(1 / 60); }, n);
+// each stepped frame is flushed (gl.finish) so SwiftShader never queues dozens of frames behind the next screenshot
+const step = (n, dt = 1 / 60) => page.evaluate(([n, dt]) => { for (let i = 0; i < n; i++) { renderFrame(dt); R3.getContext().finish(); } }, [n, dt]);
 const shots = [];
-async function snap(name) { const p = path.join(OUTD, `${TAG}-${name}.png`); await page.screenshot({ path: p, timeout: 300000 }); shots.push(p); console.log('shot', p); }
+async function snap(name) { const p = path.join(OUTD, `${TAG}-${name}.png`); await page.screenshot({ path: p, timeout: 900000 }); shots.push(p); console.log('shot', p); }
 if (!PERF) {
   for (const [w, wn] of [[0, 'day'], [3, 'dusk']]) {
     await battle(w);
     await step(2); await stage(); await step(4); await snap(wn + '-boom');
-    await step(70); await snap(wn + '-smoke');
+    await step(18, 1 / 15); await snap(wn + '-smoke'); // ~1.2 s later: smoke spreading, fireballs fading
   }
 } else {
   // frame-time probe: real main loop with explosions kept going, CPU throttled

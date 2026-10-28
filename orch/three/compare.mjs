@@ -134,8 +134,12 @@ try {
       const h = addUnit(0, 'heli', x - 40, y), j = addUnit(1, 'jet', x + 50, y - 20); h.ox = h.x; h.oy = h.y; j.ox = j.x; j.oy = j.y; h.ang = h.va = .6; j.ang = j.va = 2.4;
       boomFX(x + 20, y + 110, 26, false); FXH.smoke(x - 120, y + 60, 40);
       for (let i = 0; i < 5; i++) FXH.tr(x - 40, y, 30, x + 140 + i * 8, y + 120, 2, false);
-      cam.dist = cam.td = 240; cam.x = cam.tx = x; cam.y = cam.ty = y + 50; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; });
-    await frames(page, 4); await snap(page, 'air-apache-f16');
+      window.__air = [x, y]; });
+    // aircraft fly 55 (Apache) / 110 (jets) above the ground, which lifts them up the screen: aim north of them
+    for (const [nm, d, dy] of [['air-apache-f16', 300, -70], ['air-wide', 520, -40]]) {
+      await page.evaluate(([d, dy]) => { const [x, y] = window.__air; cam.dist = cam.td = d; cam.x = cam.tx = x; cam.y = cam.ty = y + dy; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; }, [d, dy]);
+      await frames(page, 4); await snap(page, nm);
+    }
   }
   await ctx.close();
   if (PERF && CLOSE.length) {
