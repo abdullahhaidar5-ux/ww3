@@ -102,7 +102,7 @@ export class BattleHost {
     const P = this.players.get(id); P.pres = p;
     this.sim.pres(id, p, (peer, by, f, tok) => this.hello(peer, f, tok));
     // this player's loading screen has closed: noted for their side (a page that reconnected keeps its side)
-    if (p.rd && this.phase === 'battle') { const k = this.sim.teamOf(id); if (k >= 0) this.rd[k] = 1; }
+    if (p.rd) { P.rd = 1; if (this.phase === 'battle') { const k = this.sim.teamOf(id); if (k >= 0) this.rd[k] = 1; } }
   }
   event(id, t, d) {
     if (t === 'hello') { if (d && typeof d === 'object') this.hello(id, d.f, null); }
@@ -198,7 +198,8 @@ export class BattleHost {
     if (now - this.startedAt > MAX_BATTLE_MS) return this.shut('time limit');
     if (!this.go) {   // after Start: no steps, no snapshots until every human seat's page says rd (at most 20 s)
       // (a side whose player dropped meanwhile does not hold it)
-      if (now < this.goBy && !this.order.every((id, k) => this.rd[k] || !this.sim.test.peers()[k])) return 100;
+      const pr = this.sim.test.peers(), ready = k => { const q = pr[k], P = q && this.players.get(q); return this.rd[k] || !q || (P && P.rd); };
+      if (now < this.goBy && !this.order.every((id, k) => ready(k))) return 100;
       this.go = true; this.lastStep = now; this.acc = 0;
       this.log(`battle ${this.code} running (${((now - this.startedAt) / 1000).toFixed(1)} s after Start)`);
     }
