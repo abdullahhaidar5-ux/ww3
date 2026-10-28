@@ -106,11 +106,20 @@ const waitFor = (page, fn, a, ms, what) => page.waitForFunction(fn, a, { timeout
 async function shot(page, name) { try { fs.mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: path.join(OUT, name), timeout: 240000 }); } catch (e) { warns.push(`screenshot ${name}: ${String(e.message || e).split('\n')[0]}`); } }
 const status = p => p.evaluate(() => document.getElementById('mpstatus').textContent);
 // a scripted lobby on the server (to fill the battle slots)
+// a battle someone else is playing (owner + friend greet, owner starts): it holds one of the 3 battle slots (a lobby
+// holds none: it claims its slot at Start)
 function dummyLobby(code, k) {
+  const sock = (id, own) => new WebSocket(`${WS}/battle/${code}?role=client&id=${id}` + (own ? `&own=${own}` : ''), { headers: { Origin: ORIGIN } });
+  const say = (w, recs) => w.send(recs.map(r => '|' + JSON.stringify(r)).join('\n'));
+  const hi = (w, f, tok) => say(w, [{ k: 'p', p: { hi: { f, n: 1, tok, ed: 1 } } }, { k: 'e', t: 'hello', d: { f } }]);
   return new Promise(res => {
-    const ws = new WebSocket(`${WS}/battle/${code}?role=client&id=ww3p-dummy00${k}&own=dummykey00${k}`, { headers: { Origin: ORIGIN } });
-    ws.onmessage = ev => res({ ws, code, ctl: String(ev.data) }); ws.onerror = () => res({ ws, code, ctl: 'error' });
-    setTimeout(() => res({ ws, code, ctl: 'timeout' }), 8000);
+    const ws = sock(`ww3p-dummy00${k}`, `dummykey00${k}`); let ctl = null, ws2 = null, started = false;
+    ws.onmessage = ev => { const m = String(ev.data);
+      if (ctl === null) { ctl = m; if (!m.startsWith('!w ')) { res({ ws, code, ctl: m }); return; }
+        ws2 = sock(`ww3p-dummyf0${k}`); ws2.onmessage = e2 => { if (String(e2.data).startsWith('!w ')) { hi(ws, 'US', 'tokdummy' + k + 'a'); hi(ws2, 'RU', 'tokdummy' + k + 'b'); setTimeout(() => say(ws, [{ k: 'e', t: 'bset', d: { tm: [0, 1], start: 1 } }]), 400); } }; return; }
+      if (!started && /"t":"start"|\["start",/.test(m)) { started = true; res({ ws, ws2, code, ctl: '!w started' }); } };
+    ws.onerror = () => res({ ws, code, ctl: 'error' });
+    setTimeout(() => res({ ws, ws2, code, ctl: ctl && !started ? ctl + ' (no start)' : 'timeout' }), 10000);
   });
 }
 
@@ -126,8 +135,8 @@ async function main() {
   // ---- 1. all battle slots taken -> busy -> host in this browser ----
   const dz = [];
   for (let k = 0; k < 3; k++) dz.push(await dummyLobby('dz' + k + Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'q'), k));
-  say(`1. three other lobbies take the 3 battle slots: ${dz.map(d => d.ctl).join(', ')}`);
-  if (!dz.every(d => d.ctl.startsWith('!w '))) fail('could not open the 3 lobbies that fill the battle slots');
+  say(`1. three other battles take the 3 battle slots: ${dz.map(d => d.ctl).join(', ')}`);
+  if (!dz.every(d => d.ctl === '!w started')) fail('could not start the 3 battles that fill the battle slots');
   await A.evaluate(() => newBattle());
   await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf && document.querySelector('#mpstatus .lob'), null, 40000, 'the creator\'s battle to start in its own browser');
   const fb = await A.evaluate(() => ({ st: document.getElementById('mpstatus').textContent, why: NET.fb || '' }));
@@ -135,7 +144,7 @@ async function main() {
   if (fb.why !== 'busy') fail(`the fallback did not come from the server saying "busy" (${fb.why})`);
   if (/Cloudflare|busy|\bhost/i.test(fb.st)) fail('the fallback lobby tells the player where the battle runs: ' + fb.st.slice(0, 200));
   await A.evaluate(() => cancelHost());
-  for (const d of dz) { await H(d.code, 'close'); try { d.ws.close(); } catch {} }
+  for (const d of dz) { await H(d.code, 'close'); try { d.ws.close(); if (d.ws2) d.ws2.close(); } catch {} }
   await sleep(800);
   const hl = await (await fetch(SRV.url + '/health')).json();
   say(`   the 3 lobbies closed; battle slots in use: ${hl.budget && hl.budget.battles}`);

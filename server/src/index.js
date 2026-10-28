@@ -626,7 +626,7 @@ export class BattleRoom extends DurableObject {
       this.usage.event(true);
       const m = ev.data;
       if (typeof m !== 'string' || this.socks.get(id) !== s || !this.host) return;
-      if (m === 'ping') { safeSend(s, 'pong'); return; }
+      if (m === 'ping') { safeSend(s, 'pong'); this.host.heard(id); return; }
       // a flood or an oversized frame closes the socket soon (every frame is billed before it is dropped: review R5)
       if (m.length > 16 * 1024) { safeClose(s, 1009, 'frame too big'); return; }
       if (!allow(this.buckets, s, RATE.c)) { if (this.buckets.get(s).drop > 200) safeClose(s, 1008, 'too many messages'); return; }

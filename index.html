@@ -7679,9 +7679,12 @@ function joinT(name,ms){const p=NET.room.join(name,NET.via?{via:NET.via}:undefin
   return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>{late=true;rej(Object.assign(new Error('timeout'),{type:'timeout'}));},ms))]).catch(e=>{if(late)p.then(g=>{try{g.leave().catch(()=>{});}catch(_){}},()=>{});throw e;});}
 async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NET.jcode)return;NET.recon=true;NET.reconKick=false;pushLog('Connection lost. Reconnecting…','w');
   const gen0=NET.gen||0,p0=NET.myPeer,t0=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let gone=false,here=false,n=0,newTries=0;
-  // a battle hosted on Cloudflare: a short server blip (restart, redeploy) is ridden out on the server, which picks the
-  // battle up again from its kept checkpoint; only "no such battle" there (or 8 s of no answer) hands it to a player
-  const svBlip=()=>NET.sv&&!(gen0>0)&&!gone&&performance.now()-t0<8000;
+  // a battle hosted on Cloudflare: a server blip (restart, redeploy) or this player's own network drop is ridden out on
+  // the server, which keeps the battle (and the side, 30 s) or picks it up again from its kept checkpoint. Only the
+  // server's own "no such battle" (it handed the battle over, or could not pick it up) lets the standby take over: a
+  // standby that merely can't reach the server must not start a second copy of the battle (review R6). If nobody hears
+  // from the server for 40 s, it is gone for everyone and the standby takes over.
+  const svBlip=()=>NET.sv&&!(gen0>0)&&!gone&&performance.now()-t0<40000;
   while(MODE==='client'&&!(G&&G.over)&&performance.now()-t0<60000){
     if(n>0&&NET.isStandby&&NET.lastCk&&(!here||performance.now()-t0>15000)&&!svBlip()){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
     if(MODE!=='client'||(G&&G.over))break;

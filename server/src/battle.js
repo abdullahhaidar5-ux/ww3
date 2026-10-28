@@ -14,7 +14,8 @@ export const EMPTY_MS = 60000;               // no player connected for this lon
                                              // no socket that holds a side; review R3)
 export const NO_GREET_MS = 20000;            // a lobby nobody has greeted (no human seat) closes after 20 s (review R2)
 export const UNSEATED_MS = 30000;            // during the battle a socket without a side (told "full") is closed after 30 s
-export const SILENT_MS = 60000;              // a socket silent this long is closed (pages send a keep-alive every 1 s)
+export const SILENT_MS = 150000;             // a socket silent this long is closed (pages send a keep-alive every 1 s;
+                                             // not while the battle waits for loading screens, which can freeze a page)
 export const AFTER_END_MS = 120000;          // battle over: the room closes this much later
 export const MAX_BATTLE_MS = 45 * 60000;     // free-plan cap: after 45 minutes the server hands the battle to a player
                                              // (it closes; the standby player takes over as a browser host, as when a
@@ -93,6 +94,7 @@ export class BattleHost {
     } else if (this.phase === 'battle') this.sim.gone(id);
     if (!this.players.size && !this.emptySince) this.emptySince = this.now();
   }
+  heard(id) { const P = this.players.get(id); if (P) P.heard = this.now(); }   // a keep-alive ('ping') from the socket
   // a frame from a player: "|<json>" records joined by "\n"
   frame(id, msg) {
     if (typeof msg !== 'string' || msg.length > MAX_FRAME || !this.players.has(id)) return;
@@ -196,7 +198,7 @@ export class BattleHost {
     this.swept = now;
     for (const [id, P] of [...this.players]) {
       const unseated = this.phase === 'battle' && this.sim.teamOf(id) < 0 && now - P.at > UNSEATED_MS;
-      if (now - P.heard > SILENT_MS || unseated) { this.closeRaw(id, 4003, unseated ? 'full' : 'silent'); this.leave(id); }
+      if ((now - P.heard > SILENT_MS && (this.phase !== 'battle' || this.go)) || unseated) { this.closeRaw(id, 4003, unseated ? 'full' : 'silent'); this.leave(id); }
     }
   }
 
