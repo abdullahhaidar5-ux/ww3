@@ -19,7 +19,7 @@ anything.
 | `orch/LOG.md` | ORCH's cycle log | ORCH appends |
 | `orch/ROADMAP.md` | Progress of all big workstreams, status-tagged; drives the board's Progress section | ORCH + anyone shipping |
 | `orch/board.py` → `orch/board.html` | Command Board (claude.ai/artifact/UENjCQzdzHCzYmqQQEuJLx), built from the three files above | Generated |
-| `vo/`, `mus/` | Voice lines per nation (`vo/<CODE>.mp3`), music | Audio squad |
+| `vo/`, `mus/` | Voice lines per nation (`vo/<CODE>.mp3`); music: the shared soundtrack `mus/st/` (tracks + `manifest.json`, made by `mus/st_pack.py`) and anthem excerpts `mus/an_<CODE>.mp3` (`mus/an_pack.py`) | Audio squad |
 | `sw.js`, `manifest.webmanifest`, icons | Offline/PWA install | Rarely |
 | `relay-worker.js`, `tools/` | Cloudflare relay for strict networks; Windows host tune-up scripts | Netcode squad |
 
@@ -61,8 +61,11 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   combat with the fighting; Abdullah picks the tracks from a shortlist. Nation identity = its anthem at battle start
   and on victory. Shia factions (IR, RS, DW) use the shared soundtrack too; real recorded latmiyas may be added later
   if freely licensed ones are found.
-- Multiplayer: up to 8 players, host's browser runs the battle. Never break multiplayer sync — host and clients
-  must agree.
+- Multiplayer: up to 8 players. Never break multiplayer sync — host and clients must agree. **Battles are hosted on
+  Cloudflare** (Abdullah, 2026-10-27 19:28: Cloudflare is the default and **no hosting button or wording at all** —
+  19:30: "just host": the Multiplayer menu has one "Play online" button that joins an open battle or starts a new one on
+  Cloudflare with the player's map/nation; friends join from the list or by invite code/link); hosting in a player's browser remains only as the automatic fallback (free-plan limit, busy, unreachable, or
+  the server going away mid-match). Until Cloudflare hosting ships, the host's browser runs the battle.
 - Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
   (Abdullah, 2026-10-26).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
