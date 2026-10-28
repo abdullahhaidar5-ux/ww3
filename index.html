@@ -9825,6 +9825,7 @@ function modelsFor(facs,onProg,maxMs){const ks=modelKeysFor(facs);let done=0;MQ.
   const all=Promise.all(ks.map(k=>parseModel(k).then(ok=>{done++;if(onProg)try{onProg(done,ks.length);}catch(e){}return ok?null:k;})));
   return Promise.race([all,new Promise(r=>setTimeout(()=>r(null),maxMs||40000))]).then(res=>{MQ.need=Math.max(0,MQ.need-1);setTimeout(bgPump,0);
     const bad=res?res.filter(Boolean):ks.filter(k=>!MODELS.proto[k]);MODELS.loadMs=Math.round(performance.now()-T0);
+    try{navigator.serviceWorker.ready.then(g=>{if(g.active)g.active.postMessage({t:'models',urls:ks.filter(k=>MODELS.proto[k]).map(k=>MODEL_FILES[k])});}).catch(()=>{});}catch(e){} // keep this battle's models for offline play (sw.js)
     console.log('3D models for '+(facs||[]).join('/')+': '+(ks.length-bad.length)+' of '+ks.length+' ready in '+MODELS.loadMs+' ms'+(bad.length?' (missing: '+bad.join(', ')+')':''));
     return{n:ks.length,bad};});}
 // background downloads while the menu is up: shared models first (unpacked straight away, since every battle uses
