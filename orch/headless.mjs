@@ -24,6 +24,9 @@
 //   node orch/headless.mjs --compare --native-math          # compare with each engine's own Math.sin/cos/atan2/exp/pow
 //                                                           # (fails: Node 22 and Chromium 153 differ in the last bit)
 //   node orch/headless.mjs --portable-math                  # plain run with the portable math --compare uses
+//   node orch/headless.mjs --steptime --players 8 --map fulda --minutes 4   # per-step cost of a server-hosted battle:
+//                                                           # mean / p99 / worst step and which functions the slowest
+//                                                           # steps spent their time in -> orch/out/steptime-*.json
 //   node orch/headless.mjs --hostsnap                       # server bundle: battle + host netcode (07a-hostsnap,
 //                                                           # 07b-ckpt) with no window; hosts N-1 connected players
 //                                                           # and checks what it sends them -> HOSTSNAP PASS / FAIL
@@ -137,7 +140,19 @@ export function simSource(srcDir = SRC, { host = false } = {}) {
 // independent simulation with its own G, caches and driver.
 const BROWSER_NAMES = ['window', 'self', 'document', 'localStorage', 'matchMedia', 'navigator', 'performance'];
 let compiled = null;
-export function makeSim(srcDir = SRC, { host = false } = {}) {
+// prof: names of top-level sim functions to time (--steptime). Each `function NAME(` becomes NAME__raw plus a wrapper
+// NAME that adds its run time (inclusive: nested timed calls count in both) to globalThis.__ww3prof.t[NAME].
+function profWrap(code, names) {
+  let tail = '';
+  for (const f of names) {
+    const re = new RegExp('([\\n;])(async )?function ' + f + '\\(');
+    const m = re.exec(code); if (!m) continue;
+    code = code.replace(re, `${m[1]}${m[2] || ''}function ${f}__raw(`);
+    tail += `function ${f}(){const P=globalThis.__ww3prof,t0=P.now();try{return ${f}__raw.apply(this,arguments);}finally{P.t.${f}=(P.t.${f}||0)+P.now()-t0;}}\n`;
+  }
+  return code + '\n/* ===== --steptime wrappers ===== */\n' + tail;
+}
+export function makeSim(srcDir = SRC, { host = false, prof = null } = {}) {
   const noop = () => {};
   const ctx2d = new Proxy({}, { get: (t, k) => (k in t ? t[k] : noop), set: () => true });
   const canvas = () => ({ width: 0, height: 0, style: {}, getContext: () => ctx2d });
@@ -151,9 +166,11 @@ export function makeSim(srcDir = SRC, { host = false } = {}) {
     performance: perf,
   };
   env.window = env.self = host ? undefined : env; // the server bundle runs with no window at all
-  if (!compiled || compiled.dir !== srcDir || compiled.host !== host) {
-    const body = simSource(srcDir, { host }) + `\n/* ===== driver ===== */\nreturn (${DRIVER.toString()})();\n//# sourceURL=ww3-sim.js`;
-    compiled = { dir: srcDir, host, fn: new vm.Script(`(function(${BROWSER_NAMES.join(',')}){\n${body}\n})`, { filename: 'ww3-sim.js' }).runInThisContext() };
+  const pk = prof ? prof.join(',') : '';
+  if (!compiled || compiled.dir !== srcDir || compiled.host !== host || compiled.pk !== pk) {
+    const src0 = simSource(srcDir, { host });
+    const body = (prof ? profWrap(src0, prof) : src0) + `\n/* ===== driver ===== */\nreturn (${DRIVER.toString()})();\n//# sourceURL=ww3-sim.js`;
+    compiled = { dir: srcDir, host, pk, fn: new vm.Script(`(function(${BROWSER_NAMES.join(',')}){\n${body}\n})`, { filename: 'ww3-sim.js' }).runInThisContext() };
   }
   return { W: compiled.fn(...BROWSER_NAMES.map(k => env[k])) };
 }
@@ -557,6 +574,55 @@ function bench() {
   fs.writeFileSync(path.join(ROOT, 'orch', 'out', `headless-bench-${map}-d${DIFFB}.json`), JSON.stringify({ node: process.version, cpu: os.cpus()[0].model, map, rows }, null, 1));
 }
 
+// ------------------------------------------------------------------------------------------------ --steptime
+// Per-step cost of a server-hosted battle, as a Cloudflare BattleRoom runs it: battle + host netcode sending to every
+// other side as a connected player (--hostsnap's setup), one 1/60 s step at a time with a yield to the event loop
+// between steps (so checkpoint packing and other promises run as they would on the server), and a frozen
+// performance.now inside the sim (on Cloudflare the clock does not move while code runs). Reports mean / p99 / worst
+// step and, for the slowest steps, which sim functions took the time (inclusive wall time; GC from Node's gc events).
+//   node orch/headless.mjs --steptime --players 8 --map fulda --seed 1 --minutes 4 [--top 15] [--fns a,b,c]
+const STEP_FNS = ['aiThink', 'findPath', 'regions', 'wallCost', 'nearestInRegion', 'smoothP', 'ffBuild', 'sharePath', 'updateVis', 'separate',
+  'updUnit', 'unitBrain', 'autoEngage', 'nearestEnemy', 'moraleTick', 'updHarv', 'updDozer', 'updBld', 'production', 'econTick', 'checkEnd',
+  'buildHash', 'aiFindSpot', 'aiExpand', 'netTick', 'sendSnapP', 'encEnt', 'visGrid', 'snapOut', 'teamMsg', 'ckEncode', 'ckPack'];
+async function steptime(o) {
+  const fns = argS('fns', '') ? argS('fns', '').split(',') : STEP_FNS, TOP = Number(argS('top', 15));
+  const now = performance.now.bind(performance);
+  const P = globalThis.__ww3prof = { now, t: {} };
+  let gcMs = 0; const { PerformanceObserver } = await import('node:perf_hooks');
+  const obs = new PerformanceObserver(l => { for (const e of l.getEntries()) gcMs += e.duration; }); obs.observe({ entryTypes: ['gc'] });
+  const { W } = makeSim(SRC, { host: true, prof: fns });
+  const st = W.hostStart(Object.assign({}, o, { p2p: true }));
+  console.log(`steptime: ${st.per.map(p => p.fac).join(' ')} on ${st.mapName}, seed ${o.seed}, AI ${o.diff}; battle + host netcode for ${st.per.length - 1} players, one step per event, frozen sim clock; Node ${process.version}, ${os.cpus()[0].model}`);
+  const yieldNow = () => new Promise(r => setImmediate(r));
+  const rec = [], tot = {}, mins = []; let gcPrev = 0;
+  const N = Math.round(o.minutes * 3600);
+  for (let i = 0; i < N; i++) {
+    await yieldNow();
+    P.t = {}; gcMs = 0;
+    const r = W.hostStep(1 / 60);
+    await yieldNow(); // let gc entries for this step arrive (attribution is approximate)
+    const parts = P.t; parts.GC = gcMs; gcPrev = gcMs;
+    for (const k in parts) tot[k] = (tot[k] || 0) + parts[k];
+    rec.push({ i, t: r.t, ms: r.ms, net: r.netMs, parts });
+    const m = Math.floor(i / 3600); if (!mins[m]) mins[m] = { max: 0, sum: 0, n: 0 }; mins[m].max = Math.max(mins[m].max, r.ms); mins[m].sum += r.ms; mins[m].n++;
+    if (r.over || !r.steps) break;
+  }
+  obs.disconnect();
+  const ms = rec.map(r => r.ms).sort((a, b) => a - b), q = p => ms[Math.min(ms.length - 1, Math.floor(ms.length * p))];
+  const mean = ms.reduce((a, b) => a + b, 0) / ms.length;
+  const top = parts => Object.entries(parts).filter(([, v]) => v >= 0.3).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, v]) => `${k} ${v.toFixed(1)}`).join(', ');
+  console.log(`\n${rec.length} steps (${(rec.length / 3600).toFixed(1)} game-min): mean ${mean.toFixed(2)} ms, p99 ${q(.99).toFixed(1)} ms, p99.9 ${q(.999).toFixed(1)} ms, worst ${ms[ms.length - 1].toFixed(1)} ms; steps over 10 ms: ${ms.filter(v => v > 10).length}, over 20 ms: ${ms.filter(v => v > 20).length}`);
+  console.log('per game-minute: ' + mins.map((m, k) => `min ${k + 1}: ${(m.sum / m.n * 60).toFixed(0)} ms/game-s, worst ${m.max.toFixed(1)} ms`).join(' | '));
+  console.log(`slowest ${TOP} steps (inclusive ms per function; nested calls count twice):`);
+  for (const r of [...rec].sort((a, b) => b.ms - a.ms).slice(0, TOP)) console.log(`  t=${r.t.toFixed(2).padStart(7)}s ${r.ms.toFixed(1).padStart(6)} ms (net ${r.net.toFixed(1)})  ${top(r.parts)}`);
+  console.log('total ms per function: ' + Object.entries(tot).sort((a, b) => b[1] - a[1]).slice(0, 16).map(([k, v]) => `${k} ${Math.round(v)}`).join(', '));
+  fs.mkdirSync(path.join(ROOT, 'orch', 'out'), { recursive: true });
+  const res = { node: process.version, map: o.map, players: o.facs.length, seed: o.seed, diff: o.diff, steps: rec.length, mean, p99: q(.99), p999: q(.999), max: ms[ms.length - 1],
+    over10: ms.filter(v => v > 10).length, over20: ms.filter(v => v > 20).length, perMinute: mins, slowest: [...rec].sort((a, b) => b.ms - a.ms).slice(0, TOP), total: tot };
+  fs.writeFileSync(path.join(ROOT, 'orch', 'out', `steptime-${o.map}-${o.facs.length}p-s${o.seed}.json`), JSON.stringify(res, null, 1));
+  return res;
+}
+
 // ------------------------------------------------------------------------------------------------ --compare
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -737,6 +803,7 @@ async function hostsnapCompare(o, P2P, seq, fails) {
 // ------------------------------------------------------------------------------------------------ main
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (has('bench')) bench();
+  else if (has('steptime')) await steptime(opts());
   else if (has('hostsnap')) { const o = opts(); if (has('compare')) { o.realClock = false; o.portMath = has('native-math') ? [] : PORTABLE; } await hostsnap(o); }
   else if (has('compare')) { const o = opts(); o.realClock = false; o.portMath = has('native-math') ? [] : PORTABLE; await compare(o); }
   else { const o = opts(); const res = runNode(o); summary(res, o); }
