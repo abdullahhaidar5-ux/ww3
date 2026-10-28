@@ -10,7 +10,7 @@ Each file is fetched only when about to play. My music, volumes, mute, ducking, 
 
 **Step 4 (new here):** score generator removed from `src/09-audio.js` (1443 → 420 lines); `mus/smp.mp3` and
 me/as/we sheets + pack scripts deleted (−4.8 MB); anthems kept. Offline/unloadable tracks: music rests, retries after
-2 min (no generated fallback any more). Credits: old instrument lines → anthem line. `mus/st/manifest.json` added,
+2 min (no generated fallback any more). `mus/st/manifest.json` added,
 checked by `build.py --check`.
 
 **Tracks/licences:** Matthew Pablo, Alexandr Zhelanov (CC BY 3.0/4.0), Markus Lindner, joeBaxterWebb (CC BY 4.0),
@@ -19,8 +19,7 @@ Kevin MacLeod (CC BY 4.0); anthems US Navy Band (public domain). None blocked.
 **Sizes:** 14 tracks, 32.0 MB at 112 kbps, −18 LUFS (calm −20) — main's encode, not the 96 kbps asked; replacing it
 would conflict with the shipped files (backlog: don't overwrite).
 
-**Tests:** `orch/audio.mjs` AUDIO PASS (25 checks: tap→menu, anthem+calm, calm→combat crossfade + dwell, victory, defeat,
-only played files fetched, no audio errors, offline rest + recovery). CIGATE on e749ff2 (main merged): 14 PASS
+**Tests:** `orch/audio.mjs` AUDIO PASS (25 checks). CIGATE on e749ff2 (main merged): 14 PASS
 (check, audio, smoke4, mpsync, mpsync-server, art-smoke, art-mpsync, headless, mapsweep, migrate, servertest; 3
 no-test SKIPs); FAIL only migrate-abrupt and migrate-down, the known main-side migrate failures — no new failures.
 Ready to ship to main.
