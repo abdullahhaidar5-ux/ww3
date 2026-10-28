@@ -81,5 +81,5 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 
 - Work only in your squad's files unless ORCH assigned otherwise; parallel agents share one repo.
 - Small, verifiable changes. Describe each change in plain words a player would understand.
-- No new runtime dependencies from other hosts beyond what's already used (Three.js r128 bundled, PeerJS bundled).
+- No new runtime dependencies from other hosts beyond what's already used (Three.js r186 bundled via `orch/three/vendor.mjs`, PeerJS bundled).
 - Never force-push `main`, never delete branches or files you didn't create, never rewrite history.

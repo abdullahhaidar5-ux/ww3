@@ -47,11 +47,20 @@ function modelKeysFor(facs){if(typeof MODEL_FILES==='undefined')return[];const n
   const want=new Set();for(const f of facs||[])for(const k of nationModelKeys(f))want.add(k);
   return Object.keys(MODEL_FILES).filter(k=>want.has(k)||!nat.has(k)&&!/^m_/.test(k));}
 function modelBytes(k){const url=MODEL_FILES[k];return MQ.bytes[url]=MQ.bytes[url]||fetchModel(url);}
+// Older spec/gloss materials (the Apache): Three.js dropped them from GLTFLoader after r128. Read them as plain standard
+// materials (diffuse colour + texture, roughness from glossiness: what plainStd() made of them before), so the model
+// keeps its paint. Glass with "transmission" (F-16 canopy) becomes see-through glass in parseModel: real transmission
+// would draw the whole scene a second time every frame.
+class SpecGloss{constructor(p){this.parser=p;this.name='KHR_materials_pbrSpecularGlossiness';}
+  extendMaterialParams(i,P){const d=this.parser.json.materials[i],x=d&&d.extensions&&d.extensions[this.name];if(!x)return Promise.resolve();
+    const f=x.diffuseFactor;if(Array.isArray(f)){P.color=new THREE.Color(f[0],f[1],f[2]);P.opacity=f[3];}
+    P.userData=Object.assign(P.userData||{},{sgGloss:x.glossinessFactor!=null?x.glossinessFactor:1});
+    return x.diffuseTexture?this.parser.assignTexture(P,'map',x.diffuseTexture,THREE.SRGBColorSpace):Promise.resolve();}}
 function parseModel(k){if(MQ.parsed[k])return MQ.parsed[k];return MQ.parsed[k]=(async()=>{try{
-    if(!THREE.GLTFLoader)throw new Error('no GLTFLoader');const ld=MQ.ld=MQ.ld||new THREE.GLTFLoader();
+    if(!THREE.GLTFLoader)throw new Error('no GLTFLoader');const ld=MQ.ld=MQ.ld||new THREE.GLTFLoader().register(p=>new SpecGloss(p));
     let b=await modelBytes(k);const u=new Uint8Array(b);if(u[0]===0x1f&&u[1]===0x8b)b=await gunzipU8(u);
     const g=await new Promise((res,rej)=>{try{ld.parse(b,'',res,rej);}catch(e){rej(e);}});const P={scene:g.scene,anims:g.animations};
-    P.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.encoding=THREE.sRGBEncoding;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);}}});
+    P.scene.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const ms=Array.isArray(o.material)?o.material:[o.material];for(const m of ms){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.roughness=Math.max(.5,m.roughness??.8);m.metalness=Math.min(.35,m.metalness??0);if(m.userData.sgGloss!=null){m.roughness=Math.min(1,Math.max(.35,1-m.userData.sgGloss*.7));m.metalness=.15;}if(m.transmission>0){m.opacity*=1-m.transmission;m.transmission=0;}}}});
     try{mergeProto(P);}catch(e){console.warn('merge',k,e);}
     MODELS.proto[k]=P;MODELS.ready=true;{const i=MODELS.failed.indexOf(k);if(i>=0)MODELS.failed.splice(i,1);}delete MQ.bytes[MODEL_FILES[k]];
     // the effects module keeps a list of model geometry it must never free; a model added later must join it
@@ -208,7 +217,7 @@ function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=doc
     case 'IM':rect('#4d5a3a',0,0,W,H);x.fillStyle='#e8e6dc';x.beginPath();x.moveTo(30,54);x.lineTo(55,20);x.lineTo(66,36);x.lineTo(76,26);x.lineTo(92,54);x.closePath();x.fill();break;
     default:rect('#888',0,0,W,H);}
   x.fillStyle='rgba(0,0,0,.08)';for(let i=0;i<W;i+=6)x.fillRect(i,0,3,H);
-  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return FLAGTEX[fac]=t;}
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return FLAGTEX[fac]=t;}
 // A soft sky/ground environment for reflections on painted metal (vehicles, aircraft, ships) and glass/steel on
 // buildings, so they pick up a sheen and catch the light instead of looking flat.
 let ENVT=null;function envTex(){if(window.NOENV)return null;if(ENVT||typeof R3==='undefined'||!R3||!THREE.PMREMGenerator)return ENVT;try{const sc=new THREE.Scene();const g=new THREE.SphereGeometry(50,32,16);
@@ -227,7 +236,7 @@ function tintedProto(key,team,kk){camoFreq(key);const LK=team&&team.fac?FLOOK[te
 // (only the tinted canopy and the shadow showed). Such materials become plain standard ones before weathering.
 function plainStd(m){if(!m||!m.isMeshStandardMaterial||!(m.isGLTFSpecularGlossinessMaterial||'glossiness' in m||m.specularMap!==undefined&&m.specularMap!==null))return m;
   const n=new THREE.MeshStandardMaterial({name:m.name,color:m.color?m.color.clone():0xffffff,map:m.map||null,normalMap:m.normalMap||null,aoMap:m.aoMap||null,emissive:m.emissive?m.emissive.clone():0x000000,emissiveMap:m.emissiveMap||null,
-    alphaMap:m.alphaMap||null,transparent:m.transparent,opacity:m.opacity,side:m.side,alphaTest:m.alphaTest||0,vertexColors:!!m.vertexColors,skinning:!!m.skinning,roughness:m.glossiness!=null?Math.min(1,Math.max(.35,1-m.glossiness*.7)):.75,metalness:.15});
+    alphaMap:m.alphaMap||null,transparent:m.transparent,opacity:m.opacity,side:m.side,alphaTest:m.alphaTest||0,vertexColors:!!m.vertexColors,roughness:m.glossiness!=null?Math.min(1,Math.max(.35,1-m.glossiness*.7)):.75,metalness:.15});
   if(m.normalScale&&n.normalScale)n.normalScale.copy(m.normalScale);n.userData=Object.assign({},m.userData);return n;}
 function instModel(key,team,fit,size,ys,kk){const T=tintedProto(key,team,kk);if(!T)return null;const src=T.scene;const skinned=!!src.getObjectByProperty('type','SkinnedMesh');
   const inner=skinned&&THREE.SkeletonUtils?THREE.SkeletonUtils.clone(src):src.clone(true);const n=normScale(src,fit,size);const wrap=new THREE.Group();const sy=n.s*(ys||1);inner.scale.set(n.s,sy,n.s);inner.position.set(-n.cx*n.s,-n.my*sy,-n.cz*n.s);if(fit==='long'&&n.xl){const r=new THREE.Group();r.rotation.y=(MODELS.flipX&&MODELS.flipX[key])?-Math.PI/2:Math.PI/2;r.add(inner);wrap.add(r);}else wrap.add(inner);// (kept out of JSON: Object3D.clone() deep-copies userData through JSON, which serialised the whole model, its

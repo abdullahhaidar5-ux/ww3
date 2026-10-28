@@ -8,7 +8,7 @@
 //   node orch/smoke.mjs --minutes 8 --players 4
 //   node orch/smoke.mjs --no-lock  # skip the machine-wide browser lock (see browserlock.mjs)
 //   node orch/smoke.mjs --artifact # test the claude.ai artifact edition instead (python3 orch/build.py --artifact
-//                                  # first): Three.js "from cdnjs", room capability stubbed, screenshots art-*.png
+//                                  # first): Three.js inline as on Pages, room capability stubbed, screenshots art-*.png
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -105,7 +105,8 @@ try {
     console.log(`artifact edition: room ${a.room}, three r${a.three}, PeerJS ${a.peer}, P2P shim ${a.p2p}`);
     if (!a.room || !a.host) fails.push('artifact: the game did not pick up the room capability (multiplayer would be off)');
     if (a.peer !== 'undefined' || a.p2p) fails.push('artifact: PeerJS / online-edition shim is still in the artifact page');
-    if (a.three !== '128') fails.push('artifact: Three.js is r' + a.three + ', expected r128');
+    { const want = (/WW3_THREE="0\.(\d+)/.exec(ART.three) || [])[1]; // the vendored bundle's release (orch/three/vendor.mjs)
+      if (a.three !== want) fails.push('artifact: Three.js is r' + a.three + ', expected r' + want); }
   }
 
   // Start a skirmish against the AI the same way the Deploy button does, with the requested number of players.

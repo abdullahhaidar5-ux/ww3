@@ -13,8 +13,9 @@ else:
 1. **No PeerJS, Trystero, online-edition shim or install/service-worker script.** On Pages those scripts stand in for
    the artifact runtime: the shim sets `window.claude.use('room')` over PeerJS. On claude.ai the real
    `claude.use('room')` is there, and `07-net.js` was written for it. The game script is byte-for-byte the same.
-2. **Three.js r128 comes from cdnjs** (`https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js`), because
-   artifact pages may only load scripts from cdnjs/jsdelivr/unpkg. GLTFLoader, SkeletonUtils and the short `MODEL_FILES` list stay inline.
+2. **Three.js stays inline, as on Pages** (since the r186 upgrade, 2026-10-27). r128 used to come from cdnjs, but current
+   Three.js releases are ES modules only and GLTFLoader/SkeletonUtils were never on cdnjs, so the page carries the same
+   bundle `orch/three/vendor.mjs` writes into `index.html` (~0.8 MB; the page loads no external script at all).
 3. **No `<!doctype>/<html>/<head>/<body>` and no manifest/icon links.** The publisher adds its own wrapper. The page
    starts at `<title>World War 3</title>`.
 4. **The 3D models are published as base64 text.** The artifact host refuses `.glb.gz` / `application/gzip` (it serves
