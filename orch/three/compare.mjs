@@ -81,13 +81,16 @@ async function battle(page, map, p, a, simSec) {
   const r = await page.evaluate(async ([map, p, a, seed]) => {
     if (G) G.over = true;
     Object.assign(setup, { map, n: 1, p, a, others: [], tm: [], slot: -1, seed });
-    startSingle(); const w0 = performance.now();
+    // the sim draws from Math.random: seed it (one stream for setup, one for the fast-forward) so both builds play the
+    // same battle; rendering in between gets the normal Math.random back
+    const R0 = Math.random; window.__R0 = R0; window.__simR = mulberry(seed * 7 + 1);
+    Math.random = mulberry(seed); try { startSingle(); } finally { Math.random = R0; } const w0 = performance.now();
     while (window.LOADING && performance.now() - w0 < 900000) await new Promise(r => setTimeout(r, 100));
-    G.teams.forEach(T => { if (!T.ai) T.ai = mkAI(1); }); G.paused = false;
+    Math.random = window.__simR; try { G.teams.forEach(T => { if (!T.ai) T.ai = mkAI(1); }); } finally { Math.random = R0; } G.paused = false;
     return { map: G.mapKey, facs: G.teams.map(T => T.fac), rev: THREE.REVISION, W: MAPW, H: MAPH };
   }, [map, p, a, SEED]);
   for (let done = 0; done < simSec * 60; done += 1800)
-    await page.evaluate(k => { for (let i = 0; i < k && G && !G.over; i++) simUpdate(1 / 60); for (const e of G.ents) { e.ox = e.x; e.oy = e.y; } G.alpha = 1; }, Math.min(1800, simSec * 60 - done));
+    await page.evaluate(k => { Math.random = window.__simR; try { for (let i = 0; i < k && G && !G.over; i++) simUpdate(1 / 60); } finally { Math.random = window.__R0; } for (const e of G.ents) { e.ox = e.x; e.oy = e.y; } G.alpha = 1; }, Math.min(1800, simSec * 60 - done));
   return r;
 }
 // camera: 'overview' (zoomed all the way out over the middle of the map) or 'close' (the busiest fight, zoomed in)
