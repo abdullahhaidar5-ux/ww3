@@ -55,7 +55,9 @@ jobs:
             controls)       [ -f orch/controls.mjs ] && node orch/controls.mjs || echo "SKIP controls (no test)" ;;
             touch)          [ -f orch/touch.mjs ] && node orch/touch.mjs || echo "SKIP touch (no test)" ;;
             audio)          f=$(ls orch/audio*.mjs 2>/dev/null | head -1); [ -n "$f" ] && node "$f" || echo "SKIP audio (no test)" ;;
-            cfclient)       f=$(ls orch/cfbattle*.mjs orch/cfclient*.mjs 2>/dev/null | head -1); [ -n "$f" ] && node "$f" || echo "SKIP cfclient (no test)" ;;
+            cfclient)       # every Cloudflare-battle browser test: cfbattle (server test hooks) and cfclient (Play online flow)
+                            ( r=0; n=0; for f in $(ls orch/cfbattle*.mjs orch/cfclient*.mjs 2>/dev/null); do n=1; node "$f" || r=1; done
+                              [ $n = 1 ] || echo "SKIP cfclient (no test)"; exit $r ) ;;
           esac > out.log 2>&1
           rc=$?
           tail -40 out.log
