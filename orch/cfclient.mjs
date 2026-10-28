@@ -1,5 +1,7 @@
-// "Host on Cloudflare", browser side: two real game pages (headless Chromium) play a battle hosted by the game
-// server's BattleRoom, the real one (server/src, run locally by `wrangler dev`, orch/serverdev.mjs).
+// "Play online", browser side: two real game pages (headless Chromium) play a battle run by the game server's
+// BattleRoom, the real one (server/src, run locally by `wrangler dev`, orch/serverdev.mjs). The player never picks or
+// sees where a battle runs (Abdullah, 2026-10-27 19:30): no visible text on the menu, lobby or battle HUD may say
+// "host" (checked at every step).
 //
 // The pages reach the servers only through orch/cfproxy.mjs (a local pass-through), so the test can cut a connection,
 // restart the server, or make a battle vanish. A second local server with a tiny free-plan allowance answers "busy"
@@ -7,16 +9,17 @@
 // through the servers, and no page can reach anything off this machine (guardContext).
 //
 // Steps (each must pass):
-//   1. fallback: "Host on Cloudflare" chosen, the server is over its budget ("busy") -> the page hosts in its own
-//      browser, with a message; the choice stays remembered
-//   2. lobby: the creator hosts on Cloudflare (a client of the server: via 'wsb', owner lobby from 'blob'); the game
-//      shows up in the friend's game list (from the server's "b|" frame) marked "on Cloudflare" and the friend joins it;
-//      the creator sets teams and adds a computer player ('bset'), the friend's copy of the lobby (from the server)
-//      shows them; the lobby says "Hosted on Cloudflare"; Start
+//   0. menu: one "Play online" button and "New battle"; no hosting choice, the old remembered choice is cleared
+//   1. fallback: "New battle" while the server is over its budget ("busy") -> the battle quietly starts in the page's
+//      own browser with the same lobby and no message about it
+//   2. lobby: "New battle" opens the battle on the server (the creator is a client of it: via 'wsb', leader lobby from
+//      'blob'); it shows up in the friend's game list (from the server's "b|" frame) and the friend's one tap on
+//      "Play online" joins it; the creator sets teams and adds a computer player ('bset'), the friend's copy of the
+//      lobby (from the server) shows them; Start
 //   3. battle: both pages get 'start' with sv:1 (creator = slot 0, friend = slot 1) and play as clients; orders from
 //      both are carried out by the server (their units move in the server's snapshots); the battle runs in sync: each
 //      page matches the server's own checkpoint (sent to the standby page) for its side, and the two pages agree on
-//      everything both can see; the in-battle readout says "hosted on Cloudflare" with a ping
+//      everything both can see; the in-battle readout shows the ping (and nothing about hosting)
 //   4. reconnect: the friend's connection is cut; it reconnects to the same battle and keeps its army
 //   5. server blip: the server restarts (same stored data); both pages wait for it, the server picks the battle up from
 //      its kept checkpoint and the battle goes on there (no player took over)
@@ -105,48 +108,61 @@ async function openPage(tag) {
 const waitFor = (page, fn, a, ms, what) => page.waitForFunction(fn, a, { timeout: ms, polling: 250 }).catch(() => { throw new Error('timed out waiting for ' + what); });
 async function shot(page, name) { try { fs.mkdirSync(OUT, { recursive: true }); await page.screenshot({ path: path.join(OUT, name), timeout: 240000 }); } catch (e) { warns.push(`screenshot ${name}: ${String(e.message || e).split('\n')[0]}`); } }
 const status = p => p.evaluate(() => document.getElementById('mpstatus').textContent);
+// visible words on the page that talk about hosting (Abdullah: none at all). \bhost: "Ghost" units are fine.
+const hostWords = p => p.evaluate(() => { const t = (document.body.innerText || '') + ' ' + [...document.querySelectorAll('button,input,select,[title],[aria-label]')].filter(e => e.offsetParent).map(e => (e.title || '') + ' ' + (e.placeholder || '') + ' ' + (e.getAttribute('aria-label') || '')).join(' ');
+  return [...new Set((t.match(/[^.\n]{0,40}\bhost[^.\n]{0,40}/gi) || []).map(x => x.trim()))]; });
+async function noHost(p, where) { const w = await hostWords(p); if (w.length) fail(`${where}: visible text talks about hosting: ${JSON.stringify(w.slice(0, 4))}`); }
 const games = async () => { try { return await (await fetch(SRV.url + '/games')).json(); } catch { return {}; } };
 
 let A, B;
 async function main() {
   [A, B] = await Promise.all([openPage('creator'), openPage('friend')]);
   await Promise.all([A, B].map(p => p.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 240000 }).catch(() => warns.push('models still loading'))));
-  await waitFor(A, () => !!NET.room && !!document.getElementById('hostOn'), null, 30000, 'the "Host on Cloudflare" choice on the multiplayer menu');
-  say('both pages loaded; the multiplayer menu offers "Host in my browser" / "Host on Cloudflare"');
-  const def = await A.evaluate(() => hostOn());
-  if (def !== 'browser') fail(`default hosting should be "browser", is "${def}"`);
-  await A.evaluate(() => { initAudio(); setup.p = 'US'; document.querySelector('#hostOn button[data-v="cf"]').click(); });
-  const remembered = await A.evaluate(() => [hostOn(), localStorage.getItem('ww3_hostOn')]);
-  if (remembered[0] !== 'cf' || remembered[1] !== 'cf') fail('choosing "Host on Cloudflare" was not remembered: ' + remembered);
+  // ---- 0. the multiplayer menu ----
+  await waitFor(A, () => !!NET.room && !!document.getElementById('playOnline') && !!document.getElementById('host'), null, 30000, 'the "Play online" button on the multiplayer menu');
+  const menu = await A.evaluate(() => ({ play: document.getElementById('playOnline').textContent, nb: document.getElementById('host').textContent, choice: !!document.getElementById('hostOn'), kept: localStorage.getItem('ww3_hostOn') }));
+  say(`0. menu: "${menu.play}" and "${menu.nb}"`);
+  if (!/Play online/.test(menu.play) || !/New battle/.test(menu.nb)) fail('the menu does not offer "Play online" and "New battle": ' + JSON.stringify(menu));
+  if (menu.choice) fail('the menu still offers a choice of where the battle runs');
+  if (menu.kept !== null) fail('the old remembered hosting choice (ww3_hostOn) was not cleared: ' + menu.kept);
+  await noHost(A, 'menu');
+  await A.evaluate(() => { initAudio(); setup.p = 'US'; });
 
-  // ---- 1. server over its budget -> host in this browser ----
+  // ---- 1. server over its budget -> the battle quietly starts in this browser ----
   await busyReady;
   P.route(p => p.startsWith('/battle/') ? BUSY.url : null);
-  await A.evaluate(() => hostGame());
-  await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf, null, 40000, 'the creator to fall back to hosting in its browser');
-  const fb = await A.evaluate(() => ({ st: document.getElementById('mpstatus').textContent, hostOn: hostOn() }));
-  say(`1. server busy -> browser hosting: "${fb.st.slice(0, 140)}"`);
-  if (!/Cloudflare is busy/.test(fb.st) || !/browser is hosting/.test(fb.st)) fail('the busy fallback message is missing from the lobby');
-  if (fb.hostOn !== 'cf') fail('the Cloudflare choice was forgotten after a fallback');
+  await A.evaluate(() => document.getElementById('host').click());
+  await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf && document.querySelector('#mpstatus .lob'), null, 40000, 'the creator\'s battle to start in its own browser');
+  const fb = await A.evaluate(() => ({ st: document.getElementById('mpstatus').textContent, why: NET.fb || '' }));
+  say(`1. server busy (${fb.why}) -> battle in this browser; lobby: "${fb.st.slice(0, 140)}"`);
+  if (fb.why !== 'busy') fail(`the fallback did not come from the server saying "busy" (${fb.why})`);
+  if (/Cloudflare|busy|browser|server/i.test(fb.st)) fail('the fallback lobby tells the player where the battle runs: ' + fb.st.slice(0, 200));
+  if (!/Online/.test(fb.st) || !/Start/.test(fb.st)) fail('the fallback lobby is not the usual lobby (connection line, Start)');
+  await noHost(A, 'fallback lobby');
   await A.evaluate(() => cancelHost());
   P.route(null);
 
   // ---- 2. lobby on Cloudflare ----
-  await A.evaluate(() => hostGame());
-  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpstatus .lob'), null, 30000, 'the creator\'s Cloudflare lobby');
+  await A.evaluate(() => document.getElementById('host').click());
+  await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpstatus .lob'), null, 30000, 'the creator\'s lobby on the server');
   const code = await A.evaluate(() => NET.jcode);
-  say(`2. lobby open on Cloudflare, code ${code.toUpperCase()}; creator status: "${(await status(A)).slice(0, 120)}"`);
-  if (!/Hosted on Cloudflare/.test(await status(A))) fail('the creator\'s lobby does not say "Hosted on Cloudflare"');
+  say(`2. lobby open on the server, code ${code.toUpperCase()}; creator status: "${(await status(A)).slice(0, 120)}"`);
+  if (/Cloudflare/.test(await status(A))) fail('the creator\'s lobby tells the player where the battle runs');
+  if (!/Online/.test(await status(A))) fail('the creator\'s lobby has no connection line ("Online · ping")');
+  await noHost(A, 'leader lobby');
   const gl = await games();
   if (!(gl.battles || []).some(([, e]) => e.g && e.g.c === code && e.g.cf)) fail('the server does not list the battle (cf:1) in its game list: ' + JSON.stringify(gl).slice(0, 200));
   // the friend finds it in the game list (the server's "b|" frame) and joins from there
   await waitFor(B, c => NET.room.peers().some(q => q.presence && q.presence.g && q.presence.g.c === c && q.presence.g.cf), code, 20000, 'the Cloudflare battle in the friend\'s game list');
   const listed = await B.evaluate(async c => { await renderGames(); return document.getElementById('games') ? document.getElementById('games').textContent : ''; }, code);
   say(`friend's game list: "${listed.replace(/\s+/g, ' ').slice(0, 120)}"`);
-  if (!/on Cloudflare/.test(listed)) warns.push('the game list entry does not say "on Cloudflare"');
-  await B.evaluate(c => { initAudio(); setup.p = 'RU'; joinGame(NET.room.peers().find(q => q.presence && q.presence.g && q.presence.g.c === c)); }, code);
-  await waitFor(B, () => NET.via === 'wsb' && /hosted on Cloudflare/.test(document.getElementById('mpstatus').textContent), null, 60000, 'the friend to join the Cloudflare battle from the game list');
-  say(`friend joined: "${(await status(B)).slice(0, 120)}"`);
+  if (/Cloudflare/.test(listed)) fail('the game list tells players where the battle runs: ' + listed.slice(0, 160));
+  await noHost(B, 'game list');
+  // one tap on "Play online": the only open battle is the creator's, so the friend joins it
+  await B.evaluate(() => { initAudio(); setup.p = 'RU'; document.getElementById('playOnline').click(); });
+  await waitFor(B, c => NET.via === 'wsb' && NET.jcode === c && /Joined/.test(document.getElementById('mpstatus').textContent), code, 60000, 'the friend\'s "Play online" to join the creator\'s battle');
+  say(`friend joined with "Play online": "${(await status(B)).slice(0, 120)}"`);
+  await noHost(B, 'joined lobby');
   await waitFor(A, () => NET.cf.blob.seats.filter(s => s.h).length === 2, null, 20000, 'the friend to appear in the creator\'s lobby');
   // teams 1 vs 2 plus one Easy computer player on the friend's team, as a player would set them in the lobby
   await A.evaluate(() => { NET.tm = [0, 1]; renderLobby(); });
@@ -206,7 +222,8 @@ async function main() {
   // in-battle readout
   const hud = await A.evaluate(() => { localStorage.setItem('ww3_fpsShow', '1'); _fpsT = 0; fpsHud(); return document.getElementById('fpsHud').textContent; });
   say(`in-battle readout (creator): "${hud}"`);
-  if (!/hosted on Cloudflare/.test(hud) || !/ping \d+ ms/.test(hud)) fail('the in-battle readout does not show "hosted on Cloudflare" and a ping');
+  if (/Cloudflare|\bhost/i.test(hud) || !/ping \d+ ms/.test(hud)) fail('the in-battle readout should show the ping and nothing about hosting');
+  for (const [p, n] of [[A, 'creator'], [B, 'friend']]) await noHost(p, n + ' battle HUD');
   // run to about MINUTES game-minutes, then check sync
   while ((await snapT(A)) < MINUTES * 60) await tick(10);
   await syncCheck(`@${((await snapT(A)) / 60).toFixed(1)} min`);
@@ -270,6 +287,10 @@ async function main() {
     if (rx > 2000) fail('the other player gets no updates from the new host');
     await shot(C, 'cf-takeover.png');
   }
+  // nothing on screen or in the battle log talked about hosting, through reconnects, the server blip and the takeover
+  for (const [p, n] of [[A, 'creator'], [B, 'friend']]) { await noHost(p, n + ' after the takeover');
+    const lg = await p.evaluate(() => (G && G.msgs || []).map(l => String(l.m)).filter(m => /\bhost/i.test(m)));
+    if (lg.length) fail(`${n}'s battle log talks about hosting: ${JSON.stringify(lg.slice(0, 3))}`); }
 
   // pages reconnecting (client mode, fresh updates from a room on 'wsb'); keeps ticking. true when all made it.
   async function waitRecon(pages, ms) {
@@ -324,5 +345,5 @@ try { fs.rmSync(STATE, { recursive: true, force: true }); } catch {}
 for (const w of [...new Set(warns)].slice(0, 10)) console.log('  warn: ' + w);
 const uniq = [...new Set(fails)];
 if (uniq.length) { console.log(`\nCFCLIENT FAIL: ${uniq[0]} (${secs()})`); for (const f of uniq.slice(1, 15)) console.log('  ✗ ' + f); process.exit(1); }
-console.log(`\nCFCLIENT PASS (${secs()}) — battle hosted by the real server: busy fallback, lobby, start, sync, orders, reconnect, server restart, takeover all OK`);
+console.log(`\nCFCLIENT PASS (${secs()}) — Play online on the real server: menu, silent busy fallback, lobby, one-tap join, start, sync, orders, reconnect, server restart, takeover, no hosting wording all OK`);
 process.exit(0);
