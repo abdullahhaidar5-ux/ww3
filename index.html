@@ -7534,7 +7534,7 @@ function hostChoice(){const h=$('host');if(!h||!cfOK()||$('hostOn'))return;const
 async function hostCF(again){if(!NET.room||NET.code||NET.game)return;const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a'),key=Math.random().toString(36).slice(2,12)+Math.random().toString(36).slice(2,10);
   NET.cf={own:1,key,blob:null,pend:null};$('host').hidden=true;$('cancelHost').hidden=false;
   const r=await joinGame({peer:'ww3-'+code,presence:{g:{c:code,s:'open',cf:1}}},{via:'wsb',own:key});
-  if(r===true){NET.ais=[];NET.tm=[0];cfPush(true);return;}
+  if(r===true){NET.lobby=[];NET.ais=[];NET.tm=[0];cfPush(true);return;}
   NET.cf=null;$('host').hidden=false;$('cancelHost').hidden=true;
   if(r&&r.why==='taken'&&!again)return hostCF(1);
   // the server is over today's free allowance, unreachable or refusing: this browser hosts, as before
