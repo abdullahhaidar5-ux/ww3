@@ -59,7 +59,7 @@ export async function pwCheck(pw, rec) {
 // In memory: it resets only if the object sleeps, which needs everyone to stop connecting.
 const PER_IP = [1 / 20, 5], PER_GAME = [1 / 2, 30];
 export class PwGuard {
-  constructor(now = () => Date.now()) { this.now = now; this.ips = new Map(); this.game = null; }
+  constructor(now = () => Date.now()) { this.now = now; this.ips = new Map(); this.game = null; this.good = new Set(); }
   fill(b, [rate, burst]) { const t = this.now(); b.t = Math.min(burst, b.t + (t - b.at) * rate / 1000); b.at = t; return b; }
   get(ip) { let b = this.ips.get(ip); if (!b) { if (this.ips.size > 5000) this.ips.clear(); b = { t: PER_IP[1], at: this.now() }; this.ips.set(ip, b); } return this.fill(b, PER_IP); }
   g() { if (!this.game) this.game = { t: PER_GAME[1], at: this.now() }; return this.fill(this.game, PER_GAME); }
@@ -74,8 +74,11 @@ export async function pwGate(guard, rec, req, ip) {
   if (!rec) return null;
   const given = pwOf(req);
   if (given === null) return 'needpw';
-  if (!guard.ok(ip)) return 'pwlimit';
-  if (await pwCheck(given, rec)) return null;
+  // an address that already got in with the right password (friends on one Wi-Fi / carrier NAT) is held only by the
+  // per-game limit, so someone else there mistyping it can't lock them out (review R7)
+  const known = guard.good.has(ip);
+  if (known ? guard.g().t < 1 : !guard.ok(ip)) return 'pwlimit';
+  if (await pwCheck(given, rec)) { if (guard.good.size < 5000) guard.good.add(ip); return null; }
   guard.miss(ip);
   return 'badpw';
 }

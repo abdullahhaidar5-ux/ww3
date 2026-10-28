@@ -220,14 +220,21 @@ try {
     const tp = await A2.wait(([t, d]) => t === 'b' && (d.m || []).some(([tt, dd]) => tt === 'team' && dd.gt > 0), 8000);
     const gt = tp ? Math.max(...tp[1].m.filter(([tt]) => tt === 'team').map(([, dd]) => dd.gt)) : 0;
     check(!!st && !!tp && gt >= 3 && gt > t0 - 12, `...picked up from its checkpoint: "start" again and the battle goes on from ${gt.toFixed(0)} s (it was at ${t0.toFixed(0)} s)`);
-    // at most 3 battles at once (the resumed one holds a slot until it closes)
-    const more = [];
-    for (let k = 0; k < 3; k++) {
-      const P = player('s' + k + code.slice(2), 'ww3p-slot000' + k, 'ownslotkey' + k);
-      more.push(await Promise.race([P.waitCtl(m => m.startsWith('!w ') || m.startsWith('!e '), 8000)]));
-      P.ws.close && setTimeout(() => P.ws.close(), 200);
+    // at most 3 battles at once (the resumed one holds a slot until it closes). A lobby holds no slot (review R2): it
+    // claims one at Start, so two more battles start and then a 4th new battle is refused with "busy"
+    const more = [], held = [];
+    for (let k = 0; k < 2; k++) {
+      const c = 's' + k + code.slice(2), P = player(c, 'ww3p-slot000' + k, 'ownslotkey' + k);
+      await P.waitCtl(m => m.startsWith('!w ') || m.startsWith('!e '), 8000);
+      const Q = player(c, 'ww3p-slotq00' + k); await Q.waitCtl(m => m.startsWith('!w ') || m.startsWith('!e '), 8000);
+      P.hello('US', 'tokslot' + k + 'aa'); Q.hello('RU', 'tokslot' + k + 'bb'); await sleep(400);
+      P.emit('bset', { tm: [0, 1], start: 1 });
+      const st = await P.wait(([t, d]) => t === 'start' || (t === 'b' && (d.m || []).some(([tt]) => tt === 'start')), 8000);
+      more.push(st ? 'started' : 'no start'); held.push(P, Q);
     }
-    check(more[0] && more[0].startsWith('!w') && more[1] && more[1].startsWith('!w') && more[2] === '!e busy', `at most 3 battles run at once: the 4th is refused with "busy" (${more.join(', ')})`);
+    { const P3 = player('s2' + code.slice(2), 'ww3p-slot0002', 'ownslotkey2'); more.push(await P3.waitCtl(m => m.startsWith('!w ') || m.startsWith('!e '), 8000)); held.push(P3); }
+    check(more[0] === 'started' && more[1] === 'started' && more[2] === '!e busy', `at most 3 battles run at once: the 4th is refused with "busy" (${more.join(', ')})`);
+    for (const P of held) try { P.ws.close(); } catch {}
     A2.ws.close();
   }
   await sleep(500);

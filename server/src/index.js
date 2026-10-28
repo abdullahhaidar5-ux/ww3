@@ -596,19 +596,23 @@ export class BattleRoom extends DurableObject {
     if (!this.host) {
       if (!own) return refuse('nohost');
       if (await this.usage.used() >= STOP_BATTLE) return refuse('busy');
-      if (!this.host && !(await this.usage.claim(code))) return refuse('busy');   // all battle slots taken
+      // all battle slots in use by running battles: busy now (the page starts the battle in the player's browser). A lobby
+      // itself holds no slot; it claims one at Start (hostOpts claim), so idle lobbies can't lock everyone out (review R2)
+      if (this.usage.status && this.usage.status.battles >= (this.usage.status.maxBattles || MAX_BATTLES)) return refuse('busy');
       // a password-protected battle: the creator's password, kept only as a salted hash (password.js)
       const cpw = pwOf(req), pw = cpw ? await pwHash(cpw) : null;
       if (!this.host) {                 // (another creator may have got in while the budget was being checked)
         made = true;
-        this.code = code; this.slot = code; this.lastRep = Date.now();
+        this.code = code; this.slot = null; this.lastRep = Date.now();
         this.host = new BattleHost({ ...this.hostOpts(), sim: createBattleSim(), code, ownKey: own, pw });
         this.loop(0);
       }
     }
     if ([...this.ips.values()].filter(x => x === ip).length >= MAX_BATTLE_SOCKETS_PER_IP) return refuse('limit');
-    // password-protected: everyone but the battle's owner (its key) needs the right password
-    if (!made && this.host.pw && !(own && own === this.host.ownKey)) {
+    // password-protected: everyone but the battle's owner (its key) needs the right password. Not once the battle runs:
+    // then a socket gets a side only with its player's reconnect token (anyone else is told "full"), so reconnects are
+    // never held up by someone else's wrong guesses (review R7)
+    if (!made && this.host.pw && this.host.phase === 'lobby' && !(own && own === this.host.ownKey)) {
       const why = await pwGate(this.pwGuard, this.host.pw, req, ip);
       if (why) return refuse(why);
       if (!this.host || this.host.phase === 'closed') return refuse('nohost');
@@ -623,7 +627,9 @@ export class BattleRoom extends DurableObject {
       const m = ev.data;
       if (typeof m !== 'string' || this.socks.get(id) !== s || !this.host) return;
       if (m === 'ping') { safeSend(s, 'pong'); return; }
-      if (!allow(this.buckets, s, RATE.c)) { if (this.buckets.get(s).drop > 2000) safeClose(s, 1008, 'too many messages'); return; }
+      // a flood or an oversized frame closes the socket soon (every frame is billed before it is dropped: review R5)
+      if (m.length > 16 * 1024) { safeClose(s, 1009, 'frame too big'); return; }
+      if (!allow(this.buckets, s, RATE.c)) { if (this.buckets.get(s).drop > 200) safeClose(s, 1008, 'too many messages'); return; }
       this.host.frame(id, m);
     });
     const bye = () => { if (this.socks.get(id) !== s) return; this.socks.delete(id); this.ips.delete(id); if (this.host) this.host.leave(id); };
@@ -639,6 +645,7 @@ export class BattleRoom extends DurableObject {
     // (the local end-to-end test waits longer for its slow software-rendered pages: BATTLE_READY_MS, test hooks only)
     const readyMs = this.env.TEST_HOOKS === '1' && +this.env.BATTLE_READY_MS > 0 ? +this.env.BATTLE_READY_MS : undefined;
     return { now: () => Date.now(), log: m => console.log(m), publish: g => this.publish(g), readyMs,
+      claim: async () => { if (await this.usage.used() >= STOP_BATTLE || !this.code || !(await this.usage.claim(this.code))) return false; this.slot = this.code; return true; },
       send: (pid, f) => { const w = this.socks.get(pid); if (w) safeSend(w, f); },
       close: (pid, c, why) => { const w = this.socks.get(pid); this.socks.delete(pid); this.ips.delete(pid); if (w) safeClose(w, c, why); },
       // the latest checkpoint (every 8 s while players are connected; ~10-40 KB): one storage write each

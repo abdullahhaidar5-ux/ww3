@@ -10,7 +10,11 @@ export const MAX_STEPS_PER_TICK = 1;         // one timer callback runs one 1/60
                                              // behind, the next callback comes at once (timers are not billed)
 export const READY_MAX_MS = 20000;           // after Start, wait this long at most for every player's loading screen (rd)
 export const LOBBY_MAX_MS = 30 * 60000;      // an unstarted lobby closes after 30 minutes
-export const EMPTY_MS = 60000;               // no player connected for this long: the room closes
+export const EMPTY_MS = 60000;               // no player connected for this long: the room closes (during the battle:
+                                             // no socket that holds a side; review R3)
+export const NO_GREET_MS = 20000;            // a lobby nobody has greeted (no human seat) closes after 20 s (review R2)
+export const UNSEATED_MS = 30000;            // during the battle a socket without a side (told "full") is closed after 30 s
+export const SILENT_MS = 60000;              // a socket silent this long is closed (pages send a keep-alive every 1 s)
 export const AFTER_END_MS = 120000;          // battle over: the room closes this much later
 export const MAX_BATTLE_MS = 45 * 60000;     // free-plan cap: after 45 minutes the server hands the battle to a player
                                              // (it closes; the standby player takes over as a browser host, as when a
@@ -25,8 +29,10 @@ export class BattleHost {
   // now(): ms clock; publish(entry|null): the game-list entry changed; save(record|null): keep (or drop) the battle's
   // latest checkpoint so it can be picked up after a server restart (BattleHost.restore); log(msg)
   // pw: a password-protected battle's salted hash ({s,h,i}, server/src/password.js), checked by the caller at connect
-  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed, readyMs = READY_MAX_MS, pw = null }) {
-    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log, readyMs, pw });
+  // claim(): async, true when one of the battle slots is free for this battle; asked at Start (a lobby holds no slot, so
+  // idle lobbies can't lock everyone out of battles: review R2). Without it Start is immediate (tests).
+  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed, readyMs = READY_MAX_MS, pw = null, claim = null }) {
+    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log, readyMs, pw, claim });
     this.hostId = 'ww3-' + code;
     this.phase = 'lobby';                    // lobby -> battle -> over -> closed
     this.players = new Map();                // id -> {id, pres, f, tok, at, seat}
@@ -68,7 +74,7 @@ export class BattleHost {
     return null;
   }
   join(id, own) {
-    const p = { id, pres: {}, f: null, tok: null, at: this.now(), own: !!own && own === this.ownKey };
+    const p = { id, pres: {}, f: null, tok: null, at: this.now(), heard: this.now(), own: !!own && own === this.ownKey };
     this.players.set(id, p);
     if (p.own) this.owner = id;
     this.emptySince = 0;
@@ -85,11 +91,12 @@ export class BattleHost {
       if (this.owner === id) this.owner = this.order[0] || null;
       this.sendLobby();
     } else if (this.phase === 'battle') this.sim.gone(id);
-    if (!this.players.size) this.emptySince = this.now();
+    if (!this.players.size && !this.emptySince) this.emptySince = this.now();
   }
   // a frame from a player: "|<json>" records joined by "\n"
   frame(id, msg) {
     if (typeof msg !== 'string' || msg.length > MAX_FRAME || !this.players.has(id)) return;
+    this.players.get(id).heard = this.now();
     for (const r of msg.indexOf('\n') < 0 ? [msg] : msg.split('\n')) {
       const i = r.indexOf('|'); if (i < 0) continue;
       let m; try { m = JSON.parse(r.slice(i + 1)); } catch (e) { continue; }
@@ -122,6 +129,7 @@ export class BattleHost {
     if (typeof f === 'string' && this.sim.facs.includes(f)) P.f = f; else if (!P.f) P.f = this.sim.facs[0];
     if (!this.order.includes(id)) {
       if (this.order.length >= this.mx()) { this.emit('lobby', { n: 0, to: id, full: 1 }); return; }
+      this.greeted = this.now();
       if (P.own) { this.order.unshift(id); this.tm.unshift(0); } else { this.order.push(id); this.tm.push(this.order.length - 1); }
       if (!this.owner) this.owner = id;
       // a joining human takes a computer seat if the map is full
@@ -150,13 +158,26 @@ export class BattleHost {
     if (Array.isArray(d.tm)) this.tm = this.order.map((_, i) => int(d.tm[i], 0, 7, this.tm[i] | 0));
     const mx = this.mx();
     if (this.order.length + this.ais.length > mx) this.ais.splice(Math.max(0, mx - this.order.length));
-    if (d.start) { const why = this.check(); if (!why) { this.startBattle(); return; } }
+    if (d.start) { const why = this.check(); if (!why) { if (!this.claim) { this.startBattle(); return; } this.askStart(); return; } }
     this.sendLobby();
+  }
+  // Start on the server: first a battle slot (claim); if all are in use, the leader is told and can press Start again
+  askStart() {
+    if (this.claiming) return;
+    this.claiming = true;
+    const done = ok => {
+      this.claiming = false;
+      if (this.phase !== 'lobby') return;
+      if (ok && !this.check()) { this.note = ''; this.startBattle(); this.flush(); return; }
+      if (!ok) this.note = 'The game\'s servers are full right now. Press Start again in a minute.';
+      this.sendLobby();
+    };
+    Promise.resolve().then(() => this.claim()).then(ok => done(ok === true), () => done(false));
   }
   sendLobby() {
     const seats = this.seats(), why = this.check();
     for (const id of this.players.keys()) {
-      this.emit('blob', { to: id, c: this.code, pv: this.sim.pv, own: id === this.owner ? 1 : 0, you: this.order.indexOf(id), map: this.map, mx: this.mx(), w: this.w, seats, ok: why ? 0 : 1, why });
+      this.emit('blob', { to: id, c: this.code, pv: this.sim.pv, own: id === this.owner ? 1 : 0, you: this.order.indexOf(id), map: this.map, mx: this.mx(), w: this.w, seats, ok: why ? 0 : 1, why: why || this.note || '' });
     }
     this.flush();
     this.list();
@@ -168,6 +189,16 @@ export class BattleHost {
     return { c: this.code, f: (o && o.f) || (this.facs && this.facs[0]) || 'US', s: this.phase === 'lobby' && n < this.mx() ? 'open' : 'full', n: Math.max(1, n), m: this.map, mx: this.mx(), cf: 1, ...(this.pw ? { pw: 1 } : {}) };
   }
   list(force) { const e = this.entry(), s = JSON.stringify(e); if (force || s !== this.lastPub) { this.lastPub = s; this.publish(e); } }
+
+  // close sockets gone silent (a phone that dropped off the network without closing), and during the battle sockets
+  // that hold no side (told "full"; a real reconnect greets with its token and gets its side back at once)
+  sweep(now) {
+    this.swept = now;
+    for (const [id, P] of [...this.players]) {
+      const unseated = this.phase === 'battle' && this.sim.teamOf(id) < 0 && now - P.at > UNSEATED_MS;
+      if (now - P.heard > SILENT_MS || unseated) { this.closeRaw(id, 4003, unseated ? 'full' : 'silent'); this.leave(id); }
+    }
+  }
 
   // ---- battle
   startBattle() {
@@ -193,9 +224,15 @@ export class BattleHost {
     if (this.phase === 'closed') return -1;
     if (this.phase === 'lobby') {
       if (now - this.created > LOBBY_MAX_MS || (this.emptySince && now - this.emptySince > EMPTY_MS)) return this.shut('lobby closed');
+      if (!this.order.length && now - (this.greeted || this.created) > NO_GREET_MS) return this.shut('lobby closed');
+      this.sweep(now);
       return 1000;
     }
     if (this.phase === 'over') return now >= this.endAt ? this.shut('battle over') : 1000;
+    if (now - (this.swept || 0) > 1000) {   // once a second: only sockets that hold a side keep the battle going
+      this.sweep(now);
+      if ([...this.players.keys()].some(id => this.sim.teamOf(id) >= 0)) this.emptySince = 0; else if (!this.emptySince) this.emptySince = now;
+    }
     if (this.emptySince && now - this.emptySince > EMPTY_MS) return this.shut('everyone left');
     if (now - this.startedAt > MAX_BATTLE_MS) return this.shut('time limit');
     if (!this.go) {   // after Start: no steps, no snapshots until every human seat's page says rd (at most 20 s)
