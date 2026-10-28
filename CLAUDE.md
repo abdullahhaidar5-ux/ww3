@@ -83,3 +83,17 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 - Small, verifiable changes. Describe each change in plain words a player would understand.
 - No new runtime dependencies from other hosts beyond what's already used (Three.js r186 bundled via `orch/three/vendor.mjs`, PeerJS bundled).
 - Never force-push `main`, never delete branches or files you didn't create, never rewrite history.
+
+## Saving usage (Abdullah, 2026-10-28: move fast without burning through his usage limit)
+
+Every token an agent reads counts against Abdullah's plan. Work like this:
+- **Never read `index.html`** (2 MB, generated) or anything in `models/`, `mus/`, `vo/`, `sfx/`, `orch/out/`. Check the
+  build with `python3 orch/build.py --check`, not by reading the output.
+- **Never read a whole `src/` module.** They are 60–280 KB each (`04-gfx.js` alone is ~70k tokens). Find the spot with
+  `grep -n` and read only that range (Read with offset/limit, ~100–200 lines).
+- **Keep command output short:** pipe tests and builds through `| tail -20` (or grep for PASS/FAIL); never print whole
+  gate logs, only the failing excerpt. Use `git log --oneline -10`, `git diff --stat` before full diffs.
+- **Read only the top of `orch/BACKLOG.md`/`LOG.md`/`HISTORY.md`** (head -60) unless the task needs more.
+- **Test smart:** quick local checks while working; run `orch/cigate.sh` (all 16 tests) once when done and once after a
+  fix, not after every small step. Wait on it with one blocking command, not repeated polling.
+- **Write handoff notes** (`orch/HANDOFF-<branch>.md`) when stopping early, so a restart doesn't re-explore.
