@@ -293,10 +293,12 @@ function dustTrail(e,o,dt){if(!o||!o.visible||!(dt>0)||!e.s||!G||!G.map)return;c
   if(ud.tacc>1)ud.tacc=1;}
 /* ---------- Ricochet sparks ----------
    Rifle and machine-gun rounds striking a tank or other armoured vehicle throw a few bright, short-lived sparks off
-   the hull (back toward the shooter) instead of a puff of dirt. Visual only: it looks up which vehicle is at the impact
-   point without changing anything. */
+   the hull (back toward the shooter) instead of a puff of dirt. Visual only: it looks up what was hit without changing
+   anything. The sim aims each round at its target's centre (give or take 4 units), so the unit whose centre is nearest
+   the impact point IS the real target: sparks only when that unit is an armoured vehicle, never for a soldier who
+   happens to stand beside a tank. */
 const RICO_NB=[];
-function ricoHit(x,y){if(!G||!G.ents||!inView(x,y,.05))return false;let hit=false;try{nearby(x,y,30,RICO_NB);for(let i=0;i<RICO_NB.length;i++){const e=RICO_NB[i];if(e.dead||e.isB||!e.s||e.s.dom!=='ground'||e.s.armor!=='heavy')continue;const R=(e.r||12)+5;if((e.x-x)*(e.x-x)+(e.y-y)*(e.y-y)<R*R){hit=true;break;}}}catch(err){}RICO_NB.length=0;return hit;}
+function ricoHit(x,y){if(!G||!G.ents||!inView(x,y,.05))return false;let best=null,bd=64;try{nearby(x,y,16,RICO_NB);for(let i=0;i<RICO_NB.length;i++){const e=RICO_NB[i];if(e.dead||e.isB||!e.s||e.s.dom!=='ground')continue;const d=(e.x-x)*(e.x-x)+(e.y-y)*(e.y-y);if(d<bd){bd=d;best=e;}}}catch(err){}RICO_NB.length=0;return !!best&&best.s.armor==='heavy';}
 const C_RICO=[3,2.5,1.5];
 function ricochet(x1,y1,x,y){const h=groundH(x,y)+rnd(5,10),b=Math.atan2(y1-y,x1-x);part({x,y,h,s:2.4,d:.045,add:true,c:C_RICO});
   const n=3+(Math.random()*3|0);for(let i=0;i<n;i++){const a=b+rnd(-1.4,1.4),v=rnd(60,150);part({x,y,h,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(15,80),add:true,c:i&1?C_SPARK:C_RICO,s:rnd(.7,1.2),f:.5,grav:1,d:rnd(.1,.26)});}}

@@ -451,7 +451,10 @@ function decorateBld(e,o){if(!MODELS.ready)return;const h=e.size/2;const P=new T
   else if(e.kind==='factory'){propObj('container',-h-18,0,Math.PI/2,P);propObj('barrel',h+8,h-4,0,P);propObj('barrel',h+8,h-12,0,P);propObj('barrel',h+14,h-8,0,P);propObj('pallet',-h+6,h+10,0,P);propObj('crate',-h+6,h+10,0,P);}
   else if(e.kind==='airfield'){propObj('crate',h+6,h-6,0,P);propObj('barrel',h+6,h-16,0,P);propObj('containerG',-h-18,10,Math.PI/2,P);}
   else if(e.kind==='shipyard'){propObj('container',-10,-h-14,0,P);propObj('containerG',22,-h-14,0,P);propObj('crate',h+6,0,0,P);}
-  else if(e.kind==='turret'){propObj('sandbag',-h-2,0,Math.PI/2,P);propObj('sandbag',h+2,0,Math.PI/2,P);}
+  else if(e.kind==='turret'){propObj('sandbag',-h-2,0,Math.PI/2,P);propObj('sandbag',h+2,0,Math.PI/2,P);propObj('sandbag',-5,h+3,.08,P);propObj('sandbag',5,-h-3,-.06,P);}
+  // anti-air sites and tunnel mouths get a low sandbag wall and some supplies too (render only)
+  else if(e.kind==='sam'){propObj('sandbag',-h-3,4,Math.PI/2,P);propObj('sandbag',h+3,-4,Math.PI/2,P);propObj('sandbag',2,h+3,.1,P);propObj('crate',h+6,h+4,.3,P);}
+  else if(e.kind==='tunnel'){propObj('sandbag',-h-2,-6,Math.PI/2+.1,P);propObj('sandbag',-h-2,8,Math.PI/2-.08,P);propObj('sandbag',h+2,0,Math.PI/2,P);propObj('barrel',h+5,h-4,0,P);propObj('crate',-h-4,h+4,.5,P);}
   else if(e.kind==='depot'){propObj('containerG',-h-12,8,Math.PI/2,P);propObj('pallet',h+5,h-8,0,P);propObj('crate',h+7,-h+10,.4,P);propObj('barrel',-h+6,h+6,0,P);}
   else if(e.kind==='uplink'){propObj('barrel',h+8,h,0,P);propObj('fence',0,h+14,0,P);}}
 const BMOD={hq:{slab:1,list:[{m:'b_hq',fit:'xz',size:70,ys:.62,x:6,z:4},{m:'b_radar',fit:'y',size:30,x:-30,z:-30,part:'dish',col:'#8a908c',k:.82}]},
