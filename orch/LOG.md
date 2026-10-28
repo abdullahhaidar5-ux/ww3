@@ -13,6 +13,8 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
   (ambush posts cleared when a player takes back their side; barrage wait reset).
 - Gate: smoke 4p PASS, MPSYNC PASS, HEADLESS --compare PASS, artifact smoke PASS. Local artifact MPSYNC failed
   (models "aborted a request") — identical on the untouched base → used the CI gate (`orch/cigate.sh`) for the ship.
+- CIGATE 16/16 PASS on b29152b. Artifact republished v174 (page + 5 tank models + 3 anthems); board v17. Server part of
+  the follow-ups waits on PR #5 (main → servers-live). Chaining denied again; 4-hourly schedule picks up the next cycle.
 
 ## 2026-10-27 18:20 — side lane (this chat): shared soundtrack shipped
 
