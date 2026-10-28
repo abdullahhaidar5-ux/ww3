@@ -675,7 +675,7 @@ export class BattleRoom extends DurableObject {
       try {
         write(`World War 3 battle bench on Cloudflare (Durable Object, ${new Date().toISOString()})`);
         const r = await runBench(sim, o, { now: () => Date.now(), write,
-          yieldFn: () => new Promise(res => setTimeout(() => { this.usage.wake(); if (Date.now() - this.lastRep > BATTLE_REPORT_MS) { this.lastRep = Date.now(); this.usage.report({ bat: 'bench' }).catch(() => {}); } res(); }, 1)) });
+          yieldFn: () => w.write(enc.encode('\n')).catch(() => {}).then(() => new Promise(res => setTimeout(() => { this.usage.wake(); if (Date.now() - this.lastRep > BATTLE_REPORT_MS) { this.lastRep = Date.now(); this.usage.report({ bat: 'bench' }).catch(() => {}); } res(); }, 0))) });
         r.totalWallMs = Date.now() - t0;
         write(`done: ${r.gameSeconds} game-seconds in ${r.totalWallMs} ms; ${r.wallMsPerGameS} ms per game-second (wall time of the steps, an upper bound on CPU); slowest event ${r.maxEventMs} ms; sent ${r.kbPerGameS} KB per game-second to ${r.players} players`);
         write('RESULT ' + JSON.stringify(r));
