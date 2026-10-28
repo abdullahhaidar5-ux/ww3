@@ -1,0 +1,84 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:37033
+[2s] both pages loaded; the multiplayer menu offers "Play online" and "New battle"
+[6s] 1. three other battles take the 3 battle slots: !w started, !w started, !w started
+[6s]    server busy (busy) -> battle in this browser: "Your battle · codeS3BD1COnlineDesert Strait1 / 8 players▶ Start battleWaiting for at least one more player to join. You can also add compute"
+[7s]    the 3 lobbies closed; battle slots in use: 0
+[7s] 2. lobby open on the server, code 2GFTN1; creator status: "Your battle · code2GFTN1OnlineDesert Strait1 / 8 players▶ Start battleWaiting for at least one more player to join.Battl"
+[8s]    friend joined: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[9s]    server lobby: humans US/team 1, RU/team 2; computer CN/team 2
+[29s] 3. battle started on the server (battle, held for loading screens: true); creator is slot 0, friend slot 1
+[58s]    both pages past the loading screen (rd: true, true); battle running: true
+[64s]    slot 0's order: 2/2 of its units moved on the server
+[64s]    slot 1's order: 2/2 of its units moved on the server
+[64s]    in-battle readout (creator): "60 FPS · ping 127 ms"
+[149s]    check @1.5 min slot 0 t=90s: server 24 entities, this side sees 10; page has 10; missing 0, extra 0, off-position 0, mismatched 0; credits server 7305 page 7305
+[150s]    check @1.5 min slot 1 t=90s: server 24 entities, this side sees 22; page has 22; missing 0, extra 0, off-position 0, mismatched 0; credits server 7255 page 7255
+[151s] 4. the friend's connection to the server is cut
+[151s]    after 0.6 s the friend is reconnected via wsb
+[157s]    after reconnect slot 1 t=95s: server 24 entities, this side sees 22; page has 22; missing 0, extra 0, off-position 0, mismatched 0; credits server 7255 page 7255
+[166s] 5. the battle's object is evicted at t=104 s (as on a redeploy)
+[167s]    after 1.5 s: server battle at t=99 s; creator client via wsb (room gen 0), friend client via wsb (room gen 0)
+[171s]    after restart slot 0 t=102s: server 24 entities, this side sees 10; page has 10; missing 0, extra 0, off-position 0, mismatched 0; credits server 7865 page 7865
+[173s]    after restart slot 1 t=102s: server 24 entities, this side sees 22; page has 22; missing 0, extra 0, off-position 0, mismatched 0; credits server 7815 page 7815
+[182s] 6. today's use is pushed past 75%; standby (checkpoint holder) is slot 0; pages holding a checkpoint: true,false
+[183s]    after 1.2 s: server battle closed, today at 76.2%, battles allowed: false; creator host, friend client (room gen 1, last update 0.1 s ago)
+[186s]    new browser host at t=113 s with 24 entities; the other player's side is still theirs; its last update 0.1 s ago
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E PASS (186s) — battle hosted by the real BattleRoom (wrangler dev): busy fallback, lobby, start, sync, orders, reconnect, server restart, budget hand-over all OK
+local game server http://127.0.0.1:44759
+[2s] both pages loaded
+[3s] 1. protected battle open on Cloudflare, code II4A2A; invite link http://127.0.0.1:44341/index.html#join=ii4a2a&pw=Yalla%202026%20%C3%B1
+[3s]    server keeps: {"mem":{"s":"dzz7tXab5GsQQZQbCPDblg==","h":"iFsunOhmza3csdSOQuV1D+Kf7W4raiSFdDpIlVOgJ6w=","i":4000},"kept":null}
+[3s] 2. friend's game list: "🔒 United States · game II4A2A · Desert Strait · 1/8 playersJoin"
+[3s]    "Play online" with no password: started its own battle (did not join the protected one)
+[4s]    wrong password -> "Wrong password. Try again.JoinCancel"
+[4s]    right password -> "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"; creator's lobby has 2 players
+[6s] 3. invite link joined in one go; address bar now /index.html#join=ii4a2a
+[6s] 4. browser-hosted K2P3JG: join by code asks "🔒 Game K2P3JG is password protected. Enter its password to join.JoinC"
+[7s]    right password -> friend: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFPASSWORD PASS (8s) — password-protected games: lock in the list, wrong password refused, right password and invite link join, server keeps only a hash, browser-hosted fallback checks it too
+local game server http://127.0.0.1:45433 (pages reach it through http://127.0.0.1:41677); over-budget server http://127.0.0.1:33701
+[3s] 0. menu: "▶ Play online" and "+ New battle"
+[3s] 1. server busy (busy) -> battle in this browser; lobby: "Your battle · codeSHJOVCOnlineDesert Strait1 / 8 players▶ Start battleWaiting for at least one more player to join. You can also add compute"
+[3s] 2. lobby open on the server, code T98JT9; creator status: "Your battle · codeT98JT9OnlineDesert Strait1 / 8 players▶ Start battleWaiting for at least one more player to join.Battl"
+[3s] friend's game list: "2 open battles · 0 in progressUnited States · game SHJOVC · Desert Strait · 1/8 playersJoinUnited States · game T98JT9 ·"
+  ✗ timed out waiting for the friend's "Play online" to join the creator's battle
+--- server log (tail) ---
+
+ ⛅️ wrangler 4.153.0 (update available 4.154.0)
+───────────────────────────────────────────────
+[custom build] Running: node build-sim.mjs
+[custom build] battle sim up to date: gen/battle-sim.js (315 KB)
+[custom build] 
+Your Worker has access to the following bindings:
+Binding                       Resource            Mode
+env.ROOMS (GameRoom)          Durable Object      local
+env.LOBBY (Lobby)             Durable Object      local
+env.BUDGET (Budget)           Durable Object      local
+env.BATTLES (BattleRoom)      Durable Object      local
+
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:45433
+[wrangler:info] GET /health 200 OK (416ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (19ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (7ms)
+[wrangler:info] GET /turn 200 OK (4ms)
+[wrangler:info] GET /room/shjovc 101 Switching Protocols (17ms)
+[wrangler:info] GET /battle/t98jt9 101 Switching Protocols (25ms)
+[wrangler:info] GET /games 200 OK (4ms)
+[wrangler:info] GET /turn 200 OK (4ms)
+[wrangler:info] GET /room/shjovc 101 Switching Protocols (4ms)
+[wrangler:info] GET /battle/shjovc 101 Switching Protocols (5ms)
+[wrangler:info] GET /battle/2ui5qi 101 Switching Protocols (12ms)
+
+creator log: []
+friend log: []
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT FAIL: timed out waiting for the friend's "Play online" to join the creator's battle (64s)
