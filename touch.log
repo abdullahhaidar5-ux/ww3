@@ -1,0 +1,103 @@
+
+portrait: 390x844, touch
+  ✓ [portrait] first-time guide shows at the start of the first battle
+  ✓ [portrait] guide starts at step 1 of 3 (1 / 3)
+  ✓ [portrait] guide closes after 3 steps and is remembered
+  ✓ [portrait] guide does not come back by itself
+  ✓ [portrait] touch layout is on
+  ✓ [portrait] one-finger drag scrolls the map (camera moved 85)
+  ✓ [portrait] the map follows the finger (dragging left moves the view right: 644 -> 845)
+  ✓ [portrait] a flick keeps gliding after the finger lifts (glided 192 more)
+  ✓ [portrait] scrolling neither selects nor orders anything
+  ✓ [portrait] a drag that stops before lifting does not glide
+  ✓ [portrait] pinch out zooms in (420 -> 200)
+  ✓ [portrait] pinch in zooms out (200 -> 489)
+  ✓ [portrait] tap on a unit selects it (11)
+  ✓ [portrait] command strip appears with units selected (8 buttons)
+  ✓ [portrait] strip buttons are at least 40 px (44x44)
+  ✓ [portrait] strip fits on screen
+  ✓ [portrait] strip sits above the bottom bar (strip bottom 558, bar top 564)
+  ✓ [portrait] the old floating order row steps aside for the strip
+  ✓ [portrait] tap on the ground with a unit selected orders a move (go)
+  ✓ [portrait] a move marker flashes where the order went
+  ✓ [portrait] the unit stays selected after the order
+  ✓ [portrait] tap on an enemy with units selected orders an attack (atk)
+  ✓ [portrait] an attack marker flashes on the target
+  ✓ [portrait] double-tap selects all of that type on screen (5 of 5, other type left out)
+  ✓ [portrait] strip ✕ deselects
+  ✓ [portrait] strip hides when nothing is selected
+  ✓ [portrait] hold, then drag box-selects (7 selected)
+  ✓ [portrait] box-select does not scroll the map
+  ✓ [portrait] hold, then drag with units selected draws a line formation (line)
+  ✓ [portrait] drawing the line does not scroll the map
+  ✓ [portrait] strip "Line" then a plain drag draws the line
+  ✓ [portrait] strip ⚔ arms attack-move
+  ✓ [portrait] then a tap on the map attack-moves there
+  ✓ [portrait] strip 🛡 then a tap guards that spot
+  ✓ [portrait] strip ■ stops the units
+  ✓ [portrait] found a spot to build on
+  ✓ [portrait] choosing a building shows ✓ / ✕ (ok+,no+)
+  ✓ [portrait] a tap only marks the spot (nothing is built yet)
+  ✓ [portrait] scrolling while placing keeps the marked spot
+  ✓ [portrait] ✓ builds it there (bld)
+  ✓ [portrait] ✕ cancels aiming without firing
+  ✓ [portrait] tap a target, then ✓ fires the power there
+  ✓ [portrait] ☰ menu has "Touch controls"
+  ✓ [portrait] it opens the guide again
+
+landscape: 844x390, touch
+  ✓ [landscape] guide is not shown again on a later battle (already seen on this device)
+  ✓ [landscape] touch layout is on
+  ✓ [landscape] one-finger drag scrolls the map (camera moved 180)
+  ✓ [landscape] the map follows the finger (dragging left moves the view right: 644 -> 932)
+  ✓ [landscape] a flick keeps gliding after the finger lifts (glided 207 more)
+  ✓ [landscape] scrolling neither selects nor orders anything
+  ✓ [landscape] a drag that stops before lifting does not glide
+  ✓ [landscape] pinch out zooms in (420 -> 200)
+  ✓ [landscape] pinch in zooms out (200 -> 489)
+  ✓ [landscape] tap on a unit selects it (11)
+  ✓ [landscape] command strip appears with units selected (8 buttons)
+  ✓ [landscape] strip buttons are at least 40 px (76x44)
+  ✓ [landscape] strip fits on screen
+  ✓ [landscape] strip sits above the bottom bar (strip bottom 252, bar top 258)
+  ✓ [landscape] the old floating order row steps aside for the strip
+  ✓ [landscape] tap on the ground with a unit selected orders a move (go)
+  ✓ [landscape] a move marker flashes where the order went
+  ✓ [landscape] the unit stays selected after the order
+  ✓ [landscape] tap on an enemy with units selected orders an attack (atk)
+  ✓ [landscape] an attack marker flashes on the target
+  ✓ [landscape] double-tap selects all of that type on screen (5 of 5, other type left out)
+  ✓ [landscape] strip ✕ deselects
+  ✓ [landscape] strip hides when nothing is selected
+  ✓ [landscape] hold, then drag box-selects (7 selected)
+  ✓ [landscape] box-select does not scroll the map
+  ✓ [landscape] hold, then drag with units selected draws a line formation (line)
+  ✓ [landscape] drawing the line does not scroll the map
+  ✓ [landscape] strip "Line" then a plain drag draws the line
+  ✓ [landscape] strip ⚔ arms attack-move
+  ✓ [landscape] then a tap on the map attack-moves there
+  ✓ [landscape] strip 🛡 then a tap guards that spot
+  ✓ [landscape] strip ■ stops the units
+  ✓ [landscape] found a spot to build on
+  ✓ [landscape] choosing a building shows ✓ / ✕ (ok+,no+)
+  ✓ [landscape] a tap only marks the spot (nothing is built yet)
+  ✓ [landscape] scrolling while placing keeps the marked spot
+  ✓ [landscape] ✓ builds it there (bld)
+  ✓ [landscape] ✕ cancels aiming without firing
+  ✓ [landscape] tap a target, then ✓ fires the power there
+  ✓ [landscape] ☰ menu has "Touch controls"
+  ✓ [landscape] it opens the guide again
+
+desktop: 1366x768, mouse
+  ✓ [desktop] no touch layout with a mouse
+  ✓ [desktop] left-click on a unit selects it
+  ✓ [desktop] no touch command strip with a mouse
+  ✓ [desktop] left-click on the ground orders a move (Generals default) (go)
+  ✓ [desktop] no touch order markers from the mouse
+  ✓ [desktop] right-click deselects (Generals default)
+  ✓ [desktop] left-drag draws a selection box (6 selected)
+  ✓ [desktop] a left-drag does not scroll the map
+  ✓ [desktop] no touch guide on a desktop
+
+94 checks passed, 0 failed (1500s) — screenshots in orch/shots/touch/
+TOUCH PASS
