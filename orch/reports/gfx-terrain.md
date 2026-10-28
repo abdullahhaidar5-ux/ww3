@@ -25,4 +25,4 @@ Desktop close-ups cost +12–28% on the software GPU. Phones are slightly faster
 
 Shots are in `orch/shots/gfx-terrain/`. Harness: `orch/gfxterrain.mjs`.
 
-**CIGATE:** 16/16 PASS (with `origin/main` merged).
+**CIGATE:** 16/16 PASS on `4f12282` (`origin/main` + `orch/three-upgrade` merged). `touch` failed 3 timed hold-drag checks on its first run (1862 s, a slow runner; it also passed on `bbf7767`) and passed on the single re-run. Worth watching.
