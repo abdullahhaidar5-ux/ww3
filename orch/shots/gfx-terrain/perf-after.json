@@ -1,0 +1,111 @@
+{
+  "tag": "after",
+  "html": "index.html",
+  "when": "2026-10-28T08:03:45.887Z",
+  "maps": {
+    "rubalkhali": {
+      "overview": {
+        "median": 12889.5,
+        "mean": 12885.3,
+        "p90": 13068.1,
+        "n": 6
+      },
+      "ground": {
+        "median": 8279.6,
+        "mean": 8272.5,
+        "p90": 8338.9,
+        "n": 6
+      }
+    },
+    "fulda": {
+      "overview": {
+        "median": 11078.8,
+        "mean": 11013.1,
+        "p90": 11332.3,
+        "n": 6
+      },
+      "ground": {
+        "median": 7715.2,
+        "mean": 7642,
+        "p90": 8059.3,
+        "n": 6
+      }
+    },
+    "arctic": {
+      "overview": {
+        "median": 7551.1,
+        "mean": 7309.8,
+        "p90": 7610.6,
+        "n": 6
+      },
+      "ground": {
+        "median": 5056.1,
+        "mean": 5028.5,
+        "p90": 5194.7,
+        "n": 6
+      }
+    },
+    "emirates": {
+      "overview": {
+        "median": 13772.7,
+        "mean": 13703.4,
+        "p90": 14500,
+        "n": 6
+      },
+      "ground": {
+        "median": 8525.4,
+        "mean": 8573.8,
+        "p90": 9258.5,
+        "n": 6
+      }
+    },
+    "islands": {
+      "overview": {
+        "median": 6282.7,
+        "mean": 6197.3,
+        "p90": 6623.1,
+        "n": 6
+      },
+      "ground": {
+        "median": 5700.7,
+        "mean": 5562.8,
+        "p90": 5798.5,
+        "n": 6
+      }
+    },
+    "zagros": {
+      "overview": {
+        "median": 11864.8,
+        "mean": 11785.4,
+        "p90": 12032.1,
+        "n": 6
+      },
+      "ground": {
+        "median": 8145,
+        "mean": 8095.3,
+        "p90": 8294.9,
+        "n": 6
+      }
+    }
+  },
+  "rev": "186",
+  "phone": {
+    "fulda": {
+      "scene": "ground fulda 390x844 x3, 4x CPU, phone=true lv1 527x761",
+      "median": 6271.4,
+      "mean": 6242.8,
+      "p90": 6384.7,
+      "n": 6
+    },
+    "rubalkhali": {
+      "scene": "ground rubalkhali 390x844 x3, 4x CPU, phone=true lv1 527x761",
+      "median": 7480.9,
+      "mean": 7582,
+      "p90": 8131.1,
+      "n": 6
+    }
+  },
+  "errors": [
+    "warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed."
+  ]
+}
