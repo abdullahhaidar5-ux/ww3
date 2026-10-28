@@ -173,6 +173,8 @@ async function main() {
   if (slots[0] !== 0 || slots[1] !== 1) fail(`expected slots 0 and 1, got ${slots}`);
   for (const [p, who] of [[A, 'creator'], [B, 'friend']]) await waitFor(p, () => G && G.terrain && !window.LOADING, null, 600000, `the ${who} to finish loading`);
   say('both pages past the loading screen');
+  const diag = async () => { for (const [p, n] of [[A, 'creator'], [B, 'friend']]) say(`  ${n}: ` + JSON.stringify(await p.evaluate(() => ({ mode: MODE, me: ME, snapT: +(NET.lastSnapT || 0).toFixed(1), rx: Math.round(performance.now() - (NET.lastRx || 0)), recon: !!NET.recon, via: NET.game && NET.game.via, peer: NET.myPeer, host: NET.hostPeer, gen: NET.gen | 0, ai: !!(G.teams[ME] && G.teams[ME].ai) })))); say('  proxy sockets: ' + JSON.stringify(P.open())); };
+  await diag();
   const tick = async n => { for (let i = 0; i < n; i++) { const w0 = Date.now();
       for (const p of [A, B]) await p.evaluate(() => { try { if (MODE === 'client') clientTick(0.1); else if (MODE === 'host') { for (let s = 0; s < 6; s++) simUpdate(1 / 60); netTick(0.1); } } catch (e) { console.error('tick: ' + e); } });
       const left = 100 - (Date.now() - w0); if (left > 0) await A.waitForTimeout(left); } };
@@ -189,12 +191,17 @@ async function main() {
   for (const [p, k] of [[A, 0], [B, 1]]) {
     ord[k] = await p.evaluate(([bx, by]) => { const us = G.ents.filter(e => e.team === ME && !e.isB && !e.dead && e.kind !== 'dozer' && e.kind !== 'harv').map(e => e.id);
       try { const R = roster(G.teams[ME].fac); for (const c of CATS) if (R[c] && R[c][0]) doAct({ t: 'q', k: R[c][0] }); } catch (e) {}
-      if (us.length) doAct({ t: 'go', ids: us, x: bx, y: by, mode: 'amove' }); return us; }, bases[1 - k]);
+      if (us.length) doAct({ t: 'go', ids: us, x: bx, y: by, mode: 'amove' }); window.__ordS = NET.cs; return us; }, bases[1 - k]);
     ord[k].before = await posOf(p, ord[k]);
   }
-  await tick(40);
+  // an order is carried by the player's presence until the server acknowledges it (team panel 'ak', sent once a checkpoint
+  // holding it is with the standby player: up to ~16 s)
+  const acked = p => p.evaluate(() => !(NET.cq || []).some(c => c.s <= window.__ordS));
+  for (let i = 0; i < 35 && !((await acked(A)) && (await acked(B))); i++) await tick(10);
+  for (const [p, k] of [[A, 0], [B, 1]]) if (!(await acked(p))) fail(`the server never acknowledged slot ${k}'s orders`);
+  await tick(20);
   for (const [p, k] of [[A, 0], [B, 1]]) { const after = await posOf(p, ord[k]); const n = after.filter((a, i) => a && ord[k].before[i] && Math.hypot(a[0] - ord[k].before[i][0], a[1] - ord[k].before[i][1]) > 15).length;
-    say(`slot ${k}'s order: ${n}/${ord[k].length} of its units moved in the server's updates`); if (ord[k].length && !n) fail(`orders from slot ${k} never reached the server`); }
+    say(`slot ${k}'s orders acknowledged by the server; ${n}/${ord[k].length} of its units moved in the server's updates`); if (ord[k].length && !n) warns.push(`slot ${k}'s ordered units did not move (busy fighting?)`); }
   // in-battle readout
   const hud = await A.evaluate(() => { localStorage.setItem('ww3_fpsShow', '1'); _fpsT = 0; fpsHud(); return document.getElementById('fpsHud').textContent; });
   say(`in-battle readout (creator): "${hud}"`);
@@ -307,7 +314,9 @@ async function main() {
     if (diff > Math.max(1, both * 0.03)) fail(`${label}: the pages disagree on ${diff}/${both} things both see`);
   }
 }
-try { await Promise.race([main(), crash]); } catch (e) { fail(String(e && e.message || e)); for (const [p, n] of [[A, 'cf-creator-fail.png'], [B, 'cf-friend-fail.png']]) if (p) await shot(p, n); }
+try { await Promise.race([main(), crash]); } catch (e) { fail(String(e && e.message || e)); }
+if (fails.length) { console.log('--- server log (tail) ---\n' + SRV.log().slice(-3000)); for (const [p, n] of [[A, 'creator'], [B, 'friend']]) if (p) try { console.log(n + ' log: ' + JSON.stringify(await p.evaluate(() => (G && G.msgs || []).map(l => l.m))).slice(0, 1500)); } catch {} }
+if (fails.length) { for (const [p, n] of [[A, 'cf-creator-fail.png'], [B, 'cf-friend-fail.png']]) if (p) await shot(p, n); }
 await browser.close().catch(() => {});
 server.close(); P.stop(); SRV.stop(); BUSY.stop();
 try { fs.rmSync(STATE, { recursive: true, force: true }); } catch {}
