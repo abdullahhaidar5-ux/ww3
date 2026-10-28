@@ -74,8 +74,9 @@ async function newBattle(){if(!NET.room||NET.code||NET.game)return;NET.hostNote=
 // "Play online": join the open battle with the most players (one tap); if there is none (or it can't be joined), start
 // a new one with the player's nation and map from the menu. A typed password means a new private battle: never join
 // someone else's game then; password-protected games are joined from the list only (with their password).
-function quickPick(){if(!NET.room)return null;return NET.room.peers().filter(p=>!p.sameTab&&p.presence&&p.presence.g&&p.presence.g.s==='open'&&FKEYS.includes(p.presence.g.f)&&!p.presence.g.pw&&!p.presence.g.lk&&(p.presence.g.n|0)<(p.presence.g.mx||8)).sort((x,y)=>(y.presence.g.n|0)-(x.presence.g.n|0))[0]||null;}
-async function playOnline(){if(!NET.room||NET.code||NET.game||NET.qp)return;NET.qp=1;try{const p=pwVal()?null:quickPick();if(p){const r=await joinGame(p);if(r===true)return;}if(!NET.code&&!NET.game)await newBattle();}finally{NET.qp=0;}}
+// (battles on the game's servers first: they never go stale; a browser lobby that just closed can linger in the list)
+function quickPick(){if(!NET.room)return [];return NET.room.peers().filter(p=>!p.sameTab&&p.presence&&p.presence.g&&p.presence.g.s==='open'&&FKEYS.includes(p.presence.g.f)&&!p.presence.g.pw&&!p.presence.g.lk&&(p.presence.g.n|0)<(p.presence.g.mx||8)).sort((x,y)=>((y.presence.g.cf|0)-(x.presence.g.cf|0))||((y.presence.g.n|0)-(x.presence.g.n|0))).slice(0,2);}
+async function playOnline(){if(!NET.room||NET.code||NET.game||NET.qp)return;NET.qp=1;try{for(const p of pwVal()?[]:quickPick()){const r=await joinGame(p);if(r===true||NET.game||NET.code)return;}if(!NET.code&&!NET.game)await newBattle();}finally{NET.qp=0;}}
 // Host in this browser (today's way; also the fallback when Cloudflare can't host). note: shown at the top of the lobby
 async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hostNote=note||'';NET.ais=[];const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];mpIn(1);
   $('mpstatus').textContent='Connecting…';

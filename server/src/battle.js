@@ -75,7 +75,7 @@ export class BattleHost {
     return null;
   }
   join(id, own) {
-    const p = { id, pres: {}, f: null, tok: null, at: this.now(), heard: this.now(), own: !!own && own === this.ownKey };
+    const p = { id, pres: {}, f: null, tok: null, at: this.now(), heard: this.now(), own: !!own && own === this.ownKey, full: this.phase === 'battle' ? 1 : 0 };   // full: no side (yet)
     this.players.set(id, p);
     if (p.own) this.owner = id;
     this.emptySince = 0;
@@ -124,7 +124,7 @@ export class BattleHost {
     const P = this.players.get(id); if (!P) return;
     if (tok) P.tok = String(tok).slice(0, 16);
     if (this.phase === 'battle') {   // a reconnect; anyone else is told the game is full (it has started)
-      if (P.tok && this.sim.hasTok(P.tok)) this.sim.rejoin(id, P.tok); else this.emit('lobby', { n: 0, to: id, full: 1 });
+      if (P.tok && this.sim.hasTok(P.tok)) { P.full = 0; this.sim.rejoin(id, P.tok); } else { P.full = 1; this.emit('lobby', { n: 0, to: id, full: 1 }); }
       return;
     }
     if (this.phase !== 'lobby') return;
@@ -197,7 +197,7 @@ export class BattleHost {
   sweep(now) {
     this.swept = now;
     for (const [id, P] of [...this.players]) {
-      const unseated = this.phase === 'battle' && this.sim.teamOf(id) < 0 && now - P.at > UNSEATED_MS;
+      const unseated = this.phase === 'battle' && P.full && now - P.at > UNSEATED_MS;
       if ((now - P.heard > SILENT_MS && (this.phase !== 'battle' || this.go)) || unseated) { this.closeRaw(id, 4003, unseated ? 'full' : 'silent'); this.leave(id); }
     }
   }
@@ -231,9 +231,9 @@ export class BattleHost {
       return 1000;
     }
     if (this.phase === 'over') return now >= this.endAt ? this.shut('battle over') : 1000;
-    if (now - (this.swept || 0) > 1000) {   // once a second: only sockets that hold a side keep the battle going
+    if (now - (this.swept || 0) > 1000) {   // once a second: sockets told "full" (no side) don't keep the battle going
       this.sweep(now);
-      if ([...this.players.keys()].some(id => this.sim.teamOf(id) >= 0)) this.emptySince = 0; else if (!this.emptySince) this.emptySince = now;
+      if ([...this.players.values()].some(P => !P.full)) this.emptySince = 0; else if (!this.emptySince) this.emptySince = now;
     }
     if (this.emptySince && now - this.emptySince > EMPTY_MS) return this.shut('everyone left');
     if (now - this.startedAt > MAX_BATTLE_MS) return this.shut('time limit');
