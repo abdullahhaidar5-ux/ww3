@@ -134,4 +134,6 @@ plain `mpsync` 3/3 PASS; `smoke --players 4` PASS; artifact build + `smoke --art
   threshold. Cloudflare's own limit is the backstop.
 - Compression was verified in local workerd only. On first deploy, check in a browser's devtools (Network → WS →
   headers: `Sec-WebSocket-Extensions: permessage-deflate`).
-- Stage 2 (server-hosted battles) is not started.
+- Stage 2 (battles hosted on Cloudflare): `BattleRoom` at `/battle/<code>` and `/battle-bench` are in `server/`
+  (branch `orch/stage2-dedicated`, not yet used by the game). Protocol, limits and measurements: `STAGE2.md` §8–9;
+  test: `node orch/battletest.mjs`.
