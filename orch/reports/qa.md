@@ -86,12 +86,16 @@ lobby buttons + reload mid-battle), `qa-joincode.mjs` / `qa-paste.mjs` (join-by-
 - Screenshots: `orch/shots/qa/settings-fhd.png`, `orch/shots/qa/settings-phoneL.png`
 
 
-### Q7 · Command bar names cut off at 1366×768 — Low
+### Q7 · Command bar names cut off at 1366×768 — Low (still on 8e5ad4d; the wrap fix is phones-only)
 - Steps: start any skirmish as Mountain Shias (long names) at 1366×768 → Powers tab.
 - Actual: faction name shows "MOUNTAIN …", the strike power "Mountain …", powers "Mountain Wat…",
   "Tunnel Works…", "Hidden Fight…", "Labbayk Ya H…" (the war slogan is cut in half). A player can't read what
   they're unlocking without hovering.
-- Screenshot: `orch/shots/qa/hd-RS-zagros-1-powers.png`
+- Re-check 11:05 on 8e5ad4d, Mountain Shias at 1366×768, names whose text doesn't fit: Build "Khums Treasury",
+  "Mountain Rocket Silo"; Units "Construction Vehicle", "Mountain Guard", "Mountain RPG Team", "Mountain Rocket Team",
+  "Armed Technical", "Medium Rocket Launcher", "Fast Attack Skiff"; Powers "Mountain Watchers", "Tunnel Workshops",
+  "Labbayk Ya Hussein"; plus the faction name and strike name in the side panel. (Phone landscape: none cut now.)
+- Screenshots: `orch/shots/qa/hd-RS-zagros-1-powers.png`, `orch/shots/qa/names-hd-units.png`
 
 
 ### Q8 · Main menu still has "Host a game" button and "Host one…" wording — Low (known, in progress)
