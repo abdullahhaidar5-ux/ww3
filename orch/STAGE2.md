@@ -418,6 +418,52 @@ then the standby player (who holds the latest checkpoint) takes over as a **brow
 `/room/<code>-m1` + PeerJS, as today) and everyone else joins it. The checkpoint's `me` is -1, so no side is handed to
 the AI on takeover (only players who don't come back are).
 
+### Browser side (branch `orch/cf-battle-client`, 2026-10-27)
+
+Built against the protocol above. What the page does, and the few things it relies on the server for:
+
+- **Menu:** under "Host a game", a two-way choice **Host in my browser** (default) / **Host on Cloudflare**, remembered
+  in `localStorage.ww3_hostOn`. Shown only in the online edition with the servers configured (`NET.room.cf()`); the
+  claude.ai artifact has no such room, so nothing changes there.
+- **Create:** `/battle/<code>?role=client&id=…&own=<key>` (shell `namedRoom(…,'wsb',own)`, `R.via='wsb'`), then the
+  normal greeting (`hi` presence + `hello`) and a first `bset {map,w,tm:[0],ais:[]}`. The creator is an ordinary
+  client (`NET.code='join'`, `NET.jcode`=code); its lobby screen is the usual host lobby drawn from `blob` (`own:1`),
+  edits go out as `bset` (only real changes; older `blob`s are ignored for 2.5 s after an edit until the server's
+  answer matches). Start = `bset {…, seed, start:1}`.
+- **Refused / unreachable** (`!e busy`, `limit`, `error`, timeout, no answer): the page hosts in its own browser at
+  once, with "Cloudflare is busy right now, so your browser is hosting this battle instead." at the top of the lobby.
+  `!e taken`: one retry with a new code.
+- **Join:** a listed game with `cf:1` joins through `/battle/` directly. The game list shows server-hosted battles from
+  the Lobby's own `b|` frame (the page merges it with `l|`; marked "on Cloudflare"). Join by code: direct P2P → TURN →
+  relay `/room/<code>`; when the relay answers `nohost`, the page tries `/battle/<code>` before giving up.
+- **Start:** `start` with `sv:1` may give slot 0. The battle-start log says "This battle is hosted on Cloudflare."; the
+  FPS/ping readout (Settings › Show FPS & ping) shows "hosted on Cloudflare · ping N ms" (ping = `pg`/`pong` with the
+  server); the lobby shows the same line, refreshed every second.
+- **Two things the server does for the page** (both in the BattleRoom): `blob` again after every `hi` (a new `n`);
+  and the **loading screen**: a player's presence gets `rd:1` when its loading screen closes, and the battle is held
+  until every human seat has it (at most 20 s). The page also sets its no-updates watchdog from that moment and never
+  counts time on the loading screen against the server (a slow phone is not "cut off" while it builds the map).
+- **Reconnect** reuses `/battle/<code>` (`NET.via='wsb'`). A server blip (restart, redeploy) is ridden out: for up to 8 s
+  the page keeps knocking on `/battle/<code>` (the server picks the battle up from its kept checkpoint) and the standby
+  does not take over; only `nohost` there, or 8 s with no answer, hands the battle to the standby player as a browser
+  host in `<code>-m1` (relay + PeerJS as today; checkpoint `me:-1`: no side goes to the AI). `-m<n>` rooms use the
+  normal join chain.
+- **Order numbers** (`cq` seq) start at `Date.now()/10`, past 32 bits; the host code no longer `|0`s them (acks `ak`
+  and checkpoint `cs` were garbled, in browser hosting too, so players resent all recent orders forever and a new
+  host after a migration could replay up to 14 of them).
+
+**Test:** `node orch/cfclient.mjs` (gate name `cfclient`) plays a battle in two headless Chromium pages against the
+**real BattleRoom** (local `wrangler dev`), reached through `orch/cfproxy.mjs`, a local pass-through that can cut
+connections, switch the server, or make a battle vanish. Steps: a second server over its free-plan allowance answers
+`busy` → browser-host fallback with the message; Cloudflare lobby; the friend finds it in the game list ("on
+Cloudflare") and joins; teams + computer player via `bset` (checked in the friend's server-sent lobby); Start (slots 0
+and 1); orders from both acknowledged by the server; sync: each page's side matches the server's own checkpoint and the
+two pages agree on everything both see; the readout; the friend's socket is cut and it reconnects; the server
+restarts with its stored data and both pages get back into the same battle on the server (no takeover), still in sync;
+the battle vanishes for good and the standby page takes over in `<code>-m1` with the other page following.
+(`orch/cfe2e.mjs`, from the server side, covers the same ground with the server's test hooks; `orch/cfhost-standin.mjs`
+is the earlier Node stand-in, no longer used by the gate.)
+
 ### Endpoints
 
 - `GET /battle-bench?players=2..8&minutes=0.25..10[&map=strait&seed=1&diff=1&batch=1..60][&key=…]`: runs one AI
