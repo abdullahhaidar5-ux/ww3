@@ -8,10 +8,7 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
-**ROUND PAUSED (Abdullah, 2026-10-27 18:00: "Pause the current round and do these first and then continue").** The
-4-hourly ORCH schedule is switched off until the side lane finishes order steps 1–3. A cycle already running: ship only
-what is already gated, start no new squads, release the lock, and leave server battles / open items / music to the side
-lane (it is working on them now).
+**ROUND RESUMED (2026-10-28 07:00 Chicago):** the side lane finished order steps 1–3 (Cloudflare battles live, open items, music) and graphics Phases 1–4 shipped; the 4-hourly ORCH schedule is back on. `orch/followups` (QA findings, battle hint text, review R11/R12) and `orch/qa` are side-lane agents — integrate their reports, don't redo them. Keep usage steady (Abdullah 02:05): at most ~4 agents at once.
 
 **2026-10-28 06:55 (Chicago) SHIPPED:** small fixes (8e5ad4d); Cloudflare battles (7e44492; Abdullah merged PR #4 → servers-live, deploy OK); graphics Phases 1–4 (three-upgrade + gfx-models + gfx-terrain + gfx-fx, 16/16 on 663efc6). Running: `orch/qa` (until 12:00 UTC), `orch/followups` (QA findings + review R11/R12). ww3 Cloudflare site build lagging (still old version at 06:47).
 
