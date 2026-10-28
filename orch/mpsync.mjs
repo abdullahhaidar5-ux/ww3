@@ -216,7 +216,8 @@ async function main() {
   // ---- lobby: host opens a game, client joins by its code, host adds computer players and starts ----
   await waitFor(host, () => !!NET.room, null, 30000, 'the host page to set up its network room');
   const code = await host.evaluate(async () => { try { initAudio(); } catch (e) {} setup.p = 'US';
-    await Promise.race([typeof hostBrowser === 'function' ? hostBrowser() : hostGame(), new Promise(r => setTimeout(r, 20000))]);   // a battle hosted in this browser (with the servers, "Play online" goes to Cloudflare) return NET.game ? NET.code : null; });
+    // a battle hosted in this browser (with the servers, "Play online" goes to Cloudflare)
+    await Promise.race([typeof hostBrowser === 'function' ? hostBrowser() : hostGame(), new Promise(r => setTimeout(r, 20000))]); return NET.game ? NET.code : null; });
   if (!code) throw new Error('host could not open a game (NET.code empty; fake transport not picked up?)');
   console.log(`[${secs()}] host lobby open, code ${code}`);
   if (process.argv.includes('--verbose')) for (const p of [host, client]) { p.__cdp = await ctx.newCDPSession(p); await p.__cdp.send('Debugger.enable'); }

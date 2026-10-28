@@ -296,7 +296,8 @@ async function main() {
   // ---- lobby: host opens a game, both clients join by its code, host starts a 3-way free-for-all ----
   await waitFor(host, () => !!NET.room, null, 30000, 'the host page to set up its network room');
   const code = await host.evaluate(async () => { try { initAudio(); } catch (e) {} setup.p = 'US';
-    await Promise.race([typeof hostBrowser === 'function' ? hostBrowser() : hostGame(), new Promise(r => setTimeout(r, 20000))]);   // a battle hosted in this browser (with the servers, "Play online" goes to Cloudflare) return NET.game ? NET.code : null; });
+    // a battle hosted in this browser (with the servers, "Play online" goes to Cloudflare)
+    await Promise.race([typeof hostBrowser === 'function' ? hostBrowser() : hostGame(), new Promise(r => setTimeout(r, 20000))]); return NET.game ? NET.code : null; });
   if (!code) throw new Error('host could not open a game (NET.code empty; fake transport not picked up?)');
   console.log(`[${secs()}] host lobby open, code ${code}`);
   await cA.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'RU'; joinByCode(c); }, code);
