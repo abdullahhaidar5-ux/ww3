@@ -3,11 +3,11 @@
 // Host presses Host a game (or Play online when that ships); the client sees the game in Open games and taps Join;
 // host presses Start; both load; the client taps its own unit and taps the ground (order must reach the host); then
 // the client's page is reloaded mid-battle (a phone that dropped / refreshed) and must get back into the battle.
-//   node orch/qa-mplobby.mjs [--client phoneP|phoneL|hd]
+//   node orch/qa-mplobby.mjs [--client phoneP|phoneL|hd] [--host sm|phoneP|...] [--lobby-only]
 import { startServer as startStatic, launch, openPage, toMenu, shot, layoutAudit, sleep } from './qa-lib.mjs';
 import { startServer as startGameServer } from './serverdev.mjs';
 const A = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
-const CVP = A('client', 'phoneP');
+const CVP = A('client', 'phoneP'), HVP = A('host', 'sm'), LOBBY_ONLY = process.argv.includes('--lobby-only');
 function blockedPeerShim(url) {
   window.WW3_SERVER = url;
   class BlockedPeer { constructor() { this._h = {}; this.destroyed = false; this.open = false;
@@ -33,16 +33,16 @@ async function mk(vp, tag) {
   return { ctx, page };
 }
 const press = async (page, el, touch) => { await el.scrollIntoViewIfNeeded(); touch ? await el.tap() : await el.click(); };
-const H = await mk('sm', 'host'), C = await mk(CVP, 'client');
+const H = await mk(HVP, 'host'), C = await mk(CVP, 'client');
 // (phones at deviceScaleFactor 1 here: SwiftShader draws 9x fewer pixels; layout is the same)
-const ctouch = CVP.startsWith('phone');
+const ctouch = CVP.startsWith('phone'), htouch = HVP.startsWith('phone');
 try {
   await toMenu(H.page, url); await toMenu(C.page, url);
   // host: the online button
   const hb = await H.page.evaluateHandle(() => [...document.querySelectorAll('#menu button')].find(b => b.offsetParent && /play online|host a game/i.test(b.innerText)));
   if (!hb.asElement()) { bug('host: no "Play online"/"Host a game" button'); throw new Error('stop'); }
   note('host presses: ' + await hb.asElement().innerText());
-  await press(H.page, hb.asElement(), false);
+  await press(H.page, hb.asElement(), htouch);
   await sleep(3000);
   await shot(H.page, 'mp-host-lobby.png');
   note('host status: ' + await H.page.evaluate(() => ($('mpstatus').innerText + ' | ' + $('games').innerText).replace(/\s+/g, ' ').slice(0, 300)));
@@ -55,14 +55,22 @@ try {
   await sleep(4000);
   note('client status: ' + await C.page.evaluate(() => $('mpstatus').innerText.replace(/\s+/g, ' ').slice(0, 300)));
   await shot(C.page, `mp-client-joined-${CVP}.png`);
+  { const cb = await C.page.evaluate(() => ({ leave: [...document.querySelectorAll('#menu button')].filter(x => x.offsetParent && /cancel|leave/i.test(x.innerText)).map(x => x.innerText.trim()),
+      host: { hidden: $('host').hidden, disabled: $('host').disabled }, join: [...document.querySelectorAll('#games button')].map(x => x.innerText.trim() + (x.disabled ? '(off)' : '')) }));
+    note('client after joining: ' + JSON.stringify(cb));
+    if (!cb.leave.length) bug('client in a lobby has no Leave/Cancel button (only a page reload gets out)');
+    if (!cb.host.hidden && !cb.host.disabled) { const hb2 = await C.page.$('#host'); await press(C.page, hb2, ctouch); await sleep(1500);
+      note('client pressed HOST A GAME while in a lobby: ' + await C.page.evaluate(() => $('mpstatus').innerText.slice(0, 200) + ' | code=' + NET.code)); } }
   const cl = await layoutAudit(C.page, '#menu'); if (cl.offscreen.length || cl.overlaps.length) bug(`client lobby layout on ${CVP}: ${JSON.stringify(cl)}`);
   // host: start
   let sb = null;
   for (let i = 0; i < 20 && !sb; i++) { const h = await H.page.evaluateHandle(() => [...document.querySelectorAll('#menu button')].find(b => b.offsetParent && !b.disabled && /start.*battle/i.test(b.innerText) && b.id !== 'start' && b.id !== 'sandbox')); sb = h.asElement(); if (!sb) await sleep(1000); }
   await shot(H.page, 'mp-host-lobby2.png');
   if (!sb) { bug('host: no enabled Start button after a player joined'); note('host lobby buttons: ' + await H.page.evaluate(() => [...document.querySelectorAll('#menu button')].filter(b => b.offsetParent).map(b => b.innerText.trim() + (b.disabled ? '(off)' : '')).join(' | ').slice(-600))); throw new Error('stop'); }
+  { const hl = await layoutAudit(H.page, '#menu'); if (hl.offscreen.length || hl.overlaps.length || hl.tiny.length) bug(`host lobby layout on ${HVP}: ${JSON.stringify(hl)}`); }
+  if (LOBBY_ONLY) throw new Error('stop');
   note('host presses: ' + await sb.innerText());
-  await press(H.page, sb, false);
+  await press(H.page, sb, htouch);
   const t0 = Date.now();
   const st = p => p.evaluate(() => ({ G: !!(typeof G !== 'undefined' && G), loading: !!window.LOADING, t: typeof G !== 'undefined' && G ? +G.t.toFixed(1) : null, mode: typeof MODE !== 'undefined' ? MODE : null,
     over: $('loadOv') ? $('loadOv').innerText.replace(/\s+/g, ' ').slice(0, 120) : '', status: $('mpstatus').innerText.slice(0, 120), net: ($('net') && !$('net').hidden) ? $('net').innerText.slice(0, 120) : '' })).catch(e => ({ err: e.message.slice(0, 80) }));

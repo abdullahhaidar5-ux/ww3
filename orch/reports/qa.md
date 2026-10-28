@@ -39,6 +39,17 @@ build → train → select/order → powers → battle to the end → Play again
 - Run: `node orch/qa-mplobby.mjs --client phoneP` (local wrangler server, browser-to-browser blocked).
 - Screenshot: `orch/shots/qa/mp-client-after-reload-phoneP.png`
 
+### Q0b · Multiplayer lobby: a friend who joined can't leave, and "Host a game" is a dead button — Medium
+- Steps: friend taps JOIN on an open game (phone 390×844 and 844×390 seen; desktop the same code path).
+- Expected: a "Leave" button; Host a game hidden or disabled while in someone's lobby.
+- Actual: status "Joined… Waiting for the host to start the battle…", no Leave/Cancel button anywhere; HOST A GAME
+  stays bright and enabled but does nothing when pressed (`hostGame` returns because `NET.code` is 'join'); the
+  game's JOIN button is disabled but still drawn bright green. The only way out is reloading the page. The host's
+  phone lobby also keeps saying "Your game is open. Waiting for players to join…" above "2 / 8 players".
+- Repro: `node orch/qa-mplobby.mjs --client phoneP --lobby-only`
+- Screenshots: `orch/shots/qa/mp-client-joined-phoneP.png`, `orch/shots/qa/mp-client-joined-phoneL.png`,
+  `orch/shots/qa/mp-host-lobby2.png` (host on a phone)
+
 ### Q1 · Defeat screen says "The last enemy capitulated" when YOU lost — Medium
 - Steps: skirmish 1 vs 1 AI, lose (all your units/buildings destroyed). Seen: Mountain Shias vs US on Zagros, 1366×768.
 - Expected: something like "You have been wiped out: every unit and building destroyed. United States won."
