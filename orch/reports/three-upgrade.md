@@ -15,7 +15,7 @@ in a fight. Phones are not slower. They still get the lighter phone look.
 that failed earlier included). Local smoke PASS.
 
 **Fixes this run:** the comparison script now seeds the battle's random numbers so both builds play the same battle.
-I did not need to change the game code. An Apache paint fix I tried turned out to duplicate code that was already
+An Apache paint fix I tried turned out to duplicate code that was already
 there, so I took it back out.
 
 **Risky:** the page is ~60 KB bigger, because the engine is bundled in. Older phones and browsers without WebGL2
