@@ -23,9 +23,11 @@ lobby buttons + reload mid-battle), `qa-joincode.mjs` / `qa-paste.mjs` (join-by-
      War 3 battle!"), before ever reaching the real code.
   A pasted invite *link* has the same problem: `https://abdullahhaidar5-ux.github.io/ww3/#join=abc123` is cut at 40
   characters, then "github" is taken as the code ("No open game with code GITHUB"). The error message itself tells
-  players to "Paste the invite", so this is exactly what friends will do. Clicking a `#join=` link still works.
+  players to "Paste the invite", so this is exactly what friends will do. Opening a `…/index.html#join=<code>` link
+  does work (tested: `orch/qa-joinlink.mjs`, the phone joined the lobby by itself) — but the GitHub Pages invite text
+  doesn't contain such a link, only "open <site>, go to Multiplayer and enter game code X".
 - Fix idea: drop/raise the maxlength, and prefer `join=…` or the token after "code" (or an all-caps 6-char token)
-  over any 6-letter word.
+  over any 6-letter word; and put the `#join=<code>` link into the Pages invite text (one tap to join).
 - Repro: `node orch/qa-paste.mjs` (prints the parsed code), `node orch/qa-joincode.mjs` (status texts on a phone).
 - Screenshot: `orch/shots/qa/joincode-wrong-phoneP.png`
 
@@ -51,7 +53,7 @@ lobby buttons + reload mid-battle), `qa-joincode.mjs` / `qa-paste.mjs` (join-by-
 - Actual: status "Joined… Waiting for the host to start the battle…", no Leave/Cancel button anywhere; HOST A GAME
   stays bright and enabled but does nothing when pressed (`hostGame` returns because `NET.code` is 'join'); the
   game's JOIN button is disabled but still drawn bright green. The only way out is reloading the page. The host's
-  phone lobby also keeps saying "Your game is open. Waiting for players to join…" above "2 / 8 players".
+  lobby (phone and desktop) keeps saying "Your game is open. Waiting for players to join…" next to "2 / 8 players".
 - Repro: `node orch/qa-mplobby.mjs --client phoneP --lobby-only`
 - Screenshots: `orch/shots/qa/mp-client-joined-phoneP.png`, `orch/shots/qa/mp-client-joined-phoneL.png`,
   `orch/shots/qa/mp-host-lobby2.png` (host on a phone)
