@@ -21,13 +21,16 @@
 // the host clock; a client order reaches the host (its units move); every 10 game-s a loose live comparison; and at
 // 1, 2.5 and N minutes (and when the battle ends) a strict "settle" check - host paused, a full keyframe flushed -
 // in which every entity the client's side can see on the host is on the client at the same spot (+-2 m), same
-// kind/team/health, nothing stale lingers, and the client's credits match the host's.
+// kind/team/health, nothing stale lingers, and the client's credits match the host's. Also: the host picks Overcast
+// Conditions (the client's own menu says otherwise) and both battles must show Overcast; every 3D model the battle's
+// nations need is loaded on both pages.
 //
 // Runtime: ~3-5 min, almost all of it the two pages building the map under SwiftShader; the battle itself takes ~30 s.
 //
 //   node orch/mpsync.mjs                       # default: 4 game-minutes, host (AI-driven) vs client
 //   node orch/mpsync.mjs --minutes 5 --ais 1   # longer, with a computer player added in the lobby
 //   node orch/mpsync.mjs --break               # self-test: the client stops receiving at 1 min; must print MPSYNC FAIL
+//   node orch/mpsync.mjs --break-wx            # self-test: the client ignores the host's Conditions; must print MPSYNC FAIL
 //   node orch/mpsync.mjs --verbose             # print both pages' network state every 5 s while connecting
 //   node orch/mpsync.mjs --no-lock             # skip the machine-wide browser lock (see browserlock.mjs)
 //   node orch/mpsync.mjs --reconnect           # (default in the plain run; --no-reconnect skips it) at 1 min the client's connection is cut both ways for 12 game-s, then
@@ -99,7 +102,9 @@ const server = http.createServer(ART ? artifactHandler(ART.html) : (req, res) =>
   if (p.endsWith('/')) p += 'index.html';
   const f = path.join(ROOT, p);
   if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); }
-  res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream' });
+  // model files carry their hash in the name (as on Pages they cache): the client page reuses the host page's download
+  res.writeHead(200, { 'content-type': MIME[path.extname(f)] || 'application/octet-stream',
+    ...(p.startsWith('/models/') ? { 'cache-control': 'public, max-age=31536000, immutable' } : {}) });
   fs.createReadStream(f).pipe(res);
 });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
@@ -213,8 +218,21 @@ async function main() {
   [host, client] = await Promise.all([openPage('host'), openPage('client')]);
   if (SRV) client.on('websocket', w => { if (!w.url().includes('/room/')) return; // every relay frame the client gets / sends
     w.on('framereceived', f => cap.rx.push(String(f.payload))); w.on('framesent', f => cap.tx.push(String(f.payload))); });
-  await Promise.all([host, client].map(p => p.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 240000 }).catch(() => warns.push('3D models still loading after 240s'))));
-  console.log(`[${secs()}] both pages loaded`);
+  // Let each page's menu-time background download of the 3D models finish first, as a player sitting in the lobby
+  // would. Under SwiftShader both pages share one renderer main thread, and the battle's terrain build blocks it for
+  // 30+ s: model downloads started at battle start then find the game's 30 s fetch timeout already expired when the
+  // thread frees up ("The user aborted a request"), which is a harness artefact, not a game bug. The check after the
+  // loading screen still demands every model the battle's nations need on both pages.
+  const dl = await Promise.all([host, client].map(p => p.evaluate(async () => {
+    const t0 = performance.now(), sl = ms => new Promise(r => setTimeout(r, ms));
+    while (!MODELS.loading && performance.now() - t0 < 30000) await sl(250);
+    const done = await Promise.race([Promise.resolve(MODELS.loading).then(() => true), sl(240000).then(() => false)]);
+    return { done, s: ((performance.now() - t0) / 1000).toFixed(0), failed: (MODELS.failed || []).slice(), err: MODELS.err || '' };
+  })));
+  for (const [i, d] of dl.entries()) { const tag = i ? 'client' : 'host';
+    if (!d.done) warns.push(`${tag}: 3D model downloads still running after 240s`);
+    if (d.failed.length) warns.push(`${tag}: ${d.failed.length} 3D models failed in the menu download (${d.failed.slice(0, 5).join(', ')}) ${d.err}`); }
+  console.log(`[${secs()}] both pages loaded (menu model downloads done after ${dl.map(d => d.s + 's').join(' / ')})`);
 
   // ---- lobby: host opens a game, client joins by its code, host adds computer players and starts ----
   await waitFor(host, () => !!NET.room, null, 30000, 'the host page to set up its network room');
@@ -251,6 +269,15 @@ async function main() {
   // GPU textures are uploaded) until the screenshots at the end - two full game pages are heavy under SwiftShader.
   await client.evaluate(() => { window.__stopLoop = true; });
   await host.evaluate(() => { window.__stopLoop = true; });
+  // Conditions: the host picks Overcast in the skirmish menu (the client keeps its own Clear day); every player must
+  // see the host's choice
+  const wx = await host.evaluate(() => { const i = WX.findIndex(w => w.n === 'Overcast'); if (i < 0) return null;
+    const b = document.querySelector('#wx button[data-w="' + i + '"]'); if (b) b.click(); else setup.w = i; return { i, n: WX[i].n, clicked: !!b, w: setup.w }; });
+  if (!wx) fail('no "Overcast" battle condition (WX) found on the host page');
+  else { if (wx.w !== wx.i) fail(`host picked ${wx.n} but its setup.w is ${wx.w}`);
+    await client.evaluate((i) => { setup.w = i === 0 ? 1 : 0; }, wx.i);
+    // --break-wx (self-test): the client ignores the host's Conditions; must print MPSYNC FAIL
+    if (process.argv.includes('--break-wx')) await client.evaluate(() => { window.wxSet = () => {}; }); }
   const facs = await host.evaluate((ais) => {
     NET.tm = [0, 1]; NET.ais = [];
     const pool = ['CN', 'IR', 'TR', 'EU', 'KP', 'IN'];
@@ -273,6 +300,11 @@ async function main() {
       return { of: ks.length, miss: ks.filter(k => !MODELS.proto[k]), err: MODELS.err || '' }; });
     if (m.miss.length) fail(`${ART ? 'artifact ' : ''}${tag}: ${m.miss.length} of ${m.of} 3D models for this battle missing (${m.miss.slice(0, 5).join(', ')}) ${m.err}`); }
   if (cInfo.me !== 1) fail('client got slot ' + cInfo.me + ', expected 1');
+  if (wx) { const cond = p => p.evaluate(() => ({ i: WXI, n: WX[WXI] && WX[WXI].n, w: setup.w }));
+    const hc = await cond(host), cc = await cond(client);
+    console.log(`[${secs()}] conditions: host picked ${wx.n}${wx.clicked ? ' (menu button)' : ''}; host shows ${hc.n}, client shows ${cc.n}`);
+    if (hc.i !== wx.i) fail(`host battle shows ${hc.n} conditions, but the host picked ${wx.n}`);
+    if (cc.i !== wx.i) fail(`client battle shows ${cc.n} conditions, but the host picked ${wx.n} (every player must see the host's Conditions)`); }
   if (SRV) { cap.rx.length = 0; cap.tx.length = 0; cap.g0 = await host.evaluate(() => G.t); cap.w0 = Date.now(); }
 
   // ---- take over the clocks: stop both render loops; the host's own side plays as an easy AI ----
