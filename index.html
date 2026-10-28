@@ -7580,14 +7580,14 @@ function joinT(name,ms){const p=NET.room.join(name,NET.via?{via:NET.via}:undefin
 async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NET.jcode)return;NET.recon=true;NET.reconKick=false;pushLog('Connection to the host lost. Reconnecting…','w');
   const gen0=NET.gen||0,p0=NET.myPeer,t0=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let gone=false,here=false,n=0,newTries=0;
   while(MODE==='client'&&!(G&&G.over)&&performance.now()-t0<60000){
-    if(n>0&&NET.isStandby&&NET.lastCk&&(gone||performance.now()-t0>15000)){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
+    if(n>0&&NET.isStandby&&NET.lastCk&&(!here||performance.now()-t0>15000)){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
     if(MODE!=='client'||(G&&G.over))break;
     // which room: the old one first; then the follow-up room (with an occasional look back at the old room while it
     // is not certain that its host is gone)
     const old=n===0||(here&&!gone)||(!gone&&newTries>0&&newTries%4===0),gen=old?gen0:gen0+1,room=migRoom(gen);
     await slp(n===0?250:!old&&newTries===0?500:300);n++;if(!old)newTries++;if(MODE!=='client'||(G&&G.over))break;
     {const og=NET.game;NET.game=null;try{if(og)og.leave().catch(()=>{});}catch(e){}}
-    let g=null;try{g=await joinT('tc-'+room,old?4000:6000);}catch(e){if(old&&e&&e.type==='peer-unavailable')gone=true;continue;}
+    let g=null;try{g=await joinT('tc-'+room,old?4000:6000);}catch(e){if(old){here=false;if(e&&e.type==='peer-unavailable')gone=true;}continue;}
     if(MODE!=='client'||(G&&G.over)){try{g.leave().catch(()=>{});}catch(e){}break;}
     NET.game=g;NET.myPeer=null;NET.reconKick=false;
     if(window.WW3_P2P)NET.hostPeer='ww3-'+room;else if(gen>0){NET.hostPeer=null;NET.findHost=true;}wireClient(g);
@@ -7601,7 +7601,8 @@ async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NE
       if(k%3===0)g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1},cq:NET.cq||[]}).catch(()=>{});await slp(300);}
     if(back()&&!NET.reconKick){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Connected to the new host.':'Reconnected to the host.','g');return;}
     // the host is not in its room any more (closed the game / lost its connection): it is gone, the standby takes over now.
-    // While it is still there (it was just slow), keep knocking instead of starting a second battle beside it.
+    // While it is still there (it was just slow), keep knocking at its room, and the standby holds off for up to 15 s
+    // instead of starting a second battle beside it. If its room can't be reached at all, the standby takes over at once.
     if(old){here=!NET.reconKick&&g.peers().some(q=>!q.sameTab&&(q.peer===NET.hostPeer||(q.presence&&q.presence.h)));if(!here)gone=true;}NET.reconKick=false;}
   NET.recon=false;NET.reconKick=false;if(MODE==='client')oppLeft();}
 async function joinGame(p){if(NET.game)return;const code=p.presence.g.c;$('mpstatus').textContent='Joining…';
