@@ -154,7 +154,13 @@ export class BattleHost {
     return '';
   }
   configure(d) {
-    if (this.sim.mapOk(d.map)) this.map = d.map;
+    // a battlefield with fewer seats than the players already in the lobby is refused, so the lobby never lists more
+    // sides than the map holds (review R4); the leader is told why
+    if (this.sim.mapOk(d.map) && d.map !== this.map) {
+      const n = Math.min(MAX_PLAYERS, this.sim.mapMax(d.map));
+      if (n >= this.order.length) { this.map = d.map; if (/^That battlefield/.test(this.note || '')) this.note = ''; }
+      else this.note = `That battlefield holds only ${n} players: pick a bigger one.`;
+    }
     if (typeof d.w === 'number') this.w = int(d.w, -1, 31, 0);
     if (Array.isArray(d.ais)) this.ais = d.ais.slice(0, MAX_PLAYERS).map(a => ({ f: this.sim.facs.includes(a && a.f) ? a.f : this.sim.facs[0], d: int(a && a.d, 0, 2, 1), tm: int(a && a.tm, 0, 7, 1) }));
     if (Array.isArray(d.tm)) this.tm = this.order.map((_, i) => int(d.tm[i], 0, 7, this.tm[i] | 0));
@@ -215,6 +221,9 @@ export class BattleHost {
     this.flush();
     this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
+    // sockets still in the lobby without a seat (never greeted, or told the lobby was full) hold no side: like late
+    // joiners they are closed after UNSEATED_MS, so they can't keep an abandoned battle (and its slot) alive (review R12)
+    for (const [id, P] of this.players) if (!this.order.includes(id)) { P.full = 1; P.at = this.now(); }
     this.go = false; this.goBy = this.now() + this.readyMs; this.rd = [];   // hold until every player is past the loading screen
     this.log(`battle ${this.code} started: ${facs.join(' ')} on ${this.map}`);
     this.list();

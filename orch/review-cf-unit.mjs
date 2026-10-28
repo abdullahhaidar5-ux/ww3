@@ -60,7 +60,7 @@ cases.mapShrink = () => {
     for (let k = 0; k < 5; k++) { const b = R.h.sim.test.base(k), v = R.h.sim.test.view(k); console.log(`    side ${k} (${R.h.facs[k]}): base at ${b.map(Math.round)}, ${v.list.filter(r => r[2] === k).length} own entities`); }
   }
   check(!(starts.length && R.h.phase !== 'battle'), "players are never sent 'start' for a battle the server did not start (stuck loading screens)");
-  check(!(R.h.phase === 'battle' && R.h.facs.length > 4), 'a battle never starts with more sides than the map has seats');
+  check(!(R.h.phase === 'battle' && R.h.facs.length > R.h.mx()), `a battle never starts with more sides than the map has seats (${R.h.map}: ${R.h.mx()})`);   // the server may refuse the smaller map instead
 };
 
 // 2. the standby player's checkpoint carries every player's reconnect token: a third socket using a stolen token takes
