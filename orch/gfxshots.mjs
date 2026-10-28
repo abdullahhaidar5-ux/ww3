@@ -7,8 +7,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
-import { acquireBrowserLock } from '../browserlock.mjs';
-import { guardContext } from '../serverdev.mjs';
+import { acquireBrowserLock } from './browserlock.mjs';
+import { guardContext } from './serverdev.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argS = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
@@ -80,9 +80,10 @@ async function frames(page, n) {
     for (let i = 0; i < n; i++) { const a = performance.now(); renderFrame(1 / 60); gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); ts.push(performance.now() - a); }
     return ts; }, n);
 }
-// a paused lineup next to player 0's base: each side's tank, artillery, supply truck, AA, transport helicopter and an
-// infantry squad (plus its special unit), two columns facing each other
-const SCENES = [['fulda', 'US', 'RU'], ['golan', 'IL', 'IR'], ['strait', 'EU', 'SA']];
+async function snap(page, name) { await page.screenshot({ path: path.join(dir, name + '.png'), timeout: 300000 }); console.log(`[${secs()}] ${TAG}/${name}.png`); }
+// a paused lineup next to the player's base: the nation's tank, artillery, supply truck, AA, infantry squad, transport
+// helicopter and special unit, in a row (one battle per nation, same seed and camera)
+const SCENES = [['fulda', 'US', 'RU'], ['fulda', 'RU', 'US'], ['golan', 'IL', 'IR'], ['golan', 'IR', 'IL'], ['strait', 'EU', 'SA'], ['strait', 'SA', 'EU']];
 try {
   const { ctx, page } = await open({ viewport: { width: 1280, height: 720 } });
   for (const [k, p, a] of SCENES) {
@@ -90,9 +91,9 @@ try {
     await page.evaluate(() => { G.paused = true; G.ents = G.ents.filter(e => e.isB);
       const [bx, by] = BASES[0]; const x = Math.max(700, Math.min(MAPW - 700, bx + 260)), y = Math.max(700, Math.min(MAPH - 700, by + 80));
       const kinds = t => ['tank', 'arty', 'harv', 'aa', 'inf', 'airlift', FACTIONS[G.teams[t].fac].special];
-      for (const t of [0, 1]) kinds(t).forEach((kd, i) => { try { const u = addUnit(t, kd, x - 110 + i * 38, y + (t ? -60 : 60)); u.ox = u.x; u.oy = u.y; u.ang = u.va = t ? Math.PI / 2 : -Math.PI / 2; } catch (e) {} });
+      for (const t of [0]) kinds(t).forEach((kd, i) => { try { const u = addUnit(t, kd, x - 120 + i * 40, y + 40); u.ox = u.x; u.oy = u.y; if (u.vs) u.vs[0] = true; u.ang = u.va = t ? Math.PI / 2 : -Math.PI / 2; } catch (e) {} });
       window.__at = [x, y]; });
-    for (const [nm, d, dy] of [['close', 260, 30], ['wide', 420, 30]]) {
+    for (const [nm, d, dy] of [['close', 250, 60]]) {
       await page.evaluate(([d, dy]) => { const [x, y] = window.__at; cam.dist = cam.td = d; cam.x = cam.tx = x; cam.y = cam.ty = y + dy; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; }, [d, dy]);
       await frames(page, 4); await snap(page, `${nm}-${k}-${p}-${a}`);
     }
