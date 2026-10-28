@@ -1,6 +1,6 @@
 # Cloudflare battles: final branch (orch/cf-final)
 
-**What players see:** one "Play online" button (joins an open battle, servers' battles first, else starts one) and
+**What players see:** one "Play online" button (joins an open battle or starts one) and
 "New battle". No hosting choice or wording; if the servers can't take a battle it quietly runs in a browser. An
 optional password makes a private battle (🔒 in the list, prompt, `#pw=` invite link). If the servers are full at
 Start, the lobby says so and Start can be pressed again.
@@ -14,9 +14,9 @@ slot until Start; R3 sockets without a side are closed and don't keep battles al
 R4 Start refused when players exceed the map; R5 floods close sooner. R10 was already handled.
 
 **Staging (real Cloudflare):** deploy + servertest PASS on the final head. Bench (8 players, fulda, 2 min):
-maxEventMs 1488/1800 ms, but p50 0 ms, p99 2 ms, and the 12 slowest "events" sum to nearly the whole run: Cloudflare's
-clock only moves with I/O, so many steps land on one reading. Same bench in local workerd: worst 27 ms, p99 5 ms.
+maxEventMs 1488/1800 ms, but p50 0 ms, p99 2 ms, the 12 slowest "events" sum to nearly the whole run: Cloudflare's clock
+only moves with I/O, so many steps land on one reading. Same bench in local workerd: worst 27 ms, p99 5 ms.
 
 **CIGATE:** 16/16 PASS on dca96b1.
 
-**Left:** a true per-step latency on Cloudflare needs a moving clock (e.g. measured from players' side).
+**Left:** a true per-step latency on Cloudflare needs a moving clock.
