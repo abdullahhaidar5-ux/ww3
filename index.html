@@ -7771,7 +7771,8 @@ async function playOnline(){if(!NET.room||NET.code||NET.game||NET.qp)return;NET.
 // Host in this browser (today's way; also the fallback when Cloudflare can't host). note: shown at the top of the lobby
 async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hostNote=note||'';NET.ais=[];const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];mpIn(1);
   $('mpstatus').textContent='Connecting…';
-  try{NET.game=await NET.room.join('tc-'+code);}catch(e){$('mpstatus').textContent=window.WW3_P2P?'Could not reach the online matchmaking service. Check your internet connection and try again.':'Could not open a game room. Try again in a moment.';cancelHost();return;}
+  // the matchmaking service can hang without ever answering: give up after 20 s with the same message as a refusal
+  try{NET.game=await joinT('tc-'+code,20000,1);}catch(e){if(NET.code!==code)return;$('mpstatus').textContent=window.WW3_P2P?'Could not reach the online matchmaking service. Check your internet connection and try again.':'Could not open a game room. Try again in a moment.';cancelHost();return;}
   wireHost(NET.game);
   try{await NET.game.emit('lobby',{n:1,probe:1});}catch(e){if(e&&e.code==='not_permitted'){noPerm();cancelHost();return;}}
   await NET.room.presence({g:{c:code,f:setup.p,s:'open',n:1,pw:NET.pw?1:undefined}}).catch(()=>{});renderLobby();renderGames();}
@@ -7896,7 +7897,8 @@ function wireClient(g){
 //     timeout rather than "nobody is hosting this") do we look back there now and then.
 //  3. If the host of the room we just reached leaves while we wait for its first update, we stop waiting at once
 //     (NET.reconKick) instead of sitting out the full wait.
-function joinT(name,ms){const p=NET.room.join(name,NET.via?{via:NET.via}:undefined);let late=false;
+// joinT: join a room, giving up after ms (a room that answers late is left at once). host: open it as its host (no 'via')
+function joinT(name,ms,host){const p=NET.room.join(name,!host&&NET.via?{via:NET.via}:undefined);let late=false;
   return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>{late=true;rej(Object.assign(new Error('timeout'),{type:'timeout'}));},ms))]).catch(e=>{if(late)p.then(g=>{try{g.leave().catch(()=>{});}catch(_){}},()=>{});throw e;});}
 // is a Cloudflare battle still running? 'up' (the server lists it), 'gone' (the network works but the server doesn't run
 // it, or can't be reached while this page's own site can), 'down' (this device has no network)
@@ -7925,7 +7927,9 @@ async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NE
     // which room: the old one first; then the follow-up room (with an occasional look back at the old room while it
     // is not certain that its host is gone)
     const old=n===0||svBlip()||(here&&!gone)||(!gone&&newTries>0&&newTries%4===0),gen=old?gen0:gen0+1,room=migRoom(gen);
-    await slp(n===0?250:!old&&newTries===0?500:old&&svBlip()?700:300);n++;if(!old)newTries++;if(MODE!=='client'||(G&&G.over))break;
+    // knocking on the follow-up room backs off (0.5 s, then x1.4 each try up to 2.5 s, +-25% so players spread out): each
+    // try opens a fresh connection to the matchmaking service, and 7 players knocking every 0.3 s could trip its limits
+    await slp(n===0?250:!old?Math.min(2500,500*1.4**newTries)*(.75+Math.random()*.5):svBlip()?700:300);n++;if(!old)newTries++;if(MODE!=='client'||(G&&G.over))break;
     {const og=NET.game;NET.game=null;try{if(og)og.leave().catch(()=>{});}catch(e){}}
     let g=null;try{g=await joinT('tc-'+room,old?4000:6000);}catch(e){if(old){here=false;if(e&&e.type==='peer-unavailable')gone=true;}continue;}
     if(MODE!=='client'||(G&&G.over)){try{g.leave().catch(()=>{});}catch(e){}break;}
@@ -8296,12 +8300,22 @@ async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e
   // open the follow-up room first, while still a client: if another player already opened it (two players held a
   // checkpoint), this page stays a client and simply joins that room instead of restoring and splitting the battle
   {const og=NET.game;NET.game=null;try{if(og)og.leave().catch(()=>{});}catch(e){}}NET.code=code2;
-  let g;try{g=await NET.room.join('tc-'+code2);}catch(e){NET.code='join';console.warn('new host room',e&&e.type||e);return e&&e.type==='unavailable-id'?false:'retry';}
+  // (at most 12 s: a matchmaking service that never answers must not hold up the takeover for good; it is tried again)
+  let g;try{g=await joinT('tc-'+code2,12000,1);}catch(e){NET.code='join';console.warn('new host room',e&&e.type||e);return e&&e.type==='unavailable-id'?false:'retry';}
   if(MODE!=='client'||!G||G.over){NET.code='join';try{g.leave().catch(()=>{});}catch(e){}return false;}
+  // Only one player may take over. A shared room (claude.ai room, or the Nostr network when this page could not get the
+  // game's id on PeerJS) lets two standbys in at once, so each first stakes a claim [checkpoint time, side] in the room
+  // for ~0.8 s: the newest checkpoint wins, then the lowest side number. A player who sees a better claim, or a host
+  // already there, steps back and simply rejoins as a player.
+  const cl=[+(ck.g&&ck.g.t)||0,me],beats=c=>Array.isArray(c)&&(+c[0]>cl[0]+1e-6||Math.abs(+c[0]-cl[0])<=1e-6&&(c[1]|0)<me);
+  const rival=()=>g.peers().some(q=>!q.sameTab&&q.presence&&(q.presence.h||beats(q.presence.cl)));
+  for(let k=0;k<4&&!rival();k++){g.presence({cl}).catch(()=>{});await new Promise(r=>setTimeout(r,200));}
+  if(rival()||MODE!=='client'||!G||G.over){console.info('takeover: another player is taking over');NET.code='join';try{g.leave().catch(()=>{});}catch(e){}return false;}
   try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);NET.code='join';try{g.leave().catch(()=>{});}catch(_){}return false;}
   MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};try{if(NET.room&&NET.startInfo)NET.room.presence({g:{c:NET.baseCode||NET.jcode,f:G.teams[me].fac,s:'full',n:G.teams.length,m:NET.startInfo.map}}).catch(()=>{});}catch(e){}
   const oldHost=ck.me|0;for(let k=0;k<G.teams.length;k++){const T=G.teams[k];if(k===ME){T.ai=null;T.discT=0;continue;}if(k===oldHost){if(!T.ai){T.ai=mkAI(1);T.aiTook=1;}continue;}if(!T.ai&&!T.out)T.discT=G.t;}
-  NET.game=g;wireHost(g);g.presence({h:1}).catch(()=>{});
+  // the host flag goes out again each second for 10 s, so a claimant that only reaches the room now still sees it
+  NET.game=g;wireHost(g);g.presence({h:1,cl:null}).catch(()=>{});for(let k=1;k<=10;k++)setTimeout(()=>{if(MODE==='host'&&NET.game===g)g.presence({h:1}).catch(()=>{});},k*1000);
   for(const O of G.teams)log(O.id,`Connection lost for a moment. The battle goes on; the other commanders are reconnecting.`,'w');return true;}
 /* ================= UI: sidebar, input, menu, main loop ================= */
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
