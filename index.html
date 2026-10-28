@@ -5426,6 +5426,20 @@ const P_REG={};function regions(dom){const key=dom;let R=P_REG[key];if(R&&R.g===
   for(let i=0;i<a.length;i++){if(a[i]||!pass(i))continue;id++;a[i]=id;st.push(i);while(st.length){const c=st.pop(),cx=c%GW,cy=(c/GW)|0;
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(a[n]||!pass(n))continue;if(dx&&dy&&(!pass(cy*GW+nx)||!pass(ny*GW+cx)))continue;a[n]=id;st.push(n);}}}
   P_REG[key]={a,g:G.grid,v:G.gridV|0};return a;}
+// A wall cell (a collapsed building) becomes open ground. The route caches (wall costs and connected regions) are
+// patched around that one cell instead of being rebuilt for the whole map on the next route search, which was a single
+// 10-30 ms hitch on big maps. The result is exactly what a full rebuild gives (regions are only ever compared by id).
+function gridOpen(k){const g=G.grid,v0=G.gridV|0,v1=v0+1;g[k]=0;G.gridV=v1;const cx=k%GW,cy=(k/GW)|0;
+  if(P_W&&P_Wg===g&&P_Wv===v0&&P_W.length===GW*GH){P_Wv=v1;
+    for(let y=cy-1;y<=cy+1;y++)for(let x=cx-1;x<=cx+1;x++){if(x<0||y<0||x>=GW||y>=GH)continue;const i=y*GW+x;if(g[i]!==0&&g[i]!==2)continue;let n=0;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=GW||Y>=GH){n++;continue;}const v=g[Y*GW+X];if(v!==0&&v!==2)n++;}P_W[i]=Math.min(.9,n*.18);}}
+  const RN=P_REG.naval;if(RN&&RN.g===g&&RN.v===v0&&RN.a.length===GW*GH)RN.v=v1;   // water is untouched
+  const R=P_REG.ground;if(!(R&&R.g===g&&R.v===v0&&R.a.length===GW*GH))return;const a=R.a,pass=i=>{const v=g[i];return v===0||v===2;},ids=[];
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!pass(n))continue;
+    if(dx&&dy&&(!pass(cy*GW+nx)||!pass(ny*GW+cx)))continue;if(a[n]&&ids.indexOf(a[n])<0)ids.push(a[n]);}
+  if(!ids.length){let m=0;for(let i=0;i<a.length;i++)if(a[i]>m)m=a[i];a[k]=m+1;}
+  else{const keep=ids[0];a[k]=keep;if(ids.length>1)for(let i=0;i<a.length;i++){const r=a[i];if(r!==keep&&r&&ids.indexOf(r)>0)a[i]=keep;}}
+  R.v=v1;}
 function nearestInRegion(R,reg,gx,gy){for(let r=1;r<90;r++){let best=-1,bd=1e9;for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;const x=gx+dx,y=gy+dy;if(x<0||y<0||x>=GW||y>=GH)continue;if(R[y*GW+x]!==reg)continue;const d=dx*dx+dy*dy;if(d<bd){bd=d;best=y*GW+x;}}if(best>=0)return[best%GW,(best/GW)|0];}return null;}
 function findPath(dom,sx,sy,tx,ty){
   const s0=nearestPass(dom,Math.floor(sx/CELL),Math.floor(sy/CELL));let g0=nearestPass(dom,Math.floor(tx/CELL),Math.floor(ty/CELL));if(!s0||!g0)return null;
@@ -5621,6 +5635,7 @@ function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&N<=MAPS[o.map].m
   if(MODE!=='client'){
     for(let t=0;t<N;t++){const [bx,by]=BASES[t];const a=baseFacing(t),cx=Math.cos(a),cy=Math.sin(a);addBld(t,'hq',bx,by,true);addUnit(t,'harv',bx+cx*150-cy*60,by+cy*150+cx*60);addUnit(t,'dozer',bx+cx*120-cy*110,by+cy*120+cx*110);addUnit(t,'inf',bx+cx*130+cy*90,by+cy*130-cx*90);addUnit(t,'inf',bx+cx*150+cy*70,by+cy*150-cx*70);}
     if(G.sandbox)sandboxSetup();
+    wallCost();regions('ground');regions('naval');   // route caches built now, behind the loading screen, not by the first long route search mid-battle (a 10-30 ms hitch)
   }
 }
 function baseFacing(t){const b=BASES[t]||BASES[0];return Math.atan2(MAPH/2-b[1],MAPW/2-b[0]);}
@@ -6429,7 +6444,7 @@ function civAtXY(x,y){if(!G.civAt)return null;const c=G.civAt.get(Math.floor(y/C
 function canGarrison(u){return !u.isB&&!u.dead&&isInf(u.s)&&!u.s.noAttack&&u.kind!=='hacker'&&u.kind!=='harv'&&u.kind!=='dozer';}
 function civTarget(c){const ALL=new Array(16).fill(true);return c.tg||(c.tg={civ:c,isB:true,kind:'civb',x:c.x,y:c.y,r:16,size:32,team:-1,vs:ALL,s:{name:'City building',armor:'bld'},get dead(){return c.dead||!!c.g;},get hp(){return c.hp;},get max(){return c.max;}});}
 function damageCiv(c,d,team){if(c.dead||d<=0||c.g)return;c.hp-=d;c.hit=G.t;if(c.hp<=0)collapseCiv(c,team);}
-function collapseCiv(c,team){if(c.dead)return;c.dead=true;c.hp=0;if(G.grid[c.k]===3){G.grid[c.k]=0;G.gridV=(G.gridV|0)+1;}if(G.cover)G.cover[c.k]=Math.min(255,(G.cover[c.k]||0)+2);G.civDirty=true;
+function collapseCiv(c,team){if(c.dead)return;c.dead=true;c.hp=0;if(G.grid[c.k]===3)gridOpen(c.k);if(G.cover)G.cover[c.k]=Math.min(255,(G.cover[c.k]||0)+2);G.civDirty=true;
   const g=c.g;c.g=null;const occ=c.occ;c.occ=[];occ.forEach((u,i)=>{const a=i/Math.max(1,occ.length)*6.283;const p=nearestPassXY('ground',c.x+Math.cos(a)*30,c.y+Math.sin(a)*30)||[c.x,c.y];u.x=p[0];u.y=p[1];u.inTun=false;u.inGar=null;u.mv=G.t;u.order=null;u.target=null;u.hp*=.6;u.fear=(u.fear||0)+.5;G.ents.push(u);G.byId.set(u.id,u);});
   if(g&&!g.dead){g.dead=true;G.byId.delete(g.id);FXE('die',[g.id,g.x|0,g.y|0,KINDS.indexOf(g.kind),1,g.team]);}FXE('civd',[c.i]);if(occ.length)log(occ[0].team,`A building we held collapsed - ${occ.length} soldier${occ.length>1?'s':''} thrown clear.`,'w');}
 function enterGarrison(u,c){if(c.dead){u.order=null;return;}if(c.g&&!ally(c.g.team,u.team)){u.order=null;return;}if(c.occ.length>=c.cap){u.order=null;log(u.team,`That building is full (${c.cap} troops).`,'w');return;}
@@ -8026,7 +8041,8 @@ function migRoom(gen){return gen>0?NET.baseCode+'-m'+gen:NET.baseCode;}
 function ckTick(dt,live){NET.ckT=(NET.ckT==null?4:NET.ckT)-dt;if(NET.ckT>0||NET.ckBusy||NET.ckOut||!live.length||!NET.game)return;NET.ckT=8;
   const sb=live.find(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(sb==null)return;const to=NET.peers[sb];NET.ckBusy=true;
   let ck;try{ck=ckEncode();ck.gen=NET.gen||0;}catch(e){console.warn('checkpoint',e);NET.ckBusy=false;return;}
-  ckPack(ck).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,sb,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
+  // packing (JSON + gzip) waits for the next turn of the event loop: a separate slice from the step that took the checkpoint
+  new Promise(r=>setTimeout(r,0)).then(()=>ckPack(ck)).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,sb,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
 // the checkpoint trickles out 2 chunks per tick (it used to go in one ~30 KB burst that delayed that player's snapshots)
 function ckFlush(){const O=NET.ckOut;if(!O||!NET.game){NET.ckOut=null;return;}if(NET.game.buffered&&NET.game.buffered(O.to)>12000)return;for(let k=0;k<2&&O.i<O.n;k++,O.i++)NET.game.emit('ck',{to:O.to,id:O.id,i:O.i,n:O.n,d:O.s.slice(O.i*3000,(O.i+1)*3000)}).catch(()=>{});if(O.i>=O.n){NET.ckAk=O.cs;NET.sbSlot=O.sb;NET.ckOut=null;}}  // the standby flag moves only once the new standby holds a whole checkpoint
 function ckReceive(d){if(!d||typeof d.d!=='string'||!(d.n>0)||d.n>400)return;const P=NET.ckParts||(NET.ckParts={});let e=P[d.id];if(!e){e=P[d.id]={n:d.n,got:0,a:new Array(d.n)};for(const k in P)if(+k<d.id-2)delete P[k];}

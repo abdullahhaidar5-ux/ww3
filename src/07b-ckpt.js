@@ -50,7 +50,8 @@ function migRoom(gen){return gen>0?NET.baseCode+'-m'+gen:NET.baseCode;}
 function ckTick(dt,live){NET.ckT=(NET.ckT==null?4:NET.ckT)-dt;if(NET.ckT>0||NET.ckBusy||NET.ckOut||!live.length||!NET.game)return;NET.ckT=8;
   const sb=live.find(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(sb==null)return;const to=NET.peers[sb];NET.ckBusy=true;
   let ck;try{ck=ckEncode();ck.gen=NET.gen||0;}catch(e){console.warn('checkpoint',e);NET.ckBusy=false;return;}
-  ckPack(ck).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,sb,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
+  // packing (JSON + gzip) waits for the next turn of the event loop: a separate slice from the step that took the checkpoint
+  new Promise(r=>setTimeout(r,0)).then(()=>ckPack(ck)).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,sb,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}
 // the checkpoint trickles out 2 chunks per tick (it used to go in one ~30 KB burst that delayed that player's snapshots)
 function ckFlush(){const O=NET.ckOut;if(!O||!NET.game){NET.ckOut=null;return;}if(NET.game.buffered&&NET.game.buffered(O.to)>12000)return;for(let k=0;k<2&&O.i<O.n;k++,O.i++)NET.game.emit('ck',{to:O.to,id:O.id,i:O.i,n:O.n,d:O.s.slice(O.i*3000,(O.i+1)*3000)}).catch(()=>{});if(O.i>=O.n){NET.ckAk=O.cs;NET.sbSlot=O.sb;NET.ckOut=null;}}  // the standby flag moves only once the new standby holds a whole checkpoint
 function ckReceive(d){if(!d||typeof d.d!=='string'||!(d.n>0)||d.n>400)return;const P=NET.ckParts||(NET.ckParts={});let e=P[d.id];if(!e){e=P[d.id]={n:d.n,got:0,a:new Array(d.n)};for(const k in P)if(+k<d.id-2)delete P[k];}

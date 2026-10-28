@@ -253,6 +253,20 @@ const P_REG={};function regions(dom){const key=dom;let R=P_REG[key];if(R&&R.g===
   for(let i=0;i<a.length;i++){if(a[i]||!pass(i))continue;id++;a[i]=id;st.push(i);while(st.length){const c=st.pop(),cx=c%GW,cy=(c/GW)|0;
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(a[n]||!pass(n))continue;if(dx&&dy&&(!pass(cy*GW+nx)||!pass(ny*GW+cx)))continue;a[n]=id;st.push(n);}}}
   P_REG[key]={a,g:G.grid,v:G.gridV|0};return a;}
+// A wall cell (a collapsed building) becomes open ground. The route caches (wall costs and connected regions) are
+// patched around that one cell instead of being rebuilt for the whole map on the next route search, which was a single
+// 10-30 ms hitch on big maps. The result is exactly what a full rebuild gives (regions are only ever compared by id).
+function gridOpen(k){const g=G.grid,v0=G.gridV|0,v1=v0+1;g[k]=0;G.gridV=v1;const cx=k%GW,cy=(k/GW)|0;
+  if(P_W&&P_Wg===g&&P_Wv===v0&&P_W.length===GW*GH){P_Wv=v1;
+    for(let y=cy-1;y<=cy+1;y++)for(let x=cx-1;x<=cx+1;x++){if(x<0||y<0||x>=GW||y>=GH)continue;const i=y*GW+x;if(g[i]!==0&&g[i]!==2)continue;let n=0;
+      for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const X=x+dx,Y=y+dy;if(X<0||Y<0||X>=GW||Y>=GH){n++;continue;}const v=g[Y*GW+X];if(v!==0&&v!==2)n++;}P_W[i]=Math.min(.9,n*.18);}}
+  const RN=P_REG.naval;if(RN&&RN.g===g&&RN.v===v0&&RN.a.length===GW*GH)RN.v=v1;   // water is untouched
+  const R=P_REG.ground;if(!(R&&R.g===g&&R.v===v0&&R.a.length===GW*GH))return;const a=R.a,pass=i=>{const v=g[i];return v===0||v===2;},ids=[];
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!pass(n))continue;
+    if(dx&&dy&&(!pass(cy*GW+nx)||!pass(ny*GW+cx)))continue;if(a[n]&&ids.indexOf(a[n])<0)ids.push(a[n]);}
+  if(!ids.length){let m=0;for(let i=0;i<a.length;i++)if(a[i]>m)m=a[i];a[k]=m+1;}
+  else{const keep=ids[0];a[k]=keep;if(ids.length>1)for(let i=0;i<a.length;i++){const r=a[i];if(r!==keep&&r&&ids.indexOf(r)>0)a[i]=keep;}}
+  R.v=v1;}
 function nearestInRegion(R,reg,gx,gy){for(let r=1;r<90;r++){let best=-1,bd=1e9;for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;const x=gx+dx,y=gy+dy;if(x<0||y<0||x>=GW||y>=GH)continue;if(R[y*GW+x]!==reg)continue;const d=dx*dx+dy*dy;if(d<bd){bd=d;best=y*GW+x;}}if(best>=0)return[best%GW,(best/GW)|0];}return null;}
 function findPath(dom,sx,sy,tx,ty){
   const s0=nearestPass(dom,Math.floor(sx/CELL),Math.floor(sy/CELL));let g0=nearestPass(dom,Math.floor(tx/CELL),Math.floor(ty/CELL));if(!s0||!g0)return null;
