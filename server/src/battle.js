@@ -298,12 +298,13 @@ export async function runBench(sim, o, { now, yieldFn, write = () => {}, cpu = n
   write(`setup: ${facs.length} sides (${facs.join(' ')}) on ${o.map}, seed ${o.seed}, AI difficulty ${o.diff}, ${o.batch} step(s) per event; battle set up in ${setupMs} ms`);
   const steps = Math.round(o.minutes * 60 / STEP), per = Math.max(1, o.batch | 0);
   const rows = []; let minute = { wall: 0, cpu: 0, events: 0, maxEv: 0, steps: 0 }, total = { wall: 0, cpu: 0, events: 0, steps: 0 }, maxEv = 0;
-  let done = 0, last = now(), c0 = cpu ? cpu() : 0; const evs = [];
+  let done = 0, last = now(), c0 = cpu ? cpu() : 0; const evs = [], worst = [];   // worst: [ms, game-s] of the slowest events
   while (done < steps) {
     const evStart = now();
     for (let k = 0; k < per && done < steps; k++) { sim.step(STEP); sim.benchNet(STEP); done++; minute.steps++; }
     await yieldFn();
     const t = now(), ev = t - evStart; last = t; evs.push(ev);
+    if (ev >= 20) { worst.push([ev, +(done * STEP).toFixed(2)]); worst.sort((x, y) => y[0] - x[0]); worst.length = Math.min(worst.length, 12); }
     minute.wall += ev; minute.events++; if (ev > minute.maxEv) minute.maxEv = ev;
     const info = done % 3600 === 0 || done >= steps ? sim.info() : null;
     if (info) {
@@ -321,5 +322,5 @@ export async function runBench(sim, o, { now, yieldFn, write = () => {}, cpu = n
   return { players: facs.length, map: o.map, seed: o.seed, diff: o.diff, batch: per, setupMs, gameSeconds: +gs.toFixed(1), wallMs: total.wall,
     wallMsPerGameS: +(total.wall / Math.max(1e-9, gs)).toFixed(1), cpuMsPerGameS: cpu ? +(total.cpu / Math.max(1e-9, gs)).toFixed(1) : null,
     maxEventMs: maxEv, events: total.events, ...pctl(evs), peakEnts: Math.max(0, ...rows.map(r => r.ents)), endEnts: info.ents, over: info.over,
-    msgs, kbSent: Math.round(bytes / 1024), kbPerGameS: +(bytes / 1024 / Math.max(1e-9, gs)).toFixed(1), rows };
+    msgs, kbSent: Math.round(bytes / 1024), kbPerGameS: +(bytes / 1024 / Math.max(1e-9, gs)).toFixed(1), worst, rows };
 }
