@@ -1,0 +1,41 @@
+game servers configured but down (http://127.0.0.1:9)
+[2s] three pages loaded
+[2s] host lobby open, code 6uj1ed
+[32s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+[92s] before: client A @1 min t=60s: host 22 entities, slot 1 sees 6 (own 6); its screen has 6; missing 0, extra 0, off-position 0, mismatched 0; credits host 5140 client 5140
+[93s] before: client B @1 min t=60s: host 22 entities, slot 2 sees 13 (own 13); its screen has 13; missing 0, extra 0, off-position 0, mismatched 0; credits host 2320 client 2320
+    trace client A (screenshot stall):  || now: client via=pjd ws=false rxAgo=257
+    trace client B (screenshot stall):  || now: client via=pjd ws=false rxAgo=258
+[98s] host leaves at t=120.2s; standby checkpoint from t=111.8s (11 KB, 32 entities); armies US 3, RU 4, CN 25
+    +0.5s client A: client reconnecting room=ww3-6uj1ed gen=0 (no room)
+[98s] client A noticed the host was gone after 0.6 s
+    +0.6s client B: client reconnecting room=ww3-6uj1ed gen=0 (no room)
+    +2.2s client A: client reconnecting room=6uj1ed-m1 gen=0 (no room)
+[100s] client A is the new host after 2.3 s (room 6uj1ed-m1, battle resumed from t=120.0s)
+    +2.4s client A: host room=6uj1ed-m1 gen=1
+    +3.4s client B: client reconnecting room=ww3-6uj1ed-m1 gen=0
+    +3.6s client B: client reconnecting room=ww3-6uj1ed-m1 gen=1
+    +3.8s client B: client room=ww3-6uj1ed-m1 gen=1
+[102s] client B reconnected to the new host 3.8 s after the host left
+    trace client A: 0.0 clientReconnect | 0.3 join tc-6uj1ed | 2.1 join failed tc-6uj1ed: network | 2.1 promoteToHost | 2.1 join tc-6uj1ed-m1 | 2.3 joined tc-6uj1ed-m1 via undefined | 2.3 promoteToHost -> true | 2.3 clientReconnect done, mode host
+    trace client B: 0.0 clientReconnect | 0.3 join tc-6uj1ed | 2.7 join failed tc-6uj1ed: network | 3.2 join tc-6uj1ed-m1 | 3.4 joined tc-6uj1ed-m1 via pjd | 3.4 snapshot t=121.1 while reconnecting | 3.5 snapshot t=121.2 while reconnecting | 3.6 snapshot t=121.3 while reconnecting | 3.7 clientReconnect done, mode client
+[107s]   US (slot 0): 3/3 of its pre-takeover entities are on the new host, 5 in all; AI-run (took over)
+[107s]   RU (slot 1): 4/4 of its pre-takeover entities are on the new host, 4 in all; player-run
+[107s]   CN (slot 2): 25/25 of its pre-takeover entities are on the new host, 27 in all; player-run
+[107s] after: client B right after the takeover t=126s: host 36 entities, slot 2 sees 31 (own 27); its screen has 31; missing 0, extra 0, off-position 0, mismatched 0; credits host 1065 client 1065
+[109s] client B order after the takeover: 19/22 of its units moved on the new host
+[110s] old host's side after 45 game-s under the AI: build step 1 -> 4, 11 new entities, 0 in production, $1228
+[111s] after: client B 45 game-s after the takeover t=172s: host 47 entities, slot 2 sees 31 (own 31); its screen has 31; missing 0, extra 0, off-position 0, mismatched 0; credits host 1430 client 1430
+peak memory (node + browser, summed RSS): 2989 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/6uj1ed?role=host&key=urkxxnwumov54zzoxe' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/6uj1ed?role=client&id=ww3p-pf97v1ta' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/6uj1ed?role=client&id=ww3p-irmqexs6' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/6uj1ed-m1?role=host&key=6pgr4mgbixthg2tzjl' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MIGRATE FAIL: before the host left, a client fell 14.5 game-s behind (118s)
