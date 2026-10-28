@@ -59,7 +59,7 @@ function blockedPeerShim(url) {
 }
 
 if (!process.argv.includes('--no-lock')) await acquireBrowserLock();
-const SRV = await startServer({ vars: { TEST_HOOKS: '1' }, quiet: !process.env.CFE2E_DEBUG });
+const SRV = await startServer({ vars: { TEST_HOOKS: '1', BATTLE_READY_MS: '240000' }, quiet: !process.env.CFE2E_DEBUG });
 const WS = SRV.url.replace(/^http/, 'ws');
 console.log(`local game server (wrangler dev, TEST_HOOKS) ${SRV.url}`);
 // the server's view of a battle (test hooks)
@@ -173,6 +173,7 @@ async function main() {
   say(`   both pages past the loading screen (rd: ${st.humans.map(h => h.rd).join(', ')}); battle running: ${st.go}`);
   if (process.env.CFE2E_DEBUG) for (const p of [A, B]) say('     page ' + JSON.stringify(await p.evaluate(() => { const me = NET.game && NET.game.peers().find(q => q.sameTab); return { mode: MODE, sv: NET.sv, me: me && me.peer, rd: me && me.presence && me.presence.rd, peers: NET.peers, recon: !!NET.recon }; })) + ' server ' + JSON.stringify(st.conn) + ' ' + JSON.stringify(st.peers));
   if (!st.go || !st.humans.every(h => h.rd)) fail('the server did not start the battle after both loading screens closed');
+  if (s0.go) fail('the server did not wait for the players\' loading screens');
   const tick = async n => { for (let i = 0; i < n; i++) { const w0 = Date.now();
       for (const p of [A, B]) await p.evaluate(() => { try { if (MODE === 'client') clientTick(0.1); else if (MODE === 'host') { for (let s = 0; s < 6; s++) simUpdate(1 / 60); netTick(0.1); } } catch (e) { console.error('tick: ' + e); } });
       const left = 100 - (Date.now() - w0); if (left > 0) await A.waitForTimeout(left); } };

@@ -598,7 +598,9 @@ export class BattleRoom extends DurableObject {
   }
 
   hostOpts() {
-    return { now: () => Date.now(), log: m => console.log(m), publish: g => this.publish(g),
+    // (the local end-to-end test waits longer for its slow software-rendered pages: BATTLE_READY_MS, test hooks only)
+    const readyMs = this.env.TEST_HOOKS === '1' && +this.env.BATTLE_READY_MS > 0 ? +this.env.BATTLE_READY_MS : undefined;
+    return { now: () => Date.now(), log: m => console.log(m), publish: g => this.publish(g), readyMs,
       send: (pid, f) => { const w = this.socks.get(pid); if (w) safeSend(w, f); },
       close: (pid, c, why) => { const w = this.socks.get(pid); this.socks.delete(pid); this.ips.delete(pid); if (w) safeClose(w, c, why); },
       // the latest checkpoint (every 8 s while players are connected; ~10-40 KB): one storage write each

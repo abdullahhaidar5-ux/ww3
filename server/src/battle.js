@@ -24,8 +24,8 @@ export class BattleHost {
   // sim: createBattleSim(); code: game code; ownKey: the creator's key; send(id, frame); close(id, code, why);
   // now(): ms clock; publish(entry|null): the game-list entry changed; save(record|null): keep (or drop) the battle's
   // latest checkpoint so it can be picked up after a server restart (BattleHost.restore); log(msg)
-  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed }) {
-    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log });
+  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed, readyMs = READY_MAX_MS }) {
+    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log, readyMs });
     this.hostId = 'ww3-' + code;
     this.phase = 'lobby';                    // lobby -> battle -> over -> closed
     this.players = new Map();                // id -> {id, pres, f, tok, at, seat}
@@ -180,7 +180,7 @@ export class BattleHost {
     this.flush();
     this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
-    this.go = false; this.goBy = this.now() + READY_MAX_MS; this.rd = [];   // hold until every player is past the loading screen
+    this.go = false; this.goBy = this.now() + this.readyMs; this.rd = [];   // hold until every player is past the loading screen
     this.log(`battle ${this.code} started: ${facs.join(' ')} on ${this.map}`);
     this.list();
   }
