@@ -1,6 +1,6 @@
 # Graphics Phase 4: light and effects (branch orch/gfx-fx)
 
-**What looks different** (only 05-fx3d / 10-post; driven by existing battle events, never read by the simulation)
+**What looks different** (visual only; the simulation never reads it)
 - Big explosions: fireball lingers and rolls up, cooling to dark red; tumbling debris chunks on heavy hits (PC);
   a low ground-coloured dust cloud hangs for 6–9 s; the biggest blasts leave a dark smoke column climbing and leaning
   downwind for up to 16 s.
@@ -14,7 +14,7 @@
 **Shots** orch/shots/gfx-fx/: before/after close-ups (fulda, golan, arctic, dmz dusk; same seed, same camera)
 and boom-1/2/3 explosion sequence.
 
-**Frame times** (SwiftShader software GL, 2 cores; noisy, explosion-heavy probe orch/three/fxshots.mjs --perf)
+**Frame times** (SwiftShader, noisy; explosion probe fxshots.mjs --perf)
 
 | | before | after |
 |---|---|---|
