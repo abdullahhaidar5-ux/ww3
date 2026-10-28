@@ -298,7 +298,7 @@ body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);ove
 #mode:not([hidden])~#log{top:calc(max(10px,env(safe-area-inset-top,0px)) + 40px)}
 #app.mmpeek #log{top:calc(max(8px,env(safe-area-inset-top,0px)) + 112px)}
 /* ---------- Command bar: docked along the bottom like Generals. Left: minimap · centre: command card · right: money, strike, rank, selection ---------- */
-#side{--bh:clamp(150px,19vh,180px);--bw:126px;--rows:3;position:relative;z-index:6;box-sizing:border-box;height:var(--bh);min-width:0;display:grid;
+#side{--bh:clamp(176px,19vh,190px);--bw:126px;--rows:3;position:relative;z-index:6;box-sizing:border-box;height:var(--bh);min-width:0;display:grid;
   grid-template-columns:auto minmax(0,1fr) clamp(260px,22vw,360px);grid-template-rows:minmax(0,1fr);gap:8px;
   padding:6px max(8px,env(safe-area-inset-right,0px)) max(6px,env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));
   background:linear-gradient(180deg,#1c2521,#121815 60%);border-top:1px solid #3d4d44;box-shadow:0 -1px 0 #090c0b,0 -6px 16px rgba(0,0,0,.45)}
@@ -336,6 +336,11 @@ body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);ove
 .btn:disabled{opacity:.42;cursor:not-allowed}
 #panel .btn:disabled{pointer-events:none}
 .btn .n{display:block;font:600 13px/1.1 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:12px}
+/* command-button names: up to two lines (fitBtnNames shrinks a name that still doesn't fit) instead of ending in "…" */
+#panel .btn{padding:1px 6px 2px}
+#panel .btn .n{white-space:normal;overflow-wrap:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;text-overflow:clip;font-size:12px;line-height:1.0;padding-right:10px}
+#panel .btn .c{font-size:10px;line-height:1.1}
+#panel.grid{scroll-snap-type:x proximity}#panel .btn,#panel .sub{scroll-snap-align:start}
 .btn .c{display:block;color:var(--accent);font-size:10.5px;line-height:1.2;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .btn .d{display:none}
 .btn .q{position:absolute;top:2px;right:4px;font:600 11px var(--mono);color:var(--ok)}
@@ -359,6 +364,10 @@ body{margin:0;background:var(--bg);color:var(--fg);font:13px/1.4 var(--mono);ove
 .sup{display:flex;flex-direction:column;gap:2px;flex:none}
 .sup .lbl{display:flex;justify-content:space-between;align-items:baseline;gap:6px;font-family:var(--display);font-weight:600;font-size:13px;line-height:1.15;min-width:0}
 .sup .lbl>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* long nation and strike names wrap onto a second line instead of ending in "…" */
+#facname{white-space:normal;overflow-wrap:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;line-height:1.02}
+.sup .lbl>span:first-child{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}
+.sup .lbl{flex-wrap:wrap;column-gap:6px}
 .sw{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"l b" "r b";gap:2px 6px;align-items:center}
 .sw .lbl{grid-area:l}.sw .bar{grid-area:r}.sw #supbtn{grid-area:b}
 #supt,#rankt{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -573,7 +582,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div id="log" aria-live="polite"></div>
     <div id="wxchip" hidden></div>
     <div id="net" hidden></div>
-    <div id="hint">Left-click or drag: select (click empty ground to deselect) · Right-click: move / attack · Right-drag: line formation · R: retreat · Left-click to place buildings and aim powers · F then click: attack-move · G then click: defend area · Q: army · H: home · Wheel or +/−: zoom · WASD/arrows: scroll · Esc: cancel / deselect</div>
+    <div id="hint">Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add · Double-click: all of a type · Ctrl+click: force-fire · Alt+click: waypoint · A / G then click: attack-move / guard · S: stop · R: retreat · Right-click: deselect / cancel · Right-drag: infantry line (nothing selected: rapid scroll) · Q: army · H: home · Wheel: zoom · Arrows/WASD: scroll</div>
     <div id="sbx" class="sbx" hidden><button class="sbt" id="sbFold" type="button" aria-expanded="true">TEST RANGE</button><div class="sbr"><button id="sbTargets">Send new targets</button><button id="sbClear">Clear targets</button></div><button id="sbFight" class="sbw">Enemy fights back: OFF</button><div id="sbCount" class="sbc"></div></div>
     <div id="allyBox" class="sup" hidden></div>
   </div>
@@ -633,7 +642,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div class="label">Open battles</div>
         <div id="games"><div class="empty">Looking for battles…</div></div>
         <div class="row"><button class="big ghost" id="host" title="Set up a battle: battlefield, players and computer players">+ New battle</button><button class="big ghost" id="cancelHost" hidden>Leave</button></div>
-        <div class="row joinrow"><input id="jcode" maxlength="40" placeholder="Game code or invite link" aria-label="Game code or invite link" autocomplete="off" spellcheck="false"><button class="big ghost" id="jbtn">Join by code</button></div>
+        <div class="row joinrow"><input id="jcode" maxlength="600" placeholder="Game code or invite link" aria-label="Game code or invite link" autocomplete="off" spellcheck="false"><button class="big ghost" id="jbtn">Join by code</button></div>
         <div id="mpstatus"></div>
       </div>
     </div>
@@ -641,7 +650,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   </div>
 </div>
 <div id="settings" class="overlay" hidden style="z-index:30">
-  <div class="card" style="max-width:560px;max-height:92vh;overflow-y:auto">
+  <div class="card" style="max-width:560px;max-height:92vh;overflow:hidden">
+    <div id="setBody">
     <h1 style="font-size:clamp(30px,6vw,44px)">Settings</h1>
     <h2 class="sethd">Display &amp; sound</h2>
     <div class="label">Graphics quality</div><div class="seg" id="sGfx"><button data-v="auto">Auto</button><button data-v="high">High</button><button data-v="med">Medium</button><button data-v="low">Low</button></div>
@@ -666,6 +676,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div class="label">Click tolerance before a drag becomes a selection box</div><div class="seg" id="sTol"><button data-v="5">Small</button><button data-v="8">Normal</button><button data-v="16">Large (trackpad / touch)</button></div>
     <div class="label">Clicking the minimap</div><div class="seg" id="sMmc"><button data-v="cam">Moves the camera</button><button data-v="units">Sends selected units</button></div>
     <div class="label">Hold the middle button (wheel) and drag to pan</div><div class="seg" id="sMpan"><button data-v="1">On</button><button data-v="0">Off</button></div>
+    </div>
     <div class="row"><button class="big" id="sDone">Done</button></div>
   </div>
 </div>
@@ -7678,18 +7689,27 @@ async function renderGames(){if(!NET.room)return;const el=$('games');const all=N
   el.innerHTML='';const hd=document.createElement('div');hd.className='empty';hd.textContent=`${ps.length} open battle${ps.length===1?'':'s'} · ${busy.length} in progress`;el.append(hd);
   for(const p of [...ps,...busy]){const g=p.presence.g,row=document.createElement('div');row.className='game';const nm=(p.by&&names[p.by]&&names[p.by].name)||(p.isMe?'You (other tab)':window.WW3_P2P&&g.c?'game '+String(g.c).toUpperCase():'A player');
     const info=document.createElement('div');const b=document.createElement('b');b.textContent=(g.pw?'🔒 ':'')+FACTIONS[g.f].name;if(g.pw)b.title='Password protected: you need the password to join';const s=document.createElement('span');s.textContent=` · ${nm} · ${(MAPS[g.m]||MAPS.strait).name} · ${g.n||1}${g.s==='full'?'':'/'+(g.mx||8)} players`;info.append(b,s);
-    const btn=document.createElement('button');btn.textContent=g.s==='full'?'In battle':'Join';btn.disabled=!!NET.code||!!NET.game||g.s==='full';btn.onclick=()=>{initAudio();if(g.pw)askPw(p);else joinGame(p);};row.append(info,btn);el.append(row);}}
+    // a battle under way that this tab was playing in (its reconnect token survives a page reload): Rejoin gets the army back
+    let mine=false;if(g.s==='full'&&window.WW3_P2P&&g.c)try{mine=!!sessionStorage.getItem('ww3_tok_'+g.c);}catch(e){}
+    const btn=document.createElement('button');btn.textContent=mine?'Rejoin':g.s==='full'?'In battle':'Join';btn.disabled=!!NET.code||!!NET.game||(g.s==='full'&&!mine);btn.onclick=()=>{initAudio();if(mine){joinByCode(g.c,false,'');return;}if(g.pw)askPw(p);else joinGame(p);};row.append(info,btn);el.append(row);}}
 const GAME_URL=window.WW3_P2P?(()=>{try{const r=document.referrer||'';if(/itch\.io/.test(r))return r.split('#')[0];}catch(e){}return location.href.split('#')[0];})():'https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi';
 function lobbyCode(){return (NET.code&&NET.code!=='join'?NET.code:NET.jcode)||'';}
 // a password-protected game's invite carries the password in the link's fragment (#…&pw=, never sent to any server),
 // so a friend joins in one tap; the text also spells it out for anyone typing the code
 function inviteLink(){const c=lobbyCode();return GAME_URL+'#join='+c+(NET.pw?'&pw='+encodeURIComponent(NET.pw):'');}
-function inviteText(){const NETc=lobbyCode(),pwT=NET.pw?` and the password ${NET.pw}`:'';if(window.WW3_P2P&&location.protocol==='file:')return `Join my World War 3 battle! Open the World War 3 game file (ww3.html, from Discord) in Chrome or Edge, go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code"${pwT}.`;return window.WW3_P2P?(NET.pw?`Join my World War 3 battle (password protected)! Tap ${inviteLink()} , or open ${GAME_URL} , go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code"${pwT}.`:`Join my World War 3 battle! Open ${GAME_URL} , go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code".`):`Join my World War 3 battle: ${GAME_URL}#join=${NETc} (game code ${NETc.toUpperCase()}). Open the link signed in to claude.ai, go to Multiplayer and press Join, or type the code into "Join by code".`;}
+function inviteText(){const NETc=lobbyCode(),pwT=NET.pw?` and the password ${NET.pw}`:'';if(window.WW3_P2P&&location.protocol==='file:')return `Join my World War 3 battle! Open the World War 3 game file (ww3.html, from Discord) in Chrome or Edge, go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code"${pwT}.`;return window.WW3_P2P?(NET.pw?`Join my World War 3 battle (password protected)! Tap ${inviteLink()} , or open ${GAME_URL} , go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code"${pwT}.`:`Join my World War 3 battle! Tap ${inviteLink()} , or open ${GAME_URL} , go to Multiplayer and enter game code ${NETc.toUpperCase()} in "Join by code".`):`Join my World War 3 battle: ${GAME_URL}#join=${NETc} (game code ${NETc.toUpperCase()}). Open the link signed in to claude.ai, go to Multiplayer and press Join, or type the code into "Join by code".`;}
 function copyText(t,btn){const done=()=>{if(btn){const o=btn.textContent;btn.textContent='Copied ✓';setTimeout(()=>btn.textContent=o,1600);}};
   try{if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done,()=>fallback());return;}}catch(e){}fallback();
   function fallback(){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();let ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();if(ok)done();else if(btn)btn.textContent='Select the text and copy it';}}
 // join a hosted game from its code (typed, pasted invite text, or the #join= part of an invite link)
-function codeFrom(s){const m=String(s||'').toLowerCase().match(/join=([a-z0-9]{4,8})/)||String(s||'').toLowerCase().match(/\b([a-z0-9]{6})\b/);return m?m[1]:null;}
+// pasted invites: the #join= part of a link wins, then the word after "code", then a bare code, then a capitalised
+// 6-character token outside any web address (codes are shown in capitals), and only last any 6-character word
+function codeFrom(s){s=String(s||'');let m=s.toLowerCase().match(/join=([a-z0-9]{4,8})/);if(m)return m[1];
+  m=s.match(/\bcode\s*[:#]?\s*([a-z0-9]{6})\b/i);if(m)return m[1].toLowerCase();
+  const t=s.trim();if(/^[a-z0-9]{4,8}$/i.test(t))return t.toLowerCase();
+  const w=s.replace(/\S*(\/\/|www\.|\.[a-z]{2,6}\/)\S*/gi,' ');
+  m=w.match(/\b(?=[A-Z]*[0-9])[A-Z0-9]{6}\b/)||w.match(/\b[A-Z0-9]{6}\b/);if(m)return m[0].toLowerCase();
+  const STOP=/^(battle|online|github|invite|friend|please|thanks|server)$/;for(const x of w.toLowerCase().match(/\b[a-z0-9]{6}\b/g)||[])if(!STOP.test(x))return x;return null;}
 function joinByCode(raw,quiet,pw){if(!NET.room||NET.game)return;const code=codeFrom(raw);if(!code){if(!quiet)$('mpstatus').textContent='That is not a game code. Paste the invite or type the 6-character code.';return;}
   if(window.WW3_P2P){if(pw==null)pw=pwFrom(raw);const q=NET.room.peers().find(q=>!q.sameTab&&q.presence&&q.presence.g&&q.presence.g.c===code);const p={peer:'ww3-'+code,presence:{g:{c:code,s:'open',cf:q&&q.presence.g.cf?1:0,pw:q&&q.presence.g.pw?1:0}}};
     // a listed game that needs a password: ask for it first (a game not in the list asks when its host or the server does)
@@ -7853,15 +7873,28 @@ function wireClient(g){
 //     (NET.reconKick) instead of sitting out the full wait.
 function joinT(name,ms){const p=NET.room.join(name,NET.via?{via:NET.via}:undefined);let late=false;
   return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>{late=true;rej(Object.assign(new Error('timeout'),{type:'timeout'}));},ms))]).catch(e=>{if(late)p.then(g=>{try{g.leave().catch(()=>{});}catch(_){}},()=>{});throw e;});}
+// is a Cloudflare battle still running? 'up' (the server lists it), 'gone' (the network works but the server doesn't run
+// it, or can't be reached while this page's own site can), 'down' (this device has no network)
+async function svAsk(code){const sig=ms=>{try{const c=new AbortController();setTimeout(()=>c.abort(),ms);return c.signal;}catch(e){return undefined;}};
+  const srv=String(window.WW3_SERVER||(typeof WW3_SERVER_URL!=='undefined'?WW3_SERVER_URL:'')).replace(/\/+$/,'');
+  if(srv)try{const r=await fetch(srv+'/games',{cache:'no-store',signal:sig(5000)});const j=await r.json();return ((j&&j.battles)||[]).some(x=>Array.isArray(x)&&x[0]==='b-'+code)?'up':'gone';}catch(e){}
+  if(location.protocol==='file:')return 'gone';
+  try{await fetch(location.href.split('#')[0],{method:'HEAD',cache:'no-store',signal:sig(5000)});return 'gone';}catch(e){return 'down';}}
 async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NET.jcode)return;NET.recon=true;NET.reconKick=false;pushLog('Connection lost. Reconnecting…','w');
-  const gen0=NET.gen||0,p0=NET.myPeer,t0=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let gone=false,here=false,n=0,newTries=0;
+  const gen0=NET.gen||0,p0=NET.myPeer,tA=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let t0=tA,gone=false,here=false,n=0,newTries=0;
   // a battle hosted on Cloudflare: a server blip (restart, redeploy) or this player's own network drop is ridden out on
   // the server, which keeps the battle (and the side, 30 s) or picks it up again from its kept checkpoint. Only the
   // server's own "no such battle" (it handed the battle over, or could not pick it up) lets the standby take over: a
   // standby that merely can't reach the server must not start a second copy of the battle (review R6). If nobody hears
   // from the server for 40 s, it is gone for everyone and the standby takes over.
+  // But 40 s of silence can just as well be this page's own network (a phone in a tunnel): then a takeover helps nobody and
+  // splits the battle (review R11). So when the 40 s are up, ask once more (svAsk): while this page has no network, or
+  // the server still lists the battle, keep riding it out (the 60 s budget counts from then on); take over only when
+  // the network works and the server no longer runs the battle, or can't be reached while other sites can. 5 min at most.
   const svBlip=()=>NET.sv&&!(gen0>0)&&!gone&&performance.now()-t0<40000;
   while(MODE==='client'&&!(G&&G.over)&&performance.now()-t0<60000){
+    if(n>0&&NET.sv&&!(gen0>0)&&!gone&&performance.now()-t0>=40000&&performance.now()-tA<300000){const st=await svAsk(NET.baseCode||NET.jcode);
+      if(MODE!=='client'||(G&&G.over))break;if(st!=='gone'){t0=performance.now()-35000;if(st==='down'&&!NET.svDownSaid){NET.svDownSaid=1;pushLog('No network on this device. Waiting for it to come back…','w');}}}
     if(n>0&&NET.isStandby&&NET.lastCk&&(!here||performance.now()-t0>15000)&&!svBlip()){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
     if(MODE!=='client'||(G&&G.over))break;
     // which room: the old one first; then the follow-up room (with an occasional look back at the old room while it
@@ -7881,7 +7914,7 @@ async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NE
     const back=()=>gen>gen0?NET.lastRx>=t1:(NET.ackW>=t1||NET.lastRxMe>=t1||(NET.lastRx>=t1&&!!p0&&NET.myPeer===p0));
     for(let k=0;k<24&&!back()&&!NET.reconKick&&MODE==='client';k++){if(!NET.myPeer){const me=g.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}
       if(k%3===0)g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1},cq:NET.cq||[]}).catch(()=>{});await slp(300);}
-    if(back()&&!NET.reconKick){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Reconnected.':'Reconnected.','g');return;}
+    if(back()&&!NET.reconKick){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.svDownSaid=0;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Reconnected.':'Reconnected.','g');return;}
     // the host is not in its room any more (closed the game / lost its connection): it is gone, the standby takes over now.
     // While it is still there (it was just slow), keep knocking at its room, and the standby holds off for up to 15 s
     // instead of starting a second battle beside it. If its room can't be reached at all, the standby takes over at once.
@@ -8248,7 +8281,7 @@ async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e
 /* ================= UI: sidebar, input, menu, main loop ================= */
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
-let TOUCHUI=false,PICKMIN=10,LASTPT='mouse';
+let TOUCHUI=false,PICKMIN=10,LASTPT='mouse',HINTDEV='mouse';
 function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
   // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
   // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
@@ -8256,7 +8289,10 @@ function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/
 function rivals(){return G.teams.filter(T=>!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
 function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams,me=T[ME],m=Math.floor(G.t/60),s=Math.floor(G.t%60);
-  const won=winner>=0&&ally(winner,ME);const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
+  const won=winner>=0&&ally(winner,ME);
+  // the sim's reason is written from the winner's side ("The last enemy capitulated: …"); the losers read their own fall
+  if(!won&&reason&&/^The last enemy capitulated/.test(reason)){const why=me.whyOut||String(reason).replace(/^The last enemy capitulated:\s*/,'');reason=`${me.F.name} has been defeated${why?': '+why:'.'}`;if(!/[.!]$/.test(reason))reason+='.';}
+  const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
   $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=true;$('end').hidden=false;}
 function showElim(){if(!G)return;const left=G.teams.filter(T=>!T.out&&T.id!==ME).length;$('endt').textContent='Defeat';const why=G.teams[ME].whyOut;$('ends').textContent=`${G.teams[ME].F.name} has capitulated${why?': '+why:'.'} ${left} rival${left===1?'':'s'} still fighting. You can keep watching the battle.`;
   $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=false;$('end').hidden=false;}
@@ -8276,14 +8312,25 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
 function showTab(t){TAB=t;const pn=$('panel');if(pn)pn.scrollLeft=0;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('#panel>[data-tab]').forEach(b=>b.hidden=b.dataset.tab!==t);fitBtnNames();}
 // phones: a command-button name that still doesn't fit in two lines gets a smaller font (down to 8.5 px) instead of "…"
 const PHONE_BAR=typeof matchMedia==='function'?matchMedia('(max-width:560px),(max-width:760px) and (min-height:521px),(max-height:520px)'):null;
-function fitBtnNames(){const pn=$('panel');if(!pn)return;const on=PHONE_BAR&&PHONE_BAR.matches;for(const n of pn.querySelectorAll('.btn:not([hidden]) .n')){n.style.fontSize='';n.style.overflowWrap='';const b=n.parentNode;if(b.dataset.nm&&n.textContent!==b.dataset.nm)n.textContent=b.dataset.nm;if(!on||!n.clientWidth)continue;let f=parseFloat(getComputedStyle(n).fontSize)||11;while(f>8.5&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1)){f-=.5;n.style.fontSize=f+'px';}const sh=PHONE_NM[n.textContent];if(sh&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1))n.textContent=sh;if(n.scrollWidth>n.clientWidth+1)n.style.overflowWrap='anywhere';}}
+function fitBtnNames(){const pn=$('panel');if(!pn)return;const on=PHONE_BAR&&PHONE_BAR.matches;fitCols(pn);for(const n of pn.querySelectorAll('.btn:not([hidden]) .n')){n.style.fontSize='';n.style.overflowWrap='';const b=n.parentNode;if(b.dataset.nm&&n.textContent!==b.dataset.nm)n.textContent=b.dataset.nm;if(!n.clientWidth)continue;let f=parseFloat(getComputedStyle(n).fontSize)||11;const fmin=on?8.5:9.5;while(f>fmin&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1)){f-=.5;n.style.fontSize=f+'px';}const sh=on&&PHONE_NM[n.textContent];if(sh&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1))n.textContent=sh;if(n.scrollWidth>n.clientWidth+1)n.style.overflowWrap='anywhere';}
+  for(const c of pn.querySelectorAll('.btn:not([hidden]) .c'))fitText(c,on?7.5:8.5);
+  for(const el of [$('facname'),...document.querySelectorAll('#side .sup .lbl>span:first-child')])fitText(el,10);}
+// a one-line label that doesn't fit gets a smaller font (down to min px) instead of "…"
+function fitText(el,min){if(!el)return;el.style.fontSize='';if(!el.clientWidth||el.scrollWidth<=el.clientWidth+1)return;let f=parseFloat(getComputedStyle(el).fontSize)||13;while(f>min&&el.scrollWidth>el.clientWidth+1){f-=.5;el.style.fontSize=f+'px';}}
+// the command grid shows whole buttons only: the button width is stretched a little so a whole number of columns fills
+// the grid (no last column half hidden at the edge or under the panel beside it), the building labels between them counted
+const BW_MIN={up:80,land:100,desk:132};
+function fitCols(pn){const up=matchMedia('(max-width:560px),(max-width:760px) and (min-height:521px)').matches,land=!up&&matchMedia('(max-height:520px)').matches;
+  const base=up?BW_MIN.up:land?BW_MIN.land:BW_MIN.desk,W=pn.clientWidth;if(!W)return;
+  const P=pn.getBoundingClientRect();for(let k=0;k<2;k++){let subW=0;for(const d of pn.querySelectorAll('.sub:not([hidden])')){const r=d.getBoundingClientRect();if(r.left-P.left+pn.scrollLeft<W)subW+=r.width+3;}
+    const w=W-subW,cols=Math.max(1,Math.floor((w+3)/(base+3))),bw=Math.min(base*1.45,Math.floor(((w+3)/cols-3)*4)/4);pn.style.setProperty('--bw',bw+'px');}}
 const PHONE_NM={'Hetman Sahaidachny Frigate':'Sahaidachny Frigate'}; // phones only, when even the smallest font can't fit the full name (the tooltip keeps it)
 addEventListener('resize',()=>{clearTimeout(fitBtnNames.t);fitBtnNames.t=setTimeout(fitBtnNames,150);});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(barMin())barMin(false);showTab(b.dataset.tab);});
 function specLock(T,k){return k===T.F.special&&T.rank<SPEC_RANK;}
 // the full text of a button (what it does, what it needs, what it counters) lives in data-tip and shows in the command
 // tooltip (hover with a mouse; tap or long-press on a touch screen) instead of on the button itself
-function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=null)b.querySelector('.c').textContent=o.cost;b.querySelector('.q').textContent=o.q||'';b.querySelector('.p').style.width=(o.p||0)*100+'%';b.classList.toggle('on',!!o.on);b.classList.toggle('done',!!o.done);b.classList.toggle('rdy',!!o.rdy);const t=o.title||'';if(b.dataset.tip!==t){b.dataset.tip=t;b.setAttribute('aria-label',[b.dataset.nm,b.dataset.desc,t].filter(Boolean).join('. '));}if(CTIP.b===b)ctipFill(b);}
+function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=null){const c=b.querySelector('.c');if(c.textContent!==String(o.cost)){c.textContent=o.cost;if(!b.hidden&&b.dataset.tab===TAB)fitText(c,PHONE_BAR&&PHONE_BAR.matches?7.5:8.5);}}b.querySelector('.q').textContent=o.q||'';b.querySelector('.p').style.width=(o.p||0)*100+'%';b.classList.toggle('on',!!o.on);b.classList.toggle('done',!!o.done);b.classList.toggle('rdy',!!o.rdy);const t=o.title||'';if(b.dataset.tip!==t){b.dataset.tip=t;b.setAttribute('aria-label',[b.dataset.nm,b.dataset.desc,t].filter(Boolean).join('. '));}if(CTIP.b===b)ctipFill(b);}
 const CTIP={el:null,b:null,hideT:0,lp:null,eat:0};
 function ctipEl(){if(!CTIP.el){const d=document.createElement('div');d.id='ctip';d.hidden=true;d.setAttribute('role','tooltip');document.body.append(d);CTIP.el=d;}return CTIP.el;}
 function ctipFill(b){const d=ctipEl();d.innerHTML='';const n=document.createElement('b');n.textContent=b.dataset.nm||b.querySelector('.n').textContent;const c=document.createElement('span');c.className='tc';c.textContent=[b.querySelector('.c').textContent,b.querySelector('.q').textContent?'queued '+b.querySelector('.q').textContent:''].filter(Boolean).join(' · ');d.append(n,c);
@@ -8545,7 +8592,7 @@ function touchCancel(e){TCH.delete(e.pointerId);TIGN.delete(e.pointerId);if(TCH.
 function rightCancel(){if(!G||G.over)return;if(G.place||G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;}else G.sel=[];updateUI();}
 function rightClickAct(sh){if(rightOrders())orderClick(sh);else rightCancel();}
 function lineOrder(r){const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!w1||!ids.length)return;doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);mark({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}
-let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(LASTPT==='mouse'){let mode=own.length?SET.mRDU:SET.mRDN;if(mode==='line'&&!(own.length>=(rightOrders()?2:1)&&w0&&!G.place&&!G.aim&&!G.defm))mode='none';try{cv.setPointerCapture(e.pointerId);}catch(_){}if(mode==='box'){drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:'mouse',rb:1};return;}RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false,gen:1,mode,line:mode==='line'};return;}if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
+let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';hintDev(LASTPT);if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(LASTPT==='mouse'){let mode=own.length?SET.mRDU:SET.mRDN;if(mode==='line'&&!(own.length>=(rightOrders()?2:1)&&w0&&!G.place&&!G.aim&&!G.defm))mode='none';try{cv.setPointerCapture(e.pointerId);}catch(_){}if(mode==='box'){drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:'mouse',rb:1};return;}RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false,gen:1,mode,line:mode==='line'};return;}if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.place||G.aim){placeOrAim(w,e.shiftKey);return;}
   if(!rightPress(e))return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
@@ -8590,7 +8637,9 @@ mm.addEventListener('contextmenu',e=>e.preventDefault());
 {const st=document.createElement('style');st.id='phoneCss';st.textContent=`
 #app,.overlay button,.overlay select{touch-action:manipulation}
 #app{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
-#settings .card>.row:last-child{position:sticky;bottom:-1px;z-index:2;background:linear-gradient(rgba(8,11,10,0),rgba(8,11,10,.97) 30%);padding:14px 0 4px}
+#settings{background:#080b0a}
+#setBody{display:flex;flex-direction:column;gap:14px;overflow-y:auto;min-height:0;flex:1 1 auto;padding-right:6px;overscroll-behavior:contain}
+#settings .card>.row:last-child{flex:none;border-top:1px solid rgba(255,255,255,.12);padding:12px 0 2px}
 body.touchui #mode{white-space:normal;text-align:left;width:max-content;max-width:calc(100% - 20px);box-sizing:border-box;font-size:12px;letter-spacing:.02em;line-height:1.2;padding:5px;display:flex;align-items:center;gap:6px;z-index:5}
 body.touchui #mode>span{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;padding-left:4px}
 body.touchui #mode[hidden]{display:none}
@@ -8620,13 +8669,23 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
   .game button,.joinrow .big,.joinrow input{min-height:40px}
 }`;document.body.append(st);}
-function touchUI(){TOUCHUI=true;document.body.classList.add('touchui');const h=$('hint');if(h)h.textContent='Drag to scroll · pinch to zoom · tap a unit to select it, then tap the ground to move or an enemy to attack · double-tap: all of that type · hold, then drag: box-select (or a battle line with units selected)';try{updateUI();}catch(e){}}
+const HINT_TOUCH='Drag to scroll · pinch to zoom · tap a unit to select it, then tap the ground to move or an enemy to attack · double-tap: all of that type · hold, then drag: box-select (or a battle line with units selected)';
+function touchUI(){TOUCHUI=true;HINTDEV='touch';document.body.classList.add('touchui');setHint();try{updateUI();}catch(e){}}
 // on touch: the banner says how to place, and tapping it cancels; the long hint steps aside after the opening
 function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: tap a spot (drag scrolls), then ✓ Build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target')+', then ✓ Fire':(md.dataset.d||'').replace(/click/g,'tap');
     if(md.dataset.t!==t){md.dataset.t=t;md.innerHTML='<span></span><button class="mcx" type="button">✕ Cancel</button>';md.firstChild.textContent=t;}}else md.dataset.t='';
   const h=$('hint');if(h)h.hidden=!md.hidden||G.t>40;}
 $('mode').onclick=e=>{if(!G||!e.target.closest('.mcx'))return;G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();};
 try{if(matchMedia('(hover:none) and (pointer:coarse)').matches)touchUI();}catch(e){}
+// phones held upright: the menu is several screens long, so Deploy and Play online ride along at the bottom of the screen
+// (they press the real buttons further down)
+{const card=document.querySelector('#menu>.card');if(card&&!$('qDeploy')){const q=document.createElement('div');q.id='qDeploy';
+  for(const [id,t] of [['start','▶ Deploy vs AI'],['playOnline','Play online']]){const b=document.createElement('button');b.type='button';b.className='big'+(id==='start'?'':' ghost');b.textContent=t;b.onclick=()=>{const r=$(id);if(r&&!r.disabled&&!r.hidden)r.click();};b.dataset.for=id;q.append(b);}
+  card.append(q);const st=document.createElement('style');st.textContent=`#qDeploy{display:none}
+@media (max-width:560px){#qDeploy{display:flex;gap:6px;position:sticky;bottom:0;z-index:4;margin:0 -4px;padding:8px 4px max(6px,env(safe-area-inset-bottom,0px));background:linear-gradient(rgba(8,11,10,0),rgba(8,11,10,.96) 28%)}#qDeploy button{flex:1 1 0;min-height:44px}#qDeploy.near{display:none}}`;document.head.append(st);
+  // stepped aside while the real buttons are on screen
+  try{const io=new IntersectionObserver(es=>{const vis=es.some(e=>e.isIntersecting);q.classList.toggle('near',vis);},{root:$('menu')});io.observe($('start'));}catch(e){}
+  setInterval(()=>{if($('menu').hidden)return;for(const b of q.children){const r=$(b.dataset.for);b.hidden=!r||r.hidden;b.disabled=!!(r&&r.disabled);}},700);}}
 /* ================= TOUCH CONTROLS (phones, tablets) — touch only ================= */
 // Everything in this block acts only on touch (pointerType 'touch'). Touches on the battlefield are taken here in the
 // capture phase and stopped, so they never reach the mouse handlers above, and a mouse or pen never reaches this code:
@@ -8694,7 +8753,7 @@ function tcLong(){const g=TC.g;if(!g||g.mode!=='tap')return;g.mode='hold';tcHold
 window.addEventListener('pointerdown',e=>{TC.touch=e.pointerType==='touch';TC.nd=(TC.nd||0)+1;TC.lastDown=e.pointerType+':'+(e.target&&(e.target.id||e.target.tagName));if(e.pointerType!=='touch'||e.target!==cv)return;
   if(typeof menuOpen==='function'&&menuOpen())return; // the menu's own handler closes it and swallows the tap
   e.stopPropagation();e.preventDefault();if(!G||G.over)return;
-  LASTPT='touch';if(!TOUCHUI)touchUI();PICKMIN=20;mouse.in=false;try{cv.setPointerCapture(e.pointerId);}catch(_){}
+  LASTPT='touch';if(!TOUCHUI)touchUI();else hintDev('touch');PICKMIN=20;mouse.in=false;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   TC.glide=false;const p=tcXY(e);TC.ids.set(e.pointerId,p);
   if(TC.ids.size>=2){tcAbort();if(!TC.pinch&&TC.ids.size===2)TC.pinch=tcMid();return;}
   TC.g={id:e.pointerId,x0:p.x,y0:p.y,x:p.x,y:p.y,mode:'tap',t0:e.timeStamp};clearTimeout(TC.lpT);TC.lpT=setTimeout(tcLong,TC_LP);},true);
@@ -9112,7 +9171,7 @@ const MOPT=[['sMpre','Mouse scheme',null,[['gen','Generals (default)'],['alt','A
     if(id==='sMRDN'){const lr=document.createElement('div');lr.className='label';lr.innerHTML='<label for="sMRS">Rapid-scroll speed</label> <span class="sv" id="sMRSV"></span>';const r=document.createElement('input');r.type='range';r.id='sMRS';r.min=40;r.max=300;r.step=10;els.push(lr,r);}}
   const wn=document.createElement('div');wn.className='sv';wn.id='sMwarn';wn.style.cssText='color:var(--warn);margin:4px 0';wn.hidden=true;wn.textContent='Neither mouse button gives move orders now - set Left-click to Move or Right-click to Move & attack.';els.push(wn);
   hd.after(...els);
-  const rs=document.createElement('button');rs.className='btn2';rs.id='sMreset';rs.type='button';rs.textContent='Reset mouse settings to defaults';rs.style.margin='10px 0 4px';const last=$('settings').querySelector('.card>.row:last-child');if(last)last.before(rs);}}
+  const rs=document.createElement('button');rs.className='btn2';rs.id='sMreset';rs.type='button';rs.textContent='Reset mouse settings to defaults';rs.style.margin='10px 0 4px';const sb=$('setBody');if(sb)sb.append(rs);else{const last=$('settings').querySelector('.card>.row:last-child');if(last)last.before(rs);}}}
 function syncMouseUI(){const pre=mPreset();
   for(const [id,,k] of MOPT){const el=$(id);if(!el)continue;for(const b of el.querySelectorAll('button')){const v=b.dataset.v;b.classList.toggle('on',k?String(SET[k])===v:v===pre);if(id==='sMpre'&&v==='custom')b.disabled=pre!=='custom';
       b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing')?+v:v;else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
@@ -9129,7 +9188,10 @@ function hintText(){if(altMouse())return HINT_ALT;const L=leftOrders(),R=rightOr
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
   P.push('Q: army · H: home · Wheel: zoom · Arrows/WASD: scroll');return P.join(' · ');}
-function setHint(){if(TOUCHUI)return;const h=$('hint');if(h)h.textContent=hintText();}
+// the hint line speaks to what the player last used: touch wording after a tap, the active mouse scheme after a click
+// (a touchscreen laptop switches back and forth)
+function setHint(){const h=$('hint');if(h)h.textContent=TOUCHUI&&HINTDEV==='touch'?HINT_TOUCH:hintText();}
+function hintDev(t){const d=t==='touch'?'touch':t==='mouse'?'mouse':null;if(d&&d!==HINTDEV){HINTDEV=d;setHint();}}
 function mouseScheme(){setHint();CURST.k=null;try{cursorTick(true);}catch(_){}if(G)updateUI();}
 function openSettings(){try{myUI();}catch(e){}syncSettings();$('settings').hidden=false;}
 if($('openSettings'))$('openSettings').onclick=openSettings;if($('aSet'))$('aSet').onclick=openSettings;if($('sDone'))$('sDone').onclick=()=>{$('settings').hidden=true;};

@@ -111,7 +111,11 @@ export async function layoutAudit(page, rootSel = 'body') {
       if ((r.right > W + 1 || r.left < -1 || r.bottom > H + 1 || r.top < -1) && !inScroller(el)) out.offscreen.push(name(el) + ` @${r.left|0},${r.top|0} ${r.width|0}x${r.height|0}`);
       if (el.tagName === 'BUTTON' && (el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 2) && getComputedStyle(el).overflow !== 'visible') out.clipped.push(name(el));
       if (matchMedia('(pointer:coarse)').matches && (r.width < 32 || r.height < 32) && el.tagName === 'BUTTON') out.tiny.push(name(el) + ` ${r.width|0}x${r.height|0}`);
-      rects.push([el, r]);
+      // the part of the element its scrolling/clipping ancestors actually show (scrolled-away parts are not "covered")
+      let c = { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+      for (let p = el.parentElement; p && p !== document.body; p = p.parentElement) { const s = getComputedStyle(p); if (s.overflowX === 'visible' && s.overflowY === 'visible') continue;
+        const q = p.getBoundingClientRect(); c = { left: Math.max(c.left, q.left), top: Math.max(c.top, q.top), right: Math.min(c.right, q.right), bottom: Math.min(c.bottom, q.bottom) }; }
+      if (c.right - c.left > 0 && c.bottom - c.top > 0) rects.push([el, c]);
     }
     for (let i = 0; i < rects.length; i++) for (let j = i + 1; j < rects.length; j++) {
       const [a, ra] = rects[i], [b, rb] = rects[j];

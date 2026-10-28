@@ -1,7 +1,7 @@
 /* ================= UI: sidebar, input, menu, main loop ================= */
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
-let TOUCHUI=false,PICKMIN=10,LASTPT='mouse';
+let TOUCHUI=false,PICKMIN=10,LASTPT='mouse',HINTDEV='mouse';
 function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
   // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
   // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
@@ -9,7 +9,10 @@ function pushLog(m,k){if(!G)return;try{if(/ ready\.$/.test(m))speak(3);else if(/
 function rivals(){return G.teams.filter(T=>!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
 function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams,me=T[ME],m=Math.floor(G.t/60),s=Math.floor(G.t%60);
-  const won=winner>=0&&ally(winner,ME);const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
+  const won=winner>=0&&ally(winner,ME);
+  // the sim's reason is written from the winner's side ("The last enemy capitulated: …"); the losers read their own fall
+  if(!won&&reason&&/^The last enemy capitulated/.test(reason)){const why=me.whyOut||String(reason).replace(/^The last enemy capitulated:\s*/,'');reason=`${me.F.name} has been defeated${why?': '+why:'.'}`;if(!/[.!]$/.test(reason))reason+='.';}
+  const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
   $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=true;$('end').hidden=false;}
 function showElim(){if(!G)return;const left=G.teams.filter(T=>!T.out&&T.id!==ME).length;$('endt').textContent='Defeat';const why=G.teams[ME].whyOut;$('ends').textContent=`${G.teams[ME].F.name} has capitulated${why?': '+why:'.'} ${left} rival${left===1?'':'s'} still fighting. You can keep watching the battle.`;
   $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=false;$('end').hidden=false;}
@@ -29,14 +32,25 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
 function showTab(t){TAB=t;const pn=$('panel');if(pn)pn.scrollLeft=0;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('#panel>[data-tab]').forEach(b=>b.hidden=b.dataset.tab!==t);fitBtnNames();}
 // phones: a command-button name that still doesn't fit in two lines gets a smaller font (down to 8.5 px) instead of "…"
 const PHONE_BAR=typeof matchMedia==='function'?matchMedia('(max-width:560px),(max-width:760px) and (min-height:521px),(max-height:520px)'):null;
-function fitBtnNames(){const pn=$('panel');if(!pn)return;const on=PHONE_BAR&&PHONE_BAR.matches;for(const n of pn.querySelectorAll('.btn:not([hidden]) .n')){n.style.fontSize='';n.style.overflowWrap='';const b=n.parentNode;if(b.dataset.nm&&n.textContent!==b.dataset.nm)n.textContent=b.dataset.nm;if(!on||!n.clientWidth)continue;let f=parseFloat(getComputedStyle(n).fontSize)||11;while(f>8.5&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1)){f-=.5;n.style.fontSize=f+'px';}const sh=PHONE_NM[n.textContent];if(sh&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1))n.textContent=sh;if(n.scrollWidth>n.clientWidth+1)n.style.overflowWrap='anywhere';}}
+function fitBtnNames(){const pn=$('panel');if(!pn)return;const on=PHONE_BAR&&PHONE_BAR.matches;fitCols(pn);for(const n of pn.querySelectorAll('.btn:not([hidden]) .n')){n.style.fontSize='';n.style.overflowWrap='';const b=n.parentNode;if(b.dataset.nm&&n.textContent!==b.dataset.nm)n.textContent=b.dataset.nm;if(!n.clientWidth)continue;let f=parseFloat(getComputedStyle(n).fontSize)||11;const fmin=on?8.5:9.5;while(f>fmin&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1)){f-=.5;n.style.fontSize=f+'px';}const sh=on&&PHONE_NM[n.textContent];if(sh&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1))n.textContent=sh;if(n.scrollWidth>n.clientWidth+1)n.style.overflowWrap='anywhere';}
+  for(const c of pn.querySelectorAll('.btn:not([hidden]) .c'))fitText(c,on?7.5:8.5);
+  for(const el of [$('facname'),...document.querySelectorAll('#side .sup .lbl>span:first-child')])fitText(el,10);}
+// a one-line label that doesn't fit gets a smaller font (down to min px) instead of "…"
+function fitText(el,min){if(!el)return;el.style.fontSize='';if(!el.clientWidth||el.scrollWidth<=el.clientWidth+1)return;let f=parseFloat(getComputedStyle(el).fontSize)||13;while(f>min&&el.scrollWidth>el.clientWidth+1){f-=.5;el.style.fontSize=f+'px';}}
+// the command grid shows whole buttons only: the button width is stretched a little so a whole number of columns fills
+// the grid (no last column half hidden at the edge or under the panel beside it), the building labels between them counted
+const BW_MIN={up:80,land:100,desk:132};
+function fitCols(pn){const up=matchMedia('(max-width:560px),(max-width:760px) and (min-height:521px)').matches,land=!up&&matchMedia('(max-height:520px)').matches;
+  const base=up?BW_MIN.up:land?BW_MIN.land:BW_MIN.desk,W=pn.clientWidth;if(!W)return;
+  const P=pn.getBoundingClientRect();for(let k=0;k<2;k++){let subW=0;for(const d of pn.querySelectorAll('.sub:not([hidden])')){const r=d.getBoundingClientRect();if(r.left-P.left+pn.scrollLeft<W)subW+=r.width+3;}
+    const w=W-subW,cols=Math.max(1,Math.floor((w+3)/(base+3))),bw=Math.min(base*1.45,Math.floor(((w+3)/cols-3)*4)/4);pn.style.setProperty('--bw',bw+'px');}}
 const PHONE_NM={'Hetman Sahaidachny Frigate':'Sahaidachny Frigate'}; // phones only, when even the smallest font can't fit the full name (the tooltip keeps it)
 addEventListener('resize',()=>{clearTimeout(fitBtnNames.t);fitBtnNames.t=setTimeout(fitBtnNames,150);});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(barMin())barMin(false);showTab(b.dataset.tab);});
 function specLock(T,k){return k===T.F.special&&T.rank<SPEC_RANK;}
 // the full text of a button (what it does, what it needs, what it counters) lives in data-tip and shows in the command
 // tooltip (hover with a mouse; tap or long-press on a touch screen) instead of on the button itself
-function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=null)b.querySelector('.c').textContent=o.cost;b.querySelector('.q').textContent=o.q||'';b.querySelector('.p').style.width=(o.p||0)*100+'%';b.classList.toggle('on',!!o.on);b.classList.toggle('done',!!o.done);b.classList.toggle('rdy',!!o.rdy);const t=o.title||'';if(b.dataset.tip!==t){b.dataset.tip=t;b.setAttribute('aria-label',[b.dataset.nm,b.dataset.desc,t].filter(Boolean).join('. '));}if(CTIP.b===b)ctipFill(b);}
+function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=null){const c=b.querySelector('.c');if(c.textContent!==String(o.cost)){c.textContent=o.cost;if(!b.hidden&&b.dataset.tab===TAB)fitText(c,PHONE_BAR&&PHONE_BAR.matches?7.5:8.5);}}b.querySelector('.q').textContent=o.q||'';b.querySelector('.p').style.width=(o.p||0)*100+'%';b.classList.toggle('on',!!o.on);b.classList.toggle('done',!!o.done);b.classList.toggle('rdy',!!o.rdy);const t=o.title||'';if(b.dataset.tip!==t){b.dataset.tip=t;b.setAttribute('aria-label',[b.dataset.nm,b.dataset.desc,t].filter(Boolean).join('. '));}if(CTIP.b===b)ctipFill(b);}
 const CTIP={el:null,b:null,hideT:0,lp:null,eat:0};
 function ctipEl(){if(!CTIP.el){const d=document.createElement('div');d.id='ctip';d.hidden=true;d.setAttribute('role','tooltip');document.body.append(d);CTIP.el=d;}return CTIP.el;}
 function ctipFill(b){const d=ctipEl();d.innerHTML='';const n=document.createElement('b');n.textContent=b.dataset.nm||b.querySelector('.n').textContent;const c=document.createElement('span');c.className='tc';c.textContent=[b.querySelector('.c').textContent,b.querySelector('.q').textContent?'queued '+b.querySelector('.q').textContent:''].filter(Boolean).join(' · ');d.append(n,c);
@@ -298,7 +312,7 @@ function touchCancel(e){TCH.delete(e.pointerId);TIGN.delete(e.pointerId);if(TCH.
 function rightCancel(){if(!G||G.over)return;if(G.place||G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;}else G.sel=[];updateUI();}
 function rightClickAct(sh){if(rightOrders())orderClick(sh);else rightCancel();}
 function lineOrder(r){const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!w1||!ids.length)return;doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);mark({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}
-let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(LASTPT==='mouse'){let mode=own.length?SET.mRDU:SET.mRDN;if(mode==='line'&&!(own.length>=(rightOrders()?2:1)&&w0&&!G.place&&!G.aim&&!G.defm))mode='none';try{cv.setPointerCapture(e.pointerId);}catch(_){}if(mode==='box'){drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:'mouse',rb:1};return;}RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false,gen:1,mode,line:mode==='line'};return;}if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
+let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';hintDev(LASTPT);if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(LASTPT==='mouse'){let mode=own.length?SET.mRDU:SET.mRDN;if(mode==='line'&&!(own.length>=(rightOrders()?2:1)&&w0&&!G.place&&!G.aim&&!G.defm))mode='none';try{cv.setPointerCapture(e.pointerId);}catch(_){}if(mode==='box'){drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:'mouse',rb:1};return;}RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false,gen:1,mode,line:mode==='line'};return;}if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.place||G.aim){placeOrAim(w,e.shiftKey);return;}
   if(!rightPress(e))return;try{cv.setPointerCapture(e.pointerId);}catch(_){}
@@ -343,7 +357,9 @@ mm.addEventListener('contextmenu',e=>e.preventDefault());
 {const st=document.createElement('style');st.id='phoneCss';st.textContent=`
 #app,.overlay button,.overlay select{touch-action:manipulation}
 #app{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
-#settings .card>.row:last-child{position:sticky;bottom:-1px;z-index:2;background:linear-gradient(rgba(8,11,10,0),rgba(8,11,10,.97) 30%);padding:14px 0 4px}
+#settings{background:#080b0a}
+#setBody{display:flex;flex-direction:column;gap:14px;overflow-y:auto;min-height:0;flex:1 1 auto;padding-right:6px;overscroll-behavior:contain}
+#settings .card>.row:last-child{flex:none;border-top:1px solid rgba(255,255,255,.12);padding:12px 0 2px}
 body.touchui #mode{white-space:normal;text-align:left;width:max-content;max-width:calc(100% - 20px);box-sizing:border-box;font-size:12px;letter-spacing:.02em;line-height:1.2;padding:5px;display:flex;align-items:center;gap:6px;z-index:5}
 body.touchui #mode>span{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;padding-left:4px}
 body.touchui #mode[hidden]{display:none}
@@ -373,13 +389,23 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
   .game button,.joinrow .big,.joinrow input{min-height:40px}
 }`;document.body.append(st);}
-function touchUI(){TOUCHUI=true;document.body.classList.add('touchui');const h=$('hint');if(h)h.textContent='Drag to scroll · pinch to zoom · tap a unit to select it, then tap the ground to move or an enemy to attack · double-tap: all of that type · hold, then drag: box-select (or a battle line with units selected)';try{updateUI();}catch(e){}}
+const HINT_TOUCH='Drag to scroll · pinch to zoom · tap a unit to select it, then tap the ground to move or an enemy to attack · double-tap: all of that type · hold, then drag: box-select (or a battle line with units selected)';
+function touchUI(){TOUCHUI=true;HINTDEV='touch';document.body.classList.add('touchui');setHint();try{updateUI();}catch(e){}}
 // on touch: the banner says how to place, and tapping it cancels; the long hint steps aside after the opening
 function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: tap a spot (drag scrolls), then ✓ Build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target')+', then ✓ Fire':(md.dataset.d||'').replace(/click/g,'tap');
     if(md.dataset.t!==t){md.dataset.t=t;md.innerHTML='<span></span><button class="mcx" type="button">✕ Cancel</button>';md.firstChild.textContent=t;}}else md.dataset.t='';
   const h=$('hint');if(h)h.hidden=!md.hidden||G.t>40;}
 $('mode').onclick=e=>{if(!G||!e.target.closest('.mcx'))return;G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();};
 try{if(matchMedia('(hover:none) and (pointer:coarse)').matches)touchUI();}catch(e){}
+// phones held upright: the menu is several screens long, so Deploy and Play online ride along at the bottom of the screen
+// (they press the real buttons further down)
+{const card=document.querySelector('#menu>.card');if(card&&!$('qDeploy')){const q=document.createElement('div');q.id='qDeploy';
+  for(const [id,t] of [['start','▶ Deploy vs AI'],['playOnline','Play online']]){const b=document.createElement('button');b.type='button';b.className='big'+(id==='start'?'':' ghost');b.textContent=t;b.onclick=()=>{const r=$(id);if(r&&!r.disabled&&!r.hidden)r.click();};b.dataset.for=id;q.append(b);}
+  card.append(q);const st=document.createElement('style');st.textContent=`#qDeploy{display:none}
+@media (max-width:560px){#qDeploy{display:flex;gap:6px;position:sticky;bottom:0;z-index:4;margin:0 -4px;padding:8px 4px max(6px,env(safe-area-inset-bottom,0px));background:linear-gradient(rgba(8,11,10,0),rgba(8,11,10,.96) 28%)}#qDeploy button{flex:1 1 0;min-height:44px}#qDeploy.near{display:none}}`;document.head.append(st);
+  // stepped aside while the real buttons are on screen
+  try{const io=new IntersectionObserver(es=>{const vis=es.some(e=>e.isIntersecting);q.classList.toggle('near',vis);},{root:$('menu')});io.observe($('start'));}catch(e){}
+  setInterval(()=>{if($('menu').hidden)return;for(const b of q.children){const r=$(b.dataset.for);b.hidden=!r||r.hidden;b.disabled=!!(r&&r.disabled);}},700);}}
 /* ================= TOUCH CONTROLS (phones, tablets) — touch only ================= */
 // Everything in this block acts only on touch (pointerType 'touch'). Touches on the battlefield are taken here in the
 // capture phase and stopped, so they never reach the mouse handlers above, and a mouse or pen never reaches this code:
@@ -447,7 +473,7 @@ function tcLong(){const g=TC.g;if(!g||g.mode!=='tap')return;g.mode='hold';tcHold
 window.addEventListener('pointerdown',e=>{TC.touch=e.pointerType==='touch';TC.nd=(TC.nd||0)+1;TC.lastDown=e.pointerType+':'+(e.target&&(e.target.id||e.target.tagName));if(e.pointerType!=='touch'||e.target!==cv)return;
   if(typeof menuOpen==='function'&&menuOpen())return; // the menu's own handler closes it and swallows the tap
   e.stopPropagation();e.preventDefault();if(!G||G.over)return;
-  LASTPT='touch';if(!TOUCHUI)touchUI();PICKMIN=20;mouse.in=false;try{cv.setPointerCapture(e.pointerId);}catch(_){}
+  LASTPT='touch';if(!TOUCHUI)touchUI();else hintDev('touch');PICKMIN=20;mouse.in=false;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   TC.glide=false;const p=tcXY(e);TC.ids.set(e.pointerId,p);
   if(TC.ids.size>=2){tcAbort();if(!TC.pinch&&TC.ids.size===2)TC.pinch=tcMid();return;}
   TC.g={id:e.pointerId,x0:p.x,y0:p.y,x:p.x,y:p.y,mode:'tap',t0:e.timeStamp};clearTimeout(TC.lpT);TC.lpT=setTimeout(tcLong,TC_LP);},true);
@@ -865,7 +891,7 @@ const MOPT=[['sMpre','Mouse scheme',null,[['gen','Generals (default)'],['alt','A
     if(id==='sMRDN'){const lr=document.createElement('div');lr.className='label';lr.innerHTML='<label for="sMRS">Rapid-scroll speed</label> <span class="sv" id="sMRSV"></span>';const r=document.createElement('input');r.type='range';r.id='sMRS';r.min=40;r.max=300;r.step=10;els.push(lr,r);}}
   const wn=document.createElement('div');wn.className='sv';wn.id='sMwarn';wn.style.cssText='color:var(--warn);margin:4px 0';wn.hidden=true;wn.textContent='Neither mouse button gives move orders now - set Left-click to Move or Right-click to Move & attack.';els.push(wn);
   hd.after(...els);
-  const rs=document.createElement('button');rs.className='btn2';rs.id='sMreset';rs.type='button';rs.textContent='Reset mouse settings to defaults';rs.style.margin='10px 0 4px';const last=$('settings').querySelector('.card>.row:last-child');if(last)last.before(rs);}}
+  const rs=document.createElement('button');rs.className='btn2';rs.id='sMreset';rs.type='button';rs.textContent='Reset mouse settings to defaults';rs.style.margin='10px 0 4px';const sb=$('setBody');if(sb)sb.append(rs);else{const last=$('settings').querySelector('.card>.row:last-child');if(last)last.before(rs);}}}
 function syncMouseUI(){const pre=mPreset();
   for(const [id,,k] of MOPT){const el=$(id);if(!el)continue;for(const b of el.querySelectorAll('button')){const v=b.dataset.v;b.classList.toggle('on',k?String(SET[k])===v:v===pre);if(id==='sMpre'&&v==='custom')b.disabled=pre!=='custom';
       b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing')?+v:v;else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
@@ -882,7 +908,10 @@ function hintText(){if(altMouse())return HINT_ALT;const L=leftOrders(),R=rightOr
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
   P.push('Q: army · H: home · Wheel: zoom · Arrows/WASD: scroll');return P.join(' · ');}
-function setHint(){if(TOUCHUI)return;const h=$('hint');if(h)h.textContent=hintText();}
+// the hint line speaks to what the player last used: touch wording after a tap, the active mouse scheme after a click
+// (a touchscreen laptop switches back and forth)
+function setHint(){const h=$('hint');if(h)h.textContent=TOUCHUI&&HINTDEV==='touch'?HINT_TOUCH:hintText();}
+function hintDev(t){const d=t==='touch'?'touch':t==='mouse'?'mouse':null;if(d&&d!==HINTDEV){HINTDEV=d;setHint();}}
 function mouseScheme(){setHint();CURST.k=null;try{cursorTick(true);}catch(_){}if(G)updateUI();}
 function openSettings(){try{myUI();}catch(e){}syncSettings();$('settings').hidden=false;}
 if($('openSettings'))$('openSettings').onclick=openSettings;if($('aSet'))$('aSet').onclick=openSettings;if($('sDone'))$('sDone').onclick=()=>{$('settings').hidden=true;};
