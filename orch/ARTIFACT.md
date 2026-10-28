@@ -55,7 +55,7 @@ Then publish with the Artifact tool:
      always complete (94 entries as of 2026-10-27, with the soundtrack). Keys are published paths; values are source paths relative to the
      repo root (run the publish from the repo root, or use the absolute paths):
      - `vo/<CODE>.mp3` → `vo/<CODE>.mp3` (18 files, `audio/mpeg`, type from the extension)
-     - `mus/<name>.mp3` → `mus/<name>.mp3` (every `mus/*.mp3`: `smp`, `me`, `as`, `we`, `an_US/EU/IL/UA/CU/IN/CN/EG`; `audio/mpeg`)
+     - `mus/<name>.mp3` → `mus/<name>.mp3` (every `mus/*.mp3`: the anthems `an_US/EU/IL/UA/CU/IN/CN/EG`; `audio/mpeg`)
      - `mus/st/<id>.mp3` → `mus/st/<id>.mp3` (the shared soundtrack, 14 tracks, ~32 MB; `audio/mpeg`). The first publish
        after the soundtrack landed must pass `files`, or the artifact plays the generated fallback score instead
      - `models/<key>.<hash>.txt` → `{"from": "orch/out/artifact/models/<key>.<hash>.txt", "contentType": "text/plain"}`
