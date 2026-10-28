@@ -203,7 +203,7 @@ export class BattleHost {
       this.go = true; this.lastStep = now; this.acc = 0;
       this.log(`battle ${this.code} running (${((now - this.startedAt) / 1000).toFixed(1)} s after Start)`);
     }
-    if (this.paused) { this.lastStep = now; return 50; }   // test hook only (orch/cfe2e.mjs)
+    if (this.paused) { this.lastStep = now; return 50; }   // test hook only (orch/cfbattle.mjs)
     const real = Math.min(1, Math.max(0, (now - this.lastStep) / 1000)); this.lastStep = now;
     this.acc = Math.min(0.25, this.acc + real);   // more than 0.25 s behind: the battle slows down rather than spiking
     let n = 0;
