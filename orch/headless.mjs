@@ -150,7 +150,7 @@ function profWrap(code, names) {
     code = code.replace(re, `${m[1]}${m[2] || ''}function ${f}__raw(`);
     tail += `function ${f}(){const P=globalThis.__ww3prof,t0=P.now();try{return ${f}__raw.apply(this,arguments);}finally{P.t.${f}=(P.t.${f}||0)+P.now()-t0;P.c.${f}=(P.c.${f}||0)+1;}}\n`;
   }
-  return code + '\n/* ===== --steptime wrappers ===== */\n' + tail;
+  return code + '\n/* ===== --steptime wrappers ===== */\n' + tail + 'globalThis.__ww3prof.G=()=>G;globalThis.__ww3prof.fp=findPath;globalThis.__ww3prof.ev=s=>eval(s);\n';
 }
 export function makeSim(srcDir = SRC, { host = false, prof = null } = {}) {
   const noop = () => {};
@@ -601,7 +601,7 @@ async function steptime(o) {
     P.t = {}; P.c = {}; gcMs = 0;
     const r = W.hostStep(1 / 60);
     await yieldNow(); // let gc entries for this step arrive (attribution is approximate)
-    const parts = P.t; parts.GC = gcMs; gcPrev = gcMs;
+    const parts = P.t; parts.GC = gcMs; gcPrev = gcMs; P.c.pfN = (P.G && P.G() && P.G().pfN) || 0;
     for (const k in parts) tot[k] = (tot[k] || 0) + parts[k];
     rec.push({ i, t: r.t, ms: r.ms, net: r.netMs, parts, calls: P.c });
     const m = Math.floor(i / 3600); if (!mins[m]) mins[m] = { max: 0, sum: 0, n: 0 }; mins[m].max = Math.max(mins[m].max, r.ms); mins[m].sum += r.ms; mins[m].n++;
