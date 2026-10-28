@@ -161,6 +161,9 @@ try {
     // same picture in both builds whatever the battle did: the player's own base, fixed camera
     await m.evaluate(() => { const [bx, by] = BASES[0]; cam.dist = cam.td = 330; cam.x = cam.tx = bx; cam.y = cam.ty = by + 60; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; });
     await frames(m, 2); perf.phoneBase = { scene: `own base, fixed camera, same phone setup`, ...stats(await frames(m, FRAMES)) };
+    // and a fixed spot in the middle of the fulda fighting (the busiest-fight pick can land elsewhere in each build)
+    await m.evaluate(() => { cam.dist = cam.td = 330; cam.x = cam.tx = 1500; cam.y = cam.ty = 1930; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; });
+    await frames(m, 2); perf.phoneFight = { scene: `fixed camera at 1500,1930 (fulda fighting), same phone setup`, ...stats(await frames(m, FRAMES)) };
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
     await snap(m, `phone-${k}`);
     await c2.close();
@@ -169,7 +172,7 @@ try {
 await browser.close(); server.close();
 perf.errors = [...new Set(errs)].slice(0, 40);
 fs.writeFileSync(path.join(dir, PERF ? 'perf.json' : 'errors-' + Date.now() + '.json'), JSON.stringify(perf, null, 2));
-console.log(JSON.stringify({ desktop: perf.desktop, desktopOverview: perf.desktopOverview, phone: perf.phone, phoneBase: perf.phoneBase }, null, 1));
+console.log(JSON.stringify({ desktop: perf.desktop, desktopOverview: perf.desktopOverview, phone: perf.phone, phoneBase: perf.phoneBase, phoneFight: perf.phoneFight }, null, 1));
 for (const e of perf.errors) console.log('  ! ' + e);
 console.log(`done in ${secs()}: orch/out/three/${TAG}/`);
 
