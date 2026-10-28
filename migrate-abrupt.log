@@ -1,0 +1,42 @@
+game servers running locally at http://127.0.0.1:35223
+[2s] three pages loaded
+[3s] host lobby open, code ajvkka
+[35s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+[103s] before: client A @1 min t=60s: host 29 entities, slot 1 sees 11 (own 11); its screen has 0; missing 11, extra 0, off-position 0, mismatched 0; credits host 230 client 4800
+[104s] before: client B @1 min t=60s: host 29 entities, slot 2 sees 15 (own 15); its screen has 0; missing 15, extra 0, off-position 0, mismatched 0; credits host 280 client 4800
+    trace client A (screenshot stall):  || now: client via=pjd ws=false rxAgo=258
+    trace client B (screenshot stall):  || now: client via=pjd ws=false rxAgo=259
+[110s] host leaves at t=120.2s; standby checkpoint from t=112.4s (16 KB, 50 entities); armies US 3, RU 21, CN 25
+    +0.6s client A: client room=ww3-ajvkka gen=0
+    +0.6s client B: client room=ww3-ajvkka gen=0
+[115s] client A noticed the host was gone after 5.0 s (abrupt: no goodbye)
+    +5.1s client A: client reconnecting room=ww3-ajvkka gen=0
+    +5.3s client A: client reconnecting room=ww3-ajvkka gen=0 (no room)
+    +5.3s client B: client reconnecting room=ww3-ajvkka gen=0
+    +5.7s client B: client reconnecting room=ww3-ajvkka gen=0 (no room)
+    +6.3s client A: client reconnecting room=ajvkka-m1 gen=0 (no room)
+[117s] client A is the new host after 6.5 s (room ajvkka-m1, battle resumed from t=112.6s)
+    +6.5s client A: host room=ajvkka-m1 gen=1
+    +7.4s client B: client reconnecting room=ww3-ajvkka-m1 gen=1
+[118s] client B reconnected to the new host 7.5 s after the host left
+    trace client A: 5.0 clientReconnect | 5.3 join tc-ajvkka | 6.2 join failed tc-ajvkka: peer-unavailable | 6.2 promoteToHost | 6.2 join tc-ajvkka-m1 | 6.4 joined tc-ajvkka-m1 via undefined | 6.4 promoteToHost -> true | 6.4 clientReconnect done, mode host
+    trace client B: 5.3 clientReconnect | 5.5 join tc-ajvkka | 6.5 join failed tc-ajvkka: peer-unavailable | 7.0 join tc-ajvkka-m1 | 7.2 joined tc-ajvkka-m1 via pjd | 7.2 snapshot t=113.3 while reconnecting | 7.3 snapshot t=113.4 while reconnecting | 7.4 snapshot t=113.5 while reconnecting | 7.5 clientReconnect done, mode client
+[123s]   US (slot 0): 3/3 of its pre-takeover entities are on the new host, 5 in all; AI-run (took over)
+[123s]   RU (slot 1): 20/21 of its pre-takeover entities are on the new host, 21 in all; player-run
+[123s]   CN (slot 2): 25/25 of its pre-takeover entities are on the new host, 28 in all; player-run
+[124s] after: client B right after the takeover t=119s: host 54 entities, slot 2 sees 31 (own 28); its screen has 31; missing 0, extra 0, off-position 0, mismatched 0; credits host 965 client 965
+[126s] client B order after the takeover: 17/20 of its units moved on the new host
+[127s] old host's side after 45 game-s under the AI: build step 1 -> 4, 11 new entities, 0 in production, $930
+[128s] after: client B 45 game-s after the takeover t=164s: host 54 entities, slot 2 sees 29 (own 26); its screen has 30; missing 0, extra 0, off-position 0, mismatched 0; credits host 1885 client 1885
+peak memory (node + browser, summed RSS): 3571 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MIGRATE FAIL: before: client A @1 min: 11 of slot 1's own entities are missing on its screen: hq#6(team 1), harv#7(team 1), dozer#8(team 1), inf#9(team 1) (+7 more) (136s)
+  ✗ before: client A @1 min: slot 1 credits differ: host 230, client 4800
+  ✗ before: client A @1 min: slot 1's latest state is 59.5 s behind the host after settling
+  ✗ before: client B @1 min: 15 of slot 2's own entities are missing on its screen: hq#11(team 2), harv#12(team 2), dozer#13(team 2), barracks#17(team 2) (+11 more)
+  ✗ before: client B @1 min: slot 2 credits differ: host 280, client 4800
+  ✗ before: client B @1 min: slot 2's latest state is 59.5 s behind the host after settling
+  ✗ before the host left, a client fell 77.0 game-s behind
