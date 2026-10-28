@@ -554,8 +554,8 @@ function loadStep(label,p){const el=LOAD.el;if(!el)return;const s=el.querySelect
 function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.hidden=true;window.LOADING=false;
   // a battle hosted on Cloudflare waits (up to 20 s) until every player is past the loading screen ('rd' in their presence)
   // (the presence carries the player's token, so a server that gave up on a player who was silent while loading links
-  // them back at once; the no-updates watchdog counts from here, not from before the loading screen)
-  if(MODE==='client'&&NET.sv&&NET.game){NET.lastRx=Math.max(NET.lastRx||0,performance.now());NET.game.presence({rd:1}).catch(()=>{});}}
+  // them back at once)
+  if(MODE==='client'&&NET.sv&&NET.game)NET.game.presence({rd:1}).catch(()=>{});}
 // wait until the browser has painted (falls back to a timer when the tab is in the background and frames stop)
 function loadFrame(){return new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,document.hidden?0:300);});}
 async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;

@@ -147,3 +147,15 @@ plain `mpsync` 3/3 PASS; `smoke --players 4` PASS; artifact build + `smoke --art
 - Stage 2 (battles hosted on Cloudflare): `BattleRoom` at `/battle/<code>` and `/battle-bench` are in `server/`
   (branch `orch/stage2-dedicated`, not yet used by the game). Protocol, limits and measurements: `STAGE2.md` §8–9;
   test: `node orch/battletest.mjs`.
+
+## Test copy on real Cloudflare (staging)
+
+Abdullah OK'd a separate test Worker on 2026-10-27 19:37: **`ww3-servers-staging`** at
+https://ww3-servers-staging.abdullah-haidar5.workers.dev, with its own Durable Objects. It never touches the live
+`ww3-servers` Worker or its game list. To test a commit on real Cloudflare, push it to any `staging/<name>` branch
+(`git push origin HEAD:staging/<name>`). `.github/workflows/staging-servers.yml` deploys `server/` from that commit,
+runs `orch/servertest.mjs --url` against it, and runs one battle bench (8 players, fulda, 2 game-minutes) when the
+commit message contains `[bench]`. Results are commit statuses `staging/deploy|servertest|bench`; the full log is on
+branch `staging-logs/<sha10>`. One deploy runs at a time, so agents share it. A page served from localhost may use it
+(the origin rules allow localhost). The free plan's daily allowance is shared with the live servers, so bench only
+when server or battle code changed.
