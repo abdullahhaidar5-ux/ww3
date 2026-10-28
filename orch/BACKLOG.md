@@ -8,6 +8,8 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+**SIDE LANE IN FLIGHT (Abdullah 2026-10-28 18:23: "move faster, don't run over usage") — ORCH: don't take these, merge their branches when their report lands:** Phase 5 massive columns → `orch/columns` (04-gfx instancing/LOD, sim perf); recorded weapon/engine/explosion sounds + ambience + mix → `orch/audio-sfx` (09-audio, `sfx/`); native-language unit voices for all 18 nations → `orch/voices` (`vo/`, voice hooks in 09-audio). Keep ORCH cycles to ≤ 3 agents while these run.
+
 **ROUND RESUMED (2026-10-28 07:00 Chicago):** the side lane finished order steps 1–3 (Cloudflare battles live, open items, music) and graphics Phases 1–4 shipped; the 4-hourly ORCH schedule is back on. `orch/followups` (QA findings, battle hint text, review R11/R12) and `orch/qa` are side-lane agents — integrate their reports, don't redo them. Keep usage steady (Abdullah 02:05): at most ~4 agents at once.
 
 **2026-10-28 06:55 (Chicago) SHIPPED:** small fixes (8e5ad4d); Cloudflare battles (7e44492; Abdullah merged PR #4 → servers-live, deploy OK); graphics Phases 1–4 (three-upgrade + gfx-models + gfx-terrain + gfx-fx, 16/16 on 663efc6). Running: `orch/qa` (until 12:00 UTC), `orch/followups` (QA findings + review R11/R12). ww3 Cloudflare site build lagging (still old version at 06:47).
