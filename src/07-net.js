@@ -13,7 +13,7 @@ async function netInit(){
   if(!NET.room){$('games').innerHTML='<div class="empty">Multiplayer works when this game is opened from its claude.ai link. Skirmish works everywhere.</div>';$('host').disabled=true;return;}
   try{NET.user=await claude.use('user');}catch(e){}
   NET.room.onPeers(()=>renderGames(),()=>{$('games').innerHTML='<div class="empty">Multiplayer is unavailable for this viewer.</div>';$('host').disabled=true;});
-  renderGames();hostChoice();pwField();
+  renderGames();playOnlineBtn();pwField();
   if($('jbtn')){$('jbtn').onclick=()=>{initAudio();joinByCode($('jcode').value);};$('jcode').onkeydown=e=>{if(e.key==='Enter'){initAudio();joinByCode($('jcode').value);}};}
   try{const h=(location.hash||'')+' '+(document.referrer||'');const c=codeFrom(h.includes('join=')?h:'');const pw=window.WW3_P2P?pwFrom(location.hash):null;
     // an invite link's password (#join=<code>&pw=<password>, fragment only) is taken off the address bar at once
@@ -61,7 +61,17 @@ function wireHost(g){
   g.onPeers(ch=>{for(const q of ch.joined.concat(ch.updated)){if(q.sameTab||!q.presence)continue;hostPres(q,hostHello);}});
   g.onPeers(ch=>{for(const q of ch.left){if(MODE==='single'){NET.lobby=NET.lobby.filter(p=>p.peer!==q.peer);renderLobby();}else hostGone(q.peer);}});
 }
-async function hostGame(){if(!NET.room||NET.code||NET.game)return;NET.hostNote='';NET.pw=pwVal();NET.pwBad=null;if(hostOn()==='cf')return hostCF();return hostBrowser();}
+// The Multiplayer menu's main button. With the game servers (online edition) it is "Play online" (Abdullah,
+// 2026-10-27 19:30: no hosting choice or wording): join an open game if there is one (battles on Cloudflare first,
+// then the fullest), otherwise start a new battle on Cloudflare with this player's map and nation. Without the servers
+// (the claude.ai artifact) it is "Host a game" in this browser, as before.
+// A password typed under the button (online edition) means a new private battle: it never joins someone else's game;
+// without one, password-protected games are never joined automatically (they are joined from the list, with the password).
+async function hostGame(){if(!NET.room||NET.code||NET.game)return;NET.hostNote='';NET.pw=pwVal();NET.pwBad=null;if(hostOn()!=='cf')return hostBrowser();
+  const open=NET.pw?[]:NET.room.peers().filter(q=>!q.sameTab&&q.presence&&q.presence.g&&q.presence.g.s==='open'&&!q.presence.g.pw&&FKEYS.includes(q.presence.g.f)&&typeof q.presence.g.c==='string')
+    .sort((x,y)=>((y.presence.g.cf|0)-(x.presence.g.cf|0))||((y.presence.g.n|0)-(x.presence.g.n|0)));
+  for(const q of open.slice(0,2)){const r=await joinGame(q);if(r===true||NET.game||NET.code)return;}
+  NET.pw=pwVal();return hostCF();}
 // Host in this browser (today's way; also the fallback when Cloudflare can't host). note: shown at the top of the lobby
 async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hostNote=note||'';NET.ais=[];const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];$('host').hidden=true;$('cancelHost').hidden=false;
   $('mpstatus').textContent='Opening your game…';
@@ -76,12 +86,10 @@ async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hos
    map, Conditions, Start) go to the server as 'bset'; the server answers with the whole lobby ('blob'). Protocol:
    orch/STAGE2.md "Cloudflare battle protocol". Offered only in the online edition with the servers configured. */
 function cfOK(){try{return !!(NET.room&&typeof NET.room.cf==='function'&&NET.room.cf());}catch(e){return false;}}
-function hostOn(){let v='';try{v=localStorage.getItem('ww3_hostOn')||'';}catch(e){}return v==='cf'&&cfOK()?'cf':'browser';}
-function hostChoice(){const h=$('host');if(!h||!cfOK()||$('hostOn'))return;const row=h.parentNode,d=document.createElement('div');d.id='hostOn';d.className='row hoston';d.setAttribute('role','radiogroup');d.setAttribute('aria-label','Where your battle runs');
-  const paint=()=>{const v=hostOn();for(const b of d.querySelectorAll('button')){const on=b.dataset.v===v;b.setAttribute('aria-checked',on?'true':'false');b.style.borderColor=on?'var(--accent)':'';b.style.color=on?'var(--accent)':'';}};
-  for(const [v,t,tip] of [['browser','Host in my browser','Your browser runs the battle. Works everywhere.'],['cf','Host on Cloudflare','The game\'s server runs the battle: no host advantage, and your phone or PC does not have to run it. If the server is busy, your browser hosts instead.']]){
-    const b=document.createElement('button');b.className='chip';b.type='button';b.dataset.v=v;b.textContent=t;b.title=tip;b.setAttribute('role','radio');b.onclick=()=>{try{localStorage.setItem('ww3_hostOn',v);}catch(e){}paint();};d.append(b);}
-  row.parentNode.insertBefore(d,row);paint();}
+// where a new battle runs: on Cloudflare whenever the servers are configured (localStorage ww3_hostOn='browser' forces
+// this browser, for testing); the browser hosts only as the automatic fallback
+function hostOn(){let v='';try{v=localStorage.getItem('ww3_hostOn')||'';}catch(e){}return v!=='browser'&&cfOK()?'cf':'browser';}
+function playOnlineBtn(){const h=$('host');if(!h||!cfOK())return;h.textContent='Play online';h.title='Join an open game, or start a new battle that friends can join';}
 async function hostCF(again){if(!NET.room||NET.code||NET.game)return;const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a'),key=Math.random().toString(36).slice(2,12)+Math.random().toString(36).slice(2,10);
   NET.cf={own:1,key,blob:null,pend:null};$('host').hidden=true;$('cancelHost').hidden=false;
   const r=await joinGame({peer:'ww3-'+code,presence:{g:{c:code,s:'open',cf:1}}},{via:'wsb',own:key});
@@ -89,8 +97,8 @@ async function hostCF(again){if(!NET.room||NET.code||NET.game)return;const code=
   NET.cf=null;$('host').hidden=false;$('cancelHost').hidden=true;
   if(r&&r.why==='taken'&&!again)return hostCF(1);
   // the server is over today's free allowance, unreachable or refusing: this browser hosts, as before
-  const why=r&&r.why==='busy'?'Cloudflare is busy right now':r&&(r.type==='network'||r.type==='timeout')?'Cloudflare could not be reached':'Cloudflare could not host this battle';
-  return hostBrowser(why+', so your browser is hosting this battle instead.');}
+  const why=r&&r.why==='busy'?'The game server is busy right now':r&&(r.type==='network'||r.type==='timeout')?'The game server could not be reached':'The game server could not take this battle';
+  return hostBrowser(why+', so this battle runs in your browser.');}
 // the owner's lobby settings as the server wants them ('bset')
 function cfCfg(){const nh=NET.lobby.length+1;return {map:setup.map||'strait',w:setup.w|0,tm:(NET.tm||[]).slice(0,nh).map(v=>v|0),ais:(NET.ais||[]).map(a=>({f:a.f,d:a.d|0,tm:a.tm|0}))};}
 function cfCfgOf(b){const hs=(b.seats||[]).filter(s=>s.h),as=(b.seats||[]).filter(s=>s.ai);return {map:b.map,w:b.w|0,tm:hs.map(s=>s.tm|0),ais:as.map(s=>({f:s.f,d:s.d|0,tm:s.tm|0}))};}
@@ -237,7 +245,7 @@ function leaveNet(){if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}NET.cf=nul
 function pwVal(){const i=$('hostpw');return i&&window.WW3_P2P?String(i.value||'').trim().slice(0,64):'';}
 function pwFrom(s){const m=String(s||'').match(/[#&?\s]pw=([^&\s#]*)/);if(!m)return null;try{return decodeURIComponent(m[1]).trim().slice(0,64);}catch(e){return null;}}
 function pwField(){if(!window.WW3_P2P||!NET.room||$('hostpw'))return;const h=$('host');if(!h)return;const row=h.closest('.row')||h.parentNode,d=document.createElement('div');d.className='row joinrow pwrow';
-  const i=document.createElement('input');i.id='hostpw';i.type='password';i.maxLength=64;i.placeholder='🔒 Password (optional)';i.autocomplete='new-password';i.spellcheck=false;i.setAttribute('aria-label','Password for your game (optional): only friends who know it can join');i.title='Optional. Leave empty for a game anyone can join.';
+  const i=document.createElement('input');i.id='hostpw';i.type='password';i.maxLength=64;i.placeholder='🔒 Password (optional): for a private battle';i.autocomplete='new-password';i.spellcheck=false;i.setAttribute('aria-label','Password for your game (optional): only friends who know it can join');i.title='Optional. Leave empty for a game anyone can join.';
   i.onkeydown=e=>{if(e.key==='Enter'){initAudio();hostGame();}};d.append(i);row.parentNode.insertBefore(d,row.nextSibling);}
 // the browser host's check of a newcomer's password: null = fine, else 'need' / 'bad' / 'limit' (wrong guesses: 10 a minute)
 function pwHostCheck(peer,given){const now=Date.now(),B=NET.pwBad=NET.pwBad&&now-NET.pwBad.at<60000?NET.pwBad:{at:now,n:0,seen:{}};

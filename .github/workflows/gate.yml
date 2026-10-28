@@ -55,11 +55,8 @@ jobs:
             controls)       [ -f orch/controls.mjs ] && node orch/controls.mjs || echo "SKIP controls (no test)" ;;
             touch)          [ -f orch/touch.mjs ] && node orch/touch.mjs || echo "SKIP touch (no test)" ;;
             audio)          f=$(ls orch/audio*.mjs 2>/dev/null | head -1); [ -n "$f" ] && node "$f" || echo "SKIP audio (no test)" ;;
-            cfclient)       # the Cloudflare battle test (first of cfbattle*.mjs / cfclient.mjs), then every orch/cfclient-*.mjs
-                            rc0=0; f=$(ls orch/cfbattle*.mjs orch/cfclient.mjs 2>/dev/null | head -1)
-                            if [ -n "$f" ]; then node "$f" || rc0=1; else echo "SKIP cfclient (no test)"; fi
-                            for x in orch/cfclient-*.mjs; do [ -f "$x" ] && { node "$x" || rc0=1; }; done
-                            [ $rc0 = 0 ] ;;
+            cfclient)       # every Cloudflare battle test (server side cfbattle, browser side cfclient); all must pass
+                            (r=0; n=0; for f in orch/cfbattle*.mjs orch/cfclient*.mjs; do [ -f "$f" ] || continue; n=1; node "$f" || r=1; done; [ $n = 1 ] || echo "SKIP cfclient (no test)"; exit $r) ;;
           esac > out.log 2>&1
           rc=$?
           tail -40 out.log

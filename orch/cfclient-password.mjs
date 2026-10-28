@@ -6,7 +6,8 @@
 //   1. Cloudflare battle: the creator types a password and hosts on Cloudflare; its lobby says "Password protected" and
 //      its invite link carries the password in the fragment (#join=<code>&pw=…); the server's game list marks the
 //      battle pw:1 and never contains the password
-//   2. the friend's game list shows the battle with a 🔒; Join asks for the password; a wrong one is refused with
+//   2. the friend's game list shows the battle with a 🔒; "Play online" (no password) does not join it automatically
+//      but starts the friend's own battle; Join asks for the password; a wrong one is refused with
 //      "Wrong password"; the right one joins (the friend's seat appears in the creator's server-sent lobby)
 //   3. invite link: the friend opens the creator's invite link and is in the lobby in one go, with the password taken
 //      off the address bar
@@ -129,6 +130,15 @@ async function main() {
   say(`2. friend's game list: "${String(row).replace(/\s+/g, ' ').slice(0, 100)}"`);
   if (!row) throw new Error('no 🔒 game in the friend\'s game list');
   if (pwRx.test(await B.evaluate(() => JSON.stringify(NET.room.peers().map(q => q.presence))))) fail('the friend\'s copy of the game list contains the password');
+  // "Play online" without a password never joins a protected game automatically: it starts the friend's own battle
+  await B.evaluate(() => hostGame());
+  await waitFor(B, () => NET.game && NET.cf && NET.cf.blob, null, 40000, 'the friend\'s "Play online" to settle');
+  const auto = await B.evaluate(c => ({ own: !!NET.cf.own, code: NET.jcode }), code);
+  say(`   "Play online" with no password: ${auto.own && auto.code !== code ? 'started its own battle (did not join the protected one)' : 'joined ' + auto.code}`);
+  if (!auto.own || auto.code === code) fail('"Play online" joined a password-protected game automatically');
+  await B.evaluate(() => cancelHost());
+  await waitFor(B, () => !NET.game && !!document.querySelector('#games .game'), null, 20000, 'the friend back on the game list');
+  await B.evaluate(() => renderGames());
   await B.evaluate(() => [...document.querySelectorAll('#games .game')].find(x => x.textContent.includes('🔒')).querySelector('button').click());
   await answer(B, 'yalla 2026 n');
   await waitFor(B, () => /Wrong password/.test(document.getElementById('mpstatus').textContent) && !!document.getElementById('joinpw'), null, 20000, '"Wrong password" for a wrong password');
