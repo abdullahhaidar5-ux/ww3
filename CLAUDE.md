@@ -74,7 +74,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   per `orch/ARTIFACT.md`). Everything in the repo is served publicly by both Pages and the `ww3` Worker.
 - **Targets (Abdullah, 2026-10-28 18:33):** a big battle shows **~300 units on screen** (all sides) and stays smooth;
   phones may draw far-away units simpler. **Unit voices:** every nation gets native-language lines now with the best
-  free computer voice available (real recordings may replace them later). **Weapon/explosion sound: cinematic and
+  free computer voice available — no real human recordings (Abdullah, 18:36: "forget the real recordings"). **Weapon/explosion sound: cinematic and
   punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all 18 nations about equally strong.**
 - **Priorities (Abdullah, 2026-10-28 18:34):** his group plays the **Shia factions (IR, RS, DW) most** — do their voices,
   uniforms and buildings first, in a **realistic military** style (IRGC/Hezbollah-style fatigues, Middle Eastern
