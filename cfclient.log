@@ -1,0 +1,29 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:34451
+[3s] both pages loaded; the multiplayer menu offers "Host in my browser" / "Host on Cloudflare"
+[3s] 1. three other lobbies take the 3 battle slots: !w ww3-dz0wuyh, !w ww3-dz1mdoz, !w ww3-dz2thc9
+[3s]    server busy -> browser hosting: "Your game · codeL2MW2ZDesert Strait1 / 8 playersCloudflare is busy right now, so your browser is hosting this battle instead.▶ Start battleW"
+[4s]    the 3 lobbies closed; battle slots in use: 0
+[4s] 2. lobby open on the server, code WXB2LZ; creator status: "Your game · codeWXB2LZHosted on CloudflareDesert Strait1 / 8 players▶ Start battleWaiting for at least one more player t"
+[4s]    friend joined: "Joined (hosted on Cloudflare). 2 players in the lobby. Waiting for the game's creator to start the battle…"
+[6s]    server lobby: humans US/team 1, RU/team 2; computer CN/team 2
+[29s] 3. battle started on the server (battle, held for loading screens: true); creator is slot 0, friend slot 1
+[61s]    both pages past the loading screen (rd: true, true); battle running: true
+[67s]    slot 0's order: 2/2 of its units moved on the server
+[67s]    slot 1's order: 2/2 of its units moved on the server
+[67s]    in-battle readout (creator): "60 FPS · hosted on Cloudflare · ping 181 ms"
+[152s]    check @1.5 min slot 0 t=90s: server 24 entities, this side sees 5; page has 5; missing 0, extra 0, off-position 0, mismatched 0; credits server 7305 page 7305
+[154s]    check @1.5 min slot 1 t=90s: server 24 entities, this side sees 19; page has 19; missing 0, extra 0, off-position 0, mismatched 0; credits server 7255 page 7255
+[154s] 4. the friend's connection to the server is cut
+[154s]    after 0.6 s the friend is reconnected via wsb
+[160s]    after reconnect slot 1 t=95s: server 25 entities, this side sees 21; page has 21; missing 0, extra 0, off-position 0, mismatched 0; credits server 7255 page 7255
+[169s] 5. the battle's object is evicted at t=104 s (as on a redeploy)
+[170s]    after 1.5 s: server battle at t=99 s; creator client via wsb (room gen 0), friend client via wsb (room gen 0)
+[174s]    after restart slot 0 t=102s: server 24 entities, this side sees 4; page has 4; missing 0, extra 0, off-position 0, mismatched 0; credits server 7865 page 7865
+[176s]    after restart slot 1 t=102s: server 24 entities, this side sees 20; page has 20; missing 0, extra 0, off-position 0, mismatched 0; credits server 7815 page 7815
+[185s] 6. today's use is pushed past 75%; standby (checkpoint holder) is slot 0; pages holding a checkpoint: true,false
+[186s]    after 1.2 s: server battle closed, today at 76.2%, battles allowed: false; creator host, friend client (room gen 1, last update 0.1 s ago)
+[189s]    new browser host at t=114 s with 27 entities; the other player's side is still theirs; its last update 0.1 s ago
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E PASS (189s) — battle hosted by the real BattleRoom (wrangler dev): busy fallback, lobby, start, sync, orders, reconnect, server restart, budget hand-over all OK
