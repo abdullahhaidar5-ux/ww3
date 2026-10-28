@@ -167,7 +167,7 @@ async function main() {
   const s0 = await SB();
   say(`3. battle started on the server (${s0.phase}, held for loading screens: ${!s0.go}); creator is slot ${slots[0]}, friend slot ${slots[1]}`);
   if (slots[0] !== 0 || slots[1] !== 1) fail(`expected slots 0 and 1, got ${slots}`);
-  for (const [p, who] of [[A, 'creator'], [B, 'friend']]) await waitFor(p, () => G && G.terrain && !window.LOADING, null, 600000, `the ${who} to finish loading`);
+  for (const [p, who] of [[A, 'creator'], [B, 'friend']]) await waitFor(p, () => G && window.LOADING === false, null, 600000, `the ${who} to finish loading`);
   let st = await SB();
   for (let i = 0; i < 100 && !(st.go && st.humans.every(h => h.rd)); i++) { await A.waitForTimeout(200); st = await SB(); }
   say(`   both pages past the loading screen (rd: ${st.humans.map(h => h.rd).join(', ')}); battle running: ${st.go}`);
