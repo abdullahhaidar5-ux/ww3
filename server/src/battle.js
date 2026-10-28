@@ -321,6 +321,8 @@ export async function runBench(sim, o, { now, yieldFn, write = () => {}, cpu = n
   const info = sim.info(), gs = total.steps * STEP;
   return { players: facs.length, map: o.map, seed: o.seed, diff: o.diff, batch: per, setupMs, gameSeconds: +gs.toFixed(1), wallMs: total.wall,
     wallMsPerGameS: +(total.wall / Math.max(1e-9, gs)).toFixed(1), cpuMsPerGameS: cpu ? +(total.cpu / Math.max(1e-9, gs)).toFixed(1) : null,
-    maxEventMs: maxEv, events: total.events, ...pctl(evs), peakEnts: Math.max(0, ...rows.map(r => r.ents)), endEnts: info.ents, over: info.over,
+    // zeroShare: events whose clock reading did not move. On Cloudflare the clock advances only with I/O, so a run of
+    // events reads 0 ms each and their summed time lands on one event: maxEventMs there is an upper bound, not one step
+    maxEventMs: maxEv, events: total.events, zeroShare: +(evs.filter(v => v === 0).length / Math.max(1, evs.length)).toFixed(3), ...pctl(evs), peakEnts: Math.max(0, ...rows.map(r => r.ents)), endEnts: info.ents, over: info.over,
     msgs, kbSent: Math.round(bytes / 1024), kbPerGameS: +(bytes / 1024 / Math.max(1e-9, gs)).toFixed(1), worst, rows };
 }
