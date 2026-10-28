@@ -1,0 +1,20 @@
+artifact page written: orch/out/artifact/index.html (1867596 bytes, game 1028226 chars), 40 audio files + 50 model files (5.3 MB); publish arguments in orch/out/artifact/publish.json
+[2s] both pages loaded
+[2s] host lobby open, code sedavw
+[2s] client joining
+[22s] battle: US vs RU on strait; client is slot 1
+[67s] both pages finished loading
+[67s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[69s] client order: 2/2 of the client's units moved on the host
+[71s] check @1.0 min t=60s: host 26 entities, client side sees 8 (own 8); client has 8 (own 8); missing 0, extra 0, off-position 0, mismatched 0; credits host 4730 client 4730
+[73s] check @2.5 min t=150s: host 30 entities, client side sees 9 (own 9); client has 10 (own 9); missing 0, extra 0, off-position 0, mismatched 0; credits host 9295 client 9295
+[86s] check @4.0 min t=240s: host 32 entities, client side sees 10 (own 10); client has 11 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 14900 client 14900
+[96s] traffic host->client 954 KB in 3319 messages, client->host 0 KB in 1; client lag max 0.10 game-s; 7 ms per 0.5 s step
+[96s] 24 live checks, 0 out of tolerance; up to 8 enemy entities were in the client's view at once
+[96s] host room sends: 3320 messages, peak 29 in one game-second
+[96s] client room sends: 1 messages, peak 0 in one game-second
+peak memory (node + browser, summed RSS): 2576 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC PASS (artifact edition) (96s) — screenshots orch/out/art-mp-host.png, orch/out/art-mp-client.png (this run: orch/out/runs/20261028-075606-mpsync-art/)
