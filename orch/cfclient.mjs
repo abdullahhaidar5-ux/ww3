@@ -7,11 +7,12 @@
 // through the servers, and no page can reach anything off this machine (guardContext).
 //
 // Steps (each must pass):
-//   1. fallback: "Host on Cloudflare" chosen, the server is over its budget ("busy") -> the page hosts in its own
-//      browser, with a message; the choice stays remembered
+//   0. menu: one "Play online" button, no hosting choice; new battles go to Cloudflare
+//   1. fallback: "Play online" with no open game starts a battle; the server is over its budget ("busy") -> the battle
+//      runs in the page's own browser, with a short message
 //   2. lobby: the creator hosts on Cloudflare (a client of the server: via 'wsb', owner lobby from 'blob'); the game
-//      shows up in the friend's game list (from the server's "b|" frame) marked "on Cloudflare" and the friend joins it;
-//      the creator sets teams and adds a computer player ('bset'), the friend's copy of the lobby (from the server)
+//      shows up in the friend's game list (from the server's "b|" frame) marked "on Cloudflare" and the friend's
+//      "Play online" joins it; the creator sets teams and adds a computer player ('bset'), the friend's copy of the lobby (from the server)
 //      shows them; the lobby says "Hosted on Cloudflare"; Start
 //   3. battle: both pages get 'start' with sv:1 (creator = slot 0, friend = slot 1) and play as clients; orders from
 //      both are carried out by the server (their units move in the server's snapshots); the battle runs in sync: each
@@ -111,23 +112,22 @@ let A, B;
 async function main() {
   [A, B] = await Promise.all([openPage('creator'), openPage('friend')]);
   await Promise.all([A, B].map(p => p.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 240000 }).catch(() => warns.push('models still loading'))));
-  await waitFor(A, () => !!NET.room && !!document.getElementById('hostOn'), null, 30000, 'the "Host on Cloudflare" choice on the multiplayer menu');
-  say('both pages loaded; the multiplayer menu offers "Host in my browser" / "Host on Cloudflare"');
-  const def = await A.evaluate(() => hostOn());
-  if (def !== 'browser') fail(`default hosting should be "browser", is "${def}"`);
-  await A.evaluate(() => { initAudio(); setup.p = 'US'; document.querySelector('#hostOn button[data-v="cf"]').click(); });
-  const remembered = await A.evaluate(() => [hostOn(), localStorage.getItem('ww3_hostOn')]);
-  if (remembered[0] !== 'cf' || remembered[1] !== 'cf') fail('choosing "Host on Cloudflare" was not remembered: ' + remembered);
+  await waitFor(A, () => !!NET.room && !!document.getElementById('host'), null, 30000, 'the multiplayer menu');
+  const menu = await A.evaluate(() => ({ btn: document.getElementById('host').textContent, on: hostOn(), choice: !!document.getElementById('hostOn') }));
+  say(`both pages loaded; the multiplayer menu's button says "${menu.btn}", new battles go to ${menu.on}`);
+  if (menu.btn !== 'Play online') fail(`the multiplayer button should say "Play online", says "${menu.btn}"`);
+  if (menu.on !== 'cf') fail(`new battles should be hosted on Cloudflare by default, go to "${menu.on}"`);
+  if (menu.choice) fail('the menu still shows a hosting choice');
+  await A.evaluate(() => { initAudio(); setup.p = 'US'; });
 
-  // ---- 1. server over its budget -> host in this browser ----
+  // ---- 1. "Play online" with no open game and the server over its budget -> the battle runs in this browser ----
   await busyReady;
   P.route(p => p.startsWith('/battle/') ? BUSY.url : null);
   await A.evaluate(() => hostGame());
   await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf, null, 40000, 'the creator to fall back to hosting in its browser');
   const fb = await A.evaluate(() => ({ st: document.getElementById('mpstatus').textContent, hostOn: hostOn() }));
   say(`1. server busy -> browser hosting: "${fb.st.slice(0, 140)}"`);
-  if (!/Cloudflare is busy/.test(fb.st) || !/browser is hosting/.test(fb.st)) fail('the busy fallback message is missing from the lobby');
-  if (fb.hostOn !== 'cf') fail('the Cloudflare choice was forgotten after a fallback');
+  if (!/server is busy/.test(fb.st) || !/runs in your browser/.test(fb.st)) fail('the busy fallback message is missing from the lobby');
   await A.evaluate(() => cancelHost());
   P.route(null);
 
@@ -139,13 +139,13 @@ async function main() {
   if (!/Hosted on Cloudflare/.test(await status(A))) fail('the creator\'s lobby does not say "Hosted on Cloudflare"');
   const gl = await games();
   if (!(gl.battles || []).some(([, e]) => e.g && e.g.c === code && e.g.cf)) fail('the server does not list the battle (cf:1) in its game list: ' + JSON.stringify(gl).slice(0, 200));
-  // the friend finds it in the game list (the server's "b|" frame) and joins from there
+  // the friend sees it in the game list (the server's "b|" frame); "Play online" joins it
   await waitFor(B, c => NET.room.peers().some(q => q.presence && q.presence.g && q.presence.g.c === c && q.presence.g.cf), code, 20000, 'the Cloudflare battle in the friend\'s game list');
   const listed = await B.evaluate(async c => { await renderGames(); return document.getElementById('games') ? document.getElementById('games').textContent : ''; }, code);
   say(`friend's game list: "${listed.replace(/\s+/g, ' ').slice(0, 120)}"`);
   if (!/on Cloudflare/.test(listed)) warns.push('the game list entry does not say "on Cloudflare"');
-  await B.evaluate(c => { initAudio(); setup.p = 'RU'; joinGame(NET.room.peers().find(q => q.presence && q.presence.g && q.presence.g.c === c)); }, code);
-  await waitFor(B, () => NET.via === 'wsb' && /hosted on Cloudflare/.test(document.getElementById('mpstatus').textContent), null, 60000, 'the friend to join the Cloudflare battle from the game list');
+  await B.evaluate(() => { initAudio(); setup.p = 'RU'; hostGame(); });
+  await waitFor(B, () => NET.via === 'wsb' && /hosted on Cloudflare/.test(document.getElementById('mpstatus').textContent), null, 60000, 'the friend\'s "Play online" to join the open Cloudflare battle');
   say(`friend joined: "${(await status(B)).slice(0, 120)}"`);
   await waitFor(A, () => NET.cf.blob.seats.filter(s => s.h).length === 2, null, 20000, 'the friend to appear in the creator\'s lobby');
   // teams 1 vs 2 plus one Easy computer player on the friend's team, as a player would set them in the lobby

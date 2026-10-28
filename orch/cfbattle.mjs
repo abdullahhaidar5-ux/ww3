@@ -118,20 +118,20 @@ let A, B;
 async function main() {
   [A, B] = await Promise.all([openPage('creator'), openPage('friend')]);
   await Promise.all([A, B].map(p => p.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 240000 }).catch(() => warns.push('models still loading'))));
-  await waitFor(A, () => !!NET.room && !!document.getElementById('hostOn'), null, 30000, 'the "Host on Cloudflare" choice on the multiplayer menu');
-  say('both pages loaded; the multiplayer menu offers "Host in my browser" / "Host on Cloudflare"');
-  await A.evaluate(() => { initAudio(); setup.p = 'US'; document.querySelector('#hostOn button[data-v="cf"]').click(); });
+  await waitFor(A, () => !!NET.room && hostOn() === 'cf', null, 30000, 'Cloudflare hosting (the default with the servers configured)');
+  say('both pages loaded; new battles are hosted on Cloudflare');
+  await A.evaluate(() => { initAudio(); setup.p = 'US'; });
 
   // ---- 1. all battle slots taken -> busy -> host in this browser ----
   const dz = [];
   for (let k = 0; k < 3; k++) dz.push(await dummyLobby('dz' + k + Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'q'), k));
   say(`1. three other lobbies take the 3 battle slots: ${dz.map(d => d.ctl).join(', ')}`);
   if (!dz.every(d => d.ctl.startsWith('!w '))) fail('could not open the 3 lobbies that fill the battle slots');
-  await A.evaluate(() => hostGame());
+  await A.evaluate(() => hostCF());   // (not "Play online": that would join one of the 3 open lobbies)
   await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf, null, 40000, 'the creator to fall back to hosting in its browser');
   const fb = await A.evaluate(() => ({ st: document.getElementById('mpstatus').textContent, hostOn: hostOn() }));
   say(`   server busy -> browser hosting: "${fb.st.slice(0, 140)}"`);
-  if (!/Cloudflare is busy/.test(fb.st) || !/browser is hosting/.test(fb.st)) fail('the busy fallback message is missing from the lobby');
+  if (!/server is busy/.test(fb.st) || !/runs in your browser/.test(fb.st)) fail('the busy fallback message is missing from the lobby');
   await A.evaluate(() => cancelHost());
   for (const d of dz) { await H(d.code, 'close'); try { d.ws.close(); } catch {} }
   await sleep(800);
