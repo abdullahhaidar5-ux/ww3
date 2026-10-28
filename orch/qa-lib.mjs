@@ -16,6 +16,7 @@ export const sleep = ms => new Promise(r => setTimeout(r, ms));
 export const VIEWPORTS = {
   fhd: { viewport: { width: 1920, height: 1080 } },
   hd: { viewport: { width: 1366, height: 768 } },
+  sm: { viewport: { width: 1024, height: 576 } },
   phoneP: { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true,
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' },
   phoneL: { viewport: { width: 844, height: 390 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true,
@@ -65,8 +66,8 @@ export async function launch() {
 }
 
 // errs: array the page pushes problems into (page errors, console errors, failed local requests)
-export async function openPage(browser, origin, vpKey, errs, { storageState, allowHosts = [] } = {}) {
-  const ctx = await browser.newContext({ ...VIEWPORTS[vpKey], ...(storageState ? { storageState } : {}) });
+export async function openPage(browser, origin, vpKey, errs, { storageState, allowHosts = [], dpr } = {}) {
+  const ctx = await browser.newContext({ ...VIEWPORTS[vpKey], ...(dpr ? { deviceScaleFactor: dpr } : {}), ...(storageState ? { storageState } : {}) });
   await guardContext(ctx);
   const page = await ctx.newPage();
   await page.route('**/*', r => { const u = r.request().url(); return u.startsWith(origin) || allowHosts.some(h => u.startsWith(h)) ? r.continue() : r.abort(); });

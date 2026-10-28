@@ -9,6 +9,17 @@ build → train → select/order → powers → battle to the end → Play again
 
 ## Findings (most severe first)
 
+### Q0 · Multiplayer: a phone that reloads the page mid-battle can't get back in from the menu — High (pending re-test)
+- Steps: friend A hosts (desktop), friend B (phone, 390×844) joins from Open games, battle starts, B's page reloads
+  (phone browsers do this when the tab is backgrounded or memory is low; or B pulls to refresh).
+- Expected: B sees "Rejoin battle" (or the battle in Open games with a Join button) and gets their army back.
+- Actual: B lands on the main menu; Open games shows the battle as "IN BATTLE" with a disabled button; the only
+  other option is "Join by code" (B has to ask the host for the code). Nothing in the page remembers the battle across
+  a reload (no session storage of the code/slot). The 2026-10-27 reconnect work covers dropped *connections*
+  (page still open), not a reloaded page. Re-test running with Join-by-code — result below when done.
+- Run: `node orch/qa-mplobby.mjs --client phoneP` (local wrangler server, browser-to-browser blocked).
+- Screenshot: `orch/shots/qa/mp-client-after-reload-phoneP.png`
+
 ### Q1 · Defeat screen says "The last enemy capitulated" when YOU lost — Medium
 - Steps: skirmish 1 vs 1 AI, lose (all your units/buildings destroyed). Seen: Mountain Shias vs US on Zagros, 1366×768.
 - Expected: something like "You have been wiped out: every unit and building destroyed. United States won."
@@ -69,4 +80,18 @@ build → train → select/order → powers → battle to the end → Play again
 - 844×390 phone, Coffee Shias + 3 AI on Golan: same flow works; battle ended 9:46 (Egypt won).
 - No console errors in any run; only two harmless warnings (Canvas2D willReadFrequently, THREE toNonIndexed).
 
+- Multiplayer through the local game servers (`mpsync --server --reconnect --ais 1`): MPSYNC PASS — lobby, join,
+  orders, 12 s connection cut → reconnected in 0.7 s with army and money matching, settle checks all clean.
+- Multiplayer through the real buttons (`qa-mplobby.mjs`): desktop host presses HOST A GAME → phone sees the game in
+  Open games → taps JOIN → host presses ▶ START 2-PLAYER BATTLE → both load → phone taps own truck + ground → the move
+  order arrives on the host. (Under SwiftShader both pages showed "Connection to the host lost. Reconnecting… /
+  Reconnected" twice in the first seconds; frames take seconds headless, so this is probably a test artifact.)
+- AI that takes over a slot after 2 idle minutes (the dropped-player path) still builds 85–96 units and fights.
+- Balance probe (headless, Medium AI vs AI, Desert Strait, 15 game-min, 3 seeds × 10 nation pairs, each pair played
+  from both starts): the player in start slot 0 won 19, slot 1 won 10, 2 unfinished. E.g. Mountain Shias beat the US
+  3/3 from slot 0, lost 2/3 from slot 1. Might be a start-position edge on Strait (or AI update order); for the
+  Battlefield squad to check, not a confirmed bug.
+- Anthems: only 8 of 18 nations have one (US EU IL UA CU IN CN EG); the others start silently — known (BACKLOG).
+
 ## Re-checks of origin/main
+- 08:23 UTC: no new commits on main since 1639dab.
