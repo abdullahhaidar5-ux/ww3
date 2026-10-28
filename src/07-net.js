@@ -262,7 +262,9 @@ function pwVal(){const i=$('hostpw');return i&&window.WW3_P2P?String(i.value||''
 function pwFrom(s){const m=String(s||'').match(/[#&?\s]pw=([^&\s#]*)/);if(!m)return null;try{return decodeURIComponent(m[1]).trim().slice(0,64);}catch(e){return null;}}
 function pwField(){if(!window.WW3_P2P||!NET.room||$('hostpw'))return;const h=$('host');if(!h)return;const row=h.closest('.row')||h.parentNode,d=document.createElement('div');d.className='row joinrow pwrow';
   const i=document.createElement('input');i.id='hostpw';i.type='password';i.maxLength=64;i.placeholder='🔒 Password (optional): for a private battle';i.autocomplete='new-password';i.spellcheck=false;i.setAttribute('aria-label','Password for your game (optional): only friends who know it can join');i.title='Optional. Leave empty for a game anyone can join.';
-  i.onkeydown=e=>{if(e.key==='Enter'){initAudio();hostGame();}};d.append(i);row.parentNode.insertBefore(d,row.nextSibling);}
+  i.onkeydown=e=>{if(e.key==='Enter'){initAudio();hostGame();}};d.append(i);row.parentNode.insertBefore(d,row.nextSibling);
+  // shown with the button only (not while this player is in a lobby)
+  try{new MutationObserver(()=>{d.hidden=!!h.hidden;}).observe(h,{attributes:true,attributeFilter:['hidden']});}catch(e){}d.hidden=!!h.hidden;}
 // the browser host's check of a newcomer's password: null = fine, else 'need' / 'bad' / 'limit' (wrong guesses: 10 a minute)
 function pwHostCheck(peer,given){const now=Date.now(),B=NET.pwBad=NET.pwBad&&now-NET.pwBad.at<60000?NET.pwBad:{at:now,n:0,seen:{}};
   if(typeof given!=='string'||!given)return 'need';
