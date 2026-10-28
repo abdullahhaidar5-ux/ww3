@@ -69,8 +69,8 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 - Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
   (Abdullah, 2026-10-26).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
-  (Abdullah connected it 2026-10-26; Cloudflare builds the repo root from `main` automatically on every push — nothing
-  to do at ship except check it serves the new version), and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi, republish
+  (Abdullah connected it 2026-10-26; since 2026-10-28 `.github/workflows/deploy-site.yml` also sends it from `main` on every
+  push, status `deploy/site`, because Cloudflare's own builder got stuck — nothing to do at ship except check it serves the new version), and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi, republish
   per `orch/ARTIFACT.md`). Everything in the repo is served publicly by both Pages and the `ww3` Worker.
 - **Art is free only** (Abdullah, 2026-10-26): CC0 or CC-BY models/textures/sounds, every author credited in the menu
   credits; no paid assets, no ripped game assets.

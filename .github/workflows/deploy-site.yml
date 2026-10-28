@@ -1,0 +1,37 @@
+# Sends the game site to Abdullah's Cloudflare Worker "ww3" (https://ww3.abdullah-haidar5.workers.dev) on every push to
+# main, so that copy never lags behind GitHub Pages (Abdullah OK'd it 2026-10-28 12:52; Cloudflare's own builder had
+# been stuck "Queued"). Same content as before: every file tracked in the repo, served as static files. Uses the same
+# repository secret as the servers' deploy (CLOUDFLARE_API_TOKEN). Status "deploy/site" on the commit.
+name: Deploy site
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  statuses: write
+concurrency: { group: deploy-site, cancel-in-progress: true }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Deploy ww3 site
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 125601b8775d8b94cf1167c2c6ddaef5
+        run: |
+          set +e
+          mkdir -p /tmp/site && git archive HEAD | tar -x -C /tmp/site
+          rm -rf /tmp/site/.github
+          (cd /tmp && npx --yes wrangler@4.153.0 deploy --name ww3 --assets /tmp/site --compatibility-date 2026-03-01) > out.log 2>&1
+          rc=$?
+          tail -30 out.log
+          state=failure; [ $rc -eq 0 ] && state=success
+          desc=$(grep -E "Deployed|Uploaded|ERROR|Error" out.log | tail -1 | cut -c1-130 | sed 's/"/'"'"'/g')
+          curl -s -o /dev/null -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -d "{\"state\":\"$state\",\"context\":\"deploy/site\",\"description\":\"${desc:-exit $rc}\",\"target_url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+          [ $rc -eq 0 ]
