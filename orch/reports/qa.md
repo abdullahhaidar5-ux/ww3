@@ -1,6 +1,11 @@
 # QA playtest report — 2026-10-28
 
-(in progress — summary goes here at 12:00 UTC)
+**Summary (12:00 UTC):**
+1. **High — friends can't join by pasting the invite:** the box cuts it to 40 chars and the parser picks the word "battle" (or "github" from a link) as the game code (Q1).
+2. **Multiplayer lobby/reconnect gaps:** a phone that reloads mid-battle gets no Rejoin (works only by retyping the code); a friend in a lobby has no Leave button and "Host a game" is dead (Q2, Q3).
+3. **Wrong defeat text:** losers read "The last enemy capitulated…" (Q4); phone landscape build bar still hides a 5th column under LAUNCH (Q5); settings overlay/Done overlap and cut names at 1366×768 (Q6, Q7).
+4. **Works:** full skirmish loop on 1920/1366/phone portrait/landscape, all 18 nations (8 maps, headless), victory/defeat/elimination screens, ☰ settings/graphics/mouse schemes/restart/quit, Test Range, 2-player online through local servers incl. 12 s cut-and-reconnect; gate scripts controls 43/43, audio PASS, touch 71/71 run.
+5. Re-checked main hourly (1639dab → 8e5ad4d): phone button names now wrap (Q10 fixed); no new console errors; 11 reusable `orch/qa-*.mjs` scripts left for the next pass.
 
 Tested build: `origin/main` 1639dab (re-checked hourly, see "Re-checks" at the bottom). Headless Chromium with
 SwiftShader (CPU WebGL), so absolute frame times are not meaningful — only spikes relative to the run.
@@ -9,7 +14,7 @@ Scripts (reusable, all serve the repo locally; multiplayer only against a local 
 deploy → build → train → select/order → powers → battle to the end → Play again / Main menu / Quit), `qa-settings.mjs`
 (☰ menu, graphics tiers, music, mouse schemes, restart, Test Range), `qa-mplobby.mjs` (2 players through the real
 lobby buttons + reload mid-battle), `qa-joincode.mjs` / `qa-paste.mjs` (join-by-code inputs), `qa-win.mjs` (victory),
-`qa-aitake.mjs` (AI taking over an idle slot).
+`qa-aitake.mjs` (AI taking over an idle slot), `qa-joinlink.mjs` (#join= invite link), `qa-phonemusic.mjs` (music on a phone).
 
 ## Findings (most severe first)
 
@@ -156,6 +161,10 @@ lobby buttons + reload mid-battle), `qa-joincode.mjs` / `qa-paste.mjs` (join-by-
 - All 18 nations in 4-player AI battles on 8 maps (headless, 12 game-min): no errors, every battle progressed
   (7 ended with a winner, DMZ still 2 sides fighting).
 - Join by code: empty box and a wrong code give clear messages.
+- Phone music (normal autoplay rules, 390×844): silent until the first tap, then the menu track plays; in battle the
+  calm soundtrack takes over (Egypt; menu track was still on 8 s after the loading screen under SwiftShader — slow
+  frames, probably a test artifact; `audio.mjs` on current main: AUDIO PASS). (`orch/qa-phonemusic.mjs`)
+- 1366×768, Egypt + 2 AI on Nile & Suez: build/train/select/order flow works.
 - Victory path (phone 390×844, you + an AI ally vs 2 AIs on Fulda): "VICTORY — … Your alliance (Iran, North Korea)
   won." with Play again / Main menu; Play again starts a new 4-player battle. (`orch/qa-win.mjs`)
 - Gate scripts on current main: `controls.mjs` CONTROLS PASS 43/43 (all Generals mouse actions, Alternate setup,
@@ -166,3 +175,4 @@ lobby buttons + reload mid-battle), `qa-joincode.mjs` / `qa-paste.mjs` (join-by-
 ## Re-checks of origin/main
 - 08:23 UTC: no new commits on main since 1639dab.
 - 09:52 UTC: main at 8e5ad4d (phone button names wrap; map picker terrain line; gate mpsync-server reconnect). Merged into orch/qa. Re-checked phone landscape: Q3b still there, Q3c fixed in landscape too; phone ❚❚ → Quit battle → menu works.
+- 11:09 UTC: no new commits since 8e5ad4d. Re-checked Q7 (still cut at 1366×768) and Q5 (still cut on phone landscape).
