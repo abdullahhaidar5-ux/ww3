@@ -13,6 +13,95 @@ node orch/review-cf-ws.mjs   --root <checkout> [--only ghost,flood,squat]   # re
 
 ---
 
+## Batch 2 — `orch/cf-battle-client` @ aa802a2, `orch/play-online` @ 3a6ff90, `orch/passwords` @ 39cb081 (~01:10 UTC)
+
+(The server code on play-online and cf-battle-client is the same as stage2-dedicated, so R1–R5 apply to them too.)
+
+### R6. [HIGH] A 15-second network drop on the standby's phone splits the battle in two
+
+- **Where:** `src/07-net.js` `clientReconnect` (play-online / cf-battle-client / passwords): `svBlip()` rides out a
+  Cloudflare blip for only **8 s**; after that, every loop turn first calls `promoteToHost()` if this page is the
+  standby, **without having heard "nohost" from the server** (`gone` is never required for `NET.sv`). The server
+  battle is still running, so the other players never leave it.
+- **Scenario:** Cloudflare battle, 2 players. The standby (normally the creator) walks into a lift / switches Wi-Fi →
+  4G / the phone sleeps for ~15 s. Its reconnects fail for 8 s, it then opens `<code>-m1` and runs the battle in its
+  own browser from its last checkpoint. The server keeps the real battle with the friend; the standby's side there
+  goes to the AI after 30 s. Result: the creator plays alone in a copy ("the other commanders are reconnecting…"
+  forever), the friend fights the creator's AI. Nobody is told what happened.
+- **Reproduced:** `node orch/review-cf-split.mjs --root <play-online> --blip 15` (two Chromium pages, local
+  `wrangler dev`, the standby page's WebSockets fail for 15 s): `standby page: {"mode":"host","gen":1}; other page:
+  {"mode":"client","gen":0,"via":"wsb"}; server: phase battle` → **REVIEW-SPLIT FAIL**. Same with `--blip 25`. With
+  `--blip 12` it came back to the server (PASS), but only by luck (see R10).
+- **Suggested fix:** for a server-run battle (`NET.sv`), promote only after the server itself answered `nohost`
+  (`gone === true`) — that is exactly the restart-failed / handed-over case the standby exists for. While the server
+  is merely unreachable, keep retrying `/battle/<code>` (the server gives the side 30 s before the AI, and the page
+  can keep trying up to its 60 s budget). If Cloudflare as a whole is unreachable for everyone, every player sees the
+  same thing; a longer cutoff (e.g. promote only if *also* 25 s without any answer) still covers it.
+
+### R7. [MEDIUM] Password games: the right password is refused ("pwlimit") for everyone on an address where someone mistyped it 5 times — including players already in the battle reconnecting
+
+- **Where:** `server/src/password.js` `PwGuard.ok` / `pwGate` (passwords branch): `ok(ip)` is checked **before** the
+  password, so after 5 wrong guesses from one address (and 30 from all addresses) even correct passwords are refused
+  for ~20 s per guess; `index.js` BattleRoom.fetch runs the gate for every connection, also during the battle.
+- **Scenario:** friends on the same Wi-Fi (or the same mobile carrier NAT — very common on phones) play a protected
+  battle. Someone else at that address mistypes the password 5 times while trying to join. Any player from that
+  address whose connection blips now gets `!e pwlimit` on every reconnect → after 8 s the standby splits the battle
+  (R6), a non-standby player loses their side to the AI. Also: 6+ addresses × 5 wrong guesses empty the per-game
+  bucket and lock *everyone* out of reconnecting.
+- **Reproduced:** `node orch/review-cf-ws.mjs --root <passwords> --only pwshared` → 5× `!e badpw`, then the friend's
+  reconnect with the right password: `!e pwlimit` → **FAIL**.
+- **Suggested fix:** once the battle has started, a socket can do nothing without a valid side token (it is told
+  `full`), so skip the password gate in the battle phase, or at least let a correct password through regardless of the
+  buckets (only *wrong* guesses should consume and be blocked by them: check `pwCheck` first when the per-address
+  bucket allows, and when it doesn't, still accept an address that already got in correctly to this game).
+
+### R8. [MEDIUM] Merge hazard: passwords branch brings back hosting wording and isn't wired to "New battle" / "Play online"
+
+- **Where:** passwords `src/07-net.js`: `hostChoice()` ("Host in my browser" / "Host on Cloudflare" chips),
+  `hostCF` fallback text "Cloudflare is busy right now, so your browser is hosting this battle instead.",
+  `cfNetText()` "Hosted on Cloudflare", "Waiting for … the host", password field placed next to "Host a game"; the
+  password is read only in `hostGame()` (`NET.pw=pwVal()`).
+- **Impact:** passwords forked from cf-battle-client before aa802a2 ("Play online", no hosting wording). If it is merged
+  as is, Abdullah's "no hosting button or wording" is reverted. And play-online's `newBattle()` → `hostCF()` never sets
+  `NET.pw`: a player who types a password and presses **New battle** gets an **unprotected** game while believing it
+  is locked.
+- **Suggested fix (for whoever merges passwords into play-online):** keep play-online's buttons/texts; set
+  `NET.pw=pwVal()` in `newBattle()` (and decide whether "Play online" with a typed password should skip joining and
+  create a protected battle); keep `quickPick`'s `!g.pw` filter; re-run `cfclient-password.mjs` on the merge.
+
+### R9. [LOW] play-online: "New battle" on a fresh page throws (NET.lobby undefined)
+
+- **Where:** play-online `hostCF`: `if(r===true){NET.ais=[];NET.tm=[0];cfPush(true);…}` → `cfCfg()` reads
+  `NET.lobby.length`, which is unset until the first `leaveNet`. Seen as `page error: Cannot read properties of
+  undefined (reading 'length')` in the split test. The lobby recovers when the server's first `blob` arrives, but the
+  creator's map/conditions aren't sent at creation and the page logs an uncaught error (the gate's browser tests fail on
+  page errors). Already fixed on passwords (39cb081: `NET.lobby=[]`); make sure play-online gets it.
+
+### R10. [LOW, from reading + the 12 s run] A failed takeover attempt leaves a "zombie" relay host for `<code>-m1`
+
+- **Where:** shim `namedRoom` hosting path: when PeerJS and Nostr hosting fail, `wsOpen('host')` failing starts
+  `wsRetry(1)` in the background, then `namedRoom` throws; `promoteToHost` returns `'retry'` and abandons that room
+  object, but its `wsRetry` keeps trying (up to 30 times, ~2 min) and, once the network is back, becomes the host of
+  relay room `<code>-m1` with a key no live code uses. The next real `promoteToHost` gets `taken` → `isStandby=false`
+  → nobody takes over; players joining `-m1` through the relay reach a host that isn't wired to any game.
+- **Evidence:** in the 12 s blip run the standby did *not* split although it was past the 8 s mark — consistent with
+  its later promote being refused as `taken` by its own leftover. When the server really is gone (hand-over at 75%,
+  45-minute cap) with a flaky standby connection, this can leave the battle with no host at all.
+- **Suggested fix:** when `namedRoom`'s `ready` rejects, set `wsBye=true` (and close any socket it opened) so no retry
+  outlives the failed attempt.
+
+### Checked and fine (client / passwords / play-online)
+
+- play-online: no player-visible "host/hosting" wording left in `src/` strings I could find (lobby says "Online · ping",
+  leader, "Connection lost. Reconnecting…"). One "Play online" button + "New battle"; fallback to the browser is silent.
+- Passwords: never in the URL (WebSocket subprotocol), stored only as a salted PBKDF2 hash (in memory / the kept
+  checkpoint), the game list carries only `pw:1`, no `console.log` of either; invite link puts it in the `#fragment`
+  only and strips it from the address bar. (Note the invite *text* spells the password out in Discord — by design.)
+- Reconnect of a non-standby player after a short cut, server restart pickup, 75% hand-over: their own tests
+  (`cfbattle`) cover them; the split test above passes for a 12 s blip.
+
+---
+
 ## Batch 1 — `orch/stage2-dedicated` @ cffbaaa (server code = fcad540), 2026-10-28 ~00:50 UTC
 
 ### R1. [HIGH] Any player who is the standby can take over another player's side (reconnect tokens leak in the checkpoint)

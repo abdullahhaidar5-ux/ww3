@@ -19,9 +19,12 @@ const srv = await startServer({ vars: { TEST_HOOKS: '1' } });
 const WS = srv.url.replace(/^http/, 'ws');
 console.log('local server ' + srv.url);
 
-function sock(code, id, own, ip) {
+const b64u = s => Buffer.from(s, 'utf8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function sock(code, id, own, ip, pw) {
   const q = `role=client&id=${id}` + (own ? `&own=${own}` : '');
-  const ws = new WebSocket(`${WS}/battle/${code}?${q}`, { headers: { Origin: ORIGIN, 'CF-Connecting-IP': ip || '10.9.0.' + (++ipN) } });
+  const o = { headers: { Origin: ORIGIN, 'CF-Connecting-IP': ip || '10.9.0.' + (++ipN) } };
+  if (pw != null) o.protocols = ['ww3', 'pw.' + b64u(pw)];
+  const ws = new WebSocket(`${WS}/battle/${code}?${q}`, o);
   const S = { ws, got: [], ctl: [], closed: false, recs: [] };
   ws.onmessage = ev => { const m = String(ev.data); if (m[0] === '!') { S.ctl.push(m); return; }
     for (const line of m.split('\n')) { const i = line.indexOf('|'); try { S.recs.push(JSON.parse(line.slice(i + 1))); } catch (e) {} } };
@@ -80,6 +83,25 @@ cases.flood = async () => {
   check(b.closed, 'the flooding socket is closed by the server');
   check(st && st.t - t0 > 3, 'the battle kept running for the other player during the flood');
   try { a.ws.close(); } catch (e) {}
+  await sleep(1000);
+};
+
+// password-protected battle: a player already in the battle shares an address (same Wi-Fi / mobile carrier NAT) with
+// someone who mistyped the password 5 times; the player's connection blips and they reconnect with the RIGHT password
+cases.pwshared = async () => {
+  console.log('pwshared: protected battle; 5 wrong guesses from the address a player in the battle uses; that player reconnects');
+  const code = rnd(), PW = 'tonight42', IP = '10.77.0.5';
+  const a = sock(code, 'ownerPW01', 'pwkey000001', '10.77.0.1', PW); console.log('    owner: ' + await a.open()); a.hi('US', 'tokPWA0000');
+  const b = sock(code, 'friendPW1', null, IP, PW); console.log('    friend: ' + await b.open()); b.hi('RU', 'tokPWB0000');
+  await sleep(500); a.say([{ k: 'e', t: 'bset', d: { tm: [0, 1], start: 1 } }]); await sleep(500);
+  a.say([{ k: 'p', p: { rd: 1 } }]); b.say([{ k: 'p', p: { rd: 1 } }]); await sleep(1500);
+  const wrong = []; for (let k = 0; k < 5; k++) { const w = sock(code, 'guess00' + k, null, IP, 'tonight41'); wrong.push(await w.open()); }
+  console.log('    wrong guesses from the shared address: ' + wrong.join(', '));
+  b.ws.close(); await sleep(300);
+  const b2 = sock(code, 'friendPW2', null, IP, PW); const r = await b2.open();
+  console.log('    the friend reconnects with the right password: ' + r);
+  check(r.startsWith('!w'), 'a player already in a protected battle can reconnect with the right password even after someone else on the same address mistyped it');
+  for (const x of [a, b2]) try { x.ws.close(); } catch (e) {}
   await sleep(1000);
 };
 
