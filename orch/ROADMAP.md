@@ -22,10 +22,9 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Game live on Cloudflare (ww3.abdullah-haidar5.workers.dev), updated automatically
 - [done] Matchmaking + relay servers with automatic fallback (built and tested; switched off until they're live)
 - [done] Servers live on Cloudflare (ww3-servers), approved by Abdullah; multiplayer uses them (game list, relay for blocked networks)
-- [doing] Battles run on a server (or a dedicated PC) instead of the host's device — top priority (step 1 done: battle runs without graphics, identical to the browser; battle code needs no graphics stand-ins since cycle 9; what the host sends players runs without a browser since cycle 10; next: PC server + Cloudflare option)
+- [done] Battles run on Cloudflare: one Play online button, optional passwords, quiet fallback to a player's browser (Abdullah merged 2026-10-28)
 - [done] Fix: stale enemy soldiers left on a player's screen
 - [done] Rejoining mid-battle restores your army, fog and money; short freezes no longer drop anyone; host takeover waits for a slow host
-- [doing] One "Play online" button (join an open battle or start one; no hosting choice) + optional battle passwords
 
 ## Audio and music overhaul
 - [done] New soundtrack: 14 real recorded tracks for every nation (calm while building, combat when fighting); each nation's anthem at start and on victory
@@ -40,10 +39,10 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [todo] Proper mix: voices duck music, distance fade, even loudness
 
 ## Graphics overhaul
-- [doing] Phase 1 Foundations: 3D models moved out of the game page into separate files (done: page 8.3 → 1.8 MB; battles load only their nations' models); next engine upgrade
+- [done] Phase 1 Foundations: models in separate files; 3D engine upgraded (Three.js r186)
 - [doing] Phase 2 Real models: real tanks (Abrams, Merkava, KF51 Panther), trucks (M35, Ural), SPGs (G6, Msta), Humvee and transport helicopters (UH-60, Mi-8) per nation on branch orch/gfx-models; next: infantry, buildings
-- [todo] Phase 3 Terrain and world: sculpted ground, water, roads, craters
-- [todo] Phase 4 Light and effects: shadows, smoke, fire, explosions, theatre colour
+- [done] Phase 3 Terrain and world: real ground textures, gravel roads, wet shores, surf, lasting craters (PC; phones keep the light look)
+- [done] Phase 4 Light and effects: rolling fireballs, dust, smoke columns, lit muzzle flashes, theatre colour, steady shadows
 - [todo] Phase 5 Massive columns: hundreds of units at a smooth frame rate
 - [todo] Phase 6 Device tiers: phones stay smooth with a lighter look, PCs get everything
 
@@ -53,4 +52,4 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Fix AI blowouts: no general powers in the first 3 minutes, AI always builds an army
 - [done] Balance round 2: AI fields tanks, weak nations (Israel, Turkey, Korea) strengthened
 - [done] Faster takeover when the host leaves a multiplayer battle (about 2 s)
-- [todo] Fix map picker calling Fulda Gap, Golan and Korean DMZ "open land"
+- [done] Map picker describes every map correctly
