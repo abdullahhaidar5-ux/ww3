@@ -1,0 +1,64 @@
+# TEST copy of the World War 3 servers on real Cloudflare (Abdullah OK'd it 2026-10-27 19:37): Worker
+# "ww3-servers-staging" at https://ww3-servers-staging.abdullah-haidar5.workers.dev. It is a separate Worker with its
+# own Durable Objects, so nothing here touches the live "ww3-servers" Worker or its game list.
+#
+# How agents use it: push any commit to a branch named staging/<anything> (e.g. `git push origin HEAD:staging/spikes`).
+# This workflow deploys server/ from that commit as ww3-servers-staging, runs `orch/servertest.mjs --url` against it,
+# and (only when the commit message contains [bench]) one battle bench: 8 players, fulda, 2 game-minutes, one sim step
+# per event. Results: commit statuses staging/deploy, staging/servertest, staging/bench, and the full log on branch
+# staging-logs/<sha10>. One deploy at a time (later pushes wait). Free plan: the bench shares the account's daily
+# free allowance with the live servers, so bench only when the server or battle code actually changed.
+name: Staging servers
+on:
+  push:
+    branches: ['staging/**']
+permissions:
+  contents: write
+  statuses: write
+concurrency: { group: staging-servers, cancel-in-progress: false }
+jobs:
+  staging:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: 125601b8775d8b94cf1167c2c6ddaef5
+      STAGING_URL: https://ww3-servers-staging.abdullah-haidar5.workers.dev
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Deploy, test, bench
+        run: |
+          set +e
+          st() { curl -s -o /dev/null -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -d "{\"state\":\"$2\",\"context\":\"staging/$1\",\"description\":\"$(echo "$3" | cut -c1-130 | sed 's/"/'"'"'/g')\",\"target_url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"; }
+          : > out.log
+          # A fresh random bench key per deploy, so nobody else can run benches on the test copy.
+          KEY=$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')
+          (cd server && npm ci --no-audit --no-fund && npx wrangler deploy --name ww3-servers-staging --var BENCH_KEY:$KEY) >> out.log 2>&1
+          rc=$?
+          if [ $rc -ne 0 ]; then st deploy failure "$(grep -E 'ERROR|Error' out.log | tail -1)"; else st deploy success "deployed $STAGING_URL"; fi
+          if [ $rc -eq 0 ]; then
+            sleep 5
+            echo "=== servertest --url $STAGING_URL ===" >> out.log
+            timeout 300 node orch/servertest.mjs --url "$STAGING_URL" >> out.log 2>&1; t=$?
+            if [ $t -eq 0 ]; then st servertest success "servertest PASS on staging"; else st servertest failure "servertest exit $t"; rc=1; fi
+            if git log -1 --format=%B | grep -q '\[bench\]'; then
+              echo "=== battle bench ===" >> out.log
+              curl -sN -m 900 "$STAGING_URL/battle-bench?players=8&minutes=2&map=fulda&batch=1&key=$KEY" > bench.txt; b=$?
+              cat bench.txt >> out.log; echo >> out.log
+              grep '^RESULT ' bench.txt | tail -1 | sed 's/^RESULT //' > bench.json
+              if [ -s bench.json ]; then st bench success "$(head -c 120 bench.json)"; else st bench failure "no RESULT (curl exit $b)"; fi
+            fi
+          fi
+          sed -i "s/$KEY/<key>/g" out.log
+          tail -60 out.log
+          # Full log on branch staging-logs/<sha10>
+          git config user.name "staging-bot"; git config user.email "staging-bot@users.noreply.github.com"
+          b="staging-logs/$(echo ${{ github.sha }} | cut -c1-10)"
+          mkdir -p /tmp/l && cp out.log /tmp/l/staging.log && { [ -f bench.txt ] && cp bench.txt bench.json /tmp/l/; true; }
+          git checkout -q --orphan "$b" && git rm -rqf . && cp /tmp/l/* . && git add -A && git commit -qm "staging log ${{ github.sha }}" && git push -q -f origin "$b"
+          [ $rc -eq 0 ]
