@@ -139,6 +139,7 @@ export class BattleHost {
   check() {
     const s = this.seats();
     if (this.order.length < 2) return 'Waiting for at least one more player to join.';
+    if (this.order.length > this.mx()) return 'Too many players for this battlefield: pick a bigger one.';   // review R4
     if (new Set(s.map(x => x.tm)).size < 2) return 'Everyone is on one team: put someone on another team to start.';
     return '';
   }

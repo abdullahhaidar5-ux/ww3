@@ -18,7 +18,7 @@ function ckEncode(){const ids=new Map();for(const e of G.ents)ids.set(e,e.id);co
   const fields=G.fields.map(f=>({amt:f.amt,owner:f.owner}));
   const oil=G.oil.map(o=>{const r={};for(const k in o){if(k==='tg')continue;const y=enc(o[k],1);if(y!==undefined&&(typeof y!=='object'||Array.isArray(y)||y===null||y.$e!=null))r[k]=y;}return r;});
   const civ=(G.civ||[]).map(c=>{const r={};for(const k in c){if(k==='obj'||k==='mesh')continue;const y=enc(c[k],2);if(y!==undefined)r[k]=y;}return r;});
-  return {v:1,ents,S:S.map(s=>enc(s,1)),teams,g,fields,oil,civ,toks:NET.toks||null,start:NET.startInfo||null,me:ME,cs:NET.peers?NET.peers.map((p,i)=>Math.max(p&&NET.cseq?(NET.cseq[p]||0):0,((NET.cseqSlot||[])[i]||0))):null};}
+  return {v:1,ents,S:S.map(s=>enc(s,1)),teams,g,fields,oil,civ,toks:tokSafe(),start:NET.startInfo||null,me:ME,cs:NET.peers?NET.peers.map((p,i)=>Math.max(p&&NET.cseq?(NET.cseq[p]||0):0,((NET.cseqSlot||[])[i]||0))):null};}
 function ckDecode(ck){const byId=new Map();const S=ck.S;const ents=ck.ents.map(o=>Object.assign({},o));for(const e of ents)byId.set(e.id,e);
   const dec=v=>{if(v==null||typeof v!=='object')return v;if(Array.isArray(v))return v.map(dec);if(v.$e!=null)return byId.get(v.$e)||null;if(v.$f!=null)return G.fields[v.$f]||null;if(v.$o!=null)return G.oil[v.$o]||null;if(v.$c!=null)return (G.civ||[])[v.$c]||null;
     const o={};for(const k in v)o[k]=dec(v[k]);return o;};

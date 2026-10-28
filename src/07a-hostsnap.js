@@ -17,7 +17,14 @@ function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return nul
 const NET_PV=6;
 // A dropped player gets 30 s to reconnect (same team, same units) before the AI takes over their side. A player counts as
 // dropped after 8 s without a word, or 90 s while their keep-alive says they are still on the loading screen (NET.ldOf).
-function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=NET.toks.indexOf(tok);if(ix<0||ix===ME)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,((NET.cseqSlot||[])[ix]||0));
+// Reconnect tokens never leave the host in the clear: a checkpoint (sent to the standby player, kept by the server)
+// carries only 'h:'+tokHash(token), so the standby can't use another player's token to take over their side
+// (review R1). A host that picked the battle up from a checkpoint matches a returning player's token by its hash.
+function tokHash(t){t='ww3tok|'+String(t);let a=0x811c9dc5|0,b=0x9e3779b9|0;for(let i=0;i<t.length;i++){const c=t.charCodeAt(i);a=Math.imul(a^c,0x01000193);b=Math.imul(b^c,0x5bd1e995);b^=b>>>13;}
+  for(let r=0;r<4;r++){a=Math.imul(a^(a>>>15),0x85ebca6b)^b;b=Math.imul(b^(b>>>16),0xc2b2ae35)^a;}return (a>>>0).toString(36)+'.'+(b>>>0).toString(36);}
+function tokIx(tok){if(!tok||typeof tok!=='string'||tok.startsWith('h:')||!NET.toks)return -1;let ix=NET.toks.indexOf(tok);if(ix<0){const h='h:'+tokHash(tok);ix=NET.toks.indexOf(h);}return ix;}
+function tokSafe(){return NET.toks?NET.toks.map(t=>typeof t==='string'&&t?(t.startsWith('h:')?t:'h:'+tokHash(t)):null):null;}
+function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=tokIx(tok);if(ix<0||ix===ME)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.toks[ix]=tok;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,((NET.cseqSlot||[])[ix]||0));
   const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',Object.assign({pv:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm,w:S.w|0},S.sv?{sv:1}:{})).catch(()=>{});
   for(const O of G.teams)log(O.id,`${T.F.name}'s commander reconnected.`,'g');
   // P2P: the rejoined player starts from a fresh map, so collapsed city blocks are re-sent as they come into view
