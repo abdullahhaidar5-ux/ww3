@@ -152,7 +152,7 @@ async function main() {
   await noHost(A, 'leader lobby');
   const gl = await games();
   if (!(gl.battles || []).some(([, e]) => e.g && e.g.c === code && e.g.cf)) fail('the server does not list the battle (cf:1) in its game list: ' + JSON.stringify(gl).slice(0, 200));
-  // the friend finds it in the game list (the server's "b|" frame) and joins from there
+  // the friend sees it in the game list (the server's "b|" frame); "Play online" joins it
   await waitFor(B, c => NET.room.peers().some(q => q.presence && q.presence.g && q.presence.g.c === c && q.presence.g.cf), code, 20000, 'the Cloudflare battle in the friend\'s game list');
   const listed = await B.evaluate(async c => { await renderGames(); return document.getElementById('games') ? document.getElementById('games').textContent : ''; }, code);
   say(`friend's game list: "${listed.replace(/\s+/g, ' ').slice(0, 120)}"`);

@@ -24,8 +24,9 @@ export class BattleHost {
   // sim: createBattleSim(); code: game code; ownKey: the creator's key; send(id, frame); close(id, code, why);
   // now(): ms clock; publish(entry|null): the game-list entry changed; save(record|null): keep (or drop) the battle's
   // latest checkpoint so it can be picked up after a server restart (BattleHost.restore); log(msg)
-  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed, readyMs = READY_MAX_MS }) {
-    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log, readyMs });
+  // pw: a password-protected battle's salted hash ({s,h,i}, server/src/password.js), checked by the caller at connect
+  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed, readyMs = READY_MAX_MS, pw = null }) {
+    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log, readyMs, pw });
     this.hostId = 'ww3-' + code;
     this.phase = 'lobby';                    // lobby -> battle -> over -> closed
     this.players = new Map();                // id -> {id, pres, f, tok, at, seat}
@@ -163,7 +164,7 @@ export class BattleHost {
   entry() {
     if (this.phase === 'closed' || this.phase === 'over') return null;
     const o = this.owner && this.players.get(this.owner), n = this.phase === 'battle' ? this.facs.length : this.seats().length;
-    return { c: this.code, f: (o && o.f) || (this.facs && this.facs[0]) || 'US', s: this.phase === 'lobby' && n < this.mx() ? 'open' : 'full', n: Math.max(1, n), m: this.map, mx: this.mx(), cf: 1 };
+    return { c: this.code, f: (o && o.f) || (this.facs && this.facs[0]) || 'US', s: this.phase === 'lobby' && n < this.mx() ? 'open' : 'full', n: Math.max(1, n), m: this.map, mx: this.mx(), cf: 1, ...(this.pw ? { pw: 1 } : {}) };
   }
   list(force) { const e = this.entry(), s = JSON.stringify(e); if (force || s !== this.lastPub) { this.lastPub = s; this.publish(e); } }
 
@@ -211,7 +212,7 @@ export class BattleHost {
     if (real > 0) this.sim.net(real);
     this.flush();
     const ck = this.sim.ckFresh();
-    if (ck) this.save({ code: this.code, own: this.ownKey, si: this.si, s: ck, at: now });
+    if (ck) this.save({ code: this.code, own: this.ownKey, si: this.si, s: ck, at: now, pw: this.pw });
     const info = n && this.sim.over() ? this.sim.info() : null;   // (info() walks every entity: only once, at the end)
     if (info && info.over) { this.phase = 'over'; this.endAt = now + AFTER_END_MS; this.save(null); this.log(`battle ${this.code} over, winner slot ${info.winner}`); this.list(); }
     return Math.max(0, Math.ceil((STEP - this.acc) * 1000));
@@ -219,7 +220,7 @@ export class BattleHost {
   // A battle picked up from its last kept checkpoint after the server restarted (rec: what save() was given). Players
   // reconnect as usual (same /battle/ address, their token); each human side has 30 s before the AI takes over.
   static async restore(opts, rec) {
-    const h = new BattleHost({ ...opts, code: rec.code, ownKey: rec.own });
+    const h = new BattleHost({ ...opts, code: rec.code, ownKey: rec.own, pw: rec.pw || null });
     await h.sim.restore(rec.si, rec.s);
     h.si = rec.si; h.facs = rec.si.facs.slice(); h.map = rec.si.map; h.w = rec.si.w | 0;
     h.phase = 'battle'; h.startedAt = h.lastStep = h.emptySince = h.now(); h.acc = 0; h.go = true;
