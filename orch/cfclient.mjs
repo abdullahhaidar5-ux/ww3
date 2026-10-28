@@ -66,7 +66,7 @@ if (!process.argv.includes('--no-lock')) await acquireBrowserLock();
 const STATE = fs.mkdtempSync(path.join(os.tmpdir(), 'ww3-cfclient-'));
 const BENCH_KEY = 'cfclientbench1';
 // the game server (its stored data kept in STATE, so it can be restarted with it) and one over its free-plan budget
-let [SRV, BUSY] = await Promise.all([startServer({ state: STATE }), startServer({ vars: { FREE_GBS: '0.001', BENCH_KEY } })]);
+let [SRV, BUSY] = await Promise.all([startServer({ state: STATE, logLevel: 'log' }), startServer({ vars: { FREE_GBS: '0.001', BENCH_KEY } })]);
 const P = await startProxy(SRV.url);
 console.log(`local game server ${SRV.url} (pages reach it through ${P.url}); over-budget server ${BUSY.url}`);
 // put some use on the over-budget server's books (a short bench), so it refuses new battles with "busy"
@@ -196,9 +196,10 @@ async function main() {
   }
   // an order is carried by the player's presence until the server acknowledges it (team panel 'ak', sent once a checkpoint
   // holding it is with the standby player: up to ~16 s)
+  for (const p of [A, B]) await p.evaluate(() => { const o = applyTeam; applyTeam = function (d) { if (d && typeof d.ak === 'number') window.__ak = d.ak; return o.apply(this, arguments); }; });
   const acked = p => p.evaluate(() => !(NET.cq || []).some(c => c.s <= window.__ordS));
   for (let i = 0; i < 35 && !((await acked(A)) && (await acked(B))); i++) await tick(10);
-  for (const [p, k] of [[A, 0], [B, 1]]) if (!(await acked(p))) fail(`the server never acknowledged slot ${k}'s orders`);
+  for (const [p, k] of [[A, 0], [B, 1]]) if (!(await acked(p))) fail(`the server never acknowledged slot ${k}'s orders: ` + JSON.stringify(await p.evaluate(() => ({ ordS: window.__ordS, cq: (NET.cq || []).map(c => c.s), ak: window.__ak, sb: !!NET.isStandby }))));
   await tick(20);
   for (const [p, k] of [[A, 0], [B, 1]]) { const after = await posOf(p, ord[k]); const n = after.filter((a, i) => a && ord[k].before[i] && Math.hypot(a[0] - ord[k].before[i][0], a[1] - ord[k].before[i][1]) > 15).length;
     say(`slot ${k}'s orders acknowledged by the server; ${n}/${ord[k].length} of its units moved in the server's updates`); if (ord[k].length && !n) warns.push(`slot ${k}'s ordered units did not move (busy fighting?)`); }
@@ -228,7 +229,7 @@ async function main() {
   // ---- 5. server blip: restart with the same stored data ----
   await tick(90);   // a fresh checkpoint (every 8 s) is on the server
   const tBefore = await snapT(A);
-  const SRV2 = await startServer({ state: STATE });   // up before the old one goes, so the blip stays short
+  const SRV2 = await startServer({ state: STATE, logLevel: 'log' });   // up before the old one goes, so the blip stays short
   SRV.stop(); P.setUpstream(SRV2.url); SRV = SRV2;
   P.cut(() => true);
   say(`5. the server restarted (battle at ${tBefore.toFixed(0)} s); pages reconnect`);
@@ -257,7 +258,7 @@ async function main() {
     if (h >= 0 && c >= 0 && st[c].gen === 1 && !st[c].recon && st[c].rx < 1000) break; }
   say(`after ${((Date.now() - k0) / 1000).toFixed(1)} s: ${st.map((s, i) => `${i ? 'friend' : 'creator'} ${s.mode}${s.mode === 'client' ? ` (room gen ${s.gen}, last update ${(s.rx / 1000).toFixed(1)} s ago)` : ''}`).join(', ')}`);
   const hi = st.findIndex(s => s.mode === 'host'), ci = st.findIndex(s => s.mode === 'client');
-  if (hi < 0 || ci < 0 || st[ci].gen !== 1 || st[ci].recon) fail('no player took over the battle after the server lost it');
+  if (hi < 0 || ci < 0 || st[ci].gen !== 1 || st[ci].recon) { fail('no player took over the battle after the server lost it'); await diag(); }
   else {
     await tick(30);
     const H = [A, B][hi], C = [A, B][ci], ck = ci;
