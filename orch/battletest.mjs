@@ -34,7 +34,7 @@ async function nodeBench(players, minutes, map, write = () => {}) {
   if (global.gc) global.gc();
   const h0 = process.memoryUsage().heapUsed;
   const sim = createBattleSim();
-  const r = await runBench(sim, { players, minutes, map, seed: 1, diff: 1, batch: 60, facs: FACS },
+  const r = await runBench(sim, { players, minutes, map, seed: 1, diff: 1, batch: Number(argS('batch', 60)), facs: FACS },
     { now: () => performance.now(), yieldFn: () => new Promise(res => setImmediate(res)), write, cpu: cpuMs });
   if (global.gc) global.gc();
   r.heapMB = +((process.memoryUsage().heapUsed - h0) / 1048576).toFixed(1);   // the battle is still alive here
@@ -47,7 +47,7 @@ if (has('bench')) {
   console.log(`Node ${process.version}: battle server cost (battle + host netcode sending to every side), ${map}, ${minutes} game-min, Normal AI`);
   for (const n of String(argS('bench', '2,4,8')).split(',').map(Number)) {
     const r = await nodeBench(n, minutes, map, s => console.log('    ' + s));
-    console.log(`  ${n} players: ${r.cpuMsPerGameS} ms CPU per game-second (avg), worst minute ${Math.max(...r.rows.map(x => x.cpuMsPerGameS))} ms, peak ${r.peakEnts} entities, ${r.kbPerGameS} KB/s sent, battle heap ~${r.heapMB} MB${r.over ? ' (ended)' : ''}`);
+    console.log(`  ${n} players: ${r.cpuMsPerGameS} ms CPU per game-second (avg), per event (${r.batch} step${r.batch > 1 ? "s" : ""}) p50 ${r.p50EventMs} / p90 ${r.p90EventMs} / p99 ${r.p99EventMs} / max ${r.maxEventMs} ms, worst minute ${Math.max(...r.rows.map(x => x.cpuMsPerGameS))} ms, peak ${r.peakEnts} entities, ${r.kbPerGameS} KB/s sent, battle heap ~${r.heapMB} MB${r.over ? ' (ended)' : ''}`);
   }
   process.exit(0);
 }
