@@ -5438,6 +5438,7 @@ function findPath(dom,sx,sy,tx,ty){
     const cx=cur%GW,cy=(cur/GW)|0;{const hh=hfn(cx,cy);if(hh<bestH){bestH=hh;bestN=cur;}}
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(!passC(dom,nx,ny))continue;if(dx&&dy&&(!passC(dom,cx+dx,cy)||!passC(dom,cx,cy+dy)))continue;
       const ni=ny*GW+nx;if(P_closed[ni]===st)continue;const ng=P_g[cur]+(dx&&dy?1.414:1)*(WC?1+WC[ni]:1);if(P_mark[ni]!==st||ng<P_g[ni]){P_mark[ni]=st;P_g[ni]=ng;P_came[ni]=cur;push(ng+hfn(nx,ny),ni);}}}
+  if(typeof G!=='undefined'&&G)G.pfN=(G.pfN||0)+it;   // route-search work done this step (the budget in 03-sim counts it)
   let end=goal;if(!found){if(bestN===start||bestH>hfn(s0[0],s0[1])-2)return null;end=bestN;}
   const cells=[];for(let c=end;c!==-1;c=P_came[c])cells.push(c);cells.reverse();
   const pts=cells.map(c=>[(c%GW)*CELL+CELL/2,((c/GW)|0)*CELL+CELL/2]);if(found&&!unreach&&passXY(dom,tx,ty))pts[pts.length-1]=[tx,ty];
@@ -5606,7 +5607,7 @@ function ally(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.te
 function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&N<=MAPS[o.map].max?o.map:'strait';setWorld(worldScaleFor(N));setBases(N,mk,mk===o.map?o.slot:-1);
   const M=mkMap(o.seed,mk);
   G={t:0,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
-     map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};initCiv();G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});
+     map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};for(const k of G_LATE)G[k]=undefined;initCiv();G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});
   G.bs=BATTLE;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));G.teams.forEach(T=>{T.credits=Math.round(3000*(1+(G.bs-1)*.8)/100)*100;});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
   {const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'];const cd=(p,q)=>{const a=hexRGB(p),b=hexRGB(q);return Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);};
    for(let i=1;i<N;i++){const T=G.teams[i];if(G.teams.slice(0,i).some(P=>cd(P.color,T.color)<.45)){const c=ALT.find(c=>G.teams.slice(0,i).every(P=>cd(P.color,c)>=.45))||ALT[i%ALT.length];T.color=c;T.dark=shade(c,.45);}}}
@@ -5620,12 +5621,21 @@ function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&N<=MAPS[o.map].m
     wallCost();regions('ground');regions('naval');   // route caches built now, behind the loading screen, not by the first long route search mid-battle (a 10-30 ms hitch)
   }
 }
+// Fields the battle adds to G as it runs. Declaring them all up front keeps G one fixed shape, so the engine's compiled
+// code for the hot loops (which reads G everywhere) is not thrown away and rebuilt each time a new field appears.
+const G_LATE=['pfTok','pfMs','pfN','wx','hash','bmaxH','rmax','mines','aur','cbrTeams','mT','prT','bg','bgSig','sg','ecT','aiTT','vsT','vsN','vsB','vsD','hqC','bocc','boccV'];
 function baseFacing(t){const b=BASES[t]||BASES[0];return Math.atan2(MAPH/2-b[1],MAPW/2-b[0]);}
+// Fields units and buildings pick up as the battle runs, declared (as undefined: same meaning as missing) when each is
+// made, so every unit has the same shape. Units growing fields in different orders gave the engine dozens of shapes,
+// and each new one threw away the compiled code of the hot loops (~80 times a game-minute): 10-30 ms hitches.
+const U_LATE='fldT,field,path,pgx,pgy,prt,npW,npD,npT,hd,v,vt,mv,px,py,si,_vr,vis,hid,building,mT,odds,sur,rz,fear,scT,bt,ms,guard,ffx,ffy,ffP,ffw,ffwT,so,sbD,sbT,srp,gt,drop,dropT,retreat,supp,fw,lc,rt,rtTo,rout,cvT,tagT,hlT,hl,cbrT,aband,cp,cpT,last,crew,_dsT,_dsV,kx,ky,mark,stun,sq,inTun,flank,spT,landed,wxw,toT,dead'.split(','),B_LATE='_vr,vis,hid,nd,stall,scT,sn,lastFire,_dsT,_dsV,dead'.split(',');
 function addUnit(team,kind,x,y){const T=G.teams[team],s0=stats(T.fac,kind),sm=kind===T.F.special?specMult(T):1,s=sm>1?Object.assign({},s0,{hp:Math.round(s0.hp*sm),dmg:s0.dmg*sm,name:s0.name+(sm>=1.4?' (Elite)':' (Veteran)')}):s0;const a=baseFacing(team);
   const u={id:G.nid++,isB:false,team,kind,s,x,y,ang:a,va:a,tang:a,hp:s.hp,max:s.hp,r:s.r,cd:0,order:null,target:null,lastHit:-99,lastFire:-99,state:'go',cargo:0,xp:0,rank:0,ammo:s.ammo||0,vs:new Array(G.teams.length).fill(false)};
+  for(const k of U_LATE)u[k]=undefined;
   u.max=Math.round(s.hp*hpMult(team,kind));u.hp=u.max;G.ents.push(u);G.byId.set(u.id,u);return u;}
 function addBld(team,kind,x,y,built){const T=G.teams[team],s=bstats(T.fac,kind);G.bdirty=true;
   const b={id:G.nid++,isB:true,team,kind,s,x,y,size:s.size,r:s.size/2,max:s.hp,hp:built?s.hp:s.hp*.1,built:built?1:0,cd:0,target:null,ang:baseFacing(team),lastHit:-99,dis:0,vs:new Array(G.teams.length).fill(false)};
+  for(const k of B_LATE)b[k]=undefined;
   G.ents.push(b);G.byId.set(b.id,b);return b;}
 const done=(t,k)=>G.ents.some(e=>e.isB&&e.team===t&&e.kind===k&&e.built>=1&&!e.dead);
 const working=(t,k)=>G.ents.some(e=>e.isB&&e.team===t&&e.kind===k&&e.built>=1&&!e.dead&&!(e.dis>G.t));
@@ -5772,14 +5782,14 @@ function ffBuild(gx,gy){const g0=nearestPass('ground',Math.floor(gx/CELL),Math.f
   const d=new Float32Array(PN).fill(Infinity),cl=new Uint8Array(PN);if(!FFH||FFH.length<PN*8){FFH=new Float32Array(PN*8);FFI=new Int32Array(PN*8);}const HF=FFH,HI=FFI;let HN=0;
   const push=(f,i)=>{let k=HN++;while(k>0){const p=(k-1)>>1;if(HF[p]<=f)break;HF[k]=HF[p];HI[k]=HI[p];k=p;}HF[k]=f;HI[k]=i;};
   const pop=()=>{const top=HI[0];HN--;if(HN>0){const f=HF[HN],v=HI[HN];let k=0;for(;;){const l=2*k+1,r=l+1;let m=-1,mf=f;if(l<HN&&HF[l]<mf){m=l;mf=HF[l];}if(r<HN&&HF[r]<mf){m=r;}if(m<0)break;HF[k]=HF[m];HI[k]=HI[m];k=m;}HF[k]=f;HI[k]=v;}return top;};
-  const WC=wallCost();d[goal]=0;push(0,goal);
-  while(HN>0&&HN<PN*8-9){const cur=pop();if(cl[cur])continue;cl[cur]=1;const cx=cur%GW,cy=(cur/GW)|0,base=d[cur]+(WC?WC[cur]:0)*.5;
+  const WC=wallCost();d[goal]=0;push(0,goal);let it=0;
+  while(HN>0&&HN<PN*8-9){const cur=pop();if(cl[cur])continue;cl[cur]=1;it++;const cx=cur%GW,cy=(cur/GW)|0,base=d[cur]+(WC?WC[cur]:0)*.5;
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(!passC('ground',nx,ny))continue;if(dx&&dy&&(!passC('ground',cx+dx,cy)||!passC('ground',cx,cy+dy)))continue;
       const ni=ny*GW+nx;if(cl[ni])continue;const nd=d[cur]+(dx&&dy?1.414:1)*(WC?1+WC[ni]:1);if(nd<d[ni]){d[ni]=nd;push(nd,ni);}}}
-  return {d,goal};}
+  G.pfN=(G.pfN||0)+it;return {d,goal};}
 function ffGet(gx,gy){const g0=nearestPass('ground',Math.floor(gx/CELL),Math.floor(gy/CELL));if(!g0)return false;const key=g0[1]*GW+g0[0];bocc();
   let F=FFC.get(key);if(F&&F.gv===(G.gridV|0)&&F.bv===(G.boccV|0)&&G.t-F.t<30&&F.pn===PN)return F.f;
-  if((G.pfTok||0)<1||(G.pfMs||0)>=PF_MS)return F&&F.pn===PN?F.f:null;   // stale field is fine until there is budget to rebuild it
+  if((G.pfTok||0)<1||(G.pfMs||0)>=PF_MS||(G.pfN||0)>=PF_N)return F&&F.pn===PN?F.f:null;   // stale field is fine until there is budget to rebuild it
   G.pfTok-=2;const t0=performance.now();let f;P_B=true;try{f=ffBuild(gx,gy);}finally{P_B=false;}G.pfMs=(G.pfMs||0)+performance.now()-t0;
   FFC.delete(key);FFC.set(key,{f,gv:G.gridV|0,bv:G.boccV|0,t:G.t,pn:PN});while(FFC.size>8)FFC.delete(FFC.keys().next().value);return f;}
 // next point for a unit following the field toward (x,y); null = fall back to an individual route (also used for the
@@ -5804,13 +5814,15 @@ function sharePath(us,x,y){const G0=us.filter(u=>u.s.dom==='ground'&&u.order&&!u
 // Route searches are budgeted per tick (a big army ordered at once used to search every unit's route in the same
 // tick - a visible hitch); a unit waiting its turn keeps its current route, or briefly holds if it has none. Routes are
 // re-planned every few seconds (that keeps a big army fanning out instead of queueing on one route) and when stuck.
-const PF_RATE=120,PF_BURST=12,PF_MS=4;
+// PF_N: route-search work per tick, in search steps (~4 ms of searching): the time budget alone does nothing where the
+// clock stands still while code runs (a battle hosted on Cloudflare), so the work is counted too.
+const PF_RATE=120,PF_BURST=12,PF_MS=4,PF_N=12000;
 function navTo(u,x,y,dt,fin){const d=u.s.dom;if(d==='air'){stepTo(u,x,y,dt,fin);return;}
   if(d==='ground'&&u.ffx!=null){if(Math.hypot(u.ffx-x,u.ffy-y)>450||Math.hypot(x-u.x,y-u.y)<600)u.ffx=null;else{const r=ffStep(u,x,y);if(r){stepTo(u,r[0],r[1],dt,r[2]&&fin);return;}}}
   const goalMoved=!u.path||Math.hypot(u.pgx-x,u.pgy-y)>60;
   if(goalMoved||G.t>u.prt){
     if(los(d,u.x,u.y,x,y)){u.path=[[x,y]];u.pgx=x;u.pgy=y;u.prt=G.t+2.5+Math.random();}
-    else if((G.pfTok||0)>=1&&(G.pfMs||0)<PF_MS){G.pfTok-=1;const t0=performance.now();if(d==='ground'){bocc();P_B=true;}try{u.path=smoothP(d,u.x,u.y,findPath(d,u.x,u.y,x,y))||[[x,y]];}finally{P_B=false;}G.pfMs=(G.pfMs||0)+performance.now()-t0;u.pgx=x;u.pgy=y;u.prt=G.t+2.5+Math.random();}
+    else if((G.pfTok||0)>=1&&(G.pfMs||0)<PF_MS&&(G.pfN||0)<PF_N){G.pfTok-=1;const t0=performance.now();if(d==='ground'){bocc();P_B=true;}try{u.path=smoothP(d,u.x,u.y,findPath(d,u.x,u.y,x,y))||[[x,y]];}finally{P_B=false;}G.pfMs=(G.pfMs||0)+performance.now()-t0;u.pgx=x;u.pgy=y;u.prt=G.t+2.5+Math.random();}
     else if(goalMoved){u.v=(u.v||0)*.85;return;}}
   const sk=(MOVE[u.s.cls]||[4])[0]>=8?12:26;while(u.path.length>1&&Math.hypot(u.path[0][0]-u.x,u.path[0][1]-u.y)<sk)u.path.shift();
   // unstick: no progress toward the next waypoint for 2.5s (jammed on a corner or in a crowd) -> sidestep, then re-plan
@@ -6375,7 +6387,7 @@ function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
 function weatherTick(dt){if(!G.wx)G.wx={k:'clear',t:0,next:150+Math.random()*90};const W=G.wx;W.t+=dt;if(W.t<W.next)return;W.t=0;const ks=weatherKinds(G.map.theme);
   if(W.k==='clear'){W.k=ks[1+Math.floor(Math.random()*(ks.length-1))];W.next=55+Math.random()*45;}else{W.k='clear';W.next=170+Math.random()*120;}
   for(const T of G.teams){const w=WEATHER[W.k];log(T.id,W.k==='clear'?'The weather is clearing.':`Weather: ${w.name}. ${w.tip}`,'w');}}
-function simUpdate(dt){G.t+=dt;G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);production(dt);buildHash();if(!G.mines)G.mines=[];
+function simUpdate(dt){G.t+=dt;G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);production(dt);buildHash();if(!G.mines)G.mines=[];
   if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam});if(s.cbr)G.cbrTeams|=1<<e.team;}
   if(G.aur.heal.length)for(const e of G.ents){if(e.dead||e.isB||e.hp>=e.max||e.s.dom==='air')continue;for(const a of G.aur.heal)if(a.team===e.team&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){e.hp=Math.min(e.max,e.hp+a.v*dt);break;}}
   if(G.aur.jam.length)for(const e of G.ents){if(e.dead||e.kind!=='drone')continue;for(const a of G.aur.jam)if(!ally(a.team,e.team)&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){applyDmg(e,30*dt,'flak',a.team,null);break;}}
