@@ -238,11 +238,15 @@ export async function runBench(sim, o, { now, yieldFn, write = () => {}, cpu = n
   const steps = Math.round(o.minutes * 60 / STEP), per = Math.max(1, o.batch | 0);
   const rows = []; let minute = { wall: 0, cpu: 0, events: 0, maxEv: 0, steps: 0 }, total = { wall: 0, cpu: 0, events: 0, steps: 0 }, maxEv = 0;
   let done = 0, last = now(), c0 = cpu ? cpu() : 0;
+  const HB = [0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000], hist = HB.map(() => 0), big = []; // staging diagnostics
+  let zeroRun = 0, maxZeroRun = 0, runBefore = [];
   while (done < steps) {
     const evStart = now();
     for (let k = 0; k < per && done < steps; k++) { sim.step(STEP); sim.benchNet(STEP); done++; minute.steps++; }
     await yieldFn();
     const t = now(), ev = t - evStart; last = t;
+    { let b = 0; while (b + 1 < HB.length && ev >= HB[b + 1]) b++; hist[b]++; }
+    if (ev === 0) { zeroRun++; if (zeroRun > maxZeroRun) maxZeroRun = zeroRun; } else { if (ev >= 50) big.push({ step: done, ms: ev, zerosBefore: zeroRun }); zeroRun = 0; }
     minute.wall += ev; minute.events++; if (ev > minute.maxEv) minute.maxEv = ev;
     const info = done % 3600 === 0 || done >= steps ? sim.info() : null;
     if (info) {
@@ -260,5 +264,6 @@ export async function runBench(sim, o, { now, yieldFn, write = () => {}, cpu = n
   return { players: facs.length, map: o.map, seed: o.seed, diff: o.diff, batch: per, setupMs, gameSeconds: +gs.toFixed(1), wallMs: total.wall,
     wallMsPerGameS: +(total.wall / Math.max(1e-9, gs)).toFixed(1), cpuMsPerGameS: cpu ? +(total.cpu / Math.max(1e-9, gs)).toFixed(1) : null,
     maxEventMs: maxEv, events: total.events, peakEnts: Math.max(0, ...rows.map(r => r.ents)), endEnts: info.ents, over: info.over,
+    hist: HB.map((b, i) => b + 'ms:' + hist[i]).join(' '), maxZeroRun, big: big.slice(0, 40),
     msgs, kbSent: Math.round(bytes / 1024), kbPerGameS: +(bytes / 1024 / Math.max(1e-9, gs)).toFixed(1), rows };
 }
