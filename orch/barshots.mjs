@@ -55,8 +55,8 @@ for (const s of sizes) {
     const cut = await page.evaluate(() => { const T = G.teams[ME], f0 = T.fac, out = {}, Fs = Object.keys(FACTIONS);
       for (const f of Fs) { T.fac = f; try { buildPanels(); } catch (e) { out[f] = ['buildPanels: ' + e.message]; continue; }
         for (const tab of ['build', 'units', 'upg', 'pow']) { showTab(tab);
-          for (const b of document.querySelectorAll('#panel>.btn[data-tab="' + tab + '"]')) { const n = b.querySelector('.n'), r = b.getBoundingClientRect();
-            if (n.scrollWidth > n.clientWidth + 1 || n.scrollHeight > n.clientHeight + 1) (out[f] = out[f] || []).push(tab + ': ' + n.textContent + ' (' + n.scrollWidth + '>' + n.clientWidth + ')');
+          for (const b of document.querySelectorAll('#panel>.btn[data-tab="' + tab + '"]')) { const n = b.querySelector('.n'), r = b.getBoundingClientRect(); if (!r.width && !r.height) continue; // not shown (e.g. level-up before a power is bought)
+            if (n.scrollWidth > n.clientWidth + 1 || n.scrollHeight > n.clientHeight + 1) (out[f] = out[f] || []).push(tab + ': ' + n.textContent + ' (' + n.scrollWidth + 'x' + n.scrollHeight + ' in ' + n.clientWidth + 'x' + n.clientHeight + ', ' + getComputedStyle(n).fontSize + ')');
             if (r.height < 40 || r.width < 40) (out[f] = out[f] || []).push(tab + ': ' + n.textContent + ' button ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' < 40px'); } } }
       T.fac = f0; buildPanels(); return out; });
     const n = Object.values(cut).reduce((a, v) => a + v.length, 0);
