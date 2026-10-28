@@ -146,6 +146,12 @@ an earlier one still has work a squad can take (other squads may only do small P
 
 **Foundation (ORCH itself)**
 
+- [open] Local `mpsync.mjs` / `mpsync --artifact` fail on this sandbox with "N of 47 3D models missing … aborted a
+  request" (the loader's 30 s fetch timeout under load) — also on cycle 11's untouched base; CI gate passes. Make the
+  harness server/model wait robust (or give tests a longer timeout).
+- [open] `build.py --check` passed an `index.html` with git conflict markers in the credits shell (cycle 11 merge) —
+  fail on `<<<<<<<`/`>>>>>>>` lines in `index.html`, `sw.js`, `src/`.
+
 - [open] Extend `orch/mpsync.mjs`: packet loss/latency, real WebRTC (3-player host migration is now covered by
   `orch/migrate.mjs`, cycle 6; its `--abrupt` mode — host vanishes without goodbye — is untested).
   Don't start from scratch — port the surviving old harnesses on the `testbed` branch: `tw8b.py` (host in Chicago +
@@ -156,8 +162,9 @@ an earlier one still has work a squad can take (other squads may only do small P
 - [open] **Faction balance round 3** (round 2 shipped cycle 8: AI keeps ~1/3 of army value in vehicles; 72-game
   swapped sample after: AE 88, SA 75, UA 75, RS 50, TR 50, IL 38, KR 25 — 8 games each, ±17 noise). New low ones:
   KR, RU, EU; AE may now be too strong. Use `node orch/tourney.mjs --swap` with more games per pair (cap ~90 min).
-- [open] AI: covert and barrage doctrines rarely trigger in AI play; `T.ai.cbr` is never cleared, so the AI never
-  rebuilds a lost CBR unit (review, cycle 8).
+- [open] Covert nations still win under half their AI games (IL ~50%, AE ~25%) after cycle 11's doctrine fix — balance.
+- [open] AI barrage (review, cycle 11): `aiTroops` doesn't check for own units near the target (can shell its own mixed-in
+  troops); ambush pickets may chase a target up to 420 from their post, giving the ambush away.
 - [open] Fulda: a few supply trucks still go ~60 s without delivering late in a game.
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
   below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
@@ -165,12 +172,12 @@ an earlier one still has work a squad can take (other squads may only do small P
 - [check] AI uses flanking and cover (DIFF has `flank`/`retreat` params) — verify in battles, strengthen on Hard.
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
-- [open] Models (cycle 10): on a first visit `sw.js` still downloads all models at install, competing with the battle's
-  own models for bandwidth — defer non-battle models in the service worker.
 - [open] `migrate.mjs` failed once in cycle 10's gate ("a client fell 59 game-s behind before the host left") right
   after a 6-min `mpsync --server` run; passed on rerun. Watch for a repeat (load-sensitive?). Very old Safari (<16.4, no DecompressionStream) now
   gets simple shapes. Check after ship that Pages + the `ww3` Worker serve `models/*.glb.gz` (loader also accepts
   already-unzipped bytes) and that the artifact publish with `application/gzip` files works.
+- [open] More national tanks when free models appear: Type 99 (CN), K2 (KR), Altay (TR), Al-Khalid (PK) — none free
+  and downloadable in cycle 11 (Type 99s are War Thunder rips).
 - [open] Measure FPS on a real phone (needs a real device, not emulation): busy 4-player late game, many helicopters
   (rotor wash), and the new phone layout.
 
@@ -230,6 +237,18 @@ an earlier one still has work a squad can take (other squads may only do small P
 ## Done
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
+
+- 2026-10-28 (cycle 11) — **Five more national tanks:** Ukraine T-84 Oplot, Iran T-72, North Korea T-62, Cuba T-55,
+  Turkey Leopard 2A4 (CC BY, credited).
+- 2026-10-28 (cycle 11) — **Smarter AI doctrines:** AIs rebuild a lost counter-battery radar; RU/CN/KP keep ~1/5
+  artillery and fire barrages at troop groups (2–3 per game, was ~1); IL/AE set camouflaged ambush pickets.
+- 2026-10-28 (cycle 11) — **Anthems for Pakistan, South Korea and Russia** (US Navy Band, PD; reasons in
+  `mus/an_pack.py`). Skipped, not clearly PD: TR (free 2029), SA, AE, IR, KP.
+- 2026-10-28 (cycle 11) — **Faster first visit:** the offline helper no longer downloads all 60 models at install; it
+  saves what the game loads (59 → 1 model requests at install; offline replay of a played battle works).
+- 2026-10-28 (side lane, shipped before cycle 11) — QA follow-ups: pasted invites join the right game, Rejoin after a
+  reload, defeat text, settings screen, whole command buttons, review R11/R12/R4. **Server part (R12, R4) goes live
+  only after the main → servers-live PR is merged.**
 
 - 2026-10-27 (after cycle 10) — claude.ai copy's voice clips replaced with the repo's `vo/` (Abdullah: he didn't upload
   other voices); artifact v165. Republishes may pass `vo/` again.

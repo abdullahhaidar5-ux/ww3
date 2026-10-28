@@ -2,6 +2,18 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-28 08:36 → 11:30 — cycle 11
+
+- Lock expired (cycle of 10-27 21:25 never cleared it); took it. Baseline: `--check` OK, SMOKE PASS. Side lane's
+  `orch/followups` (CIGATE 16/16) landed on main mid-cycle via `orch/ship-fu`; merged.
+- Shipped 4 squads: Visuals (5 national tanks), Battlefield (CBR rebuild, barrage/covert doctrines), Audio (PK/KR/RU
+  anthems), Netcode (`sw.js` no longer downloads every model at install).
+- Integration: two merges committed with conflict markers in the `index.html` credits shell and `sw.js` (build/smoke
+  didn't catch it) → fixed in 024b624; QA item added. Fresh review of the AI diff: no blockers; applied both should-fixes
+  (ambush posts cleared when a player takes back their side; barrage wait reset).
+- Gate: smoke 4p PASS, MPSYNC PASS, HEADLESS --compare PASS, artifact smoke PASS. Local artifact MPSYNC failed
+  (models "aborted a request") — identical on the untouched base → used the CI gate (`orch/cigate.sh`) for the ship.
+
 ## 2026-10-27 18:20 — side lane (this chat): shared soundtrack shipped
 
 - Abdullah: "keep what you think is best and proceed". ORCH picked 14 of the 32 candidates (2 menu, 4 calm, 6 combat,

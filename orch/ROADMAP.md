@@ -31,7 +31,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Authentic Middle Eastern music: Iran, Mountain Shias, Coffee Shias, Saudi Arabia, UAE, Egypt (real maqam/dastgah, regional rhythms, recorded percussion)
 - [done] Asian music: Pakistan, India, China, North Korea, South Korea (regional instruments and rhythms)
 - [done] Region-specific music for the other 7 nations (US, TR, IL, EU, UA, RU, CU) — all 18 done
-- [doing] Military band layer: each nation's public-domain US Navy Band anthem recording (US, EU, IL, UA, CU, IN, CN, EG done)
+- [doing] Military band layer: each nation's public-domain US Navy Band anthem recording (US, EU, IL, UA, CU, IN, CN, EG, PK, KR, RU done; TR free in 2029)
 - [todo] Recorded weapons, explosions, engines and aircraft (near and far, echo per theatre)
 - [todo] Battlefield ambience per map and weather
 - [todo] Full native-language unit voice lines per nation
@@ -40,7 +40,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 
 ## Graphics overhaul
 - [done] Phase 1 Foundations: models in separate files; 3D engine upgraded (Three.js r186)
-- [doing] Phase 2 Real models: real tanks (Abrams, Merkava, KF51 Panther), trucks (M35, Ural), SPGs (G6, Msta), Humvee and transport helicopters (UH-60, Mi-8) per nation on branch orch/gfx-models; next: infantry, buildings
+- [doing] Phase 2 Real models: real tanks (Abrams, Merkava, KF51 Panther), trucks (M35, Ural), SPGs (G6, Msta), Humvee, transport helicopters (UH-60, Mi-8), plus T-84 Oplot (UA), T-72 (IR), T-62 (KP), T-55 (CU), Leopard 2 (TR) live; next: infantry, buildings
 - [done] Phase 3 Terrain and world: real ground textures, gravel roads, wet shores, surf, lasting craters (PC; phones keep the light look)
 - [done] Phase 4 Light and effects: rolling fireballs, dust, smoke columns, lit muzzle flashes, theatre colour, steady shadows
 - [todo] Phase 5 Massive columns: hundreds of units at a smooth frame rate
@@ -53,3 +53,4 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Balance round 2: AI fields tanks, weak nations (Israel, Turkey, Korea) strengthened
 - [done] Faster takeover when the host leaves a multiplayer battle (about 2 s)
 - [done] Map picker describes every map correctly
+- [done] AI fights by its doctrine: artillery barrages (RU, CN, KP), camouflaged ambushes (IL, AE), rebuilds lost radars
