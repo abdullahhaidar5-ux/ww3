@@ -42,7 +42,7 @@ jobs:
             headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --compare || echo "SKIP headless" ;;
             smoke4)         node orch/smoke.mjs --players 4 ;;
             mpsync)         node orch/mpsync.mjs ;;
-            mpsync-server)  node orch/mpsync.mjs --server ;;
+            mpsync-server)  node orch/mpsync.mjs --server && node orch/mpsync.mjs --server --reconnect ;;   # sync, then reconnect via the server
             migrate)        node orch/migrate.mjs ;;
             migrate-abrupt) node orch/migrate.mjs --abrupt ;;
             migrate-down)   node orch/migrate.mjs --server-down ;;

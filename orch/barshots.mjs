@@ -2,7 +2,8 @@
 // mobile/touch emulation) and desktop (1366x768) sizes, with the Construction Vehicle selected so the Build tab shows
 // its full grid. Prints, per size, where each command button sits and any text in the bar that is cut off without an
 // ellipsis. Screenshots: orch/out/bar-portrait.png, bar-landscape.png, bar-desktop.png.
-//   node orch/barshots.mjs [--tag -x]   (SIZES=p,l,d to pick sizes)
+//   node orch/barshots.mjs [--tag -x] [--names]   (SIZES=p,l,d to pick sizes; --names: list every faction's command-button
+//   names that don't fit, and buttons under 40 px, on every tab -> BARNAMES PASS / FAIL)
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -29,7 +30,7 @@ const sizes = (process.env.SIZES || 'p,l,d').split(',');
 const cfg = { p: { name: 'portrait', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
   l: { name: 'landscape', viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
   d: { name: 'desktop', viewport: { width: 1366, height: 768 } } };
-const errs = [];
+const errs = [], NAMES = process.argv.includes('--names'); let namesBad = 0;
 for (const s of sizes) {
   const c = cfg[s]; const ctx = await browser.newContext({ viewport: c.viewport, isMobile: !!c.isMobile, hasTouch: !!c.hasTouch, deviceScaleFactor: c.deviceScaleFactor || 1 });
   await guardContext(ctx);
@@ -50,7 +51,20 @@ for (const s of sizes) {
     return { vw: innerWidth, panel: [Math.round(r.left), Math.round(r.right), p.scrollWidth, p.clientWidth], btns: out, clip: clip.slice(0, 12), info: document.getElementById('info').innerText.slice(0, 200) }; });
   console.log(c.name, JSON.stringify(m));
   await page.screenshot({ path: path.join(OUT, `bar-${c.name}${TAG}.png`), timeout: 300000 });
+  if (NAMES) { // every faction, every tab: which command-button names don't fit (ellipsis or clipped)
+    const cut = await page.evaluate(() => { const T = G.teams[ME], f0 = T.fac, out = {}, Fs = Object.keys(FACTIONS);
+      for (const f of Fs) { T.fac = f; try { buildPanels(); } catch (e) { out[f] = ['buildPanels: ' + e.message]; continue; }
+        for (const tab of ['build', 'units', 'upg', 'pow']) { showTab(tab);
+          for (const b of document.querySelectorAll('#panel>.btn[data-tab="' + tab + '"]')) { const n = b.querySelector('.n'), r = b.getBoundingClientRect(); if (!r.width && !r.height) continue; // not shown (e.g. level-up before a power is bought)
+            if (n.scrollWidth > n.clientWidth + 1 || n.scrollHeight > n.clientHeight + 1) (out[f] = out[f] || []).push(tab + ': ' + n.textContent + ' (' + n.scrollWidth + 'x' + n.scrollHeight + ' in ' + n.clientWidth + 'x' + n.clientHeight + ', ' + getComputedStyle(n).fontSize + ')');
+            if (r.height < 40 || r.width < 40) (out[f] = out[f] || []).push(tab + ': ' + n.textContent + ' button ' + Math.round(r.width) + 'x' + Math.round(r.height) + ' < 40px'); } } }
+      T.fac = f0; buildPanels(); return out; });
+    const n = Object.values(cut).reduce((a, v) => a + v.length, 0);
+    console.log(`${c.name}: ${n} command-button names cut off or buttons under 40 px` + (n ? '\n  ' + Object.entries(cut).map(([f, v]) => f + ': ' + v.join(' | ')).join('\n  ') : ''));
+    if (n) namesBad += n;
+  }
   await ctx.close();
 }
 await browser.close(); server.close();
 if (errs.length) console.log('ERRORS', errs);
+if (NAMES) console.log(namesBad ? `BARNAMES FAIL (${namesBad})` : 'BARNAMES PASS');
