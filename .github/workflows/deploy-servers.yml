@@ -1,0 +1,35 @@
+# Deploys Abdullah's World War 3 servers (server/, Worker "ww3-servers") straight from GitHub, as a backup to
+# Cloudflare's own builder. Runs ONLY when servers-live changes, which happens only when Abdullah taps Merge on a
+# "main -> servers-live" pull request. Needs one repository secret, CLOUDFLARE_API_TOKEN (a Cloudflare API token from the
+# "Edit Cloudflare Workers" template), added by Abdullah in GitHub: Settings > Secrets and variables > Actions.
+name: Deploy servers
+on:
+  push:
+    branches: [servers-live]
+permissions:
+  contents: read
+  statuses: write
+concurrency: { group: deploy-servers, cancel-in-progress: false }
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Deploy ww3-servers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: 125601b8775d8b94cf1167c2c6ddaef5
+        run: |
+          set +e
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then echo "Missing repository secret CLOUDFLARE_API_TOKEN" > out.log; rc=1
+          else (cd server && npm ci --no-audit --no-fund && npx wrangler deploy) > out.log 2>&1; rc=$?; fi
+          tail -40 out.log
+          state=failure; [ $rc -eq 0 ] && state=success
+          desc=$(grep -E "Deployed|Uploaded|Missing repository secret|ERROR|Error" out.log | tail -1 | cut -c1-130 | sed 's/"/'"'"'/g')
+          curl -s -o /dev/null -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
+            -d "{\"state\":\"$state\",\"context\":\"deploy/servers\",\"description\":\"${desc:-exit $rc}\",\"target_url\":\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"}"
+          [ $rc -eq 0 ]
