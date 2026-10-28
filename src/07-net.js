@@ -179,13 +179,16 @@ function joinT(name,ms){const p=NET.room.join(name,NET.via?{via:NET.via}:undefin
   return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>{late=true;rej(Object.assign(new Error('timeout'),{type:'timeout'}));},ms))]).catch(e=>{if(late)p.then(g=>{try{g.leave().catch(()=>{});}catch(_){}},()=>{});throw e;});}
 async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NET.jcode)return;NET.recon=true;NET.reconKick=false;pushLog('Connection to the host lost. Reconnecting…','w');
   const gen0=NET.gen||0,t0=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let gone=false,n=0,newTries=0;
+  // a battle hosted on Cloudflare: a short server blip (restart, redeploy) is ridden out on the server, which picks the
+  // battle up again from its kept checkpoint; only "no such battle" there (or 8 s of no answer) hands it to a player
+  const svBlip=()=>NET.sv&&!(gen0>0)&&!gone&&performance.now()-t0<8000;
   while(MODE==='client'&&!(G&&G.over)&&performance.now()-t0<60000){
-    if(n>0&&NET.isStandby&&NET.lastCk){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
+    if(n>0&&NET.isStandby&&NET.lastCk&&!svBlip()){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
     if(MODE!=='client'||(G&&G.over))break;
     // which room: the old one first; then the follow-up room (with an occasional look back at the old room while it
     // is not certain that its host is gone)
-    const old=n===0||(!gone&&newTries>0&&newTries%4===0),gen=old?gen0:gen0+1,room=migRoom(gen);
-    await slp(n===0?250:!old&&newTries===0?500:300);n++;if(!old)newTries++;if(MODE!=='client'||(G&&G.over))break;
+    const old=n===0||svBlip()||(!gone&&newTries>0&&newTries%4===0),gen=old?gen0:gen0+1,room=migRoom(gen);
+    await slp(n===0?250:!old&&newTries===0?500:old&&svBlip()?700:300);n++;if(!old)newTries++;if(MODE!=='client'||(G&&G.over))break;
     {const og=NET.game;NET.game=null;try{if(og)og.leave().catch(()=>{});}catch(e){}}
     let g=null;try{g=await joinT('tc-'+room,old?4000:6000);}catch(e){if(old&&e&&e.type==='peer-unavailable')gone=true;continue;}
     if(MODE!=='client'||(G&&G.over)){try{g.leave().catch(()=>{});}catch(e){}break;}
@@ -202,7 +205,7 @@ async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NE
 async function joinGame(p,o){if(NET.game)return;const code=p.presence.g.c,jo=o||(p.presence.g.cf?{via:'wsb'}:undefined),own=!!(o&&o.own);$('mpstatus').textContent=own?'Opening your game on Cloudflare…':'Joining…';NET.joined=0;
   try{NET.game=await NET.room.join('tc-'+code,jo);}catch(e){NET.game=null;if(own)return e||{};$('mpstatus').textContent=e&&e.why==='busy'?'The game server is busy right now. Try again later.':e&&e.why==='full'?'That game is full.':window.WW3_P2P?'No open game with code '+code.toUpperCase()+' was found. Check the code and make sure the host still has the lobby open.':'Could not join that game.';NET.game=null;return e||{};}
   NET.hostPeer=p.peer;NET.code='join';NET.jcode=code;NET.baseCode=code;NET.gen=0;NET.via=NET.game.via||null;NET.tok=joinTok(code);NET.lastRx=0;wireClient(NET.game);NET.cq=[];NET.cs=Math.floor(Date.now()/10);
-  clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}if(MODE==='client'&&!NET.recon&&NET.lastRx&&performance.now()-NET.lastRx>5000){clientReconnect();return;}if($('cfNet'))$('cfNet').textContent=cfNetText();if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null}).catch(()=>{});},1000);
+  clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}if(MODE==='client'&&!NET.recon&&NET.lastRx&&performance.now()-NET.lastRx>5000&&!(NET.sv&&window.LOADING)){clientReconnect();return;}if($('cfNet'))$('cfNet').textContent=cfNetText();if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null}).catch(()=>{});},1000);
   let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!NET.joined&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The host did not answer. The game may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}NET.game.presence({hi:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',{f:setup.p}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
   hello();NET.helloI=setInterval(hello,1500);if(!own)$('mpstatus').textContent='Connecting to the host…';return true;}
 // Set the Conditions choice and light up its menu button. The host's choice is used only for that battle: the player's
