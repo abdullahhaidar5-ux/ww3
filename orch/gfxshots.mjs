@@ -83,7 +83,9 @@ async function frames(page, n) {
 async function snap(page, name) { await page.screenshot({ path: path.join(dir, name + '.png'), timeout: 300000 }); console.log(`[${secs()}] ${TAG}/${name}.png`); }
 // a paused lineup next to the player's base: the nation's tank, artillery, supply truck, AA, infantry squad, transport
 // helicopter and special unit, in a row (one battle per nation, same seed and camera)
-const SCENES = [['fulda', 'US', 'RU'], ['fulda', 'RU', 'US'], ['golan', 'IL', 'IR'], ['golan', 'IR', 'IL'], ['strait', 'EU', 'SA'], ['strait', 'SA', 'EU']];
+// --scenes map:P:A,map:P:A,... picks other lineups (e.g. fulda:UA:RU,fulda:TR:IR)
+const SCENES = argS('scenes', '') ? argS('scenes', '').split(',').map(s => s.split(':'))
+  : [['fulda', 'US', 'RU'], ['fulda', 'RU', 'US'], ['golan', 'IL', 'IR'], ['golan', 'IR', 'IL'], ['strait', 'EU', 'SA'], ['strait', 'SA', 'EU']];
 try {
   const { ctx, page } = await open({ viewport: { width: 1280, height: 720 } });
   for (const [k, p, a] of SCENES) {
