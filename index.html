@@ -10205,7 +10205,8 @@ function modelBytes(k){const url=MODEL_FILES[k];return MQ.bytes[url]=MQ.bytes[ur
 class SpecGloss{constructor(p){this.parser=p;this.name='KHR_materials_pbrSpecularGlossiness';}
   extendMaterialParams(i,P){const d=this.parser.json.materials[i],x=d&&d.extensions&&d.extensions[this.name];if(!x)return Promise.resolve();
     const f=x.diffuseFactor;if(Array.isArray(f)){P.color=new THREE.Color(f[0],f[1],f[2]);P.opacity=f[3];}
-    P.userData=Object.assign(P.userData||{},{sgGloss:x.glossinessFactor!=null?x.glossinessFactor:1});
+    const g=x.glossinessFactor!=null?x.glossinessFactor:1;P.userData=Object.assign(P.userData||{},{sgGloss:g});
+    P.metalness=.15;P.roughness=Math.min(1,Math.max(.35,1-g*.7));P.metalnessMap=null;P.roughnessMap=null;
     return x.diffuseTexture?this.parser.assignTexture(P,'map',x.diffuseTexture,THREE.SRGBColorSpace):Promise.resolve();}}
 function parseModel(k){if(MQ.parsed[k])return MQ.parsed[k];return MQ.parsed[k]=(async()=>{try{
     if(!THREE.GLTFLoader)throw new Error('no GLTFLoader');const ld=MQ.ld=MQ.ld||new THREE.GLTFLoader().register(p=>new SpecGloss(p));

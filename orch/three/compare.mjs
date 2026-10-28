@@ -30,6 +30,7 @@ const PERF = argS('perf', '1') !== '0';
 const FRAMES = Number(argS('frames', 20));
 const AIR = argS('air', '1') !== '0'; // Apache + F-16 close-up (US vs IL: US flies the Apache, IL the F-16)
 const SEED = 4242;
+const PHONEONLY = argS('phoneonly', '0') === '1'; // skip the desktop shots, phone frame times only
 
 if (process.argv.includes('--sheet')) { sheet(); process.exit(0); }
 
@@ -117,6 +118,7 @@ async function snap(page, name) { await page.screenshot({ path: path.join(dir, n
 
 const perf = { tag: TAG, html: path.relative(ROOT, HTML), when: new Date().toISOString() };
 try {
+  if (!PHONEONLY) {
   const { ctx, page } = await open({ viewport: { width: 1280, height: 720 } });
   perf.rev = await page.evaluate(() => THREE.REVISION);
   console.log(`[${secs()}] booted three r${perf.rev}`);
@@ -145,6 +147,7 @@ try {
     }
   }
   await ctx.close();
+  }
   if (PERF && CLOSE.length) {
     const [k, p, a] = CLOSE[0];
     const { ctx: c2, page: m } = await open({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true,
@@ -155,6 +158,9 @@ try {
     const q = await m.evaluate(() => ({ phone: gfxPhone(), lv: QUAL.lv, dpr, w: Math.round(VW * dpr), h: Math.round(VH * dpr) }));
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
     perf.phone = { scene: `close-up ${k} @${at.x},${at.y}, 390x844 x3, 4x CPU throttle, phone look=${q.phone} level ${q.lv}, ${q.w}x${q.h} px`, ...stats(await frames(m, FRAMES)) };
+    // same picture in both builds whatever the battle did: the player's own base, fixed camera
+    await m.evaluate(() => { const [bx, by] = BASES[0]; cam.dist = cam.td = 330; cam.x = cam.tx = bx; cam.y = cam.ty = by + 60; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; });
+    await frames(m, 2); perf.phoneBase = { scene: `own base, fixed camera, same phone setup`, ...stats(await frames(m, FRAMES)) };
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 });
     await snap(m, `phone-${k}`);
     await c2.close();
@@ -163,7 +169,7 @@ try {
 await browser.close(); server.close();
 perf.errors = [...new Set(errs)].slice(0, 40);
 fs.writeFileSync(path.join(dir, PERF ? 'perf.json' : 'errors-' + Date.now() + '.json'), JSON.stringify(perf, null, 2));
-console.log(JSON.stringify({ desktop: perf.desktop, desktopOverview: perf.desktopOverview, phone: perf.phone }, null, 1));
+console.log(JSON.stringify({ desktop: perf.desktop, desktopOverview: perf.desktopOverview, phone: perf.phone, phoneBase: perf.phoneBase }, null, 1));
 for (const e of perf.errors) console.log('  ! ' + e);
 console.log(`done in ${secs()}: orch/out/three/${TAG}/`);
 
