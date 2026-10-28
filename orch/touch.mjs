@@ -106,21 +106,26 @@ const scr = (page, id) => page.evaluate(id => { const e = G.byId.get(id); const 
 const acts = page => page.evaluate(() => { const a = window.__acts.slice(); window.__acts.length = 0; return a; });
 const sel = page => page.evaluate(() => G.sel.filter(u => !u.dead).map(u => u.id));
 
+// Every touch carries its own timestamp on a gesture clock: a slow test machine may run the page's handlers seconds
+// late, but the game judges hold / double-tap / flick by when the finger moved (event times), as on a real phone.
 function touch(page) {
-  let cdp = null;
-  const send = async (type, pts) => { cdp = cdp || await page.context().newCDPSession(page);
-    await cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts.map((p, i) => ({ x: Math.round(p.x), y: Math.round(p.y), id: p.id ?? i, radiusX: 3, radiusY: 3, force: 1 })) }); };
+  let cdp = null, vt = 0;
+  const begin = () => { vt = Math.max(Date.now(), vt + 1000); }; // each gesture starts on a fresh clock
+  const send = async (type, pts, dt = 0) => { cdp = cdp || await page.context().newCDPSession(page); vt += dt;
+    await cdp.send('Input.dispatchTouchEvent', { type, timestamp: vt / 1000, touchPoints: pts.map((p, i) => ({ x: Math.round(p.x), y: Math.round(p.y), id: p.id ?? i, radiusX: 3, radiusY: 3, force: 1 })) }); };
+  const tap1 = async (x, y, gap = 0) => { await send('touchStart', [{ x, y, id: 1 }], gap); await send('touchEnd', [], 40); };
   return {
-    async tap(x, y) { await send('touchStart', [{ x, y, id: 1 }]); await sleep(40); await send('touchEnd', []); },
-    async drag(x0, y0, x1, y1, { hold = 0, steps = 10, ms = 120, end = 0 } = {}) {
+    async tap(x, y) { begin(); await tap1(x, y); await sleep(40); },
+    async dtap(x, y) { begin(); await tap1(x, y); await tap1(x, y, 90); await sleep(40); },
+    async drag(x0, y0, x1, y1, { hold = 0, steps = 10, ms = 120, end = 0 } = {}) { begin();
       await send('touchStart', [{ x: x0, y: y0, id: 1 }]); if (hold) await sleep(hold);
-      for (let i = 1; i <= steps; i++) { await send('touchMove', [{ x: x0 + (x1 - x0) * i / steps, y: y0 + (y1 - y0) * i / steps, id: 1 }]); await sleep(ms / steps); }
-      if (end) await sleep(end); await send('touchEnd', []); },
-    async pinch(cx, cy, d0, d1, steps = 8) {
+      for (let i = 1; i <= steps; i++) await send('touchMove', [{ x: x0 + (x1 - x0) * i / steps, y: y0 + (y1 - y0) * i / steps, id: 1 }], (i === 1 ? hold : 0) + ms / steps);
+      await send('touchEnd', [], end + 4); },
+    async pinch(cx, cy, d0, d1, steps = 8) { begin();
       const pts = d => [{ x: cx - d / 2, y: cy, id: 1 }, { x: cx + d / 2, y: cy, id: 2 }];
-      await send('touchStart', pts(d0)); await sleep(30);
-      for (let i = 1; i <= steps; i++) { await send('touchMove', pts(d0 + (d1 - d0) * i / steps)); await sleep(20); }
-      await send('touchEnd', []); },
+      await send('touchStart', pts(d0));
+      for (let i = 1; i <= steps; i++) await send('touchMove', pts(d0 + (d1 - d0) * i / steps), i === 1 ? 30 : 20);
+      await send('touchEnd', [], 20); },
   };
 }
 
@@ -162,7 +167,7 @@ async function phonePass(tag, viewport, storageState) {
   const c2 = await page.evaluate(() => ({ x: cam.x, y: cam.y, sel: G.sel.length }));
   const d1 = Math.hypot(c1.x - c0.x, c1.y - c0.y), d2 = Math.hypot(c2.x - c1.x, c2.y - c1.y);
   check(tag, d1 > 20, `one-finger drag scrolls the map (camera moved ${d1.toFixed(0)})`);
-  if (!(d1 > 20)) console.log('    state:', JSON.stringify(await page.evaluate(() => ({ nd: TC.nd, nm: TC.nm, last: TC.lastDown, ids: [...TC.ids.keys()], g: TC.g, sel: G.sel.map(u => u.kind), menu: menuOpen() }))));
+  if (!(d1 > 20)) console.log('    state:', JSON.stringify(await page.evaluate(() => ({ nd: TC.nd, nm: TC.nm, last: TC.lastDown, ids: [...TC.ids.keys()], g: TC.g, end: TC.endLog, sel: G.sel.map(u => u.kind), menu: menuOpen() }))));
   check(tag, c2.x > c0.x, `the map follows the finger (dragging left moves the view right: ${c0.x.toFixed(0)} -> ${c2.x.toFixed(0)})`);
   check(tag, c1.glide || d2 > 1, `a flick keeps gliding after the finger lifts (glided ${d2.toFixed(0)} more)`);
   check(tag, c2.sel === 0 && (await acts(page)).length === 0, 'scrolling neither selects nor orders anything');
@@ -212,18 +217,24 @@ async function phonePass(tag, viewport, storageState) {
   if (tag === 'portrait') await shot(page, 'portrait-order.png');
 
   // --- tap an enemy: attack order ---
+  const look = id => page.evaluate(id => { const u = G.byId.get(id); centerOn(u.x, u.y + 10, true); camTarget(); TC.glide = false; }, id);
+  await look(S.enemy); await frames(page, 3); // on a narrow portrait screen the enemy may sit just off the edge
   p = await scr(page, S.enemy);
   await T.tap(p.x, p.y); await frames(page, 1);
   a = await acts(page);
   check(tag, a.some(x => x.t === 'atk' && x.tid === S.enemy), `tap on an enemy with units selected orders an attack (${a.map(x => x.t).join(',')})`);
+  if (!a.some(x => x.t === 'atk')) console.log('    state:', JSON.stringify(await page.evaluate(([px, py, id]) => { const r = cv.getBoundingClientRect(), e = G.byId.get(id), k = pickAt(px - r.left, py - r.top, false);
+    return { p: [Math.round(px - r.left), Math.round(py - r.top)], pick: k ? k.kind + '/' + k.team : null, vis: vis(e), hid: !!e.hid, tap: TC.tapLog, nd: TC.nd, g: TC.g, sel: G.sel.map(u => u.kind) }; }, [p.x, p.y, S.enemy])));
   check(tag, await page.evaluate(() => (TC.seen.atk || 0) >= 1), 'an attack marker flashes on the target');
 
   // --- double-tap selects all of that type on screen ---
   await page.waitForTimeout(500);
+  await look(S.ids[1]); await frames(page, 3);
   p = await scr(page, S.ids[1]);
-  await T.tap(p.x, p.y); await sleep(60); await T.tap(p.x, p.y); await frames(page);
+  await T.dtap(p.x, p.y); await frames(page);
   s = await sel(page);
   const want = await page.evaluate(k => G.ents.filter(u => u.team === ME && u.kind === k && !u.dead && tcOnScreen(u)).length, S.inf);
+  if (!(s.length >= 3 && s.length === want)) console.log('    state:', JSON.stringify(await page.evaluate(() => ({ tap: TC.tapLog, last: TC.lastTap, nd: TC.nd }))));
   check(tag, s.length >= 3 && s.length === want && !s.includes(S.ids[3]), `double-tap selects all of that type on screen (${s.length} of ${want}, other type left out)`);
 
   // --- strip: deselect, then hold+drag box-selects ---

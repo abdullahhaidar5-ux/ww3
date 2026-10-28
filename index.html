@@ -8291,13 +8291,14 @@ function tcUse(t,own){if(!t||t.team!==ME||t.dead)return false;
 function tcProd(){return G.sel.some(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)&&b.built>=1);}
 function tcSelSound(){if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);}
 function tcAbort(){clearTimeout(TC.lpT);tcHold();const g=TC.g;TC.g=null;if(!g)return;if(drag&&drag.id===g.id)drag=null;if(RDRAG&&RDRAG.id===g.id)RDRAG=null;}
-function tcTap(x,y){mouse.x=x;mouse.y=y;const w=screenToWorld(x,y);if(!w)return;
+function tcTap(x,y,ts){if(ts==null)ts=performance.now();mouse.x=x;mouse.y=y;const w=screenToWorld(x,y);if(!w)return;
   if(G.place||G.aim){TC.pick=w;sfxUI(520);updateUI();return;}
   const own=tcOwn();
   if(G.defm){if(own.length){defendAt(w);tcMark(x,y,'gd');}G.defm=false;updateUI();return;}
   if(G.amove&&own.length){const ids=own.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);if(ids.length){doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});tcMark(x,y,'am');}G.amove=false;updateUI();return;}
   G.amove=false;
-  const t=pickAt(x,y,false),now=performance.now(),L=TC.lastTap;
+  const t=pickAt(x,y,false),now=ts,L=TC.lastTap;
+  TC.tapLog={x:Math.round(x),y:Math.round(y),t:t?t.kind+'/'+t.team:null,own:own.length};
   if(t&&t.team===ME&&!t.isB&&L&&now-L.t<TC_DBL&&L.kind===t.kind&&Math.hypot(x-L.x,y-L.y)<60){TC.lastTap=null;
     G.sel=G.ents.filter(u=>u.team===ME&&u.kind===t.kind&&!u.dead&&tcOnScreen(u));tcMark(x,y,'sel');tcSelSound();updateUI();return;}
   TC.lastTap=t&&t.team===ME&&!t.isB?{t:now,kind:t.kind,x,y}:null;
@@ -8311,10 +8312,10 @@ function tcBox(g){const x0=Math.min(g.x0,g.x),x1=Math.max(g.x0,g.x),y0=Math.min(
 function tcLine(g){const w0=g.w0,w1=screenToWorld(g.x,g.y),ids=tcOwn().map(u=>u.id);TC.lineArm=false;if(!w0||!w1||!ids.length)return;
   doAct({t:'line',ids,x:w0.x,y:w0.y,x2:w1.x,y2:w1.y,mode:G.amove?'amove':'move'});G.amove=false;speak(1);PINGS.push({x:(w0.x+w1.x)/2,y:(w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});
   tcMark(g.x0,g.y0,'ln');tcMark(g.x,g.y,'ln');updateUI();}
-function tcStartDrag(g){const own=tcOwn();
+function tcStartDrag(g,ts){const own=tcOwn();
   if(own.length&&!G.place&&!G.aim&&(g.mode==='hold'||TC.lineArm)){g.mode='line';g.w0=screenToWorld(g.x0,g.y0);RDRAG={x0:g.x0,y0:g.y0,w0:g.w0,id:g.id,am:G.amove,moved:true,line:true,tc:1};}
   else if(g.mode==='hold'&&!G.place&&!G.aim){g.mode='box';drag={x0:g.x0,y0:g.y0,box:true,shift:false,id:g.id,pt:'touch',tc:1};}
-  else{g.mode='pan';g.lt=performance.now();TC.vel={x:0,y:0};}
+  else{g.mode='pan';g.lt=ts;TC.vel={x:0,y:0};}
   tcHold();}
 function tcLong(){const g=TC.g;if(!g||g.mode!=='tap')return;g.mode='hold';tcHold(g.x,g.y);try{navigator.vibrate&&navigator.vibrate(15);}catch(_){}}
 window.addEventListener('pointerdown',e=>{TC.touch=e.pointerType==='touch';TC.nd=(TC.nd||0)+1;TC.lastDown=e.pointerType+':'+(e.target&&(e.target.id||e.target.tagName));if(e.pointerType!=='touch'||e.target!==cv)return;
@@ -8323,26 +8324,28 @@ window.addEventListener('pointerdown',e=>{TC.touch=e.pointerType==='touch';TC.nd
   LASTPT='touch';if(!TOUCHUI)touchUI();PICKMIN=20;mouse.in=false;try{cv.setPointerCapture(e.pointerId);}catch(_){}
   TC.glide=false;const p=tcXY(e);TC.ids.set(e.pointerId,p);
   if(TC.ids.size>=2){tcAbort();if(!TC.pinch&&TC.ids.size===2)TC.pinch=tcMid();return;}
-  TC.g={id:e.pointerId,x0:p.x,y0:p.y,x:p.x,y:p.y,mode:'tap'};clearTimeout(TC.lpT);TC.lpT=setTimeout(tcLong,TC_LP);},true);
+  TC.g={id:e.pointerId,x0:p.x,y0:p.y,x:p.x,y:p.y,mode:'tap',t0:e.timeStamp};clearTimeout(TC.lpT);TC.lpT=setTimeout(tcLong,TC_LP);},true);
 window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')TC.nm=(TC.nm||0)+1;if(e.pointerType!=='touch'||!TC.ids.has(e.pointerId))return;e.stopPropagation();if(!G)return;
   const p=tcXY(e),q=TC.ids.get(e.pointerId);TC.ids.set(e.pointerId,p);
   if(TC.pinch&&TC.ids.size>=2){const m=tcMid(),P=TC.pinch;camTarget();
     if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(1800,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
     const a=screenToWorld(P.x,P.y),b=screenToWorld(m.x,m.y);if(a&&b){cam.tx+=a.x-b.x;cam.ty+=a.y-b.y;}TC.pinch={x:m.x,y:m.y,d:m.d};return;}
   const g=TC.g;if(!g||g.id!==e.pointerId)return;g.x=p.x;g.y=p.y;
-  if(g.mode==='tap'||g.mode==='hold'){if(Math.hypot(p.x-g.x0,p.y-g.y0)<=TC_SLOP)return;clearTimeout(TC.lpT);tcStartDrag(g);if(g.mode==='pan')q.x=g.x0,q.y=g.y0;}
+  if(g.mode==='tap'||g.mode==='hold'){if(Math.hypot(p.x-g.x0,p.y-g.y0)<=TC_SLOP)return;clearTimeout(TC.lpT);
+    // held or not is decided by how long the finger rested before it moved (event times), not by when the timer ran
+    g.mode=e.timeStamp-g.t0>=TC_LP?'hold':'tap';tcStartDrag(g,e.timeStamp);if(g.mode==='pan')q.x=g.x0,q.y=g.y0;}
   if(g.mode==='pan'){const a=screenToWorld(q.x,q.y),b=screenToWorld(p.x,p.y);if(!a||!b)return;let dx=a.x-b.x,dy=a.y-b.y;const cap=cam.dist*1.5,n=Math.hypot(dx,dy);if(n>cap){dx*=cap/n;dy*=cap/n;}
-    tcCam(dx,dy);const now=performance.now(),dt=Math.max(.004,(now-g.lt)/1000);g.lt=now;const ix=dx/dt,iy=dy/dt;
+    tcCam(dx,dy);const now=e.timeStamp,dt=Math.max(.004,(now-g.lt)/1000);g.lt=now;const ix=dx/dt,iy=dy/dt;
     TC.vel=dt>.1?{x:ix,y:iy}:{x:TC.vel.x*.45+ix*.55,y:TC.vel.y*.45+iy*.55};return;}
   mouse.x=p.x;mouse.y=p.y;},true);
 function tcEnd(e,cancel){if(e.pointerType!=='touch'||!TC.ids.has(e.pointerId))return;e.stopPropagation();TC.ids.delete(e.pointerId);if(TC.ids.size<2)TC.pinch=null;
-  const g=TC.g;if(!g||g.id!==e.pointerId)return;clearTimeout(TC.lpT);tcHold();TC.g=null;
+  const g=TC.g;if(!g||g.id!==e.pointerId)return;clearTimeout(TC.lpT);tcHold();TC.g=null;TC.endLog={mode:g.mode,ms:Math.round(e.timeStamp-g.t0),d:Math.round(Math.hypot(g.x-g.x0,g.y-g.y0))};
   if(g.mode==='line'&&RDRAG&&RDRAG.id===g.id)RDRAG=null;if(g.mode==='box'&&drag&&drag.id===g.id)drag=null;
   if(cancel||!G||G.over)return;
-  if(g.mode==='tap'||g.mode==='hold')tcTap(g.x0,g.y0);
+  if(g.mode==='tap'||g.mode==='hold')tcTap(g.x0,g.y0,e.timeStamp);
   else if(g.mode==='box')tcBox(g);
   else if(g.mode==='line')tcLine(g);
-  else if(g.mode==='pan'){const sp=Math.hypot(TC.vel.x,TC.vel.y),cap=cam.dist*4;if(performance.now()-g.lt<90&&sp>cam.dist*.35){if(sp>cap){TC.vel.x*=cap/sp;TC.vel.y*=cap/sp;}TC.glide=true;}}}
+  else if(g.mode==='pan'){const sp=Math.hypot(TC.vel.x,TC.vel.y),cap=cam.dist*4;if(e.timeStamp-g.lt<90&&sp>cam.dist*.35){if(sp>cap){TC.vel.x*=cap/sp;TC.vel.y*=cap/sp;}TC.glide=true;}}}
 window.addEventListener('pointerup',e=>tcEnd(e,false),true);
 window.addEventListener('pointercancel',e=>tcEnd(e,true),true);
 /* ---- command strip (touch only, while units are selected) and build / fire confirm ---- */
