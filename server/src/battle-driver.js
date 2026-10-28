@@ -52,6 +52,7 @@ export function BATTLE_DRIVER() {
   };
   B.step = dt => { if (G && !G.over) simUpdate(dt); };
   B.net = dt => { if (G) { ckNote(); netTick(dt); } };
+  B.over = () => !!(G && G.over);
   B.info = () => {
     if (!G) return null;
     const per = G.teams.map(T => ({ fac: T.fac, units: 0, blds: 0, credits: Math.round(T.credits), out: !!T.out, ai: !!T.ai }));

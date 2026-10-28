@@ -212,7 +212,7 @@ export class BattleHost {
     this.flush();
     const ck = this.sim.ckFresh();
     if (ck) this.save({ code: this.code, own: this.ownKey, si: this.si, s: ck, at: now });
-    const info = n ? this.sim.info() : null;
+    const info = n && this.sim.over() ? this.sim.info() : null;   // (info() walks every entity: only once, at the end)
     if (info && info.over) { this.phase = 'over'; this.endAt = now + AFTER_END_MS; this.save(null); this.log(`battle ${this.code} over, winner slot ${info.winner}`); this.list(); }
     return Math.max(0, Math.ceil((STEP - this.acc) * 1000));
   }
