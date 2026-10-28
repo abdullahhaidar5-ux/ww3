@@ -4,7 +4,9 @@
 // players, a host that leaves for good releases them), refusals (no host, code taken, room full, message too big),
 // per-socket rate limit, per-address limit, keep-alive ping, batched frames (several records in one frame, regrouped
 // per player), the live game list (a hosted game appears for other players and disappears when the host leaves), and
-// the daily free-tier guard (a second server with a tiny allowance must start refusing new relay rooms with "busy").
+// the daily free-tier guard (a second server with a tiny allowance must start refusing new relay rooms with "busy"),
+// and password-protected games (relay room and Cloudflare battle: needpw / badpw / right password joins, the server keeps
+// only a salted hash, the game list says pw:1 but never carries the password, wrong guesses are rate-limited).
 // ~30 s. Prints SERVERTEST PASS / SERVERTEST FAIL.
 //
 //   node orch/servertest.mjs            # needs `npm ci` in server/ once
@@ -14,16 +16,20 @@ import { startServer } from './serverdev.mjs';
 
 const ORIGIN = 'http://localhost:8000';
 const argUrl = (() => { const i = process.argv.indexOf('--url'); return i > 0 ? process.argv[i + 1] : null; })();
-const srv = argUrl ? { url: argUrl, stop() {} } : await startServer();
+const srv = argUrl ? { url: argUrl, stop() {} } : await startServer({ vars: { TEST_HOOKS: '1' } });
 const HTTP = srv.url, WS = HTTP.replace(/^http/, 'ws');
 const fails = [];
 const check = (ok, what) => { console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${what}`); if (!ok) fails.push(what); };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // a socket that records every frame, with helpers to wait for one
-function sock(path, origin = ORIGIN, ip = '10.0.0.1', base = WS) {
+// pw: offer a game password the way the page does (subprotocols "ww3" + "pw.<base64url>")
+const b64u = t => Buffer.from(t, 'utf8').toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function sock(path, origin = ORIGIN, ip = '10.0.0.1', base = WS, pw = null) {
   // the live server sits behind Cloudflare, which refuses a client-set CF-Connecting-IP: send it only to the local one
-  const ws = new WebSocket(base + path, { headers: argUrl ? { Origin: origin } : { Origin: origin, 'CF-Connecting-IP': ip } });
+  const o = { headers: argUrl ? { Origin: origin } : { Origin: origin, 'CF-Connecting-IP': ip } };
+  if (pw != null) o.protocols = ['ww3', 'pw.' + b64u(pw)];
+  const ws = new WebSocket(base + path, o);
   const got = [], waiters = [];
   ws.closed = null; ws.got = got;
   ws.onmessage = ev => { got.push(String(ev.data)); for (const w of waiters.splice(0)) w(); };
@@ -138,6 +144,67 @@ try {
   let goneOk = false; for (let t = 0; t < 50 && !goneOk; t++) { goneOk = v2.got.slice(seen).some(m => m.startsWith('l|') && !m.includes(code)); if (!goneOk) await sleep(100); }
   check(goneOk, 'the game disappears when the host leaves the menu');
   v2.close();
+
+  // ---- password-protected games ----
+  {
+    const PW = 'Röte Fahne 7!', pwRx = new RegExp([PW, b64u(PW), Buffer.from(PW).toString('base64')].map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'));
+    const pcode = 'pw' + Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'q'), PHID = 'ww3-' + pcode;
+    const proom = (role, id, pw, ip) => sock(`/room/${pcode}?role=${role}&id=${id}&key=${KEY}`, ORIGIN, ip || '10.0.2.' + (++ipN), WS, pw);
+    const ph = proom('host', '', PW);
+    check(await ph.wait(m => m === '!w ' + PHID) !== null && ph.protocol === 'ww3', 'relay room: a host opens a password-protected game (subprotocol answered "ww3")');
+    const n1 = proom('client', 'ww3p-nopw1', null);
+    check(await n1.wait(m => m === '!e needpw') !== null && await n1.waitClose() === 4000, 'relay room: joining without the password is refused (needpw)');
+    const w1 = proom('client', 'ww3p-wrong1', 'röte fahne 7!');
+    check(await w1.wait(m => m === '!e badpw') !== null, 'relay room: a wrong password is refused (badpw)');
+    const g1 = proom('client', 'ww3p-right1', PW);
+    check(await g1.wait(m => m === '!w ' + PHID) !== null && await ph.wait(m => m === '!j ww3p-right1') !== null, 'relay room: the right password joins (host told)');
+    check(!ph.got.some(m => m.includes('wrong1') || m.includes('nopw1')), 'relay room: refused players never reach the host');
+    if (!argUrl) {
+      const t = await (await fetch(HTTP + '/room-test/' + pcode)).text(), rec = (JSON.parse(t).host[0] || {}).pw || {};
+      check(typeof rec.s === 'string' && typeof rec.h === 'string' && rec.h.length >= 40 && !pwRx.test(t), 'relay room: the server keeps only a salted hash (no password in what it stores)');
+      // rate limit: one address, five wrong guesses, then even the right password waits; another address is not affected
+      const res = [];
+      for (let i = 0; i < 6; i++) { const w = proom('client', 'ww3p-guess' + i, 'guess' + i, '10.0.3.3'); res.push(await w.wait(m => m.startsWith('!e') || m.startsWith('!w'))); }
+      const after = proom('client', 'ww3p-guessok', PW, '10.0.3.3'), other = proom('client', 'ww3p-other1', PW, '10.0.3.4');
+      const ra = await after.wait(m => m.startsWith('!e') || m.startsWith('!w')), ro = await other.wait(m => m.startsWith('!e') || m.startsWith('!w'));
+      check(res.slice(0, 5).every(m => m === '!e badpw') && res[5] === '!e pwlimit' && ra === '!e pwlimit' && ro === '!w ' + PHID,
+        `relay room: wrong guesses are rate-limited per address (${res.join(', ')}; then right password: ${ra}; other address: ${ro})`);
+      for (const w of [after, other]) w.close();
+    }
+    // game list: the lock flag is kept, a password never is
+    const v = sock('/lobby'), vw = sock('/lobby');
+    await v.wait(m => m.startsWith('!w ')); await vw.wait(m => m.startsWith('l|'));
+    v.send('p|' + JSON.stringify({ g: { c: pcode, f: 'US', s: 'open', n: 1, m: 'strait', mx: 8, pw: 1, pass: PW, password: PW } }));
+    const pl = await vw.wait(m => m.startsWith('l|') && m.includes(pcode));
+    const pe = pl && JSON.parse(pl.slice(2)).find(([, p]) => p.g.c === pcode);
+    check(!!pe && pe[1].g.pw === 1 && !pwRx.test(pl) && !pwRx.test(await (await fetch(HTTP + '/games')).text()), 'game list: a protected game is marked pw:1 and no password is ever listed');
+    v.close(); vw.close(); ph.close(); g1.close();
+
+    // battle hosted on Cloudflare (BattleRoom)
+    const bcode = 'bp' + Math.random().toString(36).slice(2, 6).replace(/[^a-z0-9]/g, 'q'), BHID = 'ww3-' + bcode, OWN = 'own' + Math.random().toString(36).slice(2, 12);
+    const bat = (id, pw, own, ip) => sock(`/battle/${bcode}?role=client&id=${id}${own ? '&own=' + own : ''}`, ORIGIN, ip || '10.0.4.' + (++ipN), WS, pw);
+    const bo = bat('ww3p-owner1', PW, OWN);
+    check(await bo.wait(m => m === '!w ' + BHID, 8000) !== null && bo.protocol === 'ww3', 'battle: the creator opens a password-protected battle on Cloudflare');
+    bo.send('|' + JSON.stringify({ k: 'p', p: { hi: { f: 'US', n: 1, tok: 'tokowner1' } } }));
+    await bo.wait(m => m.includes('"blob"'));
+    let bl = null; for (let t = 0; t < 30 && !bl; t++) { const gj = await (await fetch(HTTP + '/games')).text(); if (gj.includes('b-' + bcode)) bl = gj; else await sleep(200); }
+    const be = bl && JSON.parse(bl).battles.find(([id]) => id === 'b-' + bcode);
+    check(!!be && be[1].g.pw === 1 && be[1].g.cf === 1 && !pwRx.test(bl), 'battle: listed with pw:1 (lock) and without the password');
+    const bn = bat('ww3p-bnopw1', null), bw = bat('ww3p-bwrong1', 'Rote Fahne 7!'), bg = bat('ww3p-bright1', PW);
+    check(await bn.wait(m => m === '!e needpw') !== null, 'battle: joining without the password is refused (needpw)');
+    check(await bw.wait(m => m === '!e badpw') !== null, 'battle: a wrong password is refused (badpw)');
+    check(await bg.wait(m => m === '!w ' + BHID) !== null, 'battle: the right password joins');
+    const bk = bat('ww3p-owner2', null, OWN);
+    check(await bk.wait(m => m === '!w ' + BHID) !== null, 'battle: the creator\'s own key gets back in without the password');
+    if (!argUrl) {
+      const t = await (await fetch(`${HTTP}/battle-test/${bcode}?op=pw`)).text(), rec = JSON.parse(t).mem || {};
+      check(typeof rec.s === 'string' && typeof rec.h === 'string' && !pwRx.test(t), 'battle: the server keeps only a salted hash');
+      const res = [];
+      for (let i = 0; i < 6; i++) { const w = bat('ww3p-bguess' + i, 'nope' + i, null, '10.0.5.5'); res.push(await w.wait(m => m.startsWith('!e') || m.startsWith('!w'))); }
+      check(res.slice(0, 5).every(m => m === '!e badpw') && res[5] === '!e pwlimit', `battle: wrong guesses are rate-limited per address (${res.join(', ')})`);
+    }
+    for (const w of [bo, bg, bk]) w.close();
+  }
 
   // free-tier guard: a server whose daily allowance is only 30 requests must refuse new relay rooms ("busy") once ~80%
   // is used, while the page falls back to peer-to-peer (local only)
