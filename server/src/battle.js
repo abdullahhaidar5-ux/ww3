@@ -243,6 +243,9 @@ export class BattleHost {
 // (yieldFn), and times each event by the clock reading at the start of the next one: on Cloudflare the clock stands
 // still while code runs and moves on between events, so this is the event's wall time (CPU + scheduling).
 // write(line) gets a progress line every game-minute. Returns the summary.
+// per-event time percentiles (ms): p50, p90, p99
+const pctl = a => { if (!a.length) return {}; const s = a.slice().sort((x, y) => x - y), q = f => +s[Math.min(s.length - 1, Math.floor(f * s.length))].toFixed(3);
+  return { p50EventMs: q(0.5), p90EventMs: q(0.9), p99EventMs: q(0.99) }; };
 export async function runBench(sim, o, { now, yieldFn, write = () => {}, cpu = null }) {
   const facs = o.facs.slice(0, o.players);
   let msgs = 0, bytes = 0;
@@ -254,12 +257,12 @@ export async function runBench(sim, o, { now, yieldFn, write = () => {}, cpu = n
   write(`setup: ${facs.length} sides (${facs.join(' ')}) on ${o.map}, seed ${o.seed}, AI difficulty ${o.diff}, ${o.batch} step(s) per event; battle set up in ${setupMs} ms`);
   const steps = Math.round(o.minutes * 60 / STEP), per = Math.max(1, o.batch | 0);
   const rows = []; let minute = { wall: 0, cpu: 0, events: 0, maxEv: 0, steps: 0 }, total = { wall: 0, cpu: 0, events: 0, steps: 0 }, maxEv = 0;
-  let done = 0, last = now(), c0 = cpu ? cpu() : 0;
+  let done = 0, last = now(), c0 = cpu ? cpu() : 0; const evs = [];
   while (done < steps) {
     const evStart = now();
     for (let k = 0; k < per && done < steps; k++) { sim.step(STEP); sim.benchNet(STEP); done++; minute.steps++; }
     await yieldFn();
-    const t = now(), ev = t - evStart; last = t;
+    const t = now(), ev = t - evStart; last = t; evs.push(ev);
     minute.wall += ev; minute.events++; if (ev > minute.maxEv) minute.maxEv = ev;
     const info = done % 3600 === 0 || done >= steps ? sim.info() : null;
     if (info) {
@@ -276,6 +279,6 @@ export async function runBench(sim, o, { now, yieldFn, write = () => {}, cpu = n
   const info = sim.info(), gs = total.steps * STEP;
   return { players: facs.length, map: o.map, seed: o.seed, diff: o.diff, batch: per, setupMs, gameSeconds: +gs.toFixed(1), wallMs: total.wall,
     wallMsPerGameS: +(total.wall / Math.max(1e-9, gs)).toFixed(1), cpuMsPerGameS: cpu ? +(total.cpu / Math.max(1e-9, gs)).toFixed(1) : null,
-    maxEventMs: maxEv, events: total.events, peakEnts: Math.max(0, ...rows.map(r => r.ents)), endEnts: info.ents, over: info.over,
+    maxEventMs: maxEv, events: total.events, ...pctl(evs), peakEnts: Math.max(0, ...rows.map(r => r.ents)), endEnts: info.ents, over: info.over,
     msgs, kbSent: Math.round(bytes / 1024), kbPerGameS: +(bytes / 1024 / Math.max(1e-9, gs)).toFixed(1), rows };
 }
