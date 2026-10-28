@@ -4,12 +4,16 @@
 
 Tested build: `origin/main` 1639dab (re-checked hourly, see "Re-checks" at the bottom). Headless Chromium with
 SwiftShader (CPU WebGL), so absolute frame times are not meaningful — only spikes relative to the run.
-Scripts: `orch/qa-menu.mjs` (menu/settings layout on 4 screens), `orch/qa-play.mjs` (full player run: menu → deploy →
-build → train → select/order → powers → battle to the end → Play again / Main menu / Quit), shared `orch/qa-lib.mjs`.
+Scripts (reusable, all serve the repo locally; multiplayer only against a local `wrangler dev`): `orch/qa-lib.mjs`
+(shared setup + layout audit), `qa-menu.mjs` (menu/settings on 4 screens), `qa-play.mjs` (full player run: menu →
+deploy → build → train → select/order → powers → battle to the end → Play again / Main menu / Quit), `qa-settings.mjs`
+(☰ menu, graphics tiers, music, mouse schemes, restart, Test Range), `qa-mplobby.mjs` (2 players through the real
+lobby buttons + reload mid-battle), `qa-joincode.mjs` / `qa-paste.mjs` (join-by-code inputs), `qa-win.mjs` (victory),
+`qa-aitake.mjs` (AI taking over an idle slot).
 
 ## Findings (most severe first)
 
-### Q-1 · Pasting the host's invite message into "Join by code" joins game "BATTLE" — High
+### Q1 · Pasting the host's invite message into "Join by code" joins game "BATTLE" — High
 - Steps: host presses Host a game → COPY INVITE → sends it on Discord. Friend opens the game (GitHub Pages edition),
   Multiplayer, pastes the message into the "Game code or invite link" box, presses JOIN BY CODE.
 - Expected: joins the host's game (the message contains "enter game code K7P2XQ").
@@ -25,7 +29,8 @@ build → train → select/order → powers → battle to the end → Play again
 - Repro: `node orch/qa-paste.mjs` (prints the parsed code), `node orch/qa-joincode.mjs` (status texts on a phone).
 - Screenshot: `orch/shots/qa/joincode-wrong-phoneP.png`
 
-### Q0 · Multiplayer: a phone that reloads mid-battle gets no Rejoin — only works if they know the game code — Medium
+
+### Q2 · Multiplayer: a phone that reloads mid-battle gets no Rejoin — only works if they know the game code — Medium
 - Steps: friend A hosts (desktop), friend B (phone, 390×844) joins from Open games, battle starts, B's page reloads
   (phone browsers do this when the tab is backgrounded or memory is low; or B pulls to refresh).
 - Expected: B sees "Rejoin battle" (or the battle in Open games with a Join button) and gets their army back.
@@ -39,7 +44,8 @@ build → train → select/order → powers → battle to the end → Play again
 - Run: `node orch/qa-mplobby.mjs --client phoneP` (local wrangler server, browser-to-browser blocked).
 - Screenshot: `orch/shots/qa/mp-client-after-reload-phoneP.png`
 
-### Q0b · Multiplayer lobby: a friend who joined can't leave, and "Host a game" is a dead button — Medium
+
+### Q3 · Multiplayer lobby: a friend who joined can't leave, and "Host a game" is a dead button — Medium
 - Steps: friend taps JOIN on an open game (phone 390×844 and 844×390 seen; desktop the same code path).
 - Expected: a "Leave" button; Host a game hidden or disabled while in someone's lobby.
 - Actual: status "Joined… Waiting for the host to start the battle…", no Leave/Cancel button anywhere; HOST A GAME
@@ -50,7 +56,8 @@ build → train → select/order → powers → battle to the end → Play again
 - Screenshots: `orch/shots/qa/mp-client-joined-phoneP.png`, `orch/shots/qa/mp-client-joined-phoneL.png`,
   `orch/shots/qa/mp-host-lobby2.png` (host on a phone)
 
-### Q1 · Defeat screen says "The last enemy capitulated" when YOU lost — Medium
+
+### Q4 · Defeat screen says "The last enemy capitulated" when YOU lost — Medium
 - Steps: skirmish 1 vs 1 AI, lose (all your units/buildings destroyed). Seen: Mountain Shias vs US on Zagros, 1366×768.
 - Expected: something like "You have been wiped out: every unit and building destroyed. United States won."
 - Actual: "DEFEAT — The last enemy capitulated: every unit and building has been destroyed. United States won."
@@ -58,23 +65,8 @@ build → train → select/order → powers → battle to the end → Play again
   `The last enemy capitulated: …` is shown to every player regardless of side; `08-ui showEnd`.)
 - Screenshot: `orch/shots/qa/hd-RS-zagros-1-end.png`
 
-### Q2 · Settings screen: menu text shows through, "Done" floats over options (1920×1080, 844×390) — Low/Medium
-- Steps: main menu → Settings.
-- Expected: settings readable on their own background; Done button not covering anything.
-- Actual: the main menu (nation cards) is visible through the settings overlay, so settings text sits on top of
-  other text (hard to read on 1080p). The sticky "DONE" button sits on top of the "Scroll when the mouse touches the
-  screen edge" On/Off buttons (1920×1080) and on top of the Soundtrack / Import music buttons (phone landscape) —
-  you must scroll past it to reach them.
-- Screenshots: `orch/shots/qa/settings-fhd.png`, `orch/shots/qa/settings-phoneL.png`
 
-### Q3 · Command bar names cut off at 1366×768 — Low
-- Steps: start any skirmish as Mountain Shias (long names) at 1366×768 → Powers tab.
-- Actual: faction name shows "MOUNTAIN …", the strike power "Mountain …", powers "Mountain Wat…",
-  "Tunnel Works…", "Hidden Fight…", "Labbayk Ya H…" (the war slogan is cut in half). A player can't read what
-  they're unlocking without hovering.
-- Screenshot: `orch/shots/qa/hd-RS-zagros-1-powers.png`
-
-### Q3b · Phone landscape (844×390): build grid's last column is cut off under the right-hand panel — Medium (still on 8e5ad4d)
+### Q5 · Phone landscape (844×390): build grid's last column is cut off under the right-hand panel — Medium (still on 8e5ad4d)
 - Steps: phone held sideways, start any skirmish (seen: Coffee Shias, Golan Heights, 3 AI) → Build tab.
 - Expected: whole buttons (the portrait bar was fixed to show exactly 4 whole columns on 2026-10-27).
 - Actual: a 5th column ("Tu…", "Lo…" = Tunnel / …) peeks out and disappears under the strike/"LAUNCH" panel; the
@@ -83,22 +75,50 @@ build → train → select/order → powers → battle to the end → Play again
 - Screenshot: `orch/shots/qa/phoneL-DW-golan-3-start.png`; re-check on main 8e5ad4d (names now wrap, but the
   5th column "Tur… $57…", "Mo… Ro… $23…" is still cut under the LAUNCH panel): `orch/shots/qa/phoneL-RS-dmz-recheck-start.png`
 
-### Q3c · Phone portrait: most build/unit/power names are cut to a few letters — Low · FIXED on main 8e5ad4d (names wrap to two lines)
-- 390×844, Iran: "Saffron B…", "Defense G…", "Supply De…", "IRGC Fiel…", "Construct…", "Spoils of …", "Takavar D…",
-  "Missile Sa…", "Shahed S…", and the cost line "Unlock · 1 …". Players have to guess what a button builds.
-- Screenshot: `orch/shots/qa/phoneP-IR-strait-1-powers.png`, `orch/shots/qa/phoneP-IR-strait-1-units.png`
 
-### Q4 · Main menu still has "Host a game" button and "Host one…" wording — Low (known, in progress)
+### Q6 · Settings screen: menu text shows through, "Done" floats over options (1920×1080, 844×390) — Low/Medium
+- Steps: main menu → Settings.
+- Expected: settings readable on their own background; Done button not covering anything.
+- Actual: the main menu (nation cards) is visible through the settings overlay, so settings text sits on top of
+  other text (hard to read on 1080p). The sticky "DONE" button sits on top of the "Scroll when the mouse touches the
+  screen edge" On/Off buttons (1920×1080) and on top of the Soundtrack / Import music buttons (phone landscape) —
+  you must scroll past it to reach them.
+- Screenshots: `orch/shots/qa/settings-fhd.png`, `orch/shots/qa/settings-phoneL.png`
+
+
+### Q7 · Command bar names cut off at 1366×768 — Low
+- Steps: start any skirmish as Mountain Shias (long names) at 1366×768 → Powers tab.
+- Actual: faction name shows "MOUNTAIN …", the strike power "Mountain …", powers "Mountain Wat…",
+  "Tunnel Works…", "Hidden Fight…", "Labbayk Ya H…" (the war slogan is cut in half). A player can't read what
+  they're unlocking without hovering.
+- Screenshot: `orch/shots/qa/hd-RS-zagros-1-powers.png`
+
+
+### Q8 · Main menu still has "Host a game" button and "Host one…" wording — Low (known, in progress)
 - Standing decision (2026-10-27 19:30): one "Play online" button, no hosting button or wording. Live `main` still shows
   "HOST A GAME" + "No open games right now. Host one, or type a friend's game code below." on every screen.
   BACKLOG says `orch/play-online` is on it — listed so it's re-checked when that ships.
 - Screenshot: `orch/shots/qa/menu-fhd.png`
 
-### Q5 · Phone portrait: Deploy button is ~3.5 screens down the menu — Low (UX)
+
+### Q9 · Phone portrait: Deploy button is ~3.5 screens down the menu — Low (UX)
 - Steps: open the game on a 390×844 phone.
 - Actual: menu is 3077 px tall; to start a battle you scroll past all 18 nation cards (the selected one expands to a
   long paragraph), the map picker, and 5 option rows. No sticky Deploy button. Friends on phones may not find it.
 - Screenshot: `orch/shots/qa/menu-phoneP.png`
+
+### Q10 · Phone portrait: most build/unit/power names are cut to a few letters — Low · FIXED on main 8e5ad4d (names wrap to two lines)
+- 390×844, Iran: "Saffron B…", "Defense G…", "Supply De…", "IRGC Fiel…", "Construct…", "Spoils of …", "Takavar D…",
+  "Missile Sa…", "Shahed S…", and the cost line "Unlock · 1 …". Players have to guess what a button builds.
+- Screenshot: `orch/shots/qa/phoneP-IR-strait-1-powers.png`, `orch/shots/qa/phoneP-IR-strait-1-units.png`
+
+
+### Q11 · 8-player battles cost a lot of CPU for the simulation alone — Info (perf)
+- 1920×1080, North Korea + 7 AI on Fulda Gap: the battle simulation took ~7–8 ms per 60 Hz step in Chromium on this
+  2-core machine (≈ 0.45 s of CPU per game-second, before any drawing), one step peaked at 264 ms around 13 game-min.
+  Desktops will cope; a mid-range phone hosting (or playing) an 8-player battle likely can't hold full speed. Worth a
+  phone measurement by the Battlefield/Netcode squads before friends try 8-player games on phones.
+- Screenshot: `orch/shots/qa/fhd-KP-fulda-7-start.png`
 
 ## Things that worked (no bug)
 - Menu, settings, Done → back to menu on all 4 screens: no console errors, no off-screen or clipped controls.
@@ -130,6 +150,12 @@ build → train → select/order → powers → battle to the end → Play again
 - All 18 nations in 4-player AI battles on 8 maps (headless, 12 game-min): no errors, every battle progressed
   (7 ended with a winner, DMZ still 2 sides fighting).
 - Join by code: empty box and a wrong code give clear messages.
+- Victory path (phone 390×844, you + an AI ally vs 2 AIs on Fulda): "VICTORY — … Your alliance (Iran, North Korea)
+  won." with Play again / Main menu; Play again starts a new 4-player battle. (`orch/qa-win.mjs`)
+- Gate scripts on current main: `controls.mjs` CONTROLS PASS 43/43 (all Generals mouse actions, Alternate setup,
+  phone taps); `touch.mjs` 71 checks passed, 0 failed (portrait + most of landscape; I stopped it at my 25-min limit).
+- 1920×1080, North Korea + 7 AI on Fulda: loads in 49 s, build/train/order all work, the elimination screen ("North
+  Korea has capitulated… 6 rivals still fighting") offers Keep watching / Play again / Main menu.
 
 ## Re-checks of origin/main
 - 08:23 UTC: no new commits on main since 1639dab.
