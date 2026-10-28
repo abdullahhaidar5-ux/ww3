@@ -1,0 +1,36 @@
+local game server http://127.0.0.1:42021 (pages reach it through http://127.0.0.1:34425); over-budget server http://127.0.0.1:44117
+[3s] both pages loaded; the multiplayer menu offers "Host in my browser" / "Host on Cloudflare"
+[3s] 1. server busy -> browser hosting: "Your game · codeI03XYODesert Strait1 / 8 playersCloudflare is busy right now, so your browser is hosting this battle instead.▶ Start battleW"
+[4s] 2. lobby open on Cloudflare, code I5QFTB; creator status: "Your game · codeI5QFTBHosted on CloudflareDesert Strait1 / 8 players▶ Start battleWaiting for at least one more player t"
+[4s] friend's game list: "1 open game · 0 battles in progressUnited States · on Cloudflare · Desert Strait · 1/8 playersJoin"
+[4s] friend joined: "Joined (hosted on Cloudflare). 2 players in the lobby. Waiting for the game's creator to start the battle…"
+[5s] server lobby (as the friend sees it): player US/team 1, player RU/team 2, computer CN/team 2
+[28s] 3. battle started; creator is slot 0, friend slot 1
+[71s] both pages past the loading screen
+[71s]   creator: {"mode":"client","me":0,"snapT":44.6,"rx":10,"recon":false,"via":"wsb","peer":"ww3p-cfb9g508","host":"ww3-i5qftb","gen":0,"ai":false}
+[71s]   friend: {"mode":"client","me":1,"snapT":44.7,"rx":0,"recon":false,"via":"wsb","peer":"ww3p-7nekv0ri","host":"ww3-i5qftb","gen":0,"ai":false}
+[71s]   proxy sockets: [{"path":"/lobby","code":null,"id":null},{"path":"/lobby","code":null,"id":null},{"path":"/battle/i5qftb","code":"i5qftb","id":"ww3p-cfb9g508"},{"path":"/battle/i5qftb","code":"i5qftb","id":"ww3p-7nekv0ri"}]
+[76s] the server's battle clock advances on the creator's page: 47.5 s -> 49.8 s
+[86s] slot 0's orders acknowledged by the server; 2/2 of its units moved in the server's updates
+[86s] slot 1's orders acknowledged by the server; 2/2 of its units moved in the server's updates
+[86s] in-battle readout (creator): "60 FPS · hosted on Cloudflare · ping 4 ms"
+[117s] @1.5 min slot 0: server checkpoint (1.6 s older) has 1 buildings + 4 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[117s] @1.5 min slot 1: server checkpoint (1.6 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[117s] @1.5 min: the pages' latest states are 0.00 s apart; 3 things both see, 0 differ
+[117s] 4. the friend's connection to the server is cut (1 socket)
+[117s]   back after 0.6 s
+[120s] friend reconnected via wsb (room gen 0); its side has 6 units/buildings (had 6)
+[131s] 5. the server restarted (battle at 103 s); pages reconnect
+[133s]   back after 1.5 s
+[133s] after the restart: creator client via wsb gen 0, friend client via wsb gen 0
+[137s] the server picked the battle up: clock now 109 s
+[137s] after the server restart slot 0: server checkpoint (0.7 s older) has 1 buildings + 1 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[137s] after the server restart slot 1: server checkpoint (0.7 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[137s] after the server restart: the pages' latest states are 0.00 s apart; 8 things both see, 0 differ
+[146s] 6. the server's battle vanishes for good; pages holding a checkpoint: true,false
+[147s] after 1.2 s: creator host, friend client (room gen 1, last update 0.1 s ago)
+[150s] new browser host at t=121 s with 24 entities; the other player's side is still theirs; its last update 0.1 s ago
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT PASS (151s) — battle hosted by the real server: busy fallback, lobby, start, sync, orders, reconnect, server restart, takeover all OK
