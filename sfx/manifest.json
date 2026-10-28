@@ -1,0 +1,195 @@
+{
+ "sr": 32000,
+ "clips": {
+  "rifle": [
+   [
+    0.0,
+    1.1
+   ],
+   [
+    1.22,
+    1.1
+   ],
+   [
+    2.44,
+    1.1
+   ],
+   [
+    3.66,
+    1.1
+   ],
+   [
+    4.88,
+    1.2
+   ],
+   [
+    6.2,
+    1.1
+   ]
+  ],
+  "mg": [
+   [
+    7.42,
+    0.9
+   ],
+   [
+    8.44,
+    0.9
+   ],
+   [
+    9.46,
+    0.9
+   ],
+   [
+    10.48,
+    0.578
+   ]
+  ],
+  "cannon": [
+   [
+    11.178,
+    2.2
+   ],
+   [
+    13.498,
+    1.8
+   ],
+   [
+    15.418,
+    1.8
+   ]
+  ],
+  "rocket": [
+   [
+    17.338,
+    2.2
+   ],
+   [
+    19.658,
+    2.4
+   ],
+   [
+    22.178,
+    2.2
+   ]
+  ],
+  "boomS": [
+   [
+    24.498,
+    0.645
+   ],
+   [
+    25.263,
+    0.554
+   ],
+   [
+    25.936,
+    1.4
+   ],
+   [
+    27.456,
+    1.6
+   ]
+  ],
+  "boomL": [
+   [
+    29.176,
+    3.2
+   ],
+   [
+    32.496,
+    1.7
+   ],
+   [
+    34.316,
+    3.0
+   ]
+  ]
+ },
+ "loops": {
+  "tank": 3.9,
+  "truck": 8,
+  "heli": 8,
+  "jet": 3.3,
+  "wind": 16,
+  "rain": 14,
+  "rumble": 16
+ },
+ "bytes": {
+  "sfx.mp3": 375165,
+  "tank.mp3": 40005,
+  "truck.mp3": 81045,
+  "heli.mp3": 81045,
+  "jet.mp3": 33885,
+  "wind.mp3": 128781,
+  "rain.mp3": 112653,
+  "rumble.mp3": 128781
+ },
+ "credits": [
+  {
+   "who": "Bart (bart)",
+   "what": "The Free Firearm Sound Library",
+   "lic": "CC0"
+  },
+  {
+   "who": "Michel Baradari (apollo-music.de)",
+   "what": "Chaingun/rifle shots, 4 projectile launches, 2 High Quality Explosions",
+   "lic": "CC-BY 3.0"
+  },
+  {
+   "who": "Thimras",
+   "what": "Cannon fire",
+   "lic": "CC0"
+  },
+  {
+   "who": "EZduzziteh",
+   "what": "Explosions",
+   "lic": "CC0"
+  },
+  {
+   "who": "Lamoot",
+   "what": "Big Explosion",
+   "lic": "CC-BY 3.0"
+  },
+  {
+   "who": "theMinesAreShakin",
+   "what": "Rocket Engine",
+   "lic": "CC0"
+  },
+  {
+   "who": "Nayckron",
+   "what": "Engine-loop heavy vehicle/tank",
+   "lic": "CC-BY 3.0"
+  },
+  {
+   "who": "kurt",
+   "what": "Engine Sound",
+   "lic": "CC-BY 3.0"
+  },
+  {
+   "who": "dklon",
+   "what": "Jet Engine Takeoff",
+   "lic": "CC-BY 3.0"
+  },
+  {
+   "who": "WuxiaScrub",
+   "what": "Helicopter SFX",
+   "lic": "CC0"
+  },
+  {
+   "who": "Bashar3A",
+   "what": "Mild Wind Background Noise",
+   "lic": "CC0"
+  },
+  {
+   "who": "Kresiek The Furry",
+   "what": "AMB Rain Loop 1",
+   "lic": "CC0"
+  },
+  {
+   "who": "gryc",
+   "what": "Background Rumble Noise",
+   "lic": "CC-BY 3.0"
+  }
+ ]
+}
