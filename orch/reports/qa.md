@@ -33,6 +33,19 @@ build → train → select/order → powers → battle to the end → Play again
   they're unlocking without hovering.
 - Screenshot: `orch/shots/qa/hd-RS-zagros-1-powers.png`
 
+### Q3b · Phone landscape (844×390): build grid's last column is cut off under the right-hand panel — Medium
+- Steps: phone held sideways, start any skirmish (seen: Coffee Shias, Golan Heights, 3 AI) → Build tab.
+- Expected: whole buttons (the portrait bar was fixed to show exactly 4 whole columns on 2026-10-27).
+- Actual: a 5th column ("Tu…", "Lo…" = Tunnel / …) peeks out and disappears under the strike/"LAUNCH" panel; the
+  layout audit finds the Command HQ button underneath the LAUNCH button. Names in the visible columns are also cut
+  ("Coffee Ro…", "Defense …", "Supply D…").
+- Screenshot: `orch/shots/qa/phoneL-DW-golan-3-start.png`
+
+### Q3c · Phone portrait: most build/unit/power names are cut to a few letters — Low
+- 390×844, Iran: "Saffron B…", "Defense G…", "Supply De…", "IRGC Fiel…", "Construct…", "Spoils of …", "Takavar D…",
+  "Missile Sa…", "Shahed S…", and the cost line "Unlock · 1 …". Players have to guess what a button builds.
+- Screenshot: `orch/shots/qa/phoneP-IR-strait-1-powers.png`, `orch/shots/qa/phoneP-IR-strait-1-units.png`
+
 ### Q4 · Main menu still has "Host a game" button and "Host one…" wording — Low (known, in progress)
 - Standing decision (2026-10-27 19:30): one "Play online" button, no hosting button or wording. Live `main` still shows
   "HOST A GAME" + "No open games right now. Host one, or type a friend's game code below." on every screen.
@@ -50,5 +63,10 @@ build → train → select/order → powers → battle to the end → Play again
 - 1366×768, Mountain Shias vs US on Zagros: Deploy → loaded in 38 s; Barracks button → Generals left-click placement
   → built; units trained from the sidebar; left-click selects own unit; left-click ground sends a move order;
   battle ran to a result in 5:42; end screen → Play again started a fresh battle.
+
+- 390×844 phone, Iran vs US, Strait: touch guide shows (Skip/Next), Barracks → tap spot → "✓ Build here" confirm
+  → built; units trained; tap selects; tap ground orders; battle to the end (10:46) → Main menu works.
+- 844×390 phone, Coffee Shias + 3 AI on Golan: same flow works; battle ended 9:46 (Egypt won).
+- No console errors in any run; only two harmless warnings (Canvas2D willReadFrequently, THREE toNonIndexed).
 
 ## Re-checks of origin/main
