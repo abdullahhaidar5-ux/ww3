@@ -25,8 +25,9 @@ across ticks before switching players to Cloudflare hosting. Server deploys now 
 (`.github/workflows/deploy-servers.yml`) on Abdullah's servers-live merge.
 
 **DECISION (Abdullah, 2026-10-27 19:28): "Host on Cloudflare" is the only hosting choice players see — hide "Host in my
-browser"; keep browser hosting purely as the automatic fallback.** (cf-battle-client: no visible choice; one "Host a game"
-button that hosts on Cloudflare and falls back silently with a short note.)
+browser"; keep browser hosting purely as the automatic fallback.** **19:30 update: no hosting button or wording at all — one "Play online" button: join an open battle if there is one,
+otherwise start a new battle on Cloudflare with the player's map/nation (listed for others; invite code/link still works).
+Browser hosting only as the silent fallback.**
 
 **ORDER OF WORK (Abdullah, 2026-10-27 17:58): "Do the battles on servers first. Then address the open items. Then fix
 the music and move onto the graphics overhaul."** ORCH follows this order across cycles; don't start a later stage while

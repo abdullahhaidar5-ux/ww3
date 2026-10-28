@@ -62,8 +62,9 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   and on victory. Shia factions (IR, RS, DW) use the shared soundtrack too; real recorded latmiyas may be added later
   if freely licensed ones are found.
 - Multiplayer: up to 8 players. Never break multiplayer sync — host and clients must agree. **Battles are hosted on
-  Cloudflare** (Abdullah, 2026-10-27 19:28: Cloudflare is the default and **"Host in my browser" is hidden** from the
-  lobby); hosting in a player's browser remains only as the automatic fallback (free-plan limit, busy, unreachable, or
+  Cloudflare** (Abdullah, 2026-10-27 19:28: Cloudflare is the default and **no hosting button or wording at all** —
+  19:30: "just host": the Multiplayer menu has one "Play online" button that joins an open battle or starts a new one on
+  Cloudflare with the player's map/nation; friends join from the list or by invite code/link); hosting in a player's browser remains only as the automatic fallback (free-plan limit, busy, unreachable, or
   the server going away mid-match). Until Cloudflare hosting ships, the host's browser runs the battle.
 - Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
   (Abdullah, 2026-10-26).
