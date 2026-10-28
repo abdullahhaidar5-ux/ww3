@@ -95,7 +95,10 @@ await page.evaluate(() => {
   for (const e of G.ents) if (!e.isB && !e.dead && Math.hypot(e.x - cx, e.y - cy) < 600) { sx += e.x; sy += e.y; n++; }
   if (n) centerOn(sx / n, sy / n); else centerOn(cx, cy);
 });
-if (PHONE) { const s = await ctx.newCDPSession(page); await s.send('Emulation.setCPUThrottlingRate', { rate: 4 }); }
+const CDP = await ctx.newCDPSession(page);
+if (PHONE) await CDP.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+const PROF = process.argv.includes('--cpuprofile');
+if (PROF) { await CDP.send('Profiler.enable'); await CDP.send('Profiler.setSamplingInterval', { interval: 200 }); await CDP.send('Profiler.start'); }
 const res = await page.evaluate(async (FR) => {
   const now = () => performance.now(), gl = R3.getContext();
   const parts = { sync: 'syncScene', fx: 'fxUpdate', fog: 'updateFog', render: 'renderPost', hud: 'drawHUD', mini: 'drawMini' };
@@ -125,17 +128,30 @@ const res = await page.evaluate(async (FR) => {
       const b = by[k] || (by[k] = { n: 0, tri: 0, mesh: 0, cast: 0, skin: 0 }); b.n++;
       o.traverseVisible(m => { if (!m.isMesh) return; b.mesh++; b.tri += tri(m); if (m.castShadow) b.cast++; if (m.isSkinnedMesh) b.skin++; }); }
     let rest = 0, restM = 0; const inObj = new Set(); for (const o of OBJ.values()) o.traverse(m => inObj.add(m));
-    SCN.traverseVisible(m => { if ((m.isMesh || m.isPoints) && !inObj.has(m)) { rest += tri(m); restM++; } });
+    const fr = new THREE.Frustum().setFromProjectionMatrix(new THREE.Matrix4().multiplyMatrices(CAM.projectionMatrix, CAM.matrixWorldInverse));
+    const wb = {}; SCN.updateMatrixWorld(true);
+    SCN.traverseVisible(m => { if ((m.isMesh || m.isPoints) && !inObj.has(m)) { rest += tri(m); restM++;
+      let top = m; while (top.parent && top.parent !== SCN) top = top.parent; const key = (top.name || top.type) + (m.isInstancedMesh ? '/inst' : '') + (m.castShadow ? '/cast' : '');
+      const v = wb[key] || (wb[key] = { n: 0, tri: 0, inView: 0 }); v.n++; v.tri += tri(m);
+      try { if (m.frustumCulled === false || fr.intersectsObject(m)) v.inView += tri(m); } catch (e) {} } });
+    out.worldBy = Object.fromEntries(Object.entries(wb).sort((a, b) => b[1].tri - a[1].tri).slice(0, 14).map(([k, v]) => [k, { n: v.n, tri: Math.round(v.tri), inView: Math.round(v.inView) }]));
     out.byKind = Object.fromEntries(Object.entries(by).sort((a, b) => b[1].tri - a[1].tri).map(([k, v]) => [k, { ...v, tri: Math.round(v.tri) }]));
     out.world = { meshes: restM, tri: Math.round(rest) };
   }
   out.other = +(out.frameJS - out.sync - out.fx - out.fog - out.render - out.hud - out.mini).toFixed(2);
   return out;
 }, FRAMES);
+if (PROF) { // self time per function over the measured frames (and warm-up), top 30
+  const { profile } = await CDP.send('Profiler.stop'); const self = new Map(), dt = profile.timeDeltas, byId = new Map(profile.nodes.map(n => [n.id, n]));
+  const cnt = new Map(); for (const id of profile.samples) cnt.set(id, (cnt.get(id) || 0) + 1);
+  let tot = 0; for (const [id, c] of cnt) { const n = byId.get(id), f = n.callFrame, k = (f.functionName || '(anon)') + ' ' + (f.url.split('/').pop() || '') + ':' + f.lineNumber; self.set(k, (self.get(k) || 0) + c); tot += c; }
+  console.log('CPU profile, self time share (' + tot + ' samples):');
+  for (const [k, c] of [...self].sort((a, b) => b[1] - a[1]).slice(0, 30)) console.log('  ' + (100 * c / tot).toFixed(1).padStart(5) + '%  ' + k);
+}
 console.log('frame ms (mean):  total ' + res.total + '  p90 ' + res.p90 + '  | sim ' + res.sim + '  sync ' + res.sync + '  fx ' + res.fx + '  fog ' + res.fog +
   '  render ' + res.render + '  gpu(finish) ' + res.gpu + '  hud ' + res.hud + '  mini ' + res.mini + '  other ' + res.other);
 console.log(`scene: ${res.calls} draw calls, ${(res.tris / 1000).toFixed(0)}k triangles, ${res.meshes} visible meshes (${res.casters} shadow casters, ${res.skinned} skinned, ${res.inst} instanced), ${res.visObj}/${res.objs} objects in view, quality level ${res.qual}`);
-if (process.argv.includes('--census')) { console.log('world (terrain, trees, city, fx): ' + JSON.stringify(res.world)); for (const [k, v] of Object.entries(res.byKind)) console.log('  ' + k.padEnd(12) + JSON.stringify(v)); }
+if (process.argv.includes('--census')) { console.log('world (terrain, trees, city, fx): ' + JSON.stringify(res.world)); for (const [k, v] of Object.entries(res.worldBy)) console.log('  W ' + k.padEnd(24) + JSON.stringify(v)); for (const [k, v] of Object.entries(res.byKind)) console.log('  ' + k.padEnd(12) + JSON.stringify(v)); }
 if (SHOT) { fs.mkdirSync(path.dirname(path.resolve(ROOT, SHOT)), { recursive: true });
   await page.evaluate(() => { renderFrame(1 / 60); });
   await page.screenshot({ path: path.resolve(ROOT, SHOT), timeout: 180000 }); console.log('screenshot ' + SHOT); }
