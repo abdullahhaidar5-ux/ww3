@@ -403,6 +403,8 @@ function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.aband)return updAband(u
   if(unitBrain(u,dt,o))return;
   if(u.target){const t=u.target;
     if(!o&&u.guard&&Math.hypot(u.x-u.guard.x,u.y-u.guard.y)>420){u.target=null;setMove(u,u.guard.x,u.guard.y,'move');return;}
+    /* AI ambush picket: fight only what is within its weapon range of its post; never chase, slip back into position */
+    if(u.amb&&!o&&u.guard&&Math.hypot(t.x-u.guard.x,t.y-u.guard.y)-t.r>rngOf(u)+30){u.target=null;if(Math.hypot(u.x-u.guard.x,u.y-u.guard.y)>24)setMove(u,u.guard.x,u.guard.y,'move');return;}
     const d=Math.hypot(t.x-u.x,t.y-u.y)-t.r,R=rngOf(u);
     if(d>R){if(o&&o.type==='move'){u.target=null;navTo(u,o.x,o.y,dt,true);return;}navTo(u,t.x,t.y,dt);return;}
     if(!['tank','arty','aa','ship','boat'].includes(s.cls))u.ang=Math.atan2(t.y-u.y,t.x-u.x);
@@ -631,8 +633,14 @@ function aiExpand(T,mine,hq){const id=T.id,dz=mine.filter(e=>e.kind==='dozer'),h
   const dzr=dz.find(u=>!u.order)||dz[0];const blds=G.ents.filter(e=>e.isB&&!e.dead);
   const opts=G.fields.filter(f=>f.amt>2500&&blds.every(b=>Math.hypot(b.x-f.x,b.y-f.y)>650)).sort((p,q)=>dist(p,dzr)-dist(q,dzr));
   for(const f of opts.slice(0,4)){for(let k=0;k<30;k++){const a=rnd(0,6.28),r=rnd(150,260),x=f.x+Math.cos(a)*r,y=f.y+Math.sin(a)*r;if(validSpot(id,'hq',x,y)===2){placeBld(id,'hq',x,y,dzr.id);T.ai.exp=(T.ai.exp||0)+1;return;}}}}
-// Densest knot of enemy troops (buildings ignored): at least 4 units within 170 of one of them, or null.
-function aiTroops(team){const P=G.ents.filter(e=>e.team===team&&!e.dead&&!e.isB&&e.s.dom==='ground');let best=null,bs=3;for(const a of P){let s=0;for(const b of P)if(Math.hypot(a.x-b.x,a.y-b.y)<170)s++;if(s>bs){bs=s;best=a;}}return best;}
+// Densest knot of enemy troops (buildings ignored): at least 4 units within 170 of one of them, or null. ok(a), when
+// given, must accept the spot (see aiShellOk).
+function aiTroops(team,ok){const P=G.ents.filter(e=>e.team===team&&!e.dead&&!e.isB&&e.s.dom==='ground');let best=null,bs=3;for(const a of P){let s=0;for(const b of P)if(Math.hypot(a.x-b.x,a.y-b.y)<170)s++;if(s>bs&&(!ok||ok(a))){bs=s;best=a;}}return best;}
+// Is spot p safe for team id's Artillery Barrage? No: our own or allied ground troops are inside the area the shells
+// can land in (the barrage radius at its current level, plus each shell's 60 burst, plus a 40 margin), e.g. when our
+// infantry are mixed in with the enemy's. The AI then picks another target or holds fire.
+function aiShellOk(id){const T=G.teams[id],P=powInfo('barrage',T.fac),w=T.pw.barrage,L=Math.max(1,Math.min(3,(w&&w.lv)||1)),R=((P&&P.r)||180)*(1+.2*(L-1))+100;
+  return p=>!G.ents.some(e=>!e.dead&&!e.isB&&e.s.dom==='ground'&&ally(e.team,id)&&Math.abs(e.x-p.x)<R&&Math.abs(e.y-p.y)<R&&Math.hypot(e.x-p.x,e.y-p.y)<R);}
 // Covert-operations doctrine (IL, AE): camouflaged infantry and AT teams go out in small groups to lie in wait, turn
 // invisible once still, and open fire only on enemies inside their own range (the first shot from hiding hits 50%
 // harder). When an enemy column is on its way in, a group is sent to a spot some 30% of the way out toward it, to be
@@ -650,7 +658,7 @@ function aiAmbush(T,army,anchor,pb){if(T.ai.t%2||!pb.length)return;const id=T.id
   else if(n+2<=Math.min(4,Math.floor((army.length-T.ai.wave)/2))&&G.t>DIFF[T.ai.d??1].first*.6){const t=pb.find(e=>e.kind==='hq')||pb[0],ang=Math.atan2(t.y-anchor.y,t.x-anchor.x)+rnd(-.6,.6),D=Math.min(rnd(300,460),Math.hypot(t.x-anchor.x,t.y-anchor.y)*.4);x=anchor.x+Math.cos(ang)*D;y=anchor.y+Math.sin(ang)*D;sp=ang+1.57;}
   else return;const p=nearestPassXY('ground',x,y);if(!p)return;
   cand.slice(0,Math.min(4,cap-n)).forEach((u,i)=>{const o=(i-1.5)*30;setMove(u,p[0]-Math.sin(sp)*o,p[1]+Math.cos(sp)*o,'move');u.amb=G.t;u.guard=undefined;});}
-function aiCluster(team){const P=G.ents.filter(e=>e.team===team&&!e.dead);let best=null,bs=-1;for(const a of P){let s=0;for(const b of P)if(Math.hypot(a.x-b.x,a.y-b.y)<170)s+=b.isB?3:1;if(s>bs){bs=s;best=a;}}return best;}
+function aiCluster(team,ok){const P=G.ents.filter(e=>e.team===team&&!e.dead);let best=null,bs=-1;for(const a of P){let s=0;for(const b of P)if(Math.hypot(a.x-b.x,a.y-b.y)<170)s+=b.isB?3:1;if(s>bs&&(!ok||ok(a))){bs=s;best=a;}}return best;}
 function aiFoe(T,anchor){const alive=G.teams.filter(O=>!ally(O.id,T.id)&&G.ents.some(e=>e.team===O.id&&e.isB&&!e.dead));if(!alive.length)return T.id===0?1:0;if(T.ai.foe!=null&&alive.some(O=>O.id===T.ai.foe)&&T.ai.t%20)return T.ai.foe;let best=alive[0].id,bd=1e9;for(const O of alive){const b=G.ents.find(e=>e.team===O.id&&e.isB&&!e.dead);const d=b?Math.hypot(b.x-anchor.x,b.y-anchor.y):1e9;if(d<bd){bd=d;best=O.id;}}return T.ai.foe=best;}
 // ---- AI navy ----
 // On maps with real water the AI builds a Shipyard on its own coast (earlier and bigger on Hard, a single patrol boat
@@ -748,8 +756,9 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
     else if(c&&(N.type!=='cyber'&&N.type!=='intel'||true))usePower(id,'nat',c.x,c.y);}
   // Artillery Barrage: fired at the enemy's densest spot when our forces are near it. Barrage-doctrine nations also shell
   // any big enemy troop concentration, and if none shows up within 40 s of the barrage being ready, the enemy base.
-  if(T.pw.barrage&&T.pw.barrage.cd>0)T.ai.bw=null;/* the 40 s wait restarts whenever the barrage was used */if(T.pw.barrage&&T.pw.barrage.cd<=0&&T.ai.t%(DC.barrage?3:7)===0){const c=aiCluster(en);if(c&&G.ents.some(e=>e.team===id&&Math.hypot(e.x-c.x,e.y-c.y)<900))usePower(id,'barrage',c.x,c.y);
-    else if(DC.barrage){if(T.ai.bw==null)T.ai.bw=G.t;const u=aiTroops(en);if(u)usePower(id,'barrage',u.x,u.y);else if(c&&G.t-T.ai.bw>40)usePower(id,'barrage',c.x,c.y);if(T.pw.barrage.cd>0)T.ai.bw=null;}}
+  // Never where our own or allied troops are inside the target area (aiShellOk): the next-densest safe spot instead.
+  if(T.pw.barrage&&T.pw.barrage.cd>0)T.ai.bw=null;/* the 40 s wait restarts whenever the barrage was used */if(T.pw.barrage&&T.pw.barrage.cd<=0&&T.ai.t%(DC.barrage?3:7)===0){const ok=aiShellOk(id),c=aiCluster(en,ok);if(c&&G.ents.some(e=>e.team===id&&Math.hypot(e.x-c.x,e.y-c.y)<900))usePower(id,'barrage',c.x,c.y);
+    else if(DC.barrage){if(T.ai.bw==null)T.ai.bw=G.t;const u=aiTroops(en,ok);if(u)usePower(id,'barrage',u.x,u.y);else if(c&&G.t-T.ai.bw>40)usePower(id,'barrage',c.x,c.y);if(T.pw.barrage.cd>0)T.ai.bw=null;}}
   if(T.pw.repair&&T.pw.repair.cd<=0){const hurt=mine.filter(e=>!e.isB&&e.hp<e.max*.45);if(hurt.length>=4)usePower(id,'repair',hurt[0].x,hurt[0].y);}
   const army=mine.filter(e=>!e.isB&&e.s.dom!=='naval'&&!['harv','hacker','jet','dozer'].includes(e.kind));const pb=G.ents.filter(e=>e.team===en&&e.isB&&!e.dead);
   let threat=null;for(const e of G.ents){if(ally(e.team,id)||e.dead||e.isB)continue;if(mine.some(b=>b.isB&&Math.hypot(b.x-e.x,b.y-e.y)<560)){threat=e;break;}}
