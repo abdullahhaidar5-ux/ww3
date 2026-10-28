@@ -470,7 +470,11 @@ input[type=range]{width:100%;accent-color:var(--accent)}
   #info{grid-area:info;min-height:0;padding:0 0 0 6px;border-top:0;overflow-y:auto;font-size:11px;line-height:1.25}
   #info b{font-size:13px}#info .tip{display:none}#info .morale{margin-top:1px}
   #side .sqbar{grid-area:sq;padding-left:6px;justify-content:flex-start}#side .sqbar #sqAll{margin-left:0}
-  #panel.grid{grid-area:pan;grid-template-rows:repeat(2,40px)}
+  #panel.grid{grid-area:pan;grid-template-rows:repeat(2,40px);scroll-snap-type:x proximity}
+  /* exactly four whole columns across the phone's width, so no button is cut off at the edge; swiping snaps to whole columns */
+  #side{--cols:4;--bw:calc((100vw - max(6px,env(safe-area-inset-left,0px)) - max(6px,env(safe-area-inset-right,0px)) - (var(--cols) - 1)*3px)/var(--cols) - .5px)}
+  @media (min-width:561px){#side{--cols:6}}
+  #panel .btn{padding:2px 5px 4px;scroll-snap-align:start}#panel .btn .n{padding-right:9px;font-size:12px;letter-spacing:-.01em}
   #facname{display:none}
   #credits{align-self:center;text-align:center;font:600 16px var(--display);letter-spacing:.02em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #side .sw{display:none}
@@ -7557,12 +7561,13 @@ function joinTok(code){const k='ww3_tok_'+code;let t=null;try{t=sessionStorage.g
 function wireClient(g){
   g.on('hello',m=>{if(m.sameTab)NET.myPeer=m.peer;});
   g.on('lobby',m=>{if(m.peer===NET.hostPeer&&m.data&&m.data.to===NET.myPeer&&MODE==='single'){if(m.data.full){clearInterval(NET.helloI);$('mpstatus').textContent='That game is full.';leaveNet();return;}$('mpstatus').textContent=`Joined${NET.via==='ws'?' (through the game server)':''}. ${m.data.n} players in the lobby. Waiting for the host to start the battle…`;}});
-  g.on('start',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV){$('mpstatus').textContent='You and the host have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<1||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
+  g.on('start',m=>{if(MODE==='client'){if(m.peer===NET.hostPeer&&m.data&&m.data.to&&m.data.to===NET.myPeer)NET.ackW=performance.now();return;} // mid-battle: the host has linked this player back in (hostRejoin)
+  if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV){$('mpstatus').textContent='You and the host have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<1||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
   // An old host sends no 'w': the player's own menu choice stays, as before.
   if(typeof d.w==='number'&&d.w>=-1&&d.w<WX.length){if(NET.ownW==null)NET.ownW=setup.w;wxSet(d.w|0);}
-  startMP('client',d.seed|0,d.facs,sl,map,tm);});
+  NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm);});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
-  g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();applySnap(m.data);}});
+  g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();if(m.data.to)NET.lastRxMe=NET.lastRx;applySnap(m.data);}});
   g.on('evt',m=>{if(ok(m)){NET.lastRx=performance.now();applyEvents(m.data);}});
   g.on('team',m=>{if(ok(m)){NET.lastRx=performance.now();applyTeam(m.data);}});
   g.on('b',m=>{if(!ok(m)||!Array.isArray(m.data.m))return;NET.lastRx=performance.now();for(const x of m.data.m){if(!Array.isArray(x))continue;const [t,d]=x;if(!d)continue;try{if(t==='snap')applySnap(d);else if(t==='evt')applyEvents(d);else if(t==='team')applyTeam(d);}catch(e){console.warn('bundle',t,e);}}});
@@ -7580,30 +7585,45 @@ function wireClient(g){
 function joinT(name,ms){const p=NET.room.join(name,NET.via?{via:NET.via}:undefined);let late=false;
   return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>{late=true;rej(Object.assign(new Error('timeout'),{type:'timeout'}));},ms))]).catch(e=>{if(late)p.then(g=>{try{g.leave().catch(()=>{});}catch(_){}},()=>{});throw e;});}
 async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NET.jcode)return;NET.recon=true;NET.reconKick=false;pushLog('Connection to the host lost. Reconnecting…','w');
-  const gen0=NET.gen||0,t0=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let gone=false,n=0,newTries=0;
+  const gen0=NET.gen||0,p0=NET.myPeer,t0=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let gone=false,here=false,n=0,newTries=0;
   while(MODE==='client'&&!(G&&G.over)&&performance.now()-t0<60000){
-    if(n>0&&NET.isStandby&&NET.lastCk){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
+    if(n>0&&NET.isStandby&&NET.lastCk&&(!here||performance.now()-t0>15000)){const pr=await promoteToHost();if(pr===true){NET.recon=false;NET.reconKick=false;return;}if(pr!=='retry')NET.isStandby=false;}
     if(MODE!=='client'||(G&&G.over))break;
     // which room: the old one first; then the follow-up room (with an occasional look back at the old room while it
     // is not certain that its host is gone)
-    const old=n===0||(!gone&&newTries>0&&newTries%4===0),gen=old?gen0:gen0+1,room=migRoom(gen);
+    const old=n===0||(here&&!gone)||(!gone&&newTries>0&&newTries%4===0),gen=old?gen0:gen0+1,room=migRoom(gen);
     await slp(n===0?250:!old&&newTries===0?500:300);n++;if(!old)newTries++;if(MODE!=='client'||(G&&G.over))break;
     {const og=NET.game;NET.game=null;try{if(og)og.leave().catch(()=>{});}catch(e){}}
-    let g=null;try{g=await joinT('tc-'+room,old?4000:6000);}catch(e){if(old&&e&&e.type==='peer-unavailable')gone=true;continue;}
+    let g=null;try{g=await joinT('tc-'+room,old?4000:6000);}catch(e){if(old){here=false;if(e&&e.type==='peer-unavailable')gone=true;}continue;}
     if(MODE!=='client'||(G&&G.over)){try{g.leave().catch(()=>{});}catch(e){}break;}
     NET.game=g;NET.myPeer=null;NET.reconKick=false;
     if(window.WW3_P2P)NET.hostPeer='ww3-'+room;else if(gen>0){NET.hostPeer=null;NET.findHost=true;}wireClient(g);
     if(NET.findHost){const h=g.peers().find(q=>!q.sameTab&&q.presence&&q.presence.h);if(h){NET.hostPeer=h.peer;NET.findHost=false;}}
     NET.lastSnapT=0;NET.prevT=0;NET.rxW=0;NET.ia=0;NET.iaDev=0;const t1=performance.now();
-    for(let k=0;k<24&&NET.lastRx<t1&&!NET.reconKick&&MODE==='client';k++){if(!NET.myPeer){const me=g.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}
+    // back in only once the host is sending to *this* player again: it linked us back in (its 'start' to us), or an update
+    // addressed to us arrived, or (same connection as before) any update. Updates the host broadcasts to everyone also
+    // reach a player it has dropped, and taking those as 'reconnected' left that player on an empty, frozen battle.
+    const back=()=>gen>gen0?NET.lastRx>=t1:(NET.ackW>=t1||NET.lastRxMe>=t1||(NET.lastRx>=t1&&!!p0&&NET.myPeer===p0));
+    for(let k=0;k<24&&!back()&&!NET.reconKick&&MODE==='client';k++){if(!NET.myPeer){const me=g.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}
       if(k%3===0)g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1},cq:NET.cq||[]}).catch(()=>{});await slp(300);}
-    if(NET.lastRx>=t1&&!NET.reconKick){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Connected to the new host.':'Reconnected to the host.','g');return;}
-    if(old&&NET.reconKick)gone=true;NET.reconKick=false;}
+    if(back()&&!NET.reconKick){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Connected to the new host.':'Reconnected to the host.','g');return;}
+    // the host is not in its room any more (closed the game / lost its connection): it is gone, the standby takes over now.
+    // While it is still there (it was just slow), keep knocking at its room, and the standby holds off for up to 15 s
+    // instead of starting a second battle beside it. If its room can't be reached at all, the standby takes over at once.
+    if(old){here=!NET.reconKick&&g.peers().some(q=>!q.sameTab&&(q.peer===NET.hostPeer||(q.presence&&q.presence.h)));if(!here)gone=true;}NET.reconKick=false;}
   NET.recon=false;NET.reconKick=false;if(MODE==='client')oppLeft();}
 async function joinGame(p){if(NET.game)return;const code=p.presence.g.c;$('mpstatus').textContent='Joining…';
   try{NET.game=await NET.room.join('tc-'+code);}catch(e){$('mpstatus').textContent=window.WW3_P2P?'No open game with code '+code.toUpperCase()+' was found. Check the code and make sure the host still has the lobby open.':'Could not join that game.';NET.game=null;return;}
   NET.hostPeer=p.peer;NET.code='join';NET.jcode=code;NET.baseCode=code;NET.gen=0;NET.via=NET.game.via||null;NET.tok=joinTok(code);NET.lastRx=0;wireClient(NET.game);NET.cq=[];NET.cs=Math.floor(Date.now()/10);
-  clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}if(MODE==='client'&&!NET.recon&&NET.lastRx&&performance.now()-NET.lastRx>5000){clientReconnect();return;}if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null}).catch(()=>{});},1000);
+  // keep-alive + 'host lost' watchdog. The watchdog counts from the last update, or from the end of this player's loading
+  // screen / the battle start if none came yet (before, a player who had heard nothing since the start never noticed, so a
+  // host that had given up on them left them on a frozen battle: no army, starting money). The loading flag (ld) tells
+  // the host this player is busy loading, so it doesn't count the silence of a slow load as a dropped connection.
+  // When this page itself froze for a while (busy loading, a slow phone, a background tab), the silence is ours, not the
+  // host's: the watchdog starts counting again from when the page came back (NET.stW). Before the first update ever
+  // arrives the host may simply still be on its own loading screen, so that wait is much longer (45 s).
+  clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}const w=performance.now(),ld=window.LOADING?1:0;if(ld)NET.ldW=w;if(NET.pgW&&w-NET.pgW>2500)NET.stW=w;NET.pgW=w;
+    if(MODE==='client'&&!NET.recon&&!ld&&(NET.lastRx?w-Math.max(NET.lastRx,NET.ldW||0,NET.stW||0)>5000:w-Math.max(NET.ldW||0,NET.startW||0,NET.stW||0)>45000)){clientReconnect();return;}if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null,ld}).catch(()=>{});},1000);
   let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The host did not answer. The game may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}NET.game.presence({hi:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',{f:setup.p}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
   hello();NET.helloI=setInterval(hello,1500);$('mpstatus').textContent='Connecting to the host…';}
 // Set the Conditions choice and light up its menu button. The host's choice is used only for that battle: the player's
@@ -7670,13 +7690,16 @@ function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return nul
   if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
   if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
 const NET_PV=6;
-// A dropped player gets 30 s to reconnect (same team, same units) before the AI takes over their side.
+// A dropped player gets 30 s to reconnect (same team, same units) before the AI takes over their side. A player counts as
+// dropped after 8 s without a word, or 90 s while their keep-alive says they are still on the loading screen (NET.ldOf).
 function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=NET.toks.indexOf(tok);if(ix<0||ix===ME)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,(NET.cseqSlot||[])[ix]|0);
   const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',Object.assign({pv:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm,w:S.w|0},S.sv?{sv:1}:{})).catch(()=>{});
   for(const O of G.teams)log(O.id,`${T.F.name}'s commander reconnected.`,'g');
   // P2P: the rejoined player starts from a fresh map, so collapsed city blocks are re-sent as they come into view
   if(hostP2P()){(NET.gq=NET.gq||[])[ix]=[];(NET.civQ=NET.civQ||[])[ix]=(G.civ||[]).map((c,i)=>c.dead?i:-1).filter(i=>i>=0);}}
-function discTick(){if(!NET.peers||!G)return;const now=performance.now();for(let k=0;k<NET.peers.length;k++){const p=NET.peers[k];if(k===ME||!p)continue;const ls=(NET.seen||{})[p];if(ls&&now-ls>8000&&!G.teams[k].discT&&!G.teams[k].ai){NET.peers[k]=null;playerLeft(k);}}for(let k=0;k<NET.peers.length;k++){const T=G.teams[k];if(k!==ME&&T&&T.discT&&G.t-T.discT>30&&!T.out){T.discT=0;T.ai=mkAI(1);T.aiTook=1;for(const O of G.teams)log(O.id,`${T.F.name}'s commander did not come back. The AI has taken over (they can still rejoin).`,'w');}}}
+function discTick(){if(!NET.peers||!G)return;const now=performance.now();
+  // the host's own page froze (loading, a slow PC): what queued up meanwhile is not the players' silence, so that gap is not counted
+  if(NET.dtW&&now-NET.dtW>2500&&NET.seen){const gap=now-NET.dtW;for(const p in NET.seen)NET.seen[p]+=gap;}NET.dtW=now;for(let k=0;k<NET.peers.length;k++){const p=NET.peers[k];if(k===ME||!p)continue;const ls=(NET.seen||{})[p];if(ls&&now-ls>((NET.ldOf||{})[p]?90000:8000)&&!G.teams[k].discT&&!G.teams[k].ai){NET.peers[k]=null;playerLeft(k);}}for(let k=0;k<NET.peers.length;k++){const T=G.teams[k];if(k!==ME&&T&&T.discT&&G.t-T.discT>30&&!T.out){T.discT=0;T.ai=mkAI(1);T.aiTook=1;for(const O of G.teams)log(O.id,`${T.F.name}'s commander did not come back. The AI has taken over (they can still rejoin).`,'w');}}}
 function playerLeft(ix){if(!G||G.over)return;const T=G.teams[ix];if(!T||T.out||T.ai)return;T.discT=G.t;for(const O of G.teams)log(O.id,`${T.F.name}'s commander lost connection. Waiting up to 30 s for them to reconnect…`,'w');}
 /* ---------- host: what players send (shared by the browser host's wireHost and the server host) ----------
    A server-hosted battle has no side of its own (ME=-1), so every slot is a player; a browser host is slot ME=0. */
@@ -7687,6 +7710,7 @@ function hostCmd(peer,data){if(MODE!=='host')return;const ix=NET.peers?NET.peers
 // (de-duplicated), and requests for a full snapshot
 function hostPres(q,hello){const pr=q.presence;(NET.seen=NET.seen||{})[q.peer]=performance.now();
   if(pr.hi&&pr.hi.ed!=null)(NET.edOf=NET.edOf||{})[q.peer]=pr.hi.ed?1:0;
+  if(pr.ld!=null)(NET.ldOf=NET.ldOf||{})[q.peer]=pr.ld?1:0;
   // a player the heartbeat marked as gone (e.g. their PC stalled while loading) is linked back as soon as they are heard from again
   if(MODE==='host'&&NET.peers&&pr.hi&&typeof pr.hi.tok==='string'&&NET.peers.indexOf(q.peer)<0)hostRejoin(q.peer,pr.hi.tok.slice(0,16));
   if(pr.hi&&(MODE==='single'||MODE==='host')&&(NET.lastHi||{})[q.peer]!==pr.hi.n){(NET.lastHi=NET.lastHi||{})[q.peer]=pr.hi.n;hello(q.peer,q.by,pr.hi.f,typeof pr.hi.tok==='string'?pr.hi.tok.slice(0,16):null);}
@@ -8273,13 +8297,182 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
   .game button,.joinrow .big,.joinrow input{min-height:40px}
 }`;document.body.append(st);}
-function touchUI(){TOUCHUI=true;document.body.classList.add('touchui');const h=$('hint');if(h)h.textContent='Tap a unit to select it · with units selected, tap the ground to move or an enemy to attack · drag to box-select · two fingers: slide to pan, pinch to zoom · tap the small map to jump there';try{updateUI();}catch(e){}}
+function touchUI(){TOUCHUI=true;document.body.classList.add('touchui');const h=$('hint');if(h)h.textContent='Drag to scroll · pinch to zoom · tap a unit to select it, then tap the ground to move or an enemy to attack · double-tap: all of that type · hold, then drag: box-select (or a battle line with units selected)';try{updateUI();}catch(e){}}
 // on touch: the banner says how to place, and tapping it cancels; the long hint steps aside after the opening
-function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: touch the map, slide, lift to build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target'):(md.dataset.d||'').replace(/click/g,'tap');
+function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: tap a spot (drag scrolls), then ✓ Build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target')+', then ✓ Fire':(md.dataset.d||'').replace(/click/g,'tap');
     if(md.dataset.t!==t){md.dataset.t=t;md.innerHTML='<span></span><button class="mcx" type="button">✕ Cancel</button>';md.firstChild.textContent=t;}}else md.dataset.t='';
   const h=$('hint');if(h)h.hidden=!md.hidden||G.t>40;}
 $('mode').onclick=e=>{if(!G||!e.target.closest('.mcx'))return;G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();};
 try{if(matchMedia('(hover:none) and (pointer:coarse)').matches)touchUI();}catch(e){}
+/* ================= TOUCH CONTROLS (phones, tablets) — touch only ================= */
+// Everything in this block acts only on touch (pointerType 'touch'). Touches on the battlefield are taken here in the
+// capture phase and stopped, so they never reach the mouse handlers above, and a mouse or pen never reaches this code:
+// the desktop mouse scheme is unchanged. (touchDown/touchMove/touchUp above are the older touch code, no longer reached.)
+//   one finger drag ........ scrolls the map like a maps app (it follows the finger and glides on after a flick)
+//   two fingers ............ pinch to zoom, slide to pan
+//   tap .................... selects a unit or building; with units selected, tap the ground to move, an enemy to
+//                            attack, or your own transport / tunnel / building they can use to go in. A production
+//                            building selected: tap the ground for its rally point. A ring flashes where the order went.
+//   double-tap a unit ...... selects all of that type on screen
+//   hold, then drag ........ box-select; with units selected it draws the infantry line formation instead
+//   command strip .......... above the bar while units are selected: attack-move, guard, stop, line, same type, all army,
+//                            retreat, deselect
+//   building or power ...... tap to choose the spot (one finger still scrolls), then ✓ to build / fire or ✕ to cancel
+//   first battle ........... a 3-step guide shows once (remembered on this device); ☰ > Touch controls shows it again
+const TC={ids:new Map(),g:null,pinch:null,vel:{x:0,y:0},glide:false,lastTap:null,pick:null,lineArm:false,lpT:0,last:performance.now(),
+  touch:false,stripK:'',stripT:0,marks:0,seen:{}};
+try{TC.touch=matchMedia('(hover:none) and (pointer:coarse)').matches;}catch(e){}
+const TC_LP=380,TC_SLOP=10,TC_DBL=420;
+function tcOwn(){return G?G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead):[];}
+function tcXY(e){const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+function tcMid(){const a=[...TC.ids.values()];return{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};}
+function tcOnScreen(u,h){const p=toScreen(u.x,unitH(u)+(h||0),u.y);return p.x>0&&p.y>0&&p.x<VW&&p.y<VH;}
+// move the camera by a world offset, at once (no easing), kept on the map
+function tcCam(dx,dy){camTarget();const ox=cam.tx,oy=cam.ty;cam.tx=Math.max(0,Math.min(MAPW,cam.tx+dx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty+dy));
+  const mx=cam.tx-ox,my=cam.ty-oy;cam.x+=mx;cam.y+=my;cam._xl=cam.x;cam._yl=cam.y;return Math.abs(mx)+Math.abs(my)>1e-3;}
+// a ring that flashes where an order went (move green, attack red, attack-move orange, guard blue, rally, line, blocked)
+function tcMark(x,y,k){TC.marks++;TC.seen[k]=(TC.seen[k]||0)+1;if(SET.mPing===0)return;const r=cv.getBoundingClientRect(),d=document.createElement('div');d.className='tmark '+k;d.style.left=(x+r.left)+'px';d.style.top=(y+r.top)+'px';document.body.append(d);setTimeout(()=>d.remove(),750);}
+function tcHold(x,y){let h=$('thold');if(x==null){if(h)h.hidden=true;return;}if(!h){h=document.createElement('div');h.id='thold';document.body.append(h);}const r=cv.getBoundingClientRect();h.style.left=(x+r.left)+'px';h.style.top=(y+r.top)+'px';h.hidden=false;}
+// your own unit or building that the selection can use (board, enter a tunnel, garrison, help build, re-crew)
+function tcUse(t,own){if(!t||t.team!==ME||t.dead)return false;
+  if(t.kind==='garrison'&&own.some(u=>canGarrison(u)))return true;
+  if(t.isB)return(t.built<1&&own.some(u=>u.kind==='dozer'))||(t.kind==='tunnel'&&t.built>=1&&own.some(u=>u.s.dom==='ground'&&u.kind!=='harv'));
+  return!!(t.s&&t.s.cap&&own.some(u=>u!==t&&canBoard(t,u)))||(!!t.aband&&own.some(u=>isInf(u.s)&&!u.s.noAttack));}
+function tcProd(){return G.sel.some(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)&&b.built>=1);}
+function tcSelSound(){if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);}
+function tcAbort(){clearTimeout(TC.lpT);tcHold();const g=TC.g;TC.g=null;if(!g)return;if(drag&&drag.id===g.id)drag=null;if(RDRAG&&RDRAG.id===g.id)RDRAG=null;}
+function tcTap(x,y,ts){if(ts==null)ts=performance.now();mouse.x=x;mouse.y=y;const w=screenToWorld(x,y);if(!w)return;
+  if(G.place||G.aim){TC.pick=w;sfxUI(520);updateUI();return;}
+  const own=tcOwn();
+  if(G.defm){if(own.length){defendAt(w);tcMark(x,y,'gd');}G.defm=false;updateUI();return;}
+  if(G.amove&&own.length){const ids=own.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);if(ids.length){doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});tcMark(x,y,'am');}G.amove=false;updateUI();return;}
+  G.amove=false;
+  const t=pickAt(x,y,false),now=ts,L=TC.lastTap;
+  TC.tapLog={x:Math.round(x),y:Math.round(y),t:t?t.kind+'/'+t.team:null,own:own.length};
+  if(t&&t.team===ME&&!t.isB&&L&&now-L.t<TC_DBL&&L.kind===t.kind&&Math.hypot(x-L.x,y-L.y)<60){TC.lastTap=null;
+    G.sel=G.ents.filter(u=>u.team===ME&&u.kind===t.kind&&!u.dead&&tcOnScreen(u));tcMark(x,y,'sel');tcSelSound();updateUI();return;}
+  TC.lastTap=t&&t.team===ME&&!t.isB?{t:now,kind:t.kind,x,y}:null;
+  if(own.length&&!(t&&t.team===ME&&!tcUse(t,own))){
+    if(!t&&typeof noGo==='function'&&noGo(own,w)){try{sfxUI(220);}catch(_){}tcMark(x,y,'no');return;}
+    if(issueCmd(w,t,false)){tcMark(x,y,t&&!ally(t.team,ME)?'atk':'mv');updateUI();return;}}
+  if(!t&&!own.length&&tcProd()){issueCmd(w,null,true);tcMark(x,y,'rl');updateUI();return;}
+  selectClick(t,false);if(t)tcMark(x,y,'sel');tcSelSound();updateUI();}
+function tcBox(g){const x0=Math.min(g.x0,g.x),x1=Math.max(g.x0,g.x),y0=Math.min(g.y0,g.y),y1=Math.max(g.y0,g.y);
+  G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u)+4,u.y);return p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1;})());tcSelSound();updateUI();}
+function tcLine(g){const w0=g.w0,w1=screenToWorld(g.x,g.y),ids=tcOwn().map(u=>u.id);TC.lineArm=false;if(!w0||!w1||!ids.length)return;
+  doAct({t:'line',ids,x:w0.x,y:w0.y,x2:w1.x,y2:w1.y,mode:G.amove?'amove':'move'});G.amove=false;speak(1);PINGS.push({x:(w0.x+w1.x)/2,y:(w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});
+  tcMark(g.x0,g.y0,'ln');tcMark(g.x,g.y,'ln');updateUI();}
+function tcStartDrag(g,ts){const own=tcOwn();
+  if(own.length&&!G.place&&!G.aim&&(g.mode==='hold'||TC.lineArm)){g.mode='line';g.w0=screenToWorld(g.x0,g.y0);RDRAG={x0:g.x0,y0:g.y0,w0:g.w0,id:g.id,am:G.amove,moved:true,line:true,tc:1};}
+  else if(g.mode==='hold'&&!G.place&&!G.aim){g.mode='box';drag={x0:g.x0,y0:g.y0,box:true,shift:false,id:g.id,pt:'touch',tc:1};}
+  else{g.mode='pan';g.lt=ts;TC.vel={x:0,y:0};}
+  tcHold();}
+function tcLong(){const g=TC.g;if(!g||g.mode!=='tap')return;g.mode='hold';tcHold(g.x,g.y);try{navigator.vibrate&&navigator.vibrate(15);}catch(_){}}
+window.addEventListener('pointerdown',e=>{TC.touch=e.pointerType==='touch';TC.nd=(TC.nd||0)+1;TC.lastDown=e.pointerType+':'+(e.target&&(e.target.id||e.target.tagName));if(e.pointerType!=='touch'||e.target!==cv)return;
+  if(typeof menuOpen==='function'&&menuOpen())return; // the menu's own handler closes it and swallows the tap
+  e.stopPropagation();e.preventDefault();if(!G||G.over)return;
+  LASTPT='touch';if(!TOUCHUI)touchUI();PICKMIN=20;mouse.in=false;try{cv.setPointerCapture(e.pointerId);}catch(_){}
+  TC.glide=false;const p=tcXY(e);TC.ids.set(e.pointerId,p);
+  if(TC.ids.size>=2){tcAbort();if(!TC.pinch&&TC.ids.size===2)TC.pinch=tcMid();return;}
+  TC.g={id:e.pointerId,x0:p.x,y0:p.y,x:p.x,y:p.y,mode:'tap',t0:e.timeStamp};clearTimeout(TC.lpT);TC.lpT=setTimeout(tcLong,TC_LP);},true);
+window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')TC.nm=(TC.nm||0)+1;if(e.pointerType!=='touch'||!TC.ids.has(e.pointerId))return;e.stopPropagation();if(!G)return;
+  const p=tcXY(e),q=TC.ids.get(e.pointerId);TC.ids.set(e.pointerId,p);
+  if(TC.pinch&&TC.ids.size>=2){const m=tcMid(),P=TC.pinch;camTarget();
+    if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(1800,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
+    const a=screenToWorld(P.x,P.y),b=screenToWorld(m.x,m.y);if(a&&b){cam.tx+=a.x-b.x;cam.ty+=a.y-b.y;}TC.pinch={x:m.x,y:m.y,d:m.d};return;}
+  const g=TC.g;if(!g||g.id!==e.pointerId)return;g.x=p.x;g.y=p.y;
+  if(g.mode==='tap'||g.mode==='hold'){if(Math.hypot(p.x-g.x0,p.y-g.y0)<=TC_SLOP)return;clearTimeout(TC.lpT);
+    // held or not is decided by how long the finger rested before it moved (event times), not by when the timer ran
+    g.mode=e.timeStamp-g.t0>=TC_LP?'hold':'tap';tcStartDrag(g,e.timeStamp);if(g.mode==='pan')q.x=g.x0,q.y=g.y0;}
+  if(g.mode==='pan'){const a=screenToWorld(q.x,q.y),b=screenToWorld(p.x,p.y);if(!a||!b)return;let dx=a.x-b.x,dy=a.y-b.y;const cap=cam.dist*1.5,n=Math.hypot(dx,dy);if(n>cap){dx*=cap/n;dy*=cap/n;}
+    tcCam(dx,dy);const now=e.timeStamp,dt=Math.max(.004,(now-g.lt)/1000);g.lt=now;const ix=dx/dt,iy=dy/dt;
+    TC.vel=dt>.1?{x:ix,y:iy}:{x:TC.vel.x*.45+ix*.55,y:TC.vel.y*.45+iy*.55};return;}
+  mouse.x=p.x;mouse.y=p.y;},true);
+function tcEnd(e,cancel){if(e.pointerType!=='touch'||!TC.ids.has(e.pointerId))return;e.stopPropagation();TC.ids.delete(e.pointerId);if(TC.ids.size<2)TC.pinch=null;
+  const g=TC.g;if(!g||g.id!==e.pointerId)return;clearTimeout(TC.lpT);tcHold();TC.g=null;TC.endLog={mode:g.mode,ms:Math.round(e.timeStamp-g.t0),d:Math.round(Math.hypot(g.x-g.x0,g.y-g.y0))};
+  if(g.mode==='line'&&RDRAG&&RDRAG.id===g.id)RDRAG=null;if(g.mode==='box'&&drag&&drag.id===g.id)drag=null;
+  if(cancel||!G||G.over)return;
+  if(g.mode==='tap'||g.mode==='hold')tcTap(g.x0,g.y0,e.timeStamp);
+  else if(g.mode==='box')tcBox(g);
+  else if(g.mode==='line')tcLine(g);
+  else if(g.mode==='pan'){const sp=Math.hypot(TC.vel.x,TC.vel.y),cap=cam.dist*4;if(e.timeStamp-g.lt<90&&sp>cam.dist*.35){if(sp>cap){TC.vel.x*=cap/sp;TC.vel.y*=cap/sp;}TC.glide=true;}}}
+window.addEventListener('pointerup',e=>tcEnd(e,false),true);
+window.addEventListener('pointercancel',e=>tcEnd(e,true),true);
+/* ---- command strip (touch only, while units are selected) and build / fire confirm ---- */
+const TC_BTN=[['am','⚔','Attack','Attack-move: tap a spot, they fight everything on the way'],['gd','🛡','Guard','Guard: tap the spot to hold'],['st','■','Stop','Stop'],
+  ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all units of the selected types on screen'],['all','★','Army','Select your whole army'],
+  ['rt','↩','Retreat','Retreat to the nearest base building'],['ds','✕','Clear','Deselect']];
+function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
+  if(k==='am'){G.amove=!G.amove;G.defm=false;TC.lineArm=false;}
+  else if(k==='gd'){G.defm=!G.defm;G.amove=false;TC.lineArm=false;}
+  else if(k==='st'){if(ids.length)doAct({t:'stop',ids});sfxUI(520);}
+  else if(k==='ln'){TC.lineArm=!TC.lineArm;G.amove=false;G.defm=false;}
+  else if(k==='ty'){const ks=new Set(own.map(u=>u.kind));G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&ks.has(u.kind)&&tcOnScreen(u));tcSelSound();}
+  else if(k==='all'){selectArmy();}
+  else if(k==='rt'){if(ids.length){doAct({t:'ret',ids});speak(2);}}
+  else if(k==='ds'){G.sel=[];G.amove=false;G.defm=false;TC.lineArm=false;}
+  else if(k==='ok'){if(TC.pick&&(G.place||G.aim)){const p=toScreen(TC.pick.x,0,TC.pick.y);placeOrAim(TC.pick,false);if(!G.place&&!G.aim){tcMark(p.x,p.y,'am');TC.pick=null;}}}
+  else if(k==='no'){G.place=null;G.aim=null;TC.pick=null;}
+  TC.stripK='';updateUI();tcStrip(true);}
+function tcStrip(force){const now=performance.now();if(!force&&now-TC.stripT<120)return;TC.stripT=now;
+  let s=$('tstrip');if(!s){s=document.createElement('div');s.id='tstrip';s.hidden=true;s.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled)tcCmd(b.dataset.k);});document.body.append(s);}
+  const on=TOUCHUI&&TC.touch&&G&&!G.over&&!window.LOADING&&$('menu').hidden;const own=on?tcOwn():[];
+  const mode=!on?'':(G.place||G.aim)?'conf':own.length?'cmd':'';
+  const ok=mode==='conf'&&!!TC.pick&&(G.aim||!!validSpot(ME,G.place,TC.pick.x,TC.pick.y));
+  const key=mode+'|'+(mode==='cmd'?[G.amove,G.defm,TC.lineArm,own.some(u=>u.retreat)].join():mode==='conf'?(G.place?'b':'f')+ok:'');
+  document.body.classList.toggle('tstripOn',mode==='cmd');document.body.classList.toggle('tconfOn',mode==='conf');
+  if(key===TC.stripK)return;TC.stripK=key;s.hidden=!mode;s.className=mode;s.innerHTML='';if(!mode)return;
+  const mk=(k,ic,tx,ti,cl)=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.title=ti;b.setAttribute('aria-label',ti);if(cl)b.className=cl;const i=document.createElement('i');i.textContent=ic;const t=document.createElement('span');t.textContent=tx;b.append(i,t);s.append(b);return b;};
+  if(mode==='conf'){const b=mk('ok','✓',G.place?'Build here':'Fire here',G.place?'Build it at the marked spot':'Fire at the marked spot','go');b.disabled=!ok;mk('no','✕','Cancel','Cancel','cx');return;}
+  for(const [k,ic,tx,ti] of TC_BTN){const b=mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}}
+/* ---- first-time guide: three steps, shown once, remembered; ☰ > Touch controls shows it again. A card near the top,
+   not a full-screen cover: the battle keeps running (multiplayer can't pause) and stays playable around it ---- */
+const TC_GUIDE=[['☝','Move the map','Drag one finger to scroll the battlefield; flick to glide. Pinch with two fingers to zoom.'],
+  ['◉','Select and command','Tap a unit to select it, then tap the ground to move or an enemy to attack: a ring shows where the order went. Double-tap a unit to select all of that type on screen.'],
+  ['▭','Hold, then drag','Hold a finger still for a moment, then drag to box-select a group. With units selected, hold and drag to draw a battle line. The buttons above the bar give attack-move, guard, stop and more.']];
+function tcGuideSeen(){try{return localStorage.getItem('ww3_touchGuide')==='1';}catch(e){return false;}}
+function tcGuide(show){let o=$('tguide');if(show===false){if(o)o.hidden=true;return;}
+  if(!o){o=document.createElement('div');o.id='tguide';o.setAttribute('role','dialog');o.setAttribute('aria-label','Touch controls');o.innerHTML='<div class="tgc"><div class="tgn"></div><div class="tgi"></div><b></b><p></p><div class="tgb"><button type="button" class="tgs">Skip</button><button type="button" class="tgx">Next</button></div></div>';document.body.append(o);
+    o.querySelector('.tgs').onclick=()=>tcGuide(false);o.querySelector('.tgx').onclick=()=>{if(o.dataset.i>=TC_GUIDE.length-1)tcGuide(false);else tcGuideStep(+o.dataset.i+1);};}
+  try{localStorage.setItem('ww3_touchGuide','1');}catch(e){}TC.guideShown=(TC.guideShown||0)+1;o.hidden=false;tcGuideStep(0);}
+function tcGuideStep(i){const o=$('tguide'),[ic,h,p]=TC_GUIDE[i];o.dataset.i=i;o.querySelector('.tgn').textContent=`${i+1} / ${TC_GUIDE.length}`;o.querySelector('.tgi').textContent=ic;o.querySelector('b').textContent=h;o.querySelector('p').textContent=p;o.querySelector('.tgx').textContent=i===TC_GUIDE.length-1?'Got it':'Next';}
+{const m=$('amenu'),s=$('aSet');if(m&&s&&!$('aGuide')){const b=document.createElement('button');b.id='aGuide';b.className='on';b.setAttribute('role','menuitem');b.textContent='☝ Touch controls';b.title='Show the touch controls guide';b.onclick=()=>{menuOpen(false);tcGuide(true);};s.after(b);}}
+/* ---- every frame: flick glide, the build / fire marker stays on its spot while the map scrolls, strip, guide ---- */
+(function tcLoop(){requestAnimationFrame(tcLoop);const now=performance.now(),dt=Math.min(.05,(now-TC.last)/1000);TC.last=now;TC.frames=(TC.frames||0)+1;if(!G)return;
+  try{if(TC.glide){if(!tcCam(TC.vel.x*dt,TC.vel.y*dt))TC.glide=false;const k=Math.exp(-dt*4.2);TC.vel.x*=k;TC.vel.y*=k;if(Math.hypot(TC.vel.x,TC.vel.y)<cam.dist*.04)TC.glide=false;}
+    if((G.place||G.aim)&&TC.touch&&!G.over){if(!TC.pick)TC.pick=screenToWorld(VW/2,VH*.42);if(TC.pick){const p=toScreen(TC.pick.x,0,TC.pick.y);mouse.x=p.x;mouse.y=p.y;}}else TC.pick=null;
+    tcStrip(false);
+    if(TOUCHUI&&TC.touch&&!G.over&&!window.LOADING&&$('menu').hidden&&!tcGuideSeen())tcGuide(true);}catch(e){TC.err=String(e&&e.stack||e).slice(0,300);}})();
+{const st=document.createElement('style');st.id='touchCss';st.textContent=`
+.tmark{position:fixed;z-index:7;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;border:3px solid #7be08f;box-shadow:0 0 0 2px rgba(0,0,0,.55),inset 0 0 0 2px rgba(0,0,0,.4);pointer-events:none;animation:tmk .7s ease-out forwards}
+.tmark::after{content:"";position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px;border-radius:50%;background:currentColor;color:inherit}
+.tmark.mv{border-color:#7be08f;color:#7be08f}.tmark.atk{border-color:#ff4a3a;color:#ff4a3a}.tmark.am{border-color:#ffb02e;color:#ffb02e}.tmark.gd{border-color:#6fb2ff;color:#6fb2ff}
+.tmark.rl{border-color:#7be08f;color:#7be08f;border-style:dashed}.tmark.ln{border-color:#d6f7de;color:#d6f7de;width:30px;height:30px;margin:-15px}.tmark.sel{border-color:#e9f5ec;color:transparent;border-radius:6px}.tmark.no{border-color:#ff3b30;color:#ff3b30}
+@keyframes tmk{from{transform:scale(.35);opacity:1}60%{opacity:1}to{transform:scale(1.35);opacity:0}}
+#thold{position:fixed;z-index:7;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:2px solid rgba(233,245,236,.9);background:rgba(123,224,143,.14);pointer-events:none}
+#thold[hidden]{display:none}
+#tstrip{position:fixed;z-index:7;left:max(6px,env(safe-area-inset-left,0px));right:max(6px,env(safe-area-inset-right,0px));bottom:calc(var(--barh,180px) + 6px);display:flex;justify-content:center;gap:4px;pointer-events:none}
+#tstrip[hidden]{display:none}
+#tstrip button{pointer-events:auto;flex:1 1 0;min-width:40px;max-width:76px;min-height:44px;padding:2px 1px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:rgba(24,32,28,.94);border:1px solid #3d4d44;color:var(--fg,#e9f5ec);font:600 10px var(--display,system-ui);letter-spacing:.02em;box-shadow:0 2px 8px rgba(0,0,0,.5);touch-action:manipulation;cursor:pointer}
+#tstrip button i{font-style:normal;font-size:16px;line-height:1}
+#tstrip button.on{border-color:var(--accent,#7be08f);color:var(--accent,#7be08f);background:rgba(40,60,46,.96)}
+#tstrip.conf{justify-content:flex-end}
+#tstrip.conf button{flex:0 1 96px;max-width:none;font-size:12px}
+#tstrip.conf button.go{border-color:var(--ok,#7be08f);color:var(--ok,#7be08f)}#tstrip.conf button.go:disabled{opacity:.45}
+#tstrip.conf button.cx{border-color:var(--warn,#ea5a40);color:var(--warn,#ea5a40)}
+body.tstripOn #info .cmdrow{display:none!important}
+#tguide{position:fixed;left:0;right:0;top:max(44px,calc(env(safe-area-inset-top,0px) + 38px));z-index:30;display:flex;justify-content:center;padding:0 10px;pointer-events:none}
+#tguide[hidden]{display:none}
+#tguide .tgc{pointer-events:auto;width:min(360px,100%);box-sizing:border-box;background:rgba(18,24,21,.98);border:1px solid #3d4d44;box-shadow:0 10px 30px rgba(0,0,0,.6);padding:16px 16px 12px;color:var(--fg,#e9f5ec);font:14px/1.4 system-ui,sans-serif}
+#tguide .tgn{font:600 11px var(--mono,monospace);color:var(--dim,#9aa8a0);letter-spacing:.08em}
+#tguide .tgi{font-size:34px;line-height:1.2;margin:4px 0;color:var(--accent,#7be08f)}
+#tguide b{display:block;font:700 18px var(--display,system-ui);letter-spacing:.03em;margin-bottom:4px}
+#tguide p{margin:0 0 12px;color:#c9d4ce}
+#tguide .tgb{display:flex;gap:8px;justify-content:flex-end}
+#tguide .tgb button{min-height:44px;min-width:88px;padding:0 14px;background:var(--panel2,#1d2622);border:1px solid #3d4d44;color:var(--fg,#e9f5ec);font:600 14px var(--display,system-ui);cursor:pointer}
+#tguide .tgx{border-color:var(--accent,#7be08f)!important;color:var(--accent,#7be08f)!important}
+body:not(.touchui) #aGuide{display:none}
+@media (max-height:520px){#tguide .tgi{font-size:26px}#tguide .tgc{padding:10px 14px 8px}#tguide p{margin-bottom:8px}}`;document.body.append(st);}
 setTimeout(setHint,0);
 function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=genKeys();if(keys.ArrowLeft||(keys.a&&!gk))cam.tx-=sp;if(keys.ArrowRight||keys.d)cam.tx+=sp;if(keys.ArrowUp||keys.w)cam.ty-=sp;if(keys.ArrowDown||(keys.s&&!gk))cam.ty+=sp;
   // Generals rapid scroll: right-drag with nothing selected pans toward the drag, faster the further you drag

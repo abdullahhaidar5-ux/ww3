@@ -14,8 +14,9 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] iPhone sound works, even on silent, with a Sound check in Settings
 - [done] Faster battle start on phones + loading screen with each nation's quotes
 - [done] Generals-style bottom command bar replacing the side menu
-- [next] Generals mouse controls + Mouse settings (after server battles)
-- [next] More intuitive phone controls (one-finger scroll, command bar for touch; after server battles)
+- [done] Generals mouse controls + Mouse settings
+- [done] Phone held upright: the build grid shows 4 whole columns, nothing cut off
+- [done] Phone controls: drag scrolls the map, hold+drag selects or draws a line, tap gives orders with a marker, touch command strip, first-time guide
 
 ## Multiplayer in the cloud
 - [done] Game live on Cloudflare (ww3.abdullah-haidar5.workers.dev), updated automatically
@@ -23,6 +24,8 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Servers live on Cloudflare (ww3-servers), approved by Abdullah; multiplayer uses them (game list, relay for blocked networks)
 - [doing] Battles run on a server (or a dedicated PC) instead of the host's device — top priority (step 1 done: battle runs without graphics, identical to the browser; battle code needs no graphics stand-ins since cycle 9; what the host sends players runs without a browser since cycle 10; next: PC server + Cloudflare option)
 - [done] Fix: stale enemy soldiers left on a player's screen
+- [done] Rejoining mid-battle restores your army, fog and money; short freezes no longer drop anyone; host takeover waits for a slow host
+- [doing] One "Play online" button (join an open battle or start one; no hosting choice) + optional battle passwords
 
 ## Audio and music overhaul
 - [done] New soundtrack: 14 real recorded tracks for every nation (calm while building, combat when fighting); each nation's anthem at start and on victory

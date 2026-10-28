@@ -61,6 +61,8 @@ const browser = await chromium.launch({ executablePath: findChromium(),
 async function openGame(ctxOpts) {
   const ctx = await browser.newContext(ctxOpts);
   await guardContext(ctx);
+  // the phone's first-time touch guide (a card near the top) is tested in orch/touch.mjs; here it would cover test units
+  await ctx.addInitScript(() => { try { localStorage.setItem('ww3_touchGuide', '1'); } catch (e) {} });
   const page = await ctx.newPage();
   await page.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue() : r.abort());
   page.on('pageerror', e => errors.push('page error: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')));
@@ -293,7 +295,7 @@ try {
   const tp = T.page;
   V = await view(tp);
   const tg = V.ground;
-  check('phone: test units and open ground are on screen', V.onScreen && tg.length >= 1, JSON.stringify({ U: V.U, g: V.ground }));
+  check('phone: test units and open ground are on screen', V.onScreen && tg.length >= 1, JSON.stringify({ U: V.U, E: V.E, g: V.ground }));
   await clear(tp);
   await tp.touchscreen.tap(V.U[1].x, V.U[1].y);
   check('phone: tap a unit selects it', sameIds(await sel(tp), [B]), JSON.stringify(await sel(tp)));

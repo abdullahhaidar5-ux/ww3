@@ -238,3 +238,6 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
 - Gate: baseline `SMOKE PASS` — 3 players (IR vs US vs CU) on Strait, 4 game-minutes, peak 46/25/22 entities.
 - `testbed` netcode work found ~95% merged into live; left in place, review queued in the backlog.
 - Organized all open ideas and Abdullah's standing decisions into `orch/BACKLOG.md` and `CLAUDE.md`.
+
+- 2026-10-27 19:50 side lane: shipped reconnect/host-takeover/phone-bar (CIGATE 16/16 on 6b29922, migrate fixed on GitHub runners). Abdullah OK'd a staging Worker (19:37) → `ww3-servers-staging` via `.github/workflows/staging-servers.yml` (first deploy + servertest PASS). New cloud agents: passwords, play-online, review-cf, assembler.
+- 2026-10-28 01:45 side lane: cloud agents hit the usage limit ~20:00 (8 at once). Shipped touch controls (a1bdcb3, 16/16), artifact v169. Restarted 2 agents: cf-final, three-upgrade.
