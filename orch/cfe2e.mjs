@@ -171,6 +171,7 @@ async function main() {
   let st = await SB();
   for (let i = 0; i < 100 && !(st.go && st.humans.every(h => h.rd)); i++) { await A.waitForTimeout(200); st = await SB(); }
   say(`   both pages past the loading screen (rd: ${st.humans.map(h => h.rd).join(', ')}); battle running: ${st.go}`);
+  if (process.env.CFE2E_DEBUG) for (const p of [A, B]) say('     page ' + JSON.stringify(await p.evaluate(() => { const me = NET.game && NET.game.peers().find(q => q.sameTab); return { mode: MODE, sv: NET.sv, me: me && me.peer, rd: me && me.presence && me.presence.rd, peers: NET.peers, recon: !!NET.recon }; })) + ' server ' + JSON.stringify(st.conn) + ' ' + JSON.stringify(st.peers));
   if (!st.go || !st.humans.every(h => h.rd)) fail('the server did not start the battle after both loading screens closed');
   const tick = async n => { for (let i = 0; i < n; i++) { const w0 = Date.now();
       for (const p of [A, B]) await p.evaluate(() => { try { if (MODE === 'client') clientTick(0.1); else if (MODE === 'host') { for (let s = 0; s < 6; s++) simUpdate(1 / 60); netTick(0.1); } } catch (e) { console.error('tick: ' + e); } });

@@ -685,7 +685,7 @@ export class BattleRoom extends DurableObject {
     return json({ phase: h.phase, go: !!h.go, steps: h.steps, code: h.code, owner: h.owner, map: h.map, w: h.w, ais: h.ais, tm: h.tm,
       humans: h.order.map((id, k) => ({ id, f: h.players.get(id) ? h.players.get(id).f : h.facs && h.facs[k], rd: !!(h.rd && h.rd[k]) })),
       t: info && info.t, over: info && info.over, ents: info && info.ents, ck: info ? sim.test.ck() : null, peers: info ? sim.test.peers() : null,
-      ev: this.evStats || null });
+      ev: this.evStats || null, conn: [...h.players.values()].map(P => [P.id, P.rd ? 1 : 0]) });
   }
 
   // GET /battle-bench: one AI battle as fast as the object can run it, streamed as text, then "RESULT {json}"
