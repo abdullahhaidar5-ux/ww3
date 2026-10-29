@@ -6072,6 +6072,8 @@ function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.aband)return updAband(u
   if(u.kind==='harv')return updHarv(u,dt);if(u.kind==='dozer')return updDozer(u,dt);if(u.kind==='jet')return updJet(u,dt);if(u.kind==='hacker')return updHacker(u,dt);
   if(canRout(u)&&moraleTick(u,dt))return;
   let o=u.order;if(o&&o.type==='demo')return updDemo(u,dt);
+  // drive-then-unload (Alt+right-click with a transport): unload once the move ends; any other order cancels it
+  if(u.ulO){if(!o)unloadTransport(u);if(!o||!o.ul)u.ulO=0;}
   // transport helicopters' door gunners fire at nearby infantry, light vehicles and low aircraft while the helicopter
   // flies its route (it never stops or turns to fight)
   if(s.door&&!u.landed){const D=s.door;u.dgT=(u.dgT||0)-dt;if(u.dgT<=0){let t=u.dgTg;if(!t||t.dead||!canTarget(D,t)||Math.hypot(t.x-u.x,t.y-u.y)-t.r>D.rng)t=nearestEnemy(u,D.rng,D);u.dgTg=t;u.dgT=t?D.rof*rofMult(u)*(.85+Math.random()*.3):.25;if(t)fire(u,t,D.dmg*dmgOut(u),D.wpn,0);}}
@@ -6244,7 +6246,8 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'atk':{const t=G.byId.get(a.tid);if(!t||ally(t.team,team))break;for(const u of own(a.ids)){
       if(u.kind==='hacker'){if(t.isB){u.order={type:'hack',target:t};u.hk=0;}continue;}
       if(u.s.demo&&t.isB){u.order={type:'demo',target:t};u.pt=0;continue;}
-      if(u.kind==='harv'||u.kind==='dozer'||!canTarget(u.s,t))continue;u.order={type:'attack',target:t};u.guard=null;u.path=null;if(u.kind==='jet'){u.state='fly';u.landed=false;}}break;}
+      if(u.kind==='harv'||u.kind==='dozer'||!canTarget(u.s,t))continue;u.order={type:'attack',target:t};u.guard=null;u.path=null;if(u.kind==='jet'){u.state='fly';u.landed=false;}}
+      for(const i of a.ids||[]){const g=G.byId.get(i);if(g&&g.isB&&g.kind==='garrison'&&g.team===team&&g.civ)for(const u of g.civ.occ)if(canTarget(u.s,t))u.target=t;}break;}
     case 'atkOil':{const o=G.oil[a.fi];if(!o||o.dead||ally(o.owner,team))break;for(const u of own(a.ids)){if(u.kind==='harv'||u.kind==='dozer'||u.kind==='hacker'||!canTarget(u.s,o.tg))continue;u.order={type:'attack',target:o.tg};u.guard=null;u.path=null;if(u.kind==='jet'){u.state='fly';u.landed=false;}}break;}
     case 'fld':{const f=G.fields[a.fi];if(f)for(const u of own(a.ids))if(u.kind==='harv'){u.field=f;u.state='go';u.order=null;}break;}
     case 'q':enqueue(team,a.k);break;
@@ -6260,8 +6263,10 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'tun':{const b=G.byId.get(a.tid);if(!b||!b.isB||b.team!==team||b.kind!=='tunnel'||b.built<1)break;for(const u of own(a.ids))if(u.s.dom==='ground'&&u.kind!=='harv'&&u.kind!=='hacker'){u.order={type:'enter',target:b};u.target=null;u.path=null;}break;}
     case 'gar':{const c=G.civ&&G.civ[a.ci|0];if(!c||c.dead||(c.g&&!ally(c.g.team,team)))break;for(const u of own(a.ids))if(canGarrison(u)){u.order={type:'garrison',ci:c.i,x:c.x,y:c.y};u.target=null;u.guard=null;u.path=null;}break;}
     case 'atkCiv':{const c=G.civ&&G.civ[a.ci|0];if(!c||c.dead||c.g)break;const t=civTarget(c);for(const u of own(a.ids)){if(u.kind==='harv'||u.kind==='dozer'||u.kind==='hacker'||!canTarget(u.s,t))continue;u.order={type:'attack',target:t};u.guard=null;u.path=null;}break;}
-    case 'ungar':{const b=G.byId.get(a.tid);if(b&&b.kind==='garrison'&&b.team===team&&b.civ)leaveGarrison(b.civ);break;}
-    case 'unl':{const b=G.byId.get(a.tid);if(b&&b.isB&&b.team===team&&b.kind==='tunnel'&&b.built>=1)unloadTunnel(b);else if(b&&!b.isB&&b.team===team&&b.s.cap)unloadTransport(b);break;}
+    // at=1: leave toward the point x,y (garrison / tunnel: everyone comes out and moves there; transport: drive there, then unload)
+    case 'ungar':{const b=G.byId.get(a.tid);if(b&&b.kind==='garrison'&&b.team===team&&b.civ){const out=leaveGarrison(b.civ);if(a.at&&out&&out.length)formMove(out,a.x,a.y,'move',false);}break;}
+    case 'unl':{const b=G.byId.get(a.tid);if(b&&b.isB&&b.team===team&&b.kind==='tunnel'&&b.built>=1){const out=unloadTunnel(b);if(a.at&&out&&out.length)formMove(out,a.x,a.y,'move',false);}
+      else if(b&&!b.isB&&b.team===team&&b.s.cap){if(a.at){b.wq=null;setMove(b,a.x,a.y,'move');b.order.ul=1;b.ulO=1;}else{b.ulO=0;unloadTransport(b);}}break;}
     case 'board':{const tr=G.byId.get(a.tid);if(!tr||tr.isB||tr.team!==team||!tr.s.cap)break;for(const u of own(a.ids))if(canBoard(tr,u)){u.order={type:'board',target:tr};u.target=null;u.path=null;}break;}
     case 'stop':for(const u of own(a.ids)){u.order=null;u.target=null;u.path=null;}break;
     // right-drag line formation: units spread evenly along the dragged line (extra units form ranks behind it),
@@ -6523,7 +6528,7 @@ function unloadTransport(tr){const C=tr.cargo||[];if(!C.length)return;const dom=
   tr.cargo=C.filter(Boolean);if(placed)log(tr.team,`${placed} unit${placed>1?'s':''} unloaded.`,'g');if(tr.cargo.length)log(tr.team,'Move closer to land to unload the rest.','w');}
 function enterTunnel(u){const T=G.teams[u.team];if(T.tun.length>=TUN_CAP){u.order=null;log(u.team,'The tunnel network is full (12 units).','w');return;}u.order=null;u.target=null;u.inTun=true;G.byId.delete(u.id);T.tun.push(u);}
 function unloadTunnel(b){const T=G.teams[b.team];const n=T.tun.length;if(!n)return;T.tun.forEach((u,i)=>{const a=i/n*6.283+Math.random()*.3,r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;G.ents.push(u);G.byId.set(u.id,u);});
-  T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the tunnel.`,'g');}
+  const out=T.tun;T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the tunnel.`,'g');return out;}
 function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
 function weatherTick(dt){if(!G.wx)G.wx={k:'clear',t:0,next:150+Math.random()*90};const W=G.wx;W.t+=dt;if(W.t<W.next)return;W.t=0;const ks=weatherKinds(G.map.theme);
   if(W.k==='clear'){W.k=ks[1+Math.floor(Math.random()*(ks.length-1))];W.next=55+Math.random()*45;}else{W.k='clear';W.next=170+Math.random()*120;}
@@ -6586,7 +6591,7 @@ function enterGarrison(u,c){if(c.dead){u.order=null;return;}if(c.g&&!ally(c.g.te
   if(!c.g){const T=G.teams[u.team],s=bstats(T.fac,'garrison');const g={id:G.nid++,isB:true,team:u.team,kind:'garrison',s,civ:c,x:c.x,y:c.y,size:s.size,r:s.size/2,max:c.max,hp:c.hp,built:1,cd:0,target:null,ang:0,lastHit:-99,dis:0,vs:new Array(G.teams.length).fill(false)};G.ents.push(g);G.byId.set(g.id,g);c.g=g;}
   u.order=null;u.target=null;u.guard=null;u.inTun=true;u.inGar=c;u.x=c.x;u.y=c.y;G.byId.delete(u.id);c.occ.push(u);}
 function leaveGarrison(c){const g=c.g;if(!g)return;const occ=c.occ;c.occ=[];occ.forEach((u,i)=>{const a=i/Math.max(1,occ.length)*6.283;const p=nearestPassXY('ground',c.x+Math.cos(a)*30,c.y+Math.sin(a)*30)||[c.x,c.y];u.x=p[0];u.y=p[1];u.inTun=false;u.inGar=null;u.mv=G.t;u.order=null;G.ents.push(u);G.byId.set(u.id,u);});
-  c.hp=Math.max(1,g.hp);g.dead=true;G.byId.delete(g.id);c.g=null;FXE('gone',[g.id,g.x|0,g.y|0,-1,1]);}
+  c.hp=Math.max(1,g.hp);g.dead=true;G.byId.delete(g.id);c.g=null;FXE('gone',[g.id,g.x|0,g.y|0,-1,1]);return occ;}
 // the soldiers inside shoot from the windows
 function updGarrison(g,dt){const c=g.civ;if(!c||c.dead){g.dead=true;return;}c.hp=g.hp;if(!c.occ.length){leaveGarrison(c);return;}
   for(const u of c.occ){u.x=c.x;u.y=c.y;u.cd-=dt;u.hp=Math.min(u.max,u.hp+2*dt);u.fear=Math.max(0,(u.fear||0)-dt*.1);if(u.cd>0)continue;const R=u.s.rng*1.2;
@@ -8073,7 +8078,7 @@ function hostP2P(){return NET.p2p!=null?!!NET.p2p:typeof window!=='undefined'&&!
 const CMD_T=['go','atk','atkOil','fld','q','dq','bld','bldGo','tun','unl','board','up','sup','buy','pow','rally','stop','gar','atkCiv','ungar','give','def','line','ret'];
 function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;
   if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
-  if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
+  if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.at=a.at?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
 const NET_PV=6;
 // A dropped player gets 30 s to reconnect (same team, same units) before the AI takes over their side. A player counts as
 // dropped after 8 s without a word, or 90 s while their keep-alive says they are still on the loading screen (NET.ldOf).
@@ -8437,7 +8442,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+(altMouse()?' · Esc cancels':' · right-click or Esc cancels'));}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
   const s=G.sel.filter(e=>!e.dead);const el=$('info');el.innerHTML='';const b=document.createElement('b'),sp=document.createElement('span'),tip=document.createElement('span');tip.className='tip';
   if(s.length===1){const e=s[0];b.textContent=e.s.name+(e.rank?` · ${VET[e.rank]}`:'');sp.textContent=` ${Math.ceil(e.hp)} / ${e.max} HP`+(e.isB&&e.built<1?` · building ${Math.floor(e.built*100)}%`:'')+((e.dis>G.t||e.disv)?' · HACKED':'')+(e.kind==='jet'?` · ${e.landed?'parked':'airborne'}`:'');
-    tip.textContent=e.kind==='hacker'?'Right-click an enemy building to disable it. Idle hackers earn cash.':e.s.demo?'Stealthed. Right-click an enemy building to plant explosives.':e.kind==='hero'?'Stealthed until it fires. Snipes infantry from long range.':e.kind==='jet'?'Right-click a target to strike. Jets return to the airfield to rearm.':e.kind==='harv'?'Right-click a supply field to send it there.':e.kind==='dozer'?'Builds everything: pick a building under Build, then click the map. Right-click an unfinished building to help. Repairs buildings it stands next to.':e.isB&&e.kind==='tunnel'&&e.team===ME?`Units inside: ${MODE==='client'?(T.tunN|0):T.tun.length} of 12. Select units and right-click a tunnel to send them in; they heal inside and can come out of any tunnel.`:e.isB&&e.nd&&e.built<1?(e.stall?'Waiting for a Construction Vehicle to arrive and build it.':'A Construction Vehicle is building this.'):e.isB&&e.team===ME&&CATS.includes(e.kind)?'Right-click the ground to set the rally point.':'';}
+    tip.textContent=e.kind==='hacker'?'Right-click an enemy building to disable it. Idle hackers earn cash.':e.s.demo?'Stealthed. Right-click an enemy building to plant explosives.':e.kind==='hero'?'Stealthed until it fires. Snipes infantry from long range.':e.kind==='jet'?'Right-click a target to strike. Jets return to the airfield to rearm.':e.kind==='harv'?'Right-click a supply field to send it there.':e.kind==='dozer'?'Builds everything: pick a building under Build, then click the map. Right-click an unfinished building to help. Repairs buildings it stands next to.':e.isB&&e.kind==='tunnel'&&e.team===ME?`Units inside: ${MODE==='client'?(T.tunN|0):T.tun.length} of 12. Select units and right-click a tunnel to send them in; they heal inside and can come out of any tunnel. With the tunnel selected, ${TOUCHUI?'tap':'right-click'} the ground to bring them out there.`:e.isB&&e.kind==='garrison'&&e.team===ME?`Troops inside fire from the windows. ${TOUCHUI?'Tap':'Right-click'} the ground to bring them out and send them there; ${TOUCHUI?'tap':'right-click'} an enemy to focus fire.`:!e.isB&&e.s&&e.s.cap&&e.team===ME?(TOUCHUI?'Select infantry and tap this to board. With it selected, tap it again to unload here.':'Select infantry and right-click this to board. With it selected, right-click it to unload here, or Alt+right-click a spot to drive there and unload.'):e.isB&&e.nd&&e.built<1?(e.stall?'Waiting for a Construction Vehicle to arrive and build it.':'A Construction Vehicle is building this.'):e.isB&&e.team===ME&&CATS.includes(e.kind)?'Right-click the ground to set the rally point.':'';}
   else if(s.length){const c={};for(const e of s)c[e.s.name]=(c[e.s.name]||0)+1;b.textContent=`${s.length} selected`;sp.textContent=' '+Object.entries(c).map(([n,v])=>`${v}× ${n}`).join(' · ');}
   else{sp.textContent=TOUCHUI?'Tap a unit or building to select it. Double-tap a unit to select all of that type on screen.':'Click to select units or a building. Double-click selects all of a type on screen.';}
   if(s.length===1&&!s[0].isB&&s[0].aband)tip.textContent=ally(s[0].team,ME)?'Abandoned - the crew bailed out. Select infantry and right-click it to re-crew it before the enemy captures it.':'Abandoned enemy vehicle - select infantry and right-click it to capture it.';
@@ -8451,6 +8456,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   el.append(b,sp);if(tip.textContent)el.append(tip);
   if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack ('+(SET.mAK==='a'?'A':'F')+')';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop ('+(SET.mAK==='a'?'S':'X')+')';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
   {const ap=$('app'),o=!!el.querySelector('.cmdrow');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
+  {const trs=s.filter(u=>!u.isB&&u.s&&u.s.cap&&u.team===ME&&!u.dead);if(trs.length>1&&trs.length===s.filter(u=>!u.isB).length){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Unload all '+trs.length+' transports';ub.title=(TOUCHUI?'Or tap one of them again':'Or right-click one of them')+' to unload them all';ub.onpointerdown=ev=>{ev.preventDefault();for(const tr of trs)doAct({t:'unl',tid:tr.id});};el.append(ub);}}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.';el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1){const n=MODE==='client'?(T.tunN|0):T.tun.length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>In the tunnel network: '+n+' / '+TUN_CAP+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. '+(TOUCHUI?'Tap':leftOrders()?'Click':'Right-click')+' a tunnel with units selected to send them in.');el.append(d);}
@@ -8480,12 +8486,15 @@ cv.addEventListener('mouseenter',e=>{mpos(e);mouse.in=true;});cv.addEventListene
 cv.addEventListener('mousemove',e=>{mpos(e);});
 cv.addEventListener('wheel',e=>{e.preventDefault();const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(1800,cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}},{passive:false});
 function issueCmd(w,t,rally){
+    {const x=exitIntent(t,MODK.alt);if(x)return doExit(x,w,t);}
     const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
     if(rally&&!units.length&&G.sel.some(b=>b.isB&&b.team===ME)){doAct({t:'rally',x:w.x,y:w.y});pushLog('Rally point set.');return true;}
     if(!units.length)return false;const ids=units.map(u=>u.id);
     if(!t){const oi=G.oil.findIndex(o=>!o.dead&&!ally(o.owner,ME)&&o.owner>=0&&Math.hypot(o.x-w.x,o.y-w.y)<38);if(oi>=0){doAct({t:'atkOil',ids,fi:oi});speak(2);markT(G.oil[oi].x,G.oil[oi].y,30);return true;}}
-    if(t&&t.team===ME&&!t.isB&&t.s.cap&&units.some(u=>u!==t&&canBoard(t,u))){doAct({t:'board',ids:units.filter(u=>u!==t&&canBoard(t,u)).map(u=>u.id),tid:t.id});speak(1);markT(t.x,t.y,30);return true;}
-    if(t&&t.team===ME&&t.isB&&t.kind==='tunnel'&&t.built>=1&&units.some(u=>u.s.dom==='ground'&&u.kind!=='harv')){doAct({t:'tun',ids:units.filter(u=>u.s.dom==='ground'&&u.kind!=='harv').map(u=>u.id),tid:t.id});speak(1);markT(t.x,t.y,30);return true;}
+    // units that can't go in (too big, aircraft, the transport itself) just move up next to it
+    const nextTo=(rest,x,y)=>{if(rest.length)doAct({t:'go',ids:rest.map(u=>u.id),x,y,mode:'move'});};
+    if(t&&t.team===ME&&!t.isB&&t.s.cap&&units.some(u=>u!==t&&canBoard(t,u))){const inn=units.filter(u=>u!==t&&canBoard(t,u));doAct({t:'board',ids:inn.map(u=>u.id),tid:t.id});nextTo(units.filter(u=>u!==t&&!inn.includes(u)&&u.s.dom!=='naval'),t.x,t.y);speak(1);markT(t.x,t.y,30);return true;}
+    if(t&&t.team===ME&&t.isB&&t.kind==='tunnel'&&t.built>=1&&units.some(u=>u.s.dom==='ground'&&u.kind!=='harv')){const inn=units.filter(u=>u.s.dom==='ground'&&u.kind!=='harv');doAct({t:'tun',ids:inn.map(u=>u.id),tid:t.id});nextTo(units.filter(u=>!inn.includes(u)&&u.s.dom!=='naval'),t.x,t.y);speak(1);markT(t.x,t.y,30);return true;}
     if(t&&t.team===ME&&t.isB&&t.built<1&&units.some(u=>u.kind==='dozer')){doAct({t:'bldGo',ids:units.filter(u=>u.kind==='dozer').map(u=>u.id),tid:t.id});speak(1);markT(t.x,t.y,30);return true;}
     if(t&&!ally(t.team,ME)&&t.aband&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){const inf=units.filter(u=>isInf(u.s)&&!u.s.noAttack);doAct({t:'go',ids:inf.map(u=>u.id),x:t.x,y:t.y,mode:'move'});const rest=units.filter(u=>!inf.includes(u));if(rest.length)doAct({t:'go',ids:rest.map(u=>u.id),x:t.x,y:t.y,mode:'amove'});speak(1);markT(t.x,t.y,30);pushLog('Infantry moving to capture the abandoned vehicle.');return true;}
     if(t&&ally(t.team,ME)&&t.aband&&!t.isB&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){doAct({t:'go',ids:units.filter(u=>isInf(u.s)&&!u.s.noAttack).map(u=>u.id),x:t.x,y:t.y,mode:'move'});speak(1);markT(t.x,t.y,30);return true;}
@@ -8493,6 +8502,7 @@ function issueCmd(w,t,rally){
     {const c=(!t||(t.kind==='garrison'&&ally(t.team,ME)))?(t&&t.kind==='garrison'?civAtXYAny(t.x,t.y):civUnder(mouse.x,mouse.y,w)):null;
      if(c&&!c.dead){const inf=units.filter(u=>canGarrison(u));const rest=units.filter(u=>!canGarrison(u)&&u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker');
        if(inf.length){doAct({t:'gar',ids:inf.map(u=>u.id),ci:c.i});speak(1);markT(c.x,c.y,30);if(!rest.length)return true;}
+       if(inf.length&&rest.length){nextTo(rest,c.x,c.y);return true;}
        if(rest.length&&!(t&&t.kind==='garrison')){doAct({t:'atkCiv',ids:rest.map(u=>u.id),ci:c.i});speak(2);markT(c.x,c.y,24);return true;}
        if(inf.length)return true;}}
     const fi=fieldAt(w);if(fi>=0&&units.some(u=>u.kind==='harv')){doAct({t:'fld',ids,fi});const rest=units.filter(u=>u.kind!=='harv').map(u=>u.id);if(rest.length)doAct({t:'go',ids:rest,x:w.x,y:w.y,mode:'move'});return true;}
@@ -8531,6 +8541,23 @@ function prodSel(){return G.sel.some(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includ
 function selectClick(t,shift){if(t&&t.team===ME){if(shift&&!t.isB){const i=G.sel.indexOf(t);i>=0?G.sel.splice(i,1):G.sel.push(t);}else G.sel=[t];}else if(t&&!shift)G.sel=[t];else if(!shift)G.sel=[];}
 // a click on one of your own units/buildings that the selection can use (board, enter, garrison, build, re-crew) instead of selecting it
 function helpOn(t,sel){return !!t&&t.team===ME&&((t.isB&&((t.built<1&&sel.some(u=>u.kind==='dozer'&&u.team===ME&&!u.dead))||(t.kind==='tunnel'&&t.built>=1&&sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&u.s.dom==='ground'))))||(!t.isB&&t.s&&t.s.cap&&sel.some(u=>u!==t&&!u.isB&&canBoard(t,u)))||(t.kind==='garrison'&&sel.some(u=>u.team===ME&&canGarrison(u)))||(!t.isB&&t.aband&&sel.some(u=>!u.isB&&u.team===ME&&isInf(u.s)&&!u.s.noAttack)));}
+// Getting out needs no button (Abdullah 2026-10-28): with a loaded transport selected, right-click (tap) the transport
+// itself to unload there, Alt+right-click a spot to drive there and unload; with a garrisoned building or a tunnel
+// selected, right-click (tap) the ground and everyone comes out and runs there (an enemy: the garrison fires at it).
+function ldTr(u){return !!u&&!u.isB&&u.team===ME&&!u.dead&&!!u.s&&!!u.s.cap&&(MODE==='client'?!!u.cargo:(u.cargo||[]).length>0);}
+function garSel(){return G.sel.filter(b=>b.isB&&b.kind==='garrison'&&b.team===ME&&!b.dead);}
+function tunSel(){const T=G.teams[ME],n=MODE==='client'?(T.tunN|0):(T.tun||[]).length;return n?G.sel.filter(b=>b.isB&&b.kind==='tunnel'&&b.team===ME&&!b.dead&&b.built>=1):[];}
+function exitIntent(t,alt){if(!G||G.over||G.place||G.aim||G.amove||G.defm)return null;const units=selfSel();
+  if(t&&!alt&&G.sel.includes(t)&&ldTr(t)&&!units.some(u=>u!==t&&canBoard(t,u)))return{k:'unload',trs:units.filter(ldTr)};
+  if(alt&&!t){const trs=units.filter(ldTr);if(trs.length)return{k:'unloadAt',trs,rest:units.filter(u=>!trs.includes(u))};}
+  if(!units.length){const gs=garSel(),ts=tunSel();if(t&&!ally(t.team,ME)&&gs.length)return{k:'fire',gs};if(!t&&(gs.length||ts.length))return{k:'exit',gs,ts};}
+  return null;}
+function doExit(x,w,t){if(x.k==='unload'){for(const tr of x.trs)doAct({t:'unl',tid:tr.id});speak(1);markT(t.x,t.y,30);pushLog(x.trs.length>1?'Transports unloading.':'Unloading here.');return true;}
+  if(x.k==='unloadAt'){for(const tr of x.trs)doAct({t:'unl',tid:tr.id,at:1,x:w.x,y:w.y});if(x.rest.length)doAct({t:'go',ids:x.rest.map(u=>u.id),x:w.x,y:w.y,mode:'move'});speak(1);mark({x:w.x,y:w.y,r:22,t:0,d:.6,c:0x6fb2ff});pushLog('Driving there to unload.');return true;}
+  if(x.k==='fire'){doAct({t:'atk',ids:x.gs.map(g=>g.id),tid:t.id});sfxUI(660);markT(t.x,t.y,24);return true;}
+  for(const g of x.gs)doAct({t:'ungar',tid:g.id,at:1,x:w.x,y:w.y});if(x.ts.length)doAct({t:'unl',tid:x.ts[0].id,at:1,x:w.x,y:w.y});
+  sfxUI(660);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0x74d08f});return true;}
+function exitClick(){if(!G||G.over)return false;const w=screenToWorld(mouse.x,mouse.y);if(!w)return false;const t=pickAt(mouse.x,mouse.y,false),x=exitIntent(t,MODK.alt);if(!x)return false;doExit(x,w,t);updateUI();return true;}
 function oilAt(w,neutralToo){return G.oil.findIndex(o=>!o.dead&&!ally(o.owner,ME)&&(neutralToo||o.owner>=0)&&Math.hypot(o.x-w.x,o.y-w.y)<38);}
 // nowhere any selected unit can go (water for tanks, cliffs and mountains for everything on the ground)
 function noGo(units,w){return units.length>0&&units.every(u=>!passXY(u.s.dom,w.x,w.y));}
@@ -8559,6 +8586,7 @@ const CURD={
   way:[5,30,'pointer',c=>{flag(c,'#e3b341');c.fillStyle='#000';c.beginPath();c.arc(24,26,4.6,0,7);c.fill();c.fillStyle='#e3b341';c.beginPath();c.arc(24,26,3,0,7);c.fill();c.fillStyle='#000';c.beginPath();c.arc(14,29,2.6,0,7);c.fill();c.fillStyle='#e3b341';c.beginPath();c.arc(14,29,1.5,0,7);c.fill();}],
   capture:[5,30,'pointer',c=>flag(c,'#ffd166')],
   enter:[16,16,'pointer',c=>{c.beginPath();c.moveTo(4,15);c.lineTo(16,4);c.lineTo(28,15);c.lineTo(28,29);c.lineTo(4,29);c.closePath();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#06101c';c.stroke();c.fillStyle='#6fb2ff';c.fill();c.fillStyle='#06101c';c.fillRect(12,19,8,10);c.beginPath();c.moveTo(16,11);c.lineTo(16,18);c.moveTo(12.5,14.5);c.lineTo(16,18);c.lineTo(19.5,14.5);c.lineWidth=2;c.stroke();}],
+  exit:[16,16,'pointer',c=>{c.beginPath();c.moveTo(3,15);c.lineTo(13,5);c.lineTo(23,15);c.lineTo(23,29);c.lineTo(3,29);c.closePath();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#06101c';c.stroke();c.fillStyle='#7be08f';c.fill();c.beginPath();c.moveTo(10,21);c.lineTo(29,21);c.moveTo(24,16);c.lineTo(29,21);c.lineTo(24,26);c.lineCap='round';c.lineWidth=5;c.strokeStyle='#06101c';c.stroke();c.lineWidth=2.4;c.strokeStyle='#fff';c.stroke();}],
   place:[16,16,'copy',c=>{c.lineWidth=3.6;c.strokeStyle='#000';c.strokeRect(6,6,20,20);c.lineWidth=1.8;c.strokeStyle='#ffd166';c.setLineDash([4,3]);c.strokeRect(6,6,20,20);c.setLineDash([]);c.beginPath();c.moveTo(16,10);c.lineTo(16,22);c.moveTo(10,16);c.lineTo(22,16);c.lineWidth=4;c.strokeStyle='#000';c.stroke();c.lineWidth=2;c.strokeStyle='#ffd166';c.stroke();}],
   aim:[16,16,'crosshair',c=>{for(const [r,w] of [[13,2],[7,2]]){c.beginPath();c.arc(16,16,r,0,7);c.lineWidth=w+2.2;c.strokeStyle='#000';c.stroke();c.lineWidth=w;c.strokeStyle='#ff6a3a';c.stroke();}c.fillStyle='#000';c.fillRect(14,14,4,4);c.fillStyle='#ff6a3a';c.fillRect(15,15,2,2);}],
   scroll:[16,16,'all-scroll',c=>{const tri=(x,y,dx,dy)=>{c.beginPath();c.moveTo(x+dx*7,y+dy*7);c.lineTo(x-dy*6,y+dx*6);c.lineTo(x+dy*6,y-dx*6);c.closePath();c.lineWidth=2.6;c.strokeStyle='#000';c.stroke();c.fillStyle='#f2f5f3';c.fill();};tri(16,7,0,-1);tri(16,25,0,1);tri(7,16,-1,0);tri(25,16,1,0);c.fillStyle='#000';c.beginPath();c.arc(16,16,3.4,0,7);c.fill();c.fillStyle='#f2f5f3';c.beginPath();c.arc(16,16,2,0,7);c.fill();}],
@@ -8572,6 +8600,7 @@ function cursorIntent(){if(!G||G.over)return '';const lo=leftOrders(),ro=rightOr
   if(RDRAG&&RDRAG.moved)return !RDRAG.gen||RDRAG.line?'line':RDRAG.mode==='scroll'?'scroll':'';
   if(G.place)return 'place';if(G.aim)return 'aim';if(G.amove)return 'amove';if(G.defm)return 'guard';
   const units=selfSel(),t=pickAt(mouse.x,mouse.y,false);
+  {const x=(ro||!units.length||MODK.alt)?exitIntent(t,MODK.alt):null;if(x)return x.k==='fire'?'attack':'exit';}
   if(!units.length){if(t)return t.team===ME?'sel':'';if((lo||ro)&&prodSel())return 'rally';return '';}
   if(!lo&&!ro)return t&&t.team===ME?'sel':'';
   const w=screenToWorld(mouse.x,mouse.y);
@@ -8654,7 +8683,7 @@ function touchCancel(e){TCH.delete(e.pointerId);TIGN.delete(e.pointerId);if(TCH.
 // Generals scheme, right button: a click without dragging cancels the current mode (placement, power, attack-move,
 // guard) or, if there is none, deselects everything. Right-drag with units selected draws the line formation.
 function rightCancel(){if(!G||G.over)return;if(G.place||G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;}else G.sel=[];updateUI();}
-function rightClickAct(sh){if(rightOrders())orderClick(sh);else rightCancel();}
+function rightClickAct(sh){if(exitClick())return;if(rightOrders())orderClick(sh);else rightCancel();}
 function lineOrder(r){const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!w1||!ids.length)return;doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);mark({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}
 let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';hintDev(LASTPT);if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(LASTPT==='mouse'){let mode=own.length?SET.mRDU:SET.mRDN;if(mode==='line'&&!(own.length>=(rightOrders()?2:1)&&w0&&!G.place&&!G.aim&&!G.defm))mode='none';try{cv.setPointerCapture(e.pointerId);}catch(_){}if(mode==='box'){drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:'mouse',rb:1};return;}RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false,gen:1,mode,line:mode==='line'};return;}if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
@@ -8733,7 +8762,7 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
   .game button,.joinrow .big,.joinrow input{min-height:40px}
 }`;document.body.append(st);}
-const HINT_TOUCH='Drag to scroll · pinch to zoom · tap a unit to select it, then tap the ground to move or an enemy to attack · double-tap: all of that type · hold, then drag: box-select (or a battle line with units selected)';
+const HINT_TOUCH='Drag to scroll · pinch to zoom · tap a unit to select it, then tap the ground to move or an enemy to attack · double-tap: all of that type · hold, then drag: box-select (or a battle line with units selected) · tap your transport or building to go in; tap a selected transport again to unload, or tap the ground with a held building selected to come out';
 function touchUI(){TOUCHUI=true;HINTDEV='touch';document.body.classList.add('touchui');setHint();try{updateUI();}catch(e){}}
 // on touch: the banner says how to place, and tapping it cancels; the long hint steps aside after the opening
 function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: tap a spot (drag scrolls), then ✓ Build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target')+', then ✓ Fire':(md.dataset.d||'').replace(/click/g,'tap');
@@ -8798,6 +8827,7 @@ function tcTap(x,y,ts){if(ts==null)ts=performance.now();mouse.x=x;mouse.y=y;cons
   if(t&&t.team===ME&&!t.isB&&L&&now-L.t<TC_DBL&&L.kind===t.kind&&Math.hypot(x-L.x,y-L.y)<60){TC.lastTap=null;
     G.sel=G.ents.filter(u=>u.team===ME&&u.kind===t.kind&&!u.dead&&tcOnScreen(u));tcMark(x,y,'sel');tcSelSound();updateUI();return;}
   TC.lastTap=t&&t.team===ME&&!t.isB?{t:now,kind:t.kind,x,y}:null;
+  {const xi=exitIntent(t,false);if(xi){doExit(xi,w,t);tcMark(x,y,xi.k==='fire'?'atk':'mv');updateUI();return;}}
   if(own.length&&!(t&&t.team===ME&&!tcUse(t,own))){
     if(!t&&typeof noGo==='function'&&noGo(own,w)){try{sfxUI(220);}catch(_){}tcMark(x,y,'no');return;}
     if(issueCmd(w,t,false)){tcMark(x,y,t&&!ally(t.team,ME)?'atk':'mv');updateUI();return;}}
@@ -9243,7 +9273,7 @@ function syncMouseUI(){const pre=mPreset();
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
   const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
-const HINT_ALT='Left-click or drag: select (click empty ground to deselect) · Right-click: move / attack · Right-drag: line formation · R: retreat · Left-click to place buildings and aim powers · F then click: attack-move · G then click: defend area · Q: army · H: home · Wheel or +/−: zoom · WASD/arrows: scroll · Esc: cancel / deselect';
+const HINT_ALT='Left-click or drag: select (click empty ground to deselect) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport: go in · Get out: right-click the selected transport (Alt+right-click: drive there, unload), or the ground with a held building selected · R: retreat · Left-click to place buildings and aim powers · F then click: attack-move · G then click: defend area · Q: army · H: home · Wheel or +/−: zoom · WASD/arrows: scroll · Esc: cancel / deselect';
 // the on-screen hint follows the chosen mouse functions (the Alternate preset shows the original text word for word)
 function hintText(){if(altMouse())return HINT_ALT;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
@@ -9251,6 +9281,7 @@ function hintText(){if(altMouse())return HINT_ALT;const L=leftOrders(),R=rightOr
   P.push(SET.mAK==='a'?'A / G then click: attack-move / guard · S: stop':'F then click: attack-move · G then click: defend area · X: stop');P.push('R: retreat');
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
+  P.push('Get out: right-click your selected transport (Alt+right-click a spot: drive there, unload) · building or tunnel selected, right-click the ground');
   P.push('Q: army · H: home · Wheel: zoom · Arrows/WASD: scroll');return P.join(' · ');}
 // the hint line speaks to what the player last used: touch wording after a tap, the active mouse scheme after a click
 // (a touchscreen laptop switches back and forth)

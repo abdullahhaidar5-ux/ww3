@@ -388,6 +388,8 @@ function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.aband)return updAband(u
   if(u.kind==='harv')return updHarv(u,dt);if(u.kind==='dozer')return updDozer(u,dt);if(u.kind==='jet')return updJet(u,dt);if(u.kind==='hacker')return updHacker(u,dt);
   if(canRout(u)&&moraleTick(u,dt))return;
   let o=u.order;if(o&&o.type==='demo')return updDemo(u,dt);
+  // drive-then-unload (Alt+right-click with a transport): unload once the move ends; any other order cancels it
+  if(u.ulO){if(!o)unloadTransport(u);if(!o||!o.ul)u.ulO=0;}
   // transport helicopters' door gunners fire at nearby infantry, light vehicles and low aircraft while the helicopter
   // flies its route (it never stops or turns to fight)
   if(s.door&&!u.landed){const D=s.door;u.dgT=(u.dgT||0)-dt;if(u.dgT<=0){let t=u.dgTg;if(!t||t.dead||!canTarget(D,t)||Math.hypot(t.x-u.x,t.y-u.y)-t.r>D.rng)t=nearestEnemy(u,D.rng,D);u.dgTg=t;u.dgT=t?D.rof*rofMult(u)*(.85+Math.random()*.3):.25;if(t)fire(u,t,D.dmg*dmgOut(u),D.wpn,0);}}
@@ -560,7 +562,8 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'atk':{const t=G.byId.get(a.tid);if(!t||ally(t.team,team))break;for(const u of own(a.ids)){
       if(u.kind==='hacker'){if(t.isB){u.order={type:'hack',target:t};u.hk=0;}continue;}
       if(u.s.demo&&t.isB){u.order={type:'demo',target:t};u.pt=0;continue;}
-      if(u.kind==='harv'||u.kind==='dozer'||!canTarget(u.s,t))continue;u.order={type:'attack',target:t};u.guard=null;u.path=null;if(u.kind==='jet'){u.state='fly';u.landed=false;}}break;}
+      if(u.kind==='harv'||u.kind==='dozer'||!canTarget(u.s,t))continue;u.order={type:'attack',target:t};u.guard=null;u.path=null;if(u.kind==='jet'){u.state='fly';u.landed=false;}}
+      for(const i of a.ids||[]){const g=G.byId.get(i);if(g&&g.isB&&g.kind==='garrison'&&g.team===team&&g.civ)for(const u of g.civ.occ)if(canTarget(u.s,t))u.target=t;}break;}
     case 'atkOil':{const o=G.oil[a.fi];if(!o||o.dead||ally(o.owner,team))break;for(const u of own(a.ids)){if(u.kind==='harv'||u.kind==='dozer'||u.kind==='hacker'||!canTarget(u.s,o.tg))continue;u.order={type:'attack',target:o.tg};u.guard=null;u.path=null;if(u.kind==='jet'){u.state='fly';u.landed=false;}}break;}
     case 'fld':{const f=G.fields[a.fi];if(f)for(const u of own(a.ids))if(u.kind==='harv'){u.field=f;u.state='go';u.order=null;}break;}
     case 'q':enqueue(team,a.k);break;
@@ -576,8 +579,10 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'tun':{const b=G.byId.get(a.tid);if(!b||!b.isB||b.team!==team||b.kind!=='tunnel'||b.built<1)break;for(const u of own(a.ids))if(u.s.dom==='ground'&&u.kind!=='harv'&&u.kind!=='hacker'){u.order={type:'enter',target:b};u.target=null;u.path=null;}break;}
     case 'gar':{const c=G.civ&&G.civ[a.ci|0];if(!c||c.dead||(c.g&&!ally(c.g.team,team)))break;for(const u of own(a.ids))if(canGarrison(u)){u.order={type:'garrison',ci:c.i,x:c.x,y:c.y};u.target=null;u.guard=null;u.path=null;}break;}
     case 'atkCiv':{const c=G.civ&&G.civ[a.ci|0];if(!c||c.dead||c.g)break;const t=civTarget(c);for(const u of own(a.ids)){if(u.kind==='harv'||u.kind==='dozer'||u.kind==='hacker'||!canTarget(u.s,t))continue;u.order={type:'attack',target:t};u.guard=null;u.path=null;}break;}
-    case 'ungar':{const b=G.byId.get(a.tid);if(b&&b.kind==='garrison'&&b.team===team&&b.civ)leaveGarrison(b.civ);break;}
-    case 'unl':{const b=G.byId.get(a.tid);if(b&&b.isB&&b.team===team&&b.kind==='tunnel'&&b.built>=1)unloadTunnel(b);else if(b&&!b.isB&&b.team===team&&b.s.cap)unloadTransport(b);break;}
+    // at=1: leave toward the point x,y (garrison / tunnel: everyone comes out and moves there; transport: drive there, then unload)
+    case 'ungar':{const b=G.byId.get(a.tid);if(b&&b.kind==='garrison'&&b.team===team&&b.civ){const out=leaveGarrison(b.civ);if(a.at&&out&&out.length)formMove(out,a.x,a.y,'move',false);}break;}
+    case 'unl':{const b=G.byId.get(a.tid);if(b&&b.isB&&b.team===team&&b.kind==='tunnel'&&b.built>=1){const out=unloadTunnel(b);if(a.at&&out&&out.length)formMove(out,a.x,a.y,'move',false);}
+      else if(b&&!b.isB&&b.team===team&&b.s.cap){if(a.at){b.wq=null;setMove(b,a.x,a.y,'move');b.order.ul=1;b.ulO=1;}else{b.ulO=0;unloadTransport(b);}}break;}
     case 'board':{const tr=G.byId.get(a.tid);if(!tr||tr.isB||tr.team!==team||!tr.s.cap)break;for(const u of own(a.ids))if(canBoard(tr,u)){u.order={type:'board',target:tr};u.target=null;u.path=null;}break;}
     case 'stop':for(const u of own(a.ids)){u.order=null;u.target=null;u.path=null;}break;
     // right-drag line formation: units spread evenly along the dragged line (extra units form ranks behind it),
@@ -839,7 +844,7 @@ function unloadTransport(tr){const C=tr.cargo||[];if(!C.length)return;const dom=
   tr.cargo=C.filter(Boolean);if(placed)log(tr.team,`${placed} unit${placed>1?'s':''} unloaded.`,'g');if(tr.cargo.length)log(tr.team,'Move closer to land to unload the rest.','w');}
 function enterTunnel(u){const T=G.teams[u.team];if(T.tun.length>=TUN_CAP){u.order=null;log(u.team,'The tunnel network is full (12 units).','w');return;}u.order=null;u.target=null;u.inTun=true;G.byId.delete(u.id);T.tun.push(u);}
 function unloadTunnel(b){const T=G.teams[b.team];const n=T.tun.length;if(!n)return;T.tun.forEach((u,i)=>{const a=i/n*6.283+Math.random()*.3,r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;G.ents.push(u);G.byId.set(u.id,u);});
-  T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the tunnel.`,'g');}
+  const out=T.tun;T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the tunnel.`,'g');return out;}
 function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
 function weatherTick(dt){if(!G.wx)G.wx={k:'clear',t:0,next:150+Math.random()*90};const W=G.wx;W.t+=dt;if(W.t<W.next)return;W.t=0;const ks=weatherKinds(G.map.theme);
   if(W.k==='clear'){W.k=ks[1+Math.floor(Math.random()*(ks.length-1))];W.next=55+Math.random()*45;}else{W.k='clear';W.next=170+Math.random()*120;}
@@ -902,7 +907,7 @@ function enterGarrison(u,c){if(c.dead){u.order=null;return;}if(c.g&&!ally(c.g.te
   if(!c.g){const T=G.teams[u.team],s=bstats(T.fac,'garrison');const g={id:G.nid++,isB:true,team:u.team,kind:'garrison',s,civ:c,x:c.x,y:c.y,size:s.size,r:s.size/2,max:c.max,hp:c.hp,built:1,cd:0,target:null,ang:0,lastHit:-99,dis:0,vs:new Array(G.teams.length).fill(false)};G.ents.push(g);G.byId.set(g.id,g);c.g=g;}
   u.order=null;u.target=null;u.guard=null;u.inTun=true;u.inGar=c;u.x=c.x;u.y=c.y;G.byId.delete(u.id);c.occ.push(u);}
 function leaveGarrison(c){const g=c.g;if(!g)return;const occ=c.occ;c.occ=[];occ.forEach((u,i)=>{const a=i/Math.max(1,occ.length)*6.283;const p=nearestPassXY('ground',c.x+Math.cos(a)*30,c.y+Math.sin(a)*30)||[c.x,c.y];u.x=p[0];u.y=p[1];u.inTun=false;u.inGar=null;u.mv=G.t;u.order=null;G.ents.push(u);G.byId.set(u.id,u);});
-  c.hp=Math.max(1,g.hp);g.dead=true;G.byId.delete(g.id);c.g=null;FXE('gone',[g.id,g.x|0,g.y|0,-1,1]);}
+  c.hp=Math.max(1,g.hp);g.dead=true;G.byId.delete(g.id);c.g=null;FXE('gone',[g.id,g.x|0,g.y|0,-1,1]);return occ;}
 // the soldiers inside shoot from the windows
 function updGarrison(g,dt){const c=g.civ;if(!c||c.dead){g.dead=true;return;}c.hp=g.hp;if(!c.occ.length){leaveGarrison(c);return;}
   for(const u of c.occ){u.x=c.x;u.y=c.y;u.cd-=dt;u.hp=Math.min(u.max,u.hp+2*dt);u.fear=Math.max(0,(u.fear||0)-dt*.1);if(u.cd>0)continue;const R=u.s.rng*1.2;
