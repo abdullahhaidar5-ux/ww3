@@ -8998,9 +8998,9 @@ function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].na
   const h=$('hint');if(h)h.hidden=!md.hidden||G.t>40;}
 $('mode').onclick=e=>{if(!G||!e.target.closest('.mcx'))return;G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();};
 try{if(matchMedia('(hover:none) and (pointer:coarse)').matches)touchUI();}catch(e){}
-// phones held upright: the menu is several screens long, so Deploy and Play online ride along at the bottom of the screen
-// (they press the real buttons further down)
-{const card=document.querySelector('#menu>.card');if(card&&!$('qDeploy')){const q=document.createElement('div');q.id='qDeploy';
+// (removed, Abdullah 2026-10-29: "removing the floating play online or AI button — looks cheap") phones held upright used to
+// get a floating Deploy / Play online bar at the bottom of the menu; the real buttons in the menu are the only ones now
+{const card=document.querySelector('#menu>.card');if(false&&card&&!$('qDeploy')){const q=document.createElement('div');q.id='qDeploy';
   for(const [id,t] of [['start','▶ Deploy vs AI'],['playOnline','Play online']]){const b=document.createElement('button');b.type='button';b.className='big'+(id==='start'?'':' ghost');b.textContent=t;b.onclick=()=>{const r=$(id);if(r&&!r.disabled&&!r.hidden)r.click();};b.dataset.for=id;q.append(b);}
   card.append(q);const st=document.createElement('style');st.textContent=`#qDeploy{display:none}
 @media (max-width:560px){#qDeploy{display:flex;gap:6px;position:sticky;bottom:0;z-index:4;margin:0 -4px;padding:8px 4px max(6px,env(safe-area-inset-bottom,0px));background:linear-gradient(rgba(8,11,10,0),rgba(8,11,10,.96) 28%)}#qDeploy button{flex:1 1 0;min-height:44px}#qDeploy.near{display:none}}`;document.head.append(st);
