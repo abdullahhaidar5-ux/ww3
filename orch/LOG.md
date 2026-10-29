@@ -2,6 +2,15 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-29 16:25 → 17:40 (Chicago) — cycle 16
+
+- No lock; took it. Local clone's main was stale/unrelated → reset to origin/main. Baseline: `--check` OK, SMOKE PASS.
+- 4 agents: Visuals (ME Strike Center + Shipyard, camo nets; Opus), Battlefield (navy/flanking verify; Opus — both
+  already fine, no changes), Audio (phone voice fallback → English; Sonnet), QA (cigate touch skip; Sonnet).
+- Merged 3 branches clean; no 03-sim/07 changes → no review agent, no servers-live PR.
+- Gate on adad5d5: `--check` OK, smoke 4p PASS, MPSYNC PASS, artifact smoke + MPSYNC PASS. Artifact v182 (page only).
+- QA: touch.mjs >8 min; cfclient not re-run (server deps missing in worktree). New: AI Math.random follow-up.
+
 ## 2026-10-29 08:46 → 11:50 (Chicago) — cycle 15
 
 - No lock; took it (extended once: balance tourney ran 2 h 5 min). Baseline: `--check` OK, SMOKE PASS. Side lane had

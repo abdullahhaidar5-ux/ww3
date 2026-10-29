@@ -64,4 +64,5 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Balance round 3: every nation wins 37–65% vs the AI field (Israel 51%, UAE 57%)
 - [done] Real soldier models (desert / green / militia fatigues) and Middle Eastern HQ, barracks and factory for IR, RS, DW, SA, AE, EG
 - [done] Middle Eastern compounds, HESCO depots, bunkers and hardened airfields for the rest of those bases
+- [done] Middle Eastern missile bunker (Strike Center) and harbour (Shipyard); camo nets that drape like real netting
 - [done] Balance round 4: every nation wins 38–65% (Iran up from 12%)

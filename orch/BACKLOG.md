@@ -8,7 +8,7 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
-**CYCLE 15 (2026-10-29): side lane finished (voices-natural + enter-exit on main). PR #7 (balance → servers-live) merged 2026-10-29.**
+**CYCLE 16 (2026-10-29 evening): ME Strike Center/Shipyard + camo nets, phone voice fallback, gate touch check shipped; AI navy/flanking verified OK.** **CYCLE 15 (2026-10-29): side lane finished (voices-natural + enter-exit on main). PR #7 (balance → servers-live) merged 2026-10-29.**
 
 **SIDE LANE IN FLIGHT (Abdullah 2026-10-28 18:23: "move faster, don't run over usage") — ORCH: don't take these, merge their branches when their report lands:** Phase 5 massive columns → `orch/columns` (04-gfx instancing/LOD, sim perf); recorded weapon/engine/explosion sounds + ambience + mix → `orch/audio-sfx` (09-audio, `sfx/`); native-language unit voices for all 18 nations → `orch/voices` (`vo/`, voice hooks in 09-audio). Queued (staggered to keep usage steady): AI tactics + navy + balance (flanking/cover on Hard, navy on time + landing craft, IL/AE win rates, Fulda supply trucks) → `orch/ai-tactics` from ~20:30; infantry + building models (Phase 2 rest) → `orch/gfx-infantry` from ~22:30. Keep ORCH cycles to ≤ 3 agents while these run.
 
@@ -154,11 +154,11 @@ an earlier one still has work a squad can take (other squads may only do small P
 - [open] **QA: CI `cfclient` flaked once on d136254** ("no player took over after the server lost it"); passed locally ×1 and on
   the branches. If it fails again in CI, root-cause the takeover-after-server-restart timing.
 
-- [open] **Strike Center + Shipyard** still use the generic look for ME nations; camo nets read as parasols from far out (Visuals, cycle 15).
+- [open] **ME buildings follow-ups** (Visuals, cycle 16): Strike Center close-ups from a real battle; Egypt vs Saudi/UAE versions differ only in silo height — give EG its own touch.
 - [open] **Balance: watch TR (38%) and KR (41%)** next round; CN highest (65%). Tool: `node orch/aitourney.mjs` (Battlefield).
-- [open] **Phone-side voices:** fa/he/ar/tr device-speech fallback stays silent where only a stand-in voice exists (Audio, minor).
 
 **Foundation (ORCH itself)**
+- [open] `orch/touch.mjs` takes over 8 minutes — speed it up (QA, cycle 16). CI `gate.yml` now fails loudly if controls/touch tests are missing (branch predates them → merge main).
 
 
 - [open] Extend `orch/mpsync.mjs`: packet loss/latency, real WebRTC (3-player host migration is now covered by
@@ -168,12 +168,11 @@ an earlier one still has work a squad can take (other squads may only do small P
   `p2pmig.py` (3 players over a local PeerJS server, host leaves, checks migration). `probe.py` = load-time probe.
 
 **Battlefield & AI** (`03-sim`, `01-data`)
+- [open] AI unit picking in `src/03-sim.js` (~lines 809/816) uses Math.random, not `srand` — harmless (AI is host-only) but breaks the rule; switch to the seeded RNG (cycle 16 finding).
 - [open] (side lane `orch/ai-tactics` has this; ORCH cycle 13's own version is on branch `worktree-agent-af18354e507b5537f` e597af4 if theirs falls through) Fulda: late-game supply trucks haul from fields up to ~4,000 away because nearby fields run dry (cycle 12
   finding) — AI should expand: build a depot or HQ near the new field.
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
   below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
-- [open] AI navy arrives late (~6 game-min on Normal; buildings come first) and never uses landing craft.
-- [check] AI uses flanking and cover (DIFF has `flank`/`retreat` params) — verify in battles, strengthen on Hard.
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
 - [open] Big explosions still open with a soft, flat yellow ball for their first instant — rework (cycle 12).
@@ -221,6 +220,11 @@ an earlier one still has work a squad can take (other squads may only do small P
 - Clip/showcase pipeline rebuilt in `orch/` so ORCH can post short phone-friendly clips of new features.
 
 ## Done
+
+- 2026-10-29 (cycle 16) — Strike Center + Shipyard get the Middle Eastern military look (IR, RS, DW, SA, AE, EG); camo nets now drape low instead of looking like parasols.
+- 2026-10-29 (cycle 16) — Phones with no voice for a nation's language speak the English line instead of staying silent.
+- 2026-10-29 (cycle 16) — [verified] AI navy on time (first warship ~4.3 min Normal, ~3.6 Hard) and lands troops by landing craft; Hard flanks/uses cover (won 10/12 vs Normal, no extra money).
+- 2026-10-29 (cycle 16) — QA: "SKIP touch" came from a branch older than touch.mjs; CI now fails loudly instead of skipping.
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
 
