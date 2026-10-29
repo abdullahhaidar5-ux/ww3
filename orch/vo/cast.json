@@ -97,5 +97,15 @@
    "de": "Ludvig Milivoj",
    "en": "Viktor Menelaos"
   }
+ },
+ "CN": {
+  "eng": "xtts",
+  "lang": "zh-cn",
+  "sold": [
+   "Kazuhiko Atallah",
+   "Ilkin Urbano",
+   "Ludvig Milivoj"
+  ],
+  "cmd": "Gilberto Mathias"
  }
 }
