@@ -9467,6 +9467,9 @@ $('aMus').onclick=()=>{initAudio();AU.musicOn=!AU.musicOn;saveAudio();applyAudio
 // to spare and down when they don't. Desktop and the High setting are unchanged.
 const GFX_PHONE=(()=>{try{return matchMedia('(pointer:coarse)').matches&&!matchMedia('(pointer:fine)').matches;}catch(e){return false;}})();
 const QCAPS0=QUAL.caps.slice();
+// phones start on Low graphics (Abdullah 2026-10-29: iPhones froze on the battle loading screen with Auto, Low worked);
+// done once, so a player who later picks Medium/High/Auto in Settings keeps that choice
+if(GFX_PHONE&&SET.gfx==='auto'&&!SET.phLow){SET.gfx='low';SET.phLow=1;try{saveSet();}catch(e){}}
 function gfxPhone(){return GFX_PHONE&&SET.gfx!=='high';}
 function qualStartLv(){return SET.gfx==='auto'?(gfxPhone()?1:0):({high:0,med:1,low:3}[SET.gfx]??0);}
 // a fresh start for the frame-rate governor (a new battle, or a settings change): the long frames of the loading
