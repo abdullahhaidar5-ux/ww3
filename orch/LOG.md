@@ -2,6 +2,17 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-29 08:46 → 11:50 (Chicago) — cycle 15
+
+- No lock; took it (extended once: balance tourney ran 2 h 5 min). Baseline: `--check` OK, SMOKE PASS. Side lane had
+  merged `orch/voices-natural` + `orch/enter-exit` to main after cycle 14 (unlogged; recorded now). No branches in flight.
+- 3 agents: Visuals (ME buildings, Opus), Battlefield (balance round 4, Opus), Audio (voice fallback, Sonnet). All merged
+  clean; smoke PASS. Only 01-data in sim → no review agent. NET_PV not bumped (prices only; bumping would lock new
+  clients out of Cloudflare battles until PR #7 is merged).
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, artifact smoke + MPSYNC PASS (+ agent: HEADLESS --compare PASS).
+  Shipped 452c0ab; artifact v181 (page only); PR #7 main → servers-live opened.
+- Visuals agent's cigate showed "SKIP touch (no test)" counted as fail in its worktree — check cigate.sh next cycle.
+
 ## 2026-10-29 00:25 → 01:40 (Chicago) — cycle 14
 
 - No lock; took it. Baseline: `--check` OK, SMOKE PASS. Integration-only cycle (side lane holds 4 branches with reports;

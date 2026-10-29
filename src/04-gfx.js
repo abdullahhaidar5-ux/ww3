@@ -324,8 +324,73 @@ function merge(parts){let n=0;const L=[];for(const p of parts){const g=(p.g.inde
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P,3));g.setAttribute('normal',new THREE.BufferAttribute(N,3));g.setAttribute('color',new THREE.BufferAttribute(C,3));g.computeBoundingSphere();return g;}
 const GEO={};
 function camo(team){const c=new THREE.Color(team.color);return '#'+c.lerp(new THREE.Color('#5f5f4a'),.66).getHexString();}
+// Middle Eastern military look (IR/RS/DW/SA/AE/EG, MEFAC in 11-models) for the buildings that have no ME model:
+// sandstone/mud-brick, flat roofs with parapets, HESCO and T-wall blast walls, sandbags, camo netting. One merged mesh
+// each, same footprint as the standard building (render only, no effect on the simulation).
+const ME_C={sand:'#cdb48a',sand2:'#bfa47a',mud:'#a88c64',conc:'#a69f8e',hes:'#b7a173',hesT:'#8a7550',bag:'#a9956b',net:'#56563b',net2:'#69654a',dk:'#1e1c18',gl:'#34424a',grd:'#a8946e'};
+function meKit(B,seed){const R=mulberry(seed),C=ME_C;
+  const j=(c,a=.07)=>{const k=new THREE.Color(c);k.offsetHSL(0,(R()-.5)*.02,(R()-.5)*a);return '#'+k.getHexString();};
+  return {R,j,
+    // HESCO bastion line: sand-filled wire baskets with darker earth on top
+    hesco(x0,z0,x1,z1,h=6,w=5.5,y0=0){const L=Math.hypot(x1-x0,z1-z0),n=Math.max(1,Math.round(L/w)),a=Math.atan2(z1-z0,x1-x0);for(let i=0;i<n;i++){const t=(i+.5)/n,x=x0+(x1-x0)*t,z=z0+(z1-z0)*t,hh=h*(.94+R()*.1);B.box(L/n-.25,hh,w,x,y0+hh/2,z,j(C.hes),0,-a,0);B.box(L/n-.9,.5,w-.7,x,y0+hh+.05,z,j(C.hesT),0,-a,0);}},
+    // concrete T-walls in a row
+    twall(x0,z0,x1,z1,h=9,y0=0){const L=Math.hypot(x1-x0,z1-z0),n=Math.max(1,Math.round(L/4.2)),a=Math.atan2(z1-z0,x1-x0);for(let i=0;i<n;i++){const t=(i+.5)/n,x=x0+(x1-x0)*t,z=z0+(z1-z0)*t;B.box(L/n-.3,h,1.1,x,y0+h/2,z,j(C.conc,.05),0,-a,0);B.box(L/n-.3,1,3.6,x,y0+.5,z,j(C.conc,.05),0,-a,0);}},
+    // sandbag wall in staggered courses
+    bags(x0,z0,x1,z1,rows=3,y0=0){const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(z1-z0,x1-x0),n=Math.max(1,Math.round(L/2.8));for(let r=0;r<rows;r++)for(let i=0;i<n-(r%2);i++){const t=(i+.5+(r%2)*.5)/n,x=x0+(x1-x0)*t,z=z0+(z1-z0)*t;B.box(L/n-.2,1.25,2.1,x,y0+.65+r*1.2,z,j(C.bag,.1),0,-a+(R()-.5)*.12,0);}},
+    // camo net on four poles: two overlapping low cones so the drape looks irregular
+    net(x,z,r,y){for(const [px,pz] of [[-1,-1],[1,-1],[-1,1],[1,1]])B.cyl(.25,.25,y,4,x+px*r*.62,y/2,z+pz*r*.62,'#4a4436');B.cone(r,1.3,6,x,y+.5,z,j(C.net),0,R()*3,0);for(let i=0;i<4;i++){const a=i*1.57+R()*.8,d=r*(.75+R()*.25);B.cone(r*(.38+R()*.15),1,5,x+Math.cos(a)*d,y-.4-R()*.8,z+Math.sin(a)*d,j(i%2?C.net2:C.net),(R()-.5)*.5,R()*3,(R()-.5)*.5);}},
+    // flat-roofed block with a parapet and arched dark windows on its +z face
+    block(w,h,d,x,y0,z,c,win=0){B.box(w,h,d,x,y0+h/2,z,j(c,.05));const t=y0+h;B.box(w+.4,1.6,1,x,t+.8,z+d/2-.3,j(c,.05));B.box(w+.4,1.6,1,x,t+.8,z-d/2+.3,j(c,.05));B.box(1,1.6,d,x+w/2-.3,t+.8,z,j(c,.05));B.box(1,1.6,d,x-w/2+.3,t+.8,z,j(c,.05));
+      for(let i=0;i<win;i++){const wx=x-w/2+(i+.5)*w/win;B.box(2.2,3.2,.5,wx,y0+h*.55,z+d/2+.05,C.dk);B.cyl(1.1,1.1,.5,8,wx,y0+h*.55+1.6,z+d/2+.05,C.dk,Math.PI/2);}},
+    barrels(x,z,n,y0=2.5){for(let i=0;i<n;i++)B.cyl(1.1,1.1,3,8,x+(i%3)*2.4,y0+1.5,z+Math.floor(i/3)*2.4,j(i%2?'#3f4a32':'#5a4a34',.06));}};}
+function meGeo(B,kp,tc){const C=ME_C;let K;
+  switch(kp){
+    case 'econ:main':{K=meKit(B,101);B.box(58,2.5,58,0,1.25,0,C.grd);
+      // compound wall with a gate on the front (+z) and corner towers
+      const W=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(z1-z0,x1-x0),x=(x0+x1)/2,z=(z0+z1)/2;B.box(L,7,1.6,x,6,z,K.j(C.mud,.05),0,-a,0);B.box(L+.6,.6,2.2,x,9.6,z,K.j(C.sand2,.05),0,-a,0);};
+      W(-27.5,-27.5,27.5,-27.5);W(-27.5,-27.5,-27.5,27.5);W(27.5,-27.5,27.5,27.5);W(-27.5,27.5,-7,27.5);W(7,27.5,27.5,27.5);
+      for(const [x,z] of [[-27.5,-27.5],[27.5,-27.5],[-27.5,27.5],[27.5,27.5]]){B.box(5,12,5,x,8.5,z,K.j(C.sand2));B.box(5.8,1,5.8,x,15,z,K.j(C.mud));}
+      B.box(2.4,10,2.4,-7.5,7.5,27.5,C.sand2);B.box(2.4,10,2.4,7.5,7.5,27.5,C.sand2);B.box(17.4,2.4,2.6,0,13,27.5,tc);
+      // two-storey sandstone office: flat roof, parapet, arched windows, recessed upper floor, porch
+      K.block(34,15,24,-6,2.5,-8,C.sand,6);K.block(18,9,14,-12,17.5,-12,C.sand2,3);B.box(34.6,1.1,24.6,-6,10,-8,tc);
+      for(const x of [-14,-6,2])B.box(1.6,9,1.6,x,7,5.6,C.sand2);B.box(20,1.2,6,-6,11.6,6,C.sand2);
+      B.cyl(1.6,1.6,3,8,6,19.5,-14,'#22231f');B.cyl(1.6,1.6,3,8,6,19.5,-10,'#22231f');B.box(3,2,2.4,-20,18.5,-2,'#8a8a82');B.box(3,2,2.4,-16,18.5,-2,'#8a8a82');
+      B.cyl(.25,.25,16,4,-4,34,-15,'#3a3a35');B.cyl(2.8,.3,1.2,10,-16,28,-6,'#cfccc0',.6);
+      // oil storage tanks with pipework, a netted parking bay and fuel drums
+      for(const z of [-16,-2]){B.cyl(6,6,10,14,17,7.5,z,K.j('#d6cdb6',.04));B.cyl(6.2,6.2,.8,14,17,9,z,'#6d6a5c');B.cyl(6.1,6.1,.6,14,17,12.6,z,tc);}B.box(1,1,14,10,5,-9,'#5b5a52');
+      K.net(15,15,8,8);K.barrels(-22,12,5);break;}
+    case 'depot:main':{K=meKit(B,202);B.box(56,2.5,56,0,1.25,0,C.grd);
+      // HESCO perimeter on three sides, sandbag chicane at the open front
+      K.hesco(-25,-25,25,-25,6,5.5,2.5);K.hesco(-25,-19.5,-25,25,6,5.5,2.5);K.hesco(25,-19.5,25,25,6,5.5,2.5);
+      K.bags(-24,26,-10,26,3,2.5);K.bags(10,26,24,26,3,2.5);
+      // mud-brick supply shed: corrugated flat roof, dark open loading bay
+      B.box(26,10,16,-8,7.5,-12,K.j(C.mud,.05));B.box(29,.9,19,-8,12.9,-11,K.j('#7c7466',.05));B.box(20,7.5,.5,-8,6.25,-3.9,C.dk);B.box(26.2,1,16.2,-8,10.5,-12,tc);
+      // ammunition and supply crates under camo netting
+      for(const [x,z,c,y] of [[9,-12,'#6b6343',0],[14,-12,'#6b6343',0],[9,-7,'#c99a2e',0],[14,-7,'#7a6a45',0],[19,-12,'#c99a2e',0],[11.5,-9.5,'#6b6343',4.6]])B.box(4.6,4.6,4.6,x,4.8+y,z,K.j(c,.08));
+      K.net(13,-9,12,11);
+      K.barrels(-20,8,6);B.box(8,1,6,14,3,12,'#7a6446');B.box(7,3,5,14,5,12,K.j('#6b6343'));
+      for(let x=-16;x<=16;x+=8)B.box(5,.3,1.2,x,2.6,18,'#e8e3cf');break;}
+    case 'tunnel:main':{K=meKit(B,303);
+      // bunker: earth mound, concrete portal with T-wall wings, two-course sandbag ring, net over the entrance
+      B.cyl(14,21,6,12,0,3,0,K.j('#9a8460',.04));B.cyl(9,14,4.5,10,0,8,0,K.j('#8d7855',.04));B.cyl(7,9,1,10,0,10.6,0,'#a6a08f');
+      B.box(15,9,9,0,4.5,15,K.j(C.conc,.04));B.box(9,6.5,.6,0,3.6,19.6,C.dk);B.box(17,1.6,11,0,9.6,15.4,K.j(C.conc,.04));
+      K.twall(-8.5,17,-8.5,24,8);K.twall(8.5,17,8.5,24,8);
+      for(let i=0;i<14;i++){const a=i/14*6.283;if(Math.abs(a-1.5708)<.5)continue;for(let r=0;r<2;r++)B.box(5.4,1.3,2.4,Math.cos(a)*21.5,.7+r*1.25,Math.sin(a)*21.5,K.j(C.bag,.1),0,-a+Math.PI/2+r*.15,0);}
+      B.cone(9,1.8,7,0,10.4,16,K.j(C.net),0,.4,0);break;}
+    case 'airfield:main':{K=meKit(B,404);B.box(96,2,96,0,1,0,'#a39a84');B.box(90,.4,22,0,2.2,30,'#5a5750');for(let x=-38;x<=38;x+=12)B.box(6,.3,1.4,x,2.5,30,'#e6e2d2');
+      for(const [x,z] of [[-26,-22],[26,-22],[-26,22],[26,22]])B.box(26,.3,20,x,2.3,z-10,'#8e8672');
+      // hardened aircraft shelter: concrete arch, sand berms, dark mouth
+      B.half(16,30,-30,2,-34,K.j(C.conc,.04),Math.PI/2);B.half(12.5,.6,-30,2,-18.8,C.dk,Math.PI/2);B.box(7,12,30,-48,5,-34,K.j('#a48d65',.04),0,0,.55);B.box(7,12,30,-12,5,-34,K.j('#a48d65',.04),0,0,-.55);
+      // sandstone control tower with a glass cab
+      K.block(10,22,10,38,2,-38,C.sand,0);B.box(12,6,12,38,28,-38,C.gl);B.box(13,1.2,13,38,31.6,-38,tc);B.cyl(.2,.2,8,4,40,36,-36,'#3a3a35');
+      // blast walls screening the aprons, a sandbag post, a netted fuel point
+      K.twall(46,-24,46,14,8,2);K.twall(-46,-14,-46,14,8,2);K.bags(4,-46,22,-46,3,2);K.net(14,-36,9,8);K.barrels(10,-40,6,2);
+      B.box(96,.5,3,0,2.6,-47,tc);break;}
+    default:return false;}
+  return true;}
 const GEO_ALIAS={lander:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',cbr:'aa',jeep:'aa',raidlead:'aa'};
 function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];const key=kind+fac+team.color+part;if(GEO[key])return GEO[key];const tc=team.color,hc=camo(team),dk='#2b2d26',mt='#55574e',cn='#9a988c',cl='#7d7c70';const B=Bld();let s=FACTIONS[fac].units[kind]||{};
+  if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc))return GEO[key]=B.geo();
   switch(kind+':'+part){
     case 'inf:body':case 'at:body':case 'hacker:body':case 'hero:body':{const n={inf:3,at:2,hacker:2,hero:1}[kind];const pos=[[3,0],[-4,-5],[-4,5]].slice(0,n);if(n===2){pos[0]=[2,-3.5];pos[1]=[-3,3.5];}if(n===1)pos[0]=[0,0];
       for(const [px,pz] of pos){const uni=kind==='hero'?'#2c3027':'#5d6146';const kneel=kind==='hacker';B.box(2.6,kneel?3:5,3.2,px,kneel?1.5:2.5,pz,uni);B.box(3,4.2,3.6,px,kneel?4.6:6.6,pz,tc);B.sph(1.6,px,kneel?7.6:9.8,pz,'#c7a27c');B.sph(1.85,px,kneel?8.2:10.4,pz,kind==='hero'?'#1e211b':'#4a4e36',1,.65,1);
