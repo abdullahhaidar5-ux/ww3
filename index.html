@@ -7696,7 +7696,7 @@ function qualTick(dt){if(!(dt>0))return;QUAL.dts.push(dt);if(QUAL.dts.length>180
   // resolution would only blur the picture without making it faster
   if(QUAL.bad>1.5&&QUAL.lv<5&&QUAL.cost<.75/T){QUAL.lv++;QUAL.bad=0;QUAL.ema=1/T;applyQual();}else if(QUAL.good>10&&QUAL.lv>0){QUAL.lv--;QUAL.good=0;applyQual();}}
 function applyQual(){POST.aoOn=QUAL.lv<2;resize();}
-function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1)*QUAL.caps[QUAL.lv];VW=Math.max(1,r.width);VH=Math.max(1,r.height);
+function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1)*(((()=>{try{return GFX_PHONE;}catch(e){return false;}})())?Math.max(.85,QUAL.caps[QUAL.lv]):QUAL.caps[QUAL.lv]);/* phones stay sharp (Abdullah 2026-10-29: Low looked bad); they save on effects instead */VW=Math.max(1,r.width);VH=Math.max(1,r.height);
   if(R3){R3.setPixelRatio(dpr);R3.setSize(VW,VH,false);if(POST.rt)sizePost();CAM.aspect=VW/VH;CAM.updateProjectionMatrix();}hud.width=Math.round(VW*dpr);hud.height=Math.round(VH*dpr);}
 function placeCam(){const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/(600-230))),p=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d)));cam.x=Math.max(0,Math.min(MAPW,cam.x));cam.y=Math.max(60+cam.dist*.5,Math.min(MAPH+120,cam.y));cam.x=Math.max(cam.dist*.55,Math.min(MAPW-cam.dist*.55,cam.x));
   const sx=shake>.3?rnd(-shake,shake):0,sy=shake>.3?rnd(-shake,shake):0;
@@ -8992,7 +8992,7 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
   .game button,.joinrow .big,.joinrow input{min-height:40px}
 }`;document.body.append(st);}
-const HINT_TOUCH='Drag to scroll · pinch to zoom · tap a unit to select it, then tap the ground to move or an enemy to attack · double-tap: all of that type · hold, then drag: box-select (or a battle line with units selected) · tap your transport or building to go in; tap a selected transport again to unload, or tap the ground with a held building selected to come out';
+const HINT_TOUCH='Tap: select · tap ground: move · tap enemy: attack · drag: scroll · pinch: zoom';/* one short line on phones (Abdullah 2026-10-29: the long hint covered the battlefield); the full guide is in ☰ > Touch controls */
 function touchUI(){TOUCHUI=true;HINTDEV='touch';document.body.classList.add('touchui');setHint();try{updateUI();}catch(e){}}
 // on touch: the banner says how to place, and tapping it cancels; the long hint steps aside after the opening
 function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: tap a spot (drag scrolls), then ✓ Build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target')+', then ✓ Fire':(md.dataset.d||'').replace(/click/g,'tap');

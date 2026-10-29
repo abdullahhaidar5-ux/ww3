@@ -12,7 +12,7 @@ function qualTick(dt){if(!(dt>0))return;QUAL.dts.push(dt);if(QUAL.dts.length>180
   // resolution would only blur the picture without making it faster
   if(QUAL.bad>1.5&&QUAL.lv<5&&QUAL.cost<.75/T){QUAL.lv++;QUAL.bad=0;QUAL.ema=1/T;applyQual();}else if(QUAL.good>10&&QUAL.lv>0){QUAL.lv--;QUAL.good=0;applyQual();}}
 function applyQual(){POST.aoOn=QUAL.lv<2;resize();}
-function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1)*QUAL.caps[QUAL.lv];VW=Math.max(1,r.width);VH=Math.max(1,r.height);
+function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1)*(((()=>{try{return GFX_PHONE;}catch(e){return false;}})())?Math.max(.85,QUAL.caps[QUAL.lv]):QUAL.caps[QUAL.lv]);/* phones stay sharp (Abdullah 2026-10-29: Low looked bad); they save on effects instead */VW=Math.max(1,r.width);VH=Math.max(1,r.height);
   if(R3){R3.setPixelRatio(dpr);R3.setSize(VW,VH,false);if(POST.rt)sizePost();CAM.aspect=VW/VH;CAM.updateProjectionMatrix();}hud.width=Math.round(VW*dpr);hud.height=Math.round(VH*dpr);}
 function placeCam(){const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/(600-230))),p=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d)));cam.x=Math.max(0,Math.min(MAPW,cam.x));cam.y=Math.max(60+cam.dist*.5,Math.min(MAPH+120,cam.y));cam.x=Math.max(cam.dist*.55,Math.min(MAPW-cam.dist*.55,cam.x));
   const sx=shake>.3?rnd(-shake,shake):0,sy=shake>.3?rnd(-shake,shake):0;
