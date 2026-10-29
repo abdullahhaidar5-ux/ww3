@@ -10,7 +10,7 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
   clean; smoke PASS. Only 01-data in sim → no review agent. NET_PV not bumped (prices only; bumping would lock new
   clients out of Cloudflare battles until PR #7 is merged).
 - Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, artifact smoke + MPSYNC PASS (+ agent: HEADLESS --compare PASS).
-  Shipped 452c0ab; artifact v181 (page only); PR #7 main → servers-live opened.
+  Shipped 452c0ab; artifact v181 (page only); PR #7 main → servers-live merged by Abdullah 20:02 UTC.
 - Visuals agent's cigate showed "SKIP touch (no test)" counted as fail in its worktree — check cigate.sh next cycle.
 
 ## 2026-10-29 00:25 → 01:40 (Chicago) — cycle 14
