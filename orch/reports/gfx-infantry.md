@@ -18,4 +18,4 @@ Other buildings and the Eastern/Western set unchanged (no suitable free models f
 Harness: `node orch/gfxinf.mjs --tag X [--html old.html] [--bld 1] [--scenes map:P:A,...]`.
 
 **Merged:** origin/orch/columns (its mergeSoldier runs on the old model; mine are single-mesh) and origin/main.
-**CIGATE:** see last line below.
+**CIGATE: PASS (16/16 incl. mapsweep, touch) on c28782c (report-only commit follows).
