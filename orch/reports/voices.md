@@ -8,4 +8,4 @@
 
 **Checks:** Whisper round-trip: US 0.97, RU 0.82, CN 0.75, KR 0.68, KP 0.66 match (Korean weakest: single female KSS voice pitched down + MMS; Persian/Arabic dialect not checked). Nobody has listened on a real device: Abdullah should hear IR/RS/DW and KR/KP first.
 
-**Limits:** Arabic has one real Piper voice (Jordanian) + MMS; nations differ by wording, pitch and pace. Device-speech fallback has no lines for the 3 new cues (silent). CIGATE: PASS 16/16 on the first commit (9b0af6b). On the Korean re-tune commit, migrate-abrupt failed once ("client B 2.0 game-s behind", a timing flake unrelated to audio); see final line.
+**Limits:** Arabic has one real Piper voice (Jordanian) + MMS; nations differ by wording, pitch and pace. Device-speech fallback has no lines for the 3 new cues (silent). CIGATE: PASS 16/16 on the first commit (9b0af6b). On the Korean re-tune commit, migrate-abrupt failed once ("client B 2.0 game-s behind", a timing flake unrelated to audio); Re-run on the final commit: CIGATE PASS 16/16.
