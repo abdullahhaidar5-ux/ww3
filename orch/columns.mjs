@@ -122,7 +122,7 @@ const res = await page.evaluate(async (FR) => {
   SCN.traverseVisible(o => { if (o.isMesh || o.isPoints || o.isLine) { meshes++; if (o.castShadow) casters++; if (o.isSkinnedMesh) skinned++; if (o.isInstancedMesh) inst++; } });
   for (const o of OBJ.values()) if (o.visible) visObj++;
   const per = x => +(x / L.n).toFixed(2), s = L.all.slice().sort((a, b) => a - b);
-  const out = { frames: L.n, sim: per(L.sim), frameJS: per(L.frame), gpu: per(L.gpu), total: per(L.sim + L.frame + L.gpu), p90: +s[Math.floor(s.length * .9)].toFixed(1),
+  const out = { frames: L.n, sim: per(L.sim), frameJS: per(L.frame), gpu: per(L.gpu), total: per(L.sim + L.frame + L.gpu), p90: +s[Math.floor(s.length * .9)].toFixed(1), med: +s[Math.floor(s.length / 2)].toFixed(1),
     calls: Math.round(L.calls / L.n), newProg, tris: Math.round(L.tris / L.n), meshes, casters, skinned, inst, objs: OBJ.size, visObj, qual: QUAL.lv };
   for (const k in acc) out[k] = per(acc[k]);
   { // where the triangles are: per kind of unit/building, visible objects only (shadow casters are drawn twice)
@@ -152,7 +152,7 @@ if (PROF) { // self time per function over the measured frames (and warm-up), to
   console.log('CPU profile, self time share (' + tot + ' samples):');
   for (const [k, c] of [...self].sort((a, b) => b[1] - a[1]).slice(0, 30)) console.log('  ' + (100 * c / tot).toFixed(1).padStart(5) + '%  ' + k);
 }
-console.log('frame ms (mean):  total ' + res.total + '  p90 ' + res.p90 + '  | sim ' + res.sim + '  sync ' + res.sync + '  fx ' + res.fx + '  fog ' + res.fog +
+console.log('frame ms (mean):  total ' + res.total + '  median ' + res.med + '  p90 ' + res.p90 + '  | sim ' + res.sim + '  sync ' + res.sync + '  fx ' + res.fx + '  fog ' + res.fog +
   '  render ' + res.render + '  gpu(finish) ' + res.gpu + '  hud ' + res.hud + '  mini ' + res.mini + '  wreck ' + res.wreck + '  city ' + res.city + '  other ' + res.other);
 console.log(`scene: ${res.calls} draw calls, ${(res.tris / 1000).toFixed(0)}k triangles, ${res.meshes} visible meshes (${res.casters} shadow casters, ${res.skinned} skinned, ${res.inst} instanced), ${res.visObj}/${res.objs} objects in view, quality level ${res.qual}`);
 if (process.argv.includes('--census')) { console.log('world (terrain, trees, city, fx): ' + JSON.stringify(res.world)); for (const [k, v] of Object.entries(res.worldBy)) console.log('  W ' + k.padEnd(24) + JSON.stringify(v)); for (const [k, v] of Object.entries(res.byKind)) console.log('  ' + k.padEnd(12) + JSON.stringify(v)); }
