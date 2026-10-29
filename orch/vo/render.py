@@ -118,7 +118,7 @@ def best_take(eng, voice, lang, text, mood, n, most=8):
         if best is None or (ok, s) > (best[4], best[0]):
             best = (s, w, r, take, ok)
         take += 1
-    return best[:4]
+    return best
 
 
 def radio(w, rng, hiss):
@@ -187,7 +187,12 @@ def nation(fac, phr, n_takes=3, log=print):
                     v = C['cmd'][lang] if isinstance(C['cmd'], dict) else C['cmd']
                 else:
                     v = voices[(i + (k if cry else 0)) % len(voices)]
-                s, w, r, take = best_take(C['eng'], v, lang, say, mood, n_takes)
+                s, w, r, take, ok = best_take(C['eng'], v, lang, say, mood, n_takes)
+                if not ok and C.get('alt'):   # XTTS kept babbling on this line: the nation's second engine reads it
+                    A = C['alt']; av = A['voices'][i % len(A['voices'])]
+                    alt = best_take(A['eng'], av, A.get('lang', lang), text if A.get('raw') else say, mood, 3, most=6)
+                    if (alt[4], alt[0]) > (ok, s):
+                        s, w, r, take, ok = alt; v = av
                 w = radio(w, rng, hiss=(rng.random() < .35))
                 ent.append([round(t, 3), round(len(w) / SR, 3)])
                 sheet += [w, np.zeros(gap, np.float32)]

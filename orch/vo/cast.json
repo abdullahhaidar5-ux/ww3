@@ -36,7 +36,13 @@
    "Zacharie Aimilios",
    "Damjan Chapman"
   ],
-  "cmd": "Wulf Carlevaro"
+  "cmd": "Wulf Carlevaro",
+  "alt": {
+   "eng": "mms",
+   "voices": [
+    "kor"
+   ]
+  }
  },
  "KP": {
   "eng": "xtts",
@@ -45,7 +51,13 @@
    "Damien Black",
    "Baldur Sanjin"
   ],
-  "cmd": "Luis Moray"
+  "cmd": "Luis Moray",
+  "alt": {
+   "eng": "mms",
+   "voices": [
+    "kor"
+   ]
+  }
  },
  "IN": {
   "eng": "xtts",
@@ -54,7 +66,14 @@
    "Damjan Chapman",
    "Baldur Sanjin"
   ],
-  "cmd": "Xavier Hayasaka"
+  "cmd": "Xavier Hayasaka",
+  "alt": {
+   "eng": "piper",
+   "voices": [
+    "hi_IN-rohan-medium",
+    "hi_IN-pratham-medium"
+   ]
+  }
  },
  "PK": {
   "eng": "xtts",
@@ -63,7 +82,15 @@
    "Damien Black",
    "Xavier Hayasaka"
   ],
-  "cmd": "Baldur Sanjin"
+  "cmd": "Baldur Sanjin",
+  "alt": {
+   "eng": "piper",
+   "lang": "ur",
+   "raw": true,
+   "voices": [
+    "ur_PK-fasih-medium"
+   ]
+  }
  },
  "CU": {
   "eng": "xtts",
