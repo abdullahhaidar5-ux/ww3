@@ -1,0 +1,101 @@
+{
+ "US": {
+  "eng": "xtts",
+  "lang": "en",
+  "sold": [
+   "Zacharie Aimilios",
+   "Ferran Simen",
+   "Marcos Rudaski"
+  ],
+  "cmd": "Viktor Menelaos"
+ },
+ "TR": {
+  "eng": "xtts",
+  "lang": "tr",
+  "sold": [
+   "Filip Traverse",
+   "Xavier Hayasaka",
+   "Gilberto Mathias"
+  ],
+  "cmd": "Ludvig Milivoj"
+ },
+ "RU": {
+  "eng": "xtts",
+  "lang": "ru",
+  "sold": [
+   "Zacharie Aimilios",
+   "Ilkin Urbano",
+   "Gilberto Mathias"
+  ],
+  "cmd": "Torcull Diarmuid"
+ },
+ "KR": {
+  "eng": "xtts",
+  "lang": "ko",
+  "sold": [
+   "Zacharie Aimilios",
+   "Damjan Chapman"
+  ],
+  "cmd": "Wulf Carlevaro"
+ },
+ "KP": {
+  "eng": "xtts",
+  "lang": "ko",
+  "sold": [
+   "Damien Black",
+   "Baldur Sanjin"
+  ],
+  "cmd": "Luis Moray"
+ },
+ "IN": {
+  "eng": "xtts",
+  "lang": "hi",
+  "sold": [
+   "Damjan Chapman",
+   "Baldur Sanjin"
+  ],
+  "cmd": "Xavier Hayasaka"
+ },
+ "PK": {
+  "eng": "xtts",
+  "lang": "hi",
+  "sold": [
+   "Damien Black",
+   "Xavier Hayasaka"
+  ],
+  "cmd": "Baldur Sanjin"
+ },
+ "CU": {
+  "eng": "xtts",
+  "lang": "es",
+  "sold": [
+   "Damien Black",
+   "Kazuhiko Atallah",
+   "Filip Traverse"
+  ],
+  "cmd": "Wulf Carlevaro"
+ },
+ "EU": {
+  "eng": "xtts",
+  "lang": "fr",
+  "sold": {
+   "fr": [
+    "Ilkin Urbano",
+    "Viktor Menelaos"
+   ],
+   "de": [
+    "Damien Black",
+    "Marcos Rudaski"
+   ],
+   "en": [
+    "Ferran Simen",
+    "Zacharie Aimilios"
+   ]
+  },
+  "cmd": {
+   "fr": "Wulf Carlevaro",
+   "de": "Ludvig Milivoj",
+   "en": "Viktor Menelaos"
+  }
+ }
+}

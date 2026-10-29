@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # render nations one by one; after each: rebuild index.html, commit and push (orch/vo/run.sh RS DW IR ...)
 cd "$(dirname "$0")/../.."
+export PYTHONDONTWRITEBYTECODE=1
 for f in "$@"; do
   python3 orch/vo/render.py "$f" || { echo "RENDER FAIL $f"; continue; }
   python3 orch/build.py | tail -1 && python3 orch/build.py --check | tail -1 || { echo "BUILD FAIL $f"; exit 1; }
