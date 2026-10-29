@@ -23,7 +23,7 @@ V = {
  'PK': [pi('ur_PK-fasih-medium'), mm('urd-script_arabic', p=.95), pi('ur_PK-fasih-medium', p=.88)],
  'IN': [pi('hi_IN-pratham-medium'), pi('hi_IN-rohan-medium'), ko('hm_omega', 'hi')],
  'CN': [ko('zm_yunjian', 'zh'), ko('zm_yunxi', 'zh'), ko('zm_yunyang', 'zh', p=.97)],
- 'KR': [pi('ko_KR-kss-medium', p=.78), mm('kor', p=.92), pi('ko_KR-kss-medium', p=.70, ls=.95)],
- 'KP': [mm('kor', p=.84, t=1.08), pi('ko_KR-kss-medium', p=.66, ls=.88), mm('kor', p=.76)],
+ 'KR': [pi('ko_KR-kss-medium', p=.86), mm('kor', p=.95), pi('ko_KR-kss-medium', p=.80, ls=.95)],
+ 'KP': [mm('kor', p=.88, t=1.06), pi('ko_KR-kss-medium', p=.76, ls=.9), mm('kor', p=.82)],
  'CU': [ko('em_alex', 'es'), ko('em_santa', 'es'), pi('es_MX-claude-high'), pi('es_MX-ald-medium')],
 }
