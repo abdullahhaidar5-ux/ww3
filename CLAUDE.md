@@ -42,15 +42,14 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   Most tactical/realistic gameplay possible: flanking, cover, suppression.
 - **No decorative or ambient aircraft or drones.** They were removed because they confused players. Only real,
   controllable aircraft fly.
-- **Controls = C&C Generals mechanics** (Abdullah, 2026-10-26 17:34, and re-confirmed 18:55 in the side-lane chat
-  when asked about a 17:55 "freeze the live mouse controls" note from another chat: **Generals wins; the freeze is
-  void**). Default mouse scheme is Generals' default: left-click selects and gives orders (ground = move, enemy =
-  attack, own unit = select), Shift+click adds, double-click selects that type on screen, Ctrl+click force-fire,
-  A+click attack-move, G+click guard, Alt+click waypoints, right-click deselects/cancels, right-drag draws the
-  infantry line formation when units are selected and rapid-scrolls when nothing is selected, left-click ground with
-  a production building selected sets its rally point. Today's scheme (right-click move/attack, right-drag line)
-  lives on as Settings > "Alternate mouse setup". Every action must also work with touch alone; phone controls are
-  being redesigned to be more intuitive (Abdullah, 18:49).
+- **Controls (Abdullah, 2026-10-28 19:11 — replaces the 2026-10-26 Generals left-click scheme):** **left-click selects**
+  (drag = box select, Shift adds, double-click selects that type on screen); **right-click moves and attacks** (ground =
+  move, enemy = attack), right-drag draws the infantry line formation; **F + click = attack-move** (A no longer does
+  it); G+click guard, Ctrl+click force-fire, Alt+click waypoints; left-click ground with a production building selected
+  sets its rally point. The old Generals left-click-orders scheme may stay as a Settings option. On PCs **the mouse stays
+  inside the game window** during a battle (pointer lock with the game's own cursor; edge scrolling works; Esc or the
+  menu releases it; a Settings toggle turns it off). **Command bar text is bigger and easier to read** (PC and phone).
+  Every action must also work with touch alone (phone touch controls unchanged).
 - **Factions (18 live):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
   **DW "Coffee Shias"**. The IM faction was removed on purpose; 18 is the intended count (no 19th planned). Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
