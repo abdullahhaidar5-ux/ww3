@@ -8,7 +8,7 @@
 
 **Balance** (Normal AI vs AI, new fast tournament `node orch/aitourney.mjs`)
 - Before (153 games): 24–76%. Israel 32%, UAE 24%.
-- After (459 games, 51 per nation): 37–65%. Israel 51%, UAE 57%. Strongest Egypt 65%, weakest Cuba 37%. (±7% noise per nation.)
-- Done with each nation's overall cost factor. "Radwan Training" untouched.
+- After (459 games, 51 per nation): 37–65%. Israel 51%, UAE 57%. Strongest Egypt 65%, weakest Cuba 37%.
+- Tuned via each nation's overall cost; "Radwan Training" untouched.
 
 **CIGATE:** 16/16 PASS on 142bbfb (HEADLESS PASS: battles stay deterministic, multiplayer sync and host-migration tests pass).
