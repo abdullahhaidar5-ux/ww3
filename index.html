@@ -582,6 +582,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .btn:disabled{opacity:.58}
 .btn .q{font-size:12.5px}
 .cmdrow button{font-size:12.5px}#info .cmdrow button{font-size:14px;min-height:32px}
+@media (min-width:761px) and (max-width:1500px){.sqs button.empty small{display:none}} /* room for "+ Squad" beside the taller bar's wider minimap */
 body.mlock .btn.vhov:not(:disabled),body.mlock button.vhov:not(:disabled){border-color:var(--accent)}
 @media (max-width:560px),(max-width:760px) and (min-height:521px){
   #side{height:clamp(212px,36vh,292px);grid-template-rows:40px minmax(0,1fr) 40px 95px}
@@ -591,7 +592,6 @@ body.mlock .btn.vhov:not(:disabled),body.mlock button.vhov:not(:disabled){border
   #panel .btn .c{font-size:11.5px;line-height:1.1}
 }
 @media (max-height:520px) and (min-width:561px){
-  #side{--bh:140px}
   #panel .btn{padding:2px 6px 3px;gap:1px}
   #panel .btn .n{font-size:13.5px;line-height:1.02;padding-right:8px}
   #panel .btn .c{font-size:11.5px;line-height:1.1}
