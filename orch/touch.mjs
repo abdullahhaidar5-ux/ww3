@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock } from './browserlock.mjs';
 import { guardContext } from './serverdev.mjs';
+import { enterExitChecks } from './enterexit.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SHOTS = path.join(ROOT, 'orch', 'shots', 'touch');
@@ -310,6 +311,9 @@ async function phonePass(tag, viewport, storageState) {
   await page.tap('#tstrip button[data-k="ok"]');
   a = await acts(page);
   check(tag, a.some(x => x.t === 'sup') && await page.evaluate(() => !G.aim), 'tap a target, then ✓ fires the power there');
+
+  // --- getting in and out with taps alone (orch/enterexit.mjs) ---
+  if (tag === 'portrait') await enterExitChecks(page, { mode: 'touch', ck: (n, ok, d) => check(tag, ok, n + (ok || !d ? '' : ' — ' + String(d).slice(0, 300))), tap: (x, y) => T.tap(x, y) });
 
   // --- guide again from the ☰ menu ---
   await page.tap('#aMenu');
