@@ -2,14 +2,14 @@
 // mobile/touch emulation) and desktop (1366x768) sizes, with the Construction Vehicle selected so the Build tab shows
 // its full grid. Prints, per size, where each command button sits and any text in the bar that is cut off without an
 // ellipsis. Screenshots: orch/out/bar-portrait.png, bar-landscape.png, bar-desktop.png.
-//   node orch/barshots.mjs [--tag -x] [--names]   (SIZES=p,l,d to pick sizes; --names: list every faction's command-button
+//   node orch/barshots.mjs [--tag -x] [--names]   (SIZES=p,l,d,w to pick sizes, w = 1920x1080; OUT=dir for the screenshots; --names: list every faction's command-button
 //   names that don't fit, and buttons under 40 px, on every tab -> BARNAMES PASS / FAIL)
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), OUT = path.join(ROOT, 'orch', 'out');
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), OUT = process.env.OUT ? path.resolve(process.env.OUT) : path.join(ROOT, 'orch', 'out');
 const TAG = process.argv.includes('--tag') ? process.argv[process.argv.indexOf('--tag') + 1] : '';
 const { acquireBrowserLock } = await import(path.join(ROOT, 'orch/browserlock.mjs'));
 const { guardContext } = await import(path.join(ROOT, 'orch/serverdev.mjs'));
@@ -29,7 +29,8 @@ const browser = await pw.chromium.launch({ executablePath: exe, args: ['--use-gl
 const sizes = (process.env.SIZES || 'p,l,d').split(',');
 const cfg = { p: { name: 'portrait', viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
   l: { name: 'landscape', viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 },
-  d: { name: 'desktop', viewport: { width: 1366, height: 768 } } };
+  d: { name: 'desktop', viewport: { width: 1366, height: 768 } },
+  w: { name: 'desktop1920', viewport: { width: 1920, height: 1080 } } };
 const errs = [], NAMES = process.argv.includes('--names'); let namesBad = 0;
 for (const s of sizes) {
   const c = cfg[s]; const ctx = await browser.newContext({ viewport: c.viewport, isMobile: !!c.isMobile, hasTouch: !!c.hasTouch, deviceScaleFactor: c.deviceScaleFactor || 1 });

@@ -572,6 +572,30 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 }
 /* touch screens big enough for the desktop bar (tablets): two taller rows of command buttons */
 @media (pointer:coarse) and (min-width:761px) and (min-height:521px){#side{--rows:2}.tabs button,.hdr button,.sqbar button{min-height:36px}}
+/* Command bar text bigger and easier to read (Abdullah, 2026-10-28): larger names and costs, brighter text, greyed-out
+   buttons still readable. PC: names 15 px, costs 13 px, a slightly taller bar. Phones: names 13-13.5 px wrapping onto two
+   lines (fitBtnNames only shrinks a name that still doesn't fit), costs 11.5 px, buttons at least 40 px. */
+@media (min-width:761px) and (min-height:521px){#side{--bh:clamp(196px,21vh,214px)}} /* PC bar only; phones keep their own height */
+#panel .btn{padding:2px 8px 3px;gap:2px}
+#panel .btn .n{font-size:15px;line-height:1.05;color:#f4f8f5;letter-spacing:.01em}
+#panel .btn .c,.btn .c{font-size:13px;font-weight:600;color:#f0c75a}
+.btn:disabled{opacity:.58}
+.btn .q{font-size:12.5px}
+.cmdrow button{font-size:12.5px}#info .cmdrow button{font-size:14px;min-height:32px}
+@media (min-width:761px) and (max-width:1500px){.sqs button.empty small{display:none}} /* room for "+ Squad" beside the taller bar's wider minimap */
+body.mlock .btn.vhov:not(:disabled),body.mlock button.vhov:not(:disabled){border-color:var(--accent)}
+@media (max-width:560px),(max-width:760px) and (min-height:521px){
+  #side{height:clamp(212px,36vh,292px);grid-template-rows:40px minmax(0,1fr) 40px 95px}
+  #panel.grid{grid-template-rows:repeat(2,46px)}
+  #panel .btn{padding:2px 5px 3px;gap:1px}
+  #panel .btn .n{font-size:13.5px;line-height:1.02;letter-spacing:0;padding-right:8px}
+  #panel .btn .c{font-size:11.5px;line-height:1.1}
+}
+@media (max-height:520px) and (min-width:561px){
+  #panel .btn{padding:2px 6px 3px;gap:1px}
+  #panel .btn .n{font-size:13.5px;line-height:1.02;padding-right:8px}
+  #panel .btn .c{font-size:11.5px;line-height:1.1}
+}
 </style>
 
 <div id="app">
@@ -582,7 +606,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
     <div id="log" aria-live="polite"></div>
     <div id="wxchip" hidden></div>
     <div id="net" hidden></div>
-    <div id="hint">Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add · Double-click: all of a type · Ctrl+click: force-fire · Alt+click: waypoint · A / G then click: attack-move / guard · S: stop · R: retreat · Right-click: deselect / cancel · Right-drag: infantry line (nothing selected: rapid scroll) · Q: army · H: home · Wheel: zoom · Arrows/WASD: scroll</div>
+    <div id="hint">Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · F then click: attack-move · G then click: defend area · X: stop · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Q: army · H: home · Wheel: zoom · WASD/arrows: scroll · Esc: cancel / deselect</div>
     <div id="sbx" class="sbx" hidden><button class="sbt" id="sbFold" type="button" aria-expanded="true">TEST RANGE</button><div class="sbr"><button id="sbTargets">Send new targets</button><button id="sbClear">Clear targets</button></div><button id="sbFight" class="sbw">Enemy fights back: OFF</button><div id="sbCount" class="sbc"></div></div>
     <div id="allyBox" class="sup" hidden></div>
   </div>
@@ -8452,14 +8476,14 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
 function showTab(t){TAB=t;const pn=$('panel');if(pn)pn.scrollLeft=0;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('#panel>[data-tab]').forEach(b=>b.hidden=b.dataset.tab!==t);fitBtnNames();}
 // phones: a command-button name that still doesn't fit in two lines gets a smaller font (down to 8.5 px) instead of "…"
 const PHONE_BAR=typeof matchMedia==='function'?matchMedia('(max-width:560px),(max-width:760px) and (min-height:521px),(max-height:520px)'):null;
-function fitBtnNames(){const pn=$('panel');if(!pn)return;const on=PHONE_BAR&&PHONE_BAR.matches;fitCols(pn);for(const n of pn.querySelectorAll('.btn:not([hidden]) .n')){n.style.fontSize='';n.style.overflowWrap='';const b=n.parentNode;if(b.dataset.nm&&n.textContent!==b.dataset.nm)n.textContent=b.dataset.nm;if(!n.clientWidth)continue;let f=parseFloat(getComputedStyle(n).fontSize)||11;const fmin=on?8.5:9.5;while(f>fmin&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1)){f-=.5;n.style.fontSize=f+'px';}const sh=on&&PHONE_NM[n.textContent];if(sh&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1))n.textContent=sh;if(n.scrollWidth>n.clientWidth+1)n.style.overflowWrap='anywhere';}
-  for(const c of pn.querySelectorAll('.btn:not([hidden]) .c'))fitText(c,on?7.5:8.5);
+function fitBtnNames(){const pn=$('panel');if(!pn)return;const on=PHONE_BAR&&PHONE_BAR.matches;fitCols(pn);for(const n of pn.querySelectorAll('.btn:not([hidden]) .n')){n.style.fontSize='';n.style.overflowWrap='';const b=n.parentNode;if(b.dataset.nm&&n.textContent!==b.dataset.nm)n.textContent=b.dataset.nm;if(!n.clientWidth)continue;let f=parseFloat(getComputedStyle(n).fontSize)||11;const fmin=on?10:12;while(f>fmin&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1)){f-=.5;n.style.fontSize=f+'px';}const sh=on&&PHONE_NM[n.textContent];if(sh&&(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1))n.textContent=sh;if(n.scrollWidth>n.clientWidth+1)n.style.overflowWrap='anywhere';}
+  for(const c of pn.querySelectorAll('.btn:not([hidden]) .c'))fitText(c,on?9.5:11);
   for(const el of [$('facname'),...document.querySelectorAll('#side .sup .lbl>span:first-child')])fitText(el,10);}
 // a one-line label that doesn't fit gets a smaller font (down to min px) instead of "…"
 function fitText(el,min){if(!el)return;el.style.fontSize='';if(!el.clientWidth||el.scrollWidth<=el.clientWidth+1)return;let f=parseFloat(getComputedStyle(el).fontSize)||13;while(f>min&&el.scrollWidth>el.clientWidth+1){f-=.5;el.style.fontSize=f+'px';}}
 // the command grid shows whole buttons only: the button width is stretched a little so a whole number of columns fills
 // the grid (no last column half hidden at the edge or under the panel beside it), the building labels between them counted
-const BW_MIN={up:80,land:100,desk:132};
+const BW_MIN={up:80,land:100,desk:150};
 function fitCols(pn){const up=matchMedia('(max-width:560px),(max-width:760px) and (min-height:521px)').matches,land=!up&&matchMedia('(max-height:520px)').matches;
   const base=up?BW_MIN.up:land?BW_MIN.land:BW_MIN.desk,W=pn.clientWidth;if(!W)return;
   const P=pn.getBoundingClientRect();for(let k=0;k<2;k++){let subW=0;for(const d of pn.querySelectorAll('.sub:not([hidden])')){const r=d.getBoundingClientRect();if(r.left-P.left+pn.scrollLeft<W)subW+=r.width+3;}
@@ -8510,7 +8534,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('side').classList.toggle('hasUp',!!up);$('supbar').style.width=(up?f*100:0)+'%';
   $('supt').textContent=!up?'needs Strike Center':f>=1?'READY':`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;$('supbtn').disabled=!(up&&f>=1);
   const nx=RANKS[T.rank]||null,pr=RANKS[T.rank-1];$('rankname').textContent=`General rank ${T.rank}`+(pts>0?` · ${pts} point${pts>1?'s':''} to spend`:'');$('rankbar').style.width=(nx?Math.min(1,(T.gxp-pr)/(nx-pr))*100:100)+'%';$('rankt').textContent=nx?`${T.gxp}/${nx} XP`:'Max rank';
-  const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+(altMouse()?' · Esc cancels':' · right-click or Esc cancels'));}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
+  const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+(stdMouse()?' · Esc cancels':' · right-click or Esc cancels'));}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
   const s=G.sel.filter(e=>!e.dead);const el=$('info');el.innerHTML='';const b=document.createElement('b'),sp=document.createElement('span'),tip=document.createElement('span');tip.className='tip';
   if(s.length===1){const e=s[0];b.textContent=e.s.name+(e.rank?` · ${VET[e.rank]}`:'');sp.textContent=` ${Math.ceil(e.hp)} / ${e.max} HP`+(e.isB&&e.built<1?` · building ${Math.floor(e.built*100)}%`:'')+((e.dis>G.t||e.disv)?' · HACKED':'')+(e.kind==='jet'?` · ${e.landed?'parked':'airborne'}`:'');
     tip.textContent=e.kind==='hacker'?'Right-click an enemy building to disable it. Idle hackers earn cash.':e.s.demo?'Stealthed. Right-click an enemy building to plant explosives.':e.kind==='hero'?'Stealthed until it fires. Snipes infantry from long range.':e.kind==='jet'?'Right-click a target to strike. Jets return to the airfield to rearm.':e.kind==='harv'?'Right-click a supply field to send it there.':e.kind==='dozer'?'Builds everything: pick a building under Build, then click the map. Right-click an unfinished building to help. Repairs buildings it stands next to.':e.isB&&e.kind==='tunnel'&&e.team===ME?`Units inside: ${MODE==='client'?(T.tunN|0):T.tun.length} of 12. Select units and right-click a tunnel to send them in; they heal inside and can come out of any tunnel.`:e.isB&&e.nd&&e.built<1?(e.stall?'Waiting for a Construction Vehicle to arrive and build it.':'A Construction Vehicle is building this.'):e.isB&&e.team===ME&&CATS.includes(e.kind)?'Right-click the ground to set the rally point.':'';}
@@ -8525,7 +8549,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   else if(leftOrders()&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Click').replace(/right-click/g,'click');
   el.append(b,sp);if(tip.textContent)el.append(tip);
-  if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack ('+(SET.mAK==='a'?'A':'F')+')';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop ('+(SET.mAK==='a'?'S':'X')+')';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
+  if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
   {const ap=$('app'),o=!!el.querySelector('.cmdrow');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.';el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
@@ -8574,28 +8598,28 @@ function issueCmd(w,t,rally){
     const fi=fieldAt(w);if(fi>=0&&units.some(u=>u.kind==='harv')){doAct({t:'fld',ids,fi});const rest=units.filter(u=>u.kind!=='harv').map(u=>u.id);if(rest.length)doAct({t:'go',ids:rest,x:w.x,y:w.y,mode:'move'});return true;}
     doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0,q:G.qShift?1:0});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:G.qShift?0xe3b341:0x74d08f});return true;
 }
-// Controls (mouse) follow Command & Conquer Generals (default scheme):
-//   LEFT does everything - click a unit to select it (Shift+click adds/removes, double-click selects all of that type
-//   on screen, drag a box to select units); with units selected, click the ground to move, an enemy to attack, a
-//   friendly unit to select it instead (or, for infantry, a transport, tunnel or building they can enter to go in).
-//   Ctrl+click force-fires, Alt+click adds a waypoint, A then click attack-moves, G then click guards an area. With a
-//   production building selected, clicking the ground sets the rally point. A building or power chosen from the
-//   sidebar is placed or aimed with a left click.
-//   RIGHT click (without dragging) deselects, or first cancels placement, power targeting or A/G mode. Right-drag with
-//   units selected draws the infantry line formation; with nothing selected it rapid-scrolls the camera.
+// Controls (mouse), default "Standard" scheme (Abdullah, 2026-10-28):
+//   LEFT selects - click a unit (Shift+click adds/removes, double-click selects all of that type on screen, drag a box
+//   to select units); a click on empty ground deselects. With a production building selected, a left click on the
+//   ground sets its rally point. With units selected, Ctrl+click force-fires and Alt+click adds a waypoint. A building
+//   or power chosen from the sidebar is placed or aimed with a left click.
+//   RIGHT orders - click the ground to move, an enemy to attack, your own transport / tunnel / building to go in
+//   (Ctrl+right-click force-fires); it first cancels placement or power targeting. Right-drag with units selected draws
+//   the infantry line formation; with nothing selected it does nothing.
+//   F then click attack-moves, G then click guards an area, X stops, R retreats (A no longer attack-moves anywhere).
 // Settings > Mouse lets each function be chosen (saved in SET): mLG left-click on the ground with units selected
 // (move | desel), mRC right-click (cancel = deselect & cancel | order = move & attack), mRDU right-drag with units
-// (line | scroll), mRDN right-drag with nothing selected (scroll | box | none), mAK attack-move key (a: A attack-move and
-// S stop while units are selected | f: F and X, WASD always scrolls), mRS rapid-scroll speed, mCur contextual cursor,
-// mPing order markers. Two presets: Generals (default) and "Alternate mouse setup" (Generals' own name for its
-// right-click-orders option = the older scheme: left selects, right-click moves/attacks, right-drag draws a line).
+// (line | scroll), mRDN right-drag with nothing selected (scroll | box | none), mRS rapid-scroll speed, mCur contextual
+// cursor, mPing order markers, mLock keep the mouse inside the game window (pointer lock, see MLOCK). Two presets:
+// Standard (default) and Generals (left-click gives orders, right-click deselects / cancels, right-drag scrolls).
+// Saved settings from before 2026-10-29 are moved to Standard once (ctl2). mAK is always 'f' now (F attack-move, X stop).
 // Touch and pen have no right button, so a tap selects or orders as before. The cursor shows what a click will do.
 let lastR={t:0,id:0},rDown=0;
-const MDEF={mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll',mAK:'a',mRS:100,mCur:1,mPing:1};
-const MPRE={gen:{mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll',mAK:'a'},alt:{mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f'}};
-if(SET.mLG==null&&SET.alt===1)Object.assign(SET,MPRE.alt);for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];delete SET.alt;
+const MDEF={mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f',mRS:100,mCur:1,mPing:1,mLock:1};
+const MPRE={std:{mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none'},gen:{mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll'}};
+if(SET.ctl2!==1){Object.assign(SET,MPRE.std);SET.ctl2=1;try{saveSet();}catch(_){}}for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];SET.mAK='f';delete SET.alt;
 function mPreset(){for(const p in MPRE)if(Object.keys(MPRE[p]).every(k=>SET[k]===MPRE[p][k]))return p;return 'custom';}
-function altMouse(){return mPreset()==='alt';}
+function stdMouse(){return mPreset()==='std';}
 function leftOrders(){return SET.mLG==='move';}
 function rightOrders(){return SET.mRC==='order';}
 // order markers (ground pings for move / attack orders), Settings > Mouse > Order markers
@@ -8624,6 +8648,7 @@ function waypoint(w,units){if(noGo(units,w)){try{sfxUI(220);}catch(_){}return fa
 const CURD={
   sel:[3,2,'default',c=>{c.beginPath();c.moveTo(3,2);c.lineTo(3,24);c.lineTo(9,19);c.lineTo(13,28);c.lineTo(17,26);c.lineTo(13,17.5);c.lineTo(21,17.5);c.closePath();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#000';c.stroke();c.fillStyle='#e9f5ec';c.fill();
     c.lineWidth=3.4;c.strokeStyle='#000';const br=()=>{c.beginPath();c.moveTo(20,23);c.lineTo(20,29);c.lineTo(26,29);c.moveTo(30,23);c.lineTo(30,29);c.lineTo(24,29);c.stroke();};br();c.lineWidth=1.6;c.strokeStyle='#7be08f';br();}],
+  arrow:[3,2,'default',c=>{c.beginPath();c.moveTo(3,2);c.lineTo(3,24);c.lineTo(9,19);c.lineTo(13,28);c.lineTo(17,26);c.lineTo(13,17.5);c.lineTo(21,17.5);c.closePath();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#000';c.stroke();c.fillStyle='#e9f5ec';c.fill();}],
   move:[16,27,'pointer',c=>{const arrow=()=>{c.beginPath();c.moveTo(16,23);c.lineTo(25,12);c.lineTo(19.5,12);c.lineTo(19.5,3);c.lineTo(12.5,3);c.lineTo(12.5,12);c.lineTo(7,12);c.closePath();};arrow();c.lineJoin='round';c.lineWidth=3;c.strokeStyle='#04140a';c.stroke();c.fillStyle='#7be08f';c.fill();
     c.beginPath();c.ellipse(16,27,11,3.6,0,0,7);c.lineWidth=3.6;c.strokeStyle='#04140a';c.stroke();c.lineWidth=1.8;c.strokeStyle='#7be08f';c.stroke();}],
   attack:[16,16,'crosshair',c=>ring(c,'#ff4a3a',false)],
@@ -8649,6 +8674,7 @@ function cursorIntent(){if(!G||G.over)return '';const lo=leftOrders(),ro=rightOr
   if(G.place)return 'place';if(G.aim)return 'aim';if(G.amove)return 'amove';if(G.defm)return 'guard';
   const units=selfSel(),t=pickAt(mouse.x,mouse.y,false);
   if(!units.length){if(t)return t.team===ME?'sel':'';if((lo||ro)&&prodSel())return 'rally';return '';}
+  if(!lo&&(MODK.ctrl||MODK.alt)){const w=screenToWorld(mouse.x,mouse.y);if(MODK.ctrl)return w&&forceTarget(t,w)?'force':'nogo';return w&&!noGo(units,w)?'way':'nogo';}
   if(!lo&&!ro)return t&&t.team===ME?'sel':'';
   const w=screenToWorld(mouse.x,mouse.y);
   if(lo&&MODK.ctrl)return w&&forceTarget(t,w)?'force':'nogo';
@@ -8680,7 +8706,7 @@ function orderClick(sh){if(!G||G.over)return;G.qShift=!!sh;const w=screenToWorld
   const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
   if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;return;}
   G.amove=false;const bsel=!units.length&&G.sel.some(b=>b.isB&&b.team===ME);if(!units.length&&!bsel)return;
-  const t=pickAt(mouse.x,mouse.y,false);if(issueCmd(w,t,bsel))updateUI();}
+  const t=pickAt(mouse.x,mouse.y,false);if(units.length&&MODK.ctrl){forceFire(w,t,units);updateUI();return;}if(issueCmd(w,t,bsel))updateUI();}
 // Generals scheme, a left click with the mouse: orders for the selection, or a rally point for a production building.
 // Returns false when the click should simply select what is under the cursor.
 function genClick(d,t){const units=selfSel(),w=screenToWorld(mouse.x,mouse.y);if(!w)return false;
@@ -8691,6 +8717,13 @@ function genClick(d,t){const units=selfSel(),w=screenToWorld(mouse.x,mouse.y);if
     G.qShift=!!d.shift;const ok=issueCmd(w,t,false);G.qShift=false;if(ok){updateUI();return true;}return false;}
   if(!t&&!d.shift&&prodSel()){issueCmd(w,null,true);updateUI();return true;}
   return false;}
+// Standard scheme, a left click with the mouse: Ctrl+click force-fires and Alt+click adds a waypoint for the selected units;
+// with a production building selected, a click on the ground sets its rally point. False = just select.
+function selClick(d,t){const units=selfSel(),w=screenToWorld(mouse.x,mouse.y);if(!w)return false;
+  if(units.length&&d.ctrl){forceFire(w,t,units);updateUI();return true;}
+  if(units.length&&d.alt){waypoint(w,units);updateUI();return true;}
+  if(!units.length&&!t&&!d.shift&&prodSel()){issueCmd(w,null,true);updateUI();return true;}
+  return false;}
 function rightRelease(d){if(!G)return;
   if(d.box){const x0=Math.min(d.x0,mouse.x),x1=Math.max(d.x0,mouse.x),y0=Math.min(d.y0,mouse.y),y1=Math.max(d.y0,mouse.y);
     const got=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u)+4,u.y);return p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1;})());G.sel=d.shift?[...new Set([...G.sel,...got])]:got;}
@@ -8699,7 +8732,7 @@ function rightRelease(d){if(!G)return;
     lastR={t:now,id:t?t.id:0};
     const mine=G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead),bsel=!mine&&G.sel.some(b=>b.isB&&b.team===ME);
     const dzHelp=t&&t.team===ME&&t.isB&&((t.built<1&&G.sel.some(u=>u.kind==='dozer'&&u.team===ME&&!u.dead))||(t.kind==='tunnel'&&t.built>=1&&G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&u.s.dom==='ground')))||(t&&t.team===ME&&!t.isB&&t.s&&t.s.cap&&G.sel.some(u=>u!==t&&!u.isB&&canBoard(t,u)))||(t&&t.kind==='garrison'&&t.team===ME&&G.sel.some(u=>u.team===ME&&canGarrison(u)));
-    if(d.pt==='mouse'&&leftOrders()&&genClick(d,t))return;
+    if(d.pt==='mouse'&&(leftOrders()?genClick(d,t):selClick(d,t)))return;
     if(d.pt!=='mouse'&&(mine||bsel)&&!d.shift&&(!(t&&t.team===ME)||dzHelp)){const w=screenToWorld(mouse.x,mouse.y);if(w&&issueCmd(w,t,bsel)){updateUI();return;}}
     selectClick(t,d.shift);}
   if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);updateUI();}
@@ -8742,9 +8775,10 @@ window.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e))r
 window.addEventListener('pointercancel',e=>{touchCancel(e);if(drag&&e.pointerId===drag.id)drag=null;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;MODK.ctrl=e.ctrlKey||e.metaKey||k==='Control'||k==='Meta';MODK.alt=e.altKey||k==='Alt';MODK.shift=e.shiftKey;if(!G||$('menu').hidden===false)return;if(k==='Alt')e.preventDefault();
-  const gk=genKeys()&&!e.ctrlKey&&!e.metaKey&&!e.altKey;if(gk&&k==='a'&&!e.repeat){G.amove=true;G.defm=false;}if(gk&&k==='s'&&!e.repeat){const ids=selfSel().map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
+  const gk=genKeys()&&!e.ctrlKey&&!e.metaKey&&!e.altKey;/* W A S D only scroll the camera in every scheme (Abdullah 2026-10-28): no A attack-move, no S stop (X stops) */
   if(/^Digit[1-5]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
   if(k==='p'&&!G.over){e.preventDefault();togglePause();return;}
+  if(k==='Escape'&&MLOCK.on){MLOCK.escK=performance.now();mlockCancelModes();mlockOff();return;}
   if(k==='Escape'&&menuOpen()){menuOpen(false);return;}
   if(k==='Escape'){if(G.defm){G.defm=false;return;}if(G.paused){togglePause(false);return;}if(!G.place&&!G.aim&&!G.amove&&!G.sel.length&&!G.over){togglePause(true);return;}if(!G.place&&!G.aim&&!G.amove)G.sel=[];G.place=null;G.aim=null;G.amove=false;}
   if(k==='q')G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);
@@ -8756,9 +8790,9 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();updateUI();});
 window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
 window.addEventListener('blur',()=>{MODK.ctrl=MODK.alt=MODK.shift=false;});
-// Generals keys: with your own units selected, A arms attack-move and S stops them (instead of scrolling); with nothing
-// selected WASD scrolls. Arrow keys always scroll. The Alternate mouse setup keeps the older keys (F attack, X stop).
-function genKeys(){return !!G&&SET.mAK==='a'&&G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead);}
+// Keys: F arms attack-move, G guard, X stops, R retreats in every mouse scheme; WASD and the arrow keys always scroll
+// (A no longer arms attack-move - Abdullah, 2026-10-28).
+function genKeys(){return false;}
 function mmJump(e){const r=mm.getBoundingClientRect();centerOn((e.clientX-r.left)/r.width*MAPW,(e.clientY-r.top)/r.height*MAPH);}
 // Minimap: left-click / tap / drag moves the view there; right-click sends the selected units there.
 // Pointer events so it works the same with a mouse, trackpad, touch screen or pen.
@@ -8999,6 +9033,7 @@ setTimeout(setHint,0);
 function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=genKeys();if(keys.ArrowLeft||(keys.a&&!gk))cam.tx-=sp;if(keys.ArrowRight||keys.d)cam.tx+=sp;if(keys.ArrowUp||keys.w)cam.ty-=sp;if(keys.ArrowDown||(keys.s&&!gk))cam.ty+=sp;
   // Generals rapid scroll: right-drag with nothing selected pans toward the drag, faster the further you drag
   if(RDRAG&&RDRAG.gen&&RDRAG.mode==='scroll'&&RDRAG.moved){const dx=mouse.x-RDRAG.x0,dy=mouse.y-RDRAG.y0,d=Math.hypot(dx,dy);if(d>4){const v=sp*Math.min(6,.6+d/70)*(SET.mRS||100)/100;cam.tx+=dx/d*v;cam.ty+=dy/d*v;}}
+  if(MLOCK.on&&!mouse.in&&!drag&&SET.edge){const W=innerWidth-1,H=innerHeight-1;if(MLOCK.x<=0)cam.tx-=sp;if(MLOCK.x>=W)cam.tx+=sp;if(MLOCK.y<=0)cam.ty-=sp;if(MLOCK.y>=H)cam.ty+=sp;}
   if(mouse.in&&!drag&&SET.edge&&LASTPT!=='touch'){if(mouse.x<14)cam.tx-=sp;if(mouse.x>VW-14)cam.tx+=sp;if(mouse.y<14)cam.ty-=sp;if(mouse.y>VH-14)cam.ty+=sp;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
 
 /* ---------- game start / reset ---------- */
@@ -9297,12 +9332,12 @@ function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['
   for(const [id,k] of [['sMus','mus'],['sFx','fx'],['sVo','vo'],['sScr','scr'],['sZm','zm']]){const el=$(id);if(!el)continue;el.value=SET[k];const out=$(id+'V');if(out)out.textContent=SET[k]+'%';el.oninput=()=>{SET[k]=+el.value;if(out)out.textContent=SET[k]+'%';saveSet();if(k!=='scr'&&k!=='zm')applyAudio();};}
   syncMouseUI();}
 // Settings > Mouse: a scheme preset (Generals / Alternate mouse setup / Custom) and a choice for each mouse function
-const MOPT=[['sMpre','Mouse scheme',null,[['gen','Generals (default)'],['alt','Alternate mouse setup'],['custom','Custom']]],
+const MOPT=[['sMpre','Mouse scheme',null,[['std','Standard (default)'],['gen','Generals'],['custom','Custom']]],
+  ['sMLock','Keep the mouse inside the game window (PC, during a battle)','mLock',[['1','On'],['0','Off']]],
   ['sMLG','Left-click on the ground with units selected','mLG',[['move','Move'],['desel','Deselect']]],
   ['sMRC','Right-click','mRC',[['cancel','Deselect & cancel'],['order','Move & attack']]],
   ['sMRDU','Right-drag with units selected','mRDU',[['line','Infantry line'],['scroll','Rapid scroll']]],
   ['sMRDN','Right-drag with nothing selected','mRDN',[['scroll','Rapid scroll'],['box','Box select'],['none','Nothing']]],
-  ['sMAK','Attack-move key (F always works)','mAK',[['a','A (S stops)'],['f','F (X stops)']]],
   ['sMCur','Cursor shows what a click will do','mCur',[['1','On'],['0','Off']]],
   ['sMPing','Order markers on the ground','mPing',[['1','On'],['0','Off']]]];
 {const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sMpre')){const els=[];
@@ -9314,17 +9349,17 @@ const MOPT=[['sMpre','Mouse scheme',null,[['gen','Generals (default)'],['alt','A
   const rs=document.createElement('button');rs.className='btn2';rs.id='sMreset';rs.type='button';rs.textContent='Reset mouse settings to defaults';rs.style.margin='10px 0 4px';const sb=$('setBody');if(sb)sb.append(rs);else{const last=$('settings').querySelector('.card>.row:last-child');if(last)last.before(rs);}}}
 function syncMouseUI(){const pre=mPreset();
   for(const [id,,k] of MOPT){const el=$(id);if(!el)continue;for(const b of el.querySelectorAll('button')){const v=b.dataset.v;b.classList.toggle('on',k?String(SET[k])===v:v===pre);if(id==='sMpre'&&v==='custom')b.disabled=pre!=='custom';
-      b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing')?+v:v;else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
-  const n=$('sMpreN');if(n)n.textContent=pre==='gen'?'Command & Conquer Generals controls: left-click selects and gives orders, right-click deselects.':pre==='alt'?'Alternate mouse setup: left-click selects, right-click moves and attacks, right-drag draws a line.':'Custom: your own mix of the choices below.';
+      b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing'||k==='mLock')?+v:v;if(k==='mLock'&&!SET.mLock)try{mlockOff();}catch(_){}else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
+  const n=$('sMpreN');if(n)n.textContent=pre==='std'?'Standard: left-click selects, right-click moves and attacks, right-drag draws a line. F then click: attack-move.':pre==='gen'?'Command & Conquer Generals: left-click selects and gives orders, right-click deselects, right-drag scrolls.':'Custom: your own mix of the choices below.';
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
   const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
-const HINT_ALT='Left-click or drag: select (click empty ground to deselect) · Right-click: move / attack · Right-drag: line formation · R: retreat · Left-click to place buildings and aim powers · F then click: attack-move · G then click: defend area · Q: army · H: home · Wheel or +/−: zoom · WASD/arrows: scroll · Esc: cancel / deselect';
-// the on-screen hint follows the chosen mouse functions (the Alternate preset shows the original text word for word)
-function hintText(){if(altMouse())return HINT_ALT;const L=leftOrders(),R=rightOrders(),P=[];
+const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · F then click: attack-move · G then click: defend area · X: stop · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Q: army · H: home · Wheel: zoom · WASD/arrows: scroll · Esc: cancel / deselect';
+// the on-screen hint follows the chosen mouse functions (the Standard preset has its own fixed text)
+function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
-  P.push('Double-click: all of a type');if(L)P.push('Ctrl+click: force-fire · Alt+click: waypoint');
-  P.push(SET.mAK==='a'?'A / G then click: attack-move / guard · S: stop':'F then click: attack-move · G then click: defend area · X: stop');P.push('R: retreat');
+  P.push('Double-click: all of a type');P.push('Ctrl+click: force-fire · Alt+click: waypoint');
+  P.push('F then click: attack-move · G then click: defend area · X: stop');P.push('R: retreat');
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
   P.push('Q: army · H: home · Wheel: zoom · Arrows/WASD: scroll');return P.join(' · ');}
@@ -9333,6 +9368,61 @@ function hintText(){if(altMouse())return HINT_ALT;const L=leftOrders(),R=rightOr
 function setHint(){const h=$('hint');if(h)h.textContent=TOUCHUI&&HINTDEV==='touch'?HINT_TOUCH:hintText();}
 function hintDev(t){const d=t==='touch'?'touch':t==='mouse'?'mouse':null;if(d&&d!==HINTDEV){HINTDEV=d;setHint();}}
 function mouseScheme(){setHint();CURST.k=null;try{cursorTick(true);}catch(_){}if(G)updateUI();}
+// Keep the mouse inside the game window (PC, Abdullah 2026-10-28; Settings > Mouse, SET.mLock, default on). During a
+// battle a mouse click on the battlefield takes the browser's Pointer Lock on the canvas: the system cursor is hidden and
+// the game draws its own (#vcur, the same pictures as the contextual cursor), moved by movementX/Y and clamped to the
+// window, so pushing against an edge scrolls the camera. While locked every mouse event gets the virtual position as
+// clientX/Y (window, capture phase); over the command bar, minimap or ☰ button the press / release / click / wheel / hover
+// are re-sent to the element under the virtual cursor, so the bar works as usual. Esc (the browser itself releases the
+// lock), the ☰ menu, pause, settings and the end screen release it; the next click on the battlefield locks again.
+// Never on touch, never in the menus; a browser that refuses the lock (or an embedding frame without allow-pointer-lock)
+// simply keeps the normal cursor. Esc while locked only cancels the current mode (attack-move, guard, placement, power).
+const MLOCK={on:false,x:0,y:0,self:false,escK:0,cap:null,down:null,hov:null,hovB:null,img:'',req:0,cx:null,cy:null,bad:0,broken:false};
+const VCUR=document.createElement('div');VCUR.id='vcur';VCUR.hidden=true;VCUR.setAttribute('aria-hidden','true');
+VCUR.style.cssText='position:fixed;left:0;top:0;width:32px;height:32px;z-index:2147483000;pointer-events:none;background:no-repeat 0 0/32px 32px;will-change:transform';
+document.body.append(VCUR);
+function mlockOk(){return !!G&&!G.over&&!window.LOADING&&SET.mLock!==0&&$('menu').hidden&&!document.querySelector('.overlay:not([hidden])')&&!menuOpen();}
+function mlockOff(){if(document.pointerLockElement){MLOCK.self=true;try{document.exitPointerLock();}catch(_){}}}
+// (not under browser automation - the test harness stands in for the lock itself, see orch/controls.mjs - and not after a
+// browser showed it does not really lock: the cursor kept moving freely with no movementX/Y)
+function mlockReq(e){if(MLOCK.on||MLOCK.broken||e.pointerType!=='mouse'||!e.isTrusted||!mlockOk()||!cv.requestPointerLock||(navigator.webdriver&&!window.__mlockTest))return;
+  MLOCK.x=e.clientX;MLOCK.y=e.clientY;MLOCK.req++;try{const p=cv.requestPointerLock();if(p&&p.catch)p.catch(()=>{});}catch(_){}}
+function mlockCancelModes(){if(!G)return;if(G.place||G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;try{updateUI();}catch(_){}}}
+function vcurDraw(){if(!MLOCK.on)return;const k=mouse.in?CURST.k:'';let img,hx=3,hy=2;if(k&&CURD[k]){curCss(k);img=CURIMG[k];hx=CURD[k][0];hy=CURD[k][1];}if(!img){curCss('arrow');img=CURIMG.arrow;hx=3;hy=2;}
+  if(img!==MLOCK.img){MLOCK.img=img;VCUR.style.backgroundImage=img?`url("${img}")`:'';}
+  VCUR.style.transform=`translate(${MLOCK.x-hx}px,${MLOCK.y-hy}px)`;}
+document.addEventListener('pointerlockchange',()=>{const on=document.pointerLockElement===cv;const was=MLOCK.on;MLOCK.on=on;VCUR.hidden=!on;document.body.classList.toggle('mlock',on);
+  if(on){MLOCK.img='';MLOCK.cx=null;MLOCK.bad=0;mouse.x=MLOCK.x-cv.getBoundingClientRect().left;mouse.y=MLOCK.y-cv.getBoundingClientRect().top;mouse.in=true;CURST.k=null;try{cursorTick(true);}catch(_){}vcurDraw();}
+  else{if(MLOCK.hovB)MLOCK.hovB.classList.remove('vhov');MLOCK.hov=MLOCK.hovB=null;MLOCK.cap=null;
+    if(was&&!MLOCK.self&&performance.now()-MLOCK.escK>400)mlockCancelModes(); // Esc released it and the key itself never reached the page
+    MLOCK.self=false;}});
+document.addEventListener('pointerlockerror',()=>{MLOCK.on=false;VCUR.hidden=true;});
+setInterval(()=>{if(MLOCK.on&&!mlockOk())mlockOff();},100);
+function mlPatch(e,x,y){for(const [k,v] of [['clientX',x],['clientY',y],['pageX',x],['pageY',y],['x',x],['y',y]])try{Object.defineProperty(e,k,{value:v,configurable:true});}catch(_){}}
+function mlSend(el,ty,e,x,y,bub){const o={bubbles:bub!==false,cancelable:true,composed:true,clientX:x,clientY:y,screenX:x,screenY:y,button:e.button||0,buttons:e.buttons||0,ctrlKey:e.ctrlKey,shiftKey:e.shiftKey,altKey:e.altKey,metaKey:e.metaKey,view:window};
+  let ev;if(ty.startsWith('pointer'))ev=new PointerEvent(ty,Object.assign(o,{pointerId:e.pointerId||1,pointerType:'mouse',isPrimary:true}));else if(ty==='wheel')ev=new WheelEvent(ty,Object.assign(o,{deltaX:e.deltaX,deltaY:e.deltaY,deltaMode:e.deltaMode}));else ev=new MouseEvent(ty,o);
+  el.dispatchEvent(ev);return ev;}
+function mlHover(el,e,x,y){const old=MLOCK.hov;if(el===old)return;
+  if(MLOCK.hovB){MLOCK.hovB.classList.remove('vhov');MLOCK.hovB=null;}
+  if(old){mlSend(old,'pointerout',e,x,y);mlSend(old,'mouseout',e,x,y);for(let a=old;a&&a!==document.body&&!(el&&a.contains(el));a=a.parentElement){mlSend(a,'pointerleave',e,x,y,false);mlSend(a,'mouseleave',e,x,y,false);}}
+  MLOCK.hov=el;if(el){const b=el.closest('button,.btn,a');if(b){b.classList.add('vhov');MLOCK.hovB=b;}mlSend(el,'pointerover',e,x,y);mlSend(el,'mouseover',e,x,y);for(let a=el;a&&a!==document.body&&!(old&&a.contains(old));a=a.parentElement){mlSend(a,'pointerenter',e,x,y,false);mlSend(a,'mouseenter',e,x,y,false);}}}
+function mlEv(e){if(!MLOCK.on||!e.isTrusted)return;const ty=e.type;
+  if(ty==='pointermove'){const cx=e.clientX,cy=e.clientY;if(!e.movementX&&!e.movementY&&MLOCK.cx!=null&&(cx!==MLOCK.cx||cy!==MLOCK.cy)){if(++MLOCK.bad>3){MLOCK.broken=true;mlockOff();}}else MLOCK.bad=0;MLOCK.cx=cx;MLOCK.cy=cy;}
+  if(ty==='pointermove'||(ty==='mousemove'&&!window.PointerEvent)){MLOCK.x=Math.max(0,Math.min(innerWidth-1,MLOCK.x+(e.movementX||0)));MLOCK.y=Math.max(0,Math.min(innerHeight-1,MLOCK.y+(e.movementY||0)));}
+  const x=MLOCK.x,y=MLOCK.y;mlPatch(e,x,y);
+  if(ty==='contextmenu'){e.preventDefault();e.stopImmediatePropagation();return;}
+  const under=document.elementFromPoint(x,y);let el=MLOCK.cap||under;
+  if(ty==='pointerdown')MLOCK.cap=MLOCK.down=el;
+  if(ty==='mouseup'||ty==='pointerup')setTimeout(()=>{MLOCK.cap=null;},0);
+  const onCv=!el||el===cv;
+  if(ty==='pointermove'||ty==='mousemove'){mouse.in=!!under&&under===cv&&!MLOCK.cap||MLOCK.cap===cv;mlHover(onCv?null:under,e,x,y);vcurDraw();}
+  if(onCv)return; // the battlefield: the game's own handlers run with the virtual position
+  e.stopImmediatePropagation();
+  if(ty==='wheel'){e.preventDefault();const w=mlSend(el,'wheel',e,x,y);if(!w.defaultPrevented)for(let a=el;a;a=a.parentElement){const cs=getComputedStyle(a);if(/(auto|scroll)/.test(cs.overflowY+cs.overflowX)&&(a.scrollHeight>a.clientHeight||a.scrollWidth>a.clientWidth)){a.scrollBy(e.deltaX,e.deltaY);break;}}return;}
+  if(ty==='click'||ty==='dblclick'||ty==='auxclick'){const d=MLOCK.down;if(d&&(d===under||d.contains(under)||under&&under.contains(d)))mlSend(under||d,ty,e,x,y);return;}
+  mlSend(el,ty,e,x,y);}
+for(const t of ['pointerdown','pointermove','pointerup','mousedown','mousemove','mouseup','click','dblclick','auxclick','contextmenu','wheel'])window.addEventListener(t,mlEv,{capture:true,passive:false});
+cv.addEventListener('pointerdown',mlockReq);
 function openSettings(){try{myUI();}catch(e){}syncSettings();$('settings').hidden=false;}
 if($('openSettings'))$('openSettings').onclick=openSettings;if($('aSet'))$('aSet').onclick=openSettings;if($('sDone'))$('sDone').onclick=()=>{$('settings').hidden=true;};
 syncSettings();setTimeout(applyGfx,0);
@@ -9486,8 +9576,8 @@ function initAudio(){try{if(AU.ctx&&AU.ctx.state==='closed')audioRebuild();if(!A
     try{if(c.addEventListener)c.addEventListener('statechange',audioState);else c.onstatechange=audioState;}catch(e){}
     AU.master=c.createGain();AU.master.gain.value=.75;const comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;comp.attack.value=.004;comp.release.value=.25;AU.master.connect(comp);comp.connect(c.destination);
     AU.rev=c.createConvolver();AU.rev.buffer=impulse(c,1.8,3.2);AU.revIn=c.createGain();AU.revIn.gain.value=.55;AU.revIn.connect(AU.rev);AU.rev.connect(AU.master);
-    AU.sfx=c.createGain();AU.sfx.connect(AU.master);AU.sfxRev=c.createGain();AU.sfxRev.gain.value=.35;AU.sfx.connect(AU.sfxRev);AU.sfxRev.connect(AU.revIn);
-    AU.mus=c.createGain();AU.mus.gain.value=.19;{const lo=c.createBiquadFilter();lo.type='lowshelf';lo.frequency.value=110;lo.gain.value=3;const mid=c.createBiquadFilter();mid.type='peaking';mid.frequency.value=420;mid.Q.value=.8;mid.gain.value=-2.5;const hi=c.createBiquadFilter();hi.type='highshelf';hi.frequency.value=7000;hi.gain.value=2.5;const gl=c.createDynamicsCompressor();gl.threshold.value=-18;gl.ratio.value=2.5;gl.attack.value=.02;gl.release.value=.3;AU.mus.connect(lo);lo.connect(mid);mid.connect(hi);hi.connect(gl);gl.connect(AU.master);}AU.musRev=c.createGain();AU.musRev.gain.value=.08;AU.mus.connect(AU.musRev);AU.musRev.connect(AU.revIn);AU.musBus=AU.mus;
+    AU.sfxD=c.createGain();AU.sfxD.connect(AU.master);AU.musD=c.createGain();AU.musD.connect(AU.master);AU.sfx=c.createGain();AU.sfx.connect(AU.sfxD);AU.sfxRev=c.createGain();AU.sfxRev.gain.value=.35;AU.sfx.connect(AU.sfxRev);AU.sfxRev.connect(AU.revIn);
+    AU.mus=c.createGain();AU.mus.gain.value=.19;{const lo=c.createBiquadFilter();lo.type='lowshelf';lo.frequency.value=110;lo.gain.value=3;const mid=c.createBiquadFilter();mid.type='peaking';mid.frequency.value=420;mid.Q.value=.8;mid.gain.value=-2.5;const hi=c.createBiquadFilter();hi.type='highshelf';hi.frequency.value=7000;hi.gain.value=2.5;const gl=c.createDynamicsCompressor();gl.threshold.value=-18;gl.ratio.value=2.5;gl.attack.value=.02;gl.release.value=.3;AU.mus.connect(lo);lo.connect(mid);mid.connect(hi);hi.connect(gl);gl.connect(AU.musD);}AU.musRev=c.createGain();AU.musRev.gain.value=.08;AU.mus.connect(AU.musRev);AU.musRev.connect(AU.revIn);AU.musBus=AU.mus;
     const b=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;AU.noise=b;
     const pb=c.createBuffer(1,c.sampleRate*2,c.sampleRate),pd=pb.getChannelData(0);let l=0;for(let i=0;i<pd.length;i++){l=(l+.02*(Math.random()*2-1))/1.02;pd[i]=l*3.5;}AU.brown=pb;}
   // resume from suspended and also from iOS "interrupted"
@@ -9498,17 +9588,19 @@ function auOn(){return !!(AU.ctx&&AU.ctx.state==='running');}
 function musBase(){return .19*(SET.mus/70);}
 function applyAudio(){if(AU.ctx){AU.sfx.gain.value=AU.sfxOn?SET.fx/100:0;AU.musBus.gain.value=AU.musicOn?musBase():0;}const set=(id,on,l)=>{const b=$(id);if(b){b.textContent=l+(on?' on':' off');b.classList.toggle('on',on);}};set('aMus',AU.musicOn,'Music');set('aSfx',AU.sfxOn,'Sound');set('aVoc',AU.voiceOn,'Voices');}
 function spatial(x,y){if(!G||!CAM)return null;const d=Math.hypot(x-cam.x,y-cam.y),r=cam.dist*1.25;if(d>r*1.8)return null;const v=Math.max(0,1-d/(r*1.8))*Math.pow(900/cam.dist,.5);TMP.set(x,0,y).project(CAM);return{v,pan:Math.max(-1,Math.min(1,TMP.x*.8)),far:Math.min(1,d/(r*1.8))};}
-function bus(sp){const c=AU.ctx,g=c.createGain();g.gain.value=sp.v;let n=g;if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=sp.pan;g.connect(p);n=p;}const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=18000-sp.far*14000;n.connect(lp);lp.connect(AU.sfx);return g;}
+function bus(sp){const c=AU.ctx,g=c.createGain();g.gain.value=sp.v;let n=g;if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=sp.pan;g.connect(p);n=p;}const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=18000-sp.far*14000;n.connect(lp);lp.connect(AU.sfx);if(AU.thIn){const e=c.createGain();e.gain.value=.3+sp.far*.7;lp.connect(e);e.connect(AU.thIn);}return g;}
 function limit(k,n,win=.12){const t=AU.ctx.currentTime;const a=AU.rate[k]=(AU.rate[k]||[]).filter(v=>t-v<win);if(a.length>=n)return false;a.push(t);return true;}
 function nz(dst,t,dur,type,f1,f2,gain,q=.8,src){const c=AU.ctx,s=c.createBufferSource();s.buffer=src||AU.noise;s.loop=true;const f=c.createBiquadFilter();f.type=type;f.frequency.setValueAtTime(f1,t);if(f2)f.frequency.exponentialRampToValueAtTime(f2,t+dur);f.Q.value=q;
   const g=c.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(gain,t+.004);g.gain.exponentialRampToValueAtTime(.0005,t+dur);s.connect(f);f.connect(g);g.connect(dst);s.start(t,Math.random()*1.5);s.stop(t+dur+.05);}
 function osc(dst,t,type,f1,f2,dur,gain,att=.003){const c=AU.ctx,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f1,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(gain,t+att);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g);g.connect(dst);o.start(t);o.stop(t+dur+.05);}
 function sfxShot(x,y,s){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02)return;const t=AU.ctx.currentTime+Math.random()*.01;
-  if(s<=5){if(!limit('gun',6))return;const b=bus(sp);const n=1+(Math.random()*3|0);for(let i=0;i<n;i++){const ti=t+i*.075;nz(b,ti,.05,'highpass',1600,0,.5,.7);nz(b,ti,.09,'bandpass',900+Math.random()*400,300,.35,1.2);osc(b,ti,'sine',190,70,.05,.25);}}
-  else if(s<=8){if(!limit('msl',3))return;const b=bus(sp);nz(b,t,.08,'highpass',2500,0,.4);nz(b,t,.9,'bandpass',350,3200,.32,1.6);osc(b,t,'sawtooth',90,40,.5,.06);}
-  else{if(!limit('can',3))return;const b=bus(sp);nz(b,t,.025,'highpass',3000,0,.8);osc(b,t,'sine',95,30,.55,.9);nz(b,t,.5,'lowpass',2200,180,.7,1);nz(b,t+.02,1.2,'lowpass',600,90,.25,.5,AU.brown);}}
+  const rec=sfxEnsure();
+  if(s<=5){if(!limit('gun',6))return;const b=bus(sp);const n=1+(Math.random()*3|0);if(rec){for(let i=0;i<n;i++)sfxClip(n>2&&Math.random()<.5?'mg':'rifle',b,.9,1,i*.075+sp.far*.12);return;}for(let i=0;i<n;i++){const ti=t+i*.075;nz(b,ti,.05,'highpass',1600,0,.5,.7);nz(b,ti,.09,'bandpass',900+Math.random()*400,300,.35,1.2);osc(b,ti,'sine',190,70,.05,.25);}}
+  else if(s<=8){if(!limit('msl',3))return;const b=bus(sp);if(rec){sfxClip('rocket',b,.8,1,sp.far*.15);return;}nz(b,t,.08,'highpass',2500,0,.4);nz(b,t,.9,'bandpass',350,3200,.32,1.6);osc(b,t,'sawtooth',90,40,.5,.06);}
+  else{if(!limit('can',3))return;const b=bus(sp);if(rec){sfxClip('cannon',b,1.1,s>14?.88:1,sp.far*.2);return;}nz(b,t,.025,'highpass',3000,0,.8);osc(b,t,'sine',95,30,.55,.9);nz(b,t,.5,'lowpass',2200,180,.7,1);nz(b,t+.02,1.2,'lowpass',600,90,.25,.5,AU.brown);}}
 function sfxBoom(x,y,s,big){if(auOn()&&!AU.sfxOn){const sp=spatial(x,y);if(sp&&sp.v>=.02)AU.heat=Math.min(1,AU.heat+(big?.25:.06));return;}if(!auOn())return; // with sound effects off, nearby explosions still tell the music the fighting started
   const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('boom',big?3:4,.15))return;const t=AU.ctx.currentTime,k=Math.min(1,.3+s/40)*(big?1.3:1),d=Math.min(3,.6+s/22);const b=bus(sp);
+  if(sfxEnsure()){sfxClip(big||s>26?'boomL':'boomS',b,(big?1.1:.9)*Math.min(1.2,.6+k),big?.94:1,sp.far*.3);AU.heat=Math.min(1,AU.heat+(big?.25:.06));return;}
   nz(b,t,.04,'highpass',2000,0,.9*k);osc(b,t,'sine',big?62:85,24,d*.9,1.1*k,.006);nz(b,t,d,'lowpass',big?1600:2400,120,.9*k,.7);nz(b,t+.03,d*1.4,'lowpass',500,60,.5*k,.5,AU.brown);
   for(let i=0;i<(big?14:6);i++){const ti=t+.08+Math.random()*d*.6;nz(b,ti,.03+Math.random()*.04,'bandpass',1500+Math.random()*3000,0,.12*k*Math.random(),3);}
   AU.heat=Math.min(1,AU.heat+(big?.25:.06));}
@@ -9530,6 +9622,44 @@ function droneAudio(dt){if(!AU.ctx||!G)return;drT-=dt;if(drT>0)return;drT=.1;con
     for(let k=0;k<n.os.length;k++){const o=n.os[k];if(o.type==='sawtooth'){const r=n.delta?[1,2,3.02][k]||1:(1+k*.017);o.frequency.setTargetAtTime(n.base*r*dive,now,.15);}}
     if(n.pan){TMP.set(e.x,0,e.y).project(CAM);n.pan.pan.setTargetAtTime(Math.max(-1,Math.min(1,TMP.x*.8)),now,.1);}}}
 function droneTypeA(fac){return fac==='IR'||fac==='RS'?'delta':fac==='TR'?'kargu':'fpv';}
+// ----- Recorded battlefield sounds (sfx/, made by sfx/sfx_pack.py) -----
+// One sprite sheet of recorded one-shots (rifles, MGs, cannons, rockets, small/large explosions) is fetched at the first
+// battle sound; loops (engines, aircraft, wind, rain, distant rumble) are fetched only when something needs them. Until the
+// sheet is ready (or if it can't load) the old synthesized sounds play instead. Distance = volume + low-pass + a little delay
+// and a theatre echo (open desert: dull and wide, green country: slap-back, snow/mountains: long tail). At most 28 (phones 16)
+// recorded sounds sound at once. Voices duck the music and effects for a moment.
+const SFX={st:'',tries:0,at:0,buf:null,man:null,nv:0,cap:PHONE?16:28,th:null,loops:{}};
+function sfxGet(url,json){return fetch(url).then(r=>{if(!r.ok)throw new Error(url+' '+r.status);return json?r.json():r.arrayBuffer();});}
+function sfxEnsure(){if(!AU.ctx||!G)return false;if(SFX.cx!==AU.ctx){SFX.cx=AU.ctx;SFX.loops={};SFX.th=null;AU.thRev=null;AU.thIn=null;}sfxTheatre();if(SFX.st==='ok')return true;if(SFX.st==='loading'||SFX.tries>=4||performance.now()-SFX.at<4000)return false;
+  const c=AU.ctx;SFX.st='loading';SFX.tries++;SFX.at=performance.now();
+  Promise.all([sfxGet('sfx/manifest.json',1),sfxGet('sfx/sfx.mp3')]).then(([m,ab])=>decodeAB(c,ab).then(b=>{SFX.man=m;SFX.buf=b;SFX.st='ok';})).catch(e=>{SFX.st='';audioErr('sfx',e);});return false;}
+function sfxClip(cat,dst,g,rate,delay){const B=SFX.buf,M=SFX.man,L=M&&M.clips[cat];if(!B||!L||SFX.nv>=SFX.cap)return false;const c=AU.ctx,cl=L[Math.random()*L.length|0],s=c.createBufferSource(),gn=c.createGain();
+  s.buffer=B;s.playbackRate.value=rate*(.95+Math.random()*.1);gn.gain.value=g;s.connect(gn);gn.connect(dst);SFX.nv++;s.onended=()=>{SFX.nv--;try{gn.disconnect();}catch(e){}};
+  try{s.start(c.currentTime+(delay||0),cl[0],cl[1]);}catch(e){SFX.nv--;return false;}return true;}
+// theatre echo: rebuilt when the map changes
+function sfxTheatre(){const m=G&&G.map;if(!AU.ctx||!m||SFX.th===m)return;SFX.th=m;const c=AU.ctx;
+  if(!AU.thRev){AU.thRev=c.createConvolver();AU.thIn=c.createGain();AU.thIn.connect(AU.thRev);const o=c.createGain();o.gain.value=.5;AU.thRev.connect(o);o.connect(AU.sfxD);AU.thOut=o;}
+  const mountain=m.theme==='snow'||(m.rough||0)>1.3,green=m.theme==='green';let b;
+  if(mountain){b=impulse(c,3.4,2.1);AU.thIn.gain.value=.42;}
+  else if(green){b=c.createBuffer(2,c.sampleRate*.9,c.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(const [t,a] of [[.012,1],[.085+ch*.02,.8],[.17-ch*.03,.5],[.29,.3]])for(let i=0;i<c.sampleRate*.02;i++)d[(t*c.sampleRate|0)+i]+=(Math.random()*2-1)*a*(1-i/(c.sampleRate*.02));for(let i=0;i<d.length;i++)d[i]+=(Math.random()*2-1)*Math.pow(1-i/d.length,5)*.2;}AU.thIn.gain.value=.5;}
+  else{b=impulse(c,1.5,4.5);AU.thIn.gain.value=.3;}
+  AU.thRev.buffer=b;}
+// voices duck music and effects briefly
+function duck(){const c=AU.ctx;if(!c||!AU.sfxD)return;const t=c.currentTime;try{AU.musD.gain.setTargetAtTime(.55,t,.05);AU.sfxD.gain.setTargetAtTime(.72,t,.05);clearTimeout(SFX.dk);SFX.dk=setTimeout(()=>{try{const u=c.currentTime;AU.musD.gain.setTargetAtTime(1,u,.4);AU.sfxD.gain.setTargetAtTime(1,u,.4);}catch(e){}},1300);}catch(e){}}
+// loops: engines of units near the camera, wind/rain by theme and weather, distant battle rumble
+function envLoop(k,g){let L=SFX.loops[k];const c=AU.ctx;if(!L){if(g<.01||SFX.loops['_'+k]||SFX.st!=='ok')return;SFX.loops['_'+k]=1;
+    sfxGet('sfx/'+k+'.mp3').then(ab=>decodeAB(c,ab)).then(b=>{if(AU.ctx!==c)return;const s=c.createBufferSource(),gn=c.createGain();s.buffer=b;s.loop=true;gn.gain.value=0;s.connect(gn);gn.connect(AU.sfx);s.start(0,Math.random()*b.duration);SFX.loops[k]={gn};}).catch(e=>{SFX.loops['_'+k]=0;audioErr('sfx '+k,e);});return;}
+  L.gn.gain.setTargetAtTime(g,c.currentTime,.5);}
+let envT=0;
+function envAudio(dt){if(!AU.ctx||!G||SFX.st!=='ok')return;envT-=dt;if(envT>0)return;envT=.15;const on=AU.sfxOn&&!G.over&&!audioHeld();
+  let tk=0,tr=0,he=0,je=0;
+  if(on){const R=cam.dist*1.4;for(const e of G.ents){if(e.dead||e.isB||!(e.team===ME||e.vis))continue;const s=e.s,cl=s.cls;if(cl!=='heli'&&cl!=='jet'&&!(s.dom==='ground'&&s.armor==='heavy'))continue;
+      const d=Math.hypot(e.x-cam.x,e.y-cam.y);if(d>R)continue;const w=Math.pow(1-d/R,1.5);
+      if(cl==='heli'){if(!e.landed)he+=w;}else if(cl==='jet'){if(e.state!=='park')je+=w;}else if(G.t-(e.mv||-9)<.5){if(cl==='tank'||cl==='arty'||cl==='aa')tk+=w;else tr+=w;}}}
+  const f=(v,m)=>on?Math.min(1,v*.3)*m:0,k=G.wx&&G.wx.k||'clear',th=G.map.theme;
+  envLoop('tank',f(tk,.55));envLoop('truck',f(tr,.4));envLoop('heli',f(he,.6));envLoop('jet',f(je,.5));
+  const wind=k==='blizzard'||k==='sandstorm'?.5:th==='snow'?.2:th==='green'?.08:.12;
+  envLoop('wind',on?wind*.5:0);envLoop('rain',on&&k==='rain'?.45:0);envLoop('rumble',on?(.05+Math.min(.45,AU.heat*.45))*.5:0);}
 function sfxUI(f){if(!auOn()||!AU.sfxOn)return;const t=AU.ctx.currentTime;osc(AU.sfx,t,'sine',f||880,0,.07,.08);osc(AU.sfx,t+.05,'sine',(f||880)*1.5,0,.08,.05);}
 function sfxAlarm(){if(!auOn()||!AU.sfxOn)return;const c=AU.ctx,t=c.currentTime;for(let i=0;i<5;i++){const o=c.createOscillator(),g=c.createGain();o.type='sawtooth';o.frequency.setValueAtTime(480,t+i*.6);o.frequency.linearRampToValueAtTime(900,t+i*.6+.5);const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=2200;g.gain.setValueAtTime(.0001,t+i*.6);g.gain.linearRampToValueAtTime(.08,t+i*.6+.05);g.gain.linearRampToValueAtTime(0,t+i*.6+.55);o.connect(f);f.connect(g);g.connect(AU.sfx);o.start(t+i*.6);o.stop(t+i*.6+.6);}}
 /* ---------- voices ---------- */
@@ -9648,7 +9778,7 @@ function voPlay(fac,kind){const buf=VOB[fac],M=VO_MAP[fac];if(!buf||typeof buf==
   // soft edges so a clip never starts or stops with a click
   g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.005);g.gain.setValueAtTime(vol,Math.max(t0+.006,t0+dur-.05));g.gain.linearRampToValueAtTime(0,t0+dur);AU.voEnd=t0+dur;src.connect(g);g.connect(c.destination);
   if(AU.musicOn&&AU.mus){AU.musBus.gain.setTargetAtTime(musBase()*.45,c.currentTime,.05);AU.musBus.gain.setTargetAtTime(musBase(),c.currentTime+d+.1,.25);}src.start(t0,o,d);return true;}
-function speak(kind){if(!AU.voiceOn||!G)return;const now=performance.now();if(now-AU.lastVoice<1300)return;AU.lastVoice=now;{const fac=G.teams[ME].fac;voLoad(fac);if(voPlay(fac,kind)){if(AU.ctx&&AU.sfxOn){const t=AU.ctx.currentTime;nz(AU.sfx,t,.12,'bandpass',2200,0,.08,2);}return;}}if(!window.speechSynthesis)return;
+function speak(kind){if(!AU.voiceOn||!G)return;const now=performance.now();if(now-AU.lastVoice<1300)return;AU.lastVoice=now;duck();{const fac=G.teams[ME].fac;voLoad(fac);if(voPlay(fac,kind)){if(AU.ctx&&AU.sfxOn){const t=AU.ctx.currentTime;nz(AU.sfx,t,.12,'bandpass',2200,0,.08,2);}return;}}if(!window.speechSynthesis)return;
   const L=G.teams[ME].F.lang,base=L.split('-')[0];const vs=AU.voices.length?AU.voices:speechSynthesis.getVoices();let voice=pickVoice(vs,L),lines=(voice&&PHR_FAC[G.teams[ME].fac])||PHR[base]||PHR.en,lang=L;
   if(!voice&&PHR_ALT[base]){const A=PHR_ALT[base];for(const b of A.v){const v=pickVoice(vs,b==='es'?'es-CU':b);if(v){voice=v;lang=v.lang;if(A.lines&&!(A.keep&&A.keep.includes(b)))lines=A.lines;break;}}}
   if(!voice&&vs.length){voice=pickVoice(vs,'en-US');lines=PHR.en;lang='en-US';}
@@ -9719,7 +9849,7 @@ function menuMusic(){if(!AU.ctx||AU.ctx.state==='suspended'&&G&&G.paused)return;
 // A broken sound call must never break the battle or the interface: every sound entry point used by other modules
 // swallows its own errors (the last one is shown in Settings > Sound check).
 {const safe=(f,n)=>function(){try{return f.apply(this,arguments);}catch(e){audioErr(n,e);}};
-  sfxShot=safe(sfxShot,'shot');sfxBoom=safe(sfxBoom,'boom');sfxUI=safe(sfxUI,'ui');sfxAlarm=safe(sfxAlarm,'alarm');speak=safe(speak,'voice');droneAudio=safe(droneAudio,'drones');}
+  sfxShot=safe(sfxShot,'shot');sfxBoom=safe(sfxBoom,'boom');sfxUI=safe(sfxUI,'ui');sfxAlarm=safe(sfxAlarm,'alarm');speak=safe(speak,'voice');droneAudio=safe(droneAudio,'drones');{const d0=droneAudio;droneAudio=safe(function(dt){d0(dt);envAudio(dt);},'env');}}
 
 // ===== Sound check (Settings) =====
 // One button that plays a radio beep and one voice line, and a status line saying exactly what this device reports,
@@ -9848,6 +9978,10 @@ function stopMusic(){myStop();stHalt();}
 {const _ss=sndStatus;sndStatus=function(){return _ss()+' · Soundtrack: '+(ST.fail?'could not load, trying again shortly':ST.id&&ST_TR[ST.id]?ST_TR[ST.id][0]+' ('+ST.pool+')':ST.an?'anthem':'idle');};}(function stCredits(){try{if(document.getElementById('stCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
   const p=document.createElement('p');p.className='credits';p.id='stCred';
   p.textContent='Soundtrack: The Fall of Arcana, Dream Raid and Tactical Pursuit by Matthew Pablo (www.matthewpablo.com, CC BY 3.0); Epic Orchestral Fantasy Theme by Markus Lindner (CC BY 4.0); Conflict (CC BY 4.0), Enemy Spotted and Act of War (CC BY 3.0) by Alexandr Zhelanov; Howitzer by joeBaxterWebb (CC BY 4.0); all via OpenGameArt.org. Tabuk, Impending Boom, Black Vortex, Curse of the Scarab, Egmont Overture Finale and Death of Kings by Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/';
+  ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
+(function sfxCredits(){try{if(document.getElementById('sfxCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
+  const p=document.createElement('p');p.className='credits';p.id='sfxCred';
+  p.textContent='Battle sounds (all via OpenGameArt.org): The Free Firearm Sound Library by Bart (CC0); Chaingun/pistol/rifle shots, 4 projectile launches and 2 High Quality Explosions by Michel Baradari (apollo-music.de, CC BY 3.0); Cannon fire and Battle at sea by Thimras (CC0); Explosions by EZduzziteh (CC0); Big Explosion by Lamoot (CC BY 3.0); Rocket Engine by theMinesAreShakin (CC0); Engine-loop heavy vehicle/tank by Nayckron (CC BY 3.0); Engine Sound by kurt (CC BY 3.0); Jet Engine Takeoff by dklon (CC BY 3.0); Helicopter SFX by WuxiaScrub (CC0); Mild Wind Background Noise by Bashar3A (CC0); AMB Rain Loop 1 by Kresiek The Furry (CC0); Background Rumble Noise by gryc (CC BY 3.0).';
   ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
 
 /* ================= CINEMATIC POST-PROCESSING: HDR, bloom, grading, vignette ================= */
