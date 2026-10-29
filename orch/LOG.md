@@ -2,6 +2,17 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-28 16:26 → 2026-10-29 ~22:45 (Chicago) — cycle 13
+
+- No lock on main; took it. Baseline: `--check` OK, SMOKE PASS. Container restarted mid-cycle (Visuals explosion agent
+  lost, no commits; item stays open). Side lane meanwhile queued `orch/ai-tactics` (incl. Fulda trucks) → ORCH's
+  Battlefield branch not merged (kept on its branch).
+- Abdullah live: "right click attacks and moves, left click selects" + "mouse stays in the browser window". ORCH built
+  both, then found the side lane had shipped the same to main (8b970d4/6de5d75) → dropped ORCH's copy, kept main's.
+- Shipped: map picker "rivers" label (Interface), `migrate --dual-claim` + stepped-down ghost fix (Netcode). Fresh
+  review of 07b: no blockers; applied its should-fix (fade from `lastSnapT`, no blank flash).
+- Gate: CIGATE 17/17 PASS on b9a444c (incl. migrate-dual, controls, touch). Artifact republished v177.
+
 ## 2026-10-28 12:26 → 14:45 — cycle 12
 
 - No lock on main; took it. Baseline: `--check` OK, SMOKE PASS. Side lane pushed c8d50dc (site deploy workflow) mid-cycle;

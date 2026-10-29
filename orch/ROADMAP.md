@@ -15,6 +15,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Faster battle start on phones + loading screen with each nation's quotes
 - [done] Generals-style bottom command bar replacing the side menu
 - [done] Generals mouse controls + Mouse settings
+- [done] Mouse: left-click selects, right-click moves and attacks; mouse stays inside the game window (2026-10-29)
 - [done] Phone held upright: the build grid shows 4 whole columns, nothing cut off
 - [done] Phone controls: drag scrolls the map, hold+drag selects or draws a line, tap gives orders with a marker, touch command strip, first-time guide
 

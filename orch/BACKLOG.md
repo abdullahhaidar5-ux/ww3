@@ -160,7 +160,7 @@ an earlier one still has work a squad can take (other squads may only do small P
   swapped sample after: AE 88, SA 75, UA 75, RS 50, TR 50, IL 38, KR 25 — 8 games each, ±17 noise). New low ones:
   KR, RU, EU; AE may now be too strong. Use `node orch/tourney.mjs --swap` with more games per pair (cap ~90 min).
 - [open] Covert nations still win under half their AI games (IL ~50%, AE ~25%) after cycle 11's doctrine fix — balance.
-- [open] Fulda: late-game supply trucks haul from fields up to ~4,000 away because nearby fields run dry (cycle 12
+- [open] (side lane `orch/ai-tactics` has this; ORCH cycle 13's own version is on branch `worktree-agent-af18354e507b5537f` e597af4 if theirs falls through) Fulda: late-game supply trucks haul from fields up to ~4,000 away because nearby fields run dry (cycle 12
   finding) — AI should expand: build a depot or HQ near the new field.
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
   below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
@@ -197,15 +197,9 @@ an earlier one still has work a squad can take (other squads may only do small P
 - [check] Infantry helmet/kit variety beyond v68 tone variation.
 
 **UI/UX & controls** (`08-ui`, `06-view`)
-- [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers (`08-ui.js` ~833:
-  water <6% → "open land" even with bridges; say "rivers" when there are bridges).
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
-- [open] Takeover claim (cycle 12) adds ~0.8 s (2 s off PeerJS) to every browser-host takeover; the two-claimant
-  step-down path has no test — add a `migrate.mjs` mode where two standbys claim at once. "Play again" path should
-  restore the player's own Conditions if it skips `leaveNet` (cosmetic, cycle 8 review).
-- [open] **P1:** after a client reconnects mid-battle its state is wrong (own units missing, enemy base visible, money
-  off) — found by the side-lane agent 2026-10-27 while testing the bottom bar. Reproduce, fix, add to `orch/migrate.mjs`.
+- [open] "Play again" path should restore the player's own Conditions if it skips `leaveNet` (cosmetic, cycle 8 review).
 - [open] Asian music stand-ins (no free recording found yet): janggu, haegeum, piri, taepyeongso, gayageum, guzheng, sitar, shehnai — swap in real free recordings when found (`mus/as_pack.py`). Check the new credit line shows in the menu.
 - [open] Music follow-ups: real ney (Freesound blocks this sandbox with 403 — needs a download from elsewhere) (Freesound
   #580759 CC0, #328744 CC BY); gayageum/guzheng/sitar blocked by Wikimedia rate limits; no clean bandura/balalaika
@@ -221,6 +215,14 @@ an earlier one still has work a squad can take (other squads may only do small P
 ## Done
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
+
+- 2026-10-29 (cycle 13) — **Mouse:** left-click selects, right-click moves/attacks, mouse stays in the game window
+  (Abdullah's live request) — already shipped by the side lane (8b970d4) while ORCH was building the same; ORCH's copy
+  dropped (kept on branch `orch-cycle13-dup-controls`), gate re-run on main's version (controls PASS).
+- 2026-10-29 (cycle 13) — Map picker says "rivers" (not "open land") for Fulda Gap, Golan, Korean DMZ and other bridged maps.
+- 2026-10-29 (cycle 13) — **Host takeover with two backups at once:** new test `migrate.mjs --dual-claim` (gate job
+  migrate-dual); a player who steps down no longer sees frozen ghost units, and fades them out (review fix).
+- 2026-10-29 (cycle 13, verified) — Reconnect state bug was fixed 2026-10-27 (`orch/open-reconnect-phonebar`, in mpsync).
 
 - 2026-10-28 (cycle 12, verified) — Already live, removed from P2: phone-portrait whole columns, Generals mouse
   controls + Mouse settings, intuitive phone controls (shipped by side lanes 10-27/28; roadmap [done]).
