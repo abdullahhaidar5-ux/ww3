@@ -10,6 +10,7 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
 - Merged 3 branches clean; no 03-sim/07 changes → no review agent, no servers-live PR.
 - Gate on adad5d5: `--check` OK, smoke 4p PASS, MPSYNC PASS, artifact smoke + MPSYNC PASS. Artifact v182 (page only).
 - QA: touch.mjs >8 min; cfclient not re-run (server deps missing in worktree). New: AI Math.random follow-up.
+- Not chained: ORCH stays on its 8-hourly schedule to save usage (CLAUDE.md "Saving usage").
 
 ## 2026-10-29 08:46 → 11:50 (Chicago) — cycle 15
 
