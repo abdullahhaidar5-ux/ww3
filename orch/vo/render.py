@@ -160,6 +160,9 @@ def radio(w, rng, hiss):
 
 def nation(fac, phr, n_takes=3, log=print):
     C = CAST[fac]
+    if C['eng'] == 'xtts':   # load XTTS before the scoring models: its checkpoint load peaks at ~2x its size
+        from xt import model
+        model()
     groups = {}   # name -> list per kind of list of texts   (e.g. 'l' from PHR_FAC, 'c' from FCRY)
     for name, src in phr.items():
         lst = src.get(fac)
