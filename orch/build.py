@@ -557,6 +557,9 @@ def artifact():
     with open(out, 'w', encoding='utf-8', newline='') as f:
         f.write(page)
     rels = sorted('vo/' + n for n in os.listdir(os.path.join(ROOT, 'vo')) if n.endswith('.mp3')) + ['mus/' + n for n in mus_files()]
+    sfxd = os.path.join(ROOT, 'sfx')  # recorded battle sounds (sheet, loops, manifest), loaded by 09-audio from sfx/
+    if os.path.isdir(sfxd):
+        rels += sorted('sfx/' + n for n in os.listdir(sfxd) if n.endswith(('.mp3', '.json')))
     files = {rel: rel for rel in rels}  # published path -> source path, relative to the repo root (ORCH's cwd)
     for rel in rels:
         if not os.path.isfile(os.path.join(ROOT, rel)):
