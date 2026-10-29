@@ -36,7 +36,8 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [doing] Military band layer: each nation's public-domain US Navy Band anthem recording (US, EU, IL, UA, CU, IN, CN, EG, PK, KR, RU done; TR free in 2029)
 - [todo] Recorded weapons, explosions, engines and aircraft (near and far, echo per theatre)
 - [todo] Battlefield ambience per map and weather
-- [todo] Full native-language unit voice lines per nation
+- [done] Native-language unit voice lines for all 18 nations, incl. new "under fire", "unit lost", "building ready"
+- [doing] Natural-sounding neural re-voicing (13 of 18 nations re-voiced; EU, IN, CN, PK, CU left)
 - [todo] Real latmiyas added to the shared soundtrack if freely licensed ones are found
 - [todo] Proper mix: voices duck music, distance fade, even loudness
 
@@ -47,7 +48,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Phase 4 Light and effects: rolling fireballs, dust, smoke columns, lit muzzle flashes, theatre colour, steady shadows
 - [done] Realistic muzzle flashes, sparks only off armour, sandbagged defences
 - [todo] Big explosions: replace the flat yellow first-instant ball
-- [todo] Phase 5 Massive columns: hundreds of units at a smooth frame rate
+- [doing] Phase 5 Massive columns: hundreds of units at a smooth frame rate (infantry merged, off-screen culling, no freeze on vehicle kills shipped; vehicles next)
 - [todo] Phase 6 Device tiers: phones stay smooth with a lighter look, PCs get everything
 
 ## Battlefield and maps
@@ -59,3 +60,6 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Map picker describes every map correctly
 - [done] AI fights by its doctrine: artillery barrages (RU, CN, KP), camouflaged ambushes (IL, AE), rebuilds lost radars
 - [done] AI barrages never aim at their own troops; ambush pickets hold their posts
+- [done] Hard AI = smarter, not richer: counter-builds, flanks, uses cover, focus-fires; navy on time + landing craft; supply trucks fixed
+- [done] Balance round 3: every nation wins 37–65% vs the AI field (Israel 51%, UAE 57%)
+- [done] Real soldier models (desert / green / militia fatigues) and Middle Eastern HQ, barracks and factory for IR, RS, DW, SA, AE, EG

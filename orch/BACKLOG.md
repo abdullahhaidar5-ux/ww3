@@ -8,6 +8,8 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+**CYCLE 14 (2026-10-29): merged `orch/columns`, `orch/gfx-infantry`, `orch/ai-tactics`, `orch/voices` to main. Still in flight: `orch/voices-natural` (XTTS re-voicing, 13/18 done: EU, IN, CN, PK, CU left) — merge it when its report lands.**
+
 **SIDE LANE IN FLIGHT (Abdullah 2026-10-28 18:23: "move faster, don't run over usage") — ORCH: don't take these, merge their branches when their report lands:** Phase 5 massive columns → `orch/columns` (04-gfx instancing/LOD, sim perf); recorded weapon/engine/explosion sounds + ambience + mix → `orch/audio-sfx` (09-audio, `sfx/`); native-language unit voices for all 18 nations → `orch/voices` (`vo/`, voice hooks in 09-audio). Queued (staggered to keep usage steady): AI tactics + navy + balance (flanking/cover on Hard, navy on time + landing craft, IL/AE win rates, Fulda supply trucks) → `orch/ai-tactics` from ~20:30; infantry + building models (Phase 2 rest) → `orch/gfx-infantry` from ~22:30. Keep ORCH cycles to ≤ 3 agents while these run.
 
 **ROUND RESUMED (2026-10-28 07:00 Chicago):** the side lane finished order steps 1–3 (Cloudflare battles live, open items, music) and graphics Phases 1–4 shipped; the 4-hourly ORCH schedule is back on. `orch/followups` (QA findings, battle hint text, review R11/R12) and `orch/qa` are side-lane agents — integrate their reports, don't redo them. Keep usage steady (Abdullah 02:05): at most ~4 agents at once.
@@ -146,6 +148,13 @@ an earlier one still has work a squad can take (other squads may only do small P
 
 ## P1 — now
 
+- [open] **Phase 5 next: merge vehicle model parts** (Visuals) — vehicles are now the biggest frame cost (columns report).
+- [open] **Soldier animation clips + distant low-poly soldier** (Visuals, gfx-infantry follow-up): baked run/shoot/die; the
+  remaining buildings (only HQ/barracks/factory got ME models).
+- [open] **QA: CI `cfclient` flaked once on d136254** ("no player took over after the server lost it"); passed locally ×1 and on
+  the branches. If it fails again in CI, root-cause the takeover-after-server-restart timing.
+- [open] **Device-speech fallback** has no lines for the 3 new voice cues (Audio, minor).
+
 **Foundation (ORCH itself)**
 
 
@@ -216,6 +225,14 @@ an earlier one still has work a squad can take (other squads may only do small P
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
 
+- 2026-10-29 (cycle 14) — **Massive columns (side lane `orch/columns`):** soldiers drawn as one piece, forests/rocks drawn only in
+  view, off-screen units skipped, no more multi-second freeze when a vehicle dies (8-player battle: frame time halved).
+- 2026-10-29 (cycle 14) — **Real soldiers + Middle Eastern buildings (`orch/gfx-infantry`):** desert / green / militia-fatigue
+  soldier models; sandstone HQ, mud-brick barracks, walled factory for IR, RS, DW, SA, AE, EG.
+- 2026-10-29 (cycle 14) — **AI tactics + navy + balance (`orch/ai-tactics`):** Hard has no extra money but counter-builds, flanks,
+  uses cover, focus-fires; shipyard ~3 min, landing craft; trucks fixed; nations 37–65% (IL 51%, AE 57%).
+- 2026-10-29 (cycle 14) — **Unit voices (`orch/voices`):** native-language lines for all 18 nations + under fire / unit lost /
+  building ready. Review fix: "Building ready" played every moment during construction → now once when done.
 - 2026-10-29 (cycle 13) — **Mouse:** left-click selects, right-click moves/attacks, mouse stays in the game window
   (Abdullah's live request) — already shipped by the side lane (8b970d4) while ORCH was building the same; ORCH's copy
   dropped (kept on branch `orch-cycle13-dup-controls`), gate re-run on main's version (controls PASS).

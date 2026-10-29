@@ -2,6 +2,17 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-29 00:25 → (Chicago) — cycle 14
+
+- No lock; took it. Baseline: `--check` OK, SMOKE PASS. Integration-only cycle (side lane holds 4 branches with reports;
+  usage kept low: 0 workers, 1 review agent).
+- Merged `orch/gfx-infantry`, `orch/columns`, `orch/ai-tactics`, `orch/voices` (one conflict in `09-audio` speak():
+  kept main's duck() + voices' kind>4 guard). Smoke PASS after merges. `orch/voices-natural` still in flight, not merged.
+- Fresh review of 03-sim/01/08/09: 1 blocker — "Building ready" v7 logged every tick during construction (missing
+  braces) → fixed. Rest OK (AI randomness host-only, voice throttles on G.t, checkpoints fine).
+- Gate: CIGATE on d136254 16/17 — cfclient failed (no takeover after server restart); local cfclient, cfbattle,
+  cfpassword all PASS → re-run CIGATE on the records commit.
+
 ## 2026-10-28 16:26 → 22:45 (Chicago) — cycle 13
 
 - No lock on main; took it. Baseline: `--check` OK, SMOKE PASS. Container restarted mid-cycle (Visuals explosion agent
