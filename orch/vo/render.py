@@ -196,6 +196,9 @@ def nation(fac, phr, n_takes=3, log=print):
                     alt = best_take(A['eng'], av, A.get('lang', lang), text if A.get('raw') else say, mood, 3, most=6)
                     if (alt[4], alt[0]) > (ok, s):
                         s, w, r, take, ok = alt; v = av
+                if not ok and r['cer'] >= 0.75 and (ent or name == 'c' or i < len(texts) - 1):
+                    log(f'{fac} {name}{k} DROPPED (no clean take) | {text} -> {r["hyp"].strip()}')
+                    continue   # a garbled variant is left out; the kind keeps its other variants
                 w = radio(w, rng, hiss=(rng.random() < .35))
                 ent.append([round(t, 3), round(len(w) / SR, 3)])
                 sheet += [w, np.zeros(gap, np.float32)]
