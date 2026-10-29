@@ -8363,7 +8363,13 @@ async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e
   NET.game=g;wireHost(g);g.presence({h:1,cl}).catch(()=>{});
   for(let k=1;k<=10;k++)setTimeout(()=>{if(MODE!=='host'||NET.game!==g)return;
     if(g.peers().some(q=>!q.sameTab&&q.presence&&q.presence.h&&beats(q.presence.cl))){console.info('takeover: another player took over first, rejoining as a player');
-      NET.game=null;try{g.leave().catch(()=>{});}catch(e){}MODE='client';NET.code='join';NET.gen=gen-1;NET.isStandby=false;NET.lastCk=null;NET.lastRx=performance.now();clientReconnect();return;}
+      NET.game=null;try{g.leave().catch(()=>{});}catch(e){}MODE='client';NET.code='join';NET.gen=gen-1;NET.isStandby=false;NET.lastCk=null;NET.lastRx=performance.now();
+      // this screen still shows the restored checkpoint (a host's view, with no client bookkeeping): from now on the other
+      // host's updates draw it, and whatever they don't show (units in the fog) fades out as on any player's screen,
+      // instead of standing frozen forever. This page no longer lists the battle in the game list either.
+      for(const e of G.ents){e.seenAt=0;e.seenL=G.t;if(!e.isB){e.fx=e.tx=e.x;e.fy=e.ty=e.y;e.it=1;}}
+      try{if(NET.room)NET.room.presence({g:null}).catch(()=>{});}catch(e){}
+      clientReconnect();return;}
     g.presence({h:1,cl}).catch(()=>{});},k*1000);
   for(const O of G.teams)log(O.id,`Connection lost for a moment. The battle goes on; the other commanders are reconnecting.`,'w');return true;}
 /* ================= UI: sidebar, input, menu, main loop ================= */
