@@ -168,15 +168,22 @@ def nation(fac, phr, n_takes=3, log=print):
         out = []
         for k, texts in enumerate(kinds):
             ent = []
-            for text in texts:
+            for i, item in enumerate(texts):
+                lang, text = (item if isinstance(item, (list, tuple)) else (C['lang'], item))
                 say = TRANSLIT.get(text, text)
                 cry = name == 'c'
-                mood = 'cry' if cry else ('cmd' if (name == 'l' and k in (3, 4)) else 'sold')
-                if mood == 'cmd':
-                    v = C['cmd']
+                if cry or k in (2, 5):
+                    mood = 'cry'
+                elif k in (3, 7):
+                    mood = 'cmd'
                 else:
-                    v = C['sold'][nsold % len(C['sold'])]; nsold += 1
-                s, w, r, take = best_take(C['eng'], v, C['lang'], say, mood, n_takes)
+                    mood = 'sold'
+                voices = C['sold'][lang] if isinstance(C['sold'], dict) else C['sold']
+                if k in (3, 4, 7) and not cry:
+                    v = C['cmd'][lang] if isinstance(C['cmd'], dict) else C['cmd']
+                else:
+                    v = voices[(i + (k if cry else 0)) % len(voices)]
+                s, w, r, take = best_take(C['eng'], v, lang, say, mood, n_takes)
                 w = radio(w, rng, hiss=(rng.random() < .35))
                 ent.append([round(t, 3), round(len(w) / SR, 3)])
                 sheet += [w, np.zeros(gap, np.float32)]
@@ -184,6 +191,8 @@ def nation(fac, phr, n_takes=3, log=print):
                 rep.append((round(r['p808'], 2), round(r['cer'], 2)))
                 log(f'{fac} {name}{k} {v[:14]:14} p808 {r["p808"]:.2f} cer {r["cer"]:.2f} {len(w)/SR:.2f}s take{take} | {text} -> {r["hyp"].strip()}')
             out.append(ent)
+        while name == 'c' and len(out) < 8:
+            out.append([])
         vmap[name] = out
     wav = np.concatenate(sheet)
     tmp = os.path.join(CACHE, fac + '.sheet.wav')
@@ -191,14 +200,17 @@ def nation(fac, phr, n_takes=3, log=print):
     dst = os.path.join(ROOT, 'vo', fac + '.mp3')
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', tmp, '-ac', '1', '-ar', str(SR), '-c:a', 'libmp3lame', '-b:a', '40k', dst], check=True)
     log(f'{fac}: {len(rep)} clips, {t:.1f}s, {os.path.getsize(dst)//1024} KB, mean p808 {np.mean([a for a,_ in rep]):.2f} cer {np.mean([b for _,b in rep]):.2f}')
+    json.dump(vmap, open(os.path.join(ROOT, 'tools', 'voices', 'map', fac + '.json'), 'w'), separators=(',', ':'))
     return vmap
 
 
 def phrases():
-    js = os.path.join(ROOT, 'src', '09-audio.js')
-    names = os.environ.get('VO_GROUPS', 'l=PHR_FAC,c=FCRY')
-    d = json.loads(subprocess.run(['node', os.path.join(HERE, 'extract.mjs'), js, ','.join(x.split('=')[1] for x in names.split(','))], capture_output=True, text=True, check=True).stdout)
-    return {x.split('=')[0]: d[x.split('=')[1]] for x in names.split(',')}
+    """{'l': P, 'c': C} from tools/voices/phrases.py (kinds: select, move, attack, unit ready, base attacked, under fire,
+    unit lost, building ready; C = war cries for kinds 0-3). An entry is a text or (lang, text)."""
+    sys.path.insert(0, os.path.join(ROOT, 'tools', 'voices'))
+    import importlib, phrases as ph
+    importlib.reload(ph)
+    return {'l': ph.P, 'c': ph.C}
 
 
 def write_map(updates):
@@ -214,5 +226,6 @@ def write_map(updates):
 
 if __name__ == '__main__':
     P = phrases()
+    n = int(os.environ.get('VO_TAKES', '3'))
     for fac in sys.argv[1:]:
-        write_map({fac: nation(fac, P)})
+        write_map({fac: nation(fac, P, n_takes=n)})
