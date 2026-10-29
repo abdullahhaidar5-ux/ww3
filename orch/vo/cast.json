@@ -37,12 +37,7 @@
    "Damjan Chapman"
   ],
   "cmd": "Wulf Carlevaro",
-  "alt": {
-   "eng": "mms",
-   "voices": [
-    "kor"
-   ]
-  }
+  "most": 12
  },
  "KP": {
   "eng": "xtts",
@@ -52,12 +47,7 @@
    "Baldur Sanjin"
   ],
   "cmd": "Luis Moray",
-  "alt": {
-   "eng": "mms",
-   "voices": [
-    "kor"
-   ]
-  }
+  "most": 12
  },
  "IN": {
   "eng": "xtts",
