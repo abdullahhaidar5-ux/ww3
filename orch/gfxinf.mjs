@@ -14,10 +14,14 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argS = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const TAG = argS('tag', 'after');
 const HTML = path.resolve(argS('html', path.join(ROOT, 'index.html')));
-const OUT = path.join(ROOT, 'orch', 'shots', 'gfx-infantry');
+const OUT = path.join(ROOT, 'orch', 'shots', argS('out', 'gfx-infantry'));
 const MAPS = argS('maps', 'strait,arctic,fulda,gulf,zagros,emirates,dmz').split(',').filter(Boolean);
 const SEED = 4242;
 const ISBLD = !!argS('bld', '');
+// --bkinds kind:dx:dy,... buildings placed around the base (bld mode); --dist camera distance; --live N = no staging, N sim-seconds of AI play, camera on the player's base
+const BKINDS = argS('bkinds', 'barracks:110:-90,factory:-110:90,hq:0:0').split(',').map(s => { const [k, x, y] = s.split(':'); return [k, +x, +y]; });
+const DIST = +argS('dist', '330');
+const LIVE = +argS('live', '0');
 const CLIP = ISBLD ? { x: 190, y: 60, width: 900, height: 480 } : { x: 340, y: 170, width: 600, height: 340 };
 
 async function loadPlaywright() {
@@ -57,7 +61,7 @@ async function open(ctxOpts) {
   const page = await ctx.newPage();
   await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue() : r.abort());
   page.on('pageerror', e => errs.push('page error: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')));
-  page.on('console', m => { const t = m.text(); if ((m.type() === 'error' || m.type() === 'warning') && !/net::|Failed to load|AudioContext|autoplay|speech|WebSocket|peer/i.test(t)) errs.push(m.type() + ': ' + t.slice(0, 300)); });
+  page.on('console', m => { const t = m.text(); if (/^live blds|^bld /.test(t)) console.log(t); if ((m.type() === 'error' || m.type() === 'warning') && !/net::|Failed to load|AudioContext|autoplay|speech|WebSocket|peer/i.test(t)) errs.push(m.type() + ': ' + t.slice(0, 300)); });
   await page.goto(URL0, { waitUntil: 'load', timeout: 180000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 120000 });
   await page.evaluate(() => { window.__stopLoop = true; try { initAudio(); } catch (e) {} try { AU.musicOn = false; AU.sfxOn = false; AU.voiceOn = false; applyAudio(); } catch (e) {} });
@@ -91,15 +95,16 @@ const SCENES = argS('scenes', '') ? argS('scenes', '').split(',').map(s => s.spl
 try {
   const { ctx, page } = await open({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 2 });
   for (const [k, p, a] of SCENES) {
-    await battle(page, k, p, a, 2);
-    await page.evaluate((ISBLD) => { G.paused = true; G.ents = G.ents.filter(e => e.isB && !ISBLD);
+    await battle(page, k, p, a, LIVE || 2);
+    if (LIVE) { await page.evaluate(() => { G.paused = true; const T0 = G.ents.filter(e => e.isB && e.team === 0 && !e.dead); const hq = T0.find(e => e.kind === 'hq') || T0[0] || { x: BASES[0][0], y: BASES[0][1] }; window.__at = [hq.x, hq.y]; console.log('live blds', T0.map(e => e.kind).join(',')); }); }
+    else await page.evaluate(([ISBLD, BKINDS]) => { G.paused = true; G.ents = G.ents.filter(e => e.isB && !ISBLD);
       const [bx, by] = BASES[0]; const BLD = ISBLD; const x = BLD ? bx : Math.max(700, Math.min(MAPW - 700, bx + 260)), y = BLD ? by : Math.max(700, Math.min(MAPH - 700, by + 80));
       const kinds = t => BLD ? [] : ['inf', 'at', 'medic', 'sapper', 'officer', 'inf'];
       for (const t of [0]) kinds(t).forEach((kd, i) => { try { const u = addUnit(t, kd, x - 90 + i * 30, y + 40); u.ox = u.x; u.oy = u.y; if (u.vs) u.vs[0] = true; u.ang = u.va = t ? Math.PI / 2 : -Math.PI / 2; } catch (e) {} });
-      if (BLD) { for (const [kd, dx, dy] of [['barracks', 110, -90], ['factory', -110, 90], ['hq', 0, 0]]) { try { const b = addBld(0, kd, x + dx, y + dy, true); } catch (er) { console.log('bld', kd, er.message); } } }
-      window.__at = [x, y]; }, ISBLD);
+      if (BLD) { for (const [kd, dx, dy] of BKINDS) { try { const b = addBld(0, kd, x + dx, y + dy, true); } catch (er) { console.log('bld', kd, er.message); } } }
+      window.__at = [x, y]; }, [ISBLD, BKINDS]);
     if (process.env.DBG) console.log(await page.evaluate(() => { const o=[]; const sc=SCN; sc.traverse(q=>{ if(q.isSkinnedMesh&&o.length<4){const m=q.material;o.push([m.type,m.color.r.toFixed(2),m.color.g.toFixed(2),m.color.b.toFixed(2),!!m.map,m.envMapIntensity,m.emissive&&m.emissive.getHexString(),q.parent&&q.parent.name]);}}); return JSON.stringify(o); }));
-    for (const [nm, d, dy] of [ISBLD ? ['bld', 330, 0] : ['inf', 232, 18]]) {
+    for (const [nm, d, dy] of [ISBLD ? [LIVE ? 'live' : 'bld', DIST, 0] : ['inf', 232, 18]]) {
       await page.evaluate(([d, dy]) => { const [x, y] = window.__at; cam.dist = cam.td = d; cam.x = cam.tx = x; cam.y = cam.ty = y + dy; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; }, [d, dy]);
       await frames(page, 4); await snap(page, `${nm}-${k}-${p}-${a}`);
     }
