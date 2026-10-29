@@ -156,6 +156,10 @@ function fxPlay(type,args){if(FXH[type]&&!G.headless)try{FXH[type](...args);}cat
 // Burnt-out wrecks keep their shape and panel detail: patchy soot, rust-brown scorched paint and grey ash with the
 // original surface showing faintly through, glowing embers that die down over ~20 seconds, and a slight list.
 const WRECK_HEAT={value:1};let WRECKM=null;const WRECKQ=[],BURNT=new Map();
+// Object3D.clone() deep-copies every userData through JSON; a unit's userData holds its 3D parts, so cloning one for its
+// wreck serialised the whole model (geometry, even textures as images) - seconds of frozen game per destroyed vehicle in a
+// big battle. Wrecks never need the copied userData: clone with it set aside.
+function cloneLite(o){const keep=[];o.traverse(c=>{keep.push([c,c.userData]);c.userData={};});try{return o.clone(true);}finally{for(const [c,u] of keep)c.userData=u;}}
 function wreckTick(){const q=WRECKQ.shift();if(q)try{wreck(q[0],q[1],q[2]);}catch(e){}}
 function burntMat(src){const m=new THREE.MeshStandardMaterial({color:0xffffff,map:src&&src.map||null,roughness:1,metalness:.05,vertexColors:!!(src&&src.vertexColors)});
   if(src&&src.color)m.userData.base=src.color.clone();m.color.copy(m.userData.base||new THREE.Color(.3,.3,.3));const heat={value:1};m.userData.heat=heat;
@@ -167,7 +171,7 @@ function burntMat(src){const m=new THREE.MeshStandardMaterial({color:0xffffff,ma
      .replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
       {float e=smoothstep(.70,.82,wn(vBW*.55+7.)*.7+wn(vBW*2.1)*.3);totalEmissiveRadiance+=vec3(1.6,.48,.1)*e*uHeat*uHeat;}`);};
   m.customProgramCacheKey=()=>'burnt1';return m;}
-function wreck(o,x,y){mats();let w;const mats2=[];const rec={heat:1};const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};if(o.userData.model){w=o.clone(true);w.traverse(c=>{if(c.isMesh){c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);}if(c.isSkinnedMesh)c.visible=false;});w.rotation.z=rnd(-.08,.08);w.rotation.x=rnd(-.05,.05);}else{w=new THREE.Group();o.traverse(c=>{if(c.isMesh&&c.material===MAT.std){const m=new THREE.Mesh(c.geometry,bm(c.material));m.position.copy(c.position);m.rotation.copy(c.rotation);m.castShadow=true;w.add(m);}});
+function wreck(o,x,y){mats();let w;const mats2=[];const rec={heat:1};const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};if(o.userData.model){w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh){c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);}if(c.isSkinnedMesh)c.visible=false;});w.rotation.z=rnd(-.08,.08);w.rotation.x=rnd(-.05,.05);}else{w=new THREE.Group();o.traverse(c=>{if(c.isMesh&&c.material===MAT.std){const m=new THREE.Mesh(c.geometry,bm(c.material));m.position.copy(c.position);m.rotation.copy(c.rotation);m.castShadow=true;w.add(m);}});
   w.position.copy(o.position);w.rotation.y=o.rotation.y;}const P=o.userData.parts;if(P.turret){const t=w.children[1];if(t)t.rotation.set(rnd(-.2,.2),rnd(-1,1),rnd(-.2,.2));}w.traverse(c=>{if(c.isMesh){c.onBeforeRender=(r,s,cam,g,m)=>{if(m&&m.userData.heat&&m.userData.heat.value!==rec.heat){m.userData.heat.value=rec.heat;m.uniformsNeedUpdate=true;}};}});SCN.add(w);WRECKS.push({o:w,x,y,t:0,rec});}
 function rubble(x,y,size,o){mats();const w=new THREE.Group();const B=Bld(),h=size*.5;const gr=['#7d7a72','#8e8b82','#6c6962','#5a5751','#9a968c'];
   B.box(size*.95,1.6,size*.95,0,.8,0,'#5e5b54');
@@ -384,7 +388,9 @@ function warmShaders(){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0
   const add=o=>{if(!o)return;o.traverse(c=>{c.frustumCulled=false;if(c.isMesh)c.castShadow=true;});grp.add(o);};
   const teams=[G.teams[ME],null];
   for(const k of Object.keys(MODELS.proto||{}))for(const T of teams){let o=null;try{o=instModel(k,T,'y',12);}catch(e){}if(!o)continue;add(o);
-    if(T){try{const w=o.clone(true);w.traverse(c=>{if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});add(w);}catch(e){}}}
+    if(T){try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});add(w);}catch(e){}}}
+  // the merged one-mesh soldier (mergeSoldier) is its own shader variant (skinned + vertex colours)
+  if(typeof mergeSoldier==='function')for(const T of teams){try{const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+(T?T.color+T.fac:'')))add(o);}catch(e){}}
   try{add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);const cc=new Float32Array(gg.attributes.position.count*3).fill(.5);gg.setAttribute('color',new THREE.BufferAttribute(cc,3));add(new THREE.Mesh(gg,gm));add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
   for(const op of [.8,.12])add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
   // shockwave rings: drawn once, faintly and in view, so the GPU has their exact drawing state ready too

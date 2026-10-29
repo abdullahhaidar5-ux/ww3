@@ -93,7 +93,7 @@ console.log(`t=${(census.t / 60).toFixed(1)} min: ${census.u} units (${census.in
 await page.evaluate(() => {
   let sx = 0, sy = 0, n = 0; const cx = MAPW / 2, cy = MAPH / 2;
   for (const e of G.ents) if (!e.isB && !e.dead && Math.hypot(e.x - cx, e.y - cy) < 600) { sx += e.x; sy += e.y; n++; }
-  if (n) centerOn(sx / n, sy / n); else centerOn(cx, cy);
+  if (n) centerOn(sx / n, sy / n, true); else centerOn(cx, cy, true);
 });
 const CDP = await ctx.newCDPSession(page);
 if (PHONE) await CDP.send('Emulation.setCPUThrottlingRate', { rate: 4 });
@@ -101,7 +101,7 @@ const PROF = process.argv.includes('--cpuprofile');
 if (PROF) { await CDP.send('Profiler.enable'); await CDP.send('Profiler.setSamplingInterval', { interval: 200 }); await CDP.send('Profiler.start'); }
 const res = await page.evaluate(async (FR) => {
   const now = () => performance.now(), gl = R3.getContext();
-  const parts = { sync: 'syncScene', fx: 'fxUpdate', fog: 'updateFog', render: 'renderPost', hud: 'drawHUD', mini: 'drawMini' };
+  const parts = { sync: 'syncScene', fx: 'fxUpdate', fog: 'updateFog', render: 'renderPost', hud: 'drawHUD', mini: 'drawMini', wreck: 'wreckTick', city: 'buildCity', dra: 'droneAudio' };
   const acc = {}; for (const k in parts) { acc[k] = 0; const name = parts[k], f = window[name];
     window[name] = function () { const t = now(); try { return f.apply(this, arguments); } finally { acc[k] += now() - t; } }; }
   R3.info.autoReset = false;
@@ -110,7 +110,7 @@ const res = await page.evaluate(async (FR) => {
     R3.info.reset(); renderFrame(1 / 60); const t2 = now(); gl.finish(); const t3 = now();
     if (log) { log.sim += t1 - t0; log.frame += t2 - t1; log.gpu += t3 - t2; log.calls += R3.info.render.calls; log.tris += R3.info.render.triangles; log.n++; log.all.push(t3 - t0); }
   };
-  for (let i = 0; i < 8; i++) frame(null); // warm-up: objects get built, shaders compile
+  { let last = -1, same = 0; for (let i = 0; i < 60 && same < 4; i++) { frame(null); const n = R3.info.programs.length; same = n === last ? same + 1 : 0; last = n; } } // warm-up until no new shaders compile (steady state)
   for (const k in acc) acc[k] = 0;
   const L = { sim: 0, frame: 0, gpu: 0, calls: 0, tris: 0, n: 0, all: [] };
   for (let i = 0; i < FR; i++) { frame(L); if (i % 5 === 4) await new Promise(r => setTimeout(r, 0)); }
@@ -138,7 +138,7 @@ const res = await page.evaluate(async (FR) => {
     out.byKind = Object.fromEntries(Object.entries(by).sort((a, b) => b[1].tri - a[1].tri).map(([k, v]) => [k, { ...v, tri: Math.round(v.tri) }]));
     out.world = { meshes: restM, tri: Math.round(rest) };
   }
-  out.other = +(out.frameJS - out.sync - out.fx - out.fog - out.render - out.hud - out.mini).toFixed(2);
+  out.other = +(out.frameJS - out.sync - out.fx - out.fog - out.render - out.hud - out.mini - out.wreck - out.city - out.dra).toFixed(2);
   return out;
 }, FRAMES);
 if (PROF) { // self time per function over the measured frames (and warm-up), top 30
@@ -149,7 +149,7 @@ if (PROF) { // self time per function over the measured frames (and warm-up), to
   for (const [k, c] of [...self].sort((a, b) => b[1] - a[1]).slice(0, 30)) console.log('  ' + (100 * c / tot).toFixed(1).padStart(5) + '%  ' + k);
 }
 console.log('frame ms (mean):  total ' + res.total + '  p90 ' + res.p90 + '  | sim ' + res.sim + '  sync ' + res.sync + '  fx ' + res.fx + '  fog ' + res.fog +
-  '  render ' + res.render + '  gpu(finish) ' + res.gpu + '  hud ' + res.hud + '  mini ' + res.mini + '  other ' + res.other);
+  '  render ' + res.render + '  gpu(finish) ' + res.gpu + '  hud ' + res.hud + '  mini ' + res.mini + '  wreck ' + res.wreck + '  city ' + res.city + '  other ' + res.other);
 console.log(`scene: ${res.calls} draw calls, ${(res.tris / 1000).toFixed(0)}k triangles, ${res.meshes} visible meshes (${res.casters} shadow casters, ${res.skinned} skinned, ${res.inst} instanced), ${res.visObj}/${res.objs} objects in view, quality level ${res.qual}`);
 if (process.argv.includes('--census')) { console.log('world (terrain, trees, city, fx): ' + JSON.stringify(res.world)); for (const [k, v] of Object.entries(res.worldBy)) console.log('  W ' + k.padEnd(24) + JSON.stringify(v)); for (const [k, v] of Object.entries(res.byKind)) console.log('  ' + k.padEnd(12) + JSON.stringify(v)); }
 if (SHOT) { fs.mkdirSync(path.dirname(path.resolve(ROOT, SHOT)), { recursive: true });
