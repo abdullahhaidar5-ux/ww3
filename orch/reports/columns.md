@@ -5,7 +5,7 @@
 - Forests, grass and rocks used to be drawn across the whole map every frame; they are cut into map tiles and only the ones in view are drawn. Trees and rocks cast their shadow from a simplified copy (same shadow, ~4× fewer triangles).
 - Units and buildings off screen are no longer drawn or posed.
 - Fixed a freeze of several seconds every time a vehicle was destroyed (making its wreck copied the whole 3D model through text). Big battles no longer hitch on every kill.
-- New profiler `orch/columns.mjs` (8 players, late game, +320-unit clash, frame split into sim/sync/effects/render/HUD).
+- New profiler `orch/columns.mjs`.
 
 **Before → after** (8-player Fulda, ~640 units fighting in view; SwiftShader, relative only)
 
