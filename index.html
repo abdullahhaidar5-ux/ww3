@@ -9410,8 +9410,8 @@ function initAudio(){try{if(AU.ctx&&AU.ctx.state==='closed')audioRebuild();if(!A
     try{if(c.addEventListener)c.addEventListener('statechange',audioState);else c.onstatechange=audioState;}catch(e){}
     AU.master=c.createGain();AU.master.gain.value=.75;const comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;comp.attack.value=.004;comp.release.value=.25;AU.master.connect(comp);comp.connect(c.destination);
     AU.rev=c.createConvolver();AU.rev.buffer=impulse(c,1.8,3.2);AU.revIn=c.createGain();AU.revIn.gain.value=.55;AU.revIn.connect(AU.rev);AU.rev.connect(AU.master);
-    AU.sfx=c.createGain();AU.sfx.connect(AU.master);AU.sfxRev=c.createGain();AU.sfxRev.gain.value=.35;AU.sfx.connect(AU.sfxRev);AU.sfxRev.connect(AU.revIn);
-    AU.mus=c.createGain();AU.mus.gain.value=.19;{const lo=c.createBiquadFilter();lo.type='lowshelf';lo.frequency.value=110;lo.gain.value=3;const mid=c.createBiquadFilter();mid.type='peaking';mid.frequency.value=420;mid.Q.value=.8;mid.gain.value=-2.5;const hi=c.createBiquadFilter();hi.type='highshelf';hi.frequency.value=7000;hi.gain.value=2.5;const gl=c.createDynamicsCompressor();gl.threshold.value=-18;gl.ratio.value=2.5;gl.attack.value=.02;gl.release.value=.3;AU.mus.connect(lo);lo.connect(mid);mid.connect(hi);hi.connect(gl);gl.connect(AU.master);}AU.musRev=c.createGain();AU.musRev.gain.value=.08;AU.mus.connect(AU.musRev);AU.musRev.connect(AU.revIn);AU.musBus=AU.mus;
+    AU.sfxD=c.createGain();AU.sfxD.connect(AU.master);AU.musD=c.createGain();AU.musD.connect(AU.master);AU.sfx=c.createGain();AU.sfx.connect(AU.sfxD);AU.sfxRev=c.createGain();AU.sfxRev.gain.value=.35;AU.sfx.connect(AU.sfxRev);AU.sfxRev.connect(AU.revIn);
+    AU.mus=c.createGain();AU.mus.gain.value=.19;{const lo=c.createBiquadFilter();lo.type='lowshelf';lo.frequency.value=110;lo.gain.value=3;const mid=c.createBiquadFilter();mid.type='peaking';mid.frequency.value=420;mid.Q.value=.8;mid.gain.value=-2.5;const hi=c.createBiquadFilter();hi.type='highshelf';hi.frequency.value=7000;hi.gain.value=2.5;const gl=c.createDynamicsCompressor();gl.threshold.value=-18;gl.ratio.value=2.5;gl.attack.value=.02;gl.release.value=.3;AU.mus.connect(lo);lo.connect(mid);mid.connect(hi);hi.connect(gl);gl.connect(AU.musD);}AU.musRev=c.createGain();AU.musRev.gain.value=.08;AU.mus.connect(AU.musRev);AU.musRev.connect(AU.revIn);AU.musBus=AU.mus;
     const b=c.createBuffer(1,c.sampleRate*2,c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;AU.noise=b;
     const pb=c.createBuffer(1,c.sampleRate*2,c.sampleRate),pd=pb.getChannelData(0);let l=0;for(let i=0;i<pd.length;i++){l=(l+.02*(Math.random()*2-1))/1.02;pd[i]=l*3.5;}AU.brown=pb;}
   // resume from suspended and also from iOS "interrupted"
@@ -9422,17 +9422,19 @@ function auOn(){return !!(AU.ctx&&AU.ctx.state==='running');}
 function musBase(){return .19*(SET.mus/70);}
 function applyAudio(){if(AU.ctx){AU.sfx.gain.value=AU.sfxOn?SET.fx/100:0;AU.musBus.gain.value=AU.musicOn?musBase():0;}const set=(id,on,l)=>{const b=$(id);if(b){b.textContent=l+(on?' on':' off');b.classList.toggle('on',on);}};set('aMus',AU.musicOn,'Music');set('aSfx',AU.sfxOn,'Sound');set('aVoc',AU.voiceOn,'Voices');}
 function spatial(x,y){if(!G||!CAM)return null;const d=Math.hypot(x-cam.x,y-cam.y),r=cam.dist*1.25;if(d>r*1.8)return null;const v=Math.max(0,1-d/(r*1.8))*Math.pow(900/cam.dist,.5);TMP.set(x,0,y).project(CAM);return{v,pan:Math.max(-1,Math.min(1,TMP.x*.8)),far:Math.min(1,d/(r*1.8))};}
-function bus(sp){const c=AU.ctx,g=c.createGain();g.gain.value=sp.v;let n=g;if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=sp.pan;g.connect(p);n=p;}const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=18000-sp.far*14000;n.connect(lp);lp.connect(AU.sfx);return g;}
+function bus(sp){const c=AU.ctx,g=c.createGain();g.gain.value=sp.v;let n=g;if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=sp.pan;g.connect(p);n=p;}const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=18000-sp.far*14000;n.connect(lp);lp.connect(AU.sfx);if(AU.thIn){const e=c.createGain();e.gain.value=.3+sp.far*.7;lp.connect(e);e.connect(AU.thIn);}return g;}
 function limit(k,n,win=.12){const t=AU.ctx.currentTime;const a=AU.rate[k]=(AU.rate[k]||[]).filter(v=>t-v<win);if(a.length>=n)return false;a.push(t);return true;}
 function nz(dst,t,dur,type,f1,f2,gain,q=.8,src){const c=AU.ctx,s=c.createBufferSource();s.buffer=src||AU.noise;s.loop=true;const f=c.createBiquadFilter();f.type=type;f.frequency.setValueAtTime(f1,t);if(f2)f.frequency.exponentialRampToValueAtTime(f2,t+dur);f.Q.value=q;
   const g=c.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(gain,t+.004);g.gain.exponentialRampToValueAtTime(.0005,t+dur);s.connect(f);f.connect(g);g.connect(dst);s.start(t,Math.random()*1.5);s.stop(t+dur+.05);}
 function osc(dst,t,type,f1,f2,dur,gain,att=.003){const c=AU.ctx,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f1,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(gain,t+att);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g);g.connect(dst);o.start(t);o.stop(t+dur+.05);}
 function sfxShot(x,y,s){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02)return;const t=AU.ctx.currentTime+Math.random()*.01;
-  if(s<=5){if(!limit('gun',6))return;const b=bus(sp);const n=1+(Math.random()*3|0);for(let i=0;i<n;i++){const ti=t+i*.075;nz(b,ti,.05,'highpass',1600,0,.5,.7);nz(b,ti,.09,'bandpass',900+Math.random()*400,300,.35,1.2);osc(b,ti,'sine',190,70,.05,.25);}}
-  else if(s<=8){if(!limit('msl',3))return;const b=bus(sp);nz(b,t,.08,'highpass',2500,0,.4);nz(b,t,.9,'bandpass',350,3200,.32,1.6);osc(b,t,'sawtooth',90,40,.5,.06);}
-  else{if(!limit('can',3))return;const b=bus(sp);nz(b,t,.025,'highpass',3000,0,.8);osc(b,t,'sine',95,30,.55,.9);nz(b,t,.5,'lowpass',2200,180,.7,1);nz(b,t+.02,1.2,'lowpass',600,90,.25,.5,AU.brown);}}
+  const rec=sfxEnsure();
+  if(s<=5){if(!limit('gun',6))return;const b=bus(sp);const n=1+(Math.random()*3|0);if(rec){for(let i=0;i<n;i++)sfxClip(n>2&&Math.random()<.5?'mg':'rifle',b,.9,1,i*.075+sp.far*.12);return;}for(let i=0;i<n;i++){const ti=t+i*.075;nz(b,ti,.05,'highpass',1600,0,.5,.7);nz(b,ti,.09,'bandpass',900+Math.random()*400,300,.35,1.2);osc(b,ti,'sine',190,70,.05,.25);}}
+  else if(s<=8){if(!limit('msl',3))return;const b=bus(sp);if(rec){sfxClip('rocket',b,.8,1,sp.far*.15);return;}nz(b,t,.08,'highpass',2500,0,.4);nz(b,t,.9,'bandpass',350,3200,.32,1.6);osc(b,t,'sawtooth',90,40,.5,.06);}
+  else{if(!limit('can',3))return;const b=bus(sp);if(rec){sfxClip('cannon',b,1.1,s>14?.88:1,sp.far*.2);return;}nz(b,t,.025,'highpass',3000,0,.8);osc(b,t,'sine',95,30,.55,.9);nz(b,t,.5,'lowpass',2200,180,.7,1);nz(b,t+.02,1.2,'lowpass',600,90,.25,.5,AU.brown);}}
 function sfxBoom(x,y,s,big){if(auOn()&&!AU.sfxOn){const sp=spatial(x,y);if(sp&&sp.v>=.02)AU.heat=Math.min(1,AU.heat+(big?.25:.06));return;}if(!auOn())return; // with sound effects off, nearby explosions still tell the music the fighting started
   const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('boom',big?3:4,.15))return;const t=AU.ctx.currentTime,k=Math.min(1,.3+s/40)*(big?1.3:1),d=Math.min(3,.6+s/22);const b=bus(sp);
+  if(sfxEnsure()){sfxClip(big||s>26?'boomL':'boomS',b,(big?1.1:.9)*Math.min(1.2,.6+k),big?.94:1,sp.far*.3);AU.heat=Math.min(1,AU.heat+(big?.25:.06));return;}
   nz(b,t,.04,'highpass',2000,0,.9*k);osc(b,t,'sine',big?62:85,24,d*.9,1.1*k,.006);nz(b,t,d,'lowpass',big?1600:2400,120,.9*k,.7);nz(b,t+.03,d*1.4,'lowpass',500,60,.5*k,.5,AU.brown);
   for(let i=0;i<(big?14:6);i++){const ti=t+.08+Math.random()*d*.6;nz(b,ti,.03+Math.random()*.04,'bandpass',1500+Math.random()*3000,0,.12*k*Math.random(),3);}
   AU.heat=Math.min(1,AU.heat+(big?.25:.06));}
@@ -9454,6 +9456,44 @@ function droneAudio(dt){if(!AU.ctx||!G)return;drT-=dt;if(drT>0)return;drT=.1;con
     for(let k=0;k<n.os.length;k++){const o=n.os[k];if(o.type==='sawtooth'){const r=n.delta?[1,2,3.02][k]||1:(1+k*.017);o.frequency.setTargetAtTime(n.base*r*dive,now,.15);}}
     if(n.pan){TMP.set(e.x,0,e.y).project(CAM);n.pan.pan.setTargetAtTime(Math.max(-1,Math.min(1,TMP.x*.8)),now,.1);}}}
 function droneTypeA(fac){return fac==='IR'||fac==='RS'?'delta':fac==='TR'?'kargu':'fpv';}
+// ----- Recorded battlefield sounds (sfx/, made by sfx/sfx_pack.py) -----
+// One sprite sheet of recorded one-shots (rifles, MGs, cannons, rockets, small/large explosions) is fetched at the first
+// battle sound; loops (engines, aircraft, wind, rain, distant rumble) are fetched only when something needs them. Until the
+// sheet is ready (or if it can't load) the old synthesized sounds play instead. Distance = volume + low-pass + a little delay
+// and a theatre echo (open desert: dull and wide, green country: slap-back, snow/mountains: long tail). At most 28 (phones 16)
+// recorded sounds sound at once. Voices duck the music and effects for a moment.
+const SFX={st:'',tries:0,at:0,buf:null,man:null,nv:0,cap:PHONE?16:28,th:null,loops:{}};
+function sfxGet(url,json){return fetch(url).then(r=>{if(!r.ok)throw new Error(url+' '+r.status);return json?r.json():r.arrayBuffer();});}
+function sfxEnsure(){if(!AU.ctx||!G)return false;if(SFX.cx!==AU.ctx){SFX.cx=AU.ctx;SFX.loops={};SFX.th=null;AU.thRev=null;AU.thIn=null;}sfxTheatre();if(SFX.st==='ok')return true;if(SFX.st==='loading'||SFX.tries>=4||performance.now()-SFX.at<4000)return false;
+  const c=AU.ctx;SFX.st='loading';SFX.tries++;SFX.at=performance.now();
+  Promise.all([sfxGet('sfx/manifest.json',1),sfxGet('sfx/sfx.mp3')]).then(([m,ab])=>decodeAB(c,ab).then(b=>{SFX.man=m;SFX.buf=b;SFX.st='ok';})).catch(e=>{SFX.st='';audioErr('sfx',e);});return false;}
+function sfxClip(cat,dst,g,rate,delay){const B=SFX.buf,M=SFX.man,L=M&&M.clips[cat];if(!B||!L||SFX.nv>=SFX.cap)return false;const c=AU.ctx,cl=L[Math.random()*L.length|0],s=c.createBufferSource(),gn=c.createGain();
+  s.buffer=B;s.playbackRate.value=rate*(.95+Math.random()*.1);gn.gain.value=g;s.connect(gn);gn.connect(dst);SFX.nv++;s.onended=()=>{SFX.nv--;try{gn.disconnect();}catch(e){}};
+  try{s.start(c.currentTime+(delay||0),cl[0],cl[1]);}catch(e){SFX.nv--;return false;}return true;}
+// theatre echo: rebuilt when the map changes
+function sfxTheatre(){const m=G&&G.map;if(!AU.ctx||!m||SFX.th===m)return;SFX.th=m;const c=AU.ctx;
+  if(!AU.thRev){AU.thRev=c.createConvolver();AU.thIn=c.createGain();AU.thIn.connect(AU.thRev);const o=c.createGain();o.gain.value=.5;AU.thRev.connect(o);o.connect(AU.sfxD);AU.thOut=o;}
+  const mountain=m.theme==='snow'||(m.rough||0)>1.3,green=m.theme==='green';let b;
+  if(mountain){b=impulse(c,3.4,2.1);AU.thIn.gain.value=.42;}
+  else if(green){b=c.createBuffer(2,c.sampleRate*.9,c.sampleRate);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(const [t,a] of [[.012,1],[.085+ch*.02,.8],[.17-ch*.03,.5],[.29,.3]])for(let i=0;i<c.sampleRate*.02;i++)d[(t*c.sampleRate|0)+i]+=(Math.random()*2-1)*a*(1-i/(c.sampleRate*.02));for(let i=0;i<d.length;i++)d[i]+=(Math.random()*2-1)*Math.pow(1-i/d.length,5)*.2;}AU.thIn.gain.value=.5;}
+  else{b=impulse(c,1.5,4.5);AU.thIn.gain.value=.3;}
+  AU.thRev.buffer=b;}
+// voices duck music and effects briefly
+function duck(){const c=AU.ctx;if(!c||!AU.sfxD)return;const t=c.currentTime;try{AU.musD.gain.setTargetAtTime(.55,t,.05);AU.sfxD.gain.setTargetAtTime(.72,t,.05);clearTimeout(SFX.dk);SFX.dk=setTimeout(()=>{try{const u=c.currentTime;AU.musD.gain.setTargetAtTime(1,u,.4);AU.sfxD.gain.setTargetAtTime(1,u,.4);}catch(e){}},1300);}catch(e){}}
+// loops: engines of units near the camera, wind/rain by theme and weather, distant battle rumble
+function envLoop(k,g){let L=SFX.loops[k];const c=AU.ctx;if(!L){if(g<.01||SFX.loops['_'+k]||SFX.st!=='ok')return;SFX.loops['_'+k]=1;
+    sfxGet('sfx/'+k+'.mp3').then(ab=>decodeAB(c,ab)).then(b=>{if(AU.ctx!==c)return;const s=c.createBufferSource(),gn=c.createGain();s.buffer=b;s.loop=true;gn.gain.value=0;s.connect(gn);gn.connect(AU.sfx);s.start(0,Math.random()*b.duration);SFX.loops[k]={gn};}).catch(e=>{SFX.loops['_'+k]=0;audioErr('sfx '+k,e);});return;}
+  L.gn.gain.setTargetAtTime(g,c.currentTime,.5);}
+let envT=0;
+function envAudio(dt){if(!AU.ctx||!G||SFX.st!=='ok')return;envT-=dt;if(envT>0)return;envT=.15;const on=AU.sfxOn&&!G.over&&!audioHeld();
+  let tk=0,tr=0,he=0,je=0;
+  if(on){const R=cam.dist*1.4;for(const e of G.ents){if(e.dead||e.isB||!(e.team===ME||e.vis))continue;const s=e.s,cl=s.cls;if(cl!=='heli'&&cl!=='jet'&&!(s.dom==='ground'&&s.armor==='heavy'))continue;
+      const d=Math.hypot(e.x-cam.x,e.y-cam.y);if(d>R)continue;const w=Math.pow(1-d/R,1.5);
+      if(cl==='heli'){if(!e.landed)he+=w;}else if(cl==='jet'){if(e.state!=='park')je+=w;}else if(G.t-(e.mv||-9)<.5){if(cl==='tank'||cl==='arty'||cl==='aa')tk+=w;else tr+=w;}}}
+  const f=(v,m)=>on?Math.min(1,v*.3)*m:0,k=G.wx&&G.wx.k||'clear',th=G.map.theme;
+  envLoop('tank',f(tk,.55));envLoop('truck',f(tr,.4));envLoop('heli',f(he,.6));envLoop('jet',f(je,.5));
+  const wind=k==='blizzard'||k==='sandstorm'?.5:th==='snow'?.2:th==='green'?.08:.12;
+  envLoop('wind',on?wind*.5:0);envLoop('rain',on&&k==='rain'?.45:0);envLoop('rumble',on?(.05+Math.min(.45,AU.heat*.45))*.5:0);}
 function sfxUI(f){if(!auOn()||!AU.sfxOn)return;const t=AU.ctx.currentTime;osc(AU.sfx,t,'sine',f||880,0,.07,.08);osc(AU.sfx,t+.05,'sine',(f||880)*1.5,0,.08,.05);}
 function sfxAlarm(){if(!auOn()||!AU.sfxOn)return;const c=AU.ctx,t=c.currentTime;for(let i=0;i<5;i++){const o=c.createOscillator(),g=c.createGain();o.type='sawtooth';o.frequency.setValueAtTime(480,t+i*.6);o.frequency.linearRampToValueAtTime(900,t+i*.6+.5);const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=2200;g.gain.setValueAtTime(.0001,t+i*.6);g.gain.linearRampToValueAtTime(.08,t+i*.6+.05);g.gain.linearRampToValueAtTime(0,t+i*.6+.55);o.connect(f);f.connect(g);g.connect(AU.sfx);o.start(t+i*.6);o.stop(t+i*.6+.6);}}
 /* ---------- voices ---------- */
@@ -9572,7 +9612,7 @@ function voPlay(fac,kind){const buf=VOB[fac],M=VO_MAP[fac];if(!buf||typeof buf==
   // soft edges so a clip never starts or stops with a click
   g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.005);g.gain.setValueAtTime(vol,Math.max(t0+.006,t0+dur-.05));g.gain.linearRampToValueAtTime(0,t0+dur);AU.voEnd=t0+dur;src.connect(g);g.connect(c.destination);
   if(AU.musicOn&&AU.mus){AU.musBus.gain.setTargetAtTime(musBase()*.45,c.currentTime,.05);AU.musBus.gain.setTargetAtTime(musBase(),c.currentTime+d+.1,.25);}src.start(t0,o,d);return true;}
-function speak(kind){if(!AU.voiceOn||!G)return;const now=performance.now();if(now-AU.lastVoice<1300)return;AU.lastVoice=now;{const fac=G.teams[ME].fac;voLoad(fac);if(voPlay(fac,kind)){if(AU.ctx&&AU.sfxOn){const t=AU.ctx.currentTime;nz(AU.sfx,t,.12,'bandpass',2200,0,.08,2);}return;}}if(!window.speechSynthesis)return;
+function speak(kind){if(!AU.voiceOn||!G)return;const now=performance.now();if(now-AU.lastVoice<1300)return;AU.lastVoice=now;duck();{const fac=G.teams[ME].fac;voLoad(fac);if(voPlay(fac,kind)){if(AU.ctx&&AU.sfxOn){const t=AU.ctx.currentTime;nz(AU.sfx,t,.12,'bandpass',2200,0,.08,2);}return;}}if(!window.speechSynthesis)return;
   const L=G.teams[ME].F.lang,base=L.split('-')[0];const vs=AU.voices.length?AU.voices:speechSynthesis.getVoices();let voice=pickVoice(vs,L),lines=(voice&&PHR_FAC[G.teams[ME].fac])||PHR[base]||PHR.en,lang=L;
   if(!voice&&PHR_ALT[base]){const A=PHR_ALT[base];for(const b of A.v){const v=pickVoice(vs,b==='es'?'es-CU':b);if(v){voice=v;lang=v.lang;if(A.lines&&!(A.keep&&A.keep.includes(b)))lines=A.lines;break;}}}
   if(!voice&&vs.length){voice=pickVoice(vs,'en-US');lines=PHR.en;lang='en-US';}
@@ -9643,7 +9683,7 @@ function menuMusic(){if(!AU.ctx||AU.ctx.state==='suspended'&&G&&G.paused)return;
 // A broken sound call must never break the battle or the interface: every sound entry point used by other modules
 // swallows its own errors (the last one is shown in Settings > Sound check).
 {const safe=(f,n)=>function(){try{return f.apply(this,arguments);}catch(e){audioErr(n,e);}};
-  sfxShot=safe(sfxShot,'shot');sfxBoom=safe(sfxBoom,'boom');sfxUI=safe(sfxUI,'ui');sfxAlarm=safe(sfxAlarm,'alarm');speak=safe(speak,'voice');droneAudio=safe(droneAudio,'drones');}
+  sfxShot=safe(sfxShot,'shot');sfxBoom=safe(sfxBoom,'boom');sfxUI=safe(sfxUI,'ui');sfxAlarm=safe(sfxAlarm,'alarm');speak=safe(speak,'voice');droneAudio=safe(droneAudio,'drones');{const d0=droneAudio;droneAudio=safe(function(dt){d0(dt);envAudio(dt);},'env');}}
 
 // ===== Sound check (Settings) =====
 // One button that plays a radio beep and one voice line, and a status line saying exactly what this device reports,
@@ -9772,6 +9812,10 @@ function stopMusic(){myStop();stHalt();}
 {const _ss=sndStatus;sndStatus=function(){return _ss()+' · Soundtrack: '+(ST.fail?'could not load, trying again shortly':ST.id&&ST_TR[ST.id]?ST_TR[ST.id][0]+' ('+ST.pool+')':ST.an?'anthem':'idle');};}(function stCredits(){try{if(document.getElementById('stCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
   const p=document.createElement('p');p.className='credits';p.id='stCred';
   p.textContent='Soundtrack: The Fall of Arcana, Dream Raid and Tactical Pursuit by Matthew Pablo (www.matthewpablo.com, CC BY 3.0); Epic Orchestral Fantasy Theme by Markus Lindner (CC BY 4.0); Conflict (CC BY 4.0), Enemy Spotted and Act of War (CC BY 3.0) by Alexandr Zhelanov; Howitzer by joeBaxterWebb (CC BY 4.0); all via OpenGameArt.org. Tabuk, Impending Boom, Black Vortex, Curse of the Scarab, Egmont Overture Finale and Death of Kings by Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution 4.0 License, http://creativecommons.org/licenses/by/4.0/';
+  ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
+(function sfxCredits(){try{if(document.getElementById('sfxCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
+  const p=document.createElement('p');p.className='credits';p.id='sfxCred';
+  p.textContent='Battle sounds (all via OpenGameArt.org): The Free Firearm Sound Library by Bart (CC0); Chaingun/pistol/rifle shots, 4 projectile launches and 2 High Quality Explosions by Michel Baradari (apollo-music.de, CC BY 3.0); Cannon fire and Battle at sea by Thimras (CC0); Explosions by EZduzziteh (CC0); Big Explosion by Lamoot (CC BY 3.0); Rocket Engine by theMinesAreShakin (CC0); Engine-loop heavy vehicle/tank by Nayckron (CC BY 3.0); Engine Sound by kurt (CC BY 3.0); Jet Engine Takeoff by dklon (CC BY 3.0); Helicopter SFX by WuxiaScrub (CC0); Mild Wind Background Noise by Bashar3A (CC0); AMB Rain Loop 1 by Kresiek The Furry (CC0); Background Rumble Noise by gryc (CC BY 3.0).';
   ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
 
 /* ================= CINEMATIC POST-PROCESSING: HDR, bloom, grading, vignette ================= */
