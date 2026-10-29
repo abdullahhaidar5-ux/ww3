@@ -575,7 +575,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 /* Command bar text bigger and easier to read (Abdullah, 2026-10-28): larger names and costs, brighter text, greyed-out
    buttons still readable. PC: names 15 px, costs 13 px, a slightly taller bar. Phones: names 13-13.5 px wrapping onto two
    lines (fitBtnNames only shrinks a name that still doesn't fit), costs 11.5 px, buttons at least 40 px. */
-#side{--bh:clamp(196px,21vh,214px)}
+@media (min-width:761px) and (min-height:521px){#side{--bh:clamp(196px,21vh,214px)}} /* PC bar only; phones keep their own height */
 #panel .btn{padding:2px 8px 3px;gap:2px}
 #panel .btn .n{font-size:15px;line-height:1.05;color:#f4f8f5;letter-spacing:.01em}
 #panel .btn .c,.btn .c{font-size:13px;font-weight:600;color:#f0c75a}
