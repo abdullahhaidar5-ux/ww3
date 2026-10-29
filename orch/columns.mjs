@@ -65,8 +65,10 @@ await page.goto(BASE + '/index.html', { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
 await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => {});
 const st = await page.evaluate(([n, map, seed]) => {
-  setup.n = n - 1; setup.map = map; try { if (typeof srand === 'function') srand(seed); } catch (e) {}
-  startSingle(); if (G.teams[0] && !G.teams[0].ai) G.teams[0].ai = mkAI(1);
+  setup.n = n - 1; setup.map = map; setup.seed = seed;
+  // same nations every run (they are rolled with Math.random): a fixed generator just for the roll
+  const MR = Math.random; let z = seed * 2654435761 >>> 0; Math.random = () => ((z = (z * 1664525 + 1013904223) >>> 0) / 4294967296);
+  try { startSingle(); } finally { Math.random = MR; } if (G.teams[0] && !G.teams[0].ai) G.teams[0].ai = mkAI(1);
   return { n: G.teams.length, map: G.mapKey, facs: G.teams.map(t => t.fac).join(',') };
 }, [PLAYERS, MAP, SEED]);
 await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 });
@@ -112,14 +114,16 @@ const res = await page.evaluate(async (FR) => {
   };
   { let last = -1, same = 0; for (let i = 0; i < 60 && same < 4; i++) { frame(null); const n = R3.info.programs.length; same = n === last ? same + 1 : 0; last = n; } } // warm-up until no new shaders compile (steady state)
   for (const k in acc) acc[k] = 0;
+  const prog0 = new Set(R3.info.programs);
   const L = { sim: 0, frame: 0, gpu: 0, calls: 0, tris: 0, n: 0, all: [] };
   for (let i = 0; i < FR; i++) { frame(L); if (i % 5 === 4) await new Promise(r => setTimeout(r, 0)); }
+  const newProg = R3.info.programs.filter(p => !prog0.has(p)).map(p => p.name + ':' + String(p.cacheKey).slice(0, 60));
   let meshes = 0, casters = 0, skinned = 0, inst = 0, visObj = 0;
   SCN.traverseVisible(o => { if (o.isMesh || o.isPoints || o.isLine) { meshes++; if (o.castShadow) casters++; if (o.isSkinnedMesh) skinned++; if (o.isInstancedMesh) inst++; } });
   for (const o of OBJ.values()) if (o.visible) visObj++;
   const per = x => +(x / L.n).toFixed(2), s = L.all.slice().sort((a, b) => a - b);
   const out = { frames: L.n, sim: per(L.sim), frameJS: per(L.frame), gpu: per(L.gpu), total: per(L.sim + L.frame + L.gpu), p90: +s[Math.floor(s.length * .9)].toFixed(1),
-    calls: Math.round(L.calls / L.n), tris: Math.round(L.tris / L.n), meshes, casters, skinned, inst, objs: OBJ.size, visObj, qual: QUAL.lv };
+    calls: Math.round(L.calls / L.n), newProg, tris: Math.round(L.tris / L.n), meshes, casters, skinned, inst, objs: OBJ.size, visObj, qual: QUAL.lv };
   for (const k in acc) out[k] = per(acc[k]);
   { // where the triangles are: per kind of unit/building, visible objects only (shadow casters are drawn twice)
     const tri = m => { const g = m.geometry; if (!g) return 0; const n = g.index ? g.index.count : (g.attributes.position ? g.attributes.position.count : 0); return n / 3 * (m.isInstancedMesh ? m.count : 1); };
@@ -155,6 +159,7 @@ if (process.argv.includes('--census')) { console.log('world (terrain, trees, cit
 if (SHOT) { fs.mkdirSync(path.dirname(path.resolve(ROOT, SHOT)), { recursive: true });
   await page.evaluate(() => { renderFrame(1 / 60); });
   await page.screenshot({ path: path.resolve(ROOT, SHOT), timeout: 180000 }); console.log('screenshot ' + SHOT); }
+if (res.newProg.length) console.log('shaders compiled during the measured frames: ' + res.newProg.length + ' e.g. ' + res.newProg.slice(0, 6).join(' | '));
 if (errs.length) console.log('page errors: ' + errs.slice(0, 3).join(' | '));
 if (JSONOUT) fs.writeFileSync(path.resolve(ROOT, JSONOUT), JSON.stringify({ phone: PHONE, census, army, ...res }, null, 1));
 await browser.close(); server.close();
