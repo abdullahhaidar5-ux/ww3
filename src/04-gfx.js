@@ -154,6 +154,17 @@ function scarAdd(x,y,r,pit){if(!SCAR||!(r>(pit?0:6))||!isFinite(x+y))return;cons
     const burn=pit?Math.max(0,1-q/1.5)*190:Math.max(0,1-q)*(70+40*Math.sin(a*7+ph))*(q<.25?.6:1);d[k]=Math.min(235,Math.max(d[k],d[k]*.6+burn));
     if(pit){const dh=q<1?-(1-q*q)*46:(q<1.9?Math.sin((q-1)/.9*Math.PI)*16:0);d[k+1]=Math.max(20,Math.min(220,d[k+1]+dh*(q<1?Math.max(0,1-(128-d[k+1])/90):1)));}}
   if(!SCAR.due){SCAR.due=1;setTimeout(()=>{if(SCAR){SCAR.t.needsUpdate=true;SCAR.due=0;}},gfxLow()?900:300);}}
+// Massive columns: each forest / grass / rock set was ONE instanced mesh spanning the whole map, so the camera could never
+// skip any of it - every tree on the map (3-4 million triangles) was drawn every frame, twice with the shadow pass. Each
+// set is cut into map tiles of its own; tiles outside the view (or the sun's shadow box) are skipped by the GPU culling.
+function chunkInst(root){const TS=Math.max(420,Math.min(MAPW,MAPH)/4),nx=Math.ceil(MAPW/TS)+2,M=new THREE.Matrix4(),p=new THREE.Vector3(),c=new THREE.Color();
+  for(const im of root.children.slice()){if(!im.isInstancedMesh||im.count<200||im.frustumCulled===false||im.morphTexture)continue;const bins=new Map();
+    for(let i=0;i<im.count;i++){im.getMatrixAt(i,M);p.setFromMatrixPosition(M);const k=(Math.floor(p.z/TS)+1)*nx+Math.floor(p.x/TS)+1;let b=bins.get(k);if(!b)bins.set(k,b=[]);b.push(i);}
+    if(bins.size<2)continue;
+    for(const ids of bins.values()){const t=new THREE.InstancedMesh(im.geometry,im.material,ids.length);t.castShadow=im.castShadow;t.receiveShadow=im.receiveShadow;t.renderOrder=im.renderOrder;t.name=im.name;t.layers.mask=im.layers.mask;
+      t.userData=Object.assign({},im.userData);t.onBeforeRender=im.onBeforeRender;
+      ids.forEach((i,j)=>{im.getMatrixAt(i,M);t.setMatrixAt(j,M);if(im.instanceColor){im.getColorAt(i,c);t.setColorAt(j,c);}});t.computeBoundingSphere();root.add(t);}
+    root.remove(im);}}
 function buildWorld(tc){
   if(WORLD){SCN.remove(WORLD);WORLD.traverse(o=>{if(o.geometry)o.geometry.dispose();});}
   WORLD=new THREE.Group();SCN.add(WORLD);
@@ -278,6 +289,7 @@ function buildWorld(tc){
         propObj('pallet',0,0,0,st);const hgt=1+(R()*3|0);for(let k=0;k<hgt;k++){const m=propObj(R()<.2?'barrel':'crate',(R()-.5)*1.5,0,R()*.3,st);if(m)m.position.y=1.6+k*8;}items.push(st);}
       propObj('container',-f.r-6,0,Math.PI/2,grp);propObj('containerG',f.r+8,6,Math.PI/2+.05,grp);propObj('sandbag',0,f.r*.9+6,0,grp);}
     return{grp,items,n:items.length};});
+  try{chunkInst(WORLD);}catch(e){console.warn('chunkInst',e);}
   // fog of war overlay
   {const fk=Math.min(1.4,Math.max(1,WK*.65));FOGC=document.createElement('canvas');FOGC.width=Math.round(480*fk);FOGC.height=Math.round(330*fk);FOGC.b=document.createElement('canvas');FOGC.b.width=FOGC.width;FOGC.b.height=FOGC.height;}FOGT=new THREE.CanvasTexture(FOGC);FOGT.magFilter=THREE.LinearFilter;
   FOGM=new THREE.Mesh(new THREE.PlaneGeometry(MAPW,MAPH).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x060a0f,transparent:true,alphaMap:FOGT,depthWrite:false}));FOGM.position.set(MAPW/2,46,MAPH/2);FOGM.renderOrder=2;WORLD.add(FOGM);

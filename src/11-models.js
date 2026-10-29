@@ -342,6 +342,37 @@ function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)re
   const r=solRifle(k);attach(B.chest,r,base.clone().add(new THREE.Vector3(-.05*k,.0,.2*k)));
   if(fac==='DW'){const g=new THREE.Group(),d=new THREE.Mesh(new THREE.SphereGeometry(.98*k*.82,12,8,0,Math.PI*2,0,Math.PI*.58),gearMat('#d9d0b8'));g.add(d);const t=new THREE.Mesh(new THREE.BoxGeometry(.5*k,1.1*k,1.0*k),gearMat('#c9bfa6'));t.position.set(-.55*k,-.55*k,0);g.add(t);const band=new THREE.Mesh(new THREE.TorusGeometry(.8*k,.09*k,6,14),gearMat('#8a2a24'));band.rotation.x=Math.PI/2;band.position.y=.14*k;g.add(band);attach(B.head,g,hp.clone().add(new THREE.Vector3(0,.55*k,0)));}
   mergeGear(B,key+'|'+fac+'|'+kind+'|'+k.toFixed(3));}
+// Massive columns: every soldier was 7 skinned meshes (rifle, magazine and uniform parts, one per material colour) plus
+// 3 kit meshes on its bones - 10 draw calls per soldier in every pass (picture + shadow), ~30 per squad. They are merged
+// into ONE skinned, vertex-coloured mesh per soldier (kit rides its bone as a rigidly skinned part), so a squad costs 3.
+// The merged shape is built once per nation / team colour / unit type and shared by every soldier that looks the same.
+const SOLM={};
+function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false;const sk=[];inner.traverse(o=>{if(o.isSkinnedMesh)sk.push(o);});if(sk.length<2)return false;
+  const skel=sk[0].skeleton;if(!skel||sk.some(o=>!o.skeleton||o.skeleton.bones.length!==skel.bones.length||o.skeleton.bones.some((b,i)=>b!==skel.bones[i])||Array.isArray(o.material)||!o.geometry.attributes.skinIndex))return false;
+  const gear=[];skel.bones.forEach((b,bi)=>{for(const c of b.children)if(c.isMesh&&c.userData.gear&&!c.isSkinnedMesh)gear.push([c,bi]);});
+  let E=SOLM[key];
+  if(!E){const parts=[];let nv=0,ni=0;const nm=new THREE.Matrix3(),M=new THREE.Matrix4(),v=new THREE.Vector3(),col=new THREE.Color();
+    // each part may carry its own inverse-bind matrices (same joints, offset by a constant): fold that offset into its vertices
+    for(const o of sk){const X=new THREE.Matrix4().copy(skel.boneInverses[0]).invert().multiply(o.skeleton.boneInverses[0]);for(let j=1;j<skel.bones.length;j++){const Y=new THREE.Matrix4().copy(skel.boneInverses[j]).invert().multiply(o.skeleton.boneInverses[j]);if(Y.elements.some((x,k)=>Math.abs(x-X.elements[k])>1e-3))return false;}
+      parts.push({g:o.geometry,M:X.multiply(o.bindMatrix),c:o.material.color||new THREE.Color(1,1,1),sk:true});}
+    for(const [c,bi] of gear){c.updateMatrix();parts.push({g:c.geometry,M:new THREE.Matrix4().copy(skel.boneInverses[bi]).invert().multiply(c.matrix),c:c.material.color||new THREE.Color(1,1,1),bi});}
+    for(const p of parts){nv+=p.g.attributes.position.count;ni+=p.g.index?p.g.index.count:p.g.attributes.position.count;}
+    const P=new Float32Array(nv*3),N=new Float32Array(nv*3),C=new Float32Array(nv*3),SI=new Uint16Array(nv*4),SW=new Float32Array(nv*4),I=nv>65535?new Uint32Array(ni):new Uint16Array(ni);let ov=0,oi=0;
+    for(const p of parts){const g=p.g,pa=g.attributes.position,na=g.attributes.normal,ca=g.attributes.color,n=pa.count;nm.getNormalMatrix(p.M);
+      for(let i=0;i<n;i++){v.fromBufferAttribute(pa,i).applyMatrix4(p.M);P[(ov+i)*3]=v.x;P[(ov+i)*3+1]=v.y;P[(ov+i)*3+2]=v.z;
+        if(na){v.fromBufferAttribute(na,i).applyMatrix3(nm).normalize();}else v.set(0,1,0);N[(ov+i)*3]=v.x;N[(ov+i)*3+1]=v.y;N[(ov+i)*3+2]=v.z;
+        col.copy(p.c);if(ca)col.multiply(new THREE.Color(ca.getX(i),ca.getY(i),ca.getZ(i)));C[(ov+i)*3]=col.r;C[(ov+i)*3+1]=col.g;C[(ov+i)*3+2]=col.b;
+        if(p.sk){const a=g.attributes.skinIndex,w=g.attributes.skinWeight;for(let k=0;k<4;k++){SI[(ov+i)*4+k]=a.getComponent(i,k);SW[(ov+i)*4+k]=w.getComponent(i,k);}}else{SI[(ov+i)*4]=p.bi;SW[(ov+i)*4]=1;}}
+      if(g.index){const ix=g.index.array;for(let i=0;i<ix.length;i++)I[oi+i]=ix[i]+ov;oi+=ix.length;}else{for(let i=0;i<n;i++)I[oi+i]=ov+i;oi+=n;}ov+=n;}
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(P,3));geo.setAttribute('normal',new THREE.BufferAttribute(N,3));geo.setAttribute('color',new THREE.BufferAttribute(C,3));
+    geo.setAttribute('skinIndex',new THREE.BufferAttribute(SI,4));geo.setAttribute('skinWeight',new THREE.BufferAttribute(SW,4));geo.setIndex(new THREE.BufferAttribute(I,1));
+    // one material for the whole soldier: the uniform's (most triangles among the coloured parts), white so the baked
+    // vertex colours show, keeping its weathering shader hook
+    let src=sk[0].material,best=-1;for(const o of sk){const c=o.material.color,t=o.geometry.index?o.geometry.index.count:o.geometry.attributes.position.count;if(c&&c.r*.3+c.g*.59+c.b*.11>.02&&t>best){best=t;src=o.material;}}
+    const mat=src.clone();mat.onBeforeCompile=src.onBeforeCompile;mat.customProgramCacheKey=src.customProgramCacheKey;mat.vertexColors=true;if(mat.color)mat.color.setRGB(1,1,1);mat.map=null;
+    E=SOLM[key]={geo,mat};}
+  const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
+  sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;inner.updateMatrixWorld(true);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
   if(!B.uplegL||!B.uplegR||!B.legL||!B.legR)return null;let pl=new THREE.Vector3().setFromMatrixPosition(B.uplegL.matrixWorld),pr=new THREE.Vector3().setFromMatrixPosition(B.uplegR.matrixWorld);
   // the rifle-ready stance has the hips turned ~20 degrees; square them to the direction of travel so the legs
@@ -428,7 +459,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   if(c&&!MODELS.proto[c.m]){const alt={soldier:'inf',tankE:'tank',tankW:'tank',drone:null,technical:'tank',toontank:'tank'}[c.m];if(alt&&MODELS.proto[alt])c=Object.assign({},c,{m:alt});}
   if(!c||!MODELS.proto[c.m])return null;
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
-  for(const [px,pz] of sq){const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK);else soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}}
+  for(const [px,pz] of sq){const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK);else soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+((c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk)||0)+'|'+(T.fac||'')+'|'+e.kind);}catch(err){console.warn('mergeSoldier',err);}}
     if(m.userData.anims&&m.userData.anims.length){const mix=new THREE.AnimationMixer(m.userData.inner);(o.userData.mixers=o.userData.mixers||[]).push({mix,anims:m.userData.anims,cur:null});}}
   o.userData.parts.body=yaw;o.userData.model=true;if(c.m==='soldier'){o.userData.mixers=null;o.userData.walker=true;}
   {const ring=new THREE.Mesh(new THREE.RingGeometry(c.size*(c.squad?.5:.36),c.size*(c.squad?.56:.41),28).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:new THREE.Color(T.color),transparent:true,opacity:.24,depthWrite:false}));ring.position.y=1.2;ring.renderOrder=2;if(!['heli','jet'].includes(e.kind))o.add(ring);o.userData.parts.tring=ring;}
