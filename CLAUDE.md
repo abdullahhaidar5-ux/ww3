@@ -49,6 +49,11 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   sets its rally point. The old Generals left-click-orders scheme may stay as a Settings option. On PCs **the mouse stays
   inside the game window** during a battle (pointer lock with the game's own cursor; edge scrolling works; Esc or the
   menu releases it; a Settings toggle turns it off). **Command bar text is bigger and easier to read** (PC and phone).
+  **Getting in and out needs no button** (Abdullah, 19:14): enter = select units, right-click your own building /
+  vehicle / transport / tunnel ("enter" cursor shown); leave a building = select it, right-click the ground (everyone
+  comes out and runs there); leave a vehicle = select it and right-click the vehicle itself (unload here), or
+  Alt+right-click a spot (drive there, then unload); touch: tap a selected vehicle again to unload, tap ground with a
+  garrisoned building selected. The Unload/Leave buttons may stay as extras.
   Every action must also work with touch alone (phone touch controls unchanged).
 - **Factions (18 live):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
   **DW "Coffee Shias"**. The IM faction was removed on purpose; 18 is the intended count (no 19th planned). Shia factions = IR, RS, DW.
