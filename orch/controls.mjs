@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock } from './browserlock.mjs';
 import { guardContext } from './serverdev.mjs';
+import { enterExitChecks } from './enterexit.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, 'orch', 'out');
@@ -344,6 +345,8 @@ try {
   await press('#sMreset');
   check('Reset mouse settings returns to Standard', await page.evaluate(() => mPreset() === 'std' && SET.mLock === 1));
   await press('#sDone');
+  // getting in and out of transports, buildings and tunnels with no button (orch/enterexit.mjs)
+  await enterExitChecks(page, { mode: 'mouse', ck: check });
   await page.context().close();
 
   /* ================= phone (touch) ================= */
@@ -362,6 +365,7 @@ try {
     check('phone: tap the ground with units selected = move order', a.some(x => x.t === 'go'), JSON.stringify(a)); }
   check('phone: taps never lock the mouse', await tp.evaluate(() => __lockReq === 0 && !MLOCK.on));
   try { await tp.screenshot({ path: path.join(OUT, 'controls-phone.png'), timeout: 120000 }); } catch (e) {}
+  await enterExitChecks(tp, { mode: 'touch', ck: check, tap: (x, y) => tp.touchscreen.tap(x, y) });
   await T.ctx.close();
 } catch (e) {
   errors.push(String(e && e.stack || e).split('\n').slice(0, 4).join(' | '));
