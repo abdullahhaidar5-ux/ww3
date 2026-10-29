@@ -7664,6 +7664,44 @@ function warmShaders(){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0
   SCN.add(grp);try{if(typeof placeCam==='function')placeCam();const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}R3.compile(SCN,CAM);if(typeof renderPost==='function'){CAM.updateMatrixWorld();renderPost();}R3.setRenderTarget(null);if(!post)R3.render(SCN,CAM);}catch(e){console.warn('shader warm-up',e);}SCN.remove(grp);SHOCKS.forEach((S,i)=>{S.m.position.copy(shk[i][0]);S.m.scale.setScalar(shk[i][1]);S.m.material.opacity=shk[i][2];});
   console.log('shader warm-up',Math.round(performance.now()-t0)+' ms, '+grp.children.length+' objects');}
 
+// Phones: the same warm-up, but light and spread over frames, so a phone never sits for a minute on one frame (Safari on
+// iPhone compiles shaders slowly and can drop the whole graphics context after one huge frame): only the models of the
+// nations in this battle, only the player's own team variant (team colour is a shader input, not a separate shader),
+// burnt wreck variants once per kind of material, a few models per frame with progress on the loading screen, a texture
+// memory budget, and a stop flag the loading watchdog sets (whatever isn't prepared then is prepared when first seen).
+// onProg(done,total) reports progress. Resolves when done or stopped.
+async function warmShadersPhone(onProg,stop){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0=performance.now();
+  const [bx,by]=BASES[ME]||[MAPW/2,MAPH/2],T=G.teams[ME],gy=groundH(bx,by);
+  const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};
+  const want=new Set(typeof modelKeysFor==='function'?modelKeysFor(G.teams.map(q=>q.fac)):[]);
+  const keys=Object.keys(MODELS.proto||{}).filter(k=>!want.size||want.has(k));
+  const sig=new Set(),texSeen=new Set();let texB=0;const TEXMAX=192*1048576;let nObj=0,nBatch=0;
+  const frame=()=>new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,120);});
+  const upTex=o=>o.traverse(c=>{if(!c.isMesh)return;for(const m of (Array.isArray(c.material)?c.material:[c.material]))for(const p of ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap']){const t=m&&m[p];if(!t||texSeen.has(t))continue;texSeen.add(t);
+    const im=t.image||{},b=(im.width||0)*(im.height||0)*4*1.33;if(texB+b>TEXMAX)continue;texB+=b;try{R3.initTexture(t);}catch(e){}}});
+  const BATCH=4;
+  for(let i=0;i<keys.length;i+=BATCH){if(stop&&stop())break;if(window.GLLOST)break;const grp=new THREE.Group();grp.position.set(bx,gy,by);
+    for(const k of keys.slice(i,i+BATCH)){let o=null;try{o=instModel(k,T,'y',12);}catch(e){}if(!o)continue;o.traverse(c=>{c.frustumCulled=false;if(c.isMesh)c.castShadow=true;});grp.add(o);
+      // a burnt copy only for a kind of material not seen yet (most wrecks share a handful of burnt shaders)
+      let s='';o.traverse(c=>{if(c.isMesh&&!c.isSkinnedMesh){const m=Array.isArray(c.material)?c.material[0]:c.material;if(m)s+=m.type+(m.map?'m':'')+(m.normalMap?'n':'')+(m.vertexColors?'v':'')+'|';}});
+      if(s&&!sig.has(s)){sig.add(s);try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});grp.add(w);}catch(e){}}}
+    nObj+=grp.children.length;nBatch++;SCN.add(grp);
+    try{const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}
+      // compileAsync uses the browser's background shader compiling where it has it; the watchdog below never lets
+      // a program that never reports ready hold the loading screen
+      const p=R3.compileAsync(grp,CAM,SCN);R3.setRenderTarget(null);
+      await Promise.race([p,new Promise(r=>setTimeout(r,4000))]);upTex(grp);}catch(e){console.warn('phone warm-up',e);}
+    SCN.remove(grp);if(onProg)try{onProg(Math.min(keys.length,i+BATCH),keys.length);}catch(e){}await frame();}
+  // the merged one-mesh soldier and the shared plain materials
+  if(!(stop&&stop())&&!window.GLLOST){const grp=new THREE.Group();grp.position.set(bx,gy,by);
+    try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac))grp.add(o);}}catch(e){}
+    try{grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);gg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(gg.attributes.position.count*3).fill(.5),3));grp.add(new THREE.Mesh(gg,gm));grp.add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
+    grp.traverse(c=>{c.frustumCulled=false;});SCN.add(grp);
+    // and the battlefield itself (ground, scenery, buildings), drawn into the post-processing target as in the battle
+    try{if(typeof placeCam==='function')placeCam();const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}const p=R3.compileAsync(SCN,CAM);R3.setRenderTarget(null);await Promise.race([p,new Promise(r=>setTimeout(r,6000))]);}catch(e){console.warn('phone warm-up',e);}
+    SCN.remove(grp);}
+  console.log('shader warm-up (phone)',Math.round(performance.now()-t0)+' ms, '+keys.length+' models, '+nObj+' objects in '+nBatch+' steps, textures '+Math.round(texB/1048576)+' MB'+(stop&&stop()?' (stopped by the loading watchdog)':''));}
+
 /* ---------- GPU memory clean-up ----------
    Units, wrecks, rubble and effects create their own small shapes (selection rings, contact shadows, soldier kit,
    rotors, flags, debris...). Removing an object from the scene does not free its GPU buffers, so a long battle kept
@@ -9367,6 +9405,7 @@ function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.h
   if(MODE==='client'&&NET.sv&&NET.game)NET.game.presence({rd:1}).catch(()=>{});}
 // wait until the browser has painted (falls back to a timer when the tab is in the background and frames stop)
 function loadFrame(){return new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,document.hidden?0:300);});}
+const LOAD_WD=20000;
 async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
   // the 3D models of the shared scenery and of the nations in this battle (only those) download while the ground is painted
   const mp=modelsFor(g.teams.map(T=>T.fac),(d,n)=>{if(tok===LOAD.tok)loadStep('Loading 3D models… '+d+' of '+n,.08+.3*d/n);});
@@ -9383,14 +9422,19 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
     ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
     ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
-    ['Preparing graphics…',.78,()=>{try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
+    ['Preparing graphics…',.78,()=>{if(gfxPhone()&&typeof warmShadersPhone==='function'){LOAD.wstop=0;return warmShadersPhone((d,n)=>{if(live())loadStep('Preparing graphics… '+d+' of '+n,.78+.11*d/n);},()=>LOAD.wstop||!live());}
+      try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
     ['Deploying forces…',.9,()=>{buildPanels();}],
     // the first battle frame creates every unit, building, town and the fog of war on the GPU, by far the slowest frame
     // of the battle: draw it here, under the loading screen, so the battle appears already running
     ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
   const T0=performance.now(),TL=LOAD.times=[];
+  // every step has a watchdog: a step still not done after LOAD_WD ms (a download or a phone's shader compile that never
+  // finishes) is logged and the loading moves on, so the loading screen can never hang for ever
   for(const [label,p,fn,gl] of steps){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;const t1=performance.now();
-    try{const r=fn();if(r&&r.then)await r;TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
+    try{const r=fn();if(r&&r.then){let wt=null;const to=await Promise.race([r.then(()=>0,e=>{throw e;}),new Promise(z=>{wt=setTimeout(()=>z(1),LOAD_WD);})]);clearTimeout(wt);
+        if(to){LOAD.wstop=1;console.warn('loading watchdog: "'+label.replace('…','')+'" still not done after '+LOAD_WD/1000+' s, moving on');}}
+      TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
       R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
   g.terrain=tc;loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
   TL.push(['total',Math.round(performance.now()-T0)]);console.log('battle start: '+TL.map(([a,b])=>a.replace('…','')+' '+b+' ms').join(', '));
