@@ -1,18 +1,17 @@
-# Controls 2 — new mouse controls (branch `orch/controls2`)
+# Controls 2 (branch `orch/controls2`)
 
-**Mouse (new default "Standard", saved old settings moved over once):**
-- Left-click: select. Drag = box select, Shift adds, double-click = all of that type on screen, click empty ground = deselect.
-  With a factory/barracks selected, left-click ground sets its rally point. Ctrl+click = force-fire, Alt+click = waypoint.
-- Right-click: ground = move, enemy = attack, own transport/tunnel/building = go in. Right-drag with units = line formation;
-  with nothing selected it does nothing.
-- Keys: **F + click = attack-move** (left or right click); A does nothing now. G + click = guard, X = stop, R = retreat.
-- The old Generals scheme (left-click orders) is still in Settings > Mouse.
+**Mouse — new default "Standard"** (old saved settings moved over once):
+- Left-click selects. Drag = box, Shift adds, double-click = all of that type, click empty ground = deselect.
+  Factory selected: left-click ground sets the rally point. Ctrl+click force-fire, Alt+click waypoint.
+- Right-click: ground = move, enemy = attack, own transport/building = go in. Right-drag = line formation
+  (nothing selected: nothing happens).
+- **F + click = attack-move**; A does nothing. G guard, X stop, R retreat.
+- The Generals scheme stays in Settings > Mouse.
 
-**Mouse stays in the window (PC):** the first click on the battlefield locks it; the game draws its own cursor, pushing
-against a window edge scrolls, and the command bar, minimap and ☰ still work under it. Esc, ☰ menu, pause, settings and
-the end screen let it go; the next battlefield click locks again. Never on phones. Settings > Mouse > "Keep the mouse
-inside the game window" turns it off.
+**Mouse stays in the window (PC):** first battlefield click locks it; the game draws its own cursor; pushing an edge
+scrolls; command bar, minimap and ☰ still work. Esc, ☰, pause, settings and the end screen release it; clicking the
+battlefield locks again. Never on phones. Toggle: Settings > Mouse.
 
-**Command bar:** names 15 px / costs 13 px on PC, 13.5 / 11.5 px on phones (46 px buttons). Shots: `orch/shots/controls2/`.
+**Command bar:** names 15 px / costs 13 px on PC, 13.5 / 11.5 px on phones. Shots: `orch/shots/controls2/`.
 
-**CIGATE:** PASS — all 16 on commit eff37126c6 (an earlier run's two phone-landscape touch failures were fixed by keeping that bar's height).
+**CIGATE:** PASS, 16/16 on eff37126c6.
