@@ -301,6 +301,37 @@ def check_soundtrack(html, i, j, paras):
     return probs
 
 
+def check_sfx(paras):
+    """The recorded battle sounds, sfx/: every sfx/*.mp3 is listed in sfx/manifest.json, and every credit in the manifest
+    (author, title words, licence) appears in the menu credits."""
+    import html as H
+    probs = []
+    d = os.path.join(ROOT, 'sfx')
+    if not os.path.isdir(d):
+        return probs
+    try:
+        man = json.load(open(os.path.join(d, 'manifest.json'), encoding='utf-8'))
+    except Exception as e:
+        return [f'sfx/manifest.json unreadable: {e}']
+    listed = set(man.get('bytes', {}))
+    for f in sorted(os.listdir(d)):
+        if f.endswith('.mp3') and f not in listed:
+            probs.append(f'sfx/{f} is not in sfx/manifest.json (no author/licence to credit)')
+    for f in listed:
+        if not os.path.isfile(os.path.join(d, f)):
+            probs.append(f'sfx/manifest.json lists {f} but the file is missing')
+    plain = H.unescape('\n'.join(paras)).lower()
+    for c in man.get('credits', []):
+        who = c['who'].split(' (')[0].lower()
+        lic = c['lic'].replace('CC-BY', 'CC BY').lower()
+        for what in (who, c['what'].split(' by ')[0].split(',')[0].split(' and ')[0].lower()):
+            if what not in plain:
+                probs.append(f"menu credits missing for sfx: {what!r} ({c['what']} by {c['who']})")
+        if lic not in plain:
+            probs.append(f"menu credits missing for sfx: licence {lic!r} ({c['what']})")
+    return probs
+
+
 def check_shell(html, i, j):
     """Return a list of human-readable problems with the page shell (empty = fine)."""
     shell = html[:i] + html[j:]
@@ -344,6 +375,7 @@ def check_shell(html, i, j):
         if phrase.lower() not in allc:
             probs.append(f'menu credits missing: no credits text containing {phrase!r}')
     probs += check_soundtrack(html, i, j, paras)
+    probs += check_sfx(paras)
     for f in mus_files():
         if f not in covered:
             probs.append(f'mus/{f} has no credit rule: give it a mus/*_pack.py with a "Sources" list, '
@@ -525,6 +557,9 @@ def artifact():
     with open(out, 'w', encoding='utf-8', newline='') as f:
         f.write(page)
     rels = sorted('vo/' + n for n in os.listdir(os.path.join(ROOT, 'vo')) if n.endswith('.mp3')) + ['mus/' + n for n in mus_files()]
+    sfxd = os.path.join(ROOT, 'sfx')  # recorded battle sounds (sheet, loops, manifest), loaded by 09-audio from sfx/
+    if os.path.isdir(sfxd):
+        rels += sorted('sfx/' + n for n in os.listdir(sfxd) if n.endswith(('.mp3', '.json')))
     files = {rel: rel for rel in rels}  # published path -> source path, relative to the repo root (ORCH's cwd)
     for rel in rels:
         if not os.path.isfile(os.path.join(ROOT, rel)):
