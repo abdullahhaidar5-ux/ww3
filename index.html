@@ -6732,7 +6732,9 @@ function initGfx(){
 // One object that cannot be drawn must never stop the whole frame (that froze the picture while the battle went on):
 // skip it, hide it and keep drawing everything else.
 {const rbd=R3.renderBufferDirect.bind(R3);let nErr=0;R3.renderBufferDirect=function(cam,scene,geo,mat,obj,grp){try{return rbd(cam,scene,geo,mat,obj,grp);}catch(e){if(obj)obj.visible=false;if(nErr++<5){let q=obj,path=[];while(q&&path.length<6){path.push((q.name||'')+':'+q.type);q=q.parent;}console.warn('skipped an object that failed to draw: '+(e&&e.message)+' | '+(mat&&mat.type)+' '+(mat&&mat.name||'')+' map='+!!(mat&&mat.map)+' env='+!!(mat&&mat.envMap)+' ud='+Object.keys((mat&&mat.userData)||{}).join('/')+' | '+path.join(' < ')+' @ '+String(e&&e.stack||'').split('\n').slice(1,4).map(x=>x.trim()).join(' / '));}}};}
-  cv.addEventListener('webglcontextlost',e=>{e.preventDefault();window.GLLOST=1;try{pushLog('Graphics were reset by the browser; restoring…','w');}catch(_){}},false);
+  cv.addEventListener('webglcontextlost',e=>{e.preventDefault();window.GLLOST=1;try{pushLog('Graphics were reset by the browser; restoring…','w');}catch(_){}
+    // not back within 4 s (phones that ran out of graphics memory never restore): offer a reload with low graphics instead of a frozen screen
+    setTimeout(()=>{if(!window.GLLOST||document.getElementById('glLostOv'))return;try{if(SET.gfx!=='low'){SET.gfx='low';saveSet();}}catch(_){}const d=document.createElement('div');d.id='glLostOv';d.style.cssText='position:fixed;inset:0;z-index:90;background:rgba(6,10,8,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center;color:#dde5df;font:15px/1.4 -apple-system,sans-serif';d.innerHTML='<div style="font:700 22px \'Saira Condensed\',sans-serif;letter-spacing:.04em;text-transform:uppercase">Graphics need a restart</div><div>This device ran out of graphics memory. The game switched to low graphics.</div>';const bt=document.createElement('button');bt.textContent='Restart with low graphics';bt.style.cssText='background:#e3b341;color:#17130a;border:0;padding:12px 22px;font:700 17px sans-serif;cursor:pointer';bt.onclick=()=>location.reload();d.append(bt);document.body.append(d);},4000);},false);
   cv.addEventListener('webglcontextrestored',()=>{window.GLLOST=0;try{for(const o of OBJ.values())SCN.remove(o);OBJ.clear();for(const k in GEO)delete GEO[k];if(G&&G.terrain)buildWorld();}catch(err){console.warn(err);}},false);
   R3.outputColorSpace=THREE.SRGBColorSpace;R3.toneMapping=THREE.NoToneMapping;R3.shadowMap.enabled=true;R3.shadowMap.autoUpdate=false;/* shadows are drawn once per frame, for the main pass only (renderPost) - not again for the depth pre-pass */R3.shadowMap.type=THREE.PCFShadowMap;/* r186: PCF = 5 filtered taps spread over shadow.radius texels (PCFSoftShadowMap is gone) */R3.autoClear=true;
   SCN=new THREE.Scene();SCN.background=lin('#c7b493');SCN.fog=new THREE.Fog(lin('#8f8a70'),1800,6200);
@@ -9383,14 +9385,14 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
     ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
     ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
-    ['Preparing graphics…',.78,()=>{try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
+    ['Preparing graphics…',.78,()=>{/* phones skip the all-models shader warm-up: on iPhones it could hang the loading screen (2026-10-29) */if(typeof gfxPhone==='function'&&gfxPhone())return;try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
     ['Deploying forces…',.9,()=>{buildPanels();}],
     // the first battle frame creates every unit, building, town and the fog of war on the GPU, by far the slowest frame
     // of the battle: draw it here, under the loading screen, so the battle appears already running
     ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
   const T0=performance.now(),TL=LOAD.times=[];
   for(const [label,p,fn,gl] of steps){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;const t1=performance.now();
-    try{const r=fn();if(r&&r.then)await r;TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
+    try{const r=fn();if(r&&r.then){let done=0,to;await Promise.race([r.then(()=>{done=1;},()=>{done=1;}),new Promise(res=>{to=setTimeout(()=>{if(!done)console.warn('loading step timed out: '+label);res();},25000);})]);clearTimeout(to);}/* a step that never finishes (seen on iPhones) must not hold the loading screen forever */TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
       R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
   g.terrain=tc;loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
   TL.push(['total',Math.round(performance.now()-T0)]);console.log('battle start: '+TL.map(([a,b])=>a.replace('…','')+' '+b+' ms').join(', '));
