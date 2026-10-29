@@ -53,8 +53,8 @@ jobs:
                             if git diff --quiet origin/main...HEAD -- src/02-map.js src/04-gfx.js src/11-models.js models/ orch/mapsweep.mjs 2>/dev/null \
                                && [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then echo "SKIP mapsweep (no map/graphics/model changes vs main)"; \
                             else node orch/mapsweep.mjs --minutes 1; fi ;;
-            controls)       [ -f orch/controls.mjs ] && node orch/controls.mjs || echo "SKIP controls (no test)" ;;
-            touch)          [ -f orch/touch.mjs ] && node orch/touch.mjs || echo "SKIP touch (no test)" ;;
+            controls)       [ -f orch/controls.mjs ] && node orch/controls.mjs || { echo "FAIL: orch/controls.mjs missing - this branch predates it; merge origin/main"; exit 1; } ;;
+            touch)          [ -f orch/touch.mjs ] && node orch/touch.mjs || { echo "FAIL: orch/touch.mjs missing - this branch predates it; merge origin/main"; exit 1; } ;;
             audio)          f=$(ls orch/audio*.mjs 2>/dev/null | head -1); [ -n "$f" ] && node "$f" || echo "SKIP audio (no test)" ;;
             cfclient)       # every Cloudflare-battle browser test: cfbattle (server test hooks) and cfclient (Play online flow)
                             ( r=0; n=0; for f in $(ls orch/cfbattle*.mjs orch/cfclient*.mjs 2>/dev/null); do n=1; node "$f" || r=1; done
