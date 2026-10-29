@@ -60,7 +60,7 @@ await guardContext(ctx);
 const page = await ctx.newPage();
 await page.route('**/*', r => r.request().url().startsWith(BASE) ? r.continue() : r.abort());
 const errs = []; page.on('pageerror', e => errs.push(String(e.message || e).slice(0, 200)));
-await page.addInitScript(() => { try { localStorage.setItem('ww3_tut', '1'); } catch (e) {} });
+await page.addInitScript(() => { try { localStorage.setItem('ww3_tut', '1'); localStorage.setItem('ww3_touchGuide', '1'); } catch (e) {} });
 await page.goto(BASE + '/index.html', { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
 await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => {});
@@ -93,9 +93,12 @@ const census = await page.evaluate(() => { let u = 0, b = 0, inf = 0; for (const
 console.log(`t=${(census.t / 60).toFixed(1)} min: ${census.u} units (${census.inf} infantry squads), ${census.b} structures; +${army} column units`);
 // camera on the fight
 await page.evaluate(() => {
-  let sx = 0, sy = 0, n = 0; const cx = MAPW / 2, cy = MAPH / 2;
-  for (const e of G.ents) if (!e.isB && !e.dead && Math.hypot(e.x - cx, e.y - cy) < 600) { sx += e.x; sy += e.y; n++; }
-  if (n) centerOn(sx / n, sy / n, true); else centerOn(cx, cy, true);
+  // the densest 240x240 patch of units (the heart of the fight)
+  const C = 240, cnt = new Map(); let best = null, bn = 0;
+  for (const e of G.ents) if (!e.isB && !e.dead) { const k = Math.floor(e.x / C) + ',' + Math.floor(e.y / C); const n = (cnt.get(k) || 0) + 1; cnt.set(k, n); if (n > bn) { bn = n; best = k; } }
+  if (best) { const [i, j] = best.split(',').map(Number); let sx = 0, sy = 0, n = 0;
+    for (const e of G.ents) if (!e.isB && !e.dead && Math.floor(e.x / C) === i && Math.floor(e.y / C) === j) { sx += e.x; sy += e.y; n++; }
+    centerOn(sx / n, sy / n, true); } else centerOn(MAPW / 2, MAPH / 2, true);
 });
 const CDP = await ctx.newCDPSession(page);
 if (PHONE) await CDP.send('Emulation.setCPUThrottlingRate', { rate: 4 });
