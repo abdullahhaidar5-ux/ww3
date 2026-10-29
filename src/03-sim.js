@@ -658,8 +658,9 @@ function aiShellOk(id){const T=G.teams[id],P=powInfo('barrage',T.fac),w=T.pw.bar
 // group that has seen no action for 2 minutes rejoins the army. Base defence and the attack waves leave them be.
 // u.amb = game time the unit was posted.
 function aiAmbush(T,army,anchor,pb){if(T.ai.t%2||!pb.length)return;const id=T.id;let n=0;
-  for(const u of army)if(u.amb){if(G.t-u.amb>120&&G.t-(u.lastFire||-99)>40&&G.t-(u.lastHit||-99)>30)u.amb=undefined;else n++;}
-  const cap=Math.min(Math.round(6*(G.bs||1)),Math.floor(army.length*.35));if(n+2>cap)return;
+  for(const u of army)if(u.amb){if(G.t-u.amb>60&&G.t-(u.lastFire||-99)>25&&G.t-(u.lastHit||-99)>20)u.amb=undefined;else n++;}
+  // ambush teams are a screen, not the army: at most a fifth of it, and a quiet post is left after a minute
+  const cap=Math.min(Math.round(4*(G.bs||1)),Math.floor(army.length*.2));if(n+2>cap)return;
   const cand=army.filter(u=>!u.amb&&!u.order&&!u.target&&u.s.camo&&Math.hypot(u.x-anchor.x,u.y-anchor.y)<900);if(cand.length<2)return;
   let inc=null,bd=1800;for(const e of G.ents){if(e.dead||e.isB||ally(e.team,id)||e.s.dom!=='ground'||e.s.noAttack||!e.order)continue;const d=Math.hypot(e.x-anchor.x,e.y-anchor.y);if(d<=650||d>=bd)continue;
     const g=e.order.target||e.order;if(g.x==null||Math.hypot(g.x-anchor.x,g.y-anchor.y)>d-250)continue;bd=d;inc=e;}
