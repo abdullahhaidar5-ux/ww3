@@ -6,7 +6,8 @@
 //   node orch/aitourney.mjs --diff 2 --maps strait,fulda --minutes 25 --jobs 2 --seed 3
 //   node orch/aitourney.mjs --factions IL,AE,US,RU  # only these
 //   node orch/aitourney.mjs --vs IL,AE              # only games involving IL or AE (every other nation, both slots)
-//   node orch/aitourney.mjs --hard-vs-normal        # slot A plays Hard, slot B Normal (does Hard beat Normal?)
+//   node orch/aitourney.mjs --hard-vs-normal        # one side plays Hard, the other Normal (does Hard beat Normal?)
+//        [--hard-set cover=0,retreat=1]             # with some of Hard's DIFF settings changed (ablation)
 //
 // Timeouts are adjudicated like tourney.mjs: base + army value (forceOf) ahead by --adj (1.5x) wins, else draw (half).
 // Writes orch/out/aitourney.json and prints a win-rate table per faction.
@@ -29,6 +30,7 @@ if (process.argv[2] === '--child') {
     try {
       const { W } = makeSim(undefined, { prof: [] });
       const P = globalThis.__ww3prof;
+      if (m.hset) P.ev(`Object.assign(DIFF[2], ${JSON.stringify(m.hset)})`);
       W.start({ seed: m.seed, map: m.map, facs: m.facs, diff: m.diff });
       if (m.diffs) P.ev(`G.teams.forEach((T,i)=>{ if (T.ai) T.ai = mkAI(${JSON.stringify(m.diffs)}[i]); })`);
       let st = null;
@@ -55,6 +57,8 @@ if (process.argv[2] === '--child') {
   const DIFF = Number(argS('diff', 1)), ADJ = Number(argS('adj', 1.5));
   const JOBS = Math.max(1, Number(argS('jobs', os.cpus().length)));
   const HVN = has('hard-vs-normal');
+  // --hard-set cover=0,retreat=1 : try Hard with some DIFF settings changed (ablation tests)
+  const HSET = argS('hard-set', '') ? Object.fromEntries(argS('hard-set').split(',').map(kv => { const [k, v] = kv.split('='); return [k, Number(v)]; })) : null;
   const OUT = argS('out', path.join(ROOT, 'orch', 'out', 'aitourney.json'));
   const sched = []; let k = 0;
   for (let r = 0; r < ROUNDS; r++)
@@ -63,7 +67,7 @@ if (process.argv[2] === '--child') {
       const sw = (k + r) % 2 === 1;
       const facs = sw ? [FAC[j], FAC[i]] : [FAC[i], FAC[j]];
       sched.push({ n: k, facs, map: MAPS[(k * 7 + r * 3) % MAPS.length], seed: (SEED * 1000 + k * 13 + r * 7919) >>> 0, diff: DIFF,
-        diffs: HVN ? [2, 1] : null, minutes: MIN, adj: ADJ });
+        diffs: HVN ? [2, 1] : null, minutes: MIN, adj: ADJ, hset: HSET });
       k++;
     }
   if (HVN) for (const m of sched) if (m.n % 2) { m.facs.reverse(); m.diffs = [1, 2]; } // Hard plays both slots

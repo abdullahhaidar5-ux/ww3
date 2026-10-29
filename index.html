@@ -5704,7 +5704,7 @@ const BATTLE=1.75;
 // woods and buildings while advancing, damaged vehicles pulled back earlier and further, and amphibious landings.
 const DIFF=[{wave:4,inc:.7,first:420,think:1.6,flank:0,retreat:0,focus:0,cover:0,land:0,maxWave:10,q:1,nvAt:480,nvCap:1,nvShare:.08,nvShip:0,nvSortie:2},
   {wave:6,inc:1,first:270,think:1,flank:1,retreat:1,focus:0,cover:0,land:1,maxWave:22,q:2,nvAt:150,nvCap:4,nvShare:.15,nvShip:1,nvSortie:2},
-  {wave:7,inc:1,first:170,think:.6,flank:2,retreat:2,focus:1,cover:1,land:2,maxWave:32,q:3,nvAt:90,nvCap:8,nvShare:.22,nvShip:1,nvSortie:3}];
+  {wave:6,inc:1,first:220,think:.6,flank:2,retreat:2,focus:1,cover:1,land:2,maxWave:26,q:3,nvAt:90,nvCap:6,nvShare:.18,nvShip:1,nvSortie:3}];
 // wave is scaled by the battle size here, so an AI made mid-game (host migration, a commander who never came back) matches a fresh one
 function mkAI(d){d=Math.max(0,Math.min(2,d|0));const D=DIFF[d];return{bi:0,wave:Math.round(D.wave*((G&&G.bs)||BATTLE)),inc:D.inc,t:0,d};}
 const setup={p:'IR',a:'US',d:1,n:1,bs:BATTLE};
@@ -5739,7 +5739,7 @@ function baseFacing(t){const b=BASES[t]||BASES[0];return Math.atan2(MAPH/2-b[1],
 // Fields units and buildings pick up as the battle runs, declared (as undefined: same meaning as missing) when each is
 // made, so every unit has the same shape. Units growing fields in different orders gave the engine dozens of shapes,
 // and each new one threw away the compiled code of the hot loops (~80 times a game-minute): 10-30 ms hitches.
-const U_LATE='fldT,field,path,pgx,pgy,prt,npW,npD,npT,hd,v,vt,mv,px,py,si,_vr,vis,hid,building,mT,odds,sur,rz,fear,scT,bt,ms,guard,ffx,ffy,ffP,ffw,ffwT,so,sbD,sbT,srp,gt,drop,dropT,retreat,supp,fw,lc,rt,rtTo,rout,cvT,tagT,hlT,hl,cbrT,aband,cp,cpT,last,crew,_dsT,_dsV,kx,ky,mark,stun,sq,inTun,flank,flT,amb,spT,landed,wxw,toT,dead'.split(','),B_LATE='_vr,vis,hid,nd,stall,scT,sn,lastFire,_dsT,_dsV,dead'.split(',');
+const U_LATE='fldT,field,path,pgx,pgy,prt,npW,npD,npT,hd,v,vt,mv,px,py,si,_vr,vis,hid,building,mT,odds,sur,rz,fear,scT,bt,ms,guard,ffx,ffy,ffP,ffw,ffwT,so,sbD,sbT,srp,gt,drop,dropT,retreat,supp,fw,lc,rt,rtTo,rout,cvT,tagT,hlT,hl,cbrT,aband,cp,cpT,last,crew,_dsT,_dsV,kx,ky,mark,stun,sq,inTun,flank,flT,_fc,cvRes,amb,spT,landed,wxw,toT,dead'.split(','),B_LATE='_vr,vis,hid,nd,stall,scT,sn,lastFire,_dsT,_dsV,dead'.split(',');
 function addUnit(team,kind,x,y){const T=G.teams[team],s0=stats(T.fac,kind),sm=kind===T.F.special?specMult(T):1,s=sm>1?Object.assign({},s0,{hp:Math.round(s0.hp*sm),dmg:s0.dmg*sm,name:s0.name+(sm>=1.4?' (Elite)':' (Veteran)')}):s0;const a=baseFacing(team);
   const u={id:G.nid++,isB:false,team,kind,s,x,y,ang:a,va:a,tang:a,hp:s.hp,max:s.hp,r:s.r,cd:0,order:null,target:null,lastHit:-99,lastFire:-99,state:'go',cargo:0,xp:0,rank:0,ammo:s.ammo||0,vs:new Array(G.teams.length).fill(false)};
   for(const k of U_LATE)u[k]=undefined;
@@ -5962,12 +5962,14 @@ function buildHash(){const n=HW*(Math.ceil(MAPH/HC)+3);let H=G.hash;if(!H||H.n!=
 function nearby(x,y,R,out){out.length=0;const H=G.hash;if(!H){for(const e of G.ents)out.push(e);return out;}const x0=Math.floor((x-R)/HC)+1,x1=Math.floor((x+R)/HC)+1,y0=Math.floor((y-R)/HC)+1,y1=Math.floor((y+R)/HC)+1;
   const A=H.A,n=H.n;for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++){const k=cx+cy*HW,a=k>=0&&k<n?A[k]:(H.O.size?H.O.get(k):null);if(a)for(let i=0;i<a.length;i++)out.push(a[i]);}return out;}
 const NB=[],NB2=[];
-function nearestEnemy(src,range,s,minEff){s=s||src.s;let best=null,bd=1e9;for(const e of nearby(src.x,src.y,range+60,NB)){if(e.dead||e.aband||ally(e.team,src.team)||!canTarget(s,e)||!seenBy(src.team,e))continue;if(minEff&&effOn(s,e)<minEff)continue;
+function nearestEnemy(src,range,s,minEff,foc){s=s||src.s;let best=null,bd=1e9;for(const e of nearby(src.x,src.y,range+60,NB)){if(e.dead||e.aband||ally(e.team,src.team)||!canTarget(s,e)||!seenBy(src.team,e))continue;if(minEff&&effOn(s,e)<minEff)continue;
   const d=Math.hypot(e.x-src.x,e.y-src.y)-e.r;if(d>range)continue;
   // smart targeting: prefer what this weapon is good against, finish off damaged targets, answer units that can shoot back,
   // and leave buildings and supply trucks for last
   let sc=d;if(s.wpn){const ar=e.isB?'bld':(e.landed?'heavy':e.s.armor),eff=(VS[s.wpn]||{})[ar]||0;sc-=eff*90;}
   sc-=(1-Math.max(0,e.hp)/e.max)*70;if(!e.isB&&e.s.dmg&&canTarget(e.s,src))sc-=35;if(e.isB)sc+=e.kind==='turret'||e.kind==='sam'?60:180;if(e.kind==='harv'||e.kind==='dozer')sc+=30;
+  // focus fire (Hard AI): between two similar picks, the one a squad-mate is already shooting
+  if(foc&&!e.isB&&G.t-(e._fc??-9)<2)sc-=20;
   if(sc<bd){bd=sc;best=e;}}return best;}
 function fire(src,t,dmg,wpn,splash){if(!src.isB){const ss=src.s;if(ss.finisher&&!t.isB&&t.s&&isVeh(t.s)&&t.hp<t.max*.5)dmg*=1.4;if(ss.dom==='air'&&!t.isB&&saSpotted(src.team,t))dmg*=1.3;
   if(ss.ripple&&!src._rip){for(let k=1;k<ss.ripple;k++)G.timers.push({t:.16*k,fn:()=>{if(!src.dead&&!t.dead){src._rip=1;try{fire(src,t,dmg,wpn,splash);}finally{src._rip=0;}}}});}}
@@ -6134,19 +6136,24 @@ function autoEngage(u,o,T){const s=u.s;if(s.noAttack||u.rout>G.t||u.retreat)retu
 // - infantry under fire look for cover in nearby woods
 // - units that outrange their target keep their distance (kiting)
 // - vehicles turn their thick front armour toward whoever is shooting at them
-// hard AI: pick the enemy in range closest to dying (and that this unit can actually hurt)
-const WNB=[];function weakestEnemy(u,R){let best=null,bv=1e9;for(const e of nearby(u.x,u.y,R+40,WNB)){if(e.dead||ally(e.team,u.team)||!seenBy(u.team,e)||!canTarget(u.s,e))continue;const d=Math.hypot(e.x-u.x,e.y-u.y)-(e.r||0);if(d>R)continue;const v=e.hp/(e.max||1)+(e.isB?.5:0)+d/(R*4);if(v<bv){bv=v;best=e;}}return best||nearestEnemy(u,R);}
+// hard AI: focus fire - the usual smart pick (weapon vs armour, threats, damaged first), tie-broken toward what squad-mates already shoot
+// (it used to pick whatever had the least health left, even a tank its rifles couldn't hurt: Hard lost to Normal 39/61)
+function weakestEnemy(u,R){const e=nearestEnemy(u,R,null,0,1);if(e&&!e.isB)e._fc=G.t;return e;}
 function unitBrain(u,dt,o){const s=u.s;if(o&&o.type==='move'&&!o.auto)return false;u.bt=(u.bt||0)-dt;
   if(u.bt<=0){u.bt=.9+Math.random()*.3;
     if(s.dom!=='air'){for(const st of G.strikes){if(st.t<.4||st.team===u.team||ally(st.team,u.team))continue;const dd=Math.hypot(u.x-st.x,u.y-st.y);if(dd<st.r+26){const a=Math.atan2(u.y-st.y,u.x-st.x)||Math.random()*6.28,k=st.r+60-dd;setMove(u,u.x+Math.cos(a)*k,u.y+Math.sin(a)*k,'move');u.order.auto=1;return true;}}}
     const RAI=G.teams[u.team].ai,RD=RAI?DIFF[RAI.d??1].retreat:1,RH=RD>1?(isVeh(s)?.4:.3):.25;
     if(u.hp<u.max*RH&&!u.rt&&s.dom!=='air'&&G.t-u.lastHit<3&&u.target&&!(RAI&&!RD)){if(G.teams[u.team].ai&&u.kind!=='harv'&&u.kind!=='dozer'){const tn=G.ents.filter(b=>b.isB&&b.team===u.team&&b.kind==='tunnel'&&!b.dead&&b.built>=1&&dist(b,u)<750).sort((p,q)=>dist(p,u)-dist(q,u))[0];if(tn&&G.teams[u.team].tun.length<TUN_CAP){u.rt=G.t;u.order={type:'enter',target:tn,auto:1};u.target=null;u.path=null;return true;}}const home=G.ents.filter(b=>b.isB&&b.team===u.team&&!b.dead).sort((p,q)=>dist(p,u)-dist(q,u))[0];if(home&&dist(home,u)>260){u.rt=G.t;const a=Math.atan2(home.y-u.y,home.x-u.x),k=RD>1?Math.min(480,dist(home,u)-200):260;setMove(u,u.x+Math.cos(a)*k,u.y+Math.sin(a)*k,'move');u.order.auto=1;if(RAI)aiStat(RAI,'retreat');log(u.team,`${s.name} is badly damaged and pulling back.`);return true;}}
     if(u.rt&&G.t-u.rt>12)u.rt=0;
-    const CAI=RAI&&DIFF[RAI.d??1].cover&&o&&o.type==='amove'&&!o.nv;
-    if(isInf(s)&&(!o||CAI)&&G.t-u.lastHit<1.5&&!coverAt(u.x,u.y)&&G.cover&&G.t-(u.cvT||-9)>(CAI?9:6)){u.cvT=G.t;let best=null,bd=1e9;const cx=Math.floor(u.x/CELL),cy=Math.floor(u.y/CELL);for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++){const X=cx+i,Y=cy+j;if(X<0||Y<0||X>=GW||Y>=GH||!G.cover[Y*GW+X])continue;const x=X*CELL+CELL/2,y=Y*CELL+CELL/2;if(!coverAt(x,y))continue;const d=Math.hypot(x-u.x,y-u.y);if(d<bd&&d<130){bd=d;best=[x,y];}}
+    const CAI=RAI&&DIFF[RAI.d??1].cover&&o&&o.type==='amove'&&!o.nv&&u.target&&!u.target.dead&&Math.hypot(u.target.x-u.x,u.target.y-u.y)-u.target.r<=rngOf(u)+10;/* already trading fire: a short hop into cover */
+    if(isInf(s)&&(!o||CAI)&&G.t-u.lastHit<1.5&&!coverAt(u.x,u.y)&&G.cover&&G.t-(u.cvT||-9)>(CAI?9:6)){u.cvT=G.t;let best=null,bd=1e9;const cx=Math.floor(u.x/CELL),cy=Math.floor(u.y/CELL);for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++){const X=cx+i,Y=cy+j;if(X<0||Y<0||X>=GW||Y>=GH||!G.cover[Y*GW+X])continue;const x=X*CELL+CELL/2,y=Y*CELL+CELL/2;if(!coverAt(x,y))continue;const d=Math.hypot(x-u.x,y-u.y);if(d<bd&&d<(CAI?90:130)){bd=d;best=[x,y];}}
       // Hard AI: the near side of a friendly or neutral building (or wall) counts too - a house corner, a bunker, sandbags
-      if(CAI)for(const b of nearby(u.x,u.y,230,CV_U)){if(!b.isB||b.dead||(b.team>=0&&!ally(b.team,u.team)))continue;const a=Math.atan2(u.y-b.y,u.x-b.x),r=b.size/2+20,x=b.x+Math.cos(a)*r,y=b.y+Math.sin(a)*r;const d=Math.hypot(x-u.x,y-u.y);if(d<bd&&d<160&&passXY('ground',x,y)&&coverAt(x,y)){bd=d;best=[x,y];}}
-      if(best){setMove(u,best[0],best[1],'move');u.order.auto=1;u.guard={x:best[0],y:best[1]};if(CAI)aiStat(RAI,'cover');return true;}}
+      if(CAI)for(const b of nearby(u.x,u.y,230,CV_U)){if(!b.isB||b.dead||(b.team>=0&&!ally(b.team,u.team)))continue;const a=Math.atan2(u.y-b.y,u.x-b.x),r=b.size/2+20,x=b.x+Math.cos(a)*r,y=b.y+Math.sin(a)*r;const d=Math.hypot(x-u.x,y-u.y);if(d<bd&&d<90&&passXY('ground',x,y)&&coverAt(x,y)){bd=d;best=[x,y];}}
+      if(best&&CAI){const fx=o.x-u.x,fy=o.y-u.y;if((best[0]-u.x)*fx+(best[1]-u.y)*fy<-.3*Math.hypot(fx,fy)*Math.hypot(best[0]-u.x,best[1]-u.y))best=null;/* never fall back to find cover */}
+      if(best&&CAI){const res={x:o.x,y:o.y};setMove(u,best[0],best[1],'move');u.order.auto=1;u.cvRes=res;aiStat(RAI,'cover');return true;}
+      if(best){setMove(u,best[0],best[1],'move');u.order.auto=1;u.guard={x:best[0],y:best[1]};return true;}}
+    // Hard AI infantry that stopped in cover carry on with the attack once nothing is left to shoot from there
+    if(u.cvRes&&!o&&!u.target&&G.t-u.cvT>3){const r=u.cvRes;u.cvRes=undefined;setMove(u,r.x,r.y,'amove');return true;}
     if(u.target&&(!o||o.type==='amove')){const AI=G.teams[u.team].ai;const b=AI&&DIFF[AI.d??1].focus?weakestEnemy(u,rngOf(u)+20):nearestEnemy(u,rngOf(u)+20);if(b&&b!==u.target)u.target=b;}}
   const t=u.target;if(!t||t.dead)return false;const d=Math.hypot(t.x-u.x,t.y-u.y)-t.r,R=rngOf(u);
   if(!t.isB&&t.s&&t.s.rng&&s.dom==='ground'&&!s.minr&&R>t.s.rng*1.3&&d<Math.min(R*.6,t.s.rng+30)&&canTarget(t.s,u)){const a=Math.atan2(u.y-t.y,u.x-t.x);stepTo(u,u.x+Math.cos(a)*60,u.y+Math.sin(a)*60,dt);if(u.cd<=0&&Math.abs(angDiff(u.tang,Math.atan2(t.y-u.y,t.x-u.x)))<.35){fire(u,t,s.dmg*dmgOut(u),s.wpn,s.splash||0);u.cd=s.rof*rofMult(u);}return true;}
