@@ -2,7 +2,7 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
-## 2026-10-29 00:25 → (Chicago) — cycle 14
+## 2026-10-29 00:25 → 01:40 (Chicago) — cycle 14
 
 - No lock; took it. Baseline: `--check` OK, SMOKE PASS. Integration-only cycle (side lane holds 4 branches with reports;
   usage kept low: 0 workers, 1 review agent).
@@ -11,7 +11,8 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
 - Fresh review of 03-sim/01/08/09: 1 blocker — "Building ready" v7 logged every tick during construction (missing
   braces) → fixed. Rest OK (AI randomness host-only, voice throttles on G.t, checkpoints fine).
 - Gate: CIGATE on d136254 16/17 — cfclient failed (no takeover after server restart); local cfclient, cfbattle,
-  cfpassword all PASS → re-run CIGATE on the records commit.
+  cfpassword all PASS → re-run: CIGATE 17/17 PASS on 587af58 (cfclient a one-off). Shipped; artifact v178 (page +
+  18 voice sheets + 6 models).
 
 ## 2026-10-28 16:26 → 22:45 (Chicago) — cycle 13
 
