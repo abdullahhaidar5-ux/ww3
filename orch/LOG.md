@@ -13,6 +13,7 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
 - Gate: CIGATE on d136254 16/17 — cfclient failed (no takeover after server restart); local cfclient, cfbattle,
   cfpassword all PASS → re-run: CIGATE 17/17 PASS on 587af58 (cfclient a one-off). Shipped; artifact v178 (page +
   18 voice sheets + 6 models).
+- Not chained: ORCH is on an 8-hourly schedule while side-lane agents run (CLAUDE.md "Saving usage").
 
 ## 2026-10-28 16:26 → 22:45 (Chicago) — cycle 13
 
