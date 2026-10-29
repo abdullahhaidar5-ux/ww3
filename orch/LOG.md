@@ -2,7 +2,7 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
-## 2026-10-28 16:26 → 2026-10-29 ~22:45 (Chicago) — cycle 13
+## 2026-10-28 16:26 → 22:45 (Chicago) — cycle 13
 
 - No lock on main; took it. Baseline: `--check` OK, SMOKE PASS. Container restarted mid-cycle (Visuals explosion agent
   lost, no commits; item stays open). Side lane meanwhile queued `orch/ai-tactics` (incl. Fulda trucks) → ORCH's
