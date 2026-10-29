@@ -37,7 +37,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [todo] Recorded weapons, explosions, engines and aircraft (near and far, echo per theatre)
 - [todo] Battlefield ambience per map and weather
 - [done] Native-language unit voice lines for all 18 nations, incl. new "under fire", "unit lost", "building ready"
-- [doing] Natural-sounding neural re-voicing (13 of 18 nations re-voiced; EU, IN, CN, PK, CU left)
+- [done] Natural-sounding neural re-voicing for all 18 nations
 - [todo] Real latmiyas added to the shared soundtrack if freely licensed ones are found
 - [todo] Proper mix: voices duck music, distance fade, even loudness
 
@@ -63,3 +63,5 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Hard AI = smarter, not richer: counter-builds, flanks, uses cover, focus-fires; navy on time + landing craft; supply trucks fixed
 - [done] Balance round 3: every nation wins 37–65% vs the AI field (Israel 51%, UAE 57%)
 - [done] Real soldier models (desert / green / militia fatigues) and Middle Eastern HQ, barracks and factory for IR, RS, DW, SA, AE, EG
+- [done] Middle Eastern compounds, HESCO depots, bunkers and hardened airfields for the rest of those bases
+- [done] Balance round 4: every nation wins 38–65% (Iran up from 12%)
