@@ -25,7 +25,7 @@ export async function enterExitChecks(page, { mode, ck, tap }) {
     const tr = addUnit(ME, 'airlift', C.x - 55, C.y), tr2 = addUnit(ME, 'airlift', C.x + 55, C.y);
     const i1 = addUnit(ME, inf, C.x - 25, C.y + 55), i2 = addUnit(ME, inf, C.x + 25, C.y + 55);
     const tun = addBld(ME, 'tunnel', C.x, C.y - 95, true);
-    const en = G.teams.find(Q => Q.id !== ME), e = addUnit(en.id, roster(en.fac).barracks[0], C.x + 120, C.y + 70);
+    const en = G.teams.find(Q => Q.id !== ME), e = addUnit(en.id, roster(en.fac).barracks[0], C.x + 60, C.y + 100);
     for (const u of [tr, tr2, i1, i2, e]) { u.max = u.hp = 1e7; u.vis = true; u.hid = false; }
     window.__EE = { C, tr: tr.id, tr2: tr2.id, i1: i1.id, i2: i2.id, tun: tun.id, e: e.id };
     if (window.__acts) window.__acts.length = 0;
@@ -40,7 +40,7 @@ export async function enterExitChecks(page, { mode, ck, tap }) {
     const R = cv.getBoundingClientRect();
     const sc = id => { const e = G.byId.get(id); if (!e) return null; const p = toScreen(e.x, unitH(e) + entHeightMid(e) * .6, e.y); return { x: R.left + p.x, y: R.top + p.y, ok: document.elementFromPoint(R.left + p.x, R.top + p.y) === cv && pickAt(p.x, p.y, false) === e }; };
     let g = null;
-    for (const [dx, dy] of [[-120, 40], [-130, -40], [110, -50], [0, 120], [-90, 110], [140, -10], [-150, 0]]) { const wx = C.x + dx, wy = C.y + dy, p = toScreen(wx, groundH(wx, wy), wy);
+    for (const [dx, dy] of [[-110, 40], [-120, -40], [100, -50], [-80, 110], [130, -10], [-140, 0], [0, 140]]) { const wx = C.x + dx, wy = C.y + dy, p = toScreen(wx, groundH(wx, wy), wy);
       const x = R.left + p.x, y = R.top + p.y; if (document.elementFromPoint(x, y) === cv && !pickAt(p.x, p.y, false) && passXY('ground', wx, wy)) { g = { x, y, wx, wy }; break; } }
     return { tr: sc(E.tr), tr2: sc(E.tr2), e: sc(E.e), tun: sc(E.tun), g };
   });
@@ -91,7 +91,7 @@ export async function enterExitChecks(page, { mode, ck, tap }) {
     ck(P('plain right-click ground with a transport just moves it'), a.some(x => x.t === 'go') && !a.some(x => x.t === 'unl'), JSON.stringify(a));
   }
   const drive = await page.evaluate(([tid, x, y]) => { const tr = G.byId.get(tid); act(ME, { t: 'unl', tid, at: 1, x, y }); const r = { ul: !!(tr.order && tr.order.ul), n0: tr.cargo.length };
-    tr.x = tr.order.x; tr.y = tr.order.y; tr.order = null; updUnit(tr, 0.05); r.n1 = tr.cargo.length; return r; }, [S.tr, V.g.wx, V.g.wy]);
+    const ox = tr.x, oy = tr.y; tr.x = tr.order.x; tr.y = tr.order.y; tr.order = null; updUnit(tr, 0.05); r.n1 = tr.cargo.length; tr.x = ox; tr.y = oy; tr.order = null; return r; }, [S.tr, V.g.wx, V.g.wy]);
   ck(P('battle: the transport drives off still loaded, then unloads where it stops'), drive.ul && drive.n0 === 2 && drive.n1 === 0, JSON.stringify(drive));
 
   // 4. several transports at once
@@ -101,6 +101,8 @@ export async function enterExitChecks(page, { mode, ck, tap }) {
   a = await acts();
   ck(P('two transports selected + right-click/tap one = both unload'), a.filter(x => x.t === 'unl').length === 2, JSON.stringify(a));
   ck(P('…both empty'), await cargo(S.tr) === 0 && await cargo(S.tr2) === 0);
+  // whatever happened above, the infantry are back on the ground for the next checks
+  await page.evaluate(() => { for (const id of [window.__EE.tr, window.__EE.tr2]) unloadTransport(G.byId.get(id)); });
 
   // 5. a held city building
   const gar = await page.evaluate(([i1, i2]) => { const C = window.__EE.C; let best = null, bd = 1e9; for (const c of G.civ || []) { if (c.dead || c.g || c.cap < 2) continue; const d = Math.hypot(c.x - C.x, c.y - C.y); if (d < bd) { bd = d; best = c; } }
