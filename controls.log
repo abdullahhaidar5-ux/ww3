@@ -1,0 +1,68 @@
+desktop (1600×900, mouse)
+  ok   default mouse scheme is Standard (old saved Generals default migrated once)
+  ok   on-screen hint: left selects, right moves/attacks, F attack-move
+  ok   no text says A attack-moves or S stops
+  ok   test units are on screen
+  ok   open ground to click on
+ Standard scheme (default)
+  ok   left-click own unit selects it
+  ok   Shift+click adds to the selection
+  ok   right-click ground = move order
+  ok   …and keeps the selection
+  ok   right-click enemy = attack order
+  ok   left-click enemy selects it (no order)
+  ok   left-click empty ground deselects (no order)
+  ok   double-click selects every unit of that type on screen
+  ok   left-drag draws a selection box
+  ok   A does nothing (no attack-move, no order)
+  ok   F arms attack-move
+  ok   F then left-click ground = attack-move order
+  ok   …selection kept after attack-move
+  ok   F then right-click ground = attack-move order
+  ok   Ctrl+click enemy = force-fire on it
+  ok   Ctrl+click empty ground does not move the units
+  ok   …selection kept after Ctrl+click
+  ok   Alt+click = waypoint (queued move)
+  ok   G arms guard
+  ok   G then click ground = guard-area order
+  ok   X stops the selected units
+  ok   right-click cancels building placement (no order)
+  ok   right-drag with units selected = infantry line formation
+  ok   …selection kept after the line order
+  ok   right-drag with nothing selected does nothing
+  ok   left-click own building selects it
+  ok   rally-point ground is clickable
+  ok   left-click ground with a production building selected sets its rally point
+  ok   …and the building stays selected
+ mouse kept inside the game window
+  ok   lock: a click on the battlefield locks the mouse (and still selects)
+  ok   lock: the game draws its own cursor
+  ok   lock: the game cursor follows the mouse movement
+  ok   lock: right-click ground still gives a move order
+  ok   lock: the cursor stays inside the window at the edge
+  ok   lock: edge scrolling works at the window edge
+  ok   lock: clicking a command-bar tab under the game cursor works
+  ok   lock: Esc releases the mouse and cancels attack-move (selection kept)
+  ok   lock: clicking the battlefield again locks again
+  ok   lock: when the browser itself releases it (Esc), attack-move is cancelled too
+  ok   lock: the ☰ menu opens under the game cursor and releases the mouse
+  ok   lock: Settings toggle off = the mouse is never locked
+ Generals scheme (chosen in Settings > Mouse)
+  ok   lock: no lock while Settings is open
+  ok   Settings > Mouse switches to Generals and saves it
+  ok   Settings > Mouse has the "keep the mouse inside the game window" toggle
+  ok   hint shows the Generals controls with F attack-move
+  ok   gen: left-click ground = move order
+  ok   gen: left-click enemy = attack order
+  ok   gen: A does nothing
+  ok   gen: F then click = attack-move
+  ok   gen: right-click deselects
+  ok   per-function choice works (custom mix)
+  ok   Reset mouse settings returns to Standard
+phone (390×844, touch)
+  ok   phone: test units and open ground are on screen
+  ok   phone: tap a unit selects it
+  ok   phone: tap the ground with units selected = move order
+  ok   phone: taps never lock the mouse
+
+CONTROLS PASS — 61/61 checks (393s); screenshots orch/out/controls-*.png
