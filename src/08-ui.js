@@ -331,7 +331,7 @@ window.addEventListener('pointerup',e=>{if(e.pointerType==='touch'&&touchUp(e))r
 window.addEventListener('pointercancel',e=>{touchCancel(e);if(drag&&e.pointerId===drag.id)drag=null;});
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;MODK.ctrl=e.ctrlKey||e.metaKey||k==='Control'||k==='Meta';MODK.alt=e.altKey||k==='Alt';MODK.shift=e.shiftKey;if(!G||$('menu').hidden===false)return;if(k==='Alt')e.preventDefault();
-  const gk=genKeys()&&!e.ctrlKey&&!e.metaKey&&!e.altKey;if(gk&&k==='a'&&!e.repeat){G.amove=true;G.defm=false;}if(gk&&k==='s'&&!e.repeat){const ids=selfSel().map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
+  const gk=genKeys()&&!e.ctrlKey&&!e.metaKey&&!e.altKey;/* W A S D only scroll the camera in every scheme (Abdullah 2026-10-28): no A attack-move, no S stop (X stops) */
   if(/^Digit[1-5]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
   if(k==='p'&&!G.over){e.preventDefault();togglePause();return;}
   if(k==='Escape'&&MLOCK.on){MLOCK.escK=performance.now();mlockCancelModes();mlockOff();return;}
