@@ -3,3 +3,4 @@ orch/out/
 .claude/worktrees/
 orch/three/node_modules/
 server/gen/
+__pycache__/
