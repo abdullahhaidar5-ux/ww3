@@ -168,10 +168,6 @@ an earlier one still has work a squad can take (other squads may only do small P
   `p2pmig.py` (3 players over a local PeerJS server, host leaves, checks migration). `probe.py` = load-time probe.
 
 **Battlefield & AI** (`03-sim`, `01-data`)
-- [open] **Faction balance round 3** (round 2 shipped cycle 8: AI keeps ~1/3 of army value in vehicles; 72-game
-  swapped sample after: AE 88, SA 75, UA 75, RS 50, TR 50, IL 38, KR 25 — 8 games each, ±17 noise). New low ones:
-  KR, RU, EU; AE may now be too strong. Use `node orch/tourney.mjs --swap` with more games per pair (cap ~90 min).
-- [open] Covert nations still win under half their AI games (IL ~50%, AE ~25%) after cycle 11's doctrine fix — balance.
 - [open] (side lane `orch/ai-tactics` has this; ORCH cycle 13's own version is on branch `worktree-agent-af18354e507b5537f` e597af4 if theirs falls through) Fulda: late-game supply trucks haul from fields up to ~4,000 away because nearby fields run dry (cycle 12
   finding) — AI should expand: build a depot or HQ near the new field.
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
