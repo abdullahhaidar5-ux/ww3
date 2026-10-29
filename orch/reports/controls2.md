@@ -15,4 +15,4 @@ inside the game window" turns it off.
 
 **Command bar:** names 15 px / costs 13 px on PC, 13.5 / 11.5 px on phones (46 px buttons). Shots: `orch/shots/controls2/`.
 
-**CIGATE:** see below.
+**CIGATE:** PASS — all 16 on commit eff37126c6 (an earlier run's two phone-landscape touch failures were fixed by keeping that bar's height).
