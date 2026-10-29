@@ -1,10 +1,10 @@
-# Getting in and out with no button (branch orch/enter-exit, built on orch/controls2)
+# Getting in and out with no button (orch/enter-exit, built on orch/controls2)
 
-- **Get in:** select troops, right-click (tap) your transport, tunnel or a building → they go in. The cursor turns into a house. Units that can't fit (tanks into a helicopter, aircraft) drive up next to it.
-- **Leave a building / tunnel:** select it, right-click (tap) the ground → everyone comes out and runs there. Right-click an enemy instead → the troops inside focus fire on it and stay in.
-- **Leave a transport:** select it, right-click (tap) the transport itself → unload right there. Alt+right-click a spot → it drives (or flies) there, then unloads. Several transports selected → all unload.
-- The Unload / Bring out buttons are still there; hints and tooltips explain the new way.
-- Multiplayer-safe: same order messages plus one "at this spot" flag, handled by the host and the Cloudflare server alike. Headless determinism check passes.
-- Tests added to controls.mjs and touch.mjs (shared orch/enterexit.mjs).
+- **Get in:** select troops, right-click (tap) your transport, tunnel or building. House cursor shown. Units that can't fit drive up next to it.
+- **Leave a building / tunnel:** select it, right-click (tap) the ground: everyone comes out and runs there. Right-click an enemy: the troops inside focus fire and stay in.
+- **Leave a transport:** select it, right-click (tap) the transport itself: unload there. Alt+right-click a spot: drive/fly there, then unload. Several transports selected: all unload.
+- Unload/Bring-out buttons kept; hints and tooltips updated.
+- Multiplayer-safe: same order messages plus one "at this spot" flag, handled by host and Cloudflare server alike.
+- New tests: orch/enterexit.mjs, run from controls.mjs and touch.mjs.
 
-CIGATE PASS — all 16 on f37b62dbd7 (controls 94/94, touch PASS, headless determinism PASS, mpsync + server mpsync PASS).
+CIGATE PASS: all 16 on f37b62dbd7 (controls 94/94, touch, headless determinism, mpsync incl. server).
