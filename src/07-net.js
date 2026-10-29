@@ -89,7 +89,8 @@ async function playOnline(){if(!NET.room||NET.code||NET.game||NET.qp)return;NET.
 // Host in this browser (today's way; also the fallback when Cloudflare can't host). note: shown at the top of the lobby
 async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hostNote=note||'';NET.ais=[];const code=Math.random().toString(36).slice(2,8).replace(/[^a-z0-9]/g,'a');NET.code=code;NET.baseCode=code;NET.gen=0;NET.lobby=[];mpIn(1);
   $('mpstatus').textContent='Connecting…';
-  try{NET.game=await NET.room.join('tc-'+code);}catch(e){$('mpstatus').textContent=window.WW3_P2P?'Could not reach the online matchmaking service. Check your internet connection and try again.':'Could not open a game room. Try again in a moment.';cancelHost();return;}
+  // the matchmaking service can hang without ever answering: give up after 20 s with the same message as a refusal
+  try{const g=await joinT('tc-'+code,20000,1);if(NET.code!==code){try{g.leave();}catch(e){}return;}NET.game=g;}catch(e){if(NET.code!==code)return;$('mpstatus').textContent=window.WW3_P2P?'Could not reach the online matchmaking service. Check your internet connection and try again.':'Could not open a game room. Try again in a moment.';cancelHost();return;}
   wireHost(NET.game);
   try{await NET.game.emit('lobby',{n:1,probe:1});}catch(e){if(e&&e.code==='not_permitted'){noPerm();cancelHost();return;}}
   await NET.room.presence({g:{c:code,f:setup.p,s:'open',n:1,pw:NET.pw?1:undefined}}).catch(()=>{});renderLobby();renderGames();}
@@ -214,7 +215,8 @@ function wireClient(g){
 //     timeout rather than "nobody is hosting this") do we look back there now and then.
 //  3. If the host of the room we just reached leaves while we wait for its first update, we stop waiting at once
 //     (NET.reconKick) instead of sitting out the full wait.
-function joinT(name,ms){const p=NET.room.join(name,NET.via?{via:NET.via}:undefined);let late=false;
+// joinT: join a room, giving up after ms (a room that answers late is left at once). host: open it as its host (no 'via')
+function joinT(name,ms,host){const p=NET.room.join(name,!host&&NET.via?{via:NET.via}:undefined);let late=false;
   return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>{late=true;rej(Object.assign(new Error('timeout'),{type:'timeout'}));},ms))]).catch(e=>{if(late)p.then(g=>{try{g.leave().catch(()=>{});}catch(_){}},()=>{});throw e;});}
 // is a Cloudflare battle still running? 'up' (the server lists it), 'gone' (the network works but the server doesn't run
 // it, or can't be reached while this page's own site can), 'down' (this device has no network)
@@ -243,7 +245,9 @@ async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NE
     // which room: the old one first; then the follow-up room (with an occasional look back at the old room while it
     // is not certain that its host is gone)
     const old=n===0||svBlip()||(here&&!gone)||(!gone&&newTries>0&&newTries%4===0),gen=old?gen0:gen0+1,room=migRoom(gen);
-    await slp(n===0?250:!old&&newTries===0?500:old&&svBlip()?700:300);n++;if(!old)newTries++;if(MODE!=='client'||(G&&G.over))break;
+    // knocking on the follow-up room backs off (0.5 s, then x1.4 each try up to 2.5 s, +-25% so players spread out): each
+    // try opens a fresh connection to the matchmaking service, and 7 players knocking every 0.3 s could trip its limits
+    await slp(n===0?250:!old?Math.min(2500,500*1.4**newTries)*(.75+Math.random()*.5):svBlip()?700:300);n++;if(!old)newTries++;if(MODE!=='client'||(G&&G.over))break;
     {const og=NET.game;NET.game=null;try{if(og)og.leave().catch(()=>{});}catch(e){}}
     let g=null;try{g=await joinT('tc-'+room,old?4000:6000);}catch(e){if(old){here=false;if(e&&e.type==='peer-unavailable')gone=true;}continue;}
     if(MODE!=='client'||(G&&G.over)){try{g.leave().catch(()=>{});}catch(e){}break;}

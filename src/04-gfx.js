@@ -36,7 +36,7 @@ function initGfx(){
         gl_FragColor=vec4(pow(c,vec3(2.2))*1.6,1.);}`}));SKY.renderOrder=-10;SKY.frustumCulled=false;SCN.add(SKY);
   CAM=new THREE.PerspectiveCamera(38,1,40,9000);
   HEMI=new THREE.HemisphereLight(lin('#b4cbef'),lin('#4d3f2c'),1.0*LUX);SCN.add(HEMI);
-  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7*LUX);SUN.castShadow=true;const sm=PH?1024:2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
+  SUN=new THREE.DirectionalLight(lin('#ffe2bd'),2.7*LUX);SUN.castShadow=true;SUN.shadow.camera.layers.enable(1);const sm=PH?1024:2048;SUN.shadow.mapSize.set(sm,sm);SUN.shadow.radius=2;const sc=SUN.shadow.camera;sc.left=-900;sc.right=900;sc.top=900;sc.bottom=-900;sc.near=10;sc.far=3000;SUN.shadow.bias=-.0012;SUN.shadow.normalBias=1.4;
   SCN.add(SUN);SCN.add(SUN.target);
   initFX();initPost();
 }
@@ -154,6 +154,29 @@ function scarAdd(x,y,r,pit){if(!SCAR||!(r>(pit?0:6))||!isFinite(x+y))return;cons
     const burn=pit?Math.max(0,1-q/1.5)*190:Math.max(0,1-q)*(70+40*Math.sin(a*7+ph))*(q<.25?.6:1);d[k]=Math.min(235,Math.max(d[k],d[k]*.6+burn));
     if(pit){const dh=q<1?-(1-q*q)*46:(q<1.9?Math.sin((q-1)/.9*Math.PI)*16:0);d[k+1]=Math.max(20,Math.min(220,d[k+1]+dh*(q<1?Math.max(0,1-(128-d[k+1])/90):1)));}}
   if(!SCAR.due){SCAR.due=1;setTimeout(()=>{if(SCAR){SCAR.t.needsUpdate=true;SCAR.due=0;}},gfxLow()?900:300);}}
+// Massive columns: each forest / grass / rock set was ONE instanced mesh spanning the whole map, so the camera could never
+// skip any of it - every tree on the map (3-4 million triangles) was drawn every frame, twice with the shadow pass. Each
+// set is cut into map tiles of its own; tiles outside the view (or the sun's shadow box) are skipped by the GPU culling.
+function chunkInst(root){const TS=Math.max(420,Math.min(MAPW,MAPH)/4),nx=Math.ceil(MAPW/TS)+2,M=new THREE.Matrix4(),p=new THREE.Vector3(),c=new THREE.Color();
+  for(const im of root.children.slice()){if(!im.isInstancedMesh||im.count<40||im.count<200&&im.count*((im.geometry.index?im.geometry.index.count:im.geometry.attributes.position.count)/3)<40000||im.frustumCulled===false||im.morphTexture)continue;const bins=new Map();
+    for(let i=0;i<im.count;i++){im.getMatrixAt(i,M);p.setFromMatrixPosition(M);const k=(Math.floor(p.z/TS)+1)*nx+Math.floor(p.x/TS)+1;let b=bins.get(k);if(!b)bins.set(k,b=[]);b.push(i);}
+    if(bins.size<2)continue;
+    // shadows: a coarse copy of the shape (vertices snapped to a grid, ~4x fewer triangles) is drawn into the sun's shadow map
+    // only (layer 1, which only the shadow camera sees); the detailed one no longer casts. The shadow looks the same.
+    const sg=im.castShadow?shadowGeo(im.geometry):null;
+    for(const ids of bins.values()){if(sg){const t=new THREE.InstancedMesh(sg,SHADOWM||(SHADOWM=new THREE.MeshBasicMaterial()),ids.length);t.castShadow=true;t.layers.set(1);t.userData.noDepth=true;
+        ids.forEach((i,j)=>{im.getMatrixAt(i,M);t.setMatrixAt(j,M);});t.computeBoundingSphere();root.add(t);}
+      const t=new THREE.InstancedMesh(im.geometry,im.material,ids.length);t.castShadow=im.castShadow&&!sg;t.receiveShadow=im.receiveShadow;t.renderOrder=im.renderOrder;t.name=im.name;t.layers.mask=im.layers.mask;
+      t.userData=Object.assign({},im.userData);t.onBeforeRender=im.onBeforeRender;
+      ids.forEach((i,j)=>{im.getMatrixAt(i,M);t.setMatrixAt(j,M);if(im.instanceColor){im.getColorAt(i,c);t.setColorAt(j,c);}});t.computeBoundingSphere();root.add(t);}
+    root.remove(im);}}
+let SHADOWM=null;const SHGEO=new Map();
+function shadowGeo(g){if(SHGEO.has(g))return SHGEO.get(g);let out=null;try{const P=g.attributes.position,ix=g.index?g.index.array:null,nt=(ix?ix.length:P.count)/3;
+  if(nt>=300){if(!g.boundingBox)g.computeBoundingBox();const b=g.boundingBox,cell=Math.max(b.max.x-b.min.x,b.max.y-b.min.y,b.max.z-b.min.z)/11,key=new Map(),pos=[],tri=[],seen=new Set();
+    const vid=i=>{const x=Math.round(P.getX(i)/cell),y=Math.round(P.getY(i)/cell),z=Math.round(P.getZ(i)/cell),k=x+','+y+','+z;let v=key.get(k);if(v===undefined){v=pos.length/3;key.set(k,v);pos.push(x*cell,y*cell,z*cell);}return v;};
+    for(let t=0;t<nt;t++){const a=vid(ix?ix[t*3]:t*3),c=vid(ix?ix[t*3+1]:t*3+1),d=vid(ix?ix[t*3+2]:t*3+2);if(a===c||c===d||a===d)continue;const k=[a,c,d].sort((p,q)=>p-q).join(',');if(seen.has(k))continue;seen.add(k);tri.push(a,c,d);}
+    if(tri.length/3<nt*.6){out=new THREE.BufferGeometry();out.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));out.setIndex(tri);out.computeBoundingSphere();}}}catch(e){out=null;}
+  SHGEO.set(g,out);return out;}
 function buildWorld(tc){
   if(WORLD){SCN.remove(WORLD);WORLD.traverse(o=>{if(o.geometry)o.geometry.dispose();});}
   WORLD=new THREE.Group();SCN.add(WORLD);
@@ -278,6 +301,7 @@ function buildWorld(tc){
         propObj('pallet',0,0,0,st);const hgt=1+(R()*3|0);for(let k=0;k<hgt;k++){const m=propObj(R()<.2?'barrel':'crate',(R()-.5)*1.5,0,R()*.3,st);if(m)m.position.y=1.6+k*8;}items.push(st);}
       propObj('container',-f.r-6,0,Math.PI/2,grp);propObj('containerG',f.r+8,6,Math.PI/2+.05,grp);propObj('sandbag',0,f.r*.9+6,0,grp);}
     return{grp,items,n:items.length};});
+  try{chunkInst(WORLD);}catch(e){console.warn('chunkInst',e);}
   // fog of war overlay
   {const fk=Math.min(1.4,Math.max(1,WK*.65));FOGC=document.createElement('canvas');FOGC.width=Math.round(480*fk);FOGC.height=Math.round(330*fk);FOGC.b=document.createElement('canvas');FOGC.b.width=FOGC.width;FOGC.b.height=FOGC.height;}FOGT=new THREE.CanvasTexture(FOGC);FOGT.magFilter=THREE.LinearFilter;
   FOGM=new THREE.Mesh(new THREE.PlaneGeometry(MAPW,MAPH).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x060a0f,transparent:true,alphaMap:FOGT,depthWrite:false}));FOGM.position.set(MAPW/2,46,MAPH/2);FOGM.renderOrder=2;WORLD.add(FOGM);

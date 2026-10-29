@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { acquireBrowserLock } from './browserlock.mjs';
 import { guardContext } from './serverdev.mjs';
+import { enterExitChecks } from './enterexit.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SHOTS = path.join(ROOT, 'orch', 'shots', 'touch');
@@ -311,6 +312,9 @@ async function phonePass(tag, viewport, storageState) {
   a = await acts(page);
   check(tag, a.some(x => x.t === 'sup') && await page.evaluate(() => !G.aim), 'tap a target, then ✓ fires the power there');
 
+  // --- getting in and out with taps alone (orch/enterexit.mjs) ---
+  if (tag === 'portrait') await enterExitChecks(page, { mode: 'touch', ck: (n, ok, d) => check(tag, ok, n + (ok || !d ? '' : ' — ' + String(d).slice(0, 300))), tap: (x, y) => T.tap(x, y) });
+
   // --- guide again from the ☰ menu ---
   await page.tap('#aMenu');
   const gb = await page.evaluate(() => { const b = document.getElementById('aGuide'); return !!b && getComputedStyle(b).display !== 'none'; });
@@ -339,13 +343,13 @@ async function desktopPass() {
   check(tag, s.length === 1 && s[0] === S.ids[0], 'left-click on a unit selects it');
   check(tag, await page.evaluate(() => { const t = document.getElementById('tstrip'); return !t || t.hidden; }), 'no touch command strip with a mouse');
   await acts(page);
-  await page.mouse.move(p.x + 120, p.y - 60); await page.mouse.down(); await page.mouse.up(); await frames(page, 1);
+  await page.mouse.move(p.x + 120, p.y - 60); await page.mouse.down({ button: 'right' }); await page.mouse.up({ button: 'right' }); await frames(page, 1);
   let a = await acts(page);
-  check(tag, a.some(x => x.t === 'go'), `left-click on the ground orders a move (Generals default) (${a.map(x => x.t).join(',')})`);
+  check(tag, a.some(x => x.t === 'go'), `right-click on the ground orders a move (Standard default) (${a.map(x => x.t).join(',')})`);
   check(tag, await page.evaluate(() => !document.querySelector('.tmark') && !(TC.marks)), 'no touch order markers from the mouse');
   const c0 = await page.evaluate(() => ({ x: cam.x, y: cam.y }));
-  await page.mouse.click(p.x + 200, p.y + 80, { button: 'right' }); await frames(page);
-  check(tag, (await sel(page)).length === 0, 'right-click deselects (Generals default)');
+  await page.mouse.click(p.x + 200, p.y + 80); await frames(page);
+  check(tag, (await sel(page)).length === 0, 'left-click on empty ground deselects (Standard default)');
   const box = await page.evaluate(ids => { const r = cv.getBoundingClientRect(); const ps = ids.map(id => { const e = G.byId.get(id), p = toScreen(e.x, unitH(e) + 4, e.y); return { x: p.x + r.left, y: p.y + r.top }; });
     return { x0: Math.min(...ps.map(p => p.x)) - 30, y0: Math.min(...ps.map(p => p.y)) - 30, x1: Math.max(...ps.map(p => p.x)) + 30, y1: Math.max(...ps.map(p => p.y)) + 30 }; }, S.ids);
   await page.mouse.move(box.x0, box.y0); await page.mouse.down(); await page.mouse.move(box.x1, box.y1, { steps: 8 }); await page.mouse.up(); await frames(page);

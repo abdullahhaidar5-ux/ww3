@@ -8,6 +8,10 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+**CYCLE 14 (2026-10-29): merged `orch/columns`, `orch/gfx-infantry`, `orch/ai-tactics`, `orch/voices` to main. Still in flight: `orch/voices-natural` (XTTS re-voicing, 13/18 done: EU, IN, CN, PK, CU left) — merge it when its report lands.**
+
+**SIDE LANE IN FLIGHT (Abdullah 2026-10-28 18:23: "move faster, don't run over usage") — ORCH: don't take these, merge their branches when their report lands:** Phase 5 massive columns → `orch/columns` (04-gfx instancing/LOD, sim perf); recorded weapon/engine/explosion sounds + ambience + mix → `orch/audio-sfx` (09-audio, `sfx/`); native-language unit voices for all 18 nations → `orch/voices` (`vo/`, voice hooks in 09-audio). Queued (staggered to keep usage steady): AI tactics + navy + balance (flanking/cover on Hard, navy on time + landing craft, IL/AE win rates, Fulda supply trucks) → `orch/ai-tactics` from ~20:30; infantry + building models (Phase 2 rest) → `orch/gfx-infantry` from ~22:30. Keep ORCH cycles to ≤ 3 agents while these run.
+
 **ROUND RESUMED (2026-10-28 07:00 Chicago):** the side lane finished order steps 1–3 (Cloudflare battles live, open items, music) and graphics Phases 1–4 shipped; the 4-hourly ORCH schedule is back on. `orch/followups` (QA findings, battle hint text, review R11/R12) and `orch/qa` are side-lane agents — integrate their reports, don't redo them. Keep usage steady (Abdullah 02:05): at most ~4 agents at once.
 
 **2026-10-28 06:55 (Chicago) SHIPPED:** small fixes (8e5ad4d); Cloudflare battles (7e44492; Abdullah merged PR #4 → servers-live, deploy OK); graphics Phases 1–4 (three-upgrade + gfx-models + gfx-terrain + gfx-fx, 16/16 on 663efc6). Running: `orch/qa` (until 12:00 UTC), `orch/followups` (QA findings + review R11/R12). ww3 Cloudflare site build lagging (still old version at 06:47).
@@ -144,13 +148,15 @@ an earlier one still has work a squad can take (other squads may only do small P
 
 ## P1 — now
 
+- [open] **Phase 5 next: merge vehicle model parts** (Visuals) — vehicles are now the biggest frame cost (columns report).
+- [open] **Soldier animation clips + distant low-poly soldier** (Visuals, gfx-infantry follow-up): baked run/shoot/die; the
+  remaining buildings (only HQ/barracks/factory got ME models).
+- [open] **QA: CI `cfclient` flaked once on d136254** ("no player took over after the server lost it"); passed locally ×1 and on
+  the branches. If it fails again in CI, root-cause the takeover-after-server-restart timing.
+- [open] **Device-speech fallback** has no lines for the 3 new voice cues (Audio, minor).
+
 **Foundation (ORCH itself)**
 
-- [open] Local `mpsync.mjs` / `mpsync --artifact` fail on this sandbox with "N of 47 3D models missing … aborted a
-  request" (the loader's 30 s fetch timeout under load) — also on cycle 11's untouched base; CI gate passes. Make the
-  harness server/model wait robust (or give tests a longer timeout).
-- [open] `build.py --check` passed an `index.html` with git conflict markers in the credits shell (cycle 11 merge) —
-  fail on `<<<<<<<`/`>>>>>>>` lines in `index.html`, `sw.js`, `src/`.
 
 - [open] Extend `orch/mpsync.mjs`: packet loss/latency, real WebRTC (3-player host migration is now covered by
   `orch/migrate.mjs`, cycle 6; its `--abrupt` mode — host vanishes without goodbye — is untested).
@@ -163,15 +169,15 @@ an earlier one still has work a squad can take (other squads may only do small P
   swapped sample after: AE 88, SA 75, UA 75, RS 50, TR 50, IL 38, KR 25 — 8 games each, ±17 noise). New low ones:
   KR, RU, EU; AE may now be too strong. Use `node orch/tourney.mjs --swap` with more games per pair (cap ~90 min).
 - [open] Covert nations still win under half their AI games (IL ~50%, AE ~25%) after cycle 11's doctrine fix — balance.
-- [open] AI barrage (review, cycle 11): `aiTroops` doesn't check for own units near the target (can shell its own mixed-in
-  troops); ambush pickets may chase a target up to 420 from their post, giving the ambush away.
-- [open] Fulda: a few supply trucks still go ~60 s without delivering late in a game.
+- [open] (side lane `orch/ai-tactics` has this; ORCH cycle 13's own version is on branch `worktree-agent-af18354e507b5537f` e597af4 if theirs falls through) Fulda: late-game supply trucks haul from fields up to ~4,000 away because nearby fields run dry (cycle 12
+  finding) — AI should expand: build a depot or HQ near the new field.
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
   below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
 - [open] AI navy arrives late (~6 game-min on Normal; buildings come first) and never uses landing craft.
 - [check] AI uses flanking and cover (DIFF has `flank`/`retreat` params) — verify in battles, strengthen on Hard.
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
+- [open] Big explosions still open with a soft, flat yellow ball for their first instant — rework (cycle 12).
 - [open] `migrate.mjs` failed once in cycle 10's gate ("a client fell 59 game-s behind before the host left") right
   after a 6-min `mpsync --server` run; passed on rerun. Watch for a repeat (load-sensitive?). Very old Safari (<16.4, no DecompressionStream) now
   gets simple shapes. Check after ship that Pages + the `ww3` Worker serve `models/*.glb.gz` (loader also accepts
@@ -193,41 +199,22 @@ an earlier one still has work a squad can take (other squads may only do small P
 ## P2 — next
 
 **Visuals**
-- [open] Ricochet sparks may also show on infantry standing right next to a vehicle — filter by actual target.
-- [check] Muzzle-flash and impact-spark polish.
 - [check] Battlefield debris near roads: shell casings, burnt patches (some debris exists).
 - [check] Bridge guard rails and lamp posts look too modern.
 - [check] Tree canopies a little faceted up close.
 - [check] Shoreline foam variation on water.
-- [check] Sandbags/props around buildings (sandbag model exists — check placement).
 - [check] Infantry helmet/kit variety beyond v68 tone variation.
 
 **UI/UX & controls** (`08-ui`, `06-view`)
-- [open] Phone portrait bottom bar: the 4th build column (Defense Gun, SAM Site…) is cut off at the right edge and
-  the hint text under the tabs is clipped mid-line — make the grid fit or scroll visibly (side lane, 2026-10-27).
-- [open] **UNPAUSED 2026-10-27 17:58 (order step 2, after server battles) — intuitive phone controls.** Abdullah: "make the mobile
-  controls more intuitive". One-finger drag scrolls (Maps-app style), long-press+drag box-selects, tap selects/orders
-  with order markers, long-press+drag with units = infantry line, touch command bar (attack-move, guard, stop, line,
-  same type, all army, deselect), collapsible panel, better landscape, first-time guide. Starts after the Generals
-  mouse work lands.
-- [open] **UNPAUSED 2026-10-27 17:58 (order step 2, after server battles; work saved on branch `orch/wip-generals-mouse`, unbuilt/untested) — Generals mouse controls + per-function Mouse settings.** Re-confirmed by Abdullah 2026-10-26 18:55 over
-  the 17:55 "freeze" note (see CLAUDE.md). ORCH takes it at order step 2.
-- [open] Map picker labels Fulda Gap, Golan and Korean DMZ as "open land" although they have rivers.
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
-- [open] **P1:** after a client reconnects mid-battle its state is wrong (own units missing, enemy base visible, money
-  off) — found by the side-lane agent 2026-10-27 while testing the bottom bar. Reproduce, fix, add to `orch/migrate.mjs`.
+- [open] "Play again" path should restore the player's own Conditions if it skips `leaveNet` (cosmetic, cycle 8 review).
 - [open] Asian music stand-ins (no free recording found yet): janggu, haegeum, piri, taepyeongso, gayageum, guzheng, sitar, shehnai — swap in real free recordings when found (`mus/as_pack.py`). Check the new credit line shows in the menu.
 - [open] Music follow-ups: real ney (Freesound blocks this sandbox with 403 — needs a download from elsewhere) (Freesound
   #580759 CC0, #328744 CC BY); gayageum/guzheng/sitar blocked by Wikimedia rate limits; no clean bandura/balalaika
   found; still stand-ins: bandura, balalaika/domra, tres, bayan, sopilka. TR/RU anthems skipped (not clearly PD).
   No freely licensed real
   latmiya found yet (cycle 9 search).
-- [open] Host migration (review, cycle 8): in shared-room (non-P2P) mode two standbys could both take over if PeerJS
-  fails but Trystero succeeds; the host-room join has no timeout; waiting clients create a new PeerJS peer every
-  ~0.3 s for up to 60 s (broker rate limits with 7 clients?); consider a shorter 5 s silence timeout. "Play again"
-  path should restore the player's own Conditions too if it skips `leaveNet` (cosmetic).
-- [open] Add a Conditions check (host Overcast → client shows Overcast) to `orch/mpsync.mjs` permanently.
 - [open] Review the ~5% of `testbed` netcode lines not in live; merge what's still useful, then mark `testbed`
   superseded (don't delete it).
 - [open] Artifact edition untested on the real claude.ai room: latency, ~40 msg/s cap, drops, host migration.
@@ -237,6 +224,36 @@ an earlier one still has work a squad can take (other squads may only do small P
 ## Done
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
+
+- 2026-10-29 (cycle 14) — **Massive columns (side lane `orch/columns`):** soldiers drawn as one piece, forests/rocks drawn only in
+  view, off-screen units skipped, no more multi-second freeze when a vehicle dies (8-player battle: frame time halved).
+- 2026-10-29 (cycle 14) — **Real soldiers + Middle Eastern buildings (`orch/gfx-infantry`):** desert / green / militia-fatigue
+  soldier models; sandstone HQ, mud-brick barracks, walled factory for IR, RS, DW, SA, AE, EG.
+- 2026-10-29 (cycle 14) — **AI tactics + navy + balance (`orch/ai-tactics`):** Hard has no extra money but counter-builds, flanks,
+  uses cover, focus-fires; shipyard ~3 min, landing craft; trucks fixed; nations 37–65% (IL 51%, AE 57%).
+- 2026-10-29 (cycle 14) — **Unit voices (`orch/voices`):** native-language lines for all 18 nations + under fire / unit lost /
+  building ready. Review fix: "Building ready" played every moment during construction → now once when done.
+- 2026-10-29 (cycle 13) — **Mouse:** left-click selects, right-click moves/attacks, mouse stays in the game window
+  (Abdullah's live request) — already shipped by the side lane (8b970d4) while ORCH was building the same; ORCH's copy
+  dropped (kept on branch `orch-cycle13-dup-controls`), gate re-run on main's version (controls PASS).
+- 2026-10-29 (cycle 13) — Map picker says "rivers" (not "open land") for Fulda Gap, Golan, Korean DMZ and other bridged maps.
+- 2026-10-29 (cycle 13) — **Host takeover with two backups at once:** new test `migrate.mjs --dual-claim` (gate job
+  migrate-dual); a player who steps down no longer sees frozen ghost units, and fades them out (review fix).
+- 2026-10-29 (cycle 13, verified) — Reconnect state bug was fixed 2026-10-27 (`orch/open-reconnect-phonebar`, in mpsync).
+
+- 2026-10-28 (cycle 12, verified) — Already live, removed from P2: phone-portrait whole columns, Generals mouse
+  controls + Mouse settings, intuitive phone controls (shipped by side lanes 10-27/28; roadmap [done]).
+
+- 2026-10-28 (cycle 12) — **AI barrages never aim at their own troops** (7 of 52 → 0 of 59 in 12 test battles); IL/AE
+  ambush pickets fight only within range of their post and slip back (time far from post 0.6% → 0.08%).
+- 2026-10-28 (cycle 12) — **Realistic muzzle flashes:** small bright core + short flame (no more glowing balls over
+  squads), tank guns get a sized flash with side jets (phones lighter); ricochet sparks only when the round hit armour;
+  sandbags at SAM sites, tunnels and all sides of defence guns.
+- 2026-10-28 (cycle 12) — **Safer host takeover (browser-hosted battles):** only one player takes over (newest backup
+  wins; a second host steps down); joining the takeover room times out after 12 s, opening a battle after 20 s; waiting
+  players retry 0.5→2.5 s apart instead of every 0.3 s; a cancelled battle never opens late.
+- 2026-10-28 (cycle 12) — Gate: `build.py` refuses merge-conflict markers; mpsync no longer fails on "models missing"
+  in this sandbox (local `--artifact` passes again); mpsync checks host Conditions reach the client.
 
 - 2026-10-28 (cycle 11) — **Five more national tanks:** Ukraine T-84 Oplot, Iran T-72, North Korea T-62, Cuba T-55,
   Turkey Leopard 2A4 (CC BY, credited).

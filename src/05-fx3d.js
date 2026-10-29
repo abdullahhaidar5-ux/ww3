@@ -95,7 +95,15 @@ function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.
   if(s>12&&LIGHTS.length){const L=LIGHTS[lightI++%LIGHTS.length];L.position.set(x,g+20,y);L.intensity=(big?7:3.2)*WXFX*LUX;L.distance=big?600:300;L.userData.d=big?.8:.35;L.userData.t=0;}
   if(inView(x,y,.3)){if(s>14)shake=Math.min(18,shake+s/(big?5:13));if(big)flash=Math.min(.2,flash+.1);}}
 const FXH={
-  muz(x,y,h,a,s){sfxShot(x,y,s);if(s>=13){const gh=groundH(x,y),ca=Math.cos(a),sa=Math.sin(a);for(let i=0;i<10;i++){const b=a+rnd(-1.3,1.3),v=rnd(30,90);part({x:x+ca*4,y:y+sa*4,h:h+rnd(-1,2),vx:Math.cos(b)*v+ca*40,vy:Math.sin(b)*v+sa*40,vh:rnd(4,18),f:.25,rise:rnd(6,14),c:i%3?C_SMOKE:[.62,.6,.56],c2:[.55,.53,.5],ck:.3,s:rnd(8,13),g:16,d:rnd(1.8,2.8),a:.62});}for(let i=0;i<12;i++){const b=rnd(0,6.28),v=rnd(40,80);part({x,y,h:gh+2,vx:Math.cos(b)*v,vy:Math.sin(b)*v,f:.1,c:C_DUST,s:rnd(5,8),g:10,d:rnd(.8,1.3),a:.35});}part({x:x+ca*8,y:y+sa*8,h,s:s*3.2,d:.09,add:true,c:[3.2,1.8,.6]});}part({x,y,h,s:s*2.4,d:.07,add:true,c:[3,2,.9]});part({x:x+Math.cos(a)*s*.9,y:y+Math.sin(a)*s*.9,h,s:s*1.4,d:.05,add:true,c:[2.6,1.4,.5]});if(s>9)mlight(x,y,h,s>=13?3:2.2,s>=13?200:150);if(s>9)for(let i=0;i<3;i++)part({x,y,h,vx:Math.cos(a)*rnd(20,50),vy:Math.sin(a)*rnd(20,50),c:C_SMOKE,s:rnd(4,7),g:12,d:rnd(.5,.9),a:.5});},
+  muz(x,y,h,a,s){sfxShot(x,y,s);if(s>=13){const gh=groundH(x,y),ca=Math.cos(a),sa=Math.sin(a);for(let i=0;i<10;i++){const b=a+rnd(-1.3,1.3),v=rnd(30,90);part({x:x+ca*4,y:y+sa*4,h:h+rnd(-1,2),vx:Math.cos(b)*v+ca*40,vy:Math.sin(b)*v+sa*40,vh:rnd(4,18),f:.25,rise:rnd(6,14),c:i%3?C_SMOKE:[.62,.6,.56],c2:[.55,.53,.5],ck:.3,s:rnd(8,13),g:16,d:rnd(1.8,2.8),a:.62});}for(let i=0;i<12;i++){const b=rnd(0,6.28),v=rnd(40,80);part({x,y,h:gh+2,vx:Math.cos(b)*v,vy:Math.sin(b)*v,f:.1,c:C_DUST,s:rnd(5,8),g:10,d:rnd(.8,1.3),a:.35});}part({x:x+ca*8,y:y+sa*8,h,s:s*1.9,d:.08,add:true,c:[3.2,1.8,.6]});}// big guns: a hot core, a flame tongue down the barrel and two side jets from the muzzle brake, sized to the tank
+    // rather than one fuzzy ball bigger than the vehicle
+    if(s>=13){const ca=Math.cos(a),sa=Math.sin(a);part({x,y,h,s:s*1.5,d:.06,add:true,c:[3.2,2.4,1.2]});part({x:x+ca*s*.8,y:y+sa*s*.8,h,s:s*1.15,d:.05,add:true,c:[2.8,1.5,.5]});
+      if(!fxPH())for(const k of [-1,1])part({x:x+ca*2-sa*k*s*.45,y:y+sa*2+ca*k*s*.45,h,s:s*.6,d:.045,add:true,c:[2.6,1.3,.4]});}
+    // rifles, machine guns, rockets: a small white-hot core and a short flame tongue pointing down the barrel instead of
+    // one big round glow that swallowed the whole squad; each shot's flame is a little different in length
+    else{const ca=Math.cos(a),sa=Math.sin(a),L=s*rnd(.55,.85);part({x,y,h,s:s*1.15,d:.045,add:true,c:[3,2.3,1.2]});part({x:x+ca*L,y:y+sa*L,h,s:s*.8,d:.04,add:true,c:[2.8,1.5,.5]});
+      if(!fxPH())part({x:x+ca*L*1.9,y:y+sa*L*1.9,h,s:s*.5,d:.035,add:true,c:[2.2,1,.3]});if(s<=6&&!fxPH()&&Math.random()<.5)part({x:x+ca*3,y:y+sa*3,h,vx:ca*rnd(20,40),vy:sa*rnd(20,40),vh:rnd(2,6),f:.2,c:[.5,.49,.46],s:rnd(2,3),g:7,d:rnd(.35,.6),a:.32});}
+    if(s>9)mlight(x,y,h,s>=13?3:2.2,s>=13?200:150);if(s>9)for(let i=0;i<3;i++)part({x,y,h,vx:Math.cos(a)*rnd(20,50),vy:Math.sin(a)*rnd(20,50),c:C_SMOKE,s:rnd(4,7),g:12,d:rnd(.5,.9),a:.5});},
   tr(x1,y1,h1,x2,y2,h2,flak){if(MLIGHTS.length&&Math.random()<.35)mlight(x1,y1,h1,flak?1.6:1.1,90);TRACERS.push({a:[x1,h1,y1],b:[x2,h2,y2],t:0,d:.09,c:flak?[3,1.5,.5]:[3,1.9,.7]});if(flak){part({x:x2,y:y2,h:h2,s:7,d:.12,add:true,c:C_FIRE});part({x:x2,y:y2,h:h2,s:5,g:7,d:.8,c:[.3,.29,.27],c2:[.5,.48,.45],ck:.3,a:.5});}
     else if(h2<10){if(ricoHit(x2,y2))ricochet(x1,y1,x2,y2);else if(Math.random()<.4)part({x:x2,y:y2,h:groundH(x2,y2)+1,vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(10,30),c:C_DUST,s:3,g:6,d:.4,a:.6});}},
   salvo(x,y,h,tx,ty,ang){const sx=Math.cos(ang),sy=Math.sin(ang),px=-sy,py=sx;
@@ -148,6 +156,10 @@ function fxPlay(type,args){if(FXH[type]&&!G.headless)try{FXH[type](...args);}cat
 // Burnt-out wrecks keep their shape and panel detail: patchy soot, rust-brown scorched paint and grey ash with the
 // original surface showing faintly through, glowing embers that die down over ~20 seconds, and a slight list.
 const WRECK_HEAT={value:1};let WRECKM=null;const WRECKQ=[],BURNT=new Map();
+// Object3D.clone() deep-copies every userData through JSON; a unit's userData holds its 3D parts, so cloning one for its
+// wreck serialised the whole model (geometry, even textures as images) - seconds of frozen game per destroyed vehicle in a
+// big battle. Wrecks never need the copied userData: clone with it set aside.
+function cloneLite(o){const keep=[];o.traverse(c=>{keep.push([c,c.userData]);c.userData={};});try{return o.clone(true);}finally{for(const [c,u] of keep)c.userData=u;}}
 function wreckTick(){const q=WRECKQ.shift();if(q)try{wreck(q[0],q[1],q[2]);}catch(e){}}
 function burntMat(src){const m=new THREE.MeshStandardMaterial({color:0xffffff,map:src&&src.map||null,roughness:1,metalness:.05,vertexColors:!!(src&&src.vertexColors)});
   if(src&&src.color)m.userData.base=src.color.clone();m.color.copy(m.userData.base||new THREE.Color(.3,.3,.3));const heat={value:1};m.userData.heat=heat;
@@ -159,7 +171,7 @@ function burntMat(src){const m=new THREE.MeshStandardMaterial({color:0xffffff,ma
      .replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
       {float e=smoothstep(.70,.82,wn(vBW*.55+7.)*.7+wn(vBW*2.1)*.3);totalEmissiveRadiance+=vec3(1.6,.48,.1)*e*uHeat*uHeat;}`);};
   m.customProgramCacheKey=()=>'burnt1';return m;}
-function wreck(o,x,y){mats();let w;const mats2=[];const rec={heat:1};const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};if(o.userData.model){w=o.clone(true);w.traverse(c=>{if(c.isMesh){c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);}if(c.isSkinnedMesh)c.visible=false;});w.rotation.z=rnd(-.08,.08);w.rotation.x=rnd(-.05,.05);}else{w=new THREE.Group();o.traverse(c=>{if(c.isMesh&&c.material===MAT.std){const m=new THREE.Mesh(c.geometry,bm(c.material));m.position.copy(c.position);m.rotation.copy(c.rotation);m.castShadow=true;w.add(m);}});
+function wreck(o,x,y){mats();let w;const mats2=[];const rec={heat:1};const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};if(o.userData.model){w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh){c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);}if(c.isSkinnedMesh)c.visible=false;});w.rotation.z=rnd(-.08,.08);w.rotation.x=rnd(-.05,.05);}else{w=new THREE.Group();o.traverse(c=>{if(c.isMesh&&c.material===MAT.std){const m=new THREE.Mesh(c.geometry,bm(c.material));m.position.copy(c.position);m.rotation.copy(c.rotation);m.castShadow=true;w.add(m);}});
   w.position.copy(o.position);w.rotation.y=o.rotation.y;}const P=o.userData.parts;if(P.turret){const t=w.children[1];if(t)t.rotation.set(rnd(-.2,.2),rnd(-1,1),rnd(-.2,.2));}w.traverse(c=>{if(c.isMesh){c.onBeforeRender=(r,s,cam,g,m)=>{if(m&&m.userData.heat&&m.userData.heat.value!==rec.heat){m.userData.heat.value=rec.heat;m.uniformsNeedUpdate=true;}};}});SCN.add(w);WRECKS.push({o:w,x,y,t:0,rec});}
 function rubble(x,y,size,o){mats();const w=new THREE.Group();const B=Bld(),h=size*.5;const gr=['#7d7a72','#8e8b82','#6c6962','#5a5751','#9a968c'];
   B.box(size*.95,1.6,size*.95,0,.8,0,'#5e5b54');
@@ -293,10 +305,12 @@ function dustTrail(e,o,dt){if(!o||!o.visible||!(dt>0)||!e.s||!G||!G.map)return;c
   if(ud.tacc>1)ud.tacc=1;}
 /* ---------- Ricochet sparks ----------
    Rifle and machine-gun rounds striking a tank or other armoured vehicle throw a few bright, short-lived sparks off
-   the hull (back toward the shooter) instead of a puff of dirt. Visual only: it looks up which vehicle is at the impact
-   point without changing anything. */
+   the hull (back toward the shooter) instead of a puff of dirt. Visual only: it looks up what was hit without changing
+   anything. The sim aims each round at its target's centre (give or take 4 units), so the unit whose centre is nearest
+   the impact point IS the real target: sparks only when that unit is an armoured vehicle, never for a soldier who
+   happens to stand beside a tank. */
 const RICO_NB=[];
-function ricoHit(x,y){if(!G||!G.ents||!inView(x,y,.05))return false;let hit=false;try{nearby(x,y,30,RICO_NB);for(let i=0;i<RICO_NB.length;i++){const e=RICO_NB[i];if(e.dead||e.isB||!e.s||e.s.dom!=='ground'||e.s.armor!=='heavy')continue;const R=(e.r||12)+5;if((e.x-x)*(e.x-x)+(e.y-y)*(e.y-y)<R*R){hit=true;break;}}}catch(err){}RICO_NB.length=0;return hit;}
+function ricoHit(x,y){if(!G||!G.ents||!inView(x,y,.05))return false;let best=null,bd=64;try{nearby(x,y,16,RICO_NB);for(let i=0;i<RICO_NB.length;i++){const e=RICO_NB[i];if(e.dead||e.isB||!e.s||e.s.dom!=='ground')continue;const d=(e.x-x)*(e.x-x)+(e.y-y)*(e.y-y);if(d<bd){bd=d;best=e;}}}catch(err){}RICO_NB.length=0;return !!best&&best.s.armor==='heavy';}
 const C_RICO=[3,2.5,1.5];
 function ricochet(x1,y1,x,y){const h=groundH(x,y)+rnd(5,10),b=Math.atan2(y1-y,x1-x);part({x,y,h,s:2.4,d:.045,add:true,c:C_RICO});
   const n=3+(Math.random()*3|0);for(let i=0;i<n;i++){const a=b+rnd(-1.4,1.4),v=rnd(60,150);part({x,y,h,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(15,80),add:true,c:i&1?C_SPARK:C_RICO,s:rnd(.7,1.2),f:.5,grav:1,d:rnd(.1,.26)});}}
@@ -374,7 +388,9 @@ function warmShaders(){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0
   const add=o=>{if(!o)return;o.traverse(c=>{c.frustumCulled=false;if(c.isMesh)c.castShadow=true;});grp.add(o);};
   const teams=[G.teams[ME],null];
   for(const k of Object.keys(MODELS.proto||{}))for(const T of teams){let o=null;try{o=instModel(k,T,'y',12);}catch(e){}if(!o)continue;add(o);
-    if(T){try{const w=o.clone(true);w.traverse(c=>{if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});add(w);}catch(e){}}}
+    if(T){try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});add(w);}catch(e){}}}
+  // the merged one-mesh soldier (mergeSoldier) is its own shader variant (skinned + vertex colours)
+  if(typeof mergeSoldier==='function')for(const T of teams){try{const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+(T?T.color+T.fac:'')))add(o);}catch(e){}}
   try{add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);const cc=new Float32Array(gg.attributes.position.count*3).fill(.5);gg.setAttribute('color',new THREE.BufferAttribute(cc,3));add(new THREE.Mesh(gg,gm));add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
   for(const op of [.8,.12])add(new THREE.Mesh(new THREE.CircleGeometry(4,8),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:op,depthWrite:false})));
   // shockwave rings: drawn once, faintly and in view, so the GPU has their exact drawing state ready too

@@ -46,12 +46,12 @@ for (const VP of VPS) {
   // ---- the hint line
   const hints = await page.evaluate(() => { const h = () => $('hint').textContent; const o = {}; const save = JSON.stringify(SET);
     if (TOUCHUI) { o.touch = h(); return o; }
-    o.default = h(); Object.assign(SET, MPRE.alt); mouseScheme(); o.alt = h(); Object.assign(SET, MPRE.gen); mouseScheme(); o.gen = h(); Object.assign(SET, JSON.parse(save)); mouseScheme(); return o; });
+    o.default = h(); Object.assign(SET, MPRE.std); mouseScheme(); o.std = h(); Object.assign(SET, MPRE.gen); mouseScheme(); o.gen = h(); Object.assign(SET, JSON.parse(save)); mouseScheme(); return o; });
   for (const [k, v] of Object.entries(hints)) note(`hint (${k}): ${v}`);
   if (touch) { if (!/tap/i.test(hints.touch || '') || /click/i.test(hints.touch || '')) bug(`${VP}: touch hint talks about the mouse: ${hints.touch}`); }
   else {
-    if (!/left-click ground to move/i.test(hints.default) || /Right-click: move/i.test(hints.default)) bug(`${VP}: default (Generals) hint describes another scheme: ${hints.default}`);
-    if (!/Right-click: move/i.test(hints.alt)) bug(`${VP}: Alternate hint lacks right-click move: ${hints.alt}`);
+    if (!/Right-click: move/i.test(hints.default) || /left-click ground to move/i.test(hints.default)) bug(`${VP}: default (Standard) hint describes another scheme: ${hints.default}`);
+    if (!/left-click ground to move/i.test(hints.gen)) bug(`${VP}: Generals hint lacks left-click move: ${hints.gen}`);
   }
   // ---- defeat screen: wipe out my side
   await page.evaluate(() => { for (const e of G.ents.filter(e => e.team === ME && !e.dead)) { e.hp = 0; try { kill(e, 1, null); } catch (x) { e.dead = true; } } for (let i = 0; i < 1800 && !G.over; i++) simUpdate(1 / 60); renderFrame(0.016); });

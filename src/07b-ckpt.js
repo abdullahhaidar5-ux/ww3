@@ -61,10 +61,32 @@ async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e
   // open the follow-up room first, while still a client: if another player already opened it (two players held a
   // checkpoint), this page stays a client and simply joins that room instead of restoring and splitting the battle
   {const og=NET.game;NET.game=null;try{if(og)og.leave().catch(()=>{});}catch(e){}}NET.code=code2;
-  let g;try{g=await NET.room.join('tc-'+code2);}catch(e){NET.code='join';console.warn('new host room',e&&e.type||e);return e&&e.type==='unavailable-id'?false:'retry';}
+  // (at most 12 s: a matchmaking service that never answers must not hold up the takeover for good; it is tried again)
+  let g;try{g=await joinT('tc-'+code2,12000,1);}catch(e){NET.code='join';console.warn('new host room',e&&e.type||e);return e&&e.type==='unavailable-id'?false:'retry';}
   if(MODE!=='client'||!G||G.over){NET.code='join';try{g.leave().catch(()=>{});}catch(e){}return false;}
+  // Only one player may take over. A shared room (claude.ai room, or the Nostr network when this page could not get the
+  // game's id on PeerJS) lets two standbys in at once, so each first stakes a claim [checkpoint time, side] in the room
+  // for ~0.8 s: the newest checkpoint wins, then the lowest side number. A player who sees a better claim, or a host
+  // already there, steps back and simply rejoins as a player.
+  const cl=[+(ck.g&&ck.g.t)||0,me],beats=c=>Array.isArray(c)&&(+c[0]>cl[0]+1e-6||Math.abs(+c[0]-cl[0])<=1e-6&&(c[1]|0)<me);
+  const rival=()=>g.peers().some(q=>!q.sameTab&&q.presence&&(q.presence.h||beats(q.presence.cl)));
+  for(let k=0,kn=window.WW3_P2P?4:10;k<kn&&!rival();k++){g.presence({cl}).catch(()=>{});await new Promise(r=>setTimeout(r,200));}
+  if(rival()||MODE!=='client'||!G||G.over){console.info('takeover: another player is taking over');NET.code='join';try{g.leave().catch(()=>{});}catch(e){}return false;}
   try{ckRestore(ck);}catch(e){console.warn('checkpoint restore',e);NET.code='join';try{g.leave().catch(()=>{});}catch(_){}return false;}
   MODE='host';ME=me;NET.gen=gen;NET.toks=ck.toks||[];NET.startInfo=ck.start;NET.peers=new Array(G.teams.length).fill(null);NET.cseq={};NET.cseqSlot=Array.isArray(ck.cs)?ck.cs.slice():[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.sc={};NET.kt={};NET.kf={};NET.isStandby=false;NET.lastCk=null;NET.edOf={};try{if(NET.room&&NET.startInfo)NET.room.presence({g:{c:NET.baseCode||NET.jcode,f:G.teams[me].fac,s:'full',n:G.teams.length,m:NET.startInfo.map}}).catch(()=>{});}catch(e){}
   const oldHost=ck.me|0;for(let k=0;k<G.teams.length;k++){const T=G.teams[k];if(k===ME){T.ai=null;T.discT=0;continue;}if(k===oldHost){if(!T.ai){T.ai=mkAI(1);T.aiTook=1;}continue;}if(!T.ai&&!T.out)T.discT=G.t;}
-  NET.game=g;wireHost(g);g.presence({h:1}).catch(()=>{});
+  // the host flag goes out again each second for 10 s, so a claimant that only reaches the room now still sees it
+  // In its first 10 s a new host that sees another host with a better claim (the two never saw each other's claims in
+  // time) steps down: it leaves and rejoins that host as a player, so the battle doesn't split in two.
+  NET.game=g;wireHost(g);g.presence({h:1,cl}).catch(()=>{});
+  for(let k=1;k<=10;k++)setTimeout(()=>{if(MODE!=='host'||NET.game!==g)return;
+    if(g.peers().some(q=>!q.sameTab&&q.presence&&q.presence.h&&beats(q.presence.cl))){console.info('takeover: another player took over first, rejoining as a player');
+      NET.game=null;try{g.leave().catch(()=>{});}catch(e){}MODE='client';NET.code='join';NET.gen=gen-1;NET.isStandby=false;NET.lastCk=null;NET.lastRx=performance.now();
+      // this screen still shows the restored checkpoint (a host's view, with no client bookkeeping): from now on the other
+      // host's updates draw it, and whatever they don't show (units in the fog) fades out as on any player's screen,
+      // instead of standing frozen forever. This page no longer lists the battle in the game list either.
+      for(const e of G.ents){e.seenAt=NET.lastSnapT||0;e.seenL=G.t;if(!e.isB){e.fx=e.tx=e.x;e.fy=e.ty=e.y;e.it=1;}}
+      try{if(NET.room)NET.room.presence({g:null}).catch(()=>{});}catch(e){}
+      clientReconnect();return;}
+    g.presence({h:1,cl}).catch(()=>{});},k*1000);
   for(const O of G.teams)log(O.id,`Connection lost for a moment. The battle goes on; the other commanders are reconnecting.`,'w');return true;}
