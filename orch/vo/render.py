@@ -64,7 +64,7 @@ def synth(eng, voice, lang, text, take, mood):
         return w
     if eng == 'xtts':
         from xt import synth as xs
-        temp = {'sold': 0.78, 'cry': 0.85, 'cmd': 0.65}[mood]
+        temp = {'sold': 0.78, 'cry': 0.85, 'cmd': 0.65}[mood] if take < 3 else 0.55 + 0.05 * (take % 3)
         speed = {'sold': 1.1, 'cry': 1.05, 'cmd': 1.0}[mood]
         w, sr = xs(text, lang, voice, temp=temp, speed=speed, seed=take * 7919 + 13)
     elif eng == 'piper':
@@ -102,19 +102,23 @@ def trim(w):
     return w[a:b]
 
 
-def best_take(eng, voice, lang, text, mood, n):
+def best_take(eng, voice, lang, text, mood, n, most=8):
+    """n takes; if none reads back right (Whisper) at a sane length (XTTS can babble on short lines), keep sampling
+    up to `most` takes. Best = DNSMOS P.808 naturalness minus read-back errors minus over-length."""
     wl = {'zh-cn': 'zh'}.get(lang, lang)
-    best = None
-    for take in range(n):
+    exp = 0.35 + 0.075 * len(re.sub(r'\s', '', text)) * (2.2 if lang in ('zh-cn', 'ko') else 1)
+    best = None; take = 0
+    while take < n or (take < most and not best[4]):
         w = trim(synth(eng, voice, lang, text, take, mood))
         d = len(w) / SR
         r = score(w, SR, wl, text)
-        # long takes for a short line mean babble/hallucination
-        exp = 0.35 + 0.075 * len(re.sub(r'\s', '', text))
-        s = r['p808'] - 2.0 * r['cer'] - (1.0 if d > 1.7 * exp + 0.45 else 0) - 0.15 * max(0, d - exp) - (1.0 if d < 0.25 else 0)
-        if best is None or s > best[0]:
-            best = (s, w, r, take)
-    return best
+        long = d > 1.7 * exp + 0.45
+        s = r['p808'] - 2.0 * r['cer'] - (3.0 if long else 0) - 0.15 * max(0, d - exp) - (1.0 if d < 0.25 else 0)
+        ok = r['cer'] <= 0.34 and not long
+        if best is None or (ok, s) > (best[4], best[0]):
+            best = (s, w, r, take, ok)
+        take += 1
+    return best[:4]
 
 
 def radio(w, rng, hiss):
