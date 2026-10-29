@@ -8,6 +8,9 @@
 //   e) the nation's anthem (mus/an_US.mp3) is fetched at battle start
 //   f) tracks stream one at a time, and the only music files downloaded are the ones that played (plus the anthem)
 //   g) if the soundtrack can't load, the music rests without errors breaking anything, and comes back once it can
+//   i) recorded battle sounds (sfx/): nothing fetched before a battle sound is needed; the sprite sheet then loads and
+//      shots/explosions play from it; loops (wind/rumble/engines) load only when wanted; a voice ducks music+effects;
+//      the number of simultaneous recorded sounds stays capped; every sfx file is fetched at most once
 //   h) no page errors and no audio errors (AU.err, console)
 // Time-based waits (dwell, retry) are shortened by moving start times back, so the logic is tested, not the clock.
 //   node orch/audio.mjs            # prints AUDIO PASS / FAIL
@@ -76,6 +79,8 @@ await page.route('**/*', r => {
 });
 const reqs = [];
 page.on('request', q => { const u = new URL(q.url()); if (u.pathname.startsWith('/mus/')) reqs.push(u.pathname.slice(1)); });
+const sreqs = [];
+page.on('request', q => { const u = new URL(q.url()); if (u.pathname.startsWith('/sfx/')) sreqs.push(u.pathname.slice(1)); });
 const errs = [];
 page.on('pageerror', e => errs.push('page error: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')));
 let blockLog = false;
@@ -116,6 +121,7 @@ try {
   const L = {};
   if (s) ok('0) menu: music bus is not silent', (L.menu = await level()) > 0.002);
 
+  ok('i) menu: no battle sound files downloaded yet', sreqs.length === 0, sreqs.join(','));
   // battle start
   await page.evaluate(() => { startSingle(); if (G && G.teams[0]) G.teams[0].ai = mkAI(1); });
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 500 });
@@ -161,6 +167,29 @@ try {
   await page.evaluate(() => { clearInterval(window.__hot); });
   const st2 = ST_REQ_CHECK(reqs, s.req);
   ok('f) no soundtrack file fetched that the player did not play', st2.length === 0, st2.join(', '));
+
+  // recorded battle sounds (sfx/)
+  await page.evaluate(() => { cam.x = G.teams[ME].base ? G.teams[ME].base.x : cam.x; sfxBoom(cam.x, cam.y, 40, true); sfxShot(cam.x, cam.y, 3); });
+  const sfxOk = await page.waitForFunction(() => SFX.st === 'ok', null, { timeout: 20000 }).then(() => true, () => false);
+  ok('i) the sound sprite sheet loads and decodes', sfxOk && await page.evaluate(() => SFX.buf.duration > 20 && Object.keys(SFX.man.clips).length === 6), JSON.stringify(sreqs));
+  const played = await page.evaluate(async () => {
+    let n = 0; const real = AudioBufferSourceNode.prototype.start;
+    AudioBufferSourceNode.prototype.start = function () { if (this.buffer === SFX.buf) n++; return real.apply(this, arguments); };
+    for (let i = 0; i < 4; i++) { sfxBoom(cam.x, cam.y, 40, i & 1); sfxShot(cam.x, cam.y, 3 + i * 4); await new Promise(r => setTimeout(r, 180)); }
+    AudioBufferSourceNode.prototype.start = real; return n;
+  });
+  ok('i) shots, rockets, cannons and explosions play from the recordings', played >= 6, 'sprite clips started: ' + played);
+  const cap = await page.evaluate(() => { let mx = 0; for (let i = 0; i < 80; i++) { AU.rate = {}; sfxBoom(cam.x, cam.y, 40, true); sfxShot(cam.x, cam.y, 20); mx = Math.max(mx, SFX.nv); } return [mx, SFX.cap]; });
+  ok('i) simultaneous recorded sounds are capped', cap[0] <= cap[1], cap.join('/'));
+  const dk = await page.evaluate(async () => { duck(); await new Promise(r => setTimeout(r, 300)); const v = [AU.musD.gain.value, AU.sfxD.gain.value]; await new Promise(r => setTimeout(r, 2800)); return [v, AU.musD.gain.value, AU.sfxD.gain.value]; });
+  ok('i) a voice ducks music and effects, then they come back', dk[0][0] < .9 && dk[0][1] < .95 && dk[1] > .95 && dk[2] > .95, JSON.stringify(dk));
+  await page.evaluate(() => { envT = 0; envAudio(1); });
+  await sleep(2500);
+  const loops = await page.evaluate(() => Object.keys(SFX.loops).filter(k => k[0] !== '_'));
+  ok('i) ambience loops (wind / distant rumble) are in place', loops.includes('wind') && loops.includes('rumble'), loops.join(','));
+  const dupes = sreqs.filter((r, i) => sreqs.indexOf(r) !== i), allowed = /^sfx\/(manifest\.json|sfx\.mp3|wind\.mp3|rumble\.mp3|rain\.mp3|tank\.mp3|truck\.mp3|heli\.mp3|jet\.mp3)$/;
+  ok('i) only needed sound files downloaded, each once', dupes.length === 0 && sreqs.every(r => allowed.test(r)), sreqs.join(',') + ' dupes:' + dupes.join(','));
+  console.log('sfx fetched:', sreqs.join(', '));
 
   // victory
   await page.evaluate(() => { showEnd(ME); });

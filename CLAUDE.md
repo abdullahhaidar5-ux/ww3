@@ -42,15 +42,19 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   Most tactical/realistic gameplay possible: flanking, cover, suppression.
 - **No decorative or ambient aircraft or drones.** They were removed because they confused players. Only real,
   controllable aircraft fly.
-- **Controls = C&C Generals mechanics** (Abdullah, 2026-10-26 17:34, and re-confirmed 18:55 in the side-lane chat
-  when asked about a 17:55 "freeze the live mouse controls" note from another chat: **Generals wins; the freeze is
-  void**). Default mouse scheme is Generals' default: left-click selects and gives orders (ground = move, enemy =
-  attack, own unit = select), Shift+click adds, double-click selects that type on screen, Ctrl+click force-fire,
-  A+click attack-move, G+click guard, Alt+click waypoints, right-click deselects/cancels, right-drag draws the
-  infantry line formation when units are selected and rapid-scrolls when nothing is selected, left-click ground with
-  a production building selected sets its rally point. Today's scheme (right-click move/attack, right-drag line)
-  lives on as Settings > "Alternate mouse setup". Every action must also work with touch alone; phone controls are
-  being redesigned to be more intuitive (Abdullah, 18:49).
+- **Controls (Abdullah, 2026-10-28 19:11 — replaces the 2026-10-26 Generals left-click scheme):** **left-click selects**
+  (drag = box select, Shift adds, double-click selects that type on screen); **right-click moves and attacks** (ground =
+  move, enemy = attack), right-drag draws the infantry line formation; **F + click = attack-move** (A no longer does
+  it); **W A S D only scroll the camera — no other job in any scheme** (Abdullah, 19:17; Stop = X); G+click guard, Ctrl+click force-fire, Alt+click waypoints; left-click ground with a production building selected
+  sets its rally point. The old Generals left-click-orders scheme may stay as a Settings option. On PCs **the mouse stays
+  inside the game window** during a battle (pointer lock with the game's own cursor; edge scrolling works; Esc or the
+  menu releases it; a Settings toggle turns it off). **Command bar text is bigger and easier to read** (PC and phone).
+  **Getting in and out needs no button** (Abdullah, 19:14): enter = select units, right-click your own building /
+  vehicle / transport / tunnel ("enter" cursor shown); leave a building = select it, right-click the ground (everyone
+  comes out and runs there); leave a vehicle = select it and right-click the vehicle itself (unload here), or
+  Alt+right-click a spot (drive there, then unload); touch: tap a selected vehicle again to unload, tap ground with a
+  garrisoned building selected. The Unload/Leave buttons may stay as extras.
+  Every action must also work with touch alone (phone touch controls unchanged).
 - **Factions (18 live):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
   **DW "Coffee Shias"**. The IM faction was removed on purpose; 18 is the intended count (no 19th planned). Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
@@ -72,6 +76,19 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   (Abdullah connected it 2026-10-26; since 2026-10-28 `.github/workflows/deploy-site.yml` also sends it from `main` on every
   push, status `deploy/site`, because Cloudflare's own builder got stuck — nothing to do at ship except check it serves the new version), and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi, republish
   per `orch/ARTIFACT.md`). Everything in the repo is served publicly by both Pages and the `ww3` Worker.
+- **Targets (Abdullah, 2026-10-28 18:33):** a big battle shows **~300 units on screen** (all sides) and stays smooth;
+  phones may draw far-away units simpler. **Unit voices:** every nation gets native-language lines now with the best
+  free computer voice available — no real human recordings (Abdullah, 18:36: "forget the real recordings"). **Voices must sound natural,
+  not robotic** (Abdullah, 19:12): use an expressive neural voice (XTTS-v2 for every language it covers — en, ar, tr,
+  ru, zh, ko, hi/ur, es, fr, de; non-commercial licence accepted for this free game, as MMS already is) with radio
+  treatment; Piper/MMS only where nothing more natural exists (fa, he, uk) and then the best-sounding option found. **Weapon/explosion sound: cinematic and
+  punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all 18 nations about equally strong.**
+- **Priorities (Abdullah, 2026-10-28 18:34):** his group plays the **Shia factions (IR, RS, DW) most** — do their voices,
+  uniforms and buildings first, in a **realistic military** style (IRGC/Hezbollah-style fatigues, Middle Eastern
+  compounds and bunkers). The group plays on **recent iPhones (12 or newer)** — that is the phone target. Biggest pain:
+  **looks and performance** — better looks only where it stays smooth. Next focus after current work: **graphics
+  realism**. Abdullah will test on his iPhone: when something visible ships, ask him in the report to try one specific
+  thing for 2 minutes (with the link).
 - **Art is free only** (Abdullah, 2026-10-26): CC0 or CC-BY models/textures/sounds, every author credited in the menu
   credits; no paid assets, no ripped game assets.
 - Abdullah reads updates on his phone: short summaries, and send screenshots/clips as links or images that open on
@@ -83,3 +100,20 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 - Small, verifiable changes. Describe each change in plain words a player would understand.
 - No new runtime dependencies from other hosts beyond what's already used (Three.js r186 bundled via `orch/three/vendor.mjs`, PeerJS bundled).
 - Never force-push `main`, never delete branches or files you didn't create, never rewrite history.
+
+## Saving usage (Abdullah, 2026-10-28: move fast without burning through his usage limit)
+
+Every token an agent reads counts against Abdullah's plan. Work like this:
+- **Never read `index.html`** (2 MB, generated) or anything in `models/`, `mus/`, `vo/`, `sfx/`, `orch/out/`. Check the
+  build with `python3 orch/build.py --check`, not by reading the output.
+- **Never read a whole `src/` module.** They are 60–280 KB each (`04-gfx.js` alone is ~70k tokens). Find the spot with
+  `grep -n` and read only that range (Read with offset/limit, ~100–200 lines).
+- **Keep command output short:** pipe tests and builds through `| tail -20` (or grep for PASS/FAIL); never print whole
+  gate logs, only the failing excerpt. Use `git log --oneline -10`, `git diff --stat` before full diffs.
+- **Read only the top of `orch/BACKLOG.md`/`LOG.md`/`HISTORY.md`** (head -60) unless the task needs more.
+- **Test smart:** quick local checks while working; run `orch/cigate.sh` (all 16 tests) once when done and once after a
+  fix, not after every small step. Wait on it with one blocking command, not repeated polling.
+- **Pick the cheaper model for simple work** (Abdullah, 2026-10-28 18:32: "mix models"): when dispatching helper agents,
+  use `model: "sonnet"` for finding/packing free assets, credits, copy/text, layout tweaks and small fixes; keep Opus
+  for netcode, the simulation/AI, performance and reviews. ORCH runs every 8 h while the side-lane agents work.
+- **Write handoff notes** (`orch/HANDOFF-<branch>.md`) when stopping early, so a restart doesn't re-explore.
