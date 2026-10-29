@@ -69,7 +69,9 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   Cloudflare** (Abdullah, 2026-10-27 19:28: Cloudflare is the default and **no hosting button or wording at all** —
   19:30: "just host": the Multiplayer menu has one "Play online" button that joins an open battle or starts a new one on
   Cloudflare with the player's map/nation; friends join from the list or by invite code/link); hosting in a player's browser remains only as the automatic fallback (free-plan limit, busy, unreachable, or
-  the server going away mid-match). Until Cloudflare hosting ships, the host's browser runs the battle.
+  the server going away mid-match). Cloudflare battles run the copy of `src/` built into the
+  server at its last deploy, so **whenever a ship changes the simulation (03-sim, 01-data, 02-map, 07*) open a
+  `main → servers-live` PR for Abdullah to merge** (one tap; deploy runs from GitHub).
 - Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
   (Abdullah, 2026-10-26).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
