@@ -933,20 +933,22 @@ function mouseScheme(){setHint();CURST.k=null;try{cursorTick(true);}catch(_){}if
 // lock), the ☰ menu, pause, settings and the end screen release it; the next click on the battlefield locks again.
 // Never on touch, never in the menus; a browser that refuses the lock (or an embedding frame without allow-pointer-lock)
 // simply keeps the normal cursor. Esc while locked only cancels the current mode (attack-move, guard, placement, power).
-const MLOCK={on:false,x:0,y:0,self:false,escK:0,cap:null,down:null,hov:null,hovB:null,img:'',req:0};
+const MLOCK={on:false,x:0,y:0,self:false,escK:0,cap:null,down:null,hov:null,hovB:null,img:'',req:0,cx:null,cy:null,bad:0,broken:false};
 const VCUR=document.createElement('div');VCUR.id='vcur';VCUR.hidden=true;VCUR.setAttribute('aria-hidden','true');
 VCUR.style.cssText='position:fixed;left:0;top:0;width:32px;height:32px;z-index:2147483000;pointer-events:none;background:no-repeat 0 0/32px 32px;will-change:transform';
 document.body.append(VCUR);
 function mlockOk(){return !!G&&!G.over&&!window.LOADING&&SET.mLock!==0&&$('menu').hidden&&!document.querySelector('.overlay:not([hidden])')&&!menuOpen();}
 function mlockOff(){if(document.pointerLockElement){MLOCK.self=true;try{document.exitPointerLock();}catch(_){}}}
-function mlockReq(e){if(MLOCK.on||e.pointerType!=='mouse'||!e.isTrusted||!mlockOk()||!cv.requestPointerLock)return;
+// (not under browser automation - the test harness stands in for the lock itself, see orch/controls.mjs - and not after a
+// browser showed it does not really lock: the cursor kept moving freely with no movementX/Y)
+function mlockReq(e){if(MLOCK.on||MLOCK.broken||e.pointerType!=='mouse'||!e.isTrusted||!mlockOk()||!cv.requestPointerLock||(navigator.webdriver&&!window.__mlockTest))return;
   MLOCK.x=e.clientX;MLOCK.y=e.clientY;MLOCK.req++;try{const p=cv.requestPointerLock();if(p&&p.catch)p.catch(()=>{});}catch(_){}}
 function mlockCancelModes(){if(!G)return;if(G.place||G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;try{updateUI();}catch(_){}}}
 function vcurDraw(){if(!MLOCK.on)return;const k=mouse.in?CURST.k:'';let img,hx=3,hy=2;if(k&&CURD[k]){curCss(k);img=CURIMG[k];hx=CURD[k][0];hy=CURD[k][1];}if(!img){curCss('arrow');img=CURIMG.arrow;hx=3;hy=2;}
   if(img!==MLOCK.img){MLOCK.img=img;VCUR.style.backgroundImage=img?`url("${img}")`:'';}
   VCUR.style.transform=`translate(${MLOCK.x-hx}px,${MLOCK.y-hy}px)`;}
 document.addEventListener('pointerlockchange',()=>{const on=document.pointerLockElement===cv;const was=MLOCK.on;MLOCK.on=on;VCUR.hidden=!on;document.body.classList.toggle('mlock',on);
-  if(on){MLOCK.img='';mouse.x=MLOCK.x-cv.getBoundingClientRect().left;mouse.y=MLOCK.y-cv.getBoundingClientRect().top;mouse.in=true;CURST.k=null;try{cursorTick(true);}catch(_){}vcurDraw();}
+  if(on){MLOCK.img='';MLOCK.cx=null;MLOCK.bad=0;mouse.x=MLOCK.x-cv.getBoundingClientRect().left;mouse.y=MLOCK.y-cv.getBoundingClientRect().top;mouse.in=true;CURST.k=null;try{cursorTick(true);}catch(_){}vcurDraw();}
   else{if(MLOCK.hovB)MLOCK.hovB.classList.remove('vhov');MLOCK.hov=MLOCK.hovB=null;MLOCK.cap=null;
     if(was&&!MLOCK.self&&performance.now()-MLOCK.escK>400)mlockCancelModes(); // Esc released it and the key itself never reached the page
     MLOCK.self=false;}});
@@ -961,6 +963,7 @@ function mlHover(el,e,x,y){const old=MLOCK.hov;if(el===old)return;
   if(old){mlSend(old,'pointerout',e,x,y);mlSend(old,'mouseout',e,x,y);for(let a=old;a&&a!==document.body&&!(el&&a.contains(el));a=a.parentElement){mlSend(a,'pointerleave',e,x,y,false);mlSend(a,'mouseleave',e,x,y,false);}}
   MLOCK.hov=el;if(el){const b=el.closest('button,.btn,a');if(b){b.classList.add('vhov');MLOCK.hovB=b;}mlSend(el,'pointerover',e,x,y);mlSend(el,'mouseover',e,x,y);for(let a=el;a&&a!==document.body&&!(old&&a.contains(old));a=a.parentElement){mlSend(a,'pointerenter',e,x,y,false);mlSend(a,'mouseenter',e,x,y,false);}}}
 function mlEv(e){if(!MLOCK.on||!e.isTrusted)return;const ty=e.type;
+  if(ty==='pointermove'){const cx=e.clientX,cy=e.clientY;if(!e.movementX&&!e.movementY&&MLOCK.cx!=null&&(cx!==MLOCK.cx||cy!==MLOCK.cy)){if(++MLOCK.bad>3){MLOCK.broken=true;mlockOff();}}else MLOCK.bad=0;MLOCK.cx=cx;MLOCK.cy=cy;}
   if(ty==='pointermove'||(ty==='mousemove'&&!window.PointerEvent)){MLOCK.x=Math.max(0,Math.min(innerWidth-1,MLOCK.x+(e.movementX||0)));MLOCK.y=Math.max(0,Math.min(innerHeight-1,MLOCK.y+(e.movementY||0)));}
   const x=MLOCK.x,y=MLOCK.y;mlPatch(e,x,y);
   if(ty==='contextmenu'){e.preventDefault();e.stopImmediatePropagation();return;}

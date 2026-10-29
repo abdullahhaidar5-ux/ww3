@@ -255,8 +255,9 @@ try {
   await clear(page);
   // Headless Chromium has no real pointer lock, so the browser side is stood in for: requestPointerLock / exitPointerLock
   // flip document.pointerLockElement and fire pointerlockchange. Playwright's mouse sends real (trusted) events with
-  // movementX/Y, which drive the game's own cursor exactly as under a real lock.
-  await page.evaluate(() => { let L = null; window.__lockReq = 0;
+  // movementX/Y, which drive the game's own cursor exactly as under a real lock. (Under automation the game only asks for
+// the lock when __mlockTest is set.)
+  await page.evaluate(() => { let L = null; window.__lockReq = 0; window.__mlockTest = true;
     Object.defineProperty(Document.prototype, 'pointerLockElement', { configurable: true, get() { return L; } });
     HTMLCanvasElement.prototype.requestPointerLock = function () { __lockReq++; L = this; setTimeout(() => document.dispatchEvent(new Event('pointerlockchange')), 0); return Promise.resolve(); };
     Document.prototype.exitPointerLock = function () { if (!L) return; L = null; setTimeout(() => document.dispatchEvent(new Event('pointerlockchange')), 0); }; });
@@ -272,11 +273,13 @@ try {
   // pushed past the left edge: the cursor stops at the edge and the camera scrolls
   await page.evaluate(() => { SET.edge = 1; });
   const cx0 = await page.evaluate(() => cam.tx);
-  await page.mouse.move(-3000, 450, { steps: 4 }); await wait(700);
+  // (the test mouse can't leave the page, so the game cursor is first put 5 px from the edge, then the mouse moves 60 px left)
+  await page.mouse.move(400, 450, { steps: 2 }); await page.evaluate(() => { MLOCK.x = 5; MLOCK.y = 450; });
+  await page.mouse.move(340, 450, { steps: 3 }); await wait(700);
   L = await lk(); const cx1 = await page.evaluate(() => cam.tx);
   check('lock: the cursor stays inside the window at the edge', L.x === 0 && L.on, JSON.stringify(L));
   check('lock: edge scrolling works at the window edge', cx1 < cx0 - 20, JSON.stringify({ cx0, cx1 }));
-  await page.evaluate(() => { SET.edge = 0; MLOCK.x = 800; MLOCK.y = 450; }); await page.mouse.move(800, 450);
+  await page.mouse.move(800, 450); await page.evaluate(() => { SET.edge = 0; MLOCK.x = 800; MLOCK.y = 450; });
   // the command bar still works: a click on the Units tab goes to the tab under the game cursor
   { const tb = await page.evaluate(() => { const b = [...document.querySelectorAll('.tabs button')].find(b => /units/i.test(b.textContent)); const r = b.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
     await page.mouse.move(tb.x, tb.y, { steps: 3 }); await page.mouse.click(tb.x, tb.y); await wait(100);
@@ -287,7 +290,7 @@ try {
   check('lock: Esc releases the mouse and cancels attack-move (selection kept)', !L.on && !L.el && !L.vis && await page.evaluate(() => !G.amove) && (await sel(page)).length === 2, JSON.stringify(L));
   await page.mouse.click(V.U[1].x, V.U[1].y); await wait(150); L = await lk();
   check('lock: clicking the battlefield again locks again', L.on && L.req === 2, JSON.stringify(L));
-  await page.evaluate(() => { G.amove = true; document.exitPointerLock(); }); await wait(150);
+  await wait(500); await page.evaluate(() => { G.amove = true; document.exitPointerLock(); }); await wait(150);
   check('lock: when the browser itself releases it (Esc), attack-move is cancelled too', await page.evaluate(() => !MLOCK.on && !G.amove));
   await page.mouse.click(V.U[1].x, V.U[1].y); await wait(150);
   { const mb = await page.evaluate(() => { const r = $('aMenu').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2 }; });
