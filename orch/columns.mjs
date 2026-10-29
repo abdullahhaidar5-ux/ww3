@@ -101,6 +101,8 @@ await page.evaluate(() => {
     centerOn(sx / n, sy / n, true); } else centerOn(MAPW / 2, MAPH / 2, true);
 });
 const CDP = await ctx.newCDPSession(page);
+// show every unit (no fog of war) so the whole fight is drawn, as a spectator would see it
+await page.evaluate(() => { window.vis = () => true; if (window.FOGM) FOGM.visible = false; const uf = window.updateFog; window.updateFog = function () { uf.apply(this, arguments); if (window.FOGM) FOGM.visible = false; }; });
 if (PHONE) await CDP.send('Emulation.setCPUThrottlingRate', { rate: 4 });
 const PROF = process.argv.includes('--cpuprofile');
 if (PROF) { await CDP.send('Profiler.enable'); await CDP.send('Profiler.setSamplingInterval', { interval: 200 }); await CDP.send('Profiler.start'); }
