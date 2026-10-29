@@ -8367,7 +8367,7 @@ async function promoteToHost(){let ck;try{ck=await ckUnpack(NET.lastCk);}catch(e
       // this screen still shows the restored checkpoint (a host's view, with no client bookkeeping): from now on the other
       // host's updates draw it, and whatever they don't show (units in the fog) fades out as on any player's screen,
       // instead of standing frozen forever. This page no longer lists the battle in the game list either.
-      for(const e of G.ents){e.seenAt=0;e.seenL=G.t;if(!e.isB){e.fx=e.tx=e.x;e.fy=e.ty=e.y;e.it=1;}}
+      for(const e of G.ents){e.seenAt=NET.lastSnapT||0;e.seenL=G.t;if(!e.isB){e.fx=e.tx=e.x;e.fy=e.ty=e.y;e.it=1;}}
       try{if(NET.room)NET.room.presence({g:null}).catch(()=>{});}catch(e){}
       clientReconnect();return;}
     g.presence({h:1,cl}).catch(()=>{});},k*1000);
