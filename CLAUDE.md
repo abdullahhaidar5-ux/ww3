@@ -72,7 +72,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   the server going away mid-match). Cloudflare battles run the copy of `src/` built into the
   server at its last deploy, so **whenever a ship changes the simulation (03-sim, 01-data, 02-map, 07*) open a
   `main → servers-live` PR for Abdullah to merge** (one tap; deploy runs from GitHub).
-- Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
+- **Phones start on Low graphics** (Abdullah 2026-10-29: iPhones froze on the battle loading screen with Auto; Low worked) until a lighter phone path is proven on a real iPhone. - Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
   (Abdullah, 2026-10-26).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
   (Abdullah connected it 2026-10-26; since 2026-10-28 `.github/workflows/deploy-site.yml` also sends it from `main` on every
