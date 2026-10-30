@@ -105,10 +105,16 @@ async function run(spec, i, lose) {
     for (const e of st.ev) log.push(ts() + ' ' + e);
     if (st.step !== lastStep) { log.push(ts() + ' step: ' + st.step); lastStep = st.step; stepAt = Date.now(); }
     if (lose && !lost && /Preparing graphics|Building the battlefield/.test(st.step)) { lost = true;
-      const r = await page.evaluate(() => { try { const x = R3.getContext().getExtension('WEBGL_lose_context'); if (!x) return 'no extension'; x.loseContext(); setTimeout(() => { try { x.restoreContext(); } catch (e) {} }, 1500); return 'lost'; } catch (e) { return 'err ' + e.message; } });
+      const r = await page.evaluate(() => { try { const x = R3.getContext().getExtension('WEBGL_lose_context'); if (!x) return 'no extension'; x.loseContext(); return 'lost (never given back, as Safari does)'; } catch (e) { return 'err ' + e.message; } });
       log.push(ts() + ' forced context loss: ' + r); }
     if (st.err) { log.push(ts() + ' recovery message: ' + st.err.slice(0, 160)); break; }
     if (!st.loading && st.t > 5) { ok = true; break; }
+  }
+  if (ok) { // the picture must really be drawing: a live graphics context and frames going by
+    const f = await page.evaluate(async () => { const gl = R3 && R3.getContext(); const f0 = R3 ? R3.info.render.frame : 0; await new Promise(r => setTimeout(r, 2500));
+      return { lost: !gl || gl.isContextLost(), frames: R3 ? R3.info.render.frame - f0 : 0, canvas: R3 && R3.domElement !== cv ? 'new canvas' : 'game canvas', q: SET.gfx }; }).catch(e => ({ lost: true, err: e.message }));
+    log.push(ts() + ' drawing: ' + JSON.stringify(f));
+    if (f.lost || !(f.frames > 0)) { ok = false; st = { ...st, err: 'battle runs but nothing is drawn ' + JSON.stringify(f) }; }
   }
   if (has('--probe')) console.log('   probe: ' + JSON.stringify(await page.evaluate(() => { let tex = 0, ntex = 0, big = []; const seen = new Set();
     for (const k in (MODELS.proto || {})) MODELS.proto[k].scene.traverse(o => { const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : [];
@@ -121,7 +127,7 @@ async function run(spec, i, lose) {
   for (const l of log) console.log('   ' + l);
   for (const e of errs) console.log('   ' + e);
   console.log(`   load times: ${times}`);
-  const why = ok ? '' : st && st.err ? 'stopped with recovery message' : `stuck at "${lastStep}" for ${((Date.now() - stepAt) / 1000).toFixed(0)} s (G.t ${st && st.t})`;
+  const why = ok ? '' : st && st.err ? 'stopped: ' + st.err.slice(0, 120) : `stuck at "${lastStep}" for ${((Date.now() - stepAt) / 1000).toFixed(0)} s (G.t ${st && st.t})`;
   console.log(`   ${ok ? '✓' : '✗'} ${ok ? 'battle running after ' + ts() : why}`);
   if (!ok) fails.push(`${picked.map}: ${why}`);
   if (errs.some(e => /page error|CRASHED/.test(e))) fails.push(`${picked.map}: ${errs[0]}`);
