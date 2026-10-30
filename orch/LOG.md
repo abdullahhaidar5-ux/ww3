@@ -8,6 +8,7 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
 - 3 agents (Opus): Interface+Battlefield (end-of-match stats page, Abdullah's top request), Visuals (vehicle mesh merge, 2606→1576 draws), Netcode+QA (EW/martyr state in checkpoints, ewtest in gate).
 - Review: no blockers; fixed mbanN default on restore. Minors → backlog (decal refill ×2/frame, graph cap, awards cap).
 - Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, EW PASS, ENDSTATS PASS (1 flaky fail first), artifact smoke + MPSYNC PASS. 03-sim/07-net changed → rides open servers-live PR #8. mapsweep not run (02-map change was the side lane's, already gated by it).
+- Artifact v185 (page only). Not chained: 8-hourly schedule to save usage.
 
 ## 2026-10-29 21:58 → 2026-10-30 01:05 (Chicago) — cycle 18
 
