@@ -5342,7 +5342,7 @@ const MAPS={
       const ridge=(y0,y1,x0)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([x0+70*Math.sin(y*.004+ph),y]);return pts;};for(const [a,b] of [[-200,560],[820,1450],[1720,MAPH+200]])M.ridges.push({pts:ridge(a,b,1250),hw:()=>100});
       M.ridges.push({pts:ridge(1250,MAPH+200,2350),hw:()=>85});M.peaks.push({x:2350,y:500,r:90,rx:1.3,rot:.5});}},
   volga:{home:['RU'],name:'Volga Winter',min:2,max:8,sym:'none',theme:'snow',tag:'great river · city',desc:'The frozen Volga in winter: a great river city on the east bank, villages in the snow and three bridges to fight over.',
-    slots:[[400,1100],[2800,1100],[600,300],[2600,1900],[600,1900],[2600,300],[1000,650],[2200,1550]],
+    slots:[[400,1100],[2800,1100],[600,300],[2600,1900],[600,1900],[2600,300],[1000,650],[2200,1550]],sl4:[[600,300],[2600,1900],[600,1900],[2600,300]],
     cities:[[2000,1080,200,'russia'],[760,560,90,'russia'],[2560,1700,90,'russia'],[880,1600,80,'russia']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1560+190*Math.sin(y*.0026+ph)+40*Math.sin(y*.009+ph*2),y]);M.rivers.push({pts,hw:()=>140});M.bridgeAt=[[0,.22],[0,.5],[0,.8]];M.bridgeFrac=true;}},
   heartland:{home:['US'],name:'American Heartland',min:2,max:8,sym:'none',theme:'green',tag:'farmland · river confluence',desc:'Farm country where two great rivers meet: a river city at the confluence, small towns and long bridges.',
@@ -5440,7 +5440,7 @@ const MAPS={
     slots:[[420,1100],[2780,1100],[1600,300],[1600,1900]],cities:[[1600,1100,110,'russia']],
     water(M,R){M.lakes.push({x:960,y:620,r:95,rx:1.5,wob:a=>.1*Math.sin(a*3)});M.peaks.push({x:1150,y:1050,r:60,rx:1.8,rot:1.3},{x:600,y:330,r:70,rx:1.4,rot:.3});mirrorMap(M,'x');mirrorMap(M,'y');}},
   hawizeh:{name:'Hawizeh Marshes',min:3,max:4,sym:'quad',theme:'green',home:['IR','RS'],tag:'marshland · causeway crossroads',desc:'The reed marshes on the Iran-Iraq border: a lagoon in the middle crossed by two causeways that meet on an island, and marsh pools that channel every advance.',
-    slots:[[480,380],[2720,1820],[2720,380],[480,1820]],
+    slots:[[480,380],[2720,1820],[2720,380],[480,1820]],sl3:[[480,380],[2720,380],[1600,1700]],
     water(M,R){M.lakes.push({x:950,y:720,r:85,rx:1.5,wob:a=>.12*Math.sin(a*3)},{x:1600,y:330,r:70,rx:2,wob:a=>.1*Math.sin(a*2)},{x:420,y:1100,r:65,rx:1.3,wob:a=>.1*Math.sin(a*4)});mirrorMap(M,'x');mirrorMap(M,'y');
       M.lakes.push({x:1600,y:1100,r:250,rx:1.6,wob:a=>.07*Math.cos(4*a)});M.islands.push({x:1600,y:1100,r:70,rx:1.2,rot:0,wob:()=>0});M.bridgeAng.push([1360,1100,1,0],[1840,1100,-1,0],[1600,925,0,1],[1600,1275,0,-1]);}},
   sahara:{name:'Sahara Crossroads',min:4,max:6,sym:'point',rough:.9,tag:'open desert · oases · caravan town',desc:'Open Saharan sand around a caravan town: rock outcrops split the desert into lanes and small oases mark the routes. Room for armour to swing wide.',
