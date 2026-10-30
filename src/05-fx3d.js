@@ -146,7 +146,7 @@ const FXH={
   // P2P: a remembered enemy building that was destroyed out of this player's sight - removed silently (leaving rubble)
   // when they next see the spot, instead of an explosion that would give the fight away
   gone(id,x,y,ki){const k=KINDS[ki];if(k&&STRUCT[k])try{rubble(x,y,STRUCT[k].size);}catch(_){}},
-  flag(x,y,team,dur){flagFX(x,y,team,dur);},
+  flag(x,y,team,dur){flagFX(x,y,team,dur);if(typeof martyrSwell==='function')martyrSwell(team);},
   txt(x,y,str,team,vic){if(!SET.txt||team!==ME&&vic!==ME&&vic!==-2)return;FLOATS.push({x,y,s:str,t0:performance.now(),c:vic===-2?(ally(team,ME)?(str==='RALLIED'?'#74d08f':'#ea5a40'):'#f2c94c'):team===ME?'#f2c94c':'#ea5a40'});if(FLOATS.length>14)FLOATS.shift();},
 };
 // Martyrdom banner (Shia factions): a crimson cloth on a wooden pole planted where a soldier fell. It rises out of the

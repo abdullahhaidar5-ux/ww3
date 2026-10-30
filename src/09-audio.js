@@ -63,6 +63,8 @@ function initAudio(){try{if(AU.ctx&&AU.ctx.state==='closed')audioRebuild();if(!A
   speechUnlock();}
 // sounds are only scheduled while the engine runs, so an interrupted phone doesn't pile up a burst of queued shots
 function auOn(){return !!(AU.ctx&&AU.ctx.state==='running');}
+// Martyr banner raised by me or an ally: the music swells ~+3 dB for 6 s (soft attack/release), at most once per 20 s. Nobody else hears it.
+function martyrSwell(team){try{if(!AU.ctx||!AU.musicOn||!AU.mus||!G||!ally(team,ME))return;const n=performance.now();if(n-(AU.swellT||0)<20000)return;AU.swellT=n;const c=AU.ctx,t=c.currentTime,g=AU.musBus.gain;g.setTargetAtTime(musBase()*1.41,t,.8);g.setTargetAtTime(musBase(),t+6,1.2);}catch(e){}}
 function musBase(){return .19*(SET.mus/70);}
 function applyAudio(){if(AU.ctx){AU.sfx.gain.value=AU.sfxOn?SET.fx/100:0;AU.musBus.gain.value=AU.musicOn?musBase():0;}const set=(id,on,l)=>{const b=$(id);if(b){b.textContent=l+(on?' on':' off');b.classList.toggle('on',on);}};set('aMus',AU.musicOn,'Music');set('aSfx',AU.sfxOn,'Sound');set('aVoc',AU.voiceOn,'Voices');}
 function spatial(x,y){if(!G||!CAM)return null;const d=Math.hypot(x-cam.x,y-cam.y),r=cam.dist*1.25;if(d>r*1.8)return null;const v=Math.max(0,1-d/(r*1.8))*Math.pow(900/cam.dist,.5);TMP.set(x,0,y).project(CAM);return{v,pan:Math.max(-1,Math.min(1,TMP.x*.8)),far:Math.min(1,d/(r*1.8))};}
