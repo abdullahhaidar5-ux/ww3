@@ -20,6 +20,7 @@ import { createRequire } from 'node:module';
 import { acquireBrowserLock } from './browserlock.mjs';
 import { guardContext } from './serverdev.mjs';
 import { enterExitChecks } from './enterexit.mjs';
+import { stanceChecks } from './stances.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SHOTS = path.join(ROOT, 'orch', 'shots', 'touch');
@@ -311,8 +312,10 @@ async function phonePass(tag, viewport, storageState) {
     const hq = G.ents.find(b => b.team === ME && b.kind === 'hq'); for (let r = 80; r < 400; r += 20) for (let a = 0; a < 6.28; a += .4) { const x = hq.x + Math.cos(a) * r, y = hq.y + Math.sin(a) * r; if (validSpot(ME, k, x, y)) { centerOn(x, y + 10, true); return { k, x, y }; } } return null; });
   check(tag, !!spot, 'found a spot to build on');
   if (spot) {
-    await frames(page, 3);
-    const conf0 = await page.evaluate(() => { const t = document.getElementById('tstrip'); return t && !t.hidden && t.className === 'conf' ? [...t.querySelectorAll('button')].map(b => b.dataset.k + (b.disabled ? '-' : '+')).join(',') : ''; });
+    // the ✓ / ✕ strip appears within a few frames; on a busy CI runner it can take longer than 3, so wait up to ~1 s
+    let conf0 = '';
+    for (let i = 0; i < 20 && !conf0; i++) { await frames(page, 3);
+      conf0 = await page.evaluate(() => { const t = document.getElementById('tstrip'); return t && !t.hidden && t.className === 'conf' ? [...t.querySelectorAll('button')].map(b => b.dataset.k + (b.disabled ? '-' : '+')).join(',') : ''; }); }
     check(tag, /ok/.test(conf0) && /no/.test(conf0), `choosing a building shows ✓ / ✕ (${conf0})`);
     const sp = await page.evaluate(s => { const p = toScreen(s.x, 0, s.y), r = cv.getBoundingClientRect(); return { x: p.x + r.left, y: p.y + r.top }; }, spot);
     await T.tap(sp.x, sp.y); await frames(page, 2);
@@ -339,6 +342,7 @@ async function phonePass(tag, viewport, storageState) {
 
   // --- getting in and out with taps alone (orch/enterexit.mjs) ---
   if (tag === 'portrait') await enterExitChecks(page, { mode: 'touch', ck: (n, ok, d) => check(tag, ok, n + (ok || !d ? '' : ' — ' + String(d).slice(0, 300))), tap: (x, y) => T.tap(x, y) });
+  if (tag === 'portrait') await stanceChecks(page, { mode: 'touch', ck: (n, ok, d) => check(tag, ok, n + (ok || !d ? '' : ' — ' + String(d).slice(0, 300))) });
 
   // --- guide again from the ☰ menu ---
   await T.ptap('#aMenu');

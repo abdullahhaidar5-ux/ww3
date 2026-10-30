@@ -265,13 +265,19 @@ const MAP_RINGS={
 for(const k in MAP_RINGS)Object.assign(MAPS[k],MAP_RINGS[k]);
 let BASE_SLOTS=MAPS.strait.slots;
 let BASES=BASE_SLOTS.slice(0,2);
-// Start positions: by default players take the map's first n slots. If the player picked a slot, they get it and the
-// others are spread out by farthest-point choice so nobody starts next door to anyone.
+// Start positions: by default players take the map's first n slots. Players can pick their slot in the battle setup
+// (pick: one slot for player 0, or an array with a slot per player, -1 = random; a slot named twice counts once): the
+// picks are kept and everyone on Random is placed by farthest-point choice so nobody starts next door to anyone.
+// Same picks = same bases on every machine (no random numbers are used).
 // A map may give its own start positions for a player count (sl6, sl8...): a ring where every base has the same number of
 // neighbours, so nobody starts squeezed in the middle of a row.
 function slotsOf(D,n){return (n&&D['sl'+n])||D.slots;}
-function slotOrder(D,n,pick){const S=slotsOf(D,n).slice(0,D.max||D.slots.length);n=Math.max(2,Math.min(S.length,n));if(!(pick>=0&&pick<S.length))return S.slice(0,n).map((_,i)=>i);
-  const out=[pick];while(out.length<n){let best=-1,bd=-1;for(let i=0;i<S.length;i++){if(out.includes(i))continue;const d=Math.min(...out.map(j=>Math.hypot(S[i][0]-S[j][0],S[i][1]-S[j][1])));if(d>bd+1e-6){bd=d;best=i;}}out.push(best);}return out;}
+function slotOrder(D,n,pick){const S=slotsOf(D,n).slice(0,D.max||D.slots.length);n=Math.max(2,Math.min(S.length,n));
+  const out=[];for(let i=0;i<n;i++){const v=Array.isArray(pick)?pick[i]:i===0?pick:-1;out.push(Number.isInteger(v)&&v>=0&&v<S.length&&!out.includes(v)?v:-1);}
+  if(!out.some(v=>v>=0))return S.slice(0,n).map((_,i)=>i);
+  for(let k=0;k<n;k++){if(out[k]>=0)continue;const tk=out.filter(v=>v>=0);let best=-1,bd=-1;for(let i=0;i<S.length;i++){if(tk.includes(i))continue;const d=Math.min(...tk.map(j=>Math.hypot(S[i][0]-S[j][0],S[i][1]-S[j][1])));if(d>bd+1e-6){bd=d;best=i;}}out[k]=best;}return out;}
+// the start slots a battle of n players on map mk offers, as [x,y] fractions of the map (the setup screen's picker)
+function startSpots(mk,n){const D=MAPS[mk]||MAPS.strait;return slotsOf(D,n).slice(0,D.max||D.slots.length).map(([x,y])=>[x/3200,y/2200]);}
 function setBases(n,mk,pick){const D=MAPS[mk]||MAPS.strait;BASE_SLOTS=slotsOf(D,Math.max(2,Math.min(D.max||8,n))).map(([x,y])=>[x*WK,y*WK]);BASES=slotOrder(D,n,pick).map(i=>BASE_SLOTS[i]);}
 let EF_R=8;let EF_W=Math.ceil(MAPW/EF_R)+1,EF_H=Math.ceil(MAPH/EF_R)+1;
 function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,L=dx*dx+dy*dy||1;let t=((px-ax)*dx+(py-ay)*dy)/L;t=Math.max(0,Math.min(1,t));const qx=ax+dx*t,qy=ay+dy*t;return[Math.hypot(px-qx,py-qy),t];}
@@ -420,9 +426,11 @@ function mkMap(seed,mk){
 // P_B: while planning a route (pathfinding / line of sight in navTo), ground cells under buildings count as blocked,
 // so units route around bases instead of walking into walls. Plain movement checks ignore buildings (separation handles them).
 let P_B=false;
+// P_H: route/move checks for a heavy vehicle (tank, artillery, big truck): rubble from a fallen city block blocks it
+let P_H=false;
 function bocc(){if(!G.bocc||G.bdirty){G.bdirty=false;G.boccV=(G.boccV|0)+1;const o=G.bocc||(G.bocc=new Uint8Array(GW*GH));o.fill(0);for(const b of G.ents){if(!b.isB||b.dead)continue;const h=b.size/2-CELL*.25;
   const x0=Math.ceil((b.x-h)/CELL-.5),x1=Math.floor((b.x+h)/CELL-.5),y0=Math.ceil((b.y-h)/CELL-.5),y1=Math.floor((b.y+h)/CELL-.5);for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)if(cx>=0&&cy>=0&&cx<GW&&cy<GH)o[cy*GW+cx]=1;}}return G.bocc;}
-function passC(dom,cx,cy){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;const i=cy*GW+cx,v=G.grid[i];if(dom==='naval')return v===1||v===2;if(v!==0&&v!==2)return false;return !(P_B&&G.bocc&&G.bocc[i]);}
+function passC(dom,cx,cy){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;const i=cy*GW+cx,v=G.grid[i];if(dom==='naval')return v===1||v===2;if(v!==0&&v!==2)return false;if(P_H&&G.rub&&G.rub[i])return false;return !(P_B&&G.bocc&&G.bocc[i]);}
 function passXY(dom,x,y){return dom==='air'||passC(dom,Math.floor(x/CELL),Math.floor(y/CELL));}
 function los(dom,x0,y0,x1,y1){if(dom==='air')return true;const n=Math.ceil(Math.hypot(x1-x0,y1-y0)/16);for(let i=1;i<=n;i++){const t=i/n;if(!passXY(dom,x0+(x1-x0)*t,y0+(y1-y0)*t))return false;}return true;}
 function nearestPass(dom,cx,cy){if(passC(dom,cx,cy))return[cx,cy];for(let r=1;r<16;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;if(passC(dom,cx+dx,cy+dy))return[cx+dx,cy+dy];}return null;}

@@ -142,7 +142,7 @@ const FXH={
   elim(team){if(team===ME&&G&&!G.over)showElim();},
   oilDry(i){const o=G.oil&&G.oil[i];if(!o)return;if(MODE==='client'){o.res=0;}if(o.owner===ME||MODE==='client')try{pushLog('An oil derrick has run dry.','w');}catch(_){}},
   give(f,t,a){if(t===ME&&typeof sfxUI==='function')sfxUI(880);},
-  civd(i,q){const c=G.civ&&G.civ[i];if(!c)return;if(c.ruin&&c.obj){c.obj.visible=false;if(typeof scorch==='function')scorch(c.x,c.y,30);}if(MODE==='client'){c.dead=true;if(G.grid[c.k]===3)G.grid[c.k]=0;}G.civDirty=true;const g=groundH(c.x,c.y);if(!q)try{FXH.boom(c.x|0,c.y|0,26,1);chunks(c.x,c.y,48,'#cfc6b2',12);}catch(_){}},
+  civd(i,q){const c=G.civ&&G.civ[i];if(!c)return;if(c.ruin&&c.obj){c.obj.visible=false;if(typeof scorch==='function')scorch(c.x,c.y,30);}if(MODE==='client'){c.dead=true;if(G.grid[c.k]===3)G.grid[c.k]=0;if(typeof rubMark==='function')rubMark(c);}G.civDirty=true;const g=groundH(c.x,c.y);if(!q)try{FXH.boom(c.x|0,c.y|0,26,1);chunks(c.x,c.y,48,'#cfc6b2',12);}catch(_){}},
   // P2P: a remembered enemy building that was destroyed out of this player's sight - removed silently (leaving rubble)
   // when they next see the spot, instead of an explosion that would give the fight away
   gone(id,x,y,ki){const k=KINDS[ki];if(k&&STRUCT[k])try{rubble(x,y,STRUCT[k].size);}catch(_){}},

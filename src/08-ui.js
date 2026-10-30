@@ -192,7 +192,12 @@ function renderAllies(){const el=$('allyBox');if(!el||!G)return;const T=G.teams[
       for(const v of [250,1000,'½']){const b=document.createElement('button');b.textContent=v==='½'?'Half':'+$'+v;b.dataset.v=v;b.title=v==='½'?'Send half of your money':`Send $${v}`;b.onpointerdown=ev=>{ev.preventDefault();const amt=v==='½'?Math.floor(G.teams[ME].credits/2):v;doAct({t:'give',to:O.id,amt});};r.append(b);}el.append(r);}}
   for(const sm of el.querySelectorAll('small[data-c]')){const O=G.teams[+sm.dataset.c];sm.textContent='$'+Math.floor(O.credits);}
   for(const b of el.querySelectorAll('button'))b.disabled=b.dataset.v==='½'?T.credits<100:T.credits<+b.dataset.v;}
-function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[ME];sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
+// Sanctions banner: shown to the sanctioned player with the cut and a countdown (T.sanc = sim time it ends; clients get it from the snapshot)
+function sancBanner(T){let el=$('sancB');const left=T.sanc>G.t?Math.ceil(T.sanc-G.t):0;
+  if(!left){if(el)el.hidden=true;return;}
+  if(!el){el=document.createElement('div');el.id='sancB';el.style.cssText='position:fixed;z-index:7;left:50%;top:30px;transform:translateX(-50%);padding:5px 14px;background:rgba(150,16,20,.92);color:#fff;font:700 14px system-ui,sans-serif;border:1px solid #ff8a80;border-radius:4px;pointer-events:none;text-align:center;max-width:94vw';document.body.append(el);}
+  el.hidden=false;const t='SANCTIONED · income −'+(T.upg.smug?8:20)+'% · '+left+' s'+(T.upg.smug?' · smuggling routes open':'');if(el.textContent!==t)el.textContent=t;}
+function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k),ok=reqMet(ME,k);if(!bldAllowed(T.fac,k)){setBtn('b_'+k,{dis:true,cost:'Not available',title:'This faction has no air force'});continue;}const lim=s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===ME&&e.kind===k).length>=s.limit;setBtn('b_'+k,{dis:!ok||T.credits<s.cost||lim,cost:lim?'Max '+s.limit:'$'+s.cost,on:G.place===k,title:ok?(STRUCT[k].desc||(STRUCT[k].shore?'Place on the shoreline':'')):`Requires ${STRUCT[STRUCT[k].req].name}`});}
   for(const k of allUnits(T.fac)){const s=stats(T.fac,k),q=T.q[s.from]||[],n=q.filter(x=>x.kind===k).length,has=done(ME,s.from);const first=q[0]&&q[0].kind===k?(q[0].p!=null?q[0].p:q[0].t/prodTime(T,s)):0;
     const lk=specLock(T,k);setBtn('u_'+k,{dis:lk||!has||(T.credits<s.cost&&!n),cost:lk?`General rank ${SPEC_RANK}`:k===T.F.special?'$'+s.cost+(T.rank>=6?' · Elite':T.rank>=4?' · Veteran':''):'$'+s.cost,q:n?'×'+n:'',p:first,title:(lk?`Unlocks at general rank ${SPEC_RANK}; gets Veteran (+20%) at rank 4 and Elite (+40%) at rank 6. `:'')+(has?'':`Requires ${STRUCT[s.from].name}. `)+(k===T.F.special&&SPECIAL_TIP[k]?SPECIAL_TIP[k](s)+' ':'')+(COUNTER[k]||COUNTER[s.cls]||'')});}
@@ -218,7 +223,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   else if(leftOrders()&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Click').replace(/right-click/g,'click');
   el.append(b,sp);if(tip.textContent)el.append(tip);
-  if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};r.append(ba,bd,bs,br);el.append(r);}
+  if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;r.append(ba,bd,bs,br,bv);el.append(r);}
   {const ap=$('app'),o=!!el.querySelector('.cmdrow');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   {const trs=s.filter(u=>!u.isB&&u.s&&u.s.cap&&u.team===ME&&!u.dead);if(trs.length>1&&trs.length===s.filter(u=>!u.isB).length){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Unload all '+trs.length+' transports';ub.title=(TOUCHUI?'Or tap one of them again':'Or right-click one of them')+' to unload them all';ub.onpointerdown=ev=>{ev.preventDefault();for(const tr of trs)doAct({t:'unl',tid:tr.id});};el.append(ub);}}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
@@ -477,6 +482,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='Escape'){if(G.defm){G.defm=false;return;}if(G.paused){togglePause(false);return;}if(!G.place&&!G.aim&&!G.amove&&!G.sel.length&&!G.over){togglePause(true);return;}if(!G.place&&!G.aim&&!G.amove)G.sel=[];G.place=null;G.aim=null;G.amove=false;}
   if(k==='q')G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);
   if(k==='f'&&G.sel.some(u=>!u.isB)){G.amove=true;G.defm=false;}if(k==='g'&&G.sel.some(u=>!u.isB&&u.team===ME)){G.defm=true;G.amove=false;}
+  if(k==='v'&&!e.ctrlKey&&!e.metaKey)cycleStance();
   if(k==='x'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
   if(k==='r'&&!e.ctrlKey&&!e.metaKey){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length){doAct({t:'ret',ids});speak(2);}}
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
@@ -573,6 +579,12 @@ const TC={ids:new Map(),g:null,pinch:null,vel:{x:0,y:0},glide:false,lastTap:null
   touch:false,stripK:'',stripT:0,marks:0,seen:{}};
 try{TC.touch=matchMedia('(hover:none) and (pointer:coarse)').matches;}catch(e){}
 const TC_LP=380,TC_SLOP=10,TC_DBL=420;
+const STANCES=[null,['Assault','⚔','Attack-move: chase and fight everything'],['Hold','■','Hold position: fire only at enemies in range'],['Guerrilla','◈','Hold fire until the enemy is close, then fire; fall back to cover when hit']];
+const STANCE_COL=[0,0x8af0a6,0x6fb4ff,0xffb347];
+function stDisp(u){return u.st>=2?u.st:1;}
+function stUnits(){if(!G)return[];const m=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead&&!u.s.noAttack);return m.length?m:G.ents.filter(u=>!u.isB&&u.team===ME&&!u.dead&&!u.s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer');}
+function stanceLabel(){const us=stUnits();if(!us.length)return'';const d=stDisp(us[0]),mixed=us.some(u=>stDisp(u)!==d);return STANCES[d][1]+' '+STANCES[d][0]+(mixed?'+':'');}
+function cycleStance(){const us=stUnits();if(!us.length)return;const c=stDisp(us[0]),n=c===1?2:c===2?3:1;doAct({t:'stance',ids:us.map(u=>u.id),v:n});sfxUI(480+n*40);if(typeof updateUI==='function')updateUI();}
 function tcOwn(){return G?G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead):[];}
 function tcXY(e){const r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
 function tcMid(){const a=[...TC.ids.values()];return{x:(a[0].x+a[1].x)/2,y:(a[0].y+a[1].y)/2,d:Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)};}
@@ -654,10 +666,11 @@ window.addEventListener('pointercancel',e=>tcEnd(e,true),true);
 /* ---- command strip (touch only, while units are selected) and build / fire confirm ---- */
 const TC_BTN=[['am','⚔','Attack','Attack-move: tap a spot, they fight everything on the way'],['gd','🛡','Guard','Guard: tap the spot to hold'],['st','■','Stop','Stop'],
   ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all units of the selected types on screen'],['all','★','Army','Select your whole army'],
-  ['rt','↩','Retreat','Retreat to the nearest base building'],['ds','✕','Clear','Deselect']];
+  ['sn','◈','Stance','Cycle army stance: Assault, Hold, Guerrilla'],['rt','↩','Retreat','Retreat to the nearest base building'],['ds','✕','Clear','Deselect']];
 function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   if(k==='am'){G.amove=!G.amove;G.defm=false;TC.lineArm=false;}
   else if(k==='gd'){G.defm=!G.defm;G.amove=false;TC.lineArm=false;}
+  else if(k==='sn'){cycleStance();TC.stripK=null;}
   else if(k==='st'){if(ids.length)doAct({t:'stop',ids});sfxUI(520);}
   else if(k==='ln'){TC.lineArm=!TC.lineArm;G.amove=false;G.defm=false;}
   else if(k==='ty'){const ks=new Set(own.map(u=>u.kind));G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&ks.has(u.kind)&&tcOnScreen(u));tcSelSound();}
@@ -672,12 +685,12 @@ function tcStrip(force){const now=performance.now();if(!force&&now-TC.stripT<120
   const on=TOUCHUI&&TC.touch&&G&&!G.over&&!window.LOADING&&$('menu').hidden;const own=on?tcOwn():[];
   const mode=!on?'':(G.place||G.aim)?'conf':own.length?'cmd':'';
   const ok=mode==='conf'&&!!TC.pick&&(G.aim||!!validSpot(ME,G.place,TC.pick.x,TC.pick.y));
-  const key=mode+'|'+(mode==='cmd'?[G.amove,G.defm,TC.lineArm,own.some(u=>u.retreat)].join():mode==='conf'?(G.place?'b':'f')+ok:'');
+  const key=mode+'|'+(mode==='cmd'?[G.amove,G.defm,TC.lineArm,own.some(u=>u.retreat),stanceLabel()].join():mode==='conf'?(G.place?'b':'f')+ok:'');
   document.body.classList.toggle('tstripOn',mode==='cmd');document.body.classList.toggle('tconfOn',mode==='conf');
   if(key===TC.stripK)return;TC.stripK=key;s.hidden=!mode;s.className=mode;s.innerHTML='';if(!mode)return;
   const mk=(k,ic,tx,ti,cl)=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.title=ti;b.setAttribute('aria-label',ti);if(cl)b.className=cl;const i=document.createElement('i');i.textContent=ic;const t=document.createElement('span');t.textContent=tx;b.append(i,t);s.append(b);return b;};
   if(mode==='conf'){const b=mk('ok','✓',G.place?'Build here':'Fire here',G.place?'Build it at the marked spot':'Fire at the marked spot','go');b.disabled=!ok;mk('no','✕','Cancel','Cancel','cx');return;}
-  for(const [k,ic,tx,ti] of TC_BTN){const b=mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}}
+  for(const [k,ic,tx,ti] of TC_BTN){const b=k==='sn'?mk(k,'◈',(stanceLabel().replace(/^\S+ /,'').replace('Guerrilla','Guerr.'))||'Stance',ti):mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}}
 /* ---- first-time guide: three steps, shown once, remembered; ☰ > Touch controls shows it again. A card near the top,
    not a full-screen cover: the battle keeps running (multiplayer can't pause) and stays playable around it ---- */
 const TC_GUIDE=[['☝','Move the map','Drag one finger to scroll the battlefield; flick to glide. Pinch with two fingers to zoom.'],
@@ -704,9 +717,9 @@ function tcGuideStep(i){const o=$('tguide'),[ic,h,p]=TC_GUIDE[i];o.dataset.i=i;o
 @keyframes tmk{from{transform:scale(.35);opacity:1}60%{opacity:1}to{transform:scale(1.35);opacity:0}}
 #thold{position:fixed;z-index:7;width:64px;height:64px;margin:-32px 0 0 -32px;border-radius:50%;border:2px solid rgba(233,245,236,.9);background:rgba(123,224,143,.14);pointer-events:none}
 #thold[hidden]{display:none}
-#tstrip{position:fixed;z-index:7;left:max(6px,env(safe-area-inset-left,0px));right:max(6px,env(safe-area-inset-right,0px));bottom:calc(var(--barh,180px) + 6px);display:flex;justify-content:center;gap:4px;pointer-events:none}
+#tstrip{position:fixed;z-index:7;left:max(4px,env(safe-area-inset-left,0px));right:max(4px,env(safe-area-inset-right,0px));bottom:calc(var(--barh,180px) + 6px);display:flex;justify-content:center;gap:2px;pointer-events:none}
 #tstrip[hidden]{display:none}
-#tstrip button{pointer-events:auto;flex:1 1 0;min-width:40px;max-width:76px;min-height:44px;padding:2px 1px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:rgba(24,32,28,.94);border:1px solid #3d4d44;color:var(--fg,#e9f5ec);font:600 10px var(--display,system-ui);letter-spacing:.02em;box-shadow:0 2px 8px rgba(0,0,0,.5);touch-action:manipulation;cursor:pointer}
+#tstrip button{pointer-events:auto;flex:1 1 0;min-width:40px;max-width:76px;overflow:hidden;min-height:44px;padding:2px 1px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:rgba(24,32,28,.94);border:1px solid #3d4d44;color:var(--fg,#e9f5ec);font:600 10px var(--display,system-ui);letter-spacing:.02em;box-shadow:0 2px 8px rgba(0,0,0,.5);touch-action:manipulation;cursor:pointer}
 #tstrip button i{font-style:normal;font-size:16px;line-height:1}
 #tstrip button.on{border-color:var(--accent,#7be08f);color:var(--accent,#7be08f);background:rgba(40,60,46,.96)}
 #tstrip.conf{justify-content:flex-end}
@@ -956,28 +969,60 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
   pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
   // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
   setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}},0);}
-function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot});}finally{TERR_DEFER=false;}afterStart();}
+function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length)});}finally{TERR_DEFER=false;}afterStart();}
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
   MODE='single';ME=0;
   TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
-function startMP(mode,seed,facs,slot,map,tm,aiD){NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm});}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm,aiD,st){NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');
     const sp=`Special: ${stats(k,F.special).name}`;b.innerHTML=`<span class="ins" style="background:${F.color}">${({RS:"MS",DW:"CS"})[k]||k}</span><span><div class="nm"></div><div class="dc"></div><div class="full"></div><div class="sp"></div><div class="sw"></div></span>`;
     b.querySelector('.nm').textContent=F.name;if(k==='RS'||k==='DW'){const ins=b.querySelector('.ins');ins.textContent='';const ec=emblemCanvas(k,38);ec.style.width='38px';ec.style.height='38px';ins.append(ec);}b.querySelector('.dc').textContent=F.docShort||F.doctrine;b.querySelector('.full').textContent=F.doctrine;b.title=F.doctrine;b.querySelector('.sp').textContent=sp+' · '+upgName(k,F.fup);b.querySelector('.sw').textContent='Strike: '+F.sup.name;b.onclick=()=>{setup.p=k;{const hm=MAP_KEYS.find(m=>(MAPS[m].home||[]).includes(k));if(hm&&$('mapSel')&&setup.map!==hm){$('mapSel').value=hm;$('mapSel').onchange();}}facCards();renderTeams();if(NET.code&&NET.code!=='join'&&NET.room)NET.room.presence({g:{c:NET.code,f:k,s:'open'}}).catch(()=>{});};el.append(b);}}
 const PREV={};
-// Draw start-slot markers on the preview: your chosen slot in gold with YOU, the slots the AIs will take in red, unused ones dim.
-// start positions shown on the preview for n players (some maps use their own ring of positions for 6 or 8 players)
-function prevSlots(k,n){const D=MAPS[k],P=PREV[k];if(!D['sl'+n])return P.sl;return D['sl'+n].map(([x,y])=>[x/3200*MAPW,y/2200*MAPH]);}
-function prevMarks(){const cv=$('mapCv'),k=setup.map,P=PREV[k];if(!cv||!P)return;const c=cv.getContext('2d'),W=cv.width,H=cv.height;c.putImageData(P.img,0,0);
-  const n=Math.min((setup.n||1)+1,P.sl.length),pick=setup.slot==null?-1:setup.slot,used=slotOrder(MAPS[k],n,pick);c.textAlign='center';c.textBaseline='middle';
-  prevSlots(k,n).forEach(([x,y],i)=>{const X=x/MAPW*W,Y=y/MAPH*H,u=used.indexOf(i),me=pick>=0?i===pick:false;const r=me?11:9;
-    c.globalAlpha=u<0?.55:1;c.fillStyle='rgba(8,10,9,.78)';c.beginPath();c.arc(X,Y,r,0,7);c.fill();c.lineWidth=2;c.strokeStyle=me?'#e3b341':u>0?'#ea5a40':u===0?'#e3b341':'rgba(220,220,220,.5)';c.stroke();
-    c.font='bold 12px sans-serif';c.fillStyle=me?'#e3b341':'#eee';c.fillText(i+1,X,Y+.5);
-    if(me){c.font='bold 10px sans-serif';const tw=c.measureText('YOU').width+8;c.fillStyle='#e3b341';c.fillRect(X-tw/2,Y-r-15,tw,12);c.fillStyle='#111';c.fillText('YOU',X,Y-r-8.5);}c.globalAlpha=1;});
-  const note=$('slotNote');if(note)note.textContent=pick>=0?`You start at position ${pick+1}. Click another number to move, or click empty ground for a random start.`:'Click a numbered position on the map to choose where you start (random if none).';}
+/* ---------- start positions (Abdullah 2026-10-30: "select where AI will be based on the map") ----------
+   The skirmish setup and the multiplayer lobby both show the map with its numbered start spots. Every side (you, each
+   AI, each friend) has a Start menu (Random or a spot number), and tapping a spot hands it to the next side in turn
+   (You, AI 1, AI 2 ... then free again). Two sides never share a spot; sides left on Random are placed by slotOrder
+   (02-map) exactly as the battle will place them, so the preview shows where everyone really starts. */
+// the start spots of a battle of n sides on map mk, as a key: picks made for one set of spots are dropped when it changes
+function spotsKey(mk,n){return mk+':'+startSpots(mk,n).map(p=>p.join(',')).join(';');}
+// sides: [{lab, col}] in battle order; st: a spot per side (-1 = Random). Picked spots: solid ring and a label in the
+// side's team colour; spots Random will fill: dashed ring, grey label; unused spots: dim.
+function spotsDraw(cv,mk,sides,st){const c=cv.getContext('2d'),W=cv.width,H=cv.height,P=PREV[mk];if(P&&P.img.width===W&&P.img.height===H)c.putImageData(P.img,0,0);else{c.fillStyle='#1d2420';c.fillRect(0,0,W,H);}
+  const n=sides.length,used=slotOrder(MAPS[mk]||MAPS.strait,n,st).slice(0,n);/* a lobby of one: slotOrder always places two */c.textAlign='center';c.textBaseline='middle';
+  startSpots(mk,n).forEach(([fx,fy],i)=>{const X=fx*W,Y=fy*H,u=used.indexOf(i),pk=u>=0&&st[u]===i,r=pk?12:10;
+    c.globalAlpha=u<0?.55:1;c.fillStyle='rgba(8,10,9,.82)';c.beginPath();c.arc(X,Y,r,0,7);c.fill();c.lineWidth=pk?3:2;c.strokeStyle=u<0?'rgba(220,220,220,.5)':sides[u].col;
+    if(u>=0&&!pk)c.setLineDash([3,2.5]);c.stroke();c.setLineDash([]);c.font='bold 12px sans-serif';c.fillStyle='#f2f2f2';c.fillText(i+1,X,Y+.5);
+    if(u>=0){const lab=sides[u].lab;c.font='bold 10px sans-serif';const tw=c.measureText(lab).width+8,lx=Math.max(tw/2,Math.min(W-tw/2,X)),ly=Y-r-9<7?Y+r+9:Y-r-9;
+      c.fillStyle=pk?sides[u].col:'rgba(8,10,9,.78)';c.fillRect(lx-tw/2,ly-6,tw,12);c.fillStyle=pk?'#101010':'#c9cfcb';c.fillText(lab,lx,ly+.5);}
+    c.globalAlpha=1;});}
+// the spot a click/tap on the preview landed on (finger-sized: within 22 px or 9% of its width), or -1
+function spotsHit(cv,e,mk,n){const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let best=-1,bd=1e9;startSpots(mk,n).forEach(([fx,fy],i)=>{const d=Math.hypot(fx*r.width-x,fy*r.height-y);if(d<bd){bd=d;best=i;}});return bd<Math.max(22,r.width*.09)?best:-1;}
+// tapping spot k: it goes to the side after the one holding it (a side that moves here leaves its old spot), after the last side it is free
+function spotsCycle(st,k){const o=st.slice(),cur=o.indexOf(k);if(cur>=0)o[cur]=-1;if(cur+1<o.length)o[cur+1]=k;return o;}
+// a side's Start menu: picking a spot another side holds swaps the two (get: the picks as they are now, since the lobby
+// may have been redrawn from the server's copy since this menu was made)
+function spotsPick(st,i,k){const o=st.slice(),j=k>=0?o.indexOf(k):-1;if(j>=0&&j!==i)o[j]=o[i];o[i]=k;return o;}
+function spotsSel(i,mk,sides,st,set,get){const s=document.createElement('select');s.className='stsel';s.setAttribute('aria-label','Start position for '+sides[i].lab);
+  const add=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;s.append(o);};add(-1,'Random');
+  startSpots(mk,sides.length).forEach((_,k)=>{const j=st.indexOf(k);add(k,'Start '+(k+1)+(j>=0&&j!==i?' · '+sides[j].lab:''));});s.value=st[i]>=0?st[i]:-1;s.onchange=()=>set(spotsPick(get?get():st,i,+s.value));return s;}
+function spotsNote(st,sides){const k=st.filter(v=>v>=0).length;return (k?`${k} of ${sides.length} start spots picked; the rest are Random (dashed). `:'Everyone starts at Random spots (dashed). ')+'Tap a numbered spot to start there; tap it again to hand it to the next player or AI. Or use each Start menu.';}
+{const st=document.createElement('style');st.id='spotsCss';st.textContent=`
+.trow.sp{grid-template-columns:minmax(0,1fr) 104px 104px}
+.trow .stsel{background:var(--panel2);color:var(--fg);border:1px solid var(--line);padding:4px;font:inherit;width:100%}
+.seat .sel2{display:flex;flex-direction:column;gap:4px;min-width:0}.seat .sel2 select{width:100%;min-width:0}
+.spcv{display:block;width:100%;max-width:384px;height:auto;aspect-ratio:32/22;border:1px solid var(--line);cursor:pointer;touch-action:manipulation;margin-top:6px}
+.spnote{color:var(--dim);font-size:12px;margin:4px 0 2px;max-width:640px}
+@media (max-width:560px){.trow.sp{grid-template-columns:minmax(0,1fr) 88px 92px;gap:5px}.trow .stsel,.trow select{font-size:12px;padding:3px}}
+@media (pointer:coarse){.trow .stsel{min-height:38px}}`;document.head.append(st);}
+// Skirmish: you are side 0, the main opponent side 1, the other AIs 2+ (rollAis). Your own spot stays in setup.slot (as
+// before); setup.st holds a spot per side; setup.stK the set of spots they were picked on.
+function skSides(){const f=rollAis();return f.map((_,i)=>({lab:i?'AI '+i:'You',col:TEAM_COL[(setup.tm[i]|0)%8]}));}
+function skSt(n){if(setup.stK&&setup.stK!==spotsKey(setup.map,n)){setup.slot=-1;setup.st=[];setup.stK=null;}const o=[];for(let i=0;i<n;i++){const v=i?(setup.st||[])[i]:setup.slot;o.push(Number.isInteger(v)&&v>=0&&!o.includes(v)?v:-1);}return o;}
+function skSet(st){setup.slot=st[0];setup.st=st.slice();setup.stK=spotsKey(setup.map,st.length);renderTeams();}
+function prevMarks(){const cv=$('mapCv'),k=setup.map;if(!cv||!PREV[k])return;const sides=skSides(),st=skSt(sides.length);spotsDraw(cv,k,sides,st);const note=$('slotNote');if(note)note.textContent=spotsNote(st,sides);}
 function mapPreview(k,cv){const c=cv.getContext('2d'),W=cv.width,H=cv.height;const old=srand;const M=(()=>{const keepB=BASES,keepS=BASE_SLOTS;setBases(MAPS[k].max,k);const m=mkMap(4242,k);const sl=BASES.slice();BASES=keepB;BASE_SLOTS=keepS;return{m,sl};})();srand=old;
   const id=c.createImageData(W,H);for(let j=0;j<H;j++)for(let i=0;i<W;i++){const wx=(i+.5)/W*MAPW,wy=(j+.5)/H*MAPH,e=M.m.edge(wx,wy),mt=M.m.mtn(wx,wy),q=(j*W+i)*4,sn=M.m.theme==='snow';const v=e>0?(sn?[150,180,196]:[44,92,102]):mt>0?(mt>(sn?20:75)?[236,240,246]:sn?[150,156,166]:[112,102,90]):e>-30?(sn?[220,226,234]:[201,174,124]):(sn?[206,214,224]:[168,130,90]);id.data.set([...v,255],q);}c.putImageData(id,0,0);
   c.fillStyle='#8a7b63';for(const b of M.m.bridges){c.save();c.translate(b.x/MAPW*W,b.y/MAPH*H);c.rotate(Math.atan2(b.n[1]*H/MAPH,b.n[0]*W/MAPW));c.fillRect(-b.h/MAPW*W,-1,b.h*2/MAPW*W,2);c.restore();}
@@ -986,21 +1031,21 @@ function mapPreview(k,cv){const c=cv.getContext('2d'),W=cv.width,H=cv.height;con
   return{water:wa/n,mtn:mo/n,bridges:M.m.bridges.length};}
 function syncAiN(){const mx=(MAPS[setup.map]||MAPS.strait).max-1;if($('aiN'))$('aiN').querySelectorAll('button').forEach(b=>{b.disabled=+b.dataset.n>mx;});if(setup.n>mx){setup.n=[1,2,3,5,7].filter(v=>v<=mx).pop();$('aiN').querySelectorAll('button').forEach(x=>x.classList.toggle('on',+x.dataset.n===setup.n));$('start').textContent=setup.n>1?`Deploy vs ${setup.n} AI`:'Deploy vs AI';}}
 function mapCards(){const el=$('pickMap');if(!el)return;if(!setup.map)setup.map=(typeof SET!=='undefined'&&SET.map&&MAPS[SET.map])?SET.map:'strait';el.className='';el.innerHTML='';const box=document.createElement('div');box.className='mapsel';
-  const cv=document.createElement('canvas');cv.id='mapCv';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Map preview: click a numbered position to choose your start');cv.onclick=e=>{const P=PREV[setup.map];if(!P)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)/r.width*MAPW,my=(e.clientY-r.top)/r.height*MAPH;let best=-1,bd=1e9;prevSlots(setup.map,Math.min((setup.n||1)+1,P.sl.length)).forEach(([x,y],i)=>{const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=i;}});setup.slot=bd<MAPW*.09?best:-1;try{sfxUI(700);}catch(_){}prevMarks();};const right=document.createElement('div');const sel=document.createElement('select');sel.id='mapSel';sel.setAttribute('aria-label','Battlefield');
+  const cv=document.createElement('canvas');cv.id='mapCv';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Map preview: tap a numbered spot to choose who starts there');cv.onclick=e=>{if(!PREV[setup.map])return;const n=skSides().length,k=spotsHit(cv,e,setup.map,n);if(k<0)return;try{sfxUI(700);}catch(_){}skSet(spotsCycle(skSt(n),k));};const right=document.createElement('div');const sel=document.createElement('select');sel.id='mapSel';sel.setAttribute('aria-label','Battlefield');
   for(const k of MAP_KEYS){const o=document.createElement('option');o.value=k;const hm=(MAPS[k].home||[]).map(f=>FACTIONS[f]&&FACTIONS[f].name).filter(Boolean);o.textContent=`${MAPS[k].name}${hm.length?' · home of '+hm.join(' & '):''} (${MAPS[k].min}–${MAPS[k].max} players)`;sel.append(o);}sel.value=setup.map;
   const pl=document.createElement('div');pl.className='pl';const dc=document.createElement('div');dc.className='dc';const sn=document.createElement('div');sn.className='dc';sn.id='slotNote';right.append(sel,pl,dc,sn);box.append(cv,right);el.append(box);
   const show=()=>{const D=MAPS[setup.map];const base=(D.min===D.max?`${D.max} players`:`${D.min}–${D.max} players`)+(D.theme==='snow'?' · snow & ice':'');pl.textContent=base+(D.tag?' · '+D.tag:'');dc.textContent=D.desc;
     setTimeout(()=>{try{const r=mapPreview(setup.map,cv);if(r){const t=[base];if(D.tag)t.push(D.tag);else if(r.water>.28)t.push('naval-heavy');else if(r.water>.06)t.push('rivers & coast');else t.push(r.bridges?'rivers':'open land');if(!D.tag&&r.mtn>.05)t.push('mountain passes');if(r.bridges)t.push(r.bridges+(r.bridges>1?' bridges':' bridge'));pl.textContent=t.join(' · ');}}catch(e){}},20);};
   const rb=document.createElement('button');rb.type='button';rb.className='rndmap';rb.textContent='Random battlefield';rb.onclick=()=>{const need=(setup.n||1)+1;const ks=MAP_KEYS.filter(k=>k!==setup.map&&MAPS[k].max>=Math.min(need,8));const k=ks[Math.floor(Math.random()*ks.length)]||setup.map;sel.value=k;sel.onchange();};right.insertBefore(rb,pl);
-  sel.onchange=()=>{setup.map=sel.value;setup.slot=-1;try{SET.map=setup.map;saveSet();}catch(e){}show();syncAiN();renderTeams();if(typeof renderLobby==='function')renderLobby();};show();syncAiN();}
+  sel.onchange=()=>{setup.map=sel.value;setup.slot=-1;setup.st=[];setup.stK=null;try{SET.map=setup.map;saveSet();}catch(e){}show();syncAiN();renderTeams();if(typeof renderLobby==='function')renderLobby();};show();syncAiN();}
 // Skirmish roster: you, the main opponent and the other AIs (rolled once so you can see who they are), each with a team.
 function rollAis(){const n=Math.max(1,Math.min((MAPS[setup.map]||MAPS.strait).max-1,setup.n||1));const facs=[setup.p,setup.a];const pool=FKEYS.filter(k=>!facs.includes(k)&&!(setup.others||[]).includes(k));
   setup.others=(setup.others||[]).filter(k=>!facs.includes(k)).slice(0,n-1);while(setup.others.length<n-1){const k=pool.splice(Math.floor(Math.random()*pool.length),1)[0]||FKEYS[setup.others.length%FKEYS.length];setup.others.push(k);}
   const tm=(setup.tm||[]).slice(0,n+1);while(tm.length<n+1)tm.push(tm.length);setup.tm=tm;return[...facs,...setup.others];}
-function renderTeams(){const el=$('teamList');if(!el)return;const facs=rollAis();el.innerHTML='';const N=facs.length;
-  facs.forEach((f,i)=>{const row=document.createElement('div');row.className='trow';const nm=document.createElement('span');nm.textContent=(i===0?'You · ':`AI ${i} · `)+FACTIONS[f].name;
+function renderTeams(){const el=$('teamList');if(!el)return;const facs=rollAis();el.innerHTML='';const N=facs.length,sides=skSides(),st=skSt(N);
+  facs.forEach((f,i)=>{const row=document.createElement('div');row.className='trow sp';const nm=document.createElement('span');nm.textContent=(i===0?'You · ':`AI ${i} · `)+FACTIONS[f].name;
     const s=document.createElement('select');s.setAttribute('aria-label','Team for '+nm.textContent);for(let t=0;t<Math.max(2,N);t++){const o=document.createElement('option');o.value=t;o.textContent='Team '+(t+1);s.append(o);}s.value=setup.tm[i];
-    s.onchange=()=>{setup.tm[i]=+s.value;checkTeams();};row.append(nm,s);el.append(row);});checkTeams();}
+    s.onchange=()=>{setup.tm[i]=+s.value;checkTeams();prevMarks();};row.append(nm,s,spotsSel(i,setup.map,sides,st,skSet,()=>skSt(N)));el.append(row);});checkTeams();prevMarks();}
 function checkTeams(){const ok=new Set(setup.tm).size>1;const b=$('start');if(!b)return;b.disabled=!ok;b.title=ok?'':'Put at least one player on a different team.';}
 mapCards();
 facCards();const sel=$('aiFac');for(const k of FKEYS){const o=document.createElement('option');o.value=k;o.textContent=FACTIONS[k].name;sel.append(o);}sel.value=setup.a;setTimeout(renderTeams,0);sel.onchange=()=>{setup.a=sel.value;renderTeams();};if($('aiN'))$('aiN').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.n=+b.dataset.n;setTimeout(prevMarks,0);$('aiN').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));$('start').textContent=setup.n>1?`Deploy vs ${setup.n} AI`:'Deploy vs AI';renderTeams();});if($('watch'))$('watch').onclick=()=>{$('end').hidden=true;};

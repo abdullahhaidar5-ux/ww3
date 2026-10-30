@@ -376,6 +376,11 @@ normal join chain.
   `{map, w, tm:[team per human seat], ais:[{f,d,tm}…], start:1}`. `map` = a `MAPS` key (seats beyond its max are
   dropped, AIs first); `w` = battle Conditions as today (-1..WX.length-1); `ais` replaces the computer seats.
   `start:1` starts the battle if `ok`; otherwise the server answers with a `blob` whose `why` says why.
+  **Start spots** (2026-10-30): `bset` may carry `st:[spot per human seat]` and `ais:[{…,st}]` (-1 or absent = Random;
+  a bset without `st` puts every human on Random); `blob` seats then carry `st` only when one is picked. The battle's
+  `start` (and the start re-sent on rejoin / kept in checkpoints as start info) then carries `st:[spot per slot]` and
+  `pv: NET_PV+100` (`NET_PVS`, 07a) so an older page refuses it as another version instead of placing bases elsewhere.
+  No picks = exactly the messages above. Placement: `slotOrder` (02-map), same picks = same bases everywhere.
 - If the owner leaves the lobby, the next human becomes the owner. When no human is connected for 60 s, the room
   closes. A lobby lasts at most 30 minutes.
 - The game list: the server publishes the battle in `/lobby`, but in **its own frame** so today's pages (which only read

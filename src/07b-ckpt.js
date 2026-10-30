@@ -34,7 +34,7 @@ function ckRestore(ck){const N=G.teams.length;const {ents,byId}=ckDecode(ck);
   for(const k of ['mines','smokes','shields'])if(Array.isArray(G[k]))G[k]=reb(G[k]);
   ck.fields.forEach((f,i)=>{if(G.fields[i])Object.assign(G.fields[i],f);});
   ck.oil.forEach((o,i)=>{if(G.oil[i])Object.assign(G.oil[i],reb(o));});
-  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});
+  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});try{rubSync();}catch(e){}
   ck.teams.forEach((t,i)=>{const T=G.teams[i];if(!T)return;for(const k in t){if(k==='$ai'||k==='$aiD'||k==='aiTook')continue;T[k]=reb(t[k]);}T.ai=(t.$ai||t.aiTook)?mkAI(t.$aiD!=null?t.$aiD:1):null;T.aiTook=!!t.aiTook;});
   G.bdirty=true;G.hash=null;try{buildHash();}catch(e){}try{updateVis();}catch(e){}G.sel=G.sel.filter(e=>byId.has(e.id)).map(e=>byId.get(e.id));}
 /* ---------- Host migration ----------

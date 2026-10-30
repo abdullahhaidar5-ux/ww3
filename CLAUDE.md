@@ -82,7 +82,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   phones may draw far-away units simpler. **Unit voices:** every nation gets native-language lines now with the best
   free computer voice available — no real human recordings (Abdullah, 18:36: "forget the real recordings"). **Voices must sound natural,
   not robotic** (Abdullah, 19:12) **and tough** (Abdullah, 2026-10-29 19:01: deep, gritty, hard-edged combat soldiers, not
-  calm narrators; 20:36 after hearing the first tough pass for RS/DW/IR: "Tougher" — deeper, barked/shouted combat lines, grittier radio, still clear and human): use an expressive neural voice (XTTS-v2 for every language it covers — en, ar, tr,
+  calm narrators; 20:36 after hearing the first tough pass for RS/DW/IR: "Tougher" — deeper, barked/shouted combat lines, grittier radio, still clear and human; 2026-10-30 06:08 he approved the second tough pass ("tough2", orch/voices-tough) as the level for all 18): use an expressive neural voice (XTTS-v2 for every language it covers — en, ar, tr,
   ru, zh, ko, hi/ur, es, fr, de; non-commercial licence accepted for this free game, as MMS already is) with radio
   treatment; Piper/MMS only where nothing more natural exists (fa, he, uk) and then the best-sounding option found. **Weapon/explosion sound: cinematic and
   punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all 18 nations about equally strong.**

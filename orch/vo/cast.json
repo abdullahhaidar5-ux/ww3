@@ -3,37 +3,37 @@
   "eng": "xtts",
   "lang": "en",
   "sold": [
-   "Zacharie Aimilios",
-   "Ferran Simen",
-   "Marcos Rudaski"
+   "Damien Black",
+   "Dionisio Schuyler",
+   "Viktor Eka"
   ],
-  "cmd": "Viktor Menelaos"
+  "cmd": "Baldur Sanjin"
  },
  "TR": {
   "eng": "xtts",
   "lang": "tr",
   "sold": [
-   "Filip Traverse",
-   "Xavier Hayasaka",
-   "Gilberto Mathias"
+   "Baldur Sanjin",
+   "Damjan Chapman",
+   "Damien Black"
   ],
-  "cmd": "Ludvig Milivoj"
+  "cmd": "Dionisio Schuyler"
  },
  "RU": {
   "eng": "xtts",
   "lang": "ru",
   "sold": [
-   "Zacharie Aimilios",
-   "Ilkin Urbano",
+   "Viktor Eka",
+   "Damien Black",
    "Gilberto Mathias"
   ],
-  "cmd": "Torcull Diarmuid"
+  "cmd": "Baldur Sanjin"
  },
  "KR": {
   "eng": "xtts",
   "lang": "ko",
   "sold": [
-   "Zacharie Aimilios",
+   "Dionisio Schuyler",
    "Luis Moray"
   ],
   "cmd": "Luis Moray",
@@ -46,7 +46,7 @@
    "Damien Black",
    "Baldur Sanjin"
   ],
-  "cmd": "Luis Moray",
+  "cmd": "Viktor Eka",
   "most": 12
  },
  "IN": {
@@ -56,7 +56,7 @@
    "Damjan Chapman",
    "Baldur Sanjin"
   ],
-  "cmd": "Xavier Hayasaka",
+  "cmd": "Dionisio Schuyler",
   "alt": {
    "eng": "piper",
    "voices": [
@@ -70,7 +70,7 @@
   "lang": "hi",
   "sold": [
    "Damien Black",
-   "Xavier Hayasaka"
+   "Viktor Eka"
   ],
   "cmd": "Baldur Sanjin",
   "alt": {
@@ -87,42 +87,42 @@
   "lang": "es",
   "sold": [
    "Damien Black",
-   "Kazuhiko Atallah",
-   "Filip Traverse"
+   "Dionisio Schuyler",
+   "Viktor Eka"
   ],
-  "cmd": "Wulf Carlevaro"
+  "cmd": "Baldur Sanjin"
  },
  "EU": {
   "eng": "xtts",
   "lang": "fr",
   "sold": {
    "fr": [
-    "Ilkin Urbano",
-    "Viktor Menelaos"
+    "Viktor Eka",
+    "Dionisio Schuyler"
    ],
    "de": [
     "Damien Black",
-    "Marcos Rudaski"
+    "Baldur Sanjin"
    ],
    "en": [
-    "Ferran Simen",
-    "Zacharie Aimilios"
+    "Damjan Chapman",
+    "Damien Black"
    ]
   },
   "cmd": {
-   "fr": "Wulf Carlevaro",
-   "de": "Ludvig Milivoj",
-   "en": "Viktor Menelaos"
+   "fr": "Dionisio Schuyler",
+   "de": "Baldur Sanjin",
+   "en": "Viktor Eka"
   }
  },
  "CN": {
   "eng": "xtts",
   "lang": "zh-cn",
   "sold": [
-   "Kazuhiko Atallah",
-   "Ilkin Urbano",
-   "Ludvig Milivoj"
+   "Baldur Sanjin",
+   "Dionisio Schuyler",
+   "Damien Black"
   ],
-  "cmd": "Gilberto Mathias"
+  "cmd": "Viktor Eka"
  }
 }
