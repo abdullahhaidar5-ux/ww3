@@ -92,6 +92,9 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   **looks and performance** — better looks only where it stays smooth. Next focus after current work: **graphics
   realism**. Abdullah will test on his iPhone: when something visible ships, ask him in the report to try one specific
   thing for 2 minutes (with the link).
+- **Maps (Abdullah, 2026-10-29):** a little bigger than before (room to flank), maps for every player count, and **every
+  map fun and fair**: symmetric starts and resources, at least two real attack routes, something worth fighting over,
+  proven by AI-vs-AI win rates per start position. Any new or changed map must pass that check.
 - **Art is free only** (Abdullah, 2026-10-26): CC0 or CC-BY models/textures/sounds, every author credited in the menu
   credits; no paid assets, no ripped game assets.
 - Abdullah reads updates on his phone: short summaries, and send screenshots/clips as links or images that open on
