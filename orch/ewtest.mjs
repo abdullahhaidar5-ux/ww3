@@ -74,6 +74,15 @@ try {
     // counter: a working Strike Center flags the ghosts
     addBld(me, 'uplink', myHq.x - 200, myHq.y - 160, true); simUpdate(0.02); simUpdate(0.02);
     o.flagged = ewView(me).g.filter(q => q[5] === 1).length;
+    // host migration: a checkpoint carries the spoofs, the truck's cooldown and martyr state, and a restore brings them back
+    const enT = G.teams[en]; enT.mart = G.t + 25; martyrBanner({ x: enHq.x, y: enHq.y, team: en });
+    const before = { sp: JSON.stringify(G.spoofs), cd: mt.spfT, mb: JSON.stringify(G.mban), mart: enT.mart, gh: JSON.stringify(ewView(me).g) };
+    const pk = JSON.parse(JSON.stringify(ckEncode())); G.spoofs = []; G.mban = []; enT.mart = 0; ckRestore(pk); G._ewv = null;
+    const mt2 = G.byId.get(mt.id);
+    o.ck = { sp: JSON.stringify(G.spoofs) === before.sp, cd: !!mt2 && mt2.spfT === before.cd, mb: JSON.stringify(G.mban) === before.mb, mart: G.teams[en].mart === before.mart, gh: JSON.stringify(ewView(me).g) === before.gh };
+    // older checkpoints without the new fields still restore (defaults: no spoofs, no banners)
+    delete pk.g.spoofs; delete pk.g.mban; delete pk.g.mbanN; G.spoofs = undefined; G.mban = undefined; let okOld = true; try { ckRestore(pk); simUpdate(0.02); ewView(me); } catch (e) { okOld = String(e); } o.ckOld = okOld;
+    ckRestore(JSON.parse(JSON.stringify(ckEncode()))); // keep going with a sane state
     // ghosts expire after 20 s
     window.__exp = () => { for (let i = 0; i < 160; i++) simUpdate(0.1); return (G.spoofs || []).length; };
     // frame the minimap for the screenshot: undo the Strike Center flag so ghosts show as real-looking contacts
@@ -96,6 +105,8 @@ try {
   ck('no units added to the simulation', r.entsAdded === 0, r.entsAdded);
   ck('team message carries EW data', r.packJson > 10);
   ck('Strike Center flags ghosts as fake', r.flagged >= 3, r.flagged);
+  ck('checkpoint keeps radar-spoof ghosts, cooldown, martyr banner and Ayatollah buff', Object.values(r.ck).every(Boolean), JSON.stringify(r.ck));
+  ck('old checkpoint without EW fields restores', r.ckOld === true, r.ckOld);
   await page.evaluate(() => { const c = document.getElementById('mm') || mm; window.__mmPng = c.toDataURL('image/png'); });
   const png = await page.evaluate(() => window.__mmPng.split(',')[1]);
   fs.writeFileSync(path.join(OUT, 'ew-minimap.png'), Buffer.from(png, 'base64'));

@@ -6,7 +6,7 @@ set -u
 REPO=abdullahhaidar5-ux/ww3
 SHA=$(git rev-parse "${1:-HEAD}") || exit 2
 git push -q origin "$SHA:refs/heads/gate/${SHA:0:10}" 2>&1 | grep -v '^remote:' || true
-N=17; t0=$(date +%s)
+N=18; t0=$(date +%s)
 while :; do
   J=$(gh api "repos/$REPO/commits/$SHA/statuses?per_page=100" 2>/dev/null) || J='[]'
   done_n=$(printf '%s' "$J" | python3 -c 'import json,sys;s={};[s.setdefault(x["context"],x["state"]) for x in json.load(sys.stdin) if x["context"].startswith("gate/")];print(len([v for v in s.values() if v!="pending"]))')
