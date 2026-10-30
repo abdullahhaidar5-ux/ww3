@@ -1,0 +1,34 @@
+mapfair: 24 of 570 battles, 4 at a time
+  5/24 done, 5.6 min
+  10/24 done, 7.9 min
+  15/24 done, 9.3 min
+  20/24 done, 10.0 min
+  24/24 done, 10.3 min
+
+BATTLES map            n games  kills  win share by start position (fair = 1/n)        score share by position     avg-min
+  arctic          8     1      0  100   0   0   0   0   0   0   0                 61   0   0  39   0   0   0   0 15.0 <<
+  caucasus        6     1      0    0   0 100   0   0   0                          0   0  88   0   0  12     15.0 <<
+  delta           4     1      1    0 100   0   0                                  0 100   0   0             14.1 <<
+  dmz             8     1      0    0 100   0   0   0   0   0   0                  0  81   0   0   0  19   0   0 15.0 <<
+  euphrates       2     1      1    0 100                                          0 100                     13.2 <<
+  fulda           8     1      1    0 100   0   0   0   0   0   0                  0 100   0   0   0   0   0   0 14.9 <<
+  golan           2     1      1  100   0                                        100   0                     7.5 <<
+  gulfoil         8     1      0    0   0   0   0 100   0   0   0                  0   0   0   0  76   0  24   0 15.0 <<
+  hawizeh         3     1      1  100   0   0                                    100   0   0                 12.2 <<
+  indus           6     1      1    0   0 100   0   0   0                          0   0 100   0   0   0     13.8 <<
+  islands         4     1      1    0 100   0   0                                  0 100   0   0             13.7 <<
+  kashmir         2     1      1    0 100                                          0 100                     6.8 <<
+  kuwait          8     1      0    0   0   0   0   0 100   0   0                 15   0   0   0   0  85   0   0 15.0 <<
+  lebanon         6     1      0  100   0   0   0   0   0                         62   0   0   6  32   0     15.0 <<
+  nile            4     1      1    0   0   0 100                                  0   0   0 100             12.4 <<
+  oasis           8     1      0    0   0   0   0   0   0 100   0                  0   0   0   0   0  19  53  28 15.0 <<
+  persia          2     1      1    0 100                                          0 100                     9.1 <<
+  plateau         2     1      1    0 100                                          0 100                     7.9 <<
+  rubalkhali      4     1      1    0   0 100   0                                  0   0 100   0             14.1 <<
+  sahara          4     1      1  100   0   0   0                                100   0   0   0             13.1 <<
+  ural            6     1      1    0   0 100   0   0   0                          0   0 100   0   0   0     12.8 <<
+  ural            8     1      0   13  13  13  13  13  13  13  13                  0   0   0  47   0   0  53   0 15.0 <<
+  volga           4     1      1    0   0   0 100                                  0   0   0 100             8.9 <<
+  volga           8     1      0   13  13  13  13  13  13  13  13                  0   0   0   0  43  57   0   0 15.0 <<
+BATTLES 24 games; layouts where one position's mean score share > 1.6x fair: arctic|8, caucasus|6, delta|4, dmz|8, euphrates|2, fulda|8, golan|2, gulfoil|8, hawizeh|3, indus|6, islands|4, kashmir|2, kuwait|8, lebanon|6, nile|4, oasis|8, persia|2, plateau|2, rubalkhali|4, sahara|4, ural|6, ural|8, volga|4, volga|8
+MAPFAIR DONE 10.3 min -> ../../../../../tmp/lg/fair-9.json
