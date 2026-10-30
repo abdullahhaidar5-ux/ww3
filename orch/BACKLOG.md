@@ -30,10 +30,6 @@ already exist in some form (checked 2026-10-29): morale/rout + officer/Ayatollah
 grounding jets, EW Jamming Truck, hidden Tunnel Networks (IR/RS/DW/KP), city buildings that collapse to rubble. Build
 on those, don't duplicate. Every sim item: randomness only via the seeded RNG, host-authoritative, and open a
 `main → servers-live` PR after shipping. Keep all 18 nations about equally strong (run the tourney after balance-touching items). Order = priority:
-- [open] **Electronic warfare, bigger** — Battlefield + Interface. Extend the EW Jamming Truck: enemies inside its
-  bubble lose their minimap there (static/blackout patch on the minimap) and a "Radar spoof" ability puts 3–4 fake
-  ghost units on enemy radar/minimap for ~20 s. Counter: an upgrade (or the existing radar/uplink) that filters ghosts.
-  Ghosts are per-team view data; never affect the sim.
 - [open] **Destructible cities that change the map** — Battlefield + Visuals. Rubble from collapsed city buildings
   becomes infantry cover (like `coverAt`) and slows/blocks heavy vehicles (tanks route around; infantry/light vehicles
   pass slowly). Pathfinding grid updates when a block falls. Rubble must look like rubble (Visuals).
@@ -53,9 +49,6 @@ on those, don't duplicate. Every sim item: randomness only via the seeded RNG, h
 - [open] **One-tap army stances** — Interface + Battlefield. One button (and hotkey) switches selected units — or the
   whole army when nothing is selected — between **Assault** (attack-move, chase), **Hold** (stay, fire in range only)
   and **Guerrilla** (hold fire until enemies come close, hit-and-run, stay in cover). Works on touch.
-- [open] **Kill-cam replay** — Interface + Visuals. At match end, a short (~8–10 s) cinematic replay of the battle's
-  biggest moment (most value destroyed in a short window), then the score screen; a Share/screenshot option for
-  Discord. Client-side recording only (ring buffer of the visible scene), must not cost frame rate during battle.
 
 **CYCLE 17 (2026-10-30 night): martyrdom banner + news ticker shipped; servers-live PR opened.** **CYCLE 16 (2026-10-29 evening): ME Strike Center/Shipyard + camo nets, phone voice fallback, gate touch check shipped; AI navy/flanking verified OK.** **CYCLE 15 (2026-10-29): side lane finished (voices-natural + enter-exit on main). PR #7 (balance → servers-live) merged 2026-10-29.**
 
@@ -241,9 +234,12 @@ an earlier one still has work a squad can take (other squads may only do small P
   were tuned headless — check they're audible but not too loud next to the main mix.
 - [open] Menu music: test iOS audio unlock on a real iPhone; soft fade-in on first note; it loads the 3.3 MB `mus/smp.mp3` on first tap.
 
-- [open] Martyrdom banner follow-ups (cycle 17): staged/real-battle screenshot of the flag; flag fade runs on real time, not game time (can outlast the buff when paused); banners aren't in checkpoints or sent to clients who arrive in view later (8 s, accepted). Optional: combat music swell while a banner is up (Audio).
+- [open] Martyrdom banner follow-ups (cycle 17): staged/real-battle screenshot of the flag; flag fade runs on real time, not game time (can outlast the buff when paused); banners aren't in checkpoints or sent to clients who arrive in view later (8 s, accepted). 
 - [open] News ticker follow-ups (cycle 17): only shows own-team news (clients get only their own messages) — consider host-broadcast public headlines for enemy captures/losses; click-test the Settings toggle.
 - [open] touch.mjs still ~265 s — cut software-GL screenshots to get under 3 min (QA).
+
+- [open] EW follow-ups (cycle 18 review): save spoof cooldowns + active ghosts (`spfT`, `G.spoofs`) in host-migration checkpoints (07b-ckpt); EW truck exists only for RU — consider giving the jam/spoof to another nation's special if Abdullah wants it wider; ewtest.mjs into the gate.
+- [open] Kill-cam follow-ups (cycle 18 review): replayed plane effects / building-death timers keep running after the replay and cam._xl/_yl/_dl aren't restored (kcStop in 08-ui); first replay frame may stutter; test on a real iPhone.
 
 ## P2 — next
 
@@ -272,6 +268,9 @@ an earlier one still has work a squad can take (other squads may only do small P
 
 ## Done
 
+- 2026-10-30 (cycle 18) — Bigger EW (RU EW truck): enemies inside its bubble get a "JAM" static patch on their minimap; new Radar spoof button (60 s recharge, AI uses it) puts 3–4 fake contacts on enemy minimaps for 20 s; a Strike Center (yours or an ally's) marks fakes with "?".
+- 2026-10-30 (cycle 18) — Kill-cam: ~10 s slow-motion replay of the battle's biggest moment before the score screen (skip with tap/Esc), plus a Save screenshot button.
+- 2026-10-30 (cycle 18) — Martyr banner: the soundtrack swells briefly for its side (max once per 20 s).
 - 2026-10-30 (cycle 17) — Martyrdom banner: fallen IR/RS/DW infantry leave a crimson rally flag (~8 s, one per area): nearby infantry shake off fear faster, routers rally, +10% damage / ~9% faster fire; "MARTYR" text.
 - 2026-10-30 (cycle 17) — Live news ticker: thin BREAKING strip at the top with battle headlines (captures, eliminations, weather, superweapons, heavy losses); Settings → News ticker.
 - 2026-10-30 (cycle 17) — AI unit/upgrade picks use the seeded RNG; touch.mjs ~265 s (was >600 s).

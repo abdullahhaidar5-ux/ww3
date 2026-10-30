@@ -2,6 +2,15 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-29 21:58 → 2026-10-30 01:05 (Chicago) — cycle 18
+
+- Fired again by the feature-pack trigger right after cycle 17. Took the lock; baseline = cycle 17's gate on the same src (nothing new on main).
+- 3 agents: Battlefield+view (bigger EW: minimap jam patch, Radar spoof ghosts; Opus), Interface+Visuals (kill-cam replay +
+  Save screenshot; Opus), Audio (martyr-banner music swell; Sonnet). All merged clean + side lane's infantry-motion from main; smoke PASS.
+- Slip: the lock-extension push also pushed the merged (smoke-passed, not yet fully gated) features to main ~20 min early; the full gate then passed.
+- Review: no blockers; fixed 4 minors (hidden EW truck position leaked via jam patch, spoof from inside transport, allies' Strike Center, kill-cam memory). Rest → backlog.
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, EW PASS, artifact smoke + MPSYNC PASS. NET_PV not bumped; servers-live PR needed for 'spoof' order.
+
 ## 2026-10-29 19:30 → 21:55 (Chicago) — cycle 17
 
 - No lock; took it. Baseline: `--check` OK, SMOKE PASS. Started Abdullah's new feature pack (top two client/sim items).

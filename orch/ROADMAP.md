@@ -53,13 +53,13 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 
 ## Battlefield and maps
 - [done] Martyrdom banner: fallen Shia soldiers leave a rally flag that steadies nearby troops
-- [next] Bigger electronic warfare: minimap blackout and fake radar ghosts
+- [done] Bigger electronic warfare: minimap blackout and fake radar ghosts
 - [next] Rubble from destroyed buildings becomes cover and blocks tanks
 - [next] Tunnels counter: ground-penetrating radar, tunnel ambushes
 - [next] Proxy militias you can fund near the front
 - [next] Sanctions on an enemy's income, countered by smuggling routes
 - [next] Day/night battles with thermal optics
-- [done] Live news ticker · [next] one-tap army stances (Assault/Hold/Guerrilla), end-of-match kill-cam replay
+- [done] Live news ticker · [done] end-of-match kill-cam replay · [next] one-tap army stances (Assault/Hold/Guerrilla)
 - [done] Bases always start on dry ground; all 28 maps checked by an automatic sweep
 - [done] AI builds and uses a navy on water maps
 - [done] Fix AI blowouts: no general powers in the first 3 minutes, AI always builds an army
