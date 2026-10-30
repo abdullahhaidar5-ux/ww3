@@ -11331,21 +11331,49 @@ function solArm(B,sd,T,pole){const sh=B['arm'+sd],fo=B['forearm'+sd],ha=B['hand'
   const a=S.distanceTo(E0),b=E0.distanceTo(H0),d=Math.min(a+b-.01,Math.max(Math.abs(a-b)+.01,S.distanceTo(T))),dir=T.clone().sub(S).normalize();
   const x=(a*a-b*b+d*d)/(2*d),h=Math.sqrt(Math.max(0,a*a-x*x)),pp=pole.clone().sub(dir.clone().multiplyScalar(pole.dot(dir))).normalize();
   const E=S.clone().add(dir.clone().multiplyScalar(x)).add(pp.multiplyScalar(h));solAim(sh,fo,E);solAim(fo,ha,T);}
-function solRifle(k){const g=new THREE.Group(),bl=gearMat('#1c1d1c'),wd=gearMat('#3a3228');
+// Hand twist: turn the hand about its own length (wrist to knuckles = bone +y) until the palm (bone +z, the thumb's side
+// on this rig) faces `want`.
+function solTwist(ha,want){const hq=new THREE.Quaternion();ha.getWorldQuaternion(hq);const ax=new THREE.Vector3(0,1,0).applyQuaternion(hq),cur=new THREE.Vector3(0,0,1).applyQuaternion(hq);
+  const w=want.clone().sub(ax.clone().multiplyScalar(want.dot(ax)));cur.sub(ax.clone().multiplyScalar(cur.dot(ax)));if(w.lengthSq()<1e-8||cur.lengthSq()<1e-8)return;
+  const dq=new THREE.Quaternion().setFromUnitVectors(cur.normalize(),w.normalize()),pq=new THREE.Quaternion();ha.parent.getWorldQuaternion(pq);ha.quaternion.copy(pq.invert().multiply(dq).multiply(hq));ha.updateMatrixWorld(true);}
+// Curl the fingers (and a little of the thumb) toward the palm so the hand closes round the grip / handguard.
+function solCurl(B,side,a){if(!B['hand'+side])return;const pre=(side==='R'?'Right':'Left')+'Hand',q=new THREE.Quaternion(),X=new THREE.Vector3(1,0,0);let sg=0;
+  for(const f of ['Index','Middle','Ring','Pinky'])for(let i=1;i<=3;i++){const b=B[pre+f+i];if(!b)continue;
+    if(!sg){// which way is "toward the palm" for this rig: try +a and keep it if the fingertip moves to the palm side (+z)
+      const tip=B[pre+f+4]||b,ha=B['hand'+side],t0=ha.worldToLocal(tip.getWorldPosition(new THREE.Vector3())).z;b.quaternion.multiply(q.setFromAxisAngle(X,a));b.updateMatrixWorld(true);
+      sg=ha.worldToLocal(tip.getWorldPosition(new THREE.Vector3())).z>=t0?1:-1;if(sg<0)b.quaternion.multiply(q.setFromAxisAngle(X,-2*a));continue;}
+    b.quaternion.multiply(q.setFromAxisAngle(X,sg*a*(i===1?.8:1)));}
+  for(let i=2;i<=3;i++){const b=B[pre+'Thumb'+i];if(b)b.quaternion.multiply(q.setFromAxisAngle(X,sg*.35));}
+  B['hand'+side].updateMatrixWorld(true);}
+// Rifle, in its own frame: +z toward the muzzle, +y up, sizes in units of k (k ~ 1/5 of the soldier's head-to-hips height).
+// Chunky enough to read at battle zoom: receiver, stock, pistol grip, magazine, handguard, barrel, sight. RGRIP / RFORE are
+// where the right palm (on the pistol grip) and the left palm (under the handguard) go.
+const RGRIP=[-.2,-.44,1.0],RFORE=[0,-.4,2.75];
+function solRifle(k){const g=new THREE.Group(),bl=gearMat('#1c1d1c'),wd=gearMat('#3a3228'),mg=gearMat('#2a2b26');
   const bx=(w,h,l,x,y,z,m,rx)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w*k,h*k,l*k),m);q.position.set(x*k,y*k,z*k);if(rx)q.rotation.x=rx;g.add(q);return q;};
-  bx(.34,.5,2.4,0,0,.9,bl);bx(.26,.62,1.4,0,-.12,-1.0,wd,-.12);bx(.2,.7,.34,0,-.55,1.0,bl,.12);bx(.3,.34,1.3,0,.0,2.6,wd);
-  const br=new THREE.Mesh(new THREE.CylinderGeometry(.09*k,.09*k,2.0*k,6),bl);br.rotation.x=Math.PI/2;br.position.set(0,.05*k,4.2*k);g.add(br);bx(.12,.2,.14,0,.36,3.4,bl);return g;}
+  bx(.42,.56,2.4,0,0,.9,bl);bx(.32,.66,1.5,0,-.12,-1.05,wd,-.12);bx(.26,.74,.36,0,-.58,.95,bl,.22);bx(.3,.9,.42,0,-.6,1.75,mg,-.2);bx(.4,.42,1.5,0,-.02,2.7,wd);
+  const br=new THREE.Mesh(new THREE.CylinderGeometry(.1*k,.1*k,1.8*k,6),bl);br.rotation.x=Math.PI/2;br.position.set(0,.04*k,4.3*k);g.add(br);bx(.14,.24,.18,0,.38,3.3,bl);bx(.16,.2,.5,0,.36,.6,bl);return g;}
 function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)return;m.updateWorldMatrix(true,true);const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const V=(x,y,z)=>new THREE.Vector3(x,y,z).applyQuaternion(mq);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});if(!B.head||!B.chest||!B.hips)return;
   const hp=new THREE.Vector3().setFromMatrixPosition(B.head.matrixWorld),hv=new THREE.Vector3().setFromMatrixPosition(B.hips.matrixWorld),k=Math.max(.5,(hp.y-hv.y)/5.2);
-  const cp=new THREE.Vector3().setFromMatrixPosition(B.chest.matrixWorld),fw=new THREE.Vector3(0,0,1);
-  // rifle held low-ready across the chest: grip hand back by the body, support hand out on the handguard
-  const base=cp.clone().add(V(-.15*k,-.95*k,0));
-  const Tr=base.clone().add(V(-.35*k,-.05*k,1.9*k)),Tl=base.clone().add(V(.35*k,.12*k,4.3*k));
-  // character's left is +x (rig faces +z); pull elbows down and a little out
-  solArm(B,'R',Tr,V(-.5,-1,-.2));solArm(B,'L',Tl,V(.6,-1,-.1));
-  if(kind==='hero')return;
-  const attach=(bone,obj,wp)=>{const bq=new THREE.Quaternion(),ws=new THREE.Vector3();bone.getWorldQuaternion(bq);bone.getWorldScale(ws);const p=wp.clone();bone.worldToLocal(p);obj.position.copy(p);obj.quaternion.copy(bq.invert().multiply(mq));obj.scale.set(1/ws.x,1/ws.y,1/ws.z);obj.userData.gear=1;bone.add(obj);};
-  const r=solRifle(k);attach(B.chest,r,base.clone().add(V(-.05*k,.0,.2*k)));
+  const cp=new THREE.Vector3().setFromMatrixPosition(B.chest.matrixWorld);
+  if(kind==='hero'){const base=cp.clone().add(V(-.15*k,-.95*k,0));solArm(B,'R',base.clone().add(V(-.35*k,-.05*k,1.9*k)),V(-.5,-1,-.2));solArm(B,'L',base.clone().add(V(.35*k,.12*k,4.3*k)),V(.6,-1,-.1));return;}
+  // Rifle at low-ready across the body, muzzle a little down. Its frame: the soldier's (faces +z, its left is +x) pitched.
+  const rq=mq.clone().multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0),.16));
+  const attach=(bone,obj,wp,q)=>{const bq=new THREE.Quaternion(),ws=new THREE.Vector3();bone.getWorldQuaternion(bq);bone.getWorldScale(ws);const p=wp.clone();bone.worldToLocal(p);obj.position.copy(p);obj.quaternion.copy(bq.invert().multiply(q||mq));obj.scale.set(1/ws.x,1/ws.y,1/ws.z);obj.userData.gear=1;bone.add(obj);};
+  // the rifle goes on first; the palm spots are read back from it, so the hands follow wherever the rifle really is
+  const rf=solRifle(k);attach(B.chest,rf,cp.clone().add(V(-.18*k,-1.0*k,.15*k)),rq);rf.updateMatrixWorld(true);const RP=a=>rf.localToWorld(new THREE.Vector3(a[0]*k,a[1]*k,a[2]*k)),TR=RP(RGRIP),TL=RP(RFORE);
+  // The hands are posed by their palms, not their wrists (the old pose put the wrists on the grip points, so the hands
+  // floated in front of a rifle hidden under the forearms): a two-bone arm solve aims the wrist, the hand is turned so the
+  // palm faces the rifle (right palm against the grip from the right, left palm up under the handguard), the fingers
+  // close, and the wrist target is corrected by how far the palm still is from its spot (converges in a few passes).
+  const palm=sd=>{const ha=B['hand'+sd],mid=B[(sd==='R'?'Right':'Left')+'HandMiddle1'];const p=mid?mid.position.clone().multiplyScalar(.5):new THREE.Vector3(0,ha.position.length()*.17,0);p.z+=p.length()*.25;return p;};
+  const hand=(sd,T,pole,face)=>{const ha=B['hand'+sd];if(!ha||!B['arm'+sd]||!B['forearm'+sd])return;const P=palm(sd),W=T.clone(),c=new THREE.Vector3();
+    for(let i=0;i<6;i++){solArm(B,sd,W,pole);solTwist(ha,face);c.copy(P).applyMatrix4(ha.matrixWorld);W.add(T.clone().sub(c));}return P;};
+  const PR=hand('R',TR,V(-.5,-1,-.35),V(1,.15,0)),PL=hand('L',TL,V(.7,-1,-.1),V(-.15,1,0));
+  solCurl(B,'R',1.15);solCurl(B,'L',.95);
+  // where the palms belong on the rifle (chest frame) and where the palm sits in each hand (hand frame): orch/walktest.mjs
+  // checks every soldier's palms stay on their spots through idle, walk and jog
+  {const lc=p=>B.chest.worldToLocal(p.clone());m.userData.rg={b:B.chest,k,g:lc(TR),f:lc(TL),pR:PR,pL:PL};}
   if(fac==='DW'){const g=new THREE.Group(),d=new THREE.Mesh(new THREE.SphereGeometry(.98*k*.82,12,8,0,Math.PI*2,0,Math.PI*.58),gearMat('#d9d0b8'));g.add(d);const t=new THREE.Mesh(new THREE.BoxGeometry(.5*k,1.1*k,1.0*k),gearMat('#c9bfa6'));t.position.set(-.55*k,-.55*k,0);g.add(t);const band=new THREE.Mesh(new THREE.TorusGeometry(.8*k,.09*k,6,14),gearMat('#8a2a24'));band.rotation.x=Math.PI/2;band.position.y=.14*k;g.add(band);attach(B.head,g,hp.clone().add(V(0,.55*k,0)));}
   mergeGear(B,key+'|'+fac+'|'+kind+'|'+k.toFixed(3));}
 // Massive columns: every soldier was 7 skinned meshes (rifle, magazine and uniform parts, one per material colour) plus
@@ -11353,9 +11381,14 @@ function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)re
 // into ONE skinned, vertex-coloured mesh per soldier (kit rides its bone as a rigidly skinned part), so a squad costs 3.
 // The merged shape is built once per nation / team colour / unit type and shared by every soldier that looks the same.
 const SOLM={};
-function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false;const sk=[];inner.traverse(o=>{if(o.isSkinnedMesh)sk.push(o);});if(sk.length<2)return false;
+function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false;const sk=[];inner.traverse(o=>{if(o.isSkinnedMesh)sk.push(o);});if(!sk.length)return false;
   const skel=sk[0].skeleton;if(!skel||sk.some(o=>!o.skeleton||o.skeleton.bones.length!==skel.bones.length||o.skeleton.bones.some((b,i)=>b!==skel.bones[i])||Array.isArray(o.material)||!o.geometry.attributes.skinIndex))return false;
   const gear=[];skel.bones.forEach((b,bi)=>{for(const c of b.children)if(c.isMesh&&c.userData.gear&&!c.isSkinnedMesh)gear.push([c,bi]);});
+  // The realistic soldiers are ONE textured skinned mesh, so this used to bail out (nothing to merge) and the rifle stayed a
+  // separate mesh - one more draw call per soldier, hidden when zoomed out past 480 (the default view is 560), so in a real
+  // battle nobody held a rifle. The rifle now joins that mesh too: the texture stays, rifle vertices get a uv far outside
+  // the texture (-4) and the shader takes their colour from the vertex colour alone.
+  if(sk.length<2&&!gear.length)return false;const tex=sk[0].material.map||null;if(sk.some(o=>(o.material.map||null)!==tex||(tex&&!o.geometry.attributes.uv)))return false;
   let E=SOLM[key];
   if(!E){const parts=[];let nv=0,ni=0;const nm=new THREE.Matrix3(),M=new THREE.Matrix4(),v=new THREE.Vector3(),col=new THREE.Color();
     // each part may carry its own inverse-bind matrices (same joints, offset by a constant): fold that offset into its vertices
@@ -11363,21 +11396,24 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
       parts.push({g:o.geometry,M:X.multiply(o.bindMatrix),c:o.material.color||new THREE.Color(1,1,1),sk:true});}
     for(const [c,bi] of gear){c.updateMatrix();parts.push({g:c.geometry,M:new THREE.Matrix4().copy(skel.boneInverses[bi]).invert().multiply(c.matrix),c:c.material.color||new THREE.Color(1,1,1),bi});}
     for(const p of parts){nv+=p.g.attributes.position.count;ni+=p.g.index?p.g.index.count:p.g.attributes.position.count;}
-    const P=new Float32Array(nv*3),N=new Float32Array(nv*3),C=new Float32Array(nv*3),SI=new Uint16Array(nv*4),SW=new Float32Array(nv*4),I=nv>65535?new Uint32Array(ni):new Uint16Array(ni);let ov=0,oi=0;
+    const P=new Float32Array(nv*3),N=new Float32Array(nv*3),C=new Float32Array(nv*3),UV=tex?new Float32Array(nv*2):null,SI=new Uint16Array(nv*4),SW=new Float32Array(nv*4),I=nv>65535?new Uint32Array(ni):new Uint16Array(ni);let ov=0,oi=0;
     for(const p of parts){const g=p.g,pa=g.attributes.position,na=g.attributes.normal,ca=g.attributes.color,n=pa.count;nm.getNormalMatrix(p.M);
       for(let i=0;i<n;i++){v.fromBufferAttribute(pa,i).applyMatrix4(p.M);P[(ov+i)*3]=v.x;P[(ov+i)*3+1]=v.y;P[(ov+i)*3+2]=v.z;
         if(na){v.fromBufferAttribute(na,i).applyMatrix3(nm).normalize();}else v.set(0,1,0);N[(ov+i)*3]=v.x;N[(ov+i)*3+1]=v.y;N[(ov+i)*3+2]=v.z;
         col.copy(p.c);if(ca)col.multiply(new THREE.Color(ca.getX(i),ca.getY(i),ca.getZ(i)));C[(ov+i)*3]=col.r;C[(ov+i)*3+1]=col.g;C[(ov+i)*3+2]=col.b;
+        if(UV){const ua=p.sk&&g.attributes.uv;UV[(ov+i)*2]=ua?ua.getX(i):-4;UV[(ov+i)*2+1]=ua?ua.getY(i):-4;}
         if(p.sk){const a=g.attributes.skinIndex,w=g.attributes.skinWeight;for(let k=0;k<4;k++){SI[(ov+i)*4+k]=a.getComponent(i,k);SW[(ov+i)*4+k]=w.getComponent(i,k);}}else{SI[(ov+i)*4]=p.bi;SW[(ov+i)*4]=1;}}
       if(g.index){const ix=g.index.array;for(let i=0;i<ix.length;i++)I[oi+i]=ix[i]+ov;oi+=ix.length;}else{for(let i=0;i<n;i++)I[oi+i]=ov+i;oi+=n;}ov+=n;}
-    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(P,3));geo.setAttribute('normal',new THREE.BufferAttribute(N,3));geo.setAttribute('color',new THREE.BufferAttribute(C,3));
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(P,3));geo.setAttribute('normal',new THREE.BufferAttribute(N,3));geo.setAttribute('color',new THREE.BufferAttribute(C,3));if(UV)geo.setAttribute('uv',new THREE.BufferAttribute(UV,2));
     geo.setAttribute('skinIndex',new THREE.BufferAttribute(SI,4));geo.setAttribute('skinWeight',new THREE.BufferAttribute(SW,4));geo.setIndex(new THREE.BufferAttribute(I,1));
     // one material for the whole soldier: the uniform's (most triangles among the coloured parts), white so the baked
     // vertex colours show, keeping its weathering shader hook
     let src=sk[0].material,best=-1;for(const o of sk){const c=o.material.color,t=o.geometry.index?o.geometry.index.count:o.geometry.attributes.position.count;if(c&&c.r*.3+c.g*.59+c.b*.11>.02&&t>best){best=t;src=o.material;}}
-    const mat=src.clone();mat.onBeforeCompile=src.onBeforeCompile;mat.customProgramCacheKey=src.customProgramCacheKey;mat.vertexColors=true;if(mat.color)mat.color.setRGB(1,1,1);mat.map=null;
-    E=SOLM[key]={geo,mat};}
-  const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
+    const mat=src.clone();mat.onBeforeCompile=src.onBeforeCompile;mat.customProgramCacheKey=src.customProgramCacheKey;mat.vertexColors=true;if(mat.color)mat.color.setRGB(1,1,1);mat.map=tex;
+    if(tex){const ob=src.onBeforeCompile,ck=src.customProgramCacheKey;mat.onBeforeCompile=(sh,r)=>{if(ob)ob.call(src,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#ifdef USE_MAP\nvec4 sampledDiffuseColor=texture2D(map,vMapUv);if(vMapUv.x<-2.)sampledDiffuseColor=vec4(1.);diffuseColor*=sampledDiffuseColor;\n#endif');};
+      mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
+    E=SOLM[key]={geo,mat,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
+  const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
   if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;

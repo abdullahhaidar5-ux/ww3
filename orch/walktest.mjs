@@ -4,7 +4,9 @@
 // front (support hand ahead of the hips) and any hand motion runs along the walking direction (within 20 degrees once the
 // hands travel more than .15); planted feet don't slide (at most 35% of ground speed); the body never rolls (2 degrees).
 // Soldiers move at real infantry speed. Desktop and phone
-// (390x844), three zoom levels. Usage: node orch/walktest.mjs [--html other.html] [--shots tag]   -> WALKTEST PASS/FAIL
+// (390x844), three zoom levels. Rifle grip: every soldier carries its rifle (merged into its mesh, visible at every zoom)
+// and holds it - right palm on the pistol grip, left palm under the handguard, each within GRIPTOL (x k, the soldier's
+// size unit) while walking/jogging and standing. Usage: node orch/walktest.mjs [--html other.html] [--shots tag]   -> WALKTEST PASS/FAIL
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,7 +18,7 @@ import { guardContext } from './serverdev.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argS = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
-const TAG = argS('shots', '');
+const TAG = argS('shots', ''), QUICK = process.argv.includes('--quick'); // --quick: desktop, first scene, closest zoom only
 const HTML = path.resolve(argS('html', path.join(ROOT, 'index.html')));
 const OUT = path.join(ROOT, 'orch', 'shots', process.env.WALK_SHOTS || 'infantry-walk');
 
@@ -54,6 +56,9 @@ const t0 = Date.now(), secs = () => ((Date.now() - t0) / 1000).toFixed(0) + 's';
 
 async function open(ctxOpts) {
   const ctx = await browser.newContext(ctxOpts); await guardContext(ctx);
+  // test only: the game gives up on a model download after 30 s; on a machine busy with other agents' browsers that drops
+  // the soldier models (stand-ins with no skeleton fail every check). Let downloads finish however long they take.
+  await ctx.addInitScript(() => { const AC = window.AbortController; if (AC) window.AbortController = class extends AC { abort() {} }; });
   const page = await ctx.newPage();
   await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue() : r.abort());
   page.on('pageerror', e => errs.push('page error: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')));
@@ -63,7 +68,7 @@ async function open(ctxOpts) {
   await page.evaluate(() => { window.__stopLoop = true; try { initAudio(); } catch (e) {} try { AU.musicOn = false; AU.sfxOn = false; AU.voiceOn = false; applyAudio(); } catch (e) {} });
   return { ctx, page };
 }
-const TOL = 20;
+const TOL = 20, GRIPTOL = .35; // GRIPTOL: measured max .0x after the fix; the old pose (wrists on the grip spots) was .9-1.6
 // one battle per scene; soldiers of both teams (so all three uniform models: western, eastern, militia)
 const SCENES = [['fulda', 'US', 'RU'], ['fulda', 'DW', 'IR'], ['golan', 'RS', 'EU']];
 const DIRS = [['E', 0], ['S', Math.PI / 2], ['W', Math.PI], ['N', -Math.PI / 2], ['NE', -Math.PI / 4]];
@@ -72,7 +77,13 @@ async function runScene(page, sc, zooms, tagp) {
   const [map, p, a] = sc;
   await page.evaluate(async ([map, p, a]) => {
     if (G) G.over = true; Object.assign(setup, { map, n: 1, p, a, others: [], tm: [], slot: -1, seed: 4242 });
-    startSingle(); const w0 = performance.now(); while (window.LOADING && performance.now() - w0 < 900000) await new Promise(r => setTimeout(r, 100));
+    // On a busy machine the battle can start (after its 40 s cap) before the soldier models are unpacked - soldiers built
+    // then are plain stand-ins with no skeleton - or a download times out (30 s). Wait for both nations' soldier models;
+    // a failed one is retried by starting the battle again.
+    const ready = () => !!(MODELS.proto[solKey(p)] && MODELS.proto[solKey(a)]);
+    for (let tr = 0; tr < 3; tr++) { if (tr) G.over = true; startSingle(); const w0 = performance.now(); while (window.LOADING && performance.now() - w0 < 900000) await new Promise(r => setTimeout(r, 100));
+      while (!ready() && !MODELS.failed.some(k => k === solKey(p) || k === solKey(a)) && performance.now() - w0 < 600000) await new Promise(r => setTimeout(r, 250));
+      if (ready()) break; console.warn('retrying battle: soldier models missing (' + MODELS.failed.slice(0, 5).join(' ') + ')'); }
     G.paused = true; G.ents = G.ents.filter(e => e.isB);
   }, [map, p, a]);
   for (const dist of zooms) {
@@ -87,21 +98,30 @@ async function runScene(page, sc, zooms, tagp) {
       const V = () => new THREE.Vector3(), tmp = V(), deg0 = r => r * 180 / Math.PI;
       const bonesOf = m => { const B = {}; m.userData.inner.traverse(o => { if (o.isBone) B[o.name] = o; }); return B; };
       const wp = b => { b.updateWorldMatrix(true, false); return tmp.setFromMatrixPosition(b.matrixWorld).clone(); };
+      // palms to their rifle spots, in units of k (worst hand); 99 when the soldier has no rifle data or hand bones
+      const grip = q => { const rg = q.m.userData.rg, B = q.B; if (!rg || !rg.pR || !rg.pL || !B.handR || !B.handL) return 99; rg.b.updateWorldMatrix(true, false); B.handR.updateWorldMatrix(true, false); B.handL.updateWorldMatrix(true, false);
+        return Math.max(rg.pR.clone().applyMatrix4(B.handR.matrixWorld).distanceTo(rg.g.clone().applyMatrix4(rg.b.matrixWorld)), rg.pL.clone().applyMatrix4(B.handL.matrixWorld).distanceTo(rg.f.clone().applyMatrix4(rg.b.matrixWorld))) / rg.k; };
+      // the rifle is drawn: merged into the soldier's mesh (gearN vertices), or a visible separate rifle mesh on the chest
+      const rifleOn = q => { let n = 0; q.m.traverse(o => { if (!o.isMesh) return; let v = true; for (let p = o; p; p = p.parent) if (!p.visible) { v = false; break; } if (!v) return; if (o.userData.gearN) n += o.userData.gearN; else if (o.userData.gear && o.parent && o.parent.name === 'chest') n += o.geometry.attributes.position.count; }); return n; };
       const N = 60, dt = 1 / 60; // one second at real infantry speed: more than a full stride
       const S = U.map(({ u }) => { const o = OBJ.get(u.id); const ms = o ? o.userData.parts.body.children.filter(m => m.userData.inner) : [];
-        return { o, u, allIn: true, ms: ms.map(m => ({ m, B: bonesOf(m), f: [[], []], h: [[], []], fw: [[], []], mids: [], roll: 0, fwd: V(), lat: V(), cross: 0, minGap: 1e9 })), p0: o ? wp(o) : null }; });
+        return { o, u, allIn: true, ms: ms.map(m => ({ m, B: bonesOf(m), f: [[], []], h: [[], []], fw: [[], []], mids: [], roll: 0, fwd: V(), lat: V(), cross: 0, minGap: 1e9, gw: 0, gs: 0, rifle: 0 })), p0: o ? wp(o) : null }; });
       for (let k = 0; k < N; k++) { step(dt); for (const s of S) if (!inView(s.u.x, s.u.y, .05)) s.allIn = false;
         for (const s of S) for (const q of s.ms) { const B = q.B; if (!B.footL) continue;
           const hl = wp(B.uplegL), hr = wp(B.uplegR), mid = hl.clone().add(hr).multiplyScalar(.5), fl = wp(B.footL), fr = wp(B.footR);
           q.f[0].push(fl.clone().sub(mid)); q.f[1].push(fr.clone().sub(mid)); q.fw[0].push(fl.clone().setY(fl.y - s.o.position.y)); q.fw[1].push(fr.clone().setY(fr.y - s.o.position.y)); q.mids.push(mid.clone());
           { const up = new THREE.Vector3(0, 1, 0).transformDirection(q.m.matrixWorld), l = hr.clone().sub(hl); l.y = 0; l.normalize(); q.roll = Math.max(q.roll, Math.abs(deg0(Math.asin(Math.max(-1, Math.min(1, up.dot(l))))))); }
           if (B.handL && B.handR) { q.h[0].push(wp(B.handL).sub(mid)); q.h[1].push(wp(B.handR).sub(mid)); }
+          q.gw = Math.max(q.gw, grip(q));
           const lat = hr.clone().sub(hl); lat.y = 0; lat.normalize(); q.lat.add(lat);
           const tl = B.LeftToeBase || B.footL.children.find(c => c.isBone), tr = B.RightToeBase || B.footR.children.find(c => c.isBone);
           if (tl && tr) { const f = wp(tl).sub(fl).add(wp(tr).sub(fr)); f.y = 0; q.fwd.add(f); }
           // signed lateral position of each foot: left must stay left of right (no leg crossing through the other)
           const gl = fl.clone().sub(fr).dot(lat); q.minGap = Math.min(q.minGap, -gl);
         } }
+      for (const s of S) for (const q of s.ms) q.rifle = rifleOn(q);
+      // stand still (no new u.mv: the walk blends out into idle breathing), then measure the grip again
+      for (let k = 0; k < 45; k++) { G.t += dt; for (const { u, d } of U) { u.ang = u.va = d; u.target = null; } G.alpha = 1; placeCam(); syncScene(dt); if (k > 30) for (const s of S) for (const q of s.ms) q.gs = Math.max(q.gs, grip(q)); }
       const deg = r => r * 180 / Math.PI;
       const out = [];
       U.forEach(({ u, nm, t }, j) => { const s = S[j]; if (!s.o) { out.push({ nm, t, err: 'no 3D object' }); return; }
@@ -133,17 +153,18 @@ async function runScene(page, sc, zooms, tagp) {
           for (const F of q.fw) { const lo = Math.min(...F.map(v => v.y)); for (let i = 1; i < F.length; i++) if (F[i].y < lo + .3 && F[i - 1].y < lo + .3) sl.push(Math.hypot(F[i].x - F[i - 1].x, F[i].z - F[i - 1].z) / Math.max(1e-6, gsp)); }
           sl.sort((x, y) => x - y); slip = sl.length ? sl[sl.length >> 1] : 1; ns = sl.length;
           const fa = Math.atan2(q.fwd.z, q.fwd.x); let fe = Math.abs(deg(Math.atan2(Math.sin(fa - md), Math.cos(fa - md))));
-          out.push({ nm, t, fac: G.teams[t].fac, swing: +sw.toFixed(1), face: +fe.toFixed(1), amp: +amp.toFixed(2), gap: +q.minGap.toFixed(2), aswing: +asw.toFixed(1), aamp: +aamp.toFixed(2), hf: +hf.toFixed(2), slip: +slip.toFixed(2), roll: +q.roll.toFixed(1), anim: !!q.m.userData.legs });
+          out.push({ nm, t, fac: G.teams[t].fac, swing: +sw.toFixed(1), face: +fe.toFixed(1), amp: +amp.toFixed(2), gap: +q.minGap.toFixed(2), aswing: +asw.toFixed(1), aamp: +aamp.toFixed(2), hf: +hf.toFixed(2), slip: +slip.toFixed(2), roll: +q.roll.toFixed(1), anim: !!q.m.userData.legs, real: !!MODELS.proto[solKey(G.teams[t].fac)], rg: !!q.m.userData.rg, gw: +q.gw.toFixed(2), gs: +q.gs.toFixed(2), rifle: q.rifle });
         } });
-      return { dist, out };
+      return { dist, out, off: S.filter(s => !s.allIn).length, norig: S.filter(s => s.o && !s.ms.length).length, cam: [cam.x, cam.y, cam.dist].map(Math.round).join(',') };
     }, [dist, DIRS]);
     const moving = dist < 760; // legs animate only when near enough (far away they stand still, by design)
     for (const r of res.out) {
       const bad = r.err ? r.err : !moving ? '' : [r.swing > TOL && `legs swing ${r.swing}° off the walking direction`, r.face > TOL && `body faces ${r.face}° off`, r.gap < 0 && 'feet cross', r.amp < .8 && `stride too small (${r.amp})`, r.aswing > TOL && `arms/rifle sway ${r.aswing}° off the walking direction`, r.hf < 1 && `rifle not carried in front (support hand ${r.hf} ahead of hips)`, r.slip > .35 && `feet slide (${r.slip} of ground speed)`, r.roll > 2 && `body rolls sideways ${r.roll}°`, !r.anim && 'no walk rig'].filter(Boolean).join(', ');
-      if (bad) { fails++; lines.push(`FAIL ${tagp} ${map} ${r.fac} ${r.nm} zoom ${dist}: ${bad}`); }
+      const gbad = r.err ? '' : [!r.rifle && 'rifle missing', r.real && !r.rg && 'no rifle grip data', r.rg && r.gw > GRIPTOL && `hands off the rifle while moving (${r.gw} k)`, r.rg && r.gs > GRIPTOL && `hands off the rifle standing (${r.gs} k)`].filter(Boolean).join(', ');
+      if (bad || gbad) { fails++; lines.push(`FAIL ${tagp} ${map} ${r.fac} ${r.nm} zoom ${dist}: ${[bad, gbad].filter(Boolean).join(', ')}`); }
     }
-    const w = res.out.filter(r => !r.err); if (w.length < (tagp === 'phone' && dist < 300 ? 8 : 12)) { fails++; lines.push(`FAIL ${tagp} ${map} zoom ${dist}: only ${w.length} soldiers on screen`); } const mx = k => Math.max(...w.map(r => r[k]));
-    console.log(`[${secs()}] ${tagp} ${map}:${p}/${a} zoom ${dist}: ${w.length} soldiers, worst swing ${mx('swing')}°, worst facing ${mx('face')}°, min stride ${Math.min(...w.map(r => r.amp))}, min foot gap ${Math.min(...w.map(r => r.gap))}, arms: worst swing ${mx('aswing')}°, hand travel ${Math.min(...w.map(r => r.aamp))}-${mx('aamp')}, support hand ahead ${Math.min(...w.map(r => r.hf))}, foot slip ${mx('slip')}, body roll ${mx('roll')}°`);
+    const w = res.out.filter(r => !r.err); if (w.length < (tagp === 'phone' && dist < 300 ? 8 : 12)) { fails++; lines.push(`FAIL ${tagp} ${map} zoom ${dist}: only ${w.length} soldiers on screen (${res.off} squads off screen, ${res.norig} without a skinned soldier, camera ${res.cam})`); } const mx = k => Math.max(...w.map(r => r[k]));
+    console.log(`[${secs()}] ${tagp} ${map}:${p}/${a} zoom ${dist}: ${w.length} soldiers, worst swing ${mx('swing')}°, worst facing ${mx('face')}°, min stride ${Math.min(...w.map(r => r.amp))}, min foot gap ${Math.min(...w.map(r => r.gap))}, arms: worst swing ${mx('aswing')}°, hand travel ${Math.min(...w.map(r => r.aamp))}-${mx('aamp')}, support hand ahead ${Math.min(...w.map(r => r.hf))}, foot slip ${mx('slip')}, body roll ${mx('roll')}°, grip moving ${Math.max(0, ...w.filter(r => r.rg).map(r => r.gw))} standing ${Math.max(0, ...w.filter(r => r.rg).map(r => r.gs))} k, rifle on ${w.filter(r => r.rifle).length}/${w.length}`);
     if (dir && dist === zooms[0] && !process.env.NOSNAP) await snap(page, `${tagp}-${map}-${p}`, dist);
   }
 }
@@ -159,7 +180,7 @@ async function snap(page, name) {
 try {
   for (const [tagp, opts, zooms, scenes] of [
     ['desktop', { viewport: { width: 1280, height: 720 } }, [232, 450, 700], SCENES],
-    ['phone', { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, [232, 600], SCENES.slice(0, 2)]]) {
+    ['phone', { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, [232, 600], SCENES.slice(0, 2)]].slice(0, QUICK ? 1 : 2).map(r => QUICK ? [r[0], r[1], [232], r[3].slice(0, 1)] : r)) {
     const { ctx, page } = await open(opts);
     for (const sc of scenes) await runScene(page, sc, zooms, tagp);
     await ctx.close();
