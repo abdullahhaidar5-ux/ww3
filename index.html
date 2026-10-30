@@ -6342,6 +6342,7 @@ function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.aband)return updAband(u
     if(u.amb&&!o&&u.guard&&Math.hypot(t.x-u.guard.x,t.y-u.guard.y)-t.r>rngOf(u)+50){u.target=null;if(Math.hypot(u.x-u.guard.x,u.y-u.guard.y)>24)setMove(u,u.guard.x,u.guard.y,'move');return;}
     const d=Math.hypot(t.x-u.x,t.y-u.y)-t.r,R=rngOf(u);
     if(d>R&&u.st>=2&&!o){u.target=null;return;}/* Hold / Guerrilla: fire only at what is in range, never chase */
+    if(u.st===3&&!o&&d>R*.6&&!(u.lastHit>G.t-1.5)){u.target=null;return;}/* Guerrilla never keeps a target beyond its close range (one set before the stance changed, or by an aid/AI path) unless it was just hit */
     if(d>R){if(o&&o.type==='move'){u.target=null;navTo(u,o.x,o.y,dt,true);return;}navTo(u,t.x,t.y,dt);return;}
     if(!['tank','arty','aa','ship','boat'].includes(s.cls))u.ang=Math.atan2(t.y-u.y,t.x-u.x);
     if(s.minr&&d<s.minr){if(s.dom!=='naval')stepTo(u,u.x*2-t.x,u.y*2-t.y,dt);return;}
