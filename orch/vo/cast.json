@@ -33,20 +33,20 @@
   "eng": "xtts",
   "lang": "ko",
   "sold": [
-   "Zacharie Aimilios",
-   "Luis Moray"
+   "Ferran Simen",
+   "Viktor Menelaos"
   ],
-  "cmd": "Luis Moray",
+  "cmd": "Kazuhiko Atallah",
   "most": 12
  },
  "KP": {
   "eng": "xtts",
   "lang": "ko",
   "sold": [
-   "Damien Black",
-   "Baldur Sanjin"
+   "Kazuhiko Atallah",
+   "Aaron Dreschner"
   ],
-  "cmd": "Luis Moray",
+  "cmd": "Gilberto Mathias",
   "most": 12
  },
  "IN": {
@@ -88,32 +88,32 @@
   "eng": "xtts",
   "lang": "es",
   "sold": [
-   "Damien Black",
-   "Kazuhiko Atallah",
-   "Filip Traverse"
+   "Aaron Dreschner",
+   "Dionisio Schuyler",
+   "Damjan Chapman"
   ],
-  "cmd": "Wulf Carlevaro"
+  "cmd": "Gilberto Mathias"
  },
  "EU": {
   "eng": "xtts",
   "lang": "fr",
   "sold": {
    "fr": [
-    "Ilkin Urbano",
-    "Viktor Menelaos"
+    "Damjan Chapman",
+    "Aaron Dreschner"
    ],
    "de": [
-    "Damien Black",
-    "Marcos Rudaski"
+    "Damjan Chapman",
+    "Kazuhiko Atallah"
    ],
    "en": [
-    "Ferran Simen",
-    "Zacharie Aimilios"
+    "Torcull Diarmuid",
+    "Luis Moray"
    ]
   },
   "cmd": {
-   "fr": "Wulf Carlevaro",
-   "de": "Ludvig Milivoj",
+   "fr": "Luis Moray",
+   "de": "Gilberto Mathias",
    "en": "Viktor Menelaos"
   }
  },
@@ -121,10 +121,10 @@
   "eng": "xtts",
   "lang": "zh-cn",
   "sold": [
-   "Kazuhiko Atallah",
-   "Ilkin Urbano",
-   "Ludvig Milivoj"
+   "Aaron Dreschner",
+   "Gilberto Mathias",
+   "Damjan Chapman"
   ],
-  "cmd": "Gilberto Mathias"
+  "cmd": "Viktor Menelaos"
  }
 }

@@ -2,7 +2,16 @@
 # give nations sharing a language different soldier voices where possible; commander = next best
 import json,sys
 c=json.load(open('cast.json'))
-def rank(l): return [x['spk'] for x in sorted(json.load(open('/home/claude/vowork/aud_'+l+'.json')),key=lambda x:-(x['p808']+0.8*x['tough']-2*x['cer']))]
+import os
+def rank(l):
+    if not os.path.exists('/home/claude/vowork/aud_'+l+'.json'):   # not auditioned: mean rank over all languages
+        S={}
+        for f in os.listdir('/home/claude/vowork'):
+            if f.startswith('aud_') and f.endswith('.json'):
+                for x in json.load(open('/home/claude/vowork/'+f)):
+                    if x['spk'] in json.load(open('/home/claude/vowork/cand.json')): S.setdefault(x['spk'],[]).append(x['p808']+0.8*x['tough']-2*x['cer'])
+        return sorted(S,key=lambda k:-sum(S[k])/len(S[k]))
+    return [x['spk'] for x in sorted(json.load(open('/home/claude/vowork/aud_'+l+'.json')),key=lambda x:-(x['p808']+0.8*x['tough']-2*x['cer']))]
 def put(nats,l,n):
     r=rank(l);i=0
     for f in nats:
