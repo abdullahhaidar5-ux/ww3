@@ -1,5 +1,8 @@
 # Handoff: orch/voices-tough ("Tougher." pass, 2026-10-30)
 
+STATUS 2026-10-30 15:15 UTC: ALL 18 nations DONE at the final settings (CER gate 0.12; IR redone at 129d811 with
+the old Persian pace). CIGATE PASS 17/17. Only remaining: Abdullah's listen, then merge to main. Older notes below.
+
 Status is in the git log: one commit per nation, "Voices: XX soldiers sound tougher still". A nation is DONE at the
 new level only if its LAST such commit came after commit "tough2: tighter clarity gate" (CER_OK 0.12) — earlier ones
 (RS, DW, IR, UA, IL first runs) used the looser 0.2 gate and are queued to be redone.
