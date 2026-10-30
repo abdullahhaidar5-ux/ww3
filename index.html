@@ -6732,19 +6732,43 @@ const LUX=Math.PI;
 (function legacyFalloff(){const C=THREE.ShaderChunk,k='lights_pars_begin',a=C[k].indexOf('float getDistanceAttenuation('),b=a<0?-1:C[k].indexOf('\n}',a);
   if(a<0||b<0){console.warn('three: point-light falloff not patched (shader chunk changed)');return;}
   C[k]=C[k].slice(0,a)+'float getDistanceAttenuation(const in float lightDistance,const in float cutoffDistance,const in float decayExponent){\n\tif(cutoffDistance>0.0&&decayExponent>0.0)return pow(saturate(-lightDistance/cutoffDistance+1.0),decayExponent);\n\treturn 1.0;'+C[k].slice(b);})();
-function initGfx(){
+// The renderer on a canvas. A graphics context the browser takes away (Safari on iPhone does when the GPU runs out of
+// memory or one frame takes too long) and doesn't give back within 2.5 s is replaced: a new renderer on a fresh canvas
+// over the old one (input stays on the old canvas below), one quality step lower (phones: Low); the scene, models and
+// battle are kept, three.js uploads everything again. If that fails too, a message with "Try again with low graphics".
+const GLREC={n:0,t:null};
+function mkR3(canvas){const PH=typeof gfxPhone==='function'&&gfxPhone();
   // phones on Auto/Medium/Low: no multisampled screen buffer (the picture is already smoothed in the post-processing pass,
   // which draws into its own multisampled target), a 1024 shadow map instead of 2048 and plain (not soft) shadow edges
-  const PH=typeof gfxPhone==='function'&&gfxPhone();
-  R3=new THREE.WebGLRenderer({canvas:cv,antialias:!PH,powerPreference:'high-performance'});
+  const r=new THREE.WebGLRenderer({canvas,antialias:!PH&&!GLREC.n,powerPreference:'high-performance'});
 // One object that cannot be drawn must never stop the whole frame (that froze the picture while the battle went on):
 // skip it, hide it and keep drawing everything else.
-{const rbd=R3.renderBufferDirect.bind(R3);let nErr=0;R3.renderBufferDirect=function(cam,scene,geo,mat,obj,grp){try{return rbd(cam,scene,geo,mat,obj,grp);}catch(e){if(obj)obj.visible=false;if(nErr++<5){let q=obj,path=[];while(q&&path.length<6){path.push((q.name||'')+':'+q.type);q=q.parent;}console.warn('skipped an object that failed to draw: '+(e&&e.message)+' | '+(mat&&mat.type)+' '+(mat&&mat.name||'')+' map='+!!(mat&&mat.map)+' env='+!!(mat&&mat.envMap)+' ud='+Object.keys((mat&&mat.userData)||{}).join('/')+' | '+path.join(' < ')+' @ '+String(e&&e.stack||'').split('\n').slice(1,4).map(x=>x.trim()).join(' / '));}}};}
-  cv.addEventListener('webglcontextlost',e=>{e.preventDefault();window.GLLOST=1;try{pushLog('Graphics were reset by the browser; restoring…','w');}catch(_){}
-    // not back within 4 s (phones that ran out of graphics memory never restore): offer a reload with low graphics instead of a frozen screen
-    setTimeout(()=>{if(!window.GLLOST||document.getElementById('glLostOv'))return;try{if(SET.gfx!=='low'){SET.gfx='low';saveSet();}}catch(_){}const d=document.createElement('div');d.id='glLostOv';d.style.cssText='position:fixed;inset:0;z-index:90;background:rgba(6,10,8,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center;color:#dde5df;font:15px/1.4 -apple-system,sans-serif';d.innerHTML='<div style="font:700 22px \'Saira Condensed\',sans-serif;letter-spacing:.04em;text-transform:uppercase">Graphics need a restart</div><div>This device ran out of graphics memory. The game switched to low graphics.</div>';const bt=document.createElement('button');bt.textContent='Restart with low graphics';bt.style.cssText='background:#e3b341;color:#17130a;border:0;padding:12px 22px;font:700 17px sans-serif;cursor:pointer';bt.onclick=()=>location.reload();d.append(bt);document.body.append(d);},4000);},false);
-  cv.addEventListener('webglcontextrestored',()=>{window.GLLOST=0;try{for(const o of OBJ.values())SCN.remove(o);OBJ.clear();for(const k in GEO)delete GEO[k];if(G&&G.terrain)buildWorld();}catch(err){console.warn(err);}},false);
-  R3.outputColorSpace=THREE.SRGBColorSpace;R3.toneMapping=THREE.NoToneMapping;R3.shadowMap.enabled=true;R3.shadowMap.autoUpdate=false;/* shadows are drawn once per frame, for the main pass only (renderPost) - not again for the depth pre-pass */R3.shadowMap.type=THREE.PCFShadowMap;/* r186: PCF = 5 filtered taps spread over shadow.radius texels (PCFSoftShadowMap is gone) */R3.autoClear=true;
+{const rbd=r.renderBufferDirect.bind(r);let nErr=0;r.renderBufferDirect=function(cam,scene,geo,mat,obj,grp){try{return rbd(cam,scene,geo,mat,obj,grp);}catch(e){if(obj)obj.visible=false;if(nErr++<5){let q=obj,path=[];while(q&&path.length<6){path.push((q.name||'')+':'+q.type);q=q.parent;}console.warn('skipped an object that failed to draw: '+(e&&e.message)+' | '+(mat&&mat.type)+' '+(mat&&mat.name||'')+' map='+!!(mat&&mat.map)+' env='+!!(mat&&mat.envMap)+' ud='+Object.keys((mat&&mat.userData)||{}).join('/')+' | '+path.join(' < ')+' @ '+String(e&&e.stack||'').split('\n').slice(1,4).map(x=>x.trim()).join(' / '));}}};}
+  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();if(r!==R3)return;window.GLLOST=1;console.warn('WebGL context lost'+(window.LOADING?' during loading':''));try{pushLog('Graphics were reset by the browser; restoring…','w');}catch(_){}
+    clearTimeout(GLREC.t);GLREC.t=setTimeout(()=>glRecover(false),2500);},false);
+  canvas.addEventListener('webglcontextrestored',()=>{if(r!==R3)return;clearTimeout(GLREC.t);console.warn('WebGL context restored');window.GLLOST=0;try{for(const o of OBJ.values())SCN.remove(o);OBJ.clear();for(const k in GEO)delete GEO[k];if(G&&G.terrain)buildWorld();}catch(err){console.warn(err);}},false);
+  r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.NoToneMapping;r.shadowMap.enabled=true;r.shadowMap.autoUpdate=false;/* shadows are drawn once per frame, for the main pass only (renderPost) - not again for the depth pre-pass */r.shadowMap.type=THREE.PCFShadowMap;/* r186: PCF = 5 filtered taps spread over shadow.radius texels (PCFSoftShadowMap is gone) */r.autoClear=true;
+  return r;}
+function glRecover(manual){if(!window.GLLOST&&!manual)return;clearTimeout(GLREC.t);GLREC.n++;
+  if(GLREC.n>2&&!manual){glFail();return;}
+  try{// one quality step down for the rest of this visit (not saved; phones go straight to Low)
+    const ph=typeof GFX_PHONE!=='undefined'&&GFX_PHONE;SET.gfx=manual||ph?'low':({auto:'med',high:'med',med:'low'}[SET.gfx]||'low');
+    const old=R3,oc=old&&old.domElement;R3=null;try{old.dispose();}catch(e){}
+    const nc=glCanvas(oc);R3=mkR3(nc);try{const gl=R3.getContext();if(!gl||gl.isContextLost())throw new Error('no context');}catch(e){throw e;}
+    if(oc&&oc!==cv)oc.remove();window.GLLOST=0;
+    try{applyGfx();}catch(e){}try{resize();}catch(e){}
+    console.warn('graphics restarted on a new canvas ('+SET.gfx+' quality)');try{pushLog('Graphics restarted at low quality to keep the battle running.','w');}catch(_){}
+    const f=document.getElementById('gfxFail');if(f)f.remove();return true;}
+  catch(e){console.warn('graphics restart failed',e);R3=null;window.GLLOST=1;glFail();return false;}}
+function glCanvas(after){const nc=document.createElement('canvas');nc.className='gl3';nc.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block';(after||cv).after(nc);return nc;}
+function glFail(){if(document.getElementById('gfxFail'))return;const d=document.createElement('div');d.id='gfxFail';d.setAttribute('role','alert');
+  d.style.cssText='position:fixed;inset:0;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;background:rgba(10,13,11,.94);color:#e8e2d0;font:500 17px/1.45 sans-serif;text-align:center';
+  d.innerHTML='<div>Graphics stopped working on this device (it ran out of graphics memory).</div>';
+  const b=document.createElement('button');b.textContent='Try again with low graphics';b.style.cssText='font:700 17px sans-serif;padding:14px 22px;min-height:48px;border:0;border-radius:6px;background:#e3b341;color:#111';
+  b.onclick=()=>{try{SET.gfx='low';saveSet();}catch(e){}GLREC.n=0;if(!glRecover(true)){try{location.reload();}catch(e){}}};d.append(b);document.body.append(d);}
+function initGfx(){const PH=typeof gfxPhone==='function'&&gfxPhone();
+  // after a lost graphics context the game canvas can't get a new one: draw on a fresh canvas over it
+  {const old=document.querySelector('canvas.gl3');R3=mkR3(GLREC.n?glCanvas(old):cv);if(old&&GLREC.n)old.remove();}
   SCN=new THREE.Scene();SCN.background=lin('#c7b493');SCN.fog=new THREE.Fog(lin('#8f8a70'),1800,6200);
   window.SKY=new THREE.Mesh(new THREE.SphereGeometry(7600,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{t:{value:0},hor:{value:new THREE.Vector3(.86,.78,.64)},zen:{value:new THREE.Vector3(.30,.50,.80)}},
     vertexShader:`varying vec3 vd;void main(){vd=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
@@ -7692,6 +7716,44 @@ function warmShaders(){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0
   SCN.add(grp);try{if(typeof placeCam==='function')placeCam();const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}R3.compile(SCN,CAM);if(typeof renderPost==='function'){CAM.updateMatrixWorld();renderPost();}R3.setRenderTarget(null);if(!post)R3.render(SCN,CAM);}catch(e){console.warn('shader warm-up',e);}SCN.remove(grp);SHOCKS.forEach((S,i)=>{S.m.position.copy(shk[i][0]);S.m.scale.setScalar(shk[i][1]);S.m.material.opacity=shk[i][2];});
   console.log('shader warm-up',Math.round(performance.now()-t0)+' ms, '+grp.children.length+' objects');}
 
+// Phones: the same warm-up, but light and spread over frames, so a phone never sits for a minute on one frame (Safari on
+// iPhone compiles shaders slowly and can drop the whole graphics context after one huge frame): only the models of the
+// nations in this battle, only the player's own team variant (team colour is a shader input, not a separate shader),
+// burnt wreck variants once per kind of material, a few models per frame with progress on the loading screen, a texture
+// memory budget, and a stop flag the loading watchdog sets (whatever isn't prepared then is prepared when first seen).
+// onProg(done,total) reports progress. Resolves when done or stopped.
+async function warmShadersPhone(onProg,stop){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0=performance.now();
+  const [bx,by]=BASES[ME]||[MAPW/2,MAPH/2],T=G.teams[ME],gy=groundH(bx,by);
+  const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};
+  const want=new Set(typeof modelKeysFor==='function'?modelKeysFor(G.teams.map(q=>q.fac)):[]);
+  const keys=Object.keys(MODELS.proto||{}).filter(k=>!want.size||want.has(k));
+  const sig=new Set(),texSeen=new Set();let texB=0;const TEXMAX=192*1048576;let nObj=0,nBatch=0;
+  const frame=()=>new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,120);});
+  const upTex=o=>o.traverse(c=>{if(!c.isMesh)return;for(const m of (Array.isArray(c.material)?c.material:[c.material]))for(const p of ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap']){const t=m&&m[p];if(!t||texSeen.has(t))continue;texSeen.add(t);
+    const im=t.image||{},b=(im.width||0)*(im.height||0)*4*1.33;if(texB+b>TEXMAX)continue;texB+=b;try{R3.initTexture(t);}catch(e){}}});
+  const BATCH=4;
+  for(let i=0;i<keys.length;i+=BATCH){if(stop&&stop())break;if(window.GLLOST)break;const grp=new THREE.Group();grp.position.set(bx,gy,by);
+    for(const k of keys.slice(i,i+BATCH)){let o=null;try{o=instModel(k,T,'y',12);}catch(e){}if(!o)continue;o.traverse(c=>{c.frustumCulled=false;if(c.isMesh)c.castShadow=true;});grp.add(o);
+      // a burnt copy only for a kind of material not seen yet (most wrecks share a handful of burnt shaders)
+      let s='';o.traverse(c=>{if(c.isMesh&&!c.isSkinnedMesh){const m=Array.isArray(c.material)?c.material[0]:c.material;if(m)s+=m.type+(m.map?'m':'')+(m.normalMap?'n':'')+(m.vertexColors?'v':'')+'|';}});
+      if(s&&!sig.has(s)){sig.add(s);try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});grp.add(w);}catch(e){}}}
+    nObj+=grp.children.length;nBatch++;SCN.add(grp);
+    try{const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}
+      // compileAsync uses the browser's background shader compiling where it has it; the watchdog below never lets
+      // a program that never reports ready hold the loading screen
+      const p=R3.compileAsync(grp,CAM,SCN);R3.setRenderTarget(null);
+      await Promise.race([p,new Promise(r=>setTimeout(r,4000))]);upTex(grp);}catch(e){console.warn('phone warm-up',e);}
+    SCN.remove(grp);if(onProg)try{onProg(Math.min(keys.length,i+BATCH),keys.length);}catch(e){}await frame();}
+  // the merged one-mesh soldier and the shared plain materials
+  if(!(stop&&stop())&&!window.GLLOST){const grp=new THREE.Group();grp.position.set(bx,gy,by);
+    try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac))grp.add(o);}}catch(e){}
+    try{grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);gg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(gg.attributes.position.count*3).fill(.5),3));grp.add(new THREE.Mesh(gg,gm));grp.add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
+    grp.traverse(c=>{c.frustumCulled=false;});SCN.add(grp);
+    // and the battlefield itself (ground, scenery, buildings), drawn into the post-processing target as in the battle
+    try{if(typeof placeCam==='function')placeCam();const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}const p=R3.compileAsync(SCN,CAM);R3.setRenderTarget(null);await Promise.race([p,new Promise(r=>setTimeout(r,6000))]);}catch(e){console.warn('phone warm-up',e);}
+    SCN.remove(grp);}
+  console.log('shader warm-up (phone)',Math.round(performance.now()-t0)+' ms, '+keys.length+' models, '+nObj+' objects in '+nBatch+' steps, textures '+Math.round(texB/1048576)+' MB'+(stop&&stop()?' (stopped by the loading watchdog)':''));}
+
 /* ---------- GPU memory clean-up ----------
    Units, wrecks, rubble and effects create their own small shapes (selection rings, contact shadows, soldier kit,
    rotors, flags, debris...). Removing an object from the scene does not free its GPU buffers, so a long battle kept
@@ -7724,7 +7786,9 @@ function qualTick(dt){if(!(dt>0))return;QUAL.dts.push(dt);if(QUAL.dts.length>180
 function applyQual(){POST.aoOn=QUAL.lv<2;resize();}
 function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1)*(((()=>{try{return GFX_PHONE;}catch(e){return false;}})())?Math.max(.85,QUAL.caps[QUAL.lv]):QUAL.caps[QUAL.lv]);/* phones stay sharp (Abdullah 2026-10-29: Low looked bad); they save on effects instead */VW=Math.max(1,r.width);VH=Math.max(1,r.height);
   if(R3){R3.setPixelRatio(dpr);R3.setSize(VW,VH,false);if(POST.rt)sizePost();CAM.aspect=VW/VH;CAM.updateProjectionMatrix();}hud.width=Math.round(VW*dpr);hud.height=Math.round(VH*dpr);}
-function placeCam(){const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/(600-230))),p=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d)));cam.x=Math.max(0,Math.min(MAPW,cam.x));cam.y=Math.max(60+cam.dist*.5,Math.min(MAPH+120,cam.y));cam.x=Math.max(cam.dist*.55,Math.min(MAPW-cam.dist*.55,cam.x));
+// the player can pull the camera higher (ZMAX) and tilt it (cam.tilt: Shift+wheel, Page Up/Down, two fingers up/down) - Abdullah 2026-10-29
+const ZMAX=2600;function tiltBy(v){cam.tilt=Math.max(-.32,Math.min(.62,(cam.tilt||0)+v));}
+function placeCam(){const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/(600-230)));let p=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d)));p=Math.max(.22,Math.min(1.42,p+(cam.tilt||0)));if(typeof SCN!=='undefined'&&SCN&&SCN.fog){const f=SCN.fog;if(f._set!==f.near){f.n0=f.near;f.f0=f.far;}const ex=Math.max(0,d-1400)*1.2;f.near=f.n0+ex;f.far=f.f0+ex;f._set=f.near;}/* zoomed far out, push the haze back so the battlefield stays clear */cam.x=Math.max(0,Math.min(MAPW,cam.x));cam.y=Math.max(Math.min(60+cam.dist*.5,MAPH/2),Math.min(MAPH+120,cam.y));{const lo=Math.min(cam.dist*.55,MAPW/2);cam.x=Math.max(lo,Math.min(MAPW-lo,cam.x));}
   const sx=shake>.3?rnd(-shake,shake):0,sy=shake>.3?rnd(-shake,shake):0;
   CAM.position.set(cam.x+sx,Math.sin(p)*d,cam.y+Math.cos(p)*d+sy);CAM.lookAt(cam.x+sx,0,cam.y+sy);CAM.updateMatrixWorld();if(window.SKY)SKY.position.copy(CAM.position);
   SUN.position.set(cam.x+SUNOFF[0],SUNOFF[1],cam.y+SUNOFF[2]);SUN.target.position.set(cam.x,0,cam.y);const hs=Math.max(380,d*1.05),sc=SUN.shadow.camera;if(sc.right!==hs){sc.left=-hs;sc.right=hs;sc.top=hs;sc.bottom=-hs;sc.updateProjectionMatrix();}
@@ -8731,7 +8795,7 @@ function pickAt(sx,sy,own){let best=null,bd=1e9;for(const e of G.ents){if(e.dead
 function fieldAt(w){const i=G.fields.findIndex(f=>Math.hypot(f.x-w.x,f.y-w.y)<f.r+10);return i;}
 cv.addEventListener('mouseenter',e=>{mpos(e);mouse.in=true;});cv.addEventListener('mouseleave',()=>{mouse.in=false;});
 cv.addEventListener('mousemove',e=>{mpos(e);});
-cv.addEventListener('wheel',e=>{e.preventDefault();const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(1800,cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}},{passive:false});
+cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(ZMAX,cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}},{passive:false});
 function issueCmd(w,t,rally){
     {const x=exitIntent(t,MODK.alt);if(x)return doExit(x,w,t);}
     const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
@@ -8928,7 +8992,7 @@ function touchDown(e){TCH.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cv.setP
   return false;}
 function touchMove(e){if(!TCH.has(e.pointerId))return false;TCH.set(e.pointerId,{x:e.clientX,y:e.clientY});if(!PINCH||TCH.size<2)return false;
   const m=tMid(),P=PINCH;camTarget();
-  if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(1800,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
+  if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(ZMAX,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
   const a=screenToWorld(P.x,P.y),b=screenToWorld(m.x,m.y);if(a&&b){cam.tx+=a.x-b.x;cam.ty+=a.y-b.y;}
   PINCH={x:m.x,y:m.y,d:m.d};return true;}
 function touchUp(e){TCH.delete(e.pointerId);if(TCH.size<2)PINCH=null;
@@ -8962,7 +9026,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='x'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
   if(k==='r'&&!e.ctrlKey&&!e.metaKey){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length){doAct({t:'ret',ids});speak(2);}}
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
-  if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(1800,cam.td*1.15);}
+  if(e.key==='PageUp'){tiltBy(-.06);e.preventDefault();}if(e.key==='PageDown'){tiltBy(.06);e.preventDefault();}if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(ZMAX,cam.td*1.15);}
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();updateUI();});
 window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
 window.addEventListener('blur',()=>{MODK.ctrl=MODK.alt=MODK.shift=false;});
@@ -9019,7 +9083,7 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
   .game button,.joinrow .big,.joinrow input{min-height:40px}
 }`;document.body.append(st);}
-const HINT_TOUCH='Tap: select · tap ground: move · tap enemy: attack · drag: scroll · pinch: zoom';/* one short line on phones (Abdullah 2026-10-29: the long hint covered the battlefield); the full guide is in ☰ > Touch controls */
+const HINT_TOUCH='Tap: select · tap ground: move · tap enemy: attack · drag: scroll · pinch: zoom · two fingers up/down: tilt';/* one short line on phones (Abdullah 2026-10-29: the long hint covered the battlefield); the full guide is in ☰ > Touch controls */
 function touchUI(){TOUCHUI=true;HINTDEV='touch';document.body.classList.add('touchui');setHint();try{updateUI();}catch(e){}}
 // on touch: the banner says how to place, and tapping it cancels; the long hint steps aside after the opening
 function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: tap a spot (drag scrolls), then ✓ Build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target')+', then ✓ Fire':(md.dataset.d||'').replace(/click/g,'tap');
@@ -9111,7 +9175,9 @@ window.addEventListener('pointerdown',e=>{TC.touch=e.pointerType==='touch';TC.nd
 window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')TC.nm=(TC.nm||0)+1;if(e.pointerType!=='touch'||!TC.ids.has(e.pointerId))return;e.stopPropagation();if(!G)return;
   const p=tcXY(e),q=TC.ids.get(e.pointerId);TC.ids.set(e.pointerId,p);
   if(TC.pinch&&TC.ids.size>=2){const m=tcMid(),P=TC.pinch;camTarget();
-    if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(1800,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
+    if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(ZMAX,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
+    // two fingers moving up/down together (not pinching) tilt the camera; sideways they still pan
+    {const dy=m.y-P.y,dd=Math.abs(m.d-P.d);if(Math.abs(dy)>Math.abs(m.x-P.x)&&dd<Math.abs(dy)*.6){tiltBy(dy*.004);TC.pinch={x:m.x,y:m.y,d:m.d};return;}}
     const a=screenToWorld(P.x,P.y),b=screenToWorld(m.x,m.y);if(a&&b){cam.tx+=a.x-b.x;cam.ty+=a.y-b.y;}TC.pinch={x:m.x,y:m.y,d:m.d};return;}
   const g=TC.g;if(!g||g.id!==e.pointerId)return;g.x=p.x;g.y=p.y;
   if(g.mode==='tap'||g.mode==='hold'){if(Math.hypot(p.x-g.x0,p.y-g.y0)<=TC_SLOP)return;clearTimeout(TC.lpT);
@@ -9396,6 +9462,7 @@ function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.h
   if(MODE==='client'&&NET.sv&&NET.game)NET.game.presence({rd:1}).catch(()=>{});}
 // wait until the browser has painted (falls back to a timer when the tab is in the background and frames stop)
 function loadFrame(){return new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,document.hidden?0:300);});}
+const LOAD_WD=20000;
 async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
   // the 3D models of the shared scenery and of the nations in this battle (only those) download while the ground is painted
   const mp=modelsFor(g.teams.map(T=>T.fac),(d,n)=>{if(tok===LOAD.tok)loadStep('Loading 3D models… '+d+' of '+n,.08+.3*d/n);});
@@ -9412,15 +9479,20 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
     ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
     ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
-    ['Preparing graphics…',.78,()=>{/* phones skip the all-models shader warm-up: on iPhones it could hang the loading screen (2026-10-29) */if(typeof gfxPhone==='function'&&gfxPhone())return;try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
+    ['Preparing graphics…',.78,()=>{if(gfxPhone()&&typeof warmShadersPhone==='function'){LOAD.wstop=0;return warmShadersPhone((d,n)=>{if(live())loadStep('Preparing graphics… '+d+' of '+n,.78+.11*d/n);},()=>LOAD.wstop||!live());}
+      try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
     ['Deploying forces…',.9,()=>{buildPanels();}],
     // the first battle frame creates every unit, building, town and the fog of war on the GPU, by far the slowest frame
     // of the battle: draw it here, under the loading screen, so the battle appears already running
     ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
   const T0=performance.now(),TL=LOAD.times=[];
+  // every step has a watchdog: a step still not done after LOAD_WD ms (a download or a phone's shader compile that never
+  // finishes) is logged and the loading moves on, so the loading screen can never hang for ever
   for(const [label,p,fn,gl] of steps){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;const t1=performance.now();
-    try{const r=fn();if(r&&r.then){let done=0,to;await Promise.race([r.then(()=>{done=1;},()=>{done=1;}),new Promise(res=>{to=setTimeout(()=>{if(!done)console.warn('loading step timed out: '+label);res();},25000);})]);clearTimeout(to);}/* a step that never finishes (seen on iPhones) must not hold the loading screen forever */TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
-      R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
+    try{const r=fn();if(r&&r.then){let wt=null;const to=await Promise.race([r.then(()=>0,e=>{throw e;}),new Promise(z=>{wt=setTimeout(()=>z(1),LOAD_WD);})]);clearTimeout(wt);
+        if(to){LOAD.wstop=1;console.warn('loading watchdog: "'+label.replace('…','')+'" still not done after '+LOAD_WD/1000+' s, moving on');}}
+      TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
+      console.error('3D graphics failed to start',err);R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
   g.terrain=tc;loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
   TL.push(['total',Math.round(performance.now()-T0)]);console.log('battle start: '+TL.map(([a,b])=>a.replace('…','')+' '+b+' ms').join(', '));
   // multiplayer client: its battle clock stood still under the loading screen while the host's kept running; catch up
@@ -9534,7 +9606,7 @@ function syncMouseUI(){const pre=mPreset();
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
   const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
-const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Q: army · H: home · Wheel: zoom · WASD/arrows: scroll · Esc: cancel / deselect';
+const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Q: army · H: home · Wheel: zoom · Shift+wheel / PgUp PgDn: tilt · WASD/arrows: scroll · Esc: cancel / deselect';
 // the on-screen hint follows the chosen mouse functions (the Standard preset has its own fixed text)
 function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
@@ -10685,12 +10757,16 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     E=SOLM[key]={geo,mat};}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
-function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;inner.updateMatrixWorld(true);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
-  if(!B.uplegL||!B.uplegR||!B.legL||!B.legR)return null;let pl=new THREE.Vector3().setFromMatrixPosition(B.uplegL.matrixWorld),pr=new THREE.Vector3().setFromMatrixPosition(B.uplegR.matrixWorld);
-  // the rifle-ready stance has the hips turned ~20 degrees; square them to the direction of travel so the legs
-  // swing straight forward and back instead of diagonally across the body
-  {const a=Math.atan2(pr.z-pl.z,pr.x-pl.x),tg=Math.abs(a)>Math.PI/2?Math.sign(a)*Math.PI:0,th=a-tg;if(Math.abs(th)>.02){inner.rotation.y+=th;inner.updateMatrixWorld(true);pl=new THREE.Vector3().setFromMatrixPosition(B.uplegL.matrixWorld);pr=new THREE.Vector3().setFromMatrixPosition(B.uplegR.matrixWorld);}}
-  const lat=pr.clone().sub(pl).normalize();const q=new THREE.Quaternion();
+function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
+  if(!B.uplegL||!B.uplegR||!B.legL||!B.legR)return null;
+  // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
+  // degrees) before that group's world matrices were ever updated, so the hips used to be read without the turn while
+  // the bones' parent rotations included it: the swing axis came out 90 degrees off and the legs swung sideways.
+  const hip=()=>{m.updateWorldMatrix(true,true);const pl=m.worldToLocal(new THREE.Vector3().setFromMatrixPosition(B.uplegL.matrixWorld)),pr=m.worldToLocal(new THREE.Vector3().setFromMatrixPosition(B.uplegR.matrixWorld));return[pl,pr];};
+  let [pl,pr]=hip();
+  // the rifle-ready stance has the hips turned ~20 degrees; square them to the direction of travel (the model faces +z)
+  {const a=Math.atan2(pr.z-pl.z,pr.x-pl.x),tg=Math.abs(a)>Math.PI/2?Math.sign(a)*Math.PI:0,th=a-tg;if(Math.abs(th)>.02){inner.rotation.y+=th;[pl,pr]=hip();}}
+  const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const lat=pr.clone().sub(pl).normalize().applyQuaternion(mq);const q=new THREE.Quaternion();
   const mk=(b,s)=>{if(!b)return null;b.parent.getWorldQuaternion(q);const ax=lat.clone().applyQuaternion(q.clone().invert()).normalize();return{b,q0:b.quaternion.clone(),ax,s};};
   return[mk(B.uplegL,1),mk(B.uplegR,-1),mk(B.legL,1),mk(B.legR,-1),mk(B.spine,0)].filter(Boolean);}
 const WQ=new THREE.Quaternion();

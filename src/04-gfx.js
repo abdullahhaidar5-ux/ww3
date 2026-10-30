@@ -16,19 +16,43 @@ const LUX=Math.PI;
 (function legacyFalloff(){const C=THREE.ShaderChunk,k='lights_pars_begin',a=C[k].indexOf('float getDistanceAttenuation('),b=a<0?-1:C[k].indexOf('\n}',a);
   if(a<0||b<0){console.warn('three: point-light falloff not patched (shader chunk changed)');return;}
   C[k]=C[k].slice(0,a)+'float getDistanceAttenuation(const in float lightDistance,const in float cutoffDistance,const in float decayExponent){\n\tif(cutoffDistance>0.0&&decayExponent>0.0)return pow(saturate(-lightDistance/cutoffDistance+1.0),decayExponent);\n\treturn 1.0;'+C[k].slice(b);})();
-function initGfx(){
+// The renderer on a canvas. A graphics context the browser takes away (Safari on iPhone does when the GPU runs out of
+// memory or one frame takes too long) and doesn't give back within 2.5 s is replaced: a new renderer on a fresh canvas
+// over the old one (input stays on the old canvas below), one quality step lower (phones: Low); the scene, models and
+// battle are kept, three.js uploads everything again. If that fails too, a message with "Try again with low graphics".
+const GLREC={n:0,t:null};
+function mkR3(canvas){const PH=typeof gfxPhone==='function'&&gfxPhone();
   // phones on Auto/Medium/Low: no multisampled screen buffer (the picture is already smoothed in the post-processing pass,
   // which draws into its own multisampled target), a 1024 shadow map instead of 2048 and plain (not soft) shadow edges
-  const PH=typeof gfxPhone==='function'&&gfxPhone();
-  R3=new THREE.WebGLRenderer({canvas:cv,antialias:!PH,powerPreference:'high-performance'});
+  const r=new THREE.WebGLRenderer({canvas,antialias:!PH&&!GLREC.n,powerPreference:'high-performance'});
 // One object that cannot be drawn must never stop the whole frame (that froze the picture while the battle went on):
 // skip it, hide it and keep drawing everything else.
-{const rbd=R3.renderBufferDirect.bind(R3);let nErr=0;R3.renderBufferDirect=function(cam,scene,geo,mat,obj,grp){try{return rbd(cam,scene,geo,mat,obj,grp);}catch(e){if(obj)obj.visible=false;if(nErr++<5){let q=obj,path=[];while(q&&path.length<6){path.push((q.name||'')+':'+q.type);q=q.parent;}console.warn('skipped an object that failed to draw: '+(e&&e.message)+' | '+(mat&&mat.type)+' '+(mat&&mat.name||'')+' map='+!!(mat&&mat.map)+' env='+!!(mat&&mat.envMap)+' ud='+Object.keys((mat&&mat.userData)||{}).join('/')+' | '+path.join(' < ')+' @ '+String(e&&e.stack||'').split('\n').slice(1,4).map(x=>x.trim()).join(' / '));}}};}
-  cv.addEventListener('webglcontextlost',e=>{e.preventDefault();window.GLLOST=1;try{pushLog('Graphics were reset by the browser; restoring…','w');}catch(_){}
-    // not back within 4 s (phones that ran out of graphics memory never restore): offer a reload with low graphics instead of a frozen screen
-    setTimeout(()=>{if(!window.GLLOST||document.getElementById('glLostOv'))return;try{if(SET.gfx!=='low'){SET.gfx='low';saveSet();}}catch(_){}const d=document.createElement('div');d.id='glLostOv';d.style.cssText='position:fixed;inset:0;z-index:90;background:rgba(6,10,8,.94);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center;color:#dde5df;font:15px/1.4 -apple-system,sans-serif';d.innerHTML='<div style="font:700 22px \'Saira Condensed\',sans-serif;letter-spacing:.04em;text-transform:uppercase">Graphics need a restart</div><div>This device ran out of graphics memory. The game switched to low graphics.</div>';const bt=document.createElement('button');bt.textContent='Restart with low graphics';bt.style.cssText='background:#e3b341;color:#17130a;border:0;padding:12px 22px;font:700 17px sans-serif;cursor:pointer';bt.onclick=()=>location.reload();d.append(bt);document.body.append(d);},4000);},false);
-  cv.addEventListener('webglcontextrestored',()=>{window.GLLOST=0;try{for(const o of OBJ.values())SCN.remove(o);OBJ.clear();for(const k in GEO)delete GEO[k];if(G&&G.terrain)buildWorld();}catch(err){console.warn(err);}},false);
-  R3.outputColorSpace=THREE.SRGBColorSpace;R3.toneMapping=THREE.NoToneMapping;R3.shadowMap.enabled=true;R3.shadowMap.autoUpdate=false;/* shadows are drawn once per frame, for the main pass only (renderPost) - not again for the depth pre-pass */R3.shadowMap.type=THREE.PCFShadowMap;/* r186: PCF = 5 filtered taps spread over shadow.radius texels (PCFSoftShadowMap is gone) */R3.autoClear=true;
+{const rbd=r.renderBufferDirect.bind(r);let nErr=0;r.renderBufferDirect=function(cam,scene,geo,mat,obj,grp){try{return rbd(cam,scene,geo,mat,obj,grp);}catch(e){if(obj)obj.visible=false;if(nErr++<5){let q=obj,path=[];while(q&&path.length<6){path.push((q.name||'')+':'+q.type);q=q.parent;}console.warn('skipped an object that failed to draw: '+(e&&e.message)+' | '+(mat&&mat.type)+' '+(mat&&mat.name||'')+' map='+!!(mat&&mat.map)+' env='+!!(mat&&mat.envMap)+' ud='+Object.keys((mat&&mat.userData)||{}).join('/')+' | '+path.join(' < ')+' @ '+String(e&&e.stack||'').split('\n').slice(1,4).map(x=>x.trim()).join(' / '));}}};}
+  canvas.addEventListener('webglcontextlost',e=>{e.preventDefault();if(r!==R3)return;window.GLLOST=1;console.warn('WebGL context lost'+(window.LOADING?' during loading':''));try{pushLog('Graphics were reset by the browser; restoring…','w');}catch(_){}
+    clearTimeout(GLREC.t);GLREC.t=setTimeout(()=>glRecover(false),2500);},false);
+  canvas.addEventListener('webglcontextrestored',()=>{if(r!==R3)return;clearTimeout(GLREC.t);console.warn('WebGL context restored');window.GLLOST=0;try{for(const o of OBJ.values())SCN.remove(o);OBJ.clear();for(const k in GEO)delete GEO[k];if(G&&G.terrain)buildWorld();}catch(err){console.warn(err);}},false);
+  r.outputColorSpace=THREE.SRGBColorSpace;r.toneMapping=THREE.NoToneMapping;r.shadowMap.enabled=true;r.shadowMap.autoUpdate=false;/* shadows are drawn once per frame, for the main pass only (renderPost) - not again for the depth pre-pass */r.shadowMap.type=THREE.PCFShadowMap;/* r186: PCF = 5 filtered taps spread over shadow.radius texels (PCFSoftShadowMap is gone) */r.autoClear=true;
+  return r;}
+function glRecover(manual){if(!window.GLLOST&&!manual)return;clearTimeout(GLREC.t);GLREC.n++;
+  if(GLREC.n>2&&!manual){glFail();return;}
+  try{// one quality step down for the rest of this visit (not saved; phones go straight to Low)
+    const ph=typeof GFX_PHONE!=='undefined'&&GFX_PHONE;SET.gfx=manual||ph?'low':({auto:'med',high:'med',med:'low'}[SET.gfx]||'low');
+    const old=R3,oc=old&&old.domElement;R3=null;try{old.dispose();}catch(e){}
+    const nc=glCanvas(oc);R3=mkR3(nc);try{const gl=R3.getContext();if(!gl||gl.isContextLost())throw new Error('no context');}catch(e){throw e;}
+    if(oc&&oc!==cv)oc.remove();window.GLLOST=0;
+    try{applyGfx();}catch(e){}try{resize();}catch(e){}
+    console.warn('graphics restarted on a new canvas ('+SET.gfx+' quality)');try{pushLog('Graphics restarted at low quality to keep the battle running.','w');}catch(_){}
+    const f=document.getElementById('gfxFail');if(f)f.remove();return true;}
+  catch(e){console.warn('graphics restart failed',e);R3=null;window.GLLOST=1;glFail();return false;}}
+function glCanvas(after){const nc=document.createElement('canvas');nc.className='gl3';nc.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block';(after||cv).after(nc);return nc;}
+function glFail(){if(document.getElementById('gfxFail'))return;const d=document.createElement('div');d.id='gfxFail';d.setAttribute('role','alert');
+  d.style.cssText='position:fixed;inset:0;z-index:99;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;background:rgba(10,13,11,.94);color:#e8e2d0;font:500 17px/1.45 sans-serif;text-align:center';
+  d.innerHTML='<div>Graphics stopped working on this device (it ran out of graphics memory).</div>';
+  const b=document.createElement('button');b.textContent='Try again with low graphics';b.style.cssText='font:700 17px sans-serif;padding:14px 22px;min-height:48px;border:0;border-radius:6px;background:#e3b341;color:#111';
+  b.onclick=()=>{try{SET.gfx='low';saveSet();}catch(e){}GLREC.n=0;if(!glRecover(true)){try{location.reload();}catch(e){}}};d.append(b);document.body.append(d);}
+function initGfx(){const PH=typeof gfxPhone==='function'&&gfxPhone();
+  // after a lost graphics context the game canvas can't get a new one: draw on a fresh canvas over it
+  {const old=document.querySelector('canvas.gl3');R3=mkR3(GLREC.n?glCanvas(old):cv);if(old&&GLREC.n)old.remove();}
   SCN=new THREE.Scene();SCN.background=lin('#c7b493');SCN.fog=new THREE.Fog(lin('#8f8a70'),1800,6200);
   window.SKY=new THREE.Mesh(new THREE.SphereGeometry(7600,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{t:{value:0},hor:{value:new THREE.Vector3(.86,.78,.64)},zen:{value:new THREE.Vector3(.30,.50,.80)}},
     vertexShader:`varying vec3 vd;void main(){vd=normalize(position);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,

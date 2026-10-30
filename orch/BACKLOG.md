@@ -8,6 +8,22 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+- [open] **End-of-match stats screen (Abdullah, 2026-10-29 19:37: "when the games end make a summary page for the players to
+  show cool stats")** — Interface + Battlefield (stat counters). Today the end screen is one line of text (Victory/Defeat +
+  "trained X units, destroyed Y…"), and **clients get no stats at all** (`MODE==='client'` skips it in `08-ui`). Build a real
+  summary page shown to **every player, host and clients alike**, after the result banner (and after the kill-cam once that ships):
+  - **Scoreboard, all players** (nation flag/name, team colour, winner highlighted): units built, units lost, kills,
+    structures destroyed/lost, money earned/spent, final general rank, time alive.
+  - **Awards / "cool stats"** per match, e.g. MVP (most value destroyed), Top Killer, Iron Wall (fewest losses), Big Spender,
+    Fastest First Kill, Best Unit (single unit with most kills, by type), most used general power, biggest army at once.
+  - **Army strength over time** graph (one line per player) — sampled every ~10 s; light enough for phones.
+  - Buttons: Rematch / Back to menu, and **Share** (screenshot image of the page for Discord; must work on iPhone).
+  - Counters live in team state on the host (already has `built`, `kills`, `rank`, `spent`, `lost`); add the missing ones
+    there, ship the final table to clients in the existing `['end',winner]` message (or a new end-stats message) so everyone
+    sees the same numbers. Counting only — **never change gameplay or sync**; open a `main → servers-live` PR since it
+    touches 03-sim/07-net. Readable on a phone in portrait and landscape; works in the artifact edition too.
+  - Ask Abdullah to try it on his iPhone after one quick AI battle.
+
 **NEW FEATURE PACK (Abdullah, 2026-10-29 19:26 — picked from a Rise of the Reds–inspired list; "Get more creative"; NO drone
 swarm economy, NO supply lines (Abdullah 19:29); nuclear deterrence, world campaign map and commander co-op were NOT picked — don't build them).** Several
 already exist in some form (checked 2026-10-29): morale/rout + officer/Ayatollah auras, weather incl. sandstorm/fog
