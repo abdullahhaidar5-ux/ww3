@@ -149,6 +149,12 @@ const FXH={
   flag(x,y,team,dur){flagFX(x,y,team,dur);if(typeof martyrSwell==='function')martyrSwell(team);},
   txt(x,y,str,team,vic){if(!SET.txt||team!==ME&&vic!==ME&&vic!==-2)return;FLOATS.push({x,y,s:str,t0:performance.now(),c:vic===-2?(ally(team,ME)?(str==='RALLIED'?'#74d08f':'#ea5a40'):'#f2c94c'):team===ME?'#f2c94c':'#ea5a40'});if(FLOATS.length>14)FLOATS.shift();},
 };
+// Kill-cam (08-ui.js): the visual-only effects are also noted for the end-of-match replay, on the host (via fxPlay) and
+// on clients (via applyEvents) alike. FXH_RAW keeps the plain handlers so the replay can play them without re-noting
+// them. Effects that change game state (civd, oilDry, log, end, ...) are never noted or replayed.
+const FXH_RAW={};
+for(const k of ['muz','tr','salvo','pj','boom','toss','bmis','die','strike','smoke','heal','hack','plane','gone']){const f=FXH[k];if(!f)continue;FXH_RAW[k]=f;
+  FXH[k]=function(...a){try{if(typeof kcFx==='function')kcFx(k,a);}catch(_){}return f.apply(FXH,a);};}
 // Martyrdom banner (Shia factions): a crimson cloth on a wooden pole planted where a soldier fell. It rises out of the
 // ground, waves, and sinks away when the sim's banner runs out (the sim re-sends 'flag' to renew it). All banners share
 // one pole and one cloth geometry (the cloth's wave is moved once a frame for all of them): 3 small meshes each.
