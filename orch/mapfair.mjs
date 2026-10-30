@@ -72,11 +72,11 @@ if (process.argv[2] === '--child') {
   const sched = [];
   if (has('static')) {
     const seeds = Number(argS('seeds', 2));
-    for (const [k, lo, hi] of maps) for (let n = lo; n <= hi; n++) for (let s = 1; s <= seeds; s++) sched.push({ static: 1, map: k, n, seed: 1000 + s * 77, dump: has('dump') && (n === hi) && s === 1 });
+    for (const [k, lo, hi] of maps) for (let n = lo; n <= hi; n++) for (let s = 1; s <= seeds; s++) sched.push({ static: 1, map: k, n, seed: 1000 + s * 77, dump: has("dump") && (n === hi || n === 6) && s === 1 });
   } else {
     const CNT = argS('counts', '') ? argS('counts').split(',').map(Number) : null;
     maps.forEach(([k, lo, hi], mi) => {
-      const counts = CNT ? CNT.filter(n => n >= lo && n <= hi) : [...new Set([lo, Math.max(lo, 2), 4, hi].filter(n => n >= lo && n <= hi))];
+      const counts = CNT ? CNT.filter(n => n >= lo && n <= hi) : [...new Set([lo, Math.max(lo, 2), 4, 6, hi].filter(n => n >= lo && n <= hi))];
       for (const n of counts) {
         const reps = n === 2 ? 2 : 1; // a duel: 2 seeds x both sides; bigger: one full rotation of n nations through n positions
         for (let rep = 0; rep < reps; rep++) {
