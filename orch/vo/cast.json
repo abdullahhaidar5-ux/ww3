@@ -3,29 +3,29 @@
   "eng": "xtts",
   "lang": "en",
   "sold": [
-   "Zacharie Aimilios",
+   "Damjan Chapman",
    "Ferran Simen",
-   "Marcos Rudaski"
+   "Eugenio Mataracı"
   ],
-  "cmd": "Viktor Menelaos"
+  "cmd": "Torcull Diarmuid"
  },
  "TR": {
   "eng": "xtts",
   "lang": "tr",
   "sold": [
-   "Filip Traverse",
-   "Xavier Hayasaka",
-   "Gilberto Mathias"
+   "Aaron Dreschner",
+   "Damjan Chapman",
+   "Dionisio Schuyler"
   ],
-  "cmd": "Ludvig Milivoj"
+  "cmd": "Viktor Menelaos"
  },
  "RU": {
   "eng": "xtts",
   "lang": "ru",
   "sold": [
-   "Zacharie Aimilios",
-   "Ilkin Urbano",
-   "Gilberto Mathias"
+   "Aaron Dreschner",
+   "Dionisio Schuyler",
+   "Abrahan Mack"
   ],
   "cmd": "Torcull Diarmuid"
  },
@@ -53,10 +53,11 @@
   "eng": "xtts",
   "lang": "hi",
   "sold": [
-   "Damjan Chapman",
-   "Baldur Sanjin"
+   "Luis Moray",
+   "Gilberto Mathias",
+   "Kazuhiko Atallah"
   ],
-  "cmd": "Xavier Hayasaka",
+  "cmd": "Aaron Dreschner",
   "alt": {
    "eng": "piper",
    "voices": [
@@ -69,10 +70,11 @@
   "eng": "xtts",
   "lang": "hi",
   "sold": [
-   "Damien Black",
-   "Xavier Hayasaka"
+   "Dionisio Schuyler",
+   "Abrahan Mack",
+   "Luis Moray"
   ],
-  "cmd": "Baldur Sanjin",
+  "cmd": "Torcull Diarmuid",
   "alt": {
    "eng": "piper",
    "lang": "ur",
