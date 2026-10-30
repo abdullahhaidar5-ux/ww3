@@ -141,6 +141,84 @@ const MAPS={
     cities:[[1300,780,160,'latin'],[2150,1380,110,'latin']],
     water(M,R){M.lakes.push({x:1600,y:1100,r:6000,rx:1,wob:()=>0});const w=R()*6.28;M.islands.push({x:1600,y:1100,r:520,rx:2.6,rot:-.12,wob:q=>.12*Math.sin(q*3+w)+.07*Math.sin(q*7+w*2)});
       for(const [x,y] of [[500,300],[2700,1900],[2800,350],[400,1850]])M.islands.push({x,y,r:90,rx:1.6,rot:.4,wob:q=>.15*Math.sin(q*3+x)});}},
+  // ---- 2026-10-30 maps (Maps squad): 20 more theatres, every one symmetric so each start position gets the same ground ----
+  khyber:{name:'Khyber Pass',min:2,max:2,sym:'point',rough:1.5,home:['PK'],tag:'mountain pass · two goat tracks · duel',desc:'A duel through the Spin Ghar range: one narrow pass split by a rock fort in the middle, and a long goat track along each edge to outflank it.',
+    slots:[[420,1500],[2780,700]],cities:mirrorList([[1020,1280,85,'southasia']],'p'),
+    water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[1270,330],[1420,560],[1560,770]],40,25,2,ph),hw:()=>110},{pts:polyline([[640,330],[960,560]],40,18,2,ph),hw:()=>80});
+      M.peaks.push({x:2250,y:330,r:80,rx:1.5,rot:.3});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:72,rx:1.25,rot:0});}},
+  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armour.',
+    slots:[[420,700],[2780,1500]],cities:mirrorList([[1180,430,110,'mideast'],[860,1700,75,'mideast']],'p'),
+    water(M,R){M.lakes.push({x:900,y:1170,r:70,rx:1.7,wob:a=>.12*Math.sin(a*3)});M.peaks.push({x:1250,y:1820,r:70,rx:1.6,rot:.3});mirrorMap(M,'p');
+      const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+110*Math.sin((y-1100)*.0035)+35*Math.sin((y-1100)*.011),y]);M.rivers.push({pts,hw:()=>92});M.bridgeAt=[[0,.18],[0,.5],[0,.82]];M.bridgeFrac=true;}},
+  caspian:{name:'Caspian Oil Coast',min:2,max:2,sym:'mirrorX',home:['RU','IR'],tag:'coast · central oil field · navy · duel',desc:'A duel on the Caspian shore: a rich oil field on the peninsula between the two bases, open sea to the south for the navies and hills to the north.',
+    slots:[[480,1150],[2720,1150]],cities:[[1600,1080,110,'mideast'],...mirrorList([[980,520,90,'mideast']],'x')],oilAt:[[1600,1520],[1430,1650],[1770,1650]],
+    water(M,R){const pts=[];for(let x=-300;x<=3500;x+=40)pts.push([x,2000+60*Math.cos((x-1600)*.004)]);M.rivers.push({pts,hw:()=>340});
+      M.peaks.push({x:1000,y:860,r:70,rx:1.7,rot:.6});mirrorMap(M,'x');M.peaks.push({x:1600,y:330,r:100,rx:2.2,rot:0});M.islands.push({x:1600,y:1700,r:230,rx:1.7,rot:0,wob:a=>.06*Math.cos(2*a)});}},
+  aleppo:{name:'Aleppo Ruins',min:2,max:2,sym:'point',rough:1.1,home:['RS','TR'],tag:'urban sprawl · citadel · street fighting · duel',desc:'A duel through a ruined city: a great old town around the citadel in the middle, suburbs on both sides and streets to fight down block by block.',
+    slots:[[430,1650],[2770,550]],cities:[[1600,1100,290,'mideast'],...mirrorList([[860,680,140,'mideast'],[1250,1880,100,'mideast']],'p')],
+    water(M,R){M.peaks.push({x:700,y:260,r:80,rx:1.6,rot:.2});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:62,rx:1.3,rot:0});}},
+  anatolia:{name:'Anatolian Mesa',min:3,max:4,sym:'quad',rough:1.4,home:['TR'],tag:'walled mesa · oil on top · four ways in',desc:'A rock-walled mesa in the middle of the highlands with oil on top. Four gaps lead up onto it, all equally far from every base.',
+    slots:[[780,1100],[2420,1100],[1600,280],[1600,1920]],oilAt:[[1600,1100]],
+    water(M,R){const arc=(c,s)=>{const pts=[];for(let t=c-s;t<=c+s+1e-9;t+=.05)pts.push([1600+Math.cos(t)*420,1100+Math.sin(t)*420]);return pts;};
+      M.ridges.push({pts:arc(Math.PI,.5),hw:()=>50},{pts:arc(-Math.PI/2,.5),hw:()=>50});M.peaks.push({x:1050,y:560,r:60,rx:1.4,rot:.8},{x:420,y:500,r:70,rx:1.5,rot:1.2});mirrorMap(M,'x');mirrorMap(M,'y');}},
+  babelmandeb:{name:'Bab-el-Mandeb',min:3,max:4,sym:'point',home:['DW','SA'],tag:'sea strait · two causeways · navy',desc:'The Gate of Tears between Arabia and Africa: two shores across a narrow sea strait, two long causeways and Perim island in the middle. Navies decide the strait.',
+    slots:[[480,380],[2720,1820],[2720,380],[480,1820]],cities:mirrorList([[1150,450,90,'yemen']],'p'),
+    water(M,R){const pts=[];for(let x=-300;x<=3500;x+=40)pts.push([x,1100+70*Math.sin((x-1600)*.0025)]);M.rivers.push({pts,hw:(t,x)=>230+40*Math.cos((x-1600)*.004)});
+      M.bridgeAt=[[0,.3],[0,.7]];M.bridgeFrac=true;M.islands.push({x:1600,y:1100,r:62,rx:2,rot:0,wob:a=>.08*Math.cos(2*a)});}},
+  taiga:{name:'Siberian Taiga',min:3,max:4,sym:'quad',theme:'snow',rough:1.2,home:['RU'],tag:'snow forest · frozen lakes · hills',desc:'Deep winter in the taiga: frozen lakes and wooded hills break the snow into lanes, with a logging town in the middle worth holding.',
+    slots:[[420,1100],[2780,1100],[1600,300],[1600,1900]],cities:[[1600,1100,110,'russia']],
+    water(M,R){M.lakes.push({x:960,y:620,r:95,rx:1.5,wob:a=>.1*Math.sin(a*3)});M.peaks.push({x:1150,y:1050,r:60,rx:1.8,rot:1.3},{x:600,y:330,r:70,rx:1.4,rot:.3});mirrorMap(M,'x');mirrorMap(M,'y');}},
+  hawizeh:{name:'Hawizeh Marshes',min:3,max:4,sym:'quad',theme:'green',home:['IR','RS'],tag:'marshland · causeway crossroads',desc:'The reed marshes on the Iran-Iraq border: a lagoon in the middle crossed by two causeways that meet on an island, and marsh pools that channel every advance.',
+    slots:[[480,380],[2720,1820],[2720,380],[480,1820]],
+    water(M,R){M.lakes.push({x:950,y:720,r:85,rx:1.5,wob:a=>.12*Math.sin(a*3)},{x:1600,y:330,r:70,rx:2,wob:a=>.1*Math.sin(a*2)},{x:420,y:1100,r:65,rx:1.3,wob:a=>.1*Math.sin(a*4)});mirrorMap(M,'x');mirrorMap(M,'y');
+      M.lakes.push({x:1600,y:1100,r:250,rx:1.6,wob:a=>.07*Math.cos(4*a)});M.islands.push({x:1600,y:1100,r:70,rx:1.2,rot:0,wob:()=>0});M.bridgeAng.push([1360,1100,1,0],[1840,1100,-1,0],[1600,925,0,1],[1600,1275,0,-1]);}},
+  sahara:{name:'Sahara Crossroads',min:4,max:6,sym:'point',rough:.9,tag:'open desert · oases · caravan town',desc:'Open Saharan sand around a caravan town: rock outcrops split the desert into lanes and small oases mark the routes. Room for armour to swing wide.',
+    slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,130,'mideast']],
+    water(M,R){M.peaks.push({x:1150,y:640,r:85,rx:1.6,rot:.5},{x:1600,y:380,r:75,rx:1.4,rot:0},{x:1000,y:1420,r:70,rx:1.3,rot:-.4});M.lakes.push({x:1280,y:1060,r:48,rx:1.3,wob:a=>.1*Math.sin(a*3)},{x:700,y:820,r:40,rx:1.2,wob:a=>.1*Math.sin(a*3)});mirrorMap(M,'p');}},
+  caucasus:{name:'Caucasus Valleys',min:4,max:6,sym:'point',theme:'snow',rough:1.5,home:['RU'],tag:'three valleys · mountain passes',desc:'Three snowy valleys between Caucasus ridges. Passes in the middle and narrow tracks at both ends link them: hold a pass and you hold the valley.',
+    slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:mirrorList([[1000,1100,80,'russia'],[1600,380,70,'russia']],'p'),
+    water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[330,720],[800,680],[1350,760]],40,22,2,ph),hw:()=>95},{pts:polyline([[1850,700],[2400,740],[2900,690]],40,22,2,ph+1),hw:()=>95});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:80,rx:1.6,rot:0});}},
+  crimea:{name:'Crimean Isthmus',min:4,max:6,sym:'point',theme:'green',home:['UA','RU'],tag:'two seas · isthmus · lagoons',desc:'Two seas squeeze the land into a wide isthmus. Lagoons split it into lanes, and the mountains on the shore guard the flanks.',
+    slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:mirrorList([[1100,1000,90,'europe']],'p'),
+    water(M,R){M.lakes.push({x:1600,y:150,r:470,rx:1.4,wob:a=>.06*Math.sin(a*3)});M.peaks.push({x:1250,y:1400,r:70,rx:1.6,rot:.3});M.lakes.push({x:1350,y:1050,r:55,rx:1.6,wob:a=>.12*Math.sin(a*2)});mirrorMap(M,'p');M.lakes.push({x:1600,y:1100,r:80,rx:1.2,wob:a=>.06*Math.cos(2*a)});}},
+  punjab:{name:'Five Rivers',min:4,max:6,sym:'point',theme:'green',home:['PK','IN'],tag:'river plain · many bridges · farm villages',desc:'The Punjab plain: three rivers cross the farmland, with seven bridges and a market town between them. Choose your crossing.',
+    slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'southasia'],...mirrorList([[1300,500,70,'southasia']],'p')],
+    water(M,R){const ph=R()*6.28,side=[];for(let y=-200;y<=2400;y+=40)side.push([1020+40*Math.sin(y*.004+ph)+(y-1100)*.08,y]);M.rivers.push({pts:side,hw:()=>58});M.bridgeAt=[[0,.25],[0,.75]];M.bridgeFrac=true;mirrorMap(M,'p');
+      const mid=[];for(let y=-200;y<=2400;y+=40)mid.push([1600+70*Math.sin((y-1100)*.004),y]);M.rivers.push({pts:mid,hw:()=>66});M.bridgeAt.push([2,.2],[2,.5],[2,.8]);}},
+  najd:{name:'Najd Escarpment',min:6,max:8,sym:'quad',rough:1.2,home:['SA'],tag:'ring of cliffs · plateau oil · eight gaps',desc:'A ring of desert cliffs around the Najd plateau, with oil on top. Every base faces a cliff wall and has a gap on each side of it.',
+    slots:ring8(880),oilAt:[[1600,1100]],
+    water(M,R){const arc=(c,s)=>{const pts=[];for(let t=c-s;t<=c+s+1e-9;t+=.04)pts.push([1600+Math.cos(t)*450,1100+Math.sin(t)*450]);return pts;};
+      M.ridges.push({pts:arc(0,.27),hw:()=>55},{pts:arc(-.785,.27),hw:()=>58},{pts:arc(-1.571,.27),hw:()=>58});mirrorMap(M,'x');mirrorMap(M,'y');}},
+  ural:{name:'Ural Ridge',min:6,max:8,sym:'point',theme:'snow',rough:1.3,home:['RU'],tag:'mountain wall · three passes · east vs west',desc:'The Urals split the map from north to south: one pass in the middle split by a fortress hill and a narrow track at each end. Four bases a side.',
+    slots:[[420,830],[2780,1370],[420,1370],[2780,830],[420,330],[2780,1870],[420,1870],[2780,330]],cities:mirrorList([[1000,1100,90,'russia']],'p'),
+    water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[1600,380],[1560,640],[1610,880]],40,24,2,ph),hw:()=>115});M.lakes.push({x:1050,y:560,r:70,rx:1.5,wob:a=>.1*Math.sin(a*3)});M.peaks.push({x:900,y:1700,r:70,rx:1.5,rot:.4});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:70,rx:1.2,rot:0});}},
+  aegean:{name:'Aegean Islands',min:6,max:8,sym:'point',theme:'green',home:['TR','EU'],tag:'sea · island bridges · navy',desc:'Two coasts facing each other across the Aegean. Two islands carry bridges across the sea; the rock in the middle belongs to whoever rules the waves.',
+    slots:[[420,830],[2780,1370],[420,1370],[2780,830],[420,330],[2780,1870],[420,1870],[2780,330]],
+    water(M,R){const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+60*Math.sin((y-1100)*.003),y]);M.rivers.push({pts,hw:()=>460});
+      M.islands.push({x:1600,y:560,r:150,rx:1.25,rot:0,wob:a=>.08*Math.sin(a*3)});M.bridgeAng.push([1290,560,1,0],[1910,560,-1,0]);
+      M.islands.push({x:1600,y:1640,r:150,rx:1.25,rot:0,wob:a=>.08*Math.sin((a+Math.PI)*3)});M.bridgeAng.push([1910,1640,-1,0],[1290,1640,1,0]);M.islands.push({x:1600,y:1100,r:95,rx:1.3,rot:0,wob:()=>0});}},
+  yangtze:{name:'Yangtze Gorges',min:6,max:8,sym:'point',theme:'green',rough:1.3,home:['CN'],tag:'great river · four bridges · gorge hills',desc:'The Yangtze cuts the map in two between steep gorge hills. Four bridges, towns at both ends of the middle ones, four bases on each bank.',
+    slots:[[1250,330],[1950,1870],[1950,330],[1250,1870],[500,330],[2700,1870],[2700,330],[500,1870]],cities:mirrorList([[1300,760,80,'asia']],'p'),
+    water(M,R){M.peaks.push({x:820,y:820,r:80,rx:1.8,rot:.1},{x:2350,y:780,r:70,rx:1.6,rot:-.1});mirrorMap(M,'p');
+      const pts=[];for(let x=-200;x<=3400;x+=40)pts.push([x,1100+90*Math.sin((x-1600)*.0026)]);M.rivers.push({pts,hw:()=>105});M.bridgeAt=[[0,.2],[0,.4],[0,.6],[0,.8]];M.bridgeFrac=true;}},
+  kuwait:{name:'Burning Oil Fields',min:8,max:8,sym:'quad',rough:.9,home:['SA','AE'],tag:'eight-way war · oil field in the middle',desc:'Eight armies around a great oil field in the open desert. The derricks in the middle pay the most; rock outcrops between the bases cover the approaches.',
+    slots:ring8(880),
+    oilAt:[[1600,1100],...ring8(250)],
+    water(M,R){for(const a of [-.39,-1.18])M.peaks.push({x:1600+Math.cos(a)*640,y:1100+Math.sin(a)*640,r:55,rx:1.5,rot:a+1.57});M.lakes.push({x:2150,y:1100,r:40,rx:1.3,wob:a=>.1*Math.cos(2*a)});mirrorMap(M,'x');mirrorMap(M,'y');}},
+  rhine:{name:'Rhine Front',min:8,max:8,sym:'point',theme:'green',home:['EU'],tag:'river · four bridges · forest hills · four a side',desc:'Four armies on each bank of the Rhine: four bridges, river towns, and forested hills that hide flanking moves.',
+    slots:[[420,830],[2780,1370],[420,1370],[2780,830],[420,330],[2780,1870],[420,1870],[2780,330]],cities:mirrorList([[1300,560,90,'europe'],[1250,1650,80,'europe']],'p'),
+    water(M,R){M.peaks.push({x:900,y:1100,r:70,rx:1.6,rot:1.5},{x:1050,y:300,r:60,rx:1.5,rot:.2});mirrorMap(M,'p');
+      const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+120*Math.sin((y-1100)*.0032),y]);M.rivers.push({pts,hw:()=>78});M.bridgeAt=[[0,.2],[0,.4],[0,.6],[0,.8]];M.bridgeFrac=true;}},
+  hindukush:{name:'Hindu Kush',min:8,max:8,sym:'quad',theme:'snow',rough:1.4,home:['PK','IR'],tag:'eight valleys · central massif · ring road',desc:'Eight valleys around a snow massif. Ridges wall each valley off from the next, so armies meet on the road around the mountain - or go round the outside.',
+    slots:ring8(880),
+    oilAt:ring8(330),
+    water(M,R){for(const a of [-.39,-1.18])M.ridges.push({pts:[[1600+Math.cos(a)*420,1100+Math.sin(a)*420],[1600+Math.cos(a)*740,1100+Math.sin(a)*740]],hw:()=>50});mirrorMap(M,'x');mirrorMap(M,'y');
+      M.peaks.push({x:1600,y:1100,r:190,rx:1,rot:0});}},
+  gulfoil:{name:'Gulf Oil Platforms',min:8,max:8,sym:'point',home:['AE','IR'],tag:'sea · oil islands · causeways · navy',desc:'Four bases on each shore of the Gulf. Three oil islands in the sea, each joined to both shores by causeways - and navies to cut them.',
+    slots:[[1250,330],[1950,1870],[1950,330],[1250,1870],[500,330],[2700,1870],[2700,330],[500,1870]],oilAt:[[1600,1100],[1000,1100],[2200,1100]],
+    water(M,R){const pts=[];for(let x=-300;x<=3500;x+=40)pts.push([x,1100+40*Math.sin((x-1600)*.003)]);M.rivers.push({pts,hw:()=>380});
+      M.islands.push({x:1000,y:1100,r:110,rx:1.6,rot:0,wob:a=>.08*Math.sin(a*3)});M.bridgeAng.push([1000,850,0,1],[1000,1350,0,-1]);mirrorMap(M,'p');
+      M.islands.push({x:1600,y:1100,r:120,rx:1.5,rot:0,wob:a=>.06*Math.cos(2*a)});M.bridgeAng.push([1600,850,0,1],[1600,1350,0,-1]);}},
 };
 const MAP_KEYS=Object.keys(MAPS);
 let BASE_SLOTS=MAPS.strait.slots;
@@ -152,6 +230,35 @@ function slotOrder(D,n,pick){const S=D.slots.slice(0,D.max||D.slots.length);n=Ma
 function setBases(n,mk,pick){const D=MAPS[mk]||MAPS.strait;BASE_SLOTS=D.slots.map(([x,y])=>[x*WK,y*WK]);BASES=slotOrder(D,n,pick).map(i=>BASE_SLOTS[i]);}
 let EF_R=8;let EF_W=Math.ceil(MAPW/EF_R)+1,EF_H=Math.ceil(MAPH/EF_R)+1;
 function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,L=dx*dx+dy*dy||1;let t=((px-ax)*dx+(py-ay)*dy)/L;t=Math.max(0,Math.min(1,t));const qx=ax+dx*t,qy=ay+dy*t;return[Math.hypot(px-qx,py-qy),t];}
+// Driving distance from (x,y) to every ground cell (8-way moves, no cutting corners past rock or water), in world units;
+// 1e9 = can't get there. Used to place supply fairly (same route length for every base).
+// eight start positions on a circle around the centre (pairs face each other through it), in design units
+function ring8(r){return [Math.PI,0,-2.356,.785,2.356,-.785,-1.571,1.571].map(a=>[Math.round(1600+Math.cos(a)*r),Math.round(1100+Math.sin(a)*r)]);}
+// Symmetric maps: copy every feature made so far, mirrored left-right ('x'), top-bottom ('y') or through the centre
+// ('p'), wobbles and ridge roughness included, so both sides get exactly the same ground. Call 'x' then 'y' for four-way.
+function mirrorMap(M,mode){const W=MAPW,H=MAPH,fx=mode!=='y',fy=mode!=='x',P=([x,y])=>[fx?W-x:x,fy?H-y:y],A=mode==='x'?a=>Math.PI-a:mode==='y'?a=>-a:a=>a+Math.PI,Rt=r=>mode==='p'?r:-r,nr=M.rivers.length;
+  for(const rv of M.rivers.slice(0,nr)){const h=rv.hw;M.rivers.push({pts:rv.pts.map(P),hw:(t,x)=>h(t,fx?W-x:x)});}
+  for(const L of M.lakes.slice()){const w=L.wob;M.lakes.push(Object.assign({},L,{x:fx?W-L.x:L.x,y:fy?H-L.y:L.y,wob:a=>w(A(a))}));}
+  for(const I of M.islands.slice()){const w=I.wob;M.islands.push(Object.assign({},I,{x:fx?W-I.x:I.x,y:fy?H-I.y:I.y,rot:Rt(I.rot||0),wob:a=>w(A(a))}));}
+  for(const rg of M.ridges.slice())M.ridges.push({pts:rg.pts.map(P),hw:rg.hw,sfx:!!rg.sfx!==fx,sfy:!!rg.sfy!==fy});
+  for(const K of M.peaks.slice()){const am=K.am;M.peaks.push(Object.assign({},K,{x:fx?W-K.x:K.x,y:fy?H-K.y:K.y,rot:Rt(K.rot||0),wx:K.wx!=null?K.wx:K.x,am:am?a=>am(A(a)):A}));}
+  if(M.bridgeAt)M.bridgeAt=M.bridgeAt.concat(M.bridgeAt.filter(([ri])=>ri<nr).map(([ri,at])=>[ri+nr,at]));
+  M.bridgeAng=M.bridgeAng.concat(M.bridgeAng.map(([x,y,nx,ny])=>[fx?W-x:x,fy?H-y:y,fx?-nx:nx,fy?-ny:ny]));}
+// [x,y,...] lists mirrored the same way (cities, slots): returns the list followed by its mirror image
+function mirrorList(L,mode){return L.concat(L.map(([x,y,...r])=>[mode!=='y'?3200-x:x,mode!=='x'?2200-y:y,...r]));}
+// a river/ridge line through points, with an optional gentle wiggle
+function polyline(P,step,amp,f,ph){const pts=[];for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1],L=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.max(1,Math.ceil(L/(step||40))),nx=-(b[1]-a[1])/L,ny=(b[0]-a[0])/L;
+  for(let k=0;k<n;k++){const t=k/n,w=(amp||0)*Math.sin((i+t)*(f||3)+(ph||0))*Math.sin(t*Math.PI);pts.push([a[0]+(b[0]-a[0])*t+nx*w,a[1]+(b[1]-a[1])*t+ny*w]);}}pts.push(P[P.length-1].slice());return pts;}
+function gridDist(grid,x,y){const N=GW*GH,D=new Float64Array(N).fill(1e9),ps=v=>v===0||v===2,hk=[],hv=[];let s=-1;
+  const cx0=Math.floor(x/CELL),cy0=Math.floor(y/CELL);for(let r=0;r<16&&s<0;r++)for(let dy=-r;dy<=r&&s<0;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;const X=cx0+dx,Y=cy0+dy;if(X>=0&&Y>=0&&X<GW&&Y<GH&&ps(grid[Y*GW+X])){s=Y*GW+X;break;}}
+  if(s<0)return D;
+  const push=(k,v)=>{let i=hk.length;hk.push(k);hv.push(v);while(i>0){const q=(i-1)>>1;if(hk[q]<=k)break;hk[i]=hk[q];hv[i]=hv[q];i=q;}hk[i]=k;hv[i]=v;};
+  const pop=()=>{const v=hv[0],lk=hk.pop(),lv=hv.pop(),n=hk.length;if(n){let i=0;for(;;){let c=2*i+1;if(c>=n)break;if(c+1<n&&hk[c+1]<hk[c])c++;if(hk[c]>=lk)break;hk[i]=hk[c];hv[i]=hv[c];i=c;}hk[i]=lk;hv[i]=lv;}return v;};
+  const DG=CELL*1.41421356;D[s]=0;push(0,s);
+  while(hk.length){const k=hk[0],c=pop();if(k>D[c])continue;const cx=c%GW,cy=(c-cx)/GW;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!ps(grid[n]))continue;
+      if(dx&&dy&&(!ps(grid[cy*GW+nx])||!ps(grid[ny*GW+cx])))continue;const nd=k+(dx&&dy?DG:CELL);if(nd<D[n]){D[n]=nd;push(nd,n);}}}
+  return D;}
 function mkMap(seed,mk){
   mk=MAPS[mk]?mk:'strait';const D=MAPS[mk];
   srand=mulberry(seed);const R=srand;
@@ -161,7 +268,7 @@ function mkMap(seed,mk){
   if(WK!==1){const k=WK,P=p=>p.map(([x,y])=>[x*k,y*k]);
     for(const rv of M.rivers){rv.pts=P(rv.pts);const h0=rv.hw;rv.hw=(t,x)=>h0(t,x/k)*k;}
     for(const L of M.lakes){L.x*=k;L.y*=k;L.r*=k;}for(const I of M.islands){I.x*=k;I.y*=k;I.r*=k;}
-    for(const rg of M.ridges){rg.pts=P(rg.pts);const h0=rg.hw;rg.hw=()=>h0()*k;}for(const pk of M.peaks){pk.x*=k;pk.y*=k;pk.r*=k;}
+    for(const rg of M.ridges){rg.pts=P(rg.pts);const h0=rg.hw;rg.hw=()=>h0()*k;}for(const pk of M.peaks){pk.x*=k;pk.y*=k;pk.r*=k;if(pk.wx!=null)pk.wx*=k;}
     if(M.bridgeAt&&!M.bridgeFrac)M.bridgeAt=M.bridgeAt.map(([ri,at])=>[ri,at*k]);M.bridgeAng=M.bridgeAng.map(([x,y,nx,ny])=>[x*k,y*k,nx,ny]);}
   // edge field
   const EF=new Float32Array(EF_W*EF_H).fill(-1000);
@@ -180,8 +287,8 @@ function mkMap(seed,mk){
   // mountains: positive inside a ridge or peak (distance in from its foot)
   const MF=new Float32Array(EF_W*EF_H).fill(-1000);
   for(const rv of M.ridges){const P=rv.pts;for(let j=0;j<EF_H;j++){const y=j*EF_R;for(let i=0;i<EF_W;i++){const x=i*EF_R;let bd=500;for(let k=0;k<P.length-1;k++){const a=P[k],b=P[k+1];const lb=Math.max(Math.min(Math.abs(a[0]-x),Math.abs(b[0]-x)),Math.min(Math.abs(a[1]-y),Math.abs(b[1]-y)))-60;if(lb>bd)continue;const [d]=segDist(x,y,a[0],a[1],b[0],b[1]);if(d<bd)bd=d;}
-      if(bd>=500)continue;const e=rv.hw()*(1+.18*Math.sin(x*.013+y*.009)+.1*Math.sin(x*.031-y*.027))-bd;const k2=j*EF_W+i;if(e>MF[k2])MF[k2]=e;}}}
-  for(const K of M.peaks){const c=Math.cos(-K.rot),sn=Math.sin(-K.rot);for(let j=0;j<EF_H;j++){const y=j*EF_R;for(let i=0;i<EF_W;i++){const x=i*EF_R,qx=x-K.x,qy=y-K.y,lx=(qx*c-qy*sn)/K.rx,ly=qx*sn+qy*c,d=Math.hypot(lx,ly);if(d>K.r+500)continue;const e=(K.r*(1+.15*Math.sin(Math.atan2(ly,lx)*4+K.x))-d)*Math.min(1,K.rx);const k2=j*EF_W+i;if(e>MF[k2])MF[k2]=e;}}}
+      if(bd>=500)continue;const sx=rv.sfx?MAPW-x:x,sy=rv.sfy?MAPH-y:y,e=rv.hw()*(1+.18*Math.sin(sx*.013+sy*.009)+.1*Math.sin(sx*.031-sy*.027))-bd;const k2=j*EF_W+i;if(e>MF[k2])MF[k2]=e;}}}
+  for(const K of M.peaks){const c=Math.cos(-K.rot),sn=Math.sin(-K.rot);for(let j=0;j<EF_H;j++){const y=j*EF_R;for(let i=0;i<EF_W;i++){const x=i*EF_R,qx=x-K.x,qy=y-K.y,lx=(qx*c-qy*sn)/K.rx,ly=qx*sn+qy*c,d=Math.hypot(lx,ly);if(d>K.r+500)continue;const e=(K.r*(1+.15*Math.sin((K.am?K.am(Math.atan2(ly,lx)):Math.atan2(ly,lx))*4+(K.wx!=null?K.wx:K.x)))-d)*Math.min(1,K.rx);const k2=j*EF_W+i;if(e>MF[k2])MF[k2]=e;}}}
   M.MF=MF;M.hasMtn=M.ridges.length+M.peaks.length>0;
   M.mf=(x,y)=>{const fx=Math.max(0,Math.min(EF_W-1.001,x/EF_R)),fy=Math.max(0,Math.min(EF_H-1.001,y/EF_R)),i=fx|0,j=fy|0,tx=fx-i,ty=fy-j,k=j*EF_W+i;return(MF[k]*(1-tx)+MF[k+1]*tx)*(1-ty)+(MF[k+EF_W]*(1-tx)+MF[k+EF_W+1]*tx)*ty;};
   M.edge=(x,y)=>{const fx=Math.max(0,Math.min(EF_W-1.001,x/EF_R)),fy=Math.max(0,Math.min(EF_H-1.001,y/EF_R)),i=fx|0,j=fy|0,tx=fx-i,ty=fy-j,k=j*EF_W+i;return(EF[k]*(1-tx)+EF[k+1]*tx)*(1-ty)+(EF[k+EF_W]*(1-tx)+EF[k+EF_W+1]*tx)*ty;};
@@ -194,9 +301,9 @@ function mkMap(seed,mk){
   for(const [ri,at] of (M.bridgeAt||[])){const rv=M.rivers[ri];if(!rv)continue;const P=rv.pts;let k=0;
     if(M.bridgeFrac){const target=at*rv.len;while(k<P.length-2&&rv.acc[k+1]<target)k++;}else{let bd=1e9;for(let q=0;q<P.length-1;q++){const d=Math.abs((P[q][0]+P[q+1][0])/2-at);if(d<bd){bd=d;k=q;}}}
     const a=P[k],b=P[k+1],L=Math.hypot(b[0]-a[0],b[1]-a[1])||1,t=[(b[0]-a[0])/L,(b[1]-a[1])/L],n=[-t[1],t[0]],cx=(a[0]+b[0])/2,cy=(a[1]+b[1])/2;
-    let h=40;while(h<900&&(M.edge(cx+n[0]*h,cy+n[1]*h)>-8||M.edge(cx-n[0]*h,cy-n[1]*h)>-8))h+=8;h+=26;
+    let h=40;while(h<900*Math.max(1,WK)&&(M.edge(cx+n[0]*h,cy+n[1]*h)>-8||M.edge(cx-n[0]*h,cy-n[1]*h)>-8))h+=8;h+=26;
     M.bridges.push({x:cx,y:cy,h,n,t,a:[cx-n[0]*h,cy-n[1]*h],b:[cx+n[0]*h,cy+n[1]*h]});}
-  for(const [cx,cy,nx,ny] of M.bridgeAng){const n=[nx,ny],t=[-ny,nx];let h=40;while(h<900&&(M.edge(cx+n[0]*h,cy+n[1]*h)>-8||M.edge(cx-n[0]*h,cy-n[1]*h)>-8))h+=8;h+=26;M.bridges.push({x:cx,y:cy,h,n,t,a:[cx-n[0]*h,cy-n[1]*h],b:[cx+n[0]*h,cy+n[1]*h]});}
+  for(const [cx,cy,nx,ny] of M.bridgeAng){const n=[nx,ny],t=[-ny,nx];let h=40;while(h<900*Math.max(1,WK)&&(M.edge(cx+n[0]*h,cy+n[1]*h)>-8||M.edge(cx-n[0]*h,cy-n[1]*h)>-8))h+=8;h+=26;M.bridges.push({x:cx,y:cy,h,n,t,a:[cx-n[0]*h,cy-n[1]*h],b:[cx+n[0]*h,cy+n[1]*h]});}
   const grid=new Uint8Array(GW*GH);
   for(let cy=0;cy<GH;cy++)for(let cx=0;cx<GW;cx++){const x=cx*CELL+CELL/2,y=cy*CELL+CELL/2;if(!M.isWater(x,y)){if(M.mtn(x,y)>0)grid[cy*GW+cx]=3;continue;}let v=1;
     for(const b of M.bridges){const dx=x-b.x,dy=y-b.y,along=Math.abs(dx*b.t[0]+dy*b.t[1]),acr=Math.abs(dx*b.n[0]+dy*b.n[1]);if(along<36&&acr<b.h+10)v=2;}grid[cy*GW+cx]=v;}
@@ -219,13 +326,46 @@ function mkMap(seed,mk){
   const mir=D.sym==='none'?null:D.sym==='mirrorX'?([x,y])=>[MAPW-x,y]:D.sym==='mirrorY'?([x,y])=>[x,MAPH-y]:([x,y])=>[MAPW-x,MAPH-y];
   const dry=(x,y,m)=>x>90&&y>90&&x<MAPW-90&&y<MAPH-90&&!M.cityNear(x,y,60)&&M.edge(x,y)<-(m||90)&&M.mtn(x,y)<-(m||90)*.8&&M.reach[Math.floor(y/CELL)*GW+Math.floor(x/CELL)]===1;
   M.fields=[];M.oil=[];
+  // fixed derricks a map asks for (a central oil field): symmetric by design, so fair to everyone
+  for(const [ox,oy] of (D.oilAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>150))M.oil.push({x:X,y:Y,owner:-1,cp:[0,0],inc:0});}
   for(const [bx,by] of BASES){const a0=Math.atan2(MAPH/2-by,MAPW/2-bx);let put=false;for(let r of [390,430,350,470,300,250])for(let q=0;q<14&&!put;q++){const a=a0+(q%2?1:-1)*Math.ceil(q/2)*.35,fx=bx+Math.cos(a)*r,fy=by+Math.sin(a)*r;
       if(!dry(fx,fy,110))continue;if(BASES.some(([qx,qy])=>(qx!==bx||qy!==by)&&Math.hypot(qx-fx,qy-fy)<380))continue;if(M.fields.some(f=>Math.hypot(f.x-fx,f.y-fy)<220))continue;M.fields.push({x:fx,y:fy,r:46,amt:9000});put=true;}}
-  const free=(x,y,minB,minF,minO)=>dry(x,y,110)&&BASES.every(([bx,by])=>Math.hypot(bx-x,by-y)>minB)&&M.fields.every(f=>Math.hypot(f.x-x,f.y-y)>minF)&&M.oil.every(o=>Math.hypot(o.x-x,o.y-y)>minO);
-  const pairs=(want,push,minB,minF,minO)=>{let got=0;if(!mir)want*=2;for(let k=0;k<900&&got<want;k++){const p=[srnd(160,MAPW-160),srnd(160,MAPH-160)];if(!mir){if(free(p[0],p[1],minB,minF,minO)){push(p);got++;}continue;}const q=mir(p);if(Math.hypot(p[0]-q[0],p[1]-q[1])<260)continue;if(!free(p[0],p[1],minB,minF,minO))continue;const undo=push(p);if(!free(q[0],q[1],minB,minF,minO)){undo();continue;}push(q);got++;}return mir?got:got/2;};
-  // neutral supply scales with the number of players: a duel has a few contested fields, an 8-way war many more
-  {const want=2+Math.ceil(BASES.length*.75)+Math.max(0,Math.round((WK-1)*1.6));let got=0;for(const rl of [1,.8,.62,.5]){if(got>=want)break;got+=pairs(want-got,([x,y])=>{M.fields.push({x,y,r:46,amt:9000});return()=>M.fields.pop();},(D.fieldMinB||520)*Math.min(1,WK)*rl,(D.fieldMinB?240:300)*Math.min(1,WK)*rl,0);}}
-  {const want=2+Math.ceil(BASES.length/2)+Math.max(0,Math.round((WK-1)*1.1));let got=0;for(const rl of [1,.8,.62,.5]){if(got>=want)break;got+=pairs(want-got,([x,y])=>{M.oil.push({x,y,owner:-1,cp:[0,0],inc:0});return()=>M.oil.pop();},(D.fieldMinB||470)*Math.min(1,WK)*rl,170*Math.min(1,WK)*rl,(D.fieldMinB?220:300)*Math.min(1,WK)*rl);}}
+  // Neutral supply and oil, placed fairly for whichever start positions are in play: every base gets the same
+  // expansions at the same DRIVING distance inside its own part of the map, a contested field sits where the routes
+  // between each pair of neighbours meet (equally far for both), and the contested oil is where everyone is as equally
+  // far as the ground allows. Distances are real routes (around water, rock and cities), not straight lines.
+  {const NB=BASES.length,cellOf=(x,y)=>Math.floor(y/CELL)*GW+Math.floor(x/CELL),DB=BASES.map(([x,y])=>gridDist(grid,x,y));
+   const cand=[];for(let cy=1;cy<GH-1;cy+=2)for(let cx=1;cx<GW-1;cx+=2){const x=cx*CELL+CELL/2,y=cy*CELL+CELL/2;if(!dry(x,y,110))continue;const c=cy*GW+cx,d=DB.map(Q=>Q[c]);if(d.some(v=>v>=1e8))continue;
+     let lo=1e9,hi=0;for(const v of d){lo=Math.min(lo,v);hi=Math.max(hi,v);}cand.push({x,y,d,lo,hi});}
+   const eD=BASES.map((b,i)=>Math.min(...BASES.map((q,j)=>j===i?1e9:DB[i][cellOf(q[0],q[1])])));let E=Math.min(...eD);if(!(E<1e8))E=2600*WK;
+   const fmb=(D.fieldMinB||520)*Math.min(1,WK);
+   const far=(p,minB)=>BASES.every(([bx,by])=>Math.hypot(bx-p.x,by-p.y)>minB);
+   const okF=(p,rl,minF)=>far(p,fmb*rl)&&M.fields.every(f=>Math.hypot(f.x-p.x,f.y-p.y)>minF*rl)&&M.oil.every(o=>Math.hypot(o.x-p.x,o.y-p.y)>170*rl);
+   const okO=(p,rl,minO,minF)=>far(p,fmb*.9*rl)&&M.fields.every(f=>Math.hypot(f.x-p.x,f.y-p.y)>(minF||170)*rl)&&M.oil.every(o=>Math.hypot(o.x-p.x,o.y-p.y)>minO*rl);
+   const best=(score,ok)=>{for(const rl of [1,.8,.62,.5]){let b=null,bs=1e18;for(const p of cand){const s=score(p);if(s<bs&&ok(p,rl)){bs=s;b=p;}}if(b)return b;}return null;};
+   const addF=p=>{if(p)M.fields.push({x:p.x,y:p.y,r:46,amt:9000});},addO=p=>{if(p)M.oil.push({x:p.x,y:p.y,owner:-1,cp:[0,0],inc:0});};
+   const mine=(p,i,m)=>p.d[i]<=p.lo+.01&&p.d.every((v,j)=>j===i||v-p.d[i]>=m);
+   // own expansions: one supply field and one derrick per base, same route length for everyone, safely on its side
+   for(let i=0;i<NB;i++)addF(best(p=>Math.abs(p.d[i]-.27*E),(p,rl)=>mine(p,i,.12*E*rl)&&okF(p,rl,300*Math.min(1,WK))));
+   for(let i=0;i<NB;i++)addO(best(p=>Math.abs(p.d[i]-.36*E),(p,rl)=>mine(p,i,.08*E*rl)&&okO(p,rl,300*Math.min(1,WK),240)));
+   // contested supply: one "unit" between every pair of neighbours - a spot equally far from both on the shortest
+   // route or, where that ground is water (a river between them), a pair of spots, one on each side, each the other's
+   // mirror in route length. A duel gets the centre and the two best flanking routes.
+   const tw=(p,i,j)=>{for(let k=0;k<NB;k++)if(k!==i&&k!==j&&p.d[k]<Math.max(p.d[i],p.d[j]))return false;return true;};
+   const unit=(i,j,add,ok,sp)=>{const tol=Math.max(2*CELL,.03*E);
+     const b=best(p=>p.d[i]+p.d[j]+4*Math.abs(p.d[i]-p.d[j]),(p,rl)=>Math.abs(p.d[i]-p.d[j])<tol/rl&&tw(p,i,j)&&ok(p,rl,sp));if(b){add(b);return 1;}
+     for(const [rl,gm] of [[1,.3],[.8,.3],[1,.6],[.62,.6],[.5,.8]]){const L=[];for(const p of cand){if(!tw(p,i,j))continue;const g=p.d[j]-p.d[i];if(g<.04*E||g>gm*E)continue;L.push([p.d[i]+p.d[j]+2*g,p]);}L.sort((a,b)=>a[0]-b[0]);
+       for(let n=0,t=0;n<L.length&&t<30;n++){const p0=L[n][1];if(!ok(p0,rl,sp))continue;t++;let q0=null,qs=.04*E;
+         for(const q of cand){if(!tw(q,i,j))continue;const s=Math.abs(q.d[j]-p0.d[i])+Math.abs(q.d[i]-p0.d[j]);if(s<qs&&Math.hypot(q.x-p0.x,q.y-p0.y)>sp*rl&&ok(q,rl,sp)){qs=s;q0=q;}}
+         if(q0){add(p0);add(q0);return 2;}}}
+     return 0;};
+   const oF=(p,rl,sp)=>okF(p,rl,sp),oO=(p,rl,sp)=>okO(p,rl,sp,.16*E);
+   if(NB===2){let u=0;for(let n=0;n<3&&u<3;n++){const r=unit(0,1,addF,oF,.3*E);if(!r)break;u+=r===2?1.5:1;}for(let n=0;n<2;n++)unit(0,1,addO,oO,.3*E);}
+   else{for(let i=0;i<NB;i++)for(let j=i+1;j<NB;j++){let adj=false;for(const p of cand)if(tw(p,i,j)&&Math.abs(p.d[i]-p.d[j])<.3*E&&(p.d[i]+p.d[j])/2<=.75*Math.max(eD[i],eD[j])){adj=true;break;}
+       if(adj)unit(i,j,addF,oF,280*Math.min(1,WK));}
+     // contested oil: a forward derrick for every base, the same route length out towards the middle of the map
+     const DCt=gridDist(grid,MAPW/2,MAPH/2);
+     for(let i=0;i<NB;i++)addO(best(p=>Math.abs(p.d[i]-.46*E)+.3*DCt[cellOf(p.x,p.y)],(p,rl)=>mine(p,i,.02*E*rl)&&Math.abs(p.d[i]-.46*E)<.08*E/rl&&okO(p,rl,300*Math.min(1,WK),240)));}}
   return M;
 }
 // P_B: while planning a route (pathfinding / line of sight in navTo), ground cells under buildings count as blocked,
