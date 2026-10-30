@@ -2,7 +2,7 @@
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse',HINTDEV='mouse';
-function pushLog(m,k){if(!G)return;if(k&&k.length===2&&k[0]==='v'){try{speak(+k[1]);}catch(e){}return;}try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
+function pushLog(m,k){if(!G)return;try{tkFeed(m,k);}catch(e){}if(k&&k.length===2&&k[0]==='v'){try{speak(+k[1]);}catch(e){}return;}try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
   // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
   // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
   const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},7000);el.append(d);while(el.children.length>4)el.firstChild.remove();}
@@ -12,10 +12,123 @@ function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams,me=T[ME
   const won=winner>=0&&ally(winner,ME);
   // the sim's reason is written from the winner's side ("The last enemy capitulated: …"); the losers read their own fall
   if(!won&&reason&&/^The last enemy capitulated/.test(reason)){const why=me.whyOut||String(reason).replace(/^The last enemy capitulated:\s*/,'');reason=`${me.F.name} has been defeated${why?': '+why:'.'}`;if(!/[.!]$/.test(reason))reason+='.';}
-  const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
-  $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=true;$('end').hidden=false;}
-function showElim(){if(!G)return;const left=G.teams.filter(T=>!T.out&&T.id!==ME).length;$('endt').textContent='Defeat';const why=G.teams[ME].whyOut;$('ends').textContent=`${G.teams[ME].F.name} has capitulated${why?': '+why:'.'} ${left} rival${left===1?'':'s'} still fighting. You can keep watching the battle.`;
-  $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=false;$('end').hidden=false;}
+  const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'||G.endStats?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
+  $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=true;try{esPage(G.endStats||null);}catch(e){console.warn('end stats',e);}
+  // the kill-cam replays the battle's biggest moment first (Skip: tap, click or Esc), then this score screen
+  const g0=G,show=()=>{$('end').hidden=false;try{esDraw();}catch(e){}};let kc=false;try{kc=kcStart(()=>{if(G===g0&&G.over)show();});}catch(e){console.warn('kill-cam',e);}if(!kc)show();}
+function showElim(){if(!G||G.over)return;   // (the 'out' list can arrive after the battle's end: keep the summary)
+  const left=G.teams.filter(T=>!T.out&&T.id!==ME).length;$('endt').textContent='Defeat';const why=G.teams[ME].whyOut;$('ends').textContent=`${G.teams[ME].F.name} has capitulated${why?': '+why:'.'} ${left} rival${left===1?'':'s'} still fighting. You can keep watching the battle.`;
+  $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=false;try{esPage(null);}catch(e){}$('end').hidden=false;}
+/* ---------- end-of-match summary page: scoreboard, awards, army-strength graph and a Share picture ----------
+   Every player sees the same numbers: the host (or the Cloudflare server) builds them in endStats() (03-sim) when the
+   battle ends and sends them to the clients in one 'est' event just before 'end' (07-net applyEvents keeps G.endStats). */
+const ES={blob:null,S:null};
+function esT(t){t=Math.max(0,Math.round(t||0));return Math.floor(t/60)+':'+String(t%60).padStart(2,'0');}
+function esM(n){n=Math.round(n||0);return '$'+(n>=100000?Math.round(n/1000)+'k':n>=10000?(n/1000).toFixed(1)+'k':String(n).replace(/\B(?=(\d{3})+(?!\d))/g,','));}
+function esFlag(f){try{const t=flagTex(f);return t&&t.image||null;}catch(e){return null;}}
+function esUnit(f,k){try{return stats(f,k).name;}catch(e){return k||'';}}
+function esPow(f,k){try{const P=powInfo(k,f);return P&&P.name||k;}catch(e){return k||'';}}
+function esName(p){const F=FACTIONS[p.f];return F?F.name:String(p.f||'?');}
+function esWin(S,i){const w=S.w;if(w==null||w<0||!S.p[w])return false;return i===w||S.p[i].tm===S.p[w].tm;}
+function esWho(S,i){return esName(S.p[i])+(i===ME?' (you)':'');}
+function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb;
+  const best=(val,ok,low)=>{let bi=-1,bv=0;P.forEach((p,i)=>{if(ok&&!ok(p))return;const v=val(p);if(bi<0||(low?v<bv:v>bv)||(v===bv&&K(p)>K(P[bi]))){bi=i;bv=v;}});return bi;};
+  let i;
+  i=best(p=>p.vd);if(i>=0&&P[i].vd>0)A.push(['MVP',i,esM(P[i].vd)+' of enemy forces destroyed']);
+  i=best(K);if(i>=0&&K(P[i])>0)A.push(['Top Killer',i,K(P[i])+' kills']);
+  i=best(p=>p.bn);if(i>=0&&P[i].bn>1)A.push(['Best Unit',i,'One '+esUnit(P[i].f,P[i].bk)+' got '+P[i].bn+' kills']);
+  i=best(p=>p.lu,p=>p.b>=5,true);if(i>=0)A.push(['Iron Wall',i,'Only '+P[i].lu+' unit'+(P[i].lu===1?'':'s')+' lost']);
+  i=best(p=>p.fk,p=>p.fk>=0,true);if(i>=0)A.push(['Quick Draw',i,'First kill at '+esT(P[i].fk)]);
+  i=best(p=>p.ap);if(i>=0&&P[i].ap>0)A.push(['Biggest Army',i,P[i].ap+' units in the field at once']);
+  i=best(p=>p.ms);if(i>=0&&P[i].ms>0)A.push(['Big Spender',i,esM(P[i].ms)+' spent']);
+  i=best(p=>p.me);if(i>=0&&P[i].me>0)A.push(['War Economy',i,esM(P[i].me)+' earned']);
+  i=best(p=>p.pt);if(i>=0&&P[i].pt>0)A.push(['Power Player',i,P[i].pt+' general power'+(P[i].pt===1?'':'s')+' used'+(P[i].pk?' (most: '+esPow(P[i].f,P[i].pk)+')':'')]);
+  return A;}
+const ES_ROWS=[['Units built',p=>p.b],['Units lost',p=>p.lu],['Enemy units destroyed',p=>p.ku],['Structures destroyed',p=>p.kb],['Structures lost',p=>p.lb],
+  ['Enemy value destroyed',p=>esM(p.vd)],['Money earned',p=>esM(p.me)],['Money spent',p=>esM(p.ms)],['General rank',p=>p.r],['Time alive',p=>esT(p.ta)]];
+// players in table order: winners first, then by value destroyed
+function esOrder(S){return S.p.map((p,i)=>i).sort((a,b)=>(esWin(S,b)-esWin(S,a))||(S.p[b].vd-S.p[a].vd)||a-b);}
+function esCss(){if($('esCss'))return;const st=document.createElement('style');st.id='esCss';st.textContent=`
+#end{place-items:start center}#end>.card{margin-block:auto}
+#endStats{display:flex;flex-direction:column;gap:20px;font-size:16px;line-height:1.35;text-align:left}#endStats[hidden]{display:none}
+#endStats h2{font-size:14px;letter-spacing:.14em;text-transform:uppercase;opacity:.75;margin:0 0 10px;font-weight:700}
+.esP{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.esC{border:1px solid rgba(255,255,255,.14);border-left:6px solid var(--c);border-radius:8px;padding:10px 12px;background:rgba(255,255,255,.035)}
+.esC.win{border-color:rgba(227,179,65,.75);border-left-color:var(--c);background:rgba(227,179,65,.07)}.esC.me{box-shadow:0 0 0 2px rgba(255,255,255,.35) inset}
+.esH{display:flex;align-items:center;gap:10px;margin-bottom:8px}.esH canvas{width:42px;height:25px;border-radius:2px;flex:none;box-shadow:0 0 0 1px rgba(0,0,0,.6)}
+.esN{font-weight:700;font-size:18px;line-height:1.2}.esTag{font-size:13px;opacity:.75}.esWinT{color:#e3b341;font-weight:800;font-size:13px;letter-spacing:.1em}
+.esC dl{display:grid;grid-template-columns:1fr auto;gap:3px 12px;margin:0}.esC dt{opacity:.78}.esC dd{margin:0;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.esA{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.esAw{border-radius:8px;padding:10px 12px;background:rgba(227,179,65,.08);border:1px solid rgba(227,179,65,.35);border-left:5px solid var(--c)}
+.esAw b{display:block;color:#e3b341;font-size:13px;letter-spacing:.12em;text-transform:uppercase}.esAw .who{font-weight:700;font-size:17px;margin:2px 0}.esAw .what{font-size:15px;opacity:.88}
+#esGraph{width:100%;height:230px;display:block;background:rgba(255,255,255,.03);border-radius:8px}
+.esLeg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:15px;margin-top:8px}.esLeg i{display:inline-block;width:16px;height:4px;border-radius:2px;margin-right:6px;vertical-align:middle;background:var(--c)}
+#esPrev{max-width:100%;border-radius:8px;margin-top:6px}#esPrevBox p{font-size:14px;opacity:.8;margin:4px 0}
+@media (max-width:560px){.esP{grid-template-columns:1fr}.esA{grid-template-columns:1fr 1fr}#esGraph{height:190px}.esAw .who{font-size:16px}}`;document.head.append(st);}
+function esFlagEl(f,w,h){const c=document.createElement('canvas');c.width=w*2;c.height=h*2;const im=esFlag(f);const x=c.getContext('2d');if(im)try{x.drawImage(im,0,0,c.width,c.height);}catch(e){}else{x.fillStyle=(FACTIONS[f]||{}).color||'#888';x.fillRect(0,0,c.width,c.height);}return c;}
+function esShareBtn(){let b=$('endShare');if(b)return b;const row=$('again')&&$('again').parentNode;if(!row)return null;b=document.createElement('button');b.id='endShare';b.className='big ghost';b.type='button';b.textContent='Share';b.hidden=true;b.onclick=esShare;row.insertBefore(b,$('change'));return b;}
+// fills (or with S=null hides) the summary under the result line
+function esPage(S){esCss();let box=$('endStats');if(!box){box=document.createElement('div');box.id='endStats';$('ends').after(box);}
+  const sb=esShareBtn();ES.S=S;ES.blob=null;box.innerHTML='';if(!S||!Array.isArray(S.p)||!S.p.length){box.hidden=true;if(sb)sb.hidden=true;return;}box.hidden=false;if(sb)sb.hidden=false;
+  const ord=esOrder(S),sec=t=>{const s=document.createElement('section'),h=document.createElement('h2');h.textContent=t;s.append(h);box.append(s);return s;};
+  // awards
+  const A=esAwards(S);if(A.length){const s=sec('Awards'),g=document.createElement('div');g.className='esA';for(const [t,i,w] of A){const d=document.createElement('div');d.className='esAw';d.style.setProperty('--c',S.p[i].c);d.innerHTML='<b></b><div class="who"></div><div class="what"></div>';d.querySelector('b').textContent=t;d.querySelector('.who').textContent=esWho(S,i);d.querySelector('.what').textContent=w;g.append(d);}s.append(g);}
+  // scoreboard
+  {const s=sec('Scoreboard'),g=document.createElement('div');g.className='esP';for(const i of ord){const p=S.p[i],d=document.createElement('div');d.className='esC'+(esWin(S,i)?' win':'')+(i===ME?' me':'');d.style.setProperty('--c',p.c);
+    const h=document.createElement('div');h.className='esH';h.append(esFlagEl(p.f,42,25));const nm=document.createElement('div');nm.innerHTML='<div class="esN"></div><div class="esTag"></div>';nm.querySelector('.esN').textContent=esName(p);
+    nm.querySelector('.esTag').textContent=[i===ME?'You':p.ai?'AI':'Player',S.p.some((q,j)=>j!==i&&q.tm===p.tm)?'Team '+(p.tm<100?p.tm+1:i+1):'',esWin(S,i)?'':p.out?'Defeated':''].filter(Boolean).join(' · ');h.append(nm);
+    if(esWin(S,i)){const w=document.createElement('div');w.className='esWinT';w.style.marginLeft='auto';w.textContent='WINNER';h.append(w);}d.append(h);
+    const dl=document.createElement('dl');for(const [k,f] of ES_ROWS){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=f(p);dl.append(dt,dd);}d.append(dl);g.append(d);}s.append(g);}
+  // army strength over time
+  if(S.a&&S.a.some(a=>a&&a.length>1)){const s=sec('Army strength over time');const c=document.createElement('canvas');c.id='esGraph';s.append(c);const lg=document.createElement('div');lg.className='esLeg';
+    for(const i of ord){const sp=document.createElement('span'),k=document.createElement('i');k.style.setProperty('--c',S.p[i].c);sp.append(k,document.createTextNode(esWho(S,i)));lg.append(sp);}s.append(lg);
+    const n=document.createElement('div');n.className='esTag';n.style.marginTop='4px';n.textContent='Value of each side\'s units in the field, every 10 seconds.';s.append(n);}
+  // the Share picture is drawn now, so tapping Share can open the share sheet straight away (iPhone needs that)
+  try{const cv=esImage(S);if(cv.toBlob)cv.toBlob(b=>{if(ES.S===S)ES.blob=b;},'image/png');}catch(e){console.warn('share image',e);}}
+function esDraw(){const c=$('esGraph'),S=ES.S;if(!c||!S||$('end').hidden)return;const r=c.getBoundingClientRect();if(!r.width||!r.height)return;const d=Math.min(2,window.devicePixelRatio||1);
+  c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);esGraph(x,S,0,0,c.width,c.height,d);}
+addEventListener('resize',()=>{try{esDraw();}catch(e){}});
+function esNice(v){const p=Math.pow(10,Math.floor(Math.log10(Math.max(1,v))));for(const m of [1,2,2.5,5,10])if(m*p>=v)return m*p;return 10*p;}
+// army-value lines, one per side (yours drawn last and thicker); sc = pixels per CSS pixel
+function esGraph(x,S,x0,y0,w,h,sc){const A=S.a||[],dt=S.dt||10,T=Math.max(1,S.t||1);let mx=1;for(const a of A)for(const v of (a||[]))if(v>mx)mx=v;
+  const top=esNice(mx*100/4)*4,pl=58*sc,pb=24*sc,pt=10*sc,pr=10*sc,gx=x0+pl,gy=y0+pt,gw=w-pl-pr,gh=h-pt-pb;
+  x.save();x.font=`${12*sc}px system-ui,-apple-system,sans-serif`;x.textBaseline='middle';x.lineWidth=sc;
+  for(let k=0;k<=4;k++){const yy=gy+gh-gh*k/4;x.strokeStyle='rgba(255,255,255,.12)';x.beginPath();x.moveTo(gx,yy);x.lineTo(gx+gw,yy);x.stroke();x.fillStyle='rgba(255,255,255,.65)';x.textAlign='right';x.fillText(esM(top*k/4),gx-6*sc,yy);}
+  const mins=T/60,step=[1,2,5,10,15,20,30,60].find(s=>mins/s<=6)||60;x.textAlign='center';x.textBaseline='top';
+  for(let m=0;m<=mins+1e-6;m+=step){const xx=gx+gw*(m*60/T);x.fillText(m+' min',Math.min(gx+gw-14*sc,Math.max(gx+14*sc,xx)),gy+gh+6*sc);}
+  const ord=S.p.map((p,i)=>i).sort((a,b)=>(a===ME)-(b===ME));x.lineJoin='round';x.lineCap='round';
+  for(const i of ord){const a=A[i];if(!a||!a.length)continue;x.strokeStyle=S.p[i].c||'#ccc';x.lineWidth=(i===ME?3.6:2.4)*sc;x.globalAlpha=i===ME?1:.9;x.beginPath();
+    a.forEach((v,j)=>{const xx=gx+gw*Math.min(1,j*dt/T),yy=gy+gh-gh*Math.min(1,v*100/top);if(j)x.lineTo(xx,yy);else x.moveTo(xx,yy);});x.stroke();}
+  x.restore();}
+// the whole summary as one picture (1080 px wide) for Discord
+function esImage(S){const W=1080,P=S.p,ord=esOrder(S),A=esAwards(S),rowH=74,awH=96,awRows=Math.ceil(A.length/2),grH=S.a&&S.a.some(a=>a&&a.length>1)?360:0;
+  const H=40+120+44+rowH*P.length+(A.length?60+awRows*(awH+12):0)+(grH?70+grH:0)+96;const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const F=(wt,sz)=>`${wt} ${sz}px system-ui,-apple-system,"Segoe UI",sans-serif`;const fit=(t,mw)=>{t=String(t);if(x.measureText(t).width<=mw)return t;while(t.length>1&&x.measureText(t+'…').width>mw)t=t.slice(0,-1);return t+'…';};
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,'#141a15');g.addColorStop(1,'#0b0e0c');x.fillStyle=g;x.fillRect(0,0,W,H);
+  let y=40;x.textBaseline='alphabetic';x.fillStyle='#e3b341';x.font=F(800,24);x.fillText('WORLD WAR 3 · BATTLE REPORT',40,y+24);
+  const wi=P.map((p,i)=>i).filter(i=>esWin(S,i));x.fillStyle='#fff';x.font=F(800,50);x.fillText(fit(wi.length?wi.map(i=>esName(P[i])).join(' & ')+' won':'No winner',W-80),40,y+84);
+  x.font=F(500,24);x.fillStyle='rgba(255,255,255,.7)';x.fillText(P.length+' sides · battle lasted '+esT(S.t),40,y+118);y+=150;
+  const cols=[['Kills',p=>p.ku+p.kb],['Lost',p=>p.lu+p.lb],['Built',p=>p.b],['Destroyed',p=>esM(p.vd)],['Rank',p=>p.r]],cx=[560,660,760,900,1040];
+  x.font=F(700,18);x.fillStyle='rgba(255,255,255,.6)';x.textAlign='left';x.fillText('NATION',40,y+20);x.textAlign='right';cols.forEach((k,j)=>x.fillText(k[0].toUpperCase(),cx[j],y+20));y+=44;
+  for(const i of ord){const p=P[i],win=esWin(S,i);x.fillStyle=win?'rgba(227,179,65,.12)':i%2?'rgba(255,255,255,.03)':'rgba(255,255,255,.06)';x.fillRect(30,y,W-60,rowH-8);x.fillStyle=p.c;x.fillRect(30,y,8,rowH-8);
+    const fl=esFlag(p.f);if(fl)try{x.drawImage(fl,54,y+(rowH-8-34)/2,57,34);}catch(e){}
+    x.textAlign='left';x.fillStyle='#fff';x.font=F(700,26);x.fillText(fit(esName(p),330),126,y+32);x.font=F(500,18);x.fillStyle=win?'#e3b341':'rgba(255,255,255,.65)';
+    x.fillText([win?'WINNER':p.out?'Defeated':'',i===ME?'You':p.ai?'AI':'Player'].filter(Boolean).join(' · '),126,y+56);
+    x.textAlign='right';x.fillStyle='#fff';x.font=F(700,26);cols.forEach((k,j)=>x.fillText(String(k[1](p)),cx[j],y+42));y+=rowH;}
+  x.textAlign='left';
+  if(A.length){y+=24;x.fillStyle='#e3b341';x.font=F(800,22);x.fillText('AWARDS',40,y+22);y+=36;const bw=(W-80-16)/2;
+    A.forEach(([t,i,w],k)=>{const bx=40+(k%2)*(bw+16),by=y+Math.floor(k/2)*(awH+12);x.fillStyle='rgba(227,179,65,.09)';x.fillRect(bx,by,bw,awH);x.fillStyle=P[i].c;x.fillRect(bx,by,6,awH);
+      x.fillStyle='#e3b341';x.font=F(800,17);x.fillText(t.toUpperCase(),bx+20,by+26);x.fillStyle='#fff';x.font=F(700,24);x.fillText(fit(esWho(S,i),bw-36),bx+20,by+56);x.fillStyle='rgba(255,255,255,.8)';x.font=F(500,19);x.fillText(fit(w,bw-36),bx+20,by+82);});
+    y+=awRows*(awH+12);}
+  if(grH){y+=24;x.fillStyle='#e3b341';x.font=F(800,22);x.fillText('ARMY STRENGTH OVER TIME',40,y+22);y+=46;x.fillStyle='rgba(255,255,255,.04)';x.fillRect(40,y,W-80,grH);esGraph(x,S,40,y,W-80,grH,1.6);y+=grH;}
+  x.fillStyle='rgba(255,255,255,.5)';x.font=F(500,18);x.fillText('abdullahhaidar5-ux.github.io/ww3',40,H-28);return c;}
+async function esShare(){const S=ES.S;if(!S)return;let b=ES.blob;
+  if(!b){try{b=await new Promise(r=>esImage(S).toBlob(r,'image/png'));}catch(e){b=null;}}if(!b)return;
+  const f=typeof File==='function'?new File([b],'ww3-battle-report.png',{type:'image/png'}):null;
+  try{if(f&&navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'World War 3 battle report'});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  // no share sheet (most PCs, the claude.ai copy): download it, and show the picture under the buttons to save by hand
+  const u=URL.createObjectURL(b);try{const a=document.createElement('a');a.href=u;a.download='ww3-battle-report.png';document.body.append(a);a.click();a.remove();}catch(e){}
+  let bx=$('esPrevBox');if(!bx){bx=document.createElement('div');bx.id='esPrevBox';$('endStats').append(bx);}bx.innerHTML='<p>Battle report picture: '+(TOUCHUI?'press and hold':'right-click')+' it to save or copy.</p>';const im=document.createElement('img');im.id='esPrev';im.alt='Battle report';im.src=u;bx.append(im);im.scrollIntoView({block:'nearest'});}
 
 /* ---------- panels ---------- */
 function btnHTML(id,name,cost,desc){return `<button class="btn" id="${id}"><span class="n"></span><span class="c"></span>${desc!=null?'<span class="d"></span>':''}<span class="q"></span><span class="p"></span></button>`;}
@@ -109,6 +222,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   {const ap=$('app'),o=!!el.querySelector('.cmdrow');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   {const trs=s.filter(u=>!u.isB&&u.s&&u.s.cap&&u.team===ME&&!u.dead);if(trs.length>1&&trs.length===s.filter(u=>!u.isB).length){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Unload all '+trs.length+' transports';ub.title=(TOUCHUI?'Or tap one of them again':'Or right-click one of them')+' to unload them all';ub.onpointerdown=ev=>{ev.preventDefault();for(const tr of trs)doAct({t:'unl',tid:tr.id});};el.append(ub);}}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
+  if(s.length===1&&!s[0].isB&&s[0].s&&s[0].s.jam&&s[0].team===ME)el.append(spoofBtn(s[0]));
   if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.';el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1){const n=MODE==='client'?(T.tunN|0):T.tun.length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>In the tunnel network: '+n+' / '+TUN_CAP+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. '+(TOUCHUI?'Tap':leftOrders()?'Click':'Right-click')+' a tunnel with units selected to send them in.');el.append(d);}
   if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1&&(MODE==='client'?T.tunN:T.tun.length)){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring units out here';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
@@ -135,7 +249,7 @@ function pickAt(sx,sy,own){let best=null,bd=1e9;for(const e of G.ents){if(e.dead
 function fieldAt(w){const i=G.fields.findIndex(f=>Math.hypot(f.x-w.x,f.y-w.y)<f.r+10);return i;}
 cv.addEventListener('mouseenter',e=>{mpos(e);mouse.in=true;});cv.addEventListener('mouseleave',()=>{mouse.in=false;});
 cv.addEventListener('mousemove',e=>{mpos(e);});
-cv.addEventListener('wheel',e=>{e.preventDefault();const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(1800,cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}},{passive:false});
+cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(ZMAX,cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}},{passive:false});
 function issueCmd(w,t,rally){
     {const x=exitIntent(t,MODK.alt);if(x)return doExit(x,w,t);}
     const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
@@ -332,7 +446,7 @@ function touchDown(e){TCH.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cv.setP
   return false;}
 function touchMove(e){if(!TCH.has(e.pointerId))return false;TCH.set(e.pointerId,{x:e.clientX,y:e.clientY});if(!PINCH||TCH.size<2)return false;
   const m=tMid(),P=PINCH;camTarget();
-  if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(1800,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
+  if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(ZMAX,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
   const a=screenToWorld(P.x,P.y),b=screenToWorld(m.x,m.y);if(a&&b){cam.tx+=a.x-b.x;cam.ty+=a.y-b.y;}
   PINCH={x:m.x,y:m.y,d:m.d};return true;}
 function touchUp(e){TCH.delete(e.pointerId);if(TCH.size<2)PINCH=null;
@@ -366,7 +480,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='x'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
   if(k==='r'&&!e.ctrlKey&&!e.metaKey){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length){doAct({t:'ret',ids});speak(2);}}
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
-  if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(1800,cam.td*1.15);}
+  if(e.key==='PageUp'){tiltBy(-.06);e.preventDefault();}if(e.key==='PageDown'){tiltBy(.06);e.preventDefault();}if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(ZMAX,cam.td*1.15);}
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();updateUI();});
 window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
 window.addEventListener('blur',()=>{MODK.ctrl=MODK.alt=MODK.shift=false;});
@@ -423,7 +537,7 @@ body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);pad
   .trow select,.seat select,.mapsel select,#aiFac,.seg button,.chip,.mapsel .rndmap,.seatx{min-height:38px}
   .game button,.joinrow .big,.joinrow input{min-height:40px}
 }`;document.body.append(st);}
-const HINT_TOUCH='Drag to scroll · pinch to zoom · tap a unit to select it, then tap the ground to move or an enemy to attack · double-tap: all of that type · hold, then drag: box-select (or a battle line with units selected) · tap your transport or building to go in; tap a selected transport again to unload, or tap the ground with a held building selected to come out';
+const HINT_TOUCH='Tap: select · tap ground: move · tap enemy: attack · drag: scroll · pinch: zoom · two fingers up/down: tilt';/* one short line on phones (Abdullah 2026-10-29: the long hint covered the battlefield); the full guide is in ☰ > Touch controls */
 function touchUI(){TOUCHUI=true;HINTDEV='touch';document.body.classList.add('touchui');setHint();try{updateUI();}catch(e){}}
 // on touch: the banner says how to place, and tapping it cancels; the long hint steps aside after the opening
 function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].name}${STRUCT[G.place].shore?' on the shore':''}: tap a spot (drag scrolls), then ✓ Build`:G.aim?(md.dataset.d||'').replace(/^Choose a target/,'Tap a target')+', then ✓ Fire':(md.dataset.d||'').replace(/click/g,'tap');
@@ -431,9 +545,9 @@ function touchHud(md){if(!md.hidden){const t=G.place?`Place ${STRUCT[G.place].na
   const h=$('hint');if(h)h.hidden=!md.hidden||G.t>40;}
 $('mode').onclick=e=>{if(!G||!e.target.closest('.mcx'))return;G.place=null;G.aim=null;G.amove=false;G.defm=false;updateUI();};
 try{if(matchMedia('(hover:none) and (pointer:coarse)').matches)touchUI();}catch(e){}
-// phones held upright: the menu is several screens long, so Deploy and Play online ride along at the bottom of the screen
-// (they press the real buttons further down)
-{const card=document.querySelector('#menu>.card');if(card&&!$('qDeploy')){const q=document.createElement('div');q.id='qDeploy';
+// (removed, Abdullah 2026-10-29: "removing the floating play online or AI button — looks cheap") phones held upright used to
+// get a floating Deploy / Play online bar at the bottom of the menu; the real buttons in the menu are the only ones now
+{const card=document.querySelector('#menu>.card');if(false&&card&&!$('qDeploy')){const q=document.createElement('div');q.id='qDeploy';
   for(const [id,t] of [['start','▶ Deploy vs AI'],['playOnline','Play online']]){const b=document.createElement('button');b.type='button';b.className='big'+(id==='start'?'':' ghost');b.textContent=t;b.onclick=()=>{const r=$(id);if(r&&!r.disabled&&!r.hidden)r.click();};b.dataset.for=id;q.append(b);}
   card.append(q);const st=document.createElement('style');st.textContent=`#qDeploy{display:none}
 @media (max-width:560px){#qDeploy{display:flex;gap:6px;position:sticky;bottom:0;z-index:4;margin:0 -4px;padding:8px 4px max(6px,env(safe-area-inset-bottom,0px));background:linear-gradient(rgba(8,11,10,0),rgba(8,11,10,.96) 28%)}#qDeploy button{flex:1 1 0;min-height:44px}#qDeploy.near{display:none}}`;document.head.append(st);
@@ -515,7 +629,9 @@ window.addEventListener('pointerdown',e=>{TC.touch=e.pointerType==='touch';TC.nd
 window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')TC.nm=(TC.nm||0)+1;if(e.pointerType!=='touch'||!TC.ids.has(e.pointerId))return;e.stopPropagation();if(!G)return;
   const p=tcXY(e),q=TC.ids.get(e.pointerId);TC.ids.set(e.pointerId,p);
   if(TC.pinch&&TC.ids.size>=2){const m=tcMid(),P=TC.pinch;camTarget();
-    if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(1800,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
+    if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(ZMAX,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
+    // two fingers moving up/down together (not pinching) tilt the camera; sideways they still pan
+    {const dy=m.y-P.y,dd=Math.abs(m.d-P.d);if(Math.abs(dy)>Math.abs(m.x-P.x)&&dd<Math.abs(dy)*.6){tiltBy(dy*.004);TC.pinch={x:m.x,y:m.y,d:m.d};return;}}
     const a=screenToWorld(P.x,P.y),b=screenToWorld(m.x,m.y);if(a&&b){cam.tx+=a.x-b.x;cam.ty+=a.y-b.y;}TC.pinch={x:m.x,y:m.y,d:m.d};return;}
   const g=TC.g;if(!g||g.id!==e.pointerId)return;g.x=p.x;g.y=p.y;
   if(g.mode==='tap'||g.mode==='hold'){if(Math.hypot(p.x-g.x0,p.y-g.y0)<=TC_SLOP)return;clearTimeout(TC.lpT);
@@ -800,6 +916,7 @@ function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.h
   if(MODE==='client'&&NET.sv&&NET.game)NET.game.presence({rd:1}).catch(()=>{});}
 // wait until the browser has painted (falls back to a timer when the tab is in the background and frames stop)
 function loadFrame(){return new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,document.hidden?0:300);});}
+const LOAD_WD=20000;
 async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
   // the 3D models of the shared scenery and of the nations in this battle (only those) download while the ground is painted
   const mp=modelsFor(g.teams.map(T=>T.fac),(d,n)=>{if(tok===LOAD.tok)loadStep('Loading 3D models… '+d+' of '+n,.08+.3*d/n);});
@@ -816,15 +933,20 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
     ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
     ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
-    ['Preparing graphics…',.78,()=>{try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
+    ['Preparing graphics…',.78,()=>{if(gfxPhone()&&typeof warmShadersPhone==='function'){LOAD.wstop=0;return warmShadersPhone((d,n)=>{if(live())loadStep('Preparing graphics… '+d+' of '+n,.78+.11*d/n);},()=>LOAD.wstop||!live());}
+      try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
     ['Deploying forces…',.9,()=>{buildPanels();}],
     // the first battle frame creates every unit, building, town and the fog of war on the GPU, by far the slowest frame
     // of the battle: draw it here, under the loading screen, so the battle appears already running
     ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
   const T0=performance.now(),TL=LOAD.times=[];
+  // every step has a watchdog: a step still not done after LOAD_WD ms (a download or a phone's shader compile that never
+  // finishes) is logged and the loading moves on, so the loading screen can never hang for ever
   for(const [label,p,fn,gl] of steps){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;const t1=performance.now();
-    try{const r=fn();if(r&&r.then)await r;TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
-      R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
+    try{const r=fn();if(r&&r.then){let wt=null;const to=await Promise.race([r.then(()=>0,e=>{throw e;}),new Promise(z=>{wt=setTimeout(()=>z(1),LOAD_WD);})]);clearTimeout(wt);
+        if(to){LOAD.wstop=1;console.warn('loading watchdog: "'+label.replace('…','')+'" still not done after '+LOAD_WD/1000+' s, moving on');}}
+      TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
+      console.error('3D graphics failed to start',err);R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
   g.terrain=tc;loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
   TL.push(['total',Math.round(performance.now()-T0)]);console.log('battle start: '+TL.map(([a,b])=>a.replace('…','')+' '+b+' ms').join(', '));
   // multiplayer client: its battle clock stood still under the loading screen while the host's kept running; catch up
@@ -847,9 +969,11 @@ function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){co
     b.querySelector('.nm').textContent=F.name;if(k==='RS'||k==='DW'){const ins=b.querySelector('.ins');ins.textContent='';const ec=emblemCanvas(k,38);ec.style.width='38px';ec.style.height='38px';ins.append(ec);}b.querySelector('.dc').textContent=F.docShort||F.doctrine;b.querySelector('.full').textContent=F.doctrine;b.title=F.doctrine;b.querySelector('.sp').textContent=sp+' · '+upgName(k,F.fup);b.querySelector('.sw').textContent='Strike: '+F.sup.name;b.onclick=()=>{setup.p=k;{const hm=MAP_KEYS.find(m=>(MAPS[m].home||[]).includes(k));if(hm&&$('mapSel')&&setup.map!==hm){$('mapSel').value=hm;$('mapSel').onchange();}}facCards();renderTeams();if(NET.code&&NET.code!=='join'&&NET.room)NET.room.presence({g:{c:NET.code,f:k,s:'open'}}).catch(()=>{});};el.append(b);}}
 const PREV={};
 // Draw start-slot markers on the preview: your chosen slot in gold with YOU, the slots the AIs will take in red, unused ones dim.
+// start positions shown on the preview for n players (some maps use their own ring of positions for 6 or 8 players)
+function prevSlots(k,n){const D=MAPS[k],P=PREV[k];if(!D['sl'+n])return P.sl;return D['sl'+n].map(([x,y])=>[x/3200*MAPW,y/2200*MAPH]);}
 function prevMarks(){const cv=$('mapCv'),k=setup.map,P=PREV[k];if(!cv||!P)return;const c=cv.getContext('2d'),W=cv.width,H=cv.height;c.putImageData(P.img,0,0);
   const n=Math.min((setup.n||1)+1,P.sl.length),pick=setup.slot==null?-1:setup.slot,used=slotOrder(MAPS[k],n,pick);c.textAlign='center';c.textBaseline='middle';
-  P.sl.forEach(([x,y],i)=>{const X=x/MAPW*W,Y=y/MAPH*H,u=used.indexOf(i),me=pick>=0?i===pick:false;const r=me?11:9;
+  prevSlots(k,n).forEach(([x,y],i)=>{const X=x/MAPW*W,Y=y/MAPH*H,u=used.indexOf(i),me=pick>=0?i===pick:false;const r=me?11:9;
     c.globalAlpha=u<0?.55:1;c.fillStyle='rgba(8,10,9,.78)';c.beginPath();c.arc(X,Y,r,0,7);c.fill();c.lineWidth=2;c.strokeStyle=me?'#e3b341':u>0?'#ea5a40':u===0?'#e3b341':'rgba(220,220,220,.5)';c.stroke();
     c.font='bold 12px sans-serif';c.fillStyle=me?'#e3b341':'#eee';c.fillText(i+1,X,Y+.5);
     if(me){c.font='bold 10px sans-serif';const tw=c.measureText('YOU').width+8;c.fillStyle='#e3b341';c.fillRect(X-tw/2,Y-r-15,tw,12);c.fillStyle='#111';c.fillText('YOU',X,Y-r-8.5);}c.globalAlpha=1;});
@@ -862,10 +986,10 @@ function mapPreview(k,cv){const c=cv.getContext('2d'),W=cv.width,H=cv.height;con
   return{water:wa/n,mtn:mo/n,bridges:M.m.bridges.length};}
 function syncAiN(){const mx=(MAPS[setup.map]||MAPS.strait).max-1;if($('aiN'))$('aiN').querySelectorAll('button').forEach(b=>{b.disabled=+b.dataset.n>mx;});if(setup.n>mx){setup.n=[1,2,3,5,7].filter(v=>v<=mx).pop();$('aiN').querySelectorAll('button').forEach(x=>x.classList.toggle('on',+x.dataset.n===setup.n));$('start').textContent=setup.n>1?`Deploy vs ${setup.n} AI`:'Deploy vs AI';}}
 function mapCards(){const el=$('pickMap');if(!el)return;if(!setup.map)setup.map=(typeof SET!=='undefined'&&SET.map&&MAPS[SET.map])?SET.map:'strait';el.className='';el.innerHTML='';const box=document.createElement('div');box.className='mapsel';
-  const cv=document.createElement('canvas');cv.id='mapCv';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Map preview: click a numbered position to choose your start');cv.onclick=e=>{const P=PREV[setup.map];if(!P)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)/r.width*MAPW,my=(e.clientY-r.top)/r.height*MAPH;let best=-1,bd=1e9;P.sl.forEach(([x,y],i)=>{const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=i;}});setup.slot=bd<MAPW*.09?best:-1;try{sfxUI(700);}catch(_){}prevMarks();};const right=document.createElement('div');const sel=document.createElement('select');sel.id='mapSel';sel.setAttribute('aria-label','Battlefield');
+  const cv=document.createElement('canvas');cv.id='mapCv';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Map preview: click a numbered position to choose your start');cv.onclick=e=>{const P=PREV[setup.map];if(!P)return;const r=cv.getBoundingClientRect(),mx=(e.clientX-r.left)/r.width*MAPW,my=(e.clientY-r.top)/r.height*MAPH;let best=-1,bd=1e9;prevSlots(setup.map,Math.min((setup.n||1)+1,P.sl.length)).forEach(([x,y],i)=>{const d=Math.hypot(x-mx,y-my);if(d<bd){bd=d;best=i;}});setup.slot=bd<MAPW*.09?best:-1;try{sfxUI(700);}catch(_){}prevMarks();};const right=document.createElement('div');const sel=document.createElement('select');sel.id='mapSel';sel.setAttribute('aria-label','Battlefield');
   for(const k of MAP_KEYS){const o=document.createElement('option');o.value=k;const hm=(MAPS[k].home||[]).map(f=>FACTIONS[f]&&FACTIONS[f].name).filter(Boolean);o.textContent=`${MAPS[k].name}${hm.length?' · home of '+hm.join(' & '):''} (${MAPS[k].min}–${MAPS[k].max} players)`;sel.append(o);}sel.value=setup.map;
   const pl=document.createElement('div');pl.className='pl';const dc=document.createElement('div');dc.className='dc';const sn=document.createElement('div');sn.className='dc';sn.id='slotNote';right.append(sel,pl,dc,sn);box.append(cv,right);el.append(box);
-  const show=()=>{const D=MAPS[setup.map];const base=`${D.min}–${D.max} players`+(D.theme==='snow'?' · snow & ice':'');pl.textContent=base+(D.tag?' · '+D.tag:'');dc.textContent=D.desc;
+  const show=()=>{const D=MAPS[setup.map];const base=(D.min===D.max?`${D.max} players`:`${D.min}–${D.max} players`)+(D.theme==='snow'?' · snow & ice':'');pl.textContent=base+(D.tag?' · '+D.tag:'');dc.textContent=D.desc;
     setTimeout(()=>{try{const r=mapPreview(setup.map,cv);if(r){const t=[base];if(D.tag)t.push(D.tag);else if(r.water>.28)t.push('naval-heavy');else if(r.water>.06)t.push('rivers & coast');else t.push(r.bridges?'rivers':'open land');if(!D.tag&&r.mtn>.05)t.push('mountain passes');if(r.bridges)t.push(r.bridges+(r.bridges>1?' bridges':' bridge'));pl.textContent=t.join(' · ');}}catch(e){}},20);};
   const rb=document.createElement('button');rb.type='button';rb.className='rndmap';rb.textContent='Random battlefield';rb.onclick=()=>{const need=(setup.n||1)+1;const ks=MAP_KEYS.filter(k=>k!==setup.map&&MAPS[k].max>=Math.min(need,8));const k=ks[Math.floor(Math.random()*ks.length)]||setup.map;sel.value=k;sel.onchange();};right.insertBefore(rb,pl);
   sel.onchange=()=>{setup.map=sel.value;setup.slot=-1;try{SET.map=setup.map;saveSet();}catch(e){}show();syncAiN();renderTeams();if(typeof renderLobby==='function')renderLobby();};show();syncAiN();}
@@ -898,6 +1022,9 @@ $('aMus').onclick=()=>{initAudio();AU.musicOn=!AU.musicOn;saveAudio();applyAudio
 // to spare and down when they don't. Desktop and the High setting are unchanged.
 const GFX_PHONE=(()=>{try{return matchMedia('(pointer:coarse)').matches&&!matchMedia('(pointer:fine)').matches;}catch(e){return false;}})();
 const QCAPS0=QUAL.caps.slice();
+// phones start on Low graphics (Abdullah 2026-10-29: iPhones froze on the battle loading screen with Auto, Low worked);
+// done once, so a player who later picks Medium/High/Auto in Settings keeps that choice
+if(GFX_PHONE&&SET.gfx==='auto'&&!SET.phLow){SET.gfx='low';SET.phLow=1;try{saveSet();}catch(e){}}
 function gfxPhone(){return GFX_PHONE&&SET.gfx!=='high';}
 function qualStartLv(){return SET.gfx==='auto'?(gfxPhone()?1:0):({high:0,med:1,low:3}[SET.gfx]??0);}
 // a fresh start for the frame-rate governor (a new battle, or a settings change): the long frames of the loading
@@ -908,8 +1035,8 @@ function applyGfx(){if(typeof QUAL==='undefined')return;const ph=gfxPhone(),base
   QUAL.lock=SET.gfx==='auto'?0:1;qualReset();try{applyQual();}catch(e){}}
 // One game speed for everyone, a little brisker than real time so battles keep moving.
 const GSPD=1.2;
-function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number]];
-  for(const [id,k,cv] of segs){const el=$(id);if(!el)continue;el.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',cv(b.dataset.v)===SET[k]);b.onclick=()=>{SET[k]=cv(b.dataset.v);saveSet();syncSettings();if(k==='gfx')applyGfx();};});}
+function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number],['sTk','tk',Number]];
+  for(const [id,k,cv] of segs){const el=$(id);if(!el)continue;el.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',cv(b.dataset.v)===SET[k]);b.onclick=()=>{SET[k]=cv(b.dataset.v);saveSet();syncSettings();if(k==='gfx')applyGfx();if(k==='tk')tkApply();};});}
   for(const [id,k] of [['sMus','mus'],['sFx','fx'],['sVo','vo'],['sScr','scr'],['sZm','zm']]){const el=$(id);if(!el)continue;el.value=SET[k];const out=$(id+'V');if(out)out.textContent=SET[k]+'%';el.oninput=()=>{SET[k]=+el.value;if(out)out.textContent=SET[k]+'%';saveSet();if(k!=='scr'&&k!=='zm')applyAudio();};}
   syncMouseUI();}
 // Settings > Mouse: a scheme preset (Generals / Alternate mouse setup / Custom) and a choice for each mouse function
@@ -935,7 +1062,7 @@ function syncMouseUI(){const pre=mPreset();
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
   const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
-const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Q: army · H: home · Wheel: zoom · WASD/arrows: scroll · Esc: cancel / deselect';
+const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Q: army · H: home · Wheel: zoom · Shift+wheel / PgUp PgDn: tilt · WASD/arrows: scroll · Esc: cancel / deselect';
 // the on-screen hint follows the chosen mouse functions (the Standard preset has its own fixed text)
 function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
@@ -1044,7 +1171,99 @@ if($('mmBtn'))$('mmBtn').onclick=()=>mapPeek();
 if($('sbFold')){const sb=$('sbx'),f=v=>{sb.classList.toggle('fold',v);$('sbFold').setAttribute('aria-expanded',v?'false':'true');};let v=false;try{v=localStorage.getItem('ww3_sbFold')==='1';}catch(e){}f(v);
   $('sbFold').onclick=()=>{const n=!sb.classList.contains('fold');f(n);try{localStorage.setItem('ww3_sbFold',n?'1':'0');}catch(e){}};}
 $('quitNo').onclick=()=>{$('quitOv').hidden=true;if(G&&G.qPause){G.qPause=false;togglePause(false);}};
-$('again').onclick=()=>{initAudio();startSingle();};$('change').onclick=()=>{$('end').hidden=true;$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;renderGames();};
+$('again').onclick=()=>{initAudio();startSingle();};$('change').onclick=()=>{$('end').hidden=true;$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;try{kcReset();}catch(e){}renderGames();};
+
+/* ---------- kill-cam: at match end, a short replay of the battle's biggest moment ---------- */
+// While a battle runs, four times a second this screen notes where every unit and building is (7 numbers each, about
+// 12 s kept) and every battle effect it plays (shots, explosions, deaths). Each death the player's side could see adds
+// the unit's cost to a running "value destroyed" tally, and the 8-second stretch with the most is kept (it only shares
+// the notes already taken, nothing is copied each frame). When the match ends, that stretch is played back through the
+// normal 3D view with stand-in copies of the units - the battle's own units and state are never changed (the swap below
+// lasts for one synchronous draw and is put back before anything else can run). Then the score screen, with a button
+// that saves the best frame as a PNG for sharing.
+const KC={G:null,on:false,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0,R:null};
+const KC_SPAN=9,KC_DT=.25,KC_TAIL=1.2;
+function kcOff(){return !!(navigator.webdriver&&!window.__killcam)||!!(G&&G.headless);}
+function kcReset(){if(KC.url)try{URL.revokeObjectURL(KC.url);}catch(e){}Object.assign(KC,{G,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0});const a=$('kcSave');if(a)a.hidden=true;}
+function kcFx(type,args){if(!G||G.over||KC.on||kcOff())return;if(KC.G!==G)kcReset();const t=G.t;KC.fx.push([t,type,args]);
+  if(type==='die'){const [id,x,y,ki,isB,team]=args,k=KINDS[ki];const v=(isB?STRUCT[k]&&STRUCT[k].cost:BASE[k]&&BASE[k].cost)||150;
+    let seen=team!=null&&ally(team,ME);const S=KC.snaps[KC.snaps.length-1];
+    if(!seen&&S){for(let i=0;i<S.e.length;i++)if(S.e[i].id===id){seen=(S.f[i*7+6]&1)>0;break;}}
+    if(seen)KC.deaths.push({t,v,x,y});}}
+function kcRec(force){try{if(kcOff()||!G)return;if(KC.G!==G)kcReset();const t=G.t;if(!force&&t-KC.lt<KC_DT&&t>=KC.lt)return;KC.lt=t;const w0=performance.now();
+  const E=[];for(const e of G.ents)if(!e.dead)E.push(e);const n=E.length,f=new Float32Array(n*7);
+  for(let i=0;i<n;i++){const e=E[i],j=i*7;f[j]=e.x;f[j+1]=e.y;f[j+2]=e.va??e.ang??0;f[j+3]=e.tang??NaN;f[j+4]=e.hp;f[j+5]=e.built??1;f[j+6]=(e.vis?1:0)|(e.landed?2:0);}
+  KC.snaps.push({t,e:E,f});const old=t-KC_SPAN-1.5;while(KC.snaps.length&&KC.snaps[0].t<old)KC.snaps.shift();
+  const F=KC.fx;while(KC.fh<F.length&&F[KC.fh][0]<old)KC.fh++;if(F.length-KC.fh>40000)KC.fh=F.length-40000;if(KC.fh>4096){F.splice(0,KC.fh);KC.fh=0;}
+  while(KC.deaths.length&&KC.deaths[0].t<t-14)KC.deaths.shift();
+  if(!force)kcEval(t-KC_SPAN+1.5,t-.5,t-KC_SPAN,t);
+  KC.ms+=performance.now()-w0;KC.n++;}catch(e){if(!KC.err){KC.err=1;console.warn('kill-cam record',e);}}}
+// keep [t0,t1] if the deaths seen in [a,b] add up to more value than the best stretch so far
+function kcEval(a,b,t0,t1){let sc=0,sx=0,sy=0,pk=null;for(const d of KC.deaths)if(d.t>=a&&d.t<=b){sc+=d.v;sx+=d.x*d.v;sy+=d.y*d.v;if(!pk||d.v>pk.v)pk=d;}
+  if(!pk||sc<300||KC.best&&sc<=KC.best.score)return;const snaps=KC.snaps.filter(s=>s.t>=t0-.3&&s.t<=t1);if(snaps.length<4)return;
+  const fx=[];for(let i=KC.fh;i<KC.fx.length;i++){const v=KC.fx[i];if(v[0]>=snaps[0].t&&v[0]<=t1)fx.push(v);}
+  KC.best={score:sc,t0:snaps[0].t,t1,cx:sx/sc,cy:sy/sc,peak:pk,snaps,fx};}
+const kcAng=(a,b,u)=>{const d=Math.atan2(Math.sin(b-a),Math.cos(b-a));return a+d*u;};
+function kcEls(){if($('kcOv'))return;const st=document.createElement('style');st.textContent=`
+#kcOv{position:fixed;inset:0;z-index:80;cursor:pointer;opacity:0;transition:opacity .45s ease;-webkit-tap-highlight-color:transparent}#kcOv.on{opacity:1}
+#kcOv .kcBar{position:absolute;left:0;right:0;height:9vh;background:#000}#kcOv .kcBar.t{top:0}#kcOv .kcBar.b{bottom:0;height:calc(var(--barh,0px) + 7vh)}
+#kcOv .kcTag{position:absolute;left:max(16px,3vw);top:calc(9vh + 12px);color:#fff;font:500 13px/1.35 system-ui,sans-serif;text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.6)}
+#kcOv .kcTag b{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;letter-spacing:.16em;color:#ffd27a}
+#kcOv .kcTag b:before{content:"";width:9px;height:9px;border-radius:50%;background:#e04a3a;box-shadow:0 0 6px #e04a3a}
+#kcOv .kcTag span{opacity:.9;letter-spacing:.03em}
+#kcSkip{position:absolute;right:max(16px,3vw);bottom:calc(var(--barh,0px) + 7vh + 12px);min-height:44px;padding:0 20px;border-radius:6px;border:1px solid rgba(255,255,255,.45);background:rgba(10,12,10,.6);color:#fff;font:600 15px system-ui,sans-serif;letter-spacing:.06em;cursor:pointer}
+#kcSkip:hover{background:rgba(40,44,38,.8)}
+body.kcOn #stage>*:not(#cv),body.kcOn #side{visibility:hidden!important}
+#kcSave{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}#kcSave[hidden]{display:none}`;document.head.append(st);
+  const o=document.createElement('div');o.id='kcOv';o.hidden=true;o.innerHTML='<div class="kcBar t"></div><div class="kcBar b"></div><div class="kcTag"><b>BATTLE REPLAY</b><span id="kcSub"></span></div><button id="kcSkip" type="button">Skip ▸</button>';
+  o.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();kcSkip();});o.addEventListener('contextmenu',e=>e.preventDefault());document.body.append(o);
+  // Esc, Space or Enter skips; every other key is held back so nothing reaches the (finished) battle's hotkeys
+  addEventListener('keydown',e=>{if(!KC.on)return;e.preventDefault();e.stopImmediatePropagation();if(e.key==='Escape'||e.key===' '||e.key==='Enter')kcSkip();},true);}
+function kcSaveBtn(){let a=$('kcSave');if(a)return a;const row=$('again')&&$('again').parentNode;if(!row)return null;a=document.createElement('a');a.id='kcSave';a.className='big ghost';a.hidden=true;a.textContent='Save screenshot';
+  if(!('download' in a))a.target='_blank';   // no download support: the picture opens in a new tab (long-press to save)
+  row.insertBefore(a,$('change'));return a;}
+function kcSkip(){if(KC.on&&KC.R)KC.R.skip=true;}
+function kcStart(done){if(kcOff()||KC.G!==G||!R3||window.GLLOST)return false;kcRec(true);const t=G.t;kcEval(t-KC_SPAN+1,t,t-KC_SPAN,t);const B=KC.best;if(!B||B.snaps.length<4)return false;
+  kcEls();const N=B.snaps.length,T=new Map();
+  B.snaps.forEach((S,k)=>{for(let i=0;i<S.e.length;i++){const e=S.e[i];let tr=T.get(e.id);
+    if(!tr){tr={g:Object.assign({},e,{dead:false,ox:null,oy:null,mv:-99,mvC:0,lx:undefined,ly:undefined,lastFire:-9}),d:new Float32Array(N*7).fill(NaN),gone:false};T.set(e.id,tr);}
+    tr.d.set(S.f.subarray(i*7,i*7+7),k*7);}});
+  // wrecks and fallen soldiers from the whole battle are set aside while the replay runs, then put back
+  const hide=[];for(const L of [WRECKS,BODIES])for(const w of L.splice(0)){SCN.remove(w.o);hide.push([L,w]);}const wq=WRECKQ.splice(0);
+  const cs={x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td};
+  KC.R={B,T,times:B.snaps.map(s=>s.t),rt:B.t0,k:0,fi:0,done,cs,hide,wq,G,skip:false,shot:false};KC.on=true;KC.shot=null;
+  const m=Math.floor(B.peak.t/60),s=Math.floor(B.peak.t%60);$('kcSub').textContent=`Biggest moment of the battle · ${m}:${String(s).padStart(2,'0')} · $${Math.round(B.score).toLocaleString('en-US')} destroyed`;
+  document.body.classList.add('kcOn');const o=$('kcOv');o.hidden=false;setTimeout(()=>o.classList.add('on'),30);return true;}
+function kcCam(R){const B=R.B,P=B.peak,len=B.t1+KC_TAIL-B.t0,p=Math.max(0,Math.min(1,(R.rt-B.t0)/len)),q0=Math.max(0,Math.min(1,(R.rt-B.t0)/Math.max(.5,P.t-B.t0))),q=q0*q0*(3-2*q0),e=p*p*(3-2*p);
+  // a slow push-in from the middle of the action toward its biggest kill, the camera sinking lower as it goes
+  cam.x=B.cx+(P.x-B.cx)*q*.7;cam.y=B.cy+(P.y-B.cy)*q*.7+30*(1-e);cam.dist=470-160*e;cam.tilt=-.03-.12*e;
+  cam.tx=cam.x;cam.ty=cam.y;cam.td=cam.dist;cam._xl=cam.x;cam._yl=cam.y;cam._dl=cam.dist;}
+function kcGrab(){try{cv.toBlob(b=>{if(b){KC.shot=b;kcCompose();}},'image/png');}catch(e){}}
+function kcFrame(dt){const R=KC.R;if(!R||R.G!==G||!G){kcStop(false);return;}
+  try{const B=R.B,sp=1-.6*Math.exp(-(((R.rt-B.peak.t)/.8)**2)),d=Math.min(.05,dt)*sp;R.rt+=d;   // slow motion around the biggest kill
+    if(R.rt>=B.t1+KC_TAIL&&!R.skip){if(!R.shot)R.skip=true;else{kcStop(true);return;}}
+    const ts=R.times;while(R.k<ts.length-2&&ts[R.k+1]<=R.rt)R.k++;const k=R.k,k1=Math.min(ts.length-1,k+1),u=k1>k?Math.max(0,Math.min(1,(R.rt-ts[k])/(ts[k1]-ts[k]))):0;
+    const L=[];for(const tr of R.T.values()){if(tr.gone)continue;const D=tr.d,j=k*7,j1=k1*7;if(D[j]!==D[j])continue;   // NaN: not on the field at this moment
+      const g=tr.g,h1=k1>k&&D[j1]===D[j1];let x=D[j],y=D[j+1],a=D[j+2],ta=D[j+3];
+      if(h1){const dx=D[j1]-x,dy=D[j1+1]-y;g.mvC=dx*dx+dy*dy>.25?1:0;x+=dx*u;y+=dy*u;a=kcAng(a,D[j1+2],u);if(ta===ta&&D[j1+3]===D[j1+3])ta=kcAng(ta,D[j1+3],u);}else g.mvC=0;
+      g.x=x;g.y=y;g.va=a;g.ang=a;g.tang=ta===ta?ta:undefined;g.hp=h1?D[j+4]+(D[j1+4]-D[j+4])*u:D[j+4];g.built=D[j+5];const fl=D[j+6];g.vis=(fl&1)>0;g.landed=(fl&2)>0;L.push(g);}
+    const gE=G.ents,gT=G.t;G.ents=L;G.t=R.rt;
+    try{const fx=B.fx;while(R.fi<fx.length&&fx[R.fi][0]<=R.rt){const v=fx[R.fi++],ty=v[1],a=v[2];if(ty==='die'){const tr=R.T.get(a[0]);if(tr)tr.gone=true;}const h=FXH_RAW[ty];if(h)try{h.apply(FXH,a);}catch(_){}}
+      kcCam(R);renderFrame(d);if(!R.shot&&(R.rt>=B.peak.t+.35||R.skip)){R.shot=true;kcGrab();}}
+    finally{G.ents=gE;G.t=gT;}
+    if(R.skip)kcStop(true);}catch(e){console.warn('kill-cam',e);kcStop(true);}}
+function kcStop(ok){const R=KC.R;KC.on=false;KC.R=null;document.body.classList.remove('kcOn');const o=$('kcOv');if(o){o.classList.remove('on');o.hidden=true;}if(!R)return;
+  try{for(const L of [WRECKS,BODIES])for(const w of L.splice(0))SCN.remove(w.o);for(const [L,w] of R.hide){L.push(w);SCN.add(w.o);}WRECKQ.length=0;WRECKQ.push(...R.wq);Object.assign(cam,R.cs);}catch(e){}
+  if(ok&&R.G===G)try{R.done();}catch(e){}}
+// the saved picture: the replay's best frame with a caption strip (result, nations, match time)
+function kcCompose(){const b=KC.shot,B=KC.best;if(!b||!G)return;const u=URL.createObjectURL(b),im=new Image();
+  im.onload=()=>{try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);URL.revokeObjectURL(u);
+    const W=c.width,H=c.height,s=Math.max(.6,H/720),bh=104*s,gr=x.createLinearGradient(0,H-bh,0,H);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.8)');x.fillStyle=gr;x.fillRect(0,H-bh,W,bh);
+    const me=G.teams[ME],won=$('endt')?$('endt').textContent:'',m=Math.floor(G.t/60),sec=String(Math.floor(G.t%60)).padStart(2,'0');
+    x.fillStyle='#fff';x.font=`700 ${28*s}px system-ui,sans-serif`;x.fillText(`WORLD WAR 3${won?' · '+won.toUpperCase():''}`,22*s,H-50*s);
+    x.fillStyle='#e6dcc2';x.font=`500 ${17*s}px system-ui,sans-serif`;x.fillText(`${me.F.name} vs ${vsText()} · ${m}:${sec}${B?` · biggest moment: $${Math.round(B.score).toLocaleString('en-US')} destroyed`:''}`,22*s,H-20*s);
+    c.toBlob(p=>{if(!p)return;if(KC.url)try{URL.revokeObjectURL(KC.url);}catch(e){}KC.url=URL.createObjectURL(p);const a=kcSaveBtn();if(!a)return;a.href=KC.url;a.download=`ww3-battle-${me.F.name.replace(/[^\w]+/g,'-')}-${Date.now()}.png`;a.hidden=false;},'image/png');}catch(e){console.warn('kill-cam picture',e);}};
+  im.onerror=()=>URL.revokeObjectURL(u);im.src=u;}
 
 let last=performance.now();
 // FPS and ping readout (Settings > Show FPS & ping)
@@ -1058,7 +1277,8 @@ function loop(now){if(window.__stopLoop)return;const _w0=performance.now();const
     if(sd>1/40){G.acc=0;G.alpha=1;if(sd>.06){simUpdate(sd/2);simUpdate(sd/2);}else simUpdate(sd);}   // slow frames (under 40 fps): one larger step, as before
     else{G.acc=Math.min(.1,(G.acc||0)+sd);let n=0;while(G.acc>=ST-1e-6&&n<3){for(const e of G.ents)if(!e.isB){e.ox=e.x;e.oy=e.y;}simUpdate(ST);G.acc-=ST;n++;}G.alpha=Math.max(0,Math.min(1,G.acc/ST));}}G.uiT-=dt;if(G.uiT<=0){G.uiT=.2;updateUI();}}
     if(G)netTick(dt);
-    if(G){scroll(dt);renderFrame(dt);}}catch(err){console.error(err);}
+    if(G&&!G.over)kcRec();
+    if(G){if(KC.on)kcFrame(dt);else{scroll(dt);renderFrame(dt);}}}catch(err){console.error(err);}
   QUAL.cost+=((performance.now()-_w0)/1000-QUAL.cost)*.05;fpsHud();
   requestAnimationFrame(loop);}
 // Hosting from a hidden or minimized window. Browsers stop drawing frames for a page you can't see (requestAnimationFrame
@@ -1102,3 +1322,58 @@ if($('sbTargets'))$('sbTargets').onclick=()=>{if(G&&G.sandbox){sandboxTargets();
 if($('sbFight'))$('sbFight').onclick=()=>{if(G&&G.sandbox){const D=G.teams[1];D.fight=!D.fight;updateUI();}};
 if($('sbClear'))$('sbClear').onclick=()=>{if(G&&G.sandbox){for(const e of G.ents)if(e.team===1&&!e.isB&&!e.dead){e.dead=true;G.byId.delete(e.id);FXE('die',[e.id,e.x|0,e.y|0,KINDS.indexOf(e.kind),0,1]);}updateUI();}};
 
+
+/* ---------- live news ticker ----------
+Client-only and read-only: builds headlines from the battle messages this player already gets (pushLog) and from
+team/weather state it can see, then scrolls them across a thin strip at the very top. Never touches the simulation. */
+const TK={q:[],cur:0,G:null,seen:{},out:{},wx:'',loss:[],kill:[],on:true,el:null,txt:null,tm:0};
+const TK_ADJ={US:'American',TR:'Turkish',IL:'Israeli',EU:'European',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
+function tkAdj(code){return TK_ADJ[code]||'';}
+function tkAdjName(name){for(const c in FACTIONS)if(FACTIONS[c].name===name)return tkAdj(c)||name;return name;}
+function tkOwn(){try{return G.teams[ME].F.name;}catch(e){return 'Our';}}
+function tkOwnAdj(){try{return tkAdj(G.teams[ME].F.code||G.teams[ME].fac)||tkOwn();}catch(e){return 'Allied';}}
+function tkApply(){if(SET.tk===undefined)SET.tk=1;TK.on=SET.tk!==0;document.body.classList.toggle('tk',TK.on);if(!TK.on){TK.q.length=0;TK.cur=0;if(TK.el)TK.el.hidden=true;}}
+function tkEl(){if(TK.el)return TK.el;const st=document.createElement('style');st.id='tkCss';st.textContent=`
+#news{position:fixed;z-index:6;left:0;right:0;top:0;height:calc(21px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);display:flex;align-items:stretch;background:rgba(8,10,12,.72);border-bottom:1px solid rgba(255,255,255,.12);pointer-events:none;overflow:hidden;font:600 12.5px/21px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#f1f1ee;letter-spacing:.2px}
+#news[hidden]{display:none}
+#news b{flex:none;position:relative;z-index:1;margin:0;padding:0 9px;background:#c4161c;color:#fff;font-size:11px;letter-spacing:1px;box-shadow:2px 0 6px rgba(0,0,0,.5)}
+#news .tkw{flex:1;position:relative;overflow:hidden;min-width:0}
+#news .tkt{position:absolute;left:0;top:0;white-space:nowrap;will-change:transform;transform:translateX(100vw)}
+@keyframes tkgo{from{transform:translateX(var(--w0))}to{transform:translateX(-100%)}}
+body.tk #log{margin-top:22px}
+@media (max-width:560px){#news{font-size:12px}}`;document.head.append(st);
+  const d=document.createElement('div');d.id='news';d.hidden=true;d.setAttribute('aria-hidden','true');d.innerHTML='<b>BREAKING</b><div class="tkw"><span class="tkt"></span></div>';document.body.append(d);
+  TK.el=d;TK.txt=d.querySelector('.tkt');TK.txt.addEventListener('animationend',()=>{TK.cur=0;TK.txt.style.animation='none';TK.el.hidden=!TK.q.length;tkNext();});return d;}
+// pri: 2 = jumps the queue; the queue holds at most 5 and anything older than 30 s is dropped unread
+function tkHead(text,pri){if(!TK.on||!G||MODE==='replay')return;const now=performance.now();if(TK.seen[text]&&now-TK.seen[text]<25000)return;TK.seen[text]=now;
+  const q=TK.q;q.push({t:text,at:now,p:pri||1});if(pri===2){q.sort((a,b)=>b.p-a.p||a.at-b.at);}
+  while(q.length>5){let i=q.findIndex(h=>h.p<2);if(i<0)i=q.length-1;q.splice(i,1);}tkEl();tkNext();}
+function tkNext(){if(TK.cur||!TK.on)return;const now=performance.now();let h;while((h=TK.q.shift())&&now-h.at>30000);if(!h){if(TK.el)TK.el.hidden=true;return;}
+  tkEl();TK.el.hidden=false;const t=TK.txt;t.textContent=h.t;const w=TK.el.querySelector('.tkw').clientWidth||600;t.style.setProperty('--w0',w+'px');
+  const dur=Math.max(6,(w+t.offsetWidth)/(w<700?95:130));t.style.animation='none';void t.offsetWidth;t.style.animation=`tkgo ${dur}s linear 1 forwards`;TK.cur=1;TK.shown=(TK.shown||0)+1;TK.last=h.t;}
+function tkCount(arr,n,win){const now=performance.now();arr.push(now);while(arr.length&&now-arr[0]>win)arr.shift();if(arr.length>=n){arr.length=0;return true;}return false;}
+function tkReset(){TK.G=G;TK.q.length=0;TK.cur=0;TK.seen={};TK.out={};TK.wx='';TK.loss=[];TK.kill=[];if(TK.txt){TK.txt.style.animation='none';}if(TK.el)TK.el.hidden=true;clearInterval(TK.tm);TK.tm=setInterval(tkPoll,1000);}
+function tkFeed(m,k){if(!G)return;if(TK.G!==G)tkReset();if(SET.tk===undefined||TK.el===null)tkApply();if(!TK.on||!m||(k&&k.length===2&&k[0]==='v'&&m!=='Unit lost.'))return;let r;const own=tkOwnAdj();
+  if(m==='Unit lost.'||/^The .+ was destroyed with \d+ aboard/.test(m)){if(tkCount(TK.loss,6,60000))tkHead(`Heavy losses for ${own} forces: six more units lost in a minute`,1);return;}
+  if(m==='Our base is under attack!')return tkHead(`${own} base under enemy assault`,2);
+  if(r=/^Warning: enemy (.+) inbound/.exec(m))return tkHead(`ALERT: enemy ${r[1]} inbound on ${own} positions`,2);
+  if(r=/^Enemy (.+) used (.+)\.$/.exec(m))return tkHead(`${tkAdjName(r[1])} forces unleash ${r[2]}`,2);
+  if(r=/^(.+) launched\.$/.exec(m)&&k==='g')return tkHead(`${own} forces launch ${r[1]}`,2);
+  if(r=/^Weather: ([^.]+)\./.exec(m)){const w=r[1].toLowerCase();return tkHead(w==='sandstorm'?'Sandstorm grounds jets over the battlefield':w==='blizzard'?'Blizzard sweeps the front, visibility near zero':w==='fog'?'Dense fog blankets the battlefield':w==='rain'?'Heavy rain turns the front to mud':`Weather change: ${r[1]}`,1);}
+  if(m==='The weather is clearing.')return tkHead('Skies clearing over the battlefield',1);
+  if(m==='Enemy attack force spotted moving out.')return tkHead(`Enemy attack force on the move toward ${own} lines`,2);
+  if(/^Enemy .+ destroyed\.$/.test(m)){if(tkCount(TK.kill,8,60000))tkHead(`${own} forces press the attack: eight more enemy units destroyed`,1);return;}
+  if(m==='An oil derrick was captured by the enemy!')return tkHead(`Oil derrick falls to the enemy, ${own} income down`,1);
+  if(m==='One of our oil derricks was destroyed!')return tkHead(`${own} oil derrick destroyed`,1);
+  if(/^Oil derrick (repaired and )?captured\.$/.test(m))return tkHead(`${own} forces seize an oil derrick`,1);
+  if(/^Our infantry captured an abandoned enemy /.test(m))return tkHead(`${own} infantry capture an abandoned enemy ${m.replace(/^.*enemy (.+)!$/,'$1')}`,1);
+  if(r=/^Capitulation in (\d+) seconds/.exec(m))return tkHead(`${own} faces capitulation in ${r[1]} seconds`,2);
+  if(r=/^(.+) destroyed\.$/.exec(m)&&k==='w'&&!/^(Unit|Oil)/.test(m))return tkHead(`${own} ${r[1]} destroyed`,1);
+  if(/^Our last tunnel was destroyed/.test(m))return tkHead(`${own} tunnel network destroyed, troops lost underground`,1);}
+function tkPoll(){try{if(!G||!TK.on||TK.G!==G){if(!G||TK.G!==G)clearInterval(TK.tm);return;}
+  for(const T of G.teams){if(T.out&&!TK.out[T.id]){TK.out[T.id]=1;const nm=T.F.name;tkHead(T.id===ME?`${tkOwn()} has capitulated`:`${nm} eliminated${T.whyOut?': '+String(T.whyOut).replace(/\.$/,''):''}`,2);}}
+}catch(e){}}
+if(typeof window!=='undefined'){window.__tk=TK;}
+try{tkApply();}catch(e){}
+{const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='News ticker (headlines scrolling across the top)';
+  const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}

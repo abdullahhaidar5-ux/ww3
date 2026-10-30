@@ -260,7 +260,42 @@ function tintedProto(key,team,kk){camoFreq(key);const LK=team&&team.fac?FLOOK[te
   const clone=(THREE.SkeletonUtils&&root.getObjectByProperty('type','SkinnedMesh'))?THREE.SkeletonUtils.clone(root):root.clone(true);
   clone.traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];const nm=ms.map(m=>{if(!map.has(m)){const c=plainStd(m.clone());if(key==='heli'&&/Gray_Aircraft/.test(m.name||'')){c.visible=false;}const isB=/^b_/.test(key);if(isB&&c.color){const hs={};c.color.getHSL(hs);c.color.setHSL(hs.h,hs.s*.55,hs.l*.95);}weather(c,['tree1','tree2','tree3','tree4'].includes(key)?.5:(key==='boat'||key==='ship')?.15:isB?1.35:1,CAMOK[key]?CAMOK[key]:0);const VK=['tank','tankE','tankW','truck','technical','toontank','m_t90','m_hilux','m_ozelot','m_abrams','m_merkava','m_kf51','m_msta','m_g6','m_ural','m_m35','m_humvee','m_oplot','m_t72','m_t62','m_t55','m_leo2'];if(isB)c.userData.refl=.35;{const LV={m_su35:.7,m_j10:.75,m_f18:.45,m_typhoon:.15,m_f15:.2,m_f16:.15,m_rafale:.15,m_mig29:.2};const lv=LV[key];if(lv&&c.color){const l=c.color.r*.3+c.color.g*.59+c.color.b*.11;c.color.lerp(new THREE.Color(.18,.2,.22).multiplyScalar(.7+l*1.6),lv);}}if(VK.includes(key)||/^m_|^(jet|heli|drone|boat|ship)$/.test(key))c.userData.refl=/^m_(f|su|ra|ty|j1|mig)|^jet$/.test(key)?1:.75;if(LK&&c.color){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.012){if(key==='soldier')c.color.lerp(new THREE.Color(LK.uni).convertSRGBToLinear(),.6);else if(isSol(key)){c.color.lerp(new THREE.Color(LK.uni).lerp(new THREE.Color('#ffffff'),.4).convertSRGBToLinear(),.5);c.color.multiplyScalar(1.8);}else if(VK.includes(key)){const tgt=new THREE.Color(LK.veh).convertSRGBToLinear().multiplyScalar(Math.min(1.6,.55+lum*2.2));c.color.lerp(tgt,.85);if(c.map&&TEXB[key])c.color.multiplyScalar(TEXB[key]);else if(!c.map&&UNTEX[key])c.color.multiplyScalar(UNTEX[key]);}}if(VK.includes(key)){const X=CAMOX[team.fac]||{};c.userData.camoA=new THREE.Color(LK.ca).convertSRGBToLinear();c.userData.camoB=new THREE.Color(LK.cb).convertSRGBToLinear();c.userData.camoP=X.p!=null?X.p:(LK.pat||0);c.userData.camoS=X.s||1;c.userData.camoC=new THREE.Color(X.c||LK.ca).convertSRGBToLinear();}}if(tc&&c.color&&!['tree1','tree2','tree3','tree4'].includes(key))c.color.lerp(tc,LK&&(isSol(key)||VK.includes(key))?Math.min(k,.06):k);if(isB&&c.color){c.color.multiply(new THREE.Color(1.08,1.0,.84));const rg=team&&team.fac&&FACTIONS[team.fac]?FACTIONS[team.fac].music:null,BW={west:'#9aa3a8',mideast:'#d2b48a',slavic:'#8f9686',southasia:'#c9a27a',eastasia:'#a8a196',latin:'#d9c9a8'}[rg];if(BW){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.05&&lum<.85)c.color.lerp(new THREE.Color(BW).convertSRGBToLinear().multiplyScalar(.6+lum*.9),.32);}}{if(c.isMeshStandardMaterial&&['tank','tankE','tankW','truck','technical','toontank','heli','jet','ship','boat','drone','sam'].includes(key)){c.metalness=Math.min(Math.max(c.metalness||0,.12),.3);c.roughness=Math.min(Math.max(c.roughness??.7,.5),.7);c.userData.sheen=1;}}
       if(isB&&team&&team.fac&&CAMOX[team.fac]){const X=CAMOX[team.fac];c.userData.trimC=new THREE.Color(X.t).convertSRGBToLinear();c.userData.wall=X.w||0;}map.set(m,c);}return map.get(m);});o.material=Array.isArray(o.material)?nm:nm[0];});
+  if(!(P.anims&&P.anims.length))try{mergeTinted(clone);}catch(err){console.warn('mergeTinted',key,err);}
   MODELS.tinted[id]={scene:clone,anims:P.anims};return MODELS.tinted[id];}
+// Graphics Phase 5: a vehicle model still drew one mesh per paint colour (hull, tracks, wheels, hatches, lights... each
+// its own plain untextured material, so mergeProto could not join them) - 5 to 20 draw calls per vehicle in every pass,
+// times hundreds of vehicles. Once a model is painted for a team, the parts whose materials differ ONLY in colour are
+// merged into one mesh: the colour moves into the vertices (material colour x vertex colour is the same paint, and the
+// weathering/camo shader works on the colour after that multiply), so it looks identical. Moving parts (turret, gun,
+// rotors) and textured, see-through or hidden parts stay as they were.
+function matSig(m){if(!m||!m.isMeshStandardMaterial||m.isMeshPhysicalMaterial||!m.visible||m.transparent||m.wireframe)return null;
+  for(const t of ['map','normalMap','roughnessMap','metalnessMap','aoMap','emissiveMap','alphaMap','bumpMap','lightMap','displacementMap','envMap'])if(m[t])return null;
+  const u=m.userData,cc=c=>c&&c.isColor?c.getHexString():'';
+  return [m.side,m.alphaTest,+m.roughness.toFixed(4),+m.metalness.toFixed(4),m.emissive.getHexString(),m.emissiveIntensity,m.flatShading?1:0,m.depthWrite?1:0,m.depthTest?1:0,m.fog?1:0,m.polygonOffset?m.polygonOffsetFactor+'/'+m.polygonOffsetUnits:0,m.envMapIntensity,
+    m.customProgramCacheKey?m.customProgramCacheKey():'',u.wx||0,u.refl||0,u.sheen||0,cc(u.camoA),cc(u.camoB),cc(u.camoC),u.camoP||0,u.camoS||0,cc(u.trimC),u.wall||0].join('|');}
+// Only rotors and propellers are animated by name (main_rotor / tail_rotor); a model's turret and gun nodes never move
+// on their own (the whole vehicle turns to its target), so they merge too. A future turret animation must keep them.
+const MOVE_KEEP=/rotor|prop/i;
+function mergeTinted(root){if(root.getObjectByProperty('type','SkinnedMesh'))return;
+  root.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(root.matrixWorld).invert(),M=new THREE.Matrix4(),groups=new Map();
+  const kept=o=>{for(let q=o;q&&q!==root;q=q.parent)if(MOVE_KEEP.test(q.name||''))return true;return false;};
+  root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||o.isSkinnedMesh||Array.isArray(o.material)||!o.visible||o.morphTargetInfluences||!o.geometry||!o.geometry.attributes.position||!o.geometry.attributes.normal||kept(o))return;
+    const sg=matSig(o.material);if(sg===null)return;const vc=!!(o.material.vertexColors&&o.geometry.attributes.color);
+    const key=sg+'|'+(o.castShadow?1:0)+(o.receiveShadow?1:0)+'|'+o.renderOrder+'|'+o.layers.mask+'|'+(o.frustumCulled?1:0);
+    let L=groups.get(key);if(!L){L={mat:o.material,items:[]};groups.set(key,L);}L.items.push([o,vc]);});
+  for(const L of groups.values()){if(L.items.length<2)continue;
+    const parts=L.items.map(([o,vc])=>{const g=floatGeo(o.geometry,vc?['position','normal','color']:['position','normal']);M.multiplyMatrices(inv,o.matrixWorld);g.applyMatrix4(M);
+      const n=g.attributes.position.count,col=new Float32Array(n*3),mc=o.material.color;
+      if(vc){const C=g.attributes.color,sz=C.itemSize,a=C.array;for(let i=0;i<n;i++){col[i*3]=a[i*sz]*mc.r;col[i*3+1]=a[i*sz+1]*mc.g;col[i*3+2]=a[i*sz+2]*mc.b;}g.deleteAttribute('color');}
+      else for(let i=0;i<n;i++){col[i*3]=mc.r;col[i*3+1]=mc.g;col[i*3+2]=mc.b;}
+      g.setAttribute('color',new THREE.BufferAttribute(col,3));
+      if(M.determinant()<0){for(const nm of ['position','normal','color']){const a=g.attributes[nm].array;for(let i=0;i<a.length;i+=9)for(let c=0;c<3;c++){const t=a[i+3+c];a[i+3+c]=a[i+6+c];a[i+6+c]=t;}}}
+      return g;});
+    const out=new THREE.BufferGeometry();for(const nm of ['position','normal','color']){let len=0;for(const g of parts)len+=g.attributes[nm].array.length;const arr=new Float32Array(len);let off=0;for(const g of parts){arr.set(g.attributes[nm].array,off);off+=g.attributes[nm].array.length;}out.setAttribute(nm,new THREE.BufferAttribute(arr,3));}
+    out.computeBoundingBox();out.computeBoundingSphere();for(const g of parts)g.dispose();
+    const src=L.mat,mat=src.clone();mat.color.setRGB(1,1,1);mat.vertexColors=true;mat.userData=src.userData;mat.onBeforeCompile=src.onBeforeCompile;mat.customProgramCacheKey=src.customProgramCacheKey;mat.needsUpdate=true;
+    const f=L.items[0][0],m=new THREE.Mesh(out,mat);m.name='vmerged';m.castShadow=f.castShadow;m.receiveShadow=f.receiveShadow;m.renderOrder=f.renderOrder;m.layers.mask=f.layers.mask;m.frustumCulled=f.frustumCulled;
+    for(const [o] of L.items)if(o.parent)o.parent.remove(o);root.add(m);}}
 // Some models (the Apache) use the older spec/gloss material type, which works only through its own shader hook; the
 // weathering hook replaced it, leaving the shader without its specular-map slot, so the hull failed to draw every frame
 // (only the tinted canopy and the shadow showed). Such materials become plain standard ones before weathering.
@@ -317,6 +352,8 @@ function soldierGear(m,fac,kind){const inner=m.userData.inner;if(!inner)return;i
 
 // Kit for the realistic soldiers: they already wear their own helmet, vest and boots, so only the rifle is added (merged into
 // the chest bone like the old kit) and the arms are posed holding it. Two-bone arm solve toward grip points, then aim each bone.
+// Offsets are in the soldier's own frame (faces +z, its left is +x), turned into the world by its rotation: it sits in its
+// unit's yaw group (turned 90 degrees), so raw world axes posed the rifle and arms sideways, hands out to one side.
 function solAim(bone,child,tgt){const bp=new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld),cp=new THREE.Vector3().setFromMatrixPosition(child.matrixWorld),cur=cp.sub(bp).normalize(),want=tgt.clone().sub(bp).normalize();
   const dq=new THREE.Quaternion().setFromUnitVectors(cur,want),bq=new THREE.Quaternion();bone.getWorldQuaternion(bq);const pq=new THREE.Quaternion();bone.parent.getWorldQuaternion(pq);
   bone.quaternion.copy(pq.invert().multiply(dq).multiply(bq));bone.updateMatrixWorld(true);}
@@ -329,18 +366,18 @@ function solRifle(k){const g=new THREE.Group(),bl=gearMat('#1c1d1c'),wd=gearMat(
   const bx=(w,h,l,x,y,z,m,rx)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w*k,h*k,l*k),m);q.position.set(x*k,y*k,z*k);if(rx)q.rotation.x=rx;g.add(q);return q;};
   bx(.34,.5,2.4,0,0,.9,bl);bx(.26,.62,1.4,0,-.12,-1.0,wd,-.12);bx(.2,.7,.34,0,-.55,1.0,bl,.12);bx(.3,.34,1.3,0,.0,2.6,wd);
   const br=new THREE.Mesh(new THREE.CylinderGeometry(.09*k,.09*k,2.0*k,6),bl);br.rotation.x=Math.PI/2;br.position.set(0,.05*k,4.2*k);g.add(br);bx(.12,.2,.14,0,.36,3.4,bl);return g;}
-function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)return;inner.updateMatrixWorld(true);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});if(!B.head||!B.chest||!B.hips)return;
+function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)return;m.updateWorldMatrix(true,true);const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const V=(x,y,z)=>new THREE.Vector3(x,y,z).applyQuaternion(mq);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});if(!B.head||!B.chest||!B.hips)return;
   const hp=new THREE.Vector3().setFromMatrixPosition(B.head.matrixWorld),hv=new THREE.Vector3().setFromMatrixPosition(B.hips.matrixWorld),k=Math.max(.5,(hp.y-hv.y)/5.2);
   const cp=new THREE.Vector3().setFromMatrixPosition(B.chest.matrixWorld),fw=new THREE.Vector3(0,0,1);
   // rifle held low-ready across the chest: grip hand back by the body, support hand out on the handguard
-  const base=cp.clone().add(new THREE.Vector3(-.15*k,-.95*k,0));
-  const Tr=base.clone().add(new THREE.Vector3(-.35*k,-.05*k,1.9*k)),Tl=base.clone().add(new THREE.Vector3(.35*k,.12*k,4.3*k));
+  const base=cp.clone().add(V(-.15*k,-.95*k,0));
+  const Tr=base.clone().add(V(-.35*k,-.05*k,1.9*k)),Tl=base.clone().add(V(.35*k,.12*k,4.3*k));
   // character's left is +x (rig faces +z); pull elbows down and a little out
-  solArm(B,'R',Tr,new THREE.Vector3(-.5,-1,-.2));solArm(B,'L',Tl,new THREE.Vector3(.6,-1,-.1));
+  solArm(B,'R',Tr,V(-.5,-1,-.2));solArm(B,'L',Tl,V(.6,-1,-.1));
   if(kind==='hero')return;
-  const attach=(bone,obj,wp)=>{const bq=new THREE.Quaternion(),ws=new THREE.Vector3();bone.getWorldQuaternion(bq);bone.getWorldScale(ws);const p=wp.clone();bone.worldToLocal(p);obj.position.copy(p);obj.quaternion.copy(bq.invert());obj.scale.set(1/ws.x,1/ws.y,1/ws.z);obj.userData.gear=1;bone.add(obj);};
-  const r=solRifle(k);attach(B.chest,r,base.clone().add(new THREE.Vector3(-.05*k,.0,.2*k)));
-  if(fac==='DW'){const g=new THREE.Group(),d=new THREE.Mesh(new THREE.SphereGeometry(.98*k*.82,12,8,0,Math.PI*2,0,Math.PI*.58),gearMat('#d9d0b8'));g.add(d);const t=new THREE.Mesh(new THREE.BoxGeometry(.5*k,1.1*k,1.0*k),gearMat('#c9bfa6'));t.position.set(-.55*k,-.55*k,0);g.add(t);const band=new THREE.Mesh(new THREE.TorusGeometry(.8*k,.09*k,6,14),gearMat('#8a2a24'));band.rotation.x=Math.PI/2;band.position.y=.14*k;g.add(band);attach(B.head,g,hp.clone().add(new THREE.Vector3(0,.55*k,0)));}
+  const attach=(bone,obj,wp)=>{const bq=new THREE.Quaternion(),ws=new THREE.Vector3();bone.getWorldQuaternion(bq);bone.getWorldScale(ws);const p=wp.clone();bone.worldToLocal(p);obj.position.copy(p);obj.quaternion.copy(bq.invert().multiply(mq));obj.scale.set(1/ws.x,1/ws.y,1/ws.z);obj.userData.gear=1;bone.add(obj);};
+  const r=solRifle(k);attach(B.chest,r,base.clone().add(V(-.05*k,.0,.2*k)));
+  if(fac==='DW'){const g=new THREE.Group(),d=new THREE.Mesh(new THREE.SphereGeometry(.98*k*.82,12,8,0,Math.PI*2,0,Math.PI*.58),gearMat('#d9d0b8'));g.add(d);const t=new THREE.Mesh(new THREE.BoxGeometry(.5*k,1.1*k,1.0*k),gearMat('#c9bfa6'));t.position.set(-.55*k,-.55*k,0);g.add(t);const band=new THREE.Mesh(new THREE.TorusGeometry(.8*k,.09*k,6,14),gearMat('#8a2a24'));band.rotation.x=Math.PI/2;band.position.y=.14*k;g.add(band);attach(B.head,g,hp.clone().add(V(0,.55*k,0)));}
   mergeGear(B,key+'|'+fac+'|'+kind+'|'+k.toFixed(3));}
 // Massive columns: every soldier was 7 skinned meshes (rifle, magazine and uniform parts, one per material colour) plus
 // 3 kit meshes on its bones - 10 draw calls per soldier in every pass (picture + shadow), ~30 per squad. They are merged
@@ -373,18 +410,62 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     E=SOLM[key]={geo,mat};}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
-function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;inner.updateMatrixWorld(true);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
-  if(!B.uplegL||!B.uplegR||!B.legL||!B.legR)return null;let pl=new THREE.Vector3().setFromMatrixPosition(B.uplegL.matrixWorld),pr=new THREE.Vector3().setFromMatrixPosition(B.uplegR.matrixWorld);
-  // the rifle-ready stance has the hips turned ~20 degrees; square them to the direction of travel so the legs
-  // swing straight forward and back instead of diagonally across the body
-  {const a=Math.atan2(pr.z-pl.z,pr.x-pl.x),tg=Math.abs(a)>Math.PI/2?Math.sign(a)*Math.PI:0,th=a-tg;if(Math.abs(th)>.02){inner.rotation.y+=th;inner.updateMatrixWorld(true);pl=new THREE.Vector3().setFromMatrixPosition(B.uplegL.matrixWorld);pr=new THREE.Vector3().setFromMatrixPosition(B.uplegR.matrixWorld);}}
-  const lat=pr.clone().sub(pl).normalize();const q=new THREE.Quaternion();
-  const mk=(b,s)=>{if(!b)return null;b.parent.getWorldQuaternion(q);const ax=lat.clone().applyQuaternion(q.clone().invert()).normalize();return{b,q0:b.quaternion.clone(),ax,s};};
-  return[mk(B.uplegL,1),mk(B.uplegR,-1),mk(B.legL,1),mk(B.legR,-1),mk(B.spine,0)].filter(Boolean);}
-const WQ=new THREE.Quaternion();
-function walkPose(m,ph,amt){const L=m.userData.legs;if(!L)return;const sw=Math.sin(ph);for(const j of L){let a=0;const n=j.b.name;
-    if(n==='uplegL')a=sw*.55*amt;else if(n==='uplegR')a=-sw*.55*amt;else if(n==='legL')a=-Math.max(0,Math.cos(ph))*.9*amt;else if(n==='legR')a=-Math.max(0,-Math.cos(ph))*.9*amt;else if(n==='spine')a=.08*amt;
-    WQ.setFromAxisAngle(j.ax,a*(m.userData.wsign||1));j.b.quaternion.copy(WQ).multiply(j.q0);}}
+function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
+  if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;
+  // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
+  // degrees) before that group's world matrices were ever updated, so the hips used to be read without the turn while
+  // the bones' parent rotations included it: the swing axis came out 90 degrees off and the legs swung sideways.
+  const hip=()=>{m.updateWorldMatrix(true,true);const pl=m.worldToLocal(new THREE.Vector3().setFromMatrixPosition(B.uplegL.matrixWorld)),pr=m.worldToLocal(new THREE.Vector3().setFromMatrixPosition(B.uplegR.matrixWorld));return[pl,pr];};
+  let [pl,pr]=hip();
+  // the rifle-ready stance has the hips turned ~20 degrees; square them to the direction of travel (the model faces +z)
+  {const a=Math.atan2(pr.z-pl.z,pr.x-pl.x),tg=Math.abs(a)>Math.PI/2?Math.sign(a)*Math.PI:0,th=a-tg;if(Math.abs(th)>.02){inner.rotation.y+=th;[pl,pr]=hip();}}
+  const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const lat=pr.clone().sub(pl).normalize().applyQuaternion(mq),up=new THREE.Vector3(0,1,0).applyQuaternion(mq);const q=new THREE.Quaternion();
+  // each joint keeps its rest rotation and two axes in its parent's frame: lat (the soldier's left-right line: pitch, legs
+  // swing forward/back about it) and up (yaw)
+  const mk=b=>{if(!b)return null;b.parent.getWorldQuaternion(q);q.invert();return{b,q0:b.quaternion.clone(),ax:lat.clone().applyQuaternion(q).normalize(),up:up.clone().applyQuaternion(q).normalize()};};
+  const W={uL:mk(B.uplegL),uR:mk(B.uplegR),lL:mk(B.legL),lR:mk(B.legR),hip:mk(B.hips),sp:mk(B.spine),ch:mk(B.chest),fL:mk(B.footL),fR:mk(B.footR)};
+  // the rest leg in the soldier's side view (z forward, y up): hip->knee and knee->ankle, so the hip height that keeps a
+  // planted foot on the ground can be worked out exactly for any thigh angle and knee bend (walkPose)
+  const lp=b=>m.worldToLocal(new THREE.Vector3().setFromMatrixPosition(b.matrixWorld)),h=lp(B.uplegL),kn=lp(B.legL),an=lp(B.footL);
+  W.hz=kn.z-h.z;W.hy=kn.y-h.y;W.kz=an.z-kn.z;W.ky=an.y-kn.y;W.D0=-(W.hy+W.ky);
+  return W;}
+// Gait. The soldier's legs, hips and upper body follow one phase u (0..1 per two steps, left foot lands at 0, right at .5).
+// A planted foot sweeps back in a straight line at exactly the ground speed (no sliding); the free foot swings forward
+// with the knee bent. Speed sets everything (see gaitStep in 06-view): slow = walk, the usual infantry speed = a jog with a
+// short airborne moment, forward lean and a longer stride. The rifle stays in both hands at low-ready; it only bobs
+// up/down and fore-aft with the steps (chest pitch) - nothing in the upper body sways sideways, and the body never rolls.
+const WQ=new THREE.Quaternion(),WQ2=new THREE.Quaternion();
+function wSet(j,a,y){if(!j)return;WQ.setFromAxisAngle(j.ax,a);if(y){WQ2.setFromAxisAngle(j.up,y);WQ.multiply(WQ2);}j.b.quaternion.copy(WQ).multiply(j.q0);}
+// Side view of one leg (z forward, y up, from the rest leg measured in setupWalk): ankle forward offset and depth below
+// the hip for a thigh angle th (forward +) and knee bend kn.
+function gFz(W,th,kn){return W.hz*Math.cos(th)-W.hy*Math.sin(th)+W.kz*Math.cos(th-kn)-W.ky*Math.sin(th-kn);}
+function gDepth(W,th,kn){return-(W.hz*Math.sin(th)+W.hy*Math.cos(th)+W.kz*Math.sin(th-kn)+W.ky*Math.cos(th-kn));}
+// how far the body travels per planted step (the foot's sweep from landing to push-off): sets the cadence (06-view)
+function gSweep(W,a,run){return gFz(W,a,.1+.18*run)-gFz(W,-a,0);}
+// One leg at phase u (0..1; the foot lands at 0) with stance fraction s. Planted (u<s): the ankle moves back in a straight
+// line at constant speed (thigh solved for it, two Newton steps) with the knee landing slightly bent and giving a little
+// mid-stance. Swinging: heel kicks up, knee stays bent while the thigh comes through, then reaches out to land.
+const GL={th:0,kn:0},GR={th:0,kn:0};
+function gLeg(W,u,s,a,run,o){const KC=.1+.18*run;
+  if(u<s){const t=u/s,kn=KC*(1-t)+run*.2*Math.sin(Math.PI*t),z0=gFz(W,a,KC),zt=z0+(gFz(W,-a,0)-z0)*t;let th=a*(1-2*t);
+    for(let i=0;i<2;i++)th-=(gFz(W,th,kn)-zt)/Math.max(1,gDepth(W,th,kn));o.th=th;o.kn=kn;return;}
+  const w=(u-s)/(1-s),KM=.85+.8*run;o.th=-a*Math.cos(Math.PI*Math.min(1,w/.8));
+  o.kn=w<.4?KM*Math.sin(Math.PI/2*w/.4):w<.78?KM:KC+(KM-KC)*(.5+.5*Math.cos(Math.PI*(w-.78)/.22));}
+// u: phase, amt: 0..1 blend from standing, a: thigh swing (radians), s: stance fraction, run: 0 walk .. 1 jog, br: breath.
+// Poses the bones and returns the hip height (0 = standing) that keeps the planted foot on the ground: lower with the leg
+// swung out or the knee bent, a little higher while both feet are off the ground (jogging). Two bobs per stride.
+function walkPose(m,u,amt,a,s,run,br){const W=m.userData.legs;if(!W||!W.uL)return 0;a*=amt;run*=amt;const uR=(u+.5)%1;
+  gLeg(W,u,s,a,run,GL);gLeg(W,uR,s,a,run,GR);
+  wSet(W.uL,GL.th,0);wSet(W.uR,GR.th,0);wSet(W.lL,-GL.kn,0);wSet(W.lR,-GR.kn,0);
+  // ankles: a planted foot lies flat on the ground; a swinging foot only half follows the shin (toes don't point at the sky)
+  wSet(W.fL,(GL.kn-GL.th)*(u<s?1:.5),0);wSet(W.fR,(GR.kn-GR.th)*(uR<s?1:.5),0);
+  // pelvis turns a little with the forward leg; the spine turns it back so the chest (and rifle) stays square; the body
+  // leans into the run (negative = forward about the left-right axis)
+  const pv=a>.01?(GL.th-GR.th)/a*.035:0;wSet(W.hip,0,pv);wSet(W.sp,-(.05*amt+.13*run),-pv);
+  // rifle carry: the chest dips as each foot lands (twice per stride), plus a slow breath when standing
+  wSet(W.ch,-.045*run*Math.cos(4*Math.PI*(u-s*.5))+br,0);
+  if(u<s)return gDepth(W,GL.th,GL.kn)-W.D0;if(uR<s)return gDepth(W,GR.th,GR.kn)-W.D0;
+  const w=((u-s)%.5)/Math.max(.01,.5-s),y1=gDepth(W,-a,0)-W.D0,y0=gDepth(W,a,.1+.18*run)-W.D0;return y1+(y0-y1)*w+run*.25*4*w*(1-w);}
 // Drones are built by hand so each nation's looks right: a Shahed-style delta wing with a pusher propeller
 // (Iran, Mountain Shias), a Kargu-style quadcopter (Turkey) and a small X-frame FPV racer (Ukraine and others).
 function droneType(fac){return fac==='IR'||fac==='RS'?'delta':fac==='TR'?'kargu':'fpv';}
@@ -452,6 +533,26 @@ function clericModel(e){const T=G.teams[e.team],o=new THREE.Group(),yaw=new THRE
   // a faint green halo of light marks him on the battlefield
   const glow=new THREE.Mesh(new THREE.RingGeometry(5.2,6.2,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x5fd38a,transparent:true,opacity:.18,depthWrite:false}));glow.position.y=1.3;glow.renderOrder=2;o.add(glow);
   SCN.add(o);return o;}
+// Graphics Phase 5: every unit's team-colour ring and every ground vehicle's soft contact shadow were a mesh of their
+// own (own geometry, own material) - one draw call each, i.e. one or two per unit on screen. They are now plain marker
+// objects inside the unit (so they still move, turn, hide and die with it), and all the visible ones of a kind are
+// drawn by ONE instanced mesh, refilled each frame from the markers' positions just before the scene is drawn.
+const DECAL={sets:{}};
+function decalSet(k){let S=DECAL.sets[k];if(S)return S;let geo,mat,ro;
+  if(k==='blob'){if(!window.BLOBTEX){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,4,32,32,31);g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(.6,'rgba(0,0,0,.25)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);window.BLOBTEX=new THREE.CanvasTexture(c);}
+    geo=new THREE.PlaneGeometry(1.5,1).rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({map:BLOBTEX,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});ro=1;}
+  else{geo=k==='ringS'?new THREE.RingGeometry(.5,.56,28):new THREE.RingGeometry(.36,.41,28);geo.rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.24,depthWrite:false});ro=2;}
+  return DECAL.sets[k]=S={geo,mat,ro,im:null,cap:0,list:new Set(),col:k!=='blob'};}
+function decal(k,color){const S=decalSet(k),m=new THREE.Object3D();m.name='decal_'+k;if(color)m.userData.dc=color;S.list.add(m);
+  if(SCN&&SCN.onBeforeRender!==decalUpdate)SCN.onBeforeRender=decalUpdate;return m;}
+function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
+    if(S.im&&S.im.parent!==SCN){if(S.im.parent)S.im.parent.remove(S.im);S.im.dispose();S.im=null;S.cap=0;}
+    for(const m of S.list){let q=m,v=true;while(q.parent){if(!q.visible)v=false;q=q.parent;}if(q!==SCN){if((m.userData.off=(m.userData.off||0)+1)>3600)S.list.delete(m);continue;}m.userData.off=0;if(v)n++;}
+    if(n>S.cap){if(S.im){SCN.remove(S.im);S.im.dispose();}S.cap=Math.max(64,Math.ceil(n*1.5));const im=new THREE.InstancedMesh(S.geo,S.mat,S.cap);im.name='decals_'+k;im.frustumCulled=false;im.renderOrder=S.ro;im.castShadow=im.receiveShadow=false;im.matrixAutoUpdate=false;
+      if(S.col)im.setColorAt(0,new THREE.Color(1,1,1));S.im=im;SCN.add(im);}
+    if(!S.im)continue;const im=S.im;let i=0;
+    for(const m of S.list){let q=m,v=true;while(q.parent){if(!q.visible){v=false;break;}q=q.parent;}if(!v||q!==SCN)continue;im.setMatrixAt(i,m.matrixWorld);if(S.col&&m.userData.dc)im.setColorAt(i,m.userData.dc);i++;}
+    im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}}
 function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
   if(e.kind==='aa'&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
   if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
@@ -462,10 +563,9 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   for(const [px,pz] of sq){const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK);else soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+((c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk)||0)+'|'+(T.fac||'')+'|'+e.kind);}catch(err){console.warn('mergeSoldier',err);}}
     if(m.userData.anims&&m.userData.anims.length){const mix=new THREE.AnimationMixer(m.userData.inner);(o.userData.mixers=o.userData.mixers||[]).push({mix,anims:m.userData.anims,cur:null});}}
   o.userData.parts.body=yaw;o.userData.model=true;if(c.m==='soldier'){o.userData.mixers=null;o.userData.walker=true;}
-  {const ring=new THREE.Mesh(new THREE.RingGeometry(c.size*(c.squad?.5:.36),c.size*(c.squad?.56:.41),28).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:new THREE.Color(T.color),transparent:true,opacity:.24,depthWrite:false}));ring.position.y=1.2;ring.renderOrder=2;if(!['heli','jet'].includes(e.kind))o.add(ring);o.userData.parts.tring=ring;}
+  {const ring=decal(c.squad?'ringS':'ringV',new THREE.Color(T.color));ring.scale.setScalar(c.size);ring.position.y=1.2;if(!['heli','jet'].includes(e.kind))o.add(ring);o.userData.parts.tring=ring;}
   // soft contact shadow so ground vehicles sit in the terrain instead of floating on it
-  if(T&&e.s&&e.s.dom==='ground'&&!isInf(e.s)){if(!window.BLOBTEX){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,4,32,32,31);g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(.6,'rgba(0,0,0,.25)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,64,64);window.BLOBTEX=new THREE.CanvasTexture(c);}
-    const bs=(c.size||30)*.62,bl=new THREE.Mesh(new THREE.PlaneGeometry(bs*1.5,bs).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:BLOBTEX,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2}));bl.position.y=.35;bl.renderOrder=1;yaw.add(bl);}
+  if(T&&e.s&&e.s.dom==='ground'&&!isInf(e.s)){const bs=(c.size||30)*.62,bl=decal('blob');bl.scale.set(bs,1,bs);bl.position.y=.35;yaw.add(bl);}
   const rotary=e.kind==='heli'||e.kind==='airlift'&&/^m_/.test(c.m),ownRotor=rotary?yaw.getObjectByName('main_rotor'):null;if(ownRotor){o.userData.parts.blades=ownRotor;const tr0=yaw.getObjectByName('tail_rotor');if(tr0)o.userData.parts.tailR0=tr0;}
   if(rotary&&!ownRotor){
     // main rotor on a mast just above the cabin roof and a tail rotor on the tail boom, both placed from the model's
@@ -532,7 +632,8 @@ const BMOD={hq:{slab:1,list:[{m:'b_hq',fit:'xz',size:70,ys:.62,x:6,z:4},{m:'b_ra
   turret:{slab:1,list:[{m:'b_turret',fit:'xz',size:30,part:'gun',col:'#5a5d4c',k:.85}]},
   sam:{slab:1,list:[{m:'sam',fit:'y',size:24,part:'gun',col:'#62664f',k:.6}]},
   uplink:{list:[{m:'b_radar',fit:'y',size:30,x:-26,z:26,part:'dish',col:'#8a908c',k:.82}]}};
-function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.fac)&&BME[e.kind]&&MODELS.proto[BME[e.kind].m])cfg=Object.assign({},cfg,{list:cfg.list.map((q,i)=>i?q:Object.assign({},q,{m:BME[e.kind].m,size:BME[e.kind].size,ys:1}))});if(!cfg||!cfg.list.every(q=>MODELS.proto[q.m]))return false;const P=o.userData.parts;
+function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.fac)&&BME[e.kind]&&MODELS.proto[BME[e.kind].m])cfg=Object.assign({},cfg,{list:cfg.list.map((q,i)=>i?q:Object.assign({},q,{m:BME[e.kind].m,size:BME[e.kind].size,ys:1}))});if(cfg&&e.kind==='shipyard'&&MEFAC.has(T.fac))cfg={list:cfg.list.filter(q=>q.part).map(q=>Object.assign({},q,{y:4}))};// ME naval base: code-built quay (04-gfx meGeo), keep the crane model
+  if(!cfg||!cfg.list.every(q=>MODELS.proto[q.m]))return false;const P=o.userData.parts;
   if(!['turret','sam'].includes(e.kind)){const fg=new THREE.Group(),h2=e.size/2;fg.position.set(-h2+4,0,h2-4);const pole=new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,30,6),new THREE.MeshStandardMaterial({color:0x8a8d90,metalness:.6,roughness:.4}));pole.position.y=15;pole.castShadow=true;fg.add(pole);
     const fgeo=new THREE.PlaneGeometry(15,9,8,1);fgeo.translate(7.5,0,0);const fl=new THREE.Mesh(fgeo,new THREE.MeshStandardMaterial({map:flagTex(T.fac),side:THREE.DoubleSide,roughness:.85,emissive:new THREE.Color(T.color),emissiveIntensity:.04}));{const tb=new THREE.Mesh(new THREE.BoxGeometry(.9,7,.9),new THREE.MeshStandardMaterial({color:new THREE.Color(T.color),roughness:.6}));tb.position.set(0,26.5,0);fg.add(tb);}fl.position.y=26.5;fl.castShadow=true;fg.add(fl);o.add(fg);P.flag=fl;fl.userData.base=fgeo.attributes.position.array.slice();}
   if(cfg.slab){const s=e.size,B=Bld(),tc='#'+new THREE.Color(T.color).lerp(new THREE.Color('#5a5c54'),.3).getHexString();B.box(s,2.4,s,0,1.2,0,'#a0937c');B.box(s-2,.7,3,0,2.5,s/2-3,tc);B.box(s-2,.7,3,0,2.5,-s/2+3,tc);B.box(3,.7,s-2,s/2-3,2.5,0,tc);B.box(3,.7,s-2,-s/2+3,2.5,0,tc);

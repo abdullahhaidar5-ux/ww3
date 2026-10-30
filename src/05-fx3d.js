@@ -146,8 +146,31 @@ const FXH={
   // P2P: a remembered enemy building that was destroyed out of this player's sight - removed silently (leaving rubble)
   // when they next see the spot, instead of an explosion that would give the fight away
   gone(id,x,y,ki){const k=KINDS[ki];if(k&&STRUCT[k])try{rubble(x,y,STRUCT[k].size);}catch(_){}},
+  flag(x,y,team,dur){flagFX(x,y,team,dur);if(typeof martyrSwell==='function')martyrSwell(team);},
   txt(x,y,str,team,vic){if(!SET.txt||team!==ME&&vic!==ME&&vic!==-2)return;FLOATS.push({x,y,s:str,t0:performance.now(),c:vic===-2?(ally(team,ME)?(str==='RALLIED'?'#74d08f':'#ea5a40'):'#f2c94c'):team===ME?'#f2c94c':'#ea5a40'});if(FLOATS.length>14)FLOATS.shift();},
 };
+// Kill-cam (08-ui.js): the visual-only effects are also noted for the end-of-match replay, on the host (via fxPlay) and
+// on clients (via applyEvents) alike. FXH_RAW keeps the plain handlers so the replay can play them without re-noting
+// them. Effects that change game state (civd, oilDry, log, end, ...) are never noted or replayed.
+const FXH_RAW={};
+for(const k of ['muz','tr','salvo','pj','boom','toss','bmis','die','strike','smoke','heal','hack','plane','gone']){const f=FXH[k];if(!f)continue;FXH_RAW[k]=f;
+  FXH[k]=function(...a){try{if(typeof kcFx==='function')kcFx(k,a);}catch(_){}return f.apply(FXH,a);};}
+// Martyrdom banner (Shia factions): a crimson cloth on a wooden pole planted where a soldier fell. It rises out of the
+// ground, waves, and sinks away when the sim's banner runs out (the sim re-sends 'flag' to renew it). All banners share
+// one pole and one cloth geometry (the cloth's wave is moved once a frame for all of them): 3 small meshes each.
+const FLAGS=[];let FLAGG=null;
+function flagGeo(){if(FLAGG)return FLAGG;const pole=new THREE.CylinderGeometry(.45,.6,30,6).translate(0,15,0),tip=new THREE.SphereGeometry(1,6,4).translate(0,30.5,0);
+  const cloth=new THREE.PlaneGeometry(13,8,8,2).translate(6.5,24.5,0),P=cloth.attributes.position,base=Float32Array.from(P.array);
+  FLAGG={pole,tip,cloth,base,mPole:new THREE.MeshStandardMaterial({color:lin('#4a3a28'),roughness:.9}),mTip:new THREE.MeshStandardMaterial({color:lin('#b8953c'),roughness:.4,metalness:.6}),
+    mCloth:new THREE.MeshStandardMaterial({color:lin('#8a1212'),roughness:.85,side:THREE.DoubleSide})};return FLAGG;}
+function flagFX(x,y,team,dur){for(const f of FLAGS)if(f.team===team&&f.x===x&&f.y===y){f.left=Math.max(f.left,dur);return;}
+  const F=flagGeo(),g=new THREE.Group(),pm=new THREE.Mesh(F.pole,F.mPole),tm=new THREE.Mesh(F.tip,F.mTip),cm=new THREE.Mesh(F.cloth,F.mCloth);pm.castShadow=cm.castShadow=true;g.add(pm,tm,cm);
+  g.position.set(x,groundH(x,y)-30,y);g.rotation.y=-(((x*7+y*13)%628)/100);SCN.add(g);FLAGS.push({g,x,y,team,left:dur,t:0,G0:G});if(FLAGS.length>24){const o=FLAGS.shift();SCN.remove(o.g);}}
+function flagTick(dt){if(!FLAGS.length)return;let any=false;
+  for(let i=FLAGS.length-1;i>=0;i--){const f=FLAGS[i];f.t+=dt;f.left-=dt;if(f.left<=-1.2||f.G0!==G){SCN.remove(f.g);FLAGS.splice(i,1);continue;}
+    const up=Math.min(1,f.t/.5),dn=f.left<0?Math.min(1,-f.left/1.2):0,k=up*(1-dn);f.g.position.y=groundH(f.x,f.y)-30*(1-k*k*(3-2*k));f.g.visible=k>.02;any=true;}
+  if(!any||!FLAGG)return;const P=FLAGG.cloth.attributes.position,A=P.array,B=FLAGG.base,t=performance.now()/1000;
+  for(let i=0;i<A.length;i+=3){const u=B[i]/13;A[i+2]=Math.sin(B[i]*.55-t*5.2)*1.6*u;A[i+1]=B[i+1]-u*u*1.2;}P.needsUpdate=true;FLAGG.cloth.computeVertexNormals();}
 // An effect must never throw into the simulation (that stopped the whole battle): the battle can run before the 3D
 // world exists (behind the loading screen, or in headless tests), so a failing effect is skipped and the battle goes on.
 let FXERR=0;
@@ -230,6 +253,7 @@ function fxUpdate(dt){
   {const PH=fxPH(),B=pBudget();for(let i=COLS.length-1;i>=0;i--){const C=COLS[i];C.t+=dt;if(C.t>=C.d||C.G0!==G){COLS.splice(i,1);continue;}if(!inView(C.x,C.y,.35)||PARTS.length>B*.8)continue;
     const life=1-C.t/C.d;C.acc+=dt*(C.big?9:5)*(PH?.5:1)*(.35+.65*life)*(PARTS.length>B*.55?.5:1);
     while(C.acc>=1){C.acc-=1;const fx=C.x+rnd(-6,6),fy=C.y+rnd(-6,6);part({x:fx,y:fy,h:C.g+rnd(6,14),vx:rnd(6,12),vy:rnd(-3,3),vh:rnd(4,10),f:.4,rise:rnd(28,42)*(C.big?1.15:1),c:Math.random()<.65?C_DARK:[.2,.19,.18],c2:[.42,.4,.37],ck:.35,s:PH?rnd(7,10):rnd(12,18),g:PH?8:rnd(12,18),d:PH?rnd(3.5,5):rnd(5,7.5),a:.5*life+.15});}}}
+  flagTick(dt);
   for(const p of PINGS)p.t+=dt;for(let i=PINGS.length-1;i>=0;i--)if(PINGS[i].t>=PINGS[i].d)PINGS.splice(i,1);
   washTick();wakeTick(dt);dustN=0;
   gpuGcHook();gcT-=dt;if(gcT<=0){gcT=15;try{gpuGc();}catch(e){console.warn('gpu gc',e);}}
@@ -400,6 +424,44 @@ function warmShaders(){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0
   // screen (which needs different shader variants), so the warm-up prepares those variants only: one scene draw, not two.
   SCN.add(grp);try{if(typeof placeCam==='function')placeCam();const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}R3.compile(SCN,CAM);if(typeof renderPost==='function'){CAM.updateMatrixWorld();renderPost();}R3.setRenderTarget(null);if(!post)R3.render(SCN,CAM);}catch(e){console.warn('shader warm-up',e);}SCN.remove(grp);SHOCKS.forEach((S,i)=>{S.m.position.copy(shk[i][0]);S.m.scale.setScalar(shk[i][1]);S.m.material.opacity=shk[i][2];});
   console.log('shader warm-up',Math.round(performance.now()-t0)+' ms, '+grp.children.length+' objects');}
+
+// Phones: the same warm-up, but light and spread over frames, so a phone never sits for a minute on one frame (Safari on
+// iPhone compiles shaders slowly and can drop the whole graphics context after one huge frame): only the models of the
+// nations in this battle, only the player's own team variant (team colour is a shader input, not a separate shader),
+// burnt wreck variants once per kind of material, a few models per frame with progress on the loading screen, a texture
+// memory budget, and a stop flag the loading watchdog sets (whatever isn't prepared then is prepared when first seen).
+// onProg(done,total) reports progress. Resolves when done or stopped.
+async function warmShadersPhone(onProg,stop){if(!R3||!SCN||!CAM||!G||G.headless)return;mats();const t0=performance.now();
+  const [bx,by]=BASES[ME]||[MAPW/2,MAPH/2],T=G.teams[ME],gy=groundH(bx,by);
+  const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};
+  const want=new Set(typeof modelKeysFor==='function'?modelKeysFor(G.teams.map(q=>q.fac)):[]);
+  const keys=Object.keys(MODELS.proto||{}).filter(k=>!want.size||want.has(k));
+  const sig=new Set(),texSeen=new Set();let texB=0;const TEXMAX=192*1048576;let nObj=0,nBatch=0;
+  const frame=()=>new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,120);});
+  const upTex=o=>o.traverse(c=>{if(!c.isMesh)return;for(const m of (Array.isArray(c.material)?c.material:[c.material]))for(const p of ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap']){const t=m&&m[p];if(!t||texSeen.has(t))continue;texSeen.add(t);
+    const im=t.image||{},b=(im.width||0)*(im.height||0)*4*1.33;if(texB+b>TEXMAX)continue;texB+=b;try{R3.initTexture(t);}catch(e){}}});
+  const BATCH=4;
+  for(let i=0;i<keys.length;i+=BATCH){if(stop&&stop())break;if(window.GLLOST)break;const grp=new THREE.Group();grp.position.set(bx,gy,by);
+    for(const k of keys.slice(i,i+BATCH)){let o=null;try{o=instModel(k,T,'y',12);}catch(e){}if(!o)continue;o.traverse(c=>{c.frustumCulled=false;if(c.isMesh)c.castShadow=true;});grp.add(o);
+      // a burnt copy only for a kind of material not seen yet (most wrecks share a handful of burnt shaders)
+      let s='';o.traverse(c=>{if(c.isMesh&&!c.isSkinnedMesh){const m=Array.isArray(c.material)?c.material[0]:c.material;if(m)s+=m.type+(m.map?'m':'')+(m.normalMap?'n':'')+(m.vertexColors?'v':'')+'|';}});
+      if(s&&!sig.has(s)){sig.add(s);try{const w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh)c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);if(c.isSkinnedMesh)c.visible=false;});grp.add(w);}catch(e){}}}
+    nObj+=grp.children.length;nBatch++;SCN.add(grp);
+    try{const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}
+      // compileAsync uses the browser's background shader compiling where it has it; the watchdog below never lets
+      // a program that never reports ready hold the loading screen
+      const p=R3.compileAsync(grp,CAM,SCN);R3.setRenderTarget(null);
+      await Promise.race([p,new Promise(r=>setTimeout(r,4000))]);upTex(grp);}catch(e){console.warn('phone warm-up',e);}
+    SCN.remove(grp);if(onProg)try{onProg(Math.min(keys.length,i+BATCH),keys.length);}catch(e){}await frame();}
+  // the merged one-mesh soldier and the shared plain materials
+  if(!(stop&&stop())&&!window.GLLOST){const grp=new THREE.Group();grp.position.set(bx,gy,by);
+    try{if(typeof mergeSoldier==='function'){const o=instModel('soldier',T,'y',12);if(o&&mergeSoldier(o,'warm|'+T.color+T.fac))grp.add(o);}}catch(e){}
+    try{grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),bm(MAT.std)));grp.add(new THREE.Mesh(new THREE.BoxGeometry(4,4,4),MAT.std));if(typeof gearVCMat==='function'){const gm=gearVCMat();const gg=new THREE.BoxGeometry(2,2,2);gg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(gg.attributes.position.count*3).fill(.5),3));grp.add(new THREE.Mesh(gg,gm));grp.add(new THREE.Mesh(gg,bm(gm)));}}catch(e){}
+    grp.traverse(c=>{c.frustumCulled=false;});SCN.add(grp);
+    // and the battlefield itself (ground, scenery, buildings), drawn into the post-processing target as in the battle
+    try{if(typeof placeCam==='function')placeCam();const post=typeof renderPost==='function'&&POST.on&&POST.mFinal;if(post){sizePost();R3.setRenderTarget(POST.rt);}const p=R3.compileAsync(SCN,CAM);R3.setRenderTarget(null);await Promise.race([p,new Promise(r=>setTimeout(r,6000))]);}catch(e){console.warn('phone warm-up',e);}
+    SCN.remove(grp);}
+  console.log('shader warm-up (phone)',Math.round(performance.now()-t0)+' ms, '+keys.length+' models, '+nObj+' objects in '+nBatch+' steps, textures '+Math.round(texB/1048576)+' MB'+(stop&&stop()?' (stopped by the loading watchdog)':''));}
 
 /* ---------- GPU memory clean-up ----------
    Units, wrecks, rubble and effects create their own small shapes (selection rings, contact shadows, soldier kit,

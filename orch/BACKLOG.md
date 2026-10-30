@@ -8,7 +8,33 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
-**CYCLE 15 (2026-10-29): side lane finished (voices-natural + enter-exit on main). PR #7 (balance → servers-live) waits on Abdullah.**
+**NEW FEATURE PACK (Abdullah, 2026-10-29 19:26 — picked from a Rise of the Reds–inspired list; "Get more creative"; NO drone
+swarm economy, NO supply lines (Abdullah 19:29); nuclear deterrence, world campaign map and commander co-op were NOT picked — don't build them).** Several
+already exist in some form (checked 2026-10-29): morale/rout + officer/Ayatollah auras, weather incl. sandstorm/fog
+grounding jets, EW Jamming Truck, hidden Tunnel Networks (IR/RS/DW/KP), city buildings that collapse to rubble. Build
+on those, don't duplicate. Every sim item: randomness only via the seeded RNG, host-authoritative, and open a
+`main → servers-live` PR after shipping. Keep all 18 nations about equally strong (run the tourney after balance-touching items). Order = priority:
+- [open] **Destructible cities that change the map** — Battlefield + Visuals. Rubble from collapsed city buildings
+  becomes infantry cover (like `coverAt`) and slows/blocks heavy vehicles (tanks route around; infantry/light vehicles
+  pass slowly). Pathfinding grid updates when a block falls. Rubble must look like rubble (Visuals).
+- [open] **Tunnels, deeper** — Battlefield. Tunnels already exist; add the counter: a "Ground-Penetrating Radar"
+  upgrade (or scout ability) for non-tunnel factions that reveals enemy tunnel entrances in a radius, plus tunnel
+  ambush: units can pop out of a tunnel with a short first-shot bonus.
+- [open] **Proxy militias** — Battlefield + Interface. Each faction can fund an allied militia (a general power or a
+  "Fund militia" building action, cost + cooldown): a squad of militia infantry/technicals spawns at a neutral map
+  spot near the front and fights for you (AI-controlled or player-controlled — pick whichever is cleaner and say
+  which). Flavour per faction (e.g. IR/RS/DW: allied PMF-style volunteers; US: contractors; RU: PMC). AI uses it.
+- [open] **Sanctions & smuggling** — Battlefield + Interface. A power that sanctions one enemy: their income drops
+  ~20% for ~60 s (shown to them with a clear banner). Counter: "Smuggling routes" upgrade/structure that cuts the
+  penalty and gives a small trickle while sanctioned. Balance so it's an annoyance, not a win button.
+- [open] **Day/night** — Visuals + Battlefield. Battles can start at dusk or go through night (with weather). Night:
+  shorter sight for everyone, except units with thermal optics (tanks, recon, certain infantry/upgrade) who keep more;
+  muzzle flashes and fires light the scene (Visuals; must stay smooth — phones on Low get a simple darker tint).
+- [open] **One-tap army stances** — Interface + Battlefield. One button (and hotkey) switches selected units — or the
+  whole army when nothing is selected — between **Assault** (attack-move, chase), **Hold** (stay, fire in range only)
+  and **Guerrilla** (hold fire until enemies come close, hit-and-run, stay in cover). Works on touch.
+
+**CYCLE 17 (2026-10-30 night): martyrdom banner + news ticker shipped; servers-live PR opened.** **CYCLE 16 (2026-10-29 evening): ME Strike Center/Shipyard + camo nets, phone voice fallback, gate touch check shipped; AI navy/flanking verified OK.** **CYCLE 15 (2026-10-29): side lane finished (voices-natural + enter-exit on main). PR #7 (balance → servers-live) merged 2026-10-29.**
 
 **SIDE LANE IN FLIGHT (Abdullah 2026-10-28 18:23: "move faster, don't run over usage") — ORCH: don't take these, merge their branches when their report lands:** Phase 5 massive columns → `orch/columns` (04-gfx instancing/LOD, sim perf); recorded weapon/engine/explosion sounds + ambience + mix → `orch/audio-sfx` (09-audio, `sfx/`); native-language unit voices for all 18 nations → `orch/voices` (`vo/`, voice hooks in 09-audio). Queued (staggered to keep usage steady): AI tactics + navy + balance (flanking/cover on Hard, navy on time + landing craft, IL/AE win rates, Fulda supply trucks) → `orch/ai-tactics` from ~20:30; infantry + building models (Phase 2 rest) → `orch/gfx-infantry` from ~22:30. Keep ORCH cycles to ≤ 3 agents while these run.
 
@@ -148,15 +174,15 @@ an earlier one still has work a squad can take (other squads may only do small P
 
 ## P1 — now
 
-- [open] **Phase 5 next: merge vehicle model parts** (Visuals) — vehicles are now the biggest frame cost (columns report).
+- [open] **Phase 5 next: infantry draws** (Visuals, cycle 19) — vehicles merged; infantry is now the biggest cost (~16 draws per squad); artillery add-on gun still its own draw; decal ring/shadow refill runs twice per frame (10-post re-renders the scene — skip if `R3.info.render.frame` unchanged); run `columns.mjs --phone`. If turrets are ever animated, keep their parts out of the merge.
+- [open] **End-stats follow-ups** (Interface, cycle 19): cap awards per player (one player can sweep them all); show player names; army graph stops at 720 samples (~2 h) — halve + double interval instead; `orch/endstats.mjs` failed once then passed ×2 (flaky? add to gate when stable); ask Abdullah to test on iPhone. claude.ai copy: Share download does nothing there (no `downloads` capability) — same fix as kill-cam Save.
 - [open] **Soldier animation clips + distant low-poly soldier** (Visuals, gfx-infantry follow-up): baked run/shoot/die; the
   remaining buildings (only HQ/barracks/factory got ME models).
-- [open] **QA: CI `cfclient` flaked once on d136254** ("no player took over after the server lost it"); passed locally ×1 and on
+- [open] **QA: CI `cfclient` flaked once on d136254 and again in cycle 19 (passed on rerun)** ("no player took over after the server lost it"); passed locally ×1 and on
   the branches. If it fails again in CI, root-cause the takeover-after-server-restart timing.
 
-- [open] **Strike Center + Shipyard** still use the generic look for ME nations; camo nets read as parasols from far out (Visuals, cycle 15).
+- [open] **ME buildings follow-ups** (Visuals, cycle 16): Strike Center close-ups from a real battle; Egypt vs Saudi/UAE versions differ only in silo height — give EG its own touch.
 - [open] **Balance: watch TR (38%) and KR (41%)** next round; CN highest (65%). Tool: `node orch/aitourney.mjs` (Battlefield).
-- [open] **Phone-side voices:** fa/he/ar/tr device-speech fallback stays silent where only a stand-in voice exists (Audio, minor).
 
 **Foundation (ORCH itself)**
 
@@ -172,8 +198,6 @@ an earlier one still has work a squad can take (other squads may only do small P
   finding) — AI should expand: build a depot or HQ near the new field.
 - [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
   below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
-- [open] AI navy arrives late (~6 game-min on Normal; buildings come first) and never uses landing craft.
-- [check] AI uses flanking and cover (DIFF has `flank`/`retreat` params) — verify in battles, strengthen on Hard.
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
 - [open] Big explosions still open with a soft, flat yellow ball for their first instant — rework (cycle 12).
@@ -194,6 +218,13 @@ an earlier one still has work a squad can take (other squads may only do small P
 - [open] Listen on a phone: the new signature layers (US bugles, EU strings, RU choir/bells, KP brass, RS qanun/daf)
   were tuned headless — check they're audible but not too loud next to the main mix.
 - [open] Menu music: test iOS audio unlock on a real iPhone; soft fade-in on first note; it loads the 3.3 MB `mus/smp.mp3` on first tap.
+
+- [open] Martyrdom banner follow-ups (cycle 17): staged/real-battle screenshot of the flag; flag fade runs on real time, not game time (can outlast the buff when paused); banners aren't in checkpoints or sent to clients who arrive in view later (8 s, accepted). 
+- [open] News ticker follow-ups (cycle 17): only shows own-team news (clients get only their own messages) — consider host-broadcast public headlines for enemy captures/losses; click-test the Settings toggle.
+- [open] touch.mjs still ~265 s — cut software-GL screenshots to get under 3 min (QA).
+
+- [open] EW follow-ups (cycle 18 review): (checkpoint save + ewtest in gate DONE cycle 19) EW truck exists only for RU — consider giving the jam/spoof to another nation's special if Abdullah wants it wider; ewtest.mjs into the gate.
+- [open] Kill-cam follow-ups (cycle 18 review): replayed plane effects / building-death timers keep running after the replay and cam._xl/_yl/_dl aren't restored (kcStop in 08-ui); first replay frame may stutter; test on a real iPhone. claude.ai copy: Save screenshot does nothing there (artifact viewer blocks plain downloads) — use the `downloads` capability (window.claude.downloads.save) in the artifact build or hide the button there. Headless replay shot shows a black band under the picture (~40% of the screen, where the command bar was) — check the letterbox layout on PC and phone.
 
 ## P2 — next
 
@@ -221,6 +252,20 @@ an earlier one still has work a squad can take (other squads may only do small P
 - Clip/showcase pipeline rebuilt in `orch/` so ORCH can post short phone-friendly clips of new features.
 
 ## Done
+
+- 2026-10-30 (cycle 19) — End-of-match summary page for every player (host and clients): awards, scoreboard per nation, army-strength graph, Share picture (iPhone share sheet). Counting only.
+- 2026-10-30 (cycle 19) — Vehicles drawn as one merged mesh per type/team + batched team rings/shadows: −40% draw calls in a 620-unit battle, same look.
+- 2026-10-30 (cycle 19) — Host takeover keeps fake radar contacts and martyr banners; EW test in the CI gate (18 jobs).
+- 2026-10-30 (cycle 18) — Bigger EW (RU EW truck): enemies inside its bubble get a "JAM" static patch on their minimap; new Radar spoof button (60 s recharge, AI uses it) puts 3–4 fake contacts on enemy minimaps for 20 s; a Strike Center (yours or an ally's) marks fakes with "?".
+- 2026-10-30 (cycle 18) — Kill-cam: ~10 s slow-motion replay of the battle's biggest moment before the score screen (skip with tap/Esc), plus a Save screenshot button.
+- 2026-10-30 (cycle 18) — Martyr banner: the soundtrack swells briefly for its side (max once per 20 s).
+- 2026-10-30 (cycle 17) — Martyrdom banner: fallen IR/RS/DW infantry leave a crimson rally flag (~8 s, one per area): nearby infantry shake off fear faster, routers rally, +10% damage / ~9% faster fire; "MARTYR" text.
+- 2026-10-30 (cycle 17) — Live news ticker: thin BREAKING strip at the top with battle headlines (captures, eliminations, weather, superweapons, heavy losses); Settings → News ticker.
+- 2026-10-30 (cycle 17) — AI unit/upgrade picks use the seeded RNG; touch.mjs ~265 s (was >600 s).
+- 2026-10-29 (cycle 16) — Strike Center + Shipyard get the Middle Eastern military look (IR, RS, DW, SA, AE, EG); camo nets now drape low instead of looking like parasols.
+- 2026-10-29 (cycle 16) — Phones with no voice for a nation's language speak the English line instead of staying silent.
+- 2026-10-29 (cycle 16) — [verified] AI navy on time (first warship ~4.3 min Normal, ~3.6 Hard) and lands troops by landing craft; Hard flanks/uses cover (won 10/12 vs Normal, no extra money).
+- 2026-10-29 (cycle 16) — QA: "SKIP touch" came from a branch older than touch.mjs; CI now fails loudly instead of skipping.
 
 Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md`.
 

@@ -72,7 +72,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   the server going away mid-match). Cloudflare battles run the copy of `src/` built into the
   server at its last deploy, so **whenever a ship changes the simulation (03-sim, 01-data, 02-map, 07*) open a
   `main → servers-live` PR for Abdullah to merge** (one tap; deploy runs from GitHub).
-- Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
+- **Phones start on Low graphics** (Abdullah 2026-10-29: iPhones froze on the battle loading screen with Auto; Low worked) until a lighter phone path is proven on a real iPhone. - Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
   (Abdullah, 2026-10-26).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
   (Abdullah connected it 2026-10-26; since 2026-10-28 `.github/workflows/deploy-site.yml` also sends it from `main` on every
@@ -81,7 +81,8 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 - **Targets (Abdullah, 2026-10-28 18:33):** a big battle shows **~300 units on screen** (all sides) and stays smooth;
   phones may draw far-away units simpler. **Unit voices:** every nation gets native-language lines now with the best
   free computer voice available — no real human recordings (Abdullah, 18:36: "forget the real recordings"). **Voices must sound natural,
-  not robotic** (Abdullah, 19:12): use an expressive neural voice (XTTS-v2 for every language it covers — en, ar, tr,
+  not robotic** (Abdullah, 19:12) **and tough** (Abdullah, 2026-10-29 19:01: deep, gritty, hard-edged combat soldiers, not
+  calm narrators; 20:36 after hearing the first tough pass for RS/DW/IR: "Tougher" — deeper, barked/shouted combat lines, grittier radio, still clear and human): use an expressive neural voice (XTTS-v2 for every language it covers — en, ar, tr,
   ru, zh, ko, hi/ur, es, fr, de; non-commercial licence accepted for this free game, as MMS already is) with radio
   treatment; Piper/MMS only where nothing more natural exists (fa, he, uk) and then the best-sounding option found. **Weapon/explosion sound: cinematic and
   punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all 18 nations about equally strong.**
@@ -91,6 +92,9 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   **looks and performance** — better looks only where it stays smooth. Next focus after current work: **graphics
   realism**. Abdullah will test on his iPhone: when something visible ships, ask him in the report to try one specific
   thing for 2 minutes (with the link).
+- **Maps (Abdullah, 2026-10-29):** a little bigger than before (room to flank), maps for every player count, and **every
+  map fun and fair**: symmetric starts and resources, at least two real attack routes, something worth fighting over,
+  proven by AI-vs-AI win rates per start position. Any new or changed map must pass that check.
 - **Art is free only** (Abdullah, 2026-10-26): CC0 or CC-BY models/textures/sounds, every author credited in the menu
   credits; no paid assets, no ripped game assets.
 - Abdullah reads updates on his phone: short summaries, and send screenshots/clips as links or images that open on
@@ -113,7 +117,7 @@ Every token an agent reads counts against Abdullah's plan. Work like this:
 - **Keep command output short:** pipe tests and builds through `| tail -20` (or grep for PASS/FAIL); never print whole
   gate logs, only the failing excerpt. Use `git log --oneline -10`, `git diff --stat` before full diffs.
 - **Read only the top of `orch/BACKLOG.md`/`LOG.md`/`HISTORY.md`** (head -60) unless the task needs more.
-- **Test smart:** quick local checks while working; run `orch/cigate.sh` (all 16 tests) once when done and once after a
+- **Test smart:** quick local checks while working; run `orch/cigate.sh` (all 18 tests) once when done and once after a
   fix, not after every small step. Wait on it with one blocking command, not repeated polling.
 - **Pick the cheaper model for simple work** (Abdullah, 2026-10-28 18:32: "mix models"): when dispatching helper agents,
   use `model: "sonnet"` for finding/packing free assets, credits, copy/text, layout tweaks and small fixes; keep Opus

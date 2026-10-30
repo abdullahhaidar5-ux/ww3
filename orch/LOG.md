@@ -2,6 +2,44 @@
 
 Newest first. One entry per cycle: date/time (Chicago), what shipped, what failed or was rolled back, gate results.
 
+## 2026-10-30 00:25 → 04:30 (Chicago) — cycle 19
+
+- Lock held by cycle 18 (extended to 04:00 Chicago); waited ~55 min, took it at 01:19. Side lane shipped maps20 to main mid-cycle (merged in). Baseline SMOKE PASS.
+- 3 agents (Opus): Interface+Battlefield (end-of-match stats page, Abdullah's top request), Visuals (vehicle mesh merge, 2606→1576 draws), Netcode+QA (EW/martyr state in checkpoints, ewtest in gate).
+- Review: no blockers; fixed mbanN default on restore. Minors → backlog (decal refill ×2/frame, graph cap, awards cap).
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, EW PASS, ENDSTATS PASS (1 flaky fail first), artifact smoke + MPSYNC PASS. 03-sim/07-net changed → rides open servers-live PR #8. mapsweep not run (02-map change was the side lane's, already gated by it).
+- Artifact v185 (page only). Not chained: 8-hourly schedule to save usage.
+
+## 2026-10-29 21:58 → 2026-10-30 01:05 (Chicago) — cycle 18
+
+- Fired again by the feature-pack trigger right after cycle 17. Took the lock; baseline = cycle 17's gate on the same src (nothing new on main).
+- 3 agents: Battlefield+view (bigger EW: minimap jam patch, Radar spoof ghosts; Opus), Interface+Visuals (kill-cam replay +
+  Save screenshot; Opus), Audio (martyr-banner music swell; Sonnet). All merged clean + side lane's infantry-motion from main; smoke PASS.
+- Slip: the lock-extension push also pushed the merged (smoke-passed, not yet fully gated) features to main ~20 min early; the full gate then passed.
+- Review: no blockers; fixed 4 minors (hidden EW truck position leaked via jam patch, spoof from inside transport, allies' Strike Center, kill-cam memory). Rest → backlog.
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, EW PASS, artifact smoke + MPSYNC PASS. NET_PV not bumped; servers-live PR needed for 'spoof' order.
+
+## 2026-10-29 19:30 → 21:55 (Chicago) — cycle 17
+
+- No lock; took it. Baseline: `--check` OK, SMOKE PASS. Started Abdullah's new feature pack (top two client/sim items).
+- 3 agents: Battlefield+Visuals (martyrdom banner + AI picks on srand; Opus), Interface (news ticker; Sonnet), QA
+  (touch.mjs >600 s → ~265 s; Sonnet). All merged clean; smoke PASS after each.
+- Review (03-sim + 07a-hostsnap): no blockers; fixed 3 minors (Heavy-losses headline never fired, stale martyr pinning
+  bonus on fearless units, unused ticker var). Accepted: banner fade runs on real time.
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, artifact smoke + MPSYNC PASS. NET_PV not bumped (new
+  'flag' effect only). servers-live PR #8 opened for the sim change. Artifact v183 (page only).
+- Not chained: 8-hourly schedule to save usage.
+
+## 2026-10-29 16:25 → 17:40 (Chicago) — cycle 16
+
+- No lock; took it. Local clone's main was stale/unrelated → reset to origin/main. Baseline: `--check` OK, SMOKE PASS.
+- 4 agents: Visuals (ME Strike Center + Shipyard, camo nets; Opus), Battlefield (navy/flanking verify; Opus — both
+  already fine, no changes), Audio (phone voice fallback → English; Sonnet), QA (cigate touch skip; Sonnet).
+- Merged 3 branches clean; no 03-sim/07 changes → no review agent, no servers-live PR.
+- Gate on adad5d5: `--check` OK, smoke 4p PASS, MPSYNC PASS, artifact smoke + MPSYNC PASS. Artifact v182 (page only).
+- QA: touch.mjs >8 min; cfclient not re-run (server deps missing in worktree). New: AI Math.random follow-up.
+- Not chained: ORCH stays on its 8-hourly schedule to save usage (CLAUDE.md "Saving usage").
+
 ## 2026-10-29 08:46 → 11:50 (Chicago) — cycle 15
 
 - No lock; took it (extended once: balance tourney ran 2 h 5 min). Baseline: `--check` OK, SMOKE PASS. Side lane had
@@ -10,7 +48,7 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
   clean; smoke PASS. Only 01-data in sim → no review agent. NET_PV not bumped (prices only; bumping would lock new
   clients out of Cloudflare battles until PR #7 is merged).
 - Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, artifact smoke + MPSYNC PASS (+ agent: HEADLESS --compare PASS).
-  Shipped 452c0ab; artifact v181 (page only); PR #7 main → servers-live opened.
+  Shipped 452c0ab; artifact v181 (page only); PR #7 main → servers-live merged by Abdullah 20:02 UTC.
 - Visuals agent's cigate showed "SKIP touch (no test)" counted as fail in its worktree — check cigate.sh next cycle.
 
 ## 2026-10-29 00:25 → 01:40 (Chicago) — cycle 14
