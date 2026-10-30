@@ -24,7 +24,8 @@ TOUGH_W = 1.2            # weight of score.tough in take picking (was 0.8; 1.6 p
 F0_TARGET = {'cry': 88, 'sold': 92, 'cmd': 95, 'grim': 92}   # median Hz the pitch-down aims for
 MAX_SEMIS = 3.0
 P808_SLACK = 0.25        # max naturalness loss accepted for the pitch-down
-CER_SLACK, CER_OK = 0.12, 0.2   # processed take must read back (Whisper) within +0.12 of the dry take, or <= 0.2
+CER_SLACK, CER_OK = 0.08, 0.12  # processed take must read back (Whisper) within +0.08 of the dry take, or <= 0.12
+# (0.12 / 0.2 cost RS clarity: sheet CER 0.11 -> 0.20; tightened 2026-10-30)
 CHAIN = {   # band (Hz), dry full-band share, EQ (Hz, dB, Q)..., compressor stages (thr dB, ratio, att s, rel s), drive, drive mix
     # cry: picked from 4 variants on RS lines (tough 0.97 for all; this one kept P.808 2.77 / CER 0.20 vs 2.64 / 0.30
     # for the hottest) - gritty but words stay clear
