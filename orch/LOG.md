@@ -17,7 +17,7 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
   Save screenshot; Opus), Audio (martyr-banner music swell; Sonnet). All merged clean + side lane's infantry-motion from main; smoke PASS.
 - Slip: the lock-extension push also pushed the merged (smoke-passed, not yet fully gated) features to main ~20 min early; the full gate then passed.
 - Review: no blockers; fixed 4 minors (hidden EW truck position leaked via jam patch, spoof from inside transport, allies' Strike Center, kill-cam memory). Rest → backlog.
-- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, EW PASS, artifact smoke + MPSYNC PASS. NET_PV not bumped; servers-live PR needed for 'spoof' order.
+- Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, EW PASS, artifact smoke + MPSYNC PASS. NET_PV not bumped; servers-live PR needed for 'spoof' order → PR #8 merged by Abdullah 11:06 UTC 2026-10-30 (banner + EW live on Cloudflare servers).
 
 ## 2026-10-29 19:30 → 21:55 (Chicago) — cycle 17
 
