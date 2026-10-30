@@ -10,7 +10,7 @@ Newest first. One entry per cycle: date/time (Chicago), what shipped, what faile
 - Review (03-sim + 07a-hostsnap): no blockers; fixed 3 minors (Heavy-losses headline never fired, stale martyr pinning
   bonus on fearless units, unused ticker var). Accepted: banner fade runs on real time.
 - Gate: `--check` OK, smoke 4p PASS, MPSYNC PASS, MIGRATE PASS, artifact smoke + MPSYNC PASS. NET_PV not bumped (new
-  'flag' effect only). servers-live PR opened for the sim change.
+  'flag' effect only). servers-live PR #8 opened for the sim change. Artifact v183 (page only).
 - Not chained: 8-hourly schedule to save usage.
 
 ## 2026-10-29 16:25 → 17:40 (Chicago) — cycle 16
