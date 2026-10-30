@@ -175,7 +175,7 @@ an earlier one still has work a squad can take (other squads may only do small P
 ## P1 — now
 
 - [open] **Phase 5 next: infantry draws** (Visuals, cycle 19) — vehicles merged; infantry is now the biggest cost (~16 draws per squad); artillery add-on gun still its own draw; decal ring/shadow refill runs twice per frame (10-post re-renders the scene — skip if `R3.info.render.frame` unchanged); run `columns.mjs --phone`. If turrets are ever animated, keep their parts out of the merge.
-- [open] **End-stats follow-ups** (Interface, cycle 19): cap awards per player (one player can sweep them all); show player names; army graph stops at 720 samples (~2 h) — halve + double interval instead; `orch/endstats.mjs` failed once then passed ×2 (flaky? add to gate when stable); ask Abdullah to test on iPhone.
+- [open] **End-stats follow-ups** (Interface, cycle 19): cap awards per player (one player can sweep them all); show player names; army graph stops at 720 samples (~2 h) — halve + double interval instead; `orch/endstats.mjs` failed once then passed ×2 (flaky? add to gate when stable); ask Abdullah to test on iPhone. claude.ai copy: Share download does nothing there (no `downloads` capability) — same fix as kill-cam Save.
 - [open] **Soldier animation clips + distant low-poly soldier** (Visuals, gfx-infantry follow-up): baked run/shoot/die; the
   remaining buildings (only HQ/barracks/factory got ME models).
 - [open] **QA: CI `cfclient` flaked once on d136254 and again in cycle 19 (passed on rerun)** ("no player took over after the server lost it"); passed locally ×1 and on
