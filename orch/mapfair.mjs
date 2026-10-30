@@ -6,6 +6,7 @@
 //                                                       # nations rotate through every start position (Latin rotation), so
 //                                                       # nation strength cancels out and only the start position is left
 //   node orch/mapfair.mjs --battles --maps khyber,strait --minutes 14 --jobs 2
+//   node orch/mapfair.mjs --battles --round 2                # another round: different seeds and nation sets
 //   node orch/mapfair.mjs --report orch/out/mapfair-*.json   # merge shard results into one table
 //
 // A battle that runs out of time is adjudicated by base + army value (forceOf): the leader wins if 1.4x the runner-up.
@@ -66,6 +67,7 @@ if (process.argv[2] === '--child') {
   const ONLY = argS('maps', '') ? argS('maps').split(',') : null;
   const maps = MI.filter(([k]) => !ONLY || ONLY.includes(k));
   const JOBS = Math.max(1, Number(argS('jobs', os.cpus().length)));
+  const RND = Number(argS('round', 0)); // a later round: other seeds and other nations, same rotation
   const MIN = Number(argS('minutes', 15)), ADJ = Number(argS('adj', 1.4)), DIFF = Number(argS('diff', 1));
   const sched = [];
   if (has('static')) {
@@ -78,8 +80,8 @@ if (process.argv[2] === '--child') {
       for (const n of counts) {
         const reps = n === 2 ? 2 : 1; // a duel: 2 seeds x both sides; bigger: one full rotation of n nations through n positions
         for (let rep = 0; rep < reps; rep++) {
-          const set = Array.from({ length: n }, (_, i) => ALL[(mi * 5 + rep * 7 + i * 3) % ALL.length]);
-          for (let g = 0; g < n; g++) sched.push({ map: k, n, seed: (mi * 1000 + n * 37 + rep * 11 + 1) >>> 0, facs: set.map((_, i) => set[(i + g) % n]), diff: DIFF, minutes: MIN, adj: ADJ });
+          const set = Array.from({ length: n }, (_, i) => ALL[(mi * 5 + rep * 7 + RND * 11 + i * 3) % ALL.length]);
+          for (let g = 0; g < n; g++) sched.push({ map: k, n, seed: (mi * 1000 + n * 37 + rep * 11 + RND * 100003 + 1) >>> 0, round: RND, facs: set.map((_, i) => set[(i + g) % n]), diff: DIFF, minutes: MIN, adj: ADJ });
         }
       }
     });
