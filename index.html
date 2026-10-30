@@ -5114,7 +5114,7 @@ const SPECIAL_TIP={atgm:()=>'Long-range wire-guided anti-tank missiles: outrange
   officer:u=>'Nearby infantry do 20% more damage and can\'t be suppressed.',medic:u=>u.revive?'Heals nearby infantry and vehicles, and saves the wounded: about a third of infantry killed near the medics return to the fight 8 seconds later.':'Heals nearby infantry and vehicles.',commissar:u=>'Nearby infantry fire 25% faster and can\'t be suppressed.',
   sapper:u=>'Lays hidden anti-tank mines when standing still (up to 8). Enemy vehicles that drive over them are badly damaged.',guer:u=>'Hides when standing still; the first volley from hiding does double damage.',
   atk:u=>u.finisher?'Long-range anti-tank team that hides when standing still. Tank hunters: 40% more damage to vehicles already below half health.':'Long-range anti-tank team that hides when standing still.',idome:u=>'Shoots down incoming shells, rockets and missiles: friendly units and buildings nearby take 55% less damage from them.',
-  ew:u=>'Jams drones and guided weapons: nearby enemy drones burn out and aircraft and missiles do half damage to your units nearby.',cbr:u=>'Any enemy artillery or rocket launcher that fires anywhere on the map is revealed to you for 10 seconds.',
+  ew:u=>'Jams drones and guided weapons: nearby enemy drones burn out and aircraft and missiles do half damage to your units nearby. Enemies near it lose their minimap there. Radar spoof (button): fake attackers on enemy radar for 20 s.',cbr:u=>'Any enemy artillery or rocket launcher that fires anywhere on the map is revealed to you for 10 seconds.',
   jeep:u=>u.airSpot?'Fast recon patrol with long sight that guides the air force: enemies it can see take 30% more damage from your aircraft.':'Fast recon patrol with long sight.',raidlead:u=>'Nearby vehicles move 20% faster and do 20% more damage.',hacker:u=>'Disables enemy buildings; earns cash when idle.'};
 // Tunnel warfare: these factions can dig hidden Tunnel Networks. Units sent into any tunnel heal and can come out of any other.
 for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctrine+=' Tunnel warfare: hidden tunnels move units across the map instantly.';}
@@ -6296,6 +6296,7 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'unl':{const b=G.byId.get(a.tid);if(b&&b.isB&&b.team===team&&b.kind==='tunnel'&&b.built>=1){const out=unloadTunnel(b);if(a.at&&out&&out.length)formMove(out,a.x,a.y,'move',false);}
       else if(b&&!b.isB&&b.team===team&&b.s.cap){if(a.at){b.wq=null;setMove(b,a.x,a.y,'move');b.order.ul=1;b.ulO=1;}else{b.ulO=0;unloadTransport(b);}}break;}
     case 'board':{const tr=G.byId.get(a.tid);if(!tr||tr.isB||tr.team!==team||!tr.s.cap)break;for(const u of own(a.ids))if(canBoard(tr,u)){u.order={type:'board',target:tr};u.target=null;u.path=null;}break;}
+    case 'spoof':{const u=G.byId.get(a.tid);if(u&&u.team===team)doSpoof(u);break;}
     case 'stop':for(const u of own(a.ids)){u.order=null;u.target=null;u.path=null;}break;
     // right-drag line formation: units spread evenly along the dragged line (extra units form ranks behind it),
     // assigned in order along the line so their paths do not cross
@@ -6313,6 +6314,31 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     // defend an area: go there, then hold it - engage anything that comes within range of the spot and return afterwards
     case 'def':{const us=own(a.ids).filter(u=>!u.s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer');formMove(us,a.x,a.y,'amove',false);for(const u of us){u.defend={x:u.order?u.order.x:a.x,y:u.order?u.order.y:a.y,r:Math.max(260,(u.s.aggro||240)+80)};}break;}
   }}
+
+/* ---------- electronic warfare: minimap jamming + radar spoof ----------
+   VIEW DATA ONLY. The spoof's ghost contacts and the jamming blackout only change what enemy players see on their
+   minimap: no unit is created, nothing can target a ghost, and the AI never reads them. The spoof itself is a normal
+   player order ('spoof', host-authoritative); ewView(team) is what each team sees, sent to clients in the team message. */
+const SPOOF_CD=60,SPOOF_T=20,SPOOF_SPD=38;
+function doSpoof(u){if(!u||u.dead||u.isB||!u.s||!u.s.jam||u.spfT>G.t)return false;
+  // the fake column heads for the nearest enemy building (map centre if none is known)
+  let tx=MAPW/2,ty=MAPH/2,bd=1e18;for(const e of G.ents){if(e.dead||!e.isB||ally(e.team,u.team))continue;const d=(e.x-u.x)**2+(e.y-u.y)**2;if(d<bd){bd=d;tx=e.x;ty=e.y;}}
+  const dx=tx-u.x,dy=ty-u.y,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,n=3+(srand()<.5?1:0),g=[];
+  for(let i=0;i<n;i++){const side=(i-(n-1)/2)*34+srnd(-10,10),ahead=srnd(90,150)-i*22,v=SPOOF_SPD*srnd(.9,1.1);
+    g.push([Math.max(0,Math.min(MAPW,u.x+ux*ahead-uy*side)),Math.max(0,Math.min(MAPH,u.y+uy*ahead+ux*side)),ux*v,uy*v]);}
+  (G.spoofs=G.spoofs||[]).push({team:u.team,t0:G.t,t1:G.t+SPOOF_T,g});u.spfT=G.t+SPOOF_CD;
+  log(u.team,'Radar spoof active: fake contacts are moving on the enemy radar for 20 seconds.','');return true;}
+function ewTick(dt){if(G.spoofs&&G.spoofs.length)G.spoofs=G.spoofs.filter(p=>p.t1>G.t);
+  // AI: now and then an EW truck near the enemy spoofs (roughly once a minute while in contact)
+  if(G.aur&&G.aur.jam.length&&srand()<dt*G.aur.jam.length/25)for(const a of G.aur.jam){const T=G.teams[a.team];if(!T||!T.ai)continue;const u=G.byId.get(a.id);if(!u||u.spfT>G.t)continue;
+    for(const e of G.ents)if(!e.dead&&!ally(e.team,a.team)&&e.team>=0&&Math.abs(e.x-u.x)<900&&Math.abs(e.y-u.y)<900){doSpoof(u);break;}}}
+// what team tm's minimap shows: j = enemy jamming bubbles that cover any of its side's units or buildings (blacked out),
+// g = ghost contacts [x,y,vx,vy,secondsLeft,flag,team]; flag 1 = recognised as fake (the team has a working Strike
+// Center), 2 = the team's own spoof (shown faintly so the player sees it working)
+function ewView(tm){const C=G._ewv||(G._ewv=[]);const h=C[tm];if(h&&h.t===G.t)return h;const j=[],g=[];
+  if(G.aur)for(const a of G.aur.jam){if(ally(a.team,tm))continue;const r2=a.r*a.r;for(const e of G.ents)if(!e.dead&&ally(e.team,tm)&&(e.x-a.x)**2+(e.y-a.y)**2<r2){j.push([a.x|0,a.y|0,a.r]);break;}}
+  const T=G.teams[tm];for(const p of G.spoofs||[]){const fr=ally(p.team,tm)?2:(T&&T._upl?1:0),dt=G.t-p.t0;for(const q of p.g)g.push([Math.round(q[0]+q[2]*dt),Math.round(q[1]+q[3]*dt),+q[2].toFixed(1),+q[3].toFixed(1),+(p.t1-G.t).toFixed(1),fr,p.team]);}
+  return C[tm]={t:G.t,rt:G.t,j,g,cd:G.ents.filter(e=>e.team===tm&&!e.dead&&e.spfT>G.t).map(e=>[e.id,+(e.spfT-G.t).toFixed(1)])};}
 
 /* ---------- vision ---------- */
 const VISMAX=720;
@@ -6620,9 +6646,10 @@ function weatherTick(dt){if(!G.wx)G.wx={k:'clear',t:0,next:150+Math.random()*90}
   if(W.k==='clear'){W.k=ks[1+Math.floor(Math.random()*(ks.length-1))];W.next=55+Math.random()*45;}else{W.k='clear';W.next=170+Math.random()*120;}
   for(const T of G.teams){const w=WEATHER[W.k];log(T.id,W.k==='clear'?'The weather is clearing.':`Weather: ${w.name}. ${w.tip}`,'w');}}
 function simUpdate(dt){G.t+=dt;G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);production(dt);buildHash();if(!G.mines)G.mines=[];
-  if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[],mart:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam});if(s.cbr)G.cbrTeams|=1<<e.team;}martyrTick();
+  if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[],mart:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam,id:e.id});if(s.cbr)G.cbrTeams|=1<<e.team;}martyrTick();
   if(G.aur.heal.length)for(const e of G.ents){if(e.dead||e.isB||e.hp>=e.max||e.s.dom==='air')continue;for(const a of G.aur.heal)if(a.team===e.team&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){e.hp=Math.min(e.max,e.hp+a.v*dt);break;}}
   if(G.aur.jam.length)for(const e of G.ents){if(e.dead||e.kind!=='drone')continue;for(const a of G.aur.jam)if(!ally(a.team,e.team)&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){applyDmg(e,30*dt,'flak',a.team,null);break;}}
+  ewTick(dt);
   G.mT=(G.mT||0)-dt;if(G.mT<=0){G.mT=.2;updMines();}
   for(const T of G.teams){T._upl=false;T._tun=false;}for(const e of G.ents){if(!e.isB||e.dead||e.built<1)continue;const T=G.teams[e.team];if(!T)continue;if(e.kind==='tunnel')T._tun=true;else if(e.kind==='uplink'&&!(e.dis>G.t))T._upl=true;}
   for(const T of G.teams){if(!T.tun.length)continue;for(const u of T.tun)u.hp=Math.min(u.max,u.hp+12*dt);if(!T._tun){log(T.id,`Our last tunnel was destroyed. ${T.tun.length} units inside were lost.`,'w');T.tun=[];}}
@@ -7976,6 +8003,26 @@ function mmBase(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH;const c=docum
   return c;}
 function mmGrid(x,y){return 'ABCDEFGH'[Math.max(0,Math.min(7,Math.floor(x/MAPW*MMG.cols)))]+(Math.max(0,Math.min(5,Math.floor(y/MAPH*MMG.rows)))+1);}
 const MMC=[];let mmFogT=0;
+// Electronic warfare on the minimap (view only). Where an enemy jamming truck covers our units the minimap there turns
+// to static and hides every contact under it; radar-spoof ghosts show as enemy armour moving toward us. A working
+// Strike Center sees through them: drawn faded with a "?". Our own spoof's ghosts show as faint outlines.
+function ewMine(){return MODE==='client'?G.ewv:(typeof ewView==='function'&&G.teams[ME]?ewView(ME):null);}
+function mmEW(c,sx,sy,now){const V=ewMine();if(!V)return;const el=G.t-(V.rt||G.t);
+  for(const [x,y,r] of V.j||[]){const X=x*sx,Y=y*sy,R=Math.max(6,r*sx);c.save();c.beginPath();c.arc(X,Y,R,0,7);c.clip();c.fillStyle='#0d110f';c.fillRect(X-R,Y-R,R*2,R*2);
+    const f=(now*12)|0;for(let i=0;i<70;i++){const h=((i*2654435761+f*40503)>>>0)%10007,px=X-R+(h%97)/97*R*2,py=Y-R+((h/97|0)%103)/103*R*2,v=60+(h%7)*22;c.fillStyle=`rgb(${v},${v+8},${v})`;c.fillRect(px,py,1.6,1.2);}
+    c.fillStyle='rgba(150,170,160,.18)';for(let k=0;k<4;k++){const yy=Y-R+((f*3+k*37)%100)/100*R*2;c.fillRect(X-R,yy,R*2,1);}c.restore();
+    c.strokeStyle='rgba(234,90,64,.7)';c.lineWidth=1;c.setLineDash([2,2]);c.beginPath();c.arc(X,Y,R,0,7);c.stroke();c.setLineDash([]);
+    if(R>12){c.font='700 8px IBM Plex Mono, monospace';c.fillStyle='rgba(234,90,64,.9)';c.textAlign='center';c.fillText('JAM',X,Y+3);c.textAlign='left';}}
+  for(const q of V.g||[]){if(q[4]-el<=0)continue;const x=(q[0]+q[2]*el)*sx,y=(q[1]+q[3]*el)*sy,col=(G.teams[q[6]]||{}).color||'#ea5a40';
+    if(q[5]===2){c.strokeStyle=col;c.globalAlpha=.45;c.lineWidth=1;c.setLineDash([2,1.5]);c.strokeRect(x-2.7,y-2.7,5.4,5.4);c.setLineDash([]);c.globalAlpha=1;continue;}
+    if(q[5]===1){c.globalAlpha=.35;c.fillStyle=col;c.fillRect(x-2.2,y-2.2,4.4,4.4);c.globalAlpha=1;c.font='700 8px IBM Plex Mono, monospace';c.fillStyle='#e3b341';c.fillText('?',x+3,y-2);continue;}
+    c.fillStyle=col;c.strokeStyle='#050807';c.lineWidth=1;c.fillRect(x-2.2,y-2.2,4.4,4.4);c.strokeRect(x-2.7,y-2.7,5.4,5.4);}}
+// command-card button for the EW truck's radar spoof (08-ui puts it on the card; works by click or tap)
+function spoofBtn(u){const V=ewMine(),cd=MODE==='client'?((V&&V.cd||[]).find(r=>r[0]===u.id)||[0,0])[1]-(G.t-((V&&V.rt)||G.t)):(u.spfT||0)-G.t;
+  const b=document.createElement('button');b.className='btn wide';b.style.marginTop='6px';const left=Math.ceil(cd);
+  b.textContent=left>0?'📡 Radar spoof (ready in '+left+' s)':'📡 Radar spoof';b.disabled=left>0;
+  b.title='For 20 seconds 3-4 fake contacts appear on enemy radar near this truck and move toward them like an attacking column. Enemies with a Strike Center see they are fake. Recharges in 60 s.';
+  b.onpointerdown=ev=>{ev.preventDefault();if(!b.disabled)doAct({t:'spoof',tid:u.id});};return b;}
 function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=performance.now()/1000,c=mx;
   if(!G.mmBase)G.mmBase=mmBase();c.drawImage(G.mmBase,0,0);
   // fog of war: hidden ground darker
@@ -7997,6 +8044,7 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
     else{c.fillRect(x-2.2,y-2.2,4.4,4.4);c.strokeRect(x-2.7,y-2.7,5.4,5.4);}
     if(sel.has(e)){c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();c.arc(x,y,4.5,0,7);c.stroke();}
     if(own&&G.t-(e.lastHit||-99)<1.2&&Math.random()<.04)MMC.push({x:e.x,y:e.y,t:now});}
+  mmEW(c,sx,sy,now);
   // contact flashes where we're under fire
   for(let i=MMC.length-1;i>=0;i--){const m=MMC[i],a=now-m.t;if(a>1.4){MMC.splice(i,1);continue;}c.strokeStyle=`rgba(255,80,60,${1-a/1.4})`;c.lineWidth=1.5;c.beginPath();c.arc(m.x*sx,m.y*sy,3+a*9,0,7);c.stroke();}
   if(MMC.length>40)MMC.splice(0,MMC.length-40);
@@ -8367,7 +8415,7 @@ function clientTick(dt){G.t+=dt;const now=G.t;
 function applyEvents(d){if(!d||!Array.isArray(d.e))return;for(const v of d.e){if(!Array.isArray(v))continue;const [type,...args]=v;if(!FXH[type]||type==='end'&&false)continue;
   if(type==='die'||type==='gone'){const e=G.byId.get(args[0]);if(e){e.dead=true;e.gone=true;G.byId.delete(e.id);if(G.sel.includes(e))G.sel=G.sel.filter(x=>x!==e);}}
   if(type==='log'&&args[0]!==ME)continue;try{FXH[type](...args);}catch(e){}}}
-function applyTeam(d){if(!G||!d)return;if(typeof d.ak==='number'&&NET.cq&&NET.cq.length&&NET.cq[0].s<=d.ak){NET.cq=NET.cq.filter(c=>c.s>d.ak);if(NET.game)NET.game.presence({cq:NET.cq}).catch(()=>{});}if(typeof d.mg==='number')NET.gen=Math.max(NET.gen||0,d.mg|0);if(d.sb===0&&NET.isStandby){NET.isStandby=false;NET.lastCk=null;}const T=G.teams[ME];T.credits=d.c|0;for(const c of CATS)T.q[c]=(d.q&&d.q[c]||[]).map(([k,p])=>({kind:k,t:p*prodTime(T,stats(T.fac,k)),p}));
+function applyTeam(d){if(!G||!d)return;G.ewv=d.ew?Object.assign(d.ew,{rt:G.t}):null;if(typeof d.ak==='number'&&NET.cq&&NET.cq.length&&NET.cq[0].s<=d.ak){NET.cq=NET.cq.filter(c=>c.s>d.ak);if(NET.game)NET.game.presence({cq:NET.cq}).catch(()=>{});}if(typeof d.mg==='number')NET.gen=Math.max(NET.gen||0,d.mg|0);if(d.sb===0&&NET.isStandby){NET.isStandby=false;NET.lastCk=null;}const T=G.teams[ME];T.credits=d.c|0;for(const c of CATS)T.q[c]=(d.q&&d.q[c]||[]).map(([k,p])=>({kind:k,t:p*prodTime(T,stats(T.fac,k)),p}));
   T.rq={};for(const c in (d.rq||{})){const [k,p]=d.rq[c];if(UPG[k])T.rq[c]={key:k,t:p*UPG[k].time};}T.upg={};for(const k of d.u||[])if(UPG[k])T.upg[k]=true;upgReset(T);T.charge=+d.ch||0;T.tunN=d.tn|0;if(Array.isArray(d.ac))for(const [i,c] of d.ac)if(G.teams[i])G.teams[i].credits=+c||0;T.tunK=d.tk&&typeof d.tk==='object'?d.tk:{};if(WEATHER[d.wx]){G.wx=G.wx||{t:0,next:1e9};G.wx.k=d.wx;}if(Array.isArray(d.mn))G.mines=d.mn.map(([x,y])=>({x,y,team:ME,arm:0}));T.gxp=d.gx|0;T.rank=d.rk|0||1;T.spent=d.sp|0;
   T.pw={};for(const k in (d.pw||{}))if(POWERS[k]){const v=d.pw[k];T.pw[k]=Array.isArray(v)?{cd:+v[0]||0,lv:+v[1]||1}:{cd:+v||0,lv:1};}T.reveals=(d.rv||[]).map(([x,y,r,t])=>({x,y,r,t}));T.rally=d.rl?{x:d.rl[0],y:d.rl[1]}:null;
   if(Array.isArray(d.oil))d.oil.forEach((v,i)=>{const o=G.oil[i];if(o&&Array.isArray(v)){o.owner=v[0];if(Array.isArray(v[1]))o.cp=v[1].map(x=>+x||0);o.dead=!!v[2];o.hp=+v[3]||0;}});if(Array.isArray(d.out))d.out.forEach((x,i)=>{if(G.teams[i]&&x&&!G.teams[i].out){G.teams[i].out=true;if(i===ME)showElim();}});
@@ -8385,7 +8433,7 @@ const NET={room:null,user:null,game:null,code:null,opp:null,hostPeer:null,myPeer
 const FLG={built:1,cargo:2,dis:4,chg:8,hack:16,plant:32,land:64,hid:128,mem:256,mov:2048,busy:4096,nd:8192,stall:16384,supp:32768,mark:65536,rout:131072,shak:262144,last:524288,aband:1048576};
 // per-player streams and bundles (online edition / servers) vs one broadcast per topic (claude.ai artifact room)
 function hostP2P(){return NET.p2p!=null?!!NET.p2p:typeof window!=='undefined'&&!!window.WW3_P2P;}
-const CMD_T=['go','atk','atkOil','fld','q','dq','bld','bldGo','tun','unl','board','up','sup','buy','pow','rally','stop','gar','atkCiv','ungar','give','def','line','ret'];
+const CMD_T=['go','atk','atkOil','fld','q','dq','bld','bldGo','tun','unl','board','up','sup','buy','pow','rally','stop','gar','atkCiv','ungar','give','def','line','ret','spoof'];
 function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;
   if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
   if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.at=a.at?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
@@ -8472,9 +8520,11 @@ function snapDrops(dr){if(!dr.length)return null;let c=NET.dyC;if(!c||c.t!==G.t|
 // changed since what they last got, or once a second as a refresh - it was resent to everyone 4x a second
 function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0);NET.tgC={t:G.t,v:{fa,oil,out},js:JSON.stringify([fa,oil,out])};}
   const C=NET.tgC,S=NET.tgS||(NET.tgS={}),last=S[k];if(last&&last.js===C.js&&G.t-last.t<1)return {};S[k]={js:C.js,t:G.t};return C.v;}
+// EW minimap data for this team only (enemy bubbles over its units, ghost contacts, own spoof cooldowns); null when empty
+function ewPack(k){const v=ewView(k);return v.j.length||v.g.length||v.cd.length?{j:v.j,g:v.g,cd:v.cd}:null;}
 function teamMsg(T){const q={};for(const c of CATS)q[c]=T.q[c].map(i=>[i.kind,+(i.t/prodTime(T,stats(T.fac,i.kind))).toFixed(2)]);const rq={};for(const c in T.rq)if(T.rq[c])rq[c]=[T.rq[c].key,+(T.rq[c].t/UPG[T.rq[c].key].time).toFixed(2)];
   const pw={};for(const k in T.pw)pw[k]=[Math.ceil(T.pw[k].cd),T.pw[k].lv||1];
-  return{c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),tn:T.tun.length,tk:tunKinds(T),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min((NET.cseq[NET.peers[T.id]]||0),NET.ckAk?(NET.ckAk[T.id]||0):0):0,to:NET.peers[T.id]};}
+  return{c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),tn:T.tun.length,tk:tunKinds(T),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,ew:ewPack(T.id),mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min((NET.cseq[NET.peers[T.id]]||0),NET.ckAk?(NET.ckAk[T.id]||0):0):0,to:NET.peers[T.id]};}
 // P2P: everything a player gets in one tick (snapshot chunks, effects, panel) travels as ONE bundle ('b') - about 10
 // messages a second per connection instead of ~17-24, less per-message overhead, and effects arrive with their snapshot.
 function netTick(dt){if(!hostP2P()||MODE!=='host'||!NET.game||!NET.peers)return netTick0(dt);const g=NET.game,real=g.emit,B=new Map();
@@ -8777,6 +8827,7 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   {const ap=$('app'),o=!!el.querySelector('.cmdrow');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   {const trs=s.filter(u=>!u.isB&&u.s&&u.s.cap&&u.team===ME&&!u.dead);if(trs.length>1&&trs.length===s.filter(u=>!u.isB).length){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Unload all '+trs.length+' transports';ub.title=(TOUCHUI?'Or tap one of them again':'Or right-click one of them')+' to unload them all';ub.onpointerdown=ev=>{ev.preventDefault();for(const tr of trs)doAct({t:'unl',tid:tr.id});};el.append(ub);}}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
+  if(s.length===1&&!s[0].isB&&s[0].s&&s[0].s.jam&&s[0].team===ME)el.append(spoofBtn(s[0]));
   if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.';el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
   if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1){const n=MODE==='client'?(T.tunN|0):T.tun.length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>In the tunnel network: '+n+' / '+TUN_CAP+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. '+(TOUCHUI?'Tap':leftOrders()?'Click':'Right-click')+' a tunnel with units selected to send them in.');el.append(d);}
   if(s.length===1&&s[0].isB&&s[0].kind==='tunnel'&&s[0].team===ME&&s[0].built>=1&&(MODE==='client'?T.tunN:T.tun.length)){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring units out here';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}

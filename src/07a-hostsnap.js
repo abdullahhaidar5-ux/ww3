@@ -10,7 +10,7 @@ const NET={room:null,user:null,game:null,code:null,opp:null,hostPeer:null,myPeer
 const FLG={built:1,cargo:2,dis:4,chg:8,hack:16,plant:32,land:64,hid:128,mem:256,mov:2048,busy:4096,nd:8192,stall:16384,supp:32768,mark:65536,rout:131072,shak:262144,last:524288,aband:1048576};
 // per-player streams and bundles (online edition / servers) vs one broadcast per topic (claude.ai artifact room)
 function hostP2P(){return NET.p2p!=null?!!NET.p2p:typeof window!=='undefined'&&!!window.WW3_P2P;}
-const CMD_T=['go','atk','atkOil','fld','q','dq','bld','bldGo','tun','unl','board','up','sup','buy','pow','rally','stop','gar','atkCiv','ungar','give','def','line','ret'];
+const CMD_T=['go','atk','atkOil','fld','q','dq','bld','bldGo','tun','unl','board','up','sup','buy','pow','rally','stop','gar','atkCiv','ungar','give','def','line','ret','spoof'];
 function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;
   if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
   if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.at=a.at?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
@@ -97,9 +97,11 @@ function snapDrops(dr){if(!dr.length)return null;let c=NET.dyC;if(!c||c.t!==G.t|
 // changed since what they last got, or once a second as a refresh - it was resent to everyone 4x a second
 function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0);NET.tgC={t:G.t,v:{fa,oil,out},js:JSON.stringify([fa,oil,out])};}
   const C=NET.tgC,S=NET.tgS||(NET.tgS={}),last=S[k];if(last&&last.js===C.js&&G.t-last.t<1)return {};S[k]={js:C.js,t:G.t};return C.v;}
+// EW minimap data for this team only (enemy bubbles over its units, ghost contacts, own spoof cooldowns); null when empty
+function ewPack(k){const v=ewView(k);return v.j.length||v.g.length||v.cd.length?{j:v.j,g:v.g,cd:v.cd}:null;}
 function teamMsg(T){const q={};for(const c of CATS)q[c]=T.q[c].map(i=>[i.kind,+(i.t/prodTime(T,stats(T.fac,i.kind))).toFixed(2)]);const rq={};for(const c in T.rq)if(T.rq[c])rq[c]=[T.rq[c].key,+(T.rq[c].t/UPG[T.rq[c].key].time).toFixed(2)];
   const pw={};for(const k in T.pw)pw[k]=[Math.ceil(T.pw[k].cd),T.pw[k].lv||1];
-  return{c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),tn:T.tun.length,tk:tunKinds(T),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min((NET.cseq[NET.peers[T.id]]||0),NET.ckAk?(NET.ckAk[T.id]||0):0):0,to:NET.peers[T.id]};}
+  return{c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),tn:T.tun.length,tk:tunKinds(T),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,ew:ewPack(T.id),mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min((NET.cseq[NET.peers[T.id]]||0),NET.ckAk?(NET.ckAk[T.id]||0):0):0,to:NET.peers[T.id]};}
 // P2P: everything a player gets in one tick (snapshot chunks, effects, panel) travels as ONE bundle ('b') - about 10
 // messages a second per connection instead of ~17-24, less per-message overhead, and effects arrive with their snapshot.
 function netTick(dt){if(!hostP2P()||MODE!=='host'||!NET.game||!NET.peers)return netTick0(dt);const g=NET.game,real=g.emit,B=new Map();
