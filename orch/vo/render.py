@@ -19,21 +19,24 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 from score import score, tough
+sys.path.insert(0, os.path.join(ROOT, 'tools', 'voices'))
+import tough2 as T2   # tougher pass settings + radio chain (2026-10-30)
 CACHE = os.environ.get('VO_CACHE', '/home/claude/vowork/cache')
 PIPER = os.environ.get('PIPER_DIR', '/home/claude/piperv')
 SR = 24000
 os.makedirs(CACHE, exist_ok=True)
 
 # voice cast per nation: engine:language, soldier voices (rotated over the lines), commander (unit ready / base alarm)
-# XTTS speakers picked per language by orch/vo/audition.py (2026-10-29 tough pass: deepest, hardest-sounding male studio
+# 2026-10-30 tougher pass: deepest natural XTTS speakers from tools/voices/audition2.py (Damien Black, Baldur Sanjin,
+# Dionisio Schuyler ~90 Hz; Viktor Eka, Damjan Chapman hard/gritty). Earlier: orch/vo/audition.py (2026-10-29 tough pass: deepest, hardest-sounding male studio
 # voices that stay natural and intelligible in shouted delivery; score p808 + 0.8*tough - 2*cer)
 X = 'xtts'
 CAST = {
-    'RS': dict(eng=X, lang='ar', sold=['Gilberto Mathias', 'Eugenio Mataracı', 'Damjan Chapman'], cmd='Torcull Diarmuid'),
-    'DW': dict(eng=X, lang='ar', sold=['Aaron Dreschner', 'Ferran Simen', 'Dionisio Schuyler'], cmd='Kazuhiko Atallah'),
-    'SA': dict(eng=X, lang='ar', sold=['Kazuhiko Atallah', 'Torcull Diarmuid'], cmd='Viktor Menelaos'),
-    'AE': dict(eng=X, lang='ar', sold=['Ferran Simen', 'Damjan Chapman'], cmd='Dionisio Schuyler'),
-    'EG': dict(eng=X, lang='ar', sold=['Eugenio Mataracı', 'Aaron Dreschner'], cmd='Gilberto Mathias'),
+    'RS': dict(eng=X, lang='ar', sold=['Damien Black', 'Baldur Sanjin', 'Dionisio Schuyler'], cmd='Viktor Eka'),
+    'DW': dict(eng=X, lang='ar', sold=['Dionisio Schuyler', 'Viktor Eka', 'Damjan Chapman'], cmd='Baldur Sanjin'),
+    'SA': dict(eng=X, lang='ar', sold=['Baldur Sanjin', 'Damjan Chapman'], cmd='Damien Black'),
+    'AE': dict(eng=X, lang='ar', sold=['Viktor Eka', 'Luis Moray'], cmd='Dionisio Schuyler'),
+    'EG': dict(eng=X, lang='ar', sold=['Damien Black', 'Gilberto Mathias'], cmd='Viktor Eka'),
     'IR': dict(eng='piper', lang='fa', sold=['fa_IR-ganji-medium', 'fa_IR-gyro-medium'], cmd='fa_IR-ganji-medium'),
     'IL': dict(eng='mix', lang='he', sold=['mms:heb', 'piper:he_IL-saspeech-medium'], cmd='mms:heb'),
     'UA': dict(eng='piper', lang='uk', sold=['uk_UA-mykyta-high', 'uk_UA-oleksa-high'], cmd='uk_UA-oleksa-high'),
@@ -60,21 +63,21 @@ def synth(eng, voice, lang, text, take, mood):
     'cmd' (calm but hard). Tough delivery (2026-10-29): faster, hotter sampling on combat lines."""
     if eng == 'mix':
         eng, voice = voice.split(':', 1)
-    f = os.path.join(CACHE, key('tough1', eng, voice, lang, text, take, mood) + '.wav')
+    f = os.path.join(CACHE, key(T2.TAG, eng, voice, lang, text, take, mood) + '.wav')
     if os.path.exists(f):
         w, _ = sf.read(f, dtype='float32')
         return w
     if eng == 'xtts':
         from xt import synth as xs
-        temp = {'sold': 0.8, 'cry': 0.9, 'grim': 0.72, 'cmd': 0.68}[mood] if take < 3 else 0.6 + 0.08 * (take % 3)
-        speed = {'sold': 1.16, 'cry': 1.12, 'grim': 1.0, 'cmd': 1.06}[mood]
+        temp = T2.SYN['xtts_temp'][mood] if take < 3 else 0.62 + 0.08 * (take % 3)
+        speed = T2.SYN['xtts_speed'][mood]
         w, sr = xs(text, lang, voice, temp=temp, speed=speed, seed=take * 7919 + 13)
     elif eng == 'piper':
         from piper import PiperVoice, SynthesisConfig
         if voice not in _piper:
             _piper[voice] = PiperVoice.load(os.path.join(PIPER, voice + '.onnx'))
         v = _piper[voice]
-        ls = {'sold': 0.84, 'cry': 0.86, 'grim': 0.97, 'cmd': 0.94}[mood]
+        ls = T2.SYN['piper_ls'][mood]
         ns = [0.7, 0.8, 0.6][take % 3] if mood == 'cry' else [0.667, 0.55, 0.8][take % 3]
         cfg = SynthesisConfig(length_scale=ls, noise_scale=ns, noise_w_scale=0.8)
         w = np.concatenate([c.audio_float_array for c in v.synthesize(text, syn_config=cfg)])
@@ -85,7 +88,7 @@ def synth(eng, voice, lang, text, take, mood):
         if voice not in _mms:
             _mms[voice] = (VitsModel.from_pretrained('facebook/mms-tts-' + voice), AutoTokenizer.from_pretrained('facebook/mms-tts-' + voice))
         m, t = _mms[voice]
-        m.speaking_rate = {'sold': 1.16, 'cry': 1.12, 'grim': 1.0, 'cmd': 1.05}[mood]
+        m.speaking_rate = T2.SYN['mms_rate'][mood]
         m.noise_scale = [0.667, 0.55, 0.8][take % 3]
         torch.manual_seed(take * 31 + 7)
         with torch.no_grad():
@@ -117,7 +120,7 @@ def best_take(eng, voice, lang, text, mood, n, most=8):
         r = score(w, SR, wl, text)
         long = d > 1.7 * exp + 0.45
         r['tough'] = tough(w, SR)['tough']
-        s = r['p808'] + 0.8 * r['tough'] - 2.0 * r['cer'] - (3.0 if long else 0) - 0.15 * max(0, d - exp) - (1.0 if d < 0.25 else 0)
+        s = r['p808'] + T2.TOUGH_W * r['tough'] - 2.0 * r['cer'] - (3.0 if long else 0) - 0.15 * max(0, d - exp) - (1.0 if d < 0.25 else 0)
         ok = r['cer'] <= 0.34 and not long
         if best is None or (ok, s) > (best[4], best[0]):
             best = (s, w, r, take, ok)
@@ -213,34 +216,24 @@ def peak(w, f0, gain_db, q=1.0):
     return lfilter(np.array(b) / a[0], np.array(a) / a[0], w)
 
 
-def tough_radio(w, rng, k, semis=None):
-    """tough field-radio chain (2026-10-29): optional gentle formant-preserving pitch-down (only when the voice is not
-    already deep, <= 2 semitones), low-mid warmth, tighter 330-3300 Hz band, hard compression, light grit, then static,
-    a squelch click on some lines and a very quiet distant-gunfire bed under 'under fire' (k=5) lines."""
-    if semis is None:   # auto: shift only voices above ~105 Hz median, at most 2 semitones
-        f = tough(w, SR)['f0']
-        semis = float(np.clip(12 * np.log2(max(f, 1) / 105), 0, 2))
-    if semis >= 0.3:    # ...and only if it stays natural (DNSMOS P.808 drops by < 0.1)
+def tough_radio(w, rng, k, semis=None, mood='sold'):
+    """tougher field-radio chain (2026-10-30, tools/voices/tough2.py): formant-preserving pitch-down toward a ~90 Hz
+    median (kept only while it stays natural), then T2.voice_chain (tight band on combat lines, bite EQ, two-stage hard
+    compression, drive), then static, a squelch click on some lines and a quiet distant-gunfire bed under 'under fire'."""
+    if semis is None:
+        semis = T2.semis_for(tough(w, SR)['f0'], mood)
+    if semis >= 0.3:
         x = pitch_down(w, semis)
-        if p808(x) > p808(w) - 0.1:
+        p0 = p808(w)
+        if p808(x) <= p0 - T2.P808_SLACK and semis > 1.5:   # too much: try a smaller step
+            semis = semis / 2; x = pitch_down(w, semis)
+        if p808(x) > p0 - T2.P808_SLACK:
             w = x
         else:
             semis = 0
     global LAST_SEMIS
     LAST_SEMIS = semis if semis >= 0.3 else 0
-    full = sosfilt(butter(2, 140, 'highpass', fs=SR, output='sos'), w)
-    band = sosfilt(butter(4, 3300, 'lowpass', fs=SR, output='sos'), sosfilt(butter(3, 330, 'highpass', fs=SR, output='sos'), w))
-    w = 0.82 * band + 0.18 * full
-    w = peak(w, 380, 3.5, 0.8)            # low-mid warmth / chest
-    w = peak(w, 1800, 2.5, 1.2)           # bite
-    w = comp(w, -26, 5, .003, .06)        # hard compression
-    w = w / (np.max(np.abs(w)) + 1e-9)
-    g = np.tanh(1.9 * w + 0.08 * w * w) / np.tanh(1.9)    # light grit: drive + a touch of even harmonics
-    w = 0.5 * g + 0.5 * w
-    w = w - np.mean(w)
-    act = w[np.abs(w) > 0.02 * np.max(np.abs(w))]
-    rms = np.sqrt(np.mean(act ** 2)) if len(act) else 1
-    w = w * (10 ** (-16 / 20) / rms)      # loudness: active RMS -16 dBFS (as before)
+    w = T2.voice_chain(w, SR, mood)
     nb = lambda n: sosfilt(butter(2, [450, 3200], 'bandpass', fs=SR, output='sos'), rng.standard_normal(n))
     pre = int(.07 * SR) if rng.random() < .35 else 0     # squelch click + burst before the line on some lines
     post = int(.09 * SR)
@@ -316,7 +309,7 @@ def nation(fac, phr, n_takes=3, log=print):
                 if not ok and r['cer'] >= 0.75 and (ent or name == 'c' or i < len(texts) - 1):
                     log(f'{fac} {name}{k} DROPPED (no clean take) | {text} -> {r["hyp"].strip()}')
                     continue   # a garbled variant is left out; the kind keeps its other variants
-                w = tough_radio(w, rng, k=-1 if cry else k, semis=C.get('pitch'))
+                w = tough_radio(w, rng, k=-1 if cry else k, semis=C.get('pitch'), mood=mood)
                 ent.append([round(t, 3), round(len(w) / SR, 3)])
                 sheet += [w, np.zeros(gap, np.float32)]
                 t += (len(w) + gap) / SR
