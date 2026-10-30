@@ -1,0 +1,11 @@
+# Army stances (orch/stances)
+- One button cycles the army between **Assault** (chase), **Hold** (fire only in range, never chase) and **Guerrilla** (hold fire until the enemy is close, then fire; hops to cover when hit). Selected units, or the whole army with nothing selected.
+- Desktop: "Stance (V)" button on the command row; V cycles. Phone: new "Stance" button on the touch strip (shows the current stance; strip tightened so 9 buttons still fit 390 px).
+- Selection rings tint: green Assault, blue Hold, orange Guerrilla. Default (existing units) = Assault = today's behaviour.
+- Sim: per-unit `u.st` set by a normal `stance` command (added to CMD_T), shown to clients via 2 spare snapshot flag bits, carried by checkpoints automatically.
+- Files: src/03-sim.js, 06-view.js, 07-net.js, 07a-hostsnap.js, 08-ui.js, index.html, orch/stances.mjs (new), controls.mjs, touch.mjs.
+- Tests: controls 102/102, touch 116/0 failed (Hold/Guerrilla/Assault behaviour, command, checkpoint, V and button). Smoke PASS.
+- AI use of Hold/Guerrilla: not done (optional).
+- CIGATE: 17 PASS, 1 FAIL ("touch" entry; its phoneload part passed, standalone touch.mjs passes 116/0 on rerun after the fix) — likely flake, ORCH please re-run.
+- servers-live PR needed: yes (simulation changed).
+- Try on iPhone (2 min): select some troops, tap "Stance" until Hold, then walk an enemy near them.
