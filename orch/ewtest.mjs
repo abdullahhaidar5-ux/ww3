@@ -1,4 +1,4 @@
-// Electronic warfare check: EW truck radar spoof + minimap jamming (view-only, per team).
+// Electronic warfare check (plus the rubble / destructible-cities checks at the end): EW truck radar spoof + minimap jamming (view-only, per team).
 // Starts a single-player battle, puts an enemy EW truck over our base and one of ours near theirs, uses the spoof
 // through the normal order path (the command-card button), and checks what each side's minimap gets:
 // jamming bubble over our units, 3-4 ghost contacts, flagged as fake once the team owns a Strike Center, nothing
@@ -115,8 +115,68 @@ try {
   await page.screenshot({ path: path.join(OUT, 'ew-battle.png'), timeout: 150000 });
   const left = await page.evaluate(() => window.__exp());
   ck('spoof ends after 20 s', left === 0, left);
+  // ---- Rubble (destructible cities): a fallen city block is cover for infantry and a wall for heavy vehicles ----
+  // a fresh battle on South Lebanon (it has towns; the EW battle's map may not)
+  await page.evaluate(() => { setup.map = 'lebanon'; setup.n = 1; startSingle(); });
+  await page.waitForFunction(() => G && G.map && G.map.cityBlds && G.map.cityBlds.length && !window.LOADING, null, { timeout: 600000, polling: 250 });
+  const rb = await page.evaluate(() => {
+    const o = {}, me = ME; G.paused = true; o.rubBefore = !!G.rub;
+    const open = k => k >= 0 && k < GW * GH && (G.grid[k] === 0 || G.grid[k] === 2);
+    // a standing block cell with open ground on its left and right: once it falls, the straight line crosses its rubble
+    o.nciv = (G.civ || []).filter(c => !c.ruin).length;
+    const c = (G.civ || []).find(c => !c.dead && !c.ruin && G.grid[c.k] === 3 && open(c.k - 1) && open(c.k + 1) && c.x > 300 && c.x < MAPW - 300);
+    o.city = !!c; if (!c) return o;
+    const ax = c.x - CELL, bx = c.x + CELL, y = c.y, cellOf = (x, y) => Math.floor(y / CELL) * GW + Math.floor(x / CELL);
+    collapseCiv(c, me);
+    o.rubN = G.rubN; o.gridOpen = G.grid[c.k] === 0; o.rubCell = G.rub[c.k];
+    // routes: infantry straight over the rubble, a tank around it
+    const thru = P => { let x0 = ax, y0 = y; for (const [x1, y1] of P) { for (let t = 0; t <= 1; t += .05) if (cellOf(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t) === c.k) return true; x0 = x1; y0 = y1; } return false; };
+    const len = P => { let x0 = ax, y0 = y, L = 0; for (const [x1, y1] of P) { L += Math.hypot(x1 - x0, y1 - y0); x0 = x1; y0 = y1; } return Math.round(L); };
+    const Pi = findPath('ground', ax, y, bx, y) || []; P_H = true; let Pt; try { Pt = findPath('ground', ax, y, bx, y) || []; } finally { P_H = false; }
+    o.infThru = thru(Pi); o.tankThru = thru(Pt); o.infLen = len(Pi); o.tankLen = len(Pt);
+    // drive a real tank (and a rifleman) across: the tank must never enter the rubble cell and still arrive
+    const tk = addUnit(me, 'tank', ax, y), R = roster(G.teams[me].fac), ik = R.barracks.find(k => isInf(stats(G.teams[me].fac, k)) && !stats(G.teams[me].fac, k).noAttack) || R.barracks[0], inf = addUnit(me, ik, ax, y + 6);
+    for (const u of [tk, inf]) { u.max = u.hp = 1e7; }
+    o.heavy = rubHeavy(tk); o.infHeavy = rubHeavy(inf);
+    setMove(tk, bx, y, 'move'); setMove(inf, bx, y, 'move'); let inT = 0, inI = 0, slowI = 1;
+    for (let i = 0; i < 400; i++) { simUpdate(0.1); if (cellOf(tk.x, tk.y) === c.k) inT++; if (cellOf(inf.x, inf.y) === c.k) { inI++; slowI = Math.min(slowI, rubSlow(inf)); } }
+    o.tankInRubble = inT; o.tankArrived = Math.round(Math.hypot(tk.x - bx, tk.y - y)); o.infInRubble = inI; o.infSlow = slowI;
+    // damage: the same rifleman, same shot, in the rubble vs. the same spot as open ground
+    const en = G.teams.find(T => T.id !== me), src = addUnit(en.id, roster(en.fac).barracks[0], c.x + 150, c.y); src.max = src.hp = 1e7;
+    const hit = () => { inf.x = c.x; inf.y = c.y; inf.max = inf.hp = 1000; inf.supp = 0; inf.mark = 0; applyDmg(inf, 50, 'gun', en.id, src, false); return { d: 1000 - inf.hp, s: inf.supp }; };
+    const tg = tactic(Object.assign(inf, { x: c.x, y: c.y }), 'gun', src, false).tag;
+    const r1 = hit(); const sv = { rub: G.rub, n: G.rubN, cov: G.cover }; G.rub = null; G.rubN = 0; G.cover = null; const r0 = hit(); G.rub = sv.rub; G.rubN = sv.n; G.cover = sv.cov;
+    o.tag = tg; o.dmgRubble = +r1.d.toFixed(2); o.dmgOpen = +r0.d.toFixed(2); o.suppRubble = +r1.s.toFixed(3); o.suppOpen = +r0.s.toFixed(3);
+    src.dead = true;
+    // every copy agrees: a client / rejoin / restored checkpoint rebuilds the same rubble from the fallen blocks
+    const host = Array.from(G.rub).join(''), gk = G.grid[c.k]; rubSync(); o.syncSame = Array.from(G.rub).join('') === host && G.grid[c.k] === gk;
+    const pk = JSON.parse(JSON.stringify(ckEncode())); G.rub = null; G.rubN = 0; ckRestore(pk); o.ckSame = !!G.rub && Array.from(G.rub).join('') === host;
+    // knock down a few neighbouring blocks for the pictures
+    for (const d of (G.civ || []).filter(q => !q.dead && !q.ruin && Math.hypot(q.x - c.x, q.y - c.y) < 200).slice(0, 5)) collapseCiv(d, me);
+    window.__rubC = { x: c.x, y: c.y }; return o;
+  });
+  console.log('rubble', JSON.stringify(rb));
+  ck('rubble: map has a city block to knock down', rb.city);
+  if (rb.city) {
+    ck('rubble: no rubble grid before any block falls', rb.rubBefore === false);
+    ck('rubble: fallen block marks one rubble cell, open to infantry', rb.rubN === 1 && rb.gridOpen && rb.rubCell === 1, JSON.stringify(rb));
+    ck('rubble: tank counts as heavy, rifleman does not', rb.heavy && !rb.infHeavy);
+    ck('rubble: infantry route crosses the rubble, tank route goes around (longer)', rb.infThru && !rb.tankThru && rb.tankLen > rb.infLen, JSON.stringify(rb));
+    ck('rubble: driving tank never enters the rubble and arrives', rb.tankInRubble === 0 && rb.tankArrived < 70, `${rb.tankInRubble} ticks in, ${rb.tankArrived} px off`);
+    ck('rubble: rifleman walks through it, slowed', rb.infInRubble > 0 && rb.infSlow < 1, `${rb.infInRubble} ${rb.infSlow}`);
+    ck('rubble: infantry inside take about half the damage', rb.tag === 'IN RUBBLE' && rb.dmgRubble > 0 && rb.dmgRubble <= rb.dmgOpen * .55, `${rb.tag} ${rb.dmgRubble} vs ${rb.dmgOpen}`);
+    ck('rubble: less suppression inside', rb.suppRubble < rb.suppOpen, `${rb.suppRubble} vs ${rb.suppOpen}`);
+    ck('rubble: client/rejoin rebuild matches the host', rb.syncSame);
+    ck('rubble: checkpoint restore (host migration) keeps the rubble', rb.ckSame);
+    const SH = path.join(ROOT, 'orch', 'shots', 'rubble'); fs.mkdirSync(SH, { recursive: true });
+    for (const [lo, f] of [[false, 'rubble-high.png'], [true, 'rubble-low.png']]) {
+      await page.evaluate(lo => { SET.gfx = lo ? 'low' : 'high'; G.civDirty = true; G.paused = true; G.sel = []; const C = window.__rubC; centerOn(C.x, C.y, true); cam.td = 420; for (let i = 0; i < 12; i++) renderFrame(0.25); }, lo);   // let the dust settle
+      await page.waitForTimeout(400);
+      await page.screenshot({ path: path.join(SH, f), timeout: 150000 });
+    }
+  }
   ck('no page errors', !errors.length, errors.join(' / '));
 } catch (e) { fails++; console.log('ERROR', e.message); }
 await browser.close(); server.close();
-console.log(fails ? `EW FAIL (${fails})` : 'EW PASS');
+console.log(fails ? `EW FAIL (${fails})` : 'EW PASS');   // also covers rubble (destructible cities)
 process.exit(fails ? 1 : 0);
