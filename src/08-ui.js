@@ -1136,7 +1136,7 @@ function tkNext(){if(TK.cur||!TK.on)return;const now=performance.now();let h;whi
   const dur=Math.max(6,(w+t.offsetWidth)/(w<700?95:130));t.style.animation='none';void t.offsetWidth;t.style.animation=`tkgo ${dur}s linear 1 forwards`;TK.cur=1;TK.shown=(TK.shown||0)+1;TK.last=h.t;}
 function tkCount(arr,n,win){const now=performance.now();arr.push(now);while(arr.length&&now-arr[0]>win)arr.shift();if(arr.length>=n){arr.length=0;return true;}return false;}
 function tkReset(){TK.G=G;TK.q.length=0;TK.cur=0;TK.seen={};TK.out={};TK.wx='';TK.loss=[];TK.kill=[];if(TK.txt){TK.txt.style.animation='none';}if(TK.el)TK.el.hidden=true;clearInterval(TK.tm);TK.tm=setInterval(tkPoll,1000);}
-function tkFeed(m,k){if(!G)return;if(TK.G!==G)tkReset();if(SET.tk===undefined||TK.el===null)tkApply();if(!TK.on||!m||(k&&k.length===2&&k[0]==='v'))return;let r;const own=tkOwnAdj();
+function tkFeed(m,k){if(!G)return;if(TK.G!==G)tkReset();if(SET.tk===undefined||TK.el===null)tkApply();if(!TK.on||!m||(k&&k.length===2&&k[0]==='v'&&m!=='Unit lost.'))return;let r;const own=tkOwnAdj();
   if(m==='Unit lost.'||/^The .+ was destroyed with \d+ aboard/.test(m)){if(tkCount(TK.loss,6,60000))tkHead(`Heavy losses for ${own} forces: six more units lost in a minute`,1);return;}
   if(m==='Our base is under attack!')return tkHead(`${own} base under enemy assault`,2);
   if(r=/^Warning: enemy (.+) inbound/.exec(m))return tkHead(`ALERT: enemy ${r[1]} inbound on ${own} positions`,2);
@@ -1155,7 +1155,7 @@ function tkFeed(m,k){if(!G)return;if(TK.G!==G)tkReset();if(SET.tk===undefined||T
   if(/^Our last tunnel was destroyed/.test(m))return tkHead(`${own} tunnel network destroyed, troops lost underground`,1);}
 function tkPoll(){try{if(!G||!TK.on||TK.G!==G){if(!G||TK.G!==G)clearInterval(TK.tm);return;}
   for(const T of G.teams){if(T.out&&!TK.out[T.id]){TK.out[T.id]=1;const nm=T.F.name;tkHead(T.id===ME?`${tkOwn()} has capitulated`:`${nm} eliminated${T.whyOut?': '+String(T.whyOut).replace(/\.$/,''):''}`,2);}}
-  const wk=G.wx&&G.wx.k;if(wk&&wk!==TK.wx){TK.wx=wk;}}catch(e){}}
+}catch(e){}}
 if(typeof window!=='undefined'){window.__tk=TK;}
 try{tkApply();}catch(e){}
 {const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='News ticker (headlines scrolling across the top)';
