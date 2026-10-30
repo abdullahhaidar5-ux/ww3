@@ -1,0 +1,23 @@
+artifact page written: orch/out/artifact/index.html (2096082 bytes, game 1253444 chars), 52 audio files + 70 model files (8.9 MB); publish arguments in orch/out/artifact/publish.json
+[2s] both pages loaded (menu model downloads done after 1s / 1s)
+[2s] host lobby open, code r4upay
+[2s] client joining
+[13s] battle: US vs RU on strait; client is slot 1
+[40s] both pages finished loading
+[41s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[41s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[42s] client order: 2/2 of the client's units moved on the host
+[44s] check @1.0 min t=60s: host 25 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 5940 client 5940
+[45s] check @2.5 min t=150s: host 27 entities, client side sees 11 (own 8); client has 11 (own 8); missing 0, extra 0, off-position 0, mismatched 0; credits host 11010 client 11010
+[51s] the client's side sees nothing from host t=211.5s (wiped out): its clock is no longer checked
+[52s] battle ended at t=212s (US, RU out)
+[53s] final t=212s: host 22 entities, client side sees 0 (own 0); client has 0 (own 0); missing 0, extra 0, off-position 0, mismatched 0; credits host 13270 client 13270
+[53s] traffic host->client 857 KB in 3215 messages, client->host 0 KB in 1; client lag max 0.10 game-s; 5 ms per 0.5 s step
+[53s] 21 live checks, 0 out of tolerance; up to 8 enemy entities were in the client's view at once
+[53s] host room sends: 3216 messages, peak 27 in one game-second
+[53s] client room sends: 1 messages, peak 0 in one game-second
+peak memory (node + browser, summed RSS): 2934 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC PASS (artifact edition) (53s) — screenshots orch/out/art-mp-host.png, orch/out/art-mp-client.png (this run: orch/out/runs/20261030-141802-mpsync-art/)
