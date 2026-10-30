@@ -8,6 +8,62 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+- [open] **End-of-match stats screen (Abdullah, 2026-10-29 19:37: "when the games end make a summary page for the players to
+  show cool stats")** — Interface + Battlefield (stat counters). Today the end screen is one line of text (Victory/Defeat +
+  "trained X units, destroyed Y…"), and **clients get no stats at all** (`MODE==='client'` skips it in `08-ui`). Build a real
+  summary page shown to **every player, host and clients alike**, after the result banner (and after the kill-cam once that ships):
+  - **Scoreboard, all players** (nation flag/name, team colour, winner highlighted): units built, units lost, kills,
+    structures destroyed/lost, money earned/spent, final general rank, time alive.
+  - **Awards / "cool stats"** per match, e.g. MVP (most value destroyed), Top Killer, Iron Wall (fewest losses), Big Spender,
+    Fastest First Kill, Best Unit (single unit with most kills, by type), most used general power, biggest army at once.
+  - **Army strength over time** graph (one line per player) — sampled every ~10 s; light enough for phones.
+  - Buttons: Rematch / Back to menu, and **Share** (screenshot image of the page for Discord; must work on iPhone).
+  - Counters live in team state on the host (already has `built`, `kills`, `rank`, `spent`, `lost`); add the missing ones
+    there, ship the final table to clients in the existing `['end',winner]` message (or a new end-stats message) so everyone
+    sees the same numbers. Counting only — **never change gameplay or sync**; open a `main → servers-live` PR since it
+    touches 03-sim/07-net. Readable on a phone in portrait and landscape; works in the artifact edition too.
+  - Ask Abdullah to try it on his iPhone after one quick AI battle.
+
+**NEW FEATURE PACK (Abdullah, 2026-10-29 19:26 — picked from a Rise of the Reds–inspired list; "Get more creative"; NO drone
+swarm economy, NO supply lines (Abdullah 19:29); nuclear deterrence, world campaign map and commander co-op were NOT picked — don't build them).** Several
+already exist in some form (checked 2026-10-29): morale/rout + officer/Ayatollah auras, weather incl. sandstorm/fog
+grounding jets, EW Jamming Truck, hidden Tunnel Networks (IR/RS/DW/KP), city buildings that collapse to rubble. Build
+on those, don't duplicate. Every sim item: randomness only via the seeded RNG, host-authoritative, and open a
+`main → servers-live` PR after shipping. Keep all 18 nations about equally strong (run the tourney after balance-touching items). Order = priority:
+- [open] **Martyrdom banner (Shia factions IR, RS, DW)** — Battlefield. When their infantry die, a brief rally banner/flag
+  stays on the spot (~8 s): nearby friendly infantry lose fear faster and get a small damage/rof boost; banners don't
+  stack past one per area. Visible flag (Visuals: small cloth banner), floating "MARTYR" text like "RALLIED". Combat
+  music swells while a banner is up if cheap (Audio, optional).
+- [open] **Electronic warfare, bigger** — Battlefield + Interface. Extend the EW Jamming Truck: enemies inside its
+  bubble lose their minimap there (static/blackout patch on the minimap) and a "Radar spoof" ability puts 3–4 fake
+  ghost units on enemy radar/minimap for ~20 s. Counter: an upgrade (or the existing radar/uplink) that filters ghosts.
+  Ghosts are per-team view data; never affect the sim.
+- [open] **Destructible cities that change the map** — Battlefield + Visuals. Rubble from collapsed city buildings
+  becomes infantry cover (like `coverAt`) and slows/blocks heavy vehicles (tanks route around; infantry/light vehicles
+  pass slowly). Pathfinding grid updates when a block falls. Rubble must look like rubble (Visuals).
+- [open] **Tunnels, deeper** — Battlefield. Tunnels already exist; add the counter: a "Ground-Penetrating Radar"
+  upgrade (or scout ability) for non-tunnel factions that reveals enemy tunnel entrances in a radius, plus tunnel
+  ambush: units can pop out of a tunnel with a short first-shot bonus.
+- [open] **Proxy militias** — Battlefield + Interface. Each faction can fund an allied militia (a general power or a
+  "Fund militia" building action, cost + cooldown): a squad of militia infantry/technicals spawns at a neutral map
+  spot near the front and fights for you (AI-controlled or player-controlled — pick whichever is cleaner and say
+  which). Flavour per faction (e.g. IR/RS/DW: allied PMF-style volunteers; US: contractors; RU: PMC). AI uses it.
+- [open] **Sanctions & smuggling** — Battlefield + Interface. A power that sanctions one enemy: their income drops
+  ~20% for ~60 s (shown to them with a clear banner). Counter: "Smuggling routes" upgrade/structure that cuts the
+  penalty and gives a small trickle while sanctioned. Balance so it's an annoyance, not a win button.
+- [open] **Day/night** — Visuals + Battlefield. Battles can start at dusk or go through night (with weather). Night:
+  shorter sight for everyone, except units with thermal optics (tanks, recon, certain infantry/upgrade) who keep more;
+  muzzle flashes and fires light the scene (Visuals; must stay smooth — phones on Low get a simple darker tint).
+- [open] **Live news ticker** — Interface. A thin scrolling headline strip (top or bottom, out of the way on phones)
+  reacting to events: big losses, buildings captured/destroyed, superweapons, weather, a nation eliminated
+  ("BREAKING: Iranian armor crosses the river"). Client-only, from the event log; Settings toggle.
+- [open] **One-tap army stances** — Interface + Battlefield. One button (and hotkey) switches selected units — or the
+  whole army when nothing is selected — between **Assault** (attack-move, chase), **Hold** (stay, fire in range only)
+  and **Guerrilla** (hold fire until enemies come close, hit-and-run, stay in cover). Works on touch.
+- [open] **Kill-cam replay** — Interface + Visuals. At match end, a short (~8–10 s) cinematic replay of the battle's
+  biggest moment (most value destroyed in a short window), then the score screen; a Share/screenshot option for
+  Discord. Client-side recording only (ring buffer of the visible scene), must not cost frame rate during battle.
+
 **CYCLE 16 (2026-10-29 evening): ME Strike Center/Shipyard + camo nets, phone voice fallback, gate touch check shipped; AI navy/flanking verified OK.** **CYCLE 15 (2026-10-29): side lane finished (voices-natural + enter-exit on main). PR #7 (balance → servers-live) merged 2026-10-29.**
 
 **SIDE LANE IN FLIGHT (Abdullah 2026-10-28 18:23: "move faster, don't run over usage") — ORCH: don't take these, merge their branches when their report lands:** Phase 5 massive columns → `orch/columns` (04-gfx instancing/LOD, sim perf); recorded weapon/engine/explosion sounds + ambience + mix → `orch/audio-sfx` (09-audio, `sfx/`); native-language unit voices for all 18 nations → `orch/voices` (`vo/`, voice hooks in 09-audio). Queued (staggered to keep usage steady): AI tactics + navy + balance (flanking/cover on Hard, navy on time + landing craft, IL/AE win rates, Fulda supply trucks) → `orch/ai-tactics` from ~20:30; infantry + building models (Phase 2 rest) → `orch/gfx-infantry` from ~22:30. Keep ORCH cycles to ≤ 3 agents while these run.
