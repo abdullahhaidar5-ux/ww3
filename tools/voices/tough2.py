@@ -20,6 +20,15 @@ SYN = dict(
     piper_ls={'sold': 0.8, 'cry': 0.8, 'grim': 0.92, 'cmd': 0.88},
     mms_rate={'sold': 1.22, 'cry': 1.2, 'grim': 1.06, 'cmd': 1.12},
 )
+# Persian Piper voices blur when rushed through the harder chain (IR sheet clarity 0.70 -> 0.47 clips clear at 0.8):
+# they keep the first tough pass's pace
+PIPER_LS_LANG = {'fa': {'sold': 0.84, 'cry': 0.86, 'grim': 0.97, 'cmd': 0.92}}
+
+
+def piper_ls(voice, mood):
+    return PIPER_LS_LANG.get(voice[:2], SYN['piper_ls'])[mood]
+
+
 TOUGH_W = 1.2            # weight of score.tough in take picking (was 0.8; 1.6 picked mumbled takes)
 F0_TARGET = {'cry': 88, 'sold': 92, 'cmd': 95, 'grim': 92}   # median Hz the pitch-down aims for
 MAX_SEMIS = 3.0

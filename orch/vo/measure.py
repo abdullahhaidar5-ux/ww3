@@ -13,7 +13,7 @@ for f in sys.argv[1:]:
     for g in M[f].values():
         for kind in g:
             for a,d in kind:
-                c=w[int(a*16000):int((a+d)*16000)]
+                c=np.clip(w[int(a*16000):int((a+d)*16000)],-1,1)
                 if len(c)<1600: continue
                 P.append(dnsmos.run(np.pad(c,(0,max(0,16000-len(c)))),16000)['p808_mos'])
                 t=tough(c,16000);T.append(t["tough"]);F.append(t["f0"]);TL.append(t["tilt"])

@@ -63,7 +63,8 @@ def synth(eng, voice, lang, text, take, mood):
     'cmd' (calm but hard). Tough delivery (2026-10-29): faster, hotter sampling on combat lines."""
     if eng == 'mix':
         eng, voice = voice.split(':', 1)
-    f = os.path.join(CACHE, key(T2.TAG, eng, voice, lang, text, take, mood) + '.wav')
+    kx = () if eng != 'piper' or T2.piper_ls(voice, mood) == T2.SYN['piper_ls'][mood] else (T2.piper_ls(voice, mood),)
+    f = os.path.join(CACHE, key(T2.TAG, eng, voice, lang, text, take, mood, *kx) + '.wav')
     if os.path.exists(f):
         w, _ = sf.read(f, dtype='float32')
         return w
@@ -77,7 +78,7 @@ def synth(eng, voice, lang, text, take, mood):
         if voice not in _piper:
             _piper[voice] = PiperVoice.load(os.path.join(PIPER, voice + '.onnx'))
         v = _piper[voice]
-        ls = T2.SYN['piper_ls'][mood]
+        ls = T2.piper_ls(voice, mood)
         ns = [0.7, 0.8, 0.6][take % 3] if mood == 'cry' else [0.667, 0.55, 0.8][take % 3]
         cfg = SynthesisConfig(length_scale=ls, noise_scale=ns, noise_w_scale=0.8)
         w = np.concatenate([c.audio_float_array for c in v.synthesize(text, syn_config=cfg)])
