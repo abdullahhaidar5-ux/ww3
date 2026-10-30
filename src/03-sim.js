@@ -505,7 +505,7 @@ function angDiff(a,b){return((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;}
 function updHarv(u,dt){const T=G.teams[u.team];
   if(u.order){if(Math.hypot(u.order.x-u.x,u.order.y-u.y)<10)u.order=null;else{navTo(u,u.order.x,u.order.y,dt);return;}}
   if(u.state==='ret'){let best=u.drop&&!u.drop.dead&&G.t<(u.dropT||0)?u.drop:null,bd=best?dist(best,u):1e9;if(!best){for(const e of G.ents)if(e.isB&&e.team===u.team&&(e.kind==='hq'||e.kind==='depot')&&e.built>=1&&!e.dead){const d=dist(e,u);if(d<bd){bd=d;best=e;}}u.drop=best;u.dropT=G.t+1.5;}
-    if(!best)return;if(bd<best.size/2+26){T.credits+=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1));u.cargo=0;u.state='go';}else navTo(u,best.x,best.y,dt);return;}
+    if(!best)return;if(bd<best.size/2+26){T.credits+=Math.round(u.cargo*(T.ai?T.ai.inc:1)*(G.bs||1)*incMul(T));u.cargo=0;u.state='go';}else navTo(u,best.x,best.y,dt);return;}
   if(!u.field||u.field.amt<=0){if(G.t<(u.fldT||0))return;u.fldT=G.t+1.5;const drops=G.ents.filter(e=>e.isB&&e.team===u.team&&(e.kind==='hq'||e.kind==='depot')&&e.built>=1&&!e.dead);let best=null,bd=1e9;const gr=regions('ground'),rg=gr[Math.floor(u.y/CELL)*GW+Math.floor(u.x/CELL)];let bdd=0;for(const f of G.fields)if(f.amt>0){{const fr=gr[Math.floor(f.y/CELL)*GW+Math.floor(f.x/CELL)];if(rg&&fr&&fr!==rg)continue;}/* never a field this truck can't drive to */let dd=1e9;for(const b of drops)dd=Math.min(dd,dist(b,f));let foe=0;if(T.ai)for(const b of nearby(f.x,f.y,700,HV_N))if(b.isB&&!b.dead&&b.team>=0&&!ally(b.team,u.team)){foe=1500;break;}/* AI trucks keep out of enemy bases while any other field is left */const d=dist(f,u)*.6+(drops.length?dd:0)+(los('ground',u.x,u.y,f.x,f.y)?0:900)+foe;if(d<bd){bd=d;best=f;bdd=dd;}}u.field=best;if(!best)return;if(T.ai&&bdd>900&&bdd<1e9)T.ai.depF=best;}
   const f=u.field;if(u.state==='go'){if(dist(f,u)<f.r+6){u.state='gather';u.gt=0;}else navTo(u,f.x,f.y,dt);}
   else if(u.state==='gather'){u.gt+=dt;if(u.gt>=3){const take=Math.min(Math.round(160*upgT(T,'harv')*(T.F.mods.harv||1)),f.amt);f.amt-=take;u.cargo=take;u.state='ret';}}}
@@ -591,6 +591,8 @@ function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T
   const dur=(25+10*(L-1))*(P.tm||1);if(P.fx)gpowFx(team,P,x,y,dur);
   if(key==='recon'){T.reveals.push({x,y,r:P.r,t:dur});FXE('ping',[x|0,y|0,P.r],team);}
   else if(key==='barrage'){const nS=Math.max(3,Math.round(10*M*(P.nm||1)));for(let i=0;i<nS;i++){const a=rnd(0,6.28),r=rnd(0,P.r);addStrike(x+Math.cos(a)*r,y+Math.sin(a)*r,1.5+i*.3*Math.min(1,10/nS*1.2),60,Math.round(230*(P.dm||1)),team,'bar');}for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+300))log(O.id,'Warning: incoming artillery barrage!','w');}
+  else if(key==='sanc'){let tg=null;for(const O of G.teams)if(O.id!==team&&!ally(O.id,team)&&!O.out&&!O.dummy&&(!tg||O.credits>tg.credits))tg=O;if(!tg)return false;
+    const SD=60+10*(L-1);tg.sanc=G.t+SD;tg.sancSeen=true;log(team,`Sanctions imposed on ${tg.F.name}: their income is cut for ${SD} seconds.`,'g');log(tg.id,`SANCTIONED by ${T.F.name}! Income -${tg.upg.smug?8:20}% for ${SD} seconds.${tg.upg.smug?'':' Research Smuggling Routes to soften it.'}`,'w');}
   else if(key==='repair'){for(const e of G.ents)if(e.team===team&&Math.hypot(e.x-x,e.y-y)<P.r)e.hp=Math.min(e.max,e.hp+e.max*(.4+.2*L)*(P.pm||1));FXE('heal',[x|0,y|0,P.r],team);}
   else if(key==='para'){const p=nearestPassXY('ground',x,y);if(!p)return false;const bb=BASES[team]||BASES[0],sx=bb[0]<MAPW/2?-100:MAPW+100,sy=bb[1]<MAPH/2?-100:MAPH+100;FXE('plane',[sx,sy,p[0]|0,p[1]|0,team]);
     G.timers.push({t:2.6,fn:()=>{const R=roster(T.fac).barracks;(()=>{const mx=P.mix||['inf','inf','inf','at','at','inf','at','inf','inf','at','inf'],nP=Math.max(2,Math.round((2+3*L)*(P.nm||1)));return Array.from({length:nP},(_,i)=>mx[i%mx.length]);})().forEach((k,i)=>{const q=nearestPassXY('ground',p[0]+rnd(-40,40),p[1]+rnd(-40,40))||p;const n=addUnit(team,k,q[0],q[1]);if(n&&P.fx==='vet'){n.rank=Math.max(n.rank||0,1);n.xp=Math.max(300,n.s.cost);}if(n&&P.fx==='dig')n.digT=1;if(n&&P.fx==='stealth')n.stlT=1;});log(team,'Paratroopers have landed.','g');}});}
@@ -867,8 +869,10 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
     if(DIFF[T.ai.d??1].pick&&(cat==='barracks'||cat==='factory')&&opts.length>1){if(!T.ai.foeA||T.ai.foeA.t!==T.ai.t){const A=[];for(const e of G.ents)if(e.team===en&&!e.dead&&!e.isB&&!e.s.noAttack&&e.kind!=='harv'&&e.kind!=='dozer')A.push(e);T.ai.foeA={t:T.ai.t,A};}
       const A=T.ai.foeA.A;if(A.length>=3){let tot=0;const w=opts.map(o=>{const S=stats(T.fac,o);let v=0,c=0;for(const e of A){const ec=e.s.cost||300;c+=ec;if(canTarget(S,e))v+=effOn(S,e)*ec;}const x=.25+v/Math.max(1,c);tot+=x*x;return x*x;});
         let r=srand()*tot;for(let i=0;i<opts.length;i++){r-=w[i];if(r<=0){k=opts[i];break;}}}}const sv=(cat!=='shipyard'&&T.ai.nvSv>G.t-25?stats(T.fac,'ship').cost*.7:0)+(cat==='barracks'||cat==='airfield'?vSv:0);if(k&&T.credits-reserve-sv>=stats(T.fac,k).cost){enqueue(id,k);}else if(k==='ship')T.ai.nvSv=G.t;else if(wantVeh&&cat==='factory'&&isVeh(stats(T.fac,k))&&!stats(T.fac,k).noAttack)vSv=stats(T.fac,k).cost;}
-  if(T.credits>1700&&T.ai.t%5===0){const ups=upgList(T.fac).filter(k=>!T.upg[k]&&done(id,UPG[k].at)&&!T.rq[UPG[k].at]);if(ups.length)startResearch(id,ups[Math.floor(srand()*ups.length)]);}
-  if(T.rank-T.spent>0){{let did=false;for(const k of DC.barrage?['nat','barrage','bounty','repair','para','recon']:['nat','bounty','barrage','repair','para','recon'])if(!T.pw[k]){did=buyPower(id,k);break;}if(!did)for(const k of DC.barrage?['barrage','nat','repair']:['nat','barrage','repair'])if(T.pw[k]&&buyPower(id,k))break;}}
+  if(T.credits>1700&&T.ai.t%5===0){const ups=upgList(T.fac).filter(k=>k!=='smug'&&!T.upg[k]&&done(id,UPG[k].at)&&!T.rq[UPG[k].at]);if(ups.length)startResearch(id,ups[Math.floor(srand()*ups.length)]);}
+  if(T.sancSeen&&!T.upg.smug&&!T.rq.hq&&done(id,'hq')&&T.credits>=UPG.smug.cost+300)startResearch(id,'smug');  // sanctioned once: buy Smuggling Routes
+  if(T.pw.sanc&&T.pw.sanc.cd<=0&&T.ai.d>=1&&T.ai.t%5===3&&G.t>240)usePower(id,'sanc',0,0);
+  if(T.rank-T.spent>0){{let did=false;for(const k of DC.barrage?['nat','barrage','bounty','repair','para','recon']:['nat','bounty','barrage','repair','para','recon'])if(!T.pw[k]){did=buyPower(id,k);break;}if(!did&&T.ai.d>=1&&!T.pw.sanc&&['nat','bounty','barrage','repair','para','recon'].every(k=>T.pw[k]))did=buyPower(id,'sanc');if(!did)for(const k of DC.barrage?['barrage','nat','repair']:['nat','barrage','repair'])if(T.pw[k]&&buyPower(id,k))break;}}
   if(T.pw.nat&&T.pw.nat.cd<=0&&T.ai.t%5===2){const N=natPow(T.fac);const c=aiCluster(en);const army=mine.filter(e=>!e.isB);
     if(N.self){if(N.type==='cash'||N.type==='mercs'||army.some(u=>u.target))usePower(id,'nat',0,0);}
     else if(N.type==='shield'||N.type==='smoke'||N.type==='supply'){const g=army.filter(u=>u.target);if(g.length>=4)usePower(id,'nat',g[0].x,g[0].y);}
@@ -1052,11 +1056,14 @@ function updOil(dt){const N=G.teams.length;const here=OIL_HERE.length===N?OIL_HE
   if(o.dead){o.burn=Math.max(0,o.burn-dt);if(present.length&&present.every(q=>ally(q,present[0]))){const t=present[0];o.cp[t]+=dt;if(o.cp[t]>=12){o.dead=false;o.hp=o.max*.4;o.owner=t;o.cp=o.cp.map(()=>0);log(t,'Oil derrick repaired and captured.','g');}}else for(let t=0;t<N;t++)if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);continue;}
   for(let t=0;t<N;t++){if(here[t]&&present.every(q=>ally(q,t))&&!ally(o.owner,t)){o.cp[t]+=dt;if(o.cp[t]>=6){const prev=o.owner;o.owner=t;o.cp=o.cp.map(()=>0);log(t,'Oil derrick captured.','g');if(prev>=0&&prev!==t)log(prev,'An oil derrick was captured by the enemy!','w');}}else if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);}
   if(o.hp<o.max&&G.t-(o.hit??-99)>8)o.hp=Math.min(o.max,o.hp+o.max*.01*dt);
-  if(o.owner>=0){o.inc+=dt;if(o.inc>=2){o.inc=0;const T=G.teams[o.owner];T.credits+=Math.round(14*(T.F.mods.oil||1)*(G.bs||1));}}}
+  if(o.owner>=0){o.inc+=dt;if(o.inc>=2){o.inc=0;const T=G.teams[o.owner];T.credits+=Math.round(14*(T.F.mods.oil||1)*(G.bs||1)*incMul(T));}}}
   econTick(dt);}
 // income buildings pay every 2 seconds; a team's extra ones earn less each
-function econTick(dt){G.ecT=(G.ecT||0)+dt;if(G.ecT<2)return;G.ecT-=2;const per={};for(const b of G.ents){if(b.dead||!b.isB||b.kind!=='econ'||b.built<1)continue;const k=per[b.team]=(per[b.team]||0)+1;const T=G.teams[b.team];if(T.dummy)continue;
-  const v=b.s.inc*2*(ECON_RATE[k-1]||0)*((b.dis||0)>G.t?0:1);b.acc=(b.acc||0)+v;const w=Math.floor(b.acc);if(w>0){b.acc-=w;T.credits+=w;}}}
+// Sanctions: income multiplier for a team (1 normally; 0.8 while sanctioned, 0.92 with Smuggling Routes). T.sanc = sim time it ends.
+function incMul(T){return T.sanc>G.t?(T.upg.smug?.92:.8):1;}
+function econTick(dt){G.ecT=(G.ecT||0)+dt;if(G.ecT<2)return;G.ecT-=2;for(const T of G.teams)if(T.sanc>G.t&&T.upg.smug&&!T.dummy)T.credits+=6;  // smuggling trickle: 3 cash/s while sanctioned
+const per={};for(const b of G.ents){if(b.dead||!b.isB||b.kind!=='econ'||b.built<1)continue;const k=per[b.team]=(per[b.team]||0)+1;const T=G.teams[b.team];if(T.dummy)continue;
+  const v=b.s.inc*2*(ECON_RATE[k-1]||0)*((b.dis||0)>G.t?0:1)*incMul(T);b.acc=(b.acc||0)+v;const w=Math.floor(b.acc);if(w>0){b.acc-=w;T.credits+=w;}}}
 
 /* ---------- Test Range: unlimited money, everything unlocked and fast to build, and a passive target enemy ---------- */
 function sbSpot(team,kind,anchor,r0,r1){for(let k=0;k<160;k++){const a=rnd(0,6.28),r=rnd(r0,r1),x=anchor.x+Math.cos(a)*r,y=anchor.y+Math.sin(a)*r;if(validSpot(team,kind,x,y))return[x,y];}return null;}

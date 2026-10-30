@@ -204,7 +204,9 @@ const UPG={"us1":{"name":"Marine Raider Training","at":"barracks","cost":1250,"t
 const UPGL={"US":["us1","us2","us3","us4","us5","us6","us7","us8","us9"],"TR":["tr1","tr2","tr3","tr4","tr5","tr6","tr7","tr8","tr9"],"IL":["il1","il2","il3","il4","il5","il6","il7","il8","il9"],"EU":["eu1","eu2","eu3","eu4","eu5","eu6","eu7","eu8","eu9"],"UA":["ua1","ua2","ua3","ua4","ua5","ua6","ua7","ua8","ua9"],"RU":["ru1","ru2","ru3","ru4","ru5","ru6","ru7","ru8","ru9"],"IR":["ir1","ir2","ir3","ir4","ir5","ir6","ir7","ir8","ir9"],"SA":["sa1","sa2","sa3","sa4","sa5","sa6","sa7","sa8","sa9"],"AE":["ae1","ae2","ae3","ae4","ae5","ae6","ae7","ae8","ae9"],"PK":["pk1","pk2","pk3","pk4","pk5","pk6","pk7","pk8","pk9"],"IN":["in1","in2","in3","in4","in5","in6","in7","in8","in9"],"CN":["cn1","cn2","cn3","cn4","cn5","cn6","cn7","cn8","cn9"],"KP":["kp1","kp2","kp3","kp4","kp5","kp6","kp7","kp8","kp9"],"KR":["kr1","kr2","kr3","kr4","kr5","kr6","kr7","kr8","kr9"],"EG":["eg1","eg2","eg3","eg4","eg5","eg6","eg7","eg8","eg9"],"CU":["cu1","cu2","cu3","cu4","cu5","cu6","cu7","cu8","cu9"],"RS":["rs1","rs2","rs3","rs4","rs5","rs6","rs7","rs8","rs9"],"DW":["dw1","dw2","dw3","dw4","dw5","dw6","dw7","dw8","dw9"]};
 // an upgrade's name and the nation's own list (each nation has its own nine; signature upgrade marked sp)
 function upgName(fac,k){return (UPG[k]&&UPG[k].name)||k;}
-function upgList(fac){return UPGL[fac]||[];}
+// Smuggling Routes: the same hq upgrade for every nation (counter to the Sanctions power; no stat effects, read by incMul/econTick)
+UPG.smug={name:'Smuggling Routes',at:'hq',cost:1500,time:30,desc:'Back-channel trade: while you are under Sanctions your income loss drops from 20% to 8%, and a small trickle of cash keeps coming in.'};
+function upgList(fac){return (UPGL[fac]||[]).concat('smug');}
 // Effect groups an upgrade can target (unit stats s; buildings only match 'bld')
 function upgMatch(c,s,b){if(b)return c==='bld';switch(c){case 'all':return true;case 'inf':return s.armor==='light'&&s.dom==='ground';case 'rifle':return s.kind==='inf';case 'atinf':return s.cls==='at';
   case 'veh':return s.armor==='heavy'&&s.dom==='ground';case 'tank':case 'arty':case 'aa':case 'drone':case 'heli':case 'jet':case 'ship':case 'boat':return s.cls===c;case 'air':return s.dom==='air';case 'naval':return s.dom==='naval';}return false;}
@@ -215,6 +217,7 @@ const POWERS={
   para:{name:'Paradrop',desc:'Drop 5 infantry anywhere on land',cd:150},
   barrage:{name:'Artillery Barrage',desc:'10 shells over a wide area',cd:170,r:180},
   repair:{name:'Emergency Repair',desc:'Restore 60% health to your forces in an area',cd:120,r:230},
+  sanc:{name:'Sanctions',desc:'Sanction the richest enemy: their income drops 20% for 60 seconds (their Smuggling Routes upgrade cuts that to 8%)',cd:420,self:true},
 };
 // Every nation's own signature general power (unlocked like the others). Effects differ; cooldowns balance them.
 POWERS.nat={name:'National Power',desc:'',cd:200,r:150,nat:true};

@@ -115,6 +115,26 @@ try {
   await page.screenshot({ path: path.join(OUT, 'ew-battle.png'), timeout: 150000 });
   const left = await page.evaluate(() => window.__exp());
   ck('spoof ends after 20 s', left === 0, left);
+  // Sanctions & smuggling: income of the target cuts 20% for 60 s (8% with Smuggling Routes + trickle), back to normal after
+  const sx = await page.evaluate(() => {
+    G.paused = true; const me = ME, en = G.teams.find(T => T.id !== me).id, E = G.teams[en], M = G.teams[me], hq = G.ents.find(b => b.team === en && b.kind === 'hq');
+    for (const T of G.teams) { T.sanc = 0; T.upg.smug = false; }
+    for (const e of G.ents) if (e.isB && e.kind === 'econ') e.dead = true;
+    const b = addBld(en, 'econ', hq.x + 300, hq.y + 300, true); b.built = 1; b.dis = 0;
+    const earn = () => { const c0 = E.credits; G.ecT = 2; econTick(0.01); const d = E.credits - c0; return d; };
+    const o = {}; b.acc = 0; let base = 0; for (let i = 0; i < 50; i++) base += earn(); o.base = base;
+    M.pw.sanc = { cd: 0, lv: 1 }; G.t = Math.max(G.t, 300); E.credits = 5000; M.credits = 100;
+    o.fired = usePower(me, 'sanc', 0, 0); o.cd = M.pw.sanc.cd; o.again = usePower(me, 'sanc', 0, 0); o.dur = Math.round(E.sanc - G.t);
+    b.acc = 0; let cut = 0; for (let i = 0; i < 50; i++) cut += earn(); o.cut = cut;
+    E.upg.smug = true; b.acc = 0; let sm = 0; for (let i = 0; i < 50; i++) sm += earn(); o.smug = sm;
+    const pk = JSON.parse(JSON.stringify(ckEncode())); E.sanc = 0; ckRestore(pk); o.ckKeeps = G.teams[en].sanc > G.t;
+    G.t = E.sanc + 1; b.acc = 0; let after = 0; for (let i = 0; i < 50; i++) after += earn(); o.after = after; o.unsanctioned = incMul(M);
+    return o;
+  });
+  ck('sanctions: 20% income cut', sx.fired && Math.abs(sx.cut / sx.base - .8) < .03, JSON.stringify(sx));
+  ck('sanctions: 60 s, long cooldown, no double-fire', sx.dur === 60 && sx.cd === 420 && !sx.again, JSON.stringify(sx));
+  ck('smuggling routes: only 8% cut plus trickle', sx.smug > sx.base * .92 && sx.smug < sx.base * .92 + 50 * 6 + 5, JSON.stringify(sx));
+  ck('sanctions survive checkpoint and end on time', sx.ckKeeps && sx.after > sx.base * .98 + 50 * 0 && sx.after < sx.base * 1.02 && sx.unsanctioned === 1, JSON.stringify(sx));
   ck('no page errors', !errors.length, errors.join(' / '));
 } catch (e) { fails++; console.log('ERROR', e.message); }
 await browser.close(); server.close();
