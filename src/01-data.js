@@ -206,17 +206,22 @@ const UPGL={"US":["us1","us2","us3","us4","us5","us6","us7","us8","us9"],"TR":["
 function upgName(fac,k){return (UPG[k]&&UPG[k].name)||k;}
 // Smuggling Routes: the same hq upgrade for every nation (counter to the Sanctions power; no stat effects, read by incMul/econTick)
 UPG.smug={name:'Smuggling Routes',at:'hq',cost:1500,time:30,desc:'Back-channel trade: while you are under Sanctions your income loss drops from 20% to 8%, and a small trickle of cash keeps coming in.'};
-function upgList(fac){return (UPGL[fac]||[]).concat('smug');}
+// Ground-Penetrating Radar: HQ upgrade for nations WITHOUT tunnels - your HQ and Strike Centers reveal enemy tunnel entrances within 650 range
+UPG.gpr={name:'Ground-Penetrating Radar',at:'hq',cost:1200,time:25,desc:'Counter to tunnel warfare: enemy Tunnel Network entrances within 650 range of your HQ or Strike Center are revealed (and can be shot). Only for nations without tunnels.'};
+const GPR_R=650;
+function upgList(fac){return (UPGL[fac]||[]).concat('smug',FACTIONS[fac]&&FACTIONS[fac].tunnels?[]:['gpr']);}
 // Effect groups an upgrade can target (unit stats s; buildings only match 'bld')
 function upgMatch(c,s,b){if(b)return c==='bld';switch(c){case 'all':return true;case 'inf':return s.armor==='light'&&s.dom==='ground';case 'rifle':return s.kind==='inf';case 'atinf':return s.cls==='at';
   case 'veh':return s.armor==='heavy'&&s.dom==='ground';case 'tank':case 'arty':case 'aa':case 'drone':case 'heli':case 'jet':case 'ship':case 'boat':return s.cls===c;case 'air':return s.dom==='air';case 'naval':return s.dom==='naval';}return false;}
 
+const MILNAME={IR:'Popular Mobilization volunteers',RS:'Popular Mobilization volunteers',DW:'Popular Mobilization volunteers',US:'Contractors',RU:'PMC'};
 const POWERS={
   bounty:{name:'Cash Bounty',desc:'Earn 15% of the cost of every enemy you destroy',passive:true},
   recon:{name:'Recon Sweep',desc:'Reveal an area for 25 seconds',cd:90,r:450},
   para:{name:'Paradrop',desc:'Drop 5 infantry anywhere on land',cd:150},
   barrage:{name:'Artillery Barrage',desc:'10 shells over a wide area',cd:170,r:180},
   repair:{name:'Emergency Repair',desc:'Restore 60% health to your forces in an area',cd:120,r:230},
+  mil:{name:'Fund Militia',desc:'Pay a local militia: 5 riflemen, an RPG team and an armed technical appear at the neutral spot nearest the front, under your command',cd:480,self:true},
   sanc:{name:'Sanctions',desc:'Sanction the richest enemy: their income drops 20% for 60 seconds (their Smuggling Routes upgrade cuts that to 8%)',cd:420,self:true},
 };
 // Every nation's own signature general power (unlocked like the others). Effects differ; cooldowns balance them.
@@ -274,7 +279,7 @@ function gpowDesc(k,P,g){const f=(v,a,b)=>v&&Math.abs(v-1)>.01?(v>1?a:b)+' '+(v>
   const L=[f(g.m,'bounty','bounty'),f(g.rm,'radius','radius'),f(g.tm,'duration','duration'),f(g.nm,k==='barrage'?'shells':'troops',k==='barrage'?'shells':'troops'),f(g.dm,'shell damage','shell damage'),f(g.pm,'repair','repair'),f(g.cdm,'cooldown','cooldown'),g.mix===PARA_AT?'mostly anti-tank teams':g.mix===PARA_INF?'mostly riflemen':null].filter(Boolean);
   return P.desc+(L.length?' ('+L.join(', ')+')':'')+(g.fx?'. Special: '+GFX_TXT[g.fx]+(k!=='bounty'?' (cooldown +10%)':' (bounty −10%)'):'');}
 const GFX_TXT={vet:'troops arrive as veterans',dig:'troops arrive dug in (35% less damage until they move)',stealth:'troops land hidden and stay unseen until they move or fire',mark:'enemies in the area are marked - your forces do 25% more damage to them',detect:'also exposes hidden and stealthed enemy units in the area',fire:'leaves the ground burning for 8 seconds',emp:'disables enemy vehicles in the area for 4 seconds',smoke:'lays a smoke screen that hides your units inside it',rearm:'units in the area also fire 25% faster for 12 seconds',rally:'units in the area rally instantly and are fearless for 15 seconds',shield:'units in the area take 25% less damage for 12 seconds',salvage:'also refunds 15% of the cost of each unit you lose'};
-function powInfo(k,fac){const P=POWERS[k];if(!P)return null;if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N=natPow(fac);return Object.assign({},P,N);}
+function powInfo(k,fac){const P=POWERS[k];if(!P)return null;if(k==='mil'){const n=MILNAME[fac]||'Local militia';return Object.assign({},P,{name:'Fund '+n,desc:P.desc.replace('a local militia','the '+n)});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N=natPow(fac);return Object.assign({},P,N);}
 // General ranks get steadily harder to earn; each promotion gives a point. Powers unlock for 1 point and can be
 // raised to level 2 (2 more points) and level 3 (3 more): bigger effect, shorter cooldown.
 const RANKS=[0,2500,7000,14000,24000,38000,56000,80000];
