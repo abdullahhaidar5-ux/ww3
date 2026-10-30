@@ -84,10 +84,21 @@ function edgeTex(){const M=G.map,d=new Uint8Array(EF_W*EF_H*4);for(let i=0;i<EF_
 let CITYM=null,CITYMAT=null;
 function civAtXYAny(x,y){return G.civAt?G.civAt.get(Math.floor(y/CELL)*GW+Math.floor(x/CELL)):null;}
 // city buildings: one merged mesh, styled by region; rebuilt when buildings are destroyed (rubble left behind)
+// Rubble of a fallen block (part of the same merged mesh: no extra draw calls, nothing per frame): a dusty debris apron
+// wider than the old footprint, a low heap, broken floor slabs tilted at angles, a jagged wall stub still standing and
+// loose bricks. Phones / Low graphics get the apron, heap and two slabs only. Its own seeded RNG (looks only).
+function rubbleBld(B,b,P){const g=groundH(b.x,b.y),R=mulberry((b.x*7+b.y*3)|0),lo=gfxLow(),W=b.w,D=b.d,col=P[Math.floor(b.v*P.length)%P.length];
+  const rc=['#8d8371','#a39a86','#6f685b','#7a7466','#5e584e'],at=(k)=>[b.x+(R()-.5)*W*k,b.y+(R()-.5)*D*k];
+  B.box(W*1.35,.7,D*1.35,b.x,g+.1,b.y,'#9a9180',0,R()*.6-.3,0);   // dust and grit spread over the street
+  const hh=Math.min(7,2.5+b.h*.12);B.box(W*.75,hh,D*.7,b.x,g+hh*.35,b.y,rc[2],R()*.12,R()*3,R()*.12);B.box(W*.5,hh*.8,D*.55,b.x+(R()-.5)*W*.2,g+hh*.55,b.y+(R()-.5)*D*.2,rc[1],R()*.2,R()*3,R()*.2);
+  const ns=lo?2:4;for(let q=0;q<ns;q++){const[x,z]=at(.55),w=W*(.35+R()*.3),d=D*(.25+R()*.3);B.box(w,1.4,d,x,g+hh*(.5+R()*.5),z,q%2?col:rc[q%4],(R()-.5)*1.3,R()*3,(R()-.5)*1.3);}
+  if(lo)return;
+  {const sd=R()<.5?1:-1,h=Math.min(18,4+b.h*.35*(.5+R()*.5)),w=W*(.35+R()*.25);B.box(w,h,1.6,b.x+(R()-.5)*W*.3,g+h/2-.5,b.y+sd*D*.42,col,(R()-.5)*.15,(R()-.5)*.3,(R()-.5)*.2);B.box(w*.45,h*.55,1.6,b.x+(R()-.5)*W*.3+w*.5,g+h*.27,b.y+sd*D*.42,col,0,(R()-.5)*.3,.3);}
+  for(let q=0;q<7;q++){const[x,z]=at(1.1),s=1.2+R()*2.2;B.box(s*1.6,s*.8,s,x,g+s*.4,z,rc[q%5],R()*.6,R()*3,R()*.6);}}
 const RCC={};function roofCol(c){return RCC[c]||(RCC[c]='#'+new THREE.Color(c).lerp(new THREE.Color('#8e8a82'),.42).getHexString());}
 function buildCity(){if(!G.map.cityBlds||!G.map.cityBlds.length)return;
 {const B=Bld(),W=Bld(),BT=[];const PAL={mideast:['#d8c9a8','#e6dcc6','#cbb48c','#efe8d8','#bfa883'],lebanon:['#efe7d6','#e4d6bc','#f4efe4','#d9cbb0'],yemen:['#8c6a4a','#a07a56','#7b5c40','#9c7b5c'],russia:['#a7a59c','#b8b1a3','#8f949a','#c2b7a0','#9aa3a8'],america:['#e9e4da','#c9d2da','#b88f6c','#d7d0c0','#8fa1b2'],turkey:['#efe9de','#e3d6c0','#f4eee4','#d8c9b0'],europe:['#efe6d2','#e2d2b4','#d8c8a8','#f2ead8'],gulfcity:['#9fb7c6','#c3d0d8','#7f98aa','#d9dde0','#b9a98c'],korea:['#d8d8d4','#c6cacc','#e4e2dc','#b8bec4'],asia:['#b7b2a8','#c9c3b6','#a6a49c','#d4cec0'],southasia:['#e2c49a','#d69a6a','#c8b08c','#e8d8b8','#b98a6a'],latin:['#f0d9a8','#9fd0c8','#f2b9a0','#e8e2d0','#b8d4e8']};
-    for(const b of G.map.cityBlds){const cv=civAtXYAny(b.x,b.y);if(cv&&cv.dead){const g=groundH(b.x,b.y);const R=mulberry((b.x*7+b.y*3)|0);const rc=['#8d8371','#a39a86','#6f685b','#7a7466'];for(let q=0;q<5;q++){const w=b.w*(.3+R()*.4),h=2+R()*Math.min(9,b.h*.25);B.box(w,h,w*(.6+R()*.5),b.x+(R()-.5)*b.w*.6,g+h/2-.5,b.y+(R()-.5)*b.d*.6,rc[q%4],R()*.5,R()*3,R()*.4);}continue;}const g=groundH(b.x,b.y)-1,P=PAL[b.style]||PAL.mideast,col=P[Math.floor(b.v*P.length)%P.length],h=b.h,w=b.w,dd=b.d;
+    for(const b of G.map.cityBlds){const cv=civAtXYAny(b.x,b.y);if(cv&&cv.dead){rubbleBld(B,b,(PAL[b.style]||PAL.mideast));continue;}const g=groundH(b.x,b.y)-1,P=PAL[b.style]||PAL.mideast,col=P[Math.floor(b.v*P.length)%P.length],h=b.h,w=b.w,dd=b.d;
       W.box(w,h,dd,b.x,g+h/2,b.y,col);BT.push([g+1,g+h,b.style==='gulfcity'||b.style==='korea'||b.style==='asia'?1:b.style==='america'&&h<16?2:b.style==='yemen'?3:0,b.v]);
       // rooftop clutter: water tanks, AC units, stair heads, dishes and parapets on flat roofs
       {const flat=!(b.style==='america'&&h<16)&&!((b.style==='europe'||b.style==='turkey'))&&!(b.style==='lebanon'&&b.v>.7);if(flat){const R=mulberry(((b.x*13)^(b.y*7))|0),top=g+h;

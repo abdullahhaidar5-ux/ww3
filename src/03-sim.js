@@ -200,13 +200,14 @@ function stepTo(u,x,y,dt,fin){if(u.s.dom==='air'&&isFW(u)){const t=u.target;let 
   const err=err0;u.hd+=Math.max(-tr,Math.min(tr,err));
   const ae=Math.abs(angDiff(u.hd,want)),foot=M[0]>=8;let f=foot?(ae<1.2?1:.35):Math.max(.12,Math.cos(Math.min(ae,1.45)));
   if(whl)f=Math.max(.35,Math.cos(Math.min(ae,1.2)));let sl=1;if(d==='ground'){const ca=Math.cos(u.hd),sa=Math.sin(u.hd),g0=groundH(u.x,u.y),g1=groundH(u.x+ca*14,u.y+sa*14),gr=(g1-g0)/14;sl=Math.max(.45,Math.min(1.15,1-gr*(M[0]>=8?.9:1.6)));}
-  const wx=wxNow();const UP=G.teams[u.team].upg;let top=u.s.spd*f*sl*upgK(G.teams[u.team],u.kind,'spd')*(d==='ground'?wx.spd:d==='air'?(.75+.25*wx.air):1)*((u.supp||0)>.5?.6:1)*(isVeh(u.s)&&auraNear(u,'raid')?1.2:1)*((G.teams[u.team].raidT||0)>G.t&&u.s.armor==='heavy'?1.35:1)*(G.smokes&&G.smokes.some(S=>S.t>G.t&&S.team===u.team&&Math.hypot(u.x-S.x,u.y-S.y)<S.r)?1.25:1)*(d==='ground'&&u.s.armor!=='heavy'&&G.t-(u.lastFire||-9)<3&&(DOCT[G.teams[u.team].fac]||{}).hitrun?1.25:1);if(u.order&&u.order.cap)top=Math.min(top,u.order.cap*f);if(fin){const brake=M[1]*1.4;top=Math.min(top,Math.sqrt(2*brake*Math.max(0,dist2-2))+4);}
+  const wx=wxNow();const UP=G.teams[u.team].upg;let top=u.s.spd*f*sl*(G.rubN&&d==='ground'?rubSlow(u):1)*upgK(G.teams[u.team],u.kind,'spd')*(d==='ground'?wx.spd:d==='air'?(.75+.25*wx.air):1)*((u.supp||0)>.5?.6:1)*(isVeh(u.s)&&auraNear(u,'raid')?1.2:1)*((G.teams[u.team].raidT||0)>G.t&&u.s.armor==='heavy'?1.35:1)*(G.smokes&&G.smokes.some(S=>S.t>G.t&&S.team===u.team&&Math.hypot(u.x-S.x,u.y-S.y)<S.r)?1.25:1)*(d==='ground'&&u.s.armor!=='heavy'&&G.t-(u.lastFire||-9)<3&&(DOCT[G.teams[u.team].fac]||{}).hitrun?1.25:1);if(u.order&&u.order.cap)top=Math.min(top,u.order.cap*f);if(fin){const brake=M[1]*1.4;top=Math.min(top,Math.sqrt(2*brake*Math.max(0,dist2-2))+4);}
   if(u.retreat)top*=1.15;
   if(d==='ground'&&!foot&&G.hash&&u.v>4){const la=u.r*2+12,px=u.x+Math.cos(u.hd)*la,py=u.y+Math.sin(u.hd)*la;for(const o of nearby(px,py,34,AV_N)){if(o===u||o.dead||o.isB||!o.s||o.s.dom!=='ground')continue;const dx=o.x-px,dy=o.y-py;if(dx*dx+dy*dy>(o.r+u.r*.8)*(o.r+u.r*.8))continue;
     if((o.v||0)>4&&Math.abs(angDiff(u.hd,o.ang||0))<.6)top=Math.min(top,Math.max(8,(o.v||0)*.95));else if(massOf(o)>=massOf(u)*.5){const ah=angDiff(u.hd,Math.atan2(o.y-u.y,o.x-u.x));u.hd-=Math.sign(ah||1)*Math.min(1.8*dt,.12);top*=.75;}break;}}
   const acc=(u.v<top?M[1]:M[1]*2.2)*dt;u.v+=Math.max(-acc,Math.min(acc,top-u.v));u.vt=G.t;
   const st=Math.min(u.v*dt,dist2+.5);const nx=u.x+Math.cos(u.hd)*st,ny=u.y+Math.sin(u.hd)*st;u.ang=u.hd;
-  if(passXY(d,nx,ny)){u.x=nx;u.y=ny;}else if(passXY(d,nx,u.y)){u.x=nx;u.v*=.6;}else if(passXY(d,u.x,ny)){u.y=ny;u.v*=.6;}else{u.v*=.3;u.hd+=.6*dt*Math.sign(err||1);}
+  {const ph=P_H;P_H=!!(G.rubN&&d==='ground'&&rubHeavy(u)&&!rubAt(u.x,u.y));   // a heavy vehicle can't climb onto rubble (one already on it may drive off)
+  if(passXY(d,nx,ny)){u.x=nx;u.y=ny;}else if(passXY(d,nx,u.y)){u.x=nx;u.v*=.6;}else if(passXY(d,u.x,ny)){u.y=ny;u.v*=.6;}else{u.v*=.3;u.hd+=.6*dt*Math.sign(err||1);}P_H=ph;}
   if(st>.01)u.mv=G.t;}
 // A move that stops making progress ends instead of pushing forever: close to the spot (crowded by other units or a
 // building) it counts as arrived; further away the unit re-plans its route, then gives up after a while.
@@ -250,7 +251,7 @@ function ffStep(u,x,y){const dd=Math.hypot(x-u.x,y-u.y);P_B=true;try{
     if(!steps.length){u.ffw=null;return [x,y,true];}
     let w=steps[0];for(let j=steps.length-1;j>0;j--)if(los('ground',u.x,u.y,steps[j][0],steps[j][1])){w=steps[j];break;}
     u.ffw=w;u.ffwT=G.t+.6;return [w[0],w[1],false];}finally{P_B=false;}}
-function sharePath(us,x,y){const G0=us.filter(u=>u.s.dom==='ground'&&u.order&&!u.dead);if(G0.length<4)return;
+function sharePath(us,x,y){const G0=us.filter(u=>u.s.dom==='ground'&&u.order&&!u.dead&&!(G.rubN&&rubHeavy(u)));if(G0.length<4)return;
   if(G0.length>=6){for(const u of G0){u.ffx=x;u.ffy=y;u.ffP=null;u.ffw=null;}return;}let cx=0,cy=0;for(const u of G0){cx+=u.x;cy+=u.y;}cx/=G0.length;cy/=G0.length;
   if(los('ground',cx,cy,x,y))return;let P;bocc();P_B=true;try{P=findPath('ground',cx,cy,x,y);}finally{P_B=false;}if(!P||P.length<2)return;P=smoothP('ground',cx,cy,P);
   for(const u of G0){if(Math.hypot(u.x-cx,u.y-cy)>260||!los('ground',u.x,u.y,P[0][0],P[0][1]))continue;const o=u.order;u.path=P.slice(0,-1).map(p=>[p[0],p[1]]).concat([[o.x,o.y]]);u.pgx=o.x;u.pgy=o.y;u.prt=G.t+3+Math.random();}}
@@ -260,7 +261,8 @@ function sharePath(us,x,y){const G0=us.filter(u=>u.s.dom==='ground'&&u.order&&!u
 // PF_N: route-search work per tick, in search steps (~4 ms of searching): the time budget alone does nothing where the
 // clock stands still while code runs (a battle hosted on Cloudflare), so the work is counted too.
 const PF_RATE=120,PF_BURST=12,PF_MS=4,PF_N=12000;
-function navTo(u,x,y,dt,fin){const d=u.s.dom;if(d==='air'){stepTo(u,x,y,dt,fin);return;}
+function navTo(u,x,y,dt,fin){if(G.rubN&&rubHeavy(u)){u.ffx=null;P_H=true;try{navTo0(u,x,y,dt,fin);}finally{P_H=false;}}else navTo0(u,x,y,dt,fin);}
+function navTo0(u,x,y,dt,fin){const d=u.s.dom;if(d==='air'){stepTo(u,x,y,dt,fin);return;}
   if(d==='ground'&&u.ffx!=null){if(Math.hypot(u.ffx-x,u.ffy-y)>450||Math.hypot(x-u.x,y-u.y)<600)u.ffx=null;else{const r=ffStep(u,x,y);if(r){stepTo(u,r[0],r[1],dt,r[2]&&fin);return;}}}
   const goalMoved=!u.path||Math.hypot(u.pgx-x,u.pgy-y)>60;
   if(goalMoved||G.t>u.prt){
@@ -323,12 +325,23 @@ function tgtH(e){if(e.oil)return 16;return e.isB?BH[e.kind]*.5:e.s.dom==='air'?(
 function coverAt(x,y){const g=G.cover;if(!g)return 0;const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);let n=0;for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const X=cx+i,Y=cy+j;if(X>=0&&Y>=0&&X<GW&&Y<GH)n+=g[Y*GW+X];}
   if(n>=2)return 1;for(const b of nearby(x,y,(G.bmaxH||160)+34,CV_N))if(b.isB&&!b.dead&&Math.abs(b.x-x)<b.size/2+34&&Math.abs(b.y-y)<b.size/2+34)return 1;return 0;}
 const CV_N=[],MN_N=[],CV_U=[],HV_N=[];
+/* ---------- Rubble: a fallen city block changes the map ----------
+   Its cell stays open to infantry and light vehicles (slowly) but tanks, artillery and heavy trucks can't climb it
+   and route around (P_H in passC). Infantry inside it get heavy cover. G.rub is created on the first collapse only, so
+   a battle where no city block falls runs exactly as before; it is rebuilt from the civ list (c.dead) on clients,
+   rejoins and checkpoint restores, so every copy agrees. */
+function rubMark(c){if(!c||c.ruin||c.k==null)return;if(!G.rub||G.rub.length!==GW*GH){G.rub=new Uint8Array(GW*GH);G.rubN=0;}if(!G.rub[c.k]){G.rub[c.k]=1;G.rubN++;}}
+function rubSync(){G.rub=null;G.rubN=0;for(const c of (G.civ||[]))if(c.dead&&!c.ruin){if(G.grid[c.k]===3)G.grid[c.k]=0;rubMark(c);}if(G.rubN)G.gridV=(G.gridV|0)+1;}
+function rubAt(x,y){const R=G.rub;if(!R)return 0;const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);return cx>=0&&cy>=0&&cx<GW&&cy<GH?R[cy*GW+cx]:0;}
+function rubHeavy(u){const s=u.s;return !!s&&s.dom==='ground'&&s.armor==='heavy'&&u.kind!=='dozer'&&(s.cls==='tank'||s.cls==='arty'||s.cls==='harv'||(s.r||0)>=13);}
+// speed on rubble: infantry pick their way through, light vehicles crawl
+function rubSlow(u){if(!rubAt(u.x,u.y))return 1;return isInf(u.s)?.7:.5;}
 // AI tactics tally (flanks, cover, retreats, landings...): read by orch/aitourney.mjs; never feeds back into the battle
 function aiStat(A,k,v){const S=A.st||(A.st={});S[k]=(S[k]||0)+(v==null?1:v);}
 function tactic(e,wpn,src,splash){let m=1,tag=null;if(e.isB||!src||src.isB&&!src.s)return{m,tag};const air=e.s.dom==='air'&&!e.landed,sair=!src.isB&&src.s.dom==='air';
   if(!air&&(isVeh(e.s)||e.s.dom==='naval')&&!splash&&wpn!=='bomb'){const a=Math.atan2(e.y-src.y,e.x-src.x),rel=Math.abs(angDiff(e.hd??e.ang,a));
     if(rel<.95){m*=1.6;tag='REAR HIT';}else if(rel<2.1){m*=1.2;tag='SIDE HIT';}else m*=.8;}
-  if(isInf(e.s)&&!air){if(coverAt(e.x,e.y)){m*=wpn==='shell'||wpn==='boom'||splash?.8:.65;tag=tag||'IN COVER';}if(e.supp>.5)m*=.9;}
+  if(isInf(e.s)&&!air){if(G.rubN&&rubAt(e.x,e.y)){m*=wpn==='shell'||wpn==='boom'||splash?.7:.5;tag=tag||'IN RUBBLE';}else if(coverAt(e.x,e.y)){m*=wpn==='shell'||wpn==='boom'||splash?.8:.65;tag=tag||'IN COVER';}if(e.supp>.5)m*=.9;}
   if(!air&&!sair){const dh=groundH(src.x,src.y)-groundH(e.x,e.y);if(dh>10){m*=1.15;tag=tag||'HIGH GROUND';}else if(dh<-10)m*=.9;}
   if(!air&&G.t-(e.mv||-9)<.35&&['cannon','at','tower','snipe','gun'].includes(wpn))m*=.85;
   return{m,tag};}
@@ -336,7 +349,7 @@ function specialMult(e,wpn,src){let m=1;if(e.mark>G.t)m*=1.25;if((wpn==='shell'|
   if(src&&!src.isB&&(src.s.dom==='air'||src.kind==='drone'||wpn==='missile')&&auraProtect(e,'jam'))m*=.5;return m;}
 function applyDmg(e,d,wpn,team,src,splash){if(e.dead)return;if(e.civ&&e.kind==='civb'){const m=VS[wpn]&&VS[wpn].bld;if(m)damageCiv(e.civ,d*m,team);return;}if(e.oil){const m=VS[wpn]&&VS[wpn].bld;if(m)damageOil(e.oil,d*m,team);return;}if(e.isB&&team!=null&&!ally(team,e.team)){const V=G.teams[e.team];if(G.t-(V.atkWarn??-99)>25){V.atkWarn=G.t;log(e.team,'Our base is under attack!','w');}}else if(!e.isB&&e.s&&!e.civ&&team!=null&&e.team!=null&&!ally(team,e.team)&&G.teams[e.team]){const V=G.teams[e.team];if(G.t-(V.fireWarn??-99)>14){V.fireWarn=G.t;log(e.team,'Our troops are under fire!','v5');}}const ar=e.isB?'bld':(e.landed?'heavy':e.s.armor);const m=VS[wpn][ar];if(!m)return;const tc=tactic(e,wpn,src,splash);const dd=d*m*dmgIn(e,wpn)*tc.m*specialMult(e,wpn,src);if(src&&!src.isB&&src.s.mark&&!e.isB)e.mark=G.t+6;e.hp-=dd;e.lastHit=G.t;
   if(!e.isB&&canRout(e)){e.fear=(e.fear||0)+dd/e.max*(isInf(e.s)?1.25:.7)*(coverAt(e.x,e.y)&&isInf(e.s)?.7:1)*(auraNear(e,'morale')?.5:1)+(splash?.05:.02);}
-  if(!e.isB&&isInf(e.s)&&!auraNear(e,'morale')&&!auraNear(e,'rof')){const bk=team!=null&&G.teams[team]&&(DOCT[G.teams[team].fac]||{}).barrage&&(wpn==='shell'||wpn==='rocket'||splash)?1.5:1;e.supp=Math.min(1,(e.supp||0)+(dd/e.max*1.4+(wpn==='gun'||wpn==='tower'?.06:.12))*bk);if(bk>1&&canRout(e))e.fear=(e.fear||0)+.04;}
+  if(!e.isB&&isInf(e.s)&&!auraNear(e,'morale')&&!auraNear(e,'rof')){const bk=team!=null&&G.teams[team]&&(DOCT[G.teams[team].fac]||{}).barrage&&(wpn==='shell'||wpn==='rocket'||splash)?1.5:1;e.supp=Math.min(1,(e.supp||0)+(dd/e.max*1.4+(wpn==='gun'||wpn==='tower'?.06:.12))*bk*(G.rubN&&rubAt(e.x,e.y)?.6:1));if(bk>1&&canRout(e))e.fear=(e.fear||0)+.04;}
   if(tc.tag&&tc.m>1.05&&G.t-(e.tagT||-9)>1.6&&(tc.tag==='REAR HIT'||tc.tag==='SIDE HIT'||tc.tag==='HIGH GROUND')){e.tagT=G.t;FXE('txt',[e.x|0,e.y|0,tc.tag,team,e.team]);}
   if(e.hp<=0)kill(e,team,src);}
 function kill(e,team,src){if(e.dead)return;if(e.kind==='garrison'&&e.civ){collapseCiv(e.civ,team);return;}e.dead=true;if(!e.isB&&!e.civ&&e.s&&e.team!=null&&G.teams[e.team]&&G.t-(G.teams[e.team].lostWarn??-99)>7){G.teams[e.team].lostWarn=G.t;log(e.team,'Unit lost.','v6');}if(!e.isB&&e.s&&isInf(e.s)&&!e.s.noAttack&&(e.s.cost||0)<=600&&!e.crew&&Math.random()<.35){let md=null;for(const o of nearby(e.x,e.y,170,DS_N))if(!o.dead&&o.team===e.team&&o.s&&o.s.revive&&Math.hypot(o.x-e.x,o.y-e.y)<170){md=o;break;}if(md){const kd=e.kind,tm=e.team;G.timers.push({t:8,fn:()=>{if(md.dead||G.teams[tm].out)return;const p=nearestPassXY('ground',md.x+rnd(-14,14),md.y+rnd(-14,14));if(!p)return;const n=addUnit(tm,kd,p[0],p[1]);if(n){n.hp=n.max*.3;FXE('txt',[n.x|0,n.y|0,'BACK IN ACTION',tm,-2]);}}});}}if(e.kind==='cleric'){const T=G.teams[e.team];T.mart=G.t+30;T.clr=false;for(const O of G.teams)log(O.id,O.id===e.team||ally(O.id,e.team)?'Our Ayatollah has been martyred! His sacrifice steels our soldiers: no fear and +10% damage for 30 seconds.':`The enemy Ayatollah has fallen - expect his followers to fight harder for a while.`,O.id===e.team?'bad':'w');}if(!e.isB&&!e.civ&&e.s&&isInf(e.s)&&!e.s.noAttack&&!e.inTun&&e.team!=null&&G.teams[e.team]&&SHIA[G.teams[e.team].fac])martyrBanner(e);if(!e.isB&&e.s.dom==='ground'){for(const o of nearby(e.x,e.y,240,MOR_K)){if(o.dead||o.isB||o===e||!canRout(o))continue;if(o.team===e.team)o.fear=(o.fear||0)+(isInf(e.s)?.16:.26);else if(team!=null&&ally(o.team,team))o.fear=Math.max(0,(o.fear||0)-.08);}}if(e.cargo&&e.cargo.length){log(e.team,`The ${e.s.name} was destroyed with ${e.cargo.length} aboard.`,'bad');for(const c of e.cargo){c.dead=true;G.teams[c.team].lost++;stLost(c);}e.cargo=[];}if(e.isB)G.bdirty=true;G.byId.delete(e.id);FXE('die',[e.id,e.x|0,e.y|0,KINDS.indexOf(e.kind),e.isB?1:0,e.team]);G.teams[e.team].lost++;stLost(e);
@@ -490,9 +503,11 @@ function unitBrain(u,dt,o){const s=u.s;if(o&&o.type==='move'&&!o.auto)return fal
     if(u.hp<u.max*RH&&!u.rt&&s.dom!=='air'&&G.t-u.lastHit<3&&u.target&&!(RAI&&!RD)){if(G.teams[u.team].ai&&u.kind!=='harv'&&u.kind!=='dozer'){const tn=G.ents.filter(b=>b.isB&&b.team===u.team&&b.kind==='tunnel'&&!b.dead&&b.built>=1&&dist(b,u)<750).sort((p,q)=>dist(p,u)-dist(q,u))[0];if(tn&&G.teams[u.team].tun.length<TUN_CAP){u.rt=G.t;u.order={type:'enter',target:tn,auto:1};u.target=null;u.path=null;return true;}}const home=G.ents.filter(b=>b.isB&&b.team===u.team&&!b.dead).sort((p,q)=>dist(p,u)-dist(q,u))[0];if(home&&dist(home,u)>260){u.rt=G.t;const a=Math.atan2(home.y-u.y,home.x-u.x),k=RD>1?Math.min(480,dist(home,u)-200):260;setMove(u,u.x+Math.cos(a)*k,u.y+Math.sin(a)*k,'move');u.order.auto=1;if(RAI)aiStat(RAI,'retreat');log(u.team,`${s.name} is badly damaged and pulling back.`);return true;}}
     if(u.rt&&G.t-u.rt>12)u.rt=0;
     const CAI=RAI&&DIFF[RAI.d??1].cover&&o&&o.type==='amove'&&!o.nv&&u.target&&!u.target.dead&&Math.hypot(u.target.x-u.x,u.target.y-u.y)-u.target.r<=rngOf(u)+10;/* already trading fire: a short hop into cover */
-    if(isInf(s)&&(!o||CAI)&&G.t-u.lastHit<1.5&&!coverAt(u.x,u.y)&&G.cover&&G.t-(u.cvT||-9)>(CAI?9:u.st===3?3:6)){u.cvT=G.t;let best=null,bd=1e9;const cx=Math.floor(u.x/CELL),cy=Math.floor(u.y/CELL);for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++){const X=cx+i,Y=cy+j;if(X<0||Y<0||X>=GW||Y>=GH||!G.cover[Y*GW+X])continue;const x=X*CELL+CELL/2,y=Y*CELL+CELL/2;if(!coverAt(x,y))continue;const d=Math.hypot(x-u.x,y-u.y);if(d<bd&&d<(CAI?90:130)){bd=d;best=[x,y];}}
+    // Hard AI infantry holding ground (no order) or trading fire prefer rubble: they hop from light cover into a fallen block nearby
+    const HR=!!(G.rubN&&isInf(s)&&RAI&&DIFF[RAI.d??1].cover&&(!o||CAI)&&!rubAt(u.x,u.y)),RO=HR&&coverAt(u.x,u.y);
+    if(isInf(s)&&(!o||CAI)&&G.t-u.lastHit<1.5&&(!coverAt(u.x,u.y)||HR)&&G.cover&&G.t-(u.cvT||-9)>(CAI?9:u.st===3?3:6)){u.cvT=G.t;let best=null,bd=1e9;const cx=Math.floor(u.x/CELL),cy=Math.floor(u.y/CELL);for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++){const X=cx+i,Y=cy+j;if(X<0||Y<0||X>=GW||Y>=GH||!G.cover[Y*GW+X])continue;const rb=HR&&G.rub[Y*GW+X];if(RO&&!rb)continue;const x=X*CELL+CELL/2,y=Y*CELL+CELL/2;if(!rb&&!coverAt(x,y))continue;const d=Math.hypot(x-u.x,y-u.y)*(rb?.6:1);if(d<bd&&d<(CAI?90:130)){bd=d;best=[x,y];}}
       // Hard AI: the near side of a friendly or neutral building (or wall) counts too - a house corner, a bunker, sandbags
-      if(CAI)for(const b of nearby(u.x,u.y,230,CV_U)){if(!b.isB||b.dead||(b.team>=0&&!ally(b.team,u.team)))continue;const a=Math.atan2(u.y-b.y,u.x-b.x),r=b.size/2+20,x=b.x+Math.cos(a)*r,y=b.y+Math.sin(a)*r;const d=Math.hypot(x-u.x,y-u.y);if(d<bd&&d<90&&passXY('ground',x,y)&&coverAt(x,y)){bd=d;best=[x,y];}}
+      if(CAI&&!RO)for(const b of nearby(u.x,u.y,230,CV_U)){if(!b.isB||b.dead||(b.team>=0&&!ally(b.team,u.team)))continue;const a=Math.atan2(u.y-b.y,u.x-b.x),r=b.size/2+20,x=b.x+Math.cos(a)*r,y=b.y+Math.sin(a)*r;const d=Math.hypot(x-u.x,y-u.y);if(d<bd&&d<90&&passXY('ground',x,y)&&coverAt(x,y)){bd=d;best=[x,y];}}
       if(best&&CAI){const fx=o.x-u.x,fy=o.y-u.y;if((best[0]-u.x)*fx+(best[1]-u.y)*fy<-.3*Math.hypot(fx,fy)*Math.hypot(best[0]-u.x,best[1]-u.y))best=null;/* never fall back to find cover */}
       if(best&&CAI){const res={x:o.x,y:o.y};setMove(u,best[0],best[1],'move');u.order.auto=1;u.cvRes=res;aiStat(RAI,'cover');return true;}
       if(best){setMove(u,best[0],best[1],'move');u.order.auto=1;u.guard={x:best[0],y:best[1]};return true;}}
@@ -1035,7 +1050,7 @@ function civAtXY(x,y){if(!G.civAt)return null;const c=G.civAt.get(Math.floor(y/C
 function canGarrison(u){return !u.isB&&!u.dead&&isInf(u.s)&&!u.s.noAttack&&u.kind!=='hacker'&&u.kind!=='harv'&&u.kind!=='dozer';}
 function civTarget(c){const ALL=new Array(16).fill(true);return c.tg||(c.tg={civ:c,isB:true,kind:'civb',x:c.x,y:c.y,r:16,size:32,team:-1,vs:ALL,s:{name:'City building',armor:'bld'},get dead(){return c.dead||!!c.g;},get hp(){return c.hp;},get max(){return c.max;}});}
 function damageCiv(c,d,team){if(c.dead||d<=0||c.g)return;c.hp-=d;c.hit=G.t;if(c.hp<=0)collapseCiv(c,team);}
-function collapseCiv(c,team){if(c.dead)return;c.dead=true;c.hp=0;if(G.grid[c.k]===3)gridOpen(c.k);if(G.cover)G.cover[c.k]=Math.min(255,(G.cover[c.k]||0)+2);G.civDirty=true;
+function collapseCiv(c,team){if(c.dead)return;c.dead=true;c.hp=0;if(G.grid[c.k]===3)gridOpen(c.k);rubMark(c);if(G.cover)G.cover[c.k]=Math.min(255,(G.cover[c.k]||0)+2);G.civDirty=true;
   const g=c.g;c.g=null;const occ=c.occ;c.occ=[];occ.forEach((u,i)=>{const a=i/Math.max(1,occ.length)*6.283;const p=nearestPassXY('ground',c.x+Math.cos(a)*30,c.y+Math.sin(a)*30)||[c.x,c.y];u.x=p[0];u.y=p[1];u.inTun=false;u.inGar=null;u.mv=G.t;u.order=null;u.target=null;u.hp*=.6;u.fear=(u.fear||0)+.5;G.ents.push(u);G.byId.set(u.id,u);});
   if(g&&!g.dead){g.dead=true;G.byId.delete(g.id);FXE('die',[g.id,g.x|0,g.y|0,KINDS.indexOf(g.kind),1,g.team]);}FXE('civd',[c.i]);if(occ.length)log(occ[0].team,`A building we held collapsed - ${occ.length} soldier${occ.length>1?'s':''} thrown clear.`,'w');}
 function enterGarrison(u,c){if(c.dead){u.order=null;return;}if(c.g&&!ally(c.g.team,u.team)){u.order=null;return;}if(c.occ.length>=c.cap){u.order=null;log(u.team,`That building is full (${c.cap} troops).`,'w');return;}
