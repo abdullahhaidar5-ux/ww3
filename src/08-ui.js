@@ -2,7 +2,7 @@
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse',HINTDEV='mouse';
-function pushLog(m,k){if(!G)return;if(k&&k.length===2&&k[0]==='v'){try{speak(+k[1]);}catch(e){}return;}try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
+function pushLog(m,k){if(!G)return;try{tkFeed(m,k);}catch(e){}if(k&&k.length===2&&k[0]==='v'){try{speak(+k[1]);}catch(e){}return;}try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
   // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
   // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
   const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},7000);el.append(d);while(el.children.length>4)el.firstChild.remove();}
@@ -911,8 +911,8 @@ function applyGfx(){if(typeof QUAL==='undefined')return;const ph=gfxPhone(),base
   QUAL.lock=SET.gfx==='auto'?0:1;qualReset();try{applyQual();}catch(e){}}
 // One game speed for everyone, a little brisker than real time so battles keep moving.
 const GSPD=1.2;
-function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number]];
-  for(const [id,k,cv] of segs){const el=$(id);if(!el)continue;el.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',cv(b.dataset.v)===SET[k]);b.onclick=()=>{SET[k]=cv(b.dataset.v);saveSet();syncSettings();if(k==='gfx')applyGfx();};});}
+function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number],['sTk','tk',Number]];
+  for(const [id,k,cv] of segs){const el=$(id);if(!el)continue;el.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',cv(b.dataset.v)===SET[k]);b.onclick=()=>{SET[k]=cv(b.dataset.v);saveSet();syncSettings();if(k==='gfx')applyGfx();if(k==='tk')tkApply();};});}
   for(const [id,k] of [['sMus','mus'],['sFx','fx'],['sVo','vo'],['sScr','scr'],['sZm','zm']]){const el=$(id);if(!el)continue;el.value=SET[k];const out=$(id+'V');if(out)out.textContent=SET[k]+'%';el.oninput=()=>{SET[k]=+el.value;if(out)out.textContent=SET[k]+'%';saveSet();if(k!=='scr'&&k!=='zm')applyAudio();};}
   syncMouseUI();}
 // Settings > Mouse: a scheme preset (Generals / Alternate mouse setup / Custom) and a choice for each mouse function
@@ -1105,3 +1105,58 @@ if($('sbTargets'))$('sbTargets').onclick=()=>{if(G&&G.sandbox){sandboxTargets();
 if($('sbFight'))$('sbFight').onclick=()=>{if(G&&G.sandbox){const D=G.teams[1];D.fight=!D.fight;updateUI();}};
 if($('sbClear'))$('sbClear').onclick=()=>{if(G&&G.sandbox){for(const e of G.ents)if(e.team===1&&!e.isB&&!e.dead){e.dead=true;G.byId.delete(e.id);FXE('die',[e.id,e.x|0,e.y|0,KINDS.indexOf(e.kind),0,1]);}updateUI();}};
 
+
+/* ---------- live news ticker ----------
+Client-only and read-only: builds headlines from the battle messages this player already gets (pushLog) and from
+team/weather state it can see, then scrolls them across a thin strip at the very top. Never touches the simulation. */
+const TK={q:[],cur:0,G:null,seen:{},out:{},wx:'',loss:[],kill:[],on:true,el:null,txt:null,tm:0};
+const TK_ADJ={US:'American',TR:'Turkish',IL:'Israeli',EU:'European',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
+function tkAdj(code){return TK_ADJ[code]||'';}
+function tkAdjName(name){for(const c in FACTIONS)if(FACTIONS[c].name===name)return tkAdj(c)||name;return name;}
+function tkOwn(){try{return G.teams[ME].F.name;}catch(e){return 'Our';}}
+function tkOwnAdj(){try{return tkAdj(G.teams[ME].F.code||G.teams[ME].fac)||tkOwn();}catch(e){return 'Allied';}}
+function tkApply(){if(SET.tk===undefined)SET.tk=1;TK.on=SET.tk!==0;document.body.classList.toggle('tk',TK.on);if(!TK.on){TK.q.length=0;TK.cur=0;if(TK.el)TK.el.hidden=true;}}
+function tkEl(){if(TK.el)return TK.el;const st=document.createElement('style');st.id='tkCss';st.textContent=`
+#news{position:fixed;z-index:6;left:0;right:0;top:0;height:calc(21px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);display:flex;align-items:stretch;background:rgba(8,10,12,.72);border-bottom:1px solid rgba(255,255,255,.12);pointer-events:none;overflow:hidden;font:600 12.5px/21px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#f1f1ee;letter-spacing:.2px}
+#news[hidden]{display:none}
+#news b{flex:none;position:relative;z-index:1;margin:0;padding:0 9px;background:#c4161c;color:#fff;font-size:11px;letter-spacing:1px;box-shadow:2px 0 6px rgba(0,0,0,.5)}
+#news .tkw{flex:1;position:relative;overflow:hidden;min-width:0}
+#news .tkt{position:absolute;left:0;top:0;white-space:nowrap;will-change:transform;transform:translateX(100vw)}
+@keyframes tkgo{from{transform:translateX(var(--w0))}to{transform:translateX(-100%)}}
+body.tk #log{margin-top:22px}
+@media (max-width:560px){#news{font-size:12px}}`;document.head.append(st);
+  const d=document.createElement('div');d.id='news';d.hidden=true;d.setAttribute('aria-hidden','true');d.innerHTML='<b>BREAKING</b><div class="tkw"><span class="tkt"></span></div>';document.body.append(d);
+  TK.el=d;TK.txt=d.querySelector('.tkt');TK.txt.addEventListener('animationend',()=>{TK.cur=0;TK.txt.style.animation='none';TK.el.hidden=!TK.q.length;tkNext();});return d;}
+// pri: 2 = jumps the queue; the queue holds at most 5 and anything older than 30 s is dropped unread
+function tkHead(text,pri){if(!TK.on||!G||MODE==='replay')return;const now=performance.now();if(TK.seen[text]&&now-TK.seen[text]<25000)return;TK.seen[text]=now;
+  const q=TK.q;q.push({t:text,at:now,p:pri||1});if(pri===2){q.sort((a,b)=>b.p-a.p||a.at-b.at);}
+  while(q.length>5){let i=q.findIndex(h=>h.p<2);if(i<0)i=q.length-1;q.splice(i,1);}tkEl();tkNext();}
+function tkNext(){if(TK.cur||!TK.on)return;const now=performance.now();let h;while((h=TK.q.shift())&&now-h.at>30000);if(!h){if(TK.el)TK.el.hidden=true;return;}
+  tkEl();TK.el.hidden=false;const t=TK.txt;t.textContent=h.t;const w=TK.el.querySelector('.tkw').clientWidth||600;t.style.setProperty('--w0',w+'px');
+  const dur=Math.max(6,(w+t.offsetWidth)/(w<700?95:130));t.style.animation='none';void t.offsetWidth;t.style.animation=`tkgo ${dur}s linear 1 forwards`;TK.cur=1;TK.shown=(TK.shown||0)+1;TK.last=h.t;}
+function tkCount(arr,n,win){const now=performance.now();arr.push(now);while(arr.length&&now-arr[0]>win)arr.shift();if(arr.length>=n){arr.length=0;return true;}return false;}
+function tkReset(){TK.G=G;TK.q.length=0;TK.cur=0;TK.seen={};TK.out={};TK.wx='';TK.loss=[];TK.kill=[];if(TK.txt){TK.txt.style.animation='none';}if(TK.el)TK.el.hidden=true;clearInterval(TK.tm);TK.tm=setInterval(tkPoll,1000);}
+function tkFeed(m,k){if(!G)return;if(TK.G!==G)tkReset();if(SET.tk===undefined||TK.el===null)tkApply();if(!TK.on||!m||(k&&k.length===2&&k[0]==='v'))return;let r;const own=tkOwnAdj();
+  if(m==='Unit lost.'||/^The .+ was destroyed with \d+ aboard/.test(m)){if(tkCount(TK.loss,6,60000))tkHead(`Heavy losses for ${own} forces: six more units lost in a minute`,1);return;}
+  if(m==='Our base is under attack!')return tkHead(`${own} base under enemy assault`,2);
+  if(r=/^Warning: enemy (.+) inbound/.exec(m))return tkHead(`ALERT: enemy ${r[1]} inbound on ${own} positions`,2);
+  if(r=/^Enemy (.+) used (.+)\.$/.exec(m))return tkHead(`${tkAdjName(r[1])} forces unleash ${r[2]}`,2);
+  if(r=/^(.+) launched\.$/.exec(m)&&k==='g')return tkHead(`${own} forces launch ${r[1]}`,2);
+  if(r=/^Weather: ([^.]+)\./.exec(m)){const w=r[1].toLowerCase();return tkHead(w==='sandstorm'?'Sandstorm grounds jets over the battlefield':w==='blizzard'?'Blizzard sweeps the front, visibility near zero':w==='fog'?'Dense fog blankets the battlefield':w==='rain'?'Heavy rain turns the front to mud':`Weather change: ${r[1]}`,1);}
+  if(m==='The weather is clearing.')return tkHead('Skies clearing over the battlefield',1);
+  if(m==='Enemy attack force spotted moving out.')return tkHead(`Enemy attack force on the move toward ${own} lines`,2);
+  if(/^Enemy .+ destroyed\.$/.test(m)){if(tkCount(TK.kill,8,60000))tkHead(`${own} forces press the attack: eight more enemy units destroyed`,1);return;}
+  if(m==='An oil derrick was captured by the enemy!')return tkHead(`Oil derrick falls to the enemy, ${own} income down`,1);
+  if(m==='One of our oil derricks was destroyed!')return tkHead(`${own} oil derrick destroyed`,1);
+  if(/^Oil derrick (repaired and )?captured\.$/.test(m))return tkHead(`${own} forces seize an oil derrick`,1);
+  if(/^Our infantry captured an abandoned enemy /.test(m))return tkHead(`${own} infantry capture an abandoned enemy ${m.replace(/^.*enemy (.+)!$/,'$1')}`,1);
+  if(r=/^Capitulation in (\d+) seconds/.exec(m))return tkHead(`${own} faces capitulation in ${r[1]} seconds`,2);
+  if(r=/^(.+) destroyed\.$/.exec(m)&&k==='w'&&!/^(Unit|Oil)/.test(m))return tkHead(`${own} ${r[1]} destroyed`,1);
+  if(/^Our last tunnel was destroyed/.test(m))return tkHead(`${own} tunnel network destroyed, troops lost underground`,1);}
+function tkPoll(){try{if(!G||!TK.on||TK.G!==G){if(!G||TK.G!==G)clearInterval(TK.tm);return;}
+  for(const T of G.teams){if(T.out&&!TK.out[T.id]){TK.out[T.id]=1;const nm=T.F.name;tkHead(T.id===ME?`${tkOwn()} has capitulated`:`${nm} eliminated${T.whyOut?': '+String(T.whyOut).replace(/\.$/,''):''}`,2);}}
+  const wk=G.wx&&G.wx.k;if(wk&&wk!==TK.wx){TK.wx=wk;}}catch(e){}}
+if(typeof window!=='undefined'){window.__tk=TK;}
+try{tkApply();}catch(e){}
+{const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='News ticker (headlines scrolling across the top)';
+  const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}
