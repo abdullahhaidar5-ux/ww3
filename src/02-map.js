@@ -310,11 +310,48 @@ function gridDist(grid,x,y){const N=GW*GH,D=new Float64Array(N).fill(1e9),ps=v=>
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(!ps(grid[n]))continue;
       if(dx&&dy&&(!ps(grid[cy*GW+nx])||!ps(grid[ny*GW+cx])))continue;const nd=k+(dx&&dy?DG:CELL);if(nd<D[n]){D[n]=nd;push(nd,n);}}}
   return D;}
+// Complexity pass (Abdullah 2026-10-30: "maps need to be bigger and more complex"). Between every pair of
+// neighbouring start positions (Gabriel graph of the bases in play): a ravine on the
+// line halfway between them with three bridges, rock spurs that split each approach into lanes, woods in front of the
+// flank bridges (infantry cover, vehicles slow down) and a village on each flank past the ravine's ends: five ways
+// across. Every feature is mirrored across that halfway line, so both bases see the same ground. Anything that would
+// touch existing water, rock, a city, the map edge or a base is left out (as a mirrored pair). Design coords (3200x2200).
+// A map can opt out with plain:true.
+function addComplexity(M,D){M.woods=[];M.genCities=[];
+  if(D.plain||M.islands.length)return;
+  const S=BASES.map(([x,y])=>[x/WK,y/WK]),N=S.length,u=1/WK; // margins below are world units (bases don't grow with the map)if(N<2)return;
+  const RV=M.rivers.slice(),RG=M.ridges.slice(),CT=(D.cities||[]).slice();
+  const clr=(x,y)=>{let c=Math.min(x-110,y-110,3090-x,2090-y);
+    for(const rv of RV){const P=rv.pts;for(let k=0;k<P.length-1;k++){const a=P[k],b=P[k+1];if(Math.max(Math.min(Math.abs(a[0]-x),Math.abs(b[0]-x)),Math.min(Math.abs(a[1]-y),Math.abs(b[1]-y)))-60>c+700)continue;c=Math.min(c,segDist(x,y,a[0],a[1],b[0],b[1])[0]-rv.hw(.5,a[0])*1.15-30);}}
+    for(const L of M.lakes)c=Math.min(c,Math.hypot((x-L.x)/(L.rx||1),y-L.y)-L.r*1.35);
+    for(const rg of RG){const P=rg.pts,h=rg.hw()*1.3;for(let k=0;k<P.length-1;k++)c=Math.min(c,segDist(x,y,P[k][0],P[k][1],P[k+1][0],P[k+1][1])[0]-h);}
+    for(const K of M.peaks)c=Math.min(c,Math.hypot(x-K.x,y-K.y)-K.r*Math.max(1,K.rx||1)*1.25);
+    for(const C of CT)c=Math.min(c,Math.hypot(x-C[0],y-C[1])-C[2]*1.2);
+    for(const [sx,sy] of S)c=Math.min(c,Math.hypot(x-sx,y-sy)-760*u);
+    return c;};
+  const ok=(pts,m)=>pts.every(([x,y])=>clr(x,y)>m);
+  const vs=(CT[0]&&CT[0][3])||({snow:'russia',green:'europe'})[M.theme]||'mideast';let wi=1;
+  for(let i=0;i<N;i++)for(let j=i+1;j<N;j++){const mx=(S[i][0]+S[j][0])/2,my=(S[i][1]+S[j][1])/2,L=Math.hypot(S[j][0]-S[i][0],S[j][1]-S[i][1]);
+    if(L<1500*u||S.some((q,k)=>k!==i&&k!==j&&Math.hypot(q[0]-mx,q[1]-my)<L*.53))continue;
+    const dx=(S[j][0]-S[i][0])/L,dy=(S[j][1]-S[i][1])/L,nx=-dy,ny=dx,P=(a,b)=>[mx+dx*a*L+nx*b*L,my+dy*a*L+ny*b*L];
+    // ravine with bridges: it lies on the halfway line itself, so it is cut wherever it would meet other ground features
+    // (every piece is still the same for both bases); a long piece gets three bridges, a short one one
+    {let run=[];const flush=()=>{if(run.length*.02>=.12){M.rivers.push({pts:run.filter((q,k)=>k%5===0||k===run.length-1),hw:t=>(66+18*Math.sin(t*9.42))*u,gen:1});const n=run.length,f=n*.02>=.36?[.5,.17,.83]:[.5];for(const u of f){const q=run[Math.round((n-1)*u)];M.bridgeAng.push([q[0],q[1],dx,dy]);}}run=[];};
+     for(let s=-.42;s<=.42+1e-9;s+=.02){const q=P(0,s);if(clr(q[0],q[1])>230*u)run.push(q);else flush();}flush();}
+    // rock spurs either side of the centre lane, on both approaches
+    for(const b of [-.14,.14])for(const a1 of [.32,.26,.21,.17]){const sp=[];for(const sg of [-1,1]){const seg=[];for(let a=.07;a<=a1+1e-9;a+=.03)seg.push(P(sg*a,b));sp.push(seg);}
+      if(!ok(sp[0].concat(sp[1]),40*u))continue;for(const seg of sp)M.ridges.push({pts:[seg[0],seg[seg.length-1]],hw:()=>90*u,gen:1});break;}
+    // woods in front of the flank bridges
+    for(const b of [-.27,.27]){const r=Math.max(140*u,Math.min(240*u,.075*L)),A=P(-.2,b),B=P(.2,b);if(clr(A[0],A[1])<r*.6||clr(B[0],B[1])<r*.6)continue;
+      M.woods.push({x:A[0],y:A[1],r,seed:wi,ax:dx,ay:dy,m:0},{x:B[0],y:B[1],r,seed:wi,ax:dx,ay:dy,m:1});wi++;}
+    // a village on each flank, past the ravine's ends
+    for(const b of [-.57,.57]){const q=P(0,b);if(clr(q[0],q[1])>200*u)M.genCities.push([q[0],q[1],70,vs]);}}}
 function mkMap(seed,mk){
   mk=MAPS[mk]?mk:'strait';const D=MAPS[mk];
   srand=mulberry(seed);const R=srand;
   const M={seed,key:mk,name:D.name,rough:D.rough||1,theme:D.theme||'desert',rivers:[],lakes:[],islands:[],ridges:[],peaks:[],bridgeAng:[],bridges:[]};
   {const sw=MAPW,sh=MAPH;MAPW=3200;MAPH=2200;try{D.water(M,R);}finally{MAPW=sw;MAPH=sh;}}
+  addComplexity(M,D);
   // the map is designed at 3200 x 2200: scale every feature to the current world size
   if(WK!==1){const k=WK,P=p=>p.map(([x,y])=>[x*k,y*k]);
     for(const rv of M.rivers){rv.pts=P(rv.pts);const h0=rv.hw;rv.hw=(t,x)=>h0(t,x/k)*k;}
@@ -362,7 +399,8 @@ function mkMap(seed,mk){
   // Cities: blocks of buildings on a street grid. Building lots are impassable (units use the streets) and give
   // infantry cover; bases, supply and oil keep clear of them.
   M.cities=[];M.cityBlds=[];
-  if(D.cities){const CR=mulberry((seed|0)*13+7);for(const [cxd,cyd,rd,style] of D.cities){const cx=cxd*WK,cy=cyd*WK,r=rd*Math.pow(WK,.78)*1.3;M.cities.push({x:cx,y:cy,r,style});
+  const CITIES=(D.cities||[]).concat(M.genCities||[]);
+  if(CITIES.length){const CR=mulberry((seed|0)*13+7);for(const [cxd,cyd,rd,style] of CITIES){const cx=cxd*WK,cy=cyd*WK,r=rd*Math.pow(WK,.78)*1.3;M.cities.push({x:cx,y:cy,r,style});
     const i0=Math.floor((cx-r)/CELL),i1=Math.ceil((cx+r)/CELL),j0=Math.floor((cy-r)/CELL),j1=Math.ceil((cy+r)/CELL),sx=Math.floor(cx/CELL),sy=Math.floor(cy/CELL);
     for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){if(i<1||j<1||i>=GW-1||j>=GH-1)continue;const x=i*CELL+CELL/2,y=j*CELL+CELL/2,d=Math.hypot(x-cx,y-cy);if(d>r)continue;
       if(((i-sx)%4+4)%4===0||((j-sy)%4+4)%4===0)continue;if(grid[j*GW+i]!==0)continue;if(BASES.some(([bx,by])=>Math.hypot(bx-x,by-y)<400))continue;
@@ -604,6 +642,8 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
   // forests
   const trees=[];
   for(let i=0;i<70*AR;i++){const cx=srnd(80,MAPW-80),cy=srnd(80,MAPH-80);if(!clear(cx,cy,40)||roadD(cx,cy)<150)continue;const n=10+srand()*26|0;for(let j=0;j<n;j++){const x=cx+srnd(-150,150),y=cy+srnd(-100,100);if(clear(x,y)&&roadD(x,y)>70)trees.push([x,y]);}}
+  // woods from the complexity pass: each one is the mirror image of its partner across the line between two bases
+  for(const w of (M.woods||[])){const R2=mulberry(w.seed*977+(M.seed|0)),X=w.x*WK,Y=w.y*WK,r=w.r*WK;for(let q=0;q<34;q++){let ox=(R2()*2-1)*r,oy=(R2()*2-1)*r;if(ox*ox+oy*oy>r*r)continue;if(w.m){const p=ox*w.ax+oy*w.ay;ox-=2*p*w.ax;oy-=2*p*w.ay;}const x=X+ox,y=Y+oy;if(clear(x,y)&&roadD(x,y)>45)trees.push([x,y]);}}
   {const tp=trees.map(([x,y])=>[x,y,srnd(.75,1.35),srnd(0,6.28)]);if(sim)G.treePos=tp;}
   for(let i=0;i<90*TA;i++){const x=srnd(0,MAPW),y=srnd(0,MAPH);if(!clear(x,y)||roadD(x,y)<40)continue;const m=1+srand()*3|0;
     for(let j=0;j<m;j++){const cx=x+srnd(-18,18),cy=y+srnd(-12,12),r=srnd(7,20),pts=[],k=7+srand()*4|0;for(let q=0;q<k;q++){const a=q/k*6.28,rr=r*srnd(.7,1.1);pts.push([cx+Math.cos(a)*rr,cy+Math.sin(a)*rr*.75]);}
