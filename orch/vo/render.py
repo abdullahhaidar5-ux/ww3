@@ -363,6 +363,6 @@ def write_map(updates):
 
 if __name__ == '__main__':
     P = phrases()
-    n = int(os.environ.get('VO_TAKES', '3'))
-    for fac in sys.argv[1:]:
+    for fac in sys.argv[1:]:   # 3 takes per line for the Shia factions (played most), 2 for the rest (CPU time)
+        n = int(os.environ.get('VO_TAKES', '3' if fac in ('RS', 'DW', 'IR') else '2'))
         write_map({fac: nation(fac, P, n_takes=n)})
