@@ -5288,10 +5288,12 @@ const MAPS={
       for(const a of [-1.1,2.04,.47,-2.67]){const x=1600+Math.cos(a)*1250,y=1100+Math.sin(a)*800;M.lakes.push({x,y,r:85,rx:1.2,wob:q=>.15*Math.sin(q*3+x)});}}},
   gulf:{name:'Gulf Coast',min:2,max:4,sym:'mirrorX',tag:'desert shore · naval-heavy',desc:'Bases on a desert shore above the open sea. Naval power matters.',
     slots:[[450,330],[MAPW-450,330],[520,1250],[MAPW-520,1250]],
-    water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,MAPH+60-90*Math.cos((x-1600)/1600*Math.PI*.5)*0+40*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:(t,x)=>470+120*Math.exp(-Math.pow((x-1600)/380,2))});}},
-  plateau:{name:'Sinai Plateau',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war.',rough:1.6,
+    water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,MAPH+60-90*Math.cos((x-1600)/1600*Math.PI*.5)*0+40*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:(t,x)=>470+120*Math.exp(-Math.pow((x-1600)/380,2))});
+      // 2026-10-30: coastal hills to fight around and an island offshore (mirrored left-right like the rest)
+      M.peaks.push({x:1050,y:880,r:65,rx:1.6,rot:.5});mirrorMap(M,'x');M.peaks.push({x:1600,y:700,r:85,rx:1.9,rot:0});M.islands.push({x:1600,y:2020,r:80,rx:2.2,rot:0,wob:a=>.06*Math.cos(2*a)});}},
+  plateau:{name:'Sinai Plateau',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1280,1100+Math.sin(a)*820]);return s;})(),
-    water(){}},
+    water(M){M.peaks.push({x:1020,y:720,r:75,rx:1.6,rot:.45},{x:1230,y:470,r:60,rx:1.4,rot:-.2},{x:880,y:1480,r:70,rx:1.4,rot:-.5});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:105,rx:1.5,rot:0});}},
   hormuz:{home:['IR','AE'],name:'Strait of Hormuz',min:2,max:8,sym:'none',tag:'sea strait · naval-heavy',desc:'Iran faces the Arabian shore across the world\'s busiest oil chokepoint. Navies rule the strait; armies must go the long way round.',
     slots:[[1650,270],[1750,1800],[450,330],[2750,1950],[2800,330],[480,1950],[1050,270],[1100,1830]],
     water(M,R){const ph=R()*6.28;const P=[[780,1280],[1150,1010],[1500,820],[1800,760],[2100,840],[2450,1080],[2800,1350],[3500,1720]];const pts=[];for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1],n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/40);for(let k=0;k<n;k++){const t=k/n;pts.push([a[0]+(b[0]-a[0])*t+12*Math.sin((a[1]+t*(b[1]-a[1]))*.02+ph),a[1]+(b[1]-a[1])*t+14*Math.sin((a[0]+t*(b[0]-a[0]))*.013+ph)]);}}pts.push(P[P.length-1]);
@@ -5337,7 +5339,7 @@ const MAPS={
       const ridge=(y0,y1,x0)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([x0+70*Math.sin(y*.004+ph),y]);return pts;};for(const [a,b] of [[-200,560],[820,1450],[1720,MAPH+200]])M.ridges.push({pts:ridge(a,b,1250),hw:()=>100});
       M.ridges.push({pts:ridge(1250,MAPH+200,2350),hw:()=>85});M.peaks.push({x:2350,y:500,r:90,rx:1.3,rot:.5});}},
   volga:{home:['RU'],name:'Volga Winter',min:2,max:8,sym:'none',theme:'snow',tag:'great river · city',desc:'The frozen Volga in winter: a great river city on the east bank, villages in the snow and three bridges to fight over.',
-    slots:[[400,1100],[2800,1100],[600,300],[2600,1900],[600,1900],[2600,300],[300,720],[2900,1500]],
+    slots:[[400,1100],[2800,1100],[600,300],[2600,1900],[600,1900],[2600,300],[1000,650],[2200,1550]],
     cities:[[2000,1080,200,'russia'],[760,560,90,'russia'],[2560,1700,90,'russia'],[880,1600,80,'russia']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1560+190*Math.sin(y*.0026+ph)+40*Math.sin(y*.009+ph*2),y]);M.rivers.push({pts,hw:()=>140});M.bridgeAt=[[0,.22],[0,.5],[0,.8]];M.bridgeFrac=true;}},
   heartland:{home:['US'],name:'American Heartland',min:2,max:8,sym:'none',theme:'green',tag:'farmland · river confluence',desc:'Farm country where two great rivers meet: a river city at the confluence, small towns and long bridges.',
@@ -5365,7 +5367,7 @@ const MAPS={
       M.rivers.push({pts,hw:()=>52});M.bridgeAt=[[0,.2],[0,.42],[0,.6],[0,.82]];M.bridgeFrac=true;
       M.peaks.push({x:1600,y:500,r:80,rx:1.6,rot:.2},{x:1600,y:1700,r:80,rx:1.6,rot:.2});}},
   dnipro:{name:'Dnipro Front',min:2,max:8,sym:'none',theme:'green',home:['UA'],tag:'wide river · city · islands',desc:'The wide Dnipro splits Ukraine: a great city on both banks, river islands and long bridges under fire.',
-    slots:[[380,1100],[2820,1100],[500,300],[2700,1900],[500,1900],[2700,300],[300,700],[2900,1500]],
+    slots:[[380,1100],[2820,1100],[500,300],[2700,1900],[500,1900],[2700,300],[1000,650],[2200,1550]],
     cities:[[1300,950,190,'russia'],[1980,1050,170,'russia'],[700,1600,80,'europe'],[2600,600,80,'europe']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1640+150*Math.sin(y*.0028+ph),y]);M.rivers.push({pts,hw:()=>150});M.bridgeAt=[[0,.25],[0,.48],[0,.78]];M.bridgeFrac=true;
       M.islands.push({x:1650,y:620,r:60,rx:2,rot:1.4,wob:q=>.1*Math.sin(q*3)},{x:1640,y:1600,r:50,rx:1.8,rot:1.5,wob:q=>.1*Math.sin(q*4)});}},
@@ -5614,6 +5616,10 @@ function mkMap(seed,mk){
    // own expansions: one supply field and one derrick per base, same route length for everyone, safely on its side
    for(let i=0;i<NB;i++)addF(best(p=>Math.abs(p.d[i]-.27*E),(p,rl)=>mine(p,i,.12*E*rl)&&okF(p,rl,300*Math.min(1,WK))));
    for(let i=0;i<NB;i++)addO(best(p=>Math.abs(p.d[i]-.36*E),(p,rl)=>mine(p,i,.08*E*rl)&&okO(p,rl,300*Math.min(1,WK),240)));
+   // a base with more rivals close by (the middle of a row, a crossroads valley) has to fight on more fronts: it gets
+   // one more supply field of its own, close in, for each extra rival, so no start position is starved by its neighbours
+   if(NB>2){const nb=BASES.map((b,i)=>BASES.filter((q,j)=>j!==i&&DB[i][cellOf(q[0],q[1])]<=1.35*eD[i]).length),m0=Math.min(...nb);
+     for(let i=0;i<NB;i++)for(let x=0;x<nb[i]-m0;x++)addF(best(p=>Math.abs(p.d[i]-.2*E),(p,rl)=>mine(p,i,.1*E*rl)&&okF(p,rl,260*Math.min(1,WK))));}
    // contested supply: one "unit" between every pair of neighbours - a spot equally far from both on the shortest
    // route or, where that ground is water (a river between them), a pair of spots, one on each side, each the other's
    // mirror in route length. A duel gets the centre and the two best flanking routes.

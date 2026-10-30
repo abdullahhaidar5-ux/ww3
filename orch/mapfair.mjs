@@ -125,7 +125,7 @@ function report(res) {
     for (const r of st) {
       const f = r.b.map(x => x.f), o = r.b.map(x => x.o), e = r.b.map(x => x.eD), c = r.b.map(x => x.dC);
       const sp = a => Math.max(...a) - Math.min(...a), rt = a => Math.max(...a) / Math.max(1, Math.min(...a));
-      const flag = (sp(f) > 1.01 || sp(o) > 1.01) ? ' <<' : '';
+      const flag = sp(o) > 1.01 ? ' <<' : ''; // supply fields may differ on purpose: bases with more rivals close by get extra
       if (flag) bad++;
       console.log(`  ${r.k.padEnd(14)} ${String(r.n).padStart(2)}  ${r.W}x${r.H} ${r.ms}ms  ${String(r.F).padStart(3)} ${String(r.O).padStart(3)} | ${f.map(v => v.toFixed(1)).join(' ')} | ${o.map(v => v.toFixed(1)).join(' ')} | ${Math.min(...e)}-${Math.max(...e)} | ${Math.min(...c)}-${Math.max(...c)}${flag}`);
     }
@@ -149,8 +149,22 @@ function report(res) {
     }
     const g = L.length - err, ws = w.map(v => v / Math.max(1, g)), ss = sc.map(v => v / Math.max(1, g));
     const dev = Math.max(...ss.map(v => v * n)); // best position's score share relative to fair
-    rows.push({ key, n, g, dev });
-    console.log(`  ${key.split('|')[0].padEnd(14)} ${String(n).padStart(2)} ${String(g).padStart(5)} ${String(kills).padStart(6)}  ${ws.map(v => (100 * v).toFixed(0).padStart(3)).join(' ').padEnd(46)} ${ss.map(v => (100 * v).toFixed(0).padStart(3)).join(' ').padEnd(27)} ${(len / Math.max(1, g)).toFixed(1)}${err ? ' ERR ' + err : ''}${dev > 1.6 ? ' <<' : ''}`);
+    const chi = w.reduce((a, v) => a + (v - g / n) ** 2 / (g / n), 0), pv = chiP(chi, n - 1); // all positions equally likely to win?
+    const hot = pv < .01 && Math.max(...ws) > 1.5 / n;
+    rows.push({ key, n, g, dev, pv, hot, ws });
+    console.log(`  ${key.split('|')[0].padEnd(14)} ${String(n).padStart(2)} ${String(g).padStart(5)} ${String(kills).padStart(6)}  ${ws.map(v => (100 * v).toFixed(0).padStart(3)).join(' ').padEnd(46)} ${ss.map(v => (100 * v).toFixed(0).padStart(3)).join(' ').padEnd(27)} ${(len / Math.max(1, g)).toFixed(1)} p=${pv.toFixed(3)}${err ? ' ERR ' + err : ''}${hot ? ' <<' : ''}`);
   }
-  console.log(`BATTLES ${bt.length} games; layouts where one position's mean score share > 1.6x fair: ${rows.filter(r => r.dev > 1.6).map(r => r.key).join(', ') || 'none'}`);
+  const hot = rows.filter(r => r.hot);
+  console.log(`BATTLES ${bt.length} games, ${rows.length} layouts; a start position wins significantly more than its share (p<0.01, >1.5x fair): ${hot.map(r => r.key).join(', ') || 'none'}`);
+  // positions 2k and 2k+1 are each other's mirror image on every symmetric map: pooled, they show any bias of the AI itself
+  const pair = [0, 0]; for (const r of bt) if (r.winner >= 0 && r.winner < 2) pair[r.winner]++;
+  console.log(`pooled duel seat: position 1 won ${pair[0]}, position 2 won ${pair[1]} (of games decided between the first two seats)`);
+}
+// p-value of a chi-square statistic with k degrees of freedom (regularized upper incomplete gamma)
+function chiP(x, k) {
+  const a = k / 2, z = x / 2; if (z <= 0) return 1;
+  const lg = v => { const c = [76.18009172947146, -86.50532032941677, 24.01409824083091, -1.231739572450155, .1208650973866179e-2, -.5395239384953e-5]; let y = v, t = v + 5.5; t -= (v + .5) * Math.log(t); let ser = 1.000000000190015; for (const q of c) ser += q / ++y; return -t + Math.log(2.5066282746310005 * ser / v); };
+  if (z < a + 1) { let sum = 1 / a, d = sum, ap = a; for (let i = 0; i < 200; i++) { d *= z / ++ap; sum += d; } return 1 - sum * Math.exp(-z + a * Math.log(z) - lg(a)); }
+  let b = z + 1 - a, c = 1e30, d = 1 / b, h = d; for (let i = 1; i < 200; i++) { const an = -i * (i - a); b += 2; d = an * d + b; d = 1 / d; c = b + an / c; h *= d * c; }
+  return h * Math.exp(-z + a * Math.log(z) - lg(a));
 }
