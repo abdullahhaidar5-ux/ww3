@@ -7893,7 +7893,7 @@ function syncScene(dt){const live=new Set();
       const moving=G.t-(e.mv||-9)<.15||(e.mvC>0);
       {const f=e.hp/e.max;if(f<.5&&!['inf','at','hacker','hero'].includes(c)&&Math.random()<dt*(f<.25?7:2.5)){const hh=gh+(s.dom==='air'?0:8);part({x:e.x+rnd(-3,3),y:e.y+rnd(-3,3),h:hh+4,rise:rnd(34,48),c:f<.25?C_DARK:C_SMOKE,c2:[.46,.44,.41],ck:rnd(.25,.4),s:rnd(3,5),g:6,d:rnd(1.6,2.4),a:.38});if(f<.25&&Math.random()<.5)part({x:e.x+rnd(-3,3),y:e.y+rnd(-3,3),h:hh,rise:14,add:true,c:C_FIRE,s:rnd(3,5),g:-3,d:rnd(.2,.4)});}}
       if(o.userData.mixers)playAnim(o,c==='hero'?(moving?'run':(G.t-(e.lastFire||-9)<1?'shoot':'aim')):'stand',dt);
-      if(P.body&&(o.userData.walker||['inf','at','hero','hacker'].includes(c))){if(o.userData.walker){const near=inView(e.x,e.y,.05);o.userData.wa=Math.max(0,Math.min(1,(o.userData.wa||0)+(moving?dt*5:-dt*5)));const wa=o.userData.wa;{const far=cam.dist>480;if(o.userData.farS!==far){o.userData.farS=far;o.traverse(q=>{if(q.userData&&q.userData.gear===2)q.visible=!far;});}}let k=0;for(const m of P.body.children){const ph=G.t*9.5*(e.s.spd/50)+e.id+k*1.9;m.position.y=wa*Math.abs(Math.cos(ph))*.45;m.rotation.x=0;m.rotation.z=-.06*wa;if(near&&cam.dist<760&&m.userData.legs&&(wa>0||m.userData.wl))walkPose(m,ph,wa);m.userData.wl=wa>0;k++;}}else if(o.userData.cleric){P.body.position.y=moving?Math.abs(Math.sin(G.t*5+e.id))*.22:0;P.body.rotation.x=moving?Math.sin(G.t*5+e.id)*.03:0;}else P.body.position.y=moving&&!o.userData.mixers?Math.abs(Math.sin(G.t*12+e.id))*1.2:0;}
+      if(P.body&&(o.userData.walker||['inf','at','hero','hacker'].includes(c))){if(o.userData.walker){const near=inView(e.x,e.y,.05);o.userData.wa=Math.max(0,Math.min(1,(o.userData.wa||0)+(moving?dt*5:-dt*5)));const wa=o.userData.wa;{const far=cam.dist>480;if(o.userData.farS!==far){o.userData.farS=far;o.traverse(q=>{if(q.userData&&q.userData.gear===2)q.visible=!far;});}}{const ud=o.userData,px=o.position.x,pz=o.position.z;if(ud.gpx!==undefined&&dt>0)ud.gv+=(Math.min(150,Math.hypot(px-ud.gpx,pz-ud.gpz)/dt)-ud.gv)*Math.min(1,dt*8);else ud.gv=0;ud.gpx=px;ud.gpz=pz;}const gv=Math.max(o.userData.gv,moving?8:0),run=Math.max(0,Math.min(1,(gv-12)/30)),ga=.38+.1*run,gs=.5-.29*run,pose=near&&cam.dist<760,br=!moving&&pose&&cam.dist<480;let k=0;for(const m of P.body.children){const W=m.userData.legs,ud=m.userData;if(ud.wph===undefined)ud.wph=(e.id*.618+k*.31)%1;if(wa>0&&W)ud.wph=(ud.wph+dt*gs*gv/Math.max(1,gSweep(W,ga,run)))%1;m.position.y=0;m.rotation.x=0;m.rotation.z=0;const b=br?.018*Math.sin(G.t*1.7+e.id+k*2.1):0;if(pose&&W&&(wa>0||ud.wl||b))m.position.y=walkPose(m,ud.wph,wa,ga,gs,run,b);ud.wl=wa>0||b!==0;k++;}}else if(o.userData.cleric){P.body.position.y=moving?Math.abs(Math.sin(G.t*5+e.id))*.22:0;P.body.rotation.x=moving?Math.sin(G.t*5+e.id)*.03:0;}else P.body.position.y=moving&&!o.userData.mixers?Math.abs(Math.sin(G.t*12+e.id))*1.2:0;}
       if(c==='hero'&&P.body&&!o.userData.model){const hid=e.hid;P.body.material=hid?(MAT.stealth||(MAT.stealth=new THREE.MeshStandardMaterial({vertexColors:true,transparent:true,opacity:.35}))):MAT.std;}
       if(c==='jet'&&!e.landed){const ud=o.userData;o.rotation.order='YZX';const tr=angDiff(ud.pjy??e.va,e.va)/Math.max(dt,1e-3);ud.pjy=e.va;ud.bk=(ud.bk||0)+((Math.max(-1.05,Math.min(1.05,-tr*.55)))-(ud.bk||0))*Math.min(1,dt*3);
         const vy=(gh-(ud.pgh??gh))/Math.max(dt,1e-3);ud.pgh=gh;ud.pc=(ud.pc||0)+((Math.max(-.6,Math.min(.6,Math.atan2(vy,Math.max(60,e.s.spd)))))-(ud.pc||0))*Math.min(1,dt*3);o.rotation.x=ud.bk;o.rotation.z=ud.pc;
@@ -10855,6 +10855,8 @@ function soldierGear(m,fac,kind){const inner=m.userData.inner;if(!inner)return;i
 
 // Kit for the realistic soldiers: they already wear their own helmet, vest and boots, so only the rifle is added (merged into
 // the chest bone like the old kit) and the arms are posed holding it. Two-bone arm solve toward grip points, then aim each bone.
+// Offsets are in the soldier's own frame (faces +z, its left is +x), turned into the world by its rotation: it sits in its
+// unit's yaw group (turned 90 degrees), so raw world axes posed the rifle and arms sideways, hands out to one side.
 function solAim(bone,child,tgt){const bp=new THREE.Vector3().setFromMatrixPosition(bone.matrixWorld),cp=new THREE.Vector3().setFromMatrixPosition(child.matrixWorld),cur=cp.sub(bp).normalize(),want=tgt.clone().sub(bp).normalize();
   const dq=new THREE.Quaternion().setFromUnitVectors(cur,want),bq=new THREE.Quaternion();bone.getWorldQuaternion(bq);const pq=new THREE.Quaternion();bone.parent.getWorldQuaternion(pq);
   bone.quaternion.copy(pq.invert().multiply(dq).multiply(bq));bone.updateMatrixWorld(true);}
@@ -10867,18 +10869,18 @@ function solRifle(k){const g=new THREE.Group(),bl=gearMat('#1c1d1c'),wd=gearMat(
   const bx=(w,h,l,x,y,z,m,rx)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w*k,h*k,l*k),m);q.position.set(x*k,y*k,z*k);if(rx)q.rotation.x=rx;g.add(q);return q;};
   bx(.34,.5,2.4,0,0,.9,bl);bx(.26,.62,1.4,0,-.12,-1.0,wd,-.12);bx(.2,.7,.34,0,-.55,1.0,bl,.12);bx(.3,.34,1.3,0,.0,2.6,wd);
   const br=new THREE.Mesh(new THREE.CylinderGeometry(.09*k,.09*k,2.0*k,6),bl);br.rotation.x=Math.PI/2;br.position.set(0,.05*k,4.2*k);g.add(br);bx(.12,.2,.14,0,.36,3.4,bl);return g;}
-function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)return;inner.updateMatrixWorld(true);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});if(!B.head||!B.chest||!B.hips)return;
+function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)return;m.updateWorldMatrix(true,true);const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const V=(x,y,z)=>new THREE.Vector3(x,y,z).applyQuaternion(mq);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});if(!B.head||!B.chest||!B.hips)return;
   const hp=new THREE.Vector3().setFromMatrixPosition(B.head.matrixWorld),hv=new THREE.Vector3().setFromMatrixPosition(B.hips.matrixWorld),k=Math.max(.5,(hp.y-hv.y)/5.2);
   const cp=new THREE.Vector3().setFromMatrixPosition(B.chest.matrixWorld),fw=new THREE.Vector3(0,0,1);
   // rifle held low-ready across the chest: grip hand back by the body, support hand out on the handguard
-  const base=cp.clone().add(new THREE.Vector3(-.15*k,-.95*k,0));
-  const Tr=base.clone().add(new THREE.Vector3(-.35*k,-.05*k,1.9*k)),Tl=base.clone().add(new THREE.Vector3(.35*k,.12*k,4.3*k));
+  const base=cp.clone().add(V(-.15*k,-.95*k,0));
+  const Tr=base.clone().add(V(-.35*k,-.05*k,1.9*k)),Tl=base.clone().add(V(.35*k,.12*k,4.3*k));
   // character's left is +x (rig faces +z); pull elbows down and a little out
-  solArm(B,'R',Tr,new THREE.Vector3(-.5,-1,-.2));solArm(B,'L',Tl,new THREE.Vector3(.6,-1,-.1));
+  solArm(B,'R',Tr,V(-.5,-1,-.2));solArm(B,'L',Tl,V(.6,-1,-.1));
   if(kind==='hero')return;
-  const attach=(bone,obj,wp)=>{const bq=new THREE.Quaternion(),ws=new THREE.Vector3();bone.getWorldQuaternion(bq);bone.getWorldScale(ws);const p=wp.clone();bone.worldToLocal(p);obj.position.copy(p);obj.quaternion.copy(bq.invert());obj.scale.set(1/ws.x,1/ws.y,1/ws.z);obj.userData.gear=1;bone.add(obj);};
-  const r=solRifle(k);attach(B.chest,r,base.clone().add(new THREE.Vector3(-.05*k,.0,.2*k)));
-  if(fac==='DW'){const g=new THREE.Group(),d=new THREE.Mesh(new THREE.SphereGeometry(.98*k*.82,12,8,0,Math.PI*2,0,Math.PI*.58),gearMat('#d9d0b8'));g.add(d);const t=new THREE.Mesh(new THREE.BoxGeometry(.5*k,1.1*k,1.0*k),gearMat('#c9bfa6'));t.position.set(-.55*k,-.55*k,0);g.add(t);const band=new THREE.Mesh(new THREE.TorusGeometry(.8*k,.09*k,6,14),gearMat('#8a2a24'));band.rotation.x=Math.PI/2;band.position.y=.14*k;g.add(band);attach(B.head,g,hp.clone().add(new THREE.Vector3(0,.55*k,0)));}
+  const attach=(bone,obj,wp)=>{const bq=new THREE.Quaternion(),ws=new THREE.Vector3();bone.getWorldQuaternion(bq);bone.getWorldScale(ws);const p=wp.clone();bone.worldToLocal(p);obj.position.copy(p);obj.quaternion.copy(bq.invert().multiply(mq));obj.scale.set(1/ws.x,1/ws.y,1/ws.z);obj.userData.gear=1;bone.add(obj);};
+  const r=solRifle(k);attach(B.chest,r,base.clone().add(V(-.05*k,.0,.2*k)));
+  if(fac==='DW'){const g=new THREE.Group(),d=new THREE.Mesh(new THREE.SphereGeometry(.98*k*.82,12,8,0,Math.PI*2,0,Math.PI*.58),gearMat('#d9d0b8'));g.add(d);const t=new THREE.Mesh(new THREE.BoxGeometry(.5*k,1.1*k,1.0*k),gearMat('#c9bfa6'));t.position.set(-.55*k,-.55*k,0);g.add(t);const band=new THREE.Mesh(new THREE.TorusGeometry(.8*k,.09*k,6,14),gearMat('#8a2a24'));band.rotation.x=Math.PI/2;band.position.y=.14*k;g.add(band);attach(B.head,g,hp.clone().add(V(0,.55*k,0)));}
   mergeGear(B,key+'|'+fac+'|'+kind+'|'+k.toFixed(3));}
 // Massive columns: every soldier was 7 skinned meshes (rifle, magazine and uniform parts, one per material colour) plus
 // 3 kit meshes on its bones - 10 draw calls per soldier in every pass (picture + shadow), ~30 per squad. They are merged
@@ -10912,7 +10914,7 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
-  if(!B.uplegL||!B.uplegR||!B.legL||!B.legR)return null;
+  if(!B.uplegL||!B.uplegR||!B.legL||!B.legR||!B.footL)return null;
   // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
   // degrees) before that group's world matrices were ever updated, so the hips used to be read without the turn while
   // the bones' parent rotations included it: the swing axis came out 90 degrees off and the legs swung sideways.
@@ -10920,13 +10922,53 @@ function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B
   let [pl,pr]=hip();
   // the rifle-ready stance has the hips turned ~20 degrees; square them to the direction of travel (the model faces +z)
   {const a=Math.atan2(pr.z-pl.z,pr.x-pl.x),tg=Math.abs(a)>Math.PI/2?Math.sign(a)*Math.PI:0,th=a-tg;if(Math.abs(th)>.02){inner.rotation.y+=th;[pl,pr]=hip();}}
-  const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const lat=pr.clone().sub(pl).normalize().applyQuaternion(mq);const q=new THREE.Quaternion();
-  const mk=(b,s)=>{if(!b)return null;b.parent.getWorldQuaternion(q);const ax=lat.clone().applyQuaternion(q.clone().invert()).normalize();return{b,q0:b.quaternion.clone(),ax,s};};
-  return[mk(B.uplegL,1),mk(B.uplegR,-1),mk(B.legL,1),mk(B.legR,-1),mk(B.spine,0)].filter(Boolean);}
-const WQ=new THREE.Quaternion();
-function walkPose(m,ph,amt){const L=m.userData.legs;if(!L)return;const sw=Math.sin(ph);for(const j of L){let a=0;const n=j.b.name;
-    if(n==='uplegL')a=sw*.55*amt;else if(n==='uplegR')a=-sw*.55*amt;else if(n==='legL')a=-Math.max(0,Math.cos(ph))*.9*amt;else if(n==='legR')a=-Math.max(0,-Math.cos(ph))*.9*amt;else if(n==='spine')a=.08*amt;
-    WQ.setFromAxisAngle(j.ax,a*(m.userData.wsign||1));j.b.quaternion.copy(WQ).multiply(j.q0);}}
+  const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const lat=pr.clone().sub(pl).normalize().applyQuaternion(mq),up=new THREE.Vector3(0,1,0).applyQuaternion(mq);const q=new THREE.Quaternion();
+  // each joint keeps its rest rotation and two axes in its parent's frame: lat (the soldier's left-right line: pitch, legs
+  // swing forward/back about it) and up (yaw)
+  const mk=b=>{if(!b)return null;b.parent.getWorldQuaternion(q);q.invert();return{b,q0:b.quaternion.clone(),ax:lat.clone().applyQuaternion(q).normalize(),up:up.clone().applyQuaternion(q).normalize()};};
+  const W={uL:mk(B.uplegL),uR:mk(B.uplegR),lL:mk(B.legL),lR:mk(B.legR),hip:mk(B.hips),sp:mk(B.spine),ch:mk(B.chest),fL:mk(B.footL),fR:mk(B.footR)};
+  // the rest leg in the soldier's side view (z forward, y up): hip->knee and knee->ankle, so the hip height that keeps a
+  // planted foot on the ground can be worked out exactly for any thigh angle and knee bend (walkPose)
+  const lp=b=>m.worldToLocal(new THREE.Vector3().setFromMatrixPosition(b.matrixWorld)),h=lp(B.uplegL),kn=lp(B.legL),an=lp(B.footL);
+  W.hz=kn.z-h.z;W.hy=kn.y-h.y;W.kz=an.z-kn.z;W.ky=an.y-kn.y;W.D0=-(W.hy+W.ky);
+  return W;}
+// Gait. The soldier's legs, hips and upper body follow one phase u (0..1 per two steps, left foot lands at 0, right at .5).
+// A planted foot sweeps back in a straight line at exactly the ground speed (no sliding); the free foot swings forward
+// with the knee bent. Speed sets everything (see gaitStep in 06-view): slow = walk, the usual infantry speed = a jog with a
+// short airborne moment, forward lean and a longer stride. The rifle stays in both hands at low-ready; it only bobs
+// up/down and fore-aft with the steps (chest pitch) - nothing in the upper body sways sideways, and the body never rolls.
+const WQ=new THREE.Quaternion(),WQ2=new THREE.Quaternion();
+function wSet(j,a,y){if(!j)return;WQ.setFromAxisAngle(j.ax,a);if(y){WQ2.setFromAxisAngle(j.up,y);WQ.multiply(WQ2);}j.b.quaternion.copy(WQ).multiply(j.q0);}
+// Side view of one leg (z forward, y up, from the rest leg measured in setupWalk): ankle forward offset and depth below
+// the hip for a thigh angle th (forward +) and knee bend kn.
+function gFz(W,th,kn){return W.hz*Math.cos(th)-W.hy*Math.sin(th)+W.kz*Math.cos(th-kn)-W.ky*Math.sin(th-kn);}
+function gDepth(W,th,kn){return-(W.hz*Math.sin(th)+W.hy*Math.cos(th)+W.kz*Math.sin(th-kn)+W.ky*Math.cos(th-kn));}
+// how far the body travels per planted step (the foot's sweep from landing to push-off): sets the cadence (06-view)
+function gSweep(W,a,run){return gFz(W,a,.1+.18*run)-gFz(W,-a,0);}
+// One leg at phase u (0..1; the foot lands at 0) with stance fraction s. Planted (u<s): the ankle moves back in a straight
+// line at constant speed (thigh solved for it, two Newton steps) with the knee landing slightly bent and giving a little
+// mid-stance. Swinging: heel kicks up, knee stays bent while the thigh comes through, then reaches out to land.
+const GL={th:0,kn:0},GR={th:0,kn:0};
+function gLeg(W,u,s,a,run,o){const KC=.1+.18*run;
+  if(u<s){const t=u/s,kn=KC*(1-t)+run*.2*Math.sin(Math.PI*t),z0=gFz(W,a,KC),zt=z0+(gFz(W,-a,0)-z0)*t;let th=a*(1-2*t);
+    for(let i=0;i<2;i++)th-=(gFz(W,th,kn)-zt)/Math.max(1,gDepth(W,th,kn));o.th=th;o.kn=kn;return;}
+  const w=(u-s)/(1-s),KM=.85+.8*run;o.th=-a*Math.cos(Math.PI*Math.min(1,w/.8));
+  o.kn=w<.4?KM*Math.sin(Math.PI/2*w/.4):w<.78?KM:KC+(KM-KC)*(.5+.5*Math.cos(Math.PI*(w-.78)/.22));}
+// u: phase, amt: 0..1 blend from standing, a: thigh swing (radians), s: stance fraction, run: 0 walk .. 1 jog, br: breath.
+// Poses the bones and returns the hip height (0 = standing) that keeps the planted foot on the ground: lower with the leg
+// swung out or the knee bent, a little higher while both feet are off the ground (jogging). Two bobs per stride.
+function walkPose(m,u,amt,a,s,run,br){const W=m.userData.legs;if(!W||!W.uL)return 0;a*=amt;run*=amt;const uR=(u+.5)%1;
+  gLeg(W,u,s,a,run,GL);gLeg(W,uR,s,a,run,GR);
+  wSet(W.uL,GL.th,0);wSet(W.uR,GR.th,0);wSet(W.lL,-GL.kn,0);wSet(W.lR,-GR.kn,0);
+  // ankles: a planted foot lies flat on the ground; a swinging foot only half follows the shin (toes don't point at the sky)
+  wSet(W.fL,(GL.kn-GL.th)*(u<s?1:.5),0);wSet(W.fR,(GR.kn-GR.th)*(uR<s?1:.5),0);
+  // pelvis turns a little with the forward leg; the spine turns it back so the chest (and rifle) stays square; the body
+  // leans into the run (negative = forward about the left-right axis)
+  const pv=a>.01?(GL.th-GR.th)/a*.035:0;wSet(W.hip,0,pv);wSet(W.sp,-(.05*amt+.13*run),-pv);
+  // rifle carry: the chest dips as each foot lands (twice per stride), plus a slow breath when standing
+  wSet(W.ch,-.045*run*Math.cos(4*Math.PI*(u-s*.5))+br,0);
+  if(u<s)return gDepth(W,GL.th,GL.kn)-W.D0;if(uR<s)return gDepth(W,GR.th,GR.kn)-W.D0;
+  const w=((u-s)%.5)/Math.max(.01,.5-s),y1=gDepth(W,-a,0)-W.D0,y0=gDepth(W,a,.1+.18*run)-W.D0;return y1+(y0-y1)*w+run*.25*4*w*(1-w);}
 // Drones are built by hand so each nation's looks right: a Shahed-style delta wing with a pusher propeller
 // (Iran, Mountain Shias), a Kargu-style quadcopter (Turkey) and a small X-frame FPV racer (Ukraine and others).
 function droneType(fac){return fac==='IR'||fac==='RS'?'delta':fac==='TR'?'kargu':'fpv';}
