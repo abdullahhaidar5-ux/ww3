@@ -216,24 +216,34 @@ def peak(w, f0, gain_db, q=1.0):
     return lfilter(np.array(b) / a[0], np.array(a) / a[0], w)
 
 
-def tough_radio(w, rng, k, semis=None, mood='sold'):
+def tough_radio(w, rng, k, semis=None, mood='sold', clear=None):
     """tougher field-radio chain (2026-10-30, tools/voices/tough2.py): formant-preserving pitch-down toward a ~90 Hz
     median (kept only while it stays natural), then T2.voice_chain (tight band on combat lines, bite EQ, two-stage hard
-    compression, drive), then static, a squelch click on some lines and a quiet distant-gunfire bed under 'under fire'."""
+    compression, drive), then static, a squelch click on some lines and a quiet distant-gunfire bed under 'under fire'.
+    clear(x) -> read-back error of a processed take: the toughest (pitch step, chain) that still reads back within
+    T2.CER_SLACK of the dry take wins, so every line stays understandable."""
     if semis is None:
         semis = T2.semis_for(tough(w, SR)['f0'], mood)
-    if semis >= 0.3:
-        x = pitch_down(w, semis)
-        p0 = p808(w)
-        if p808(x) <= p0 - T2.P808_SLACK and semis > 1.5:   # too much: try a smaller step
-            semis = semis / 2; x = pitch_down(w, semis)
-        if p808(x) > p0 - T2.P808_SLACK:
-            w = x
-        else:
-            semis = 0
+    p0 = p808(w)
+    steps = [semis, semis / 2, 0] if semis >= 0.3 else [0]
+    cands = []
+    for st in dict.fromkeys(round(x, 2) for x in steps):
+        x = pitch_down(w, st) if st >= 0.3 else w
+        if st and p808(x) <= p0 - T2.P808_SLACK:
+            continue
+        cands += [(st, x, mood), (st, x, 'mild')] if mood == 'cry' else [(st, x, mood)]
+    cands.sort(key=lambda c: (c[0] == 0, c[2] == 'mild'))   # toughest first; the dry, mild version is the last resort
+    base = None if clear is None else clear(w)
+    pick = None
+    for st, x, md in cands:
+        y = T2.voice_chain(x, SR, 'sold' if md == 'mild' else md)
+        if base is None or clear(y) <= max(base + T2.CER_SLACK, T2.CER_OK):
+            pick = (st, y); break
+    if pick is None:
+        st, x, md = cands[-1]; pick = (st, T2.voice_chain(x, SR, 'sold' if md == 'mild' else md))
+    semis, w = pick
     global LAST_SEMIS
     LAST_SEMIS = semis if semis >= 0.3 else 0
-    w = T2.voice_chain(w, SR, mood)
     nb = lambda n: sosfilt(butter(2, [450, 3200], 'bandpass', fs=SR, output='sos'), rng.standard_normal(n))
     pre = int(.07 * SR) if rng.random() < .35 else 0     # squelch click + burst before the line on some lines
     post = int(.09 * SR)
@@ -309,7 +319,9 @@ def nation(fac, phr, n_takes=3, log=print):
                 if not ok and r['cer'] >= 0.75 and (ent or name == 'c' or i < len(texts) - 1):
                     log(f'{fac} {name}{k} DROPPED (no clean take) | {text} -> {r["hyp"].strip()}')
                     continue   # a garbled variant is left out; the kind keeps its other variants
-                w = tough_radio(w, rng, k=-1 if cry else k, semis=C.get('pitch'), mood=mood)
+                wl = {'zh-cn': 'zh'}.get(lang, lang)
+                w = tough_radio(w, rng, k=-1 if cry else k, semis=C.get('pitch'), mood=mood,
+                                clear=lambda x: score(np.clip(x.astype(np.float32) / (np.max(np.abs(x)) + 1e-9) * .9, -1, 1), SR, wl, say)['cer'])
                 ent.append([round(t, 3), round(len(w) / SR, 3)])
                 sheet += [w, np.zeros(gap, np.float32)]
                 t += (len(w) + gap) / SR

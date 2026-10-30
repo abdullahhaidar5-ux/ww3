@@ -2,7 +2,7 @@
 Used by orch/vo/render.py (all settings live here so the pass is reproducible).
 
 Versus the first tough pass (render.py tough_radio):
-  * deeper: formant-preserving WORLD pitch-down toward a ~90 Hz median (was ~105 Hz, max 2 st) - up to 3.5 semitones,
+  * deeper: formant-preserving WORLD pitch-down toward a ~90 Hz median (was ~105 Hz, max 2 st) - up to 3 semitones,
     kept only while DNSMOS P.808 stays within 0.25 of the dry take (still natural, not a monster filter)
   * barked: XTTS/Piper/MMS read combat lines faster and hotter (SYN below); take picking weighs toughness x2
   * grittier: harder two-stage compression, more drive with a touch of even harmonics
@@ -20,10 +20,11 @@ SYN = dict(
     piper_ls={'sold': 0.8, 'cry': 0.8, 'grim': 0.92, 'cmd': 0.88},
     mms_rate={'sold': 1.22, 'cry': 1.2, 'grim': 1.06, 'cmd': 1.12},
 )
-TOUGH_W = 1.6            # weight of score.tough in take picking (was 0.8)
+TOUGH_W = 1.2            # weight of score.tough in take picking (was 0.8; 1.6 picked mumbled takes)
 F0_TARGET = {'cry': 88, 'sold': 92, 'cmd': 95, 'grim': 92}   # median Hz the pitch-down aims for
-MAX_SEMIS = 3.5
+MAX_SEMIS = 3.0
 P808_SLACK = 0.25        # max naturalness loss accepted for the pitch-down
+CER_SLACK, CER_OK = 0.12, 0.2   # processed take must read back (Whisper) within +0.12 of the dry take, or <= 0.2
 CHAIN = {   # band (Hz), dry full-band share, EQ (Hz, dB, Q)..., compressor stages (thr dB, ratio, att s, rel s), drive, drive mix
     # cry: picked from 4 variants on RS lines (tough 0.97 for all; this one kept P.808 2.77 / CER 0.20 vs 2.64 / 0.30
     # for the hottest) - gritty but words stay clear
