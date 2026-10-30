@@ -20,6 +20,7 @@ import { createRequire } from 'node:module';
 import { acquireBrowserLock } from './browserlock.mjs';
 import { guardContext } from './serverdev.mjs';
 import { enterExitChecks } from './enterexit.mjs';
+import { stanceChecks } from './stances.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SHOTS = path.join(ROOT, 'orch', 'shots', 'touch');
@@ -339,6 +340,7 @@ async function phonePass(tag, viewport, storageState) {
 
   // --- getting in and out with taps alone (orch/enterexit.mjs) ---
   if (tag === 'portrait') await enterExitChecks(page, { mode: 'touch', ck: (n, ok, d) => check(tag, ok, n + (ok || !d ? '' : ' — ' + String(d).slice(0, 300))), tap: (x, y) => T.tap(x, y) });
+  if (tag === 'portrait') await stanceChecks(page, { mode: 'touch', ck: (n, ok, d) => check(tag, ok, n + (ok || !d ? '' : ' — ' + String(d).slice(0, 300))) });
 
   // --- guide again from the ☰ menu ---
   await T.ptap('#aMenu');
