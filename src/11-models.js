@@ -373,12 +373,16 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     E=SOLM[key]={geo,mat};}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
-function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;inner.updateMatrixWorld(true);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
-  if(!B.uplegL||!B.uplegR||!B.legL||!B.legR)return null;let pl=new THREE.Vector3().setFromMatrixPosition(B.uplegL.matrixWorld),pr=new THREE.Vector3().setFromMatrixPosition(B.uplegR.matrixWorld);
-  // the rifle-ready stance has the hips turned ~20 degrees; square them to the direction of travel so the legs
-  // swing straight forward and back instead of diagonally across the body
-  {const a=Math.atan2(pr.z-pl.z,pr.x-pl.x),tg=Math.abs(a)>Math.PI/2?Math.sign(a)*Math.PI:0,th=a-tg;if(Math.abs(th)>.02){inner.rotation.y+=th;inner.updateMatrixWorld(true);pl=new THREE.Vector3().setFromMatrixPosition(B.uplegL.matrixWorld);pr=new THREE.Vector3().setFromMatrixPosition(B.uplegR.matrixWorld);}}
-  const lat=pr.clone().sub(pl).normalize();const q=new THREE.Quaternion();
+function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
+  if(!B.uplegL||!B.uplegR||!B.legL||!B.legR)return null;
+  // Everything is measured in the soldier's own frame (m). The soldier is built inside its unit's yaw group (turned 90
+  // degrees) before that group's world matrices were ever updated, so the hips used to be read without the turn while
+  // the bones' parent rotations included it: the swing axis came out 90 degrees off and the legs swung sideways.
+  const hip=()=>{m.updateWorldMatrix(true,true);const pl=m.worldToLocal(new THREE.Vector3().setFromMatrixPosition(B.uplegL.matrixWorld)),pr=m.worldToLocal(new THREE.Vector3().setFromMatrixPosition(B.uplegR.matrixWorld));return[pl,pr];};
+  let [pl,pr]=hip();
+  // the rifle-ready stance has the hips turned ~20 degrees; square them to the direction of travel (the model faces +z)
+  {const a=Math.atan2(pr.z-pl.z,pr.x-pl.x),tg=Math.abs(a)>Math.PI/2?Math.sign(a)*Math.PI:0,th=a-tg;if(Math.abs(th)>.02){inner.rotation.y+=th;[pl,pr]=hip();}}
+  const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const lat=pr.clone().sub(pl).normalize().applyQuaternion(mq);const q=new THREE.Quaternion();
   const mk=(b,s)=>{if(!b)return null;b.parent.getWorldQuaternion(q);const ax=lat.clone().applyQuaternion(q.clone().invert()).normalize();return{b,q0:b.quaternion.clone(),ax,s};};
   return[mk(B.uplegL,1),mk(B.uplegR,-1),mk(B.legL,1),mk(B.legR,-1),mk(B.spine,0)].filter(Boolean);}
 const WQ=new THREE.Quaternion();
