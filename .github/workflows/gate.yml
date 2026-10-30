@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down, migrate-dual,
-            art-smoke, art-mpsync, mapsweep, controls, touch, audio, cfclient]
+            art-smoke, art-mpsync, mapsweep, controls, touch, audio, cfclient, ew]
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -41,6 +41,7 @@ jobs:
           case "$T" in
             check)          python3 orch/build.py --check ;;
             servertest)     node orch/servertest.mjs ;;
+            ew)             if [ -f orch/ewtest.mjs ]; then node orch/ewtest.mjs; else echo "SKIP ew (no test)"; fi ;;   # electronic warfare: spoof/jamming + their host-migration checkpoint
             headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --compare || echo "SKIP headless" ;;
             smoke4)         node orch/smoke.mjs --players 4 ;;
             mpsync)         node orch/mpsync.mjs ;;
@@ -69,9 +70,9 @@ jobs:
           esac > out.log 2>&1
           rc=$?
           tail -40 out.log
-          line=$(grep -E "^(SMOKE|MPSYNC|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|WALKTEST|TOUCH|PHONELOAD|AUDIO|CF[A-Z]*) (PASS|FAIL)|^SKIP|index.html is up to date|is out of date|Error" out.log | tail -1 | cut -c1-130)
+          line=$(grep -E "^(SMOKE|MPSYNC|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|WALKTEST|TOUCH|PHONELOAD|AUDIO|EW|CF[A-Z]*) (PASS|FAIL)|^SKIP|index.html is up to date|is out of date|Error" out.log | tail -1 | cut -c1-130)
           state=failure; [ $rc -eq 0 ] && state=success
-          grep -qE "^(SMOKE|MPSYNC|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|WALKTEST|TOUCH|PHONELOAD|AUDIO|CF[A-Z]*) FAIL" out.log && state=failure
+          grep -qE "^(SMOKE|MPSYNC|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|WALKTEST|TOUCH|PHONELOAD|AUDIO|EW|CF[A-Z]*) FAIL" out.log && state=failure
           desc=$(printf '%s' "${line:-exit $rc}" | sed 's/"/'"'"'/g')
           curl -s -o /dev/null -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \
