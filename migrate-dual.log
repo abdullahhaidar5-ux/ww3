@@ -1,0 +1,53 @@
+artifact page written: orch/out/artifact/index.html (2108942 bytes, game 1266304 chars), 52 audio files + 70 model files (8.9 MB); publish arguments in orch/out/artifact/publish.json
+claude.ai artifact edition (shared rooms; no game servers)
+[2s] three pages loaded
+[2s] host lobby open, code lzfqj3
+[26s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+    [net battle start] host: {"t":0,"loading":true,"paused":true,"fp":{"tx":12,"rx":2,"txB":500,"rxB":20,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{},"peakRate":0,"peakAt":0},"slots":[{"k":1,"peer":"qh768yrv","seenAgo":246,"disc":0,"ai":false,"aiTook":false,"buf":null},{"k":2,"peer":"1g03fmdp","seenAgo":613,"disc":0,"ai":false,"aiTook":false,"buf":null}],"sb":null,"ckOut":false}
+    [net battle start] client A: {"me":1,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"qh768yrv","hostPeer":"7bz8zyi5","sb":false,"ck":false,"ents":0,"fp":{"tx":1,"rx":12,"txB":10,"rxB":493,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{},"peakRate":0,"peakAt":0},"trace":[]}
+    [net battle start] client B: {"me":2,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"1g03fmdp","hostPeer":"7bz8zyi5","sb":false,"ck":false,"ents":0,"fp":{"tx":1,"rx":9,"txB":10,"rxB":437,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{},"peakRate":0,"peakAt":0},"trace":[]}
+    [net t=5s] host: {"t":5,"loading":true,"paused":true,"fp":{"tx":100,"rx":2,"txB":21583,"rxB":20,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{"0":{"n":20,"snap":9,"team":6,"pong":5},"1":{"n":18,"team":8,"snap":10},"2":{"n":15,"snap":9,"team":6},"3":{"n":18,"snap":10,"team":8},"4":{"n":16,"ck":2,"snap":8,"team":6}},"peakRate":20,"peakAt":0,"peakMix":{"n":20,"snap":9,"team":6,"pong":5}},"slots":[{"k":1,"peer":"qh768yrv","seenAgo":-24243,"disc":0,"ai":false,"aiTook":false,"buf":null},{"k":2,"peer":"1g03fmdp","seenAgo":-24243,"disc":0,"ai":false,"aiTook":false,"buf":null}],"sb":1,"ckOut":false}
+    [net t=5s] client A: {"me":1,"mode":"client","loading":true,"paused":true,"t":5,"snapT":4.9,"rxAgo":6,"recon":false,"myPeer":"qh768yrv","hostPeer":"7bz8zyi5","sb":true,"ck":true,"ents":5,"fp":{"tx":1,"rx":100,"txB":10,"rxB":21576,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{},"peakRate":0,"peakAt":0},"trace":[]}
+    [net t=5s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":5,"snapT":4.9,"rxAgo":8,"recon":false,"myPeer":"1g03fmdp","hostPeer":"7bz8zyi5","sb":false,"ck":false,"ents":5,"fp":{"tx":1,"rx":97,"txB":10,"rxB":21520,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{},"peakRate":0,"peakAt":0},"trace":[]}
+    [net t=10s] host: {"t":10,"loading":false,"paused":false,"fp":{"tx":186,"rx":2,"txB":39174,"rxB":20,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{"0":{"n":20,"snap":9,"team":6,"pong":5},"1":{"n":18,"team":8,"snap":10},"2":{"n":15,"snap":9,"team":6},"3":{"n":18,"snap":10,"team":8},"4":{"n":16,"ck":2,"snap":8,"team":6},"5":{"n":19,"snap":10,"evt":1,"team":6,"pong":2},"6":{"n":17,"snap":9,"team":8},"7":{"n":16,"snap":10,"team":6},"8":{"n":15,"snap":9,"team":6},"9":{"n":16,"snap":10,"team":6},"10":{"n":3,"team":2,"pong":1}},"peakRate":20,"peakAt":0,"peakMix":{"n":20,"snap":9,"team":6,"pong":5}},"slots":[{"k":1,"peer":"qh768yrv","seenAgo":-2882,"disc":0,"ai":false,"aiTook":false,"buf":null},{"k":2,"peer":"1g03fmdp","seenAgo":6,"disc":0,"ai":false,"aiTook":false,"buf":null}],"sb":1,"ckOut":false}
+    [net t=10s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":10,"snapT":9.9,"rxAgo":17,"recon":false,"myPeer":"qh768yrv","hostPeer":"7bz8zyi5","sb":true,"ck":true,"ents":6,"fp":{"tx":1,"rx":186,"txB":10,"rxB":39167,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{},"peakRate":0,"peakAt":0},"trace":[]}
+    [net t=10s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":10,"snapT":9.9,"rxAgo":23,"recon":false,"myPeer":"1g03fmdp","hostPeer":"7bz8zyi5","sb":false,"ck":false,"ents":6,"fp":{"tx":1,"rx":183,"txB":10,"rxB":39111,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{},"peakRate":0,"peakAt":0},"trace":[]}
+    [net t=30s] host: {"t":30,"loading":false,"paused":false,"fp":{"tx":520,"rx":2,"txB":130012,"rxB":20,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{"0":{"n":20,"snap":9,"team":6,"pong":5},"1":{"n":18,"team":8,"snap":10},"2":{"n":15,"snap":9,"team":6},"3":{"n":18,"snap":10,"team":8},"4":{"n":16,"ck":2,"snap":8,"team":6},"5":{"n":19,"snap":10,"evt":1,"team":6,"pong":2},"6":{"n":17,"snap":9,"team":8},"7":{"n":16,"snap":10,"team":6},"8":{"n":15,"snap":9,"team":6},"9":{"n":16,"snap":10,"team":6},"10":{"n":18,"team":8,"pong":1,"snap":9},"11":{"n":16,"snap":10,"team":6},"12":{"n":17,"snap":9,"team":6,"ck":2},"13":{"n":19,"team":8,"snap":10,"evt":1},"14":{"n":15,"snap":9,"team":6},"15":{"n":16,"snap":10,"team":6},"16":{"n":17,"team":8,"snap":9},"17":{"n":16,"snap":10,"team":6},"18":{"n":16,"snap":9,"evt":1,"team":6},"19":{"n":19,"team":8,"snap":10,"evt":1},"20":{"n":19,"snap":10,"team":6,"ck":3},"21":{"n":15,"snap":9,"team":6},"22":{"n":19,"team":8,"snap":10,"evt":1},"23":{"n":15,"snap":9,"team":6},"24":{"n":18,"snap":10,"team":8},"25":{"n":15,"snap":9,"team":6},"26":{"n":16,"snap":10,"team":6},"27":{"n":17,"snap":9,"team":8},"28":{"n":19,"snap":10,"team":6,"ck":3},"29":{"n":15,"snap":9,"team":6}},"peakRate":20,"peakAt":0,"peakMix":{"n":20,"snap":9,"team":6,"pong":5}},"slots":[{"k":1,"peer":"qh768yrv","seenAgo":145,"disc":0,"ai":false,"aiTook":false,"buf":null},{"k":2,"peer":"1g03fmdp","seenAgo":145,"disc":0,"ai":false,"aiTook":false,"buf":null}],"sb":1,"ckOut":false}
+    [net t=30s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":30,"snapT":29.9,"rxAgo":7,"recon":false,"myPeer":"qh768yrv","hostPeer":"7bz8zyi5","sb":true,"ck":true,"ents":6,"fp":{"tx":1,"rx":520,"txB":10,"rxB":130005,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{},"peakRate":0,"peakAt":0},"trace":[]}
+    [net t=30s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":30,"snapT":29.9,"rxAgo":9,"recon":false,"myPeer":"1g03fmdp","hostPeer":"7bz8zyi5","sb":false,"ck":false,"ents":9,"fp":{"tx":1,"rx":517,"txB":10,"rxB":129949,"dropped":0,"big":{},"denied":{},"bigPres":0,"perSec":{},"peakRate":0,"peakAt":0},"trace":[]}
+[101s] before: client A @1 min t=60s: host 27 entities, slot 1 sees 6 (own 6); its screen has 6; missing 0, extra 0, off-position 0, mismatched 0; credits host 5140 client 5140
+[101s] before: client B @1 min t=60s: host 27 entities, slot 2 sees 16 (own 16); its screen has 16; missing 0, extra 0, off-position 0, mismatched 0; credits host 2320 client 2320
+    trace client A (screenshot stall):  || now: client via=undefined ws=false rxAgo=257
+    trace client B (screenshot stall):  || now: client via=undefined ws=false rxAgo=258
+[105s] host leaves at t=120.2s; standby checkpoint from t=116.4s (10 KB, 39 entities); armies US 5, RU 6, CN 28
+[106s] --dual-claim: client A holds the checkpoint from t=108.3s, client B the newer one from t=116.4s; for 3 s in the takeover room neither sees the other's claim
+    +0.5s client A: client reconnecting room=7bz8zyi5 gen=0
+    +0.5s client B: client reconnecting room=7bz8zyi5 gen=0
+[106s] client A noticed the host was gone after 0.5 s
+    +7.8s client A: client reconnecting room=lzfqj3-m1 gen=0 (no room)
+    +7.8s client B: client reconnecting room=lzfqj3-m1 gen=0 (no room)
+[115s] client B is the new host after 9.8 s (room lzfqj3-m1, battle resumed from t=116.4s)
+    +9.8s client A: host room=lzfqj3-m1 gen=1
+    +9.8s client B: host room=lzfqj3-m1 gen=1
+    +10.8s client A: client reconnecting room=7bz8zyi5 gen=0 (no room)
+    +11.2s client A: client reconnecting room=7bz8zyi5 gen=0
+    +18.9s client A: client reconnecting room=1g03fmdp gen=1
+[125s] client A reconnected to the new host 19.3 s after the host left
+    +19.3s client A: client room=1g03fmdp gen=1
+    trace client A: 0.0 clientReconnect | 0.3 join tc-lzfqj3 | 0.5 joined tc-lzfqj3 via undefined | 7.7 promoteToHost | 7.7 join tc-lzfqj3-m1 | 7.7 joined tc-lzfqj3-m1 via undefined | 9.7 promoteToHost -> true | 9.7 clientReconnect done, mode host | 10.7 clientReconnect | 11.0 join tc-lzfqj3 | 11.0 joined tc-lzfqj3 via undefined | 18.8 join tc-lzfqj3-m1 | 18.9 joined tc-lzfqj3-m1 via undefined | 18.9 snapshot t=125.6 while reconnecting | 19.1 snapshot t=125.8 while reconnecting | 19.1 snapshot t=125.8 while reconnecting | 19.2 clientReconnect done, mode client
+    trace client B: 0.0 clientReconnect | 0.3 join tc-lzfqj3 | 0.5 joined tc-lzfqj3 via undefined | 7.7 promoteToHost | 7.7 join tc-lzfqj3-m1 | 7.7 joined tc-lzfqj3-m1 via undefined | 9.7 promoteToHost -> true | 9.7 clientReconnect done, mode host
+    takeover notes clientA: +10.7s takeover: another player took over first, rejoining as a player
+[130s] --dual-claim: now A is client, B is host; both were hosting at once for 0.8 s at most; A hosted for a while
+[130s]   US (slot 0): 3/5 of its pre-takeover entities are on the new host, 7 in all; AI-run (took over)
+[130s]   RU (slot 1): 6/6 of its pre-takeover entities are on the new host, 6 in all; player-run
+[130s]   CN (slot 2): 28/28 of its pre-takeover entities are on the new host, 28 in all; player-run
+[131s] after: client A right after the takeover t=131s: host 41 entities, slot 1 sees 6 (own 6); its screen has 6; missing 0, extra 0, off-position 0, mismatched 0; credits host 6540 client 6540
+[133s] client A order after the takeover: 2/2 of its units moved on the new host
+[133s] old host's side after 45 game-s under the AI: build step 2 -> 4, 12 new entities, 0 in production, $539
+[134s] after: client A 45 game-s after the takeover t=176s: host 53 entities, slot 1 sees 6 (own 6); its screen has 6; missing 0, extra 0, off-position 0, mismatched 0; credits host 7100 client 7100
+peak memory (node + browser, summed RSS): 3474 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MIGRATE PASS (two standbys claimed at once, blind for 3 s), artifact edition (141s) — screenshots orch/out/mig-before-host.png, orch/out/mig-after-newhost.png, orch/out/mig-after-client.png (this run: orch/out/runs/20261030-155756-migrate-dual/)
