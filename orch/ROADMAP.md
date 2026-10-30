@@ -52,6 +52,15 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [todo] Phase 6 Device tiers: phones stay smooth with a lighter look, PCs get everything
 
 ## Battlefield and maps
+- [next] Martyrdom banner: fallen Shia soldiers leave a rally flag that steadies nearby troops
+- [next] Supply lines: forward units run low on ammo; convoys restock them and can be ambushed
+- [next] Bigger electronic warfare: minimap blackout and fake radar ghosts
+- [next] Rubble from destroyed buildings becomes cover and blocks tanks
+- [next] Tunnels counter: ground-penetrating radar, tunnel ambushes
+- [next] Proxy militias you can fund near the front
+- [next] Sanctions on an enemy's income, countered by smuggling routes
+- [next] Day/night battles with thermal optics
+- [next] Live news ticker, one-tap army stances (Assault/Hold/Guerrilla), end-of-match kill-cam replay
 - [done] Bases always start on dry ground; all 28 maps checked by an automatic sweep
 - [done] AI builds and uses a navy on water maps
 - [done] Fix AI blowouts: no general powers in the first 3 minutes, AI always builds an army
