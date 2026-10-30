@@ -1,0 +1,21 @@
+{"jamMine":1,"jamTheirs":0,"btn":true,"spoofs":1,"cd":59.98,"theirG":[0,0,0],"mineG":[2,2,2],"btn2":"📡 Radar spoof (ready in 60 s) [disabled]","spoofsAfterRepeat":1,"spoofsStolen":1,"entsAdded":0,"onMine":3,"drift":205,"packJson":204,"flagged":3,"ck":{"sp":true,"cd":true,"mb":true,"mart":true,"gh":true},"ckOld":true}
+  ok   enemy jam bubble over our base blacks out our minimap
+  ok   our truck far from their units: no blackout for them
+  ok   Radar spoof button on the EW truck command card
+  ok   spoof order via the button creates one spoof
+  ok   cooldown ~60 s
+  ok   3-4 ghosts on the enemy minimap, unflagged
+  ok   own ghosts shown faintly to the owner
+  ok   button shows cooldown
+  ok   repeat during cooldown refused
+  ok   cannot spoof with an enemy truck
+  ok   enemy ghosts on our minimap
+  ok   ghosts drift toward us (~190 px in 5 s)
+  ok   no units added to the simulation
+  ok   team message carries EW data
+  ok   Strike Center flags ghosts as fake
+  ok   checkpoint keeps radar-spoof ghosts, cooldown, martyr banner and Ayatollah buff
+  ok   old checkpoint without EW fields restores
+  ok   spoof ends after 20 s
+  ok   no page errors
+EW PASS
