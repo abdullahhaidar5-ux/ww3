@@ -632,7 +632,7 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
    minimap: no unit is created, nothing can target a ghost, and the AI never reads them. The spoof itself is a normal
    player order ('spoof', host-authoritative); ewView(team) is what each team sees, sent to clients in the team message. */
 const SPOOF_CD=60,SPOOF_T=20,SPOOF_SPD=38;
-function doSpoof(u){if(!u||u.dead||u.isB||!u.s||!u.s.jam||u.spfT>G.t)return false;
+function doSpoof(u){if(!u||u.dead||u.isB||!u.s||!u.s.jam||u.inTun||u.spfT>G.t)return false;
   // the fake column heads for the nearest enemy building (map centre if none is known)
   let tx=MAPW/2,ty=MAPH/2,bd=1e18;for(const e of G.ents){if(e.dead||!e.isB||ally(e.team,u.team))continue;const d=(e.x-u.x)**2+(e.y-u.y)**2;if(d<bd){bd=d;tx=e.x;ty=e.y;}}
   const dx=tx-u.x,dy=ty-u.y,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,n=3+(srand()<.5?1:0),g=[];
@@ -648,8 +648,8 @@ function ewTick(dt){if(G.spoofs&&G.spoofs.length)G.spoofs=G.spoofs.filter(p=>p.t
 // g = ghost contacts [x,y,vx,vy,secondsLeft,flag,team]; flag 1 = recognised as fake (the team has a working Strike
 // Center), 2 = the team's own spoof (shown faintly so the player sees it working)
 function ewView(tm){const C=G._ewv||(G._ewv=[]);const h=C[tm];if(h&&h.t===G.t)return h;const j=[],g=[];
-  if(G.aur)for(const a of G.aur.jam){if(ally(a.team,tm))continue;const r2=a.r*a.r;for(const e of G.ents)if(!e.dead&&ally(e.team,tm)&&(e.x-a.x)**2+(e.y-a.y)**2<r2){j.push([a.x|0,a.y|0,a.r]);break;}}
-  const T=G.teams[tm];for(const p of G.spoofs||[]){const fr=ally(p.team,tm)?2:(T&&T._upl?1:0),dt=G.t-p.t0;for(const q of p.g)g.push([Math.round(q[0]+q[2]*dt),Math.round(q[1]+q[3]*dt),+q[2].toFixed(1),+q[3].toFixed(1),+(p.t1-G.t).toFixed(1),fr,p.team]);}
+  if(G.aur)for(const a of G.aur.jam){if(ally(a.team,tm))continue;const r2=a.r*a.r;for(const e of G.ents)if(!e.dead&&ally(e.team,tm)&&(e.x-a.x)**2+(e.y-a.y)**2<r2){const J=G.byId.get(a.id);if(J&&seenBy(tm,J))j.push([a.x|0,a.y|0,a.r]);else j.push([Math.round(e.x/100)*100,Math.round(e.y/100)*100,a.r]);break;}}
+  const T=G.teams[tm];for(const p of G.spoofs||[]){const fr=ally(p.team,tm)?2:(G.teams.some(A=>A&&A._upl&&ally(A.id,tm))?1:0),dt=G.t-p.t0;for(const q of p.g)g.push([Math.round(q[0]+q[2]*dt),Math.round(q[1]+q[3]*dt),+q[2].toFixed(1),+q[3].toFixed(1),+(p.t1-G.t).toFixed(1),fr,p.team]);}
   return C[tm]={t:G.t,rt:G.t,j,g,cd:G.ents.filter(e=>e.team===tm&&!e.dead&&e.spfT>G.t).map(e=>[e.id,+(e.spfT-G.t).toFixed(1)])};}
 
 /* ---------- vision ---------- */
