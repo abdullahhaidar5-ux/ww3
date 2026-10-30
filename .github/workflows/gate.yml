@@ -29,6 +29,8 @@ jobs:
         run: |
           npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
           PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright install --with-deps chromium >/dev/null
+          # the touch job also loads battles in WebKit (Safari's engine) as an iPhone (orch/phoneload.mjs)
+          [ '${{ matrix.t }}' = touch ] && { PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers npx playwright install --with-deps webkit >/dev/null 2>&1 || echo "webkit install failed: phoneload uses Chromium"; } || true
           (cd server && npm ci --no-audit --no-fund >/dev/null)
           sudo apt-get install -y -qq ffmpeg >/dev/null 2>&1 || true
       - name: Run ${{ matrix.t }}
@@ -54,7 +56,9 @@ jobs:
                                && [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then echo "SKIP mapsweep (no map/graphics/model changes vs main)"; \
                             else node orch/mapsweep.mjs --minutes 1; fi ;;
             controls)       [ -f orch/controls.mjs ] && node orch/controls.mjs || { echo "FAIL: orch/controls.mjs missing - this branch predates it; merge origin/main"; exit 1; } ;;
-            touch)          [ -f orch/touch.mjs ] && node orch/touch.mjs || { echo "FAIL: orch/touch.mjs missing - this branch predates it; merge origin/main"; exit 1; } ;;
+            touch)          [ -f orch/touch.mjs ] || { echo "FAIL: orch/touch.mjs missing - this branch predates it; merge origin/main"; exit 1; }
+                            # touch controls, then phone battle loading (WebKit iPhone 13: 3 maps + a lost graphics context)
+                            ( r=0; node orch/touch.mjs || r=1; node orch/phoneload.mjs --lose --timeout 300 || r=1; exit $r ) ;;
             audio)          f=$(ls orch/audio*.mjs 2>/dev/null | head -1); [ -n "$f" ] && node "$f" || echo "SKIP audio (no test)" ;;
             cfclient)       # every Cloudflare-battle browser test: cfbattle (server test hooks) and cfclient (Play online flow)
                             ( r=0; n=0; for f in $(ls orch/cfbattle*.mjs orch/cfclient*.mjs 2>/dev/null); do n=1; node "$f" || r=1; done
@@ -62,9 +66,9 @@ jobs:
           esac > out.log 2>&1
           rc=$?
           tail -40 out.log
-          line=$(grep -E "^(SMOKE|MPSYNC|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|TOUCH|AUDIO|CF[A-Z]*) (PASS|FAIL)|^SKIP|index.html is up to date|is out of date|Error" out.log | tail -1 | cut -c1-130)
+          line=$(grep -E "^(SMOKE|MPSYNC|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|TOUCH|PHONELOAD|AUDIO|CF[A-Z]*) (PASS|FAIL)|^SKIP|index.html is up to date|is out of date|Error" out.log | tail -1 | cut -c1-130)
           state=failure; [ $rc -eq 0 ] && state=success
-          grep -qE "^(SMOKE|MPSYNC|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|TOUCH|AUDIO|CF[A-Z]*) FAIL" out.log && state=failure
+          grep -qE "^(SMOKE|MPSYNC|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|TOUCH|PHONELOAD|AUDIO|CF[A-Z]*) FAIL" out.log && state=failure
           desc=$(printf '%s' "${line:-exit $rc}" | sed 's/"/'"'"'/g')
           curl -s -o /dev/null -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \

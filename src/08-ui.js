@@ -802,6 +802,7 @@ function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.h
   if(MODE==='client'&&NET.sv&&NET.game)NET.game.presence({rd:1}).catch(()=>{});}
 // wait until the browser has painted (falls back to a timer when the tab is in the background and frames stop)
 function loadFrame(){return new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,document.hidden?0:300);});}
+const LOAD_WD=20000;
 async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
   // the 3D models of the shared scenery and of the nations in this battle (only those) download while the ground is painted
   const mp=modelsFor(g.teams.map(T=>T.fac),(d,n)=>{if(tok===LOAD.tok)loadStep('Loading 3D models… '+d+' of '+n,.08+.3*d/n);});
@@ -818,15 +819,20 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
     ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
     ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
-    ['Preparing graphics…',.78,()=>{/* phones skip the all-models shader warm-up: on iPhones it could hang the loading screen (2026-10-29) */if(typeof gfxPhone==='function'&&gfxPhone())return;try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
+    ['Preparing graphics…',.78,()=>{if(gfxPhone()&&typeof warmShadersPhone==='function'){LOAD.wstop=0;return warmShadersPhone((d,n)=>{if(live())loadStep('Preparing graphics… '+d+' of '+n,.78+.11*d/n);},()=>LOAD.wstop||!live());}
+      try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
     ['Deploying forces…',.9,()=>{buildPanels();}],
     // the first battle frame creates every unit, building, town and the fog of war on the GPU, by far the slowest frame
     // of the battle: draw it here, under the loading screen, so the battle appears already running
     ['Deploying forces…',.97,()=>{g.terrain=tc;try{renderFrame(1/60);}finally{g.terrain=null;}}]];
   const T0=performance.now(),TL=LOAD.times=[];
+  // every step has a watchdog: a step still not done after LOAD_WD ms (a download or a phone's shader compile that never
+  // finishes) is logged and the loading moves on, so the loading screen can never hang for ever
   for(const [label,p,fn,gl] of steps){loadStep(label,p);await loadFrame();if(!live()){if(tok===LOAD.tok)loadHide();return;}g.paused=true;const t1=performance.now();
-    try{const r=fn();if(r&&r.then){let done=0,to;await Promise.race([r.then(()=>{done=1;},()=>{done=1;}),new Promise(res=>{to=setTimeout(()=>{if(!done)console.warn('loading step timed out: '+label);res();},25000);})]);clearTimeout(to);}/* a step that never finishes (seen on iPhones) must not hold the loading screen forever */TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
-      R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
+    try{const r=fn();if(r&&r.then){let wt=null;const to=await Promise.race([r.then(()=>0,e=>{throw e;}),new Promise(z=>{wt=setTimeout(()=>z(1),LOAD_WD);})]);clearTimeout(wt);
+        if(to){LOAD.wstop=1;console.warn('loading watchdog: "'+label.replace('…','')+'" still not done after '+LOAD_WD/1000+' s, moving on');}}
+      TL.push([label,Math.round(performance.now()-t1)]);}catch(err){if(!gl){console.error(err);continue;}
+      console.error('3D graphics failed to start',err);R3=null;loadHide();$('mpstatus').textContent='';$('menu').hidden=false;$('games').innerHTML='<div class="empty">This browser could not start 3D graphics (WebGL). Try another browser or turn on hardware acceleration.</div>';G=null;return;}}
   g.terrain=tc;loadStep('Ready',1);$('menu').hidden=true;$('end').hidden=true;
   TL.push(['total',Math.round(performance.now()-T0)]);console.log('battle start: '+TL.map(([a,b])=>a.replace('…','')+' '+b+' ms').join(', '));
   // multiplayer client: its battle clock stood still under the loading screen while the host's kept running; catch up
