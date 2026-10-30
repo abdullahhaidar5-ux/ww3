@@ -182,15 +182,16 @@ def p808(w):
 
 
 def pitch_down(w, semis):
-    """formant-preserving pitch shift (ffmpeg rubberband, formant=preserved), same length"""
+    """formant-preserving pitch shift: WORLD vocoder (pyworld) resynthesis with f0 scaled and the spectral envelope
+    (formants) kept; scored natural by DNSMOS where rubberband's formant mode lost 0.2-0.6 P.808"""
     if not semis:
         return w
-    i = os.path.join(CACHE, 'pd_in.wav'); o = os.path.join(CACHE, 'pd_out.wav')
-    sf.write(i, w, SR)
-    subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', i, '-af',
-                    f'rubberband=pitch={2 ** (-semis / 12):.5f}:formant=preserved:pitchq=quality:transients=smooth', o], check=True)
-    x, _ = sf.read(o, dtype='float32')
-    return x[:len(w)] if len(x) >= len(w) else np.pad(x, (0, len(w) - len(x)))
+    import pyworld as pw
+    x = w.astype(np.float64)
+    f0, t = pw.harvest(x, SR, f0_floor=60, f0_ceil=400, frame_period=5)
+    sp = pw.cheaptrick(x, f0, t, SR); ap = pw.d4c(x, f0, t, SR)
+    y = pw.synthesize(f0 * 2 ** (-semis / 12), sp, ap, SR, 5).astype(np.float32)
+    return y[:len(w)] if len(y) >= len(w) else np.pad(y, (0, len(w) - len(y)))
 
 
 def comp(w, thr, ratio, att, rel):
@@ -216,13 +217,17 @@ def tough_radio(w, rng, k, semis=None):
     """tough field-radio chain (2026-10-29): optional gentle formant-preserving pitch-down (only when the voice is not
     already deep, <= 2 semitones), low-mid warmth, tighter 330-3300 Hz band, hard compression, light grit, then static,
     a squelch click on some lines and a very quiet distant-gunfire bed under 'under fire' (k=5) lines."""
-    if semis is None:   # auto: shift only voices above ~110 Hz median, at most 2 semitones
+    if semis is None:   # auto: shift only voices above ~105 Hz median, at most 2 semitones
         f = tough(w, SR)['f0']
-        semis = float(np.clip(12 * np.log2(max(f, 1) / 110), 0, 2))
-    if semis >= 0.3:    # ...and only if it stays natural (DNSMOS P.808 drops by < 0.12)
+        semis = float(np.clip(12 * np.log2(max(f, 1) / 105), 0, 2))
+    if semis >= 0.3:    # ...and only if it stays natural (DNSMOS P.808 drops by < 0.1)
         x = pitch_down(w, semis)
-        if p808(x) > p808(w) - 0.12:
+        if p808(x) > p808(w) - 0.1:
             w = x
+        else:
+            semis = 0
+    global LAST_SEMIS
+    LAST_SEMIS = semis if semis >= 0.3 else 0
     full = sosfilt(butter(2, 140, 'highpass', fs=SR, output='sos'), w)
     band = sosfilt(butter(4, 3300, 'lowpass', fs=SR, output='sos'), sosfilt(butter(3, 330, 'highpass', fs=SR, output='sos'), w))
     w = 0.82 * band + 0.18 * full
@@ -316,7 +321,7 @@ def nation(fac, phr, n_takes=3, log=print):
                 sheet += [w, np.zeros(gap, np.float32)]
                 t += (len(w) + gap) / SR
                 rep.append((round(r['p808'], 2), round(r['cer'], 2)))
-                log(f'{fac} {name}{k} {v[:14]:14} p808 {r["p808"]:.2f} cer {r["cer"]:.2f} {len(w)/SR:.2f}s take{take} | {text} -> {r["hyp"].strip()}')
+                log(f'{fac} {name}{k} {v[:14]:14} p808 {r["p808"]:.2f} cer {r["cer"]:.2f} tough {r["tough"]:.2f} pd {LAST_SEMIS:.1f} {len(w)/SR:.2f}s take{take} | {text} -> {r["hyp"].strip()}')
             out.append(ent)
         while name == 'c' and len(out) < 8:
             out.append([])

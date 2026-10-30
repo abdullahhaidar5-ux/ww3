@@ -3,7 +3,7 @@ import sys,os,json,re,subprocess,numpy as np
 from speechmos import dnsmos
 import librosa
 from score import tough
-R=os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+R=os.environ.get('VO_ROOT') or os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 s=open(os.path.join(R,'src/09-audio.js'),encoding='utf-8').read()
 M=json.loads(re.search(r'const VO_MAP=(\{.*?\});const VOB',s).group(1))
 out={}
