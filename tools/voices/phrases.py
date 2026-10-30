@@ -8,7 +8,7 @@ C = {}
 P['US'] = [
  ['Ready.', 'Standing by, sir.', 'Awaiting orders.', 'Go ahead, sir.'],
  ['Moving out.', 'Roger that.', 'On the move.', 'Copy, moving.'],
- ['Engaging!', 'Weapons free!', 'Contact, opening fire!', 'Target acquired.'],
+ ['Engaging!', 'Weapons free!', 'Contact, opening fire!', 'Target acquired, firing!'],
  ['Unit ready.', 'Reporting for duty.', 'Squad is up.', 'Ready to roll.'],
  ['Base is under attack!', 'We are taking fire at the base!', 'Enemy at the gates, base under attack!'],
  ['Taking fire!', 'Contact, we are pinned down!', 'Under fire, need support!', 'Incoming!'],

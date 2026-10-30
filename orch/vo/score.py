@@ -29,3 +29,15 @@ def score(w,sr,lang,text):
     segs,_=_w().transcribe(w16,language=wl,beam_size=1)
     hyp=''.join(s.text for s in segs)
     return dict(p808=float(m['p808_mos']),sig=float(m['sig_mos']),cer=cer(text,hyp),hyp=hyp)
+def tough(w,sr):
+    """toughness proxy: lower median pitch (Hz) + more vocal effort (energy 1-4 kHz vs 100-1000 Hz, dB) -> about -1..1"""
+    w=np.asarray(w,dtype=np.float32)
+    f0=librosa.yin(w,fmin=55,fmax=220,sr=sr,frame_length=2048,hop_length=256)
+    rms=librosa.feature.rms(y=w,frame_length=2048,hop_length=256)[0]
+    S=np.abs(librosa.stft(w,n_fft=1024,hop_length=256))**2;fr=librosa.fft_frequencies(sr=sr,n_fft=1024)
+    n=min(len(f0),len(rms),S.shape[1]);v=rms[:n]>0.3*rms.max()
+    f=float(np.median(f0[:n][v])) if v.any() else 150.0
+    lo=S[(fr>=100)&(fr<1000)][:,:n][:,v].sum();hi=S[(fr>=1000)&(fr<4000)][:,:n][:,v].sum()
+    tilt=float(10*np.log10((hi+1e-9)/(lo+1e-9)))
+    t=0.5*float(np.clip((140-f)/40,-1,1))+0.5*float(np.clip((tilt+15)/10,-1,1))
+    return dict(tough=t,f0=f,tilt=tilt)
