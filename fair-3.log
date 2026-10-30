@@ -1,0 +1,9 @@
+mapfair: 2 of 29 battles, 4 at a time
+  2/2 done, 1.6 min
+
+BATTLES map            n games  kills  win share by start position (fair = 1/n)        score share by position     avg-min
+  volga           2     1      1  100   0                                        100   0                     8.3 p=0.317
+  volga           8     1      0    0   0   0   0   0   0 100   0                  0   0   0   0   0   0  80  20 15.0 p=0.429
+BATTLES 2 games, 2 layouts; a start position wins significantly more than its share (p<0.01, >1.5x fair): none
+pooled duel seat: position 1 won 1, position 2 won 0 (of games decided between the first two seats)
+MAPFAIR DONE 1.6 min -> ../../../../../tmp/lg/fair-3.json
