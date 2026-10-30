@@ -144,7 +144,9 @@ export class BattleHost {
   // ---- lobby
   mx() { return Math.min(MAX_PLAYERS, this.sim.mapMax(this.map)); }
   seats() {
-    return [...this.order.map((id, i) => ({ h: 1, f: this.players.get(id).f, tm: this.tm[i] | 0 })), ...this.ais.map(a => ({ ai: 1, f: a.f, d: a.d, tm: a.tm }))];
+    // st: the seat's picked start spot, only when one is picked (lobbies without picks look as before)
+    const sp = v => (v >= 0 ? { st: v } : {});
+    return [...this.order.map((id, i) => ({ h: 1, f: this.players.get(id).f, tm: this.tm[i] | 0, ...sp(this.players.get(id).st) })), ...this.ais.map(a => ({ ai: 1, f: a.f, d: a.d, tm: a.tm, ...sp(a.st) }))];
   }
   check() {
     const s = this.seats();
@@ -162,8 +164,10 @@ export class BattleHost {
       else this.note = `That battlefield holds only ${n} players: pick a bigger one.`;
     }
     if (typeof d.w === 'number') this.w = int(d.w, -1, 31, 0);
-    if (Array.isArray(d.ais)) this.ais = d.ais.slice(0, MAX_PLAYERS).map(a => ({ f: this.sim.facs.includes(a && a.f) ? a.f : this.sim.facs[0], d: int(a && a.d, 0, 2, 1), tm: int(a && a.tm, 0, 7, 1) }));
+    if (Array.isArray(d.ais)) this.ais = d.ais.slice(0, MAX_PLAYERS).map(a => ({ f: this.sim.facs.includes(a && a.f) ? a.f : this.sim.facs[0], d: int(a && a.d, 0, 2, 1), tm: int(a && a.tm, 0, 7, 1), st: int(a && a.st, -1, 7, -1) }));
     if (Array.isArray(d.tm)) this.tm = this.order.map((_, i) => int(d.tm[i], 0, 7, this.tm[i] | 0));
+    // start spots picked for the players (the owner always sends the whole setup: no 'st' = everyone on Random)
+    this.order.forEach((id, i) => { const P = this.players.get(id); if (P) P.st = Array.isArray(d.st) ? int(d.st[i], -1, 7, -1) : -1; });
     const mx = this.mx();
     if (this.order.length + this.ais.length > mx) this.ais.splice(Math.max(0, mx - this.order.length));
     if (d.start) { const why = this.check(); if (!why) { if (!this.claim) { this.startBattle(); return; } this.askStart(); return; } }
@@ -216,10 +220,12 @@ export class BattleHost {
     const peers = [...this.order, ...ais.map(() => null)], toks = [...this.order.map(id => this.players.get(id).tok || null), ...ais.map(() => null)];
     const aiD = [...this.order.map(() => null), ...ais.map(a => a.d)];
     const seed = this.seed != null ? this.seed : (Math.random() * 1e9) | 0;
-    this.facs = facs; this.si = { seed, facs, map: this.map, tm, w: this.w | 0, code: this.code };
-    this.order.forEach((id, i) => this.emit('start', { pv: this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, sv: 1 }));
+    // picked start spots (null when everyone is on Random): sent with every start, kept for restarts
+    const st = this.sim.stClean([...this.order.map(id => this.players.get(id).st), ...ais.map(a => a.st)], facs.length), sp = st ? { st } : {};
+    this.facs = facs; this.si = { seed, facs, map: this.map, tm, w: this.w | 0, code: this.code, ...sp };
+    this.order.forEach((id, i) => this.emit('start', { pv: st ? this.sim.pvs : this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, sv: 1, ...sp }));
     this.flush();
-    this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code });
+    this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code, ...sp });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
     // sockets still in the lobby without a seat (never greeted, or told the lobby was full) hold no side: like late
     // joiners they are closed after UNSEATED_MS, so they can't keep an abandoned battle (and its slot) alive (review R12)

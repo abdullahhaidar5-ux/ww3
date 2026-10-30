@@ -265,13 +265,19 @@ const MAP_RINGS={
 for(const k in MAP_RINGS)Object.assign(MAPS[k],MAP_RINGS[k]);
 let BASE_SLOTS=MAPS.strait.slots;
 let BASES=BASE_SLOTS.slice(0,2);
-// Start positions: by default players take the map's first n slots. If the player picked a slot, they get it and the
-// others are spread out by farthest-point choice so nobody starts next door to anyone.
+// Start positions: by default players take the map's first n slots. Players can pick their slot in the battle setup
+// (pick: one slot for player 0, or an array with a slot per player, -1 = random; a slot named twice counts once): the
+// picks are kept and everyone on Random is placed by farthest-point choice so nobody starts next door to anyone.
+// Same picks = same bases on every machine (no random numbers are used).
 // A map may give its own start positions for a player count (sl6, sl8...): a ring where every base has the same number of
 // neighbours, so nobody starts squeezed in the middle of a row.
 function slotsOf(D,n){return (n&&D['sl'+n])||D.slots;}
-function slotOrder(D,n,pick){const S=slotsOf(D,n).slice(0,D.max||D.slots.length);n=Math.max(2,Math.min(S.length,n));if(!(pick>=0&&pick<S.length))return S.slice(0,n).map((_,i)=>i);
-  const out=[pick];while(out.length<n){let best=-1,bd=-1;for(let i=0;i<S.length;i++){if(out.includes(i))continue;const d=Math.min(...out.map(j=>Math.hypot(S[i][0]-S[j][0],S[i][1]-S[j][1])));if(d>bd+1e-6){bd=d;best=i;}}out.push(best);}return out;}
+function slotOrder(D,n,pick){const S=slotsOf(D,n).slice(0,D.max||D.slots.length);n=Math.max(2,Math.min(S.length,n));
+  const out=[];for(let i=0;i<n;i++){const v=Array.isArray(pick)?pick[i]:i===0?pick:-1;out.push(Number.isInteger(v)&&v>=0&&v<S.length&&!out.includes(v)?v:-1);}
+  if(!out.some(v=>v>=0))return S.slice(0,n).map((_,i)=>i);
+  for(let k=0;k<n;k++){if(out[k]>=0)continue;const tk=out.filter(v=>v>=0);let best=-1,bd=-1;for(let i=0;i<S.length;i++){if(tk.includes(i))continue;const d=Math.min(...tk.map(j=>Math.hypot(S[i][0]-S[j][0],S[i][1]-S[j][1])));if(d>bd+1e-6){bd=d;best=i;}}out[k]=best;}return out;}
+// the start slots a battle of n players on map mk offers, as [x,y] fractions of the map (the setup screen's picker)
+function startSpots(mk,n){const D=MAPS[mk]||MAPS.strait;return slotsOf(D,n).slice(0,D.max||D.slots.length).map(([x,y])=>[x/3200,y/2200]);}
 function setBases(n,mk,pick){const D=MAPS[mk]||MAPS.strait;BASE_SLOTS=slotsOf(D,Math.max(2,Math.min(D.max||8,n))).map(([x,y])=>[x*WK,y*WK]);BASES=slotOrder(D,n,pick).map(i=>BASE_SLOTS[i]);}
 let EF_R=8;let EF_W=Math.ceil(MAPW/EF_R)+1,EF_H=Math.ceil(MAPH/EF_R)+1;
 function segDist(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,L=dx*dx+dy*dy||1;let t=((px-ax)*dx+(py-ay)*dy)/L;t=Math.max(0,Math.min(1,t));const qx=ax+dx*t,qy=ay+dy*t;return[Math.hypot(px-qx,py-qy),t];}
