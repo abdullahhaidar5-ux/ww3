@@ -1,0 +1,48 @@
+{"jamMine":1,"jamTheirs":0,"btn":true,"spoofs":1,"cd":59.98,"theirG":[0,0,0],"mineG":[2,2,2],"btn2":"📡 Radar spoof (ready in 60 s) [disabled]","spoofsAfterRepeat":1,"spoofsStolen":1,"entsAdded":0,"onMine":3,"drift":192,"packJson":204,"flagged":3,"ck":{"sp":true,"cd":true,"mb":true,"mart":true,"gh":true},"ckOld":true}
+  ok   enemy jam bubble over our base blacks out our minimap
+  ok   our truck far from their units: no blackout for them
+  ok   Radar spoof button on the EW truck command card
+  ok   spoof order via the button creates one spoof
+  ok   cooldown ~60 s
+  ok   3-4 ghosts on the enemy minimap, unflagged
+  ok   own ghosts shown faintly to the owner
+  ok   button shows cooldown
+  ok   repeat during cooldown refused
+  ok   cannot spoof with an enemy truck
+  ok   enemy ghosts on our minimap
+  ok   ghosts drift toward us (~190 px in 5 s)
+  ok   no units added to the simulation
+  ok   team message carries EW data
+  ok   Strike Center flags ghosts as fake
+  ok   checkpoint keeps radar-spoof ghosts, cooldown, martyr banner and Ayatollah buff
+  ok   old checkpoint without EW fields restores
+  ok   spoof ends after 20 s
+  ok   sanctions: 20% income cut
+  ok   sanctions: 60 s, long cooldown, no double-fire
+  ok   smuggling routes: only 8% cut plus trickle
+  ok   sanctions survive checkpoint and end on time
+  ok   GPR: reveals tunnel in range, not out of range, not without the upgrade
+  ok   tunnel ambush: +50% damage, gone after 3 s
+  ok   fund militia: 7 units owned by caster, cooldown blocks 2nd use, checkpoint keeps it
+  ok   fund militia names per nation
+rubble {"rubBefore":false,"nciv":164,"city":true,"rubN":1,"gridOpen":true,"rubCell":1,"infThru":true,"tankThru":false,"infLen":80,"tankLen":160,"heavy":true,"infHeavy":false,"tankInRubble":0,"tankArrived":6,"infInRubble":12,"infSlow":0.7,"tag":"IN RUBBLE","dmgRubble":25,"dmgOpen":50,"suppRubble":0.057,"suppOpen":0.13,"syncSame":true,"ckSame":true}
+  ok   rubble: map has a city block to knock down
+  ok   rubble: no rubble grid before any block falls
+  ok   rubble: fallen block marks one rubble cell, open to infantry
+  ok   rubble: tank counts as heavy, rifleman does not
+  ok   rubble: infantry route crosses the rubble, tank route goes around (longer)
+  ok   rubble: driving tank never enters the rubble and arrives
+  ok   rubble: rifleman walks through it, slowed
+  ok   rubble: infantry inside take about half the damage
+  ok   rubble: less suppression inside
+  ok   rubble: client/rejoin rebuild matches the host
+  ok   rubble: checkpoint restore (host migration) keeps the rubble
+fortress {"allowedKP":true,"deniedUS":true,"second":false,"immune":true,"entered":true,"cap":24,"exited":true,"early":false,"fired":true,"paid":true,"cd":true,"dead":true,"capAfter":12}
+  ok   fortress: only KP/IR/RS/DW can build it
+  ok   fortress: limit of 1 per player
+  ok   fortress: takes 0 damage from guns, cannon, artillery, bombs, superweapons
+  ok   fortress: units enter and come out like a tunnel, bigger garrison (24)
+  ok   bunker buster: locked first 5 min, costs $2200, cooldown, destroys the fortress
+  ok   fortress: checkpoint restore keeps it (and its damage)
+  ok   no page errors
+EW PASS
