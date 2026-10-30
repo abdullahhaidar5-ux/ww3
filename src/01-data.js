@@ -195,7 +195,7 @@ const COUNTER={inf:'Beats AT teams and other infantry · Loses to tanks and arti
   drone:'Explodes on groups of vehicles and infantry · Loses to AA and rifle fire',heli:'Beats tanks and vehicles · Loses to AA and AT teams',jet:'Bombs buildings and vehicles · Loses to SAM sites and AA',
   boat:'Beats boats and helicopters near water · Loses to warships',ship:'Shells coasts and boats from long range · Loses to boats up close and aircraft'};
 const SHIA={IR:1,RS:1,DW:1};
-function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(SHIA[fac]||fac==='KP'?['cleric']:[])],factory:['aa','tank','arty',...(F.extra||[]),...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift'],shipyard:F.noShip?['boat']:['boat','ship','lander']};}
+function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(SHIA[fac]||fac==='KP'?['cleric']:[])],factory:['aa','tank','arty',...(F.extra||[]),...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift'],shipyard:F.noShip?['boat','lander']:['boat','ship','lander']};}
 function allUnits(fac){const r=roster(fac);return CATS.flatMap(c=>r[c]);}
 function bldAllowed(fac,k){if(k==='tunnel'||k==='fort')return !!FACTIONS[fac].tunnels;return !(k==='airfield'&&FACTIONS[fac].noAir);}
 
@@ -324,7 +324,7 @@ const XL={US:{jet:{dmg:1.25,hp:1.15},heli:{dmg:1.25,hp:1.1}},TR:{drone:{cost:.75
   RS:{drone:{cost:.75,time:.6,dmg:1.15,hp:1.2},arty:{rng:1.12,dmg:1.12,rof:.9},at:{hp:1.15}}};
 const TRN={US:['LCAC Hovercraft','CH-47 Chinook'],TR:['Landing Craft Tank','T-70 Black Hawk'],IL:['Landing Craft','CH-53 Yasur'],EU:['LCM Landing Craft','NH90 Transport'],UA:['Landing Craft','Mi-8 Hip'],RU:['Zubr Hovercraft','Mi-8 Hip'],
   IR:['Tondar Hovercraft','Bell 214 Transport'],SA:['Landing Craft Utility','UH-60 Black Hawk'],AE:['Landing Craft','CH-47 Chinook'],PK:['Landing Craft Utility','Mi-17 Hip'],IN:['Landing Craft Utility','Mi-17 Hip'],CN:['Type 726 Hovercraft','Z-8 Transport'],
-  KP:['Kongbang Hovercraft','Mi-8 Hip'],KR:['Solgae Hovercraft','KUH-1 Surion'],EG:['Landing Craft','CH-47 Chinook'],CU:['Landing Craft','Mi-8 Hip']};
+  KP:['Kongbang Hovercraft','Mi-8 Hip'],KR:['Solgae Hovercraft','KUH-1 Surion'],EG:['Landing Craft','CH-47 Chinook'],CU:['Landing Craft','Mi-8 Hip'],RS:['Fishing Dhow Ferry','Mi-8 Hip'],DW:['Fishing Dhow Ferry','Mi-8 Hip']};
 for(const k in TRN){const F=FACTIONS[k];if(!F)continue;F.units=F.units||{};F.units.lander=Object.assign({},F.units.lander||{},{name:TRN[k][0]});F.units.airlift=Object.assign({},F.units.airlift||{},{name:TRN[k][1]});}
 const XLB={RS:{turret:{hp:1.4,dmg:1.25,rng:1.12},tunnel:{hp:1.35,dmg:1.3},sam:{hp:1.3}},IL:{sam:{rng:1.3,dmg:1.3}},KR:{turret:{rng:1.15}},SA:{sam:{rng:1.2}}};
 const sc={};
