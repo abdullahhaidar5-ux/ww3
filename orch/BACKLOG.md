@@ -239,7 +239,7 @@ an earlier one still has work a squad can take (other squads may only do small P
 - [open] touch.mjs still ~265 s — cut software-GL screenshots to get under 3 min (QA).
 
 - [open] EW follow-ups (cycle 18 review): save spoof cooldowns + active ghosts (`spfT`, `G.spoofs`) in host-migration checkpoints (07b-ckpt); EW truck exists only for RU — consider giving the jam/spoof to another nation's special if Abdullah wants it wider; ewtest.mjs into the gate.
-- [open] Kill-cam follow-ups (cycle 18 review): replayed plane effects / building-death timers keep running after the replay and cam._xl/_yl/_dl aren't restored (kcStop in 08-ui); first replay frame may stutter; test on a real iPhone. claude.ai copy: Save screenshot does nothing there (artifact viewer blocks plain downloads) — use the `downloads` capability (window.claude.downloads.save) in the artifact build or hide the button there.
+- [open] Kill-cam follow-ups (cycle 18 review): replayed plane effects / building-death timers keep running after the replay and cam._xl/_yl/_dl aren't restored (kcStop in 08-ui); first replay frame may stutter; test on a real iPhone. claude.ai copy: Save screenshot does nothing there (artifact viewer blocks plain downloads) — use the `downloads` capability (window.claude.downloads.save) in the artifact build or hide the button there. Headless replay shot shows a black band under the picture (~40% of the screen, where the command bar was) — check the letterbox layout on PC and phone.
 
 ## P2 — next
 
