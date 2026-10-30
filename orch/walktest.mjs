@@ -86,11 +86,12 @@ async function runScene(page, sc, zooms, tagp) {
       const wp = b => { b.updateWorldMatrix(true, false); return tmp.setFromMatrixPosition(b.matrixWorld).clone(); };
       const per = 2 * Math.PI / (9.5 * (U[0].u.s.spd / 50)), N = 32, dt = per / N;
       const S = U.map(({ u }) => { const o = OBJ.get(u.id); const ms = o ? o.userData.parts.body.children.filter(m => m.userData.inner) : [];
-        return { o, ms: ms.map(m => ({ m, B: bonesOf(m), f: [[], []], fwd: V(), lat: V(), cross: 0, minGap: 1e9 })), p0: o ? wp(o) : null }; });
+        return { o, ms: ms.map(m => ({ m, B: bonesOf(m), f: [[], []], h: [[], []], fwd: V(), lat: V(), cross: 0, minGap: 1e9 })), p0: o ? wp(o) : null }; });
       for (let k = 0; k < N; k++) { step(dt);
         for (const s of S) for (const q of s.ms) { const B = q.B; if (!B.footL) continue;
           const hl = wp(B.uplegL), hr = wp(B.uplegR), mid = hl.clone().add(hr).multiplyScalar(.5), fl = wp(B.footL), fr = wp(B.footR);
           q.f[0].push(fl.clone().sub(mid)); q.f[1].push(fr.clone().sub(mid));
+          if (B.handL && B.handR) { q.h[0].push(wp(B.handL).sub(mid)); q.h[1].push(wp(B.handR).sub(mid)); }
           const lat = hr.clone().sub(hl); lat.y = 0; lat.normalize(); q.lat.add(lat);
           const tl = B.LeftToeBase || B.footL.children.find(c => c.isBone), tr = B.RightToeBase || B.footR.children.find(c => c.isBone);
           if (tl && tr) { const f = wp(tl).sub(fl).add(wp(tr).sub(fr)); f.y = 0; q.fwd.add(f.normalize()); }
@@ -111,8 +112,17 @@ async function runScene(page, sc, zooms, tagp) {
             const th = .5 * Math.atan2(2 * xz, xx - zz); let e = Math.abs(deg(Math.atan2(Math.sin(th - md), Math.cos(th - md)))); if (e > 90) e = 180 - e;
             sw = Math.max(sw, e); amp = Math.max(amp, 2 * Math.sqrt((xx + zz) / F.length));
           }
+          // arms: principal horizontal axis of each hand's path (only judged when the hands actually move)
+          let asw = 0, aamp = 0;
+          for (const F of q.h) { if (!F.length) continue;
+            let cx = 0, cz = 0; for (const v of F) { cx += v.x; cz += v.z; } cx /= F.length; cz /= F.length;
+            let xx = 0, zz = 0, xz = 0; for (const v of F) { const dx = v.x - cx, dz = v.z - cz; xx += dx * dx; zz += dz * dz; xz += dx * dz; }
+            const a2 = 2 * Math.sqrt((xx + zz) / F.length); aamp = Math.max(aamp, a2);
+            const th = .5 * Math.atan2(2 * xz, xx - zz); let e = Math.abs(deg(Math.atan2(Math.sin(th - md), Math.cos(th - md)))); if (e > 90) e = 180 - e;
+            if (a2 > .15) asw = Math.max(asw, e);
+          }
           const fa = Math.atan2(q.fwd.z, q.fwd.x); let fe = Math.abs(deg(Math.atan2(Math.sin(fa - md), Math.cos(fa - md))));
-          out.push({ nm, t, fac: G.teams[t].fac, swing: +sw.toFixed(1), face: +fe.toFixed(1), amp: +amp.toFixed(2), gap: +q.minGap.toFixed(2), anim: !!q.m.userData.legs });
+          out.push({ nm, t, fac: G.teams[t].fac, swing: +sw.toFixed(1), face: +fe.toFixed(1), amp: +amp.toFixed(2), gap: +q.minGap.toFixed(2), aswing: +asw.toFixed(1), aamp: +aamp.toFixed(2), anim: !!q.m.userData.legs });
         } });
       return { dist, out };
     }, [dist, DIRS]);
@@ -122,7 +132,7 @@ async function runScene(page, sc, zooms, tagp) {
       if (bad) { fails++; lines.push(`FAIL ${tagp} ${map} ${r.fac} ${r.nm} zoom ${dist}: ${bad}`); }
     }
     const w = res.out.filter(r => !r.err); if (w.length < 12) { fails++; lines.push(`FAIL ${tagp} ${map} zoom ${dist}: only ${w.length} soldiers on screen`); } const mx = k => Math.max(...w.map(r => r[k]));
-    console.log(`[${secs()}] ${tagp} ${map}:${p}/${a} zoom ${dist}: ${w.length} soldiers, worst swing ${mx('swing')}°, worst facing ${mx('face')}°, min stride ${Math.min(...w.map(r => r.amp))}, min foot gap ${Math.min(...w.map(r => r.gap))}`);
+    console.log(`[${secs()}] ${tagp} ${map}:${p}/${a} zoom ${dist}: ${w.length} soldiers, worst swing ${mx('swing')}°, worst facing ${mx('face')}°, min stride ${Math.min(...w.map(r => r.amp))}, min foot gap ${Math.min(...w.map(r => r.gap))}, arms: worst swing ${mx('aswing')}°, hand travel ${Math.min(...w.map(r => r.aamp))}-${mx('aamp')}`);
     if (dir && dist === zooms[0]) await snap(page, `${tagp}-${map}-${p}`, dist);
   }
 }
