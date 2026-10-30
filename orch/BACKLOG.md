@@ -9,7 +9,7 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
 **NEW FEATURE PACK (Abdullah, 2026-10-29 19:26 — picked from a Rise of the Reds–inspired list; "Get more creative"; NO drone
-swarm economy; nuclear deterrence, world campaign map and commander co-op were NOT picked — don't build them).** Several
+swarm economy, NO supply lines (Abdullah 19:29); nuclear deterrence, world campaign map and commander co-op were NOT picked — don't build them).** Several
 already exist in some form (checked 2026-10-29): morale/rout + officer/Ayatollah auras, weather incl. sandstorm/fog
 grounding jets, EW Jamming Truck, hidden Tunnel Networks (IR/RS/DW/KP), city buildings that collapse to rubble. Build
 on those, don't duplicate. Every sim item: randomness only via the seeded RNG, host-authoritative, and open a
@@ -18,10 +18,6 @@ on those, don't duplicate. Every sim item: randomness only via the seeded RNG, h
   stays on the spot (~8 s): nearby friendly infantry lose fear faster and get a small damage/rof boost; banners don't
   stack past one per area. Visible flag (Visuals: small cloth banner), floating "MARTYR" text like "RALLIED". Combat
   music swells while a banner is up if cheap (Audio, optional).
-- [open] **Supply lines that can be cut** — Battlefield. Forward vehicles/artillery far from friendly supply (base,
-  depot, supply truck route) slowly run low on ammo (fire slower, then stop heavy weapons); supply trucks/convoys driving
-  near them restock. Ambushing convoys stalls a push. Must stay simple to read: a small ammo pip on the unit card/
-  health bar and a "Low on ammo" voice/log line. AI must use it (escort convoys, raid enemy ones on Hard).
 - [open] **Electronic warfare, bigger** — Battlefield + Interface. Extend the EW Jamming Truck: enemies inside its
   bubble lose their minimap there (static/blackout patch on the minimap) and a "Radar spoof" ability puts 3–4 fake
   ghost units on enemy radar/minimap for ~20 s. Counter: an upgrade (or the existing radar/uplink) that filters ghosts.

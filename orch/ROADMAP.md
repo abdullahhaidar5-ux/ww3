@@ -53,7 +53,6 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 
 ## Battlefield and maps
 - [next] Martyrdom banner: fallen Shia soldiers leave a rally flag that steadies nearby troops
-- [next] Supply lines: forward units run low on ammo; convoys restock them and can be ambushed
 - [next] Bigger electronic warfare: minimap blackout and fake radar ghosts
 - [next] Rubble from destroyed buildings becomes cover and blocks tanks
 - [next] Tunnels counter: ground-penetrating radar, tunnel ambushes
