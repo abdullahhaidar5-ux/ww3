@@ -135,6 +135,32 @@ try {
   ck('sanctions: 60 s, long cooldown, no double-fire', sx.dur === 60 && sx.cd === 420 && !sx.again, JSON.stringify(sx));
   ck('smuggling routes: only 8% cut plus trickle', sx.smug > sx.base * .92 && sx.smug < sx.base * .92 + 50 * 6 + 5, JSON.stringify(sx));
   ck('sanctions survive checkpoint and end on time', sx.ckKeeps && sx.after > sx.base * .98 + 50 * 0 && sx.after < sx.base * 1.02 && sx.unsanctioned === 1, JSON.stringify(sx));
+  // Tunnels deeper + proxy militias: Ground-Penetrating Radar reveals enemy tunnel entrances in range only, tunnel ambush bonus (+50% for 3 s), Fund Militia
+  const tm = await page.evaluate(() => {
+    G.paused = true; const me = ME, en = G.teams.find(T => T.id !== me).id, M = G.teams[me], E = G.teams[en], hq = G.ents.find(b => b.team === me && b.kind === 'hq'), o = {};
+    G.t = Math.max(G.t, 400);
+    const mk = (team, dx) => { const b = addBld(team, 'tunnel', hq.x + dx, hq.y + 40, true); b.built = 1; b.dis = 0; b.lastFire = -99; return b; };
+    const near = mk(en, 300), far = mk(en, 1600); M.upg.gpr = false; near.detT = far.detT = 0;
+    G.gprT = 0; gprTick(0.01); o.noUpg = hiddenNow(near);
+    M.upg.gpr = true; G.gprT = 0; gprTick(0.01); o.near = hiddenNow(near); o.far = hiddenNow(far);
+    G.t += 2; o.expires = hiddenNow(near); M.upg.gpr = false;
+    // ambush
+    const mine = mk(me, -300), u = addUnit(me, 'inf', hq.x, hq.y + 100), tg = addUnit(en, 'inf', hq.x + 500, hq.y + 500);
+    enterTunnel(u); unloadTunnel(mine); const base = specialMult(tg, 'gun', { s: u.s, isB: false, team: me });
+    o.amb = specialMult(tg, 'gun', u) / base; G.t += 3.1; o.ambEnd = specialMult(tg, 'gun', u) / base;
+    // militia
+    M.pw.mil = { cd: 0, lv: 1 }; const before = new Set(G.ents.filter(e => e.team === me && !e.isB).map(e => e.id));
+    o.fired = usePower(me, 'mil', 0, 0); const nu = G.ents.filter(e => e.team === me && !e.isB && !before.has(e.id) && !e.dead);
+    o.n = nu.length; o.tech = nu.filter(e => e.kind === 'jeep').length; o.cd = M.pw.mil.cd; o.again = usePower(me, 'mil', 0, 0);
+    const pk = JSON.parse(JSON.stringify(ckEncode())); ckRestore(pk);
+    o.ck = G.ents.filter(e => e.team === me && !e.isB && !before.has(e.id) && !e.dead).length === o.n && G.teams[me].pw.mil.cd > 0;
+    o.names = [powInfo('mil', 'IR').name, powInfo('mil', 'US').name, powInfo('mil', 'RU').name, powInfo('mil', 'TR').name];
+    return o;
+  });
+  ck('GPR: reveals tunnel in range, not out of range, not without the upgrade', tm.near === false && tm.far === true && tm.noUpg === true && tm.expires === true, JSON.stringify(tm));
+  ck('tunnel ambush: +50% damage, gone after 3 s', Math.abs(tm.amb - 1.5) < .01 && Math.abs(tm.ambEnd - 1) < .01, JSON.stringify(tm));
+  ck('fund militia: 7 units owned by caster, cooldown blocks 2nd use, checkpoint keeps it', tm.fired && tm.n === 7 && tm.tech === 1 && tm.cd >= 400 && !tm.again && tm.ck, JSON.stringify(tm));
+  ck('fund militia names per nation', /Popular Mobilization/.test(tm.names[0]) && /Contractors/.test(tm.names[1]) && /PMC/.test(tm.names[2]) && /Local militia/.test(tm.names[3]), JSON.stringify(tm.names));
   // ---- Rubble (destructible cities): a fallen city block is cover for infantry and a wall for heavy vehicles ----
   // a fresh battle on South Lebanon (it has towns; the EW battle's map may not)
   await page.evaluate(() => { setup.map = 'lebanon'; setup.n = 1; startSingle(); });

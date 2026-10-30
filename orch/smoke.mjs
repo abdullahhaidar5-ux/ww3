@@ -75,6 +75,7 @@ const browser = await chromium.launch({ executablePath: findChromium(),
 const bctx = await browser.newContext({ viewport: { width: 1600, height: 900 } });
 await guardContext(bctx); // never the live game servers (WebSockets escape page.route)
 const page = await bctx.newPage();
+if (process.env.DN_W) await page.addInitScript(w => { window.__DNW = w; }, +process.env.DN_W); // DN_W=4: run the same smoke battle at night (screenshots for orch/shots/daynight)
 // Network to other hosts (PeerJS signalling, fonts, relays) is not part of the test.
 await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue()
   : ART && r.request().url() === THREE_CDN ? r.fulfill({ status: 200, contentType: 'text/javascript', body: ART.three }) : r.abort());
@@ -112,7 +113,7 @@ try {
   // Start a skirmish against the AI the same way the Deploy button does, with the requested number of players.
   const start = await page.evaluate((n) => {
     try {
-      if (typeof setup === 'object' && setup) setup.n = n - 1; // number of AI opponents
+      if (typeof setup === "object" && setup) { setup.n = n - 1; setup.w = +(window.__DNW || 0); } // number of AI opponents
       try { initAudio(); } catch (e) {}
       startSingle();
       // put the player's slot under AI control too, so the test is a real two-sided battle

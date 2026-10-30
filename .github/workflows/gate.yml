@@ -42,7 +42,7 @@ jobs:
             check)          python3 orch/build.py --check ;;
             servertest)     node orch/servertest.mjs ;;
             ew)             if [ -f orch/ewtest.mjs ]; then node orch/ewtest.mjs; else echo "SKIP ew (no test)"; fi ;;   # electronic warfare: spoof/jamming + their host-migration checkpoint
-            headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --compare || echo "SKIP headless" ;;
+            headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --night && node orch/headless.mjs --compare || echo "SKIP headless" ;;
             smoke4)         node orch/smoke.mjs --players 4 ;;
             mpsync)         node orch/mpsync.mjs ;;
             mpsync-server)  node orch/mpsync.mjs --server && node orch/mpsync.mjs --server --reconnect ;;   # sync, then reconnect via the server
