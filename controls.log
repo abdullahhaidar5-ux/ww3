@@ -1,0 +1,124 @@
+desktop (1600×900, mouse)
+  ok   default mouse scheme is Standard (old saved Generals default migrated once)
+  ok   on-screen hint: left selects, right moves/attacks, F attack-move
+  ok   no text says A attack-moves or S stops
+  ok   test units are on screen
+  ok   open ground to click on
+ Standard scheme (default)
+  ok   left-click own unit selects it
+  ok   Shift+click adds to the selection
+  ok   right-click ground = move order
+  ok   …and keeps the selection
+  ok   right-click enemy = attack order
+  ok   left-click enemy selects it (no order)
+  ok   left-click empty ground deselects (no order)
+  ok   double-click selects every unit of that type on screen
+  ok   left-drag draws a selection box
+  ok   A does nothing (no attack-move, no order)
+  ok   F arms attack-move
+  ok   F then left-click ground = attack-move order
+  ok   …selection kept after attack-move
+  ok   F then right-click ground = attack-move order
+  ok   Ctrl+click enemy = force-fire on it
+  ok   Ctrl+click empty ground does not move the units
+  ok   …selection kept after Ctrl+click
+  ok   Alt+click = waypoint (queued move)
+  ok   G arms guard
+  ok   G then click ground = guard-area order
+  ok   X stops the selected units
+  ok   right-click cancels building placement (no order)
+  ok   right-drag with units selected = infantry line formation
+  ok   …selection kept after the line order
+  ok   right-drag with nothing selected does nothing
+  ok   left-click own building selects it
+  ok   rally-point ground is clickable
+  ok   left-click ground with a production building selected sets its rally point
+  ok   …and the building stays selected
+ mouse kept inside the game window
+  ok   lock: a click on the battlefield locks the mouse (and still selects)
+  ok   lock: the game draws its own cursor
+  ok   lock: the game cursor follows the mouse movement
+  ok   lock: right-click ground still gives a move order
+  ok   lock: the cursor stays inside the window at the edge
+  ok   lock: edge scrolling works at the window edge
+  ok   lock: clicking a command-bar tab under the game cursor works
+  ok   lock: Esc releases the mouse and cancels attack-move (selection kept)
+  ok   lock: clicking the battlefield again locks again
+  ok   lock: when the browser itself releases it (Esc), attack-move is cancelled too
+  ok   lock: the ☰ menu opens under the game cursor and releases the mouse
+  ok   lock: Settings toggle off = the mouse is never locked
+ Generals scheme (chosen in Settings > Mouse)
+  ok   lock: no lock while Settings is open
+  ok   Settings > Mouse switches to Generals and saves it
+  ok   Settings > Mouse has the "keep the mouse inside the game window" toggle
+  ok   hint shows the Generals controls with F attack-move
+  ok   gen: left-click ground = move order
+  ok   gen: left-click enemy = attack order
+  ok   gen: A does nothing
+  ok   gen: F then click = attack-move
+  ok   gen: right-click deselects
+  ok   per-function choice works (custom mix)
+  ok   Reset mouse settings returns to Standard
+  ok   mouse: enter/exit test units are on screen
+  ok   mouse: infantry selected + right-click/tap own transport = they board it
+  ok   mouse: the cursor shows "enter" over the transport
+  ok   mouse: test transport loaded
+  ok   mouse: the cursor shows "get out" over the selected loaded transport
+  ok   mouse: transport selected + right-click/tap it again = unload there
+  ok   mouse: …and the troops are out
+  ok   mouse: Alt+right-click a spot = drive there, then unload
+  ok   mouse: plain right-click ground with a transport just moves it
+  ok   mouse: battle: the transport drives off still loaded, then unloads where it stops
+  ok   mouse: two transports selected + right-click/tap one = both unload
+  ok   mouse: …both empty
+  ok   mouse: held building selected + right-click/tap an enemy = garrison fires at it, nobody leaves
+  ok   mouse: …every soldier inside targets that enemy
+  ok   mouse: held building selected + right-click/tap the ground = everyone comes out
+  ok   mouse: …and they run to the spot clicked
+  ok   mouse: the cursor shows "get out" over the ground with the tunnel selected
+  ok   mouse: tunnel selected + right-click/tap the ground = units come out there
+  ok   mouse: …and they run to the spot
+  ok   mouse: stances: Hold does not chase an enemy out of range
+  ok   mouse: stances: Hold fires at an enemy in range
+  ok   mouse: stances: Guerrilla holds fire until the enemy is close
+  ok   mouse: stances: Guerrilla fires once the enemy is close
+  ok   mouse: stances: Assault chases
+  ok   mouse: stances: stance command sets the unit stance
+  ok   mouse: stances: stance survives a host-migration checkpoint
+  ok   mouse: stances: V cycles the stance
+phone (390×844, touch)
+  ok   phone: test units and open ground are on screen
+  ok   phone: tap a unit selects it
+  ok   phone: tap the ground with units selected = move order
+  ok   phone: taps never lock the mouse
+  ok   touch: enter/exit test units are on screen
+  ok   touch: infantry selected + right-click/tap own transport = they board it
+  ok   touch: test transport loaded
+  ok   touch: transport selected + right-click/tap it again = unload there
+  ok   touch: …and the troops are out
+  ok   touch: battle: the transport drives off still loaded, then unloads where it stops
+  ok   touch: two transports selected + right-click/tap one = both unload
+  ok   touch: …both empty
+  ok   touch: held building selected + right-click/tap an enemy = garrison fires at it, nobody leaves
+  ok   touch: …every soldier inside targets that enemy
+  ok   touch: held building selected + right-click/tap the ground = everyone comes out
+  ok   touch: …and they run to the spot clicked
+  ok   touch: tunnel selected + right-click/tap the ground = units come out there
+  ok   touch: …and they run to the spot
+
+CONTROLS PASS — 102/102 checks (631s); screenshots orch/out/controls-*.png
+[47s] desktop fulda:US/RU zoom 232: 30 soldiers, worst swing 5.8°, worst facing 5.4°, min stride 3.21, min foot gap 1.29, arms: worst swing 0°, hand travel 0.12-0.13, support hand ahead 1.61, foot slip 0.09, body roll 0°, grip moving 0 standing 0 k, rifle on 30/30
+[47s] desktop fulda:US/RU zoom 450: 30 soldiers, worst swing 5.9°, worst facing 5.6°, min stride 3.2, min foot gap 1.29, arms: worst swing 0°, hand travel 0.12-0.13, support hand ahead 1.61, foot slip 0.1, body roll 0°, grip moving 0 standing 0 k, rifle on 30/30
+[47s] desktop fulda:US/RU zoom 700: 30 soldiers, worst swing 5°, worst facing 5.2°, min stride 3.2, min foot gap 1.29, arms: worst swing 0°, hand travel 0.12-0.13, support hand ahead 1.61, foot slip 0.09, body roll 0°, grip moving 0 standing 0 k, rifle on 30/30
+[67s] desktop fulda:DW/IR zoom 232: 30 soldiers, worst swing 5.2°, worst facing 3°, min stride 3.49, min foot gap 2.32, arms: worst swing 0°, hand travel 0.12-0.12, support hand ahead 1.79, foot slip 0.1, body roll 0°, grip moving 0 standing 0 k, rifle on 30/30
+[67s] desktop fulda:DW/IR zoom 450: 30 soldiers, worst swing 5.4°, worst facing 2.7°, min stride 3.47, min foot gap 2.32, arms: worst swing 0°, hand travel 0.12-0.12, support hand ahead 1.79, foot slip 0.09, body roll 0°, grip moving 0 standing 0 k, rifle on 30/30
+[68s] desktop fulda:DW/IR zoom 700: 30 soldiers, worst swing 5°, worst facing 2.9°, min stride 3.47, min foot gap 2.32, arms: worst swing 0°, hand travel 0.12-0.12, support hand ahead 1.79, foot slip 0.1, body roll 0°, grip moving 0 standing 0 k, rifle on 30/30
+[98s] desktop golan:RS/EU zoom 232: 30 soldiers, worst swing 5.2°, worst facing 3.1°, min stride 3.49, min foot gap 1.29, arms: worst swing 0°, hand travel 0.12-0.12, support hand ahead 1.61, foot slip 0.09, body roll 0°, grip moving 0 standing 0 k, rifle on 30/30
+[98s] desktop golan:RS/EU zoom 450: 30 soldiers, worst swing 5.9°, worst facing 2.6°, min stride 3.5, min foot gap 1.29, arms: worst swing 0°, hand travel 0.12-0.12, support hand ahead 1.61, foot slip 0.1, body roll 0°, grip moving 0 standing 0 k, rifle on 30/30
+[98s] desktop golan:RS/EU zoom 700: 30 soldiers, worst swing 6°, worst facing 3°, min stride 3.51, min foot gap 1.29, arms: worst swing 0°, hand travel 0.12-0.12, support hand ahead 1.61, foot slip 0.1, body roll 0°, grip moving 0 standing 0 k, rifle on 30/30
+[121s] phone fulda:US/RU zoom 232: 12 soldiers, worst swing 5°, worst facing 3.3°, min stride 3.22, min foot gap 1.29, arms: worst swing 0°, hand travel 0.12-0.13, support hand ahead 1.61, foot slip 0.09, body roll 0°, grip moving 0 standing 0 k, rifle on 12/12
+[121s] phone fulda:US/RU zoom 600: 30 soldiers, worst swing 6°, worst facing 5.8°, min stride 3.2, min foot gap 1.29, arms: worst swing 0°, hand travel 0.12-0.13, support hand ahead 1.61, foot slip 0.1, body roll 0°, grip moving 0 standing 0 k, rifle on 30/30
+[131s] phone fulda:DW/IR zoom 232: 9 soldiers, worst swing 4.6°, worst facing 2.8°, min stride 3.5, min foot gap 2.32, arms: worst swing 0°, hand travel 0.12-0.12, support hand ahead 1.79, foot slip 0.09, body roll 0°, grip moving 0 standing 0 k, rifle on 9/9
+[132s] phone fulda:DW/IR zoom 600: 30 soldiers, worst swing 5.6°, worst facing 2.7°, min stride 3.47, min foot gap 2.32, arms: worst swing 0°, hand travel 0.12-0.12, support hand ahead 1.79, foot slip 0.1, body roll 0°, grip moving 0 standing 0 k, rifle on 30/30
+
+WALKTEST PASS
