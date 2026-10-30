@@ -8,22 +8,6 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
-- [open] **End-of-match stats screen (Abdullah, 2026-10-29 19:37: "when the games end make a summary page for the players to
-  show cool stats")** — Interface + Battlefield (stat counters). Today the end screen is one line of text (Victory/Defeat +
-  "trained X units, destroyed Y…"), and **clients get no stats at all** (`MODE==='client'` skips it in `08-ui`). Build a real
-  summary page shown to **every player, host and clients alike**, after the result banner (and after the kill-cam once that ships):
-  - **Scoreboard, all players** (nation flag/name, team colour, winner highlighted): units built, units lost, kills,
-    structures destroyed/lost, money earned/spent, final general rank, time alive.
-  - **Awards / "cool stats"** per match, e.g. MVP (most value destroyed), Top Killer, Iron Wall (fewest losses), Big Spender,
-    Fastest First Kill, Best Unit (single unit with most kills, by type), most used general power, biggest army at once.
-  - **Army strength over time** graph (one line per player) — sampled every ~10 s; light enough for phones.
-  - Buttons: Rematch / Back to menu, and **Share** (screenshot image of the page for Discord; must work on iPhone).
-  - Counters live in team state on the host (already has `built`, `kills`, `rank`, `spent`, `lost`); add the missing ones
-    there, ship the final table to clients in the existing `['end',winner]` message (or a new end-stats message) so everyone
-    sees the same numbers. Counting only — **never change gameplay or sync**; open a `main → servers-live` PR since it
-    touches 03-sim/07-net. Readable on a phone in portrait and landscape; works in the artifact edition too.
-  - Ask Abdullah to try it on his iPhone after one quick AI battle.
-
 **NEW FEATURE PACK (Abdullah, 2026-10-29 19:26 — picked from a Rise of the Reds–inspired list; "Get more creative"; NO drone
 swarm economy, NO supply lines (Abdullah 19:29); nuclear deterrence, world campaign map and commander co-op were NOT picked — don't build them).** Several
 already exist in some form (checked 2026-10-29): morale/rout + officer/Ayatollah auras, weather incl. sandstorm/fog
@@ -190,10 +174,11 @@ an earlier one still has work a squad can take (other squads may only do small P
 
 ## P1 — now
 
-- [open] **Phase 5 next: merge vehicle model parts** (Visuals) — vehicles are now the biggest frame cost (columns report).
+- [open] **Phase 5 next: infantry draws** (Visuals, cycle 19) — vehicles merged; infantry is now the biggest cost (~16 draws per squad); artillery add-on gun still its own draw; decal ring/shadow refill runs twice per frame (10-post re-renders the scene — skip if `R3.info.render.frame` unchanged); run `columns.mjs --phone`. If turrets are ever animated, keep their parts out of the merge.
+- [open] **End-stats follow-ups** (Interface, cycle 19): cap awards per player (one player can sweep them all); show player names; army graph stops at 720 samples (~2 h) — halve + double interval instead; `orch/endstats.mjs` failed once then passed ×2 (flaky? add to gate when stable); ask Abdullah to test on iPhone.
 - [open] **Soldier animation clips + distant low-poly soldier** (Visuals, gfx-infantry follow-up): baked run/shoot/die; the
   remaining buildings (only HQ/barracks/factory got ME models).
-- [open] **QA: CI `cfclient` flaked once on d136254** ("no player took over after the server lost it"); passed locally ×1 and on
+- [open] **QA: CI `cfclient` flaked once on d136254 and again in cycle 19 (passed on rerun)** ("no player took over after the server lost it"); passed locally ×1 and on
   the branches. If it fails again in CI, root-cause the takeover-after-server-restart timing.
 
 - [open] **ME buildings follow-ups** (Visuals, cycle 16): Strike Center close-ups from a real battle; Egypt vs Saudi/UAE versions differ only in silo height — give EG its own touch.
@@ -238,7 +223,7 @@ an earlier one still has work a squad can take (other squads may only do small P
 - [open] News ticker follow-ups (cycle 17): only shows own-team news (clients get only their own messages) — consider host-broadcast public headlines for enemy captures/losses; click-test the Settings toggle.
 - [open] touch.mjs still ~265 s — cut software-GL screenshots to get under 3 min (QA).
 
-- [open] EW follow-ups (cycle 18 review): save spoof cooldowns + active ghosts (`spfT`, `G.spoofs`) in host-migration checkpoints (07b-ckpt); EW truck exists only for RU — consider giving the jam/spoof to another nation's special if Abdullah wants it wider; ewtest.mjs into the gate.
+- [open] EW follow-ups (cycle 18 review): (checkpoint save + ewtest in gate DONE cycle 19) EW truck exists only for RU — consider giving the jam/spoof to another nation's special if Abdullah wants it wider; ewtest.mjs into the gate.
 - [open] Kill-cam follow-ups (cycle 18 review): replayed plane effects / building-death timers keep running after the replay and cam._xl/_yl/_dl aren't restored (kcStop in 08-ui); first replay frame may stutter; test on a real iPhone. claude.ai copy: Save screenshot does nothing there (artifact viewer blocks plain downloads) — use the `downloads` capability (window.claude.downloads.save) in the artifact build or hide the button there. Headless replay shot shows a black band under the picture (~40% of the screen, where the command bar was) — check the letterbox layout on PC and phone.
 
 ## P2 — next
@@ -268,6 +253,9 @@ an earlier one still has work a squad can take (other squads may only do small P
 
 ## Done
 
+- 2026-10-30 (cycle 19) — End-of-match summary page for every player (host and clients): awards, scoreboard per nation, army-strength graph, Share picture (iPhone share sheet). Counting only.
+- 2026-10-30 (cycle 19) — Vehicles drawn as one merged mesh per type/team + batched team rings/shadows: −40% draw calls in a 620-unit battle, same look.
+- 2026-10-30 (cycle 19) — Host takeover keeps fake radar contacts and martyr banners; EW test in the CI gate (18 jobs).
 - 2026-10-30 (cycle 18) — Bigger EW (RU EW truck): enemies inside its bubble get a "JAM" static patch on their minimap; new Radar spoof button (60 s recharge, AI uses it) puts 3–4 fake contacts on enemy minimaps for 20 s; a Strike Center (yours or an ally's) marks fakes with "?".
 - 2026-10-30 (cycle 18) — Kill-cam: ~10 s slow-motion replay of the battle's biggest moment before the score screen (skip with tap/Esc), plus a Save screenshot button.
 - 2026-10-30 (cycle 18) — Martyr banner: the soundtrack swells briefly for its side (max once per 20 s).

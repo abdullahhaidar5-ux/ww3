@@ -117,7 +117,7 @@ Every token an agent reads counts against Abdullah's plan. Work like this:
 - **Keep command output short:** pipe tests and builds through `| tail -20` (or grep for PASS/FAIL); never print whole
   gate logs, only the failing excerpt. Use `git log --oneline -10`, `git diff --stat` before full diffs.
 - **Read only the top of `orch/BACKLOG.md`/`LOG.md`/`HISTORY.md`** (head -60) unless the task needs more.
-- **Test smart:** quick local checks while working; run `orch/cigate.sh` (all 16 tests) once when done and once after a
+- **Test smart:** quick local checks while working; run `orch/cigate.sh` (all 18 tests) once when done and once after a
   fix, not after every small step. Wait on it with one blocking command, not repeated polling.
 - **Pick the cheaper model for simple work** (Abdullah, 2026-10-28 18:32: "mix models"): when dispatching helper agents,
   use `model: "sonnet"` for finding/packing free assets, credits, copy/text, layout tweaks and small fixes; keep Opus
