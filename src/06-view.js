@@ -150,7 +150,7 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
     if(e.kind==='dozer'&&e.building&&e.team===ME){c.font='600 11px Saira Condensed, sans-serif';c.textAlign='center';c.fillStyle='#e3b341';c.fillText('BUILDING',p.x,p.y-6);}
     if(e.hacking||e.planting){c.font='600 11px Saira Condensed, sans-serif';c.textAlign='center';c.fillStyle=e.planting?'#ea5a40':'#74d08f';c.fillText(e.planting?'PLANTING':(e.order&&e.order.type==='hack'||e.hk)?'HACKING':'+$ ONLINE',p.x,p.y-6);}}
   {const T=G.teams[ME];if(T){const n=MODE==='client'?(T.tunN|0):(T.tun||[]).length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);
-   for(const e of G.ents){if(e.dead||e.team!==ME||e.kind!=='tunnel'||e.built<1)continue;const p=toScreen(e.x,groundH(e.x,e.y)+BH.tunnel+14,e.y);if(p.z>1||p.x<-80||p.y<-40||p.x>VW+80||p.y>VH+40)continue;
+   for(const e of G.ents){if(e.dead||e.team!==ME||!isTun(e)||e.built<1)continue;const p=toScreen(e.x,groundH(e.x,e.y)+BH.tunnel+14,e.y);if(p.z>1||p.x<-80||p.y<-40||p.x>VW+80||p.y>VH+40)continue;
      const parts=Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' '+(SHORTN[k]||k.toUpperCase()));const t1='TUNNEL '+n+'/'+TUN_CAP,t2=n?parts.join(' · '):'empty';
      c.font='700 12px Saira Condensed, sans-serif';const w1=c.measureText(t1).width;c.font='500 10px IBM Plex Mono, monospace';const w2=c.measureText(t2).width;const W=Math.max(w1,w2)+14,H=n?31:29;
      c.fillStyle='rgba(8,12,10,.82)';c.fillRect(p.x-W/2,p.y-H,W,H);c.strokeStyle=n>=TUN_CAP?'#ea5a40':n?'#74d08f':'#55655c';c.lineWidth=1.5;c.strokeRect(p.x-W/2+.5,p.y-H+.5,W-1,H-1);
@@ -231,7 +231,7 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
   // units and buildings
   const sel=new Set(G.sel);
   for(const e of G.ents){if(e.dead||!vis(e))continue;const x=e.x*sx,y=e.y*sy,col=G.teams[e.team].color,own=e.team===ME;
-    if(e.isB){const s=e.kind==='hq'?9:e.kind==='turret'||e.kind==='sam'||e.kind==='tunnel'?5:7;c.fillStyle='#050807';c.fillRect(x-s/2-1.5,y-s/2-1.5,s+3,s+3);c.fillStyle=col;c.fillRect(x-s/2,y-s/2,s,s);if(e.kind==='hq'){c.fillStyle='#050807';c.fillRect(x-1.5,y-1.5,3,3);}if(e.built<1){c.fillStyle='rgba(0,0,0,.45)';c.fillRect(x-s/2,y-s/2,s,s*(1-e.built));}continue;}
+    if(e.isB){const s=e.kind==='hq'?9:e.kind==='turret'||e.kind==='sam'||isTun(e)?5:7;c.fillStyle='#050807';c.fillRect(x-s/2-1.5,y-s/2-1.5,s+3,s+3);c.fillStyle=col;c.fillRect(x-s/2,y-s/2,s,s);if(e.kind==='hq'){c.fillStyle='#050807';c.fillRect(x-1.5,y-1.5,3,3);}if(e.built<1){c.fillStyle='rgba(0,0,0,.45)';c.fillRect(x-s/2,y-s/2,s,s*(1-e.built));}continue;}
     const d=e.s.dom;c.fillStyle=col;c.strokeStyle=own?'rgba(255,255,255,.75)':'#050807';c.lineWidth=1;
     if(d==='air'){const a=e.ang||0;c.save();c.translate(x,y);c.rotate(a);c.beginPath();c.moveTo(4.5,0);c.lineTo(-3,3);c.lineTo(-1.5,0);c.lineTo(-3,-3);c.closePath();c.fill();c.stroke();c.restore();}
     else if(d==='naval'){const a=e.ang||0;c.save();c.translate(x,y);c.rotate(a);c.beginPath();c.moveTo(5,0);c.lineTo(1,2.6);c.lineTo(-4,2.2);c.lineTo(-4,-2.2);c.lineTo(1,-2.6);c.closePath();c.fill();c.stroke();c.restore();}
