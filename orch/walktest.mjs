@@ -183,6 +183,13 @@ try {
     ['phone', { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true }, [232, 600], SCENES.slice(0, 2)]].slice(0, QUICK ? 1 : 2).map(r => QUICK ? [r[0], r[1], [232], r[3].slice(0, 1)] : r)) {
     const { ctx, page } = await open(opts);
     for (const sc of scenes) await runScene(page, sc, zooms, tagp);
+    if (tagp === 'desktop') { // a unit on a bridge stands on the deck (top 4.5), and stepping on/off is smooth
+      const br = await page.evaluate(() => { const B = G.map.bridges || []; const u = (x, y) => unitH({ s: { dom: 'ground' }, x, y, id: 0, isB: false }); let worst = 0, jump = 0, n = 0;
+        for (const b of B) { n++; worst = Math.max(worst, Math.abs(u(b.x, b.y) - 4.5)); let pv = null; for (let t = -b.h - 40; t <= b.h + 40; t += 4) { const h = u(b.x + b.n[0] * t, b.y + b.n[1] * t); if (pv != null) jump = Math.max(jump, Math.abs(h - pv)); pv = h; } }
+        return { n, worst, jump }; });
+      if (br.n && (br.worst > 1.5 || br.jump > 3)) { fails++; lines.push(`FAIL bridge deck height: off by ${br.worst.toFixed(1)}, max step ${br.jump.toFixed(1)}`); }
+      else console.log(`bridge check ok (${br.n} bridges, off ${br.worst.toFixed(2)}, step ${br.jump.toFixed(2)})`);
+    }
     await ctx.close();
   }
 } catch (e) { console.error(e); fails++; lines.push('FAIL harness: ' + (e.message || e)); }
