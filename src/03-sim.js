@@ -608,6 +608,7 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'unl':{const b=G.byId.get(a.tid);if(b&&b.isB&&b.team===team&&b.kind==='tunnel'&&b.built>=1){const out=unloadTunnel(b);if(a.at&&out&&out.length)formMove(out,a.x,a.y,'move',false);}
       else if(b&&!b.isB&&b.team===team&&b.s.cap){if(a.at){b.wq=null;setMove(b,a.x,a.y,'move');b.order.ul=1;b.ulO=1;}else{b.ulO=0;unloadTransport(b);}}break;}
     case 'board':{const tr=G.byId.get(a.tid);if(!tr||tr.isB||tr.team!==team||!tr.s.cap)break;for(const u of own(a.ids))if(canBoard(tr,u)){u.order={type:'board',target:tr};u.target=null;u.path=null;}break;}
+    case 'spoof':{const u=G.byId.get(a.tid);if(u&&u.team===team)doSpoof(u);break;}
     case 'stop':for(const u of own(a.ids)){u.order=null;u.target=null;u.path=null;}break;
     // right-drag line formation: units spread evenly along the dragged line (extra units form ranks behind it),
     // assigned in order along the line so their paths do not cross
@@ -625,6 +626,31 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     // defend an area: go there, then hold it - engage anything that comes within range of the spot and return afterwards
     case 'def':{const us=own(a.ids).filter(u=>!u.s.noAttack&&u.kind!=='harv'&&u.kind!=='dozer');formMove(us,a.x,a.y,'amove',false);for(const u of us){u.defend={x:u.order?u.order.x:a.x,y:u.order?u.order.y:a.y,r:Math.max(260,(u.s.aggro||240)+80)};}break;}
   }}
+
+/* ---------- electronic warfare: minimap jamming + radar spoof ----------
+   VIEW DATA ONLY. The spoof's ghost contacts and the jamming blackout only change what enemy players see on their
+   minimap: no unit is created, nothing can target a ghost, and the AI never reads them. The spoof itself is a normal
+   player order ('spoof', host-authoritative); ewView(team) is what each team sees, sent to clients in the team message. */
+const SPOOF_CD=60,SPOOF_T=20,SPOOF_SPD=38;
+function doSpoof(u){if(!u||u.dead||u.isB||!u.s||!u.s.jam||u.spfT>G.t)return false;
+  // the fake column heads for the nearest enemy building (map centre if none is known)
+  let tx=MAPW/2,ty=MAPH/2,bd=1e18;for(const e of G.ents){if(e.dead||!e.isB||ally(e.team,u.team))continue;const d=(e.x-u.x)**2+(e.y-u.y)**2;if(d<bd){bd=d;tx=e.x;ty=e.y;}}
+  const dx=tx-u.x,dy=ty-u.y,L=Math.hypot(dx,dy)||1,ux=dx/L,uy=dy/L,n=3+(srand()<.5?1:0),g=[];
+  for(let i=0;i<n;i++){const side=(i-(n-1)/2)*34+srnd(-10,10),ahead=srnd(90,150)-i*22,v=SPOOF_SPD*srnd(.9,1.1);
+    g.push([Math.max(0,Math.min(MAPW,u.x+ux*ahead-uy*side)),Math.max(0,Math.min(MAPH,u.y+uy*ahead+ux*side)),ux*v,uy*v]);}
+  (G.spoofs=G.spoofs||[]).push({team:u.team,t0:G.t,t1:G.t+SPOOF_T,g});u.spfT=G.t+SPOOF_CD;
+  log(u.team,'Radar spoof active: fake contacts are moving on the enemy radar for 20 seconds.','');return true;}
+function ewTick(dt){if(G.spoofs&&G.spoofs.length)G.spoofs=G.spoofs.filter(p=>p.t1>G.t);
+  // AI: now and then an EW truck near the enemy spoofs (roughly once a minute while in contact)
+  if(G.aur&&G.aur.jam.length&&srand()<dt*G.aur.jam.length/25)for(const a of G.aur.jam){const T=G.teams[a.team];if(!T||!T.ai)continue;const u=G.byId.get(a.id);if(!u||u.spfT>G.t)continue;
+    for(const e of G.ents)if(!e.dead&&!ally(e.team,a.team)&&e.team>=0&&Math.abs(e.x-u.x)<900&&Math.abs(e.y-u.y)<900){doSpoof(u);break;}}}
+// what team tm's minimap shows: j = enemy jamming bubbles that cover any of its side's units or buildings (blacked out),
+// g = ghost contacts [x,y,vx,vy,secondsLeft,flag,team]; flag 1 = recognised as fake (the team has a working Strike
+// Center), 2 = the team's own spoof (shown faintly so the player sees it working)
+function ewView(tm){const C=G._ewv||(G._ewv=[]);const h=C[tm];if(h&&h.t===G.t)return h;const j=[],g=[];
+  if(G.aur)for(const a of G.aur.jam){if(ally(a.team,tm))continue;const r2=a.r*a.r;for(const e of G.ents)if(!e.dead&&ally(e.team,tm)&&(e.x-a.x)**2+(e.y-a.y)**2<r2){j.push([a.x|0,a.y|0,a.r]);break;}}
+  const T=G.teams[tm];for(const p of G.spoofs||[]){const fr=ally(p.team,tm)?2:(T&&T._upl?1:0),dt=G.t-p.t0;for(const q of p.g)g.push([Math.round(q[0]+q[2]*dt),Math.round(q[1]+q[3]*dt),+q[2].toFixed(1),+q[3].toFixed(1),+(p.t1-G.t).toFixed(1),fr,p.team]);}
+  return C[tm]={t:G.t,rt:G.t,j,g,cd:G.ents.filter(e=>e.team===tm&&!e.dead&&e.spfT>G.t).map(e=>[e.id,+(e.spfT-G.t).toFixed(1)])};}
 
 /* ---------- vision ---------- */
 const VISMAX=720;
@@ -932,9 +958,10 @@ function weatherTick(dt){if(!G.wx)G.wx={k:'clear',t:0,next:150+Math.random()*90}
   if(W.k==='clear'){W.k=ks[1+Math.floor(Math.random()*(ks.length-1))];W.next=55+Math.random()*45;}else{W.k='clear';W.next=170+Math.random()*120;}
   for(const T of G.teams){const w=WEATHER[W.k];log(T.id,W.k==='clear'?'The weather is clearing.':`Weather: ${w.name}. ${w.tip}`,'w');}}
 function simUpdate(dt){G.t+=dt;G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);production(dt);buildHash();if(!G.mines)G.mines=[];
-  if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[],mart:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam});if(s.cbr)G.cbrTeams|=1<<e.team;}martyrTick();
+  if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[],mart:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam,id:e.id});if(s.cbr)G.cbrTeams|=1<<e.team;}martyrTick();
   if(G.aur.heal.length)for(const e of G.ents){if(e.dead||e.isB||e.hp>=e.max||e.s.dom==='air')continue;for(const a of G.aur.heal)if(a.team===e.team&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){e.hp=Math.min(e.max,e.hp+a.v*dt);break;}}
   if(G.aur.jam.length)for(const e of G.ents){if(e.dead||e.kind!=='drone')continue;for(const a of G.aur.jam)if(!ally(a.team,e.team)&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){applyDmg(e,30*dt,'flak',a.team,null);break;}}
+  ewTick(dt);
   G.mT=(G.mT||0)-dt;if(G.mT<=0){G.mT=.2;updMines();}
   for(const T of G.teams){T._upl=false;T._tun=false;}for(const e of G.ents){if(!e.isB||e.dead||e.built<1)continue;const T=G.teams[e.team];if(!T)continue;if(e.kind==='tunnel')T._tun=true;else if(e.kind==='uplink'&&!(e.dis>G.t))T._upl=true;}
   for(const T of G.teams){if(!T.tun.length)continue;for(const u of T.tun)u.hp=Math.min(u.max,u.hp+12*dt);if(!T._tun){log(T.id,`Our last tunnel was destroyed. ${T.tun.length} units inside were lost.`,'w');T.tun=[];}}

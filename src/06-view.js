@@ -198,6 +198,26 @@ function mmBase(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH;const c=docum
   return c;}
 function mmGrid(x,y){return 'ABCDEFGH'[Math.max(0,Math.min(7,Math.floor(x/MAPW*MMG.cols)))]+(Math.max(0,Math.min(5,Math.floor(y/MAPH*MMG.rows)))+1);}
 const MMC=[];let mmFogT=0;
+// Electronic warfare on the minimap (view only). Where an enemy jamming truck covers our units the minimap there turns
+// to static and hides every contact under it; radar-spoof ghosts show as enemy armour moving toward us. A working
+// Strike Center sees through them: drawn faded with a "?". Our own spoof's ghosts show as faint outlines.
+function ewMine(){return MODE==='client'?G.ewv:(typeof ewView==='function'&&G.teams[ME]?ewView(ME):null);}
+function mmEW(c,sx,sy,now){const V=ewMine();if(!V)return;const el=G.t-(V.rt||G.t);
+  for(const [x,y,r] of V.j||[]){const X=x*sx,Y=y*sy,R=Math.max(6,r*sx);c.save();c.beginPath();c.arc(X,Y,R,0,7);c.clip();c.fillStyle='#0d110f';c.fillRect(X-R,Y-R,R*2,R*2);
+    const f=(now*12)|0;for(let i=0;i<70;i++){const h=((i*2654435761+f*40503)>>>0)%10007,px=X-R+(h%97)/97*R*2,py=Y-R+((h/97|0)%103)/103*R*2,v=60+(h%7)*22;c.fillStyle=`rgb(${v},${v+8},${v})`;c.fillRect(px,py,1.6,1.2);}
+    c.fillStyle='rgba(150,170,160,.18)';for(let k=0;k<4;k++){const yy=Y-R+((f*3+k*37)%100)/100*R*2;c.fillRect(X-R,yy,R*2,1);}c.restore();
+    c.strokeStyle='rgba(234,90,64,.7)';c.lineWidth=1;c.setLineDash([2,2]);c.beginPath();c.arc(X,Y,R,0,7);c.stroke();c.setLineDash([]);
+    if(R>12){c.font='700 8px IBM Plex Mono, monospace';c.fillStyle='rgba(234,90,64,.9)';c.textAlign='center';c.fillText('JAM',X,Y+3);c.textAlign='left';}}
+  for(const q of V.g||[]){if(q[4]-el<=0)continue;const x=(q[0]+q[2]*el)*sx,y=(q[1]+q[3]*el)*sy,col=(G.teams[q[6]]||{}).color||'#ea5a40';
+    if(q[5]===2){c.strokeStyle=col;c.globalAlpha=.45;c.lineWidth=1;c.setLineDash([2,1.5]);c.strokeRect(x-2.7,y-2.7,5.4,5.4);c.setLineDash([]);c.globalAlpha=1;continue;}
+    if(q[5]===1){c.globalAlpha=.35;c.fillStyle=col;c.fillRect(x-2.2,y-2.2,4.4,4.4);c.globalAlpha=1;c.font='700 8px IBM Plex Mono, monospace';c.fillStyle='#e3b341';c.fillText('?',x+3,y-2);continue;}
+    c.fillStyle=col;c.strokeStyle='#050807';c.lineWidth=1;c.fillRect(x-2.2,y-2.2,4.4,4.4);c.strokeRect(x-2.7,y-2.7,5.4,5.4);}}
+// command-card button for the EW truck's radar spoof (08-ui puts it on the card; works by click or tap)
+function spoofBtn(u){const V=ewMine(),cd=MODE==='client'?((V&&V.cd||[]).find(r=>r[0]===u.id)||[0,0])[1]-(G.t-((V&&V.rt)||G.t)):(u.spfT||0)-G.t;
+  const b=document.createElement('button');b.className='btn wide';b.style.marginTop='6px';const left=Math.ceil(cd);
+  b.textContent=left>0?'📡 Radar spoof (ready in '+left+' s)':'📡 Radar spoof';b.disabled=left>0;
+  b.title='For 20 seconds 3-4 fake contacts appear on enemy radar near this truck and move toward them like an attacking column. Enemies with a Strike Center see they are fake. Recharges in 60 s.';
+  b.onpointerdown=ev=>{ev.preventDefault();if(!b.disabled)doAct({t:'spoof',tid:u.id});};return b;}
 function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=performance.now()/1000,c=mx;
   if(!G.mmBase)G.mmBase=mmBase();c.drawImage(G.mmBase,0,0);
   // fog of war: hidden ground darker
@@ -219,6 +239,7 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
     else{c.fillRect(x-2.2,y-2.2,4.4,4.4);c.strokeRect(x-2.7,y-2.7,5.4,5.4);}
     if(sel.has(e)){c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();c.arc(x,y,4.5,0,7);c.stroke();}
     if(own&&G.t-(e.lastHit||-99)<1.2&&Math.random()<.04)MMC.push({x:e.x,y:e.y,t:now});}
+  mmEW(c,sx,sy,now);
   // contact flashes where we're under fire
   for(let i=MMC.length-1;i>=0;i--){const m=MMC[i],a=now-m.t;if(a>1.4){MMC.splice(i,1);continue;}c.strokeStyle=`rgba(255,80,60,${1-a/1.4})`;c.lineWidth=1.5;c.beginPath();c.arc(m.x*sx,m.y*sy,3+a*9,0,7);c.stroke();}
   if(MMC.length>40)MMC.splice(0,MMC.length-40);
