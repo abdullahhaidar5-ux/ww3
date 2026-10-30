@@ -10811,9 +10811,12 @@ function matSig(m){if(!m||!m.isMeshStandardMaterial||m.isMeshPhysicalMaterial||!
   const u=m.userData,cc=c=>c&&c.isColor?c.getHexString():'';
   return [m.side,m.alphaTest,+m.roughness.toFixed(4),+m.metalness.toFixed(4),m.emissive.getHexString(),m.emissiveIntensity,m.flatShading?1:0,m.depthWrite?1:0,m.depthTest?1:0,m.fog?1:0,m.polygonOffset?m.polygonOffsetFactor+'/'+m.polygonOffsetUnits:0,m.envMapIntensity,
     m.customProgramCacheKey?m.customProgramCacheKey():'',u.wx||0,u.refl||0,u.sheen||0,cc(u.camoA),cc(u.camoB),cc(u.camoC),u.camoP||0,u.camoS||0,cc(u.trimC),u.wall||0].join('|');}
+// Only rotors and propellers are animated by name (main_rotor / tail_rotor); a model's turret and gun nodes never move
+// on their own (the whole vehicle turns to its target), so they merge too. A future turret animation must keep them.
+const MOVE_KEEP=/rotor|prop/i;
 function mergeTinted(root){if(root.getObjectByProperty('type','SkinnedMesh'))return;
   root.updateMatrixWorld(true);const inv=new THREE.Matrix4().copy(root.matrixWorld).invert(),M=new THREE.Matrix4(),groups=new Map();
-  const kept=o=>{for(let q=o;q&&q!==root;q=q.parent)if(MERGE_KEEP.test(q.name||''))return true;return false;};
+  const kept=o=>{for(let q=o;q&&q!==root;q=q.parent)if(MOVE_KEEP.test(q.name||''))return true;return false;};
   root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh||o.isSkinnedMesh||Array.isArray(o.material)||!o.visible||o.morphTargetInfluences||!o.geometry||!o.geometry.attributes.position||!o.geometry.attributes.normal||kept(o))return;
     const sg=matSig(o.material);if(sg===null)return;const vc=!!(o.material.vertexColors&&o.geometry.attributes.color);
     const key=sg+'|'+(o.castShadow?1:0)+(o.receiveShadow?1:0)+'|'+o.renderOrder+'|'+o.layers.mask+'|'+(o.frustumCulled?1:0);
