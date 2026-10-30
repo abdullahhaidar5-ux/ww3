@@ -263,7 +263,7 @@ function fxUpdate(dt){
 // Weather on screen: rain streaks, blowing sand, heavy snow and thick fog close in the view; the haze colour and
 // distance ease in and out as the weather changes.
 let RAIN=null,WXV={k:'clear',m:0};
-function weatherFX(dt){if(!G||!G.map||!CAM)return;const k=(G.wx&&G.wx.k)||'clear';if(WXV.base==null&&SCN.fog){WXV.base={c:SCN.fog.color.clone(),n:SCN.fog.near,f:SCN.fog.far};}const B=WXV.base;if(!B)return;
+function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&todLvl()!==WXT)try{applyWeather(0);}catch(e){}const k=(G.wx&&G.wx.k)||'clear';if(WXV.base==null&&SCN.fog){WXV.base={c:SCN.fog.color.clone(),n:SCN.fog.near,f:SCN.fog.far};}const B=WXV.base;if(!B)return;
   if(WXV.k!==k){WXV.m=Math.max(0,WXV.m-dt*.5);if(WXV.m<=0)WXV.k=k;}else WXV.m=Math.min(1,WXV.m+dt*.35);const m=WXV.k==='clear'?0:WXV.m,K=WXV.k;
   const T={rain:{c:'#7d868c',n:500,f:3200},fog:{c:'#b9bdbb',n:150,f:1500},sandstorm:{c:'#b88a52',n:40,f:950},blizzard:{c:'#dfe6ee',n:150,f:1700}}[K];
   if(T){const tc=lin(T.c);SCN.fog.color.copy(B.c).lerp(tc,m*.85);SCN.fog.near=B.n+(T.n-B.n)*m;SCN.fog.far=B.f+(T.f-B.f)*m;}else{SCN.fog.color.lerp(B.c,Math.min(1,dt*2));SCN.fog.near+=(B.n-SCN.fog.near)*Math.min(1,dt*2);SCN.fog.far+=(B.f-SCN.fog.far)*Math.min(1,dt*2);}
@@ -274,7 +274,7 @@ function weatherFX(dt){if(!G||!G.map||!CAM)return;const k=(G.wx&&G.wx.k)||'clear
     RAIN.visible=m>.02;RAIN.material.opacity=.35*m;const p=RAIN.geometry.attributes.position.array,D=RAIN.userData.d,H=320;
     for(let i=0;i<D.length;i++){const d=D[i];d[2]-=dt*1.6;if(d[2]<0){d[2]+=1;d[0]=rnd(-1,1);d[1]=rnd(-1,1);}const x=cam.x+d[0]*R,y=cam.y+d[1]*R*.7,gh=groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y))),h=gh+d[2]*H;p.set([x,h,y,x+3,h+14,y],i*6);}
     RAIN.geometry.attributes.position.needsUpdate=true;}else if(RAIN)RAIN.visible=false;
-  const el=document.getElementById('wxchip');if(el){const W=WEATHER[k];const on=k!=='clear';el.hidden=!on;if(on){const txt=`${W.name.toUpperCase()} · vision ${Math.round((W.vis-1)*100)}% · accuracy ${Math.round((W.acc-1)*100)}%${W.air===0?' · jets grounded':''}`;if(el.textContent!==txt)el.textContent=txt;}}}
+  const el=document.getElementById('wxchip');if(el){const W=WEATHER[k];const tl=G.todM?todLvl():0,tn=tl===2?'NIGHT':tl===1?(G.todM===3&&Math.floor((G.t%1200)/300)===3?'DAWN':'DUSK'):'';const on=k!=='clear'||!!tn;el.hidden=!on;if(on){const txt=(tn?tn+(k!=='clear'?' · ':' · sight '+(tl===2?'-40%':'-20%')+', thermal optics see further'):'')+(k!=='clear'?`${W.name.toUpperCase()} · vision ${Math.round((W.vis-1)*100)}% · accuracy ${Math.round((W.acc-1)*100)}%${W.air===0?' · jets grounded':''}`:'');if(el.textContent!==txt)el.textContent=txt;}}}
 /* ---------- Helicopter rotor wash ----------
    A helicopter's downwash blasts whatever is under it: a ring of dust rolls outward on land (powder snow on snow maps),
    white spray and a flattened, swirling ring on water. Strongest when the helicopter hovers low and slow; a fast pass

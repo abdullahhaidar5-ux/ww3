@@ -365,12 +365,14 @@ function DRIVER() {
     try { return fn(); } finally { Math.random = realRandom; for (const k of S.portMath) Math[k] = NATIVE[k]; if (!S.realClock) { if (own) perf.now = old; else delete perf.now; } }
   };
   W.realNow = realNow;
+  // time-of-day probe: sight radius of one ordinary infantry squad, one tank and one HQ at game time t (see todVis in 03-sim)
+  W.sightProbe = (w, t) => { W.start({ seed: 1, facs: ['US', 'RU'], map: 'strait', w }); G.t = t; const x = G.ents.find(e => e.isB && e.team === 0); const r = {}; for (const k of ['inf', 'tank', 'heli']) { const u = addUnit(0, k, x.x + 40, x.y + 40); r[k] = visR(u); } r.b = visR(x); return r; };
   W.start = o => {
     if (typeof G !== 'undefined' && G) G.over = true;
     S = { rng: mul((o.seed ^ 0x9E3779B9) >>> 0), clock: 0, realClock: !!o.realClock, portMath: (o.portMath || []).filter(k => PM[k]), steps: 0, ms: 0 };
     MODE = o.mode || 'single'; ME = 0; setup.d = o.diff == null ? 1 : o.diff;
     const t0 = realNow();
-    sim(() => { TERR_DEFER = true; try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map(() => true), map: o.map, tm: o.tm || o.facs.map((_, i) => i), slot: -1 }); } finally { TERR_DEFER = false; } });
+    sim(() => { TERR_DEFER = true; try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map(() => true), map: o.map, tm: o.tm || o.facs.map((_, i) => i), slot: -1, w: o.w | 0 }); } finally { TERR_DEFER = false; } });
     G.headless = !o.fx; // the page runs no visual/audio effect handlers unless --render
     if (o.fx && !W.fxWrapped) { // effects on: they may use Math.random/performance.now, but never the battle's
       W.fxWrapped = true; const f = FXE;
@@ -805,6 +807,19 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   if (has('bench')) bench();
   else if (has('steptime')) await steptime(opts());
   else if (has('hostsnap')) { const o = opts(); if (has('compare')) { o.realClock = false; o.portMath = has('native-math') ? [] : PORTABLE; } await hostsnap(o); }
+  else if (has('night')) {
+    const { W } = makeSim(); const f = [];
+    const day = W.sightProbe(0, 0), dusk = W.sightProbe(3, 0), night = W.sightProbe(4, 0), ch = [0, 400, 700, 1000].map(t => W.sightProbe(5, t));
+    const near = (a, b) => Math.abs(a - b) < 1e-6;
+    if (!(night.inf < day.inf * .61 && near(night.inf, day.inf * .6))) f.push('night: infantry sight is not x0.6');
+    if (!near(night.tank, day.tank * .9) || !near(night.heli, day.heli * .9)) f.push('night: tank/heli (thermal) sight is not x0.9');
+    if (!(night.tank > night.inf)) f.push('night: thermal not above infantry');
+    if (!(dusk.inf < day.inf && dusk.inf > night.inf)) f.push('dusk sight not between day and night');
+    if (!near(ch[0].inf, day.inf) || !near(ch[1].inf, dusk.inf) || !near(ch[2].inf, night.inf) || !near(ch[3].inf, dusk.inf)) f.push('changing: day>dusk>night>dawn sight steps wrong');
+    console.log('  day', JSON.stringify(day), '\n  night', JSON.stringify(night));
+    if (f.length) { console.log('NIGHT FAIL'); f.forEach(x => console.log('  x ' + x)); process.exit(1); }
+    console.log('NIGHT PASS — night sight x0.6, thermal x0.9, dusk between, changing cycles');
+  }
   else if (has('compare')) { const o = opts(); o.realClock = false; o.portMath = has('native-math') ? [] : PORTABLE; await compare(o); }
   else { const o = opts(); const res = runNode(o); summary(res, o); }
 }

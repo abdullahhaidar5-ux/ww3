@@ -31,7 +31,7 @@ export function BATTLE_DRIVER() {
     const isAI = i => Array.isArray(o.aiD) && o.aiD[i] != null;
     TERR_DEFER = true;
     const st = stClean(o.st, o.facs.length);
-    try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map((_, i) => isAI(i)), map: o.map, tm: o.tm, st: st || undefined }); } finally { TERR_DEFER = false; }
+    try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map((_, i) => isAI(i)), map: o.map, tm: o.tm, w: o.w | 0, st: st || undefined }); } finally { TERR_DEFER = false; }
     G.teams.forEach((T, i) => { T.ai = isAI(i) ? mkAI(o.aiD[i]) : null; });
     G.headless = true;
     NET.peers = o.peers.slice(); NET.toks = o.toks.slice(); NET.gen = 0; NET.code = o.code || null; NET.baseCode = o.code || null;

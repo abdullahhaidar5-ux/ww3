@@ -572,18 +572,19 @@ function makeGhost(kind){mats();const T=G.teams[ME],o=new THREE.Group();const g=
 const WX=[{n:'Clear day',sun:'#ffeccc',si:2.7,off:[-900,860,-620],sky:'#a9c4ec',gnd:'#9c8058',hi:1.2,fog:'#c4ae86',fn:1800,ff:6200,expo:.9,cl:.6,sr:2,hor:[.86,.78,.64],zen:[.30,.50,.80],gr:[1,1,1],sat:1,wl:[1,1,1],ws:[.6,.72,.8],fx:1,lamp:.55,win:0,amb:[1,1,1]},
   {n:'Golden hour',sun:'#ffc283',si:3.0,off:[-1150,470,-520],sky:'#9fb2d4',gnd:'#7a5a3c',hi:1.12,fog:'#c09a72',fn:1700,ff:6000,expo:1.04,cl:.7,sr:2,hor:[.98,.74,.48],zen:[.36,.48,.72],gr:[1.05,1,.9],sat:1.08,wl:[1,.9,.78],ws:[.85,.68,.5],fx:1.1,lamp:.6,win:0,amb:[1.03,.95,.86]},
   {n:'Overcast',sun:'#e4e9ef',si:1.15,off:[-450,1150,-300],sky:'#b7bfc8',gnd:'#625d51',hi:1.6,fog:'#a2a7a9',fn:1300,ff:5200,expo:.98,cl:0,sr:6,hor:[.7,.72,.74],zen:[.52,.56,.62],gr:[.97,.99,1.03],sat:.82,wl:[.78,.82,.86],ws:[.62,.66,.7],fx:1.15,lamp:.6,win:0,amb:[.9,.92,.95]},
-  {n:'Dusk',sun:'#ffa868',si:2.5,off:[-1320,290,-560],sky:'#6a7aa8',gnd:'#40352f',hi:.95,fog:'#6c5a68',fn:1400,ff:5400,expo:1.08,cl:.4,sr:3,hor:[.95,.5,.32],zen:[.13,.18,.36],gr:[1,.95,.98],sat:.92,wl:[.5,.42,.5],ws:[.75,.45,.38],fx:2.1,lamp:1.6,win:1,amb:[.5,.48,.55]}];
-let WXI=0,WXG=null,WXFX=1;const WXCITY={value:0},WXAMB={value:new THREE.Vector3(1,1,1)};
+  {n:'Dusk',sun:'#ffa868',si:2.5,off:[-1320,290,-560],sky:'#6a7aa8',gnd:'#40352f',hi:.95,fog:'#6c5a68',fn:1400,ff:5400,expo:1.08,cl:.4,sr:3,hor:[.95,.5,.32],zen:[.13,.18,.36],gr:[1,.95,.98],sat:.92,wl:[.5,.42,.5],ws:[.75,.45,.38],fx:2.1,lamp:1.6,win:1,amb:[.5,.48,.55]},
+  {n:'Night',sun:'#9db4e8',si:.5,off:[-900,700,-500],sky:'#1a2644',gnd:'#14161e',hi:.45,fog:'#0b1020',fn:900,ff:4200,expo:1.2,cl:.2,sr:4,hor:[.07,.09,.16],zen:[.01,.02,.06],gr:[.9,.96,1.1],sat:.75,wl:[.2,.25,.4],ws:[.1,.15,.3],fx:2.6,lamp:2.2,win:1,amb:[.45,.5,.7]}];
+let WXT=-1,WXI=0,WXG=null,WXFX=1;const WXCITY={value:0},WXAMB={value:new THREE.Vector3(1,1,1)};
 // "Random" is decided by the battle's seed, so it stays the same for the whole battle (and would match on every
 // machine of a multiplayer game if the condition is ever sent with the match start).
-function wxPick(i){i=i|0;if(i>=0&&i<WX.length)return i;if(i<0){const s=((typeof G!=='undefined'&&G&&G.seed)|0)>>>0;return (Math.imul(s^0x9e3779b9,2654435761)>>>16)%WX.length;}return 0;}
-function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){WXG=G;WXI=wxPick(i);}else if(typeof G==='undefined'||!G)WXI=wxPick(i);i=WXI;const w=WX[i];
+function wxPick(i){i=i|0;if(i>=0&&i<WX.length)return i;if(i<0){const s=((typeof G!=='undefined'&&G&&G.seed)|0)>>>0;return (Math.imul(s^0x9e3779b9,2654435761)>>>16)%4;}return 0;}
+function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){WXG=G;WXI=wxPick(i);}else if(typeof G==='undefined'||!G)WXI=wxPick(i);i=WXI;if(typeof G!=='undefined'&&G&&G.todM){const l=todLvl();WXT=G.todM<3?-1:l;i=l===2?4:l===1?3:i;}else WXT=-1;const w=WX[i];
   SUN.color.copy(lin(w.sun));SUN.intensity=w.si*LUX;SUNOFF=w.off;HEMI.color.copy(lin(w.sky));HEMI.groundColor.copy(lin(w.gnd));HEMI.intensity=w.hi*LUX;
   SCN.fog.color.copy(lin(w.fog));SCN.fog.near=w.fn;SCN.fog.far=w.ff;SUN.shadow.radius=w.sr;POST.cloud=w.cl;WXFX=w.fx;WXCITY.value=w.win;WXAMB.value.set(w.amb[0],w.amb[1],w.amb[2]);if(LAMPM)LAMPM.emissiveIntensity=w.lamp;
   if(POST.mFinal){const F=POST.mFinal.uniforms;F.expo.value=w.expo;if(F.gr)F.gr.value.set(w.gr[0],w.gr[1],w.gr[2]);if(F.sat)F.sat.value=w.sat;}
   if(window.SKY&&SKY.material.uniforms.hor){SKY.material.uniforms.hor.value.set(w.hor[0],w.hor[1],w.hor[2]);SKY.material.uniforms.zen.value.set(w.zen[0],w.zen[1],w.zen[2]);}
   if(WATER&&WATER.material.uniforms.sun){const U=WATER.material.uniforms;U.sun.value.set(w.off[0],w.off[1],w.off[2]).normalize();if(U.wl){U.wl.value.set(w.wl[0],w.wl[1],w.wl[2]);U.wsky.value.set(w.ws[0],w.ws[1],w.ws[2]);U.wsp.value.copy(new THREE.Color(w.sun)).multiplyScalar(3/(w.wl[0]+w.wl[1]+w.wl[2]));}}
-  if(typeof G!=='undefined'&&G&&G.map&&G.map.theme==='snow'){const dk=i===3;SUN.color.lerp(lin('#f4f7ff'),dk?.2:.6);HEMI.color.copy(lin(dk?'#7486ad':'#c2d0e2'));HEMI.groundColor.copy(lin(dk?'#6a7286':'#a3abb5'));SCN.fog.color.copy(lin(i==1?'#d9c9bd':dk?'#8f8296':'#cfd8e2'));HEMI.intensity*=1.08;}
+  if(typeof G!=='undefined'&&G&&G.map&&G.map.theme==='snow'){const dk=i===3||i===4;SUN.color.lerp(lin('#f4f7ff'),dk?.2:.6);HEMI.color.copy(lin(dk?'#7486ad':'#c2d0e2'));HEMI.groundColor.copy(lin(dk?'#6a7286':'#a3abb5'));SCN.fog.color.copy(lin(i==1?'#d9c9bd':dk?'#8f8296':'#cfd8e2'));HEMI.intensity*=1.08;}
   // the weather effects (rain, fog banks...) blend from this battle's haze, not from the previous battle's
   if(typeof WXV!=='undefined'){WXV.base=null;WXV.k='clear';WXV.m=0;}}
 // Ground detail textures (CC0, ambientCG.com: Ground037, Ground054, Rock030, Snow006, Gravel022), 256px layers: grass, soil, rock, snow, gravel. Colour is normalised (mean = mid-grey, contrast evened out) so it only adds detail to the painted map.
