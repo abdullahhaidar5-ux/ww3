@@ -1,0 +1,40 @@
+mapfair: 28 of 660 battles, 4 at a time
+  5/28 done, 3.2 min
+  10/28 done, 4.6 min
+  15/28 done, 5.7 min
+  20/28 done, 6.5 min
+  25/28 done, 6.8 min
+  28/28 done, 7.0 min
+
+BATTLES map            n games  kills  win share by start position (fair = 1/n)        score share by position     avg-min
+  aegean          6     1      0    0   0   0   0   0 100                         32   0   0  18   0  50     15.0 p=0.416
+  aleppo          2     1      1    0 100                                          0 100                     11.1 p=0.317
+  anatolia        4     1      1    0   0 100   0                                  0   0 100   0             13.3 p=0.392
+  arctic          2     1      1    0 100                                          0 100                     5.7 p=0.317
+  arctic          6     1      0    0   0   0   0   0 100                          0   0   0  28   0  72     15.0 p=0.416
+  arctic          8     1      0  100   0   0   0   0   0   0   0                 83   0   0   0   0   1   0  17 15.0 p=0.429
+  bosphorus       4     1      1    0   0 100   0                                  0   0 100   0             9.1 p=0.392
+  bosphorus       6     1      0    0   0 100   0   0   0                          0  26  74   0   0   0     15.0 p=0.416
+  crimea          4     1      0    0   0   0 100                                  0   0  35  65             15.0 p=0.392
+  crimea          6     1      0    0   0   0   0   0 100                          0   0   0   0  37  63     15.0 p=0.416
+  delta           6     1      1    0 100   0   0   0   0                          0 100   0   0   0   0     11.8 p=0.416
+  dmz             2     1      1    0 100                                          0 100                     6.2 p=0.317
+  dmz             6     1      1  100   0   0   0   0   0                        100   0   0   0   0   0     14.1 p=0.416
+  dmz             8     1      0    0   0   0   0 100   0   0   0                  0  19   0   8  73   0   0   0 15.0 p=0.429
+  dnipro          2     1      1    0 100                                          0 100                     9.8 p=0.317
+  fulda           8     1      0   13  13  13  13  13  13  13  13                 42   0   0  34   0   0  24   0 15.0 p=1.000
+  gulfoil         8     1      0    0 100   0   0   0   0   0   0                  0  60   0   0  27  13   0   0 15.0 p=0.429
+  gulf            4     1      1    0 100   0   0                                  0 100   0   0             11.1 p=0.392
+  indus           4     1      1  100   0   0   0                                100   0   0   0             11.0 p=0.392
+  kuwait          8     1      1  100   0   0   0   0   0   0   0                100   0   0   0   0   0   0   0 12.5 p=0.429
+  lebanon         4     1      1    0 100   0   0                                  0 100   0   0             14.7 p=0.392
+  mesopotamia     6     1      0   17  17  17  17  17  17                         40   0   0  14   0  47     15.0 p=1.000
+  oasis           8     1      0    0   0   0   0   0 100   0   0                  0   0   0   7   0  93   0   0 15.0 p=0.429
+  rivers          2     1      1  100   0                                        100   0                     7.1 p=0.317
+  rubalkhali      6     1      0    0   0   0 100   0   0                          0   0   6  94   0   0     15.0 p=0.416
+  ural            8     1      0    0   0   0   0   0   0   0 100                  0   0   0   0   0   0  33  67 15.0 p=0.429
+  volga           8     1      0    0   0   0   0 100   0   0   0                  0  31   0   0  66   0   3   0 15.0 p=0.429
+  yemen           2     1      1    0 100                                          0 100                     12.6 p=0.317
+BATTLES 28 games, 28 layouts; a start position wins significantly more than its share (p<0.01, >1.5x fair): none
+pooled duel seat: position 1 won 5, position 2 won 9 (of games decided between the first two seats)
+MAPFAIR DONE 7.0 min -> ../../../../../tmp/lg/fair-9.json
