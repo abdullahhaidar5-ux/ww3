@@ -67,8 +67,15 @@ function initGfx(){const PH=typeof gfxPhone==='function'&&gfxPhone();
   initFX();initPost();
 }
 // groundH/groundH0/buildHGrid (ground height) live in 02-map.js: the server-side battle needs them too.
+// View-only: height of the ground a unit stands on, counting bridge decks (top of deck = 4.5) with a smooth ramp at the
+// bridge ends and sides so units don't pop or tilt toward the riverbed under the bridge.
+function viewH(x,y){const g=groundH(x,y),B=G&&G.map&&G.map.bridges;if(!B)return g;
+  for(let i=0;i<B.length;i++){const b=B[i],dx=x-b.x,dy=y-b.y,hl=b.h+15;if(dx>hl+40||dx<-hl-40||dy>hl+40||dy<-hl-40)continue;
+    const u=Math.abs(dx*b.n[0]+dy*b.n[1]),w=Math.abs(dx*b.t[0]+dy*b.t[1]);if(w>36||u>hl)continue;
+    const ke=Math.min(1,Math.max(0,(hl-u)/22)),ks=Math.min(1,Math.max(0,(36-w)/6)),k=Math.min(ke,ks),sk=k*k*(3-2*k);return g+(4.5-g)*sk;}
+  return g;}
 function unitH(e){if(e.isB)return groundH(e.x,e.y);const s=e.s;if(s.dom==='naval')return WL+.5+Math.sin(G.t*1.6+e.id)*.6;
-  const g=G.grid?G.grid[Math.floor(e.y/CELL)*GW+Math.floor(e.x/CELL)]:0;const base=g===2?4:Math.max(groundH(e.x,e.y),g===1?WL:-99);
+  const g=G.grid?G.grid[Math.floor(e.y/CELL)*GW+Math.floor(e.x/CELL)]:0;const base=g===2?viewH(e.x,e.y):Math.max(viewH(e.x,e.y),g===1?WL:-99);
   if(s.dom==='air'){if(e.landed)return base+1;let h=base+(s.alt==='high'?110:55)+Math.sin(G.t*2+e.id)*2;
     // jets: climb out after take-off, dive on the target, pull up hard after the drop, glide down to land
     if(e.kind==='jet'){const cr=base+125;h=cr;if(e.toT!=null){const k=Math.min(1,(G.t-e.toT)/3.2);h=base+1+(cr-base-1)*k*k*(3-2*k);}
