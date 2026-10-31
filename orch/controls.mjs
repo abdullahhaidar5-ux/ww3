@@ -139,6 +139,8 @@ async function powerChecks(page, { mode, ck, tap }) {
   ck(mode + ' power buttons on the bar', !!bb && !!bs);
   if (!bb || !bs) return;
   await click(bs.x, bs.y); ck(mode + ' no-target power fires on one click', pw(await acts(page)).includes('sanc'));
+  { const r = await page.evaluate(() => { G.teams[ME].pw.sanc.cd = 30; QPSIG = ''; updateUI(); const b = document.querySelector('#qpow button[data-pow="sanc"]'); const f = b && b.querySelector('.qf'); G.teams[ME].pw.sanc.cd = 0; QPSIG = ''; updateUI(); return b && f ? [b.dataset.cd, parseFloat(f.style.height)] : null; });
+    ck(mode + ' used power shows a non-zero recharge', !!r && +r[0] > 0 && r[1] > 0, JSON.stringify(r)); }
   await page.waitForTimeout(600); await page.evaluate(() => updateUI());
   const bb2 = await btn('barrage'); await click(bb2.x, bb2.y); ck(mode + ' targeted power arms on button click', await page.evaluate(() => G.aim === 'barrage'), await page.evaluate(() => JSON.stringify({ aim: G.aim, pw: G.teams[ME].pw.barrage, paused: G.paused, el: document.elementFromPoint(innerWidth/2, 60)?.outerHTML.slice(0, 80) })));
   const vp = await page.evaluate(() => { for (let y = innerHeight * .5; y < innerHeight * .9; y += 20) for (let x = innerWidth * .3; x < innerWidth * .7; x += 20) { if (document.elementFromPoint(x, y) === cv && screenToWorld(x, y)) return { width: x * 2, height: y / 0.6 }; } return { width: innerWidth, height: innerHeight }; });
