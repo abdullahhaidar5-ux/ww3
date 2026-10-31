@@ -76,7 +76,7 @@ const MAPS={
     slots:[[400,1100],[2800,1100],[600,300],[2600,1900],[600,1900],[2600,300],[1000,650],[2200,1550]],sl4:[[600,300],[2600,1900],[600,1900],[2600,300]],
     cities:[[2000,1080,200,'russia'],[760,560,90,'russia'],[2560,1700,90,'russia'],[880,1600,80,'russia']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1560+190*Math.sin(y*.0026+ph)+40*Math.sin(y*.009+ph*2),y]);M.rivers.push({pts,hw:()=>140});M.bridgeAt=[[0,.22],[0,.5],[0,.8]];M.bridgeFrac=true;}},
-  heartland:{plain:[4],home:['US'],name:'American Heartland',min:2,max:8,sym:'none',theme:'green',tag:'farmland · river confluence',desc:'Farm country where two great rivers meet: a river city at the confluence, small towns and long bridges.',
+  heartland:{plain:[4],oldScale:[4],home:['US'],name:'American Heartland',min:2,max:8,sym:'none',theme:'green',tag:'farmland · river confluence',desc:'Farm country where two great rivers meet: a river city at the confluence, small towns and long bridges.',
     slots:[[350,1100],[2860,1150],[400,300],[2850,1900],[400,1900],[2850,300],[1000,1100],[2300,1500]],
     cities:[[1820,820,200,'america'],[650,560,95,'america'],[2650,1650,105,'america'],[760,1650,85,'america']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1480+150*Math.sin(y*.003+ph)+40*Math.sin(y*.011),y]);M.rivers.push({pts,hw:()=>110});

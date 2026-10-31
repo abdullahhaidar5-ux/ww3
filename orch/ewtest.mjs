@@ -221,6 +221,43 @@ try {
       await page.screenshot({ path: path.join(SH, f), timeout: 150000 });
     }
   }
+  // ---- Mountain Fortress + Bunker Buster ----
+  const ft = await page.evaluate(() => {
+    const o = {}, me = ME, T = G.teams[me], en = G.teams.find(t => t.id !== me && !ally(t.id, me)); G.paused = true;
+    T.fac = 'RS'; T.F = FACTIONS.RS; T.credits = 99999; const hq = hqOf(me);
+    for (const k of ['factory']) if (!done(me, k)) addBld(me, k, hq.x + 200, hq.y, true);
+    const spot = [hq.x + 140, hq.y + 140];
+    o.allowedKP = bldAllowed('KP', 'fort') && bldAllowed('IR', 'fort') && bldAllowed('DW', 'fort') && bldAllowed('RS', 'fort'); o.deniedUS = !bldAllowed('US', 'fort') && !bldAllowed('TR', 'fort');
+    const f = addBld(me, 'fort', spot[0], spot[1], true); const hp0 = f.hp;
+    o.second = placeBld(me, 'fort', spot[0] + 200, spot[1], null);   // limit 1
+    const foe = addUnit(en.id, 'tank', f.x + 120, f.y), foeA = addUnit(en.id, 'tank', f.x + 120, f.y); foe.max = foe.hp = 1e7;
+    for (const w of ['gun', 'at', 'cannon', 'shell', 'boom', 'tower', 'missile', 'bomb', 'super', 'demo']) applyDmg(f, 5000, w, en.id, foe, 1);
+    explode(f.x, f.y, 90, 9000, en.id, 'shell', 'bar', foe); explode(f.x, f.y, 90, 9000, en.id, 'super', 'sup', foe);
+    o.immune = f.hp === hp0 && !f.dead;
+    // units enter and leave like a tunnel
+    const inf = addUnit(me, 'inf', f.x + 40, f.y + 40); T.tun = []; enterTunnel(inf); o.entered = T.tun.length === 1 && inf.inTun; o.cap = tunCap(me);
+    const out = unloadTunnel(f); o.exited = out && out.length === 1 && !inf.inTun;
+    // Bunker Buster
+    T.pw.bb = { cd: 0, lv: 1 }; G.t = 100; o.early = usePower(me, 'bb', f.x, f.y);   // not in the first 5 minutes
+    G.t = 400; const cr = T.credits; G.teams[en.id].credits = 99999; const E = G.teams[en.id]; E.pw.bb = { cd: 0, lv: 1 };
+    o.fired = usePower(en.id, 'bb', f.x, f.y); o.paid = G.teams[en.id].credits === 99999 - 2200; o.cd = E.pw.bb.cd > 0;
+    for (let i = 0; i < 70; i++) simUpdate(0.1);
+    o.dead = f.dead; o.capAfter = tunCap(me);
+    return o;
+  });
+  console.log('fortress', JSON.stringify(ft));
+  ck('fortress: only KP/IR/RS/DW can build it', ft.allowedKP && ft.deniedUS, JSON.stringify(ft));
+  ck('fortress: limit of 1 per player', ft.second === false, JSON.stringify(ft));
+  ck('fortress: takes 0 damage from guns, cannon, artillery, bombs, superweapons', ft.immune, JSON.stringify(ft));
+  ck('fortress: units enter and come out like a tunnel, bigger garrison (24)', ft.entered && ft.exited && ft.cap === 24 && ft.capAfter === 12, JSON.stringify(ft));
+  ck('bunker buster: locked first 5 min, costs $2200, cooldown, destroys the fortress', ft.early === false && ft.fired && ft.paid && ft.cd && ft.dead, JSON.stringify(ft));
+  const fc = await page.evaluate(() => {
+    const me = ME, hq = hqOf(me), f = addBld(me, 'fort', hq.x + 140, hq.y - 140, true), n = G.ents.filter(e => e.kind === 'fort' && !e.dead).length;
+    f.hp = f.max * .45; const pk = JSON.parse(JSON.stringify(ckEncode())); ckRestore(pk);
+    const g = G.ents.find(e => e.kind === 'fort' && !e.dead && e.team === me);
+    return { n, kept: !!g && Math.abs(g.hp - g.max * .45) < 2, tun: tunCap(me) };
+  });
+  ck('fortress: checkpoint restore keeps it (and its damage)', fc.kept, JSON.stringify(fc));
   ck('no page errors', !errors.length, errors.join(' / '));
 } catch (e) { fails++; console.log('ERROR', e.message); }
 await browser.close(); server.close();

@@ -136,5 +136,9 @@ export async function enterExitChecks(page, { mode, ck, tap }) {
   const tout = await page.evaluate(([i1, i2, x, y]) => [i1, i2].map(i => G.byId.get(i)).every(u => u && !u.inTun && u.order && Math.hypot(u.order.x - x, u.order.y - y) < 80) && G.teams[ME].tun.length === 0, [S.i1, S.i2, V.g.wx, V.g.wy]);
   ck(P('…and they run to the spot'), tout);
 
+  // 7. every nation has a water transport (Shipyard landing craft / hovercraft / dhow) that takes infantry aboard
+  const wt = await page.evaluate(() => { const bad = []; for (const f of Object.keys(FACTIONS)) { try { const R = roster(f), s = stats(f, 'lander'); if (!R.shipyard.includes('lander') || !(s.cap >= 8) || !s.carryVeh || !s.name) { bad.push(f + ':roster'); continue; } const me = G.teams[ME].id, tr = addUnit(me, 'lander', 0, 0), u = addUnit(me, R.barracks[0], 0, 0); boardTransport(u, tr); if (!(tr.cargo || []).includes(u)) bad.push(f + ':board'); tr.dead = u.dead = true; } catch (e) { bad.push(f + ':' + e.message); } } return bad; });
+  ck(P('every nation has a Shipyard water transport that loads infantry'), wt.length === 0, JSON.stringify(wt));
+
   await page.evaluate(() => { const o = window.__eeOld; G.paused = o.paused; SET.mRC = o.mRC; G.sel = []; updateUI(); });
 }
