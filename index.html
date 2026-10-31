@@ -5350,7 +5350,7 @@ const MAPS={
     slots:[[400,1100],[2800,1100],[600,300],[2600,1900],[600,1900],[2600,300],[1000,650],[2200,1550]],sl4:[[600,300],[2600,1900],[600,1900],[2600,300]],
     cities:[[2000,1080,200,'russia'],[760,560,90,'russia'],[2560,1700,90,'russia'],[880,1600,80,'russia']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1560+190*Math.sin(y*.0026+ph)+40*Math.sin(y*.009+ph*2),y]);M.rivers.push({pts,hw:()=>140});M.bridgeAt=[[0,.22],[0,.5],[0,.8]];M.bridgeFrac=true;}},
-  heartland:{home:['US'],name:'American Heartland',min:2,max:8,sym:'none',theme:'green',tag:'farmland · river confluence',desc:'Farm country where two great rivers meet: a river city at the confluence, small towns and long bridges.',
+  heartland:{plain:[4],home:['US'],name:'American Heartland',min:2,max:8,sym:'none',theme:'green',tag:'farmland · river confluence',desc:'Farm country where two great rivers meet: a river city at the confluence, small towns and long bridges.',
     slots:[[350,1100],[2860,1150],[400,300],[2850,1900],[400,1900],[2850,300],[1000,1100],[2300,1500]],
     cities:[[1820,820,200,'america'],[650,560,95,'america'],[2650,1650,105,'america'],[760,1650,85,'america']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1480+150*Math.sin(y*.003+ph)+40*Math.sin(y*.011),y]);M.rivers.push({pts,hw:()=>110});
@@ -5366,7 +5366,7 @@ const MAPS={
     cities:[[820,1250,110,'lebanon'],[2150,1250,100,'mideast'],[1500,1820,80,'lebanon']],
     water(M,R){const ph=R()*6.28;M.lakes.push({x:560,y:880,r:200,rx:.8,wob:q=>.1*Math.sin(q*3+ph)});const jr=[];for(let y=1060;y<=MAPH+200;y+=40)jr.push([560+40*Math.sin(y*.01+ph),y]);M.rivers.push({pts:jr,hw:()=>34});M.bridgeAt=[[0,.5]];M.bridgeFrac=true;
       M.peaks.push({x:1700,y:250,r:200,rx:1.8,rot:.2},{x:1600,y:1000,r:80,rx:1.3,rot:.5},{x:2500,y:1500,r:75,rx:1.5,rot:-.3},{x:1250,y:1500,r:70,rx:1.4,rot:.8});}},
-  fulda:{name:'Fulda Gap',min:2,max:8,sym:'point',theme:'green',home:['EU'],tag:'farmland · forests · winding river',desc:'Rolling German farmland, forests and half-timbered towns on the old Cold War invasion route. A winding river with four bridges.',
+  fulda:{plain:[6],name:'Fulda Gap',min:2,max:8,sym:'point',theme:'green',home:['EU'],tag:'farmland · forests · winding river',desc:'Rolling German farmland, forests and half-timbered towns on the old Cold War invasion route. A winding river with four bridges.',
     slots:[[400,1100],[2800,1100],[500,300],[2700,1900],[500,1900],[2700,300],[1200,1980],[2000,220]],
     cities:[[1150,700,120,'europe'],[2050,1500,120,'europe'],[1600,1100,95,'europe'],[700,1500,70,'europe'],[2500,700,70,'europe']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-200;x<=MAPW+200;x+=40)pts.push([x,1100+260*Math.sin(x*.0024+ph)+50*Math.sin(x*.009)]);
@@ -5590,9 +5590,9 @@ function gridDist(grid,x,y){const N=GW*GH,D=new Float64Array(N).fill(1e9),ps=v=>
 // flank bridges (infantry cover, vehicles slow down) and a village on each flank past the ravine's ends: five ways
 // across. Every feature is mirrored across that halfway line, so both bases see the same ground. Anything that would
 // touch existing water, rock, a city, the map edge or a base is left out (as a mirrored pair). Design coords (3200x2200).
-// A map can opt out with plain:true.
+// A map can opt out with plain:true, or for some player counts with plain:[n,...] (where AI batches found a hot seat).
 function addComplexity(M,D){M.woods=[];M.genCities=[];
-  if(D.plain||M.islands.length)return;
+  if(D.plain===true||(D.plain||[]).includes(BASES.length)||M.islands.length)return;
   const S=BASES.map(([x,y])=>[x/WK,y/WK]),N=S.length,u=1/WK; // margins below are world units (bases don't grow with the map)if(N<2)return;
   const RV=M.rivers.slice(),RG=M.ridges.slice(),CT=(D.cities||[]).slice();
   const clr=(x,y)=>{let c=Math.min(x-110,y-110,3090-x,2090-y);
