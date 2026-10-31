@@ -267,6 +267,16 @@ try {
   await page.mouse.click(g[2].x, g[2].y);
   a = await acts(page);
   check('G then click ground = guard-area order', a.some(x => x.t === 'def'), JSON.stringify(a));
+  { // T = Type: every own unit of the selected type(s) on the whole map; nothing selected = all own combat units
+    const r = await page.evaluate(([A]) => { const u = G.byId.get(A), far = addUnit(u.team, u.kind, 90, 90); G.sel = [u]; return { id: far.id, kind: u.kind }; }, [A]);
+    await page.keyboard.press('t');
+    check('T selects ALL own units of the same type on the whole map (even off screen)', await page.evaluate(([id, k]) => G.sel.some(u => u.id === id) && G.sel.every(u => u.kind === k && u.team === ME), [r.id, r.kind]));
+    await page.evaluate(() => { G.sel = []; });
+    await page.keyboard.press('t');
+    check('T with nothing selected selects all own combat units', await page.evaluate(() => G.sel.length > 0 && G.sel.every(u => !u.isB && u.team === ME && !['harv', 'hacker', 'dozer'].includes(u.kind))));
+    await page.evaluate(([A, B]) => { G.sel = [G.byId.get(A), G.byId.get(B)].filter(Boolean); updateUI(); }, [A, B]);
+    check('orders row has a Type (T) button', await page.evaluate(() => [...document.querySelectorAll('.cmdrow button')].some(b => /Type \(T\)/.test(b.textContent))));
+  }
   await page.keyboard.press('x');
   a = await acts(page);
   check('X stops the selected units', a.some(x => x.t === 'stop'), JSON.stringify(a));

@@ -293,6 +293,9 @@ async function phonePass(tag, viewport, storageState) {
   check(tag, Math.hypot(cL.x - cB.x, cL.y - cB.y) < 1, 'drawing the line does not scroll the map');
   // the strip's Line button: a plain drag draws the line
   await page.evaluate(ids => { G.sel = ids.map(i => G.byId.get(i)).filter(Boolean); updateUI(); }, S.ids); await frames(page, 1); // an order drops the selection: pick the units again
+  { const far = await page.evaluate(() => { const u = G.sel.find(x => !x.isB && x.team === ME); if (!u) return null; const f = addUnit(u.team, u.kind, 90, 90); G.sel = [u]; updateUI(); return f.id; });
+    if (far != null) { await T.ptap('#tstrip button[data-k="ty"]');
+      check(tag, await page.evaluate(id => G.sel.some(u => u.id === id), far), 'touch Type button selects every unit of that type on the whole map'); await page.evaluate(ids => { G.sel = ids.map(i => G.byId.get(i)).filter(Boolean); updateUI(); }, S.ids); await frames(page, 1); } }
   await T.ptap('#tstrip button[data-k="ln"]');
   await T.drag(L.x0, L.y1, L.x1, L.y0, { steps: 8, ms: 120, end: 120 });
   a = await acts(page);
