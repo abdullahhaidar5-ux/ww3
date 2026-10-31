@@ -122,4 +122,8 @@ Every token an agent reads counts against Abdullah's plan. Work like this:
 - **Pick the cheaper model for simple work** (Abdullah, 2026-10-28 18:32: "mix models"): when dispatching helper agents,
   use `model: "sonnet"` for finding/packing free assets, credits, copy/text, layout tweaks and small fixes; keep Opus
   for netcode, the simulation/AI, performance and reviews. ORCH runs every 8 h while the side-lane agents work.
+- **Dispatching agents (Abdullah, 2026-10-30 22:20):** batch small requests into one agent (collect them for up to ~1 h)
+  instead of one agent per request; schedule every new cloud agent ≥5 min ahead and switch its model before it starts
+  (a trigger that fires before the switch runs on Opus); use the cheapest model that fits — Haiku for text/price/colour
+  tweaks, Sonnet for features and fixes, Opus only for hard netcode/sim work — the full gate still checks every change.
 - **Write handoff notes** (`orch/HANDOFF-<branch>.md`) when stopping early, so a restart doesn't re-explore.
