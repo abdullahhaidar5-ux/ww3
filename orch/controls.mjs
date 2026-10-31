@@ -160,6 +160,24 @@ try {
 
   console.log(' Standard scheme (default)');
   await clear(page);
+  // After an order the units deselect (Abdullah 2026-10-30 20:54); Shift keeps them; Settings toggle mKeep keeps them
+  await page.evaluate(() => { SET.mKeep = 0; });
+  await setSel([A, B]);
+  await page.mouse.click(g[1].x, g[1].y, { button: 'right' });
+  a = await acts(page);
+  check('right-click move gives the order', a.some(x => x.t === 'go'), JSON.stringify(a));
+  check('…and the selection is empty afterwards', (await sel(page)).length === 0, JSON.stringify(await sel(page)));
+  await setSel([A, B]);
+  await page.keyboard.down('Shift'); await page.mouse.click(g[2].x, g[2].y, { button: 'right' }); await page.keyboard.up('Shift');
+  a = await acts(page);
+  check('Shift+right-click keeps the selection', a.some(x => x.t === 'go') && sameIds(await sel(page), [A, B]), JSON.stringify({ a, s: await sel(page) }));
+  await page.evaluate(() => { SET.mKeep = 1; });
+  await setSel([A, B]);
+  await page.mouse.click(g[1].x, g[1].y, { button: 'right' });
+  a = await acts(page);
+  check('with "Keep units selected" on, the selection stays', a.some(x => x.t === 'go') && sameIds(await sel(page), [A, B]), JSON.stringify({ a, s: await sel(page) }));
+  // (SET.mKeep stays on below: the older checks chain several orders on one selection)
+  await clear(page);
   await page.mouse.click(V.U[0].x, V.U[0].y);
   check('left-click own unit selects it', sameIds(await sel(page), [A]), JSON.stringify(await sel(page)));
   await page.keyboard.down('Shift'); await page.mouse.click(V.U[1].x, V.U[1].y); await page.keyboard.up('Shift');
