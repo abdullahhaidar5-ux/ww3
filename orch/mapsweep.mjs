@@ -110,7 +110,7 @@ const HELPERS = () => {
   // Static map check at n players: builds the map the way newGame does (world scale, base slots, seed).
   SW.staticCheck = (k, n, seed) => {
     const out = { k, n, issues: [], fields: 0, oil: 0 };
-    setWorld(worldScaleFor(n)); setBases(n, k, -1);
+    setWorld(worldScaleFor(n, k)); setBases(n, k, -1);
     const sv = srand; let M; try { M = mkMap(seed, k); } finally { srand = sv; }
     const g = M.grid, R = SW.regions(g, gpass);
     out.fields = M.fields.length; out.oil = M.oil.length;
