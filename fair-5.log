@@ -1,0 +1,10 @@
+mapfair: 3 of 66 battles, 4 at a time
+  3/3 done, 2.9 min
+
+BATTLES map            n games  kills  win share by start position (fair = 1/n)        score share by position     avg-min
+  heartland       2     1      1  100   0                                        100   0                     13.6 p=0.317
+  heartland       8     1      0   13  13  13  13  13  13  13  13                 50   0   0   0   0  50   0   0 15.0 p=1.000
+  taiwan          6     1      1    0   0   0   0   0 100                          0   0   0   0   0 100     13.6 p=0.416
+BATTLES 3 games, 3 layouts; a start position wins significantly more than its share (p<0.01, >1.5x fair): none
+pooled duel seat: position 1 won 1, position 2 won 0 (of games decided between the first two seats)
+MAPFAIR DONE 2.9 min -> ../../../../../tmp/lg/fair-5.json
