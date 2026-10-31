@@ -223,8 +223,8 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   else if(leftOrders()&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Click').replace(/right-click/g,'click');
   el.append(b,sp);if(tip.textContent)el.append(tip);
-  if(s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack)){const r=document.createElement('div');r.className='cmdrow';const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ Defending · ':'')+'Defend area (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='⚔ Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Defend: tap map…':'🛡 Defend: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;r.append(ba,bd,bs,br,bv);el.append(r);}
-  {const ap=$('app'),o=!!el.querySelector('.cmdrow');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
+  {const can=s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack);const r=document.createElement('div');r.className='cmdrow'+(can?'':' off');const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ ':'')+'Guard (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Guard: tap map…':'🛡 Guard: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='■ Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;r.append(ba,bd,bs,br,bv);if(!can){const why='Select combat units to use orders';for(const x of r.children){x.disabled=true;x.title=why;}}else{ba.title+=' (hotkey F)';bs.title='Stop: halt and hold fire position (hotkey X)';}if(can)el.append(r);else el.append(r);}
+  {const ap=$('app'),o=!!el.querySelector('.cmdrow:not(.off)');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   {const trs=s.filter(u=>!u.isB&&u.s&&u.s.cap&&u.team===ME&&!u.dead);if(trs.length>1&&trs.length===s.filter(u=>!u.isB).length){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Unload all '+trs.length+' transports';ub.title=(TOUCHUI?'Or tap one of them again':'Or right-click one of them')+' to unload them all';ub.onpointerdown=ev=>{ev.preventDefault();for(const tr of trs)doAct({t:'unl',tid:tr.id});};el.append(ub);}}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   if(s.length===1&&!s[0].isB&&s[0].s&&s[0].s.jam&&s[0].team===ME)el.append(spoofBtn(s[0]));
@@ -255,6 +255,10 @@ function fieldAt(w){const i=G.fields.findIndex(f=>Math.hypot(f.x-w.x,f.y-w.y)<f.
 cv.addEventListener('mouseenter',e=>{mpos(e);mouse.in=true;});cv.addEventListener('mouseleave',()=>{mouse.in=false;});
 cv.addEventListener('mousemove',e=>{mpos(e);});
 cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(ZMAX,cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}},{passive:false});
+// After an order the ordered units deselect so the next click selects fresh (Abdullah 2026-10-30 20:54). Kept when Shift
+// queues, when Settings > Mouse > mKeep is on, or when a targeting mode is active. Production-building rally points never count.
+function ordDone(shift){if(!G||SET.mKeep||shift||G.place||G.aim)return;if(G.sel.some(u=>!u.isB&&u.team===ME))G.sel=[];}
+function issueCmdD(w,t,rally){const had=G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead);const ok=issueCmd(w,t,rally);if(ok&&had)ordDone(G.qShift);return ok;}
 function issueCmd(w,t,rally){
     {const x=exitIntent(t,MODK.alt);if(x)return doExit(x,w,t);}
     const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
@@ -295,7 +299,7 @@ function issueCmd(w,t,rally){
 // Saved settings from before 2026-10-29 are moved to Standard once (ctl2). mAK is always 'f' now (F attack-move, X stop).
 // Touch and pen have no right button, so a tap selects or orders as before. The cursor shows what a click will do.
 let lastR={t:0,id:0},rDown=0;
-const MDEF={mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f',mRS:100,mCur:1,mPing:1,mLock:1};
+const MDEF={mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none',mAK:'f',mRS:100,mCur:1,mPing:1,mLock:1,mKeep:0};
 const MPRE={std:{mLG:'desel',mRC:'order',mRDU:'line',mRDN:'none'},gen:{mLG:'move',mRC:'cancel',mRDU:'line',mRDN:'scroll'}};
 if(SET.ctl2!==1){Object.assign(SET,MPRE.std);SET.ctl2=1;try{saveSet();}catch(_){}}for(const k in MDEF)if(SET[k]==null)SET[k]=MDEF[k];SET.mAK='f';delete SET.alt;
 function mPreset(){for(const p in MPRE)if(Object.keys(MPRE[p]).every(k=>SET[k]===MPRE[p][k]))return p;return 'custom';}
@@ -395,31 +399,31 @@ function cursorTick(force){const now=performance.now();if(!force&&now-CURST.t<50
   CURST.t=now;CURST.x=mouse.x;CURST.y=mouse.y;CURST.m=m;let k='';try{k=cursorIntent();}catch(_){k='';}
   if(k!==CURST.k){CURST.k=k;cv.style.cursor=curCss(k);cv.dataset.cur=k;}}
 setInterval(()=>cursorTick(false),50);
-function defendAt(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);G.defm=false;if(!ids.length)return;doAct({t:'def',ids,x:w.x,y:w.y});speak(1);mark({x:w.x,y:w.y,r:300,t:0,d:1.1,c:0x6fb2ff});pushLog('Units moving to defend the area.');}
+function defendAt(w){const sh0=MODK.shift;const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);G.defm=false;if(!ids.length)return;doAct({t:'def',ids,x:w.x,y:w.y});speak(1);mark({x:w.x,y:w.y,r:300,t:0,d:1.1,c:0x6fb2ff});pushLog('Units moving to defend the area.');ordDone(sh0);}
 function rightPress(e){const w=screenToWorld(mouse.x,mouse.y);if(!w)return false;rDown=performance.now();if(G.defm){defendAt(w);return false;}
   if(G.place||G.aim){G.place=null;G.aim=null;return false;}
-  if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;return false;}
+  if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(MODK.shift);return false;}
   return true;}
 function orderClick(sh){if(!G||G.over)return;G.qShift=!!sh;const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.place||G.aim){G.place=null;G.aim=null;updateUI();return;}if(G.defm){defendAt(w);return;}
   const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
-  if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;return;}
+  if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(sh);return;}
   G.amove=false;const bsel=!units.length&&G.sel.some(b=>b.isB&&b.team===ME);if(!units.length&&!bsel)return;
-  const t=pickAt(mouse.x,mouse.y,false);if(units.length&&MODK.ctrl){forceFire(w,t,units);updateUI();return;}if(issueCmd(w,t,bsel))updateUI();}
+  const t=pickAt(mouse.x,mouse.y,false);if(units.length&&MODK.ctrl){if(forceFire(w,t,units))ordDone(sh);updateUI();return;}if(issueCmdD(w,t,bsel))updateUI();}
 // Generals scheme, a left click with the mouse: orders for the selection, or a rally point for a production building.
 // Returns false when the click should simply select what is under the cursor.
 function genClick(d,t){const units=selfSel(),w=screenToWorld(mouse.x,mouse.y);if(!w)return false;
-  if(units.length){if(d.ctrl){forceFire(w,t,units);updateUI();return true;}
+  if(units.length){if(d.ctrl){if(forceFire(w,t,units))ordDone(d.shift);updateUI();return true;}
     if(d.alt){waypoint(w,units);updateUI();return true;}
     if(t&&t.team===ME&&!helpOn(t,units))return false;
     if(!t&&groundIntent(units,w)==='nogo'){try{sfxUI(220);}catch(_){}return true;}
-    G.qShift=!!d.shift;const ok=issueCmd(w,t,false);G.qShift=false;if(ok){updateUI();return true;}return false;}
+    G.qShift=!!d.shift;const ok=issueCmdD(w,t,false);G.qShift=false;if(ok){updateUI();return true;}return false;}
   if(!t&&!d.shift&&prodSel()){issueCmd(w,null,true);updateUI();return true;}
   return false;}
 // Standard scheme, a left click with the mouse: Ctrl+click force-fires and Alt+click adds a waypoint for the selected units;
 // with a production building selected, a click on the ground sets its rally point. False = just select.
 function selClick(d,t){const units=selfSel(),w=screenToWorld(mouse.x,mouse.y);if(!w)return false;
-  if(units.length&&d.ctrl){forceFire(w,t,units);updateUI();return true;}
+  if(units.length&&d.ctrl){if(forceFire(w,t,units))ordDone(d.shift);updateUI();return true;}
   if(units.length&&d.alt){waypoint(w,units);updateUI();return true;}
   if(!units.length&&!t&&!d.shift&&prodSel()){issueCmd(w,null,true);updateUI();return true;}
   return false;}
@@ -432,7 +436,7 @@ function rightRelease(d){if(!G)return;
     const mine=G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead),bsel=!mine&&G.sel.some(b=>b.isB&&b.team===ME);
     const dzHelp=t&&t.team===ME&&t.isB&&((t.built<1&&G.sel.some(u=>u.kind==='dozer'&&u.team===ME&&!u.dead))||(isTun(t)&&t.built>=1&&G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&u.s.dom==='ground')))||(t&&t.team===ME&&!t.isB&&t.s&&t.s.cap&&G.sel.some(u=>u!==t&&!u.isB&&canBoard(t,u)))||(t&&t.kind==='garrison'&&t.team===ME&&G.sel.some(u=>u.team===ME&&canGarrison(u)));
     if(d.pt==='mouse'&&(leftOrders()?genClick(d,t):selClick(d,t)))return;
-    if(d.pt!=='mouse'&&(mine||bsel)&&!d.shift&&(!(t&&t.team===ME)||dzHelp)){const w=screenToWorld(mouse.x,mouse.y);if(w&&issueCmd(w,t,bsel)){updateUI();return;}}
+    if(d.pt!=='mouse'&&(mine||bsel)&&!d.shift&&(!(t&&t.team===ME)||dzHelp)){const w=screenToWorld(mouse.x,mouse.y);if(w&&issueCmdD(w,t,bsel)){updateUI();return;}}
     selectClick(t,d.shift);}
   if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);updateUI();}
 // Touch screens (phones, tablets). One finger works like the left mouse button: tap selects, tap the ground or an enemy
@@ -463,7 +467,7 @@ function touchCancel(e){TCH.delete(e.pointerId);TIGN.delete(e.pointerId);if(TCH.
 // guard) or, if there is none, deselects everything. Right-drag with units selected draws the line formation.
 function rightCancel(){if(!G||G.over)return;if(G.place||G.aim||G.amove||G.defm){G.place=null;G.aim=null;G.amove=false;G.defm=false;}else G.sel=[];updateUI();}
 function rightClickAct(sh){if(exitClick())return;if(rightOrders())orderClick(sh);else rightCancel();}
-function lineOrder(r){const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!w1||!ids.length)return;doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);mark({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});updateUI();}
+function lineOrder(r){const w1=screenToWorld(mouse.x,mouse.y);const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!w1||!ids.length)return;doAct({t:'line',ids,x:r.w0.x,y:r.w0.y,x2:w1.x,y2:w1.y,mode:r.am?'amove':'move'});G.amove=false;speak(1);mark({x:(r.w0.x+w1.x)/2,y:(r.w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});ordDone(MODK.shift);updateUI();}
 let mpan=null,RDRAG=null;cv.addEventListener('mousedown',e=>{if(e.button===1)e.preventDefault();});cv.addEventListener('pointerdown',e=>{if(!G||G.over)return;LASTPT=e.pointerType||'mouse';hintDev(LASTPT);if(LASTPT==='touch'){if(!TOUCHUI)touchUI();PICKMIN=18;if(touchDown(e))return;}else if(LASTPT==='mouse')PICKMIN=10;mpos(e);if(e.button===1&&SET.mpan){e.preventDefault();mpan={x:e.clientX,y:e.clientY,id:e.pointerId};try{cv.setPointerCapture(e.pointerId);}catch(_){}return;}if(e.button===2){e.preventDefault();const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);const w0=screenToWorld(mouse.x,mouse.y);if(LASTPT==='mouse'){let mode=own.length?SET.mRDU:SET.mRDN;if(mode==='line'&&!(own.length>=(rightOrders()?2:1)&&w0&&!G.place&&!G.aim&&!G.defm))mode='none';try{cv.setPointerCapture(e.pointerId);}catch(_){}if(mode==='box'){drag={x0:mouse.x,y0:mouse.y,box:false,shift:e.shiftKey,id:e.pointerId,pt:'mouse',rb:1};return;}RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false,gen:1,mode,line:mode==='line'};return;}if(own.length>=2&&w0&&!G.place&&!G.aim&&!G.defm){RDRAG={x0:mouse.x,y0:mouse.y,w0,id:e.pointerId,shift:e.shiftKey,am:G.amove,moved:false};try{cv.setPointerCapture(e.pointerId);}catch(_){}}else orderClick(e.shiftKey);return;}if(e.button!==0){e.preventDefault();return;}
   const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.place||G.aim){placeOrAim(w,e.shiftKey);return;}
@@ -617,14 +621,14 @@ function tcTap(x,y,ts){if(ts==null)ts=performance.now();mouse.x=x;mouse.y=y;cons
   {const xi=exitIntent(t,false);if(xi){doExit(xi,w,t);tcMark(x,y,xi.k==='fire'?'atk':'mv');updateUI();return;}}
   if(own.length&&!(t&&t.team===ME&&!tcUse(t,own))){
     if(!t&&typeof noGo==='function'&&noGo(own,w)){try{sfxUI(220);}catch(_){}tcMark(x,y,'no');return;}
-    if(issueCmd(w,t,false)){tcMark(x,y,t&&!ally(t.team,ME)?'atk':'mv');updateUI();return;}}
+    if(issueCmdD(w,t,false)){tcMark(x,y,t&&!ally(t.team,ME)?'atk':'mv');updateUI();return;}}
   if(!t&&!own.length&&tcProd()){issueCmd(w,null,true);tcMark(x,y,'rl');updateUI();return;}
   selectClick(t,false);if(t)tcMark(x,y,'sel');tcSelSound();updateUI();}
 function tcBox(g){const x0=Math.min(g.x0,g.x),x1=Math.max(g.x0,g.x),y0=Math.min(g.y0,g.y),y1=Math.max(g.y0,g.y);
   G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u)+4,u.y);return p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1;})());tcSelSound();updateUI();}
 function tcLine(g){const w0=g.w0,w1=screenToWorld(g.x,g.y),ids=tcOwn().map(u=>u.id);TC.lineArm=false;if(!w0||!w1||!ids.length)return;
   doAct({t:'line',ids,x:w0.x,y:w0.y,x2:w1.x,y2:w1.y,mode:G.amove?'amove':'move'});G.amove=false;speak(1);PINGS.push({x:(w0.x+w1.x)/2,y:(w0.y+w1.y)/2,r:16,t:0,d:.4,c:0x74d08f});
-  tcMark(g.x0,g.y0,'ln');tcMark(g.x,g.y,'ln');updateUI();}
+  tcMark(g.x0,g.y0,'ln');tcMark(g.x,g.y,'ln');ordDone(false);updateUI();}
 function tcStartDrag(g,ts){const own=tcOwn();
   if(own.length&&!G.place&&!G.aim&&(g.mode==='hold'||TC.lineArm)){g.mode='line';g.w0=screenToWorld(g.x0,g.y0);RDRAG={x0:g.x0,y0:g.y0,w0:g.w0,id:g.id,am:G.amove,moved:true,line:true,tc:1};}
   else if(g.mode==='hold'&&!G.place&&!G.aim){g.mode='box';drag={x0:g.x0,y0:g.y0,box:true,shift:false,id:g.id,pt:'touch',tc:1};}
@@ -1092,7 +1096,8 @@ const MOPT=[['sMpre','Mouse scheme',null,[['std','Standard (default)'],['gen','G
   ['sMRDU','Right-drag with units selected','mRDU',[['line','Infantry line'],['scroll','Rapid scroll']]],
   ['sMRDN','Right-drag with nothing selected','mRDN',[['scroll','Rapid scroll'],['box','Box select'],['none','Nothing']]],
   ['sMCur','Cursor shows what a click will do','mCur',[['1','On'],['0','Off']]],
-  ['sMPing','Order markers on the ground','mPing',[['1','On'],['0','Off']]]];
+  ['sMPing','Order markers on the ground','mPing',[['1','On'],['0','Off']]],
+  ['sMKeep','Keep units selected after giving an order','mKeep',[['1','On'],['0','Off']]]];
 {const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sMpre')){const els=[];
   for(const [id,txt,,opts] of MOPT){const lb=document.createElement('div');lb.className='label';lb.textContent=txt;const sg=document.createElement('div');sg.className='seg';sg.id=id;for(const [v,t] of opts){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}els.push(lb,sg);
     if(id==='sMpre'){const n=document.createElement('div');n.className='sv';n.id='sMpreN';n.style.cssText='opacity:.8;margin:2px 0 4px';els.push(n);}
@@ -1102,7 +1107,7 @@ const MOPT=[['sMpre','Mouse scheme',null,[['std','Standard (default)'],['gen','G
   const rs=document.createElement('button');rs.className='btn2';rs.id='sMreset';rs.type='button';rs.textContent='Reset mouse settings to defaults';rs.style.margin='10px 0 4px';const sb=$('setBody');if(sb)sb.append(rs);else{const last=$('settings').querySelector('.card>.row:last-child');if(last)last.before(rs);}}}
 function syncMouseUI(){const pre=mPreset();
   for(const [id,,k] of MOPT){const el=$(id);if(!el)continue;for(const b of el.querySelectorAll('button')){const v=b.dataset.v;b.classList.toggle('on',k?String(SET[k])===v:v===pre);if(id==='sMpre'&&v==='custom')b.disabled=pre!=='custom';
-      b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing'||k==='mLock')?+v:v;if(k==='mLock'&&!SET.mLock)try{mlockOff();}catch(_){}else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
+      b.onclick=()=>{if(k)SET[k]=(k==='mCur'||k==='mPing'||k==='mLock'||k==='mKeep')?+v:v;if(k==='mLock'&&!SET.mLock)try{mlockOff();}catch(_){}else if(MPRE[v])Object.assign(SET,MPRE[v]);else return;saveSet();syncMouseUI();mouseScheme();};}}
   const n=$('sMpreN');if(n)n.textContent=pre==='std'?'Standard: left-click selects, right-click moves and attacks, right-drag draws a line. F then click: attack-move.':pre==='gen'?'Command & Conquer Generals: left-click selects and gives orders, right-click deselects, right-drag scrolls.':'Custom: your own mix of the choices below.';
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
