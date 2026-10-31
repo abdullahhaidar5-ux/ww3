@@ -128,6 +128,36 @@ async function view(page, at) {
 const sel = page => page.evaluate(() => G.sel.filter(e => !e.dead).map(e => e.id).sort((a, b) => a - b));
 const acts = page => page.evaluate(() => { const a = window.__acts; window.__acts = []; return a; });
 const clear = page => page.evaluate(() => { G.sel = []; G.amove = G.defm = false; G.place = G.aim = null; window.__acts = []; updateUI(); });
+
+async function powerChecks(page, { mode, ck, tap }) {
+  const click = async (x, y) => tap ? tap(x, y) : page.mouse.click(x, y);
+  await page.evaluate(() => { try { MLOCK.broken = true; mlockOff(); if (MLOCK.on) { MLOCK.on = false; VCUR.hidden = true; document.body.classList.remove('mlock'); } } catch (e) {} });
+  await page.evaluate(() => { const T = G.teams[ME]; T.pw.barrage = { lv: 1, cd: 0 }; T.pw.sanc = { lv: 1, cd: 0 }; G.sel = []; G.place = G.aim = null; window.__acts = []; updateUI(); });
+  const pw = a => a.filter(x => x.t === 'pow').map(x => x.k);
+  const btn = k => page.evaluate(k => { const b = document.querySelector('#qpow button[data-pow="' + k + '"]'); if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }, k);
+  const bb = await btn('barrage'), bs = await btn('sanc');
+  ck(mode + ' power buttons on the bar', !!bb && !!bs);
+  if (!bb || !bs) return;
+  await click(bs.x, bs.y); ck(mode + ' no-target power fires on one click', pw(await acts(page)).includes('sanc'));
+  await page.waitForTimeout(600); await page.evaluate(() => updateUI());
+  const bb2 = await btn('barrage'); await click(bb2.x, bb2.y); ck(mode + ' targeted power arms on button click', await page.evaluate(() => G.aim === 'barrage'), await page.evaluate(() => JSON.stringify({ aim: G.aim, pw: G.teams[ME].pw.barrage, paused: G.paused, el: document.elementFromPoint(innerWidth/2, 60)?.outerHTML.slice(0, 80) })));
+  const vp = await page.evaluate(() => { for (let y = innerHeight * .5; y < innerHeight * .9; y += 20) for (let x = innerWidth * .3; x < innerWidth * .7; x += 20) { if (document.elementFromPoint(x, y) === cv && screenToWorld(x, y)) return { width: x * 2, height: y / 0.6 }; } return { width: innerWidth, height: innerHeight }; });
+  await click(vp.width / 2, vp.height * 0.6);
+  { const ac = await acts(page); ck(mode + ' targeted power fires after one map click', pw(ac).includes('barrage') && await page.evaluate(() => !G.aim), JSON.stringify([ac, vp, await page.evaluate(() => [JSON.stringify(window.__pd), MLOCK.on, LASTPT, G.aim, G.place, G.over, mouse.x, mouse.y, !!screenToWorld(mouse.x, mouse.y)])])); }
+  if (!tap) {
+    await page.evaluate(() => { G.teams[ME].pw.barrage.cd = 0; updateUI(); window.__acts = []; });
+    await page.keyboard.press('b'); await page.mouse.click(vp.width / 2, vp.height * 0.6);
+    ck(mode + ' hotkey + one click fires', pw(await acts(page)).includes('barrage'));
+    await page.evaluate(() => { G.teams[ME].pw.barrage.cd = 0; updateUI(); });
+    await page.keyboard.press('b'); const armed = await page.evaluate(() => { G.paused = false; return G.aim === 'barrage'; }); await page.keyboard.press('Escape');
+    ck(mode + ' Esc cancels the armed power', armed && await page.evaluate(() => !G.aim));
+  } else {
+    await page.evaluate(() => { G.teams[ME].pw.barrage.cd = 0; updateUI(); }); const b2 = await btn('barrage'); await click(b2.x, b2.y);
+    await page.evaluate(() => { G.aim = null; updateUI(); }); ck(mode + ' cancel clears the armed power', await page.evaluate(() => !G.aim));
+  }
+  await clear(page);
+}
+
 const wait = ms => new Promise(r => setTimeout(r, ms));
 async function rdrag(page, a, b, holdMs = 0) {
   await page.mouse.move(a.x, a.y); await page.mouse.down({ button: 'right' });
@@ -366,6 +396,7 @@ try {
   await press('#sDone');
   // getting in and out of transports, buildings and tunnels with no button (orch/enterexit.mjs)
   await enterExitChecks(page, { mode: 'mouse', ck: check });
+  await powerChecks(page, { mode: 'mouse', ck: check });
   await stanceChecks(page, { mode: 'mouse', ck: check });
   // one-click powers: hotkey + 1 click, no-target = 1 press, Esc / right-click cancels
   await page.evaluate(() => { const T = G.teams[ME]; T.pw.barrage = { lv: 1, cd: 0 }; T.pw.sanc = { lv: 1, cd: 0 }; updateUI(); });
@@ -398,6 +429,7 @@ try {
   check('phone: taps never lock the mouse', await tp.evaluate(() => __lockReq === 0 && !MLOCK.on));
   try { await tp.screenshot({ path: path.join(OUT, 'controls-phone.png'), timeout: 120000 }); } catch (e) {}
   await enterExitChecks(tp, { mode: 'touch', ck: check, tap: (x, y) => tp.touchscreen.tap(x, y) });
+  await powerChecks(tp, { mode: 'touch', ck: check, tap: (x, y) => tp.touchscreen.tap(x, y) });
   await T.ctx.close();
 } catch (e) {
   errors.push(String(e && e.stack || e).split('\n').slice(0, 4).join(' | '));
