@@ -83,6 +83,15 @@ try {
     // older checkpoints without the new fields still restore (defaults: no spoofs, no banners)
     delete pk.g.spoofs; delete pk.g.mban; delete pk.g.mbanN; G.spoofs = undefined; G.mban = undefined; let okOld = true; try { ckRestore(pk); simUpdate(0.02); ewView(me); } catch (e) { okOld = String(e); } o.ckOld = okOld;
     ckRestore(JSON.parse(JSON.stringify(ckEncode()))); // keep going with a sane state
+    // mourning: 40 s buff then gone; rebuy blocked 180 s then allowed; checkpoint keeps the wait
+    { const T = G.teams[me], t0 = G.t; T.mart = 0; T.rebuy = 0; T.credits = 99999; const c = addUnit(me, 'cleric', myHq.x + 60, myHq.y + 60); const m = {};
+      if (c) { kill(c, null, null); m.set = Math.abs(T.mart - t0 - 40) < 0.5 && Math.abs(T.rebuy - t0 - 180) < 0.5;
+        const g = () => dmgOut({ team: me, s: { cls: 'inf', armor: 'light' }, rank: 0 }); m.fear = fearlessT(T, { s: { cls: 'inf' } });
+        const pk2 = JSON.parse(JSON.stringify(ckEncode())); T.mart = 0; T.rebuy = 0; ckRestore(pk2); m.ck = Math.abs(G.teams[me].rebuy - t0 - 180) < 0.5 && Math.abs(G.teams[me].mart - t0 - 40) < 0.5;
+        const T2 = G.teams[me]; m.blocked1 = enqueue(me, 'cleric') === false;
+        T2.mart = G.t + 0.01; simUpdate(0.05); m.buffEnds = !(fearlessT(T2, { s: { cls: 'inf' } }) && T2.mart > G.t) || T2.mart <= G.t;
+        T2.rebuy = G.t + 0.5; m.blockedMid = enqueue(me, 'cleric') === false; T2.rebuy = G.t - 1; const r2 = enqueue(me, 'cleric'); m.allowed = r2 === true || !allUnits(T2.fac).includes('cleric') || !done(me, stats(T2.fac, 'cleric').from); }
+      o.mourn = m; }
     // ghosts expire after 20 s
     window.__exp = () => { for (let i = 0; i < 160; i++) simUpdate(0.1); return (G.spoofs || []).length; };
     // frame the minimap for the screenshot: undo the Strike Center flag so ghosts show as real-looking contacts
@@ -106,6 +115,7 @@ try {
   ck('team message carries EW data', r.packJson > 10);
   ck('Strike Center flags ghosts as fake', r.flagged >= 3, r.flagged);
   ck('checkpoint keeps radar-spoof ghosts, cooldown, martyr banner and Ayatollah buff', Object.values(r.ck).every(Boolean), JSON.stringify(r.ck));
+  ck('mourning: 40 s buff, 180 s rebuy wait, checkpoint keeps both', Object.keys(r.mourn).length >= 6 && Object.values(r.mourn).every(Boolean), JSON.stringify(r.mourn));
   ck('old checkpoint without EW fields restores', r.ckOld === true, r.ckOld);
   await page.evaluate(() => { const c = document.getElementById('mm') || mm; window.__mmPng = c.toDataURL('image/png'); });
   const png = await page.evaluate(() => window.__mmPng.split(',')[1]);

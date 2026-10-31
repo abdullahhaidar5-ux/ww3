@@ -523,7 +523,21 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
       B.box(2,22,2,16,11,12,'#5a5c52');B.box(2,22,2,-20,11,12,'#5a5c52');B.box(38,2,2,-2,22,12,'#5a5c52');B.box(4,6,4,4,17,12,'#3a3b34');
       for(let x=-22;x<=22;x+=11)B.box(6,.4,1.2,x,3.2,20,'#e8e3cf');break;}
     case 'tunnel:main':B.cyl(17,22,7,12,0,3.5,0,'#8a7656');B.cyl(10,15,4,10,0,9,0,'#7a6849');B.box(13,10,9,0,5,15,'#1c1814');B.box(15,2,10,0,10.5,15,'#5d5a50');for(let i=0;i<9;i++){const a=i/9*6.28;B.box(6,3,3.5,Math.cos(a)*21,1.5,Math.sin(a)*21,'#a08d68',0,-a,0);}break;
-    case 'fort:main':{const R='#7d766a',R2='#6a645a',C='#a39f92';B.cyl(20,27,9,9,0,4.5,0,R);B.cyl(13,20,8,8,0,12,0,R2);B.cyl(6,12,4,7,3,19,-2,R);B.box(20,12,13,0,6,20,'#0f0d0b');B.box(26,3,10,0,12.5,19,C);B.box(3,12,12,-12,6,20,C);B.box(3,12,12,12,6,20,C);B.box(24,2.5,3,0,1.3,29,'#6f5f43');B.box(8,4,2,-15,14,26,'#3b3d36');B.box(8,4,2,15,14,26,'#3b3d36');for(let i=0;i<7;i++){const a=i/7*6.28;B.box(5,3,3.5,Math.cos(a)*27,1.5,Math.sin(a)*27,'#8b7e66',0,-a,0);}break;}
+    case 'fort:main':{/* Mountain Fortress: a rock outcrop with a reinforced gate, blast doors, sandbag/HESCO walls, slits, gun ports, camo net, mast and flag. Gate faces +z. */
+      const lo=gfxLow(),KP=fac==='KP',SH=fac==='IR'||fac==='RS'||fac==='DW',C=KP?'#8a8d90':SH?'#b9a77f':'#a39f92',C2=KP?'#6f7275':SH?'#9d8c68':'#8a867a',RK=KP?'#6d6e6a':SH?'#8a7a60':'#7d766a',RK2=KP?'#5b5c58':SH?'#76684f':'#6a645a',DK='#0b0a09',SB='#9a8e6c',HS='#a89f78';
+      B.cyl(30,38,10,lo?8:11,0,5,0,RK);B.cyl(21,30,12,lo?7:10,0,16,-6,RK2);B.cyl(9,18,13,lo?6:8,-5,28,-13,RK);
+      if(!lo)for(let i=0;i<9;i++){const a=i/9*6.28+.3,r=30+(i%3)*3;if(Math.sin(a)>.55)continue;B.box(9+i%3*3,6+i%2*3,8,Math.cos(a)*r,3,Math.sin(a)*r-4,i%2?RK:RK2,.1*i,a,.05*i);}
+      B.box(30,17,7,0,8.5,22,C);B.box(34,3,9,0,18.5,22,C2);B.box(15,11.5,3.4,0,5.8,25,DK);
+      B.box(7,10.6,1.2,-4.1,5.5,26.3,'#4b514b');B.box(7,10.6,1.2,4.8,5.5,26.6,'#434943',0,-.5,0);B.box(1,10.6,1.6,0,5.5,26.6,'#2b2e2b');
+      B.box(9,10,5,-21,5,23,C);B.box(9,10,5,21,5,23,C);B.box(5,.9,1,-21,7.5,25.7,DK);B.box(5,.9,1,21,7.5,25.7,DK);B.box(3.6,.9,1,-12,12.5,25.7,DK);B.box(3.6,.9,1,12,12.5,25.7,DK);
+      B.box(8,8,7,-27,4,32,C2);B.box(8,8,7,27,4,32,C2);B.box(4.4,1.8,1,-27,5.4,35.7,DK);B.box(4.4,1.8,1,27,5.4,35.7,DK);B.box(9,1,8,-27,8.5,32,C);B.box(9,1,8,27,8.5,32,C);
+      if(KP){B.box(4.6,4.6,.5,0,18.7,26.9,'#c0141c',0,0,.785);B.box(4.6,4.6,.5,0,18.7,26.9,'#c0141c');}
+      const nb=lo?4:7;for(let r=0;r<(lo?1:2);r++)for(let i=0;i<nb;i++){const a=(i/(nb-1)-.5)*1.5;B.box(6,2,2.6,Math.sin(a)*34*(r?.97:1),1+r*2,Math.cos(a)*32+10-Math.abs(a)*6+r,SB,0,-a,0);}
+      for(let i=0;i<(lo?3:5);i++){B.box(7,5,3,-14-i*7.5,2.5,38-i*1.6,HS,0,.12,0);B.box(7,5,3,14+i*7.5,2.5,38-i*1.6,HS,0,-.12,0);B.box(6.4,.5,2.6,-14-i*7.5,5.2,38-i*1.6,'#6b6446',0,.12,0);B.box(6.4,.5,2.6,14+i*7.5,5.2,38-i*1.6,'#6b6446',0,-.12,0);}
+      if(!lo){B.box(26,.5,16,15,17.5,14,'#4d5a3c',.22,0,-.08);B.box(18,.5,12,22,14,22,'#5c6a47',.15,.3,-.12);B.cyl(.35,.35,12,5,3,12,22,DK);B.cyl(.35,.35,10,5,28,10,30,DK);}
+      B.cyl(.45,.55,30,5,-6,43,-13,DK);B.box(10,.5,.5,-6,52,-13,DK);B.box(.5,.5,7,-6,48,-13,DK);B.cyl(.3,.4,10,4,-12,40,-14,DK);
+      B.cyl(.3,.3,24,5,10,46,-4,DK);B.box(7,4.5,.4,13.5,56,-4,tc);
+      for(let i=0;i<7;i++){const a=i/7*6.28+.2;B.box(5,3,3.5,Math.cos(a)*36,1.5,Math.sin(a)*36,'#8b7e66',0,-a,0);}break;}
     case 'fort:gun':
     case 'tunnel:gun':B.cyl(2.4,2.8,3,8,0,8,0,'#3b3d36');B.box(12,1.6,1.6,6,9.5,0,'#2c2e29');break;
     case 'turret:main':B.tor(15,4.2,0,3.5,0,'#968660');B.cyl(10,12,7,12,0,3.5,0,'#6d6c62');break;
