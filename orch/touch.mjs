@@ -130,7 +130,12 @@ function touch(page) {
   return {
     // tap a page element with the same gesture clock as every other touch (Playwright's own tap carries real-time stamps, which
     // sit behind this clock and are dropped as stale by Chrome's gesture detector once the page runs fast)
-    async ptap(sel) { const r = await page.evaluate(sel => { const e = document.querySelector(sel).getBoundingClientRect(); return { x: e.x + e.width / 2, y: e.y + e.height / 2 }; }, sel);
+    async ptap(sel) {
+      // orders drop the selection (Abdullah 2026-10-31), which hides the strip: pick the test units again before a strip tap
+      if (sel.startsWith('#tstrip') && await page.evaluate(() => { if (G.sel.some(u => !u.dead) || !window.__tsIds) return false; G.sel = window.__tsIds.map(i => G.byId.get(i)).filter(u => u && !u.dead); updateUI(); return true; })) await frames(page, 2);
+      if (sel.startsWith('#tstrip')) await page.evaluate(() => { try { tcStrip(true); } catch (e) {} });
+      if (!(await page.evaluate(sel => !!document.querySelector(sel), sel))) console.log('    ptap missing', sel, JSON.stringify(await page.evaluate(() => ({ sel: G.sel.length, ids: window.__tsIds, alive: (window.__tsIds || []).map(i => { const u = G.byId.get(i); return u ? (u.dead ? 'dead' : u.inTun ? 'tun' : 'ok') : 'gone'; }), strip: document.getElementById('tstrip') && document.getElementById('tstrip').hidden }))));
+      const r = await page.evaluate(sel => { const e = document.querySelector(sel).getBoundingClientRect(); return { x: e.x + e.width / 2, y: e.y + e.height / 2 }; }, sel);
       const w = lastEnd + 400 - Date.now(); if (w > 0) await sleep(w); // a tap that lands on a still-flying fling only stops the fling (no click): drags before it rest 120 ms first, and it waits a beat
       begin(); await tap1(r.x, r.y); await sleep(40); },
     async tap(x, y) { begin(); await tap1(x, y); await sleep(40); },
@@ -151,6 +156,7 @@ async function phonePass(tag, viewport, storageState) {
   console.log(`\n${tag}: ${viewport.width}x${viewport.height}, touch`);
   const { ctx, page } = await newPage({ viewport, isMobile: true, hasTouch: true, deviceScaleFactor: 1 }, storageState);
   const S = await battle(page);
+  await page.evaluate(ids => { window.__tsIds = ids; }, S.ids);
   const T = touch(page);
   const firstGuide = !storageState;
   // --- the first-time guide ---
@@ -286,6 +292,7 @@ async function phonePass(tag, viewport, storageState) {
   check(tag, a.some(x => x.t === 'line' && S.ids.every(id => x.ids.includes(id))), `hold, then drag with units selected draws a line formation (${a.map(x => x.t).join(',')})`);
   check(tag, Math.hypot(cL.x - cB.x, cL.y - cB.y) < 1, 'drawing the line does not scroll the map');
   // the strip's Line button: a plain drag draws the line
+  await page.evaluate(ids => { G.sel = ids.map(i => G.byId.get(i)).filter(Boolean); updateUI(); }, S.ids); await frames(page, 1); // an order drops the selection: pick the units again
   await T.ptap('#tstrip button[data-k="ln"]');
   await T.drag(L.x0, L.y1, L.x1, L.y0, { steps: 8, ms: 120, end: 120 });
   a = await acts(page);
@@ -293,6 +300,7 @@ async function phonePass(tag, viewport, storageState) {
   if (!a.some(x => x.t === 'line')) console.log('    state:', JSON.stringify(await page.evaluate(() => ({ sel: G.sel.length, strip: document.getElementById('tstrip').className + '|' + document.getElementById('tstrip').hidden, amove: G.amove, TCg: TC.g, acts: window.__acts.length }))));
 
   // --- strip: attack-move, guard ---
+  await page.evaluate(ids => { G.sel = ids.map(i => G.byId.get(i)).filter(Boolean); updateUI(); }, S.ids); await frames(page, 1); // an order drops the selection: pick the units again
   await T.ptap('#tstrip button[data-k="am"]');
   check(tag, await page.evaluate(() => G.amove), 'strip ⚔ arms attack-move');
   if (!(await page.evaluate(() => G.amove))) console.log('    state:', JSON.stringify(await page.evaluate(() => ({ sel: G.sel.length, strip: document.getElementById('tstrip').className + '|' + document.getElementById('tstrip').hidden, btns: [...document.querySelectorAll('#tstrip button')].map(b => b.dataset.k).join(',') }))));
@@ -367,6 +375,7 @@ async function desktopPass() {
   // this pass checks the mouse controls, not the looks: low graphics keep the software renderer from taking minutes
   await page.addInitScript(() => { try { localStorage.setItem('ww3_settings', JSON.stringify({ gfx: 'low' })); } catch (e) {} });
   const S = await battle(page);
+  await page.evaluate(ids => { window.__tsIds = ids; }, S.ids);
   await frames(page, 3);
   check(tag, await page.evaluate(() => !TOUCHUI), 'no touch layout with a mouse');
   let p = await scr(page, S.ids[0]);
