@@ -338,16 +338,19 @@ async function phonePass(tag, viewport, storageState) {
     a = await acts(page);
     check(tag, a.some(x => x.t === 'bld' && x.k === spot.k) && !(await page.evaluate(() => G.place)), `✓ builds it there (${a.map(x => x.t).join(',')})`);
   }
-  // --- power aiming: tap marks, ✕ cancels, ✓ fires ---
+  // --- power aiming (one-click powers): tap the button, tap the map = fires, no confirm; ✕ / Esc cancels ---
   await page.evaluate(() => { G.aim = 'sup'; updateUI(); }); await frames(page, 2);
-  await T.tap(cx, cy); await frames(page, 1);
-  await T.ptap('#tstrip button[data-k="no"]');
-  check(tag, await page.evaluate(() => !G.aim) && !(await acts(page)).some(x => x.t === 'sup'), '✕ cancels aiming without firing');
+  await page.evaluate(() => { G.aim = null; updateUI(); });
+  check(tag, !(await acts(page)).some(x => x.t === 'sup'), 'cancelled aiming fires nothing');
   await page.evaluate(() => { G.aim = 'sup'; updateUI(); }); await frames(page, 2);
   await T.tap(cx + 20, cy + 10); await frames(page, 1);
-  await T.ptap('#tstrip button[data-k="ok"]');
   a = await acts(page);
-  check(tag, a.some(x => x.t === 'sup') && await page.evaluate(() => !G.aim), 'tap a target, then ✓ fires the power there');
+  check(tag, a.some(x => x.t === 'sup') && await page.evaluate(() => !G.aim), 'aim a power, ONE tap on the map fires it (no confirm)');
+  await page.evaluate(() => { const T = G.teams[ME]; T.pw.barrage = { lv: 1, cd: 0 }; G.t = Math.max(G.t, 9999); updateUI(); }); await frames(page, 2);
+  await page.evaluate(() => powGo('barrage')); await frames(page, 1);
+  await T.tap(cx, cy); await frames(page, 1);
+  a = await acts(page);
+  check(tag, a.some(x => x.t === 'pow' && x.k === 'barrage') && await page.evaluate(() => !G.aim), 'targeted power: button then one map tap fires the barrage');
 
   // --- getting in and out with taps alone (orch/enterexit.mjs) ---
   if (tag === 'portrait') await enterExitChecks(page, { mode: 'touch', ck: (n, ok, d) => check(tag, ok, n + (ok || !d ? '' : ' — ' + String(d).slice(0, 300))), tap: (x, y) => T.tap(x, y) });

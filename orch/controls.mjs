@@ -367,6 +367,18 @@ try {
   // getting in and out of transports, buildings and tunnels with no button (orch/enterexit.mjs)
   await enterExitChecks(page, { mode: 'mouse', ck: check });
   await stanceChecks(page, { mode: 'mouse', ck: check });
+  // one-click powers: hotkey + 1 click, no-target = 1 press, Esc / right-click cancels
+  await page.evaluate(() => { const T = G.teams[ME]; T.pw.barrage = { lv: 1, cd: 0 }; T.pw.sanc = { lv: 1, cd: 0 }; updateUI(); });
+  await clear(page); await page.keyboard.press('b'); await wait(100);
+  check('power: B aims the barrage', await page.evaluate(() => G.aim === 'barrage'));
+  await page.keyboard.press('Escape'); await wait(100);
+  check('power: Esc cancels aiming, nothing fired', await page.evaluate(() => !G.aim) && !(await acts(page)).some(x => x.t === 'pow'));
+  await page.keyboard.press('b'); await wait(100); await page.mouse.click(640, 360); await wait(150);
+  { const a = await acts(page); check('power: hotkey + ONE click fires the barrage', a.some(x => x.t === 'pow' && x.k === 'barrage') && await page.evaluate(() => !G.aim), JSON.stringify(a)); }
+  await page.keyboard.press('b'); await wait(100); await page.mouse.click(640, 360, { button: 'right' }); await wait(150);
+  check('power: right-click cancels aiming', await page.evaluate(() => !G.aim));
+  await page.keyboard.press('u'); await wait(150);
+  { const a = await acts(page); check('power: no-target power fires on ONE key press', a.some(x => x.t === 'pow' && x.k === 'sanc'), JSON.stringify(a)); }
   await page.context().close();
 
   /* ================= phone (touch) ================= */
