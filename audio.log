@@ -1,0 +1,38 @@
+battle loaded: US vs RU
+sfx fetched: sfx/manifest.json, sfx/sfx.mp3, sfx/truck.mp3, sfx/wind.mp3, sfx/rumble.mp3
+music bus RMS (info): menu 0.0047, calm 0.0264, combat 0.0636
+fetched: mus/st/menu-04.mp3, mus/an_US.mp3, mus/st/calm-03.mp3, mus/st/combat-01.mp3, mus/st/calm-02.mp3, mus/st/victory-01.mp3, mus/st/menu-02.mp3, mus/st/calm-05.mp3, mus/st/defeat-02.mp3
+ok   0) nothing plays or downloads before the first tap
+ok   0) menu: a menu track plays after a tap — menu-04
+ok   0) menu: music bus is not silent
+ok   i) menu: no battle sound files downloaded yet
+ok   e) anthem requested at battle start (US) — mus/an_US.mp3
+ok   e) anthem plays
+ok   a) a calm track plays after the anthem — calm-03
+ok   a) calm is audible on the music bus
+ok   a) old sample sheets not fetched (smp/me/as/we)
+ok   a) old generated score is gone
+ok   f) only the menu + calm files fetched so far (streaming) — mus/st/menu-04.mp3, mus/st/calm-03.mp3
+ok   b) heat high switches to the combat pool — combat-01
+ok   b) crossfade done: combat deck up, calm deck faded and paused — [{"id":"combat-01","on":true,"started":true,"paused":false,"t":3.78,"g":2.6},{"id":"calm-03","on":false,"started":true,"paused":true,"t":11.8,"g":0}]
+ok   c) combat holds while its 60 s dwell runs (heat 0) — combat
+ok   c) after the dwell, back to calm
+ok   c) no ping-pong: calm holds for its dwell even with heat high — calm
+ok   f) no soundtrack file fetched that the player did not play
+ok   i) the sound sprite sheet loads and decodes — ["sfx/manifest.json","sfx/sfx.mp3","sfx/truck.mp3","sfx/wind.mp3","sfx/rumble.mp3"]
+ok   i) shots, rockets, cannons and explosions play from the recordings — sprite clips started: 8
+ok   i) simultaneous recorded sounds are capped — 28/28
+ok   i) a voice ducks music and effects, then they come back — [[0.5507591366767883,0.7204722762107849],0.9949578046798706,0.9968611598014832]
+ok   i) ambience loops (wind / distant rumble) are in place — truck,rumble,wind
+ok   i) only needed sound files downloaded, each once — sfx/manifest.json,sfx/sfx.mp3,sfx/truck.mp3,sfx/wind.mp3,sfx/rumble.mp3 dupes:
+ok   d) victory plays the victory track — victory-01
+ok   d) the anthem follows the victory track
+ok   d) then the menu pool — menu-02
+ok   d) second battle: battle music again — calm-05
+ok   d) defeat plays the defeat track — defeat-02
+ok   h) no audio error reported by the game (AU.err)
+ok   f) only needed music files downloaded (tracks that played + the anthem)
+ok   g) soundtrack unreachable: the player gives up quietly — {"mode":null,"pool":null,"id":null,"fail":1,"an":false,"anWait":false,"heat":0,"playing":false,"decks":[{"id":"menu-04","on":false,"started":false,"paused":true,"t":0,"g":0},{"id":"menu-02","on":false,"started":false,"paused":true,"t":0,"g":0}],"req":["mus/st/menu-04.mp3","mus/st/calm-03.mp3","mus/st/combat-01.mp3","mus/st/calm-02.mp3","mus/st/victory-01.mp3","mus/st/menu-02.mp3","mus/st/calm-05.mp3","mus/st/defeat-02.mp3","mus/st/menu-04.mp3","mus/st/menu-02.mp3"],"err":"soundtrack: track menu-02 media error 4","ctx":"running"}
+ok   g) back online: menu music returns — {"mode":"menu","pool":"menu","id":"menu-04","fail":0,"an":false,"anWait":false,"heat":0,"playing":true,"decks":[{"id":"menu-04","on":true,"started":true,"paused":false,"t":0.19,"g":0.161},{"id":"menu-02","on":false,"started":false,"paused":true,"t":0,"g":0}],"req":["mus/st/menu-04.mp3","mus/st/calm-03.mp3","mus/st/combat-01.mp3","mus/st/calm-02.mp3","mus/st/victory-01.mp3","mus/st/menu-02.mp3","mus/st/calm-05.mp3","mus/st/defeat-02.mp3","mus/st/menu-04.mp3","mus/st/menu-02.mp3","mus/st/menu-04.mp3"],"err":"","ctx":"running"}
+ok   h) no page errors / console audio errors
+AUDIO PASS
