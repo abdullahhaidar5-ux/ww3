@@ -1,0 +1,7 @@
+mapfair: 0 of 22 battles, 4 at a time
+Warning: Detected unsettled top-level await at file:///home/runner/work/ww3/ww3/orch/mapfair.mjs:97
+  await new Promise(done => {
+  ^
+
+
+
