@@ -28,7 +28,9 @@ export async function stanceChecks(page, { mode, ck, tap }) {
       u.st = st; u.max = u.hp = e.max = e.hp = 1e7; e.cd = 1e9; e.st = 2; e.vis = true; u.vis = true; u.hid = false; e.hid = false;
       if (e.vs) e.vs[ME] = true; if (u.vs) u.vs[en.id] = true;
       const x0 = u.x, y0 = u.y; let tgt = false;
-      for (let i = 0; i < 40; i++) { simUpdate(.1); if (u.target === e) tgt = true; }
+      // the enemy is a fixed target: pin it in place each step (its own AI may otherwise walk it towards or past us)
+      const ex = e.x, ey = e.y;
+      for (let i = 0; i < 40; i++) { simUpdate(.1); e.x = ex; e.y = ey; if (e.path) e.path = null; if (u.target === e) tgt = true; }
       const mv = Math.hypot(u.x - x0, u.y - y0);
       u.dead = e.dead = true; G.byId.delete(u.id); G.byId.delete(e.id);
       const near = G.ents.filter(o => !o.dead && o !== u && o !== e && Math.hypot(o.x - u.x, o.y - u.y) < 150).map(o => o.kind).slice(0, 6);

@@ -62,6 +62,7 @@ export async function enterExitChecks(page, { mode, ck, tap }) {
   let a = await acts();
   ck(P('infantry selected + right-click/tap own transport = they board it'), a.some(x => x.t === 'board' && x.tid === S.tr && x.ids.length === 2), JSON.stringify(a));
   if (mode === 'mouse') {
+    await setSel([S.i1, S.i2]); // a mouse order drops the selection: pick them again for the cursor check
     await page.mouse.move(V.tr.x + 1, V.tr.y); const cur = await page.evaluate(() => { cursorTick(true); return cv.dataset.cur; });
     ck(P('the cursor shows "enter" over the transport'), cur === 'enter', cur);
   }

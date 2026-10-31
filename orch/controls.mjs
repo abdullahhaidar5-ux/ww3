@@ -168,7 +168,11 @@ try {
   await page.mouse.click(g[0].x, g[0].y, { button: 'right' });
   a = await acts(page);
   check('right-click ground = move order', a.some(x => x.t === 'go' && x.mode === 'move' && sameIds(x.ids.slice().sort((p, q) => p - q), [A, B])), JSON.stringify(a));
-  check('…and keeps the selection', sameIds(await sel(page), [A, B]));
+  check('…and drops the selection (ready to pick other units)', (await sel(page)).length === 0, JSON.stringify(await sel(page)));
+  await setSel([A, B]);
+  await page.keyboard.down('Shift'); await page.mouse.click(g[1].x, g[1].y, { button: 'right' }); await page.keyboard.up('Shift');
+  check('Shift+right-click orders and keeps the selection', sameIds(await sel(page), [A, B]), JSON.stringify(await sel(page)));
+  await setSel([A, B]);
   await page.mouse.click(V.E.x, V.E.y, { button: 'right' });
   a = await acts(page);
   check('right-click enemy = attack order', a.some(x => x.t === 'atk' && x.tid === E), JSON.stringify(a));
@@ -198,17 +202,20 @@ try {
   await page.mouse.click(g[1].x, g[1].y);
   a = await acts(page);
   check('F then left-click ground = attack-move order', a.some(x => x.t === 'go' && x.mode === 'amove'), JSON.stringify(a));
-  check('…selection kept after attack-move', sameIds(await sel(page), [A, B]));
+  check('…selection dropped after attack-move', (await sel(page)).length === 0);
+  await setSel([A, B]);
   await page.keyboard.press('f');
   await page.mouse.click(g[2].x, g[2].y, { button: 'right' });
   a = await acts(page);
   check('F then right-click ground = attack-move order', a.some(x => x.t === 'go' && x.mode === 'amove'), JSON.stringify(a));
   // Ctrl / Alt / G / X
+  await setSel([A, B]);
   await page.keyboard.down('Control'); await page.mouse.click(V.E.x, V.E.y); await page.mouse.click(g[1].x, g[1].y); await page.keyboard.up('Control');
   a = await acts(page);
   check('Ctrl+click enemy = force-fire on it', a.some(x => x.t === 'atk' && x.tid === E), JSON.stringify(a));
   check('Ctrl+click empty ground does not move the units', !a.some(x => x.t === 'go'), JSON.stringify(a));
-  check('…selection kept after Ctrl+click', sameIds(await sel(page), [A, B]));
+  check('…selection dropped after Ctrl+click', (await sel(page)).length === 0, JSON.stringify(await sel(page)));
+  await setSel([A, B]);
   await page.keyboard.down('Alt'); await page.mouse.click(g[0].x, g[0].y); await page.keyboard.up('Alt');
   a = await acts(page);
   check('Alt+click = waypoint (queued move)', a.some(x => x.t === 'go' && x.q === 1), JSON.stringify(a));
@@ -233,7 +240,7 @@ try {
   await page.mouse.up({ button: 'right' });
   a = await acts(page);
   check('right-drag with units selected = infantry line formation', a.some(x => x.t === 'line' && x.ids.length === 3), JSON.stringify(a));
-  check('…selection kept after the line order', (await sel(page)).length === 3);
+  check('…selection dropped after the line order', (await sel(page)).length === 0);
   await clear(page);
   { const c0 = await page.evaluate(() => ({ x: cam.tx, y: cam.ty }));
     await rdrag(page, { x: 800, y: 380 }, { x: 1050, y: 380 }, 600);
