@@ -22,7 +22,7 @@ const argS = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 
 const has = k => process.argv.includes('--' + k);
 const ALL = ['US', 'TR', 'IL', 'EU', 'UA', 'RU', 'IR', 'SA', 'AE', 'PK', 'IN', 'CN', 'KP', 'KR', 'EG', 'CU', 'RS', 'DW'];
 
-const STATIC_FN = `globalThis.__fairStatic=(k,n,seed)=>{setWorld(worldScaleFor(n));setBases(n,k,-1);const sv=srand;let M;try{M=mkMap(seed,k);}finally{srand=sv;}
+const STATIC_FN = `globalThis.__fairStatic=(k,n,seed)=>{setWorld(worldScaleFor(n,k));setBases(n,k,-1);const sv=srand;let M;try{M=mkMap(seed,k);}finally{srand=sv;}
   const cell=(x,y)=>Math.floor(y/CELL)*GW+Math.floor(x/CELL),DB=BASES.map(([x,y])=>gridDist(M.grid,x,y)),DC=gridDist(M.grid,MAPW/2,MAPH/2);
   const b=BASES.map(([x,y],i)=>({eD:Math.round(Math.min(...BASES.map((q,j)=>j===i?1e9:DB[i][cell(q[0],q[1])]))),dC:Math.round(DC[cell(x,y)]),f:0,o:0}));
   const share=(arr,key)=>{for(const p of arr){const d=DB.map(Q=>Q[cell(p.x,p.y)]),m=Math.min(...d);if(!(m<1e8))continue;const w=d.map((v,i)=>v<=m+Math.max(120,.04*m)?i:-1).filter(i=>i>=0);for(const i of w)b[i][key]+=1/w.length;}};

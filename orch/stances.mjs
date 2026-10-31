@@ -14,9 +14,11 @@ export async function stanceChecks(page, { mode, ck, tap }) {
     G.paused = true;
     const T = G.teams[ME], hq = G.ents.find(b => b.team === ME && b.kind === 'hq'), en = G.teams.find(Q => Q.id !== ME);
     const k = roster(T.fac).barracks[0], ek = roster(en.fac).barracks[0];
-    const clear = (x, y) => passXY('ground', x, y) && !G.ents.some(e => !e.dead && Math.hypot(e.x - x, e.y - y) < (e.isB ? e.size / 2 + 60 : 40));
+    // a quiet spot: away from buildings, units, and the supply/oil fields trucks drive to (traffic would push the test unit)
+    const clear = (x, y) => passXY('ground', x, y) && !G.ents.some(e => !e.dead && Math.hypot(e.x - x, e.y - y) < (e.isB ? e.size / 2 + 90 : 160))
+      && !(G.map.fields || []).concat(G.map.oil || []).some(f => Math.hypot(f.x - x, f.y - y) < 260) && !coverAt(x, y);
     let C = null;
-    for (let r = 300; r < 1400 && !C; r += 50) for (let a = 0; a < 6.28 && !C; a += .35) { const x = hq.x + Math.cos(a) * r, y = hq.y + Math.sin(a) * r;
+    for (let r = 400; r < 1800 && !C; r += 50) for (let a = 0; a < 6.28 && !C; a += .35) { const x = hq.x + Math.cos(a) * r, y = hq.y + Math.sin(a) * r;
       let ok = x > 300 && y > 300 && x < MAPW - 300 && y < MAPH - 300; for (let d = -250; d <= 250 && ok; d += 50) if (!clear(x + d, y)) ok = false; if (ok) C = { x, y }; }
     if (!C) C = { x: hq.x + 400, y: hq.y };
     const out = {};
@@ -26,10 +28,13 @@ export async function stanceChecks(page, { mode, ck, tap }) {
       u.st = st; u.max = u.hp = e.max = e.hp = 1e7; e.cd = 1e9; e.st = 2; e.vis = true; u.vis = true; u.hid = false; e.hid = false;
       if (e.vs) e.vs[ME] = true; if (u.vs) u.vs[en.id] = true;
       const x0 = u.x, y0 = u.y; let tgt = false;
-      for (let i = 0; i < 40; i++) { simUpdate(.1); if (u.target === e) tgt = true; }
+      // the enemy is a fixed target: pin it in place each step (its own AI may otherwise walk it towards or past us)
+      const ex = e.x, ey = e.y;
+      for (let i = 0; i < 40; i++) { simUpdate(.1); e.x = ex; e.y = ey; if (e.path) e.path = null; if (u.target === e) tgt = true; }
       const mv = Math.hypot(u.x - x0, u.y - y0);
       u.dead = e.dead = true; G.byId.delete(u.id); G.byId.delete(e.id);
-      return { mv: Math.round(mv), tgt, rg: Math.round(rg) };
+      const near = G.ents.filter(o => !o.dead && o !== u && o !== e && Math.hypot(o.x - u.x, o.y - u.y) < 150).map(o => o.kind).slice(0, 6);
+      return { mv: Math.round(mv), tgt, rg: Math.round(rg), ut: u.target ? u.target.kind : null, near };
     };
     out.holdFar = trial(2, 1.5);   // enemy out of range
     out.holdNear = trial(2, .8);   // enemy in range
