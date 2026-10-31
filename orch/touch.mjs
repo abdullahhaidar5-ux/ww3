@@ -232,7 +232,8 @@ async function phonePass(tag, viewport, storageState) {
   let a = await acts(page);
   check(tag, a.some(x => x.t === 'go' && x.ids.includes(S.ids[0])), `tap on the ground with a unit selected orders a move (${a.map(x => x.t).join(',')})`);
   check(tag, mk.n >= 1 && mk.dom >= 1, 'a move marker flashes where the order went');
-  check(tag, (await sel(page)).length === 1, 'the unit stays selected after the order');
+  check(tag, (await sel(page)).length === 0, 'the unit deselects right after the order (Abdullah 2026-10-30)');
+  await page.evaluate(ids => { G.sel = [G.byId.get(ids[0])]; updateUI(); }, S.ids); // later steps continue with it selected
   if (tag === 'portrait') await shot(page, 'portrait-order.png');
 
   // --- tap an enemy: attack order ---
