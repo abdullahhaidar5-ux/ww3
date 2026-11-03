@@ -11962,24 +11962,25 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
   const flagCell=fac==='KP'?'star':'f:'+fac;
   const pole=(x,top,hh,fw)=>{B.cyl(.14,.16,hh,5,x,top+hh/2,0,'#25262a');const fh=fw*.6;sides((sg,f)=>B.quad(fw,fh,x-fw/2-.1,top+hh-fh/2-.1,sg*.06,f,'f:'+fac));};
   if(air){
-    if(k==='jet'){const half=W/2;let done=0;for(const xf of [.5,.42,.58,.35]){const ys=[];for(const sg of [1,-1]){const p=P.down(minx+L*xf,sg*half*.55);if(p)ys.push([sg,p.y]);}if(ys.length===2){const s=L*.1;for(const [sg,y] of ys)B.quad(s,s,minx+L*xf,y+.15,sg*half*.55,'+y','r:'+fac);done=1;break;}}
-      outer:for(const xf of [.12,.17,.22,.08])for(const yf of [.85,.75,.65,.55]){const p=P.side(minx+L*xf,miny+H*yf,1);if(p&&Math.abs(p.z)<W*.12){const s=L*.075;sides((sg,f)=>B.quad(s,s*.62,minx+L*xf,miny+H*yf,sg*Math.abs(p.z)+(sg>0?.1:-.1),f,'f:'+fac));break outer;}}}
-    else{outer2:for(const xf of [.14,.2,.1,.26])for(const yf of [.55,.5,.6,.45,.4]){const p=P.side(minx+L*xf,miny+H*yf,1);if(p&&Math.abs(p.z)<W*.3){const s=L*.07;sides((sg,f)=>B.quad(s,s*.62,minx+L*xf,miny+H*yf,sg*Math.abs(p.z)+(sg>0?.1:-.1),f,'f:'+fac));break outer2;}}}
+    if(k==='jet'){const half=W/2;let done=0;for(const xf of [.5,.42,.58,.35]){const ys=[];for(const sg of [1,-1]){const p=P.down(minx+L*xf,sg*half*.55);if(p)ys.push([sg,p.y]);}if(ys.length===2){const s=L*.16;for(const [sg,y] of ys)B.quad(s,s,minx+L*xf,y+.15,sg*half*.55,'+y','r:'+fac);done=1;break;}}
+      outer:for(const xf of [.12,.17,.22,.08])for(const yf of [.85,.75,.65,.55]){const p=P.side(minx+L*xf,miny+H*yf,1);if(p&&Math.abs(p.z)<W*.12){const s=L*.11;sides((sg,f)=>B.quad(s,s*.62,minx+L*xf,miny+H*yf,sg*Math.abs(p.z)+(sg>0?.1:-.1),f,'f:'+fac));break outer;}}}
+    else{outer2:for(const xf of [.14,.2,.1,.26])for(const yf of [.55,.5,.6,.45,.4]){const p=P.side(minx+L*xf,miny+H*yf,1);if(p&&Math.abs(p.z)<W*.3){const s=L*.11;sides((sg,f)=>B.quad(s,s*.62,minx+L*xf,miny+H*yf,sg*Math.abs(p.z)+(sg>0?.1:-.1),f,'f:'+fac));break outer2;}}}
   }else if(nav){
     const y=miny+H*.3;let p=P.side(cx,y,1);if(p){const hz=Math.abs(p.z);
-      const fw=Math.min(L*.12,H*1.2);sides((sg,f)=>B.quad(fw,fw*.6,minx+L*.2,y,sg*(hz+.12),f,'f:'+fac));
+      const fw=Math.min(L*.18,H*1.6);sides((sg,f)=>B.quad(fw,fw*.6,minx+L*.2,y,sg*(hz+.12),f,'f:'+fac));
       if(k!=='lander'){const no=(k==='ship'?100+((KFAC.indexOf(fac)*37+17+(e.id&3)*11)%800):10+((KFAC.indexOf(fac)*13+(e.id&3)*7)%89)),ds=String(no),dh=Math.min(H*.3,L*.07),dw=dh*.55;
         for(let i=0;i<ds.length;i++){const xx=maxx-L*.3-(ds.length-1-i)*dw*1.05;sides((sg,f)=>B.quad(dw,dh,xx,y,sg*(Math.abs((P.side(xx,y,1)||p).z)+.12),f,'d:'+ds[i],[.3,.1,.7,.9]));}}}
-    const tp=P.down(minx+L*.12,0);if(tp)pole(minx+L*.12,tp.y,Math.max(3,H*.9),Math.min(L*.12,8));
+    const tp=P.down(minx+L*.12,0);if(tp)pole(minx+L*.12,tp.y,Math.max(4,H*1.1),Math.min(L*.17,12));
   }else{
     // ground vehicles: a flag on each side, then the nation's kit
-    const hx=cx-L*.1,yS=miny+H*.42,ps=P.side(hx,yS,1);const fw=Math.min(L*.1,7);
+    const hx=cx-L*.1,yS=miny+H*.42,ps=P.side(hx,yS,1);const fw=Math.min(L*.17,11);
     if(ps){const hz=Math.abs(ps.z);sides((sg,f)=>B.quad(fw,fw*(fac==='KP'?1:.6),hx,yS,sg*(hz+.12),f,flagCell));}
     const tt=P.down(cx-L*.02,0);
-    if(shia){const rp=P.down(cx-L*.4,0);if(rp)pole(cx-L*.4,rp.y,Math.max(5,H*.55),Math.min(L*.14,8));
+    if(shia){const rp=P.down(cx-L*.4,0);if(rp)pole(cx-L*.4,rp.y,Math.max(6,H*.7),Math.min(L*.21,12));
       if(fac==='IR'&&k==='tank'&&c.m!=='m_hilux'){for(let i=-2;i<=2;i++){const xx=cx+i*L*.07,p=P.side(xx,miny+H*.52,1);if(p){const hz=Math.abs(p.z);sides((sg)=>B.box(L*.05,H*.12,.9,xx,miny+H*.52,sg*(hz+.35),'#43483a'));}}}
       if(c.m==='m_hilux'){const bx=cx-L*.28,bp=P.down(bx,0);if(bp){const by=bp.y;for(let i=0;i<5;i++){B.box(L*.07,H*.07,W*.2,bx+(i%3-1)*L*.075,by+H*.04+((i/3)|0)*H*.07,(i%2?-1:1)*W*.2,'#a39874');}B.tor(H*.17,H*.05,bx-L*.1,by+H*.18,0,'#1c1c1b',0,Math.PI/2,0);B.box(.6,H*.3,W*.34,bx-L*.1,by+H*.18,0,'#161615');}}}
-    if(fac==='KP'&&tt)B.quad(Math.min(L*.11,8),Math.min(L*.11,8),cx-L*.02,tt.y+.2,0,'+y','star');
+    if(fac!=='KP'){const rx=cx-L*.28,rq=P.down(rx,0);if(rq){const s=Math.min(L*.2,W*.5,13);B.quad(s,s*.6,rx,rq.y+.2,0,'+y','f:'+fac);}}
+    if(fac==='KP'&&tt)B.quad(Math.min(L*.18,12),Math.min(L*.18,12),cx-L*.02,tt.y+.2,0,'+y','star');
     if(fac==='RU'&&k==='tank'&&tt){const y=tt.y+1.1,ww=L*.3,dd=W*.42;B.box(ww,.35,.4,cx-L*.02,y,0,'#2e312a');for(const z of [-1,0,1])B.box(ww,.3,.35,cx-L*.02,y,z*dd/2,'#2e312a');for(let i=0;i<5;i++)B.box(.4,.3,dd,cx-L*.02-ww/2+i*ww/4,y,0,'#2e312a');for(const sx of [-1,1])for(const sz of [-1,1])B.box(.35,1.1,.35,cx-L*.02+sx*ww/2,y-.55,sz*dd/2,'#2e312a');}
     if((fac==='US'||fac==='IL'||fac==='EU')&&k!=='jeep'){const rp=P.down(cx-L*.34,W*.2);if(rp){for(const sg of [1,-1])B.cyl(.07,.1,H*.8,4,cx-L*.34,rp.y+H*.38,sg*W*.2,'#202220',0,0,sg*.12);}
       if(tt)B.box(L*.06,H*.09,W*.09,cx+L*.01,tt.y+H*.04,W*.12,'#2a2d2b');}
