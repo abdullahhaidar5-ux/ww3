@@ -245,7 +245,7 @@ try {
     explode(f.x, f.y, 90, 9000, en.id, 'shell', 'bar', foe); explode(f.x, f.y, 90, 9000, en.id, 'super', 'sup', foe);
     o.immune = f.hp === hp0 && !f.dead;
     // units enter and leave like a tunnel
-    const inf = addUnit(me, 'inf', f.x + 40, f.y + 40); T.tun = []; enterTunnel(inf); o.entered = T.tun.length === 1 && inf.inTun; o.cap = tunCap(me); inf.hp = inf.max * .5; const h0 = inf.hp; fortHeal(2); o.healed = inf.hp > h0 && inf.hp <= inf.max;
+    const inf = addUnit(me, 'inf', f.x + 40, f.y + 40); T.tun = []; enterTunnel(inf, f); o.entered = f.gar.length === 1 && T.tun.length === 0 && inf.inTun; o.cap = FORT_CAP; inf.hp = inf.max * .5; const h0 = inf.hp; fortHeal(2); o.healed = inf.hp > h0 && inf.hp <= inf.max;
     const out = unloadTunnel(f); o.exited = out && out.length === 1 && !inf.inTun;
     // Bunker Buster
     T.pw.bb = { cd: 0, lv: 1 }; G.t = 100; o.early = usePower(me, 'bb', f.x, f.y);   // not in the first 5 minutes
@@ -259,7 +259,7 @@ try {
   ck('fortress: only KP/IR/RS/DW can build it', ft.allowedKP && ft.deniedUS, JSON.stringify(ft));
   ck('fortress: limit of 1 per player', ft.second === false, JSON.stringify(ft));
   ck('fortress: takes 0 damage from guns, cannon, artillery, bombs, superweapons', ft.immune, JSON.stringify(ft));
-  ck('fortress: units enter and come out like a tunnel, bigger garrison (24)', ft.entered && ft.exited && ft.cap === 24 && ft.capAfter === 12, JSON.stringify(ft));
+  ck('fortress: standalone garrison of its own (20), tunnel network stays 12', ft.entered && ft.exited && ft.cap === 20 && ft.capAfter === 12, JSON.stringify(ft));
   ck('fortress: infantry waiting inside slowly heal', ft.healed, JSON.stringify(ft));
   ck('bunker buster: locked first 5 min, costs $2200, cooldown, destroys the fortress', ft.early === false && ft.fired && ft.paid && ft.cd && ft.dead, JSON.stringify(ft));
   const fc = await page.evaluate(() => {
