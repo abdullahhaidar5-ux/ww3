@@ -169,6 +169,8 @@ function validSpot(team,kind,x,y){validSpot.why='';const s=bstats(G.teams[team].
   if(!dz.length)return no('You need a Construction Vehicle to build. Train one at your Command HQ.');
   if(enemy<FRONT_R&&!dz.some(u=>Math.hypot(u.x-x,u.y-y)<ONSITE_R))return no('Too close to an enemy base. Drive a Construction Vehicle there first.');
   return 2;}
+// Cancel an unfinished building (Abdullah 2026-10-31): the whole price comes back, builders stand down.
+function cancelBld(team,tid){const b=G.byId.get(tid);if(!b||b.dead||!b.isB||b.team!==team||b.built>=1||b.kind==='hq')return;const T=G.teams[team],s=bstats(T.fac,b.kind);for(const u of G.ents)if(u.order&&u.order.type==='build'&&u.order.target===b){u.order=null;u.path=null;}kill(b,team);T.credits+=s.cost;stSp(T,-s.cost);T.lost--;log(team,`${s.name} cancelled - refunded $${s.cost}.`);}
 function placeBld(team,kind,x,y,dzId){const T=G.teams[team],s=bstats(T.fac,kind);if(!bldAllowed(T.fac,kind))return false;if(!BUILD_ORDER.includes(kind)||!reqMet(team,kind)||T.credits<s.cost)return false;if(s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===team&&e.kind===kind).length>=s.limit){log(team,`You can have at most ${s.limit} ${s.name}s.`,'w');return false;}
   let m=validSpot(team,kind,x,y);if(!m){log(team,validSpot.why||'Cannot build there.','w');return false;}if(m===2&&G.sandbox&&team===0)m=1;
   const b=addBld(team,kind,x,y,false);T.credits-=s.cost;stSp(T,s.cost);
@@ -655,6 +657,7 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'fld':{const f=G.fields[a.fi];if(f)for(const u of own(a.ids))if(u.kind==='harv'){u.field=f;u.state='go';u.order=null;}break;}
     case 'q':enqueue(team,a.k);break;
     case 'dq':dequeue(team,a.k);break;
+    case 'cb':cancelBld(team,a.tid);break;
     case 'bld':placeBld(team,a.k,a.x,a.y,a.dz);break;
     case 'bldGo':{const b=G.byId.get(a.tid);if(!b||!b.isB||b.team!==team||b.built>=1)break;for(const u of own(a.ids))if(u.kind==='dozer'){u.order={type:'build',target:b};u.path=null;}break;}
     case 'up':startResearch(team,a.k);break;

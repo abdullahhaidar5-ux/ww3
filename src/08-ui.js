@@ -248,6 +248,19 @@ function sancBanner(T){let el=$('sancB');const left=T.sanc>G.t?Math.ceil(T.sanc-
   if(!left){if(el)el.hidden=true;return;}
   if(!el){el=document.createElement('div');el.id='sancB';el.style.cssText='position:fixed;z-index:7;left:50%;top:30px;transform:translateX(-50%);padding:5px 14px;background:rgba(150,16,20,.92);color:#fff;font:700 14px system-ui,sans-serif;border:1px solid #ff8a80;border-radius:4px;pointer-events:none;text-align:center;max-width:94vw';document.body.append(el);}
   el.hidden=false;const t='SANCTIONED · income −'+(T.upg.smug?8:20)+'% · '+left+' s'+(T.upg.smug?' · smuggling routes open':'');if(el.textContent!==t)el.textContent=t;}
+// Cancel (Abdullah 2026-10-31): one button + Backspace/Delete. Placing a building -> stop placing; a production building with a queue
+// -> remove its last item (refunded; Shift = 5); a builder / unfinished building -> cancel it (refunded).
+function cancelInfo(){if(!G||G.over)return null;if(G.place)return{k:'place',tip:'Stop placing the building'};const T=G.teams[ME];
+  for(const e of G.sel){if(e.dead||e.team!==ME)continue;
+    if(e.isB&&e.built>=1){const q=T.q&&T.q[e.kind];if(q&&q.length)return{k:'q',kind:e.kind,tip:'Remove the last queued item and refund it (Shift: 5)'};}
+    const b=e.isB?e:e.kind==='dozer'&&e.order&&e.order.type==='build'?e.order.target:null;
+    if(b&&b.isB&&!b.dead&&b.team===ME&&b.built<1&&b.kind!=='hq')return{k:'bld',tid:b.id,tip:'Cancel the unfinished building and get the money back'};}
+  return null;}
+function doCancel(sh){const c=cancelInfo();if(!c)return false;
+  if(c.k==='place'){G.place=null;TC.pick=null;}
+  else if(c.k==='q'){const q=(G.teams[ME].q[c.kind]||[]).slice(-(sh?5:1)).map(x=>x.kind).reverse();for(const k of q)doAct({t:'dq',k});}
+  else doAct({t:'cb',tid:c.tid});
+  try{sfxUI(380);}catch(_){}updateUI();return true;}
 function updateUI(){if(!G)return;qpUpdate();renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);mournBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k),ok=reqMet(ME,k);if(!bldAllowed(T.fac,k)){setBtn('b_'+k,{dis:true,cost:'Not available',title:'This faction has no air force'});continue;}const lim=s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===ME&&e.kind===k).length>=s.limit;setBtn('b_'+k,{dis:!ok||T.credits<s.cost||lim,cost:lim?'Max '+s.limit:'$'+s.cost,on:G.place===k,title:ok?(STRUCT[k].desc||(STRUCT[k].shore?'Place on the shoreline':'')):`Requires ${STRUCT[STRUCT[k].req].name}`});}
   for(const k of allUnits(T.fac)){const s=stats(T.fac,k),q=T.q[s.from]||[],n=q.filter(x=>x.kind===k).length,has=done(ME,s.from);const first=q[0]&&q[0].kind===k?(q[0].p!=null?q[0].p:q[0].t/prodTime(T,s)):0;
@@ -274,7 +287,7 @@ function updateUI(){if(!G)return;qpUpdate();renderSquads();renderAllies();const 
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   else if(leftOrders()&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Click').replace(/right-click/g,'click');
   el.append(b,sp);if(tip.textContent)el.append(tip);
-  {const can=s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack);const r=document.createElement('div');r.className='cmdrow'+(can?'':' off');const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ ':'')+'Guard (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Guard: tap map…':'🛡 Guard: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='■ Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;const bt=document.createElement('button');bt.textContent='▣ Type (T)';bt.title='Select every one of your units on the map that is the same type as the selection (hotkey T)';bt.onclick=selectTypes;r.append(ba,bd,bt,bs,br,bv);if(!can){const why='Select combat units to use orders';for(const x of r.children){x.disabled=true;x.title=why;}}else{ba.title+=' (hotkey F)';bs.title='Stop: halt and hold fire position (hotkey X)';}if(can)el.append(r);else el.append(r);}
+  {const can=s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack);const r=document.createElement('div');r.className='cmdrow'+(can?'':' off');const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ ':'')+'Guard (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Guard: tap map…':'🛡 Guard: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='■ Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;const bcn=document.createElement('button');bcn.className='cnBtn';bcn.textContent='✕ Cancel';{const ci=cancelInfo();bcn.disabled=!ci;bcn.title=ci?ci.tip+' (Backspace / Delete)':'Nothing to cancel (select a building with a queue or a builder)';bcn.onclick=e=>doCancel(e.shiftKey);if(ci)r.classList.remove('off');}const bt=document.createElement('button');bt.textContent='▣ Type (T)';bt.title='Select every one of your units on the map that is the same type as the selection (hotkey T)';bt.onclick=selectTypes;r.append(ba,bd,bt,bs,br,bv,bcn);if(!can){const why='Select combat units to use orders';for(const x of r.children){if(x===bcn)continue;x.disabled=true;x.title=why;}}else{ba.title+=' (hotkey F)';bs.title='Stop: halt and hold fire position (hotkey X)';}if(can)el.append(r);else el.append(r);}
   {const ap=$('app'),o=!!el.querySelector('.cmdrow:not(.off)');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   {const trs=s.filter(u=>!u.isB&&u.s&&u.s.cap&&u.team===ME&&!u.dead);if(trs.length>1&&trs.length===s.filter(u=>!u.isB).length){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Unload all '+trs.length+' transports';ub.title=(TOUCHUI?'Or tap one of them again':'Or right-click one of them')+' to unload them all';ub.onpointerdown=ev=>{ev.preventDefault();for(const tr of trs)doAct({t:'unl',tid:tr.id});};el.append(ub);}}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
@@ -541,6 +554,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='f'&&G.sel.some(u=>!u.isB)){G.amove=true;G.defm=false;}if(k==='g'&&G.sel.some(u=>!u.isB&&u.team===ME)){G.defm=true;G.amove=false;}
   if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)for(const pk in POW_KEY)if(POW_KEY[pk]===k){powGo(pk);break;}
   if(k==='v'&&!e.ctrlKey&&!e.metaKey)cycleStance();
+  if((k==='Backspace'||k==='Delete')&&doCancel(e.shiftKey))e.preventDefault();
   if(k==='x'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
   if(k==='r'&&!e.ctrlKey&&!e.metaKey){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length){doAct({t:'ret',ids});speak(2);}}
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
@@ -726,6 +740,7 @@ window.addEventListener('pointercancel',e=>tcEnd(e,true),true);
 const TC_BTN=[['am','⚔','Attack','Attack-move: tap a spot, they fight everything on the way'],['gd','🛡','Guard','Guard: tap the spot to hold'],['st','■','Stop','Stop'],
   ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all your units of the selected types on the whole map (T)'],['all','★','Army','Select your whole army'],
   ['sn','◈','Stance','Cycle army stance: Assault, Hold, Guerrilla'],['rt','↩','Retreat','Retreat to the nearest base building'],['ds','✕','Clear','Deselect']];
+const TC_CN=['cn','✕','Cancel','Cancel: stop placing, remove the last queued item, or cancel the unfinished building'];
 function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   if(k==='am'){G.amove=!G.amove;G.defm=false;TC.lineArm=false;}
   else if(k==='gd'){G.defm=!G.defm;G.amove=false;TC.lineArm=false;}
@@ -737,19 +752,21 @@ function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   else if(k==='rt'){if(ids.length){doAct({t:'ret',ids});speak(2);}}
   else if(k==='ds'){G.sel=[];G.amove=false;G.defm=false;TC.lineArm=false;}
   else if(k==='ok'){if(TC.pick&&(G.place||G.aim)){const p=toScreen(TC.pick.x,0,TC.pick.y);placeOrAim(TC.pick,false);if(!G.place&&!G.aim){tcMark(p.x,p.y,'am');TC.pick=null;}}}
+  else if(k==='cn'){doCancel(false);}
   else if(k==='no'){G.place=null;G.aim=null;TC.pick=null;}
   TC.stripK='';updateUI();tcStrip(true);}
 function tcStrip(force){const now=performance.now();if(!force&&now-TC.stripT<120)return;TC.stripT=now;
   let s=$('tstrip');if(!s){s=document.createElement('div');s.id='tstrip';s.hidden=true;s.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled)tcCmd(b.dataset.k);});document.body.append(s);}
   const on=TOUCHUI&&TC.touch&&G&&!G.over&&!window.LOADING&&$('menu').hidden;const own=on?tcOwn():[];
-  const mode=!on?'':(G.place||G.aim)?'conf':own.length?'cmd':'';
+  const cnl=on&&!G.place&&!G.aim&&!!cancelInfo();const mode=!on?'':(G.place||G.aim)?'conf':own.length?'cmd':cnl?'cn':'';
   const ok=mode==='conf'&&!!TC.pick&&(G.aim||!!validSpot(ME,G.place,TC.pick.x,TC.pick.y));
-  const key=mode+'|'+(mode==='cmd'?[G.amove,G.defm,TC.lineArm,own.some(u=>u.retreat),stanceLabel()].join():mode==='conf'?(G.place?'b':'f')+ok:'');
-  document.body.classList.toggle('tstripOn',mode==='cmd');document.body.classList.toggle('tconfOn',mode==='conf');
-  if(key===TC.stripK)return;TC.stripK=key;s.hidden=!mode;s.className=mode;s.innerHTML='';if(!mode)return;
+  const key=mode+'|'+(mode==='cmd'?[cnl,G.amove,G.defm,TC.lineArm,own.some(u=>u.retreat),stanceLabel()].join():mode==='conf'?(G.place?'b':'f')+ok:'');
+  document.body.classList.toggle('tstripOn',mode==='cmd'||mode==='cn');document.body.classList.toggle('tconfOn',mode==='conf');
+  if(key===TC.stripK)return;TC.stripK=key;s.hidden=!mode;s.className=mode==='cn'?'conf':mode;s.innerHTML='';if(!mode)return;
   const mk=(k,ic,tx,ti,cl)=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.title=ti;b.setAttribute('aria-label',ti);if(cl)b.className=cl;const i=document.createElement('i');i.textContent=ic;const t=document.createElement('span');t.textContent=tx;b.append(i,t);s.append(b);return b;};
+  if(mode==='cn'){mk(...TC_CN,'cx');return;}
   if(mode==='conf'){const b=mk('ok','✓',G.place?'Build here':'Fire here',G.place?'Build it at the marked spot':'Fire at the marked spot','go');b.disabled=!ok;mk('no','✕','Cancel','Cancel','cx');return;}
-  for(const [k,ic,tx,ti] of TC_BTN){const b=k==='sn'?mk(k,'◈',(stanceLabel().replace(/^\S+ /,'').replace('Guerrilla','Guerr.'))||'Stance',ti):mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}}
+  for(const [k,ic,tx,ti] of TC_BTN){const b=k==='sn'?mk(k,'◈',(stanceLabel().replace(/^\S+ /,'').replace('Guerrilla','Guerr.'))||'Stance',ti):mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}if(cnl)mk(...TC_CN,'cx');}
 /* ---- first-time guide: three steps, shown once, remembered; ☰ > Touch controls shows it again. A card near the top,
    not a full-screen cover: the battle keeps running (multiplayer can't pause) and stays playable around it ---- */
 const TC_GUIDE=[['☝','Move the map','Drag one finger to scroll the battlefield; flick to glide. Pinch with two fingers to zoom.'],

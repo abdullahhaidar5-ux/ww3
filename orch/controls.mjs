@@ -129,6 +129,43 @@ const sel = page => page.evaluate(() => G.sel.filter(e => !e.dead).map(e => e.id
 const acts = page => page.evaluate(() => { const a = window.__acts; window.__acts = []; return a; });
 const clear = page => page.evaluate(() => { G.sel = []; G.amove = G.defm = false; G.place = G.aim = null; window.__acts = []; updateUI(); });
 
+
+// Cancel button / Backspace (Abdullah 2026-10-31): queue item, unfinished building, placement.
+async function cancelChecks(page, { mode, ck }) {
+  const press = async sel => { if (mode === 'touch') { await page.evaluate(() => { TC.stripK = null; tcStrip(true); }); const b = await page.$(sel); const r = await b.boundingBox(); await page.touchscreen.tap(r.x + r.width / 2, r.y + r.height / 2); } else await page.$eval(sel, el => el.click()); await wait(150); };
+  const btn = mode === 'touch' ? '#tstrip button[data-k="cn"]' : '#info .cnBtn';
+  await page.evaluate(() => { try { MLOCK.broken = true; mlockOff(); } catch (e) {} G.place = G.aim = null; window.__acts = [];
+    const T = G.teams[ME]; T.credits = 5000; let b = G.ents.find(e => e.team === ME && e.isB && e.kind === 'barracks' && e.built >= 1);
+    if (!b) { const h = G.byId.get(window.__HQ); b = addBld(ME, 'barracks', h.x + 150, h.y + 150, true); }
+    T.q.barracks = []; enqueue(ME, 'inf'); enqueue(ME, 'inf'); window.__CB = b.id; window.__C0 = T.credits; G.sel = [b]; updateUI(); });
+  await wait(300);
+  if (mode === 'touch') await page.evaluate(() => { TC.stripK = null; tcStrip(true); });
+  const dis = await page.evaluate(() => { const b = document.querySelector('#info .cnBtn'); return b ? b.disabled : null; });
+  ck(mode + ' Cancel is enabled with a queued building selected', mode === 'touch' ? !!(await page.$(btn)) : dis === false, JSON.stringify(await page.evaluate(() => ({ dis: String(document.querySelector('#info .cnBtn') && document.querySelector('#info .cnBtn').disabled), ui: TOUCHUI, t: TC.touch, ci: cancelInfo(), st: document.getElementById('tstrip') && document.getElementById('tstrip').className, hid: document.getElementById('tstrip') && document.getElementById('tstrip').hidden, menu: document.getElementById('menu').hidden, load: !!window.LOADING }))));
+  await press(btn);
+  let r = await page.evaluate(() => ({ n: G.teams[ME].q.barracks.length, c: G.teams[ME].credits, c0: window.__C0 }));
+  ck(mode + ' Cancel removes the last queued unit and refunds it', r.n === 1 && r.c > r.c0, JSON.stringify(r));
+  if (mode !== 'touch') {
+    await page.keyboard.press('Backspace'); await wait(100);
+    r = await page.evaluate(() => ({ n: G.teams[ME].q.barracks.length }));
+    ck('Backspace cancels too', r.n === 0, JSON.stringify(r));
+  }
+  // a builder constructing a building
+  await page.evaluate(() => { const T = G.teams[ME], h = G.byId.get(window.__HQ); const d = addUnit(ME, 'dozer', h.x + 60, h.y + 60);
+    const b = addBld(ME, 'barracks', h.x - 160, h.y + 160, false); T.credits -= bstats(T.fac, 'barracks').cost; d.order = { type: 'build', target: b };
+    window.__CB = b.id; window.__C0 = T.credits; G.sel = [d]; updateUI(); window.__acts = []; });
+  await wait(300);
+  await press(btn);
+  r = await page.evaluate(() => { const b = G.byId.get(window.__CB); return { gone: !b || b.dead, c: G.teams[ME].credits, c0: window.__C0 }; });
+  ck(mode + ' Cancel on a constructing builder removes the building and refunds it', r.gone && r.c > r.c0, JSON.stringify(r));
+  // placement
+  await page.evaluate(() => { G.sel = []; G.place = 'barracks'; updateUI(); });
+  await wait(300);
+  if (mode === 'touch') { await page.evaluate(() => { TC.stripK = null; tcStrip(true); }); await press('#tstrip button[data-k="no"]'); }
+  else await press(btn);
+  ck(mode + ' Cancel exits placement', await page.evaluate(() => !G.place));
+  await page.evaluate(() => { G.sel = []; updateUI(); });
+}
 async function powerChecks(page, { mode, ck, tap }) {
   const click = async (x, y) => tap ? tap(x, y) : page.mouse.click(x, y);
   await page.evaluate(() => { try { MLOCK.broken = true; mlockOff(); if (MLOCK.on) { MLOCK.on = false; VCUR.hidden = true; document.body.classList.remove('mlock'); } } catch (e) {} });
@@ -408,6 +445,7 @@ try {
   await press('#sDone');
   // getting in and out of transports, buildings and tunnels with no button (orch/enterexit.mjs)
   await enterExitChecks(page, { mode: 'mouse', ck: check });
+  await cancelChecks(page, { mode: 'mouse', ck: check });
   await powerChecks(page, { mode: 'mouse', ck: check });
   await stanceChecks(page, { mode: 'mouse', ck: check });
   // one-click powers: hotkey + 1 click, no-target = 1 press, Esc / right-click cancels
@@ -441,6 +479,7 @@ try {
   check('phone: taps never lock the mouse', await tp.evaluate(() => __lockReq === 0 && !MLOCK.on));
   try { await tp.screenshot({ path: path.join(OUT, 'controls-phone.png'), timeout: 120000 }); } catch (e) {}
   await enterExitChecks(tp, { mode: 'touch', ck: check, tap: (x, y) => tp.touchscreen.tap(x, y) });
+  await cancelChecks(tp, { mode: 'touch', ck: check });
   await powerChecks(tp, { mode: 'touch', ck: check, tap: (x, y) => tp.touchscreen.tap(x, y) });
   await T.ctx.close();
 } catch (e) {

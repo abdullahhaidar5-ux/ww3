@@ -211,6 +211,17 @@ async function phonePass(tag, viewport, storageState) {
   // back to the test squad
   await page.evaluate(([id]) => { const u = G.byId.get(id); centerOn(u.x, u.y + 10, true); camTarget(); cam.td = cam.dist = 420; TC.glide = false; }, S.ids);
   await frames(page, 3);
+  // --- Cancel on the touch strip (Abdullah 2026-10-31): a production building with a queue ---
+  await page.evaluate(() => { const T = G.teams[ME]; T.credits = 5000; let b = G.ents.find(e => e.team === ME && e.isB && e.kind === 'barracks' && e.built >= 1);
+    if (!b) { const h = G.ents.find(e => e.team === ME && e.kind === 'hq'); b = addBld(ME, 'barracks', h.x + 150, h.y + 150, true); }
+    T.q.barracks = []; enqueue(ME, 'inf'); enqueue(ME, 'inf'); window.__C0 = T.credits; G.sel = [b]; updateUI(); TC.stripK = null; tcStrip(true); });
+  await sleep(300);
+  const cnb = await page.$('#tstrip button[data-k="cn"]');
+  check(tag, !!cnb, 'a Cancel button shows on the touch strip with a queued building selected');
+  if (cnb) { const r = await cnb.boundingBox(); await T.tap(r.x + r.width / 2, r.y + r.height / 2); await sleep(200);
+    const q = await page.evaluate(() => ({ n: G.teams[ME].q.barracks.length, c: G.teams[ME].credits, c0: window.__C0 }));
+    check(tag, q.n === 1 && q.c > q.c0, `tapping Cancel removes the last queued unit and refunds it (${JSON.stringify(q)})`); }
+  await page.evaluate(() => { G.teams[ME].q.barracks = []; G.sel = []; updateUI(); });
   // --- tap selects ---
   let p = await scr(page, S.ids[0]);
   await T.tap(p.x, p.y); await frames(page);
