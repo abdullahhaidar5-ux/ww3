@@ -1,0 +1,246 @@
+
+portrait: 390x844, touch
+  [0s] boot
+  [2s] page up
+  [2s] models ready
+  [16s] battle loaded
+    17s ✓ [portrait] first-time guide shows at the start of the first battle
+    17s ✓ [portrait] guide starts at step 1 of 3 (1 / 3)
+    31s ✓ [portrait] guide closes after 3 steps and is remembered
+    32s ✓ [portrait] guide does not come back by itself
+    32s ✓ [portrait] touch layout is on
+    34s ✓ [portrait] one-finger drag scrolls the map (camera moved 85)
+    34s ✓ [portrait] the map follows the finger (dragging left moves the view right: 891 -> 1191)
+    34s ✓ [portrait] a flick keeps gliding after the finger lifts (glided 330 more)
+    34s ✓ [portrait] scrolling neither selects nor orders anything
+    35s ✓ [portrait] a drag that stops before lifting does not glide
+    36s ✓ [portrait] pinch out zooms in (420 -> 200)
+    37s ✓ [portrait] pinch in zooms out (200 -> 489)
+    37s ✓ [portrait] a Cancel button shows on the touch strip with a queued building selected
+    38s ✓ [portrait] tapping Cancel removes the last queued unit and refunds it ({"n":1,"c":4900,"c0":4800})
+    38s ✓ [portrait] tap on a unit selects it (11)
+    38s ✓ [portrait] command strip appears with units selected (9 buttons)
+    38s ✓ [portrait] strip buttons are at least 40 px (41x44)
+    38s ✓ [portrait] strip fits on screen
+    38s ✓ [portrait] strip sits above the bottom bar (strip bottom 558, bar top 564)
+    38s ✓ [portrait] the old floating order row steps aside for the strip
+    38s ✓ [portrait] tap on the ground with a unit selected orders a move (go)
+    38s ✓ [portrait] a move marker flashes where the order went
+    38s ✓ [portrait] the unit deselects right after the order (Abdullah 2026-10-30)
+    48s ✓ [portrait] tap on an enemy with units selected orders an attack (atk)
+    48s ✓ [portrait] an attack marker flashes on the target
+    49s ✓ [portrait] double-tap selects all of that type on screen (5 of 5, other type left out)
+    49s ✓ [portrait] strip ✕ deselects
+    49s ✓ [portrait] strip hides when nothing is selected
+    51s ✓ [portrait] hold, then drag box-selects (5 selected)
+    51s ✓ [portrait] box-select does not scroll the map
+    52s ✓ [portrait] hold, then drag with units selected draws a line formation (line)
+    52s ✓ [portrait] drawing the line does not scroll the map
+    53s ✓ [portrait] touch Type button selects every unit of that type on the whole map
+    54s ✓ [portrait] strip "Line" then a plain drag draws the line
+    55s ✓ [portrait] strip ⚔ arms attack-move
+    55s ✓ [portrait] then a tap on the map attack-moves there
+    56s ✓ [portrait] strip 🛡 then a tap guards that spot
+    56s ✓ [portrait] strip ■ stops the units
+    57s ✓ [portrait] found a spot to build on
+    57s ✓ [portrait] choosing a building shows ✓ / ✕ (ok+,no+)
+    57s ✓ [portrait] a tap only marks the spot (nothing is built yet)
+    58s ✓ [portrait] scrolling while placing keeps the marked spot
+    66s ✓ [portrait] ✓ builds it there (bld)
+    66s ✓ [portrait] cancelled aiming fires nothing
+    66s ✓ [portrait] aim a power, ONE tap on the map fires it (no confirm)
+    67s ✓ [portrait] targeted power: button then one map tap fires the barrage
+    67s ✓ [portrait] touch: enter/exit test units are on screen
+    68s ✓ [portrait] touch: infantry selected + right-click/tap own transport = they board it
+    68s ✓ [portrait] touch: test transport loaded
+    69s ✓ [portrait] touch: transport selected + right-click/tap it again = unload there
+    69s ✓ [portrait] touch: …and the troops are out
+    69s ✓ [portrait] touch: battle: the transport drives off still loaded, then unloads where it stops
+    69s ✓ [portrait] touch: two transports selected + right-click/tap one = both unload
+    69s ✓ [portrait] touch: …both empty
+    70s ✓ [portrait] touch: held building selected + right-click/tap an enemy = garrison fires at it, nobody leaves
+    70s ✓ [portrait] touch: …every soldier inside targets that enemy
+    70s ✓ [portrait] touch: held building selected + right-click/tap the ground = everyone comes out
+    70s ✓ [portrait] touch: …and they run to the spot clicked
+    71s ✓ [portrait] touch: tunnel selected + right-click/tap the ground = units come out there
+    71s ✓ [portrait] touch: …and they run to the spot
+    71s ✓ [portrait] touch: every nation has a Shipyard water transport that loads infantry
+    71s ✓ [portrait] touch: stances: Hold does not chase an enemy out of range
+    71s ✓ [portrait] touch: stances: Hold fires at an enemy in range
+    71s ✓ [portrait] touch: stances: Guerrilla holds fire until the enemy is close
+    71s ✓ [portrait] touch: stances: Guerrilla fires once the enemy is close
+    71s ✓ [portrait] touch: stances: Assault chases
+    71s ✓ [portrait] touch: stances: stance command sets the unit stance
+    71s ✓ [portrait] touch: stances: stance survives a host-migration checkpoint
+    71s ✓ [portrait] touch: stances: Stance button cycles the stance
+    71s ✓ [portrait] ☰ menu has "Touch controls"
+    72s ✓ [portrait] it opens the guide again
+
+landscape: 844x390, touch
+  [73s] boot
+  [74s] page up
+  [74s] models ready
+  [85s] battle loaded
+    87s ✓ [landscape] guide is not shown again on a later battle (already seen on this device)
+    87s ✓ [landscape] touch layout is on
+    93s ✓ [landscape] one-finger drag scrolls the map (camera moved 180)
+    93s ✓ [landscape] the map follows the finger (dragging left moves the view right: 891 -> 1301)
+    93s ✓ [landscape] a flick keeps gliding after the finger lifts (glided 371 more)
+    93s ✓ [landscape] scrolling neither selects nor orders anything
+    94s ✓ [landscape] a drag that stops before lifting does not glide
+    95s ✓ [landscape] pinch out zooms in (420 -> 200)
+    95s ✓ [landscape] pinch in zooms out (200 -> 489)
+    96s ✓ [landscape] a Cancel button shows on the touch strip with a queued building selected
+    96s ✓ [landscape] tapping Cancel removes the last queued unit and refunds it ({"n":1,"c":4900,"c0":4800})
+    96s ✓ [landscape] tap on a unit selects it (11)
+    96s ✓ [landscape] command strip appears with units selected (9 buttons)
+    96s ✓ [landscape] strip buttons are at least 40 px (76x44)
+    96s ✓ [landscape] strip fits on screen
+    96s ✓ [landscape] strip sits above the bottom bar (strip bottom 252, bar top 258)
+    96s ✓ [landscape] the old floating order row steps aside for the strip
+    97s ✓ [landscape] tap on the ground with a unit selected orders a move (go)
+    97s ✓ [landscape] a move marker flashes where the order went
+    97s ✓ [landscape] the unit deselects right after the order (Abdullah 2026-10-30)
+    97s ✓ [landscape] tap on an enemy with units selected orders an attack (atk)
+    97s ✓ [landscape] an attack marker flashes on the target
+    98s ✓ [landscape] double-tap selects all of that type on screen (5 of 5, other type left out)
+    99s ✓ [landscape] strip ✕ deselects
+    99s ✓ [landscape] strip hides when nothing is selected
+   100s ✓ [landscape] hold, then drag box-selects (5 selected)
+   100s ✓ [landscape] box-select does not scroll the map
+   102s ✓ [landscape] hold, then drag with units selected draws a line formation (line)
+   102s ✓ [landscape] drawing the line does not scroll the map
+   102s ✓ [landscape] touch Type button selects every unit of that type on the whole map
+   103s ✓ [landscape] strip "Line" then a plain drag draws the line
+   104s ✓ [landscape] strip ⚔ arms attack-move
+   115s ✓ [landscape] then a tap on the map attack-moves there
+   115s ✓ [landscape] strip 🛡 then a tap guards that spot
+   116s ✓ [landscape] strip ■ stops the units
+   116s ✓ [landscape] found a spot to build on
+   116s ✓ [landscape] choosing a building shows ✓ / ✕ (ok+,no+)
+   117s ✓ [landscape] a tap only marks the spot (nothing is built yet)
+   117s ✓ [landscape] scrolling while placing keeps the marked spot
+   118s ✓ [landscape] ✓ builds it there (bld)
+   118s ✓ [landscape] cancelled aiming fires nothing
+   118s ✓ [landscape] aim a power, ONE tap on the map fires it (no confirm)
+   119s ✓ [landscape] targeted power: button then one map tap fires the barrage
+   119s ✓ [landscape] ☰ menu has "Touch controls"
+   120s ✓ [landscape] it opens the guide again
+
+desktop: 1366x768, mouse
+  [130s] boot
+  [130s] page up
+  [130s] models ready
+  [142s] battle loaded
+   153s ✓ [desktop] no touch layout with a mouse
+   153s ✓ [desktop] left-click on a unit selects it
+   153s ✓ [desktop] no touch command strip with a mouse
+   153s ✓ [desktop] right-click on the ground orders a move (Standard default) (go)
+   153s ✓ [desktop] no touch order markers from the mouse
+   154s ✓ [desktop] left-click on empty ground deselects (Standard default)
+   155s ✓ [desktop] left-drag draws a selection box (6 selected)
+   155s ✓ [desktop] a left-drag does not scroll the map
+   155s ✓ [desktop] no touch guide on a desktop
+
+125 checks passed, 0 failed (167s) — screenshots in orch/shots/touch/
+TOUCH PASS
+phoneload: webkit, iPhone 13 (390x664), local build
+
+[1] map strait, IR vs 1 AI
+   0.2s info: Web Inspector blocked https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap from loading
+   5.6s step: Loading 3D models… 38%
+   6.1s step: Building the battlefield… 42%
+   6.8s step: Building the battlefield… 52%
+   7.7s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   7.7s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   7.7s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   7.7s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   7.8s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   7.8s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   7.8s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   7.8s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   8.0s step: Preparing graphics… 78%
+   9.4s step: Preparing graphics… 8 of 52 80%
+   10.1s step: Preparing graphics… 24 of 52 83%
+   11.1s step: Preparing graphics… 32 of 52 85%
+   11.9s step: Preparing graphics… 40 of 52 86%
+   12.6s step: Preparing graphics… 48 of 52 88%
+   13.6s step: Deploying forces… 90%
+   24.4s log: battle start: Generating terrain 1741 ms, Loading 3D models 22 ms, Building the battlefield 617 ms, Building the battlefield 957 ms, Preparing graphics 4778 ms, Deploying forces 93 ms, Deploying forces 10523 ms, total 21143 ms
+   25.3s step: Ready 100%
+   57.8s drawing: {"lost":false,"frames":64,"canvas":"game canvas","q":"low"}
+   load times: 
+   ✓ battle running after 58.7s
+
+[2] map rivers, RS vs 3 AI
+   0.3s info: Web Inspector blocked https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap from loading
+   3.2s step: Loading 3D models… 3 of 57 10%
+   4.8s step: Loading 3D models… 38%
+   5.3s step: Loading 3D models… 40 of 57 29%
+   5.8s step: Building the battlefield… 52%
+   6.5s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   6.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   6.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   6.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   6.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   6.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   6.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   6.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   7.1s step: Preparing graphics… 78%
+   7.6s step: Preparing graphics… 20 of 57 82%
+   8.2s step: Preparing graphics… 36 of 57 85%
+   8.9s step: Preparing graphics… 48 of 57 87%
+   9.4s step: Preparing graphics… 57 of 57 89%
+   9.9s step: Deploying forces… 97%
+   12.4s log: battle start: Generating terrain 1583 ms, Loading 3D models 670 ms, Building the battlefield 335 ms, Building the battlefield 1004 ms, Preparing graphics 2769 ms, Deploying forces 51 ms, Deploying forces 2479 ms, total 9738 ms
+   12.7s step: Ready 100%
+   42.3s drawing: {"lost":false,"frames":72,"canvas":"game canvas","q":"low"}
+   load times: 
+   ✓ battle running after 43.1s
+
+[3] map oasis, DW vs 1 AI
+   0.2s info: Web Inspector blocked https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap from loading
+   3.1s step: Loading 3D models… 38%
+   3.7s step: Building the battlefield… 42%
+   4.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.6s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.7s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.9s step: Preparing graphics… 78%
+   5.4s step: Preparing graphics… 28 of 51 84%
+   6.0s step: Preparing graphics… 36 of 51 86%
+   6.6s step: Preparing graphics… 48 of 51 88%
+   8.0s log: battle start: Generating terrain 1378 ms, Loading 3D models 478 ms, Building the battlefield 341 ms, Building the battlefield 808 ms, Preparing graphics 2107 ms, Deploying forces 51 ms, Deploying forces 941 ms, total 6609 ms
+   8.4s step: Ready 100%
+   43.1s drawing: {"lost":false,"frames":56,"canvas":"game canvas","q":"low"}
+   load times: 
+   ✓ battle running after 44.0s
+
+[4] map strait, DW vs 1 AI, forced WebGL context loss
+   0.2s info: Web Inspector blocked https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap from loading
+   3.3s step: Loading 3D models… 38%
+   3.8s step: Loading 3D models… 44 of 51 34%
+   4.7s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.8s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.8s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.8s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.8s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.8s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.8s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   4.8s warning: THREE.BufferGeometry.toNonIndexed(): BufferGeometry is already non-indexed.
+   5.0s step: Preparing graphics… 78%
+   5.2s forced context loss: lost (never given back, as Safari does)
+   5.2s log: THREE.WebGLRenderer: Context Lost.
+   5.2s warning: WebGL context lost during loading
+   5.3s log: battle start: Generating terrain 1320 ms, Loading 3D models 348 ms, Building the battlefield 260 ms, Building the battlefield 839 ms, Preparing graphics 135 ms, Deploying forces 65 ms, Deploying forces 0 ms, total 3570 ms
+   5.7s webglcontextlost
+   5.7s step: Ready 100%
+   7.7s warning: graphics restarted on a new canvas (low quality)
+   25.6s drawing: {"lost":false,"frames":64,"canvas":"new canvas","q":"low"}
+   load times: 
+   ✓ battle running after 26.8s
+PHONELOAD PASS webkit: 4 battles reached G.t > 5
