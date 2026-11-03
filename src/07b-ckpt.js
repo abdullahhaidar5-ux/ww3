@@ -3,7 +3,7 @@
    drops out, the standby restores the latest checkpoint and carries on as the new host; everyone else reconnects to it.
    Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
-const CK_G=['t','nid','aiT','visT','endT','over','bs','cbrTeams','mT','ecT','wx','mines','smokes','shields','craters','ruins','aiTT','sqOf',
+const CK_G=['t','nid','aiT','visT','endT','over','bs','cbrTeams','mT','ecT','wx','fixWx','mines','smokes','shields','craters','ruins','aiTT','sqOf',
   'spoofs','mban','mbanN'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams)
 const CK_TEAM_SKIP=new Set(['_uk','_ut','F','ai','id','fac','color','dark']);
 function ckEncode(){const ids=new Map();for(const e of G.ents)ids.set(e,e.id);const fi=new Map(G.fields.map((f,i)=>[f,i])),oi=new Map(G.oil.map((o,i)=>[o,i])),ci=new Map((G.civ||[]).map((c,i)=>[c,i]));

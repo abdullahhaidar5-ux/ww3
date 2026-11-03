@@ -632,7 +632,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         <div class="label">Difficulty</div>
         <div class="seg" id="diff"><button data-d="0" title="Slow to build and attack, small waves, no tricks">Easy</button><button data-d="1" class="on" title="A fair fight">Medium</button><button data-d="2" title="Fast, rich and cunning: early attacks, flanking, focus fire, pulls back damaged units">Hard</button></div>
         <div class="label">Conditions</div>
-        <div class="seg" id="wx"><button data-w="0" class="on">Clear day</button><button data-w="1">Golden hour</button><button data-w="2">Overcast</button><button data-w="3" title="Low red sun, long shadows; gunfire and explosions light up the field">Dusk</button><button data-w="4" title="Dark battlefield: everyone sees less, tanks, aircraft, commandos and recon keep thermal sight; fire and flashes light the field">Night</button><button data-w="5" title="Starts in daylight, then dusk, night and dawn over about 20 minutes">Changing</button><button data-w="-1" title="A surprise: one of the conditions is picked when the battle starts">Random</button></div>
+        <div class="seg" id="wx"><button data-w="0" class="on">Clear day</button><button data-w="1">Golden hour</button><button data-w="2">Overcast</button><button data-w="3" title="Low red sun, long shadows; gunfire and explosions light up the field">Dusk</button><button data-w="4" title="Dark battlefield: everyone sees less, tanks, aircraft, commandos and recon keep thermal sight; fire and flashes light the field">Night</button><button data-w="5" title="Starts in daylight, then dusk, night and dawn over about 20 minutes">Changing</button><button data-w="6" title="Brown haze: vision and accuracy down, jets grounded, helicopters and drones weaker">Sandstorm</button><button data-w="7" title="Rain: vision and accuracy a little down, mud slows ground units">Rain</button><button data-w="8" title="Snowfall: white haze, deep snow slows ground units, aircraft a bit worse">Snow</button><button data-w="-1" title="A surprise: one of the conditions is picked when the battle starts">Random</button></div>
         <button class="big" id="start">Deploy vs AI</button>
         <button class="big ghost" id="sandbox" title="Unlimited money, every unit and building unlocked and fast to build, against a passive target enemy">Test Range</button>
       </div>
@@ -4940,6 +4940,7 @@ const WEATHER={clear:{name:'Clear',vis:1,acc:1,spd:1,air:1},
   rain:{name:'Rain',vis:.8,acc:.9,spd:.88,air:.9,tip:'Mud slows ground units, visibility and accuracy drop.'},
   fog:{name:'Fog',vis:.55,acc:.92,spd:.95,air:.85,tip:'Heavy fog: units see barely half as far. Ambush weather.'},
   sandstorm:{name:'Sandstorm',vis:.55,acc:.8,spd:.88,air:0,tip:'Sandstorm: vision and accuracy slashed, jets grounded, helicopters and drones struggle.'},
+  snow:{name:'Snow',vis:.8,acc:.92,spd:.9,air:.8,tip:'Deep snow slows ground units; vision and aircraft are a little worse.'},
   blizzard:{name:'Blizzard',vis:.6,acc:.85,spd:.8,air:0,tip:'Blizzard: snow slows everything, jets grounded, vision cut.'}};
 function weatherKinds(theme){return theme==='snow'?['clear','blizzard','fog']:theme==='green'?['clear','rain','fog']:['clear','sandstorm','fog'];}
 // A duel is fought on a field 1.3x the 3200x2200 design (about 300 infantry-lengths across, like a classic RTS 1v1
@@ -5993,7 +5994,7 @@ function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&N<=MAPS[o.map].m
   G.cover=new Uint8Array(GW*GH);for(const [x,y] of (G.treePos||[])){const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);if(cx>=0&&cy>=0&&cx<GW&&cy<GH)G.cover[cy*GW+cx]=Math.min(255,G.cover[cy*GW+cx]+1);}
   G.wood=G.cover.slice(); // trees per cell (before city cover is added): woods slow vehicles
   for(const b of (M.cityBlds||[])){const cx=Math.floor(b.x/CELL),cy=Math.floor(b.y/CELL);for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const X=cx+i,Y=cy+j;if(X>=0&&Y>=0&&X<GW&&Y<GH&&G.grid[Y*GW+X]!==3)G.cover[Y*GW+X]=Math.min(255,G.cover[Y*GW+X]+2);}}
-  G.todM=todMode(o.w|0);
+  G.todM=todMode(o.w|0);{const fx={6:'sandstorm',7:'rain',8:'snow'}[o.w|0];if(fx){G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};}}
   if(o.sandbox)G.sandbox=true;
   if(MODE!=='client'){
     for(let t=0;t<N;t++){const [bx,by]=BASES[t];const a=baseFacing(t),cx=Math.cos(a),cy=Math.sin(a);addBld(t,'hq',bx,by,true);addUnit(t,'harv',bx+cx*150-cy*60,by+cy*150+cx*60);addUnit(t,'dozer',bx+cx*120-cy*110,by+cy*120+cx*110);addUnit(t,'inf',bx+cx*130+cy*90,by+cy*130-cx*90);addUnit(t,'inf',bx+cx*150+cy*70,by+cy*150-cx*70);}
@@ -6973,7 +6974,7 @@ function enterTunnel(u,b){const f=b&&b.kind==='fort';const T=G.teams[u.team],L=f
 function unloadTunnel(b){const f=b.kind==='fort';const T=G.teams[b.team];const L=f?fortUnits(b):T.tun;const n=L.length;if(!n)return;L.forEach((u,i)=>{const a=i/n*6.283+(f?(i*.37)%.3:Math.random()*.3),r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;u.ambT=G.t+3;G.ents.push(u);G.byId.set(u.id,u);});
   const out=L.slice();if(f)b.gar=[];else T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the ${f?'Mountain Fortress':'tunnel'}.`,'g');return out;}
 function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
-function weatherTick(dt){if(!G.wx)G.wx={k:'clear',t:0,next:150+Math.random()*90};const W=G.wx;W.t+=dt;if(W.t<W.next)return;W.t=0;const ks=weatherKinds(G.map.theme);
+function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,t:0,next:1e9};return;}if(!G.wx)G.wx={k:'clear',t:0,next:150+Math.random()*90};const W=G.wx;W.t+=dt;if(W.t<W.next)return;W.t=0;const ks=weatherKinds(G.map.theme);
   if(W.k==='clear'){W.k=ks[1+Math.floor(Math.random()*(ks.length-1))];W.next=55+Math.random()*45;}else{W.k='clear';W.next=170+Math.random()*120;}
   for(const T of G.teams){const w=WEATHER[W.k];log(T.id,W.k==='clear'?'The weather is clearing.':`Weather: ${w.name}. ${w.tip}`,'w');}}
 function simUpdate(dt){G.t+=dt;stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
@@ -7958,11 +7959,11 @@ function fxUpdate(dt){
 let RAIN=null,WXV={k:'clear',m:0};
 function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&todLvl()!==WXT)try{applyWeather(0);}catch(e){}const k=(G.wx&&G.wx.k)||'clear';if(WXV.base==null&&SCN.fog){WXV.base={c:SCN.fog.color.clone(),n:SCN.fog.near,f:SCN.fog.far};}const B=WXV.base;if(!B)return;
   if(WXV.k!==k){WXV.m=Math.max(0,WXV.m-dt*.5);if(WXV.m<=0)WXV.k=k;}else WXV.m=Math.min(1,WXV.m+dt*.35);const m=WXV.k==='clear'?0:WXV.m,K=WXV.k;
-  const T={rain:{c:'#7d868c',n:500,f:3200},fog:{c:'#b9bdbb',n:150,f:1500},sandstorm:{c:'#b88a52',n:40,f:950},blizzard:{c:'#dfe6ee',n:150,f:1700}}[K];
+  const T={rain:{c:'#7d868c',n:500,f:3200},fog:{c:'#b9bdbb',n:150,f:1500},sandstorm:{c:'#b88a52',n:40,f:950},blizzard:{c:'#dfe6ee',n:150,f:1700},snow:{c:'#e3e9f0',n:220,f:2300}}[K];
   if(T){const tc=lin(T.c);SCN.fog.color.copy(B.c).lerp(tc,m*.85);SCN.fog.near=B.n+(T.n-B.n)*m;SCN.fog.far=B.f+(T.f-B.f)*m;}else{SCN.fog.color.lerp(B.c,Math.min(1,dt*2));SCN.fog.near+=(B.n-SCN.fog.near)*Math.min(1,dt*2);SCN.fog.far+=(B.f-SCN.fog.far)*Math.min(1,dt*2);}
   const R=Math.max(420,cam.dist*1.1);
   if(K==='sandstorm'&&m>.05){const n=(dt*90*m)|0;for(let i=0;i<n;i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(2,60),vx:rnd(90,160),vy:rnd(-15,15),vh:rnd(-4,8),f:.9,c:[.78,.6,.38],s:rnd(18,36),g:22,d:rnd(1.6,2.8),a:.3*m});}}
-  if(K==='blizzard'&&m>.05){const n=(dt*120*m)|0;for(let i=0;i<n;i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(40,220),vx:rnd(50,90),vy:rnd(-10,14),vh:-rnd(30,50),f:1,c:[1.05,1.08,1.12],s:rnd(1.6,2.8),d:rnd(3,5),a:.9});}}
+  if((K==='blizzard'||K==='snow')&&m>.05){const n=(dt*(K==='snow'?(SET.gfx==='low'?35:70):120)*m)|0;for(let i=0;i<n;i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(40,220),vx:rnd(50,90),vy:rnd(-10,14),vh:-rnd(30,50),f:1,c:[1.05,1.08,1.12],s:rnd(1.6,2.8),d:rnd(3,5),a:.9});}}
   if(K==='rain'){if(!RAIN){const N=1400,g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(N*6),3).setUsage(THREE.DynamicDrawUsage));RAIN=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xaab4be,transparent:true,opacity:.35,depthWrite:false}));RAIN.frustumCulled=false;RAIN.userData.d=[];for(let i=0;i<N;i++)RAIN.userData.d.push([rnd(-1,1),rnd(-1,1),rnd(0,1)]);SCN.add(RAIN);}
     RAIN.visible=m>.02;RAIN.material.opacity=.35*m;const p=RAIN.geometry.attributes.position.array,D=RAIN.userData.d,H=320;
     for(let i=0;i<D.length;i++){const d=D[i];d[2]-=dt*1.6;if(d[2]<0){d[2]+=1;d[0]=rnd(-1,1);d[1]=rnd(-1,1);}const x=cam.x+d[0]*R,y=cam.y+d[1]*R*.7,gh=groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y))),h=gh+d[2]*H;p.set([x,h,y,x+3,h+14,y],i*6);}
@@ -8641,7 +8642,7 @@ function wireClient(g){
   g.on('start',m=>{if(MODE==='client'){if(m.peer===NET.hostPeer&&m.data&&m.data.to&&m.data.to===NET.myPeer)NET.ackW=performance.now();return;} // mid-battle: the battle has linked this player back in (hostRejoin)
   if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV&&!((d.pv|0)===NET_PVS&&Array.isArray(d.st))){$('mpstatus').textContent='You and the battle\'s leader have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<(d.sv?0:1)||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
   // An old host sends no 'w': the player's own menu choice stays, as before.
-  if(typeof d.w==='number'&&d.w>=-1&&d.w<=5){if(NET.ownW==null)NET.ownW=setup.w;wxSet(d.w|0);}
+  if(typeof d.w==='number'&&d.w>=-1&&d.w<=9){if(NET.ownW==null)NET.ownW=setup.w;wxSet(d.w|0);}
   // sv: the host is the game server (Cloudflare), which has no side of its own, so this player may be slot 0
   NET.sv=d.sv?1:0;NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm,null,stClean(d.st,d.facs.length));});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
@@ -9013,7 +9014,7 @@ function sendEvtP2P(evs,live){const gq=NET.gq=NET.gq||[],vq=NET.civQ=NET.civQ||[
    drops out, the standby restores the latest checkpoint and carries on as the new host; everyone else reconnects to it.
    Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
-const CK_G=['t','nid','aiT','visT','endT','over','bs','cbrTeams','mT','ecT','wx','mines','smokes','shields','craters','ruins','aiTT','sqOf',
+const CK_G=['t','nid','aiT','visT','endT','over','bs','cbrTeams','mT','ecT','wx','fixWx','mines','smokes','shields','craters','ruins','aiTT','sqOf',
   'spoofs','mban','mbanN'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams)
 const CK_TEAM_SKIP=new Set(['_uk','_ut','F','ai','id','fac','color','dark']);
 function ckEncode(){const ids=new Map();for(const e of G.ents)ids.set(e,e.id);const fi=new Map(G.fields.map((f,i)=>[f,i])),oi=new Map(G.oil.map((o,i)=>[o,i])),ci=new Map((G.civ||[]).map((c,i)=>[c,i]));

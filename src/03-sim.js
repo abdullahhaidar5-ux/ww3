@@ -58,7 +58,7 @@ function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&N<=MAPS[o.map].m
   G.cover=new Uint8Array(GW*GH);for(const [x,y] of (G.treePos||[])){const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);if(cx>=0&&cy>=0&&cx<GW&&cy<GH)G.cover[cy*GW+cx]=Math.min(255,G.cover[cy*GW+cx]+1);}
   G.wood=G.cover.slice(); // trees per cell (before city cover is added): woods slow vehicles
   for(const b of (M.cityBlds||[])){const cx=Math.floor(b.x/CELL),cy=Math.floor(b.y/CELL);for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const X=cx+i,Y=cy+j;if(X>=0&&Y>=0&&X<GW&&Y<GH&&G.grid[Y*GW+X]!==3)G.cover[Y*GW+X]=Math.min(255,G.cover[Y*GW+X]+2);}}
-  G.todM=todMode(o.w|0);
+  G.todM=todMode(o.w|0);{const fx={6:'sandstorm',7:'rain',8:'snow'}[o.w|0];if(fx){G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};}}
   if(o.sandbox)G.sandbox=true;
   if(MODE!=='client'){
     for(let t=0;t<N;t++){const [bx,by]=BASES[t];const a=baseFacing(t),cx=Math.cos(a),cy=Math.sin(a);addBld(t,'hq',bx,by,true);addUnit(t,'harv',bx+cx*150-cy*60,by+cy*150+cx*60);addUnit(t,'dozer',bx+cx*120-cy*110,by+cy*120+cx*110);addUnit(t,'inf',bx+cx*130+cy*90,by+cy*130-cx*90);addUnit(t,'inf',bx+cx*150+cy*70,by+cy*150-cx*70);}
@@ -1038,7 +1038,7 @@ function enterTunnel(u,b){const f=b&&b.kind==='fort';const T=G.teams[u.team],L=f
 function unloadTunnel(b){const f=b.kind==='fort';const T=G.teams[b.team];const L=f?fortUnits(b):T.tun;const n=L.length;if(!n)return;L.forEach((u,i)=>{const a=i/n*6.283+(f?(i*.37)%.3:Math.random()*.3),r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;u.ambT=G.t+3;G.ents.push(u);G.byId.set(u.id,u);});
   const out=L.slice();if(f)b.gar=[];else T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the ${f?'Mountain Fortress':'tunnel'}.`,'g');return out;}
 function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
-function weatherTick(dt){if(!G.wx)G.wx={k:'clear',t:0,next:150+Math.random()*90};const W=G.wx;W.t+=dt;if(W.t<W.next)return;W.t=0;const ks=weatherKinds(G.map.theme);
+function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,t:0,next:1e9};return;}if(!G.wx)G.wx={k:'clear',t:0,next:150+Math.random()*90};const W=G.wx;W.t+=dt;if(W.t<W.next)return;W.t=0;const ks=weatherKinds(G.map.theme);
   if(W.k==='clear'){W.k=ks[1+Math.floor(Math.random()*(ks.length-1))];W.next=55+Math.random()*45;}else{W.k='clear';W.next=170+Math.random()*120;}
   for(const T of G.teams){const w=WEATHER[W.k];log(T.id,W.k==='clear'?'The weather is clearing.':`Weather: ${w.name}. ${w.tip}`,'w');}}
 function simUpdate(dt){G.t+=dt;stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
