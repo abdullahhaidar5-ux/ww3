@@ -131,3 +131,4 @@ FPS/ping readout, installable app with offline solo play (Oct 25), renamed facti
 **Correction (2026-10-26 evening):** the game has **28 maps** in `MAPS`, not 10 — runs #4–5 added 18 more
 (e.g. Bosphorus, Fulda Gap, Caribbean, Golan, Korean DMZ, Heartland). The map picker is now a dropdown with one large
 preview, not per-map thumbnail cards.
+- 2026-11-03 faction-looks (helper agent): per-nation flag/roundel decals, hull numbers, navy paint, Shia/KP/RU/West vehicle kits (procedural); new free models skipped (no verifiable licences). See orch/reports/faction-looks.md
