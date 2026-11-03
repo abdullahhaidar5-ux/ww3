@@ -615,6 +615,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   if(e.kind==='aa'&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
   if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
   else if(e.kind==='arty'){if(e.s&&e.s.rocket||!MIL_TANK[T.fac]&&!MODELS.proto.tank)c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};else{const tc=MIL_TANK[T.fac]&&MIL_TANK[T.fac].m!=='technical'&&MIL_TANK[T.fac].m!=='toontank'?MIL_TANK[T.fac]:MCFG.tank;c=Object.assign({},tc,{size:tc.size*1.08,extra:'gun'});if(MIL_TANK[T.fac]&&(MIL_TANK[T.fac].m==='technical'||MIL_TANK[T.fac].m==='toontank'))c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};}}
+  if(c&&(c.m==='boat'||c.m==='ship')&&T&&T.fac)c=Object.assign({},c,{tint:navyPaint(T.fac,c.m),tk:e.kind==='lander'?.6:.88});
   if(c&&!MODELS.proto[c.m]){const alt={soldier:'inf',tankE:'tank',tankW:'tank',drone:null,technical:'tank',toontank:'tank'}[c.m];if(alt&&MODELS.proto[alt])c=Object.assign({},c,{m:alt});}
   if(!c||!MODELS.proto[c.m])return null;
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
@@ -666,6 +667,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
     
     const m=mesh(B.geo());yaw.add(m);}}
   if(e.kind==='harv'){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
+  try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
   SCN.add(o);return o;}
 function playAnim(o,name,dt){const L=o.userData.mixers;if(!L)return;for(const M of L){if(M.cur!==name){const clip=M.anims.find(a=>a.name.toLowerCase().includes(name))||M.anims[0];if(clip){M.mix.stopAllAction();M.mix.clipAction(clip).play();}M.cur=name;}M.mix.update(dt);}}
 function propObj(key,x,z,rot,parent){const c=PROPS[key];if(!c||!MODELS.proto[key])return;const m=instModel(key,null,c.fit,c.size);if(!m)return;m.position.set(x,0,z);m.rotation.y=rot||0;m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});parent.add(m);return m;}
@@ -748,3 +750,83 @@ function scenery(){G.sceneryPos=[];if(!MODELS.ready||!G.map)return;mats();const 
     else{propObj(R()<.5?'container':'containerG',0,0,.1,g);propObj('barrel',22,10,0,g);propObj('barrel',26,4,0,g);propObj('pallet',-20,8,.5,g);const B=Bld();B.box(18,7,10,0,3.5,0,'#2b2723',0,0,.1);B.box(10,5,9,-2,8,0,'#221f1c');const m=mesh(B.geo());m.position.set(-8,0,-26);m.rotation.y=.7;m.castShadow=true;g.add(m);{const v=new THREE.Vector3(-8,0,-26).applyAxisAngle(new THREE.Vector3(0,1,0),g.rotation.y);const sp=G.sceneryPos[G.sceneryPos.length-1];sp[3]=x+v.x;sp[4]=y+v.z;}scorch(x-8,y-26,14);}}}
 loadModels();
 
+
+/* ================= FACTION LOOKS (Step 1): national markings + add-on kits =================
+   Every aircraft, ship and combat vehicle gets ONE extra merged mesh (one draw call) carrying its nation's flag/roundel
+   decals and a small kit (flags on poles, sandbags, ERA blocks, cope cage, red stars, antennas). The mesh geometry is
+   built once per model+nation and shared; textures come from one shared atlas. On Low graphics (phones) ground vehicles
+   skip the kit entirely; aircraft/ships keep only the cheap decals. Visuals only - nothing here touches the simulation. */
+const KFAC=['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','CU','RS','DW'];
+const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=6;
+function kitCellIdx(n){if(n==='star')return 36;if(n==='white')return 37;const t=n[0],v=n.slice(2);if(t==='f')return KFAC.indexOf(v);if(t==='r')return 18+KFAC.indexOf(v);return 38+(+v);}
+function kitUV(n,x0=0,y0=0,x1=1,y1=1){const i=kitCellIdx(n),cx=i%KCOLS,cy=(i/KCOLS)|0,W=KCOLS*KCW,H=KROWS*KCH;
+  return {u0:(cx*KCW+x0*KCW)/W,u1:(cx*KCW+x1*KCW)/W,vt:1-(cy*KCH+y0*KCH)/H,vb:1-(cy*KCH+y1*KCH)/H};}
+function kitMat(){if(KIT.mat)return KIT.mat;const c=document.createElement('canvas');c.width=KCOLS*KCW;c.height=KROWS*KCH;const x=c.getContext('2d');
+  KFAC.forEach((f,i)=>{let img=null;try{img=flagTex(f).image;}catch(e){}const cx=(i%KCOLS)*KCW,cy=((i/KCOLS)|0)*KCH;
+    if(img){x.drawImage(img,cx+4,cy+4,KCW-8,KCH-8);x.strokeStyle='rgba(20,20,20,.6)';x.lineWidth=2;x.strokeRect(cx+4,cy+4,KCW-8,KCH-8);}
+    const j=18+i,rx=(j%KCOLS)*KCW,ry=((j/KCOLS)|0)*KCH;x.save();x.beginPath();x.arc(rx+KCW/2,ry+KCH/2,28,0,7);x.clip();if(img)x.drawImage(img,rx+KCW/2-46,ry+KCH/2-28,92,56);x.restore();
+    x.strokeStyle='rgba(235,235,225,.9)';x.lineWidth=3;x.beginPath();x.arc(rx+KCW/2,ry+KCH/2,28,0,7);x.stroke();});
+  {const sx=(36%KCOLS)*KCW+KCW/2,sy=((36/KCOLS)|0)*KCH+KCH/2;x.fillStyle='#c8102e';x.strokeStyle='#e8e4da';x.lineWidth=2;x.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?12:29;x.lineTo(sx+Math.cos(a)*r,sy+Math.sin(a)*r*1.0);}x.closePath();x.fill();x.stroke();}
+  {const wx=(37%KCOLS)*KCW,wy=((37/KCOLS)|0)*KCH;x.fillStyle='#fff';x.fillRect(wx,wy,KCW,KCH);}
+  x.font='bold 54px Arial, Helvetica, sans-serif';x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';
+  for(let d=0;d<10;d++){const i=38+d,dx=(i%KCOLS)*KCW+KCW/2,dy=((i/KCOLS)|0)*KCH+KCH/2+2;x.lineWidth=5;x.strokeStyle='rgba(18,18,18,.75)';x.strokeText(String(d),dx,dy);x.fillStyle='#f1efe6';x.fillText(String(d),dx,dy);}
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;KIT.tex=t;
+  const m=new THREE.MeshStandardMaterial({map:t,vertexColors:true,alphaTest:.5,roughness:.75,metalness:.1});if(typeof weather==='function')weather(m,.8,0);KIT.mat=m;return m;}
+function kitBuilder(){const P=[],N=[],C=[],U=[],Wc=kitUV('white',.4,.4,.6,.6),wu=(Wc.u0+Wc.u1)/2,wv=(Wc.vt+Wc.vb)/2,E=new THREE.Euler(),Q=new THREE.Quaternion(),V=new THREE.Vector3(),S=new THREE.Vector3(1,1,1);
+  const push=(g,M,col,rect)=>{g=g.index?g.toNonIndexed():g;g.applyMatrix4(M);const p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
+    for(let i=0;i<p.count;i++){P.push(p.getX(i),p.getY(i),p.getZ(i));N.push(n.getX(i),n.getY(i),n.getZ(i));C.push(col.r,col.g,col.b);
+      if(rect)U.push(rect.u0+(rect.u1-rect.u0)*uv.getX(i),rect.vb+(rect.vt-rect.vb)*uv.getY(i));else U.push(wu,wv);}g.dispose();};
+  const M=(x,y,z,rx,ry,rz)=>new THREE.Matrix4().compose(V.set(x,y,z),Q.setFromEuler(E.set(rx||0,ry||0,rz||0)),S);
+  const api={box:(w,h,d,x,y,z,c,rx,ry,rz)=>(push(new THREE.BoxGeometry(w,h,d),M(x,y,z,rx,ry,rz),lin(c)),api),
+    cyl:(rt,rb,h,sg,x,y,z,c,rx,ry,rz)=>(push(new THREE.CylinderGeometry(rt,rb,h,sg),M(x,y,z,rx,ry,rz),lin(c)),api),
+    tor:(r,t,x,y,z,c,rx,ry,rz)=>(push(new THREE.TorusGeometry(r,t,5,12),M(x,y,z,rx,ry,rz),lin(c)),api),
+    // textured decal, face '+z' | '-z' | '+y' (a tiny offset keeps it clear of the surface)
+    quad:(w,h,x,y,z,face,cell,sub)=>{const g=new THREE.PlaneGeometry(w,h);const r=sub?kitUV(cell,sub[0],sub[1],sub[2],sub[3]):kitUV(cell);const white=new THREE.Color(1,1,1);
+      if(face==='-z')push(g,M(x,y,z,0,Math.PI,0),white,r);else if(face==='+y')push(g,M(x,y,z,-Math.PI/2,0,0),white,r);else push(g,M(x,y,z,0,0,0),white,r);return api;},
+    geo:()=>{if(!P.length)return null;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.computeBoundingSphere();return g;}};
+  return api;}
+// ray probes against a model (in the unit's x-forward frame) so decals sit on the real surface
+function kitProbe(o,yaw,m,key){let P=KIT.probe[key];if(P)return P;const r0=m.rotation.y;m.rotation.y=0;o.updateMatrixWorld(true);
+  const bb=new THREE.Box3().setFromObject(yaw);m.rotation.y=r0;o.updateMatrixWorld(true);if(!isFinite(bb.min.x)||bb.max.x-bb.min.x<5)return KIT.probe[key]=null;
+  m.rotation.y=0;o.updateMatrixWorld(true);const RC=new THREE.Raycaster(),L=bb.max.x-bb.min.x,Wd=bb.max.z-bb.min.z,H=bb.max.y-bb.min.y;
+  const hit=(org,dir)=>{RC.set(org,dir);RC.far=2000;const h=RC.intersectObject(yaw,true);for(const q of h){if(q.object.material&&q.object.material.visible===false)continue;return q.point.clone();}return null;};
+  P={bb,L,W:Wd,H,cx:(bb.min.x+bb.max.x)/2,
+    down:(x,z)=>hit(new THREE.Vector3(x,bb.max.y+40,z),new THREE.Vector3(0,-1,0)),
+    side:(x,y,sg)=>hit(new THREE.Vector3(x,y,sg*(Wd+60)),new THREE.Vector3(0,0,-sg))};
+  m.rotation.y=r0;o.updateMatrixWorld(true);return KIT.probe[key]=P;}
+const NAVYP={west:'#8f989f',slav:'#6f8294',east:'#6a7e91',irgc:'#4d5a44',sand:'#a29271',olive:'#66694a'};
+function navyPaint(fac,m){const k={US:'west',IL:'west',EU:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
+function factionKit(e,c,o,yaw,m,T){if(!T||!T.fac||!c||!m)return;const low=typeof SET!=='undefined'&&SET.gfx==='low',fac=T.fac,k=e.kind;
+  const air=k==='jet'||k==='heli'||k==='airlift',nav=k==='boat'||k==='ship'||k==='lander',gnd=/^m_/.test(c.m)&&['tank','arty','aa','atgm','jeep','raidlead'].includes(k);
+  if(!(air||nav||gnd)||(gnd&&low)||(c.squad&&c.squad.length>1))return;
+  const gk=c.m+'|'+c.size+'|'+k+'|'+fac+'|'+(low?1:0)+'|'+(nav&&k==='ship'?e.id&3:0);let g=KIT.geo[gk];
+  if(g===undefined){g=null;try{const P=kitProbe(o,yaw,m,c.m+'|'+c.size);if(P){m.rotation.y=0;o.updateMatrixWorld(true);try{g=kitGeo(e,c,fac,k,air,nav,P);}finally{}}}catch(err){console.warn('kit',err);}KIT.geo[gk]=g;}
+  if(!g)return;const kg=new THREE.Mesh(g,kitMat());kg.castShadow=false;kg.receiveShadow=true;kg.rotation.y=-yaw.rotation.y;kg.name='factionKit';m.add(kg);}
+function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=bb.min.x,maxx=bb.max.x,miny=bb.min.y,shia=fac==='IR'||fac==='RS'||fac==='DW',low=typeof SET!=='undefined'&&SET.gfx==='low';
+  const sides=(fn)=>{for(const sg of [1,-1])fn(sg,sg>0?'+z':'-z');};
+  const flagCell=fac==='KP'?'star':'f:'+fac;
+  const pole=(x,top,hh,fw)=>{B.cyl(.14,.16,hh,5,x,top+hh/2,0,'#25262a');const fh=fw*.6;sides((sg,f)=>B.quad(fw,fh,x-fw/2-.1,top+hh-fh/2-.1,sg*.06,f,'f:'+fac));};
+  if(air){
+    if(k==='jet'){const half=W/2;let done=0;for(const xf of [.5,.42,.58,.35]){const ys=[];for(const sg of [1,-1]){const p=P.down(minx+L*xf,sg*half*.55);if(p)ys.push([sg,p.y]);}if(ys.length===2){const s=L*.1;for(const [sg,y] of ys)B.quad(s,s,minx+L*xf,y+.15,sg*half*.55,'+y','r:'+fac);done=1;break;}}
+      outer:for(const xf of [.12,.17,.22,.08])for(const yf of [.85,.75,.65,.55]){const p=P.side(minx+L*xf,miny+H*yf,1);if(p&&Math.abs(p.z)<W*.12){const s=L*.075;sides((sg,f)=>B.quad(s,s*.62,minx+L*xf,miny+H*yf,sg*Math.abs(p.z)+(sg>0?.1:-.1),f,'f:'+fac));break outer;}}}
+    else{outer2:for(const xf of [.14,.2,.1,.26])for(const yf of [.55,.5,.6,.45,.4]){const p=P.side(minx+L*xf,miny+H*yf,1);if(p&&Math.abs(p.z)<W*.3){const s=L*.07;sides((sg,f)=>B.quad(s,s*.62,minx+L*xf,miny+H*yf,sg*Math.abs(p.z)+(sg>0?.1:-.1),f,'f:'+fac));break outer2;}}}
+  }else if(nav){
+    const y=miny+H*.3;let p=P.side(cx,y,1);if(p){const hz=Math.abs(p.z);
+      const fw=Math.min(L*.12,H*1.2);sides((sg,f)=>B.quad(fw,fw*.6,minx+L*.2,y,sg*(hz+.12),f,'f:'+fac));
+      if(k!=='lander'){const no=(k==='ship'?100+((KFAC.indexOf(fac)*37+17+(e.id&3)*11)%800):10+((KFAC.indexOf(fac)*13+(e.id&3)*7)%89)),ds=String(no),dh=Math.min(H*.3,L*.07),dw=dh*.55;
+        for(let i=0;i<ds.length;i++){const xx=maxx-L*.3-(ds.length-1-i)*dw*1.05;sides((sg,f)=>B.quad(dw,dh,xx,y,sg*(Math.abs((P.side(xx,y,1)||p).z)+.12),f,'d:'+ds[i],[.3,.1,.7,.9]));}}}
+    const tp=P.down(minx+L*.12,0);if(tp)pole(minx+L*.12,tp.y,Math.max(3,H*.9),Math.min(L*.12,8));
+  }else{
+    // ground vehicles: a flag on each side, then the nation's kit
+    const hx=cx-L*.1,yS=miny+H*.42,ps=P.side(hx,yS,1);const fw=Math.min(L*.1,7);
+    if(ps){const hz=Math.abs(ps.z);sides((sg,f)=>B.quad(fw,fw*(fac==='KP'?1:.6),hx,yS,sg*(hz+.12),f,flagCell));}
+    const tt=P.down(cx-L*.02,0);
+    if(shia){const rp=P.down(cx-L*.4,0);if(rp)pole(cx-L*.4,rp.y,Math.max(5,H*.55),Math.min(L*.14,8));
+      if(fac==='IR'&&k==='tank'&&c.m!=='m_hilux'){for(let i=-2;i<=2;i++){const xx=cx+i*L*.07,p=P.side(xx,miny+H*.52,1);if(p){const hz=Math.abs(p.z);sides((sg)=>B.box(L*.05,H*.12,.9,xx,miny+H*.52,sg*(hz+.35),'#43483a'));}}}
+      if(c.m==='m_hilux'){const bx=cx-L*.28,bp=P.down(bx,0);if(bp){const by=bp.y;for(let i=0;i<5;i++){B.box(L*.07,H*.07,W*.2,bx+(i%3-1)*L*.075,by+H*.04+((i/3)|0)*H*.07,(i%2?-1:1)*W*.2,'#a39874');}B.tor(H*.17,H*.05,bx-L*.1,by+H*.18,0,'#1c1c1b',0,Math.PI/2,0);B.box(.6,H*.3,W*.34,bx-L*.1,by+H*.18,0,'#161615');}}}
+    if(fac==='KP'&&tt)B.quad(Math.min(L*.11,8),Math.min(L*.11,8),cx-L*.02,tt.y+.2,0,'+y','star');
+    if(fac==='RU'&&k==='tank'&&tt){const y=tt.y+1.1,ww=L*.3,dd=W*.42;B.box(ww,.35,.4,cx-L*.02,y,0,'#2e312a');for(const z of [-1,0,1])B.box(ww,.3,.35,cx-L*.02,y,z*dd/2,'#2e312a');for(let i=0;i<5;i++)B.box(.4,.3,dd,cx-L*.02-ww/2+i*ww/4,y,0,'#2e312a');for(const sx of [-1,1])for(const sz of [-1,1])B.box(.35,1.1,.35,cx-L*.02+sx*ww/2,y-.55,sz*dd/2,'#2e312a');}
+    if((fac==='US'||fac==='IL'||fac==='EU')&&k!=='jeep'){const rp=P.down(cx-L*.34,W*.2);if(rp){for(const sg of [1,-1])B.cyl(.07,.1,H*.8,4,cx-L*.34,rp.y+H*.38,sg*W*.2,'#202220',0,0,sg*.12);}
+      if(tt)B.box(L*.06,H*.09,W*.09,cx+L*.01,tt.y+H*.04,W*.12,'#2a2d2b');}
+  }
+  return B.geo();}
