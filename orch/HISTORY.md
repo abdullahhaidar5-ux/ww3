@@ -132,3 +132,4 @@ FPS/ping readout, installable app with offline solo play (Oct 25), renamed facti
 (e.g. Bosphorus, Fulda Gap, Caribbean, Golan, Korean DMZ, Heartland). The map picker is now a dropdown with one large
 preview, not per-map thumbnail cards.
 - 2026-11-03 faction-looks (helper agent): per-nation flag/roundel decals, hull numbers, navy paint, Shia/KP/RU/West vehicle kits (procedural); new free models skipped (no verifiable licences). See orch/reports/faction-looks.md
+- 2026-11-03 orch/bolder-marks (helper): Mountain Fortress is now a standalone garrison (own 20 slots, not linked to tunnels, heals infantry, releases units alive when destroyed); bolder faction markings verified (screenshots bolder-IR/KP). Report: orch/reports/fort-standalone.md
