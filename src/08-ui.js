@@ -139,9 +139,59 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k);mk('build','b_'+k,s.name,'$'+s.cost,null,()=>{if(T.credits<s.cost||!reqMet(ME,k))return;G.aim=null;G.place=G.place===k?null:k;});}
   const R=roster(T.fac);for(const c of CATS){sub('units',STRUCT[c].name);for(const k of R[c]){const s=stats(T.fac,k);mk('units','u_'+k,s.name,'$'+s.cost,null,()=>{if(!(MODE==='client'?true:enqueue(ME,k)))pushLog('Not enough credits or missing building.','w');else if(MODE==='client')doAct({t:'q',k});},()=>doAct({t:'dq',k}));}}
   const ups=upgList(T.fac);for(const c of CATS){const list=ups.filter(k=>UPG[k].at===c);if(!list.length)continue;sub('upg',STRUCT[c].name);for(const k of list){const U=UPG[k];mk('upg','g_'+k,upgName(T.fac,k)+(U.sp?' ★':''),'$'+U.cost,U.desc,()=>doAct({t:'up',k}),null,true);}}
-  for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});return;}if(P.passive||T.pw[k].cd>0)return;if(P.self){doAct({t:'pow',k,x:0,y:0});return;}G.place=null;G.aim=k;},null,true);}
+  for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});}/* owned powers are used from the side rail / hotkey */},null,true);}
   sub('pow','Level up');for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
   showTab(TAB);updateUI();}
+// One-click powers (Abdullah 2026-10-31): a no-target power fires at once; a targeted one aims (circle follows the cursor) and the next map click/tap fires it. Hotkeys below; Esc / right-click cancels.
+const POW_KEY={recon:'e',para:'c',barrage:'b',repair:'y',mil:'m',bb:'n',sanc:'u',nat:'j'};
+function powGo(k){if(!G||G.over)return false;const T=G.teams[ME],P=T&&powInfo(k,T.fac);if(!P||!T.pw[k]||P.passive||T.pw[k].cd>0)return false;if(P.self){doAct({t:'pow',k,x:0,y:0});return true;}G.place=null;G.amove=false;G.defm=false;G.aim=k;updateUI();return true;}
+/* ---------- one-click powers: a strip of buttons always on screen; hotkey/button arms, next map click fires ---------- */
+let QPSIG='',QPEL=null,QPDRAG=null,QPSEEN=null,QPRDY=null,QPTIP=null,QPTK=null,QPLP=0,QPOFF=false;
+/* power rail (Abdullah 2026-10-31): square icon buttons docked on the left edge, vertically centred; full name + effect only in a tooltip (hover) / long-press (touch) */
+const QPIC={recon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 12L19 6"/>',para:'<path d="M3 11a9 8 0 0 1 18 0c-1.5-1.5-3-1.5-4.5 0-1.5-1.5-3-1.5-4.5 0-1.5-1.5-3-1.5-4.5 0C6 9.5 4.5 9.5 3 11zM4 11l8 10M20 11l-8 10M12 11v10"/>',barrage:'<path d="M14 3c4 0 7 3 7 7-3 1-6 3-8 6l-5-5c3-2 5-5 6-8z"/><path d="M8 11l-4 1-1 4 4-1M13 16l-1 4 4-1 1-4M5 19l-2 2"/><circle cx="15.5" cy="8.5" r="1.5"/>',repair:'<path d="M14 6a4 4 0 0 0-5 5l-6 6 3 3 6-6a4 4 0 0 0 5-5l-3 2-2-2z"/>',mil:'<path d="M8 21v-6l-3-3V7a2 2 0 0 1 4 0v3h1V5a2 2 0 0 1 4 0v5h1V6a2 2 0 0 1 4 0v8c0 4-2 7-6 7z"/>',bb:'<circle cx="11" cy="14" r="7"/><path d="M15 8l3-3M17 3l4 4M17 3l-1 3 2 2 3-1"/>',sanc:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 14v4M14 15h-3a1 1 0 0 0 0 2h2a1 1 0 0 1 0 2h-3" stroke-width="1.4"/>',nat:'<path d="M12 2l3 7 7 .6-5.3 4.7 1.7 7.2L12 17.8 5.6 21.5l1.7-7.2L2 9.6 9 9z"/>'};
+function qpIcon(k){return '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(QPIC[k]||QPIC.nat)+'</svg>';}
+function qpTip(k,btn){const T=G&&G.teams[ME];if(!k||!T||!btn){if(QPTIP)QPTIP.hidden=true;QPTK=null;return;}const P=powInfo(k,T.fac),hk=POW_KEY[k];
+  if(!QPTIP){QPTIP=document.createElement('div');QPTIP.id='qptip';document.body.append(QPTIP);}
+  const d=String(P.desc||'').split(/(?<=[.!?])\s/)[0];QPTIP.textContent='';const a=document.createElement('b');a.textContent=P.name+(hk?' ['+hk.toUpperCase()+']':'')+(P.cash?' · $'+P.cash:'');const c=document.createElement('span');c.textContent=d;QPTIP.append(a,c);
+  QPTK=k;QPTIP.hidden=false;const r=btn.getBoundingClientRect();QPTIP.style.left=Math.round(r.right+8)+'px';QPTIP.style.top=Math.round(r.top+r.height/2)+'px';}
+function qpUpdate(){const T=G&&G.teams[ME];if(!T)return;const ks=Object.keys(POWERS).filter(k=>T.pw[k]&&!powInfo(k,T.fac).passive);
+    if(!QPEL){QPEL=document.createElement('div');QPEL.id='qpow';QPEL.innerHTML='<div class="qcol"></div><button type="button" class="qtab" aria-label="Show or hide powers"></button>';document.body.append(QPEL);
+    try{QPOFF=localStorage.getItem('ww3qpoff')==='1';}catch(e){}
+    const tb=QPEL.querySelector('.qtab');tb.textContent=QPOFF?'⚡':'‹';QPEL.classList.toggle('off',QPOFF);
+    tb.onclick=()=>{QPOFF=!QPOFF;QPEL.classList.toggle('off',QPOFF);tb.textContent=QPOFF?'⚡':'‹';qpTip(null);try{localStorage.setItem('ww3qpoff',QPOFF?'1':'0');}catch(e){}};
+    window.addEventListener('pointerup',e=>{const q=QPDRAG;QPDRAG=null;if(!q||!G||!G.aim||document.elementFromPoint(e.clientX,e.clientY)!==cv)return;mpos(e);const w=screenToWorld(mouse.x,mouse.y);if(w)placeOrAim(w,false);});}
+  const col=QPEL.querySelector('.qcol');QPEL.hidden=!ks.length;
+  const now=Date.now();QPSEEN=QPSEEN||{};QPRDY=QPRDY||{};
+  const info=ks.map(k=>{const P=powInfo(k,T.fac),w=T.pw[k],cd=Math.max(0,w.cd||0),L=Math.max(1,Math.min(3,w.lv||1)),tot=Math.max(cd,QPSEEN[k]||0,Math.round((P.cd||0)*(typeof PCD!=='undefined'?PCD[L-1]:1)));
+    if(cd>0){QPSEEN[k]=Math.max(QPSEEN[k]||0,cd);QPRDY[k]=-1;}else if(QPRDY[k]===-1)QPRDY[k]=now;
+    const locked=k==='bb'&&G.t<300,poor=!!P.cash&&T.credits<P.cash,pulse=cd<=0&&QPRDY[k]>0&&now-QPRDY[k]<2000;return{k,P,cd,tot,locked,poor,pulse};});
+  const sig=info.map(o=>o.k+(G.aim===o.k?'*':'')+(o.cd>0?Math.ceil(o.cd):'')+(o.pulse?'p':'')+(o.poor?'$':'')+(o.locked?'L':'')).join();if(sig===QPSIG)return;QPSIG=sig;col.innerHTML='';
+  if(!document.getElementById('qpcss')){const st=document.createElement('style');st.id='qpcss';st.textContent='@keyframes qpp{0%,100%{box-shadow:0 0 0 0 rgba(120,255,140,0)}50%{box-shadow:0 0 12px 4px rgba(120,255,140,.9)}}'
+    +'#qpow{position:fixed;z-index:90;left:max(4px,env(safe-area-inset-left,0px));top:calc((100vh - var(--barh,180px))/2);transform:translateY(-50%);display:flex;align-items:center;gap:3px;pointer-events:none;max-height:calc(100vh - var(--barh,180px) - 70px)}#qpow[hidden]{display:none}'
+    +'#qpow .qcol{display:flex;flex-direction:column;flex-wrap:wrap;gap:6px;max-height:inherit;align-content:flex-start}#qpow.off .qcol{display:none}'
+    +'#qpow .qtab{pointer-events:auto;width:20px;height:44px;padding:0;border:1px solid #5d6b54;border-radius:0 8px 8px 0;background:rgba(24,30,22,.9);color:#cfe3c0;font:700 15px sans-serif;cursor:pointer}'
+    +'#qpow .qcol button{pointer-events:auto;position:relative;overflow:hidden;width:56px;height:56px;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#d6e6c4;background:linear-gradient(160deg,#3b4636,#232b21);border:1px solid #9fc27f;border-radius:7px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.5);cursor:pointer;touch-action:manipulation}'
+    +'#qpow .qcol button svg{position:relative;margin-top:-6px;pointer-events:none}#qpow .qf{position:absolute;left:0;top:0;width:100%;height:100%!important;pointer-events:none}'
+    +'#qpow .qk{position:absolute;left:3px;top:2px;min-width:14px;padding:0 3px;font:800 11px/14px sans-serif;background:rgba(0,0,0,.7);color:#e8f5d8;border-radius:3px;pointer-events:none;z-index:2}'
+    +'#qpow .qc{position:absolute;left:0;right:0;bottom:2px;text-align:center;font:800 11px/12px sans-serif;color:#fff;text-shadow:0 1px 2px #000;pointer-events:none;z-index:2}'
+    +'#qpow .qcol button.rdy{border-color:#7dff8c}#qpow .qcol button.arm{border-color:#ea5a40;background:linear-gradient(160deg,#7a2a1c,#4a1a12)}#qpow .qcol button:disabled,#qpow .qcol button.poor{filter:grayscale(.8);opacity:.7;cursor:default}#qpow .qc.bad{color:#ff9a8a}'
+    +'#qptip{position:fixed;z-index:95;transform:translateY(-50%);max-width:min(260px,60vw);padding:6px 10px;background:rgba(14,18,13,.96);border:1px solid #9fc27f;border-radius:6px;color:#e8f5d8;font:12px/1.35 sans-serif;pointer-events:none}#qptip[hidden]{display:none}#qptip b{display:block;font-size:13px}'
+    +'@media(max-width:760px),(max-height:520px){#qpow .qcol button{width:48px;height:48px}#qpow .qcol button svg{width:26px;height:26px}#qpow .qcol{gap:5px}}';document.head.append(st);}
+  info.forEach(({k,P,cd,tot,locked,poor,pulse})=>{const hk=POW_KEY[k],b=document.createElement('button'),off=cd>0||locked;b.type='button';b.setAttribute('aria-label',P.name);
+    b.className=(G.aim===k?'arm ':'')+(!off&&!poor?'rdy ':'')+(poor?'poor':'');if(pulse)b.style.animation='qpp .5s 3';
+    const f=document.createElement('div');f.className='qf';f.style.height=(cd>0?Math.min(100,100*cd/tot):0)+'%';f.style.background=cd>0?'conic-gradient(rgba(0,0,0,.68) '+Math.round(360*Math.min(1,cd/tot))+'deg,transparent 0)':'none';b.append(f);
+    b.insertAdjacentHTML('beforeend',qpIcon(k));
+    if(hk){const kb=document.createElement('span');kb.className='qk';kb.textContent=hk.toUpperCase();b.append(kb);}
+    const m=document.createElement('span');m.className='qc'+(poor&&!off?' bad':'');m.textContent=cd>0?Math.ceil(cd)+'s':locked?'🔒 5:00':P.cash?'$'+P.cash:'';b.append(m);
+    b.dataset.pow=k;b.dataset.cd=Math.ceil(cd);b.disabled=off;
+    b.onpointerenter=e=>{if(e.pointerType==='mouse')qpTip(k,b);};b.onpointerleave=e=>{if(e.pointerType==='mouse')qpTip(null);};
+    b.onpointerdown=e=>{e.preventDefault();if(e.pointerType==='mouse'||e.pointerType===''){QPDRAG=P.self?null:k;powGo(k);return;}
+      /* touch/pen: fire on release; holding ~0.45 s shows the name + effect instead */
+      QPLP=0;const t0=setTimeout(()=>{QPLP=1;qpTip(k,b);setTimeout(()=>{if(QPTK===k)qpTip(null);},3500);},450);
+      const cx=()=>{clearTimeout(t0);b.removeEventListener('pointerup',up);b.removeEventListener('pointercancel',cx);};
+      const up=()=>{cx();if(!QPLP){QPDRAG=P.self?null:k;powGo(k);}};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',cx);};
+    col.append(b);});
+  if(QPTK){const bb=col.querySelector('[data-pow="'+QPTK+'"]');qpTip(bb?QPTK:null,bb);}}
 function showTab(t){TAB=t;const pn=$('panel');if(pn)pn.scrollLeft=0;document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));document.querySelectorAll('#panel>[data-tab]').forEach(b=>b.hidden=b.dataset.tab!==t);fitBtnNames();}
 // phones: a command-button name that still doesn't fit in two lines gets a smaller font (down to 8.5 px) instead of "…"
 const PHONE_BAR=typeof matchMedia==='function'?matchMedia('(max-width:560px),(max-width:760px) and (min-height:521px),(max-height:520px)'):null;
@@ -193,16 +243,30 @@ function renderAllies(){const el=$('allyBox');if(!el||!G)return;const T=G.teams[
   for(const sm of el.querySelectorAll('small[data-c]')){const O=G.teams[+sm.dataset.c];sm.textContent='$'+Math.floor(O.credits);}
   for(const b of el.querySelectorAll('button'))b.disabled=b.dataset.v==='½'?T.credits<100:T.credits<+b.dataset.v;}
 // Sanctions banner: shown to the sanctioned player with the cut and a countdown (T.sanc = sim time it ends; clients get it from the snapshot)
+function mournBanner(T){let el=$('mournB');const left=(T.mart||0)>G.t?Math.ceil(T.mart-G.t):0;if(!left){if(el)el.hidden=true;return;}if(!el){el=document.createElement('div');el.id='mournB';el.style.cssText='position:fixed;z-index:7;left:50%;top:62px;transform:translateX(-50%);padding:5px 14px;background:rgba(20,20,24,.92);color:#fff;font:700 14px system-ui,sans-serif;border:1px solid #bbb;border-radius:4px;pointer-events:none;text-align:center;max-width:94vw';document.body.append(el);}el.hidden=false;const t='Mourning: '+left+' s · no fear · +15% damage';if(el.textContent!==t)el.textContent=t;}
 function sancBanner(T){let el=$('sancB');const left=T.sanc>G.t?Math.ceil(T.sanc-G.t):0;
   if(!left){if(el)el.hidden=true;return;}
   if(!el){el=document.createElement('div');el.id='sancB';el.style.cssText='position:fixed;z-index:7;left:50%;top:30px;transform:translateX(-50%);padding:5px 14px;background:rgba(150,16,20,.92);color:#fff;font:700 14px system-ui,sans-serif;border:1px solid #ff8a80;border-radius:4px;pointer-events:none;text-align:center;max-width:94vw';document.body.append(el);}
   el.hidden=false;const t='SANCTIONED · income −'+(T.upg.smug?8:20)+'% · '+left+' s'+(T.upg.smug?' · smuggling routes open':'');if(el.textContent!==t)el.textContent=t;}
-function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
+// Cancel (Abdullah 2026-10-31): one button + Backspace/Delete. Placing a building -> stop placing; a production building with a queue
+// -> remove its last item (refunded; Shift = 5); a builder / unfinished building -> cancel it (refunded).
+function cancelInfo(){if(!G||G.over)return null;if(G.place)return{k:'place',tip:'Stop placing the building'};const T=G.teams[ME];
+  for(const e of G.sel){if(e.dead||e.team!==ME)continue;
+    if(e.isB&&e.built>=1){const q=T.q&&T.q[e.kind];if(q&&q.length)return{k:'q',kind:e.kind,tip:'Remove the last queued item and refund it (Shift: 5)'};}
+    const b=e.isB?e:e.kind==='dozer'&&e.order&&e.order.type==='build'?e.order.target:null;
+    if(b&&b.isB&&!b.dead&&b.team===ME&&b.built<1&&b.kind!=='hq')return{k:'bld',tid:b.id,tip:'Cancel the unfinished building and get the money back'};}
+  return null;}
+function doCancel(sh){const c=cancelInfo();if(!c)return false;
+  if(c.k==='place'){G.place=null;TC.pick=null;}
+  else if(c.k==='q'){const q=(G.teams[ME].q[c.kind]||[]).slice(-(sh?5:1)).map(x=>x.kind).reverse();for(const k of q)doAct({t:'dq',k});}
+  else doAct({t:'cb',tid:c.tid});
+  try{sfxUI(380);}catch(_){}updateUI();return true;}
+function updateUI(){if(!G)return;qpUpdate();renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);mournBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k),ok=reqMet(ME,k);if(!bldAllowed(T.fac,k)){setBtn('b_'+k,{dis:true,cost:'Not available',title:'This faction has no air force'});continue;}const lim=s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===ME&&e.kind===k).length>=s.limit;setBtn('b_'+k,{dis:!ok||T.credits<s.cost||lim,cost:lim?'Max '+s.limit:'$'+s.cost,on:G.place===k,title:ok?(STRUCT[k].desc||(STRUCT[k].shore?'Place on the shoreline':'')):`Requires ${STRUCT[STRUCT[k].req].name}`});}
   for(const k of allUnits(T.fac)){const s=stats(T.fac,k),q=T.q[s.from]||[],n=q.filter(x=>x.kind===k).length,has=done(ME,s.from);const first=q[0]&&q[0].kind===k?(q[0].p!=null?q[0].p:q[0].t/prodTime(T,s)):0;
-    const lk=specLock(T,k);setBtn('u_'+k,{dis:lk||!has||(T.credits<s.cost&&!n),cost:lk?`General rank ${SPEC_RANK}`:k===T.F.special?'$'+s.cost+(T.rank>=6?' · Elite':T.rank>=4?' · Veteran':''):'$'+s.cost,q:n?'×'+n:'',p:first,title:(lk?`Unlocks at general rank ${SPEC_RANK}; gets Veteran (+20%) at rank 4 and Elite (+40%) at rank 6. `:'')+(has?'':`Requires ${STRUCT[s.from].name}. `)+(k===T.F.special&&SPECIAL_TIP[k]?SPECIAL_TIP[k](s)+' ':'')+(COUNTER[k]||COUNTER[s.cls]||'')});}
+    const lk=specLock(T,k);const rbw=k==='cleric'&&(T.rebuy||0)>G.t?Math.ceil(T.rebuy-G.t):0;setBtn('u_'+k,{dis:lk||!has||rbw>0||(T.credits<s.cost&&!n),cost:rbw?'Wait '+rebuyFmt(rbw):lk?`General rank ${SPEC_RANK}`:k===T.F.special?'$'+s.cost+(T.rank>=6?' · Elite':T.rank>=4?' · Veteran':''):'$'+s.cost,q:n?'×'+n:'',p:first,title:(rbw?`A new leader can be chosen in ${rebuyFmt(rbw)}. `:'')+(lk?`Unlocks at general rank ${SPEC_RANK}; gets Veteran (+20%) at rank 4 and Elite (+40%) at rank 6. `:'')+(has?'':`Requires ${STRUCT[s.from].name}. `)+(k===T.F.special&&SPECIAL_TIP[k]?SPECIAL_TIP[k](s)+' ':'')+(COUNTER[k]||COUNTER[s.cls]||'')});}
   for(const k of upgList(T.fac)){const U=UPG[k],r=T.rq[U.at],mine=r&&r.key===k;setBtn('g_'+k,{dis:T.upg[k]||!done(ME,U.at)||(!!r&&!mine)||T.credits<U.cost&&!mine,done:T.upg[k],cost:T.upg[k]?'Researched':mine?'Researching…':'$'+U.cost,p:mine?r.t/U.time:0,title:done(ME,U.at)?'':`Requires ${STRUCT[U.at].name}`});}
-  const pts=T.rank-T.spent;for(const k in POWERS){const P=powInfo(k,T.fac),w=T.pw[k];const lv=w?(w.lv||1):0;setBtn('p_'+k,{dis:w?(P.passive||w.cd>0):pts<1,done:!!w,on:G.aim===k,cost:w?('Lv '+lv+' · '+(P.passive?'Active':w.cd>0?`Ready in ${Math.ceil(w.cd)}s`:(P.self?'Ready · click to use':'Ready · click, then pick a spot'))):`Unlock · 1 point`});
+  const pts=T.rank-T.spent;for(const k in POWERS){const P=powInfo(k,T.fac),w=T.pw[k];const lv=w?(w.lv||1):0;setBtn('p_'+k,{dis:w?true:pts<1,done:!!w,on:G.aim===k,cost:w?('Lv '+lv+' · '+(P.passive?'Active':'use it on the side rail'+(POW_KEY[k]?' ['+POW_KEY[k].toUpperCase()+']':''))):`Unlock · 1 point`});
     {const b=$('pu_'+k);if(b){const c=lv>=1&&lv<3?lv+1:0;const dv=c?'':'none';if(b.style.display!==dv){b.style.display=dv;if(c)fitBtnNames();}if(c)setBtn('pu_'+k,{dis:pts<c,cost:`To level ${lv+1} · ${c} points`});}}}
   const dot=$('pdot');const tb=document.querySelector('.tabs button[data-tab="pow"]');if(tb){let d=tb.querySelector('.dot');if(pts>0&&!d){d=document.createElement('span');d.className='dot';tb.append(d);}else if(pts<=0&&d)d.remove();}
   const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('side').classList.toggle('hasUp',!!up);$('supbar').style.width=(up?f*100:0)+'%';
@@ -223,14 +287,14 @@ function updateUI(){if(!G)return;renderSquads();renderAllies();const T=G.teams[M
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   else if(leftOrders()&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Click').replace(/right-click/g,'click');
   el.append(b,sp);if(tip.textContent)el.append(tip);
-  {const can=s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack);const r=document.createElement('div');r.className='cmdrow'+(can?'':' off');const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ ':'')+'Guard (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Guard: tap map…':'🛡 Guard: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='■ Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;r.append(ba,bd,bs,br,bv);if(!can){const why='Select combat units to use orders';for(const x of r.children){x.disabled=true;x.title=why;}}else{ba.title+=' (hotkey F)';bs.title='Stop: halt and hold fire position (hotkey X)';}if(can)el.append(r);else el.append(r);}
+  {const can=s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack);const r=document.createElement('div');r.className='cmdrow'+(can?'':' off');const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ ':'')+'Guard (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Guard: tap map…':'🛡 Guard: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='■ Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;const bcn=document.createElement('button');bcn.className='cnBtn';bcn.textContent='✕ Cancel';{const ci=cancelInfo();bcn.disabled=!ci;bcn.title=ci?ci.tip+' (Backspace / Delete)':'Nothing to cancel (select a building with a queue or a builder)';bcn.onclick=e=>doCancel(e.shiftKey);if(ci)r.classList.remove('off');}const bt=document.createElement('button');bt.textContent='▣ Type (T)';bt.title='Select every one of your units on the map that is the same type as the selection (hotkey T)';bt.onclick=selectTypes;r.append(ba,bd,bt,bs,br,bv,bcn);if(!can){const why='Select combat units to use orders';for(const x of r.children){if(x===bcn)continue;x.disabled=true;x.title=why;}}else{ba.title+=' (hotkey F)';bs.title='Stop: halt and hold fire position (hotkey X)';}if(can)el.append(r);else el.append(r);}
   {const ap=$('app'),o=!!el.querySelector('.cmdrow:not(.off)');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   {const trs=s.filter(u=>!u.isB&&u.s&&u.s.cap&&u.team===ME&&!u.dead);if(trs.length>1&&trs.length===s.filter(u=>!u.isB).length){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Unload all '+trs.length+' transports';ub.title=(TOUCHUI?'Or tap one of them again':'Or right-click one of them')+' to unload them all';ub.onpointerdown=ev=>{ev.preventDefault();for(const tr of trs)doAct({t:'unl',tid:tr.id});};el.append(ub);}}
   if(s.length===1&&!s[0].isB&&s[0].s.cap&&s[0].team===ME){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';const n=MODE==='client'?'':` (${cargoLoad(s[0])}/${s[0].s.cap})`;ub.textContent='Unload troops here'+n;const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   if(s.length===1&&!s[0].isB&&s[0].s&&s[0].s.jam&&s[0].team===ME)el.append(spoofBtn(s[0]));
   if(s.length===1&&s[0].isB&&s[0].kind==='garrison'&&s[0].team===ME){const c=civAtXYAny(s[0].x,s[0].y),n=MODE==='client'?(s[0].occN|0):(c?c.occ.length:0),cap=MODE==='client'?(s[0].capN|0):(c?c.cap:0);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>Troops inside: '+n+' / '+cap+'</b><br>Safe inside, firing out at 20% longer range. Shells, rockets and tank guns can bring the building down.';el.append(d);const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring troops out';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'ungar',tid});};el.append(ub);}
-  if(s.length===1&&s[0].isB&&isTun(s[0])&&s[0].team===ME&&s[0].built>=1){const n=MODE==='client'?(T.tunN|0):T.tun.length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>In the tunnel network: '+n+' / '+tunCap(ME)+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. '+(TOUCHUI?'Tap':leftOrders()?'Click':'Right-click')+' a tunnel with units selected to send them in.');el.append(d);}
-  if(s.length===1&&s[0].isB&&isTun(s[0])&&s[0].team===ME&&s[0].built>=1&&(MODE==='client'?T.tunN:T.tun.length)){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring units out here';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
+  if(s.length===1&&s[0].isB&&isTun(s[0])&&s[0].team===ME&&s[0].built>=1){const FT=s[0].kind==='fort',n=FT?(MODE==='client'?(T.fortN|0):fortN(ME)):(MODE==='client'?(T.tunN|0):T.tun.length),K=FT?(MODE==='client'?(T.fortK||{}):fortKinds(ME)):(MODE==='client'?(T.tunK||{}):tunKinds(T));const d=document.createElement('div');d.className='tunlist';d.innerHTML='<b>'+(FT?'Inside the Mountain Fortress: '+n+' / '+FORT_CAP:'In the tunnel network: '+n+' / '+tunCap(ME))+'</b>'+(n?'<br>'+Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' × '+((()=>{try{return stats(T.fac,k).name}catch(_){return k}})())).join('<br>'):'<br>Empty. '+(TOUCHUI?'Tap':leftOrders()?'Click':'Right-click')+(FT?' the fortress':' a tunnel')+' with units selected to send them in.'+(FT?' Units inside heal and only leave through the fortress.':''));el.append(d);}
+  if(s.length===1&&s[0].isB&&isTun(s[0])&&s[0].team===ME&&s[0].built>=1&&(s[0].kind==='fort'?(MODE==='client'?T.fortN:fortN(ME)):(MODE==='client'?T.tunN:T.tun.length))){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Bring units out here';const tid=s[0].id;ub.onpointerdown=ev=>{ev.preventDefault();doAct({t:'unl',tid});};el.append(ub);}
   const net=$('net');if(MODE!=='single'){net.hidden=false;net.innerHTML=`<b>●</b> Online · vs ${vsText()}`;}else net.hidden=true;}
 $('supbtn').onclick=()=>{G.place=null;G.aim='sup';};
 
@@ -245,6 +309,7 @@ let sqLast={i:0,t:0};function sqSelect(i){const L=sqList(i);if(!L.length)return;
 function renderSquads(){const el=$('sqs');if(!el||!G)return;if(!el.children.length)for(let i=1;i<=SQN;i++){const b=document.createElement('button');b.dataset.i=i;b.onclick=e=>{const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(e.shiftKey||e.ctrlKey||(!sqList(i).length&&own.length))sqAssign(i);else sqSelect(i);};el.append(b);}
   const cur=sqOfSel();G.sqOf={};for(let i=1;i<=SQN;i++){const L=sqList(i);if(G.sq)G.sq[i]=L.map(u=>u.id);for(const u of L)G.sqOf[u.id]=i;const b=el.children[i-1];b.innerHTML='';b.append(String(i));const sm=document.createElement('small');sm.textContent=L.length?`${L.length} unit${L.length>1?'s':''}`:'empty';b.append(sm);{const ms=L.map(moraleOf).filter(Boolean);if(ms.length){const avg=ms.reduce((a,m)=>a+m.v,0)/ms.length,fl=ms.every(m=>m.st==='fearless'),rt=ms.some(m=>m.st==='routing');const st=fl?'fearless':rt?'routing':avg>.66?'steady':avg>.35?'shaken':'breaking';const q=document.createElement('span');q.className='sqm';q.innerHTML=`<i style="width:${Math.round(avg*100)}%;background:${MOR_COL[st]}"></i>`;q.title='Squad morale: '+MOR_TXT[st];b.append(q);if(rt)b.classList.add('rout');else b.classList.remove('rout');}}b.classList.toggle('on',cur===i);b.classList.toggle('empty',!L.length);b.title=L.length?`Squad ${i}: click to select, click again to find it. Shift+click to replace it with the selection.`:'Empty: select units, then click here to make them squad '+i+'.';}
   const mk=$('sqMake');if(mk)mk.disabled=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).length<1;}
+function selectTypes(){if(!G||G.over)return;const mine=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead),ks=new Set(mine.map(u=>u.kind));G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(ks.size?ks.has(u.kind):!['harv','hacker','dozer'].includes(u.kind)));if(G.sel.length)speak(0);updateUI();}
 function selectArmy(){if(!G)return;G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);if(G.sel.length)speak(0);updateUI();}
 {const mk=$('sqMake');if(mk&&!$('sqAll')){const w=document.createElement('span');w.className='sqbtns';const a=document.createElement('button');a.id='sqAll';a.textContent='All army';a.title='Select every combat unit you have (Q)';a.onclick=selectArmy;mk.replaceWith(w);w.append(a,mk);}}
 if($('sqMake'))$('sqMake').onclick=()=>{if(!G)return;let i=0;for(let k=1;k<=SQN;k++)if(!sqList(k).length){i=k;break;}if(!i)i=1;sqAssign(i);};
@@ -320,7 +385,7 @@ function helpOn(t,sel){return !!t&&t.team===ME&&((t.isB&&((t.built<1&&sel.some(u
 // selected, right-click (tap) the ground and everyone comes out and runs there (an enemy: the garrison fires at it).
 function ldTr(u){return !!u&&!u.isB&&u.team===ME&&!u.dead&&!!u.s&&!!u.s.cap&&(MODE==='client'?!!u.cargo:(u.cargo||[]).length>0);}
 function garSel(){return G.sel.filter(b=>b.isB&&b.kind==='garrison'&&b.team===ME&&!b.dead);}
-function tunSel(){const T=G.teams[ME],n=MODE==='client'?(T.tunN|0):(T.tun||[]).length;return n?G.sel.filter(b=>b.isB&&isTun(b)&&b.team===ME&&!b.dead&&b.built>=1):[];}
+function tunSel(){const T=G.teams[ME],n=MODE==='client'?(T.tunN|0):(T.tun||[]).length,nf=MODE==='client'?(T.fortN|0):fortN(ME);return (n||nf)?G.sel.filter(b=>b.isB&&isTun(b)&&b.team===ME&&!b.dead&&b.built>=1&&(b.kind==='fort'?nf:n)):[];}
 function exitIntent(t,alt){if(!G||G.over||G.place||G.aim||G.amove||G.defm)return null;const units=selfSel();
   if(t&&!alt&&G.sel.includes(t)&&ldTr(t)&&!units.some(u=>u!==t&&canBoard(t,u)))return{k:'unload',trs:units.filter(ldTr)};
   if(alt&&!t){const trs=units.filter(ldTr);if(trs.length)return{k:'unloadAt',trs,rest:units.filter(u=>!trs.includes(u))};}
@@ -485,8 +550,11 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='Escape'&&menuOpen()){menuOpen(false);return;}
   if(k==='Escape'){if(G.defm){G.defm=false;return;}if(G.paused){togglePause(false);return;}if(!G.place&&!G.aim&&!G.amove&&!G.sel.length&&!G.over){togglePause(true);return;}if(!G.place&&!G.aim&&!G.amove)G.sel=[];G.place=null;G.aim=null;G.amove=false;}
   if(k==='q')G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);
+  if(k==='t'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){selectTypes();}
   if(k==='f'&&G.sel.some(u=>!u.isB)){G.amove=true;G.defm=false;}if(k==='g'&&G.sel.some(u=>!u.isB&&u.team===ME)){G.defm=true;G.amove=false;}
+  if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)for(const pk in POW_KEY)if(POW_KEY[pk]===k){powGo(pk);break;}
   if(k==='v'&&!e.ctrlKey&&!e.metaKey)cycleStance();
+  if((k==='Backspace'||k==='Delete')&&doCancel(e.shiftKey))e.preventDefault();
   if(k==='x'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
   if(k==='r'&&!e.ctrlKey&&!e.metaKey){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length){doAct({t:'ret',ids});speak(2);}}
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
@@ -608,6 +676,7 @@ function tcProd(){return G.sel.some(b=>b.isB&&b.team===ME&&!b.dead&&CATS.include
 function tcSelSound(){if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);}
 function tcAbort(){clearTimeout(TC.lpT);tcHold();const g=TC.g;TC.g=null;if(!g)return;if(drag&&drag.id===g.id)drag=null;if(RDRAG&&RDRAG.id===g.id)RDRAG=null;}
 function tcTap(x,y,ts){if(ts==null)ts=performance.now();mouse.x=x;mouse.y=y;const w=screenToWorld(x,y);if(!w)return;
+  if(G.aim&&!G.place){placeOrAim(w,false);tcMark(x,y,'am');TC.pick=null;return;}
   if(G.place||G.aim){TC.pick=w;sfxUI(520);updateUI();return;}
   const own=tcOwn();
   if(G.defm){if(own.length){defendAt(w);tcMark(x,y,'gd');}G.defm=false;updateUI();return;}
@@ -669,32 +738,35 @@ window.addEventListener('pointerup',e=>tcEnd(e,false),true);
 window.addEventListener('pointercancel',e=>tcEnd(e,true),true);
 /* ---- command strip (touch only, while units are selected) and build / fire confirm ---- */
 const TC_BTN=[['am','⚔','Attack','Attack-move: tap a spot, they fight everything on the way'],['gd','🛡','Guard','Guard: tap the spot to hold'],['st','■','Stop','Stop'],
-  ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all units of the selected types on screen'],['all','★','Army','Select your whole army'],
+  ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all your units of the selected types on the whole map (T)'],['all','★','Army','Select your whole army'],
   ['sn','◈','Stance','Cycle army stance: Assault, Hold, Guerrilla'],['rt','↩','Retreat','Retreat to the nearest base building'],['ds','✕','Clear','Deselect']];
+const TC_CN=['cn','✕','Cancel','Cancel: stop placing, remove the last queued item, or cancel the unfinished building'];
 function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   if(k==='am'){G.amove=!G.amove;G.defm=false;TC.lineArm=false;}
   else if(k==='gd'){G.defm=!G.defm;G.amove=false;TC.lineArm=false;}
   else if(k==='sn'){cycleStance();TC.stripK=null;}
   else if(k==='st'){if(ids.length)doAct({t:'stop',ids});sfxUI(520);}
   else if(k==='ln'){TC.lineArm=!TC.lineArm;G.amove=false;G.defm=false;}
-  else if(k==='ty'){const ks=new Set(own.map(u=>u.kind));G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&ks.has(u.kind)&&tcOnScreen(u));tcSelSound();}
+  else if(k==='ty'){selectTypes();tcSelSound();}
   else if(k==='all'){selectArmy();}
   else if(k==='rt'){if(ids.length){doAct({t:'ret',ids});speak(2);}}
   else if(k==='ds'){G.sel=[];G.amove=false;G.defm=false;TC.lineArm=false;}
   else if(k==='ok'){if(TC.pick&&(G.place||G.aim)){const p=toScreen(TC.pick.x,0,TC.pick.y);placeOrAim(TC.pick,false);if(!G.place&&!G.aim){tcMark(p.x,p.y,'am');TC.pick=null;}}}
+  else if(k==='cn'){doCancel(false);}
   else if(k==='no'){G.place=null;G.aim=null;TC.pick=null;}
   TC.stripK='';updateUI();tcStrip(true);}
 function tcStrip(force){const now=performance.now();if(!force&&now-TC.stripT<120)return;TC.stripT=now;
   let s=$('tstrip');if(!s){s=document.createElement('div');s.id='tstrip';s.hidden=true;s.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled)tcCmd(b.dataset.k);});document.body.append(s);}
   const on=TOUCHUI&&TC.touch&&G&&!G.over&&!window.LOADING&&$('menu').hidden;const own=on?tcOwn():[];
-  const mode=!on?'':(G.place||G.aim)?'conf':own.length?'cmd':'';
+  const cnl=on&&!G.place&&!G.aim&&!!cancelInfo();const mode=!on?'':(G.place||G.aim)?'conf':own.length?'cmd':cnl?'cn':'';
   const ok=mode==='conf'&&!!TC.pick&&(G.aim||!!validSpot(ME,G.place,TC.pick.x,TC.pick.y));
-  const key=mode+'|'+(mode==='cmd'?[G.amove,G.defm,TC.lineArm,own.some(u=>u.retreat),stanceLabel()].join():mode==='conf'?(G.place?'b':'f')+ok:'');
-  document.body.classList.toggle('tstripOn',mode==='cmd');document.body.classList.toggle('tconfOn',mode==='conf');
-  if(key===TC.stripK)return;TC.stripK=key;s.hidden=!mode;s.className=mode;s.innerHTML='';if(!mode)return;
+  const key=mode+'|'+(mode==='cmd'?[cnl,G.amove,G.defm,TC.lineArm,own.some(u=>u.retreat),stanceLabel()].join():mode==='conf'?(G.place?'b':'f')+ok:'');
+  document.body.classList.toggle('tstripOn',mode==='cmd'||mode==='cn');document.body.classList.toggle('tconfOn',mode==='conf');
+  if(key===TC.stripK)return;TC.stripK=key;s.hidden=!mode;s.className=mode==='cn'?'conf':mode;s.innerHTML='';if(!mode)return;
   const mk=(k,ic,tx,ti,cl)=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.title=ti;b.setAttribute('aria-label',ti);if(cl)b.className=cl;const i=document.createElement('i');i.textContent=ic;const t=document.createElement('span');t.textContent=tx;b.append(i,t);s.append(b);return b;};
+  if(mode==='cn'){mk(...TC_CN,'cx');return;}
   if(mode==='conf'){const b=mk('ok','✓',G.place?'Build here':'Fire here',G.place?'Build it at the marked spot':'Fire at the marked spot','go');b.disabled=!ok;mk('no','✕','Cancel','Cancel','cx');return;}
-  for(const [k,ic,tx,ti] of TC_BTN){const b=k==='sn'?mk(k,'◈',(stanceLabel().replace(/^\S+ /,'').replace('Guerrilla','Guerr.'))||'Stance',ti):mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}}
+  for(const [k,ic,tx,ti] of TC_BTN){const b=k==='sn'?mk(k,'◈',(stanceLabel().replace(/^\S+ /,'').replace('Guerrilla','Guerr.'))||'Stance',ti):mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}if(cnl)mk(...TC_CN,'cx');}
 /* ---- first-time guide: three steps, shown once, remembered; ☰ > Touch controls shows it again. A card near the top,
    not a full-screen cover: the battle keeps running (multiplayer can't pause) and stays playable around it ---- */
 const TC_GUIDE=[['☝','Move the map','Drag one finger to scroll the battlefield; flick to glide. Pinch with two fingers to zoom.'],

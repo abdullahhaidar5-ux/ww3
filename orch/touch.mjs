@@ -211,6 +211,17 @@ async function phonePass(tag, viewport, storageState) {
   // back to the test squad
   await page.evaluate(([id]) => { const u = G.byId.get(id); centerOn(u.x, u.y + 10, true); camTarget(); cam.td = cam.dist = 420; TC.glide = false; }, S.ids);
   await frames(page, 3);
+  // --- Cancel on the touch strip (Abdullah 2026-10-31): a production building with a queue ---
+  await page.evaluate(() => { const T = G.teams[ME]; T.credits = 5000; let b = G.ents.find(e => e.team === ME && e.isB && e.kind === 'barracks' && e.built >= 1);
+    if (!b) { const h = G.ents.find(e => e.team === ME && e.kind === 'hq'); b = addBld(ME, 'barracks', h.x + 150, h.y + 150, true); }
+    T.q.barracks = []; enqueue(ME, 'inf'); enqueue(ME, 'inf'); window.__C0 = T.credits; G.sel = [b]; updateUI(); TC.stripK = null; tcStrip(true); });
+  await sleep(300);
+  const cnb = await page.$('#tstrip button[data-k="cn"]');
+  check(tag, !!cnb, 'a Cancel button shows on the touch strip with a queued building selected');
+  if (cnb) { const r = await cnb.boundingBox(); await T.tap(r.x + r.width / 2, r.y + r.height / 2); await sleep(200);
+    const q = await page.evaluate(() => ({ n: G.teams[ME].q.barracks.length, c: G.teams[ME].credits, c0: window.__C0 }));
+    check(tag, q.n === 1 && q.c > q.c0, `tapping Cancel removes the last queued unit and refunds it (${JSON.stringify(q)})`); }
+  await page.evaluate(() => { G.teams[ME].q.barracks = []; G.sel = []; updateUI(); });
   // --- tap selects ---
   let p = await scr(page, S.ids[0]);
   await T.tap(p.x, p.y); await frames(page);
@@ -293,6 +304,9 @@ async function phonePass(tag, viewport, storageState) {
   check(tag, Math.hypot(cL.x - cB.x, cL.y - cB.y) < 1, 'drawing the line does not scroll the map');
   // the strip's Line button: a plain drag draws the line
   await page.evaluate(ids => { G.sel = ids.map(i => G.byId.get(i)).filter(Boolean); updateUI(); }, S.ids); await frames(page, 1); // an order drops the selection: pick the units again
+  { const far = await page.evaluate(() => { const u = G.sel.find(x => !x.isB && x.team === ME); if (!u) return null; const f = addUnit(u.team, u.kind, 90, 90); G.sel = [u]; updateUI(); return f.id; });
+    if (far != null) { await T.ptap('#tstrip button[data-k="ty"]');
+      check(tag, await page.evaluate(id => G.sel.some(u => u.id === id), far), 'touch Type button selects every unit of that type on the whole map'); await page.evaluate(ids => { G.sel = ids.map(i => G.byId.get(i)).filter(Boolean); updateUI(); }, S.ids); await frames(page, 1); } }
   await T.ptap('#tstrip button[data-k="ln"]');
   await T.drag(L.x0, L.y1, L.x1, L.y0, { steps: 8, ms: 120, end: 120 });
   a = await acts(page);
@@ -338,16 +352,19 @@ async function phonePass(tag, viewport, storageState) {
     a = await acts(page);
     check(tag, a.some(x => x.t === 'bld' && x.k === spot.k) && !(await page.evaluate(() => G.place)), `✓ builds it there (${a.map(x => x.t).join(',')})`);
   }
-  // --- power aiming: tap marks, ✕ cancels, ✓ fires ---
+  // --- power aiming (one-click powers): tap the button, tap the map = fires, no confirm; ✕ / Esc cancels ---
   await page.evaluate(() => { G.aim = 'sup'; updateUI(); }); await frames(page, 2);
-  await T.tap(cx, cy); await frames(page, 1);
-  await T.ptap('#tstrip button[data-k="no"]');
-  check(tag, await page.evaluate(() => !G.aim) && !(await acts(page)).some(x => x.t === 'sup'), '✕ cancels aiming without firing');
+  await page.evaluate(() => { G.aim = null; updateUI(); });
+  check(tag, !(await acts(page)).some(x => x.t === 'sup'), 'cancelled aiming fires nothing');
   await page.evaluate(() => { G.aim = 'sup'; updateUI(); }); await frames(page, 2);
   await T.tap(cx + 20, cy + 10); await frames(page, 1);
-  await T.ptap('#tstrip button[data-k="ok"]');
   a = await acts(page);
-  check(tag, a.some(x => x.t === 'sup') && await page.evaluate(() => !G.aim), 'tap a target, then ✓ fires the power there');
+  check(tag, a.some(x => x.t === 'sup') && await page.evaluate(() => !G.aim), 'aim a power, ONE tap on the map fires it (no confirm)');
+  await page.evaluate(() => { const T = G.teams[ME]; T.pw.barrage = { lv: 1, cd: 0 }; G.t = Math.max(G.t, 9999); updateUI(); }); await frames(page, 2);
+  await page.evaluate(() => powGo('barrage')); await frames(page, 1);
+  await T.tap(cx, cy); await frames(page, 1);
+  a = await acts(page);
+  check(tag, a.some(x => x.t === 'pow' && x.k === 'barrage') && await page.evaluate(() => !G.aim), 'targeted power: button then one map tap fires the barrage');
 
   // --- getting in and out with taps alone (orch/enterexit.mjs) ---
   if (tag === 'portrait') await enterExitChecks(page, { mode: 'touch', ck: (n, ok, d) => check(tag, ok, n + (ok || !d ? '' : ' — ' + String(d).slice(0, 300))), tap: (x, y) => T.tap(x, y) });

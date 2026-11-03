@@ -128,6 +128,75 @@ async function view(page, at) {
 const sel = page => page.evaluate(() => G.sel.filter(e => !e.dead).map(e => e.id).sort((a, b) => a - b));
 const acts = page => page.evaluate(() => { const a = window.__acts; window.__acts = []; return a; });
 const clear = page => page.evaluate(() => { G.sel = []; G.amove = G.defm = false; G.place = G.aim = null; window.__acts = []; updateUI(); });
+
+
+// Cancel button / Backspace (Abdullah 2026-10-31): queue item, unfinished building, placement.
+async function cancelChecks(page, { mode, ck }) {
+  const press = async sel => { if (mode === 'touch') { await page.evaluate(() => { TC.stripK = null; tcStrip(true); }); const b = await page.$(sel); const r = await b.boundingBox(); await page.touchscreen.tap(r.x + r.width / 2, r.y + r.height / 2); } else await page.$eval(sel, el => el.click()); await wait(150); };
+  const btn = mode === 'touch' ? '#tstrip button[data-k="cn"]' : '#info .cnBtn';
+  await page.evaluate(() => { try { MLOCK.broken = true; mlockOff(); } catch (e) {} G.place = G.aim = null; window.__acts = [];
+    const T = G.teams[ME]; T.credits = 5000; let b = G.ents.find(e => e.team === ME && e.isB && e.kind === 'barracks' && e.built >= 1);
+    if (!b) { const h = G.byId.get(window.__HQ); b = addBld(ME, 'barracks', h.x + 150, h.y + 150, true); }
+    T.q.barracks = []; enqueue(ME, 'inf'); enqueue(ME, 'inf'); window.__CB = b.id; window.__C0 = T.credits; G.sel = [b]; updateUI(); });
+  await wait(300);
+  if (mode === 'touch') await page.evaluate(() => { TC.stripK = null; tcStrip(true); });
+  const dis = await page.evaluate(() => { const b = document.querySelector('#info .cnBtn'); return b ? b.disabled : null; });
+  ck(mode + ' Cancel is enabled with a queued building selected', mode === 'touch' ? !!(await page.$(btn)) : dis === false, JSON.stringify(await page.evaluate(() => ({ dis: String(document.querySelector('#info .cnBtn') && document.querySelector('#info .cnBtn').disabled), ui: TOUCHUI, t: TC.touch, ci: cancelInfo(), st: document.getElementById('tstrip') && document.getElementById('tstrip').className, hid: document.getElementById('tstrip') && document.getElementById('tstrip').hidden, menu: document.getElementById('menu').hidden, load: !!window.LOADING }))));
+  await press(btn);
+  let r = await page.evaluate(() => ({ n: G.teams[ME].q.barracks.length, c: G.teams[ME].credits, c0: window.__C0 }));
+  ck(mode + ' Cancel removes the last queued unit and refunds it', r.n === 1 && r.c > r.c0, JSON.stringify(r));
+  if (mode !== 'touch') {
+    await page.keyboard.press('Backspace'); await wait(100);
+    r = await page.evaluate(() => ({ n: G.teams[ME].q.barracks.length }));
+    ck('Backspace cancels too', r.n === 0, JSON.stringify(r));
+  }
+  // a builder constructing a building
+  await page.evaluate(() => { const T = G.teams[ME], h = G.byId.get(window.__HQ); const d = addUnit(ME, 'dozer', h.x + 60, h.y + 60);
+    const b = addBld(ME, 'barracks', h.x - 160, h.y + 160, false); T.credits -= bstats(T.fac, 'barracks').cost; d.order = { type: 'build', target: b };
+    window.__CB = b.id; window.__C0 = T.credits; G.sel = [d]; updateUI(); window.__acts = []; });
+  await wait(300);
+  await press(btn);
+  r = await page.evaluate(() => { const b = G.byId.get(window.__CB); return { gone: !b || b.dead, c: G.teams[ME].credits, c0: window.__C0 }; });
+  ck(mode + ' Cancel on a constructing builder removes the building and refunds it', r.gone && r.c > r.c0, JSON.stringify(r));
+  // placement
+  await page.evaluate(() => { G.sel = []; G.place = 'barracks'; updateUI(); });
+  await wait(300);
+  if (mode === 'touch') { await page.evaluate(() => { TC.stripK = null; tcStrip(true); }); await press('#tstrip button[data-k="no"]'); }
+  else await press(btn);
+  ck(mode + ' Cancel exits placement', await page.evaluate(() => !G.place));
+  await page.evaluate(() => { G.sel = []; updateUI(); });
+}
+async function powerChecks(page, { mode, ck, tap }) {
+  const click = async (x, y) => tap ? tap(x, y) : page.mouse.click(x, y);
+  await page.evaluate(() => { try { MLOCK.broken = true; mlockOff(); if (MLOCK.on) { MLOCK.on = false; VCUR.hidden = true; document.body.classList.remove('mlock'); } } catch (e) {} });
+  await page.evaluate(() => { const T = G.teams[ME]; T.pw.barrage = { lv: 1, cd: 0 }; T.pw.sanc = { lv: 1, cd: 0 }; G.sel = []; G.place = G.aim = null; window.__acts = []; updateUI(); });
+  const pw = a => a.filter(x => x.t === 'pow').map(x => x.k);
+  const btn = k => page.evaluate(k => { const b = document.querySelector('#qpow button[data-pow="' + k + '"]'); if (!b) return null; const r = b.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; }, k);
+  const bb = await btn('barrage'), bs = await btn('sanc');
+  ck(mode + ' power buttons on the bar', !!bb && !!bs);
+  if (!bb || !bs) return;
+  await click(bs.x, bs.y); ck(mode + ' no-target power fires on one click', pw(await acts(page)).includes('sanc'));
+  { const r = await page.evaluate(() => { G.teams[ME].pw.sanc.cd = 30; QPSIG = ''; updateUI(); const b = document.querySelector('#qpow button[data-pow="sanc"]'); const f = b && b.querySelector('.qf'); G.teams[ME].pw.sanc.cd = 0; QPSIG = ''; updateUI(); return b && f ? [b.dataset.cd, parseFloat(f.style.height)] : null; });
+    ck(mode + ' used power shows a non-zero recharge', !!r && +r[0] > 0 && r[1] > 0, JSON.stringify(r)); }
+  await page.waitForTimeout(600); await page.evaluate(() => updateUI());
+  const bb2 = await btn('barrage'); await click(bb2.x, bb2.y); ck(mode + ' targeted power arms on button click', await page.evaluate(() => G.aim === 'barrage'), await page.evaluate(() => JSON.stringify({ aim: G.aim, pw: G.teams[ME].pw.barrage, paused: G.paused, el: document.elementFromPoint(innerWidth/2, 60)?.outerHTML.slice(0, 80) })));
+  const vp = await page.evaluate(() => { for (let y = innerHeight * .5; y < innerHeight * .9; y += 20) for (let x = innerWidth * .3; x < innerWidth * .7; x += 20) { if (document.elementFromPoint(x, y) === cv && screenToWorld(x, y)) return { width: x * 2, height: y / 0.6 }; } return { width: innerWidth, height: innerHeight }; });
+  await click(vp.width / 2, vp.height * 0.6);
+  { const ac = await acts(page); ck(mode + ' targeted power fires after one map click', pw(ac).includes('barrage') && await page.evaluate(() => !G.aim), JSON.stringify([ac, vp, await page.evaluate(() => [JSON.stringify(window.__pd), MLOCK.on, LASTPT, G.aim, G.place, G.over, mouse.x, mouse.y, !!screenToWorld(mouse.x, mouse.y)])])); }
+  if (!tap) {
+    await page.evaluate(() => { G.teams[ME].pw.barrage.cd = 0; updateUI(); window.__acts = []; });
+    await page.keyboard.press('b'); await page.mouse.click(vp.width / 2, vp.height * 0.6);
+    ck(mode + ' hotkey + one click fires', pw(await acts(page)).includes('barrage'));
+    await page.evaluate(() => { G.teams[ME].pw.barrage.cd = 0; updateUI(); });
+    await page.keyboard.press('b'); const armed = await page.evaluate(() => { G.paused = false; return G.aim === 'barrage'; }); await page.keyboard.press('Escape');
+    ck(mode + ' Esc cancels the armed power', armed && await page.evaluate(() => !G.aim));
+  } else {
+    await page.evaluate(() => { G.teams[ME].pw.barrage.cd = 0; updateUI(); }); const b2 = await btn('barrage'); await click(b2.x, b2.y);
+    await page.evaluate(() => { G.aim = null; updateUI(); }); ck(mode + ' cancel clears the armed power', await page.evaluate(() => !G.aim));
+  }
+  await clear(page);
+}
+
 const wait = ms => new Promise(r => setTimeout(r, ms));
 async function rdrag(page, a, b, holdMs = 0) {
   await page.mouse.move(a.x, a.y); await page.mouse.down({ button: 'right' });
@@ -235,6 +304,16 @@ try {
   await page.mouse.click(g[2].x, g[2].y);
   a = await acts(page);
   check('G then click ground = guard-area order', a.some(x => x.t === 'def'), JSON.stringify(a));
+  { // T = Type: every own unit of the selected type(s) on the whole map; nothing selected = all own combat units
+    const r = await page.evaluate(([A]) => { const u = G.byId.get(A), far = addUnit(u.team, u.kind, 90, 90); G.sel = [u]; return { id: far.id, kind: u.kind }; }, [A]);
+    await page.keyboard.press('t');
+    check('T selects ALL own units of the same type on the whole map (even off screen)', await page.evaluate(([id, k]) => G.sel.some(u => u.id === id) && G.sel.every(u => u.kind === k && u.team === ME), [r.id, r.kind]));
+    await page.evaluate(() => { G.sel = []; });
+    await page.keyboard.press('t');
+    check('T with nothing selected selects all own combat units', await page.evaluate(() => G.sel.length > 0 && G.sel.every(u => !u.isB && u.team === ME && !['harv', 'hacker', 'dozer'].includes(u.kind))));
+    await page.evaluate(([A, B]) => { G.sel = [G.byId.get(A), G.byId.get(B)].filter(Boolean); updateUI(); }, [A, B]);
+    check('orders row has a Type (T) button', await page.evaluate(() => [...document.querySelectorAll('.cmdrow button')].some(b => /Type \(T\)/.test(b.textContent))));
+  }
   await page.keyboard.press('x');
   a = await acts(page);
   check('X stops the selected units', a.some(x => x.t === 'stop'), JSON.stringify(a));
@@ -366,7 +445,21 @@ try {
   await press('#sDone');
   // getting in and out of transports, buildings and tunnels with no button (orch/enterexit.mjs)
   await enterExitChecks(page, { mode: 'mouse', ck: check });
+  await cancelChecks(page, { mode: 'mouse', ck: check });
+  await powerChecks(page, { mode: 'mouse', ck: check });
   await stanceChecks(page, { mode: 'mouse', ck: check });
+  // one-click powers: hotkey + 1 click, no-target = 1 press, Esc / right-click cancels
+  await page.evaluate(() => { const T = G.teams[ME]; T.pw.barrage = { lv: 1, cd: 0 }; T.pw.sanc = { lv: 1, cd: 0 }; updateUI(); });
+  await clear(page); await page.keyboard.press('b'); await wait(100);
+  check('power: B aims the barrage', await page.evaluate(() => G.aim === 'barrage'));
+  await page.keyboard.press('Escape'); await wait(100);
+  check('power: Esc cancels aiming, nothing fired', await page.evaluate(() => !G.aim) && !(await acts(page)).some(x => x.t === 'pow'));
+  await page.keyboard.press('b'); await wait(100); await page.mouse.click(640, 360); await wait(150);
+  { const a = await acts(page); check('power: hotkey + ONE click fires the barrage', a.some(x => x.t === 'pow' && x.k === 'barrage') && await page.evaluate(() => !G.aim), JSON.stringify(a)); }
+  await page.keyboard.press('b'); await wait(100); await page.mouse.click(640, 360, { button: 'right' }); await wait(150);
+  check('power: right-click cancels aiming', await page.evaluate(() => !G.aim));
+  await page.keyboard.press('u'); await wait(150);
+  { const a = await acts(page); check('power: no-target power fires on ONE key press', a.some(x => x.t === 'pow' && x.k === 'sanc'), JSON.stringify(a)); }
   await page.context().close();
 
   /* ================= phone (touch) ================= */
@@ -386,6 +479,8 @@ try {
   check('phone: taps never lock the mouse', await tp.evaluate(() => __lockReq === 0 && !MLOCK.on));
   try { await tp.screenshot({ path: path.join(OUT, 'controls-phone.png'), timeout: 120000 }); } catch (e) {}
   await enterExitChecks(tp, { mode: 'touch', ck: check, tap: (x, y) => tp.touchscreen.tap(x, y) });
+  await cancelChecks(tp, { mode: 'touch', ck: check });
+  await powerChecks(tp, { mode: 'touch', ck: check, tap: (x, y) => tp.touchscreen.tap(x, y) });
   await T.ctx.close();
 } catch (e) {
   errors.push(String(e && e.stack || e).split('\n').slice(0, 4).join(' | '));

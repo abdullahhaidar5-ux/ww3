@@ -190,6 +190,13 @@ try {
       if (br.n && (br.worst > 1.5 || br.jump > 3)) { fails++; lines.push(`FAIL bridge deck height: off by ${br.worst.toFixed(1)}, max step ${br.jump.toFixed(1)}`); }
       else console.log(`bridge check ok (${br.n} bridges, off ${br.worst.toFixed(2)}, step ${br.jump.toFixed(2)})`);
     }
+    if (tagp === 'desktop') { // the Ayatollah and the Dear Leader (with escorts) stand as tall as a soldier (+-10%; soldier = its fitted height MCFG.inf.size)
+      const lh = await page.evaluate(() => { const H = o => { o.updateWorldMatrix(true, true); const b = new THREE.Box3().setFromObject(o); return b.max.y - b.min.y; };
+        const mk = (t, f) => { const T = G.teams[t], old = T.fac; T.fac = f; const o = clericModel({ kind: 'cleric', team: t, x: 0, y: 0, id: -5 }); T.fac = old; const y = o.userData.parts.body; y.updateWorldMatrix(true, true); const bb = new THREE.Box3().setFromObject(y); if (o.parent) o.parent.remove(o); return bb.max.y - bb.min.y; };
+        return { sol: MCFG.inf.size, aya: mk(0, 'IR'), dl: mk(1, G.teams[1].fac === 'KP' ? 'KP' : 'KP') }; });
+      for (const k of ['aya', 'dl']) if (Math.abs(lh[k] / lh.sol - 1) > .1) { fails++; lines.push(`FAIL leader height ${k}: ${lh[k].toFixed(1)} vs soldier ${lh.sol} (must be within 10%)`); }
+      console.log(`leader heights ok? soldier ${lh.sol}, ayatollah ${lh.aya.toFixed(1)}, dear leader ${lh.dl.toFixed(1)}`);
+    }
     await ctx.close();
   }
 } catch (e) { console.error(e); fails++; lines.push('FAIL harness: ' + (e.message || e)); }

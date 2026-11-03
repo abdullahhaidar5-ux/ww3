@@ -149,13 +149,13 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
      else if(!e.isB&&e.team===ME&&(e.supp||0)>.5){c.font='600 10px Saira Condensed, sans-serif';c.textAlign='center';c.fillStyle='#ea5a40';c.fillText('SUPPRESSED',p.x,p.y-6);}}
     if(e.kind==='dozer'&&e.building&&e.team===ME){c.font='600 11px Saira Condensed, sans-serif';c.textAlign='center';c.fillStyle='#e3b341';c.fillText('BUILDING',p.x,p.y-6);}
     if(e.hacking||e.planting){c.font='600 11px Saira Condensed, sans-serif';c.textAlign='center';c.fillStyle=e.planting?'#ea5a40':'#74d08f';c.fillText(e.planting?'PLANTING':(e.order&&e.order.type==='hack'||e.hk)?'HACKING':'+$ ONLINE',p.x,p.y-6);}}
-  {const T=G.teams[ME];if(T){const n=MODE==='client'?(T.tunN|0):(T.tun||[]).length,K=MODE==='client'?(T.tunK||{}):tunKinds(T);
-   for(const e of G.ents){if(e.dead||e.team!==ME||!isTun(e)||e.built<1)continue;const p=toScreen(e.x,groundH(e.x,e.y)+BH.tunnel+14,e.y);if(p.z>1||p.x<-80||p.y<-40||p.x>VW+80||p.y>VH+40)continue;
-     const parts=Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' '+(SHORTN[k]||k.toUpperCase()));const t1='TUNNEL '+n+'/'+TUN_CAP,t2=n?parts.join(' · '):'empty';
+  {const T=G.teams[ME];if(T){const nT=MODE==='client'?(T.tunN|0):(T.tun||[]).length,KT=MODE==='client'?(T.tunK||{}):tunKinds(T),nF=MODE==='client'?(T.fortN|0):fortN(ME),KF=MODE==='client'?(T.fortK||{}):fortKinds(ME);
+   for(const e of G.ents){if(e.dead||e.team!==ME||!isTun(e)||e.built<1)continue;const FT=e.kind==='fort',n=FT?nF:nT,K=FT?KF:KT,CAP=FT?FORT_CAP:(MODE==='client'?(T.tunCap||TUN_CAP):tunCap(ME));const p=toScreen(e.x,groundH(e.x,e.y)+BH.tunnel+14,e.y);if(p.z>1||p.x<-80||p.y<-40||p.x>VW+80||p.y>VH+40)continue;
+     const parts=Object.entries(K).sort((a,b)=>b[1]-a[1]).map(([k,v])=>v+' '+(SHORTN[k]||k.toUpperCase()));const t1=(e.kind==='fort'?'MOUNTAIN FORTRESS ':'TUNNEL ')+n+'/'+CAP,t2=n?parts.join(' · '):'empty';
      c.font='700 12px Saira Condensed, sans-serif';const w1=c.measureText(t1).width;c.font='500 10px IBM Plex Mono, monospace';const w2=c.measureText(t2).width;const W=Math.max(w1,w2)+14,H=n?31:29;
-     c.fillStyle='rgba(8,12,10,.82)';c.fillRect(p.x-W/2,p.y-H,W,H);c.strokeStyle=n>=TUN_CAP?'#ea5a40':n?'#74d08f':'#55655c';c.lineWidth=1.5;c.strokeRect(p.x-W/2+.5,p.y-H+.5,W-1,H-1);
-     c.fillStyle=n>=TUN_CAP?'#ea5a40':'#e8efe9';c.textAlign='center';c.font='700 12px Saira Condensed, sans-serif';c.fillText(t1,p.x,p.y-H+13);c.font='500 10px IBM Plex Mono, monospace';c.fillStyle=n?'#b9d8c2':'#7f8f86';c.fillText(t2,p.x,p.y-H+25);
-     c.fillStyle='rgba(0,0,0,.5)';c.fillRect(p.x-W/2+3,p.y-3,W-6,2);c.fillStyle=n>=TUN_CAP?'#ea5a40':'#74d08f';c.fillRect(p.x-W/2+3,p.y-3,(W-6)*n/TUN_CAP,2);}}}
+     c.fillStyle='rgba(8,12,10,.82)';c.fillRect(p.x-W/2,p.y-H,W,H);c.strokeStyle=n>=CAP?'#ea5a40':n?'#74d08f':'#55655c';c.lineWidth=1.5;c.strokeRect(p.x-W/2+.5,p.y-H+.5,W-1,H-1);
+     c.fillStyle=n>=CAP?'#ea5a40':'#e8efe9';c.textAlign='center';c.font='700 12px Saira Condensed, sans-serif';c.fillText(t1,p.x,p.y-H+13);c.font='500 10px IBM Plex Mono, monospace';c.fillStyle=n?'#b9d8c2':'#7f8f86';c.fillText(t2,p.x,p.y-H+25);
+     c.fillStyle='rgba(0,0,0,.5)';c.fillRect(p.x-W/2+3,p.y-3,W-6,2);c.fillStyle=n>=CAP?'#ea5a40':'#74d08f';c.fillRect(p.x-W/2+3,p.y-3,(W-6)*n/CAP,2);}}}
   // garrison prompt: with infantry selected, outline the city building under the cursor and say how many fit
   {const inf=G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&typeof canGarrison==='function'&&canGarrison(u));if(inf&&!G.place&&!G.aim){const now=performance.now();if(now-(drawHUD.ht||0)>90){drawHUD.ht=now;const w=screenToWorld(mouse.x,mouse.y);drawHUD.hc=civUnder(mouse.x,mouse.y,w);}
     const cv=drawHUD.hc;if(cv&&!cv.dead){const own=cv.g&&!cv.g.dead,mine=own&&ally(cv.g.team,ME),enemy=own&&!mine;const n=MODE==='client'?(own?(cv.g.occN|0):0):cv.occ.length,cap=cv.cap;const bh=cv.h,g0=groundH(cv.x,cv.y),hw=CELL/2;
