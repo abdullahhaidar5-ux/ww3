@@ -144,3 +144,4 @@ preview, not per-map thumbnail cards.
 
 - 2026-11-04 vis-1103 (Sonnet): explosions reworked (flash + lumpy fireball + dark debris); distant low-poly soldier (vertex-clustered skinned LOD, swapped in past cam.dist 480). Kit variety, scenery details, baked clips left open (see orch/HANDOFF-vis-1103.md).
 - 2026-11-04 orch/replay-spec (helper): Replays (every battle recorded as compressed snapshots; Watch/Save replay on the end screen, Watch a replay file in the menu; play/pause, 1-8x, timeline seek, side view / fog off) + spectators (👁 Watch in the game list, up to 4, see everything or one side, never a side/standby/host; server battles end when only spectators remain). Tests: replaytest (end hash matches), mpsync --spectator, specserver. Report: orch/reports/replay-spec.md
+- 2026-11-04 terrain-urgent: stronger ground detail/patches/slope rock, card-foliage conifers + broadleaf trees, muted grass tufts (src/04-gfx.js, src/11-models.js).
