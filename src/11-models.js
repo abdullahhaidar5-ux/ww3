@@ -763,8 +763,9 @@ function smoothNorm(g){const P=g.attributes.position,N=g.attributes.normal;if(!N
   for(let i=0;i<P.count;i++){const k=key(i);let a=m.get(k);if(!a){a=[0,0,0];m.set(k,a);}a[0]+=N.getX(i);a[1]+=N.getY(i);a[2]+=N.getZ(i);}
   for(let i=0;i<P.count;i++){const a=m.get(key(i)),L=Math.hypot(a[0],a[1],a[2])||1;N.setXYZ(i,a[0]/L,a[1]/L,a[2]/L);}N.needsUpdate=true;}
 /* ---------- Realistic trees: alpha-cut foliage cards (needle sprigs / leaf clusters), muted natural greens (rendering only) ---------- */
-let FOLTEX={};
-function folTex(kind){if(FOLTEX[kind])return FOLTEX[kind];const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d'),R=mulberry(kind==='needle'?5:9),g=()=>{const v=150+R()*105|0;return 'rgb('+v+','+v+','+v+')';};
+let FOLTEX={},FOLREAL=false;
+function folReal(kind){const P=MODELS.proto&&MODELS.proto.tree_tex;if(!P)return null;let t=null;P.scene.traverse(o=>{if(o.isMesh&&o.material&&o.material.name===kind&&o.material.map)t=o.material.map;});return t;}
+function folTex(kind){if(FOLTEX[kind])return FOLTEX[kind];{const rt=folReal(kind);if(rt){rt.colorSpace=THREE.SRGBColorSpace;rt.anisotropy=4;rt.generateMipmaps=true;rt.minFilter=THREE.LinearMipmapLinearFilter;rt.needsUpdate=true;rt.userData.real=1;return FOLTEX[kind]=rt;}}const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d'),R=mulberry(kind==='needle'?5:9),g=()=>{const v=150+R()*105|0;return 'rgb('+v+','+v+','+v+')';};
   x.lineCap='round';
   if(kind==='needle'){ // a conifer sprig: a twig with many fine needles
     x.strokeStyle='rgb(120,120,120)';x.lineWidth=3;x.beginPath();x.moveTo(128,254);x.lineTo(128,6);x.stroke();
@@ -779,7 +780,7 @@ function folGeo(cards,cx,cy,cz){const n=cards.length,P=new Float32Array(n*12),N=
     const bx=x+dx*o,by=y+dy*o,bz=z+dz*o,tx=bx+dx*l,ty=by+dy*l-dr,tz=bz+dz*l,mx=(bx+tx)/2-cx,my=(by+ty)/2-cy,mz=(bz+tz)/2-cz,ml=Math.hypot(mx,my,mz)||1;
     P.set([bx-sx,by,bz-sz,bx+sx,by,bz+sz,tx+sx,ty,tz+sz,tx-sx,ty,tz-sz],i*12);
     for(let q=0;q<4;q++){N[i*12+q*3]=mx/ml*.8;N[i*12+q*3+1]=my/ml*.8+.45;N[i*12+q*3+2]=mz/ml*.8;const sh=q<2?.78:1;C[i*12+q*3]=r*sh;C[i*12+q*3+1]=g*sh;C[i*12+q*3+2]=b*sh;}
-    U.set([0,0,1,0,1,1,0,1],i*8);I.set([i*4,i*4+1,i*4+2,i*4,i*4+2,i*4+3],i*6);});
+    {const a=FOLREAL?(i%2)*.5:0,b=FOLREAL?a+.5:1;U.set(FOLREAL?[a,1,b,1,b,0,a,0]:[0,0,1,0,1,1,0,1],i*8);}I.set([i*4,i*4+1,i*4+2,i*4,i*4+2,i*4+3],i*6);});
   const G2=new THREE.BufferGeometry();G2.setAttribute('position',new THREE.BufferAttribute(P,3));G2.setAttribute('normal',new THREE.BufferAttribute(N,3));G2.setAttribute('uv',new THREE.BufferAttribute(U,2));G2.setAttribute('color',new THREE.BufferAttribute(C,3));G2.setIndex(new THREE.BufferAttribute(I,1));return G2;}
 function folMat(kind){const tm=new THREE.MeshStandardMaterial({map:folTex(kind),vertexColors:true,alphaTest:.42,side:THREE.DoubleSide,roughness:1,metalness:0});weather(tm,.35);
   const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;').replace('#include <begin_vertex>','#include <begin_vertex>\n{vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/38.,0.,1.);transformed.x+=sin(wt*.9+ip.x*.013+transformed.z*.15)*k*k*1.1;transformed.z+=cos(wt*.7+ip.z*.011+transformed.x*.15)*k*k*.6;}');}};
@@ -791,19 +792,44 @@ function folPlace(list,geos,mats2,shadowG,yoff,sx,sy,snow){ // one InstancedMesh
     im.castShadow=gi===0;im.receiveShadow=true;WORLD.add(im);out.push(im);});
   if(shadowG){const im=new THREE.InstancedMesh(shadowG,SHADOWM||(SHADOWM=new THREE.MeshBasicMaterial()),list.length);list.forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)+yoff,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*sx,s*sy*(.86+((i*7)%5)*.07),s*sx));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.layers.set(1);im.userData.noDepth=true;WORLD.add(im);}
   return out;}
-function conifer(v,snow,lo){const R=mulberry(v*17+3),B=Bld();B.cyl(.5,1.5,12,6,0,6,0,'#3b3026');const trunk=B.geo().toNonIndexed();trunk.computeVertexNormals();
+function conifer_old(v,snow,lo){const R=mulberry(v*17+3),B=Bld();B.cyl(.5,1.5,12,6,0,6,0,'#3b3026');const trunk=B.geo().toNonIndexed();trunk.computeVertexNormals();
   const cards=[],NW=lo?9:15,per=lo?4:6,H=36;
   for(let k=0;k<NW;k++){const t=k/(NW-1),y=7+t*(H-7),rad=(12.5*Math.pow(1-t,.85)+1.4)*(.92+R()*.16),ph=R()*6.28;
     for(let q=0;q<per;q++){const yaw=ph+q/per*6.283+(R()-.5)*.5,l=rad*(1.05+R()*.25),sh=.55+t*.5,c=new THREE.Color().setHSL(.255+R()*.07,.2+R()*.1,(.1+t*.06)*(.85+R()*.3));if(snow)c.lerp(new THREE.Color(.8,.84,.88),.25+R()*.3);
       cards.push([0,y,0,yaw,-.42+t*.5+(R()-.5)*.2,l*.78,l,0,l*.1,c.r*1.2,c.g*1.2,c.b*1.2]);}}
   for(let q=0;q<3;q++){const c=new THREE.Color().setHSL(.27,.22,.2);cards.push([0,H-3,0,q*2.09,1.25,5,9,0,0,c.r,c.g,c.b]);}
   return [trunk,folGeo(cards,0,20,0)];}
-function broadleaf(kind,v,lo){const R=mulberry(v*53+11),B=Bld(),bark='#5a4733',oak=kind==='oak',cards=[],cl=()=>{const c=new THREE.Color().setHSL(.18+R()*.07,.26+R()*.1,.14+R()*.07);return c;};
+function broadleaf_old(kind,v,lo){const R=mulberry(v*53+11),B=Bld(),bark='#5a4733',oak=kind==='oak',cards=[],cl=()=>{const c=new THREE.Color().setHSL(.18+R()*.07,.26+R()*.1,.14+R()*.07);return c;};
   if(oak){B.cyl(.9,2.1,18,7,0,9,0,bark);const nb=4;for(let b=0;b<nb;b++){const a=b/nb*6.28+R(),L=9+R()*4,lean=.65;B.cyl(.45,.9,L,5,Math.cos(a)*Math.sin(lean)*L/2,17+Math.cos(lean)*L/2,Math.sin(a)*Math.sin(lean)*L/2,bark,Math.sin(a)*lean,0,-Math.cos(a)*lean);}
     const N=lo?22:42;for(let i=0;i<N;i++){const a=R()*6.28,u=Math.pow(R(),.55),e=R()*1.5,rr=u*13,x=Math.cos(a)*rr*Math.cos(e*.6),z=Math.sin(a)*rr*Math.cos(e*.6),y=27+Math.sin(e)*u*8-(1-u)*1.5-3,c=cl(),w=7.5+R()*4;
       cards.push([x,y,z,R()*6.28,(R()-.5)*1.6,w,w*1.05,1,w*.15,c.r,c.g,c.b]);}}
   else{B.cyl(.8,1.7,16,6,0,8,0,bark);const nb=3+(R()*2|0),tops=[];for(let b=0;b<nb;b++){const a=b/nb*6.28+R()*.6,lean=.55+R()*.25,L=10+R()*6;B.cyl(.4,.75,L,5,Math.cos(a)*Math.sin(lean)*L/2,16+Math.cos(lean)*L/2,Math.sin(a)*Math.sin(lean)*L/2,bark,Math.sin(a)*lean,0,-Math.cos(a)*lean);tops.push([Math.cos(a)*Math.sin(lean)*L,16+Math.cos(lean)*L,Math.sin(a)*Math.sin(lean)*L]);}
     for(const [tx,ty,tz] of tops)for(let q=0;q<(lo?7:14);q++){const a=R()*6.28,d=q?R()*8:0,c=cl(),w=9+R()*4;cards.push([tx+Math.cos(a)*d,ty+1+R()*2.2-d*.1,tz+Math.sin(a)*d,R()*6.28,(R()-.5)*.55,w,w,1,w*.1,c.r*1.1,c.g*1.1,c.b*.95]);}}
+  const trunk=B.geo().toNonIndexed();trunk.computeVertexNormals();return [trunk,folGeo(cards,0,oak?27:ty0(cards),0)];}
+// Real-texture trees: Poly Haven CC0 fir twig + leaf photos, cards laid out like real branching (rendering only)
+function treeTint(kind,R,shade,snow){ // linear multipliers on the photo texture; biome decides the palette
+  const th=G.map&&G.map.theme,dry=th!=='green'&&th!=='snow',j=.9+R()*.2;let r,g,b;
+  if(kind==='needle'){r=1.35;g=1.65;b=1.1;if(dry){r=1.55;g=1.65;b=1.2;}}
+  else if(kind==='oak'){r=1.05;g=1.6;b=.7;if(dry){r=1.3;g=1.5;b=.8;}}
+  else{r=1.35;g=1.55;b=.7;if(dry){r=1.5;g=1.5;b=.85;}} // acacia / olive: dusty, olive-gold
+  const k=shade*j,c=new THREE.Color(r*k*(.92+R()*.16),g*k,b*k*(.9+R()*.2));
+  if(snow&&kind==='needle')c.lerp(new THREE.Color(.8,.86,.9),.35+R()*.25);return c;}
+function conifer(v,snow,lo){if(!folReal('needle'))return conifer_old(v,snow,lo);FOLREAL=true;
+  const R=mulberry(v*17+3),B=Bld(),tall=v?1.1:1;B.cyl(.45,1.4,14,6,0,7,0,'#43362a');const trunk=B.geo().toNonIndexed();trunk.computeVertexNormals();
+  const cards=[],NW=lo?9:17,per=lo?4:7,H=37*tall;
+  for(let k=0;k<NW;k++){const t=k/(NW-1),y=6+Math.pow(t,.92)*(H-6),rad=(13.5*Math.pow(1-t,.8)+2.2)*(.9+R()*.2)*(v?.82:1),ph=R()*6.28,sh=.55+.5*t+.1*R();
+    for(let q=0;q<per;q++){const yaw=ph+q/per*6.283+(R()-.5)*.6,l=rad*(1.0+R()*.3),pit=-.55+t*.8+(R()-.5)*.25,c=treeTint('needle',R,sh,snow);
+      cards.push([0,y,0,yaw,pit,l*.95,l,0,l*.16*(1-t*.6),c.r,c.g,c.b]);}}
+  for(let q=0;q<4;q++){const c=treeTint('needle',R,1.0,snow);cards.push([0,H-4,0,q*1.57,1.15,5.5,10,0,0,c.r,c.g,c.b]);}
+  return [trunk,folGeo(cards,0,20,0)];}
+function broadleaf(kind,v,lo){if(!folReal('leaf'))return broadleaf_old(kind,v,lo);FOLREAL=true;
+  const R=mulberry(v*53+11),B=Bld(),bark='#5b4a3a',oak=kind==='oak',cards=[],cl=(sh,k)=>treeTint(oak?'oak':'acacia',R,sh,false);
+  if(oak){B.cyl(.9,2.1,18,7,0,9,0,bark);const nb=4;for(let b=0;b<nb;b++){const a=b/nb*6.28+R(),L=9+R()*4,lean=.65;B.cyl(.45,.9,L,5,Math.cos(a)*Math.sin(lean)*L/2,17+Math.cos(lean)*L/2,Math.sin(a)*Math.sin(lean)*L/2,bark,Math.sin(a)*lean,0,-Math.cos(a)*lean);}
+    const N=lo?30:64;for(let i=0;i<N;i++){const a=R()*6.28,u=Math.pow(R(),.6),e=R()*1.4,rr=u*14,y=26+Math.sin(e)*u*9-(1-u)*2-3,x=Math.cos(a)*rr*Math.cos(e*.6),z=Math.sin(a)*rr*Math.cos(e*.6),
+        sh=.5+.55*Math.min(1,Math.max(0,(y-18)/16))*(.6+.4*u),c=cl(sh),w=11+R()*5;
+      cards.push([x,y,z,R()*6.28,(R()-.5)*1.5,w,w*1.05,1,w*.12,c.r,c.g,c.b]);}}
+  else{B.cyl(.8,1.7,16,6,0,8,0,bark);const nb=3+(R()*2|0),tops=[];for(let b=0;b<nb;b++){const a=b/nb*6.28+R()*.6,lean=.55+R()*.25,L=10+R()*6;B.cyl(.4,.75,L,5,Math.cos(a)*Math.sin(lean)*L/2,16+Math.cos(lean)*L/2,Math.sin(a)*Math.sin(lean)*L/2,bark,Math.sin(a)*lean,0,-Math.cos(a)*lean);tops.push([Math.cos(a)*Math.sin(lean)*L,16+Math.cos(lean)*L,Math.sin(a)*Math.sin(lean)*L]);}
+    for(const [tx,ty,tz] of tops)for(let q=0;q<(lo?8:16);q++){const a=R()*6.28,d=q?Math.sqrt(R())*9:0,sh=.65+.35*(1-d/9)*R()+.15,c=cl(sh),w=10+R()*4;cards.push([tx+Math.cos(a)*d,ty+.5+R()*2.4-d*.12,tz+Math.sin(a)*d,R()*6.28,(R()-.5)*.5,w,w,1,w*.08,c.r,c.g,c.b]);}}
   const trunk=B.geo().toNonIndexed();trunk.computeVertexNormals();return [trunk,folGeo(cards,0,oak?27:ty0(cards),0)];}
 function ty0(c){let s=0;c.forEach(k=>s+=k[1]);return s/c.length-3;}
 function modelTrees(){if(!MODELS.ready||!G.treePos)return false;const keys=['tree1','tree2','tree3','tree4'].filter(k=>MODELS.proto[k]);if(!keys.length)return false;
@@ -812,11 +838,16 @@ function modelTrees(){if(!MODELS.ready||!G.treePos)return false;const keys=['tre
   mats();{const lo=gfxLow(),snow=G.map.theme==='snow',tkm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0});[0,1].forEach(v=>{if(!con[v].length)return;const [tr,fo]=conifer(v,snow,lo);
     folPlace(con[v],[tr,fo],[tkm,folMat('needle')],new THREE.ConeGeometry(10,32,6).translate(0,22,0),0,.95,.95+(v?.08:0),snow);});}
   {const all=[].concat(...per).filter((t,i)=>(i*37)%10<6&&!(G.sceneryPos||[]).some(([sx,sy])=>Math.hypot(t[0]-sx,t[1]-sy)<75));const VAR=3,lists=[[],[],[]],palms=[];all.forEach((t,i)=>{const nearW=Math.abs(G.map.depth(t[0],t[1]))<G.map.hw(t[0])+420;if((nearW&&i%3!==0)||i%7===0)palms.push(t);else lists[i%VAR].push(t);});
-   if(palms.length){const R=mulberry(77),B=Bld(),bark='#7a6448';let px=0,py=0,pz=0;for(let k=0;k<8;k++){const ny=py+4.2,nx=px+k*.28;B.cyl(1.05-k*.06,1.2-k*.06,4.4,6,(px+nx)/2,(py+ny)/2,0,k%2?bark:'#6b563c',0,0,-.07*k);px=nx;py=ny;}
+   if(palms.length){const R=mulberry(77),B=Bld(),bark='#7a6448',lo2=gfxLow();let px=0,py=0,pz=0;for(let k=0;k<8;k++){const ny=py+4.2,nx=px+k*.28;B.cyl(1.05-k*.06,1.2-k*.06,4.4,6,(px+nx)/2,(py+ny)/2,0,k%2?bark:'#6b563c',0,0,-.07*k);px=nx;py=ny;}
+     if(folReal('needle')){FOLREAL=true;const cards=[],NF=lo2?8:14;for(let f=0;f<NF;f++){const a=f/NF*6.283+R()*.35,sh=.75+R()*.3;let sx=px,sy=py,sz=0;
+        for(let q=0;q<2;q++){const l=q?10:11,pit=q?-.1-R()*.3:.55+R()*.2,c=treeTint('acacia',R,sh*1.25,false);cards.push([sx,sy,sz,a,pit,13,l,0,q?3:0,c.r,c.g,c.b]);sx+=Math.cos(pit)*Math.cos(a)*l;sy+=Math.sin(pit)*l-(q?3:0);sz+=Math.cos(pit)*Math.sin(a)*l;}}
+       B.sph(1.6,px,py-.5,0,'#5d4a30');const tg=B.geo().toNonIndexed();tg.computeVertexNormals();
+       folPlace(palms,[tg,folGeo(cards,px,py+2,0)],[new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0}),folMat('needle')],null,-.5,.95,1,false);}
+     else{
      for(let f=0;f<12;f++){const a=f/12*6.283+R()*.3,len=14+R()*5;for(let q=0;q<5;q++){const t=(q+.5)/5,d=t*len,droop=-Math.pow(t,1.7)*10+2.5;const g=new THREE.ConeGeometry(4.2*(1-t*.55),len/5+2,4);g.rotateZ(Math.PI/2);g.scale(1,.3,1);g.rotateY(-a);const c=new THREE.Color().setHSL(.22+R()*.04,.42,.2+t*.05);parts_add(B,g,px+Math.cos(a)*d,py+droop,Math.sin(a)*d,c);}}
      B.sph(1.6,px,py-.5,0,'#5d4a30');
      const g=B.geo().toNonIndexed();g.computeVertexNormals();smoothNorm(g);const tm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95,side:THREE.DoubleSide});weather(tm,.3);const im=new THREE.InstancedMesh(g,tm,palms.length);
-     palms.forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)-.5,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*.95,s*(.9+((i*7)%5)*.06),s*.95));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.receiveShadow=true;WORLD.add(im);}
+     palms.forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)-.5,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*.95,s*(.9+((i*7)%5)*.06),s*.95));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.receiveShadow=true;WORLD.add(im);}}
    {const lo=gfxLow(),tkm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0});for(let v=0;v<VAR;v++){if(!lists[v].length)continue;const oak=v===2,[tr,fo]=broadleaf(oak?'oak':'acacia',v,lo);
     folPlace(lists[v],[tr,fo],[tkm,folMat('leaf')],oak?new THREE.IcosahedronGeometry(13,0).scale(1,.7,1).translate(0,27,0):new THREE.IcosahedronGeometry(12,0).scale(1,.32,1).translate(0,20,0),-.5,1.05,1.05);}}
    return true;}

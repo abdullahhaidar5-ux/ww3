@@ -154,3 +154,4 @@ preview, not per-map thumbnail cards.
 - 2026-11-04 terrain2: no more cubes (rock-shaped boulders/rubble/explosion fragments), seamless 512px ambientCG ground atlas, stripes removed; see orch/reports/terrain2.md
 - 2026-11-04 vis2-1103: soldier helmet/kit variety (4 seeded looks per nation, Shia first); scenery + baked clips still open.
 - 2026-11-04 weather-naval: fixed Sandstorm/Rain/Snow Conditions; submarines (stealth, sonar), coastal missile batteries, offshore oil rigs, AI subs/batteries/rig grabs, wider beach unloads; 4 naval maps (Coral Archipelago, Hormuz Narrows, Delta Harbour, Pacific Atolls) with AI-vs-AI fairness table. Report: orch/reports/weather-naval.md
+- 2026-11-04 trees: real CC0 Poly Haven fir/leaf textures on conifers, oak/acacia, palms (tree_tex model); report orch/reports/trees.md
