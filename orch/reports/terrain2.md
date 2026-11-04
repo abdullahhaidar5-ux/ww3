@@ -1,0 +1,7 @@
+# terrain2 (2026-11-04) — "no blocks" pass
+Shipped (visuals only; sim/map data untouched):
+- Cubes gone. Ground boulders are now 4 irregular noise-pushed rock shapes (smooth normals, flattened, half sunk in the ground) instead of 80-face flat-shaded blobs that read as tilted cubes. Building rubble (city + destroyed structures) is made of irregular rocks, not boxes. Explosion chunks are small irregular dark fragments + dirt clods (smaller than a soldier) with dust puffs. New helper `rockGeo()` / `Bld.rock()` in 04-gfx.js.
+- Stripes: the ground detail atlas was 256px tiles with edge/bleed artefacts repeating every 38 units; replaced by a 512px atlas with wrapped gutters (no layer bleed, seamless), low-frequency lighting removed, and tile repeat broken by blending a second rotated/rescaled sample. Rock-strata colour banding and rock texture are gated by slope (they were hitting flat grass via vertex colour).
+- Textures: ambientCG CC0 Ground037 (grass), Ground054 (soil), Rock030, Snow006, Gravel022 at 512px WebP (~0.7 MB total, credits already in menu). PC only (phones stay on Low path).
+Not done: dead/burnt trees, tree impostor billboards, new biome sets (mud/dry sand separate), shader wheel ruts (roads already carry painted ruts). A faint broad darker streaking can still show on open grass close to the camera in fulda (cause not identified: not AO, not the painted map, not texture); worth a follow-up.
+Shots: orch/shots/terrain2/ (before-*, after-*, columns.png, phone-after-*). Harness: orch/terrain2.mjs.
