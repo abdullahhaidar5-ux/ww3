@@ -135,11 +135,27 @@ function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,
   for(const r of (G.teams[ME].reveals||[]))hole(r.x,r.y,r.r);c.globalCompositeOperation='source-over';const f=FOGC.getContext('2d');f.filter='blur(4px)';f.drawImage(FOGC.b,0,0);f.filter='none';FOGT.needsUpdate=true;}
 const RKV=new Map();   // rank-up flash: last rank seen per unit (view only)
 const SHORTN={inf:'INF',at:'AT',aa:'AA',tank:'TANK',arty:'ARTY',apc:'APC',hero:'HERO',hacker:'HACK',dozer:'DOZER',demo:'DEMO',sniper:'SNIPER',mlrs:'MLRS',ifv:'IFV'};
+/* Supply circles (faint rings around HQ / depots / trucks / held towns) show while ammo units are selected, while O is held,
+   or always on a phone with a unit selected; towns show an owner flag and a capture bar. */
+let SUPC={t:-9,P:null};
+function ringOn(c,x,y,r,col,fill){c.beginPath();for(let i=0;i<=40;i++){const a=i/40*6.2832,px=x+Math.cos(a)*r,py=y+Math.sin(a)*r,p=toScreen(px,groundH(px,py)+2,py);if(p.z>1)return;if(i)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);}if(fill){c.fillStyle=fill;c.fill();}c.strokeStyle=col;c.stroke();}
+function supplyWanted(){return !!(KEYO||G.sel.some(u=>!u.isB&&u.team===ME&&u.am!==undefined));}
+let KEYO=false;
+try{addEventListener('keydown',e=>{if(e.key==='o'||e.key==='O')KEYO=true;});addEventListener('keyup',e=>{if(e.key==='o'||e.key==='O')KEYO=false;});addEventListener('blur',()=>{KEYO=false;});}catch(_){}
+function drawSupplyTowns(c){if(!G||G.over)return;try{ammoRowTick();}catch(_){}
+  if(supplyWanted()){if(G.t-SUPC.t>.3||!SUPC.P){SUPC={t:G.t,P:supplyPoints()[ME]||[]};}c.lineWidth=1.4;c.setLineDash([7,6]);for(const q of SUPC.P){if(!inView(q.x,q.y,1.6))continue;ringOn(c,q.x,q.y,q.r,'rgba(150,215,255,.55)','rgba(120,190,255,.06)');}c.setLineDash([]);}
+  if(G.civ)for(const k of G.civ){if(k.dead||!(k.ow>=0||k.cp>0)||!inView(k.x,k.y,.05))continue;const p=toScreen(k.x,groundH(k.x,k.y)+40,k.y);if(p.z>1)continue;
+    if(k.ow>=0&&G.teams[k.ow]){c.fillStyle='rgba(0,0,0,.65)';c.beginPath();c.arc(p.x,p.y,7,0,7);c.fill();c.fillStyle=G.teams[k.ow].color;c.beginPath();c.arc(p.x,p.y,5,0,7);c.fill();}
+    if(k.cp>0&&k.cpT>=0&&G.teams[k.cpT]){c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-18,p.y-14,36,6);c.fillStyle=G.teams[k.cpT].color;c.fillRect(p.x-17,p.y-13,34*Math.min(1,k.cp),4);}}}
 function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW,VH);
-  for(const e of G.ents){if(e.dead||!vis(e))continue;const sel=G.sel.includes(e);if(SET.hp!=='all'&&!sel&&e.hp>=e.max&&!(e.rank>0)&&!(e.isB&&e.built<1)&&!e.hacking&&!e.planting&&!(e.building&&e.team===ME)&&!((e.supp||0)>.5&&!e.isB)&&!(e.rout>G.t||e.routV)&&!(e.team===ME&&!e.isB&&(()=>{const m=moraleOf(e);return m&&m.v<.995;})())&&!(e.team===ME&&G.sqOf&&G.sqOf[e.id])&&!(e.mark>G.t||e.markV))continue;
+  try{drawSupplyTowns(c);}catch(_){}
+  for(const e of G.ents){if(e.dead||!vis(e))continue;const sel=G.sel.includes(e);if(SET.hp!=='all'&&!sel&&e.hp>=e.max&&!(e.rank>0)&&!(e.isB&&e.built<1)&&!e.hacking&&!e.planting&&!(e.building&&e.team===ME)&&!((e.supp||0)>.5&&!e.isB)&&!(e.rout>G.t||e.routV)&&!(e.team===ME&&!e.isB&&(()=>{const m=moraleOf(e);return m&&m.v<.995;})())&&!(e.team===ME&&G.sqOf&&G.sqOf[e.id])&&!(e.mark>G.t||e.markV)&&!(e.am!==undefined&&e.amx&&ally(e.team,ME)&&(e.am<e.amx*.3||(!e.sup&&G.t-(e.supT??G.t)>20))))continue;
     const top=e.isB?BH[e.kind]+8:entHeightMid(e)+(e.s.dom==='air'?14:16);const p=toScreen(e.x,unitH(e)+top,e.y);if(p.z>1||p.x<-40||p.y<-40||p.x>VW+40||p.y>VH+40)continue;
     const w=Math.max(18,Math.min(90,(e.isB?e.size:e.r*2.6)*PPU));
     if(sel||e.hp<e.max||SET.hp==='all'){const f=Math.max(0,e.hp/e.max);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,p.y-1,w+2,5);c.fillStyle=f>.5?'#74d08f':f>.25?'#e3b341':'#ea5a40';c.fillRect(p.x-w/2,p.y,w*f,3);c.fillStyle='rgba(0,0,0,.45)';for(let i=1;i<5;i++)c.fillRect(p.x-w/2+w*i/5,p.y,1,3);}
+    if(e.am!==undefined&&e.amx&&!e.isB&&ally(e.team,ME)){const fa=e.am/e.amx,low=fa<.3,oos=!e.sup&&G.t-(e.supT??G.t)>20;
+      if(sel||low){const y=p.y+(sel||e.hp<e.max||SET.hp==='all'?9:4);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,y-1,w+2,4);const fl=e.am<=0&&((performance.now()/260)|0)%2;c.fillStyle=e.am<=0?(fl?'#ff5a40':'#8a2a20'):low?'#f2d14a':'#c9b784';c.fillRect(p.x-w/2,y,Math.max(e.am<=0?w:2,w*fa),2);}
+      if(oos){const ix=p.x+w/2+7,iy=p.y+(sel?3:2);c.fillStyle='rgba(0,0,0,.7)';c.beginPath();c.arc(ix,iy,6,0,7);c.fill();c.strokeStyle='#ff8a5a';c.lineWidth=1.6;c.strokeRect(ix-3,iy-2.5,6,5);c.beginPath();c.moveTo(ix-5,iy+5);c.lineTo(ix+5,iy-5);c.stroke();}}
     if(e.aband&&!e.isB){c.font='bold 10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='rgba(0,0,0,.7)';c.fillText('ABANDONED',p.x+1,p.y-4);c.fillStyle=ally(e.team,ME)?'#e3b341':'#ffd166';c.fillText('ABANDONED',p.x,p.y-5);c.textAlign='left';}
     {const mo=!e.isB?moraleOf(e):null;if(mo&&(sel||mo.v<.995||mo.st==='fearless'&&e.team===ME&&sel||mo.st==='routing')&&(ally(e.team,ME)||sel||mo.v<.66)){const y=p.y+(sel||e.hp<e.max||SET.hp==='all'?5:0);c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-w/2-1,y-1,w+2,4);c.fillStyle=MOR_COL[mo.st];c.fillRect(p.x-w/2,y,Math.max(2,w*mo.v),2);if(mo.st==='fearless'){c.fillStyle='#5fd38a';c.beginPath();c.arc(p.x+w/2+5,y+1,2.2,0,7);c.fill();}}}
     if(!e.isB&&e.team===ME&&G.sqOf&&G.sqOf[e.id]){const q=G.sqOf[e.id];c.fillStyle='rgba(0,0,0,.7)';c.fillRect(p.x-w/2-13,p.y-3,10,10);c.fillStyle='#e3b341';c.font='700 10px IBM Plex Mono, monospace';c.textAlign='center';c.fillText(q,p.x-w/2-8,p.y+5);}
@@ -237,6 +253,7 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
     c.save();c.globalCompositeOperation='multiply';c.globalAlpha=.6;c.drawImage(G.mmFog,0,0);c.restore();}
   // resources
   c.fillStyle='rgba(227,179,65,.8)';for(const f of G.fields)if(f.amt>0)c.fillRect(f.x*sx-1.5,f.y*sy-1.5,3,3);
+  if(G.civ)for(const k of G.civ){if(k.dead||!(k.ow>=0||k.cp>0))continue;const x=k.x*sx,y=k.y*sy,t=k.ow>=0?k.ow:k.cpT;if(!G.teams[t])continue;c.fillStyle='#000';c.fillRect(x-3.5,y-3.5,7,7);c.fillStyle=G.teams[t].color;if(k.ow>=0)c.fillRect(x-2.5,y-2.5,5,5);else{c.fillRect(x-2.5,y-2.5,5,2.5*0+Math.max(1,5*Math.min(1,k.cp)));}}
   for(const o of G.oil){const x=o.x*sx,y=o.y*sy;c.fillStyle='#0b0f0d';c.beginPath();c.moveTo(x,y-5);c.lineTo(x+5,y);c.lineTo(x,y+5);c.lineTo(x-5,y);c.closePath();c.fill();c.fillStyle=o.dead?'#5a2a20':(o.res0&&o.res<=0)?'#555852':o.owner>=0?G.teams[o.owner].color:'#9a9a90';c.beginPath();c.moveTo(x,y-3.2);c.lineTo(x+3.2,y);c.lineTo(x,y+3.2);c.lineTo(x-3.2,y);c.closePath();c.fill();}
   // strike warnings
   for(const st of (G.strikes||[])){const x=st.x*sx,y=st.y*sy,r=Math.max(4,st.r*sx);c.strokeStyle=ally(st.team,ME)?'rgba(116,208,143,.9)':'rgba(234,90,64,.95)';c.lineWidth=1.5;c.setLineDash([3,2]);c.beginPath();c.arc(x,y,r,0,7);c.stroke();c.setLineDash([]);c.beginPath();c.moveTo(x-r-3,y);c.lineTo(x+r+3,y);c.moveTo(x,y-r-3);c.lineTo(x,y+r+3);c.stroke();}

@@ -73,7 +73,7 @@ const STRUCT={
   tunnel:{name:'Tunnel Network',hp:900,size:40,cost:600,time:9,req:'barracks',rng:220,dmg:14,rof:.45,wpn:'gun',aa:1},
   uplink:{name:'Strike Center',hp:1800,size:70,cost:2500,time:20,req:'factory'},
   // Supply Depot: a forward drop-off point. Supply trucks unload at the nearest depot or HQ instead of driving home.
-  depot:{name:'Supply Depot',hp:1000,size:54,cost:600,time:8,desc:'Supply trucks unload here instead of driving back to the HQ. Build one beside a far supply field.'},
+  depot:{name:'Supply Depot',hp:1000,size:54,cost:600,time:8,desc:'Supply trucks unload here instead of driving back to the HQ. Build one beside a far supply field. Also refills ammo of troops near it.'},
   // Income building: every nation has one (same price and output, national flavour). A slow, steady trickle for
   // once the supply fields are mined out - $3.5/s for the first, each extra one earns less (max 4).
   // a city building held by infantry (not buildable: created when troops move in)
@@ -123,7 +123,7 @@ const FACTIONS={
   IL:F_('IL','Israel','#7fd3f0','he-IL','mideast','Iron Dome & missile defence: units are 10% tougher and hit 5% harder, enemy strikes and missiles do 50% damage to you, SAM sites reach 30% farther and hit harder, Merkava tanks are extra tough, Spike missiles hit hard.',{supResist:.5,hp:1.1,dmg:1.05},'hero',
     {inf:{name:'Infantry Squad'},at:{name:'Spike Team',dmg:60},hero:{name:'Sayeret Commando',demo:true},aa:{name:'Machbet SPAAG'},tank:{name:'Merkava Mk4',hp:820},arty:{name:'M109 Doher'},heli:{name:'AH-64 Saraf'},jet:{name:'F-35I Adir'},boat:{name:'Shaldag Patrol Boat'},ship:{name:'Sa’ar 6 Corvette'}},
     {name:'Air Strike',charge:140,n:5,dmg:755,r:70,spread:130},'trophy'),
-  EU:F_('EU','European Union','#f0c032','fr-FR','west','Engineering & precision artillery: units self-repair, structures have 30% more hit points, CAESAR guns hit 15% harder.',{regen:3,bldHp:1.3},'hero',
+  EU:F_('EU','European Union','#f0c032','fr-FR','west','Engineering & precision artillery: units self-repair, structures have 30% more hit points, all units cost 7% less, CAESAR guns hit 15% harder.',{regen:3,bldHp:1.3,cost:.93},'hero',
     {inf:{name:'Rifle Section'},at:{name:'MILAN Team'},hero:{name:'KSK Sniper',rng:340,dmg:160,rof:2.2},aa:{name:'Gepard SPAAG'},tank:{name:'Leopard 2A8'},arty:{name:'CAESAR Howitzer',rng:450},heli:{name:'Tiger Attack Helo'},jet:{name:'Eurofighter Typhoon'},boat:{name:'Combattante Patrol Boat'},ship:{name:'FREMM Frigate'}},
     {name:'Storm Shadow Salvo',charge:150,n:4,dmg:685,r:80,spread:110},'network'),
   UA:F_('UA','Ukraine','#ffd447','uk-UA','slavic','Drone war & resilience: FPV drones are cheap and build fast, Sea Baby drone boats hit 40% harder, units repair themselves out of combat.',{regen:3},'hacker',
@@ -132,10 +132,10 @@ const FACTIONS={
   RU:F_('RU','Russia','#c9d1da','ru-RU','slavic','Heavy armour & massed artillery: vehicles have 25% more hit points, artillery is tougher and hits 15% harder. TOS-1A burns everything nearby.',{vehHp:1.25},'hacker',
     {inf:{name:'Motor Rifle Squad'},at:{name:'Kornet Team'},hacker:{name:'GRU Cyber Unit'},aa:{name:'Pantsir-S1'},tank:{name:'T-90M'},arty:{name:'TOS-1A',rng:280,minr:50,splash:95,dmg:66,rof:3.5,rocket:true},heli:{name:'Ka-52 Alligator'},jet:{name:'Su-34 Fullback'},boat:{name:'Raptor Patrol Boat'},ship:{name:'Admiral Gorshkov Frigate'}},
     {name:'Iskander Strike',charge:160,n:2,dmg:555,r:130,spread:90},'reactive'),
-  IR:F_('IR','Iran','#3fae5c','fa-IR','mideast','Missiles & cheap drones: Shahed drones cost half as much and build almost twice as fast, Fateh missile launchers fire 20% farther and hit 15% harder, the Kheibar barrage charges faster. Basij militia costs 25% less.',{infCost:.75},'hacker',
+  IR:F_('IR','Iran','#3fae5c','fa-IR','mideast','Missiles & cheap drones: Shahed drones cost half as much and build almost twice as fast, Fateh missile launchers fire 20% farther and hit 15% harder, the Kheibar barrage charges faster. Basij militia costs 15% less.',{infCost:.85},'hacker',
     {inf:{name:'Basij Militia',hp:110},at:{name:'RPG Cell'},hacker:{name:'IRGC Cyber Team'},drone:{name:'Shahed-136'},aa:{name:'Mesbah AA Gun'},tank:{name:'Karrar MBT',hp:580},arty:{name:'Fateh-110 Launcher',rng:470,splash:65,rocket:true},heli:{name:'AH-1J Cobra'},jet:{name:'F-14 Tomcat'},boat:{name:'Seraj Fast Attack Craft',spd:110},ship:{name:'Moudge Frigate'}},
     {name:'Kheibar Missile Strike',charge:130,n:12,dmg:335,r:75,spread:200},'thermo',{extra:['drone']}),
-  SA:F_('SA','Saudi Arabia','#1f9a54','ar-SA','mideast','Petro wealth & air force: oil pays 40% more, supply trucks carry 10% more, F-15SA jets cost 15% less and are tougher, air defence reaches 20% farther.',{oil:1.4,harv:1.1},'hero',
+  SA:F_('SA','Saudi Arabia','#1f9a54','ar-SA','mideast','Petro wealth & air force: oil pays 40% more, supply trucks carry 10% more, F-15SA jets cost 15% less and are tougher, air defence reaches 20% farther, all units cost 7% less.',{oil:1.4,harv:1.1,cost:.93},'hero',
     {inf:{name:'Royal Land Forces Squad'},at:{name:'TOW Team'},hero:{name:'Special Forces Sniper',rng:330,dmg:150,rof:2.2},aa:{name:'Shahine SAM Vehicle'},tank:{name:'M1A2S Abrams'},arty:{name:'CAESAR Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'F-15SA Eagle'},boat:{name:'Fast Patrol Boat'},ship:{name:'Al Riyadh Frigate'}},
     {name:'Royal Air Strike',charge:150,n:5,dmg:625,r:75,spread:130},'awacs'),
   AE:F_('AE','United Arab Emirates','#b49a5e','ar-AE','mideast','High-tech wealth: weapons deal 15% more damage, oil pays 25% more, supply trucks carry 10% more, Pantsir air defence and Apaches hit 15% harder.',{dmg:1.15,oil:1.25,harv:1.1},'hero',
@@ -166,7 +166,7 @@ const FACTIONS={
     Object.assign(MIL_UNITS({inf:'Mountain Guard',boat:'Fast Attack Skiff'}),{inf:{name:'Mountain Guard',hp:150},at:{name:'Mountain RPG Team',hp:140,rng:205},hacker:{name:'Signal Jammers'},
       drone:{name:'Shahed-136',cost:225,hp:100,spd:135,dmg:260,splash:72},arty:{name:'Medium Rocket Launcher',rocket:true,hp:260,rng:470,minr:90,dmg:68,splash:66,rof:3.2,cost:750,time:10}}),
     {name:'Mountain Rocket Storm',charge:150,n:14,dmg:300,r:65,spread:230},'bunkers',{extra:['drone'],noAir:true,noShip:true,militia:true}),
-  DW:F_('DW','Coffee Shias','#c8a46e','ar-YE','mideast','Technical raiders: tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 20% faster. No air force.',{spd:1.2,cost:.9},'hero',
+  DW:F_('DW','Coffee Shias','#c8a46e','ar-YE','mideast','Technical raiders: tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 12% faster and cost 3% less. No air force.',{spd:1.12,cost:.97},'hero',
     Object.assign(MIL_UNITS({inf:'Wolf Raiders',boat:'Raider Speedboat'}),{hero:{name:'Ghost Raider',demo:true},
       tank:{name:'Raider Technical',hp:370,spd:96,dmg:26,rof:.28,wpn:'gun',aa:1,cost:500,time:5},aa:{name:'ZU-23 Technical',hp:320,cost:400,spd:90},
       arty:{name:'Long-Range Rocket Truck',rocket:true,hp:280,rng:620,minr:120,dmg:74,splash:72,rof:4.2,cost:900,time:11}}),
@@ -192,7 +192,7 @@ for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctr
 const FKEYS=Object.keys(FACTIONS);
 // Rock-paper-scissors: what each kind of unit beats and what beats it (shown in the unit tooltips).
 const COUNTER={inf:'Beats AT teams and other infantry · Loses to tanks and artillery · Takes 35% less damage in woods or beside buildings; gets suppressed under heavy fire',at:'Beats tanks, vehicles and helicopters · Loses to riflemen',hacker:'Disables buildings · Loses to any armed unit',
-  hero:'Picks off infantry from long range · Loses to vehicles',harv:'Gathers supply · Unarmed',dozer:'Builds and repairs · Unarmed',tank:'Beats infantry, AA vehicles and artillery · Loses to AT teams and helicopters · Thickest armour in front: side hits do 20% more damage, rear hits 60% more',
+  hero:'Picks off infantry from long range · Loses to vehicles',harv:'Gathers supply · Also resupplies ammo around it · Unarmed',dozer:'Builds and repairs · Unarmed',tank:'Beats infantry, AA vehicles and artillery · Loses to AT teams and helicopters · Thickest armour in front: side hits do 20% more damage, rear hits 60% more',
   aa:'Beats helicopters, jets and drones · Loses to tanks and infantry',arty:'Beats infantry and buildings from long range · Loses to tanks and fast units up close',
   drone:'Explodes on groups of vehicles and infantry · Loses to AA and rifle fire',heli:'Beats tanks and vehicles · Loses to AA and AT teams',jet:'Bombs buildings and vehicles · Loses to SAM sites and AA',
   boat:'Beats boats and helicopters near water · Loses to warships',ship:'Shells coasts and boats from long range · Loses to boats up close and aircraft'};
@@ -320,9 +320,9 @@ const DOCT={US:{name:'Aggressive Manoeuvre',shock:1},RU:{name:'Heavy Barrages',b
 const DOCT_TXT={shock:'+15% damage while advancing or attacking; vehicles 10% faster',barrage:'artillery reaches 15% farther, bigger blasts, faster reloads, 15% cheaper; shellfire suppresses harder',
   covert:'infantry and AT teams are camouflaged; first shot from hiding hits 50% harder',ambush:'infantry, AT teams and drones holding still or in cover deal 20% more damage',
   hitrun:'infantry and light vehicles sprint 25% faster for 3s after firing',homeland:'+15% damage near their own buildings'};
-const XL={US:{jet:{dmg:1.25,hp:1.15},heli:{dmg:1.25,hp:1.1}},TR:{drone:{cost:.75,time:.7,hp:1.3,dmg:1.15}},IL:{},EU:{arty:{dmg:1.15}},
+const XL={US:{jet:{dmg:1.25,hp:1.15},heli:{dmg:1.25,hp:1.1}},TR:{drone:{cost:.75,time:.7,hp:1.3,dmg:1.15}},IL:{},EU:{arty:{dmg:1.15},tank:{hp:1.12,cost:.92}},
   UA:{drone:{cost:.9,time:.6},boat:{dmg:1.4,spd:1.15}},RU:{arty:{hp:1.3,dmg:1.15}},IR:{drone:{cost:.5,time:.55,spd:1.1},arty:{rng:1.2,dmg:1.15}},
-  SA:{jet:{cost:.85,hp:1.2},aa:{rng:1.2}},AE:{aa:{dmg:1.15},heli:{dmg:1.15}},PK:{at:{dmg:1.2}},IN:{ship:{hp:1.25},boat:{hp:1.15}},
+  SA:{jet:{cost:.85,hp:1.2,dmg:1.1},aa:{rng:1.2}},AE:{aa:{dmg:1.15},heli:{dmg:1.15}},PK:{at:{dmg:1.2}},IN:{ship:{hp:1.25},boat:{hp:1.15}},
   CN:{ship:{hp:1.3,dmg:1.15},boat:{hp:1.15},arty:{dmg:1.1}},KP:{arty:{cost:.8,rng:1.1}},KR:{arty:{rof:.8}},EG:{tank:{cost:.85}},CU:{arty:{cost:.8}},
   RS:{drone:{cost:.75,time:.6,dmg:1.15,hp:1.2},arty:{rng:1.12,dmg:1.12,rof:.9},at:{hp:1.15}}};
 const TRN={US:['LCAC Hovercraft','CH-47 Chinook'],TR:['Landing Craft Tank','T-70 Black Hawk'],IL:['Landing Craft','CH-53 Yasur'],EU:['LCM Landing Craft','NH90 Transport'],UA:['Landing Craft','Mi-8 Hip'],RU:['Zubr Hovercraft','Mi-8 Hip'],
