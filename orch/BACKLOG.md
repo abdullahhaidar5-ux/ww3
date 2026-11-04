@@ -79,7 +79,7 @@ an earlier one still has work a squad can take (other squads may only do small P
    battles to be on Cloudflare"): BattleRoom Durable Object running the sim; lobby "Host on Cloudflare" with "Host in my
    browser" as default/fallback; PC dedicated server dropped. First measure CPU on the real free plan (`/bench`, via a
    `servers-live` PR Abdullah merges); if the free plan's CPU limit can't hold a battle, ask him about Workers Paid.
-2. **Open items:** client reconnect state wrong (Multiplayer P1); phone-portrait bar clipping (UI); then the two
+2. **Open items:** client reconnect state wrong (Multiplayer P1 — re-verified 2026-11-04 net-1103: strict checks after reconnect pass P2P, lossy and on Cloudflare); phone-portrait bar clipping (UI); then the two
    items Abdullah had paused — **Generals mouse controls + Mouse settings** (branch `orch/wip-generals-mouse`) and
    **intuitive phone controls** — now unpaused by this instruction (side lane read "open items" to include them; he
    can say otherwise).
@@ -182,7 +182,7 @@ an earlier one still has work a squad can take (other squads may only do small P
 - [done 2026-11-03 polish-1103 — partly, see orch/reports/polish-1103.md] **End-stats follow-ups** (Interface, cycle 19): cap awards per player (one player can sweep them all); show player names; army graph stops at 720 samples (~2 h) — halve + double interval instead; `orch/endstats.mjs` failed once then passed ×2 (flaky? add to gate when stable); ask Abdullah to test on iPhone. claude.ai copy: Share download does nothing there (no `downloads` capability) — same fix as kill-cam Save.
 - [open] **Soldier animation clips + distant low-poly soldier** (Visuals, gfx-infantry follow-up): baked run/shoot/die; the
   remaining buildings (only HQ/barracks/factory got ME models).
-- [open] **QA: CI `cfclient` flaked once on d136254 and again in cycle 19 (passed on rerun)** ("no player took over after the server lost it"); passed locally ×1 and on
+- [watch] **QA: CI `cfclient` flaked once on d136254 and again in cycle 19 (passed on rerun)** — net-1103 (2026-11-04): two causes fixed (server hung on its Budget call after a restart → 8 s timeout; standby gave up when its own late try held the follow-up room); see orch/reports/net-1103.md. Original: ("no player took over after the server lost it"); passed locally ×1 and on
   the branches. If it fails again in CI, root-cause the takeover-after-server-restart timing.
 
 - [open] **ME buildings follow-ups** (Visuals, cycle 16): Strike Center close-ups from a real battle; Egypt vs Saudi/UAE versions differ only in silo height — give EG its own touch.
@@ -191,7 +191,7 @@ an earlier one still has work a squad can take (other squads may only do small P
 **Foundation (ORCH itself)**
 
 
-- [open] Extend `orch/mpsync.mjs`: packet loss/latency, real WebRTC (3-player host migration is now covered by
+- [open] Extend `orch/mpsync.mjs`: ~~packet loss/latency~~ (done 2026-11-04: `--lossy`, in the gate), real WebRTC (3-player host migration is now covered by
   `orch/migrate.mjs`, cycle 6; its `--abrupt` mode — host vanishes without goodbye — is untested).
   Don't start from scratch — port the surviving old harnesses on the `testbed` branch: `tw8b.py` (host in Chicago +
   1–7 clients with real-world one-way delays, jitter and lag spikes; measures order latency, drift, bandwidth) and
@@ -204,7 +204,7 @@ an earlier one still has work a squad can take (other squads may only do small P
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
 - [open] Big explosions still open with a soft, flat yellow ball for their first instant — rework (cycle 12).
-- [open] `migrate.mjs` failed once in cycle 10's gate ("a client fell 59 game-s behind before the host left") right
+- [done 2026-11-04 net-1103: test outran its pages; clients now paced like a real match] `migrate.mjs` failed once in cycle 10's gate ("a client fell 59 game-s behind before the host left") right
   after a 6-min `mpsync --server` run; passed on rerun. Watch for a repeat (load-sensitive?). Very old Safari (<16.4, no DecompressionStream) now
   gets simple shapes. Check after ship that Pages + the `ww3` Worker serve `models/*.glb.gz` (loader also accepts
   already-unzipped bytes) and that the artifact publish with `application/gzip` files works.
