@@ -778,7 +778,7 @@ function tcStrip(force){const now=performance.now();if(!force&&now-TC.stripT<120
   const mk=(k,ic,tx,ti,cl)=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.title=ti;b.setAttribute('aria-label',ti);if(cl)b.className=cl;const i=document.createElement('i');i.textContent=ic;const t=document.createElement('span');t.textContent=tx;b.append(i,t);s.append(b);return b;};
   if(mode==='cn'){mk(...TC_CN,'cx');return;}
   if(mode==='conf'){const b=mk('ok','✓',G.place?'Build here':'Fire here',G.place?'Build it at the marked spot':'Fire at the marked spot','go');b.disabled=!ok;mk('no','✕','Cancel','Cancel','cx');return;}
-  for(const [k,ic,tx,ti] of TC_BTN){const b=k==='sn'?mk(k,'◈',(stanceLabel().replace(/^\S+ /,'').replace('Guerrilla','Guerr.'))||'Stance',ti):mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}if(cnl)mk(...TC_CN,'cx');}
+  for(const [k,ic,tx,ti] of TC_BTN){if(k==='rs'&&!own.some(u=>u.am!==undefined))continue;const b=k==='sn'?mk(k,'◈',(stanceLabel().replace(/^\S+ /,'').replace('Guerrilla','Guerr.'))||'Stance',ti):mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}if(cnl)mk(...TC_CN,'cx');}
 /* ---- first-time guide: three steps, shown once, remembered; ☰ > Touch controls shows it again. A card near the top,
    not a full-screen cover: the battle keeps running (multiplayer can't pause) and stays playable around it ---- */
 const TC_GUIDE=[['☝','Move the map','Drag one finger to scroll the battlefield; flick to glide. Pinch with two fingers to zoom.'],
