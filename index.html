@@ -7643,7 +7643,7 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
       B.cone(16,22,3,-3,0,0,'#7f858c',0,0,-Math.PI/2);B.box(6,6,.8,-13,4,-4,'#7f858c',.3);B.box(6,6,.8,-13,4,4,'#7f858c',-.3);B.box(9,.4,3,-12,.5,-6,tc);B.box(9,.4,3,-12,.5,6,tc);B.box(16,.5,1.2,0,3.2,0,tc);break;
     case 'jet:glow':B.cyl(2.6,2.6,1,10,-15.5,0,0,'#ffb35a',0,0,Math.PI/2);break;
     case 'boat:hull':B.box(26,5,11,-2,2,0,hc);B.cone(5.5,10,4,15,2,0,hc,0,Math.PI/4,-Math.PI/2);B.box(10,6,8,-3,7,0,cn);B.box(4,1,7,1,10.2,0,'#3b4f5c');B.box(26,.8,11.4,-2,4.5,0,tc);B.cyl(.5,.5,10,5,-5,14,0,dk);break;
-    case 'sub:hull':B.box(56,7,11,-2,1,0,'#262b2f');B.cone(5.5,13,4,32,1,0,'#262b2f',0,Math.PI/4,-Math.PI/2);B.box(56,.8,11.4,-2,4.6,0,tc);B.box(10,8,5,4,8,0,'#2d3236');B.box(1.4,12,1.4,6,15,0,'#1d2023');B.box(4,9,1,-27,4,0,'#262b2f');B.box(4,1,13,-27,3,0,'#262b2f');break;
+    case 'sub:hull':B.box(56,7,11,-2,1,0,'#262b2f');B.cone(5.5,13,4,32,1,0,'#262b2f',0,Math.PI/4,-Math.PI/2);B.box(46,.8,3.4,-2,4.6,0,tc);B.box(10,8,5,4,8,0,'#2d3236');B.box(1.4,12,1.4,6,15,0,'#1d2023');B.box(4,9,1,-27,4,0,'#262b2f');B.box(4,1,13,-27,3,0,'#262b2f');break;
     case 'coast:main':B.cyl(15,17,3,12,0,1.5,0,'#6d6c62');B.box(24,6,14,-2,5,0,'#55574e');B.box(8,4,16,-10,3.5,0,hc);B.box(6,9,6,-9,9,6,'#3a3d36');break;
     case 'coast:gun':for(const z of [-5,-1.7,1.7,5]){B.cyl(1.7,1.7,24,8,7,1.4,z,'#8d8e84',0,0,Math.PI/2*.82);B.cone(1.7,3,8,18,4.6,z,hc,0,0,Math.PI/2*.82);}B.box(8,5,15,-2,-1,0,'#44463f');break;
     case 'boat:turret':B.cyl(2.4,2.8,3,8,0,1.5,0,mt);B.cyl(.6,.6,9,6,4.5,2.6,0,dk,0,0,Math.PI/2);break;
