@@ -223,16 +223,22 @@ const hostRun = (pg, n) => pg.evaluate((n) => {
   catch (e) { return { err: String(e && e.stack || e) }; }
   return { t: G.t, over: G.over };
 }, n);
-const clientRun = (pg, n) => pg.evaluate(async (n) => {
+// The test runs the battle ~10-25x faster than real time, so a real-time hiccup of a few hundred ms (a GC pause, a busy
+// CI machine, a message through the local relay) reads as several game-s of "lag". As in mpsync.mjs --server, the client
+// first waits (real time, up to 400 ms) for the host's latest update, as it would in a real match; a client the host has
+// really stopped updating still falls behind at once (cycle 10's "fell 59 game-s behind" and the CI "fell 7.5 game-s
+// behind after the takeover" were this test outrunning its own pages).
+const clientRun = (pg, n, hostT = 0) => pg.evaluate(async ([n, hostT]) => {
   await new Promise(r => setTimeout(r, 0));
+  if (hostT && MODE === 'client' && !NET.recon) { const w0 = performance.now(); while (performance.now() - w0 < 400 && (NET.lastSnapT || 0) < hostT - 0.6) await new Promise(r => setTimeout(r, 4)); }
   try { for (let i = 0; i < n && G; i++) clientTick(0.1); } catch (e) { return { err: String(e && e.stack || e) }; }
   return { t: G.t, snapT: NET.lastSnapT || 0 };
-}, n);
+}, [n, hostT]);
 // one 0.5 s step for the host page and every client page; returns false if something threw
 async function step(hp, clients, n = 5) {
   const h = await hostRun(hp, n); if (h.err) { fail('host simulation threw: ' + h.err.split('\n').slice(0, 4).join(' | ')); return null; }
   let lag = 0;
-  for (const c of clients) { const r = await clientRun(c, n); if (r.err) { fail('client tick threw: ' + r.err.split('\n').slice(0, 4).join(' | ')); return null; } lag = Math.max(lag, h.t - r.snapT); }
+  for (const c of clients) { const r = await clientRun(c, n, h.t); if (r.err) { fail('client tick threw: ' + r.err.split('\n').slice(0, 4).join(' | ')); return null; } lag = Math.max(lag, h.t - r.snapT); }
   return { t: h.t, over: h.over, lag };
 }
 // ---- what client slot k may see on the host page vs what it shows (same rules as mpsync.mjs) ----
