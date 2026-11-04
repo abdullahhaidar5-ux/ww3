@@ -495,6 +495,9 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
       B.cone(16,22,3,-3,0,0,'#7f858c',0,0,-Math.PI/2);B.box(6,6,.8,-13,4,-4,'#7f858c',.3);B.box(6,6,.8,-13,4,4,'#7f858c',-.3);B.box(9,.4,3,-12,.5,-6,tc);B.box(9,.4,3,-12,.5,6,tc);B.box(16,.5,1.2,0,3.2,0,tc);break;
     case 'jet:glow':B.cyl(2.6,2.6,1,10,-15.5,0,0,'#ffb35a',0,0,Math.PI/2);break;
     case 'boat:hull':B.box(26,5,11,-2,2,0,hc);B.cone(5.5,10,4,15,2,0,hc,0,Math.PI/4,-Math.PI/2);B.box(10,6,8,-3,7,0,cn);B.box(4,1,7,1,10.2,0,'#3b4f5c');B.box(26,.8,11.4,-2,4.5,0,tc);B.cyl(.5,.5,10,5,-5,14,0,dk);break;
+    case 'sub:hull':B.box(56,7,11,-2,1,0,'#262b2f');B.cone(5.5,13,4,32,1,0,'#262b2f',0,Math.PI/4,-Math.PI/2);B.box(46,.8,3.4,-2,4.6,0,tc);B.box(10,8,5,4,8,0,'#2d3236');B.box(1.4,12,1.4,6,15,0,'#1d2023');B.box(4,9,1,-27,4,0,'#262b2f');B.box(4,1,13,-27,3,0,'#262b2f');break;
+    case 'coast:main':B.cyl(15,17,3,12,0,1.5,0,'#6d6c62');B.box(24,6,14,-2,5,0,'#55574e');B.box(8,4,16,-10,3.5,0,hc);B.box(6,9,6,-9,9,6,'#3a3d36');break;
+    case 'coast:gun':for(const z of [-5,-1.7,1.7,5]){B.cyl(1.7,1.7,24,8,7,1.4,z,'#8d8e84',0,0,Math.PI/2*.82);B.cone(1.7,3,8,18,4.6,z,hc,0,0,Math.PI/2*.82);}B.box(8,5,15,-2,-1,0,'#44463f');break;
     case 'boat:turret':B.cyl(2.4,2.8,3,8,0,1.5,0,mt);B.cyl(.6,.6,9,6,4.5,2.6,0,dk,0,0,Math.PI/2);break;
     case 'ship:hull':B.box(70,8,17,-4,1,0,'#7d8186');B.cone(8.5,16,4,39,1,0,'#7d8186',0,Math.PI/4,-Math.PI/2);B.box(70,1,17.4,-4,5,0,tc);
       B.box(20,10,12,-8,10,0,'#9aa0a5');B.box(10,9,10,-8,19,0,'#9aa0a5');B.box(9,2,10.4,-8,15,0,'#2e3c45');B.cyl(.8,1,18,6,-8,30,0,dk);B.box(8,.6,.6,-8,36,0,dk);B.box(6,3,10,-26,7,0,'#8b9095');B.cyl(2.6,2.6,7,10,-34,8,0,'#5d6166');
@@ -567,7 +570,7 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
 function mesh(g){const m=new THREE.Mesh(g,MAT.std);m.castShadow=true;m.receiveShadow=true;return m;}
 function makeObj(e){mats();if(e.kind==='cleric')return clericModel(e);if(!e.isB){const mo=modelFor(e);if(mo)return mo;}const T=G.teams[e.team],f=T.fac,k=e.kind,o=new THREE.Group();o.userData.parts={};const P=o.userData.parts;
   const add=(part,parent=o)=>{const m=mesh(geoFor(k,f,T,part));parent.add(m);P[part]=m;return m;};
-  if(e.isB){const eS=k==='garrison'?e:Object.assign(Object.create(e),{size:e.size/BSC});const meY=k==='shipyard'&&MEFAC.has(f),mb=(k==='airfield'||k==='uplink'||meY)?false:bldModel(eS,o,T);if(mb){}else if(k==='hq'){add('main');const d=add('dish');d.position.set(14,48,14);}else if(k==='turret'||k==='sam'||k==='tunnel'||k==='fort'){add('main');const g=add('gun');g.position.y=k==='tunnel'?4:k==='fort'?14:6;}
+  if(e.isB){const eS=k==='garrison'?e:Object.assign(Object.create(e),{size:e.size/BSC});const meY=k==='shipyard'&&MEFAC.has(f),mb=(k==='airfield'||k==='uplink'||meY)?false:bldModel(eS,o,T);if(mb){}else if(k==='hq'){add('main');const d=add('dish');d.position.set(14,48,14);}else if(k==='turret'||k==='sam'||k==='coast'||k==='tunnel'||k==='fort'){add('main');const g=add('gun');g.position.y=k==='tunnel'?4:k==='fort'?14:6;}
     else if(k==='shipyard'){add('main');if(!(meY&&bldModel(eS,o,T))){const c=add('crane');c.position.set(22,5,22);}}else if(k==='uplink'){add('main');const m=add('missile');m.position.y=4;const a=mesh(geoFor(k,f,T,'door')),b=mesh(geoFor(k,f,T,'door'));const HY=UPHY[(UPLINK[f]||[])[1]]||27.5;a.position.set(-9,HY,0);b.position.set(9,HY,0);b.rotation.y=Math.PI;o.add(a);o.add(b);P.da=a;P.db=b;P.hy=HY-27.5;}
     else add('main');
     if(!mb&&(k==='airfield'||k==='uplink'))bldModel(eS,o,T);
@@ -582,10 +585,11 @@ function makeObj(e){mats();if(e.kind==='cleric')return clericModel(e);if(!e.isB)
     else if(c==='drone')add('body');
     else if(c==='heli'){add('body');const r=add('rotor');r.position.set(1,8.6,0);r.castShadow=false;}
     else if(c==='jet'){add('body');const g=new THREE.Mesh(geoFor(k,f,T,'glow'),MAT.glow);o.add(g);P.glow=g;}
+    else if(c==='sub'){add('hull');}
     else if(c==='boat'){add('hull');const t=add('turret');t.position.set(9,5,0);}
     else if(c==='ship'){add('hull');const t=add('turret');t.position.set(24,7,0);}}
   SCN.add(o);return o;}
-function makeGhost(kind){mats();const T=G.teams[ME],o=new THREE.Group();const g=geoFor(kind,T.fac,T,'main');o.add(new THREE.Mesh(g,MAT.ghostOk));if(kind==='turret'||kind==='sam'){const m=new THREE.Mesh(geoFor(kind,T.fac,T,'gun'),MAT.ghostOk);m.position.y=6;o.add(m);}
+function makeGhost(kind){mats();const T=G.teams[ME],o=new THREE.Group();const g=geoFor(kind,T.fac,T,'main');o.add(new THREE.Mesh(g,MAT.ghostOk));if(kind==='turret'||kind==='sam'||kind==='coast'){const m=new THREE.Mesh(geoFor(kind,T.fac,T,'gun'),MAT.ghostOk);m.position.y=6;o.add(m);}
   const ring=new THREE.Mesh(new THREE.RingGeometry(1,1.02,64).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x74d08f,transparent:true,opacity:.6}));o.add(ring);o.userData.ring=ring;SCN.add(o);return o;}
 
 // Battle conditions (skirmish menu "Conditions"): 0 clear day, 1 golden hour, 2 overcast, 3 dusk; -1 = random.
