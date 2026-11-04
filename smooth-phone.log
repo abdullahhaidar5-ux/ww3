@@ -1,0 +1,43 @@
+[0s] phone: launching browser
+[3s] ctx
+[3s] guarded
+[3s] page
+[3s] phone: loading page
+[3s] phone: page loaded
+[4s] phone: menu ready
+[18s] phone: battle loaded in 14s
+[24s] phone: army in place
+[24s] phone: measuring 150 frames
+[29s] phone: warm-up done, 92 shaders
+[31s] phone: frame 10
+[33s] phone: frame 20
+[35s] phone: frame 30
+[37s] phone: frame 40
+[38s] phone: frame 50
+[40s] phone: frame 60
+[42s] phone: frame 70
+[43s] phone: frame 80
+[45s] phone: frame 90
+[46s] phone: frame 100
+[48s] phone: frame 110
+[49s] phone: frame 120
+[51s] phone: frame 130
+[53s] phone: frame 140
+[54s] phone: frame 150
+[55s] phone attempt 1: ok
+
+                       phone     
+units on screen        289       
+load time s            13.7      
+median frame ms        158.3     
+p95 frame ms           184.2     
+p99 frame ms           208.6     
+worst 1% FPS           4.57      
+frames >50 ms          150       
+sim step p95 ms        22.9      
+draw calls             594       
+k triangles            2815      
+heap MB/min            -38.86    
+runtime 0.9 min
+
+SMOOTH PASS
