@@ -8,11 +8,12 @@ const WEATHER={clear:{name:'Clear',vis:1,acc:1,spd:1,air:1},
   rain:{name:'Rain',vis:.8,acc:.9,spd:.88,air:.9,tip:'Mud slows ground units, visibility and accuracy drop.'},
   fog:{name:'Fog',vis:.55,acc:.92,spd:.95,air:.85,tip:'Heavy fog: units see barely half as far. Ambush weather.'},
   sandstorm:{name:'Sandstorm',vis:.55,acc:.8,spd:.88,air:0,tip:'Sandstorm: vision and accuracy slashed, jets grounded, helicopters and drones struggle.'},
+  snow:{name:'Snow',vis:.8,acc:.92,spd:.9,air:.8,tip:'Deep snow slows ground units; vision and aircraft are a little worse.'},
   blizzard:{name:'Blizzard',vis:.6,acc:.85,spd:.8,air:0,tip:'Blizzard: snow slows everything, jets grounded, vision cut.'}};
 function weatherKinds(theme){return theme==='snow'?['clear','blizzard','fog']:theme==='green'?['clear','rain','fog']:['clear','sandstorm','fog'];}
 // A duel is fought on a field 1.3x the 3200x2200 design (about 300 infantry-lengths across, like a classic RTS 1v1
 // map); each extra player adds room (8 players: 2.26x).
-function worldScaleFor(n,mk){n=Math.max(2,Math.min(8,n|0||2));const D=mk&&typeof MAPS!=='undefined'&&MAPS[mk];return Math.round((D&&D.oldScale&&D.oldScale.includes(n)?1.56:1.95)*Math.pow(n/2,.4)*100)/100;} // +25% again (Abdullah 2026-10-30: "maps need to be bigger and more complex"; 2026-10-29 was 1.56; a map can keep 1.56 for player counts listed in oldScale, where the bigger ground gave a start position the edge)
+function worldScaleFor(n,mk){n=Math.max(2,Math.min(8,n|0||2));const D=mk&&typeof MAPS!=='undefined'&&MAPS[mk];return D&&D.cscale?D.cscale:Math.round((D&&D.oldScale&&D.oldScale.includes(n)?1.56:1.95)*Math.pow(n/2,.4)*100)/100;} // +25% again (Abdullah 2026-10-30: "maps need to be bigger and more complex"; 2026-10-29 was 1.56; a map can keep 1.56 for player counts listed in oldScale, where the bigger ground gave a start position the edge)
 // Player settings (graphics, volumes, game speed, HUD), saved per browser.
 const SET={gfx:'auto',mus:70,fx:100,vo:100,spd:1,hp:'dmg',edge:1,txt:1,scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1};try{Object.assign(SET,JSON.parse(localStorage.getItem('ww3_settings')||'{}'));}catch(e){}
 function saveSet(){try{localStorage.setItem('ww3_settings',JSON.stringify(SET));}catch(e){}}
@@ -59,8 +60,10 @@ const BASE={
   // select the transport and press Unload. Destroyed transports take their passengers with them.
   lander:{name:'Landing Craft',cls:'boat',hp:620,spd:74,rng:0,dmg:0,rof:1,cost:600,time:8,from:'shipyard',armor:'heavy',r:16,dom:'naval',noAttack:1,cap:8,carryVeh:1},
   airlift:{name:'Transport Helicopter',cls:'heli',hp:480,spd:118,rng:0,dmg:0,rof:1,cost:800,time:9,from:'airfield',armor:'air',r:15,dom:'air',alt:'low',noAttack:1,cap:6,door:{rng:170,dmg:9,rof:.6,wpn:'gun',aa:1}},
-  boat:{cls:'boat',hp:460,spd:92,rng:220,dmg:14,rof:.35,wpn:'gun',aa:2,cost:700,time:9,from:'shipyard',armor:'heavy',r:14,dom:'naval'},
-  ship:{cls:'ship',hp:1400,spd:48,rng:540,dmg:90,rof:3.5,wpn:'shell',splash:62,minr:110,cost:2200,time:22,from:'shipyard',armor:'heavy',r:26,dom:'naval'},
+  boat:{cls:'boat',sonar:170,hp:460,spd:92,rng:220,dmg:14,rof:.35,wpn:'gun',aa:2,cost:700,time:9,from:'shipyard',armor:'heavy',r:14,dom:'naval'},
+  // Submarine: stealthy (hidden until it fires or an enemy ship / boat / coastal battery's sonar is close); torpedoes hit ships only.
+  sub:{name:'Submarine',cls:'sub',hp:560,spd:54,rng:340,dmg:200,rof:5,wpn:'torp',splash:30,minr:50,cost:1500,time:16,from:'shipyard',armor:'heavy',r:18,dom:'naval',stealth:true,sub:1,sonar:230,navalOnly:1},
+  ship:{cls:'ship',sonar:300,hp:1400,spd:48,rng:540,dmg:90,rof:3.5,wpn:'shell',splash:62,minr:110,cost:2200,time:22,from:'shipyard',armor:'heavy',r:26,dom:'naval'},
 };
 const STRUCT={
   hq:{name:'Command HQ',hp:3000,size:90,cost:2000,time:30},
@@ -70,10 +73,11 @@ const STRUCT={
   shipyard:{name:'Shipyard',hp:1400,size:70,cost:1200,time:12,req:'barracks',shore:true},
   turret:{name:'Defense Gun',hp:750,size:34,cost:600,time:6,req:'barracks',rng:290,dmg:30,rof:1.1,wpn:'tower'},
   sam:{name:'SAM Site',hp:650,size:34,cost:700,time:7,req:'barracks',rng:400,dmg:80,rof:1.5,wpn:'missile',aa:2,ground:false},
+  coast:{name:'Coastal Missile Battery',hp:800,size:34,cost:1000,time:12,req:'barracks',shore:true,rng:520,dmg:150,rof:3.4,wpn:'missile',aa:0,navalOnly:1,sonar:260,desc:'Anti-ship missiles for the shore: hits warships, boats and landing craft (and spots submarines nearby), nothing else. Build it on the coast.'},
   tunnel:{name:'Tunnel Network',hp:900,size:40,cost:600,time:9,req:'barracks',rng:220,dmg:14,rof:.45,wpn:'gun',aa:1},
   uplink:{name:'Strike Center',hp:1800,size:70,cost:2500,time:20,req:'factory'},
   // Supply Depot: a forward drop-off point. Supply trucks unload at the nearest depot or HQ instead of driving home.
-  depot:{name:'Supply Depot',hp:1000,size:54,cost:600,time:8,desc:'Supply trucks unload here instead of driving back to the HQ. Build one beside a far supply field.'},
+  depot:{name:'Supply Depot',hp:1000,size:54,cost:600,time:8,desc:'Supply trucks unload here instead of driving back to the HQ. Build one beside a far supply field. Also refills ammo of troops near it.'},
   // Income building: every nation has one (same price and output, national flavour). A slow, steady trickle for
   // once the supply fields are mined out - $3.5/s for the first, each extra one earns less (max 4).
   // a city building held by infantry (not buildable: created when troops move in)
@@ -93,11 +97,11 @@ const ECON={US:'Arms Export Office',TR:'Grand Bazaar',IL:'Tech Startup Hub',EU:'
   SA:'Oil Ministry Office',AE:'Free Trade Zone',PK:'Textile Mill',IN:'IT Services Park',CN:'Export Factory',KP:'Overseas Labour Bureau',KR:'Electronics Plant',EG:'Suez Canal Toll House',
   CU:'Cigar Factory',RS:'Khums Treasury',DW:'Coffee Roastery'};
 const ECON_RATE=[1,.75,.55,.4];
-const BUILD_ORDER=['barracks','depot','econ','factory','airfield','shipyard','turret','sam','tunnel','fort','uplink','hq'];
+const BUILD_ORDER=['barracks','depot','econ','factory','airfield','shipyard','coast','turret','sam','tunnel','fort','uplink','hq'];
 const CATS=['hq','barracks','factory','airfield','shipyard'];
 const VS={
   gun:{light:1,heavy:.3,bld:.2,air:.5}, at:{light:.45,heavy:1.6,bld:1.1,air:1}, cannon:{light:.7,heavy:1.2,bld:1,air:0},
-  shell:{light:1,heavy:.9,bld:1.3,air:0}, boom:{light:1,heavy:1,bld:1.5,air:.3}, tower:{light:1,heavy:1,bld:.3,air:0},
+  shell:{light:1,heavy:.9,bld:1.3,air:0}, torp:{light:.3,heavy:1.4,bld:.8,air:0}, boom:{light:1,heavy:1,bld:1.5,air:.3}, tower:{light:1,heavy:1,bld:.3,air:0},
   flak:{light:.6,heavy:.2,bld:.1,air:1.6}, missile:{light:.5,heavy:1,bld:.6,air:1.5}, snipe:{light:3,heavy:.08,bld:.05,air:0},
   bb:{light:1,heavy:1,bld:1.6,air:0}, bomb:{light:1,heavy:1.3,bld:1.4,air:0}, super:{light:1,heavy:1,bld:1,air:.5}, demo:{light:0,heavy:0,bld:1,air:0},
 };
@@ -123,7 +127,7 @@ const FACTIONS={
   IL:F_('IL','Israel','#7fd3f0','he-IL','mideast','Iron Dome & missile defence: units are 10% tougher and hit 5% harder, enemy strikes and missiles do 50% damage to you, SAM sites reach 30% farther and hit harder, Merkava tanks are extra tough, Spike missiles hit hard.',{supResist:.5,hp:1.1,dmg:1.05},'hero',
     {inf:{name:'Infantry Squad'},at:{name:'Spike Team',dmg:60},hero:{name:'Sayeret Commando',demo:true},aa:{name:'Machbet SPAAG'},tank:{name:'Merkava Mk4',hp:820},arty:{name:'M109 Doher'},heli:{name:'AH-64 Saraf'},jet:{name:'F-35I Adir'},boat:{name:'Shaldag Patrol Boat'},ship:{name:'Sa’ar 6 Corvette'}},
     {name:'Air Strike',charge:140,n:5,dmg:755,r:70,spread:130},'trophy'),
-  EU:F_('EU','European Union','#f0c032','fr-FR','west','Engineering & precision artillery: units self-repair, structures have 30% more hit points, CAESAR guns hit 15% harder.',{regen:3,bldHp:1.3},'hero',
+  EU:F_('EU','European Union','#f0c032','fr-FR','west','Engineering & precision artillery: units self-repair, structures have 30% more hit points, all units cost 7% less, CAESAR guns hit 15% harder.',{regen:3,bldHp:1.3,cost:.93},'hero',
     {inf:{name:'Rifle Section'},at:{name:'MILAN Team'},hero:{name:'KSK Sniper',rng:340,dmg:160,rof:2.2},aa:{name:'Gepard SPAAG'},tank:{name:'Leopard 2A8'},arty:{name:'CAESAR Howitzer',rng:450},heli:{name:'Tiger Attack Helo'},jet:{name:'Eurofighter Typhoon'},boat:{name:'Combattante Patrol Boat'},ship:{name:'FREMM Frigate'}},
     {name:'Storm Shadow Salvo',charge:150,n:4,dmg:685,r:80,spread:110},'network'),
   UA:F_('UA','Ukraine','#ffd447','uk-UA','slavic','Drone war & resilience: FPV drones are cheap and build fast, Sea Baby drone boats hit 40% harder, units repair themselves out of combat.',{regen:3},'hacker',
@@ -132,10 +136,10 @@ const FACTIONS={
   RU:F_('RU','Russia','#c9d1da','ru-RU','slavic','Heavy armour & massed artillery: vehicles have 25% more hit points, artillery is tougher and hits 15% harder. TOS-1A burns everything nearby.',{vehHp:1.25},'hacker',
     {inf:{name:'Motor Rifle Squad'},at:{name:'Kornet Team'},hacker:{name:'GRU Cyber Unit'},aa:{name:'Pantsir-S1'},tank:{name:'T-90M'},arty:{name:'TOS-1A',rng:280,minr:50,splash:95,dmg:66,rof:3.5,rocket:true},heli:{name:'Ka-52 Alligator'},jet:{name:'Su-34 Fullback'},boat:{name:'Raptor Patrol Boat'},ship:{name:'Admiral Gorshkov Frigate'}},
     {name:'Iskander Strike',charge:160,n:2,dmg:555,r:130,spread:90},'reactive'),
-  IR:F_('IR','Iran','#3fae5c','fa-IR','mideast','Missiles & cheap drones: Shahed drones cost half as much and build almost twice as fast, Fateh missile launchers fire 20% farther and hit 15% harder, the Kheibar barrage charges faster. Basij militia costs 25% less.',{infCost:.75},'hacker',
+  IR:F_('IR','Iran','#3fae5c','fa-IR','mideast','Missiles & cheap drones: Shahed drones cost half as much and build almost twice as fast, Fateh missile launchers fire 20% farther and hit 15% harder, the Kheibar barrage charges faster. Basij militia costs 15% less.',{infCost:.85},'hacker',
     {inf:{name:'Basij Militia',hp:110},at:{name:'RPG Cell'},hacker:{name:'IRGC Cyber Team'},drone:{name:'Shahed-136'},aa:{name:'Mesbah AA Gun'},tank:{name:'Karrar MBT',hp:580},arty:{name:'Fateh-110 Launcher',rng:470,splash:65,rocket:true},heli:{name:'AH-1J Cobra'},jet:{name:'F-14 Tomcat'},boat:{name:'Seraj Fast Attack Craft',spd:110},ship:{name:'Moudge Frigate'}},
     {name:'Kheibar Missile Strike',charge:130,n:12,dmg:335,r:75,spread:200},'thermo',{extra:['drone']}),
-  SA:F_('SA','Saudi Arabia','#1f9a54','ar-SA','mideast','Petro wealth & air force: oil pays 40% more, supply trucks carry 10% more, F-15SA jets cost 15% less and are tougher, air defence reaches 20% farther.',{oil:1.4,harv:1.1},'hero',
+  SA:F_('SA','Saudi Arabia','#1f9a54','ar-SA','mideast','Petro wealth & air force: oil pays 40% more, supply trucks carry 10% more, F-15SA jets cost 15% less and are tougher, air defence reaches 20% farther, all units cost 7% less.',{oil:1.4,harv:1.1,cost:.93},'hero',
     {inf:{name:'Royal Land Forces Squad'},at:{name:'TOW Team'},hero:{name:'Special Forces Sniper',rng:330,dmg:150,rof:2.2},aa:{name:'Shahine SAM Vehicle'},tank:{name:'M1A2S Abrams'},arty:{name:'CAESAR Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'F-15SA Eagle'},boat:{name:'Fast Patrol Boat'},ship:{name:'Al Riyadh Frigate'}},
     {name:'Royal Air Strike',charge:150,n:5,dmg:625,r:75,spread:130},'awacs'),
   AE:F_('AE','United Arab Emirates','#b49a5e','ar-AE','mideast','High-tech wealth: weapons deal 15% more damage, oil pays 25% more, supply trucks carry 10% more, Pantsir air defence and Apaches hit 15% harder.',{dmg:1.15,oil:1.25,harv:1.1},'hero',
@@ -166,7 +170,7 @@ const FACTIONS={
     Object.assign(MIL_UNITS({inf:'Mountain Guard',boat:'Fast Attack Skiff'}),{inf:{name:'Mountain Guard',hp:150},at:{name:'Mountain RPG Team',hp:140,rng:205},hacker:{name:'Signal Jammers'},
       drone:{name:'Shahed-136',cost:225,hp:100,spd:135,dmg:260,splash:72},arty:{name:'Medium Rocket Launcher',rocket:true,hp:260,rng:470,minr:90,dmg:68,splash:66,rof:3.2,cost:750,time:10}}),
     {name:'Mountain Rocket Storm',charge:150,n:14,dmg:300,r:65,spread:230},'bunkers',{extra:['drone'],noAir:true,noShip:true,militia:true}),
-  DW:F_('DW','Coffee Shias','#c8a46e','ar-YE','mideast','Technical raiders: tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 20% faster. No air force.',{spd:1.2,cost:.9},'hero',
+  DW:F_('DW','Coffee Shias','#c8a46e','ar-YE','mideast','Technical raiders: tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 12% faster and cost 3% less. No air force.',{spd:1.12,cost:.97},'hero',
     Object.assign(MIL_UNITS({inf:'Wolf Raiders',boat:'Raider Speedboat'}),{hero:{name:'Ghost Raider',demo:true},
       tank:{name:'Raider Technical',hp:370,spd:96,dmg:26,rof:.28,wpn:'gun',aa:1,cost:500,time:5},aa:{name:'ZU-23 Technical',hp:320,cost:400,spd:90},
       arty:{name:'Long-Range Rocket Truck',rocket:true,hp:280,rng:620,minr:120,dmg:74,splash:72,rof:4.2,cost:900,time:11}}),
@@ -192,12 +196,12 @@ for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctr
 const FKEYS=Object.keys(FACTIONS);
 // Rock-paper-scissors: what each kind of unit beats and what beats it (shown in the unit tooltips).
 const COUNTER={inf:'Beats AT teams and other infantry · Loses to tanks and artillery · Takes 35% less damage in woods or beside buildings; gets suppressed under heavy fire',at:'Beats tanks, vehicles and helicopters · Loses to riflemen',hacker:'Disables buildings · Loses to any armed unit',
-  hero:'Picks off infantry from long range · Loses to vehicles',harv:'Gathers supply · Unarmed',dozer:'Builds and repairs · Unarmed',tank:'Beats infantry, AA vehicles and artillery · Loses to AT teams and helicopters · Thickest armour in front: side hits do 20% more damage, rear hits 60% more',
+  hero:'Picks off infantry from long range · Loses to vehicles',harv:'Gathers supply · Also resupplies ammo around it · Unarmed',dozer:'Builds and repairs · Unarmed',tank:'Beats infantry, AA vehicles and artillery · Loses to AT teams and helicopters · Thickest armour in front: side hits do 20% more damage, rear hits 60% more',
   aa:'Beats helicopters, jets and drones · Loses to tanks and infantry',arty:'Beats infantry and buildings from long range · Loses to tanks and fast units up close',
   drone:'Explodes on groups of vehicles and infantry · Loses to AA and rifle fire',heli:'Beats tanks and vehicles · Loses to AA and AT teams',jet:'Bombs buildings and vehicles · Loses to SAM sites and AA',
   boat:'Beats boats and helicopters near water · Loses to warships',ship:'Shells coasts and boats from long range · Loses to boats up close and aircraft'};
 const SHIA={IR:1,RS:1,DW:1};
-function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(SHIA[fac]||fac==='KP'?['cleric']:[])],factory:['aa','tank','arty',...(F.extra||[]),...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift'],shipyard:F.noShip?['boat','lander']:['boat','ship','lander']};}
+function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(SHIA[fac]||fac==='KP'?['cleric']:[])],factory:['aa','tank','arty',...(F.extra||[]),...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift'],shipyard:F.noShip?['boat','lander']:['boat','sub','ship','lander']};}
 function allUnits(fac){const r=roster(fac);return CATS.flatMap(c=>r[c]);}
 function bldAllowed(fac,k){if(k==='tunnel'||k==='fort')return !!FACTIONS[fac].tunnels;return !(k==='airfield'&&FACTIONS[fac].noAir);}
 
@@ -217,6 +221,36 @@ function upgList(fac){return (UPGL[fac]||[]).concat('smug',FACTIONS[fac]&&FACTIO
 function upgMatch(c,s,b){if(b)return c==='bld';switch(c){case 'all':return true;case 'inf':return s.armor==='light'&&s.dom==='ground';case 'rifle':return s.kind==='inf';case 'atinf':return s.cls==='at';
   case 'veh':return s.armor==='heavy'&&s.dom==='ground';case 'tank':case 'arty':case 'aa':case 'drone':case 'heli':case 'jet':case 'ship':case 'boat':return s.cls===c;case 'air':return s.dom==='air';case 'naval':return s.dom==='naval';}return false;}
 
+
+// ---------- General Doctrines (Abdullah 2026-11-03): picked in the first 2 minutes; each has 4 perks bought with general-rank points ----------
+// perk.fx uses the upgrade format [stat, unit group, value] (folded into upgAgg); perk.cost = [group, multiplier] cheaper units/buildings; the rest are special-cased in 03-sim by key
+const GDOC={
+ arm:{name:'Armour',short:'ARM',blurb:'Tanks and vehicles: faster production, tougher hulls, tank-hunter ambushes',perks:[
+  {k:'a1',name:'Assembly Line',desc:'Vehicles build 25% faster',fx:[['build','veh',.75]]},
+  {k:'a2',name:'Reactive Plating',desc:'Vehicles take 15% less damage',fx:[['taken','veh',.85]]},
+  {k:'a3',name:'Tank-Hunter Ambush',desc:'Tanks holding still or sitting in cover deal 25% more damage'},
+  {k:'a4',name:'Gun Stabilisers',desc:'Tanks shoot 12% faster and 10% farther, vehicles +8% damage',fx:[['rof','tank',.88],['rng','tank',1.1],['dmg','veh',1.08]]}]},
+ gue:{name:'Guerrilla',short:'GUE',blurb:'Infantry swarms: cheap, hidden, booby-trapped',perks:[
+  {k:'g1',name:'Cheap Recruits',desc:'Infantry cost 15% less',cost:['inf',.85]},
+  {k:'g2',name:'Hidden Ambush',desc:'Infantry holding still or in cover deal 25% more damage',},
+  {k:'g3',name:'Booby Traps',desc:'Idle infantry quietly lay hidden mines (up to 8)'},
+  {k:'g4',name:'Hit and Run',desc:'Infantry move 10% faster and take 5% less damage',fx:[['spd','inf',1.1],['taken','inf',.95]]}]},
+ air:{name:'Air',short:'AIR',blurb:'Airfields, recon flights and air superiority',perks:[
+  {k:'i1',name:'Cheap Airfields',desc:'Airfields cost 30% less',cost:['airfield',.7]},
+  {k:'i2',name:'Recon Flights',desc:'Every 75 seconds a recon flight reveals an enemy area for 10 seconds'},
+  {k:'i3',name:'Air Superiority',desc:'Aircraft deal 15% more damage and have 10% more health',fx:[['dmg','air',1.15],['hp','air',1.1]]},
+  {k:'i4',name:'Quick Turnaround',desc:'Aircraft cost 15% less and build 15% faster',cost:['air',.85],fx:[['build','air',.85]]}]},
+ art:{name:'Artillery',short:'ART',blurb:'Guns that see everything: counter-battery radar and creeping barrage',perks:[
+  {k:'r1',name:'Counter-Battery Radar',desc:'Your artillery spots enemy guns the moment they fire'},
+  {k:'r2',name:'Creeping Barrage',desc:'Artillery shells burst 25% wider',fx:[['splash','arty',1.25]]},
+  {k:'r3',name:'Rapid Reload',desc:'Artillery reloads 12% faster and reaches 8% farther',fx:[['rof','arty',.88],['rng','arty',1.08]]},
+  {k:'r4',name:'Gun Foundry',desc:'Artillery costs 15% less',cost:['arty',.85]}]}};
+const GDOC_KEYS=Object.keys(GDOC);
+const GDOC_AI={US:'arm',RU:'art',IL:'air',IR:'gue',TR:'air',EU:'arm',UA:'art',SA:'air',AE:'air',PK:'arm',IN:'arm',CN:'art',KP:'art',KR:'art',EG:'arm',CU:'gue',RS:'gue',DW:'gue'};
+const GDOC_PERKS={};for(const d in GDOC)for(const p of GDOC[d].perks){p.doc=d;GDOC_PERKS[p.k]=p;}
+const GDOC_LATE=120;   // doctrine can be picked / changed until this many seconds into the battle
+function gdHas(T,k){return !!(T&&T.gperk&&T.gperk[k]);}
+function gdCostK(T,s,b,kind){if(!T||!T.gdoc)return 1;let m=1;const D=GDOC[T.gdoc];if(!D)return 1;for(const p of D.perks){if(!p.cost||!gdHas(T,p.k))continue;const g=p.cost[0];if(b?g===kind:(g==='air'?s.dom==='air':upgMatch(g,s,false)))m*=p.cost[1];}return m;}
 const MILNAME={IR:'Popular Mobilization volunteers',RS:'Popular Mobilization volunteers',DW:'Popular Mobilization volunteers',US:'Contractors',RU:'PMC'};
 const POWERS={
   bounty:{name:'Cash Bounty',desc:'Earn 15% of the cost of every enemy you destroy',passive:true},
@@ -224,6 +258,7 @@ const POWERS={
   para:{name:'Paradrop',desc:'Drop 5 infantry anywhere on land',cd:150},
   barrage:{name:'Artillery Barrage',desc:'10 shells over a wide area',cd:170,r:180},
   repair:{name:'Emergency Repair',desc:'Restore 60% health to your forces in an area',cd:120,r:230},
+  flare:{name:'Illumination Flares',desc:'Light up an area for about 30 seconds so everybody can see in it, friend and foe. Made for night battles',cd:60,r:300},
   mil:{name:'Fund Militia',desc:'Pay a local militia: 5 riflemen, an RPG team and an armed technical appear at the neutral spot nearest the front, under your command',cd:480,self:true},
   bb:{name:'Bunker Buster',desc:'Two guided heavy bombs on one spot. Costs $2200 each time and is not available in the first 5 minutes. Heavy damage to buildings in a small radius, and the ONLY thing that can destroy a Mountain Fortress (both bombs must hit)',cd:420,r:70,cash:2200},
   sanc:{name:'Sanctions',desc:'Sanction the richest enemy: their income drops 20% for 60 seconds (their Smuggling Routes upgrade cuts that to 8%)',cd:420,self:true},
@@ -319,9 +354,9 @@ const DOCT={US:{name:'Aggressive Manoeuvre',shock:1},RU:{name:'Heavy Barrages',b
 const DOCT_TXT={shock:'+15% damage while advancing or attacking; vehicles 10% faster',barrage:'artillery reaches 15% farther, bigger blasts, faster reloads, 15% cheaper; shellfire suppresses harder',
   covert:'infantry and AT teams are camouflaged; first shot from hiding hits 50% harder',ambush:'infantry, AT teams and drones holding still or in cover deal 20% more damage',
   hitrun:'infantry and light vehicles sprint 25% faster for 3s after firing',homeland:'+15% damage near their own buildings'};
-const XL={US:{jet:{dmg:1.25,hp:1.15},heli:{dmg:1.25,hp:1.1}},TR:{drone:{cost:.75,time:.7,hp:1.3,dmg:1.15}},IL:{},EU:{arty:{dmg:1.15}},
-  UA:{drone:{cost:.9,time:.6},boat:{dmg:1.4,spd:1.15}},RU:{arty:{hp:1.3,dmg:1.15}},IR:{drone:{cost:.5,time:.55,spd:1.1},arty:{rng:1.2,dmg:1.15}},
-  SA:{jet:{cost:.85,hp:1.2},aa:{rng:1.2}},AE:{aa:{dmg:1.15},heli:{dmg:1.15}},PK:{at:{dmg:1.2}},IN:{ship:{hp:1.25},boat:{hp:1.15}},
+const XL={US:{jet:{dmg:1.25,hp:1.15},heli:{dmg:1.25,hp:1.1}},TR:{drone:{cost:.75,time:.7,hp:1.3,dmg:1.15}},IL:{},EU:{arty:{dmg:1.15},tank:{hp:1.12,cost:.92}},
+  UA:{drone:{cost:.9,time:.6},boat:{dmg:1.4,spd:1.15}},RU:{arty:{hp:1.3,dmg:1.15}},IR:{boat:{spd:1.18,cost:.88,dmg:1.15},sub:{cost:.7,hp:.7,spd:1.1},drone:{cost:.5,time:.55,spd:1.1},arty:{rng:1.2,dmg:1.15}},
+  SA:{jet:{cost:.85,hp:1.2,dmg:1.1},aa:{rng:1.2}},AE:{aa:{dmg:1.15},heli:{dmg:1.15}},PK:{at:{dmg:1.2}},IN:{ship:{hp:1.25},boat:{hp:1.15}},
   CN:{ship:{hp:1.3,dmg:1.15},boat:{hp:1.15},arty:{dmg:1.1}},KP:{arty:{cost:.8,rng:1.1}},KR:{arty:{rof:.8}},EG:{tank:{cost:.85}},CU:{arty:{cost:.8}},
   RS:{drone:{cost:.75,time:.6,dmg:1.15,hp:1.2},arty:{rng:1.12,dmg:1.12,rof:.9},at:{hp:1.15}}};
 const TRN={US:['LCAC Hovercraft','CH-47 Chinook'],TR:['Landing Craft Tank','T-70 Black Hawk'],IL:['Landing Craft','CH-53 Yasur'],EU:['LCM Landing Craft','NH90 Transport'],UA:['Landing Craft','Mi-8 Hip'],RU:['Zubr Hovercraft','Mi-8 Hip'],
@@ -330,13 +365,17 @@ const TRN={US:['LCAC Hovercraft','CH-47 Chinook'],TR:['Landing Craft Tank','T-70
 for(const k in TRN){const F=FACTIONS[k];if(!F)continue;F.units=F.units||{};F.units.lander=Object.assign({},F.units.lander||{},{name:TRN[k][0]});F.units.airlift=Object.assign({},F.units.airlift||{},{name:TRN[k][1]});}
 const XLB={RS:{turret:{hp:1.4,dmg:1.25,rng:1.12},tunnel:{hp:1.35,dmg:1.3},sam:{hp:1.3}},IL:{sam:{rng:1.3,dmg:1.3}},KR:{turret:{rng:1.15}},SA:{sam:{rng:1.2}}};
 const sc={};
+// National names for the submarine and the coastal anti-ship battery (stats are shared; Iran's are cheaper and quicker, see MODS).
+const SUBN={US:'Virginia-class Submarine',TR:'Preveze-class Submarine',IL:'Dolphin-class Submarine',EU:'Barracuda-class Submarine',UA:'Kilo-class Submarine',RU:'Yasen-class Submarine',IR:'Ghadir Midget Submarine',SA:'Type 209 Submarine',AE:'Scorpene Submarine',PK:'Agosta 90B Submarine',IN:'Kalvari-class Submarine',CN:'Type 039 Yuan Submarine',KP:'Romeo-class Submarine',KR:'Son Won-il Submarine',EG:'Type 209/1400 Submarine',CU:'Foxtrot Submarine'};
+const COASTN={US:'Naval Strike Missile Battery',TR:'Atmaca Coastal Battery',IL:'Gabriel Coastal Battery',EU:'Exocet MM40 Battery',UA:'Neptune Coastal Battery',RU:'Bastion-P Coastal Battery',IR:'Noor / Qader Coastal Missiles',SA:'Harpoon Coastal Battery',AE:'Exocet Coastal Battery',PK:'Zarb Coastal Battery',IN:'BrahMos Coastal Battery',CN:'YJ-62 Coastal Battery',KP:'Kumsong Coastal Battery',KR:'Haeseong Coastal Battery',EG:'Otomat Coastal Battery',CU:'P-15 Termit Battery',RS:'Mountain Anti-Ship Rockets',DW:'Coffee Coast Rocket Battery'};
+for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
 function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
   const s=Object.assign({},BASE[kind],(F.units||{})[kind]||{});s.kind=kind;if(kind==='cleric'&&fac==='KP')s.name='Dear Leader';{const X=(XL[fac]||{})[kind];if(X)for(const q in X)if(s[q]!=null)s[q]*=X[q];if(X)s.xl=1;}const inf=s.armor==='light',veh=s.armor==='heavy'||s.cls==='heli'||s.cls==='jet';
   let c=s.cost*(m.cost||1);if(inf)c*=(m.infCost||1);const B=BAL[fac];if(B)c*=(B._||1)*(B[kind]||1);s.cost=Math.round(c/25)*25;if(inf)s.time*=(m.infTime||1);
   s.hp=Math.round(s.hp*(m.hp||1)*(veh?(m.vehHp||1):1));if(m.spd&&s.dom!=='air')s.spd*=m.spd;{const D=DOCT[fac]||{};if(D.barrage&&s.cls==='arty'){s.rng*=1.15;if(s.splash)s.splash*=1.3;s.rof*=.85;s.cost=Math.round(s.cost*.85/25)*25;}if(D.covert&&(s.cls==='inf'||s.cls==='at')&&s.dom==='ground'&&kind!=='hacker')s.camo=1;if(D.shock&&s.armor==='heavy'&&s.dom==='ground')s.spd*=1.1;}s.dmg*=(m.dmg||1);s.aggro=kind==='drone'?290:s.rng+90;if(s.aa===undefined)s.aa=0;return sc[k]=s;}
-function bstats(fac,kind){const k=fac+'#'+kind;if(sc[k])return sc[k];const m=FACTIONS[fac].mods||{};const s=Object.assign({},STRUCT[kind]);s.kind=kind;{const X=(XLB[fac]||{})[kind];if(X){for(const q in X)if(s[q]!=null)s[q]*=X[q];s.xl=1;}}
+function bstats(fac,kind){const k=fac+'#'+kind;if(sc[k])return sc[k];const m=FACTIONS[fac].mods||{};const s=Object.assign({},STRUCT[kind]);s.kind=kind;if(kind==='coast'&&COASTN[fac])s.name=COASTN[fac];{const X=(XLB[fac]||{})[kind];if(X){for(const q in X)if(s[q]!=null)s[q]*=X[q];s.xl=1;}}
   if(kind==='econ'&&ECON[fac])s.name=ECON[fac];if(kind==='uplink'&&UPLINK[fac])s.name=UPLINK[fac][0];s.hp=Math.round(s.hp*(m.bldHp||1));s.cost=kind==='econ'?s.cost:Math.round(s.cost*(m.cost||1)/25)*25;if(s.dmg)s.dmg*=(m.dmg||1);s.aa=s.aa||0;s.armor='bld';return sc[k]=s;}
-const BH={garrison:18,econ:30,depot:19,tunnel:12,fort:16,hq:39,barracks:26,factory:34,airfield:19,shipyard:20,turret:12,sam:12,uplink:30};
+const BH={garrison:18,econ:30,depot:19,tunnel:12,fort:16,hq:39,barracks:26,factory:34,airfield:19,shipyard:20,coast:12,turret:12,sam:12,uplink:30};
 function lerpA(a,b,t){const d=((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;return a+d*Math.min(1,t);}
 const KINDS=[...Object.keys(BASE),...Object.keys(STRUCT)];
 function shade(hex,f){const n=parseInt(hex.slice(1),16);const r=(n>>16)*f,g=(n>>8&255)*f,b=(n&255)*f;return `rgb(${Math.min(255,r)|0},${Math.min(255,g)|0},${Math.min(255,b)|0})`}

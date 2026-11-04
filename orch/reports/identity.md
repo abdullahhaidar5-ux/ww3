@@ -1,0 +1,8 @@
+# Identity: medals, colour + emblem, colourblind mode, unit guide (2026-11-04)
+
+New module `src/08b-identity.js` (all new UI is built from JS, no page-shell edits); small hooks in 08-ui, 06-view, 07-net, 11-models, `server/src/battle.js`.
+
+- **Medals** (25, Shia first): win with each of the 18 nations; Coffee Shias without losing a tank; Mountain Shias win with a standing Fortress; hold a Fortress 20 min; call a Bunker Buster (a general power, so "first Bunker Buster kill" became "call one in"); win a 1v3 on Hard; Iron Wall (win losing <10 units); finish 10 battles. Judged locally in `showEnd` (never Test Range; wins need 3+ min); stored in localStorage `ww3_medals` with the last 40 battles (social-1103's match history was never merged to main, so this is a small own history). Toast on unlock; Menu > Medals.
+- **Profile** (menu): 12 team colours + nation colour, 10 emblems + nation flag. Shown stamped on building flags, on the loading screen and in the scoreboard. Online: `id:{c,e}` rides in the join presence; the host (and the server, `battle.js`) cleans it and sends `ids` with `start`; cosmetic only, colour clashes are de-duplicated deterministically. Cloudflare battles need a servers-live deploy for the server half; browser-hosted battles work at once.
+- **Colourblind** (Settings): Okabe-Ito team colours from the next battle; per-team shapes on minimap markers and per-team outlines (circle/square/triangle/hexagon/pentagon) on selection rings immediately.
+- **Unit guide** (menu): every unit and building per nation from `stats()/bstats()`: role, cost, HP/speed/range/DPS, "Beats / Loses to" derived from the `VS` damage table.

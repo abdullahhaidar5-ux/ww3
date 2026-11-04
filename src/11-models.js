@@ -33,6 +33,16 @@ RMAP.arty={};RMAP.airlift={};RMAP.jeep={SA:'humvee'};RMAP.raidlead={DW:'hilux'};
 for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k]={};
 for(const f of WESTVEH){RMAP.arty[f]='g6';RMAP.airlift[f]='uh60';for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k][f]='m35';}
 for(const f of EASTVEH){if(f!=='RS'&&f!=='DW')RMAP.arty[f]='msta';RMAP.airlift[f]='mi8';for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k][f]='ural';}
+// Faction-unique helicopters and warships (Objaverse / Sketchfab, CC BY, authors in the menu credits): Russia flies the Mi-28,
+// Egypt the Ka-52, Turkey, Pakistan and Iran an AH-1 Cobra-type gunship; Western navies a Type 45 destroyer (Germany an F123
+// frigate), Russia/China/North Korea/Ukraine/India/Pakistan/Cuba/Iran a Russian-style destroyer; the Shia nations'
+// patrol boats are a camouflaged fast boat. Visual only: the simulation does not know about these.
+Object.assign(RMOD,{ka52:{m:'m_ka52',fit:'z',size:56,tint:'#5a6450',tk:.55},mi28:{m:'m_mi28',fit:'z',size:56},ah1:{m:'m_ah1',fit:'z',size:56},
+  frw:{m:'m_frw',fit:'z',size:118},frg:{m:'m_frg',fit:'z',size:118},fre:{m:'m_fre',fit:'z',size:118},spb:{m:'m_spb',fit:'z',size:42,tint:'#7a8590',tk:.15}});
+Object.assign(RMAP.heli,{RU:'mi28',EG:'ka52',TR:'ah1',PK:'ah1',IR:'ah1'});
+RMAP.ship={};RMAP.boat={IR:'spb',RS:'spb',DW:'spb'};
+for(const f of ['US','IL','TR','KR','SA','AE','EG'])RMAP.ship[f]='frw';RMAP.ship.EU='frg';
+for(const f of ['RU','CN','KP','UA','IN','PK','CU','IR','RS','DW'])RMAP.ship[f]='fre';
 // the nation's own truck model, if it has arrived (AA trucks and rocket launchers are built on it)
 // their paint textures are dark (woodland camo, weathering): brightened so the national paint reads like the other vehicles'
 const TEXB={m_abrams:2,m_merkava:2,m_kf51:1.6,m_msta:2.2,m_ural:1.9,m_m35:2.2,m_oplot:2.2,m_t72:1.3};
@@ -384,7 +394,35 @@ function solRifle(k){const g=new THREE.Group(),bl=gearMat('#1c1d1c'),wd=gearMat(
   const bx=(w,h,l,x,y,z,m,rx)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w*k,h*k,l*k),m);q.position.set(x*k,y*k,z*k);if(rx)q.rotation.x=rx;g.add(q);return q;};
   bx(.42,.56,2.4,0,0,.9,bl);bx(.32,.66,1.5,0,-.12,-1.05,wd,-.12);bx(.26,.74,.36,0,-.58,.95,bl,.22);bx(.3,.9,.42,0,-.6,1.75,mg,-.2);bx(.4,.42,1.5,0,-.02,2.7,wd);
   const br=new THREE.Mesh(new THREE.CylinderGeometry(.1*k,.1*k,1.8*k,6),bl);br.rotation.x=Math.PI/2;br.position.set(0,.04*k,4.3*k);g.add(br);bx(.14,.24,.18,0,.38,3.3,bl);bx(.16,.2,.5,0,.36,.6,bl);return g;}
-function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)return;m.updateWorldMatrix(true,true);const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const V=(x,y,z)=>new THREE.Vector3(x,y,z).applyQuaternion(mq);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});if(!B.head||!B.chest||!B.hips)return;
+// Per-soldier look variety (seeded by unit id + slot, so a soldier always looks the same): 4 variants per nation, each a few
+// cheap low-poly pieces (head cover, goggles, headset, scarf / balaclava, vest, pouches, backpack) that are merged into the
+// head / chest gear meshes below - no extra draw calls. Shia nations get their own looks first.
+const KITV={IR:[['scrimOl','pouch'],['beret','scarf','pouch'],['goggles','headset','pack'],['balaclava','vest','pouch']],
+ RS:[['scarf','pouch'],['bandana','vest'],['headset','pack','pouch'],['balaclava','pouch']],
+ DW:[['pouch'],['pack'],['vest','scarfRed'],['pouch','pack']],
+ W:[['scrimSand','goggles'],['headset','pouch'],['pack','pouch'],['vest','scarfRed']],
+ E:[['pouch'],['pack'],['scrimOl','pouch'],['vest','headset']]};
+const KITF={IR:'IR',RS:'RS',DW:'DW',RU:'E',CN:'E',KP:'E',CU:'E',IN:'E',PK:'E'};
+function kitPieces(fac,vr){return (KITV[KITF[fac]||'W']||KITV.W)[vr&3];}
+function addKitVariant(B,attach,hp,cp,V,k,fac,vr,mq){const L=kitPieces(fac,vr),has=n=>L.indexOf(n)>=0;
+  const mk=(geo,col,x,y,z,sx,sy,sz,g)=>{const o=new THREE.Mesh(geo,gearMat(col));o.position.set(x*k,y*k,z*k);if(sx!==undefined)o.scale.set(sx,sy,sz);g.add(o);return o;};
+  const H=new THREE.Group(),Cg=new THREE.Group(),shia=fac==='IR'||fac==='RS'||fac==='DW';
+  const dark=shia?'#2c2e22':'#3b3d33',olive=shia?'#4f5336':'#566040',sand='#a4916a',cloth=fac==='RS'?'#3a3f2c':'#50533a';
+  // head (origin = middle of the skull)
+  if(has('scrimOl')||has('scrimSand')){mk(new THREE.SphereGeometry(1.1*k,9,5,0,Math.PI*2,0,Math.PI*.52),has('scrimSand')?sand:olive,0,.12,0,1,.9,1.08,H);}
+  if(has('beret')){mk(new THREE.SphereGeometry(1.08*k,9,5,0,Math.PI*2,0,Math.PI*.5),fac==='IR'?'#5a6040':'#2d3224',.15,.22,0,1.05,.36,1.12,H);}
+  if(has('bandana')){mk(new THREE.SphereGeometry(1.0*k,9,5,0,Math.PI*2,0,Math.PI*.5),'#1d1e1a',0,.1,0,1,.8,1.05,H);mk(new THREE.BoxGeometry(.5*k,1.1*k,.5*k),'#1d1e1a',-.2,-.45,-.95,1,1,1,H);}
+  if(has('goggles')){const st=new THREE.TorusGeometry(1.02*k,.07*k,5,12);const t=mk(st,'#1a1a18',0,.05,0,1,1,1.0,H);t.rotation.x=Math.PI/2;mk(new THREE.BoxGeometry(.8*k,.5*k,.2*k),'#26303a',-.42,.2,.98,1,1,1,H);mk(new THREE.BoxGeometry(.8*k,.5*k,.2*k),'#26303a',.42,.2,.98,1,1,1,H);}
+  if(has('headset')){for(const sx of[-1,1]){mk(new THREE.CylinderGeometry(.42*k,.42*k,.28*k,8),'#1d1e1c',sx*1.05,-.15,.05,1,1,1,H).rotation.z=Math.PI/2;}}
+  if(has('balaclava')){mk(new THREE.BoxGeometry(1.7*k,.85*k,.25*k),dark,0,-.55,.92,1,1,1,H);mk(new THREE.CylinderGeometry(.98*k,1.0*k,.7*k,9),dark,0,-.6,0,1,1,1,H);}
+  if(has('scarf')||has('scarfRed')){const t=mk(new THREE.TorusGeometry(.95*k,.26*k,5,10),has('scarfRed')?'#8a3a2c':(fac==='IR'?'#c8c2b0':'#bdb59a'),0,-1.25,.05,1,1,1,H);t.rotation.x=Math.PI/2;}
+  if(H.children.length)attach(B.head,H,hp.clone().add(V(0,1.35*k,0)));
+  // chest
+  if(has('vest')){mk(new THREE.BoxGeometry(2.5*k,1.9*k,1.9*k),shia?'#38402c':'#454a38',0,.2,0,1,1,1,Cg);}
+  if(has('pouch')){for(const x of[-.75,0,.75])mk(new THREE.BoxGeometry(.6*k,.8*k,.45*k),dark,x,-.2,1.05,1,1,1,Cg);}
+  if(has('pack')){mk(new THREE.BoxGeometry(2.0*k,2.4*k,1.0*k),fac==='IR'?'#3f4430':olive,0,.1,-1.15,1,1,1,Cg);mk(new THREE.BoxGeometry(1.7*k,.7*k,.9*k),dark,0,-1.5,-1.1,1,1,1,Cg);}
+  if(Cg.children.length)attach(B.chest,Cg,cp.clone().add(V(0,.2*k,0)));}
+function newSoldierKit(m,fac,kind,key,vr){vr=vr|0;const inner=m.userData.inner;if(!inner)return;m.updateWorldMatrix(true,true);const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const V=(x,y,z)=>new THREE.Vector3(x,y,z).applyQuaternion(mq);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});if(!B.head||!B.chest||!B.hips)return;
   const hp=new THREE.Vector3().setFromMatrixPosition(B.head.matrixWorld),hv=new THREE.Vector3().setFromMatrixPosition(B.hips.matrixWorld),k=Math.max(.5,(hp.y-hv.y)/5.2);
   const cp=new THREE.Vector3().setFromMatrixPosition(B.chest.matrixWorld);
   if(kind==='hero'){const base=cp.clone().add(V(-.15*k,-.95*k,0));solArm(B,'R',base.clone().add(V(-.35*k,-.05*k,1.9*k)),V(-.5,-1,-.2));solArm(B,'L',base.clone().add(V(.35*k,.12*k,4.3*k)),V(.6,-1,-.1));return;}
@@ -406,12 +444,24 @@ function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)re
   // checks every soldier's palms stay on their spots through idle, walk and jog
   {const lc=p=>B.chest.worldToLocal(p.clone());m.userData.rg={b:B.chest,k,g:lc(TR),f:lc(TL),pR:PR,pL:PL};}
   if(fac==='DW'){const g=new THREE.Group(),d=new THREE.Mesh(new THREE.SphereGeometry(.98*k*.82,12,8,0,Math.PI*2,0,Math.PI*.58),gearMat('#d9d0b8'));g.add(d);const t=new THREE.Mesh(new THREE.BoxGeometry(.5*k,1.1*k,1.0*k),gearMat('#c9bfa6'));t.position.set(-.55*k,-.55*k,0);g.add(t);const band=new THREE.Mesh(new THREE.TorusGeometry(.8*k,.09*k,6,14),gearMat('#8a2a24'));band.rotation.x=Math.PI/2;band.position.y=.14*k;g.add(band);attach(B.head,g,hp.clone().add(V(0,1.35*k,0)));g.scale.multiplyScalar(1.15);}/* head bone is at the neck; the skull spans 0..2.19k above it, so the cap sits at 1.35k (was .55k = at the neck) */
-  mergeGear(B,key+'|'+fac+'|'+kind+'|'+k.toFixed(3));}
+  if(kind!=='hero')addKitVariant(B,attach,hp,cp,V,k,fac,vr,mq);
+  mergeGear(B,key+'|'+fac+'|'+kind+'|'+k.toFixed(3)+'|v'+vr);}
 // Massive columns: every soldier was 7 skinned meshes (rifle, magazine and uniform parts, one per material colour) plus
 // 3 kit meshes on its bones - 10 draw calls per soldier in every pass (picture + shadow), ~30 per squad. They are merged
 // into ONE skinned, vertex-coloured mesh per soldier (kit rides its bone as a rigidly skinned part), so a squad costs 3.
 // The merged shape is built once per nation / team colour / unit type and shared by every soldier that looks the same.
 const SOLM={};
+// Distant soldier: the merged soldier mesh is thinned by vertex clustering (nearby vertices snap together, tiny triangles vanish)
+// into a cheap skinned mesh on the same skeleton. Shown instead of the full one when the camera is far (see 06-view), so big
+// crowds cost far fewer vertices to skin and shade. Built once per shape, shared like the full mesh.
+function lowSoldierGeo(g){const pa=g.attributes.position,n=pa.count,ix=g.index.array;g.computeBoundingBox();const bb=g.boundingBox,h=Math.max(.001,bb.max.y-bb.min.y),cs=h/17,map=new Map(),rep=new Int32Array(n),first=[],sum=[];
+  for(let i=0;i<n;i++){const x=pa.getX(i),y=pa.getY(i),z=pa.getZ(i),k=Math.floor((x-bb.min.x)/cs)+','+Math.floor((y-bb.min.y)/cs)+','+Math.floor((z-bb.min.z)/cs);let r=map.get(k);if(r===undefined){r=first.length;map.set(k,r);first.push(i);sum.push([0,0,0,0]);}rep[i]=r;const q=sum[r];q[0]+=x;q[1]+=y;q[2]+=z;q[3]++;}
+  const m=first.length,P=new Float32Array(m*3),idx=[];for(let r=0;r<m;r++){const q=sum[r];P[r*3]=q[0]/q[3];P[r*3+1]=q[1]/q[3];P[r*3+2]=q[2]/q[3];}
+  const seen=new Set();for(let t=0;t<ix.length;t+=3){const a=rep[ix[t]],b=rep[ix[t+1]],c=rep[ix[t+2]];if(a===b||b===c||a===c)continue;const key=[a,b,c].sort((u,v)=>u-v).join('_');if(seen.has(key))continue;seen.add(key);idx.push(a,b,c);}
+  const lo=new THREE.BufferGeometry();lo.setAttribute('position',new THREE.BufferAttribute(P,3));
+  for(const nm of ['color','uv','skinIndex','skinWeight']){const A=g.attributes[nm];if(!A)continue;const sz=A.itemSize,arr=new (nm==='skinIndex'?Uint16Array:Float32Array)(m*sz);for(let r=0;r<m;r++)for(let k=0;k<sz;k++)arr[r*sz+k]=A.getComponent(first[r],k);lo.setAttribute(nm,new THREE.BufferAttribute(arr,sz));}
+  // normals: rebuilt from the thinned faces, so the rounded far soldier still shades smoothly
+  lo.setIndex(new THREE.BufferAttribute(m>65535?new Uint32Array(idx):new Uint16Array(idx),1));lo.computeVertexNormals();return lo;}
 function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false;const sk=[];inner.traverse(o=>{if(o.isSkinnedMesh)sk.push(o);});if(!sk.length)return false;
   const skel=sk[0].skeleton;if(!skel||sk.some(o=>!o.skeleton||o.skeleton.bones.length!==skel.bones.length||o.skeleton.bones.some((b,i)=>b!==skel.bones[i])||Array.isArray(o.material)||!o.geometry.attributes.skinIndex))return false;
   const gear=[];skel.bones.forEach((b,bi)=>{for(const c of b.children)if(c.isMesh&&c.userData.gear&&!c.isSkinnedMesh)gear.push([c,bi]);});
@@ -444,6 +494,8 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     if(tex){const ob=src.onBeforeCompile,ck=src.customProgramCacheKey;mat.onBeforeCompile=(sh,r)=>{if(ob)ob.call(src,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#ifdef USE_MAP\nvec4 sampledDiffuseColor=texture2D(map,vMapUv);if(vMapUv.x<-2.)sampledDiffuseColor=vec4(1.);diffuseColor*=sampledDiffuseColor;\n#endif');};
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
     E=SOLM[key]={geo,mat,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
+  if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}
+  if(E.lo){const lm=new THREE.SkinnedMesh(E.lo,E.mat);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
@@ -619,7 +671,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   if(c&&!MODELS.proto[c.m]){const alt={soldier:'inf',tankE:'tank',tankW:'tank',drone:null,technical:'tank',toontank:'tank'}[c.m];if(alt&&MODELS.proto[alt])c=Object.assign({},c,{m:alt});}
   if(!c||!MODELS.proto[c.m])return null;
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
-  for(const [px,pz] of sq){const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK);else soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+((c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk)||0)+'|'+(T.fac||'')+'|'+e.kind);}catch(err){console.warn('mergeSoldier',err);}}
+  for(const [px,pz] of sq){const VR=Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK,VR);else soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+((c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk)||0)+'|'+(T.fac||'')+'|'+e.kind+'|v'+(SK?VR:0));}catch(err){console.warn('mergeSoldier',err);}}
     if(m.userData.anims&&m.userData.anims.length){const mix=new THREE.AnimationMixer(m.userData.inner);(o.userData.mixers=o.userData.mixers||[]).push({mix,anims:m.userData.anims,cur:null});}}
   o.userData.parts.body=yaw;o.userData.model=true;if(c.m==='soldier'){o.userData.mixers=null;o.userData.walker=true;}
   {const ring=decal(c.squad?'ringS':'ringV',new THREE.Color(T.color));ring.scale.setScalar(c.size);ring.position.y=1.2;if(!['heli','jet'].includes(e.kind))o.add(ring);o.userData.parts.tring=ring;}
@@ -662,7 +714,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
     
     for(const v of [-1,1])bx(L*.2,H*.12,W*.08,rear+fwd*L*.35,H*.5,v*W*.47,'#4d4a3c');
     // national pennant on the rear antenna
-    {const [x,z]=P(ru+fwd*L*.06,W*.3);const fl=new THREE.Mesh(new THREE.PlaneGeometry(H*.75,H*.45,6,1),new THREE.MeshStandardMaterial({map:flagTex(G.teams[e.team].fac),side:THREE.DoubleSide,roughness:.9}));
+    {const [x,z]=P(ru+fwd*L*.06,W*.3);const fl=new THREE.Mesh(new THREE.PlaneGeometry(H*.75,H*.45,6,1),new THREE.MeshStandardMaterial({map:idFlagTex(G.teams[e.team]),side:THREE.DoubleSide,roughness:.9}));
      fl.geometry.translate(-H*.375,0,0);fl.position.set(x,y0+H*.95+H*.82,z);fl.rotation.y=ax==='x'?(fwd>0?0:Math.PI):(fwd>0?-Math.PI/2:Math.PI/2);yaw.add(fl);o.userData.parts.pennant=fl;fl.userData.base=Float32Array.from(fl.geometry.attributes.position.array);}
     
     const m=mesh(B.geo());yaw.add(m);}}
@@ -695,7 +747,7 @@ const BMOD={hq:{slab:1,list:[{m:'b_hq',fit:'xz',size:70,ys:.62,x:6,z:4},{m:'b_ra
 function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.fac)&&BME[e.kind]&&MODELS.proto[BME[e.kind].m])cfg=Object.assign({},cfg,{list:cfg.list.map((q,i)=>i?q:Object.assign({},q,{m:BME[e.kind].m,size:BME[e.kind].size,ys:1}))});if(cfg&&e.kind==='shipyard'&&MEFAC.has(T.fac))cfg={list:cfg.list.filter(q=>q.part).map(q=>Object.assign({},q,{y:4}))};// ME naval base: code-built quay (04-gfx meGeo), keep the crane model
   if(!cfg||!cfg.list.every(q=>MODELS.proto[q.m]))return false;const P=o.userData.parts;
   if(!['turret','sam'].includes(e.kind)){const fg=new THREE.Group(),h2=e.size/2;fg.position.set(-h2+4,0,h2-4);const pole=new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,30,6),new THREE.MeshStandardMaterial({color:0x8a8d90,metalness:.6,roughness:.4}));pole.position.y=15;pole.castShadow=true;fg.add(pole);
-    const fgeo=new THREE.PlaneGeometry(15,9,8,1);fgeo.translate(7.5,0,0);const fl=new THREE.Mesh(fgeo,new THREE.MeshStandardMaterial({map:flagTex(T.fac),side:THREE.DoubleSide,roughness:.85,emissive:new THREE.Color(T.color),emissiveIntensity:.04}));{const tb=new THREE.Mesh(new THREE.BoxGeometry(.9,7,.9),new THREE.MeshStandardMaterial({color:new THREE.Color(T.color),roughness:.6}));tb.position.set(0,26.5,0);fg.add(tb);}fl.position.y=26.5;fl.castShadow=true;fg.add(fl);o.add(fg);P.flag=fl;fl.userData.base=fgeo.attributes.position.array.slice();}
+    const fgeo=new THREE.PlaneGeometry(15,9,8,1);fgeo.translate(7.5,0,0);const fl=new THREE.Mesh(fgeo,new THREE.MeshStandardMaterial({map:idFlagTex(T),side:THREE.DoubleSide,roughness:.85,emissive:new THREE.Color(T.color),emissiveIntensity:.04}));{const tb=new THREE.Mesh(new THREE.BoxGeometry(.9,7,.9),new THREE.MeshStandardMaterial({color:new THREE.Color(T.color),roughness:.6}));tb.position.set(0,26.5,0);fg.add(tb);}fl.position.y=26.5;fl.castShadow=true;fg.add(fl);o.add(fg);P.flag=fl;fl.userData.base=fgeo.attributes.position.array.slice();}
   if(cfg.slab){const s=e.size,B=Bld(),tc='#'+new THREE.Color(T.color).lerp(new THREE.Color('#5a5c54'),.3).getHexString();B.box(s,2.4,s,0,1.2,0,'#a0937c');B.box(s-2,.7,3,0,2.5,s/2-3,tc);B.box(s-2,.7,3,0,2.5,-s/2+3,tc);B.box(3,.7,s-2,s/2-3,2.5,0,tc);B.box(3,.7,s-2,-s/2+3,2.5,0,tc);
     if(s>50){B.cyl(.5,.5,30,6,s/2-4,15,s/2-4,'#2b2d26');B.box(.3,7,11,s/2-4,26.5,s/2-9.5,tc);}
     // Middle Eastern nations: gun and SAM pits get a HESCO ring (open at the back), main buildings blast walls and a sandbag post
@@ -710,24 +762,63 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
 function smoothNorm(g){const P=g.attributes.position,N=g.attributes.normal;if(!N)return;const m=new Map(),key=i=>Math.round(P.getX(i)*20)+','+Math.round(P.getY(i)*20)+','+Math.round(P.getZ(i)*20);
   for(let i=0;i<P.count;i++){const k=key(i);let a=m.get(k);if(!a){a=[0,0,0];m.set(k,a);}a[0]+=N.getX(i);a[1]+=N.getY(i);a[2]+=N.getZ(i);}
   for(let i=0;i<P.count;i++){const a=m.get(key(i)),L=Math.hypot(a[0],a[1],a[2])||1;N.setXYZ(i,a[0]/L,a[1]/L,a[2]/L);}N.needsUpdate=true;}
+/* ---------- Realistic trees: alpha-cut foliage cards (needle sprigs / leaf clusters), muted natural greens (rendering only) ---------- */
+let FOLTEX={};
+function folTex(kind){if(FOLTEX[kind])return FOLTEX[kind];const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d'),R=mulberry(kind==='needle'?5:9),g=()=>{const v=150+R()*105|0;return 'rgb('+v+','+v+','+v+')';};
+  x.lineCap='round';
+  if(kind==='needle'){ // a conifer sprig: a twig with many fine needles
+    x.strokeStyle='rgb(120,120,120)';x.lineWidth=3;x.beginPath();x.moveTo(128,254);x.lineTo(128,6);x.stroke();
+    for(let i=0;i<64;i++){const t=i/63,y=250-t*240,L=(1-t*.78)*108*(.8+R()*.4);for(const sd of [-1,1]){const a=(sd*(.95-.25*t))+(R()-.5)*.25;x.strokeStyle=g();x.lineWidth=2.2-1.1*t;x.beginPath();x.moveTo(128,y);x.lineTo(128+Math.sin(a)*L,y-Math.cos(a)*L*.55);x.stroke();}}}
+  else{ // a leaf cluster: twigs radiating from the bottom with small leaves
+    x.strokeStyle='rgb(110,110,110)';x.lineWidth=2.4;for(let k=0;k<7;k++){const a=(k-3)*.34+(R()-.5)*.15,L=150+R()*80;x.beginPath();x.moveTo(128,252);x.lineTo(128+Math.sin(a)*L,252-Math.cos(a)*L);x.stroke();
+      for(let q=0;q<17;q++){const t=.2+q/17*.8,px=128+Math.sin(a)*L*t,py=252-Math.cos(a)*L*t;for(const sd of [-1,1]){x.fillStyle=g();x.beginPath();x.ellipse(px+sd*7,py+(R()-.5)*8,13+R()*5,5+R()*2.4,sd*.75+a*.4+(R()-.5)*.5,0,7);x.fill();}}}}
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;t.generateMipmaps=true;return FOLTEX[kind]=t;}
+// cards: [x,y,z,yaw,pitch,w,l,centred,droop,r,g,b]; cx,cy,cz: crown centre (cards are lit like a soft ball)
+function folGeo(cards,cx,cy,cz){const n=cards.length,P=new Float32Array(n*12),N=new Float32Array(n*12),U=new Float32Array(n*8),C=new Float32Array(n*12),I=new Uint32Array(n*6);
+  cards.forEach((k,i)=>{const [x,y,z,yaw,pit,w,l,ce,dr,r,g,b]=k,dx=Math.cos(pit)*Math.cos(yaw),dy=Math.sin(pit),dz=Math.cos(pit)*Math.sin(yaw),sx=-Math.sin(yaw)*w/2,sz=Math.cos(yaw)*w/2,o=ce?-l/2:0;
+    const bx=x+dx*o,by=y+dy*o,bz=z+dz*o,tx=bx+dx*l,ty=by+dy*l-dr,tz=bz+dz*l,mx=(bx+tx)/2-cx,my=(by+ty)/2-cy,mz=(bz+tz)/2-cz,ml=Math.hypot(mx,my,mz)||1;
+    P.set([bx-sx,by,bz-sz,bx+sx,by,bz+sz,tx+sx,ty,tz+sz,tx-sx,ty,tz-sz],i*12);
+    for(let q=0;q<4;q++){N[i*12+q*3]=mx/ml*.8;N[i*12+q*3+1]=my/ml*.8+.45;N[i*12+q*3+2]=mz/ml*.8;const sh=q<2?.78:1;C[i*12+q*3]=r*sh;C[i*12+q*3+1]=g*sh;C[i*12+q*3+2]=b*sh;}
+    U.set([0,0,1,0,1,1,0,1],i*8);I.set([i*4,i*4+1,i*4+2,i*4,i*4+2,i*4+3],i*6);});
+  const G2=new THREE.BufferGeometry();G2.setAttribute('position',new THREE.BufferAttribute(P,3));G2.setAttribute('normal',new THREE.BufferAttribute(N,3));G2.setAttribute('uv',new THREE.BufferAttribute(U,2));G2.setAttribute('color',new THREE.BufferAttribute(C,3));G2.setIndex(new THREE.BufferAttribute(I,1));return G2;}
+function folMat(kind){const tm=new THREE.MeshStandardMaterial({map:folTex(kind),vertexColors:true,alphaTest:.42,side:THREE.DoubleSide,roughness:1,metalness:0});weather(tm,.35);
+  const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;').replace('#include <begin_vertex>','#include <begin_vertex>\n{vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/38.,0.,1.);transformed.x+=sin(wt*.9+ip.x*.013+transformed.z*.15)*k*k*1.1;transformed.z+=cos(wt*.7+ip.z*.011+transformed.x*.15)*k*k*.6;}');}};
+  tm.customProgramCacheKey=()=>'folt'+kind;return tm;}
+function folPlace(list,geos,mats2,shadowG,yoff,sx,sy,snow){ // one InstancedMesh per part, same transforms
+  const out=[];const col=new THREE.Color();
+  geos.forEach((g,gi)=>{const im=new THREE.InstancedMesh(g,mats2[gi],list.length);list.forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)+yoff,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*sx,s*sy*(.86+((i*7)%5)*.07),s*sx));im.setMatrixAt(i,TMPM);
+      const j=((i*2654435761)>>>0)/4294967296;col.setHSL(0,0,.8+j*.35);im.setColorAt(i,col);});
+    im.castShadow=gi===0;im.receiveShadow=true;WORLD.add(im);out.push(im);});
+  if(shadowG){const im=new THREE.InstancedMesh(shadowG,SHADOWM||(SHADOWM=new THREE.MeshBasicMaterial()),list.length);list.forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)+yoff,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*sx,s*sy*(.86+((i*7)%5)*.07),s*sx));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.layers.set(1);im.userData.noDepth=true;WORLD.add(im);}
+  return out;}
+function conifer(v,snow,lo){const R=mulberry(v*17+3),B=Bld();B.cyl(.5,1.5,12,6,0,6,0,'#3b3026');const trunk=B.geo().toNonIndexed();trunk.computeVertexNormals();
+  const cards=[],NW=lo?9:15,per=lo?4:6,H=36;
+  for(let k=0;k<NW;k++){const t=k/(NW-1),y=7+t*(H-7),rad=(12.5*Math.pow(1-t,.85)+1.4)*(.92+R()*.16),ph=R()*6.28;
+    for(let q=0;q<per;q++){const yaw=ph+q/per*6.283+(R()-.5)*.5,l=rad*(1.05+R()*.25),sh=.55+t*.5,c=new THREE.Color().setHSL(.255+R()*.07,.2+R()*.1,(.1+t*.06)*(.85+R()*.3));if(snow)c.lerp(new THREE.Color(.8,.84,.88),.25+R()*.3);
+      cards.push([0,y,0,yaw,-.42+t*.5+(R()-.5)*.2,l*.78,l,0,l*.1,c.r*1.2,c.g*1.2,c.b*1.2]);}}
+  for(let q=0;q<3;q++){const c=new THREE.Color().setHSL(.27,.22,.2);cards.push([0,H-3,0,q*2.09,1.25,5,9,0,0,c.r,c.g,c.b]);}
+  return [trunk,folGeo(cards,0,20,0)];}
+function broadleaf(kind,v,lo){const R=mulberry(v*53+11),B=Bld(),bark='#5a4733',oak=kind==='oak',cards=[],cl=()=>{const c=new THREE.Color().setHSL(.18+R()*.07,.26+R()*.1,.14+R()*.07);return c;};
+  if(oak){B.cyl(.9,2.1,18,7,0,9,0,bark);const nb=4;for(let b=0;b<nb;b++){const a=b/nb*6.28+R(),L=9+R()*4,lean=.65;B.cyl(.45,.9,L,5,Math.cos(a)*Math.sin(lean)*L/2,17+Math.cos(lean)*L/2,Math.sin(a)*Math.sin(lean)*L/2,bark,Math.sin(a)*lean,0,-Math.cos(a)*lean);}
+    const N=lo?22:42;for(let i=0;i<N;i++){const a=R()*6.28,u=Math.pow(R(),.55),e=R()*1.5,rr=u*13,x=Math.cos(a)*rr*Math.cos(e*.6),z=Math.sin(a)*rr*Math.cos(e*.6),y=27+Math.sin(e)*u*8-(1-u)*1.5-3,c=cl(),w=7.5+R()*4;
+      cards.push([x,y,z,R()*6.28,(R()-.5)*1.6,w,w*1.05,1,w*.15,c.r,c.g,c.b]);}}
+  else{B.cyl(.8,1.7,16,6,0,8,0,bark);const nb=3+(R()*2|0),tops=[];for(let b=0;b<nb;b++){const a=b/nb*6.28+R()*.6,lean=.55+R()*.25,L=10+R()*6;B.cyl(.4,.75,L,5,Math.cos(a)*Math.sin(lean)*L/2,16+Math.cos(lean)*L/2,Math.sin(a)*Math.sin(lean)*L/2,bark,Math.sin(a)*lean,0,-Math.cos(a)*lean);tops.push([Math.cos(a)*Math.sin(lean)*L,16+Math.cos(lean)*L,Math.sin(a)*Math.sin(lean)*L]);}
+    for(const [tx,ty,tz] of tops)for(let q=0;q<(lo?7:14);q++){const a=R()*6.28,d=q?R()*8:0,c=cl(),w=9+R()*4;cards.push([tx+Math.cos(a)*d,ty+1+R()*2.2-d*.1,tz+Math.sin(a)*d,R()*6.28,(R()-.5)*.55,w,w,1,w*.1,c.r*1.1,c.g*1.1,c.b*.95]);}}
+  const trunk=B.geo().toNonIndexed();trunk.computeVertexNormals();return [trunk,folGeo(cards,0,oak?27:ty0(cards),0)];}
+function ty0(c){let s=0;c.forEach(k=>s+=k[1]);return s/c.length-3;}
 function modelTrees(){if(!MODELS.ready||!G.treePos)return false;const keys=['tree1','tree2','tree3','tree4'].filter(k=>MODELS.proto[k]);if(!keys.length)return false;
   const slopeAt=(x,y)=>Math.hypot(groundH(x+6,y)-groundH(x-6,y),groundH(x,y+6)-groundH(x,y-6))/12;
   const per=keys.map(()=>[]),con=[[],[]];G.treePos.forEach((t,i)=>{if(slopeAt(t[0],t[1])>.35)return;if((G.sceneryPos||[]).some(([sx,sy])=>Math.hypot(t[0]-sx,t[1]-sy)<75))return;const h=Math.sin(t[0]*.004)*Math.cos(t[1]*.005);if(G.map.theme==='snow'||(h>.2&&((i*7)%10)<3))con[i%2].push(t);else per[i%keys.length].push(t);});
-  mats();[0,1].forEach(v=>{if(!con[v].length)return;const R=mulberry(v*17+3),B=Bld();B.cyl(.9,1.5,14,6,0,7,0,'#3d2e20');const tiers=5+v;for(let k=0;k<tiers;k++){const y=10+k*(30/tiers),r=(13-k*(10/tiers))*(.9+R()*.2);const c=new THREE.Color().setHSL(.24+R()*.04,.36+R()*.12,.12+R()*.05+k*.012);if(G.map.theme==='snow')c.lerp(new THREE.Color(.86,.9,.95),k%2?.62:.38);B.cone(r,15-k*1.2,7,0,y+6,0,c,0,R()*3,0);}
-    const g=B.geo().index?B.geo().toNonIndexed():B.geo();{const P=g.attributes.position;for(let i=0;i<P.count;i++){const x=P.getX(i),y=P.getY(i),z=P.getZ(i);if(y<14)continue;const j=Math.sin(x*.9+z*1.3+y*.4)*1.1;P.setXYZ(i,x+j*.6,y,z+j*.6);}}g.computeVertexNormals();smoothNorm(g);
-    const tm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95,metalness:0});weather(tm,.4);const im=new THREE.InstancedMesh(g,tm,con[v].length);
-    con[v].forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y),y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*.95,s*(.85+((i*7)%5)*.08),s*.95));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.receiveShadow=true;WORLD.add(im);});
+  mats();{const lo=gfxLow(),snow=G.map.theme==='snow',tkm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0});[0,1].forEach(v=>{if(!con[v].length)return;const [tr,fo]=conifer(v,snow,lo);
+    folPlace(con[v],[tr,fo],[tkm,folMat('needle')],new THREE.ConeGeometry(10,32,6).translate(0,22,0),0,.95,.95+(v?.08:0),snow);});}
   {const all=[].concat(...per).filter((t,i)=>(i*37)%10<6&&!(G.sceneryPos||[]).some(([sx,sy])=>Math.hypot(t[0]-sx,t[1]-sy)<75));const VAR=3,lists=[[],[],[]],palms=[];all.forEach((t,i)=>{const nearW=Math.abs(G.map.depth(t[0],t[1]))<G.map.hw(t[0])+420;if((nearW&&i%3!==0)||i%7===0)palms.push(t);else lists[i%VAR].push(t);});
    if(palms.length){const R=mulberry(77),B=Bld(),bark='#7a6448';let px=0,py=0,pz=0;for(let k=0;k<8;k++){const ny=py+4.2,nx=px+k*.28;B.cyl(1.05-k*.06,1.2-k*.06,4.4,6,(px+nx)/2,(py+ny)/2,0,k%2?bark:'#6b563c',0,0,-.07*k);px=nx;py=ny;}
      for(let f=0;f<12;f++){const a=f/12*6.283+R()*.3,len=14+R()*5;for(let q=0;q<5;q++){const t=(q+.5)/5,d=t*len,droop=-Math.pow(t,1.7)*10+2.5;const g=new THREE.ConeGeometry(4.2*(1-t*.55),len/5+2,4);g.rotateZ(Math.PI/2);g.scale(1,.3,1);g.rotateY(-a);const c=new THREE.Color().setHSL(.22+R()*.04,.42,.2+t*.05);parts_add(B,g,px+Math.cos(a)*d,py+droop,Math.sin(a)*d,c);}}
      B.sph(1.6,px,py-.5,0,'#5d4a30');
      const g=B.geo().toNonIndexed();g.computeVertexNormals();smoothNorm(g);const tm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.95,side:THREE.DoubleSide});weather(tm,.3);const im=new THREE.InstancedMesh(g,tm,palms.length);
      palms.forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)-.5,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*.95,s*(.9+((i*7)%5)*.06),s*.95));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.receiveShadow=true;WORLD.add(im);}
-   for(let v=0;v<VAR;v++){if(!lists[v].length)continue;const R=mulberry(v*53+11),B=Bld();const bark='#5b4632';
-    B.cyl(.9,1.6,16,6,0,8,0,bark);const nb=3+(R()*2|0),tops=[];for(let b=0;b<nb;b++){const a=b/nb*6.28+R()*.6,lean=.55+R()*.25,L=10+R()*6;const bx=Math.cos(a)*Math.sin(lean)*L/2,bz=Math.sin(a)*Math.sin(lean)*L/2,by=16+Math.cos(lean)*L/2;B.cyl(.45,.75,L,5,bx,by,bz,bark,Math.sin(a)*lean,0,-Math.cos(a)*lean);tops.push([bx*2,16+Math.cos(lean)*L,bz*2]);}
-    for(const [tx,ty,tz] of tops)for(let q=0;q<7;q++){const g=new THREE.IcosahedronGeometry(3+R()*2.6,1);const gp=g.attributes.position;for(let vi=0;vi<gp.count;vi++){const ph=q*1.7+tx;const j=1+.22*Math.sin(gp.getX(vi)*1.9+ph)*Math.cos(gp.getZ(vi)*2.3-ph)+.12*Math.sin(gp.getY(vi)*3.1+ph);gp.setXYZ(vi,gp.getX(vi)*j,gp.getY(vi)*j,gp.getZ(vi)*j);}g.scale(1.45,.5,1.45);const c=new THREE.Color().setHSL(.17+R()*.07,.3+R()*.14,.13+R()*.07);const qa=R()*6.28,qd=q?2+R()*6:0;parts_add(B,g,tx+Math.cos(qa)*qd,ty+.5+R()*2.6-qd*.12,tz+Math.sin(qa)*qd,c);}
-    const g=B.geo().toNonIndexed();g.computeVertexNormals();smoothNorm(g);{const cn=g.attributes.normal,cc=g.attributes.color;if(cc)for(let vi=0;vi<cc.count;vi++){const r=cc.getX(vi),gg=cc.getY(vi),bb=cc.getZ(vi);if(gg>r*1.05&&gg>bb){const ny=cn.getY(vi);const k=ny<-.2?.55:ny>.6?1.12:.85;cc.setXYZ(vi,r*k,gg*k,bb*k*(ny>.6?.9:1));const nx=cn.getX(vi),nz=cn.getZ(vi),L=Math.hypot(nx,ny+.9,nz)||1;cn.setXYZ(vi,nx/L,(ny+.9)/L,nz/L);}}}const tm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0,flatShading:false});weather(tm,.35);{const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.fragmentShader=sh.fragmentShader.replace('#include <dithering_fragment>','#include <dithering_fragment>\n');sh.fragmentShader=sh.fragmentShader.replace('float dh=1.-smoothstep','if(diffuseColor.g>diffuseColor.r*1.02&&vWP.y>14.){float lf=wn(vWP*.95)*.55+wn(vWP*2.6)*.45;diffuseColor.rgb*=.62+.62*smoothstep(.28,.72,lf);diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(1.12,1.05,.78),smoothstep(.55,.8,wn(vWP*.31+3.1))*.6);}float dh=1.-smoothstep');sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;').replace('#include <begin_vertex>','#include <begin_vertex>\n{vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=max(transformed.y-12.,0.)/20.;transformed.x+=sin(wt*.9+ip.x*.013)*k*k*1.2;transformed.z+=cos(wt*.7+ip.z*.011)*k*k*.6;}');}};tm.customProgramCacheKey=()=>'wxtree';}const im=new THREE.InstancedMesh(g,tm,lists[v].length);
-    lists[v].forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)-.5,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*1.05,s*(.85+((i*7)%5)*.07),s*1.05));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.receiveShadow=true;WORLD.add(im);}
+   {const lo=gfxLow(),tkm=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0});for(let v=0;v<VAR;v++){if(!lists[v].length)continue;const oak=v===2,[tr,fo]=broadleaf(oak?'oak':'acacia',v,lo);
+    folPlace(lists[v],[tr,fo],[tkm,folMat('leaf')],oak?new THREE.IcosahedronGeometry(13,0).scale(1,.7,1).translate(0,27,0):new THREE.IcosahedronGeometry(12,0).scale(1,.32,1).translate(0,20,0),-.5,1.05,1.05);}}
    return true;}
   keys.forEach((k,ki)=>{const root=MODELS.proto[k].scene;const n=normScale(root,'y',40);root.updateMatrixWorld(true);const base=new THREE.Matrix4().compose(new THREE.Vector3(-n.cx*n.s,-n.my*n.s,-n.cz*n.s),new THREE.Quaternion(),new THREE.Vector3(n.s,n.s,n.s));
     root.traverse(mm=>{if(!mm.isMesh)return;const tm=mm.material.clone();weather(tm,.5);if(tm.color){tm.color.offsetHSL(.02,-.2,.03);}tm.roughness=1;tm.metalness=0;const im=new THREE.InstancedMesh(mm.geometry,tm,per[ki].length);const local=new THREE.Matrix4().multiplyMatrices(base,mm.matrixWorld);

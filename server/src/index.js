@@ -183,6 +183,12 @@ const battles = env => env.BATTLES;
 const BATTLE_CODE_RE = /^[a-z0-9]{4,8}$/;      // a migrated battle ("-m1") is an ordinary browser-hosted relay room
 const RESERVED_CODES = new Set(['bench', 'budget', 'lobby', 'admin', 'test']);
 const budgetObj = env => env.BUDGET.get(env.BUDGET.idFromName('budget'));
+// a call to the Budget object that never answers (seen right after a server restart) must not hold up a battle for
+// good: picking a battle up after a restart waits on it, and every player's reconnect waited behind that, forever
+// (cfclient flake, 2026-10-29: both pages stuck, nobody took over). After 8 s it counts as failed.
+const BUDGET_WAIT_MS = 8000;
+const budgetCall = (env, url, init) => Promise.race([budgetObj(env).fetch(url, init).then(r => r.json()),
+  new Promise((_, rej) => setTimeout(() => rej(new Error('budget timeout')), BUDGET_WAIT_MS))]);
 const turnConfigured = env => !!(env.TURN_KEY_ID && env.TURN_KEY_API_TOKEN);
 
 // Cloudflare TURN (Realtime > TURN Server): set TURN_KEY_ID and TURN_KEY_API_TOKEN as secrets on this Worker.
@@ -245,19 +251,19 @@ class Usage {
   async report(extra) {
     const u = this.take();
     if (!u.req && !u.gbs && !extra) return;
-    try { this.setStatus(await (await budgetObj(this.env).fetch('https://budget/add', { method: 'POST', body: JSON.stringify({ ...u, ...extra }) })).json()); } catch (e) {}
+    try { this.setStatus(await budgetCall(this.env, 'https://budget/add', { method: 'POST', body: JSON.stringify({ ...u, ...extra }) })); } catch (e) {}
   }
   // today's use as of the last answer from the Budget object (0..1+)
   pct() { return this.status ? Math.max(this.status.reqPct, this.status.gbsPct) / 100 : 0; }
   // claim one of the MAX_BATTLES battle slots (key: the battle's code); false = all taken
   async claim(key) {
-    try { const s = await (await budgetObj(this.env).fetch('https://budget/claim', { method: 'POST', body: JSON.stringify({ bat: key }) })).json(); this.setStatus(s); return s.claimed === true; } catch (e) { return false; }
+    try { const s = await budgetCall(this.env, 'https://budget/claim', { method: 'POST', body: JSON.stringify({ bat: key }) }); this.setStatus(s); return s.claimed === true; } catch (e) { return false; }
   }
   setStatus(s) { if (s && typeof s.reqPct === 'number') { this.status = s; this.statusAt = Date.now(); } }
   // share of today's free allowance used (0..1+), refreshed at most every 5 minutes per object (one request)
   async used() {
     if (!this.status || Date.now() - this.statusAt > SWEEP_MS) {
-      try { this.setStatus(await (await budgetObj(this.env).fetch('https://budget/status')).json()); } catch (e) {}
+      try { this.setStatus(await budgetCall(this.env, 'https://budget/status')); } catch (e) {}
     }
     return this.status ? Math.max(this.status.reqPct, this.status.gbsPct) / 100 : 0;
   }
@@ -420,7 +426,7 @@ const str = (v, n) => typeof v === 'string' ? v.slice(0, n) : undefined;
 const int = (v, lo, hi) => typeof v === 'number' && isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : undefined;
 function cleanGame(g) {
   if (!g || typeof g !== 'object' || typeof g.c !== 'string' || !CODE_RE.test(g.c)) return null;
-  const o = { c: g.c, f: str(g.f, 4), s: g.s === 'full' ? 'full' : 'open', n: int(g.n, 0, 16), m: str(g.m, 24), mx: int(g.mx, 1, 16), cf: g.cf ? 1 : undefined, pw: g.pw ? 1 : undefined };
+  const o = { c: g.c, f: str(g.f, 4), s: g.s === 'full' ? 'full' : 'open', n: int(g.n, 0, 16), m: str(g.m, 24), mx: int(g.mx, 1, 16), cf: g.cf ? 1 : undefined, pw: g.pw ? 1 : undefined, sp: g.sp ? 1 : undefined, ns: g.ns ? int(g.ns, 0, 8) : undefined };
   for (const k in o) if (o[k] === undefined) delete o[k];
   return o;
 }
