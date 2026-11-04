@@ -241,6 +241,10 @@ async function main() {
     say(`friend reconnected via ${r.via} (room gen ${r.gen}); its side has ${r.own} units/buildings (had ${own0})`);
     if (r.via !== 'wsb' || r.gen !== 0) fail('the friend reconnected somewhere other than the Cloudflare battle');
     if (r.own < own0 * 0.6) fail('the friend lost its army on reconnecting');
+    // the full state, not just a head count: its side matches the server's own record of the battle, and both pages
+    // agree on everything both of them see (a reconnecting player must not keep stale or missing units)
+    await tick(90);   // a checkpoint taken after the reconnect is with the standby page
+    await syncCheck('after the friend reconnected');
   }
 
   // ---- 5. server blip: restart with the same stored data ----
