@@ -110,6 +110,10 @@ export class BattleHost {
   presence(id, p) {
     if (!p || typeof p !== 'object') return;
     const P = this.players.get(id); P.pres = p;
+    if (p.hi && p.hi.id && typeof p.hi.id === 'object') {   // cosmetic only: the player's colour + emblem, cleaned here and sent with 'start'
+      const q = p.hi.id, c = typeof q.c === 'string' && /^#[0-9a-fA-F]{6}$/.test(q.c) ? q.c.toLowerCase() : '', e = typeof q.e === 'string' && /^[a-z]{3,10}$/.test(q.e) ? q.e : '';
+      P.idc = c || e ? { c, e } : null;
+    }
     this.sim.pres(id, p, (peer, by, f, tok) => this.hello(peer, f, tok));
     // this player's loading screen has closed: noted for their side (a page that reconnected keeps its side)
     if (p.rd) { P.rd = 1; if (this.phase === 'battle') { const k = this.sim.teamOf(id); if (k >= 0) this.rd[k] = 1; } }
@@ -222,8 +226,9 @@ export class BattleHost {
     const seed = this.seed != null ? this.seed : (Math.random() * 1e9) | 0;
     // picked start spots (null when everyone is on Random): sent with every start, kept for restarts
     const st = this.sim.stClean([...this.order.map(id => this.players.get(id).st), ...ais.map(a => a.st)], facs.length), sp = st ? { st } : {};
+    const ids = [...this.order.map(id => this.players.get(id).idc || 0), ...ais.map(() => 0)];
     this.facs = facs; this.si = { seed, facs, map: this.map, tm, w: this.w | 0, code: this.code, ...sp };
-    this.order.forEach((id, i) => this.emit('start', { pv: st ? this.sim.pvs : this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, sv: 1, ...sp }));
+    this.order.forEach((id, i) => this.emit('start', { pv: st ? this.sim.pvs : this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, sv: 1, ids, ...sp }));
     this.flush();
     this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code, ...sp });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
