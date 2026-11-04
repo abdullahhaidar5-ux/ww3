@@ -5110,6 +5110,8 @@ const SPEC={US:['hero',{name:'Delta Operator',mark:1}],TR:['mortar',{name:'Kale 
   CN:['commissar',{name:'PLA Political Commissar'}],KP:['hacker',{}],KR:['cbr',{name:'K-Counter-Battery Radar'}],EG:['saka',{}],CU:['guer',{name:'Guerrilla Ambush Squad'}],
   RS:['mortar',{name:'Mountain Rocket Team',rocket:true,rng:360,dmg:13.5,rof:4.2,splash:46,ripple:4,camo:1}],DW:['raidlead',{}]};
 for(const k in SPEC){const F=FACTIONS[k];if(!F)continue;const [kind,o]=SPEC[k];F.special=kind;F.units=F.units||{};F.units[kind]=Object.assign({},F.units[kind]||{},o);}
+// Electronic warfare beyond RU: nations with a real EW arm can also build the jamming/spoof truck from the Factory (same stats, max 2, General rank gate in the UI).
+for(const [k,nm] of [['US','AN/ULQ EW Vehicle'],['CN','PLA EW Jamming Truck'],['IR','IRGC EW Truck'],['IL','IDF EW Truck']]){const F=FACTIONS[k];if(!F||F.special==='ew')continue;F.extra=[...(F.extra||[]),'ew'];F.units=F.units||{};F.units.ew=Object.assign({},F.units.ew||{},{name:nm});}
 const SPECIAL_TIP={atgm:()=>'Long-range wire-guided anti-tank missiles: outranges tanks, but thin-skinned. Keep it behind your armour.',saka:()=>'Elite fast-moving commandos with grenades that hurt clustered infantry and garrisons.',hero:u=>u.mark?'Stealthed commando. Plants charges on buildings, and every target it hits is laser-marked: all your forces do 25% more damage to it for 6 seconds.':u.demo?'Stealthed commando. Right-click an enemy building to plant explosives.':'Stealthed sniper. Picks off infantry from very long range.',
   mortar:u=>u.ripple?'Hidden rocket launchers: fire a ripple of 4 rockets that blankets an area, then reload. Hide when standing still. Cannot fire at close range.':u.droneSpot?'Indirect fire from long range, devastating against infantry in the open. Drone-guided: 40% more range against targets a friendly drone can see. Cannot fire at close range.':'Indirect fire from long range: devastating against infantry in the open. Cannot fire at close range.',recon:u=>'Unarmed, hides when still. Sees 520 metres and marks every enemy near it: your forces do 25% more damage to marked targets.',
   officer:u=>'Nearby infantry do 20% more damage and can\'t be suppressed.',medic:u=>u.revive?'Heals nearby infantry and vehicles, and saves the wounded: about a third of infantry killed near the medics return to the fight 8 seconds later.':'Heals nearby infantry and vehicles.',commissar:u=>'Nearby infantry fire 25% faster and can\'t be suppressed.',
@@ -5941,6 +5943,8 @@ let G=null,MODE='single',ME=0;
 // then plays it on this screen; it is missing on a server.
 function FXE(type,args,own){if(MODE==='host'&&G&&G.out){const v=[type,...args];if(own!=null)v.own=own;G.out.push(v);}if(typeof fxPlay==='function')fxPlay(type,args);}
 function log(team,msg,kind){FXE('log',[team,msg,kind||'']);}
+// public headline for the news ticker (host-broadcast to every player; view-only, nothing in the simulation reads it)
+function pubNews(k,a,b,tx){if(MODE==='host')FXE('hl',[k,a,b==null?-1:b,tx||'']);}
 /* ---------- match stats (counting only: nothing here feeds back into the battle) ----------
    T.st per side: ku/kb enemy units/structures destroyed, lb own structures lost, vd/vl value destroyed/lost, sp money
    spent (net of cancels), got money received from allies, c0 starting money, fk time of first kill, bk/bn the unit type
@@ -5950,12 +5954,13 @@ function stOf(T){return T&&(T.st||(T.st=stNew()));}
 function stSp(T,n){const s=stOf(T);s.sp+=n||0;}
 function stKill(T,e,val,src){const s=stOf(T);if(e.isB)s.kb++;else s.ku++;s.vd+=val||0;if(s.fk<0)s.fk=G.t;if(src&&!src.isB&&src.s){src.kc=(src.kc||0)+1;if(src.kc>s.bn){s.bn=src.kc;s.bk=src.kind;}}}
 function stLost(e){const T=e&&e.team!=null&&G.teams[e.team];if(!T)return;const s=stOf(T);if(e.isB)s.lb++;s.vl+=(e.s&&e.s.cost)||0;}
-function stSample(f){if(!G||!G.teams)return;if(!f&&G.stT!=null&&G.t<G.stT+9.99)return;G.stT=G.t;const n=G.teams.map(()=>0),v=G.teams.map(()=>0);
+function stDt(){const T=G.teams[0],s=T&&T.st;return s&&s.dt||10;}
+function stSample(f){if(!G||!G.teams)return;if(!f&&G.stT!=null&&G.t<G.stT+stDt()-.01)return;G.stT=G.t;const n=G.teams.map(()=>0),v=G.teams.map(()=>0);
   for(const e of G.ents){if(e.dead||e.isB||e.team==null||e.team<0||!e.s||e.civ||e.inTun)continue;if(n[e.team]==null)continue;n[e.team]++;v[e.team]+=e.s.cost||0;}
-  G.teams.forEach((T,i)=>{const s=stOf(T);if(n[i]>s.pk)s.pk=n[i];if(s.ar.length<720)s.ar.push(Math.round(v[i]/100));});}
-function endStats(w){const N=G.teams.length;return{v:1,t:Math.round(G.t),w,dt:10,p:G.teams.map(T=>{const s=stOf(T),c0=s.c0!=null?s.c0:3000;
+  G.teams.forEach((T,i)=>{const s=stOf(T);if(n[i]>s.pk)s.pk=n[i];if(s.ar.length>=720){const h=[];for(let k=0;k+1<s.ar.length;k+=2)h.push(Math.round((s.ar[k]+s.ar[k+1])/2));s.ar=h;s.dt=(s.dt||10)*2;}else s.ar.push(Math.round(v[i]/100));});}
+function endStats(w){const N=G.teams.length;return{v:1,t:Math.round(G.t),w,dt:stDt(),p:G.teams.map(T=>{const s=stOf(T),c0=s.c0!=null?s.c0:3000;
   let pk='',pn=0,pt=0;for(const k in s.pw){pt+=s.pw[k];if(s.pw[k]>pn){pn=s.pw[k];pk=k;}}
-  return{f:T.fac,c:T.color,tm:T.tm,ai:T.ai?1:0,b:T.built|0,lu:Math.max(0,(T.lost|0)-s.lb),lb:s.lb,ku:s.ku,kb:s.kb,
+  return{f:T.fac,n:(typeof NET!=='undefined'&&NET.pnames&&NET.pnames[T.id]?String(NET.pnames[T.id]).slice(0,24):undefined),c:T.color,tm:T.tm,ai:T.ai?1:0,b:T.built|0,lu:Math.max(0,(T.lost|0)-s.lb),lb:s.lb,ku:s.ku,kb:s.kb,
     me:Math.max(0,Math.round((T.credits||0)-c0+s.sp+(T.gave||0)-s.got)),ms:Math.round(s.sp),r:T.rank|0,ta:Math.round(T.out&&s.out!=null?s.out:G.t),
     vd:Math.round(s.vd),vl:Math.round(s.vl),fk:s.fk<0?-1:Math.round(s.fk),bk:s.bk,bn:s.bn,pk,pn,pt,ap:s.pk,out:T.out?1:0};}),a:G.teams.map(T=>stOf(T).ar.slice())};}
 // Battle over: the host tells the clients right away; showEnd (08-ui) shows the result screen in a browser.
@@ -6563,7 +6568,7 @@ function gprTick(dt){G.gprT=(G.gprT||0)-dt;if(G.gprT>0)return;G.gprT=.5;let any=
     for(const r of G.ents){if(r.dead||!r.isB||r.team!==T.id||r.built<1||(r.kind!=='hq'&&r.kind!=='uplink')||r.dis>G.t)continue;if(Math.hypot(r.x-e.x,r.y-e.y)<=GPR_R){e.detT=Math.max(e.detT||0,G.t+1);break;}}}}}
 function usePower(team,key,x,y){const ok=usePower0(team,key,x,y);if(ok&&G.teams[team]){const s=stOf(G.teams[team]);s.pw[key]=(s.pw[key]||0)+1;}return ok;}
 function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T.pw[key];if(!P0||P0.passive||!w||w.cd>0)return false;if(key==='bb'&&(G.t<300||T.credits<P0.cash)){log(team,G.t<300?'Bunker Buster is not available in the first 5 minutes.':'Bunker Buster costs $'+P0.cash+'.','w');return false;}const L=Math.max(1,Math.min(3,w.lv||1)),M=PLV[L-1],P=Object.assign({},P0,{lv:L,M,cd:Math.round(P0.cd*PCD[L-1]),r:P0.r?Math.round(P0.r*(1+.2*(L-1))):P0.r});
-  if(key==='nat'){if(!natPower(team,P,x,y))return false;w.cd=P.cd;log(team,`${P.name}!`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} used ${P.name}.`,'w');return true;}
+  if(key==='nat'){if(!natPower(team,P,x,y))return false;w.cd=P.cd;log(team,`${P.name}!`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} used ${P.name}.`,'w');pubNews('pow',team,-1,P.name);return true;}
   const dur=(25+10*(L-1))*(P.tm||1);if(P.fx)gpowFx(team,P,x,y,dur);
   if(key==='recon'){T.reveals.push({x,y,r:P.r,t:dur});FXE('ping',[x|0,y|0,P.r],team);}
   else if(key==='barrage'){const nS=Math.max(3,Math.round(10*M*(P.nm||1)));for(let i=0;i<nS;i++){const a=rnd(0,6.28),r=rnd(0,P.r);addStrike(x+Math.cos(a)*r,y+Math.sin(a)*r,1.5+i*.3*Math.min(1,10/nS*1.2),60,Math.round(230*(P.dm||1)),team,'bar');}for(const O of G.teams)if(O.id!==team&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<P.r+300))log(O.id,'Warning: incoming artillery barrage!','w');}
@@ -7055,7 +7060,7 @@ const OILNB=[];let OIL_HERE=[];
 function updOil(dt){const N=G.teams.length;const here=OIL_HERE.length===N?OIL_HERE:(OIL_HERE=new Array(N).fill(0));for(const o of G.oil){if(o.cp.length!==N)o.cp=new Array(N).fill(0);here.fill(0);for(const e of (G.hash?nearby(o.x,o.y,70,OILNB):G.ents)){if(e.dead||e.isB||e.s.dom!=='ground'||e.kind==='harv')continue;if(Math.abs(e.x-o.x)<60&&Math.abs(e.y-o.y)<60&&Math.hypot(e.x-o.x,e.y-o.y)<60)here[e.team]++;}
   const present=[];for(let t=0;t<N;t++)if(here[t])present.push(t);
   if(o.dead){o.burn=Math.max(0,o.burn-dt);if(present.length&&present.every(q=>ally(q,present[0]))){const t=present[0];o.cp[t]+=dt;if(o.cp[t]>=12){o.dead=false;o.hp=o.max*.4;o.owner=t;o.cp=o.cp.map(()=>0);log(t,'Oil derrick repaired and captured.','g');}}else for(let t=0;t<N;t++)if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);continue;}
-  for(let t=0;t<N;t++){if(here[t]&&present.every(q=>ally(q,t))&&!ally(o.owner,t)){o.cp[t]+=dt;if(o.cp[t]>=6){const prev=o.owner;o.owner=t;o.cp=o.cp.map(()=>0);log(t,'Oil derrick captured.','g');if(prev>=0&&prev!==t)log(prev,'An oil derrick was captured by the enemy!','w');}}else if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);}
+  for(let t=0;t<N;t++){if(here[t]&&present.every(q=>ally(q,t))&&!ally(o.owner,t)){o.cp[t]+=dt;if(o.cp[t]>=6){const prev=o.owner;o.owner=t;o.cp=o.cp.map(()=>0);log(t,'Oil derrick captured.','g');if(prev>=0&&prev!==t){log(prev,'An oil derrick was captured by the enemy!','w');pubNews('oil',t,prev);}}}else if(!here[t])o.cp[t]=Math.max(0,o.cp[t]-dt*.5);}
   if(o.hp<o.max&&G.t-(o.hit??-99)>8)o.hp=Math.min(o.max,o.hp+o.max*.01*dt);
   if(o.owner>=0){o.inc+=dt;if(o.inc>=2){o.inc=0;const T=G.teams[o.owner];T.credits+=Math.round(14*(T.F.mods.oil||1)*(G.bs||1)*incMul(T));}}}
   econTick(dt);}
@@ -7792,7 +7797,10 @@ function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.
   if(gr&&(s>=20||big)&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9)){if(FIRES.length>=10)FIRES.shift();FIRES.push({x,y,g,t:0,d:big?9:rnd(4,6.5),r:Math.min(30,s*.45),big:!!big,acc:0});}
   if(s>12&&LIGHTS.length){const L=LIGHTS[lightI++%LIGHTS.length];L.position.set(x,g+20,y);L.intensity=(big?7:3.2)*WXFX*LUX;L.distance=big?600:300;L.userData.d=big?.8:.35;L.userData.t=0;}
   if(inView(x,y,.3)){if(s>14)shake=Math.min(18,shake+s/(big?5:13));if(big)flash=Math.min(.2,flash+.1);}}
+// timers for effects: ones started while the kill-cam replay runs are dropped if the replay has already ended
+function fxLater(fn,ms){const rp=typeof KC!=='undefined'&&KC.on&&KC.R?KC.R:null;return setTimeout(()=>{if(rp&&KC.R!==rp)return;fn();},ms);}
 const FXH={
+  hl(k,a,b,tx){if(typeof tkPublic==='function')tkPublic(k,a,b,tx);},
   muz(x,y,h,a,s){sfxShot(x,y,s);if(s>=13){const gh=groundH(x,y),ca=Math.cos(a),sa=Math.sin(a);for(let i=0;i<10;i++){const b=a+rnd(-1.3,1.3),v=rnd(30,90);part({x:x+ca*4,y:y+sa*4,h:h+rnd(-1,2),vx:Math.cos(b)*v+ca*40,vy:Math.sin(b)*v+sa*40,vh:rnd(4,18),f:.25,rise:rnd(6,14),c:i%3?C_SMOKE:[.62,.6,.56],c2:[.55,.53,.5],ck:.3,s:rnd(8,13),g:16,d:rnd(1.8,2.8),a:.62});}for(let i=0;i<12;i++){const b=rnd(0,6.28),v=rnd(40,80);part({x,y,h:gh+2,vx:Math.cos(b)*v,vy:Math.sin(b)*v,f:.1,c:C_DUST,s:rnd(5,8),g:10,d:rnd(.8,1.3),a:.35});}part({x:x+ca*8,y:y+sa*8,h,s:s*1.9,d:.08,add:true,c:[3.2,1.8,.6]});}// big guns: a hot core, a flame tongue down the barrel and two side jets from the muzzle brake, sized to the tank
     // rather than one fuzzy ball bigger than the vehicle
     if(s>=13){const ca=Math.cos(a),sa=Math.sin(a);part({x,y,h,s:s*1.5,d:.06,add:true,c:[3.2,2.4,1.2]});part({x:x+ca*s*.8,y:y+sa*s*.8,h,s:s*1.15,d:.05,add:true,c:[2.8,1.5,.5]});
@@ -7806,7 +7814,7 @@ const FXH={
     else if(h2<10){if(ricoHit(x2,y2))ricochet(x1,y1,x2,y2);else if(Math.random()<.4)part({x:x2,y:y2,h:groundH(x2,y2)+1,vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(10,30),c:C_DUST,s:3,g:6,d:.4,a:.6});}},
   salvo(x,y,h,tx,ty,ang){const sx=Math.cos(ang),sy=Math.sin(ang),px=-sy,py=sx;
     for(let i=0;i<3;i++){const side=i%2?1:-1,ox=x+px*side*5,oy=y+py*side*5,ix=tx+rnd(-18,18)+sx*rnd(-10,20),iy=ty+rnd(-18,18)+sy*rnd(-10,20);const len=Math.max(1,Math.hypot(ix-ox,iy-oy));VPROJ.push({x:ox,y:oy,h,sx:ox,sy:oy,sh:h,tx:ix,ty:iy,th:groundH(ix,iy)+1,spd:520,wpn:'missile',rocket:1,len,p:-i*55,vis:1});}
-    for(let i=0;i<6;i++){const k=i/5,gx=tx-sx*40+sx*80*k+rnd(-8,8),gy=ty-sy*40+sy*80*k+rnd(-8,8);setTimeout(()=>{TRACERS.push({a:[x,h-3,y],b:[gx,groundH(gx,gy)+1,gy],t:0,d:.09,c:[3,1.9,.7]});part({x:gx,y:gy,h:groundH(gx,gy)+2,vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(20,50),c:C_DUST,s:rnd(3,5),g:8,d:rnd(.5,.9),a:.55});part({x:gx,y:gy,h:groundH(gx,gy)+2,add:true,c:C_SPARK,s:2.2,d:.08});},80+i*55);}},
+    for(let i=0;i<6;i++){const k=i/5,gx=tx-sx*40+sx*80*k+rnd(-8,8),gy=ty-sy*40+sy*80*k+rnd(-8,8);fxLater(()=>{TRACERS.push({a:[x,h-3,y],b:[gx,groundH(gx,gy)+1,gy],t:0,d:.09,c:[3,1.9,.7]});part({x:gx,y:gy,h:groundH(gx,gy)+2,vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(20,50),c:C_DUST,s:rnd(3,5),g:8,d:rnd(.5,.9),a:.55});part({x:gx,y:gy,h:groundH(gx,gy)+2,add:true,c:C_SPARK,s:2.2,d:.08});},80+i*55);}},
   pj(x,y,h,tx,ty,th,spd,wpn,rocket){const len=Math.max(1,Math.hypot(tx-x,ty-y));VPROJ.push({x,y,h,sx:x,sy:y,sh:h,tx,ty,th,spd,wpn,rocket,len,p:0});},
   boom(x,y,s,big){boomFX(x,y,s,big);},
   toss(id,vh){const o=OBJ.get(id);if(o)o.userData.toss={h:0,vh,sp:(Math.random()<.5?-1:1)*rnd(4,9),r:0};},
@@ -7821,7 +7829,7 @@ const FXH={
     for(let q=0;q<26;q++)part({x:sx+rnd(-10,10),y:sy+rnd(-10,10),h:sh-4+rnd(0,6),vx:rnd(-60,60),vy:rnd(-60,60),vh:rnd(5,30),c:C_SMOKE,s:rnd(10,18),g:-2,d:rnd(2.5,4.5),a:.6,rise:4});
     for(let q=0;q<10;q++)part({x:sx,y:sy,h:sh+rnd(0,10),vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(20,60),add:true,c:C_FIRE2,s:rnd(5,9),d:rnd(.2,.4)});},
   die(id,x,y,ki,isB,team){const kind=KINDS[ki],o=OBJ.get(id);const rot=o?o.rotation.y:0;
-    if(isB){boomFX(x,y,40,true,10);chunks(x,y,STRUCT[kind].size,'#8a8478',10);for(let i=0;i<5;i++)setTimeout(()=>boomFX(x+rnd(-35,35),y+rnd(-35,35),18,false,rnd(0,20)),i*180);rubble(x,y,STRUCT[kind].size,o);}
+    if(isB){boomFX(x,y,40,true,10);chunks(x,y,STRUCT[kind].size,'#8a8478',10);for(let i=0;i<5;i++)fxLater(()=>boomFX(x+rnd(-35,35),y+rnd(-35,35),18,false,rnd(0,20)),i*180);rubble(x,y,STRUCT[kind].size,o);}
     else{const s=BASE[kind];if(s.armor==='light'&&s.dom==='ground'){for(let i=0;i<6;i++)part({x,y,h:groundH(x,y)+3,vx:rnd(-30,30),vy:rnd(-30,30),c:C_DUST,s:rnd(4,7),g:10,d:rnd(.5,.9),a:.6});}
       else if(kind==='drone')boomFX(x,y,16,false,unitH({s,x,y,id:0}));else{const air=s.dom==='air';boomFX(x,y,air?18:s.r*1.5,false,air&&o?o.position.y-groundH(x,y):0);if(o&&!air){const P=o.userData.parts||{};if(P.turret&&s.armor==='heavy'&&Math.random()<.45&&inView(x,y,.2)){const tu=P.turret;o.updateMatrixWorld(true);const wp=new THREE.Vector3(),wq=new THREE.Quaternion();tu.getWorldPosition(wp);tu.getWorldQuaternion(wq);tu.parent.remove(tu);tu.position.copy(wp);tu.quaternion.copy(wq);if(typeof burntMat==='function')tu.traverse(m=>{if(m.isMesh&&m.material&&!Array.isArray(m.material))m.material=burntMat(m.material);});SCN.add(tu);const a=Math.random()*6.28;DEBRIS.push({m:tu,vx:Math.cos(a)*rnd(15,45),vz:Math.sin(a)*rnd(15,45),vh:rnd(70,120),wx:rnd(-4,4),wy:rnd(-5,5),wz:rnd(-4,4),t:0,rest:0});for(let q=0;q<14;q++)part({x,y,h:wp.y,vx:rnd(-40,40),vy:rnd(-40,40),vh:rnd(30,90),add:true,c:C_FIRE2,s:rnd(4,7),d:rnd(.3,.6)});}if(WRECKQ.length<6)WRECKQ.push([o,x,y]);}}}
     if(o&&!isB&&BASE[kind].armor==='light'&&BASE[kind].dom==='ground'&&o.userData.model&&o.userData.parts.body){OBJ.delete(id);const P=o.userData.parts;if(P.tring)P.tring.visible=false;o.userData.walker=false;
@@ -7864,7 +7872,8 @@ function flagGeo(){if(FLAGG)return FLAGG;const pole=new THREE.CylinderGeometry(.
 function flagFX(x,y,team,dur){for(const f of FLAGS)if(f.team===team&&f.x===x&&f.y===y){f.left=Math.max(f.left,dur);return;}
   const F=flagGeo(),g=new THREE.Group(),pm=new THREE.Mesh(F.pole,F.mPole),tm=new THREE.Mesh(F.tip,F.mTip),cm=new THREE.Mesh(F.cloth,F.mCloth);pm.castShadow=cm.castShadow=true;g.add(pm,tm,cm);
   g.position.set(x,groundH(x,y)-30,y);g.rotation.y=-(((x*7+y*13)%628)/100);SCN.add(g);FLAGS.push({g,x,y,team,left:dur,t:0,G0:G});if(FLAGS.length>24){const o=FLAGS.shift();SCN.remove(o.g);}}
-function flagTick(dt){if(!FLAGS.length)return;let any=false;
+let FLAGT=null;
+function flagTick(rdt){if(!FLAGS.length){FLAGT=null;return;}let any=false;const gn=G?G.t:0,dt=FLAGT!=null?Math.max(0,Math.min(.25,gn-FLAGT)):0;FLAGT=gn;   // fade runs on game time: a paused battle holds the flags
   for(let i=FLAGS.length-1;i>=0;i--){const f=FLAGS[i];f.t+=dt;f.left-=dt;if(f.left<=-1.2||f.G0!==G){SCN.remove(f.g);FLAGS.splice(i,1);continue;}
     const up=Math.min(1,f.t/.5),dn=f.left<0?Math.min(1,-f.left/1.2):0,k=up*(1-dn);f.g.position.y=groundH(f.x,f.y)-30*(1-k*k*(3-2*k));f.g.visible=k>.02;any=true;}
   if(!any||!FLAGG)return;const P=FLAGG.cloth.attributes.position,A=P.array,B=FLAGG.base,t=performance.now()/1000;
@@ -8569,6 +8578,7 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   NET.ais=NET.ais||[];if(NET.lobby.length+1+NET.ais.length>mx)NET.ais.splice(Math.max(0,mx-1-NET.lobby.length));
   if(NET.lobby.length+1>mx&&!cfb){const drop=NET.lobby.splice(mx-1);for(const p of drop)NET.game.emit('lobby',{n:0,to:p.peer,full:1}).catch(()=>{});}
   let names={};try{if(NET.user){const ids=NET.lobby.map(p=>p.by).filter(Boolean);if(ids.length)names=await NET.user.profiles(ids);}}catch(e){}
+  NET.pnames={};NET.lobby.forEach((p,k)=>{const n=p.by&&names[p.by]&&names[p.by].name;if(n)NET.pnames[k+1]=n;});
   const nh=NET.lobby.length+1,nn=nh+NET.ais.length;NET.tm=(NET.tm||[]).slice(0,nh);while(NET.tm.length<nh)NET.tm.push(NET.tm.length%Math.max(2,nn));const tmAll=lobbyTeams();const teamsOk=new Set(tmAll).size>1;
   const E=(t,c,txt)=>{const d=document.createElement(t);if(c)d.className=c;if(txt!=null)d.textContent=txt;return d;};
   const el=$('mpstatus');el.innerHTML='';const L=E('div','lob');
@@ -9136,11 +9146,11 @@ function esM(n){n=Math.round(n||0);return '$'+(n>=100000?Math.round(n/1000)+'k':
 function esFlag(f){try{const t=flagTex(f);return t&&t.image||null;}catch(e){return null;}}
 function esUnit(f,k){try{return stats(f,k).name;}catch(e){return k||'';}}
 function esPow(f,k){try{const P=powInfo(k,f);return P&&P.name||k;}catch(e){return k||'';}}
-function esName(p){const F=FACTIONS[p.f];return F?F.name:String(p.f||'?');}
+function esName(p){const F=FACTIONS[p.f];return p.n||(F?F.name:String(p.f||'?'));}
 function esWin(S,i){const w=S.w;if(w==null||w<0||!S.p[w])return false;return i===w||S.p[i].tm===S.p[w].tm;}
-function esWho(S,i){return esName(S.p[i])+(i===ME?' (you)':'');}
-function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb;
-  const best=(val,ok,low)=>{let bi=-1,bv=0;P.forEach((p,i)=>{if(ok&&!ok(p))return;const v=val(p);if(bi<0||(low?v<bv:v>bv)||(v===bv&&K(p)>K(P[bi]))){bi=i;bv=v;}});return bi;};
+function esWho(S,i){const q=S.p[i],F=FACTIONS[q.f];return (q.n&&F?q.n+' · '+F.name:esName(q))+(i===ME?' (you)':'');}
+function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb,cnt=P.map(()=>0),cap=P.length<=2?3:2;A.push=function(a){cnt[a[1]]++;return Array.prototype.push.call(this,a);};
+  const best=(val,ok,low)=>{let bi=-1,bv=0;P.forEach((p,i)=>{if(ok&&!ok(p))return;if(cnt[i]>=cap)return;const v=val(p);if(bi<0||(low?v<bv:v>bv)||(v===bv&&K(p)>K(P[bi]))){bi=i;bv=v;}});return bi;};
   let i;
   i=best(p=>p.vd);if(i>=0&&P[i].vd>0)A.push(['MVP',i,esM(P[i].vd)+' of enemy forces destroyed']);
   i=best(K);if(i>=0&&K(P[i])>0)A.push(['Top Killer',i,K(P[i])+' kills']);
@@ -9318,7 +9328,7 @@ function fitCols(pn){const up=matchMedia('(max-width:560px),(max-width:760px) an
 const PHONE_NM={'Hetman Sahaidachny Frigate':'Sahaidachny Frigate'}; // phones only, when even the smallest font can't fit the full name (the tooltip keeps it)
 addEventListener('resize',()=>{clearTimeout(fitBtnNames.t);fitBtnNames.t=setTimeout(fitBtnNames,150);});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(barMin())barMin(false);showTab(b.dataset.tab);});
-function specLock(T,k){return k===T.F.special&&T.rank<SPEC_RANK;}
+function specLock(T,k){return (k===T.F.special||k==='ew')&&T.rank<SPEC_RANK;}
 // the full text of a button (what it does, what it needs, what it counters) lives in data-tip and shows in the command
 // tooltip (hover with a mouse; tap or long-press on a touch screen) instead of on the button itself
 function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=null){const c=b.querySelector('.c');if(c.textContent!==String(o.cost)){c.textContent=o.cost;if(!b.hidden&&b.dataset.tab===TAB)fitText(c,PHONE_BAR&&PHONE_BAR.matches?7.5:8.5);}}b.querySelector('.q').textContent=o.q||'';b.querySelector('.p').style.width=(o.p||0)*100+'%';b.classList.toggle('on',!!o.on);b.classList.toggle('done',!!o.done);b.classList.toggle('rdy',!!o.rdy);const t=o.title||'';if(b.dataset.tip!==t){b.dataset.tip=t;b.setAttribute('aria-label',[b.dataset.nm,b.dataset.desc,t].filter(Boolean).join('. '));}if(CTIP.b===b)ctipFill(b);}
@@ -9387,7 +9397,7 @@ function updateUI(){if(!G)return;qpUpdate();renderSquads();renderAllies();const 
   else if(s.length){const c={};for(const e of s)c[e.s.name]=(c[e.s.name]||0)+1;b.textContent=`${s.length} selected`;sp.textContent=' '+Object.entries(c).map(([n,v])=>`${v}× ${n}`).join(' · ');}
   else{sp.textContent=TOUCHUI?'Tap a unit or building to select it. Double-tap a unit to select all of that type on screen.':'Click to select units or a building. Double-click selects all of a type on screen.';}
   if(s.length===1&&!s[0].isB&&s[0].aband)tip.textContent=ally(s[0].team,ME)?'Abandoned - the crew bailed out. Select infantry and right-click it to re-crew it before the enemy captures it.':'Abandoned enemy vehicle - select infantry and right-click it to capture it.';
-  if(s.length===1&&!s[0].isB&&!s[0].aband&&SPECIAL_TIP[s[0].kind]&&s[0].kind===G.teams[s[0].team].F.special)tip.textContent=SPECIAL_TIP[s[0].kind](s[0].s);
+  if(s.length===1&&!s[0].isB&&!s[0].aband&&SPECIAL_TIP[s[0].kind]&&(s[0].kind===G.teams[s[0].team].F.special||s[0].kind==='ew'))tip.textContent=SPECIAL_TIP[s[0].kind](s[0].s);
   if(s.length===1&&!s[0].isB&&(COUNTER[s[0].s.cls]||COUNTER[s[0].kind])&&!tip.textContent)tip.textContent=COUNTER[s[0].kind]||COUNTER[s[0].s.cls];
   {const ms=s.filter(e=>!e.isB).map(moraleOf).filter(Boolean);if(ms.length){const avg=ms.reduce((a,m)=>a+m.v,0)/ms.length,fl=ms.every(m=>m.st==='fearless'),ls=ms.filter(m=>m.st==='last').length,rt=ms.filter(m=>m.st==='routing').length;const T0=G.teams[s[0].team],why=NOBREAK[T0.fac]?'never break':T0.clr?'Ayatollah':(T0.mart||0)>G.t?'martyrdom':'fervor';const st=fl?'fearless':ls>ms.length/2?'last':rt>ms.length/2?'routing':avg>.66?'steady':avg>.35?'shaken':'breaking';
     const mb=document.createElement('div');mb.className='morale';mb.innerHTML=`<span class="ml">Morale</span><span class="mbar"><i style="width:${Math.round(avg*100)}%;background:${MOR_COL[st]}"></i></span><span class="mt" style="color:${MOR_COL[st]}">${fl?'Fearless ('+why+')':MOR_TXT[st]+(st==='last'?'':' '+Math.round(avg*100)+'%')}${rt&&!fl?' · '+rt+' routing':''}${ls&&st!=='last'?' · '+ls+' last stand':''}</span>`;
@@ -10401,7 +10411,7 @@ if($('mmBtn'))$('mmBtn').onclick=()=>mapPeek();
 if($('sbFold')){const sb=$('sbx'),f=v=>{sb.classList.toggle('fold',v);$('sbFold').setAttribute('aria-expanded',v?'false':'true');};let v=false;try{v=localStorage.getItem('ww3_sbFold')==='1';}catch(e){}f(v);
   $('sbFold').onclick=()=>{const n=!sb.classList.contains('fold');f(n);try{localStorage.setItem('ww3_sbFold',n?'1':'0');}catch(e){}};}
 $('quitNo').onclick=()=>{$('quitOv').hidden=true;if(G&&G.qPause){G.qPause=false;togglePause(false);}};
-$('again').onclick=()=>{initAudio();startSingle();};$('change').onclick=()=>{$('end').hidden=true;$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;try{kcReset();}catch(e){}renderGames();};
+$('again').onclick=()=>{initAudio();try{if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}}catch(e){}startSingle();};$('change').onclick=()=>{$('end').hidden=true;$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;try{kcReset();}catch(e){}renderGames();};
 
 /* ---------- kill-cam: at match end, a short replay of the battle's biggest moment ---------- */
 // While a battle runs, four times a second this screen notes where every unit and building is (7 numbers each, about
@@ -10460,7 +10470,7 @@ function kcStart(done){if(kcOff()||KC.G!==G||!R3||window.GLLOST)return false;kcR
     tr.d.set(S.f.subarray(i*7,i*7+7),k*7);}});
   // wrecks and fallen soldiers from the whole battle are set aside while the replay runs, then put back
   const hide=[];for(const L of [WRECKS,BODIES])for(const w of L.splice(0)){SCN.remove(w.o);hide.push([L,w]);}const wq=WRECKQ.splice(0);
-  const cs={x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td};
+  const cs={x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td,_xl:cam._xl,_yl:cam._yl,_dl:cam._dl};
   KC.R={B,T,times:B.snaps.map(s=>s.t),rt:B.t0,k:0,fi:0,done,cs,hide,wq,G,skip:false,shot:false};KC.on=true;KC.shot=null;
   const m=Math.floor(B.peak.t/60),s=Math.floor(B.peak.t%60);$('kcSub').textContent=`Biggest moment of the battle · ${m}:${String(s).padStart(2,'0')} · $${Math.round(B.score).toLocaleString('en-US')} destroyed`;
   document.body.classList.add('kcOn');const o=$('kcOv');o.hidden=false;setTimeout(()=>o.classList.add('on'),30);return true;}
@@ -10600,6 +10610,11 @@ function tkFeed(m,k){if(!G)return;if(TK.G!==G)tkReset();if(SET.tk===undefined||T
   if(r=/^Capitulation in (\d+) seconds/.exec(m))return tkHead(`${own} faces capitulation in ${r[1]} seconds`,2);
   if(r=/^(.+) destroyed\.$/.exec(m)&&k==='w'&&!/^(Unit|Oil)/.test(m))return tkHead(`${own} ${r[1]} destroyed`,1);
   if(/^Our last tunnel was destroyed/.test(m))return tkHead(`${own} tunnel network destroyed, troops lost underground`,1);}
+// public headlines the host sends to everyone ('hl' event): shown only to players on neither side, since the sides involved get their own news
+function tkPublic(k,a,b,tx){try{if(!G||!TK.on||KC.on||MODE==='replay')return;const T=G.teams,inv=t=>t>=0&&T[ME]&&(t===ME||ally(t,ME));if(inv(a)||inv(b)||!T[a])return;
+  const nm=t=>(T[t]&&(tkAdj(T[t].fac)||T[t].F.name))||'Enemy';
+  if(k==='oil')tkHead(`${nm(a)} forces seize an oil derrick${b>=0&&T[b]?' from the '+nm(b)+' side':''}`,1);
+  else if(k==='pow'&&tx)tkHead(`${nm(a)} forces unleash ${String(tx).slice(0,40)}`,2);}catch(e){}}
 function tkPoll(){try{if(!G||!TK.on||TK.G!==G){if(!G||TK.G!==G)clearInterval(TK.tm);return;}
   for(const T of G.teams){if(T.out&&!TK.out[T.id]){TK.out[T.id]=1;const nm=T.F.name;tkHead(T.id===ME?`${tkOwn()} has capitulated`:`${nm} eliminated${T.whyOut?': '+String(T.whyOut).replace(/\.$/,''):''}`,2);}}
 }catch(e){}}
