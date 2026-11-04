@@ -162,6 +162,8 @@ function evWho(v){const AM=VG.AM,own=v.own!=null?AM[v.own]|0:0;
     case 'boom':return own|visAt(v[1],v[2],Math.min(400,20+(+v[3]||0)*(v[4]?2.5:1.5)));  // fireball, smoke column and flash reach past the fog edge
     case 'hack':return visAt(v[1],v[2],40);
     case 'flag':return own|visAt(v[1],v[2],40);                                // martyr banner: its side and whoever sees the spot
+    case 'rank':return visAt(v[3],v[4],30);
+    case 'flare':return true;                                                // everyone sees a flare go up
     case 'ping':case 'heal':case 'smoke':return own|visAt(v[1],v[2],+v[3]||0);
     case 'strike':return v[5]?255:own|visAt(v[1],v[2],(+v[4]||0)+40);      // superweapon-class warnings are global (alarm + "inbound" log)
     case 'bmis':return visAt(v[1],v[2],120);                                 // only where the launch is seen: never hands out the silo's position
