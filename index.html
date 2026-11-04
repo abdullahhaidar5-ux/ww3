@@ -6001,7 +6001,7 @@ function mkTeam(id,fac,ai){const F=FACTIONS[fac];return{id,fac,F,sup:F.sup,credi
 function giveMoney(from,to,amt){const A=G.teams[from],B=G.teams[to];if(!A||!B||from===to||!ally(from,to)||B.out||A.out)return false;amt=Math.floor(Math.min(+amt||0,A.credits)/50)*50;if(amt<50)return false;
   A.credits-=amt;B.credits+=amt;stOf(B).got+=amt;A.gave=(A.gave||0)+amt;log(from,`Sent $${amt} to ${B.F.name}.`,'g');log(to,`${A.F.name} sent you $${amt}.`,'g');FXE('give',[from,to,amt]);return true;}
 function ally(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.teams[a]||!G.teams[b])return false;return G.teams[a].tm===G.teams[b].tm;}
-function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&N<=MAPS[o.map].max?o.map:'strait';setWorld(worldScaleFor(N,mk));setBases(N,mk,mk===o.map?(Array.isArray(o.st)?o.st:o.slot):-1);
+function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].max||o.camp)?o.map:'strait';setWorld(worldScaleFor(N,mk));setBases(N,mk,mk===o.map?(Array.isArray(o.st)?o.st:o.slot):-1);if(o.camp)while(BASES.length<N)BASES.push(BASES[BASES.length-1]);
   const M=mkMap(o.seed,mk);
   G={t:0,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
      map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};for(const k of G_LATE)G[k]=undefined;initCiv();G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});
@@ -6015,14 +6015,14 @@ function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&N<=MAPS[o.map].m
   G.todM=(o.w|0)<0?(wxRandIdx(G.seed)===4?2:0):todMode(o.w|0);G.flares=[];
   if(o.sandbox)G.sandbox=true;
   if(MODE!=='client'){
-    for(let t=0;t<N;t++){const [bx,by]=BASES[t];const a=baseFacing(t),cx=Math.cos(a),cy=Math.sin(a);addBld(t,'hq',bx,by,true);addUnit(t,'harv',bx+cx*150-cy*60,by+cy*150+cx*60);addUnit(t,'dozer',bx+cx*120-cy*110,by+cy*120+cx*110);addUnit(t,'inf',bx+cx*130+cy*90,by+cy*130-cx*90);addUnit(t,'inf',bx+cx*150+cy*70,by+cy*150-cx*70);}
+    if(o.camp)campSetup(o.camp);else for(let t=0;t<N;t++){const [bx,by]=BASES[t];const a=baseFacing(t),cx=Math.cos(a),cy=Math.sin(a);addBld(t,'hq',bx,by,true);addUnit(t,'harv',bx+cx*150-cy*60,by+cy*150+cx*60);addUnit(t,'dozer',bx+cx*120-cy*110,by+cy*120+cx*110);addUnit(t,'inf',bx+cx*130+cy*90,by+cy*130-cx*90);addUnit(t,'inf',bx+cx*150+cy*70,by+cy*150-cx*70);}
     if(G.sandbox)sandboxSetup();
     wallCost();regions('ground');regions('naval');   // route caches built now, behind the loading screen, not by the first long route search mid-battle (a 10-30 ms hitch)
   }
 }
 // Fields the battle adds to G as it runs. Declaring them all up front keeps G one fixed shape, so the engine's compiled
 // code for the hot loops (which reads G everywhere) is not thrown away and rebuilt each time a new field appears.
-const G_LATE=['pfTok','pfMs','pfN','wx','hash','bmaxH','rmax','mines','aur','mban','mbanN','cbrTeams','mT','prT','bg','bgSig','sg','ecT','aiTT','vsT','vsN','vsB','vsD','hqC','bocc','boccV'];
+const G_LATE=['camp','pfTok','pfMs','pfN','wx','hash','bmaxH','rmax','mines','aur','mban','mbanN','cbrTeams','mT','prT','bg','bgSig','sg','ecT','aiTT','vsT','vsN','vsB','vsD','hqC','bocc','boccV'];
 function baseFacing(t){const b=BASES[t]||BASES[0];return Math.atan2(MAPH/2-b[1],MAPW/2-b[0]);}
 // Fields units and buildings pick up as the battle runs, declared (as undefined: same meaning as missing) when each is
 // made, so every unit has the same shape. Units growing fields in different orders gave the engine dozens of shapes,
@@ -6956,7 +6956,7 @@ function forceOf(T){let bv=0,bn=0,uv=0,un=0,dz=0;for(const e of G.ents){if(e.dea
 function capitulate(T,why){T.out=true;stOf(T).out=G.t;T.whyOut=why;for(const O of G.teams)log(O.id,O.id===T.id?`We have capitulated: ${why}`:`${T.F.name} has capitulated - ${why}`,O.id===T.id?'bad':'w');
   for(const e of G.ents)if(!e.dead&&e.team===T.id&&e.kind!=='garrison'){if(e.isB)kill(e,null);else{e.dead=true;G.byId.delete(e.id);FXE('die',[e.id,e.x|0,e.y|0,KINDS.indexOf(e.kind),0,e.team]);}}
   if(T.tun)for(const u of T.tun)u.dead=true;for(const f of G.ents)if(f.kind==='fort'&&f.team===T.id&&f.gar){for(const u of f.gar)u.dead=true;f.gar=[];}if(G.civ)for(const c of G.civ)if(c.occ&&c.occ.some(u=>u.team===T.id)){for(const u of c.occ)if(u.team===T.id)u.dead=true;c.occ=c.occ.filter(u=>!u.dead);}FXE('elim',[T.id]);G.lastWhy=why;}
-function checkEnd(){if(G.sandbox)return;const fall=[];
+function checkEnd(){if(G.sandbox||G.camp)return;const fall=[];
   for(const T of G.teams){if(T.out)continue;const F=forceOf(T);T.lastF=F;T.pkB=Math.max(T.pkB||0,F.bv);T.pkU=Math.max(T.pkU||0,F.uv);
     if(!F.bn&&!F.dz&&!F.un){fall.push([T,'every unit and building has been destroyed.']);continue;}
     const baseGone=(T.pkB||0)>=2000&&F.bv<=T.pkB*.1,armyGone=F.un<=4||F.uv<=(T.pkU||0)*.12;
@@ -7009,7 +7009,7 @@ function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
 function weatherTick(dt){if(!G.wx)G.wx={k:'clear',t:0,next:150+Math.random()*90};const W=G.wx;W.t+=dt;if(W.t<W.next)return;W.t=0;const ks=weatherKinds(G.map.theme);
   if(W.k==='clear'){W.k=ks[1+Math.floor(Math.random()*(ks.length-1))];W.next=55+Math.random()*45;}else{W.k='clear';W.next=170+Math.random()*120;}
   for(const T of G.teams){const w=WEATHER[W.k];log(T.id,W.k==='clear'?'The weather is clearing.':`Weather: ${w.name}. ${w.tip}`,'w');}}
-function simUpdate(dt){G.t+=dt;stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
+function simUpdate(dt){G.t+=dt;stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
   if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[],mart:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam,id:e.id});if(s.cbr)G.cbrTeams|=1<<e.team;}martyrTick();
   if(G.aur.heal.length)for(const e of G.ents){if(e.dead||e.isB||e.hp>=e.max||e.s.dom==='air')continue;for(const a of G.aur.heal)if(a.team===e.team&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){e.hp=Math.min(e.max,e.hp+a.v*dt);break;}}
   if(G.aur.jam.length)for(const e of G.ents){if(e.dead||e.kind!=='drone')continue;for(const a of G.aur.jam)if(!ally(a.team,e.team)&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){applyDmg(e,30*dt,'flak',a.team,null);break;}}
@@ -8339,7 +8339,7 @@ function syncScene(dt){const live=new Set();
     v.arm.rotation.z=Math.sin(ph)*.24;if(v.crank)v.crank.rotation.z=ph+Math.PI/2;v.flag.material.color.set(o.owner>=0?G.teams[o.owner].color:'#8a8a80');if(o.owner>=0&&Math.random()<dt*1.5)part({x:o.x+10,y:o.y+6,h:groundH(o.x,o.y)+12,rise:12,c:C_DARK,s:4,g:6,d:1.5,a:.35});});
   // selection rings
   while(RINGS.length<G.sel.length){const m=new THREE.Mesh(new THREE.RingGeometry(.86,1,40).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x8af0a6,transparent:true,opacity:.85,depthWrite:false}));m.renderOrder=3;SCN.add(m);RINGS.push(m);}
-  RINGS.forEach((m,i)=>{const e=G.sel[i];if(!e||e.dead){m.visible=false;return;}m.visible=true;m.material.color.setHex(e.isB?0x8af0a6:(e.st>=2?(e.st===2?0x6fb4ff:0xffb347):0x8af0a6));const r=e.isB?e.size*.75:e.r+6;m.scale.set(r,1,r);m.position.set(e.x,(e.isB?groundH(e.x,e.y):unitH(e))+1.2,e.y);});
+  RINGS.forEach((m,i)=>{const e=G.sel[i];if(!e||e.dead){m.visible=false;return;}if(SET.cb){const sg=idRingSeg(e.team);if(m.userData.sg!==sg){m.userData.sg=sg;m.geometry.dispose();m.geometry=new THREE.RingGeometry(.86,1,sg).rotateX(-Math.PI/2);}}else if(m.userData.sg){m.userData.sg=0;m.geometry.dispose();m.geometry=new THREE.RingGeometry(.86,1,40).rotateX(-Math.PI/2);}m.visible=true;m.material.color.setHex(e.isB?0x8af0a6:(e.st>=2?(e.st===2?0x6fb4ff:0xffb347):0x8af0a6));const r=e.isB?e.size*.75:e.r+6;m.scale.set(r,1,r);m.position.set(e.x,(e.isB?groundH(e.x,e.y):unitH(e))+1.2,e.y);});
   // rally flag
   const T=G.teams[ME];if(T&&T.rally){if(!RALLY){RALLY=new THREE.Group();const pole=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,24,5),new THREE.MeshBasicMaterial({color:0x2a2b26}));pole.position.y=12;RALLY.add(pole);const fl=new THREE.Mesh(new THREE.PlaneGeometry(12,7),new THREE.MeshBasicMaterial({color:0x74d08f,side:THREE.DoubleSide}));fl.position.set(6,20,0);RALLY.add(fl);SCN.add(RALLY);}
     RALLY.visible=true;RALLY.position.set(T.rally.x,groundH(T.rally.x,T.rally.y),T.rally.y);RALLY.children[1].rotation.y=Math.sin(G.t*3)*.3;}else if(RALLY)RALLY.visible=false;
@@ -8467,13 +8467,13 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
   // units and buildings
   const sel=new Set(G.sel);
   for(const e of G.ents){if(e.dead||!vis(e))continue;const x=e.x*sx,y=e.y*sy,col=G.teams[e.team].color,own=e.team===ME;
-    if(e.isB){const s=e.kind==='hq'?9:e.kind==='turret'||e.kind==='sam'||isTun(e)?5:7;c.fillStyle='#050807';c.fillRect(x-s/2-1.5,y-s/2-1.5,s+3,s+3);c.fillStyle=col;c.fillRect(x-s/2,y-s/2,s,s);if(e.kind==='hq'){c.fillStyle='#050807';c.fillRect(x-1.5,y-1.5,3,3);}if(e.built<1){c.fillStyle='rgba(0,0,0,.45)';c.fillRect(x-s/2,y-s/2,s,s*(1-e.built));}continue;}
+    if(e.isB){const s=e.kind==='hq'?9:e.kind==='turret'||e.kind==='sam'||isTun(e)?5:7;c.fillStyle='#050807';c.fillRect(x-s/2-1.5,y-s/2-1.5,s+3,s+3);c.fillStyle=col;c.fillRect(x-s/2,y-s/2,s,s);if(e.kind==='hq'){c.fillStyle='#050807';c.fillRect(x-1.5,y-1.5,3,3);}if(SET.cb)idMiniMark(c,x,y,e.team,1);if(e.built<1){c.fillStyle='rgba(0,0,0,.45)';c.fillRect(x-s/2,y-s/2,s,s*(1-e.built));}continue;}
     const d=e.s.dom;c.fillStyle=col;c.strokeStyle=own?'rgba(255,255,255,.75)':'#050807';c.lineWidth=1;
     if(d==='air'){const a=e.ang||0;c.save();c.translate(x,y);c.rotate(a);c.beginPath();c.moveTo(4.5,0);c.lineTo(-3,3);c.lineTo(-1.5,0);c.lineTo(-3,-3);c.closePath();c.fill();c.stroke();c.restore();}
     else if(d==='naval'){const a=e.ang||0;c.save();c.translate(x,y);c.rotate(a);c.beginPath();c.moveTo(5,0);c.lineTo(1,2.6);c.lineTo(-4,2.2);c.lineTo(-4,-2.2);c.lineTo(1,-2.6);c.closePath();c.fill();c.stroke();c.restore();}
     else if(isInf(e.s)){c.beginPath();c.arc(x,y,1.9,0,7);c.fill();if(!own){c.stroke();}}
     else{c.fillRect(x-2.2,y-2.2,4.4,4.4);c.strokeRect(x-2.7,y-2.7,5.4,5.4);}
-    if(sel.has(e)){c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();c.arc(x,y,4.5,0,7);c.stroke();}
+    if(SET.cb)idMiniMark(c,x,y,e.team,e.isB);if(sel.has(e)){c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();c.arc(x,y,4.5,0,7);c.stroke();}
     if(own&&G.t-(e.lastHit||-99)<1.2&&Math.random()<.04)MMC.push({x:e.x,y:e.y,t:now});}
   mmEW(c,sx,sy,now);
   // contact flashes where we're under fire
@@ -8693,7 +8693,7 @@ function lobSides(n){const nh=NET.lobby.length+1,cfb=NET.cf&&NET.cf.own&&NET.cf.
 function launchMP(){if(NET.cf&&NET.cf.own){if(MODE!=='single'||!NET.game)return;const c=cfCfg();NET.cf.pend=null;NET.game.emit('bset',Object.assign(c,{seed:(Math.random()*1e9)|0,start:1})).catch(()=>{});$('mpstatus').querySelectorAll('.startbtn').forEach(b=>{b.disabled=true;b.textContent='Starting…';});return;}
   if(MODE!=='single'||!NET.lobby.length)return;const seed=(Math.random()*1e9)|0;const ais=(NET.ais||[]).slice(0,Math.max(0,(MAPS[setup.map]||MAPS.strait).max-1-NET.lobby.length)).map(a=>({f:FKEYS.includes(a.f)?a.f:FKEYS[0],d:Math.max(0,Math.min(2,a.d|0)),p:persCode(a.p),tm:Math.max(0,Math.min(7,a.tm|0))}));const facs=[setup.p,...NET.lobby.map(p=>p.f),...ais.map(a=>a.f)];NET.peers=[null,...NET.lobby.map(p=>p.peer),...ais.map(()=>null)];NET.toks=[null,...NET.lobby.map(p=>p.tok||null),...ais.map(()=>null)];
   const aiD=[null,...NET.lobby.map(()=>null),...ais.map(a=>(a.d|0)+10*persCode(a.p))];NET.opp=NET.peers[1];
-  const map=setup.map||'strait';const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0},sp)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined,sp:1}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0},sp);const LS=(NET.lobbySpec||[]).slice();NET.lobbySpec=[];startMP('host',seed,facs,0,map,tm,aiD,st);NET.specs=[];for(const q of LS)specJoin(q);}
+  const map=setup.map||'strait';const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};const ids=idLobbyIds().slice(0,facs.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0,ids},sp)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined,sp:1}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0},sp);const LS=(NET.lobbySpec||[]).slice();NET.lobbySpec=[];startMP('host',seed,facs,0,map,tm,aiD,st,ids);NET.specs=[];for(const q of LS)specJoin(q);}
 // Joining: each player has a reconnect token for this game (kept for the browser tab), so if the link drops - or the
 // page is reloaded - they rejoin as the same commander. Client handlers are wired by wireClient() so a reconnect can
 // rebuild them on the new connection.
@@ -8714,7 +8714,7 @@ function wireClient(g){
   // An old host sends no 'w': the player's own menu choice stays, as before.
   if(typeof d.w==='number'&&d.w>=-1&&d.w<=5){if(NET.ownW==null)NET.ownW=setup.w;wxSet(d.w|0);}
   // sv: the host is the game server (Cloudflare), which has no side of its own, so this player may be slot 0
-  NET.sv=d.sv?1:0;NET.spec=d.sp?1:0;NET.specAll=NET.spec;NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm,null,stClean(d.st,d.facs.length));});
+  NET.sv=d.sv?1:0;NET.spec=d.sp?1:0;NET.specAll=NET.spec;NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm,null,stClean(d.st,d.facs.length),Array.isArray(d.ids)?d.ids.map(idClean):null);});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
   g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();if(m.data.to)NET.lastRxMe=NET.lastRx;applySnap(m.data);}});
   g.on('evt',m=>{if(ok(m)){NET.lastRx=performance.now();applyEvents(m.data);}});
@@ -8798,7 +8798,7 @@ async function joinGame(p,o){if(NET.game)return;const code=p.presence.g.c,jo=o&&
   // arrives the host may simply still be on its own loading screen, so that wait is much longer (45 s).
   clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}const w=performance.now(),ld=window.LOADING?1:0;if(ld)NET.ldW=w;if(NET.pgW&&w-NET.pgW>2500)NET.stW=w;NET.pgW=w;
     if(MODE==='client'&&!NET.recon&&!ld&&(NET.lastRx?w-Math.max(NET.lastRx,NET.ldW||0,NET.stW||0)>5000:w-Math.max(NET.ldW||0,NET.startW||0,NET.stW||0)>45000)){clientReconnect();return;}if($('cfNet'))$('cfNet').textContent=cfNetText();if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null,ld}).catch(()=>{});},1000);
-  let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!NET.joined&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The battle did not answer. It may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}const hpw=NET.pw&&NET.via!=='wsb'?NET.pw:undefined;NET.game.presence({hi:NET.wantSpec?{sp:1,n:n,ed:0,pw:hpw}:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1,pw:hpw}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',NET.wantSpec?{sp:1,pw:hpw}:{f:setup.p,pw:hpw}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
+  let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!NET.joined&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The battle did not answer. It may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}const hpw=NET.pw&&NET.via!=='wsb'?NET.pw:undefined;NET.game.presence({hi:NET.wantSpec?{sp:1,n:n,ed:0,pw:hpw}:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1,pw:hpw,id:idPayload()}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',NET.wantSpec?{sp:1,pw:hpw}:{f:setup.p,pw:hpw}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
   hello();NET.helloI=setInterval(hello,1500);if(!own)$('mpstatus').textContent='Connecting…';return true;}
 // Set the Conditions choice and light up its menu button. The host's choice is used only for that battle: the player's
 // own menu choice (NET.ownW) comes back when they leave the battle, so their next solo battle uses their own Conditions.
@@ -9222,7 +9222,7 @@ function pushLog(m,k){if(!G)return;try{tkFeed(m,k);}catch(e){}if(k&&k.length===2
 function rivals(){return G.teams.filter(T=>!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
 function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams,me=T[ME],m=Math.floor(G.t/60),s=Math.floor(G.t%60);
-  const won=winner>=0&&ally(winner,ME);
+  const won=winner>=0&&ally(winner,ME);try{idFinish(winner,won);}catch(e){console.warn('medals',e);}
   // the sim's reason is written from the winner's side ("The last enemy capitulated: …"); the losers read their own fall
   if(!won&&reason&&/^The last enemy capitulated/.test(reason)){const why=me.whyOut||String(reason).replace(/^The last enemy capitulated:\s*/,'');reason=`${me.F.name} has been defeated${why?': '+why:'.'}`;if(!/[.!]$/.test(reason))reason+='.';}
   const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'||G.endStats?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
@@ -9288,7 +9288,7 @@ function esPage(S){esCss();let box=$('endStats');if(!box){box=document.createEle
   const A=esAwards(S);if(A.length){const s=sec('Awards'),g=document.createElement('div');g.className='esA';for(const [t,i,w] of A){const d=document.createElement('div');d.className='esAw';d.style.setProperty('--c',S.p[i].c);d.innerHTML='<b></b><div class="who"></div><div class="what"></div>';d.querySelector('b').textContent=t;d.querySelector('.who').textContent=esWho(S,i);d.querySelector('.what').textContent=w;g.append(d);}s.append(g);}
   // scoreboard
   {const s=sec('Scoreboard'),g=document.createElement('div');g.className='esP';for(const i of ord){const p=S.p[i],d=document.createElement('div');d.className='esC'+(esWin(S,i)?' win':'')+(i===ME?' me':'');d.style.setProperty('--c',p.c);
-    const h=document.createElement('div');h.className='esH';h.append(esFlagEl(p.f,42,25));const nm=document.createElement('div');nm.innerHTML='<div class="esN"></div><div class="esTag"></div>';nm.querySelector('.esN').textContent=esName(p);
+    const h=document.createElement('div');h.className='esH';h.append(esFlagEl(p.f,42,25));try{const GT=G&&G.teams&&G.teams[i];if(GT&&GT.emb&&GT.emb!=='flag')h.append(idEmbEl(GT,24));}catch(e){}const nm=document.createElement('div');nm.innerHTML='<div class="esN"></div><div class="esTag"></div>';nm.querySelector('.esN').textContent=esName(p);
     nm.querySelector('.esTag').textContent=[i===ME?'You':p.ai?'AI':'Player',S.p.some((q,j)=>j!==i&&q.tm===p.tm)?'Team '+(p.tm<100?p.tm+1:i+1):'',esWin(S,i)?'':p.out?'Defeated':''].filter(Boolean).join(' · ');h.append(nm);
     if(esWin(S,i)){const w=document.createElement('div');w.className='esWinT';w.style.marginLeft='auto';w.textContent='WINNER';h.append(w);}d.append(h);
     const dl=document.createElement('dl');for(const [k,f] of ES_ROWS){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=f(p);dl.append(dt,dd);}d.append(dl);g.append(d);}s.append(g);}
@@ -9474,7 +9474,7 @@ function doCancel(sh){const c=cancelInfo();if(!c)return false;
   else if(c.k==='q'){const q=(G.teams[ME].q[c.kind]||[]).slice(-(sh?5:1)).map(x=>x.kind).reverse();for(const k of q)doAct({t:'dq',k});}
   else doAct({t:'cb',tid:c.tid});
   try{sfxUI(380);}catch(_){}updateUI();return true;}
-function updateUI(){if(!G)return;qpUpdate();renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);mournBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
+function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);mournBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k),ok=reqMet(ME,k);if(!bldAllowed(T.fac,k)){setBtn('b_'+k,{dis:true,cost:'Not available',title:'This faction has no air force'});continue;}const lim=s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===ME&&e.kind===k).length>=s.limit;setBtn('b_'+k,{dis:!ok||T.credits<s.cost||lim,cost:lim?'Max '+s.limit:'$'+s.cost,on:G.place===k,title:ok?(STRUCT[k].desc||(STRUCT[k].shore?'Place on the shoreline':'')):`Requires ${STRUCT[STRUCT[k].req].name}`});}
   for(const k of allUnits(T.fac)){const s=stats(T.fac,k),q=T.q[s.from]||[],n=q.filter(x=>x.kind===k).length,has=done(ME,s.from);const first=q[0]&&q[0].kind===k?(q[0].p!=null?q[0].p:q[0].t/prodTime(T,s)):0;
     const lk=specLock(T,k);const rbw=k==='cleric'&&(T.rebuy||0)>G.t?Math.ceil(T.rebuy-G.t):0;setBtn('u_'+k,{dis:lk||!has||rbw>0||(T.credits<s.cost&&!n),cost:rbw?'Wait '+rebuyFmt(rbw):lk?`General rank ${SPEC_RANK}`:k===T.F.special?'$'+s.cost+(T.rank>=6?' · Elite':T.rank>=4?' · Veteran':''):'$'+s.cost,q:n?'×'+n:'',p:first,title:(rbw?`A new leader can be chosen in ${rebuyFmt(rbw)}. `:'')+(lk?`Unlocks at general rank ${SPEC_RANK}; gets Veteran (+20%) at rank 4 and Elite (+40%) at rank 6. `:'')+(has?'':`Requires ${STRUCT[s.from].name}. `)+(k===T.F.special&&SPECIAL_TIP[k]?SPECIAL_TIP[k](s)+' ':'')+(COUNTER[k]||COUNTER[s.cls]||'')});}
@@ -10202,7 +10202,7 @@ function loadShow(o){const el=loadUI(),D=MAPS[o.map]||MAPS.strait;
   tms.forEach((g,k)=>{if(k){const vs=document.createElement('div');vs.className='lo-vs';vs.textContent='VS';v.append(vs);}const col=document.createElement('div');col.className='lo-tm';
     for(const i of g.m){const f=o.facs[i],F=FACTIONS[f]||{name:f,color:'#888'},row=document.createElement('div');row.className='lo-f';row.style.setProperty('--c',(o.cols&&o.cols[i])||F.color);
       const ic=document.createElement('i');if(f==='RS'||f==='DW'){try{ic.append(emblemCanvas(f,30));}catch(e){ic.textContent=f;}}else ic.textContent=f;
-      const tx=document.createElement('span');tx.style.minWidth='0';const b=document.createElement('b');b.textContent=F.name;const s=document.createElement('small');s.textContent=i===o.me?'YOU':o.mode==='sandbox'?'TARGETS':o.mode==='single'||o.ai&&o.ai[i]?'AI':'PLAYER';tx.append(b,s);row.append(ic,tx);col.append(row);}
+      const tx=document.createElement('span');tx.style.minWidth='0';const b=document.createElement('b');b.textContent=F.name;const s=document.createElement('small');s.textContent=i===o.me?'YOU':o.mode==='sandbox'?'TARGETS':o.mode==='single'||o.ai&&o.ai[i]?'AI':'PLAYER';tx.append(b,s);row.append(ic,tx);try{const GT=G&&G.teams&&G.teams[i];if(GT&&GT.emb&&GT.emb!=='flag')row.append(idEmbEl(GT,20));}catch(e){}col.append(row);}
     v.append(col);});
   loadMap(o.map,o.bases||null,o.cols||[],o.me);
   {const fac=o.facs[o.me];if(el.hidden||LOAD.qf!==fac){LOAD.qf=fac;const Q=loadQuote(fac),qe=el.querySelector('.lo-q');qe.classList.remove('in');el.querySelector('.lo-qt').textContent=Q.q;
@@ -10219,7 +10219,7 @@ function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.h
 // wait until the browser has painted (falls back to a timer when the tab is in the background and frames stop)
 function loadFrame(){return new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,document.hidden?0:300);});}
 const LOAD_WD=20000;
-async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
+async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn('identity',e);}const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
   // the 3D models of the shared scenery and of the nations in this battle (only those) download while the ground is painted
   const mp=modelsFor(g.teams.map(T=>T.fac),(d,n)=>{if(tok===LOAD.tok)loadStep('Loading 3D models… '+d+' of '+n,.08+.3*d/n);});
   mp.then(r=>setTimeout(()=>{if(G!==g||typeof pushLog!=='function')return;if(!MODELS.ready)pushLog('Detailed 3D models could not load on this device ('+(MODELS.err||'unknown')+'). Showing simple shapes.','bad');
@@ -10263,7 +10263,7 @@ function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
   MODE='single';ME=0;
   TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
-function startMP(mode,seed,facs,slot,map,tm,aiD,st){NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');
@@ -10723,6 +10723,133 @@ if(typeof window!=='undefined'){window.__tk=TK;}
 try{tkApply();}catch(e){}
 {const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='News ticker (headlines scrolling across the top)';
   const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}
+/* ---------- identity: medals, player colour + emblem, colourblind mode, unit guide (08b) ----------
+   Everything here is cosmetic and local: nothing feeds the simulation. A player's colour/emblem travels as a tiny
+   {c:'#rrggbb',e:'key'} in the join greeting; the host (or the Cloudflare server) cleans it and sends the list with
+   the battle's 'start' message, so every screen paints the same colours. Medals are judged on this device when a
+   battle ends and stored with a short match history in localStorage 'ww3_medals'. */
+const ID_COLS=[['#e8e8e8','White'],['#d94f4f','Red'],['#e2812d','Orange'],['#f2d14a','Gold'],['#8bc34a','Lime'],['#3fae5c','Green'],['#36c2c9','Teal'],['#4a80e8','Blue'],['#8b6cf6','Violet'],['#d94fa0','Pink'],['#9a6a42','Brown'],['#2d3a34','Black']];
+const ID_CB=['#0072B2','#E69F00','#F0E442','#D55E00','#56B4E9','#CC79A7','#009E73','#FFFFFF'];   // Okabe-Ito colourblind-safe palette
+const ID_EMB=['flag','star','shield','chevron','diamond','bolt','target','crown','wings','hex','skull'];
+const ID_EMBN={flag:'Nation flag',star:'Star',shield:'Shield',chevron:'Chevron',diamond:'Diamond',bolt:'Lightning',target:'Target',crown:'Crown',wings:'Wings',hex:'Hexagon',skull:'Skull'};
+const ID_SEG=[40,4,3,6,5,10,11,12];   // colourblind mode: selection-ring outline per team (circle, square, triangle, hexagon, pentagon, ...)
+let IDS_PEND=null;
+function idClean(o){if(!o||typeof o!=='object')return null;const c=typeof o.c==='string'&&/^#[0-9a-fA-F]{6}$/.test(o.c)?o.c.toLowerCase():'',e=typeof o.e==='string'&&ID_EMB.includes(o.e)?o.e:'';return c||e?{c,e}:null;}
+function idSelf(){return idClean({c:SET.idc,e:SET.ide});}
+function idPayload(){return idSelf()||undefined;}
+function idPeer(peer){try{const q=NET.game&&NET.game.peers().find(x=>x.peer===peer);return idClean(q&&q.presence&&q.presence.hi&&q.presence.hi.id);}catch(e){return null;}}
+function idLobbyIds(){return [idSelf(),...NET.lobby.map(p=>idPeer(p.peer))].concat((NET.ais||[]).map(()=>null)).map(x=>x||0);}
+// Paint the teams of the battle that is starting (before any model is built): chosen colours first, then a de-clash pass
+function idStart(){const ids=IDS_PEND;IDS_PEND=null;if(!G||!G.teams)return;const N=G.teams.length,cd=(p,q)=>{const a=hexRGB(p),b=hexRGB(q);return Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);};
+  const want=G.teams.map((T,i)=>{const d=idClean(ids?ids[i]:(i===ME&&MODE==='single'?idSelf():null));T.emb=d&&d.e||'';return d&&d.c||'';});
+  const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'],out=[];
+  if(SET.cb){G.teams.forEach((T,i)=>{T.color=ID_CB[i%ID_CB.length];T.dark=shade(T.color,.45);});return;}
+  for(let i=0;i<N;i++)if(want[i]&&!out.some(c=>c&&cd(c,want[i])<.45))out[i]=want[i];
+  for(let i=0;i<N;i++){if(out[i])continue;let c=G.teams[i].color;if(out.some(q=>q&&cd(q,c)<.45))c=ALT.find(a=>out.every(q=>!q||cd(q,a)>=.45))||ALT[i%ALT.length];out[i]=c;}
+  G.teams.forEach((T,i)=>{if(T.color!==out[i]){T.color=out[i];T.dark=shade(out[i],.45);}});}
+/* ---------- emblems ---------- */
+function idDrawEmb(c,key,cx,cy,r,col){c.save();c.translate(cx,cy);c.lineJoin='round';c.fillStyle=col||'#fff';c.strokeStyle='rgba(0,0,0,.85)';c.lineWidth=Math.max(1,r*.14);const P=(pts)=>{c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0]*r,p[1]*r):c.moveTo(p[0]*r,p[1]*r));c.closePath();c.fill();c.stroke();};
+  switch(key){
+    case'star':{const p=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,k=i%2?.42:1;p.push([Math.cos(a)*k,Math.sin(a)*k]);}P(p);break;}
+    case'shield':P([[-.8,-.85],[.8,-.85],[.8,.1],[0,1],[-.8,.1]]);break;
+    case'chevron':P([[-.9,-.2],[0,-.95],[.9,-.2],[.9,.4],[0,-.2],[-.9,.4]]);break;
+    case'diamond':P([[0,-1],[.8,0],[0,1],[-.8,0]]);break;
+    case'bolt':P([[.25,-1],[-.65,.15],[-.05,.15],[-.3,1],[.7,-.2],[.05,-.2]]);break;
+    case'target':c.beginPath();c.arc(0,0,r*.9,0,7);c.fill();c.stroke();c.fillStyle='rgba(0,0,0,.8)';c.beginPath();c.arc(0,0,r*.55,0,7);c.fill();c.fillStyle=col||'#fff';c.beginPath();c.arc(0,0,r*.25,0,7);c.fill();break;
+    case'crown':P([[-.9,.7],[-.9,-.5],[-.45,0],[0,-.8],[.45,0],[.9,-.5],[.9,.7]]);break;
+    case'wings':P([[0,.2],[-.95,-.7],[-.7,.05],[-.95,.45],[-.4,.35],[0,.9],[.4,.35],[.95,.45],[.7,.05],[.95,-.7]]);break;
+    case'hex':{const p=[];for(let i=0;i<6;i++){const a=i*Math.PI/3;p.push([Math.cos(a)*.95,Math.sin(a)*.95]);}P(p);break;}
+    case'skull':c.beginPath();c.arc(0,-.15*r,r*.75,0,7);c.fill();c.stroke();c.fillRect(-r*.35,r*.4,r*.7,r*.45);c.strokeRect(-r*.35,r*.4,r*.7,r*.45);c.fillStyle='#000';c.beginPath();c.arc(-r*.3,-.2*r,r*.2,0,7);c.arc(r*.3,-.2*r,r*.2,0,7);c.fill();break;
+    default:break;}
+  c.restore();}
+// a small canvas with the player's emblem on their colour (used in the lobby, loading screen and scoreboard)
+function idEmbEl(T,w){w=w||22;const c=document.createElement('canvas');c.width=c.height=w*2;c.style.cssText=`width:${w}px;height:${w}px;vertical-align:middle;margin-right:5px;border-radius:4px`;const x=c.getContext('2d');x.fillStyle=T.color||'#888';x.fillRect(0,0,w*2,w*2);
+  const e=T.emb||'';if(!e||e==='flag'){const im=esFlag(T.fac||T.f);if(im)x.drawImage(im,3,w*.5+2,w*2-6,w-4);}else idDrawEmb(x,e,w,w,w*.78,'#fff');return c;}
+const IDF={};
+// the roof/mast flag: the nation's flag, with the player's emblem stamped on it when one is chosen
+function idFlagTex(T){const e=T.emb;if(!e||e==='flag')return flagTex(T.fac);const k=T.fac+e+T.color;if(IDF[k])return IDF[k];const src=flagTex(T.fac),W=120,H=72,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');x.drawImage(src.image,0,0,W,H);
+  x.fillStyle=T.color;x.fillRect(W-46,H-46,46,46);idDrawEmb(x,e,W-23,H-23,19,'#fff');const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return IDF[k]=t;}
+/* ---------- colourblind helpers used by the minimap and selection rings (06-view) ---------- */
+function idMiniMark(c,x,y,team,big){const sg=ID_SEG[((team|0)+8)%8],r=big?3.6:2.9;c.save();c.translate(x,y);c.fillStyle='#050807';c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();
+  if(sg>=10){c.arc(0,0,r,0,7);if(sg>10){c.moveTo(-r,0);c.lineTo(r,0);c.moveTo(0,-r);c.lineTo(0,r);}}else for(let k=0;k<sg;k++){const a=(sg===4?-Math.PI/4:-Math.PI/2)+k*2*Math.PI/sg;k?c.lineTo(Math.cos(a)*r*1.2,Math.sin(a)*r*1.2):c.moveTo(Math.cos(a)*r*1.2,Math.sin(a)*r*1.2);}
+  if(sg<10)c.closePath();c.globalAlpha=.9;c.fill();c.globalAlpha=1;c.stroke();c.restore();}
+function idRingSeg(team){return ID_SEG[((team|0)+8)%8];}
+/* ---------- medals ---------- */
+const ID_MEDALS=(()=>{const n=(k,t,d)=>({k:'win_'+k,t,d,f:k,w:1});const M=[n('IR','Iran: Labbaik ya Hussein','Win a battle as Iran.'),n('RS','Mountain Shias: Radwan\'s Sons','Win a battle as the Mountain Shias.'),n('DW','Coffee Shias: Desert Raiders','Win a battle as the Coffee Shias.'),
+  {k:'dw_notank',t:'Coffee Shias: Steel Untouched',d:'Win as the Coffee Shias without losing a single tank (you must have built some).',f:'DW',w:1},
+  {k:'rs_fort',t:'Mountain Shias: Rock Stands',d:'Win as the Mountain Shias with your Mountain Fortress still standing.',f:'RS',w:1},
+  {k:'fort20',t:'Hold the Mountain',d:'Keep a Mountain Fortress standing for 20 minutes in one battle.',w:1},
+  {k:'ir_bb',t:'Fire and Fury',d:'Call in a Bunker Buster strike (any nation).',w:1}];
+  for(const k of ['US','TR','IL','EU','UA','RU','SA','AE','PK','IN','CN','KP','KR','EG','CU'])M.push(n(k,FACTIONS[k].name+': Victory','Win a battle as '+FACTIONS[k].name+'.'));
+  M.push({k:'hard_1v3',t:'Outnumbered',d:'Win alone against three or more enemies on Hard.',w:1},{k:'iron_wall',t:'Iron Wall',d:'Win a battle (3+ minutes) losing fewer than 10 units.'},{k:'vet10',t:'Veteran Commander',d:'Finish 10 battles.'});return M;})();
+function idStore(){let s=null;try{s=JSON.parse(localStorage.getItem('ww3_medals')||'null');}catch(e){}if(!s||typeof s!=='object')s={};s.earned=s.earned||{};s.hist=Array.isArray(s.hist)?s.hist:[];s.n=s.n|0;return s;}
+function idSave(s){try{localStorage.setItem('ww3_medals',JSON.stringify(s));}catch(e){}}
+const IDR={tank:new Set(),lost:0,seen:0,fortT:0,fortBest:0,lastT:0};
+function idBattleReset(){IDR.tank=new Set();IDR.lost=0;IDR.seen=0;IDR.fortT=0;IDR.fortBest=0;IDR.lastT=0;}
+function idTick(){if(!G||!G.ents||G.over)return;if(G.t<IDR.lastT||G.t-IDR.lastT<1)return;const dt=G.t-IDR.lastT;IDR.lastT=G.t;const T=G.teams[ME];if(!T)return;let fort=false;const alive=new Set();
+  for(const e of G.ents){if(e.dead||e.team!==ME)continue;if(e.isB){if(e.kind==='fort'&&e.built>=1)fort=true;continue;}if(e.s&&e.s.cls==='tank'){alive.add(e.id);if(!IDR.tank.has(e.id)){IDR.tank.add(e.id);IDR.seen++;}}}
+  for(const id of IDR.tank)if(!alive.has(id)){IDR.tank.delete(id);IDR.lost++;}
+  if(fort){IDR.fortT+=Math.min(dt,5);if(IDR.fortT>IDR.fortBest)IDR.fortBest=IDR.fortT;}else IDR.fortT=0;}
+function idFinish(winner,won){if(!G||G.sandbox||G.idDone)return;G.idDone=1;const T=G.teams[ME];if(!T)return;idTick();const s=idStore(),st=T.st||{},S=G.endStats,P=S&&S.p&&S.p[ME];
+  const foes=G.teams.filter(Q=>!ally(Q.id,ME)).length,mates=G.teams.filter(Q=>ally(Q.id,ME)).length;const hard=G.teams.some(Q=>!ally(Q.id,ME)&&Q.ai&&Q.ai.d===2)||(MODE==='single'&&setup.d===2);
+  const lu=P?P.lu:Math.max(0,(T.lost|0)-(st.lb|0)),secs=Math.round(G.t);
+  s.n++;s.hist.unshift({t:Date.now(),f:T.fac,won:won?1:0,s:secs,foes,mates,map:G.mapKey,m:MODE==='single'?'solo':'online',lu,ku:P?P.ku:st.ku|0});s.hist.length=Math.min(s.hist.length,40);
+  const got=[],add=k=>{if(!s.earned[k]){s.earned[k]=Date.now();got.push(k);}};
+  if((st.pw&&st.pw.bb)>0)add('ir_bb');if(IDR.fortBest>=1200)add('fort20');
+  if(won&&secs>=180){add('win_'+T.fac);if(T.fac==='DW'&&IDR.seen>0&&IDR.lost===0)add('dw_notank');if(T.fac==='RS'&&G.ents.some(e=>!e.dead&&e.isB&&e.team===ME&&e.kind==='fort'&&e.built>=1))add('rs_fort');
+    if(foes>=3&&mates===1&&hard)add('hard_1v3');if(lu<10)add('iron_wall');}
+  if(s.n>=10)add('vet10');idSave(s);got.forEach((k,i)=>setTimeout(()=>idToast(ID_MEDALS.find(m=>m.k===k)),700+i*3200));}
+function idToast(m){if(!m)return;let box=document.getElementById('idToasts');if(!box){box=document.createElement('div');box.id='idToasts';document.body.appendChild(box);}
+  const d=document.createElement('div');d.className='idToast';d.appendChild(idMedalEl(m,true));const t=document.createElement('div');t.innerHTML=`<b>Medal unlocked</b><span>${m.t}</span>`;d.appendChild(t);box.appendChild(d);setTimeout(()=>d.remove(),6000);}
+function idMedalEl(m,on){const c=document.createElement('canvas');c.width=c.height=112;c.style.cssText='width:56px;height:56px;flex:none;'+(on?'':'filter:grayscale(1);opacity:.35');const x=c.getContext('2d');
+  x.fillStyle=on?'#b3262c':'#555';x.fillRect(38,0,14,34);x.fillRect(60,0,14,34);const g=x.createRadialGradient(56,66,6,56,66,42);g.addColorStop(0,'#fff1a8');g.addColorStop(1,'#b8892b');x.fillStyle=g;x.beginPath();x.arc(56,68,40,0,7);x.fill();x.strokeStyle='#6b4a12';x.lineWidth=3;x.stroke();
+  x.fillStyle='#1b2420';x.beginPath();x.arc(56,68,30,0,7);x.fill();const im=m.f&&esFlag(m.f);if(im)x.drawImage(im,34,54,44,28);else idDrawEmb(x,m.k==='fort20'?'shield':m.k==='ir_bb'?'bolt':m.k==='hard_1v3'?'skull':m.k==='iron_wall'?'chevron':'star',56,68,18,'#f2d14a');return c;}
+/* ---------- the pages: Medals, Profile (colour + emblem), Unit guide ---------- */
+function idOv(id,title){let o=document.getElementById(id);if(o)return o;o=document.createElement('div');o.id=id;o.className='overlay';o.hidden=true;o.style.zIndex=35;o.style.background='rgba(8,11,10,.96)';o.innerHTML=`<div class="card idcard"><h1 style="font-size:clamp(26px,5vw,38px)">${title}</h1><div class="idbody"></div><div class="row"><button class="big idx">Done</button></div></div>`;document.body.appendChild(o);o.querySelector('.idx').onclick=()=>{o.hidden=true;};o.addEventListener('pointerdown',e=>{if(e.target===o)o.hidden=true;});return o;}
+function idMedalsPage(){const o=idOv('idMedals','Medals'),b=o.querySelector('.idbody'),s=idStore();b.innerHTML='';const n=ID_MEDALS.filter(m=>s.earned[m.k]).length;
+  const h=document.createElement('p');h.textContent=`${n} of ${ID_MEDALS.length} medals · ${s.n} battles finished on this device`;b.appendChild(h);const grid=document.createElement('div');grid.className='idgrid';b.appendChild(grid);
+  for(const m of ID_MEDALS){const on=!!s.earned[m.k],d=document.createElement('div');d.className='idm'+(on?' on':'');d.appendChild(idMedalEl(m,on));const t=document.createElement('div');t.innerHTML=`<b>${m.t}</b><span>${m.d}</span>`+(on?`<i>Earned ${new Date(s.earned[m.k]).toLocaleDateString()}</i>`:'');d.appendChild(t);grid.appendChild(d);}
+  if(s.hist.length){const hh=document.createElement('h2');hh.className='sethd';hh.textContent='Recent battles';b.appendChild(hh);for(const r of s.hist.slice(0,10)){const p=document.createElement('div');p.className='idh';const F=FACTIONS[r.f]||{name:r.f};p.textContent=`${r.won?'Victory':'Defeat'} · ${F.name} · ${Math.floor(r.s/60)}:${String(r.s%60).padStart(2,'0')} · ${r.mates>1?r.mates+' vs '+r.foes:'1 vs '+r.foes} · ${r.ku} kills · ${new Date(r.t).toLocaleDateString()}`;p.style.color=r.won?'#74d08f':'#ea8a7a';b.appendChild(p);}}
+  o.hidden=false;}
+function idProfilePage(){const o=idOv('idProfile','Profile'),b=o.querySelector('.idbody');const draw=()=>{b.innerHTML='';const me=idSelf()||{c:'',e:''},fc=(FACTIONS[setup.p]||{}).color||'#888',col=me.c||fc;
+    const pv=document.createElement('div');pv.className='idpv';pv.appendChild(idEmbEl({color:col,emb:me.e,fac:setup.p},56));const nm=document.createElement('span');nm.textContent=(FACTIONS[setup.p]||{}).name+' · your marks';pv.appendChild(nm);b.appendChild(pv);
+    const l1=document.createElement('div');l1.className='label';l1.textContent='Team colour (other players see it too; if it clashes with a rival the game picks the closest free one)';b.appendChild(l1);const sw=document.createElement('div');sw.className='idsw';
+    const mk=(c,t)=>{const x=document.createElement('button');x.className='idsq'+((me.c||'')===c?' on':'');x.title=t;x.setAttribute('aria-label',t);x.style.background=c||fc;if(!c)x.textContent='★';x.onclick=()=>{SET.idc=c;saveSet();draw();};sw.appendChild(x);};mk('','Nation colour');for(const [c,t] of ID_COLS)mk(c,t);b.appendChild(sw);
+    const l2=document.createElement('div');l2.className='label';l2.textContent='Emblem (stamped on your flags and shown in lobbies and the scoreboard)';b.appendChild(l2);const eg=document.createElement('div');eg.className='idsw';
+    for(const k of ID_EMB){const x=document.createElement('button');x.className='idsq'+((me.e||'flag')===k?' on':'');x.title=ID_EMBN[k];x.setAttribute('aria-label',ID_EMBN[k]);const c=document.createElement('canvas');c.width=c.height=48;c.style.cssText='width:32px;height:32px';const g=c.getContext('2d');g.fillStyle=col;g.fillRect(0,0,48,48);if(k==='flag'){const im=esFlag(setup.p);if(im)g.drawImage(im,2,10,44,28);}else idDrawEmb(g,k,24,24,19,'#fff');x.appendChild(c);x.onclick=()=>{SET.ide=k==='flag'?'':k;saveSet();draw();};eg.appendChild(x);}b.appendChild(eg);};
+  draw();o.hidden=false;}
+const ID_ROLE={harv:'Economy',dozer:'Builder',cleric:'Morale leader',hacker:'Electronic warfare',hero:'Hero',tank:'Main battle vehicle',arty:'Artillery',drone:'Loitering drone',heli:'Helicopter',jet:'Fighter-bomber',boat:'Patrol boat',ship:'Warship',lander:'Landing craft',airlift:'Air transport'};
+const ID_TGT={light:'infantry',heavy:'vehicles',bld:'buildings',air:'aircraft'},ID_CTR={gun:'rifles and machine guns',at:'anti-tank weapons',cannon:'tank guns',shell:'artillery',boom:'bombs and drones',tower:'defence towers',flak:'flak guns',missile:'AA missiles',snipe:'snipers',bb:'bunker busters',bomb:'bombers',super:'superweapons'};
+function idRole(s){if(ID_ROLE[s.kind])return ID_ROLE[s.kind];if(s.cls==='inf')return s.wpn==='snipe'?'Sniper':s.wpn==='boom'?'Suicide bomber':s.wpn==='at'?'Anti-tank infantry':'Infantry';if(s.cls==='at')return 'Anti-tank infantry';if(s.cls==='aa')return s.wpn==='at'?'Tank hunter':'Anti-air / support';return s.cls||'Unit';}
+function idBeats(s){if(s.noAttack||!(s.dmg>0))return 'Unarmed';const v=VS[s.wpn]||{},r=Object.keys(ID_TGT).filter(a=>(v[a]||0)>=1.2&&!(a==='air'&&!s.aa&&s.dom==='ground'&&v[a]<1.5)).map(a=>ID_TGT[a]);return r.length?r.join(', '):'general fighting';}
+function idLoses(s){const a=s.armor==='bld'?'bld':s.armor==='air'?'air':s.armor==='heavy'?'heavy':'light';const r=Object.keys(VS).filter(w=>(VS[w][a]||0)>=1.3&&ID_CTR[w]).sort((p,q)=>VS[q][a]-VS[p][a]).slice(0,3).map(w=>ID_CTR[w]);return r.length?r.join(', '):'—';}
+function idFirst(t){t=String(t||'');const i=t.search(/[.!](\s|$)/);return (i>0?t.slice(0,i+1):t).slice(0,150);}
+function idGuidePage(){const o=idOv('idGuide','Unit guide'),b=o.querySelector('.idbody');const order=['IR','RS','DW',...FKEYS.filter(k=>!['IR','RS','DW'].includes(k))];let cur=idGuidePage.cur||setup.p||'IR';
+  const draw=()=>{idGuidePage.cur=cur;b.innerHTML='';const sel=document.createElement('select');sel.className='idsel';sel.setAttribute('aria-label','Nation');for(const k of order){const op=document.createElement('option');op.value=k;op.textContent=FACTIONS[k].name;if(k===cur)op.selected=true;sel.appendChild(op);}sel.onchange=()=>{cur=sel.value;draw();};b.appendChild(sel);
+    const F=FACTIONS[cur],intro=document.createElement('p');intro.textContent=String(F.doctrine||'').slice(0,420);b.appendChild(intro);
+    const sec=(h)=>{const e=document.createElement('h2');e.className='sethd';e.textContent=h;b.appendChild(e);};const card=(name,sub,cost,lines)=>{const d=document.createElement('div');d.className='idu';d.innerHTML=`<div class="idut"><b>${name}</b><span>${sub}</span><em>${cost}</em></div>`+lines.map(l=>`<div>${l}</div>`).join('');b.appendChild(d);};
+    sec('Units');let seen=new Set();for(const k of allUnits(cur)){if(seen.has(k))continue;seen.add(k);let s;try{s=stats(cur,k);}catch(e){continue;}const dps=s.dmg>0&&s.rof>0?Math.round(s.dmg/s.rof):0;
+      card(s.name,idRole(s),'$'+s.cost,[`HP ${s.hp} · speed ${Math.round(s.spd)}${s.rng?` · range ${Math.round(s.rng)}`:''}${dps?` · ~${dps} damage/s`:''}${s.limit?` · max ${s.limit}`:''}`,`<span class="g">Beats:</span> ${idBeats(s)}`,`<span class="r">Loses to:</span> ${idLoses(s)}`,s.desc?`<span class="d">${idFirst(s.desc)}</span>`:'']);}
+    sec('Buildings');for(const k of BUILD_ORDER){let s;try{if(!bldAllowed(cur,k))continue;s=bstats(cur,k);}catch(e){continue;}const dps=s.dmg>0&&s.rof>0?Math.round(s.dmg/s.rof):0;
+      card(s.name,s.dmg?'Defence':'Structure','$'+s.cost,[`HP ${s.hp}${s.req?' · needs '+((STRUCT[s.req]||{}).name||s.req):''}${s.rng&&s.dmg?` · range ${Math.round(s.rng)}`:''}${dps?` · ~${dps} damage/s`:''}${s.limit?` · max ${s.limit}`:''}`,s.dmg?`<span class="g">Beats:</span> ${idBeats(s)}`:'',`<span class="r">Loses to:</span> ${idLoses(s)}`,s.desc?`<span class="d">${idFirst(s.desc)}</span>`:'']);}};
+  draw();o.hidden=false;}
+/* ---------- wiring: menu buttons, Settings > colourblind, styles ---------- */
+function idInit(){if(document.getElementById('idCss'))return;const st=document.createElement('style');st.id='idCss';st.textContent=`
+#idToasts{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:92vw}
+.idToast{display:flex;align-items:center;gap:10px;background:rgba(18,24,21,.96);border:1px solid #c9a24a;border-radius:10px;padding:6px 14px 6px 8px;box-shadow:0 6px 24px #000a;animation:idin .35s}
+.idToast b{display:block;color:#e3b341;font-size:12px;letter-spacing:.08em;text-transform:uppercase}.idToast span{font-size:16px}@keyframes idin{from{opacity:0;transform:translateY(-14px)}}
+.idcard{background:var(--panel,#141a17);padding:14px 16px;max-width:720px;width:min(94vw,720px);max-height:92vh;overflow:hidden;display:flex;flex-direction:column}.idbody{overflow:auto;flex:1;text-align:left;-webkit-overflow-scrolling:touch;padding:2px}
+.idgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px}.idm{display:flex;gap:10px;align-items:center;padding:6px;border:1px solid var(--line);border-radius:8px;opacity:.7}.idm.on{opacity:1;border-color:#c9a24a}
+.idm span,.idm i{display:block;font-size:12px;opacity:.8;font-style:normal}.idh{font-size:13px;padding:2px 0}
+.idsw{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}.idsq{width:42px;height:42px;border-radius:8px;border:2px solid #444;padding:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;cursor:pointer}.idsq.on{border-color:#fff;box-shadow:0 0 0 2px #e3b341}
+.idpv{display:flex;align-items:center;gap:10px;font-size:18px;margin-bottom:8px}.idpv canvas{width:56px!important;height:56px!important}.idsel{background:var(--panel2);color:var(--fg);border:1px solid var(--line);padding:9px;font:inherit;width:100%;margin-bottom:8px}
+.idu{border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin:6px 0;font-size:13px;line-height:1.45}.idut{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}.idut b{font-size:16px}.idut span{opacity:.7}.idut em{margin-left:auto;color:#e3b341;font-style:normal}
+.idu .g{color:#74d08f}.idu .r{color:#ea8a7a}.idu .d{opacity:.7}`;document.head.appendChild(st);
+  const op=document.getElementById('openSettings');if(op&&op.parentNode){for(const [t,f] of [['Medals',idMedalsPage],['Profile',idProfilePage],['Unit guide',idGuidePage]]){const b=document.createElement('button');b.className='big ghost';b.style.cssText='font-size:15px;padding:7px 16px';b.textContent=t;b.onclick=f;op.parentNode.appendChild(b);}op.parentNode.style.flexWrap='wrap';}
+  const tx=document.getElementById('sTxt');if(tx){const l=document.createElement('div');l.className='label';l.textContent='Colourblind mode (safe team colours from the next battle; shapes on the minimap and selection rings now)';const sg=document.createElement('div');sg.className='seg';sg.id='sCb';sg.innerHTML='<button data-v="1">On</button><button data-v="0">Off</button>';
+    const pr=document.createElement('div');pr.className='label';pr.innerHTML='Your colour and emblem are in the main menu under <b>Profile</b>.';const after=tx.nextSibling;tx.parentNode.insertBefore(l,after);tx.parentNode.insertBefore(sg,after);tx.parentNode.insertBefore(pr,after);
+    const sync=()=>sg.querySelectorAll('button').forEach(b=>{b.classList.toggle('on',(+b.dataset.v)===(SET.cb?1:0));b.onclick=()=>{SET.cb=+b.dataset.v;saveSet();sync();};});sync();}}
+try{idInit();}catch(e){console.warn('identity init',e);}
 /* ================= REPLAYS: record every battle, watch it again, save it as a small file =================
    Abdullah 2026-11-03: "every battle (skirmish and online) can be saved and re-watched".
 
@@ -12198,7 +12325,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
     
     for(const v of [-1,1])bx(L*.2,H*.12,W*.08,rear+fwd*L*.35,H*.5,v*W*.47,'#4d4a3c');
     // national pennant on the rear antenna
-    {const [x,z]=P(ru+fwd*L*.06,W*.3);const fl=new THREE.Mesh(new THREE.PlaneGeometry(H*.75,H*.45,6,1),new THREE.MeshStandardMaterial({map:flagTex(G.teams[e.team].fac),side:THREE.DoubleSide,roughness:.9}));
+    {const [x,z]=P(ru+fwd*L*.06,W*.3);const fl=new THREE.Mesh(new THREE.PlaneGeometry(H*.75,H*.45,6,1),new THREE.MeshStandardMaterial({map:idFlagTex(G.teams[e.team]),side:THREE.DoubleSide,roughness:.9}));
      fl.geometry.translate(-H*.375,0,0);fl.position.set(x,y0+H*.95+H*.82,z);fl.rotation.y=ax==='x'?(fwd>0?0:Math.PI):(fwd>0?-Math.PI/2:Math.PI/2);yaw.add(fl);o.userData.parts.pennant=fl;fl.userData.base=Float32Array.from(fl.geometry.attributes.position.array);}
     
     const m=mesh(B.geo());yaw.add(m);}}
@@ -12231,7 +12358,7 @@ const BMOD={hq:{slab:1,list:[{m:'b_hq',fit:'xz',size:70,ys:.62,x:6,z:4},{m:'b_ra
 function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.fac)&&BME[e.kind]&&MODELS.proto[BME[e.kind].m])cfg=Object.assign({},cfg,{list:cfg.list.map((q,i)=>i?q:Object.assign({},q,{m:BME[e.kind].m,size:BME[e.kind].size,ys:1}))});if(cfg&&e.kind==='shipyard'&&MEFAC.has(T.fac))cfg={list:cfg.list.filter(q=>q.part).map(q=>Object.assign({},q,{y:4}))};// ME naval base: code-built quay (04-gfx meGeo), keep the crane model
   if(!cfg||!cfg.list.every(q=>MODELS.proto[q.m]))return false;const P=o.userData.parts;
   if(!['turret','sam'].includes(e.kind)){const fg=new THREE.Group(),h2=e.size/2;fg.position.set(-h2+4,0,h2-4);const pole=new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,30,6),new THREE.MeshStandardMaterial({color:0x8a8d90,metalness:.6,roughness:.4}));pole.position.y=15;pole.castShadow=true;fg.add(pole);
-    const fgeo=new THREE.PlaneGeometry(15,9,8,1);fgeo.translate(7.5,0,0);const fl=new THREE.Mesh(fgeo,new THREE.MeshStandardMaterial({map:flagTex(T.fac),side:THREE.DoubleSide,roughness:.85,emissive:new THREE.Color(T.color),emissiveIntensity:.04}));{const tb=new THREE.Mesh(new THREE.BoxGeometry(.9,7,.9),new THREE.MeshStandardMaterial({color:new THREE.Color(T.color),roughness:.6}));tb.position.set(0,26.5,0);fg.add(tb);}fl.position.y=26.5;fl.castShadow=true;fg.add(fl);o.add(fg);P.flag=fl;fl.userData.base=fgeo.attributes.position.array.slice();}
+    const fgeo=new THREE.PlaneGeometry(15,9,8,1);fgeo.translate(7.5,0,0);const fl=new THREE.Mesh(fgeo,new THREE.MeshStandardMaterial({map:idFlagTex(T),side:THREE.DoubleSide,roughness:.85,emissive:new THREE.Color(T.color),emissiveIntensity:.04}));{const tb=new THREE.Mesh(new THREE.BoxGeometry(.9,7,.9),new THREE.MeshStandardMaterial({color:new THREE.Color(T.color),roughness:.6}));tb.position.set(0,26.5,0);fg.add(tb);}fl.position.y=26.5;fl.castShadow=true;fg.add(fl);o.add(fg);P.flag=fl;fl.userData.base=fgeo.attributes.position.array.slice();}
   if(cfg.slab){const s=e.size,B=Bld(),tc='#'+new THREE.Color(T.color).lerp(new THREE.Color('#5a5c54'),.3).getHexString();B.box(s,2.4,s,0,1.2,0,'#a0937c');B.box(s-2,.7,3,0,2.5,s/2-3,tc);B.box(s-2,.7,3,0,2.5,-s/2+3,tc);B.box(3,.7,s-2,s/2-3,2.5,0,tc);B.box(3,.7,s-2,-s/2+3,2.5,0,tc);
     if(s>50){B.cyl(.5,.5,30,6,s/2-4,15,s/2-4,'#2b2d26');B.box(.3,7,11,s/2-4,26.5,s/2-9.5,tc);}
     // Middle Eastern nations: gun and SAM pits get a HESCO ring (open at the back), main buildings blast walls and a sandbag post
@@ -12367,5 +12494,230 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
       if(tt)B.box(L*.06,H*.09,W*.09,cx+L*.01,tt.y+H*.04,W*.12,'#2a2d2b');}
   }
   return B.geo();}
+// ===== 12-campaign: single-player mini-campaign for the Shia factions (IR, RS, DW) =====
+// Five scripted missions on the real simulation and the existing maps. Scripting runs on the host of a single-player
+// battle only (MODE 'single'); skirmish and online play never touch this. Randomness is a seeded mulberry (c.R).
+// Fiction: the opposing side is always a generic "coalition" - no real people or real recent events are depicted.
+const CAMP_KEY='ww3camp1',CAMP_DIFF=['Easy','Medium','Hard'],CAMP_MUL=[.7,1,1.4];
+function campLoad(){try{return JSON.parse(localStorage.getItem(CAMP_KEY))||{};}catch(e){return {};}}
+function campStore(id,diff,t){try{const s=campLoad();const r=s[id]||(s[id]={});const k=CAMP_DIFF[diff];if(!r[k]||t<r[k])r[k]=Math.round(t);localStorage.setItem(CAMP_KEY,JSON.stringify(s));}catch(e){}}
+
+// ---------- helpers (all deterministic given the seed) ----------
+const CH={
+  ax(){const P=BASES[0],E=BASES[1];return{P,E,dx:E[0]-P[0],dy:E[1]-P[1]};},
+  // a point along the line from our base (t=0) to the far base (t=1), o = sideways offset in world units
+  pt(t,o,dom){const a=CH.ax(),L=Math.hypot(a.dx,a.dy)||1;let x=a.P[0]+a.dx*t-a.dy/L*(o||0),y=a.P[1]+a.dy*t+a.dx/L*(o||0);x=Math.max(60,Math.min(MAPW-60,x));y=Math.max(60,Math.min(MAPH-60,y));return nearestPassXY(dom||'ground',x,y)||[x,y];},
+  has(fac,k){try{return !!stats(fac,k);}catch(e){return false;}},
+  unit(team,kind,x,y){const f=G.teams[team].fac;if(!CH.has(f,kind))kind='inf';const p=nearestPassXY(stats(f,kind).dom||'ground',x,y)||[x,y];const u=addUnit(team,kind,p[0],p[1]);const c=G.camp;if(c&&c.ehp&&team===G.teams.length-1&&u)u.hp=u.max=Math.round(u.max*c.ehp);return u;},
+  units(team,kind,n,x,y,spread){const c=G.camp,out=[];n=Math.max(0,Math.round(n));for(let i=0;i<n;i++)out.push(CH.unit(team,kind,x+(c.R()-.5)*2*(spread||60),y+(c.R()-.5)*2*(spread||60)));return out;},
+  bld(team,kind,x,y){const f=G.teams[team].fac;if(kind!=='hq'&&!bldAllowed(f,kind))return null;for(let k=0;k<120;k++){const r=k*7,a=k*2.4,px=x+Math.cos(a)*r,py=y+Math.sin(a)*r;if(k===0||validSpot(team,kind,px,py))return addBld(team,kind,px,py,true);}return null;},
+  base(team,x,y){const hq=CH.bld(team,'hq',x,y);if(!hq)return null;CH.unit(team,'harv',hq.x+120,hq.y+40);CH.unit(team,'dozer',hq.x+90,hq.y-100);return hq;},
+  go(team,us,x,y,amove){us=us.filter(u=>u&&!u.dead);if(us.length)act(team,{t:'go',ids:us.map(u=>u.id),x,y,mode:amove?'amove':'move'});},
+  alive(a){return a.filter(u=>u&&!u.dead);},
+  combat(team){let n=0;for(const e of G.ents)if(e.team===team&&!e.dead&&!e.isB&&e.kind!=='harv'&&e.kind!=='dozer')n++;return n;},
+  count(team,kind){let n=0;for(const e of G.ents)if(e.team===team&&!e.dead&&(kind==null||e.kind===kind))n++;return n;},
+  blds(team){return G.ents.filter(e=>e.team===team&&e.isB&&!e.dead);},
+  near(team,x,y,r){let n=0;for(const e of G.ents)if(e.team===team&&!e.dead&&!e.isB&&Math.hypot(e.x-x,e.y-y)<r)n++;return n;},
+  say(m,k){try{log(0,m,k||'g');}catch(e){}},
+  enemyName(team,name){const T=G.teams[team];T.F=Object.assign(Object.create(Object.getPrototypeOf(T.F)),T.F,{name});},
+  tag(us,name,hp){for(const u of us){u.s=Object.assign({},u.s,{name});if(hp){u.hp=u.max=hp;}}}
+};
+
+// ---------- the five missions ----------
+const CAMPAIGN=[
+{id:'pass',n:1,title:'Hold the Pass',sub:'Mountain Shias · Ridge defence',fac:'RS',enemy:'EU',enemyName:'Invasion Force',map:'khyber',
+ brief:['An invasion force is pushing up the only road into our valleys. Our main columns are still two hours away on the mountain tracks.','You hold a ridge above the road with a small garrison: riflemen, anti-tank teams, two tanks and a few emplacements. Hold it. Every minute you stand buys the valley time.','When the reinforcements arrive, do not let the enemy rest: take the fight back down the pass and destroy their forward base.'],
+ obj:[['hold','Hold the ridge until reinforcements arrive'],['reinf','Reinforcements arrive'],['crush','Destroy the enemy forward base']],
+ win:'The pass is ours. The valley is safe, and the road is closed to the invaders.',lose:'The ridge has fallen. The valley will have to be defended from the next line.',
+ setup(c){const d=c.mul;c.T=360;const R=CH.pt(.2,0),F=CH.pt(.1,0);c.ridge=R;c.focus=R;G.teams[0].credits=400;
+  CH.base(0,BASES[0][0],BASES[0][1]);const g=[];
+  g.push(...CH.units(0,'inf',Math.round(14/Math.max(.8,d)+2),R[0],R[1],70),...CH.units(0,'at',4,R[0],R[1],50),...CH.units(0,'tank',2,R[0],R[1],50));
+  for(const o of [-120,0,120]){const p=CH.pt(.23,o);CH.bld(0,'turret',p[0],p[1]);}c.garrison=g;
+  CH.base(1,BASES[1][0],BASES[1][1]);const q=CH.pt(.86,0);for(const o of [-130,0,130]){const p=CH.pt(.8,o);CH.bld(1,'turret',p[0],p[1]);}CH.bld(1,'barracks',q[0],q[1]);
+  G.teams[1].credits=500;c.wave=0;c.nextWave=25;c.armies=[];},
+ tick(c,dt){const d=c.mul;
+  if(c.t<c.T+60&&c.t>=c.nextWave){c.nextWave+=Math.round(48/Math.max(.7,d)),c.wave++;const k=c.wave,s=CH.pt(.8,0);let us=[...CH.units(1,'inf',(5+k*1.6)*d,s[0],s[1],90),...CH.units(1,'at',1+k*.4*d,s[0],s[1],70)];if(k>=3)us.push(...CH.units(1,'tank',(k-1)*.7*d,s[0],s[1],70));if(k>=5)us.push(...CH.units(1,'arty',d>1?2:1,s[0],s[1],70));CH.go(1,us,c.ridge[0],c.ridge[1],true);if(k===1)CH.say('Contact! Enemy column on the road below the ridge.','w');}
+  if(!c.o.reinf&&c.t>=c.T){c.o.hold=c.o.reinf=true;const b=CH.pt(.02,0);const r=[...CH.units(0,'inf',10,b[0],b[1],90),...CH.units(0,'tank',5,b[0],b[1],90),...CH.units(0,'at',3,b[0],b[1],60),...CH.units(0,'arty',2,b[0],b[1],60)];CH.go(0,r,c.ridge[0],c.ridge[1],true);CH.say('Reinforcements have arrived on the mountain track! Counter-attack - drive them off the pass.','g');G.teams[0].credits+=1500;}
+  if(c.o.reinf&&!c.o.crush&&CH.blds(1).length===0)c.o.crush=true;
+  if(c.o.crush)c.win();
+  else if(!c.o.reinf&&c.t>5&&CH.combat(0)===0)c.lose('Every defender on the ridge has fallen.');
+  else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Headquarters and garrison are gone.');
+  c.status=c.o.reinf?null:'Reinforcements in '+campClock(c.T-c.t);}},
+
+{id:'supply',n:2,title:'Supply Run',sub:'Coffee Shias · Convoy escort',fac:'DW',enemy:'US',enemyName:'Siege Force',map:'plateau',
+ brief:['A highland town is surrounded. Its people have food for days, not weeks, and the road in is held by irregulars and raiders of the besieging force.','Six supply trucks are loaded at your depot. Escort them across the plateau to the town. Expect ambushes from the ridges and the dry riverbeds - they will hit the trucks first.','At least four trucks must reach the town. Scout ahead, keep the escort close, and do not drive blind into the narrows.'],
+ obj:[['half','Cross the plateau to the halfway ridge'],['clear','Break the siege line around the town'],['deliver','Deliver at least 4 of 6 trucks to the town']],
+ win:'The convoy has reached the town. The siege is broken and the people eat tonight.',lose:'The convoy is lost. The town is on its own.',
+ setup(c){const d=c.mul;const B=BASES[0];G.teams[0].credits=600;CH.base(0,B[0],B[1]);const s=CH.pt(.07,0);c.focus=s;
+  const esc=[...CH.units(0,'inf',8,s[0],s[1],110),...CH.units(0,'tank',4,s[0],s[1],110),...CH.units(0,'at',2,s[0],s[1],70),...CH.units(0,'aa',1,s[0],s[1],70)];
+  c.trucks=CH.units(0,'dozer',6,s[0]-60,s[1]+30,60);CH.tag(c.trucks,'Supply Truck',420);
+  const town=CH.pt(.86,0);c.town=town;c.half=CH.pt(.5,0);
+  for(const o of [-90,90]){const p=CH.pt(.88,o);CH.bld(0,'turret',p[0],p[1]);}CH.units(0,'inf',4,town[0],town[1],60);
+  CH.base(1,BASES[1][0],BASES[1][1]);G.teams[1].credits=300;
+  c.siege=[];for(const o of [-200,-80,80,200]){const p=CH.pt(.77,o);c.siege.push(...CH.units(1,'inf',Math.round(4*d),p[0],p[1],60),...CH.units(1,'tank',Math.round(1*d),p[0],p[1],60));}
+  for(const o of [-170,120]){const p=CH.pt(.8,o);CH.bld(1,'turret',p[0],p[1]);}
+  c.amb=[];for(const [t,o] of [[.26,300],[.4,-320],[.6,290],[.68,-260]]){const p=CH.pt(t,o);c.amb.push({t,pos:p,fired:false,us:[...CH.units(1,'inf',Math.round(5*d),p[0],p[1],50),...CH.units(1,'at',Math.round(2*d),p[0],p[1],40),...(t>.5?CH.units(1,'tank',Math.round(1*d),p[0],p[1],40):[])]});}},
+ tick(c,dt){const tr=CH.alive(c.trucks);
+  for(const a of c.amb){if(a.fired)continue;let hit=null;for(const u of tr){if(Math.hypot(u.x-a.pos[0],u.y-a.pos[1])<420){hit=u;break;}}if(hit){a.fired=true;CH.go(1,a.us,hit.x,hit.y,true);CH.say('Ambush! Raiders are coming down from the ridge.','w');
+    if(a.t>.5){const b=CH.pt(a.t-.12,0),us=CH.units(1,'inf',Math.round(4*c.mul),b[0],b[1],50);CH.go(1,us,hit.x,hit.y,true);}}}
+  if(!c.o.half&&tr.some(u=>Math.hypot(u.x-c.half[0],u.y-c.half[1])<260)){c.o.half=true;CH.say('Halfway ridge passed. The besieged town is ahead.','g');}
+  let got=0;for(const u of c.trucks){if(!u.dead&&Math.hypot(u.x-c.town[0],u.y-c.town[1])<190){u.delivered=true;}if(u.delivered)got++;}
+  c.status='Trucks delivered '+got+'/6 · alive '+tr.length;
+  if(!c.o.clear&&CH.alive(c.siege).length<=Math.round(2*c.mul))c.o.clear=true;
+  if(got>=4){c.o.deliver=true;c.win();}
+  else if(tr.length+0<4&&got+tr.length<4)c.lose('Too many supply trucks were lost.');
+  else if(CH.combat(0)===0&&tr.length&&got<4)c.lose('The escort is gone.');}},
+
+{id:'fortress',n:3,title:'Mountain Fortress',sub:'Iran · Build and defend',fac:'IR',enemy:'US',enemyName:'Coalition Task Force',map:'zagros',
+ brief:['Our command post sits in a mountain valley that the enemy must take to open the road to the plains. They will come in waves - infantry first, then armour, then everything they have.','Build a Mountain Fortress: five thousand tons of rock-cut bunker, with room for twenty fighters. Garrison it, dig in, and keep the engineers repairing.','Late in the battle the enemy will bring bunker-busting bombs. Warnings will sound. Get the garrison out of the fortress before the bombs fall, repair what you can, and do not lose headquarters. Hold until relief arrives at twelve minutes.'],
+ obj:[['fort','Build the Mountain Fortress'],['hold','Hold headquarters until relief arrives'],['bb','Survive the bunker-buster strikes']],
+ win:'Relief columns have arrived. The valley held.',lose:'Headquarters has fallen. The valley is lost.',
+ setup(c){const B=BASES[0];G.teams[0].credits=Math.round(7000/Math.max(.85,c.mul));c.T=720;c.focus=[B[0],B[1]];const hq=CH.base(0,B[0],B[1]);CH.unit(0,'dozer',B[0]+60,B[1]+110);
+  for(const k of ['barracks','factory']){const p=sbSpot(0,k,hq,170,360);if(p)addBld(0,k,p[0],p[1],true);}
+  CH.units(0,'inf',8,B[0]+160,B[1],90);CH.units(0,'at',3,B[0]+160,B[1],60);for(const o of [-150,150]){const p=CH.pt(.1,o);CH.bld(0,'turret',p[0],p[1]);}
+  CH.base(1,BASES[1][0],BASES[1][1]);G.teams[1].credits=0;c.wave=0;c.next=45;c.bb=[[500,525],[640,665]];c.bbDone=0;},
+ tick(c,dt){const d=c.mul,hq=CH.blds(0).find(b=>b.kind==='hq');
+  if(c.t>=c.next&&c.t<c.T-30){c.wave++;c.next+=Math.round(62/Math.max(.75,d));const k=c.wave,s=CH.pt(.88,0);let us=[...CH.units(1,'inf',(5+k*1.7)*d,s[0],s[1],100)];if(k>=2)us.push(...CH.units(1,'at',k*.5*d,s[0],s[1],70));if(k>=3)us.push(...CH.units(1,'tank',(k-1)*.9*d,s[0],s[1],80));if(k>=7)us.push(...CH.units(1,'arty',2,s[0],s[1],70));if(k>=8)us.push(...CH.units(1,'heli',d>1?3:2,s[0],s[1],70));
+   const T0=hq||{x:BASES[0][0],y:BASES[0][1]};CH.go(1,us,T0.x,T0.y,true);CH.say('Wave '+k+': enemy column approaching from the plains.','w');}
+  const fort=G.ents.find(e=>e.team===0&&e.kind==='fort'&&!e.dead&&e.built>=1);if(fort)c.o.fort=true;if(fort)c.fortSeen=true;
+  for(let i=0;i<c.bb.length;i++){const w=c.bb[i];if(c.bbDone===i&&c.t>=w[0]&&!w.warn){w.warn=true;CH.say('WARNING: bunker-buster aircraft inbound on the Fortress. Evacuate the garrison now!','bad');}
+   if(c.bbDone===i&&c.t>=w[1]){c.bbDone++;const f=G.ents.find(e=>e.team===0&&e.kind==='fort'&&!e.dead);const tg=f||hq;if(tg){addStrike(tg.x,tg.y,3,POWERS.bb.r||150,1500,1,'bb');CH.say('Bunker-buster bombs falling!','bad');}}}
+  if(c.bbDone>=c.bb.length&&c.t>c.bb[1][1]+8)c.o.bb=true;
+  if(c.t>=c.T&&hq){c.o.hold=true;c.win();}
+  else if(!hq)c.lose('Headquarters was destroyed.');
+  c.status=c.t<c.T?'Relief in '+campClock(c.T-c.t)+' · wave '+c.wave:null;}},
+
+{id:'town',n:4,title:'Retake the Town',sub:'Mountain Shias + Coffee Shias · Street fight',fac:'RS',ally:'DW',enemy:'EU',enemyName:'Occupation Force',map:'aleppo',
+ brief:['An occupation force has seized the old town at the crossroads. Its streets and rooftops are held by infantry and anti-tank teams, with armour in the squares.','Mountain Shias and Coffee Shias fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.','Clear the town street by street. Put infantry into buildings to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves.'],
+ obj:[['z0','Clear the southern approach'],['z1','Clear the west quarter'],['z2','Clear the east quarter'],['z3','Take the citadel square'],['z4','Clear the far gate'],['gar','Garrison a building to hold ground']],
+ win:'The town is free. Both flags fly over the citadel.',lose:'The assault has failed. Our columns fall back.',
+ setup(c){const d=c.mul,B=BASES[0],C=[MAPW/2,MAPH/2],E=BASES[1];const ang=Math.atan2(C[1]-B[1],C[0]-B[0]),nx=-Math.sin(ang),ny=Math.cos(ang),ux=Math.cos(ang),uy=Math.sin(ang);
+  const Rt=290*WK;c.zr=Rt*.33;const zp=(f,s)=>{const x=C[0]-ux*Rt*f+nx*Rt*s,y=C[1]-uy*Rt*f+ny*Rt*s;return nearestPassXY('ground',x,y)||[x,y];};
+  c.zones=[zp(.72,0),zp(.15,-.55),zp(.15,.55),[C[0],C[1]],zp(-.72,0)];c.focus=zp(1.3,0);
+  G.teams[0].credits=1200;G.teams[1].credits=1000;c.ehp=1.7;
+  const hq=CH.base(0,B[0],B[1]);const a=[B[0]+nx*420,B[1]+ny*420];CH.base(1,a[0],a[1]);
+  const m0=zp(1.35,-.15),m1=zp(1.35,.35);
+  c.me=[...CH.units(0,'inf',14,m0[0],m0[1],80),...CH.units(0,'at',4,m0[0],m0[1],60),...CH.units(0,'tank',2,m0[0],m0[1],60),...CH.units(0,'arty',2,m0[0],m0[1],50)];
+  c.ally=[...CH.units(1,'inf',12,m1[0],m1[1],80),...CH.units(1,'tank',4,m1[0],m1[1],60),...CH.units(1,'at',3,m1[0],m1[1],50)];
+  c.foe=[];c.zoneFoe=c.zones.map((p,i)=>{const us=[...CH.units(2,'inf',Math.round((9+i*1.5)*d),p[0],p[1],c.zr*.7),...CH.units(2,'at',Math.round(3*d),p[0],p[1],c.zr*.6),...(i>=2?CH.units(2,'tank',Math.round((i>=3?2.5:1)*d),p[0],p[1],c.zr*.5):[])];c.foe.push(...us);return us;});
+  c.raid=[[150,.6],[300,.8],[450,1]];c.done=[false,false,false,false,false];c.nextOrder=8;},
+ tick(c,dt){const d=c.mul;
+  const gate=[()=>true,()=>c.done[0],()=>c.done[0],()=>c.done[1]&&c.done[2],()=>c.done[3]];
+  for(let i=0;i<5;i++){if(c.done[i]||!gate[i]())continue;const p=c.zones[i];const foes=CH.near(2,p[0],p[1],c.zr*1.15),mine=CH.near(0,p[0],p[1],c.zr*1.4)+CH.near(1,p[0],p[1],c.zr*1.4);if(foes<=2&&mine>0&&CH.alive(c.zoneFoe[i]).length<=Math.round(c.zoneFoe[i].length*.15)){c.done[i]=true;c.o['z'+i]=true;CH.say(['Southern approach clear.','West quarter clear.','East quarter clear.','Citadel square taken!','Far gate clear.'][i],'g');}}
+  if(!c.o.gar){for(const k of (G.civ||[]))if(k.occ&&k.occ.some(u=>u.team<2)){c.o.gar=true;break;}}
+  for(const r of c.raid){if(!r.fired&&c.t>=r[0]){r.fired=true;const s=CH.pt(.96,0),us=[...CH.units(2,'inf',(10+r[1]*6)*d,s[0],s[1],90),...CH.units(2,'tank',(2+r[1]*3)*d,s[0],s[1],70)];c.foe.push(...us);const z=c.zones[c.done[3]?2:3];CH.go(2,us,z[0],z[1],true);CH.say('Enemy reserves are counter-attacking from the east!','w');}}
+  if(c.t>=c.nextOrder){c.nextOrder+=26;const k=c.done.findIndex(x=>!x);if(k>=0){const z=c.zones[k],o=(k%2?1:-1)*c.zr*.5;CH.go(1,c.ally,z[0]+o,z[1]-o,true);}
+   if(c.t%104<26)CH.go(1,CH.units(1,'inf',4,CH.ax().P[0]+300,CH.ax().P[1]+300,60).concat(c.ally),c.zones[Math.max(0,k)][0],c.zones[Math.max(0,k)][1],true);}
+  c.ally=CH.alive(c.ally);
+  const left=c.done.filter(x=>!x).length;c.status=left?left+' district'+(left>1?'s':'')+' left to clear':null;
+  if(c.done.every(x=>x))c.win();
+  else if(CH.combat(0)===0&&G.teams[0].credits<200)c.lose('Our assault force is spent.');
+  else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and assault force lost.');}},
+
+{id:'finale',n:5,title:'Combined Arms',sub:'Iran · Final assault',fac:'IR',enemy:'RU',enemyName:'Northern Group',map:'plateau',
+ brief:['This is the strike that ends the offensive. The enemy has dug a fortified base on the plateau: air-defence sites on the approaches, armour in depth, a factory and a command post at the back.','You command a combined force: loitering drones, missile launchers, armour and infantry. Drones cannot survive the air defences - break the SAM sites first with launchers and tanks, then let the drones tear the base apart.','Take out the air defences, destroy the vehicle factory, then the headquarters. The enemy commander will fight back with everything he builds.'],
+ obj:[['sam','Destroy the enemy air-defence sites'],['fac','Destroy the vehicle factory'],['hq','Destroy the enemy headquarters']],
+ win:'The enemy command post is rubble. The offensive is over.',lose:'The assault force is destroyed.',
+ setup(c){const d=c.mul,B=BASES[0];G.teams[0].credits=3500;const s=CH.pt(.14,0);c.focus=s;CH.base(0,B[0],B[1]);
+  const hq=G.ents.find(e=>e.team===0&&e.kind==='hq');for(const k of ['barracks','factory']){const p=sbSpot(0,k,hq,170,360);if(p)addBld(0,k,p[0],p[1],true);}
+  CH.units(0,'drone',8,s[0],s[1],90);CH.units(0,'arty',5,s[0],s[1],90);CH.units(0,'tank',8,s[0],s[1],110);CH.units(0,'inf',12,s[0],s[1],110);CH.units(0,'at',4,s[0],s[1],70);CH.units(0,'aa',2,s[0],s[1],70);
+  const E=BASES[1];const T=G.teams[1];T.credits=3000;CH.base(1,E[0],E[1]);const ehq=G.ents.find(e=>e.team===1&&e.kind==='hq');
+  for(const k of ['barracks','factory']){const p=sbSpot(1,k,ehq,170,320);if(p)addBld(1,k,p[0],p[1],true);}
+  for(const o of [-260,-90,90,260]){const p=CH.pt(.8,o);CH.bld(1,'turret',p[0],p[1]);}
+  for(const o of [-200,0,200]){const p=CH.pt(.9,o);CH.bld(1,'sam',p[0],p[1]);}
+  const q=CH.pt(.85,0);CH.units(1,'tank',Math.round(5*d),q[0],q[1],140);CH.units(1,'inf',Math.round(10*d),q[0],q[1],140);CH.units(1,'at',Math.round(4*d),q[0],q[1],100);CH.units(1,'aa',2,q[0],q[1],100);
+  T.ai=mkAI(c.diff);},
+ tick(c,dt){const sam=CH.count(1,'sam'),fac=CH.count(1,'factory'),hq=CH.count(1,'hq');
+  if(!c.o.sam&&sam===0){c.o.sam=true;CH.say('Air defences down - the drones have a free sky.','g');}
+  if(!c.o.fac&&fac===0)c.o.fac=true;if(!c.o.hq&&hq===0)c.o.hq=true;
+  c.status=null;if(c.o.hq)c.win();
+  else if(CH.combat(0)===0&&G.teams[0].credits<250)c.lose('The assault force is destroyed.');
+  else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and force lost.');}}
+];
+function campClock(s){s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+
+// ---------- engine hooks (called from newGame / simUpdate; host of a single-player battle only) ----------
+function campSetup(o){
+  const m=CAMPAIGN.find(x=>x.id===o.id);if(!m)return;
+  const c=G.camp={m,id:m.id,diff:o.diff|0,mul:CAMP_MUL[o.diff|0],t:0,o:{},over:false,R:mulberry((G.seed|0)*31+m.n),status:null,focus:null,t0:0,
+   win(){if(this.over)return;this.over=true;this.res='win';},lose(why){if(this.over)return;this.over=true;this.res='lose';this.why=why||'';}};
+  for(const [k] of m.obj)c.o[k]=false;
+  G.teams.forEach((T,i)=>{T.ai=null;});
+  G.teams[0].camp=1;
+  const en=G.teams.length-1;CH.enemyName(en,m.enemyName);
+  m.setup(c);
+  c.n0=CH.combat(0);
+  G.camp.lost0=0;
+}
+function campTick(dt){
+  const c=G.camp;if(!c||G.over)return;
+  if(!c.started){c.started=1;if(c.focus&&typeof centerOn==='function'){try{centerOn(c.focus[0],c.focus[1]);}catch(e){}}}
+  if(c.over){if(!c.fin){c.fin=1;campFinish();}return;}
+  c.t+=dt;try{c.m.tick(c,dt);}catch(e){console.error('campaign tick',e);c.m.tickErr=1;}
+}
+function campFinish(){
+  const c=G.camp,won=c.res==='win';G.over=true;
+  if(won)campStore(c.id,c.diff,c.t);
+  try{campDebrief(c,won);}catch(e){console.error(e);}
+}
+
+// ---------- UI: menu button, mission list, briefing, objectives panel, debrief ----------
+function campEl(tag,css,html){const e=document.createElement(tag);if(css)e.style.cssText=css;if(html!=null)e.innerHTML=html;return e;}
+const CAMP_CSS='position:fixed;inset:0;z-index:9000;background:rgba(6,8,10,.94);color:#e8e4d8;font-family:inherit;overflow:auto;padding:16px;box-sizing:border-box;';
+function campClose(){const e=document.getElementById('campScreen');if(e)e.remove();}
+function campShow(inner){campClose();const e=campEl('div',CAMP_CSS);e.id='campScreen';const w=campEl('div','max-width:760px;margin:0 auto;');w.appendChild(inner);e.appendChild(w);document.body.appendChild(e);return e;}
+function campBtn(txt,fn,ghost){const b=campEl('button','font-size:18px;padding:14px 22px;margin:6px 8px 6px 0;border-radius:8px;border:1px solid #6b7a55;background:'+(ghost?'transparent':'#4f6b32')+';color:#fff;cursor:pointer;min-height:48px;',txt);b.type='button';b.onclick=fn;return b;}
+function campMenu(){
+  const s=campLoad(),root=campEl('div');
+  root.appendChild(campEl('h1','margin:6px 0 4px;font-size:30px;letter-spacing:.04em;','CAMPAIGN'));
+  root.appendChild(campEl('div','opacity:.75;margin-bottom:14px;','Five missions for the Shia factions. Replay any mission on Easy, Medium or Hard; your best times are saved on this device.'));
+  for(const m of CAMPAIGN){const r=s[m.id]||{},done=Object.keys(r);const card=campEl('div','border:1px solid #3d4733;border-radius:10px;padding:12px 14px;margin:10px 0;background:rgba(40,48,32,.5);cursor:pointer;');
+    card.innerHTML=`<div style="font-size:20px;font-weight:bold">${done.length?'✓ ':''}${m.n}. ${m.title}</div><div style="opacity:.8;font-size:15px">${m.sub}</div><div style="font-size:14px;opacity:.7;margin-top:4px">${done.length?CAMP_DIFF.filter(k=>r[k]).map(k=>k+' '+campClock(r[k])).join(' · '):'Not yet completed'}</div>`;
+    card.onclick=()=>campBrief(m);root.appendChild(card);}
+  root.appendChild(campBtn('Back',campClose,true));campShow(root);
+}
+function campBrief(m){
+  let diff=1;const root=campEl('div');
+  root.appendChild(campEl('div','opacity:.7;font-size:14px','MISSION '+m.n+' · '+m.sub));
+  root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;',m.title));
+  root.appendChild(campEl('div','font-size:17px;line-height:1.5;',m.brief.map(p=>'<p style="margin:0 0 10px">'+p+'</p>').join('')));
+  root.appendChild(campEl('div','font-weight:bold;margin:10px 0 4px','Objectives'));
+  root.appendChild(campEl('div','font-size:16px;line-height:1.6;',m.obj.map(o=>'☐ '+o[1]).join('<br>')));
+  const row=campEl('div','margin:12px 0');
+  const bs=CAMP_DIFF.map((n,i)=>{const b=campBtn(n,()=>{diff=i;bs.forEach((x,j)=>x.style.background=j===i?'#4f6b32':'transparent');},i!==1);return b;});bs.forEach(b=>row.appendChild(b));root.appendChild(row);
+  root.appendChild(campBtn('Begin mission',()=>{campClose();startCampaign(m.id,diff);}));
+  root.appendChild(campBtn('Back',campMenu,true));campShow(root);
+}
+function startCampaign(id,diff){
+  const m=CAMPAIGN.find(x=>x.id===id);if(!m)return;try{initAudio();}catch(e){}
+  MODE='single';ME=0;const ally=!!m.ally,facs=ally?[m.fac,m.ally,m.enemy]:[m.fac,m.enemy];
+  setup.p=m.fac;setup.d=diff;
+  TERR_DEFER=true;try{newGame({seed:(m.n*7919+diff*104729+12345)|0,facs,ai:facs.map(()=>false),map:m.map,tm:ally?[0,0,1]:[0,1],bs:1,slot:0,st:[0,1],w:0,camp:{id,diff}});}finally{TERR_DEFER=false;}
+  afterStart();
+}
+function campDebrief(c,won){
+  const m=c.m,T=G.teams[0],root=campEl('div');
+  root.appendChild(campEl('div','opacity:.7;font-size:14px','MISSION '+m.n+' · '+(won?'COMPLETE':'FAILED')+' · '+CAMP_DIFF[c.diff]));
+  root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;color:'+(won?'#9fd36b':'#e07a6a'),(won?'Victory - ':'Defeat - ')+m.title));
+  root.appendChild(campEl('div','font-size:17px;line-height:1.5;margin-bottom:10px',won?m.win:(m.lose+(c.why?' '+c.why:''))));
+  root.appendChild(campEl('div','font-size:16px;line-height:1.7;margin-bottom:10px',m.obj.map(o=>(c.o[o[0]]?'☑ ':'☐ ')+o[1]).join('<br>')+'<br><br>Time '+campClock(c.t)+' · Enemy destroyed '+(T.kills|0)+' · Our losses '+(T.lost|0)));
+  root.appendChild(campBtn(won?'Play again':'Try again',()=>{campClose();startCampaign(m.id,c.diff);},won));
+  const nx=CAMPAIGN[m.n];if(won&&nx)root.appendChild(campBtn('Next mission',()=>{campBrief(nx);campLeave();}));
+  root.appendChild(campBtn('Missions',()=>{campLeave();campMenu();},true));
+  root.appendChild(campBtn('Main menu',()=>{campLeave();campClose();},true));
+  campShow(root);
+}
+function campLeave(){try{if(MODE!=='single')leaveNet();}catch(e){}MODE='single';ME=0;G=null;try{kcReset();}catch(e){}try{$('end').hidden=true;$('menu').hidden=false;renderGames();}catch(e){}}
+
+// objectives panel (on screen during a mission)
+function campPanel(){
+  let el=document.getElementById('campHud');
+  if(!G||!G.camp||G.over&&G.camp.fin){if(el)el.hidden=true;return;}
+  const c=G.camp;if(!el){el=campEl('div','position:fixed;left:10px;top:92px;z-index:600;max-width:min(300px,62vw);background:rgba(12,16,10,.82);border:1px solid #5d6e49;border-radius:8px;padding:8px 10px;color:#efe9d6;font-size:15px;line-height:1.45;pointer-events:none;');el.id='campHud';document.body.appendChild(el);}
+  el.hidden=false;
+  el.innerHTML=`<b>${c.m.title}</b> <span style="opacity:.6">· ${CAMP_DIFF[c.diff]}</span><br>`+c.m.obj.map(o=>`<span style="${c.o[o[0]]?'color:#9fd36b':''}">${c.o[o[0]]?'☑':'☐'} ${o[1]}</span>`).join('<br>')+(c.status?`<br><b style="color:#f0d27a">${c.status}</b>`:'');
+}
+setInterval(()=>{try{campPanel();}catch(e){}},400);
+(function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Campaign';b.title='Five single-player missions for Iran, the Mountain Shias and the Coffee Shias';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();
 </script>
 </body></html>
