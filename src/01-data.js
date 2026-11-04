@@ -221,6 +221,36 @@ function upgList(fac){return (UPGL[fac]||[]).concat('smug',FACTIONS[fac]&&FACTIO
 function upgMatch(c,s,b){if(b)return c==='bld';switch(c){case 'all':return true;case 'inf':return s.armor==='light'&&s.dom==='ground';case 'rifle':return s.kind==='inf';case 'atinf':return s.cls==='at';
   case 'veh':return s.armor==='heavy'&&s.dom==='ground';case 'tank':case 'arty':case 'aa':case 'drone':case 'heli':case 'jet':case 'ship':case 'boat':return s.cls===c;case 'air':return s.dom==='air';case 'naval':return s.dom==='naval';}return false;}
 
+
+// ---------- General Doctrines (Abdullah 2026-11-03): picked in the first 2 minutes; each has 4 perks bought with general-rank points ----------
+// perk.fx uses the upgrade format [stat, unit group, value] (folded into upgAgg); perk.cost = [group, multiplier] cheaper units/buildings; the rest are special-cased in 03-sim by key
+const GDOC={
+ arm:{name:'Armour',short:'ARM',blurb:'Tanks and vehicles: faster production, tougher hulls, tank-hunter ambushes',perks:[
+  {k:'a1',name:'Assembly Line',desc:'Vehicles build 25% faster',fx:[['build','veh',.75]]},
+  {k:'a2',name:'Reactive Plating',desc:'Vehicles take 15% less damage',fx:[['taken','veh',.85]]},
+  {k:'a3',name:'Tank-Hunter Ambush',desc:'Tanks holding still or sitting in cover deal 25% more damage'},
+  {k:'a4',name:'Gun Stabilisers',desc:'Tanks shoot 12% faster and 10% farther, vehicles +8% damage',fx:[['rof','tank',.88],['rng','tank',1.1],['dmg','veh',1.08]]}]},
+ gue:{name:'Guerrilla',short:'GUE',blurb:'Infantry swarms: cheap, hidden, booby-trapped',perks:[
+  {k:'g1',name:'Cheap Recruits',desc:'Infantry cost 15% less',cost:['inf',.85]},
+  {k:'g2',name:'Hidden Ambush',desc:'Infantry holding still or in cover deal 25% more damage',},
+  {k:'g3',name:'Booby Traps',desc:'Idle infantry quietly lay hidden mines (up to 8)'},
+  {k:'g4',name:'Hit and Run',desc:'Infantry move 10% faster and take 5% less damage',fx:[['spd','inf',1.1],['taken','inf',.95]]}]},
+ air:{name:'Air',short:'AIR',blurb:'Airfields, recon flights and air superiority',perks:[
+  {k:'i1',name:'Cheap Airfields',desc:'Airfields cost 30% less',cost:['airfield',.7]},
+  {k:'i2',name:'Recon Flights',desc:'Every 75 seconds a recon flight reveals an enemy area for 10 seconds'},
+  {k:'i3',name:'Air Superiority',desc:'Aircraft deal 15% more damage and have 10% more health',fx:[['dmg','air',1.15],['hp','air',1.1]]},
+  {k:'i4',name:'Quick Turnaround',desc:'Aircraft cost 15% less and build 15% faster',cost:['air',.85],fx:[['build','air',.85]]}]},
+ art:{name:'Artillery',short:'ART',blurb:'Guns that see everything: counter-battery radar and creeping barrage',perks:[
+  {k:'r1',name:'Counter-Battery Radar',desc:'Your artillery spots enemy guns the moment they fire'},
+  {k:'r2',name:'Creeping Barrage',desc:'Artillery shells burst 25% wider',fx:[['splash','arty',1.25]]},
+  {k:'r3',name:'Rapid Reload',desc:'Artillery reloads 12% faster and reaches 8% farther',fx:[['rof','arty',.88],['rng','arty',1.08]]},
+  {k:'r4',name:'Gun Foundry',desc:'Artillery costs 15% less',cost:['arty',.85]}]}};
+const GDOC_KEYS=Object.keys(GDOC);
+const GDOC_AI={US:'arm',RU:'art',IL:'air',IR:'gue',TR:'air',EU:'arm',UA:'art',SA:'air',AE:'air',PK:'arm',IN:'arm',CN:'art',KP:'art',KR:'art',EG:'arm',CU:'gue',RS:'gue',DW:'gue'};
+const GDOC_PERKS={};for(const d in GDOC)for(const p of GDOC[d].perks){p.doc=d;GDOC_PERKS[p.k]=p;}
+const GDOC_LATE=120;   // doctrine can be picked / changed until this many seconds into the battle
+function gdHas(T,k){return !!(T&&T.gperk&&T.gperk[k]);}
+function gdCostK(T,s,b,kind){if(!T||!T.gdoc)return 1;let m=1;const D=GDOC[T.gdoc];if(!D)return 1;for(const p of D.perks){if(!p.cost||!gdHas(T,p.k))continue;const g=p.cost[0];if(b?g===kind:(g==='air'?s.dom==='air':upgMatch(g,s,false)))m*=p.cost[1];}return m;}
 const MILNAME={IR:'Popular Mobilization volunteers',RS:'Popular Mobilization volunteers',DW:'Popular Mobilization volunteers',US:'Contractors',RU:'PMC'};
 const POWERS={
   bounty:{name:'Cash Bounty',desc:'Earn 15% of the cost of every enemy you destroy',passive:true},
