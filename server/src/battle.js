@@ -156,11 +156,13 @@ export class BattleHost {
     return '';
   }
   configure(d) {
+    // a custom map (map editor) arrives with its code; the key is a hash of the code, so it must match the key announced
+    if (typeof d.cm === 'string' && d.cm.length <= 40000 && /^cm_/.test(d.map || '')) { const k = this.sim.regMap(d.cm); if (k && k === d.map) this.cmCode = d.cm; }
     // a battlefield with fewer seats than the players already in the lobby is refused, so the lobby never lists more
     // sides than the map holds (review R4); the leader is told why
     if (this.sim.mapOk(d.map) && d.map !== this.map) {
       const n = Math.min(MAX_PLAYERS, this.sim.mapMax(d.map));
-      if (n >= this.order.length) { this.map = d.map; if (/^That battlefield/.test(this.note || '')) this.note = ''; }
+      if (n >= this.order.length) { this.map = d.map; if (!/^cm_/.test(d.map)) this.cmCode = ''; if (/^That battlefield/.test(this.note || '')) this.note = ''; }
       else this.note = `That battlefield holds only ${n} players: pick a bigger one.`;
     }
     if (typeof d.w === 'number') this.w = int(d.w, -1, 31, 0);
@@ -189,7 +191,7 @@ export class BattleHost {
   sendLobby() {
     const seats = this.seats(), why = this.check();
     for (const id of this.players.keys()) {
-      this.emit('blob', { to: id, c: this.code, pv: this.sim.pv, own: id === this.owner ? 1 : 0, you: this.order.indexOf(id), map: this.map, mx: this.mx(), w: this.w, seats, ok: why ? 0 : 1, why: why || this.note || '' });
+      this.emit('blob', { to: id, c: this.code, pv: this.sim.pv, own: id === this.owner ? 1 : 0, you: this.order.indexOf(id), map: this.map, ...(this.cmCode && /^cm_/.test(this.map) ? { cm: this.cmCode } : {}), mx: this.mx(), w: this.w, seats, ok: why ? 0 : 1, why: why || this.note || '' });
     }
     this.flush();
     this.list();
@@ -222,10 +224,11 @@ export class BattleHost {
     const seed = this.seed != null ? this.seed : (Math.random() * 1e9) | 0;
     // picked start spots (null when everyone is on Random): sent with every start, kept for restarts
     const st = this.sim.stClean([...this.order.map(id => this.players.get(id).st), ...ais.map(a => a.st)], facs.length), sp = st ? { st } : {};
-    this.facs = facs; this.si = { seed, facs, map: this.map, tm, w: this.w | 0, code: this.code, ...sp };
-    this.order.forEach((id, i) => this.emit('start', { pv: st ? this.sim.pvs : this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, sv: 1, ...sp }));
+    this.facs = facs; const cmS = this.cmCode && /^cm_/.test(this.map) ? { cm: this.cmCode } : {};
+    this.si = { seed, facs, map: this.map, tm, w: this.w | 0, code: this.code, ...sp, ...cmS };
+    this.order.forEach((id, i) => this.emit('start', { pv: st ? this.sim.pvs : this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, sv: 1, ...sp, ...cmS }));
     this.flush();
-    this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code, ...sp });
+    this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code, ...sp, ...cmS });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
     // sockets still in the lobby without a seat (never greeted, or told the lobby was full) hold no side: like late
     // joiners they are closed after UNSEATED_MS, so they can't keep an abandoned battle (and its slot) alive (review R12)
@@ -277,7 +280,7 @@ export class BattleHost {
   static async restore(opts, rec) {
     const h = new BattleHost({ ...opts, code: rec.code, ownKey: rec.own, pw: rec.pw || null });
     await h.sim.restore(rec.si, rec.s);
-    h.si = rec.si; h.facs = rec.si.facs.slice(); h.map = rec.si.map; h.w = rec.si.w | 0;
+    h.si = rec.si; h.facs = rec.si.facs.slice(); h.map = rec.si.map; h.w = rec.si.w | 0; h.cmCode = rec.si.cm || '';
     h.phase = 'battle'; h.startedAt = h.lastStep = h.emptySince = h.now(); h.acc = 0; h.go = true;
     h.log(`battle ${rec.code} picked up from its checkpoint (${Math.round((h.now() - rec.at) / 1000)} s old)`);
     h.list(true);
