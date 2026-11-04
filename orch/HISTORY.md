@@ -157,3 +157,4 @@ preview, not per-map thumbnail cards.
 - 2026-11-04 weather-naval: fixed Sandstorm/Rain/Snow Conditions; submarines (stealth, sonar), coastal missile batteries, offshore oil rigs, AI subs/batteries/rig grabs, wider beach unloads; 4 naval maps (Coral Archipelago, Hormuz Narrows, Delta Harbour, Pacific Atolls) with AI-vs-AI fairness table. Report: orch/reports/weather-naval.md
 - 2026-11-04 orch/sub-models (Sonnet): realistic submarines (CC-BY Warfare/8bit/KoreanNavy models for West/East/IR-RS-DW) and a Scud-truck coastal missile battery with sandbags + command truck; visual only. Report orch/reports/sub-models.md
 - 2026-11-04 trees: real CC0 Poly Haven fir/leaf textures on conifers, oak/acacia, palms (tree_tex model); report orch/reports/trees.md
+- 2026-11-04 vehicles-real (Sonnet): shader weathering stage 1 — ships rust/waterline, aircraft panel lines/soot, map-aware mud/sand/snow grime; rest in HANDOFF-vehicles-real.md
