@@ -75,6 +75,7 @@ function syncScene(dt){const live=new Set();
         o.rotation.z=-ud.pt;o.rotation.x=ud.rl;if(!e.landed){o.position.y+=Math.sin(G.t*1.3+e.id)*1.2;}}
       if(s.cls==='heli'&&!e.landed)rotorWash(e,o,dt);
       if(s.dom==='naval')shipWake(e,o,dt);
+      if(e.kind==='sub'){const ud=o.userData;ud.sk=(ud.sk||0)+((e.hid?-6:0)-(ud.sk||0))*Math.min(1,dt*1.5);o.position.y+=ud.sk;} // submerged: sinks under the water, surfaces when it fires
       if(s.dom==='ground'&&s.armor==='heavy')dustTrail(e,o,dt);
       if(P.props){for(const p of P.props)p.m.rotation[p.ax]+=dt*(p.ax==='x'?55:70);if(e.kind==='drone'){const ud=o.userData,prev=ud.pyd??ud.yaw;let tr=angDiff(prev,ud.yaw)/Math.max(dt,1e-3);ud.pyd=ud.yaw;const t=e.target,d=t&&!t.dead?Math.hypot(t.x-e.x,t.y-e.y):1e9;
           const dsp=Math.hypot(e.x-(ud.dpx??e.x),e.y-(ud.dpy??e.y))/Math.max(dt,1e-3);ud.dpx=e.x;ud.dpy=e.y;ud.dsv=(ud.dsv||0)+(Math.min(1,dsp/Math.max(40,e.s.spd))-(ud.dsv||0))*Math.min(1,dt*3);
