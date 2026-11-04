@@ -200,8 +200,7 @@ an earlier one still has work a squad can take (other squads may only do small P
 **Battlefield & AI** (`03-sim`, `01-data`)
 - [open] (side lane `orch/ai-tactics` has this; ORCH cycle 13's own version is on branch `worktree-agent-af18354e507b5537f` e597af4 if theirs falls through) Fulda: late-game supply trucks haul from fields up to ~4,000 away because nearby fields run dry (cycle 12
   finding) — AI should expand: build a depot or HQ near the new field.
-- [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
-  below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
+- [open] "Massive columns" scale: profiled 2026-11-04 (orch/reports/perf-1103.md): sim 3.3 ms/step, sync 3.8, fx 2.5 on PC (x4 phone-like); push-apart sped up. Remaining: render (draw calls/shadow casters/vehicle parts) — needs Abdullah's iPhone numbers first.
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
 - [open] Big explosions still open with a soft, flat yellow ball for their first instant — rework (cycle 12).

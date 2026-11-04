@@ -6319,7 +6319,7 @@ function explode(x,y,r,d,team,wpn,kind,src){for(const e of G.ents){if(e.dead||al
 // Morale. Fear builds from damage taken, comrades dying nearby and being badly outnumbered, and drains away out of
 // combat. When it passes the unit's courage it breaks: it drops its orders and runs for the nearest friendly
 // building for a few seconds (ignoring commands), then rallies at reduced fear.
-const MOR_K=[],MOR_N=[],MOR_H=[];const SEP_G={ground:[],naval:[],air:[]};
+const MOR_K=[],MOR_N=[],MOR_H=[];const SEP_G={ground:[],naval:[],air:[]},SEP_S={nc:0,cap:0,st:null,ord:null,cel:null,fill:null};
 // morale as the player sees it: 0..1 plus a state word; null for units that never break
 function moraleOf(e){if(!e||e.isB||e.dead)return null;if(MODE==='client'){if(e.aband||e.mor==null||e.mor<0)return null;if(e.mor>100)return{v:1,st:'fearless'};const v=e.mor/100;return{v,st:e.routV?'routing':e.lastV?'last':v>.66?'steady':v>.35?'shaken':'breaking'};}
   if(!e.s||!canRout(e)||e.aband)return null;const T=G.teams[e.team];if(fearlessT(T,e))return{v:1,st:'fearless'};if(e.last>G.t)return{v:1,st:'last'};if(e.rout>G.t)return{v:0,st:'routing'};const v=Math.max(0,Math.min(1,1-(e.fear||0)/courageOf(e)));return{v,st:v>.66?'steady':v>.35?'shaken':'breaking'};}
@@ -7001,9 +7001,14 @@ function separate(){const groups=SEP_G;groups.ground.length=groups.naval.length=
   // buildings don't move: their grid is rebuilt only when the set of buildings changes (it was rebuilt every tick)
   const bsig=bn*1e7+bsum+BW;if(G.bgSig!==bsig){G.bgSig=bsig;for(const L of BG.values())L.length=0;for(const b of G.ents){if(!b.isB||b.dead)continue;const r=b.size/2+20,x0=Math.floor((b.x-r)/BC)+1,x1=Math.floor((b.x+r)/BC)+1,y0=Math.floor((b.y-r)/BC)+1,y1=Math.floor((b.y+r)/BC)+1;for(let yy=y0;yy<=y1;yy++)for(let xx=x0;xx<=x1;xx++){const k=xx+yy*BW,L=BG.get(k);if(L)L.push(b);else BG.set(k,[b]);}}}
   for(const dom in groups){const U=groups[dom],k=dom==='air'?.3:.5;for(let i=0;i<U.length;i++){const a=U[i];a.px=a.x;a.py=a.y;}
-    const SG=G.sg||(G.sg=new Map()),SC=64,SW=Math.ceil(MAPW/SC)+2;for(const L of SG.values())L.length=0;for(let i=0;i<U.length;i++){const a=U[i];a.si=i;const k=Math.floor(a.x/SC)+1+(Math.floor(a.y/SC)+1)*SW;const L=SG.get(k);if(L)L.push(a);else SG.set(k,[a]);}
-    for(let i=0;i<U.length;i++){const a=U[i];const cx=Math.floor(a.x/SC)+1,cy=Math.floor(a.y/SC)+1;for(let yy=cy-1;yy<=cy+1;yy++)for(let xx=cx-1;xx<=cx+1;xx++){const L=SG.get(xx+yy*SW);if(!L)continue;for(const b of L){if(b.si<=i)continue;const dx=b.x-a.x,dy=b.y-a.y,m=a.r+b.r;if(Math.abs(dx)>m||Math.abs(dy)>m)continue;const d=Math.hypot(dx,dy)||.01;if(d<m){const p=(m-d)*k*2,nx=dx/d,ny=dy/d,ma=massOf(a),mb=massOf(b),wa=mb/(ma+mb),wb=ma/(ma+mb);a.x-=nx*p*wa;a.y-=ny*p*wa;b.x+=nx*p*wb;b.y+=ny*p*wb;
-          if(dom==='ground'&&(ma>=10||mb>=10)&&!ally(a.team,b.team)){const V=ma>=10?a:b,I=V===a?b:a;if(massOf(I)<2&&(V.v||0)>22&&!I.dead&&!I.inTun)applyDmg(I,I.max*3,'boom',V.team,V,0);}}}}
+    // unit grid as flat arrays (counting sort by 64-unit cell; units keep their list order inside a cell, so the pairs are visited in the same order as the old Map-of-lists grid)
+    const SC=64,SW=Math.ceil(MAPW/SC)+2,SH=Math.ceil(MAPH/SC)+3,NC=SW*SH,n=U.length;let SS=SEP_S;if(SS.nc!==NC){SS.nc=NC;SS.st=new Int32Array(NC+1);}if(SS.cap<n){SS.cap=n+256;SS.ord=new Int32Array(SS.cap);SS.cel=new Int32Array(SS.cap);}
+    const st=SS.st,ord=SS.ord,cel=SS.cel;st.fill(0);
+    for(let i=0;i<n;i++){const a=U[i];a.si=i;let cx=Math.floor(a.x/SC)+1,cy=Math.floor(a.y/SC)+1;cx=cx<0?0:cx>=SW?SW-1:cx;cy=cy<0?0:cy>=SH?SH-1:cy;const c=cx+cy*SW;cel[i]=c;st[c+1]++;}
+    for(let c=0;c<NC;c++)st[c+1]+=st[c];
+    {const fill=SS.fill&&SS.fill.length===NC?SS.fill:(SS.fill=new Int32Array(NC));fill.set(st.subarray(0,NC));for(let i=0;i<n;i++)ord[fill[cel[i]]++]=i;}
+    for(let i=0;i<n;i++){const a=U[i];const cx=Math.floor(a.x/SC)+1,cy=Math.floor(a.y/SC)+1;for(let yy=cy-1;yy<=cy+1;yy++){if(yy<0||yy>=SH)continue;for(let xx=cx-1;xx<=cx+1;xx++){if(xx<0||xx>=SW)continue;const c=xx+yy*SW;for(let q=st[c],qe=st[c+1];q<qe;q++){const j=ord[q];if(j<=i)continue;const b=U[j];const dx=b.x-a.x,dy=b.y-a.y,m=a.r+b.r;if(Math.abs(dx)>m||Math.abs(dy)>m)continue;const d=Math.sqrt(dx*dx+dy*dy)||.01;if(d<m){const p=(m-d)*k*2,nx=dx/d,ny=dy/d,ma=massOf(a),mb=massOf(b),wa=mb/(ma+mb),wb=ma/(ma+mb);a.x-=nx*p*wa;a.y-=ny*p*wa;b.x+=nx*p*wb;b.y+=ny*p*wb;
+          if(dom==='ground'&&(ma>=10||mb>=10)&&!ally(a.team,b.team)){const V=ma>=10?a:b,I=V===a?b:a;if(massOf(I)<2&&(V.v||0)>22&&!I.dead&&!I.inTun)applyDmg(I,I.max*3,'boom',V.team,V,0);}}}}}
       if(dom==='ground')for(const b of (BG.get(Math.floor(a.x/BC)+1+(Math.floor(a.y/BC)+1)*BW)||SEP_E)){const h=b.size/2+a.r,dx=a.x-b.x,dy=a.y-b.y;if(Math.abs(dx)<h&&Math.abs(dy)<h){const px=h-Math.abs(dx),py=h-Math.abs(dy);if(px<py)a.x+=Math.sign(dx||1)*px;else a.y+=Math.sign(dy||1)*py;}}}
     if(dom!=='air')for(const a of U){if(!passXY(dom,a.x,a.y)){a.x=a.px;a.y=a.py;}}}
   for(const e of G.ents){if(e.kind==='jet')continue;e.x=Math.max(10,Math.min(MAPW-10,e.x));e.y=Math.max(10,Math.min(MAPH-10,e.y));}}
