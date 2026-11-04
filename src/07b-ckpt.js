@@ -14,7 +14,7 @@ function ckEncode(){const ids=new Map();for(const e of G.ents)ids.set(e,e.id);co
     if(v instanceof Map||v instanceof Set||v instanceof WeakSet||ArrayBuffer.isView(v))return undefined;if(depth>7||seen.has(v))return undefined;seen.add(v);
     let out;if(Array.isArray(v)){out=v.map(x=>{const y=enc(x,depth+1);return y===undefined?null:y;});}else{out={};for(const k in v){const y=enc(v[k],depth+1);if(y!==undefined)out[k]=y;}}seen.delete(v);return out;};
   const ents=G.ents.filter(e=>!e.dead).map(e=>{const o={};for(const k in e){if(k==='s'){o.$s=sref(e.s);continue;}if(k==='vs'||k==='_vr'||k[0]==='_')continue;const y=enc(e[k],1);if(y!==undefined)o[k]=y;}return o;});
-  const teams=G.teams.map(T=>{const o={};for(const k in T){if(CK_TEAM_SKIP.has(k))continue;const y=enc(T[k],1);if(y!==undefined)o[k]=y;}o.$ai=!!T.ai;o.$aiD=T.ai?T.ai.d:null;o.aiTook=!!T.aiTook;return o;});
+  const teams=G.teams.map(T=>{const o={};for(const k in T){if(CK_TEAM_SKIP.has(k))continue;const y=enc(T[k],1);if(y!==undefined)o[k]=y;}o.$ai=!!T.ai;o.$aiD=T.ai?T.ai.d+10*(T.ai.p|0):null;o.aiTook=!!T.aiTook;return o;});
   const g={};for(const k of CK_G)if(G[k]!==undefined){const y=enc(G[k],1);if(y!==undefined)g[k]=y;}
   const fields=G.fields.map(f=>({amt:f.amt,owner:f.owner}));
   const oil=G.oil.map(o=>{const r={};for(const k in o){if(k==='tg')continue;const y=enc(o[k],1);if(y!==undefined&&(typeof y!=='object'||Array.isArray(y)||y===null||y.$e!=null))r[k]=y;}return r;});
