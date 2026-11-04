@@ -231,6 +231,7 @@ function fxUpdate(dt){
     if(k>=1){p.done=true;if(p.vis)boomFX(p.tx,p.ty,9,false);continue;}
     if(p.wpn==='at'||p.wpn==='missile'||p.rocket){if(Math.random()<.5)part({x:p.x,y:p.y,h:p.h,s:2.6,d:.04,add:true,c:C_FIRE,a:.7});for(let q=0;q<2;q++)part({x:p.x+rnd(-1,1),y:p.y+rnd(-1,1),h:p.h,vx:rnd(-4,4),vy:rnd(-4,4),c:[.88,.87,.84],s:rnd(3,5),g:9,d:rnd(1.6,2.6),a:.55});}
     else if(p.wpn==='shell'){part({x:p.x,y:p.y,h:p.h,s:3,d:.04,add:true,c:C_FIRE});if(Math.random()<.6)part({x:p.x,y:p.y,h:p.h,vx:rnd(-2,2),vy:rnd(-2,2),c:[.7,.68,.65],s:rnd(1.6,2.4),g:3.5,d:rnd(.8,1.3),a:.32});}
+    else if(p.wpn==='torp'){if(Math.random()<.7)part({x:p.x,y:p.y,h:groundH(p.x,p.y)+1.5,vx:rnd(-3,3),vy:rnd(-3,3),c:[.92,.96,1],s:rnd(3,5),d:rnd(.9,1.5),a:.6});}
     else if(p.wpn==='bomb'){part({x:p.x,y:p.y,h:p.h,s:3,d:.04,c:C_DARK,a:1});}
     else{part({x:p.x,y:p.y,h:p.h,s:2.6,d:.04,add:true,c:C_FIRE2});if(ox!=null)TRACERS.push({a:[ox,oh,oy],b:[p.x,p.h,p.y],t:0,d:.07,c:[1.6,1.2,.7]});}}
   for(let i=VPROJ.length-1;i>=0;i--)if(VPROJ[i].done)VPROJ.splice(i,1);
@@ -281,11 +282,11 @@ function fxUpdate(dt){
 let RAIN=null,WXV={k:'clear',m:0};
 function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&todLvl()!==WXT)try{applyWeather(0);}catch(e){}const k=(G.wx&&G.wx.k)||'clear';if(WXV.base==null&&SCN.fog){WXV.base={c:SCN.fog.color.clone(),n:SCN.fog.near,f:SCN.fog.far};}const B=WXV.base;if(!B)return;
   if(WXV.k!==k){WXV.m=Math.max(0,WXV.m-dt*.5);if(WXV.m<=0)WXV.k=k;}else WXV.m=Math.min(1,WXV.m+dt*.35);const m=WXV.k==='clear'?0:WXV.m,K=WXV.k;
-  const T={rain:{c:'#7d868c',n:500,f:3200},fog:{c:'#b9bdbb',n:150,f:1500},sandstorm:{c:'#b88a52',n:40,f:950},blizzard:{c:'#dfe6ee',n:150,f:1700}}[K];
+  const T={rain:{c:'#7d868c',n:500,f:3200},fog:{c:'#b9bdbb',n:150,f:1500},sandstorm:{c:'#b88a52',n:40,f:950},blizzard:{c:'#dfe6ee',n:150,f:1700},snow:{c:'#e3e9f0',n:220,f:2300}}[K];
   if(T){const tc=lin(T.c);SCN.fog.color.copy(B.c).lerp(tc,m*.85);SCN.fog.near=B.n+(T.n-B.n)*m;SCN.fog.far=B.f+(T.f-B.f)*m;}else{SCN.fog.color.lerp(B.c,Math.min(1,dt*2));SCN.fog.near+=(B.n-SCN.fog.near)*Math.min(1,dt*2);SCN.fog.far+=(B.f-SCN.fog.far)*Math.min(1,dt*2);}
   const R=Math.max(420,cam.dist*1.1);
   if(K==='sandstorm'&&m>.05){const n=(dt*90*m)|0;for(let i=0;i<n;i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(2,60),vx:rnd(90,160),vy:rnd(-15,15),vh:rnd(-4,8),f:.9,c:[.78,.6,.38],s:rnd(18,36),g:22,d:rnd(1.6,2.8),a:.3*m});}}
-  if(K==='blizzard'&&m>.05){const n=(dt*120*m)|0;for(let i=0;i<n;i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(40,220),vx:rnd(50,90),vy:rnd(-10,14),vh:-rnd(30,50),f:1,c:[1.05,1.08,1.12],s:rnd(1.6,2.8),d:rnd(3,5),a:.9});}}
+  if((K==='blizzard'||K==='snow')&&m>.05){const n=(dt*(K==='snow'?(SET.gfx==='low'?35:70):120)*m)|0;for(let i=0;i<n;i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(40,220),vx:rnd(50,90),vy:rnd(-10,14),vh:-rnd(30,50),f:1,c:[1.05,1.08,1.12],s:rnd(1.6,2.8),d:rnd(3,5),a:.9});}}
   if(K==='rain'){if(!RAIN){const N=1400,g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(N*6),3).setUsage(THREE.DynamicDrawUsage));RAIN=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:0xaab4be,transparent:true,opacity:.35,depthWrite:false}));RAIN.frustumCulled=false;RAIN.userData.d=[];for(let i=0;i<N;i++)RAIN.userData.d.push([rnd(-1,1),rnd(-1,1),rnd(0,1)]);SCN.add(RAIN);}
     RAIN.visible=m>.02;RAIN.material.opacity=.35*m;const p=RAIN.geometry.attributes.position.array,D=RAIN.userData.d,H=320;
     for(let i=0;i<D.length;i++){const d=D[i];d[2]-=dt*1.6;if(d[2]<0){d[2]+=1;d[0]=rnd(-1,1);d[1]=rnd(-1,1);}const x=cam.x+d[0]*R,y=cam.y+d[1]*R*.7,gh=groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y))),h=gh+d[2]*H;p.set([x,h,y,x+3,h+14,y],i*6);}
