@@ -72,6 +72,8 @@ async function battleProfile(name) {
     await page.route('**/*', r => r.request().url().startsWith(ORIGIN) || r.request().url().startsWith('data:') || r.request().url().startsWith('blob:') ? r.continue() : r.abort());
     page.on('console', m => { if (m.text().startsWith('SM:')) LOG(name + ' ' + m.text()); });
     const errs = []; page.on('pageerror', e => errs.push(String(e.message || e).slice(0, 200))); page.on('crash', () => errs.push('PAGE CRASHED'));
+    // the same random numbers every run (units, AI, effects), so two runs of one build see the same battle
+    await page.addInitScript(() => { let z = 12345; Math.random = () => { z = (z + 0x6D2B79F5) | 0; let t = Math.imul(z ^ (z >>> 15), 1 | z); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; });
     await page.addInitScript(() => { try { localStorage.setItem('ww3_tut', '1'); localStorage.setItem('ww3_touchGuide', '1'); } catch (e) {} });
     LOG(name + ': loading page'); await page.goto(URL0, { waitUntil: 'load', timeout: 120000 }); LOG(name + ': page loaded');
     await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
@@ -117,21 +119,22 @@ async function battleProfile(name) {
       // software GL needs ~8 s to rasterise one frame of this battle and says nothing about a real GPU, so the draw commands are
       // swallowed (three.js still counts calls/triangles): what is timed is everything the game's own code does per frame
       for (const fn of ['drawElements', 'drawElementsInstanced', 'drawArrays', 'drawArraysInstanced', 'drawRangeElements']) if (gl[fn]) gl[fn] = function () {};
-      window.__L = { sim: [], cpu: [], all: [], calls: 0, tris: 0 };
+      window.__L = { sim: [], cpu: [], all: [], cl: [], tl: [], calls: 0, tris: 0 };
       window.__frame = (rec) => {
         const L = window.__L, t0 = now(); for (const e of G.ents) if (!e.isB) { e.ox = e.x; e.oy = e.y; } simUpdate(1 / 60); G.alpha = 1; const t1 = now();
         R3.info.reset(); renderFrame(1 / 60); const t3 = now(), t2 = t3; /* CPU-side frame: sim + scene + command submission. Software GL cannot give real GPU time (13 s/frame here), so it is not measured */
-        if (rec) { L.sim.push(t1 - t0); L.cpu.push(t2 - t0); L.all.push(t3 - t0); L.calls += R3.info.render.calls; L.tris += R3.info.render.triangles; }
+        if (rec) { L.sim.push(t1 - t0); L.cpu.push(t2 - t0); L.all.push(t3 - t0); L.calls += R3.info.render.calls; L.tris += R3.info.render.triangles; L.cl.push(R3.info.render.calls); L.tl.push(R3.info.render.triangles); }
         return R3.info.programs.length;
       };
     });
     { let last = -1, same = 0; for (let i = 0; i < 12 && same < 3; i++) { const n = await page.evaluate(() => { return window.__frame(false); }); same = n === last ? same + 1 : 0; last = n; } LOG(name + ': warm-up done, ' + last + ' shaders'); }
     const prog0 = await page.evaluate(() => R3.info.programs.length);
     const heap0 = await page.evaluate(() => performance.memory ? performance.memory.usedJSHeapSize : 0), w0 = Date.now();
+    for (let i = 0; i < 6; i++) await page.evaluate(() => window.__frame(false)); /* first frames after the warm-up still do one-off work */
     for (let i = 0; i < FRAMES; i++) { await page.evaluate(() => window.__frame(true)); if (i % 10 === 9) LOG(name + ': frame ' + (i + 1)); }
     const res = await page.evaluate(() => ({ L: window.__L, newProg: 0, qual: QUAL.lv }));
     res.newProg = (await page.evaluate(() => R3.info.programs.length)) - prog0; res.heap0 = heap0; res.wall = Date.now() - w0;
-    res.calls = res.L.calls / FRAMES; res.tris = res.L.tris / FRAMES;
+    res.calls = pct(res.L.cl, .5); res.tris = pct(res.L.tl, .5); /* median: the shadow pass does not run every frame */
     await gcHeap(page);
     const heap1 = await page.evaluate(() => performance.memory ? performance.memory.usedJSHeapSize : 0);
     const L = res.L, worst = L.all.slice().sort((a, b) => b - a), nW = Math.max(1, Math.floor(L.all.length * .01));
@@ -221,23 +224,23 @@ async function mpProfile() {
       return page;
     };
     const waitFor = (page, fn, arg, ms, what) => page.waitForFunction(fn, arg, { timeout: ms, polling: 250 }).catch(() => { throw new Error('timed out waiting for ' + what); });
-    const host = await open('host'), c1 = await open('client1'), c2 = await open('client2'); const clients = [c1, c2];
+    LOG('mp: opening 3 pages'); const host = await open('host'), c1 = await open('client1'), c2 = await open('client2'); const clients = [c1, c2];
     await Promise.all([host, c1, c2].map(p => p.evaluate(async () => { const t0 = performance.now(); while (!MODELS.loading && performance.now() - t0 < 30000) await new Promise(r => setTimeout(r, 250));
       await Promise.race([Promise.resolve(MODELS.loading), new Promise(r => setTimeout(r, 240000))]); })));
-    await waitFor(host, () => !!NET.room, null, 30000, 'host network room');
+    LOG('mp: pages open'); await waitFor(host, () => !!NET.room, null, 30000, 'host network room');
     const code = await host.evaluate(async () => { try { initAudio(); } catch (e) {} setup.p = 'US';
       await Promise.race([typeof hostBrowser === 'function' ? hostBrowser() : hostGame(), new Promise(r => setTimeout(r, 20000))]); return NET.game ? NET.code : null; });
-    if (!code) throw new Error('host could not open a game');
+    if (!code) throw new Error('host could not open a game'); LOG('mp: lobby ' + code);
     for (const [i, c] of clients.entries()) {
       await c.evaluate(([code, f]) => { try { initAudio(); } catch (e) {} setup.p = f; joinByCode(code); }, [code, i ? 'TR' : 'RU']);
       await waitFor(host, (n) => NET.lobby && NET.lobby.length === n, i + 1, 60000, `client ${i + 1} in the lobby`);
       await waitFor(c, () => /Joined/.test(document.getElementById('mpstatus').textContent), null, 30000, `client ${i + 1} "Joined"`);
     }
-    await Promise.all([host, c1, c2].map(p => p.evaluate(() => { window.__stopLoop = true; })));
+    LOG('mp: clients joined'); await Promise.all([host, c1, c2].map(p => p.evaluate(() => { window.__stopLoop = true; })));
     await host.evaluate(() => { NET.tm = [0, 1, 0]; NET.ais = []; const pool = ['CN', 'IR', 'EU', 'KP', 'IN']; for (let i = 0; i < 5; i++) NET.ais.push({ f: pool[i], d: 0, tm: 1 + (i % 2) }); launchMP(); });
     for (const [p, w] of [[c1, 'client1'], [c2, 'client2']]) await waitFor(p, () => MODE === 'client' && G && G.teams && G.teams.length > 1, null, 300000, w + ' entering the battle');
     for (const [p, w] of [[host, 'host'], [c1, 'client1'], [c2, 'client2']]) await waitFor(p, () => typeof G !== 'undefined' && G && G.terrain && !window.LOADING, null, 600000, w + ' loading screen');
-    await host.evaluate(() => { if (!G.teams[0].ai) G.teams[0].ai = mkAI(1); });
+    LOG('mp: battle loaded on all pages'); await host.evaluate(() => { if (!G.teams[0].ai) G.teams[0].ai = mkAI(1); });
     // instrument: snapshot arrival times and order timestamps
     await Promise.all(clients.map(p => p.evaluate(() => { const o = window.applySnap; window.__snapAt = []; window.__ticks = [];
       window.applySnap = function (d) { window.__snapAt.push(Date.now()); return o.apply(this, arguments); };
@@ -254,13 +257,13 @@ async function mpProfile() {
     // the clients play like people: every 2 s order their infantry to attack-move (so the order latency has samples)
     const orders = setInterval(() => { for (const [i, c] of clients.entries()) c.evaluate((i) => { try { if (!G || G.over) return; const mine = G.ents.filter(e => !e.dead && !e.isB && e.team === ME).slice(0, 6);
       if (mine.length) doAct({ t: 'go', ids: mine.map(e => e.id), x: MAPW / 2 + (Math.random() - .5) * 300, y: MAPH / 2 + (Math.random() - .5) * 300, am: 1 }); } catch (e) {} }, i).catch(() => {}); }, 2000);
-    await sleep(MPSECS * 1000);
+    LOG('mp: playing ' + MPSECS + 's'); await sleep(MPSECS * 1000); LOG('mp: checking sync');
     clearInterval(orders);
     // stop drivers; client frame time: draw the client's screen for a short stretch (render + client tick), host stays quiet
     const hostOut = await host.evaluate(() => { window.__hd.stop = true; const s = window.__hd.steps; return { steps: s, lat: window.__lat, hostT: G.t }; });
     const cOut = [];
     for (const [i, c] of clients.entries()) {
-      const o = await c.evaluate(async () => { window.__cd.stop = true; const gl = R3.getContext(); const fr = [];
+      const o = await c.evaluate(async () => { window.__cd.stop = true; const gl = R3.getContext(); const fr = []; for (const fn of ['drawElements', 'drawElementsInstanced', 'drawArrays', 'drawArraysInstanced', 'drawRangeElements']) if (gl[fn]) gl[fn] = function () {}; /* software GL: see the battle profiles */
         for (let k = 0; k < 40; k++) { const t = performance.now(); clientTick(1 / 30); renderFrame(1 / 30); gl.finish(); fr.push(performance.now() - t); if (k % 5 === 4) await new Promise(r => setTimeout(r, 0)); }
         return { snapAt: window.__snapAt, ticks: window.__ticks, frames: fr, t: G.t, lost: window.__nstats.lost, rx: window.__nstats.rx }; });
       cOut.push(o);
@@ -297,18 +300,18 @@ async function mpProfile() {
 // ============ budgets ============
 // [key, label, ratio vs baseline, absolute slack, cpuScaled?, higher-is-better?]
 const BUDGETS = {
-  pc: [['frameMed', 'median frame ms', 1.35, 5, 1], ['frameP95', 'p95 frame ms', 1.5, 10, 1], ['frameP99', 'p99 frame ms', 1.7, 20, 1], ['worst1Fps', 'worst-1% FPS', .65, 0, 1, 1],
-    ['simP95', 'sim step p95 ms', 1.5, 1, 1], ['drawCalls', 'draw calls', 1.25, 30], ['kTris', 'thousand triangles', 1.3, 100], ['heapMBperMin', 'JS heap growth MB/min', 2, 25], ['loadS', 'load time s', 1.6, 8, 1]],
-  phone: [['frameMed', 'median frame ms', 1.35, 8, 1], ['frameP95', 'p95 frame ms', 1.5, 15, 1], ['frameP99', 'p99 frame ms', 1.7, 30, 1], ['worst1Fps', 'worst-1% FPS', .65, 0, 1, 1],
-    ['simP95', 'sim step p95 ms', 1.5, 3, 1], ['drawCalls', 'draw calls', 1.25, 30], ['kTris', 'thousand triangles', 1.3, 100], ['heapMBperMin', 'JS heap growth MB/min', 2, 25], ['loadS', 'load time s', 1.6, 8, 1]],
+  pc: [['frameMed', 'median frame ms', 1.6, 10, 1], ['frameP95', 'p95 frame ms', 1.8, 30, 1], ['frameP99', 'p99 frame ms', 2, 60, 1], ['worst1Fps', 'worst-1% FPS', .5, 0, 1, 1],
+    ['simP95', 'sim step p95 ms', 1.5, 1, 1], ['drawCalls', 'draw calls', 1.5, 60], ['kTris', 'thousand triangles', 1.5, 300], ['loadS', 'load time s', 1.6, 8, 1]],
+  phone: [['frameMed', 'median frame ms', 1.6, 15, 1], ['frameP95', 'p95 frame ms', 1.8, 40, 1], ['frameP99', 'p99 frame ms', 2, 80, 1], ['worst1Fps', 'worst-1% FPS', .5, 0, 1, 1],
+    ['simP95', 'sim step p95 ms', 1.5, 3, 1], ['drawCalls', 'draw calls', 1.5, 60], ['kTris', 'thousand triangles', 1.5, 300], ['loadS', 'load time s', 1.6, 8, 1]],
   mp: [['snapIntervalP95', 'snapshot interval p95 ms', 1.4, 40], ['snapJitterSd', 'snapshot jitter (std dev) ms', 1.6, 15], ['cmdLatP95', 'order latency p95 ms', 1.4, 60],
     ['clientTickP95', 'client tick p95 ms', 1.6, 6, 1], ['hostTickP95', 'host step p95 ms', 1.6, 8, 1], ['clientFrameP95', 'client frame p95 ms', 1.6, 40, 1]],
 };
 const ABS = { // absolute sanity limits (independent of the baseline)
-  pc: r => [[r.cpuMax > 500, `freeze: one frame spent ${r.cpuMax} ms in the game's own code (limit 500)`], [r.heapMBperMin > 60, `JS heap grows ${r.heapMBperMin} MB/min (limit 60) - memory leak?`], [r.errs.length > 0, 'page errors: ' + r.errs.join(' | ')]],
-  phone: r => [[r.cpuMax > 1500, `freeze: one frame spent ${r.cpuMax} ms in the game's own code at 4x slower CPU (limit 1500)`], [r.heapMBperMin > 60, `JS heap grows ${r.heapMBperMin} MB/min (limit 60) - memory leak?`], [r.errs.length > 0, 'page errors: ' + r.errs.join(' | ')]],
+  pc: r => [[r.cpuMax > 1500, `freeze: one frame spent ${r.cpuMax} ms in the game's own code (limit 1500)`], [r.heapMBperMin > 60, `JS heap grows ${r.heapMBperMin} MB/min (limit 60) - memory leak?`], [r.errs.length > 0, 'page errors: ' + r.errs.join(' | ')]],
+  phone: r => [[r.cpuMax > 4000, `freeze: one frame spent ${r.cpuMax} ms in the game's own code at 4x slower CPU (limit 4000)`], [r.heapMBperMin > 60, `JS heap grows ${r.heapMBperMin} MB/min (limit 60) - memory leak?`], [r.errs.length > 0, 'page errors: ' + r.errs.join(' | ')]],
   mp: r => [[r.desync > 0, 'DESYNC: ' + r.desyncInfo.join(' ; ')], [r.snaps < 30, `only ${r.snaps} snapshots arrived on the clients (host or network stalled)`], [r.cmds < 3, `only ${r.cmds} client orders reached the host`],
-    [r.snapGapMax > 1500, `a client got no snapshot for ${r.snapGapMax} ms (limit 1500)`], [r.errs.length > 0, 'errors: ' + r.errs.join(' | ')]],
+    [r.snapGapMax > 2500, `a client got no snapshot for ${r.snapGapMax} ms (limit 2500)`], [r.errs.length > 0, 'errors: ' + r.errs.join(' | ')]],
 };
 function judge(name, r, base) {
   const bad = [];

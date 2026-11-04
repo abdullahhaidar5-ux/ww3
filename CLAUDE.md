@@ -30,7 +30,7 @@ host-migration checkpoints · `08-ui` sidebar, input, menus, main loop · `09-au
 `10-post` post-processing · `11-models` 3D model loading/animation.
 
 **Every change:** edit `src/` → `python3 orch/build.py` (syntax-checks, refuses to write on error) →
-`node orch/smoke.mjs` must print `SMOKE PASS` → commit `src/` **and** `index.html` (and `sw.js` + `models/` if they
+`node orch/smoke.mjs` must print `SMOKE PASS` → `node orch/smooth.mjs` must print `SMOOTH PASS` (smoothness gate, runs in CI as `gate/smooth-*`; if a change is intentionally heavier, re-baseline per `orch/SMOOTH.md`) → commit `src/` **and** `index.html` (and `sw.js` + `models/` if they
 changed) together. Never write `</script` inside `src/` (escape as `<\/script`). Don't touch the vendored libraries
 or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace a model with
 `python3 orch/build.py --add-model KEY file.glb`, never by renaming files in `models/` (the name carries its hash).
