@@ -163,6 +163,15 @@ try {
     if (last.perTeam.some(n => n === 0) && !last.over) warns.push('a team has no entities left');
     if (peak.some(n => n < 6)) fails.push(`a side never built up (peak entities per team ${peak.join('/')}) — AI build order or production broken`);
   }
+  if (process.env.DN_SHOW) { // DN_SHOW=1: fire an illumination flare over our units, rank some up, pin one (screenshots for orch/shots/night)
+    await page.evaluate(() => { const T = G.teams[0]; const us = G.ents.filter(e => !e.dead && !e.isB && e.team === 0 && e.s.cls === 'inf');
+      const c = us[0] || G.ents.find(e => e.team === 0 && !e.isB); if (!c) return; T.pw.flare = { cd: 0, lv: 1 }; usePower0(0, 'flare', c.x, c.y);
+      us.slice(0, 6).forEach((e, i) => { e.rank = (i % 3) + 1; FXE('rank', [e.id, e.rank, e.x | 0, e.y | 0]); }); if (us[1]) us[1].supp = 1; if (us[3]) us[3].supp = 1; if (us[5]) us[5].supp = 1;
+      try { centerOn(c.x, c.y, true); } catch (e) {} });
+    await page.waitForTimeout(3000);
+    await page.evaluate(() => { try { renderFrame(0.016); } catch (e) {} });
+    await shot(page, 'night-flare.png');
+  }
   await page.evaluate(() => { try { renderFrame(0.016); } catch (e) {} });
   await page.waitForTimeout(1500);
   await shot(page, 'battle-later.png');
