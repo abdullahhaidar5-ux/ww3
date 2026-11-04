@@ -101,7 +101,7 @@ function droneAudio(dt){if(!AU.ctx||!G)return;drT-=dt;if(drT>0)return;drT=.1;con
     const t=e.target,td=t&&!t.dead?Math.hypot(t.x-e.x,t.y-e.y):1e9,dive=td<170?1+(1-td/170)*(n.delta?.18:.35):1;
     for(let k=0;k<n.os.length;k++){const o=n.os[k];if(o.type==='sawtooth'){const r=n.delta?[1,2,3.02][k]||1:(1+k*.017);o.frequency.setTargetAtTime(n.base*r*dive,now,.15);}}
     if(n.pan){TMP.set(e.x,0,e.y).project(CAM);n.pan.pan.setTargetAtTime(Math.max(-1,Math.min(1,TMP.x*.8)),now,.1);}}}
-function droneTypeA(fac){return fac==='IR'||fac==='RS'?'delta':fac==='TR'?'kargu':'fpv';}
+function droneTypeA(fac){return ['IR','RS','DW','TR','US','IL','RU'].includes(fac)?'delta':fac==='TR'?'kargu':'fpv';}
 // ----- Recorded battlefield sounds (sfx/, made by sfx/sfx_pack.py) -----
 // One sprite sheet of recorded one-shots (rifles, MGs, cannons, rockets, small/large explosions) is fetched at the first
 // battle sound; loops (engines, aircraft, wind, rain, distant rumble) are fetched only when something needs them. Until the

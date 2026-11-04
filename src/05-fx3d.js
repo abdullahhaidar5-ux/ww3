@@ -70,6 +70,19 @@ function pBudget(){const lv=(typeof QUAL!=='undefined'&&QUAL.lv)||0;return [1700
 // ate the particle budget meant for what the player is looking at)
 function part(o){if(!inView(o.x,o.y,.4))return;const B=pBudget(),n=PARTS.length;if(n>B){if(!o.add||n>B*1.35)return;}else if(n>B*.6&&!o.add&&Math.random()<(n-B*.6)/(B*.4))return;PARTS.push(Object.assign({vx:0,vy:0,vh:0,t:0,d:1,s:6,g:0,a:1,h:0,c:[.4,.39,.36],add:false,f:.25,rise:0},o));}
 const C_SMOKE=[.42,.4,.37],C_DARK=[.13,.12,.11],C_DUST=[.66,.58,.44],C_FIRE=[1,.42,.1],C_FIRE2=[1,.68,.3],C_SPARK=[1,.75,.35];
+/* Battle damage on a unit (visual only): a thin grey trickle of smoke from 75% health, thick smoke from 50%, black
+   smoke with flames and sparks under 25%. Aircraft leave a smoke trail behind the tail; damaged ships list to one
+   side, settle lower in the water and burn on deck. */
+function unitDamageFX(e,o,s,gh,dt){if(!inView(e.x,e.y,.1))return;const f=e.hp/e.max,air=s.dom==='air',nav=s.dom==='naval',ca=Math.cos(e.va||0),sa=Math.sin(e.va||0),r=e.r||8,lo=fxPH();
+  if(nav&&f<.6){const k=(.6-f)/.6;o.rotation.x+=k*.09*(e.id&1?1:-1);o.position.y-=k*3.5;}
+  if(air){const n=f<.25?24:f<.5?13:4;if(Math.random()<dt*n*(lo?.6:1)){const bx=e.x-ca*r*.8+rnd(-1,1),by=e.y-sa*r*.8+rnd(-1,1);
+      part({x:bx,y:by,h:gh+rnd(-1,1),rise:rnd(2,6),c:f<.5?C_DARK:C_SMOKE,c2:[.5,.48,.45],ck:.35,s:rnd(2.2,3.4),g:f<.5?7:4,d:rnd(1.8,2.8),a:f<.5?.5:.26});
+      if(f<.25&&Math.random()<.6)part({x:bx,y:by,h:gh,add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(2.5,4),g:-1.5,d:rnd(.12,.25)});}return;}
+  const hh=gh+(nav?5:7),rate=(f<.25?7:f<.5?2.6:.8)*(lo?.6:1);
+  if(Math.random()<dt*rate){const ox=nav?rnd(-r*.5,r*.4):rnd(-3,3),oy=nav?0:rnd(-3,3),x=e.x+ca*ox-sa*oy,y=e.y+sa*ox+ca*oy;
+    part({x,y,h:hh+4,rise:rnd(f<.5?34:22,f<.5?48:32),vx:rnd(2,6),c:f<.25?C_DARK:C_SMOKE,c2:[.46,.44,.41],ck:rnd(.25,.4),s:f<.5?rnd(3,5):rnd(1.8,2.8),g:f<.5?6:4,d:rnd(1.6,2.4)*(f<.5?1:.8),a:f<.5?.38:.2});
+    if(f<.25&&Math.random()<.55)part({x,y,h:hh,rise:14,add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(3,5)*(nav?1.4:1),g:-3,d:rnd(.2,.4)});
+    if(f<.25&&!lo&&Math.random()<.25)for(let q=0;q<3;q++)part({x,y,h:hh,vx:rnd(-30,30),vy:rnd(-30,30),vh:rnd(30,70),add:true,c:C_SPARK,s:.9,f:.6,grav:1,d:rnd(.3,.6)});}}
 function inView(x,y,m){if(!CAM)return true;TMP.set(x,0,y).project(CAM);return Math.abs(TMP.x)<1+m&&Math.abs(TMP.y)<1+m;}
 function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.min(18,4+(s/5|0)),gr=h<4;
   if(s<=10&&!big){for(let i=0;i<9;i++){const a=rnd(0,6.28),v=rnd(80,200);part({x,y,h:g+rnd(4,9),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(60,180),add:true,c:i%3?C_SPARK:[3,2.4,1.4],s:rnd(1,1.8),f:.5,grav:1,bounce:1,d:rnd(.25,.6)});}part({x,y,h:g+6,s:s*2.2,d:.06,add:true,c:[3.2,2.4,1.4]});}
