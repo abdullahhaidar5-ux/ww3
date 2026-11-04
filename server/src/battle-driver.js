@@ -9,6 +9,7 @@ export function BATTLE_DRIVER() {
   B.stClean = (st, n) => stClean(st, n);
   B.facs = FKEYS.slice();
   B.mapMax = k => (MAPS[k] || MAPS.strait).max;
+  B.regMap = code => registerCustomMap(code);   // a custom map from the map editor: returns its key (hash of its content) or null
   B.mapOk = k => typeof k === 'string' && Object.prototype.hasOwnProperty.call(MAPS, k);
   B.mapName = k => (MAPS[k] || MAPS.strait).name;
   // the room the host netcode talks through: emit(topic, data) and buffered(to) (07a-hostsnap)
@@ -33,6 +34,7 @@ export function BATTLE_DRIVER() {
     Object.assign(NET, { lastSnapT: 0, sc: {}, kf: {}, kt: {}, cseq: {}, cseqSlot: [], ckAk: null, ckOut: null, sbSlot: null, iaDev: 0, tgC: null, tgS: null, ver: null, sk: null, gq: [], civQ: [], snapTo: [], ia: 0, rxW: 0, prevT: 0,
       snapT: 0, evT: 0, teamT: 0, bT: 0, verSt: 0, skP: 0, dhG: null, dh: null, dyC: null, trr: 0, ckT: null, ckBusy: false, ckId: 0 });
     MODE = 'host'; ME = -1;
+    if (o.cm) registerCustomMap(o.cm);   // a custom map: known to this battle before the game is built
     const isAI = i => Array.isArray(o.aiD) && o.aiD[i] != null;
     TERR_DEFER = true;
     const st = stClean(o.st, o.facs.length);
@@ -40,7 +42,7 @@ export function BATTLE_DRIVER() {
     G.teams.forEach((T, i) => { T.ai = isAI(i) ? mkAI(o.aiD[i]) : null; });
     G.headless = true;
     NET.peers = o.peers.slice(); NET.toks = o.toks.slice(); NET.gen = 0; NET.code = o.code || null; NET.baseCode = o.code || null;
-    NET.startInfo = Object.assign({ seed: o.seed, facs: o.facs.slice(), map: o.map, tm: o.tm.slice(), w: o.w | 0, sv: 1 }, st ? { st } : {});
+    NET.startInfo = Object.assign({ seed: o.seed, facs: o.facs.slice(), map: o.map, tm: o.tm.slice(), w: o.w | 0, sv: 1 }, st ? { st } : {}, o.cm ? { cm: o.cm } : {});
     return B.info();
   };
   // The checkpoint the host netcode just packed for its standby player (07b ckTick, every 8 s while a player is
@@ -53,7 +55,7 @@ export function BATTLE_DRIVER() {
   B.restore = async (si, s) => {
     const ck = await ckUnpack(s);
     const st = ck.start || si, n = st.facs.length;
-    B.start({ seed: st.seed, facs: st.facs, map: st.map, tm: st.tm, w: st.w, st: st.st, aiD: st.facs.map(() => null), peers: st.facs.map(() => null), toks: Array.isArray(ck.toks) ? ck.toks.slice(0, n) : st.facs.map(() => null), code: si.code });
+    B.start({ seed: st.seed, facs: st.facs, map: st.map, tm: st.tm, w: st.w, st: st.st, aiD: st.facs.map(() => null), peers: st.facs.map(() => null), toks: Array.isArray(ck.toks) ? ck.toks.slice(0, n) : st.facs.map(() => null), code: si.code, cm: st.cm || si.cm });
     ckRestore(ck);
     NET.cseqSlot = Array.isArray(ck.cs) ? ck.cs.slice() : []; NET.gen = ck.gen || 0;
     for (const T of G.teams) if (!T.ai && !T.out) T.discT = G.t;
