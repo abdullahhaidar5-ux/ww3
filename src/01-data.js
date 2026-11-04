@@ -73,7 +73,7 @@ const STRUCT={
   tunnel:{name:'Tunnel Network',hp:900,size:40,cost:600,time:9,req:'barracks',rng:220,dmg:14,rof:.45,wpn:'gun',aa:1},
   uplink:{name:'Strike Center',hp:1800,size:70,cost:2500,time:20,req:'factory'},
   // Supply Depot: a forward drop-off point. Supply trucks unload at the nearest depot or HQ instead of driving home.
-  depot:{name:'Supply Depot',hp:1000,size:54,cost:600,time:8,desc:'Supply trucks unload here instead of driving back to the HQ. Build one beside a far supply field.'},
+  depot:{name:'Supply Depot',hp:1000,size:54,cost:600,time:8,desc:'Supply trucks unload here instead of driving back to the HQ. Build one beside a far supply field. Also refills ammo of troops near it.'},
   // Income building: every nation has one (same price and output, national flavour). A slow, steady trickle for
   // once the supply fields are mined out - $3.5/s for the first, each extra one earns less (max 4).
   // a city building held by infantry (not buildable: created when troops move in)
@@ -190,7 +190,7 @@ for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctr
 const FKEYS=Object.keys(FACTIONS);
 // Rock-paper-scissors: what each kind of unit beats and what beats it (shown in the unit tooltips).
 const COUNTER={inf:'Beats AT teams and other infantry · Loses to tanks and artillery · Takes 35% less damage in woods or beside buildings; gets suppressed under heavy fire',at:'Beats tanks, vehicles and helicopters · Loses to riflemen',hacker:'Disables buildings · Loses to any armed unit',
-  hero:'Picks off infantry from long range · Loses to vehicles',harv:'Gathers supply · Unarmed',dozer:'Builds and repairs · Unarmed',tank:'Beats infantry, AA vehicles and artillery · Loses to AT teams and helicopters · Thickest armour in front: side hits do 20% more damage, rear hits 60% more',
+  hero:'Picks off infantry from long range · Loses to vehicles',harv:'Gathers supply · Also resupplies ammo around it · Unarmed',dozer:'Builds and repairs · Unarmed',tank:'Beats infantry, AA vehicles and artillery · Loses to AT teams and helicopters · Thickest armour in front: side hits do 20% more damage, rear hits 60% more',
   aa:'Beats helicopters, jets and drones · Loses to tanks and infantry',arty:'Beats infantry and buildings from long range · Loses to tanks and fast units up close',
   drone:'Explodes on groups of vehicles and infantry · Loses to AA and rifle fire',heli:'Beats tanks and vehicles · Loses to AA and AT teams',jet:'Bombs buildings and vehicles · Loses to SAM sites and AA',
   boat:'Beats boats and helicopters near water · Loses to warships',ship:'Shells coasts and boats from long range · Loses to boats up close and aircraft'};
