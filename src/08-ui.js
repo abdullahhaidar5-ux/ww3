@@ -9,7 +9,7 @@ function pushLog(m,k){if(!G)return;try{tkFeed(m,k);}catch(e){}if(k&&k.length===2
 function rivals(){return G.teams.filter(T=>!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
 function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams,me=T[ME],m=Math.floor(G.t/60),s=Math.floor(G.t%60);
-  const won=winner>=0&&ally(winner,ME);
+  const won=winner>=0&&ally(winner,ME);try{idFinish(winner,won);}catch(e){console.warn('medals',e);}
   // the sim's reason is written from the winner's side ("The last enemy capitulated: …"); the losers read their own fall
   if(!won&&reason&&/^The last enemy capitulated/.test(reason)){const why=me.whyOut||String(reason).replace(/^The last enemy capitulated:\s*/,'');reason=`${me.F.name} has been defeated${why?': '+why:'.'}`;if(!/[.!]$/.test(reason))reason+='.';}
   const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'||G.endStats?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
@@ -28,11 +28,11 @@ function esM(n){n=Math.round(n||0);return '$'+(n>=100000?Math.round(n/1000)+'k':
 function esFlag(f){try{const t=flagTex(f);return t&&t.image||null;}catch(e){return null;}}
 function esUnit(f,k){try{return stats(f,k).name;}catch(e){return k||'';}}
 function esPow(f,k){try{const P=powInfo(k,f);return P&&P.name||k;}catch(e){return k||'';}}
-function esName(p){const F=FACTIONS[p.f];return F?F.name:String(p.f||'?');}
+function esName(p){const F=FACTIONS[p.f];return p.n||(F?F.name:String(p.f||'?'));}
 function esWin(S,i){const w=S.w;if(w==null||w<0||!S.p[w])return false;return i===w||S.p[i].tm===S.p[w].tm;}
-function esWho(S,i){return esName(S.p[i])+(i===ME?' (you)':'');}
-function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb;
-  const best=(val,ok,low)=>{let bi=-1,bv=0;P.forEach((p,i)=>{if(ok&&!ok(p))return;const v=val(p);if(bi<0||(low?v<bv:v>bv)||(v===bv&&K(p)>K(P[bi]))){bi=i;bv=v;}});return bi;};
+function esWho(S,i){const q=S.p[i],F=FACTIONS[q.f];return (q.n&&F?q.n+' · '+F.name:esName(q))+(i===ME?' (you)':'');}
+function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb,cnt=P.map(()=>0),cap=P.length<=2?3:2;A.push=function(a){cnt[a[1]]++;return Array.prototype.push.call(this,a);};
+  const best=(val,ok,low)=>{let bi=-1,bv=0;P.forEach((p,i)=>{if(ok&&!ok(p))return;if(cnt[i]>=cap)return;const v=val(p);if(bi<0||(low?v<bv:v>bv)||(v===bv&&K(p)>K(P[bi]))){bi=i;bv=v;}});return bi;};
   let i;
   i=best(p=>p.vd);if(i>=0&&P[i].vd>0)A.push(['MVP',i,esM(P[i].vd)+' of enemy forces destroyed']);
   i=best(K);if(i>=0&&K(P[i])>0)A.push(['Top Killer',i,K(P[i])+' kills']);
@@ -75,7 +75,7 @@ function esPage(S){esCss();let box=$('endStats');if(!box){box=document.createEle
   const A=esAwards(S);if(A.length){const s=sec('Awards'),g=document.createElement('div');g.className='esA';for(const [t,i,w] of A){const d=document.createElement('div');d.className='esAw';d.style.setProperty('--c',S.p[i].c);d.innerHTML='<b></b><div class="who"></div><div class="what"></div>';d.querySelector('b').textContent=t;d.querySelector('.who').textContent=esWho(S,i);d.querySelector('.what').textContent=w;g.append(d);}s.append(g);}
   // scoreboard
   {const s=sec('Scoreboard'),g=document.createElement('div');g.className='esP';for(const i of ord){const p=S.p[i],d=document.createElement('div');d.className='esC'+(esWin(S,i)?' win':'')+(i===ME?' me':'');d.style.setProperty('--c',p.c);
-    const h=document.createElement('div');h.className='esH';h.append(esFlagEl(p.f,42,25));const nm=document.createElement('div');nm.innerHTML='<div class="esN"></div><div class="esTag"></div>';nm.querySelector('.esN').textContent=esName(p);
+    const h=document.createElement('div');h.className='esH';h.append(esFlagEl(p.f,42,25));try{const GT=G&&G.teams&&G.teams[i];if(GT&&GT.emb&&GT.emb!=='flag')h.append(idEmbEl(GT,24));}catch(e){}const nm=document.createElement('div');nm.innerHTML='<div class="esN"></div><div class="esTag"></div>';nm.querySelector('.esN').textContent=esName(p);
     nm.querySelector('.esTag').textContent=[i===ME?'You':p.ai?'AI':'Player',S.p.some((q,j)=>j!==i&&q.tm===p.tm)?'Team '+(p.tm<100?p.tm+1:i+1):'',esWin(S,i)?'':p.out?'Defeated':''].filter(Boolean).join(' · ');h.append(nm);
     if(esWin(S,i)){const w=document.createElement('div');w.className='esWinT';w.style.marginLeft='auto';w.textContent='WINNER';h.append(w);}d.append(h);
     const dl=document.createElement('dl');for(const [k,f] of ES_ROWS){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=f(p);dl.append(dt,dd);}d.append(dl);g.append(d);}s.append(g);}
@@ -143,12 +143,12 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
   sub('pow','Level up');for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
   showTab(TAB);updateUI();}
 // One-click powers (Abdullah 2026-10-31): a no-target power fires at once; a targeted one aims (circle follows the cursor) and the next map click/tap fires it. Hotkeys below; Esc / right-click cancels.
-const POW_KEY={recon:'e',para:'c',barrage:'b',repair:'y',mil:'m',bb:'n',sanc:'u',nat:'j'};
+const POW_KEY={recon:'e',para:'c',barrage:'b',repair:'y',mil:'m',bb:'n',sanc:'u',flare:'l',nat:'j'};
 function powGo(k){if(!G||G.over)return false;const T=G.teams[ME],P=T&&powInfo(k,T.fac);if(!P||!T.pw[k]||P.passive||T.pw[k].cd>0)return false;if(P.self){doAct({t:'pow',k,x:0,y:0});return true;}G.place=null;G.amove=false;G.defm=false;G.aim=k;updateUI();return true;}
 /* ---------- one-click powers: a strip of buttons always on screen; hotkey/button arms, next map click fires ---------- */
 let QPSIG='',QPEL=null,QPDRAG=null,QPSEEN=null,QPRDY=null,QPTIP=null,QPTK=null,QPLP=0,QPOFF=false;
 /* power rail (Abdullah 2026-10-31): square icon buttons docked on the left edge, vertically centred; full name + effect only in a tooltip (hover) / long-press (touch) */
-const QPIC={recon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 12L19 6"/>',para:'<path d="M3 11a9 8 0 0 1 18 0c-1.5-1.5-3-1.5-4.5 0-1.5-1.5-3-1.5-4.5 0-1.5-1.5-3-1.5-4.5 0C6 9.5 4.5 9.5 3 11zM4 11l8 10M20 11l-8 10M12 11v10"/>',barrage:'<path d="M14 3c4 0 7 3 7 7-3 1-6 3-8 6l-5-5c3-2 5-5 6-8z"/><path d="M8 11l-4 1-1 4 4-1M13 16l-1 4 4-1 1-4M5 19l-2 2"/><circle cx="15.5" cy="8.5" r="1.5"/>',repair:'<path d="M14 6a4 4 0 0 0-5 5l-6 6 3 3 6-6a4 4 0 0 0 5-5l-3 2-2-2z"/>',mil:'<path d="M8 21v-6l-3-3V7a2 2 0 0 1 4 0v3h1V5a2 2 0 0 1 4 0v5h1V6a2 2 0 0 1 4 0v8c0 4-2 7-6 7z"/>',bb:'<circle cx="11" cy="14" r="7"/><path d="M15 8l3-3M17 3l4 4M17 3l-1 3 2 2 3-1"/>',sanc:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 14v4M14 15h-3a1 1 0 0 0 0 2h2a1 1 0 0 1 0 2h-3" stroke-width="1.4"/>',nat:'<path d="M12 2l3 7 7 .6-5.3 4.7 1.7 7.2L12 17.8 5.6 21.5l1.7-7.2L2 9.6 9 9z"/>'};
+const QPIC={flare:'<path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/><circle cx="12" cy="12" r="3"/>',recon:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 12L19 6"/>',para:'<path d="M3 11a9 8 0 0 1 18 0c-1.5-1.5-3-1.5-4.5 0-1.5-1.5-3-1.5-4.5 0-1.5-1.5-3-1.5-4.5 0C6 9.5 4.5 9.5 3 11zM4 11l8 10M20 11l-8 10M12 11v10"/>',barrage:'<path d="M14 3c4 0 7 3 7 7-3 1-6 3-8 6l-5-5c3-2 5-5 6-8z"/><path d="M8 11l-4 1-1 4 4-1M13 16l-1 4 4-1 1-4M5 19l-2 2"/><circle cx="15.5" cy="8.5" r="1.5"/>',repair:'<path d="M14 6a4 4 0 0 0-5 5l-6 6 3 3 6-6a4 4 0 0 0 5-5l-3 2-2-2z"/>',mil:'<path d="M8 21v-6l-3-3V7a2 2 0 0 1 4 0v3h1V5a2 2 0 0 1 4 0v5h1V6a2 2 0 0 1 4 0v8c0 4-2 7-6 7z"/>',bb:'<circle cx="11" cy="14" r="7"/><path d="M15 8l3-3M17 3l4 4M17 3l-1 3 2 2 3-1"/>',sanc:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/><path d="M12 14v4M14 15h-3a1 1 0 0 0 0 2h2a1 1 0 0 1 0 2h-3" stroke-width="1.4"/>',nat:'<path d="M12 2l3 7 7 .6-5.3 4.7 1.7 7.2L12 17.8 5.6 21.5l1.7-7.2L2 9.6 9 9z"/>'};
 function qpIcon(k){return '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+(QPIC[k]||QPIC.nat)+'</svg>';}
 function qpTip(k,btn){const T=G&&G.teams[ME];if(!k||!T||!btn){if(QPTIP)QPTIP.hidden=true;QPTK=null;return;}const P=powInfo(k,T.fac),hk=POW_KEY[k];
   if(!QPTIP){QPTIP=document.createElement('div');QPTIP.id='qptip';document.body.append(QPTIP);}
@@ -210,7 +210,7 @@ function fitCols(pn){const up=matchMedia('(max-width:560px),(max-width:760px) an
 const PHONE_NM={'Hetman Sahaidachny Frigate':'Sahaidachny Frigate'}; // phones only, when even the smallest font can't fit the full name (the tooltip keeps it)
 addEventListener('resize',()=>{clearTimeout(fitBtnNames.t);fitBtnNames.t=setTimeout(fitBtnNames,150);});
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{if(barMin())barMin(false);showTab(b.dataset.tab);});
-function specLock(T,k){return k===T.F.special&&T.rank<SPEC_RANK;}
+function specLock(T,k){return (k===T.F.special||k==='ew')&&T.rank<SPEC_RANK;}
 // the full text of a button (what it does, what it needs, what it counters) lives in data-tip and shows in the command
 // tooltip (hover with a mouse; tap or long-press on a touch screen) instead of on the button itself
 function setBtn(id,o){const b=$(id);if(!b)return;b.disabled=!!o.dis;if(o.cost!=null){const c=b.querySelector('.c');if(c.textContent!==String(o.cost)){c.textContent=o.cost;if(!b.hidden&&b.dataset.tab===TAB)fitText(c,PHONE_BAR&&PHONE_BAR.matches?7.5:8.5);}}b.querySelector('.q').textContent=o.q||'';b.querySelector('.p').style.width=(o.p||0)*100+'%';b.classList.toggle('on',!!o.on);b.classList.toggle('done',!!o.done);b.classList.toggle('rdy',!!o.rdy);const t=o.title||'';if(b.dataset.tip!==t){b.dataset.tip=t;b.setAttribute('aria-label',[b.dataset.nm,b.dataset.desc,t].filter(Boolean).join('. '));}if(CTIP.b===b)ctipFill(b);}
@@ -261,7 +261,7 @@ function doCancel(sh){const c=cancelInfo();if(!c)return false;
   else if(c.k==='q'){const q=(G.teams[ME].q[c.kind]||[]).slice(-(sh?5:1)).map(x=>x.kind).reverse();for(const k of q)doAct({t:'dq',k});}
   else doAct({t:'cb',tid:c.tid});
   try{sfxUI(380);}catch(_){}updateUI();return true;}
-function updateUI(){if(!G)return;qpUpdate();renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);mournBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
+function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);mournBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k),ok=reqMet(ME,k);if(!bldAllowed(T.fac,k)){setBtn('b_'+k,{dis:true,cost:'Not available',title:'This faction has no air force'});continue;}const lim=s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===ME&&e.kind===k).length>=s.limit;setBtn('b_'+k,{dis:!ok||T.credits<s.cost||lim,cost:lim?'Max '+s.limit:'$'+s.cost,on:G.place===k,title:ok?(STRUCT[k].desc||(STRUCT[k].shore?'Place on the shoreline':'')):`Requires ${STRUCT[STRUCT[k].req].name}`});}
   for(const k of allUnits(T.fac)){const s=stats(T.fac,k),q=T.q[s.from]||[],n=q.filter(x=>x.kind===k).length,has=done(ME,s.from);const first=q[0]&&q[0].kind===k?(q[0].p!=null?q[0].p:q[0].t/prodTime(T,s)):0;
     const lk=specLock(T,k);const rbw=k==='cleric'&&(T.rebuy||0)>G.t?Math.ceil(T.rebuy-G.t):0;setBtn('u_'+k,{dis:lk||!has||rbw>0||(T.credits<s.cost&&!n),cost:rbw?'Wait '+rebuyFmt(rbw):lk?`General rank ${SPEC_RANK}`:k===T.F.special?'$'+s.cost+(T.rank>=6?' · Elite':T.rank>=4?' · Veteran':''):'$'+s.cost,q:n?'×'+n:'',p:first,title:(rbw?`A new leader can be chosen in ${rebuyFmt(rbw)}. `:'')+(lk?`Unlocks at general rank ${SPEC_RANK}; gets Veteran (+20%) at rank 4 and Elite (+40%) at rank 6. `:'')+(has?'':`Requires ${STRUCT[s.from].name}. `)+(k===T.F.special&&SPECIAL_TIP[k]?SPECIAL_TIP[k](s)+' ':'')+(COUNTER[k]||COUNTER[s.cls]||'')});}
@@ -279,7 +279,7 @@ function updateUI(){if(!G)return;qpUpdate();renderSquads();renderAllies();const 
   else if(s.length){const c={};for(const e of s)c[e.s.name]=(c[e.s.name]||0)+1;b.textContent=`${s.length} selected`;sp.textContent=' '+Object.entries(c).map(([n,v])=>`${v}× ${n}`).join(' · ');}
   else{sp.textContent=TOUCHUI?'Tap a unit or building to select it. Double-tap a unit to select all of that type on screen.':'Click to select units or a building. Double-click selects all of a type on screen.';}
   if(s.length===1&&!s[0].isB&&s[0].aband)tip.textContent=ally(s[0].team,ME)?'Abandoned - the crew bailed out. Select infantry and right-click it to re-crew it before the enemy captures it.':'Abandoned enemy vehicle - select infantry and right-click it to capture it.';
-  if(s.length===1&&!s[0].isB&&!s[0].aband&&SPECIAL_TIP[s[0].kind]&&s[0].kind===G.teams[s[0].team].F.special)tip.textContent=SPECIAL_TIP[s[0].kind](s[0].s);
+  if(s.length===1&&!s[0].isB&&!s[0].aband&&SPECIAL_TIP[s[0].kind]&&(s[0].kind===G.teams[s[0].team].F.special||s[0].kind==='ew'))tip.textContent=SPECIAL_TIP[s[0].kind](s[0].s);
   if(s.length===1&&!s[0].isB&&(COUNTER[s[0].s.cls]||COUNTER[s[0].kind])&&!tip.textContent)tip.textContent=COUNTER[s[0].kind]||COUNTER[s[0].s.cls];
   {const ms=s.filter(e=>!e.isB).map(moraleOf).filter(Boolean);if(ms.length){const avg=ms.reduce((a,m)=>a+m.v,0)/ms.length,fl=ms.every(m=>m.st==='fearless'),ls=ms.filter(m=>m.st==='last').length,rt=ms.filter(m=>m.st==='routing').length;const T0=G.teams[s[0].team],why=NOBREAK[T0.fac]?'never break':T0.clr?'Ayatollah':(T0.mart||0)>G.t?'martyrdom':'fervor';const st=fl?'fearless':ls>ms.length/2?'last':rt>ms.length/2?'routing':avg>.66?'steady':avg>.35?'shaken':'breaking';
     const mb=document.createElement('div');mb.className='morale';mb.innerHTML=`<span class="ml">Morale</span><span class="mbar"><i style="width:${Math.round(avg*100)}%;background:${MOR_COL[st]}"></i></span><span class="mt" style="color:${MOR_COL[st]}">${fl?'Fearless ('+why+')':MOR_TXT[st]+(st==='last'?'':' '+Math.round(avg*100)+'%')}${rt&&!fl?' · '+rt+' routing':''}${ls&&st!=='last'?' · '+ls+' last stand':''}</span>`;
@@ -989,7 +989,7 @@ function loadShow(o){const el=loadUI(),D=MAPS[o.map]||MAPS.strait;
   tms.forEach((g,k)=>{if(k){const vs=document.createElement('div');vs.className='lo-vs';vs.textContent='VS';v.append(vs);}const col=document.createElement('div');col.className='lo-tm';
     for(const i of g.m){const f=o.facs[i],F=FACTIONS[f]||{name:f,color:'#888'},row=document.createElement('div');row.className='lo-f';row.style.setProperty('--c',(o.cols&&o.cols[i])||F.color);
       const ic=document.createElement('i');if(f==='RS'||f==='DW'){try{ic.append(emblemCanvas(f,30));}catch(e){ic.textContent=f;}}else ic.textContent=f;
-      const tx=document.createElement('span');tx.style.minWidth='0';const b=document.createElement('b');b.textContent=F.name;const s=document.createElement('small');s.textContent=i===o.me?'YOU':o.mode==='sandbox'?'TARGETS':o.mode==='single'||o.ai&&o.ai[i]?'AI':'PLAYER';tx.append(b,s);row.append(ic,tx);col.append(row);}
+      const tx=document.createElement('span');tx.style.minWidth='0';const b=document.createElement('b');b.textContent=F.name;const s=document.createElement('small');s.textContent=i===o.me?'YOU':o.mode==='sandbox'?'TARGETS':o.mode==='single'||o.ai&&o.ai[i]?'AI':'PLAYER';tx.append(b,s);row.append(ic,tx);try{const GT=G&&G.teams&&G.teams[i];if(GT&&GT.emb&&GT.emb!=='flag')row.append(idEmbEl(GT,20));}catch(e){}col.append(row);}
     v.append(col);});
   loadMap(o.map,o.bases||null,o.cols||[],o.me);
   {const fac=o.facs[o.me];if(el.hidden||LOAD.qf!==fac){LOAD.qf=fac;const Q=loadQuote(fac),qe=el.querySelector('.lo-q');qe.classList.remove('in');el.querySelector('.lo-qt').textContent=Q.q;
@@ -1006,7 +1006,7 @@ function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.h
 // wait until the browser has painted (falls back to a timer when the tab is in the background and frames stop)
 function loadFrame(){return new Promise(r=>{let d=0;const go=()=>{if(!d){d=1;r();}};try{requestAnimationFrame(()=>setTimeout(go,0));}catch(e){}setTimeout(go,document.hidden?0:300);});}
 const LOAD_WD=20000;
-async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
+async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn('identity',e);}const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.sandbox?'sandbox':'single'):MODE;
   // the 3D models of the shared scenery and of the nations in this battle (only those) download while the ground is painted
   const mp=modelsFor(g.teams.map(T=>T.fac),(d,n)=>{if(tok===LOAD.tok)loadStep('Loading 3D models… '+d+' of '+n,.08+.3*d/n);});
   mp.then(r=>setTimeout(()=>{if(G!==g||typeof pushLog!=='function')return;if(!MODELS.ready)pushLog('Detailed 3D models could not load on this device ('+(MODELS.err||'unknown')+'). Showing simple shapes.','bad');
@@ -1045,12 +1045,12 @@ async function afterStart(){const tok=++LOAD.tok,g=G,mode=MODE==='single'?(g.san
   pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
   // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
   setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}},0);}
-function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({w:setup.w|0,seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length)});}finally{TERR_DEFER=false;}afterStart();}
+function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({w:setup.w|0,seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length)});G.teams.forEach((T,i)=>{if(T.ai)T.ai=mkAI(Math.max(0,Math.min(2,setup.d|0))+10*persCode((setup.pers||[])[i]));});}finally{TERR_DEFER=false;}afterStart();}
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
   MODE='single';ME=0;
   TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
-function startMP(mode,seed,facs,slot,map,tm,aiD,st){NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');
@@ -1118,10 +1118,15 @@ function mapCards(){const el=$('pickMap');if(!el)return;if(!setup.map)setup.map=
 function rollAis(){const n=Math.max(1,Math.min((MAPS[setup.map]||MAPS.strait).max-1,setup.n||1));const facs=[setup.p,setup.a];const pool=FKEYS.filter(k=>!facs.includes(k)&&!(setup.others||[]).includes(k));
   setup.others=(setup.others||[]).filter(k=>!facs.includes(k)).slice(0,n-1);while(setup.others.length<n-1){const k=pool.splice(Math.floor(Math.random()*pool.length),1)[0]||FKEYS[setup.others.length%FKEYS.length];setup.others.push(k);}
   const tm=(setup.tm||[]).slice(0,n+1);while(tm.length<n+1)tm.push(tm.length);setup.tm=tm;return[...facs,...setup.others];}
+// AI personality picker (Balanced, Tank Rush, Guerrilla, Artillery Turtle, Air Power, Random=9) shared by the skirmish and lobby seat menus
+function persSel(get,set,label){const s=document.createElement('select');s.className='persel';s.setAttribute('aria-label',label);s.title='AI style';PERS.forEach((P,i)=>{const o=document.createElement('option');o.value=i;o.textContent=P.name;o.title=P.d;s.append(o);});const r=document.createElement('option');r.value=9;r.textContent='Random style';s.append(r);s.value=get();s.onchange=()=>set(+s.value);return s;}
+function persCode(p){p=p|0;return p===9||(p>0&&p<PERS.length)?p:0;}
 function renderTeams(){const el=$('teamList');if(!el)return;const facs=rollAis();el.innerHTML='';const N=facs.length,sides=skSides(),st=skSt(N);
   facs.forEach((f,i)=>{const row=document.createElement('div');row.className='trow sp';const nm=document.createElement('span');nm.textContent=(i===0?'You · ':`AI ${i} · `)+FACTIONS[f].name;
     const s=document.createElement('select');s.setAttribute('aria-label','Team for '+nm.textContent);for(let t=0;t<Math.max(2,N);t++){const o=document.createElement('option');o.value=t;o.textContent='Team '+(t+1);s.append(o);}s.value=setup.tm[i];
-    s.onchange=()=>{setup.tm[i]=+s.value;checkTeams();prevMarks();};row.append(nm,s,spotsSel(i,setup.map,sides,st,skSet,()=>skSt(N)));el.append(row);});checkTeams();prevMarks();}
+    s.onchange=()=>{setup.tm[i]=+s.value;checkTeams();prevMarks();};if(i>0){setup.pers=setup.pers||[];row.append(nm,persSel(()=>persCode(setup.pers[i]),v=>{setup.pers[i]=v;},'AI style for '+nm.textContent),s,spotsSel(i,setup.map,sides,st,skSet,()=>skSt(N)));}else row.append(nm,s,spotsSel(i,setup.map,sides,st,skSet,()=>skSt(N)));el.append(row);});
+  if(N>=2){const pr=document.createElement('div');pr.className='presets';const pb=(lab,fn)=>{const b=document.createElement('button');b.className='chip';b.textContent=lab;b.onclick=()=>{setup.tm=facs.map((_,i)=>fn(i));renderTeams();};pr.append(b);};pb('Me vs all',i=>i?1:0);pb('Free for all',i=>i);if(N>=3)pb('Co-op: me + allies vs AI',i=>i<Math.ceil(N/2)?0:1);el.append(pr);}
+  checkTeams();prevMarks();}
 function checkTeams(){const ok=new Set(setup.tm).size>1;const b=$('start');if(!b)return;b.disabled=!ok;b.title=ok?'':'Put at least one player on a different team.';}
 mapCards();
 facCards();const sel=$('aiFac');for(const k of FKEYS){const o=document.createElement('option');o.value=k;o.textContent=FACTIONS[k].name;sel.append(o);}sel.value=setup.a;setTimeout(renderTeams,0);sel.onchange=()=>{setup.a=sel.value;renderTeams();};if($('aiN'))$('aiN').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.n=+b.dataset.n;setTimeout(prevMarks,0);$('aiN').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));$('start').textContent=setup.n>1?`Deploy vs ${setup.n} AI`:'Deploy vs AI';renderTeams();});if($('watch'))$('watch').onclick=()=>{$('end').hidden=true;};
@@ -1293,7 +1298,7 @@ if($('mmBtn'))$('mmBtn').onclick=()=>mapPeek();
 if($('sbFold')){const sb=$('sbx'),f=v=>{sb.classList.toggle('fold',v);$('sbFold').setAttribute('aria-expanded',v?'false':'true');};let v=false;try{v=localStorage.getItem('ww3_sbFold')==='1';}catch(e){}f(v);
   $('sbFold').onclick=()=>{const n=!sb.classList.contains('fold');f(n);try{localStorage.setItem('ww3_sbFold',n?'1':'0');}catch(e){}};}
 $('quitNo').onclick=()=>{$('quitOv').hidden=true;if(G&&G.qPause){G.qPause=false;togglePause(false);}};
-$('again').onclick=()=>{initAudio();startSingle();};$('change').onclick=()=>{$('end').hidden=true;$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;try{kcReset();}catch(e){}renderGames();};
+$('again').onclick=()=>{initAudio();try{if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}}catch(e){}startSingle();};$('change').onclick=()=>{$('end').hidden=true;$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;try{kcReset();}catch(e){}renderGames();};
 
 /* ---------- kill-cam: at match end, a short replay of the battle's biggest moment ---------- */
 // While a battle runs, four times a second this screen notes where every unit and building is (7 numbers each, about
@@ -1352,7 +1357,7 @@ function kcStart(done){if(kcOff()||KC.G!==G||!R3||window.GLLOST)return false;kcR
     tr.d.set(S.f.subarray(i*7,i*7+7),k*7);}});
   // wrecks and fallen soldiers from the whole battle are set aside while the replay runs, then put back
   const hide=[];for(const L of [WRECKS,BODIES])for(const w of L.splice(0)){SCN.remove(w.o);hide.push([L,w]);}const wq=WRECKQ.splice(0);
-  const cs={x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td};
+  const cs={x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td,_xl:cam._xl,_yl:cam._yl,_dl:cam._dl};
   KC.R={B,T,times:B.snaps.map(s=>s.t),rt:B.t0,k:0,fi:0,done,cs,hide,wq,G,skip:false,shot:false};KC.on=true;KC.shot=null;
   const m=Math.floor(B.peak.t/60),s=Math.floor(B.peak.t%60);$('kcSub').textContent=`Biggest moment of the battle · ${m}:${String(s).padStart(2,'0')} · $${Math.round(B.score).toLocaleString('en-US')} destroyed`;
   document.body.classList.add('kcOn');const o=$('kcOv');o.hidden=false;setTimeout(()=>o.classList.add('on'),30);return true;}
@@ -1492,6 +1497,11 @@ function tkFeed(m,k){if(!G)return;if(TK.G!==G)tkReset();if(SET.tk===undefined||T
   if(r=/^Capitulation in (\d+) seconds/.exec(m))return tkHead(`${own} faces capitulation in ${r[1]} seconds`,2);
   if(r=/^(.+) destroyed\.$/.exec(m)&&k==='w'&&!/^(Unit|Oil)/.test(m))return tkHead(`${own} ${r[1]} destroyed`,1);
   if(/^Our last tunnel was destroyed/.test(m))return tkHead(`${own} tunnel network destroyed, troops lost underground`,1);}
+// public headlines the host sends to everyone ('hl' event): shown only to players on neither side, since the sides involved get their own news
+function tkPublic(k,a,b,tx){try{if(!G||!TK.on||KC.on||MODE==='replay')return;const T=G.teams,inv=t=>t>=0&&T[ME]&&(t===ME||ally(t,ME));if(inv(a)||inv(b)||!T[a])return;
+  const nm=t=>(T[t]&&(tkAdj(T[t].fac)||T[t].F.name))||'Enemy';
+  if(k==='oil')tkHead(`${nm(a)} forces seize an oil derrick${b>=0&&T[b]?' from the '+nm(b)+' side':''}`,1);
+  else if(k==='pow'&&tx)tkHead(`${nm(a)} forces unleash ${String(tx).slice(0,40)}`,2);}catch(e){}}
 function tkPoll(){try{if(!G||!TK.on||TK.G!==G){if(!G||TK.G!==G)clearInterval(TK.tm);return;}
   for(const T of G.teams){if(T.out&&!TK.out[T.id]){TK.out[T.id]=1;const nm=T.F.name;tkHead(T.id===ME?`${tkOwn()} has capitulated`:`${nm} eliminated${T.whyOut?': '+String(T.whyOut).replace(/\.$/,''):''}`,2);}}
 }catch(e){}}

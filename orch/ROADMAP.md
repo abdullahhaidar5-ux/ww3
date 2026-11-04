@@ -51,6 +51,9 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [doing] Phase 5 Massive columns: hundreds of units at a smooth frame rate (infantry merged, off-screen culling, no freeze on vehicle kills shipped; vehicles merged −40% draws; infantry next)
 - [todo] Phase 6 Device tiers: phones stay smooth with a lighter look, PCs get everything
 
+## Campaign
+- [doing] Shia mini-campaign: 5 missions (Hold the Pass, Supply Run, Mountain Fortress, Retake the Town, Combined Arms) with briefings, objectives and debriefs (2026-11-03)
+
 ## Battlefield and maps
 - [done] Martyrdom banner: fallen Shia soldiers leave a rally flag that steadies nearby troops
 - [done] Bigger electronic warfare: minimap blackout and fake radar ghosts

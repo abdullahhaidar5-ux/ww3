@@ -110,6 +110,10 @@ export class BattleHost {
   presence(id, p) {
     if (!p || typeof p !== 'object') return;
     const P = this.players.get(id); P.pres = p;
+    if (p.hi && p.hi.id && typeof p.hi.id === 'object') {   // cosmetic only: the player's colour + emblem, cleaned here and sent with 'start'
+      const q = p.hi.id, c = typeof q.c === 'string' && /^#[0-9a-fA-F]{6}$/.test(q.c) ? q.c.toLowerCase() : '', e = typeof q.e === 'string' && /^[a-z]{3,10}$/.test(q.e) ? q.e : '';
+      P.idc = c || e ? { c, e } : null;
+    }
     this.sim.pres(id, p, (peer, by, f, tok) => this.hello(peer, f, tok));
     // this player's loading screen has closed: noted for their side (a page that reconnected keeps its side)
     if (p.rd) { P.rd = 1; if (this.phase === 'battle') { const k = this.sim.teamOf(id); if (k >= 0) this.rd[k] = 1; } }
@@ -164,7 +168,7 @@ export class BattleHost {
       else this.note = `That battlefield holds only ${n} players: pick a bigger one.`;
     }
     if (typeof d.w === 'number') this.w = int(d.w, -1, 31, 0);
-    if (Array.isArray(d.ais)) this.ais = d.ais.slice(0, MAX_PLAYERS).map(a => ({ f: this.sim.facs.includes(a && a.f) ? a.f : this.sim.facs[0], d: int(a && a.d, 0, 2, 1), tm: int(a && a.tm, 0, 7, 1), st: int(a && a.st, -1, 7, -1) }));
+    if (Array.isArray(d.ais)) this.ais = d.ais.slice(0, MAX_PLAYERS).map(a => ({ f: this.sim.facs.includes(a && a.f) ? a.f : this.sim.facs[0], d: int(a && a.d, 0, 2, 1), p: int(a && a.p, 0, 9, 0), tm: int(a && a.tm, 0, 7, 1), st: int(a && a.st, -1, 7, -1) }));
     if (Array.isArray(d.tm)) this.tm = this.order.map((_, i) => int(d.tm[i], 0, 7, this.tm[i] | 0));
     // start spots picked for the players (the owner always sends the whole setup: no 'st' = everyone on Random)
     this.order.forEach((id, i) => { const P = this.players.get(id); if (P) P.st = Array.isArray(d.st) ? int(d.st[i], -1, 7, -1) : -1; });
@@ -218,12 +222,13 @@ export class BattleHost {
     const facs = [...this.order.map(id => this.players.get(id).f), ...ais.map(a => a.f)];
     const tm = [...this.order.map((_, i) => this.tm[i] | 0), ...ais.map(a => a.tm | 0)];
     const peers = [...this.order, ...ais.map(() => null)], toks = [...this.order.map(id => this.players.get(id).tok || null), ...ais.map(() => null)];
-    const aiD = [...this.order.map(() => null), ...ais.map(a => a.d)];
+    const aiD = [...this.order.map(() => null), ...ais.map(a => a.d + 10 * (a.p | 0))];
     const seed = this.seed != null ? this.seed : (Math.random() * 1e9) | 0;
     // picked start spots (null when everyone is on Random): sent with every start, kept for restarts
     const st = this.sim.stClean([...this.order.map(id => this.players.get(id).st), ...ais.map(a => a.st)], facs.length), sp = st ? { st } : {};
+    const ids = [...this.order.map(id => this.players.get(id).idc || 0), ...ais.map(() => 0)];
     this.facs = facs; this.si = { seed, facs, map: this.map, tm, w: this.w | 0, code: this.code, ...sp };
-    this.order.forEach((id, i) => this.emit('start', { pv: st ? this.sim.pvs : this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, sv: 1, ...sp }));
+    this.order.forEach((id, i) => this.emit('start', { pv: st ? this.sim.pvs : this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, sv: 1, ids, ...sp }));
     this.flush();
     this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code, ...sp });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
