@@ -767,24 +767,25 @@ function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   else if(k==='cn'){doCancel(false);}
   else if(k==='no'){G.place=null;G.aim=null;TC.pick=null;}
   TC.stripK='';updateUI();tcStrip(true);}
+/* the Supply button shows only when it matters (a selected unit is under 60% ammo or has been out of supply 10 s+) and takes Clear's place so the strip still fits */
+function tcNeedSup(own){return own.some(u=>u.am!==undefined&&u.amx&&(u.am<u.amx*.6||(!u.sup&&G.t-(u.supT??G.t)>10)));}
 function tcStrip(force){const now=performance.now();if(!force&&now-TC.stripT<120)return;TC.stripT=now;
   let s=$('tstrip');if(!s){s=document.createElement('div');s.id='tstrip';s.hidden=true;s.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled)tcCmd(b.dataset.k);});document.body.append(s);}
   const on=TOUCHUI&&TC.touch&&G&&!G.over&&!window.LOADING&&$('menu').hidden;const own=on?tcOwn():[];
   const cnl=on&&!G.place&&!G.aim&&!!cancelInfo();const mode=!on?'':(G.place||G.aim)?'conf':own.length?'cmd':cnl?'cn':'';
   const ok=mode==='conf'&&!!TC.pick&&(G.aim||!!validSpot(ME,G.place,TC.pick.x,TC.pick.y));
-  const key=mode+'|'+(mode==='cmd'?[cnl,G.amove,G.defm,TC.lineArm,own.some(u=>u.retreat),stanceLabel()].join():mode==='conf'?(G.place?'b':'f')+ok:'');
+  const key=mode+'|'+(mode==='cmd'?[cnl,G.amove,G.defm,TC.lineArm,own.some(u=>u.retreat),stanceLabel(),tcNeedSup(own)].join():mode==='conf'?(G.place?'b':'f')+ok:'');
   document.body.classList.toggle('tstripOn',mode==='cmd'||mode==='cn');document.body.classList.toggle('tconfOn',mode==='conf');
   if(key===TC.stripK)return;TC.stripK=key;s.hidden=!mode;s.className=mode==='cn'?'conf':mode;s.innerHTML='';if(!mode)return;
   const mk=(k,ic,tx,ti,cl)=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.title=ti;b.setAttribute('aria-label',ti);if(cl)b.className=cl;const i=document.createElement('i');i.textContent=ic;const t=document.createElement('span');t.textContent=tx;b.append(i,t);s.append(b);return b;};
   if(mode==='cn'){mk(...TC_CN,'cx');return;}
   if(mode==='conf'){const b=mk('ok','✓',G.place?'Build here':'Fire here',G.place?'Build it at the marked spot':'Fire at the marked spot','go');b.disabled=!ok;mk('no','✕','Cancel','Cancel','cx');return;}
-  for(const [k,ic,tx,ti] of TC_BTN){if(k==='rs'&&!own.some(u=>u.am!==undefined))continue;const b=k==='sn'?mk(k,'◈',(stanceLabel().replace(/^\S+ /,'').replace('Guerrilla','Guerr.'))||'Stance',ti):mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}if(cnl)mk(...TC_CN,'cx');}
+  for(const [k,ic,tx,ti] of TC_BTN){if(k==='rs'&&!tcNeedSup(own))continue;if(k==='ds'&&tcNeedSup(own))continue;const b=k==='sn'?mk(k,'◈',(stanceLabel().replace(/^\S+ /,'').replace('Guerrilla','Guerr.'))||'Stance',ti):mk(k,ic,tx,ti);if((k==='am'&&G.amove)||(k==='gd'&&G.defm)||(k==='ln'&&TC.lineArm)||(k==='rt'&&own.some(u=>u.retreat)))b.classList.add('on');}if(cnl)mk(...TC_CN,'cx');}
 /* ---- first-time guide: three steps, shown once, remembered; ☰ > Touch controls shows it again. A card near the top,
    not a full-screen cover: the battle keeps running (multiplayer can't pause) and stays playable around it ---- */
 const TC_GUIDE=[['☝','Move the map','Drag one finger to scroll the battlefield; flick to glide. Pinch with two fingers to zoom.'],
   ['◉','Select and command','Tap a unit to select it, then tap the ground to move or an enemy to attack: a ring shows where the order went. Double-tap a unit to select all of that type on screen.'],
-  ['⛽','Ammo and supply','Units carry limited ammo (the thin bar under health) and refill it inside the blue supply circles around your HQ, depots, supply trucks and towns you hold. Out of supply too long and they stop healing. The Resupply button sends selected units back.'],
-  ['▭','Hold, then drag','Hold a finger still for a moment, then drag to box-select a group. With units selected, hold and drag to draw a battle line. The buttons above the bar give attack-move, guard, stop and more.']];
+  ['▭','Hold, then drag','Hold a finger still for a moment, then drag to box-select a group. With units selected, hold and drag to draw a battle line. The buttons above the bar give attack-move, guard, stop and more. Troops carry limited ammo (thin bar under health): they refill it inside the blue supply circles around your HQ, depots, trucks and held towns, and the Supply button sends them back.']];
 function tcGuideSeen(){try{return localStorage.getItem('ww3_touchGuide')==='1';}catch(e){return false;}}
 function tcGuide(show){let o=$('tguide');if(show===false){if(o)o.hidden=true;return;}
   if(!o){o=document.createElement('div');o.id='tguide';o.setAttribute('role','dialog');o.setAttribute('aria-label','Touch controls');o.innerHTML='<div class="tgc"><div class="tgn"></div><div class="tgi"></div><b></b><p></p><div class="tgb"><button type="button" class="tgs">Skip</button><button type="button" class="tgx">Next</button></div></div>';document.body.append(o);
