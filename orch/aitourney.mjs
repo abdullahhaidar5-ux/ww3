@@ -33,6 +33,7 @@ if (process.argv[2] === '--child') {
       if (m.hset) P.ev(`Object.assign(DIFF[2], ${JSON.stringify(m.hset)})`);
       W.start({ seed: m.seed, map: m.map, facs: m.facs, diff: m.diff });
       if (m.diffs) P.ev(`G.teams.forEach((T,i)=>{ if (T.ai) T.ai = mkAI(${JSON.stringify(m.diffs)}[i]); })`);
+      if (m.pers) P.ev(`G.teams.forEach((T,i)=>{ if (T.ai) T.ai = mkAI(${m.diff}+10*${JSON.stringify(m.pers)}[i]); })`);
       if (m.dcs) P.ev(`G.teams.forEach((T,i)=>{ T.gdoc=${JSON.stringify(m.dcs)}[i]; T.gperk={}; T._uk=null; })`);
       let st = null;
       const haul = [0, 0];
@@ -60,6 +61,7 @@ if (process.argv[2] === '--child') {
   const HVN = has('hard-vs-normal');
   const DOC = has('doctrines');   // --doctrines : each side gets a General Doctrine (all ordered pairs in turn), table per doctrine
   const DOCK = ['arm', 'gue', 'air', 'art'];
+  const PERS = argS('pers', '') ? Number(argS('pers')) : null; // --pers 1..4: personality N (slot A, swapped every game) vs Balanced
   // --hard-set cover=0,retreat=1 : try Hard with some DIFF settings changed (ablation tests)
   const HSET = argS('hard-set', '') ? Object.fromEntries(argS('hard-set').split(',').map(kv => { const [k, v] = kv.split('='); return [k, Number(v)]; })) : null;
   const OUT = argS('out', path.join(ROOT, 'orch', 'out', 'aitourney.json'));
@@ -70,9 +72,10 @@ if (process.argv[2] === '--child') {
       const sw = (k + r) % 2 === 1;
       const facs = sw ? [FAC[j], FAC[i]] : [FAC[i], FAC[j]];
       sched.push({ n: k, facs, map: MAPS[(k * 7 + r * 3) % MAPS.length], seed: (SEED * 1000 + k * 13 + r * 7919) >>> 0, diff: DIFF,
-        diffs: HVN ? [2, 1] : null, minutes: MIN, adj: ADJ, hset: HSET, dcs: DOC ? (() => { const pr = []; for (const a of DOCK) for (const b of DOCK) if (a !== b) pr.push([a, b]); return pr[k % pr.length]; })() : null });
+        fi: FAC[i], r, diffs: HVN ? [2, 1] : null, minutes: MIN, adj: ADJ, hset: HSET, dcs: DOC ? (() => { const pr = []; for (const a of DOCK) for (const b of DOCK) if (a !== b) pr.push([a, b]); return pr[k % pr.length]; })() : null });
       k++;
     }
+  if (PERS) for (const m of sched) { const a = (m.facs[0] === m.fi) === (m.r % 2 === 0) ? 0 : 1; m.pers = a ? [0, PERS] : [PERS, 0]; m.pa = a; }
   if (HVN) for (const m of sched) if (m.n % 2) { m.facs.reverse(); m.diffs = [1, 2]; } // Hard plays both slots
   console.log(`aitourney: ${sched.length} games, ${JOBS} at a time, ${MIN}-min cap, maps ${MAPS.join(',')}${HVN ? ', Hard vs Normal' : ', diff ' + DIFF}`);
   const res = []; let next = 0; const t0 = Date.now();
@@ -101,7 +104,8 @@ if (process.argv[2] === '--child') {
   for (const r of res) {
     if (r.result === 'error') continue;
     r.facs.forEach((f, i) => { const s = T(f); s.g++; s.len += r.t / 60; if (r.winner === i) { s.w++; if (r.result === 'kill') s.kill++; else s.to++; } else if (r.winner < 0) { s.w += .5; s.d++; } });
-    if (r.diffs) { hardG++; const hi = r.diffs.indexOf(2); hardW += r.winner === hi ? 1 : r.winner < 0 ? .5 : 0; }
+    if (r.pers) { const pi = r.pers.indexOf(Number(argS('pers'))); hardG++; hardW += r.winner === pi ? 1 : r.winner < 0 ? .5 : 0; }
+    else if (r.diffs) { hardG++; const hi = r.diffs.indexOf(2); hardW += r.winner === hi ? 1 : r.winner < 0 ? .5 : 0; }
   }
   if (DOC) { const dt = {}; for (const r of res) { if (r.result === 'error' || !r.dcs) continue; r.dcs.forEach((d, i) => { const s = dt[d] || (dt[d] = { g: 0, w: 0 }); s.g++; if (r.winner === i) s.w++; else if (r.winner < 0) s.w += .5; }); } console.log('\ndoctrine win rates:'); for (const [d, s] of Object.entries(dt)) console.log(`  ${d}  ${s.g} games  ${(100 * s.w / s.g).toFixed(0)}%`); }
   const rows = Object.entries(tab).sort((a, b) => b[1].w / b[1].g - a[1].w / a[1].g);
@@ -114,5 +118,6 @@ if (process.argv[2] === '--child') {
   const hauls = res.flatMap(r => (r.extra || []).map(x => x.haul || 0)).sort((a, b) => a - b);
   console.log(`tactics (totals over all sides): ${Object.entries(agg).filter(([k]) => k !== 'haul' && k !== 'upg').map(([k, v]) => k + ' ' + v).join(', ')}`);
   console.log(`shipyard placed: ${firsts('yardT')}; first warship: ${firsts('fleetT')}; truck haul (field to nearest drop) worst per side: median ${hauls[hauls.length >> 1] || 0}, max ${hauls[hauls.length - 1] || 0}`);
-  if (hardG) console.log(`Hard vs Normal: Hard scored ${hardW}/${hardG} (${(100 * hardW / hardG).toFixed(0)}%)`);
+  if (hardG && PERS) console.log(`Personality ${PERS} vs Balanced: scored ${hardW}/${hardG} (${(100 * hardW / hardG).toFixed(0)}%)`);
+  else if (hardG) console.log(`Hard vs Normal: Hard scored ${hardW}/${hardG} (${(100 * hardW / hardG).toFixed(0)}%)`);
 }
