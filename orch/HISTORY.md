@@ -140,3 +140,5 @@ preview, not per-map thumbnail cards.
 - 2026-11-04 perf-1103 (helper): profiler extended (--simprof/--syncprof/--glcount); unit push-apart (03-sim separate) 38% faster; findings in orch/reports/perf-1103.md — render side needs a real-iPhone measurement.
 - 2026-11-04 coop-ai: AI personalities (Tank Rush, Guerrilla, Artillery Turtle, Air Power, Random) + Co-op vs AI lobby/skirmish presets; aitourney --pers; tourney 38-58%.
 - 2026-11-03 orch/polish-1103 (helper): end-stats awards capped per player + player names + long-battle graph downsampled; EW jam/spoof truck now also for US, CN, IR, IL; kill-cam leaves no stray effects and restores camera; news ticker shows host-broadcast public headlines (oil seizures, superweapons); Play again restores your own Conditions; martyr flags fade on game time. Report: orch/reports/polish-1103.md
+
+- 2026-11-04 vis-1103 (Sonnet): explosions reworked (flash + lumpy fireball + dark debris); distant low-poly soldier (vertex-clustered skinned LOD, swapped in past cam.dist 480). Kit variety, scenery details, baked clips left open (see orch/HANDOFF-vis-1103.md).
