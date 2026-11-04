@@ -276,6 +276,7 @@ function buildWorld(tc){
         #ifdef WDET
         {float b1=texture2D(nz,p*.021+vec2(t*.011,-t*.007)).r,b2=texture2D(nz,p*.0047-vec2(t*.003,0.)).r;foam*=.35+1.3*smoothstep(.3,.75,b1*.6+b2*.4);float sw2=sin(edge*.21-t*.95+b2*5.)*.5+.5;foam+=smoothstep(46.,20.,edge)*smoothstep(.86,.98,sw2)*smoothstep(.45,.7,b1)*.7;}
         #endif
+        foam*=.62+.7*smoothstep(.15,.85,sin(wp.x*.027+sin(wp.z*.019)*2.)*sin(wp.z*.031-wp.x*.011)*.5+.5);foam+=smoothstep(30.,8.,edge)*smoothstep(.9,1.,sin(edge*.42-t*1.1+fn*3.)*.5+.5)*.35*(.4+.6*br);
         float dp=smoothstep(0.,120.,edge);
         c=mix(vec3(.3,.5,.44),c,smoothstep(0.,150.,edge));c=mix(vec3(.5,.56,.44),c,smoothstep(0.,22.,edge)*.7+.3);c=mix(c,vec3(.9,.92,.9),clamp(foam,0.,1.)*.8);if(ice>0.){vec2 q=p+vec2(sin(p.y*.006)*90.,sin(p.x*.005)*90.);float fl=sin(q.x*.0105+sin(q.y*.0071)*2.3)*sin(q.y*.0123+sin(q.x*.0083)*2.1)*.6+sin(q.x*.027-q.y*.021+sin(q.y*.019)*1.7)*.3+sin(q.x*.061+q.y*.053)*.1;float cr=(smoothstep(.99,1.,abs(sin(q.x*.05+fl*7.)))+smoothstep(.99,1.,abs(sin(q.y*.043-fl*6.))))*.25;float shore=smoothstep(60.,6.,edge+fl*25.);float k=clamp(shore+smoothstep(.22,.32,fl),0.,1.);c=mix(c,vec3(.78,.86,.9)-cr*.12,k*.85);foam=max(foam,k*1.5);}
         gl_FragColor=vec4(pow(c*wl,vec3(2.2)),mix(.45,.88,dp)+fr*.1+foam*.3);}`}));
@@ -294,12 +295,22 @@ function buildWorld(tc){
   for(const b of G.map.bridges){const grp=new THREE.Group();grp.position.set(b.x,0,b.y);grp.rotation.y=-Math.atan2(b.n[1],b.n[0]);const L=b.h*2+30;
     const deck=new THREE.Mesh(new THREE.BoxGeometry(L,3,66),[bm,bm,dm,bm,bm,bm]);deck.position.y=3;deck.castShadow=deck.receiveShadow=true;grp.add(deck);dk.repeat.set(Math.max(1,Math.round(L/256)),1);
     const gird=new THREE.Mesh(new THREE.BoxGeometry(L,6,56),pm);gird.position.y=-2;gird.castShadow=true;grp.add(gird);
-    for(const z of [-31,31])for(let s2=-L/2+12;s2<L/2;s2+=48){const lp=new THREE.Mesh(new THREE.CylinderGeometry(.5,.6,16,6),rm);lp.position.set(s2,13,z);lp.castShadow=true;grp.add(lp);const arm=new THREE.Mesh(new THREE.BoxGeometry(1,1,6),rm);arm.position.set(s2,21,z*0.9);grp.add(arm);const hd=new THREE.Mesh(new THREE.BoxGeometry(2.6,1.1,3.6),LAMPM||(LAMPM=new THREE.MeshStandardMaterial({color:0x3a3d40,emissive:0xffd9a0,emissiveIntensity:.55,roughness:.6})));hd.position.set(s2,20.4,z*0.8);grp.add(hd);}
-    for(const z of [-33,33]){const r=new THREE.Mesh(new THREE.BoxGeometry(L,1.2,1.2),rm);r.position.set(0,8.2,z);r.castShadow=true;grp.add(r);const cb=new THREE.Mesh(new THREE.BoxGeometry(L,2.4,2.4),pm);cb.position.set(0,5.6,z);grp.add(cb);for(let s2=-L/2+4;s2<L/2;s2+=12){const po=new THREE.Mesh(new THREE.BoxGeometry(.8,3,.8),rm);po.position.set(s2,6.8,z);grp.add(po);}}
+    { // old-style stone parapet with round-capped piers and cast-iron gooseneck lamps (no modern highway rails)
+      const lo=gfxLow(),sg=lo?6:10;LAMPM=LAMPM||new THREE.MeshStandardMaterial({color:0x3a3d40,emissive:0xffd9a0,emissiveIntensity:.55,roughness:.6});
+      const cap=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.5,L,sg).rotateZ(Math.PI/2),pm),ir=rm;
+      for(const z of [-33,33]){const w=new THREE.Mesh(new THREE.BoxGeometry(L,2.4,2.2),pm);w.position.set(0,5.7,z);w.castShadow=true;grp.add(w);const c2=cap.clone();c2.position.set(0,7,z);grp.add(c2);
+        for(let s2=-L/2+4;s2<L/2;s2+=24){const pr=new THREE.Mesh(new THREE.CylinderGeometry(1.5,1.9,5,sg),pm);pr.position.set(s2,6.6,z);pr.castShadow=true;grp.add(pr);const bl=new THREE.Mesh(new THREE.SphereGeometry(1.7,sg,Math.max(4,sg>>1)),pm);bl.position.set(s2,9.3,z);grp.add(bl);}}
+      const lg=new THREE.SphereGeometry(1.5,sg,Math.max(4,sg>>1)),arcG=new THREE.TorusGeometry(3.6,.28,4,lo?4:8,Math.PI/2).rotateZ(Math.PI/2);
+      for(const z of [-31,31])for(let s2=-L/2+16;s2<L/2;s2+=48){const sd=z>0?1:-1;const bs=new THREE.Mesh(new THREE.CylinderGeometry(.9,1.4,3,sg),ir);bs.position.set(s2,6,z);grp.add(bs);
+        const lp=new THREE.Mesh(new THREE.CylinderGeometry(.35,.6,13,sg),ir);lp.position.set(s2,11.5,z);lp.castShadow=true;grp.add(lp);
+        const ar=new THREE.Mesh(arcG,ir);ar.position.set(s2+3.6,18,z);grp.add(ar);
+        const gl=new THREE.Mesh(lg,LAMPM);gl.position.set(s2+3.6,20.2,z);grp.add(gl);}
+    }
     for(let s=-L/2+50;s<L/2-30;s+=70){const pl=new THREE.Mesh(new THREE.BoxGeometry(12,26,58),pm);pl.position.set(s,-10,0);pl.castShadow=true;grp.add(pl);}
     WORLD.add(grp);}
   // trees (instanced)
   try{scenery();}catch(e){console.warn('scenery',e);}
+  warScenery();
   if(modelTrees()){try{borderTrees();}catch(e){}}else{const N=G.treePos.length;mats();
   const mkTree=v=>{const B=Bld();B.cyl(1.1,1.9,12,6,0,6,0,'#4a3826');const R=mulberry(v*31+7);const nb=4+(R()*3|0);for(let i=0;i<nb;i++){const a=R()*6.28,d=i?2+R()*4:0,r=5.5+R()*4,h=13+R()*7+(i?0:4);const g=new THREE.IcosahedronGeometry(r,1);g.scale(1,.9,1);B.box(.1,.1,.1,0,0,0,'#000');const c=new THREE.Color().setHSL(.21+R()*.06,.38+R()*.15,.2+R()*.08);parts_add(B,g,Math.cos(a)*d,h,Math.sin(a)*d,c);}return B.geo();};
   const TG=[0,1,2].map(mkTree);const per=[[],[],[]];G.treePos.forEach((t,i)=>per[i%3].push(t));
@@ -359,6 +370,22 @@ function mats(){if(MAT.std)return;MAT.std=new THREE.MeshStandardMaterial({vertex
   MAT.glow=new THREE.MeshBasicMaterial({color:lin('#ffcf7a')});MAT.ghostOk=new THREE.MeshBasicMaterial({color:0x74d08f,transparent:true,opacity:.42,depthWrite:false});MAT.ghostBad=new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:.42,depthWrite:false});MAT.ghostDz=new THREE.MeshBasicMaterial({color:0xe3b341,transparent:true,opacity:.42,depthWrite:false});}
 /* irregular rock / fragment geometry: an icosphere pushed around by a few octaves of seeded noise, squashed, with smooth normals
    (never a box). Same position -> same push, so the faces stay closed. Used for boulders, rubble and explosion fragments. */
+// War scenery (visual only, seeded, never read by the sim): burnt patches in the ground-scar texture near roads and craters, plus scattered
+// debris (charred rubble chunks, flat torn metal sheets, tyres, oil drums) as 4 instanced meshes. Low graphics: burnt patches only.
+function warScenery(){try{if(!G.map||!SCAR)return;const R=mulberry((G.seed||1)*13+77),rm=G.roadMask,M=G.map,LO=gfxLow(),spots=[];
+  const free=(x,y)=>x>80&&y>80&&x<MAPW-80&&y<MAPH-80&&Math.abs(M.depth(x,y))>M.hw(x)+30&&!BASES.some(([bx,by])=>Math.hypot(x-bx,y-by)<260);
+  if(rm&&rm.f){const C=rm.C;for(let k=0;k<4000&&spots.length<(LO?14:28);k++){const x=R()*MAPW,y=R()*MAPH;if(rm.f[(y/C|0)*rm.w+(x/C|0)]>.3&&free(x,y))spots.push([x,y,1]);}}
+  for(const c of (G.craters||[])){if(spots.length>=(LO?20:44))break;if(free(c[0],c[1]))spots.push([c[0],c[1],c[2]/10]);}
+  for(const [x,y,k] of spots){const n=1+(R()*2|0);for(let i=0;i<n;i++){const bx=x+(R()-.5)*26,by=y+(R()-.5)*26,br=12+R()*14*Math.min(1.4,k);scarAdd(bx,by,br,0);scarAdd(bx,by,br*.7,0);}}
+  G.warSpots=spots;if(LO||!spots.length)return;
+  const gs=[rockGeo(5,1,.5,.5),rockGeo(9,1,.35,.6),rockGeo(12,1,.09,.45),new THREE.TorusGeometry(1.15,.5,6,12).rotateX(Math.PI/2),new THREE.CylinderGeometry(1.1,1.1,2.8,10)];
+  const mt=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.9,metalness:0}),NMAX=[70,50,50,16,14],ims=gs.map((g,i)=>{const im=new THREE.InstancedMesh(g,mt,NMAX[i]);im.castShadow=false;im.receiveShadow=true;im.userData.noDepth=true;return im;}),cn=[0,0,0,0,0],cc=new THREE.Color();
+  const put=(t,x,y,sc,rot,hue,lit)=>{const im=ims[t];if(cn[t]>=NMAX[t])return;const gy=groundH(x,y);TMPM.compose(TMP.set(x,gy+(t===4?.9*sc:t===3?.3*sc:-.1),y),TMPQ.setFromEuler(new THREE.Euler(t===4?Math.PI/2*(R()<.5?1:0)+(R()-.5)*.3:(R()-.5)*.25,rot,t>=3?(R()-.5)*.3:(R()-.5)*.2)),new THREE.Vector3(sc,t===2?sc:sc*(.8+R()*.4),sc*(.85+R()*.4)));
+    im.setMatrixAt(cn[t],TMPM);cc.setHSL(hue,t===0?.06:.1,lit).convertSRGBToLinear();im.setColorAt(cn[t],cc);cn[t]++;};
+  for(const [x,y] of spots){const m=5+(R()*6|0);for(let i=0;i<m;i++){const px=x+(R()-.5)*28,py=y+(R()-.5)*28;if(!free(px,py))continue;const q=R();
+    if(q<.4)put(0,px,py,.6+R()*1.2,R()*6.3,.07+R()*.04,.26+R()*.14);else if(q<.62)put(1,px,py,.8+R()*1.2,R()*6.3,.08,.34+R()*.14);else if(q<.82)put(2,px,py,1.2+R()*2.2,R()*6.3,.58,.42+R()*.18);else if(q<.92)put(3,px,py,.8+R()*.3,R()*6.3,0,.17);else put(4,px,py,.8+R()*.3,R()*6.3,.05+R()*.05,.42+R()*.12);}}
+  ims.forEach((im,i)=>{im.count=cn[i];if(cn[i]){im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;WORLD.add(im);}});
+}catch(e){console.warn('warScenery',e);}}
 function rockGeo(seed,det,sq,rough){const g=new THREE.IcosahedronGeometry(1,det),P=g.attributes.position,R=mulberry(seed*7919+13),ph=[];for(let i=0;i<12;i++)ph.push(R()*6.283);const k=rough==null?.34:rough;
   for(let i=0;i<P.count;i++){const x=P.getX(i),y=P.getY(i),z=P.getZ(i);const n=Math.sin(x*2.1+ph[0]+z*1.3)*Math.sin(y*2.7+ph[1]+x*.9)*.5+Math.sin(x*4.3+ph[2]+y*3.1)*Math.sin(z*4.9+ph[3]+y*1.7)*.28+Math.sin(x*8.1+ph[4]+z*6.7)*Math.sin(y*7.3+ph[5])*.14;const j=1+k*n+.12*Math.sin(x*1.1+ph[6])*Math.cos(z*1.4+ph[7]);let yy=y*(sq||.6)*j;if(yy<-.3)yy=-.3+(yy+.3)*.4;P.setXYZ(i,x*j,yy,z*j);}
   g.computeVertexNormals();const N=g.attributes.normal,A=new Map();for(let i=0;i<P.count;i++){const key=Math.round(P.getX(i)*500)+','+Math.round(P.getY(i)*500)+','+Math.round(P.getZ(i)*500);let a=A.get(key);if(!a){a=[0,0,0];A.set(key,a);}a[0]+=N.getX(i);a[1]+=N.getY(i);a[2]+=N.getZ(i);}
