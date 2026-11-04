@@ -179,8 +179,8 @@ an earlier one still has work a squad can take (other squads may only do small P
 ## P1 — now
 
 - [open] **Phase 5 next: infantry draws** (Visuals, cycle 19) — vehicles merged; infantry is now the biggest cost (~16 draws per squad); artillery add-on gun still its own draw; decal ring/shadow refill runs twice per frame (10-post re-renders the scene — skip if `R3.info.render.frame` unchanged); run `columns.mjs --phone`. If turrets are ever animated, keep their parts out of the merge.
-- [open] **End-stats follow-ups** (Interface, cycle 19): cap awards per player (one player can sweep them all); show player names; army graph stops at 720 samples (~2 h) — halve + double interval instead; `orch/endstats.mjs` failed once then passed ×2 (flaky? add to gate when stable); ask Abdullah to test on iPhone. claude.ai copy: Share download does nothing there (no `downloads` capability) — same fix as kill-cam Save.
-- [open] **Soldier animation clips + distant low-poly soldier** (Visuals, gfx-infantry follow-up): baked run/shoot/die; the
+- [done 2026-11-03 polish-1103 — partly, see orch/reports/polish-1103.md] **End-stats follow-ups** (Interface, cycle 19): cap awards per player (one player can sweep them all); show player names; army graph stops at 720 samples (~2 h) — halve + double interval instead; `orch/endstats.mjs` failed once then passed ×2 (flaky? add to gate when stable); ask Abdullah to test on iPhone. claude.ai copy: Share download does nothing there (no `downloads` capability) — same fix as kill-cam Save.
+- [partly done 2026-11-04 vis-1103: distant low-poly soldier shipped (thinned skinned mesh when cam.dist>480); baked run/shoot/die clips still open] **Soldier animation clips + distant low-poly soldier** (Visuals, gfx-infantry follow-up): baked run/shoot/die; the
   remaining buildings (only HQ/barracks/factory got ME models).
 - [open] **QA: CI `cfclient` flaked once on d136254 and again in cycle 19 (passed on rerun)** ("no player took over after the server lost it"); passed locally ×1 and on
   the branches. If it fails again in CI, root-cause the takeover-after-server-restart timing.
@@ -200,11 +200,10 @@ an earlier one still has work a squad can take (other squads may only do small P
 **Battlefield & AI** (`03-sim`, `01-data`)
 - [open] (side lane `orch/ai-tactics` has this; ORCH cycle 13's own version is on branch `worktree-agent-af18354e507b5537f` e597af4 if theirs falls through) Fulda: late-game supply trucks haul from fields up to ~4,000 away because nearby fields run dry (cycle 12
   finding) — AI should expand: build a depot or HQ near the new field.
-- [open] "Massive columns" scale: profile a 4–8 player late game; raise practical unit counts without dropping
-  below 30 FPS on mid hardware (pathfinding, `nearby()` hash, render instancing).
+- [open] "Massive columns" scale: profiled 2026-11-04 (orch/reports/perf-1103.md): sim 3.3 ms/step, sync 3.8, fx 2.5 on PC (x4 phone-like); push-apart sped up. Remaining: render (draw calls/shadow casters/vehicle parts) — needs Abdullah's iPhone numbers first.
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
-- [open] Big explosions still open with a soft, flat yellow ball for their first instant — rework (cycle 12).
+- [done 2026-11-04 vis-1103] Big explosions: brief hot flash + lumpy fireball puffs + dark debris (no flat yellow ball).
 - [open] `migrate.mjs` failed once in cycle 10's gate ("a client fell 59 game-s behind before the host left") right
   after a 6-min `mpsync --server` run; passed on rerun. Watch for a repeat (load-sensitive?). Very old Safari (<16.4, no DecompressionStream) now
   gets simple shapes. Check after ship that Pages + the `ww3` Worker serve `models/*.glb.gz` (loader also accepts
@@ -227,7 +226,7 @@ an earlier one still has work a squad can take (other squads may only do small P
 - [open] News ticker follow-ups (cycle 17): only shows own-team news (clients get only their own messages) — consider host-broadcast public headlines for enemy captures/losses; click-test the Settings toggle.
 - [open] touch.mjs still ~265 s — cut software-GL screenshots to get under 3 min (QA).
 
-- [open] EW follow-ups (cycle 18 review): (checkpoint save + ewtest in gate DONE cycle 19) EW truck exists only for RU — consider giving the jam/spoof to another nation's special if Abdullah wants it wider; ewtest.mjs into the gate.
+- [done 2026-11-03 polish-1103 — partly, see orch/reports/polish-1103.md] EW follow-ups (cycle 18 review): (checkpoint save + ewtest in gate DONE cycle 19) EW truck exists only for RU — consider giving the jam/spoof to another nation's special if Abdullah wants it wider; ewtest.mjs into the gate.
 - [open] Kill-cam follow-ups (cycle 18 review): replayed plane effects / building-death timers keep running after the replay and cam._xl/_yl/_dl aren't restored (kcStop in 08-ui); first replay frame may stutter; test on a real iPhone. claude.ai copy: Save screenshot does nothing there (artifact viewer blocks plain downloads) — use the `downloads` capability (window.claude.downloads.save) in the artifact build or hide the button there. Headless replay shot shows a black band under the picture (~40% of the screen, where the command bar was) — check the letterbox layout on PC and phone.
 
 ## P2 — next
@@ -242,7 +241,7 @@ an earlier one still has work a squad can take (other squads may only do small P
 **UI/UX & controls** (`08-ui`, `06-view`)
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
-- [open] "Play again" path should restore the player's own Conditions if it skips `leaveNet` (cosmetic, cycle 8 review).
+- [done 2026-11-03 polish-1103 — partly, see orch/reports/polish-1103.md] "Play again" path should restore the player's own Conditions if it skips `leaveNet` (cosmetic, cycle 8 review).
 - [open] Asian music stand-ins (no free recording found yet): janggu, haegeum, piri, taepyeongso, gayageum, guzheng, sitar, shehnai — swap in real free recordings when found (`mus/as_pack.py`). Check the new credit line shows in the menu.
 - [open] Music follow-ups: real ney (Freesound blocks this sandbox with 403 — needs a download from elsewhere) (Freesound
   #580759 CC0, #328744 CC BY); gayageum/guzheng/sitar blocked by Wikimedia rate limits; no clean bandura/balalaika

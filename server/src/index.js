@@ -420,7 +420,7 @@ const str = (v, n) => typeof v === 'string' ? v.slice(0, n) : undefined;
 const int = (v, lo, hi) => typeof v === 'number' && isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : undefined;
 function cleanGame(g) {
   if (!g || typeof g !== 'object' || typeof g.c !== 'string' || !CODE_RE.test(g.c)) return null;
-  const o = { c: g.c, f: str(g.f, 4), s: g.s === 'full' ? 'full' : 'open', n: int(g.n, 0, 16), m: str(g.m, 24), mx: int(g.mx, 1, 16), cf: g.cf ? 1 : undefined, pw: g.pw ? 1 : undefined };
+  const o = { c: g.c, f: str(g.f, 4), s: g.s === 'full' ? 'full' : 'open', n: int(g.n, 0, 16), m: str(g.m, 24), mx: int(g.mx, 1, 16), cf: g.cf ? 1 : undefined, pw: g.pw ? 1 : undefined, sp: g.sp ? 1 : undefined, ns: g.ns ? int(g.ns, 0, 8) : undefined };
   for (const k in o) if (o[k] === undefined) delete o[k];
   return o;
 }
