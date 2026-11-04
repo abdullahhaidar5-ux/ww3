@@ -34,7 +34,10 @@ async function renderGames(){if(!NET.room)return;const el=$('games');const all=N
     const info=document.createElement('div');const b=document.createElement('b');b.textContent=(g.pw?'🔒 ':'')+FACTIONS[g.f].name;if(g.pw)b.title='Password protected: you need the password to join';const s=document.createElement('span');s.textContent=` · ${nm} · ${(MAPS[g.m]||MAPS.strait).name} · ${g.n||1}${g.s==='full'?'':'/'+(g.mx||8)} players`;info.append(b,s);
     // a battle under way that this tab was playing in (its reconnect token survives a page reload): Rejoin gets the army back
     let mine=false;if(g.s==='full'&&window.WW3_P2P&&g.c)try{mine=!!sessionStorage.getItem('ww3_tok_'+g.c);}catch(e){}
-    const btn=document.createElement('button');btn.textContent=mine?'Rejoin':g.s==='full'?'In battle':'Join';btn.disabled=!!NET.code||!!NET.game||(g.s==='full'&&!mine);btn.onclick=()=>{initAudio();if(mine){joinByCode(g.c,false,'');return;}if(g.pw)askPw(p);else joinGame(p);};row.append(info,btn);el.append(row);}}
+    const btn=document.createElement('button');btn.textContent=mine?'Rejoin':g.s==='full'?'In battle':'Join';btn.disabled=!!NET.code||!!NET.game||(g.s==='full'&&!mine);btn.onclick=()=>{initAudio();NET.wantSpec=0;if(mine){joinByCode(g.c,false,'');return;}if(g.pw)askPw(p);else joinGame(p);};row.append(info,btn);
+    // spectators (Abdullah 2026-11-03): watch any battle that supports it, lobby or under way, up to SPEC_MAX at a time (not password games)
+    if(g.sp&&!g.pw&&!mine){const w=document.createElement('button');w.className='ghost';w.textContent=(g.ns|0)>=SPEC_MAX?'👁 Full':'👁 Watch';w.title='Watch this battle as a spectator: no army, you see everything';w.disabled=!!NET.code||!!NET.game||(g.ns|0)>=SPEC_MAX;w.onclick=()=>{initAudio();NET.wantSpec=1;joinGame(p).then(r=>{if(r!==true)NET.wantSpec=0;});};row.append(w);}
+    el.append(row);}}
 const GAME_URL=window.WW3_P2P?(()=>{try{const r=document.referrer||'';if(/itch\.io/.test(r))return r.split('#')[0];}catch(e){}return location.href.split('#')[0];})():'https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi';
 function lobbyCode(){return (NET.code&&NET.code!=='join'?NET.code:NET.jcode)||'';}
 // a password-protected game's invite carries the password in the link's fragment (#…&pw=, never sent to any server),
@@ -68,11 +71,12 @@ function wireHost(g){
     if(!p&&NET.pw){if(pw===undefined){const q=NET.game&&NET.game.peers().find(x=>x.peer===peer);pw=q&&q.presence&&q.presence.hi?q.presence.hi.pw:undefined;}const why=pwHostCheck(peer,pw);if(why){NET.game.emit('lobby',{n:0,to:peer,pw:why}).catch(()=>{});return;}}
     if(p){p.f=cf;if(tok)p.tok=tok;}else{const mxS=(MAPS[setup.map]||MAPS.strait).max;NET.ais=NET.ais||[];if(NET.lobby.length+1+NET.ais.length>=mxS&&NET.ais.length)NET.ais.pop();if(NET.lobby.length>=mxS-1){NET.game.emit('lobby',{n:NET.lobby.length+1,to:m.peer,full:1}).catch(()=>{});return;}NET.lobby.push({peer:m.peer,by:m.by,f:cf,tok:tok||null});}
     NET.game.emit('lobby',{n:NET.lobby.length+1,to:m.peer}).catch(()=>{});renderLobby();};
-  g.on('hello',m=>{if(m.sameTab)return;hostHello(m.peer,m.by,m.data&&m.data.f,null,m.data&&typeof m.data.pw==='string'?m.data.pw:'');});
+  NET.onSpec=browserSpec;NET.onSpecGone=null;
+  g.on('hello',m=>{if(m.sameTab)return;if(m.data&&m.data.sp){if(!(NET.peers&&NET.peers.indexOf(m.peer)>=0)&&!NET.lobby.some(p=>p.peer===m.peer)){(NET.isSpec=NET.isSpec||{})[m.peer]=1;browserSpec(m.peer);}return;}hostHello(m.peer,m.by,m.data&&m.data.f,null,m.data&&typeof m.data.pw==='string'?m.data.pw:'');});
   g.on('cmd',m=>hostCmd(m.peer,m.data));
   // the battle half (orders, pings, reconnects, keyframe requests) is shared with the server host (07a-hostsnap)
   g.onPeers(ch=>{for(const q of ch.joined.concat(ch.updated)){if(q.sameTab||!q.presence)continue;hostPres(q,hostHello);}});
-  g.onPeers(ch=>{for(const q of ch.left){if(MODE==='single'){NET.lobby=NET.lobby.filter(p=>p.peer!==q.peer);renderLobby();}else hostGone(q.peer);}});
+  g.onPeers(ch=>{for(const q of ch.left){if(MODE==='single'){NET.lobby=NET.lobby.filter(p=>p.peer!==q.peer);if(NET.lobbySpec)NET.lobbySpec=NET.lobbySpec.filter(x=>x!==q.peer);if(NET.isSpec)delete NET.isSpec[q.peer];renderLobby();}else hostGone(q.peer);}});
 }
 // hostGame: start a battle in this browser (the artifact edition's way, and what the browser tests drive directly)
 async function hostGame(){if(!NET.room||NET.code||NET.game)return;NET.hostNote='';NET.pw=pwVal();NET.pwBad=null;return hostBrowser();}
@@ -114,8 +118,8 @@ async function hostCF(again){if(!NET.room||NET.code||NET.game)return;const code=
   return hostBrowser();}
 // the owner's lobby settings as the server wants them ('bset')
 // (start spots, 'st', only when someone picked one: a lobby without picks sends exactly what it did before)
-function cfCfg(){const nh=NET.lobby.length+1,st=lobSt(),o={map:setup.map||'strait',w:setup.w|0,tm:(NET.tm||[]).slice(0,nh).map(v=>v|0),ais:(NET.ais||[]).map((a,j)=>Object.assign({f:a.f,d:a.d|0,tm:a.tm|0},a.p?{p:persCode(a.p)}:{},st[nh+j]>=0?{st:st[nh+j]}:{}))};if(st.slice(0,nh).some(v=>v>=0))o.st=st.slice(0,nh);return o;}
-function cfCfgOf(b){const hs=(b.seats||[]).filter(s=>s.h),as=(b.seats||[]).filter(s=>s.ai),o={map:b.map,w:b.w|0,tm:hs.map(s=>s.tm|0),ais:as.map(s=>Object.assign({f:s.f,d:s.d|0,tm:s.tm|0},s.p?{p:persCode(s.p)}:{},s.st>=0?{st:s.st|0}:{}))};if(hs.some(s=>s.st>=0))o.st=hs.map(s=>s.st>=0?s.st|0:-1);return o;}
+function cfCfg(){const nh=NET.lobby.length+1,st=lobSt(),o={map:setup.map||'strait',w:setup.w|0,tm:(NET.tm||[]).slice(0,nh).map(v=>v|0),ais:(NET.ais||[]).map((a,j)=>Object.assign({f:a.f,d:a.d|0,tm:a.tm|0},a.p?{p:persCode(a.p)}:{},st[nh+j]>=0?{st:st[nh+j]}:{}))};if(st.slice(0,nh).some(v=>v>=0))o.st=st.slice(0,nh);if(MAPS[o.map]&&MAPS[o.map].custom)o.cm=customMapCode(o.map);return o;}
+function cfCfgOf(b){const hs=(b.seats||[]).filter(s=>s.h),as=(b.seats||[]).filter(s=>s.ai),o={map:b.map,w:b.w|0,tm:hs.map(s=>s.tm|0),ais:as.map(s=>Object.assign({f:s.f,d:s.d|0,tm:s.tm|0},s.p?{p:persCode(s.p)}:{},s.st>=0?{st:s.st|0}:{}))};if(hs.some(s=>s.st>=0))o.st=hs.map(s=>s.st>=0?s.st|0:-1);if(b.cm&&MAPS[b.map]&&MAPS[b.map].custom)o.cm=b.cm;return o;}
 // send the owner's edits (only real changes); until the server's answer reflects them, older lobby states are ignored
 function cfPush(force){const C=NET.cf;if(!C||!C.own||!NET.game)return;const js=JSON.stringify(cfCfg());if(!force&&(C.blob&&JSON.stringify(cfCfgOf(C.blob))===js||C.pend&&C.pend.js===js))return;
   C.pend={js,until:performance.now()+2500};NET.game.emit('bset',JSON.parse(js)).catch(()=>{});}
@@ -137,7 +141,7 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   const el=$('mpstatus');el.innerHTML='';const L=E('div','lob');
   // header
   const hd=E('div','lobhd');const l=E('div');l.append(E('div','lobk','Your battle · code'),E('div','lobcode',lobbyCode().toUpperCase()));{const c=E('div','lobk',cfNetText());c.id='cfNet';l.append(c);}
-  const r=E('div','lobr');r.append(E('div','lobmap',mapN),E('div','lobn',`${nn} / ${mx} players`));const pips=E('div','pips');for(let i=0;i<mx;i++){const d=E('i');if(i<nn)d.className='on';pips.append(d);}r.append(pips);hd.append(l,r);L.append(hd);
+  const r=E('div','lobr');r.append(E('div','lobmap',mapN),E('div','lobn',`${nn} / ${mx} players`+((cfb?cfb.ns|0:(NET.lobbySpec||[]).length)?` · 👁 ${cfb?cfb.ns|0:(NET.lobbySpec||[]).length} watching`:'')));const pips=E('div','pips');for(let i=0;i<mx;i++){const d=E('i');if(i<nn)d.className='on';pips.append(d);}r.append(pips);hd.append(l,r);L.append(hd);
   // start
   if(NET.hostNote)L.append(E('div','lobwhy',NET.hostNote));
   if(NET.pw)L.append(E('div','lobwhy','🔒 Password protected: only players with the password can join (the invite below includes it).'));
@@ -180,7 +184,7 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   el.append(L);
   // a Cloudflare battle is listed in the game list by the server itself; the owner's edits go to the server
   if(cfb){cfPush();return;}
-  NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,m:setup.map||'strait',mx,pw:NET.pw?1:undefined}}).catch(()=>{});}
+  NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,m:setup.map||'strait',mx,pw:NET.pw?1:undefined,sp:1,ns:(NET.lobbySpec||[]).length||undefined}}).catch(()=>{});}
 function lobbyTeams(){const nh=NET.lobby.length+1;return [...(NET.tm||[]).slice(0,nh),...(NET.ais||[]).map(a=>a.tm|0)];}
 // Start spots in the lobby: one per seat (players then computer players; -1 = Random). Picks made for one set of spots
 // (map and player count) are dropped when the set changes, so a number always means the spot the leader saw.
@@ -194,7 +198,7 @@ function lobSides(n){const nh=NET.lobby.length+1,cfb=NET.cf&&NET.cf.own&&NET.cf.
 function launchMP(){if(NET.cf&&NET.cf.own){if(MODE!=='single'||!NET.game)return;const c=cfCfg();NET.cf.pend=null;NET.game.emit('bset',Object.assign(c,{seed:(Math.random()*1e9)|0,start:1})).catch(()=>{});$('mpstatus').querySelectorAll('.startbtn').forEach(b=>{b.disabled=true;b.textContent='Starting…';});return;}
   if(MODE!=='single'||!NET.lobby.length)return;const seed=(Math.random()*1e9)|0;const ais=(NET.ais||[]).slice(0,Math.max(0,(MAPS[setup.map]||MAPS.strait).max-1-NET.lobby.length)).map(a=>({f:FKEYS.includes(a.f)?a.f:FKEYS[0],d:Math.max(0,Math.min(2,a.d|0)),p:persCode(a.p),tm:Math.max(0,Math.min(7,a.tm|0))}));const facs=[setup.p,...NET.lobby.map(p=>p.f),...ais.map(a=>a.f)];NET.peers=[null,...NET.lobby.map(p=>p.peer),...ais.map(()=>null)];NET.toks=[null,...NET.lobby.map(p=>p.tok||null),...ais.map(()=>null)];
   const aiD=[null,...NET.lobby.map(()=>null),...ais.map(a=>(a.d|0)+10*persCode(a.p))];NET.opp=NET.peers[1];
-  const map=setup.map||'strait';const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0},sp)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0},sp);startMP('host',seed,facs,0,map,tm,aiD,st);}
+  const map=setup.map||'strait',cmx=MAPS[map]&&MAPS[map].custom?{cm:customMapCode(map)}:{};const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};const ids=idLobbyIds().slice(0,facs.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0,ids},sp,cmx)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined,sp:1}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0},sp,cmx);const LS=(NET.lobbySpec||[]).slice();NET.lobbySpec=[];startMP('host',seed,facs,0,map,tm,aiD,st,ids);NET.specs=[];for(const q of LS)specJoin(q);}
 // Joining: each player has a reconnect token for this game (kept for the browser tab), so if the link drops - or the
 // page is reloaded - they rejoin as the same commander. Client handlers are wired by wireClient() so a reconnect can
 // rebuild them on the new connection.
@@ -204,18 +208,18 @@ function wireClient(g){
   g.on('lobby',m=>{if(m.peer===NET.hostPeer&&m.data&&m.data.to===NET.myPeer&&MODE==='single'){
     // a browser host refused our password (direct browser-to-browser join): ask again
     if(m.data.pw){clearInterval(NET.helloI);const jp=NET.joinP;leaveNet();pwRefused(jp,m.data.pw==='limit'?'pwlimit':m.data.pw==='need'?'needpw':'badpw');return;}
-    NET.joined=1;if(m.data.full){clearInterval(NET.helloI);$('mpstatus').textContent='That game is full.';leaveNet();return;}if(NET.cf&&NET.cf.own)return;$('mpstatus').textContent=`Joined. ${m.data.n} players in the lobby. Waiting for the leader to start the battle…`;}});
+    NET.joined=1;if(m.data.full){clearInterval(NET.helloI);$('mpstatus').textContent=m.data.spec?`This battle already has ${SPEC_MAX} spectators.`:'That game is full.';leaveNet();return;}if(NET.cf&&NET.cf.own)return;$('mpstatus').textContent=NET.wantSpec?`👁 Watching. ${m.data.n} players in the lobby. The battle shows here when the leader starts it…`:`Joined. ${m.data.n} players in the lobby. Waiting for the leader to start the battle…`;}});
   // a battle hosted on Cloudflare: the whole lobby, from the server ('own': this player sets it up and starts it)
-  g.on('blob',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;const b=m.data;NET.joined=1;
+  g.on('blob',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;const b=m.data;NET.joined=1;if(typeof b.map==='string'&&/^cm_/.test(b.map)&&!acceptCustomMap(b.map,b.cm)){$('mpstatus').textContent='This battle uses a custom map that did not arrive intact. Try joining again.';leaveNet();return;}
     if((b.pv|0)!==NET_PV){$('mpstatus').textContent='You and the game server have different versions of the game. Close the game and open it again to update, then try again.';leaveNet();return;}
     NET.cf=NET.cf||{};NET.cf.blob=b;if(b.own){NET.cf.own=1;mpIn(1);if(cfApply())renderLobby();return;}NET.cf.own=0;
-    const n=(b.seats||[]).filter(s=>s.h).length;$('mpstatus').textContent=`Joined. ${n} player${n===1?'':'s'} in the lobby. Waiting for the leader to start the battle…`;});
+    const n=(b.seats||[]).filter(s=>s.h).length;$('mpstatus').textContent=NET.wantSpec?`👁 Watching. ${n} player${n===1?'':'s'} in the lobby. The battle shows here when the leader starts it…`:`Joined. ${n} player${n===1?'':'s'} in the lobby. Waiting for the leader to start the battle…`;});
   g.on('start',m=>{if(MODE==='client'){if(m.peer===NET.hostPeer&&m.data&&m.data.to&&m.data.to===NET.myPeer)NET.ackW=performance.now();return;} // mid-battle: the battle has linked this player back in (hostRejoin)
-  if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV&&!((d.pv|0)===NET_PVS&&Array.isArray(d.st))){$('mpstatus').textContent='You and the battle\'s leader have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<(d.sv?0:1)||sl>=d.facs.length)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
+  if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV&&!((d.pv|0)===NET_PVS&&Array.isArray(d.st))){$('mpstatus').textContent='You and the battle\'s leader have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<(d.sv||d.sp?0:1)||sl>=d.facs.length)return;if(!!d.sp!==!!NET.wantSpec)return;if(typeof d.map==='string'&&/^cm_/.test(d.map)&&!acceptCustomMap(d.map,d.cm)){$('mpstatus').textContent='This battle uses a custom map that did not arrive intact (its check code does not match yours). Ask the leader to start again.';leaveNet();return;}const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
   // An old host sends no 'w': the player's own menu choice stays, as before.
   if(typeof d.w==='number'&&d.w>=-1&&d.w<=9){if(NET.ownW==null)NET.ownW=setup.w;wxSet(d.w|0);}
   // sv: the host is the game server (Cloudflare), which has no side of its own, so this player may be slot 0
-  NET.sv=d.sv?1:0;NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm,null,stClean(d.st,d.facs.length));});
+  NET.sv=d.sv?1:0;NET.spec=d.sp?1:0;NET.specAll=NET.spec;NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm,null,stClean(d.st,d.facs.length),Array.isArray(d.ids)?d.ids.map(idClean):null);});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
   g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();if(m.data.to)NET.lastRxMe=NET.lastRx;applySnap(m.data);}});
   g.on('evt',m=>{if(ok(m)){NET.lastRx=performance.now();applyEvents(m.data);}});
@@ -242,7 +246,7 @@ async function svAsk(code){const sig=ms=>{try{const c=new AbortController();setT
   if(srv)try{const r=await fetch(srv+'/games',{cache:'no-store',signal:sig(5000)});const j=await r.json();return ((j&&j.battles)||[]).some(x=>Array.isArray(x)&&x[0]==='b-'+code)?'up':'gone';}catch(e){}
   if(location.protocol==='file:')return 'gone';
   try{await fetch(location.href.split('#')[0],{method:'HEAD',cache:'no-store',signal:sig(5000)});return 'gone';}catch(e){return 'down';}}
-async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NET.jcode)return;NET.recon=true;NET.reconKick=false;pushLog('Connection lost. Reconnecting…','w');
+async function clientReconnect(){if(NET.spec){oppLeft();return;}if(NET.recon){NET.reconKick=true;return;}if(!NET.jcode)return;NET.recon=true;NET.reconKick=false;pushLog('Connection lost. Reconnecting…','w');
   const gen0=NET.gen||0,p0=NET.myPeer,tA=performance.now(),slp=ms=>new Promise(r=>setTimeout(r,ms));let t0=tA,gone=false,here=false,n=0,newTries=0;
   // a battle hosted on Cloudflare: a server blip (restart, redeploy) or this player's own network drop is ridden out on
   // the server, which keeps the battle (and the side, 30 s) or picks it up again from its kept checkpoint. Only the
@@ -289,7 +293,7 @@ async function clientReconnect(){if(NET.recon){NET.reconKick=true;return;}if(!NE
 async function joinGame(p,o){if(NET.game)return;const code=p.presence.g.c,jo=o&&o.via?o:(p.presence.g.cf?{via:'wsb'}:undefined),own=!!(o&&o.own);$('mpstatus').textContent=own?'Connecting…':'Joining…';NET.joined=0;
   if(!own){NET.pw=o&&typeof o.pw==='string'?o.pw:'';NET.joinP=p;}
   try{NET.game=await NET.room.join('tc-'+code,jo);}catch(e){NET.game=null;if(own)return e||{};if(e&&e.type==='password'){pwRefused(p,e.why);return e;}$('mpstatus').textContent=e&&e.why==='busy'?'The game server is busy right now. Try again later.':e&&e.why==='full'?'That game is full.':window.WW3_P2P?'No open battle with code '+code.toUpperCase()+' was found. Check the code and make sure the battle\'s lobby is still open.':'Could not join that game.';NET.game=null;return e||{};}
-  mpIn(1);NET.hostPeer=p.peer;NET.code='join';NET.jcode=code;NET.baseCode=code;NET.gen=0;NET.via=NET.game.via||null;NET.tok=joinTok(code);NET.lastRx=0;wireClient(NET.game);NET.cq=[];NET.cs=Math.floor(Date.now()/10);
+  mpIn(1);NET.hostPeer=p.peer;NET.code='join';NET.jcode=code;NET.baseCode=code;NET.gen=0;NET.via=NET.game.via||null;NET.tok=NET.wantSpec?null:joinTok(code);NET.lastRx=0;wireClient(NET.game);NET.cq=[];NET.cs=Math.floor(Date.now()/10);
   // keep-alive + 'host lost' watchdog. The watchdog counts from the last update, or from the end of this player's loading
   // screen / the battle start if none came yet (before, a player who had heard nothing since the start never noticed, so a
   // host that had given up on them left them on a frozen battle: no army, starting money). The loading flag (ld) tells
@@ -299,12 +303,12 @@ async function joinGame(p,o){if(NET.game)return;const code=p.presence.g.c,jo=o&&
   // arrives the host may simply still be on its own loading screen, so that wait is much longer (45 s).
   clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}const w=performance.now(),ld=window.LOADING?1:0;if(ld)NET.ldW=w;if(NET.pgW&&w-NET.pgW>2500)NET.stW=w;NET.pgW=w;
     if(MODE==='client'&&!NET.recon&&!ld&&(NET.lastRx?w-Math.max(NET.lastRx,NET.ldW||0,NET.stW||0)>5000:w-Math.max(NET.ldW||0,NET.startW||0,NET.stW||0)>45000)){clientReconnect();return;}if($('cfNet'))$('cfNet').textContent=cfNetText();if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null,ld}).catch(()=>{});},1000);
-  let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!NET.joined&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The battle did not answer. It may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}const hpw=NET.pw&&NET.via!=='wsb'?NET.pw:undefined;NET.game.presence({hi:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1,pw:hpw}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',{f:setup.p,pw:hpw}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
+  let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!NET.joined&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The battle did not answer. It may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}const hpw=NET.pw&&NET.via!=='wsb'?NET.pw:undefined;NET.game.presence({hi:NET.wantSpec?{sp:1,n:n,ed:0,pw:hpw}:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1,pw:hpw,id:idPayload()}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',NET.wantSpec?{sp:1,pw:hpw}:{f:setup.p,pw:hpw}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
   hello();NET.helloI=setInterval(hello,1500);if(!own)$('mpstatus').textContent='Connecting…';return true;}
 // Set the Conditions choice and light up its menu button. The host's choice is used only for that battle: the player's
 // own menu choice (NET.ownW) comes back when they leave the battle, so their next solo battle uses their own Conditions.
 function wxSet(w){setup.w=w;const W=$('wx');if(W)W.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.w===w));}
-function leaveNet(){if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}NET.cf=null;NET.joined=0;NET.sv=0;NET.hostNote='';clearInterval(NET.helloI);clearInterval(NET.pingI);NET.ping=0;NET.pings={};if(NET.game)NET.game.leave().catch(()=>{});NET.game=null;NET.code=null;NET.opp=null;NET.hostPeer=null;NET.lobby=[];NET.peers=null;if(NET.room)NET.room.presence({g:null}).catch(()=>{});mpIn(0);}
+function leaveNet(){if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}NET.spec=0;NET.specAll=0;NET.wantSpec=0;NET.specs=[];NET.lobbySpec=[];NET.isSpec={};document.body.classList.remove('spec');NET.cf=null;NET.joined=0;NET.sv=0;NET.hostNote='';clearInterval(NET.helloI);clearInterval(NET.pingI);NET.ping=0;NET.pings={};if(NET.game)NET.game.leave().catch(()=>{});NET.game=null;NET.code=null;NET.opp=null;NET.hostPeer=null;NET.lobby=[];NET.peers=null;if(NET.room)NET.room.presence({g:null}).catch(()=>{});mpIn(0);}
 /* ---------- password-protected games (online edition only) ----------
    The creator may type a password under "Play online" / "New battle" (a new private battle). The game list shows a 🔒 and never carries the password; joiners
    are asked for it. The server checks it (relay room and Cloudflare battle: salted hash, rate-limited; server/src/
@@ -334,7 +338,7 @@ function askPw(p,msg){if(!p||NET.game)return;const code=String(p.presence.g.c||'
 function oppLeft(){if(!G||G.over)return;pushLog('The connection to the battle was lost.','w');showEnd(-1,'The connection to the battle was lost, so the battle has ended.');}
 // a keep-alive list named units this client doesn't have (a missed update): ask the host for a full copy (at most every 2 s)
 function askKeyframe(){const w=performance.now();if(NET.krW&&w-NET.krW<2000)return;NET.krW=w;if(NET.game)NET.game.presence({kr:Math.round(w)}).catch(()=>{});}
-function doAct(a){if(MODE==='client'){if(!NET.game)return;
+function doAct(a){if(RP.on||NET.spec)return;if(MODE==='client'){if(!NET.game)return;
     // orders travel in this player's presence (any invited player may set it): a rolling, numbered queue the host
     // reads and de-duplicates, trimmed to the presence size limit
     NET.cq=NET.cq||[];NET.cs=(NET.cs||0)+1;NET.cq.push({s:NET.cs,a});while(NET.cq.length>14||(NET.cq.length>1&&JSON.stringify(NET.cq).length>3300))NET.cq.shift();
@@ -351,15 +355,15 @@ function applySnap(d){if(!G||!Array.isArray(d.e))return;const now=G.t;if(typeof 
   // arrival-interval estimate (for smooth interpolation): only between consecutive host ticks
   {const w=performance.now()/1000;if(!(d.e.length===0&&d.k)&&st>(NET.prevT||0)){if(NET.rxW&&st-(NET.prevT||0)<=1.5*Math.max(.1,NET.iv||.1)){const gap=Math.min(1.5,w-NET.rxW);if(gap>.02){NET.iaDev=NET.ia?(NET.iaDev||0)*.85+Math.abs(gap-NET.ia)*.15:0;NET.ia=NET.ia?NET.ia*.85+gap*.15:gap;}}NET.rxW=w;NET.prevT=st;}}
   if(Array.isArray(d.k)&&d.kb){let miss=0;for(const id of d.k){const e=G.byId.get(id);if(e){e.seenAt=st;e.seenL=now;}else miss++;}if(miss)askKeyframe();}
-  else if(Array.isArray(d.k)){const b=1<<ME;for(let i=0;i+1<d.k.length;i+=2){if(!((d.k[i+1]|0)&b))continue;const e=G.byId.get(d.k[i]);if(e){e.seenAt=st;e.seenL=now;}}}
+  else if(Array.isArray(d.k)){const b=NET.spec?-1:1<<ME;for(let i=0;i+1<d.k.length;i+=2){if(!((d.k[i+1]|0)&b))continue;const e=G.byId.get(d.k[i]);if(e){e.seenAt=st;e.seenL=now;}}}
   if(Array.isArray(d.dr))for(const id of d.dr){const e=G.byId.get(id);if(e&&!e.dead)e.gone=true;}
-  for(const a of d.e){if(!Array.isArray(a)||a.length<11)continue;if(a.length>=13){const b=1<<ME;if(!(a[11]&b)&&!(a[12]&b)){const o=G.byId.get(a[0]);if(o&&!o.dead)o.gone=true;continue;}a[9]=(a[11]&b)?(a[9]&~FLG.mem):(a[9]|FLG.mem);}const [id,ki,team,x,y,va,ta,hp,mx_,f,ex]=a;const kind=KINDS[ki];if(!kind||!(team>=0&&team<G.teams.length))continue;
+  for(const a of d.e){if(!Array.isArray(a)||a.length<11)continue;if(a.length>=13&&NET.spec)a[9]&=~FLG.mem;else if(a.length>=13){const b=1<<ME;if(!(a[11]&b)&&!(a[12]&b)){const o=G.byId.get(a[0]);if(o&&!o.dead)o.gone=true;continue;}a[9]=(a[11]&b)?(a[9]&~FLG.mem):(a[9]|FLG.mem);}const [id,ki,team,x,y,va,ta,hp,mx_,f,ex]=a;const kind=KINDS[ki];if(!kind||!(team>=0&&team<G.teams.length))continue;
     let e=G.byId.get(id);const isB=!!STRUCT[kind];
     if(!e){const T=G.teams[team];const s=isB?bstats(T.fac,kind):stats(T.fac,kind);e={id,isB,team,kind,s,x,y,va:va/100,tang:ta/100,hp,max:mx_,r:isB?s.size/2:s.r,size:isB?s.size:0,vs:new Array(G.teams.length).fill(true),fx:x,fy:y,tx:x,ty:y,it:1};G.ents.push(e);G.byId.set(id,e);}
     else{e.gone=false;e.fx=e.x;e.fy=e.y;e.tx=x;e.ty=y;e.it=0;if(e.team!==team&&!isB){e.team=team;const T=G.teams[team];try{e.s=stats(T.fac,kind);}catch(err){}}}
     if(!(e.fbT>G.t))e.tva=va/100;e.tta=ta/100;e.hp=hp;e.max=mx_;e.seenAt=st;e.seenL=now;e.ut=st;e.vis=true;
     if(isB){e.built=f&FLG.built?ex/100:1;e.disv=!!(f&FLG.dis);e.dis=0;e.chv=!!(f&FLG.chg);e.mem=!!(f&FLG.mem);e.busy=!!(f&FLG.busy);e.nd=!!(f&FLG.nd);e.stall=!!(f&FLG.stall);if(kind==='uplink')e.chg=ex/100;if(kind==='garrison'){e.occN=ex>>4;e.capN=ex&15;e.built=1;}e.ang=e.tta;e.x=x;e.y=y;}
-    else{e.cargo=f&FLG.cargo?1:0;e.hacking=!!(f&FLG.hack);e.planting=!!(f&FLG.plant);e.landed=!!(f&FLG.land);e.hid=!!(f&FLG.hid);e.mvC=f&FLG.mov?1:0;e.building=!!(f&FLG.busy);e.supp=f&FLG.supp?1:0;e.routV=!!(f&FLG.rout);e.shakV=!!(f&FLG.shak);e.markV=!!(f&FLG.mark);e.lastV=!!(f&FLG.last);e.aband=f&FLG.aband?1:0;e.rank=(f>>9)&3;e.st=(f>>21)&3;e.mor=ex;}}}
+    else{e.cargo=f&FLG.cargo?1:0;e.hacking=!!(f&FLG.hack);e.planting=!!(f&FLG.plant);e.landed=!!(f&FLG.land);e.hid=!!(f&FLG.hid);e.mvC=f&FLG.mov?1:0;e.building=!!(f&FLG.busy);e.supp=f&FLG.supp?1:0;e.routV=!!(f&FLG.rout);e.shakV=!!(f&FLG.shak);e.markV=!!(f&FLG.mark);e.lastV=!!(f&FLG.last);e.aband=f&FLG.aband?1:0;e.rank=(f>>9)&3;{const q=(f>>>23)&127;if(q){if(!e.amx)e.amx=ammoCap(e.s);e.am=q<=1?0:(q-1)/126*e.amx;}else e.am=undefined;const sp=(f>>>30)&1;if(sp!==(e.sup|0)||e.supT==null){e.supT=G.t;}e.sup=sp;}e.st=(f>>21)&3;e.mor=ex;}}}
 function clientTick(dt){G.t+=dt;const now=G.t;
   const P=Math.max(.1,Math.min(.6,Math.max(NET.iv||.1,(NET.ia||NET.iv||.2)+2*(NET.iaDev||0))));
   for(const e of G.ents){if(e.isB)continue;const it=(e.it||0)+dt/P;e.it=it;if(it<=1){e.x=e.fx+(e.tx-e.fx)*it;e.y=e.fy+(e.ty-e.fy)*it;}else if(e.mvC&&e.ut===NET.lastSnapT){const o=Math.min(it-1,.25/P);e.x=e.tx+(e.tx-e.fx)*o;e.y=e.ty+(e.ty-e.fy)*o;}else{e.x=e.tx;e.y=e.ty;}e.va=lerpA(e.va,e.tva,dt*10);e.tang=lerpA(e.tang,e.tta,dt*10);if(e.mvC)e.mv=now;}
@@ -371,6 +375,14 @@ function applyEvents(d){if(!d||!Array.isArray(d.e))return;for(const v of d.e){if
 function applyTeam(d){if(!G||!d)return;G.ewv=d.ew?Object.assign(d.ew,{rt:G.t}):null;if(typeof d.ak==='number'&&NET.cq&&NET.cq.length&&NET.cq[0].s<=d.ak){NET.cq=NET.cq.filter(c=>c.s>d.ak);if(NET.game)NET.game.presence({cq:NET.cq}).catch(()=>{});}if(typeof d.mg==='number')NET.gen=Math.max(NET.gen||0,d.mg|0);if(d.sb===0&&NET.isStandby){NET.isStandby=false;NET.lastCk=null;}const T=G.teams[ME];T.credits=d.c|0;for(const c of CATS)T.q[c]=(d.q&&d.q[c]||[]).map(([k,p])=>({kind:k,t:p*prodTime(T,stats(T.fac,k)),p}));
   T.rq={};for(const c in (d.rq||{})){const [k,p]=d.rq[c];if(UPG[k])T.rq[c]={key:k,t:p*UPG[k].time};}T.upg={};for(const k of d.u||[])if(UPG[k])T.upg[k]=true;upgReset(T);T.charge=+d.ch||0;T.sanc=d.sn>0?G.t+d.sn:0;T.mart=d.mo>0?G.t+d.mo:0;T.rebuy=d.rb>0?G.t+d.rb:0;T.tunN=d.tn|0;if(Array.isArray(d.ac))for(const [i,c] of d.ac)if(G.teams[i])G.teams[i].credits=+c||0;T.tunK=d.tk&&typeof d.tk==='object'?d.tk:{};T.fortN=d.fn|0;T.fortK=d.fk&&typeof d.fk==='object'?d.fk:{};if(WEATHER[d.wx]){G.wx=G.wx||{t:0,next:1e9};G.wx.k=d.wx;}if(Array.isArray(d.mn))G.mines=d.mn.map(([x,y])=>({x,y,team:ME,arm:0}));T.gxp=d.gx|0;T.rank=d.rk|0||1;T.spent=d.sp|0;
   T.pw={};for(const k in (d.pw||{}))if(POWERS[k]){const v=d.pw[k];T.pw[k]=Array.isArray(v)?{cd:+v[0]||0,lv:+v[1]||1}:{cd:+v||0,lv:1};}T.reveals=(d.rv||[]).map(([x,y,r,t])=>({x,y,r,t}));T.rally=d.rl?{x:d.rl[0],y:d.rl[1]}:null;
-  if(Array.isArray(d.oil))d.oil.forEach((v,i)=>{const o=G.oil[i];if(o&&Array.isArray(v)){o.owner=v[0];if(Array.isArray(v[1]))o.cp=v[1].map(x=>+x||0);o.dead=!!v[2];o.hp=+v[3]||0;}});if(Array.isArray(d.out))d.out.forEach((x,i)=>{if(G.teams[i]&&x&&!G.teams[i].out){G.teams[i].out=true;if(i===ME)showElim();}});
+  if(Array.isArray(d.oil))d.oil.forEach((v,i)=>{const o=G.oil[i];if(o&&Array.isArray(v)){o.owner=v[0];if(Array.isArray(v[1]))o.cp=v[1].map(x=>+x||0);o.dead=!!v[2];o.hp=+v[3]||0;}});if(Array.isArray(d.out))d.out.forEach((x,i)=>{if(G.teams[i]&&x&&!G.teams[i].out){G.teams[i].out=true;if(i===ME&&!NET.spec)showElim();}});
+  if(Array.isArray(d.cv)&&G.civ){for(const c of G.civ){c.ow=-1;c.cp=0;c.cpT=-1;}const v=d.cv;for(let i=0;i+3<v.length;i+=4){const c=G.civ[v[i]];if(c){c.ow=v[i+1];c.cp=v[i+2]/100;c.cpT=v[i+3];}}}
   if(Array.isArray(d.fa))d.fa.forEach((a,i)=>{if(G.fields[i])G.fields[i].amt=a;});}
 
+
+// the browser host's spectators: in the lobby they wait in NET.lobbySpec (they get the start with the players); once
+// the battle runs they join at once (07a specJoin). Never more than SPEC_MAX, never a seated player.
+function browserSpec(peer){if(!NET.game)return;if(NET.peers&&NET.peers.indexOf(peer)>=0)return;if(NET.lobby&&NET.lobby.some(p=>p.peer===peer))return;
+  if(MODE==='host'){specJoin(peer);return;}if(MODE!=='single')return;NET.lobbySpec=NET.lobbySpec||[];
+  if(!NET.lobbySpec.includes(peer)){if(NET.lobbySpec.length>=SPEC_MAX){NET.game.emit('lobby',{n:0,to:peer,full:1,spec:1}).catch(()=>{});return;}NET.lobbySpec.push(peer);}
+  NET.game.emit('lobby',{n:NET.lobby.length+1,to:peer,spec:1}).catch(()=>{});renderLobby();}

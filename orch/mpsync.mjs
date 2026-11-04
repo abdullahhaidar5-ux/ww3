@@ -37,6 +37,16 @@
 //                                              # it must reconnect and keep its army (the AI must not take over after
 //                                              # 30 s); right after, a strict check: own units, what it sees of the
 //                                              # enemy and its credits match the host exactly
+//   node orch/mpsync.mjs --lossy               # browser-to-browser over a bad mobile network, in real time: 120 ms
+//                                              # one-way latency +-60 ms jitter, 3% of messages resent 250-750 ms
+//                                              # later (reliable ordered links: everything behind waits), a ~0.9 s lag
+//                                              # spike every ~20 s; same checks (lag allowed up to 3 s), with the
+//                                              # reconnect. Tune with --lat MS --jitter MS --loss PERCENT
+//   node orch/mpsync.mjs --spectator           # + a third page that watches as a spectator (src/07a specJoin): it waits
+//                                              # in the lobby, sees every unit of both sides once the battle runs, can't
+//                                              # give orders (even a forged order queue is ignored), leaves at 1.5 min and
+//                                              # comes back mid-battle; the host/client checks above must stay green
+//                                              # throughout. Also packs both pages' replays (src/08b-replay.js).
 //   node orch/mpsync.mjs --artifact            # the claude.ai artifact edition (python3 orch/build.py --artifact
 //                                              # first): pages talk over a stand-in for the artifact `room`
 //                                              # capability (orch/artifact-harness.mjs) instead of PeerJS
@@ -66,8 +76,12 @@ const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ?
 const MINUTES = arg('minutes', 4), AIS = Math.max(0, Math.min(6, arg('ais', 0))), BREAK = process.argv.includes('--break');
 const ART = process.argv.includes('--artifact') ? { html: artifactHtml(), three: threeJs() } : null;
 const SRV_MODE = process.argv.includes('--server') && !ART;
+const SPEC = process.argv.includes('--spectator');
+// --lossy: browser-to-browser over a bad network (see fakePeerShim); runs in real time like --server
+const LOSSY = process.argv.includes('--lossy') && !ART && !SRV_MODE ? { lat: arg('lat', 120), jit: arg('jitter', 60), loss: arg('loss', 3) / 100, spikeEvery: 20000, spikeMs: 900 } : null;
+const RT = SRV_MODE || !!LOSSY;
 // the reconnect check runs by default in the plain (browser-to-browser) run, so the ship gate always covers it
-const PFX = ART ? 'art-' : SRV_MODE ? 'srv-' : '', RECON = process.argv.includes('--reconnect') || (!ART && !SRV_MODE && !BREAK && !process.argv.includes('--no-reconnect'));
+const PFX = ART ? 'art-' : SRV_MODE ? 'srv-' : LOSSY ? 'lossy-' : '', RECON = process.argv.includes('--reconnect') || (!ART && !SRV_MODE && !BREAK && !SPEC && !process.argv.includes('--no-reconnect'));
 
 async function loadPlaywright() {
   try { return await import('playwright'); } catch {}
@@ -111,8 +125,16 @@ await new Promise(r => server.listen(0, '127.0.0.1', r));
 const ORIGIN = `http://127.0.0.1:${server.address().port}`, URL0 = ORIGIN + '/index.html';
 
 // ---- in-page stand-in for PeerJS: same API, carried over a BroadcastChannel between pages of this origin ----
-function fakePeerShim() {
+function fakePeerShim(net) {
   if (window.__fakePeer) return; window.__fakePeer = true;
+  // --lossy: a bad mobile network on every link, both ways. The game's channels are reliable and ordered (WebRTC data
+  // channels / WebSockets), so a lost packet never vanishes: it comes again after a retransmit timeout and holds up
+  // everything behind it on that link. Modelled as: one-way latency + jitter; a share of messages "lost" and resent
+  // 250-750 ms later; now and then a lag spike that freezes the link for a moment; never out of order.
+  const NETC = net || null, lnk = new Map(); let spikeEnd = 0, spikeNext = NETC ? performance.now() + NETC.spikeEvery * (0.5 + Math.random()) : Infinity;
+  const netDelay = key => { const now = performance.now(); if (now > spikeNext) { spikeEnd = now + NETC.spikeMs * (0.5 + Math.random()); spikeNext = now + NETC.spikeEvery * (0.5 + Math.random()); }
+    let t = now + NETC.lat + (Math.random() * 2 - 1) * NETC.jit + (Math.random() < NETC.loss ? 250 + Math.random() * 500 : 0);
+    if (now < spikeEnd) t = Math.max(t, spikeEnd); t = Math.max(t, lnk.get(key) || 0); lnk.set(key, t); return t - now; };
   const BC = new BroadcastChannel('ww3-mpsync'), local = new Map(), conns = new Map(), pending = new Map();
   const stats = window.__fpStats = { tx: 0, rx: 0, txB: 0, rxB: 0, dropped: 0 };
   const nonce = () => Math.random().toString(36).slice(2, 12);
@@ -152,8 +174,9 @@ function fakePeerShim() {
     else if (m.k === 'conn') { const p = local.get(m.to); if (!p || p.destroyed) return; const c = new Conn(m.cid, p, m.from); c.open = true;
       p._emit('connection', c); post({ k: 'ack', cid: m.cid, to: m.from }); setTimeout(() => c._emit('open'), 0); }
     else if (m.k === 'ack') { const f = pending.get('c' + m.cid); if (f) f(); }
-    else if (m.k === 'd') { const c = conns.get(m.cid + '@' + m.to); if (!c || !c.open) return; if (window.__fpDrop || window.__fpCut) { stats.dropped++; return; }
-      stats.rx++; stats.rxB += m.s.length; c._emit('data', JSON.parse(m.s)); }
+    else if (m.k === 'd') { const key = m.cid + '@' + m.to, c = conns.get(key); if (!c || !c.open) return; if (window.__fpDrop || window.__fpCut) { stats.dropped++; return; }
+      const land = () => { if (!c.open || conns.get(key) !== c) return; if (window.__fpDrop || window.__fpCut) { stats.dropped++; return; } stats.rx++; stats.rxB += m.s.length; c._emit('data', JSON.parse(m.s)); };
+      if (NETC) { stats.delayed = (stats.delayed || 0) + 1; const d = netDelay(key); stats.delayMs = (stats.delayMs || 0) + d; stats.delayMax = Math.max(stats.delayMax || 0, d); setTimeout(land, d); } else land(); }
     else if (m.k === 'x') { const c = conns.get(m.cid + '@' + m.to); if (c) c._closed(false); }
   }
   BC.onmessage = ev => onMsg(ev.data);
@@ -190,7 +213,7 @@ const browser = await chromium.launch({ executablePath: findChromium(),
 const ctx = await browser.newContext({ viewport: { width: 1024, height: 576 } });
 // never the live game servers: --server uses the local one, otherwise the page sees its servers as down
 await guardContext(ctx, SRV ? SRV.url : DEAD_SERVER);
-if (ART) await ctx.addInitScript(roomStub, { topics: roomTopics() }); else if (SRV) await ctx.addInitScript(blockedPeerShim, SRV.url); else await ctx.addInitScript(fakePeerShim);
+if (ART) await ctx.addInitScript(roomStub, { topics: roomTopics() }); else if (SRV) await ctx.addInitScript(blockedPeerShim, SRV.url); else await ctx.addInitScript(fakePeerShim, LOSSY);
 await ctx.route('**/*', r => r.request().url().startsWith(ORIGIN) || SRV && r.request().url().startsWith(SRV.url) ? r.continue()
   : ART && r.request().url() === THREE_CDN ? r.fulfill({ status: 200, contentType: 'text/javascript', body: ART.three }) : r.abort());
 async function openPage(tag) {
@@ -213,9 +236,9 @@ fs.mkdirSync(OUT, { recursive: true });
 const RUN = newRun(ART ? 'mpsync-art' : SRV ? 'mpsync-srv' : 'mpsync');
 const t0 = Date.now();
 const secs = () => ((Date.now() - t0) / 1000).toFixed(0) + 's';
-let host, client;
+let host, client, spec = null, specOn = false, specPeer = null;
 async function main() {
-  [host, client] = await Promise.all([openPage('host'), openPage('client')]);
+  [host, client, spec] = await Promise.all([openPage('host'), openPage('client'), SPEC ? openPage('spec') : null]);
   if (SRV) client.on('websocket', w => { if (!w.url().includes('/room/')) return; // every relay frame the client gets / sends
     w.on('framereceived', f => cap.rx.push(String(f.payload))); w.on('framesent', f => cap.tx.push(String(f.payload))); });
   // Let each page's menu-time background download of the 3D models finish first, as a player sitting in the lobby
@@ -265,6 +288,17 @@ async function main() {
   if (SRV) { const v = await client.evaluate(() => ({ via: NET.via, ws: !!(NET.game && NET.game._ws), st: document.getElementById('mpstatus').textContent }));
     console.log(`[${secs()}] client connected via ${v.via}: "${v.st.slice(0, 80)}"`);
     if (v.via !== 'ws' || !v.ws) fail(`client should have fallen back to the server relay, but connected via ${v.via}`); }
+  if (SPEC) { // a friend watches: spectator in the lobby, never a seat
+    await spec.evaluate((c) => { try { initAudio(); } catch (e) {} NET.wantSpec = 1; joinByCode(c); }, code);
+    await waitFor(host, () => NET.lobbySpec && NET.lobbySpec.length === 1, null, 60000, 'the spectator to appear in the host lobby');
+    await waitFor(spec, () => /Watching/.test(document.getElementById('mpstatus').textContent), null, 30000, 'the spectator to see "Watching"');
+    const l = await host.evaluate(() => ({ lobby: NET.lobby.length, spec: NET.lobbySpec.slice(), txt: document.getElementById('mpstatus').textContent }));
+    specPeer = l.spec[0];
+    console.log(`[${secs()}] spectator waiting in the lobby (players in lobby: ${l.lobby}; lobby shows "watching": ${/watching/.test(l.txt)})`);
+    if (l.lobby !== 1) fail(`the spectator took a seat in the lobby (${l.lobby} players besides the host)`);
+    if (!/watching/.test(l.txt)) fail('the host lobby does not show the spectator');
+    await spec.evaluate(() => { window.__stopLoop = true; });
+  }
   // Stop both render loops BEFORE the battle starts: the test drives the clocks itself, and nothing is drawn (so no
   // GPU textures are uploaded) until the screenshots at the end - two full game pages are heavy under SwiftShader.
   await client.evaluate(() => { window.__stopLoop = true; });
@@ -294,6 +328,15 @@ async function main() {
   for (const [p, who] of [[host, 'host'], [client, 'client']])
     await waitFor(p, () => typeof G !== 'undefined' && G && G.terrain && !window.LOADING, null, 600000, `the ${who} to finish its loading screen`);
   console.log(`[${secs()}] both pages finished loading`);
+  if (SPEC) {
+    await waitFor(spec, () => MODE === 'client' && NET.spec === 1 && G && G.terrain && !window.LOADING, null, 600000, 'the spectator to enter the battle');
+    const h = await host.evaluate((p) => ({ specs: (NET.specs || []).map(s => s.peer), inPeers: (NET.peers || []).includes(p), n: G.teams.length }), specPeer);
+    console.log(`[${secs()}] spectator is watching (host has ${h.specs.length} spectator; ${h.n} sides)`);
+    if (h.specs.length !== 1 || h.specs[0] !== specPeer) fail('the host does not list the spectator once the battle started');
+    if (h.inPeers) fail('the spectator was given a side (it is in the host\'s player list)');
+    if (h.n !== 2 + AIS) fail(`the spectator added a side: ${h.n} sides`);
+    specOn = true;
+  }
   // every model this battle's nations need must have arrived on both pages (the artifact edition publishes them differently)
   for (const [tag, p] of [['host', host], ['client', client]]) {
     const m = await p.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.map(T => T.fac)) : Object.keys(MODEL_FILES);
@@ -323,12 +366,16 @@ async function main() {
   // client: let queued messages land, then advance its clock the same amount
   // --server: the test runs ~25x faster than real time, so a few tens of ms through the local server would read as
   // seconds of game lag; the client first waits (real time, up to 400 ms) for the host's latest update, as in a match
-  const clientRun = (n) => client.evaluate(async ([n, srv, hostT]) => {
+  const specRun = (n) => spec.evaluate(async (n) => { await new Promise(r => setTimeout(r, 0));
+    try { for (let i = 0; i < n && G && MODE === 'client'; i++) { clientTick(0.1); specTick(0.1); } } catch (e) { return { err: String(e && e.stack || e) }; }
+    return { t: G ? G.t : 0, snapT: NET.lastSnapT || 0 }; }, n);
+  const clientRun = (n) => clientRun0(n).then(async r => { if (SPEC && specOn) { const q = await specRun(n); if (q && q.err) fail('spectator tick threw: ' + q.err.split('\n').slice(0, 3).join(' | ')); } return r; });
+  const clientRun0 = (n) => client.evaluate(async ([n, srv, hostT]) => {
     await new Promise(r => setTimeout(r, 0));
     if (srv) { const w0 = performance.now(); while (performance.now() - w0 < 400 && (NET.lastSnapT || 0) < hostT - 0.6) await new Promise(r => setTimeout(r, 4)); }
     try { for (let i = 0; i < n && G; i++) clientTick(0.1); } catch (e) { return { err: String(e && e.stack || e) }; }
     return { t: G.t, snapT: NET.lastSnapT || 0, rx: performance.now() - (NET.lastRx || 0), ents: G.ents.length };
-  }, [n, !!SRV, lastHostT]);
+  }, [n, RT, lastHostT]);
   let lastHostT = 0;
   // what the client's side may see on the host: own entities and everything currently in its vision
   const hostView = () => host.evaluate((k) => {
@@ -346,6 +393,9 @@ async function main() {
     await host.evaluate((k) => { if (NET.kf) NET.kf[k] = 0; NET.snapT = 0; NET.teamT = 0; netTick(0.1); }, CK);
     for (let i = 0; i < 4; i++) { await client.waitForTimeout(150); await clientRun(1); await host.evaluate(() => netTick(0.1)); }
     await client.waitForTimeout(300); await clientRun(1);
+    // --lossy: the keyframe may sit behind a resent message or a lag spike; give it up to 6 s to land
+    if (LOSSY) { const ht = await host.evaluate(() => G.t), w = Date.now(); while (Date.now() - w < 6000) { const c = await clientRun(0); if (c.snapT >= ht - 0.05) break; await host.evaluate(() => netTick(0.1)); await client.waitForTimeout(150); }
+      await host.evaluate(() => netTick(0.1)); await client.waitForTimeout(LOSSY.lat * 3 + 400); await clientRun(0); }
     const H = await hostView(), C = await clientView();
     const cm = new Map(C.list.map(a => [a[0], a])), hm = new Map(H.list.map(a => [a[0], a]));
     let missing = [], moved = [], wrong = [], extra = [], ownMissing = 0, vis = 0;
@@ -369,7 +419,26 @@ async function main() {
     if (extra.length > Math.max(2, vis * .03)) fail(`${label}: ${extra.length} entities on the client that the host no longer has in view: ${sample(extra)}`);
     if (Math.abs(H.credits - C.credits) > 1) fail(`${label}: credits differ: host ${H.credits}, client ${C.credits}`);
     if (H.t - C.t > .3 && vis) fail(`${label}: client's latest state is ${(H.t - C.t).toFixed(1)} s behind the host after settling`);
+    if (SPEC && specOn) await specCheck(label);
     return { H, C };
+  }
+  // the spectator sees every unit and building of every side, where the host has it (no fog, nothing remembered)
+  async function specCheck(label) {
+    await host.evaluate((p) => { if (NET.kf) NET.kf['s:' + p] = 0; NET.snapT = 0; NET.specTT = 0; netTick(0.1); }, specPeer);
+    for (let i = 0; i < 3; i++) { await spec.waitForTimeout(150); await specRun(1); }
+    const H = await host.evaluate(() => ({ t: G.t, list: G.ents.filter(e => !e.dead).map(e => [e.id, e.kind, e.team, Math.round(e.x), Math.round(e.y), Math.round(e.hp)]) }));
+    const S = await spec.evaluate(() => ({ t: NET.lastSnapT || 0, me: ME, cq: (NET.cq || []).length, list: G.ents.filter(e => !e.dead && !e.gone).map(e => [e.id, e.kind, e.team, !e.isB && e.tx != null ? e.tx : e.x, !e.isB && e.ty != null ? e.ty : e.y, Math.round(e.hp)]) }));
+    const sm = new Map(S.list.map(a => [a[0], a])), hm = new Set(H.list.map(a => a[0]));
+    let miss = 0, off = 0, extra = 0; const ex = [];
+    for (const h of H.list) { const c = sm.get(h[0]); if (!c) { miss++; if (ex.length < 3) ex.push(`${h[1]}#${h[0]}(team ${h[2]})`); continue; } if (Math.hypot(c[3] - h[3], c[4] - h[4]) > 2) off++; }
+    for (const c of S.list) if (!hm.has(c[0])) extra++;
+    const teams = new Set(S.list.map(a => a[2]));
+    console.log(`[${secs()}] ${label} spectator: host ${H.list.length} entities, spectator ${S.list.length} (sides ${[...teams].sort().join(',')}); missing ${miss}, off ${off}, extra ${extra}`);
+    if (miss > Math.max(1, H.list.length * .02)) fail(`${label}: the spectator is missing ${miss}/${H.list.length} entities (it must see everything): ${ex.join(', ')}`);
+    if (off > Math.max(1, H.list.length * .02)) fail(`${label}: ${off} entities at the wrong position for the spectator`);
+    if (extra > Math.max(2, H.list.length * .03)) fail(`${label}: ${extra} stale entities on the spectator's screen`);
+    if (H.t - S.t > .4) fail(`${label}: the spectator is ${(H.t - S.t).toFixed(1)} s behind`);
+    if (S.cq) fail(`${label}: the spectator queued orders`);
   }
 
   // ---- light check while the battle runs (no settling): the client may trail by a snapshot, so tolerances are loose ----
@@ -408,17 +477,17 @@ async function main() {
 
   // --server: real time (one network tick per 0.1 s, each flushed on its own, like a real match), so the relay sees
   // real message rates (its rate limits are sized for those) and the traffic numbers are per real minute
-  const STEP = SRV ? 1 : 5, total = Math.round(MINUTES * 600), checks = new Set([600, 1500, total].filter(x => x <= total));
+  const STEP = RT ? 1 : 5, total = Math.round(MINUTES * 600), checks = new Set([600, 1500, total].filter(x => x <= total));
   let blindAt = 0, lagSkip = 0, lagLog = 0, lagLogged = false, ticks = 50, behindMax = 0, breakAt = BREAK ? 600 : -1, orderChecked = false, chunkMs = [];
   while (ticks < total) {
     const w0 = Date.now();
     const h = await hostRun(STEP); if (h.err) { fail('host simulation threw: ' + h.err.split('\n').slice(0, 4).join(' | ')); break; }
     const c = await clientRun(STEP); if (c.err) { fail('client tick threw: ' + c.err.split('\n').slice(0, 4).join(' | ')); break; }
     ticks += STEP; chunkMs.push(Date.now() - w0);
-    if (SRV) { const left = 100 * STEP - (Date.now() - w0); if (left > 0) await host.waitForTimeout(left); }
+    if (RT) { const left = 100 * STEP - (Date.now() - w0); if (left > 0) await host.waitForTimeout(left); }
     if (!h.sees && !blindAt) { blindAt = h.t; console.log(`[${secs()}] the client's side sees nothing from host t=${h.t.toFixed(1)}s (wiped out): its clock is no longer checked`); }
     if (ticks >= 100 && ticks > lagSkip && h.sees) behindMax = Math.max(behindMax, h.t - c.snapT);
-    if (SRV && ticks >= 100 && ticks > lagSkip && h.sees && h.t - c.snapT > 1.5 && lagLog < 6) { lagLog++;
+    if (RT && ticks >= 100 && ticks > lagSkip && h.sees && h.t - c.snapT > 1.5 && lagLog < 6) { lagLog++;
       const b = await host.evaluate(() => ({ buf: NET.game && NET.game._ws ? NET.game._ws.bufferedAmount : -1, kf: NET.kf && NET.kf[1] }));
       console.log(`[${secs()}] lag ${(h.t - c.snapT).toFixed(1)} s at host t=${h.t.toFixed(1)} (host socket backlog ${b.buf} B, client rx ${(c.rx / 1000).toFixed(1)} s ago)`); }
     if (ticks >= 100 && ticks > lagSkip && h.sees && h.t - c.snapT > 1.5 && !lagLogged) { lagLogged = true; // say when, and in what state, the client first fell behind
@@ -453,6 +522,32 @@ async function main() {
       await settleCheck('right after reconnecting'); }
     if (RECON && ticks === 1100) { const r = await host.evaluate((k) => ({ ai: !!G.teams[k].ai, disc: G.teams[k].discT || 0, out: !!G.teams[k].out }), CK);
       if (!r.out && (r.ai || r.disc)) fail('45 s after reconnecting, the host still treats the client as gone (AI took over / marked disconnected)'); }
+    if (SPEC && ticks === 700) { // the spectator tries to command: its own doAct must do nothing, and a forged order queue is ignored by the host
+      const tgt = await host.evaluate(() => { const u = G.ents.find(e => e.team === 0 && !e.isB && !e.dead && e.kind !== 'harv'); return u ? { id: u.id, x: u.x, y: u.y } : null; });
+      if (tgt) { const r = await spec.evaluate((t) => { doAct({ t: 'go', ids: [t.id], x: 50, y: 50 }); const q = (NET.cq || []).length;
+          NET.game.presence({ cq: [{ s: Date.now() * 100, a: { t: 'go', ids: [t.id], x: 50, y: 50 } }] }).catch(() => {}); return q; }, tgt);
+        if (r) fail('the spectator\'s doAct queued an order');
+        await host.waitForTimeout(800); await hostRun(5); await clientRun(5); ticks += 5;
+        const o = await host.evaluate((id) => { const e = G.byId.get(id); return e && e.order ? [e.order.x, e.order.y] : null; }, tgt.id);
+        if (o && Math.hypot(o[0] - 50, o[1] - 50) < 1) fail('a forged order from the spectator moved a player\'s unit');
+        else console.log(`[${secs()}] spectator's forged order was ignored by the host`); }
+    }
+    if (SPEC && ticks === 900) { // the spectator leaves mid-battle ...
+      await spec.evaluate(() => { quitGame(); }); specOn = false;
+      for (let i = 0; i < 6; i++) { await host.waitForTimeout(300); await hostRun(1); await clientRun(1); } ticks += 6;
+      const n = await host.evaluate(() => (NET.specs || []).length);
+      console.log(`[${secs()}] spectator left; host now has ${n} spectators`);
+      if (n) fail('the host still lists the spectator after it left');
+      await settleCheck('right after the spectator left');
+      // ... and comes back while the battle goes on
+      await spec.evaluate((c) => { NET.wantSpec = 1; joinByCode(c); }, code);
+      const w0 = Date.now(); while (Date.now() - w0 < 600000) { await hostRun(2); await clientRun(2); ticks += 2; await host.waitForTimeout(200);
+        if (await spec.evaluate(() => MODE === 'client' && NET.spec === 1 && !!G && !!G.terrain && !window.LOADING)) break; }
+      while (ticks % STEP) { await hostRun(1); await clientRun(1); ticks++; }
+      const back = await spec.evaluate(() => MODE === 'client' && NET.spec === 1 && !!G && !window.LOADING);
+      console.log(`[${secs()}] spectator ${back ? 'rejoined mid-battle' : 'did NOT rejoin'} after ${((Date.now() - w0) / 1000).toFixed(0)} s`);
+      if (!back) fail('the spectator could not rejoin a battle under way'); else { specOn = true; await hostRun(10); await clientRun(10); ticks += 10; await settleCheck('after the spectator rejoined'); }
+    }
     if (ticks === breakAt && SRV) { warns.push('--break is not supported with --server'); }
     else if (ticks === breakAt) { await client.evaluate(() => { window.__fpDrop = true; }); console.log(`[${secs()}] --break: the client stops receiving from now on`); }
     if (!orderChecked && ticks >= 250 && order.n) {
@@ -473,10 +568,11 @@ async function main() {
   const stK = SRV ? '__ww3WsStats' : '__fpStats';
   const st = await client.evaluate(k => window[k], stK), hs = await host.evaluate(k => window[k], stK);
   console.log(`[${secs()}] traffic host->client ${(st.rxB / 1024).toFixed(0)} KB in ${st.rx} messages, client->host ${(hs.rxB / 1024).toFixed(0)} KB in ${hs.rx}; ` +
-    `client lag max ${behindMax.toFixed(2)} game-s; ${(chunkMs.reduce((a, b) => a + b, 0) / Math.max(1, chunkMs.length)).toFixed(0)} ms per ${STEP / 10} s step`);
+    `client lag max ${behindMax.toFixed(2)} game-s;${LOSSY ? ` network: ${st.delayed || 0} messages delayed, avg ${((st.delayMs || 0) / Math.max(1, st.delayed || 0)).toFixed(0)} ms, worst ${(st.delayMax || 0).toFixed(0)} ms;` : ''} ${(chunkMs.reduce((a, b) => a + b, 0) / Math.max(1, chunkMs.length)).toFixed(0)} ms per ${STEP / 10} s step`);
   console.log(`[${secs()}] ${live.n} live checks, ${live.bad || 0} out of tolerance; up to ${enemySeen} enemy entities were in the client's view at once`);
   if ((live.bad || 0) > Math.max(1, live.n * .1)) fail(`client view diverged from the host in ${live.bad}/${live.n} live checks, e.g. ${live.worst}`);
-  if (behindMax > 1.5) fail(`client fell ${behindMax.toFixed(1)} game-seconds behind the host (it should trail by at most a few 0.1 s snapshots)`);
+  // --lossy: lag spikes (up to ~1.4 s) and resends hold the link up for a moment; the client may trail by that much
+  if (behindMax > (LOSSY ? 3 : 1.5)) fail(`client fell ${behindMax.toFixed(1)} game-seconds behind the host (it should trail by at most a few 0.1 s snapshots)`);
   if (!st.rx) fail('client never received anything from the host');
   if (RECON) { const r = await host.evaluate((k) => ({ ai: !!G.teams[k].ai, disc: G.teams[k].discT || 0, out: !!G.teams[k].out, t: G.t }), CK);
     console.log(`[${secs()}] --reconnect: at t=${r.t.toFixed(0)}s the client's side is ${r.ai ? 'run by the AI' : 'still the player\'s'}${r.disc ? ', still marked disconnected' : ''}`);
@@ -485,6 +581,14 @@ async function main() {
   if (ART) for (const [tag, s] of [['host', hs], ['client', st]]) { const j = judgeRoomStats(tag, s); j.fails.forEach(fail); warns.push(...j.warns);
     console.log(`[${secs()}] ${tag} room sends: ${s.tx} messages, peak ${s.peakRate} in one game-second`); }
 
+  if (SPEC) { // replays: the player's own view and the spectator's everything-view must both pack and parse
+    for (const [tag, p] of [['client', client], ['spectator', spec]]) {
+      const r = await p.evaluate(async () => { const u = await rpPack(); if (!u) return null; const P = await rpParse(u); return { kb: u.length / 1024, n: P.frames.length, full: P.hdr.full, dur: P.hdr.dur }; });
+      console.log(`[${secs()}] ${tag} replay: ${r ? `${r.n} frames, ${r.kb.toFixed(0)} KB, ${r.dur.toFixed(0)} s, ${r.full ? 'everything' : 'own view'}` : 'none'}`);
+      if (!r || !r.n) fail(`the ${tag} has no replay of the battle`);
+      else if (tag === 'spectator' && !r.full) fail('the spectator\'s replay is not marked as showing everything');
+    }
+  }
   if (!shotsTaken) await screenshots();
 }
 // one real frame on each page, mid-battle (right after the 2.5 min check) or at the end

@@ -264,11 +264,17 @@ try {
   ck('bunker buster: locked first 5 min, costs $2200, cooldown, destroys the fortress', ft.early === false && ft.fired && ft.paid && ft.cd && ft.dead, JSON.stringify(ft));
   const fc = await page.evaluate(() => {
     const me = ME, hq = hqOf(me), f = addBld(me, 'fort', hq.x + 140, hq.y - 140, true), n = G.ents.filter(e => e.kind === 'fort' && !e.dead).length;
-    f.hp = f.max * .45; const pk = JSON.parse(JSON.stringify(ckEncode())); ckRestore(pk);
+    f.hp = f.max * .45;
+    // its garrison (b.gar: units off the map) must survive a host takeover too
+    const us = ['inf', 'inf', 'cleric'].map((k, i) => addUnit(me, k, f.x + 40, f.y + 40 + i * 6)); for (const u of us) enterTunnel(u, f);
+    const pk = JSON.parse(JSON.stringify(ckEncode())); ckRestore(pk);
     const g = G.ents.find(e => e.kind === 'fort' && !e.dead && e.team === me);
-    return { n, kept: !!g && Math.abs(g.hp - g.max * .45) < 2, tun: tunCap(me) };
+    const gar = g && g.gar ? g.gar.map(u => u.kind).sort().join(',') : '', why = g ? (g.gar || []).map(u => [!!u.s, u.s && u.s.name, u.s && u.s.dom, u.inTun, G.byId.has(u.id)].join('/')) : [], statsOk = !!g && (g.gar || []).every(u => u.s && u.s.name && u.s.dom === 'ground' && u.inTun && !G.byId.has(u.id));
+    let out = false; if (g) { unloadTunnel(g); out = us.every(u => { const e = G.byId.get(u.id); return e && !e.dead && !e.inTun && G.ents.includes(e); }) && !(g.gar || []).length; }
+    return { n, kept: !!g && Math.abs(g.hp - g.max * .45) < 2, tun: tunCap(me), gar, statsOk, why, out, fn: fortN(me) };
   });
   ck('fortress: checkpoint restore keeps it (and its damage)', fc.kept, JSON.stringify(fc));
+  ck('fortress: its garrison survives a host takeover (checkpoint) and can come out after', fc.gar === 'cleric,inf,inf' && fc.statsOk && fc.out, JSON.stringify(fc));
   ck('no page errors', !errors.length, errors.join(' / '));
 } catch (e) { fails++; console.log('ERROR', e.message); }
 await browser.close(); server.close();

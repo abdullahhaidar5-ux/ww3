@@ -604,7 +604,7 @@ const WX=[{n:'Clear day',sun:'#ffeccc',si:2.7,off:[-900,860,-620],sky:'#a9c4ec',
 let WXT=-1,WXI=0,WXG=null,WXFX=1;const WXCITY={value:0},WXAMB={value:new THREE.Vector3(1,1,1)};
 // "Random" is decided by the battle's seed, so it stays the same for the whole battle (and would match on every
 // machine of a multiplayer game if the condition is ever sent with the match start).
-function wxPick(i){i=i|0;if(i>=0&&i<WX.length)return i;if(i<0){const s=((typeof G!=='undefined'&&G&&G.seed)|0)>>>0;return (Math.imul(s^0x9e3779b9,2654435761)>>>16)%4;}return 0;}
+function wxPick(i){i=i|0;if(i>=0&&i<WX.length)return i;if(i<0){const s=((typeof G!=='undefined'&&G&&G.seed)|0)>>>0;return wxRandIdx(s);}return 0;}
 function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){WXG=G;WXI=wxPick(i);}else if(typeof G==='undefined'||!G)WXI=wxPick(i);i=WXI;if(typeof G!=='undefined'&&G&&G.todM){const l=todLvl();WXT=G.todM<3?-1:l;i=l===2?4:l===1?3:i;}else WXT=-1;const w=WX[i];
   SUN.color.copy(lin(w.sun));SUN.intensity=w.si*LUX;SUNOFF=w.off;HEMI.color.copy(lin(w.sky));HEMI.groundColor.copy(lin(w.gnd));HEMI.intensity=w.hi*LUX;
   SCN.fog.color.copy(lin(w.fog));SCN.fog.near=w.fn;SCN.fog.far=w.ff;SUN.shadow.radius=w.sr;POST.cloud=w.cl;WXFX=w.fx;WXCITY.value=w.win;WXAMB.value.set(w.amb[0],w.amb[1],w.amb[2]);if(LAMPM)LAMPM.emissiveIntensity=w.lamp;

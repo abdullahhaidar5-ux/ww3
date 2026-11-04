@@ -345,7 +345,7 @@ function gridDist(grid,x,y){const N=GW*GH,D=new Float64Array(N).fill(1e9),ps=v=>
 // across. Every feature is mirrored across that halfway line, so both bases see the same ground. Anything that would
 // touch existing water, rock, a city, the map edge or a base is left out (as a mirrored pair). Design coords (3200x2200).
 // A map can opt out with plain:true, or for some player counts with plain:[n,...] (where AI batches found a hot seat).
-function addComplexity(M,D){M.woods=[];M.genCities=[];
+function addComplexity(M,D){M.woods=M.woods||[];M.genCities=[];
   if(D.plain===true||(D.plain||[]).includes(BASES.length)||M.islands.length)return;
   const S=BASES.map(([x,y])=>[x/WK,y/WK]),N=S.length,u=1/WK; // margins below are world units (bases don't grow with the map)if(N<2)return;
   const RV=M.rivers.slice(),RG=M.ridges.slice(),CT=(D.cities||[]).slice();
@@ -445,13 +445,15 @@ function mkMap(seed,mk){
   M.fields=[];M.oil=[];
   // fixed derricks a map asks for (a central oil field): symmetric by design, so fair to everyone
   for(const [ox,oy,sea] of (D.oilAt||[])){const X=ox*WK,Y=oy*WK;if((sea?(X>90&&Y>90&&X<MAPW-90&&Y<MAPH-90&&M.edge(X,Y)<-60&&M.mtn(X,Y)<-48):dry(X,Y,80))&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>150))M.oil.push(Object.assign({x:X,y:Y,owner:-1,cp:[0,0],inc:0},sea?{sea:1}:{}));}   // sea:1 = an offshore rig on a rock pad: ships beside it capture it too
+  // fixed supply fields a custom map asks for (map editor)
+  for(const [ox,oy] of (D.fieldAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.fields.every(f=>Math.hypot(f.x-X,f.y-Y)>150)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>120))M.fields.push({x:X,y:Y,r:46,amt:9000});}
   for(const [bx,by] of BASES){const a0=Math.atan2(MAPH/2-by,MAPW/2-bx);let put=false;for(let r of [390,430,350,470,300,250])for(let q=0;q<14&&!put;q++){const a=a0+(q%2?1:-1)*Math.ceil(q/2)*.35,fx=bx+Math.cos(a)*r,fy=by+Math.sin(a)*r;
       if(!dry(fx,fy,110))continue;if(BASES.some(([qx,qy])=>(qx!==bx||qy!==by)&&Math.hypot(qx-fx,qy-fy)<380))continue;if(M.fields.some(f=>Math.hypot(f.x-fx,f.y-fy)<220))continue;M.fields.push({x:fx,y:fy,r:46,amt:9000});put=true;}}
   // Neutral supply and oil, placed fairly for whichever start positions are in play: every base gets the same
   // expansions at the same DRIVING distance inside its own part of the map, a contested field sits where the routes
   // between each pair of neighbours meet (equally far for both), and the contested oil is where everyone is as equally
   // far as the ground allows. Distances are real routes (around water, rock and cities), not straight lines.
-  {const NB=BASES.length,cellOf=(x,y)=>Math.floor(y/CELL)*GW+Math.floor(x/CELL),DB=BASES.map(([x,y])=>gridDist(grid,x,y));
+  if(!D.manual){const NB=BASES.length,cellOf=(x,y)=>Math.floor(y/CELL)*GW+Math.floor(x/CELL),DB=BASES.map(([x,y])=>gridDist(grid,x,y));
    const cand=[];for(let cy=1;cy<GH-1;cy+=2)for(let cx=1;cx<GW-1;cx+=2){const x=cx*CELL+CELL/2,y=cy*CELL+CELL/2;if(!dry(x,y,110))continue;const c=cy*GW+cx,d=DB.map(Q=>Q[c]);if(d.some(v=>v>=1e8))continue;
      let lo=1e9,hi=0;for(const v of d){lo=Math.min(lo,v);hi=Math.max(hi,v);}cand.push({x,y,d,lo,hi});}
    const eD=BASES.map((b,i)=>Math.min(...BASES.map((q,j)=>j===i?1e9:DB[i][cellOf(q[0],q[1])])));let E=Math.min(...eD);if(!(E<1e8))E=2600*WK;
@@ -629,6 +631,7 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
    BASES.forEach((B,i)=>{if(linked.has(i))return;const c=ends.filter(e=>!crosses(B,e)).sort((p,q)=>Math.hypot(p[0]-B[0],p[1]-B[1])-Math.hypot(q[0]-B[0],q[1]-B[1]));if(c.length){road([B,mid(B,c[0]),c[0]],34);return;}
      let hx=MAPW/2,hy=MAPH/2;const a=Math.atan2(hy-B[1],hx-B[0]);const L=Math.hypot(hx-B[0],hy-B[1]);for(let r=300;r<L;r+=20){const x=B[0]+Math.cos(a)*r,y=B[1]+Math.sin(a)*r;if(M.edge(x,y)>-170||M.mtn(x,y)>-120){hx=B[0]+Math.cos(a)*(r-40);hy=B[1]+Math.sin(a)*(r-40);break;}}
      if(!crosses(B,[hx,hy]))road([B,mid(B,[hx,hy]),[hx,hy]],34);});}
+  for(const rp of (M.roads||[]))road(rp.map(([x,y])=>[x*WK,y*WK]),36); // roads drawn in the map editor
   for(const [bx,by] of BASES){const R=276;
     // worn dirt apron blending pad into terrain
     const ap=t.createRadialGradient(bx,by,R*.9,bx,by,R*1.45);ap.addColorStop(0,'rgba(122,108,80,.75)');ap.addColorStop(1,'rgba(122,108,80,0)');t.fillStyle=ap;t.fillRect(bx-R*1.5,by-R*1.5,R*3,R*3);
@@ -685,3 +688,48 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
   srand=Math.random;
 }
 
+/* ================= CUSTOM MAPS (made in the map editor, shared as a code string) =================
+   A custom map is plain data in design units (3200 x 2200). Everyone who plays it builds the same MAPS entry from the same
+   canonical text, and its key (cm_<hash>) is a hash of that text, so host, clients and the Cloudflare server can check they
+   run the very same map. Existing maps are not touched. Fields (all arrays of integers):
+   nm name, n players, z size 0-3, th theme, sl start slots [x,y], rv rivers [halfwidth,x,y,x,y..], rg mountain ridges [halfwidth,x,y..],
+   rd roads [x,y,..], lk lakes [x,y,r], pk rocks [x,y,r], wd woods [x,y,r], ct towns [x,y,r,style], oil [x,y], fl supply [x,y],
+   br bridges [x,y,degrees across the river]. */
+const CM_SCALE=[1.5,2,2.6,3.2],CM_SIZES=['Small','Medium','Large','Huge'],CM_THEMES=['desert','snow','green'],CM_STYLES=['mideast','russia','europe','america','yemen','gulfcity','korea','asia','latin','southasia'];
+const CM={};
+function cmHash(str){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return ((h1>>>0).toString(36)+(h2>>>0).toString(36)).slice(0,14);}
+function cmCanon(o){
+  if(!o||typeof o!=='object')return null;const I=(v,a,b)=>Math.max(a,Math.min(b,Math.round(+v||0))),X=v=>I(v,0,3200),Y=v=>I(v,0,2200);
+  const arr=(a,max)=>Array.isArray(a)?a.slice(0,max):[];
+  const pt=(a,mx)=>arr(a,mx).filter(q=>Array.isArray(q)&&q.length>=2).map(q=>[X(q[0]),Y(q[1])]);
+  const line=(a,mx,np)=>{const out=[];for(const r of arr(a,mx)){if(!Array.isArray(r))continue;const w=I(r[0],10,400),p=[];for(let i=1;i+1<r.length&&p.length<np*2;i+=2)p.push(X(r[i]),Y(r[i+1]));if(p.length>=4)out.push([w,...p]);}return out;};
+  const road=a=>{const out=[];for(const r of arr(a,40)){if(!Array.isArray(r))continue;const p=[];for(let i=0;i+1<r.length&&p.length<160;i+=2)p.push(X(r[i]),Y(r[i+1]));if(p.length>=4)out.push(p);}return out;};
+  const sl=arr(o.sl,8).filter(q=>Array.isArray(q)&&q.length>=2).map(q=>[I(q[0],150,3050),I(q[1],150,2050)]);if(sl.length<2)return null;
+  const th=CM_THEMES.includes(o.th)?o.th:'desert';let nm=String(o.nm||'Custom map').replace(/[^A-Za-z0-9 _.'!+-]/g,'').trim().slice(0,28)||'Custom map';
+  return{v:1,nm,n:sl.length,z:I(o.z,0,3),th,sl,rv:line(o.rv,40,90),rg:line(o.rg,60,90),rd:road(o.rd),
+    lk:arr(o.lk,120).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],20,600)]),pk:arr(o.pk,200).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],12,200)]),
+    wd:arr(o.wd,200).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],40,300)]),ct:arr(o.ct,40).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],40,260),I(q[3],0,CM_STYLES.length-1)]),
+    oil:pt(o.oil,40),fl:pt(o.fl,40),br:arr(o.br,40).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],-180,180)])};}
+function cmB64(js){return btoa(js).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function cmUnb64(t){t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return atob(t);}
+// text -> map data (accepts the bare code, a share link containing #map=CODE, or the JSON itself); null when it is not a map
+function cmParse(src){try{if(src&&typeof src==='object')return src;src=String(src||'').trim();if(src.length>40000)return null;const m=src.match(/WW3MAP1:([A-Za-z0-9_-]+)/);
+  if(m)return JSON.parse(cmUnb64(m[1]));if(src[0]==='{')return JSON.parse(src);}catch(e){}return null;}
+function cmBuild(c,key){const cities=c.ct.map(([x,y,r,s])=>[x,y,r,CM_STYLES[s]]);
+  return{name:c.nm,min:2,max:c.sl.length,sym:'none',custom:1,cmKey:key,theme:c.th,tag:'custom map · '+CM_SIZES[c.z].toLowerCase(),desc:'A map made in the map editor.',
+    slots:c.sl.map(q=>q.slice()),plain:true,manual:!!(c.fl.length||c.oil.length),cscale:CM_SCALE[c.z],cities,oilAt:c.oil,fieldAt:c.fl,
+    water(M){for(const r of c.rv){const w=r[0],p=[];for(let i=1;i+1<r.length;i+=2)p.push([r[i],r[i+1]]);M.rivers.push({pts:cmDens(p,40),hw:()=>w});}
+      for(const r of c.rg){const w=r[0],p=[];for(let i=1;i+1<r.length;i+=2)p.push([r[i],r[i+1]]);M.ridges.push({pts:cmDens(p,40),hw:()=>w});}
+      for(const [x,y,r] of c.lk)M.lakes.push({x,y,r,rx:1,wob:()=>0});for(const [x,y,r] of c.pk)M.peaks.push({x,y,r,rx:1,rot:0});
+      for(const [x,y,d] of c.br){const a=d*Math.PI/180;M.bridgeAng.push([x,y,Math.cos(a),Math.sin(a)]);}
+      M.woods=c.wd.map(([x,y,r],i)=>({x,y,r,seed:i+1,ax:1,ay:0,m:0}));M.roads=c.rd.map(r=>{const p=[];for(let i=0;i+1<r.length;i+=2)p.push([r[i],r[i+1]]);return p;});}};}
+function cmDens(P,step){const out=[P[0]];for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/step));for(let j=1;j<=n;j++)out.push([a[0]+(b[0]-a[0])*j/n,a[1]+(b[1]-a[1])*j/n]);}return out;}
+// Register a custom map (data or code); returns its key, or null if it is not a valid map. Safe to call again for the same map.
+function registerCustomMap(src){const c=cmCanon(cmParse(src));if(!c)return null;const js=JSON.stringify(c),key='cm_'+cmHash(js);if(!MAPS[key])MAPS[key]=cmBuild(c,key);CM[key]={c,code:'WW3MAP1:'+cmB64(js)};return key;}
+// the share code of a registered custom map ('' for built-in maps)
+function customMapCode(key){return CM[key]?CM[key].code:'';}
+// Check a code that arrived with a battle against the map key it was announced under (host and clients must agree).
+function acceptCustomMap(key,code){if(typeof key!=='string'||!/^cm_/.test(key))return MAPS[key]?key:null;if(typeof code!=='string'){return MAPS[key]?key:null;}const k=registerCustomMap(code);return k===key?k:null;}
+// maps saved on this device (map editor) are known from the start, so a chosen custom battlefield survives a reload
+try{if(typeof localStorage!=='undefined'){const L=JSON.parse(localStorage.getItem('ww3_maps')||'[]');if(Array.isArray(L))for(const e of L)if(e&&typeof e.code==='string')registerCustomMap(e.code);}}catch(e){}

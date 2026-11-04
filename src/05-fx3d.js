@@ -1,6 +1,6 @@
 /* ================= 3D EFFECTS: particles, tracers, projectiles, decals, wrecks ================= */
 const PMAX=3500;const SHOCKS=[],FIRES=[];let shockI=0;
-let PN_=null,PA_=null,TRC=null,SCORCH=null,TRACKS=null,CRATER=null,crI=0,LIGHTS=[],WLIGHTS=[],MLIGHTS=[],mlI=0;const COLS=[];
+let PN_=null,PA_=null,TRC=null,SCORCH=null,TRACKS=null,CRATER=null,crI=0,LIGHTS=[],WLIGHTS=[],MLIGHTS=[],mlI=0,FLARES=[],FLL=[];const COLS=[];
 const fxPH=()=>typeof POST!=='undefined'&&!!POST.phone;
 const BMIS=[],DEBRIS=[];
 // only the live part of a dynamic buffer is uploaded each frame (r159+: addUpdateRange replaces updateRange)
@@ -41,6 +41,8 @@ function initFX(){PN_=mkPoints(THREE.NormalBlending);PA_=mkPoints(THREE.Additive
   initWash();initWake();
   for(let i=0;i<4;i++){const l=new THREE.PointLight(0xffa860,0,320,2);l.position.set(-999,-999,-999);SCN.add(l);LIGHTS.push(l);}for(let i=0;i<3;i++){const l=new THREE.PointLight(0xff8a3a,0,170,2);l.position.set(-999,-999,-999);SCN.add(l);WLIGHTS.push(l);}
   // muzzle flashes and tracers get their own two short-lived lights on PCs (they used to steal the explosion lights)
+  // illumination flares: two cold-white lights on PCs; phones (Low) get only the glow sprite, no dynamic light
+  if(!(typeof gfxPhone==='function'&&gfxPhone()))for(let i=0;i<2;i++){const l=new THREE.PointLight(0xdfe8ff,0,520,1.6);l.position.set(-999,-999,-999);SCN.add(l);FLL.push(l);}
   if(!(typeof gfxPhone==='function'&&gfxPhone()))for(let i=0;i<2;i++){const l=new THREE.PointLight(0xffb060,0,140,2);l.position.set(-999,-999,-999);l.userData={d:.06,t:0};SCN.add(l);MLIGHTS.push(l);}}
 // a quick orange flash that lights the ground around a firing gun (PC only; the light count is fixed at start-up)
 function mlight(x,y,h,k,dist){if(!MLIGHTS.length||!inView(x,y,.05))return;const L=MLIGHTS[mlI++%MLIGHTS.length];L.position.set(x,h+5,y);L.intensity=k*WXFX*LUX;L.distance=dist;L.userData.d=.06;L.userData.t=0;}
@@ -70,9 +72,11 @@ const C_SMOKE=[.42,.4,.37],C_DARK=[.13,.12,.11],C_DUST=[.66,.58,.44],C_FIRE=[1,.
 function inView(x,y,m){if(!CAM)return true;TMP.set(x,0,y).project(CAM);return Math.abs(TMP.x)<1+m&&Math.abs(TMP.y)<1+m;}
 function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.min(18,4+(s/5|0)),gr=h<4;
   if(s<=10&&!big){for(let i=0;i<9;i++){const a=rnd(0,6.28),v=rnd(80,200);part({x,y,h:g+rnd(4,9),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(60,180),add:true,c:i%3?C_SPARK:[3,2.4,1.4],s:rnd(1,1.8),f:.5,grav:1,bounce:1,d:rnd(.25,.6)});}part({x,y,h:g+6,s:s*2.2,d:.06,add:true,c:[3.2,2.4,1.4]});}
-  part({x,y,h:g+s*.35,s:s*1.25,d:big?.18:.1,add:true,c:[1.9,.95,.35],a:.8});part({x,y,h:g+s*.5,s:s*.7,d:big?.35:.2,add:true,c:[2.4,1.3,.4],g:s*.8,a:.9});
+  // brief white-hot flash (a blink, not a lingering ball) then a lumpy fireball built of many small rolling puffs
+  part({x,y,h:g+s*.3,s:s*.75,d:big?.07:.05,add:true,c:[3.4,2.9,2.1],a:.7});
+  {const nl=big?9:4;for(let i=0;i<nl;i++){const a=rnd(0,6.28),r=rnd(0,s*.35),v=rnd(2,s*.5);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.1,s*.55),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(6,s*1.2),f:.2,rise:rnd(8,20),add:true,c:[2.6,1.2,.3],c2:[.6,.16,.04],ck:.5,s:rnd(s*.16,s*.3),g:s*.9,d:rnd(.3,.6),a:.8});}}
   const nf=Math.min(16,5+(s/4|0));for(let i=0;i<nf;i++){const a=rnd(0,6.28),r=rnd(0,s*.45),v=rnd(4,s*.9),hot=rnd(.8,1.15);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(1,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(8,s*1.6),f:.15,rise:rnd(6,18),c:[3.4*hot,1.5*hot,.4*hot],c2:i%3?[.5,.47,.42]:[.36,.34,.31],ck:rnd(.12,.25),s:rnd(s*.4,s*.7),g:s*.8,d:rnd(2,3.4),a:.62});}
-  for(let i=0;i<(n>>1);i++){const a=rnd(0,6.28),v=rnd(10,s*2);part({x,y,h:g+rnd(0,s*.6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(10,s*1.8),add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(s*.3,s*.6),g:s*.5,d:rnd(.25,.5),a:.7});}
+  for(let i=0;i<(n>>1);i++){const a=rnd(0,6.28),v=rnd(10,s*2);part({x,y,h:g+rnd(0,s*.6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(10,s*1.8),add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(s*.15,s*.34),g:s*.5,d:rnd(.25,.5),a:.5});}
   for(let i=0;i<n;i++){const a=rnd(0,6.28),v=rnd(5,s*.9);part({x:x+rnd(-s*.3,s*.3),y:y+rnd(-s*.3,s*.3),h:g+rnd(2,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,rise:rnd(16,34),c:i%4?C_SMOKE:C_DARK,c2:[.5,.47,.42],ck:.4,s:rnd(s*.4,s*.7),g:s*.6,d:rnd(2.2,3.8),a:.5});}
   if(gr&&s>8){const C_DIRT=[.42,.33,.22];for(let i=0;i<Math.min(16,5+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(10,s*1.6);part({x:x+rnd(-3,3),y:y+rnd(-3,3),h:g+2,vx:Math.cos(a)*v*.4,vy:Math.sin(a)*v*.4,vh:rnd(s*3,s*6),f:.5,grav:1,c:i%2?C_DIRT:[.3,.24,.17],s:rnd(s*.35,s*.6),g:s*1.1,d:rnd(.9,1.5),a:.75});}
     for(let i=0;i<Math.min(24,8+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(40,140)*(.5+s/40);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(90,260),c:[.22,.17,.12],s:rnd(1.6,3.2),f:.85,grav:1,bounce:1,d:rnd(1,1.8)});}}
@@ -80,7 +84,7 @@ function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.
   for(let i=0;i<n;i++){const a=rnd(0,6.28),v=rnd(90,260)*(.5+s/60);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(40,200),add:true,c:C_SPARK,s:1.4,f:.6,grav:1,d:rnd(.3,.7)});}
   if(s>10)for(let i=0;i<Math.min(12,s/3|0);i++){const a=rnd(0,6.28),v=rnd(30,130);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(80,220),c:C_DARK,s:rnd(1.4,2.8),f:.85,grav:1,bounce:1,d:rnd(1.2,2.2)});}
   // the fireball lingers and rolls upward, cooling from orange to dark red before the smoke takes over
-  if(s>=14&&!fxPH()){const nb=5;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.2,s*.6),vx:Math.cos(a)*rnd(3,s*.5),vy:Math.sin(a)*rnd(3,s*.5),vh:rnd(10,s*1.1),f:.2,rise:rnd(6,14),add:true,c:[3,1.35,.35],c2:[.55,.14,.03],ck:.7,s:rnd(s*.5,s*.8),g:s*1.1,d:rnd(.55,.95),a:.8});}}
+  if(s>=14&&!fxPH()){const nb=5;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.2,s*.6),vx:Math.cos(a)*rnd(3,s*.5),vy:Math.sin(a)*rnd(3,s*.5),vh:rnd(10,s*1.1),f:.2,rise:rnd(6,14),add:true,c:[2.4,.9,.22],c2:[.35,.1,.03],ck:.55,s:rnd(s*.3,s*.5),g:s*1.1,d:rnd(.55,.95),a:.6});}}
   // lingering dust: a low, wide cloud of ground-coloured dust that hangs over the impact and drifts off for several seconds
   if(gr&&s>=14&&!fxPH()){const th=G&&G.map?(G.map.theme==='snow'?'snow':G.map.theme==='green'?'green':'desert'):'desert',C=DUSTC[th],nd=Math.min(8,4+(s/10|0)),dk=th==='snow'?.92:.78;
     for(let i=0;i<nd;i++){const a=rnd(0,6.28),r=rnd(s*.2,s*.8);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(4,s*.35),vx:Math.cos(a)*rnd(4,14),vy:Math.sin(a)*rnd(4,14),vh:rnd(0,4),f:.5,rise:rnd(1,4),c:[C[i&1][0]*dk,C[i&1][1]*dk,C[i&1][2]*dk],c2:C[2],ck:.6,s:rnd(s*.9,s*1.4),g:rnd(s*.3,s*.45),d:rnd(6,9),a:th==='snow'?.3:.4});}}
@@ -88,6 +92,8 @@ function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.
   if(gr&&s>=18&&!big&&!fxPH())chunks(x,y,s*2.2,'#3e3a34',4);
   // a column of dark smoke keeps climbing from the biggest blasts long after the fire is out
   if(gr&&(big||s>=20&&!fxPH())&&inView(x,y,.3)){if(COLS.length>=12)COLS.shift();COLS.push({x,y,g,t:0,d:big?16:rnd(7,10),big:!!big,acc:0,G0:G});}
+  if(big&&!fxPH()){for(let i=0;i<10;i++){const a=rnd(0,6.28),v=rnd(20,s*1.4);part({x,y,h:g+rnd(2,s*.3),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(s*1.2,s*3.2),f:.3,grav:1,rise:rnd(4,10),c:C_DARK,c2:[.2,.18,.16],ck:.5,s:rnd(s*.14,s*.26),g:s*1.1,d:rnd(1.2,2.2),a:.8});}
+    for(let i=0;i<14;i++){const a=rnd(0,6.28),v=rnd(40,s*3);part({x,y,h:g+rnd(2,6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(60,s*6),c:i&1?[.16,.14,.12]:[.3,.25,.2],s:rnd(1.5,3.4),f:.7,grav:1,bounce:1,d:rnd(1.2,2.4)});}}
   scorch(x,y,s);if(gr&&s>=16&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9))crater(x,y,s*1.5);
   // pressure wave: a pale ring of dust racing outward along the ground; heavy hits leave a fire burning for a few seconds
   if(gr&&s>=14&&SHOCKS.length&&inView(x,y,.4)){const S=SHOCKS[shockI++%SHOCKS.length];S.t=0;S.d=big?.75:.45;S.r0=s*.5;S.r1=s*(big?6.5:4.2);S.a0=big?.6:.42;S.x=x;S.y=y;S.m.position.set(x,g+2.5,y);}
@@ -136,6 +142,8 @@ const FXH={
     const disc=new THREE.Mesh(new THREE.CircleGeometry(r,48).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xea5a40,transparent:true,opacity:.12,depthWrite:false}));disc.position.copy(ring.position);SCN.add(disc);
     let mis=null;if(sup&&!arc){mats();if(MODELS.ready&&MODELS.proto.missile){mis=new THREE.Group();const mm=instModel('missile',null,'y',30);mm.rotation.x=Math.PI;mm.position.y=30;mis.add(mm);}else mis=new THREE.Mesh(new THREE.CylinderGeometry(2.5,2.5,22,8),new THREE.MeshStandardMaterial({color:lin('#e8e4d6')}));mis.visible=false;SCN.add(mis);}MARKERS.push({x,y,t,r,sup,ring,disc,mis});},
   hack(x,y){for(let i=0;i<24;i++)part({x:x+rnd(-30,30),y:y+rnd(-30,30),h:groundH(x,y)+rnd(5,40),vh:rnd(10,30),add:true,c:[.3,1,.5],s:rnd(2,4),d:rnd(.6,1.2)});},
+  rank(id,r,x,y){if(typeof RKV!=='undefined')RKV.set(id,{r,t:performance.now()});if(inView(x,y,.1)){const g=groundH(x,y);for(let i=0;i<10;i++){const a=rnd(0,6.28);part({x:x+Math.cos(a)*3,y:y+Math.sin(a)*3,h:g+2,vx:Math.cos(a)*14,vy:Math.sin(a)*14,vh:rnd(10,24),add:true,c:[1,.85,.4],s:rnd(2,4),d:.6,a:.8});}}},
+  flare(x,y,r,d){FLARES.push({x,y,r,d:d||30,t:0,acc:0});if(FLARES.length>6)FLARES.shift();},
   ping(x,y,r){PINGS.push({x,y,r,t:0,d:1.6,c:0x7fb8e6});},
   smoke(x,y,r){PINGS.push({x,y,r,t:0,d:1.2,c:0xb9bdbb});for(let i=0;i<140;i++){const a=rnd(0,6.28),d=Math.sqrt(Math.random())*r;part({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,h:groundH(x,y)+rnd(2,14),vh:rnd(1,4),rise:rnd(2,6),c:C_SMOKE,c2:[.75,.75,.73],ck:.4,s:rnd(30,55),g:2,d:rnd(12,20),a:.5});}},
   heal(x,y,r){PINGS.push({x,y,r,t:0,d:1.2,c:0x74d08f});for(let i=0;i<40;i++){const a=rnd(0,6.28),d=rnd(0,r);part({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,h:groundH(x,y)+rnd(2,20),vh:rnd(15,40),add:true,c:[.4,1,.55],s:rnd(2,4),d:rnd(.8,1.4)});}},
@@ -246,6 +254,10 @@ function fxUpdate(dt){
   for(const b of BODIES){b.t+=dt;for(const g of b.figs){const k=Math.max(0,Math.min(1,(b.t-g.dl)/.45));const e=k*k*(3-2*k);g.f.rotation.z=g.dir*1.5*e;g.f.rotation.x=g.rx*e;g.f.position.y=g.base.y-e*.6;if(k>0&&k<1&&!g.dust&&e>.9){g.dust=1;part({x:b.x,y:b.y,h:groundH(b.x,b.y)+1,vx:rnd(-12,12),vy:rnd(-12,12),c:C_DUST,s:rnd(4,6),g:6,d:.7,a:.4});}}
     if(b.t>14)b.o.position.y-=dt*2.5;if(b.t>17){b.done=true;SCN.remove(b.o);}}
   for(let i=BODIES.length-1;i>=0;i--)if(BODIES[i].done)BODIES.splice(i,1);
+  {for(let i=FLARES.length-1;i>=0;i--){const F=FLARES[i];F.t+=dt;if(F.t>=F.d)FLARES.splice(i,1);}
+   FLARES.sort((a,b)=>Math.hypot(a.x-CAM.position.x,a.y-CAM.position.z)-Math.hypot(b.x-CAM.position.x,b.y-CAM.position.z));
+   for(let k=0;k<Math.max(FLL.length,0);k++){const L=FLL[k],F=FLARES[k];if(!F){L.intensity=0;continue;}const fade=Math.min(1,F.t/1.2)*Math.min(1,(F.d-F.t)/5),fl=.9+.1*Math.sin(F.t*23)*Math.sin(F.t*9.1),hh=groundH(F.x,F.y)+Math.max(90,210-F.t*4);L.position.set(F.x,hh,F.y);L.intensity=26*fade*fl*LUX;L.distance=F.r*2.2;}
+   for(const F of FLARES){if(!inView(F.x,F.y,.4))continue;F.acc+=dt;if(F.acc<.1)continue;F.acc=0;const fade=Math.min(1,F.t/1.2)*Math.min(1,(F.d-F.t)/5);part({x:F.x,y:F.y,h:groundH(F.x,F.y)+Math.max(90,210-F.t*4),vh:0,add:true,c:[1,.95,.8],s:46*fade+8,d:.2,a:.55*fade});}}
   for(const L of MLIGHTS){if(L.intensity>0){L.intensity=Math.max(0,L.intensity*(1-dt/L.userData.d*2.2));if(L.intensity<.05*LUX)L.intensity=0;}}
   for(const L of LIGHTS){if(L.intensity>0){L.userData.t+=dt;L.intensity=Math.max(0,L.intensity*(1-dt/L.userData.d*2.2));if(L.intensity<.05*LUX)L.intensity=0;}}
   for(const S of SHOCKS){if(S.t>=S.d){if(S.m.material.opacity){S.m.material.opacity=0;S.m.scale.setScalar(.001);}continue;}S.t+=dt;const k=Math.min(1,S.t/S.d),e=1-(1-k)*(1-k)*(1-k);S.m.scale.setScalar(S.r0+(S.r1-S.r0)*e);S.m.material.opacity=S.a0*(1-k)*(1-k);}
