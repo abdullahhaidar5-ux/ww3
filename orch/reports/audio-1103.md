@@ -8,3 +8,6 @@ NOT shipped yet: KR, KP (Korean XTTS takes came out 4-6 s for 1-2 word lines = b
 Quality caveats: CPU run; one take per line with Whisper read-back QC (5 takes max) for non-Hindi; Hindi/Urdu (PK, IN) checked by length only; CU/others from the first pass have only a length sanity check (CU "Equipo antitanque listo" ~6 s long). IR/UA/IL use Piper/MMS as before. No human listening yet — samples in `orch/voices-1103/`.
 Music items (Asian stand-ins, real ney): obsolete — the synthesized per-nation score and `mus/as_pack.py` were replaced by the shared soundtrack; nothing to do.
 Test: `node orch/rolevoice.mjs` (ROLEVOICE PASS).
+
+## leftovers-1104 update
+KR/KP still NOT shipped: XTTS Korean on a 2-core CPU runs ~3 min per line (4-5 QC takes each), ~5 h for both nations. 19 of 54 KR lines done; raw takes saved on branch orch/leftovers-1104 (orch/vo/cache-kr-kp). Handoff has the exact resume steps and speed-up options. KR/KP keep their old shared lines meanwhile.
