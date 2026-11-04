@@ -1,0 +1,18 @@
+[0s] mp: opening 3 pages
+[5s] mp: pages open
+[5s] mp: lobby ifeos1
+[6s] mp: clients joined
+[175s] mp: battle loaded on all pages
+[175s] mp: playing 40s
+[215s] mp: checking sync
+[223s] mp attempt 1: ok
+
+                       mp        
+snap interval p95      156       
+snap jitter sd         60.33     
+order latency p95      108       
+client frame p95       58.7      
+desyncs                0         
+runtime 3.7 min
+
+SMOOTH PASS
