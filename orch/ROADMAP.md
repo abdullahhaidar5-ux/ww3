@@ -47,6 +47,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Phase 3 Terrain and world: real ground textures, gravel roads, wet shores, surf, lasting craters (PC; phones keep the light look)
 - [done] Phase 4 Light and effects: rolling fireballs, dust, smoke columns, lit muzzle flashes, theatre colour, steady shadows
 - [done] Realistic muzzle flashes, sparks only off armour, sandbagged defences
+- [done] Realistic vehicles: battle damage smoke/fire, nation kit (slat armour, cope cages, ERA, nets, jerrycans), real air force paint, Shahed/TB2/MQ/Lancet drones, ship details (2026-11-04)
 - [todo] Big explosions: replace the flat yellow first-instant ball
 - [doing] Phase 5 Massive columns: hundreds of units at a smooth frame rate (infantry merged, off-screen culling, no freeze on vehicle kills shipped; vehicles merged −40% draws; infantry next)
 - [todo] Phase 6 Device tiers: phones stay smooth with a lighter look, PCs get everything
