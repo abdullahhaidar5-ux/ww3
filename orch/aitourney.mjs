@@ -33,6 +33,7 @@ if (process.argv[2] === '--child') {
       if (m.hset) P.ev(`Object.assign(DIFF[2], ${JSON.stringify(m.hset)})`);
       W.start({ seed: m.seed, map: m.map, facs: m.facs, diff: m.diff });
       if (m.diffs) P.ev(`G.teams.forEach((T,i)=>{ if (T.ai) T.ai = mkAI(${JSON.stringify(m.diffs)}[i]); })`);
+      if (m.dcs) P.ev(`G.teams.forEach((T,i)=>{ T.gdoc=${JSON.stringify(m.dcs)}[i]; T.gperk={}; T._uk=null; })`);
       let st = null;
       const haul = [0, 0];
       const HAUL = `G.teams.map(T=>{let mx=0;const dr=G.ents.filter(e=>e.isB&&e.team===T.id&&(e.kind==='hq'||e.kind==='depot')&&e.built>=1&&!e.dead);for(const u of G.ents)if(u.team===T.id&&u.kind==='harv'&&!u.dead&&u.field){let d=1e9;for(const b of dr)d=Math.min(d,dist(b,u.field));if(d<1e9)mx=Math.max(mx,d);}return Math.round(mx);})`;
@@ -57,6 +58,8 @@ if (process.argv[2] === '--child') {
   const DIFF = Number(argS('diff', 1)), ADJ = Number(argS('adj', 1.5));
   const JOBS = Math.max(1, Number(argS('jobs', os.cpus().length)));
   const HVN = has('hard-vs-normal');
+  const DOC = has('doctrines');   // --doctrines : each side gets a General Doctrine (all ordered pairs in turn), table per doctrine
+  const DOCK = ['arm', 'gue', 'air', 'art'];
   // --hard-set cover=0,retreat=1 : try Hard with some DIFF settings changed (ablation tests)
   const HSET = argS('hard-set', '') ? Object.fromEntries(argS('hard-set').split(',').map(kv => { const [k, v] = kv.split('='); return [k, Number(v)]; })) : null;
   const OUT = argS('out', path.join(ROOT, 'orch', 'out', 'aitourney.json'));
@@ -67,7 +70,7 @@ if (process.argv[2] === '--child') {
       const sw = (k + r) % 2 === 1;
       const facs = sw ? [FAC[j], FAC[i]] : [FAC[i], FAC[j]];
       sched.push({ n: k, facs, map: MAPS[(k * 7 + r * 3) % MAPS.length], seed: (SEED * 1000 + k * 13 + r * 7919) >>> 0, diff: DIFF,
-        diffs: HVN ? [2, 1] : null, minutes: MIN, adj: ADJ, hset: HSET });
+        diffs: HVN ? [2, 1] : null, minutes: MIN, adj: ADJ, hset: HSET, dcs: DOC ? (() => { const pr = []; for (const a of DOCK) for (const b of DOCK) if (a !== b) pr.push([a, b]); return pr[k % pr.length]; })() : null });
       k++;
     }
   if (HVN) for (const m of sched) if (m.n % 2) { m.facs.reverse(); m.diffs = [1, 2]; } // Hard plays both slots
@@ -100,6 +103,7 @@ if (process.argv[2] === '--child') {
     r.facs.forEach((f, i) => { const s = T(f); s.g++; s.len += r.t / 60; if (r.winner === i) { s.w++; if (r.result === 'kill') s.kill++; else s.to++; } else if (r.winner < 0) { s.w += .5; s.d++; } });
     if (r.diffs) { hardG++; const hi = r.diffs.indexOf(2); hardW += r.winner === hi ? 1 : r.winner < 0 ? .5 : 0; }
   }
+  if (DOC) { const dt = {}; for (const r of res) { if (r.result === 'error' || !r.dcs) continue; r.dcs.forEach((d, i) => { const s = dt[d] || (dt[d] = { g: 0, w: 0 }); s.g++; if (r.winner === i) s.w++; else if (r.winner < 0) s.w += .5; }); } console.log('\ndoctrine win rates:'); for (const [d, s] of Object.entries(dt)) console.log(`  ${d}  ${s.g} games  ${(100 * s.w / s.g).toFixed(0)}%`); }
   const rows = Object.entries(tab).sort((a, b) => b[1].w / b[1].g - a[1].w / a[1].g);
   console.log('\nfac  games  win%   kills timeouts draws  avg-min');
   for (const [f, s] of rows) console.log(`${f.padEnd(4)} ${String(s.g).padStart(5)}  ${(100 * s.w / s.g).toFixed(0).padStart(4)}%  ${String(s.kill).padStart(5)} ${String(s.to).padStart(8)} ${String(s.d).padStart(5)}  ${(s.len / s.g).toFixed(1).padStart(6)}`);
