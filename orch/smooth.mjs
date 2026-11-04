@@ -27,7 +27,7 @@ const BASEF = path.join(ROOT, 'orch', 'smooth-baseline.json');
 const argN = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? Number(process.argv[i + 1]) : d; };
 const argS = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const has = k => process.argv.includes(k);
-const FRAMES = argN('frames', 45), MIN = argN('minutes', 4), EXTRA = argN('extra', 40), MPSECS = argN('mpsecs', 40);
+const FRAMES = argN('frames', 150), MIN = argN('minutes', 2), EXTRA = argN('extra', 40), MPSECS = argN('mpsecs', 40);
 const WANT = (argS('profile', 'all')).split(',');
 const UPDATE = has('--update-baseline');
 
@@ -54,22 +54,23 @@ const server = http.createServer((req, res) => {
 await new Promise(r => server.listen(0, '127.0.0.1', r));
 const ORIGIN = `http://127.0.0.1:${server.address().port}`, URL0 = ORIGIN + '/index.html';
 const { chromium } = await loadPlaywright();
-const ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required', '--enable-precise-memory-info'];
+const ARGS = ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required', '--enable-precise-memory-info', '--js-flags=--expose-gc'];
 const pct = (a, p) => { if (!a.length) return 0; const s = a.slice().sort((x, y) => x - y); return s[Math.min(s.length - 1, Math.floor(s.length * p))]; };
 const r2 = x => Math.round(x * 100) / 100;
 const TSTART = Date.now(); const LOG = m => console.log(`[${((Date.now() - TSTART) / 1000).toFixed(0)}s] ${m}`);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const gcHeap = async (cdp) => { try { await cdp.send('HeapProfiler.collectGarbage'); } catch {} };
+const gcHeap = async (page) => { try { await page.evaluate(() => { if (window.gc) { gc(); gc(); } }); } catch {} };
 
 // ============ battle profiles (pc / phone) ============
 async function battleProfile(name) {
   const PHONE = name === 'phone'; LOG(name + ': launching browser');
   const browser = await chromium.launch({ executablePath: findChromium(), args: ARGS });
   try {
-    const ctx = await browser.newContext(PHONE ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true } : { viewport: { width: 1600, height: 900 } });
+    const ctx = await browser.newContext(PHONE ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true } : { viewport: { width: 640, height: 360 } });
     LOG('ctx'); await guardContext(ctx); LOG('guarded');
     const page = await ctx.newPage(); LOG('page');
     await page.route('**/*', r => r.request().url().startsWith(ORIGIN) || r.request().url().startsWith('data:') || r.request().url().startsWith('blob:') ? r.continue() : r.abort());
+    page.on('console', m => { if (m.text().startsWith('SM:')) LOG(name + ' ' + m.text()); });
     const errs = []; page.on('pageerror', e => errs.push(String(e.message || e).slice(0, 200))); page.on('crash', () => errs.push('PAGE CRASHED'));
     await page.addInitScript(() => { try { localStorage.setItem('ww3_tut', '1'); localStorage.setItem('ww3_touchGuide', '1'); } catch (e) {} });
     LOG(name + ': loading page'); await page.goto(URL0, { waitUntil: 'load', timeout: 120000 }); LOG(name + ': page loaded');
@@ -80,14 +81,14 @@ async function battleProfile(name) {
     const bench = await page.evaluate(() => { let best = 1e9; for (let k = 0; k < 5; k++) { const t = performance.now(); let a = 0; for (let i = 0; i < 6e6; i++) a += Math.sqrt(i) * 1.0001; best = Math.min(best, performance.now() - t); } return best; });
     // start the battle (fixed nations/seed). Loading time = startSingle until the loading screen is gone.
     const T0 = Date.now();
-    const st = await page.evaluate(([gfx, seed]) => {
-      try { SET.gfx = gfx; applyGfx(); } catch (e) {}
+    const st = await page.evaluate(([gfx, seed, nightOn]) => {
+      if (gfx !== 'auto') try { SET.gfx = gfx; applyGfx(); } catch (e) {}
       setup.n = 7; setup.map = 'fulda'; setup.seed = seed;
-      try { const i = WX.findIndex(w => /night/i.test(w.n)); if (i >= 0) { setup.w = i; } } catch (e) {}
+      if (nightOn) try { const i = WX.findIndex(w => /night/i.test(w.n)); if (i >= 0) { setup.w = i; } } catch (e) {}
       const MR = Math.random; let z = seed * 2654435761 >>> 0; Math.random = () => ((z = (z * 1664525 + 1013904223) >>> 0) / 4294967296);
       try { startSingle(); } finally { Math.random = MR; } if (G.teams[0] && !G.teams[0].ai) G.teams[0].ai = mkAI(1);
       return { n: G.teams.length, gfx: SET.gfx, wx: (typeof WX !== 'undefined' && WX[WXI] && WX[WXI].n) || '' };
-    }, [PHONE ? 'low' : 'high', 3]);
+    }, [PHONE ? 'low' : 'auto', 3, has('--night')]);
     { const iv = setInterval(() => page.evaluate(() => (window.LOADING ? 'LOADING ' : 'done ') + (typeof LOAD !== 'undefined' && LOAD ? JSON.stringify(LOAD).slice(0, 120) : '')).then(x => LOG(name + ': ' + x)).catch(() => {}), 20000); await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }); clearInterval(iv); }
     const loadS = (Date.now() - T0) / 1000; LOG(name + ': battle loaded in ' + loadS.toFixed(0) + 's');
     await page.evaluate(() => { window.__stopLoop = true; }); await page.waitForTimeout(300);
@@ -107,24 +108,31 @@ async function battleProfile(name) {
     }, EXTRA);
     LOG(name + ': army in place'); const census = await page.evaluate(() => { let u = 0; for (const e of G.ents) if (!e.dead && !e.isB) u++; return { units: u, min: +(G.t / 3600).toFixed(1) }; });
     if (PHONE) await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
-    await gcHeap(cdp);
+    await gcHeap(page);
+    if (has('--probe')) for (let i = 0; i < 6; i++) LOG('probe frame ' + await page.evaluate(() => { const t = performance.now(); simUpdate(1 / 60); G.alpha = 1; const a = performance.now(); renderFrame(1 / 60); const b = performance.now(); R3.getContext().finish(); return [a - t, b - a, performance.now() - b, R3.info.render.calls].map(x => Math.round(x)).join('/'); }));
     LOG(name + ': measuring ' + FRAMES + ' frames');
-    const res = await page.evaluate(async (FR) => {
+    await page.evaluate(() => {
       const now = () => performance.now(), gl = R3.getContext();
       R3.info.autoReset = false;
-      const frame = (L) => {
-        const t0 = now(); for (const e of G.ents) if (!e.isB) { e.ox = e.x; e.oy = e.y; } simUpdate(1 / 60); G.alpha = 1; const t1 = now();
-        R3.info.reset(); renderFrame(1 / 60); const t2 = now(); gl.finish(); const t3 = now();
-        if (L) { L.sim.push(t1 - t0); L.cpu.push(t2 - t0); L.all.push(t3 - t0); L.calls += R3.info.render.calls; L.tris += R3.info.render.triangles; }
+      // software GL needs ~8 s to rasterise one frame of this battle and says nothing about a real GPU, so the draw commands are
+      // swallowed (three.js still counts calls/triangles): what is timed is everything the game's own code does per frame
+      for (const fn of ['drawElements', 'drawElementsInstanced', 'drawArrays', 'drawArraysInstanced', 'drawRangeElements']) if (gl[fn]) gl[fn] = function () {};
+      window.__L = { sim: [], cpu: [], all: [], calls: 0, tris: 0 };
+      window.__frame = (rec) => {
+        const L = window.__L, t0 = now(); for (const e of G.ents) if (!e.isB) { e.ox = e.x; e.oy = e.y; } simUpdate(1 / 60); G.alpha = 1; const t1 = now();
+        R3.info.reset(); renderFrame(1 / 60); const t3 = now(), t2 = t3; /* CPU-side frame: sim + scene + command submission. Software GL cannot give real GPU time (13 s/frame here), so it is not measured */
+        if (rec) { L.sim.push(t1 - t0); L.cpu.push(t2 - t0); L.all.push(t3 - t0); L.calls += R3.info.render.calls; L.tris += R3.info.render.triangles; }
+        return R3.info.programs.length;
       };
-      { let last = -1, same = 0; for (let i = 0; i < 8 && same < 2; i++) { frame(null); const n = R3.info.programs.length; same = n === last ? same + 1 : 0; last = n; } }
-      const prog0 = R3.info.programs.length;
-      const heap0 = performance.memory ? performance.memory.usedJSHeapSize : 0, w0 = now();
-      const L = { sim: [], cpu: [], all: [], calls: 0, tris: 0 };
-      for (let i = 0; i < FR; i++) { frame(L); if (i % 5 === 4) await new Promise(r => setTimeout(r, 0)); }
-      return { L, wall: now() - w0, heap0, newProg: R3.info.programs.length - prog0, qual: QUAL.lv, calls: L.calls / FR, tris: L.tris / FR };
-    }, FRAMES);
-    await gcHeap(cdp);
+    });
+    { let last = -1, same = 0; for (let i = 0; i < 12 && same < 3; i++) { const n = await page.evaluate(() => { return window.__frame(false); }); same = n === last ? same + 1 : 0; last = n; } LOG(name + ': warm-up done, ' + last + ' shaders'); }
+    const prog0 = await page.evaluate(() => R3.info.programs.length);
+    const heap0 = await page.evaluate(() => performance.memory ? performance.memory.usedJSHeapSize : 0), w0 = Date.now();
+    for (let i = 0; i < FRAMES; i++) { await page.evaluate(() => window.__frame(true)); if (i % 10 === 9) LOG(name + ': frame ' + (i + 1)); }
+    const res = await page.evaluate(() => ({ L: window.__L, newProg: 0, qual: QUAL.lv }));
+    res.newProg = (await page.evaluate(() => R3.info.programs.length)) - prog0; res.heap0 = heap0; res.wall = Date.now() - w0;
+    res.calls = res.L.calls / FRAMES; res.tris = res.L.tris / FRAMES;
+    await gcHeap(page);
     const heap1 = await page.evaluate(() => performance.memory ? performance.memory.usedJSHeapSize : 0);
     const L = res.L, worst = L.all.slice().sort((a, b) => b - a), nW = Math.max(1, Math.floor(L.all.length * .01));
     const avgWorst = worst.slice(0, nW).reduce((a, b) => a + b, 0) / nW;

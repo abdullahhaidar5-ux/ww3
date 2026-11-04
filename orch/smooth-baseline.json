@@ -1,0 +1,31 @@
+{
+ "meta": {
+  "updated": "2026-11-04",
+  "note": "SwiftShader (software GL) numbers: only for comparing builds. See orch/SMOOTH.md"
+ },
+ "pc": {
+  "name": "pc",
+  "bench": 14.6,
+  "loadS": 64.03,
+  "units": 321,
+  "gameMin": 0,
+  "wx": "Clear day",
+  "gfx": "auto",
+  "quality": 0,
+  "frameMed": 142.9,
+  "frameP95": 409.7,
+  "frameP99": 726.5,
+  "worst1Fps": 1.37,
+  "longFrames": 120,
+  "cpuMed": 142.9,
+  "cpuP95": 409.7,
+  "cpuMax": 727.7,
+  "simP95": 11.4,
+  "drawCalls": 1005,
+  "kTris": 6249,
+  "newShaders": 1,
+  "heapMB": -15.54,
+  "heapMBperMin": -36.79,
+  "frames": 120
+ }
+}
