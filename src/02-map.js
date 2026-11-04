@@ -2,6 +2,10 @@
 const COSB=0.894,BT=[0.894,0.447],BN=[-0.447,0.894];
 /* Maps: each defines water features (rivers, lakes), bridges, base slots (in fill order) and a symmetry used to place supply fairly.
    Water is baked into an edge field: M.edge(x,y) > 0 is water (value = distance in from the shore), < 0 is land. */
+
+// ---- naval maps: bridge between two islands (centre of the gap between their rims, pointing along the line joining them) ----
+function navGap(A,B){const dx=B.x-A.x,dy=B.y-A.y,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,rim=I=>1/Math.hypot(ux/(I.r*(I.rx||1)),uy/I.r),tA=rim(A),tB=rim(B),m=tA+(L-tA-tB)/2;return [A.x+ux*m,A.y+uy*m,ux,uy];}
+function navIsle(M,I){M.islands.push({x:I.x,y:I.y,r:I.r,rx:I.rx||1,rot:0,wob:I.w||(()=>0)});}
 const MAPS={
   strait:{name:'Desert Strait',min:2,max:8,sym:'point',tag:'desert · sea strait',desc:'A sea strait splits the desert. Three bridges.',
     slots:[[380,MAPH-360],[MAPW-380,360],[1150,MAPH-360],[MAPW-1150,360],[380,1150],[MAPW-380,MAPH-1150],[1780,MAPH-310],[MAPW-1780,310]],
@@ -221,6 +225,30 @@ const MAPS={
     water(M,R){const pts=[];for(let x=-300;x<=3500;x+=40)pts.push([x,1100+40*Math.sin((x-1600)*.003)]);M.rivers.push({pts,hw:()=>380});
       M.islands.push({x:1000,y:1100,r:110,rx:1.6,rot:0,wob:a=>.08*Math.sin(a*3)});M.bridgeAng.push([1000,850,0,1],[1000,1350,0,-1]);mirrorMap(M,'p');
       M.islands.push({x:1600,y:1100,r:120,rx:1.5,rot:0,wob:a=>.06*Math.cos(2*a)});M.bridgeAng.push([1600,850,0,1],[1600,1350,0,-1]);}},
+
+  coral:{name:'Coral Archipelago',min:2,max:2,sym:'point',fieldMinB:300,tag:'archipelago · straits · offshore oil · naval duel',desc:'Two island homes in a warm sea, with islets between them. Narrow straits for submarines and coastal missiles, bridges to fight over by land, and oil rigs out at sea for whoever rules the waves.',
+    slots:[[640,1100],[2560,1100]],oilAt:[[1600,1100],[1060,520],[2140,1680],[1060,1780],[2140,420],[1600,430,1],[1600,1770,1]],
+    water(M,R){M.lakes.push({x:1600,y:1100,r:6000,rx:1,wob:()=>0});const w=R()*6.28;
+      const H={x:640,y:1100,r:380,rx:1.3,w:a=>.07*Math.sin(a*3+w)},NW={x:1060,y:520,r:150,rx:1.2,w:a=>.05*Math.sin(a*2+w)},SW={x:1060,y:1780,r:150,rx:1.2,w:a=>.05*Math.cos(a*2+w)},C={x:1600,y:1100,r:150,rx:1.4};
+      for(const I of [H,NW,SW])navIsle(M,I);M.bridgeAng.push(navGap(H,NW),navGap(H,SW),navGap(NW,C),navGap(SW,C));mirrorMap(M,'p');navIsle(M,C);
+      for(const [x,y] of [[1600,430],[1600,1770]])navIsle(M,{x,y,r:75,rx:1});}},
+  hormuz:{name:'Hormuz Narrows',min:2,max:4,sym:'point',fieldMinB:300,tag:'desert strait · oil rigs · navy · two coasts',desc:'Two desert coasts face each other across a busy strait. Oil rigs stand in the channel, a rock island with a bridge splits it, and the only land route is the bridge - or the sea.',
+    slots:[[780,560],[2420,1640],[2420,560],[780,1640]],oilAt:[[1600,1100],[1000,1100,1],[2200,1100,1],[1600,520],[1600,1680]],
+    water(M,R){const pts=[];for(let x=-200;x<=3400;x+=40)pts.push([x,1100+36*Math.sin((x-1600)*.003)]);M.rivers.push({pts,hw:()=>300});M.bridgeAt=[[0,.12],[0,.88]];M.bridgeFrac=true;
+      navIsle(M,{x:1600,y:1100,r:130,rx:2.3,w:a=>.05*Math.sin(a*3)});M.bridgeAng.push([1600,885,0,1],[1600,1315,0,-1]);
+      for(const x of [1000,2200])navIsle(M,{x,y:1100,r:75,rx:1});}},
+  harbour:{name:'Delta Harbour',min:2,max:4,sym:'point',fieldMinB:300,tag:'harbour city · channel · open bays · landings',desc:'A port city on a channel that runs between two open bays. Bridges and an island district tie the banks together by land; fleets and landing craft fight for the harbour from the bays.',
+    slots:[[760,560],[2440,1640],[2440,560],[760,1640]],oilAt:[[1600,1100],[1600,520],[1600,1680],[300,1100,1],[2900,1100,1]],
+    water(M,R){const pts=[];for(let x=-200;x<=3400;x+=40)pts.push([x,1100+30*Math.sin((x-1600)*.004)]);M.rivers.push({pts,hw:()=>190});M.bridgeAt=[[0,.347],[0,.653]];M.bridgeFrac=true;
+      M.lakes.push({x:-100,y:1100,r:620,rx:1,wob:a=>.05*Math.sin(a*3)});M.lakes.push({x:3300,y:1100,r:620,rx:1,wob:a=>.05*Math.sin(-a*3)});
+      navIsle(M,{x:1600,y:1100,r:70,rx:2.4});M.bridgeAng.push([1600,970,0,1],[1600,1230,0,-1]);
+      for(const x of [300,2900])navIsle(M,{x,y:1100,r:75,rx:1});}},
+  atoll:{name:'Pacific Atolls',min:6,max:8,sym:'point',fieldMinB:300,tag:'ocean · island bases · offshore oil · big navies',desc:'Eight island bases ring a great ocean. Bridges link neighbours around the ring and to the central isle; rock-pad oil rigs sit in open water between them, and fleets and landings decide who holds them.',
+    slots:[[560,430],[2640,1770],[1600,380],[1600,1820],[2640,430],[560,1770],[560,1100],[2640,1100]],oilAt:[[1600,1100],[1100,760,1],[2100,1440,1],[1100,1440,1],[2100,760,1]],
+    water(M,R){M.lakes.push({x:1600,y:1100,r:6000,rx:1,wob:()=>0});const w=R()*6.28,mk=(x,y,k)=>({x,y,r:290,rx:1.45,w:a=>.05*Math.sin(a*3+w+k)});
+      const I=[mk(560,430,0),mk(1600,380,1),mk(2640,430,2),mk(2640,1100,3),mk(2640,1770,4),mk(1600,1820,5),mk(560,1770,6),mk(560,1100,7)],C={x:1600,y:1100,r:190,rx:1.5};
+      for(const i of I)navIsle(M,i);navIsle(M,C);for(let i=0;i<8;i++)M.bridgeAng.push(navGap(I[i],I[(i+1)%8]));for(const i of [1,3,5,7])M.bridgeAng.push(navGap(I[i],C));
+      for(const [x,y] of [[1100,760],[2100,1440],[1100,1440],[2100,760]])navIsle(M,{x,y,r:75,rx:1});}},
 };
 const MAP_KEYS=Object.keys(MAPS);
 // Start positions for 6 and 8 players: a ring around the middle, so every base has two neighbours and no one starts
@@ -416,7 +444,7 @@ function mkMap(seed,mk){
   const dry=(x,y,m)=>x>90&&y>90&&x<MAPW-90&&y<MAPH-90&&!M.cityNear(x,y,60)&&M.edge(x,y)<-(m||90)&&M.mtn(x,y)<-(m||90)*.8&&M.reach[Math.floor(y/CELL)*GW+Math.floor(x/CELL)]===1;
   M.fields=[];M.oil=[];
   // fixed derricks a map asks for (a central oil field): symmetric by design, so fair to everyone
-  for(const [ox,oy] of (D.oilAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>150))M.oil.push({x:X,y:Y,owner:-1,cp:[0,0],inc:0});}
+  for(const [ox,oy,sea] of (D.oilAt||[])){const X=ox*WK,Y=oy*WK;if((sea?(X>90&&Y>90&&X<MAPW-90&&Y<MAPH-90&&M.edge(X,Y)<-60&&M.mtn(X,Y)<-48):dry(X,Y,80))&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>150))M.oil.push(Object.assign({x:X,y:Y,owner:-1,cp:[0,0],inc:0},sea?{sea:1}:{}));}   // sea:1 = an offshore rig on a rock pad: ships beside it capture it too
   for(const [bx,by] of BASES){const a0=Math.atan2(MAPH/2-by,MAPW/2-bx);let put=false;for(let r of [390,430,350,470,300,250])for(let q=0;q<14&&!put;q++){const a=a0+(q%2?1:-1)*Math.ceil(q/2)*.35,fx=bx+Math.cos(a)*r,fy=by+Math.sin(a)*r;
       if(!dry(fx,fy,110))continue;if(BASES.some(([qx,qy])=>(qx!==bx||qy!==by)&&Math.hypot(qx-fx,qy-fy)<380))continue;if(M.fields.some(f=>Math.hypot(f.x-fx,f.y-fy)<220))continue;M.fields.push({x:fx,y:fy,r:46,amt:9000});put=true;}}
   // Neutral supply and oil, placed fairly for whichever start positions are in play: every base gets the same
