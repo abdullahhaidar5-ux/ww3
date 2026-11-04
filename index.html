@@ -4944,7 +4944,7 @@ const WEATHER={clear:{name:'Clear',vis:1,acc:1,spd:1,air:1},
 function weatherKinds(theme){return theme==='snow'?['clear','blizzard','fog']:theme==='green'?['clear','rain','fog']:['clear','sandstorm','fog'];}
 // A duel is fought on a field 1.3x the 3200x2200 design (about 300 infantry-lengths across, like a classic RTS 1v1
 // map); each extra player adds room (8 players: 2.26x).
-function worldScaleFor(n,mk){n=Math.max(2,Math.min(8,n|0||2));const D=mk&&typeof MAPS!=='undefined'&&MAPS[mk];return Math.round((D&&D.oldScale&&D.oldScale.includes(n)?1.56:1.95)*Math.pow(n/2,.4)*100)/100;} // +25% again (Abdullah 2026-10-30: "maps need to be bigger and more complex"; 2026-10-29 was 1.56; a map can keep 1.56 for player counts listed in oldScale, where the bigger ground gave a start position the edge)
+function worldScaleFor(n,mk){n=Math.max(2,Math.min(8,n|0||2));const D=mk&&typeof MAPS!=='undefined'&&MAPS[mk];return D&&D.cscale?D.cscale:Math.round((D&&D.oldScale&&D.oldScale.includes(n)?1.56:1.95)*Math.pow(n/2,.4)*100)/100;} // +25% again (Abdullah 2026-10-30: "maps need to be bigger and more complex"; 2026-10-29 was 1.56; a map can keep 1.56 for player counts listed in oldScale, where the bigger ground gave a start position the edge)
 // Player settings (graphics, volumes, game speed, HUD), saved per browser.
 const SET={gfx:'auto',mus:70,fx:100,vo:100,spd:1,hp:'dmg',edge:1,txt:1,scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1};try{Object.assign(SET,JSON.parse(localStorage.getItem('ww3_settings')||'{}'));}catch(e){}
 function saveSet(){try{localStorage.setItem('ww3_settings',JSON.stringify(SET));}catch(e){}}
@@ -5596,7 +5596,7 @@ function gridDist(grid,x,y){const N=GW*GH,D=new Float64Array(N).fill(1e9),ps=v=>
 // across. Every feature is mirrored across that halfway line, so both bases see the same ground. Anything that would
 // touch existing water, rock, a city, the map edge or a base is left out (as a mirrored pair). Design coords (3200x2200).
 // A map can opt out with plain:true, or for some player counts with plain:[n,...] (where AI batches found a hot seat).
-function addComplexity(M,D){M.woods=[];M.genCities=[];
+function addComplexity(M,D){M.woods=M.woods||[];M.genCities=[];
   if(D.plain===true||(D.plain||[]).includes(BASES.length)||M.islands.length)return;
   const S=BASES.map(([x,y])=>[x/WK,y/WK]),N=S.length,u=1/WK; // margins below are world units (bases don't grow with the map)if(N<2)return;
   const RV=M.rivers.slice(),RG=M.ridges.slice(),CT=(D.cities||[]).slice();
@@ -5696,13 +5696,15 @@ function mkMap(seed,mk){
   M.fields=[];M.oil=[];
   // fixed derricks a map asks for (a central oil field): symmetric by design, so fair to everyone
   for(const [ox,oy] of (D.oilAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>150))M.oil.push({x:X,y:Y,owner:-1,cp:[0,0],inc:0});}
+  // fixed supply fields a custom map asks for (map editor)
+  for(const [ox,oy] of (D.fieldAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.fields.every(f=>Math.hypot(f.x-X,f.y-Y)>150)&&M.oil.every(o=>Math.hypot(o.x-X,o.y-Y)>120))M.fields.push({x:X,y:Y,r:46,amt:9000});}
   for(const [bx,by] of BASES){const a0=Math.atan2(MAPH/2-by,MAPW/2-bx);let put=false;for(let r of [390,430,350,470,300,250])for(let q=0;q<14&&!put;q++){const a=a0+(q%2?1:-1)*Math.ceil(q/2)*.35,fx=bx+Math.cos(a)*r,fy=by+Math.sin(a)*r;
       if(!dry(fx,fy,110))continue;if(BASES.some(([qx,qy])=>(qx!==bx||qy!==by)&&Math.hypot(qx-fx,qy-fy)<380))continue;if(M.fields.some(f=>Math.hypot(f.x-fx,f.y-fy)<220))continue;M.fields.push({x:fx,y:fy,r:46,amt:9000});put=true;}}
   // Neutral supply and oil, placed fairly for whichever start positions are in play: every base gets the same
   // expansions at the same DRIVING distance inside its own part of the map, a contested field sits where the routes
   // between each pair of neighbours meet (equally far for both), and the contested oil is where everyone is as equally
   // far as the ground allows. Distances are real routes (around water, rock and cities), not straight lines.
-  {const NB=BASES.length,cellOf=(x,y)=>Math.floor(y/CELL)*GW+Math.floor(x/CELL),DB=BASES.map(([x,y])=>gridDist(grid,x,y));
+  if(!D.manual){const NB=BASES.length,cellOf=(x,y)=>Math.floor(y/CELL)*GW+Math.floor(x/CELL),DB=BASES.map(([x,y])=>gridDist(grid,x,y));
    const cand=[];for(let cy=1;cy<GH-1;cy+=2)for(let cx=1;cx<GW-1;cx+=2){const x=cx*CELL+CELL/2,y=cy*CELL+CELL/2;if(!dry(x,y,110))continue;const c=cy*GW+cx,d=DB.map(Q=>Q[c]);if(d.some(v=>v>=1e8))continue;
      let lo=1e9,hi=0;for(const v of d){lo=Math.min(lo,v);hi=Math.max(hi,v);}cand.push({x,y,d,lo,hi});}
    const eD=BASES.map((b,i)=>Math.min(...BASES.map((q,j)=>j===i?1e9:DB[i][cellOf(q[0],q[1])])));let E=Math.min(...eD);if(!(E<1e8))E=2600*WK;
@@ -5880,6 +5882,7 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
    BASES.forEach((B,i)=>{if(linked.has(i))return;const c=ends.filter(e=>!crosses(B,e)).sort((p,q)=>Math.hypot(p[0]-B[0],p[1]-B[1])-Math.hypot(q[0]-B[0],q[1]-B[1]));if(c.length){road([B,mid(B,c[0]),c[0]],34);return;}
      let hx=MAPW/2,hy=MAPH/2;const a=Math.atan2(hy-B[1],hx-B[0]);const L=Math.hypot(hx-B[0],hy-B[1]);for(let r=300;r<L;r+=20){const x=B[0]+Math.cos(a)*r,y=B[1]+Math.sin(a)*r;if(M.edge(x,y)>-170||M.mtn(x,y)>-120){hx=B[0]+Math.cos(a)*(r-40);hy=B[1]+Math.sin(a)*(r-40);break;}}
      if(!crosses(B,[hx,hy]))road([B,mid(B,[hx,hy]),[hx,hy]],34);});}
+  for(const rp of (M.roads||[]))road(rp.map(([x,y])=>[x*WK,y*WK]),36); // roads drawn in the map editor
   for(const [bx,by] of BASES){const R=276;
     // worn dirt apron blending pad into terrain
     const ap=t.createRadialGradient(bx,by,R*.9,bx,by,R*1.45);ap.addColorStop(0,'rgba(122,108,80,.75)');ap.addColorStop(1,'rgba(122,108,80,0)');t.fillStyle=ap;t.fillRect(bx-R*1.5,by-R*1.5,R*3,R*3);
@@ -5936,6 +5939,51 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
   srand=Math.random;
 }
 
+/* ================= CUSTOM MAPS (made in the map editor, shared as a code string) =================
+   A custom map is plain data in design units (3200 x 2200). Everyone who plays it builds the same MAPS entry from the same
+   canonical text, and its key (cm_<hash>) is a hash of that text, so host, clients and the Cloudflare server can check they
+   run the very same map. Existing maps are not touched. Fields (all arrays of integers):
+   nm name, n players, z size 0-3, th theme, sl start slots [x,y], rv rivers [halfwidth,x,y,x,y..], rg mountain ridges [halfwidth,x,y..],
+   rd roads [x,y,..], lk lakes [x,y,r], pk rocks [x,y,r], wd woods [x,y,r], ct towns [x,y,r,style], oil [x,y], fl supply [x,y],
+   br bridges [x,y,degrees across the river]. */
+const CM_SCALE=[1.5,2,2.6,3.2],CM_SIZES=['Small','Medium','Large','Huge'],CM_THEMES=['desert','snow','green'],CM_STYLES=['mideast','russia','europe','america','yemen','gulfcity','korea','asia','latin','southasia'];
+const CM={};
+function cmHash(str){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return ((h1>>>0).toString(36)+(h2>>>0).toString(36)).slice(0,14);}
+function cmCanon(o){
+  if(!o||typeof o!=='object')return null;const I=(v,a,b)=>Math.max(a,Math.min(b,Math.round(+v||0))),X=v=>I(v,0,3200),Y=v=>I(v,0,2200);
+  const arr=(a,max)=>Array.isArray(a)?a.slice(0,max):[];
+  const pt=(a,mx)=>arr(a,mx).filter(q=>Array.isArray(q)&&q.length>=2).map(q=>[X(q[0]),Y(q[1])]);
+  const line=(a,mx,np)=>{const out=[];for(const r of arr(a,mx)){if(!Array.isArray(r))continue;const w=I(r[0],10,400),p=[];for(let i=1;i+1<r.length&&p.length<np*2;i+=2)p.push(X(r[i]),Y(r[i+1]));if(p.length>=4)out.push([w,...p]);}return out;};
+  const road=a=>{const out=[];for(const r of arr(a,40)){if(!Array.isArray(r))continue;const p=[];for(let i=0;i+1<r.length&&p.length<160;i+=2)p.push(X(r[i]),Y(r[i+1]));if(p.length>=4)out.push(p);}return out;};
+  const sl=arr(o.sl,8).filter(q=>Array.isArray(q)&&q.length>=2).map(q=>[I(q[0],150,3050),I(q[1],150,2050)]);if(sl.length<2)return null;
+  const th=CM_THEMES.includes(o.th)?o.th:'desert';let nm=String(o.nm||'Custom map').replace(/[^A-Za-z0-9 _.'!+-]/g,'').trim().slice(0,28)||'Custom map';
+  return{v:1,nm,n:sl.length,z:I(o.z,0,3),th,sl,rv:line(o.rv,40,90),rg:line(o.rg,60,90),rd:road(o.rd),
+    lk:arr(o.lk,120).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],20,600)]),pk:arr(o.pk,200).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],12,200)]),
+    wd:arr(o.wd,200).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],40,300)]),ct:arr(o.ct,40).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],40,260),I(q[3],0,CM_STYLES.length-1)]),
+    oil:pt(o.oil,40),fl:pt(o.fl,40),br:arr(o.br,40).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],-180,180)])};}
+function cmB64(js){return btoa(js).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function cmUnb64(t){t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return atob(t);}
+// text -> map data (accepts the bare code, a share link containing #map=CODE, or the JSON itself); null when it is not a map
+function cmParse(src){try{if(src&&typeof src==='object')return src;src=String(src||'').trim();if(src.length>40000)return null;const m=src.match(/WW3MAP1:([A-Za-z0-9_-]+)/);
+  if(m)return JSON.parse(cmUnb64(m[1]));if(src[0]==='{')return JSON.parse(src);}catch(e){}return null;}
+function cmBuild(c,key){const cities=c.ct.map(([x,y,r,s])=>[x,y,r,CM_STYLES[s]]);
+  return{name:c.nm,min:2,max:c.sl.length,sym:'none',custom:1,cmKey:key,theme:c.th,tag:'custom map · '+CM_SIZES[c.z].toLowerCase(),desc:'A map made in the map editor.',
+    slots:c.sl.map(q=>q.slice()),plain:true,manual:!!(c.fl.length||c.oil.length),cscale:CM_SCALE[c.z],cities,oilAt:c.oil,fieldAt:c.fl,
+    water(M){for(const r of c.rv){const w=r[0],p=[];for(let i=1;i+1<r.length;i+=2)p.push([r[i],r[i+1]]);M.rivers.push({pts:cmDens(p,40),hw:()=>w});}
+      for(const r of c.rg){const w=r[0],p=[];for(let i=1;i+1<r.length;i+=2)p.push([r[i],r[i+1]]);M.ridges.push({pts:cmDens(p,40),hw:()=>w});}
+      for(const [x,y,r] of c.lk)M.lakes.push({x,y,r,rx:1,wob:()=>0});for(const [x,y,r] of c.pk)M.peaks.push({x,y,r,rx:1,rot:0});
+      for(const [x,y,d] of c.br){const a=d*Math.PI/180;M.bridgeAng.push([x,y,Math.cos(a),Math.sin(a)]);}
+      M.woods=c.wd.map(([x,y,r],i)=>({x,y,r,seed:i+1,ax:1,ay:0,m:0}));M.roads=c.rd.map(r=>{const p=[];for(let i=0;i+1<r.length;i+=2)p.push([r[i],r[i+1]]);return p;});}};}
+function cmDens(P,step){const out=[P[0]];for(let i=1;i<P.length;i++){const a=P[i-1],b=P[i],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/step));for(let j=1;j<=n;j++)out.push([a[0]+(b[0]-a[0])*j/n,a[1]+(b[1]-a[1])*j/n]);}return out;}
+// Register a custom map (data or code); returns its key, or null if it is not a valid map. Safe to call again for the same map.
+function registerCustomMap(src){const c=cmCanon(cmParse(src));if(!c)return null;const js=JSON.stringify(c),key='cm_'+cmHash(js);if(!MAPS[key])MAPS[key]=cmBuild(c,key);CM[key]={c,code:'WW3MAP1:'+cmB64(js)};return key;}
+// the share code of a registered custom map ('' for built-in maps)
+function customMapCode(key){return CM[key]?CM[key].code:'';}
+// Check a code that arrived with a battle against the map key it was announced under (host and clients must agree).
+function acceptCustomMap(key,code){if(typeof key!=='string'||!/^cm_/.test(key))return MAPS[key]?key:null;if(typeof code!=='string'){return MAPS[key]?key:null;}const k=registerCustomMap(code);return k===key?k:null;}
+// maps saved on this device (map editor) are known from the start, so a chosen custom battlefield survives a reload
+try{if(typeof localStorage!=='undefined'){const L=JSON.parse(localStorage.getItem('ww3_maps')||'[]');if(Array.isArray(L))for(const e of L)if(e&&typeof e.code==='string')registerCustomMap(e.code);}}catch(e){}
 /* ================= SIMULATION (authoritative; runs in single-player and on the host) ================= */
 let G=null,MODE='single',ME=0;
 // Battle events and the end of a battle, kept here so the simulation runs on its own (a server needs only 01-03).
@@ -7803,9 +7851,11 @@ const C_SMOKE=[.42,.4,.37],C_DARK=[.13,.12,.11],C_DUST=[.66,.58,.44],C_FIRE=[1,.
 function inView(x,y,m){if(!CAM)return true;TMP.set(x,0,y).project(CAM);return Math.abs(TMP.x)<1+m&&Math.abs(TMP.y)<1+m;}
 function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.min(18,4+(s/5|0)),gr=h<4;
   if(s<=10&&!big){for(let i=0;i<9;i++){const a=rnd(0,6.28),v=rnd(80,200);part({x,y,h:g+rnd(4,9),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(60,180),add:true,c:i%3?C_SPARK:[3,2.4,1.4],s:rnd(1,1.8),f:.5,grav:1,bounce:1,d:rnd(.25,.6)});}part({x,y,h:g+6,s:s*2.2,d:.06,add:true,c:[3.2,2.4,1.4]});}
-  part({x,y,h:g+s*.35,s:s*1.25,d:big?.18:.1,add:true,c:[1.9,.95,.35],a:.8});part({x,y,h:g+s*.5,s:s*.7,d:big?.35:.2,add:true,c:[2.4,1.3,.4],g:s*.8,a:.9});
+  // brief white-hot flash (a blink, not a lingering ball) then a lumpy fireball built of many small rolling puffs
+  part({x,y,h:g+s*.3,s:s*.75,d:big?.07:.05,add:true,c:[3.4,2.9,2.1],a:.7});
+  {const nl=big?9:4;for(let i=0;i<nl;i++){const a=rnd(0,6.28),r=rnd(0,s*.35),v=rnd(2,s*.5);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.1,s*.55),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(6,s*1.2),f:.2,rise:rnd(8,20),add:true,c:[2.6,1.2,.3],c2:[.6,.16,.04],ck:.5,s:rnd(s*.16,s*.3),g:s*.9,d:rnd(.3,.6),a:.8});}}
   const nf=Math.min(16,5+(s/4|0));for(let i=0;i<nf;i++){const a=rnd(0,6.28),r=rnd(0,s*.45),v=rnd(4,s*.9),hot=rnd(.8,1.15);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(1,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(8,s*1.6),f:.15,rise:rnd(6,18),c:[3.4*hot,1.5*hot,.4*hot],c2:i%3?[.5,.47,.42]:[.36,.34,.31],ck:rnd(.12,.25),s:rnd(s*.4,s*.7),g:s*.8,d:rnd(2,3.4),a:.62});}
-  for(let i=0;i<(n>>1);i++){const a=rnd(0,6.28),v=rnd(10,s*2);part({x,y,h:g+rnd(0,s*.6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(10,s*1.8),add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(s*.3,s*.6),g:s*.5,d:rnd(.25,.5),a:.7});}
+  for(let i=0;i<(n>>1);i++){const a=rnd(0,6.28),v=rnd(10,s*2);part({x,y,h:g+rnd(0,s*.6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(10,s*1.8),add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(s*.15,s*.34),g:s*.5,d:rnd(.25,.5),a:.5});}
   for(let i=0;i<n;i++){const a=rnd(0,6.28),v=rnd(5,s*.9);part({x:x+rnd(-s*.3,s*.3),y:y+rnd(-s*.3,s*.3),h:g+rnd(2,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,rise:rnd(16,34),c:i%4?C_SMOKE:C_DARK,c2:[.5,.47,.42],ck:.4,s:rnd(s*.4,s*.7),g:s*.6,d:rnd(2.2,3.8),a:.5});}
   if(gr&&s>8){const C_DIRT=[.42,.33,.22];for(let i=0;i<Math.min(16,5+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(10,s*1.6);part({x:x+rnd(-3,3),y:y+rnd(-3,3),h:g+2,vx:Math.cos(a)*v*.4,vy:Math.sin(a)*v*.4,vh:rnd(s*3,s*6),f:.5,grav:1,c:i%2?C_DIRT:[.3,.24,.17],s:rnd(s*.35,s*.6),g:s*1.1,d:rnd(.9,1.5),a:.75});}
     for(let i=0;i<Math.min(24,8+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(40,140)*(.5+s/40);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(90,260),c:[.22,.17,.12],s:rnd(1.6,3.2),f:.85,grav:1,bounce:1,d:rnd(1,1.8)});}}
@@ -7813,7 +7863,7 @@ function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.
   for(let i=0;i<n;i++){const a=rnd(0,6.28),v=rnd(90,260)*(.5+s/60);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(40,200),add:true,c:C_SPARK,s:1.4,f:.6,grav:1,d:rnd(.3,.7)});}
   if(s>10)for(let i=0;i<Math.min(12,s/3|0);i++){const a=rnd(0,6.28),v=rnd(30,130);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(80,220),c:C_DARK,s:rnd(1.4,2.8),f:.85,grav:1,bounce:1,d:rnd(1.2,2.2)});}
   // the fireball lingers and rolls upward, cooling from orange to dark red before the smoke takes over
-  if(s>=14&&!fxPH()){const nb=5;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.2,s*.6),vx:Math.cos(a)*rnd(3,s*.5),vy:Math.sin(a)*rnd(3,s*.5),vh:rnd(10,s*1.1),f:.2,rise:rnd(6,14),add:true,c:[3,1.35,.35],c2:[.55,.14,.03],ck:.7,s:rnd(s*.5,s*.8),g:s*1.1,d:rnd(.55,.95),a:.8});}}
+  if(s>=14&&!fxPH()){const nb=5;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.2,s*.6),vx:Math.cos(a)*rnd(3,s*.5),vy:Math.sin(a)*rnd(3,s*.5),vh:rnd(10,s*1.1),f:.2,rise:rnd(6,14),add:true,c:[2.4,.9,.22],c2:[.35,.1,.03],ck:.55,s:rnd(s*.3,s*.5),g:s*1.1,d:rnd(.55,.95),a:.6});}}
   // lingering dust: a low, wide cloud of ground-coloured dust that hangs over the impact and drifts off for several seconds
   if(gr&&s>=14&&!fxPH()){const th=G&&G.map?(G.map.theme==='snow'?'snow':G.map.theme==='green'?'green':'desert'):'desert',C=DUSTC[th],nd=Math.min(8,4+(s/10|0)),dk=th==='snow'?.92:.78;
     for(let i=0;i<nd;i++){const a=rnd(0,6.28),r=rnd(s*.2,s*.8);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(4,s*.35),vx:Math.cos(a)*rnd(4,14),vy:Math.sin(a)*rnd(4,14),vh:rnd(0,4),f:.5,rise:rnd(1,4),c:[C[i&1][0]*dk,C[i&1][1]*dk,C[i&1][2]*dk],c2:C[2],ck:.6,s:rnd(s*.9,s*1.4),g:rnd(s*.3,s*.45),d:rnd(6,9),a:th==='snow'?.3:.4});}}
@@ -7821,6 +7871,8 @@ function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.
   if(gr&&s>=18&&!big&&!fxPH())chunks(x,y,s*2.2,'#3e3a34',4);
   // a column of dark smoke keeps climbing from the biggest blasts long after the fire is out
   if(gr&&(big||s>=20&&!fxPH())&&inView(x,y,.3)){if(COLS.length>=12)COLS.shift();COLS.push({x,y,g,t:0,d:big?16:rnd(7,10),big:!!big,acc:0,G0:G});}
+  if(big&&!fxPH()){for(let i=0;i<10;i++){const a=rnd(0,6.28),v=rnd(20,s*1.4);part({x,y,h:g+rnd(2,s*.3),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(s*1.2,s*3.2),f:.3,grav:1,rise:rnd(4,10),c:C_DARK,c2:[.2,.18,.16],ck:.5,s:rnd(s*.14,s*.26),g:s*1.1,d:rnd(1.2,2.2),a:.8});}
+    for(let i=0;i<14;i++){const a=rnd(0,6.28),v=rnd(40,s*3);part({x,y,h:g+rnd(2,6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(60,s*6),c:i&1?[.16,.14,.12]:[.3,.25,.2],s:rnd(1.5,3.4),f:.7,grav:1,bounce:1,d:rnd(1.2,2.4)});}}
   scorch(x,y,s);if(gr&&s>=16&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9))crater(x,y,s*1.5);
   // pressure wave: a pale ring of dust racing outward along the ground; heavy hits leave a fire burning for a few seconds
   if(gr&&s>=14&&SHOCKS.length&&inView(x,y,.4)){const S=SHOCKS[shockI++%SHOCKS.length];S.t=0;S.d=big?.75:.45;S.r0=s*.5;S.r1=s*(big?6.5:4.2);S.a0=big?.6:.42;S.x=x;S.y=y;S.m.position.set(x,g+2.5,y);}
@@ -8312,7 +8364,7 @@ function syncScene(dt){const live=new Set();
       const moving=G.t-(e.mv||-9)<.15||(e.mvC>0);
       {const f=e.hp/e.max;if(f<.5&&!['inf','at','hacker','hero'].includes(c)&&Math.random()<dt*(f<.25?7:2.5)){const hh=gh+(s.dom==='air'?0:8);part({x:e.x+rnd(-3,3),y:e.y+rnd(-3,3),h:hh+4,rise:rnd(34,48),c:f<.25?C_DARK:C_SMOKE,c2:[.46,.44,.41],ck:rnd(.25,.4),s:rnd(3,5),g:6,d:rnd(1.6,2.4),a:.38});if(f<.25&&Math.random()<.5)part({x:e.x+rnd(-3,3),y:e.y+rnd(-3,3),h:hh,rise:14,add:true,c:C_FIRE,s:rnd(3,5),g:-3,d:rnd(.2,.4)});}}
       if(o.userData.mixers)playAnim(o,c==='hero'?(moving?'run':(G.t-(e.lastFire||-9)<1?'shoot':'aim')):'stand',dt);
-      if(P.body&&(o.userData.walker||['inf','at','hero','hacker'].includes(c))){if(o.userData.walker){const near=inView(e.x,e.y,.05);o.userData.wa=Math.max(0,Math.min(1,(o.userData.wa||0)+(moving?dt*5:-dt*5)));const wa=o.userData.wa;{const far=cam.dist>480;if(o.userData.farS!==far){o.userData.farS=far;o.traverse(q=>{if(q.userData&&q.userData.gear===2)q.visible=!far;});}}{const ud=o.userData,px=o.position.x,pz=o.position.z;if(ud.gpx!==undefined&&dt>0)ud.gv+=(Math.min(150,Math.hypot(px-ud.gpx,pz-ud.gpz)/dt)-ud.gv)*Math.min(1,dt*8);else ud.gv=0;ud.gpx=px;ud.gpz=pz;}const gv=Math.max(o.userData.gv,moving?8:0),run=Math.max(0,Math.min(1,(gv-12)/30)),ga=.38+.1*run,gs=.5-.29*run,pose=near&&cam.dist<760,br=!moving&&pose&&cam.dist<480;let k=0;for(const m of P.body.children){const W=m.userData.legs,ud=m.userData;if(ud.wph===undefined)ud.wph=(e.id*.618+k*.31)%1;if(wa>0&&W)ud.wph=(ud.wph+dt*gs*gv/Math.max(1,gSweep(W,ga,run)))%1;m.position.y=0;m.rotation.x=0;m.rotation.z=0;const b=br?.018*Math.sin(G.t*1.7+e.id+k*2.1):0;if(pose&&W&&(wa>0||ud.wl||b))m.position.y=walkPose(m,ud.wph,wa,ga,gs,run,b);ud.wl=wa>0||b!==0;k++;}}else if(o.userData.cleric){P.body.position.y=moving?Math.abs(Math.sin(G.t*5+e.id))*.22:0;P.body.rotation.x=moving?Math.sin(G.t*5+e.id)*.03:0;}else P.body.position.y=moving&&!o.userData.mixers?Math.abs(Math.sin(G.t*12+e.id))*1.2:0;}
+      if(P.body&&(o.userData.walker||['inf','at','hero','hacker'].includes(c))){if(o.userData.walker){const near=inView(e.x,e.y,.05);o.userData.wa=Math.max(0,Math.min(1,(o.userData.wa||0)+(moving?dt*5:-dt*5)));const wa=o.userData.wa;{const far=cam.dist>480;if(o.userData.farS!==far){o.userData.farS=far;o.traverse(q=>{if(q.userData&&q.userData.gear===2)q.visible=!far;if(q.name==='soldier')q.visible=!far;else if(q.name==='soldierLo')q.visible=far;});}}{const ud=o.userData,px=o.position.x,pz=o.position.z;if(ud.gpx!==undefined&&dt>0)ud.gv+=(Math.min(150,Math.hypot(px-ud.gpx,pz-ud.gpz)/dt)-ud.gv)*Math.min(1,dt*8);else ud.gv=0;ud.gpx=px;ud.gpz=pz;}const gv=Math.max(o.userData.gv,moving?8:0),run=Math.max(0,Math.min(1,(gv-12)/30)),ga=.38+.1*run,gs=.5-.29*run,pose=near&&cam.dist<760,br=!moving&&pose&&cam.dist<480;let k=0;for(const m of P.body.children){const W=m.userData.legs,ud=m.userData;if(ud.wph===undefined)ud.wph=(e.id*.618+k*.31)%1;if(wa>0&&W)ud.wph=(ud.wph+dt*gs*gv/Math.max(1,gSweep(W,ga,run)))%1;m.position.y=0;m.rotation.x=0;m.rotation.z=0;const b=br?.018*Math.sin(G.t*1.7+e.id+k*2.1):0;if(pose&&W&&(wa>0||ud.wl||b))m.position.y=walkPose(m,ud.wph,wa,ga,gs,run,b);ud.wl=wa>0||b!==0;k++;}}else if(o.userData.cleric){P.body.position.y=moving?Math.abs(Math.sin(G.t*5+e.id))*.22:0;P.body.rotation.x=moving?Math.sin(G.t*5+e.id)*.03:0;}else P.body.position.y=moving&&!o.userData.mixers?Math.abs(Math.sin(G.t*12+e.id))*1.2:0;}
       if(c==='hero'&&P.body&&!o.userData.model){const hid=e.hid;P.body.material=hid?(MAT.stealth||(MAT.stealth=new THREE.MeshStandardMaterial({vertexColors:true,transparent:true,opacity:.35}))):MAT.std;}
       if(c==='jet'&&!e.landed){const ud=o.userData;o.rotation.order='YZX';const tr=angDiff(ud.pjy??e.va,e.va)/Math.max(dt,1e-3);ud.pjy=e.va;ud.bk=(ud.bk||0)+((Math.max(-1.05,Math.min(1.05,-tr*.55)))-(ud.bk||0))*Math.min(1,dt*3);
         const vy=(gh-(ud.pgh??gh))/Math.max(dt,1e-3);ud.pgh=gh;ud.pc=(ud.pc||0)+((Math.max(-.6,Math.min(.6,Math.atan2(vy,Math.max(60,e.s.spd)))))-(ud.pc||0))*Math.min(1,dt*3);o.rotation.x=ud.bk;o.rotation.z=ud.pc;
@@ -8613,8 +8665,8 @@ async function hostCF(again){if(!NET.room||NET.code||NET.game)return;const code=
   return hostBrowser();}
 // the owner's lobby settings as the server wants them ('bset')
 // (start spots, 'st', only when someone picked one: a lobby without picks sends exactly what it did before)
-function cfCfg(){const nh=NET.lobby.length+1,st=lobSt(),o={map:setup.map||'strait',w:setup.w|0,tm:(NET.tm||[]).slice(0,nh).map(v=>v|0),ais:(NET.ais||[]).map((a,j)=>Object.assign({f:a.f,d:a.d|0,tm:a.tm|0},a.p?{p:persCode(a.p)}:{},st[nh+j]>=0?{st:st[nh+j]}:{}))};if(st.slice(0,nh).some(v=>v>=0))o.st=st.slice(0,nh);return o;}
-function cfCfgOf(b){const hs=(b.seats||[]).filter(s=>s.h),as=(b.seats||[]).filter(s=>s.ai),o={map:b.map,w:b.w|0,tm:hs.map(s=>s.tm|0),ais:as.map(s=>Object.assign({f:s.f,d:s.d|0,tm:s.tm|0},s.p?{p:persCode(s.p)}:{},s.st>=0?{st:s.st|0}:{}))};if(hs.some(s=>s.st>=0))o.st=hs.map(s=>s.st>=0?s.st|0:-1);return o;}
+function cfCfg(){const nh=NET.lobby.length+1,st=lobSt(),o={map:setup.map||'strait',w:setup.w|0,tm:(NET.tm||[]).slice(0,nh).map(v=>v|0),ais:(NET.ais||[]).map((a,j)=>Object.assign({f:a.f,d:a.d|0,tm:a.tm|0},a.p?{p:persCode(a.p)}:{},st[nh+j]>=0?{st:st[nh+j]}:{}))};if(st.slice(0,nh).some(v=>v>=0))o.st=st.slice(0,nh);if(MAPS[o.map]&&MAPS[o.map].custom)o.cm=customMapCode(o.map);return o;}
+function cfCfgOf(b){const hs=(b.seats||[]).filter(s=>s.h),as=(b.seats||[]).filter(s=>s.ai),o={map:b.map,w:b.w|0,tm:hs.map(s=>s.tm|0),ais:as.map(s=>Object.assign({f:s.f,d:s.d|0,tm:s.tm|0},s.p?{p:persCode(s.p)}:{},s.st>=0?{st:s.st|0}:{}))};if(hs.some(s=>s.st>=0))o.st=hs.map(s=>s.st>=0?s.st|0:-1);if(b.cm&&MAPS[b.map]&&MAPS[b.map].custom)o.cm=b.cm;return o;}
 // send the owner's edits (only real changes); until the server's answer reflects them, older lobby states are ignored
 function cfPush(force){const C=NET.cf;if(!C||!C.own||!NET.game)return;const js=JSON.stringify(cfCfg());if(!force&&(C.blob&&JSON.stringify(cfCfgOf(C.blob))===js||C.pend&&C.pend.js===js))return;
   C.pend={js,until:performance.now()+2500};NET.game.emit('bset',JSON.parse(js)).catch(()=>{});}
@@ -8693,7 +8745,7 @@ function lobSides(n){const nh=NET.lobby.length+1,cfb=NET.cf&&NET.cf.own&&NET.cf.
 function launchMP(){if(NET.cf&&NET.cf.own){if(MODE!=='single'||!NET.game)return;const c=cfCfg();NET.cf.pend=null;NET.game.emit('bset',Object.assign(c,{seed:(Math.random()*1e9)|0,start:1})).catch(()=>{});$('mpstatus').querySelectorAll('.startbtn').forEach(b=>{b.disabled=true;b.textContent='Starting…';});return;}
   if(MODE!=='single'||!NET.lobby.length)return;const seed=(Math.random()*1e9)|0;const ais=(NET.ais||[]).slice(0,Math.max(0,(MAPS[setup.map]||MAPS.strait).max-1-NET.lobby.length)).map(a=>({f:FKEYS.includes(a.f)?a.f:FKEYS[0],d:Math.max(0,Math.min(2,a.d|0)),p:persCode(a.p),tm:Math.max(0,Math.min(7,a.tm|0))}));const facs=[setup.p,...NET.lobby.map(p=>p.f),...ais.map(a=>a.f)];NET.peers=[null,...NET.lobby.map(p=>p.peer),...ais.map(()=>null)];NET.toks=[null,...NET.lobby.map(p=>p.tok||null),...ais.map(()=>null)];
   const aiD=[null,...NET.lobby.map(()=>null),...ais.map(a=>(a.d|0)+10*persCode(a.p))];NET.opp=NET.peers[1];
-  const map=setup.map||'strait';const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};const ids=idLobbyIds().slice(0,facs.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0,ids},sp)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined,sp:1}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0},sp);const LS=(NET.lobbySpec||[]).slice();NET.lobbySpec=[];startMP('host',seed,facs,0,map,tm,aiD,st,ids);NET.specs=[];for(const q of LS)specJoin(q);}
+  const map=setup.map||'strait',cmx=MAPS[map]&&MAPS[map].custom?{cm:customMapCode(map)}:{};const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};const ids=idLobbyIds().slice(0,facs.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0,ids},sp,cmx)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined,sp:1}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0},sp,cmx);const LS=(NET.lobbySpec||[]).slice();NET.lobbySpec=[];startMP('host',seed,facs,0,map,tm,aiD,st,ids);NET.specs=[];for(const q of LS)specJoin(q);}
 // Joining: each player has a reconnect token for this game (kept for the browser tab), so if the link drops - or the
 // page is reloaded - they rejoin as the same commander. Client handlers are wired by wireClient() so a reconnect can
 // rebuild them on the new connection.
@@ -8705,12 +8757,12 @@ function wireClient(g){
     if(m.data.pw){clearInterval(NET.helloI);const jp=NET.joinP;leaveNet();pwRefused(jp,m.data.pw==='limit'?'pwlimit':m.data.pw==='need'?'needpw':'badpw');return;}
     NET.joined=1;if(m.data.full){clearInterval(NET.helloI);$('mpstatus').textContent=m.data.spec?`This battle already has ${SPEC_MAX} spectators.`:'That game is full.';leaveNet();return;}if(NET.cf&&NET.cf.own)return;$('mpstatus').textContent=NET.wantSpec?`👁 Watching. ${m.data.n} players in the lobby. The battle shows here when the leader starts it…`:`Joined. ${m.data.n} players in the lobby. Waiting for the leader to start the battle…`;}});
   // a battle hosted on Cloudflare: the whole lobby, from the server ('own': this player sets it up and starts it)
-  g.on('blob',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;const b=m.data;NET.joined=1;
+  g.on('blob',m=>{if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;const b=m.data;NET.joined=1;if(typeof b.map==='string'&&/^cm_/.test(b.map)&&!acceptCustomMap(b.map,b.cm)){$('mpstatus').textContent='This battle uses a custom map that did not arrive intact. Try joining again.';leaveNet();return;}
     if((b.pv|0)!==NET_PV){$('mpstatus').textContent='You and the game server have different versions of the game. Close the game and open it again to update, then try again.';leaveNet();return;}
     NET.cf=NET.cf||{};NET.cf.blob=b;if(b.own){NET.cf.own=1;mpIn(1);if(cfApply())renderLobby();return;}NET.cf.own=0;
     const n=(b.seats||[]).filter(s=>s.h).length;$('mpstatus').textContent=NET.wantSpec?`👁 Watching. ${n} player${n===1?'':'s'} in the lobby. The battle shows here when the leader starts it…`:`Joined. ${n} player${n===1?'':'s'} in the lobby. Waiting for the leader to start the battle…`;});
   g.on('start',m=>{if(MODE==='client'){if(m.peer===NET.hostPeer&&m.data&&m.data.to&&m.data.to===NET.myPeer)NET.ackW=performance.now();return;} // mid-battle: the battle has linked this player back in (hostRejoin)
-  if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV&&!((d.pv|0)===NET_PVS&&Array.isArray(d.st))){$('mpstatus').textContent='You and the battle\'s leader have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<(d.sv||d.sp?0:1)||sl>=d.facs.length)return;if(!!d.sp!==!!NET.wantSpec)return;const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
+  if(m.peer!==NET.hostPeer||!m.data||m.data.to!==NET.myPeer||MODE!=='single')return;clearInterval(NET.helloI);const d=m.data;if((d.pv|0)!==NET_PV&&!((d.pv|0)===NET_PVS&&Array.isArray(d.st))){$('mpstatus').textContent='You and the battle\'s leader have different versions of the game. Both of you: close the game and open it again to update, then rejoin.';leaveNet();return;}if(!Array.isArray(d.facs)||d.facs.length<2||d.facs.length>8||!d.facs.every(f=>FKEYS.includes(f)))return;const sl=d.slot|0;if(sl<(d.sv||d.sp?0:1)||sl>=d.facs.length)return;if(!!d.sp!==!!NET.wantSpec)return;if(typeof d.map==='string'&&/^cm_/.test(d.map)&&!acceptCustomMap(d.map,d.cm)){$('mpstatus').textContent='This battle uses a custom map that did not arrive intact (its check code does not match yours). Ask the leader to start again.';leaveNet();return;}const map=MAPS[d.map]?d.map:'strait';const tm=Array.isArray(d.tm)&&d.tm.length===d.facs.length?d.tm.map(v=>Math.max(0,Math.min(7,v|0))):null;// the host's battle Conditions (light/weather look); Random (-1) resolves from the shared seed, so it matches too.
   // An old host sends no 'w': the player's own menu choice stays, as before.
   if(typeof d.w==='number'&&d.w>=-1&&d.w<=5){if(NET.ownW==null)NET.ownW=setup.w;wxSet(d.w|0);}
   // sv: the host is the game server (Cloudflare), which has no side of its own, so this player may be slot 0
@@ -8912,7 +8964,7 @@ function tokHash(t){t='ww3tok|'+String(t);let a=0x811c9dc5|0,b=0x9e3779b9|0;for(
 function tokIx(tok){if(!tok||typeof tok!=='string'||tok.startsWith('h:')||!NET.toks)return -1;let ix=NET.toks.indexOf(tok);if(ix<0){const h='h:'+tokHash(tok);ix=NET.toks.indexOf(h);}return ix;}
 function tokSafe(){return NET.toks?NET.toks.map(t=>typeof t==='string'&&t?(t.startsWith('h:')?t:'h:'+tokHash(t)):null):null;}
 function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=tokIx(tok);if(ix<0||ix===ME)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.toks[ix]=tok;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,((NET.cseqSlot||[])[ix]||0));
-  const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',Object.assign({pv:S.st?NET_PVS:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm,w:S.w|0},S.sv?{sv:1}:{},S.st?{st:S.st}:{})).catch(()=>{});
+  const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',Object.assign({pv:S.st?NET_PVS:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm,w:S.w|0},S.sv?{sv:1}:{},S.st?{st:S.st}:{},S.cm?{cm:S.cm}:{})).catch(()=>{});
   for(const O of G.teams)log(O.id,`${T.F.name}'s commander reconnected.`,'g');
   // P2P: the rejoined player starts from a fresh map, so collapsed city blocks are re-sent as they come into view
   if(hostP2P()){(NET.gq=NET.gq||[])[ix]=[];(NET.civQ=NET.civQ||[])[ix]=(G.civ||[]).map((c,i)=>c.dead?i:-1).filter(i=>i>=0);}}
@@ -10321,7 +10373,7 @@ function mapPreview(k,cv){const c=cv.getContext('2d'),W=cv.width,H=cv.height;con
 function syncAiN(){const mx=(MAPS[setup.map]||MAPS.strait).max-1;if($('aiN'))$('aiN').querySelectorAll('button').forEach(b=>{b.disabled=+b.dataset.n>mx;});if(setup.n>mx){setup.n=[1,2,3,5,7].filter(v=>v<=mx).pop();$('aiN').querySelectorAll('button').forEach(x=>x.classList.toggle('on',+x.dataset.n===setup.n));$('start').textContent=setup.n>1?`Deploy vs ${setup.n} AI`:'Deploy vs AI';}}
 function mapCards(){const el=$('pickMap');if(!el)return;if(!setup.map)setup.map=(typeof SET!=='undefined'&&SET.map&&MAPS[SET.map])?SET.map:'strait';el.className='';el.innerHTML='';const box=document.createElement('div');box.className='mapsel';
   const cv=document.createElement('canvas');cv.id='mapCv';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Map preview: tap a numbered spot to choose who starts there');cv.onclick=e=>{if(!PREV[setup.map])return;const n=skSides().length,k=spotsHit(cv,e,setup.map,n);if(k<0)return;try{sfxUI(700);}catch(_){}skSet(spotsCycle(skSt(n),k));};const right=document.createElement('div');const sel=document.createElement('select');sel.id='mapSel';sel.setAttribute('aria-label','Battlefield');
-  for(const k of MAP_KEYS){const o=document.createElement('option');o.value=k;const hm=(MAPS[k].home||[]).map(f=>FACTIONS[f]&&FACTIONS[f].name).filter(Boolean);o.textContent=`${MAPS[k].name}${hm.length?' · home of '+hm.join(' & '):''} (${MAPS[k].min}–${MAPS[k].max} players)`;sel.append(o);}sel.value=setup.map;
+  for(const k of MAP_KEYS){const o=document.createElement('option');o.value=k;const hm=(MAPS[k].home||[]).map(f=>FACTIONS[f]&&FACTIONS[f].name).filter(Boolean);o.textContent=`${MAPS[k].name}${hm.length?' · home of '+hm.join(' & '):''} (${MAPS[k].min}–${MAPS[k].max} players)`;sel.append(o);}if(typeof editorAddMaps==='function')editorAddMaps(sel);sel.value=setup.map;
   const pl=document.createElement('div');pl.className='pl';const dc=document.createElement('div');dc.className='dc';const sn=document.createElement('div');sn.className='dc';sn.id='slotNote';right.append(sel,pl,dc,sn);box.append(cv,right);el.append(box);
   const show=()=>{const D=MAPS[setup.map];const base=(D.min===D.max?`${D.max} players`:`${D.min}–${D.max} players`)+(D.theme==='snow'?' · snow & ice':'');pl.textContent=base+(D.tag?' · '+D.tag:'');dc.textContent=D.desc;
     setTimeout(()=>{try{const r=mapPreview(setup.map,cv);if(r){const t=[base];if(D.tag)t.push(D.tag);else if(r.water>.28)t.push('naval-heavy');else if(r.water>.06)t.push('rivers & coast');else t.push(r.bridges?'rivers':'open land');if(!D.tag&&r.mtn>.05)t.push('mountain passes');if(r.bridges)t.push(r.bridges+(r.bridges>1?' bridges':' bridge'));pl.textContent=t.join(' · ');}}catch(e){}},20);};
@@ -12075,6 +12127,17 @@ function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)re
 // into ONE skinned, vertex-coloured mesh per soldier (kit rides its bone as a rigidly skinned part), so a squad costs 3.
 // The merged shape is built once per nation / team colour / unit type and shared by every soldier that looks the same.
 const SOLM={};
+// Distant soldier: the merged soldier mesh is thinned by vertex clustering (nearby vertices snap together, tiny triangles vanish)
+// into a cheap skinned mesh on the same skeleton. Shown instead of the full one when the camera is far (see 06-view), so big
+// crowds cost far fewer vertices to skin and shade. Built once per shape, shared like the full mesh.
+function lowSoldierGeo(g){const pa=g.attributes.position,n=pa.count,ix=g.index.array;g.computeBoundingBox();const bb=g.boundingBox,h=Math.max(.001,bb.max.y-bb.min.y),cs=h/17,map=new Map(),rep=new Int32Array(n),first=[],sum=[];
+  for(let i=0;i<n;i++){const x=pa.getX(i),y=pa.getY(i),z=pa.getZ(i),k=Math.floor((x-bb.min.x)/cs)+','+Math.floor((y-bb.min.y)/cs)+','+Math.floor((z-bb.min.z)/cs);let r=map.get(k);if(r===undefined){r=first.length;map.set(k,r);first.push(i);sum.push([0,0,0,0]);}rep[i]=r;const q=sum[r];q[0]+=x;q[1]+=y;q[2]+=z;q[3]++;}
+  const m=first.length,P=new Float32Array(m*3),idx=[];for(let r=0;r<m;r++){const q=sum[r];P[r*3]=q[0]/q[3];P[r*3+1]=q[1]/q[3];P[r*3+2]=q[2]/q[3];}
+  const seen=new Set();for(let t=0;t<ix.length;t+=3){const a=rep[ix[t]],b=rep[ix[t+1]],c=rep[ix[t+2]];if(a===b||b===c||a===c)continue;const key=[a,b,c].sort((u,v)=>u-v).join('_');if(seen.has(key))continue;seen.add(key);idx.push(a,b,c);}
+  const lo=new THREE.BufferGeometry();lo.setAttribute('position',new THREE.BufferAttribute(P,3));
+  for(const nm of ['color','uv','skinIndex','skinWeight']){const A=g.attributes[nm];if(!A)continue;const sz=A.itemSize,arr=new (nm==='skinIndex'?Uint16Array:Float32Array)(m*sz);for(let r=0;r<m;r++)for(let k=0;k<sz;k++)arr[r*sz+k]=A.getComponent(first[r],k);lo.setAttribute(nm,new THREE.BufferAttribute(arr,sz));}
+  // normals: rebuilt from the thinned faces, so the rounded far soldier still shades smoothly
+  lo.setIndex(new THREE.BufferAttribute(m>65535?new Uint32Array(idx):new Uint16Array(idx),1));lo.computeVertexNormals();return lo;}
 function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false;const sk=[];inner.traverse(o=>{if(o.isSkinnedMesh)sk.push(o);});if(!sk.length)return false;
   const skel=sk[0].skeleton;if(!skel||sk.some(o=>!o.skeleton||o.skeleton.bones.length!==skel.bones.length||o.skeleton.bones.some((b,i)=>b!==skel.bones[i])||Array.isArray(o.material)||!o.geometry.attributes.skinIndex))return false;
   const gear=[];skel.bones.forEach((b,bi)=>{for(const c of b.children)if(c.isMesh&&c.userData.gear&&!c.isSkinnedMesh)gear.push([c,bi]);});
@@ -12107,6 +12170,8 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     if(tex){const ob=src.onBeforeCompile,ck=src.customProgramCacheKey;mat.onBeforeCompile=(sh,r)=>{if(ob)ob.call(src,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#ifdef USE_MAP\nvec4 sampledDiffuseColor=texture2D(map,vMapUv);if(vMapUv.x<-2.)sampledDiffuseColor=vec4(1.);diffuseColor*=sampledDiffuseColor;\n#endif');};
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
     E=SOLM[key]={geo,mat,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
+  if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}
+  if(E.lo){const lm=new THREE.SkinnedMesh(E.lo,E.mat);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
@@ -12719,5 +12784,262 @@ function campPanel(){
 }
 setInterval(()=>{try{campPanel();}catch(e){}},400);
 (function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Campaign';b.title='Five single-player missions for Iran, the Mountain Shias and the Coffee Shias';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();
+/* ================= MAP EDITOR (Abdullah 2026-11-03) =================
+   Full-screen editor opened from the main menu. A map is the plain data described in 02-map.js (CUSTOM MAPS). Painting works
+   in design units (3200 x 2200); the Mirror setting repeats every stroke so symmetric maps are quick to make. Saved maps live
+   in localStorage ('ww3_maps'); Share = a code string / link / file; a custom map is used in skirmish and online lobbies
+   like any built-in one (the host sends its code along with the battle, and everyone checks its hash). */
+const ED_LIB_KEY='ww3_maps',ED_DRAFT_KEY='ww3_ed_draft';
+const ED={c:null,tool:'raise',brush:70,mirror:'off',style:0,undo:[],redo:[],view:{x:0,y:0,z:1},ptrs:new Map(),stroke:null,snap:null,showPrev:false,prevImg:null,prevT:0,tmpKeys:new Set(),res:null,open:false,msg:'',cur:null};
+const ED_TOOLS=[['pan','✋','Move','Drag to move the view. Two fingers or the mouse wheel zoom.'],['raise','⛰','Raise','Paint mountains (rock you cannot drive over).'],
+  ['lower','🕳','Lower','Dig ponds and lakes (water).'],['flat','▭','Flatten','Clear mountains and ponds under the brush.'],
+  ['river','🌊','River','Drag to draw a river. Add a bridge or the two sides cannot reach each other.'],['bridge','🌉','Bridge','Tap a river to put a bridge across it (or drag across the water).'],
+  ['road','🛣','Road','Drag to lay a road.'],['forest','🌲','Forest','Paint woods: cover for infantry, slows vehicles.'],['rocks','🪨','Rocks','Stamp small rock outcrops.'],
+  ['town','🏘','Town','Tap to put a town of civilian buildings.'],['oil','🛢','Oil','Tap to put an oil derrick.'],['supply','📦','Supply','Tap to put a supply field.'],
+  ['start','🚩','Start','Tap to place a start position (numbered in the order placed).'],['erase','🧽','Erase','Remove anything under the brush.']];
+const ED_STYLE_NAMES=['Middle East','Russia','Europe','America','Yemen','Gulf city','Korea','Asia','Latin America','South Asia'];
+function edBlank(){return{nm:'My map',n:2,z:1,th:'desert',sl:[],rv:[],rg:[],rd:[],lk:[],pk:[],wd:[],ct:[],oil:[],fl:[],br:[]};}
+function edVars(){const m=ED.mirror;return m==='x'?[[1,1],[-1,1]]:m==='y'?[[1,1],[1,-1]]:m==='p'?[[1,1],[-1,-1]]:m==='q'?[[1,1],[-1,1],[1,-1],[-1,-1]]:[[1,1]];}
+const edPX=(x,v)=>v[0]>0?x:3200-x,edPY=(y,v)=>v[1]>0?y:2200-y;
+function edSnap(){return JSON.stringify(ED.c);}
+function edChanged(){ED.res=null;ED.prevT=Date.now();try{localStorage.setItem(ED_DRAFT_KEY,JSON.stringify(ED.c));}catch(e){}edUI();edDraw();if(ED.showPrev)edPrevSoon();}
+function edPushUndo(s){ED.undo.push(s);if(ED.undo.length>80)ED.undo.shift();ED.redo.length=0;}
+function edUndo(){if(!ED.undo.length)return;ED.redo.push(edSnap());ED.c=JSON.parse(ED.undo.pop());edChanged();}
+function edRedo(){if(!ED.redo.length)return;ED.undo.push(edSnap());ED.c=JSON.parse(ED.redo.pop());edChanged();}
+// ---- geometry helpers
+function edSimplify(P,tol){if(P.length<3)return P;let best=0,bi=0;const a=P[0],b=P[P.length-1];for(let i=1;i<P.length-1;i++){const d=segDist(P[i][0],P[i][1],a[0],a[1],b[0],b[1])[0];if(d>best){best=d;bi=i;}}
+  if(best<=tol)return[a,b];return edSimplify(P.slice(0,bi+1),tol).slice(0,-1).concat(edSimplify(P.slice(bi),tol));}
+function edLineFit(P,mx){let tol=10,out=edSimplify(P,tol);while(out.length>mx&&tol<400){tol*=1.5;out=edSimplify(P,tol);}return out;}
+function edErase(kinds,x,y,rad){const c=ED.c;let n=0;
+  const poly=(L,hasW)=>{const keep=L.filter(r=>{const w=hasW?r[0]:0,P=hasW?r.slice(1):r;for(let i=0;i+3<P.length;i+=2)if(segDist(x,y,P[i],P[i+1],P[i+2],P[i+3])[0]<rad+w*.6)return false;return true;});n+=L.length-keep.length;return keep;};
+  const pts=(L,ri)=>{const keep=L.filter(q=>Math.hypot(q[0]-x,q[1]-y)>=rad+(ri?q[2]*(ri):0));n+=L.length-keep.length;return keep;};
+  if(kinds.includes('rg'))c.rg=poly(c.rg,true);if(kinds.includes('rv'))c.rv=poly(c.rv,true);if(kinds.includes('rd'))c.rd=poly(c.rd,false);
+  if(kinds.includes('pk'))c.pk=pts(c.pk,1);if(kinds.includes('lk'))c.lk=pts(c.lk,1);if(kinds.includes('wd'))c.wd=pts(c.wd,.8);if(kinds.includes('ct'))c.ct=pts(c.ct,.8);
+  if(kinds.includes('oil'))c.oil=pts(c.oil,0);if(kinds.includes('fl'))c.fl=pts(c.fl,0);if(kinds.includes('br'))c.br=pts(c.br,0);if(kinds.includes('sl'))c.sl=pts(c.sl,0);return n;}
+// ---- applying a tool at a point / stroke (every mirror copy)
+function edStamp(tool,x,y,ang){const c=ED.c,B=ED.brush;const seen=[];
+  for(const v of edVars()){const X=Math.round(edPX(x,v)),Y=Math.round(edPY(y,v));if(seen.some(q=>Math.hypot(q[0]-X,q[1]-Y)<8))continue;seen.push([X,Y,v]);}
+  for(const [X,Y,v] of seen){
+    if(tool==='lower'){if(!c.lk.some(q=>Math.hypot(q[0]-X,q[1]-Y)<B*.7&&q[2]>=B*1.4*.9)&&c.lk.length<120)c.lk.push([X,Y,Math.round(B*1.4)]);}
+    else if(tool==='forest'){if(!c.wd.some(q=>Math.hypot(q[0]-X,q[1]-Y)<B*.8)&&c.wd.length<200)c.wd.push([X,Y,Math.max(40,Math.round(B*1.3))]);}
+    else if(tool==='rocks'){const r=Math.max(12,Math.min(60,Math.round(B*.35)));if(!c.pk.some(q=>Math.hypot(q[0]-X,q[1]-Y)<r*1.2)&&c.pk.length<200)c.pk.push([X,Y,r]);}
+    else if(tool==='town'){if(c.ct.length<40)c.ct.push([X,Y,Math.max(50,Math.min(240,Math.round(B*1.3))),ED.style]);}
+    else if(tool==='oil'){if(c.oil.length<40)c.oil.push([X,Y]);}
+    else if(tool==='supply'){if(c.fl.length<40)c.fl.push([X,Y]);}
+    else if(tool==='start'){if(c.sl.length<c.n&&!c.sl.some(q=>Math.hypot(q[0]-X,q[1]-Y)<120))c.sl.push([Math.max(150,Math.min(3050,X)),Math.max(150,Math.min(2050,Y))]);}
+    else if(tool==='bridge'&&ang!=null){const a=ang*Math.PI/180,nx=Math.cos(a)*v[0],ny=Math.sin(a)*v[1];if(c.br.length<40)c.br.push([X,Y,Math.round(Math.atan2(ny,nx)*180/Math.PI)]);}
+    else if(tool==='flat'){edErase(['rg','pk','lk'],X,Y,B);}
+    else if(tool==='erase'){edErase(['rg','rv','rd','pk','lk','wd','ct','oil','fl','br','sl'],X,Y,B);}}}
+function edStrokeCommit(tool,P){const c=ED.c;if(P.length<2)return;const Q=edLineFit(P,tool==='road'?70:60);if(Q.length<2)return;
+  const seen=[];for(const v of edVars()){const Z=Q.map(([x,y])=>[Math.round(edPX(x,v)),Math.round(edPY(y,v))]);
+    if(seen.some(S=>S.every((q,i)=>Math.hypot(q[0]-Z[i][0],q[1]-Z[i][1])<10)))continue;seen.push(Z);
+    const flat=Z.flat();if(tool==='raise'){if(c.rg.length<60)c.rg.push([Math.max(30,Math.round(ED.brush*.9)),...flat]);}
+    else if(tool==='river'){if(c.rv.length<40)c.rv.push([Math.max(40,Math.round(ED.brush)),...flat]);}
+    else if(tool==='road'){if(c.rd.length<40)c.rd.push(flat);}}}
+function edBridgeAt(x,y){ // direction across the nearest river (degrees), or null
+  let best=null,bd=1e9;for(const r of ED.c.rv){const w=r[0],P=r.slice(1);for(let i=0;i+3<P.length;i+=2){const [d]=segDist(x,y,P[i],P[i+1],P[i+2],P[i+3]);if(d<w+90&&d<bd){bd=d;best=Math.atan2(P[i+3]-P[i+1],P[i+2]-P[i])*180/Math.PI+90;}}}
+  if(best==null)return null;return Math.round(((best+180)%360+360)%360-180);}
+// ---- whole-map transforms
+function edFlip(fx,fy){const c=ED.c,s=edSnap(),P=a=>a.map(q=>[fx<0?3200-q[0]:q[0],fy<0?2200-q[1]:q[1],...q.slice(2)]);
+  const L=a=>a.map(r=>{const o=[r[0]];for(let i=1;i+1<r.length;i+=2)o.push(fx<0?3200-r[i]:r[i],fy<0?2200-r[i+1]:r[i+1]);return o;}),R=a=>a.map(r=>{const o=[];for(let i=0;i+1<r.length;i+=2)o.push(fx<0?3200-r[i]:r[i],fy<0?2200-r[i+1]:r[i+1]);return o;});
+  c.sl=P(c.sl);c.lk=P(c.lk);c.pk=P(c.pk);c.wd=P(c.wd);c.ct=P(c.ct);c.oil=P(c.oil);c.fl=P(c.fl);c.rv=L(c.rv);c.rg=L(c.rg);c.rd=R(c.rd);
+  c.br=c.br.map(([x,y,d])=>{const a=d*Math.PI/180;return[fx<0?3200-x:x,fy<0?2200-y:y,Math.round(Math.atan2(Math.sin(a)*fy,Math.cos(a)*fx)*180/Math.PI)];});edPushUndo(s);edChanged();}
+function edApplySym(){const m=ED.mirror;if(m==='off'){ED.msg='Pick a Mirror mode first (left-right, top-bottom, 180° or 4-way).';edUI();return;}
+  const c=ED.c,s=edSnap(),src=JSON.parse(s);const keys=['lk','pk','wd','ct','oil','fl','rv','rg','rd','br','sl'];const old=ED.c;
+  for(const v of edVars().slice(1)){const t=JSON.parse(s);ED.c=t;edFlipInto(t,v);for(const k of keys)for(const e of t[k]){if(k==='sl'&&c.sl.length>=c.n)continue;c[k].push(e);}}
+  ED.c=c;edPushUndo(s);ED.msg='Mirrored copy added.';edChanged();}
+function edFlipInto(t,v){const fx=v[0],fy=v[1],X=x=>fx<0?3200-x:x,Y=y=>fy<0?2200-y:y;
+  for(const k of ['sl','lk','pk','wd','ct','oil','fl'])t[k]=t[k].map(q=>[X(q[0]),Y(q[1]),...q.slice(2)]);
+  for(const k of ['rv','rg'])t[k]=t[k].map(r=>{const o=[r[0]];for(let i=1;i+1<r.length;i+=2)o.push(X(r[i]),Y(r[i+1]));return o;});
+  t.rd=t.rd.map(r=>{const o=[];for(let i=0;i+1<r.length;i+=2)o.push(X(r[i]),Y(r[i+1]));return o;});
+  t.br=t.br.map(([x,y,d])=>{const a=d*Math.PI/180;return[X(x),Y(y),Math.round(Math.atan2(Math.sin(a)*fy,Math.cos(a)*fx)*180/Math.PI)];});}
+// ---- checks (run on Save and on the Check button)
+function edCheck(c0){
+  const R=[],bad=(m)=>R.push({l:'err',m}),warn=(m)=>R.push({l:'warn',m});const c=cmCanon(c0);
+  if(!c){bad('Place at least 2 start positions (🚩) first.');return R;}
+  if(c.sl.length<c0.n)bad(`Only ${c.sl.length} of ${c0.n} start positions placed.`);
+  const key=registerCustomMap(c);ED.tmpKeys.add(key);const keep={wk:WK,srand,B:BASES,S:BASE_SLOTS};
+  try{setWorld(1);setBases(c.sl.length,key);const M=mkMap(777,key),N=BASES.length,cellOf=(x,y)=>Math.floor(y/CELL)*GW+Math.floor(x/CELL);
+    BASES.forEach(([x,y],i)=>{if(M.mtn(x,y)>-50)bad(`Start ${i+1} is inside or beside a mountain.`);});
+    const DB=BASES.map(([x,y])=>gridDist(M.grid,x,y));let cut=0;
+    for(let i=0;i<N;i++)for(let j=i+1;j<N;j++)if(!(DB[i][cellOf(BASES[j][0],BASES[j][1])]<1e8)&&cut++<3)bad(`No ground path between start ${i+1} and start ${j+1}: water or mountains block it. Add a bridge or open a gap.`);
+    if(cut>3)bad(`${cut-3} more pairs of starts cannot reach each other.`);
+    if(!cut){ // fairness of the ground
+      const eD=BASES.map((b,i)=>Math.min(...BASES.map((q,j)=>j===i?1e9:DB[i][cellOf(q[0],q[1])])));const lo=Math.min(...eD),hi=Math.max(...eD);
+      if(hi>lo*1.35)warn(`Start ${eD.indexOf(lo)+1} has an enemy only ${Math.round(lo)} away by road, but start ${eD.indexOf(hi)+1} has ${Math.round(hi)}: the starts are not evenly spaced.`);
+      const Rr=Math.max(500,lo*.5),cnt=BASES.map((b,i)=>{const near=(P)=>P.filter(p=>{const d=DB[i][cellOf(p.x,p.y)];return d<Rr;}).length;return[near(M.fields),near(M.oil)];});
+      cnt.forEach((q,i)=>{if(q[0]+q[1]===0)bad(`Start ${i+1} has no supply field or oil derrick within reach. Add some (📦 🛢).`);});
+      const fl=cnt.map(q=>q[0]),ol=cnt.map(q=>q[1]);
+      if(Math.max(...fl)-Math.min(...fl)>=2)warn(`Supply is uneven: start ${fl.indexOf(Math.min(...fl))+1} has ${Math.min(...fl)} nearby field(s), start ${fl.indexOf(Math.max(...fl))+1} has ${Math.max(...fl)}.`);
+      if(Math.max(...ol)-Math.min(...ol)>=2)warn(`Oil is uneven: start ${ol.indexOf(Math.min(...ol))+1} has ${Math.min(...ol)} nearby derrick(s), start ${ol.indexOf(Math.max(...ol))+1} has ${Math.max(...ol)}.`);
+      // at least two ways between neighbours: block the road of the shortest route and see if another remains
+      const g=M.grid,ps=v=>v===0||v===2,NC=GW*GH,bfs=(s,t,blk)=>{const par=new Int32Array(NC).fill(-2),q=new Int32Array(NC);let h=0,e=0;par[s]=-1;q[e++]=s;
+        while(h<e){const k=q[h++];if(k===t)break;const cx=k%GW,cy=(k/GW)|0;for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(par[n]!==-2||!ps(g[n])||(blk&&blk[n]))continue;par[n]=k;q[e++]=n;}}
+        if(par[t]===-2)return null;const path=[];for(let k=t;k>=0;k=par[k])path.push(k);return path;};
+      const seenP=new Set();let one=0;
+      for(let i=0;i<N;i++){const j=BASES.findIndex((q,k)=>k!==i&&DB[i][cellOf(q[0],q[1])]===eD[i]);if(j<0)continue;const key2=Math.min(i,j)+'-'+Math.max(i,j);if(seenP.has(key2))continue;seenP.add(key2);
+        const a=cellOf(BASES[i][0],BASES[i][1]),b=cellOf(BASES[j][0],BASES[j][1]),p=bfs(a,b,null);if(!p)continue;const blk=new Uint8Array(NC),rc=Math.ceil(170/CELL),ax=BASES[i],bx=BASES[j];
+        for(const k of p){const x=(k%GW+.5)*CELL,y=((k/GW|0)+.5)*CELL;if(Math.hypot(x-ax[0],y-ax[1])<480||Math.hypot(x-bx[0],y-bx[1])<480)continue;const cx=k%GW,cy=(k/GW)|0;
+          for(let yy=-rc;yy<=rc;yy++)for(let xx=-rc;xx<=rc;xx++){if(xx*xx+yy*yy>rc*rc)continue;const X=cx+xx,Y=cy+yy;if(X>=0&&Y>=0&&X<GW&&Y<GH)blk[Y*GW+X]=1;}}
+        if(!bfs(a,b,blk)&&one++<2)warn(`Only one real route between start ${i+1} and start ${j+1}. A fair map has at least two ways to attack: add a bridge, a gap, or a flank road.`);}
+    }
+    // symmetric starts
+    const sym=[['x',([x,y])=>[3200-x,y]],['y',([x,y])=>[x,2200-y]],['p',([x,y])=>[3200-x,2200-y]]];
+    const ok=sym.some(([m,f])=>c.sl.every(s=>c.sl.some(t=>Math.hypot(t[0]-f(s)[0],t[1]-f(s)[1])<140)));
+    if(!ok)warn('The start positions are not mirror images of each other. Use the Mirror setting when you place them for a fair map.');
+    // same ground for every side? rough land share around each start
+    const gnd=BASES.map(([bx,by])=>{let n=0,t=0;for(let y=-600;y<=600;y+=40)for(let x=-600;x<=600;x+=40){const X=bx+x,Y=by+y;if(X<0||Y<0||X>=MAPW||Y>=MAPH)continue;t++;if(M.grid[cellOf(X,Y)]===0||M.grid[cellOf(X,Y)]===2)n++;}return n/Math.max(1,t);});
+    if(Math.max(...gnd)-Math.min(...gnd)>.22)warn(`Start ${gnd.indexOf(Math.min(...gnd))+1} has far less open ground around it than start ${gnd.indexOf(Math.max(...gnd))+1}.`);
+  }catch(e){bad('The map could not be built: '+(e&&e.message||e));}
+  finally{srand=keep.srand;BASES=keep.B;BASE_SLOTS=keep.S;setWorld(keep.wk);}
+  if(!R.length)R.push({l:'ok',m:'All checks passed: reachable starts, supply near each, two routes, and the starts look fair.'});
+  return R;}
+// ---- saved maps (this device)
+function edLib(){try{const a=JSON.parse(localStorage.getItem(ED_LIB_KEY)||'[]');return Array.isArray(a)?a.filter(e=>e&&typeof e.code==='string'):[];}catch(e){return[];}}
+function edLibSet(a){try{localStorage.setItem(ED_LIB_KEY,JSON.stringify(a));return true;}catch(e){ED.msg='Could not save on this device (storage is full or blocked). Use Share to keep the code.';return false;}}
+function edSave(){const c=cmCanon(ED.c);if(!c){ED.msg='Place at least 2 start positions first.';edUI();return;}ED.res=edCheck(ED.c);const key=registerCustomMap(c),code=customMapCode(key),a=edLib();
+  const ix=a.findIndex(e=>e.id===ED.id);const e={id:ED.id||(ED.id='m'+Date.now().toString(36)),name:c.nm,code,t:Date.now()};if(ix>=0)a[ix]=e;else a.push(e);
+  const bad=ED.res.some(r=>r.l==='err'),warn=ED.res.some(r=>r.l==='warn');
+  if(edLibSet(a)){ED.tmpKeys.delete(key);ED.msg=bad?'Saved, but it has problems (below): friends may not be able to play it fairly.':warn?'Saved. Some things look unfair (below).':'Saved on this device.';}edUI();}
+function edLoadCode(src,keepId){const o=cmParse(src),c=cmCanon(o);if(!c){ED.msg='That is not a World War 3 map code.';edUI();return false;}
+  edPushUndo(edSnap());ED.c=JSON.parse(JSON.stringify(Object.assign({},c)));ED.c.n=Math.max(c.n,2);ED.id=keepId||null;ED.res=null;ED.msg='Opened “'+c.nm+'”.';edFit();edChanged();return true;}
+function edImportToLib(src){const k=registerCustomMap(src);if(!k)return null;const a=edLib(),code=customMapCode(k);if(!a.some(e=>e.code===code)){a.push({id:'m'+Date.now().toString(36)+a.length,name:MAPS[k].name,code,t:Date.now()});edLibSet(a);}return k;}
+function edShareText(){const k=registerCustomMap(ED.c);return k?customMapCode(k):'';}
+function edCopy(t,what){try{navigator.clipboard.writeText(t).then(()=>{ED.msg=what+' copied.';edUI();},()=>{ED.msg='Could not copy: select the code and copy it by hand.';edUI();});}catch(e){ED.msg='Could not copy: select the code and copy it by hand.';edUI();}}
+function edDownload(){const t=edShareText();if(!t){ED.msg='Place at least 2 start positions first.';edUI();return;}const b=new Blob([t],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=(ED.c.nm||'map').replace(/[^A-Za-z0-9_-]+/g,'_')+'.ww3map';document.body.append(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
+// ---- play it
+function edPlay(){const c=cmCanon(ED.c);if(!c){ED.msg='Place at least 2 start positions first.';edUI();return;}ED.res=edCheck(ED.c);const key=registerCustomMap(c);ED.tmpKeys.delete(key);
+  try{setup.map=key;setup.slot=-1;setup.st=[];setup.stK=null;setup.n=Math.max(1,Math.min(7,MAPS[key].max-1));}catch(e){}
+  edClose();try{if(typeof mapCards==='function')mapCards();}catch(e){}try{initAudio();}catch(e){}startSingle();}
+// ---- view
+function edFit(){const cv=ED.cv;if(!cv)return;ED.userView=false;const w=cv.clientWidth||800,h=cv.clientHeight||500,z=Math.min(w/3200,h/2200)*.96;ED.view={z,x:(w-3200*z)/2,y:(h-2200*z)/2};}
+const edW2S=(x,y)=>[x*ED.view.z+ED.view.x,y*ED.view.z+ED.view.y],edS2W=(x,y)=>[(x-ED.view.x)/ED.view.z,(y-ED.view.y)/ED.view.z];
+// ---- drawing
+function edDraw(){const cv=ED.cv;if(!cv)return;const dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth,h=cv.clientHeight;if(!w||!h)return;if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  const g=cv.getContext('2d'),c=ED.c,V=ED.view;g.setTransform(dpr,0,0,dpr,0,0);g.fillStyle='#0b0f0d';g.fillRect(0,0,w,h);g.save();g.translate(V.x,V.y);g.scale(V.z,V.z);
+  const th=c.th,land=th==='snow'?'#d9dfe6':th==='green'?'#7d9758':'#c8ac7a',water='#2c5c66',rock=th==='snow'?'#8c93a0':'#6e6354';
+  g.fillStyle=land;g.fillRect(0,0,3200,2200);
+  if(ED.showPrev&&ED.prevImg){g.imageSmoothingEnabled=true;g.drawImage(ED.prevImg,0,0,3200,2200);}
+  else{g.lineCap='round';g.lineJoin='round';
+    const path=(P,st)=>{g.beginPath();for(let i=st;i+1<P.length;i+=2)i===st?g.moveTo(P[i],P[i+1]):g.lineTo(P[i],P[i+1]);};
+    g.strokeStyle='rgba(60,50,35,.55)';for(const r of c.rd){path(r,0);g.lineWidth=34;g.stroke();}
+    g.strokeStyle=water;for(const r of c.rv){path(r,1);g.lineWidth=r[0]*2;g.stroke();}g.fillStyle=water;for(const [x,y,r] of c.lk){g.beginPath();g.arc(x,y,r,0,7);g.fill();}
+    g.strokeStyle=rock;for(const r of c.rg){path(r,1);g.lineWidth=r[0]*2;g.stroke();}g.fillStyle=rock;for(const [x,y,r] of c.pk){g.beginPath();g.arc(x,y,r,0,7);g.fill();}
+    g.fillStyle='rgba(40,90,40,.55)';for(const [x,y,r] of c.wd){g.beginPath();g.arc(x,y,r,0,7);g.fill();}
+    g.fillStyle='rgba(90,85,75,.8)';for(const [x,y,r] of c.ct){g.beginPath();g.arc(x,y,r,0,7);g.fill();}}
+  // bridges
+  for(const [x,y,d] of c.br){g.save();g.translate(x,y);g.rotate(d*Math.PI/180);g.fillStyle='#8a7b63';g.strokeStyle='#241c10';g.lineWidth=5;g.fillRect(-90,-22,180,44);g.strokeRect(-90,-22,180,44);g.restore();}
+  if(!(ED.showPrev&&ED.prevImg)||true){g.font='bold 54px system-ui';g.textAlign='center';g.textBaseline='middle';
+    for(const [x,y] of c.oil){g.fillStyle='#161616';g.beginPath();g.arc(x,y,34,0,7);g.fill();g.fillStyle='#e8c040';g.fillText('⛽',x,y+3);}
+    for(const [x,y] of c.fl){g.fillStyle='#4a3a1c';g.beginPath();g.arc(x,y,42,0,7);g.fill();g.fillStyle='#f0d070';g.fillText('$',x,y+3);}
+    for(const [x,y,r,s] of c.ct){g.fillStyle='#fff';g.font='bold 40px system-ui';g.fillText('🏘',x,y);}}
+  c.sl.forEach(([x,y],i)=>{g.fillStyle='rgba(20,30,20,.35)';g.beginPath();g.arc(x,y,300,0,7);g.fill();g.strokeStyle='rgba(255,255,255,.5)';g.lineWidth=5;g.stroke();g.fillStyle=i<ED.c.n?'#d8352a':'#888';g.beginPath();g.arc(x,y,62,0,7);g.fill();g.fillStyle='#fff';g.font='bold 78px system-ui';g.textAlign='center';g.textBaseline='middle';g.fillText(String(i+1),x,y+4);});
+  // frame + mirror axes
+  g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=6;g.strokeRect(0,0,3200,2200);g.setLineDash([30,26]);g.strokeStyle='rgba(255,230,120,.8)';g.lineWidth=5;
+  const m=ED.mirror;if(m==='x'||m==='q'){g.beginPath();g.moveTo(1600,0);g.lineTo(1600,2200);g.stroke();}if(m==='y'||m==='q'){g.beginPath();g.moveTo(0,1100);g.lineTo(3200,1100);g.stroke();}if(m==='p'){g.beginPath();g.arc(1600,1100,40,0,7);g.stroke();}g.setLineDash([]);
+  // stroke in progress (with mirror copies)
+  if(ED.stroke&&ED.stroke.P.length>1){const t=ED.stroke.tool;g.strokeStyle=t==='raise'?rock:t==='river'?water:'rgba(60,50,35,.7)';g.lineWidth=t==='road'?34:(t==='raise'?ED.brush*1.8:ED.brush*2);g.globalAlpha=.8;
+    for(const v of edVars()){g.beginPath();ED.stroke.P.forEach(([x,y],i)=>i?g.lineTo(edPX(x,v),edPY(y,v)):g.moveTo(edPX(x,v),edPY(y,v)));g.stroke();}g.globalAlpha=1;}
+  g.restore();
+  if(ED.cur&&ED.tool!=='pan'){const [sx,sy]=edW2S(ED.cur[0],ED.cur[1]);g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=1.5;const r=edToolR()*V.z;
+    for(const v of edVars()){const [px,py]=edW2S(edPX(ED.cur[0],v),edPY(ED.cur[1],v));g.beginPath();g.arc(px,py,Math.max(4,r),0,7);g.stroke();}}
+  const st=$('edStat');if(st){const t=ED.cur?`x ${Math.round(ED.cur[0])}  y ${Math.round(ED.cur[1])}`:'';st.textContent=t;}}
+function edToolR(){const t=ED.tool,B=ED.brush;return t==='start'?150:t==='oil'||t==='supply'?40:t==='town'?Math.max(50,Math.min(240,B*1.3)):t==='rocks'?Math.max(12,Math.min(60,B*.35)):t==='forest'?B*1.3:t==='lower'?B*1.4:t==='bridge'?60:t==='road'?20:B;}
+let edPrevTmr=0;function edPrevSoon(){clearTimeout(edPrevTmr);edPrevTmr=setTimeout(edPrev,350);}
+function edPrev(){if(!ED.open)return;const c=cmCanon(ED.c);if(!c){ED.prevImg=null;edDraw();return;}const key=registerCustomMap(c);ED.tmpKeys.add(key);const keep={wk:WK,srand,B:BASES,S:BASE_SLOTS};
+  try{setWorld(1);const cv=document.createElement('canvas');cv.width=640;cv.height=440;mapPreview(key,cv);ED.prevImg=cv;}catch(e){ED.prevImg=null;ED.msg='Preview failed: '+(e&&e.message||e);}finally{srand=keep.srand;BASES=keep.B;BASE_SLOTS=keep.S;setWorld(keep.wk);}edDraw();edUI();}
+// ---- pointer input
+function edDown(e){const cv=ED.cv;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);const r=cv.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top;ED.ptrs.set(e.pointerId,{sx,sy});
+  if(ED.ptrs.size===2){if(ED.snap&&ED.stroke!==null||ED.snap){ED.c=JSON.parse(ED.snap);}ED.snap=null;ED.stroke=null;const [a,b]=[...ED.ptrs.values()];ED.pinch={d:Math.hypot(a.sx-b.sx,a.sy-b.sy),mx:(a.sx+b.sx)/2,my:(a.sy+b.sy)/2};edDraw();return;}
+  if(ED.ptrs.size>2)return;const [x,y]=edS2W(sx,sy);ED.cur=[x,y];
+  if(ED.tool==='pan'||e.button===1||e.button===2){ED.pan={sx,sy,vx:ED.view.x,vy:ED.view.y};return;}
+  ED.snap=edSnap();const t=ED.tool;
+  if(t==='raise'||t==='river'||t==='road'){ED.stroke={tool:t,P:[[x,y]]};}
+  else if(t==='bridge'){ED.stroke={tool:t,P:[[x,y]],bridge:1};}
+  else{ED.stroke={tool:t,P:[[x,y]],stamp:1,last:[x,y]};edStamp(t,x,y);ED.dirty=1;}
+  edDraw();}
+function edMove(e){const cv=ED.cv,r=cv.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,p=ED.ptrs.get(e.pointerId);const [x,y]=edS2W(sx,sy);ED.cur=[x,y];
+  if(p){p.sx=sx;p.sy=sy;}
+  if(ED.ptrs.size>=2&&ED.pinch){const [a,b]=[...ED.ptrs.values()],d=Math.hypot(a.sx-b.sx,a.sy-b.sy),mx=(a.sx+b.sx)/2,my=(a.sy+b.sy)/2,k=d/Math.max(1,ED.pinch.d),V=ED.view,z=Math.max(.12,Math.min(2.5,V.z*k));
+    ED.userView=true;V.x=mx-(ED.pinch.mx-V.x)*(z/V.z)+0;V.y=my-(ED.pinch.my-V.y)*(z/V.z);V.z=z;ED.pinch={d,mx,my};edDraw();return;}
+  if(ED.pan&&p){ED.userView=true;ED.view.x=ED.pan.vx+(sx-ED.pan.sx);ED.view.y=ED.pan.vy+(sy-ED.pan.sy);edDraw();return;}
+  const S=ED.stroke;if(!S||!p){edDraw();return;}
+  if(S.stamp){const rr=Math.max(10,edToolR()*.55);if(Math.hypot(x-S.last[0],y-S.last[1])>=rr&&['lower','forest','rocks','flat','erase'].includes(S.tool)){edStamp(S.tool,x,y);S.last=[x,y];}}
+  else{const L=S.P[S.P.length-1];if(Math.hypot(x-L[0],y-L[1])>22/ED.view.z*.6+8)S.P.push([x,y]);}
+  edDraw();}
+function edUp(e){const had=ED.ptrs.delete(e.pointerId);if(ED.pinch){if(ED.ptrs.size<2)ED.pinch=null;return;}if(ED.pan){ED.pan=null;return;}const S=ED.stroke;if(!S||!had)return;ED.stroke=null;
+  const r=ED.cv.getBoundingClientRect(),[x,y]=edS2W(e.clientX-r.left,e.clientY-r.top);
+  if(S.bridge){const p0=S.P[0];let ang=null;const dx=x-p0[0],dy=y-p0[1];if(Math.hypot(dx,dy)>60/ED.view.z)ang=Math.round(Math.atan2(dy,dx)*180/Math.PI);else ang=edBridgeAt(p0[0],p0[1]);
+    if(ang==null){ED.msg='Bridges go across water: tap a river, or drag from one bank across the water to the other.';ED.snap=null;edUI();return;}edStamp('bridge',p0[0],p0[1],ang);ED.dirty=1;}
+  else if(!S.stamp){S.P.push([x,y]);edStrokeCommit(S.tool,S.P);ED.dirty=1;}
+  if(ED.snap&&ED.snap!==edSnap())edPushUndo(ED.snap);ED.snap=null;ED.msg='';edChanged();}
+function edCancel(e){ED.ptrs.delete(e.pointerId);if(ED.snap){ED.c=JSON.parse(ED.snap);ED.snap=null;}ED.stroke=null;ED.pan=null;if(ED.ptrs.size<2)ED.pinch=null;edDraw();}
+function edWheel(e){e.preventDefault();const r=ED.cv.getBoundingClientRect(),sx=e.clientX-r.left,sy=e.clientY-r.top,V=ED.view,z=Math.max(.12,Math.min(2.5,V.z*(e.deltaY<0?1.15:1/1.15)));ED.userView=true;V.x=sx-(sx-V.x)*(z/V.z);V.y=sy-(sy-V.y)*(z/V.z);V.z=z;edDraw();}
+// ---- the screen
+let edBuilt=false;
+function edBuild(){if(edBuilt)return;edBuilt=true;
+  const st=document.createElement('style');st.textContent=`#edOv{position:fixed;inset:0;z-index:9000;background:#0b0f0d;color:#e8e4d4;display:none;flex-direction:column;font:14px/1.3 system-ui,sans-serif;-webkit-user-select:none;user-select:none}#edOv.on{display:flex}
+#edOv button,#edOv select,#edOv input,#edOv textarea{font:inherit;color:#e8e4d4;background:#1d2620;border:1px solid #3a4a3e;border-radius:6px;padding:7px 10px;min-height:38px}#edOv button{cursor:pointer}#edOv button:active,#edOv button.on{background:#3d5a2e;border-color:#8fbf5a}#edOv button:disabled{opacity:.4}
+#edOv .top{display:flex;gap:6px;padding:6px 8px;flex-wrap:wrap;align-items:center;background:#121a15;border-bottom:1px solid #2a382d}#edOv .top b{font-size:16px;margin-right:4px}#edOv .top input{width:150px}
+#edOv .main{flex:1;display:flex;min-height:0}#edOv .tools{display:flex;flex-direction:column;gap:4px;padding:6px;overflow:auto;background:#101713;border-right:1px solid #2a382d;width:84px;flex:none}#edOv .tools button{display:flex;flex-direction:column;align-items:center;gap:0;padding:5px 2px;min-height:48px;font-size:11px}#edOv .tools button span{font-size:20px;line-height:1.1}
+#edOv .cvw{flex:1;position:relative;min-width:0}#edOv canvas{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}#edStat{position:absolute;left:8px;bottom:6px;font-size:12px;opacity:.8;pointer-events:none;text-shadow:0 1px 2px #000}
+#edOv .side{width:270px;flex:none;overflow:auto;padding:8px;background:#101713;border-left:1px solid #2a382d;display:flex;flex-direction:column;gap:8px}#edOv .side h4{margin:4px 0 2px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9fb58a}#edOv .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}#edOv .row>*{flex:1 1 auto}#edOv .row label{flex:none;font-size:12px;opacity:.85}
+#edOv .msg{padding:6px 8px;border-radius:6px;background:#22301f;font-size:13px}#edOv .res{padding:6px 8px;border-radius:6px;font-size:13px;margin:2px 0}#edOv .res.err{background:#4a1f1b;border-left:4px solid #e0443a}#edOv .res.warn{background:#4a3d18;border-left:4px solid #e8b030}#edOv .res.ok{background:#1f3a22;border-left:4px solid #5fbf5f}
+#edOv .lib{display:flex;gap:4px;align-items:center}#edOv .lib span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#edOv textarea{width:100%;min-height:70px;font-size:11px;user-select:text;-webkit-user-select:text}#edOv .hint{font-size:12px;opacity:.75}
+@media (max-width:760px){#edOv .main{flex-direction:column}#edOv .tools{flex-direction:row;width:auto;border-right:0;border-bottom:1px solid #2a382d;padding:4px}#edOv .tools button{min-width:54px}#edOv .side{width:auto;height:38%;border-left:0;border-top:1px solid #2a382d}#edOv .top input{width:110px}}`;
+  document.head.append(st);
+  const ov=document.createElement('div');ov.id='edOv';ov.innerHTML=`<div class="top"><b>Map editor</b><input id="edName" maxlength="28" aria-label="Map name" placeholder="Map name"><button id="edUndo">↶ Undo</button><button id="edRedo">↷ Redo</button><button id="edSave">💾 Save</button><button id="edPlay">▶ Play this map</button><button id="edX" style="margin-left:auto">✕ Close</button></div>
+<div class="main"><div class="tools" id="edTools"></div><div class="cvw"><canvas id="edCv"></canvas><div id="edStat"></div></div><div class="side" id="edSide"></div></div>`;
+  document.body.append(ov);ED.cv=$('edCv');
+  for(const [id,ic,lab,hint] of ED_TOOLS){const b=document.createElement('button');b.type='button';b.dataset.t=id;b.title=hint;b.innerHTML=`<span>${ic}</span>${lab}`;b.onclick=()=>{ED.tool=id;ED.msg=hint;edUI();edDraw();};$('edTools').append(b);}
+  const cv=ED.cv;cv.addEventListener('pointerdown',edDown);cv.addEventListener('pointermove',edMove);cv.addEventListener('pointerup',edUp);cv.addEventListener('pointercancel',edCancel);cv.addEventListener('pointerleave',()=>{if(!ED.ptrs.size){ED.cur=null;edDraw();}});cv.addEventListener('wheel',edWheel,{passive:false});cv.addEventListener('contextmenu',e=>e.preventDefault());
+  $('edUndo').onclick=edUndo;$('edRedo').onclick=edRedo;$('edSave').onclick=edSave;$('edPlay').onclick=edPlay;$('edX').onclick=edClose;
+  $('edName').oninput=e=>{ED.c.nm=e.target.value.slice(0,28);try{localStorage.setItem(ED_DRAFT_KEY,JSON.stringify(ED.c));}catch(_){}};
+  window.addEventListener('resize',()=>{if(ED.open){edFit();edDraw();}});try{new ResizeObserver(()=>{if(ED.open){if(!ED.userView)edFit();edDraw();}}).observe(ED.cv.parentNode);}catch(e){}
+  addEventListener('keydown',e=>{if(!ED.open)return;const k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();e.shiftKey?edRedo():edUndo();}else if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();edRedo();}else if(k==='escape')edClose();},true);}
+function edSel(id,lab,opts,val,fn){const w=document.createElement('div');w.className='row';const l=document.createElement('label');l.textContent=lab;const s=document.createElement('select');for(const [v,t] of opts){const o=document.createElement('option');o.value=v;o.textContent=t;s.append(o);}s.value=val;s.onchange=()=>fn(s.value);w.append(l,s);return w;}
+function edBtn(t,fn,cls){const b=document.createElement('button');b.type='button';b.textContent=t;b.onclick=fn;if(cls)b.className=cls;return b;}
+function edUI(){if(!ED.open||!edBuilt)return;const c=ED.c,side=$('edSide');
+  document.querySelectorAll('#edTools button').forEach(b=>b.classList.toggle('on',b.dataset.t===ED.tool));$('edUndo').disabled=!ED.undo.length;$('edRedo').disabled=!ED.redo.length;if(document.activeElement!==$('edName'))$('edName').value=c.nm;
+  if(side.contains(document.activeElement)&&/TEXTAREA|INPUT/.test(document.activeElement.tagName)&&document.activeElement.id!=='edBrush')return;
+  side.innerHTML='';const add=(...n)=>side.append(...n);
+  if(ED.msg){const m=document.createElement('div');m.className='msg';m.textContent=ED.msg;add(m);}
+  const h=t=>{const e=document.createElement('h4');e.textContent=t;return e;};
+  add(h('Map'));add(edSel('n','Players',[2,3,4,5,6,7,8].map(v=>[v,v+' players']),c.n,v=>{edPushUndo(edSnap());c.n=+v;if(c.sl.length>c.n)c.sl.length=c.n;edChanged();}));
+  add(edSel('z','Size',CM_SIZES.map((t,i)=>[i,t+(i===1?' (like the built-in maps)':'')]),c.z,v=>{c.z=+v;edChanged();}));
+  add(edSel('th','Look',[['desert','Desert'],['snow','Snow'],['green','Green']],c.th,v=>{c.th=v;edChanged();}));
+  add(h('Brush & mirror'));
+  {const w=document.createElement('div');w.className='row';const l=document.createElement('label');l.textContent='Brush';const r=document.createElement('input');r.type='range';r.id='edBrush';r.min=20;r.max=200;r.value=ED.brush;r.oninput=()=>{ED.brush=+r.value;edDraw();};w.append(l,r);add(w);}
+  add(edSel('m','Mirror',[['off','Off'],['x','Left ↔ right'],['y','Top ↔ bottom'],['p','Turn 180°'],['q','4-way']],ED.mirror,v=>{ED.mirror=v;edUI();edDraw();}));
+  if(ED.tool==='town')add(edSel('s','Town look',ED_STYLE_NAMES.map((t,i)=>[i,t]),ED.style,v=>{ED.style=+v;}));
+  {const w=document.createElement('div');w.className='row';w.append(edBtn('Copy to other side',edApplySym),edBtn('Flip ↔',()=>edFlip(-1,1)),edBtn('Flip ↕',()=>edFlip(1,-1)),edBtn('Turn 180°',()=>edFlip(-1,-1)));add(w);}
+  {const w=document.createElement('div');w.className='row';w.append(edBtn(ED.showPrev?'Terrain preview: on':'Terrain preview: off',()=>{ED.showPrev=!ED.showPrev;if(ED.showPrev)edPrev();else edDraw();edUI();},ED.showPrev?'on':''),edBtn('Fit view',()=>{edFit();edDraw();}),edBtn('New map',()=>{edPushUndo(edSnap());ED.c=edBlank();ED.id=null;ED.res=null;ED.msg='Blank map.';edChanged();}));add(w);}
+  const cnt=`${c.sl.length}/${c.n} starts · ${c.oil.length} oil · ${c.fl.length} supply · ${c.ct.length} towns`;const sm=document.createElement('div');sm.className='hint';sm.textContent=cnt+' · '+(ED_TOOLS.find(t=>t[0]===ED.tool)||[])[3];add(sm);
+  add(h('Fair-play check'));add(edBtn('Check this map',()=>{ED.res=edCheck(ED.c);edUI();}));
+  for(const r of (ED.res||[])){const d=document.createElement('div');d.className='res '+r.l;d.textContent=r.m;add(d);}
+  add(h('Share'));
+  {const w=document.createElement('div');w.className='row';w.append(edBtn('Copy code',()=>{const t=edShareText();t?edCopy(t,'Code'):(ED.msg='Place at least 2 start positions first.',edUI());}),edBtn('Copy link',()=>{const t=edShareText();t?edCopy(location.origin+location.pathname+'#map='+t,'Link'):(ED.msg='Place at least 2 start positions first.',edUI());}),edBtn('Download file',edDownload));add(w);}
+  {const ta=document.createElement('textarea');ta.id='edCode';ta.placeholder='Paste a map code or link here, then press Import';add(ta);
+   const w=document.createElement('div');w.className='row';const fl=document.createElement('input');fl.type='file';fl.accept='.ww3map,.txt,text/plain';fl.onchange=()=>{const f=fl.files[0];if(!f)return;f.text().then(t=>{if(edImportToLib(t))edLoadCode(t);else{ED.msg='That file is not a World War 3 map.';edUI();}});};
+   w.append(edBtn('Import',()=>{const t=ta.value;if(edImportToLib(t))edLoadCode(t);else{ED.msg='That is not a World War 3 map code.';edUI();}}),fl);add(w);}
+  add(h('My maps (this device)'));const lib=edLib();if(!lib.length){const e=document.createElement('div');e.className='hint';e.textContent='Nothing saved yet. Press Save.';add(e);}
+  for(const m of lib){const d=document.createElement('div');d.className='lib';const s=document.createElement('span');s.textContent=m.name;d.append(s,edBtn('Open',()=>edLoadCode(m.code,m.id)),edBtn('🗑',()=>{edLibSet(edLib().filter(x=>x.id!==m.id));edUI();}));add(d);}}
+function edOpen(){edBuild();if(!ED.c){let d=null;try{d=JSON.parse(localStorage.getItem(ED_DRAFT_KEY)||'null');}catch(e){}ED.c=d&&Array.isArray(d.sl)&&Array.isArray(d.rv)?Object.assign(edBlank(),d):edBlank();}
+  ED.open=true;$('edOv').classList.add('on');$('menu')&&($('menu').style.visibility='hidden');ED.msg=ED.msg||'';requestAnimationFrame(()=>{edFit();edUI();edDraw();});}
+function edClose(){ED.open=false;$('edOv')&&$('edOv').classList.remove('on');$('menu')&&($('menu').style.visibility='');for(const k of ED.tmpKeys){if(!edLib().some(e=>e.code===customMapCode(k))&&!(typeof setup!=='undefined'&&setup.map===k)){delete MAPS[k];delete CM[k];}}ED.tmpKeys.clear();
+  try{if(typeof mapCards==='function')mapCards();}catch(e){}}
+// ---- hooks into the menu
+// saved maps under "My maps" in the battlefield list (skirmish and online lobbies share this list)
+function editorAddMaps(sel){const lib=edLib();if(!lib.length&&!(typeof setup!=='undefined'&&setup.map&&CM[setup.map]))return;const og=document.createElement('optgroup');og.label='My maps';const seen=new Set();
+  const keys=[];for(const e of lib){const k=registerCustomMap(e.code);if(k&&!seen.has(k)){seen.add(k);keys.push(k);}}if(typeof setup!=='undefined'&&CM[setup.map]&&!seen.has(setup.map))keys.push(setup.map);
+  for(const k of keys){const o=document.createElement('option');o.value=k;o.textContent=`${MAPS[k].name} (custom, 2–${MAPS[k].max} players)`;og.append(o);}sel.append(og);}
+function edAddMenuButton(){const po=$('playOnline');if(!po||$('edBtn'))return;const b=document.createElement('button');b.type='button';b.id='edBtn';b.className=po.className||'';b.textContent='🗺 Map editor';b.onclick=()=>{try{initAudio();}catch(e){}edOpen();};po.parentNode.insertBefore(b,po.nextSibling);}
+function edToast(t){const d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:max(18px,env(safe-area-inset-bottom,0px));z-index:9500;background:#22301f;color:#e8e4d4;border:1px solid #8fbf5a;border-radius:8px;padding:10px 14px;max-width:90vw;font:14px system-ui';document.body.append(d);setTimeout(()=>d.remove(),9000);}
+// a shared link (…/#map=CODE) adds the map to this device's list
+function edHashImport(){try{const m=location.hash.match(/^#map=(.+)$/);if(!m)return;const k=edImportToLib(m[1]);history.replaceState(null,'',location.pathname+location.search);
+  if(k){setup.map=k;setup.slot=-1;setup.st=[];setup.stK=null;try{mapCards();}catch(e){}edToast(`Map “${MAPS[k].name}” added. It is chosen as your battlefield (Skirmish and Play online).`);}else edToast('That map link is not valid.');}catch(e){}}
+try{edAddMenuButton();}catch(e){}
+try{if(typeof mapCards==='function')mapCards();}catch(e){} // the list was built before this file loaded: add "My maps"
+try{edHashImport();}catch(e){}
 </script>
 </body></html>

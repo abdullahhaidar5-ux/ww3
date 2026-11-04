@@ -190,6 +190,15 @@ try {
     let bl = null; for (let t = 0; t < 30 && !bl; t++) { const gj = await (await fetch(HTTP + '/games')).text(); if (gj.includes('b-' + bcode)) bl = gj; else await sleep(200); }
     const be = bl && JSON.parse(bl).battles.find(([id]) => id === 'b-' + bcode);
     check(!!be && be[1].g.pw === 1 && be[1].g.cf === 1 && !pwRx.test(bl), 'battle: listed with pw:1 (lock) and without the password');
+    { // a custom map from the map editor: the owner sends its code; the server derives the key from the code (hash), so a
+      // changed code or a wrong key is refused, and the lobby carries the code so every player builds the same map
+      const code = 'WW3MAP1:' + Buffer.from(JSON.stringify({ v: 1, nm: 'T', n: 2, z: 0, th: 'desert', sl: [[500, 500], [2700, 1700]], rv: [], rg: [], rd: [], lk: [], pk: [], wd: [], ct: [], oil: [], fl: [], br: [] })).toString('base64url');
+      bo.send('|' + JSON.stringify({ k: 'e', t: 'bset', d: { map: 'cm_wrongkey0000', cm: code, w: 0, tm: [0], ais: [] } }));
+      await sleep(400);
+      bo.send('|' + JSON.stringify({ k: 'e', t: 'bset', d: { map: 'strait', w: 0, tm: [0], ais: [] } }));
+      const l1 = await bo.wait(m => m.includes('"blob"') && m.includes('"map":"strait"'), 4000);
+      check(l1 !== null && !/"cm":/.test(l1), 'battle: a custom map whose key does not match its code is refused (lobby stays on a built-in map)');
+    }
     const bn = bat('ww3p-bnopw1', null), bw = bat('ww3p-bwrong1', 'Rote Fahne 7!'), bg = bat('ww3p-bright1', PW);
     check(await bn.wait(m => m === '!e needpw') !== null, 'battle: joining without the password is refused (needpw)');
     check(await bw.wait(m => m === '!e badpw') !== null, 'battle: a wrong password is refused (badpw)');

@@ -412,6 +412,17 @@ function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)re
 // into ONE skinned, vertex-coloured mesh per soldier (kit rides its bone as a rigidly skinned part), so a squad costs 3.
 // The merged shape is built once per nation / team colour / unit type and shared by every soldier that looks the same.
 const SOLM={};
+// Distant soldier: the merged soldier mesh is thinned by vertex clustering (nearby vertices snap together, tiny triangles vanish)
+// into a cheap skinned mesh on the same skeleton. Shown instead of the full one when the camera is far (see 06-view), so big
+// crowds cost far fewer vertices to skin and shade. Built once per shape, shared like the full mesh.
+function lowSoldierGeo(g){const pa=g.attributes.position,n=pa.count,ix=g.index.array;g.computeBoundingBox();const bb=g.boundingBox,h=Math.max(.001,bb.max.y-bb.min.y),cs=h/17,map=new Map(),rep=new Int32Array(n),first=[],sum=[];
+  for(let i=0;i<n;i++){const x=pa.getX(i),y=pa.getY(i),z=pa.getZ(i),k=Math.floor((x-bb.min.x)/cs)+','+Math.floor((y-bb.min.y)/cs)+','+Math.floor((z-bb.min.z)/cs);let r=map.get(k);if(r===undefined){r=first.length;map.set(k,r);first.push(i);sum.push([0,0,0,0]);}rep[i]=r;const q=sum[r];q[0]+=x;q[1]+=y;q[2]+=z;q[3]++;}
+  const m=first.length,P=new Float32Array(m*3),idx=[];for(let r=0;r<m;r++){const q=sum[r];P[r*3]=q[0]/q[3];P[r*3+1]=q[1]/q[3];P[r*3+2]=q[2]/q[3];}
+  const seen=new Set();for(let t=0;t<ix.length;t+=3){const a=rep[ix[t]],b=rep[ix[t+1]],c=rep[ix[t+2]];if(a===b||b===c||a===c)continue;const key=[a,b,c].sort((u,v)=>u-v).join('_');if(seen.has(key))continue;seen.add(key);idx.push(a,b,c);}
+  const lo=new THREE.BufferGeometry();lo.setAttribute('position',new THREE.BufferAttribute(P,3));
+  for(const nm of ['color','uv','skinIndex','skinWeight']){const A=g.attributes[nm];if(!A)continue;const sz=A.itemSize,arr=new (nm==='skinIndex'?Uint16Array:Float32Array)(m*sz);for(let r=0;r<m;r++)for(let k=0;k<sz;k++)arr[r*sz+k]=A.getComponent(first[r],k);lo.setAttribute(nm,new THREE.BufferAttribute(arr,sz));}
+  // normals: rebuilt from the thinned faces, so the rounded far soldier still shades smoothly
+  lo.setIndex(new THREE.BufferAttribute(m>65535?new Uint32Array(idx):new Uint16Array(idx),1));lo.computeVertexNormals();return lo;}
 function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false;const sk=[];inner.traverse(o=>{if(o.isSkinnedMesh)sk.push(o);});if(!sk.length)return false;
   const skel=sk[0].skeleton;if(!skel||sk.some(o=>!o.skeleton||o.skeleton.bones.length!==skel.bones.length||o.skeleton.bones.some((b,i)=>b!==skel.bones[i])||Array.isArray(o.material)||!o.geometry.attributes.skinIndex))return false;
   const gear=[];skel.bones.forEach((b,bi)=>{for(const c of b.children)if(c.isMesh&&c.userData.gear&&!c.isSkinnedMesh)gear.push([c,bi]);});
@@ -444,6 +455,8 @@ function mergeSoldier(m,key){const inner=m.userData.inner;if(!inner)return false
     if(tex){const ob=src.onBeforeCompile,ck=src.customProgramCacheKey;mat.onBeforeCompile=(sh,r)=>{if(ob)ob.call(src,sh,r);sh.fragmentShader=sh.fragmentShader.replace('#include <map_fragment>','#ifdef USE_MAP\nvec4 sampledDiffuseColor=texture2D(map,vMapUv);if(vMapUv.x<-2.)sampledDiffuseColor=vec4(1.);diffuseColor*=sampledDiffuseColor;\n#endif');};
       mat.customProgramCacheKey=()=>(ck?ck.call(src):'')+'|solgear';}
     E=SOLM[key]={geo,mat,gn:parts.reduce((n,p)=>n+(p.sk?0:p.g.attributes.position.count),0)};}
+  if(!E.lo)try{E.lo=lowSoldierGeo(E.geo);}catch(er){E.lo=null;}
+  if(E.lo){const lm=new THREE.SkinnedMesh(E.lo,E.mat);lm.name='soldierLo';lm.userData.lo=1;lm.userData.gearN=E.gn;lm.castShadow=true;lm.receiveShadow=sk[0].receiveShadow;lm.frustumCulled=sk[0].frustumCulled;lm.visible=false;sk[0].parent.add(lm);lm.bind(skel,new THREE.Matrix4());}
   const mm=new THREE.SkinnedMesh(E.geo,E.mat);mm.name='soldier';mm.userData.gearN=E.gn;mm.castShadow=true;mm.receiveShadow=sk[0].receiveShadow;mm.frustumCulled=sk[0].frustumCulled;
   sk[0].parent.add(mm);mm.bind(skel,new THREE.Matrix4());for(const o of sk)o.parent.remove(o);for(const [c] of gear)c.parent.remove(c);return true;}
 function setupWalk(m){const inner=m.userData.inner;if(!inner)return null;const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});
