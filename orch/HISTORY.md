@@ -158,3 +158,4 @@ preview, not per-map thumbnail cards.
 - 2026-11-04 orch/sub-models (Sonnet): realistic submarines (CC-BY Warfare/8bit/KoreanNavy models for West/East/IR-RS-DW) and a Scud-truck coastal missile battery with sandbags + command truck; visual only. Report orch/reports/sub-models.md
 - 2026-11-04 trees: real CC0 Poly Haven fir/leaf textures on conifers, oak/acacia, palms (tree_tex model); report orch/reports/trees.md
 - 2026-11-04 vehicles-real (Sonnet): shader weathering stage 1 — ships rust/waterline, aircraft panel lines/soot, map-aware mud/sand/snow grime; rest in HANDOFF-vehicles-real.md
+- 2026-11-04 leftovers-1104 (Sonnet): scenery shipped — old-style bridge parapets/lamps, burnt patches + war debris (no cubes, skipped on Low), varied shoreline foam; gate 21/21. Voices KR/KP not finished (XTTS CPU too slow; see HANDOFF-audio-1103).
