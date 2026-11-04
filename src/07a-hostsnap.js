@@ -30,7 +30,7 @@ function tokHash(t){t='ww3tok|'+String(t);let a=0x811c9dc5|0,b=0x9e3779b9|0;for(
 function tokIx(tok){if(!tok||typeof tok!=='string'||tok.startsWith('h:')||!NET.toks)return -1;let ix=NET.toks.indexOf(tok);if(ix<0){const h='h:'+tokHash(tok);ix=NET.toks.indexOf(h);}return ix;}
 function tokSafe(){return NET.toks?NET.toks.map(t=>typeof t==='string'&&t?(t.startsWith('h:')?t:'h:'+tokHash(t)):null):null;}
 function hostRejoin(peer,tok){if(!tok||!NET.toks||!G)return;const ix=tokIx(tok);if(ix<0||ix===ME)return;const old=NET.peers[ix];if(old===peer)return;NET.peers[ix]=peer;NET.toks[ix]=tok;NET.cseq[peer]=Math.max(NET.cseq[peer]||0,NET.cseq[old]||0,((NET.cseqSlot||[])[ix]||0));
-  const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',Object.assign({pv:S.st?NET_PVS:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm,w:S.w|0},S.sv?{sv:1}:{},S.st?{st:S.st}:{})).catch(()=>{});
+  const T=G.teams[ix];T.discT=0;if(NET.tgS)delete NET.tgS[ix];if(T.aiTook){T.ai=null;T.aiTook=0;}if(NET.kf)NET.kf[ix]=0;if(NET.kf)NET.kf.all=0;const S=NET.startInfo;if(S)NET.game.emit('start',Object.assign({pv:S.st?NET_PVS:NET_PV,seed:S.seed,facs:S.facs,slot:ix,to:peer,map:S.map,tm:S.tm,w:S.w|0},S.sv?{sv:1}:{},S.st?{st:S.st}:{},S.cm?{cm:S.cm}:{})).catch(()=>{});
   for(const O of G.teams)log(O.id,`${T.F.name}'s commander reconnected.`,'g');
   // P2P: the rejoined player starts from a fresh map, so collapsed city blocks are re-sent as they come into view
   if(hostP2P()){(NET.gq=NET.gq||[])[ix]=[];(NET.civQ=NET.civQ||[])[ix]=(G.civ||[]).map((c,i)=>c.dead?i:-1).filter(i=>i>=0);}}
@@ -47,6 +47,7 @@ function hostCmd(peer,data){if(MODE!=='host')return;const ix=NET.peers?NET.peers
 // (de-duplicated), and requests for a full snapshot
 // (order numbers start at Date.now()/10, past 32 bits: never "|0" them, or acknowledgements and checkpoints garble them)
 function hostPres(q,hello){const pr=q.presence;(NET.seen=NET.seen||{})[q.peer]=performance.now();
+  if(specIs(q.peer,pr)){specPres(q,pr);return;}
   if(pr.hi&&pr.hi.ed!=null)(NET.edOf=NET.edOf||{})[q.peer]=pr.hi.ed?1:0;
   if(pr.ld!=null)(NET.ldOf=NET.ldOf||{})[q.peer]=pr.ld?1:0;
   // a player the heartbeat marked as gone (e.g. their PC stalled while loading) is linked back as soon as they are heard from again
@@ -56,7 +57,7 @@ function hostPres(q,hello){const pr=q.presence;(NET.seen=NET.seen||{})[q.peer]=p
   if(Array.isArray(pr.cq)&&MODE==='host'){let last=NET.cseq[q.peer]||0;for(const c of pr.cq){if(!c||typeof c.s!=='number'||c.s<=last)continue;last=c.s;hostCmd(q.peer,c.a);}NET.cseq[q.peer]=last;const ix=NET.peers?NET.peers.indexOf(q.peer):-1;if(ix>=0&&ix!==ME)(NET.cseqSlot=NET.cseqSlot||[])[ix]=Math.max(((NET.cseqSlot||[])[ix]||0),last);}
   if(typeof pr.kr==='number'&&MODE==='host'&&NET.peers&&(NET.lastKr||{})[q.peer]!==pr.kr){(NET.lastKr=NET.lastKr||{})[q.peer]=pr.kr;const ix=NET.peers.indexOf(q.peer);if(ix>=0&&ix!==ME&&NET.kf)NET.kf[ix]=0;}}
 // a player's connection closed during the battle: 30 s to come back before the AI takes their side (playerLeft)
-function hostGone(peer){if(MODE!=='host'||!NET.peers)return;const ix=NET.peers.indexOf(peer);if(ix>=0&&ix!==ME){NET.peers[ix]=null;playerLeft(ix);}}
+function hostGone(peer){specGone(peer);if(MODE!=='host'||!NET.peers)return;const ix=NET.peers.indexOf(peer);if(ix>=0&&ix!==ME){NET.peers[ix]=null;playerLeft(ix);}}
 /* ---------- host: send ---------- */
 function encEnt(e,mem){let f=0,x=0;if(e.isB){if(e.built<1){f|=FLG.built;x=Math.round(e.built*100);}if(e.dis>G.t)f|=FLG.dis;if(e.charge)f|=FLG.chg;if(e.kind==='uplink'){x=Math.round(G.teams[e.team].charge/G.teams[e.team].sup.charge*100);}if(e.kind==='garrison'&&e.civ){x=e.civ.occ.length*16+e.civ.cap;}if(e.kind==='factory'&&G.teams[e.team].q.factory.length)f|=FLG.busy;if(mem)f|=FLG.mem;if(e.nd&&e.built<1)f|=FLG.nd;if(e.stall&&e.built<1)f|=FLG.stall;}
   else{if(e.cargo)f|=FLG.cargo;if(e.hacking)f|=FLG.hack;if(e.planting)f|=FLG.plant;if(e.landed)f|=FLG.land;if(e.hid)f|=FLG.hid;if(G.t-(e.mv||-9)<.25)f|=FLG.mov;if(e.building)f|=FLG.busy;if((e.supp||0)>.5)f|=FLG.supp;if(e.rout>G.t)f|=FLG.rout;else if(e.s&&canRout(e)&&(e.fear||0)>courageOf(e)*.65)f|=FLG.shak;if(e.mark>G.t)f|=FLG.mark;if(e.last>G.t)f|=FLG.last;if(e.aband)f|=FLG.aband;f|=((e.st|0)&3)*2097152;f|=(e.rank||0)<<9;{const m=moraleOf(e);x=m?(m.st==='fearless'?101:Math.round(m.v*20)*5):-1;}}
@@ -73,17 +74,17 @@ function sendSnap(key,to,items,bit){NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=N
 function verItems(items){const V=NET.ver||(NET.ver=new Map());const st=NET.verSt=(NET.verSt|0)+1;
   for(const a of items){const s=a.slice(0,11).join(',');let r=V.get(a[0]);if(!r){r=[s,1,st];V.set(a[0],r);}else{if(r[0]!==s){r[0]=s;r[1]++;}r[2]=st;}a._v=r[1];}
   if(V.size>items.length*1.5+64)for(const [id,r] of V)if(r[2]!==st)V.delete(id);}
-function sendSnapP(k,to,items){const b=1<<k,key=k;NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+4+(k%8)*.25;const old=NET.sc[key];let c=old;if(!c||full)c=NET.sc[key]=new Map();
+function sendSnapP(k,to,items,skey){const all=k<0,b=all?0:1<<k,key=all?skey:k;NET.sc=NET.sc||{};NET.kf=NET.kf||{};NET.kt=NET.kt||{};const full=!(NET.kf[key]>G.t);if(full)NET.kf[key]=G.t+4+(k%8)*.25;const old=NET.sc[key];let c=old;if(!c||full)c=NET.sc[key]=new Map();
   const sendKeep=full||!(NET.kt[key]>G.t);if(sendKeep)NET.kt[key]=G.t+.4;const ch=[],keep=[];let n=0,dv=null;
-  for(const a of items){if(!((a[11]|a[12])&b))continue;n++;const mem=!(a[11]&b),code=a._v*2+(mem?1:0);if(c.get(a[0])===code){if(sendKeep)keep.push(a[0]);continue;}
+  for(const a of items){if(!all&&!((a[11]|a[12])&b))continue;n++;const mem=!all&&!(a[11]&b),code=a._v*2+(mem?1:0);if(c.get(a[0])===code){if(sendKeep)keep.push(a[0]);continue;}
     c.set(a[0],code);const r=a.slice(0,11);r[9]=mem?(r[9]|FLG.mem):(r[9]&~FLG.mem);ch.push(r);}
-  const dr=[];if(old&&(old!==c||c.size>n)){const seen=new Set();for(const a of items)if((a[11]|a[12])&b)seen.add(a[0]);for(const [id,ov] of old)if(!seen.has(id)){if(old===c)c.delete(id);dr.push(id);if(ov%2===0)(dv||(dv=new Set())).add(id);}}
+  const dr=[];if(old&&(old!==c||c.size>n)){const seen=new Set();for(const a of items)if(all||(a[11]|a[12])&b)seen.add(a[0]);for(const [id,ov] of old)if(!seen.has(id)){if(old===c)c.delete(id);dr.push(id);if(ov%2===0)(dv||(dv=new Set())).add(id);}}
   const base={t:+G.t.toFixed(2),iv:+NET.snapT.toFixed(2)};if(to)base.to=to;if(full)base.f=1;
   // a remembered building that died out of this player's sight stays on their map until they see the spot ('gone' queue)
-  if(dr.length&&NET.gq&&NET.gq[k]&&NET.gq[k].length){const q=new Set(NET.gq[k].map(g=>g[0]));for(let i=dr.length-1;i>=0;i--)if(q.has(dr[i]))dr.splice(i,1);}
+  if(!all&&dr.length&&NET.gq&&NET.gq[k]&&NET.gq[k].length){const q=new Set(NET.gq[k].map(g=>g[0]));for(let i=dr.length-1;i>=0;i--)if(q.has(dr[i]))dr.splice(i,1);}
   if(ch.length||!keep.length&&sendKeep||dr.length)snapOut(base,ch,snapDrops(dr));for(let i=0;i<keep.length;i+=1400)NET.game.emit('snap',Object.assign({},base,{e:[],k:keep.slice(i,i+1400),kb:1})).catch(()=>{});
   // just-died units left out of the drop list are still on this player's screen until their 'die' arrives (dieWho)
-  if(dr.length&&NET.dyC){const dy=NET.dyC.s;for(const id of dr)if(dy.has(id)&&dv&&dv.has(id))dhSet(k).add(id);}}
+  if(!all&&dr.length&&NET.dyC){const dy=NET.dyC.s;for(const id of dr)if(dy.has(id)&&dv&&dv.has(id))dhSet(k).add(id);}}
 function dhSet(k){if(NET.dhG!==G){NET.dhG=G;NET.dh=[];}const D=NET.dh;return D[k]||(D[k]=new Set());}
 // P2P: one copy per player, so the two visibility masks are folded into that player's 'remembered' flag and dropped
 function forPlayer(items,k){const b=1<<k,out=[];for(const a of items){if(!((a[11]|a[12])&b))continue;const c=a.slice(0,11);c[9]=(a[11]&b)?(c[9]&~FLG.mem):(c[9]|FLG.mem);out.push(c);}return out;}
@@ -112,7 +113,7 @@ function teamMsg(T){const q={};for(const c of CATS)q[c]=T.q[c].map(i=>[i.kind,+(
 function netTick(dt){if(!hostP2P()||MODE!=='host'||!NET.game||!NET.peers)return netTick0(dt);const g=NET.game,real=g.emit,B=new Map();
   g.emit=(t,d)=>{const to=d&&typeof d==='object'&&d.to;if(!to||t==='ck')return real.call(g,t,d);let L=B.get(to);if(!L){L=[];B.set(to,L);}const dd=Object.assign({},d);delete dd.to;L.push([t,dd]);if(L.length>=4)real.call(g,'b',{to,m:L.splice(0)}).catch(()=>{});return Promise.resolve();};
   try{netTick0(dt);}finally{g.emit=real;for(const [to,L] of B)if(L.length)real.call(g,'b',{to,m:L}).catch(()=>{});}}
-function netTick0(dt){if(MODE!=='host'||!NET.game||!G||!NET.peers)return;discTick();if(NET.ckOut)ckFlush();NET.snapT-=dt;NET.evT-=dt;NET.teamT-=dt;NET.bT-=dt;const live=[];for(let k=0;k<NET.peers.length;k++)if(k!==ME&&NET.peers[k]&&!G.teams[k].ai)live.push(k);if(!live.length){if(G.out.length>400)G.out.length=0;return;}try{ckTick(dt,live);}catch(e){}
+function netTick0(dt){if(MODE!=='host'||!NET.game||!G||!NET.peers)return;discTick();if(NET.ckOut)ckFlush();NET.snapT-=dt;NET.evT-=dt;NET.teamT-=dt;NET.bT-=dt;const live=[];for(let k=0;k<NET.peers.length;k++)if(k!==ME&&NET.peers[k]&&!G.teams[k].ai)live.push(k);const SP=NET.specs&&NET.specs.length?NET.specs:null;if(!live.length&&!SP){if(G.out.length>400)G.out.length=0;return;}try{ckTick(dt,live);}catch(e){}
   // The room allows each sender about 40 messages a second, so with many players the host BROADCASTS one snapshot and
   // one event stream to everyone (each entity tagged with which players can see it, each client keeps only its own)
   // instead of one copy per player; team panels go out round-robin.
@@ -121,14 +122,15 @@ function netTick0(dt){if(MODE!=='host'||!NET.game||!G||!NET.peers)return;discTic
   // also repairs anything a dropped message missed. Typical armies are mostly idle, so this cuts traffic several-fold.
   if(NET.snapT<=0){const items=[],SK=hostP2P()?(NET.sk=NET.sk||new Map()):null;
     for(const e of G.ents){if(e.dead)continue;let vm=0,mm=0;for(const k of live){const v=e.team===k||(e.vs&&e.vs[k]);if(e.isB){if(v)vm|=1<<k;else if((e.sn|0)&(1<<k))mm|=1<<k;}else if(v)vm|=1<<k;}
-      if(!vm&&!mm)continue;if(SK)skNote(SK,e,vm,mm,live);const a=encEnt(e,false);a.push(vm,mm);items.push(a);}
+      if(!vm&&!mm&&!SP)continue;if(SK&&(vm||mm))skNote(SK,e,vm,mm,live);const a=encEnt(e,false);a.push(vm,mm);items.push(a);}
     NET.snapT=hostP2P()?.1:Math.max(.2,Math.min(.6,Math.ceil(items.length/150)*.1));
-    if(hostP2P()){verItems(items);for(const k of live){const to=NET.peers[k];if(NET.game.buffered&&NET.game.buffered(to)>12000)continue;sendSnapP(k,to,items);(NET.snapTo=NET.snapTo||[])[k]=G.t;}}else sendSnap('all',null,items);}
+    if(hostP2P()){verItems(items);for(const k of live){const to=NET.peers[k];if(NET.game.buffered&&NET.game.buffered(to)>12000)continue;sendSnapP(k,to,items);(NET.snapTo=NET.snapTo||[])[k]=G.t;}if(SP)for(const s of SP){if(NET.game.buffered&&NET.game.buffered(s.peer)>12000)continue;sendSnapP(-1,s.peer,items,'s:'+s.peer);}}else sendSnap('all',null,items);}
   if(NET.evT<=0){NET.evT=hostP2P()?.1:.15;let evs=G.out;G.out=[];
     // P2P: one filtered stream per player (sendEvtP2P); room mode: one broadcast stream as before
-    if(hostP2P())sendEvtP2P(evs,live);else if(evs.length){let len=JSON.stringify(evs).length;if(len>3400){const imp=evs.filter(v=>v[0]!=='muz'&&v[0]!=='tr');const lo=evs.filter(v=>v[0]==='muz'||v[0]==='tr');evs=imp;len=JSON.stringify(evs).length;for(const v of lo){const s=JSON.stringify(v).length+1;if(len+s>3400)break;evs.push(v);len+=s;}}
+    if(hostP2P()){if(SP&&evs.length)specEvts(evs,SP);sendEvtP2P(evs,live);}else if(evs.length){let len=JSON.stringify(evs).length;if(len>3400){const imp=evs.filter(v=>v[0]!=='muz'&&v[0]!=='tr');const lo=evs.filter(v=>v[0]==='muz'||v[0]==='tr');evs=imp;len=JSON.stringify(evs).length;for(const v of lo){const s=JSON.stringify(v).length+1;if(len+s>3400)break;evs.push(v);len+=s;}}
     if(JSON.stringify(evs).length>3400)sendChunks('evt',{},evs);else if(evs.length)NET.game.emit('evt',{e:evs}).catch(()=>{});}}
-  if(NET.teamT<=0){NET.teamT=.25;const per=hostP2P()?live.length:Math.min(live.length,3);NET.trr=NET.trr||0;for(let n=0;n<per;n++){const k=live[(NET.trr++)%live.length];NET.game.emit('team',teamMsg(G.teams[k])).catch(()=>{});}}}
+  if(SP){NET.specTT=(NET.specTT||0)-dt;if(NET.specTT<=0){NET.specTT=hostP2P()?.5:1;for(const s of SP){const T=G.teams[s.sv];if(T)NET.game.emit('team',Object.assign(teamMsg(T),{to:s.peer,sb:0,ak:0})).catch(()=>{});}}}
+  if(NET.teamT<=0&&live.length){NET.teamT=.25;const per=hostP2P()?live.length:Math.min(live.length,3);NET.trr=NET.trr||0;for(let n=0;n<per;n++){const k=live[(NET.trr++)%live.length];NET.game.emit('team',teamMsg(G.teams[k])).catch(()=>{});}}}
 
 /* ---------- host: per-player event streams (P2P only) ----------
    In P2P every player is sent their own copy of the event stream anyway, so each copy carries only what that player
@@ -206,3 +208,31 @@ function sendEvtP2P(evs,live){const gq=NET.gq=NET.gq||[],vq=NET.civQ=NET.civQ||[
       for(const x of lo){if(len+x[1].length+1>3400)break;out.push(x);len+=x[1].length+1;}}
     const e=out.map(x=>x[0]);if(len>3400)sendChunks('evt',{to},e);else NET.game.emit('evt',{e,to}).catch(()=>{});}
   if(NET.sk&&!(NET.skP>G.t)){NET.skP=G.t+5;for(const [id,r] of NET.sk)if(G.t-r.s>15&&!G.byId.has(id))NET.sk.delete(id);}}
+
+/* ---------- spectators (Abdullah 2026-11-03): friends watch an online battle, at most SPEC_MAX at a time ----------
+   A spectator is a connection that greets with hi.sp. It is never in NET.peers, so it has no side, its orders are never
+   read (hostCmd/hostPres look sides up in NET.peers), it never gets checkpoints and so can never be the standby or the
+   next host (ckTick only picks from the players). The host sends each spectator the whole battle - every unit and
+   building with nothing hidden (sendSnapP k=-1), every effect, and the team panel of the side they follow (sv) - from
+   copies of what it already builds for the players, so a spectator joining or leaving changes nothing for them.
+   Lobby bookkeeping is the host's own (NET.onSpec: the browser lobby in 07-net, the server's BattleHost.spec). */
+const SPEC_MAX=4;
+function specIs(peer,pr){if(NET.peers&&NET.peers.indexOf(peer)>=0)return false;if(pr&&pr.hi&&pr.hi.sp){(NET.isSpec=NET.isSpec||{})[peer]=1;return true;}return !!(NET.isSpec&&NET.isSpec[peer]);}
+function specOf(peer){return (NET.specs||[]).find(s=>s.peer===peer)||null;}
+// the battle is running: add the spectator (if there is room) and send them the battle's start
+function specJoin(peer){if(MODE!=='host'||!G||!NET.startInfo||!NET.game)return false;if(NET.peers&&NET.peers.indexOf(peer)>=0)return false;NET.specs=NET.specs||[];
+  if(!specOf(peer)){if(NET.specs.length>=SPEC_MAX){NET.game.emit('lobby',{n:0,to:peer,full:1,spec:1}).catch(()=>{});return false;}NET.specs.push({peer,sv:0});}
+  const si=NET.startInfo,st=Array.isArray(si.st)?{st:si.st}:{};
+  NET.game.emit('start',Object.assign({pv:st.st?NET_PVS:NET_PV,seed:si.seed,facs:si.facs,slot:0,to:peer,map:si.map,tm:si.tm,w:si.w|0,sp:1},ME<0||si.sv?{sv:1}:{},st)).catch(()=>{});
+  if(NET.kf)NET.kf['s:'+peer]=0;return true;}
+function specGone(peer){if(NET.isSpec)delete NET.isSpec[peer];if(!NET.specs)return;const i=NET.specs.findIndex(s=>s.peer===peer);if(i<0)return;NET.specs.splice(i,1);
+  const k='s:'+peer;for(const m of ['sc','kf','kt'])if(NET[m])delete NET[m][k];if(NET.onSpecGone)try{NET.onSpecGone(peer);}catch(e){}}
+function specPres(q,pr){const peer=q.peer;
+  if(pr.hi&&(NET.lastHi||{})[peer]!==pr.hi.n){(NET.lastHi=NET.lastHi||{})[peer]=pr.hi.n;if(NET.onSpec)NET.onSpec(peer);else if(MODE==='host')specJoin(peer);}
+  if(typeof pr.pg==='number'&&(NET.lastPg||{})[peer]!==pr.pg&&NET.game){(NET.lastPg=NET.lastPg||{})[peer]=pr.pg;NET.game.emit('pong',{to:peer,t:pr.pg}).catch(()=>{});}
+  const s=specOf(peer);if(!s)return;if(typeof pr.sv==='number'&&G&&pr.sv>=0&&pr.sv<G.teams.length)s.sv=pr.sv|0;
+  if(typeof pr.kr==='number'&&(NET.lastKr||{})[peer]!==pr.kr){(NET.lastKr=NET.lastKr||{})[peer]=pr.kr;if(NET.kf)NET.kf['s:'+peer]=0;}}
+// every effect to every spectator (same ~3.4 KB budget per flush as a player's stream: muzzle flashes / tracers go first)
+function specEvts(evs,SP){let e=evs.filter(v=>Array.isArray(v)),len=JSON.stringify(e).length;
+  if(len>3400){const imp=e.filter(v=>v[0]!=='muz'&&v[0]!=='tr'),lo=e.filter(v=>v[0]==='muz'||v[0]==='tr');e=imp;len=JSON.stringify(e).length;for(const v of lo){const s=JSON.stringify(v).length+1;if(len+s>3400)break;e.push(v);len+=s;}}
+  if(!e.length)return;for(const s of SP){if(len>3400)sendChunks('evt',{to:s.peer},e);else NET.game.emit('evt',{e,to:s.peer}).catch(()=>{});}}

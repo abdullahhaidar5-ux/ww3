@@ -21,6 +21,7 @@ export const MAX_BATTLE_MS = 45 * 60000;     // free-plan cap: after 45 minutes 
                                              // (it closes; the standby player takes over as a browser host, as when a
                                              // host leaves)
 const MAX_PLAYERS = 8;
+const SPEC_MAX = 4;                          // spectators per battle (src/07a-hostsnap.js SPEC_MAX)
 const MAX_FRAME = 16 * 1024;                 // a player's frame (presence with its order queue is capped ~3.5 KB)
 
 const int = (v, lo, hi, d) => (typeof v === 'number' && isFinite(v) ? Math.max(lo, Math.min(hi, Math.round(v))) : d);
@@ -46,6 +47,8 @@ export class BattleHost {
     this.lastStep = 0; this.acc = 0; this.steps = 0; this.lastPub = '';
     this.rd = [];                            // sides whose page is past the loading screen (presence rd)
     sim.room({ emit: (t, d) => { this.emit(t, d); return Promise.resolve(); }, buffered: () => 0 });
+    this.specs = new Set();                  // spectators' ids (no seat, no side; at most SPEC_MAX, src/07a-hostsnap.js)
+    if (sim.onSpec) sim.onSpec(id => this.spec(id), id => this.specs.delete(id));
   }
 
   // ---- sending
@@ -86,6 +89,7 @@ export class BattleHost {
     const p = this.players.get(id); if (!p) return;
     this.players.delete(id);
     this.sim.forget(id);
+    if (this.specs.delete(id)) { if (this.sim.specGone) this.sim.specGone(id); if (this.phase === 'lobby') this.sendLobby(); else this.list(); if (!this.players.size && !this.emptySince) this.emptySince = this.now(); return; }
     if (this.phase === 'lobby') {
       const i = this.order.indexOf(id);
       if (i >= 0) { this.order.splice(i, 1); this.tm.splice(i, 1); }
@@ -119,7 +123,7 @@ export class BattleHost {
     if (p.rd) { P.rd = 1; if (this.phase === 'battle') { const k = this.sim.teamOf(id); if (k >= 0) this.rd[k] = 1; } }
   }
   event(id, t, d) {
-    if (t === 'hello') { if (d && typeof d === 'object') this.hello(id, d.f, null); }
+    if (t === 'hello') { if (d && typeof d === 'object') { if (d.sp) this.spec(id); else this.hello(id, d.f, null); } }
     else if (t === 'cmd') { if (this.phase === 'battle') this.sim.cmd(id, d); }
     else if (t === 'bset') { if (this.phase === 'lobby' && id === this.owner) this.configure(d || {}); }
   }
@@ -145,6 +149,19 @@ export class BattleHost {
     this.sendLobby();
   }
 
+  // a spectator's greeting (presence hi.sp or a 'hello' emit with sp): watches the battle, never takes a seat. Players
+  // are unaffected: a spectator is not in the seat order, holds no side and does not keep an empty battle alive.
+  spec(id) {
+    const P = this.players.get(id); if (!P) return;
+    if (this.order.includes(id)) return;   // a seated player stays a player
+    if (!this.specs.has(id)) {
+      if (this.specs.size >= SPEC_MAX) { this.emit('lobby', { n: 0, to: id, full: 1, spec: 1 }); return; }
+      this.specs.add(id); P.spec = 1; P.full = 0; this.list();
+    }
+    if (this.phase === 'lobby') { this.emit('lobby', { n: this.seats().length, to: id, spec: 1 }); this.sendLobby(); }
+    else if (this.phase === 'battle' && this.sim.specJoin) this.sim.specJoin(id);
+  }
+
   // ---- lobby
   mx() { return Math.min(MAX_PLAYERS, this.sim.mapMax(this.map)); }
   seats() {
@@ -160,11 +177,13 @@ export class BattleHost {
     return '';
   }
   configure(d) {
+    // a custom map (map editor) arrives with its code; the key is a hash of the code, so it must match the key announced
+    if (typeof d.cm === 'string' && d.cm.length <= 40000 && /^cm_/.test(d.map || '')) { const k = this.sim.regMap(d.cm); if (k && k === d.map) this.cmCode = d.cm; }
     // a battlefield with fewer seats than the players already in the lobby is refused, so the lobby never lists more
     // sides than the map holds (review R4); the leader is told why
     if (this.sim.mapOk(d.map) && d.map !== this.map) {
       const n = Math.min(MAX_PLAYERS, this.sim.mapMax(d.map));
-      if (n >= this.order.length) { this.map = d.map; if (/^That battlefield/.test(this.note || '')) this.note = ''; }
+      if (n >= this.order.length) { this.map = d.map; if (!/^cm_/.test(d.map)) this.cmCode = ''; if (/^That battlefield/.test(this.note || '')) this.note = ''; }
       else this.note = `That battlefield holds only ${n} players: pick a bigger one.`;
     }
     if (typeof d.w === 'number') this.w = int(d.w, -1, 31, 0);
@@ -193,7 +212,7 @@ export class BattleHost {
   sendLobby() {
     const seats = this.seats(), why = this.check();
     for (const id of this.players.keys()) {
-      this.emit('blob', { to: id, c: this.code, pv: this.sim.pv, own: id === this.owner ? 1 : 0, you: this.order.indexOf(id), map: this.map, mx: this.mx(), w: this.w, seats, ok: why ? 0 : 1, why: why || this.note || '' });
+      this.emit('blob', { to: id, c: this.code, pv: this.sim.pv, own: id === this.owner ? 1 : 0, you: this.order.indexOf(id), map: this.map, ...(this.cmCode && /^cm_/.test(this.map) ? { cm: this.cmCode } : {}), mx: this.mx(), w: this.w, seats, ok: why ? 0 : 1, why: why || this.note || '', ns: this.specs.size, ...(this.specs.has(id) ? { sp: 1 } : {}) });
     }
     this.flush();
     this.list();
@@ -202,7 +221,7 @@ export class BattleHost {
   entry() {
     if (this.phase === 'closed' || this.phase === 'over') return null;
     const o = this.owner && this.players.get(this.owner), n = this.phase === 'battle' ? this.facs.length : this.seats().length;
-    return { c: this.code, f: (o && o.f) || (this.facs && this.facs[0]) || 'US', s: this.phase === 'lobby' && n < this.mx() ? 'open' : 'full', n: Math.max(1, n), m: this.map, mx: this.mx(), cf: 1, ...(this.pw ? { pw: 1 } : {}) };
+    return { c: this.code, f: (o && o.f) || (this.facs && this.facs[0]) || 'US', s: this.phase === 'lobby' && n < this.mx() ? 'open' : 'full', n: Math.max(1, n), m: this.map, mx: this.mx(), cf: 1, sp: 1, ns: this.specs.size, ...(this.pw ? { pw: 1 } : {}) };
   }
   list(force) { const e = this.entry(), s = JSON.stringify(e); if (force || s !== this.lastPub) { this.lastPub = s; this.publish(e); } }
 
@@ -211,7 +230,7 @@ export class BattleHost {
   sweep(now) {
     this.swept = now;
     for (const [id, P] of [...this.players]) {
-      const unseated = this.phase === 'battle' && P.full && now - P.at > UNSEATED_MS;
+      const unseated = this.phase === 'battle' && P.full && !P.spec && now - P.at > UNSEATED_MS;
       if ((now - P.heard > SILENT_MS && (this.phase !== 'battle' || this.go)) || unseated) { this.closeRaw(id, 4003, unseated ? 'full' : 'silent'); this.leave(id); }
     }
   }
@@ -227,14 +246,17 @@ export class BattleHost {
     // picked start spots (null when everyone is on Random): sent with every start, kept for restarts
     const st = this.sim.stClean([...this.order.map(id => this.players.get(id).st), ...ais.map(a => a.st)], facs.length), sp = st ? { st } : {};
     const ids = [...this.order.map(id => this.players.get(id).idc || 0), ...ais.map(() => 0)];
-    this.facs = facs; this.si = { seed, facs, map: this.map, tm, w: this.w | 0, code: this.code, ...sp };
-    this.order.forEach((id, i) => this.emit('start', { pv: st ? this.sim.pvs : this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, sv: 1, ids, ...sp }));
+    const cmS = this.cmCode && /^cm_/.test(this.map) ? { cm: this.cmCode } : {};
+    this.facs = facs; this.si = { seed, facs, map: this.map, tm, w: this.w | 0, code: this.code, ...sp, ...cmS };
+    this.order.forEach((id, i) => this.emit('start', { pv: st ? this.sim.pvs : this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, sv: 1, ids, ...sp, ...cmS }));
     this.flush();
-    this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code, ...sp });
+    this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code, ...sp, ...cmS });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
     // sockets still in the lobby without a seat (never greeted, or told the lobby was full) hold no side: like late
     // joiners they are closed after UNSEATED_MS, so they can't keep an abandoned battle (and its slot) alive (review R12)
-    for (const [id, P] of this.players) if (!this.order.includes(id)) { P.full = 1; P.at = this.now(); }
+    for (const [id, P] of this.players) if (!this.order.includes(id) && !this.specs.has(id)) { P.full = 1; P.at = this.now(); }
+    for (const id of this.specs) this.sim.specJoin(id);   // spectators get the battle's start too
+    this.flush();
     this.go = false; this.goBy = this.now() + this.readyMs; this.rd = [];   // hold until every player is past the loading screen
     this.log(`battle ${this.code} started: ${facs.join(' ')} on ${this.map}`);
     this.list();
@@ -253,7 +275,8 @@ export class BattleHost {
     if (this.phase === 'over') return now >= this.endAt ? this.shut('battle over') : 1000;
     if (now - (this.swept || 0) > 1000) {   // once a second: sockets told "full" (no side) don't keep the battle going
       this.sweep(now);
-      if ([...this.players.values()].some(P => !P.full)) this.emptySince = 0; else if (!this.emptySince) this.emptySince = now;
+      // spectators don't keep a battle going: with no player left it ends (EMPTY_MS later) and the spectators are let go
+      if ([...this.players.values()].some(P => !P.full && !P.spec)) this.emptySince = 0; else if (!this.emptySince) this.emptySince = now;
     }
     if (this.emptySince && now - this.emptySince > EMPTY_MS) return this.shut('everyone left');
     if (now - this.startedAt > MAX_BATTLE_MS) return this.shut('time limit');
@@ -282,7 +305,7 @@ export class BattleHost {
   static async restore(opts, rec) {
     const h = new BattleHost({ ...opts, code: rec.code, ownKey: rec.own, pw: rec.pw || null });
     await h.sim.restore(rec.si, rec.s);
-    h.si = rec.si; h.facs = rec.si.facs.slice(); h.map = rec.si.map; h.w = rec.si.w | 0;
+    h.si = rec.si; h.facs = rec.si.facs.slice(); h.map = rec.si.map; h.w = rec.si.w | 0; h.cmCode = rec.si.cm || '';
     h.phase = 'battle'; h.startedAt = h.lastStep = h.emptySince = h.now(); h.acc = 0; h.go = true;
     h.log(`battle ${rec.code} picked up from its checkpoint (${Math.round((h.now() - rec.at) / 1000)} s old)`);
     h.list(true);

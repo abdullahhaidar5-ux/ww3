@@ -180,7 +180,7 @@ an earlier one still has work a squad can take (other squads may only do small P
 
 - [open] **Phase 5 next: infantry draws** (Visuals, cycle 19) — vehicles merged; infantry is now the biggest cost (~16 draws per squad); artillery add-on gun still its own draw; decal ring/shadow refill runs twice per frame (10-post re-renders the scene — skip if `R3.info.render.frame` unchanged); run `columns.mjs --phone`. If turrets are ever animated, keep their parts out of the merge.
 - [done 2026-11-03 polish-1103 — partly, see orch/reports/polish-1103.md] **End-stats follow-ups** (Interface, cycle 19): cap awards per player (one player can sweep them all); show player names; army graph stops at 720 samples (~2 h) — halve + double interval instead; `orch/endstats.mjs` failed once then passed ×2 (flaky? add to gate when stable); ask Abdullah to test on iPhone. claude.ai copy: Share download does nothing there (no `downloads` capability) — same fix as kill-cam Save.
-- [open] **Soldier animation clips + distant low-poly soldier** (Visuals, gfx-infantry follow-up): baked run/shoot/die; the
+- [partly done 2026-11-04 vis-1103: distant low-poly soldier shipped (thinned skinned mesh when cam.dist>480); baked run/shoot/die clips still open] **Soldier animation clips + distant low-poly soldier** (Visuals, gfx-infantry follow-up): baked run/shoot/die; the
   remaining buildings (only HQ/barracks/factory got ME models).
 - [open] **QA: CI `cfclient` flaked once on d136254 and again in cycle 19 (passed on rerun)** ("no player took over after the server lost it"); passed locally ×1 and on
   the branches. If it fails again in CI, root-cause the takeover-after-server-restart timing.
@@ -203,7 +203,7 @@ an earlier one still has work a squad can take (other squads may only do small P
 - [open] "Massive columns" scale: profiled 2026-11-04 (orch/reports/perf-1103.md): sim 3.3 ms/step, sync 3.8, fx 2.5 on PC (x4 phone-like); push-apart sped up. Remaining: render (draw calls/shadow casters/vehicle parts) — needs Abdullah's iPhone numbers first.
 
 **Visuals** (`04-gfx`, `05-fx3d`, `10-post`, `11-models`)
-- [open] Big explosions still open with a soft, flat yellow ball for their first instant — rework (cycle 12).
+- [done 2026-11-04 vis-1103] Big explosions: brief hot flash + lumpy fireball puffs + dark debris (no flat yellow ball).
 - [open] `migrate.mjs` failed once in cycle 10's gate ("a client fell 59 game-s behind before the host left") right
   after a 6-min `mpsync --server` run; passed on rerun. Watch for a repeat (load-sensitive?). Very old Safari (<16.4, no DecompressionStream) now
   gets simple shapes. Check after ship that Pages + the `ww3` Worker serve `models/*.glb.gz` (loader also accepts
