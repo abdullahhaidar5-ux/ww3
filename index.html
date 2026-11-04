@@ -11998,7 +11998,7 @@ const RMOD={t90:{m:'m_t90',fit:'z',size:40},hilux:{m:'m_hilux',fit:'z',size:30,e
   ural:{m:'m_ural',fit:'z',size:36},m35:{m:'m_m35',fit:'z',size:36},humvee:{m:'m_humvee',fit:'z',size:27},uh60:{m:'m_uh60',fit:'z',size:70},mi8:{m:'m_mi8',fit:'z',size:76}};
 const RMAP={tank:{RU:'t90',KP:'t90',IR:'t90',UA:'t90',CN:'t90',IN:'t90',EG:'t90',PK:'t90',CU:'t90',RS:'hilux',DW:'hilux'},dozer:{},
   heli:{US:'apache',IL:'apache',EU:'apache',SA:'apache',AE:'apache',EG:'apache',KR:'apache',TR:'apache',IN:'apache',PK:'apache',RU:'mi24',KP:'mi24',IR:'mi24',CN:'mi24',UA:'mi24',CU:'mi24',RS:'mi24',DW:'mi24'},
-  jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',CU:'mig29'}};
+  jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',CU:'mig29',RS:'mig29',DW:'mig29'}};
 for(const f of ['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','CU','RS','DW'])RMAP.dozer[f]='jd550';
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
@@ -12575,7 +12575,7 @@ function droneType(fac){return fac==='IR'||fac==='RS'||fac==='DW'?'delta':fac===
 const DPROTO={};
 function droneModel(e){const T=G.teams[e.team],ty=droneType(T.fac),key=ty+'|'+T.fac+'|'+T.color;
   if(!DPROTO[key]){const p=buildDrone(e);SCN.remove(p);const meta={props:p.userData.parts.props.map(q=>q.ax)};p.userData={};p.children[0].userData={};let i=0;p.traverse(c=>{if(c.userData&&c.userData.dprop!=null)return;});DPROTO[key]={p,meta};}
-  const D=DPROTO[key],o=D.p.clone(),yaw=o.children[0],props=[];o.traverse(c=>{if(c.name==='dprop')props.push({m:c,ax:c.userData.ax||'y'});});
+  const D=DPROTO[key],o=D.p.clone(),yaw=o.children[0],props=[];kitAdopt(o);o.traverse(c=>{if(c.name==='dprop')props.push({m:c,ax:c.userData.ax||'y'});});
   o.userData={parts:{body:yaw,props},model:true,dtype:ty};SCN.add(o);return o;}
 function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.Group(),yaw=new THREE.Group();o.add(yaw);o.userData.parts={body:yaw,props:[]};o.userData.model=true;o.userData.dtype=ty;
   const B=Bld(),dk='#2a2c28',tc=T.color;
@@ -12618,12 +12618,15 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
     if(big)for(const s of [-1,1])B.box(.4,2.4,.4,0,-1.6,1.4*s,dk);
     if(!big){B.cyl(.55,.55,2.6,8,-.6,1.55,0,'#2d3a52',0,0,Math.PI/2);for(const t of [-.5,.4])B.cyl(.6,.6,.35,8,-.6+t,1.55,0,'#151515',0,0,Math.PI/2);for(const s of [-1,1])B.cyl(.06,.06,3.2,4,-2.6,2.4,.5*s,dk,.3*s,0,1.1);}
     B.sph(.2,arm*.72,.6,arm*.72,'#2bc24a');B.sph(.2,arm*.72,.6,-arm*.72,'#c22a1e');B.sph(.2,-arm*.72,.6,arm*.72,'#e8e8e2');B.sph(.2,-arm*.72,.6,-arm*.72,'#e8e8e2');}
-  yaw.add(mesh(B.geo()));const sc=ty==='delta'?.95:ty==='kargu'?.95:ty==='tb2'||ty==='mq'?.9:.85;yaw.scale.setScalar(sc);
+  // drones get their own plain painted-metal material: the shared one adds ground dust to everything near the model's
+  // origin, which turned every drone sand-coloured whatever its paint
+  if(!DPROTO._mat)DPROTO._mat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:.25});
+  {const dm=new THREE.Mesh(B.geo(),DPROTO._mat);dm.castShadow=true;yaw.add(dm);}const sc=ty==='delta'?.95:ty==='kargu'?.95:ty==='tb2'||ty==='mq'?.9:.85;yaw.scale.setScalar(sc);
   if(!(typeof SET!=='undefined'&&SET.gfx==='low')&&ty!=='fpv'&&ty!=='kargu')try{const K=kitBuilder(),f=T.fac;
     if(ty==='delta'){const nm=f==='RS'?'ababil':f==='DW'?'qasef':'shahed',dg=f==='IR'?'p:':'a:',sn=String(100+(KFAC.indexOf(f)*47)%800);
       for(const sg of [1,-1])K.quad(5.2,2.2,-2.5,0,sg*1.3,sg>0?'+z':'-z','s:'+nm,[.04,.1,.96,.9]);for(let i=0;i<3;i++)K.quad(.95,1.4,-6.6+(i-1)*1.0,.76,6.2,'+y',dg+sn[i],[.25,.1,.75,.9]);}
     else{const r=ty==='lancet'?.82:ty==='mq'?1.23:.98,x=ty==='lancet'?-1.5:-2.4;for(const sg of [1,-1])K.quad(2.6,1.56,x,ty==='mq'?.3:0,sg*r,sg>0?'+z':'-z','f:'+f);}
-    const g=K.geo();if(g){const km=new THREE.Mesh(g,kitMat());km.castShadow=false;yaw.add(km);}}catch(err){console.warn('drone kit',err);}
+    const g=K.geo();if(g)yaw.add(kitMarker('drone|'+ty+'|'+f,g));}catch(err){console.warn('drone kit',err);}
   SCN.add(o);return o;}
 // The Ayatollah: a senior cleric - layered black turban (amamah), full white beard, round spectacles, a pale grey
 // qaba robe to the ground under a dark brown aba cloak with thin gold edging, hands folded holding prayer beads.
@@ -12691,6 +12694,11 @@ function decalSet(k){let S=DECAL.sets[k];if(S)return S;let geo,mat,ro;
     geo=new THREE.PlaneGeometry(1.5,1).rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({map:BLOBTEX,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});ro=1;}
   else{geo=k==='ringS'?new THREE.RingGeometry(.5,.56,28):new THREE.RingGeometry(.36,.41,28);geo.rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.24,depthWrite:false});ro=2;}
   return DECAL.sets[k]=S={geo,mat,ro,im:null,cap:0,list:new Set(),col:k!=='blob'};}
+// faction kit, ship radars and drone stencils are drawn as instances (one draw call per kit shape for the whole
+// battle, not one per unit): each unit only carries an empty marker whose world matrix feeds the instanced mesh
+function kitMarker(id,g){const k='kit:'+id;let S=DECAL.sets[k];if(!S)S=DECAL.sets[k]={geo:g,mat:kitMat(),ro:0,im:null,cap:0,list:new Set(),col:false};
+  const m=new THREE.Object3D();m.name='kitInst';m.userData.kid=id;S.list.add(m);if(SCN&&SCN.onBeforeRender!==decalUpdate)SCN.onBeforeRender=decalUpdate;return m;}
+function kitAdopt(o){o.traverse(q=>{if(q.name==='kitInst'&&q.userData.kid){const S=DECAL.sets['kit:'+q.userData.kid];if(S)S.list.add(q);}});}
 function decal(k,color){const S=decalSet(k),m=new THREE.Object3D();m.name='decal_'+k;if(color)m.userData.dc=color;S.list.add(m);
   if(SCN&&SCN.onBeforeRender!==decalUpdate)SCN.onBeforeRender=decalUpdate;return m;}
 function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
@@ -12992,8 +13000,8 @@ function factionKit(e,c,o,yaw,m,T){if(!T||!T.fac||!c||!m)return;const low=typeof
   if(g===undefined){g=null;try{const P=kitProbe(o,yaw,m,c.m+'|'+c.size);if(P){m.rotation.y=0;o.updateMatrixWorld(true);g=kitPose(P,o,()=>kitGeo(e,c,fac,k,air,nav,P));}}catch(err){console.warn('kit',err);}KIT.geo[gk]=g;}
   if(k==='ship'){let R=KIT.geo['radar|'+c.m+'|'+c.size];if(R===undefined){R=null;try{const P=kitProbe(o,yaw,m,c.m+'|'+c.size);if(P){m.rotation.y=0;o.updateMatrixWorld(true);let best=null;kitPose(P,o,()=>{for(let i=0;i<=10;i++){const x=P.cx-P.L*.25+i*P.L*.04,d=P.down(x,0);if(d&&(!best||d.y>best.y))best=d;}});
       if(best){const L=P.L,B=kitBuilder();B.rbox(L*.075,L*.012,L*.006,0,L*.012,0,'#cfd2d0');B.rbox(L*.06,L*.004,L*.012,0,L*.004,L*.006,'#7d8285');B.cyl(L*.004,L*.004,L*.012,6,0,L*.006,0,'#5a5e60');R={g:B.geo(),x:best.x,y:best.y,z:best.z};}}}catch(err){console.warn('radar',err);}KIT.geo['radar|'+c.m+'|'+c.size]=R;}
-    if(R&&R.g){const piv=new THREE.Group();piv.rotation.y=-yaw.rotation.y;const rm=new THREE.Mesh(R.g,kitMat());rm.position.set(R.x,R.y-.2,R.z);rm.rotation.y=(e.id%7)*.9;piv.add(rm);m.add(piv);o.userData.parts.radar=rm;}}
-  if(!g)return;const kg=new THREE.Mesh(g,kitMat());kg.castShadow=false;kg.receiveShadow=true;kg.rotation.y=-yaw.rotation.y;kg.name='factionKit';m.add(kg);}
+    if(R&&R.g){const piv=new THREE.Group();piv.rotation.y=-yaw.rotation.y;const rm=kitMarker('radar|'+c.m+'|'+c.size,R.g);rm.position.set(R.x,R.y-.2,R.z);rm.rotation.y=(e.id%7)*.9;piv.add(rm);m.add(piv);o.userData.parts.radar=rm;}}
+  if(!g)return;const kg=kitMarker(gk,g);kg.rotation.y=-yaw.rotation.y;m.add(kg);}
 function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=bb.min.x,maxx=bb.max.x,miny=bb.min.y,shia=fac==='IR'||fac==='RS'||fac==='DW',low=typeof SET!=='undefined'&&SET.gfx==='low';
   const sides=(fn)=>{for(const sg of [1,-1])fn(sg,sg>0?'+z':'-z');};
   const flagCell=fac==='KP'?'star':'f:'+fac;
@@ -13017,9 +13025,10 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
           B.cyl(u*.2,u*.24,u*.55,6,dx-u*.15,dy+u*.28,sg*hz,LK.uni);B.ell(u*.12,u*.13,u*.12,dx-u*.15,dy+u*.68,sg*hz,'#9c7a5c');B.ell(u*.15,u*.1,u*.15,dx-u*.15,dy+u*.76,sg*hz,'#3b3e33');
           B.bar(dx+u*.05,dy+u*.45,sg*(hz+u*.1),dx+u*.1,dy+u*.3,sg*(hz+u*1.1),u*.045,'#1c1d1b',5);B.rbox(u*.22,u*.16,u*.36,dx+u*.04,dy+u*.44,sg*(hz+u*.25),'#262724');}}}
   }else if(nav){
-    const y=miny+H*.3;let p=P.side(cx,y,1);if(p){const hz=Math.abs(p.z);
-      const fw=Math.min(L*.18,H*1.6);sides((sg,f)=>B.quad(fw,fw*.6,minx+L*.2,y,sg*(hz+.12),f,'f:'+fac));
-      if(k!=='lander'){const no=(k==='ship'?100+((KFAC.indexOf(fac)*37+17+(e.id&3)*11)%800):10+((KFAC.indexOf(fac)*13+(e.id&3)*7)%89)),ds=String(no),dh=Math.min(H*.3,L*.07),dw=dh*.55;
+    // hull side height: for a warship the mast makes H tall, so measure the bow deck and paint below it
+    const bd=k==='ship'?P.down(maxx-L*.14,0):null,fb=bd&&bd.y<miny+H*.5?bd.y-miny:H*.6,y=miny+fb*.6;let p=P.side(cx,y,1);if(p){const hz=Math.abs(p.z);
+      const fw=Math.min(L*.18,H*1.6)*(k==='boat'?.55:1);if(k!=='ship')sides((sg,f)=>B.quad(fw,fw*.6,minx+L*.2,y,sg*(hz+.12),f,'f:'+fac));
+      if(k!=='lander'){const no=(k==='ship'?100+((KFAC.indexOf(fac)*37+17+(e.id&3)*11)%800):10+((KFAC.indexOf(fac)*13+(e.id&3)*7)%89)),ds=String(no),dh=Math.min(fb*.55,L*.07),dw=dh*.55;
         for(let i=0;i<ds.length;i++){const xx=maxx-L*.3-(ds.length-1-i)*dw*1.05;sides((sg,f)=>B.quad(dw,dh,xx,y,sg*(Math.abs((P.side(xx,y,1)||p).z)+.12),f,'d:'+ds[i],[.3,.1,.7,.9]));}}}
     const tp=k==='sub'?null:P.down(minx+L*.12,0);if(tp)pole(minx+L*.12,tp.y,Math.max(4,H*1.1),Math.min(L*.17,12));
     if(k==='ship'&&!low){
@@ -13034,7 +13043,7 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
     const hx=cx-L*.1,yS=miny+H*.42,ps=P.side(hx,yS,1);const fw=Math.min(L*.17,11);
     if(ps){const hz=Math.abs(ps.z);sides((sg,f)=>B.quad(fw,fw*(fac==='KP'?1:.6),hx,yS,sg*(hz+.12),f,flagCell));}
     const tt=P.down(cx-L*.02,0),hil=c.m==='m_hilux',tank=k==='tank'&&!hil,u=L/(hil?5.3:k==='jeep'?4.8:9.2),LK=FLOOK[fac]||{uni:'#5d6247',veh:'#5d6247'};
-    const rearD=P.down(minx+L*.1,0),frontD=P.down(maxx-L*.12,0),sideAt=(x,y)=>{const s=P.side(x,y,1);return s?Math.abs(s.z):null;};
+    const rearD=P.down(minx+L*.1,0),frontD=(()=>{for(let f=.02;f<.45;f+=.025){const p=P.down(maxx-L*f,W*.3);if(p&&p.y<miny+H*.62)return p;}return null;})(),/* the glacis: first hull hit behind the gun barrel */sideAt=(x,y)=>{const s=P.side(x,y,1);return s?Math.abs(s.z):null;};
     // kit pieces in real-world sizes (u = one metre on this model); colours are worn canvas, steel and rubber, never bright
     const jerry=(x,y,z,col)=>B.rbox(u*.35,u*.47,u*.17,x,y+u*.235,z,col||'#4f5634');
     const tyre=(x,y,z)=>{B.tor(u*.3,u*.11,x,y,z,'#1b1b1a',0,Math.PI/2,0);B.cyl(u*.2,u*.2,u*.12,10,x,y,z,'#3a3a35',Math.PI/2,0,0);};
@@ -13054,15 +13063,15 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
     if(fac==='KP'&&tt)B.quad(Math.min(L*.18,12),Math.min(L*.18,12),cx-L*.02,tt.y+.2,0,'+y','star');
     if(!hil){
       if(fac==='RS'&&rearD){B.net(L*.34,u*.45,W*.72,minx+L*.2,rearD.y-u*.05,0,'#4a4a34',1.3);B.net(L*.2,u*.4,W*.5,minx+L*.26,rearD.y,W*.08,'#5b5238',4.1);}
-      if(fac==='DW'){if(rearD){for(let i=0;i<3;i++)jerry(minx+L*.08,rearD.y,(i-1)*u*.22,'#4a5130');tyre(minx+L*.18,rearD.y+u*.12,-W*.25);}if(frontD)for(let i=0;i<5;i++)sandbag(maxx-L*.14,frontD.y+((i/3)|0)*u*.17,(i%3-1)*u*.62,.1*i);}
+      if(fac==='DW'){if(rearD){for(let i=0;i<3;i++)jerry(minx+L*.08,rearD.y,(i-1)*u*.22,'#4a5130');tyre(minx+L*.18,rearD.y+u*.12,-W*.25);}if(frontD)for(let i=0;i<5;i++)sandbag(frontD.x-u*.35,frontD.y+((i/3)|0)*u*.17,(i%3-1)*u*.62,.1*i);}
       if(fac==='IR'&&(tank||k==='arty'||k==='aa')){// slat armour over the rear hull sides, Persian hull number up front
-        const y0=miny+H*.22,y1=miny+H*.47,s=sideAt(cx-L*.2,miny+H*.4);if(s){const z=s+u*.28;for(const sg of [1,-1]){for(let i=0;i<11;i++){const x=minx+L*.08+i*L*.04;B.bar(x,y0,sg*z,x,y1,sg*z,u*.025,'#4a4f3c',4);}for(const yy of [y0,y1])B.bar(minx+L*.06,yy,sg*z,minx+L*.5,yy,sg*z,u*.035,'#3f4334',4);}}
+        const y0=miny+H*.12,y1=miny+H*.34,s=sideAt(cx-L*.2,miny+H*.3);if(s){const z=s+u*.28;for(const sg of [1,-1]){for(let i=0;i<11;i++){const x=minx+L*.08+i*L*.04;B.bar(x,y0,sg*z,x,y1,sg*z,u*.025,'#4a4f3c',4);}for(const yy of [y0,y1])B.bar(minx+L*.06,yy,sg*z,minx+L*.5,yy,sg*z,u*.035,'#3f4334',4);}}
         const ny=miny+H*.5,ns=sideAt(maxx-L*.25,ny);if(ns){const ds=String(100+((e.id*7)%6)*111).split(''),dh=u*.5,dw=dh*.6;for(let i=0;i<ds.length;i++){const xx=maxx-L*.22-(ds.length-1-i)*dw;sides((sg,f)=>B.quad(dw,dh,xx,ny,sg*(ns+.14),f,'p:'+ds[i],[.25,.1,.75,.9]));}}}
       if(fac==='KP'){const sx=cx-L*.28,sy=miny+H*.5,s=sideAt(sx,sy);if(s)sides((sg,f)=>B.quad(u*1.9,u*1.25,sx,sy,sg*(s+.14),f,'s:kp',[.03,.12,.97,.88]));}
       if((fac==='RU'||fac==='UA')&&tank&&tt){// cope cage: round bars on posts over the turret
         const y=tt.y+u*1.05,ww=L*.3,dd=W*.42,x0=cx-L*.02,col='#2e312a';for(const z of [-1,0,1])B.bar(x0-ww/2,y,z*dd/2,x0+ww/2,y,z*dd/2,u*.035,col);for(let i=0;i<5;i++){const x=x0-ww/2+i*ww/4;B.bar(x,y,-dd/2,x,y,dd/2,u*.035,col);}
         for(const sx of [-1,1])for(const sz of [-1,1])B.bar(x0+sx*ww/2,y,sz*dd/2,x0+sx*ww*.42,tt.y-u*.1,sz*dd*.42,u*.04,col);}
-      if(fac==='RU'&&(tank||k==='arty'||k==='aa')){if(frontD&&tank)for(let i=0;i<6;i++)for(let j=0;j<2;j++)B.rbox(u*.42,u*.11,u*.36,maxx-L*.15-j*u*.42,frontD.y+u*.04+j*u*.07,(i-2.5)*u*.4,'#4e5838',0,0,.18);
+      if(fac==='RU'&&(tank||k==='arty'||k==='aa')){if(frontD&&tank)for(let i=0;i<6;i++)for(let j=0;j<2;j++)B.rbox(u*.42,u*.11,u*.36,frontD.x-u*.3-j*u*.42,frontD.y+u*.04+j*u*.07,(i-2.5)*u*.4,'#4e5838',0,0,.18);
         const sx=cx-L*.25,sy=miny+H*.48,s=sideAt(sx,sy);if(s)sides((sg,f)=>B.quad(u*1.3,u*.8,sx,sy,sg*(s+.14),f,'s:ru'));}
       if(fac==='US'&&(tank||k==='aa'||k==='atgm')&&tt){// remote weapon station on the turret roof
         const x=cx-L*.06,z=-W*.12,y=tt.y;B.cyl(u*.18,u*.22,u*.22,8,x,y+u*.11,z,'#3b3f38');B.rbox(u*.5,u*.3,u*.36,x,y+u*.38,z,'#4a4e45');B.bar(x+u*.2,y+u*.42,z,x+u*1.15,y+u*.42,z,u*.045,'#1c1d1b',5);B.rbox(u*.22,u*.2,u*.2,x+u*.05,y+u*.62,z+u*.2,'#24262a');}
@@ -13070,11 +13079,11 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
         const bx=cx-L*.24,y=tt.y-u*.35,ww=u*1.3,dd=W*.6,col='#3c3e35';for(const yy of [y,y+u*.38]){B.bar(bx-ww/2,yy,-dd/2,bx+ww/2,yy,-dd/2,u*.03,col);B.bar(bx-ww/2,yy,dd/2,bx+ww/2,yy,dd/2,u*.03,col);B.bar(bx-ww/2,yy,-dd/2,bx-ww/2,yy,dd/2,u*.03,col);}
         for(let i=0;i<4;i++){const z=(i-1.5)*dd/3.2;B.bar(bx-ww/2,y,z,bx-ww/2,y+u*.38,z,u*.03,col);}bag(bx,y,-dd*.2,'#6b6650');bag(bx+u*.1,y,dd*.18,'#57563f');roll(bx-u*.3,y+u*.2,0,dd*.8,'#4e5040');
         const fx=cx+L*.14,fy=tt.y-u*.35,s=sideAt(fx,fy);if(s){const n=9;for(let i=0;i<n;i++){const z=(i-(n-1)/2)*(s*1.6/n);for(let j=0;j<4;j++)B.ell(u*.06,u*.06,u*.06,fx,fy-j*u*.13,z,'#2a2b28');}}}
-      if(fac==='TR'&&tank&&frontD)for(let i=0;i<5;i++)B.rbox(u*.16,u*.08,u*.62,maxx-L*.13,frontD.y+u*.05,(i-2)*u*.33,'#2c2d2a',0,0,.2);
+      if(fac==='TR'&&tank&&frontD)for(let i=0;i<5;i++)B.rbox(u*.16,u*.08,u*.62,frontD.x-u*.25,frontD.y+u*.05,(i-2)*u*.33,'#2c2d2a',0,0,.2);
       if((fac==='EU'||fac==='CN'||fac==='KR')&&tank)smokeL(fac==='CN'?4:fac==='KR'?3:4);
       if((fac==='SA'||fac==='AE'||fac==='IN')&&rearD){bag(minx+L*.16,rearD.y,W*.2,'#8a7d5c');bag(minx+L*.16,rearD.y,-W*.18,'#77704f');if(fac!=='IN')for(let i=0;i<2;i++)jerry(minx+L*.08,rearD.y,(i-.5)*u*.22,'#7a7155');}
       if((fac==='PK'||fac==='CU'||fac==='KR'||fac==='IN')&&rearD)roll(minx+L*.12,rearD.y,0,W*.6,fac==='CU'?'#4f5236':'#5a5c3f');
-      if(fac==='EG'&&frontD)for(let i=0;i<4;i++)sandbag(maxx-L*.14,frontD.y,(i-1.5)*u*.6,.15*i);
+      if(fac==='EG'&&frontD)for(let i=0;i<4;i++)sandbag(frontD.x-u*.35,frontD.y,(i-1.5)*u*.6,.15*i);
       // crew and stowage: a tank commander standing in his hatch, a bedroll on the turret side
       if(tank&&tt){const x=cx-L*.08,z=W*.13,d=P.down(x,z);if(d){const y=d.y;B.cyl(u*.32,u*.32,u*.08,10,x-u*.42,y+u*.18,z,LK.veh||'#555',0,0,1.2);B.cyl(u*.21,u*.26,u*.6,7,x,y+u*.22,z,LK.uni);
           B.ell(u*.11,u*.13,u*.11,x,y+u*.64,z,'#a07c5e');B.ell(u*.15,u*.08,u*.15,x,y+u*.73,z,fac==='US'||fac==='IL'?'#5d5a48':'#2c2e28');}

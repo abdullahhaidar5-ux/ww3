@@ -104,11 +104,13 @@ async function solo(page, fac, tagn, kinds, dmg) {
     const ok = await page.evaluate(([kd, dmg]) => { G.paused = true; G.ents = G.ents.filter(e => e.isB);
       const [bx, by] = BASES[0]; const x = Math.max(700, Math.min(MAPW - 700, bx + 260)), y = Math.max(700, Math.min(MAPH - 700, by + 80));
       let u; try { u = addUnit(0, kd, x, y); } catch (e) { return false; } u.ox = u.x; u.oy = u.y; if (u.vs) u.vs[0] = true; u.ang = u.va = -Math.PI * .8;
-      if (dmg) u.hp = u.max * dmg; window.__u = u; const d = { jet: 70, heli: 80, ship: 170, boat: 80, drone: 40 }[kd] || 75;
+      if (dmg) u.hp = u.max * dmg; window.__u = u; const d = { jet: 70, heli: 80, ship: 170, boat: 80, drone: 75 }[kd] || 75;
       cam.dist = cam.td = d; cam.x = cam.tx = x; cam.y = cam.ty = y; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; return true; }, [kd, dmg]);
     if (!ok) continue;
     await page.evaluate(() => { cam.tilt = -.55; });
     await frames(page, 2);
+    if (kd === 'drone') await page.evaluate(() => { const o = OBJ.get(window.__u.id); if (o) { o.userData.yaw = o.userData.pyd = window.__u.va; } });
+    if (kd === 'drone') console.log('drone', await page.evaluate(() => { const o = OBJ.get(window.__u.id); return o ? JSON.stringify([o.rotation.x, o.rotation.y, o.rotation.z, o.rotation.order, o.children[0].rotation.toArray(), o.position.y - groundH(window.__u.x, window.__u.y), o.userData.dp]) : 'none'; }));
     await page.evaluate(([base]) => { const o = OBJ.get(window.__u.id); if (!o) return; const h = o.position.y, ux = o.position.x, uz = o.position.z;
       const pf = d => { const kz = Math.max(0, Math.min(1, (d - 230) / 370)); return Math.max(.22, Math.min(1.42, Math.max(.34 + kz * .44, Math.asin(Math.min(1, 112 / d))) + (cam.tilt || 0))); };
       let d = base; for (let i = 0; i < 8; i++) { const p = pf(d); d = h / Math.sin(p) + base; } const p = pf(d);
