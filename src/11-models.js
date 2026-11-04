@@ -33,6 +33,16 @@ RMAP.arty={};RMAP.airlift={};RMAP.jeep={SA:'humvee'};RMAP.raidlead={DW:'hilux'};
 for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k]={};
 for(const f of WESTVEH){RMAP.arty[f]='g6';RMAP.airlift[f]='uh60';for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k][f]='m35';}
 for(const f of EASTVEH){if(f!=='RS'&&f!=='DW')RMAP.arty[f]='msta';RMAP.airlift[f]='mi8';for(const k of ['harv','idome','ew','cbr','atgm','aa'])RMAP[k][f]='ural';}
+// Faction-unique helicopters and warships (Objaverse / Sketchfab, CC BY, authors in the menu credits): Russia flies the Mi-28,
+// Egypt the Ka-52, Turkey, Pakistan and Iran an AH-1 Cobra-type gunship; Western navies a Type 45 destroyer (Germany an F123
+// frigate), Russia/China/North Korea/Ukraine/India/Pakistan/Cuba/Iran a Russian-style destroyer; the Shia nations'
+// patrol boats are a camouflaged fast boat. Visual only: the simulation does not know about these.
+Object.assign(RMOD,{ka52:{m:'m_ka52',fit:'z',size:56,tint:'#5a6450',tk:.55},mi28:{m:'m_mi28',fit:'z',size:56},ah1:{m:'m_ah1',fit:'z',size:56},
+  frw:{m:'m_frw',fit:'z',size:118},frg:{m:'m_frg',fit:'z',size:118},fre:{m:'m_fre',fit:'z',size:118},spb:{m:'m_spb',fit:'z',size:42,tint:'#7a8590',tk:.15}});
+Object.assign(RMAP.heli,{RU:'mi28',EG:'ka52',TR:'ah1',PK:'ah1',IR:'ah1'});
+RMAP.ship={};RMAP.boat={IR:'spb',RS:'spb',DW:'spb'};
+for(const f of ['US','IL','TR','KR','SA','AE','EG'])RMAP.ship[f]='frw';RMAP.ship.EU='frg';
+for(const f of ['RU','CN','KP','UA','IN','PK','CU','IR','RS','DW'])RMAP.ship[f]='fre';
 // the nation's own truck model, if it has arrived (AA trucks and rocket launchers are built on it)
 // their paint textures are dark (woodland camo, weathering): brightened so the national paint reads like the other vehicles'
 const TEXB={m_abrams:2,m_merkava:2,m_kf51:1.6,m_msta:2.2,m_ural:1.9,m_m35:2.2,m_oplot:2.2,m_t72:1.3};
