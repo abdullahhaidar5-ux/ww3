@@ -222,6 +222,7 @@ const POWERS={
   para:{name:'Paradrop',desc:'Drop 5 infantry anywhere on land',cd:150},
   barrage:{name:'Artillery Barrage',desc:'10 shells over a wide area',cd:170,r:180},
   repair:{name:'Emergency Repair',desc:'Restore 60% health to your forces in an area',cd:120,r:230},
+  flare:{name:'Illumination Flares',desc:'Light up an area for about 30 seconds so everybody can see in it, friend and foe. Made for night battles',cd:60,r:300},
   mil:{name:'Fund Militia',desc:'Pay a local militia: 5 riflemen, an RPG team and an armed technical appear at the neutral spot nearest the front, under your command',cd:480,self:true},
   bb:{name:'Bunker Buster',desc:'Two guided heavy bombs on one spot. Costs $2200 each time and is not available in the first 5 minutes. Heavy damage to buildings in a small radius, and the ONLY thing that can destroy a Mountain Fortress (both bombs must hit)',cd:420,r:70,cash:2200},
   sanc:{name:'Sanctions',desc:'Sanction the richest enemy: their income drops 20% for 60 seconds (their Smuggling Routes upgrade cuts that to 8%)',cd:420,self:true},
