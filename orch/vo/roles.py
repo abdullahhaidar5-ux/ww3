@@ -13,6 +13,7 @@ sys.modules['speechmos'].dnsmos = sys.modules['speechmos.dnsmos']
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(os.path.dirname(HERE))
 sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(ROOT, 'tools', 'voices'))
 import render as RN
+import score as SC
 import tough2 as T2
 from roles_lines import R
 SR = RN.SR
@@ -55,11 +56,23 @@ def nation(fac, log=print):
                     sv = C['sold'][ln] if isinstance(C['sold'], dict) else C['sold']
                     v = (C['cmd'][ln] if isinstance(C['cmd'], dict) else C['cmd']) if slot == 'cmd' else sv[(slot + i) % len(sv)]
                 exp = 0.35 + 0.075 * len(re.sub(r'\s', '', say)) * (2.2 if ln in ('zh-cn', 'ko') else 1)
-                best = None
-                for take in range(3):
+                best = None; bk = None
+                wl = {'zh-cn': 'zh'}.get(ln, ln)
+                nch = len(re.sub(r'\s', '', say))
+                for take in range(4 if ln == 'hi' else 5):   # QC: Whisper read-back; XTTS sometimes babbles on short lines (long tail / wrong words)
                     w = RN.trim(RN.synth(C['eng'], v, ln, say, take, mood)); d = len(w) / SR
-                    if 0.3 < d <= 1.7 * exp + .45: best = w; break
-                    if best is None or abs(d - exp) < abs(len(best) / SR - exp): best = w
+                    if ln == 'hi':   # Whisper-small can't read short Hindi/Urdu radio lines: judge by length only (babble runs long)
+                        key = (d if d >= 0.25 + 0.04 * nch else d + 10, take)
+                        if bk is None or key < bk: bk, best = key, w
+                        continue
+                    w16 = np.clip(librosa.resample(w, orig_sr=SR, target_sr=16000), -1, 1)
+                    segs, _ = SC._w().transcribe(w16, language=wl, beam_size=1)
+                    c = SC.cer(say, ''.join(x.text for x in segs))
+                    long_ = d > max(2.6, 2.0 * exp + .6)
+                    key = (c + (1.0 if long_ else 0) + (1.0 if d < 0.3 else 0), take)
+                    if bk is None or key < bk: bk, best = key, w
+                    if c <= 0.34 and not long_ and d >= 0.3: break
+                log(f'   qc cer/penalised {bk[0]:.2f} take {bk[1]}')
                 w = proc(best, mood, T2.F0_TARGET['cry' if mood == 'cry' else 'sold'] + dp, rng, k)
                 ent.append([round(t, 3), round(len(w) / SR, 3)]); sheet += [w, np.zeros(gap, np.float32)]; t += (len(w) + gap) / SR
                 log(f'{fac} {role} {k} {v[:12]} {len(w)/SR:.1f}s | {text}')

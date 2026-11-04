@@ -14,7 +14,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argS = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const TAG = argS('tag', 'after');
 const HTML = path.resolve(argS('html', path.join(ROOT, 'index.html')));
-const OUT = path.join(ROOT, 'orch', 'shots', 'faction-looks');
+const OUT = path.join(ROOT, 'orch', 'shots', argS('dir','faction-looks'));
 const MAPS = argS('maps', 'strait,arctic,fulda,gulf,zagros,emirates,dmz').split(',').filter(Boolean);
 const SEED = 4242;
 

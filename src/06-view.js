@@ -10,12 +10,12 @@ function qualTick(dt){if(!(dt>0))return;QUAL.dts.push(dt);if(QUAL.dts.length>180
   if(QUAL.ema>1/(T*.88)){QUAL.bad+=dt;QUAL.good=0;}else if(QUAL.cost<.45/T){QUAL.good+=dt;QUAL.bad=0;}else{QUAL.bad=Math.max(0,QUAL.bad-dt);QUAL.good=0;}
   // step down after 1.5 s of missed frames - unless the frame is CPU-bound (game logic, not drawing), where a lower
   // resolution would only blur the picture without making it faster
-  if(QUAL.bad>1.5&&QUAL.lv<5&&QUAL.cost<.75/T){QUAL.lv++;QUAL.bad=0;QUAL.ema=1/T;applyQual();}else if(QUAL.good>10&&QUAL.lv>0){QUAL.lv--;QUAL.good=0;applyQual();}}
+  if(QUAL.bad>1.5&&QUAL.lv<5&&QUAL.cost<.75/T){QUAL.lv++;QUAL.bad=0;QUAL.ema=1/T;applyQual();if(!QUAL.hinted&&G&&!G.over){QUAL.hinted=1;try{pushLog('Switched to lighter graphics to stay smooth');}catch(e){}}}else if(QUAL.good>10&&QUAL.lv>(QUAL.min||0)){QUAL.lv--;QUAL.good=0;applyQual();}}
 function applyQual(){POST.aoOn=QUAL.lv<2;resize();}
 function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1)*(((()=>{try{return GFX_PHONE;}catch(e){return false;}})())?Math.max(.85,QUAL.caps[QUAL.lv]):QUAL.caps[QUAL.lv]);/* phones stay sharp (Abdullah 2026-10-29: Low looked bad); they save on effects instead */VW=Math.max(1,r.width);VH=Math.max(1,r.height);
   if(R3){R3.setPixelRatio(dpr);R3.setSize(VW,VH,false);if(POST.rt)sizePost();CAM.aspect=VW/VH;CAM.updateProjectionMatrix();}hud.width=Math.round(VW*dpr);hud.height=Math.round(VH*dpr);}
 // the player can pull the camera higher (ZMAX) and tilt it (cam.tilt: Shift+wheel, Page Up/Down, two fingers up/down) - Abdullah 2026-10-29
-const ZMAX=2600;function tiltBy(v){cam.tilt=Math.max(-.32,Math.min(.62,(cam.tilt||0)+v));}
+const ZMAX=2600;function zmax(){try{return Math.max(ZMAX,Math.min(3600,Math.round(MAPW*.4)));}catch(e){return ZMAX;}}function tiltBy(v){cam.tilt=Math.max(-.32,Math.min(.62,(cam.tilt||0)+v));}
 function placeCam(){const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/(600-230)));let p=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d)));p=Math.max(.22,Math.min(1.42,p+(cam.tilt||0)));if(typeof SCN!=='undefined'&&SCN&&SCN.fog){const f=SCN.fog;if(f._set!==f.near){f.n0=f.near;f.f0=f.far;}const ex=Math.max(0,d-1400)*1.2;f.near=f.n0+ex;f.far=f.f0+ex;f._set=f.near;}/* zoomed far out, push the haze back so the battlefield stays clear */cam.x=Math.max(0,Math.min(MAPW,cam.x));cam.y=Math.max(Math.min(60+cam.dist*.5,MAPH/2),Math.min(MAPH+120,cam.y));{const lo=Math.min(cam.dist*.55,MAPW/2);cam.x=Math.max(lo,Math.min(MAPW-lo,cam.x));}
   const sx=shake>.3?rnd(-shake,shake):0,sy=shake>.3?rnd(-shake,shake):0;
   CAM.position.set(cam.x+sx,Math.sin(p)*d,cam.y+Math.cos(p)*d+sy);CAM.lookAt(cam.x+sx,0,cam.y+sy);CAM.updateMatrixWorld();if(window.SKY)SKY.position.copy(CAM.position);
@@ -75,6 +75,7 @@ function syncScene(dt){const live=new Set();
         o.rotation.z=-ud.pt;o.rotation.x=ud.rl;if(!e.landed){o.position.y+=Math.sin(G.t*1.3+e.id)*1.2;}}
       if(s.cls==='heli'&&!e.landed)rotorWash(e,o,dt);
       if(s.dom==='naval')shipWake(e,o,dt);
+      if(e.kind==='sub'){const ud=o.userData;ud.sk=(ud.sk||0)+((e.hid?-6:0)-(ud.sk||0))*Math.min(1,dt*1.5);o.position.y+=ud.sk;} // submerged: sinks under the water, surfaces when it fires
       if(s.dom==='ground'&&s.armor==='heavy')dustTrail(e,o,dt);
       if(P.props){for(const p of P.props)p.m.rotation[p.ax]+=dt*(p.ax==='x'?55:70);if(e.kind==='drone'){const ud=o.userData,prev=ud.pyd??ud.yaw;let tr=angDiff(prev,ud.yaw)/Math.max(dt,1e-3);ud.pyd=ud.yaw;const t=e.target,d=t&&!t.dead?Math.hypot(t.x-e.x,t.y-e.y):1e9;
           const dsp=Math.hypot(e.x-(ud.dpx??e.x),e.y-(ud.dpy??e.y))/Math.max(dt,1e-3);ud.dpx=e.x;ud.dpy=e.y;ud.dsv=(ud.dsv||0)+(Math.min(1,dsp/Math.max(40,e.s.spd))-(ud.dsv||0))*Math.min(1,dt*3);
