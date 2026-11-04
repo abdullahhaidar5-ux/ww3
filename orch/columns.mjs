@@ -91,6 +91,24 @@ const army = await page.evaluate((extra) => {
 await page.evaluate(() => { for (let i = 0; i < 420; i++) simUpdate(1 / 60); });
 const census = await page.evaluate(() => { let u = 0, b = 0, inf = 0; for (const e of G.ents) { if (e.dead) continue; if (e.isB) b++; else { u++; if (isInf(e.s)) inf++; } } return { u, b, inf, t: G.t }; });
 console.log(`t=${(census.t / 60).toFixed(1)} min: ${census.u} units (${census.inf} infantry squads), ${census.b} structures; +${army} column units`);
+if (process.argv.includes('--simprof')) { // sim-only CPU profile: 300 steps in the fight, top self-time functions, then exit
+  const C2 = await ctx.newCDPSession(page); if (PHONE) await C2.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+  await C2.send('Profiler.enable'); await C2.send('Profiler.setSamplingInterval', { interval: 200 });
+  const tm = await page.evaluate(() => { const t = performance.now(); for (let i = 0; i < 20; i++) simUpdate(1 / 60); return (performance.now() - t) / 20; }); console.log('warm sim ms/step ' + tm.toFixed(2));
+  const sepMs = await page.evaluate(() => { const hs = G.ents.map(e => [e.x, e.y]); const t = performance.now(); for (let i = 0; i < 300; i++) separate(); const r = (performance.now() - t) / 300; G.ents.forEach((e, i) => { e.x = hs[i][0]; e.y = hs[i][1]; }); return r; }); console.log('separate() alone ms/call ' + sepMs.toFixed(3));
+  await C2.send('Profiler.start'); const ms = await page.evaluate(() => { const t = performance.now(); for (let i = 0; i < 300; i++) simUpdate(1 / 60); return (performance.now() - t) / 300; });
+  if (process.argv.includes('--syncprof')) { await page.evaluate(() => { window.vis = () => true; try { FOGM.visible = false; } catch (e) {} const C = 240, cnt = new Map(); let best = null, bn = 0; for (const e of G.ents) if (!e.isB && !e.dead) { const k = Math.floor(e.x / C) + ',' + Math.floor(e.y / C); const n = (cnt.get(k) || 0) + 1; cnt.set(k, n); if (n > bn) { bn = n; best = k; } } if (best) { const [i, j] = best.split(',').map(Number); centerOn((i + .5) * C, (j + .5) * C, true); } placeCam(); for (let i = 0; i < 5; i++) { syncScene(1 / 60); fxUpdate(1 / 60); } });
+    await C2.send('Profiler.start'); const r = await page.evaluate(() => { let a = 0, b = 0; for (let i = 0; i < 120; i++) { simUpdate(1 / 60); G.alpha = 1; const t0 = performance.now(); syncScene(1 / 60); const t1 = performance.now(); fxUpdate(1 / 60); const t2 = performance.now(); a += t1 - t0; b += t2 - t1; } return [a / 120, b / 120]; });
+    console.log('syncScene ms ' + r[0].toFixed(2) + '  fxUpdate ms ' + r[1].toFixed(2));
+    const { profile: pr } = await C2.send('Profiler.stop'); const bi = new Map(pr.nodes.map(n => [n.id, n])), cn = new Map(); for (const id of pr.samples) cn.set(id, (cn.get(id) || 0) + 1); const sf = new Map(); let tt = 0;
+    for (const [id, c] of cn) { const f = bi.get(id).callFrame, k = (f.functionName || '(anon)') + ':' + f.lineNumber; sf.set(k, (sf.get(k) || 0) + c); tt += c; } console.log('sync+sim self time:'); for (const [k, c] of [...sf].sort((a, b) => b[1] - a[1]).slice(0, 22)) console.log('  ' + (100 * c / tt).toFixed(1).padStart(5) + '%  ' + k);
+    await browser.close(); server.close(); process.exit(0); }
+  const { profile } = await C2.send('Profiler.stop'); const byId = new Map(profile.nodes.map(n => [n.id, n])), cnt = new Map(); for (const id of profile.samples) cnt.set(id, (cnt.get(id) || 0) + 1);
+  const self = new Map(); let tot = 0; for (const [id, c] of cnt) { const f = byId.get(id).callFrame, k = (f.functionName || '(anon)') + ':' + f.lineNumber; self.set(k, (self.get(k) || 0) + c); tot += c; }
+  console.log('sim ms/step ' + ms.toFixed(2) + ' units ' + census.u + '; self time:'); for (const [k, c] of [...self].sort((a, b) => b[1] - a[1]).slice(0, 25)) console.log('  ' + (100 * c / tot).toFixed(1).padStart(5) + '%  ' + k);
+  if (JSONOUT) fs.writeFileSync(path.resolve(ROOT, JSONOUT), JSON.stringify({ phone: PHONE, simMs: ms, units: census.u }));
+  await browser.close(); server.close(); process.exit(0);
+}
 // camera on the fight
 await page.evaluate(() => {
   // the densest 240x240 patch of units (the heart of the fight)
@@ -104,6 +122,7 @@ const CDP = await ctx.newCDPSession(page);
 // show every unit (no fog of war) so the whole fight is drawn, as a spectator would see it
 await page.evaluate(() => { window.vis = () => true; try { FOGM.visible = false; } catch (e) {} const uf = window.updateFog; window.updateFog = function () { uf.apply(this, arguments); try { FOGM.visible = false; } catch (e) {} }; });
 if (PHONE) await CDP.send('Emulation.setCPUThrottlingRate', { rate: 4 });
+if (process.argv.includes('--glcount')) await page.evaluate(() => { window.__glcount = true; });
 const PROF = process.argv.includes('--cpuprofile');
 if (PROF) { await CDP.send('Profiler.enable'); await CDP.send('Profiler.setSamplingInterval', { interval: 200 }); await CDP.send('Profiler.start'); }
 const res = await page.evaluate(async (FR) => {
@@ -112,6 +131,9 @@ const res = await page.evaluate(async (FR) => {
   const acc = {}; for (const k in parts) { acc[k] = 0; const name = parts[k], f = window[name];
     window[name] = function () { const t = now(); try { return f.apply(this, arguments); } finally { acc[k] += now() - t; } }; }
   R3.info.autoReset = false;
+  const GLC = {}; if (window.__glcount) { for (const fn of ['texSubImage2D', 'texImage2D', 'bufferSubData', 'bufferData', 'uniformMatrix4fv', 'drawElements', 'drawElementsInstanced', 'drawArrays', 'useProgram', 'bindTexture']) { const o = gl[fn]; GLC[fn] = { n: 0, bytes: 0, ms: 0 };
+    gl[fn] = function () { const t = now(); const r = o.apply(this, arguments); const c = GLC[fn]; c.n++; c.ms += now() - t; const d = arguments[arguments.length - 1]; if (d && d.byteLength) c.bytes += d.byteLength; if (fn === 'texSubImage2D') { const src = arguments[6]; const k = arguments.length < 9 && src ? (src.constructor.name + ':' + (src.width || src.videoWidth) + 'x' + (src.height || src.videoHeight) + (src.id ? '#' + src.id : '')) : arguments[4] + 'x' + arguments[5]; (GLC.tsiSizes || (GLC.tsiSizes = {}))[k] = ((GLC.tsiSizes || {})[k] || 0) + 1; }
+      if (fn === 'texSubImage2D' || fn === 'texImage2D') { const w = arguments[fn === 'texSubImage2D' ? 4 : 3], h = arguments[fn === 'texSubImage2D' ? 5 : 4]; if (typeof w === 'number' && typeof h === 'number') c.bytes += w * h * 4; else if (d && d.width) c.bytes += d.width * d.height * 4; } return r; }; } }
   const frame = (log) => {
     const t0 = now(); for (const e of G.ents) if (!e.isB) { e.ox = e.x; e.oy = e.y; } simUpdate(1 / 60); G.alpha = 1; const t1 = now();
     R3.info.reset(); renderFrame(1 / 60); const t2 = now(); gl.finish(); const t3 = now();
@@ -119,6 +141,7 @@ const res = await page.evaluate(async (FR) => {
   };
   { let last = -1, same = 0; for (let i = 0; i < 60 && same < 4; i++) { frame(null); const n = R3.info.programs.length; same = n === last ? same + 1 : 0; last = n; } } // warm-up until no new shaders compile (steady state)
   for (const k in acc) acc[k] = 0;
+  for (const k in GLC) GLC[k].n = GLC[k].bytes = GLC[k].ms = 0;
   const prog0 = new Set(R3.info.programs);
   const L = { sim: 0, frame: 0, gpu: 0, calls: 0, tris: 0, n: 0, all: [] };
   for (let i = 0; i < FR; i++) { frame(L); if (i % 5 === 4) await new Promise(r => setTimeout(r, 0)); }
@@ -127,7 +150,8 @@ const res = await page.evaluate(async (FR) => {
   SCN.traverseVisible(o => { if (o.isMesh || o.isPoints || o.isLine) { meshes++; if (o.castShadow) casters++; if (o.isSkinnedMesh) skinned++; if (o.isInstancedMesh) inst++; } });
   for (const o of OBJ.values()) if (o.visible) visObj++;
   const per = x => +(x / L.n).toFixed(2), s = L.all.slice().sort((a, b) => a - b);
-  const out = { frames: L.n, sim: per(L.sim), frameJS: per(L.frame), gpu: per(L.gpu), total: per(L.sim + L.frame + L.gpu), p90: +s[Math.floor(s.length * .9)].toFixed(1), med: +s[Math.floor(s.length / 2)].toFixed(1),
+  const glc = {}; for (const k in GLC) if (k === 'tsiSizes') glc[k] = Object.fromEntries(Object.entries(GLC[k]).map(([a, b]) => [a, +(b / L.n).toFixed(1)])); else glc[k] = { perFrame: +(GLC[k].n / L.n).toFixed(1), kbPerFrame: Math.round(GLC[k].bytes / L.n / 1024), msPerFrame: +(GLC[k].ms / L.n).toFixed(1) };
+  const out = { frames: L.n, glc, sim: per(L.sim), frameJS: per(L.frame), gpu: per(L.gpu), total: per(L.sim + L.frame + L.gpu), p90: +s[Math.floor(s.length * .9)].toFixed(1), med: +s[Math.floor(s.length / 2)].toFixed(1),
     calls: Math.round(L.calls / L.n), newProg, tris: Math.round(L.tris / L.n), meshes, casters, skinned, inst, objs: OBJ.size, visObj, qual: QUAL.lv };
   for (const k in acc) out[k] = per(acc[k]);
   { // where the triangles are: per kind of unit/building, visible objects only (shadow casters are drawn twice)
@@ -164,6 +188,7 @@ if (process.argv.includes('--census')) { console.log('world (terrain, trees, cit
 if (SHOT) { fs.mkdirSync(path.dirname(path.resolve(ROOT, SHOT)), { recursive: true });
   await page.evaluate(() => { renderFrame(1 / 60); });
   await page.screenshot({ path: path.resolve(ROOT, SHOT), timeout: 180000 }); console.log('screenshot ' + SHOT); }
+if (res.glc && Object.keys(res.glc).length) console.log('GL per frame: ' + JSON.stringify(res.glc));
 if (res.newProg.length) console.log('shaders compiled during the measured frames: ' + res.newProg.length + ' e.g. ' + res.newProg.slice(0, 6).join(' | '));
 if (errs.length) console.log('page errors: ' + errs.slice(0, 3).join(' | '));
 if (JSONOUT) fs.writeFileSync(path.resolve(ROOT, JSONOUT), JSON.stringify({ phone: PHONE, census, army, ...res }, null, 1));
