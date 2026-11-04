@@ -152,3 +152,4 @@ preview, not per-map thumbnail cards.
 - 2026-11-04 balance-models JOB B: 7 free CC-BY models from Objaverse (Mi-28 RU, Ka-52 EG, AH-1 TR/PK/IR, Type 45 West, F123 EU, Russian destroyer East, camo speedboat IR/RS/DW), visual only; report orch/reports/faction-models.md
 - 2026-11-04 vis2-1103: soldier helmet/kit variety (4 seeded looks per nation, Shia first); scenery + baked clips still open.
 - 2026-11-04 weather-naval: fixed Sandstorm/Rain/Snow Conditions; submarines (stealth, sonar), coastal missile batteries, offshore oil rigs, AI subs/batteries/rig grabs, wider beach unloads; 4 naval maps (Coral Archipelago, Hormuz Narrows, Delta Harbour, Pacific Atolls) with AI-vs-AI fairness table. Report: orch/reports/weather-naval.md
+- 2026-11-04 trees: real CC0 Poly Haven fir/leaf textures on conifers, oak/acacia, palms (tree_tex model); report orch/reports/trees.md
