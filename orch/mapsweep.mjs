@@ -136,7 +136,7 @@ const HELPERS = () => {
     });
     const reachable = new Set(breg);
     M.fields.forEach((f, i) => { if (!reachable.has(SW.regAt(R, g, f.x, f.y))) out.issues.push(`supply field ${i} unreachable by land`); });
-    M.oil.forEach((o, i) => { if (!reachable.has(SW.regAt(R, g, o.x, o.y))) out.issues.push(`oil derrick ${i} unreachable by land`); });
+    M.oil.forEach((o, i) => { if (!o.sea && !reachable.has(SW.regAt(R, g, o.x, o.y))) out.issues.push(`oil derrick ${i} unreachable by land`); });
     if (M.fields.length < n + 2) out.issues.push(`only ${M.fields.length} supply fields for ${n} players`);
     if (M.oil.length < 2) out.issues.push(`only ${M.oil.length} oil derricks`);
     if (SW.wantImg) { // layout picture: land, water, bridges, rock/city, base slots, supply (yellow), oil (orange)

@@ -394,7 +394,35 @@ function solRifle(k){const g=new THREE.Group(),bl=gearMat('#1c1d1c'),wd=gearMat(
   const bx=(w,h,l,x,y,z,m,rx)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w*k,h*k,l*k),m);q.position.set(x*k,y*k,z*k);if(rx)q.rotation.x=rx;g.add(q);return q;};
   bx(.42,.56,2.4,0,0,.9,bl);bx(.32,.66,1.5,0,-.12,-1.05,wd,-.12);bx(.26,.74,.36,0,-.58,.95,bl,.22);bx(.3,.9,.42,0,-.6,1.75,mg,-.2);bx(.4,.42,1.5,0,-.02,2.7,wd);
   const br=new THREE.Mesh(new THREE.CylinderGeometry(.1*k,.1*k,1.8*k,6),bl);br.rotation.x=Math.PI/2;br.position.set(0,.04*k,4.3*k);g.add(br);bx(.14,.24,.18,0,.38,3.3,bl);bx(.16,.2,.5,0,.36,.6,bl);return g;}
-function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)return;m.updateWorldMatrix(true,true);const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const V=(x,y,z)=>new THREE.Vector3(x,y,z).applyQuaternion(mq);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});if(!B.head||!B.chest||!B.hips)return;
+// Per-soldier look variety (seeded by unit id + slot, so a soldier always looks the same): 4 variants per nation, each a few
+// cheap low-poly pieces (head cover, goggles, headset, scarf / balaclava, vest, pouches, backpack) that are merged into the
+// head / chest gear meshes below - no extra draw calls. Shia nations get their own looks first.
+const KITV={IR:[['scrimOl','pouch'],['beret','scarf','pouch'],['goggles','headset','pack'],['balaclava','vest','pouch']],
+ RS:[['scarf','pouch'],['bandana','vest'],['headset','pack','pouch'],['balaclava','pouch']],
+ DW:[['pouch'],['pack'],['vest','scarfRed'],['pouch','pack']],
+ W:[['scrimSand','goggles'],['headset','pouch'],['pack','pouch'],['vest','scarfRed']],
+ E:[['pouch'],['pack'],['scrimOl','pouch'],['vest','headset']]};
+const KITF={IR:'IR',RS:'RS',DW:'DW',RU:'E',CN:'E',KP:'E',CU:'E',IN:'E',PK:'E'};
+function kitPieces(fac,vr){return (KITV[KITF[fac]||'W']||KITV.W)[vr&3];}
+function addKitVariant(B,attach,hp,cp,V,k,fac,vr,mq){const L=kitPieces(fac,vr),has=n=>L.indexOf(n)>=0;
+  const mk=(geo,col,x,y,z,sx,sy,sz,g)=>{const o=new THREE.Mesh(geo,gearMat(col));o.position.set(x*k,y*k,z*k);if(sx!==undefined)o.scale.set(sx,sy,sz);g.add(o);return o;};
+  const H=new THREE.Group(),Cg=new THREE.Group(),shia=fac==='IR'||fac==='RS'||fac==='DW';
+  const dark=shia?'#2c2e22':'#3b3d33',olive=shia?'#4f5336':'#566040',sand='#a4916a',cloth=fac==='RS'?'#3a3f2c':'#50533a';
+  // head (origin = middle of the skull)
+  if(has('scrimOl')||has('scrimSand')){mk(new THREE.SphereGeometry(1.1*k,9,5,0,Math.PI*2,0,Math.PI*.52),has('scrimSand')?sand:olive,0,.12,0,1,.9,1.08,H);}
+  if(has('beret')){mk(new THREE.SphereGeometry(1.08*k,9,5,0,Math.PI*2,0,Math.PI*.5),fac==='IR'?'#5a6040':'#2d3224',.15,.22,0,1.05,.36,1.12,H);}
+  if(has('bandana')){mk(new THREE.SphereGeometry(1.0*k,9,5,0,Math.PI*2,0,Math.PI*.5),'#1d1e1a',0,.1,0,1,.8,1.05,H);mk(new THREE.BoxGeometry(.5*k,1.1*k,.5*k),'#1d1e1a',-.2,-.45,-.95,1,1,1,H);}
+  if(has('goggles')){const st=new THREE.TorusGeometry(1.02*k,.07*k,5,12);const t=mk(st,'#1a1a18',0,.05,0,1,1,1.0,H);t.rotation.x=Math.PI/2;mk(new THREE.BoxGeometry(.8*k,.5*k,.2*k),'#26303a',-.42,.2,.98,1,1,1,H);mk(new THREE.BoxGeometry(.8*k,.5*k,.2*k),'#26303a',.42,.2,.98,1,1,1,H);}
+  if(has('headset')){for(const sx of[-1,1]){mk(new THREE.CylinderGeometry(.42*k,.42*k,.28*k,8),'#1d1e1c',sx*1.05,-.15,.05,1,1,1,H).rotation.z=Math.PI/2;}}
+  if(has('balaclava')){mk(new THREE.BoxGeometry(1.7*k,.85*k,.25*k),dark,0,-.55,.92,1,1,1,H);mk(new THREE.CylinderGeometry(.98*k,1.0*k,.7*k,9),dark,0,-.6,0,1,1,1,H);}
+  if(has('scarf')||has('scarfRed')){const t=mk(new THREE.TorusGeometry(.95*k,.26*k,5,10),has('scarfRed')?'#8a3a2c':(fac==='IR'?'#c8c2b0':'#bdb59a'),0,-1.25,.05,1,1,1,H);t.rotation.x=Math.PI/2;}
+  if(H.children.length)attach(B.head,H,hp.clone().add(V(0,1.35*k,0)));
+  // chest
+  if(has('vest')){mk(new THREE.BoxGeometry(2.5*k,1.9*k,1.9*k),shia?'#38402c':'#454a38',0,.2,0,1,1,1,Cg);}
+  if(has('pouch')){for(const x of[-.75,0,.75])mk(new THREE.BoxGeometry(.6*k,.8*k,.45*k),dark,x,-.2,1.05,1,1,1,Cg);}
+  if(has('pack')){mk(new THREE.BoxGeometry(2.0*k,2.4*k,1.0*k),fac==='IR'?'#3f4430':olive,0,.1,-1.15,1,1,1,Cg);mk(new THREE.BoxGeometry(1.7*k,.7*k,.9*k),dark,0,-1.5,-1.1,1,1,1,Cg);}
+  if(Cg.children.length)attach(B.chest,Cg,cp.clone().add(V(0,.2*k,0)));}
+function newSoldierKit(m,fac,kind,key,vr){vr=vr|0;const inner=m.userData.inner;if(!inner)return;m.updateWorldMatrix(true,true);const mq=new THREE.Quaternion();m.getWorldQuaternion(mq);const V=(x,y,z)=>new THREE.Vector3(x,y,z).applyQuaternion(mq);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});if(!B.head||!B.chest||!B.hips)return;
   const hp=new THREE.Vector3().setFromMatrixPosition(B.head.matrixWorld),hv=new THREE.Vector3().setFromMatrixPosition(B.hips.matrixWorld),k=Math.max(.5,(hp.y-hv.y)/5.2);
   const cp=new THREE.Vector3().setFromMatrixPosition(B.chest.matrixWorld);
   if(kind==='hero'){const base=cp.clone().add(V(-.15*k,-.95*k,0));solArm(B,'R',base.clone().add(V(-.35*k,-.05*k,1.9*k)),V(-.5,-1,-.2));solArm(B,'L',base.clone().add(V(.35*k,.12*k,4.3*k)),V(.6,-1,-.1));return;}
@@ -416,7 +444,8 @@ function newSoldierKit(m,fac,kind,key){const inner=m.userData.inner;if(!inner)re
   // checks every soldier's palms stay on their spots through idle, walk and jog
   {const lc=p=>B.chest.worldToLocal(p.clone());m.userData.rg={b:B.chest,k,g:lc(TR),f:lc(TL),pR:PR,pL:PL};}
   if(fac==='DW'){const g=new THREE.Group(),d=new THREE.Mesh(new THREE.SphereGeometry(.98*k*.82,12,8,0,Math.PI*2,0,Math.PI*.58),gearMat('#d9d0b8'));g.add(d);const t=new THREE.Mesh(new THREE.BoxGeometry(.5*k,1.1*k,1.0*k),gearMat('#c9bfa6'));t.position.set(-.55*k,-.55*k,0);g.add(t);const band=new THREE.Mesh(new THREE.TorusGeometry(.8*k,.09*k,6,14),gearMat('#8a2a24'));band.rotation.x=Math.PI/2;band.position.y=.14*k;g.add(band);attach(B.head,g,hp.clone().add(V(0,1.35*k,0)));g.scale.multiplyScalar(1.15);}/* head bone is at the neck; the skull spans 0..2.19k above it, so the cap sits at 1.35k (was .55k = at the neck) */
-  mergeGear(B,key+'|'+fac+'|'+kind+'|'+k.toFixed(3));}
+  if(kind!=='hero')addKitVariant(B,attach,hp,cp,V,k,fac,vr,mq);
+  mergeGear(B,key+'|'+fac+'|'+kind+'|'+k.toFixed(3)+'|v'+vr);}
 // Massive columns: every soldier was 7 skinned meshes (rifle, magazine and uniform parts, one per material colour) plus
 // 3 kit meshes on its bones - 10 draw calls per soldier in every pass (picture + shadow), ~30 per squad. They are merged
 // into ONE skinned, vertex-coloured mesh per soldier (kit rides its bone as a rigidly skinned part), so a squad costs 3.
@@ -642,7 +671,7 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   if(c&&!MODELS.proto[c.m]){const alt={soldier:'inf',tankE:'tank',tankW:'tank',drone:null,technical:'tank',toontank:'tank'}[c.m];if(alt&&MODELS.proto[alt])c=Object.assign({},c,{m:alt});}
   if(!c||!MODELS.proto[c.m])return null;
   const o=new THREE.Group();o.userData.parts={};const sq=c.squad||[[0,0]];const yaw=new THREE.Group();yaw.rotation.y=Math.PI/2+(c.flip?Math.PI:0);o.add(yaw);
-  for(const [px,pz] of sq){const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK);else soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+((c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk)||0)+'|'+(T.fac||'')+'|'+e.kind);}catch(err){console.warn('mergeSoldier',err);}}
+  for(const [px,pz] of sq){const VR=Math.abs((e.id*31+Math.round(px*3)*17+Math.round(pz*5)*7)|0)%4;const SK=c.m==='soldier'&&MODELS.proto[solKey(T.fac)]?solKey(T.fac):null;const m=instModel(SK||c.m,c.tint?{color:c.tint}:T,c.fit,c.size,1,c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk);if(!m)return null;m.position.set(-pz,0,px);m.rotation.y=(Math.random()-.5)*(c.m==='soldier'?.08:.3);yaw.add(m);if(c.m==='soldier'){m.userData.legs=setupWalk(m);m.userData.wsign=WALKSIGN;try{if(SK)newSoldierKit(m,T.fac,e.kind,SK,VR);else soldierGear(m,T.fac||(G.teams[e.team]&&G.teams[e.team].fac),e.kind);}catch(err){console.warn('kit',err);}try{mergeSoldier(m,(SK||c.m)+'|'+(c.tint||T.color)+'|'+((c.m==='soldier'&&!c.tint?[.03,.07,.11][(e.id+px*3)%3|0]:c.tk)||0)+'|'+(T.fac||'')+'|'+e.kind+'|v'+(SK?VR:0));}catch(err){console.warn('mergeSoldier',err);}}
     if(m.userData.anims&&m.userData.anims.length){const mix=new THREE.AnimationMixer(m.userData.inner);(o.userData.mixers=o.userData.mixers||[]).push({mix,anims:m.userData.anims,cur:null});}}
   o.userData.parts.body=yaw;o.userData.model=true;if(c.m==='soldier'){o.userData.mixers=null;o.userData.walker=true;}
   {const ring=decal(c.squad?'ringS':'ringV',new THREE.Color(T.color));ring.scale.setScalar(c.size);ring.position.y=1.2;if(!['heli','jet'].includes(e.kind))o.add(ring);o.userData.parts.tring=ring;}
