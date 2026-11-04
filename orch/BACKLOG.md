@@ -215,7 +215,7 @@ an earlier one still has work a squad can take (other squads may only do small P
   (rotor wash), and the new phone layout.
 
 **Audio & voice** (`09-audio`, `vo/`, `mus/`)
-- [open] Full native-language unit responses per nation (select / move / attack / under fire / unit lost), recorded
+- [partly done 2026-11-04 audio-1103: role voices for 16 nations, KR+KP still to render (orch/HANDOFF-audio-1103.md); needs Abdullah's ears] Full native-language unit responses per nation (select / move / attack / under fire / unit lost), recorded
   quality, not browser text-to-speech. `vo/` holds one clip per nation today.
 - [open] Real recorded war scores for the 15 non-Shia nations (today all music is synthesized live per nation from
   `09-audio.js` STYLES + instrument samples in `mus/smp.mp3`).
@@ -243,8 +243,8 @@ an earlier one still has work a squad can take (other squads may only do small P
 
 **Multiplayer** (`07-net`, `07b-ckpt`, `relay-worker.js`)
 - [done 2026-11-03 polish-1103 — partly, see orch/reports/polish-1103.md] "Play again" path should restore the player's own Conditions if it skips `leaveNet` (cosmetic, cycle 8 review).
-- [open] Asian music stand-ins (no free recording found yet): janggu, haegeum, piri, taepyeongso, gayageum, guzheng, sitar, shehnai — swap in real free recordings when found (`mus/as_pack.py`). Check the new credit line shows in the menu.
-- [open] Music follow-ups: real ney (Freesound blocks this sandbox with 403 — needs a download from elsewhere) (Freesound
+- [obsolete: shared soundtrack replaced the synthesized score] Asian music stand-ins (no free recording found yet): janggu, haegeum, piri, taepyeongso, gayageum, guzheng, sitar, shehnai — swap in real free recordings when found (`mus/as_pack.py`). Check the new credit line shows in the menu.
+- [obsolete] Music follow-ups: real ney (Freesound blocks this sandbox with 403 — needs a download from elsewhere) (Freesound
   #580759 CC0, #328744 CC BY); gayageum/guzheng/sitar blocked by Wikimedia rate limits; no clean bandura/balalaika
   found; still stand-ins: bandura, balalaika/domra, tres, bayan, sopilka. TR/RU anthems skipped (not clearly PD).
   No freely licensed real

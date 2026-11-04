@@ -135,3 +135,5 @@ preview, not per-map thumbnail cards.
 - 2026-11-03 orch/bolder-marks (helper): Mountain Fortress is now a standalone garrison (own 20 slots, not linked to tunnels, heals infantry, releases units alive when destroyed); bolder faction markings verified (screenshots bolder-IR/KP). Report: orch/reports/fort-standalone.md
 - 2026-11-04 coop-ai: AI personalities (Tank Rush, Guerrilla, Artillery Turtle, Air Power, Random) + Co-op vs AI lobby/skirmish presets; aitourney --pers; tourney 38-58%.
 - 2026-11-03 orch/polish-1103 (helper): end-stats awards capped per player + player names + long-battle graph downsampled; EW jam/spoof truck now also for US, CN, IR, IL; kill-cam leaves no stray effects and restores camera; news ticker shows host-broadcast public headlines (oil seizures, superweapons); Play again restores your own Conditions; martyr flags fade on game time. Report: orch/reports/polish-1103.md
+
+- 2026-11-04 audio-1103 (Sonnet): role voices - 9 unit roles x select/move/attack in native language for 16 nations (IR/RS/DW with all Shia slogans first); KR/KP left (see orch/reports/audio-1103.md).
