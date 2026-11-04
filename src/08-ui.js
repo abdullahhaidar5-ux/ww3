@@ -1217,7 +1217,7 @@ const MLOCK={on:false,x:0,y:0,self:false,escK:0,cap:null,down:null,hov:null,hovB
 const VCUR=document.createElement('div');VCUR.id='vcur';VCUR.hidden=true;VCUR.setAttribute('aria-hidden','true');
 VCUR.style.cssText='position:fixed;left:0;top:0;width:32px;height:32px;z-index:2147483000;pointer-events:none;background:no-repeat 0 0/32px 32px;will-change:transform';
 document.body.append(VCUR);
-function mlockOk(){return !!G&&!G.over&&!window.LOADING&&SET.mLock!==0&&$('menu').hidden&&!document.querySelector('.overlay:not([hidden])')&&!menuOpen();}
+function mlockOk(){return !!G&&!G.over&&!RP.on&&!window.LOADING&&SET.mLock!==0&&$('menu').hidden&&!document.querySelector('.overlay:not([hidden])')&&!menuOpen();}
 function mlockOff(){if(document.pointerLockElement){MLOCK.self=true;try{document.exitPointerLock();}catch(_){}}}
 // (not under browser automation - the test harness stands in for the lock itself, see orch/controls.mjs - and not after a
 // browser showed it does not really lock: the cursor kept moving freely with no movementX/Y)
@@ -1397,14 +1397,15 @@ let last=performance.now();
 let _fpsT=0;function fpsHud(){const now=performance.now();if(now-_fpsT<500)return;_fpsT=now;const el=$('fpsHud');if(!el)return;let on=false;try{on=localStorage.getItem('ww3_fpsShow')==='1';}catch(e){}el.hidden=!on||!G;if(el.hidden)return;
   el.textContent=Math.round(QUAL.fps)+' FPS'+(QUAL.lv?' · detail −'+QUAL.lv:'')+(MODE==='client'&&NET.ping?' · ping '+Math.round(NET.ping)+' ms':MODE==='host'&&NET.pings&&Object.keys(NET.pings).length?' · ping '+Object.values(NET.pings).map(v=>Math.round(v)).join('/')+' ms':'');}
 function loop(now){if(window.__stopLoop)return;const _w0=performance.now();const rawDt=Math.max(0,(now-last)/1000);const dt=Math.min(.05,rawDt);last=now;if(G&&!document.hidden&&rawDt<.5)qualTick(rawDt);
-  try{if(G&&!G.over&&!G.paused){if(MODE==='client')clientTick(dt);else{const sd=dt*GSPD;
+  try{if(G&&!G.over&&!G.paused){if(MODE==='client'){if(RP.on)rpTick(dt);else{clientTick(dt);if(NET.spec)specTick(dt);}}else{const sd=dt*GSPD;
     // fixed 60 Hz simulation: it used to run once per rendered frame (144-240x a second on high-refresh monitors, all of it
     // host CPU in multiplayer); drawing interpolates unit positions between steps so motion stays smooth at any refresh rate
     const ST=1/60;
     if(sd>1/40){G.acc=0;G.alpha=1;if(sd>.06){simUpdate(sd/2);simUpdate(sd/2);}else simUpdate(sd);}   // slow frames (under 40 fps): one larger step, as before
     else{G.acc=Math.min(.1,(G.acc||0)+sd);let n=0;while(G.acc>=ST-1e-6&&n<3){for(const e of G.ents)if(!e.isB){e.ox=e.x;e.oy=e.y;}simUpdate(ST);G.acc-=ST;n++;}G.alpha=Math.max(0,Math.min(1,G.acc/ST));}}G.uiT-=dt;if(G.uiT<=0){G.uiT=.2;updateUI();}}
     if(G)netTick(dt);
-    if(G&&!G.over)kcRec();
+    if(G&&!G.over&&!RP.on)kcRec();
+    if(G&&!G.over)try{rpRecTick();}catch(e){}
     if(G){if(KC.on)kcFrame(dt);else{scroll(dt);renderFrame(dt);}}}catch(err){console.error(err);}
   QUAL.cost+=((performance.now()-_w0)/1000-QUAL.cost)*.05;fpsHud();
   requestAnimationFrame(loop);}

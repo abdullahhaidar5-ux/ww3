@@ -127,7 +127,9 @@ function syncScene(dt){const live=new Set();
   for(const p of PINGS){if(!p.m){p.m=new THREE.Mesh(new THREE.RingGeometry(.9,1,64).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:p.c,transparent:true,depthWrite:false}));p.m.position.set(p.x,groundH(p.x,p.y)+3,p.y);SCN.add(p.m);}
     const k=p.t/p.d;p.m.scale.setScalar(p.r*(.2+k*.8));p.m.material.opacity=1-k;if(k>=.98){SCN.remove(p.m);}}
 }
-function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,sx=W/MAPW,sy=H/MAPH;c.globalCompositeOperation='source-over';c.fillStyle='rgb(212,212,212)';c.fillRect(0,0,W,H);
+function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,sx=W/MAPW,sy=H/MAPH;c.globalCompositeOperation='source-over';
+  // a replay or a spectator showing everything: no fog at all
+  if((RP.on&&!RP.fog)||(NET.spec&&NET.specAll)){c.fillStyle='#000';c.fillRect(0,0,W,H);FOGC.getContext('2d').drawImage(FOGC.b,0,0);FOGT.needsUpdate=true;return;}c.fillStyle='rgb(212,212,212)';c.fillRect(0,0,W,H);
   const hole=(x,y,R)=>{const g=c.createRadialGradient(x*sx,y*sy,R*sx*.5,x*sx,y*sy,R*sx);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');c.fillStyle=g;c.beginPath();c.arc(x*sx,y*sy,R*sx,0,7);c.fill();};
   {const sk=(G.teams[ME].F.mods.sight||1)*1.08;for(const e of G.ents)if(e.team===ME&&!e.dead)hole(e.x,e.y,(!e.isB&&e.s.vis?e.s.vis:e.isB?340:e.s.dom==='air'?340:e.s.dom==='naval'?380:280)*sk);}
   for(const r of (G.teams[ME].reveals||[]))hole(r.x,r.y,r.r);c.globalCompositeOperation='source-over';const f=FOGC.getContext('2d');f.filter='blur(4px)';f.drawImage(FOGC.b,0,0);f.filter='none';FOGT.needsUpdate=true;}
