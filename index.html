@@ -4945,7 +4945,7 @@ const WEATHER={clear:{name:'Clear',vis:1,acc:1,spd:1,air:1},
 function weatherKinds(theme){return theme==='snow'?['clear','blizzard','fog']:theme==='green'?['clear','rain','fog']:['clear','sandstorm','fog'];}
 // A duel is fought on a field 1.3x the 3200x2200 design (about 300 infantry-lengths across, like a classic RTS 1v1
 // map); each extra player adds room (8 players: 2.26x).
-function worldScaleFor(n,mk){n=Math.max(2,Math.min(8,n|0||2));const D=mk&&typeof MAPS!=='undefined'&&MAPS[mk];return D&&D.cscale?D.cscale:Math.round((D&&D.oldScale&&D.oldScale.includes(n)?1.56:1.95)*Math.pow(n/2,.4)*100)/100;} // +25% again (Abdullah 2026-10-30: "maps need to be bigger and more complex"; 2026-10-29 was 1.56; a map can keep 1.56 for player counts listed in oldScale, where the bigger ground gave a start position the edge)
+function worldScaleFor(n,mk){n=Math.max(2,Math.min(8,n|0||2));const D=mk&&typeof MAPS!=='undefined'&&MAPS[mk];return D&&D.cscale?D.cscale:n===2&&!(D&&D.oldScale&&D.oldScale.includes(2))?2.25:n===3&&!(D&&D.oldScale&&D.oldScale.includes(3))?2.4:Math.round((D&&D.oldScale&&D.oldScale.includes(n)?1.56:1.95)*Math.pow(n/2,.4)*100)/100;} // 2 and 3 players another +15%/+12% (Abdullah 2026-11-03 "epic size"); +25% again (Abdullah 2026-10-30: "maps need to be bigger and more complex"; 2026-10-29 was 1.56; a map can keep 1.56 for player counts listed in oldScale, where the bigger ground gave a start position the edge)
 // Player settings (graphics, volumes, game speed, HUD), saved per browser.
 const SET={gfx:'auto',mus:70,fx:100,vo:100,spd:1,hp:'dmg',edge:1,txt:1,scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1};try{Object.assign(SET,JSON.parse(localStorage.getItem('ww3_settings')||'{}'));}catch(e){}
 function saveSet(){try{localStorage.setItem('ww3_settings',JSON.stringify(SET));}catch(e){}}
@@ -5324,29 +5324,29 @@ const COSB=0.894,BT=[0.894,0.447],BN=[-0.447,0.894];
 function navGap(A,B){const dx=B.x-A.x,dy=B.y-A.y,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,rim=I=>1/Math.hypot(ux/(I.r*(I.rx||1)),uy/I.r),tA=rim(A),tB=rim(B),m=tA+(L-tA-tB)/2;return [A.x+ux*m,A.y+uy*m,ux,uy];}
 function navIsle(M,I){M.islands.push({x:I.x,y:I.y,r:I.r,rx:I.rx||1,rot:0,wob:I.w||(()=>0)});}
 const MAPS={
-  strait:{name:'Desert Strait',min:2,max:8,sym:'point',tag:'desert · sea strait',desc:'A sea strait splits the desert. Three bridges.',
+  strait:{name:'Straits of Thunder',min:2,max:8,sym:'point',tag:'desert · sea strait',desc:'A sea strait splits the desert. Three bridges.',
     slots:[[380,MAPH-360],[MAPW-380,360],[1150,MAPH-360],[MAPW-1150,360],[380,1150],[MAPW-380,MAPH-1150],[1780,MAPH-310],[MAPW-1780,310]],
     water(M,R){const p=[R()*6.28,R()*6.28,R()*6.28];const pts=[];for(let x=-200;x<=MAPW+200;x+=40)pts.push([x,300+.5*x+45*Math.sin(x*.0035+p[0])+22*Math.sin(x*.009+p[1])]);
       M.rivers.push({pts,hw:(t,x)=>178+24*Math.sin(x*.006+p[2])});M.bridgeAt=[[0,700],[0,1600],[0,2500]];}},
-  rivers:{name:'Twin Rivers',min:2,max:6,sym:'point',tag:'desert · two rivers',desc:'Two rivers cut the land into three bands. Four bridges.',
+  rivers:{name:'Twin Rivers Offensive',min:2,max:6,sym:'point',tag:'desert · two rivers',desc:'Two rivers cut the land into three bands. Four bridges.',
     slots:[[420,260],[MAPW-420,MAPH-260],[420,MAPH-260],[MAPW-420,260],[360,1100],[MAPW-360,1100]],
     water(M,R){const p=[R()*6.28,R()*6.28];for(const [yc,ph] of [[690,p[0]],[MAPH-690,p[1]]]){const pts=[];for(let x=-200;x<=MAPW+200;x+=40)pts.push([x,yc+28*Math.sin(x*.0042+ph)+12*Math.sin(x*.011+ph*2)]);M.rivers.push({pts,hw:(t,x)=>96+14*Math.sin(x*.007+ph)});}
       M.bridgeAt=[[0,900],[0,2300],[1,900],[1,2300]];}},
-  delta:{name:'River Delta',min:2,max:6,sym:'mirrorX',tag:'river delta & coast',desc:'A river forks into two arms on its way to the sea. Five bridges.',
+  delta:{name:'Delta Inferno',min:2,max:6,sym:'mirrorX',tag:'river delta & coast',desc:'A river forks into two arms on its way to the sea. Five bridges.',
     slots:[[420,420],[MAPW-420,420],[420,1380],[MAPW-420,1380],[1150,1960],[MAPW-1150,1960]],
     water(M,R){const ph=R()*6.28,J=[1600,820];const wig=(a,b,amp)=>{const pts=[];const n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/40);for(let i=0;i<=n;i++){const t=i/n,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t,L=Math.hypot(b[0]-a[0],b[1]-a[1]),nx=-(b[1]-a[1])/L,ny=(b[0]-a[0])/L,w=amp*Math.sin(t*9+ph)*Math.sin(t*Math.PI);pts.push([x+nx*w,y+ny*w]);}return pts;};
       M.rivers.push({pts:wig([1600,-200],J,22),hw:()=>120});const L=wig(J,[260,MAPH+200],40),Rr=L.map(([x,y])=>[MAPW-x,y]);M.rivers.push({pts:L,hw:()=>100});M.rivers.push({pts:Rr,hw:()=>100});
       M.bridgeAt=[[0,.45],[1,.33],[1,.72],[2,.33],[2,.72]];M.bridgeFrac=true;}},
-  oasis:{name:'Oasis Basin',min:2,max:8,sym:'point',tag:'open desert · central lake',desc:'Open desert ringed around a central lake. No bridges, many approaches.',
+  oasis:{name:'Oasis Basin: Last Water',min:2,max:8,sym:'point',tag:'open desert · central lake',desc:'Open desert ringed around a central lake. No bridges, many approaches.',
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1250,1100+Math.sin(a)*800]);return s;})(),
     water(M,R){const w=[R()*6.28,R()*6.28];M.lakes.push({x:1600,y:1100,r:300,rx:1.35,wob:a=>.1*Math.sin(a*3+w[0])+.06*Math.sin(a*5+w[1])});
       for(const a of [-1.1,2.04,.47,-2.67]){const x=1600+Math.cos(a)*1250,y=1100+Math.sin(a)*800;M.lakes.push({x,y,r:85,rx:1.2,wob:q=>.15*Math.sin(q*3+x)});}}},
-  gulf:{name:'Gulf Coast',min:2,max:4,sym:'mirrorX',tag:'desert shore · naval-heavy',desc:'Bases on a desert shore above the open sea. Naval power matters.',
+  gulf:{name:'Gulf Coast Landings',min:2,max:4,sym:'mirrorX',tag:'desert shore · naval-heavy',desc:'Bases on a desert shore above the open sea. Naval power matters.',
     slots:[[450,330],[MAPW-450,330],[520,1250],[MAPW-520,1250]],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,MAPH+60-90*Math.cos((x-1600)/1600*Math.PI*.5)*0+40*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:(t,x)=>470+120*Math.exp(-Math.pow((x-1600)/380,2))});
       // 2026-10-30: coastal hills to fight around and an island offshore (mirrored left-right like the rest)
       M.peaks.push({x:1050,y:880,r:65,rx:1.6,rot:.5});mirrorMap(M,'x');M.peaks.push({x:1600,y:700,r:85,rx:1.9,rot:0});M.islands.push({x:1600,y:2020,r:80,rx:2.2,rot:0,wob:a=>.06*Math.cos(2*a)});}},
-  plateau:{name:'Sinai Plateau',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
+  plateau:{name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1280,1100+Math.sin(a)*820]);return s;})(),
     water(M){M.peaks.push({x:1020,y:720,r:75,rx:1.6,rot:.45},{x:1230,y:470,r:60,rx:1.4,rot:-.2},{x:880,y:1480,r:70,rx:1.4,rot:-.5});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:105,rx:1.5,rot:0});}},
   hormuz:{home:['IR','AE'],name:'Strait of Hormuz',min:2,max:8,sym:'none',tag:'sea strait · naval-heavy',desc:'Iran faces the Arabian shore across the world\'s busiest oil chokepoint. Navies rule the strait; armies must go the long way round.',
@@ -5354,17 +5354,17 @@ const MAPS={
     water(M,R){const ph=R()*6.28;const P=[[780,1280],[1150,1010],[1500,820],[1800,760],[2100,840],[2450,1080],[2800,1350],[3500,1720]];const pts=[];for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1],n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/40);for(let k=0;k<n;k++){const t=k/n;pts.push([a[0]+(b[0]-a[0])*t+12*Math.sin((a[1]+t*(b[1]-a[1]))*.02+ph),a[1]+(b[1]-a[1])*t+14*Math.sin((a[0]+t*(b[0]-a[0]))*.013+ph)]);}}pts.push(P[P.length-1]);
       M.rivers.push({pts,hw:(t,x)=>150+190*Math.min(1,Math.abs(x-1720)/900)});
       for(const [x,y,r,rx,rot] of [[1180,880,62,2.7,-.48],[1640,905,34,1.3,0],[1900,905,28,1.4,.4],[930,1170,30,1.2,0],[1030,1070,24,1.2,0],[2330,1150,30,1.6,.6]])M.islands.push({x,y,r,rx,rot,wob:q=>.12*Math.sin(q*3+x)});}},
-  arctic:{name:'Arctic Front',min:2,max:8,sym:'point',theme:'snow',tag:'frozen river · forests · rocky hills',desc:'A frozen river and snowbound forests. Three bridges, rocky hills and falling snow.',
+  arctic:{name:'Arctic Front: Frozen Armies',min:2,max:8,sym:'point',theme:'snow',tag:'frozen river · forests · rocky hills',desc:'A frozen river and snowbound forests. Three bridges, rocky hills and falling snow.',
     slots:[[450,1100],[2750,1100],[1050,330],[2150,1870],[1050,1870],[2150,330],[420,330],[2780,1870]],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1600+70*Math.sin(y*.0035+ph)+25*Math.sin(y*.011+ph*2),y]);M.rivers.push({pts,hw:()=>118});M.bridgeAt=[[0,.2],[0,.5],[0,.8]];M.bridgeFrac=true;
       M.peaks.push({x:820,y:760,r:120,rx:1.6,rot:.5},{x:MAPW-820,y:MAPH-760,r:120,rx:1.6,rot:.5},{x:780,y:1500,r:90,rx:1.3,rot:-.4},{x:MAPW-780,y:MAPH-1500,r:90,rx:1.3,rot:-.4});}},
-  islands:{name:'Island Chain',min:2,max:4,sym:'point',fieldMinB:340,tag:'island chain · naval-heavy',desc:'Four island fortresses around a central isle in open sea. Long bridges are the only land routes, so fleets decide the war.',
+  islands:{name:'Island Chain Armada',min:2,max:4,sym:'point',fieldMinB:340,tag:'island chain · naval-heavy',desc:'Four island fortresses around a central isle in open sea. Long bridges are the only land routes, so fleets decide the war.',
     slots:[[560,470],[2640,1730],[560,1730],[2640,470]],
     water(M,R){M.lakes.push({x:1600,y:1100,r:6000,rx:1,wob:()=>0});const w=R()*6.28;
       for(const [x,y] of [[560,470],[2640,1730],[560,1730],[2640,470]])M.islands.push({x,y,r:330,rx:1.45,rot:0,wob:q=>.1*Math.sin(q*3+w+x)+.05*Math.sin(q*7+y)});
       M.islands.push({x:1600,y:1100,r:250,rx:1.7,rot:0,wob:q=>.08*Math.sin(q*4+w)});
       for(const [x,y] of [[1050,770],[2150,1430],[1050,1430],[2150,770]]){const dx=1600-x,dy=1100-y,L=Math.hypot(dx,dy);M.bridgeAng.push([x,y,dx/L,dy/L]);}}},
-  zagros:{name:'Zagros Mountains',min:2,max:8,sym:'point',rough:1.3,tag:'mountain ranges · three valleys',desc:'Two snow-capped ranges split the land into three valleys. Armies fight for the mountain passes.',
+  zagros:{name:'Zagros: Mountain Fortress',min:2,max:8,sym:'point',rough:1.3,tag:'mountain ranges · three valleys',desc:'Two snow-capped ranges split the land into three valleys. Armies fight for the mountain passes.',
     slots:[[450,1100],[2750,1100],[450,380],[2750,1820],[450,1820],[2750,380],[1600,350],[1600,1850]],
     water(M,R){const ph=R()*6.28;const ridge=(y0,y1)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([1100+60*Math.sin(y*.004+ph)+20*Math.sin(y*.013),y]);return pts;};
       for(const [a,b] of [[-200,470],[740,1440],[1720,MAPH+200]]){const L=ridge(a,b);M.ridges.push({pts:L,hw:()=>105});M.ridges.push({pts:L.map(([x,y])=>[MAPW-x,MAPH-y]),hw:()=>105});}
@@ -5403,12 +5403,12 @@ const MAPS={
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1480+150*Math.sin(y*.003+ph)+40*Math.sin(y*.011),y]);M.rivers.push({pts,hw:()=>110});
       const oh=[];for(let x=MAPW+200;x>=1520;x-=40){const t=(MAPW+200-x)/(MAPW-1320);oh.push([x,600+t*700+40*Math.sin(x*.006+ph)]);}M.rivers.push({pts:oh,hw:()=>70});
       M.bridgeAt=[[0,.2],[0,.46],[0,.82],[1,.45]];M.bridgeFrac=true;}},
-  bosphorus:{name:'Bosphorus',min:2,max:8,sym:'none',theme:'green',home:['TR'],tag:'city on a strait · two seas',desc:'Istanbul on both shores of the Bosphorus, between the Black Sea and the Sea of Marmara. Two great bridges join Europe and Asia.',
+  bosphorus:{name:'Bosphorus: Gates of Empires',min:2,max:8,sym:'none',theme:'green',home:['TR'],tag:'city on a strait · two seas',desc:'Istanbul on both shores of the Bosphorus, between the Black Sea and the Sea of Marmara. Two great bridges join Europe and Asia.',
     slots:[[380,1150],[2820,1100],[420,1950],[2800,1950],[600,320],[2600,320],[1150,1980],[2100,1980]],
     cities:[[1300,1000,210,'turkey'],[1950,1180,210,'turkey'],[900,1700,110,'turkey']],
     water(M,R){const ph=R()*6.28;M.lakes.push({x:1600,y:-380,r:600,rx:2.4,wob:q=>.05*Math.sin(q*5+ph)});M.lakes.push({x:1700,y:2560,r:560,rx:2.6,wob:q=>.05*Math.sin(q*4+ph)});
       const pts=[];for(let y=-100;y<=MAPH+100;y+=40)pts.push([1620+120*Math.sin(y*.004+ph)+(y-1100)*.08,y]);M.rivers.push({pts,hw:()=>70});M.bridgeAt=[[0,.36],[0,.62]];M.bridgeFrac=true;}},
-  golan:{name:'Golan Heights',min:2,max:6,sym:'none',rough:1.6,home:['IL'],tag:'high plateau · lake & valley below',desc:'Basalt plateau above the Sea of Galilee, with Mount Hermon to the north and the Jordan valley below. High ground decides everything.',
+  golan:{name:'Golan: Fight for the Heights',min:2,max:6,sym:'none',rough:1.6,home:['IL'],tag:'high plateau · lake & valley below',desc:'Basalt plateau above the Sea of Galilee, with Mount Hermon to the north and the Jordan valley below. High ground decides everything.',
     slots:[[950,1950],[2850,1950],[2850,700],[700,300],[1750,1950],[2800,180]],
     cities:[[820,1250,110,'lebanon'],[2150,1250,100,'mideast'],[1500,1820,80,'lebanon']],
     water(M,R){const ph=R()*6.28;M.lakes.push({x:560,y:880,r:200,rx:.8,wob:q=>.1*Math.sin(q*3+ph)});const jr=[];for(let y=1060;y<=MAPH+200;y+=40)jr.push([560+40*Math.sin(y*.01+ph),y]);M.rivers.push({pts:jr,hw:()=>34});M.bridgeAt=[[0,.5]];M.bridgeFrac=true;
@@ -5421,12 +5421,12 @@ const MAPS={
       for(const [sx,sy] of [[400,1100],[2800,1100]]){const y0=1100+260*Math.sin(sx*.0024+ph)+50*Math.sin(sx*.009),s=y0>=sy?1:-1;for(const p of pts){const w=Math.exp(-Math.pow((p[0]-sx)/420,2));p[1]+=s*Math.max(0,400-s*(p[1]-sy))*w;}}
       M.rivers.push({pts,hw:()=>52});M.bridgeAt=[[0,.2],[0,.42],[0,.6],[0,.82]];M.bridgeFrac=true;
       M.peaks.push({x:1600,y:500,r:80,rx:1.6,rot:.2},{x:1600,y:1700,r:80,rx:1.6,rot:.2});}},
-  dnipro:{name:'Dnipro Front',min:2,max:8,sym:'none',theme:'green',home:['UA'],tag:'wide river · city · islands',desc:'The wide Dnipro splits Ukraine: a great city on both banks, river islands and long bridges under fire.',
+  dnipro:{name:'Dnipro: City on Fire',min:2,max:8,sym:'none',theme:'green',home:['UA'],tag:'wide river · city · islands',desc:'The wide Dnipro splits Ukraine: a great city on both banks, river islands and long bridges under fire.',
     slots:[[380,1100],[2820,1100],[500,300],[2700,1900],[500,1900],[2700,300],[1000,650],[2200,1550]],
     cities:[[1300,950,190,'russia'],[1980,1050,170,'russia'],[700,1600,80,'europe'],[2600,600,80,'europe']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1640+150*Math.sin(y*.0028+ph),y]);M.rivers.push({pts,hw:()=>150});M.bridgeAt=[[0,.25],[0,.48],[0,.78]];M.bridgeFrac=true;
       M.islands.push({x:1650,y:620,r:60,rx:2,rot:1.4,wob:q=>.1*Math.sin(q*3)},{x:1640,y:1600,r:50,rx:1.8,rot:1.5,wob:q=>.1*Math.sin(q*4)});}},
-  rubalkhali:{name:'Empty Quarter',min:2,max:8,sym:'point',rough:.85,home:['SA'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
+  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1300,1100+Math.sin(a)*840]);return s;})(),
     cities:[[1600,1100,190,'mideast']],
     water(M,R){for(const [x,y] of [[900,700],[2300,1500],[2300,700],[900,1500]])M.lakes.push({x,y,r:55,rx:1.4,wob:q=>.15*Math.sin(q*3+x)});}},
@@ -5465,7 +5465,7 @@ const MAPS={
     water(M,R){M.lakes.push({x:1600,y:1100,r:6000,rx:1,wob:()=>0});const w=R()*6.28;M.islands.push({x:1600,y:1100,r:520,rx:2.6,rot:-.12,wob:q=>.12*Math.sin(q*3+w)+.07*Math.sin(q*7+w*2)});
       for(const [x,y] of [[500,300],[2700,1900],[2800,350],[400,1850]])M.islands.push({x,y,r:90,rx:1.6,rot:.4,wob:q=>.15*Math.sin(q*3+x)});}},
   // ---- 2026-10-30 maps (Maps squad): 20 more theatres, every one symmetric so each start position gets the same ground ----
-  khyber:{name:'Khyber Pass',min:2,max:2,sym:'point',rough:1.5,home:['PK'],tag:'mountain pass · two goat tracks · duel',desc:'A duel through the Spin Ghar range: one narrow pass split by a rock fort in the middle, and a long goat track along each edge to outflank it.',
+  khyber:{name:'Khyber Pass: Gate of Fortresses',min:2,max:2,sym:'point',rough:1.5,home:['PK'],tag:'mountain pass · two goat tracks · duel',desc:'A duel through the Spin Ghar range: one narrow pass split by a rock fort in the middle, and a long goat track along each edge to outflank it.',
     slots:[[420,1500],[2780,700]],cities:mirrorList([[1020,1280,85,'southasia']],'p'),
     water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[1270,330],[1420,560],[1560,770]],40,25,2,ph),hw:()=>110},{pts:polyline([[640,330],[960,560]],40,18,2,ph),hw:()=>80});
       M.peaks.push({x:2250,y:330,r:80,rx:1.5,rot:.3});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:72,rx:1.25,rot:0});}},
@@ -5477,7 +5477,7 @@ const MAPS={
     slots:[[480,1150],[2720,1150]],cities:[[1600,1080,110,'mideast'],...mirrorList([[980,520,90,'mideast']],'x')],oilAt:[[1600,1520],[1430,1650],[1770,1650]],
     water(M,R){const pts=[];for(let x=-300;x<=3500;x+=40)pts.push([x,2000+60*Math.cos((x-1600)*.004)]);M.rivers.push({pts,hw:()=>340});
       M.peaks.push({x:1000,y:860,r:70,rx:1.7,rot:.6});mirrorMap(M,'x');M.peaks.push({x:1600,y:330,r:100,rx:2.2,rot:0});M.islands.push({x:1600,y:1700,r:230,rx:1.7,rot:0,wob:a=>.06*Math.cos(2*a)});}},
-  aleppo:{name:'Aleppo Ruins',min:2,max:2,sym:'point',rough:1.1,home:['RS','TR'],tag:'urban sprawl · citadel · street fighting · duel',desc:'A duel through a ruined city: a great old town around the citadel in the middle, suburbs on both sides and streets to fight down block by block.',
+  aleppo:{name:'Aleppo: Ruined City',min:2,max:2,sym:'point',rough:1.1,home:['RS','TR'],tag:'urban sprawl · citadel · street fighting · duel',desc:'A duel through a ruined city: a great old town around the citadel in the middle, suburbs on both sides and streets to fight down block by block.',
     slots:[[430,1650],[2770,550]],cities:[[1600,1100,290,'mideast'],...mirrorList([[860,680,140,'mideast'],[1250,1880,100,'mideast']],'p')],
     water(M,R){M.peaks.push({x:700,y:260,r:80,rx:1.6,rot:.2});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:62,rx:1.3,rot:0});}},
   anatolia:{name:'Anatolian Mesa',min:3,max:4,sym:'quad',rough:1.4,home:['TR'],tag:'walled mesa · oil on top · four ways in',desc:'A rock-walled mesa in the middle of the highlands with oil on top. Four gaps lead up onto it, all equally far from every base.',
@@ -5524,7 +5524,7 @@ const MAPS={
     slots:[[1250,330],[1950,1870],[1950,330],[1250,1870],[500,330],[2700,1870],[2700,330],[500,1870]],cities:mirrorList([[1300,760,80,'asia']],'p'),
     water(M,R){M.peaks.push({x:820,y:820,r:80,rx:1.8,rot:.1},{x:2350,y:780,r:70,rx:1.6,rot:-.1});mirrorMap(M,'p');
       const pts=[];for(let x=-200;x<=3400;x+=40)pts.push([x,1100+90*Math.sin((x-1600)*.0026)]);M.rivers.push({pts,hw:()=>105});M.bridgeAt=[[0,.2],[0,.4],[0,.6],[0,.8]];M.bridgeFrac=true;}},
-  kuwait:{name:'Burning Oil Fields',min:8,max:8,sym:'quad',rough:.9,home:['SA','AE'],tag:'eight-way war · oil field in the middle',desc:'Eight armies around a great oil field in the open desert. The derricks in the middle pay the most; rock outcrops between the bases cover the approaches.',
+  kuwait:{name:'Burning Oil Fields: Inferno',min:8,max:8,sym:'quad',rough:.9,home:['SA','AE'],tag:'eight-way war · oil field in the middle',desc:'Eight armies around a great oil field in the open desert. The derricks in the middle pay the most; rock outcrops between the bases cover the approaches.',
     slots:ring8(880),
     oilAt:[[1600,1100],...ring8(250)],
     water(M,R){for(const a of [-.39,-1.18])M.peaks.push({x:1600+Math.cos(a)*640,y:1100+Math.sin(a)*640,r:55,rx:1.5,rot:a+1.57});M.lakes.push({x:2150,y:1100,r:40,rx:1.3,wob:a=>.1*Math.cos(2*a)});mirrorMap(M,'x');mirrorMap(M,'y');}},
@@ -7433,6 +7433,25 @@ let CWMAT=null;function cityWallMat(){if(CWMAT)return CWMAT;const m=new THREE.Me
 // Beyond the playable area the land carries on: the edge heights and colours are continued outward and roll up into
 // soft hills (or stay as open sea where the map edge is water), fading into the haze, so the map has no hard border.
 function bN2(x,y){const s=Math.sin(x*.0021+Math.sin(y*.0013)*2)*Math.cos(y*.0018+Math.sin(x*.0011)*1.7);return s*.6+.4*Math.sin(x*.0057+y*.0043)*Math.cos(x*.0031-y*.0049);}
+// Distant mountain ranges beyond the playable edge (Abdullah 2026-11-03 "epic maps"): two hazed ridge rings, theme coloured,
+// dropped to nothing where the edge is sea so the horizon stays open water. One small mesh (~1.4k triangles), looks only.
+function farRidge(){const M=G.map,BX=Math.max(MAPW,MAPH)*.7,th=M.theme,snow=th==='snow',grn=th==='green',N=240;
+  const cA=new THREE.Color(snow?'#dfe6ee':grn?'#59664a':'#9a7f5a'),cB=new THREE.Color(snow?'#aeb9c8':grn?'#3f4d44':'#6e5a43'),hz=new THREE.Color(snow?'#c9d3df':grn?'#8d9a8a':'#b79f78');
+  const pos=[],col=[],idx=[],tmp=new THREE.Color(),sg=(v,e)=>Math.sign(v)*Math.pow(Math.abs(v),e);
+  const rings=[[.22,.5,snow?820:560,0],[.5,.85,snow?1500:1050,1]];let base=0;
+  for(const [o0,o1,H,k] of rings){const a=MAPW/2+BX*(o0+o1)/2,b=MAPH/2+BX*(o0+o1)/2,w=BX*(o1-o0)*.5;
+    const wet=[];for(let i=0;i<N;i++){const t=i/N*6.2832,x=MAPW/2+a*sg(Math.cos(t),.5),y=MAPH/2+b*sg(Math.sin(t),.5),cx=Math.max(1,Math.min(MAPW-1,x)),cy=Math.max(1,Math.min(MAPH-1,y));wet.push(M.edge(cx,cy)>-20?1:0);}
+    const sm=wet.map((_,i)=>{let v=0;for(let j=-8;j<=8;j++)v+=wet[(i+j+N)%N];return 1-v/17;});
+    for(let i=0;i<N;i++){const t=i/N*6.2832,c=Math.cos(t),sn=Math.sin(t),X=MAPW/2+a*sg(c,.5),Y=MAPH/2+b*sg(sn,.5),ox=sg(c,.5)*w,oy=sg(sn,.5)*w;
+      const n=.55+.45*bN2(X*.9+k*700,Y*.9)+.25*bN2(X*3.1,Y*3.1+k*300),h=Math.max(0,H*n*sm[i]);
+      pos.push(X-ox,-30,Y-oy, X,h,Y, X+ox,-30,Y+oy);
+      tmp.copy(cB).lerp(hz,k?.35:.15);col.push(tmp.r,tmp.g,tmp.b);tmp.copy(cA).lerp(hz,k?.3:.12).multiplyScalar(.85+.3*n);col.push(tmp.r,tmp.g,tmp.b);tmp.copy(cB).lerp(hz,k?.4:.2);col.push(tmp.r,tmp.g,tmp.b);}
+    for(let i=0;i<N;i++){const j=(i+1)%N,p0=base+i*3,p1=base+j*3;idx.push(p0,p0+1,p1,p1,p0+1,p1+1,p0+1,p0+2,p1+1,p1+1,p0+2,p1+2);}
+    base+=N*3;}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();
+  const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0,side:THREE.DoubleSide});
+  m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <fog_fragment>','#ifdef USE_FOG\n float ffr=smoothstep(fogNear,fogFar,vFogDepth)*.5;gl_FragColor.rgb=mix(gl_FragColor.rgb,fogColor,ffr);\n#endif');};
+  const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;mesh.renderOrder=-1;WORLD.add(mesh);}
 function borderH(x,z){const cx=Math.max(1,Math.min(MAPW-1,x)),cz=Math.max(1,Math.min(MAPH-1,z)),dx=Math.max(0,-x,x-MAPW),dz=Math.max(0,-z,z-MAPH),d=Math.hypot(dx,dz);if(d<=0)return groundH(x,z);
   if(G.map.edge(cx,cz)>-20)return Math.min(WL-6,groundH(cx,cz))-Math.min(30,d*.05);const s=Math.min(1,d/900),s2=s*s*(3-2*s),hill=60+150*(.5+.5*bN2(x,z))*Math.min(1,d/1600);return groundH(cx,cz)*(1-s2)+hill*s2+bN2(x*3,z*3)*6*s;}
 // woods continue past the map edge (rendering only: not in G.treePos, so no cover or pathing effect)
@@ -7532,7 +7551,7 @@ function buildWorld(tc){
       .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n'+(TD?' normal=normalize(normal+(viewMatrix*vec4(gTN.x*.85,0.,gTN.y*.85,0.)).xyz);':'')
         +' {float sh=(gScar.g-.5)*30.;vec3 sx=dFdx(-vViewPosition),sy=dFdy(-vViewPosition);vec3 r1=cross(sy,normal),r2=cross(normal,sx);float fd=dot(sx,r1);vec3 gr=sign(fd)*(dFdx(sh)*r1+dFdy(sh)*r2);normal=normalize(abs(fd)*normal-gr);}');};
   TERR=new THREE.Mesh(g,tm);TERR.receiveShadow=true;WORLD.add(TERR);
-  BORDER_TEX=tex;borderLand(dtex);
+  BORDER_TEX=tex;borderLand(dtex);try{farRidge();}catch(e){}
   // city buildings: one merged mesh, styled by region
   CITYM=null;G.civDirty=false;buildCity();
 
@@ -8104,6 +8123,14 @@ const WRECK_HEAT={value:1};let WRECKM=null;const WRECKQ=[],BURNT=new Map();
 // wreck serialised the whole model (geometry, even textures as images) - seconds of frozen game per destroyed vehicle in a
 // big battle. Wrecks never need the copied userData: clone with it set aside.
 function cloneLite(o){const keep=[];o.traverse(c=>{keep.push([c,c.userData]);c.userData={};});try{return o.clone(true);}finally{for(const [c,u] of keep)c.userData=u;}}
+// Lingering battle smoke (Abdullah 2026-11-03 "epic maps"): where wrecks and ruins pile up, a tall dark column keeps rising for
+// a minute or two, so a big fight can be seen from far away. Looks only (no sim), max 3 columns on Low, 7 otherwise; wrecks
+// within ~180 of a column feed it instead of starting another.
+const SMKCOL=[];function smkAdd(x,y,w){try{if(typeof G==='undefined'||!G||!G.t)return;for(const c of SMKCOL)if(Math.hypot(c.x-x,c.y-y)<180){c.t=Math.min(c.t,12);c.n+=w;return;}
+  if(SMKCOL.length>=(fxPH()?3:7))SMKCOL.shift();SMKCOL.push({x,y,t:0,L:75+Math.random()*45,n:w,b:G.t});}catch(e){}}
+function smkTick(dt){for(let i=SMKCOL.length-1;i>=0;i--){const c=SMKCOL[i];c.t+=dt;if(c.t>c.L||G.t<c.b){SMKCOL.splice(i,1);continue;}
+  if(!inView(c.x,c.y,.9))continue;const fade=Math.min(1,(c.L-c.t)/20),PH=fxPH(),k=Math.min(2.2,.8+c.n*.12);
+  if(Math.random()<dt*(PH?3:6)*k){part({x:c.x+rnd(-8,8),y:c.y+rnd(-8,8),h:groundH(c.x,c.y)+10,vx:rnd(8,14),vy:rnd(-2,2),rise:rnd(55,80),c:[.12,.115,.11],c2:[.4,.38,.35],ck:rnd(.3,.5),s:PH?rnd(9,13):rnd(11,17),g:rnd(15,22),d:PH?rnd(7,9):rnd(9,12),a:.32*fade+.04});}}}
 function wreckTick(){const q=WRECKQ.shift();if(q)try{wreck(q[0],q[1],q[2]);}catch(e){}}
 function burntMat(src){const m=new THREE.MeshStandardMaterial({color:0xffffff,map:src&&src.map||null,roughness:1,metalness:.05,vertexColors:!!(src&&src.vertexColors)});
   if(src&&src.color)m.userData.base=src.color.clone();m.color.copy(m.userData.base||new THREE.Color(.3,.3,.3));const heat={value:1};m.userData.heat=heat;
@@ -8116,14 +8143,14 @@ function burntMat(src){const m=new THREE.MeshStandardMaterial({color:0xffffff,ma
       {float e=smoothstep(.70,.82,wn(vBW*.55+7.)*.7+wn(vBW*2.1)*.3);totalEmissiveRadiance+=vec3(1.6,.48,.1)*e*uHeat*uHeat;}`);};
   m.customProgramCacheKey=()=>'burnt1';return m;}
 function wreck(o,x,y){mats();let w;const mats2=[];const rec={heat:1};const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};if(o.userData.model){w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh){c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);}if(c.isSkinnedMesh)c.visible=false;});w.rotation.z=rnd(-.08,.08);w.rotation.x=rnd(-.05,.05);}else{w=new THREE.Group();o.traverse(c=>{if(c.isMesh&&c.material===MAT.std){const m=new THREE.Mesh(c.geometry,bm(c.material));m.position.copy(c.position);m.rotation.copy(c.rotation);m.castShadow=true;w.add(m);}});
-  w.position.copy(o.position);w.rotation.y=o.rotation.y;}const P=o.userData.parts;if(P.turret){const t=w.children[1];if(t)t.rotation.set(rnd(-.2,.2),rnd(-1,1),rnd(-.2,.2));}w.traverse(c=>{if(c.isMesh){c.onBeforeRender=(r,s,cam,g,m)=>{if(m&&m.userData.heat&&m.userData.heat.value!==rec.heat){m.userData.heat.value=rec.heat;m.uniformsNeedUpdate=true;}};}});SCN.add(w);WRECKS.push({o:w,x,y,t:0,rec});}
-function rubble(x,y,size,o){mats();const w=new THREE.Group();const B=Bld(),h=size*.5;const gr=['#7d7a72','#8e8b82','#6c6962','#5a5751','#9a968c'];
+  w.position.copy(o.position);w.rotation.y=o.rotation.y;}const P=o.userData.parts;if(P.turret){const t=w.children[1];if(t)t.rotation.set(rnd(-.2,.2),rnd(-1,1),rnd(-.2,.2));}w.traverse(c=>{if(c.isMesh){c.onBeforeRender=(r,s,cam,g,m)=>{if(m&&m.userData.heat&&m.userData.heat.value!==rec.heat){m.userData.heat.value=rec.heat;m.uniformsNeedUpdate=true;}};}});SCN.add(w);WRECKS.push({o:w,x,y,t:0,rec});smkAdd(x,y,1);}
+function rubble(x,y,size,o){if(size>=28)smkAdd(x,y,2);mats();const w=new THREE.Group();const B=Bld(),h=size*.5;const gr=['#7d7a72','#8e8b82','#6c6962','#5a5751','#9a968c'];
   B.rock(size*.95,1.6,size*.95,0,.3,0,'#5e5b54',0,rnd(0,6),0);
   for(let i=0;i<46;i++){const s2=rnd(2.5,10),r=Math.sqrt(Math.random())*h*1.05,a=rnd(0,6.28);B.rock(s2*1.3,s2*rnd(.5,.9),s2*rnd(.8,1.5),Math.cos(a)*r,s2*.1+rnd(0,3)*(1-r/h),Math.sin(a)*r,Math.random()<.2?'#2b2925':gr[i%5],rnd(-.5,.5),rnd(0,6),rnd(-.5,.5));}
   for(let k=0;k<3;k++){const a=rnd(0,6.28),r=rnd(h*.3,h*.8),ht=rnd(6,18),wd=rnd(10,22);B.box(wd,ht,2.5,Math.cos(a)*r,ht/2,Math.sin(a)*r,'#86837a',rnd(-.12,.12),a+1.57,rnd(-.1,.1));}
   for(let k=0;k<8;k++){const a=rnd(0,6.28),r=rnd(0,h*.8);B.cyl(.25,.25,rnd(6,14),4,Math.cos(a)*r,rnd(3,6),Math.sin(a)*r,'#3a2a20',rnd(-1,1),0,rnd(-1,1));}
   const m=mesh(B.geo());w.add(m);scorch(x,y,size*.7);
-  w.position.set(x,groundH(x,y),y);SCN.add(w);WRECKS.push({o:w,x,y,t:0,big:true});}
+  w.position.set(x,groundH(x,y),y);SCN.add(w);WRECKS.push({o:w,x,y,t:0,big:true});smkAdd(x,y,2);}
 function fxUpdate(dt){
   for(const p of PARTS){p.t+=dt;const fr=Math.pow(p.f,dt);p.vx*=fr;p.vy*=fr;p.vh*=fr;if(p.grav)p.vh-=420*dt;p.x+=(p.vx+(p.add?0:6))*dt;p.y+=p.vy*dt;p.h+=(p.vh+p.rise)*dt;p.s=Math.max(.4,p.s+p.g*dt);
     if(p.bounce&&p.h<groundH(p.x,p.y)){p.h=groundH(p.x,p.y);p.vh*=-.3;p.vx*=.4;p.vy*=.4;}}
@@ -8158,6 +8185,7 @@ function fxUpdate(dt){
     if(vis&&burn&&Math.random()<dt*2)part({x:w.x+rnd(-6,6),y:w.y+rnd(-6,6),h:groundH(w.x,w.y)+6,vx:rnd(-30,30),vy:rnd(-30,30),vh:rnd(30,70),add:true,c:C_SPARK,s:1.2,f:.6,grav:1,d:rnd(.4,.8)});
     if(burn&&!w.light&&LIGHTS.length){w.light=1;}
     if(w.t>50)w.o.position.y-=dt*4;if(w.t>56){w.done=true;SCN.remove(w.o);}}
+  smkTick(dt);
   for(let i=WRECKS.length-1;i>=0;i--)if(WRECKS[i].done)WRECKS.splice(i,1);
   {let k=0;const now=performance.now()/1000;for(const w of WRECKS){if(k>=WLIGHTS.length)break;if(w.t>=(w.big?30:24)||!inView(w.x,w.y,.1))continue;const L=WLIGHTS[k++],fl=.75+.25*Math.sin(now*17+w.x)*Math.sin(now*11.3+w.y),fade=Math.min(1,w.t*2)*Math.min(1,((w.big?30:24)-w.t)/6);L.position.set(w.x,groundH(w.x,w.y)+16,w.y);L.intensity=(w.big?3.2:2.2)*fl*fade*WXFX*LUX;}for(;k<WLIGHTS.length;k++)WLIGHTS[k].intensity=0;}
   for(const b of BODIES){b.t+=dt;for(const g of b.figs){const k=Math.max(0,Math.min(1,(b.t-g.dl)/.45));const e=k*k*(3-2*k);g.f.rotation.z=g.dir*1.5*e;g.f.rotation.x=g.rx*e;g.f.position.y=g.base.y-e*.6;if(k>0&&k<1&&!g.dust&&e>.9){g.dust=1;part({x:b.x,y:b.y,h:groundH(b.x,b.y)+1,vx:rnd(-12,12),vy:rnd(-12,12),c:C_DUST,s:rnd(4,6),g:6,d:.7,a:.4});}}
@@ -8422,7 +8450,7 @@ function applyQual(){POST.aoOn=QUAL.lv<2;resize();}
 function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1)*(((()=>{try{return GFX_PHONE;}catch(e){return false;}})())?Math.max(.85,QUAL.caps[QUAL.lv]):QUAL.caps[QUAL.lv]);/* phones stay sharp (Abdullah 2026-10-29: Low looked bad); they save on effects instead */VW=Math.max(1,r.width);VH=Math.max(1,r.height);
   if(R3){R3.setPixelRatio(dpr);R3.setSize(VW,VH,false);if(POST.rt)sizePost();CAM.aspect=VW/VH;CAM.updateProjectionMatrix();}hud.width=Math.round(VW*dpr);hud.height=Math.round(VH*dpr);}
 // the player can pull the camera higher (ZMAX) and tilt it (cam.tilt: Shift+wheel, Page Up/Down, two fingers up/down) - Abdullah 2026-10-29
-const ZMAX=2600;function tiltBy(v){cam.tilt=Math.max(-.32,Math.min(.62,(cam.tilt||0)+v));}
+const ZMAX=2600;function zmax(){try{return Math.max(ZMAX,Math.min(3600,Math.round(MAPW*.4)));}catch(e){return ZMAX;}}function tiltBy(v){cam.tilt=Math.max(-.32,Math.min(.62,(cam.tilt||0)+v));}
 function placeCam(){const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/(600-230)));let p=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d)));p=Math.max(.22,Math.min(1.42,p+(cam.tilt||0)));if(typeof SCN!=='undefined'&&SCN&&SCN.fog){const f=SCN.fog;if(f._set!==f.near){f.n0=f.near;f.f0=f.far;}const ex=Math.max(0,d-1400)*1.2;f.near=f.n0+ex;f.far=f.f0+ex;f._set=f.near;}/* zoomed far out, push the haze back so the battlefield stays clear */cam.x=Math.max(0,Math.min(MAPW,cam.x));cam.y=Math.max(Math.min(60+cam.dist*.5,MAPH/2),Math.min(MAPH+120,cam.y));{const lo=Math.min(cam.dist*.55,MAPW/2);cam.x=Math.max(lo,Math.min(MAPW-lo,cam.x));}
   const sx=shake>.3?rnd(-shake,shake):0,sy=shake>.3?rnd(-shake,shake):0;
   CAM.position.set(cam.x+sx,Math.sin(p)*d,cam.y+Math.cos(p)*d+sy);CAM.lookAt(cam.x+sx,0,cam.y+sy);CAM.updateMatrixWorld();if(window.SKY)SKY.position.copy(CAM.position);
@@ -9758,7 +9786,7 @@ function pickAt(sx,sy,own){let best=null,bd=1e9;for(const e of G.ents){if(e.dead
 function fieldAt(w){const i=G.fields.findIndex(f=>Math.hypot(f.x-w.x,f.y-w.y)<f.r+10);return i;}
 cv.addEventListener('mouseenter',e=>{mpos(e);mouse.in=true;});cv.addEventListener('mouseleave',()=>{mouse.in=false;});
 cv.addEventListener('mousemove',e=>{mpos(e);});
-cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(ZMAX,cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}},{passive:false});
+cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(zmax(),cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}},{passive:false});
 // After an order the ordered units deselect so the next click selects fresh (Abdullah 2026-10-30 20:54). Kept when Shift
 // queues, when Settings > Mouse > mKeep is on, or when a targeting mode is active. Production-building rally points never count.
 function ordDone(shift){if(!G||SET.mKeep||shift||G.place||G.aim)return;if(G.sel.some(u=>!u.isB&&u.team===ME))G.sel=[];}
@@ -9959,7 +9987,7 @@ function touchDown(e){TCH.set(e.pointerId,{x:e.clientX,y:e.clientY});try{cv.setP
   return false;}
 function touchMove(e){if(!TCH.has(e.pointerId))return false;TCH.set(e.pointerId,{x:e.clientX,y:e.clientY});if(!PINCH||TCH.size<2)return false;
   const m=tMid(),P=PINCH;camTarget();
-  if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(ZMAX,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
+  if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(zmax(),od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
   const a=screenToWorld(P.x,P.y),b=screenToWorld(m.x,m.y);if(a&&b){cam.tx+=a.x-b.x;cam.ty+=a.y-b.y;}
   PINCH={x:m.x,y:m.y,d:m.d};return true;}
 function touchUp(e){TCH.delete(e.pointerId);if(TCH.size<2)PINCH=null;
@@ -9998,7 +10026,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='x'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
   if(k==='r'&&!e.ctrlKey&&!e.metaKey){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length){doAct({t:'ret',ids});speak(2);}}
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
-  if(e.key==='PageUp'){tiltBy(-.06);e.preventDefault();}if(e.key==='PageDown'){tiltBy(.06);e.preventDefault();}if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(ZMAX,cam.td*1.15);}
+  if(e.key==='PageUp'){tiltBy(-.06);e.preventDefault();}if(e.key==='PageDown'){tiltBy(.06);e.preventDefault();}if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(zmax(),cam.td*1.15);}
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();updateUI();});
 window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
 window.addEventListener('blur',()=>{MODK.ctrl=MODK.alt=MODK.shift=false;});
@@ -10163,7 +10191,7 @@ window.addEventListener('pointerdown',e=>{TC.touch=e.pointerType==='touch';TC.nd
 window.addEventListener('pointermove',e=>{if(e.pointerType==='touch')TC.nm=(TC.nm||0)+1;if(e.pointerType!=='touch'||!TC.ids.has(e.pointerId))return;e.stopPropagation();if(!G)return;
   const p=tcXY(e),q=TC.ids.get(e.pointerId);TC.ids.set(e.pointerId,p);
   if(TC.pinch&&TC.ids.size>=2){const m=tcMid(),P=TC.pinch;camTarget();
-    if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(ZMAX,od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
+    if(P.d>24&&m.d>24){const od=cam.td,nd=Math.max(200,Math.min(zmax(),od*P.d/m.d));cam.td=nd;const w=screenToWorld(m.x,m.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}
     // two fingers moving up/down together (not pinching) tilt the camera; sideways they still pan
     {const dy=m.y-P.y,dd=Math.abs(m.d-P.d);if(Math.abs(dy)>Math.abs(m.x-P.x)&&dd<Math.abs(dy)*.6){tiltBy(dy*.004);TC.pinch={x:m.x,y:m.y,d:m.d};return;}}
     const a=screenToWorld(P.x,P.y),b=screenToWorld(m.x,m.y);if(a&&b){cam.tx+=a.x-b.x;cam.ty+=a.y-b.y;}TC.pinch={x:m.x,y:m.y,d:m.d};return;}

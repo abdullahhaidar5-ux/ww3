@@ -153,6 +153,25 @@ let CWMAT=null;function cityWallMat(){if(CWMAT)return CWMAT;const m=new THREE.Me
 // Beyond the playable area the land carries on: the edge heights and colours are continued outward and roll up into
 // soft hills (or stay as open sea where the map edge is water), fading into the haze, so the map has no hard border.
 function bN2(x,y){const s=Math.sin(x*.0021+Math.sin(y*.0013)*2)*Math.cos(y*.0018+Math.sin(x*.0011)*1.7);return s*.6+.4*Math.sin(x*.0057+y*.0043)*Math.cos(x*.0031-y*.0049);}
+// Distant mountain ranges beyond the playable edge (Abdullah 2026-11-03 "epic maps"): two hazed ridge rings, theme coloured,
+// dropped to nothing where the edge is sea so the horizon stays open water. One small mesh (~1.4k triangles), looks only.
+function farRidge(){const M=G.map,BX=Math.max(MAPW,MAPH)*.7,th=M.theme,snow=th==='snow',grn=th==='green',N=240;
+  const cA=new THREE.Color(snow?'#dfe6ee':grn?'#59664a':'#9a7f5a'),cB=new THREE.Color(snow?'#aeb9c8':grn?'#3f4d44':'#6e5a43'),hz=new THREE.Color(snow?'#c9d3df':grn?'#8d9a8a':'#b79f78');
+  const pos=[],col=[],idx=[],tmp=new THREE.Color(),sg=(v,e)=>Math.sign(v)*Math.pow(Math.abs(v),e);
+  const rings=[[.22,.5,snow?820:560,0],[.5,.85,snow?1500:1050,1]];let base=0;
+  for(const [o0,o1,H,k] of rings){const a=MAPW/2+BX*(o0+o1)/2,b=MAPH/2+BX*(o0+o1)/2,w=BX*(o1-o0)*.5;
+    const wet=[];for(let i=0;i<N;i++){const t=i/N*6.2832,x=MAPW/2+a*sg(Math.cos(t),.5),y=MAPH/2+b*sg(Math.sin(t),.5),cx=Math.max(1,Math.min(MAPW-1,x)),cy=Math.max(1,Math.min(MAPH-1,y));wet.push(M.edge(cx,cy)>-20?1:0);}
+    const sm=wet.map((_,i)=>{let v=0;for(let j=-8;j<=8;j++)v+=wet[(i+j+N)%N];return 1-v/17;});
+    for(let i=0;i<N;i++){const t=i/N*6.2832,c=Math.cos(t),sn=Math.sin(t),X=MAPW/2+a*sg(c,.5),Y=MAPH/2+b*sg(sn,.5),ox=sg(c,.5)*w,oy=sg(sn,.5)*w;
+      const n=.55+.45*bN2(X*.9+k*700,Y*.9)+.25*bN2(X*3.1,Y*3.1+k*300),h=Math.max(0,H*n*sm[i]);
+      pos.push(X-ox,-30,Y-oy, X,h,Y, X+ox,-30,Y+oy);
+      tmp.copy(cB).lerp(hz,k?.35:.15);col.push(tmp.r,tmp.g,tmp.b);tmp.copy(cA).lerp(hz,k?.3:.12).multiplyScalar(.85+.3*n);col.push(tmp.r,tmp.g,tmp.b);tmp.copy(cB).lerp(hz,k?.4:.2);col.push(tmp.r,tmp.g,tmp.b);}
+    for(let i=0;i<N;i++){const j=(i+1)%N,p0=base+i*3,p1=base+j*3;idx.push(p0,p0+1,p1,p1,p0+1,p1+1,p0+1,p0+2,p1+1,p1+1,p0+2,p1+2);}
+    base+=N*3;}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));g.setIndex(idx);g.computeVertexNormals();
+  const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,metalness:0,side:THREE.DoubleSide});
+  m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <fog_fragment>','#ifdef USE_FOG\n float ffr=smoothstep(fogNear,fogFar,vFogDepth)*.5;gl_FragColor.rgb=mix(gl_FragColor.rgb,fogColor,ffr);\n#endif');};
+  const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;mesh.renderOrder=-1;WORLD.add(mesh);}
 function borderH(x,z){const cx=Math.max(1,Math.min(MAPW-1,x)),cz=Math.max(1,Math.min(MAPH-1,z)),dx=Math.max(0,-x,x-MAPW),dz=Math.max(0,-z,z-MAPH),d=Math.hypot(dx,dz);if(d<=0)return groundH(x,z);
   if(G.map.edge(cx,cz)>-20)return Math.min(WL-6,groundH(cx,cz))-Math.min(30,d*.05);const s=Math.min(1,d/900),s2=s*s*(3-2*s),hill=60+150*(.5+.5*bN2(x,z))*Math.min(1,d/1600);return groundH(cx,cz)*(1-s2)+hill*s2+bN2(x*3,z*3)*6*s;}
 // woods continue past the map edge (rendering only: not in G.treePos, so no cover or pathing effect)
@@ -252,7 +271,7 @@ function buildWorld(tc){
       .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n'+(TD?' normal=normalize(normal+(viewMatrix*vec4(gTN.x*.85,0.,gTN.y*.85,0.)).xyz);':'')
         +' {float sh=(gScar.g-.5)*30.;vec3 sx=dFdx(-vViewPosition),sy=dFdy(-vViewPosition);vec3 r1=cross(sy,normal),r2=cross(normal,sx);float fd=dot(sx,r1);vec3 gr=sign(fd)*(dFdx(sh)*r1+dFdy(sh)*r2);normal=normalize(abs(fd)*normal-gr);}');};
   TERR=new THREE.Mesh(g,tm);TERR.receiveShadow=true;WORLD.add(TERR);
-  BORDER_TEX=tex;borderLand(dtex);
+  BORDER_TEX=tex;borderLand(dtex);try{farRidge();}catch(e){}
   // city buildings: one merged mesh, styled by region
   CITYM=null;G.civDirty=false;buildCity();
 

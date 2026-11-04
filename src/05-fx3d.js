@@ -196,6 +196,14 @@ const WRECK_HEAT={value:1};let WRECKM=null;const WRECKQ=[],BURNT=new Map();
 // wreck serialised the whole model (geometry, even textures as images) - seconds of frozen game per destroyed vehicle in a
 // big battle. Wrecks never need the copied userData: clone with it set aside.
 function cloneLite(o){const keep=[];o.traverse(c=>{keep.push([c,c.userData]);c.userData={};});try{return o.clone(true);}finally{for(const [c,u] of keep)c.userData=u;}}
+// Lingering battle smoke (Abdullah 2026-11-03 "epic maps"): where wrecks and ruins pile up, a tall dark column keeps rising for
+// a minute or two, so a big fight can be seen from far away. Looks only (no sim), max 3 columns on Low, 7 otherwise; wrecks
+// within ~180 of a column feed it instead of starting another.
+const SMKCOL=[];function smkAdd(x,y,w){try{if(typeof G==='undefined'||!G||!G.t)return;for(const c of SMKCOL)if(Math.hypot(c.x-x,c.y-y)<180){c.t=Math.min(c.t,12);c.n+=w;return;}
+  if(SMKCOL.length>=(fxPH()?3:7))SMKCOL.shift();SMKCOL.push({x,y,t:0,L:75+Math.random()*45,n:w,b:G.t});}catch(e){}}
+function smkTick(dt){for(let i=SMKCOL.length-1;i>=0;i--){const c=SMKCOL[i];c.t+=dt;if(c.t>c.L||G.t<c.b){SMKCOL.splice(i,1);continue;}
+  if(!inView(c.x,c.y,.9))continue;const fade=Math.min(1,(c.L-c.t)/20),PH=fxPH(),k=Math.min(2.2,.8+c.n*.12);
+  if(Math.random()<dt*(PH?3:6)*k){part({x:c.x+rnd(-8,8),y:c.y+rnd(-8,8),h:groundH(c.x,c.y)+10,vx:rnd(8,14),vy:rnd(-2,2),rise:rnd(55,80),c:[.12,.115,.11],c2:[.4,.38,.35],ck:rnd(.3,.5),s:PH?rnd(9,13):rnd(11,17),g:rnd(15,22),d:PH?rnd(7,9):rnd(9,12),a:.32*fade+.04});}}}
 function wreckTick(){const q=WRECKQ.shift();if(q)try{wreck(q[0],q[1],q[2]);}catch(e){}}
 function burntMat(src){const m=new THREE.MeshStandardMaterial({color:0xffffff,map:src&&src.map||null,roughness:1,metalness:.05,vertexColors:!!(src&&src.vertexColors)});
   if(src&&src.color)m.userData.base=src.color.clone();m.color.copy(m.userData.base||new THREE.Color(.3,.3,.3));const heat={value:1};m.userData.heat=heat;
@@ -208,14 +216,14 @@ function burntMat(src){const m=new THREE.MeshStandardMaterial({color:0xffffff,ma
       {float e=smoothstep(.70,.82,wn(vBW*.55+7.)*.7+wn(vBW*2.1)*.3);totalEmissiveRadiance+=vec3(1.6,.48,.1)*e*uHeat*uHeat;}`);};
   m.customProgramCacheKey=()=>'burnt1';return m;}
 function wreck(o,x,y){mats();let w;const mats2=[];const rec={heat:1};const bm=src=>{const key=src?src.uuid:'none';let m=BURNT.get(key);if(!m){m=burntMat(src);BURNT.set(key,m);}return m;};if(o.userData.model){w=cloneLite(o);w.visible=true;w.traverse(c=>{c.matrixWorldAutoUpdate=true;if(c.isMesh){c.material=Array.isArray(c.material)?c.material.map(bm):bm(c.material);}if(c.isSkinnedMesh)c.visible=false;});w.rotation.z=rnd(-.08,.08);w.rotation.x=rnd(-.05,.05);}else{w=new THREE.Group();o.traverse(c=>{if(c.isMesh&&c.material===MAT.std){const m=new THREE.Mesh(c.geometry,bm(c.material));m.position.copy(c.position);m.rotation.copy(c.rotation);m.castShadow=true;w.add(m);}});
-  w.position.copy(o.position);w.rotation.y=o.rotation.y;}const P=o.userData.parts;if(P.turret){const t=w.children[1];if(t)t.rotation.set(rnd(-.2,.2),rnd(-1,1),rnd(-.2,.2));}w.traverse(c=>{if(c.isMesh){c.onBeforeRender=(r,s,cam,g,m)=>{if(m&&m.userData.heat&&m.userData.heat.value!==rec.heat){m.userData.heat.value=rec.heat;m.uniformsNeedUpdate=true;}};}});SCN.add(w);WRECKS.push({o:w,x,y,t:0,rec});}
-function rubble(x,y,size,o){mats();const w=new THREE.Group();const B=Bld(),h=size*.5;const gr=['#7d7a72','#8e8b82','#6c6962','#5a5751','#9a968c'];
+  w.position.copy(o.position);w.rotation.y=o.rotation.y;}const P=o.userData.parts;if(P.turret){const t=w.children[1];if(t)t.rotation.set(rnd(-.2,.2),rnd(-1,1),rnd(-.2,.2));}w.traverse(c=>{if(c.isMesh){c.onBeforeRender=(r,s,cam,g,m)=>{if(m&&m.userData.heat&&m.userData.heat.value!==rec.heat){m.userData.heat.value=rec.heat;m.uniformsNeedUpdate=true;}};}});SCN.add(w);WRECKS.push({o:w,x,y,t:0,rec});smkAdd(x,y,1);}
+function rubble(x,y,size,o){if(size>=28)smkAdd(x,y,2);mats();const w=new THREE.Group();const B=Bld(),h=size*.5;const gr=['#7d7a72','#8e8b82','#6c6962','#5a5751','#9a968c'];
   B.rock(size*.95,1.6,size*.95,0,.3,0,'#5e5b54',0,rnd(0,6),0);
   for(let i=0;i<46;i++){const s2=rnd(2.5,10),r=Math.sqrt(Math.random())*h*1.05,a=rnd(0,6.28);B.rock(s2*1.3,s2*rnd(.5,.9),s2*rnd(.8,1.5),Math.cos(a)*r,s2*.1+rnd(0,3)*(1-r/h),Math.sin(a)*r,Math.random()<.2?'#2b2925':gr[i%5],rnd(-.5,.5),rnd(0,6),rnd(-.5,.5));}
   for(let k=0;k<3;k++){const a=rnd(0,6.28),r=rnd(h*.3,h*.8),ht=rnd(6,18),wd=rnd(10,22);B.box(wd,ht,2.5,Math.cos(a)*r,ht/2,Math.sin(a)*r,'#86837a',rnd(-.12,.12),a+1.57,rnd(-.1,.1));}
   for(let k=0;k<8;k++){const a=rnd(0,6.28),r=rnd(0,h*.8);B.cyl(.25,.25,rnd(6,14),4,Math.cos(a)*r,rnd(3,6),Math.sin(a)*r,'#3a2a20',rnd(-1,1),0,rnd(-1,1));}
   const m=mesh(B.geo());w.add(m);scorch(x,y,size*.7);
-  w.position.set(x,groundH(x,y),y);SCN.add(w);WRECKS.push({o:w,x,y,t:0,big:true});}
+  w.position.set(x,groundH(x,y),y);SCN.add(w);WRECKS.push({o:w,x,y,t:0,big:true});smkAdd(x,y,2);}
 function fxUpdate(dt){
   for(const p of PARTS){p.t+=dt;const fr=Math.pow(p.f,dt);p.vx*=fr;p.vy*=fr;p.vh*=fr;if(p.grav)p.vh-=420*dt;p.x+=(p.vx+(p.add?0:6))*dt;p.y+=p.vy*dt;p.h+=(p.vh+p.rise)*dt;p.s=Math.max(.4,p.s+p.g*dt);
     if(p.bounce&&p.h<groundH(p.x,p.y)){p.h=groundH(p.x,p.y);p.vh*=-.3;p.vx*=.4;p.vy*=.4;}}
@@ -250,6 +258,7 @@ function fxUpdate(dt){
     if(vis&&burn&&Math.random()<dt*2)part({x:w.x+rnd(-6,6),y:w.y+rnd(-6,6),h:groundH(w.x,w.y)+6,vx:rnd(-30,30),vy:rnd(-30,30),vh:rnd(30,70),add:true,c:C_SPARK,s:1.2,f:.6,grav:1,d:rnd(.4,.8)});
     if(burn&&!w.light&&LIGHTS.length){w.light=1;}
     if(w.t>50)w.o.position.y-=dt*4;if(w.t>56){w.done=true;SCN.remove(w.o);}}
+  smkTick(dt);
   for(let i=WRECKS.length-1;i>=0;i--)if(WRECKS[i].done)WRECKS.splice(i,1);
   {let k=0;const now=performance.now()/1000;for(const w of WRECKS){if(k>=WLIGHTS.length)break;if(w.t>=(w.big?30:24)||!inView(w.x,w.y,.1))continue;const L=WLIGHTS[k++],fl=.75+.25*Math.sin(now*17+w.x)*Math.sin(now*11.3+w.y),fade=Math.min(1,w.t*2)*Math.min(1,((w.big?30:24)-w.t)/6);L.position.set(w.x,groundH(w.x,w.y)+16,w.y);L.intensity=(w.big?3.2:2.2)*fl*fade*WXFX*LUX;}for(;k<WLIGHTS.length;k++)WLIGHTS[k].intensity=0;}
   for(const b of BODIES){b.t+=dt;for(const g of b.figs){const k=Math.max(0,Math.min(1,(b.t-g.dl)/.45));const e=k*k*(3-2*k);g.f.rotation.z=g.dir*1.5*e;g.f.rotation.x=g.rx*e;g.f.position.y=g.base.y-e*.6;if(k>0&&k<1&&!g.dust&&e>.9){g.dust=1;part({x:b.x,y:b.y,h:groundH(b.x,b.y)+1,vx:rnd(-12,12),vy:rnd(-12,12),c:C_DUST,s:rnd(4,6),g:6,d:.7,a:.4});}}
