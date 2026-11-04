@@ -1158,7 +1158,7 @@ function qualStartLv(){return SET.gfx==='auto'?(gfxPhone()?1:0):({high:0,med:1,l
 function qualReset(){QUAL.lv=qualStartLv();QUAL.bad=QUAL.good=0;QUAL.ema=1/60;QUAL.dts.length=0;}
 function applyGfx(){if(typeof QUAL==='undefined')return;const ph=gfxPhone(),base=Math.min(2,window.devicePixelRatio||1);
   QUAL.caps=ph?QCAPS0.map((c,i)=>Math.min(c,[1.5,1.35,1.25,1.1,1,.9][i]/base)):QCAPS0.slice();POST.aoLv=ph?1:2;POST.phone=ph;
-  QUAL.lock=SET.gfx==='auto'?0:1;qualReset();try{applyQual();}catch(e){}}
+  /* Auto and Low both let the governor lighten things when frames are missed (phones are set to Low: it used to be locked, so nothing ever got lighter); High/Medium stay fixed. Low never goes back above its own level. */QUAL.lock=(SET.gfx==='high'||SET.gfx==='med')?1:0;QUAL.min=SET.gfx==='low'?qualStartLv():0;QUAL.hinted=0;qualReset();try{applyQual();}catch(e){}}
 // One game speed for everyone, a little brisker than real time so battles keep moving.
 const GSPD=1.2;
 function syncSettings(){const segs=[['sGfx','gfx',String],['sHp','hp',String],['sEdge','edge',Number],['sTxt','txt',Number],['sInv','inv',Number],['sDbl','dbl',Number],['sTol','tol',Number],['sMmc','mmc',String],['sMpan','mpan',Number],['sTk','tk',Number]];
@@ -1394,9 +1394,10 @@ function kcCompose(){const b=KC.shot,B=KC.best;if(!b||!G)return;const u=URL.crea
 
 let last=performance.now();
 // FPS and ping readout (Settings > Show FPS & ping)
+const FT=[];function lowPct(){if(FT.length<120)return 0;const s=FT.slice().sort((a,b)=>b-a),n=Math.max(1,Math.floor(s.length*.01));let t=0;for(let i=0;i<n;i++)t+=s[i];return n/t;}/* 1% low FPS: average of the slowest 1% of the last ~900 frames */
 let _fpsT=0;function fpsHud(){const now=performance.now();if(now-_fpsT<500)return;_fpsT=now;const el=$('fpsHud');if(!el)return;let on=false;try{on=localStorage.getItem('ww3_fpsShow')==='1';}catch(e){}el.hidden=!on||!G;if(el.hidden)return;
-  el.textContent=Math.round(QUAL.fps)+' FPS'+(QUAL.lv?' · detail −'+QUAL.lv:'')+(MODE==='client'&&NET.ping?' · ping '+Math.round(NET.ping)+' ms':MODE==='host'&&NET.pings&&Object.keys(NET.pings).length?' · ping '+Object.values(NET.pings).map(v=>Math.round(v)).join('/')+' ms':'');}
-function loop(now){if(window.__stopLoop)return;const _w0=performance.now();const rawDt=Math.max(0,(now-last)/1000);const dt=Math.min(.05,rawDt);last=now;if(G&&!document.hidden&&rawDt<.5)qualTick(rawDt);
+  el.textContent=Math.round(QUAL.fps)+' FPS'+(lowPct()?' · 1% low '+Math.round(lowPct()):'')+(QUAL.lv?' · detail −'+QUAL.lv:'')+(MODE==='client'&&NET.ping?' · ping '+Math.round(NET.ping)+' ms':MODE==='host'&&NET.pings&&Object.keys(NET.pings).length?' · ping '+Object.values(NET.pings).map(v=>Math.round(v)).join('/')+' ms':'');}
+function loop(now){if(window.__stopLoop)return;const _w0=performance.now();const rawDt=Math.max(0,(now-last)/1000);const dt=Math.min(.05,rawDt);last=now;if(G&&!document.hidden&&rawDt<.5){qualTick(rawDt);FT.push(rawDt);if(FT.length>900)FT.shift();}
   try{if(G&&!G.over&&!G.paused){if(MODE==='client'){if(RP.on)rpTick(dt);else{clientTick(dt);if(NET.spec)specTick(dt);}}else{const sd=dt*GSPD;
     // fixed 60 Hz simulation: it used to run once per rendered frame (144-240x a second on high-refresh monitors, all of it
     // host CPU in multiplayer); drawing interpolates unit positions between steps so motion stays smooth at any refresh rate
