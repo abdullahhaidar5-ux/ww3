@@ -19,7 +19,12 @@ export function BATTLE_DRIVER() {
   B.gone = peer => hostGone(peer);
   B.rejoin = (peer, tok) => hostRejoin(peer, tok);
   B.hasTok = tok => tokIx(tok) >= 0;   // raw or (picked up from a checkpoint) hashed tokens, 07a tokIx
-  B.forget = peer => { for (const k of ['seen', 'lastHi', 'lastPg', 'lastKr', 'edOf']) if (NET[k]) delete NET[k][peer]; };
+  // spectators (07a specJoin/specGone): the server keeps its own list (BattleHost.spec) and is told of every greeting
+  B.onSpec = (fn, gone) => { NET.onSpec = fn; NET.onSpecGone = gone || null; };
+  B.specJoin = peer => specJoin(peer);
+  B.specGone = peer => specGone(peer);
+  B.specs = () => (NET.specs || []).map(s => s.peer);
+  B.forget = peer => { for (const k of ['seen', 'lastHi', 'lastPg', 'lastKr', 'edOf', 'isSpec']) if (NET[k]) delete NET[k][peer]; };
   // Start the battle as a host that has no side of its own (ME = -1): every slot is a player or a computer player.
   // Same steps as startMP('host', ...) in the page (08-ui), minus the drawing.
   // o = {seed, facs, map, tm, w, aiD: [null | difficulty per slot], peers: [player id | null], toks: [token | null], code,

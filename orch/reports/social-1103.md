@@ -1,0 +1,12 @@
+# social-1103 — Discord previews, Tutorial, My battles (2026-11-03)
+
+**Shipped (no sim / data / map / netcode change, so no servers-live PR needed):**
+1. **Discord/Twitter link previews.** `<title>`, description, Open Graph and Twitter-card tags added to the page head (the head lives in the hand-kept shell of `index.html`; `build.py` preserves it). Image: `og-image.jpg` (1200x630, 144 KB, real in-game screenshot + title), absolute URL `https://abdullahhaidar5-ux.github.io/ww3/og-image.jpg`. Invite links are `…/ww3/#join=CODE`; the code is in the fragment, which Discord never sends, so they get the same preview. Note: Discord caches previews per link; a link posted before this ships may keep the old (blank) card for a while. The Workers copy shows the same image from Pages.
+2. **Tutorial** (`src/08b-social.js`): "▶ Tutorial" button above Deploy vs AI. Own 2-player battle, enemy passive (no AI), +$3000 and a free general point, 3 enemy soldiers placed near your base. 8 prompts: select, move, attack, build Barracks, train infantry, capture an oil derrick, use a power, win. Each step completes automatically from game state; every step has Show me (jumps the camera), Skip step, Exit tutorial. Text differs for touch. Single-player only; nothing online touched. Not recorded in My battles.
+3. **My battles** button next to Settings: local history (nation, result, length, map, opponents, units built/lost, units trained by type) in localStorage `ww3_battles` (last 200), stats: battles, wins %, favourite nation, fastest win, minutes played, most-used units, last 20 battles. Recorded at the end screen (skirmish + online); Test Range and Tutorial skipped; battles under 20 s ignored. Clear-history button.
+
+**Tests:** smoke PASS; headless check that the buttons exist and the tutorial advances step 1→2 on selecting units.
+
+**Shared online leaderboard: not done.** `server/wrangler.toml` has Durable Objects, but only for lobby/game rooms; a leaderboard needs a new DO class or KV/D1 binding plus a migration and a server deploy, and results reported by clients can be faked. Proposal (needs Abdullah's consent): one tiny DO `Board` with a migration, host-reported results only for Cloudflare battles, name = nation + a player-chosen nickname, top-20 endpoint. Say the word and a later run builds it.
+
+**Untested on a real phone:** tutorial wording for touch (tap-the-ground-to-move) and button sizes. Try it on iPhone.
