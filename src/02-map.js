@@ -426,7 +426,7 @@ function mkMap(seed,mk){
   M.grid=grid;
   // Cities: blocks of buildings on a street grid. Building lots are impassable (units use the streets) and give
   // infantry cover; bases, supply and oil keep clear of them.
-  M.cities=[];M.cityBlds=[];
+  M.cities=[];M.cityBlds=[];M.hamlets=[];
   const CITIES=(D.cities||[]).concat(M.genCities||[]);
   if(CITIES.length){const CR=mulberry((seed|0)*13+7);for(const [cxd,cyd,rd,style] of CITIES){const cx=cxd*WK,cy=cyd*WK,r=rd*Math.pow(WK,.78)*1.3;M.cities.push({x:cx,y:cy,r,style});
     const i0=Math.floor((cx-r)/CELL),i1=Math.ceil((cx+r)/CELL),j0=Math.floor((cy-r)/CELL),j1=Math.ceil((cy+r)/CELL),sx=Math.floor(cx/CELL),sy=Math.floor(cy/CELL);
@@ -488,7 +488,32 @@ function mkMap(seed,mk){
        if(adj)unit(i,j,addF,oF,280*Math.min(1,WK));}
      // contested oil: a forward derrick for every base, the same route length out towards the middle of the map
      const DCt=gridDist(grid,MAPW/2,MAPH/2);
-     for(let i=0;i<NB;i++)addO(best(p=>Math.abs(p.d[i]-.46*E)+.3*DCt[cellOf(p.x,p.y)],(p,rl)=>mine(p,i,.02*E*rl)&&Math.abs(p.d[i]-.46*E)<.08*E/rl&&okO(p,rl,300*Math.min(1,WK),240)));}}
+     for(let i=0;i<NB;i++)addO(best(p=>Math.abs(p.d[i]-.46*E)+.3*DCt[cellOf(p.x,p.y)],(p,rl)=>mine(p,i,.02*E*rl)&&Math.abs(p.d[i]-.46*E)<.08*E/rl&&okO(p,rl,300*Math.min(1,WK),240)));}
+   // HAMLETS (Conquest): small villages worth fighting over, placed with the same fairness rules as the oil - one safe
+   // hamlet behind every base, one forward hamlet at the same driving distance for everyone, and contested ones
+   // equally far from each pair of neighbours (so every map has something to take on at least two routes)
+   {const okH=(p,rl,sp)=>far(p,fmb*.8*rl)&&M.fields.every(f=>Math.hypot(f.x-p.x,f.y-p.y)>120)&&M.oil.every(o=>Math.hypot(o.x-p.x,o.y-p.y)>120)&&M.hamlets.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>(sp||260)*rl)&&!M.cityNear(p.x,p.y,150);
+    const addH=p=>{if(p)M.hamlets.push({x:p.x,y:p.y});};
+    for(let i=0;i<NB;i++)addH(best(p=>Math.abs(p.d[i]-.2*E),(p,rl)=>mine(p,i,.1*E*rl)&&okH(p,rl,260)));
+    for(let i=0;i<NB;i++)addH(best(p=>Math.abs(p.d[i]-.4*E)+.2*Math.abs(p.d[i]-p.lo),(p,rl)=>mine(p,i,.02*E*rl)&&Math.abs(p.d[i]-.4*E)<.09*E/rl&&okH(p,rl,260)));
+    const oH=(p,rl,sp)=>okH(p,rl,sp);
+    if(NB===2){for(let n=0;n<2;n++)unit(0,1,addH,oH,.28*E);}
+    else for(let i=0;i<NB;i++)for(let j=i+1;j<NB;j++){let adj=false;for(const p of cand)if(tw(p,i,j)&&Math.abs(p.d[i]-p.d[j])<.3*E&&(p.d[i]+p.d[j])/2<=.75*Math.max(eD[i],eD[j])){adj=true;break;}if(adj)unit(i,j,addH,oH,.28*E);}}
+  }
+  // hamlets a custom map asks for (map editor)
+  for(const [ox,oy] of (D.hamAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.hamlets.every(h=>Math.hypot(h.x-X,h.y-Y)>200))M.hamlets.push({x:X,y:Y});}
+  // build the houses: 2-5 low buildings round each hamlet centre, in the map's local style
+  {const cnt={};for(const q of CITIES)cnt[q[3]]=(cnt[q[3]]||0)+1;let st='europe',bn=0;for(const k in cnt)if(cnt[k]>bn){bn=cnt[k];st=k;}
+   st=({gulfcity:'yemen',america:'europe',latin:'latin',southasia:'southasia'})[st]||st;
+   const OFF=[[0,0],[2,0],[-2,0],[0,2],[0,-2],[2,2],[-2,-2],[2,-2],[-2,2],[4,0],[0,4],[-4,0],[0,-4]];
+   for(const h of M.hamlets){const HR=mulberry((seed|0)*17+Math.round(h.x*7+h.y*3)),want=2+Math.floor(HR()*4),i0=Math.floor(h.x/CELL),j0=Math.floor(h.y/CELL);let got=0;
+     const ord=OFF.map(o=>[HR(),o]).sort((a,b)=>a[0]-b[0]).map(q=>q[1]);ord.unshift([0,0]);
+     for(const [dx,dy] of ord){if(got>=want)break;const i=i0+dx,j=j0+dy;if(i<1||j<1||i>=GW-1||j>=GH-1||grid[j*GW+i]!==0)continue;const x=i*CELL+CELL/2,y=j*CELL+CELL/2;if(M.edge(x,y)>-50||M.mtn(x,y)>-40)continue;
+       if(BASES.some(([bx,by])=>Math.hypot(bx-x,by-y)<400))continue;grid[j*GW+i]=3;got++;
+       M.cityBlds.push({x,y,w:CELL*(.62+HR()*.2),d:CELL*(.62+HR()*.2),h:5+HR()*6,style:st,core:.15,v:HR(),ham:1});}
+     h.n=got;h.style=st;}
+   M.hamlets=M.hamlets.filter(h=>h.n>=2);
+   for(const h of M.hamlets)M.cities.push({x:h.x,y:h.y,r:CELL*3.4,style:h.style,ham:true});}
   return M;
 }
 // P_B: while planning a route (pathfinding / line of sight in navTo), ground cells under buildings count as blocked,

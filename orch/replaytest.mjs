@@ -64,7 +64,7 @@ try {
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof rpWatch === 'function', null, { timeout: 60000 });
   await page.evaluate(() => { setup.n = 1; try { initAudio(); } catch (e) {} startSingle(); G.teams[0].ai = mkAI(1); });
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 });
-  console.log(`live battle: ${await page.evaluate(() => G.teams.map(T => T.fac).join(' vs ') + ' on ' + G.mapKey)} (loaded after ${((Date.now() - t0) / 1000).toFixed(0)} s)`);
+  console.log(`live battle: ${await page.evaluate(() => G.teams.filter(Q => !Q.reb).map(T => T.fac).join(' vs ') + ' on ' + G.mapKey)} (loaded after ${((Date.now() - t0) / 1000).toFixed(0)} s)`);
   await page.evaluate(() => { window.__stopLoop = true; });
   for (let m = 0; m < MINUTES * 6; m++) {   // 10 game-s per call
     const o = await page.evaluate(() => { for (let i = 0; i < 600 && G && !G.over; i++) { simUpdate(1 / 60); rpRecTick(); } return { t: G.t, over: G.over }; });

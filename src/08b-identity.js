@@ -66,7 +66,7 @@ function idTick(){if(!G||!G.ents||G.over)return;if(G.t<IDR.lastT||G.t-IDR.lastT<
   for(const id of IDR.tank)if(!alive.has(id)){IDR.tank.delete(id);IDR.lost++;}
   if(fort){IDR.fortT+=Math.min(dt,5);if(IDR.fortT>IDR.fortBest)IDR.fortBest=IDR.fortT;}else IDR.fortT=0;}
 function idFinish(winner,won){if(!G||G.sandbox||G.idDone)return;G.idDone=1;const T=G.teams[ME];if(!T)return;idTick();const s=idStore(),st=T.st||{},S=G.endStats,P=S&&S.p&&S.p[ME];
-  const foes=G.teams.filter(Q=>!ally(Q.id,ME)).length,mates=G.teams.filter(Q=>ally(Q.id,ME)).length;const hard=G.teams.some(Q=>!ally(Q.id,ME)&&Q.ai&&Q.ai.d===2)||(MODE==='single'&&setup.d===2);
+  const foes=G.teams.filter(Q=>!Q.reb&&!ally(Q.id,ME)).length,mates=G.teams.filter(Q=>ally(Q.id,ME)).length;const hard=G.teams.some(Q=>!ally(Q.id,ME)&&Q.ai&&Q.ai.d===2)||(MODE==='single'&&setup.d===2);
   const lu=P?P.lu:Math.max(0,(T.lost|0)-(st.lb|0)),secs=Math.round(G.t);
   s.n++;s.hist.unshift({t:Date.now(),f:T.fac,won:won?1:0,s:secs,foes,mates,map:G.mapKey,m:MODE==='single'?'solo':'online',lu,ku:P?P.ku:st.ku|0});s.hist.length=Math.min(s.hist.length,40);
   const got=[],add=k=>{if(!s.earned[k]){s.earned[k]=Date.now();got.push(k);}};
