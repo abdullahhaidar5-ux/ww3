@@ -40,15 +40,34 @@ jobs:
           - { id: v1, k: hvn, sh: '1/2' }
           - { id: x0, k: tax }
           - { id: x1, k: turf }
+          - { id: tn0, k: tour, diff: 1, sh: '0/9', tune: 1 }
+          - { id: tn1, k: tour, diff: 1, sh: '1/9', tune: 1 }
+          - { id: tn2, k: tour, diff: 1, sh: '2/9', tune: 1 }
+          - { id: tn3, k: tour, diff: 1, sh: '3/9', tune: 1 }
+          - { id: tn4, k: tour, diff: 1, sh: '4/9', tune: 1 }
+          - { id: tn5, k: tour, diff: 1, sh: '5/9', tune: 1 }
+          - { id: tn6, k: tour, diff: 1, sh: '6/9', tune: 1 }
+          - { id: tn7, k: tour, diff: 1, sh: '7/9', tune: 1 }
+          - { id: tn8, k: tour, diff: 1, sh: '8/9', tune: 1 }
+          - { id: th0, k: tour, diff: 2, sh: '0/9', tune: 1 }
+          - { id: th1, k: tour, diff: 2, sh: '1/9', tune: 1 }
+          - { id: th2, k: tour, diff: 2, sh: '2/9', tune: 1 }
+          - { id: th3, k: tour, diff: 2, sh: '3/9', tune: 1 }
+          - { id: th4, k: tour, diff: 2, sh: '4/9', tune: 1 }
+          - { id: th5, k: tour, diff: 2, sh: '5/9', tune: 1 }
+          - { id: th6, k: tour, diff: 2, sh: '6/9', tune: 1 }
+          - { id: th7, k: tour, diff: 2, sh: '7/9', tune: 1 }
+          - { id: th8, k: tour, diff: 2, sh: '8/9', tune: 1 }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - name: Run shard ${{ matrix.id }}
+        if: ${{ (matrix.tune == 1) == startsWith(github.ref_name, 'balance/tune') }}
         run: |
           mkdir -p out; J=$(nproc)
           case "${{ matrix.k }}" in
-            tour) node orch/aitourney.mjs --rounds ${{ inputs.rounds || '2' }} --diff ${{ matrix.diff }} --shard ${{ matrix.sh }} --jobs $J --out out/${{ matrix.id }}.json > out/${{ matrix.id }}.log 2>&1 ;;
+            tour) node orch/aitourney.mjs --rounds ${{ matrix.tune == 1 && '4' || inputs.rounds || '2' }} --diff ${{ matrix.diff }} --shard ${{ matrix.sh }} --jobs $J --out out/${{ matrix.id }}.json > out/${{ matrix.id }}.log 2>&1 ;;
             hvn)  node orch/aitourney.mjs --hard-vs-normal --rounds 1 --shard ${{ matrix.sh }} --jobs $J --out out/${{ matrix.id }}.json > out/${{ matrix.id }}.log 2>&1 ;;
             fair) node orch/mapfair.mjs --battles --shard ${{ matrix.sh }} --jobs $J --out out/${{ matrix.id }}.json > out/${{ matrix.id }}.log 2>&1 ;;
             tax)  node orch/conquest-t5.mjs --seeds 6 --minutes 14 > out/${{ matrix.id }}.log 2>&1 ;;
