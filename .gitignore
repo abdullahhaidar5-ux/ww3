@@ -4,3 +4,4 @@ orch/out/
 orch/three/node_modules/
 server/gen/
 __pycache__/
+orch/shots/smooth-inf/*-frames/
