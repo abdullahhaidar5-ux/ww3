@@ -27,7 +27,7 @@ line". This report says what is built, how the numbers work, and what is still o
   shows "+$X/s" territory income.
 - **Capture reward** one-off "town treasury" ($360 town / $120 hamlet, × battle scale); tax **ramps 50% → 100% over 90 s**
   of holding (ping-pong recaptures don't pay); **whole town +50%** when every key building is yours.
-- **Unrest** 0–100 per held town (per second): Low −0.8, Normal −0.1, High +0.35, Extortionate +1.1; **enemy troops within 560**
+- **Unrest** 0–100 per held town (per second): Low −0.8, Normal −0.1, High +0.6, Extortionate +1.6; **enemy troops within 560**
   +0.8…+1.8; just-conquered +0.8 for 90 s; strike nearby +1.5 (hook `t.shock`, used by stage 3); troops stationed in/next to the
   town −(0.35 + 0.12 per soldier, max 8); clinic −0.5. Above 50 = **Restless** (enemy capture ×1.5, ×2 above 80, perk off, −20%
   tax). Warnings at 70 and 90 ("Unrest rising in X — lower taxes or send troops", map ping ring on the minimap). At 100 = **REVOLT**:
@@ -75,13 +75,23 @@ line". This report says what is built, how the numbers work, and what is still o
 - Screenshots (`orch/shots/conquest/`): rear High town calm, tax panel, front town boiling (REVOLT bar), rebels after a revolt, hamlet,
   minimap crop, phone portrait panel.
 
-## Fairness evidence — NOT DONE (needs a bigger machine)
+## Fairness evidence (partial — small samples; this box has 2 cores)
 
-The 18-nation × maps tourney (`orch/aitourney.mjs`, `mapfair.mjs`) and the "High rear / Low front vs High everywhere vs Low
-everywhere" comparison were not run: this box has 2 cores and each AI battle costs minutes. Ready-made scaffold: `conquest-t2.mjs`
-prints per-team territory income; to compare tax policies add `G.teams[0].ai` override per policy (rate = const) and run 20+ seeds.
-Expected from the numbers: High-everywhere loses a front town every ~2 min (revolt costs the town + rebels), Low-everywhere earns 40% less
-tax, High-rear/Low-front earns ≈ +30% over Normal and loses nothing.
+**Tax policy** (`node orch/conquest-t5.mjs --seeds 3 --minutes 14`, maps fulda + strait, US vs RU, team 0 plays a fixed policy against the
+smart AI; 6 games per row, "ahead/behind" = base+army value beyond ×1.4 at minute 14):
+
+| Policy for team 0 | revolts / game | tax earned / game | towns held | ahead | behind |
+|---|---|---|---|---|---|
+| **smart** (High in garrisoned rear towns, Low at the front) | 0.00 | **16,593** | 1.5 | 4 | 1 |
+| High everywhere | 0.33 | 13,282 | 1.0 | 1 | 3 |
+| Normal everywhere | 0.17 | 10,941 | 1.2 | 1 | 1 |
+| Low everywhere | 0.00 | 6,461 (−61%) | 1.2 | 1 | 2 |
+
+So the intended play wins on money (+25% over High-everywhere, +52% over Normal, 2.6× Low), never loses a town to revolt, and ends ahead
+most often; High-everywhere loses towns to revolts and falls behind; Low-everywhere is poor. (An earlier run with High = +0.35 unrest/s
+showed no revolts at all in 12-minute AI games, so High was raised to +0.6 and Extortionate to +1.6.) Human games with more fighting near the
+towns should widen the gap. **Not run:** the 18-nation tourney, start-position fairness with Conquest economics, game-length
+distribution (12–25 min) — run `node orch/aitourney.mjs` and `node orch/mapfair.mjs --battles` on a bigger machine and tune `CQ_*`/`TAX`/`townBase`.
 
 ## Not done / open
 
