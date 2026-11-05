@@ -20,3 +20,8 @@ All of it is render-side (no sim change, no servers-live PR needed): host and cl
    Kill switches for tests: `window.NOPOSTURE`, `window.NOREAL`.
 
 Tools: `orch/realismshots.mjs <posture|garrison|town>` (screenshots into orch/shots/realism/).
+
+## Evidence / not done
+Screenshots in orch/shots/realism/ (posture-*, garrison-*, town-*, scars-*). CI gate: all green (CIGATE PASS, 20/20 incl. smooth-pc and smooth-mp).
+Local smooth.mjs on this slow box failed on noise (load time +77% too), CI on GitHub passed. Not done: ≤10 s MP4, phone screenshots, comrade-drags-wounded animation,
+broken/fallen trees, wrecks blocking roads (sim change). Turret-blast on heavy kills already existed.

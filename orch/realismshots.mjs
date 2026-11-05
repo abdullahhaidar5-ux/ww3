@@ -62,7 +62,7 @@ async function open(ctxOpts) {
 // Realism screenshots (orch/realism): node orch/realismshots.mjs <scene> [map] [P] [A]   -> orch/shots/realism/<scene>-*.png
 const SCENE = process.argv[2] || 'posture', MAP = process.argv[3] || 'fulda', PN = process.argv[4] || 'US', AN = process.argv[5] || 'RU';
 const OUTD = path.join(ROOT, 'orch', 'shots', 'realism'); fs.mkdirSync(OUTD, { recursive: true });
-const { ctx, page } = await open({ viewport: { width: 1280, height: 720 } });
+const { ctx, page } = await open(process.env.PHONE ? { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true } : { viewport: { width: 1280, height: 720 } });
 await page.evaluate(async ([map, p, a]) => {
   if (G) G.over = true; Object.assign(setup, { map, n: 1, p, a, others: [], tm: [], slot: -1, seed: 4242 });
   const ready = () => !!(MODELS.proto[solKey(p)] && MODELS.proto[solKey(a)]);
@@ -71,7 +71,7 @@ await page.evaluate(async ([map, p, a]) => {
   G.paused = true;
 }, [MAP, PN, AN]);
 async function aim(cx, cy) { await page.evaluate(([cx, cy]) => { const W = innerWidth, H = innerHeight - 180; for (let i = 0; i < 100; i++) { const f = toScreen(cx, 6, cy); cam.ty += (f.y - H / 2) * .12; cam.tx += (f.x - W / 2) * .12; cam.x = cam.tx; cam.y = cam.ty; placeCam(); } }, [cx, cy]); }
-async function shot(name) { await page.evaluate(() => { for (let k = 0; k < 4; k++) renderFrame(1 / 60); }); await page.screenshot({ path: path.join(OUTD, `${SCENE}-${name}.png`), timeout: 180000 }); console.log('shot', name); }
+async function shot(name) { await page.evaluate(() => { for (let k = 0; k < 4; k++) renderFrame(1 / 60); }); await page.screenshot({ path: path.join(OUTD, `${process.env.PHONE ? 'phone-' : ''}${SCENE}-${name}.png`), timeout: 180000 }); console.log('shot', name); }
 const SC = {
   async posture() {
     await page.evaluate(() => {
@@ -122,6 +122,37 @@ const SC = {
     await page.evaluate(() => { for (let k = 0; k < 60; k++) { reMuz(__c.x + 40 + (k % 7) * 6, __c.y - 20, 0); __st(1 / 30); } });
     console.log('civ', JSON.stringify(await page.evaluate(() => [RE.civ.length, RE.cars.length, RE.dark.toFixed(2), RE.civ.filter(p => p.fl).length])));
     await shot('fleeing');
+  },
+  async battle() {
+    const info = await page.evaluate(() => {
+      G.paused = false; G.ents.filter(e => !e.isB).length; window.__st = dt => { G.alpha = 1; placeCam(); syncScene(dt); fxUpdate(dt); realTick(dt); };
+      const t0 = performance.now(); let n = 0;
+      while (G.t < 330 && performance.now() - t0 < 380000) { simUpdate(1 / 15); if (++n % 6 === 0) { fxUpdate(1 / 15); } if (G.over) break; }
+      // camera on the thickest fight
+      let best = null; for (const e of G.ents) { if (e.dead || e.isB) continue; let c = 0; for (const o of G.ents) if (!o.dead && !o.isB && o.team !== e.team && Math.abs(o.x - e.x) < 200 && Math.abs(o.y - e.y) < 200) c++; if (!best || c > best.c) best = { e, c }; }
+      const e = best ? best.e : G.ents[0]; cam.dist = cam.td = 420; cam.x = cam.tx = e.x; cam.y = cam.ty = e.y + 30; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist;
+      return { t: G.t | 0, units: G.ents.filter(e => !e.isB).length, wrecks: WRECKS.length, bodies: BODIES.length, fx: [e.x | 0, e.y | 0] };
+    });
+    console.log('battle', JSON.stringify(info));
+    await page.evaluate(() => { G.paused = true; for (let k = 0; k < 20; k++) __st(1 / 60); });
+    await shot('scarred');
+    await page.evaluate(() => { cam.dist = cam.td = 170; for (let k = 0; k < 20; k++) __st(1 / 60); });
+    await shot('close');
+  },
+  async scars() {
+    await page.evaluate(() => {
+      G.ents = G.ents.filter(e => e.isB); const [bx, by] = BASES[0]; const x0 = Math.max(800, Math.min(MAPW - 800, bx + 300)), y0 = Math.max(800, Math.min(MAPH - 800, by + 100));
+      window.__st = dt => { G.t += dt; G.alpha = 1; placeCam(); syncScene(dt); fxUpdate(dt); realTick(dt); };
+      cam.dist = cam.td = 330; cam.x = cam.tx = x0; cam.y = cam.ty = y0; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist;
+      const tk = [], inf = []; for (let i = 0; i < 7; i++) { const u = addUnit(1, 'tank', x0 - 120 + i * 40, y0 + (i % 2) * 50 - 25); u.va = u.ang = 0.5; tk.push(u); }
+      for (let i = 0; i < 24; i++) { const u = addUnit(0, 'inf', x0 - 140 + (i % 8) * 28, y0 - 70 + (i / 8 | 0) * 40); inf.push(u); }
+      for (let k = 0; k < 60; k++) __st(1 / 60);
+      for (let k = 0; k < 140; k++) { boomFX(x0 + (Math.random() - .5) * 420, y0 + (Math.random() - .5) * 220, 14 + Math.random() * 22, false, 5); if (k % 3 === 0) track(x0 - 200 + k * 3, y0 + 100, 0); }
+      for (const u of tk) kill(u, 0, null); for (let i = 0; i < inf.length; i += 2) kill(inf[i], 1, null);
+      for (let k = 0; k < 400; k++) __st(1 / 60);
+      return null;
+    });
+    await shot('wide'); await page.evaluate(() => { cam.dist = cam.td = 170; for (let k = 0; k < 10; k++) __st(1 / 60); }); await shot('close');
   },
 };
 await SC[SCENE](); await browser.close(); server.close(); console.log(errs.slice(0, 5).join('\n') || 'no errors');
