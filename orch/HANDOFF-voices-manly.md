@@ -1,0 +1,3 @@
+# Handoff — voices-manly
+Done: measured all clips; deepened weak clips in all 18 nations' sheets by post-processing (tools/voices/manly_measure.py, manly_fix.py; originals can be recovered from git history of vo/).
+Not done: re-synthesis with deeper XTTS speakers for clips still flagged (UA, IL, EU, CU, RU, KP, RS_h). Needs a machine with XTTS-v2 + Whisper (this cloud run had neither). Resume: python3 tools/voices/manly_measure.py out.json (list flagged), re-render those lines with orch/vo/roles.py / radio_lines.py at most 2 takes, splice with manly_fix-style in-place replacement (keep offsets), rebuild.
