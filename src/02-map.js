@@ -594,7 +594,7 @@ let P_B=false;
 let P_H=false;
 function bocc(){if(!G.bocc||G.bdirty){G.bdirty=false;G.boccV=(G.boccV|0)+1;const o=G.bocc||(G.bocc=new Uint8Array(GW*GH));o.fill(0);for(const b of G.ents){if(!b.isB||b.dead)continue;const h=b.size/2-CELL*.25;
   const x0=Math.ceil((b.x-h)/CELL-.5),x1=Math.floor((b.x+h)/CELL-.5),y0=Math.ceil((b.y-h)/CELL-.5),y1=Math.floor((b.y+h)/CELL-.5);for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)if(cx>=0&&cy>=0&&cx<GW&&cy<GH)o[cy*GW+cx]=1;}}return G.bocc;}
-function passC(dom,cx,cy){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;const i=cy*GW+cx,v=G.grid[i];if(dom==='naval')return v===1||v===2;if(v!==0&&v!==2)return false;if(P_H&&G.rub&&G.rub[i])return false;return !(P_B&&G.bocc&&G.bocc[i]);}
+function passC(dom,cx,cy){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;const i=cy*GW+cx,v=G.grid[i];if(dom==='naval')return v===1||v===2||v===4;if(v!==0&&v!==2)return false;if(P_H&&G.rub&&G.rub[i])return false;return !(P_B&&G.bocc&&G.bocc[i]);}
 function passXY(dom,x,y){return dom==='air'||passC(dom,Math.floor(x/CELL),Math.floor(y/CELL));}
 function los(dom,x0,y0,x1,y1){if(dom==='air')return true;const n=Math.ceil(Math.hypot(x1-x0,y1-y0)/16);for(let i=1;i<=n;i++){const t=i/n;if(!passXY(dom,x0+(x1-x0)*t,y0+(y1-y0)*t))return false;}return true;}
 function nearestPass(dom,cx,cy){if(passC(dom,cx,cy))return[cx,cy];for(let r=1;r<16;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;if(passC(dom,cx+dx,cy+dy))return[cx+dx,cy+dy];}return null;}
@@ -610,7 +610,7 @@ let P_W=null,P_Wv=-1,P_Wg=null;function wallCost(){if(P_W&&P_Wg===G.grid&&P_Wv==
 // A unit sent somewhere it can't reach (an island, across the sea) is re-targeted to the nearest cell it CAN reach
 // instead of letting the search scan the whole map first.
 const P_REG={};function regions(dom){const key=dom;let R=P_REG[key];if(R&&R.g===G.grid&&R.v===(G.gridV|0)&&R.a.length===GW*GH)return R.a;
-  const a=new Int32Array(GW*GH),pass=i=>{const v=G.grid[i];return dom==='naval'?(v===1||v===2):(v===0||v===2);};let id=0;const st=[];
+  const a=new Int32Array(GW*GH),pass=i=>{const v=G.grid[i];return dom==='naval'?(v===1||v===2||v===4):(v===0||v===2);};let id=0;const st=[];
   for(let i=0;i<a.length;i++){if(a[i]||!pass(i))continue;id++;a[i]=id;st.push(i);while(st.length){const c=st.pop(),cx=c%GW,cy=(c/GW)|0;
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(a[n]||!pass(n))continue;if(dx&&dy&&(!pass(cy*GW+nx)||!pass(ny*GW+cx)))continue;a[n]=id;st.push(n);}}}
   P_REG[key]={a,g:G.grid,v:G.gridV|0};return a;}
