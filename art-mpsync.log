@@ -1,0 +1,21 @@
+artifact page written: orch/out/artifact/index.html (3107614 bytes, game 2263479 chars), 70 audio files + 82 model files (14.1 MB); publish arguments in orch/out/artifact/publish.json
+[3s] both pages loaded (menu model downloads done after 1s / 1s)
+[3s] host lobby open, code e9ttao
+[3s] client joining
+[23s] battle: US vs RU on strait; client is slot 1
+[102s] both pages finished loading
+[102s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[102s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[104s] client order: 2/2 of the client's units moved on the host
+[106s] check @1.0 min t=60s: host 25 entities, client side sees 8 (own 8); client has 8 (own 8); missing 0, extra 0, off-position 0, mismatched 0; credits host 5160 client 5160
+[108s] check @2.5 min t=150s: host 32 entities, client side sees 9 (own 9); client has 10 (own 9); missing 0, extra 0, off-position 0, mismatched 0; credits host 9390 client 9390
+[123s] check @4.0 min t=240s: host 39 entities, client side sees 9 (own 9); client has 10 (own 9); missing 0, extra 0, off-position 0, mismatched 0; credits host 15300 client 15300
+[134s] traffic host->client 1091 KB in 3335 messages, client->host 0 KB in 1; client lag max 0.10 game-s; 10 ms per 0.5 s step
+[134s] 24 live checks, 0 out of tolerance; up to 4 enemy entities were in the client's view at once
+[134s] host room sends: 3336 messages, peak 27 in one game-second
+[134s] client room sends: 1 messages, peak 0 in one game-second
+peak memory (node + browser, summed RSS): 3490 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC PASS (artifact edition) (134s) — screenshots orch/out/art-mp-host.png, orch/out/art-mp-client.png (this run: orch/out/runs/20261105-021639-mpsync-art/)
