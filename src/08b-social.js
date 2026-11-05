@@ -49,6 +49,7 @@ const TUT=[
  {k:'trn',pc:'Train soldiers: select the Barracks (left-click it) and train some infantry from its panel.',tc:'Train soldiers: tap the Barracks and train some infantry from its panel.'},
  {k:'town',pc:'Conquest - capture a town or hamlet: select infantry and right-click one of its houses so they garrison it. More than half of its key buildings makes it yours, and it pays you TAX. "Show me" finds the nearest one.',tc:'Conquest - capture a town or hamlet: select infantry and tap one of its houses so they garrison it. "Show me" finds the nearest one.'},
  {k:'tax',pc:'Set its tax: click your town (or its square/circle on the minimap) and pick Low / Normal / High / Extortionate. High tax pays more but angers the locals; near the front they rise much faster. High tax in safe towns behind your lines, Low tax on the front line - at 100 unrest the town revolts and rebels throw you out.',tc:'Set its tax: tap your town (or its marker on the minimap) and pick a rate. High in safe towns behind your lines, Low on the front line - at 100 unrest the town revolts.'},
+ {k:'hm',pc:'Hearts and minds: a town you have held for two minutes with low unrest turns LOYAL. Click it to recruit cheap local militia, and its informants ping enemy troops on the minimap. Restless enemy towns can be bribed. Shelling a town angers the locals, and a captured radio tower calms your towns and stirs up the enemy\'s.',tc:'Hearts and minds: a loyal town lets you recruit local militia and spots enemy troops. Bribe restless enemy towns; do not shell towns.'},
  {k:'pow',pc:'Use a power: you have a free general point. Open Powers, buy one, then use it (a hotkey or a click on the map).',tc:'Use a power: you have a free general point. Open Powers, buy one, then use it.'},
  {k:'win',pc:'Win: destroy the enemy base. Build up an army, attack-move with F + click, and keep your Barracks producing. Victory finishes the tutorial.',tc:'Win: destroy the enemy base. Build up an army and attack. Victory finishes the tutorial.'}];
 let TUTS=null;
@@ -59,7 +60,7 @@ function tutEl(){let el=document.getElementById('tut');if(el)return el;el=docume
 function tutUnits(){return G.ents.filter(u=>!u.isB&&u.team===ME&&!u.dead&&!['harv','dozer','hacker'].includes(u.kind));}
 function tutShow(){if(!G||!G.tut||!TUTS)return;const k=TUT[TUTS.i].k,me=G.teams[ME];let p=null;
   if(k==='atk'){const e=G.ents.find(u=>!u.isB&&u.team!==ME&&!u.dead);if(e)p=e;}
-  else if(k==='town'||k==='tax'){let best=1e9;const hq=G.ents.find(e=>e.team===ME&&e.kind==='hq');for(const t of G.towns){if(k==='town'?t.ow===ME:t.ow!==ME)continue;const d=hq?Math.hypot(t.x-hq.x,t.y-hq.y):0;if(d<best){best=d;p=t;}}}
+  else if(k==='town'||k==='tax'||k==='hm'){let best=1e9;const hq=G.ents.find(e=>e.team===ME&&e.kind==='hq');for(const t of G.towns){if(k==='town'?t.ow===ME:t.ow!==ME)continue;const d=hq?Math.hypot(t.x-hq.x,t.y-hq.y):0;if(d<best){best=d;p=t;}}}
   else if(k==='win'){p=G.ents.find(e=>e.team!==ME&&e.kind==='hq'&&!e.dead);}
   else p=G.ents.find(e=>e.team===ME&&e.kind==='hq'&&!e.dead);
   if(p)try{centerOn(p.x,p.y);}catch(e){}}
@@ -88,6 +89,7 @@ function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&
   else if(k==='trn')ok=(me.built|0)>TUTS.b0&&G.ents.some(e=>e.team===ME&&e.kind==='inf'&&!e.dead)||(me.built|0)>TUTS.b0+1;
   else if(k==='town')ok=G.towns.filter(t=>t.ow===ME).length>TUTS.t0;
   else if(k==='tax')ok=G.towns.some(t=>t.ow===ME&&t.rate!==1);
+  else if(k==='hm')ok=G.towns.some(t=>t.ow===ME&&t.loy);
   else if(k==='pow'){/* powers start locked for a few minutes: unlock any we own on first sight; a cooldown that starts afterwards means one was used */
     for(const pk in me.pw){const c=me.pw[pk].cd;if(TUTS.unl[pk]){if(c>0.5)ok=true;}else{TUTS.unl[pk]=true;if(c>0)me.pw[pk].cd=0;}}}
   if(ok)tutAdvance(false);}
