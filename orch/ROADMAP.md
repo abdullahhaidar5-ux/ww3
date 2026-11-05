@@ -13,6 +13,8 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Hamlets (small villages) on every map, placed fairly; minimap shows towns, hamlets, tax, unrest, rebels, alerts
 - [done] Everything unlocked, $10,000 each, 90 s no-fire setup phase, territory pays the bills, win = destroy the enemy base
 - [doing] Fair missile strikes: minimum minute 8, costs money, 40% building cap, missile defence, public countdown (core rules in; launch-site reveal + minimap countdown next)
+- [done] Bigger 2-4 player maps (+27%), town bands (rear villages / middle hamlets / centre prize town), roads with +15-30% speed, fair-start check (orch/bandfair.mjs)
+- [open] 3-player maps: the isolated start wins ~55% (close pair + loner) - needs new 3p layouts or AI tuning
 - [next] Fair upgrades and powers (same tier = same cost for every nation), tutorial polish, Classic menu wording, map-editor hamlets
 - [next] Fairness proof: 18-nation tourney + start positions + tax-policy comparison (needs a bigger machine)
 
