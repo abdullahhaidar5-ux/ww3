@@ -11701,6 +11701,13 @@ function drawTownsMini(c,sx,sy,now){if(!G||!G.towns)return;
         if(t.un>50){const crit=t.un>=75,pulse=t.un>=90?.5+.5*Math.sin(now*9):1;c.strokeStyle=crit?'#ff4a3a':'#ffd24a';c.globalAlpha=crit?.55+.45*pulse:1;c.lineWidth=crit?2.2:1.6;if(!crit)c.setLineDash([2.4,1.8]);c.beginPath();c.arc(x,y,s+(crit?5.5:3.4),0,7);c.stroke();c.setLineDash([]);if(t.un>=90){c.lineWidth=1.2;c.beginPath();c.arc(x,y,s+8+pulse*2,0,7);c.stroke();}}}}
     c.restore();}
   if(G.conq&&G.t<G.setupEnd&&G.N===2&&BASES.length>=2){const a=BASES[0],b=BASES[1],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,px=-dy/L,py=dx/L,R=Math.max(MAPW,MAPH);c.save();c.strokeStyle='rgba(255,224,130,.85)';c.lineWidth=1.4;c.setLineDash([5,3]);c.beginPath();c.moveTo((mx-px*R)*sx,(my-py*R)*sy);c.lineTo((mx+px*R)*sx,(my+py*R)*sy);c.stroke();c.restore();}
+  // missile launch sites (yours, or an enemy's once you have seen it) with the strike countdown, and your missile-defence coverage
+  if(G.conq){c.save();c.font='bold 9px system-ui,sans-serif';c.textAlign='center';
+    for(const e of G.ents){if(!e.isB||e.dead||e.built<1)continue;const k=e.kind;if(k!=='uplink'&&k!=='sam')continue;const mine=ally(e.team,ME);
+      if(k==='sam'){if(!mine)continue;c.strokeStyle='rgba(120,200,255,.35)';c.lineWidth=1;c.setLineDash([2,3]);c.beginPath();c.arc(e.x*sx,e.y*sy,CQ_MD_R*sx,0,7);c.stroke();c.setLineDash([]);continue;}
+      if(!mine&&!(e.vs&&e.vs[ME])&&!e.mem)continue;const x=e.x*sx,y=e.y*sy,T=G.teams[e.team];c.fillStyle='#000';c.beginPath();c.moveTo(x,y-6);c.lineTo(x+5.5,y+4);c.lineTo(x-5.5,y+4);c.closePath();c.fill();c.fillStyle=mine?'#74d08f':'#ff5a40';c.beginPath();c.moveTo(x,y-4.4);c.lineTo(x+3.9,y+2.6);c.lineTo(x-3.9,y+2.6);c.closePath();c.fill();
+      const sec=T?strikeSecs(T):-1;if(sec>=0){const t=sec<=.5?'READY':Math.floor(sec/60)+':'+String(Math.floor(sec%60)).padStart(2,'0');c.fillStyle='#000';c.fillText(t,x+.7,y+14.2);c.fillStyle=mine?'#bfe8c4':'#ffd0c0';c.fillText(t,x,y+13.5);}}
+    c.restore();}
   // alert pings (unrest warnings, lost towns, revolts)
   if(G.tpings&&G.tpings.length){const n=performance.now();G.tpings=G.tpings.filter(q=>n-q.t<4500);for(const q of G.tpings){const a=(n-q.t)/4500,r=4+a*22;c.strokeStyle=q.k===2?'rgba(255,90,60,'+(1-a)+')':q.k===1?'rgba(255,170,60,'+(1-a)+')':'rgba(255,224,90,'+(1-a)+')';c.lineWidth=2;c.beginPath();c.arc(q.x*sx,q.y*sy,r,0,7);c.stroke();}}}
 function townAt(w,pad){if(!G||!G.towns||!w)return null;let b=null,bd=1e9;for(const t of G.towns){const d=Math.hypot(t.x-w.x,t.y-w.y);if(d<(t.ham?CELL*3.4:Math.max(CELL*3,t.r))+(pad||0)&&d<bd){bd=d;b=t;}}return b;}
