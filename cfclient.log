@@ -1,0 +1,87 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:32847
+[3s] both pages loaded; the multiplayer menu offers "Play online" and "New battle"
+[7s] 1. three other battles take the 3 battle slots: !w started, !w started, !w started
+[9s]    server busy (busy) -> battle in this browser: "Your battle · codeFLLCR8OnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join. You can also add co"
+[10s]    the 3 lobbies closed; battle slots in use: 0
+[11s] 2. lobby open on the server, code 7IC47W; creator status: "Your battle · code7IC47WOnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join."
+[11s]    friend joined: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[12s]    server lobby: humans US/team 1, RU/team 2; computer CN/team 2
+  ✗ timed out waiting for the creator to enter the battle
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E FAIL: timed out waiting for the creator to enter the battle (313s)
+local game server http://127.0.0.1:40377
+[3s] both pages loaded
+[3s] 1. protected battle open on Cloudflare, code FSWFFI; invite link http://127.0.0.1:40453/index.html#join=fswffi&pw=Yalla%202026%20%C3%B1
+[3s]    server keeps: {"mem":{"s":"wkUzNkiFMVgnLUbUYgt5LA==","h":"CbIZx4il7lEzI1+dtTlhOxECyzVPCdwC2nxf7489rDI=","i":4000},"kept":null}
+[5s] 2. friend's game list: "🔒 United States · game FSWFFI · Straits of Thunder · 1/8 playersJoin"
+[5s]    "Play online" with no password: started its own battle (did not join the protected one)
+[5s]    wrong password -> "Wrong password. Try again.JoinCancel"
+[5s]    right password -> "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"; creator's lobby has 2 players
+[7s] 3. invite link joined in one go; address bar now /index.html#join=fswffi
+[8s] 4. browser-hosted 3AITOH: join by code asks "🔒 Game 3AITOH is password protected. Enter its password to join.JoinC"
+[8s]    right password -> friend: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFPASSWORD PASS (10s) — password-protected games: lock in the list, wrong password refused, right password and invite link join, server keeps only a hash, browser-hosted fallback checks it too
+local game server http://127.0.0.1:43675
+[2s] page loaded
+  ✗ 1. skirmish: side 4 has no HQ on its base undefined
+[54s] 1. skirmish (mouse): picks [0,3,-1,1], AI 2 Random -> spot 7; bases [[977,4729],[5269,925],[4575,4857],[7247,925]]; HQs on their bases: false (preview 26462 bytes)
+[97s] 2. phone (touch only): picks [0,3,-1,1] made by tapping; picker fits in landscape too ({"cv":258,"over":0,"rows":true})
+[107s] 3. leader's Cloudflare lobby 6eecix
+[108s]    friend joined
+[108s]    computer player added
+[109s]    lobby picks [4,2,6]
+  ✗ timed out waiting for 3. Cloudflare leader: the battle to start
+--- server log (tail) ---
+
+  warn: player console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: phone console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFSTARTPICK FAIL: 1. skirmish: side 4 has no HQ on its base undefined (590s)
+  ✗ timed out waiting for 3. Cloudflare leader: the battle to start
+local game server http://127.0.0.1:33783 (pages reach it through http://127.0.0.1:34679); over-budget server http://127.0.0.1:38987
+[3s] 0. menu: "▶ Play online" and "+ New battle"
+[4s] 1. server busy (busy) -> battle in this browser; lobby: "Your battle · code1Y9PXYOnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join. You can also add co"
+[4s] 2. lobby open on the server, code MZYTUY; creator status: "Your battle · codeMZYTUYOnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join."
+[4s] friend's game list: "1 open battle · 0 in progressUnited States · game MZYTUY · Straits of Thunder · 1/8 playersJoin👁 Watch"
+[4s] friend joined with "Play online": "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[6s] server lobby (as the friend sees it): player US/team 1, player RU/team 2, computer CN/team 2
+  ✗ timed out waiting for the creator to enter the battle
+--- server log (tail) ---
+
+ ⛅️ wrangler 4.153.0 (update available 4.157.0)
+───────────────────────────────────────────────
+[custom build] Running: node build-sim.mjs
+[custom build] battle sim up to date: gen/battle-sim.js (446 KB)
+[custom build] 
+Your Worker has access to the following bindings:
+Binding                       Resource            Mode
+env.ROOMS (GameRoom)          Durable Object      local
+env.LOBBY (Lobby)             Durable Object      local
+env.BUDGET (Budget)           Durable Object      local
+env.BATTLES (BattleRoom)      Durable Object      local
+
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:33783
+[wrangler:info] GET /health 200 OK (249ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (15ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (5ms)
+[wrangler:info] GET /turn 200 OK (11ms)
+[wrangler:info] GET /room/1y9pxy 101 Switching Protocols (21ms)
+[wrangler:info] GET /battle/mzytuy 101 Switching Protocols (35ms)
+[wrangler:info] GET /games 200 OK (3ms)
+[wrangler:info] GET /battle/mzytuy 101 Switching Protocols (5ms)
+battle mzytuy started: US RU CN on strait
+battle mzytuy running (20.1 s after Start)
+
+creator log: ["Our base is under attack!","♪ Curse of the Scarab — Kevin MacLeod","The weather is clearing.","Marine Squad is badly damaged and pulling back.","Weather: Sandstorm. Sandstorm: vision and accuracy slashed, jets grounded, helicopters and drones struggle."]
+friend log: ["The weather is clearing.","♪ The Fall of Arcana — Matthew Pablo","Weather: Sandstorm. Sandstorm: vision and accuracy slashed, jets grounded, helicopters and drones struggle.","♪ Epic Orchestral Fantasy Theme — Markus Lindner","Russia's commander reconnected."]
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT FAIL: timed out waiting for the creator to enter the battle (309s)
