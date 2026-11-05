@@ -4,6 +4,8 @@
 # `python3 orch/balance_merge.py <dir>`.
 name: Balance (parallel)
 on:
+  push:
+    branches: ['balance/**']   # (a workflow only dispatches from main once merged; a push to balance/<tag> works from any branch)
   workflow_dispatch:
     inputs:
       tag: { description: 'label for this run (before/after/...)', default: 'run', required: false }
@@ -46,7 +48,7 @@ jobs:
         run: |
           mkdir -p out; J=$(nproc)
           case "${{ matrix.k }}" in
-            tour) node orch/aitourney.mjs --rounds ${{ inputs.rounds }} --diff ${{ matrix.diff }} --shard ${{ matrix.sh }} --jobs $J --out out/${{ matrix.id }}.json > out/${{ matrix.id }}.log 2>&1 ;;
+            tour) node orch/aitourney.mjs --rounds ${{ inputs.rounds || '2' }} --diff ${{ matrix.diff }} --shard ${{ matrix.sh }} --jobs $J --out out/${{ matrix.id }}.json > out/${{ matrix.id }}.log 2>&1 ;;
             hvn)  node orch/aitourney.mjs --hard-vs-normal --rounds 1 --shard ${{ matrix.sh }} --jobs $J --out out/${{ matrix.id }}.json > out/${{ matrix.id }}.log 2>&1 ;;
             fair) node orch/mapfair.mjs --battles --shard ${{ matrix.sh }} --jobs $J --out out/${{ matrix.id }}.json > out/${{ matrix.id }}.log 2>&1 ;;
             tax)  node orch/conquest-t5.mjs --seeds 6 --minutes 14 > out/${{ matrix.id }}.log 2>&1 ;;
@@ -56,5 +58,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: bal-${{ inputs.tag }}-${{ matrix.id }}
+          name: bal-${{ github.run_id }}-${{ matrix.id }}
           path: out/
