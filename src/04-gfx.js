@@ -104,8 +104,10 @@ function rubbleBld(B,b,P){const g=groundH(b.x,b.y),R=mulberry((b.x*7+b.y*3)|0),l
   for(let q=0;q<7;q++){const[x,z]=at(1.1),s=1.2+R()*2.2;B.rock(s*1.7,s*1.1,s*1.2,x,g+s*.25,z,rc[q%5],R()*.6,R()*3,R()*.6);}}
 const RCC={};function roofCol(c){return RCC[c]||(RCC[c]='#'+new THREE.Color(c).lerp(new THREE.Color('#8e8a82'),.42).getHexString());}
 function buildCity(){if(!G.map.cityBlds||!G.map.cityBlds.length)return;
-{const B=Bld(),W=Bld(),BT=[];const PAL={mideast:['#d8c9a8','#e6dcc6','#cbb48c','#efe8d8','#bfa883'],lebanon:['#efe7d6','#e4d6bc','#f4efe4','#d9cbb0'],yemen:['#8c6a4a','#a07a56','#7b5c40','#9c7b5c'],russia:['#a7a59c','#b8b1a3','#8f949a','#c2b7a0','#9aa3a8'],america:['#e9e4da','#c9d2da','#b88f6c','#d7d0c0','#8fa1b2'],turkey:['#efe9de','#e3d6c0','#f4eee4','#d8c9b0'],europe:['#efe6d2','#e2d2b4','#d8c8a8','#f2ead8'],gulfcity:['#9fb7c6','#c3d0d8','#7f98aa','#d9dde0','#b9a98c'],korea:['#d8d8d4','#c6cacc','#e4e2dc','#b8bec4'],asia:['#b7b2a8','#c9c3b6','#a6a49c','#d4cec0'],southasia:['#e2c49a','#d69a6a','#c8b08c','#e8d8b8','#b98a6a'],latin:['#f0d9a8','#9fd0c8','#f2b9a0','#e8e2d0','#b8d4e8']};
-    for(const b of G.map.cityBlds){const cv=civAtXYAny(b.x,b.y);if(cv&&cv.dead){rubbleBld(B,b,(PAL[b.style]||PAL.mideast));continue;}const g=groundH(b.x,b.y)-1,P=PAL[b.style]||PAL.mideast,col=P[Math.floor(b.v*P.length)%P.length],h=b.h,w=b.w,dd=b.d;
+{const PAL={mideast:['#d8c9a8','#e6dcc6','#cbb48c','#efe8d8','#bfa883'],lebanon:['#efe7d6','#e4d6bc','#f4efe4','#d9cbb0'],yemen:['#8c6a4a','#a07a56','#7b5c40','#9c7b5c'],russia:['#a7a59c','#b8b1a3','#8f949a','#c2b7a0','#9aa3a8'],america:['#e9e4da','#c9d2da','#b88f6c','#d7d0c0','#8fa1b2'],turkey:['#efe9de','#e3d6c0','#f4eee4','#d8c9b0'],europe:['#efe6d2','#e2d2b4','#d8c8a8','#f2ead8'],gulfcity:['#9fb7c6','#c3d0d8','#7f98aa','#d9dde0','#b9a98c'],korea:['#d8d8d4','#c6cacc','#e4e2dc','#b8bec4'],asia:['#b7b2a8','#c9c3b6','#a6a49c','#d4cec0'],southasia:['#e2c49a','#d69a6a','#c8b08c','#e8d8b8','#b98a6a'],latin:['#f0d9a8','#9fd0c8','#f2b9a0','#e8e2d0','#b8d4e8']};
+    const MOS=tlLandmarks(),CK=tlChunks(),OLD=CITYM&&G._cityMeshes||new Map(),NEW=new Map();
+    for(const ck of CK){const sig=ck.items.map(([bi,b])=>{const cv=civAtXYAny(b.x,b.y);return cv&&cv.dead?1:0;}).join(''),old=OLD.get(ck.key);if(old&&old.sig===sig){NEW.set(ck.key,old);OLD.delete(ck.key);continue;}
+    const B=Bld(),W=Bld(),BT=[];for(const [bi,b] of ck.items){const cv=civAtXYAny(b.x,b.y);if(cv&&cv.dead){rubbleBld(B,b,(PAL[b.style]||PAL.mideast));continue;}if(TL_ME[b.style]){tlMEBuilding(B,W,BT,b,PAL[b.style]||PAL.mideast,groundH(b.x,b.y)-1,MOS.get(bi)==='mosque',b.style==='mideast'||b.style==='lebanon');continue;}if(TL_KIND[b.style]&&TL_KIND[b.style]!=='me'&&tlOtherBuilding(B,W,BT,b,PAL[b.style]||PAL.mideast,groundH(b.x,b.y)-1,MOS.get(bi)==='church')){continue;}const g=groundH(b.x,b.y)-1,P=PAL[b.style]||PAL.mideast,col=P[Math.floor(b.v*P.length)%P.length],h=b.h,w=b.w,dd=b.d;
       W.box(w,h,dd,b.x,g+h/2,b.y,col);BT.push([g+1,g+h,b.style==='gulfcity'||b.style==='korea'||b.style==='asia'?1:b.style==='america'&&h<16?2:b.style==='yemen'?3:0,b.v]);
       // rooftop clutter: water tanks, AC units, stair heads, dishes and parapets on flat roofs
       {const flat=!(b.style==='america'&&h<16)&&!((b.style==='europe'||b.style==='turkey'))&&!(b.style==='lebanon'&&b.v>.7);if(flat){const R=mulberry(((b.x*13)^(b.y*7))|0),top=g+h;
@@ -122,10 +124,18 @@ function buildCity(){if(!G.map.cityBlds||!G.map.cityBlds.length)return;
       else if(b.style==='gulfcity'||b.style==='korea'||b.style==='asia'){const gl=b.style==='gulfcity'?'#5d7f99':'#5f6a74';for(let y=g+4;y<g+h-3;y+=b.style==='gulfcity'?4:5)B.box(w+.3,b.style==='gulfcity'?2:1,dd+.3,b.x,y,b.y,gl);if(b.style==='gulfcity'&&h>110)B.cyl(.6,1.4,24,6,b.x,g+h+12,b.y,'#c9ced2');if(b.style==='asia'&&b.v>.9&&h<26)B.cone(Math.max(w,dd)*.8,5,4,b.x,g+h+2.5,b.y,'#7a3b2c',0,Math.PI/4,0);}
       else if(b.style==='latin'||b.style==='southasia'){B.box(w*.98,1.4,dd*.98,b.x,g+h+.7,b.y,roofCol('#efe9dc'));if(b.style==='southasia'&&b.v>.96)B.sph(Math.min(w,dd)*.4,b.x,g+h+1,b.y,'#e8e2d6',1,1.2,1);}
       else{B.box(w*.96,1.6,dd*.96,b.x,g+h+.8,b.y,roofCol(col));if(b.v>.93&&b.core>.4){B.sph(Math.min(w,dd)*.42,b.x,g+h+1,b.y,b.v>.97?'#3f8f8a':'#d9d2c0',1,.9,1);}else if(b.v<.025){B.cyl(2.2,2.6,h+26,8,b.x+w*.3,g+(h+26)/2,b.y+dd*.3,'#e8e0cc');B.cone(2.8,6,8,b.x+w*.3,g+h+29,b.y+dd*.3,'#3f8f8a');}}}
-    if(CITYM){WORLD.remove(CITYM);CITYM.traverse(o=>{if(o.geometry)o.geometry.dispose();});}const grp=new THREE.Group();
-    if(BT.length){const wg=W.geo(),per=wg.attributes.position.count/BT.length,a=new Float32Array(wg.attributes.position.count*4);for(let k=0;k<BT.length;k++)for(let q=0;q<per;q++)a.set(BT[k],(k*per+q)*4);wg.setAttribute('bt',new THREE.BufferAttribute(a,4));
-      const wm=new THREE.Mesh(wg,cityWallMat());wm.castShadow=true;wm.receiveShadow=true;grp.add(wm);}
-    if(B._p.length){const dm=new THREE.Mesh(B.geo(),CITYMAT||(CITYMAT=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.9})));dm.castShadow=true;dm.receiveShadow=true;grp.add(dm);}
+    if(ck.city&&!ck.city.ham&&TL_KIND[ck.city.style])tlStreets(B,ck.city);
+    const cg=new THREE.Group();
+    {const wg=BT.length?W.geo():null,bg=B._p.length?B.geo():null,nW=wg?wg.attributes.position.count:0,nB=bg?bg.attributes.position.count:0;
+      if(nW+nB){const per=nW/Math.max(1,BT.length),P=new Float32Array((nW+nB)*3),N=new Float32Array((nW+nB)*3),Cc=new Float32Array((nW+nB)*3),A=new Float32Array((nW+nB)*4);
+        if(wg){P.set(wg.attributes.position.array,0);N.set(wg.attributes.normal.array,0);Cc.set(wg.attributes.color.array,0);for(let k=0;k<BT.length;k++)for(let q=0;q<per;q++)A.set(BT[k],(k*per+q)*4);}
+        if(bg){P.set(bg.attributes.position.array,nW*3);N.set(bg.attributes.normal.array,nW*3);Cc.set(bg.attributes.color.array,nW*3);for(let q=0;q<nB;q++)A.set([0,0,-1,0],(nW+q)*4);}   // details: plain vertex colour, no window shader
+        const mg=new THREE.BufferGeometry();mg.setAttribute('position',new THREE.BufferAttribute(P,3));mg.setAttribute('normal',new THREE.BufferAttribute(N,3));mg.setAttribute('color',new THREE.BufferAttribute(Cc,3));mg.setAttribute('bt',new THREE.BufferAttribute(A,4));mg.computeBoundingSphere();
+        const wm=new THREE.Mesh(mg,cityWallMat());wm.castShadow=true;wm.receiveShadow=true;cg.add(wm);}}
+    NEW.set(ck.key,{sig,cg});}
+    // one small group (walls + details) per town / hamlet: far-off towns are frustum-culled, and a building collapsing only rebuilds its own town
+    if(CITYM)WORLD.remove(CITYM);for(const o of OLD.values())o.cg.traverse(q=>{if(q.geometry)q.geometry.dispose();});
+    const grp=new THREE.Group();for(const o of NEW.values())grp.add(o.cg);G._cityMeshes=NEW;
     WORLD.add(grp);CITYM=grp;}}
 // City walls: windows, frames, shutters, sills, ground-floor shopfronts and doors, a cornice and grime, all drawn in the
 // shader from each building's base and top so they line up storey by storey.
@@ -136,19 +146,27 @@ let CWMAT=null;function cityWallMat(){if(CWMAT)return CWMAT;const m=new THREE.Me
       if(vt>.5&&y>.2&&y<H-.4){vec2 tn=normalize(vec2(-vCN.z,vCN.x));float u=dot(vCW.xz,tn);bool tower=vBT.z>.5&&vBT.z<1.5,house=vBT.z>1.5&&vBT.z<2.5,arch=vBT.z>2.5;
         float FH=tower?8.:10.,WS=tower?6.:9.;float fy=floor(y/FH),fx=floor(u/WS);vec2 f=vec2(fract(u/WS),fract(y/FH));float h=ch(vec2(fx,fy)+vBT.w*91.);
         float wx=tower?.12:.26,wy0=tower?.18:.3,wy1=tower?.92:.82;if(arch){wx=.34;wy0=.35;wy1=.78;}
-        float win=step(wx,f.x)*step(f.x,1.-wx)*step(wy0,f.y)*step(f.y,wy1);float fr=step(wx-.06,f.x)*step(f.x,1.-wx+.06)*step(wy0-.07,f.y)*step(f.y,wy1+.05)*(1.-win);
+        float win=step(wx,f.x)*step(f.x,1.-wx)*step(wy0,f.y)*step(f.y,wy1);float fr=step(wx-.06,f.x)*step(f.x,1.-wx+.06)*step(wy0-.07,f.y)*step(f.y,wy1+.05)*(1.-win);if(arch){float cxw=abs(f.x-.5)/(.5-wx+.001);win*=step(f.y,wy1-.16*cxw*cxw);fr*=step(f.y,wy1+.05-.16*cxw*cxw);}
         float gnd=1.-step(FH,y);if(gnd>.5&&!tower){float door=step(.36,fract(u/(WS*3.)))*step(fract(u/(WS*3.)),.5)*step(y,7.5);win=max(win*step(2.,y),0.);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.16,.12,.09),door*.95);}
         vec3 glass=mix(vec3(.07,.09,.11),vec3(.32,.38,.44),h*h)*(tower?1.15:1.);{vec3 Vg=normalize(cameraPosition-vCW);vec3 Rg=reflect(-Vg,normalize(vCN));float fg=.08+.92*pow(1.-clamp(dot(Vg,normalize(vCN)),0.,1.),4.);vec3 sk=mix(vec3(.55,.6,.66),vec3(.3,.45,.7),smoothstep(0.,.6,Rg.y));glass=mix(glass,sk*(tower?1.05:.9),fg*.75)+vec3(1.,.9,.7)*pow(max(dot(Rg,vec3(-.66,.57,-.46)),0.),90.)*.6;}if(h>.93)glass=vec3(.85,.7,.42);litW=win*step(.5,fract(h*7.31))*(.6+.4*h);
         vec3 base=diffuseColor.rgb;diffuseColor.rgb=mix(diffuseColor.rgb,base*1.18+.04,fr*.8);diffuseColor.rgb=mix(diffuseColor.rgb,glass,win*.95);
         if(!tower&&h<.18)diffuseColor.rgb=mix(diffuseColor.rgb,base*.62+vec3(.05,.07,.04),win);
         float sill=step(wx-.04,f.x)*step(f.x,1.-wx+.04)*step(wy0-.1,f.y)*step(f.y,wy0-.03);diffuseColor.rgb=mix(diffuseColor.rgb,base*1.3+.05,sill*.9);
         float streak=(1.-win)*step(wx,f.x)*step(f.x,1.-wx)*step(f.y,wy0)*.12;diffuseColor.rgb*=1.-streak;
-        diffuseColor.rgb*=.8+.2*smoothstep(0.,6.,y);diffuseColor.rgb=mix(diffuseColor.rgb,base*.72,step(H-1.6,y)*.85);}
-      else if(vt<.5){vec2 q=vCW.xz/9.,i0=floor(q),fq=fract(q);fq=fq*fq*(3.-2.*fq);float n=mix(mix(ch(i0),ch(i0+vec2(1,0)),fq.x),mix(ch(i0+vec2(0,1)),ch(i0+vec2(1,1)),fq.x),fq.y);
+        diffuseColor.rgb*=.8+.2*smoothstep(0.,6.,y);diffuseColor.rgb=mix(diffuseColor.rgb,base*.72,step(H-1.6,y)*.85);
+        if(vBT.z>3.5){float wr=fract(vBT.z)*1.12,hs=fract(vBT.w*13.7);
+          float sh=step(wx-.13,f.x)*step(f.x,1.-wx+.13)*step(wy0-.04,f.y)*step(f.y,wy1+.03)*(1.-win)*(1.-fr)*step(hs,.62)*step(2.,y);
+          vec3 sc=h<.33?vec3(.17,.36,.31):h<.66?vec3(.22,.33,.47):vec3(.38,.25,.16);diffuseColor.rgb=mix(diffuseColor.rgb,sc*(.85+.15*step(.5,fract(f.y*14.))),sh*.9);
+          diffuseColor.rgb*=.94+.08*ch(floor(vec2(u,y)/3.)+vBT.w*7.);
+          diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.31,.25,.19),(1.-smoothstep(.2,1.8,y))*.55);
+          float rs=ch(vec2(floor(u*1.5),vBT.w*9.));diffuseColor.rgb*=1.-.13*step(.62,rs)*(1.-clamp(y/H,0.,1.));
+          if(wr>0.){vec2 pc=vec2(u,y)*1.7,pi=floor(pc);float cl=step(.45,ch(floor(vec2(u,y)/7.)+vBT.w*17.)),hp=step(1.-.1*wr-.01,ch(pi+vBT.w*53.)),r=length(fract(pc)-.5)-(.14+.1*ch(pi+3.));
+            diffuseColor.rgb*=1.-.6*step(r,0.)*hp*cl;float sc2=smoothstep(.62,.9,ch(floor(vec2(u/5.,y/9.))+vBT.w*29.))*wr;diffuseColor.rgb*=1.-.5*sc2*(.4+.6*f.y);}}}
+      else if(vt<.5&&vBT.z>-.5){vec2 q=vCW.xz/9.,i0=floor(q),fq=fract(q);fq=fq*fq*(3.-2.*fq);float n=mix(mix(ch(i0),ch(i0+vec2(1,0)),fq.x),mix(ch(i0+vec2(0,1)),ch(i0+vec2(1,1)),fq.x),fq.y);
         vec2 q2=vCW.xz/2.3,j0=floor(q2),fj=fract(q2);fj=fj*fj*(3.-2.*fj);float n2=mix(mix(ch(j0),ch(j0+vec2(1,0)),fj.x),mix(ch(j0+vec2(0,1)),ch(j0+vec2(1,1)),fj.x),fj.y);
         vec3 roof=mix(diffuseColor.rgb,vec3(.6,.58,.55),.42);diffuseColor.rgb=roof*(.8+.14*n+.06*n2)*(1.-.18*smoothstep(.62,.8,n));}
       if(vt>.5){diffuseColor.rgb*=.93;}`).replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\ntotalEmissiveRadiance+=vec3(1.,.62,.3)*litW*cityW*1.3;');sh.uniforms.cityW=WXCITY;};
-  m.customProgramCacheKey=()=>'citywall4';return CWMAT=m;}
+  m.customProgramCacheKey=()=>'citywall6';return CWMAT=m;}
 
 // Beyond the playable area the land carries on: the edge heights and colours are continued outward and roll up into
 // soft hills (or stay as open sea where the map edge is water), fading into the haze, so the map has no hard border.
