@@ -9747,9 +9747,9 @@ function pushLog(m,k){if(!G)return;try{tkFeed(m,k);}catch(e){}if(k&&k.length===2
   // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
   // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
   const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},7000);el.append(d);while(el.children.length>4)el.firstChild.remove();}
-function rivals(){return G.teams.filter(T=>!ally(T.id,ME)).map(T=>T.F.name);}
+function rivals(){return G.teams.filter(T=>!T.reb&&!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
-function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams,me=T[ME],m=Math.floor(G.t/60),s=Math.floor(G.t%60);
+function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams.filter(q=>!q.reb),me=T[ME],m=Math.floor(G.t/60),s=Math.floor(G.t%60);
   const won=winner>=0&&ally(winner,ME);try{idFinish(winner,won);}catch(e){console.warn('medals',e);}
   // the sim's reason is written from the winner's side ("The last enemy capitulated: …"); the losers read their own fall
   if(!won&&reason&&/^The last enemy capitulated/.test(reason)){const why=me.whyOut||String(reason).replace(/^The last enemy capitulated:\s*/,'');reason=`${me.F.name} has been defeated${why?': '+why:'.'}`;if(!/[.!]$/.test(reason))reason+='.';}
@@ -9758,7 +9758,7 @@ function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams,me=T[ME
   // the kill-cam replays the battle's biggest moment first (Skip: tap, click or Esc), then this score screen
   const g0=G,show=()=>{$('end').hidden=false;try{esDraw();}catch(e){}};let kc=false;try{kc=kcStart(()=>{if(G===g0&&G.over)show();});}catch(e){console.warn('kill-cam',e);}if(!kc)show();}
 function showElim(){if(!G||G.over)return;   // (the 'out' list can arrive after the battle's end: keep the summary)
-  const left=G.teams.filter(T=>!T.out&&T.id!==ME).length;$('endt').textContent='Defeat';const why=G.teams[ME].whyOut;$('ends').textContent=`${G.teams[ME].F.name} has capitulated${why?': '+why:'.'} ${left} rival${left===1?'':'s'} still fighting. You can keep watching the battle.`;
+  const left=G.teams.filter(T=>!T.out&&!T.reb&&T.id!==ME).length;$('endt').textContent='Defeat';const why=G.teams[ME].whyOut;$('ends').textContent=`${G.teams[ME].F.name} has capitulated${why?': '+why:'.'} ${left} rival${left===1?'':'s'} still fighting. You can keep watching the battle.`;
   $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=false;try{esPage(null);}catch(e){}$('end').hidden=false;}
 /* ---------- end-of-match summary page: scoreboard, awards, army-strength graph and a Share picture ----------
    Every player sees the same numbers: the host (or the Cloudflare server) builds them in endStats() (03-sim) when the
@@ -10023,7 +10023,7 @@ function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads
   docUI(T);const pts=T.rank-T.spent;for(const k in POWERS){const P=powInfo(k,T.fac),w=T.pw[k];const lv=w?(w.lv||1):0;setBtn('p_'+k,{dis:w?true:pts<1,done:!!w,on:G.aim===k,cost:w?('Lv '+lv+' · '+(P.passive?'Active':'use it on the side rail'+(POW_KEY[k]?' ['+POW_KEY[k].toUpperCase()+']':''))):`Unlock · 1 point`});
     {const b=$('pu_'+k);if(b){const c=lv>=1&&lv<3?lv+1:0;const dv=c?'':'none';if(b.style.display!==dv){b.style.display=dv;if(c)fitBtnNames();}if(c)setBtn('pu_'+k,{dis:pts<c,cost:`To level ${lv+1} · ${c} points`});}}}
   const dot=$('pdot');const tb=document.querySelector('.tabs button[data-tab="pow"]');if(tb){let d=tb.querySelector('.dot');if(pts>0&&!d){d=document.createElement('span');d.className='dot';tb.append(d);}else if(pts<=0&&d)d.remove();}
-  const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('side').classList.toggle('hasUp',!!up);$('supbar').style.width=(up?f*100:0)+'%';
+  const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(Math.max(0,Math.ceil((T.sup.charge-T.charge)/(G.conq?.5:1))),G.conq&&G.t<CQ_STRIKE_MIN?Math.ceil(CQ_STRIKE_MIN-G.t):0);$('supname').textContent=T.sup.name;$('side').classList.toggle('hasUp',!!up);$('supbar').style.width=(up?f*100:0)+'%';
   $('supt').textContent=!up?'needs Strike Center':f>=1?'READY':`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;$('supbtn').disabled=!(up&&f>=1);
   const nx=RANKS[T.rank]||null,pr=RANKS[T.rank-1];$('rankname').textContent=`General rank ${T.rank}`+(pts>0?` · ${pts} point${pts>1?'s':''} to spend`:'');$('rankbar').style.width=(nx?Math.min(1,(T.gxp-pr)/(nx-pr))*100:100)+'%';$('rankt').textContent=nx?`${T.gxp}/${nx} XP`:'Max rank';
   const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+(stdMouse()?' · Esc cancels':' · right-click or Esc cancels'));}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
@@ -10767,7 +10767,7 @@ function loadShow(o){const el=loadUI(),D=MAPS[o.map]||MAPS.strait;
     const og=el.querySelector('.lo-qo');og.textContent=Q.o||'';og.hidden=!Q.o;og.lang=Q.l||'';og.dir=/^(ar|fa|he|ur)$/.test(Q.l||'')?'rtl':'ltr';el.querySelector('.lo-qa').textContent=(Q.at?'attributed to ':'')+Q.a;void qe.offsetWidth;qe.classList.add('in');}}
   if(el.hidden){LOAD.tipI=Math.floor(Math.random()*LOAD_TIPS.length);clearInterval(LOAD.tipT);const tip=()=>{el.querySelector('.lo-tip span').textContent=LOAD_TIPS[LOAD.tipI++%LOAD_TIPS.length];};tip();LOAD.tipT=setInterval(tip,4500);}
   el.hidden=false;window.LOADING=true;}
-function loadFromG(mode){if(!G)return;loadShow({mode,map:G.mapKey,facs:G.teams.map(T=>T.fac),tm:G.teams.map(T=>T.tm),me:ME,cols:G.teams.map(T=>T.color),ai:G.teams.map(T=>!!T.ai),bases:BASES.slice(0,G.teams.length)});}
+function loadFromG(mode){if(!G)return;loadShow({mode,map:G.mapKey,facs:G.teams.filter(T=>!T.reb).map(T=>T.fac),tm:G.teams.filter(T=>!T.reb).map(T=>T.tm),me:ME,cols:G.teams.filter(T=>!T.reb).map(T=>T.color),ai:G.teams.filter(T=>!T.reb).map(T=>!!T.ai),bases:BASES.slice(0,G.N||G.teams.length)});}
 function loadStep(label,p){const el=LOAD.el;if(!el)return;const s=el.querySelectorAll('.lo-s span');s[0].textContent=label;s[1].textContent=Math.round(p*100)+'%';el.querySelector('.lo-bar i').style.width=(p*100).toFixed(1)+'%';}
 function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.hidden=true;window.LOADING=false;
   // a battle hosted on Cloudflare waits (up to 20 s) until every player is past the loading screen ('rd' in their presence)
@@ -11353,7 +11353,7 @@ function idTick(){if(!G||!G.ents||G.over)return;if(G.t<IDR.lastT||G.t-IDR.lastT<
   for(const id of IDR.tank)if(!alive.has(id)){IDR.tank.delete(id);IDR.lost++;}
   if(fort){IDR.fortT+=Math.min(dt,5);if(IDR.fortT>IDR.fortBest)IDR.fortBest=IDR.fortT;}else IDR.fortT=0;}
 function idFinish(winner,won){if(!G||G.sandbox||G.idDone)return;G.idDone=1;const T=G.teams[ME];if(!T)return;idTick();const s=idStore(),st=T.st||{},S=G.endStats,P=S&&S.p&&S.p[ME];
-  const foes=G.teams.filter(Q=>!ally(Q.id,ME)).length,mates=G.teams.filter(Q=>ally(Q.id,ME)).length;const hard=G.teams.some(Q=>!ally(Q.id,ME)&&Q.ai&&Q.ai.d===2)||(MODE==='single'&&setup.d===2);
+  const foes=G.teams.filter(Q=>!Q.reb&&!ally(Q.id,ME)).length,mates=G.teams.filter(Q=>ally(Q.id,ME)).length;const hard=G.teams.some(Q=>!ally(Q.id,ME)&&Q.ai&&Q.ai.d===2)||(MODE==='single'&&setup.d===2);
   const lu=P?P.lu:Math.max(0,(T.lost|0)-(st.lb|0)),secs=Math.round(G.t);
   s.n++;s.hist.unshift({t:Date.now(),f:T.fac,won:won?1:0,s:secs,foes,mates,map:G.mapKey,m:MODE==='single'?'solo':'online',lu,ku:P?P.ku:st.ku|0});s.hist.length=Math.min(s.hist.length,40);
   const got=[],add=k=>{if(!s.earned[k]){s.earned[k]=Date.now();got.push(k);}};
@@ -11548,7 +11548,7 @@ try{rpMenuBtn();}catch(e){}
 /* ---------- spectating an online battle (07a specJoin): no army, no orders, see everything or one side's view ---------- */
 function specTick(){if(!G)return;let b=$('specBar');if(b&&b._g!==G){b.remove();b=null;}if(!b&&!window.LOADING){b=document.createElement('div');b.id='specBar';b.innerHTML='<b>👁 Spectating</b><select id="specView"></select><button type="button" id="specLeave">Leave</button>';b._g=G;document.body.appendChild(b);
     const st=document.createElement('style');st.textContent='#specBar{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:60;display:flex;gap:8px;align-items:center;background:rgba(10,14,12,.86);border:1px solid #4a5a48;border-radius:8px;padding:6px 10px;color:#e8eadf;font:600 15px system-ui,sans-serif}#specBar select,#specBar button{min-height:36px;background:#26312a;color:#e8eadf;border:1px solid #56685a;border-radius:6px;font:inherit;padding:0 10px}body.spec #side{display:none!important}';document.head.appendChild(st);
-    const V=$('specView'),add=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;V.appendChild(o);};add(-1,'Everything (no fog)');G.teams.forEach((T,i)=>add(i,T.F.name+"'s view"));
+    const V=$('specView'),add=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;V.appendChild(o);};add(-1,'Everything (no fog)');G.teams.forEach((T,i)=>{if(!T.reb)add(i,T.F.name+"'s view");});
     V.onchange=()=>{const k=+V.value;NET.specAll=k<0;if(k>=0){ME=k;try{const p=BASES[k];if(p)centerOn(p[0],p[1]);}catch(e){}}if(NET.game)NET.game.presence({sv:Math.max(0,k)}).catch(()=>{});fogT=0;};
     $('specLeave').onclick=()=>{try{quitGame();}catch(e){}const x=$('specBar');if(x)x.remove();};}
   if(b){b.hidden=!!G.over;document.body.classList.add('spec');}
@@ -11566,7 +11566,7 @@ function bhScan(){if(!G||G.over||G.sandbox||G.tut||!G.teams||!G.teams[ME])return
   for(const e of G.ents){if(e.isB||e.team!==ME||G.bhSeen.has(e.id))continue;G.bhSeen.add(e.id);if(!first&&!e.dead)G.bhUc[e.kind]=(G.bhUc[e.kind]||0)+1;}}
 function bhRecord(winner){if(!G||G.bhDone||G.sandbox||G.tut||G.rp||NET.spec||G.t<20)return;   // (replays and spectated battles are not your battles)
 G.bhDone=true;
-  const T=G.teams,me=T[ME];if(!me)return;const won=winner>=0&&ally(winner,ME);
+  const T=G.teams.filter(Q=>!Q.reb),me=T[ME];if(!me)return;const won=winner>=0&&ally(winner,ME);
   const opp=T.filter(Q=>Q.id!==ME&&!ally(Q.id,ME)).map(Q=>(Q.F&&Q.F.name)||Q.fac);
   const mp=MAPS&&MAPS[G.mapKey];
   const a=bhLoad();a.push({t:Date.now(),nat:me.fac,res:won?'W':'L',len:Math.round(G.t),built:me.built|0,lost:me.lost|0,kills:me.kills|0,
@@ -11715,7 +11715,7 @@ function townBuild(){if(!document.getElementById('townCss')){const st=document.c
   const d=document.createElement('div');d.id='townp';d.innerHTML='<button class="x" aria-label="Close">&times;</button><div id="tpb"></div>';d.addEventListener('pointerdown',e=>e.stopPropagation());d.addEventListener('contextmenu',e=>e.preventDefault());
   d.querySelector('.x').onclick=townClose;d.addEventListener('click',e=>{const b=e.target.closest('button[data-r]');if(b&&TP.ti>=0){doAct({t:'tax',ti:TP.ti,r:+b.dataset.r});TP.t=0;setTimeout(()=>townPanelTick(true),60);}});
   document.body.appendChild(d);TP.el=d;}
-function cqBanner(){if(!G||!G.conq||G.over)return;let b=$('cqBn');if(!b){b=document.createElement('div');b.id='cqBn';b.style.cssText='position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;font:600 14px/1.3 system-ui,sans-serif;color:#f4e9c2;text-shadow:0 1px 3px #000;max-width:calc(100vw - 150px)';document.body.appendChild(b);}
+function cqBanner(){if(!G||!G.conq)return;if(G.over){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}let b=$('cqBn');if(!b){b=document.createElement('div');b.id='cqBn';b.style.cssText='position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;font:600 14px/1.3 system-ui,sans-serif;color:#f4e9c2;text-shadow:0 1px 3px #000;max-width:calc(100vw - 150px)';document.body.appendChild(b);}
   const setup=G.t<G.setupEnd;let h='';if(setup){const l=Math.max(0,Math.ceil(G.setupEnd-G.t));h=`<div style="background:rgba(60,45,10,.88);border:1px solid #d9b34a;border-radius:6px;padding:4px 12px;color:#ffe08a">SETUP PHASE ${Math.floor(l/60)}:${String(l%60).padStart(2,'0')} <span style="font-weight:400;font-size:12px">&middot; build up and grab towns &middot; no firing yet</span></div>`;}
   if(G.bse&&G.teams[ME]){let c=0,m=0,n=0;for(const T of G.teams){if(T.reb||T.out||ally(T.id,ME)||!G.bse[T.id])continue;c+=G.bse[T.id][0];m+=G.bse[T.id][1];n++;}if(n&&m)h+=`<div style="margin-top:3px;font-size:12px;opacity:.92">${n>1?'Enemy bases':'Enemy base'}: ${c} of ${m} structures left</div>`;}
   {const tm=x=>Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0');let sl='';

@@ -11,7 +11,7 @@ function bhScan(){if(!G||G.over||G.sandbox||G.tut||!G.teams||!G.teams[ME])return
   for(const e of G.ents){if(e.isB||e.team!==ME||G.bhSeen.has(e.id))continue;G.bhSeen.add(e.id);if(!first&&!e.dead)G.bhUc[e.kind]=(G.bhUc[e.kind]||0)+1;}}
 function bhRecord(winner){if(!G||G.bhDone||G.sandbox||G.tut||G.rp||NET.spec||G.t<20)return;   // (replays and spectated battles are not your battles)
 G.bhDone=true;
-  const T=G.teams,me=T[ME];if(!me)return;const won=winner>=0&&ally(winner,ME);
+  const T=G.teams.filter(Q=>!Q.reb),me=T[ME];if(!me)return;const won=winner>=0&&ally(winner,ME);
   const opp=T.filter(Q=>Q.id!==ME&&!ally(Q.id,ME)).map(Q=>(Q.F&&Q.F.name)||Q.fac);
   const mp=MAPS&&MAPS[G.mapKey];
   const a=bhLoad();a.push({t:Date.now(),nat:me.fac,res:won?'W':'L',len:Math.round(G.t),built:me.built|0,lost:me.lost|0,kills:me.kills|0,

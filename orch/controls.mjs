@@ -80,7 +80,7 @@ async function openGame(ctxOpts, saved) {
   await page.waitForFunction(() => G && !window.LOADING, null, { timeout: 600000, polling: 250 });
   // Freeze the battle (drawing and input keep running), place the test units, record every order sent to the battle.
   await page.evaluate(() => {
-    G.paused = true; SET.edge = 0;
+    G.paused = true; SET.edge = 0; G.setupEnd = 0; /* Conquest: no setup phase in the control tests */
     window.__acts = []; const o = doAct; doAct = function (a) { __acts.push(JSON.parse(JSON.stringify(a))); return o(a); };
     const hq = G.ents.find(b => b.team === ME && b.kind === 'hq'), eq = G.ents.find(b => b.team !== ME && b.kind === 'hq');
     // a patch of open, passable ground between the two bases
@@ -110,7 +110,7 @@ async function view(page, at) {
     const R = cv.getBoundingClientRect();
     const sc = e => { const p = toScreen(e.x, unitH(e) + entHeightMid(e) * .6, e.y); return { x: R.left + p.x, y: R.top + p.y }; };
     const free = (wx, wy) => { const p = toScreen(wx, groundH(wx, wy), wy); const x = R.left + p.x, y = R.top + p.y;
-      return { x, y, ok: document.elementFromPoint(x, y) === cv && !pickAt(p.x, p.y, false) }; };
+      const el = document.elementFromPoint(x, y), pk = pickAt(p.x, p.y, false); return { x, y, ok: el === cv && !pk, el: el && (el.id || el.tagName), pk: pk && pk.kind }; };
     const out = { U: window.__U.map(id => sc(G.byId.get(id))), E: sc(G.byId.get(window.__E)), HQ: sc(G.byId.get(window.__HQ)),
       ground: [], line: null, hqGround: null, onScreen: true };
     // open ground on screen (not under the command bar or a unit), nearest to the test units first; the layout differs
@@ -120,7 +120,7 @@ async function view(page, at) {
     cand.sort((a, b) => Math.hypot(a[0], a[1] * 1.3) - Math.hypot(b[0], b[1] * 1.3));
     for (const [dx, dy] of cand) { const f = free(P.x + dx, P.y + dy); if (f.ok && out.ground.every(q => Math.hypot(q.x - f.x, q.y - f.y) > 40)) out.ground.push(f); if (out.ground.length >= 4) break; }
     for (const dy of [60, -60, 100, -100, 140, 180, -180]) { const a = free(P.x - 160, P.y + dy), b = free(P.x + 160, P.y + dy); if (a.ok && b.ok) { out.line = [a, b]; break; } }
-    const hq = G.byId.get(window.__HQ); out.hqGround = free(hq.x + (P.x - hq.x) * .35, hq.y + (P.y - hq.y) * .35);
+    const hq = G.byId.get(window.__HQ); for (const fr of [.35, .25, .18, .12, .08]) { out.hqGround = free(hq.x + (P.x - hq.x) * fr, hq.y + (P.y - hq.y) * fr); if (out.hqGround.ok) break; }
     for (const p of [...out.U, out.E]) if (document.elementFromPoint(p.x, p.y) !== cv) out.onScreen = false;
     return out;
   }, at);
