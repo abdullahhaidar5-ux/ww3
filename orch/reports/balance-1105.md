@@ -38,9 +38,7 @@ dynamic node indexes.) A host crash here would have ended a Cloudflare battle, s
 | SA | 40% | 19% | 29% | 51% | 38% | **44%** |
 | CU | 51% | 49% | 50% | 46% | 40% | **43%** |
 
-Everything pooled is now 43-61%. Single-tier readings that still look off are noise-sized (two of the 36 readings are under 40%: SA Hard 38,
-EU Hard 38, RU Normal 35 - and CN/UA read high in Hard); Hard and Normal disagree on SA, EU, UA, CN, which is the AI's playing style, not
-unit strength. Rounds 1-5 of tuning are in the git log (`Balance pass N`); intermediate runs, pooled: pass 3 had SA 64 / DW 62 (overshot, pulled
+Everything pooled is now 43-61%. Single-tier readings under 40% are RU Normal 35, SA Hard 38 and EU Hard 38 (three of 36, noise-sized at 68 games); Hard and Normal disagree on SA, EU, UA and CN, which is the AI's playing style rather than unit strength. Rounds 1-5 of tuning are in the git log (`Balance pass N`); intermediate runs, pooled: pass 3 had SA 64 / DW 62 (overshot, pulled
 back), pass 5 had PK 38, AE 38, SA 40.
 
 ## What changed (all numbers, `src/01-data.js` + one in `03-sim.js`; descriptions in the faction cards updated to match)
