@@ -49,6 +49,7 @@ function hostCmd(peer,data){if(MODE!=='host')return;const ix=NET.peers?NET.peers
 function hostPres(q,hello){const pr=q.presence;(NET.seen=NET.seen||{})[q.peer]=performance.now();
   if(specIs(q.peer,pr)){specPres(q,pr);return;}
   if(pr.hi&&pr.hi.ed!=null)(NET.edOf=NET.edOf||{})[q.peer]=pr.hi.ed?1:0;
+  if(pr.hi&&typeof pr.hi.hp==='number'&&pr.hi.hp>0)(NET.hpOf=NET.hpOf||{})[q.peer]=Math.min(1e5,pr.hi.hp);   // host benchmark (07b sbPick)
   if(pr.ld!=null)(NET.ldOf=NET.ldOf||{})[q.peer]=pr.ld?1:0;
   // a player the heartbeat marked as gone (e.g. their PC stalled while loading) is linked back as soon as they are heard from again
   if(MODE==='host'&&NET.peers&&pr.hi&&typeof pr.hi.tok==='string'&&NET.peers.indexOf(q.peer)<0)hostRejoin(q.peer,pr.hi.tok.slice(0,16));

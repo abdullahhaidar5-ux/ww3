@@ -32,7 +32,7 @@
 //   server -> players "!w <id>" then "l|[[id,{g}],...]" whenever the list changes.
 import { DurableObject } from 'cloudflare:workers';
 import { routeHost, routePlayer } from './route.js';
-import { BattleHost, runBench } from './battle.js';
+import { BattleHost, runBench, RESUME_MAX, RESUME_WINDOW_MS } from './battle.js';
 import { pwOf, pwHash, pwGate, offersProto, PwGuard } from './password.js';
 import { createBattleSim } from '../gen/battle-sim.js';   // the game's battle code, bundled by build-sim.mjs
 
@@ -650,7 +650,7 @@ export class BattleRoom extends DurableObject {
   hostOpts() {
     // (the local end-to-end test waits longer for its slow software-rendered pages: BATTLE_READY_MS, test hooks only)
     const readyMs = this.env.TEST_HOOKS === '1' && +this.env.BATTLE_READY_MS > 0 ? +this.env.BATTLE_READY_MS : undefined;
-    return { now: () => Date.now(), log: m => console.log(m), publish: g => this.publish(g), readyMs,
+    return { now: () => Date.now(), log: m => console.log(m), publish: g => this.publish(g), readyMs, overrunGuard: this.env.OVERRUN_GUARD !== '0',
       claim: async () => { if (await this.usage.used() >= STOP_BATTLE || !this.code || !(await this.usage.claim(this.code))) return false; this.slot = this.code; return true; },
       send: (pid, f) => { const w = this.socks.get(pid); if (w) safeSend(w, f); },
       close: (pid, c, why) => { const w = this.socks.get(pid); this.socks.delete(pid); this.ips.delete(pid); if (w) safeClose(w, c, why); },
@@ -662,7 +662,11 @@ export class BattleRoom extends DurableObject {
     this.resuming = (async () => {
       const rec = await this.ctx.storage.get('ck').catch(() => null);
       if (!rec || this.host) return;
-      if (Date.now() - rec.at > RESUME_MAX_MS || await this.usage.used() >= END_BATTLE || !(await this.usage.claim(rec.code))) { await this.ctx.storage.delete('ck').catch(() => {}); return; }
+      // picked up RESUME_MAX times in the last 10 min already (the server keeps getting stopped, e.g. for CPU): the
+      // standby player takes it over instead
+      const rz = (Array.isArray(rec.rz) ? rec.rz : []).filter(t => Date.now() - t < RESUME_WINDOW_MS);
+      if (rz.length >= RESUME_MAX) console.log(`battle ${rec.code}: picked up ${rz.length} times in 10 min; leaving it to the standby player`);
+      if (rz.length >= RESUME_MAX || Date.now() - rec.at > RESUME_MAX_MS || await this.usage.used() >= END_BATTLE || !(await this.usage.claim(rec.code))) { await this.ctx.storage.delete('ck').catch(() => {}); return; }
       if (this.host) return;
       try {
         this.code = rec.code; this.slot = rec.code; this.lastRep = Date.now();
@@ -724,6 +728,7 @@ export class BattleRoom extends DurableObject {
     if (!h) return json({ host: null, ck: !!(await this.ctx.storage.get('ck')) });
     if (op === 'close') { h.shut('closed by test'); this.stop(); return json({ ok: true }); }
     if (op === 'pause') { h.paused = u.searchParams.get('v') === '1'; return json({ ok: true }); }
+    if (op === 'slow') { h.slow = k; return json({ ok: true }); }   // the battle gets 1/k of the real time and falls behind (overrun guard)
     if (op === 'settle') { sim.test.keyframe(k); sim.net(0.1); h.flush(); return json({ ok: true }); }
     if (op === 'view') return json(sim.test.view(k));
     if (op === 'pw') { const ck = await this.ctx.storage.get('ck').catch(() => null); return json({ mem: h.pw || null, kept: ck ? ck.pw || null : null }); }
@@ -739,7 +744,7 @@ export class BattleRoom extends DurableObject {
     return json({ phase: h.phase, go: !!h.go, steps: h.steps, code: h.code, owner: h.owner, map: h.map, w: h.w, ais: h.ais, tm: h.tm,
       humans: h.order.map((id, k) => ({ id, f: h.players.get(id) ? h.players.get(id).f : h.facs && h.facs[k], rd: !!(h.rd && h.rd[k]) })),
       t: info && info.t, over: info && info.over, ents: info && info.ents, ck: info ? sim.test.ck() : null, peers: info ? sim.test.peers() : null,
-      ev: this.evStats || null, conn: [...h.players.values()].map(P => [P.id, P.rd ? 1 : 0]) });
+      ev: this.evStats || null, ovr: h.ovr || null, sbHp: info ? sim.test.sbHp() : null, conn: [...h.players.values()].map(P => [P.id, P.rd ? 1 : 0]) });
   }
 
   // GET /battle-bench: one AI battle as fast as the object can run it, streamed as text, then "RESULT {json}"

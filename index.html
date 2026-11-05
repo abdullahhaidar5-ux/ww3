@@ -6935,16 +6935,21 @@ function bodyAt(x,y){const a=regions('naval'),cx=Math.floor(x/CELL),cy=Math.floo
 // nearest open-water point of body b within R of (x,y), or null
 function coastSpot(b,x,y,R){const a=regions('naval'),rc=Math.ceil(R/CELL),cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);let best=null,bd=R*R;
   for(let Y=Math.max(0,cy-rc);Y<=Math.min(GH-1,cy+rc);Y++)for(let X=Math.max(0,cx-rc);X<=Math.min(GW-1,cx+rc);X++){const i=Y*GW+X;if(a[i]!==b||G.grid[i]!==1)continue;const px=X*CELL+CELL/2,py=Y*CELL+CELL/2,d=(px-x)**2+(py-y)**2;if(d<bd){bd=d;best=[px,py];}}return best;}
+// (the coast scan depends only on the anchor and the terrain, so it is kept per anchor until the terrain changes; the
+// enemy-coast test is kept per building: both used to be redone every 30 s per AI, up to ~35 ms on big water maps)
 function aiNavyPlan(T,anchor){const C=G._nvp||(G._nvp={});let P=C[T.id];if(P&&T.ai.t-P.t<30&&P.ax===anchor.x&&P.ay===anchor.y)return P;
-  const S=navSizes(),gr=regions('ground'),R=2100*WK,rc=Math.ceil(R/CELL),cx0=Math.floor(anchor.x/CELL),cy0=Math.floor(anchor.y/CELL),gh=nearestPassXY('ground',anchor.x,anchor.y),home=gh?gr[Math.floor(gh[1]/CELL)*GW+Math.floor(gh[0]/CELL)]:0,spots=[];
+  const S=navSizes(),gr=regions('ground');let M=G._nvm;if(!M||M.a!==S.a||M.g!==gr)M=G._nvm={a:S.a,g:gr,sp:new Map(),rc:new Map()};
+  const sk=anchor.x+','+anchor.y;let spots=M.sp.get(sk);if(!spots){spots=aiNavySpots(S,gr,anchor);M.sp.set(sk,spots);}
+  const b=spots.length?spots[0][3]:0,size=b?S.n[b]:0;
+  let reach=false;if(b)for(const e of G.ents){if(e.dead||!e.isB||ally(e.team,T.id))continue;const rk=b+':'+e.id;let r=M.rc.get(rk);if(r===undefined){r=!!coastSpot(b,e.x,e.y,520);M.rc.set(rk,r);}if(r){reach=true;break;}}
+  return C[T.id]={t:T.ai.t,ax:anchor.x,ay:anchor.y,b,big:size>=NV_SEA,ok:!!b&&(reach||size>=NV_SEA)&&!(P&&P.fail>4),fail:P?P.fail:0,
+    spots:spots.filter(s=>s[3]===b).slice(0,90).map(s=>[s[1],s[2]]),home:b?coastSpot(b,anchor.x,anchor.y,2300*WK):null};}
+function aiNavySpots(S,gr,anchor){const R=2100*WK,rc=Math.ceil(R/CELL),cx0=Math.floor(anchor.x/CELL),cy0=Math.floor(anchor.y/CELL),gh=nearestPassXY('ground',anchor.x,anchor.y),home=gh?gr[Math.floor(gh[1]/CELL)*GW+Math.floor(gh[0]/CELL)]:0,spots=[];
   for(let cy=Math.max(2,cy0-rc);cy<=Math.min(GH-3,cy0+rc);cy++)for(let cx=Math.max(2,cx0-rc);cx<=Math.min(GW-3,cx0+rc);cx++){const i=cy*GW+cx;if(G.grid[i]!==0||(home&&gr[i]!==home))continue;
     const px=cx*CELL+CELL/2,py=cy*CELL+CELL/2,d=Math.hypot(px-anchor.x,py-anchor.y);if(d>R)continue;let b=0;
     for(let dy=-2;dy<=2&&!b;dy++)for(let dx=-2;dx<=2;dx++){const k=(cy+dy)*GW+cx+dx;if(G.grid[k]===1&&S.n[S.a[k]]>=NV_MINW){b=S.a[k];break;}}
     if(b)spots.push([d,px,py,b]);}
-  spots.sort((p,q)=>p[0]-q[0]);const b=spots.length?spots[0][3]:0,size=b?S.n[b]:0;
-  let reach=false;if(b)for(const e of G.ents){if(e.dead||!e.isB||ally(e.team,T.id))continue;if(coastSpot(b,e.x,e.y,520)){reach=true;break;}}
-  return C[T.id]={t:T.ai.t,ax:anchor.x,ay:anchor.y,b,big:size>=NV_SEA,ok:!!b&&(reach||size>=NV_SEA)&&!(P&&P.fail>4),fail:P?P.fail:0,
-    spots:spots.filter(s=>s[3]===b).slice(0,90).map(s=>[s[1],s[2]]),home:b?coastSpot(b,anchor.x,anchor.y,2300*WK):null};}
+  spots.sort((p,q)=>p[0]-q[0]);return spots;}
 function aiNavyBuild(T,mine,anchor){T.ai.nvW=false;const D=DIFF[T.ai.d??1],id=T.id;if(!G.map.hasWater||!D.nvCap||!bldAllowed(T.fac,'shipyard')||G.t<D.nvAt)return;
   if(mine.some(e=>e.kind==='shipyard')||!reqMet(id,'shipyard')||!mine.some(e=>e.kind==='dozer'))return;const P=aiNavyPlan(T,anchor);if(!P.ok)return;
   T.ai.nvW=true;if(mine.some(e=>e.isB&&e.built<1)||T.credits<bstats(T.fac,'shipyard').cost||T.ai.t%3)return;
@@ -9642,7 +9647,7 @@ async function clientReconnect(){if(NET.spec){oppLeft();return;}if(NET.recon){NE
     // reach a player it has dropped, and taking those as 'reconnected' left that player on an empty, frozen battle.
     const back=()=>gen>gen0?NET.lastRx>=t1:(NET.ackW>=t1||NET.lastRxMe>=t1||(NET.lastRx>=t1&&!!p0&&NET.myPeer===p0));
     for(let k=0;k<24&&!back()&&!NET.reconKick&&MODE==='client';k++){if(!NET.myPeer){const me=g.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}
-      if(k%3===0)g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1},cq:NET.cq||[]}).catch(()=>{});await slp(300);}
+      if(k%3===0)g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1,hp:hostPower()},cq:NET.cq||[]}).catch(()=>{});await slp(300);}
     if(back()&&!NET.reconKick){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.svDownSaid=0;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Reconnected.':'Reconnected.','g');return;}
     // the host is not in its room any more (closed the game / lost its connection): it is gone, the standby takes over now.
     // While it is still there (it was just slow), keep knocking at its room, and the standby holds off for up to 15 s
@@ -9664,11 +9669,18 @@ async function joinGame(p,o){if(NET.game)return;const code=p.presence.g.c,jo=o&&
   // arrives the host may simply still be on its own loading screen, so that wait is much longer (45 s).
   clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}const w=performance.now(),ld=window.LOADING?1:0;if(ld)NET.ldW=w;if(NET.pgW&&w-NET.pgW>2500)NET.stW=w;NET.pgW=w;
     if(MODE==='client'&&!NET.recon&&!ld&&(NET.lastRx?w-Math.max(NET.lastRx,NET.ldW||0,NET.stW||0)>5000:w-Math.max(NET.ldW||0,NET.startW||0,NET.stW||0)>45000)){clientReconnect();return;}if($('cfNet'))$('cfNet').textContent=cfNetText();if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null,ld}).catch(()=>{});},1000);
-  let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!NET.joined&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The battle did not answer. It may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}const hpw=NET.pw&&NET.via!=='wsb'?NET.pw:undefined;NET.game.presence({hi:NET.wantSpec?{sp:1,n:n,ed:0,pw:hpw}:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1,pw:hpw,id:idPayload()}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',NET.wantSpec?{sp:1,pw:hpw}:{f:setup.p,pw:hpw}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
+  let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!NET.joined&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The battle did not answer. It may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}const hpw=NET.pw&&NET.via!=='wsb'?NET.pw:undefined;NET.game.presence({hi:NET.wantSpec?{sp:1,n:n,ed:0,pw:hpw}:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1,pw:hpw,id:idPayload(),hp:hostPower()}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',NET.wantSpec?{sp:1,pw:hpw}:{f:setup.p,pw:hpw}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
   hello();NET.helloI=setInterval(hello,1500);if(!own)$('mpstatus').textContent='Connecting…';return true;}
 // Set the Conditions choice and light up its menu button. The host's choice is used only for that battle: the player's
 // own menu choice (NET.ownW) comes back when they leave the battle, so their next solo battle uses their own Conditions.
 function wxSet(w){setup.w=w;const W=$('wx');if(W)W.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.w===w));}
+// How strong this device is as a battle host, should the battle have to move to a player (07b sbPick): a ~20 ms CPU
+// test, run once, x0.35 on a touch-only device, a little more for more cores. Typical PC 150-600, phone 30-120.
+function hostPower(){if(NET.hp>0)return NET.hp;let n=0,x=1;const a=new Float64Array(2048),t0=performance.now();
+  while(performance.now()-t0<20&&n<1e5){for(let i=0;i<2048;i++){x=(x*1.0000001+a[i]+i)%1e6;a[i]=x*.5;}n++;}
+  let coarse=false;try{coarse=matchMedia('(pointer:coarse)').matches&&!matchMedia('(pointer:fine)').matches;}catch(e){}
+  const cores=Math.min(16,(typeof navigator!=='undefined'&&navigator.hardwareConcurrency)||2);
+  return NET.hp=Math.max(1,Math.min(1e5,Math.round(n*(coarse?.35:1)*(1+cores/16))));}
 function leaveNet(){if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}NET.spec=0;NET.specAll=0;NET.wantSpec=0;NET.specs=[];NET.lobbySpec=[];NET.isSpec={};document.body.classList.remove('spec');NET.cf=null;NET.joined=0;NET.sv=0;NET.hostNote='';clearInterval(NET.helloI);clearInterval(NET.pingI);NET.ping=0;NET.pings={};if(NET.game)NET.game.leave().catch(()=>{});NET.game=null;NET.code=null;NET.opp=null;NET.hostPeer=null;NET.lobby=[];NET.peers=null;if(NET.room)NET.room.presence({g:null}).catch(()=>{});mpIn(0);}
 /* ---------- password-protected games (online edition only) ----------
    The creator may type a password under "Play online" / "New battle" (a new private battle). The game list shows a 🔒 and never carries the password; joiners
@@ -9801,6 +9813,7 @@ function hostCmd(peer,data){if(MODE!=='host')return;const ix=NET.peers?NET.peers
 function hostPres(q,hello){const pr=q.presence;(NET.seen=NET.seen||{})[q.peer]=performance.now();
   if(specIs(q.peer,pr)){specPres(q,pr);return;}
   if(pr.hi&&pr.hi.ed!=null)(NET.edOf=NET.edOf||{})[q.peer]=pr.hi.ed?1:0;
+  if(pr.hi&&typeof pr.hi.hp==='number'&&pr.hi.hp>0)(NET.hpOf=NET.hpOf||{})[q.peer]=Math.min(1e5,pr.hi.hp);   // host benchmark (07b sbPick)
   if(pr.ld!=null)(NET.ldOf=NET.ldOf||{})[q.peer]=pr.ld?1:0;
   // a player the heartbeat marked as gone (e.g. their PC stalled while loading) is linked back as soon as they are heard from again
   if(MODE==='host'&&NET.peers&&pr.hi&&typeof pr.hi.tok==='string'&&NET.peers.indexOf(q.peer)<0)hostRejoin(q.peer,pr.hi.tok.slice(0,16));
@@ -10047,8 +10060,14 @@ async function ckPack(ck){const js=JSON.stringify(ck);if(typeof CompressionStrea
 async function ckUnpack(s){if(s[0]==='J')return JSON.parse(s.slice(1));const bin=atob(s.slice(1)),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
   return JSON.parse(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text());}
 function migRoom(gen){return gen>0?NET.baseCode+'-m'+gen:NET.baseCode;}
+// the standby (who takes the battle over if the host goes, or if a Cloudflare host can't keep up): the strongest player
+// PC, by the short benchmark each page reports (hi.hp, 07-net hostPower) and its ping; players who can't send (ed 0)
+// never. The current standby keeps the job unless someone is clearly (15%) better, so checkpoints don't hop around.
+function sbScore(k){const q=NET.peers[k],hp=(NET.hpOf||{})[q],pi=(NET.pings||{})[q];return (hp>0?hp:50)/(1+(pi>0?Math.min(pi,2000):100)/200);}
+function sbPick(live){const c=live.filter(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(!c.length)return null;let b=c[0];for(const k of c)if(sbScore(k)>sbScore(b))b=k;
+  const cur=NET.sbSlot;return cur!=null&&cur!==b&&c.includes(cur)&&sbScore(cur)>=.85*sbScore(b)?cur:b;}
 function ckTick(dt,live){NET.ckT=(NET.ckT==null?4:NET.ckT)-dt;if(NET.ckT>0||NET.ckBusy||NET.ckOut||!live.length||!NET.game)return;NET.ckT=8;
-  const sb=live.find(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(sb==null)return;const to=NET.peers[sb];NET.ckBusy=true;
+  const sb=sbPick(live);if(sb==null)return;const to=NET.peers[sb];NET.ckBusy=true;
   let ck;try{ck=ckEncode();ck.gen=NET.gen||0;}catch(e){console.warn('checkpoint',e);NET.ckBusy=false;return;}
   // packing (JSON + gzip) waits for the next turn of the event loop: a separate slice from the step that took the checkpoint
   new Promise(r=>setTimeout(r,0)).then(()=>ckPack(ck)).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,sb,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}

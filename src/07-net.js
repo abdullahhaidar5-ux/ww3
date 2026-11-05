@@ -281,7 +281,7 @@ async function clientReconnect(){if(NET.spec){oppLeft();return;}if(NET.recon){NE
     // reach a player it has dropped, and taking those as 'reconnected' left that player on an empty, frozen battle.
     const back=()=>gen>gen0?NET.lastRx>=t1:(NET.ackW>=t1||NET.lastRxMe>=t1||(NET.lastRx>=t1&&!!p0&&NET.myPeer===p0));
     for(let k=0;k<24&&!back()&&!NET.reconKick&&MODE==='client';k++){if(!NET.myPeer){const me=g.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}
-      if(k%3===0)g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1},cq:NET.cq||[]}).catch(()=>{});await slp(300);}
+      if(k%3===0)g.presence({hi:{f:setup.p,n:Date.now()%1e6,tok:NET.tok,ed:NET.canEmit===false?0:1,hp:hostPower()},cq:NET.cq||[]}).catch(()=>{});await slp(300);}
     if(back()&&!NET.reconKick){for(const e of G.ents)e.seenAt=Math.min(e.seenAt,NET.lastSnapT||0);NET.recon=false;NET.svDownSaid=0;NET.gen=Math.max(NET.gen||0,gen);pushLog(gen>(NET.gen0||0)?'Reconnected.':'Reconnected.','g');return;}
     // the host is not in its room any more (closed the game / lost its connection): it is gone, the standby takes over now.
     // While it is still there (it was just slow), keep knocking at its room, and the standby holds off for up to 15 s
@@ -303,11 +303,18 @@ async function joinGame(p,o){if(NET.game)return;const code=p.presence.g.c,jo=o&&
   // arrives the host may simply still be on its own loading screen, so that wait is much longer (45 s).
   clearInterval(NET.pingI);NET.pingI=setInterval(()=>{if(!NET.game&&!NET.recon){clearInterval(NET.pingI);return;}const w=performance.now(),ld=window.LOADING?1:0;if(ld)NET.ldW=w;if(NET.pgW&&w-NET.pgW>2500)NET.stW=w;NET.pgW=w;
     if(MODE==='client'&&!NET.recon&&!ld&&(NET.lastRx?w-Math.max(NET.lastRx,NET.ldW||0,NET.stW||0)>5000:w-Math.max(NET.ldW||0,NET.startW||0,NET.stW||0)>45000)){clientReconnect();return;}if($('cfNet'))$('cfNet').textContent=cfNetText();if(NET.game)NET.game.presence({pg:Date.now(),pi:NET.ping?Math.round(NET.ping):null,ld}).catch(()=>{});},1000);
-  let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!NET.joined&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The battle did not answer. It may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}const hpw=NET.pw&&NET.via!=='wsb'?NET.pw:undefined;NET.game.presence({hi:NET.wantSpec?{sp:1,n:n,ed:0,pw:hpw}:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1,pw:hpw,id:idPayload()}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',NET.wantSpec?{sp:1,pw:hpw}:{f:setup.p,pw:hpw}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
+  let n=0;const hello=()=>{if(MODE!=='single'){clearInterval(NET.helloI);return;}if(n++>12&&!NET.joined&&!/Joined/.test($('mpstatus').textContent)){clearInterval(NET.helloI);$('mpstatus').textContent='The battle did not answer. It may have already started.';leaveNet();return;}if(n>14&&n%3)return;if(!NET.myPeer){const me=NET.game.peers().find(q=>q.sameTab);if(me)NET.myPeer=me.peer;}const hpw=NET.pw&&NET.via!=='wsb'?NET.pw:undefined;NET.game.presence({hi:NET.wantSpec?{sp:1,n:n,ed:0,pw:hpw}:{f:setup.p,n:n,tok:NET.tok,ed:NET.canEmit===false?0:1,pw:hpw,id:idPayload(),hp:hostPower()}}).catch(()=>{});if(NET.canEmit!==false)NET.game.emit('hello',NET.wantSpec?{sp:1,pw:hpw}:{f:setup.p,pw:hpw}).catch(e=>{if(e&&e.code==='not_permitted')NET.canEmit=false;});};
   hello();NET.helloI=setInterval(hello,1500);if(!own)$('mpstatus').textContent='Connecting…';return true;}
 // Set the Conditions choice and light up its menu button. The host's choice is used only for that battle: the player's
 // own menu choice (NET.ownW) comes back when they leave the battle, so their next solo battle uses their own Conditions.
 function wxSet(w){setup.w=w;const W=$('wx');if(W)W.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.w===w));}
+// How strong this device is as a battle host, should the battle have to move to a player (07b sbPick): a ~20 ms CPU
+// test, run once, x0.35 on a touch-only device, a little more for more cores. Typical PC 150-600, phone 30-120.
+function hostPower(){if(NET.hp>0)return NET.hp;let n=0,x=1;const a=new Float64Array(2048),t0=performance.now();
+  while(performance.now()-t0<20&&n<1e5){for(let i=0;i<2048;i++){x=(x*1.0000001+a[i]+i)%1e6;a[i]=x*.5;}n++;}
+  let coarse=false;try{coarse=matchMedia('(pointer:coarse)').matches&&!matchMedia('(pointer:fine)').matches;}catch(e){}
+  const cores=Math.min(16,(typeof navigator!=='undefined'&&navigator.hardwareConcurrency)||2);
+  return NET.hp=Math.max(1,Math.min(1e5,Math.round(n*(coarse?.35:1)*(1+cores/16))));}
 function leaveNet(){if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}NET.spec=0;NET.specAll=0;NET.wantSpec=0;NET.specs=[];NET.lobbySpec=[];NET.isSpec={};document.body.classList.remove('spec');NET.cf=null;NET.joined=0;NET.sv=0;NET.hostNote='';clearInterval(NET.helloI);clearInterval(NET.pingI);NET.ping=0;NET.pings={};if(NET.game)NET.game.leave().catch(()=>{});NET.game=null;NET.code=null;NET.opp=null;NET.hostPeer=null;NET.lobby=[];NET.peers=null;if(NET.room)NET.room.presence({g:null}).catch(()=>{});mpIn(0);}
 /* ---------- password-protected games (online edition only) ----------
    The creator may type a password under "Play online" / "New battle" (a new private battle). The game list shows a 🔒 and never carries the password; joiners

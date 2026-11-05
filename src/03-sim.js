@@ -849,16 +849,21 @@ function bodyAt(x,y){const a=regions('naval'),cx=Math.floor(x/CELL),cy=Math.floo
 // nearest open-water point of body b within R of (x,y), or null
 function coastSpot(b,x,y,R){const a=regions('naval'),rc=Math.ceil(R/CELL),cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);let best=null,bd=R*R;
   for(let Y=Math.max(0,cy-rc);Y<=Math.min(GH-1,cy+rc);Y++)for(let X=Math.max(0,cx-rc);X<=Math.min(GW-1,cx+rc);X++){const i=Y*GW+X;if(a[i]!==b||G.grid[i]!==1)continue;const px=X*CELL+CELL/2,py=Y*CELL+CELL/2,d=(px-x)**2+(py-y)**2;if(d<bd){bd=d;best=[px,py];}}return best;}
+// (the coast scan depends only on the anchor and the terrain, so it is kept per anchor until the terrain changes; the
+// enemy-coast test is kept per building: both used to be redone every 30 s per AI, up to ~35 ms on big water maps)
 function aiNavyPlan(T,anchor){const C=G._nvp||(G._nvp={});let P=C[T.id];if(P&&T.ai.t-P.t<30&&P.ax===anchor.x&&P.ay===anchor.y)return P;
-  const S=navSizes(),gr=regions('ground'),R=2100*WK,rc=Math.ceil(R/CELL),cx0=Math.floor(anchor.x/CELL),cy0=Math.floor(anchor.y/CELL),gh=nearestPassXY('ground',anchor.x,anchor.y),home=gh?gr[Math.floor(gh[1]/CELL)*GW+Math.floor(gh[0]/CELL)]:0,spots=[];
+  const S=navSizes(),gr=regions('ground');let M=G._nvm;if(!M||M.a!==S.a||M.g!==gr)M=G._nvm={a:S.a,g:gr,sp:new Map(),rc:new Map()};
+  const sk=anchor.x+','+anchor.y;let spots=M.sp.get(sk);if(!spots){spots=aiNavySpots(S,gr,anchor);M.sp.set(sk,spots);}
+  const b=spots.length?spots[0][3]:0,size=b?S.n[b]:0;
+  let reach=false;if(b)for(const e of G.ents){if(e.dead||!e.isB||ally(e.team,T.id))continue;const rk=b+':'+e.id;let r=M.rc.get(rk);if(r===undefined){r=!!coastSpot(b,e.x,e.y,520);M.rc.set(rk,r);}if(r){reach=true;break;}}
+  return C[T.id]={t:T.ai.t,ax:anchor.x,ay:anchor.y,b,big:size>=NV_SEA,ok:!!b&&(reach||size>=NV_SEA)&&!(P&&P.fail>4),fail:P?P.fail:0,
+    spots:spots.filter(s=>s[3]===b).slice(0,90).map(s=>[s[1],s[2]]),home:b?coastSpot(b,anchor.x,anchor.y,2300*WK):null};}
+function aiNavySpots(S,gr,anchor){const R=2100*WK,rc=Math.ceil(R/CELL),cx0=Math.floor(anchor.x/CELL),cy0=Math.floor(anchor.y/CELL),gh=nearestPassXY('ground',anchor.x,anchor.y),home=gh?gr[Math.floor(gh[1]/CELL)*GW+Math.floor(gh[0]/CELL)]:0,spots=[];
   for(let cy=Math.max(2,cy0-rc);cy<=Math.min(GH-3,cy0+rc);cy++)for(let cx=Math.max(2,cx0-rc);cx<=Math.min(GW-3,cx0+rc);cx++){const i=cy*GW+cx;if(G.grid[i]!==0||(home&&gr[i]!==home))continue;
     const px=cx*CELL+CELL/2,py=cy*CELL+CELL/2,d=Math.hypot(px-anchor.x,py-anchor.y);if(d>R)continue;let b=0;
     for(let dy=-2;dy<=2&&!b;dy++)for(let dx=-2;dx<=2;dx++){const k=(cy+dy)*GW+cx+dx;if(G.grid[k]===1&&S.n[S.a[k]]>=NV_MINW){b=S.a[k];break;}}
     if(b)spots.push([d,px,py,b]);}
-  spots.sort((p,q)=>p[0]-q[0]);const b=spots.length?spots[0][3]:0,size=b?S.n[b]:0;
-  let reach=false;if(b)for(const e of G.ents){if(e.dead||!e.isB||ally(e.team,T.id))continue;if(coastSpot(b,e.x,e.y,520)){reach=true;break;}}
-  return C[T.id]={t:T.ai.t,ax:anchor.x,ay:anchor.y,b,big:size>=NV_SEA,ok:!!b&&(reach||size>=NV_SEA)&&!(P&&P.fail>4),fail:P?P.fail:0,
-    spots:spots.filter(s=>s[3]===b).slice(0,90).map(s=>[s[1],s[2]]),home:b?coastSpot(b,anchor.x,anchor.y,2300*WK):null};}
+  spots.sort((p,q)=>p[0]-q[0]);return spots;}
 function aiNavyBuild(T,mine,anchor){T.ai.nvW=false;const D=DIFF[T.ai.d??1],id=T.id;if(!G.map.hasWater||!D.nvCap||!bldAllowed(T.fac,'shipyard')||G.t<D.nvAt)return;
   if(mine.some(e=>e.kind==='shipyard')||!reqMet(id,'shipyard')||!mine.some(e=>e.kind==='dozer'))return;const P=aiNavyPlan(T,anchor);if(!P.ok)return;
   T.ai.nvW=true;if(mine.some(e=>e.isB&&e.built<1)||T.credits<bstats(T.fac,'shipyard').cost||T.ai.t%3)return;

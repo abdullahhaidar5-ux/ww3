@@ -53,8 +53,14 @@ async function ckPack(ck){const js=JSON.stringify(ck);if(typeof CompressionStrea
 async function ckUnpack(s){if(s[0]==='J')return JSON.parse(s.slice(1));const bin=atob(s.slice(1)),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
   return JSON.parse(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text());}
 function migRoom(gen){return gen>0?NET.baseCode+'-m'+gen:NET.baseCode;}
+// the standby (who takes the battle over if the host goes, or if a Cloudflare host can't keep up): the strongest player
+// PC, by the short benchmark each page reports (hi.hp, 07-net hostPower) and its ping; players who can't send (ed 0)
+// never. The current standby keeps the job unless someone is clearly (15%) better, so checkpoints don't hop around.
+function sbScore(k){const q=NET.peers[k],hp=(NET.hpOf||{})[q],pi=(NET.pings||{})[q];return (hp>0?hp:50)/(1+(pi>0?Math.min(pi,2000):100)/200);}
+function sbPick(live){const c=live.filter(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(!c.length)return null;let b=c[0];for(const k of c)if(sbScore(k)>sbScore(b))b=k;
+  const cur=NET.sbSlot;return cur!=null&&cur!==b&&c.includes(cur)&&sbScore(cur)>=.85*sbScore(b)?cur:b;}
 function ckTick(dt,live){NET.ckT=(NET.ckT==null?4:NET.ckT)-dt;if(NET.ckT>0||NET.ckBusy||NET.ckOut||!live.length||!NET.game)return;NET.ckT=8;
-  const sb=live.find(k=>(NET.edOf||{})[NET.peers[k]]!==0);if(sb==null)return;const to=NET.peers[sb];NET.ckBusy=true;
+  const sb=sbPick(live);if(sb==null)return;const to=NET.peers[sb];NET.ckBusy=true;
   let ck;try{ck=ckEncode();ck.gen=NET.gen||0;}catch(e){console.warn('checkpoint',e);NET.ckBusy=false;return;}
   // packing (JSON + gzip) waits for the next turn of the event loop: a separate slice from the step that took the checkpoint
   new Promise(r=>setTimeout(r,0)).then(()=>ckPack(ck)).then(s=>{if(!NET.game)return;const id=(NET.ckId=(NET.ckId||0)+1),n=Math.ceil(s.length/3000);NET.ckOut={to,sb,id,n,s,i:0,cs:ck.cs};}).catch(()=>{}).finally(()=>{NET.ckBusy=false;});}

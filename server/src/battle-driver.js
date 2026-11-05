@@ -98,6 +98,7 @@ export function BATTLE_DRIVER() {
     base: k => { const b = G.ents.filter(e => e.team === k && e.isB && !e.dead); return b.length ? [b.reduce((s, e) => s + e.x, 0) / b.length, b.reduce((s, e) => s + e.y, 0) / b.length] : [MAPW / 2, MAPH / 2]; },
     ck: () => ({ sb: NET.sbSlot, id: NET.ckId || 0 }),
     peers: () => (NET.peers || []).slice(),
+    sbHp: () => ({ sb: NET.sbSlot, hp: (NET.peers || []).map(q => (q && NET.hpOf && NET.hpOf[q]) || 0) }),
   };
   return B;
 }
