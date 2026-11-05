@@ -6554,7 +6554,7 @@ function tactic(e,wpn,src,splash){let m=1,tag=null;if(e.isB||!src||src.isB&&!src
 function specialMult(e,wpn,src){let m=1;if(src&&src.ambT>G.t)m*=1.5;if(src&&src.hambT>G.t)m*=2;  // tunnel ambush: +50% damage for 3 s after leaving a tunnel
   if(e.mark>G.t)m*=1.25;if((wpn==='shell'||wpn==='missile'||wpn==='bomb'||wpn==='super'||src&&src.s&&src.s.rocket)&&auraProtect(e,'dome')){m*=.45;if(G.t-(e.domeT||-9)>1.2){e.domeT=G.t;FXE('boom',[(e.x+rnd(-20,20))|0,(e.y+rnd(-20,20))|0,6,0]);}}
   if(src&&!src.isB&&(src.s.dom==='air'||src.kind==='drone'||wpn==='missile')&&auraProtect(e,'jam'))m*=.5;return m;}
-function applyDmg(e,d,wpn,team,src,splash){if(e.dead)return;if(G.curSid&&e.isB){const q=e._sd&&e._sd.id===G.curSid?e._sd:(e._sd={id:G.curSid,sum:0}),room=e.max*CQ_STRIKE_CAP-q.sum;if(room<=0)return;if(d>room)d=room;q.sum+=d;}if(e.kind==='fort'){if(wpn!=='bb')return;e.hp-=e.max*.55;e.lastHit=G.t;if(e.hp<=0)kill(e,team,src);return;}if(e.civ&&e.kind==='civb'){const m=VS[wpn]&&VS[wpn].bld;if(m)damageCiv(e.civ,d*m,team);return;}if(e.oil){const m=VS[wpn]&&VS[wpn].bld;if(m)damageOil(e.oil,d*m,team);return;}if(e.isB&&team!=null&&!ally(team,e.team)){const V=G.teams[e.team];if(G.t-(V.atkWarn??-99)>25){V.atkWarn=G.t;log(e.team,'Our base is under attack!','r:base');}}else if(!e.isB&&e.s&&!e.civ&&team!=null&&e.team!=null&&!ally(team,e.team)&&G.teams[e.team]){const V=G.teams[e.team];if(G.t-(V.fireWarn??-99)>14){V.fireWarn=G.t;log(e.team,'Our troops are under fire!','v5');}}const ar=e.isB?'bld':(e.landed?'heavy':e.s.armor);const m=VS[wpn][ar];if(!m)return;const tc=tactic(e,wpn,src,splash);const dd=d*m*dmgIn(e,wpn)*tc.m*specialMult(e,wpn,src);if(src&&!src.isB&&src.s.mark&&!e.isB)e.mark=G.t+6;e.hp-=dd;e.lastHit=G.t;if(!e.isB&&e.hp>0&&e.s&&e.s.armor==='heavy'&&e.s.dom==='ground')critRoll(e,dd,wpn,src,splash);
+function applyDmg(e,d,wpn,team,src,splash){if(e.dead)return;if(G.curSid&&e.isB){const q=e._sd&&e._sd.id===G.curSid?e._sd:(e._sd={id:G.curSid,sum:0}),room=e.max*CQ_STRIKE_CAP-q.sum;if(room<=0)return;if(d>room)d=room;q.sum+=d;}if(e.kind==='fort'){if(wpn!=='bb')return;e.hp-=e.max*.55;e.lastHit=G.t;if(e.hp<=0)kill(e,team,src);return;}if(e.civ&&e.kind==='civb'){const m=VS[wpn]&&VS[wpn].bld;if(m)damageCiv(e.civ,d*m,team);return;}if(e.oil){const m=VS[wpn]&&VS[wpn].bld;if(m)damageOil(e.oil,d*m,team);return;}if(e.isB&&team!=null&&!ally(team,e.team)){const V=G.teams[e.team];if(G.t-(V.atkWarn??-99)>25){V.atkWarn=G.t;log(e.team,'Our base is under attack!','r:base');}}else if(!e.isB&&e.s&&!e.civ&&team!=null&&e.team!=null&&!ally(team,e.team)&&G.teams[e.team]){const V=G.teams[e.team];if(G.t-(V.fireWarn??-99)>14){V.fireWarn=G.t;log(e.team,'Our troops are under fire!','v5');}}const ar=e.isB?'bld':(e.landed?'heavy':e.s.armor);const m=VS[wpn][ar];if(!m)return;const tc=tactic(e,wpn,src,splash);const dd=d*m*dmgIn(e,wpn)*tc.m*specialMult(e,wpn,src)*(e.cv&&e.cv.esc?.55:1);if(src&&!src.isB&&src.s.mark&&!e.isB)e.mark=G.t+6;e.hp-=dd;e.lastHit=G.t;if(!e.isB&&e.hp>0&&e.s&&e.s.armor==='heavy'&&e.s.dom==='ground')critRoll(e,dd,wpn,src,splash);
   if(!e.isB&&canRout(e)){e.fear=(e.fear||0)+dd/e.max*(isInf(e.s)?1.25:.7)*(coverAt(e.x,e.y)&&isInf(e.s)?.7:1)*(auraNear(e,'morale')?.5:1)+(splash?.05:.02);}
   if(!e.isB&&isInf(e.s)&&!auraNear(e,'morale')&&!auraNear(e,'rof')){const bk=team!=null&&G.teams[team]&&(DOCT[G.teams[team].fac]||{}).barrage&&(wpn==='shell'||wpn==='rocket'||splash)?1.5:1;e.supp=Math.min(1,(e.supp||0)+(dd/e.max*1.4+(wpn==='gun'||wpn==='tower'?.06:.12))*bk*(G.rubN&&rubAt(e.x,e.y)?.6:1));if(bk>1&&canRout(e))e.fear=(e.fear||0)+.04;}
   if(tc.tag&&tc.m>1.05&&G.t-(e.tagT||-9)>1.6&&(tc.tag==='REAR HIT'||tc.tag==='SIDE HIT'||tc.tag==='HIGH GROUND')){e.tagT=G.t;FXE('txt',[e.x|0,e.y|0,tc.tag,team,e.team]);}
@@ -6638,7 +6638,7 @@ function physTick(u,dt){if(!u.kx&&!u.ky)return;const d=u.s.dom==='ground'?(massO
   if(passXY(u.s.dom,nx,ny)){u.x=nx;u.y=ny;}else{u.kx*=-.3;u.ky*=-.3;}u.kx*=k;u.ky*=k;if(Math.abs(u.kx)+Math.abs(u.ky)<2){u.kx=u.ky=0;}}
 function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.crT&&G.t>u.crT&&!u.inTun){u.dead=true;G.byId.delete(u.id);FXE('gone',[u.id,u.x|0,u.y|0,-1,1]);return;}if(u.crit)critTick(u,dt);if(u.aband)return updAband(u,dt);if(G.dugN&&u.s.armor==='heavy'&&u.s.dom==='ground'&&G.t>(u.dgT||0)){u.dgT=G.t+.25;dugVeh(u);}if(u.dig)digTick(u,dt);else if(G.teams[u.team].ai&&u.s.armor==='light'&&u.s.dom==='ground')aiDig(u,dt);if(u.hp<u.max*.2&&u.s.armor==='heavy'&&bailCheck(u))return;const s=u.s,T=G.teams[u.team],m=T.F.mods;if(u.stun>G.t){u.cd=Math.max(u.cd,.5);return;}u.cd-=dt;if(T.dummy&&!T.fight){const o=u.order;u.target=null;if(o&&(o.type==='move'||o.type==='amove')&&u.kind!=='jet'){if(Math.hypot(o.x-u.x,o.y-u.y)<14)u.order=null;else navTo(u,o.x,o.y,dt,true);}return;}if(u.supp)u.supp=Math.max(0,u.supp-dt*(u.mz?.36:.22));
   if(G.t-u.lastHit>5&&u.hp<u.max&&!(u.supT!=null&&G.t-u.supT>60)){let rg=(m.regen||0)+(u.rank>=3?5:0)+upgK(T,u.kind,'regen');if(rg)u.hp=Math.min(u.max,u.hp+rg*dt);}
-  if(u.kind==='harv')return updHarv(u,dt);if(u.kind==='dozer')return updDozer(u,dt);if(u.kind==='jet')return updJet(u,dt);if(u.kind==='hacker')return updHacker(u,dt);
+  if(u.kind==='harv')return u.cv?updConvoy(u,dt):updHarv(u,dt);if(u.kind==='dozer')return updDozer(u,dt);if(u.kind==='jet')return updJet(u,dt);if(u.kind==='hacker')return updHacker(u,dt);
   if(canRout(u)&&moraleTick(u,dt))return;
   let o=u.order;if(o&&o.type==='demo')return updDemo(u,dt);
   // drive-then-unload (Alt+right-click with a transport): unload once the move ends; any other order cancels it
@@ -7157,7 +7157,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   // HQ queue priorities: a supply truck if it has none, then a bulldozer if it has none (without one it can never build a
   // barracks again: a raid that killed its dozer used to leave it buying trucks forever and never fielding an army),
   // then trucks up to 3-4.
-  const harvs=mine.filter(e=>e.kind==='harv').length,dzN=mine.filter(e=>e.kind==='dozer').length;
+  const harvs=mine.filter(e=>e.kind==='harv'&&!e.cv).length,dzN=mine.filter(e=>e.kind==='dozer').length;
   if(hq&&!T.q.hq.length){if(!harvs)enqueue(id,'harv');else if(!dzN)enqueue(id,'dozer');else if(harvs<3+(G.t>300?1:0))enqueue(id,'harv');}
   aiExpand(T,mine,hq);
   {const fnd=mine.filter(e=>e.isB&&e.nd&&e.built<1);const dzs=mine.filter(e=>e.kind==='dozer');for(const b of fnd){if(dzs.some(u=>u.order&&u.order.type==='build'&&u.order.target===b))continue;const fr=dzs.filter(u=>!u.order||u.order.type!=='build').sort((p,q)=>dist(p,b)-dist(q,b))[0];if(fr){fr.order={type:'build',target:b};fr.path=null;}}}
@@ -7444,7 +7444,7 @@ function supplyPoints(){const N=G.teams.length,P=[];for(let i=0;i<N;i++)P.push([
   for(const e of G.ents){if(e.dead||e.inTun||e.team==null||e.team<0||e.team>=N)continue;let r=0;
     if(e.isB){if(e.built<1)continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot:0;}else if(e.kind==='harv')r=SUP_R.harv;
     if(r)add(e.team,{x:e.x,y:e.y,r});}
-  if(G.civ)for(const c of G.civ)if(!c.dead&&c.ow>=0&&c.ow<N&&!(c.ti>=0&&G.towns&&G.towns[c.ti]&&G.towns[c.ti].cut))add(c.ow,{x:c.x,y:c.y,r:SUP_R.town});
+  if(G.civ)for(const c of G.civ)if(!c.dead&&c.ow>=0&&c.ow<N&&!(c.ti>=0&&G.towns&&G.towns[c.ti]&&G.towns[c.ti].cut))add(c.ow,{x:c.x,y:c.y,r:(c.ti>=0&&G.towns&&G.towns[c.ti]&&G.conq&&!(G.towns[c.ti].dl>G.t)&&!G.towns[c.ti].sk)?SUP_R.town*.5:SUP_R.town});
   return P;}
 function updSupply(dt){G.supT=(G.supT||0)+dt;if(G.supT<.5)return;const st=G.supT;G.supT=0;const P=supplyPoints();
   for(const u of G.ents){if(u.dead||u.isB||u.inTun)continue;const pts=P[u.team];if(!pts)continue;let ins=false;for(const p of pts){if(Math.abs(p.x-u.x)<p.r&&Math.abs(p.y-u.y)<p.r&&Math.hypot(p.x-u.x,p.y-u.y)<p.r){ins=true;break;}}
@@ -7833,7 +7833,7 @@ function lgTick(st){if(!G.towns||!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;if(L.
   if(s!==L.sig||!L.reach){L.sig=s;const c0=G.towns.map(t=>t.cut|0);lgCompute();
     for(const t of G.towns){if(t.ow>=0&&t.cut&&!c0[t.i]){log(t.ow,`${t.name} is CUT OFF from your supply network - reconnect the road, retake the link or build a bypass.`,'bad');FXE('tping',[t.ow,t.x|0,t.y|0,0]);}
       else if(t.ow>=0&&!t.cut&&c0[t.i])log(t.ow,`${t.name} is back on your supply network.`,'g');}}
-  lgJobs(st);}
+  lgJobs(st);lgConvoys(st);}
 // ---- building roads ----
 function lgPathTo(team,ti){const L=G.lg,tn=L.tn[ti];if(tn==null)return null;const to=L.N[tn];
   // start from the nearest node already on the team's trade network (own base / own towns joined to it)
@@ -7868,12 +7868,49 @@ function lgBlast(x,y,r,dmg,wpn){const L=G.lg,D=G.lgd;if(!L||!D||!G.conq||r<22||d
 function lgAI(T){if(!G.conq||!G.lgd||T.ai.d<1||T.ai.t%7!==3||T.credits<900||G.t<150)return;const D=G.lgd;if(D.job.some(j=>j.team===T.id))return;
   let best=null,bd=1e18;for(const t of G.towns){if(t.ow!==T.id||t.reb>G.t)continue;const tn=G.lg.tn[t.i];if(tn==null||(G.lg.trade&&G.lg.trade[T.id]&&G.lg.trade[T.id][tn]))continue;const d=Math.hypot(t.x-BASES[T.id][0],t.y-BASES[T.id][1]);if(d<bd&&!(t.fr>0)){bd=d;best=t;}}
   if(best&&bd<6500)lgRoadCmd(T.id,{ti:best.i,ids:[]});}
+
+// ---- CONVOYS (stage 3): supply trucks that drive the road network on their own ----
+/* Every ~20 s each team's HQ sends a convoy (an ordinary Supply Truck unit with u.cv set, $60 per trip) to the held town on its supply network that
+   has gone longest without a delivery. It follows the roads (Dijkstra over uncratered edges, never through enemy-held nodes), unloads (the town is
+   STOCKED for 4 min = its supply circle refills ammo at full range; an unstocked town only reaches half as far), drives home and disappears.
+   Trucks can be shot like any truck (an ambush); armed friendly units within 200 units escort it (45% less damage). A convoy also resupplies
+   units it passes (the normal truck supply circle). Host-only and deterministic (no random numbers). */
+const CVY_COST=60,CVY_MAX=3,CVY_STOCK=240,CVY_EVERY=20,CVY_ESC=200;const CVY_N=[];
+function lgRoute(team,fromN,toN){const L=G.lg,D=G.lgd,n=L.N.length,dist=new Array(n).fill(1e18),prev=new Array(n).fill(null),done=new Uint8Array(n);dist[fromN]=0;
+  const adj=L.N.map(()=>[]);L.E.forEach((e,i)=>{if(D.cr[i]&&D.cr[i].t>G.t)return;adj[e.a].push([e.b,i,1]);adj[e.b].push([e.a,i,0]);});
+  for(;;){let u=-1,bd=1e18;for(let i=0;i<n;i++)if(!done[i]&&dist[i]<bd){bd=dist[i];u=i;}if(u<0||u===toN)break;done[u]=1;
+    for(const [v,ei,f] of adj[u]){if(done[v])continue;if(v!==toN&&lgNodeFoe(L.N[v],team))continue;const d=dist[u]+L.E[ei].len;if(d<dist[v]){dist[v]=d;prev[v]=[u,ei,f];}}}
+  if(dist[toN]>=1e17)return null;const legs=[];for(let v=toN;v!==fromN;){const q=prev[v];legs.push([q[1],q[2]]);v=q[0];}legs.reverse();
+  const pts=[];for(const [ei,f] of legs){const P=L.E[ei].pts;const A=f?P:P.slice().reverse();for(let i=pts.length?1:0;i<A.length;i++)pts.push([A[i][0],A[i][1],ei]);}
+  return{pts,len:dist[toN]};}
+function lgConvoys(st){const D=G.lgd,L=G.lg;if(!G.conq||!L.reach)return;
+  for(const t of G.towns){if(t.dlo!==t.ow){t.dlo=t.ow;t.dl=t.ow>=0?G.t+120:0;}}
+  if(!D.cvl)D.cvl=[];
+  for(const id of D.cvl){const u=G.byId.get(id);if(u&&u.dead&&u.cv&&!u.cv.rep){u.cv.rep=1;D.v++;const tw=G.towns[u.cv.ti];log(u.team,`Our supply convoy to ${tw?tw.name:'the front'} was destroyed!`,'bad');FXE('tping',[u.team,u.x|0,u.y|0,0]);}}
+  D.cvl=D.cvl.filter(id=>{const u=G.byId.get(id);return u&&!u.dead;});
+  D.cvt=(D.cvt||0)+st;if(D.cvt<CVY_EVERY)return;D.cvt=0;
+  for(const T of G.teams){if(T.reb||T.out||T.credits<CVY_COST+200||!L.reach[T.id])continue;let cnt=0;const busy=new Set();for(const id of D.cvl){const u=G.byId.get(id);if(u&&u.team===T.id){cnt++;busy.add(u.cv.ti);}}if(cnt>=CVY_MAX)continue;
+    const hq=G.ents.find(e=>e.isB&&e.team===T.id&&e.kind==='hq'&&e.built>=1&&!e.dead);if(!hq)continue;
+    let best=null,bs=1e18;
+    for(const t of G.towns){if(t.ow!==T.id||t.cut||t.reb>G.t||busy.has(t.i))continue;const tn=L.tn[t.i];if(tn==null||!L.reach[T.id][tn])continue;
+      if((t.dl||0)>G.t+CVY_STOCK*.55)continue;const sc=(t.dl||0)-(t.fr>0?400:0)+Math.hypot(t.x-hq.x,t.y-hq.y)*.002;if(sc<bs){bs=sc;best=t;}}
+    if(!best)continue;const r=lgRoute(T.id,T.id,L.tn[best.i]);if(!r||r.pts.length<2)continue;
+    T.credits-=CVY_COST;const u=addUnit(T.id,'harv',r.pts[0][0],r.pts[0][1]);u.cv={ti:best.i,pts:r.pts,i:1,ret:0,esc:0,w:0,k:0};D.cvl.push(u.id);D.v++;}}
+function updConvoy(u,dt){const c=u.cv;c.k+=dt;
+  if(c.k>=1){c.k=0;let n=0;for(const e of nearby(u.x,u.y,CVY_ESC,CVY_N))if(!e.dead&&!e.isB&&e!==u&&e.team>=0&&ally(e.team,u.team)&&e.s&&!e.s.noAttack&&e.kind!=='harv')n++;c.esc=n>0?1:0;}
+  const P=c.pts;if(c.i>=P.length){c.rep=1;u.dead=true;return;}
+  const tp=P[c.i],E=G.lgd.cr[tp[2]];if(E&&E.t>G.t){c.w+=dt;if(c.w>20&&!c.ret){c.ret=1;c.pts=P.slice(0,c.i).reverse();c.i=0;c.w=0;}return;}c.w=0;
+  if(Math.hypot(tp[0]-u.x,tp[1]-u.y)<(c.ret&&c.i===P.length-1?140:46)){c.i++;if(c.i>=P.length&&!c.ret){const t=G.towns[c.ti];
+      if(t&&t.ow===u.team){t.dl=G.t+CVY_STOCK;G.lgd.v++;log(u.team,`Convoy delivered to ${t.name} - its supply circle is stocked.`,'g');
+        for(const e of nearby(t.x,t.y,SUP_R.town,CVY_N))if(!e.isB&&!e.dead&&e.team===u.team&&e.am!==undefined)e.am=e.amx;}
+      c.ret=1;c.pts=P.slice().reverse();c.i=0;}return;}
+  navTo(u,tp[0],tp[1],dt);}
 // ---- network packs (host -> clients, only the dynamic part; lives in teamGlobals) ----
-function lgPack(){const D=G.lgd;if(!D)return 0;return{rb:D.rb.map(r=>[r.a,r.b,r.team,r.pts.flat()]),cr:Object.keys(D.cr).map(k=>[+k,D.cr[k].x,D.cr[k].y,Math.round(D.cr[k].t-G.t)]),jb:D.job.map(j=>[j.id,j.team,j.a,j.b,Math.round(j.len),Math.round(j.prog/20)*20,j.pts.flat()]),cu:G.towns.filter(t=>t.cut).map(t=>t.i),tr:G.towns.filter(t=>t.trade).map(t=>t.i)};}
+function lgPack(){const D=G.lgd;if(!D)return 0;return{rb:D.rb.map(r=>[r.a,r.b,r.team,r.pts.flat()]),cr:Object.keys(D.cr).map(k=>[+k,D.cr[k].x,D.cr[k].y,Math.round(D.cr[k].t-G.t)]),jb:D.job.map(j=>[j.id,j.team,j.a,j.b,Math.round(j.len),Math.round(j.prog/20)*20,j.pts.flat()]),cu:G.towns.filter(t=>t.cut).map(t=>t.i),tr:G.towns.filter(t=>t.trade).map(t=>t.i),cv:G.ents.filter(e=>e.cv&&!e.dead).map(e=>e.id),sk:G.towns.filter(t=>t.ow>=0&&t.dl>G.t).map(t=>t.i)};}
 function lgApply(d){const D=G.lgd;if(!D||!d||typeof d!=='object')return;const un=a=>{const o=[];for(let i=0;i+1<a.length;i+=2)o.push([a[i],a[i+1]]);return o;};
   if((d.rb||[]).length!==D.rb.length){D.rb=d.rb.map(r=>({a:r[0],b:r[1],team:r[2],pts:un(r[3])}));D.v++;lgSync();}
   D.cr={};for(const c of d.cr||[])D.cr[c[0]]={x:c[1],y:c[2],t:G.t+c[3]};D.job=(d.jb||[]).map(j=>({id:j[0],team:j[1],a:j[2],b:j[3],len:j[4],prog:j[5],pts:un(j[6]),done:0}));
-  const cu=new Set(d.cu||[]),tr=new Set(d.tr||[]);for(const t of G.towns){t.cut=cu.has(t.i)?1:0;t.trade=tr.has(t.i)?1:0;}G.lgv=(G.lgv|0)+1;}
+  const cu=new Set(d.cu||[]),tr=new Set(d.tr||[]);for(const t of G.towns){t.cut=cu.has(t.i)?1:0;t.trade=tr.has(t.i)?1:0;}G.lgCv=new Set(d.cv||[]);const sk=new Set(d.sk||[]);for(const t of G.towns)t.sk=sk.has(t.i)?1:0;G.lgv=(G.lgv|0)+1;}
 let BORDER_TEX=null;
 /* ================= 3D ENGINE: renderer, terrain, water, models ================= */
 const cv=$('cv'),hud=$('hud'),hx=hud.getContext('2d'),mm=$('mm'),mx=mm.getContext('2d');
@@ -12500,14 +12537,18 @@ function drawLogiWorld(c){if(!G||!G.lg||!G.lgd||G.over)return;
     c.setLineDash([]);if(done.length>1){c.strokeStyle='rgba(0,0,0,.5)';c.lineWidth=6;lgStroke(c,done);c.strokeStyle='#d9c27a';c.lineWidth=3;lgStroke(c,done);}
     if(todo.length>1){c.setLineDash([6,8]);c.strokeStyle='#f0d060';c.lineWidth=2;lgStroke(c,todo);c.setLineDash([]);}
     const fp=lgPoint(j,j.prog),p=toScreen(fp[0],groundH(fp[0],fp[1])+60,fp[1]);if(p.z<=1){c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-38,p.y-16,76,16);c.fillStyle='#f0d060';c.font='bold 11px system-ui,sans-serif';c.textAlign='center';c.fillText('ROAD '+Math.round(100*j.prog/Math.max(1,j.len))+'%',p.x,p.y-4);}}
+  // supply convoys: a crate badge (green = yours / allied, red = enemy) + stocked towns
+  for(const e of G.ents){if(e.dead||!(e.cv||(G.lgCv&&G.lgCv.has(e.id)))||!inView(e.x,e.y,.1))continue;const p=toScreen(e.x,groundH(e.x,e.y)+34,e.y);if(p.z>1)continue;const fr=ally(e.team,ME);
+    c.fillStyle='rgba(0,0,0,.78)';c.fillRect(p.x-15,p.y-18,30,14);c.fillStyle=fr?'#7ee88f':'#ff6a55';c.fillRect(p.x-9,p.y-15,8,8);c.fillRect(p.x+1,p.y-15,8,8);c.fillStyle='#fff';c.font='bold 8px system-ui,sans-serif';c.textAlign='center';c.fillText(fr?'SUP':'CVY',p.x,p.y-6);}
   // cut-off and trade-route tags on your towns
-  for(const t of G.towns){if(!townsMine(t)||!inView(t.x,t.y,.1))continue;if(!t.cut&&!(t.trade&&lgWanted()))continue;const p=toScreen(t.x,groundH(t.x,t.y)+(t.ham?70:110),t.y);if(p.z>1)continue;
-    c.font='bold 11px system-ui,sans-serif';c.textAlign='center';const txt=t.cut?'CUT OFF':'TRADE ROUTE +25%';c.fillStyle='rgba(0,0,0,.78)';const w=c.measureText(txt).width+12;c.fillRect(p.x-w/2,p.y+4,w,16);c.fillStyle=t.cut?'#ff6a55':'#7ee88f';c.fillText(txt,p.x,p.y+16);}
+  for(const t of G.towns){if(!townsMine(t)||!inView(t.x,t.y,.1))continue;if(!t.cut&&!((t.trade||t.sk||t.dl>G.t)&&lgWanted()))continue;const p=toScreen(t.x,groundH(t.x,t.y)+(t.ham?70:110),t.y);if(p.z>1)continue;
+    c.font='bold 11px system-ui,sans-serif';c.textAlign='center';const txt=t.cut?'CUT OFF':(t.trade?'TRADE ROUTE +25%':'')+((t.sk||t.dl>G.t)?(t.trade?' · ':'')+'STOCKED':'');c.fillStyle='rgba(0,0,0,.78)';const w=c.measureText(txt).width+12;c.fillRect(p.x-w/2,p.y+4,w,16);c.fillStyle=t.cut?'#ff6a55':'#7ee88f';c.fillText(txt,p.x,p.y+16);}
   c.restore();}
 function drawLogiMini(c,sx,sy){if(!G||!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;c.save();c.lineCap='round';
   L.E.forEach((e,i)=>{const s=lgEdgeState(e,i);if(s===1){c.setLineDash([]);c.strokeStyle='rgba(95,224,122,.75)';c.lineWidth=1.6;}else{c.setLineDash([4,3]);c.strokeStyle='rgba(255,90,74,.9)';c.lineWidth=1.6;}
     c.beginPath();e.pts.forEach((p,k)=>k?c.lineTo(p[0]*sx,p[1]*sy):c.moveTo(p[0]*sx,p[1]*sy));c.stroke();});c.setLineDash([]);
   for(const t of G.towns)if(t.cut&&townsMine(t)){c.strokeStyle='#ff5a4a';c.lineWidth=2;c.beginPath();c.arc(t.x*sx,t.y*sy,8,0,7);c.stroke();}
+  for(const e of G.ents){if(e.dead||!(e.cv||(G.lgCv&&G.lgCv.has(e.id))))continue;c.fillStyle=ally(e.team,ME)?'#ffe45a':'#ff4a3a';c.fillRect(e.x*sx-2.5,e.y*sy-2.5,5,5);}
   c.restore();}
 function lgTownHtml(t,mine){if(!mine||!G.lg)return'';const T=G.teams[ME];let h='';
   if(t.cut)h+='<div class="warn" style="margin-top:6px">CUT OFF: no road link to your supply network. No ammo refill here, tax -50%, unrest rising. Repair or rebuild the road, retake the town in between, or build a bypass.</div>';
