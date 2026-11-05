@@ -141,6 +141,16 @@ function envAudio(dt){if(!AU.ctx||!G||SFX.st!=='ok')return;envT-=dt;if(envT>0)re
   const wind=k==='blizzard'||k==='sandstorm'?.5:th==='snow'?.2:th==='green'?.08:.12;
   envLoop('wind',on?wind*.5:0);envLoop('rain',on&&k==='rain'?.45:0);envLoop('rumble',on?(.05+Math.min(.45,AU.heat*.45))*.5:0);}
 function sfxUI(f){if(!auOn()||!AU.sfxOn)return;const t=AU.ctx.currentTime;osc(AU.sfx,t,'sine',f||880,0,.07,.08);osc(AU.sfx,t+.05,'sine',(f||880)*1.5,0,.08,.05);}
+// ---- missile strikes: motor roar at the launch site, incoming whistle at the target, deep blast thump ----
+function sfxLaunch(x,y,cruise){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('mlaunch',3,.25))return;const t=AU.ctx.currentTime,b=bus(sp);
+  nz(b,t,.05,'highpass',1800,0,.8);nz(b,t,3,'lowpass',2600,260,.95,.7);nz(b,t+.05,3.4,'bandpass',cruise?900:520,140,.55,.9,AU.brown);osc(b,t,'sine',cruise?70:55,34,3.2,1.1,.02);
+  for(let i=0;i<10;i++)nz(b,t+.1+Math.random()*1.8,.04+Math.random()*.05,'bandpass',900+Math.random()*2600,0,.1*Math.random(),3);}
+function sfxWhistle(x,y,dur){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('whis',2,.5))return;const t=AU.ctx.currentTime,b=bus(sp),d=Math.max(.8,Math.min(2.2,dur));
+  osc(b,t,'sine',2300,820,d,.2,.3);osc(b,t,'triangle',2330,850,d,.07,.3);nz(b,t,d,'bandpass',3300,1100,.26,7);}
+function sfxFallBomb(x,y){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('fallb',2,.5))return;const t=AU.ctx.currentTime,b=bus(sp);nz(b,t,1.4,'bandpass',700,2600,.3,1.2);osc(b,t,'sawtooth',180,70,1.4,.12,.3);}
+function sfxMega(x,y,S){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('mboom',2,.35))return;const t=AU.ctx.currentTime,b=bus(sp),k=Math.min(1.4,.5+S/60);
+  osc(b,t,'sine',52,18,2.6,1.5*k,.004);nz(b,t,.5,'lowpass',900,100,1.1*k,.7);nz(b,t+.12,4,'lowpass',260,45,.9*k,.6,AU.brown);
+  for(let i=0;i<8;i++)nz(b,t+.4+Math.random()*2.2,.05+Math.random()*.1,'lowpass',500+Math.random()*900,120,.18*k*Math.random(),1.5);}
 function sfxAlarm(){if(!auOn()||!AU.sfxOn)return;const c=AU.ctx,t=c.currentTime;for(let i=0;i<5;i++){const o=c.createOscillator(),g=c.createGain();o.type='sawtooth';o.frequency.setValueAtTime(480,t+i*.6);o.frequency.linearRampToValueAtTime(900,t+i*.6+.5);const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=2200;g.gain.setValueAtTime(.0001,t+i*.6);g.gain.linearRampToValueAtTime(.08,t+i*.6+.05);g.gain.linearRampToValueAtTime(0,t+i*.6+.55);o.connect(f);f.connect(g);g.connect(AU.sfx);o.start(t+i*.6);o.stop(t+i*.6+.6);}}
 /* ---------- voices ---------- */
 const PHR={

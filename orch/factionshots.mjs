@@ -117,13 +117,15 @@ async function solo(page, fac, tagn, kinds, dmg) {
       let d = base; for (let i = 0; i < 8; i++) { const p = pf(d); d = h / Math.sin(p) + base; } const p = pf(d);
       cam.dist = cam.td = d; cam.x = cam.tx = ux; cam.y = cam.ty = uz - h / Math.tan(p); cam._xl = cam.x; cam._yl = cam.y; cam._dl = d; }, [await page.evaluate(() => cam.dist)]);
     if (dmg) { await page.evaluate(() => { for (let i = 0; i < 40; i++) { G.t += 1 / 30; renderFrame(1 / 30); } }); console.log('parts', await page.evaluate(() => PARTS.length + ' near ' + PARTS.filter(p => Math.hypot(p.x - window.__u.x, p.y - window.__u.y) < 60).length + ' G.paused ' + G.paused + ' hp ' + window.__u.hp + '/' + window.__u.max)); }
+    if (argS('ab', '')) { await page.evaluate(() => { const u = window.__u, o = OBJ.get(u.id); if (o) o.userData.abk = 1; }); console.log('nozzles', await page.evaluate(() => { const o = OBJ.get(window.__u.id), g = o && o.userData.parts.glow; return g ? JSON.stringify(g.children.map(c => [c.position.x, c.position.y, c.position.z, c.userData.r].map(v => +(+v).toFixed(2)))) : 'none'; })); }
     await frames(page, 3); await snap(page, `${tagn}-${fac}-${kd}${dmg ? '-dmg' : ''}`);
     await page.evaluate(() => { G.ents = G.ents.filter(e => e !== window.__u); });
   }
 }
 try {
   const SOLO = argS('solo', '');
-  if (SOLO) { const { ctx, page } = await open({ viewport: { width: 1280, height: 720 } });
+  if (SOLO) { const { ctx, page } = await open(argS('phone', '') ? { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : { viewport: { width: 1280, height: 720 } });
+    if (argS('phone', '')) await page.evaluate(() => { for (const b of document.querySelectorAll('button')) if (/^skip$/i.test(b.textContent.trim())) b.click(); });
     if (argS('low', '')) await page.evaluate(() => { SET.gfx = 'low'; });
     for (const f of FACS) await solo(page, f, argS('low', '') ? 'low' : 'pc', SOLO.split(','), +argS('dmg', '0'));
     await ctx.close(); if (errs.length) console.log(errs.slice(0, 20).join('\n')); await browser.close(); server.close(); process.exit(0); }
