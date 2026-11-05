@@ -7872,7 +7872,7 @@ function dozeRoad(u,dt){const o=u.order;if(!o||o.type!=='road')return false;cons
   const T=G.teams[u.team],cost=LG_COST*LG_SPD*dt;if(T.credits<cost){u.rn=(u.rn||0)+dt;if(u.rn>8){u.order=null;log(u.team,'Not enough supplies to keep building the road.','w');}return true;}u.rn=0;
   T.credits-=cost;job.prog=Math.min(job.len,job.prog+LG_SPD*dt);job.t=G.t;u.building=true;u.ang=Math.atan2(fp[1]-u.y,fp[0]-u.x);u.lastFire=G.t;return true;}
 function lgJobs(st){const D=G.lgd;let ch=0;for(const j of D.job){if(j.done)continue;if(j.prog>=j.len-.5){j.done=1;ch=1;D.rb.push({a:j.a,b:j.b,pts:j.pts,team:j.team});D.v++;lgSync();
-      const nt=G.lg.N[j.b].t;if(nt>=0)log(j.team,`Road to ${G.towns[nt].name} finished.`,'g');for(const u of G.ents)if(u.order&&u.order.type==='road'&&u.order.job===j.id)u.order=null;}
+      const nd=G.lg.N[j.b],nt=nd?nd.t:-1;if(nt>=0&&G.towns[nt])log(j.team,`Road to ${G.towns[nt].name} finished.`,'g');for(const u of G.ents)if(u.order&&u.order.type==='road'&&u.order.job===j.id)u.order=null;}
     else if(G.t-(j.t||G.t)>200&&!G.ents.some(u=>!u.dead&&u.order&&u.order.type==='road'&&u.order.job===j.id)){j.dead=1;ch=1;}}
   if(ch){D.job=D.job.filter(j=>!j.done&&!j.dead);D.v++;}}
 // ---- road warfare: big blasts crater a road ----
