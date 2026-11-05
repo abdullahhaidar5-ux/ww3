@@ -316,11 +316,11 @@ async function main() {
     NET.tm = [0, 1]; NET.ais = [];
     const pool = ['CN', 'IR', 'TR', 'EU', 'KP', 'IN'];
     for (let i = 0; i < ais; i++) NET.ais.push({ f: pool[i], d: 0, tm: 2 + i });
-    launchMP(); return G && G.teams.map(T => T.fac);
+    launchMP(); return G && G.teams.filter(Q => !Q.reb).map(T => T.fac);
   }, AIS);
   if (!facs) throw new Error('host battle did not start (launchMP)');
-  await waitFor(client, () => MODE === 'client' && G && G.teams && G.teams.length > 1, null, 300000, 'the client to enter the battle');
-  const cInfo = await client.evaluate(() => ({ me: ME, n: G.teams.length, map: G.mapKey }));
+  await waitFor(client, () => MODE === 'client' && G && G.teams && G.teams.filter(Q => !Q.reb).length > 1, null, 300000, 'the client to enter the battle');
+  const cInfo = await client.evaluate(() => ({ me: ME, n: G.teams.filter(Q => !Q.reb).length, map: G.mapKey }));
   console.log(`[${secs()}] battle: ${facs.join(' vs ')} on ${cInfo.map}; client is slot ${cInfo.me}`);
   // the battle starts behind a loading screen (terrain, shader warm-up, first frame drawn underneath): wait for both
   // pages to finish it, as players would, before the test drives the clocks (otherwise the client's last loading steps
@@ -330,7 +330,7 @@ async function main() {
   console.log(`[${secs()}] both pages finished loading`);
   if (SPEC) {
     await waitFor(spec, () => MODE === 'client' && NET.spec === 1 && G && G.terrain && !window.LOADING, null, 600000, 'the spectator to enter the battle');
-    const h = await host.evaluate((p) => ({ specs: (NET.specs || []).map(s => s.peer), inPeers: (NET.peers || []).includes(p), n: G.teams.length }), specPeer);
+    const h = await host.evaluate((p) => ({ specs: (NET.specs || []).map(s => s.peer), inPeers: (NET.peers || []).includes(p), n: G.teams.filter(Q => !Q.reb).length }), specPeer);
     console.log(`[${secs()}] spectator is watching (host has ${h.specs.length} spectator; ${h.n} sides)`);
     if (h.specs.length !== 1 || h.specs[0] !== specPeer) fail('the host does not list the spectator once the battle started');
     if (h.inPeers) fail('the spectator was given a side (it is in the host\'s player list)');
@@ -339,7 +339,7 @@ async function main() {
   }
   // every model this battle's nations need must have arrived on both pages (the artifact edition publishes them differently)
   for (const [tag, p] of [['host', host], ['client', client]]) {
-    const m = await p.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.map(T => T.fac)) : Object.keys(MODEL_FILES);
+    const m = await p.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.filter(Q => !Q.reb).map(T => T.fac)) : Object.keys(MODEL_FILES);
       return { of: ks.length, miss: ks.filter(k => !MODELS.proto[k]), err: MODELS.err || '' }; });
     if (m.miss.length) fail(`${ART ? 'artifact ' : ''}${tag}: ${m.miss.length} of ${m.of} 3D models for this battle missing (${m.miss.slice(0, 5).join(', ')}) ${m.err}`); }
   if (cInfo.me !== 1) fail('client got slot ' + cInfo.me + ', expected 1');
@@ -491,7 +491,7 @@ async function main() {
       const b = await host.evaluate(() => ({ buf: NET.game && NET.game._ws ? NET.game._ws.bufferedAmount : -1, kf: NET.kf && NET.kf[1] }));
       console.log(`[${secs()}] lag ${(h.t - c.snapT).toFixed(1)} s at host t=${h.t.toFixed(1)} (host socket backlog ${b.buf} B, client rx ${(c.rx / 1000).toFixed(1)} s ago)`); }
     if (ticks >= 100 && ticks > lagSkip && h.sees && h.t - c.snapT > 1.5 && !lagLogged) { lagLogged = true; // say when, and in what state, the client first fell behind
-      const o = await host.evaluate(() => G.teams.map(T => T.fac + (T.out ? ' out' : '')).join(', '));
+      const o = await host.evaluate(() => G.teams.filter(Q => !Q.reb).map(T => T.fac + (T.out ? ' out' : '')).join(', '));
       console.log(`[${secs()}] client first fell ${(h.t - c.snapT).toFixed(1)} s behind at host t=${h.t.toFixed(1)}s (${o})`); }
     if (RECON && ticks === 650 && SRV) { await client.evaluate(() => { NET.game._ws.close(); });
       console.log(`[${secs()}] --reconnect: the client's connection to the server is cut; it must reconnect`);
@@ -557,7 +557,7 @@ async function main() {
       console.log(`[${secs()}] client order: ${movedN}/${order.n} of the client's units moved on the host`);
       if (!movedN) fail('an order given on the client never reached the host (none of its units moved)');
     }
-    if (h.over) { const w = await host.evaluate(() => G.teams.map(T => T.fac + (T.out ? ' out' : '')).join(', '));
+    if (h.over) { const w = await host.evaluate(() => G.teams.filter(Q => !Q.reb).map(T => T.fac + (T.out ? ' out' : '')).join(', '));
       console.log(`[${secs()}] battle ended at t=${h.t.toFixed(0)}s (${w})`); if (!checks.has(ticks)) await settleCheck('final'); break; }
     if (ticks % 100 === 0) await liveCheck();
     if (checks.has(ticks)) { await settleCheck(`check @${(ticks / 600).toFixed(1)} min`); if (ticks === 1500 || ticks === total) await screenshots(); }

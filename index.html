@@ -7321,7 +7321,7 @@ function townBase(t){return t.ham?.9+.9*t.K:5.5+1.0*t.K;}
 function townRestless(t){return t.ow>=0&&t.un>50;}
 function townIncome(t){if(t.ow<0)return 0;const hold=Math.min(1,(G.t-t.hold)/T_RAMP),ramp=.5+.5*hold;let v=townBase(t)*TAX[t.rate].m*ramp*(t.whole?1.5:1);if(t.pk===1&&!townRestless(t))v*=t.rate===0?1.4:1.25;if(townRestless(t))v*=.8;return v*(G.bs||1);}
 function townRebelsLeft(t){let n=0;for(const u of t.rebU)if(!u.dead)n++;return n;}
-function townRevolt(t){const prev=t.ow;if(prev<0)return;const T=G.teams[prev];
+function townRevolt(t){const prev=t.ow;if(prev<0)return;const T=G.teams[prev];T.revN=(T.revN|0)+1;
   for(const c of t.cells){if(c.g){leaveGarrison(c);}c.ow=-1;c.cp=0;c.cpT=-1;}
   t.ow=-1;t.reb=G.t+T_REBEL_S;t.un=50;t.rate=1;t.tax=0;t.hold=G.t;G.civDirty=true;
   const R=G.reb,n=(t.ham?3:5)+Math.min(3,t.K-1);t.rebU=[];
@@ -7362,7 +7362,7 @@ function updTowns(st){if(!G.towns)return;const N=G.teams.length;
     t.fr=nE;t.gar=nG;
     const d=base+fr+fresh+(t.shock>G.t?1.5:0)-cal-cl;t.un=Math.max(0,Math.min(100,t.un+d*st));
     t.why=fr>=.9?1:base>=.3?2:fresh>0?3:(t.shock>G.t)?4:0;
-    t.tax=townIncome(t);T.credits+=t.tax*st;terr[t.ow]+=t.tax;
+    t.tax=townIncome(t);T.credits+=t.tax*st;terr[t.ow]+=t.tax;T.taxSum=(T.taxSum||0)+t.tax*st;
     // --- perks (off while restless): clinic heals infantry, garage repairs vehicles
     if(!townRestless(t)&&(t.pk===3||t.pk===2)){const hr=t.rate===0?1.6:1;for(const e of U){if(!ally(e.team,t.ow)||Math.hypot(e.x-t.x,e.y-t.y)>T_GAR_R)continue;const inf=e.s.armor==='light';if(t.pk===3&&inf||t.pk===2&&!inf&&e.s.dom==='ground')e.hp=Math.min(e.max,e.hp+e.max*.012*hr*st);}}
     // --- low tax: loyal locals - a couple of militia rifles help when the enemy comes close
@@ -7373,7 +7373,8 @@ function updTowns(st){if(!G.towns)return;const N=G.teams.length;
     if(t.un>=90&&!t.w90){t.w90=1;log(t.ow,`${t.name} is about to REVOLT! Lower taxes or send troops NOW.`,'bad');FXE('tping',[t.ow,t.x|0,t.y|0,0]);}
     if(t.un>=100){townRevolt(t);continue;}
     // --- AI: High tax in safe rear towns, Low on the front, never lets a town boil over
-    if(T.ai){let want=1;if(nE>0||t.un>=60)want=0;else if(t.un>=40&&t.rate>=2)want=1;else if(nG>=1&&t.un<30)want=2;else if(t.un<25)want=nG>=1?2:1;if(t.un>=75)want=0;if(want!==t.rate&&(want<t.rate||G.t>=(t.rateT||0))){t.rate=want;t.rateT=G.t+20;}}
+    if(T.ai){let want=1;if(nE>0||t.un>=60)want=0;else if(t.un>=40&&t.rate>=2)want=1;else if(nG>=1&&t.un<30)want=2;else if(t.un<25)want=nG>=1?2:1;if(t.un>=75)want=0;if(T.taxPol!=null)want=T.taxPol;   /* test hook (orch/conquest-t5.mjs): a fixed tax policy */
+      if(want!==t.rate&&(want<t.rate||G.t>=(t.rateT||0)||T.taxPol!=null)){t.rate=want;t.rateT=G.t+20;}}
   }
   for(const T of G.teams)T.terr=terr[T.id]||0;
   if(G.conq){// base trickle (comeback floor) while the HQ stands, and the structure count behind "Enemy base: N of M structures left"
