@@ -1,6 +1,6 @@
 // Bundles the game's battle code into the Worker: writes gen/battle-sim.js, an ES module whose createBattleSim() returns
 // one independent battle (its own G, NET...). Source: the game's own files in ../src (01-data, 02-map, 03-sim,
-// 07a-hostsnap, 07b-ckpt), joined exactly as orch/headless.mjs does for Node (simSource), plus the server's control
+// 07a-hostsnap, 07b-ckpt), (plus 03b-tactics) joined exactly as orch/headless.mjs does for Node (simSource), plus the server's control
 // panel (src/battle-driver.js). The browser game's build (orch/build.py) is not involved and does not change.
 //
 // Runs automatically before `wrangler dev` / `wrangler deploy` ([build] in wrangler.toml), and from the Node tests.
