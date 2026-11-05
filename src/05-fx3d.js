@@ -127,6 +127,9 @@ const FXH={
     for(let i=0;i<6;i++){const k=i/5,gx=tx-sx*40+sx*80*k+rnd(-8,8),gy=ty-sy*40+sy*80*k+rnd(-8,8);fxLater(()=>{TRACERS.push({a:[x,h-3,y],b:[gx,groundH(gx,gy)+1,gy],t:0,d:.09,c:[3,1.9,.7]});part({x:gx,y:gy,h:groundH(gx,gy)+2,vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(20,50),c:C_DUST,s:rnd(3,5),g:8,d:rnd(.5,.9),a:.55});part({x:gx,y:gy,h:groundH(gx,gy)+2,add:true,c:C_SPARK,s:2.2,d:.08});},80+i*55);}},
   pj(x,y,h,tx,ty,th,spd,wpn,rocket){const len=Math.max(1,Math.hypot(tx-x,ty-y));VPROJ.push({x,y,h,sx:x,sy:y,sh:h,tx,ty,th,spd,wpn,rocket,len,p:0});},
   boom(x,y,s,big){boomFX(x,y,s,big);},
+  // missile-defence intercept: an interceptor streaks up from the battery, a bright flash high over the target
+  icpt(sx,sy,tx,ty){const N=7;for(let i=0;i<N;i++){const k0=i/N,k1=(i+1)/N,h0=groundH(sx,sy)+8+k0*210,h1=groundH(sx,sy)+8+k1*210;fxLater(()=>{TRACERS.push({a:[sx+(tx-sx)*k0,h0,sy+(ty-sy)*k0],b:[sx+(tx-sx)*k1,h1,sy+(ty-sy)*k1],t:0,d:.35,c:[2.6,2.2,1.4]});},i*70);}
+    fxLater(()=>boomFX(tx,ty,30,true,210),N*70);},
   toss(id,vh){const o=OBJ.get(id);if(o)o.userData.toss={h:0,vh,sp:(Math.random()<.5?-1:1)*rnd(4,9),r:0};},
   // ballistic missile: launch plume at the silo, a high arc with a burning exhaust and a long smoke trail, then a steep
   // dive onto the target (the sim's own strike makes the explosion on arrival)

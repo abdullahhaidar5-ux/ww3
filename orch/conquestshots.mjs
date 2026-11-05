@@ -51,6 +51,7 @@ for (const s of sizes) {
     G.teams[ME].ai = null; for (const T of G.teams) if (T.ai) T.ai = null;
     return { rear: towns[0] && towns[0].i, front: towns[1] && towns[1].i, ham: hams[0] && hams[0].i, n: G.towns.length, nh: hams.length }; });
   console.log(c.name, JSON.stringify(pick));
+  if (s === 'd') await shot('0-setup-banner');
   // 1: rear town on High tax, calm
   await page.evaluate(([r]) => { const t = G.towns[r]; for (const k of t.cells) if (k.key) k.ow = ME; simUpdate(.6); t.rate = 2; t.un = 18; t.hold = G.t - 100; t.fresh = 0; G.teams[ME].reveals.push({ x: t.x, y: t.y, r: 700, t: 600 }); }, [pick.rear]);
   await focus(pick.rear, 0, 20); await shot('1-rear-high-calm');
@@ -71,6 +72,18 @@ for (const s of sizes) {
   await shot('7-minimap-hud');
   const mm = await page.evaluate(() => { const r = mm.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
   await page.screenshot({ path: path.join(SH, `8-minimap-${c.name}.png`), clip: { x: Math.max(0, mm.x - 6), y: Math.max(0, mm.y - 6), width: mm.w + 12, height: mm.h + 12 }, timeout: 300000 });
+  if (s === 'd') {   // 9: strike countdown + launch site exposed + missile-defence intercept; 10: end screen; (setup banner is shot 0)
+    await page.evaluate(() => { G.t = 600; G.setupEnd = 90; const me = G.teams[ME], en = G.teams.find(T => !T.reb && T.id !== ME);
+      const hq = G.ents.find(e => e.team === ME && e.kind === 'hq'), eh = G.ents.find(e => e.team === en.id && e.kind === 'hq');
+      const mk = (team, kind, x, y) => { me.credits = en.credits = 99999; for (const T of G.teams) if (!T.reb) T.pwOff = 0; const t0 = G.ents.length; placeBld(team, kind, x, y); for (const e of G.ents) if (e.isB && e.team === team && e.kind === kind) { e.built = 1; e.hp = e.max; } };
+      mk(ME, 'uplink', hq.x + 140, hq.y + 60); mk(en.id, 'sam', eh.x - 150, eh.y + 40); mk(en.id, 'sam', eh.x + 120, eh.y - 90);
+      me.charge = me.sup.charge; simUpdate(.5); launch(ME, eh.x, eh.y); G.teams[ME].reveals.push({ x: eh.x, y: eh.y, r: 700, t: 600 }); centerOn(eh.x, eh.y, true); G.sel = []; simUpdate(1.2); updateUI(); });
+    await shot('9-strike-inbound');
+    await page.evaluate(() => { const eh = G.ents.find(e => e.team !== ME && e.kind === 'hq' && !e.isGhost); for (let i = 0; i < 8; i++) { simUpdate(.3); } updateUI(); });
+    await shot('9b-strike-impact-or-intercept');
+    await page.evaluate(() => { for (const e of G.ents) if (e.isB && e.team !== ME && !G.teams[e.team].reb && ['hq', 'barracks', 'factory', 'airfield', 'shipyard'].includes(e.kind)) { e.hp = 0; } for (let i = 0; i < 6; i++) simUpdate(.5); updateUI(); });
+    await new Promise(r => setTimeout(r, 2500)); await shot('10-end-screen');
+  }
   await ctx.close();
 }
 await browser.close(); server.close(); process.exit(0);
