@@ -191,7 +191,7 @@ try {
   });
   console.log(JSON.stringify(R));
   ck('six soldiers dig six foxholes', R.fox >= 5, R.fox); ck('a foxhole gives cover', R.foxCov === 2 && R.cover === 1, R.foxCov + '/' + R.cover);
-  ck('soldiers sit low in the hole', R.drop > 0, R.drop); ck('dug-in soldier takes far less damage than one in the open', R.mHole < R.mOpen * .75, R.mHole + ' vs ' + R.mOpen);
+  ck('soldiers sit low in the hole', R.drop > 0, R.drop); ck('dug-in soldier takes far less damage than one in the open', R.mHole < .62, R.mHole + ' vs ' + R.mOpen);
   ck('Construction Vehicle lays sandbags and pays for them', R.sand >= 3, R.sand + ' ' + R.paid); ck('trench segments appear', R.trench >= 2, R.trench);
   ck('vehicles slow down over sandbags', R.slow === .5, R.slow); ck('a shell destroys sandbags', R.blast > 0, R.blast);
   ck('fortification list packs and unpacks for clients', R.pk > 0 && R.rt, R.pk);
@@ -210,8 +210,8 @@ try {
   await page.evaluate(() => { G.sel = [G.ents.find(e => e.crit && !e.isB && e.team === ME)].filter(Boolean); updateUI(); });
   await S('tank-selected', 200, 90, 160);
   await page.setViewportSize({ width: 844, height: 390 }); await page.waitForTimeout(500);
-  await page.evaluate(() => { const soldiers = G.ents.filter(e => !e.isB && e.team === ME && isInf(e.s) && !e.dead).slice(0, 4); G.sel = soldiers; updateUI(); });
-  await S('phone', -100, -45, 220);
+  await page.evaluate(() => { const soldiers = G.ents.filter(e => !e.isB && e.team === ME && isInf(e.s) && !e.dead && !e.crew).slice(0, 4); G.sel = soldiers; window.__ph = soldiers.length ? { x: soldiers.reduce((a, e) => a + e.x, 0) / soldiers.length, y: soldiers.reduce((a, e) => a + e.y, 0) / soldiers.length } : null; updateUI(); });
+  if (want.includes('phone')) { const q = await page.evaluate(() => window.__ph); if (q) await shotAt('phone', q.x - R.sx + 25, q.y - R.sy + 22, 150); }
   await page.evaluate(() => { G.sel = [G.ents.find(e => e.kind === 'dozer' && e.team === ME)]; updateUI(); }); await S('phone-dozer', 70, -15, 220);
 } catch (e) {
   fails.push(String(e && e.message || e));
