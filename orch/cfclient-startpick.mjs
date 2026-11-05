@@ -105,7 +105,7 @@ async function hitSpot(page, sel, k, n, touch) {
 }
 // where the battle put every side, and whether each side's HQ stands on its base
 const battleBases = page => page.evaluate(() => ({ mode: MODE, bases: BASES.slice(0, G.N || G.teams.length).map(([x, y]) => [Math.round(x), Math.round(y)]),
-  hq: G.teams.map((T, t) => { const b = BASES[t]; if (MODE === 'client' && (!(NET.lastSnapT > 0) || T.tm !== G.teams[ME].tm)) return null;   // a player's snapshots hold only what it can see
+  hq: G.teams.filter(T => !T.reb).map((T, t) => { const b = BASES[t]; if (MODE === 'client' && (!(NET.lastSnapT > 0) || T.tm !== G.teams[ME].tm)) return null;   // a player's snapshots hold only what it can see
     return G.ents.some(e => e.team === t && !e.dead && Math.hypot(e.x - b[0], e.y - b[1]) < 40); }) }));
 // the world position of spot k for a battle of n sides (what BASES must hold)
 const spotXY = (page, k, n) => page.evaluate(([k, n]) => { const D = MAPS[G.mapKey]; return slotsOf(D, n)[k].map(v => Math.round(v * WK)); }, [k, n]);
