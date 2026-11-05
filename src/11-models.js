@@ -965,19 +965,25 @@ function jetNozzles(o,yaw,bb){const L=bb.max.x-bb.min.x,W=bb.max.z-bb.min.z,H=bb
   // two separate engines only if both sides have nozzle cells and the middle doesn't dominate
   if(grp[0].length&&grp[1].length&&mid.length<Math.min(grp[0].length,grp[1].length)){const a=mk(grp[0]),b=mk(grp[1]),r=(a.r+b.r)/2,y=(a.y+b.y)/2,z=(Math.abs(a.z)+Math.abs(b.z))/2,x=Math.max(a.x,b.x);return [{x,y,z:-z,r},{x,y,z,r}];}
   const one=mk(rear);one.z=0;return [one];}
-// unit plume (nozzle radius 1, pointing -x): outer orange envelope, white-hot core, three faint shock diamonds, glowing nozzle ring.
-// Vertex colours carry the fade (additive blend: black = invisible), so no texture and one shared material.
-function jetPlumeGeo(){if(jetPlumeGeo.g)return jetPlumeGeo.g;const parts=[];
-  const cone=(r0,r1,len,seg,c0,c1,off)=>{const g=new THREE.CylinderGeometry(r1,r0,len,seg,6,true);g.rotateZ(Math.PI/2);g.translate(-len/2-(off||0),0,0);const p=g.attributes.position,col=[];
-    for(let i=0;i<p.count;i++){const t=Math.min(1,Math.max(0,(-p.getX(i)-(off||0))/len)),f=Math.pow(1-t,1.6);col.push(c0[0]*f+c1[0]*(1-f)*f,c0[1]*f+c1[1]*(1-f)*f,c0[2]*f+c1[2]*(1-f)*f);}
-    g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));parts.push(g);};
-  cone(.95,.35,7.5,14,[.95,.55,.22],[.55,.18,.04]);           // outer flame envelope, orange fading out
-  cone(.62,.08,4.2,12,[1.0,.92,.7],[.9,.6,.25]);              // white-hot core
-  for(let k=0;k<3;k++){const g=new THREE.SphereGeometry(.34-k*.06,10,6);g.scale(1.6,1,1);g.translate(-1.2-k*1.35,0,0);const a=.55-k*.15,col=[];for(let i=0;i<g.attributes.position.count;i++)col.push(1*a,.85*a,.6*a);g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));parts.push(g);}
-  {const g=new THREE.RingGeometry(.55,1.0,18);g.rotateY(-Math.PI/2);g.translate(-.02,0,0);const col=[];for(let i=0;i<g.attributes.position.count;i++)col.push(.75,.22,.06);g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));parts.push(g);}
-  const n=parts.map(g=>g.index?g.toNonIndexed():g),P=[],C=[];for(const g of n){P.push(...g.attributes.position.array);C.push(...g.attributes.color.array);}
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.computeBoundingSphere();return jetPlumeGeo.g=g;}
-function jetPlumeMat(){return jetPlumeMat.m||(jetPlumeMat.m=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:true,toneMapped:false}));}
+// unit plume (nozzle radius 1, pointing -x): crossed soft quads textured with a plume strip (white-hot core, shock
+// diamonds, orange fade, soft edges) + a round glow filling the nozzle exit. Additive, one shared material + texture.
+function jetPlumeGeo(){if(jetPlumeGeo.g)return jetPlumeGeo.g;const P=[],U=[],I=[];
+  const quad=(a,b,c,d,ua,ub,uc,ud)=>{const n=P.length/3;P.push(...a,...b,...c,...d);U.push(...ua,...ub,...uc,...ud);I.push(n,n+1,n+2,n,n+2,n+3);};
+  const hw=2.3,x0=.25,x1=-11;
+  quad([x0,-hw,0],[x1,-hw,0],[x1,hw,0],[x0,hw,0],[0,.5],[1,.5],[1,1],[0,1]);   // plume, vertical plane
+  quad([x0,0,-hw],[x1,0,-hw],[x1,0,hw],[x0,0,hw],[0,.5],[1,.5],[1,1],[0,1]);   // plume, horizontal plane
+  quad([-.06,-1.3,-1.3],[-.06,-1.3,1.3],[-.06,1.3,1.3],[-.06,1.3,-1.3],[0,0],[.5,0],[.5,.5],[0,.5]); // nozzle glow
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.setIndex(I);g.computeBoundingSphere();return jetPlumeGeo.g=g;}
+// texture atlas 128x128: top half = plume strip (u: nozzle -> tail), bottom-left = round nozzle glow
+function jetPlumeMat(){if(jetPlumeMat.m)return jetPlumeMat.m;const cv=document.createElement('canvas');cv.width=cv.height=128;const x=cv.getContext('2d'),im=x.createImageData(128,128),D=im.data;
+  for(let py=0;py<64;py++)for(let px=0;px<128;px++){const t=px/127,s=Math.abs(py-31.5)/31.5,w=.22+.5*t,core=Math.exp(-Math.pow(s/w,2)*2.6),inner=Math.exp(-Math.pow(s/(w*.38),2)*2.6);
+    const dia=Math.pow(Math.max(0,Math.cos(t*Math.PI*9)),8)*(t<.62?1:0)*inner,fade=Math.pow(1-t,1.5)*Math.min(1,t*14+.25);
+    const a=Math.min(1,(core*.6+inner*.75+dia)*fade),k=Math.min(1,t*1.6),G=.9-.42*k+.08*dia,B=.72-.62*k+.2*dia,o=(py*128+px)*4;
+    D[o]=255;D[o+1]=255*Math.min(1,G);D[o+2]=255*Math.max(0,Math.min(1,B));D[o+3]=255*a;}
+  for(let py=64;py<128;py++)for(let px=0;px<64;px++){const r=Math.hypot(px-31.5,py-95.5)/31.5,a=Math.max(0,1-r),v=a*a*(3-2*a),o=(py*128+px)*4;
+    D[o]=255;D[o+1]=255*(.62+.3*v);D[o+2]=255*(.25+.45*v*v);D[o+3]=255*Math.min(1,v*1.15);}
+  x.putImageData(im,0,0);const tex=new THREE.CanvasTexture(cv);tex.colorSpace=THREE.SRGBColorSpace;
+  return jetPlumeMat.m=new THREE.MeshBasicMaterial({map:tex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false,toneMapped:false});}
 
 /* ================= FACTION LOOKS (Step 1): national markings + add-on kits =================
    Every aircraft, ship and combat vehicle gets ONE extra merged mesh (one draw call) carrying its nation's flag/roundel
