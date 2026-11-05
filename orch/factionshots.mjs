@@ -105,7 +105,7 @@ async function solo(page, fac, tagn, kinds, dmg) {
       const [bx, by] = BASES[0]; const x = Math.max(700, Math.min(MAPW - 700, bx + 260)), y = Math.max(700, Math.min(MAPH - 700, by + 80));
       let px = x, py = y; if (/ship|boat|sub|lander/.test(kd) && G.map.isWater) { outer: for (let r = 100; r < 4000; r += 60) for (let a = 0; a < 6.28; a += .2) { const qx = x + Math.cos(a) * r, qy = y + Math.sin(a) * r; if (qx > 200 && qy > 200 && qx < MAPW - 200 && qy < MAPH - 200 && G.map.isWater(qx, qy) && G.map.isWater(qx + 80, qy) && G.map.isWater(qx - 80, qy) && G.map.isWater(qx, qy + 80) && G.map.isWater(qx, qy - 80)) { px = qx; py = qy; break outer; } } }
       let u; try { u = addUnit(0, kd, px, py); } catch (e) { return false; } u.ox = u.x; u.oy = u.y; if (u.vs) u.vs[0] = true; u.ang = u.va = -Math.PI * .8;
-      if (dmg) u.hp = u.max * dmg; window.__u = u; const d = dmg ? 260 : { jet: 70, heli: 80, ship: 170, boat: 80, drone: 75 }[kd] || 75;
+      if (dmg) u.hp = u.max * dmg; if (window.__ab) u.toT = G.t; window.__u = u; const d = dmg ? 260 : { jet: 70, heli: 80, ship: 170, boat: 80, drone: 75 }[kd] || 75;
       cam.dist = cam.td = d; cam.x = cam.tx = x; cam.y = cam.ty = y; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; return true; }, [kd, dmg]);
     if (!ok) continue;
     await page.evaluate(() => { cam.tilt = -.55; });
@@ -126,6 +126,7 @@ try {
   if (SOLO) { const { ctx, page } = await open(argS('phone', '') ? { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : { viewport: { width: 1280, height: 720 } });
     if (argS('phone', '')) await page.evaluate(() => { for (const b of document.querySelectorAll('button')) if (/^skip$/i.test(b.textContent.trim())) b.click(); });
     if (argS('low', '')) await page.evaluate(() => { SET.gfx = 'low'; });
+    if (argS('ab', '')) await page.evaluate(() => { window.__ab = 1; });
     for (const f of FACS) await solo(page, f, argS('low', '') ? 'low' : 'pc', SOLO.split(','), +argS('dmg', '0'));
     await ctx.close(); if (errs.length) console.log(errs.slice(0, 20).join('\n')); await browser.close(); server.close(); process.exit(0); }
   let { ctx, page } = await open({ viewport: { width: 1280, height: 720 } });

@@ -760,8 +760,11 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
     if(alongX){tr.position.set(ok?bb.min.x+tl*.9:-24,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,(ok?bb.max.z:2)*.15+1.2);}else{tr.rotation.y=Math.PI/2;tr.position.set((ok?bb.max.x:2)*.15+1.2,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,ok?bb.min.z+tl*.9:-24);}
     o.add(tr);o.userData.parts.tailR=tr;}
   if(e.kind==='jet'){mats();o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(yaw),ok=isFinite(bb.min.x);const tx=ok?bb.min.x+.6:-22,ty=ok?bb.min.y+(bb.max.y-bb.min.y)*.42:1;
-    // afterburner: a tapered additive flame cone at the real tail nozzle of each model
-    const fl=new THREE.Mesh(new THREE.ConeGeometry(1.5,9,10,1,true).rotateZ(Math.PI/2).translate(-4.5,0,0),MAT.glow);fl.position.set(tx,ty,0);fl.renderOrder=3;o.add(fl);o.userData.parts.glow=fl;}
+    // engine exhaust (one draw call per jet): a soft glowing disc in each real nozzle exit (found by ray-probing the
+    // model) + a crossed-quad plume with shock diamonds; 06-view keeps the plume short in cruise, long on take-off/climb
+    if(ok&&typeof document!=='undefined'){const L=bb.max.x-bb.min.x,twin=/^m_(f15|f18|su35|rafale|typhoon|mig29)$/.test(c.m)||c.m==='jet';
+      const nz=jetNozzles(c.m,yaw,bb,L,twin),fg=new THREE.Mesh(jetPlumeGeo(nz.list,L),jetPlumeMat());fg.position.set(nz.x,0,0);fg.renderOrder=3;fg.frustumCulled=false;
+      o.add(fg);o.userData.parts.glow=fg;}}
   if(c.extra==='zu23'){const B=Bld(),D='#2a2c28',S='#4f5446';B.box(7,1.6,6,-5,9.6,0,S);B.cyl(1.4,1.6,1.6,10,-5,11,0,D);B.box(4,3.2,4.6,-5,13,0,S);B.box(.4,3,5.4,-3,13.6,0,S);for(const z of [-1.1,1.1]){B.cyl(.32,.32,13,8,1.2,16.2,z,D,0,0,Math.PI/2-.42);B.cyl(.5,.5,1.6,8,-3.2,13.6,z,D,0,0,Math.PI/2-.42);}const g=mesh(B.geo());g.castShadow=true;o.add(g);o.userData.parts.turret=g;}
   if(c.extra==='dshk'){const B=Bld();B.cyl(.5,.6,6,8,-6,9,0,'#2b2d2a');B.box(3,1.6,2.2,-6,12.6,0,'#33352f');B.cyl(.35,.35,9,8,-1.5,13,0,'#1e1f1d',0,0,Math.PI/2);B.box(.4,2.2,2.6,-6.8,13.4,0,'#4a4d45');const g=mesh(B.geo());g.castShadow=true;o.add(g);}
   if(c.extra==='samtruck'){const sp=instModel('sam',{color:'#62664f'},'y',13,1,.6);if(sp){sp.position.set(-7,9,0);sp.rotation.y=Math.PI/2;o.add(sp);o.userData.parts.turret=sp;}}
@@ -789,6 +792,43 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   if(e.kind==='harv'){const B=Bld();for(const [x,z] of [[-9,-4],[-2,-4],[-9,3],[-2,3]])B.box(6,5,6,x,20,z,'#c99a2e');const cg=mesh(B.geo());o.add(cg);o.userData.parts.cargo=cg;}
   try{factionKit(e,c,o,yaw,yaw.children[0],T);}catch(err){console.warn('factionKit',err);}
   SCN.add(o);return o;}
+// ---- jet exhaust ----
+// Nozzle finder: rays from behind (+x direction) over the lower-rear of the airframe; an engine exit shows up as a
+// "hole" (rays travel much deeper into the pipe than at its rim). Cached per model; falls back to proportions.
+const _jetNz=new Map();
+function jetNozzles(key,yaw,bb,L,twin){const ck=key+'|'+L.toFixed(1);if(_jetNz.has(ck))return _jetNz.get(ck);
+  const H=bb.max.y-bb.min.y,rc=new THREE.Raycaster(),dir=new THREE.Vector3(1,0,0),org=new THREE.Vector3(),cells=[];
+  const NZ=19,NY=12,z0=-L*.13,z1=L*.13,y0=bb.min.y+H*.1,y1=bb.min.y+H*.6;
+  for(let i=0;i<NZ;i++)for(let j=0;j<NY;j++){const z=z0+(z1-z0)*i/(NZ-1),y=y0+(y1-y0)*j/(NY-1);org.set(bb.min.x-5,y,z);rc.set(org,dir);rc.far=L*.5;
+    const h=rc.intersectObject(yaw,true)[0];if(h)cells.push({z,y,x:h.point.x});}
+  let out=null;
+  if(cells.length>12){const rim=c0=>Math.min(...cells.filter(q=>Math.hypot(q.z-c0.z,q.y-c0.y)<L*.045).map(q=>q.x));
+    const deep=cells.filter(q=>q.x>rim(q)+L*.025),sides=twin?[q=>q.z<0,q=>q.z>0]:[()=>true],list=[];
+    for(const f of sides){const d=deep.filter(f);if(!d.length){list.length=0;break;}const cz=d.reduce((s,q)=>s+q.z,0)/d.length,cy=d.reduce((s,q)=>s+q.y,0)/d.length;
+      const near=cells.filter(q=>Math.hypot(q.z-cz,q.y-cy)<L*.05),r=Math.max(L*.018,Math.min(L*.04,Math.sqrt(d.length)*(z1-z0)/(NZ-1)*.75));
+      list.push({z:twin?cz:0,y:cy,r,x:Math.min(...near.map(q=>q.x))});}
+    if(list.length){const x=Math.max(...list.map(n=>n.x));out={x:x+L*.004,list};}}
+  if(!out){const y=bb.min.y+H*.33,x=bb.min.x+L*.055;out={x,list:(twin?[-L*.042,L*.042]:[0]).map(z=>({z,y,r:L*.028}))};}
+  _jetNz.set(ck,out);return out;}
+// Atlas (128x128 canvas): top half = plume strip (u: nozzle→tail; bright core, 4 shock diamonds, orange fade);
+// bottom-left = round nozzle glow. Additive, no depth write.
+let _jetPM=null;
+function jetPlumeMat(){if(_jetPM)return _jetPM;const cv=document.createElement('canvas');cv.width=cv.height=128;const x=cv.getContext('2d'),im=x.createImageData(128,128),D=im.data;
+  for(let py=0;py<64;py++)for(let px=0;px<128;px++){const t=px/127,s=Math.abs(py-31.5)/31.5,w=.22+.5*t,core=Math.exp(-Math.pow(s/w,2)*2.6),inner=Math.exp(-Math.pow(s/(w*.38),2)*2.6);
+    const dia=Math.pow(Math.max(0,Math.cos(t*Math.PI*9)),8)*(t<.62?1:0)*inner,fade=Math.pow(1-t,1.5)*Math.min(1,t*14+.25);
+    const a=Math.min(1,(core*.6+inner*.75+dia)*fade),k=Math.min(1,t*1.6),R=1,G=.9-.42*k+.08*dia,B=.72-.62*k+.2*dia,o=(py*128+px)*4;
+    D[o]=255*R;D[o+1]=255*Math.min(1,G);D[o+2]=255*Math.max(0,Math.min(1,B));D[o+3]=255*a;}
+  for(let py=64;py<128;py++)for(let px=0;px<64;px++){const r=Math.hypot(px-31.5,py-95.5)/31.5,a=Math.max(0,1-r);const v=a*a*(3-2*a),o=(py*128+px)*4;
+    D[o]=255;D[o+1]=255*(.62+.3*v);D[o+2]=255*(.25+.45*v*v);D[o+3]=255*Math.min(1,v*1.15);}
+  x.putImageData(im,0,0);const tex=new THREE.CanvasTexture(cv);tex.colorSpace=THREE.SRGBColorSpace;
+  return _jetPM=new THREE.MeshBasicMaterial({map:tex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false,toneMapped:false});}
+function jetPlumeGeo(list,L){const P=[],U=[],I=[];const quad=(a,b,c,d,ua,ub,uc,ud)=>{const n=P.length/3;P.push(...a,...b,...c,...d);U.push(...ua,...ub,...uc,...ud);I.push(n,n+1,n+2,n,n+2,n+3);};
+  const Lp=L*.24;
+  for(const n of list){const hw=n.r*1.55,x0=L*.006,x1=-Lp;
+    quad([x0,n.y-hw,n.z],[x1,n.y-hw,n.z],[x1,n.y+hw,n.z],[x0,n.y+hw,n.z],[0,.5],[1,.5],[1,1],[0,1]);// plume, vertical plane
+    quad([x0,n.y,n.z-hw],[x1,n.y,n.z-hw],[x1,n.y,n.z+hw],[x0,n.y,n.z+hw],[0,.5],[1,.5],[1,1],[0,1]);// plume, horizontal plane
+    const r=n.r*1.05,xd=-L*.002;quad([xd,n.y-r,n.z-r],[xd,n.y-r,n.z+r],[xd,n.y+r,n.z+r],[xd,n.y+r,n.z-r],[0,0],[.5,0],[.5,.5],[0,.5]);}// nozzle glow
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.setIndex(I);g.computeBoundingSphere();return g;}
 function playAnim(o,name,dt){const L=o.userData.mixers;if(!L)return;for(const M of L){if(M.cur!==name){const clip=M.anims.find(a=>a.name.toLowerCase().includes(name))||M.anims[0];if(clip){M.mix.stopAllAction();M.mix.clipAction(clip).play();}M.cur=name;}M.mix.update(dt);}}
 function propObj(key,x,z,rot,parent){const c=PROPS[key];if(!c||!MODELS.proto[key])return;const m=instModel(key,null,c.fit,c.size);if(!m)return;m.position.set(x,0,z);m.rotation.y=rot||0;m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});parent.add(m);return m;}
 function decorateBld(e,o){if(!MODELS.ready)return;const h=e.size/2;const P=new THREE.Group();o.add(P);
