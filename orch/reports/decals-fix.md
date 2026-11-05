@@ -27,4 +27,5 @@ the ray-hit point of ONE probe, so it overhung wing edges, fins and hull curves;
 
 ## Not done / notes
 - Landers and subs get no hull markings (no flat panel big enough; the pole ensign stays on landers).
-- Close-ups: `orch/shots/decals-fix/after/` (PC IR/DW/IL/US/RU/KP + a phone-size Low view).
+- Close-ups: `orch/shots/decals-fix/after/` (PC IR/DW/IL/US/RU/KP).
+- Phone-size screenshot not captured (tutorial popup covers the view); Low-graphics aircraft/ships use the same code path, covered by decalcheck.
