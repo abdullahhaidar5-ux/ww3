@@ -142,7 +142,7 @@ function updateFog(){const c=FOGC.b.getContext('2d'),W=FOGC.width,H=FOGC.height,
   {const sk=(G.teams[ME].F.mods.sight||1)*1.08;for(const e of G.ents)if(e.team===ME&&!e.dead)hole(e.x,e.y,(!e.isB&&e.s.vis?e.s.vis:e.isB?340:e.s.dom==='air'?340:e.s.dom==='naval'?380:280)*sk);}
   for(const r of (G.teams[ME].reveals||[]))hole(r.x,r.y,r.r);c.globalCompositeOperation='source-over';const f=FOGC.getContext('2d');f.filter='blur(4px)';f.drawImage(FOGC.b,0,0);f.filter='none';FOGT.needsUpdate=true;}
 const RKV=new Map();   // rank-up flash: last rank seen per unit (view only)
-const SHORTN={inf:'INF',at:'AT',aa:'AA',tank:'TANK',arty:'ARTY',apc:'APC',hero:'HERO',hacker:'HACK',dozer:'DOZER',demo:'DEMO',sniper:'SNIPER',mlrs:'MLRS',ifv:'IFV'};
+const SHORTN={inf:'INF',at:'AT',aa:'AA',tank:'TANK',arty:'ARTY',apc:'APC',hero:'HERO',champ:'HERO',hacker:'HACK',dozer:'DOZER',demo:'DEMO',sniper:'SNIPER',mlrs:'MLRS',ifv:'IFV'};
 /* Supply circles (faint rings around HQ / depots / trucks / held towns) show while ammo units are selected, while O is held,
    or always on a phone with a unit selected; towns show an owner flag and a capture bar. */
 let SUPC={t:-9,P:null};
@@ -180,6 +180,7 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
       if(fl>0){c.strokeStyle='rgba(255,224,120,'+(.8*fl)+')';c.lineWidth=2;c.beginPath();c.arc(cx,cy-3,6+16*(1-fl),0,7);c.stroke();}
       for(let i=0;i<e.rank;i++){const y=cy-i*4.5;c.beginPath();c.moveTo(cx-5,y);c.lineTo(cx,y+3.6);c.lineTo(cx+5,y);c.lineTo(cx+5,y-2.2);c.lineTo(cx,y+1.4);c.lineTo(cx-5,y-2.2);c.closePath();c.fillStyle=fl>0?'#fff3b0':'#f2c94c';c.fill();c.strokeStyle='rgba(0,0,0,.75)';c.lineWidth=1;c.stroke();}}
     else if(e.rank>0){c.fillStyle='#f2c94c';c.strokeStyle='rgba(0,0,0,.7)';c.lineWidth=1;for(let i=0;i<e.rank;i++){const x=p.x+w/2+4,y=p.y+4-i*4;c.beginPath();c.moveTo(x,y);c.lineTo(x+4,y-3);c.lineTo(x+8,y);c.lineTo(x+8,y+2);c.lineTo(x+4,y-1);c.lineTo(x,y+2);c.closePath();c.fill();c.stroke();}}
+    if(!e.isB&&e.kind==='champ'){const cx=p.x,cy=p.y-(e.rank>0?9+e.rank*4.5+7:19);c.save();c.fillStyle=(e.team===ME&&(e.habT||0)<=G.t)?'#ffe27a':'#d6a93a';c.strokeStyle='rgba(0,0,0,.85)';c.lineWidth=1.3;c.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?3.6:8;c.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}c.closePath();c.fill();c.stroke();c.restore();}   // hero squad: gold star (brighter when the ability is ready)
     // pinned down (suppressed infantry): red shield with a down arrow on the left of the bar, and a pulsing red ring at its feet
     if(!e.isB&&(e.supp||0)>.5&&e.s&&e.s.dom!=='air'){const f=toScreen(e.x,unitH(e),e.y),pu=.5+.5*Math.sin(performance.now()/160);
       if(f.z<=1){c.strokeStyle='rgba(234,90,64,'+(.35+.35*pu)+')';c.lineWidth=1.6;c.beginPath();c.ellipse(f.x,f.y,Math.max(7,e.r*PPU*1.1),Math.max(3.5,e.r*PPU*.55),0,0,7);c.stroke();}
@@ -261,6 +262,9 @@ function spoofBtn(u){const V=ewMine(),cd=MODE==='client'?((V&&V.cd||[]).find(r=>
   b.textContent=left>0?'📡 Radar spoof (ready in '+left+' s)':'📡 Radar spoof';b.disabled=left>0;
   b.title='For 20 seconds 3-4 fake contacts appear on enemy radar near this truck and move toward them like an attacking column. Enemies with a Strike Center see they are fake. Recharges in 60 s.';
   b.onpointerdown=ev=>{ev.preventDefault();if(!b.disabled)doAct({t:'spoof',tid:u.id});};return b;}
+/* hero squad ability button (command card); E does the same. The cooldown is host-synced (hc in the team message). */
+function habBtn(u){const A=HAB[u.s.hab]||{n:'Ability',d:''},left=Math.ceil((u.habT||0)-G.t);const b=document.createElement('button');b.className='btn wide';b.style.marginTop='6px';
+  b.textContent=(left>0?`★ ${A.n} (ready in ${left} s)`:`★ ${A.n} [E]`);b.disabled=left>0;b.title=A.d+` Cooldown ${HERO_CD} s.`;b.onpointerdown=ev=>{ev.preventDefault();if(!b.disabled)doAct({t:'hab',tid:u.id});};return b;}
 function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=performance.now()/1000,c=mx;
   if(!G.mmBase)G.mmBase=mmBase();c.drawImage(G.mmBase,0,0);
   // fog of war: hidden ground darker
