@@ -9,10 +9,10 @@ const ED_TOOLS=[['pan','✋','Move','Drag to move the view. Two fingers or the m
   ['lower','🕳','Lower','Dig ponds and lakes (water).'],['flat','▭','Flatten','Clear mountains and ponds under the brush.'],
   ['river','🌊','River','Drag to draw a river. Add a bridge or the two sides cannot reach each other.'],['bridge','🌉','Bridge','Tap a river to put a bridge across it (or drag across the water).'],
   ['road','🛣','Road','Drag to lay a road.'],['forest','🌲','Forest','Paint woods: cover for infantry, slows vehicles.'],['rocks','🪨','Rocks','Stamp small rock outcrops.'],
-  ['town','🏘','Town','Tap to put a town of civilian buildings.'],['oil','🛢','Oil','Tap to put an oil derrick.'],['supply','📦','Supply','Tap to put a supply field.'],
+  ['town','🏘','Town','Tap to put a town of civilian buildings.'],['oil','🛢','Oil','Tap to put an oil derrick.'],['ham','🛖','Hamlet','Tap to put a hamlet: a few houses you can capture and tax. Put one safe hamlet behind each start and some in the middle.'],['supply','📦','Supply','Tap to put a supply field.'],
   ['start','🚩','Start','Tap to place a start position (numbered in the order placed).'],['erase','🧽','Erase','Remove anything under the brush.']];
 const ED_STYLE_NAMES=['Middle East','Russia','Europe','America','Yemen','Gulf city','Korea','Asia','Latin America','South Asia'];
-function edBlank(){return{nm:'My map',n:2,z:1,th:'desert',sl:[],rv:[],rg:[],rd:[],lk:[],pk:[],wd:[],ct:[],oil:[],fl:[],br:[]};}
+function edBlank(){return{nm:'My map',n:2,z:1,th:'desert',sl:[],rv:[],rg:[],rd:[],lk:[],pk:[],wd:[],ct:[],oil:[],hm:[],fl:[],br:[]};}
 function edVars(){const m=ED.mirror;return m==='x'?[[1,1],[-1,1]]:m==='y'?[[1,1],[1,-1]]:m==='p'?[[1,1],[-1,-1]]:m==='q'?[[1,1],[-1,1],[1,-1],[-1,-1]]:[[1,1]];}
 const edPX=(x,v)=>v[0]>0?x:3200-x,edPY=(y,v)=>v[1]>0?y:2200-y;
 function edSnap(){return JSON.stringify(ED.c);}
@@ -29,7 +29,7 @@ function edErase(kinds,x,y,rad){const c=ED.c;let n=0;
   const pts=(L,ri)=>{const keep=L.filter(q=>Math.hypot(q[0]-x,q[1]-y)>=rad+(ri?q[2]*(ri):0));n+=L.length-keep.length;return keep;};
   if(kinds.includes('rg'))c.rg=poly(c.rg,true);if(kinds.includes('rv'))c.rv=poly(c.rv,true);if(kinds.includes('rd'))c.rd=poly(c.rd,false);
   if(kinds.includes('pk'))c.pk=pts(c.pk,1);if(kinds.includes('lk'))c.lk=pts(c.lk,1);if(kinds.includes('wd'))c.wd=pts(c.wd,.8);if(kinds.includes('ct'))c.ct=pts(c.ct,.8);
-  if(kinds.includes('oil'))c.oil=pts(c.oil,0);if(kinds.includes('fl'))c.fl=pts(c.fl,0);if(kinds.includes('br'))c.br=pts(c.br,0);if(kinds.includes('sl'))c.sl=pts(c.sl,0);return n;}
+  if(kinds.includes('oil'))c.oil=pts(c.oil,0);if(kinds.includes('hm'))c.hm=pts(c.hm||[],0);if(kinds.includes('fl'))c.fl=pts(c.fl,0);if(kinds.includes('br'))c.br=pts(c.br,0);if(kinds.includes('sl'))c.sl=pts(c.sl,0);return n;}
 // ---- applying a tool at a point / stroke (every mirror copy)
 function edStamp(tool,x,y,ang){const c=ED.c,B=ED.brush;const seen=[];
   for(const v of edVars()){const X=Math.round(edPX(x,v)),Y=Math.round(edPY(y,v));if(seen.some(q=>Math.hypot(q[0]-X,q[1]-Y)<8))continue;seen.push([X,Y,v]);}
@@ -39,11 +39,12 @@ function edStamp(tool,x,y,ang){const c=ED.c,B=ED.brush;const seen=[];
     else if(tool==='rocks'){const r=Math.max(12,Math.min(60,Math.round(B*.35)));if(!c.pk.some(q=>Math.hypot(q[0]-X,q[1]-Y)<r*1.2)&&c.pk.length<200)c.pk.push([X,Y,r]);}
     else if(tool==='town'){if(c.ct.length<40)c.ct.push([X,Y,Math.max(50,Math.min(240,Math.round(B*1.3))),ED.style]);}
     else if(tool==='oil'){if(c.oil.length<40)c.oil.push([X,Y]);}
+    else if(tool==='ham'){c.hm=c.hm||[];if(c.hm.length<24&&!c.hm.some(q=>Math.hypot(q[0]-X,q[1]-Y)<120))c.hm.push([X,Y]);}
     else if(tool==='supply'){if(c.fl.length<40)c.fl.push([X,Y]);}
     else if(tool==='start'){if(c.sl.length<c.n&&!c.sl.some(q=>Math.hypot(q[0]-X,q[1]-Y)<120))c.sl.push([Math.max(150,Math.min(3050,X)),Math.max(150,Math.min(2050,Y))]);}
     else if(tool==='bridge'&&ang!=null){const a=ang*Math.PI/180,nx=Math.cos(a)*v[0],ny=Math.sin(a)*v[1];if(c.br.length<40)c.br.push([X,Y,Math.round(Math.atan2(ny,nx)*180/Math.PI)]);}
     else if(tool==='flat'){edErase(['rg','pk','lk'],X,Y,B);}
-    else if(tool==='erase'){edErase(['rg','rv','rd','pk','lk','wd','ct','oil','fl','br','sl'],X,Y,B);}}}
+    else if(tool==='erase'){edErase(['rg','rv','rd','pk','lk','wd','ct','oil','hm','fl','br','sl'],X,Y,B);}}}
 function edStrokeCommit(tool,P){const c=ED.c;if(P.length<2)return;const Q=edLineFit(P,tool==='road'?70:60);if(Q.length<2)return;
   const seen=[];for(const v of edVars()){const Z=Q.map(([x,y])=>[Math.round(edPX(x,v)),Math.round(edPY(y,v))]);
     if(seen.some(S=>S.every((q,i)=>Math.hypot(q[0]-Z[i][0],q[1]-Z[i][1])<10)))continue;seen.push(Z);
@@ -56,14 +57,14 @@ function edBridgeAt(x,y){ // direction across the nearest river (degrees), or nu
 // ---- whole-map transforms
 function edFlip(fx,fy){const c=ED.c,s=edSnap(),P=a=>a.map(q=>[fx<0?3200-q[0]:q[0],fy<0?2200-q[1]:q[1],...q.slice(2)]);
   const L=a=>a.map(r=>{const o=[r[0]];for(let i=1;i+1<r.length;i+=2)o.push(fx<0?3200-r[i]:r[i],fy<0?2200-r[i+1]:r[i+1]);return o;}),R=a=>a.map(r=>{const o=[];for(let i=0;i+1<r.length;i+=2)o.push(fx<0?3200-r[i]:r[i],fy<0?2200-r[i+1]:r[i+1]);return o;});
-  c.sl=P(c.sl);c.lk=P(c.lk);c.pk=P(c.pk);c.wd=P(c.wd);c.ct=P(c.ct);c.oil=P(c.oil);c.fl=P(c.fl);c.rv=L(c.rv);c.rg=L(c.rg);c.rd=R(c.rd);
+  c.sl=P(c.sl);c.lk=P(c.lk);c.pk=P(c.pk);c.wd=P(c.wd);c.ct=P(c.ct);c.oil=P(c.oil);c.hm=P(c.hm||[]);c.fl=P(c.fl);c.rv=L(c.rv);c.rg=L(c.rg);c.rd=R(c.rd);
   c.br=c.br.map(([x,y,d])=>{const a=d*Math.PI/180;return[fx<0?3200-x:x,fy<0?2200-y:y,Math.round(Math.atan2(Math.sin(a)*fy,Math.cos(a)*fx)*180/Math.PI)];});edPushUndo(s);edChanged();}
 function edApplySym(){const m=ED.mirror;if(m==='off'){ED.msg='Pick a Mirror mode first (left-right, top-bottom, 180° or 4-way).';edUI();return;}
-  const c=ED.c,s=edSnap(),src=JSON.parse(s);const keys=['lk','pk','wd','ct','oil','fl','rv','rg','rd','br','sl'];const old=ED.c;
+  const c=ED.c,s=edSnap(),src=JSON.parse(s);const keys=['lk','pk','wd','ct','oil','hm','fl','rv','rg','rd','br','sl'];const old=ED.c;
   for(const v of edVars().slice(1)){const t=JSON.parse(s);ED.c=t;edFlipInto(t,v);for(const k of keys)for(const e of t[k]){if(k==='sl'&&c.sl.length>=c.n)continue;c[k].push(e);}}
   ED.c=c;edPushUndo(s);ED.msg='Mirrored copy added.';edChanged();}
 function edFlipInto(t,v){const fx=v[0],fy=v[1],X=x=>fx<0?3200-x:x,Y=y=>fy<0?2200-y:y;
-  for(const k of ['sl','lk','pk','wd','ct','oil','fl'])t[k]=t[k].map(q=>[X(q[0]),Y(q[1]),...q.slice(2)]);
+  for(const k of ['sl','lk','pk','wd','ct','oil','hm','fl'])t[k]=(t[k]||[]).map(q=>[X(q[0]),Y(q[1]),...q.slice(2)]);
   for(const k of ['rv','rg'])t[k]=t[k].map(r=>{const o=[r[0]];for(let i=1;i+1<r.length;i+=2)o.push(X(r[i]),Y(r[i+1]));return o;});
   t.rd=t.rd.map(r=>{const o=[];for(let i=0;i+1<r.length;i+=2)o.push(X(r[i]),Y(r[i+1]));return o;});
   t.br=t.br.map(([x,y,d])=>{const a=d*Math.PI/180;return[X(x),Y(y),Math.round(Math.atan2(Math.sin(a)*fy,Math.cos(a)*fx)*180/Math.PI)];});}
@@ -144,6 +145,7 @@ function edDraw(){const cv=ED.cv;if(!cv)return;const dpr=Math.min(2,window.devic
   // bridges
   for(const [x,y,d] of c.br){g.save();g.translate(x,y);g.rotate(d*Math.PI/180);g.fillStyle='#8a7b63';g.strokeStyle='#241c10';g.lineWidth=5;g.fillRect(-90,-22,180,44);g.strokeRect(-90,-22,180,44);g.restore();}
   if(!(ED.showPrev&&ED.prevImg)||true){g.font='bold 54px system-ui';g.textAlign='center';g.textBaseline='middle';
+    for(const [x,y] of (c.hm||[])){g.fillStyle='#3a2f22';g.beginPath();g.arc(x,y,26,0,7);g.fill();g.fillStyle='#e8d7b0';g.fillText('🛖',x,y+3);}
     for(const [x,y] of c.oil){g.fillStyle='#161616';g.beginPath();g.arc(x,y,34,0,7);g.fill();g.fillStyle='#e8c040';g.fillText('⛽',x,y+3);}
     for(const [x,y] of c.fl){g.fillStyle='#4a3a1c';g.beginPath();g.arc(x,y,42,0,7);g.fill();g.fillStyle='#f0d070';g.fillText('$',x,y+3);}
     for(const [x,y,r,s] of c.ct){g.fillStyle='#fff';g.font='bold 40px system-ui';g.fillText('🏘',x,y);}}
@@ -158,7 +160,7 @@ function edDraw(){const cv=ED.cv;if(!cv)return;const dpr=Math.min(2,window.devic
   if(ED.cur&&ED.tool!=='pan'){const [sx,sy]=edW2S(ED.cur[0],ED.cur[1]);g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=1.5;const r=edToolR()*V.z;
     for(const v of edVars()){const [px,py]=edW2S(edPX(ED.cur[0],v),edPY(ED.cur[1],v));g.beginPath();g.arc(px,py,Math.max(4,r),0,7);g.stroke();}}
   const st=$('edStat');if(st){const t=ED.cur?`x ${Math.round(ED.cur[0])}  y ${Math.round(ED.cur[1])}`:'';st.textContent=t;}}
-function edToolR(){const t=ED.tool,B=ED.brush;return t==='start'?150:t==='oil'||t==='supply'?40:t==='town'?Math.max(50,Math.min(240,B*1.3)):t==='rocks'?Math.max(12,Math.min(60,B*.35)):t==='forest'?B*1.3:t==='lower'?B*1.4:t==='bridge'?60:t==='road'?20:B;}
+function edToolR(){const t=ED.tool,B=ED.brush;return t==='start'?150:t==='oil'||t==='supply'||t==='ham'?40:t==='town'?Math.max(50,Math.min(240,B*1.3)):t==='rocks'?Math.max(12,Math.min(60,B*.35)):t==='forest'?B*1.3:t==='lower'?B*1.4:t==='bridge'?60:t==='road'?20:B;}
 let edPrevTmr=0;function edPrevSoon(){clearTimeout(edPrevTmr);edPrevTmr=setTimeout(edPrev,350);}
 function edPrev(){if(!ED.open)return;const c=cmCanon(ED.c);if(!c){ED.prevImg=null;edDraw();return;}const key=registerCustomMap(c);ED.tmpKeys.add(key);const keep={wk:WK,srand,B:BASES,S:BASE_SLOTS};
   try{setWorld(1);const cv=document.createElement('canvas');cv.width=640;cv.height=440;mapPreview(key,cv);ED.prevImg=cv;}catch(e){ED.prevImg=null;ED.msg='Preview failed: '+(e&&e.message||e);}finally{srand=keep.srand;BASES=keep.B;BASE_SLOTS=keep.S;setWorld(keep.wk);}edDraw();edUI();}
@@ -228,7 +230,7 @@ function edUI(){if(!ED.open||!edBuilt)return;const c=ED.c,side=$('edSide');
   if(ED.tool==='town')add(edSel('s','Town look',ED_STYLE_NAMES.map((t,i)=>[i,t]),ED.style,v=>{ED.style=+v;}));
   {const w=document.createElement('div');w.className='row';w.append(edBtn('Copy to other side',edApplySym),edBtn('Flip ↔',()=>edFlip(-1,1)),edBtn('Flip ↕',()=>edFlip(1,-1)),edBtn('Turn 180°',()=>edFlip(-1,-1)));add(w);}
   {const w=document.createElement('div');w.className='row';w.append(edBtn(ED.showPrev?'Terrain preview: on':'Terrain preview: off',()=>{ED.showPrev=!ED.showPrev;if(ED.showPrev)edPrev();else edDraw();edUI();},ED.showPrev?'on':''),edBtn('Fit view',()=>{edFit();edDraw();}),edBtn('New map',()=>{edPushUndo(edSnap());ED.c=edBlank();ED.id=null;ED.res=null;ED.msg='Blank map.';edChanged();}));add(w);}
-  const cnt=`${c.sl.length}/${c.n} starts · ${c.oil.length} oil · ${c.fl.length} supply · ${c.ct.length} towns`;const sm=document.createElement('div');sm.className='hint';sm.textContent=cnt+' · '+(ED_TOOLS.find(t=>t[0]===ED.tool)||[])[3];add(sm);
+  const cnt=`${c.sl.length}/${c.n} starts · ${c.oil.length} oil · ${(c.hm||[]).length} hamlets · ${c.fl.length} supply · ${c.ct.length} towns`;const sm=document.createElement('div');sm.className='hint';sm.textContent=cnt+' · '+(ED_TOOLS.find(t=>t[0]===ED.tool)||[])[3];add(sm);
   add(h('Fair-play check'));add(edBtn('Check this map',()=>{ED.res=edCheck(ED.c);edUI();}));
   for(const r of (ED.res||[])){const d=document.createElement('div');d.className='res '+r.l;d.textContent=r.m;add(d);}
   add(h('Share'));

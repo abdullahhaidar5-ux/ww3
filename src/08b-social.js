@@ -47,8 +47,11 @@ const TUT=[
  {k:'atk',pc:'Attack: select your soldiers, then right-click a red enemy soldier. Press "Show me" to find them.',tc:'Attack: select your soldiers, then tap a red enemy soldier. Press "Show me" to find them.'},
  {k:'bar',pc:'Build a Barracks: open the build panel, pick Barracks, then click near your base to place it. Wait until it finishes.',tc:'Build a Barracks: open the build panel, pick Barracks, then tap near your base to place it. Wait until it finishes.'},
  {k:'trn',pc:'Train soldiers: select the Barracks (left-click it) and train some infantry from its panel.',tc:'Train soldiers: tap the Barracks and train some infantry from its panel.'},
+ {k:'setup',pc:'Setup phase: in Conquest nobody can fire for the first 90 seconds (see the countdown at the top). Use it to build your barracks, factory and economy; the enemy base is safe from you too. This message goes away on its own.',tc:'Setup phase: nobody can fire for the first 90 seconds. Use it to build your base.'},
  {k:'town',pc:'Conquest - capture a town or hamlet: select infantry and right-click one of its houses so they garrison it. More than half of its key buildings makes it yours, and it pays you TAX. "Show me" finds the nearest one.',tc:'Conquest - capture a town or hamlet: select infantry and tap one of its houses so they garrison it. "Show me" finds the nearest one.'},
  {k:'tax',pc:'Set its tax: click your town (or its square/circle on the minimap) and pick Low / Normal / High / Extortionate. High tax pays more but angers the locals; near the front they rise much faster. High tax in safe towns behind your lines, Low tax on the front line - at 100 unrest the town revolts and rebels throw you out.',tc:'Set its tax: tap your town (or its marker on the minimap) and pick a rate. High in safe towns behind your lines, Low on the front line - at 100 unrest the town revolts.'},
+ {k:'unrest',pc:'Unrest and revolts: every town you hold has an unrest bar. High tax and enemy troops nearby push it up; your own soldiers inside, low tax and a clinic push it down. Above 50 the town is Restless (pays less, easier to capture); at 100 it REVOLTS - your garrison is thrown out and armed rebels appear. Watch the yellow and red rings on the minimap.',tc:'Unrest and revolts: high tax and enemy troops raise a town\'s unrest bar; at 100 it revolts and rebels appear. Lower taxes or station troops there.'},
+ {k:'civic',pc:'Civic buildings: each town has one perk building. A market adds tax (even more on Low), a garage or fuel station repairs your vehicles nearby, a clinic or mosque heals your infantry and calms unrest. Hold the building to get its perk; it switches off while the town is Restless.',tc:'Civic buildings: a market adds tax, a garage repairs vehicles, a clinic or mosque heals infantry and calms unrest. Hold the building to get the perk.'},
  {k:'hm',pc:'Hearts and minds: a town you have held for two minutes with low unrest turns LOYAL. Click it to recruit cheap local militia, and its informants ping enemy troops on the minimap. Restless enemy towns can be bribed. Shelling a town angers the locals, and a captured radio tower calms your towns and stirs up the enemy\'s.',tc:'Hearts and minds: a loyal town lets you recruit local militia and spots enemy troops. Bribe restless enemy towns; do not shell towns.'},
  {k:'pow',pc:'Use a power: you have a free general point. Open Powers, buy one, then use it (a hotkey or a click on the map).',tc:'Use a power: you have a free general point. Open Powers, buy one, then use it.'},
  {k:'win',pc:'Win: destroy the enemy base. Build up an army, attack-move with F + click, and keep your Barracks producing. Victory finishes the tutorial.',tc:'Win: destroy the enemy base. Build up an army and attack. Victory finishes the tutorial.'}];
@@ -66,7 +69,7 @@ function tutShow(){if(!G||!G.tut||!TUTS)return;const k=TUT[TUTS.i].k,me=G.teams[
   if(p)try{centerOn(p.x,p.y);}catch(e){}}
 function tutRender(){const el=tutEl();if(!TUTS||!G||!G.tut){el.hidden=true;return;}el.hidden=false;const s=TUT[TUTS.i];
   $('tutN').textContent=`Step ${TUTS.i+1}/${TUT.length}`;$('tutT').textContent=TOUCHUI?s.tc:s.pc;el.classList.remove('ok');}
-function tutEnter(){const s=TUT[TUTS.i],me=G.teams[ME];
+function tutEnter(){const s=TUT[TUTS.i],me=G.teams[ME];TUTS.e0=performance.now();
   if(s.k==='move')TUTS.pos=new Map(tutUnits().map(u=>[u.id,[u.x,u.y]]));
   if(s.k==='atk')TUTS.k0=me.kills|0;
   if(s.k==='trn')TUTS.b0=me.built|0;
@@ -89,6 +92,7 @@ function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&
   else if(k==='trn')ok=(me.built|0)>TUTS.b0&&G.ents.some(e=>e.team===ME&&e.kind==='inf'&&!e.dead)||(me.built|0)>TUTS.b0+1;
   else if(k==='town')ok=G.towns.filter(t=>t.ow===ME).length>TUTS.t0;
   else if(k==='tax')ok=G.towns.some(t=>t.ow===ME&&t.rate!==1);
+  else if(k==='setup'||k==='unrest'||k==='civic')ok=performance.now()-(TUTS.e0||0)>(k==='setup'?12000:16000)||(k==='setup'&&G.setupEnd&&G.t>G.setupEnd);
   else if(k==='hm')ok=G.towns.some(t=>t.ow===ME&&t.loy);
   else if(k==='pow'){/* powers start locked for a few minutes: unlock any we own on first sight; a cooldown that starts afterwards means one was used */
     for(const pk in me.pw){const c=me.pw[pk].cd;if(TUTS.unl[pk]){if(c>0.5)ok=true;}else{TUTS.unl[pk]=true;if(c>0)me.pw[pk].cd=0;}}}

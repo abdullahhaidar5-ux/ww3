@@ -615,11 +615,12 @@ function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!w
   const up=G.ents.find(e=>e.team===team&&e.kind==='uplink'&&!e.dead&&e.built>=1),sty=(UPLINK[T.fac]||[])[1],arc=up&&sty&&sty!=='air';
   for(let i=0;i<S.n;i++){const a=rnd(0,6.28),r=S.n>1?rnd(0,S.spread):0,tx=x+Math.cos(a)*r,ty=y+Math.sin(a)*r,t=3+i*.28;G.strikes.push({x:tx,y:ty,t,r:S.r,dmg:S.dmg,team,kind:'sup',sid});FXE('strike',[tx|0,ty|0,+t.toFixed(2),S.r|0,1,arc?1:0]);
     if(arc)FXE('bmis',[(up.x+rnd(-14,14))|0,(up.y+rnd(-14,14))|0,tx|0,ty|0,+t.toFixed(2),i]);}
+  if(G.conq&&up)for(const O of G.teams)if(!O.reb&&!ally(O.id,team))O.reveals.push({x:up.x,y:up.y,r:170,t:45});   // the launch site is exposed on the enemy's map for 45 s
   T.charge=0;log(team,`${S.name} launched.`,'g');for(const O of G.teams)if(O.id!==team)log(O.id,`Warning: enemy ${S.name} inbound. Move your units!`,'r:msl');return true;}
 function addStrike(x,y,t,r,dmg,team,kind){G.strikes.push({x,y,t,r,dmg,team,kind});FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,kind==='sup'?1:0],team);}
 function updStrikes(dt){for(const s of G.strikes){s.t-=dt;if(s.t<=0){s.done=true;
-    if(G.conq&&s.kind==='sup'){let md=0;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)&&Math.hypot(e.x-s.x,e.y-s.y)<CQ_MD_R)md++;
-      if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-CQ_MD_P,md))){FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<CQ_MD_R))log(T.id,'Missile defence intercepted an incoming missile.','g');continue;}
+    if(G.conq&&s.kind==='sup'){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<CQ_MD_R){md++;if(d<nd){nd=d;nb=e;}}}
+      if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-CQ_MD_P,md))){if(nb)FXE('icpt',[nb.x|0,nb.y|0,s.x|0,s.y|0]);FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<CQ_MD_R))log(T.id,'Missile defence intercepted an incoming missile.','g');continue;}
       if(G.towns)for(const t of G.towns)if(t.ow>=0&&!ally(t.ow,s.team)&&Math.hypot(t.x-s.x,t.y-s.y)<s.r+260)t.shock=Math.max(t.shock||0,G.t+30);}
     G.curSid=s.kind==='sup'?s.sid|0:0;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?'super':s.kind==='bb'?'bb':'shell',s.kind);G.curSid=0;}}G.strikes=G.strikes.filter(s=>!s.done);}
 
@@ -651,7 +652,7 @@ function gdBuy(team,k){const T=G.teams[team],p=GDOC_PERKS[k];if(!T||T.out||!p||p
 function aiPerk(id){const T=G.teams[id],D=GDOC[T.gdoc];if(!D)return false;for(const p of D.perks)if(!T.gperk[p.k])return gdBuy(id,p.k);return false;}
 function gdRecon(dt){for(const T of G.teams){if(T.out||!T.gdoc||!gdHas(T,'i2'))continue;T.rcT=(T.rcT||0)-dt;if(T.rcT>0)continue;T.rcT=75;const en=G.teams.filter(O=>O.id!==T.id&&!ally(O.id,T.id)&&!O.out);if(!en.length)continue;T.rcN=((T.rcN||0)+1);const O=en[T.rcN%en.length];const hq=hqOf(O.id);if(!hq)continue;const a=T.rcN*2.4;T.reveals.push({x:hq.x+Math.cos(a)*180,y:hq.y+Math.sin(a)*180,r:320,t:10});if(!T.ai)log(T.id,'Recon flight: enemy area revealed.','g');}}
 function powCost(T,key){const w=T.pw[key];return !w?1:(w.lv||1)>=3?99:(w.lv||1)+1;}
-function buyPower(team,key){const T=G.teams[team];if(!POWERS[key]||(key==='bb'&&T.pw[key]))return false;const c=powCost(T,key);if(T.rank-T.spent<c)return false;T.spent+=c;if(!T.pw[key]){T.pw[key]={cd:Math.max(0,(key==='bb'?300:POW_OPEN)-G.t),lv:1};log(team,`${powInfo(key,T.fac).name} unlocked.`,'g');}else{T.pw[key].lv=(T.pw[key].lv||1)+1;log(team,`${powInfo(key,T.fac).name} upgraded to level ${T.pw[key].lv}.`,'g');}return true;}
+function buyPower(team,key){const T=G.teams[team];if(!POWERS[key]||(key==='bb'&&T.pw[key]))return false;const c=powCost(T,key);if(T.rank-T.spent<c)return false;T.spent+=c;if(!T.pw[key]){T.pw[key]={cd:Math.max(0,(key==='bb'?300:POW_OPEN)-G.t,G.conq?(G.setupEnd||0)+CQ_PW_FIRST-G.t:0),lv:1};log(team,`${powInfo(key,T.fac).name} unlocked.`,'g');}else{T.pw[key].lv=(T.pw[key].lv||1)+1;log(team,`${powInfo(key,T.fac).name} upgraded to level ${T.pw[key].lv}.`,'g');}return true;}
 // unique per-nation effects layered on the shared general powers (GPOW .fx)
 function gpowFx(team,P,x,y,dur){const fx=P.fx,inR=e=>Math.hypot(e.x-x,e.y-y)<P.r;
   if(fx==='mark'){for(const e of G.ents)if(!e.dead&&!e.isB&&!ally(e.team,team)&&inR(e))e.mark=G.t+dur;}
@@ -1105,6 +1106,10 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
       if(tw&&!(G.tow.some(w=>w.ow>=0&&ally(w.ow,id)&&dist(w,anchor)<twd)&&bc))for(const u of idle.slice(0,2))setMove(u,tw.x,tw.y,'move');
       else if(bc){for(const u of idle.slice(0,2)){u.order={type:'garrison',ci:bc.i,x:bc.x,y:bc.y};u.path=null;}}
       else for(const t of G.towns){if(t.ow!==id||t.gar>0||(t.ham&&t.un<40))continue;const c=t.cells.find(c=>c.key&&!c.dead&&!c.g);if(c){const u=idle[0];u.order={type:'garrison',ci:c.i,x:c.x,y:c.y};u.path=null;break;}}}}
+  // conquest raid: a small fast squad goes for an enemy town far from the fighting (nobody near it, no garrison) to take it and stir unrest
+  if(T.ai.t%37===5&&G.towns&&G.conq&&G.t>CQ_SETUP+200&&DIFF[T.ai.d??1].focus){const sq=army.filter(u=>u.s.dom==='ground'&&u.kind!=='harv'&&u.kind!=='dozer'&&!u.order&&!u.target&&!u.amb).slice(0,4);
+    if(sq.length>=3){let bt=null,bd=1e9;for(const t of G.towns){if(t.ow<0||ally(t.ow,id)||t.reb>G.t||t.fr>0||t.gar>1)continue;const d=dist(t,anchor);if(d<bd){bd=d;bt=t;}}
+      if(bt)for(const u of sq)setMove(u,bt.x+((u.id%5)-2)*18,bt.y+((u.id%3)-1)*18,'amove');}}
   if(T.tun.length&&T.ai.t%3===0){const tns=mine.filter(e=>e.kind==='tunnel'&&e.built>=1);let pick=null;
     for(const b of tns)if(G.ents.some(e=>!e.dead&&!ally(e.team,id)&&!e.isB&&e.s.dom==='ground'&&Math.hypot(e.x-b.x,e.y-b.y)<300)){pick=b;break;}
     if(!pick&&T.tun.every(u=>u.hp>=u.max*.9))pick=tns.sort((p,q)=>(pb.length?Math.min(...pb.map(e=>dist(e,p)))-Math.min(...pb.map(e=>dist(e,q))):0))[0];
@@ -1303,7 +1308,7 @@ function updSupply(dt){G.supT=(G.supT||0)+dt;if(G.supT<.5)return;const st=G.supT
    Low tax on the front line. Host-authoritative; clients get the numbers in teamGlobals ('tw'). Constants are tuned so a
    full town at Normal pays about 1-1.5 oil derricks ($7/s each). */
 const TAX=[{n:'Low',m:.6,u:-.8},{n:'Normal',m:1,u:-.1},{n:'High',m:1.5,u:.6},{n:'Extortionate',m:2.2,u:1.6}];
-const CQ_START=10000,CQ_SETUP=90,CQ_TRICKLE=2.5,CQ_OIL=.6,CQ_HARV=.3;   /* Conquest: start money, no-fire setup seconds, base trickle $/s, derrick and supply-truck income multipliers */
+const CQ_CP=2.5,CQ_PW_FIRST=30,CQ_START=10000,CQ_SETUP=90,CQ_TRICKLE=2.5,CQ_OIL=.6,CQ_HARV=.3;   /* Conquest: start money, no-fire setup seconds, base trickle $/s, derrick and supply-truck income multipliers */
 const T_FRONT_R=560,T_KEYS=3,T_GAR_R=260,T_RAMP=90,T_REBEL_S=120;
 const TOWN_NAMES={me:['Qasr al-Nur','Tal Aswad','Kafr Nabil','Deir Zaman','Ain Rumman','Bayt Hanun','Wadi Khalil','Jabal Sami','Nahr Salim','Dar al-Amir','Suq Hamid','Bir Farid','Hayy al-Rawda','Marj Dabiq','Khirbet Noor','Sahl Zaid','Tell Mardikh','Bab al-Ain','Ras Qadir','Umm Hajar','Al-Zubayr','Hisn Karam','Wadi Ghazal','Qaryat Layl'],
   ru:['Zarechye','Novoselo','Krasnaya Gora','Belaya Rechka','Volna','Sosnovka','Zvezdny','Kamenka','Yasnaya','Dubrovka','Lugovoye','Mirny','Pervomaysk','Slobodka','Vishnyovka','Berezov'],
@@ -1368,7 +1373,7 @@ function updTowns(st){if(!G.towns)return;const N=G.teams.length;lgTick(st);
     let d=base+fr+fresh+(t.shock>G.t?1.5:0)-cal-cl+(t.prop||0)+(t.an[t.ow]||0)/100+(t.cut?.35:0)-(t.trade?.1:0);{const tf=TF[t.ow];if(tf>0)d=d>0?d*HM.TURF.rise:d*HM.TURF.fall;else if(tf<0&&d>0)d*=HM.TURF.foe;}t.un=Math.max(0,Math.min(100,t.un+d*st));
     t.loy=(t.ow>=0&&t.reb<=0&&t.un<HM.LOY_UN&&G.t-t.hold>=HM.LOY_HOLD&&t.pop>.3)?1:0;t.sm=townSmuggle(t);
     t.why=fr>=.9?1:base>=.3?2:fresh>0?3:(t.shock>G.t)?4:0;
-    t.tax=townIncome(t);T.credits+=t.tax*st;terr[t.ow]+=t.tax;T.taxSum=(T.taxSum||0)+t.tax*st;
+    t.tax=townIncome(t);T.credits+=t.tax*st;if(G.conq&&t.un<50&&G.t>=G.setupEnd){T.gxp+=(t.un<30?1:.4)*(t.ham?.35:1)*CQ_CP*st;T.cpSum=(T.cpSum||0)+(t.un<30?1:.4)*(t.ham?.35:1)*CQ_CP*st;promoteGeneral(T);}terr[t.ow]+=t.tax;T.taxSum=(T.taxSum||0)+t.tax*st;
     // --- perks (off while restless): clinic heals infantry, garage repairs vehicles
     if(!townRestless(t)&&(t.pk===3||t.pk===2)){const hr=t.rate===0?1.6:1;for(const e of U){if(!ally(e.team,t.ow)||Math.hypot(e.x-t.x,e.y-t.y)>T_GAR_R)continue;const inf=e.s.armor==='light';if(t.pk===3&&inf||t.pk===2&&!inf&&e.s.dom==='ground')e.hp=Math.min(e.max,e.hp+e.max*.012*hr*st);}}
     // --- low tax: loyal locals - a couple of militia rifles help when the enemy comes close

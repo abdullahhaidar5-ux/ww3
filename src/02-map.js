@@ -808,7 +808,7 @@ function cmCanon(o){
   return{v:1,nm,n:sl.length,z:I(o.z,0,3),th,sl,rv:line(o.rv,40,90),rg:line(o.rg,60,90),rd:road(o.rd),
     lk:arr(o.lk,120).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],20,600)]),pk:arr(o.pk,200).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],12,200)]),
     wd:arr(o.wd,200).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],40,300)]),ct:arr(o.ct,40).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],40,260),I(q[3],0,CM_STYLES.length-1)]),
-    oil:pt(o.oil,40),fl:pt(o.fl,40),br:arr(o.br,40).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],-180,180)])};}
+    oil:pt(o.oil,40),hm:pt(o.hm,24),fl:pt(o.fl,40),br:arr(o.br,40).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],-180,180)])};}
 function cmB64(js){return btoa(js).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 function cmUnb64(t){t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return atob(t);}
 // text -> map data (accepts the bare code, a share link containing #map=CODE, or the JSON itself); null when it is not a map
@@ -816,7 +816,7 @@ function cmParse(src){try{if(src&&typeof src==='object')return src;src=String(sr
   if(m)return JSON.parse(cmUnb64(m[1]));if(src[0]==='{')return JSON.parse(src);}catch(e){}return null;}
 function cmBuild(c,key){const cities=c.ct.map(([x,y,r,s])=>[x,y,r,CM_STYLES[s]]);
   return{name:c.nm,min:2,max:c.sl.length,sym:'none',custom:1,cmKey:key,theme:c.th,tag:'custom map · '+CM_SIZES[c.z].toLowerCase(),desc:'A map made in the map editor.',
-    slots:c.sl.map(q=>q.slice()),plain:true,manual:!!(c.fl.length||c.oil.length),cscale:CM_SCALE[c.z],cities,oilAt:c.oil,fieldAt:c.fl,
+    slots:c.sl.map(q=>q.slice()),plain:true,manual:!!(c.fl.length||c.oil.length),cscale:CM_SCALE[c.z],cities,oilAt:c.oil,hamAt:c.hm||[],fieldAt:c.fl,
     water(M){for(const r of c.rv){const w=r[0],p=[];for(let i=1;i+1<r.length;i+=2)p.push([r[i],r[i+1]]);M.rivers.push({pts:cmDens(p,40),hw:()=>w});}
       for(const r of c.rg){const w=r[0],p=[];for(let i=1;i+1<r.length;i+=2)p.push([r[i],r[i+1]]);M.ridges.push({pts:cmDens(p,40),hw:()=>w});}
       for(const [x,y,r] of c.lk)M.lakes.push({x,y,r,rx:1,wob:()=>0});for(const [x,y,r] of c.pk)M.peaks.push({x,y,r,rx:1,rot:0});

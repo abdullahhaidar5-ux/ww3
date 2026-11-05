@@ -46,6 +46,7 @@ function drawTownsMini(c,sx,sy,now){if(!G||!G.towns)return;
       if(k==='sam'){if(!mine)continue;c.strokeStyle='rgba(120,200,255,.35)';c.lineWidth=1;c.setLineDash([2,3]);c.beginPath();c.arc(e.x*sx,e.y*sy,CQ_MD_R*sx,0,7);c.stroke();c.setLineDash([]);continue;}
       if(!mine&&!(e.vs&&e.vs[ME])&&!e.mem)continue;const x=e.x*sx,y=e.y*sy,T=G.teams[e.team];c.fillStyle='#000';c.beginPath();c.moveTo(x,y-6);c.lineTo(x+5.5,y+4);c.lineTo(x-5.5,y+4);c.closePath();c.fill();c.fillStyle=mine?'#74d08f':'#ff5a40';c.beginPath();c.moveTo(x,y-4.4);c.lineTo(x+3.9,y+2.6);c.lineTo(x-3.9,y+2.6);c.closePath();c.fill();
       const sec=T?strikeSecs(T):-1;if(sec>=0){const t=sec<=.5?'READY':Math.floor(sec/60)+':'+String(Math.floor(sec%60)).padStart(2,'0');c.fillStyle='#000';c.fillText(t,x+.7,y+14.2);c.fillStyle=mine?'#bfe8c4':'#ffd0c0';c.fillText(t,x,y+13.5);}}
+    if(G.inb&&G.inb.length){const n=performance.now();G.inb=G.inb.filter(q=>q.t>n-600);for(const q of G.inb){const left=Math.max(0,(q.t-n)/1000),x=q.x*sx,y=q.y*sy,p=.5+.5*Math.sin(n/120);c.strokeStyle='rgba(255,70,50,'+(.55+.45*p)+')';c.lineWidth=1.6;c.beginPath();c.arc(x,y,Math.max(3,q.r*sx),0,7);c.stroke();if(left>0){const t=Math.ceil(left)+'s';c.fillStyle='#000';c.fillText(t,x+.7,y-q.r*sx-2.3);c.fillStyle='#ffd0c0';c.fillText(t,x,y-q.r*sx-3);}}}
     c.restore();}
   // alert pings (unrest warnings, lost towns, revolts)
   if(G.tpings&&G.tpings.length){const n=performance.now();G.tpings=G.tpings.filter(q=>n-q.t<4500);for(const q of G.tpings){const a=(n-q.t)/4500,r=4+a*22;c.strokeStyle=q.k===2?'rgba(255,90,60,'+(1-a)+')':q.k===1?'rgba(255,170,60,'+(1-a)+')':'rgba(255,224,90,'+(1-a)+')';c.lineWidth=2;c.beginPath();c.arc(q.x*sx,q.y*sy,r,0,7);c.stroke();}}}
@@ -128,3 +129,6 @@ function drawTowersMini(c,sx,sy,now){if(!G||!G.tow)return;
     for(const q of G.hums){const a=(n-q.t)/9000,x=q.x*sx,y=q.y*sy,r=3.5+Math.min(4,q.n*.5);c.globalAlpha=Math.max(0,1-a);c.strokeStyle='#ff9a3c';c.lineWidth=1.6;c.beginPath();c.moveTo(x,y-r);c.lineTo(x+r,y);c.lineTo(x,y+r);c.lineTo(x-r,y);c.closePath();c.stroke();const rr=r+a*10;c.globalAlpha=Math.max(0,.6-a);c.beginPath();c.arc(x,y,rr,0,7);c.stroke();c.globalAlpha=Math.max(0,1-a);c.fillStyle='#ffd9a8';c.fillText(q.n,x,y+3);}
     c.restore();}}
 FXH.hum=(team,x,y,n)=>{if(!G||!G.teams[ME]||!ally(team,ME))return;(G.hums=G.hums||[]).push({x,y,n,t:performance.now()});};
+
+// inbound missile countdown for the minimap (the global 'strike' warning carries the seconds to impact)
+{const _st=FXH.strike;FXH.strike=function(x,y,t,r,sup,arc){if(sup&&G)(G.inb=G.inb||[]).push({x,y,r,t:performance.now()+t*1000});return _st.apply(this,arguments);};}

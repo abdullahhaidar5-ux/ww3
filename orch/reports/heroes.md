@@ -34,3 +34,8 @@ Abdullah approved 2026-11-04 19:38: one elite squad per nation with one special 
 - No human listening yet: samples in `orch/voices-heroes/`. Persian (Piper) lines read back with CER 0.2–0.5 on 8 of 13 lines (Whisper is weak on Persian; same as earlier passes).
 - Screenshots: `orch/shots/heroes/` (IR RS DW US RU KP + two callout subtitles + a phone view).
 - `cigate.sh` needs an authenticated `gh`, which this cloud run lacks: gates run here were smoke, smooth, heroes probe; CI statuses read via the GitHub tool.
+
+## Still open (moved here from HANDOFF-heroes, 2026-11-05)
+- Listening check of the radio voice sheets (samples in `orch/voices-heroes/`) needs Abdullah's ears.
+- AI tournament balance check for heroes (identical stats, abilities differ) - runs with the separate balance agent.
+- A unique hero mesh (today: soldier model at 124% size + gold star) is a later look step; needs a free CC0/CC-BY model.

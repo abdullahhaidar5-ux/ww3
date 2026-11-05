@@ -10,8 +10,8 @@ line". This report says what is built, how the numbers work, and what is still o
 |---|---|---|
 | 1 | Town tax + unrest + revolt + rebels + hamlets + minimap + tax panel | **built, smoke PASS** (see "Checks") |
 | 2 | Conquest start: money, no prerequisites, setup phase, economy = territory, win rule | **built, smoke PASS** |
-| 3 | Fair upgrades / powers / missile strikes (launch sites, countdown, defence) | **not started** (hooks below) |
-| 4 | Remove Classic from menus + lobby, tutorial teaches Conquest, old replays | **not started** (the sim already runs Conquest for every non-campaign, non-sandbox game: `G.conq`) |
+| 3 | Fair upgrades / powers / missile strikes (launch sites, countdown, defence) | **built** (2026-11-05 finish pass, below) |
+| 4 | Remove Classic from menus + lobby, tutorial teaches Conquest, old replays | **built** (no Classic wording left anywhere; tutorial has setup/towns/tax/unrest/civic steps; editor hamlet tool; AI raids) |
 
 ## What a player sees
 
@@ -93,13 +93,26 @@ showed no revolts at all in 12-minute AI games, so High was raised to +0.6 and E
 towns should widen the gap. **Not run:** the 18-nation tourney, start-position fairness with Conquest economics, game-length
 distribution (12–25 min) — run `node orch/aitourney.mjs` and `node orch/mapfair.mjs --battles` on a bigger machine and tune `CQ_*`/`TAX`/`townBase`.
 
+## Finish pass (2026-11-05, branch `orch/conquest-finish`)
+
+- **Fair upgrades**: `01-data.js`, right after `UPGL`: every nation pays the same cost/time for the same tier at the same building
+  (barracks 1300/1200/1100, factory 1300/1100/1000, airfield 1000/850, HQ 1400/1400/1200, shipyard 650; time = cost/46 s). Effects still differ
+  per nation. One research at a time per building type was already the rule (`T.rq[at]`).
+- **Powers**: rank still comes from general XP (`gxp`); Conquest adds **command points** from calm held towns: unrest < 30 gives
+  `CQ_CP` (2.5) gxp/s per town (hamlet x0.35), unrest 30-50 gives 40% of that, restless towns give nothing (`updTowns`, `T.cpSum` counts it).
+  First charge of a newly bought power waits until setup end + `CQ_PW_FIRST` (30 s); recharge is the normal per-power cooldown; nothing usable in setup.
+- **Missile strikes**: launching exposes the launch site to every enemy for 45 s (170 radius reveal) so it shows on their map and minimap;
+  the minimap draws a red pulsing ring + seconds-to-impact over every inbound strike (`G.inb`, fed by the global `strike` warning);
+  missile defence = the SAM building, named per nation (`MDN`, now all 18: Patriot, Iron Dome, S-400, HQ-9, ... Sayyad-4B, Khordad-15, S-125),
+  same numbers for everyone (`CQ_MD_P` 28% per battery, cap 80%, radius 520); an intercept now shows an interceptor streak and a flash high above the target (`icpt` effect).
+- **Stage 4**: no Classic/mode wording exists in `src/` or the page shell (checked); map editor has a Hamlet tool (`hm` list -> `hamAt`); AI
+  (focus difficulties) sends a 3-4 unit squad to an enemy town far from the fighting every ~37 AI ticks after minute 3.5 (`raid` block before the tunnel code);
+  tutorial steps: setup phase, towns, tax, unrest/revolts, civic buildings, hearts and minds, powers, win.
+- Screenshots: `orch/shots/conquest/` (`0-setup-banner`, `9-strike-inbound`, `9b-...`, `10-end-screen` via `orch/conquestshots.mjs`, desktop).
+
 ## Not done / open
 
-1. Stage 3: fair upgrades (research cost/time per tier), powers (rank + command points from calm towns), **missile strikes** (launch
-   site building, public countdown on HUD + minimap, ≥ minute 8, 5 min recharge, cost per launch, 40% cap per building, missile
-   defence building for all 18 nations, strikes raise `t.shock`). Minimap hooks: `drawTownsMini` is the place for countdown/defence circles.
-2. Stage 4: remove Classic from the menus and the online lobby, tutorial (`08b-social.js` TUT) teaching tax/revolts, old replays
-   ("old version" message), version mismatch refusal for Cloudflare lobby (rebel team changes the team count).
-3. Map editor button to place hamlets (`D.hamAt` works); AI "raid enemy rear towns" (hook: `updTowns` AI branch), AI garrison policy is basic.
-4. Tuning: AI economy after the money change, game length 12–25 min, 18-nation balance.
-5. Phone/touch: panel works by tap; no other phone work (phones are abandoned per CLAUDE.md).
+1. Fairness evidence (tourneys) - a separate balance agent runs `aitourney.mjs`, `mapfair.mjs --battles`, `conquest-t5.mjs` on GitHub runners; tune `CQ_*`/`TAX`/`townBase` from that.
+2. Missile-defence is the existing SAM building renamed per nation (no separate new model); a dedicated look is a later art step.
+3. AI garrison policy is basic; a dedicated "raid" squad is the only offensive town play.
+4. Phone/touch: panel works by tap; no other phone work (phones are abandoned per CLAUDE.md).
