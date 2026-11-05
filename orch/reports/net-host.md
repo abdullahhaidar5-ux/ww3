@@ -14,6 +14,7 @@ step per event, 15 game-minutes, timing wrappers on (they add ~20-30 %):
 | 8, Rhine, Normal | 1.88 | 7.5 | 15.5 | 68 | ~120 ms | ~250 |
 | 8, Rhine, **Hard** (before) | 3.13 | 8.8 | 13.7 | 53 | ~200 ms (20 % of a core) | ~300 |
 | 8, Rhine, **Hard** (after) | 3.11 | 8.6 | 14.4 | 51 | ~200 ms | ~300 |
+| 8, Rhine, Hard, **after merging today's main** (heroes, Conquest maps + roads) | 4.49 | 12.1 | 18.1 | 84 | ~400-475 ms (45 % of a core) | ~400 |
 
 Where the time goes (8 sides, Hard, whole match, inclusive): unit updates 79 s (of which movement/pathing `navTo` 30 s, `findPath`
 7 s), unit separation 23 s, host netcode 17 s, morale 14 s, buildings 12 s, garrisons 8 s, AI thinking 6 s, vision 4.5 s, supply 2.6 s.
@@ -27,8 +28,9 @@ wall time per game-second (an upper bound on CPU) for 8 sides, 184 entities afte
 ~95 ms. So Cloudflare runs the sim at least as fast as this box. 10,800 timer events, several far above 10 ms, and the object was
 never stopped.
 
-**What the numbers mean:** a battle needs 60 steps a second; a late 8-side Hard battle uses ~20 % of one core, so the server keeps
-up with ~5x headroom. The "10 ms per request" free-plan figure is the per-request CPU cap of ordinary Workers; a Durable Object
+**What the numbers mean:** a battle needs 60 steps a second; a late 8-side Hard battle used ~20 % of one core this morning and ~45 % after
+today's merges (heroes, bigger Conquest maps, roads; ~400 units), so the server still keeps up with ~2x headroom — but the
+margin is shrinking, which is why the overrun guard below matters. The "10 ms per request" free-plan figure is the per-request CPU cap of ordinary Workers; a Durable Object
 battle runs its steps in timer callbacks, and the live bench shows occasional 30-60 ms steps are tolerated. The real limits are
 (a) keeping up with real time (ample today) and (b) the daily free allowance of object-awake time (13,000 GB-s/day ≈ 28
 battle-hours/day), which the existing 75 % guard already handles. **No paid plan is needed today.** Workers Paid ($5/month) would

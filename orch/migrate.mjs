@@ -356,10 +356,10 @@ async function main() {
     await Promise.race([typeof hostBrowser === 'function' ? hostBrowser() : hostGame(), new Promise(r => setTimeout(r, 20000))]); return NET.game ? NET.code : null; });
   if (!code) throw new Error('host could not open a game (NET.code empty; fake transport not picked up?)');
   console.log(`[${secs()}] host lobby open, code ${code}`);
-  await cA.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'RU'; joinByCode(c); }, code);
+  await cA.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'RU'; NET.hp = 900; joinByCode(c); }, code);   // host benchmarks pinned: A is the stronger PC, so A is the standby (07b sbPick)
   await waitFor(host, () => NET.lobby && NET.lobby.length === 1, null, 60000, 'client A to appear in the host lobby');
   await waitFor(cA, () => /Joined/.test(document.getElementById('mpstatus').textContent), null, 30000, 'client A to see "Joined"');
-  await cB.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'CN'; joinByCode(c); }, code);
+  await cB.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'CN'; NET.hp = 400; joinByCode(c); }, code);
   await waitFor(host, () => NET.lobby && NET.lobby.length === 2, null, 60000, 'client B to appear in the host lobby');
   await waitFor(cB, () => /Joined/.test(document.getElementById('mpstatus').textContent), null, 30000, 'client B to see "Joined"');
   for (const p of [host, cA, cB]) await p.evaluate(() => { window.__stopLoop = true; });
