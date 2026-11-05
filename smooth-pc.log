@@ -1,0 +1,49 @@
+[0s] pc: launching browser
+[0s] ctx
+[0s] guarded
+[1s] page
+[1s] pc: loading page
+[1s] pc: page loaded
+[2s] pc: menu ready
+[38s] pc: LOADING {"tok":1,"tipI":6,"tipT":92,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",17329],["Loading 3D models…",880],
+[78s] pc: done {"tok":1,"tipI":7,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",17329],["Loading 3D models…",880
+[78s] pc: done {"tok":1,"tipI":7,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",17329],["Loading 3D models…",880
+[78s] pc: battle loaded in 76s
+[92s] pc: army in place
+[92s] pc: measuring 150 frames
+[95s] pc: warm-up done, 169 shaders
+[97s] pc: frame 10
+[99s] pc: frame 20
+[100s] pc: frame 30
+[102s] pc: frame 40
+[103s] pc: frame 50
+[104s] pc: frame 60
+[106s] pc: frame 70
+[107s] pc: frame 80
+[109s] pc: frame 90
+[110s] pc: frame 100
+[111s] pc: frame 110
+[113s] pc: frame 120
+[114s] pc: frame 130
+[116s] pc: frame 140
+[117s] pc: frame 150
+[120s] pc attempt 1: ok
+
+                       pc        
+units on screen        290       
+load time s            75.98     
+median frame ms        114.6     
+p95 frame ms           264.3     
+p99 frame ms           423.5     
+worst 1% FPS           1.93      
+frames >50 ms          150       
+first boom x median    1.37      
+2nd boom x median      1.29      
+weather/night x median 1.48      
+sim step p95 ms        11.2      
+draw calls             1173      
+k triangles            5666      
+heap MB/min            -66.25    
+runtime 2.0 min
+
+SMOOTH PASS
