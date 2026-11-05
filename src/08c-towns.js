@@ -59,7 +59,7 @@ function townBuild(){if(!document.getElementById('townCss')){const st=document.c
 #townp h4{margin:0 0 2px;font-size:16px}#townp .tm{color:#9fb5a4;font-size:12px}#townp .rb{display:flex;gap:6px;margin:8px 0}#townp .rb button{flex:1;min-height:44px;border-radius:6px;border:1px solid #4a6a52;background:#1c2a20;color:#e8f2e8;font-size:13px;font-weight:600;cursor:pointer}#townp .rb button.on{background:#3a6b46;border-color:#9be39b}#townp .rb button[disabled]{opacity:.45}
 #townp .bar{height:10px;background:rgba(255,255,255,.14);border-radius:5px;overflow:hidden;margin:4px 0}#townp .bar i{display:block;height:100%}#townp .x{position:absolute;right:6px;top:4px;width:34px;height:34px;background:none;border:0;color:#cfe0d2;font-size:22px;cursor:pointer}#townp .warn{color:#ffb4a8;font-weight:600}`;document.head.appendChild(st);}
   const d=document.createElement('div');d.id='townp';d.innerHTML='<button class="x" aria-label="Close">&times;</button><div id="tpb"></div>';d.addEventListener('pointerdown',e=>e.stopPropagation());d.addEventListener('contextmenu',e=>e.preventDefault());
-  d.querySelector('.x').onclick=townClose;d.addEventListener('click',e=>{const b=e.target.closest('button[data-r]');if(b&&TP.ti>=0){doAct({t:'tax',ti:TP.ti,r:+b.dataset.r});TP.t=0;setTimeout(()=>townPanelTick(true),60);}});
+  d.querySelector('.x').onclick=townClose;d.addEventListener('click',e=>{const b=e.target.closest('button[data-r]');if(b&&TP.ti>=0){doAct({t:'tax',ti:TP.ti,r:+b.dataset.r});TP.t=0;setTimeout(()=>townPanelTick(true),60);}const a=e.target.closest('button[data-act]');if(a&&TP.ti>=0&&!a.disabled){doAct({t:a.dataset.act,ti:TP.ti});TP.t=0;setTimeout(()=>townPanelTick(true),90);}});
   document.body.appendChild(d);TP.el=d;}
 function cqBanner(){if(!G||!G.conq)return;if(G.over){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}let b=$('cqBn');if(!b){b=document.createElement('div');b.id='cqBn';b.style.cssText='position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;font:600 14px/1.3 system-ui,sans-serif;color:#f4e9c2;text-shadow:0 1px 3px #000;max-width:calc(100vw - 150px)';document.body.appendChild(b);}
   const setup=G.t<G.setupEnd;let h='';if(setup){const l=Math.max(0,Math.ceil(G.setupEnd-G.t));h=`<div style="background:rgba(60,45,10,.88);border:1px solid #d9b34a;border-radius:6px;padding:4px 12px;color:#ffe08a">SETUP PHASE ${Math.floor(l/60)}:${String(l%60).padStart(2,'0')} <span style="font-weight:400;font-size:12px">&middot; build up and grab towns &middot; no firing yet</span></div>`;}
@@ -88,5 +88,42 @@ function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){
   else if(reb)h+=`<div class="warn" style="margin-top:6px">The locals revolted. Rebels hold it for ${Math.max(0,Math.ceil(t.reb-G.t))} s - clear them, then garrison infantry to capture.</div>`;
   else if(t.ow>=0)h+='<div class="tm" style="margin-top:6px">Enemy-held. Garrison infantry in its buildings to capture it'+(t.un>50?' &mdash; the locals are restless, it falls faster':'')+'.</div>';
   else h+='<div class="tm" style="margin-top:6px">Neutral. Garrison infantry in its buildings (more than half of the key buildings) to capture it.</div>';
+  h+=hmPanel(t,mine,reb);
   if(pk[0])h+=`<div class="tm" style="margin-top:4px">Perk: <b>${pk[0]}</b> &mdash; ${pk[1]}</div>`;
   TP.el.querySelector('#tpb').innerHTML=h;}
+
+/* ---------- HEARTS & MINDS interface: home turf, local recruits, informants, bribes, propaganda towers ---------- */
+function homeLine(){const n=homeNames();return n.length?n.join(' & '):'';}
+function hmPanel(t,mine,reb){let h='';const T=G.teams[ME];if(!T)return h;
+  const hn=homeLine();if(hn){const tf=turfOf(ME);h+=`<div class="tm" style="margin-top:6px">Locals favour <b>${hn}</b>${tf>0?' &mdash; <span style="color:#9be39b">you are on home turf</span>':tf<0?' &mdash; <span style="color:#ffb4a8">you are the outsider here</span>':' &mdash; evens out in this match-up'}</div>`;}
+  const pop=Math.round((t.pop==null?1:t.pop)*100),an=Math.round((t.an&&t.an[ME])||0);
+  if(pop<100||an>=5)h+=`<div class="tm" style="margin-top:4px">Population ${pop}%${an>=5?' &middot; <span style="color:'+(an>=40?'#ffb4a8':'#f0c040')+'">locals angry at you '+an+'/100</span> (civilian casualties)':''}</div>`;
+  if(mine&&!reb){
+    const cost=recruitCost(t,ME),cap=HM.MIL_CAP,have=MODE==='client'?(t.milN|0):(t.mil||[]).filter(u=>!u.dead).length,nm=MIL_NAME[T.fac]||'Local Militia';
+    if(t.loy){h+=`<div style="margin-top:8px"><button data-act="recruit" style="width:100%;min-height:40px;border-radius:6px;border:1px solid #4a6a52;background:#2b4a33;color:#e8f2e8;font-weight:600;cursor:pointer" ${have>=cap||T.credits<cost?'disabled':''}>Recruit ${nm} &mdash; $${cost}</button><div class="tm">Loyal town: local volunteers here (${have}/${cap}). Informants report enemy troops within ${Math.round(HM.INF_R*(turfOf(ME)>0?HM.TURF.inf:1))} m on the minimap.</div></div>`;}
+    else h+=`<div class="tm" style="margin-top:6px">Not loyal yet: ${t.un>=HM.LOY_UN?'unrest must drop below '+HM.LOY_UN:'hold it a little longer'} to recruit locals and get informants.</div>`;
+    if(t.sm)h+='<div class="tm" style="margin-top:4px">Smuggling tunnel: this town stays supplied even if it is cut off.</div>';}
+  else if(!mine&&t.ow>=0&&!reb){
+    if(t.sm&&G.teams[ME].upg&&G.teams[ME].upg.gpr)h+='<div class="tm" style="margin-top:4px">Your radar has found a smuggling tunnel under this town.</div>';
+    if(t.un>=HM.BRIB_UN){const p=bribePrice(t,ME),cd=Math.max(0,Math.ceil((T.brT||0)-G.t)),setup=G.t<G.setupEnd;
+      h+=`<div style="margin-top:8px"><button data-act="bribe" style="width:100%;min-height:40px;border-radius:6px;border:1px solid #8a6a2a;background:#4a3a18;color:#ffe9b0;font-weight:600;cursor:pointer" ${(!bribeOk(t,ME)||T.credits<p)?'disabled':''}>Bribe the elders &mdash; $${p}</button><div class="tm">${setup?'Not during the setup phase.':cd>0?'Cooldown '+cd+' s.':T.credits<p?'Not enough money.':'The garrison is sent out, nobody is killed. Cheaper the angrier the locals.'}</div></div>`;}
+    else h+=`<div class="tm" style="margin-top:6px">Elders cannot be bribed yet: unrest ${Math.round(t.un)}/${HM.BRIB_UN}.</div>`;}
+  return h;}
+function towerAt(w){if(!G||!G.tow||!w)return null;for(const q of G.tow)if(Math.hypot(q.x-w.x,q.y-w.y)<70)return q;return null;}
+function towerName(q){const T=q.ow>=0&&G.teams[q.ow];return T?(STATION[T.fac]||'Radio tower'):'Neutral radio tower';}
+function drawTowersWorld(c){if(!G||!G.tow||G.over)return;
+  for(const q of G.tow){if(!inView(q.x,q.y,.1))continue;const p=toScreen(q.x,groundH(q.x,q.y)+105,q.y);if(p.z>1)continue;
+    const T=q.ow>=0&&G.teams[q.ow],mine=T&&ally(q.ow,ME);let prog=0,pt=-1;for(let k=0;k<(q.cp||[]).length;k++)if(q.cp[k]>prog){prog=q.cp[k];pt=k;}
+    c.save();c.font='bold 11px system-ui,sans-serif';c.textAlign='center';const txt=(T?STATION[T.fac]:'Radio tower')||'Radio tower',w=c.measureText(txt).width+18,h=18;
+    c.fillStyle='rgba(8,12,10,.78)';c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle=T?T.color:'#b9c2b3';c.fillRect(p.x-w/2,p.y-h,4,h);c.fillStyle='#e8f2e8';c.fillText(txt,p.x+2,p.y-5);
+    if(prog>0&&G.teams[pt]){c.fillStyle='rgba(255,255,255,.18)';c.fillRect(p.x-w/2,p.y,w,4);c.fillStyle=G.teams[pt].color;c.fillRect(p.x-w/2,p.y,w*Math.min(1,prog/10),4);}
+    c.restore();}}
+function drawTowersMini(c,sx,sy,now){if(!G||!G.tow)return;
+  for(const q of G.tow){const x=q.x*sx,y=q.y*sy,T=q.ow>=0&&G.teams[q.ow];c.save();c.strokeStyle='#000';c.lineWidth=3;c.beginPath();c.moveTo(x,y+5);c.lineTo(x,y-5);c.moveTo(x-3.5,y+5);c.lineTo(x,y-3);c.lineTo(x+3.5,y+5);c.stroke();
+    c.strokeStyle=T?T.color:'#d8dcd4';c.lineWidth=1.4;c.beginPath();c.moveTo(x,y+5);c.lineTo(x,y-5);c.moveTo(x-3.5,y+5);c.lineTo(x,y-3);c.lineTo(x+3.5,y+5);c.stroke();
+    c.beginPath();c.arc(x,y-6,2.6,3.6,5.8);c.stroke();c.beginPath();c.arc(x,y-6,5,3.6,5.8);c.stroke();c.restore();}
+  // informant pings (HUMINT): an expanding diamond where a loyal town reports enemy troops, with the count
+  if(G.hums&&G.hums.length){const n=performance.now();G.hums=G.hums.filter(q=>n-q.t<9000);c.save();c.font='bold 9px system-ui,sans-serif';c.textAlign='center';
+    for(const q of G.hums){const a=(n-q.t)/9000,x=q.x*sx,y=q.y*sy,r=3.5+Math.min(4,q.n*.5);c.globalAlpha=Math.max(0,1-a);c.strokeStyle='#ff9a3c';c.lineWidth=1.6;c.beginPath();c.moveTo(x,y-r);c.lineTo(x+r,y);c.lineTo(x,y+r);c.lineTo(x-r,y);c.closePath();c.stroke();const rr=r+a*10;c.globalAlpha=Math.max(0,.6-a);c.beginPath();c.arc(x,y,rr,0,7);c.stroke();c.globalAlpha=Math.max(0,1-a);c.fillStyle='#ffd9a8';c.fillText(q.n,x,y+3);}
+    c.restore();}}
+FXH.hum=(team,x,y,n)=>{if(!G||!G.teams[ME]||!ally(team,ME))return;(G.hums=G.hums||[]).push({x,y,n,t:performance.now()});};

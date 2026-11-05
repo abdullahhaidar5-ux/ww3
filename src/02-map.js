@@ -11,11 +11,11 @@ const MAPS={
     slots:[[380,MAPH-360],[MAPW-380,360],[1150,MAPH-360],[MAPW-1150,360],[380,1150],[MAPW-380,MAPH-1150],[1780,MAPH-310],[MAPW-1780,310]],
     water(M,R){const p=[R()*6.28,R()*6.28,R()*6.28];const pts=[];for(let x=-200;x<=MAPW+200;x+=40)pts.push([x,300+.5*x+45*Math.sin(x*.0035+p[0])+22*Math.sin(x*.009+p[1])]);
       M.rivers.push({pts,hw:(t,x)=>178+24*Math.sin(x*.006+p[2])});M.bridgeAt=[[0,700],[0,1600],[0,2500]];}},
-  rivers:{name:'Twin Rivers Offensive',min:2,max:6,sym:'point',tag:'desert · two rivers',desc:'Two rivers cut the land into three bands. Four bridges.',
+  rivers:{home:['IR','RS'],name:'Twin Rivers Offensive',min:2,max:6,sym:'point',tag:'desert · two rivers',desc:'Two rivers cut the land into three bands. Four bridges.',
     slots:[[420,260],[MAPW-420,MAPH-260],[420,MAPH-260],[MAPW-420,260],[360,1100],[MAPW-360,1100]],
     water(M,R){const p=[R()*6.28,R()*6.28];for(const [yc,ph] of [[690,p[0]],[MAPH-690,p[1]]]){const pts=[];for(let x=-200;x<=MAPW+200;x+=40)pts.push([x,yc+28*Math.sin(x*.0042+ph)+12*Math.sin(x*.011+ph*2)]);M.rivers.push({pts,hw:(t,x)=>96+14*Math.sin(x*.007+ph)});}
       M.bridgeAt=[[0,900],[0,2300],[1,900],[1,2300]];}},
-  delta:{name:'Delta Inferno',min:2,max:6,sym:'mirrorX',tag:'river delta & coast',desc:'A river forks into two arms on its way to the sea. Five bridges.',
+  delta:{home:['EG'],name:'Delta Inferno',min:2,max:6,sym:'mirrorX',tag:'river delta & coast',desc:'A river forks into two arms on its way to the sea. Five bridges.',
     slots:[[420,420],[MAPW-420,420],[420,1380],[MAPW-420,1380],[1150,1960],[MAPW-1150,1960]],
     water(M,R){const ph=R()*6.28,J=[1600,820];const wig=(a,b,amp)=>{const pts=[];const n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/40);for(let i=0;i<=n;i++){const t=i/n,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t,L=Math.hypot(b[0]-a[0],b[1]-a[1]),nx=-(b[1]-a[1])/L,ny=(b[0]-a[0])/L,w=amp*Math.sin(t*9+ph)*Math.sin(t*Math.PI);pts.push([x+nx*w,y+ny*w]);}return pts;};
       M.rivers.push({pts:wig([1600,-200],J,22),hw:()=>120});const L=wig(J,[260,MAPH+200],40),Rr=L.map(([x,y])=>[MAPW-x,y]);M.rivers.push({pts:L,hw:()=>100});M.rivers.push({pts:Rr,hw:()=>100});
@@ -24,12 +24,12 @@ const MAPS={
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1250,1100+Math.sin(a)*800]);return s;})(),
     water(M,R){const w=[R()*6.28,R()*6.28];M.lakes.push({x:1600,y:1100,r:300,rx:1.35,wob:a=>.1*Math.sin(a*3+w[0])+.06*Math.sin(a*5+w[1])});
       for(const a of [-1.1,2.04,.47,-2.67]){const x=1600+Math.cos(a)*1250,y=1100+Math.sin(a)*800;M.lakes.push({x,y,r:85,rx:1.2,wob:q=>.15*Math.sin(q*3+x)});}}},
-  gulf:{name:'Gulf Coast Landings',min:2,max:4,sym:'mirrorX',tag:'desert shore · naval-heavy',desc:'Bases on a desert shore above the open sea. Naval power matters.',
+  gulf:{home:['SA','AE'],name:'Gulf Coast Landings',min:2,max:4,sym:'mirrorX',tag:'desert shore · naval-heavy',desc:'Bases on a desert shore above the open sea. Naval power matters.',
     slots:[[450,330],[MAPW-450,330],[520,1250],[MAPW-520,1250]],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,MAPH+60-90*Math.cos((x-1600)/1600*Math.PI*.5)*0+40*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:(t,x)=>470+120*Math.exp(-Math.pow((x-1600)/380,2))});
       // 2026-10-30: coastal hills to fight around and an island offshore (mirrored left-right like the rest)
       M.peaks.push({x:1050,y:880,r:65,rx:1.6,rot:.5});mirrorMap(M,'x');M.peaks.push({x:1600,y:700,r:85,rx:1.9,rot:0});M.islands.push({x:1600,y:2020,r:80,rx:2.2,rot:0,wob:a=>.06*Math.cos(2*a)});}},
-  plateau:{name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
+  plateau:{home:['EG'],name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1280,1100+Math.sin(a)*820]);return s;})(),
     water(M){M.peaks.push({x:1020,y:720,r:75,rx:1.6,rot:.45},{x:1230,y:470,r:60,rx:1.4,rot:-.2},{x:880,y:1480,r:70,rx:1.4,rot:-.5});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:105,rx:1.5,rot:0});}},
   hormuz:{home:['IR','AE'],name:'Strait of Hormuz',min:2,max:8,sym:'none',tag:'sea strait · naval-heavy',desc:'Iran faces the Arabian shore across the world\'s busiest oil chokepoint. Navies rule the strait; armies must go the long way round.',
@@ -47,7 +47,7 @@ const MAPS={
       for(const [x,y] of [[560,470],[2640,1730],[560,1730],[2640,470]])M.islands.push({x,y,r:330,rx:1.45,rot:0,wob:q=>.1*Math.sin(q*3+w+x)+.05*Math.sin(q*7+y)});
       M.islands.push({x:1600,y:1100,r:250,rx:1.7,rot:0,wob:q=>.08*Math.sin(q*4+w)});
       for(const [x,y] of [[1050,770],[2150,1430],[1050,1430],[2150,770]]){const dx=1600-x,dy=1100-y,L=Math.hypot(dx,dy);M.bridgeAng.push([x,y,dx/L,dy/L]);}}},
-  zagros:{name:'Zagros: Mountain Fortress',min:2,max:8,sym:'point',rough:1.3,tag:'mountain ranges · three valleys',desc:'Two snow-capped ranges split the land into three valleys. Armies fight for the mountain passes.',
+  zagros:{home:['IR'],name:'Zagros: Mountain Fortress',min:2,max:8,sym:'point',rough:1.3,tag:'mountain ranges · three valleys',desc:'Two snow-capped ranges split the land into three valleys. Armies fight for the mountain passes.',
     slots:[[450,1100],[2750,1100],[450,380],[2750,1820],[450,1820],[2750,380],[1600,350],[1600,1850]],
     water(M,R){const ph=R()*6.28;const ridge=(y0,y1)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([1100+60*Math.sin(y*.004+ph)+20*Math.sin(y*.013),y]);return pts;};
       for(const [a,b] of [[-200,470],[740,1440],[1720,MAPH+200]]){const L=ridge(a,b);M.ridges.push({pts:L,hw:()=>105});M.ridges.push({pts:L.map(([x,y])=>[MAPW-x,MAPH-y]),hw:()=>105});}
@@ -426,7 +426,7 @@ function mkMap(seed,mk){
   M.grid=grid;
   // Cities: blocks of buildings on a street grid. Building lots are impassable (units use the streets) and give
   // infantry cover; bases, supply and oil keep clear of them.
-  M.cities=[];M.cityBlds=[];M.hamlets=[];M.roadNet=[];
+  M.cities=[];M.cityBlds=[];M.hamlets=[];M.towers=[];M.roadNet=[];
   const CITIES=(D.cities||[]).concat(M.genCities||[]);
   // CENTRE PRIZE TOWN (Conquest "town bands"): one larger market town where every base is as equally far as the ground
   // allows - an existing city of the map when one sits there, else a new one. Chosen on the bare ground (before any city
@@ -533,6 +533,13 @@ function mkMap(seed,mk){
          const n0=M.hamlets.length;addH(best(p=>Math.abs(p.d[i]-off*eD[i])+.1*Math.abs(p.d[i]-p.lo),(p,rl)=>mine(p,i,.08*E*rl)&&okH(p,rl,200)));if(M.hamlets.length>n0)done=false;}
        if(done)break;}}
     }
+  // PROPAGANDA TOWERS (Hearts & Minds): a neutral radio / TV mast. Duel: the spot equally far from both bases (or a mirrored pair);
+  // 3+ bases: the spot whose route distances to every base are the most equal. Same fairness code as the oil and hamlets.
+  M.towers=[];
+  {const okT=(p,rl,sp)=>far(p,fmb*.8*rl)&&M.fields.every(f=>Math.hypot(f.x-p.x,f.y-p.y)>110)&&M.oil.every(o=>Math.hypot(o.x-p.x,o.y-p.y)>110)&&M.hamlets.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>150)&&M.towers.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>(sp||260)*rl)&&!M.cityNear(p.x,p.y,110);
+   const addT=p=>{if(p)M.towers.push({x:p.x,y:p.y});};
+   if(NB===2)unit(0,1,addT,okT,.3*E);
+   else if(NB>2){addT(best(p=>{let m=0;for(let i=0;i<NB;i++)m+=p.d[i];m/=NB;let v=0;for(let i=0;i<NB;i++)v+=Math.abs(p.d[i]-m);return v+.15*Math.abs(m-.5*E);},(p,rl)=>okT(p,rl,260)));}}
   }
   // hamlets a custom map asks for (map editor)
   for(const [ox,oy] of (D.hamAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.hamlets.every(h=>Math.hypot(h.x-X,h.y-Y)>200))M.hamlets.push({x:X,y:Y});}

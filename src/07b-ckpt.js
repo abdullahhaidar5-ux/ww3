@@ -4,7 +4,7 @@
    Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
 const CK_G=['t','nid','aiT','visT','endT','over','bs','cbrTeams','mT','ecT','wx','fixWx','mines','smokes','shields','craters','ruins','aiTT','sqOf',
-  'spoofs','mban','mbanN'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams)
+  'spoofs','mban','mbanN','dug','dugN','dugV','dugId'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams)
 const CK_TEAM_SKIP=new Set(['_uk','_ut','F','ai','id','fac','color','dark']);
 // (a unit that just went into a tunnel / the fortress / a city building is saved inside it: it leaves G.ents only at the
 // end of the sim step)
@@ -23,8 +23,8 @@ function ckEncode(){const ids=new Map();for(const e of G.ents)if(!e.inTun)ids.se
   const fields=G.fields.map(f=>({amt:f.amt,owner:f.owner}));
   const oil=G.oil.map(o=>{const r={};for(const k in o){if(k==='tg')continue;const y=enc(o[k],1);if(y!==undefined&&(typeof y!=='object'||Array.isArray(y)||y===null||y.$e!=null))r[k]=y;}return r;});
   const civ=(G.civ||[]).map(c=>{const r={};for(const k in c){if(k==='obj'||k==='mesh')continue;const y=enc(c[k],2);if(y!==undefined)r[k]=y;}return r;});
-  const tw=(G.towns||[]).map(t=>({ow:t.ow,rate:t.rate,un:t.un,hold:t.hold,fresh:t.fresh,reb:t.reb,shock:t.shock,milT:t.milT,rateT:t.rateT}));
-  return {v:1,ents,S:S.map(s=>enc(s,1)),teams,g,fields,oil,civ,tw,toks:tokSafe(),start:NET.startInfo||null,me:ME,cs:NET.peers?NET.peers.map((p,i)=>Math.max(p&&NET.cseq?(NET.cseq[p]||0):0,((NET.cseqSlot||[])[i]||0))):null};}
+  const tw=(G.towns||[]).map(t=>({ow:t.ow,rate:t.rate,un:t.un,hold:t.hold,fresh:t.fresh,reb:t.reb,shock:t.shock,milT:t.milT,rateT:t.rateT,pop:t.pop,an:t.an,milR:t.milR,cwT:t.cwT}));const tow=(G.tow||[]).map(w=>({ow:w.ow,cp:w.cp}));const brT=G.teams.map(T=>T.brT||0);
+  return {v:1,ents,S:S.map(s=>enc(s,1)),teams,g,fields,oil,civ,tw,tow,brT,toks:tokSafe(),start:NET.startInfo||null,me:ME,cs:NET.peers?NET.peers.map((p,i)=>Math.max(p&&NET.cseq?(NET.cseq[p]||0):0,((NET.cseqSlot||[])[i]||0))):null};}
 function ckDecode(ck){const byId=new Map();const S=ck.S;const ents=ck.ents.map(o=>Object.assign({},o));for(const e of ents)byId.set(e.id,e);
   let sTab=[];const dec=v=>{if(v==null||typeof v!=='object')return v;if(Array.isArray(v))return v.map(dec);if(v.$e!=null)return byId.get(v.$e)||null;if(v.$f!=null)return G.fields[v.$f]||null;if(v.$o!=null)return G.oil[v.$o]||null;if(v.$c!=null)return (G.civ||[])[v.$c]||null;
     const o={};for(const k in v){if(k==='$s')continue;o[k]=dec(v[k]);}if(v.$s!=null&&sTab[v.$s]){o.s=sTab[v.$s];o.vs=new Array(G.teams.length).fill(false);}return o;};  // $s: a unit off the map (tunnel / fortress)
@@ -39,7 +39,7 @@ function ckRestore(ck){const N=G.teams.length;const {ents,byId,dec}=ckDecode(ck)
   for(const k of ['mines','smokes','shields'])if(Array.isArray(G[k]))G[k]=reb(G[k]);
   ck.fields.forEach((f,i)=>{if(G.fields[i])Object.assign(G.fields[i],f);});
   ck.oil.forEach((o,i)=>{if(G.oil[i])Object.assign(G.oil[i],reb(o));});
-  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});(ck.tw||[]).forEach((o,i)=>{const t=G.towns&&G.towns[i];if(t){Object.assign(t,o);t.rebU=[];}});try{rubSync();}catch(e){}
+  (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});(ck.tw||[]).forEach((o,i)=>{const t=G.towns&&G.towns[i];if(t){Object.assign(t,o);t.rebU=[];t.mil=[];}});(ck.tow||[]).forEach((o,i)=>{if(G.tow&&G.tow[i])Object.assign(G.tow[i],o);});(ck.brT||[]).forEach((x,i)=>{if(G.teams[i])G.teams[i].brT=x;});try{rubSync();}catch(e){}
   ck.teams.forEach((t,i)=>{const T=G.teams[i];if(!T)return;for(const k in t){if(k==='$ai'||k==='$aiD'||k==='aiTook')continue;T[k]=reb(t[k]);}T.ai=(t.$ai||t.aiTook)?mkAI(t.$aiD!=null?t.$aiD:1):null;T.aiTook=!!t.aiTook;});
   G.bdirty=true;G.hash=null;try{buildHash();}catch(e){}try{updateVis();}catch(e){}G.sel=G.sel.filter(e=>byId.has(e.id)).map(e=>byId.get(e.id));}
 /* ---------- Host migration ----------
