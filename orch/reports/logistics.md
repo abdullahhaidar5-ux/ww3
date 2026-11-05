@@ -25,8 +25,29 @@ is already in CLAUDE.md and BACKLOG (line 14).
   (only resent when changed); `lgd` is in the host-migration checkpoint (`CK_G`), the graph is rebuilt from the map. Server bundle list
   (`SIM_FILES` in `orch/headless.mjs`) now includes `03c-logistics.js`.
 
+## Stage 3 shipped: CONVOYS (2026-11-05, orch/logistics2)
+- Every 20 s each team's HQ sends an automatic **convoy** (an ordinary Supply Truck unit with `u.cv`, $60 per trip, max 3 alive per team) along the
+  roads (`lgRoute`: Dijkstra over uncratered edges, never through enemy-held nodes) to the held, connected town that has gone longest without one.
+- Delivery **stocks** the town for 4 min (`t.dl`): a stocked town's supply circle keeps its full 230 range for ammo; an unstocked one only reaches 115.
+  A newly held town starts stocked for 2 min. Arrival also tops up ammo of units in the circle. Then the truck drives home and vanishes.
+- **Ambush:** it is a normal truck - shoot it ("Our supply convoy to X was destroyed!" + ping). **Escorts:** armed friendly units within 200 units cut its damage 45%.
+  A cratered road ahead halts it (20 s) then it turns back. A convoy also resupplies units it passes (normal truck circle).
+- Icons: SUP (green) / CVY (red) badge over each convoy, yellow/red squares on the minimap, "STOCKED" tag on towns (overlay L). Net: `cv` ids + `sk` towns ride in `lg`.
+- AI: gets convoys automatically (same rule for every nation); its truck count ignores convoys. `node orch/convoyprobe.mjs` checks it end to end.
+- Smooth gate on this 2-core box fails the same way on plain origin/main (p95 frame ms, draw calls): not from this change; CI decides.
+
+## Stage 5 shipped (part): TERRITORY + FRONT LINE (orch/logistics2)
+- `terrUpdate()` (03c): influence field on an 80-unit grid from HQs (r1000), held towns (r520, hamlets 340, weaker if CUT OFF) and finished Supply Depots
+  (r560). Cell owner = strongest influence (neutral below 0.08). Recomputed only when the source signature changes (checked at the 0.5 s town tick).
+- **Front line** = border between non-allied owners: red/white dashed line on the ground (always on in Conquest) and on the minimap, which also gets a
+  faint team-coloured territory tint.
+- **Building only in territory:** `validSpot` refuses everything except Supply Depots in a cell an enemy dominates ("Enemy territory - push the front
+  line first"). A forward depot extends your territory, which is how you push the front. Same rule for every nation, AI included.
+- NOT done of stage 5: depots as real graph nodes joined by roads (convoys do not visit depots yet), rally/production point at a depot.
+- `node orch/terrprobe.mjs` checks it.
+
 ## NOT done (next stages, in this order)
-3 convoys (auto supply trucks, ambushes), 5 front line + build-only-in-territory + forward depots as network nodes, 6 mined roads / checkpoints / tolls,
+5b depots as graph nodes, 6 mined roads / checkpoints / tolls,
 7 bridge demolish / rebuild / pontoon, 8 ports + blockade, 9 airlift, AI blowing bridges / convoy escorts / airlift / blockade, tutorial Logistics
 step, road art per theme (road is drawn by the ground shader as gravel on every theme today). The AI tourney (18 nations, ~equal) and the Cloudflare
 free-plan CPU numbers (/battle-bench) were not run on this slow 2-core box.
