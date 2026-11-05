@@ -123,7 +123,8 @@ async function solo(page, fac, tagn, kinds, dmg) {
 }
 try {
   const SOLO = argS('solo', '');
-  if (SOLO) { const { ctx, page } = await open({ viewport: { width: 1280, height: 720 } });
+  if (SOLO) { const { ctx, page } = await open(argS('phone', '') ? { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : { viewport: { width: 1280, height: 720 } });
+    if (argS('phone', '')) await page.evaluate(() => { for (const b of document.querySelectorAll('button')) if (/^skip$/i.test(b.textContent.trim())) b.click(); });
     if (argS('low', '')) await page.evaluate(() => { SET.gfx = 'low'; });
     for (const f of FACS) await solo(page, f, argS('low', '') ? 'low' : 'pc', SOLO.split(','), +argS('dmg', '0'));
     await ctx.close(); if (errs.length) console.log(errs.slice(0, 20).join('\n')); await browser.close(); server.close(); process.exit(0); }
