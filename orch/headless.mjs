@@ -58,7 +58,7 @@ const PORTABLE = ['sin', 'cos', 'atan2', 'exp', 'pow'];
 
 // ------------------------------------------------------------------------------------------------ loading the sim
 // Modules that ARE the simulation (loaded whole).
-export const SIM_FILES = ['01-data.js', '02-map.js', '03-sim.js', '03b-tactics.js'];
+export const SIM_FILES = ['01-data.js', '02-map.js', '03-sim.js', '03b-tactics.js', '03c-heroes.js'];
 // The host netcode a server adds on top (--hostsnap): snapshots/events/team panels, and battle checkpoints. Loaded whole
 // and verbatim, with no window in scope (they must not need one).
 export const HOST_FILES = ['07a-hostsnap.js', '07b-ckpt.js'];

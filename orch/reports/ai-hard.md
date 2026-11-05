@@ -42,8 +42,8 @@ I re-checked the four extremes with a second round (`--vs TR,IR,SA,DW --seed 2`,
 
 **Verdict:** Iran is still over the ~60% target. It isn't the new Hard AI: Iran was already on top with Normal vs Normal
 (82% in the tactics run, 76% on main before that, see `tactics.md`). Turkey is borderline, and the others are inside
-or near 35-65%. **Recommended next balance pass (not done here, it is a 01-data job):** make Iran weaker (Basij discount or
-cheaper units) and make Saudi Arabia and the Coffee Shias a bit stronger. Then re-run `node orch/aitourney.mjs --diff 2 --rounds 2`.
+or near 35-65%. **Recommended next balance pass (not done here, it is a 01-data job):** make Iran weaker (a smaller Basij discount or
+pricier units) and make Saudi Arabia and the Coffee Shias a bit stronger. Then re-run `node orch/aitourney.mjs --diff 2 --rounds 2`.
 
 **Per-start fairness:** Normal is unchanged, so `orch/mapfair.mjs` (which plays Normal) is unchanged by construction; in the
 Hard-vs-Hard run above slot A vs slot B is shown in the table.
