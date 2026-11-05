@@ -99,7 +99,7 @@ distribution (12–25 min) — run `node orch/aitourney.mjs` and `node orch/mapf
   (barracks 1300/1200/1100, factory 1300/1100/1000, airfield 1000/850, HQ 1400/1400/1200, shipyard 650; time = cost/46 s). Effects still differ
   per nation. One research at a time per building type was already the rule (`T.rq[at]`).
 - **Powers**: rank still comes from general XP (`gxp`); Conquest adds **command points** from calm held towns: unrest < 30 gives
-  `CQ_CP` (2.5) gxp/s per town (hamlet x0.35), unrest 30-50 gives 40% of that, restless towns give nothing (`updTowns`, `T.cpSum` counts it).
+  `CQ_CP` (0.8; 2.5 pushed AIs into powers early and failed smooth-pc) gxp/s per town (hamlet x0.35), unrest 30-50 gives 40% of that, restless towns give nothing (`updTowns`, `T.cpSum` counts it).
   First charge of a newly bought power waits until setup end + `CQ_PW_FIRST` (30 s); recharge is the normal per-power cooldown; nothing usable in setup.
 - **Missile strikes**: launching exposes the launch site to every enemy for 45 s (170 radius reveal) so it shows on their map and minimap;
   the minimap draws a red pulsing ring + seconds-to-impact over every inbound strike (`G.inb`, fed by the global `strike` warning);
