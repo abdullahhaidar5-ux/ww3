@@ -92,7 +92,8 @@ def render_clip(lang, text, mood, kk, old_lufs, rng):
         ok = c <= lim and d <= max(2.6, 2.0 * exp + .6) and d >= 0.3
         takes.append(((not ok, f + 60 * c), w, v, c, f))
         if ok and f <= 108: break
-    takes.sort(key=lambda x: x[0]); _, w, v, c, f = takes[0]
+    takes.sort(key=lambda x: x[0]); (bad, _), w, v, c, f = takes[0]
+    if bad: return None, v, c, f, None   # no clean take in 2: keep the old clip
     e = ev(v)[0]; semis = float(np.clip(12 * np.log2(max(f, 1) / T2.F0_TARGET[mood]), 0, 3.0 if e == 'xtts' else 4.0))
     wl = {'zh-cn': 'zh'}.get(lang, lang)
     y = RN.tough_radio(w, rng, k=kk, semis=semis, mood=mood,
@@ -120,6 +121,7 @@ def main():
             o, d = next(x for pth, x in cl if pth == path); old = y[int(o * SR):int((o + d) * SR)]
             lang, text, mood, kk = line_for(code, suf, path, m, old)
             z, v, c, f, f2 = render_clip(lang, text, mood, kk, meas[k].get('lufs'), rng)
+            if z is None: print(f'{k} KEPT OLD (no clean take, cer {c:.2f}) | {text}', flush=True); continue
             new[(round(o, 3), round(d, 3))] = z
             print(f'{k} {lang} {mood} {v[:16]:16} cer {c:.2f} f0 {meas[k]["f0"] or 0:.0f} -> raw {f:.0f} -> {f2 or 0:.0f} | {text}', flush=True)
         # rebuild the sheet: same order, same gaps, replaced clips may change length
