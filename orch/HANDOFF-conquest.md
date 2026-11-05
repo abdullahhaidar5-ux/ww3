@@ -27,3 +27,15 @@ replay "older version" refusal, `NET_PV` 7. Smoke PASS on the stage 1+2 build; c
    12–25 min. Tune `CQ_*`, `TAX`, `townBase`, `CQ_TRICKLE` if the AI economy is off (AI hoards money in some games).
 6. Screenshots still missing: setup countdown banner, strike countdown / missile defence intercept, end screen (`orch/conquestshots.mjs`
    is the scaffold; it already makes the town/panel/rebel/hamlet/minimap shots in `orch/shots/conquest/`).
+
+## ADDITION from Abdullah (2026-11-04 19:57) — civic buildings for the locals (stage 1, item 11) — NOT BUILT YET
+Spec (verbatim intent): in/next to a held town or hamlet, builder/engineer builds worship place, clinic, school; money + build time; max one of each per town.
+Effects (same numbers for every nation): worship = biggest steady unrest reduction + loyalty; clinic = calm + heals own infantry nearby; school = calm + slowly raises that town's tax yield.
+Together they allow a higher tax without revolt. Faction-specific names + looks (never cubes, fits a town block):
+IR/RS/DW Husseiniya or mosque (dome+minaret, black banners), "Martyr … Clinic", "Imam … School"; TR Ottoman, SA/AE Gulf/Najdi, PK Mughal, EG Cairo mosques + red-crescent clinic + school;
+US/EU/UA field clinic (Red Cross), school, chapel/community centre; RU Orthodox chapel + field clinic + school; IL community centre + field clinic + school; IN temple-style hall + clinic + school;
+CN "Friendship Clinic" + school + community hall; KP "Revolutionary Study Hall" (no real-person likeness) + clinic + school; KR church/centre; CU medical-brigade clinic + school + centre.
+Rules: cannot be targeted by attacks; on owner change they stay and calm at half effect until the new owner pays a small "reopen" cost; shown on the town panel and as small minimap icons;
+AI builds them in rich rear towns where it keeps High tax; include in fairness tourney; screenshots: IR Husseiniya, US clinic, RU chapel, KP study hall.
+Hooks that exist: perks (clinic/mosque already calm unrest in `updTowns`: `t.perk`), `T_*` constants, `drawTownsMini`, tax panel `#townp` in `08c-towns.js`, `bldAllowed` in `01-data.js`, `addBld`.
+Plan: add 3 building kinds ('civW','civC','civS') to 01-data with per-nation name/look table; place-near-town check in the build handler; `t.civ=[o,o,o]` + owner-change half-effect flag (`t.cv`) in updTowns; include in `tw` net packing/ckpt (bump NET_PV); mark `e.civic` untargetable in `nearestEnemy/applyDmg`; AI branch in the conquest block; models via procedural meshes in 04-gfx.
