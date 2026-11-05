@@ -14,14 +14,14 @@ function drawTownsWorld(c){if(!G||!G.towns||G.over)return;const now=performance.
   for(const t of G.towns){if(!inView(t.x,t.y,.1))continue;const p=toScreen(t.x,groundH(t.x,t.y)+(t.ham?70:110),t.y);if(p.z>1)continue;
     const mine=townsMine(t),reb=t.reb>G.t;
     c.save();c.font=(ph?'bold 11px':'bold 12px')+' system-ui,sans-serif';c.textAlign='center';
-    if(mine){const w=ph?96:112,h=ph?30:34,x=p.x-w/2,y=p.y-h;c.fillStyle='rgba(8,12,10,.78)';c.fillRect(x,y,w,h);c.strokeStyle=G.teams[t.ow].color;c.lineWidth=1.5;c.strokeRect(x,y,w,h);
+    if(mine){const w=ph?96:112,h=ph?38:42,x=p.x-w/2,y=p.y-h;c.fillStyle='rgba(8,12,10,.78)';c.fillRect(x,y,w,h);c.strokeStyle=G.teams[t.ow].color;c.lineWidth=1.5;c.strokeRect(x,y,w,h);
       const hot=t.un>=85&&((now*4)%1<.5);if(hot){c.strokeStyle='#ff3b30';c.lineWidth=3;c.strokeRect(x-2,y-2,w+4,h+4);}
       // tax-rate badge: letter in a shape (square Low/Normal, up-triangle High, diamond Extortionate)
       c.fillStyle=t.rate>=3?'#e5483c':t.rate===2?'#f0c040':t.rate===1?'#bcd0c4':'#5fcf72';const bx=x+11,by=y+11;c.beginPath();if(t.rate===2){c.moveTo(bx,by-8);c.lineTo(bx+8,by+7);c.lineTo(bx-8,by+7);}else if(t.rate===3){c.moveTo(bx,by-9);c.lineTo(bx+9,by);c.lineTo(bx,by+9);c.lineTo(bx-9,by);}else c.rect(bx-8,by-8,16,16);c.closePath();c.fill();
       c.fillStyle='#10140f';c.fillText(TAXL[t.rate],bx,by+4);
       c.fillStyle='#e8f2e8';c.textAlign='left';c.fillText('Tax +$'+(t.tax<10?t.tax.toFixed(1):Math.round(t.tax))+'/s',x+24,y+15);
       c.fillStyle='rgba(255,255,255,.14)';c.fillRect(x+6,y+h-10,w-12,6);c.fillStyle=unrestCol(t.un);c.fillRect(x+6,y+h-10,(w-12)*Math.min(1,t.un/100),6);
-      if(t.un>50){c.fillStyle='#fff';c.textAlign='right';c.fillText(t.un>=85?'REVOLT!':'Restless',x+w-4,y+15);}
+      if(t.un>50){c.fillStyle=t.un>=85?'#ff8a7a':'#ffe08a';c.textAlign='left';c.font=(ph?'bold 10px':'bold 11px')+' system-ui,sans-serif';c.fillText(t.un>=85?'ABOUT TO REVOLT!':'Restless - '+TWHY[t.why|0],x+6,y+h-14);}
     }else if(reb){const w=ph?84:96,h=20,x=p.x-w/2,y=p.y-h;c.fillStyle='rgba(60,18,10,.85)';c.fillRect(x,y,w,h);c.strokeStyle='#e5483c';c.lineWidth=1.5;c.strokeRect(x,y,w,h);c.fillStyle='#ffd0c0';c.fillText('REBELS '+Math.max(0,Math.ceil(t.reb-G.t))+'s',p.x,y+14);}
     else if(t.ow>=0&&G.teams[t.ow]){c.fillStyle='rgba(8,12,10,.7)';const w=c.measureText(t.name).width+16,h=18;c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle=G.teams[t.ow].color;c.fillRect(p.x-w/2,p.y-h,4,h);c.fillStyle='#e8f2e8';c.fillText(t.name,p.x+2,p.y-5);}
     else{c.fillStyle='rgba(8,12,10,.55)';const w=c.measureText(t.name).width+12,h=16;c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle='#c9d2c6';c.fillText(t.name,p.x,p.y-4);}
@@ -39,6 +39,7 @@ function drawTownsMini(c,sx,sy,now){if(!G||!G.towns)return;
         c.fillStyle='#f4f4f4';for(let i=0;i<=t.rate;i++){c.fillRect(x-s+i*2.4,y+s+3,1.6,2.2);}
         if(t.un>50){const crit=t.un>=75,pulse=t.un>=90?.5+.5*Math.sin(now*9):1;c.strokeStyle=crit?'#ff4a3a':'#ffd24a';c.globalAlpha=crit?.55+.45*pulse:1;c.lineWidth=crit?2.2:1.6;if(!crit)c.setLineDash([2.4,1.8]);c.beginPath();c.arc(x,y,s+(crit?5.5:3.4),0,7);c.stroke();c.setLineDash([]);if(t.un>=90){c.lineWidth=1.2;c.beginPath();c.arc(x,y,s+8+pulse*2,0,7);c.stroke();}}}}
     c.restore();}
+  if(G.conq&&G.t<G.setupEnd&&G.N===2&&BASES.length>=2){const a=BASES[0],b=BASES[1],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2,dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1,px=-dy/L,py=dx/L,R=Math.max(MAPW,MAPH);c.save();c.strokeStyle='rgba(255,224,130,.85)';c.lineWidth=1.4;c.setLineDash([5,3]);c.beginPath();c.moveTo((mx-px*R)*sx,(my-py*R)*sy);c.lineTo((mx+px*R)*sx,(my+py*R)*sy);c.stroke();c.restore();}
   // alert pings (unrest warnings, lost towns, revolts)
   if(G.tpings&&G.tpings.length){const n=performance.now();G.tpings=G.tpings.filter(q=>n-q.t<4500);for(const q of G.tpings){const a=(n-q.t)/4500,r=4+a*22;c.strokeStyle=q.k===2?'rgba(255,90,60,'+(1-a)+')':q.k===1?'rgba(255,170,60,'+(1-a)+')':'rgba(255,224,90,'+(1-a)+')';c.lineWidth=2;c.beginPath();c.arc(q.x*sx,q.y*sy,r,0,7);c.stroke();}}}
 function townAt(w,pad){if(!G||!G.towns||!w)return null;let b=null,bd=1e9;for(const t of G.towns){const d=Math.hypot(t.x-w.x,t.y-w.y);if(d<(t.ham?CELL*3.4:Math.max(CELL*3,t.r))+(pad||0)&&d<bd){bd=d;b=t;}}return b;}
@@ -53,7 +54,11 @@ function townBuild(){if(!document.getElementById('townCss')){const st=document.c
   const d=document.createElement('div');d.id='townp';d.innerHTML='<button class="x" aria-label="Close">&times;</button><div id="tpb"></div>';d.addEventListener('pointerdown',e=>e.stopPropagation());d.addEventListener('contextmenu',e=>e.preventDefault());
   d.querySelector('.x').onclick=townClose;d.addEventListener('click',e=>{const b=e.target.closest('button[data-r]');if(b&&TP.ti>=0){doAct({t:'tax',ti:TP.ti,r:+b.dataset.r});TP.t=0;setTimeout(()=>townPanelTick(true),60);}});
   document.body.appendChild(d);TP.el=d;}
-function townPanelTick(force){if(!G||!G.towns){return;}
+function cqBanner(){if(!G||!G.conq||G.over)return;let b=$('cqBn');if(!b){b=document.createElement('div');b.id='cqBn';b.style.cssText='position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;font:600 14px/1.3 system-ui,sans-serif;color:#f4e9c2;text-shadow:0 1px 3px #000;max-width:calc(100vw - 150px)';document.body.appendChild(b);}
+  const setup=G.t<G.setupEnd;let h='';if(setup){const l=Math.max(0,Math.ceil(G.setupEnd-G.t));h=`<div style="background:rgba(60,45,10,.88);border:1px solid #d9b34a;border-radius:6px;padding:4px 12px;color:#ffe08a">SETUP PHASE ${Math.floor(l/60)}:${String(l%60).padStart(2,'0')} <span style="font-weight:400;font-size:12px">&middot; build up and grab towns &middot; no firing yet</span></div>`;}
+  if(G.bse&&G.teams[ME]){let c=0,m=0,n=0;for(const T of G.teams){if(T.reb||T.out||ally(T.id,ME)||!G.bse[T.id])continue;c+=G.bse[T.id][0];m+=G.bse[T.id][1];n++;}if(n&&m)h+=`<div style="margin-top:3px;font-size:12px;opacity:.92">${n>1?'Enemy bases':'Enemy base'}: ${c} of ${m} structures left</div>`;}
+  if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
+function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){}
   // territory income next to the money
   const cr=$('credits');if(cr){let s=$('terrInc');if(!s){s=document.createElement('span');s.id='terrInc';s.style.cssText='font-size:11px;color:#9be39b;margin-left:6px;font-weight:600;white-space:nowrap';cr.parentNode.insertBefore(s,cr.nextSibling);}
     const T=G.teams[ME],v=T?T.terr||0:0;const txt=v>0.05?'+$'+v.toFixed(1)+'/s':'';if(s.textContent!==txt){s.textContent=txt;s.title='Territory income: tax from your towns and hamlets. Press a town to change its tax rate.';}}

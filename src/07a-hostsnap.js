@@ -104,7 +104,7 @@ function snapDrops(dr){if(!dr.length)return null;let c=NET.dyC;if(!c||c.t!==G.t|
 // owned / being-captured towns as a flat [civIndex, owner, capture%, capturingTeam, ...] list
 function twPack(){const r=[];if(G.towns)for(const t of G.towns)if(t.ow>=0||t.reb>G.t)r.push(t.i,t.ow,t.rate,Math.round(t.un),Math.round(t.tax*10),t.why|0,t.reb>G.t?Math.ceil(t.reb-G.t):0,t.whole?1:0,t.fr|0,t.gar|0);return r;}
 function civPack(){const r=[];if(G.civ)for(const c of G.civ)if(!c.dead&&(c.ow>=0||c.cp>0))r.push(c.i,c.ow>=0?c.ow:-1,Math.round((c.cp||0)*100),c.cpT>=0?c.cpT:-1);return r;}
-function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0),cv=civPack(),tw=twPack(),gd=G.teams.map(O=>O.gdoc||'');NET.tgC={t:G.t,v:{fa,oil,out,cv,tw,gd},js:JSON.stringify([fa,oil,out,cv,tw,gd])};}
+function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0),cv=civPack(),tw=twPack(),bs=G.bse||[],gd=G.teams.map(O=>O.gdoc||'');NET.tgC={t:G.t,v:{fa,oil,out,cv,tw,bs,gd},js:JSON.stringify([fa,oil,out,cv,tw,bs,gd])};}
   const C=NET.tgC,S=NET.tgS||(NET.tgS={}),last=S[k];if(last&&last.js===C.js&&G.t-last.t<1)return {};S[k]={js:C.js,t:G.t};return C.v;}
 // EW minimap data for this team only (enemy bubbles over its units, ghost contacts, own spoof cooldowns); null when empty
 function ewPack(k){const v=ewView(k);return v.j.length||v.g.length||v.cd.length?{j:v.j,g:v.g,cd:v.cd}:null;}
