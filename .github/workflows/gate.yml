@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down, migrate-dual,
-            art-smoke, art-mpsync, mapsweep, controls, touch, audio, cfclient, ew, smooth-pc, smooth-phone, smooth-mp]
+            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, smooth-pc, smooth-mp]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }

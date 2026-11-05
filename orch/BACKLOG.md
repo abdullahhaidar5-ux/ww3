@@ -9,7 +9,7 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
 **NEW FEATURE PACK (Abdullah, 2026-10-29 19:26 — picked from a Rise of the Reds–inspired list; "Get more creative"; NO drone
-swarm economy, NO supply lines (Abdullah 19:29); nuclear deterrence, world campaign map and commander co-op were NOT picked — don't build them).** Several
+swarm economy, ~~NO supply lines (Abdullah 19:29)~~ — REVERSED 2026-11-04 20:16: supply lines on roads are in (orch/logistics); nuclear deterrence, world campaign map and commander co-op were NOT picked — don't build them).** Several
 already exist in some form (checked 2026-10-29): morale/rout + officer/Ayatollah auras, weather incl. sandstorm/fog
 grounding jets, EW Jamming Truck, hidden Tunnel Networks (IR/RS/DW/KP), city buildings that collapse to rubble. Build
 on those, don't duplicate. Every sim item: randomness only via the seeded RNG, host-authoritative, and open a
