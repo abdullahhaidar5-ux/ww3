@@ -135,7 +135,7 @@ def main():
             if isinstance(x, dict): return {kk: remap(v) for kk, v in x.items()}
             return x
         tmp = f'{WORK}/{name}.sheet.wav'; sf.write(tmp, np.concatenate(out), SR)
-        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', tmp, '-ac', '1', '-ar', str(SR), '-c:a', 'libmp3lame', '-b:a', '40k' if suf == '' else '36k', ap], check=True)
+        subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', tmp, '-ac', '1', '-ar', str(SR), '-c:a', 'libmp3lame', '-b:a', '40k', ap], check=True)
         json.dump(remap(m), open(mp, 'w'), separators=(',', ':'))
         print(name, 'resynth', len(new), 'of', len(keys), flush=True)
     print('NATION DONE', code, flush=True)
