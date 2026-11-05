@@ -21,7 +21,8 @@ function lgStamp(pts){const rm=G.roadMask;if(!rm)return;const C=rm.C,w=rm.w,h=rm
   if(rm.f)for(const [ci,cj] of cells){for(let i=-7;i<=7;i++)for(let j=-7;j<=7;j++){const x=ci+i,y=cj+j;if(x<0||y<0||x>=w||y>=h)continue;const v=1-Math.max(0,(Math.hypot(i,j)-2)/5);if(v>rm.f[y*w+x])rm.f[y*w+x]=v;}}
   G.roadV=(G.roadV|0)+1;}
 // rebuild the derived edge list after the dynamic state changed (new built road, checkpoint restore, client update)
-function lgSync(){const L=G.lg,D=G.lgd;if(!L||!D)return;lgPontSync();L.E.length=L.n0;for(const r of D.rb)L.E.push(lgEdge(r.a,r.dp?(L.en[r.dp]??r.a):r.b,r.pts,r.team));lgLinks();lgBrApply();
+function lgSync(){const L=G.lg,D=G.lgd;if(!L||!D)return;lgPontSync();L.E.length=L.n0;for(const r of D.rb)L.E.push(lgEdge(r.a,r.dp?(L.en[r.dp]??r.a):r.b,r.pts,r.team));{const nN=L.N.length;for(const e of L.E)if(!(e.a>=0&&e.a<nN&&e.b>=0&&e.b<nN))e.a=e.b=0;}   /* a road whose depot node is gone (depot destroyed, node list rebuilt) becomes inert instead of crashing the sim */
+  lgLinks();lgBrApply();
   const keep=L.ref===D?(L.stamped|0):0;for(let i=keep;i<D.rb.length;i++)lgStamp(D.rb[i].pts);L.stamped=D.rb.length;L.ref=D;L.sig='';}
 function lgNodeOwn(n,k){if(n.e)return ally(n.tm,k);if(n.b>=0)return n.b<G.teams.length&&!G.teams[n.b].reb&&ally(n.b,k)&&!G.teams[n.b].out;if(n.t>=0){const t=G.towns[n.t];return t.ow>=0&&ally(t.ow,k);}return false;}
 function lgNodeFoe(n,k){if(n.e)return !ally(n.tm,k);if(n.b>=0)return n.b!==k&&n.b<G.teams.length&&!ally(n.b,k)&&!G.teams[n.b].reb&&!G.teams[n.b].out;if(n.t>=0){const t=G.towns[n.t];return t.reb>G.t||(t.ow>=0&&!ally(t.ow,k));}return false;}
