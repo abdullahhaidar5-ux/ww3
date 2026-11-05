@@ -2,7 +2,7 @@
 
 Abdullah 2026-11-04 20:13: "Consider hosting some things on a user's PC if the cloud servers can't handle this." Branch `orch/net-host`.
 
-## 1. Measured (current main = Conquest + Hearts & Minds + Hard AI; road supply/convoys are not on main yet)
+## 1. Measured (Conquest + Hearts & Minds + Hard AI; then again after heroes, Conquest maps and logistics landed)
 
 Node 22, this box (Xeon 2.3 GHz), `node orch/headless.mjs --steptime` = battle + host netcode sending to every side, one 1/60 s
 step per event, 15 game-minutes, timing wrappers on (they add ~20-30 %):
@@ -18,7 +18,10 @@ step per event, 15 game-minutes, timing wrappers on (they add ~20-30 %):
 
 Where the time goes (8 sides, Hard, whole match, inclusive): unit updates 79 s (of which movement/pathing `navTo` 30 s, `findPath`
 7 s), unit separation 23 s, host netcode 17 s, morale 14 s, buildings 12 s, garrisons 8 s, AI thinking 6 s, vision 4.5 s, supply 2.6 s.
-Towns/tax/unrest/rebels (`updTowns`, `hmTick`, towers) are below 0.5 s each over the whole match: Conquest's town layer is cheap.
+Towns/tax/unrest/rebels (`updTowns`, `hmTick`, towers) are below 0.5 s each over the whole match (5.4 s for towns on the bigger
+Conquest maps): Conquest's town layer is cheap. **Logistics** (road supply network, merged at the end of this run; 8 sides Hard,
+15 min): `lgTick` 0.46 s, `lgCompute` 0.07 s, `lgAI` 0.05 s, `lgJobs` 0.08 s over the whole match — the supply network is
+incremental already and costs well under 1 % (that run shared the box with a smoke test, so its per-step times are not quoted).
 **Spikes** (single slow steps): before the fix, one AI's naval planning (`aiNavyPlan`) took 15-35 ms every 30 s on water maps; the
 battle checkpoint (every 8 s) takes 13-25 ms; the rest are single 20-50 ms steps in `separate`/`moraleTick`/`updUnit` that are
 garbage collection landing in that step.
