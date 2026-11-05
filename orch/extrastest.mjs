@@ -42,7 +42,7 @@ try {
   // ---- voice: mic button end to end
   const mic = await page.evaluate(() => { vcInit; return null; }).catch(() => null);
   await sleep(900);
-  const vis = await page.evaluate(() => $('vcBtn') && $('vcBtn').classList.contains('show'));
+  const vis = await page.evaluate(() => !!$('vcBtn') && $('vcBtn').offsetParent !== null);
   if (!vis) bug('mic button not visible in battle');
   const say = async (text) => { await page.evaluate(() => { $('vcBtn').dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 7 })); });
     await page.evaluate(t => { const r = __sr; const res = [{ transcript: t }]; res.isFinal = true; r.onresult({ resultIndex: 0, results: [res] }); }, text);

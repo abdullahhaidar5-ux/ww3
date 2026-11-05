@@ -11523,7 +11523,7 @@ try{socialMenu();}catch(e){console.warn('social menu',e);}
 const XS_CSS=`
 #xsClip{display:none;align-items:center;justify-content:center;text-decoration:none}
 #xsClip.on{display:inline-flex}
-body.phOn #side{display:none!important}body.phOn #stage>*:not(#cv):not(#phOv),body.phOn #vcBtn,body.phOn #vcLang,body.phOn #vcToast{visibility:hidden!important}
+body.phOn #side{display:none!important}body.phOn #stage>*:not(#cv):not(#phOv),body.phOn #vcToast{visibility:hidden!important}
 #phOv{position:fixed;z-index:85;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overflow:hidden}
 #phOv:active{cursor:grabbing}
 #phOv .phv{position:absolute;inset:0;pointer-events:none}
@@ -11538,10 +11538,7 @@ body.phOn #side{display:none!important}body.phOn #stage>*:not(#cv):not(#phOv),bo
 #phPrev{position:absolute;right:14px;top:12px;width:min(240px,42%);padding:8px;border-radius:10px;background:rgba(10,12,10,.82);border:1px solid rgba(255,255,255,.25);display:none;flex-direction:column;gap:8px;cursor:default}
 #phPrev.on{display:flex}#phPrev img{width:100%;border-radius:5px;display:block}#phPrev .r{display:flex;gap:8px}#phPrev .r>*{flex:1}
 #phPrev button,#phPrev a{min-height:44px;border-radius:7px;border:1px solid rgba(255,255,255,.4);background:rgba(30,34,28,.9);color:#fff;font:600 15px system-ui,sans-serif;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer}
-#vcBtn{position:fixed;z-index:70;left:12px;bottom:calc(var(--barh,0px) + 14px);width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,.55);background:rgba(16,20,14,.82);color:#fff;font-size:24px;line-height:1;display:none;align-items:center;justify-content:center;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;cursor:pointer;padding:0}
-#vcBtn.show{display:flex}#vcBtn.live{background:#c8342a;border-color:#ffb3a8;box-shadow:0 0 0 6px rgba(200,52,42,.35)}
-#vcLang{position:fixed;z-index:70;left:76px;bottom:calc(var(--barh,0px) + 14px);min-width:44px;height:30px;padding:0 10px;border-radius:15px;border:1px solid rgba(255,255,255,.45);background:rgba(16,20,14,.82);color:#fff;font:600 13px system-ui,sans-serif;display:none;align-items:center;justify-content:center;cursor:pointer}
-#vcLang.show{display:flex}
+#vcBtn{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}#vcBtn.live{background:#c8342a!important;color:#fff!important;border-color:#ffb3a8!important}
 #vcToast{position:fixed;z-index:71;left:50%;top:22%;transform:translateX(-50%);max-width:88%;padding:10px 18px;border-radius:10px;background:rgba(10,12,10,.86);border:1px solid rgba(255,255,255,.3);color:#fff;font:600 20px/1.3 system-ui,sans-serif;text-align:center;pointer-events:none;opacity:0;transition:opacity .25s}
 #vcToast.on{opacity:1}#vcToast small{display:block;font:500 14px system-ui,sans-serif;opacity:.8;margin-top:2px}#vcToast.bad{border-color:#e8a34a}`;
 (function(){const st=document.createElement('style');st.textContent=XS_CSS;document.head.append(st);})();
@@ -11694,14 +11691,13 @@ function vcStart(){if(!VC.SR||VC.on||!G||G.over||PHX.on)return;VC.on=true;VC.han
     r.onend=()=>{VC.on=false;VC.rec=null;const b2=$('vcBtn');if(b2)b2.classList.remove('live');vcFinish(VC.alts);};
     r.start();}catch(e){VC.on=false;VC.rec=null;if(b)b.classList.remove('live');vcSay('🎤 Voice commands are not available here','',true);}}
 function vcStop(){if(VC.rec)xsTry(()=>VC.rec.stop());}
-(function vcInit(){if(!VC.SR)return;const b=document.createElement('button');b.id='vcBtn';b.type='button';b.textContent='🎤';b.title='Hold and speak a command (V on PC)';b.setAttribute('aria-label','Voice command: hold and speak');document.body.append(b);
-  const lg=document.createElement('button');lg.id='vcLang';lg.type='button';document.body.append(lg);
-  const sl=()=>{const e=VC_LANGS.find(l=>l[0]===VC.lang)||VC_LANGS[0];lg.textContent=e[1];lg.title='Voice language: '+e[0];};sl();
-  lg.onclick=()=>{const i=VC_LANGS.findIndex(l=>l[0]===VC.lang);VC.lang=VC_LANGS[(i+1)%VC_LANGS.length][0];xsTry(()=>localStorage.setItem('ww3_voiceLang',VC.lang));sl();};
+(function vcInit(){if(!VC.SR)return;const ref=$('aPause');if(!ref)return;const b=document.createElement('button');b.id='vcBtn';b.type='button';b.className=ref.className;b.textContent='🎤';b.title='Hold and speak a command (or hold V)';b.setAttribute('aria-label','Voice command: hold and speak');ref.before(b);
+  const lg=document.createElement('button');lg.id='aVoiceLang';lg.type='button';lg.setAttribute('role','menuitem');const pm=$('aPhoto')||$('aPauseM');if(pm)pm.after(lg);
+  const sl=()=>{const e=VC_LANGS.find(l=>l[0]===VC.lang)||VC_LANGS[0];lg.textContent='🎤 Voice language: '+e[1];};sl();
+  lg.onclick=e=>{e.stopPropagation();const i=VC_LANGS.findIndex(l=>l[0]===VC.lang);VC.lang=VC_LANGS[(i+1)%VC_LANGS.length][0];xsTry(()=>localStorage.setItem('ww3_voiceLang',VC.lang));sl();};
   b.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();try{b.setPointerCapture(e.pointerId);}catch(_){}vcStart();});
   for(const t of ['pointerup','pointercancel'])b.addEventListener(t,e=>{e.stopPropagation();vcStop();});
   b.addEventListener('contextmenu',e=>e.preventDefault());
-  setInterval(()=>{const s=!!(G&&!G.over&&MODE!=='replay'&&!(RP&&RP.on)&&$('menu')&&$('menu').hidden&&!KC.on&&!PHX.on);b.classList.toggle('show',s);lg.classList.toggle('show',s);},600);
   // last tap / cursor position on the map = "here"
   for(const t of ['pointerdown','pointermove'])cv.addEventListener(t,()=>{VC.has=true;},{passive:true});
   // V: hold to talk (a quick tap still cycles the army stance, as before)
