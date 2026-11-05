@@ -66,9 +66,13 @@ function shadowSnap(){if(typeof SUN==='undefined'||!SUN||!SUN.castShadow)return;
   const tp=SUN.target.position;_shD.subVectors(SUN.position,tp);if(_shD.lengthSq()<1e-6)return;_shD.normalize();_shR.set(0,1,0).cross(_shD);if(_shR.lengthSq()<1e-6)return;_shR.normalize();_shU.crossVectors(_shD,_shR);
   const ts=2*hq/ms,a=tp.dot(_shR),b=tp.dot(_shU);_shO.copy(_shR).multiplyScalar(Math.round(a/ts)*ts-a).addScaledVector(_shU,Math.round(b/ts)*ts-b);
   SUN.position.add(_shO);tp.add(_shO);SUN.updateMatrixWorld();SUN.target.updateMatrixWorld();}
+// Shadow map refresh: the shadow pass redraws every shadow caster (~2000 in a big battle) and is the biggest single cost of a frame.
+// On phones, and whenever the frame-rate governor has already lowered the picture or frames run under ~45 FPS, it is redrawn every
+// other frame (a 1/60 s old shadow is not visible; the light, map and matrix stay consistent with each other). PCs at full speed redraw every frame.
+let _shN=0;function shadowDue(){_shN++;let lite=false;try{lite=(typeof GFX_PHONE!=='undefined'&&GFX_PHONE)||QUAL.lv>=2||QUAL.fps<45;}catch(e){}return !lite||(_shN&1)===0||_shN<4;}
 function softP(on){for(const P of [PN_,PA_]){if(!P)continue;const u=P.m.uniforms;u.soft.value=on?1:0;P.m.depthTest=!on;if(on){u.dep.value=POST.dRT.depthTexture;u.sres.value.set(POST.w,POST.h);u.nf.value.set(CAM.near,CAM.far);}}}
 function pass(mat,target){POST.quad.material=mat;R3.setRenderTarget(target);R3.render(POST.scn,POST.cam);}
-function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.setRenderTarget(null);R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);return;}
+function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.setRenderTarget(null);R3.shadowMap.needsUpdate=shadowDue();R3.render(SCN,CAM);return;}
   sizePost();
   const fogWas=FOGM?FOGM.visible:false;let postFog=false;
   if(POST.mAO&&POST.aoOn!==false&&!(POST.aoLv!=null&&QUAL.lv>=POST.aoLv)){if(FOGM&&FOGT){postFog=fogWas;FOGM.visible=false;}const hid=[];SCN.traverse(o=>{if(!o.visible)return;const m=o.material;if(o.userData.noDepth||o.isPoints||o.isLine||o.isSprite||(m&&(Array.isArray(m)?m[0].transparent:m.transparent))){o.visible=false;hid.push(o);}});
@@ -76,7 +80,7 @@ function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.se
     const A=POST.mAO.uniforms;A.dep.value=POST.dRT.depthTexture;A.near.value=CAM.near;A.far.value=CAM.far;const ty=Math.tan(CAM.fov*Math.PI/360);A.tanF.value.set(ty*CAM.aspect,ty);A.res.value.set(POST.dRT.width,POST.dRT.height);A.pm.value=POST.dRT.height/(2*ty);A.cw.value.copy(CAM.matrixWorld);A.tt.value=performance.now()/1000;A.fogT.value=FOGT;A.cloudK.value=POST.cloud??1;A.mapS.value.set(MAPW,MAPH);POST.mFinal.uniforms.fogK.value=postFog?1:0;
     pass(POST.mAO,POST.aA);const ab=(src,dst,x,y)=>{POST.mBlur.uniforms.tex.value=src.texture;POST.mBlur.uniforms.dir.value.set(x/src.width,y/src.height);pass(POST.mBlur,dst);};ab(POST.aA,POST.aB,1,0);ab(POST.aB,POST.aA,0,1);
     POST.mFinal.uniforms.ao.value=POST.aA.texture;POST.mFinal.uniforms.aoK.value=.85;softP(true);}else if(POST.mFinal.uniforms.ao){softP(false);POST.mFinal.uniforms.aoK.value=0;POST.mFinal.uniforms.fogK.value=0;POST.mFinal.uniforms.ao.value=POST.bA.texture;}
-  shadowSnap();R3.setRenderTarget(POST.rt);R3.clear();R3.shadowMap.needsUpdate=true;R3.render(SCN,CAM);if(FOGM)FOGM.visible=fogWas;
+  shadowSnap();R3.setRenderTarget(POST.rt);R3.clear();R3.shadowMap.needsUpdate=shadowDue();R3.render(SCN,CAM);if(FOGM)FOGM.visible=fogWas;
   POST.mBright.uniforms.tex.value=POST.rt.texture;pass(POST.mBright,POST.bA);
   const bl=(src,dst,w,h,x,y)=>{POST.mBlur.uniforms.tex.value=src.texture;POST.mBlur.uniforms.dir.value.set(x/w,y/h);pass(POST.mBlur,dst);};
   bl(POST.bA,POST.bB,POST.bA.width,POST.bA.height,1,0);bl(POST.bB,POST.bA,POST.bA.width,POST.bA.height,0,1);
