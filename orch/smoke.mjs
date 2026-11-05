@@ -118,7 +118,7 @@ try {
       startSingle();
       // put the player's slot under AI control too, so the test is a real two-sided battle
       if (G && G.teams[0] && !G.teams[0].ai && typeof mkAI === 'function') G.teams[0].ai = mkAI(1);
-      return { ok: !!G, n: G && G.teams.length, facs: G && G.teams.map(t => t.fac), map: G && G.mapKey };
+      return { ok: !!G, n: G && G.teams.filter(t => !t.reb).length, facs: G && G.teams.filter(t => !t.reb).map(t => t.fac), map: G && G.mapKey };
     } catch (e) { return { ok: false, err: String(e && e.stack || e) }; }
   }, PLAYERS);
   if (!start.ok) throw new Error('skirmish failed to start: ' + (start.err || 'G is null'));
@@ -129,7 +129,7 @@ try {
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('loading screen did not finish within 10 minutes'));
   console.log(`loading screen finished after ${((Date.now() - tLoad) / 1000).toFixed(1)}s`);
   // every model this battle's nations need must have arrived (in the artifact edition they come in a different published form)
-  { const m = await page.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.map(T => T.fac)) : Object.keys(MODEL_FILES);
+  { const m = await page.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.filter(T => !T.reb).map(T => T.fac)) : Object.keys(MODEL_FILES);
       return { of: ks.length, miss: ks.filter(k => !MODELS.proto[k]), err: MODELS.err || '' }; });
     console.log(`3D models for this battle: ${m.of - m.miss.length} of ${m.of}`);
     if (m.miss.length) fails.push(`${ART ? 'artifact: ' : ''}${m.miss.length} of ${m.of} 3D models for this battle missing (${m.miss.slice(0, 5).join(', ')}) ${m.err} (players would see simple shapes)`); }
@@ -150,7 +150,7 @@ try {
       let u = 0, b = 0, nan = 0;
       for (const e of ents) { if (e.isB) b++; else u++; if (!Number.isFinite(e.x) || !Number.isFinite(e.y)) nan++; }
       return { t: G ? G.t : -1, over: G ? G.over : true, units: u, blds: b, nan, ms: performance.now() - ms0,
-        perTeam: G ? G.teams.map(T => ents.filter(e => e.team === T.id).length) : [] };
+        perTeam: G ? G.teams.filter(T => !T.reb).map(T => ents.filter(e => e.team === T.id).length) : [] };
     }, Math.min(CH, steps - done));
     if (!last.err) peak = last.perTeam.map((n, i) => Math.max(n, peak[i] || 0));
     if (last.err) { fails.push('simulation threw: ' + last.err.split('\n').slice(0, 4).join(' | ')); break; }

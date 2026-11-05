@@ -11,11 +11,11 @@ const MAPS={
     slots:[[380,MAPH-360],[MAPW-380,360],[1150,MAPH-360],[MAPW-1150,360],[380,1150],[MAPW-380,MAPH-1150],[1780,MAPH-310],[MAPW-1780,310]],
     water(M,R){const p=[R()*6.28,R()*6.28,R()*6.28];const pts=[];for(let x=-200;x<=MAPW+200;x+=40)pts.push([x,300+.5*x+45*Math.sin(x*.0035+p[0])+22*Math.sin(x*.009+p[1])]);
       M.rivers.push({pts,hw:(t,x)=>178+24*Math.sin(x*.006+p[2])});M.bridgeAt=[[0,700],[0,1600],[0,2500]];}},
-  rivers:{name:'Twin Rivers Offensive',min:2,max:6,sym:'point',tag:'desert · two rivers',desc:'Two rivers cut the land into three bands. Four bridges.',
+  rivers:{home:['IR','RS'],name:'Twin Rivers Offensive',min:2,max:6,sym:'point',tag:'desert · two rivers',desc:'Two rivers cut the land into three bands. Four bridges.',
     slots:[[420,260],[MAPW-420,MAPH-260],[420,MAPH-260],[MAPW-420,260],[360,1100],[MAPW-360,1100]],
     water(M,R){const p=[R()*6.28,R()*6.28];for(const [yc,ph] of [[690,p[0]],[MAPH-690,p[1]]]){const pts=[];for(let x=-200;x<=MAPW+200;x+=40)pts.push([x,yc+28*Math.sin(x*.0042+ph)+12*Math.sin(x*.011+ph*2)]);M.rivers.push({pts,hw:(t,x)=>96+14*Math.sin(x*.007+ph)});}
       M.bridgeAt=[[0,900],[0,2300],[1,900],[1,2300]];}},
-  delta:{name:'Delta Inferno',min:2,max:6,sym:'mirrorX',tag:'river delta & coast',desc:'A river forks into two arms on its way to the sea. Five bridges.',
+  delta:{home:['EG'],name:'Delta Inferno',min:2,max:6,sym:'mirrorX',tag:'river delta & coast',desc:'A river forks into two arms on its way to the sea. Five bridges.',
     slots:[[420,420],[MAPW-420,420],[420,1380],[MAPW-420,1380],[1150,1960],[MAPW-1150,1960]],
     water(M,R){const ph=R()*6.28,J=[1600,820];const wig=(a,b,amp)=>{const pts=[];const n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/40);for(let i=0;i<=n;i++){const t=i/n,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t,L=Math.hypot(b[0]-a[0],b[1]-a[1]),nx=-(b[1]-a[1])/L,ny=(b[0]-a[0])/L,w=amp*Math.sin(t*9+ph)*Math.sin(t*Math.PI);pts.push([x+nx*w,y+ny*w]);}return pts;};
       M.rivers.push({pts:wig([1600,-200],J,22),hw:()=>120});const L=wig(J,[260,MAPH+200],40),Rr=L.map(([x,y])=>[MAPW-x,y]);M.rivers.push({pts:L,hw:()=>100});M.rivers.push({pts:Rr,hw:()=>100});
@@ -24,12 +24,12 @@ const MAPS={
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1250,1100+Math.sin(a)*800]);return s;})(),
     water(M,R){const w=[R()*6.28,R()*6.28];M.lakes.push({x:1600,y:1100,r:300,rx:1.35,wob:a=>.1*Math.sin(a*3+w[0])+.06*Math.sin(a*5+w[1])});
       for(const a of [-1.1,2.04,.47,-2.67]){const x=1600+Math.cos(a)*1250,y=1100+Math.sin(a)*800;M.lakes.push({x,y,r:85,rx:1.2,wob:q=>.15*Math.sin(q*3+x)});}}},
-  gulf:{name:'Gulf Coast Landings',min:2,max:4,sym:'mirrorX',tag:'desert shore · naval-heavy',desc:'Bases on a desert shore above the open sea. Naval power matters.',
+  gulf:{home:['SA','AE'],name:'Gulf Coast Landings',min:2,max:4,sym:'mirrorX',tag:'desert shore · naval-heavy',desc:'Bases on a desert shore above the open sea. Naval power matters.',
     slots:[[450,330],[MAPW-450,330],[520,1250],[MAPW-520,1250]],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,MAPH+60-90*Math.cos((x-1600)/1600*Math.PI*.5)*0+40*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:(t,x)=>470+120*Math.exp(-Math.pow((x-1600)/380,2))});
       // 2026-10-30: coastal hills to fight around and an island offshore (mirrored left-right like the rest)
       M.peaks.push({x:1050,y:880,r:65,rx:1.6,rot:.5});mirrorMap(M,'x');M.peaks.push({x:1600,y:700,r:85,rx:1.9,rot:0});M.islands.push({x:1600,y:2020,r:80,rx:2.2,rot:0,wob:a=>.06*Math.cos(2*a)});}},
-  plateau:{name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
+  plateau:{home:['EG'],name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1280,1100+Math.sin(a)*820]);return s;})(),
     water(M){M.peaks.push({x:1020,y:720,r:75,rx:1.6,rot:.45},{x:1230,y:470,r:60,rx:1.4,rot:-.2},{x:880,y:1480,r:70,rx:1.4,rot:-.5});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:105,rx:1.5,rot:0});}},
   hormuz:{home:['IR','AE'],name:'Strait of Hormuz',min:2,max:8,sym:'none',tag:'sea strait · naval-heavy',desc:'Iran faces the Arabian shore across the world\'s busiest oil chokepoint. Navies rule the strait; armies must go the long way round.',
@@ -47,7 +47,7 @@ const MAPS={
       for(const [x,y] of [[560,470],[2640,1730],[560,1730],[2640,470]])M.islands.push({x,y,r:330,rx:1.45,rot:0,wob:q=>.1*Math.sin(q*3+w+x)+.05*Math.sin(q*7+y)});
       M.islands.push({x:1600,y:1100,r:250,rx:1.7,rot:0,wob:q=>.08*Math.sin(q*4+w)});
       for(const [x,y] of [[1050,770],[2150,1430],[1050,1430],[2150,770]]){const dx=1600-x,dy=1100-y,L=Math.hypot(dx,dy);M.bridgeAng.push([x,y,dx/L,dy/L]);}}},
-  zagros:{name:'Zagros: Mountain Fortress',min:2,max:8,sym:'point',rough:1.3,tag:'mountain ranges · three valleys',desc:'Two snow-capped ranges split the land into three valleys. Armies fight for the mountain passes.',
+  zagros:{home:['IR'],name:'Zagros: Mountain Fortress',min:2,max:8,sym:'point',rough:1.3,tag:'mountain ranges · three valleys',desc:'Two snow-capped ranges split the land into three valleys. Armies fight for the mountain passes.',
     slots:[[450,1100],[2750,1100],[450,380],[2750,1820],[450,1820],[2750,380],[1600,350],[1600,1850]],
     water(M,R){const ph=R()*6.28;const ridge=(y0,y1)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([1100+60*Math.sin(y*.004+ph)+20*Math.sin(y*.013),y]);return pts;};
       for(const [a,b] of [[-200,470],[740,1440],[1720,MAPH+200]]){const L=ridge(a,b);M.ridges.push({pts:L,hw:()=>105});M.ridges.push({pts:L.map(([x,y])=>[MAPW-x,MAPH-y]),hw:()=>105});}
@@ -426,9 +426,25 @@ function mkMap(seed,mk){
   M.grid=grid;
   // Cities: blocks of buildings on a street grid. Building lots are impassable (units use the streets) and give
   // infantry cover; bases, supply and oil keep clear of them.
-  M.cities=[];M.cityBlds=[];
+  M.cities=[];M.cityBlds=[];M.hamlets=[];M.towers=[];M.roadNet=[];
   const CITIES=(D.cities||[]).concat(M.genCities||[]);
-  if(CITIES.length){const CR=mulberry((seed|0)*13+7);for(const [cxd,cyd,rd,style] of CITIES){const cx=cxd*WK,cy=cyd*WK,r=rd*Math.pow(WK,.78)*1.3;M.cities.push({x:cx,y:cy,r,style});
+  // CENTRE PRIZE TOWN (Conquest "town bands"): one larger market town where every base is as equally far as the ground
+  // allows - an existing city of the map when one sits there, else a new one. Chosen on the bare ground (before any city
+  // is laid out) by driving distance, so it is deterministic and the same for host and clients.
+  let PRIZE=-1;
+  if(!D.manual&&BASES.length>=2){const NB0=BASES.length,cc=(x,y)=>Math.floor(y/CELL)*GW+Math.floor(x/CELL),DB0=BASES.map(([x,y])=>gridDist(grid,x,y));
+    let E0=1e9;for(let i=0;i<NB0;i++)for(let j=0;j<NB0;j++)if(i!==j)E0=Math.min(E0,DB0[i][cc(BASES[j][0],BASES[j][1])]);
+    if(E0<1e8){const sc=(x,y)=>{const c=cc(x,y);let lo=1e9,hi=0,sm=0;for(const Q of DB0){const v=Q[c];lo=Math.min(lo,v);hi=Math.max(hi,v);sm+=v;}return hi>=1e8||lo<.4*E0?null:{sp:hi-lo,m:sm/NB0};};
+      const rOf=q=>q[2]*Math.pow(WK,.78)*1.3;let bf=null,bfs=1e18;
+      for(let cy=4;cy<GH-4;cy+=2)for(let cx=4;cx<GW-4;cx+=2){const x=cx*CELL+CELL/2,y=cy*CELL+CELL/2;if(grid[cy*GW+cx]!==0||M.edge(x,y)>-110||M.mtn(x,y)>-90)continue;
+        if(CITIES.some(q=>Math.hypot(x-q[0]*WK,y-q[1]*WK)<rOf(q)+200))continue;if(BASES.some(([bx,by])=>Math.hypot(bx-x,by-y)<600))continue;
+        const r=sc(x,y);if(!r)continue;const s=r.sp*4+r.m*.5;if(s<bfs){bfs=s;bf={x,y,r};}}
+      let bc=-1,bcs=1e18,bcr=null;CITIES.forEach((q,i)=>{if(rOf(q)<150)return;const r=sc(q[0]*WK,q[1]*WK);if(!r)return;const s=r.sp*4+r.m*.5;if(s<bcs){bcs=s;bc=i;bcr=r;}});
+      M.prizeInfo={E0:Math.round(E0),bf:bf&&[bf.x|0,bf.y|0,Math.round(bf.r.sp),Math.round(bf.r.m)],bc:bcr&&[bc,Math.round(bcr.sp),Math.round(bcr.m)]};
+      if(bc>=0&&(!bf||bcr.sp<=bf.r.sp+.04*E0&&bcr.m<=bf.r.m*1.3))PRIZE=bc;
+      else if(bf){const cnt={};for(const q of CITIES)cnt[q[3]]=(cnt[q[3]]||0)+1;let st=M.theme==='snow'?'russia':M.theme==='green'?'europe':'mideast',bn=0;for(const k in cnt)if(cnt[k]>bn){bn=cnt[k];st=k;}
+        CITIES.push([bf.x/WK,bf.y/WK,84,st]);PRIZE=CITIES.length-1;}}}
+  if(CITIES.length){const CR=mulberry((seed|0)*13+7);for(const [cxd,cyd,rd,style] of CITIES){const cx=cxd*WK,cy=cyd*WK,r=rd*Math.pow(WK,.78)*1.3;M.cities.push({x:cx,y:cy,r,style,prize:M.cities.length===PRIZE});
     const i0=Math.floor((cx-r)/CELL),i1=Math.ceil((cx+r)/CELL),j0=Math.floor((cy-r)/CELL),j1=Math.ceil((cy+r)/CELL),sx=Math.floor(cx/CELL),sy=Math.floor(cy/CELL);
     for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){if(i<1||j<1||i>=GW-1||j>=GH-1)continue;const x=i*CELL+CELL/2,y=j*CELL+CELL/2,d=Math.hypot(x-cx,y-cy);if(d>r)continue;
       if(((i-sx)%4+4)%4===0||((j-sy)%4+4)%4===0)continue;if(grid[j*GW+i]!==0)continue;if(BASES.some(([bx,by])=>Math.hypot(bx-x,by-y)<400))continue;
@@ -488,9 +504,89 @@ function mkMap(seed,mk){
        if(adj)unit(i,j,addF,oF,280*Math.min(1,WK));}
      // contested oil: a forward derrick for every base, the same route length out towards the middle of the map
      const DCt=gridDist(grid,MAPW/2,MAPH/2);
-     for(let i=0;i<NB;i++)addO(best(p=>Math.abs(p.d[i]-.46*E)+.3*DCt[cellOf(p.x,p.y)],(p,rl)=>mine(p,i,.02*E*rl)&&Math.abs(p.d[i]-.46*E)<.08*E/rl&&okO(p,rl,300*Math.min(1,WK),240)));}}
+     for(let i=0;i<NB;i++)addO(best(p=>Math.abs(p.d[i]-.46*E)+.3*DCt[cellOf(p.x,p.y)],(p,rl)=>mine(p,i,.02*E*rl)&&Math.abs(p.d[i]-.46*E)<.08*E/rl&&okO(p,rl,300*Math.min(1,WK),240)));}
+   // HAMLETS (Conquest): small villages worth fighting over, placed with the same fairness rules as the oil - one safe
+   // hamlet behind every base, one forward hamlet at the same driving distance for everyone, and contested ones
+   // equally far from each pair of neighbours (so every map has something to take on at least two routes)
+   {const OF0=[[0,0],[2,0],[-2,0],[0,2],[0,-2],[2,2],[-2,-2],[2,-2],[-2,2],[4,0],[0,4],[-4,0],[0,-4]];
+    const hOK=p=>{let g=0;const i0=Math.floor(p.x/CELL),j0=Math.floor(p.y/CELL);for(const [dx,dy] of OF0){const i=i0+dx,j=j0+dy;if(i<1||j<1||i>=GW-1||j>=GH-1||grid[j*GW+i]!==0)continue;const x=i*CELL+CELL/2,y=j*CELL+CELL/2;if(M.edge(x,y)>-50||M.mtn(x,y)>-40||BASES.some(([bx,by])=>Math.hypot(bx-x,by-y)<400))continue;g++;}return g>=3;};
+    const okH=(p,rl,sp)=>far(p,fmb*.8*rl)&&hOK(p)&&M.fields.every(f=>Math.hypot(f.x-p.x,f.y-p.y)>120)&&M.oil.every(o=>Math.hypot(o.x-p.x,o.y-p.y)>120)&&M.hamlets.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>(sp||260)*rl)&&!M.cityNear(p.x,p.y,150);
+    const addH=p=>{if(p)M.hamlets.push({x:p.x,y:p.y});};
+    for(let i=0;i<NB;i++)addH(best(p=>Math.abs(p.d[i]-.2*E),(p,rl)=>mine(p,i,.1*E*rl)&&okH(p,rl,260)));
+    // REAR band: two more safe hamlets behind every base (2-3 villages close to home where High tax is safe)
+    for(let i=0;i<NB;i++)addH(best(p=>Math.abs(p.d[i]-.12*E)+.1*Math.abs(p.d[i]-p.lo),(p,rl)=>mine(p,i,.1*E*rl)&&okH(p,rl,230)));
+    for(let i=0;i<NB;i++)addH(best(p=>Math.abs(p.d[i]-.3*E),(p,rl)=>mine(p,i,.1*E*rl)&&okH(p,rl,230)));
+    for(let i=0;i<NB;i++)addH(best(p=>Math.abs(p.d[i]-.4*E)+.2*Math.abs(p.d[i]-p.lo),(p,rl)=>mine(p,i,.02*E*rl)&&Math.abs(p.d[i]-.4*E)<.09*E/rl&&okH(p,rl,260)));
+    const oH=(p,rl,sp)=>okH(p,rl,sp);
+    if(NB===2){let got=0;for(let n=0;n<2;n++)got+=unit(0,1,addH,oH,.28*E);for(let n=0;n<2&&got<2;n++)got+=unit(0,1,addH,oH,.14*E);}
+    else for(let i=0;i<NB;i++)for(let j=i+1;j<NB;j++){let adj=false;for(const p of cand)if(tw(p,i,j)&&Math.abs(p.d[i]-p.d[j])<.3*E&&(p.d[i]+p.d[j])/2<=.75*Math.max(eD[i],eD[j])){adj=true;break;}if(adj)unit(i,j,addH,oH,.28*E);}
+    // BALANCE: a map's own cities (not mirrored on every map) can leave one base with more town income in its rear or
+    // middle band than another. Count the tax potential of every town and hamlet per base by driving distance and give the
+    // poorer bases extra hamlets in that band until nobody is more than ~one hamlet behind (deterministic, route-distance based).
+    {const nbh=(c,i)=>{let m=1e9;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const x=Math.floor((c.x+dx*CELL)/CELL),y=Math.floor((c.y+dy*CELL)/CELL);if(x<0||y<0||x>=GW||y>=GH)continue;const v=DB[i][y*GW+x];if(v<m)m=v;}return m;};
+     const val=c=>c.prize?0:3.6*(c.hamlet?1:2.4);
+     const pot=()=>{const R=Array(NB).fill(0),Mi=Array(NB).fill(0);const all=[];for(const c of CITIES.map((q,k)=>M.cities[k]).filter(Boolean))all.push({x:c.x,y:c.y,prize:c.prize});for(const h of M.hamlets)all.push({x:h.x,y:h.y,hamlet:1});
+       for(const c of all){const d=BASES.map((b,i)=>nbh(c,i)),o=d.map((v,i)=>[v,i]).sort((a,b)=>a[0]-b[0]);if(!(o[0][0]<1e8)||c.prize)continue;const v=val(c),i0=o[0][1];
+         if(o[0][0]/o[1][0]<.8){const f=o[0][0]/eD[i0],w=f<=.25?1:f>=.45?0:(.45-f)/.2;R[i0]+=v*w;Mi[i0]+=v*(1-w);}else for(const [dv,i] of o)if(dv<=o[0][0]*1.2)Mi[i]+=v/2;}return [R,Mi];};
+     M.balDbg=[];for(let it=0;it<8;it++){const [R,Mi]=pot();M.balDbg.push([R.map(v=>Math.round(v*10)/10),Mi.map(v=>Math.round(v*10)/10)]);let done=true;
+       for(const [A,off] of [[R,.2],[Mi,.5]]){const mx=Math.max(...A),mn=Math.min(...A);if(mx-mn<3.2&&mn>=7.2)continue;const i=A.indexOf(mn);
+         const n0=M.hamlets.length;addH(best(p=>Math.abs(p.d[i]-off*eD[i])+.1*Math.abs(p.d[i]-p.lo),(p,rl)=>mine(p,i,.08*E*rl)&&okH(p,rl,200)));if(M.hamlets.length>n0)done=false;}
+       if(done)break;}}
+    }
+  // PROPAGANDA TOWERS (Hearts & Minds): a neutral radio / TV mast. Duel: the spot equally far from both bases (or a mirrored pair);
+  // 3+ bases: the spot whose route distances to every base are the most equal. Same fairness code as the oil and hamlets.
+  M.towers=[];
+  {const okT=(p,rl,sp)=>far(p,fmb*.8*rl)&&M.fields.every(f=>Math.hypot(f.x-p.x,f.y-p.y)>110)&&M.oil.every(o=>Math.hypot(o.x-p.x,o.y-p.y)>110)&&M.hamlets.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>150)&&M.towers.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>(sp||260)*rl)&&!M.cityNear(p.x,p.y,110);
+   const addT=p=>{if(p)M.towers.push({x:p.x,y:p.y});};
+   if(NB===2)unit(0,1,addT,okT,.3*E);
+   else if(NB>2){addT(best(p=>{let m=0;for(let i=0;i<NB;i++)m+=p.d[i];m/=NB;let v=0;for(let i=0;i<NB;i++)v+=Math.abs(p.d[i]-m);return v+.15*Math.abs(m-.5*E);},(p,rl)=>okT(p,rl,260)));}}
+  }
+  // hamlets a custom map asks for (map editor)
+  for(const [ox,oy] of (D.hamAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.hamlets.every(h=>Math.hypot(h.x-X,h.y-Y)>200))M.hamlets.push({x:X,y:Y});}
+  // build the houses: 2-5 low buildings round each hamlet centre, in the map's local style
+  {const cnt={};for(const q of CITIES)cnt[q[3]]=(cnt[q[3]]||0)+1;let st='europe',bn=0;for(const k in cnt)if(cnt[k]>bn){bn=cnt[k];st=k;}
+   st=({gulfcity:'yemen',america:'europe',latin:'latin',southasia:'southasia'})[st]||st;
+   const OFF=[[0,0],[2,0],[-2,0],[0,2],[0,-2],[2,2],[-2,-2],[2,-2],[-2,2],[4,0],[0,4],[-4,0],[0,-4]];
+   for(const h of M.hamlets){const HR=mulberry((seed|0)*17+Math.round(h.x*7+h.y*3)),want=2+Math.floor(HR()*4),i0=Math.floor(h.x/CELL),j0=Math.floor(h.y/CELL);let got=0;
+     const ord=OFF.map(o=>[HR(),o]).sort((a,b)=>a[0]-b[0]).map(q=>q[1]);ord.unshift([0,0]);
+     for(const [dx,dy] of ord){if(got>=want)break;const i=i0+dx,j=j0+dy;if(i<1||j<1||i>=GW-1||j>=GH-1||grid[j*GW+i]!==0)continue;const x=i*CELL+CELL/2,y=j*CELL+CELL/2;if(M.edge(x,y)>-50||M.mtn(x,y)>-40)continue;
+       if(BASES.some(([bx,by])=>Math.hypot(bx-x,by-y)<400))continue;grid[j*GW+i]=3;got++;
+       M.cityBlds.push({x,y,w:CELL*(.62+HR()*.2),d:CELL*(.62+HR()*.2),h:5+HR()*6,style:st,core:.15,v:HR(),ham:1});}
+     h.n=got;h.style=st;}
+   M.hamlets=M.hamlets.filter(h=>h.n>=2);
+   for(const h of M.hamlets)M.cities.push({x:h.x,y:h.y,r:CELL*3.4,style:h.style,ham:true});}
+  // ROAD NET (Conquest): roads base -> rear towns -> middle hamlets -> centre prize town, on at least two routes. Pure
+  // geometry on the ground grid (no random numbers), so host and clients lay identical roads; units move faster on them.
+  if(!D.manual)try{buildRoadNet(M,grid);}catch(e){M.roadNet=[];}
   return M;
 }
+// A* over the ground grid for one road (only cells units can walk: open ground and bridges). Returns map points or null.
+function roadRoute(grid,ax,ay,bx,by,maxIt){const N=GW*GH,ps=i=>grid[i]===0||grid[i]===2;
+  const near=(x,y)=>{const ci=Math.floor(x/CELL),cj=Math.floor(y/CELL);for(let r=0;r<8;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;const i=ci+dx,j=cj+dy;if(i<1||j<1||i>=GW-1||j>=GH-1)continue;if(ps(j*GW+i))return j*GW+i;}return -1;};
+  const s=near(ax,ay),g=near(bx,by);if(s<0||g<0)return null;
+  const R=roadRoute;if(!R.g||R.g.length<N){R.g=new Float32Array(N);R.m=new Int32Array(N);R.c=new Int32Array(N);R.k=new Int32Array(N);R.st=0;}
+  const st=++R.st,G_=R.g,Mk=R.m,Cm=R.c,Cl=R.k,gx=g%GW,gy=(g/GW)|0,h=(c)=>{const dx=Math.abs((c%GW)-gx),dy=Math.abs(((c/GW)|0)-gy);return dx+dy-.586*Math.min(dx,dy);};
+  const hp=[[h(s),s]];Mk[s]=st;G_[s]=0;Cm[s]=-1;let it=0,ok=false;
+  const push=(f,i)=>{let k=hp.length;hp.push([f,i]);while(k>0){const p=(k-1)>>1;if(hp[p][0]<=f)break;hp[k]=hp[p];k=p;}hp[k]=[f,i];};
+  const pop=()=>{const t=hp[0],l=hp.pop();if(hp.length){let k=0;for(;;){let c=2*k+1;if(c>=hp.length)break;if(c+1<hp.length&&hp[c+1][0]<hp[c][0])c++;if(hp[c][0]>=l[0])break;hp[k]=hp[c];k=c;}hp[k]=l;}return t[1];};
+  while(hp.length&&it++<(maxIt||70000)){const cur=pop();if(Cl[cur]===st)continue;Cl[cur]=st;if(cur===g){ok=true;break;}const cx=cur%GW,cy=(cur/GW)|0;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<1||ny<1||nx>=GW-1||ny>=GH-1)continue;const ni=ny*GW+nx;if(!ps(ni))continue;if(dx&&dy&&(!ps(cy*GW+nx)||!ps(ny*GW+cx)))continue;
+      const ng=G_[cur]+(dx&&dy?1.414:1);if(Mk[ni]!==st||ng<G_[ni]){Mk[ni]=st;G_[ni]=ng;Cm[ni]=cur;push(ng+h(ni),ni);}}}
+  if(!ok)return null;const cells=[];for(let c=g;c!==-1;c=Cm[c])cells.push(c);cells.reverse();
+  const pts=[[ax,ay]];for(let i=4;i<cells.length-2;i+=5)pts.push([(cells[i]%GW)*CELL+CELL/2,((cells[i]/GW)|0)*CELL+CELL/2]);pts.push([bx,by]);return pts;}
+function buildRoadNet(M,grid){const nodes=[];BASES.forEach(([x,y],i)=>nodes.push({x,y,b:i}));for(const c of M.cities)nodes.push({x:c.x,y:c.y,t:1,prize:!!c.prize});
+  const n=nodes.length,key=(a,b)=>a<b?a*1000+b:b*1000+a,seen=new Set(),par=nodes.map((q,i)=>i),fd=i=>par[i]===i?i:(par[i]=fd(par[i])),roads=[],cands=[];
+  const eu=(a,b)=>Math.hypot(nodes[a].x-nodes[b].x,nodes[a].y-nodes[b].y);
+  const clear=(a,b)=>{const A=nodes[a],B=nodes[b],k=Math.ceil(eu(a,b)/(CELL*.7));for(let i=1;i<k;i++){const x=A.x+(B.x-A.x)*i/k,y=A.y+(B.y-A.y)*i/k,v=grid[Math.floor(y/CELL)*GW+Math.floor(x/CELL)];if(v!==0&&v!==2)return false;}return true;};
+  const link=(a,b,loose)=>{const kk=key(a,b);if(seen.has(kk))return false;let pts=null;
+    if(clear(a,b)){const A=nodes[a],B=nodes[b],k=Math.max(2,Math.ceil(eu(a,b)/500));pts=[];for(let i=0;i<=k;i++)pts.push([A.x+(B.x-A.x)*i/k,A.y+(B.y-A.y)*i/k]);}
+    else{pts=roadRoute(grid,nodes[a].x,nodes[a].y,nodes[b].x,nodes[b].y,loose?140000:50000);if(pts){let L=0;for(let i=1;i<pts.length;i++)L+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);if(!loose&&L>1.8*eu(a,b))pts=null;}}
+    if(!pts)return false;seen.add(kk);roads.push(pts);par[fd(a)]=fd(b);return true;};
+  // each node reaches its nearest neighbours (bases take 3: home villages first), the prize town gets four spokes
+  for(let a=0;a<n;a++){const o=[];for(let b=0;b<n;b++)if(b!==a)o.push([eu(a,b),b]);o.sort((p,q)=>p[0]-q[0]);const k=nodes[a].b!=null?3:nodes[a].prize?4:2;let got=0;for(const [d,b] of o){if(got>=k)break;if(d>(nodes[a].b!=null?.55:.4)*Math.hypot(MAPW,MAPH)&&got>0)break;if(link(a,b))got++;else if(seen.has(key(a,b)))got++;}}
+  // every base must be tied into one network: join the nearest pair of separate networks until one remains
+  for(let g=0;g<n;g++){const bs=nodes.map((q,i)=>q.b!=null?i:-1).filter(i=>i>=0);if(bs.every(i=>fd(i)===fd(bs[0])))break;let bp=null,bd=1e18;for(let a=0;a<n;a++)for(let b=a+1;b<n;b++){if(fd(a)===fd(b))continue;const d=eu(a,b);if(d<bd){bd=d;bp=[a,b];}}if(!bp)break;if(!link(bp[0],bp[1],true)){seen.add(key(bp[0],bp[1]));par[fd(bp[0])]=fd(bp[1]);}}
+  M.roadNet=roads;}
 // P_B: while planning a route (pathfinding / line of sight in navTo), ground cells under buildings count as blocked,
 // so units route around bases instead of walking into walls. Plain movement checks ignore buildings (separation handles them).
 let P_B=false;
@@ -533,6 +629,7 @@ function gridOpen(k){const g=G.grid,v0=G.gridV|0,v1=v0+1;g[k]=0;G.gridV=v1;const
   else{const keep=ids[0];a[k]=keep;if(ids.length>1)for(let i=0;i<a.length;i++){const r=a[i];if(r!==keep&&r&&ids.indexOf(r)>0)a[i]=keep;}}
   R.v=v1;}
 function nearestInRegion(R,reg,gx,gy){for(let r=1;r<90;r++){let best=-1,bd=1e9;for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;const x=gx+dx,y=gy+dy;if(x<0||y<0||x>=GW||y>=GH)continue;if(R[y*GW+x]!==reg)continue;const d=dx*dx+dy*dy;if(d<bd){bd=d;best=y*GW+x;}}if(best>=0)return[best%GW,(best/GW)|0];}return null;}
+let P_ROAD=false;   // supply trucks: roads cost 30% less in the route search
 function findPath(dom,sx,sy,tx,ty){
   const s0=nearestPass(dom,Math.floor(sx/CELL),Math.floor(sy/CELL));let g0=nearestPass(dom,Math.floor(tx/CELL),Math.floor(ty/CELL));if(!s0||!g0)return null;
   let unreach=false;if(dom==='ground'||dom==='naval'){const R=regions(dom),rs=R[s0[1]*GW+s0[0]];if(rs&&R[g0[1]*GW+g0[0]]!==rs){const q=nearestInRegion(R,rs,g0[0],g0[1]);if(!q)return null;g0=q;unreach=true;}}
@@ -542,12 +639,12 @@ function findPath(dom,sx,sy,tx,ty){
   const push=(f,i)=>{let k=HN++;while(k>0){const p=(k-1)>>1;if(HF[p]<=f)break;HF[k]=HF[p];HI[k]=HI[p];k=p;}HF[k]=f;HI[k]=i;};
   const pop=()=>{const top=HI[0];HN--;if(HN>0){const f=HF[HN],v=HI[HN];let k=0;for(;;){const l=2*k+1,r=l+1;let m=-1,mf=f;if(l<HN&&HF[l]<mf){m=l;mf=HF[l];}if(r<HN&&HF[r]<mf){m=r;}if(m<0)break;HF[k]=HF[m];HI[k]=HI[m];k=m;}HF[k]=f;HI[k]=v;}return top;};
   const hfn=(cx,cy)=>{const dx=Math.abs(cx-gx),dy=Math.abs(cy-gy);return dx+dy-.586*Math.min(dx,dy);};
-  const WC=dom==='ground'?wallCost():null;let bestN=start,bestH=hfn(s0[0],s0[1]);
+  const WC=dom==='ground'?wallCost():null;const RM=P_ROAD&&dom==='ground'&&G.roadMask?G.roadMask:null;let bestN=start,bestH=hfn(s0[0],s0[1]);
   P_mark[start]=st;P_g[start]=0;P_came[start]=-1;push(hfn(s0[0],s0[1]),start);let it=0,found=false;
   while(HN>0&&it++<Math.max(9000,PN*.45)&&HN<PN*4-8){const cur=pop();if(P_closed[cur]===st)continue;P_closed[cur]=st;if(cur===goal){found=true;break;}
     const cx=cur%GW,cy=(cur/GW)|0;{const hh=hfn(cx,cy);if(hh<bestH){bestH=hh;bestN=cur;}}
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(!passC(dom,nx,ny))continue;if(dx&&dy&&(!passC(dom,cx+dx,cy)||!passC(dom,cx,cy+dy)))continue;
-      const ni=ny*GW+nx;if(P_closed[ni]===st)continue;const ng=P_g[cur]+(dx&&dy?1.414:1)*(WC?1+WC[ni]:1);if(P_mark[ni]!==st||ng<P_g[ni]){P_mark[ni]=st;P_g[ni]=ng;P_came[ni]=cur;push(ng+hfn(nx,ny),ni);}}}
+      const ni=ny*GW+nx;if(P_closed[ni]===st)continue;const ng=P_g[cur]+(dx&&dy?1.414:1)*(WC?1+WC[ni]:1)*(RM&&RM.d[((ny*CELL+CELL/2)/RM.C|0)*RM.w+((nx*CELL+CELL/2)/RM.C|0)]?.7:1);if(P_mark[ni]!==st||ng<P_g[ni]){P_mark[ni]=st;P_g[ni]=ng;P_came[ni]=cur;push(ng+hfn(nx,ny),ni);}}}
   if(typeof G!=='undefined'&&G)G.pfN=(G.pfN||0)+it;   // route-search work done this step (the budget in 03-sim counts it)
   let end=goal;if(!found){if(bestN===start||bestH>hfn(s0[0],s0[1])-2)return null;end=bestN;}
   const cells=[];for(let c=end;c!==-1;c=P_came[c])cells.push(c);cells.reverse();
@@ -632,6 +729,7 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
      let hx=MAPW/2,hy=MAPH/2;const a=Math.atan2(hy-B[1],hx-B[0]);const L=Math.hypot(hx-B[0],hy-B[1]);for(let r=300;r<L;r+=20){const x=B[0]+Math.cos(a)*r,y=B[1]+Math.sin(a)*r;if(M.edge(x,y)>-170||M.mtn(x,y)>-120){hx=B[0]+Math.cos(a)*(r-40);hy=B[1]+Math.sin(a)*(r-40);break;}}
      if(!crosses(B,[hx,hy]))road([B,mid(B,[hx,hy]),[hx,hy]],34);});}
   for(const rp of (M.roads||[]))road(rp.map(([x,y])=>[x*WK,y*WK]),36); // roads drawn in the map editor
+  for(const rp of (M.roadNet||[]))if(rp.length>=2)road(rp,30); // Conquest town-to-town roads (units drive faster on them)
   for(const [bx,by] of BASES){const R=276;
     // worn dirt apron blending pad into terrain
     const ap=t.createRadialGradient(bx,by,R*.9,bx,by,R*1.45);ap.addColorStop(0,'rgba(122,108,80,.75)');ap.addColorStop(1,'rgba(122,108,80,0)');t.fillStyle=ap;t.fillRect(bx-R*1.5,by-R*1.5,R*3,R*3);

@@ -182,8 +182,8 @@ async function main() {
   await A.evaluate(() => document.querySelector('#mpstatus .startbtn').click());
 
   // ---- 3. battle ----
-  await waitFor(A, () => MODE === 'client' && G && G.teams.length === 3, null, 300000, 'the creator to enter the battle');
-  await waitFor(B, () => MODE === 'client' && G && G.teams.length === 3, null, 300000, 'the friend to enter the battle');
+  await waitFor(A, () => MODE === 'client' && G && G.teams.filter(Q => !Q.reb).length === 3, null, 300000, 'the creator to enter the battle');
+  await waitFor(B, () => MODE === 'client' && G && G.teams.filter(Q => !Q.reb).length === 3, null, 300000, 'the friend to enter the battle');
   const slots = [await A.evaluate(() => ME), await B.evaluate(() => ME)];
   say(`3. battle started; creator is slot ${slots[0]}, friend slot ${slots[1]}`);
   if (slots[0] !== 0 || slots[1] !== 1) fail(`expected slots 0 and 1, got ${slots}`);

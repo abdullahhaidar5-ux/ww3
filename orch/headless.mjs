@@ -58,7 +58,7 @@ const PORTABLE = ['sin', 'cos', 'atan2', 'exp', 'pow'];
 
 // ------------------------------------------------------------------------------------------------ loading the sim
 // Modules that ARE the simulation (loaded whole).
-export const SIM_FILES = ['01-data.js', '02-map.js', '03-sim.js'];
+export const SIM_FILES = ['01-data.js', '02-map.js', '03-sim.js', '03b-tactics.js', '03c-heroes.js', '03c-logistics.js'];
 // The host netcode a server adds on top (--hostsnap): snapshots/events/team panels, and battle checkpoints. Loaded whole
 // and verbatim, with no window in scope (they must not need one).
 export const HOST_FILES = ['07a-hostsnap.js', '07b-ckpt.js'];
@@ -380,6 +380,7 @@ function DRIVER() {
     }
     return Object.assign(W.info(), { ms: realNow() - t0 });
   };
+  W.ev = c => eval(c); // debug hook: evaluate code inside the sim's scope (G, setBases, ...); used by orch/conquest*.mjs
   W.step = sec => {
     const n = Math.round(sec * 60); let done = 0; const t0 = realNow();
     sim(() => { for (let i = 0; i < n && G && !G.over; i++) { simUpdate(1 / 60); S.clock += 1000 / 60; done++; } });

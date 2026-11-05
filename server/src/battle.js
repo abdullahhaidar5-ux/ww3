@@ -20,6 +20,18 @@ export const AFTER_END_MS = 120000;          // battle over: the room closes thi
 export const MAX_BATTLE_MS = 45 * 60000;     // free-plan cap: after 45 minutes the server hands the battle to a player
                                              // (it closes; the standby player takes over as a browser host, as when a
                                              // host leaves)
+// Overrun guard: if the battle falls behind real time (the server can't keep up: less than OVERRUN_RATIO game-seconds
+// per real second over OVERRUN_WINDOW_MS, OVERRUN_WINDOWS windows in a row), the server hands the battle to the
+// strongest player PC (the standby, src/07b-ckpt.js ckTick picks it by its benchmark and ping), exactly as at the
+// free-plan guard: it closes and the standby takes over from its checkpoint. (On Cloudflare the clock stands still
+// while code runs, so the CPU of one step can't be read; how far the battle falls behind can.)
+export const OVERRUN_RATIO = 0.8;
+export const OVERRUN_WINDOW_MS = 15000;
+export const OVERRUN_WINDOWS = 2;
+// A battle picked up again RESUME_MAX times within RESUME_WINDOW_MS (e.g. Cloudflare keeps stopping it for using too
+// much CPU) is not picked up again: the players' standby takes it over instead (server/src/index.js resume)
+export const RESUME_MAX = 2;
+export const RESUME_WINDOW_MS = 10 * 60000;
 const MAX_PLAYERS = 8;
 const SPEC_MAX = 4;                          // spectators per battle (src/07a-hostsnap.js SPEC_MAX)
 const MAX_FRAME = 16 * 1024;                 // a player's frame (presence with its order queue is capped ~3.5 KB)
@@ -31,10 +43,11 @@ export class BattleHost {
   // now(): ms clock; publish(entry|null): the game-list entry changed; save(record|null): keep (or drop) the battle's
   // latest checkpoint so it can be picked up after a server restart (BattleHost.restore); log(msg)
   // pw: a password-protected battle's salted hash ({s,h,i}, server/src/password.js), checked by the caller at connect
+  // overrunGuard: hand the battle to the standby player when it falls behind real time (OVERRUN_RATIO; the Durable Object)
   // claim(): async, true when one of the battle slots is free for this battle; asked at Start (a lobby holds no slot, so
   // idle lobbies can't lock everyone out of battles: review R2). Without it Start is immediate (tests).
-  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed, readyMs = READY_MAX_MS, pw = null, claim = null }) {
-    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log, readyMs, pw, claim });
+  constructor({ sim, code, ownKey, send, close, now, publish = () => {}, save = () => {}, log = () => {}, seed, readyMs = READY_MAX_MS, pw = null, claim = null, overrunGuard = false }) {
+    Object.assign(this, { sim, code, ownKey, sendRaw: send, closeRaw: close, now, publish, save, log, readyMs, pw, claim, overrunGuard });
     this.hostId = 'ww3-' + code;
     this.phase = 'lobby';                    // lobby -> battle -> over -> closed
     this.players = new Map();                // id -> {id, pres, f, tok, at, seat}
@@ -289,16 +302,33 @@ export class BattleHost {
     }
     if (this.paused) { this.lastStep = now; return 50; }   // test hook only (orch/cfbattle.mjs)
     const real = Math.min(1, Math.max(0, (now - this.lastStep) / 1000)); this.lastStep = now;
-    this.acc = Math.min(0.25, this.acc + real);   // more than 0.25 s behind: the battle slows down rather than spiking
+    // (test hook only: `slow` = the battle gets only 1/slow of the real time, so it falls behind as on an overloaded server)
+    this.acc = Math.min(0.25, this.acc + (this.slow > 1 ? real / this.slow : real));   // more than 0.25 s behind: the battle slows down rather than spiking
     let n = 0;
     while (this.acc >= STEP - 1e-6 && n < MAX_STEPS_PER_TICK) { this.sim.step(STEP); this.acc -= STEP; n++; this.steps++; }
+    if (this.overrunGuard && this.overrun(now, real, n)) return this.shut('server busy');
     if (real > 0) this.sim.net(real);
     this.flush();
     const ck = this.sim.ckFresh();
-    if (ck) this.save({ code: this.code, own: this.ownKey, si: this.si, s: ck, at: now, pw: this.pw });
+    if (ck) this.save({ code: this.code, own: this.ownKey, si: this.si, s: ck, at: now, pw: this.pw, rz: this.rz || [] });
     const info = n && this.sim.over() ? this.sim.info() : null;   // (info() walks every entity: only once, at the end)
     if (info && info.over) { this.phase = 'over'; this.endAt = now + AFTER_END_MS; this.save(null); this.log(`battle ${this.code} over, winner slot ${info.winner}`); this.list(); }
     return Math.max(0, Math.ceil((STEP - this.acc) * 1000));
+  }
+  // The overrun guard (see OVERRUN_RATIO): true when the battle has fallen behind real time for long enough and a
+  // standby player holds a checkpoint to take it over. Keeps its numbers in this.ovr (shown by the test hooks).
+  overrun(now, real, n) {
+    const W = this.ovr || (this.ovr = { t0: now, real: 0, game: 0, bad: 0, last: null, why: null });
+    W.real += real; W.game += n * STEP;
+    if (now - W.t0 < OVERRUN_WINDOW_MS) return false;
+    const ratio = W.real > 0 ? W.game / W.real : 1;
+    W.last = +ratio.toFixed(3); W.bad = ratio < OVERRUN_RATIO ? W.bad + 1 : 0; W.t0 = now; W.real = 0; W.game = 0;
+    if (W.bad < OVERRUN_WINDOWS) return false;
+    const sb = this.sim.test.ck().sb;
+    if (sb == null) { this.log(`battle ${this.code}: behind real time (${ratio.toFixed(2)}x) but no standby player holds a checkpoint yet`); return false; }
+    W.why = `behind real time ${ratio.toFixed(2)}x for ${OVERRUN_WINDOWS * OVERRUN_WINDOW_MS / 1000} s`;
+    this.log(`battle ${this.code}: ${W.why}; handing it to the standby player (slot ${sb})`);
+    return true;
   }
   // A battle picked up from its last kept checkpoint after the server restarted (rec: what save() was given). Players
   // reconnect as usual (same /battle/ address, their token); each human side has 30 s before the AI takes over.
@@ -307,6 +337,7 @@ export class BattleHost {
     await h.sim.restore(rec.si, rec.s);
     h.si = rec.si; h.facs = rec.si.facs.slice(); h.map = rec.si.map; h.w = rec.si.w | 0; h.cmCode = rec.si.cm || '';
     h.phase = 'battle'; h.startedAt = h.lastStep = h.emptySince = h.now(); h.acc = 0; h.go = true;
+    h.rz = [...(Array.isArray(rec.rz) ? rec.rz : []), h.now()].filter(t => h.now() - t < RESUME_WINDOW_MS).slice(-4);   // recent pick-ups (index.js resume)
     h.log(`battle ${rec.code} picked up from its checkpoint (${Math.round((h.now() - rec.at) / 1000)} s old)`);
     h.list(true);
     return h;

@@ -205,6 +205,8 @@ function terrDetTex(){if(TDET)return TDET;const mk=src=>{const t=new THREE.Textu
 // road mask (02-map's G.roadMask.f, 16-unit cells) as a small texture so the ground shader can lay gravel on the roads
 function roadTex(){if(ROADT){ROADT.dispose();ROADT=null;}const rm=G.roadMask,w=rm?rm.w:1,h=rm?rm.h:1,d=new Uint8Array(w*h);if(rm){let f=new Float32Array(w*h);for(let i=0;i<w*h;i++)f[i]=Math.max(0,Math.min(1,rm.f?rm.f[i]:rm.d[i]));for(let p=0;p<4;p++){const o=new Float32Array(w*h),hz=p%2===0;for(let y=0;y<h;y++)for(let x=0;x<w;x++){let a=0,n=0;for(let k=-1;k<=1;k++){const X=hz?x+k:x,Y=hz?y:y+k;if(X>=0&&Y>=0&&X<w&&Y<h){a+=f[Y*w+X];n++;}}o[y*w+x]=a/n;}f=o;}for(let i=0;i<w*h;i++)d[i]=Math.round(255*f[i]);}  // blurred: the 16-unit cells would show as steps
   const t=new THREE.DataTexture(d,w,h,THREE.RedFormat,THREE.UnsignedByteType);t.magFilter=t.minFilter=THREE.LinearFilter;t.needsUpdate=true;return ROADT=t;}
+// live update after a road was built (src/03c-logistics.js bumps G.roadV): refill the same texture in place
+function roadTexRefresh(){if(!ROADT||!G.roadMask)return;const rm=G.roadMask,w=rm?rm.w:1,h=rm?rm.h:1,d=new Uint8Array(w*h);if(rm){let f=new Float32Array(w*h);for(let i=0;i<w*h;i++)f[i]=Math.max(0,Math.min(1,rm.f?rm.f[i]:rm.d[i]));for(let p=0;p<4;p++){const o=new Float32Array(w*h),hz=p%2===0;for(let y=0;y<h;y++)for(let x=0;x<w;x++){let a=0,n=0;for(let k=-1;k<=1;k++){const X=hz?x+k:x,Y=hz?y:y+k;if(X>=0&&Y>=0&&X<w&&Y<h){a+=f[Y*w+X];n++;}}o[y*w+x]=a/n;}f=o;}for(let i=0;i<w*h;i++)d[i]=Math.round(255*f[i]);}if(d.length===ROADT.image.data.length){ROADT.image.data.set(d);ROADT.needsUpdate=true;}}
 // Scars: burn (R) and crater height (G, 128 = flat) at 4 units per texel, written when a big explosion lands (crater()
 // and scorch() in 05-fx3d are wrapped below; they stay as they are). Stays for the whole battle; never read by the sim.
 function scarInit(){if(SCAR)SCAR.t.dispose();const W=Math.ceil(MAPW/4),H=Math.ceil(MAPH/4),d=new Uint8Array(W*H*2);for(let i=1;i<d.length;i+=2)d[i]=128;
@@ -369,6 +371,16 @@ function buildWorld(tc){
     const pole=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,24,6),MAT.std);pole.position.set(-31,12,-9);grp.add(pole);
     grp.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
     grp.position.set(o.x,groundH(o.x,o.y),o.y);grp.rotation.y=(o.x*.01)%6;WORLD.add(grp);return{grp,arm,flag,crank};});
+  // propaganda towers: a guyed lattice radio mast with a dish and a small transmitter hut (a flag-light on top shows the owner's colour)
+  mats();G.towObj=(G.tow||[]).map(w=>{const grp=new THREE.Group(),B=Bld(),fr='#7a7f84',dk='#2c2e2c';
+    B.box(30,1.6,30,0,.8,0,'#8a877d');B.box(12,7,9,16,4.5,10,'#6c6a62');B.box(13,1,10,16,8.5,10,'#4d4b45');B.cyl(.8,.8,6,6,6,3,10,dk,Math.PI/2);
+    for(let i=0;i<9;i++){const y=i*10,w1=7-i*.55;for(const [sx,sz] of [[-1,-1],[1,-1],[1,1],[-1,1]])B.box(.9,10.4,.9,sx*w1/2,y+5,sz*w1/2,fr,0,0,0);
+      if(i<8){B.box(w1,.6,.6,0,y+10,-w1/2,fr);B.box(w1,.6,.6,0,y+10,w1/2,fr);B.box(.6,.6,w1,-w1/2,y+10,0,fr);B.box(.6,.6,w1,w1/2,y+10,0,fr);B.box(w1*1.1,.5,.5,0,y+5,-w1/2,fr,0,0,.75);B.box(w1*1.1,.5,.5,0,y+5,w1/2,fr,0,0,-.75);}}
+    B.cyl(.5,.5,14,6,0,86,0,'#c0c4c6');B.cyl(4,0.4,2.5,12,5,48,0,'#d8dcd4',0,0,Math.PI/2);
+    const base=mesh(B.geo());grp.add(base);
+    const lamp=new THREE.Mesh(new THREE.SphereGeometry(2.4,10,8),new THREE.MeshBasicMaterial({color:0x999999}));lamp.position.set(0,98,0);grp.add(lamp);
+    grp.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
+    grp.position.set(w.x,groundH(w.x,w.y),w.y);WORLD.add(grp);return{grp,lamp};});
   // supply depots
   G.fieldObj=G.fields.map((f,fi)=>{const grp=new THREE.Group();grp.position.set(f.x,groundH(f.x,f.y),f.y);WORLD.add(grp);const items=[];const R=mulberry(fi*13+5);
     const pad=Bld();pad.box(f.r*2.1,1,f.r*1.7,0,.5,0,'#7e7462');const pm=mesh(pad.geo());pm.receiveShadow=true;grp.add(pm);
@@ -521,7 +533,7 @@ function meGeo(B,kp,tc,fac){const C=ME_C;let K;
     case 'uplink:door':B.box(18,2,36,0,0,0,'#9d978a');B.box(2,2.2,36,8,0,0,'#4a4639');B.box(14,.3,32,0,1.1,0,'#a89f8a');break;
     default:return false;}
   return true;}
-const GEO_ALIAS={lander:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',cbr:'aa',jeep:'aa',raidlead:'aa'};
+const GEO_ALIAS={champ:'hero',lander:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',cbr:'aa',jeep:'aa',raidlead:'aa'};
 function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];const key=kind+fac+team.color+part;if(GEO[key])return GEO[key];const tc=team.color,hc=camo(team),dk='#2b2d26',mt='#55574e',cn='#9a988c',cl='#7d7c70';const B=Bld();let s=FACTIONS[fac].units[kind]||{};
   if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc,fac))return GEO[key]=B.geo();
   switch(kind+':'+part){

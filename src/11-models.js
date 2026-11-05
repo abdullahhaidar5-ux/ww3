@@ -7,7 +7,7 @@ const MCFG={
   commissar:{m:'soldier',fit:'y',size:15.7,tint:'#5b4a3a',tk:.5},sapper:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#6a5a3c',tk:.4},guer:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#4c5a3a',tk:.55},atk:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],tint:'#3c4434',tk:.5},
   idome:{m:'truck',fit:'z',size:36,extra:'samtruck'},ew:{m:'truck',fit:'z',size:35,extra:'dish'},cbr:{m:'truck',fit:'z',size:35,extra:'dish'},jeep:{m:'truck',fit:'z',size:26},atgm:{m:'truck',fit:'z',size:27,extra:'samtruck',tint:'#55603f',tk:.4},saka:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#a08a5c',tk:.5},raidlead:{m:'truck',fit:'z',size:28,extra:'mg'},
   inf:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]]},at:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]]},hacker:{m:'soldier',fit:'y',size:13.1,squad:[[3,-4],[-3,4]]},
-  hero:{m:'soldier',fit:'y',size:15.7,tint:'#2c302b',tk:.6},heli:{m:'heli',fit:'z',size:54},airlift:{m:'heli',fit:'z',size:72,tint:'#59604f',tk:.5},lander:{m:'boat',fit:'z',size:52,tint:'#6f7478',tk:.5},drone:{m:'drone',fit:'z',size:18,tint:'#7d8287',tk:.8},jet:{m:'jet',fit:'z',size:46},boat:{m:'boat',fit:'z',size:42,tint:'#7a8590',tk:.9},ship:{m:'ship',fit:'z',size:118,tint:'#7d8792',tk:.88},
+  hero:{m:'soldier',fit:'y',size:15.7,tint:'#2c302b',tk:.6},champ:{m:'soldier',fit:'y',size:19.5,tint:'#262a26',tk:.62},heli:{m:'heli',fit:'z',size:54},airlift:{m:'heli',fit:'z',size:72,tint:'#59604f',tk:.5},lander:{m:'boat',fit:'z',size:52,tint:'#6f7478',tk:.5},drone:{m:'drone',fit:'z',size:18,tint:'#7d8287',tk:.8},jet:{m:'jet',fit:'z',size:46},boat:{m:'boat',fit:'z',size:42,tint:'#7a8590',tk:.9},ship:{m:'ship',fit:'z',size:118,tint:'#7d8792',tk:.88},
 };
 // Realistic models (Objaverse / Sketchfab, CC-BY - authors credited in the menu): each nation fields the hardware it
 // actually flies and drives where a licensed model exists.
@@ -584,6 +584,22 @@ function walkPose(m,u,amt,a,s,run,br){const W=m.userData.legs;if(!W||!W.uL)retur
   wSet(W.ch,-.045*run*Math.cos(4*Math.PI*(u-s*.5))+br,0);
   if(u<s)return gDepth(W,GL.th,GL.kn)-W.D0;if(uR<s)return gDepth(W,GR.th,GR.kn)-W.D0;
   const w=((u-s)%.5)/Math.max(.01,.5-s),y1=gDepth(W,-a,0)-W.D0,y0=gDepth(W,a,.1+.18*run)-W.D0;return y1+(y0-y1)*w+run*.25*4*w*(1-w);}
+// Posture (realism): soldiers crouch in cover, go prone when pinned down, pause to reload and now and then lob a grenade.
+// Render only (the sim is untouched): ps 0 stand .. .5 crouch .. 1 prone, blended per soldier so a squad drops in a ripple.
+function postApply(m,ud,e,k,dt,tg,moving,fire){const W=ud.legs;if(!W||!W.uL)return;const h=((e.id*7+k*13)%10)/10;let T=tg;if(T>=1&&h<.25)T=.5;else if(T>0&&T<1&&h>.85)T=0;
+  const ps=ud.ps=(ud.ps||0)+Math.max(-1,Math.min(1,(T-(ud.ps||0))*8))*dt*(1.1+h*.9);
+  if(!moving&&fire&&!(ud.at>0)&&ps<.75){if(Math.random()<dt*.16){ud.at=.9;ud.ak=1;}else if(ps<.2&&Math.random()<dt*.05){ud.at=1.15;ud.ak=2;}}
+  let rl=0,gr=0;if(ud.at>0){if(moving||ps>.75)ud.at=0;else{ud.at-=dt;const q=ud.ak===1?1-ud.at/.9:1-ud.at/1.15;if(ud.ak===1)rl=Math.sin(Math.PI*Math.max(0,Math.min(1,q)));else gr=q;
+    if(ud.ak===2&&ud.at<=0&&!ud.gth){ud.gth=1;}}}
+  if(ud.ak===2&&gr>.42&&gr<.6&&!ud.gth2){ud.gth2=1;try{const a=(e.va||0)+(Math.random()-.5)*.5,sp=55+Math.random()*35,gx=e.x+Math.cos(a)*sp*.8,gy=e.y+Math.sin(a)*sp*.8;part({x:e.x,y:e.y,h:groundH(e.x,e.y)+8,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,vh:55,grav:1,c:[.16,.18,.1],s:1.3,f:1,d:.8});setTimeout(()=>{try{if(!G||G.over)return;part({x:gx,y:gy,h:groundH(gx,gy)+2,vx:0,vy:0,rise:14,c:[.3,.28,.25],c2:[.5,.48,.44],ck:.3,s:rnd(3,4.5),g:6,d:.9,a:.5});for(let q=0;q<4;q++)part({x:gx,y:gy,h:groundH(gx,gy)+2,vx:rnd(-40,40),vy:rnd(-40,40),vh:rnd(30,70),grav:1,add:true,c:C_SPARK,s:1,f:.6,d:rnd(.2,.4)});}catch(_){}},800);}catch(_){}}if(gr===0)ud.gth2=0;
+  if(ps<.01&&!rl&&!gr){ud.pp=0;return 0;}
+  const cr=Math.min(1,ps*2),pr=Math.max(0,ps*2-1),c1=cr*(1-pr),thL=.8*c1,knL=1.5*c1,thR=1.0*c1,knR=1.85*c1;
+  wSet(W.uL,thL,0);wSet(W.uR,thR,0);wSet(W.lL,-knL,0);wSet(W.lR,-knR,0);wSet(W.fL,knL-thL,0);wSet(W.fR,knR-thR,0);
+  // grenade: wind back, then snap forward; reload: chest bows to the rifle
+  const gl=gr>0?(gr<.42?-.32*(gr/.42):gr<.6?-.32+.9*((gr-.42)/.18):.58*(1-(gr-.6)/.4)):0;
+  wSet(W.sp,-(.2*c1+.1*rl+.0)+(gr>0?-gl*.5:0),0);wSet(W.ch,-(.12*c1+.22*rl)-(gr>0?gl:0),0);
+  const y=0.5*(gDepth(W,thL,knL)+gDepth(W,thR,knR))-W.D0;
+  m.position.y=y*(1-pr)+pr*1.25;m.rotation.x=pr*1.5;if(ud.bz===undefined)ud.bz=m.position.z;m.position.z=ud.bz-pr*3.6;ud.pp=1;return 1;}
 // Drones are built by hand so each nation's looks right: a Shahed-style delta wing with a pusher propeller
 // (Iran, Mountain Shias), a Kargu-style quadcopter (Turkey) and a small X-frame FPV racer (Ukraine and others).
 // Iran and the two Shia militias fly Shahed-style deltas (stencilled Shahed / Ababil / Qasef), Turkey a Bayraktar-style
@@ -731,7 +747,8 @@ function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
     if(!S.im)continue;const im=S.im;let i=0;
     for(const m of S.list){let q=m,v=true;while(q.parent){if(!q.visible){v=false;break;}q=q.parent;}if(!v||q!==SCN)continue;im.setMatrixAt(i,m.matrixWorld);if(S.col&&m.userData.dc)im.setColorAt(i,m.userData.dc);i++;}
     im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}}
-function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
+const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',CU:'#2e3a2c'};   // hero squad uniform colours
+function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='champ')c=Object.assign({},c,{tint:CHAMP_TINT[T.fac]||c.tint});if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
   if(e.kind==='aa'&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
   if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
   else if(e.kind==='arty'){if(e.s&&e.s.rocket||!MIL_TANK[T.fac]&&!MODELS.proto.tank)c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};else{const tc=MIL_TANK[T.fac]&&MIL_TANK[T.fac].m!=='technical'&&MIL_TANK[T.fac].m!=='toontank'?MIL_TANK[T.fac]:MCFG.tank;c=Object.assign({},tc,{size:tc.size*1.08,extra:'gun'});if(MIL_TANK[T.fac]&&(MIL_TANK[T.fac].m==='technical'||MIL_TANK[T.fac].m==='toontank'))c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};}}
