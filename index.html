@@ -6527,7 +6527,7 @@ function moraleTick(u,dt){const T0=G.teams[u.team];if(fearlessT(T0,u)){u.fear=0;
   return false;}
 function bailOut(u){const T=G.teams[u.team];u.aband=1;u.cp=0;u.cpT=0;u.target=null;u.order=null;u.guard=null;u.rout=0;u.fear=0;u.last=0;
   FXE('txt',[u.x|0,u.y|0,'CREW BAILED OUT',u.team,-2]);
-  try{const a=Math.random()*6.28,c=addUnit(u.team,'inf',u.x+Math.cos(a)*(u.r+10),u.y+Math.sin(a)*(u.r+10));if(c){c.hp=c.max*.5;c.crew=1;c.fear=courageOf(c)*1.05;}}catch(err){}
+  try{const a=(u.id*2.399)%6.28,c=addUnit(u.team,'inf',u.x+Math.cos(a)*(u.r+10),u.y+Math.sin(a)*(u.r+10));if(c){c.hp=c.max*.5;c.crew=1;c.crT=G.t+30;c.fear=courageOf(c)*1.05;}}catch(err){}
   if(u.team===ME)log(u.team,`The crew of our ${u.s.name} bailed out - send infantry to re-crew it before the enemy takes it.`,'w');}
 const AB_N=[];
 function updAband(u,dt){u.target=null;u.order=null;u.guard=null;u.cpT=(u.cpT||0)-dt;if(u.cpT>0)return;u.cpT=.5;let own=0,foe=-1;
@@ -6546,7 +6546,7 @@ function physImpulse(e,nx,ny,J){if(e.isB||e.dead||!e.s||e.s.dom!=='ground')retur
   if(m<2&&kv>70){e.stun=Math.max(e.stun||0,G.t+.8+Math.min(.8,kv/300));FXE('toss',[e.id,Math.min(110,kv*.55)|0]);}}
 function physTick(u,dt){if(!u.kx&&!u.ky)return;const d=u.s.dom==='ground'?(massOf(u)<2?5.5:7.5):6,k=Math.exp(-d*dt);const nx=u.x+u.kx*dt,ny=u.y+u.ky*dt;
   if(passXY(u.s.dom,nx,ny)){u.x=nx;u.y=ny;}else{u.kx*=-.3;u.ky*=-.3;}u.kx*=k;u.ky*=k;if(Math.abs(u.kx)+Math.abs(u.ky)<2){u.kx=u.ky=0;}}
-function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.crit)critTick(u,dt);if(u.aband)return updAband(u,dt);if(G.dugN&&u.s.armor==='heavy'&&u.s.dom==='ground'&&G.t>(u.dgT||0)){u.dgT=G.t+.25;dugVeh(u);}if(u.dig)digTick(u,dt);else if(G.teams[u.team].ai&&u.s.armor==='light'&&u.s.dom==='ground')aiDig(u,dt);if(u.hp<u.max*.2&&u.s.armor==='heavy'&&bailCheck(u))return;const s=u.s,T=G.teams[u.team],m=T.F.mods;if(u.stun>G.t){u.cd=Math.max(u.cd,.5);return;}u.cd-=dt;if(T.dummy&&!T.fight){const o=u.order;u.target=null;if(o&&(o.type==='move'||o.type==='amove')&&u.kind!=='jet'){if(Math.hypot(o.x-u.x,o.y-u.y)<14)u.order=null;else navTo(u,o.x,o.y,dt,true);}return;}if(u.supp)u.supp=Math.max(0,u.supp-dt*(u.mz?.36:.22));
+function updUnit(u,dt){if(u.kx||u.ky)physTick(u,dt);if(u.crT&&G.t>u.crT&&!u.inTun){u.dead=true;G.byId.delete(u.id);FXE('gone',[u.id,u.x|0,u.y|0,-1,1]);return;}if(u.crit)critTick(u,dt);if(u.aband)return updAband(u,dt);if(G.dugN&&u.s.armor==='heavy'&&u.s.dom==='ground'&&G.t>(u.dgT||0)){u.dgT=G.t+.25;dugVeh(u);}if(u.dig)digTick(u,dt);else if(G.teams[u.team].ai&&u.s.armor==='light'&&u.s.dom==='ground')aiDig(u,dt);if(u.hp<u.max*.2&&u.s.armor==='heavy'&&bailCheck(u))return;const s=u.s,T=G.teams[u.team],m=T.F.mods;if(u.stun>G.t){u.cd=Math.max(u.cd,.5);return;}u.cd-=dt;if(T.dummy&&!T.fight){const o=u.order;u.target=null;if(o&&(o.type==='move'||o.type==='amove')&&u.kind!=='jet'){if(Math.hypot(o.x-u.x,o.y-u.y)<14)u.order=null;else navTo(u,o.x,o.y,dt,true);}return;}if(u.supp)u.supp=Math.max(0,u.supp-dt*(u.mz?.36:.22));
   if(G.t-u.lastHit>5&&u.hp<u.max&&!(u.supT!=null&&G.t-u.supT>60)){let rg=(m.regen||0)+(u.rank>=3?5:0)+upgK(T,u.kind,'regen');if(rg)u.hp=Math.min(u.max,u.hp+rg*dt);}
   if(u.kind==='harv')return updHarv(u,dt);if(u.kind==='dozer')return updDozer(u,dt);if(u.kind==='jet')return updJet(u,dt);if(u.kind==='hacker')return updHacker(u,dt);
   if(canRout(u)&&moraleTick(u,dt))return;
@@ -8816,8 +8816,8 @@ function mushTick(dt){if(!MUSH.length)return;const ph=fxPH();for(let i=MUSH.leng
 /* ---------- Tactics visuals: earth berms, foxholes, sandbag rows, trenches, burning engines, broken tracks ----------
    Everything is irregular rock-like blobs (never cubes), drawn as ONE instanced mesh for all fortifications, rebuilt only
    when the synced list (G.dugV) changes. Cheap enough for phones. */
-const TACT={mesh:null,v:-1,g:null,trk:[],gTrk:null};
-function tactMesh(){if(TACT.mesh&&TACT.g===G)return TACT.mesh;if(TACT.mesh){SCN.remove(TACT.mesh);TACT.mesh.dispose();}
+const TACT={mesh:null,v:-1,g:null,trk:[],tv:0,tkv:0};
+function tactMesh(){if(TACT.mesh&&TACT.g===G)return TACT.mesh;TACT.trk=[];TACT.tkv=0;if(TACT.mesh){SCN.remove(TACT.mesh);TACT.mesh.dispose();}
   const geo=rockGeo(23,(typeof TOUCHUI!=='undefined'&&TOUCHUI)?0:1,.7,.42),mat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.97,metalness:0});
   const m=new THREE.InstancedMesh(geo,mat,1800);m.count=0;m.frustumCulled=false;m.castShadow=false;m.receiveShadow=true;m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);m.setColorAt(0,new THREE.Color(1,1,1));
   SCN.add(m);TACT.mesh=m;TACT.g=G;TACT.v=-1;return m;}
@@ -8833,15 +8833,15 @@ function tactRebuild(){const m=tactMesh();let n=0;const L=G.dug||[];
       n=tactBlob(m,n,d.x,d.y,.15,13,.5,4.2,-d.a,.2,.15,.1);}
     else{for(const sg of [-1,1])for(let i=0;i<5;i++){const u=(i-2)*7+(R()-.5)*2,v=sg*(6.8+R()*1),c=earth();n=tactBlob(m,n,d.x+ca*u-sa*v,d.y+sa*u+ca*v,.4,4.4+R()*1.2,1.4+R()*.6,2.4+R()*.6,-d.a+(R()-.5)*.3,c[0],c[1],c[2]);}
       for(let i=0;i<3;i++){const u=(i-1)*9;n=tactBlob(m,n,d.x+ca*u,d.y+sa*u,-.3,7,.5,6.5,-d.a,.05,.04,.03);}}}
-  m.count=n;m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;TACT.v=G.dugV;}
-// a broken track lying behind a vehicle whose tracks / wheels were shot away
-function tactTrack(e){if(!TACT.gTrk){TACT.gTrk=rockGeo(41,0,.35,.18);TACT.mTrk=new THREE.MeshStandardMaterial({color:0x1b1a18,roughness:.85,metalness:.35});}
-  const hd=e.hd??e.ang??0,ca=Math.cos(hd),sa=Math.sin(hd),R=mulberry(e.id*31+7),g=new THREE.Group(),bx=e.x-ca*(e.r+9),by=e.y-sa*(e.r+9);
-  for(let i=0;i<10;i++){const u=-i*3.7,v=(R()-.5)*1.6+i*i*.09*(e.id%2?1:-1),x=bx+ca*u-sa*v,y=by+sa*u+ca*v,m=new THREE.Mesh(TACT.gTrk,TACT.mTrk);m.position.set(x,groundH(x,y)+.35,y);m.scale.set(2.2,.4,1.7);m.rotation.set((R()-.5)*.3,-hd+(R()-.5)*.5,(R()-.5)*.3);m.receiveShadow=true;g.add(m);}
-  SCN.add(g);TACT.trk.push({e,g});}
+  for(const t of TACT.trk)for(const q of t.pts)n=tactBlob(m,n,q[0],q[1],.3,2.2,.4,1.7,q[2],.1,.095,.09);
+  m.count=n;m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;TACT.v=G.dugV;TACT.tv=TACT.tkv|0;}
+// a broken track lying behind a vehicle whose tracks / wheels were shot away: ten dark link blobs in the same instanced mesh
+function tactTrack(e){const hd=e.hd??e.ang??0,ca=Math.cos(hd),sa=Math.sin(hd),R=mulberry(e.id*31+7),bx=e.x-ca*(e.r+9),by=e.y-sa*(e.r+9),pts=[];
+  for(let i=0;i<10;i++){const u=-i*3.7,v=(R()-.5)*1.6+i*i*.09*(e.id%2?1:-1);pts.push([bx+ca*u-sa*v,by+sa*u+ca*v,-hd+(R()-.5)*.5]);}
+  TACT.trk.push({e,pts});TACT.tkv=(TACT.tkv|0)+1;}
 function tactFxTick(dt){if(!G||!SCN||!G.terrain)return;
-  if((G.dugN|0)>0||TACT.mesh){if(TACT.g!==G)TACT.mesh=null;if(TACT.v!==G.dugV||TACT.g!==G){try{tactRebuild();}catch(err){}}}
-  for(let i=TACT.trk.length-1;i>=0;i--){const t=TACT.trk[i],e=t.e;if(e.dead||e.gone||!(e.crit&1)||G.byId.get(e.id)!==e){SCN.remove(t.g);TACT.trk.splice(i,1);e.trkM=0;}}
+  if((G.dugN|0)>0||TACT.mesh||TACT.trk.length){if(TACT.g!==G)TACT.mesh=null;if(TACT.v!==G.dugV||TACT.g!==G||TACT.tv!==(TACT.tkv|0)){try{tactRebuild();}catch(err){}}}
+  for(let i=TACT.trk.length-1;i>=0;i--){const t=TACT.trk[i],e=t.e;if(e.dead||e.gone||!(e.crit&1)||G.byId.get(e.id)!==e){TACT.trk.splice(i,1);TACT.tkv=(TACT.tkv|0)+1;e.trkM=0;}}
   for(const e of G.ents){if(e.isB||e.dead||!e.s||e.s.dom!=='ground')continue;const c=e.crit|0,low=e.hp<e.max*.35&&e.s.armor==='heavy';
     if(c&1&&!e.trkM&&TACT.trk.length<24){e.trkM=1;try{tactTrack(e);}catch(err){}}
     if(!(c&4)&&!low&&!e.aband)continue;if(!inView(e.x,e.y,.25))continue;const h=unitH(e)+entHeightMid(e)*.7,fr=c&4?1:low?.3:.14;

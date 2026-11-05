@@ -1,8 +1,8 @@
 /* ---------- Tactics visuals: earth berms, foxholes, sandbag rows, trenches, burning engines, broken tracks ----------
    Everything is irregular rock-like blobs (never cubes), drawn as ONE instanced mesh for all fortifications, rebuilt only
    when the synced list (G.dugV) changes. Cheap enough for phones. */
-const TACT={mesh:null,v:-1,g:null,trk:[],gTrk:null};
-function tactMesh(){if(TACT.mesh&&TACT.g===G)return TACT.mesh;if(TACT.mesh){SCN.remove(TACT.mesh);TACT.mesh.dispose();}
+const TACT={mesh:null,v:-1,g:null,trk:[],tv:0,tkv:0};
+function tactMesh(){if(TACT.mesh&&TACT.g===G)return TACT.mesh;TACT.trk=[];TACT.tkv=0;if(TACT.mesh){SCN.remove(TACT.mesh);TACT.mesh.dispose();}
   const geo=rockGeo(23,(typeof TOUCHUI!=='undefined'&&TOUCHUI)?0:1,.7,.42),mat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.97,metalness:0});
   const m=new THREE.InstancedMesh(geo,mat,1800);m.count=0;m.frustumCulled=false;m.castShadow=false;m.receiveShadow=true;m.instanceMatrix.setUsage(THREE.DynamicDrawUsage);m.setColorAt(0,new THREE.Color(1,1,1));
   SCN.add(m);TACT.mesh=m;TACT.g=G;TACT.v=-1;return m;}
@@ -18,15 +18,15 @@ function tactRebuild(){const m=tactMesh();let n=0;const L=G.dug||[];
       n=tactBlob(m,n,d.x,d.y,.15,13,.5,4.2,-d.a,.2,.15,.1);}
     else{for(const sg of [-1,1])for(let i=0;i<5;i++){const u=(i-2)*7+(R()-.5)*2,v=sg*(6.8+R()*1),c=earth();n=tactBlob(m,n,d.x+ca*u-sa*v,d.y+sa*u+ca*v,.4,4.4+R()*1.2,1.4+R()*.6,2.4+R()*.6,-d.a+(R()-.5)*.3,c[0],c[1],c[2]);}
       for(let i=0;i<3;i++){const u=(i-1)*9;n=tactBlob(m,n,d.x+ca*u,d.y+sa*u,-.3,7,.5,6.5,-d.a,.05,.04,.03);}}}
-  m.count=n;m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;TACT.v=G.dugV;}
-// a broken track lying behind a vehicle whose tracks / wheels were shot away
-function tactTrack(e){if(!TACT.gTrk){TACT.gTrk=rockGeo(41,0,.35,.18);TACT.mTrk=new THREE.MeshStandardMaterial({color:0x1b1a18,roughness:.85,metalness:.35});}
-  const hd=e.hd??e.ang??0,ca=Math.cos(hd),sa=Math.sin(hd),R=mulberry(e.id*31+7),g=new THREE.Group(),bx=e.x-ca*(e.r+9),by=e.y-sa*(e.r+9);
-  for(let i=0;i<10;i++){const u=-i*3.7,v=(R()-.5)*1.6+i*i*.09*(e.id%2?1:-1),x=bx+ca*u-sa*v,y=by+sa*u+ca*v,m=new THREE.Mesh(TACT.gTrk,TACT.mTrk);m.position.set(x,groundH(x,y)+.35,y);m.scale.set(2.2,.4,1.7);m.rotation.set((R()-.5)*.3,-hd+(R()-.5)*.5,(R()-.5)*.3);m.receiveShadow=true;g.add(m);}
-  SCN.add(g);TACT.trk.push({e,g});}
+  for(const t of TACT.trk)for(const q of t.pts)n=tactBlob(m,n,q[0],q[1],.3,2.2,.4,1.7,q[2],.1,.095,.09);
+  m.count=n;m.instanceMatrix.needsUpdate=true;if(m.instanceColor)m.instanceColor.needsUpdate=true;TACT.v=G.dugV;TACT.tv=TACT.tkv|0;}
+// a broken track lying behind a vehicle whose tracks / wheels were shot away: ten dark link blobs in the same instanced mesh
+function tactTrack(e){const hd=e.hd??e.ang??0,ca=Math.cos(hd),sa=Math.sin(hd),R=mulberry(e.id*31+7),bx=e.x-ca*(e.r+9),by=e.y-sa*(e.r+9),pts=[];
+  for(let i=0;i<10;i++){const u=-i*3.7,v=(R()-.5)*1.6+i*i*.09*(e.id%2?1:-1);pts.push([bx+ca*u-sa*v,by+sa*u+ca*v,-hd+(R()-.5)*.5]);}
+  TACT.trk.push({e,pts});TACT.tkv=(TACT.tkv|0)+1;}
 function tactFxTick(dt){if(!G||!SCN||!G.terrain)return;
-  if((G.dugN|0)>0||TACT.mesh){if(TACT.g!==G)TACT.mesh=null;if(TACT.v!==G.dugV||TACT.g!==G){try{tactRebuild();}catch(err){}}}
-  for(let i=TACT.trk.length-1;i>=0;i--){const t=TACT.trk[i],e=t.e;if(e.dead||e.gone||!(e.crit&1)||G.byId.get(e.id)!==e){SCN.remove(t.g);TACT.trk.splice(i,1);e.trkM=0;}}
+  if((G.dugN|0)>0||TACT.mesh||TACT.trk.length){if(TACT.g!==G)TACT.mesh=null;if(TACT.v!==G.dugV||TACT.g!==G||TACT.tv!==(TACT.tkv|0)){try{tactRebuild();}catch(err){}}}
+  for(let i=TACT.trk.length-1;i>=0;i--){const t=TACT.trk[i],e=t.e;if(e.dead||e.gone||!(e.crit&1)||G.byId.get(e.id)!==e){TACT.trk.splice(i,1);TACT.tkv=(TACT.tkv|0)+1;e.trkM=0;}}
   for(const e of G.ents){if(e.isB||e.dead||!e.s||e.s.dom!=='ground')continue;const c=e.crit|0,low=e.hp<e.max*.35&&e.s.armor==='heavy';
     if(c&1&&!e.trkM&&TACT.trk.length<24){e.trkM=1;try{tactTrack(e);}catch(err){}}
     if(!(c&4)&&!low&&!e.aband)continue;if(!inView(e.x,e.y,.25))continue;const h=unitH(e)+entHeightMid(e)*.7,fr=c&4?1:low?.3:.14;
