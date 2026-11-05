@@ -1393,7 +1393,7 @@ function kcStart(done){if(kcOff()||KC.G!==G||!R3||window.GLLOST)return false;kcR
   // wrecks and fallen soldiers from the whole battle are set aside while the replay runs, then put back
   const hide=[];for(const L of [WRECKS,BODIES])for(const w of L.splice(0)){SCN.remove(w.o);hide.push([L,w]);}const wq=WRECKQ.splice(0);
   const cs={x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td,_xl:cam._xl,_yl:cam._yl,_dl:cam._dl};
-  KC.R={B,T,times:B.snaps.map(s=>s.t),rt:B.t0,k:0,fi:0,done,cs,hide,wq,G,skip:false,shot:false};KC.on=true;KC.shot=null;
+  KC.R={B,T,times:B.snaps.map(s=>s.t),rt:B.t0,k:0,fi:0,done,cs,hide,wq,G,skip:false,shot:false};KC.on=true;KC.shot=null;try{clipStart();}catch(e){}
   const m=Math.floor(B.peak.t/60),s=Math.floor(B.peak.t%60);$('kcSub').textContent=`Biggest moment of the battle · ${m}:${String(s).padStart(2,'0')} · $${Math.round(B.score).toLocaleString('en-US')} destroyed`;
   document.body.classList.add('kcOn');const o=$('kcOv');o.hidden=false;setTimeout(()=>o.classList.add('on'),30);return true;}
 function kcCam(R){const B=R.B,P=B.peak,len=B.t1+KC_TAIL-B.t0,p=Math.max(0,Math.min(1,(R.rt-B.t0)/len)),q0=Math.max(0,Math.min(1,(R.rt-B.t0)/Math.max(.5,P.t-B.t0))),q=q0*q0*(3-2*q0),e=p*p*(3-2*p);
@@ -1414,7 +1414,7 @@ function kcFrame(dt){const R=KC.R;if(!R||R.G!==G||!G){kcStop(false);return;}
       kcCam(R);renderFrame(d);if(!R.shot&&(R.rt>=B.peak.t+.35||R.skip)){R.shot=true;kcGrab();}}
     finally{G.ents=gE;G.t=gT;}
     if(R.skip)kcStop(true);}catch(e){console.warn('kill-cam',e);kcStop(true);}}
-function kcStop(ok){const R=KC.R;KC.on=false;KC.R=null;document.body.classList.remove('kcOn');const o=$('kcOv');if(o){o.classList.remove('on');o.hidden=true;}if(!R)return;
+function kcStop(ok){const R=KC.R;KC.on=false;try{clipStop();}catch(e){}KC.R=null;document.body.classList.remove('kcOn');const o=$('kcOv');if(o){o.classList.remove('on');o.hidden=true;}if(!R)return;
   try{for(const L of [WRECKS,BODIES])for(const w of L.splice(0))SCN.remove(w.o);for(const [L,w] of R.hide){L.push(w);SCN.add(w.o);}WRECKQ.length=0;WRECKQ.push(...R.wq);Object.assign(cam,R.cs);}catch(e){}
   if(ok&&R.G===G)try{R.done();}catch(e){}}
 // the saved picture: the replay's best frame with a caption strip (result, nations, match time)
@@ -1442,7 +1442,7 @@ function loop(now){if(window.__stopLoop)return;const _w0=performance.now();const
     if(G)netTick(dt);
     if(G&&!G.over&&!RP.on)kcRec();
     if(G&&!G.over)try{rpRecTick();}catch(e){}
-    if(G){if(KC.on)kcFrame(dt);else{scroll(dt);renderFrame(dt);}}}catch(err){console.error(err);}
+    if(G){if(KC.on)kcFrame(dt);else if(window.PHX&&PHX.on)PHX.frame(dt);else{scroll(dt);renderFrame(dt);}}}catch(err){console.error(err);}
   QUAL.cost+=((performance.now()-_w0)/1000-QUAL.cost)*.05;fpsHud();
   requestAnimationFrame(loop);}
 // Hosting from a hidden or minimized window. Browsers stop drawing frames for a page you can't see (requestAnimationFrame
