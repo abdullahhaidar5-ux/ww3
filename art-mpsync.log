@@ -1,0 +1,22 @@
+artifact page written: orch/out/artifact/index.html (3368934 bytes, game 2524799 chars), 88 audio files + 82 model files (14.1 MB); publish arguments in orch/out/artifact/publish.json
+[3s] both pages loaded (menu model downloads done after 1s / 1s)
+[3s] host lobby open, code mnz1h9
+[3s] client joining
+[19s] battle: US vs RU on strait; client is slot 1
+[82s] both pages finished loading
+[82s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[83s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[85s] client order: 2/2 of the client's units moved on the host
+[86s] check @1.0 min t=60s: host 26 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 9721 client 9721
+[89s] check @2.5 min t=150s: host 47 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10900 client 10900
+[125s] check @4.0 min t=240s: host 62 entities, client side sees 10 (own 9); client has 10 (own 9); missing 0, extra 0, off-position 0, mismatched 0; credits host 10924 client 10924
+[134s] traffic host->client 1521 KB in 3532 messages, client->host 0 KB in 1; client lag max 0.10 game-s; 12 ms per 0.5 s step
+[134s] 24 live checks, 0 out of tolerance; up to 16 enemy entities were in the client's view at once
+[134s] host room sends: 3533 messages, peak 51 in one game-second
+[134s] client room sends: 1 messages, peak 0 in one game-second
+peak memory (node + browser, summed RSS): 3846 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host: peak 51 room messages in one game-second (t=150s: {"n":51,"snap":12,"team":5,"pong":33,"evt":1}); the room drops sends past ~40/s (burst 80)
+
+MPSYNC PASS (artifact edition) (135s) — screenshots orch/out/art-mp-host.png, orch/out/art-mp-client.png (this run: orch/out/runs/20261105-185647-mpsync-art/)
