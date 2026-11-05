@@ -1,0 +1,20 @@
+mapfair: 2 of 52 battles, 4 at a time
+  ERROR gulfoil 8 TypeError: Cannot read properties of undefined (reading 'push')
+    at ad (ww3-sim.js:2913:130)
+    at ww3-sim.js:2914:22
+    at Array.forEach (<anonymous>)
+    at lgCompute (ww3-sim.js:2914:7)
+    at lgTick (ww3-sim.js:2931:68)
+    at updTowns (ww3-sim.js:2592:65)
+    at updSupply (ww3-sim.js:2542:3)
+    at simUpdate (ww3-sim.js:2452:52)
+    at ww3-sim.js:3447:63
+    at sim (ww3-sim.js:3426:18)
+  2/2 done, 1.4 min
+
+BATTLES map            n games  kills  win share by start position (fair = 1/n)        score share by position     avg-min
+  gulfoil         8     0      0    0   0   0   0   0   0   0   0                  0   0   0   0   0   0   0   0 0.0 p=NaN ERR 1
+  rubalkhali      4     1      0    0   0 100   0                                 22   0  59  20             15.0 p=0.392
+BATTLES 2 games, 2 layouts; a start position wins significantly more than its share (p<0.01, >1.5x fair): none
+pooled duel seat: position 1 won 0, position 2 won 0 (of games decided between the first two seats)
+MAPFAIR DONE 1.4 min -> ../../../../../tmp/lg/fair-18.json
