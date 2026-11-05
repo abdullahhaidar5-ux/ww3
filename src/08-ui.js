@@ -6,9 +6,9 @@ function pushLog(m,k){if(!G)return;try{tkFeed(m,k);}catch(e){}if(k&&k.length===2
   // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
   // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
   const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},7000);el.append(d);while(el.children.length>4)el.firstChild.remove();}
-function rivals(){return G.teams.filter(T=>!ally(T.id,ME)).map(T=>T.F.name);}
+function rivals(){return G.teams.filter(T=>!T.reb&&!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
-function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams,me=T[ME],m=Math.floor(G.t/60),s=Math.floor(G.t%60);
+function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams.filter(q=>!q.reb),me=T[ME],m=Math.floor(G.t/60),s=Math.floor(G.t%60);
   const won=winner>=0&&ally(winner,ME);try{idFinish(winner,won);}catch(e){console.warn('medals',e);}
   // the sim's reason is written from the winner's side ("The last enemy capitulated: …"); the losers read their own fall
   if(!won&&reason&&/^The last enemy capitulated/.test(reason)){const why=me.whyOut||String(reason).replace(/^The last enemy capitulated:\s*/,'');reason=`${me.F.name} has been defeated${why?': '+why:'.'}`;if(!/[.!]$/.test(reason))reason+='.';}
@@ -17,7 +17,7 @@ function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams,me=T[ME
   // the kill-cam replays the battle's biggest moment first (Skip: tap, click or Esc), then this score screen
   const g0=G,show=()=>{$('end').hidden=false;try{esDraw();}catch(e){}};let kc=false;try{kc=kcStart(()=>{if(G===g0&&G.over)show();});}catch(e){console.warn('kill-cam',e);}if(!kc)show();}
 function showElim(){if(!G||G.over)return;   // (the 'out' list can arrive after the battle's end: keep the summary)
-  const left=G.teams.filter(T=>!T.out&&T.id!==ME).length;$('endt').textContent='Defeat';const why=G.teams[ME].whyOut;$('ends').textContent=`${G.teams[ME].F.name} has capitulated${why?': '+why:'.'} ${left} rival${left===1?'':'s'} still fighting. You can keep watching the battle.`;
+  const left=G.teams.filter(T=>!T.out&&!T.reb&&T.id!==ME).length;$('endt').textContent='Defeat';const why=G.teams[ME].whyOut;$('ends').textContent=`${G.teams[ME].F.name} has capitulated${why?': '+why:'.'} ${left} rival${left===1?'':'s'} still fighting. You can keep watching the battle.`;
   $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=false;try{esPage(null);}catch(e){}$('end').hidden=false;}
 /* ---------- end-of-match summary page: scoreboard, awards, army-strength graph and a Share picture ----------
    Every player sees the same numbers: the host (or the Cloudflare server) builds them in endStats() (03-sim) when the
@@ -275,14 +275,14 @@ function doCancel(sh){const c=cancelInfo();if(!c)return false;
   else doAct({t:'cb',tid:c.tid});
   try{sfxUI(380);}catch(_){}updateUI();return true;}
 function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);mournBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
-  for(const k of BUILD_ORDER){const s=bstats(T.fac,k),ok=reqMet(ME,k);if(!bldAllowed(T.fac,k)){setBtn('b_'+k,{dis:true,cost:'Not available',title:'This faction has no air force'});continue;}const lim=s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===ME&&e.kind===k).length>=s.limit;setBtn('b_'+k,{dis:!ok||T.credits<s.cost||lim,cost:lim?'Max '+s.limit:'$'+s.cost,on:G.place===k,title:ok?(STRUCT[k].desc||(STRUCT[k].shore?'Place on the shoreline':'')):`Requires ${STRUCT[STRUCT[k].req].name}`});}
+  for(const k of BUILD_ORDER){const s=bstats(T.fac,k),ok=reqMet(ME,k);if(!bldAllowed(T.fac,k)){setBtn('b_'+k,{dis:true,cost:'Not available',title:k==='econ'?'Conquest: towns and hamlets pay the money - capture them and set their tax.':'This faction has no air force'});continue;}const lim=s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===ME&&e.kind===k).length>=s.limit;setBtn('b_'+k,{dis:!ok||T.credits<s.cost||lim,cost:lim?'Max '+s.limit:'$'+s.cost,on:G.place===k,title:ok?(STRUCT[k].desc||(STRUCT[k].shore?'Place on the shoreline':'')):`Requires ${STRUCT[STRUCT[k].req].name}`});}
   for(const k of allUnits(T.fac)){const s=stats(T.fac,k),q=T.q[s.from]||[],n=q.filter(x=>x.kind===k).length,has=done(ME,s.from);const first=q[0]&&q[0].kind===k?(q[0].p!=null?q[0].p:q[0].t/prodTime(T,s)):0;
     const lk=specLock(T,k);const rbw=k==='cleric'&&(T.rebuy||0)>G.t?Math.ceil(T.rebuy-G.t):0;setBtn('u_'+k,{dis:lk||!has||rbw>0||(T.credits<s.cost&&!n),cost:rbw?'Wait '+rebuyFmt(rbw):lk?`General rank ${SPEC_RANK}`:k===T.F.special?'$'+s.cost+(T.rank>=6?' · Elite':T.rank>=4?' · Veteran':''):'$'+s.cost,q:n?'×'+n:'',p:first,title:(rbw?`A new leader can be chosen in ${rebuyFmt(rbw)}. `:'')+(lk?`Unlocks at general rank ${SPEC_RANK}; gets Veteran (+20%) at rank 4 and Elite (+40%) at rank 6. `:'')+(has?'':`Requires ${STRUCT[s.from].name}. `)+(k===T.F.special&&SPECIAL_TIP[k]?SPECIAL_TIP[k](s)+' ':'')+(COUNTER[k]||COUNTER[s.cls]||'')});}
   for(const k of upgList(T.fac)){const U=UPG[k],r=T.rq[U.at],mine=r&&r.key===k;setBtn('g_'+k,{dis:T.upg[k]||!done(ME,U.at)||(!!r&&!mine)||T.credits<U.cost&&!mine,done:T.upg[k],cost:T.upg[k]?'Researched':mine?'Researching…':'$'+U.cost,p:mine?r.t/U.time:0,title:done(ME,U.at)?'':`Requires ${STRUCT[U.at].name}`});}
   docUI(T);const pts=T.rank-T.spent;for(const k in POWERS){const P=powInfo(k,T.fac),w=T.pw[k];const lv=w?(w.lv||1):0;setBtn('p_'+k,{dis:w?true:pts<1,done:!!w,on:G.aim===k,cost:w?('Lv '+lv+' · '+(P.passive?'Active':'use it on the side rail'+(POW_KEY[k]?' ['+POW_KEY[k].toUpperCase()+']':''))):`Unlock · 1 point`});
     {const b=$('pu_'+k);if(b){const c=lv>=1&&lv<3?lv+1:0;const dv=c?'':'none';if(b.style.display!==dv){b.style.display=dv;if(c)fitBtnNames();}if(c)setBtn('pu_'+k,{dis:pts<c,cost:`To level ${lv+1} · ${c} points`});}}}
   const dot=$('pdot');const tb=document.querySelector('.tabs button[data-tab="pow"]');if(tb){let d=tb.querySelector('.dot');if(pts>0&&!d){d=document.createElement('span');d.className='dot';tb.append(d);}else if(pts<=0&&d)d.remove();}
-  const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(0,Math.ceil(T.sup.charge-T.charge));$('supname').textContent=T.sup.name;$('side').classList.toggle('hasUp',!!up);$('supbar').style.width=(up?f*100:0)+'%';
+  const up=done(ME,'uplink'),f=T.charge/T.sup.charge,rem=Math.max(Math.max(0,Math.ceil((T.sup.charge-T.charge)/(G.conq?.5:1))),G.conq&&G.t<CQ_STRIKE_MIN?Math.ceil(CQ_STRIKE_MIN-G.t):0);$('supname').textContent=T.sup.name;$('side').classList.toggle('hasUp',!!up);$('supbar').style.width=(up?f*100:0)+'%';
   $('supt').textContent=!up?'needs Strike Center':f>=1?'READY':`${Math.floor(rem/60)}:${String(rem%60).padStart(2,'0')}`;$('supbtn').disabled=!(up&&f>=1);
   const nx=RANKS[T.rank]||null,pr=RANKS[T.rank-1];$('rankname').textContent=`General rank ${T.rank}`+(pts>0?` · ${pts} point${pts>1?'s':''} to spend`:'');$('rankbar').style.width=(nx?Math.min(1,(T.gxp-pr)/(nx-pr))*100:100)+'%';$('rankt').textContent=nx?`${T.gxp}/${nx} XP`:'Max rank';
   const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+(stdMouse()?' · Esc cancels':' · right-click or Esc cancels'));}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
@@ -516,6 +516,7 @@ function rightRelease(d){if(!G)return;
     const dzHelp=t&&t.team===ME&&t.isB&&((t.built<1&&G.sel.some(u=>u.kind==='dozer'&&u.team===ME&&!u.dead))||(isTun(t)&&t.built>=1&&G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&u.s.dom==='ground')))||(t&&t.team===ME&&!t.isB&&t.s&&t.s.cap&&G.sel.some(u=>u!==t&&!u.isB&&canBoard(t,u)))||(t&&t.kind==='garrison'&&t.team===ME&&G.sel.some(u=>u.team===ME&&canGarrison(u)));
     if(d.pt==='mouse'&&(leftOrders()?genClick(d,t):selClick(d,t)))return;
     if(d.pt!=='mouse'&&(mine||bsel)&&!d.shift&&(!(t&&t.team===ME)||dzHelp)){const w=screenToWorld(mouse.x,mouse.y);if(w&&issueCmdD(w,t,bsel)){updateUI();return;}}
+    if(!t&&!d.shift)townPick(mouse.x,mouse.y);else if(t)townClose();
     selectClick(t,d.shift);}
   if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);updateUI();}
 // Touch screens (phones, tablets). One finger works like the left mouse button: tap selects, tap the ground or an enemy
@@ -589,10 +590,11 @@ function mmSend(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u
 function mmWorld(e){const r=mm.getBoundingClientRect();return{x:Math.max(0,Math.min(MAPW,(e.clientX-r.left)/r.width*MAPW)),y:Math.max(0,Math.min(MAPH,(e.clientY-r.top)/r.height*MAPH))};}
 mm.addEventListener('pointerdown',e=>{if(!G)return;e.preventDefault();const w=mmWorld(e);
   if(e.button===2){mmSend(w);return;}
-  if(e.button!==0)return;if(SET.mmc==='units'&&mmSend(w))return;mmDown=e.pointerId;try{mm.setPointerCapture(e.pointerId);}catch(_){}centerOn(w.x,w.y);});
+  if(e.button!==0)return;{const tw=townMiniAt(e);if(tw){townOpen(tw.i);centerOn(tw.x,tw.y);return;}}if(SET.mmc==='units'&&mmSend(w))return;mmDown=e.pointerId;try{mm.setPointerCapture(e.pointerId);}catch(_){}centerOn(w.x,w.y);});
 mm.addEventListener('pointermove',e=>{if(mmDown!==e.pointerId)return;const w=mmWorld(e);centerOn(w.x,w.y);});
 mm.addEventListener('pointerup',e=>{if(mmDown===e.pointerId)mmDown=null;});mm.addEventListener('pointercancel',()=>{mmDown=null;});
 mm.addEventListener('contextmenu',e=>e.preventDefault());
+mm.addEventListener('pointermove',e=>{if(!G||e.pointerType==='touch')return;const t=townMiniAt(e);const v=t?(t.name+(t.ow>=0?(townsMine(t)?` - tax +$${t.tax.toFixed(1)}/s, unrest ${Math.round(t.un)}`:' - held by '+G.teams[t.ow].F.name):t.reb>G.t?' - REBELS':' - neutral')):'';if(mm.title!==v)mm.title=v;});
 /* ---------- phones and touch screens ---------- */
 // The command bar's own phone layouts (portrait strip + fold handle, short landscape bar) live with its styles in the
 // page shell; here: touch wording, finger-sized buttons, and small-screen placement of the battlefield chips.
@@ -717,6 +719,7 @@ function tcTap(x,y,ts){if(ts==null)ts=performance.now();mouse.x=x;mouse.y=y;cons
     if(!t&&typeof noGo==='function'&&noGo(own,w)){try{sfxUI(220);}catch(_){}tcMark(x,y,'no');return;}
     if(issueCmdD(w,t,false)){tcMark(x,y,t&&!ally(t.team,ME)?'atk':'mv');updateUI();return;}}
   if(!t&&!own.length&&tcProd()){issueCmd(w,null,true);tcMark(x,y,'rl');updateUI();return;}
+  if(!t)townPick(x,y);else townClose();
   selectClick(t,false);if(t)tcMark(x,y,'sel');tcSelSound();updateUI();}
 function tcBox(g){const x0=Math.min(g.x0,g.x),x1=Math.max(g.x0,g.x),y0=Math.min(g.y0,g.y),y1=Math.max(g.y0,g.y);
   G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u)+4,u.y);return p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1;})());tcSelSound();updateUI();}
@@ -1025,7 +1028,7 @@ function loadShow(o){const el=loadUI(),D=MAPS[o.map]||MAPS.strait;
     const og=el.querySelector('.lo-qo');og.textContent=Q.o||'';og.hidden=!Q.o;og.lang=Q.l||'';og.dir=/^(ar|fa|he|ur)$/.test(Q.l||'')?'rtl':'ltr';el.querySelector('.lo-qa').textContent=(Q.at?'attributed to ':'')+Q.a;void qe.offsetWidth;qe.classList.add('in');}}
   if(el.hidden){LOAD.tipI=Math.floor(Math.random()*LOAD_TIPS.length);clearInterval(LOAD.tipT);const tip=()=>{el.querySelector('.lo-tip span').textContent=LOAD_TIPS[LOAD.tipI++%LOAD_TIPS.length];};tip();LOAD.tipT=setInterval(tip,4500);}
   el.hidden=false;window.LOADING=true;}
-function loadFromG(mode){if(!G)return;loadShow({mode,map:G.mapKey,facs:G.teams.map(T=>T.fac),tm:G.teams.map(T=>T.tm),me:ME,cols:G.teams.map(T=>T.color),ai:G.teams.map(T=>!!T.ai),bases:BASES.slice(0,G.teams.length)});}
+function loadFromG(mode){if(!G)return;loadShow({mode,map:G.mapKey,facs:G.teams.filter(T=>!T.reb).map(T=>T.fac),tm:G.teams.filter(T=>!T.reb).map(T=>T.tm),me:ME,cols:G.teams.filter(T=>!T.reb).map(T=>T.color),ai:G.teams.filter(T=>!T.reb).map(T=>!!T.ai),bases:BASES.slice(0,G.N||G.teams.length)});}
 function loadStep(label,p){const el=LOAD.el;if(!el)return;const s=el.querySelectorAll('.lo-s span');s[0].textContent=label;s[1].textContent=Math.round(p*100)+'%';el.querySelector('.lo-bar i').style.width=(p*100).toFixed(1)+'%';}
 function loadHide(){clearInterval(LOAD.tipT);LOAD.tipT=null;if(LOAD.el)LOAD.el.hidden=true;window.LOADING=false;
   // a battle hosted on Cloudflare waits (up to 20 s) until every player is past the loading screen ('rd' in their presence)
@@ -1079,7 +1082,7 @@ function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
   MODE='single';ME=0;
   TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
-function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(!T.reb&&isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');

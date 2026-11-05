@@ -147,14 +147,19 @@ let KEYO=false;
 try{addEventListener('keydown',e=>{if(e.key==='o'||e.key==='O')KEYO=true;});addEventListener('keyup',e=>{if(e.key==='o'||e.key==='O')KEYO=false;});addEventListener('blur',()=>{KEYO=false;});}catch(_){}
 function drawSupplyTowns(c){if(!G||G.over)return;try{ammoRowTick();}catch(_){}
   if(supplyWanted()){if(G.t-SUPC.t>.3||!SUPC.P){SUPC={t:G.t,P:supplyPoints()[ME]||[]};}c.lineWidth=1.4;c.setLineDash([7,6]);for(const q of SUPC.P){if(!inView(q.x,q.y,1.6))continue;ringOn(c,q.x,q.y,q.r,'rgba(150,215,255,.55)','rgba(120,190,255,.06)');}c.setLineDash([]);}
-  if(G.civ)for(const k of G.civ){if(k.dead||!(k.ow>=0||k.cp>0)||!inView(k.x,k.y,.05))continue;const p=toScreen(k.x,groundH(k.x,k.y)+40,k.y);if(p.z>1)continue;
+  if(G.civ)for(const k of G.civ){if(k.dead||!(k.ow>=0||k.cp>0)||!inView(k.x,k.y,.05)||(k.ti>=0&&!k.key&&!(k.cp>0)))continue;const p=toScreen(k.x,groundH(k.x,k.y)+40,k.y);if(p.z>1)continue;
     if(k.ow>=0&&G.teams[k.ow]){c.fillStyle='rgba(0,0,0,.65)';c.beginPath();c.arc(p.x,p.y,7,0,7);c.fill();c.fillStyle=G.teams[k.ow].color;c.beginPath();c.arc(p.x,p.y,5,0,7);c.fill();}
+<<<<<<< HEAD
     if(k.cp>0&&k.cpT>=0&&G.teams[k.cpT]){c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-18,p.y-14,36,6);c.fillStyle=G.teams[k.cpT].color;c.fillRect(p.x-17,p.y-13,34*Math.min(1,k.cp),4);}}}
 // small pictograms on the health bar: broken track (orange), jammed turret (blue), engine fire (red)
 function critIcons(c,x,y,crit){let i=0;for(const b of [1,2,4]){if(!(crit&b))continue;const cx=x-i*14;i++;c.fillStyle='rgba(0,0,0,.78)';c.beginPath();c.arc(cx,y,6.2,0,7);c.fill();
     if(b===1){c.fillStyle='#f0a040';for(let q=-1;q<=1;q++)c.fillRect(cx-4.5+q*3.2+1.6,y-1.6,2.4,3.2);c.strokeStyle='#ff5a40';c.lineWidth=1.4;c.beginPath();c.moveTo(cx-4,y+4);c.lineTo(cx+4,y-4);c.stroke();}
     else if(b===2){c.strokeStyle='#8fc4ff';c.lineWidth=1.6;c.beginPath();c.arc(cx-.5,y+.5,2.6,Math.PI,0);c.moveTo(cx+1,y-1);c.lineTo(cx+5,y-3);c.stroke();c.strokeStyle='#ff5a40';c.lineWidth=1.3;c.beginPath();c.moveTo(cx-4,y+4);c.lineTo(cx+4,y-4);c.stroke();}
     else{c.fillStyle='#ff6a2a';c.beginPath();c.moveTo(cx,y-5);c.quadraticCurveTo(cx+4.5,y,cx+2.4,y+4);c.lineTo(cx-2.4,y+4);c.quadraticCurveTo(cx-4.5,y,cx,y-5);c.fill();c.fillStyle='#ffd35a';c.beginPath();c.moveTo(cx,y-1);c.quadraticCurveTo(cx+2,y+1.5,cx+1,y+3.4);c.lineTo(cx-1,y+3.4);c.quadraticCurveTo(cx-2,y+1.5,cx,y-1);c.fill();}}}
+=======
+    if(k.cp>0&&k.cpT>=0&&G.teams[k.cpT]){c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-18,p.y-14,36,6);c.fillStyle=G.teams[k.cpT].color;c.fillRect(p.x-17,p.y-13,34*Math.min(1,k.cp),4);}}
+  try{drawTownsWorld(c);townPanelTick();}catch(e){}}
+>>>>>>> origin/main
 function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW,VH);
   try{drawSupplyTowns(c);}catch(_){}
   for(const e of G.ents){if(e.dead||!vis(e))continue;const sel=G.sel.includes(e);if(SET.hp!=='all'&&!sel&&e.hp>=e.max&&!(e.rank>0)&&!(e.isB&&e.built<1)&&!e.hacking&&!e.planting&&!(e.building&&e.team===ME)&&!((e.supp||0)>.5&&!e.isB)&&!(e.rout>G.t||e.routV)&&!(e.team===ME&&!e.isB&&(()=>{const m=moraleOf(e);return m&&m.v<.995;})())&&!(e.team===ME&&G.sqOf&&G.sqOf[e.id])&&!(e.mark>G.t||e.markV)&&!(e.am!==undefined&&e.amx&&ally(e.team,ME)&&(e.am<e.amx*.3||(!e.sup&&G.t-(e.supT??G.t)>20)))&&!(e.crit&&!e.isB))continue;
@@ -262,8 +267,9 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
     c.save();c.globalCompositeOperation='multiply';c.globalAlpha=.6;c.drawImage(G.mmFog,0,0);c.restore();}
   // resources
   c.fillStyle='rgba(227,179,65,.8)';for(const f of G.fields)if(f.amt>0)c.fillRect(f.x*sx-1.5,f.y*sy-1.5,3,3);
-  if(G.civ)for(const k of G.civ){if(k.dead||!(k.ow>=0||k.cp>0))continue;const x=k.x*sx,y=k.y*sy,t=k.ow>=0?k.ow:k.cpT;if(!G.teams[t])continue;c.fillStyle='#000';c.fillRect(x-3.5,y-3.5,7,7);c.fillStyle=G.teams[t].color;if(k.ow>=0)c.fillRect(x-2.5,y-2.5,5,5);else{c.fillRect(x-2.5,y-2.5,5,2.5*0+Math.max(1,5*Math.min(1,k.cp)));}}
+  if(G.civ)for(const k of G.civ){if(k.dead||!(k.ow>=0||k.cp>0)||k.ti>=0)continue;const x=k.x*sx,y=k.y*sy,t=k.ow>=0?k.ow:k.cpT;if(!G.teams[t])continue;c.fillStyle='#000';c.fillRect(x-3.5,y-3.5,7,7);c.fillStyle=G.teams[t].color;if(k.ow>=0)c.fillRect(x-2.5,y-2.5,5,5);else{c.fillRect(x-2.5,y-2.5,5,2.5*0+Math.max(1,5*Math.min(1,k.cp)));}}
   for(const o of G.oil){const x=o.x*sx,y=o.y*sy;c.fillStyle='#0b0f0d';c.beginPath();c.moveTo(x,y-5);c.lineTo(x+5,y);c.lineTo(x,y+5);c.lineTo(x-5,y);c.closePath();c.fill();c.fillStyle=o.dead?'#5a2a20':(o.res0&&o.res<=0)?'#555852':o.owner>=0?G.teams[o.owner].color:'#9a9a90';c.beginPath();c.moveTo(x,y-3.2);c.lineTo(x+3.2,y);c.lineTo(x,y+3.2);c.lineTo(x-3.2,y);c.closePath();c.fill();}
+  try{drawTownsMini(c,sx,sy,now);}catch(e){}
   // strike warnings
   for(const st of (G.strikes||[])){const x=st.x*sx,y=st.y*sy,r=Math.max(4,st.r*sx);c.strokeStyle=ally(st.team,ME)?'rgba(116,208,143,.9)':'rgba(234,90,64,.95)';c.lineWidth=1.5;c.setLineDash([3,2]);c.beginPath();c.arc(x,y,r,0,7);c.stroke();c.setLineDash([]);c.beginPath();c.moveTo(x-r-3,y);c.lineTo(x+r+3,y);c.moveTo(x,y-r-3);c.lineTo(x,y+r+3);c.stroke();}
   // units and buildings

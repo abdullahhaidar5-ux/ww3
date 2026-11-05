@@ -104,8 +104,8 @@ async function hitSpot(page, sel, k, n, touch) {
   await page.waitForTimeout(120);
 }
 // where the battle put every side, and whether each side's HQ stands on its base
-const battleBases = page => page.evaluate(() => ({ mode: MODE, bases: BASES.slice(0, G.teams.length).map(([x, y]) => [Math.round(x), Math.round(y)]),
-  hq: G.teams.map((T, t) => { const b = BASES[t]; if (MODE === 'client' && (!(NET.lastSnapT > 0) || T.tm !== G.teams[ME].tm)) return null;   // a player's snapshots hold only what it can see
+const battleBases = page => page.evaluate(() => ({ mode: MODE, bases: BASES.slice(0, G.N || G.teams.length).map(([x, y]) => [Math.round(x), Math.round(y)]),
+  hq: G.teams.filter(T => !T.reb).map((T, t) => { const b = BASES[t]; if (MODE === 'client' && (!(NET.lastSnapT > 0) || T.tm !== G.teams[ME].tm)) return null;   // a player's snapshots hold only what it can see
     return G.ents.some(e => e.team === t && !e.dead && Math.hypot(e.x - b[0], e.y - b[1]) < 40); }) }));
 // the world position of spot k for a battle of n sides (what BASES must hold)
 const spotXY = (page, k, n) => page.evaluate(([k, n]) => { const D = MAPS[G.mapKey]; return slotsOf(D, n)[k].map(v => Math.round(v * WK)); }, [k, n]);
@@ -124,7 +124,7 @@ async function expectBases(page, tag, want) {
 // (snap: a player also waits for the host's first snapshot. Two battles load one after the other in the test's single page process,
 // so only one page waits for that and the other is checked as soon as its battle is set up.)
 async function mpBases(page, mode, tag, want, snap) {
-  await waitFor(page, ([m, sn]) => typeof G !== 'undefined' && G && MODE === m && G.teams && G.teams.length === 3 && (!sn || (m === 'host' || NET.lastSnapT > 0) && G.ents.length > 3), [mode, !!snap], 480000, `${tag}: the battle to start`);
+  await waitFor(page, ([m, sn]) => typeof G !== 'undefined' && G && MODE === m && G.teams && G.teams.filter(Q => !Q.reb).length === 3 && (!sn || (m === 'host' || NET.lastSnapT > 0) && G.ents.length > 3), [mode, !!snap], 480000, `${tag}: the battle to start`);
   return expectBases(page, tag, want);
 }
 const inBattle = (page, mode) => waitFor(page, m => typeof G !== 'undefined' && G && MODE === m && !window.LOADING && G.ents.some(e => e.isB), mode, 240000, `the ${mode} battle to load`);
