@@ -39,7 +39,7 @@ const BATTLE=1.75;
 // woods and buildings while advancing, damaged vehicles pulled back earlier and further, and amphibious landings.
 const DIFF=[{wave:4,inc:.7,first:420,think:1.6,flank:0,retreat:0,focus:0,cover:0,land:0,maxWave:10,q:1,nvAt:480,nvCap:1,nvShare:.08,nvShip:0,nvSortie:2},
   {wave:6,inc:1,first:270,think:1,flank:1,retreat:1,focus:0,cover:0,land:1,maxWave:22,q:2,nvAt:150,nvCap:4,nvShare:.15,nvShip:1,nvSortie:2},
-  {wave:6,inc:1,first:220,think:.6,flank:2,retreat:2,focus:1,cover:1,land:2,pick:1,rg:0,maxWave:26,q:3,nvAt:90,nvCap:6,nvShare:.18,nvShip:1,nvSortie:3}];
+  {wave:6,inc:1,first:220,think:.6,flank:2,retreat:2,focus:1,cover:1,land:2,pick:1,rg:0,hm:1,maxWave:26,q:3,nvAt:90,nvCap:6,nvShare:.18,nvShip:1,nvSortie:3}];
 // wave is scaled by the battle size here, so an AI made mid-game (host migration, a commander who never came back) matches a fresh one
 // AI personalities (data only): ord = buildings it builds first, first/wave = attack timing and wave size multipliers,
 // mix = how much it favours each class when buying units (inf, veh, arty, air; 1 = normal), amb = ambush pickets,
@@ -931,6 +931,53 @@ function aiLanding(T,mine,anchor,pb,launched){const D=DIFF[T.ai.d??1],id=T.id;if
     return;}}
 // AI sends the nearest infantry to re-crew its own abandoned vehicles or capture the enemy's
 function aiSalvage(T,mine){if(T.ai.t%3)return;for(const v of G.ents){if(v.dead||!v.aband)continue;let best=null,bd=650*650;for(const u of mine){if(u.isB||u.dead||!isInf(u.s)||u.s.noAttack||u.kind==='hacker'||u.rout>G.t||u.inTun)continue;const d=(u.x-v.x)**2+(u.y-v.y)**2;if(d<bd){bd=d;best=u;}}if(best&&!(best.order&&best.order.salv===v.id)){setMove(best,v.x,v.y,'move');best.order.salv=v.id;}}}
+/* ---- Hard AI plays Conquest like a smart human (DIFF.hm; Easy/Normal never run any of this). Tactics only: no money, no vision -
+   it only reacts to enemy troops it can see (seenBy); enemy base buildings and towns are public map knowledge, as for the other AIs. */
+const HM_CRIT={hq:1,barracks:1,factory:1,airfield:1,shipyard:1};
+function aiHmFree(army,anchor,r){return army.filter(u=>!u.order&&!u.target&&!u.amb&&!u.opW&&!u.inTun&&u.s.dom==='ground'&&!(u.rout>G.t)&&dist(u,anchor)<r);}
+function aiHmSeenVal(id,x,y,r){let v=0;for(const e of nearby(x,y,r,NB))if(!e.dead&&!e.isB&&e.team>=0&&!ally(e.team,id)&&e.s&&!e.s.noAttack&&e.s.dom!=='air'&&seenBy(id,e)&&Math.hypot(e.x-x,e.y-y)<r)v+=e.s.cost||300;return v;}
+function aiHmPick(free,x,y,need,max){const L=free.slice().sort((a,b)=>Math.hypot(a.x-x,a.y-y)-Math.hypot(b.x-x,b.y-y)),out=[];let v=0;for(const u of L){if(out.length>=max||v>=need)break;out.push(u);v+=u.s.cost||300;}return{out,v};}
+function aiHmTowns(T,mine,anchor,army,en){const id=T.id,A=T.ai,H=A.hm||(A.hm={own:{},rs:{},rd:0});if(!G.towns||A.t%4)return;
+  const free=aiHmFree(army,anchor,1400);
+  // 1) defend held towns and retake lost ones fast: a response force worth 1.3x the enemy seen there (never feed a lost fight)
+  const ord=G.towns.map((t,i)=>i).sort((a,b)=>townBase(G.towns[b])-townBase(G.towns[a]));
+  for(const i of ord){const t=G.towns[i];if(t.ow===id){H.own[i]=G.t;}
+    const ours=t.ow===id,lost=!ours&&(H.own[i]||-1e9)>G.t-150&&!(t.reb>G.t)&&!(t.ow>=0&&ally(t.ow,id));if(!ours&&!lost)continue;
+    if((H.rs[i]||-99)>G.t-25||dist(t,anchor)>2600)continue;const ev=aiHmSeenVal(id,t.x,t.y,T_FRONT_R);if(!ev&&ours)continue;
+    const need=Math.max(ev*1.3,lost?900:0),P=aiHmPick(free,t.x,t.y,need,10);if(P.v<need*.8)continue;
+    for(const u of P.out){setMove(u,t.x+rnd(-70,70),t.y+rnd(-70,70),'amove');free.splice(free.indexOf(u),1);}H.rs[i]=G.t;aiStat(A,ours?'hmDefend':'hmRetake');}
+  // 2) grab towns early on several routes: 3 riflemen per cell, the two best prizes in different directions
+  let mineN=0;for(const t of G.towns)if(t.ow===id)mineN++;
+  const inf=free.filter(u=>canGarrison(u)&&!u.order);
+  if(inf.length&&mineN<14){const C=[];for(let i=0;i<G.towns.length;i++){const t=G.towns[i];if(t.reb>G.t||(t.ow>=0&&ally(t.ow,id)))continue;
+      let bc=null,bd=1e9;for(const c of t.cells){if(!c.key||c.dead||(c.ow>=0&&ally(c.ow,id))||(c.g&&!ally(c.g.team,id)))continue;const d=dist(c,anchor);if(d<bd){bd=d;bc=c;}}
+      if(!bc||bd>2400)continue;if(aiHmSeenVal(id,bc.x,bc.y,420)>600)continue;if(G.ents.some(u=>u.team===id&&u.order&&u.order.type==='garrison'&&u.order.ci===bc.i&&!u.dead))continue;
+      C.push({t,c:bc,sc:bd/Math.sqrt(townBase(t)),a:Math.atan2(bc.y-anchor.y,bc.x-anchor.x)});}
+    C.sort((p,q)=>p.sc-q.sc);const used=[];
+    for(const k of C){if(used.length>=2||!inf.length)break;if(used.some(a=>Math.abs(Math.atan2(Math.sin(a-k.a),Math.cos(a-k.a)))<.45))continue;used.push(k.a);
+      inf.sort((p,q)=>dist(p,k.c)-dist(q,k.c));for(const u of inf.splice(0,3)){u.order={type:'garrison',ci:k.c.i,x:k.c.x,y:k.c.y};u.path=null;}aiStat(A,'hmGrab');}}
+  // 3) raid the enemy's rear towns: a fast mixed squad goes for a lightly held enemy town while the main army is busy elsewhere
+  if(G.t>360&&G.t>(H.rd||0)){H.rd=G.t+50;let bt=null,bs=-1;for(const t of G.towns){if(t.ow<0||ally(t.ow,id)||t.reb>G.t||dist(t,anchor)>3000)continue;if(aiHmSeenVal(id,t.x,t.y,500)>400)continue;const s=townBase(t)/(1+dist(t,anchor)/1500);if(s>bs){bs=s;bt=t;}}
+    const home=aiHmFree(army,anchor,1000);if(bt&&home.length>=Math.max(8,A.wave*.6)){const veh=home.filter(u=>isVeh(u.s)&&aiCls(u.s)==='veh').sort((p,q)=>q.s.spd-p.s.spd).slice(0,3),ri=home.filter(u=>canGarrison(u)).slice(0,3);
+      if(veh.length+ri.length>=4){for(const u of veh)setMove(u,bt.x+rnd(-60,60),bt.y+rnd(-60,60),'amove');
+        const cs=bt.cells.filter(c=>c.key&&!c.dead&&!(c.g&&!ally(c.g.team,id)));ri.forEach((u,j)=>{const c=cs[j%Math.max(1,cs.length)];if(c){u.order={type:'garrison',ci:c.i,x:c.x,y:c.y};u.path=null;}else setMove(u,bt.x,bt.y,'amove');});aiStat(A,'hmRaid');}}}}
+/* High tax in the safe rear, Low on the contested front (Hard only; replaces the generic AI tax rule for that team) */
+function aiHmTax(t,T,nE){if(nE>0||t.un>=62)return 0;let de=1e9,dm=1e9;for(const e of G.ents){if(!e.isB||e.dead||e.kind==='garrison'||e.team<0)continue;const d=Math.hypot(e.x-t.x,e.y-t.y);if(ally(e.team,T.id)){if(d<dm)dm=d;}else if(d<de)de=d;}
+  const rear=de>dm*1.6&&de>1500,front=de<dm*1.05||de<1100;if(front)return t.un>=30?0:1;if(rear)return t.un<42?2:t.un<52?1:0;return t.un<30?2:t.un<48?1:0;}
+/* Missile defence + launch-site raids + coherent research (Hard) */
+function aiHmSmart(T,mine,anchor,army,en,pb){const id=T.id,A=T.ai,H=A.hm||(A.hm={own:{},rs:{},rd:0});if(A.t%5!==1)return;
+  const eup=pb.find(e=>e.kind==='uplink'&&e.built>=1);
+  if(eup&&bldAllowed(T.fac,'sam')&&reqMet(id,'sam')&&mine.filter(e=>e.kind==='sam').length<2&&!mine.some(e=>e.isB&&e.built<1)&&T.credits>=bstats(T.fac,'sam').cost+300){const p=aiFindSpot(id,'sam',anchor);if(p&&placeBld(id,'sam',p[0],p[1]))aiStat(A,'hmSam');}
+  const E=G.teams[en];if(eup&&E&&E.sup&&E.charge>=E.sup.charge*.55&&G.t>(H.upT||0)){const P=aiHmPick(aiHmFree(army,anchor,1200).filter(u=>aiCls(u.s)!=='arty'),eup.x,eup.y,3000,7);if(P.out.length>=4){H.upT=G.t+60;for(const u of P.out){u.order={type:'attack',target:eup};u.path=null;}aiStat(A,'hmUplinkRaid');}}
+  if(T.credits>1500&&!(A.t%15)){const ups=upgList(T.fac).filter(k=>k!=='smug'&&k!=='gpr'&&!T.upg[k]&&done(id,UPG[k].at)&&!T.rq[UPG[k].at]);if(ups.length){const w={barracks:0,factory:0,airfield:0};for(const u of army){const c=aiCls(u.s);w[c==='inf'?'barracks':c==='air'?'airfield':'factory']+=u.s.cost||300;}
+    ups.sort((a,b)=>(w[UPG[b].at]||200)-(w[UPG[a].at]||200)||UPG[a].cost-UPG[b].cost);startResearch(id,ups[0]);}}}
+/* Coordinated assault: the main body waits at a staging point until the flankers reach their swing points, then everyone hits at once */
+function aiHmOp(T,pb){const A=T.ai,op=A.op;if(!op){if(A.t%10===0)for(const u of G.ents)if(u.opW&&u.team===T.id)u.opW=0;return;}const get=ids=>ids.map(i=>G.byId.get(i)).filter(u=>u&&!u.dead);const fl=get(op.fl),mn=get(op.mn);
+  const tg=G.byId.get(op.tg)&&!G.byId.get(op.tg).dead?G.byId.get(op.tg):pb.find(b=>HM_CRIT[b.kind])||pb[0];
+  const ready=fl.length?fl.filter(u=>!u.order).length>=fl.length*.6:true,stg=mn.filter(u=>!u.order).length>=mn.length*.5;
+  if(!tg||(ready&&stg)||G.t-op.t>80||mn.some(u=>u.lastHit>G.t-2)){A.op=null;for(const u of fl.concat(mn))u.opW=0;if(!tg)return;
+    const gnd=mn.filter(u=>u.s.dom==='ground');if(gnd.length)formMove(gnd,tg.x,tg.y,'amove',1,4);for(const u of mn)if(u.s.dom!=='ground')setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');
+    for(const u of fl){setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');u.flT=null;}aiStat(A,'hmHammer');}}
 function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);const hq=mine.find(e=>e.kind==='hq');const anchor=hq||mine.find(e=>e.isB);if(!anchor)return;T.ai.t++;aiSalvage(T,mine);aiWalls(T,mine);const en=aiFoe(T,anchor);
   // HQ queue priorities: a supply truck if it has none, then a bulldozer if it has none (without one it can never build a
   // barracks again: a raid that killed its dozer used to leave it buying trucks forever and never fielding an army),
@@ -981,7 +1028,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
     if(DIFF[T.ai.d??1].pick&&(cat==='barracks'||cat==='factory')&&opts.length>1){if(!T.ai.foeA||T.ai.foeA.t!==T.ai.t){const A=[];for(const e of G.ents)if(e.team===en&&!e.dead&&!e.isB&&!e.s.noAttack&&e.kind!=='harv'&&e.kind!=='dozer')A.push(e);T.ai.foeA={t:T.ai.t,A};}
       const A=T.ai.foeA.A;if(A.length>=3){let tot=0;const w=opts.map(o=>{const S=stats(T.fac,o);let v=0,c=0;for(const e of A){const ec=e.s.cost||300;c+=ec;if(canTarget(S,e))v+=effOn(S,e)*ec;}const x=.25+v/Math.max(1,c);tot+=x*x;return x*x;});
         let r=srand()*tot;for(let i=0;i<opts.length;i++){r-=w[i];if(r<=0){k=opts[i];break;}}}}const sv=(cat!=='shipyard'&&T.ai.nvSv>G.t-25?stats(T.fac,'ship').cost*.7:0)+(cat==='barracks'||cat==='airfield'?vSv:0);if(k&&T.credits-reserve-sv>=stats(T.fac,k).cost){enqueue(id,k);}else if(k==='ship')T.ai.nvSv=G.t;else if(wantVeh&&cat==='factory'&&isVeh(stats(T.fac,k))&&!stats(T.fac,k).noAttack)vSv=stats(T.fac,k).cost;}
-  if(T.credits>1700&&T.ai.t%5===0){const ups=upgList(T.fac).filter(k=>k!=='smug'&&k!=='gpr'&&!T.upg[k]&&done(id,UPG[k].at)&&!T.rq[UPG[k].at]);if(ups.length)startResearch(id,ups[Math.floor(srand()*ups.length)]);}
+  if(T.credits>1700&&T.ai.t%5===0&&!DIFF[T.ai.d??1].hm){const ups=upgList(T.fac).filter(k=>k!=='smug'&&k!=='gpr'&&!T.upg[k]&&done(id,UPG[k].at)&&!T.rq[UPG[k].at]);if(ups.length)startResearch(id,ups[Math.floor(srand()*ups.length)]);}
   if(!T.upg.gpr&&!FACTIONS[T.fac].tunnels&&!T.rq.hq&&done(id,'hq')&&T.credits>=UPG.gpr.cost+300&&G.teams.some(O=>O.id!==id&&!ally(O.id,id)&&FACTIONS[O.fac].tunnels))startResearch(id,'gpr');  // enemy digs tunnels: buy the radar
   if(T.sancSeen&&!T.upg.smug&&!T.rq.hq&&done(id,'hq')&&T.credits>=UPG.smug.cost+300)startResearch(id,'smug');  // sanctioned once: buy Smuggling Routes
   if(T.pw.bb&&T.pw.bb.cd<=0&&T.ai.d>=1&&T.ai.t%5===4&&G.t>=300&&T.credits>=2700){const f=G.ents.find(e=>e.kind==='fort'&&!e.dead&&e.built>=1&&!ally(e.team,id)&&seenBy(id,e));if(f)usePower(id,'bb',f.x,f.y);}
@@ -1009,8 +1056,9 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
     else if(!w&&u.aiSt!=null){u.st=u.aiPrev||0;u.aiSt=null;}}
   if(DC.covert||aiPers(T).amb)aiAmbush(T,army,anchor,pb);
   if(aiPers(T).raid)aiRaid(T,army,anchor);
-  const idle=army.filter(u=>!u.order&&!u.target&&!u.amb);
-  for(const u of idle)if(u.flT&&!u.flT.dead&&G.t-u.flank<150){setMove(u,u.flT.x+rnd(-60,60),u.flT.y+rnd(-60,60),'amove');u.flT=null;aiStat(T.ai,'flankIn');}else if(Math.hypot(u.x-anchor.x,u.y-anchor.y)>900&&pb.length){const t=pb.reduce((a,b)=>dist(a,u)<dist(b,u)?a:b);setMove(u,t.x,t.y,'amove');}
+  const HM=DIFF[T.ai.d??1].hm;if(HM){aiHmTowns(T,mine,anchor,army,en);aiHmSmart(T,mine,anchor,army,en,pb);aiHmOp(T,pb);}
+  const idle=army.filter(u=>!u.order&&!u.target&&!u.amb&&!u.opW);
+  for(const u of idle)if(u.flT&&!u.flT.dead&&G.t-u.flank<150){setMove(u,u.flT.x+rnd(-60,60),u.flT.y+rnd(-60,60),'amove');u.flT=null;aiStat(T.ai,'flankIn');}else if(Math.hypot(u.x-anchor.x,u.y-anchor.y)>900&&pb.length){const pc=HM&&pb.some(b=>HM_CRIT[b.kind])?pb.filter(b=>HM_CRIT[b.kind]):pb;const t=pc.reduce((a,b)=>dist(a,u)<dist(b,u)?a:b);setMove(u,t.x,t.y,'amove');}
   const home=idle.filter(u=>Math.hypot(u.x-anchor.x,u.y-anchor.y)<=900&&u.s.dom!=='naval');
   // Hard reads the odds before it commits (sizes up our home army against the enemy's whole army): it holds a wave that
   // would only feed the enemy, launches early when it is clearly stronger, and pulls troops out of fights they are losing
@@ -1021,13 +1069,15 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   if(SM&&DIFF[T.ai.d??1].rg&&T.ai.t%2===0)for(const u of army){if(u.rt||u.inTun||!u.order||u.order.type!=='amove'||u.order.nv||(u.odds||0)<2.5||u.s.dom!=='ground')continue;const dh=Math.hypot(u.x-anchor.x,u.y-anchor.y);if(dh<1000)continue;
     if(pb.some(b=>Math.abs(b.x-u.x)<260&&Math.abs(b.y-u.y)<260))continue;/* in the enemy base: finish the job */
     const a=Math.atan2(anchor.y-u.y,anchor.x-u.x),k=Math.min(dh-650,520);u.rt=G.t;u.flT=null;u.cvRes=undefined;setMove(u,u.x+Math.cos(a)*k,u.y+Math.sin(a)*k,'move');u.order.auto=1;aiStat(T.ai,'regroup');}
-  let launched=false;if(go&&pb.length&&G.t>aiFirst(T)){launched=true;const t=pb.find(e=>e.kind==='hq')||pb[0];const ang=Math.atan2(t.y-anchor.y,t.x-anchor.x),D=Math.hypot(t.x-anchor.x,t.y-anchor.y);
+  let launched=false;if(go&&pb.length&&G.t>aiFirst(T)&&!T.ai.op){launched=true;const pc=HM?pb.filter(b=>HM_CRIT[b.kind]):[];const t=pc.length?pc.reduce((a,b)=>dist(a,anchor)<dist(b,anchor)?a:b):pb.find(e=>e.kind==='hq')||pb[0];const ang=Math.atan2(t.y-anchor.y,t.x-anchor.x),D=Math.hypot(t.x-anchor.x,t.y-anchor.y);
       const FL=DIFF[T.ai.d??1].flank,fl=FL&&home.length>=6&&D>(FL>1?700:900)?home.filter((u,i)=>i%3===2&&isVeh(u.s)||i%4===3):[];const side=Math.random()<.5?1:-1;
       // Hard with a big wave: a pincer - the flanking force splits and swings round both sides. Flankers remember the
       // main attack's target and close on it from the side once they reach their swing point (see the idle loop).
       const pin=FL>1&&fl.length>=6;
       fl.forEach((u,i)=>{const sd=pin&&i%2?-side:side,fx=anchor.x+Math.cos(ang)*D*.62+Math.cos(ang+sd*1.57)*Math.min(650,D*.35),fy=anchor.y+Math.sin(ang)*D*.62+Math.sin(ang+sd*1.57)*Math.min(650,D*.35);
-        setMove(u,fx+rnd(-50,50),fy+rnd(-50,50),'amove');u.flank=G.t;u.flT=FL>1?t:null;});if(fl.length){aiStat(T.ai,'flank');aiStat(T.ai,'flankers',fl.length);if(pin)aiStat(T.ai,'pincer');}const main=home.filter(u=>!fl.includes(u));const gnd=main.filter(u=>u.s.dom==='ground'),oth=main.filter(u=>u.s.dom!=='ground');if(gnd.length)formMove(gnd,t.x,t.y,'amove',1,4);for(const u of oth)setMove(u,t.x+rnd(-60,60),t.y+rnd(-60,60),'amove');
+        setMove(u,fx+rnd(-50,50),fy+rnd(-50,50),'amove');u.flank=G.t;u.flT=FL>1?t:null;});if(fl.length){aiStat(T.ai,'flank');aiStat(T.ai,'flankers',fl.length);if(pin)aiStat(T.ai,'pincer');}const main=home.filter(u=>!fl.includes(u));const gnd=main.filter(u=>u.s.dom==='ground'),oth=main.filter(u=>u.s.dom!=='ground');
+      if(HM&&fl.length){const sx=anchor.x+Math.cos(ang)*D*.45,sy=anchor.y+Math.sin(ang)*D*.45;formMove(gnd,sx,sy,'amove',1,4);for(const u of oth)setMove(u,sx+rnd(-60,60),sy+rnd(-60,60),'amove');for(const u of home){u.opW=1;u.flT=null;}T.ai.op={t:G.t,tg:t.id,fl:fl.map(u=>u.id),mn:main.map(u=>u.id)};aiStat(T.ai,'hmStage');}
+      else{if(gnd.length)formMove(gnd,t.x,t.y,'amove',1,4);for(const u of oth)setMove(u,t.x+rnd(-60,60),t.y+rnd(-60,60),'amove');}
       if(fl.length)T.ai.flanks=(T.ai.flanks||0)+1;T.ai.wave=Math.min(T.ai.wave+Math.round(2*(G.bs||1)),Math.round(DIFF[T.ai.d??1].maxWave*(G.bs||1)));log(en,'Enemy attack force spotted moving out.','w');}
   aiNavyAct(T,mine);aiLanding(T,mine,anchor,pb,launched);
   if(T.ai.t%6===0)for(const u of mine)if(u.kind==='jet'&&u.state==='park'&&u.ammo>=u.s.ammo&&pb.length){const t=pb[Math.floor(Math.random()*pb.length)];u.order={type:'attack',target:t};u.state='fly';u.landed=false;}
@@ -1317,7 +1367,7 @@ function updTowns(st){if(!G.towns)return;const N=G.teams.length;
     if(t.un>=90&&!t.w90){t.w90=1;log(t.ow,`${t.name} is about to REVOLT! Lower taxes or send troops NOW.`,'bad');FXE('tping',[t.ow,t.x|0,t.y|0,0]);}
     if(t.un>=100){townRevolt(t);continue;}
     // --- AI: High tax in safe rear towns, Low on the front, never lets a town boil over
-    if(T.ai){let want=1;if(nE>0||t.un>=60)want=0;else if(t.un>=40&&t.rate>=2)want=1;else if(nG>=1&&t.un<30)want=2;else if(t.un<25)want=nG>=1?2:1;if(t.un>=75)want=0;if(T.taxPol!=null)want=T.taxPol;   /* test hook (orch/conquest-t5.mjs): a fixed tax policy */
+    if(T.ai){let want=1;if(nE>0||t.un>=60)want=0;else if(t.un>=40&&t.rate>=2)want=1;else if(nG>=1&&t.un<30)want=2;else if(t.un<25)want=nG>=1?2:1;if(t.un>=75)want=0;if(DIFF[T.ai.d??1]&&DIFF[T.ai.d??1].hm)want=aiHmTax(t,T,nE);if(T.taxPol!=null)want=T.taxPol;   /* test hook (orch/conquest-t5.mjs): a fixed tax policy */
       if(want!==t.rate&&(want<t.rate||G.t>=(t.rateT||0)||T.taxPol!=null)){t.rate=want;t.rateT=G.t+20;}
       if(t.loy&&G.t>=(t.milR||0)&&T.credits>500&&(nE>0||nG<2))townRecruit(t.ow,{ti:t.i});}   // AI: local militia in loyal towns
   }
