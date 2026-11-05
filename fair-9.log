@@ -1,0 +1,30 @@
+mapfair: 2 of 52 battles, 4 at a time
+  ERROR rubalkhali 6 TypeError: Cannot read properties of undefined (reading 't')
+    at lgAI2 (ww3-sim.js:2988:165)
+    at lgAI (ww3-sim.js:2969:18)
+    at aiThink (ww3-sim.js:2238:214)
+    at simUpdate (ww3-sim.js:2455:201)
+    at ww3-sim.js:3447:63
+    at sim (ww3-sim.js:3426:18)
+    at W.step (ww3-sim.js:3447:5)
+    at process.<anonymous> (file:///home/runner/work/ww3/ww3/orch/mapfair.mjs:45:61)
+    at process.emi
+  2/2 done, 0.4 min
+  ERROR rubalkhali 8 TypeError: Cannot read properties of undefined (reading 'push')
+    at ad (ww3-sim.js:2913:130)
+    at ww3-sim.js:2914:22
+    at Array.forEach (<anonymous>)
+    at lgCompute (ww3-sim.js:2914:7)
+    at lgTick (ww3-sim.js:2931:68)
+    at updTowns (ww3-sim.js:2592:65)
+    at updSupply (ww3-sim.js:2542:3)
+    at simUpdate (ww3-sim.js:2452:52)
+    at ww3-sim.js:3447:63
+    at sim (ww3-sim.js:3426:18)
+
+BATTLES map            n games  kills  win share by start position (fair = 1/n)        score share by position     avg-min
+  rubalkhali      6     0      0    0   0   0   0   0   0                          0   0   0   0   0   0     0.0 p=NaN ERR 1
+  rubalkhali      8     0      0    0   0   0   0   0   0   0   0                  0   0   0   0   0   0   0   0 0.0 p=NaN ERR 1
+BATTLES 2 games, 2 layouts; a start position wins significantly more than its share (p<0.01, >1.5x fair): none
+pooled duel seat: position 1 won 0, position 2 won 0 (of games decided between the first two seats)
+MAPFAIR DONE 0.4 min -> ../../../../../tmp/lg/fair-9.json
