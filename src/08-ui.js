@@ -516,6 +516,7 @@ function rightRelease(d){if(!G)return;
     const dzHelp=t&&t.team===ME&&t.isB&&((t.built<1&&G.sel.some(u=>u.kind==='dozer'&&u.team===ME&&!u.dead))||(isTun(t)&&t.built>=1&&G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&u.s.dom==='ground')))||(t&&t.team===ME&&!t.isB&&t.s&&t.s.cap&&G.sel.some(u=>u!==t&&!u.isB&&canBoard(t,u)))||(t&&t.kind==='garrison'&&t.team===ME&&G.sel.some(u=>u.team===ME&&canGarrison(u)));
     if(d.pt==='mouse'&&(leftOrders()?genClick(d,t):selClick(d,t)))return;
     if(d.pt!=='mouse'&&(mine||bsel)&&!d.shift&&(!(t&&t.team===ME)||dzHelp)){const w=screenToWorld(mouse.x,mouse.y);if(w&&issueCmdD(w,t,bsel)){updateUI();return;}}
+    if(!t&&!d.shift)townPick(mouse.x,mouse.y);else if(t)townClose();
     selectClick(t,d.shift);}
   if(G.sel.some(u=>!u.isB&&u.team===ME))speak(0);else if(G.sel.length)sfxUI(660);updateUI();}
 // Touch screens (phones, tablets). One finger works like the left mouse button: tap selects, tap the ground or an enemy
@@ -588,10 +589,11 @@ function mmSend(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u
 function mmWorld(e){const r=mm.getBoundingClientRect();return{x:Math.max(0,Math.min(MAPW,(e.clientX-r.left)/r.width*MAPW)),y:Math.max(0,Math.min(MAPH,(e.clientY-r.top)/r.height*MAPH))};}
 mm.addEventListener('pointerdown',e=>{if(!G)return;e.preventDefault();const w=mmWorld(e);
   if(e.button===2){mmSend(w);return;}
-  if(e.button!==0)return;if(SET.mmc==='units'&&mmSend(w))return;mmDown=e.pointerId;try{mm.setPointerCapture(e.pointerId);}catch(_){}centerOn(w.x,w.y);});
+  if(e.button!==0)return;{const tw=townMiniAt(e);if(tw){townOpen(tw.i);centerOn(tw.x,tw.y);return;}}if(SET.mmc==='units'&&mmSend(w))return;mmDown=e.pointerId;try{mm.setPointerCapture(e.pointerId);}catch(_){}centerOn(w.x,w.y);});
 mm.addEventListener('pointermove',e=>{if(mmDown!==e.pointerId)return;const w=mmWorld(e);centerOn(w.x,w.y);});
 mm.addEventListener('pointerup',e=>{if(mmDown===e.pointerId)mmDown=null;});mm.addEventListener('pointercancel',()=>{mmDown=null;});
 mm.addEventListener('contextmenu',e=>e.preventDefault());
+mm.addEventListener('pointermove',e=>{if(!G||e.pointerType==='touch')return;const t=townMiniAt(e);const v=t?(t.name+(t.ow>=0?(townsMine(t)?` - tax +$${t.tax.toFixed(1)}/s, unrest ${Math.round(t.un)}`:' - held by '+G.teams[t.ow].F.name):t.reb>G.t?' - REBELS':' - neutral')):'';if(mm.title!==v)mm.title=v;});
 /* ---------- phones and touch screens ---------- */
 // The command bar's own phone layouts (portrait strip + fold handle, short landscape bar) live with its styles in the
 // page shell; here: touch wording, finger-sized buttons, and small-screen placement of the battlefield chips.
@@ -716,6 +718,7 @@ function tcTap(x,y,ts){if(ts==null)ts=performance.now();mouse.x=x;mouse.y=y;cons
     if(!t&&typeof noGo==='function'&&noGo(own,w)){try{sfxUI(220);}catch(_){}tcMark(x,y,'no');return;}
     if(issueCmdD(w,t,false)){tcMark(x,y,t&&!ally(t.team,ME)?'atk':'mv');updateUI();return;}}
   if(!t&&!own.length&&tcProd()){issueCmd(w,null,true);tcMark(x,y,'rl');updateUI();return;}
+  if(!t)townPick(x,y);else townClose();
   selectClick(t,false);if(t)tcMark(x,y,'sel');tcSelSound();updateUI();}
 function tcBox(g){const x0=Math.min(g.x0,g.x),x1=Math.max(g.x0,g.x),y0=Math.min(g.y0,g.y),y1=Math.max(g.y0,g.y);
   G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(()=>{const p=toScreen(u.x,unitH(u)+4,u.y);return p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1;})());tcSelSound();updateUI();}
