@@ -29,3 +29,22 @@ All 1,936 clips of all 18 nations (nation sheets `vo/CODE.mp3`, role sheets `_r`
 | UA | 103 | 115 | 105 | 51 | 12 | -17.1 | -17.6 |
 | US | 104 | 90 | 90 | 15 | 9 | -16.6 | -17.1 |
 Remaining weak clips are mostly those already at the 3-semitone cap (a second pass would sound robotic) or only slightly over the bright threshold; the true fix for those is a fresh deep-speaker XTTS take (see handoff). Before/after samples: `orch/voices-manly/<CODE>_before.mp3` / `_after.mp3` for IR, RS, DW, US, RU, KP.
+
+## Re-synthesis pass (2026-11-05, run 3) — the clips post-processing could not fix
+XTTS-v2 (coqui-tts 0.28, CPU) + Piper/MMS + faster-whisper installed this run. `tools/voices/manly_resynth.py` re-voiced the 83 clips still
+flagged in UA, IL, EU, CU, RU, KP, RS: deepest natural male voice per language from a quick audition (lowest median F0 that still reads back:
+es/ru/ko/ar Dionisio Schuyler, then Damjan Chapman / Baldur Sanjin; fr/de/en Damien Black / Damjan Chapman; uk MMS-ukr then Piper oleksa;
+he MMS-heb), barked delivery (tough2 cry/sold settings), max 2 takes with Whisper read-back QC, then the tough2 radio chain and the
+manly_fix post chain where still high, loudness matched to the old clip. Sheets rebuilt with the same order/gaps; maps patched (patch_map.py).
+6 clips had no clean take in 2 tries (3 KP short shouts, 2 UA one-word lines, 1 more) and kept their old audio.
+
+| Nation | flagged clips | their median F0 before | after | weak clips (all sheets) before | after | nation median F0 before | after |
+|---|---|---|---|---|---|---|---|
+| CU | 17 | 126 | 88 | 17 | 3 | 90 | 89 |
+| EU | 16 | 136 | 99 | 16 | 3 | 92 | 91 |
+| IL | 11 | 121 | 98 | 11 | 4 | 104 | 101 |
+| KP | 7 | 128 | 93 | 7 | 3 | 89 | 89 |
+| RS | 7 | 122 | 87 | 7 | 0 | 89 | 88 |
+| RU | 13 | 125 | 88 | 13 | 2 | 95 | 91 |
+| UA | 12 | 130 | 98 | 12 | 5 | 105 | 104 |
+83 weak clips -> 20 (mostly slightly-bright or kept-old lines). No human listening yet.

@@ -186,3 +186,4 @@ preview, not per-map thumbnail cards.
 ## 2026-11-05 voices-manly
 Measured all 1,936 voice clips; deepened ~330 weak (high/thin) clips across all 18 nations by pitch-down + warmth post-processing (no re-synthesis). Report orch/reports/voices-manly.md. Handoff orch/HANDOFF-voices-manly.md.
 - 2026-11-05 logistics stage 5 part (Sonnet 5.5, orch/logistics2): TERRITORY + FRONT LINE - influence field from HQs/towns/depots, dashed front line on map+minimap, no building (except depots) in enemy territory. Convoys (stage 3) already on main.
+- 2026-11-05 voices-manly3 (Opus): installed XTTS-v2 + Piper/MMS + Whisper on CPU; re-voiced the 83 still-weak clips (UA, IL, EU, CU, RU, KP, RS) with the deepest male voice per language, barked, 2 takes + Whisper QC, tough2 radio + manly_fix chain; their median F0 ~126 -> ~93 Hz, weak clips 83 -> 20 (6 kept old: no clean take). Tool tools/voices/manly_resynth.py; report orch/reports/voices-manly.md.
