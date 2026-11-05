@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down, migrate-dual,
-            art-smoke, art-mpsync, mapsweep, controls, touch, audio, cfclient, ew, smooth-pc, smooth-phone, smooth-mp]
+            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, smooth-pc, smooth-mp]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -42,6 +42,7 @@ jobs:
             check)          python3 orch/build.py --check ;;
             smooth-*)       node orch/smooth.mjs --profile "${T#smooth-}" ;;   # smoothness gate (orch/SMOOTH.md): pc / phone / multiplayer, vs orch/smooth-baseline.json
             servertest)     node orch/servertest.mjs && node orch/specserver.mjs ;;   # + spectators in a server battle
+            decals)         node orch/decalcheck.mjs --facs all ;;   # every marking on every unit type x all 18 nations lies on the model's surface and is not oversized (orch/decalcheck.mjs)
             ew)             if [ -f orch/ewtest.mjs ]; then node orch/ewtest.mjs; else echo "SKIP ew (no test)"; fi ;;   # electronic warfare: spoof/jamming + their host-migration checkpoint
             headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --night && node orch/headless.mjs --compare || echo "SKIP headless" ;;
             smoke4)         node orch/smoke.mjs --players 4 && node orch/replaytest.mjs ;;   # + a replay ends where the battle ended
