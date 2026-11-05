@@ -1,0 +1,40 @@
+mapfair: 3 of 52 battles, 4 at a time
+  ERROR rubalkhali 2 TypeError: Cannot read properties of undefined (reading 't')
+    at lgJobs (ww3-sim.js:2956:28)
+    at lgTick (ww3-sim.js:2935:3)
+    at updTowns (ww3-sim.js:2592:65)
+    at updSupply (ww3-sim.js:2542:3)
+    at simUpdate (ww3-sim.js:2452:52)
+    at ww3-sim.js:3447:63
+    at sim (ww3-sim.js:3426:18)
+    at W.step (ww3-sim.js:3447:5)
+    at process.<anonymous> (file:///home/runner/work/ww3/ww3/orch/
+  ERROR heartland 8 TypeError: Cannot read properties of undefined (reading 't')
+    at lgJobs (ww3-sim.js:2956:28)
+    at lgTick (ww3-sim.js:2935:3)
+    at updTowns (ww3-sim.js:2592:65)
+    at updSupply (ww3-sim.js:2542:3)
+    at simUpdate (ww3-sim.js:2452:52)
+    at ww3-sim.js:3447:63
+    at sim (ww3-sim.js:3426:18)
+    at W.step (ww3-sim.js:3447:5)
+    at process.<anonymous> (file:///home/runner/work/ww3/ww3/orch/
+  3/3 done, 0.4 min
+  ERROR heartland 6 TypeError: Cannot read properties of undefined (reading 't')
+    at lgJobs (ww3-sim.js:2956:28)
+    at lgTick (ww3-sim.js:2935:3)
+    at updTowns (ww3-sim.js:2592:65)
+    at updSupply (ww3-sim.js:2542:3)
+    at simUpdate (ww3-sim.js:2452:52)
+    at ww3-sim.js:3447:63
+    at sim (ww3-sim.js:3426:18)
+    at W.step (ww3-sim.js:3447:5)
+    at process.<anonymous> (file:///home/runner/work/ww3/ww3/orch/
+
+BATTLES map            n games  kills  win share by start position (fair = 1/n)        score share by position     avg-min
+  heartland       6     0      0    0   0   0   0   0   0                          0   0   0   0   0   0     0.0 p=NaN ERR 1
+  heartland       8     0      0    0   0   0   0   0   0   0   0                  0   0   0   0   0   0   0   0 0.0 p=NaN ERR 1
+  rubalkhali      2     0      0    0   0                                          0   0                     0.0 p=NaN ERR 1
+BATTLES 3 games, 3 layouts; a start position wins significantly more than its share (p<0.01, >1.5x fair): none
+pooled duel seat: position 1 won 0, position 2 won 0 (of games decided between the first two seats)
+MAPFAIR DONE 0.4 min -> ../../../../../tmp/lg/fair-2.json
