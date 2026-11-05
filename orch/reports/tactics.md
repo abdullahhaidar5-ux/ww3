@@ -19,3 +19,11 @@ Abdullah approved both parts on 2026-11-04 19:38. Code: `src/03b-tactics.js` (si
 
 ## Checks
 `node orch/tacttest.mjs` 17 checks pass (foxholes, cover, sink, damage, sandbags + trench, slowdown, shell destroys, net pack round trip, rear >> front crits, immobile, fire, crit bits in snapshot, jam, bail-out, re-crew, field repair). Screenshots in `orch/shots/tactics/`.
+
+## Balance check (AI tourney, 153 games each, Normal AI, `--rounds 1`)
+With tactics: IR 82, EU 71, SA 65, KP 59, KR 59, EG 56, CU 56, RS 56, AE 53, IN 53, US 47, UA 44, DW 44, RU 41, TR 38, PK 35, CN 24, IL 18.
+Same run on `main` without tactics: IR 76, CU 74, EU 62, AE 62, RS 62, UA 59, EG 59, DW 59, US 53, PK 47, RU 41, SA 41, KP 41, TR 38, KR 38, IL 35, IN 35, CN 18.
+Only 17 games per nation, so +-12 points is noise; the same nations sit at the extremes in both (IR high, CN low), i.e. not caused by tactics. IL fell 35 -> 18 and is the one to watch in the next full 306-game pass. No tuning done.
+
+## Gate notes
+`gate/smooth-pc` drew 1893 / 1780 calls with an earlier version (limit 1725): the extra was crew soldiers from the new bail-outs, now capped at 4 per team and removed after 16 s; broken tracks live in the same single instanced mesh as the foxholes. `gate/controls` caught the extra touch-strip button pushing Cancel off a phone screen: the Dig in button is now hidden while Cancel shows.
