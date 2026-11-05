@@ -428,5 +428,5 @@ Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md
   change needed.
 - 2026-10-26 — [check] Per-nation music: all 18 nations already have distinct synthesized scores; IR/RS/DW latmiyas.
 
-## Logistics (orch/logistics) — stage 1 shipped 2026-11-05, rest open
-Open, in order: 3 convoys (auto supply trucks + ambush), 5 front line / territory / forward depots as network nodes, 6 mined roads + checkpoints, 7 bridges (demolish/rebuild/pontoon), 8 ports + blockade, 9 airlift, AI: protect convoys / cut roads / blow bridges / blockade / airlift, tutorial Logistics step, road art per theme, AI tourney + Cloudflare CPU numbers. Spec: orch/reports/logistics.md.
+## Logistics (orch/logistics) — all stages shipped 2026-11-05 (orch/logistics3)
+Open: AI tourney with logistics on (18 nations, equal?) + Cloudflare free-plan CPU numbers (/battle-bench) on a bigger machine; AI convoy escorts / naval blockade runs are only emergent. Spec: orch/reports/logistics.md.

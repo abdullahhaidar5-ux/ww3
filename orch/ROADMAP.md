@@ -16,6 +16,8 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Bigger 2-4 player maps (+27%), town bands (rear villages / middle hamlets / centre prize town), roads with +15-30% speed, fair-start check (orch/bandfair.mjs)
 - [open] 3-player maps: the isolated start wins ~55% (close pair + loner) - needs new 3p layouts or AI tuning
 - [done] Fair upgrades (same tier = same cost for every nation), powers ranked by XP + calm-town command points, tutorial covers setup/towns/tax/unrest/civic, map-editor hamlets, AI raids rear towns
+- [done] Logistics: supply runs on roads (build roads, CUT OFF towns, cratering, convoys + ambushes, territory + front line)
+- [done] Logistics 2: forward depots + ports join the road network, mines + checkpoints (tolls), bridges blow / rebuild / pontoons, port blockades, airlift, AI uses it, tutorial step, road look per theme
 - [next] Fairness proof: 18-nation tourney + start positions + tax-policy comparison (needs a bigger machine)
 
 ## Phones and interface

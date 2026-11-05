@@ -70,7 +70,7 @@ function initGfx(){const PH=typeof gfxPhone==='function'&&gfxPhone();
 // View-only: height of the ground a unit stands on, counting bridge decks (top of deck = 4.5) with a smooth ramp at the
 // bridge ends and sides so units don't pop or tilt toward the riverbed under the bridge.
 function viewH(x,y){const g=groundH(x,y),B=G&&G.map&&G.map.bridges;if(!B)return g;
-  for(let i=0;i<B.length;i++){const b=B[i],dx=x-b.x,dy=y-b.y,hl=b.h+15;if(dx>hl+40||dx<-hl-40||dy>hl+40||dy<-hl-40)continue;
+  for(let i=0;i<B.length;i++){const b=B[i];if(b.dead)continue;const dx=x-b.x,dy=y-b.y,hl=b.h+15;if(dx>hl+40||dx<-hl-40||dy>hl+40||dy<-hl-40)continue;
     const u=Math.abs(dx*b.n[0]+dy*b.n[1]),w=Math.abs(dx*b.t[0]+dy*b.t[1]);if(w>36||u>hl)continue;
     const ke=Math.min(1,Math.max(0,(hl-u)/30)),ks=Math.min(1,Math.max(0,(41-w)/6)),k=Math.min(ke,ks),sk=k*k*(3-2*k);return g+(4.5-g)*sk;}
   return g;}
@@ -284,7 +284,7 @@ function buildWorld(tc){
       +'if(wr>.02){d0=mix(d0,tdM(tdA,dU*.6,2.),wr);n0=mix(n0,tdMN(tdN,dU*.6,2.),wr);}if(gRoad>.02){vec2 dR=dU*1.7;d0=mix(d0,tdS(tdA,dR,4.)*.7+.3,gRoad*.85);n0=mix(n0,tdS(tdN,dR,4.),gRoad*.7);}'
       +'d0*=2.;float dl=dot(d0,vec3(.3,.59,.11));vec3 dm=mix(vec3(dl),d0,.6);dm=clamp(1.+(dm-1.)*1.7,vec3(.4),vec3(1.8));float gr2=texture2D(dmap,vWP*(1./2.7)).r*.55+texture2D(dmap,vWP*(1./0.9)).r*.45;dm*=.84+.32*gr2;diffuseColor.rgb*=mix(vec3(1.),dm,.95*dfk);float pa=texture2D(dmap,vWP*(1./520.)+.3).r,pb=texture2D(dmap,vWP*(1./190.)+.7).r;diffuseColor.rgb*=mix(vec3(.84,.82,.8),vec3(1.1,1.07,1.),smoothstep(.3,.7,pa));diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.7,.66,.6),smoothstep(.62,.8,pb)*.5*(1.-gRoad));gTN=(n0.xy*2.-1.)*(1.-gWet*.7)*dfk;}'
       :' float dn=texture2D(dmap,tU*90.).r*.6+texture2D(dmap,tU*17.).r*.4; diffuseColor.rgb*=mix(.72,1.22,dn); '+' {vec2 wq=vMapUv*vec2('+MAPW+'.,'+MAPH+'.);vec2 ci=floor(wq*.55);float hh=fract(sin(dot(ci,vec2(12.9898,78.233)))*43758.5453);vec2 cf=fract(wq*.55)-.5;float peb=step(.93,hh)*smoothstep(.32,.12,length(cf));float fine=texture2D(dmap,tU*1400.).r;float rip=sin(wq.x*.35+wq.y*.12+fine*4.)*.5+.5;diffuseColor.rgb*=1.+(fine-.5)*.22+(rip-.5)*.05;diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*(hh>.965?1.35:.55),peb*.7);}';
-    const SCARS='\n {float wt=gWet*(1.-gRoad);diffuseColor.rgb*=mix(1.,.6,wt);diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.86,.85,.84),gRoad*.35);float pit=clamp((.5-gScar.g)*4.,0.,1.);diffuseColor.rgb*=1.-pit*.35;diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.035,.03,.026),clamp(gScar.r,0.,1.)*.82);}';
+    const SCARS='\n {float wt=gWet*(1.-gRoad);diffuseColor.rgb*=mix(1.,.6,wt);diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3('+(snowT?'.72,.71,.7':G.map.theme==='green'?'.52,.52,.54':'1.04,.94,.8')+'),gRoad*'+(G.map.theme==='green'?'.55':'.4')+');float pit=clamp((.5-gScar.g)*4.,0.,1.);diffuseColor.rgb*=1.-pit*.35;diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.035,.03,.026),clamp(gScar.r,0.,1.)*.82);}';
     sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying float vH;varying float vAO;varying vec2 vWP;varying float vSl;uniform sampler2D dmap,scarT,roadT;'+(TD?'uniform sampler2D tdA,tdN;vec3 tdS(sampler2D s,vec2 u,float l){vec2 g1=dFdx(u)*vec2(1.,.1882),g2=dFdy(u)*vec2(1.,.1882);return textureGrad(s,vec2(fract(u.x),(l*544.+16.+fract(u.y)*512.)/2720.),g1,g2).rgb;}const mat2 tdR=mat2(.8,.6,-.6,.8);vec3 tdM(sampler2D s,vec2 u,float l){return mix(tdS(s,u,l),tdS(s,tdR*u*.43+vec2(.37,.71),l),.5);}vec3 tdMN(sampler2D s,vec2 u,float l){vec3 a=tdS(s,u,l),b=tdS(s,tdR*u*.43+vec2(.37,.71),l);vec2 nb=(b.xy*2.-1.)*tdR;return vec3(mix(a.xy,nb*.5+.5,.5),a.z);}':'')+'vec2 gScar;vec2 gTN;float gRoad,gWet;')
       .replace('#include <map_fragment>','#include <map_fragment>'+COMMON+' '+' {float mac=texture2D(dmap,tU*5.).r*.6+texture2D(dmap,tU*11.+.37).r*.4;float l0=dot(diffuseColor.rgb,vec3(.3,.59,.11));vec3 pale=vec3(l0)*vec3(1.16,1.05,.86);diffuseColor.rgb=mix(diffuseColor.rgb,pale*1.12,smoothstep(.56,.74,mac)*.5);diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*vec3(.8,.79,.78),smoothstep(.44,.26,mac)*.55);float l1=dot(diffuseColor.rgb,vec3(.3,.59,.11));diffuseColor.rgb=mix(vec3(l1),diffuseColor.rgb,.88);}'+DET+' '+' {float rk=clamp((1.-vColor.r)*5.,0.,1.)*.5*smoothstep(.1,.3,vSl);float nz=texture2D(dmap,tU*60.).r;float band=sin(vH*.75+nz*5.)*.5+.5;float band2=sin(vH*2.3+nz*9.)*.5+.5;vec3 rockc=vec3(.82,.66,.48)*(.88+.2*band)*(.94+.1*band2);float cr=smoothstep(.55,.6,texture2D(dmap,vec2(tU.x*300.,vH*.08)).r);rockc*=1.-cr*.15;diffuseColor.rgb=mix(diffuseColor.rgb,rockc*(diffuseColor.rgb/max(vec3(.05),vColor.rgb))*.9,rk*.6);}'+SCARS)
       .replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\n roughnessFactor*=1.-gWet*.55-gRoad*.12;')
@@ -346,7 +346,7 @@ function buildWorld(tc){
         const gl=new THREE.Mesh(lg,LAMPM);gl.position.set(s2+3.6,20.2,z);grp.add(gl);}
     }
     for(let s=-L/2+50;s<L/2-30;s+=70){const pl=new THREE.Mesh(new THREE.BoxGeometry(12,26,58),pm);pl.position.set(s,-10,0);pl.castShadow=true;grp.add(pl);}
-    WORLD.add(grp);}
+    WORLD.add(grp);if(typeof BRGRP!=='undefined')BRGRP.set(b,grp);}
   // trees (instanced)
   try{scenery();}catch(e){console.warn('scenery',e);}
   warScenery();
