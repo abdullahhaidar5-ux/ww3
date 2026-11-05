@@ -427,3 +427,6 @@ Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md
 - 2026-10-26 — [check] Stuck/idle units after long games: six 16–20 min 4-player AI battles on 6 maps, ~0 stuck; no
   change needed.
 - 2026-10-26 — [check] Per-nation music: all 18 nations already have distinct synthesized scores; IR/RS/DW latmiyas.
+
+## Logistics (orch/logistics) — stage 1 shipped 2026-11-05, rest open
+Open, in order: 3 convoys (auto supply trucks + ambush), 5 front line / territory / forward depots as network nodes, 6 mined roads + checkpoints, 7 bridges (demolish/rebuild/pontoon), 8 ports + blockade, 9 airlift, AI: protect convoys / cut roads / blow bridges / blockade / airlift, tutorial Logistics step, road art per theme, AI tourney + Cloudflare CPU numbers. Spec: orch/reports/logistics.md.

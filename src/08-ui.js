@@ -577,6 +577,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='v'&&!e.ctrlKey&&!e.metaKey)cycleStance();
   if(k==='i'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)tactKey();
   if(k==='z'&&!e.ctrlKey&&!e.metaKey&&!e.altKey)resupplySel();
+  if(k==='l'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.lgd)lgToggle();
   if((k==='Backspace'||k==='Delete')&&doCancel(e.shiftKey))e.preventDefault();
   if(k==='e'){const hu=G.sel.find(u=>!u.isB&&u.kind==='champ'&&u.team===ME&&!u.dead);if(hu)doAct({t:'hab',tid:hu.id});}
   if(k==='x'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}

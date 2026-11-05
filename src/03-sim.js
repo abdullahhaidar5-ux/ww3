@@ -84,7 +84,7 @@ function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].
 }
 // Fields the battle adds to G as it runs. Declaring them all up front keeps G one fixed shape, so the engine's compiled
 // code for the hot loops (which reads G everywhere) is not thrown away and rebuilt each time a new field appears.
-const G_LATE=['camp','pfTok','pfMs','pfN','wx','hash','bmaxH','rmax','mines','aur','mban','mbanN','cbrTeams','mT','prT','bg','bgSig','sg','ecT','aiTT','vsT','vsN','vsB','vsD','hqC','bocc','boccV','dug','dugN','dugV','dugId','dugBd'];
+const G_LATE=['camp','pfTok','pfMs','pfN','wx','hash','bmaxH','rmax','mines','aur','mban','mbanN','cbrTeams','mT','prT','bg','bgSig','sg','ecT','aiTT','vsT','vsN','vsB','vsD','hqC','bocc','boccV','dug','dugN','dugV','dugId','dugBd','lg','lgd','lgv'];
 function baseFacing(t){const b=BASES[t]||BASES[0];return Math.atan2(MAPH/2-b[1],MAPW/2-b[0]);}
 // Fields units and buildings pick up as the battle runs, declared (as undefined: same meaning as missing) when each is
 // made, so every unit has the same shape. Units growing fields in different orders gave the engine dozens of shapes,
@@ -203,6 +203,7 @@ function updDozer(u,dt){u.building=false;const o=u.order;
   if(o&&o.type==='build'){const b=o.target;if(b.dead||b.built>=1){u.order=null;return;}const d=Math.hypot(b.x-u.x,b.y-u.y);
     if(d>b.size/2+30){navTo(u,b.x,b.y,dt);return;}u.building=true;u.ang=Math.atan2(b.y-u.y,b.x-u.x);u.lastFire=G.t;return;}
   if(o&&o.type==='wall'&&dozeWall(u,dt))return;
+  if(o&&o.type==='road'&&dozeRoad(u,dt))return;
   if(o&&o.type==='fix'){const v=o.target;if(!v||v.dead||!v.crit){u.order=null;return;}if(Math.hypot(v.x-u.x,v.y-u.y)>v.r+u.r+24){navTo(u,v.x,v.y,dt);return;}u.building=true;u.ang=Math.atan2(v.y-u.y,v.x-u.x);u.lastFire=G.t;critFix(v,dt);return;}
   if(o&&o.type==='move'){if(Math.hypot(o.x-u.x,o.y-u.y)<14||stalled(u,o))u.order=null;else{navTo(u,o.x,o.y,dt,true);return;}}
   // idle: fix a hurt vehicle nearby, then finish a nearby foundation, otherwise patch up damaged buildings close by
@@ -403,7 +404,7 @@ function kill(e,team,src){if(e.dead)return;if(e.kind==='garrison'&&e.civ){collap
     if(e.isB&&e.vs[team])log(team,`Enemy ${e.s.name} destroyed.`,'g');
     if(src&&!src.isB&&!src.dead){src.xp+=val*upgT(T,'xp');const base=Math.max(300,src.s.cost),need=[1,2.5,5];let r=0;while(r<3&&src.xp>=base*need[r])r++;if(r>src.rank){src.rank=r;src.hp=src.max;log(src.team,`${src.s.name} promoted to ${VET[r]}.`,'g');FXE('rank',[src.id,r,src.x|0,src.y|0]);}}}}
 function promoteGeneral(T){let r=1;while(r<RANKS.length&&T.gxp>=RANKS[r])r++;if(r>T.rank){T.rank=r;log(T.id,`General promoted to rank ${r}. Spend your new point in Powers.`,'g');}}
-function explode(x,y,r,d,team,wpn,kind,src){if(G.conq&&G.towns)collateral(x,y,r,d,team);if(G.dugN&&r>=14)dugBlast(x,y,r,d,wpn);for(const e of G.ents){if(e.dead||ally(e.team,team))continue;const air=!e.isB&&e.s.dom==='air'&&!e.landed;if(air&&!VS[wpn].air)continue;
+function explode(x,y,r,d,team,wpn,kind,src){if(G.conq&&G.towns)collateral(x,y,r,d,team);if(G.dugN&&r>=14)dugBlast(x,y,r,d,wpn);if(G.lgd&&r>=22)lgBlast(x,y,r,d,wpn);for(const e of G.ents){if(e.dead||ally(e.team,team))continue;const air=!e.isB&&e.s.dom==='air'&&!e.landed;if(air&&!VS[wpn].air)continue;
   const dd=Math.hypot(e.x-x,e.y-y)-e.r;if(dd>r)continue;let m=1-.5*Math.max(0,dd)/r;if(kind==='sup')m*=(FACTIONS[G.teams[e.team].fac].mods.supResist||1);applyDmg(e,d*m,wpn,team,src,1);
   if(!e.isB&&!e.dead&&!air){const L=Math.hypot(e.x-x,e.y-y)||1;physImpulse(e,(e.x-x)/L,(e.y-y)/L,Math.min(d,900)*.55*(1-Math.max(0,dd)/r)*(kind==='sup'?1.6:1));}}
   if(G.civAt){const mm=VS[wpn]&&VS[wpn].bld;if(mm){const R=r+CELL,c0=Math.floor((x-R)/CELL),c1=Math.floor((x+R)/CELL),r0=Math.floor((y-R)/CELL),r1=Math.floor((y+R)/CELL);for(let cy=r0;cy<=r1;cy++)for(let cx=c0;cx<=c1;cx++){const c=G.civAt.get(cy*GW+cx);if(!c||c.dead||c.g)continue;const dd=Math.hypot(c.x-x,c.y-y)-16;if(dd>r)continue;damageCiv(c,d*(1-.5*Math.max(0,dd)/r)*mm,team);}}}
@@ -724,6 +725,7 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'hab':{const u=G.byId.get(a.tid);if(u&&u.team===team&&!u.dead)heroAbility(u);break;}
     case 'stance':{const v=a.v|0;if(v>=0&&v<=3)for(const u of own(a.ids))if(!u.s.noAttack)u.st=v;break;}
     case 'tax':{townCmd(team,a);break;}
+    case 'road':{lgRoadCmd(team,a);break;}
     case 'recruit':{townRecruit(team,a);break;}
     case 'bribe':{townBribe(team,a);break;}
     case 'resup':{const P=supplyPoints()[team]||[];for(const u of own(a.ids)){if(!hasAmmo(u)||!P.length)continue;let b=null,bd=1e9;for(const p of P){const d=Math.hypot(p.x-u.x,p.y-u.y);if(d<bd){bd=d;b=p;}}if(!b)continue;const an=(u.id%12)*.5236,rr=Math.min(b.r*.5,60+(u.id%5)*18);setMove(u,b.x+Math.cos(an)*rr,b.y+Math.sin(an)*rr,'move');}break;}
@@ -987,7 +989,7 @@ function aiHmOp(T,pb){const A=T.ai,op=A.op;if(!op){if(A.t%10===0)for(const u of 
   if(!tg||(ready&&stg)||G.t-op.t>80||mn.some(u=>u.lastHit>G.t-2)){A.op=null;for(const u of fl.concat(mn))u.opW=0;if(!tg)return;
     const gnd=mn.filter(u=>u.s.dom==='ground');if(gnd.length)formMove(gnd,tg.x,tg.y,'amove',1,4);for(const u of mn)if(u.s.dom!=='ground')setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');
     for(const u of fl){setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');u.flT=null;}aiStat(A,'hmHammer');}}
-function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);const hq=mine.find(e=>e.kind==='hq');const anchor=hq||mine.find(e=>e.isB);if(!anchor)return;T.ai.t++;aiSalvage(T,mine);aiWalls(T,mine);const en=aiFoe(T,anchor);
+function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);const hq=mine.find(e=>e.kind==='hq');const anchor=hq||mine.find(e=>e.isB);if(!anchor)return;T.ai.t++;aiSalvage(T,mine);aiWalls(T,mine);lgAI(T);const en=aiFoe(T,anchor);
   // HQ queue priorities: a supply truck if it has none, then a bulldozer if it has none (without one it can never build a
   // barracks again: a raid that killed its dozer used to leave it buying trucks forever and never fielding an army),
   // then trucks up to 3-4.
@@ -1278,7 +1280,7 @@ function supplyPoints(){const N=G.teams.length,P=[];for(let i=0;i<N;i++)P.push([
   for(const e of G.ents){if(e.dead||e.inTun||e.team==null||e.team<0||e.team>=N)continue;let r=0;
     if(e.isB){if(e.built<1)continue;r=e.kind==='hq'?SUP_R.hq:e.kind==='depot'?SUP_R.depot:0;}else if(e.kind==='harv')r=SUP_R.harv;
     if(r)add(e.team,{x:e.x,y:e.y,r});}
-  if(G.civ)for(const c of G.civ)if(!c.dead&&c.ow>=0&&c.ow<N)add(c.ow,{x:c.x,y:c.y,r:SUP_R.town});
+  if(G.civ)for(const c of G.civ)if(!c.dead&&c.ow>=0&&c.ow<N&&!(c.ti>=0&&G.towns&&G.towns[c.ti]&&G.towns[c.ti].cut))add(c.ow,{x:c.x,y:c.y,r:SUP_R.town});
   return P;}
 function updSupply(dt){G.supT=(G.supT||0)+dt;if(G.supT<.5)return;const st=G.supT;G.supT=0;const P=supplyPoints();
   for(const u of G.ents){if(u.dead||u.isB||u.inTun)continue;const pts=P[u.team];if(!pts)continue;let ins=false;for(const p of pts){if(Math.abs(p.x-u.x)<p.r&&Math.abs(p.y-u.y)<p.r&&Math.hypot(p.x-u.x,p.y-u.y)<p.r){ins=true;break;}}
@@ -1317,10 +1319,11 @@ function initTowns(){const M=G.map,src=[];G.towns=[];
     const pk=q.prize?1:q.ham?((Math.round(q.x+q.y)%3===0)?1:0):1+((Math.round(q.x*3+q.y)%3+3)%3);   // towns: market / garage / clinic; hamlets: sometimes a market stall
     const t={i:G.towns.length,x:q.x,y:q.y,r:q.r,ham:q.ham,prize:q.prize,style:q.style,name:nm,cells:q.cells,K,ow:-1,rate:1,un:0,hold:0,fresh:0,reb:0,rebU:[],tax:0,why:0,pk,fr:0,gar:0,milT:0,w70:0,w90:0,ramp:0,whole:0,hot:0,shock:0,rateT:0};
     q.cells.forEach((c,ix)=>{c.ti=t.i;c.key=ix<K?1:0;});G.towns.push(t);}
+  lgInit();
   if(G.teams)G.teams.forEach(T=>{T.terr=0;});}
 function townBase(t){return t.ham?.9+.9*t.K:(5.5+1.0*t.K)*(t.prize?1.5:1);}   // the centre prize town (market, always contested) pays +50%
 function townRestless(t){return t.ow>=0&&t.un>50;}
-function townIncome(t){if(t.ow<0)return 0;const hold=Math.min(1,(G.t-t.hold)/T_RAMP),ramp=.5+.5*hold;let v=townBase(t)*TAX[t.rate].m*ramp*(t.whole?1.5:1);if(t.pk===1&&!townRestless(t))v*=t.rate===0?1.4:1.25;if(townRestless(t))v*=.8;return v*(t.pop==null?1:t.pop)*(G.bs||1);}
+function townIncome(t){if(t.ow<0)return 0;const hold=Math.min(1,(G.t-t.hold)/T_RAMP),ramp=.5+.5*hold;let v=townBase(t)*TAX[t.rate].m*ramp*(t.whole?1.5:1);if(t.pk===1&&!townRestless(t))v*=t.rate===0?1.4:1.25;if(townRestless(t))v*=.8;if(t.cut)v*=LG_CUT;else if(t.trade)v*=LG_TRADE;return v*(t.pop==null?1:t.pop)*(G.bs||1);}
 function townRebelsLeft(t){let n=0;for(const u of t.rebU)if(!u.dead)n++;return n;}
 function townRevolt(t){const prev=t.ow;if(prev<0)return;const T=G.teams[prev];T.revN=(T.revN|0)+1;
   for(const c of t.cells){if(c.g){leaveGarrison(c);}c.ow=-1;c.cp=0;c.cpT=-1;}
@@ -1336,7 +1339,7 @@ function townCapture(t,newOw,prev,nr){t.ow=newOw;t.rate=1;t.hold=G.t;t.fresh=G.t
   const T=G.teams[newOw],rw=nr?0:Math.round((t.ham?120:360)*(G.bs||1));T.credits+=rw;G.civDirty=true;
   if(!nr)log(newOw,`${t.name} captured - we seized the town treasury ($${rw}). Set its tax rate: Low near the front, High behind our lines.`,'g');
   if(!nr)log(newOw,'','r:town_taken');if(prev>=0&&prev!==newOw){log(prev,`We lost ${t.name} to the enemy.`,'bad');log(prev,'','r:town_lost');FXE('tping',[prev,t.x|0,t.y|0,1]);}}
-function updTowns(st){if(!G.towns)return;const N=G.teams.length;
+function updTowns(st){if(!G.towns)return;const N=G.teams.length;lgTick(st);
   const U=[];for(const e of G.ents){if(e.dead||e.isB||e.inTun||e.team<0||!e.s||e.s.noAttack||e.kind==='harv'||e.kind==='dozer'||e.kind==='hacker')continue;U.push(e);}
   const terr=new Array(N).fill(0);const TF=G.teams.map((T,i)=>turfOf(i));G.turf=TF;updTowers(st,U);
   for(const t of G.towns){
@@ -1362,7 +1365,7 @@ function updTowns(st){if(!G.towns)return;const N=G.teams.length;
     for(const c of t.cells)if(c.occ&&c.g&&ally(c.g.team,t.ow))nG+=c.occ.length;
     const fr=nE>0?.8+Math.min(1,nE*.05):0,fresh=G.t<t.fresh?.8:0,cal=nG?.35+.12*Math.min(8,nG):0,cl=(t.pk===3&&!townRestless(t))?.5:0,base=TAX[t.rate].u;
     t.fr=nE;t.gar=nG;
-    let d=base+fr+fresh+(t.shock>G.t?1.5:0)-cal-cl+(t.prop||0)+(t.an[t.ow]||0)/100;{const tf=TF[t.ow];if(tf>0)d=d>0?d*HM.TURF.rise:d*HM.TURF.fall;else if(tf<0&&d>0)d*=HM.TURF.foe;}t.un=Math.max(0,Math.min(100,t.un+d*st));
+    let d=base+fr+fresh+(t.shock>G.t?1.5:0)-cal-cl+(t.prop||0)+(t.an[t.ow]||0)/100+(t.cut?.35:0)-(t.trade?.1:0);{const tf=TF[t.ow];if(tf>0)d=d>0?d*HM.TURF.rise:d*HM.TURF.fall;else if(tf<0&&d>0)d*=HM.TURF.foe;}t.un=Math.max(0,Math.min(100,t.un+d*st));
     t.loy=(t.ow>=0&&t.reb<=0&&t.un<HM.LOY_UN&&G.t-t.hold>=HM.LOY_HOLD&&t.pop>.3)?1:0;t.sm=townSmuggle(t);
     t.why=fr>=.9?1:base>=.3?2:fresh>0?3:(t.shock>G.t)?4:0;
     t.tax=townIncome(t);T.credits+=t.tax*st;terr[t.ow]+=t.tax;T.taxSum=(T.taxSum||0)+t.tax*st;
