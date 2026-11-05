@@ -1,0 +1,20 @@
+[1s] mp: opening 3 pages
+[4s] mp: pages open
+[4s] mp: lobby gwpmui
+[5s] mp: clients joined
+[159s] mp: battle loaded on all pages
+[159s] mp: playing 40s
+[199s] mp: checking sync
+[206s] mp attempt 1: ok
+
+                       mp        
+snap interval p95      151       
+snap jitter sd         59.03     
+order latency p95      113       
+client frame p95       58.9      
+client snaps           0         
+biggest snap (units)   0         
+desyncs                0         
+runtime 3.4 min
+
+SMOOTH PASS
