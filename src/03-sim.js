@@ -1308,7 +1308,7 @@ function updSupply(dt){G.supT=(G.supT||0)+dt;if(G.supT<.5)return;const st=G.supT
    armed locals (team G.reb, hostile to everyone) attacks the old owner's units nearby. So: High tax in safe rear towns,
    Low tax on the front line. Host-authoritative; clients get the numbers in teamGlobals ('tw'). Constants are tuned so a
    full town at Normal pays about 1-1.5 oil derricks ($7/s each). */
-const TAX=[{n:'Low',m:.6,u:-.8},{n:'Normal',m:1,u:-.1},{n:'High',m:1.5,u:.6},{n:'Extortionate',m:2.2,u:1.6}];
+const TAX=[{n:'Low',m:.6,u:-.8},{n:'Normal',m:1,u:-.1},{n:'High',m:1.5,u:.85},{n:'Extortionate',m:2.2,u:1.6}];
 const CQ_CP=.8,CQ_PW_FIRST=30,CQ_START=10000,CQ_SETUP=90,CQ_TRICKLE=2.5,CQ_OIL=.6,CQ_HARV=.3;   /* Conquest: start money, no-fire setup seconds, base trickle $/s, derrick and supply-truck income multipliers */
 const T_FRONT_R=560,T_KEYS=3,T_GAR_R=260,T_RAMP=90,T_REBEL_S=120;
 const TOWN_NAMES={me:['Qasr al-Nur','Tal Aswad','Kafr Nabil','Deir Zaman','Ain Rumman','Bayt Hanun','Wadi Khalil','Jabal Sami','Nahr Salim','Dar al-Amir','Suq Hamid','Bir Farid','Hayy al-Rawda','Marj Dabiq','Khirbet Noor','Sahl Zaid','Tell Mardikh','Bab al-Ain','Ras Qadir','Umm Hajar','Al-Zubayr','Hisn Karam','Wadi Ghazal','Qaryat Layl'],
