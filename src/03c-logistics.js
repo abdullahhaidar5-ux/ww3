@@ -42,7 +42,7 @@ function lgTick(st){if(!G.towns||!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;if(L.
   if(s!==L.sig||!L.reach){L.sig=s;const c0=G.towns.map(t=>t.cut|0);lgCompute();
     for(const t of G.towns){if(t.ow>=0&&t.cut&&!c0[t.i]){log(t.ow,`${t.name} is CUT OFF from your supply network - reconnect the road, retake the link or build a bypass.`,'bad');FXE('tping',[t.ow,t.x|0,t.y|0,0]);}
       else if(t.ow>=0&&!t.cut&&c0[t.i])log(t.ow,`${t.name} is back on your supply network.`,'g');}}
-  lgJobs(st);lgConvoys(st);}
+  lgJobs(st);lgConvoys(st);terrUpdate();}
 // ---- building roads ----
 function lgPathTo(team,ti){const L=G.lg,tn=L.tn[ti];if(tn==null)return null;const to=L.N[tn];
   // start from the nearest node already on the team's trade network (own base / own towns joined to it)
@@ -114,6 +114,35 @@ function updConvoy(u,dt){const c=u.cv;c.k+=dt;
         for(const e of nearby(t.x,t.y,SUP_R.town,CVY_N))if(!e.isB&&!e.dead&&e.team===u.team&&e.am!==undefined)e.am=e.amx;}
       c.ret=1;c.pts=P.slice().reverse();c.i=0;}return;}
   navTo(u,tp[0],tp[1],dt);}
+
+// ---- TERRITORY + FRONT LINE (stage 5) ----
+/* Influence field on a coarse grid: every base (HQ), held town/hamlet and finished Supply Depot pushes influence out to a radius (stronger near the
+   source, weaker if the town is CUT OFF). A cell belongs to the team with the most influence there (neutral below 0.08). The FRONT LINE is the border
+   between cells of teams that are not allied. You cannot build (depots excepted) in cells where an enemy has more influence than you
+   ("Enemy territory"), and a forward depot extends your territory, which is how you push the front. Same code on host and clients (display only
+   on clients; the host's check in validSpot decides). */
+const TR_CELL=80,TR_R={hq:1000,depot:560,town:520,ham:340};
+function terrBuild(){const T=G.terr||(G.terr={sig:'',cw:0,ch:0,own:null,seg:[],v:0});return T;}
+function terrSources(){const o=[];
+  for(const e of G.ents){if(e.dead||!e.isB||e.built<1||e.team==null||e.team<0||e.team>=G.teams.length||G.teams[e.team].reb)continue;
+    if(e.kind==='hq')o.push([e.team,e.x,e.y,TR_R.hq,1]);else if(e.kind==='depot')o.push([e.team,e.x,e.y,TR_R.depot,.9]);}
+  if(G.towns)for(const t of G.towns){if(t.ow<0||t.ow>=G.teams.length||G.teams[t.ow].reb||t.reb>G.t)continue;o.push([t.ow,t.x,t.y,t.ham?TR_R.ham:TR_R.town,t.cut?.45:.85]);}
+  return o;}
+function terrUpdate(force){if(!G.conq||!G.towns)return null;const T=terrBuild();const src=terrSources();
+  let sg='';for(const q of src)sg+=q[0]+':'+(q[1]|0)+','+(q[2]|0)+','+q[4]+';';if(!force&&sg===T.sig&&T.own)return T;
+  T.sig=sg;const cw=Math.ceil(MAPW/TR_CELL),ch=Math.ceil(MAPH/TR_CELL),n=cw*ch,own=new Int8Array(n).fill(-1),Nt=G.teams.length;T.cw=cw;T.ch=ch;
+  const inf=new Float32Array(n*Nt);
+  for(const [tm,x,y,R,w] of src){const x0=Math.max(0,Math.floor((x-R)/TR_CELL)),x1=Math.min(cw-1,Math.floor((x+R)/TR_CELL)),y0=Math.max(0,Math.floor((y-R)/TR_CELL)),y1=Math.min(ch-1,Math.floor((y+R)/TR_CELL));
+    for(let j=y0;j<=y1;j++)for(let i=x0;i<=x1;i++){const d=Math.hypot((i+.5)*TR_CELL-x,(j+.5)*TR_CELL-y);if(d>=R)continue;const v=w*(1-d/R),k=(j*cw+i)*Nt+tm;if(v>inf[k])inf[k]=v;}}
+  for(let c=0;c<n;c++){let b=-1,bv=.08;for(let k=0;k<Nt;k++){const v=inf[c*Nt+k];if(v>bv){bv=v;b=k;}}own[c]=b;}
+  T.own=own;T.inf=inf;T.Nt=Nt;
+  // border segments between cells held by teams that are not allied (as [x1,y1,x2,y2] on cell edges)
+  const seg=[],H=TR_CELL;const en=(a,b)=>a>=0&&b>=0&&a!==b&&!ally(a,b);
+  for(let j=0;j<ch;j++)for(let i=0;i<cw;i++){const a=own[j*cw+i];if(i+1<cw&&en(a,own[j*cw+i+1]))seg.push([(i+1)*H,j*H,(i+1)*H,(j+1)*H]);if(j+1<ch&&en(a,own[(j+1)*cw+i]))seg.push([i*H,(j+1)*H,(i+1)*H,(j+1)*H]);}
+  T.seg=seg;T.v++;return T;}
+// who holds this spot: team id of the strongest influence, -1 neutral
+function terrAt(x,y){const T=G.terr;if(!T||!T.own)return -1;const i=Math.floor(x/TR_CELL),j=Math.floor(y/TR_CELL);if(i<0||j<0||i>=T.cw||j>=T.ch)return -1;return T.own[j*T.cw+i];}
+function terrEnemy(team,x,y){const o=terrAt(x,y);return o>=0&&!ally(o,team);}
 // ---- network packs (host -> clients, only the dynamic part; lives in teamGlobals) ----
 function lgPack(){const D=G.lgd;if(!D)return 0;return{rb:D.rb.map(r=>[r.a,r.b,r.team,r.pts.flat()]),cr:Object.keys(D.cr).map(k=>[+k,D.cr[k].x,D.cr[k].y,Math.round(D.cr[k].t-G.t)]),jb:D.job.map(j=>[j.id,j.team,j.a,j.b,Math.round(j.len),Math.round(j.prog/20)*20,j.pts.flat()]),cu:G.towns.filter(t=>t.cut).map(t=>t.i),tr:G.towns.filter(t=>t.trade).map(t=>t.i),cv:G.ents.filter(e=>e.cv&&!e.dead).map(e=>e.id),sk:G.towns.filter(t=>t.ow>=0&&t.dl>G.t).map(t=>t.i)};}
 function lgApply(d){const D=G.lgd;if(!D||!d||typeof d!=='object')return;const un=a=>{const o=[];for(let i=0;i+1<a.length;i+=2)o.push([a[i],a[i+1]]);return o;};

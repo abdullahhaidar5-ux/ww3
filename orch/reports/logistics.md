@@ -36,8 +36,18 @@ is already in CLAUDE.md and BACKLOG (line 14).
 - AI: gets convoys automatically (same rule for every nation); its truck count ignores convoys. `node orch/convoyprobe.mjs` checks it end to end.
 - Smooth gate on this 2-core box fails the same way on plain origin/main (p95 frame ms, draw calls): not from this change; CI decides.
 
+## Stage 5 shipped (part): TERRITORY + FRONT LINE (orch/logistics2)
+- `terrUpdate()` (03c): influence field on an 80-unit grid from HQs (r1000), held towns (r520, hamlets 340, weaker if CUT OFF) and finished Supply Depots
+  (r560). Cell owner = strongest influence (neutral below 0.08). Recomputed only when the source signature changes (checked at the 0.5 s town tick).
+- **Front line** = border between non-allied owners: red/white dashed line on the ground (always on in Conquest) and on the minimap, which also gets a
+  faint team-coloured territory tint.
+- **Building only in territory:** `validSpot` refuses everything except Supply Depots in a cell an enemy dominates ("Enemy territory - push the front
+  line first"). A forward depot extends your territory, which is how you push the front. Same rule for every nation, AI included.
+- NOT done of stage 5: depots as real graph nodes joined by roads (convoys do not visit depots yet), rally/production point at a depot.
+- `node orch/terrprobe.mjs` checks it.
+
 ## NOT done (next stages, in this order)
-5 front line + build-only-in-territory + forward depots as network nodes, 6 mined roads / checkpoints / tolls,
+5b depots as graph nodes, 6 mined roads / checkpoints / tolls,
 7 bridge demolish / rebuild / pontoon, 8 ports + blockade, 9 airlift, AI blowing bridges / convoy escorts / airlift / blockade, tutorial Logistics
 step, road art per theme (road is drawn by the ground shader as gravel on every theme today). The AI tourney (18 nations, ~equal) and the Cloudflare
 free-plan CPU numbers (/battle-bench) were not run on this slow 2-core box.
