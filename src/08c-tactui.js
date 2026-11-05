@@ -1,7 +1,7 @@
 /* ---------- Tactics UI: dig in, sandbag lines / trenches, field repair, vehicle damage readout (Abdullah, 2026-11-04) ----------
    Hotkey I: infantry dig a foxhole; with a Construction Vehicle selected it starts a sandbag line instead (press again for a
    trench). A line is two clicks / taps: where it starts, where it ends. Right-click (or Esc) cancels. Buttons in the command bar
-   (and a touch strip button) do the same, so everything works with touch alone. */
+   (and a touch strip "Dig in" button) do the same, so everything works with touch alone. */
 const CRIT_NAME={1:'Tracks / wheels knocked out - cannot move',2:'Turret jammed - slow to aim and fire',4:'Engine on fire - burning and slower'};
 function critText(c){const a=[];for(const b of [1,2,4])if(c&b)a.push(CRIT_NAME[b]);return a.join(' · ');}
 function tactOwn(){return G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);}
