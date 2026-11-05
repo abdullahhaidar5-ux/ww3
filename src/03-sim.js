@@ -448,7 +448,7 @@ function moraleTick(u,dt){const T0=G.teams[u.team];if(fearlessT(T0,u)){u.fear=0;
   return false;}
 function bailOut(u){const T=G.teams[u.team];u.aband=1;u.cp=0;u.cpT=0;u.target=null;u.order=null;u.guard=null;u.rout=0;u.fear=0;u.last=0;
   FXE('txt',[u.x|0,u.y|0,'CREW BAILED OUT',u.team,-2]);
-  try{const a=(u.id*2.399)%6.28,c=addUnit(u.team,'inf',u.x+Math.cos(a)*(u.r+10),u.y+Math.sin(a)*(u.r+10));if(c){c.hp=c.max*.5;c.crew=1;c.crT=G.t+30;c.fear=courageOf(c)*1.05;}}catch(err){}
+  try{let nc=0;for(const q of G.ents)if(q.crew&&!q.dead&&q.team===u.team)nc++;if(nc>=4)throw 0;const a=(u.id*2.399)%6.28,c=addUnit(u.team,'inf',u.x+Math.cos(a)*(u.r+10),u.y+Math.sin(a)*(u.r+10));if(c){c.hp=c.max*.5;c.crew=1;c.crT=G.t+16;c.fear=courageOf(c)*1.05;}}catch(err){}
   if(u.team===ME)log(u.team,`The crew of our ${u.s.name} bailed out - send infantry to re-crew it before the enemy takes it.`,'w');}
 const AB_N=[];
 function updAband(u,dt){u.target=null;u.order=null;u.guard=null;u.cpT=(u.cpT||0)-dt;if(u.cpT>0)return;u.cpT=.5;let own=0,foe=-1;
