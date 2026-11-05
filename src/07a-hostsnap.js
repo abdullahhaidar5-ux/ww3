@@ -14,7 +14,7 @@ const CMD_T=['go','atk','atkOil','fld','q','dq','cb','bld','bldGo','tun','unl','
 function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;
   if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
   if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.at=a.at?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
-const NET_PV=6;
+const NET_PV=7;   // 7 = Conquest (towns, tax command, rebel team)
 // A 'start' message for a battle where players picked start spots ('st') carries NET_PVS instead: an older game, which
 // would ignore the picks and put the bases elsewhere, refuses it as another version (close and reopen) instead.
 const NET_PVS=NET_PV+100;
@@ -104,7 +104,7 @@ function snapDrops(dr){if(!dr.length)return null;let c=NET.dyC;if(!c||c.t!==G.t|
 // owned / being-captured towns as a flat [civIndex, owner, capture%, capturingTeam, ...] list
 function twPack(){const r=[];if(G.towns)for(const t of G.towns)if(t.ow>=0||t.reb>G.t)r.push(t.i,t.ow,t.rate,Math.round(t.un),Math.round(t.tax*10),t.why|0,t.reb>G.t?Math.ceil(t.reb-G.t):0,t.whole?1:0,t.fr|0,t.gar|0);return r;}
 function civPack(){const r=[];if(G.civ)for(const c of G.civ)if(!c.dead&&(c.ow>=0||c.cp>0))r.push(c.i,c.ow>=0?c.ow:-1,Math.round((c.cp||0)*100),c.cpT>=0?c.cpT:-1);return r;}
-function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0),cv=civPack(),tw=twPack(),bs=G.bse||[],gd=G.teams.map(O=>O.gdoc||'');NET.tgC={t:G.t,v:{fa,oil,out,cv,tw,bs,gd},js:JSON.stringify([fa,oil,out,cv,tw,bs,gd])};}
+function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0),cv=civPack(),tw=twPack(),bs=G.bse||[],sf=G.teams.map(T=>T.reb||!T._upl||!T.sup?-1:Math.round(100*T.charge/T.sup.charge)),gd=G.teams.map(O=>O.gdoc||'');NET.tgC={t:G.t,v:{fa,oil,out,cv,tw,bs,sf,gd},js:JSON.stringify([fa,oil,out,cv,tw,bs,sf,gd])};}
   const C=NET.tgC,S=NET.tgS||(NET.tgS={}),last=S[k];if(last&&last.js===C.js&&G.t-last.t<1)return {};S[k]={js:C.js,t:G.t};return C.v;}
 // EW minimap data for this team only (enemy bubbles over its units, ghost contacts, own spoof cooldowns); null when empty
 function ewPack(k){const v=ewView(k);return v.j.length||v.g.length||v.cd.length?{j:v.j,g:v.g,cd:v.cd}:null;}

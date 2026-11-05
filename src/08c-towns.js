@@ -57,7 +57,12 @@ function townBuild(){if(!document.getElementById('townCss')){const st=document.c
 function cqBanner(){if(!G||!G.conq||G.over)return;let b=$('cqBn');if(!b){b=document.createElement('div');b.id='cqBn';b.style.cssText='position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;font:600 14px/1.3 system-ui,sans-serif;color:#f4e9c2;text-shadow:0 1px 3px #000;max-width:calc(100vw - 150px)';document.body.appendChild(b);}
   const setup=G.t<G.setupEnd;let h='';if(setup){const l=Math.max(0,Math.ceil(G.setupEnd-G.t));h=`<div style="background:rgba(60,45,10,.88);border:1px solid #d9b34a;border-radius:6px;padding:4px 12px;color:#ffe08a">SETUP PHASE ${Math.floor(l/60)}:${String(l%60).padStart(2,'0')} <span style="font-weight:400;font-size:12px">&middot; build up and grab towns &middot; no firing yet</span></div>`;}
   if(G.bse&&G.teams[ME]){let c=0,m=0,n=0;for(const T of G.teams){if(T.reb||T.out||ally(T.id,ME)||!G.bse[T.id])continue;c+=G.bse[T.id][0];m+=G.bse[T.id][1];n++;}if(n&&m)h+=`<div style="margin-top:3px;font-size:12px;opacity:.92">${n>1?'Enemy bases':'Enemy base'}: ${c} of ${m} structures left</div>`;}
+  {const tm=x=>Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0');let sl='';
+   for(const T of G.teams){if(T.reb||T.out||!T.sup)continue;const sec=strikeSecs(T);if(sec<0)continue;const mine=ally(T.id,ME);
+     sl+=`<div style="font-size:12px;margin-top:2px;color:${mine?'#bfe8c4':'#ffb4a8'}">${T.F.name} ${UPLINK[T.fac]?UPLINK[T.fac][0]:'missile strike'}: ${sec<=0.5?'READY':'ready in '+tm(sec)}</div>`;}
+   h+=sl;}
   if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
+function strikeSecs(T){let f;if(MODE==='client'&&G.sfd)f=G.sfd[T.id];else f=T._upl?100*T.charge/T.sup.charge:-1;if(f==null||f<0)return -1;return Math.max((1-f/100)*T.sup.charge/.5,G.t<CQ_STRIKE_MIN?CQ_STRIKE_MIN-G.t:0);}
 function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){}
   // territory income next to the money
   const cr=$('credits');if(cr){let s=$('terrInc');if(!s){s=document.createElement('span');s.id='terrInc';s.style.cssText='font-size:11px;color:#9be39b;margin-left:6px;font-weight:600;white-space:nowrap';cr.parentNode.insertBefore(s,cr.nextSibling);}

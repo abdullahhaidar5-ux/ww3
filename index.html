@@ -5300,13 +5300,14 @@ const XLB={RS:{turret:{hp:1.4,dmg:1.25,rng:1.12},tunnel:{hp:1.35,dmg:1.3},sam:{h
 const sc={};
 // National names for the submarine and the coastal anti-ship battery (stats are shared; Iran's are cheaper and quicker, see MODS).
 const SUBN={US:'Virginia-class Submarine',TR:'Preveze-class Submarine',IL:'Dolphin-class Submarine',EU:'Barracuda-class Submarine',UA:'Kilo-class Submarine',RU:'Yasen-class Submarine',IR:'Ghadir Midget Submarine',SA:'Type 209 Submarine',AE:'Scorpene Submarine',PK:'Agosta 90B Submarine',IN:'Kalvari-class Submarine',CN:'Type 039 Yuan Submarine',KP:'Romeo-class Submarine',KR:'Son Won-il Submarine',EG:'Type 209/1400 Submarine',CU:'Foxtrot Submarine'};
+const MDN={US:'Patriot Battery',IL:'Iron Dome Battery',RU:'S-400 Triumf',CN:'HQ-9 Battery',IN:'Akash Battery',TR:'Hisar Battery',KR:'KM-SAM Battery',IR:'Bavar-373 Battery',EU:'SAMP/T Battery',UA:'NASAMS Battery',SA:'THAAD Battery',AE:'THAAD Battery',PK:'HQ-16 Battery',KP:'KN-06 Battery',EG:'S-300 Battery'};   // Conquest: SAM sites are every nation's missile defence (they intercept part of a strike salvo)
 const COASTN={US:'Naval Strike Missile Battery',TR:'Atmaca Coastal Battery',IL:'Gabriel Coastal Battery',EU:'Exocet MM40 Battery',UA:'Neptune Coastal Battery',RU:'Bastion-P Coastal Battery',IR:'Noor / Qader Coastal Missiles',SA:'Harpoon Coastal Battery',AE:'Exocet Coastal Battery',PK:'Zarb Coastal Battery',IN:'BrahMos Coastal Battery',CN:'YJ-62 Coastal Battery',KP:'Kumsong Coastal Battery',KR:'Haeseong Coastal Battery',EG:'Otomat Coastal Battery',CU:'P-15 Termit Battery',RS:'Mountain Anti-Ship Rockets',DW:'Coffee Coast Rocket Battery'};
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
 function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
   const s=Object.assign({},BASE[kind],(F.units||{})[kind]||{});s.kind=kind;if(kind==='cleric'&&fac==='KP')s.name='Dear Leader';{const X=(XL[fac]||{})[kind];if(X)for(const q in X)if(s[q]!=null)s[q]*=X[q];if(X)s.xl=1;}const inf=s.armor==='light',veh=s.armor==='heavy'||s.cls==='heli'||s.cls==='jet';
   let c=s.cost*(m.cost||1);if(inf)c*=(m.infCost||1);const B=BAL[fac];if(B)c*=(B._||1)*(B[kind]||1);s.cost=Math.round(c/25)*25;if(inf)s.time*=(m.infTime||1);
   s.hp=Math.round(s.hp*(m.hp||1)*(veh?(m.vehHp||1):1));if(m.spd&&s.dom!=='air')s.spd*=m.spd;{const D=DOCT[fac]||{};if(D.barrage&&s.cls==='arty'){s.rng*=1.15;if(s.splash)s.splash*=1.3;s.rof*=.85;s.cost=Math.round(s.cost*.85/25)*25;}if(D.covert&&(s.cls==='inf'||s.cls==='at')&&s.dom==='ground'&&kind!=='hacker')s.camo=1;if(D.shock&&s.armor==='heavy'&&s.dom==='ground')s.spd*=1.1;}s.dmg*=(m.dmg||1);s.aggro=kind==='drone'?290:s.rng+90;if(s.aa===undefined)s.aa=0;return sc[k]=s;}
-function bstats(fac,kind){const k=fac+'#'+kind;if(sc[k])return sc[k];const m=FACTIONS[fac].mods||{};const s=Object.assign({},STRUCT[kind]);s.kind=kind;if(kind==='coast'&&COASTN[fac])s.name=COASTN[fac];{const X=(XLB[fac]||{})[kind];if(X){for(const q in X)if(s[q]!=null)s[q]*=X[q];s.xl=1;}}
+function bstats(fac,kind){const k=fac+'#'+kind;if(sc[k])return sc[k];const m=FACTIONS[fac].mods||{};const s=Object.assign({},STRUCT[kind]);s.kind=kind;if(kind==='coast'&&COASTN[fac])s.name=COASTN[fac];if(kind==='sam'&&MDN[fac])s.name=MDN[fac];{const X=(XLB[fac]||{})[kind];if(X){for(const q in X)if(s[q]!=null)s[q]*=X[q];s.xl=1;}}
   if(kind==='econ'&&ECON[fac])s.name=ECON[fac];if(kind==='uplink'&&UPLINK[fac])s.name=UPLINK[fac][0];s.hp=Math.round(s.hp*(m.bldHp||1));s.cost=kind==='econ'?s.cost:Math.round(s.cost*(m.cost||1)/25)*25;if(s.dmg)s.dmg*=(m.dmg||1);s.aa=s.aa||0;s.armor='bld';return sc[k]=s;}
 const BH={garrison:18,econ:30,depot:19,tunnel:12,fort:16,hq:39,barracks:26,factory:34,airfield:19,shipyard:20,coast:12,turret:12,sam:12,uplink:30};
 function lerpA(a,b,t){const d=((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;return a+d*Math.min(1,t);}
@@ -6460,7 +6461,7 @@ function tactic(e,wpn,src,splash){let m=1,tag=null;if(e.isB||!src||src.isB&&!src
 function specialMult(e,wpn,src){let m=1;if(src&&src.ambT>G.t)m*=1.5;  // tunnel ambush: +50% damage for 3 s after leaving a tunnel
   if(e.mark>G.t)m*=1.25;if((wpn==='shell'||wpn==='missile'||wpn==='bomb'||wpn==='super'||src&&src.s&&src.s.rocket)&&auraProtect(e,'dome')){m*=.45;if(G.t-(e.domeT||-9)>1.2){e.domeT=G.t;FXE('boom',[(e.x+rnd(-20,20))|0,(e.y+rnd(-20,20))|0,6,0]);}}
   if(src&&!src.isB&&(src.s.dom==='air'||src.kind==='drone'||wpn==='missile')&&auraProtect(e,'jam'))m*=.5;return m;}
-function applyDmg(e,d,wpn,team,src,splash){if(e.dead)return;if(e.kind==='fort'){if(wpn!=='bb')return;e.hp-=e.max*.55;e.lastHit=G.t;if(e.hp<=0)kill(e,team,src);return;}if(e.civ&&e.kind==='civb'){const m=VS[wpn]&&VS[wpn].bld;if(m)damageCiv(e.civ,d*m,team);return;}if(e.oil){const m=VS[wpn]&&VS[wpn].bld;if(m)damageOil(e.oil,d*m,team);return;}if(e.isB&&team!=null&&!ally(team,e.team)){const V=G.teams[e.team];if(G.t-(V.atkWarn??-99)>25){V.atkWarn=G.t;log(e.team,'Our base is under attack!','w');}}else if(!e.isB&&e.s&&!e.civ&&team!=null&&e.team!=null&&!ally(team,e.team)&&G.teams[e.team]){const V=G.teams[e.team];if(G.t-(V.fireWarn??-99)>14){V.fireWarn=G.t;log(e.team,'Our troops are under fire!','v5');}}const ar=e.isB?'bld':(e.landed?'heavy':e.s.armor);const m=VS[wpn][ar];if(!m)return;const tc=tactic(e,wpn,src,splash);const dd=d*m*dmgIn(e,wpn)*tc.m*specialMult(e,wpn,src);if(src&&!src.isB&&src.s.mark&&!e.isB)e.mark=G.t+6;e.hp-=dd;e.lastHit=G.t;
+function applyDmg(e,d,wpn,team,src,splash){if(e.dead)return;if(G.curSid&&e.isB){const q=e._sd&&e._sd.id===G.curSid?e._sd:(e._sd={id:G.curSid,sum:0}),room=e.max*CQ_STRIKE_CAP-q.sum;if(room<=0)return;if(d>room)d=room;q.sum+=d;}if(e.kind==='fort'){if(wpn!=='bb')return;e.hp-=e.max*.55;e.lastHit=G.t;if(e.hp<=0)kill(e,team,src);return;}if(e.civ&&e.kind==='civb'){const m=VS[wpn]&&VS[wpn].bld;if(m)damageCiv(e.civ,d*m,team);return;}if(e.oil){const m=VS[wpn]&&VS[wpn].bld;if(m)damageOil(e.oil,d*m,team);return;}if(e.isB&&team!=null&&!ally(team,e.team)){const V=G.teams[e.team];if(G.t-(V.atkWarn??-99)>25){V.atkWarn=G.t;log(e.team,'Our base is under attack!','w');}}else if(!e.isB&&e.s&&!e.civ&&team!=null&&e.team!=null&&!ally(team,e.team)&&G.teams[e.team]){const V=G.teams[e.team];if(G.t-(V.fireWarn??-99)>14){V.fireWarn=G.t;log(e.team,'Our troops are under fire!','v5');}}const ar=e.isB?'bld':(e.landed?'heavy':e.s.armor);const m=VS[wpn][ar];if(!m)return;const tc=tactic(e,wpn,src,splash);const dd=d*m*dmgIn(e,wpn)*tc.m*specialMult(e,wpn,src);if(src&&!src.isB&&src.s.mark&&!e.isB)e.mark=G.t+6;e.hp-=dd;e.lastHit=G.t;
   if(!e.isB&&canRout(e)){e.fear=(e.fear||0)+dd/e.max*(isInf(e.s)?1.25:.7)*(coverAt(e.x,e.y)&&isInf(e.s)?.7:1)*(auraNear(e,'morale')?.5:1)+(splash?.05:.02);}
   if(!e.isB&&isInf(e.s)&&!auraNear(e,'morale')&&!auraNear(e,'rof')){const bk=team!=null&&G.teams[team]&&(DOCT[G.teams[team].fac]||{}).barrage&&(wpn==='shell'||wpn==='rocket'||splash)?1.5:1;e.supp=Math.min(1,(e.supp||0)+(dd/e.max*1.4+(wpn==='gun'||wpn==='tower'?.06:.12))*bk*(G.rubN&&rubAt(e.x,e.y)?.6:1));if(bk>1&&canRout(e))e.fear=(e.fear||0)+.04;}
   if(tc.tag&&tc.m>1.05&&G.t-(e.tagT||-9)>1.6&&(tc.tag==='REAR HIT'||tc.tag==='SIDE HIT'||tc.tag==='HIGH GROUND')){e.tagT=G.t;FXE('txt',[e.x|0,e.y|0,tc.tag,team,e.team]);}
@@ -6673,15 +6674,25 @@ function updProj(dt){for(const p of G.proj){if(p.wpn!=='shell'&&p.wpn!=='bomb'&&
   const a=Math.atan2(p.ty-p.y,p.tx-p.x),st=p.spd*dt,rem=Math.hypot(p.tx-p.x,p.ty-p.y);p.p+=st;
   if(rem<=st){p.done=true;const src=p.src&&!p.src.dead?p.src:null;if(p.splash)explode(p.tx,p.ty,p.splash,p.dmg,p.team,p.wpn,null,src);else if(!p.tgt.dead){applyDmg(p.tgt,p.dmg,p.wpn,p.team,src);FXE('boom',[p.tx|0,p.ty|0,p.wpn==='at'||p.wpn==='missile'?9:7,0]);}}
   else{p.x+=Math.cos(a)*st;p.y+=Math.sin(a)*st;}}G.proj=G.proj.filter(p=>!p.done);}
+/* Conquest missile rules: no strike before minute 8, each launch costs money, ~5 min recharge (charge fills at half speed), one salvo can take
+   at most 40% of any building's max HP, missile-defence batteries (SAM sites) intercept part of a salvo, strikes near a town raise its unrest. */
+const CQ_STRIKE_MIN=480,CQ_STRIKE_COST=1500,CQ_STRIKE_CAP=.4,CQ_MD_P=.28,CQ_MD_R=520;
 function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!working(team,'uplink'))return false;
+  if(G.conq){if(G.t<CQ_STRIKE_MIN){if(!T.ai)log(team,`No missile strikes before ${CQ_STRIKE_MIN/60}:00 - it is ${Math.floor(G.t/60)}:${String(Math.floor(G.t%60)).padStart(2,'0')}.`,'w');return false;}
+    if(T.credits<CQ_STRIKE_COST){if(!T.ai)log(team,`A launch costs $${CQ_STRIKE_COST}.`,'w');return false;}T.credits-=CQ_STRIKE_COST;G.sid=(G.sid|0)+1;}
+  const sid=G.sid|0;
   // missile nations: every missile visibly launches from the strike building and arcs through the sky onto its target
   // (same timing, damage and warning as before - only the visuals changed)
   const up=G.ents.find(e=>e.team===team&&e.kind==='uplink'&&!e.dead&&e.built>=1),sty=(UPLINK[T.fac]||[])[1],arc=up&&sty&&sty!=='air';
-  for(let i=0;i<S.n;i++){const a=rnd(0,6.28),r=S.n>1?rnd(0,S.spread):0,tx=x+Math.cos(a)*r,ty=y+Math.sin(a)*r,t=3+i*.28;G.strikes.push({x:tx,y:ty,t,r:S.r,dmg:S.dmg,team,kind:'sup'});FXE('strike',[tx|0,ty|0,+t.toFixed(2),S.r|0,1,arc?1:0]);
+  for(let i=0;i<S.n;i++){const a=rnd(0,6.28),r=S.n>1?rnd(0,S.spread):0,tx=x+Math.cos(a)*r,ty=y+Math.sin(a)*r,t=3+i*.28;G.strikes.push({x:tx,y:ty,t,r:S.r,dmg:S.dmg,team,kind:'sup',sid});FXE('strike',[tx|0,ty|0,+t.toFixed(2),S.r|0,1,arc?1:0]);
     if(arc)FXE('bmis',[(up.x+rnd(-14,14))|0,(up.y+rnd(-14,14))|0,tx|0,ty|0,+t.toFixed(2),i]);}
   T.charge=0;log(team,`${S.name} launched.`,'g');for(const O of G.teams)if(O.id!==team)log(O.id,`Warning: enemy ${S.name} inbound. Move your units!`,'w');return true;}
 function addStrike(x,y,t,r,dmg,team,kind){G.strikes.push({x,y,t,r,dmg,team,kind});FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,kind==='sup'?1:0],team);}
-function updStrikes(dt){for(const s of G.strikes){s.t-=dt;if(s.t<=0){s.done=true;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?'super':s.kind==='bb'?'bb':'shell',s.kind);}}G.strikes=G.strikes.filter(s=>!s.done);}
+function updStrikes(dt){for(const s of G.strikes){s.t-=dt;if(s.t<=0){s.done=true;
+    if(G.conq&&s.kind==='sup'){let md=0;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)&&Math.hypot(e.x-s.x,e.y-s.y)<CQ_MD_R)md++;
+      if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-CQ_MD_P,md))){FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<CQ_MD_R))log(T.id,'Missile defence intercepted an incoming missile.','g');continue;}
+      if(G.towns)for(const t of G.towns)if(t.ow>=0&&!ally(t.ow,s.team)&&Math.hypot(t.x-s.x,t.y-s.y)<s.r+260)t.shock=Math.max(t.shock||0,G.t+30);}
+    G.curSid=s.kind==='sup'?s.sid|0:0;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?'super':s.kind==='bb'?'bb':'shell',s.kind);G.curSid=0;}}G.strikes=G.strikes.filter(s=>!s.done);}
 
 /* ---------- general's powers ---------- */
 function hqOf(team){return G.ents.find(e=>e.team===team&&e.kind==='hq'&&!e.dead)||G.ents.find(e=>e.team===team&&e.isB&&!e.dead);}
@@ -7188,7 +7199,7 @@ function simUpdate(dt){G.t+=dt;gdRecon(dt);stSample();G.pfTok=Math.min(PF_BURST,
   G.mT=(G.mT||0)-dt;if(G.mT<=0){G.mT=.2;updMines();}
   for(const T of G.teams){T._upl=false;T._tun=false;}for(const e of G.ents){if(!e.isB||e.dead||e.built<1)continue;const T=G.teams[e.team];if(!T)continue;if(e.kind==='tunnel')T._tun=true;else if(e.kind==='uplink'&&!(e.dis>G.t))T._upl=true;}
   for(const T of G.teams){if(!T.tun.length)continue;for(const u of T.tun)u.hp=Math.min(u.max,u.hp+12*dt);if(!T._tun){log(T.id,`Our last tunnel was destroyed. ${T.tun.length} units inside were lost.`,'w');T.tun=[];}}
-  for(const T of G.teams){if(T._upl)T.charge=Math.min(T.sup.charge,T.charge+dt);for(const k in T.pw)if(T.pw[k].cd>0)T.pw[k].cd=Math.max(0,T.pw[k].cd-dt);
+  for(const T of G.teams){if(T._upl)T.charge=Math.min(T.sup.charge,T.charge+dt*(G.conq?.5:1));for(const k in T.pw)if(T.pw[k].cd>0)T.pw[k].cd=Math.max(0,T.pw[k].cd-dt);
     {let j=0;for(const r of T.reveals){r.t-=dt;if(r.t>0)T.reveals[j++]=r;}T.reveals.length=j;}}
   // expired smoke screens and shields are dropped once a second (they were kept for the whole match and scanned every frame)
   if(!(G.prT>G.t)){G.prT=G.t+1;for(const k of ['smokes','shields'])if(Array.isArray(G[k])&&G[k].length){let j=0;const A=G[k];for(const S of A)if(S.t>G.t)A[j++]=S;A.length=j;}}
@@ -9272,7 +9283,7 @@ function applyTeam(d){if(!G||!d)return;G.ewv=d.ew?Object.assign(d.ew,{rt:G.t}):n
   T.pw={};for(const k in (d.pw||{}))if(POWERS[k]){const v=d.pw[k];T.pw[k]=Array.isArray(v)?{cd:+v[0]||0,lv:+v[1]||1}:{cd:+v||0,lv:1};}T.reveals=(d.rv||[]).map(([x,y,r,t])=>({x,y,r,t}));T.rally=d.rl?{x:d.rl[0],y:d.rl[1]}:null;
   if(Array.isArray(d.oil))d.oil.forEach((v,i)=>{const o=G.oil[i];if(o&&Array.isArray(v)){o.owner=v[0];if(Array.isArray(v[1]))o.cp=v[1].map(x=>+x||0);o.dead=!!v[2];o.hp=+v[3]||0;}});if(Array.isArray(d.out))d.out.forEach((x,i)=>{if(G.teams[i]&&x&&!G.teams[i].out){G.teams[i].out=true;if(i===ME&&!NET.spec)showElim();}});
   if(Array.isArray(d.cv)&&G.civ){for(const c of G.civ){c.ow=-1;c.cp=0;c.cpT=-1;}const v=d.cv;for(let i=0;i+3<v.length;i+=4){const c=G.civ[v[i]];if(c){c.ow=v[i+1];c.cp=v[i+2]/100;c.cpT=v[i+3];}}}
-  if(Array.isArray(d.bs))G.bse=d.bs;if(typeof d.cq==='number')G.conq=!!d.cq;
+  if(Array.isArray(d.bs))G.bse=d.bs;if(Array.isArray(d.sf))G.sfd=d.sf;if(typeof d.cq==='number')G.conq=!!d.cq;
   if(Array.isArray(d.tw)&&G.towns){for(const t of G.towns){t.ow=-1;t.tax=0;t.reb=0;t.un=0;t.fr=0;t.gar=0;}const v=d.tw;for(let i=0;i+9<v.length;i+=10){const t=G.towns[v[i]];if(t){t.ow=v[i+1];t.rate=v[i+2];t.un=v[i+3];t.tax=v[i+4]/10;t.why=v[i+5];t.reb=v[i+6]>0?G.t+v[i+6]:0;t.whole=v[i+7];t.fr=v[i+8];t.gar=v[i+9];}}for(const T of G.teams)T.terr=0;for(const t of G.towns)if(t.ow>=0&&G.teams[t.ow])G.teams[t.ow].terr+=t.tax;}
   if(Array.isArray(d.fa))d.fa.forEach((a,i)=>{if(G.fields[i])G.fields[i].amt=a;});if(Array.isArray(d.gd))d.gd.forEach((k,i)=>{const O=G.teams[i];if(O&&i!==ME&&O.gdoc!==k){O.gdoc=GDOC[k]?k:'';}});}
 
@@ -9299,7 +9310,7 @@ const CMD_T=['go','atk','atkOil','fld','q','dq','cb','bld','bldGo','tun','unl','
 function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;
   if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
   if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.at=a.at?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
-const NET_PV=6;
+const NET_PV=7;   // 7 = Conquest (towns, tax command, rebel team)
 // A 'start' message for a battle where players picked start spots ('st') carries NET_PVS instead: an older game, which
 // would ignore the picks and put the bases elsewhere, refuses it as another version (close and reopen) instead.
 const NET_PVS=NET_PV+100;
@@ -9389,7 +9400,7 @@ function snapDrops(dr){if(!dr.length)return null;let c=NET.dyC;if(!c||c.t!==G.t|
 // owned / being-captured towns as a flat [civIndex, owner, capture%, capturingTeam, ...] list
 function twPack(){const r=[];if(G.towns)for(const t of G.towns)if(t.ow>=0||t.reb>G.t)r.push(t.i,t.ow,t.rate,Math.round(t.un),Math.round(t.tax*10),t.why|0,t.reb>G.t?Math.ceil(t.reb-G.t):0,t.whole?1:0,t.fr|0,t.gar|0);return r;}
 function civPack(){const r=[];if(G.civ)for(const c of G.civ)if(!c.dead&&(c.ow>=0||c.cp>0))r.push(c.i,c.ow>=0?c.ow:-1,Math.round((c.cp||0)*100),c.cpT>=0?c.cpT:-1);return r;}
-function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0),cv=civPack(),tw=twPack(),bs=G.bse||[],gd=G.teams.map(O=>O.gdoc||'');NET.tgC={t:G.t,v:{fa,oil,out,cv,tw,bs,gd},js:JSON.stringify([fa,oil,out,cv,tw,bs,gd])};}
+function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0),cv=civPack(),tw=twPack(),bs=G.bse||[],sf=G.teams.map(T=>T.reb||!T._upl||!T.sup?-1:Math.round(100*T.charge/T.sup.charge)),gd=G.teams.map(O=>O.gdoc||'');NET.tgC={t:G.t,v:{fa,oil,out,cv,tw,bs,sf,gd},js:JSON.stringify([fa,oil,out,cv,tw,bs,sf,gd])};}
   const C=NET.tgC,S=NET.tgS||(NET.tgS={}),last=S[k];if(last&&last.js===C.js&&G.t-last.t<1)return {};S[k]={js:C.js,t:G.t};return C.v;}
 // EW minimap data for this team only (enemy bubbles over its units, ghost contacts, own spoof cooldowns); null when empty
 function ewPack(k){const v=ewView(k);return v.j.length||v.g.length||v.cd.length?{j:v.j,g:v.g,cd:v.cd}:null;}
@@ -11364,6 +11375,7 @@ async function rpParse(buf){const u=buf instanceof Uint8Array?buf:new Uint8Array
   if(!Array.isArray(hdr.si&&hdr.si.facs)||!hdr.si.facs.every(f=>FKEYS.includes(f)))throw new Error('this replay has nations this version does not know');return {hdr,frames};}
 /* ---------- watching ---------- */
 async function rpWatch(buf){let P;try{P=await rpParse(buf);}catch(e){alert('Could not open the replay: '+(e&&e.message||e));return false;}
+  if(typeof NET_PV==='number'&&(P.hdr?.ver|0)!==NET_PV){alert('This replay was recorded with an older version of the game (before Conquest) and cannot be played back.');return false;}
   if(NET.game||NET.code)try{leaveNet();}catch(e){}try{kcReset();}catch(e){}
   $('end').hidden=true;RP.hdr=P.hdr;RP.frames=P.frames;RP.i=0;RP.spd=1;RP.paused=false;RP.kf=[];RP.fog=!P.hdr.full;RP.view=P.hdr.me|0;
   P.frames.forEach((f,i)=>{if(f[1]==='S'&&f[2].indexOf('"f":1')>=0)RP.kf.push(i);});
@@ -11488,7 +11500,8 @@ const TUT=[
  {k:'atk',pc:'Attack: select your soldiers, then right-click a red enemy soldier. Press "Show me" to find them.',tc:'Attack: select your soldiers, then tap a red enemy soldier. Press "Show me" to find them.'},
  {k:'bar',pc:'Build a Barracks: open the build panel, pick Barracks, then click near your base to place it. Wait until it finishes.',tc:'Build a Barracks: open the build panel, pick Barracks, then tap near your base to place it. Wait until it finishes.'},
  {k:'trn',pc:'Train soldiers: select the Barracks (left-click it) and train some infantry from its panel.',tc:'Train soldiers: tap the Barracks and train some infantry from its panel.'},
- {k:'oil',pc:'Capture an oil derrick: send infantry (right-click) to a derrick that is not yours and keep them there. It pays you extra money. "Show me" finds one.',tc:'Capture an oil derrick: send infantry (tap the derrick) to one that is not yours and keep them there. It pays you extra money. "Show me" finds one.'},
+ {k:'town',pc:'Conquest - capture a town or hamlet: select infantry and right-click one of its houses so they garrison it. More than half of its key buildings makes it yours, and it pays you TAX. "Show me" finds the nearest one.',tc:'Conquest - capture a town or hamlet: select infantry and tap one of its houses so they garrison it. "Show me" finds the nearest one.'},
+ {k:'tax',pc:'Set its tax: click your town (or its square/circle on the minimap) and pick Low / Normal / High / Extortionate. High tax pays more but angers the locals; near the front they rise much faster. High tax in safe towns behind your lines, Low tax on the front line - at 100 unrest the town revolts and rebels throw you out.',tc:'Set its tax: tap your town (or its marker on the minimap) and pick a rate. High in safe towns behind your lines, Low on the front line - at 100 unrest the town revolts.'},
  {k:'pow',pc:'Use a power: you have a free general point. Open Powers, buy one, then use it (a hotkey or a click on the map).',tc:'Use a power: you have a free general point. Open Powers, buy one, then use it.'},
  {k:'win',pc:'Win: destroy the enemy base. Build up an army, attack-move with F + click, and keep your Barracks producing. Victory finishes the tutorial.',tc:'Win: destroy the enemy base. Build up an army and attack. Victory finishes the tutorial.'}];
 let TUTS=null;
@@ -11499,7 +11512,7 @@ function tutEl(){let el=document.getElementById('tut');if(el)return el;el=docume
 function tutUnits(){return G.ents.filter(u=>!u.isB&&u.team===ME&&!u.dead&&!['harv','dozer','hacker'].includes(u.kind));}
 function tutShow(){if(!G||!G.tut||!TUTS)return;const k=TUT[TUTS.i].k,me=G.teams[ME];let p=null;
   if(k==='atk'){const e=G.ents.find(u=>!u.isB&&u.team!==ME&&!u.dead);if(e)p=e;}
-  else if(k==='oil'){let best=1e9;for(const o of G.oil){if(o.owner===ME||o.dead&&false)continue;const hq=G.ents.find(e=>e.team===ME&&e.kind==='hq');const d=hq?Math.hypot(o.x-hq.x,o.y-hq.y):0;if(d<best){best=d;p=o;}}}
+  else if(k==='town'||k==='tax'){let best=1e9;const hq=G.ents.find(e=>e.team===ME&&e.kind==='hq');for(const t of G.towns){if(k==='town'?t.ow===ME:t.ow!==ME)continue;const d=hq?Math.hypot(t.x-hq.x,t.y-hq.y):0;if(d<best){best=d;p=t;}}}
   else if(k==='win'){p=G.ents.find(e=>e.team!==ME&&e.kind==='hq'&&!e.dead);}
   else p=G.ents.find(e=>e.team===ME&&e.kind==='hq'&&!e.dead);
   if(p)try{centerOn(p.x,p.y);}catch(e){}}
@@ -11509,7 +11522,7 @@ function tutEnter(){const s=TUT[TUTS.i],me=G.teams[ME];
   if(s.k==='move')TUTS.pos=new Map(tutUnits().map(u=>[u.id,[u.x,u.y]]));
   if(s.k==='atk')TUTS.k0=me.kills|0;
   if(s.k==='trn')TUTS.b0=me.built|0;
-  if(s.k==='oil')TUTS.o0=G.oil.filter(o=>o.owner===ME).length;
+  if(s.k==='town')TUTS.t0=G.towns.filter(t=>t.ow===ME).length;
   if(s.k==='pow'){TUTS.unl={};}
   tutRender();}
 function tutAdvance(skip){if(!TUTS||!G||!G.tut)return;const el=tutEl();
@@ -11526,7 +11539,8 @@ function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&
   else if(k==='atk')ok=(me.kills|0)>TUTS.k0;
   else if(k==='bar')ok=G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='barracks'&&!e.dead&&e.built>=1);
   else if(k==='trn')ok=(me.built|0)>TUTS.b0&&G.ents.some(e=>e.team===ME&&e.kind==='inf'&&!e.dead)||(me.built|0)>TUTS.b0+1;
-  else if(k==='oil')ok=G.oil.filter(o=>o.owner===ME).length>TUTS.o0;
+  else if(k==='town')ok=G.towns.filter(t=>t.ow===ME).length>TUTS.t0;
+  else if(k==='tax')ok=G.towns.some(t=>t.ow===ME&&t.rate!==1);
   else if(k==='pow'){/* powers start locked for a few minutes: unlock any we own on first sight; a cooldown that starts afterwards means one was used */
     for(const pk in me.pw){const c=me.pw[pk].cd;if(TUTS.unl[pk]){if(c>0.5)ok=true;}else{TUTS.unl[pk]=true;if(c>0)me.pw[pk].cd=0;}}}
   if(ok)tutAdvance(false);}
@@ -11534,7 +11548,7 @@ setInterval(()=>{try{tutCheck();}catch(e){}},400);
 function startTutorial(){MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
   const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';
   TERR_DEFER=true;try{newGame({w:setup.w|0,seed:(Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
-  const T=G.teams[0];G.tut=true;T.credits+=3000;T.gxp=Math.max(T.gxp|0,RANKS[1]);promoteGeneral(T);if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
+  const T=G.teams[0];G.tut=true;G.setupEnd=0;T.credits+=3000;T.gxp=Math.max(T.gxp|0,RANKS[1]);promoteGeneral(T);if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
   try{const hq=G.ents.find(e=>e.team===0&&e.kind==='hq'),a=Math.atan2(MAPH/2-hq.y,MAPW/2-hq.x);
     for(let i=0;i<3;i++){const p=nearestPassXY('ground',hq.x+Math.cos(a)*380+rnd(-60,60),hq.y+Math.sin(a)*380+rnd(-60,60));if(p)addUnit(1,'inf',p[0],p[1]);}}catch(e){console.warn('tutorial spawn',e);}
   TUTS={i:0};afterStart();{const el=tutEl();for(const id of ['tutShow','tutSkip'])$(id).hidden=false;$('tutExit').textContent='Exit tutorial';}tutEnter();}
@@ -11602,7 +11616,12 @@ function townBuild(){if(!document.getElementById('townCss')){const st=document.c
 function cqBanner(){if(!G||!G.conq||G.over)return;let b=$('cqBn');if(!b){b=document.createElement('div');b.id='cqBn';b.style.cssText='position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;font:600 14px/1.3 system-ui,sans-serif;color:#f4e9c2;text-shadow:0 1px 3px #000;max-width:calc(100vw - 150px)';document.body.appendChild(b);}
   const setup=G.t<G.setupEnd;let h='';if(setup){const l=Math.max(0,Math.ceil(G.setupEnd-G.t));h=`<div style="background:rgba(60,45,10,.88);border:1px solid #d9b34a;border-radius:6px;padding:4px 12px;color:#ffe08a">SETUP PHASE ${Math.floor(l/60)}:${String(l%60).padStart(2,'0')} <span style="font-weight:400;font-size:12px">&middot; build up and grab towns &middot; no firing yet</span></div>`;}
   if(G.bse&&G.teams[ME]){let c=0,m=0,n=0;for(const T of G.teams){if(T.reb||T.out||ally(T.id,ME)||!G.bse[T.id])continue;c+=G.bse[T.id][0];m+=G.bse[T.id][1];n++;}if(n&&m)h+=`<div style="margin-top:3px;font-size:12px;opacity:.92">${n>1?'Enemy bases':'Enemy base'}: ${c} of ${m} structures left</div>`;}
+  {const tm=x=>Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0');let sl='';
+   for(const T of G.teams){if(T.reb||T.out||!T.sup)continue;const sec=strikeSecs(T);if(sec<0)continue;const mine=ally(T.id,ME);
+     sl+=`<div style="font-size:12px;margin-top:2px;color:${mine?'#bfe8c4':'#ffb4a8'}">${T.F.name} ${UPLINK[T.fac]?UPLINK[T.fac][0]:'missile strike'}: ${sec<=0.5?'READY':'ready in '+tm(sec)}</div>`;}
+   h+=sl;}
   if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
+function strikeSecs(T){let f;if(MODE==='client'&&G.sfd)f=G.sfd[T.id];else f=T._upl?100*T.charge/T.sup.charge:-1;if(f==null||f<0)return -1;return Math.max((1-f/100)*T.sup.charge/.5,G.t<CQ_STRIKE_MIN?CQ_STRIKE_MIN-G.t:0);}
 function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){}
   // territory income next to the money
   const cr=$('credits');if(cr){let s=$('terrInc');if(!s){s=document.createElement('span');s.id='terrInc';s.style.cssText='font-size:11px;color:#9be39b;margin-left:6px;font-weight:600;white-space:nowrap';cr.parentNode.insertBefore(s,cr.nextSibling);}
