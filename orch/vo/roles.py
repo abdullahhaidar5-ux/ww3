@@ -15,7 +15,9 @@ sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(ROOT, 'tools', 'voices
 import render as RN
 import score as SC
 import tough2 as T2
-from roles_lines import R
+import importlib
+_LM = importlib.import_module(os.environ.get('VO_LINES', 'roles_lines')); R = _LM.R   # VO_LINES=radio_lines VO_SUF=_h renders the radio/hero callouts instead (2026-11-05)
+SUF = os.environ.get('VO_SUF', '_r')
 import hashlib, pickle
 _TC = {}; _TCF = None
 class _CW:   # Whisper read-back cache (reruns over cached takes skip re-transcribing)
@@ -34,10 +36,12 @@ def _wc():
     return _CW(_W0())
 _W0 = SC._w; SC._w = _wc
 SR = RN.SR
-ROLES = ['inf', 'elite', 'at', 'tank', 'veh', 'pilot', 'navy', 'eng', 'leader']
+ROLES = getattr(_LM, 'ROLES', None) if SUF != '_r' else None
+ROLES = ROLES or ['inf', 'elite', 'at', 'tank', 'veh', 'pilot', 'navy', 'eng', 'leader']
 # per role: speaker slot in the nation's soldier list (or 'cmd'), mood override for select/move, pitch target (Hz) offset
-RV = {'inf': (0, None, 0), 'elite': (2, 'grim', 0), 'at': (1, None, 0), 'tank': (1, None, -4), 'veh': (2, None, 0),
+RV0 = {'inf': (0, None, 0), 'elite': (2, 'grim', 0), 'at': (1, None, 0), 'tank': (1, None, -4), 'veh': (2, None, 0),
       'pilot': ('cmd', 'cmd', 3), 'navy': (0, 'cmd', 0), 'eng': (2, None, 4), 'leader': ('cmd', 'cmd', 2)}
+RV = getattr(_LM, 'RV', RV0) if SUF != '_r' else RV0
 def proc(w, mood, f0t, rng, kind):
     f0 = float(np.median(librosa.yin(w, fmin=55, fmax=220, sr=SR, frame_length=2048, hop_length=256)))
     semis = float(np.clip(12 * np.log2(max(f0, 1) / f0t), 0, 2.5))
@@ -87,7 +91,7 @@ def nation(fac, log=print):
                 best = None; bk = None
                 wl = {'zh-cn': 'zh'}.get(ln, ln)
                 nch = len(re.sub(r'\s', '', say))
-                for take in range(4 if ln == 'hi' else 5):   # ko (2026-11-04 speed fix): stop after 2 takes unless the read-back is clearly wrong
+                for take in range(int(os.environ.get('VO_TAKES', 0)) or (4 if ln == 'hi' else 5)):   # ko (2026-11-04 speed fix): stop after 2 takes unless the read-back is clearly wrong
                        # QC: Whisper read-back; XTTS sometimes babbles on short lines (long tail / wrong words)
                     w = RN.trim(RN.synth(C['eng'], v, ln, say, take, mood)); d = len(w) / SR
                     if ln == 'hi':   # Whisper-small can't read short Hindi/Urdu radio lines: judge by length only (babble runs long)
@@ -127,11 +131,11 @@ def nation(fac, log=print):
                 if _TCF: pickle.dump(_TC, open(_TCF, 'wb'))
                 log(f'{fac} {role} {k} {v[:12]} {len(w)/SR:.1f}s | {text}')
             vmap[role].append(ent)
-    tmp = os.path.join(RN.CACHE, fac + '_r.sheet.wav'); sf.write(tmp, np.concatenate(sheet), SR)
-    dst = os.path.join(ROOT, 'vo', fac + '_r.mp3')
+    tmp = os.path.join(RN.CACHE, fac + SUF + '.sheet.wav'); sf.write(tmp, np.concatenate(sheet), SR)
+    dst = os.path.join(ROOT, 'vo', fac + SUF + '.mp3')
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', tmp, '-ac', '1', '-ar', str(SR), '-c:a', 'libmp3lame', '-b:a', '36k', dst], check=True)
     os.makedirs(os.path.join(ROOT, 'tools', 'voices', 'map'), exist_ok=True)
-    json.dump(vmap, open(os.path.join(ROOT, 'tools', 'voices', 'map', fac + '_r.json'), 'w'), separators=(',', ':'))
+    json.dump(vmap, open(os.path.join(ROOT, 'tools', 'voices', 'map', fac + SUF + '.json'), 'w'), separators=(',', ':'))
     log(f'{fac}: {t:.0f}s, {os.path.getsize(dst)//1024} KB')
 if __name__ == '__main__':
     for f in sys.argv[1:]: nation(f)
