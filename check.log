@@ -1,0 +1,10 @@
+git CONFLICT MARKERS found (9 lines) — a merge was left unfinished; resolve them (keep the right side, delete the marker lines). Nothing checked.
+  ✗ src/03-sim.js:388: <<<<<<< HEAD
+  ✗ src/03-sim.js:390: =======
+  ✗ src/03-sim.js:392: >>>>>>> origin/main
+  ✗ src/06-view.js:152: <<<<<<< HEAD
+  ✗ src/06-view.js:159: =======
+  ✗ src/06-view.js:162: >>>>>>> origin/main
+  ✗ src/07a-hostsnap.js:13: <<<<<<< HEAD
+  ✗ src/07a-hostsnap.js:15: =======
+  ✗ src/07a-hostsnap.js:17: >>>>>>> origin/main
