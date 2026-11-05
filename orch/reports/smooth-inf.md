@@ -29,7 +29,7 @@ Causes found
 ## Fixes (src only)
 * `03-sim.js` `separate()`: foot soldiers (mass < 2) ignore overlaps under 0.7 and ease out the rest at 70% per tick, continuously (no on/off chatter);
   vehicles unchanged. A push onto impassable ground now slides along the edge instead of being cancelled.
-* `03-sim.js` new `bridgeLanes()`: soldiers are kept inside the parapets (|across| <= 30 - radius), eased (<= 0.35/tick) into 4 lanes by unit id
+* `03-sim.js` new `bridgeLanes()` (a correction is only applied if the new spot is walkable - first version dropped soldiers into water cells, caught by mapsweep): soldiers are kept inside the parapets (|across| <= 30 - radius), eased (<= 0.35/tick) into 4 lanes by unit id
   while on the deck; correction per tick capped at 0.9 so entering is smooth. Pure function of positions: identical wherever the sim runs.
 * `04-gfx.js` `viewH`: full deck height to +-35 across, 30-unit ramp at the ends.
 * `04-gfx.js` / `11-models.js` wind: slow (period 4.5-7 s), small (<= 0.4 unit tip on grass), phase from position only, base anchored, blade
