@@ -27,24 +27,25 @@ def fix(y, f0m, cent):
     # light compression
     e = np.abs(x); thr = 0.25; g = np.where(e > thr, (thr + (e-thr)/3)/np.maximum(e,1e-9), 1.0); x = x*g
     return x, st
-meas = json.load(open(sys.argv[1])); meter = pl.Meter(SR); rep = {}
-os.makedirs('/tmp/claude-0/vo_orig', exist_ok=True)
-for code in sys.argv[2:]:
-    for suf in ['','_r','_h']:
-        name = f'{code}{suf}'; ap = f'{R}/vo/{name}.mp3'
-        keys = [k for k in meas if k.split(':')[0] == name and ((meas[k]['f0'] and meas[k]['f0'] > F0_MAX) or meas[k]['cent'] > CENT_MAX)]
-        if not keys: continue
-        shutil.copy(ap, f'/tmp/claude-0/vo_orig/{name}.mp3'); y = load(ap); done = 0
-        for k in keys:
-            m = meas[k]; a, b = int(m['off']*SR), int((m['off']+m['len'])*SR); seg = y[a:b]
-            try: l0 = meter.integrated_loudness(seg)
-            except Exception: l0 = None
-            z, st = fix(seg, m['f0'], m['cent'])
-            if l0 and l0 > -50:
-                try: z = z*10**((l0 - meter.integrated_loudness(z.astype(np.float32)))/20)
-                except Exception: pass
-            z = np.clip(z, -0.98, 0.98); fi = min(120, len(z)//4)
-            w = np.ones(len(z)); w[:fi] = np.linspace(0,1,fi); w[-fi:] = np.linspace(1,0,fi)   # fade edges to hide splice
-            y[a:b] = seg*(1-w) + z*w; done += 1; rep[k] = round(float(st),2)
-        save(y, ap); print(name, 'fixed', done, 'of', len(keys), flush=True)
-json.dump(rep, open('/tmp/claude-0/fix_rep_%s.json' % sys.argv[2], 'w'))
+if __name__ == '__main__':
+    meas = json.load(open(sys.argv[1])); meter = pl.Meter(SR); rep = {}
+    os.makedirs('/tmp/claude-0/vo_orig', exist_ok=True)
+    for code in sys.argv[2:]:
+        for suf in ['','_r','_h']:
+            name = f'{code}{suf}'; ap = f'{R}/vo/{name}.mp3'
+            keys = [k for k in meas if k.split(':')[0] == name and ((meas[k]['f0'] and meas[k]['f0'] > F0_MAX) or meas[k]['cent'] > CENT_MAX)]
+            if not keys: continue
+            shutil.copy(ap, f'/tmp/claude-0/vo_orig/{name}.mp3'); y = load(ap); done = 0
+            for k in keys:
+                m = meas[k]; a, b = int(m['off']*SR), int((m['off']+m['len'])*SR); seg = y[a:b]
+                try: l0 = meter.integrated_loudness(seg)
+                except Exception: l0 = None
+                z, st = fix(seg, m['f0'], m['cent'])
+                if l0 and l0 > -50:
+                    try: z = z*10**((l0 - meter.integrated_loudness(z.astype(np.float32)))/20)
+                    except Exception: pass
+                z = np.clip(z, -0.98, 0.98); fi = min(120, len(z)//4)
+                w = np.ones(len(z)); w[:fi] = np.linspace(0,1,fi); w[-fi:] = np.linspace(1,0,fi)   # fade edges to hide splice
+                y[a:b] = seg*(1-w) + z*w; done += 1; rep[k] = round(float(st),2)
+            save(y, ap); print(name, 'fixed', done, 'of', len(keys), flush=True)
+    json.dump(rep, open('/tmp/claude-0/fix_rep_%s.json' % sys.argv[2], 'w'))
