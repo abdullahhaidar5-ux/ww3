@@ -55,13 +55,6 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   Alt+right-click a spot (drive there, then unload); touch: tap a selected vehicle again to unload, tap ground with a
   garrisoned building selected. The Unload/Leave buttons may stay as extras.
   (Touch controls are no longer required — see "PC only" below.)
-- **CONQUEST is the only game mode** (Abdullah, 2026-11-04 19:45–19:54: "Players have all buildings available from the start, with a
-  certain amount of money. We keep it all fair. The point is to capture towns and hamlets and destroy the enemy's base. This is the only
-  mode from now on."): full base + everything unlocked + ~$10,000 each, ~90 s no-fire setup phase; income comes from **town tax**
-  (owner sets Low / Normal / High / Extortionate per town; **unrest** rises with tax and much faster near the front; at 100 the town
-  **revolts** — rebels, no income). Intended play: **High tax in safe towns behind your lines, Low tax on the front line.** The
-  minimap must show towns, hamlets, tax, unrest, strikes. Classic is removed from menus/lobby; campaign missions + tutorial stay.
-  Spec/progress: `orch/reports/conquest.md`, `orch/HANDOFF-conquest.md`.
 - **Factions (18 live):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
   **DW "Coffee Shias"**. The IM faction was removed on purpose; 18 is the intended count (no 19th planned). Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
@@ -85,7 +78,9 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   maintained. Must stay smooth on PC (smooth-pc, smooth-mp gates).
 - **Conquest is the only game mode** (Abdullah, 2026-11-04 19:49): same full base + money for all, everything
   unlocked, income from taxing towns/hamlets you hold (tax rate, unrest, revolts, civic buildings — "High tax in safe
-  rear towns, Low tax on the front"), fair upgrades/powers/missile strikes, win = destroy the enemy base.
+  rear towns, Low tax on the front"), fair upgrades/powers/missile strikes, win = destroy the enemy base. ~$10,000 start,
+  ~90 s no-fire setup. Classic is removed from menus/lobby; campaign missions + tutorial stay. Spec/progress: `orch/reports/conquest.md`,
+  `orch/HANDOFF-conquest.md`.
 - **Supply lines are in** (Abdullah, 2026-11-04 20:16 "Forget the rule about no supply lines"; replaces 2026-10-29):
   supply runs on roads you build (convoys, cut-off towns, forward depots).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
