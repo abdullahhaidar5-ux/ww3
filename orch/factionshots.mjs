@@ -83,7 +83,7 @@ async function frames(page, n) {
 async function snap(page, name) { await page.screenshot({ path: path.join(dir, name + '.png'), timeout: 300000 }); console.log(`[${secs()}] ${TAG}/${name}.png`); }
 
 const FACS = argS('facs', 'IR,KP,RU,US').split(',');
-const LINE1 = ['tank', 'arty', 'aa', 'jeep'], LINE2 = ['heli', 'jet', 'boat', 'ship'];
+const LINE1 = ['tank', 'arty', 'aa', 'jeep'], LINE2 = (argS('line2', 'heli,jet,drone,boat,ship')).split(',');
 async function lineup(page, fac, tagn, d) {
   const other = fac === 'US' ? 'RU' : 'US';
   await battle(page, 'fulda', fac, other, 2);
@@ -95,7 +95,40 @@ async function lineup(page, fac, tagn, d) {
   await page.evaluate(([d]) => { const [x, y] = window.__at; cam.dist = cam.td = d; cam.x = cam.tx = x; cam.y = cam.ty = y + 40; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; }, [d]);
   await frames(page, 4); await snap(page, `${tagn}-${fac}`);
 }
+// --solo tank,jet,...: one close-up per unit kind, camera centred on the rendered model (air units fly high);
+// --dmg 0.3 sets every unit's hp to that fraction first so the battle-damage smoke shows.
+async function solo(page, fac, tagn, kinds, dmg) {
+  const other = fac === 'US' ? 'RU' : 'US';
+  await battle(page, 'fulda', fac, other, 2);
+  for (const kd of kinds) {
+    const ok = await page.evaluate(([kd, dmg]) => { G.paused = true; G.ents = G.ents.filter(e => e.isB);
+      const [bx, by] = BASES[0]; const x = Math.max(700, Math.min(MAPW - 700, bx + 260)), y = Math.max(700, Math.min(MAPH - 700, by + 80));
+      let px = x, py = y; if (/ship|boat|sub|lander/.test(kd) && G.map.isWater) { outer: for (let r = 100; r < 4000; r += 60) for (let a = 0; a < 6.28; a += .2) { const qx = x + Math.cos(a) * r, qy = y + Math.sin(a) * r; if (qx > 200 && qy > 200 && qx < MAPW - 200 && qy < MAPH - 200 && G.map.isWater(qx, qy) && G.map.isWater(qx + 80, qy) && G.map.isWater(qx - 80, qy) && G.map.isWater(qx, qy + 80) && G.map.isWater(qx, qy - 80)) { px = qx; py = qy; break outer; } } }
+      let u; try { u = addUnit(0, kd, px, py); } catch (e) { return false; } u.ox = u.x; u.oy = u.y; if (u.vs) u.vs[0] = true; u.ang = u.va = -Math.PI * .8;
+      if (dmg) u.hp = u.max * dmg; window.__u = u; const d = dmg ? 260 : { jet: 70, heli: 80, ship: 170, boat: 80, drone: 75 }[kd] || 75;
+      cam.dist = cam.td = d; cam.x = cam.tx = x; cam.y = cam.ty = y; cam._xl = cam.x; cam._yl = cam.y; cam._dl = cam.dist; return true; }, [kd, dmg]);
+    if (!ok) continue;
+    await page.evaluate(() => { cam.tilt = -.55; });
+    await frames(page, 2);
+    if (kd === 'drone') await page.evaluate(() => { const o = OBJ.get(window.__u.id); if (o) { o.userData.yaw = o.userData.pyd = window.__u.va; } });
+    if (kd === 'drone') console.log('drone', await page.evaluate(() => { const o = OBJ.get(window.__u.id); return o ? JSON.stringify([o.rotation.x, o.rotation.y, o.rotation.z, o.rotation.order, o.children[0].rotation.toArray(), o.position.y - groundH(window.__u.x, window.__u.y), o.userData.dp]) : 'none'; }));
+    await page.evaluate(([base]) => { const o = OBJ.get(window.__u.id); if (!o) return; const h = o.position.y, ux = o.position.x, uz = o.position.z;
+      const pf = d => { const kz = Math.max(0, Math.min(1, (d - 230) / 370)); return Math.max(.22, Math.min(1.42, Math.max(.34 + kz * .44, Math.asin(Math.min(1, 112 / d))) + (cam.tilt || 0))); };
+      let d = base; for (let i = 0; i < 8; i++) { const p = pf(d); d = h / Math.sin(p) + base; } const p = pf(d);
+      cam.dist = cam.td = d; cam.x = cam.tx = ux; cam.y = cam.ty = uz - h / Math.tan(p); cam._xl = cam.x; cam._yl = cam.y; cam._dl = d; }, [await page.evaluate(() => cam.dist)]);
+    if (dmg) { await page.evaluate(() => { for (let i = 0; i < 40; i++) { G.t += 1 / 30; renderFrame(1 / 30); } }); console.log('parts', await page.evaluate(() => PARTS.length + ' near ' + PARTS.filter(p => Math.hypot(p.x - window.__u.x, p.y - window.__u.y) < 60).length + ' G.paused ' + G.paused + ' hp ' + window.__u.hp + '/' + window.__u.max)); }
+    if (argS('ab', '')) { await page.evaluate(() => { const u = window.__u, o = OBJ.get(u.id); if (o) o.userData.abk = 1; }); console.log('nozzles', await page.evaluate(() => { const o = OBJ.get(window.__u.id), g = o && o.userData.parts.glow; return g ? JSON.stringify(g.children.map(c => [c.position.x, c.position.y, c.position.z, c.userData.r].map(v => +(+v).toFixed(2)))) : 'none'; })); }
+    await frames(page, 3); await snap(page, `${tagn}-${fac}-${kd}${dmg ? '-dmg' : ''}`);
+    await page.evaluate(() => { G.ents = G.ents.filter(e => e !== window.__u); });
+  }
+}
 try {
+  const SOLO = argS('solo', '');
+  if (SOLO) { const { ctx, page } = await open(argS('phone', '') ? { viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true, deviceScaleFactor: 2 } : { viewport: { width: 1280, height: 720 } });
+    if (argS('phone', '')) await page.evaluate(() => { for (const b of document.querySelectorAll('button')) if (/^skip$/i.test(b.textContent.trim())) b.click(); });
+    if (argS('low', '')) await page.evaluate(() => { SET.gfx = 'low'; });
+    for (const f of FACS) await solo(page, f, argS('low', '') ? 'low' : 'pc', SOLO.split(','), +argS('dmg', '0'));
+    await ctx.close(); if (errs.length) console.log(errs.slice(0, 20).join('\n')); await browser.close(); server.close(); process.exit(0); }
   let { ctx, page } = await open({ viewport: { width: 1280, height: 720 } });
   for (const f of FACS) await lineup(page, f, 'pc', 150);
   await ctx.close();

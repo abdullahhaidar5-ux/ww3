@@ -54,7 +54,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   comes out and runs there); leave a vehicle = select it and right-click the vehicle itself (unload here), or
   Alt+right-click a spot (drive there, then unload); touch: tap a selected vehicle again to unload, tap ground with a
   garrisoned building selected. The Unload/Leave buttons may stay as extras.
-  Every action must also work with touch alone (phone touch controls unchanged).
+  (Touch controls are no longer required — see "PC only" below.)
 - **Factions (18 live):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
   **DW "Coffee Shias"**. The IM faction was removed on purpose; 18 is the intended count (no 19th planned). Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
@@ -72,8 +72,17 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   the server going away mid-match). Cloudflare battles run the copy of `src/` built into the
   server at its last deploy, so **whenever a ship changes the simulation (03-sim, 01-data, 02-map, 07*) open a
   `main → servers-live` PR for Abdullah to merge** (one tap; deploy runs from GitHub).
-- **Phones start on Low graphics** (Abdullah 2026-10-29: iPhones froze on the battle loading screen with Auto; Low worked) until a lighter phone path is proven on a real iPhone. - Must stay smooth and **phone-playable**. Phones may get a lighter look to stay smooth; PCs get the full look
-  (Abdullah, 2026-10-26).
+- **PC only — phones abandoned** (Abdullah, 2026-11-04 20:13 "Forget phones entirely", 20:16 "Abandon phones";
+  replaces the 2026-10-26/29 phone rules). Design, look and performance target = PC (mouse + keyboard). No phone
+  constraints, no phone/touch tests (gate `touch` and `smooth-phone` removed); old phone code may stay but needn't be
+  maintained. Must stay smooth on PC (smooth-pc, smooth-mp gates).
+- **Conquest is the only game mode** (Abdullah, 2026-11-04 19:49): same full base + money for all, everything
+  unlocked, income from taxing towns/hamlets you hold (tax rate, unrest, revolts, civic buildings — "High tax in safe
+  rear towns, Low tax on the front"), fair upgrades/powers/missile strikes, win = destroy the enemy base. ~$10,000 start,
+  ~90 s no-fire setup. Classic is removed from menus/lobby; campaign missions + tutorial stay. Spec/progress: `orch/reports/conquest.md`,
+  `orch/HANDOFF-conquest.md`.
+- **Supply lines are in** (Abdullah, 2026-11-04 20:16 "Forget the rule about no supply lines"; replaces 2026-10-29):
+  supply runs on roads you build (convoys, cut-off towns, forward depots).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
   (Abdullah connected it 2026-10-26; since 2026-10-28 `.github/workflows/deploy-site.yml` also sends it from `main` on every
   push, status `deploy/site`, because Cloudflare's own builder got stuck — nothing to do at ship except check it serves the new version), and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi, republish
@@ -88,10 +97,10 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all 18 nations about equally strong.**
 - **Priorities (Abdullah, 2026-10-28 18:34):** his group plays the **Shia factions (IR, RS, DW) most** — do their voices,
   uniforms and buildings first, in a **realistic military** style (IRGC/Hezbollah-style fatigues, Middle Eastern
-  compounds and bunkers). The group plays on **recent iPhones (12 or newer)** — that is the phone target. Biggest pain:
+  compounds and bunkers). The game targets **PC** (see "PC only"). Biggest pain:
   **looks and performance** — better looks only where it stays smooth. Next focus after current work: **graphics
-  realism**. Abdullah will test on his iPhone: when something visible ships, ask him in the report to try one specific
-  thing for 2 minutes (with the link).
+  realism**. When something visible ships, ask Abdullah in the report to try one specific thing for 2 minutes on PC
+  (with the link).
 - **Maps (Abdullah, 2026-10-29):** a little bigger than before (room to flank), maps for every player count, and **every
   map fun and fair**: symmetric starts and resources, at least two real attack routes, something worth fighting over,
   proven by AI-vs-AI win rates per start position. Any new or changed map must pass that check.

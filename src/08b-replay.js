@@ -63,6 +63,7 @@ async function rpParse(buf){const u=buf instanceof Uint8Array?buf:new Uint8Array
   if(!Array.isArray(hdr.si&&hdr.si.facs)||!hdr.si.facs.every(f=>FKEYS.includes(f)))throw new Error('this replay has nations this version does not know');return {hdr,frames};}
 /* ---------- watching ---------- */
 async function rpWatch(buf){let P;try{P=await rpParse(buf);}catch(e){alert('Could not open the replay: '+(e&&e.message||e));return false;}
+  if(typeof NET_PV==='number'&&(P.hdr?.ver|0)!==NET_PV){alert('This replay was recorded with an older version of the game (before Conquest) and cannot be played back.');return false;}
   if(NET.game||NET.code)try{leaveNet();}catch(e){}try{kcReset();}catch(e){}
   $('end').hidden=true;RP.hdr=P.hdr;RP.frames=P.frames;RP.i=0;RP.spd=1;RP.paused=false;RP.kf=[];RP.fog=!P.hdr.full;RP.view=P.hdr.me|0;
   P.frames.forEach((f,i)=>{if(f[1]==='S'&&f[2].indexOf('"f":1')>=0)RP.kf.push(i);});
@@ -133,7 +134,7 @@ try{rpMenuBtn();}catch(e){}
 /* ---------- spectating an online battle (07a specJoin): no army, no orders, see everything or one side's view ---------- */
 function specTick(){if(!G)return;let b=$('specBar');if(b&&b._g!==G){b.remove();b=null;}if(!b&&!window.LOADING){b=document.createElement('div');b.id='specBar';b.innerHTML='<b>👁 Spectating</b><select id="specView"></select><button type="button" id="specLeave">Leave</button>';b._g=G;document.body.appendChild(b);
     const st=document.createElement('style');st.textContent='#specBar{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:60;display:flex;gap:8px;align-items:center;background:rgba(10,14,12,.86);border:1px solid #4a5a48;border-radius:8px;padding:6px 10px;color:#e8eadf;font:600 15px system-ui,sans-serif}#specBar select,#specBar button{min-height:36px;background:#26312a;color:#e8eadf;border:1px solid #56685a;border-radius:6px;font:inherit;padding:0 10px}body.spec #side{display:none!important}';document.head.appendChild(st);
-    const V=$('specView'),add=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;V.appendChild(o);};add(-1,'Everything (no fog)');G.teams.forEach((T,i)=>add(i,T.F.name+"'s view"));
+    const V=$('specView'),add=(v,t)=>{const o=document.createElement('option');o.value=v;o.textContent=t;V.appendChild(o);};add(-1,'Everything (no fog)');G.teams.forEach((T,i)=>{if(!T.reb)add(i,T.F.name+"'s view");});
     V.onchange=()=>{const k=+V.value;NET.specAll=k<0;if(k>=0){ME=k;try{const p=BASES[k];if(p)centerOn(p[0],p[1]);}catch(e){}}if(NET.game)NET.game.presence({sv:Math.max(0,k)}).catch(()=>{});fogT=0;};
     $('specLeave').onclick=()=>{try{quitGame();}catch(e){}const x=$('specBar');if(x)x.remove();};}
   if(b){b.hidden=!!G.over;document.body.classList.add('spec');}

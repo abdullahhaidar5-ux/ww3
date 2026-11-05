@@ -44,3 +44,8 @@ Each number may be at most `baseline x ratio + slack` (ratios 1.5-2, see `BUDGET
 
 ## In-game guard
 `qualTick` (`06-view.js`) lowers resolution/effects after ~1.5 s of missed frames. It used to be switched off whenever Graphics was not Auto, which includes phones (forced to Low) - so a phone could never get lighter. Now Auto and Low both adapt (Low never goes back above its own level; High/Medium stay fixed) and a one-time message "Switched to lighter graphics to stay smooth" appears. Settings > Show FPS & ping also shows "1% low" FPS.
+
+## Extra tools (2026-11-05)
+* `node orch/smooth.mjs --profile pc --phases` then `python3 orch/phases.py orch/out/smooth-frames-pc.json` - time per part of the frame and the worst frames (what made each spike).
+* The pc/phone profiles also time the first big explosion, a second one, and a switch to every other weather/night (ratio to a normal frame; fails over 15x). The mp profile counts client snaps (a unit jumping >12 world units in one tick; report only, 0 today).
+* `node orch/wobble.mjs` - tanks, trucks, infantry across a map and back: position pops, heading flips, wobble after arrival, stuck units (`WOBBLE CLEAN` / `ISSUES`).

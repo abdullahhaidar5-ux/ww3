@@ -26,7 +26,9 @@ export async function startServer({ quiet = true, vars = {}, state: keepDir = nu
   const state = keepDir || fs.mkdtempSync(path.join(os.tmpdir(), 'ww3-wrangler-'));
   const args = ['dev', '--ip', '127.0.0.1', '--port', String(port), '--inspector-port', String(inspector),
     '--persist-to', state, '--show-interactive-dev-session=false', '--log-level', logLevel || (quiet ? 'warn' : 'log')];
-  for (const [k, v] of Object.entries(vars)) args.push('--var', `${k}:${v}`);
+  // the overrun guard (server/src/battle.js) is off in local tests unless asked for (OVERRUN_GUARD: '1'): a busy test
+  // machine running software-rendered pages can make a local battle fall behind real time
+  for (const [k, v] of Object.entries({ OVERRUN_GUARD: '0', ...vars })) args.push('--var', `${k}:${v}`);
   const child = spawn(bin, args, { cwd: SERVER_DIR, stdio: ['ignore', 'pipe', 'pipe'], detached: true,
     env: { ...process.env, WRANGLER_SEND_METRICS: 'false', CI: '1', NO_COLOR: '1' } });
   let log = '';

@@ -97,7 +97,7 @@ async function battleProfile(name) {
     for (let t = 0; t < MIN * 60; t += 30) await page.evaluate(() => { for (let i = 0; i < 1800 && !G.over; i++) simUpdate(1 / 60); });
     await page.evaluate((extra) => { // two huge columns that meet in the middle (as orch/columns.mjs)
       const kinds = ['inf', 'inf', 'inf', 'at', 'tank', 'tank', 'aa', 'arty'], cx = MAPW / 2, cy = MAPH / 2;
-      for (const T of G.teams) { if (T.dead) continue; const side = T.id % 2 ? 1 : -1, lane = (Math.floor(T.id / 2) - 1.5) * 90;
+      for (const T of G.teams) { if (T.dead || T.reb) continue; const side = T.id % 2 ? 1 : -1, lane = (Math.floor(T.id / 2) - 1.5) * 90;
         for (let i = 0; i < extra; i++) { const k = kinds[i % kinds.length];
           const p = nearestPassXY('ground', cx + side * (260 + (i % 8) * 26), cy + lane + Math.floor(i / 8) * 24 - 50) || [cx, cy];
           try { const u = addUnit(T.id, k, p[0], p[1]); if (u) setMove(u, cx - side * 500, cy + lane, 'amove'); } catch (e) {} } }
@@ -112,6 +112,7 @@ async function battleProfile(name) {
     if (PHONE) await cdp.send('Emulation.setCPUThrottlingRate', { rate: 4 });
     await gcHeap(page);
     if (has('--probe')) for (let i = 0; i < 6; i++) LOG('probe frame ' + await page.evaluate(() => { const t = performance.now(); simUpdate(1 / 60); G.alpha = 1; const a = performance.now(); renderFrame(1 / 60); const b = performance.now(); R3.getContext().finish(); return [a - t, b - a, performance.now() - b, R3.info.render.calls].map(x => Math.round(x)).join('/'); }));
+    if (has('--phases')) await page.evaluate(() => { window.__phases = true; });
     LOG(name + ': measuring ' + FRAMES + ' frames');
     await page.evaluate(() => {
       const now = () => performance.now(), gl = R3.getContext();
@@ -120,9 +121,14 @@ async function battleProfile(name) {
       // swallowed (three.js still counts calls/triangles): what is timed is everything the game's own code does per frame
       for (const fn of ['drawElements', 'drawElementsInstanced', 'drawArrays', 'drawArraysInstanced', 'drawRangeElements']) if (gl[fn]) gl[fn] = function () {};
       window.__L = { sim: [], cpu: [], all: [], cl: [], tl: [], calls: 0, tris: 0 };
+      // --phases: time each part of the frame (scene sync, fx, fog, post/draw submit, HUD, minimap) and keep every frame, to find what makes the spikes
+      window.__P = {}; window.__cur = {};
+      if (window.__phases) for (const n of ['syncScene', 'fxUpdate', 'updateFog', 'renderPost', 'drawHUD', 'drawMini', 'placeCam', 'wreckTick', 'gpuClean', 'updateUI']) { const f = window[n]; if (typeof f !== 'function') continue; window.__P[n] = [];
+        window[n] = function () { const t = now(); try { return f.apply(this, arguments); } finally { window.__cur[n] = (window.__cur[n] || 0) + now() - t; } }; }
       window.__frame = (rec) => {
         const L = window.__L, t0 = now(); for (const e of G.ents) if (!e.isB) { e.ox = e.x; e.oy = e.y; } simUpdate(1 / 60); G.alpha = 1; const t1 = now();
         R3.info.reset(); renderFrame(1 / 60); const t3 = now(), t2 = t3; /* CPU-side frame: sim + scene + command submission. Software GL cannot give real GPU time (13 s/frame here), so it is not measured */
+        if (rec && window.__phases) { for (const n in window.__P) window.__P[n].push(window.__cur[n] || 0); } window.__cur = {};
         if (rec) { L.sim.push(t1 - t0); L.cpu.push(t2 - t0); L.all.push(t3 - t0); L.calls += R3.info.render.calls; L.tris += R3.info.render.triangles; L.cl.push(R3.info.render.calls); L.tl.push(R3.info.render.triangles); }
         return R3.info.programs.length;
       };
@@ -132,11 +138,18 @@ async function battleProfile(name) {
     const heap0 = await page.evaluate(() => performance.memory ? performance.memory.usedJSHeapSize : 0), w0 = Date.now();
     for (let i = 0; i < 6; i++) await page.evaluate(() => window.__frame(false)); /* first frames after the warm-up still do one-off work */
     for (let i = 0; i < FRAMES; i++) { await page.evaluate(() => window.__frame(true)); if (i % 10 === 9) LOG(name + ': frame ' + (i + 1)); }
-    const res = await page.evaluate(() => ({ L: window.__L, newProg: 0, qual: QUAL.lv }));
+    const res = await page.evaluate(() => ({ L: window.__L, P: window.__P, newProg: 0, qual: QUAL.lv }));
+    if (has('--phases')) { const fs = await import('fs'); fs.mkdirSync(new URL('./out/', import.meta.url), { recursive: true }); fs.writeFileSync(new URL('./out/smooth-frames-' + name + '.json', import.meta.url), JSON.stringify({ all: res.L.all, P: res.P })); }
     res.newProg = (await page.evaluate(() => R3.info.programs.length)) - prog0; res.heap0 = heap0; res.wall = Date.now() - w0;
     res.calls = pct(res.L.cl, .5); res.tris = pct(res.L.tl, .5); /* median: the shadow pass does not run every frame */
     await gcHeap(page);
     const heap1 = await page.evaluate(() => performance.memory ? performance.memory.usedJSHeapSize : 0);
+    // one-off event hitches: the first big explosion, and switching to every other weather / night, each timed over its first 3 frames (software GL: ratio to the median frame is what counts)
+    const ev = await page.evaluate(() => { const out = {}; const ft = () => { const t = performance.now(); window.__frame(false); return performance.now() - t; };
+      const base = []; for (let i = 0; i < 5; i++) base.push(ft()); base.sort((a, b) => a - b); out.base = base[2];
+      try { const w = screenToWorld(innerWidth / 2, innerHeight / 2) || { x: MAPW / 2, y: MAPH / 2 }; boomFX(w.x, w.y, 80, true); out.boom = Math.max(ft(), ft(), ft()); boomFX(w.x + 30, w.y, 120, true); out.boom2 = Math.max(ft(), ft(), ft()); } catch (e) { out.boomErr = String(e).slice(0, 80); }
+      try { let worst = 0; const cur = WXI; for (let i = 0; i < WX.length; i++) { if (i === cur) continue; WXI = i; applyWeather(i); worst = Math.max(worst, ft(), ft(), ft()); } WXI = cur; applyWeather(cur); out.weather = worst; } catch (e) { out.wxErr = String(e).slice(0, 80); }
+      return out; }).catch(e => ({ err: String(e).slice(0, 80) }));
     const L = res.L, worst = L.all.slice().sort((a, b) => b - a), nW = Math.max(1, Math.floor(L.all.length * .01));
     const avgWorst = worst.slice(0, nW).reduce((a, b) => a + b, 0) / nW;
     const heapMB = (heap1 - res.heap0) / 1048576, mins = res.wall / 60000;
@@ -144,6 +157,7 @@ async function battleProfile(name) {
       frameMed: r2(pct(L.all, .5)), frameP95: r2(pct(L.all, .95)), frameP99: r2(pct(L.all, .99)), worst1Fps: r2(1000 / avgWorst),
       longFrames: L.all.filter(x => x > 50).length, cpuMed: r2(pct(L.cpu, .5)), cpuP95: r2(pct(L.cpu, .95)), cpuMax: r2(Math.max(...L.cpu)),
       simP95: r2(pct(L.sim, .95)), drawCalls: Math.round(res.calls), kTris: Math.round(res.tris / 1000), newShaders: res.newProg,
+      hitchBoomX: ev.boom ? r2(ev.boom / ev.base) : 0, hitchBoom2X: ev.boom2 ? r2(ev.boom2 / ev.base) : 0, hitchWeatherX: ev.weather ? r2(ev.weather / ev.base) : 0, hitchWorstMs: r2(Math.max(ev.boom || 0, ev.boom2 || 0, ev.weather || 0)), hitchErr: ev.boomErr || ev.wxErr || ev.err || '',
       heapMB: r2(heapMB), heapMBperMin: r2(heapMB / Math.max(mins, 1e-3)), frames: FRAMES, errs: errs.slice(0, 3) };
   } finally { await browser.close(); }
 }
@@ -244,7 +258,9 @@ async function mpProfile() {
     // instrument: snapshot arrival times and order timestamps
     await Promise.all(clients.map(p => p.evaluate(() => { const o = window.applySnap; window.__snapAt = []; window.__ticks = [];
       window.applySnap = function (d) { window.__snapAt.push(Date.now()); return o.apply(this, arguments); };
-      const ct = window.clientTick; window.clientTick = function (dt) { const t = performance.now(); try { return ct.apply(this, arguments); } finally { window.__ticks.push(performance.now() - t); } };
+      window.__snapN = 0; window.__snapMax = 0; const pp = new Map(); // client snaps: a unit jumping >12 world units in one ~16 ms tick (rubber-banding / late-snapshot pop)
+      const ct = window.clientTick; window.clientTick = function (dt) { const t = performance.now(); try { return ct.apply(this, arguments); } finally { window.__ticks.push(performance.now() - t);
+        for (const e of G.ents) { if (e.isB) continue; const q = pp.get(e.id); if (q) { const d = Math.hypot(e.x - q[0], e.y - q[1]); if (d > 12 && dt < .09) { window.__snapN++; if (d > window.__snapMax) window.__snapMax = d; } q[0] = e.x; q[1] = e.y; } else pp.set(e.id, [e.x, e.y]); } } };
       const da = window.doAct; window.doAct = function (a) { if (a && typeof a === 'object') a.__t = Date.now(); return da.apply(this, arguments); }; })));
     await host.evaluate(() => { window.__lat = []; const hc = window.hostCmd; window.hostCmd = function (peer, data) { if (data && data.__t) window.__lat.push(Date.now() - data.__t); return hc.apply(this, arguments); }; });
     await Promise.all([host, c1, c2].map(p => p.evaluate(() => { window.__nstats.on = true; })));
@@ -265,7 +281,7 @@ async function mpProfile() {
     for (const [i, c] of clients.entries()) {
       const o = await c.evaluate(async () => { window.__cd.stop = true; const gl = R3.getContext(); const fr = []; for (const fn of ['drawElements', 'drawElementsInstanced', 'drawArrays', 'drawArraysInstanced', 'drawRangeElements']) if (gl[fn]) gl[fn] = function () {}; /* software GL: see the battle profiles */
         for (let k = 0; k < 40; k++) { const t = performance.now(); clientTick(1 / 30); renderFrame(1 / 30); gl.finish(); fr.push(performance.now() - t); if (k % 5 === 4) await new Promise(r => setTimeout(r, 0)); }
-        return { snapAt: window.__snapAt, ticks: window.__ticks, frames: fr, t: G.t, lost: window.__nstats.lost, rx: window.__nstats.rx }; });
+        return { snapAt: window.__snapAt, ticks: window.__ticks, frames: fr, t: G.t, lost: window.__nstats.lost, rx: window.__nstats.rx, snapN: window.__snapN, snapMax: window.__snapMax }; });
       cOut.push(o);
     }
     // desync check (same idea as mpsync's settle check): host paused, full keyframe, then everything the client's side sees must match
@@ -293,7 +309,7 @@ async function mpProfile() {
     return { name: 'mp', bench: r2(bench), snapIntervalMed: r2(ivMed), snapIntervalP95: r2(pct(iv, .95)), snapJitterSd: r2(ivSd), snapGapMax: r2(Math.max(0, ...iv)), snaps: iv.length,
       cmdLatP50: r2(pct(hostOut.lat, .5)), cmdLatP95: r2(pct(hostOut.lat, .95)), cmds: hostOut.lat.length,
       hostTickP95: r2(pct(hostOut.steps, .95)), clientTickP95: r2(pct(tk, .95)), clientFrameMed: r2(pct(fr, .5)), clientFrameP95: r2(pct(fr, .95)),
-      lostPackets: cOut.reduce((a, o) => a + o.lost, 0), msgs: cOut.reduce((a, o) => a + o.rx, 0), desync: desync.length, desyncInfo: desync.slice(0, 2), errs: fails.slice(0, 3) };
+      clientSnaps: cOut.reduce((a, o) => a + (o.snapN || 0), 0), clientSnapMax: r2(Math.max(0, ...cOut.map(o => o.snapMax || 0))), lostPackets: cOut.reduce((a, o) => a + o.lost, 0), msgs: cOut.reduce((a, o) => a + o.rx, 0), desync: desync.length, desyncInfo: desync.slice(0, 2), errs: fails.slice(0, 3) };
   } finally { await browser.close(); }
 }
 
@@ -308,8 +324,8 @@ const BUDGETS = {
     ['clientTickP95', 'client tick p95 ms', 1.6, 6, 1], ['hostTickP95', 'host step p95 ms', 1.6, 8, 1], ['clientFrameP95', 'client frame p95 ms', 1.6, 40, 1]],
 };
 const ABS = { // absolute sanity limits (independent of the baseline)
-  pc: r => [[r.cpuMax > 1500, `freeze: one frame spent ${r.cpuMax} ms in the game's own code (limit 1500)`], [r.heapMBperMin > 60, `JS heap grows ${r.heapMBperMin} MB/min (limit 60) - memory leak?`], [r.errs.length > 0, 'page errors: ' + r.errs.join(' | ')]],
-  phone: r => [[r.cpuMax > 4000, `freeze: one frame spent ${r.cpuMax} ms in the game's own code at 4x slower CPU (limit 4000)`], [r.heapMBperMin > 60, `JS heap grows ${r.heapMBperMin} MB/min (limit 60) - memory leak?`], [r.errs.length > 0, 'page errors: ' + r.errs.join(' | ')]],
+  pc: r => [[r.hitchWorstMs > 1500, `one-off hitch: first explosion or a weather/night switch cost one frame %s ms (limit 1500)`.replace('%s', r.hitchWorstMs)], [Math.max(r.hitchBoomX||0, r.hitchBoom2X||0, r.hitchWeatherX||0) > 15, `one-off hitch: an explosion or weather/night switch made a frame ${Math.max(r.hitchBoomX||0, r.hitchBoom2X||0, r.hitchWeatherX||0)}x slower than normal (limit 15x)`], [r.cpuMax > 1500, `freeze: one frame spent ${r.cpuMax} ms in the game's own code (limit 1500)`], [r.heapMBperMin > 60, `JS heap grows ${r.heapMBperMin} MB/min (limit 60) - memory leak?`], [r.errs.length > 0, 'page errors: ' + r.errs.join(' | ')]],
+  phone: r => [[r.hitchWorstMs > 4000, `one-off hitch: first explosion or a weather/night switch cost one frame %s ms (limit 4000)`.replace('%s', r.hitchWorstMs)], [Math.max(r.hitchBoomX||0, r.hitchBoom2X||0, r.hitchWeatherX||0) > 15, `one-off hitch: an explosion or weather/night switch made a frame ${Math.max(r.hitchBoomX||0, r.hitchBoom2X||0, r.hitchWeatherX||0)}x slower than normal (limit 15x)`], [r.cpuMax > 4000, `freeze: one frame spent ${r.cpuMax} ms in the game's own code at 4x slower CPU (limit 4000)`], [r.heapMBperMin > 60, `JS heap grows ${r.heapMBperMin} MB/min (limit 60) - memory leak?`], [r.errs.length > 0, 'page errors: ' + r.errs.join(' | ')]],
   mp: r => [[r.desync > 0, 'DESYNC: ' + r.desyncInfo.join(' ; ')], [r.snaps < 30, `only ${r.snaps} snapshots arrived on the clients (host or network stalled)`], [r.cmds < 3, `only ${r.cmds} client orders reached the host`],
     [r.snapGapMax > 2500, `a client got no snapshot for ${r.snapGapMax} ms (limit 2500)`], [r.errs.length > 0, 'errors: ' + r.errs.join(' | ')]],
 };
@@ -345,8 +361,8 @@ for (const name of ['pc', 'phone', 'mp']) {
 fs.writeFileSync(path.join(OUT, 'smooth.json'), JSON.stringify(results, null, 1));
 const f = x => x === undefined ? '-' : x;
 console.log('\n                       ' + ['pc', 'phone', 'mp'].filter(n => results[n]).map(n => n.padEnd(10)).join(''));
-const rows = [['units on screen', 'units'], ['load time s', 'loadS'], ['median frame ms', 'frameMed'], ['p95 frame ms', 'frameP95'], ['p99 frame ms', 'frameP99'], ['worst 1% FPS', 'worst1Fps'], ['frames >50 ms', 'longFrames'], ['sim step p95 ms', 'simP95'], ['draw calls', 'drawCalls'], ['k triangles', 'kTris'],
-  ['heap MB/min', 'heapMBperMin'], ['snap interval p95', 'snapIntervalP95'], ['snap jitter sd', 'snapJitterSd'], ['order latency p95', 'cmdLatP95'], ['client frame p95', 'clientFrameP95'], ['desyncs', 'desync']];
+const rows = [['units on screen', 'units'], ['load time s', 'loadS'], ['median frame ms', 'frameMed'], ['p95 frame ms', 'frameP95'], ['p99 frame ms', 'frameP99'], ['worst 1% FPS', 'worst1Fps'], ['frames >50 ms', 'longFrames'], ['first boom x median', 'hitchBoomX'], ['2nd boom x median', 'hitchBoom2X'], ['weather/night x median', 'hitchWeatherX'], ['sim step p95 ms', 'simP95'], ['draw calls', 'drawCalls'], ['k triangles', 'kTris'],
+  ['heap MB/min', 'heapMBperMin'], ['snap interval p95', 'snapIntervalP95'], ['snap jitter sd', 'snapJitterSd'], ['order latency p95', 'cmdLatP95'], ['client frame p95', 'clientFrameP95'], ['client snaps', 'clientSnaps'], ['biggest snap (units)', 'clientSnapMax'], ['desyncs', 'desync']];
 for (const [label, key] of rows) { if (!['pc', 'phone', 'mp'].some(n => results[n] && results[n][key] !== undefined)) continue;
   console.log(label.padEnd(23) + ['pc', 'phone', 'mp'].filter(n => results[n]).map(n => String(f(results[n][key])).padEnd(10)).join('')); }
 if (UPDATE) {

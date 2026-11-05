@@ -44,8 +44,8 @@ if (process.argv[2] === '--child') {
       let st = null;
       for (let t = 0; t < m.minutes * 60; t += 30) { st = W.step(30); if (st.over) break; }
       const info = W.info();
-      const score = P.ev(`G.teams.map(T=>{const F=forceOf(T);return Math.round(F.bv+F.uv+F.dz*500);})`);
-      const alive = P.ev(`G.teams.map(T=>!T.out)`);
+      const score = P.ev(`G.teams.filter(T=>!T.reb).map(T=>{const F=forceOf(T);return Math.round(F.bv+F.uv+F.dz*500);})`);
+      const alive = P.ev(`G.teams.filter(T=>!T.reb).map(T=>!T.out)`);
       let winner = -1, result = 'draw';
       const ord = score.map((s, i) => [s, i]).filter(([, i]) => alive[i]).sort((a, b) => b[0] - a[0]);
       if (info.over && info.winner != null && info.winner >= 0) { winner = info.winner; result = 'kill'; }

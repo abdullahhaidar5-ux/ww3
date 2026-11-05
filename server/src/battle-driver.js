@@ -39,7 +39,7 @@ export function BATTLE_DRIVER() {
     TERR_DEFER = true;
     const st = stClean(o.st, o.facs.length);
     try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map((_, i) => isAI(i)), map: o.map, tm: o.tm, w: o.w | 0, st: st || undefined }); } finally { TERR_DEFER = false; }
-    G.teams.forEach((T, i) => { T.ai = isAI(i) ? mkAI(o.aiD[i]) : null; });
+    G.teams.forEach((T, i) => { T.ai = !T.reb && isAI(i) ? mkAI(o.aiD[i]) : null; });
     G.headless = true;
     NET.peers = o.peers.slice(); NET.toks = o.toks.slice(); NET.gen = 0; NET.code = o.code || null; NET.baseCode = o.code || null;
     NET.startInfo = Object.assign({ seed: o.seed, facs: o.facs.slice(), map: o.map, tm: o.tm.slice(), w: o.w | 0, sv: 1 }, st ? { st } : {}, o.cm ? { cm: o.cm } : {});
@@ -58,7 +58,7 @@ export function BATTLE_DRIVER() {
     B.start({ seed: st.seed, facs: st.facs, map: st.map, tm: st.tm, w: st.w, st: st.st, aiD: st.facs.map(() => null), peers: st.facs.map(() => null), toks: Array.isArray(ck.toks) ? ck.toks.slice(0, n) : st.facs.map(() => null), code: si.code, cm: st.cm || si.cm });
     ckRestore(ck);
     NET.cseqSlot = Array.isArray(ck.cs) ? ck.cs.slice() : []; NET.gen = ck.gen || 0;
-    for (const T of G.teams) if (!T.ai && !T.out) T.discT = G.t;
+    for (const T of G.teams) if (!T.ai && !T.out && !T.reb) T.discT = G.t;
     return B.info();
   };
   B.step = dt => { if (G && !G.over) simUpdate(dt); };
@@ -66,7 +66,7 @@ export function BATTLE_DRIVER() {
   B.over = () => !!(G && G.over);
   B.info = () => {
     if (!G) return null;
-    const per = G.teams.map(T => ({ fac: T.fac, units: 0, blds: 0, credits: Math.round(T.credits), out: !!T.out, ai: !!T.ai }));
+    const per = G.teams.filter(T => !T.reb).map(T => ({ fac: T.fac, units: 0, blds: 0, credits: Math.round(T.credits), out: !!T.out, ai: !!T.ai }));
     for (const e of G.ents) { if (e.dead || !per[e.team]) continue; if (e.isB) per[e.team].blds++; else per[e.team].units++; }
     return { t: G.t, over: !!G.over, winner: G.winner, map: G.mapKey, ents: G.ents.length, per };
   };
@@ -98,6 +98,7 @@ export function BATTLE_DRIVER() {
     base: k => { const b = G.ents.filter(e => e.team === k && e.isB && !e.dead); return b.length ? [b.reduce((s, e) => s + e.x, 0) / b.length, b.reduce((s, e) => s + e.y, 0) / b.length] : [MAPW / 2, MAPH / 2]; },
     ck: () => ({ sb: NET.sbSlot, id: NET.ckId || 0 }),
     peers: () => (NET.peers || []).slice(),
+    sbHp: () => ({ sb: NET.sbSlot, hp: (NET.peers || []).map(q => (q && NET.hpOf && NET.hpOf[q]) || 0) }),
   };
   return B;
 }

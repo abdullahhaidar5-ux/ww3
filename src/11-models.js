@@ -7,7 +7,7 @@ const MCFG={
   commissar:{m:'soldier',fit:'y',size:15.7,tint:'#5b4a3a',tk:.5},sapper:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#6a5a3c',tk:.4},guer:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#4c5a3a',tk:.55},atk:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],tint:'#3c4434',tk:.5},
   idome:{m:'truck',fit:'z',size:36,extra:'samtruck'},ew:{m:'truck',fit:'z',size:35,extra:'dish'},cbr:{m:'truck',fit:'z',size:35,extra:'dish'},jeep:{m:'truck',fit:'z',size:26},atgm:{m:'truck',fit:'z',size:27,extra:'samtruck',tint:'#55603f',tk:.4},saka:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#a08a5c',tk:.5},raidlead:{m:'truck',fit:'z',size:28,extra:'mg'},
   inf:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]]},at:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]]},hacker:{m:'soldier',fit:'y',size:13.1,squad:[[3,-4],[-3,4]]},
-  hero:{m:'soldier',fit:'y',size:15.7,tint:'#2c302b',tk:.6},heli:{m:'heli',fit:'z',size:54},airlift:{m:'heli',fit:'z',size:72,tint:'#59604f',tk:.5},lander:{m:'boat',fit:'z',size:52,tint:'#6f7478',tk:.5},drone:{m:'drone',fit:'z',size:18,tint:'#7d8287',tk:.8},jet:{m:'jet',fit:'z',size:46},boat:{m:'boat',fit:'z',size:42,tint:'#7a8590',tk:.9},ship:{m:'ship',fit:'z',size:118,tint:'#7d8792',tk:.88},
+  hero:{m:'soldier',fit:'y',size:15.7,tint:'#2c302b',tk:.6},champ:{m:'soldier',fit:'y',size:19.5,tint:'#262a26',tk:.62},heli:{m:'heli',fit:'z',size:54},airlift:{m:'heli',fit:'z',size:72,tint:'#59604f',tk:.5},lander:{m:'boat',fit:'z',size:52,tint:'#6f7478',tk:.5},drone:{m:'drone',fit:'z',size:18,tint:'#7d8287',tk:.8},jet:{m:'jet',fit:'z',size:46},boat:{m:'boat',fit:'z',size:42,tint:'#7a8590',tk:.9},ship:{m:'ship',fit:'z',size:118,tint:'#7d8792',tk:.88},
 };
 // Realistic models (Objaverse / Sketchfab, CC-BY - authors credited in the menu): each nation fields the hardware it
 // actually flies and drives where a licensed model exists.
@@ -18,7 +18,7 @@ const RMOD={t90:{m:'m_t90',fit:'z',size:40},hilux:{m:'m_hilux',fit:'z',size:30,e
   ural:{m:'m_ural',fit:'z',size:36},m35:{m:'m_m35',fit:'z',size:36},humvee:{m:'m_humvee',fit:'z',size:27},uh60:{m:'m_uh60',fit:'z',size:70},mi8:{m:'m_mi8',fit:'z',size:76}};
 const RMAP={tank:{RU:'t90',KP:'t90',IR:'t90',UA:'t90',CN:'t90',IN:'t90',EG:'t90',PK:'t90',CU:'t90',RS:'hilux',DW:'hilux'},dozer:{},
   heli:{US:'apache',IL:'apache',EU:'apache',SA:'apache',AE:'apache',EG:'apache',KR:'apache',TR:'apache',IN:'apache',PK:'apache',RU:'mi24',KP:'mi24',IR:'mi24',CN:'mi24',UA:'mi24',CU:'mi24',RS:'mi24',DW:'mi24'},
-  jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',CU:'mig29'}};
+  jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',CU:'mig29',RS:'mig29',DW:'mig29'}};
 for(const f of ['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','CU','RS','DW'])RMAP.dozer[f]='jd550';
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
@@ -178,7 +178,7 @@ function weather(m,amt,camo){if(!m||m.userData.wx)return;m.userData.wx=1;amt=amt
             float cmA=smoothstep(ctA-caA,ctA+caA,n1),cmB=smoothstep(ctB-caB,ctB+caB,n2),cmC=smoothstep(ctC-caC,ctC+caC,n3);
             paint=mix(paint,wCA*k,cmA*.92);paint=mix(paint,wCB*k,cmB*.92);paint=mix(paint,wCC*k,cmC*.85);}
           // weathering: dust and mud up the lower hull, fine paint chips, faint rain streaks
-          float hh=vWP.y-vOY;float dust=(1.-smoothstep(.5,5.5,hh))*.5+wn(p*3.7)*.08;paint=mix(paint,vec3(.40,.34,.26)*(.8+lum*.5),clamp(dust,0.,.6));
+          float hh=vWP.y-vOY;float dust=(1.-smoothstep(.5,5.5,hh))*.5+wn(p*3.7)*.08;paint=mix(paint,vec3(.40,.34,.26)*(.8+lum*.5),clamp(dust,0.,.6)*step(wKind,1.5));
           float ch=wn(p*16.+5.)*.7+wn(p*33.)*.3;paint=mix(paint,vec3(.16,.16,.15),smoothstep(.74,.76,ch)*.55);
           float st=wn(vec3(p.x*9.,p.y*.7,p.z*9.));paint*=1.-.08*smoothstep(.55,.85,st);
           paint*=mix(.72,1.06,smoothstep(-.7,.85,vWN.y))*mix(.86,1.,smoothstep(0.,3.,hh));
@@ -216,6 +216,23 @@ const CAMOX={US:{p:1,s:1.15,c:'#d6c9a4',t:'#3e5a8a',w:3},TR:{p:1,s:.85,c:'#6f6a4
   AE:{p:3,s:1,c:'#cbb991',t:'#00843d',w:4},PK:{p:0,s:.95,c:'#5a6a3c',t:'#0b6b2b',w:4},IN:{p:5,s:1,c:'#7d7653',t:'#e07b14',w:4},CN:{p:1,s:1.6,c:'#46553a',t:'#c8102e',w:2},
   KP:{p:3,s:1,c:'#4c5434',t:'#c8102e',w:5},KR:{p:1,s:1.1,c:'#3c4530',t:'#1f3f9a',w:2},EG:{p:6,s:1.1,c:'#ddd0aa',t:'#b8862b',w:4},CU:{p:0,s:1.5,c:'#4a5a34',t:'#1e4fa0',w:3},
   RS:{p:2,s:1,c:'#2a2620',t:'#c9a227',w:1},DW:{p:2,s:.8,c:'#7c5a36',t:'#4a2f1c',w:1},IM:{p:3,s:1,c:'#6a6a58',t:'#888',w:0}};
+/* Each air force's real paint (Abdullah: realistic, never bright): b = base, p = pattern (0 blotch camo, 1 digital,
+   3 plain), a/m/c = the camo colours; h = the helicopter scheme. Grey jets for the western/Gulf/Asian air forces,
+   blue-grey splinter on Russian Sukhois, pixel grey-blue on Ukrainian ones, desert three-tone for Iran, the militias
+   and Israel, olive for North Korea and Cuba. */
+const AIRX={US:{b:'#7f878d',p:3,h:{b:'#3e4335',p:3}},RU:{b:'#8f9ead',p:0,a:'#6c7f92',m:'#a9b6c2',c:'#5c6e80',s:1,h:{b:'#59603f',p:0,a:'#6b5c42',m:'#454a33',c:'#59603f'}},
+  UA:{b:'#8a949e',p:1,a:'#5f6b77',m:'#a8b1b9',c:'#717c86',s:1.2,h:{b:'#5b6141',p:0,a:'#6a5c40',m:'#44492f',c:'#5b6141'}},
+  IR:{b:'#b29d74',p:0,a:'#8a6d48',m:'#6e6b4e',c:'#c7b48c',s:1,h:{b:'#a99470',p:0,a:'#7d6644',m:'#646349',c:'#b9a47c'}},
+  RS:{b:'#a8936c',p:0,a:'#7a6343',m:'#5e5d44',c:'#bba57e',s:1,h:{b:'#6b6a4c',p:0,a:'#5a4a34',m:'#4a4b36',c:'#7b7656'}},
+  DW:{b:'#b49d72',p:0,a:'#8d7148',m:'#6c6648',c:'#c8b388',s:1.1,h:{b:'#a08b66',p:0,a:'#7a6444',m:'#5f5d44',c:'#b39e78'}},
+  IL:{b:'#a99a7b',p:0,a:'#7e6a4c',m:'#6b6d52',c:'#bba985',s:1,h:{b:'#5f6050',p:3}},
+  KP:{b:'#596040',p:3,h:{b:'#4f5639',p:3}},CU:{b:'#666a4c',p:0,a:'#5a4c36',m:'#454a33',c:'#787a5a',s:1,h:{b:'#565c3e',p:3}},
+  CN:{b:'#7c8a97',p:3,h:{b:'#59624a',p:3}},IN:{b:'#878d91',p:3,h:{b:'#575d47',p:3}},PK:{b:'#8a9095',p:3,h:{b:'#5b6045',p:3}},
+  TR:{b:'#838a8e',p:3,h:{b:'#575d47',p:3}},EU:{b:'#80878b',p:3,h:{b:'#4b5143',p:3}},KR:{b:'#858b8f',p:3,h:{b:'#4f5541',p:3}},
+  SA:{b:'#8b9194',p:3,h:{b:'#b8a37e',p:3}},AE:{b:'#b7a17a',p:0,a:'#8f7a57',m:'#a08a64',c:'#c6b38f',s:1.1,h:{b:'#b8a37e',p:3}},EG:{b:'#8d9396',p:3,h:{b:'#b09a74',p:3}}};
+const AIRKEY=/^(jet|heli)$|^m_(su35|f15|f16|f18|j10|mig29|rafale|typhoon|ah1|apache|ka52|mi24|mi28|mi8|uh60)$/,HELIKEY=/^heli$|^m_(ah1|apache|ka52|mi24|mi28|mi8|uh60)$/;
+function airScheme(key,team){if(!team||!team.fac||!AIRKEY.test(key))return null;const X=AIRX[team.fac];if(!X)return null;return HELIKEY.test(key)?X.h:X;}
+function airCamoFreq(key){const P=MODELS.proto[key];if(!P)return 0;if(P._acf!=null)return P._acf;P.scene.updateMatrixWorld(true);let mx=0;P.scene.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();const sz=o.geometry.boundingBox.getSize(new THREE.Vector3());mx=Math.max(mx,sz.x,sz.y,sz.z);}});return P._acf=mx>0?3.2/mx:0;}
 const FLAGTEX={};
 // Militia emblems, drawn on a 120x72 canvas: Mountain Shias carry the Zulfiqar (the forked double-bladed sword),
 // Coffee Shias a lion standing over a jambiya dagger.
@@ -278,7 +295,10 @@ function tintedProto(key,team,kk){wxEnv();camoFreq(key);const LK=team&&team.fac?
   const tc=team?new THREE.Color(team.color).convertSRGBToLinear():null;const map=new Map();const root=P.scene;
   const k=kk||(isSol(key)?.0:key==='inf'||key==='hero'?.1:.16);
   const clone=(THREE.SkeletonUtils&&root.getObjectByProperty('type','SkinnedMesh'))?THREE.SkeletonUtils.clone(root):root.clone(true);
-  clone.traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];const nm=ms.map(m=>{if(!map.has(m)){const c=plainStd(m.clone());if(key==='heli'&&/Gray_Aircraft/.test(m.name||'')){c.visible=false;}const isB=/^b_/.test(key);if(isB&&c.color){const hs={};c.color.getHSL(hs);c.color.setHSL(hs.h,hs.s*.55,hs.l*.95);}c.userData.wk=(key==='boat'||key==='ship'||/^m_(fr[egw]|spb|sub[emw])$/.test(key))?1:(/^(jet|heli|drone)$|^m_(su35|f15|f16|f18|j10|mig29|rafale|typhoon|ah1|apache|ka52|mi24|mi28|mi8|uh60)$/.test(key)?2:0);weather(c,['tree1','tree2','tree3','tree4'].includes(key)?.5:(key==='boat'||key==='ship')?.15:isB?1.35:1,CAMOK[key]?CAMOK[key]:0);const VK=['tank','tankE','tankW','truck','technical','toontank','m_t90','m_hilux','m_ozelot','m_abrams','m_merkava','m_kf51','m_msta','m_g6','m_ural','m_m35','m_humvee','m_oplot','m_t72','m_t62','m_t55','m_leo2'];if(isB)c.userData.refl=.35;{const LV={m_su35:.7,m_j10:.75,m_f18:.45,m_typhoon:.15,m_f15:.2,m_f16:.15,m_rafale:.15,m_mig29:.2};const lv=LV[key];if(lv&&c.color){const l=c.color.r*.3+c.color.g*.59+c.color.b*.11;c.color.lerp(new THREE.Color(.18,.2,.22).multiplyScalar(.7+l*1.6),lv);}}if(VK.includes(key)||/^m_|^(jet|heli|drone|boat|ship)$/.test(key))c.userData.refl=/^m_(f|su|ra|ty|j1|mig)|^jet$/.test(key)?1:.75;if(LK&&c.color){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.012){if(key==='soldier')c.color.lerp(new THREE.Color(LK.uni).convertSRGBToLinear(),.6);else if(isSol(key)){c.color.lerp(new THREE.Color(LK.uni).lerp(new THREE.Color('#ffffff'),.4).convertSRGBToLinear(),.5);c.color.multiplyScalar(1.8);}else if(VK.includes(key)){const tgt=new THREE.Color(LK.veh).convertSRGBToLinear().multiplyScalar(Math.min(1.6,.55+lum*2.2));c.color.lerp(tgt,.85);if(c.map&&TEXB[key])c.color.multiplyScalar(TEXB[key]);else if(!c.map&&UNTEX[key])c.color.multiplyScalar(UNTEX[key]);}}if(VK.includes(key)){const X=CAMOX[team.fac]||{};c.userData.camoA=new THREE.Color(LK.ca).convertSRGBToLinear();c.userData.camoB=new THREE.Color(LK.cb).convertSRGBToLinear();c.userData.camoP=X.p!=null?X.p:(LK.pat||0);c.userData.camoS=X.s||1;c.userData.camoC=new THREE.Color(X.c||LK.ca).convertSRGBToLinear();}}if(tc&&c.color&&!['tree1','tree2','tree3','tree4'].includes(key))c.color.lerp(tc,LK&&(isSol(key)||VK.includes(key))?Math.min(k,.06):k);if(isB&&c.color){c.color.multiply(new THREE.Color(1.08,1.0,.84));const rg=team&&team.fac&&FACTIONS[team.fac]?FACTIONS[team.fac].music:null,BW={west:'#9aa3a8',mideast:'#d2b48a',slavic:'#8f9686',southasia:'#c9a27a',eastasia:'#a8a196',latin:'#d9c9a8'}[rg];if(BW){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.05&&lum<.85)c.color.lerp(new THREE.Color(BW).convertSRGBToLinear().multiplyScalar(.6+lum*.9),.32);}}{if(c.isMeshStandardMaterial&&['tank','tankE','tankW','truck','technical','toontank','heli','jet','ship','boat','drone','sam'].includes(key)){c.metalness=Math.min(Math.max(c.metalness||0,.12),.3);c.roughness=Math.min(Math.max(c.roughness??.7,.5),.7);c.userData.sheen=1;}}
+  clone.traverse(o=>{if(!o.isMesh)return;const ms=Array.isArray(o.material)?o.material:[o.material];const nm=ms.map(m=>{if(!map.has(m)){const c=plainStd(m.clone());if(key==='heli'&&/Gray_Aircraft/.test(m.name||'')){c.visible=false;}const isB=/^b_/.test(key);if(isB&&c.color){const hs={};c.color.getHSL(hs);c.color.setHSL(hs.h,hs.s*.55,hs.l*.95);}c.userData.wk=(key==='boat'||key==='ship'||/^m_(fr[egw]|spb|sub[emw])$/.test(key))?1:(/^(jet|heli|drone)$|^m_(su35|f15|f16|f18|j10|mig29|rafale|typhoon|ah1|apache|ka52|mi24|mi28|mi8|uh60)$/.test(key)?2:0);const AS=airScheme(key,team);weather(c,['tree1','tree2','tree3','tree4'].includes(key)?.5:(key==='boat'||key==='ship')?.15:isB?1.35:1,AS&&AS.p!==3?airCamoFreq(key):CAMOK[key]?CAMOK[key]:0);const VK=['tank','tankE','tankW','truck','technical','toontank','m_t90','m_hilux','m_ozelot','m_abrams','m_merkava','m_kf51','m_msta','m_g6','m_ural','m_m35','m_humvee','m_oplot','m_t72','m_t62','m_t55','m_leo2'];if(isB)c.userData.refl=.35;{const LV={m_su35:.7,m_j10:.75,m_f18:.45,m_typhoon:.15,m_f15:.2,m_f16:.15,m_rafale:.15,m_mig29:.2};const lv=LV[key];if(lv&&c.color){const l=c.color.r*.3+c.color.g*.59+c.color.b*.11;c.color.lerp(new THREE.Color(.18,.2,.22).multiplyScalar(.7+l*1.6),lv);}}if(VK.includes(key)||/^m_|^(jet|heli|drone|boat|ship)$/.test(key))c.userData.refl=/^m_(f|su|ra|ty|j1|mig)|^jet$/.test(key)?1:.75;if(LK&&c.color){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.012){if(key==='soldier')c.color.lerp(new THREE.Color(LK.uni).convertSRGBToLinear(),.6);else if(isSol(key)){c.color.lerp(new THREE.Color(LK.uni).lerp(new THREE.Color('#ffffff'),.4).convertSRGBToLinear(),.5);c.color.multiplyScalar(1.8);}else if(VK.includes(key)){const tgt=new THREE.Color(LK.veh).convertSRGBToLinear().multiplyScalar(Math.min(1.6,.55+lum*2.2));c.color.lerp(tgt,.85);if(c.map&&TEXB[key])c.color.multiplyScalar(TEXB[key]);else if(!c.map&&UNTEX[key])c.color.multiplyScalar(UNTEX[key]);}}if(VK.includes(key)){const X=CAMOX[team.fac]||{};c.userData.camoA=new THREE.Color(LK.ca).convertSRGBToLinear();c.userData.camoB=new THREE.Color(LK.cb).convertSRGBToLinear();c.userData.camoP=X.p!=null?X.p:(LK.pat||0);c.userData.camoS=X.s||1;c.userData.camoC=new THREE.Color(X.c||LK.ca).convertSRGBToLinear();}}if(AS&&c.color&&!/glass|canopy|cockpit|window|light|lamp/i.test(m.name||'')){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.04){const bc=new THREE.Color(AS.b).convertSRGBToLinear(),bl=bc.r*.3+bc.g*.59+bc.b*.11;
+        if(c.map)c.color.lerp(bc.multiplyScalar(Math.min(4,(.35+lum*.65)/bl)),.7);else c.color.lerp(bc.multiplyScalar(Math.min(1.6,.6+lum*1.4)),.82);
+        if(AS.p!==3){c.userData.camoA=new THREE.Color(AS.a).convertSRGBToLinear();c.userData.camoB=new THREE.Color(AS.m).convertSRGBToLinear();c.userData.camoC=new THREE.Color(AS.c).convertSRGBToLinear();c.userData.camoP=AS.p;c.userData.camoS=AS.s||1;}}}
+      if(tc&&c.color&&!['tree1','tree2','tree3','tree4'].includes(key))c.color.lerp(tc,LK&&(isSol(key)||VK.includes(key)||AS)?Math.min(k,AS?.03:.06):k);if(isB&&c.color){c.color.multiply(new THREE.Color(1.08,1.0,.84));const rg=team&&team.fac&&FACTIONS[team.fac]?FACTIONS[team.fac].music:null,BW={west:'#9aa3a8',mideast:'#d2b48a',slavic:'#8f9686',southasia:'#c9a27a',eastasia:'#a8a196',latin:'#d9c9a8'}[rg];if(BW){const lum=c.color.r*.3+c.color.g*.59+c.color.b*.11;if(lum>.05&&lum<.85)c.color.lerp(new THREE.Color(BW).convertSRGBToLinear().multiplyScalar(.6+lum*.9),.32);}}{if(c.isMeshStandardMaterial&&['tank','tankE','tankW','truck','technical','toontank','heli','jet','ship','boat','drone','sam'].includes(key)){c.metalness=Math.min(Math.max(c.metalness||0,.12),.3);c.roughness=Math.min(Math.max(c.roughness??.7,.5),.7);c.userData.sheen=1;}}
       if(isB&&team&&team.fac&&CAMOX[team.fac]){const X=CAMOX[team.fac];c.userData.trimC=new THREE.Color(X.t).convertSRGBToLinear();c.userData.wall=X.w||0;}map.set(m,c);}return map.get(m);});o.material=Array.isArray(o.material)?nm:nm[0];});
   if(!(P.anims&&P.anims.length))try{mergeTinted(clone);}catch(err){console.warn('mergeTinted',key,err);}
   MODELS.tinted[id]={scene:clone,anims:P.anims};return MODELS.tinted[id];}
@@ -564,15 +584,34 @@ function walkPose(m,u,amt,a,s,run,br){const W=m.userData.legs;if(!W||!W.uL)retur
   wSet(W.ch,-.045*run*Math.cos(4*Math.PI*(u-s*.5))+br,0);
   if(u<s)return gDepth(W,GL.th,GL.kn)-W.D0;if(uR<s)return gDepth(W,GR.th,GR.kn)-W.D0;
   const w=((u-s)%.5)/Math.max(.01,.5-s),y1=gDepth(W,-a,0)-W.D0,y0=gDepth(W,a,.1+.18*run)-W.D0;return y1+(y0-y1)*w+run*.25*4*w*(1-w);}
+// Posture (realism): soldiers crouch in cover, go prone when pinned down, pause to reload and now and then lob a grenade.
+// Render only (the sim is untouched): ps 0 stand .. .5 crouch .. 1 prone, blended per soldier so a squad drops in a ripple.
+function postApply(m,ud,e,k,dt,tg,moving,fire){const W=ud.legs;if(!W||!W.uL)return;const h=((e.id*7+k*13)%10)/10;let T=tg;if(T>=1&&h<.25)T=.5;else if(T>0&&T<1&&h>.85)T=0;
+  const ps=ud.ps=(ud.ps||0)+Math.max(-1,Math.min(1,(T-(ud.ps||0))*8))*dt*(1.1+h*.9);
+  if(!moving&&fire&&!(ud.at>0)&&ps<.75){if(Math.random()<dt*.16){ud.at=.9;ud.ak=1;}else if(ps<.2&&Math.random()<dt*.05){ud.at=1.15;ud.ak=2;}}
+  let rl=0,gr=0;if(ud.at>0){if(moving||ps>.75)ud.at=0;else{ud.at-=dt;const q=ud.ak===1?1-ud.at/.9:1-ud.at/1.15;if(ud.ak===1)rl=Math.sin(Math.PI*Math.max(0,Math.min(1,q)));else gr=q;
+    if(ud.ak===2&&ud.at<=0&&!ud.gth){ud.gth=1;}}}
+  if(ud.ak===2&&gr>.42&&gr<.6&&!ud.gth2){ud.gth2=1;try{const a=(e.va||0)+(Math.random()-.5)*.5,sp=55+Math.random()*35,gx=e.x+Math.cos(a)*sp*.8,gy=e.y+Math.sin(a)*sp*.8;part({x:e.x,y:e.y,h:groundH(e.x,e.y)+8,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,vh:55,grav:1,c:[.16,.18,.1],s:1.3,f:1,d:.8});setTimeout(()=>{try{if(!G||G.over)return;part({x:gx,y:gy,h:groundH(gx,gy)+2,vx:0,vy:0,rise:14,c:[.3,.28,.25],c2:[.5,.48,.44],ck:.3,s:rnd(3,4.5),g:6,d:.9,a:.5});for(let q=0;q<4;q++)part({x:gx,y:gy,h:groundH(gx,gy)+2,vx:rnd(-40,40),vy:rnd(-40,40),vh:rnd(30,70),grav:1,add:true,c:C_SPARK,s:1,f:.6,d:rnd(.2,.4)});}catch(_){}},800);}catch(_){}}if(gr===0)ud.gth2=0;
+  if(ps<.01&&!rl&&!gr){ud.pp=0;return 0;}
+  const cr=Math.min(1,ps*2),pr=Math.max(0,ps*2-1),c1=cr*(1-pr),thL=.8*c1,knL=1.5*c1,thR=1.0*c1,knR=1.85*c1;
+  wSet(W.uL,thL,0);wSet(W.uR,thR,0);wSet(W.lL,-knL,0);wSet(W.lR,-knR,0);wSet(W.fL,knL-thL,0);wSet(W.fR,knR-thR,0);
+  // grenade: wind back, then snap forward; reload: chest bows to the rifle
+  const gl=gr>0?(gr<.42?-.32*(gr/.42):gr<.6?-.32+.9*((gr-.42)/.18):.58*(1-(gr-.6)/.4)):0;
+  wSet(W.sp,-(.2*c1+.1*rl+.0)+(gr>0?-gl*.5:0),0);wSet(W.ch,-(.12*c1+.22*rl)-(gr>0?gl:0),0);
+  const y=0.5*(gDepth(W,thL,knL)+gDepth(W,thR,knR))-W.D0;
+  m.position.y=y*(1-pr)+pr*1.25;m.rotation.x=pr*1.5;if(ud.bz===undefined)ud.bz=m.position.z;m.position.z=ud.bz-pr*3.6;ud.pp=1;return 1;}
 // Drones are built by hand so each nation's looks right: a Shahed-style delta wing with a pusher propeller
 // (Iran, Mountain Shias), a Kargu-style quadcopter (Turkey) and a small X-frame FPV racer (Ukraine and others).
-function droneType(fac){return fac==='IR'||fac==='RS'?'delta':fac==='TR'?'kargu':'fpv';}
+// Iran and the two Shia militias fly Shahed-style deltas (stencilled Shahed / Ababil / Qasef), Turkey a Bayraktar-style
+// light-grey drone, the US and Israel an MQ-9 / Hermes-style grey drone, Russia a Lancet-style dark loitering munition,
+// China and Korea a bigger quadcopter, everyone else taped-up FPV racers.
+function droneType(fac){return fac==='IR'||fac==='RS'||fac==='DW'?'delta':fac==='TR'?'tb2':fac==='US'||fac==='IL'?'mq':fac==='RU'?'lancet':fac==='CN'||fac==='KR'?'kargu':'fpv';}
 // Drones are built once per nation and then cloned (shared geometry and materials), so a swarm of dozens appears
 // without a hitch.
 const DPROTO={};
 function droneModel(e){const T=G.teams[e.team],ty=droneType(T.fac),key=ty+'|'+T.fac+'|'+T.color;
   if(!DPROTO[key]){const p=buildDrone(e);SCN.remove(p);const meta={props:p.userData.parts.props.map(q=>q.ax)};p.userData={};p.children[0].userData={};let i=0;p.traverse(c=>{if(c.userData&&c.userData.dprop!=null)return;});DPROTO[key]={p,meta};}
-  const D=DPROTO[key],o=D.p.clone(),yaw=o.children[0],props=[];o.traverse(c=>{if(c.name==='dprop')props.push({m:c,ax:c.userData.ax||'y'});});
+  const D=DPROTO[key],o=D.p.clone(),yaw=o.children[0],props=[];kitAdopt(o);o.traverse(c=>{if(c.name==='dprop')props.push({m:c,ax:c.userData.ax||'y'});});
   o.userData={parts:{body:yaw,props},model:true,dtype:ty};SCN.add(o);return o;}
 function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.Group(),yaw=new THREE.Group();o.add(yaw);o.userData.parts={body:yaw,props:[]};o.userData.model=true;o.userData.dtype=ty;
   const B=Bld(),dk='#2a2c28',tc=T.color;
@@ -580,7 +619,7 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
     // Shahed-136 pattern: ~3.5 m long and ~2.5 m span (longer than wide), cylindrical body with a rounded warhead nose,
     // cropped-delta wing running most of the body length, vertical fins at the wingtips reaching above and below the
     // wing, small two-stroke engine in the tail driving a two-blade pusher propeller.
-    const sk=T.fac==='RS'?'#6a665a':'#c4c2b8',sk2=T.fac==='RS'?'#5a564b':'#aeaca2';
+    const sk=T.fac==='RS'?'#6a665a':T.fac==='DW'?'#a6aaa4':'#c4c2b8',sk2=T.fac==='RS'?'#5a564b':T.fac==='DW'?'#92968f':'#aeaca2';
     B.cyl(1.25,1.25,15,12,-1.5,0,0,sk,0,0,-Math.PI/2);B.sph(1.25,6,0,0,sk,1.9,1,1);B.cyl(.55,1.25,2.6,10,-10.3,0,0,sk2,0,0,-Math.PI/2);
     B.box(4.5,.9,1.6,-1,1.15,0,sk2);
     const wing=new THREE.Shape();wing.moveTo(5.5,0);wing.lineTo(-4.6,8.6);wing.lineTo(-8.8,8.6);wing.lineTo(-8.4,0);wing.lineTo(-8.8,-8.6);wing.lineTo(-4.6,-8.6);wing.closePath();
@@ -590,12 +629,42 @@ function buildDrone(e){const T=G.teams[e.team],ty=droneType(T.fac),o=new THREE.G
     B.box(1.4,.35,1.1,1.5,1.62,0,tc);B.box(.6,.6,.6,-11.7,0,0,dk);
     const pr=new THREE.Group();const P=Bld();P.box(.35,6.2,.8,0,0,0,dk);P.sph(.45,0,0,0,dk);pr.add(mesh(P.geo()));pr.position.set(-12.1,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
     const disc=new THREE.Mesh(new THREE.CircleGeometry(3.1,20),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.16,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.y=Math.PI/2;disc.position.set(-12.2,0,0);yaw.add(disc);}
+  else if(ty==='tb2'||ty==='mq'){
+    // Bayraktar TB2 (light grey, inverted-V tail) / MQ-9-Hermes style (darker grey, bulbous nose, Y tail): long straight
+    // wing, slim fuselage, pusher propeller, sensor ball under the nose
+    const mq=ty==='mq',sk=mq?'#8b9196':'#b9bdbf',sk2=mq?'#7a8085':'#a7abad';
+    B.cyl(mq?1.2:.95,mq?1.2:.95,9,12,0,0,0,sk,0,0,Math.PI/2);B.sph(mq?1.2:.95,4.4,mq?.15:0,0,sk,mq?1.7:1.9,mq?1.15:1,1);B.cyl(mq?1.2:.95,.35,3.4,10,-6.2,0,0,sk2,0,0,Math.PI/2);B.sph(.62,3.3,-1.15,0,'#2a2c2d');
+    const wing=new THREE.Shape();wing.moveTo(1.2,0);wing.lineTo(.9,11);wing.lineTo(-.4,11);wing.lineTo(-.7,0);wing.lineTo(-.4,-11);wing.lineTo(.9,-11);wing.closePath();
+    const wg=new THREE.ExtrudeGeometry(wing,{depth:.28,bevelEnabled:true,bevelThickness:.08,bevelSize:.08,bevelSegments:1});wg.rotateX(Math.PI/2);B._p.push({g:wg,m:new THREE.Matrix4().makeTranslation(.3,mq?.25:.75,0),c:lin(sk)});
+    for(const sd of [-1,1]){const a=mq?.75:-.68;B.box(1.9,3.8,.14,-7,Math.sin(Math.abs(a))*1.7*(mq?1:-1),sd*1.55,sk2,sd*(mq?-.82:.82),0,0);}if(mq)B.box(1.5,2.2,.14,-7,-1.2,0,sk2);
+    B.sph(.18,.25,0,11,'#c22a1e');B.sph(.18,.25,0,-11,'#c22a1e');B.sph(.18,.6,.75,-11,'#c22a1e');B.sph(.18,.6,.75,11,'#2bc24a');B.sph(.16,-7.9,.4,0,'#f2f2ee');
+    const pr=new THREE.Group();const P=Bld();P.box(.3,5,.55,0,0,0,dk);P.sph(.4,0,0,0,dk);pr.add(mesh(P.geo()));pr.position.set(-8.1,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(2.6,20),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.14,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.y=Math.PI/2;disc.position.set(-8.2,0,0);yaw.add(disc);}
+  else if(ty==='lancet'){
+    // Lancet-style loitering munition: dark slim body with two sets of X wings (front and rear), small pusher prop
+    const sk='#3c403a',sk2='#2f322d';B.cyl(.8,.8,12,10,0,0,0,sk,0,0,Math.PI/2);B.cyl(0,.8,2.2,10,7.1,0,0,sk2,0,0,-Math.PI/2);B.cyl(.8,.4,1.4,10,-6.7,0,0,sk2,0,0,Math.PI/2);B.sph(.35,7.4,-.35,0,'#151515');
+    for(const [x,ch,sp] of [[3.2,2.6,3.6],[-4.4,2.8,4.4]])for(let i=0;i<4;i++){const a=Math.PI/4+i*Math.PI/2;B.box(ch,sp,.12,x,Math.cos(a)*(sp/2+.6),Math.sin(a)*(sp/2+.6),sk,a,0,0);}
+    B.sph(.16,-4.4,0,5.3,'#2bc24a');B.sph(.16,-4.4,0,-5.3,'#c22a1e');
+    const pr=new THREE.Group();const P=Bld();P.box(.25,3.2,.45,0,0,0,dk);pr.add(mesh(P.geo()));pr.position.set(-7.6,0,0);pr.name='dprop';pr.userData.ax='x';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'x'});
+    const disc=new THREE.Mesh(new THREE.CircleGeometry(1.7,16),new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.14,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.y=Math.PI/2;disc.position.set(-7.7,0,0);yaw.add(disc);}
   else{const big=ty==='kargu',arm=big?7.5:5.5,bc=big?'#7c8076':'#3b3f37';B.cyl(big?2.4:1.6,big?2.4:1.6,big?3:1.6,10,0,0,0,bc);if(big)B.sph(1.6,2,-.6,0,'#1b1c1a');else B.box(1.4,1.2,1.2,2,.5,0,'#111');B.box(1.6,.6,1.2,0,big?1.8:1.1,0,tc);
     for(const a of [Math.PI/4,3*Math.PI/4,5*Math.PI/4,7*Math.PI/4]){const x=Math.cos(a)*arm,z=Math.sin(a)*arm;B.box(arm*1.05,.5,.7,x/2,0,z/2,bc,0,-a,0);B.cyl(.7,.7,1.2,8,x,.4,z,dk);
       const pr=new THREE.Group();const P=Bld();P.box(big?6:4.4,.15,.6,0,0,0,'#151515');pr.add(mesh(P.geo()));pr.position.set(x,1.1,z);pr.name='dprop';pr.userData.ax='y';yaw.add(pr);o.userData.parts.props.push({m:pr,ax:'y'});
       const disc=new THREE.Mesh(new THREE.CircleGeometry(big?3:2.2,16),new THREE.MeshBasicMaterial({color:0x111111,transparent:true,opacity:.2,depthWrite:false,side:THREE.DoubleSide}));disc.rotation.x=-Math.PI/2;disc.position.set(x,1.15,z);yaw.add(disc);}
-    if(big)for(const s of [-1,1])B.box(.4,2.4,.4,0,-1.6,1.4*s,dk);}
-  yaw.add(mesh(B.geo()));const sc=ty==='delta'?.95:ty==='kargu'?.95:.85;yaw.scale.setScalar(sc);
+    if(big)for(const s of [-1,1])B.box(.4,2.4,.4,0,-1.6,1.4*s,dk);
+    if(!big){B.cyl(.55,.55,2.6,8,-.6,1.55,0,'#2d3a52',0,0,Math.PI/2);for(const t of [-.5,.4])B.cyl(.6,.6,.35,8,-.6+t,1.55,0,'#151515',0,0,Math.PI/2);for(const s of [-1,1])B.cyl(.06,.06,3.2,4,-2.6,2.4,.5*s,dk,.3*s,0,1.1);}
+    B.sph(.2,arm*.72,.6,arm*.72,'#2bc24a');B.sph(.2,arm*.72,.6,-arm*.72,'#c22a1e');B.sph(.2,-arm*.72,.6,arm*.72,'#e8e8e2');B.sph(.2,-arm*.72,.6,-arm*.72,'#e8e8e2');}
+  // drones get their own plain painted-metal material: the shared one adds ground dust to everything near the model's
+  // origin, which turned every drone sand-coloured whatever its paint
+  if(!DPROTO._mat)DPROTO._mat=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.55,metalness:.25});
+  const dm=new THREE.Mesh(B.geo(),DPROTO._mat);dm.castShadow=true;const dP=ty!=='fpv'&&ty!=='kargu'?kitMeshProbe(dm):null;yaw.add(dm);const sc=ty==='delta'?.95:ty==='kargu'?.95:ty==='tb2'||ty==='mq'?.9:.85;yaw.scale.setScalar(sc);
+  if(!(typeof SET!=='undefined'&&SET.gfx==='low')&&dP)try{const K=kitBuilder(),f=T.fac,dd=(face,sg,a,b,w,h,cell,sub,o)=>{const r=kitDec(dP,face,sg,a,b,w,h,cell,sub,o);if(r)K.quadN(r);return !!r;};
+    // drone markings are tiny stencils, fitted to the fuselage / wing surface like every other decal
+    if(ty==='delta'){const nm=f==='RS'?'ababil':f==='DW'?'qasef':'shahed',dg=f==='IR'?'p:':'a:',sn=String(100+(KFAC.indexOf(f)*47)%800);
+      for(const zz of [3.6,-3.6])dd('top',1,-4.4,zz,3.0,.95,'s:'+nm,[.04,.1,.96,.9],{fa:.7,fb:.7,maxh:1.2,tag:'stencil'});
+      for(const sc of [1,.8,.6]){const rs=[0,1,2].map(i=>kitDec(dP,'top',1,-6.6+(i-1)*.62*sc,6.2,.45*sc,.62*sc,dg+sn[i],[.25,.1,.75,.9],{minS:.9,tag:'serial'}));if(rs.every(r=>r&&r.w>=.45*sc*.97)){rs.forEach(r=>K.quadN(r));break;}}}
+    else{const x=ty==='lancet'?-1.5:-2.4;for(const yy of ty==='mq'?[.3,0,.6]:[0,.2]){let n=0;for(const sg of [1,-1])if(dd('side',sg,x,yy,1.1,.66,'f:'+f,null,{fa:.6,fb:.6,maxw:1.3,tag:'flag'}))n++;if(n)break;}}
+    const g=K.geo();if(g){g.userData.P=dP;yaw.add(kitMarker('drone|'+ty+'|'+f,g));}}catch(err){console.warn('drone kit',err);}
   SCN.add(o);return o;}
 // The Ayatollah: a senior cleric - layered black turban (amamah), full white beard, round spectacles, a pale grey
 // qaba robe to the ground under a dark brown aba cloak with thin gold edging, hands folded holding prayer beads.
@@ -663,6 +732,11 @@ function decalSet(k){let S=DECAL.sets[k];if(S)return S;let geo,mat,ro;
     geo=new THREE.PlaneGeometry(1.5,1).rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({map:BLOBTEX,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2});ro=1;}
   else{geo=k==='ringS'?new THREE.RingGeometry(.5,.56,28):new THREE.RingGeometry(.36,.41,28);geo.rotateX(-Math.PI/2);mat=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.24,depthWrite:false});ro=2;}
   return DECAL.sets[k]=S={geo,mat,ro,im:null,cap:0,list:new Set(),col:k!=='blob'};}
+// faction kit, ship radars and drone stencils are drawn as instances (one draw call per kit shape for the whole
+// battle, not one per unit): each unit only carries an empty marker whose world matrix feeds the instanced mesh
+function kitMarker(id,g){const k='kit:'+id;let S=DECAL.sets[k];if(!S)S=DECAL.sets[k]={geo:g,mat:kitMat(),ro:0,im:null,cap:0,list:new Set(),col:false};
+  const m=new THREE.Object3D();m.name='kitInst';m.userData.kid=id;S.list.add(m);if(SCN&&SCN.onBeforeRender!==decalUpdate)SCN.onBeforeRender=decalUpdate;return m;}
+function kitAdopt(o){o.traverse(q=>{if(q.name==='kitInst'&&q.userData.kid){const S=DECAL.sets['kit:'+q.userData.kid];if(S)S.list.add(q);}});}
 function decal(k,color){const S=decalSet(k),m=new THREE.Object3D();m.name='decal_'+k;if(color)m.userData.dc=color;S.list.add(m);
   if(SCN&&SCN.onBeforeRender!==decalUpdate)SCN.onBeforeRender=decalUpdate;return m;}
 function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
@@ -673,7 +747,8 @@ function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
     if(!S.im)continue;const im=S.im;let i=0;
     for(const m of S.list){let q=m,v=true;while(q.parent){if(!q.visible){v=false;break;}q=q.parent;}if(!v||q!==SCN)continue;im.setMatrixAt(i,m.matrixWorld);if(S.col&&m.userData.dc)im.setColorAt(i,m.userData.dc);i++;}
     im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}}
-function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
+const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',CU:'#2e3a2c'};   // hero squad uniform colours
+function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='champ')c=Object.assign({},c,{tint:CHAMP_TINT[T.fac]||c.tint});if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
   if(e.kind==='aa'&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
   if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
   else if(e.kind==='arty'){if(e.s&&e.s.rocket||!MIL_TANK[T.fac]&&!MODELS.proto.tank)c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};else{const tc=MIL_TANK[T.fac]&&MIL_TANK[T.fac].m!=='technical'&&MIL_TANK[T.fac].m!=='toontank'?MIL_TANK[T.fac]:MCFG.tank;c=Object.assign({},tc,{size:tc.size*1.08,extra:'gun'});if(MIL_TANK[T.fac]&&(MIL_TANK[T.fac].m==='technical'||MIL_TANK[T.fac].m==='toontank'))c={m:truckKey(T.fac),fit:'z',size:34,extra:'mlrs'};}}
@@ -702,8 +777,12 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
     if(alongX){tr.position.set(ok?bb.min.x+tl*.9:-24,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,(ok?bb.max.z:2)*.15+1.2);}else{tr.rotation.y=Math.PI/2;tr.position.set((ok?bb.max.x:2)*.15+1.2,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,ok?bb.min.z+tl*.9:-24);}
     o.add(tr);o.userData.parts.tailR=tr;}
   if(e.kind==='jet'){mats();o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(yaw),ok=isFinite(bb.min.x);const tx=ok?bb.min.x+.6:-22,ty=ok?bb.min.y+(bb.max.y-bb.min.y)*.42:1;
-    // afterburner: a tapered additive flame cone at the real tail nozzle of each model
-    const fl=new THREE.Mesh(new THREE.ConeGeometry(1.5,9,10,1,true).rotateZ(Math.PI/2).translate(-4.5,0,0),MAT.glow);fl.position.set(tx,ty,0);fl.renderOrder=3;o.add(fl);o.userData.parts.glow=fl;}
+    // engine exhaust at each real nozzle (found by ray probes from behind; twin-engine jets get two). A soft additive
+    // plume - hot white-yellow core fading to orange and nothing - plus a red-hot nozzle ring. In cruise only a short faint
+    // heat glow shows; the full afterburner plume with shock diamonds only on take-off / hard climbs (06-view scales it).
+    let nz=null;try{if(ok)nz=jetNozzles(o,yaw,bb);}catch(err){}if(!nz||!nz.length)nz=[{x:tx,y:ty,z:0,r:1.5}];
+    const ex=new THREE.Group();ex.name='exhaust';for(const n of nz){const g=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());g.position.set(n.x,n.y,n.z);g.scale.setScalar(n.r);g.userData.r=n.r;g.renderOrder=3;g.frustumCulled=false;ex.add(g);}
+    o.add(ex);o.userData.parts.glow=ex;}
   if(c.extra==='zu23'){const B=Bld(),D='#2a2c28',S='#4f5446';B.box(7,1.6,6,-5,9.6,0,S);B.cyl(1.4,1.6,1.6,10,-5,11,0,D);B.box(4,3.2,4.6,-5,13,0,S);B.box(.4,3,5.4,-3,13.6,0,S);for(const z of [-1.1,1.1]){B.cyl(.32,.32,13,8,1.2,16.2,z,D,0,0,Math.PI/2-.42);B.cyl(.5,.5,1.6,8,-3.2,13.6,z,D,0,0,Math.PI/2-.42);}const g=mesh(B.geo());g.castShadow=true;o.add(g);o.userData.parts.turret=g;}
   if(c.extra==='dshk'){const B=Bld();B.cyl(.5,.6,6,8,-6,9,0,'#2b2d2a');B.box(3,1.6,2.2,-6,12.6,0,'#33352f');B.cyl(.35,.35,9,8,-1.5,13,0,'#1e1f1d',0,0,Math.PI/2);B.box(.4,2.2,2.6,-6.8,13.4,0,'#4a4d45');const g=mesh(B.geo());g.castShadow=true;o.add(g);}
   if(c.extra==='samtruck'){const sp=instModel('sam',{color:'#62664f'},'y',13,1,.6);if(sp){sp.position.set(-7,9,0);sp.rotation.y=Math.PI/2;o.add(sp);o.userData.parts.turret=sp;}}
@@ -798,7 +877,7 @@ function folGeo(cards,cx,cy,cz){const n=cards.length,P=new Float32Array(n*12),N=
     {const a=FOLREAL?(i%2)*.5:0,b=FOLREAL?a+.5:1;U.set(FOLREAL?[a,1,b,1,b,0,a,0]:[0,0,1,0,1,1,0,1],i*8);}I.set([i*4,i*4+1,i*4+2,i*4,i*4+2,i*4+3],i*6);});
   const G2=new THREE.BufferGeometry();G2.setAttribute('position',new THREE.BufferAttribute(P,3));G2.setAttribute('normal',new THREE.BufferAttribute(N,3));G2.setAttribute('uv',new THREE.BufferAttribute(U,2));G2.setAttribute('color',new THREE.BufferAttribute(C,3));G2.setIndex(new THREE.BufferAttribute(I,1));return G2;}
 function folMat(kind){const tm=new THREE.MeshStandardMaterial({map:folTex(kind),vertexColors:true,alphaTest:.42,side:THREE.DoubleSide,roughness:1,metalness:0});weather(tm,.35);
-  const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;').replace('#include <begin_vertex>','#include <begin_vertex>\n{vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/38.,0.,1.);transformed.x+=sin(wt*.9+ip.x*.013+transformed.z*.15)*k*k*1.1;transformed.z+=cos(wt*.7+ip.z*.011+transformed.x*.15)*k*k*.6;}');}};
+  const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.uniforms.ws=WINDS;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;uniform float ws;').replace('#include <begin_vertex>','#include <begin_vertex>\n{/* whole canopy leans together (phase per tree, none per leaf: no shearing), slow and small, rises with height */vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/38.,0.,1.);k*=k;float ph=ip.x*.013+ip.z*.011;float a=(sin(wt*.55+ph)*.7+sin(wt*.95+ph*1.6+.8)*.18)*k*.8*ws;transformed.x+=a;transformed.z+=a*.4;transformed.y-=a*a*.6/max(transformed.y,2.);}');}};
   tm.customProgramCacheKey=()=>'folt'+kind;return tm;}
 function folPlace(list,geos,mats2,shadowG,yoff,sx,sy,snow){ // one InstancedMesh per part, same transforms
   const out=[];const col=new THREE.Color();
@@ -888,14 +967,51 @@ function scenery(){G.sceneryPos=[];if(!MODELS.ready||!G.map)return;mats();const 
 loadModels();
 
 
+// ---- jet engine exhaust (Abdullah 2026-11-05: the flat yellow wedge behind the jets) ----
+// nozzle finder: rays from behind the model (+x direction) over a y/z grid; nozzles = the rearmost THICK parts (hit on
+// neighbouring rows and columns, so thin tail fins and stabilisers don't count), clustered left/right of the centreline
+function jetNozzles(o,yaw,bb){const L=bb.max.x-bb.min.x,W=bb.max.z-bb.min.z,H=bb.max.y-bb.min.y,RC=new THREE.Raycaster(),dir=new THREE.Vector3(1,0,0),NZ=25,NY=11,cells=[];
+  for(let j=0;j<NY;j++){const y=bb.min.y+H*(.12+.5*j/(NY-1));for(let i=0;i<NZ;i++){const z=(bb.min.z+bb.max.z)/2+W*(-.22+.44*i/(NZ-1));RC.set(new THREE.Vector3(bb.min.x-30,y,z),dir);RC.far=L+60;
+    let hx=null;for(const q of RC.intersectObject(yaw,true)){if(q.object.material&&q.object.material.visible===false)continue;if(!q.object.isMesh)continue;hx=q.point.x;break;}cells.push({i,j,y,z,x:hx});}}
+  const at=(i,j)=>i>=0&&j>=0&&i<NZ&&j<NY?cells[j*NZ+i]:null,tol=L*.025;
+  const thick=cells.filter(c=>{if(c.x===null)return false;let n=0;for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1]]){const d=at(c.i+di,c.j+dj);if(d&&d.x!==null&&Math.abs(d.x-c.x)<tol)n++;}return n>=3;});
+  if(!thick.length)return null;const mx=Math.min(...thick.map(c=>c.x)),rear=thick.filter(c=>c.x<=mx+L*.03);
+  const cz=(bb.min.z+bb.max.z)/2,grp=[rear.filter(c=>c.z<cz-W*.015),rear.filter(c=>c.z>cz+W*.015)],mid=rear.filter(c=>Math.abs(c.z-cz)<=W*.015);
+  const mk=g=>{const y=g.reduce((a,c)=>a+c.y,0)/g.length,z=g.reduce((a,c)=>a+c.z,0)/g.length,x=Math.min(...g.map(c=>c.x)),sp=Math.max(Math.max(...g.map(c=>c.z))-Math.min(...g.map(c=>c.z)),Math.max(...g.map(c=>c.y))-Math.min(...g.map(c=>c.y)));
+    const p=o.worldToLocal(new THREE.Vector3(x,y,z));return {x:p.x+.2,y:p.y,z:p.z,r:Math.max(W*.018,Math.min(W*.05,sp*.5+W*.012))};};
+  // two separate engines only if both sides have nozzle cells and the middle doesn't dominate
+  if(grp[0].length&&grp[1].length&&mid.length<Math.min(grp[0].length,grp[1].length)){const a=mk(grp[0]),b=mk(grp[1]),r=(a.r+b.r)/2,y=(a.y+b.y)/2,z=(Math.abs(a.z)+Math.abs(b.z))/2,x=Math.max(a.x,b.x);return [{x,y,z:-z,r},{x,y,z,r}];}
+  const one=mk(rear);one.z=0;return [one];}
+// unit plume (nozzle radius 1, pointing -x): crossed soft quads textured with a plume strip (white-hot core, shock
+// diamonds, orange fade, soft edges) + a round glow filling the nozzle exit. Additive, one shared material + texture.
+function jetPlumeGeo(){if(jetPlumeGeo.g)return jetPlumeGeo.g;const P=[],U=[],I=[];
+  const quad=(a,b,c,d,ua,ub,uc,ud)=>{const n=P.length/3;P.push(...a,...b,...c,...d);U.push(...ua,...ub,...uc,...ud);I.push(n,n+1,n+2,n,n+2,n+3);};
+  const hw=2.3,x0=.25,x1=-11;
+  quad([x0,-hw,0],[x1,-hw,0],[x1,hw,0],[x0,hw,0],[0,.5],[1,.5],[1,1],[0,1]);   // plume, vertical plane
+  quad([x0,0,-hw],[x1,0,-hw],[x1,0,hw],[x0,0,hw],[0,.5],[1,.5],[1,1],[0,1]);   // plume, horizontal plane
+  quad([-.06,-1.3,-1.3],[-.06,-1.3,1.3],[-.06,1.3,1.3],[-.06,1.3,-1.3],[0,0],[.5,0],[.5,.5],[0,.5]); // nozzle glow
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.setIndex(I);g.computeBoundingSphere();return jetPlumeGeo.g=g;}
+// texture atlas 128x128: top half = plume strip (u: nozzle -> tail), bottom-left = round nozzle glow
+function jetPlumeMat(){if(jetPlumeMat.m)return jetPlumeMat.m;const cv=document.createElement('canvas');cv.width=cv.height=128;const x=cv.getContext('2d'),im=x.createImageData(128,128),D=im.data;
+  for(let py=0;py<64;py++)for(let px=0;px<128;px++){const t=px/127,s=Math.abs(py-31.5)/31.5,w=.22+.5*t,core=Math.exp(-Math.pow(s/w,2)*2.6),inner=Math.exp(-Math.pow(s/(w*.38),2)*2.6);
+    const dia=Math.pow(Math.max(0,Math.cos(t*Math.PI*9)),8)*(t<.62?1:0)*inner,fade=Math.pow(1-t,1.5)*Math.min(1,t*14+.25);
+    const a=Math.min(1,(core*.6+inner*.75+dia)*fade),k=Math.min(1,t*1.6),G=.9-.42*k+.08*dia,B=.72-.62*k+.2*dia,o=(py*128+px)*4;
+    D[o]=255;D[o+1]=255*Math.min(1,G);D[o+2]=255*Math.max(0,Math.min(1,B));D[o+3]=255*a;}
+  for(let py=64;py<128;py++)for(let px=0;px<64;px++){const r=Math.hypot(px-31.5,py-95.5)/31.5,a=Math.max(0,1-r),v=a*a*(3-2*a),o=(py*128+px)*4;
+    D[o]=255;D[o+1]=255*(.62+.3*v);D[o+2]=255*(.25+.45*v*v);D[o+3]=255*Math.min(1,v*1.15);}
+  x.putImageData(im,0,0);const tex=new THREE.CanvasTexture(cv);tex.colorSpace=THREE.SRGBColorSpace;
+  return jetPlumeMat.m=new THREE.MeshBasicMaterial({map:tex,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false,toneMapped:false});}
+
 /* ================= FACTION LOOKS (Step 1): national markings + add-on kits =================
    Every aircraft, ship and combat vehicle gets ONE extra merged mesh (one draw call) carrying its nation's flag/roundel
    decals and a small kit (flags on poles, sandbags, ERA blocks, cope cage, red stars, antennas). The mesh geometry is
    built once per model+nation and shared; textures come from one shared atlas. On Low graphics (phones) ground vehicles
    skip the kit entirely; aircraft/ships keep only the cheap decals. Visuals only - nothing here touches the simulation. */
 const KFAC=['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','CU','RS','DW'];
-const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=6;
-function kitCellIdx(n){if(n==='star')return 36;if(n==='white')return 37;const t=n[0],v=n.slice(2);if(t==='f')return KFAC.indexOf(v);if(t==='r')return 18+KFAC.indexOf(v);return 38+(+v);}
+const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=10;
+// extra atlas cells: 48-57 Persian digits (p:0..9), 58-67 Arabic-Indic digits (a:0..9), 68+ painted stencils (s:name)
+const KSTEN={shahed:68,qasef:69,ababil:70,kp:71,ru:72};
+function kitCellIdx(n){if(n==='star')return 36;if(n==='white')return 37;const t=n[0],v=n.slice(2);if(t==='f')return KFAC.indexOf(v);if(t==='r')return 18+KFAC.indexOf(v);if(t==='p')return 48+(+v);if(t==='a')return 58+(+v);if(t==='s')return KSTEN[v]||37;return 38+(+v);}
 function kitUV(n,x0=0,y0=0,x1=1,y1=1){const i=kitCellIdx(n),cx=i%KCOLS,cy=(i/KCOLS)|0,W=KCOLS*KCW,H=KROWS*KCH;
   return {u0:(cx*KCW+x0*KCW)/W,u1:(cx*KCW+x1*KCW)/W,vt:1-(cy*KCH+y0*KCH)/H,vb:1-(cy*KCH+y1*KCH)/H};}
 function kitMat(){if(KIT.mat)return KIT.mat;const c=document.createElement('canvas');c.width=KCOLS*KCW;c.height=KROWS*KCH;const x=c.getContext('2d');
@@ -907,9 +1023,16 @@ function kitMat(){if(KIT.mat)return KIT.mat;const c=document.createElement('canv
   {const wx=(37%KCOLS)*KCW,wy=((37/KCOLS)|0)*KCH;x.fillStyle='#fff';x.fillRect(wx,wy,KCW,KCH);}
   x.font='bold 54px Arial, Helvetica, sans-serif';x.textAlign='center';x.textBaseline='middle';x.lineJoin='round';
   for(let d=0;d<10;d++){const i=38+d,dx=(i%KCOLS)*KCW+KCW/2,dy=((i/KCOLS)|0)*KCH+KCH/2+2;x.lineWidth=5;x.strokeStyle='rgba(18,18,18,.75)';x.strokeText(String(d),dx,dy);x.fillStyle='#f1efe6';x.fillText(String(d),dx,dy);}
+  // Persian and Arabic-Indic digits (Iranian vehicles and drones, the militias' drones), painted off-white
+  const cellXY=i=>[(i%KCOLS)*KCW+KCW/2,((i/KCOLS)|0)*KCH+KCH/2+2];
+  for(let d=0;d<10;d++)for(const [base,str] of [[48,'۰۱۲۳۴۵۶۷۸۹'],[58,'٠١٢٣٤٥٦٧٨٩']]){const [dx,dy]=cellXY(base+d);x.font='bold 50px Tahoma, "Noto Sans Arabic", Arial, sans-serif';x.lineWidth=5;x.strokeStyle='rgba(18,18,18,.75)';x.strokeText(str[d],dx,dy);x.fillStyle='#ece8dc';x.fillText(str[d],dx,dy);}
+  // stencils: drone names in dark spray paint, a generic North Korean slogan panel ("For the Fatherland"), a Russian unit letter
+  const sten=(i,txt,font,fill,bg)=>{const [dx,dy]=cellXY(i);if(bg){x.fillStyle=bg;x.fillRect(dx-KCW/2+3,dy-KCH/2+8,KCW-6,KCH-18);}x.font=font;x.fillStyle=fill;x.fillText(txt,dx,dy-2,KCW-10);};
+  sten(68,'شاهد','bold 34px Tahoma, "Noto Sans Arabic", sans-serif','#262624');sten(69,'قاصف','bold 34px Tahoma, "Noto Sans Arabic", sans-serif','#262624');sten(70,'أبابيل','bold 30px Tahoma, "Noto Sans Arabic", sans-serif','#262624');
+  sten(71,'조국을 위하여','bold 17px "Noto Sans KR", "Malgun Gothic", sans-serif','#e8e2d0','#6e2a24');sten(72,'Б-21','bold 40px Arial, sans-serif','#ecebe4');
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;KIT.tex=t;
   const m=new THREE.MeshStandardMaterial({map:t,vertexColors:true,alphaTest:.5,roughness:.75,metalness:.1});if(typeof weather==='function')weather(m,.8,0);KIT.mat=m;return m;}
-function kitBuilder(){const P=[],N=[],C=[],U=[],Wc=kitUV('white',.4,.4,.6,.6),wu=(Wc.u0+Wc.u1)/2,wv=(Wc.vt+Wc.vb)/2,E=new THREE.Euler(),Q=new THREE.Quaternion(),V=new THREE.Vector3(),S=new THREE.Vector3(1,1,1);
+function kitBuilder(){const P=[],N=[],C=[],U=[],AUD=[],Wc=kitUV('white',.4,.4,.6,.6),wu=(Wc.u0+Wc.u1)/2,wv=(Wc.vt+Wc.vb)/2,E=new THREE.Euler(),Q=new THREE.Quaternion(),V=new THREE.Vector3(),S=new THREE.Vector3(1,1,1);
   const push=(g,M,col,rect)=>{g=g.index?g.toNonIndexed():g;g.applyMatrix4(M);const p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
     for(let i=0;i<p.count;i++){P.push(p.getX(i),p.getY(i),p.getZ(i));N.push(n.getX(i),n.getY(i),n.getZ(i));C.push(col.r,col.g,col.b);
       if(rect)U.push(rect.u0+(rect.u1-rect.u0)*uv.getX(i),rect.vb+(rect.vt-rect.vb)*uv.getY(i));else U.push(wu,wv);}g.dispose();};
@@ -918,53 +1041,201 @@ function kitBuilder(){const P=[],N=[],C=[],U=[],Wc=kitUV('white',.4,.4,.6,.6),wu
     cyl:(rt,rb,h,sg,x,y,z,c,rx,ry,rz)=>(push(new THREE.CylinderGeometry(rt,rb,h,sg),M(x,y,z,rx,ry,rz),lin(c)),api),
     tor:(r,t,x,y,z,c,rx,ry,rz)=>(push(new THREE.TorusGeometry(r,t,5,12),M(x,y,z,rx,ry,rz),lin(c)),api),
     // textured decal, face '+z' | '-z' | '+y' (a tiny offset keeps it clear of the surface)
-    quad:(w,h,x,y,z,face,cell,sub)=>{const g=new THREE.PlaneGeometry(w,h);const r=sub?kitUV(cell,sub[0],sub[1],sub[2],sub[3]):kitUV(cell);const white=new THREE.Color(1,1,1);
+    // surface decal from kitDec(): a quad oriented to the measured surface normal (and recorded for orch/decalcheck.mjs)
+    quadN:(r)=>{const g=new THREE.PlaneGeometry(r.w,r.h),uv=r.sub?kitUV(r.cell,r.sub[0],r.sub[1],r.sub[2],r.sub[3]):kitUV(r.cell),nn=new THREE.Vector3(...r.n).normalize(),rt=new THREE.Vector3(...r.up).cross(nn).normalize(),up=nn.clone().cross(rt);
+      push(g,new THREE.Matrix4().makeBasis(rt,up,nn).setPosition(r.c[0],r.c[1],r.c[2]),new THREE.Color(1,1,1),uv);AUD.push(r);return api;},
+    aud:AUD,
+    quad:(w,h,x,y,z,face,cell,sub)=>{AUD.push({kind:'free',w,h,cell,c:[x,y,z]});const g=new THREE.PlaneGeometry(w,h);const r=sub?kitUV(cell,sub[0],sub[1],sub[2],sub[3]):kitUV(cell);const white=new THREE.Color(1,1,1);
       if(face==='-z')push(g,M(x,y,z,0,Math.PI,0),white,r);else if(face==='+y')push(g,M(x,y,z,-Math.PI/2,0,0),white,r);else push(g,M(x,y,z,0,0,0),white,r);return api;},
-    geo:()=>{if(!P.length)return null;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.computeBoundingSphere();return g;}};
+    // ellipsoid (sandbags, bags, heads, helmets), bevelled box (jerrycans, ERA tiles, sights - never a hard cube),
+    // a round bar between two points (slat armour, cage bars, rails) and a lumpy draped net
+    ell:(rx,ry,rz,x,y,z,c,ax,ay,az)=>{const g=new THREE.SphereGeometry(1,8,6);g.scale(rx,ry,rz);push(g,M(x,y,z,ax,ay,az),lin(c));return api;},
+    rbox:(w,h,d,x,y,z,c,ax,ay,az)=>{const b=Math.min(w,h,d)*.2,sh=new THREE.Shape();sh.moveTo(-w/2+b,-h/2+b);sh.lineTo(w/2-b,-h/2+b);sh.lineTo(w/2-b,h/2-b);sh.lineTo(-w/2+b,h/2-b);sh.closePath();
+      const g=new THREE.ExtrudeGeometry(sh,{depth:Math.max(.01,d-2*b),bevelEnabled:true,bevelThickness:b,bevelSize:b,bevelSegments:1,curveSegments:1});g.translate(0,0,-(d-2*b)/2);push(g,M(x,y,z,ax,ay,az),lin(c));return api;},
+    bar:(x1,y1,z1,x2,y2,z2,r,c,sg)=>{const a=new THREE.Vector3(x1,y1,z1),b2=new THREE.Vector3(x2,y2,z2),d=b2.clone().sub(a),len=d.length();if(len<1e-3)return api;
+      const g=new THREE.CylinderGeometry(r,r,len,sg||5);const q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());push(g,new THREE.Matrix4().compose(a.add(b2).multiplyScalar(.5),q,new THREE.Vector3(1,1,1)),lin(c));return api;},
+    net:(w,h,d,x,y,z,c,seed)=>{const g=new THREE.SphereGeometry(1,10,5,0,Math.PI*2,0,Math.PI/2),p=g.attributes.position;
+      for(let i=0;i<p.count;i++){const px=p.getX(i),py=p.getY(i),pz=p.getZ(i),n=Math.sin(px*7.1+seed)*Math.cos(pz*6.3+seed*1.7)*.5+Math.sin((px+pz)*13.7+seed*3.1)*.25;p.setXYZ(i,px*(1+n*.12)*w/2,Math.max(0,py*(1+n*.6))*h,pz*(1+n*.1)*d/2);}
+      g.computeVertexNormals();push(g,M(x,y,z),lin(c));return api;},
+    geo:()=>{if(!P.length)return null;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.computeBoundingSphere();g.userData.aud=AUD;return g;}};
   return api;}
 // ray probes against a model (in the unit's x-forward frame) so decals sit on the real surface
-function kitProbe(o,yaw,m,key){let P=KIT.probe[key];if(P)return P;const r0=m.rotation.y;m.rotation.y=0;o.updateMatrixWorld(true);
+// run fn with the unit posed exactly as when its model's probe was measured (the probe is cached per model, and the
+// next unit of that model - e.g. another nation's - is somewhere else on the map), then put it back
+function kitPose(P,o,fn){const p0=o.position.clone(),q0=o.quaternion.clone(),s0=o.scale.clone();o.position.copy(P.op);o.quaternion.copy(P.oq);o.scale.copy(P.os);o.updateMatrixWorld(true);
+  try{return fn();}finally{o.position.copy(p0);o.quaternion.copy(q0);o.scale.copy(s0);o.updateMatrixWorld(true);}}
+function kitProbe(o,yaw,m,key){let P=KIT.probe[key];if(P){P.yaw=yaw;return P;}const r0=m.rotation.y;m.rotation.y=0;o.updateMatrixWorld(true);
   const bb=new THREE.Box3().setFromObject(yaw);m.rotation.y=r0;o.updateMatrixWorld(true);if(!isFinite(bb.min.x)||bb.max.x-bb.min.x<5)return KIT.probe[key]=null;
   m.rotation.y=0;o.updateMatrixWorld(true);const RC=new THREE.Raycaster(),L=bb.max.x-bb.min.x,Wd=bb.max.z-bb.min.z,H=bb.max.y-bb.min.y;
-  const hit=(org,dir)=>{RC.set(org,dir);RC.far=2000;const h=RC.intersectObject(yaw,true);for(const q of h){if(q.object.material&&q.object.material.visible===false)continue;return q.point.clone();}return null;};
-  P={bb,L,W:Wd,H,cx:(bb.min.x+bb.max.x)/2,
-    down:(x,z)=>hit(new THREE.Vector3(x,bb.max.y+40,z),new THREE.Vector3(0,-1,0)),
-    side:(x,y,sg)=>hit(new THREE.Vector3(x,y,sg*(Wd+60)),new THREE.Vector3(0,0,-sg))};
+  const hit=(org,dir)=>{RC.set(org,dir);RC.far=2000;const h=RC.intersectObject(P.yaw,true);for(const q of h){if(q.object.material&&q.object.material.visible===false)continue;return q.point.clone();}return null;};
+  P={yaw,bb,L,W:Wd,H,cx:(bb.min.x+bb.max.x)/2,op:o.position.clone(),oq:o.quaternion.clone(),os:o.scale.clone(),hit,memo:new Map(),
+    down:(x,z)=>kitGrid(P).down(x,z),side:(x,y,sg)=>kitGrid(P).side(x,y,sg),up:(x,z)=>kitGrid(P).up(x,z)};
   m.rotation.y=r0;o.updateMatrixWorld(true);return KIT.probe[key]=P;}
+
+// ---- surface-fitted decals (Abdullah 2026-11-04: markings hung over wings, ship numbers were bigger than the ships).
+// kitDec() measures the real surface under a decal with ray probes: the local flat panel around its centre (the decal may
+// use only a fraction of it), then 9 points (corners, edge middles, centre); it shrinks the decal until all 9 lie on the
+// surface within a small tolerance, fits a plane through them (decal follows the surface normal, sits just above it) and
+// gives up (returns null: nothing is drawn) when it cannot fit. Probe results are memoised per model, so all 18 nations
+// share the ray work. Every placed decal is recorded in the geometry's userData.aud for orch/decalcheck.mjs.
+// Fast axis-aligned surface probes: all the model's triangles, in the posed frame, binned once into a 2D grid per probe
+// direction (side = rays along z, down/up = rays along y). Replaces ray casting (2 ms per ray on a 16k-triangle warship).
+function kitGrid(P){if(P.grid)return P.grid;const root=P.yaw||P.mesh,T=[],w=[new THREE.Vector3(),new THREE.Vector3(),new THREE.Vector3()];
+  root.traverse(q=>{if(!q.isMesh||q.isInstancedMesh||q.isSkinnedMesh||(q.material&&q.material.visible===false))return;const g=q.geometry,pa=g&&g.attributes.position;if(!pa)return;const ix=g.index,n=ix?ix.count:pa.count;
+    for(let t=0;t+2<n;t+=3){for(let k=0;k<3;k++)w[k].fromBufferAttribute(pa,ix?ix.getX(t+k):t+k).applyMatrix4(q.matrixWorld);T.push(w[0].x,w[0].y,w[0].z,w[1].x,w[1].y,w[1].z,w[2].x,w[2].y,w[2].z);}});
+  const nT=T.length/9,TB=new Float32Array(nT*6),mn=[1e9,1e9,1e9],mx=[-1e9,-1e9,-1e9];for(let t=0;t<nT;t++)for(let c=0;c<3;c++){const a=T[t*9+c],b=T[t*9+3+c],d=T[t*9+6+c];TB[t*6+c]=Math.min(a,b,d);TB[t*6+3+c]=Math.max(a,b,d);}for(let i=0;i<T.length;i++){const c=i%3;if(T[i]<mn[c])mn[c]=T[i];if(T[i]>mx[c])mx[c]=T[i];}
+  const mk=(ia,ib)=>{const N=40,cells=new Array(N*N),sa=N/((mx[ia]-mn[ia])||1),sb=N/((mx[ib]-mn[ib])||1),cl=(v,lo,sc)=>Math.max(0,Math.min(N-1,Math.floor((v-lo)*sc)));
+    for(let t=0;t<nT;t++){const o=t*9;let a0=1e9,a1=-1e9,b0=1e9,b1=-1e9;for(let k=0;k<3;k++){const a=T[o+k*3+ia],b=T[o+k*3+ib];if(a<a0)a0=a;if(a>a1)a1=a;if(b<b0)b0=b;if(b>b1)b1=b;}
+      for(let i=cl(a0,mn[ia],sa);i<=cl(a1,mn[ia],sa);i++)for(let j=cl(b0,mn[ib],sb);j<=cl(b1,mn[ib],sb);j++){(cells[j*N+i]||(cells[j*N+i]=[])).push(t);}}
+    return {N,cells,sa,sb,la:mn[ia],lb:mn[ib],ia,ib};};
+  const gz=mk(0,1),gy=mk(0,2);
+  // depth along axis ic at (a,b): the largest (mode 1) or smallest (mode -1) value over the triangles covering that point, or null
+  const q=(G,a,b,ic,mode)=>{const i=Math.floor((a-G.la)*G.sa),j=Math.floor((b-G.lb)*G.sb);if(i<0||j<0||i>=G.N||j>=G.N)return null;const cell=G.cells[j*G.N+i];if(!cell)return null;let best=null;
+    for(const t of cell){const o=t*9,Ax=T[o+G.ia],Ay=T[o+G.ib],Bx=T[o+3+G.ia],By=T[o+3+G.ib],Cx=T[o+6+G.ia],Cy=T[o+6+G.ib],D=(By-Cy)*(Ax-Cx)+(Cx-Bx)*(Ay-Cy);if(Math.abs(D)<1e-10)continue;
+      const l1=((By-Cy)*(a-Cx)+(Cx-Bx)*(b-Cy))/D,l2=((Cy-Ay)*(a-Cx)+(Ax-Cx)*(b-Cy))/D,l3=1-l1-l2;if(l1<-1e-4||l2<-1e-4||l3<-1e-4)continue;
+      const d=l1*T[o+ic]+l2*T[o+3+ic]+l3*T[o+6+ic];if(best===null||d*mode>best*mode)best=d;}return best;};
+  return P.grid={T,TB,side:(x,y,sg)=>{const d=q(gz,x,y,2,sg);return d===null?null:new THREE.Vector3(x,y,d);},down:(x,z)=>{const d=q(gy,x,z,1,1);return d===null?null:new THREE.Vector3(x,d,z);},up:(x,z)=>{const d=q(gy,x,z,1,-1);return d===null?null:new THREE.Vector3(x,d,z);}};}
+// (decalcheck) nearest double-sided hit of a ray against the same triangle soup the probes use, so the audit does not depend on how the unit is posed now
+function kitHitTris(P,org,dir,len){const G=kitGrid(P),T=G.T,TB=G.TB;let best=null;const e=1e-9,x0=Math.min(org.x,org.x+dir.x*len)-.01,x1=Math.max(org.x,org.x+dir.x*len)+.01,y0=Math.min(org.y,org.y+dir.y*len)-.01,y1=Math.max(org.y,org.y+dir.y*len)+.01,z0=Math.min(org.z,org.z+dir.z*len)-.01,z1=Math.max(org.z,org.z+dir.z*len)+.01;
+  for(let t=0,o=0;o<T.length;t++,o+=9){const b=t*6;if(TB[b]>x1||TB[b+3]<x0||TB[b+1]>y1||TB[b+4]<y0||TB[b+2]>z1||TB[b+5]<z0)continue;
+    const e1x=T[o+3]-T[o],e1y=T[o+4]-T[o+1],e1z=T[o+5]-T[o+2],e2x=T[o+6]-T[o],e2y=T[o+7]-T[o+1],e2z=T[o+8]-T[o+2],
+      px=dir.y*e2z-dir.z*e2y,py=dir.z*e2x-dir.x*e2z,pz=dir.x*e2y-dir.y*e2x,det=e1x*px+e1y*py+e1z*pz;if(Math.abs(det)<e)continue;const inv=1/det,tx=org.x-T[o],ty=org.y-T[o+1],tz=org.z-T[o+2],u=(tx*px+ty*py+tz*pz)*inv;if(u<0||u>1)continue;
+    const qx=ty*e1z-tz*e1y,qy=tz*e1x-tx*e1z,qz=tx*e1y-ty*e1x,v=(dir.x*qx+dir.y*qy+dir.z*qz)*inv;if(v<0||u+v>1)continue;const tt=(e2x*qx+e2y*qy+e2z*qz)*inv;if(tt>0&&tt<=len&&(best===null||tt<best))best=tt;}
+  return best;}
+function kitMeshProbe(mesh){mesh.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(mesh),RC=new THREE.Raycaster(),L=bb.max.x-bb.min.x,Wd=bb.max.z-bb.min.z,H=bb.max.y-bb.min.y,
+  hit=(org,dir)=>{RC.set(org,dir);RC.far=2000;const h=RC.intersectObject(mesh,true);for(const q of h){if(q.object.material&&q.object.material.visible===false)continue;return q.point.clone();}return null;};
+  const P={mesh,bb,L,W:Wd,H,cx:(bb.min.x+bb.max.x)/2,hit,memo:new Map()};P.down=(x,z)=>kitGrid(P).down(x,z);P.side=(x,y,sg)=>kitGrid(P).side(x,y,sg);P.up=(x,z)=>kitGrid(P).up(x,z);return P;}
+function kitSurf(P,face,sg,a,b){const key=face+sg+'|'+Math.round(a*80)+'|'+Math.round(b*80),M=P.memo;if(M.has(key))return M.get(key);let d=null;
+  if(face==='side'){const p=P.side(a,b,sg);if(p)d=Math.abs(p.z);}else if(face==='top'){const p=P.down(a,b);if(p)d=p.y;}else{const p=P.up(a,b);if(p)d=-p.y;}M.set(key,d);return d;}
+// the flat panel around (a0,b0): how far the surface continues (no gap, no step) in +a,-a,+b,-b, up to cap
+function kitPanel(P,face,sg,a0,b0,cap){const d0=kitSurf(P,face,sg,a0,b0);if(d0===null)return null;const st=Math.max(P.L*.008,.04,cap/7),dirs=[[1,0],[-1,0],[0,1],[0,-1]],e=[0,0,0,0];
+  for(let i=0;i<4;i++){let pd=d0,t=st;for(;t<=cap;t+=st){const d=kitSurf(P,face,sg,a0+dirs[i][0]*t,b0+dirs[i][1]*t);if(d===null||Math.abs(d-pd)>st*1.2)break;pd=d;}e[i]=t-st;}
+  return {e,pa:Math.min(e[0],e[1])*2,pb:Math.min(e[2],e[3])*2};}
+// o: fa/fb = largest share of the panel along a (x) / b (y or z) the decal may cover (default .8), minS = smallest shrink kept, maxw/maxh = hard caps
+function kitDec(P,face,sg,a0,b0,w0,h0,cell,sub,o){o=o||{};const fa=o.fa||.8,fb=o.fb||.8,eps=Math.max(.03,P.L*.0012);let w=w0,h=h0;
+  if(!(w0>0&&h0>0))return null;if(o.maxw&&w>o.maxw){h*=o.maxw/w;w=o.maxw;}if(o.maxh&&h>o.maxh){w*=o.maxh/h;h=o.maxh;}const W1=w,H1=h;
+  const pan=kitPanel(P,face,sg,a0,b0,Math.max(w,h)*1.3);if(!pan)return null;
+  let s=Math.min(1,fa*pan.pa/W1,fb*pan.pb/H1);
+  for(let it=0;it<6;it++){if(!(s>=(o.minS||.3)))return null;w=W1*s;h=H1*s;
+    const pts=[[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0]].map(([i,j])=>kitSurf(P,face,sg,a0+i*w/2,b0+j*h/2));const dC=kitSurf(P,face,sg,a0,b0);
+    if(dC===null||pts.some(d=>d===null)){s*=.8;continue;}
+    const [d00,d10,d01,d11]=pts,ga=((d10+d11)-(d00+d01))/(2*w),gb=((d01+d11)-(d00+d10))/(2*h),dm=(d00+d10+d01+d11)/4,tol=.03*Math.max(w,h)+.02;let over=0,res=0;
+    [[-1,-1,d00],[1,-1,d10],[-1,1,d01],[1,1,d11],[0,-1,pts[4]],[0,1,pts[5]],[-1,0,pts[6]],[1,0,pts[7]],[0,0,dC]].forEach(([i,j,d])=>{const r=d-(dm+ga*i*w/2+gb*j*h/2);res=Math.max(res,Math.abs(r));over=Math.max(over,r);});
+    if(res>tol||Math.hypot(ga,gb)>.3){s*=.8;continue;}
+    const off=over+eps;let c,n,up;
+    if(face==='side'){n=[-ga,-gb,sg];up=[0,1,0];c=[a0,b0,sg*dm];}else if(face==='top'){n=[-ga,1,-gb];up=[0,0,-1];c=[a0,dm,b0];}else{n=[-ga,-1,-gb];up=[0,0,-1];c=[a0,-dm,b0];}
+    const nl=Math.hypot(n[0],n[1],n[2]);c=c.map((v,i)=>v+n[i]/nl*off);
+    // verify with rays straight down the decal's own normal (what the eye sees): no misses, small float spread, nothing buried; then seat it at eps above the highest point
+    {const nn=new THREE.Vector3(n[0],n[1],n[2]).normalize(),rt=new THREE.Vector3(up[0],up[1],up[2]).cross(nn).normalize(),uv=nn.clone().cross(rt),cv=new THREE.Vector3(c[0],c[1],c[2]),size=Math.max(w,h),m=size*.35+.25,neg=nn.clone().negate(),len=m+size*.5+.5;let gmin=1e9,gmax=-1e9,miss=false;
+      for(const [i,j] of [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1],[0,1],[-1,0],[1,0],[0,0]]){const org=cv.clone().addScaledVector(rt,i*w/2).addScaledVector(uv,j*h/2).addScaledVector(nn,m),t=kitHitTris(P,org,neg,len);if(t===null){miss=true;break;}const g=t-m;if(g<gmin)gmin=g;if(g>gmax)gmax=g;}
+      if(miss||gmax-gmin>.06*size+.05){s*=.8;continue;}
+      cv.addScaledVector(nn,eps-gmin);c=[cv.x,cv.y,cv.z];}
+    return {kind:'surface',face,sg,a0,b0,w,h,cell,sub,c,n,up,fa,fb,cap:Math.max(W1,H1)*1.3,pa:pan.pa,pb:pan.pb,maxw:o.maxw,maxh:o.maxh,tag:o.tag||cell};}
+  return null;}
 const NAVYP={west:'#8f989f',slav:'#6f8294',east:'#6a7e91',irgc:'#4d5a44',sand:'#a29271',olive:'#66694a'};
 function navyPaint(fac,m){const k={US:'west',IL:'west',EU:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
 function factionKit(e,c,o,yaw,m,T){if(!T||!T.fac||!c||!m)return;const low=typeof SET!=='undefined'&&SET.gfx==='low',fac=T.fac,k=e.kind;
   const air=k==='jet'||k==='heli'||k==='airlift',nav=k==='boat'||k==='ship'||k==='lander'||k==='sub',gnd=/^m_/.test(c.m)&&['tank','arty','aa','atgm','jeep','raidlead'].includes(k);
   if(!(air||nav||gnd)||(gnd&&low)||(c.squad&&c.squad.length>1))return;
-  const gk=c.m+'|'+c.size+'|'+k+'|'+fac+'|'+(low?1:0)+'|'+(nav&&k==='ship'?e.id&3:0);let g=KIT.geo[gk];
-  if(g===undefined){g=null;try{const P=kitProbe(o,yaw,m,c.m+'|'+c.size);if(P){m.rotation.y=0;o.updateMatrixWorld(true);try{g=kitGeo(e,c,fac,k,air,nav,P);}finally{}}}catch(err){console.warn('kit',err);}KIT.geo[gk]=g;}
-  if(!g)return;const kg=new THREE.Mesh(g,kitMat());kg.castShadow=false;kg.receiveShadow=true;kg.rotation.y=-yaw.rotation.y;kg.name='factionKit';m.add(kg);}
+  const gk=c.m+'|'+c.size+'|'+k+'|'+fac+'|'+(low?1:0)+'|'+((nav&&k==='ship')||k==='jet'?e.id&3:0);let g=KIT.geo[gk];
+  if(g===undefined){g=null;try{const P=kitProbe(o,yaw,m,c.m+'|'+c.size);if(P){m.rotation.y=0;o.updateMatrixWorld(true);g=kitPose(P,o,()=>kitGeo(e,c,fac,k,air,nav,P));}}catch(err){console.warn('kit',err);}KIT.geo[gk]=g;}
+  if(k==='ship'){let R=KIT.geo['radar|'+c.m+'|'+c.size];if(R===undefined){R=null;try{const P=kitProbe(o,yaw,m,c.m+'|'+c.size);if(P){m.rotation.y=0;o.updateMatrixWorld(true);let best=null;kitPose(P,o,()=>{for(let i=0;i<=10;i++){const x=P.cx-P.L*.25+i*P.L*.04,d=P.down(x,0);if(d&&(!best||d.y>best.y))best=d;}});
+      if(best){const L=P.L,B=kitBuilder();B.rbox(L*.075,L*.012,L*.006,0,L*.012,0,'#cfd2d0');B.rbox(L*.06,L*.004,L*.012,0,L*.004,L*.006,'#7d8285');B.cyl(L*.004,L*.004,L*.012,6,0,L*.006,0,'#5a5e60');R={g:B.geo(),x:best.x,y:best.y,z:best.z};}}}catch(err){console.warn('radar',err);}KIT.geo['radar|'+c.m+'|'+c.size]=R;}
+    if(R&&R.g){const piv=new THREE.Group();piv.rotation.y=-yaw.rotation.y;const rm=kitMarker('radar|'+c.m+'|'+c.size,R.g);rm.position.set(R.x,R.y-.2,R.z);rm.rotation.y=(e.id%7)*.9;piv.add(rm);m.add(piv);o.userData.parts.radar=rm;}}
+  if(!g)return;const kg=kitMarker(gk,g);kg.rotation.y=-yaw.rotation.y;m.add(kg);}
 function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=bb.min.x,maxx=bb.max.x,miny=bb.min.y,shia=fac==='IR'||fac==='RS'||fac==='DW',low=typeof SET!=='undefined'&&SET.gfx==='low';
   const sides=(fn)=>{for(const sg of [1,-1])fn(sg,sg>0?'+z':'-z');};
+  const D=(face,sg,a,b,w,h,cell,sub,o)=>kitDec(P,face,sg,a,b,w,h,cell,sub,o),put=r=>{if(r)B.quadN(r);return !!r;};
+  // one decal on each side of the vehicle (each only where it fits); numerals read left to right on both sides, all-or-none per side
+  const sideD=(a,b,w,h,cell,sub,o)=>{let n=0;for(const sg of [1,-1])if(put(D('side',sg,a,b,w,h,cell,sub,o)))n++;return n;};
+  const digitsD=(xc,y,dh,str,pre,o)=>{let n=0;const dw=dh*.75;for(const sg of [1,-1]){for(const sc of [1,.8,.64]){const tot=str.length*dw*sc*1.06,pn=kitPanel(P,'side',sg,xc,y,tot*1.2+dh);if(!pn||pn.pa<tot*.95||pn.pb<dh*sc*1.2)continue;const rs=[];let ok=true;for(let i=0;i<str.length;i++){const x=xc+(i-(str.length-1)/2)*dw*sc*1.06*sg,r=D('side',sg,x,y,dw*sc,dh*sc,pre+str[i],[.3,.1,.7,.9],Object.assign({minS:.9,tag:'numeral'},o));if(!r||r.w<dw*sc*.97){ok=false;break;}rs.push(r);}
+      if(ok){rs.forEach(put);n++;break;}}if(!n)return 0;}return n;};
   const flagCell=fac==='KP'?'star':'f:'+fac;
-  const pole=(x,top,hh,fw)=>{B.cyl(.14,.16,hh,5,x,top+hh/2,0,'#25262a');const fh=fw*.6;sides((sg,f)=>B.quad(fw,fh,x-fw/2-.1,top+hh-fh/2-.1,sg*.06,f,'f:'+fac));};
+  const pole=(x,top,hh,fw)=>{fw=Math.min(fw,L*.1,hh*.8);B.cyl(.14,.16,hh,5,x,top+hh/2,0,'#25262a');const fh=fw*.6;sides((sg,f)=>B.quad(fw,fh,x-fw/2-.1,top+hh-fh/2-.1,sg*.06,f,'f:'+fac));};
   if(air){
-    if(k==='jet'){const half=W/2;let done=0;for(const xf of [.5,.42,.58,.35]){const ys=[];for(const sg of [1,-1]){const p=P.down(minx+L*xf,sg*half*.55);if(p)ys.push([sg,p.y]);}if(ys.length===2){const s=L*.16;for(const [sg,y] of ys)B.quad(s,s,minx+L*xf,y+.15,sg*half*.55,'+y','r:'+fac);done=1;break;}}
-      outer:for(const xf of [.12,.17,.22,.08])for(const yf of [.85,.75,.65,.55]){const p=P.side(minx+L*xf,miny+H*yf,1);if(p&&Math.abs(p.z)<W*.12){const s=L*.11;sides((sg,f)=>B.quad(s,s*.62,minx+L*xf,miny+H*yf,sg*Math.abs(p.z)+(sg>0?.1:-.1),f,'f:'+fac));break outer;}}}
-    else{outer2:for(const xf of [.14,.2,.1,.26])for(const yf of [.55,.5,.6,.45,.4]){const p=P.side(minx+L*xf,miny+H*yf,1);if(p&&Math.abs(p.z)<W*.3){const s=L*.11;sides((sg,f)=>B.quad(s,s*.62,minx+L*xf,miny+H*yf,sg*Math.abs(p.z)+(sg>0?.1:-.1),f,'f:'+fac));break outer2;}}}
+    if(k==='jet'){const half=W/2;
+      // wing roundels about a third of the local chord, on the upper and lower wing surfaces two thirds out along the span
+      roundel:for(const xf of [.5,.42,.58,.35,.62,.3])for(const zf of [.62,.55,.7,.48]){const ro={fa:.33,fb:.6,maxw:L*.13,maxh:L*.13,tag:'roundel'},tops=[1,-1].map(sg=>D('top',1,minx+L*xf,sg*half*zf,L*.12,L*.12,'r:'+fac,null,ro));
+        if(tops.every(Boolean)){tops.forEach(put);for(const sg of [1,-1])put(D('bot',1,minx+L*xf,sg*half*zf,L*.12,L*.12,'r:'+fac,null,ro));break roundel;}}
+      // fin flash inside the vertical tail, and a small serial number under it
+      outer:for(const xf of [.12,.17,.22,.08])for(const yf of [.85,.75,.65,.55,.45]){const x=minx+L*xf,y=miny+H*yf,p=P.side(x,y,1);if(p&&Math.abs(p.z)<W*.12){const fo={fa:.6,fb:.6,maxw:L*.08,maxh:L*.06,tag:'finflash'};
+        const fl=[1,-1].map(sg=>D('side',sg,x,y,L*.07,L*.042,'f:'+fac,null,fo));if(!fl.every(Boolean))continue;fl.forEach(put);
+        const ds=String(10+((KFAC.indexOf(fac)*29+(e.id&3)*13)%89));digitsD(x,y-fl[0].h*.5-L*.02,L*.022,ds,'d:');break outer;}}
+      // underwing stores: drop tanks inboard, missiles outboard, each on a pylon under the real wing surface
+      if(!low){const sx=cx-L*.03,r1=L*.016,r2=L*.0068;for(const [zf,kd] of [[.3,0],[.5,1],[.66,1]])for(const sg of [1,-1]){const z=sg*half*zf,p=P.up(sx,z);if(!p||p.y>miny+H*.62||p.y<miny+H*.08)continue;
+        const r=kd?r2:r1,ln=kd?L*.15:L*.17,yy=p.y-L*.014-r;B.rbox(L*.07,L*.016,L*.007,sx,p.y-L*.008,z,'#5d6266');
+        B.cyl(r,r,ln,8,sx,yy,z,kd?'#c6c8c3':'#7c8286',0,0,Math.PI/2);B.cyl(0,r,ln*(kd?.1:.16),8,sx+ln*(kd?.55:.58),yy,z,kd?'#3a3c3b':'#7c8286',0,0,-Math.PI/2);B.cyl(r,r*.4,ln*.12,8,sx-ln*.56,yy,z,'#6f7478',0,0,Math.PI/2);
+        if(kd)for(const fa of [0,Math.PI/2])B.rbox(L*.022,r*4.2,r*.35,sx-ln*.42,yy,z,'#9a9c98',fa,0,0);}}}
+    else{// helicopters / transports: a small flag on the tail boom (or the fuselage side), never wider than the panel it sits on
+      outer2:for(const xf of [.14,.2,.1,.26,.32,.4])for(const yf of [.55,.5,.6,.45,.4,.65]){const x=minx+L*xf,y=miny+H*yf,p=P.side(x,y,1);if(p&&Math.abs(p.z)<W*.3){if(sideD(x,y,L*.07,L*.042,'f:'+fac,null,{fa:.7,fb:.7,maxw:L*.08,maxh:L*.05,tag:'flag'}))break outer2;}}
+      // transport helicopters: a door gunner in each cabin door behind a pintle machine gun
+      if(!low&&(k==='airlift'||c.m==='m_uh60'||c.m==='m_mi8')){const u=L/17,dx=cx+L*.1,dy=miny+H*.36,LK=FLOOK[fac]||{uni:'#5d6247'};
+        for(const sg of [1,-1]){const p=P.side(dx,dy,sg);if(!p)continue;const hz=Math.abs(p.z)-u*.25;
+          B.cyl(u*.2,u*.24,u*.55,6,dx-u*.15,dy+u*.28,sg*hz,LK.uni);B.ell(u*.12,u*.13,u*.12,dx-u*.15,dy+u*.68,sg*hz,'#9c7a5c');B.ell(u*.15,u*.1,u*.15,dx-u*.15,dy+u*.76,sg*hz,'#3b3e33');
+          B.bar(dx+u*.05,dy+u*.45,sg*(hz+u*.1),dx+u*.1,dy+u*.3,sg*(hz+u*1.1),u*.045,'#1c1d1b',5);B.rbox(u*.22,u*.16,u*.36,dx+u*.04,dy+u*.44,sg*(hz+u*.25),'#262724');}}}
   }else if(nav){
-    const y=miny+H*.3;let p=P.side(cx,y,1);if(p){const hz=Math.abs(p.z);
-      const fw=Math.min(L*.18,H*1.6);sides((sg,f)=>B.quad(fw,fw*.6,minx+L*.2,y,sg*(hz+.12),f,'f:'+fac));
-      if(k!=='lander'){const no=(k==='ship'?100+((KFAC.indexOf(fac)*37+17+(e.id&3)*11)%800):10+((KFAC.indexOf(fac)*13+(e.id&3)*7)%89)),ds=String(no),dh=Math.min(H*.3,L*.07),dw=dh*.55;
-        for(let i=0;i<ds.length;i++){const xx=maxx-L*.3-(ds.length-1-i)*dw*1.05;sides((sg,f)=>B.quad(dw,dh,xx,y,sg*(Math.abs((P.side(xx,y,1)||p).z)+.12),f,'d:'+ds[i],[.3,.1,.7,.9]));}}}
-    const tp=k==='sub'?null:P.down(minx+L*.12,0);if(tp)pole(minx+L*.12,tp.y,Math.max(4,H*1.1),Math.min(L*.17,12));
+    // hull side height: for a warship the mast makes H tall, so measure the bow deck and paint below it
+    const bd=k==='ship'?P.down(maxx-L*.14,0):null,fb=bd&&bd.y<miny+H*.5?bd.y-miny:H*.6;
+    // hull number: white digits on both sides of the bow, at most 40% of the hull side's height, only where the hull side is flat enough; small craft get small numbers or none
+    if(k!=='lander'){const no=(k==='ship'?100+((KFAC.indexOf(fac)*37+17+(e.id&3)*11)%800):10+((KFAC.indexOf(fac)*13+(e.id&3)*7)%89)),ds=String(no),dh=Math.min(fb*.4,L*.035*(k==='ship'?1:.8));
+      hn:for(const xf of [.27,.38,.2])for(const yf of [.6,.5,.7])if(digitsD(maxx-L*xf,miny+fb*yf,dh,ds,'d:',{maxh:fb*.4}))break hn;}
+    const tp=k==='sub'?null:P.down(minx+L*.12,0);if(tp)pole(minx+L*.12,tp.y,k==='ship'?Math.max(4,H*.5):Math.max(3,H*.85),L*(k==='ship'?.055:.08));
+    if(k==='ship'&&!low){
+      // guard rails round the foredeck, VLS cells on it, white life-raft canisters along the superstructure
+      let prev=null;const rh=H*.045,dk=[];for(let i=0;i<=8;i++){const x=cx+L*.14+i*L*.038,d=P.down(x,0);if(!d||d.y>miny+H*.6)break;const s=P.side(x,d.y-.4,1);if(!s)break;dk.push([x,d.y,Math.abs(s.z)-.25]);}
+      for(const sg of [1,-1]){prev=null;for(const [x,yy,ze] of dk){B.bar(x,yy,sg*ze,x,yy+rh,sg*ze,.07,'#b9bdbd',4);if(prev)B.bar(prev[0],prev[1]+rh,sg*prev[2],x,yy+rh,sg*ze,.06,'#b9bdbd',4);prev=[x,yy,ze];}}
+      if(dk.length>3){const [x0,y0]=dk[2],cw=L*.016;for(let i=0;i<4;i++)for(let j=0;j<2;j++)B.rbox(cw,.18,cw,x0+i*cw*1.15,y0+.08,(j-.5)*cw*1.15,'#40454a');}
+      for(let i=0;i<3;i++){const x=cx-L*.08+i*L*.035,yy=miny+H*.62,s=P.side(x,yy,1);if(!s)continue;const r=L*.008;sides(sg=>B.cyl(r,r,L*.026,7,x,yy,sg*(Math.abs(s.z)+r),'#e6e4dc',0,0,Math.PI/2));}}
+    if(k==='boat'&&shia&&!low){const x=maxx-L*.24,d=P.down(x,0);if(d){const u=L/12;B.cyl(u*.05,u*.08,u*.7,6,x,d.y+u*.35,0,'#2a2b29');B.rbox(u*.5,u*.18,u*.2,x,d.y+u*.75,0,'#30322e');B.bar(x+u*.2,d.y+u*.78,0,x+u*1.25,d.y+u*.8,0,u*.035,'#1b1c1a',5);B.rbox(u*.2,u*.16,u*.14,x-u*.05,d.y+u*.72,u*.2,'#4a4b3a');}}
   }else{
     // ground vehicles: a flag on each side, then the nation's kit
-    const hx=cx-L*.1,yS=miny+H*.42,ps=P.side(hx,yS,1);const fw=Math.min(L*.17,11);
-    if(ps){const hz=Math.abs(ps.z);sides((sg,f)=>B.quad(fw,fw*(fac==='KP'?1:.6),hx,yS,sg*(hz+.12),f,flagCell));}
-    const tt=P.down(cx-L*.02,0);
-    if(shia){const rp=P.down(cx-L*.4,0);if(rp)pole(cx-L*.4,rp.y,Math.max(6,H*.7),Math.min(L*.21,12));
-      if(fac==='IR'&&k==='tank'&&c.m!=='m_hilux'){for(let i=-2;i<=2;i++){const xx=cx+i*L*.07,p=P.side(xx,miny+H*.52,1);if(p){const hz=Math.abs(p.z);sides((sg)=>B.box(L*.05,H*.12,.9,xx,miny+H*.52,sg*(hz+.35),'#43483a'));}}}
-      if(c.m==='m_hilux'){const bx=cx-L*.28,bp=P.down(bx,0);if(bp){const by=bp.y;for(let i=0;i<5;i++){B.box(L*.07,H*.07,W*.2,bx+(i%3-1)*L*.075,by+H*.04+((i/3)|0)*H*.07,(i%2?-1:1)*W*.2,'#a39874');}B.tor(H*.17,H*.05,bx-L*.1,by+H*.18,0,'#1c1c1b',0,Math.PI/2,0);B.box(.6,H*.3,W*.34,bx-L*.1,by+H*.18,0,'#161615');}}}
-    if(fac!=='KP'){const rx=cx-L*.28,rq=P.down(rx,0);if(rq){const s=Math.min(L*.2,W*.5,13);B.quad(s,s*.6,rx,rq.y+.2,0,'+y','f:'+fac);}}
-    if(fac==='KP'&&tt)B.quad(Math.min(L*.18,12),Math.min(L*.18,12),cx-L*.02,tt.y+.2,0,'+y','star');
-    if(fac==='RU'&&k==='tank'&&tt){const y=tt.y+1.1,ww=L*.3,dd=W*.42;B.box(ww,.35,.4,cx-L*.02,y,0,'#2e312a');for(const z of [-1,0,1])B.box(ww,.3,.35,cx-L*.02,y,z*dd/2,'#2e312a');for(let i=0;i<5;i++)B.box(.4,.3,dd,cx-L*.02-ww/2+i*ww/4,y,0,'#2e312a');for(const sx of [-1,1])for(const sz of [-1,1])B.box(.35,1.1,.35,cx-L*.02+sx*ww/2,y-.55,sz*dd/2,'#2e312a');}
-    if((fac==='US'||fac==='IL'||fac==='EU')&&k!=='jeep'){const rp=P.down(cx-L*.34,W*.2);if(rp){for(const sg of [1,-1])B.cyl(.07,.1,H*.8,4,cx-L*.34,rp.y+H*.38,sg*W*.2,'#202220',0,0,sg*.12);}
-      if(tt)B.box(L*.06,H*.09,W*.09,cx+L*.01,tt.y+H*.04,W*.12,'#2a2d2b');}
+    {const hx=cx-L*.1,fw=L*.07;for(const yf of [.42,.36,.5])if(sideD(hx,miny+H*yf,fw,fw*(fac==='KP'?1:.6),flagCell,null,{fa:.6,fb:.6,maxw:L*.08,tag:'flag'}))break;}
+    const tt=P.down(cx-L*.02,0),hil=c.m==='m_hilux',tank=k==='tank'&&!hil,u=L/(hil?5.3:k==='jeep'?4.8:9.2),LK=FLOOK[fac]||{uni:'#5d6247',veh:'#5d6247'};
+    const rearD=P.down(minx+L*.1,0),frontD=(()=>{for(let f=.02;f<.45;f+=.025){const p=P.down(maxx-L*f,W*.3);if(p&&p.y<miny+H*.62)return p;}return null;})(),/* the glacis: first hull hit behind the gun barrel */sideAt=(x,y)=>{const s=P.side(x,y,1);return s?Math.abs(s.z):null;};
+    // kit pieces in real-world sizes (u = one metre on this model); colours are worn canvas, steel and rubber, never bright
+    const jerry=(x,y,z,col)=>B.rbox(u*.35,u*.47,u*.17,x,y+u*.235,z,col||'#4f5634');
+    const tyre=(x,y,z)=>{B.tor(u*.3,u*.11,x,y,z,'#1b1b1a',0,Math.PI/2,0);B.cyl(u*.2,u*.2,u*.12,10,x,y,z,'#3a3a35',Math.PI/2,0,0);};
+    const sandbag=(x,y,z,ry)=>B.ell(u*.3,u*.1,u*.18,x,y+u*.08,z,'#a08d68',0,ry||0,0);
+    const bag=(x,y,z,col)=>B.ell(u*.28,u*.18,u*.22,x,y+u*.14,z,col||'#5a5842');
+    const roll=(x,y,z,len,col)=>B.cyl(u*.14,u*.14,len||u*.9,8,x,y+u*.14,z,col||'#565a3e',Math.PI/2,0,0);
+    const smokeL=(n)=>{if(!tt)return;for(const sg of [1,-1]){const s=sideAt(cx+L*.04,tt.y-u*.25);if(!s)continue;for(let i=0;i<n;i++)B.cyl(u*.05,u*.05,u*.3,6,cx+L*.04-i*u*.13,tt.y-u*.2+(i%2)*u*.06,sg*(s+u*.06),'#33362f',.5*sg,0,-.5);}};
+    if(shia){const rp=P.down(cx-L*.4,0);if(rp)pole(cx-L*.4,rp.y,Math.max(6,H*.7),L*.08);}
+    if(hil){const bx=cx-L*.28,bp=P.down(bx,0);if(bp){const by=bp.y;
+      if(fac==='RS'){// a 12-tube rocket pod on the truck bed, raised on its cradle
+        const tl=u*1.5,ang=.32;B.bar(bx-L*.05-u*.3,by,-u*.35,bx-L*.05-u*.1,by+u*.45,-u*.35,u*.05,'#2b2c28');B.bar(bx-L*.05-u*.3,by,u*.35,bx-L*.05-u*.1,by+u*.45,u*.35,u*.05,'#2b2c28');
+        for(let i=0;i<4;i++)for(let j=0;j<3;j++)B.cyl(u*.065,u*.065,tl,7,bx-L*.05,by+u*.55+j*u*.15,(i-1.5)*u*.15,'#4d5240',0,0,-(Math.PI/2-ang));
+        B.rbox(tl*.95,u*.06,u*.66,bx-L*.05,by+u*.45,0,'#3c4033',0,0,ang);}
+      else if(fac==='DW'){for(let i=0;i<5;i++)sandbag(bx+(i%3-1)*u*.62,by+((i/3)|0)*u*.18,(i%2?-1:1)*u*.42,i*.3);for(let i=0;i<3;i++)jerry(bx-L*.12,by,(i-1)*u*.2,'#3f4a2e');tyre(bx-L*.1,by+u*.55,u*.55);}
+      else{for(let i=0;i<4;i++)B.rbox(u*.6,u*.32,u*.4,bx+(i%2-.5)*u*.66,by+u*.16+((i/2)|0)*u*.32,(i%2?-1:1)*u*.25,'#6b6448');tyre(bx-L*.1,by+u*.55,0);}}}
+    if(fac!=='KP')put(D('top',1,cx-L*.28,0,L*.1,L*.06,'f:'+fac,null,{fa:.6,fb:.6,maxw:L*.12,tag:'deckflag'}));
+    if(fac==='KP'&&tt)put(D('top',1,cx-L*.02,0,L*.07,L*.07,'star',null,{fa:.6,fb:.6,maxw:L*.09,tag:'star'}));
+    if(!hil){
+      if(fac==='RS'&&rearD){B.net(L*.34,u*.45,W*.72,minx+L*.2,rearD.y-u*.05,0,'#4a4a34',1.3);B.net(L*.2,u*.4,W*.5,minx+L*.26,rearD.y,W*.08,'#5b5238',4.1);}
+      if(fac==='DW'){if(rearD){for(let i=0;i<3;i++)jerry(minx+L*.08,rearD.y,(i-1)*u*.22,'#4a5130');tyre(minx+L*.18,rearD.y+u*.12,-W*.25);}if(frontD)for(let i=0;i<5;i++)sandbag(frontD.x-u*.35,frontD.y+((i/3)|0)*u*.17,(i%3-1)*u*.62,.1*i);}
+      if(fac==='IR'&&(tank||k==='arty'||k==='aa')){// slat armour over the rear hull sides, Persian hull number up front
+        const y0=miny+H*.12,y1=miny+H*.34,s=sideAt(cx-L*.2,miny+H*.3);if(s){const z=s+u*.28;for(const sg of [1,-1]){for(let i=0;i<11;i++){const x=minx+L*.08+i*L*.04;B.bar(x,y0,sg*z,x,y1,sg*z,u*.025,'#4a4f3c',4);}for(const yy of [y0,y1])B.bar(minx+L*.06,yy,sg*z,minx+L*.5,yy,sg*z,u*.035,'#3f4334',4);}}
+        for(const yf of [.5,.42,.58])if(digitsD(maxx-L*.22,miny+H*yf,u*.4,String(100+((e.id*7)%6)*111),'p:'))break;}
+      if(fac==='KP'){for(const yf of [.5,.42,.58])if(sideD(cx-L*.28,miny+H*yf,u*1.2,u*.8,'s:kp',[.03,.12,.97,.88],{tag:'slogan'}))break;}
+      if((fac==='RU'||fac==='UA')&&tank&&tt){// cope cage: round bars on posts over the turret
+        const y=tt.y+u*1.05,ww=L*.3,dd=W*.42,x0=cx-L*.02,col='#2e312a';for(const z of [-1,0,1])B.bar(x0-ww/2,y,z*dd/2,x0+ww/2,y,z*dd/2,u*.035,col);for(let i=0;i<5;i++){const x=x0-ww/2+i*ww/4;B.bar(x,y,-dd/2,x,y,dd/2,u*.035,col);}
+        for(const sx of [-1,1])for(const sz of [-1,1])B.bar(x0+sx*ww/2,y,sz*dd/2,x0+sx*ww*.42,tt.y-u*.1,sz*dd*.42,u*.04,col);}
+      if(fac==='RU'&&(tank||k==='arty'||k==='aa')){if(frontD&&tank)for(let i=0;i<6;i++)for(let j=0;j<2;j++)B.rbox(u*.42,u*.11,u*.36,frontD.x-u*.3-j*u*.42,frontD.y+u*.04+j*u*.07,(i-2.5)*u*.4,'#4e5838',0,0,.18);
+        for(const yf of [.48,.4,.56])if(sideD(cx-L*.25,miny+H*yf,u*.75,u*.46,'s:ru',null,{tag:'unitletter'}))break;}
+      if(fac==='US'&&(tank||k==='aa'||k==='atgm')&&tt){// remote weapon station on the turret roof
+        const x=cx-L*.06,z=-W*.12,y=tt.y;B.cyl(u*.18,u*.22,u*.22,8,x,y+u*.11,z,'#3b3f38');B.rbox(u*.5,u*.3,u*.36,x,y+u*.38,z,'#4a4e45');B.bar(x+u*.2,y+u*.42,z,x+u*1.15,y+u*.42,z,u*.045,'#1c1d1b',5);B.rbox(u*.22,u*.2,u*.2,x+u*.05,y+u*.62,z+u*.2,'#24262a');}
+      if(fac==='IL'&&tank&&tt){// turret bustle basket with gear inside, and the ball-and-chain curtain under the mantlet
+        const bx=cx-L*.24,y=tt.y-u*.35,ww=u*1.3,dd=W*.6,col='#3c3e35';for(const yy of [y,y+u*.38]){B.bar(bx-ww/2,yy,-dd/2,bx+ww/2,yy,-dd/2,u*.03,col);B.bar(bx-ww/2,yy,dd/2,bx+ww/2,yy,dd/2,u*.03,col);B.bar(bx-ww/2,yy,-dd/2,bx-ww/2,yy,dd/2,u*.03,col);}
+        for(let i=0;i<4;i++){const z=(i-1.5)*dd/3.2;B.bar(bx-ww/2,y,z,bx-ww/2,y+u*.38,z,u*.03,col);}bag(bx,y,-dd*.2,'#6b6650');bag(bx+u*.1,y,dd*.18,'#57563f');roll(bx-u*.3,y+u*.2,0,dd*.8,'#4e5040');
+        const fx=cx+L*.14,fy=tt.y-u*.35,s=sideAt(fx,fy);if(s){const n=9;for(let i=0;i<n;i++){const z=(i-(n-1)/2)*(s*1.6/n);for(let j=0;j<4;j++)B.ell(u*.06,u*.06,u*.06,fx,fy-j*u*.13,z,'#2a2b28');}}}
+      if(fac==='TR'&&tank&&frontD)for(let i=0;i<5;i++)B.rbox(u*.16,u*.08,u*.62,frontD.x-u*.25,frontD.y+u*.05,(i-2)*u*.33,'#2c2d2a',0,0,.2);
+      if((fac==='EU'||fac==='CN'||fac==='KR')&&tank)smokeL(fac==='CN'?4:fac==='KR'?3:4);
+      if((fac==='SA'||fac==='AE'||fac==='IN')&&rearD){bag(minx+L*.16,rearD.y,W*.2,'#8a7d5c');bag(minx+L*.16,rearD.y,-W*.18,'#77704f');if(fac!=='IN')for(let i=0;i<2;i++)jerry(minx+L*.08,rearD.y,(i-.5)*u*.22,'#7a7155');}
+      if((fac==='PK'||fac==='CU'||fac==='KR'||fac==='IN')&&rearD)roll(minx+L*.12,rearD.y,0,W*.6,fac==='CU'?'#4f5236':'#5a5c3f');
+      if(fac==='EG'&&frontD)for(let i=0;i<4;i++)sandbag(frontD.x-u*.35,frontD.y,(i-1.5)*u*.6,.15*i);
+      // crew and stowage: a tank commander standing in his hatch, a bedroll on the turret side
+      if(tank&&tt){const x=cx-L*.08,z=W*.13,d=P.down(x,z);if(d){const y=d.y;B.cyl(u*.32,u*.32,u*.08,10,x-u*.42,y+u*.18,z,LK.veh||'#555',0,0,1.2);B.cyl(u*.21,u*.26,u*.6,7,x,y+u*.22,z,LK.uni);
+          B.ell(u*.11,u*.13,u*.11,x,y+u*.64,z,'#a07c5e');B.ell(u*.15,u*.08,u*.15,x,y+u*.73,z,fac==='US'||fac==='IL'?'#5d5a48':'#2c2e28');}
+        const bs=sideAt(cx-L*.12,tt.y-u*.3);if(bs&&fac!=='IL')B.cyl(u*.14,u*.14,u*.8,8,cx-L*.12,tt.y-u*.3,-(bs+u*.12),'#5d5a44',0,0,Math.PI/2);}
+      if((fac==='US'||fac==='IL'||fac==='EU')&&k!=='jeep'){const rp=P.down(cx-L*.34,W*.2);if(rp){for(const sg of [1,-1])B.cyl(.07,.1,H*.8,4,cx-L*.34,rp.y+H*.38,sg*W*.2,'#202220',0,0,sg*.12);}}}
   }
-  return B.geo();}
+  {const g=B.geo();if(g)g.userData.P=P;return g;}}

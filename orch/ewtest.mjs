@@ -128,7 +128,7 @@ try {
   // Sanctions & smuggling: income of the target cuts 20% for 60 s (8% with Smuggling Routes + trickle), back to normal after
   const sx = await page.evaluate(() => {
     G.paused = true; const me = ME, en = G.teams.find(T => T.id !== me).id, E = G.teams[en], M = G.teams[me], hq = G.ents.find(b => b.team === en && b.kind === 'hq');
-    for (const T of G.teams) { T.sanc = 0; T.upg.smug = false; }
+    for (const T of G.teams.filter(Q => !Q.reb)) { T.sanc = 0; T.upg.smug = false; }
     for (const e of G.ents) if (e.isB && e.kind === 'econ') e.dead = true;
     const b = addBld(en, 'econ', hq.x + 300, hq.y + 300, true); b.built = 1; b.dis = 0;
     const earn = () => { const c0 = E.credits; G.ecT = 2; econTick(0.01); const d = E.credits - c0; return d; };

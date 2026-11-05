@@ -306,7 +306,7 @@ const playSide = (pg, target) => pg.evaluate((target) => {
 }, target);
 const baseOf = (hp, k) => hp.evaluate((k) => { const b = G.ents.filter(e => e.team === k && e.isB && !e.dead); if (!b.length) return null;
   return [b.reduce((s, e) => s + e.x, 0) / b.length, b.reduce((s, e) => s + e.y, 0) / b.length]; }, k);
-const armies = (hp) => hp.evaluate(() => ({ t: G.t, teams: G.teams.map(T => ({ ids: G.ents.filter(e => e.team === T.id && !e.dead).map(e => e.id), credits: Math.floor(T.credits),
+const armies = (hp) => hp.evaluate(() => ({ t: G.t, teams: G.teams.filter(Q => !Q.reb).map(T => ({ ids: G.ents.filter(e => e.team === T.id && !e.dead).map(e => e.id), credits: Math.floor(T.credits),
   ai: !!T.ai, aiTook: !!T.aiTook, disc: T.discT || 0, out: !!T.out, q: CATS.reduce((s, c) => s + T.q[c].length, 0), bi: T.ai ? T.ai.bi : null })) }));
 async function screenshot(pg, name) {
   await pg.evaluate(() => { try { updateUI(); renderFrame(0.016); } catch (e) { console.warn(e); } });
@@ -356,16 +356,16 @@ async function main() {
     await Promise.race([typeof hostBrowser === 'function' ? hostBrowser() : hostGame(), new Promise(r => setTimeout(r, 20000))]); return NET.game ? NET.code : null; });
   if (!code) throw new Error('host could not open a game (NET.code empty; fake transport not picked up?)');
   console.log(`[${secs()}] host lobby open, code ${code}`);
-  await cA.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'RU'; joinByCode(c); }, code);
+  await cA.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'RU'; NET.hp = 900; joinByCode(c); }, code);   // host benchmarks pinned: A is the stronger PC, so A is the standby (07b sbPick)
   await waitFor(host, () => NET.lobby && NET.lobby.length === 1, null, 60000, 'client A to appear in the host lobby');
   await waitFor(cA, () => /Joined/.test(document.getElementById('mpstatus').textContent), null, 30000, 'client A to see "Joined"');
-  await cB.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'CN'; joinByCode(c); }, code);
+  await cB.evaluate((c) => { try { initAudio(); } catch (e) {} setup.p = 'CN'; NET.hp = 400; joinByCode(c); }, code);
   await waitFor(host, () => NET.lobby && NET.lobby.length === 2, null, 60000, 'client B to appear in the host lobby');
   await waitFor(cB, () => /Joined/.test(document.getElementById('mpstatus').textContent), null, 30000, 'client B to see "Joined"');
   for (const p of [host, cA, cB]) await p.evaluate(() => { window.__stopLoop = true; });
-  const facs = await host.evaluate(() => { NET.tm = [0, 1, 2]; NET.ais = []; launchMP(); return G && G.teams.map(T => T.fac); });
+  const facs = await host.evaluate(() => { NET.tm = [0, 1, 2]; NET.ais = []; launchMP(); return G && G.teams.filter(Q => !Q.reb).map(T => T.fac); });
   if (!facs) throw new Error('host battle did not start (launchMP)');
-  for (const [p, n] of [[cA, 'client A'], [cB, 'client B']]) await waitFor(p, () => MODE === 'client' && G && G.teams && G.teams.length > 2, null, 300000, n + ' to enter the battle');
+  for (const [p, n] of [[cA, 'client A'], [cB, 'client B']]) await waitFor(p, () => MODE === 'client' && G && G.teams && G.teams.filter(Q => !Q.reb).length > 2, null, 300000, n + ' to enter the battle');
   const slots = [await cA.evaluate(() => ME), await cB.evaluate(() => ME)], map = await host.evaluate(() => G.mapKey);
   console.log(`[${secs()}] battle: ${facs.join(' vs ')} on ${map}; client A is slot ${slots[0]}, client B slot ${slots[1]}`);
   if (slots[0] !== 1 || slots[1] !== 2) throw new Error(`unexpected slots ${slots} (expected client A = 1, client B = 2)`);

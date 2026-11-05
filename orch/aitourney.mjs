@@ -37,11 +37,11 @@ if (process.argv[2] === '--child') {
       if (m.dcs) P.ev(`G.teams.forEach((T,i)=>{ T.gdoc=${JSON.stringify(m.dcs)}[i]; T.gperk={}; T._uk=null; })`);
       let st = null;
       const haul = [0, 0];
-      const HAUL = `G.teams.map(T=>{let mx=0;const dr=G.ents.filter(e=>e.isB&&e.team===T.id&&(e.kind==='hq'||e.kind==='depot')&&e.built>=1&&!e.dead);for(const u of G.ents)if(u.team===T.id&&u.kind==='harv'&&!u.dead&&u.field){let d=1e9;for(const b of dr)d=Math.min(d,dist(b,u.field));if(d<1e9)mx=Math.max(mx,d);}return Math.round(mx);})`;
+      const HAUL = `G.teams.filter(T=>!T.reb).map(T=>{let mx=0;const dr=G.ents.filter(e=>e.isB&&e.team===T.id&&(e.kind==='hq'||e.kind==='depot')&&e.built>=1&&!e.dead);for(const u of G.ents)if(u.team===T.id&&u.kind==='harv'&&!u.dead&&u.field){let d=1e9;for(const b of dr)d=Math.min(d,dist(b,u.field));if(d<1e9)mx=Math.max(mx,d);}return Math.round(mx);})`;
       for (let t = 0; t < m.minutes * 60; t += 30) { st = W.step(30); const h = P.ev(HAUL); h.forEach((v, i) => { haul[i] = Math.max(haul[i], v); }); if (st.over) break; }
       const info = W.info();
-      const score = P.ev(`G.teams.map(T=>{const F=forceOf(T);return F.bv+F.uv+F.dz*500;})`);
-      const extra = P.ev(`G.teams.map(T=>Object.assign({upg:Object.keys(T.upg).length},(T.ai&&T.ai.st)||{}))`); extra.forEach((x, i) => { x.haul = haul[i]; });
+      const score = P.ev(`G.teams.filter(T=>!T.reb).map(T=>{const F=forceOf(T);return F.bv+F.uv+F.dz*500;})`);
+      const extra = P.ev(`G.teams.filter(T=>!T.reb).map(T=>Object.assign({upg:Object.keys(T.upg).length},(T.ai&&T.ai.st)||{}))`); extra.forEach((x, i) => { x.haul = haul[i]; });
       let winner = -1, result = 'draw';
       if (info.over && info.winner != null && info.winner >= 0) { winner = info.winner; result = 'kill'; }
       else if (score[0] >= score[1] * m.adj && score[0] > 0) { winner = 0; result = 'timeout'; }

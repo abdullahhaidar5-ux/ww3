@@ -8,8 +8,10 @@ ORCH picks from the top of this file each cycle. Status tags: **[open]** confirm
 
 Add new requests here (or tell Claude in any chat to add them). ORCH does these before anything else.
 
+**CONQUEST (Abdullah, 2026-11-04 19:45–19:54 — "the only mode from now on"; branch `orch/conquest`, spec + status in `orch/reports/conquest.md`, next steps in `orch/HANDOFF-conquest.md`).** Everyone starts with the same full base, all units/buildings unlocked, ~$10,000, ~90 s no-fire setup; income = town tax; owner sets tax per town (Low/Normal/High/Extortionate); unrest (faster near the front) → revolt with rebels; "High tax in safe rear towns, Low tax on the front line"; hamlets on every map; minimap shows towns/tax/unrest/strikes; fair upgrades, powers, missile strikes (launch sites, visible countdown, ≥8 min, 40% building cap, missile defence); win = destroy the enemy base; Classic removed; tutorial teaches it. Stages: (1) tax + unrest + revolt + hamlets + minimap, (2) start/setup/economy, (3) upgrades/powers/strikes, (4) remove Classic + tutorial.
+
 **NEW FEATURE PACK (Abdullah, 2026-10-29 19:26 — picked from a Rise of the Reds–inspired list; "Get more creative"; NO drone
-swarm economy, NO supply lines (Abdullah 19:29); nuclear deterrence, world campaign map and commander co-op were NOT picked — don't build them).** Several
+swarm economy, ~~NO supply lines (Abdullah 19:29)~~ — REVERSED 2026-11-04 20:16: supply lines on roads are in (orch/logistics); nuclear deterrence, world campaign map and commander co-op were NOT picked — don't build them).** Several
 already exist in some form (checked 2026-10-29): morale/rout + officer/Ayatollah auras, weather incl. sandstorm/fog
 grounding jets, EW Jamming Truck, hidden Tunnel Networks (IR/RS/DW/KP), city buildings that collapse to rubble. Build
 on those, don't duplicate. Every sim item: randomness only via the seeded RNG, host-authoritative, and open a
@@ -425,3 +427,6 @@ Moved here by ORCH with date and version. Full pre-ORCH record: `orch/HISTORY.md
 - 2026-10-26 — [check] Stuck/idle units after long games: six 16–20 min 4-player AI battles on 6 maps, ~0 stuck; no
   change needed.
 - 2026-10-26 — [check] Per-nation music: all 18 nations already have distinct synthesized scores; IR/RS/DW latmiyas.
+
+## Logistics (orch/logistics) — stage 1 shipped 2026-11-05, rest open
+Open, in order: 3 convoys (auto supply trucks + ambush), 5 front line / territory / forward depots as network nodes, 6 mined roads + checkpoints, 7 bridges (demolish/rebuild/pontoon), 8 ports + blockade, 9 airlift, AI: protect convoys / cut roads / blow bridges / blockade / airlift, tutorial Logistics step, road art per theme, AI tourney + Cloudflare CPU numbers. Spec: orch/reports/logistics.md.

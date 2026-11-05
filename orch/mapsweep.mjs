@@ -167,14 +167,14 @@ const HELPERS = () => {
       while (window.LOADING && performance.now() - w0 < 600000) await new Promise(r => setTimeout(r, 100)); }
     else { MODE = 'single'; ME = 0; const facs = rollAis(); if (new Set(setup.tm).size < 2) setup.tm = facs.map((_, i) => i);
       newGame({ seed, facs, ai: facs.map((_, i) => i > 0), map: k, tm: setup.tm.slice(), bs: setup.bs, slot: -1 }); }
-    if (!G || G.mapKey !== k || G.teams.length !== n) return { err: `started ${G && G.mapKey} with ${G && G.teams.length} players` };
-    G.teams.forEach(T => { if (!T.ai) T.ai = mkAI(1); });
-    SW.st = { built: G.teams.map(() => false), harvSeen: G.teams.map(() => false), earn: G.teams.map(() => 0), cargo: new Map(),
-      peak: G.teams.map(() => 0), bad: new Map(), stuck: new Map(), frozen: new Map(), lastPos: new Map(), trace: [], first: G.teams.map(() => -1), steps: 0, ms: 0, nan: 0, nextS: 5 };
-    return { ok: true, facs: G.teams.map(T => T.fac), startMs: performance.now() - ms0, W: MAPW, H: MAPH };
+    if (!G || G.mapKey !== k || G.teams.filter(Q => !Q.reb).length !== n) return { err: `started ${G && G.mapKey} with ${G && G.teams.filter(Q => !Q.reb).length} players` };
+    G.teams.filter(Q => !Q.reb).forEach(T => { if (!T.ai) T.ai = mkAI(1); });
+    SW.st = { built: G.teams.filter(Q => !Q.reb).map(() => false), harvSeen: G.teams.filter(Q => !Q.reb).map(() => false), earn: G.teams.filter(Q => !Q.reb).map(() => 0), cargo: new Map(),
+      peak: G.teams.filter(Q => !Q.reb).map(() => 0), bad: new Map(), stuck: new Map(), frozen: new Map(), lastPos: new Map(), trace: [], first: G.teams.filter(Q => !Q.reb).map(() => -1), steps: 0, ms: 0, nan: 0, nextS: 5 };
+    return { ok: true, facs: G.teams.filter(Q => !Q.reb).map(T => T.fac), startMs: performance.now() - ms0, W: MAPW, H: MAPH };
   };
   const sample = (heavy) => {
-    const S = SW.st, ents = G.ents, cnt = G.teams.map(() => 0);
+    const S = SW.st, ents = G.ents, cnt = G.teams.filter(Q => !Q.reb).map(() => 0);
     for (const e of ents) {
       if (e.dead) continue; cnt[e.team]++;
       if (!Number.isFinite(e.x) || !Number.isFinite(e.y)) { S.nan++; continue; }
@@ -190,7 +190,7 @@ const HELPERS = () => {
       else S.lastPos.set(e.id, [e.x, e.y, 0]);
     }
     cnt.forEach((c, i) => S.peak[i] = Math.max(S.peak[i], c));
-    if (heavy && Math.round(G.t) % 10 < 5) S.trace.push(`t${G.t | 0}: ` + G.teams.map(T => { const F = forceOf(T); return `${T.fac} b${F.bn} u${F.un} dz${F.dz} $${T.credits | 0}${T.out ? ' OUT' : ''}`; }).join(' | '));
+    if (heavy && Math.round(G.t) % 10 < 5) S.trace.push(`t${G.t | 0}: ` + G.teams.filter(Q => !Q.reb).map(T => { const F = forceOf(T); return `${T.fac} b${F.bn} u${F.un} dz${F.dz} $${T.credits | 0}${T.out ? ' OUT' : ''}`; }).join(' | '));
     return cnt;
   };
   SW.chunk = (steps) => {
@@ -207,7 +207,7 @@ const HELPERS = () => {
   SW.result = () => {
     const S = SW.st;
     return { t: G.t, over: G.over, end: SW.end, msPerStep: S.ms / Math.max(1, S.steps), nan: S.nan, built: S.built, harvSeen: S.harvSeen,
-      earn: S.earn, peak: S.peak, alive: G.teams.map(T => !T.out), stuck: [...S.stuck.values()], frozen: [...S.frozen.values()], trace: S.trace, first: S.first,
+      earn: S.earn, peak: S.peak, alive: G.teams.filter(Q => !Q.reb).map(T => !T.out), stuck: [...S.stuck.values()], frozen: [...S.frozen.values()], trace: S.trace, first: S.first,
       units: G.ents.filter(e => !e.dead && !e.isB).length, blds: G.ents.filter(e => !e.dead && e.isB).length };
   };
   // top-down overview: terrain + blocked cells + fields/oil + every entity, stuck units ringed red
