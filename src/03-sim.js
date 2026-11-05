@@ -1119,6 +1119,14 @@ function simUpdate(dt){G.t+=dt;gdRecon(dt);stSample();G.pfTok=Math.min(PF_BURST,
   G.visT-=dt;if(G.visT<=0){G.visT=.2;updateVis();}
   G.endT-=dt;if(G.endT<=0){G.endT=1;checkEnd();}}
 const SEP_E=[];
+/* Bridges: soldiers keep inside the parapets (the deck is 66 wide) and file into lanes 2-4 abreast; vehicles are kept off the parapets.
+   Deterministic (pure function of positions), runs on whoever runs the simulation. */
+function bridgeLanes(U){const B=G.map.bridges;if(!B||!B.length)return;
+  for(const a of U){if(a.landed||a.inTun)continue;    for(let i=0;i<B.length;i++){const b=B[i],dx=a.x-b.x,dy=a.y-b.y,u=dx*b.n[0]+dy*b.n[1],w=dx*b.t[0]+dy*b.t[1];if(Math.abs(u)>b.h+8||Math.abs(w)>44)continue;
+      const foot=a.s.cls&&MOVE[a.s.cls]&&MOVE[a.s.cls][0]>=8,lim=Math.max(6,30-a.r);let nw=w;
+      if(foot&&Math.abs(w)<=lim&&Math.abs(u)<b.h-4){const lane=((a.id%4)-1.5)*Math.min(15,(lim*2)/4);nw=w+Math.max(-.35,Math.min(.35,(lane-w)*.03));}
+      if(nw>lim)nw=lim;else if(nw<-lim)nw=-lim;
+      if(nw!==w){const k=Math.max(-.9,Math.min(.9,nw-w)),cx=a.x+b.t[0]*k,cy=a.y+b.t[1]*k;if(passXY('ground',cx,cy)){a.x=cx;a.y=cy;}}break;}}}
 function separate(){const groups=SEP_G;groups.ground.length=groups.naval.length=groups.air.length=0;let bn=0,bsum=0;for(const e of G.ents){if(e.dead)continue;if(e.isB){bn++;bsum+=e.id;continue;}if(!e.landed&&e.kind!=='jet')groups[e.s.dom].push(e);}const BC=160,BW=Math.ceil(MAPW/BC)+2,BG=G.bg||(G.bg=new Map());
   // buildings don't move: their grid is rebuilt only when the set of buildings changes (it was rebuilt every tick)
   const bsig=bn*1e7+bsum+BW;if(G.bgSig!==bsig){G.bgSig=bsig;for(const L of BG.values())L.length=0;for(const b of G.ents){if(!b.isB||b.dead)continue;const r=b.size/2+20,x0=Math.floor((b.x-r)/BC)+1,x1=Math.floor((b.x+r)/BC)+1,y0=Math.floor((b.y-r)/BC)+1,y1=Math.floor((b.y+r)/BC)+1;for(let yy=y0;yy<=y1;yy++)for(let xx=x0;xx<=x1;xx++){const k=xx+yy*BW,L=BG.get(k);if(L)L.push(b);else BG.set(k,[b]);}}}
@@ -1129,10 +1137,11 @@ function separate(){const groups=SEP_G;groups.ground.length=groups.naval.length=
     for(let i=0;i<n;i++){const a=U[i];a.si=i;let cx=Math.floor(a.x/SC)+1,cy=Math.floor(a.y/SC)+1;cx=cx<0?0:cx>=SW?SW-1:cx;cy=cy<0?0:cy>=SH?SH-1:cy;const c=cx+cy*SW;cel[i]=c;st[c+1]++;}
     for(let c=0;c<NC;c++)st[c+1]+=st[c];
     {const fill=SS.fill&&SS.fill.length===NC?SS.fill:(SS.fill=new Int32Array(NC));fill.set(st.subarray(0,NC));for(let i=0;i<n;i++)ord[fill[cel[i]]++]=i;}
-    for(let i=0;i<n;i++){const a=U[i];const cx=Math.floor(a.x/SC)+1,cy=Math.floor(a.y/SC)+1;for(let yy=cy-1;yy<=cy+1;yy++){if(yy<0||yy>=SH)continue;for(let xx=cx-1;xx<=cx+1;xx++){if(xx<0||xx>=SW)continue;const c=xx+yy*SW;for(let q=st[c],qe=st[c+1];q<qe;q++){const j=ord[q];if(j<=i)continue;const b=U[j];const dx=b.x-a.x,dy=b.y-a.y,m=a.r+b.r;if(Math.abs(dx)>m||Math.abs(dy)>m)continue;const d=Math.sqrt(dx*dx+dy*dy)||.01;if(d<m){const p=(m-d)*k*2,nx=dx/d,ny=dy/d,ma=massOf(a),mb=massOf(b),wa=mb/(ma+mb),wb=ma/(ma+mb);a.x-=nx*p*wa;a.y-=ny*p*wa;b.x+=nx*p*wb;b.y+=ny*p*wb;
+    for(let i=0;i<n;i++){const a=U[i];const cx=Math.floor(a.x/SC)+1,cy=Math.floor(a.y/SC)+1;for(let yy=cy-1;yy<=cy+1;yy++){if(yy<0||yy>=SH)continue;for(let xx=cx-1;xx<=cx+1;xx++){if(xx<0||xx>=SW)continue;const c=xx+yy*SW;for(let q=st[c],qe=st[c+1];q<qe;q++){const j=ord[q];if(j<=i)continue;const b=U[j];const dx=b.x-a.x,dy=b.y-a.y,m=a.r+b.r;if(Math.abs(dx)>m||Math.abs(dy)>m)continue;const d=Math.sqrt(dx*dx+dy*dy)||.01;if(d<m){const ma=massOf(a),mb=massOf(b),ov=m-d,soft=dom==='ground'&&ma<2&&mb<2;if(soft&&ov<=.7)continue;/* foot soldiers: tiny overlaps are left alone and bigger ones are eased out over a few ticks, so crowds settle instead of vibrating */const p=soft?(ov-.7)*.7:ov*k*2,nx=dx/d,ny=dy/d,wa=mb/(ma+mb),wb=ma/(ma+mb);a.x-=nx*p*wa;a.y-=ny*p*wa;b.x+=nx*p*wb;b.y+=ny*p*wb;
           if(dom==='ground'&&(ma>=10||mb>=10)&&!ally(a.team,b.team)){const V=ma>=10?a:b,I=V===a?b:a;if(massOf(I)<2&&(V.v||0)>22&&!I.dead&&!I.inTun)applyDmg(I,I.max*3,'boom',V.team,V,0);}}}}}
       if(dom==='ground')for(const b of (BG.get(Math.floor(a.x/BC)+1+(Math.floor(a.y/BC)+1)*BW)||SEP_E)){const h=b.size/2+a.r,dx=a.x-b.x,dy=a.y-b.y;if(Math.abs(dx)<h&&Math.abs(dy)<h){const px=h-Math.abs(dx),py=h-Math.abs(dy);if(px<py)a.x+=Math.sign(dx||1)*px;else a.y+=Math.sign(dy||1)*py;}}}
-    if(dom!=='air')for(const a of U){if(!passXY(dom,a.x,a.y)){a.x=a.px;a.y=a.py;}}}
+    if(dom!=='air')for(const a of U){if(!passXY(dom,a.x,a.y)){/* keep the part of the push that is still on passable ground (slide along the edge) instead of throwing the whole push away */const nx=a.x,ny=a.y;if(passXY(dom,nx,a.py)){a.y=a.py;}else if(passXY(dom,a.px,ny)){a.x=a.px;}else{a.x=a.px;a.y=a.py;}}}
+    if(dom==='ground')bridgeLanes(U);}
   for(const e of G.ents){if(e.kind==='jet')continue;e.x=Math.max(10,Math.min(MAPW-10,e.x));e.y=Math.max(10,Math.min(MAPH-10,e.y));}}
 
 /* ---------- oil derricks (capture with infantry, Generals-style) ---------- */

@@ -760,8 +760,12 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
     if(alongX){tr.position.set(ok?bb.min.x+tl*.9:-24,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,(ok?bb.max.z:2)*.15+1.2);}else{tr.rotation.y=Math.PI/2;tr.position.set((ok?bb.max.x:2)*.15+1.2,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,ok?bb.min.z+tl*.9:-24);}
     o.add(tr);o.userData.parts.tailR=tr;}
   if(e.kind==='jet'){mats();o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(yaw),ok=isFinite(bb.min.x);const tx=ok?bb.min.x+.6:-22,ty=ok?bb.min.y+(bb.max.y-bb.min.y)*.42:1;
-    // afterburner: a tapered additive flame cone at the real tail nozzle of each model
-    const fl=new THREE.Mesh(new THREE.ConeGeometry(1.5,9,10,1,true).rotateZ(Math.PI/2).translate(-4.5,0,0),MAT.glow);fl.position.set(tx,ty,0);fl.renderOrder=3;o.add(fl);o.userData.parts.glow=fl;}
+    // engine exhaust at each real nozzle (found by ray probes from behind; twin-engine jets get two). A soft additive
+    // plume - hot white-yellow core fading to orange and nothing - plus a red-hot nozzle ring. In cruise only a short faint
+    // heat glow shows; the full afterburner plume with shock diamonds only on take-off / hard climbs (06-view scales it).
+    let nz=null;try{if(ok)nz=jetNozzles(o,yaw,bb);}catch(err){}if(!nz||!nz.length)nz=[{x:tx,y:ty,z:0,r:1.5}];
+    const ex=new THREE.Group();ex.name='exhaust';for(const n of nz){const g=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());g.position.set(n.x,n.y,n.z);g.scale.setScalar(n.r);g.userData.r=n.r;g.renderOrder=3;g.frustumCulled=false;ex.add(g);}
+    o.add(ex);o.userData.parts.glow=ex;}
   if(c.extra==='zu23'){const B=Bld(),D='#2a2c28',S='#4f5446';B.box(7,1.6,6,-5,9.6,0,S);B.cyl(1.4,1.6,1.6,10,-5,11,0,D);B.box(4,3.2,4.6,-5,13,0,S);B.box(.4,3,5.4,-3,13.6,0,S);for(const z of [-1.1,1.1]){B.cyl(.32,.32,13,8,1.2,16.2,z,D,0,0,Math.PI/2-.42);B.cyl(.5,.5,1.6,8,-3.2,13.6,z,D,0,0,Math.PI/2-.42);}const g=mesh(B.geo());g.castShadow=true;o.add(g);o.userData.parts.turret=g;}
   if(c.extra==='dshk'){const B=Bld();B.cyl(.5,.6,6,8,-6,9,0,'#2b2d2a');B.box(3,1.6,2.2,-6,12.6,0,'#33352f');B.cyl(.35,.35,9,8,-1.5,13,0,'#1e1f1d',0,0,Math.PI/2);B.box(.4,2.2,2.6,-6.8,13.4,0,'#4a4d45');const g=mesh(B.geo());g.castShadow=true;o.add(g);}
   if(c.extra==='samtruck'){const sp=instModel('sam',{color:'#62664f'},'y',13,1,.6);if(sp){sp.position.set(-7,9,0);sp.rotation.y=Math.PI/2;o.add(sp);o.userData.parts.turret=sp;}}
@@ -856,7 +860,7 @@ function folGeo(cards,cx,cy,cz){const n=cards.length,P=new Float32Array(n*12),N=
     {const a=FOLREAL?(i%2)*.5:0,b=FOLREAL?a+.5:1;U.set(FOLREAL?[a,1,b,1,b,0,a,0]:[0,0,1,0,1,1,0,1],i*8);}I.set([i*4,i*4+1,i*4+2,i*4,i*4+2,i*4+3],i*6);});
   const G2=new THREE.BufferGeometry();G2.setAttribute('position',new THREE.BufferAttribute(P,3));G2.setAttribute('normal',new THREE.BufferAttribute(N,3));G2.setAttribute('uv',new THREE.BufferAttribute(U,2));G2.setAttribute('color',new THREE.BufferAttribute(C,3));G2.setIndex(new THREE.BufferAttribute(I,1));return G2;}
 function folMat(kind){const tm=new THREE.MeshStandardMaterial({map:folTex(kind),vertexColors:true,alphaTest:.42,side:THREE.DoubleSide,roughness:1,metalness:0});weather(tm,.35);
-  const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;').replace('#include <begin_vertex>','#include <begin_vertex>\n{vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/38.,0.,1.);transformed.x+=sin(wt*.9+ip.x*.013+transformed.z*.15)*k*k*1.1;transformed.z+=cos(wt*.7+ip.z*.011+transformed.x*.15)*k*k*.6;}');}};
+  const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.uniforms.ws=WINDS;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;uniform float ws;').replace('#include <begin_vertex>','#include <begin_vertex>\n{/* whole canopy leans together (phase per tree, none per leaf: no shearing), slow and small, rises with height */vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/38.,0.,1.);k*=k;float ph=ip.x*.013+ip.z*.011;float a=(sin(wt*.55+ph)*.7+sin(wt*.95+ph*1.6+.8)*.18)*k*.8*ws;transformed.x+=a;transformed.z+=a*.4;transformed.y-=a*a*.6/max(transformed.y,2.);}');}};
   tm.customProgramCacheKey=()=>'folt'+kind;return tm;}
 function folPlace(list,geos,mats2,shadowG,yoff,sx,sy,snow){ // one InstancedMesh per part, same transforms
   const out=[];const col=new THREE.Color();
@@ -945,6 +949,35 @@ function scenery(){G.sceneryPos=[];if(!MODELS.ready||!G.map)return;mats();const 
     else{propObj(R()<.5?'container':'containerG',0,0,.1,g);propObj('barrel',22,10,0,g);propObj('barrel',26,4,0,g);propObj('pallet',-20,8,.5,g);const B=Bld();B.box(18,7,10,0,3.5,0,'#2b2723',0,0,.1);B.box(10,5,9,-2,8,0,'#221f1c');const m=mesh(B.geo());m.position.set(-8,0,-26);m.rotation.y=.7;m.castShadow=true;g.add(m);{const v=new THREE.Vector3(-8,0,-26).applyAxisAngle(new THREE.Vector3(0,1,0),g.rotation.y);const sp=G.sceneryPos[G.sceneryPos.length-1];sp[3]=x+v.x;sp[4]=y+v.z;}scorch(x-8,y-26,14);}}}
 loadModels();
 
+
+// ---- jet engine exhaust (Abdullah 2026-11-05: the flat yellow wedge behind the jets) ----
+// nozzle finder: rays from behind the model (+x direction) over a y/z grid; nozzles = the rearmost THICK parts (hit on
+// neighbouring rows and columns, so thin tail fins and stabilisers don't count), clustered left/right of the centreline
+function jetNozzles(o,yaw,bb){const L=bb.max.x-bb.min.x,W=bb.max.z-bb.min.z,H=bb.max.y-bb.min.y,RC=new THREE.Raycaster(),dir=new THREE.Vector3(1,0,0),NZ=25,NY=11,cells=[];
+  for(let j=0;j<NY;j++){const y=bb.min.y+H*(.12+.5*j/(NY-1));for(let i=0;i<NZ;i++){const z=(bb.min.z+bb.max.z)/2+W*(-.22+.44*i/(NZ-1));RC.set(new THREE.Vector3(bb.min.x-30,y,z),dir);RC.far=L+60;
+    let hx=null;for(const q of RC.intersectObject(yaw,true)){if(q.object.material&&q.object.material.visible===false)continue;if(!q.object.isMesh)continue;hx=q.point.x;break;}cells.push({i,j,y,z,x:hx});}}
+  const at=(i,j)=>i>=0&&j>=0&&i<NZ&&j<NY?cells[j*NZ+i]:null,tol=L*.025;
+  const thick=cells.filter(c=>{if(c.x===null)return false;let n=0;for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1]]){const d=at(c.i+di,c.j+dj);if(d&&d.x!==null&&Math.abs(d.x-c.x)<tol)n++;}return n>=3;});
+  if(!thick.length)return null;const mx=Math.min(...thick.map(c=>c.x)),rear=thick.filter(c=>c.x<=mx+L*.03);
+  const cz=(bb.min.z+bb.max.z)/2,grp=[rear.filter(c=>c.z<cz-W*.015),rear.filter(c=>c.z>cz+W*.015)],mid=rear.filter(c=>Math.abs(c.z-cz)<=W*.015);
+  const mk=g=>{const y=g.reduce((a,c)=>a+c.y,0)/g.length,z=g.reduce((a,c)=>a+c.z,0)/g.length,x=Math.min(...g.map(c=>c.x)),sp=Math.max(Math.max(...g.map(c=>c.z))-Math.min(...g.map(c=>c.z)),Math.max(...g.map(c=>c.y))-Math.min(...g.map(c=>c.y)));
+    const p=o.worldToLocal(new THREE.Vector3(x,y,z));return {x:p.x+.2,y:p.y,z:p.z,r:Math.max(W*.018,Math.min(W*.05,sp*.5+W*.012))};};
+  // two separate engines only if both sides have nozzle cells and the middle doesn't dominate
+  if(grp[0].length&&grp[1].length&&mid.length<Math.min(grp[0].length,grp[1].length)){const a=mk(grp[0]),b=mk(grp[1]),r=(a.r+b.r)/2,y=(a.y+b.y)/2,z=(Math.abs(a.z)+Math.abs(b.z))/2,x=Math.max(a.x,b.x);return [{x,y,z:-z,r},{x,y,z,r}];}
+  const one=mk(rear);one.z=0;return [one];}
+// unit plume (nozzle radius 1, pointing -x): outer orange envelope, white-hot core, three faint shock diamonds, glowing nozzle ring.
+// Vertex colours carry the fade (additive blend: black = invisible), so no texture and one shared material.
+function jetPlumeGeo(){if(jetPlumeGeo.g)return jetPlumeGeo.g;const parts=[];
+  const cone=(r0,r1,len,seg,c0,c1,off)=>{const g=new THREE.CylinderGeometry(r1,r0,len,seg,6,true);g.rotateZ(Math.PI/2);g.translate(-len/2-(off||0),0,0);const p=g.attributes.position,col=[];
+    for(let i=0;i<p.count;i++){const t=Math.min(1,Math.max(0,(-p.getX(i)-(off||0))/len)),f=Math.pow(1-t,1.6);col.push(c0[0]*f+c1[0]*(1-f)*f,c0[1]*f+c1[1]*(1-f)*f,c0[2]*f+c1[2]*(1-f)*f);}
+    g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));parts.push(g);};
+  cone(.95,.35,7.5,14,[.95,.55,.22],[.55,.18,.04]);           // outer flame envelope, orange fading out
+  cone(.62,.08,4.2,12,[1.0,.92,.7],[.9,.6,.25]);              // white-hot core
+  for(let k=0;k<3;k++){const g=new THREE.SphereGeometry(.34-k*.06,10,6);g.scale(1.6,1,1);g.translate(-1.2-k*1.35,0,0);const a=.55-k*.15,col=[];for(let i=0;i<g.attributes.position.count;i++)col.push(1*a,.85*a,.6*a);g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));parts.push(g);}
+  {const g=new THREE.RingGeometry(.55,1.0,18);g.rotateY(-Math.PI/2);g.translate(-.02,0,0);const col=[];for(let i=0;i<g.attributes.position.count;i++)col.push(.75,.22,.06);g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));parts.push(g);}
+  const n=parts.map(g=>g.index?g.toNonIndexed():g),P=[],C=[];for(const g of n){P.push(...g.attributes.position.array);C.push(...g.attributes.color.array);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.computeBoundingSphere();return jetPlumeGeo.g=g;}
+function jetPlumeMat(){return jetPlumeMat.m||(jetPlumeMat.m=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:true,toneMapped:false}));}
 
 /* ================= FACTION LOOKS (Step 1): national markings + add-on kits =================
    Every aircraft, ship and combat vehicle gets ONE extra merged mesh (one draw call) carrying its nation's flag/roundel

@@ -7171,6 +7171,14 @@ function simUpdate(dt){G.t+=dt;gdRecon(dt);stSample();G.pfTok=Math.min(PF_BURST,
   G.visT-=dt;if(G.visT<=0){G.visT=.2;updateVis();}
   G.endT-=dt;if(G.endT<=0){G.endT=1;checkEnd();}}
 const SEP_E=[];
+/* Bridges: soldiers keep inside the parapets (the deck is 66 wide) and file into lanes 2-4 abreast; vehicles are kept off the parapets.
+   Deterministic (pure function of positions), runs on whoever runs the simulation. */
+function bridgeLanes(U){const B=G.map.bridges;if(!B||!B.length)return;
+  for(const a of U){if(a.landed||a.inTun)continue;    for(let i=0;i<B.length;i++){const b=B[i],dx=a.x-b.x,dy=a.y-b.y,u=dx*b.n[0]+dy*b.n[1],w=dx*b.t[0]+dy*b.t[1];if(Math.abs(u)>b.h+8||Math.abs(w)>44)continue;
+      const foot=a.s.cls&&MOVE[a.s.cls]&&MOVE[a.s.cls][0]>=8,lim=Math.max(6,30-a.r);let nw=w;
+      if(foot&&Math.abs(w)<=lim&&Math.abs(u)<b.h-4){const lane=((a.id%4)-1.5)*Math.min(15,(lim*2)/4);nw=w+Math.max(-.35,Math.min(.35,(lane-w)*.03));}
+      if(nw>lim)nw=lim;else if(nw<-lim)nw=-lim;
+      if(nw!==w){const k=Math.max(-.9,Math.min(.9,nw-w)),cx=a.x+b.t[0]*k,cy=a.y+b.t[1]*k;if(passXY('ground',cx,cy)){a.x=cx;a.y=cy;}}break;}}}
 function separate(){const groups=SEP_G;groups.ground.length=groups.naval.length=groups.air.length=0;let bn=0,bsum=0;for(const e of G.ents){if(e.dead)continue;if(e.isB){bn++;bsum+=e.id;continue;}if(!e.landed&&e.kind!=='jet')groups[e.s.dom].push(e);}const BC=160,BW=Math.ceil(MAPW/BC)+2,BG=G.bg||(G.bg=new Map());
   // buildings don't move: their grid is rebuilt only when the set of buildings changes (it was rebuilt every tick)
   const bsig=bn*1e7+bsum+BW;if(G.bgSig!==bsig){G.bgSig=bsig;for(const L of BG.values())L.length=0;for(const b of G.ents){if(!b.isB||b.dead)continue;const r=b.size/2+20,x0=Math.floor((b.x-r)/BC)+1,x1=Math.floor((b.x+r)/BC)+1,y0=Math.floor((b.y-r)/BC)+1,y1=Math.floor((b.y+r)/BC)+1;for(let yy=y0;yy<=y1;yy++)for(let xx=x0;xx<=x1;xx++){const k=xx+yy*BW,L=BG.get(k);if(L)L.push(b);else BG.set(k,[b]);}}}
@@ -7181,10 +7189,11 @@ function separate(){const groups=SEP_G;groups.ground.length=groups.naval.length=
     for(let i=0;i<n;i++){const a=U[i];a.si=i;let cx=Math.floor(a.x/SC)+1,cy=Math.floor(a.y/SC)+1;cx=cx<0?0:cx>=SW?SW-1:cx;cy=cy<0?0:cy>=SH?SH-1:cy;const c=cx+cy*SW;cel[i]=c;st[c+1]++;}
     for(let c=0;c<NC;c++)st[c+1]+=st[c];
     {const fill=SS.fill&&SS.fill.length===NC?SS.fill:(SS.fill=new Int32Array(NC));fill.set(st.subarray(0,NC));for(let i=0;i<n;i++)ord[fill[cel[i]]++]=i;}
-    for(let i=0;i<n;i++){const a=U[i];const cx=Math.floor(a.x/SC)+1,cy=Math.floor(a.y/SC)+1;for(let yy=cy-1;yy<=cy+1;yy++){if(yy<0||yy>=SH)continue;for(let xx=cx-1;xx<=cx+1;xx++){if(xx<0||xx>=SW)continue;const c=xx+yy*SW;for(let q=st[c],qe=st[c+1];q<qe;q++){const j=ord[q];if(j<=i)continue;const b=U[j];const dx=b.x-a.x,dy=b.y-a.y,m=a.r+b.r;if(Math.abs(dx)>m||Math.abs(dy)>m)continue;const d=Math.sqrt(dx*dx+dy*dy)||.01;if(d<m){const p=(m-d)*k*2,nx=dx/d,ny=dy/d,ma=massOf(a),mb=massOf(b),wa=mb/(ma+mb),wb=ma/(ma+mb);a.x-=nx*p*wa;a.y-=ny*p*wa;b.x+=nx*p*wb;b.y+=ny*p*wb;
+    for(let i=0;i<n;i++){const a=U[i];const cx=Math.floor(a.x/SC)+1,cy=Math.floor(a.y/SC)+1;for(let yy=cy-1;yy<=cy+1;yy++){if(yy<0||yy>=SH)continue;for(let xx=cx-1;xx<=cx+1;xx++){if(xx<0||xx>=SW)continue;const c=xx+yy*SW;for(let q=st[c],qe=st[c+1];q<qe;q++){const j=ord[q];if(j<=i)continue;const b=U[j];const dx=b.x-a.x,dy=b.y-a.y,m=a.r+b.r;if(Math.abs(dx)>m||Math.abs(dy)>m)continue;const d=Math.sqrt(dx*dx+dy*dy)||.01;if(d<m){const ma=massOf(a),mb=massOf(b),ov=m-d,soft=dom==='ground'&&ma<2&&mb<2;if(soft&&ov<=.7)continue;/* foot soldiers: tiny overlaps are left alone and bigger ones are eased out over a few ticks, so crowds settle instead of vibrating */const p=soft?(ov-.7)*.7:ov*k*2,nx=dx/d,ny=dy/d,wa=mb/(ma+mb),wb=ma/(ma+mb);a.x-=nx*p*wa;a.y-=ny*p*wa;b.x+=nx*p*wb;b.y+=ny*p*wb;
           if(dom==='ground'&&(ma>=10||mb>=10)&&!ally(a.team,b.team)){const V=ma>=10?a:b,I=V===a?b:a;if(massOf(I)<2&&(V.v||0)>22&&!I.dead&&!I.inTun)applyDmg(I,I.max*3,'boom',V.team,V,0);}}}}}
       if(dom==='ground')for(const b of (BG.get(Math.floor(a.x/BC)+1+(Math.floor(a.y/BC)+1)*BW)||SEP_E)){const h=b.size/2+a.r,dx=a.x-b.x,dy=a.y-b.y;if(Math.abs(dx)<h&&Math.abs(dy)<h){const px=h-Math.abs(dx),py=h-Math.abs(dy);if(px<py)a.x+=Math.sign(dx||1)*px;else a.y+=Math.sign(dy||1)*py;}}}
-    if(dom!=='air')for(const a of U){if(!passXY(dom,a.x,a.y)){a.x=a.px;a.y=a.py;}}}
+    if(dom!=='air')for(const a of U){if(!passXY(dom,a.x,a.y)){/* keep the part of the push that is still on passable ground (slide along the edge) instead of throwing the whole push away */const nx=a.x,ny=a.y;if(passXY(dom,nx,a.py)){a.y=a.py;}else if(passXY(dom,a.px,ny)){a.x=a.px;}else{a.x=a.px;a.y=a.py;}}}
+    if(dom==='ground')bridgeLanes(U);}
   for(const e of G.ents){if(e.kind==='jet')continue;e.x=Math.max(10,Math.min(MAPW-10,e.x));e.y=Math.max(10,Math.min(MAPH-10,e.y));}}
 
 /* ---------- oil derricks (capture with infantry, Generals-style) ---------- */
@@ -7443,7 +7452,7 @@ function initGfx(){const PH=typeof gfxPhone==='function'&&gfxPhone();
 function viewH(x,y){const g=groundH(x,y),B=G&&G.map&&G.map.bridges;if(!B)return g;
   for(let i=0;i<B.length;i++){const b=B[i],dx=x-b.x,dy=y-b.y,hl=b.h+15;if(dx>hl+40||dx<-hl-40||dy>hl+40||dy<-hl-40)continue;
     const u=Math.abs(dx*b.n[0]+dy*b.n[1]),w=Math.abs(dx*b.t[0]+dy*b.t[1]);if(w>36||u>hl)continue;
-    const ke=Math.min(1,Math.max(0,(hl-u)/22)),ks=Math.min(1,Math.max(0,(36-w)/6)),k=Math.min(ke,ks),sk=k*k*(3-2*k);return g+(4.5-g)*sk;}
+    const ke=Math.min(1,Math.max(0,(hl-u)/30)),ks=Math.min(1,Math.max(0,(41-w)/6)),k=Math.min(ke,ks),sk=k*k*(3-2*k);return g+(4.5-g)*sk;}
   return g;}
 function unitH(e){if(e.isB)return groundH(e.x,e.y);const s=e.s;if(s.dom==='naval')return WL+.5+Math.sin(G.t*1.6+e.id)*.6;
   const g=G.grid?G.grid[Math.floor(e.y/CELL)*GW+Math.floor(e.x/CELL)]:0;const base=g===2?viewH(e.x,e.y):Math.max(viewH(e.x,e.y),g===1?WL:-99);
@@ -7713,8 +7722,8 @@ function buildWorld(tc){
     const gg=(()=>{const P=[],Nn=[],C=[],Rb=mulberry(5);for(let k=0;k<15;k++){const a=Rb()*6.28,d=Rb()*2.6,x=Math.cos(a)*d,z=Math.sin(a)*d,h=3+Rb()*5,w=.32+Rb()*.25,la=Rb()*6.28,lean=.6+Rb()*1.6,ox=Math.cos(la+1.57)*w,oz=Math.sin(la+1.57)*w,tx=x+Math.cos(la)*lean,tz=z+Math.sin(la)*lean;
       P.push(x-ox,0,z-oz,x+ox,0,z+oz,tx,h,tz, x+ox,0,z+oz,x-ox,0,z-oz,tx,h,tz);for(let q=0;q<6;q++)Nn.push(0,1,0);C.push(.6,.6,.6,.6,.6,.6,1.15,1.15,1.15, .6,.6,.6,.6,.6,.6,1.15,1.15,1.15);}
       const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('normal',new THREE.Float32BufferAttribute(Nn,3));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));return g;})();
-    const gmat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,vertexColors:true});window.WINDU={value:0};
-    gmat.onBeforeCompile=sh=>{sh.uniforms.wt=WINDU;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;').replace('#include <begin_vertex>','#include <begin_vertex>\n{vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=max(transformed.y,0.)/6.;float w=sin(wt*1.7+ip.x*.021+ip.z*.017)*.6+sin(wt*3.1+ip.x*.05)*.25;transformed.x+=w*k*k*1.6;transformed.z+=w*k*k*.7;}');};
+    const gmat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,vertexColors:true});window.WINDU={value:0};window.WINDS={value:1};
+    gmat.onBeforeCompile=sh=>{sh.uniforms.wt=WINDU;sh.uniforms.ws=WINDS;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;uniform float ws;').replace('#include <begin_vertex>','#include <begin_vertex>\n{/* gentle coherent sway: slow, small, phase follows position (a wave rolling over the field), base stays put, blade length kept */vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/8.,0.,1.);k*=k;float ph=ip.x*.021+ip.z*.017;float w=sin(wt*.85+ph)*.65+sin(wt*1.4+ph*1.7+1.3)*.2;float a=w*k*.45*ws;transformed.x+=a;transformed.z+=a*.45;transformed.y-=a*a*1.2/max(transformed.y,1.);}');};
     const AREA=Math.max(1,MAPW*MAPH/(3200*2200)),NG=Math.round(9000*Math.min(2,AREA)),gm=new THREE.InstancedMesh(gg,gmat,NG);let n=0;const gc=new THREE.Color();const R=mulberry(G.seed+99);
     for(let k=0;k<NG*3&&n<NG;k++){const x=R()*MAPW,y=R()*MAPH,M=G.map;if(Math.abs(M.depth(x,y))<M.hw(x)+40)continue;if(BASES.some(([bx,by])=>Math.abs(x-bx)<290&&Math.abs(y-by)<290))continue;if(G.fields.some(f=>Math.hypot(f.x-x,f.y-y)<70))continue;if(G.map.hasMtn&&G.map.mf(x,y)>-40)continue;if(G.roadMask){const q=G.roadMask;if(q.d[(y/q.C|0)*q.w+(x/q.C|0)]&&R()<.9)continue;}
       if(Math.hypot(groundH(x+6,y)-groundH(x-6,y),groundH(x,y+6)-groundH(x,y-6))/12>.4)continue;const cl=Math.sin(x*.013)*Math.cos(y*.011)+Math.sin(x*.031+y*.017)*.5;if(cl<.1&&R()<.7)continue;const s=.7+R()*1.0;TMPM.compose(TMP.set(x,groundH(x,y),y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),R()*6),new THREE.Vector3(s,s*(.6+R()*.7),s));gm.setMatrixAt(n,TMPM);const dry=R()<.7;if(G.map.theme==='snow'){if(R()<.55)continue;gc.setHSL(.09+R()*.03,.18+R()*.1,.36+R()*.14).convertSRGBToLinear();}else gc.setHSL(dry?.1+R()*.03:.19+R()*.05,dry?.2+R()*.1:.18+R()*.1,dry?.33+R()*.1:.19+R()*.07).convertSRGBToLinear();gm.setColorAt(n,gc);n++;}
@@ -8741,7 +8750,7 @@ function syncScene(dt){const live=new Set();
     const v=vis(e);
     // off-screen units and buildings are neither drawn nor have their 3D parts (49 bones per soldier) recomputed; the
     // margin keeps shadows cast from just outside the view
-    const on=v&&onScr(e.x,e.isB?0:(e.s&&e.s.dom==='air'?unitH(e):0),e.y,e.isB?.6:.35);o.visible=on;o.matrixWorldAutoUpdate=on;if(!v)continue;const P=o.userData.parts,gh=unitH(e);{let ex=e.x,ey=e.y;if(MODE!=='client'&&!e.isB&&e.ox!=null){const dx=e.x-e.ox,dy=e.y-e.oy;if(dx*dx+dy*dy<900){const a=G.alpha??1;ex=e.ox+dx*a;ey=e.oy+dy*a;}}o.position.set(ex,gh-(G.dugN&&!e.isB?holeDrop(e):0),ey);}{const ts=o.userData.toss;if(ts){ts.vh-=260*dt;ts.h+=ts.vh*dt;ts.r+=ts.sp*dt;if(ts.h<=0){o.userData.toss=null;if(P.body)P.body.rotation.z=0;}else{o.position.y+=ts.h;if(P.body)P.body.rotation.z=ts.r;}}}
+    const on=v&&onScr(e.x,e.isB?0:(e.s&&e.s.dom==='air'?unitH(e):0),e.y,e.isB?.6:.35);o.visible=on;o.matrixWorldAutoUpdate=on;if(!v)continue;const P=o.userData.parts,gh=unitH(e);{let ex=e.x,ey=e.y;if(MODE!=='client'&&!e.isB&&e.ox!=null){const dx=e.x-e.ox,dy=e.y-e.oy;if(dx*dx+dy*dy<900){const a=G.alpha??1;ex=e.ox+dx*a;ey=e.oy+dy*a;}}o.position.set(ex,gh-(G.dugN&&!e.isB?holeDrop(e):0),ey);if(o.userData.walker&&!o.userData.toss){/* drawing only: foot soldiers glide through small position/height jitter (crowd pushes, bridge ends, snapshot steps) - never touches the simulation */const ud=o.userData;if(ud.sx===undefined||Math.abs(ud.sx-ex)>24||Math.abs(ud.sz-ey)>24){ud.sx=ex;ud.sz=ey;ud.sh=gh;}else{const k=1-Math.exp(-dt*26);ud.sx+=(ex-ud.sx)*k;ud.sz+=(ey-ud.sz)*k;const dh=gh-ud.sh;ud.sh=Math.abs(dh)>9?gh:ud.sh+dh*(1-Math.exp(-dt*16));}o.position.set(ud.sx,ud.sh,ud.sz);}}{const ts=o.userData.toss;if(ts){ts.vh-=260*dt;ts.h+=ts.vh*dt;ts.r+=ts.sp*dt;if(ts.h<=0){o.userData.toss=null;if(P.body)P.body.rotation.z=0;}else{o.position.y+=ts.h;if(P.body)P.body.rotation.z=ts.r;}}}
     if(!e.isB&&P.pennant&&inView(e.x,e.y,.05)){const g=P.pennant.geometry.attributes.position,b=P.pennant.userData.base,t=G.t*(7+(e.v||0)*.08)+e.id;for(let i=0;i<g.count;i++){const x=b[i*3];g.array[i*3+2]=Math.sin(x*.9-t)*x*.12;}g.needsUpdate=true;}
     if(e.isB&&P.flag&&inView(e.x,e.y,.1)){const g=P.flag.geometry.attributes.position,b=P.flag.userData.base||(P.flag.userData.base=Float32Array.from(g.array)),t=G.t*4+e.id;for(let i=0;i<g.count;i++){const x=b[i*3];g.array[i*3+2]=Math.sin(x*.55-t)*x*.09;}g.needsUpdate=true;P.flag.rotation.y=.5+Math.sin(G.t*.3+e.id)*.25;}
     if(e.isB&&e.built>=1){const f=e.hp/e.max,lv=f<.3?2:f<.6?1:0,ud=o.userData;if((ud.dmg||0)<lv){mats();for(let q=ud.dmg||0;q<lv;q++){const h=e.size/2;for(let j=0;j<3;j++){const a=Math.random()*6.28,r=h*(1+Math.random()*.35),x=e.x+Math.cos(a)*r,y=e.y+Math.sin(a)*r;scorch(x,y,rnd(12,18));const B=Bld();for(let c=0;c<6;c++){const sz=rnd(3,7);B.box(sz,sz*.6,sz*rnd(.6,1.4),rnd(-6,6),sz*.3,rnd(-6,6),Math.random()<.5?'#4a4640':'#1f1d1a',rnd(-.4,.4),rnd(0,6),rnd(-.4,.4));}const m=mesh(B.geo());m.position.set(Math.cos(a)*r,0,Math.sin(a)*r);m.castShadow=true;o.add(m);(ud.debris=ud.debris||[]).push(m);}}ud.dmg=lv;}
@@ -8795,7 +8804,7 @@ function syncScene(dt){const live=new Set();
       if(c==='hero'&&P.body&&!o.userData.model){const hid=e.hid;P.body.material=hid?(MAT.stealth||(MAT.stealth=new THREE.MeshStandardMaterial({vertexColors:true,transparent:true,opacity:.35}))):MAT.std;}
       if(c==='jet'&&!e.landed){const ud=o.userData;o.rotation.order='YZX';const tr=angDiff(ud.pjy??e.va,e.va)/Math.max(dt,1e-3);ud.pjy=e.va;ud.bk=(ud.bk||0)+((Math.max(-1.05,Math.min(1.05,-tr*.55)))-(ud.bk||0))*Math.min(1,dt*3);
         const vy=(gh-(ud.pgh??gh))/Math.max(dt,1e-3);ud.pgh=gh;ud.pc=(ud.pc||0)+((Math.max(-.6,Math.min(.6,Math.atan2(vy,Math.max(60,e.s.spd)))))-(ud.pc||0))*Math.min(1,dt*3);o.rotation.x=ud.bk;o.rotation.z=ud.pc;
-        if(P.glow){const ab=(e.toT!=null&&G.t-e.toT<4)||vy>25;P.glow.scale.setScalar(ab?1.6:1);}
+        if(P.glow){const ab=(e.toT!=null&&G.t-e.toT<4)||vy>25,ud2=o.userData,k=ud2.abk=(ud2.abk||0)+((ab?1:0)-(ud2.abk||0))*Math.min(1,dt*4);const sx=.22+.78*k,sr=.75+.25*k;if(P.glow.name==='exhaust'){for(const ch of P.glow.children){const r=ch.userData.r||1;ch.scale.set(r*sx,r*sr,r*sr);}}else P.glow.scale.setScalar(ab?1.6:1);}
         if(inView(e.x,e.y,.15)){const yw=e.va||0,cx=Math.cos(yw),sx=Math.sin(yw),hard=Math.abs(ud.bk)>.45||Math.abs(ud.pc)>.3;for(const sd of [-1,1]){if(hard||Math.random()<.35){const wx=e.x-cx*6-sx*sd*15,wy=e.y-sx*6+cx*sd*15;part({x:wx,y:wy,h:gh+sd*Math.sin(ud.bk)*8,c:[.93,.94,.96],s:hard?2.6:1.6,g:0,d:hard?.9:.45,a:hard?.42:.22,f:0});}}
           if(Math.random()<.7)part({x:e.x-cx*24,y:e.y-sx*24,h:gh+1,c:[.55,.54,.52],s:rnd(2.5,4),g:0,d:rnd(.35,.6),a:.18,f:0});}
         if(Math.abs(ud.bk)>.7&&Math.random()<dt*30){for(const sg of [-1,1])part({x:e.x+Math.sin(e.va)*sg*16,y:e.y-Math.cos(e.va)*sg*16,h:gh+sg*Math.sin(ud.bk)*10,c:[.95,.95,.98],s:1.6,g:2,d:.5,a:.4,f:1});}if(Math.random()<dt*20)part({x:e.x-Math.cos(e.va)*18,y:e.y-Math.sin(e.va)*18,h:gh,c:[.85,.85,.85],s:2.2,g:3,d:.7,a:.35});}
@@ -8993,7 +9002,7 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
   // frame + readout
   c.strokeStyle='rgba(190,235,205,.5)';c.lineWidth=2;const k=10;for(const [x,y,dx,dy] of [[1,1,1,1],[W-1,1,-1,1],[1,H-1,1,-1],[W-1,H-1,-1,-1]]){c.beginPath();c.moveTo(x+dx*k,y);c.lineTo(x,y);c.lineTo(x,y+dy*k);c.stroke();}
   const cw=screenToWorld(VW/2,VH/2);const vis2=G.ents.filter(e=>!e.dead&&e.team!==ME&&!ally(e.team,ME)&&!e.isB&&vis(e)).length;c.font='600 9px IBM Plex Mono, monospace';const txt=(cw?'GRID '+mmGrid(cw.x,cw.y)+'  ':'')+'CONTACTS '+vis2;const tw=c.measureText(txt).width;c.fillStyle='rgba(5,8,7,.75)';c.fillRect(W-tw-10,H-15,tw+8,13);c.fillStyle='#bfe9cd';c.textBaseline='alphabetic';c.fillText(txt,W-tw-6,H-5);}
-function renderFrame(dt){if(!G||!G.terrain||!R3||window.GLLOST)return;try{tactFxTick(dt);}catch(_){}if(WRECKQ.length)wreckTick();if(G.civDirty&&performance.now()-(G.civRb||0)>400){G.civDirty=false;G.civRb=performance.now();try{buildCity();}catch(e){console.warn(e);}}try{droneAudio(dt);}catch(_){}if(window.SKY)SKY.material.uniforms.t.value=G.t;if(window.WINDU)WINDU.value=performance.now()/1000;syncScene(dt);fxUpdate(dt);placeCam();WATER.material.uniforms.t.value=G.t;WATER.material.uniforms.cpos.value.copy(CAM.position);
+function renderFrame(dt){if(!G||!G.terrain||!R3||window.GLLOST)return;try{tactFxTick(dt);}catch(_){}if(WRECKQ.length)wreckTick();if(G.civDirty&&performance.now()-(G.civRb||0)>400){G.civDirty=false;G.civRb=performance.now();try{buildCity();}catch(e){console.warn(e);}}try{droneAudio(dt);}catch(_){}if(window.SKY)SKY.material.uniforms.t.value=G.t;if(window.WINDU){WINDU.value=performance.now()/1000;{const wk=(G.wx&&G.wx.k)||'clear',tg=wk==='sandstorm'||wk==='blizzard'?1.8:wk==='rain'?1.4:wk==='snow'?1.15:wk==='fog'?.8:1;WINDS.value+=(tg-WINDS.value)*Math.min(1,dt*.5);}}syncScene(dt);fxUpdate(dt);placeCam();WATER.material.uniforms.t.value=G.t;WATER.material.uniforms.cpos.value.copy(CAM.position);
   fogT-=dt;if(fogT<=0){fogT=.12;updateFog();}renderPost();drawHUD();{const w=performance.now();if(!(w-(G.mmT||0)<33)){G.mmT=w;drawMini();}}}  // minimap at ~30 Hz (it was redrawn every frame, up to 240x a second)
 
 /* ================= MULTIPLAYER: lobby + host-authoritative sync over the artifact room ================= */
@@ -13023,8 +13032,12 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
     if(alongX){tr.position.set(ok?bb.min.x+tl*.9:-24,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,(ok?bb.max.z:2)*.15+1.2);}else{tr.rotation.y=Math.PI/2;tr.position.set((ok?bb.max.x:2)*.15+1.2,ok?bb.min.y+(bb.max.y-bb.min.y)*.62:8,ok?bb.min.z+tl*.9:-24);}
     o.add(tr);o.userData.parts.tailR=tr;}
   if(e.kind==='jet'){mats();o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(yaw),ok=isFinite(bb.min.x);const tx=ok?bb.min.x+.6:-22,ty=ok?bb.min.y+(bb.max.y-bb.min.y)*.42:1;
-    // afterburner: a tapered additive flame cone at the real tail nozzle of each model
-    const fl=new THREE.Mesh(new THREE.ConeGeometry(1.5,9,10,1,true).rotateZ(Math.PI/2).translate(-4.5,0,0),MAT.glow);fl.position.set(tx,ty,0);fl.renderOrder=3;o.add(fl);o.userData.parts.glow=fl;}
+    // engine exhaust at each real nozzle (found by ray probes from behind; twin-engine jets get two). A soft additive
+    // plume - hot white-yellow core fading to orange and nothing - plus a red-hot nozzle ring. In cruise only a short faint
+    // heat glow shows; the full afterburner plume with shock diamonds only on take-off / hard climbs (06-view scales it).
+    let nz=null;try{if(ok)nz=jetNozzles(o,yaw,bb);}catch(err){}if(!nz||!nz.length)nz=[{x:tx,y:ty,z:0,r:1.5}];
+    const ex=new THREE.Group();ex.name='exhaust';for(const n of nz){const g=new THREE.Mesh(jetPlumeGeo(),jetPlumeMat());g.position.set(n.x,n.y,n.z);g.scale.setScalar(n.r);g.userData.r=n.r;g.renderOrder=3;g.frustumCulled=false;ex.add(g);}
+    o.add(ex);o.userData.parts.glow=ex;}
   if(c.extra==='zu23'){const B=Bld(),D='#2a2c28',S='#4f5446';B.box(7,1.6,6,-5,9.6,0,S);B.cyl(1.4,1.6,1.6,10,-5,11,0,D);B.box(4,3.2,4.6,-5,13,0,S);B.box(.4,3,5.4,-3,13.6,0,S);for(const z of [-1.1,1.1]){B.cyl(.32,.32,13,8,1.2,16.2,z,D,0,0,Math.PI/2-.42);B.cyl(.5,.5,1.6,8,-3.2,13.6,z,D,0,0,Math.PI/2-.42);}const g=mesh(B.geo());g.castShadow=true;o.add(g);o.userData.parts.turret=g;}
   if(c.extra==='dshk'){const B=Bld();B.cyl(.5,.6,6,8,-6,9,0,'#2b2d2a');B.box(3,1.6,2.2,-6,12.6,0,'#33352f');B.cyl(.35,.35,9,8,-1.5,13,0,'#1e1f1d',0,0,Math.PI/2);B.box(.4,2.2,2.6,-6.8,13.4,0,'#4a4d45');const g=mesh(B.geo());g.castShadow=true;o.add(g);}
   if(c.extra==='samtruck'){const sp=instModel('sam',{color:'#62664f'},'y',13,1,.6);if(sp){sp.position.set(-7,9,0);sp.rotation.y=Math.PI/2;o.add(sp);o.userData.parts.turret=sp;}}
@@ -13119,7 +13132,7 @@ function folGeo(cards,cx,cy,cz){const n=cards.length,P=new Float32Array(n*12),N=
     {const a=FOLREAL?(i%2)*.5:0,b=FOLREAL?a+.5:1;U.set(FOLREAL?[a,1,b,1,b,0,a,0]:[0,0,1,0,1,1,0,1],i*8);}I.set([i*4,i*4+1,i*4+2,i*4,i*4+2,i*4+3],i*6);});
   const G2=new THREE.BufferGeometry();G2.setAttribute('position',new THREE.BufferAttribute(P,3));G2.setAttribute('normal',new THREE.BufferAttribute(N,3));G2.setAttribute('uv',new THREE.BufferAttribute(U,2));G2.setAttribute('color',new THREE.BufferAttribute(C,3));G2.setIndex(new THREE.BufferAttribute(I,1));return G2;}
 function folMat(kind){const tm=new THREE.MeshStandardMaterial({map:folTex(kind),vertexColors:true,alphaTest:.42,side:THREE.DoubleSide,roughness:1,metalness:0});weather(tm,.35);
-  const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;').replace('#include <begin_vertex>','#include <begin_vertex>\n{vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/38.,0.,1.);transformed.x+=sin(wt*.9+ip.x*.013+transformed.z*.15)*k*k*1.1;transformed.z+=cos(wt*.7+ip.z*.011+transformed.x*.15)*k*k*.6;}');}};
+  const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.uniforms.ws=WINDS;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;uniform float ws;').replace('#include <begin_vertex>','#include <begin_vertex>\n{/* whole canopy leans together (phase per tree, none per leaf: no shearing), slow and small, rises with height */vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/38.,0.,1.);k*=k;float ph=ip.x*.013+ip.z*.011;float a=(sin(wt*.55+ph)*.7+sin(wt*.95+ph*1.6+.8)*.18)*k*.8*ws;transformed.x+=a;transformed.z+=a*.4;transformed.y-=a*a*.6/max(transformed.y,2.);}');}};
   tm.customProgramCacheKey=()=>'folt'+kind;return tm;}
 function folPlace(list,geos,mats2,shadowG,yoff,sx,sy,snow){ // one InstancedMesh per part, same transforms
   const out=[];const col=new THREE.Color();
@@ -13208,6 +13221,35 @@ function scenery(){G.sceneryPos=[];if(!MODELS.ready||!G.map)return;mats();const 
     else{propObj(R()<.5?'container':'containerG',0,0,.1,g);propObj('barrel',22,10,0,g);propObj('barrel',26,4,0,g);propObj('pallet',-20,8,.5,g);const B=Bld();B.box(18,7,10,0,3.5,0,'#2b2723',0,0,.1);B.box(10,5,9,-2,8,0,'#221f1c');const m=mesh(B.geo());m.position.set(-8,0,-26);m.rotation.y=.7;m.castShadow=true;g.add(m);{const v=new THREE.Vector3(-8,0,-26).applyAxisAngle(new THREE.Vector3(0,1,0),g.rotation.y);const sp=G.sceneryPos[G.sceneryPos.length-1];sp[3]=x+v.x;sp[4]=y+v.z;}scorch(x-8,y-26,14);}}}
 loadModels();
 
+
+// ---- jet engine exhaust (Abdullah 2026-11-05: the flat yellow wedge behind the jets) ----
+// nozzle finder: rays from behind the model (+x direction) over a y/z grid; nozzles = the rearmost THICK parts (hit on
+// neighbouring rows and columns, so thin tail fins and stabilisers don't count), clustered left/right of the centreline
+function jetNozzles(o,yaw,bb){const L=bb.max.x-bb.min.x,W=bb.max.z-bb.min.z,H=bb.max.y-bb.min.y,RC=new THREE.Raycaster(),dir=new THREE.Vector3(1,0,0),NZ=25,NY=11,cells=[];
+  for(let j=0;j<NY;j++){const y=bb.min.y+H*(.12+.5*j/(NY-1));for(let i=0;i<NZ;i++){const z=(bb.min.z+bb.max.z)/2+W*(-.22+.44*i/(NZ-1));RC.set(new THREE.Vector3(bb.min.x-30,y,z),dir);RC.far=L+60;
+    let hx=null;for(const q of RC.intersectObject(yaw,true)){if(q.object.material&&q.object.material.visible===false)continue;if(!q.object.isMesh)continue;hx=q.point.x;break;}cells.push({i,j,y,z,x:hx});}}
+  const at=(i,j)=>i>=0&&j>=0&&i<NZ&&j<NY?cells[j*NZ+i]:null,tol=L*.025;
+  const thick=cells.filter(c=>{if(c.x===null)return false;let n=0;for(const [di,dj] of [[1,0],[-1,0],[0,1],[0,-1]]){const d=at(c.i+di,c.j+dj);if(d&&d.x!==null&&Math.abs(d.x-c.x)<tol)n++;}return n>=3;});
+  if(!thick.length)return null;const mx=Math.min(...thick.map(c=>c.x)),rear=thick.filter(c=>c.x<=mx+L*.03);
+  const cz=(bb.min.z+bb.max.z)/2,grp=[rear.filter(c=>c.z<cz-W*.015),rear.filter(c=>c.z>cz+W*.015)],mid=rear.filter(c=>Math.abs(c.z-cz)<=W*.015);
+  const mk=g=>{const y=g.reduce((a,c)=>a+c.y,0)/g.length,z=g.reduce((a,c)=>a+c.z,0)/g.length,x=Math.min(...g.map(c=>c.x)),sp=Math.max(Math.max(...g.map(c=>c.z))-Math.min(...g.map(c=>c.z)),Math.max(...g.map(c=>c.y))-Math.min(...g.map(c=>c.y)));
+    const p=o.worldToLocal(new THREE.Vector3(x,y,z));return {x:p.x+.2,y:p.y,z:p.z,r:Math.max(W*.018,Math.min(W*.05,sp*.5+W*.012))};};
+  // two separate engines only if both sides have nozzle cells and the middle doesn't dominate
+  if(grp[0].length&&grp[1].length&&mid.length<Math.min(grp[0].length,grp[1].length)){const a=mk(grp[0]),b=mk(grp[1]),r=(a.r+b.r)/2,y=(a.y+b.y)/2,z=(Math.abs(a.z)+Math.abs(b.z))/2,x=Math.max(a.x,b.x);return [{x,y,z:-z,r},{x,y,z,r}];}
+  const one=mk(rear);one.z=0;return [one];}
+// unit plume (nozzle radius 1, pointing -x): outer orange envelope, white-hot core, three faint shock diamonds, glowing nozzle ring.
+// Vertex colours carry the fade (additive blend: black = invisible), so no texture and one shared material.
+function jetPlumeGeo(){if(jetPlumeGeo.g)return jetPlumeGeo.g;const parts=[];
+  const cone=(r0,r1,len,seg,c0,c1,off)=>{const g=new THREE.CylinderGeometry(r1,r0,len,seg,6,true);g.rotateZ(Math.PI/2);g.translate(-len/2-(off||0),0,0);const p=g.attributes.position,col=[];
+    for(let i=0;i<p.count;i++){const t=Math.min(1,Math.max(0,(-p.getX(i)-(off||0))/len)),f=Math.pow(1-t,1.6);col.push(c0[0]*f+c1[0]*(1-f)*f,c0[1]*f+c1[1]*(1-f)*f,c0[2]*f+c1[2]*(1-f)*f);}
+    g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));parts.push(g);};
+  cone(.95,.35,7.5,14,[.95,.55,.22],[.55,.18,.04]);           // outer flame envelope, orange fading out
+  cone(.62,.08,4.2,12,[1.0,.92,.7],[.9,.6,.25]);              // white-hot core
+  for(let k=0;k<3;k++){const g=new THREE.SphereGeometry(.34-k*.06,10,6);g.scale(1.6,1,1);g.translate(-1.2-k*1.35,0,0);const a=.55-k*.15,col=[];for(let i=0;i<g.attributes.position.count;i++)col.push(1*a,.85*a,.6*a);g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));parts.push(g);}
+  {const g=new THREE.RingGeometry(.55,1.0,18);g.rotateY(-Math.PI/2);g.translate(-.02,0,0);const col=[];for(let i=0;i<g.attributes.position.count;i++)col.push(.75,.22,.06);g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));parts.push(g);}
+  const n=parts.map(g=>g.index?g.toNonIndexed():g),P=[],C=[];for(const g of n){P.push(...g.attributes.position.array);C.push(...g.attributes.color.array);}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.computeBoundingSphere();return jetPlumeGeo.g=g;}
+function jetPlumeMat(){return jetPlumeMat.m||(jetPlumeMat.m=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:true,toneMapped:false}));}
 
 /* ================= FACTION LOOKS (Step 1): national markings + add-on kits =================
    Every aircraft, ship and combat vehicle gets ONE extra merged mesh (one draw call) carrying its nation's flag/roundel
