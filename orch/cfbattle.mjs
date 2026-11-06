@@ -171,6 +171,7 @@ async function main() {
   for (let i = 0; i < 40 && !(L.ais.length === 1 && L.tm.join() === '0,1' && L.ais[0].f === 'CN'); i++) { await A.waitForTimeout(250); L = await SB(); }
   say(`   server lobby: humans ${L.humans.map((h, i) => h.f + '/team ' + (L.tm[i] + 1)).join(', ')}; computer ${L.ais.map(a => a.f + '/team ' + (a.tm + 1)).join(', ')}`);
   if (L.ais.length !== 1 || L.tm.join() !== '0,1' || L.humans.map(h => h.f).join() !== 'US,RU') fail('lobby edits did not reach the server (teams / computer player / nations)');
+  await B.evaluate(() => { GLB.g = NET.game; GLB.me.r = 1; glSend(); }); await A.waitForTimeout(1500);
   await waitFor(A, () => !document.querySelector('#mpstatus .startbtn').disabled, null, 15000, 'Start to be enabled');
   await shot(A, 'cfe2e-lobby.png');
   await A.evaluate(() => { window.__stopLoop = true; }); await B.evaluate(() => { window.__stopLoop = true; });

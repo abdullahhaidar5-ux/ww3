@@ -880,9 +880,9 @@ function folMat(kind){const tm=new THREE.MeshStandardMaterial({map:folTex(kind),
   const ob=tm.onBeforeCompile;tm.onBeforeCompile=sh=>{ob(sh);if(window.WINDU){sh.uniforms.wt=WINDU;sh.uniforms.ws=WINDS;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;uniform float ws;').replace('#include <begin_vertex>','#include <begin_vertex>\n{/* whole canopy leans together (phase per tree, none per leaf: no shearing), slow and small, rises with height */vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/38.,0.,1.);k*=k;float ph=ip.x*.013+ip.z*.011;float a=(sin(wt*.55+ph)*.7+sin(wt*.95+ph*1.6+.8)*.18)*k*.8*ws;transformed.x+=a;transformed.z+=a*.4;transformed.y-=a*a*.6/max(transformed.y,2.);}');}};
   tm.customProgramCacheKey=()=>'folt'+kind;return tm;}
 function folPlace(list,geos,mats2,shadowG,yoff,sx,sy,snow){ // one InstancedMesh per part, same transforms
-  const out=[];const col=new THREE.Color();
+  const out=[];const col=new THREE.Color(),AUT=typeof G!=='undefined'&&G&&G.map&&G.map.mud;
   geos.forEach((g,gi)=>{const im=new THREE.InstancedMesh(g,mats2[gi],list.length);list.forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)+yoff,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*sx,s*sy*(.86+((i*7)%5)*.07),s*sx));im.setMatrixAt(i,TMPM);
-      const j=((i*2654435761)>>>0)/4294967296;col.setHSL(0,0,.8+j*.35);im.setColorAt(i,col);});
+      const j=((i*2654435761)>>>0)/4294967296;if(AUT&&gi>0&&mats2[gi].map&&mats2[gi].map===FOLTEX.leaf)col.setRGB(1.6+j*.8,1.0+j*.3,.28+j*.12);else col.setHSL(0,0,.8+j*.35);im.setColorAt(i,col);});
     im.castShadow=gi===0;im.receiveShadow=true;WORLD.add(im);out.push(im);});
   if(shadowG){const im=new THREE.InstancedMesh(shadowG,SHADOWM||(SHADOWM=new THREE.MeshBasicMaterial()),list.length);list.forEach(([x,y,s,r],i)=>{TMPM.compose(TMP.set(x,groundH(x,y)+yoff,y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),r),new THREE.Vector3(s*sx,s*sy*(.86+((i*7)%5)*.07),s*sx));im.setMatrixAt(i,TMPM);});im.castShadow=true;im.layers.set(1);im.userData.noDepth=true;WORLD.add(im);}
   return out;}

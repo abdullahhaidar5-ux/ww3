@@ -198,3 +198,20 @@ function tlLandmarks(){const out=new Map(),M=G.map;if(!M.cities)return out;
 function tlChunks(){const M=G.map;if(M._tlCk)return M._tlCk;const cs=M.cities||[],m=new Map();
   M.cityBlds.forEach((b,bi)=>{let k=-1,bd=1e18;cs.forEach((c,i)=>{const d=Math.hypot(b.x-c.x,b.y-c.y)/(c.r+CELL);if(d<bd){bd=d;k=i;}});if(bd>1.6)k=-1;const hk=k>=0&&cs[k].ham?'h':k;if(!m.has(hk))m.set(hk,{key:hk,city:hk==='h'?null:cs[k]||null,items:[]});m.get(hk).items.push([bi,b]);});   // all hamlets share one small chunk
   return M._tlCk=[...m.values()];}
+
+/* ===== power plant model (Infrastructure): turbine hall, two striped stacks, a cooling tower, a transformer yard with pylons and a fence.
+   Owner colour shows on the flag. Same builder API as the oil derrick (Bld/mesh). ===== */
+function plantObj(o){const grp=new THREE.Group(),B=Bld(),cn='#9a978d',cd='#6f6c63',dk='#2c2e2c',st='#b8b5aa';
+  B.box(64,2,50,0,1,0,'#7c796f');                                   // slab
+  B.box(40,15,22,-6,9.5,-6,cn);B.box(40,1.6,23,-6,17.8,-6,cd);B.box(40,3,.8,-6,12,5.1,'#5d7380');B.box(8,10,.8,-20,6,5.1,dk);   // turbine hall, roof lip, window band, door
+  B.box(14,7,12,-24,5,12,'#8d8a80');B.box(10,5,8,-4,4,13,'#8d8a80');   // boiler annexes
+  for(const x of [10,18]){B.cyl(2.1,2.6,36,12,x,19,-16,'#cfcac0');B.cyl(2.3,2.3,3,12,x,34,-16,'#a43a2c');B.cyl(2.2,2.2,3,12,x,28,-16,'#f1ece0');}   // stacks with red/white bands
+  B.cyl(7.5,10.5,24,18,-24,13,-18,'#b3b0a6');B.cyl(7.6,7.6,1.4,18,-24,25.5,-18,'#8a877d');                                                   // cooling tower
+  for(const z of [14,19,24]){B.box(4,5,4,18+((z*7)%5),3.5,z-12,dk);B.box(.8,6,.8,22,6,z-12,'#55595c');}   // transformers
+  for(const x of [26,-30]){B.box(1.2,30,1.2,x,15,22,'#55595c',0,0,.16);B.box(1.2,30,1.2,x,15,26,'#55595c',0,0,-.16);B.box(1.4,1.4,10,x,26,24,'#55595c');B.box(1.4,1.4,10,x,22,24,'#55595c');}
+  for(const sx of [-31,31])B.box(.5,4,48,sx,2,0,'#44484b');for(const sz of [-24,24])B.box(62,4,.5,0,2,sz,'#44484b');   // fence
+  const base=mesh(B.geo());grp.add(base);
+  const flag=new THREE.Mesh(new THREE.PlaneGeometry(10,6),new THREE.MeshBasicMaterial({color:0x888888,side:THREE.DoubleSide}));flag.position.set(-36,22,-28);grp.add(flag);
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,24,6),MAT.std);pole.position.set(-41,12,-28);grp.add(pole);
+  grp.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
+  grp.scale.setScalar(1.6);grp.position.set(o.x,groundH(o.x,o.y),o.y);grp.rotation.y=(o.x*.01)%6;WORLD.add(grp);return{grp,arm:null,flag,crank:null,pw:1};}

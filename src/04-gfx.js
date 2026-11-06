@@ -200,7 +200,7 @@ function borderTrees(){if(!G.treePos||G.treePos.length<40||!MODELS.ready)return;
 function borderLand(dtex){const M=G.map,BX=Math.max(MAPW,MAPH)*.7,W2=MAPW+2*BX,H2=MAPH+2*BX,sx=200,sy=Math.round(sx*H2/W2);
   const g=new THREE.PlaneGeometry(W2,H2,sx,sy);g.rotateX(-Math.PI/2);g.translate(MAPW/2,0,MAPH/2);const p=g.attributes.position,col=new Float32Array(p.count*3),FD=new Float32Array(p.count),CELL=W2/sx;
   const th=G.thumb,tw=th.width,thh=th.height,td=th.getContext('2d').getImageData(0,0,tw,thh).data;
-  const theme=M.theme,base=new THREE.Color(theme==='snow'?'#c4ccd4':theme==='green'?'#66733f':'#a88d60'),rock=new THREE.Color(theme==='snow'?'#e8edf2':theme==='green'?'#6d6656':'#9a8466');
+  const theme=M.theme,base=new THREE.Color(M.mud?'#6e5a3c':theme==='snow'?'#c4ccd4':theme==='green'?'#66733f':'#a88d60'),rock=new THREE.Color(M.mud?'#6a5e4c':theme==='snow'?'#e8edf2':theme==='green'?'#6d6656':'#9a8466');
   const n2=(x,y)=>{const s=Math.sin(x*.0021+Math.sin(y*.0013)*2)*Math.cos(y*.0018+Math.sin(x*.0011)*1.7);return s*.6+.4*Math.sin(x*.0057+y*.0043)*Math.cos(x*.0031-y*.0049);};
   const c=new THREE.Color(),tc=new THREE.Color();
   for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),cx=Math.max(1,Math.min(MAPW-1,x)),cz=Math.max(1,Math.min(MAPH-1,z)),dx=Math.max(0,-x,x-MAPW),dz=Math.max(0,-z,z-MAPH),d=Math.hypot(dx,dz);
@@ -374,7 +374,7 @@ function buildWorld(tc){
       for(let v=0;v<NV;v++){rims[v].count=rcnt[v];WORLD.add(rims[v]);}}
     gm.count=n;gm.receiveShadow=true;gm.userData.noDepth=true;WORLD.add(gm);}
   // oil derricks
-  mats();G.oilObj=G.oil.map(o=>{const grp=new THREE.Group();const B=Bld(),fr='#4f555b',dk='#2c2e2c';
+  mats();G.oilObj=G.oil.map(o=>{if(o.pw)return plantObj(o);const grp=new THREE.Group();const B=Bld(),fr='#4f555b',dk='#2c2e2c';
     B.box(46,2.4,24,0,1.2,0,'#8a877d');B.box(10,1,10,20,2.6,0,'#6f6c63');
     for(const z of [-5,5]){B.box(2.2,32,2.2,-4,16,z*1.25,fr,z>0?-.16:.16,0,0);B.box(2.2,30,2.2,4,15,z*1.25,fr,z>0?-.16:.16,0,0);}
     B.box(10,1.4,1.4,0,8,-5.5,fr);B.box(10,1.4,1.4,0,8,5.5,fr);B.box(4,2,6,0,31,0,dk);
@@ -410,7 +410,7 @@ function buildWorld(tc){
   // fog of war overlay
   {const fk=Math.min(1.4,Math.max(1,WK*.65));FOGC=document.createElement('canvas');FOGC.width=Math.round(480*fk);FOGC.height=Math.round(330*fk);FOGC.b=document.createElement('canvas');FOGC.b.width=FOGC.width;FOGC.b.height=FOGC.height;}FOGT=new THREE.CanvasTexture(FOGC);FOGT.magFilter=THREE.LinearFilter;
   FOGM=new THREE.Mesh(new THREE.PlaneGeometry(MAPW,MAPH).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x060a0f,transparent:true,alphaMap:FOGT,depthWrite:false}));FOGM.position.set(MAPW/2,46,MAPH/2);FOGM.renderOrder=2;WORLD.add(FOGM);
-  buildDecals();for(const [x,y,r] of (G.craters||[]))scorch(x,y,r);applyWeather(typeof setup!=='undefined'?(setup.w|0):0);
+  buildDecals();for(const [x,y,r] of (G.craters||[]))scorch(x,y,r);applyWeather(typeof setup!=='undefined'?wxBase(setup.w):0);
 }
 
 /* ---------- procedural model builder (merged, vertex-coloured) ---------- */
@@ -689,7 +689,10 @@ let WXT=-1,WXI=0,WXG=null,WXFX=1;const WXCITY={value:0},WXAMB={value:new THREE.V
 // "Random" is decided by the battle's seed, so it stays the same for the whole battle (and would match on every
 // machine of a multiplayer game if the condition is ever sent with the match start).
 function wxPick(i){i=i|0;if(i>=0&&i<WX.length)return i;if(i<0){const s=((typeof G!=='undefined'&&G&&G.seed)|0)>>>0;return wxRandIdx(s);}return 0;}
-function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){WXG=G;WXI=wxPick(i);}else if(typeof G==='undefined'||!G)WXI=wxPick(i);i=WXI;if(typeof G!=='undefined'&&G&&G.todM){const l=todLvl();WXT=G.todM<3?-1:l;i=l===2?4:l===1?3:i;}else WXT=-1;const w=WX[i];
+// Smooth time of day: blend two look presets (colours as hex strings, numbers, and number arrays) by f.
+const _wc1=new THREE.Color(),_wc2=new THREE.Color();
+function wxMix(A,B,f){if(f<=0)return A;if(f>=1)return B;const o={};for(const k in A){const a=A[k],b=B[k];if(typeof a==='number')o[k]=a+(b-a)*f;else if(Array.isArray(a))o[k]=a.map((v,j)=>v+(b[j]-v)*f);else if(typeof a==='string'&&a[0]==='#'){_wc1.set(a);_wc2.set(b);_wc1.lerp(_wc2,f);o[k]='#'+_wc1.getHexString();}else o[k]=f<.5?a:b;}return o;}
+function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){WXG=G;WXI=wxPick(i);}else if(typeof G==='undefined'||!G)WXI=wxPick(i);i=WXI;let WXB=null;if(typeof G!=='undefined'&&G&&G.todM){const l=todLvl();if(G.todM===3){const sg=todSeg(G.t);WXT=Math.round(sg.d*20);WXB=sg;i=sg.d>.5?(sg.a===1||sg.b===1?1:3):i;if(sg.d>=.8)i=4;}else{WXT=-1;i=l===2?4:l===1?3:i;}}else WXT=-1;const w=WXB?wxMix(WX[WXB.a],WX[WXB.b],WXB.f):WX[i];
   SUN.color.copy(lin(w.sun));SUN.intensity=w.si*LUX;SUNOFF=w.off;HEMI.color.copy(lin(w.sky));HEMI.groundColor.copy(lin(w.gnd));HEMI.intensity=w.hi*LUX;
   SCN.fog.color.copy(lin(w.fog));SCN.fog.near=w.fn;SCN.fog.far=w.ff;SUN.shadow.radius=w.sr;POST.cloud=w.cl;WXFX=w.fx;WXCITY.value=w.win;WXAMB.value.set(w.amb[0],w.amb[1],w.amb[2]);if(LAMPM)LAMPM.emissiveIntensity=w.lamp;
   if(POST.mFinal){const F=POST.mFinal.uniforms;F.expo.value=w.expo;if(F.gr)F.gr.value.set(w.gr[0],w.gr[1],w.gr[2]);if(F.sat)F.sat.value=w.sat;}

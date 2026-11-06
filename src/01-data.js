@@ -10,6 +10,12 @@ const WEATHER={clear:{name:'Clear',vis:1,acc:1,spd:1,air:1},
   sandstorm:{name:'Sandstorm',vis:.55,acc:.8,spd:.88,air:0,tip:'Sandstorm: vision and accuracy slashed, jets grounded, helicopters and drones struggle.'},
   snow:{name:'Snow',vis:.8,acc:.92,spd:.9,air:.8,tip:'Deep snow slows ground units; vision and aircraft are a little worse.'},
   blizzard:{name:'Blizzard',vis:.6,acc:.85,spd:.8,air:0,tip:'Blizzard: snow slows everything, jets grounded, vision cut.'}};
+// Seasons (2026-11-06): the lobby 'Conditions' value w carries the weather/time-of-day in its ones digit (0-9, or -1 random) and the
+// season in its tens digit: 0 = the map's own default, 1 = Summer, 2 = Autumn mud, 3 = Winter snow. Same value on host, clients and server.
+function wxBase(w){w|=0;return w<0?-1:w%10;}
+function wxSsn(w){w|=0;return Math.min(3,(w<0?((-1-w)/10)|0:(w/10)|0));}
+function wxJoin(base,ssn){base|=0;ssn|=0;return base<0?-1-10*ssn:base+10*ssn;}
+const SEASONS=['Map default','Summer','Autumn mud','Winter snow'];
 function weatherKinds(theme){return theme==='snow'?['clear','blizzard','fog']:theme==='green'?['clear','rain','fog']:['clear','sandstorm','fog'];}
 // A duel is fought on a field 1.3x the 3200x2200 design (about 300 infantry-lengths across, like a classic RTS 1v1
 // map); each extra player adds room (8 players: 2.26x).
@@ -268,6 +274,7 @@ const GDOC_LATE=120;   // doctrine can be picked / changed until this many secon
 function gdHas(T,k){return !!(T&&T.gperk&&T.gperk[k]);}
 function gdCostK(T,s,b,kind){if(!T||!T.gdoc)return 1;let m=1;const D=GDOC[T.gdoc];if(!D)return 1;for(const p of D.perks){if(!p.cost||!gdHas(T,p.k))continue;const g=p.cost[0];if(b?g===kind:(g==='air'?s.dom==='air':upgMatch(g,s,false)))m*=p.cost[1];}return m;}
 const MILNAME={IR:'Popular Mobilization volunteers',RS:'Popular Mobilization volunteers',DW:'Popular Mobilization volunteers',US:'Contractors',RU:'PMC'};
+const FL_MAX=4;   // flare / chaff charges per aircraft; refilled while landed (at an airfield)
 const POWERS={
   bounty:{name:'Cash Bounty',desc:'Earn 15% of the cost of every enemy you destroy',passive:true},
   recon:{name:'Recon Sweep',desc:'Reveal an area for 25 seconds',cd:90,r:450},
@@ -277,6 +284,7 @@ const POWERS={
   flare:{name:'Illumination Flares',desc:'Light up an area for about 30 seconds so everybody can see in it, friend and foe. Made for night battles',cd:60,r:300},
   mil:{name:'Fund Militia',desc:'Pay a local militia: 5 riflemen, an RPG team and an armed technical appear at the neutral spot nearest the front, under your command',cd:480,self:true},
   bb:{name:'Bunker Buster',desc:'Two guided heavy bombs on one spot. Costs $2200 each time and is not available in the first 5 minutes. Heavy damage to buildings in a small radius, and the ONLY thing that can destroy a Mountain Fortress (both bombs must hit)',cd:420,r:70,cash:2200},
+  reinf:{name:'Call-In Reinforcements',desc:'Pay $1200: a platoon (2 tanks, an AA vehicle, 4 riflemen and an AT team) is called in from your nearest map edge and drives to your base. Arrives after 12 seconds, can be ambushed on the way. Not during the setup phase',cd:300,self:true,cash:1200},
   sanc:{name:'Sanctions',desc:'Sanction the richest enemy: their income drops 20% for 60 seconds (their Smuggling Routes upgrade cuts that to 8%)',cd:420,self:true},
 };
 // Every nation's own signature general power (unlocked like the others). Effects differ; cooldowns balance them.

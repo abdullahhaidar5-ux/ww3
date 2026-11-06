@@ -114,6 +114,7 @@ async function main() {
   await waitFor(B, () => NET.via === 'wsb' && /Joined/.test(document.getElementById('mpstatus').textContent), null, 60000, 'the friend to join by code');
   await waitFor(A, () => NET.cf.blob.seats.filter(s => s.h).length === 2, null, 20000, 'the friend in the creator\'s lobby');
   await A.evaluate(() => { NET.tm = [0, 1]; renderLobby(); });
+  await B.evaluate(() => { GLB.g = NET.game; GLB.me.r = 1; glSend(); }); await A.waitForTimeout(1500);
   await waitFor(A, () => !document.querySelector('#mpstatus .startbtn').disabled, null, 15000, 'Start to be enabled');
   await A.evaluate(() => { window.__stopLoop = true; }); await B.evaluate(() => { window.__stopLoop = true; });
   await A.evaluate(() => document.querySelector('#mpstatus .startbtn').click());

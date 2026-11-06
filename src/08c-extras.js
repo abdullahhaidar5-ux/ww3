@@ -38,9 +38,9 @@ function clipBtn(){let a=$('xsClip');if(a)return a;const row=$('again')&&$('agai
 function clipStart(){if(!clipOK()||CLIP.rec)return;CLIP.blob=null;CLIP.chunks=[];CLIP.G=G;const b=$('xsClip');if(b)b.classList.remove('on');
   try{const stream=cv.captureStream(30);
     if(AU&&AU.ctx&&AU.master){try{CLIP.dst=AU.ctx.createMediaStreamDestination();AU.master.connect(CLIP.dst);for(const t of CLIP.dst.stream.getAudioTracks())stream.addTrack(t);}catch(e){CLIP.dst=null;}}   // the replay's battle sound, if the audio engine is up
-    const mime=clipMime(),opt={videoBitsPerSecond:6e6};if(mime)opt.mimeType=mime;let rec;try{rec=new MediaRecorder(stream,opt);}catch(e){rec=new MediaRecorder(stream);}
+    const mime=clipMime(),opt={videoBitsPerSecond:4.5e6};if(mime)opt.mimeType=mime;let rec;try{rec=new MediaRecorder(stream,opt);}catch(e){rec=new MediaRecorder(stream);}
     CLIP.mime=rec.mimeType||mime||'video/mp4';rec.ondataavailable=e=>{if(e.data&&e.data.size)CLIP.chunks.push(e.data);};rec.onstop=clipDone;rec.onerror=()=>{};
-    rec.start(500);CLIP.rec=rec;CLIP.t0=performance.now();CLIP.tm=setTimeout(clipStop,15000);   // about 10-15 s of replay
+    rec.start(500);CLIP.rec=rec;CLIP.t0=performance.now();CLIP.tm=setTimeout(clipStop,26000);   // up to three highlights, about 7-9 s each
   }catch(e){CLIP.rec=null;console.warn('clip',e);}}
 function clipStop(){clearTimeout(CLIP.tm);const r=CLIP.rec;if(!r)return;CLIP.rec=null;if(CLIP.dst){xsTry(()=>AU.master.disconnect(CLIP.dst));CLIP.dst=null;}xsTry(()=>{if(r.state!=='inactive')r.stop();});}
 function clipDone(){if(CLIP.G!==G||!CLIP.chunks.length||performance.now()-CLIP.t0<1500)return;CLIP.blob=new Blob(CLIP.chunks,{type:(CLIP.mime||'video/mp4').split(';')[0]});CLIP.chunks=[];const b=clipBtn();if(b){b.classList.add('on');b.textContent='Save clip';}}

@@ -2,7 +2,7 @@
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse',HINTDEV='mouse';
-function pushLog(m,k){if(!G)return;
+function pushLog(m,k){if(!G)return;try{hlLog(m,k);}catch(e){}
   /* commander radio (2026-11-05): kind 'r:<key>' = a log line that also triggers the callout (subtitle + voice, see 09b-radio.js) */
   if(k&&k[1]===':'&&k[0]==='r'){const rk=k.slice(2);k=RADCLS[rk]||'';let ok=false;try{ok=radioCall(rk);}catch(e){}if(!m)return;
     if(!ok)try{const sp={base:4,lost:6,hero:3}[rk];if(sp)speak(sp);}catch(e){}
@@ -18,7 +18,7 @@ function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams.filter(
   // the sim's reason is written from the winner's side ("The last enemy capitulated: …"); the losers read their own fall
   if(!won&&reason&&/^The last enemy capitulated/.test(reason)){const why=me.whyOut||String(reason).replace(/^The last enemy capitulated:\s*/,'');reason=`${me.F.name} has been defeated${why?': '+why:'.'}`;if(!/[.!]$/.test(reason))reason+='.';}
   const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'||G.endStats?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
-  $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=true;try{esPage(G.endStats||null);}catch(e){console.warn('end stats',e);}
+  $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=true;try{esPage(G.endStats||null);}catch(e){console.warn('end stats',e);}try{aarPage();}catch(e){console.warn('aar',e);}
   // the kill-cam replays the battle's biggest moment first (Skip: tap, click or Esc), then this score screen
   const g0=G,show=()=>{$('end').hidden=false;try{esDraw();}catch(e){}};let kc=false;try{kc=kcStart(()=>{if(G===g0&&G.over)show();});}catch(e){console.warn('kill-cam',e);}if(!kc)show();}
 function showElim(){if(!G||G.over)return;   // (the 'out' list can arrive after the battle's end: keep the summary)
@@ -161,7 +161,7 @@ function docUI(T){if(!G||!T)return;const lock=Object.keys(T.gperk||{}).length>0|
     const lb=document.createElement('button');lb.textContent='✕';lb.title='Later';lb.setAttribute('aria-label','Later');lb.style.cssText='pointer-events:auto;min-width:44px;min-height:44px;background:none;border:1px solid #667;color:#cbd;border-radius:8px';lb.onclick=()=>{G.docDis=1;ov.hidden=true;};bx.append(lb);}
   ov.hidden=false;}
 // One-click powers (Abdullah 2026-10-31): a no-target power fires at once; a targeted one aims (circle follows the cursor) and the next map click/tap fires it. Hotkeys below; Esc / right-click cancels.
-const POW_KEY={recon:'e',para:'c',barrage:'b',repair:'y',mil:'m',bb:'n',sanc:'u',flare:'l',nat:'j'};
+const POW_KEY={recon:'e',para:'c',barrage:'b',repair:'y',mil:'m',bb:'n',sanc:'u',reinf:'k',flare:'l',nat:'j'};
 function powGo(k){if(!G||G.over)return false;const T=G.teams[ME],P=T&&powInfo(k,T.fac);if(!P||!T.pw[k]||P.passive||T.pw[k].cd>0)return false;if(P.self){doAct({t:'pow',k,x:0,y:0});return true;}G.place=null;G.amove=false;G.defm=false;G.aim=k;updateUI();return true;}
 /* ---------- one-click powers: a strip of buttons always on screen; hotkey/button arms, next map click fires ---------- */
 let QPSIG='',QPEL=null,QPDRAG=null,QPSEEN=null,QPRDY=null,QPTIP=null,QPTK=null,QPLP=0,QPOFF=false;
@@ -292,7 +292,7 @@ function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads
   const nx=RANKS[T.rank]||null,pr=RANKS[T.rank-1];$('rankname').textContent=`General rank ${T.rank}`+(pts>0?` · ${pts} point${pts>1?'s':''} to spend`:'');$('rankbar').style.width=(nx?Math.min(1,(T.gxp-pr)/(nx-pr))*100:100)+'%';$('rankt').textContent=nx?`${Math.floor(T.gxp)}/${nx} XP`:'Max rank';
   const md=$('mode'),mdSet=v=>{if(TOUCHUI)md.dataset.d=v;else md.textContent=v;};if(G.place){md.hidden=false;mdSet(`Place ${STRUCT[G.place].name}`+(STRUCT[G.place].shore?' on the shore':'')+' · a Construction Vehicle will drive here and build it'+(stdMouse()?' · Esc cancels':' · right-click or Esc cancels'));}else if(G.aim){md.hidden=false;mdSet(`Choose a target for ${G.aim==='sup'?T.sup.name:powInfo(G.aim,G.teams[ME].fac).name}`);}else if(G.amove){md.hidden=false;mdSet('Attack-move: click a destination');}else if(G.defm){md.hidden=false;mdSet('Defend area: click the spot to hold');}else md.hidden=true;if(TOUCHUI)touchHud(md);
   const s=G.sel.filter(e=>!e.dead);const el=$('info');el.innerHTML='';const b=document.createElement('b'),sp=document.createElement('span'),tip=document.createElement('span');tip.className='tip';
-  if(s.length===1){const e=s[0];b.textContent=e.s.name+(e.rank?` · ${VET[e.rank]}`:'');sp.textContent=` ${Math.ceil(e.hp)} / ${e.max} HP`+(e.isB&&e.built<1?` · building ${Math.floor(e.built*100)}%`:'')+((e.dis>G.t||e.disv)?' · HACKED':'')+(e.kind==='jet'?` · ${e.landed?'parked':'airborne'}`:'');
+  if(s.length===1){const e=s[0];b.textContent=e.s.name+(e.rank?` · ${VET[e.rank]}`:'');sp.textContent=` ${Math.ceil(e.hp)} / ${e.max} HP`+(e.isB&&e.built<1?` · building ${Math.floor(e.built*100)}%`:'')+((e.dis>G.t||e.disv)?(G.teams[e.team]&&G.teams[e.team].blk&&['sam','turret','coast','uplink'].includes(e.kind)?' · NO POWER':' · HACKED'):'')+(e.kind==='jet'?` · ${e.landed?'parked':'airborne'}`:'');
     tip.textContent=e.kind==='hacker'?'Right-click an enemy building to disable it. Idle hackers earn cash.':e.s.demo?'Stealthed. Right-click an enemy building to plant explosives.':e.kind==='hero'?'Stealthed until it fires. Snipes infantry from long range.':e.kind==='jet'?'Right-click a target to strike. Jets return to the airfield to rearm.':e.kind==='harv'?'Right-click a supply field to send it there.':e.kind==='dozer'?'Builds everything: pick a building under Build, then click the map. Right-click an unfinished building to help. Repairs buildings it stands next to.':e.isB&&isTun(e)&&e.team===ME?`Units inside: ${MODE==='client'?(T.tunN|0):T.tun.length} of 12. Select units and right-click a tunnel to send them in; they heal inside and can come out of any tunnel. With the tunnel selected, ${TOUCHUI?'tap':'right-click'} the ground to bring them out there.`:e.isB&&e.kind==='garrison'&&e.team===ME?`Troops inside fire from the windows. ${TOUCHUI?'Tap':'Right-click'} the ground to bring them out and send them there; ${TOUCHUI?'tap':'right-click'} an enemy to focus fire.`:!e.isB&&e.s&&e.s.cap&&e.team===ME?(TOUCHUI?'Select infantry and tap this to board. With it selected, tap it again to unload here.':'Select infantry and right-click this to board. With it selected, right-click it to unload here, or Alt+right-click a spot to drive there and unload.'):e.isB&&e.nd&&e.built<1?(e.stall?'Waiting for a Construction Vehicle to arrive and build it.':'A Construction Vehicle is building this.'):e.isB&&e.team===ME&&CATS.includes(e.kind)?'Right-click the ground to set the rally point.':'';}
   else if(s.length){const c={};for(const e of s)c[e.s.name]=(c[e.s.name]||0)+1;b.textContent=`${s.length} selected`;sp.textContent=' '+Object.entries(c).map(([n,v])=>`${v}× ${n}`).join(' · ');}
   else{sp.textContent=TOUCHUI?'Tap a unit or building to select it. Double-tap a unit to select all of that type on screen.':'Click to select units or a building. Double-click selects all of a type on screen.';}
@@ -1170,7 +1170,13 @@ function renderTeams(){const el=$('teamList');if(!el)return;const facs=rollAis()
 function checkTeams(){const ok=new Set(setup.tm).size>1;const b=$('start');if(!b)return;b.disabled=!ok;b.title=ok?'':'Put at least one player on a different team.';}
 mapCards();
 facCards();const sel=$('aiFac');for(const k of FKEYS){const o=document.createElement('option');o.value=k;o.textContent=FACTIONS[k].name;sel.append(o);}sel.value=setup.a;setTimeout(renderTeams,0);sel.onchange=()=>{setup.a=sel.value;renderTeams();};if($('aiN'))$('aiN').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.n=+b.dataset.n;setTimeout(prevMarks,0);$('aiN').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));$('start').textContent=setup.n>1?`Deploy vs ${setup.n} AI`:'Deploy vs AI';renderTeams();});if($('watch'))$('watch').onclick=()=>{$('end').hidden=true;};
-if($('wx'))$('wx').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.w=+b.dataset.w;$('wx').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
+if($('wx'))$('wx').querySelectorAll('button').forEach(b=>b.onclick=()=>{setup.w=wxJoin(+b.dataset.w,wxSsn(setup.w));$('wx').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));});
+// Season row (Summer / Autumn mud / Winter snow): rides in the tens digit of setup.w, so it reaches clients, the server and checkpoints with the weather.
+function ssnSet(v){setup.w=wxJoin(wxBase(setup.w),v);ssnUI();}
+function ssnUI(){const r=$('ssnRow');if(r)r.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.s===wxSsn(setup.w)));}
+{const wr=$('wx');if(wr&&wr.parentNode&&!$('ssnRow')){const lb=document.createElement('div');lb.className='label';lb.textContent='Season';const row=document.createElement('div');row.className='seg';row.id='ssnRow';
+  [[0,'Map default','Each map starts in its own season (snow maps in winter, the rest in summer)'],[1,'Summer','Dry ground, green foliage'],[2,'Autumn mud','Mud and puddles: wheeled vehicles slow a lot off the roads, tanks a little. Roads matter more'],[3,'Winter snow','Snow: infantry slow down off the roads, vehicles a little. Roofs and trees are white']].forEach(([v,n,t])=>{const b=document.createElement('button');b.type='button';b.dataset.s=v;b.textContent=n;b.title=t;b.onclick=()=>ssnSet(v);row.append(b);});
+  wr.after(lb,row);ssnUI();}}
 {const dr=$('diff');if(dr&&dr.parentNode&&!$('gdocSel')){const w=document.createElement('div');w.id='gdocSel';w.style.cssText='margin:8px 0;display:flex;flex-wrap:wrap;gap:6px;align-items:center';const l=document.createElement('span');l.textContent='Doctrine:';l.style.cssText='font-size:13px;opacity:.85;margin-right:4px';w.append(l);
   for(const d of ['',...GDOC_KEYS]){const b=document.createElement('button');b.type='button';b.textContent=d?GDOC[d].name:'Pick in battle';b.title=d?GDOC[d].blurb:'Choose in the first 2 minutes of the battle';b.style.cssText='min-height:40px;padding:0 12px;border-radius:6px;border:1px solid #667;background:#222;color:#eee;touch-action:manipulation';b.onclick=()=>{setup.gdoc=d;w.querySelectorAll('button').forEach(x=>x.style.background=x===b?'#4a5a38':'#222');};if((setup.gdoc||'')===d)b.style.background='#4a5a38';w.append(b);}
   dr.parentNode.insertBefore(w,dr.nextSibling);}}
@@ -1354,12 +1360,13 @@ $('again').onclick=()=>{initAudio();try{if(NET.ownW!=null){wxSet(NET.ownW);NET.o
 const KC={G:null,on:false,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0,R:null};
 const KC_SPAN=9,KC_DT=.25,KC_TAIL=1.2;
 function kcOff(){return !!(navigator.webdriver&&!window.__killcam)||!!(G&&G.headless);}
-function kcReset(){if(KC.url)try{URL.revokeObjectURL(KC.url);}catch(e){}Object.assign(KC,{G,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0});const a=$('kcSave');if(a)a.hidden=true;}
+function kcReset(){if(KC.url)try{URL.revokeObjectURL(KC.url);}catch(e){}try{hlReset();}catch(e){}Object.assign(KC,{G,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0});const a=$('kcSave');if(a)a.hidden=true;}
 function kcFx(type,args){if(!G||G.over||KC.on||kcOff())return;if(KC.G!==G)kcReset();const t=G.t;KC.fx.push([t,type,args]);
   if(type==='die'){const [id,x,y,ki,isB,team]=args,k=KINDS[ki];const v=(isB?STRUCT[k]&&STRUCT[k].cost:BASE[k]&&BASE[k].cost)||150;
     let seen=team!=null&&ally(team,ME);const S=KC.snaps[KC.snaps.length-1];
     if(!seen&&S){for(let i=0;i<S.e.length;i++)if(S.e[i].id===id){seen=(S.f[i*7+6]&1)>0;break;}}
-    if(seen)KC.deaths.push({t,v,x,y});}}
+    if(seen)KC.deaths.push({t,v,x,y});}
+  try{hlFx(type,args);}catch(e){}}
 function kcRec(force){try{if(kcOff()||!G)return;if(KC.G!==G)kcReset();const t=G.t;if(!force&&t-KC.lt<KC_DT&&t>=KC.lt)return;KC.lt=t;const w0=performance.now();
   const E=[];for(const e of G.ents)if(!e.dead)E.push(e);const n=E.length,f=new Float32Array(n*7);
   for(let i=0;i<n;i++){const e=E[i],j=i*7;f[j]=e.x;f[j+1]=e.y;f[j+2]=e.va??e.ang??0;f[j+3]=e.tang??NaN;f[j+4]=e.hp;f[j+5]=e.built??1;f[j+6]=(e.vis?1:0)|(e.landed?2:0);}
@@ -1367,6 +1374,7 @@ function kcRec(force){try{if(kcOff()||!G)return;if(KC.G!==G)kcReset();const t=G.
   const F=KC.fx;while(KC.fh<F.length&&F[KC.fh][0]<old)KC.fh++;if(F.length-KC.fh>40000)KC.fh=F.length-40000;if(KC.fh>4096){F.splice(0,KC.fh);KC.fh=0;}
   while(KC.deaths.length&&KC.deaths[0].t<t-14)KC.deaths.shift();
   if(!force)kcEval(t-KC_SPAN+1.5,t-.5,t-KC_SPAN,t);
+  try{hlTick(t);}catch(e){}
   KC.ms+=performance.now()-w0;KC.n++;}catch(e){if(!KC.err){KC.err=1;console.warn('kill-cam record',e);}}}
 // keep [t0,t1] if the deaths seen in [a,b] add up to more value than the best stretch so far
 function kcEval(a,b,t0,t1){let sc=0,sx=0,sy=0,pk=null;for(const d of KC.deaths)if(d.t>=a&&d.t<=b){sc+=d.v;sx+=d.x*d.v;sy+=d.y*d.v;if(!pk||d.v>pk.v)pk=d;}
@@ -1392,8 +1400,13 @@ body.kcOn #stage>*:not(#cv),body.kcOn #side{visibility:hidden!important}
 function kcSaveBtn(){let a=$('kcSave');if(a)return a;const row=$('again')&&$('again').parentNode;if(!row)return null;a=document.createElement('a');a.id='kcSave';a.className='big ghost';a.hidden=true;a.textContent='Save screenshot';
   if(!('download' in a))a.target='_blank';   // no download support: the picture opens in a new tab (long-press to save)
   row.insertBefore(a,$('change'));return a;}
-function kcSkip(){if(KC.on&&KC.R)KC.R.skip=true;}
-function kcStart(done){if(kcOff()||KC.G!==G||!R3||window.GLLOST)return false;kcRec(true);const t=G.t;kcEval(t-KC_SPAN+1,t,t-KC_SPAN,t);const B=KC.best;if(!B||B.snaps.length<4)return false;
+function kcSkip(){if(KC.on&&KC.R){KC.R.skip=true;KC.R.skipAll=true;}}
+function kcStart(done){if(kcOff()||KC.G!==G||!R3||window.GLLOST)return false;kcRec(true);const t=G.t;kcEval(t-KC_SPAN+1,t,t-KC_SPAN,t);
+  // highlights (08e): up to three of the match's best moments in a row; with none noted, the single biggest fight as before
+  let L=[];try{hlFlush();L=hlPick();}catch(e){console.warn('highlights',e);}
+  if(!L.length){const B=KC.best;if(!B||B.snaps.length<4)return false;L=[B];}
+  KC.fin=done;const go=i=>kcPlay(L[i],i,L.length,i>=L.length-1?done:()=>go(i+1));return go(0);}
+function kcPlay(B,pi,pn,done){
   kcEls();const N=B.snaps.length,T=new Map();
   B.snaps.forEach((S,k)=>{for(let i=0;i<S.e.length;i++){const e=S.e[i];let tr=T.get(e.id);
     if(!tr){tr={g:Object.assign({},e,{dead:false,ox:null,oy:null,mv:-99,mvC:0,lx:undefined,ly:undefined,lastFire:-9}),d:new Float32Array(N*7).fill(NaN),gone:false};T.set(e.id,tr);}
@@ -1401,8 +1414,8 @@ function kcStart(done){if(kcOff()||KC.G!==G||!R3||window.GLLOST)return false;kcR
   // wrecks and fallen soldiers from the whole battle are set aside while the replay runs, then put back
   const hide=[];for(const L of [WRECKS,BODIES])for(const w of L.splice(0)){SCN.remove(w.o);hide.push([L,w]);}const wq=WRECKQ.splice(0);
   const cs={x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td,_xl:cam._xl,_yl:cam._yl,_dl:cam._dl};
-  KC.R={B,T,times:B.snaps.map(s=>s.t),rt:B.t0,k:0,fi:0,done,cs,hide,wq,G,skip:false,shot:false};KC.on=true;KC.shot=null;try{clipStart();}catch(e){}
-  const m=Math.floor(B.peak.t/60),s=Math.floor(B.peak.t%60);$('kcSub').textContent=`Biggest moment of the battle · ${m}:${String(s).padStart(2,'0')} · $${Math.round(B.score).toLocaleString('en-US')} destroyed`;
+  KC.R={B,T,times:B.snaps.map(s=>s.t),rt:B.t0,k:0,fi:0,done,cs,hide,wq,G,skip:false,shot:false,more:pi<pn-1,skipAll:false};KC.on=true;if(pi===0)KC.shot=null;if(B.top!==false)KC.shotLabel=B.label||'';try{if(pi===0)clipStart();}catch(e){}
+  const m=Math.floor(B.peak.t/60),s=Math.floor(B.peak.t%60);$('kcSub').textContent=B.label?`${pn>1?'Highlight '+(pi+1)+' of '+pn+' · ':'Highlight · '}${B.label} · ${m}:${String(s).padStart(2,'0')}`:`Biggest moment of the battle · ${m}:${String(s).padStart(2,'0')} · $${Math.round(B.score).toLocaleString('en-US')} destroyed`;
   document.body.classList.add('kcOn');const o=$('kcOv');o.hidden=false;setTimeout(()=>o.classList.add('on'),30);return true;}
 function kcCam(R){const B=R.B,P=B.peak,len=B.t1+KC_TAIL-B.t0,p=Math.max(0,Math.min(1,(R.rt-B.t0)/len)),q0=Math.max(0,Math.min(1,(R.rt-B.t0)/Math.max(.5,P.t-B.t0))),q=q0*q0*(3-2*q0),e=p*p*(3-2*p);
   // a slow push-in from the middle of the action toward its biggest kill, the camera sinking lower as it goes
@@ -1419,19 +1432,19 @@ function kcFrame(dt){const R=KC.R;if(!R||R.G!==G||!G){kcStop(false);return;}
       g.x=x;g.y=y;g.va=a;g.ang=a;g.tang=ta===ta?ta:undefined;g.hp=h1?D[j+4]+(D[j1+4]-D[j+4])*u:D[j+4];g.built=D[j+5];const fl=D[j+6];g.vis=(fl&1)>0;g.landed=(fl&2)>0;L.push(g);}
     const gE=G.ents,gT=G.t;G.ents=L;G.t=R.rt;
     try{const fx=B.fx;while(R.fi<fx.length&&fx[R.fi][0]<=R.rt){const v=fx[R.fi++],ty=v[1],a=v[2];if(ty==='die'){const tr=R.T.get(a[0]);if(tr)tr.gone=true;}const h=FXH_RAW[ty];if(h)try{h.apply(FXH,a);}catch(_){}}
-      kcCam(R);renderFrame(d);if(!R.shot&&(R.rt>=B.peak.t+.35||R.skip)){R.shot=true;kcGrab();}}
+      kcCam(R);renderFrame(d);if(!R.shot&&(R.rt>=B.peak.t+.35||R.skip)){R.shot=true;if(B.top!==false)kcGrab();}}
     finally{G.ents=gE;G.t=gT;}
     if(R.skip)kcStop(true);}catch(e){console.warn('kill-cam',e);kcStop(true);}}
-function kcStop(ok){const R=KC.R;KC.on=false;try{clipStop();}catch(e){}KC.R=null;document.body.classList.remove('kcOn');const o=$('kcOv');if(o){o.classList.remove('on');o.hidden=true;}if(!R)return;
+function kcStop(ok){const R=KC.R;KC.on=false;try{if(!(R&&R.more&&!R.skipAll&&ok))clipStop();}catch(e){}KC.R=null;document.body.classList.remove('kcOn');const o=$('kcOv');if(o){o.classList.remove('on');o.hidden=true;}if(!R)return;
   try{for(const L of [WRECKS,BODIES])for(const w of L.splice(0))SCN.remove(w.o);for(const [L,w] of R.hide){L.push(w);SCN.add(w.o);}WRECKQ.length=0;WRECKQ.push(...R.wq);Object.assign(cam,R.cs);}catch(e){}
-  if(ok&&R.G===G)try{R.done();}catch(e){}}
+  if(ok&&R.G===G)try{(R.skipAll&&KC.fin?KC.fin:R.done)();}catch(e){}}
 // the saved picture: the replay's best frame with a caption strip (result, nations, match time)
 function kcCompose(){const b=KC.shot,B=KC.best;if(!b||!G)return;const u=URL.createObjectURL(b),im=new Image();
   im.onload=()=>{try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);URL.revokeObjectURL(u);
     const W=c.width,H=c.height,s=Math.max(.6,H/720),bh=104*s,gr=x.createLinearGradient(0,H-bh,0,H);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.8)');x.fillStyle=gr;x.fillRect(0,H-bh,W,bh);
     const me=G.teams[ME],won=$('endt')?$('endt').textContent:'',m=Math.floor(G.t/60),sec=String(Math.floor(G.t%60)).padStart(2,'0');
     x.fillStyle='#fff';x.font=`700 ${28*s}px system-ui,sans-serif`;x.fillText(`WORLD WAR 3${won?' · '+won.toUpperCase():''}`,22*s,H-50*s);
-    x.fillStyle='#e6dcc2';x.font=`500 ${17*s}px system-ui,sans-serif`;x.fillText(`${me.F.name} vs ${vsText()} · ${m}:${sec}${B?` · biggest moment: $${Math.round(B.score).toLocaleString('en-US')} destroyed`:''}`,22*s,H-20*s);
+    x.fillStyle='#e6dcc2';x.font=`500 ${17*s}px system-ui,sans-serif`;x.fillText(`${me.F.name} vs ${vsText()} · ${m}:${sec}${KC.shotLabel?' · '+KC.shotLabel:B?` · biggest moment: $${Math.round(B.score).toLocaleString('en-US')} destroyed`:''}`,22*s,H-20*s);
     c.toBlob(p=>{if(!p)return;if(KC.url)try{URL.revokeObjectURL(KC.url);}catch(e){}KC.url=URL.createObjectURL(p);const a=kcSaveBtn();if(!a)return;a.href=KC.url;a.download=`ww3-battle-${me.F.name.replace(/[^\w]+/g,'-')}-${Date.now()}.png`;a.hidden=false;},'image/png');}catch(e){console.warn('kill-cam picture',e);}};
   im.onerror=()=>URL.revokeObjectURL(u);im.src=u;}
 
