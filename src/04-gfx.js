@@ -551,7 +551,7 @@ function meGeo(B,kp,tc,fac){const C=ME_C;let K;
     case 'uplink:door':B.box(18,2,36,0,0,0,'#9d978a');B.box(2,2.2,36,8,0,0,'#4a4639');B.box(14,.3,32,0,1.1,0,'#a89f8a');break;
     default:return false;}
   return true;}
-const GEO_ALIAS={champ:'hero',lander:'boat',fast:'boat',minel:'boat',sweep:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',cbr:'aa',jeep:'aa',raidlead:'aa'};
+const GEO_ALIAS={champ:'hero',lander:'boat',fast:'boat',minel:'boat',sweep:'boat',airlift:'heli',mortar:'inf',recon:'inf',officer:'hero',medic:'inf',spy:'inf',commissar:'hero',sapper:'inf',guer:'inf',atk:'at',idome:'aa',ew:'aa',cbr:'aa',jeep:'aa',raidlead:'aa'};
 function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];const key=kind+fac+team.color+part;if(GEO[key])return GEO[key];const tc=team.color,hc=camo(team),dk='#2b2d26',mt='#55574e',cn='#9a988c',cl='#7d7c70';const B=Bld();let s=FACTIONS[fac].units[kind]||{};
   if(MEFAC.has(fac)&&meGeo(B,kind+':'+part,tc,fac))return GEO[key]=B.geo();
   switch(kind+':'+part){
@@ -648,11 +648,16 @@ function geoFor(kind,fac,team,part){if(GEO_ALIAS[kind])kind=GEO_ALIAS[kind];cons
     case 'uplink:door':B.box(18,2,36,0,0,0,'#8e9088');B.box(2,2.2,36,8,0,0,'#d9a826');break;
     case 'uplink:missile':B.cyl(4,4,24,10,0,12,0,'#d8d4c6');B.cone(4,9,10,0,28,0,'#c4392c');break;
     case 'plane:body':B.cyl(5,6,60,10,0,0,0,'#7c8086',0,0,Math.PI/2);B.cone(5,10,10,35,0,0,'#7c8086',0,0,-Math.PI/2);B.box(18,1.2,80,-2,2,0,'#6f7378');B.box(10,10,1.2,-27,6,0,'#6f7378');B.box(10,1,26,-27,2,0,'#6f7378');B.box(20,.6,1.4,-2,2.8,-30,tc);B.box(20,.6,1.4,-2,2.8,30,tc);break;
+    case 'radio:main':{B.box(44,2,44,0,1,0,cl);B.box(30,11,22,-4,7.5,6,cn);B.box(32,1.6,24,-4,13.8,6,'#6f6e66');B.box(30,2.4,1,-4,10,17.2,tc);B.box(8,6,1.2,-12,5,17.1,'#26261f');B.box(9,5,1.2,2,6.5,17.1,'#2f4a5a');
+      B.box(12,5,10,13,4.5,-9,'#6c6a62');B.cyl(3.6,.5,2.4,12,13,9,-9,'#d8dcd4',0,0,Math.PI/2);
+      const fr='#7a7f84';for(let i=0;i<7;i++){const y=14+i*9,w1=5.4-i*.5;for(const [sx,sz] of [[-1,-1],[1,-1],[1,1],[-1,1]])B.box(.8,9.4,.8,-14+sx*w1/2,y+4.7,-8+sz*w1/2,fr);
+        if(i<6){B.box(w1,.5,.5,-14,y+9,-8-w1/2,fr);B.box(w1,.5,.5,-14,y+9,-8+w1/2,fr);B.box(.5,.5,w1,-14-w1/2,y+9,-8,fr);B.box(.5,.5,w1,-14+w1/2,y+9,-8,fr);}}
+      B.cyl(.45,.45,12,6,-14,83,-8,'#c0c4c6');B.cyl(5,.4,2,12,-8,52,-8,'#d8dcd4',0,0,Math.PI/2);break;}
     default:B.box(10,10,10,0,5,0,'#ff00ff');
   }
   return GEO[key]=B.geo();}
 function mesh(g){const m=new THREE.Mesh(g,MAT.std);m.castShadow=true;m.receiveShadow=true;return m;}
-function makeObj(e){mats();if(e.kind==='cleric')return clericModel(e);if(!e.isB){const mo=modelFor(e);if(mo)return mo;}const T=G.teams[e.team],f=T.fac,k=e.kind,o=new THREE.Group();o.userData.parts={};const P=o.userData.parts;
+function makeObj(e){mats();if(e.kind==='cleric')return clericModel(e);if(!e.isB&&e.s&&e.s.fake&&e.kind!==e.s.fake){const q=Object.create(e);q.kind=e.s.fake;const o=makeObj(q);if(o){o.userData.fakeOf=e.kind;return o;}}if(!e.isB){const mo=modelFor(e);if(mo)return mo;}const T=G.teams[e.team],f=T.fac,k=e.kind,o=new THREE.Group();o.userData.parts={};const P=o.userData.parts;
   const add=(part,parent=o)=>{const m=mesh(geoFor(k,f,T,part));parent.add(m);P[part]=m;return m;};
   if(e.isB){const eS=k==='garrison'?e:Object.assign(Object.create(e),{size:e.size/BSC});const meY=k==='shipyard'&&MEFAC.has(f),mb=(k==='airfield'||k==='uplink'||meY)?false:bldModel(eS,o,T);if(mb){}else if(k==='hq'){add('main');const d=add('dish');d.position.set(14,48,14);}else if(k==='turret'||k==='sam'||k==='coast'||k==='tunnel'||k==='fort'){add('main');const g=add('gun');g.position.y=k==='tunnel'?4:k==='fort'?14:6;}
     else if(k==='shipyard'){add('main');if(!(meY&&bldModel(eS,o,T))){const c=add('crane');c.position.set(22,5,22);}}else if(k==='uplink'){add('main');const m=add('missile');m.position.y=4;const a=mesh(geoFor(k,f,T,'door')),b=mesh(geoFor(k,f,T,'door'));const HY=UPHY[(UPLINK[f]||[])[1]]||27.5;a.position.set(-9,HY,0);b.position.set(9,HY,0);b.rotation.y=Math.PI;o.add(a);o.add(b);P.da=a;P.db=b;P.hy=HY-27.5;}
