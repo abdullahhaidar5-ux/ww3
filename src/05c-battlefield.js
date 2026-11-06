@@ -1,5 +1,5 @@
 /* ---------- Battlefield visuals: wounded soldiers + red-cross icons, damaged-building smoke and collapse dust, the dam, the flood ----------
-   (sim: 03e-battlefield.js). Everything is cheap: wounded are two small instanced meshes + one Points layer for the icons (so
+   (sim: 03f-battlefield.js). Everything is cheap: wounded are two small instanced meshes + one Points layer for the icons (so
    they stay readable from high up), damaged buildings only emit a few smoke / flame puffs a second while on screen, the dam is
    a handful of meshes built once, the flood is ONE translucent mesh rebuilt a few times a second while water is up. No cubes:
    bodies and rocks are blobs, the dam is an arch. */

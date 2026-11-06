@@ -1,6 +1,6 @@
 # Battlefield: trenches, collapsing buildings, dams + floods, wounded + medics (2026-11-06, helper agent `orch/battlefield`)
 
-Abdullah picked all four on 2026-11-05 18:55. Sim code: `src/03e-battlefield.js` (in `SIM_FILES`, so the Cloudflare server and node tests include it).
+Abdullah picked all four on 2026-11-05 18:55. Sim code: `src/03f-battlefield.js` (in `SIM_FILES`, so the Cloudflare server and node tests include it).
 Visuals: `src/05c-battlefield.js` (+ trench look in `src/05b-tactfx.js`), UI: `src/08c-tactui.js`, hooks in 03-sim, 03b-tactics, 04-gfx, 06-view, 07-net, 07a-hostsnap, 07b-ckpt, 08-ui, 01-data.
 Test (headless, 25 checks, ~1 min): `node orch/bftest.mjs`. Screenshots: `node orch/bfshots.mjs` -> `orch/shots/battlefield/`.
 One system per idea (SYSTEMS.md rows added): cover stays `coverAt()`, destruction extends rubble.md, wounded/medics have their own row.
@@ -37,10 +37,10 @@ Already there (tactics.md): foxholes (I), sandbag/trench segments laid by a Cons
 
 ## Numbers (same for every nation)
 Wound chance 40% | bleed-out 32 s | revive 4 s | aid station 10 s | rubble clear 7 s | dam 3000 HP | flood 3 min, 3.5%/s infantry | drag speed 60%.
-A balance agent should re-run the tourneys: wounded add roughly +10% effective infantry life, so medic count and wound chance are the knobs (`WND_*` at the top of 03e).
+A balance agent should re-run the tourneys: wounded add roughly +10% effective infantry life, so medic count and wound chance are the knobs (`WND_*` at the top of 03f).
 
 ## Sync / saves
-New sim state is in the checkpoint (`CK_G`: wnd*, dams, damV, fln; civ fields `stg`/`clr` ride with the civ list), clients get `wd` (wounded, filtered by sight) and `dm` (dam state) in the team panel (only when changed, wounded refresh every 1.2 s), new commands `clr` and `atkDam` in `CMD_T`. **servers-live PR needed** (03e, 03, 01 changed).
+New sim state is in the checkpoint (`CK_G`: wnd*, dams, damV, fln; civ fields `stg`/`clr` ride with the civ list), clients get `wd` (wounded, filtered by sight) and `dm` (dam state) in the team panel (only when changed, wounded refresh every 1.2 s), new commands `clr` and `atkDam` in `CMD_T`. **servers-live PR needed** (03f, 03, 01 changed).
 
 ## Checks
 `node orch/bftest.mjs`: wounded ratio, shell kills outright, medic runs over + revives with rank kept, bleed-out, drag to a foxhole, building stage 1/2 + half the garrison bails, collapse leaves rubble, tank blocked, dozer clears it, two mirrored dams with equal flood corridors, breach, valley floods, infantry slowed and hurt, vehicles survive, water recedes, infantry trench lines. Headless AI game on Twin Rivers: wounded and AI dam attacks happen, no errors.
