@@ -70,7 +70,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   cleric/officer does **not** weaken them: they stay zealous; their cost is elsewhere, e.g. they hold ground and take heavier
   losses), **Professional** (steady under artillery, rally fast near officers; heavy losses sap them more), **Strength in numbers**
   (brave in big groups, shaky when isolated), **Home defenders** (much braver on home turf / near own towns, ordinary abroad).
-  Zealous = IR, RS, DW; **Russia and Cuba = Professional** (20:15); the full assignment is in `orch/SYSTEMS.md` (set — balance by tuning numbers, not by moving nations).
+  Zealous = IR, RS, DW, **North Korea** (20:16; ideological flavour — political officers/party banners, not Shia motifs); **Russia and Cuba = Professional** (20:15); the full assignment is in `orch/SYSTEMS.md` (set — balance by tuning numbers, not by moving nations).
   Grand-map national morale: raised/lowered by victories & defeats, casualties & war length, losing home/holy places (capital,
   war goals, heritage sites) and short national/religious-day boosts (equal value for all); on collapse: troops start battles
   shaken, forced peace talks, coups & civil war.
