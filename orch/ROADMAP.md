@@ -20,6 +20,12 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Logistics 2: forward depots + ports join the road network, mines + checkpoints (tolls), bridges blow / rebuild / pontoons, port blockades, airlift, AI uses it, tutorial step, road look per theme
 - [next] Fairness proof: 18-nation tourney + start positions + tax-policy comparison (needs a bigger machine)
 
+## Battlefield (Abdullah 2026-11-05 18:55)
+- [done] Digging in: infantry or Construction Vehicles lay sandbag / trench lines by dragging, pieces shared between builders, trenches snap into networks, duckboards + sandbag parapets, AI squads dig lines when no dozer is idle
+- [done] Collapsing buildings: three damage stages (cracked, smoking, burning), garrison bails out at the last stage, dust cloud on collapse, rubble cleared by Construction Vehicles (auto or the Clear rubble button)
+- [done] Dams and floods: Twin Rivers + Fulda Gap each have two mirrored dams; shell one and the valley floods for 3 minutes (slows everything, closes bridges, drowns infantry); AI uses it
+- [done] Medics and wounded: bullet-killed infantry go down wounded (red-cross icon, 32 s), Combat Medics (all nations) revive them with veterancy, squad mates drag them to cover, HQ/Depot aid stations, AI builds medics
+
 ## Phones and interface
 - [done] Phones can play: reachable build buttons, two-finger pan and pinch zoom, touch placement
 - [done] No install buttons: just open the link and play

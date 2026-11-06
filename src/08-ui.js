@@ -350,6 +350,7 @@ function issueCmd(w,t,rally){
     const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
     if(rally&&!units.length&&G.sel.some(b=>b.isB&&b.team===ME)){doAct({t:'rally',x:w.x,y:w.y});pushLog('Rally point set.');return true;}
     if(!units.length)return false;const ids=units.map(u=>u.id);
+    if(!t){const di=damAt(w);if(di>=0){doAct({t:'atkDam',ids,fi:di});speak(2);markT(G.dams[di].x,G.dams[di].y,40);pushLog('Attacking the dam - if it breaks, the valley floods.');return true;}}
     if(!t){const oi=G.oil.findIndex(o=>!o.dead&&!ally(o.owner,ME)&&o.owner>=0&&Math.hypot(o.x-w.x,o.y-w.y)<38);if(oi>=0){doAct({t:'atkOil',ids,fi:oi});speak(2);markT(G.oil[oi].x,G.oil[oi].y,30);return true;}}
     // units that can't go in (too big, aircraft, the transport itself) just move up next to it
     const nextTo=(rest,x,y)=>{if(rest.length)doAct({t:'go',ids:rest.map(u=>u.id),x,y,mode:'move'});};
@@ -424,6 +425,7 @@ function noGo(units,w){return units.length>0&&units.every(u=>!passXY(u.s.dom,w.x
 // Ctrl+click: fire on what is under the cursor even if the unit would not pick it. The battle supports forcing an attack on
 // enemies, enemy or neutral oil derricks and empty city buildings; firing at the ground or at friendly units is not available.
 function forceTarget(t,w){if(t&&!t.dead)return ally(t.team,ME)?null:{t:'atk',tid:t.id,x:t.x,y:t.y};
+  const di=damAt(w);if(di>=0)return{t:'atkDam',fi:di,x:G.dams[di].x,y:G.dams[di].y};
   const oi=oilAt(w,true);if(oi>=0)return{t:'atkOil',fi:oi,x:G.oil[oi].x,y:G.oil[oi].y};
   const c=civUnder(mouse.x,mouse.y,w);if(c&&!c.dead){if(c.g&&!c.g.dead)return ally(c.g.team,ME)?null:{t:'atk',tid:c.g.id,x:c.x,y:c.y};return{t:'atkCiv',ci:c.i,x:c.x,y:c.y};}return null;}
 function forceFire(w,t,units){const f=forceTarget(t,w);if(!f){pushLog(t?'Force-fire on your own or allied units is not available.':'Force-fire on empty ground is not available - Ctrl+click an enemy, a derrick or a building.','w');try{sfxUI(220);}catch(_){}return false;}
