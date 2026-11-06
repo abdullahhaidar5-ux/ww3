@@ -1,0 +1,11 @@
+menu {"g":"Grand campaign","c":"Missions","s":"Conquest — deploy vs AI","t":true}
+determinism {"a":"de26fcd2","b":"de26fcd2","c":"6e197e6d","h0":"3c2fde4f","h1":"3c2fde4f","ms":424,"alive1":78,"provs":236,"seas":44}
+scenario {"foe":"IQ","from":"Khuzestan","to":"Basra","aid":49,"ok":true,"units":37,"to_i":64}
+expected {"meAtt":false,"mine":{"inf":6,"at":1},"theirs":{"inf":23,"at":3,"tank":1,"arty":1,"aa":1},"nMine":7,"waves":0,"prov":"Hormozgan"}
+battle {"me":{"at":1,"inf":6},"foe":{"tank":1,"at":3,"inf":23,"aa":1,"arty":1},"b0":["turret"],"b1":[],"qSame":true,"cr":0,"conq":false,"over":false,"waves":0,"att":1,"n0":[7,29]}
+finish {"res":true,"before":{"alive":5,"kinds":{"inf":5},"hp":[50,50,50,50,50]},"meAtt":false,"bi":4}
+flowback {"n":5,"kinds":{"inf":5},"hp":[50,50,50,50,50]}
+after {"g":false,"grand":"flex","ph":"plan","turn":2,"owner":"MX"}
+turn {"log":["Florida: Cuba beat United States.","Russia captured Donbas from Ukraine.","Israel captured Latakia from Syria.","Pakistan captured Rajasthan from India.","China captured Hwanghae from North Korea.","Cuba captured Florida from United States."],"turn":2,"save":true}
+
+GRANDTEST PASS
