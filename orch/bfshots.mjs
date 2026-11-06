@@ -42,7 +42,7 @@ try {
     const c = await page.evaluate(() => { const hq = G.ents.find(b => b.team === ME && b.kind === 'hq'); let best = null, bd = 1e9; for (const c of G.civ) { if (c.ruin || c.dead) continue; const d = Math.hypot(c.x - hq.x, c.y - hq.y); if (d < bd && d > 420) { bd = d; best = c; } }
       const cs = G.civ.filter(q => !q.ruin && !q.dead && Math.hypot(q.x - best.x, q.y - best.y) < 160).slice(0, 4); window.__cs = cs.map(q => q.i); cs[0].hp = cs[0].max * .55; civStage(cs[0]); if (cs[1]) { cs[1].hp = cs[1].max * .25; civStage(cs[1]); }
       for (let i = 0; i < 6; i++) { const u = addUnit(ME, 'inf', best.x + 40 + i * 9, best.y + 60); } return { x: best.x, y: best.y }; });
-    if (want.includes('damage')) { await page.evaluate(() => { for (let i = 0; i < 40; i++) bfFxTick(.1); }); await shot('building-damage', c.x, c.y, 330, () => { for (let i = 0; i < 30; i++) { bfFxTick(.1); } }); }
+    if (want.includes('damage')) { await page.evaluate(([x, y]) => { camTarget(); cam.td = cam.dist = 330; centerOn(x, y, true); }, [c.x, c.y]); await shot('building-damage', c.x, c.y, 330, () => { for (let i = 0; i < 60; i++) { renderFrame(.1); } }); }
     if (want.includes('rubble')) {
       await page.evaluate(() => { const cs = window.__cs.map(i => G.civ[i]); for (const c of cs) { if (!c.dead) collapseCiv(c, 1); } });
       await shot('building-collapse-dust', c.x, c.y, 300);

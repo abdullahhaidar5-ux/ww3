@@ -14,8 +14,8 @@ try {
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'load', timeout: 120000 }); await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => {});
   await page.evaluate(() => { setup.n = 1; setup.map = 'rivers'; startSingle(); }); await page.waitForFunction(() => G && !window.LOADING, null, { timeout: 600000, polling: 250 });
-  const r = await page.evaluate(() => { G.paused = true; const d = G.dams[0]; applyDmg(d.tg, 9999, 'cannon', ME, null, false); for (let i = 0; i < 400; i++) simUpdate(.05); let err = null; try { bfFloodTick(.5); } catch (e) { err = String(e.stack || e).slice(0, 400); }
-    return { err, fl: !!BFX.fl, vis: BFX.fl && BFX.fl.visible, dr: BFX.fl && BFX.fl.geometry.drawRange.count, lv: damLevel(d), t: G.t - d.t0 }; });
+  const r = await page.evaluate(() => { G.paused = true; const hq = G.ents.find(b => b.team === ME && b.kind === 'hq'); const c = G.civ.find(c => !c.ruin && !c.dead && Math.hypot(c.x - hq.x, c.y - hq.y) > 400); c.hp = c.max * .2; civStage(c); camTarget(); cam.td = cam.dist = 300; centerOn(c.x, c.y, true); for (let i = 0; i < 3; i++) renderFrame(.016);
+    const n0 = PARTS.length; let err = null; try { for (let i = 0; i < 30; i++) bfCivTick(.1); } catch (e) { err = String(e.stack || e).slice(0, 300); } return { err, stg: c.stg, inset: BFX.civ.has(c), n0, n1: PARTS.length, view: inView(c.x, c.y, .25), c: [c.x, c.y, c.h] }; });
   console.log(JSON.stringify(r));
   if (process.env.SHOT) { await page.evaluate(([x, y]) => { camTarget(); cam.td = cam.dist = 650; centerOn(x, y, true); for (let i = 0; i < 3; i++) renderFrame(.016); }, [JSON.parse(process.env.SHOT)[0], JSON.parse(process.env.SHOT)[1]]); await page.waitForTimeout(500); await page.evaluate(() => { renderFrame(.016); renderFrame(.016); }); await page.screenshot({ path: '/tmp/dbg.png', timeout: 240000 }); }
 } finally { await browser.close(); server.close(); }

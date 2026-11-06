@@ -31,7 +31,7 @@ function bfDust(x,y,h,big){const k=big?1:.6,hh=Math.min(70,(h||30)*.5);for(let i
     part({x:x+rnd(-14,14),y:y+rnd(-14,14),h:rnd(2,hh),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(4,16),rise:rnd(2,9),c:[.66,.6,.5],s:rnd(20,44),g:1.5,d:rnd(3.4,6),a:.62,f:.5});}}
 function bfCivTick(dt){if(!G.civ)return;if(BFX.civG!==G){BFX.civG=G;BFX.civ.clear();for(const c of G.civ)if(c.stg>0&&!c.dead)BFX.civ.add(c);}
   for(const c of BFX.civ){if(c.dead){BFX.civ.delete(c);continue;}if(!inView(c.x,c.y,.25))continue;const st=c.stg|0,h=Math.min(60,(c.h||30)*.8)+groundH(c.x,c.y);
-    if(Math.random()<dt*(st>1?5:1.6))part({x:c.x+rnd(-12,12),y:c.y+rnd(-12,12),h:h+rnd(-4,3),vx:rnd(-3,3),vy:rnd(-3,3),vh:rnd(6,12),rise:rnd(14,26),c:st>1?[.08,.075,.07]:[.34,.33,.31],s:rnd(7,13),g:5,d:rnd(2,3.4),a:st>1?.6:.38});
+    if(Math.random()<dt*(st>1?9:3))part({x:c.x+rnd(-12,12),y:c.y+rnd(-12,12),h:h+rnd(-4,3),vx:rnd(-3,3),vy:rnd(-3,3),vh:rnd(6,12),rise:rnd(14,26),c:st>1?[.08,.075,.07]:[.38,.37,.35],s:rnd(10,20),g:5,d:rnd(3,5),a:st>1?.7:.5});
     if(st>1&&Math.random()<dt*4)part({x:c.x+rnd(-10,10),y:c.y+rnd(-10,10),h:h+rnd(-6,0),vx:rnd(-2,2),vy:rnd(-2,2),rise:rnd(14,24),add:true,c:Math.random()<.5?[2.6,1.1,.3]:[2.9,1.7,.6],s:rnd(4,8),g:-3,d:rnd(.3,.7),a:.9});}}
 /* ---------- the dam and the flood ---------- */
 function bfDamBuild(){if(BFX.damG===G)return;for(const o of BFX.dam)SCN.remove(o.g);BFX.dam=[];BFX.damG=G;if(!G.dams)return;
