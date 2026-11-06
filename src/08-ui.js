@@ -2,7 +2,7 @@
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse',HINTDEV='mouse';
-function pushLog(m,k){if(!G)return;
+function pushLog(m,k){if(!G)return;try{hlLog(m,k);}catch(e){}
   /* commander radio (2026-11-05): kind 'r:<key>' = a log line that also triggers the callout (subtitle + voice, see 09b-radio.js) */
   if(k&&k[1]===':'&&k[0]==='r'){const rk=k.slice(2);k=RADCLS[rk]||'';let ok=false;try{ok=radioCall(rk);}catch(e){}if(!m)return;
     if(!ok)try{const sp={base:4,lost:6,hero:3}[rk];if(sp)speak(sp);}catch(e){}
@@ -1354,12 +1354,13 @@ $('again').onclick=()=>{initAudio();try{if(NET.ownW!=null){wxSet(NET.ownW);NET.o
 const KC={G:null,on:false,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0,R:null};
 const KC_SPAN=9,KC_DT=.25,KC_TAIL=1.2;
 function kcOff(){return !!(navigator.webdriver&&!window.__killcam)||!!(G&&G.headless);}
-function kcReset(){if(KC.url)try{URL.revokeObjectURL(KC.url);}catch(e){}Object.assign(KC,{G,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0});const a=$('kcSave');if(a)a.hidden=true;}
+function kcReset(){if(KC.url)try{URL.revokeObjectURL(KC.url);}catch(e){}try{hlReset();}catch(e){}Object.assign(KC,{G,lt:-9,snaps:[],fx:[],fh:0,deaths:[],best:null,shot:null,url:null,ms:0,n:0});const a=$('kcSave');if(a)a.hidden=true;}
 function kcFx(type,args){if(!G||G.over||KC.on||kcOff())return;if(KC.G!==G)kcReset();const t=G.t;KC.fx.push([t,type,args]);
   if(type==='die'){const [id,x,y,ki,isB,team]=args,k=KINDS[ki];const v=(isB?STRUCT[k]&&STRUCT[k].cost:BASE[k]&&BASE[k].cost)||150;
     let seen=team!=null&&ally(team,ME);const S=KC.snaps[KC.snaps.length-1];
     if(!seen&&S){for(let i=0;i<S.e.length;i++)if(S.e[i].id===id){seen=(S.f[i*7+6]&1)>0;break;}}
-    if(seen)KC.deaths.push({t,v,x,y});}}
+    if(seen)KC.deaths.push({t,v,x,y});}
+  try{hlFx(type,args);}catch(e){}}
 function kcRec(force){try{if(kcOff()||!G)return;if(KC.G!==G)kcReset();const t=G.t;if(!force&&t-KC.lt<KC_DT&&t>=KC.lt)return;KC.lt=t;const w0=performance.now();
   const E=[];for(const e of G.ents)if(!e.dead)E.push(e);const n=E.length,f=new Float32Array(n*7);
   for(let i=0;i<n;i++){const e=E[i],j=i*7;f[j]=e.x;f[j+1]=e.y;f[j+2]=e.va??e.ang??0;f[j+3]=e.tang??NaN;f[j+4]=e.hp;f[j+5]=e.built??1;f[j+6]=(e.vis?1:0)|(e.landed?2:0);}
@@ -1367,6 +1368,7 @@ function kcRec(force){try{if(kcOff()||!G)return;if(KC.G!==G)kcReset();const t=G.
   const F=KC.fx;while(KC.fh<F.length&&F[KC.fh][0]<old)KC.fh++;if(F.length-KC.fh>40000)KC.fh=F.length-40000;if(KC.fh>4096){F.splice(0,KC.fh);KC.fh=0;}
   while(KC.deaths.length&&KC.deaths[0].t<t-14)KC.deaths.shift();
   if(!force)kcEval(t-KC_SPAN+1.5,t-.5,t-KC_SPAN,t);
+  try{hlTick(t);}catch(e){}
   KC.ms+=performance.now()-w0;KC.n++;}catch(e){if(!KC.err){KC.err=1;console.warn('kill-cam record',e);}}}
 // keep [t0,t1] if the deaths seen in [a,b] add up to more value than the best stretch so far
 function kcEval(a,b,t0,t1){let sc=0,sx=0,sy=0,pk=null;for(const d of KC.deaths)if(d.t>=a&&d.t<=b){sc+=d.v;sx+=d.x*d.v;sy+=d.y*d.v;if(!pk||d.v>pk.v)pk=d;}
@@ -1392,8 +1394,13 @@ body.kcOn #stage>*:not(#cv),body.kcOn #side{visibility:hidden!important}
 function kcSaveBtn(){let a=$('kcSave');if(a)return a;const row=$('again')&&$('again').parentNode;if(!row)return null;a=document.createElement('a');a.id='kcSave';a.className='big ghost';a.hidden=true;a.textContent='Save screenshot';
   if(!('download' in a))a.target='_blank';   // no download support: the picture opens in a new tab (long-press to save)
   row.insertBefore(a,$('change'));return a;}
-function kcSkip(){if(KC.on&&KC.R)KC.R.skip=true;}
-function kcStart(done){if(kcOff()||KC.G!==G||!R3||window.GLLOST)return false;kcRec(true);const t=G.t;kcEval(t-KC_SPAN+1,t,t-KC_SPAN,t);const B=KC.best;if(!B||B.snaps.length<4)return false;
+function kcSkip(){if(KC.on&&KC.R){KC.R.skip=true;KC.R.skipAll=true;}}
+function kcStart(done){if(kcOff()||KC.G!==G||!R3||window.GLLOST)return false;kcRec(true);const t=G.t;kcEval(t-KC_SPAN+1,t,t-KC_SPAN,t);
+  // highlights (08e): up to three of the match's best moments in a row; with none noted, the single biggest fight as before
+  let L=[];try{hlFlush();L=hlPick();}catch(e){console.warn('highlights',e);}
+  if(!L.length){const B=KC.best;if(!B||B.snaps.length<4)return false;L=[B];}
+  KC.fin=done;const go=i=>kcPlay(L[i],i,L.length,i>=L.length-1?done:()=>go(i+1));return go(0);}
+function kcPlay(B,pi,pn,done){
   kcEls();const N=B.snaps.length,T=new Map();
   B.snaps.forEach((S,k)=>{for(let i=0;i<S.e.length;i++){const e=S.e[i];let tr=T.get(e.id);
     if(!tr){tr={g:Object.assign({},e,{dead:false,ox:null,oy:null,mv:-99,mvC:0,lx:undefined,ly:undefined,lastFire:-9}),d:new Float32Array(N*7).fill(NaN),gone:false};T.set(e.id,tr);}
@@ -1401,8 +1408,8 @@ function kcStart(done){if(kcOff()||KC.G!==G||!R3||window.GLLOST)return false;kcR
   // wrecks and fallen soldiers from the whole battle are set aside while the replay runs, then put back
   const hide=[];for(const L of [WRECKS,BODIES])for(const w of L.splice(0)){SCN.remove(w.o);hide.push([L,w]);}const wq=WRECKQ.splice(0);
   const cs={x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td,_xl:cam._xl,_yl:cam._yl,_dl:cam._dl};
-  KC.R={B,T,times:B.snaps.map(s=>s.t),rt:B.t0,k:0,fi:0,done,cs,hide,wq,G,skip:false,shot:false};KC.on=true;KC.shot=null;try{clipStart();}catch(e){}
-  const m=Math.floor(B.peak.t/60),s=Math.floor(B.peak.t%60);$('kcSub').textContent=`Biggest moment of the battle · ${m}:${String(s).padStart(2,'0')} · $${Math.round(B.score).toLocaleString('en-US')} destroyed`;
+  KC.R={B,T,times:B.snaps.map(s=>s.t),rt:B.t0,k:0,fi:0,done,cs,hide,wq,G,skip:false,shot:false,more:pi<pn-1,skipAll:false};KC.on=true;if(pi===0)KC.shot=null;if(B.top!==false)KC.shotLabel=B.label||'';try{if(pi===0)clipStart();}catch(e){}
+  const m=Math.floor(B.peak.t/60),s=Math.floor(B.peak.t%60);$('kcSub').textContent=B.label?`${pn>1?'Highlight '+(pi+1)+' of '+pn+' · ':'Highlight · '}${B.label} · ${m}:${String(s).padStart(2,'0')}`:`Biggest moment of the battle · ${m}:${String(s).padStart(2,'0')} · $${Math.round(B.score).toLocaleString('en-US')} destroyed`;
   document.body.classList.add('kcOn');const o=$('kcOv');o.hidden=false;setTimeout(()=>o.classList.add('on'),30);return true;}
 function kcCam(R){const B=R.B,P=B.peak,len=B.t1+KC_TAIL-B.t0,p=Math.max(0,Math.min(1,(R.rt-B.t0)/len)),q0=Math.max(0,Math.min(1,(R.rt-B.t0)/Math.max(.5,P.t-B.t0))),q=q0*q0*(3-2*q0),e=p*p*(3-2*p);
   // a slow push-in from the middle of the action toward its biggest kill, the camera sinking lower as it goes
@@ -1419,19 +1426,19 @@ function kcFrame(dt){const R=KC.R;if(!R||R.G!==G||!G){kcStop(false);return;}
       g.x=x;g.y=y;g.va=a;g.ang=a;g.tang=ta===ta?ta:undefined;g.hp=h1?D[j+4]+(D[j1+4]-D[j+4])*u:D[j+4];g.built=D[j+5];const fl=D[j+6];g.vis=(fl&1)>0;g.landed=(fl&2)>0;L.push(g);}
     const gE=G.ents,gT=G.t;G.ents=L;G.t=R.rt;
     try{const fx=B.fx;while(R.fi<fx.length&&fx[R.fi][0]<=R.rt){const v=fx[R.fi++],ty=v[1],a=v[2];if(ty==='die'){const tr=R.T.get(a[0]);if(tr)tr.gone=true;}const h=FXH_RAW[ty];if(h)try{h.apply(FXH,a);}catch(_){}}
-      kcCam(R);renderFrame(d);if(!R.shot&&(R.rt>=B.peak.t+.35||R.skip)){R.shot=true;kcGrab();}}
+      kcCam(R);renderFrame(d);if(!R.shot&&(R.rt>=B.peak.t+.35||R.skip)){R.shot=true;if(B.top!==false)kcGrab();}}
     finally{G.ents=gE;G.t=gT;}
     if(R.skip)kcStop(true);}catch(e){console.warn('kill-cam',e);kcStop(true);}}
-function kcStop(ok){const R=KC.R;KC.on=false;try{clipStop();}catch(e){}KC.R=null;document.body.classList.remove('kcOn');const o=$('kcOv');if(o){o.classList.remove('on');o.hidden=true;}if(!R)return;
+function kcStop(ok){const R=KC.R;KC.on=false;try{if(!(R&&R.more&&!R.skipAll&&ok))clipStop();}catch(e){}KC.R=null;document.body.classList.remove('kcOn');const o=$('kcOv');if(o){o.classList.remove('on');o.hidden=true;}if(!R)return;
   try{for(const L of [WRECKS,BODIES])for(const w of L.splice(0))SCN.remove(w.o);for(const [L,w] of R.hide){L.push(w);SCN.add(w.o);}WRECKQ.length=0;WRECKQ.push(...R.wq);Object.assign(cam,R.cs);}catch(e){}
-  if(ok&&R.G===G)try{R.done();}catch(e){}}
+  if(ok&&R.G===G)try{(R.skipAll&&KC.fin?KC.fin:R.done)();}catch(e){}}
 // the saved picture: the replay's best frame with a caption strip (result, nations, match time)
 function kcCompose(){const b=KC.shot,B=KC.best;if(!b||!G)return;const u=URL.createObjectURL(b),im=new Image();
   im.onload=()=>{try{const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const x=c.getContext('2d');x.drawImage(im,0,0);URL.revokeObjectURL(u);
     const W=c.width,H=c.height,s=Math.max(.6,H/720),bh=104*s,gr=x.createLinearGradient(0,H-bh,0,H);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.8)');x.fillStyle=gr;x.fillRect(0,H-bh,W,bh);
     const me=G.teams[ME],won=$('endt')?$('endt').textContent:'',m=Math.floor(G.t/60),sec=String(Math.floor(G.t%60)).padStart(2,'0');
     x.fillStyle='#fff';x.font=`700 ${28*s}px system-ui,sans-serif`;x.fillText(`WORLD WAR 3${won?' · '+won.toUpperCase():''}`,22*s,H-50*s);
-    x.fillStyle='#e6dcc2';x.font=`500 ${17*s}px system-ui,sans-serif`;x.fillText(`${me.F.name} vs ${vsText()} · ${m}:${sec}${B?` · biggest moment: $${Math.round(B.score).toLocaleString('en-US')} destroyed`:''}`,22*s,H-20*s);
+    x.fillStyle='#e6dcc2';x.font=`500 ${17*s}px system-ui,sans-serif`;x.fillText(`${me.F.name} vs ${vsText()} · ${m}:${sec}${KC.shotLabel?' · '+KC.shotLabel:B?` · biggest moment: $${Math.round(B.score).toLocaleString('en-US')} destroyed`:''}`,22*s,H-20*s);
     c.toBlob(p=>{if(!p)return;if(KC.url)try{URL.revokeObjectURL(KC.url);}catch(e){}KC.url=URL.createObjectURL(p);const a=kcSaveBtn();if(!a)return;a.href=KC.url;a.download=`ww3-battle-${me.F.name.replace(/[^\w]+/g,'-')}-${Date.now()}.png`;a.hidden=false;},'image/png');}catch(e){console.warn('kill-cam picture',e);}};
   im.onerror=()=>URL.revokeObjectURL(u);im.src=u;}
 
