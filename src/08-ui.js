@@ -18,7 +18,7 @@ function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams.filter(
   // the sim's reason is written from the winner's side ("The last enemy capitulated: …"); the losers read their own fall
   if(!won&&reason&&/^The last enemy capitulated/.test(reason)){const why=me.whyOut||String(reason).replace(/^The last enemy capitulated:\s*/,'');reason=`${me.F.name} has been defeated${why?': '+why:'.'}`;if(!/[.!]$/.test(reason))reason+='.';}
   const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'||G.endStats?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
-  $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=true;try{esPage(G.endStats||null);}catch(e){console.warn('end stats',e);}
+  $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=true;try{esPage(G.endStats||null);}catch(e){console.warn('end stats',e);}try{aarPage();}catch(e){console.warn('aar',e);}
   // the kill-cam replays the battle's biggest moment first (Skip: tap, click or Esc), then this score screen
   const g0=G,show=()=>{$('end').hidden=false;try{esDraw();}catch(e){}};let kc=false;try{kc=kcStart(()=>{if(G===g0&&G.over)show();});}catch(e){console.warn('kill-cam',e);}if(!kc)show();}
 function showElim(){if(!G||G.over)return;   // (the 'out' list can arrive after the battle's end: keep the summary)

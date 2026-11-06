@@ -10027,7 +10027,7 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
   // frame + readout
   c.strokeStyle='rgba(190,235,205,.5)';c.lineWidth=2;const k=10;for(const [x,y,dx,dy] of [[1,1,1,1],[W-1,1,-1,1],[1,H-1,1,-1],[W-1,H-1,-1,-1]]){c.beginPath();c.moveTo(x+dx*k,y);c.lineTo(x,y);c.lineTo(x,y+dy*k);c.stroke();}
   const cw=screenToWorld(VW/2,VH/2);const vis2=G.ents.filter(e=>!e.dead&&e.team!==ME&&!ally(e.team,ME)&&!e.isB&&vis(e)).length;c.font='600 9px IBM Plex Mono, monospace';const txt=(cw?'GRID '+mmGrid(cw.x,cw.y)+'  ':'')+'CONTACTS '+vis2;const tw=c.measureText(txt).width;c.fillStyle='rgba(5,8,7,.75)';c.fillRect(W-tw-10,H-15,tw+8,13);c.fillStyle='#bfe9cd';c.textBaseline='alphabetic';c.fillText(txt,W-tw-6,H-5);}
-function renderFrame(dt){if(!G||!G.terrain||!R3||window.GLLOST)return;try{tactFxTick(dt);}catch(_){}if(WRECKQ.length)wreckTick();if(G.civDirty&&performance.now()-(G.civRb||0)>400){G.civDirty=false;G.civRb=performance.now();try{buildCity();}catch(e){console.warn(e);}}try{droneAudio(dt);}catch(_){}if(window.SKY)SKY.material.uniforms.t.value=G.t;if(window.WINDU){WINDU.value=performance.now()/1000;{const wk=(G.wx&&G.wx.k)||'clear',tg=wk==='sandstorm'||wk==='blizzard'?1.8:wk==='rain'?1.4:wk==='snow'?1.15:wk==='fog'?.8:1;WINDS.value+=(tg-WINDS.value)*Math.min(1,dt*.5);}}syncScene(dt);fxUpdate(dt);try{realTick(dt);}catch(_){}placeCam();WATER.material.uniforms.t.value=G.t;WATER.material.uniforms.cpos.value.copy(CAM.position);
+function renderFrame(dt){if(!G||!G.terrain||!R3||window.GLLOST)return;try{aarTick();}catch(_){}try{tactFxTick(dt);}catch(_){}if(WRECKQ.length)wreckTick();if(G.civDirty&&performance.now()-(G.civRb||0)>400){G.civDirty=false;G.civRb=performance.now();try{buildCity();}catch(e){console.warn(e);}}try{droneAudio(dt);}catch(_){}if(window.SKY)SKY.material.uniforms.t.value=G.t;if(window.WINDU){WINDU.value=performance.now()/1000;{const wk=(G.wx&&G.wx.k)||'clear',tg=wk==='sandstorm'||wk==='blizzard'?1.8:wk==='rain'?1.4:wk==='snow'?1.15:wk==='fog'?.8:1;WINDS.value+=(tg-WINDS.value)*Math.min(1,dt*.5);}}syncScene(dt);fxUpdate(dt);try{realTick(dt);}catch(_){}placeCam();WATER.material.uniforms.t.value=G.t;WATER.material.uniforms.cpos.value.copy(CAM.position);
   fogT-=dt;if(fogT<=0){fogT=.12;updateFog();}renderPost();drawHUD();{const w=performance.now();if(!(w-(G.mmT||0)<33)){G.mmT=w;drawMini();}}}  // minimap at ~30 Hz (it was redrawn every frame, up to 240x a second)
 
 /* ================= REALISM (render only, orch/realism): garrison windows, floor-by-floor damage, living towns ================= */
@@ -10881,7 +10881,7 @@ function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams.filter(
   // the sim's reason is written from the winner's side ("The last enemy capitulated: …"); the losers read their own fall
   if(!won&&reason&&/^The last enemy capitulated/.test(reason)){const why=me.whyOut||String(reason).replace(/^The last enemy capitulated:\s*/,'');reason=`${me.F.name} has been defeated${why?': '+why:'.'}`;if(!/[.!]$/.test(reason))reason+='.';}
   const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'||G.endStats?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
-  $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=true;try{esPage(G.endStats||null);}catch(e){console.warn('end stats',e);}
+  $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=true;try{esPage(G.endStats||null);}catch(e){console.warn('end stats',e);}try{aarPage();}catch(e){console.warn('aar',e);}
   // the kill-cam replays the battle's biggest moment first (Skip: tap, click or Esc), then this score screen
   const g0=G,show=()=>{$('end').hidden=false;try{esDraw();}catch(e){}};let kc=false;try{kc=kcStart(()=>{if(G===g0&&G.over)show();});}catch(e){console.warn('kill-cam',e);}if(!kc)show();}
 function showElim(){if(!G||G.over)return;   // (the 'out' list can arrive after the battle's end: keep the summary)
@@ -12417,6 +12417,61 @@ if(typeof window!=='undefined'){window.__tk=TK;}
 try{tkApply();}catch(e){}
 {const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='News ticker (headlines scrolling across the top)';
   const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}
+/* ================= AFTER-ACTION MAP: a timeline of the whole match on the end screen =================
+   While you play, a light recorder notes (every ~8 s of game time) who holds which ground, who owns each town, where the
+   fighting is and where strikes land. On the end screen it replays that on a minimap you can scrub with a slider:
+   territory colours and the front line move, towns change hands, and revolts, big fights and strikes show as markers.
+   Reads the game only (never touches the simulation or what is sent over the net). */
+const AAR={g:null,s:[],ev:[],next:0,iv:8,seen:new WeakSet(),fcool:{},gw:48,gh:33,tw:null,play:0,cur:0,raf:0};
+function aarReset(){AAR.g=G;AAR.s=[];AAR.ev=[];AAR.next=0;AAR.iv=8;AAR.seen=new WeakSet();AAR.fcool={};AAR.tw=null;AAR.gh=Math.max(16,Math.round(AAR.gw*MAPH/MAPW));}
+function aarSample(){const gw=AAR.gw,gh=AAR.gh,sx=gw/MAPW,sy=gh/MAPH,R=MAPW*.085,rc=Math.ceil(R*sx)+1,acc=new Float32Array(gw*gh*(G.teams.length)),nt=G.teams.length;
+  const splat=(x,y,tm,w)=>{if(tm<0||tm>=nt)return;const cx=x*sx|0,cy=y*sy|0;for(let j=Math.max(0,cy-rc);j<=Math.min(gh-1,cy+rc);j++)for(let i=Math.max(0,cx-rc);i<=Math.min(gw-1,cx+rc);i++){const d=Math.hypot((i+.5)/sx-x,(j+.5)/sy-y)/R;if(d<1)acc[(j*gw+i)*nt+tm]+=w*(1-d*d);}};
+  const fire=new Map();
+  for(const e of G.ents){if(e.dead||e.team<0)continue;if(e.isB){if(e.built>=1||e.built==null)splat(e.x,e.y,e.team,1);}else{splat(e.x,e.y,e.team,.22);if(G.t-(e.lastFire||-99)<2){const k=((e.x*(16/MAPW)|0)+(e.y*(11/MAPH)|0)*16);const f=fire.get(k)||{x:0,y:0,n:0};f.x+=e.x;f.y+=e.y;f.n++;fire.set(k,f);}}}
+  const tw=[];for(const t of G.towns||[]){tw.push(t.ow);if(t.ow>=0)splat(t.x,t.y,t.ow,2.2);}
+  const grid=new Uint8Array(gw*gh);for(let c=0;c<gw*gh;c++){let b=0,bv=.35;for(let k=0;k<nt;k++){const v=acc[c*nt+k];if(v>bv){bv=v;b=k+1;}}grid[c]=b;}
+  const pt=AAR.s.length?AAR.s[AAR.s.length-1]:null;
+  if(pt&&G.towns)for(let i=0;i<tw.length;i++){const a=pt.tw[i],b=tw[i];if(a===b)continue;const t=G.towns[i];if(b>=0)AAR.ev.push({t:G.t,k:'cap',x:t.x,y:t.y,tm:b,from:a});else if(a>=0&&t.reb>G.t)AAR.ev.push({t:G.t,k:'rev',x:t.x,y:t.y,tm:a});}
+  for(const [k,f] of fire)if(f.n>=9&&G.t-(AAR.fcool[k]||-99)>45){AAR.fcool[k]=G.t;AAR.ev.push({t:G.t,k:'fight',x:f.x/f.n,y:f.y/f.n,n:f.n});}
+  for(const st of G.strikes||[])if(!AAR.seen.has(st)){AAR.seen.add(st);AAR.ev.push({t:G.t,k:'strike',x:st.x,y:st.y,tm:st.team});}
+  if(AAR.ev.length>500)AAR.ev=AAR.ev.filter((e,i)=>e.k==='cap'||e.k==='rev'||i%2===0);
+  AAR.s.push({t:G.t,grid,tw});if(AAR.s.length>=480){AAR.s=AAR.s.filter((_,i)=>i%2===0);AAR.iv*=2;}}
+function aarTick(){if(!G||G.over||window.LOADING)return;if(AAR.g!==G)aarReset();if(G.t<AAR.next)return;AAR.next=G.t+AAR.iv;try{aarSample();}catch(e){console.warn('aar',e);}}
+// ---- end screen ----
+function aarCol(i){const t=G.teams[i];return t&&t.color||'#888';}
+function aarDraw(cv,k){const c=cv.getContext('2d'),W=cv.width,H=cv.height,S=AAR.s;c.clearRect(0,0,W,H);if(!S.length)return;
+  let base=G.mmBase;if(!base&&typeof mmBase==='function'){try{base=G.mmBase=mmBase();}catch(e){}}
+  if(base){c.globalAlpha=.55;c.drawImage(base,0,0,W,H);c.globalAlpha=1;}else{c.fillStyle='#12181a';c.fillRect(0,0,W,H);}
+  const s=S[Math.max(0,Math.min(S.length-1,k|0))],gw=AAR.gw,gh=AAR.gh,sx=W/MAPW,sy=H/MAPH;
+  if(!AAR.tw){AAR.tw=document.createElement('canvas');AAR.tw.width=gw;AAR.tw.height=gh;}
+  const q=AAR.tw.getContext('2d'),im=q.createImageData(gw,gh);const rgb=G.teams.map((T,i)=>{const h=aarCol(i).replace('#','');const n=parseInt(h.length===3?h.replace(/./g,'$&$&'):h,16);return[(n>>16)&255,(n>>8)&255,n&255];});
+  for(let i=0;i<gw*gh;i++){const b=s.grid[i];if(!b)continue;const col=rgb[b-1]||[128,128,128];im.data[i*4]=col[0];im.data[i*4+1]=col[1];im.data[i*4+2]=col[2];im.data[i*4+3]=125;}
+  q.putImageData(im,0,0);c.imageSmoothingEnabled=true;c.drawImage(AAR.tw,0,0,W,H);
+  // front line: where two different teams' ground meet
+  c.strokeStyle='rgba(255,255,255,.8)';c.lineWidth=1.6;c.beginPath();const cw=W/gw,ch=H/gh;
+  for(let j=0;j<gh;j++)for(let i=0;i<gw;i++){const a=s.grid[j*gw+i];if(!a)continue;if(i+1<gw){const b=s.grid[j*gw+i+1];if(b&&b!==a&&!ally(a-1,b-1)){c.moveTo((i+1)*cw,j*ch);c.lineTo((i+1)*cw,(j+1)*ch);}}if(j+1<gh){const b=s.grid[(j+1)*gw+i];if(b&&b!==a&&!ally(a-1,b-1)){c.moveTo(i*cw,(j+1)*ch);c.lineTo((i+1)*cw,(j+1)*ch);}}}c.stroke();
+  // towns at that moment
+  (G.towns||[]).forEach((t,i)=>{const o=s.tw[i];c.fillStyle='#000';c.beginPath();c.arc(t.x*sx,t.y*sy,t.ham?3:5,0,7);c.fill();c.fillStyle=o>=0?aarCol(o):'#9a9a90';c.beginPath();c.arc(t.x*sx,t.y*sy,t.ham?2:3.6,0,7);c.fill();});
+  // markers up to now (the latest glow)
+  for(const e of AAR.ev){if(e.t>s.t)continue;const x=e.x*sx,y=e.y*sy,age=s.t-e.t,fr=Math.max(0,1-age/40);
+    if(e.k==='cap'){c.strokeStyle=aarCol(e.tm);c.lineWidth=2;c.beginPath();c.arc(x,y,7+9*fr,0,7);c.stroke();c.fillStyle=aarCol(e.tm);c.globalAlpha=.35+.65*fr;c.fillRect(x-1.5,y-17,2,12);c.fillRect(x+.5,y-17,7,5);c.globalAlpha=1;}
+    else if(e.k==='rev'){c.strokeStyle='#ff5a3c';c.lineWidth=2;c.beginPath();c.arc(x,y,9+8*fr,0,7);c.stroke();c.fillStyle='#ff5a3c';c.font='700 12px sans-serif';c.textAlign='center';c.fillText('!',x,y+4);}
+    else if(e.k==='fight'){c.globalAlpha=.3+.7*fr;c.fillStyle='#ffb347';c.beginPath();for(let a=0;a<8;a++){const r=a%2?4:8+Math.min(6,e.n/6);c.lineTo(x+Math.cos(a*Math.PI/4)*r,y+Math.sin(a*Math.PI/4)*r);}c.closePath();c.fill();c.globalAlpha=1;}
+    else if(e.k==='strike'){c.strokeStyle='#ffe066';c.lineWidth=2;c.globalAlpha=.4+.6*fr;c.beginPath();c.moveTo(x-6,y);c.lineTo(x+6,y);c.moveTo(x,y-6);c.lineTo(x,y+6);c.stroke();c.beginPath();c.arc(x,y,4+6*fr,0,7);c.stroke();c.globalAlpha=1;}}
+  c.textAlign='left';}
+function aarPage(){try{aarSample();}catch(e){}if(!AAR.s.length||AAR.g!==G)return;let box=$('aarBox');if(box)box.remove();
+  box=document.createElement('div');box.id='aarBox';box.style.cssText='margin:14px auto 6px;max-width:560px;text-align:left;font:13px IBM Plex Sans,sans-serif;color:#cfd8d2';
+  const W=520,H=Math.round(520*MAPH/MAPW);
+  box.innerHTML='<div style="font:700 12px IBM Plex Mono,monospace;letter-spacing:.1em;color:#e3b341;margin-bottom:6px">AFTER-ACTION MAP</div><canvas width="'+W+'" height="'+H+'" style="width:100%;border:1px solid #3a463f;border-radius:3px;background:#0b0f0d;display:block"></canvas>'+
+   '<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><button type="button" id="aarPlay" style="background:#1f2a23;color:#cfe8d6;border:1px solid #4a5a50;border-radius:3px;padding:3px 10px;cursor:pointer">▶ Replay</button><input id="aarSl" type="range" min="0" max="'+(AAR.s.length-1)+'" value="'+(AAR.s.length-1)+'" style="flex:1"><span id="aarT" style="font:12px IBM Plex Mono,monospace;min-width:44px;text-align:right"></span></div>'+
+   '<div style="font-size:11.5px;opacity:.8;margin-top:4px">White line = front line · flag = town captured · red ! = revolt · orange burst = big fight · yellow cross = missile strike</div>';
+  ($('endStats')||$('ends')).after(box);
+  const cv=box.querySelector('canvas'),sl=$('aarSl'),tt=$('aarT'),pb=$('aarPlay');
+  const show=k=>{AAR.cur=k;aarDraw(cv,k);const t=AAR.s[Math.max(0,Math.min(AAR.s.length-1,k|0))].t;tt.textContent=Math.floor(t/60)+':'+String(Math.floor(t%60)).padStart(2,'0');};
+  sl.oninput=()=>{AAR.play=0;show(+sl.value);};
+  const step=()=>{if(!AAR.play||!document.body.contains(cv)){AAR.play=0;return;}const n=AAR.s.length-1,inc=Math.max(.15,n/360);AAR.cur=Math.min(n,AAR.cur+inc);sl.value=AAR.cur;show(AAR.cur);if(AAR.cur>=n){AAR.play=0;return;}requestAnimationFrame(step);};
+  pb.onclick=()=>{AAR.cur=0;AAR.play=1;requestAnimationFrame(step);};
+  show(AAR.s.length-1);}
 /* ---------- identity: medals, player colour + emblem, colourblind mode, unit guide (08b) ----------
    Everything here is cosmetic and local: nothing feeds the simulation. A player's colour/emblem travels as a tiny
    {c:'#rrggbb',e:'key'} in the join greeting; the host (or the Cloudflare server) cleans it and sends the list with
@@ -13819,12 +13874,13 @@ function initPost(){try{
     fragmentShader:`uniform sampler2D tex;varying vec2 vUv;void main(){vec3 c=texture2D(tex,vUv).rgb;if(!(c.r==c.r&&c.g==c.g&&c.b==c.b)||max(c.r,max(c.g,c.b))>1e4)c=vec3(0.);c=min(c,vec3(60.));float l=dot(c,vec3(.2126,.7152,.0722));gl_FragColor=vec4(c*smoothstep(.95,2.6,l),1.);}`});
   POST.mBlur=new THREE.ShaderMaterial({uniforms:{tex:{value:null},dir:{value:new THREE.Vector2()}},vertexShader:FSV,depthTest:false,depthWrite:false,
     fragmentShader:`uniform sampler2D tex;uniform vec2 dir;varying vec2 vUv;void main(){vec4 c=texture2D(tex,vUv)*.227;c+=texture2D(tex,vUv+dir*1.385)*.316;c+=texture2D(tex,vUv-dir*1.385)*.316;c+=texture2D(tex,vUv+dir*3.231)*.07;c+=texture2D(tex,vUv-dir*3.231)*.07;gl_FragColor=c;}`});
-  POST.mFinal=new THREE.ShaderMaterial({uniforms:{tex:{value:null},b1:{value:null},b2:{value:null},t:{value:0},flash:{value:0},res:{value:new THREE.Vector2(1,1)},expo:{value:.92},gr:{value:new THREE.Vector3(1,1,1)},sat:{value:1},tg:{value:new THREE.Vector3(1,1,1)},tsat:{value:1},film:{value:0},vm:{value:0},hz:{value:new THREE.Vector3(.62,.5,.36)}},vertexShader:FSV,depthTest:false,depthWrite:false,
-    fragmentShader:`uniform sampler2D tex,b1,b2,ao;uniform float t,flash,expo,aoK,fogK,sat,tsat,film,vm;uniform vec3 gr,tg,hz;uniform vec2 res;varying vec2 vUv;
+  POST.mFinal=new THREE.ShaderMaterial({uniforms:{tex:{value:null},b1:{value:null},b2:{value:null},t:{value:0},flash:{value:0},res:{value:new THREE.Vector2(1,1)},expo:{value:.92},gr:{value:new THREE.Vector3(1,1,1)},sat:{value:1},tg:{value:new THREE.Vector3(1,1,1)},tsat:{value:1},film:{value:0},vm:{value:0},dof:{value:0},fd:{value:.1},hz:{value:new THREE.Vector3(.62,.5,.36)}},vertexShader:FSV,depthTest:false,depthWrite:false,
+    fragmentShader:`uniform sampler2D tex,b1,b2,ao;uniform float t,flash,expo,aoK,fogK,sat,tsat,film,vm,dof,fd;uniform vec3 gr,tg,hz;uniform vec2 res;varying vec2 vUv;
       vec3 aces(vec3 x){x*=.6;return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
       float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
       vec3 okc(vec3 c){return (c.r==c.r&&c.g==c.g&&c.b==c.b&&max(c.r,max(c.g,c.b))<1e4)?c:vec3(.5);}
       void main(){vec2 px=1./res;vec3 c=okc(texture2D(tex,vUv).rgb);
+        if(dof>.01){float dz=texture2D(ao,vUv).a;float coc=dof*smoothstep(.04,.30,abs(dz-fd))*(dz>.001?1.:0.);if(coc>.02){vec3 acc=c;float wsum=1.;for(int i=0;i<8;i++){float an=float(i)*.785398+h(vUv*res)*.8;vec2 o=vec2(cos(an),sin(an))*coc*5.*px*(1.+float(i&1)*.6);acc+=okc(texture2D(tex,vUv+o).rgb);wsum+=1.;}c=acc/wsum;}}
         vec3 n=texture2D(tex,vUv+vec2(px.x,0.)).rgb+texture2D(tex,vUv-vec2(px.x,0.)).rgb+texture2D(tex,vUv+vec2(0.,px.y)).rgb+texture2D(tex,vUv-vec2(0.,px.y)).rgb;
         c=c+(c-n*.25)*.35;vec4 oc4=texture2D(ao,vUv);vec3 oc=oc4.rgb;c*=mix(1.,oc.r,aoK)*mix(1.,oc.g,step(.01,aoK));float fgv=smoothstep(.05,.8,oc.b)*fogK;float lf=dot(c,vec3(.2126,.7152,.0722));c=mix(c,mix(vec3(lf),c,.55)*vec3(.58,.57,.58),fgv*.9);c=mix(c,hz*(.8+.4*lf),smoothstep(.32,.95,oc4.a)*.42*step(.01,aoK));
         vec3 bl=okc(texture2D(b1,vUv).rgb)*.75+okc(texture2D(b2,vUv).rgb)*.9;bl=min(bl,vec3(8.));c+=bl*.5;
@@ -13903,7 +13959,7 @@ function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.se
   bl(POST.bA,POST.bB,POST.bA.width,POST.bA.height,1,0);bl(POST.bB,POST.bA,POST.bA.width,POST.bA.height,0,1);
   POST.mBlur.uniforms.tex.value=POST.bA.texture;POST.mBlur.uniforms.dir.value.set(0,0);pass(POST.mBlur,POST.bC);
   bl(POST.bC,POST.bD,POST.bC.width,POST.bC.height,1.5,0);bl(POST.bD,POST.bC,POST.bC.width,POST.bC.height,0,1.5);
-  const F=POST.mFinal.uniforms;F.tex.value=POST.rt.texture;F.b1.value=POST.bA.texture;F.b2.value=POST.bC.texture;F.t.value=performance.now()/1000%100;F.flash.value=flash;F.film.value=(!POST.phone&&QUAL.lv>=3)?1:0;postGrade(F);F.res.value.set(POST.w,POST.h);
+  const F=POST.mFinal.uniforms;F.tex.value=POST.rt.texture;F.b1.value=POST.bA.texture;F.b2.value=POST.bC.texture;F.t.value=performance.now()/1000%100;F.flash.value=flash;F.film.value=(!POST.phone&&QUAL.lv>=3)?1:0;postGrade(F);F.res.value.set(POST.w,POST.h);{let dv=0,fd=.1;try{if(QUAL.lv<1&&POST.aoOn!==false&&!(POST.aoLv!=null&&QUAL.lv>=POST.aoLv)&&cam.dist<520){dv=Math.max(0,Math.min(1,(520-cam.dist)/320))*.75;fd=Math.min(.6,cam.dist/2600);}}catch(e){}F.dof.value=dv;F.fd.value=fd;}
   pass(POST.mFinal,null);}
 
 /* ================= NIGHT VISION & THERMAL (purely visual: same units seen, same fog of war) =================

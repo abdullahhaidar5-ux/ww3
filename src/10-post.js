@@ -7,12 +7,13 @@ function initPost(){try{
     fragmentShader:`uniform sampler2D tex;varying vec2 vUv;void main(){vec3 c=texture2D(tex,vUv).rgb;if(!(c.r==c.r&&c.g==c.g&&c.b==c.b)||max(c.r,max(c.g,c.b))>1e4)c=vec3(0.);c=min(c,vec3(60.));float l=dot(c,vec3(.2126,.7152,.0722));gl_FragColor=vec4(c*smoothstep(.95,2.6,l),1.);}`});
   POST.mBlur=new THREE.ShaderMaterial({uniforms:{tex:{value:null},dir:{value:new THREE.Vector2()}},vertexShader:FSV,depthTest:false,depthWrite:false,
     fragmentShader:`uniform sampler2D tex;uniform vec2 dir;varying vec2 vUv;void main(){vec4 c=texture2D(tex,vUv)*.227;c+=texture2D(tex,vUv+dir*1.385)*.316;c+=texture2D(tex,vUv-dir*1.385)*.316;c+=texture2D(tex,vUv+dir*3.231)*.07;c+=texture2D(tex,vUv-dir*3.231)*.07;gl_FragColor=c;}`});
-  POST.mFinal=new THREE.ShaderMaterial({uniforms:{tex:{value:null},b1:{value:null},b2:{value:null},t:{value:0},flash:{value:0},res:{value:new THREE.Vector2(1,1)},expo:{value:.92},gr:{value:new THREE.Vector3(1,1,1)},sat:{value:1},tg:{value:new THREE.Vector3(1,1,1)},tsat:{value:1},film:{value:0},vm:{value:0},hz:{value:new THREE.Vector3(.62,.5,.36)}},vertexShader:FSV,depthTest:false,depthWrite:false,
-    fragmentShader:`uniform sampler2D tex,b1,b2,ao;uniform float t,flash,expo,aoK,fogK,sat,tsat,film,vm;uniform vec3 gr,tg,hz;uniform vec2 res;varying vec2 vUv;
+  POST.mFinal=new THREE.ShaderMaterial({uniforms:{tex:{value:null},b1:{value:null},b2:{value:null},t:{value:0},flash:{value:0},res:{value:new THREE.Vector2(1,1)},expo:{value:.92},gr:{value:new THREE.Vector3(1,1,1)},sat:{value:1},tg:{value:new THREE.Vector3(1,1,1)},tsat:{value:1},film:{value:0},vm:{value:0},dof:{value:0},fd:{value:.1},hz:{value:new THREE.Vector3(.62,.5,.36)}},vertexShader:FSV,depthTest:false,depthWrite:false,
+    fragmentShader:`uniform sampler2D tex,b1,b2,ao;uniform float t,flash,expo,aoK,fogK,sat,tsat,film,vm,dof,fd;uniform vec3 gr,tg,hz;uniform vec2 res;varying vec2 vUv;
       vec3 aces(vec3 x){x*=.6;return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
       float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
       vec3 okc(vec3 c){return (c.r==c.r&&c.g==c.g&&c.b==c.b&&max(c.r,max(c.g,c.b))<1e4)?c:vec3(.5);}
       void main(){vec2 px=1./res;vec3 c=okc(texture2D(tex,vUv).rgb);
+        if(dof>.01){float dz=texture2D(ao,vUv).a;float coc=dof*smoothstep(.04,.30,abs(dz-fd))*(dz>.001?1.:0.);if(coc>.02){vec3 acc=c;float wsum=1.;for(int i=0;i<8;i++){float an=float(i)*.785398+h(vUv*res)*.8;vec2 o=vec2(cos(an),sin(an))*coc*5.*px*(1.+float(i&1)*.6);acc+=okc(texture2D(tex,vUv+o).rgb);wsum+=1.;}c=acc/wsum;}}
         vec3 n=texture2D(tex,vUv+vec2(px.x,0.)).rgb+texture2D(tex,vUv-vec2(px.x,0.)).rgb+texture2D(tex,vUv+vec2(0.,px.y)).rgb+texture2D(tex,vUv-vec2(0.,px.y)).rgb;
         c=c+(c-n*.25)*.35;vec4 oc4=texture2D(ao,vUv);vec3 oc=oc4.rgb;c*=mix(1.,oc.r,aoK)*mix(1.,oc.g,step(.01,aoK));float fgv=smoothstep(.05,.8,oc.b)*fogK;float lf=dot(c,vec3(.2126,.7152,.0722));c=mix(c,mix(vec3(lf),c,.55)*vec3(.58,.57,.58),fgv*.9);c=mix(c,hz*(.8+.4*lf),smoothstep(.32,.95,oc4.a)*.42*step(.01,aoK));
         vec3 bl=okc(texture2D(b1,vUv).rgb)*.75+okc(texture2D(b2,vUv).rgb)*.9;bl=min(bl,vec3(8.));c+=bl*.5;
@@ -91,6 +92,6 @@ function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.se
   bl(POST.bA,POST.bB,POST.bA.width,POST.bA.height,1,0);bl(POST.bB,POST.bA,POST.bA.width,POST.bA.height,0,1);
   POST.mBlur.uniforms.tex.value=POST.bA.texture;POST.mBlur.uniforms.dir.value.set(0,0);pass(POST.mBlur,POST.bC);
   bl(POST.bC,POST.bD,POST.bC.width,POST.bC.height,1.5,0);bl(POST.bD,POST.bC,POST.bC.width,POST.bC.height,0,1.5);
-  const F=POST.mFinal.uniforms;F.tex.value=POST.rt.texture;F.b1.value=POST.bA.texture;F.b2.value=POST.bC.texture;F.t.value=performance.now()/1000%100;F.flash.value=flash;F.film.value=(!POST.phone&&QUAL.lv>=3)?1:0;postGrade(F);F.res.value.set(POST.w,POST.h);
+  const F=POST.mFinal.uniforms;F.tex.value=POST.rt.texture;F.b1.value=POST.bA.texture;F.b2.value=POST.bC.texture;F.t.value=performance.now()/1000%100;F.flash.value=flash;F.film.value=(!POST.phone&&QUAL.lv>=3)?1:0;postGrade(F);F.res.value.set(POST.w,POST.h);{let dv=0,fd=.1;try{if(QUAL.lv<1&&POST.aoOn!==false&&!(POST.aoLv!=null&&QUAL.lv>=POST.aoLv)&&cam.dist<520){dv=Math.max(0,Math.min(1,(520-cam.dist)/320))*.75;fd=Math.min(.6,cam.dist/2600);}}catch(e){}F.dof.value=dv;F.fd.value=fd;}
   pass(POST.mFinal,null);}
 
