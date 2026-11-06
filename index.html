@@ -5121,11 +5121,11 @@ const FACTIONS={
   CU:F_('CU','Cuba','#2b59c3','es-CU','latin','Revolutionary fervour: everything costs 20% less but units have 10% fewer hit points; Grad rockets cost 20% less.',{cost:.8,hp:.9},'hacker',
     {inf:{name:'Revolutionary Infantry'},at:{name:'RPG Team'},hacker:{name:'Cyber Brigade'},aa:{name:'ZSU-23-4 Shilka'},tank:{name:'T-62 Tank'},arty:{name:'BM-21 Grad',rocket:true,splash:70,dmg:55,rof:3},heli:{name:'Mi-24 Hind'},jet:{name:'MiG-29 Fulcrum'},boat:{name:'Osa Missile Boat'},ship:{name:'Koni Frigate'}},
     {name:'Missile Bombardment',charge:160,n:6,dmg:490,r:80,spread:160},'guerrilla'),
-  RS:F_('RS','Mountain Shias','#b3262c','ar-LB','mideast','Drones, rockets and fortresses: the cheapest, toughest loitering drones, longer-ranged rocket launchers that fire faster, defence guns and tunnels that are far stronger, and infantry that dig in (30% less damage holding position). No air force or navy.',{cost:1,dugIn:.7},'hacker',
+  RS:F_('RS','Mountain Shias','#b3262c','ar-LB','mideast','The Lebanese mountain Shia resistance: stone villages of Bint Jbeil and the Bekaa, Ashura banners and Ya Hussein walls, rocket barrages, cheap strong drones, ATGM ambush teams, tunnels and mountain forts. Longer-ranged rockets that fire faster, far stronger defence guns and tunnels, infantry that dig in (30% less damage holding position). No air force or navy.',{cost:1,dugIn:.7},'hacker',
     Object.assign(MIL_UNITS({inf:'Mountain Guard',boat:'Fast Attack Skiff'}),{inf:{name:'Mountain Guard',hp:150},at:{name:'Mountain RPG Team',hp:140,rng:205},hacker:{name:'Signal Jammers'},
       drone:{name:'Shahed-136',cost:225,hp:100,spd:135,dmg:260,splash:72},arty:{name:'Medium Rocket Launcher',rocket:true,hp:260,rng:470,minr:90,dmg:68,splash:66,rof:3.2,cost:750,time:10}}),
     {name:'Mountain Rocket Storm',charge:150,n:14,dmg:300,r:65,spread:230},'bunkers',{extra:['drone'],noAir:true,noShip:true,militia:true}),
-  DW:F_('DW','Coffee Shias','#c8a46e','ar-YE','mideast','Technical raiders: tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 13% faster and cost 8% less. No air force.',{spd:1.13,cost:.92},'hero',
+  DW:F_('DW','Coffee Shias','#c8a46e','ar-YE','mideast','Yemeni highland raiders: tower-house towns of Sana\'a and the Sarawat, coffee terraces and Red Sea coast. Tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 13% faster and cost 8% less. No air force.',{spd:1.13,cost:.92},'hero',
     Object.assign(MIL_UNITS({inf:'Wolf Raiders',boat:'Raider Speedboat'}),{hero:{name:'Ghost Raider',demo:true},
       tank:{name:'Raider Technical',hp:370,spd:96,dmg:26,rof:.28,wpn:'gun',aa:1,cost:500,time:5},aa:{name:'ZU-23 Technical',hp:320,cost:400,spd:90},
       arty:{name:'Long-Range Rocket Truck',rocket:true,hp:280,rng:620,minr:120,dmg:74,splash:72,rof:4.2,cost:900,time:11}}),
@@ -5158,6 +5158,29 @@ const SPECIAL_TIP={atgm:()=>'Long-range wire-guided anti-tank missiles: outrange
   ew:u=>'Jams drones and guided weapons: nearby enemy drones burn out and aircraft and missiles do half damage to your units nearby. Enemies near it lose their minimap there. Radar spoof (button): fake attackers on enemy radar for 20 s.',cbr:u=>'Any enemy artillery or rocket launcher that fires anywhere on the map is revealed to you for 10 seconds.',
   jeep:u=>u.airSpot?'Fast recon patrol with long sight that guides the air force: enemies it can see take 30% more damage from your aircraft.':'Fast recon patrol with long sight.',raidlead:u=>'Nearby vehicles move 20% faster and do 20% more damage.',hacker:u=>'Disables enemy buildings; earns cash when idle.'};
 // Tunnel warfare: these factions can dig hidden Tunnel Networks. Units sent into any tunnel heal and can come out of any other.
+// ---- NEW NATIONS (nations-new1, Abdullah 2026-11-05 19:44): Iraq (IQ) and Syria (SY), national armed forces only. Built from Egypt's
+// complete table set (equal power per tier) with their own names, markings and flavour; the per-table copies happen in NAT_CLONE_TABLES below.
+const NEWNAT={
+ IQ:{base:'EG',name:'Iraq',color:'#3f7d4c',lang:'ar-IQ',doctrine:'Iraqi Army, two rivers & federal police: infantry cost 20% less and train faster, M1 Abrams tanks cost 15% less, and units fight 10% harder defending their own cities and the rivers.',mods:{infCost:.8,infTime:.85},
+  units:{inf:'Iraqi Army Squad',at:'Kornet Team',hero:'Golden Division Commando',aa:'Pantsir-S1',tank:'M1A1M Abrams',arty:'M109 Howitzer',heli:'Mi-28NE Havoc',jet:'F-16IQ Falcon',boat:'Shatt al-Arab River Boat',ship:'Ibn Khaldoun Patrol Ship'},
+  sup:{name:'Marsh Smoke',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Iraqi Army Drone Team'}],hero:['Golden Division Assault Team','demo'],
+  doct:{name:'Defence of the Two Rivers',homeland:1,shock:1},
+  pow:{name:'Reconstruction Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Oil Revenue Share'},recon:{name:'Tigris Watch',rm:.95},para:{name:'Air Assault Battalion'},barrage:{name:'Howitzer Barrage',nm:1.1,cdm:1.05},repair:{name:'Baghdad Depot Repair',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Golden Division Course','Federal Police Kit','Abrams Crew Training','Two Rivers Artillery','F-16 Integration','Havoc Maintenance','Basra Oil Revenue','Defence of the Cradle','River Patrol Refit']},
+ SY:{base:'EG',name:'Syria',color:'#a8352f',lang:'ar-SY',doctrine:'Syrian Arab Army, hardened defence: units are 8% tougher in vehicles, tanks and rocket artillery cost 12% less, and troops ambush hard from cover on their own ground (Levantine mountains, coast and plains).',mods:{vehHp:1.08,cost:.96},
+  units:{inf:'Syrian Army Squad',at:'Konkurs Team',hero:'Republican Guard Commando',aa:'ZSU-23-4 Shilka',tank:'T-72 Tank',arty:'2S1 Gvozdika',heli:'Mi-24 Hind',jet:'MiG-29 Fulcrum',boat:'Latakia Fast Attack Craft',ship:'Petya Corvette'},
+  sup:{name:'Missile Battery Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['saka',{name:'Republican Guard Assault Squad'}],hero:['Special Forces Regiment','demo'],
+  doct:{name:'Hardened Defence',homeland:1,ambush:1},
+  pow:{name:'Air Defence Umbrella',type:'shield',cd:200,r:280,desc:'Your forces in the area take 60% less damage for 20s'},
+  gp:{bounty:{name:'Spoils of Victory'},recon:{name:'Mountain Observation Posts',rm:.95},para:{name:'Heliborne Assault'},barrage:{name:'Fire Support Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Special Forces Course','Conscript Kit','Tank Crew Training','Gvozdika Fire Control','MiG Overhaul','Hind Maintenance','Levant Trade Revenue','Hardened Defence Doctrine','Coastal Patrol Refit']}};
+for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const q in B.units)u[q]=Object.assign({},B.units[q]);for(const q in N.units)u[q]=Object.assign({},u[q]||{},{name:N.units[q]});
+  FACTIONS[k]=Object.assign({},B,{code:k,name:N.name,color:N.color,lang:N.lang,doctrine:N.doctrine,mods:N.mods,units:u,sup:N.sup});
+  const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);
+  FACTIONS[k].units.champ=Object.assign({},u.champ||{},{name:N.hero[0],hab:N.hero[1]});HEROES[k]=N.hero;}
 for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctrine+=' Tunnel warfare: hidden tunnels move units across the map instantly.';}
 const FKEYS=Object.keys(FACTIONS);
 // Rock-paper-scissors: what each kind of unit beats and what beats it (shown in the unit tooltips).
@@ -5355,6 +5378,13 @@ const SUBN={US:'Virginia-class Submarine',TR:'Preveze-class Submarine',IL:'Dolph
 const MDN={US:'Patriot Battery',IL:'Iron Dome Battery',RU:'S-400 Triumf',CN:'HQ-9 Battery',IN:'Akash Battery',TR:'Hisar Battery',KR:'KM-SAM Battery',IR:'Bavar-373 Battery',EU:'SAMP/T Battery',UA:'NASAMS Battery',SA:'THAAD Battery',AE:'THAAD Battery',PK:'HQ-16 Battery',KP:'KN-06 Battery',EG:'S-300 Battery',CU:'S-125 Pechora Battery',RS:'Sayyad-4B Battery',DW:'Khordad-15 Battery'};   // Conquest: SAM sites are every nation's missile defence (they intercept part of a strike salvo)
 const COASTN={US:'Naval Strike Missile Battery',TR:'Atmaca Coastal Battery',IL:'Gabriel Coastal Battery',EU:'Exocet MM40 Battery',UA:'Neptune Coastal Battery',RU:'Bastion-P Coastal Battery',IR:'Noor / Qader Coastal Missiles',SA:'Harpoon Coastal Battery',AE:'Exocet Coastal Battery',PK:'Zarb Coastal Battery',IN:'BrahMos Coastal Battery',CN:'YJ-62 Coastal Battery',KP:'Kumsong Coastal Battery',KR:'Haeseong Coastal Battery',EG:'Otomat Coastal Battery',CU:'P-15 Termit Battery',RS:'Mountain Anti-Ship Rockets',DW:'Coffee Coast Rocket Battery'};
 const FASTN={IR:'Swarm Boat',RS:'Coastal Swarm Boat',DW:'Red Sea Skiff',US:'Patrol Boat',RU:'Raptor Patrol Boat',CN:'Type 022 Missile Boat',KP:'Sohae Rocket Boat',TR:'Fast Attack Craft',IL:'Shaldag Patrol Boat',UA:'Gunboat'};
+// nations-new1: copy Egypt's per-nation table rows to the new nations (names/flavour overridden from NEWNAT); other modules alias via NEWNAT[k].base.
+for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
+  for(const T of [UPLINK,ECON,COURAGE,GDOC_AI,BAL,XL,TRN,SUBN,MDN,COASTN]){if(T[b]!==undefined&&T[k]===undefined)T[k]=JSON.parse(JSON.stringify(T[b]));}
+  COURAGE[k]=1.16;NATPOW[k]=N.pow;GPOW[k]=Object.assign({},GPOW[b],N.gp);DOCT[k]=N.doct;
+  if(UPLINK[b])UPLINK[k]=[k==='IQ'?'Rocket Command (Al-Faw)':'Missile Command (Qalamoun)',UPLINK[b][1]];
+  ECON[k]=k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board';
+  UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
 function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
@@ -5437,7 +5467,7 @@ const MAPS={
     cities:[[1500,700,190,'mideast'],[900,1560,120,'mideast'],[2420,1640,140,'mideast']],
     water(M,R){const ph=R()*6.28;const ridge=(x0,x1)=>{const pts=[];for(let x=x0;x<=x1;x+=40)pts.push([x,330+40*Math.sin(x*.003+ph)]);return pts;};for(const [a,b] of [[-200,640],[900,1900],[2160,MAPW+200]])M.ridges.push({pts:ridge(a,b),hw:()=>110});
       M.lakes.push({x:1700,y:1320,r:210,rx:1.7,wob:q=>.12*Math.sin(q*3+ph)+.05*Math.sin(q*7)});}},
-  mesopotamia:{home:['IR','RS'],name:'Mesopotamia',min:2,max:6,sym:'none',tag:'two rivers · cities',desc:'Iraq between the Tigris and the Euphrates: Baghdad between the rivers, Basra by the Shatt al-Arab and bridges everywhere.',
+  mesopotamia:{home:['IR','RS','IQ'],name:'Mesopotamia',min:2,max:6,sym:'none',tag:'two rivers · cities',desc:'Iraq between the Tigris and the Euphrates: Baghdad between the rivers, Basra by the Shatt al-Arab and bridges everywhere.',
     slots:[[450,1620],[2880,360],[1300,2000],[2700,920],[600,160],[2150,240]],
     cities:[[1400,900,200,'mideast'],[2900,1880,130,'mideast'],[650,820,110,'mideast']],
     water(M,R){const ph=R()*6.28;const line=(a,b,amp,f)=>{const pts=[];const n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/40);for(let i=0;i<=n;i++){const t=i/n;pts.push([a[0]+(b[0]-a[0])*t+amp*Math.sin(t*f+ph),a[1]+(b[1]-a[1])*t+amp*Math.cos(t*f*.8+ph)]);}return pts;};
@@ -5525,7 +5555,7 @@ const MAPS={
     slots:[[420,1500],[2780,700]],cities:mirrorList([[1020,1280,85,'southasia']],'p'),
     water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[1270,330],[1420,560],[1560,770]],40,25,2,ph),hw:()=>110},{pts:polyline([[640,330],[960,560]],40,18,2,ph),hw:()=>80});
       M.peaks.push({x:2250,y:330,r:80,rx:1.5,rot:.3});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:72,rx:1.25,rot:0});}},
-  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armour.',
+  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR','IQ','SY'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armour.',
     slots:[[420,700],[2780,1500]],cities:mirrorList([[1180,430,110,'mideast'],[860,1700,75,'mideast']],'p'),
     water(M,R){M.lakes.push({x:900,y:1170,r:70,rx:1.7,wob:a=>.12*Math.sin(a*3)});M.peaks.push({x:1250,y:1820,r:70,rx:1.6,rot:.3});mirrorMap(M,'p');
       const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+110*Math.sin((y-1100)*.0035)+35*Math.sin((y-1100)*.011),y]);M.rivers.push({pts,hw:()=>92});M.bridgeAt=[[0,.18],[0,.5],[0,.82]];M.bridgeFrac=true;}},
@@ -5533,7 +5563,7 @@ const MAPS={
     slots:[[480,1150],[2720,1150]],cities:[[1600,1080,110,'mideast'],...mirrorList([[980,520,90,'mideast']],'x')],oilAt:[[1600,1520],[1430,1650],[1770,1650]],
     water(M,R){const pts=[];for(let x=-300;x<=3500;x+=40)pts.push([x,2000+60*Math.cos((x-1600)*.004)]);M.rivers.push({pts,hw:()=>340});
       M.peaks.push({x:1000,y:860,r:70,rx:1.7,rot:.6});mirrorMap(M,'x');M.peaks.push({x:1600,y:330,r:100,rx:2.2,rot:0});M.islands.push({x:1600,y:1700,r:230,rx:1.7,rot:0,wob:a=>.06*Math.cos(2*a)});}},
-  aleppo:{name:'Aleppo: Ruined City',min:2,max:2,sym:'point',rough:1.1,home:['RS','TR'],tag:'urban sprawl · citadel · street fighting · duel',desc:'A duel through a ruined city: a great old town around the citadel in the middle, suburbs on both sides and streets to fight down block by block.',
+  aleppo:{name:'Aleppo: Ruined City',min:2,max:2,sym:'point',rough:1.1,home:['RS','TR','SY'],tag:'urban sprawl · citadel · street fighting · duel',desc:'A duel through a ruined city: a great old town around the citadel in the middle, suburbs on both sides and streets to fight down block by block.',
     slots:[[430,1650],[2770,550]],cities:[[1600,1100,290,'mideast'],...mirrorList([[860,680,140,'mideast'],[1250,1880,100,'mideast']],'p')],
     water(M,R){M.peaks.push({x:700,y:260,r:80,rx:1.6,rot:.2});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:62,rx:1.3,rot:0});}},
   anatolia:{name:'Anatolian Mesa',min:3,max:4,sym:'quad',rough:1.4,home:['TR'],tag:'walled mesa · oil on top · four ways in',desc:'A rock-walled mesa in the middle of the highlands with oil on top. Four gaps lead up onto it, all equally far from every base.',
@@ -6237,7 +6267,7 @@ Object.assign(MAPS,{
     slots:QS,cities:Q4([[1050,420,95,'russia'],[520,990,80,'russia']]).concat([[1600,1100,140,'russia']]),
     water(M,R){const ph=R()*6.28;M.rivers.push({pts:wig(-200,1600,x=>720+55*Math.sin(x*.0042+ph)+22*Math.sin(x*.012+ph*2)),hw:()=>52});M.bridgeAt=[[0,.5],[0,.86]];M.bridgeFrac=true;
       M.peaks.push({x:1150,y:1000,r:48,rx:1.6,rot:.4},{x:860,y:420,r:44,rx:1.3,rot:-.3},{x:300,y:560,r:40,rx:1.2,rot:.2});M.lakes.push({x:1330,y:470,r:62,rx:1.4,wob:q=>.1*Math.sin(q*3+ph)});mirrorMap(M,'x');mirrorMap(M,'y');}},
-  golanplateau:{name:'Golan Plateau',min:2,max:4,sym:'quad',theme:'green',rough:1.5,ssn:1,home:['IL','RS'],tag:'basalt plateau · valleys · lakes · passes',
+  golanplateau:{name:'Golan Plateau',min:2,max:4,sym:'quad',theme:'green',rough:1.5,ssn:1,home:['IL','RS','SY'],tag:'basalt plateau · valleys · lakes · passes',
     desc:'A raised basalt plateau in the middle, walled by ridges with narrow passes, and green valleys and lakes on both sides. Whoever holds the plateau town holds the passes.',
     slots:QS,cities:Q4([[640,400,100,'lebanon'],[1000,880,75,'mideast']]).concat([[1600,1100,130,'mideast']]),
     water(M,R){const ph=R()*6.28;const rg=[];for(let y=-200;y<=960;y+=40)rg.push([1280+34*Math.sin(y*.006+ph),y]);M.ridges.push({pts:rg,hw:()=>88});
@@ -7627,8 +7657,12 @@ const T_FRONT_R=560,T_KEYS=3,T_GAR_R=260,T_RAMP=90,T_REBEL_S=120;
 const TOWN_NAMES={me:['Qasr al-Nur','Tal Aswad','Kafr Nabil','Deir Zaman','Ain Rumman','Bayt Hanun','Wadi Khalil','Jabal Sami','Nahr Salim','Dar al-Amir','Suq Hamid','Bir Farid','Hayy al-Rawda','Marj Dabiq','Khirbet Noor','Sahl Zaid','Tell Mardikh','Bab al-Ain','Ras Qadir','Umm Hajar','Al-Zubayr','Hisn Karam','Wadi Ghazal','Qaryat Layl'],
   ru:['Zarechye','Novoselo','Krasnaya Gora','Belaya Rechka','Volna','Sosnovka','Zvezdny','Kamenka','Yasnaya','Dubrovka','Lugovoye','Mirny','Pervomaysk','Slobodka','Vishnyovka','Berezov'],
   eu:['Marienthal','Rosenau','Bellmont','Saint-Aubin','Eichberg','Kirchdorf','Lindenau','Westbrook','Montfort','Altenburg','Villeneuve','Hartwick','Grunwald','Oakridge','San Mateo','Lisieux'],
+  lb:['Bint Jbeil','Maroun al-Ras','Aitaroun','Khiam','Marjayoun','Nabatieh','Tyre Hills','Qana','Yaroun','Ainata','Baalbek','Hermel','Ras Baalbek','Dahiyeh East','Zawtar','Ansar','Kfar Kila','Aytaroun Ridge','Jwaya','Shebaa','Bekaa Wadi','Litani Bend'],
+  ye:['Sana\'a Old Town','Shibam Tower','Kawkaban','Thula','Manakha','Hajjah','Saada Hills','Ibb Terraces','Taiz Slope','Zabid','Hodeidah Quay','Mokha Port','Al-Hudaydah Road','Haraz Ridge','Dhamar Pass','Amran Wadi','Jabal Sabir','Bab al-Mandab Camp'],
+  iq:['Karbala Road','Najaf Quarter','Basra Delta','Al-Amara','Kut Bend','Samarra Bank','Tikrit Reach','Mosul Old Quarter','Kirkuk Plain','Ramadi Bridge','Nasiriyah Marsh','Hillah Canal','Diwaniyah','Baqubah Orchards','Sadr Market','Tell Afar'],
+  sy:['Aleppo Citadel','Homs Quarter','Hama Norias','Latakia Hills','Tartus Quay','Deir ez-Zor Bend','Palmyra Road','Daraa Plain','Idlib Olive Grove','Qamishli','Raqqa Bank','Qusayr','Maaloula','Jableh','Suwayda Basalt','Damascus Ghouta'],
   as:['Haeju','Sinchon','Jangsu','Baekma','Yongdae','Hwangsan','Mingshan','Qinghe','Daeho','Taesong','Linhai','Songjiang','Chongjin','Suyang','Anping','Hanyuan']};
-function townNames(style){return /russia/.test(style||'')?TOWN_NAMES.ru:/korea|asia/.test(style||'')?TOWN_NAMES.as:/europe|america|latin/.test(style||'')?TOWN_NAMES.eu:TOWN_NAMES.me;}
+function townNames(style){const mk=(typeof G!=='undefined'&&G&&G.mapKey)||'';if(/^(mesopotamia|euphrates)$/.test(mk)&&/mideast/.test(style||'mideast'))return TOWN_NAMES.iq;if(/^(aleppo|golanplateau)$/.test(mk)&&/mideast/.test(style||'mideast'))return TOWN_NAMES.sy;return /lebanon/.test(style||'')?TOWN_NAMES.lb:/yemen/.test(style||'')?TOWN_NAMES.ye:/iraq|mesopot/.test(style||'')?TOWN_NAMES.iq:/syria|levant/.test(style||'')?TOWN_NAMES.sy:/russia/.test(style||'')?TOWN_NAMES.ru:/korea|asia/.test(style||'')?TOWN_NAMES.as:/europe|america|latin/.test(style||'')?TOWN_NAMES.eu:TOWN_NAMES.me;}
 function initTowns(){const M=G.map,src=[];G.towns=[];
   (M.cities||[]).forEach(c=>src.push({x:c.x,y:c.y,r:c.r,ham:!!c.ham,prize:!!c.prize,style:c.style,cells:[]}));
   for(const c of G.civ){c.ti=-1;if(c.ruin)continue;let bi=-1,bd=1e9;src.forEach((q,i)=>{const d=Math.hypot(c.x-q.x,c.y-q.y)/(q.r+CELL*.8);if(d<bd){bd=d;bi=i;}});if(bi>=0&&bd<=1.3)src[bi].cells.push(c);}
@@ -12924,7 +12958,7 @@ if($('sbClear'))$('sbClear').onclick=()=>{if(G&&G.sandbox){for(const e of G.ents
 Client-only and read-only: builds headlines from the battle messages this player already gets (pushLog) and from
 team/weather state it can see, then scrolls them across a thin strip at the very top. Never touches the simulation. */
 const TK={q:[],cur:0,G:null,seen:{},out:{},wx:'',loss:[],kill:[],on:true,el:null,txt:null,tm:0};
-const TK_ADJ={US:'American',TR:'Turkish',IL:'Israeli',EU:'European',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
+const TK_ADJ={US:'American',TR:'Turkish',IL:'Israeli',EU:'European',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',IQ:'Iraqi',SY:'Syrian',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
 function tkAdj(code){return TK_ADJ[code]||'';}
 function tkAdjName(name){for(const c in FACTIONS)if(FACTIONS[c].name===name)return tkAdj(c)||name;return name;}
 function tkOwn(){try{return G.teams[ME].F.name;}catch(e){return 'Our';}}
@@ -14694,6 +14728,8 @@ const PHR_FAC={
   SA:[['جاهزين طال عمرك.','أبشر.'],['تم، ماشين.','على هالخشم.'],['هجوم!','الهدف قدامنا!'],['الوحدة جاهزة يا طويل العمر.'],['القاعدة تنضرب!']],
   AE:[['جاهزين.','حاضرين.'],['تم، متحركين.','زين، ماشين.'],['هجوم!','الهدف واضح!'],['الوحدة جاهزة.'],['القاعدة عليها هجوم!']],
   EG:[['جاهزين يا فندم.','تمام يا فندم.'],['ماشيين.','حاضر يا فندم.'],['اضرب!','يلّا يا رجّالة!'],['الكتيبة جاهزة يا فندم.'],['القاعدة بتضرب يا فندم!']],
+  IQ:[['حاضر سيدي.','جاهزين سيدي.'],['ماشين.','حاضر، ننطلق.'],['هجوم!','دِكّوهم يا شباب!'],['الفوج جاهز سيدي.'],['القاعدة تقصف سيدي!']],
+  SY:[['جاهزين سيدي.','تمام سيدي.'],['ماشيين.','حاضر، عم نتحرك.'],['هجوم!','اضربوا يا شباب!'],['الكتيبة جاهزة سيدي.'],['القاعدة عم تقصف سيدي!']],
   IR:[['آماده‌ایم فرمانده.','در خدمتیم.'],['حرکت می‌کنیم.','چشم فرمانده.'],['آتش!','بزنیدشون!'],['یگان آماده‌ست.'],['قرارگاه زیر آتش است!']],
   KP:[['준비됐습니다, 동무!','명령만 내리십시오!'],['전진한다!','알았습니다!'],['쏴라!','놈들을 쳐부숴라!'],['부대 준비 완료!'],['기지가 공격당하고 있다!']],
   KR:[['준비 완료!','명령 대기 중!'],['이동!','알겠습니다!'],['사격 개시!','적 발견!'],['부대 준비 완료!'],['기지가 공격받고 있습니다!']],
@@ -14719,7 +14755,7 @@ const PHR_ALT={
   tr:{v:['es','it'],lines:[['Hazírum.','Emir bekliyorum.'],['Haréket ediyoruz.','Anlashíldi.'],['¡Saldíriyoruz!','Hedef guerduldú.'],['Birlik hazír.'],['¡Usumuz saldirí altindá!']]},
 };
 // Fallback lines for the three newer cues [under fire, unit lost, building ready] (kinds 5-7), same wording as the recorded sheets (tools/voices/phrases.py). Native voice only: skipped when a phonetic stand-in voice would read them.
-const PHR_X={US:[["Taking fire!","Contact, we are pinned down!","Under fire, need support!","Incoming!"],["Man down!","We lost one!","Unit lost, repeat, unit lost.","Casualty!"],["Construction complete.","Structure is operational.","Building ready, sir.","Build complete."]],EU:[["On est sous le feu !","Contact, besoin d’appui !"],["Un homme à terre !","Perte d’une unité !"],["Construction terminée."]],TR:[["Ateş altındayız!","Ateş altında, destek istiyoruz!","Temas var, yardım edin!","Üzerimize ateş açıldı!"],["Bir askerimizi kaybettik!","Birlik kaybı!","Bir kardeşimizi kaybettik!","Şehit verdik!"],["İnşaat tamamlandı.","Bina hazır komutanım.","Yapı hizmete hazır.","Tesis tamamlandı."]],IL:[["אנחנו תחת אש!","מגע, צריכים סיוע!","נפגענו, תחת אש!","יורים עלינו!"],["איבדנו לוחם.","לוחם נפגע!","יחידה אבדה.","נפגע, נפגע!"],["הבנייה הושלמה.","המבנה מוכן.","המבנה פעיל.","הבנייה הסתיימה."]],UA:[["Потрапили під обстріл!","Нас обстрілюють!","Під вогнем, потрібна підтримка!","Приліт!"],["Є втрати!","Втратили бійця!","Боєць загинув!","Втрата підрозділу!"],["Будівництво завершено.","Споруда готова.","Об’єкт збудовано.","Будівля готова, командире."]],RU:[["Попали под обстрел!","Огонь по нам!","Под огнём, нужна поддержка!","Прикройте, нас обстреливают!"],["Потеря бойца!","Есть потери!","Боец убит!","Потеряли своего!"],["Строительство завершено.","Объект готов.","Здание построено.","Сооружение готово, командир."]],IR:[["زیر آتش هستیم!","به سمت ما تیراندازی می‌شود، پشتیبانی بفرستید!","تحت آتش دشمن!","کمک! آتش سنگین!"],["یک رزمنده را از دست دادیم!","تلفات داریم!","شهید دادیم!","یک یگان از دست رفت!"],["ساختمان آماده است.","ساخت‌وساز تمام شد.","پایگاه جدید آماده شد.","سازه آمادهٔ بهره‌برداری است."]],SA:[["نتعرض لإطلاق نار!","تحت النار، نحتاج دعم!","إصابات، نحتاج مساندة!","نيران كثيفة علينا!"],["خسرنا واحد من الشباب!","فقدنا جندي!","سقط منا رجل!","فقدنا وحدة!"],["تم الانتهاء من البناء.","المبنى جاهز يا طويل العمر.","المنشأة جاهزة.","اكتمل البناء."]],AE:[["نتعرض لنيران!","تحت النار، نبي دعم!","نيران علينا!","محتاجين مساندة!"],["خسرنا واحد من الربع!","فقدنا جندي!","سقط واحد منا!","فقدنا وحدة!"],["خلصنا البناء.","المبنى جاهز.","المنشأة جاهزة يا طويل العمر.","اكتمل البناء."]],EG:[["احنا تحت النار!","بنتضرب، محتاجين دعم!","نار كتير علينا!","ساعدونا، احنا تحت القصف!"],["خسرنا واحد من رجالتنا!","فيه إصابات يا فندم!","وحدة اتفقدت!","راح مننا واحد!"],["البناء خلص يا فندم.","المبنى جاهز.","المنشأة جاهزة.","تم الانتهاء من البناء."]],RS:[["عم نتعرض لإطلاق نار!","تحت النار، بدنا دعم!","نار كتير علينا!","ساعدونا، عم ننضرب!"],["خسرنا واحد من الشباب!","استشهد واحد من الشباب يا حاج!","سقط منا واحد!","خسرنا مجموعة!"],["خلص البناء يا حاج.","المبنى جاهز.","المنشأة جاهزة.","تم الانتهاء من البناء."]],DW:[["احنا تحت النار!","يضربون علينا، نريد دعم!","نار كثيرة علينا!","ساعدونا، احنا نتضرب!"],["خسرنا واحد من الشباب!","استشهد واحد من الرجال!","فقدنا وحدة!","راح منا واحد!"],["خلص البناء.","المبنى جاهز يا قائد.","المنشأة جاهزة.","اكتمل البناء."]],PK:[["ہم پر فائرنگ ہو رہی ہے!","شدید فائرنگ، مدد چاہیے!","دشمن کی زد میں ہیں!","مدد بھیجیں، فائر آ رہا ہے!"],["ایک جوان شہید ہو گیا!","ہم نے ایک ساتھی کھو دیا!","یونٹ کا نقصان!","جوان گر گیا!"],["تعمیر مکمل ہو گئی!","عمارت تیار ہے سر!","تنصیب مکمل!","عمارت کام کے لیے تیار ہے!"]],IN:[["हम पर गोलीबारी हो रही है!","भारी गोलाबारी, मदद चाहिए!","दुश्मन की ज़द में हैं!","मदद भेजो, फायर आ रहा है!"],["एक जवान शहीद हो गया!","हमने एक साथी खो दिया!","यूनिट का नुकसान!","जवान गिर गया!"],["निर्माण पूरा हुआ!","इमारत तैयार है साहब!","निर्माण संपन्न!","इमारत इस्तेमाल के लिए तैयार है!"]],CN:[["我们遭到敌人火力攻击！","受到攻击，请求支援！","火力太猛，需要增援！","遭遇袭击！"],["有战友牺牲！","我们损失了一名战士！","部队伤亡！","战士倒下了！"],["建造完成。","建筑已就绪。","设施已建成，首长。","建造任务完成。"]],KR:[["적의 사격을 받고 있다!","교전 중, 지원 요청!","피격당했다, 지원 바란다!","적 화력이 거세다!"],["아군 전사!","병력 손실!","한 명 쓰러졌다!","부대원 전사!"],["건설 완료.","건물이 준비되었습니다.","시설 가동 준비 완료.","건설이 끝났습니다."]],KP:[["적들의 사격을 받고 있다!","지원을 요청한다!","화력이 집중되고 있다!","엄호하라!"],["전우가 쓰러졌다!","병력을 잃었다!","희생자 발생!","동무가 전사했다!"],["건설 완료했습니다!","건물이 준비됐습니다, 동지!","시설 가동 준비 끝!","건설 임무 완수!"]],CU:[["¡Estamos bajo fuego!","¡Nos disparan, necesitamos apoyo!","¡Fuego enemigo, cúbranos!","¡Bajo ataque, ayuda!"],["¡Compañero caído!","¡Perdimos a uno!","¡Baja en la unidad!","¡Perdimos un compañero!"],["Construcción terminada.","El edificio está listo.","Obra completada, comandante.","Instalación lista."]]};
+const PHR_X={US:[["Taking fire!","Contact, we are pinned down!","Under fire, need support!","Incoming!"],["Man down!","We lost one!","Unit lost, repeat, unit lost.","Casualty!"],["Construction complete.","Structure is operational.","Building ready, sir.","Build complete."]],EU:[["On est sous le feu !","Contact, besoin d’appui !"],["Un homme à terre !","Perte d’une unité !"],["Construction terminée."]],TR:[["Ateş altındayız!","Ateş altında, destek istiyoruz!","Temas var, yardım edin!","Üzerimize ateş açıldı!"],["Bir askerimizi kaybettik!","Birlik kaybı!","Bir kardeşimizi kaybettik!","Şehit verdik!"],["İnşaat tamamlandı.","Bina hazır komutanım.","Yapı hizmete hazır.","Tesis tamamlandı."]],IL:[["אנחנו תחת אש!","מגע, צריכים סיוע!","נפגענו, תחת אש!","יורים עלינו!"],["איבדנו לוחם.","לוחם נפגע!","יחידה אבדה.","נפגע, נפגע!"],["הבנייה הושלמה.","המבנה מוכן.","המבנה פעיל.","הבנייה הסתיימה."]],UA:[["Потрапили під обстріл!","Нас обстрілюють!","Під вогнем, потрібна підтримка!","Приліт!"],["Є втрати!","Втратили бійця!","Боєць загинув!","Втрата підрозділу!"],["Будівництво завершено.","Споруда готова.","Об’єкт збудовано.","Будівля готова, командире."]],RU:[["Попали под обстрел!","Огонь по нам!","Под огнём, нужна поддержка!","Прикройте, нас обстреливают!"],["Потеря бойца!","Есть потери!","Боец убит!","Потеряли своего!"],["Строительство завершено.","Объект готов.","Здание построено.","Сооружение готово, командир."]],IR:[["زیر آتش هستیم!","به سمت ما تیراندازی می‌شود، پشتیبانی بفرستید!","تحت آتش دشمن!","کمک! آتش سنگین!"],["یک رزمنده را از دست دادیم!","تلفات داریم!","شهید دادیم!","یک یگان از دست رفت!"],["ساختمان آماده است.","ساخت‌وساز تمام شد.","پایگاه جدید آماده شد.","سازه آمادهٔ بهره‌برداری است."]],SA:[["نتعرض لإطلاق نار!","تحت النار، نحتاج دعم!","إصابات، نحتاج مساندة!","نيران كثيفة علينا!"],["خسرنا واحد من الشباب!","فقدنا جندي!","سقط منا رجل!","فقدنا وحدة!"],["تم الانتهاء من البناء.","المبنى جاهز يا طويل العمر.","المنشأة جاهزة.","اكتمل البناء."]],AE:[["نتعرض لنيران!","تحت النار، نبي دعم!","نيران علينا!","محتاجين مساندة!"],["خسرنا واحد من الربع!","فقدنا جندي!","سقط واحد منا!","فقدنا وحدة!"],["خلصنا البناء.","المبنى جاهز.","المنشأة جاهزة يا طويل العمر.","اكتمل البناء."]],EG:[["احنا تحت النار!","بنتضرب، محتاجين دعم!","نار كتير علينا!","ساعدونا، احنا تحت القصف!"],["خسرنا واحد من رجالتنا!","فيه إصابات يا فندم!","وحدة اتفقدت!","راح مننا واحد!"],["البناء خلص يا فندم.","المبنى جاهز.","المنشأة جاهزة.","تم الانتهاء من البناء."]],IQ:[["جاينا نار!","تحت النار، نريد إسناد!","نار كثيرة علينا!","ساعدونا، دا ننضرب!"],["خسرنا واحد من الشباب!","كو إصابات سيدي!","فقدنا مفرزة!","راح منا واحد!"],["خلص البناء سيدي.","المبنى جاهز.","المنشأة جاهزة.","اكتمل البناء."]],SY:[["عم نتعرض لإطلاق نار!","تحت النار، بدنا دعم!","نار كتير علينا!","ساعدونا، عم ننضرب!"],["خسرنا واحد من الشباب!","في إصابات سيدي!","فقدنا مجموعة!","راح منا واحد!"],["خلص البناء سيدي.","المبنى جاهز.","المنشأة جاهزة.","تم الانتهاء من البناء."]],RS:[["عم نتعرض لإطلاق نار!","تحت النار، بدنا دعم!","نار كتير علينا!","ساعدونا، عم ننضرب!"],["خسرنا واحد من الشباب!","استشهد واحد من الشباب يا حاج!","سقط منا واحد!","خسرنا مجموعة!"],["خلص البناء يا حاج.","المبنى جاهز.","المنشأة جاهزة.","تم الانتهاء من البناء."]],DW:[["احنا تحت النار!","يضربون علينا، نريد دعم!","نار كثيرة علينا!","ساعدونا، احنا نتضرب!"],["خسرنا واحد من الشباب!","استشهد واحد من الرجال!","فقدنا وحدة!","راح منا واحد!"],["خلص البناء.","المبنى جاهز يا قائد.","المنشأة جاهزة.","اكتمل البناء."]],PK:[["ہم پر فائرنگ ہو رہی ہے!","شدید فائرنگ، مدد چاہیے!","دشمن کی زد میں ہیں!","مدد بھیجیں، فائر آ رہا ہے!"],["ایک جوان شہید ہو گیا!","ہم نے ایک ساتھی کھو دیا!","یونٹ کا نقصان!","جوان گر گیا!"],["تعمیر مکمل ہو گئی!","عمارت تیار ہے سر!","تنصیب مکمل!","عمارت کام کے لیے تیار ہے!"]],IN:[["हम पर गोलीबारी हो रही है!","भारी गोलाबारी, मदद चाहिए!","दुश्मन की ज़द में हैं!","मदद भेजो, फायर आ रहा है!"],["एक जवान शहीद हो गया!","हमने एक साथी खो दिया!","यूनिट का नुकसान!","जवान गिर गया!"],["निर्माण पूरा हुआ!","इमारत तैयार है साहब!","निर्माण संपन्न!","इमारत इस्तेमाल के लिए तैयार है!"]],CN:[["我们遭到敌人火力攻击！","受到攻击，请求支援！","火力太猛，需要增援！","遭遇袭击！"],["有战友牺牲！","我们损失了一名战士！","部队伤亡！","战士倒下了！"],["建造完成。","建筑已就绪。","设施已建成，首长。","建造任务完成。"]],KR:[["적의 사격을 받고 있다!","교전 중, 지원 요청!","피격당했다, 지원 바란다!","적 화력이 거세다!"],["아군 전사!","병력 손실!","한 명 쓰러졌다!","부대원 전사!"],["건설 완료.","건물이 준비되었습니다.","시설 가동 준비 완료.","건설이 끝났습니다."]],KP:[["적들의 사격을 받고 있다!","지원을 요청한다!","화력이 집중되고 있다!","엄호하라!"],["전우가 쓰러졌다!","병력을 잃었다!","희생자 발생!","동무가 전사했다!"],["건설 완료했습니다!","건물이 준비됐습니다, 동지!","시설 가동 준비 끝!","건설 임무 완수!"]],CU:[["¡Estamos bajo fuego!","¡Nos disparan, necesitamos apoyo!","¡Fuego enemigo, cúbranos!","¡Bajo ataque, ayuda!"],["¡Compañero caído!","¡Perdimos a uno!","¡Baja en la unidad!","¡Perdimos un compañero!"],["Construcción terminada.","El edificio está listo.","Obra completada, comandante.","Instalación lista."]]};
 // Battle cries and salutes in each nation's own voice: [select, move, attack, unit ready, base alarm]. Mixed in
 // with the ordinary acknowledgements. Native script for native voices; FCRY_ALT is a phonetic spelling for when the
 // device lacks that voice (read by a Spanish/Italian voice); FCRY_EN is used when only English is available.
@@ -14736,6 +14772,8 @@ const FCRY={
   SA:[['فداك يا وطن!'],['بسم الله!'],['الله أكبر!','للمجد والعلياء!'],['فداك يا وطن!'],null],
   AE:[['عيشي بلادي!'],['بسم الله!'],['الله أكبر!','فداك يا إمارات!'],['عيشي بلادي!'],null],
   EG:[['تحيا مصر!'],['يالله يا رجالة!'],['الله أكبر!','تحيا مصر!'],['تحيا مصر!'],null],
+  IQ:[['عاش العراق!'],['يلا يا شباب!'],['الله أكبر!','عاش العراق!'],['عاش العراق!'],null],
+  SY:[['تحيا سوريا!'],['يلّا يا شباب!'],['الله أكبر!','تحيا سوريا!'],['تحيا سوريا!'],null],
   PK:[['پاکستان زندہ باد!'],['بسم اللہ!'],['نعرہ تکبیر، اللہ اکبر!','حیدری!'],['پاکستان زندہ باد!'],null],
   IN:[['जय हिंद!'],['आगे बढ़ो!'],['भारत माता की जय!','आयो गोरखाली!'],['जय हिंद!'],null],
   CN:[['为人民服务！'],['听党指挥！'],['冲啊！','保卫祖国！'],['为人民服务！'],null],
@@ -14751,10 +14789,12 @@ const FCRY_ALT={
   SA:[['¡Fidák ya watán!'],['¡Bismiláh!'],['¡Aláju akbar!','¡Lil-mayd wal-alyá!'],['¡Fidák ya watán!'],null],
   AE:[['¡Áishi biládi!'],['¡Bismiláh!'],['¡Aláju akbar!','¡Fidák ya Imarát!'],['¡Áishi biládi!'],null],
   PK:[['पाकिस्तान ज़िंदाबाद!'],null,['अल्लाहु अकबर!','हैदरी!'],null,null],
-  EG:[['¡Tahia Masr!'],['¡Yalá ya riggála!'],['¡Aláju akbar!','¡Tahia Masr!'],['¡Tahia Masr!'],null]};
+  EG:[['¡Tahia Masr!'],['¡Yalá ya riggála!'],['¡Aláju akbar!','¡Tahia Masr!'],['¡Tahia Masr!'],null],
+  IQ:[['¡Áash al-Irák!'],['¡Yalá ya shabáb!'],['¡Aláju akbar!','¡Áash al-Irák!'],['¡Áash al-Irák!'],null],
+  SY:[['¡Tahía Súriya!'],['¡Yalá ya shabáb!'],['¡Aláju akbar!','¡Tahía Súriya!'],['¡Tahía Súriya!'],null]};
 const FCRY_EN={TR:[['My life for the homeland!'],null,['Allah Allah!'],null,null],IL:[['Follow me!'],['Kadima!'],['Am Yisrael Chai!'],null,null],EU:[['For Europe!'],null,['Forward, for freedom!'],null,null],UA:[['Slava Ukraini!'],null,['Slava Ukraini! The enemy shall not pass!'],null,null],
   RU:[['I serve Russia!'],null,['Urraaah! For the Motherland!'],null,null],IR:[['Ya Ali!'],null,['Labbaik ya Hussein!','Allahu Akbar!'],['Labbaik ya Hussein!'],null],RS:[['Ya Ali!'],null,['Labbaik ya Hussein!','Hayhat minna al-dhilla!'],['Labbaik ya Hussein!'],null],
-  DW:[['Ya Ali!'],null,['Labbaik ya Hussein!','Allahu Akbar!'],null,null],SA:[['For the homeland!'],null,['Allahu Akbar!'],null,null],AE:[['Long live my country!'],null,['Allahu Akbar!'],null,null],EG:[['Long live Egypt!'],null,['Allahu Akbar! Long live Egypt!'],null,null],
+  DW:[['Ya Ali!'],null,['Labbaik ya Hussein!','Allahu Akbar!'],null,null],SA:[['For the homeland!'],null,['Allahu Akbar!'],null,null],AE:[['Long live my country!'],null,['Allahu Akbar!'],null,null],EG:[['Long live Egypt!'],null,['Allahu Akbar! Long live Egypt!'],null,null],IQ:[['Long live Iraq!'],null,['Allahu Akbar! Long live Iraq!'],null,null],SY:[['Long live Syria!'],null,['Allahu Akbar! Long live Syria!'],null,null],
   PK:[['Pakistan Zindabad!'],null,['Nara-e-Takbeer, Allahu Akbar!','Haideri!'],null,null],IN:[['Jai Hind!'],null,['Bharat Mata ki Jai!','Ayo Gorkhali!'],null,null],CN:[['Serve the people!'],null,['Charge! Defend the motherland!'],null,null],
   KP:[['For the Great Leader!'],null,['Long live Comrade Kim Jong Un!','For the fatherland!'],['For the Great Leader!'],null],KR:[['Loyalty!'],null,['Pilseung! Certain victory!','Long live the Republic of Korea!'],null,null],CU:[['Patria o muerte!'],null,['Venceremos!'],null,null]};
 const LANG_PREF={es:['es-US','es-MX','es-419','es-ES','es'],'ar-lb':['ar-lb','ar-sy','ar-sa','ar'],'ar-ye':['ar-ye','ar-sa','ar-eg','ar']};
@@ -15187,15 +15227,15 @@ const RMOD={t90:{m:'m_t90',fit:'z',size:40},hilux:{m:'m_hilux',fit:'z',size:30,e
   abrams:{m:'m_abrams',fit:'z',size:40},merkava:{m:'m_merkava',fit:'z',size:41},kf51:{m:'m_kf51',fit:'z',size:41},msta:{m:'m_msta',fit:'z',size:42},
   oplot:{m:'m_oplot',fit:'z',size:40},t72:{m:'m_t72',fit:'z',size:40},t62:{m:'m_t62',fit:'z',size:39},t55:{m:'m_t55',fit:'z',size:37},leo2:{m:'m_leo2',fit:'z',size:41},
   ural:{m:'m_ural',fit:'z',size:36},m35:{m:'m_m35',fit:'z',size:36},humvee:{m:'m_humvee',fit:'z',size:27},uh60:{m:'m_uh60',fit:'z',size:70},mi8:{m:'m_mi8',fit:'z',size:76}};
-const RMAP={tank:{RU:'t90',KP:'t90',IR:'t90',UA:'t90',CN:'t90',IN:'t90',EG:'t90',PK:'t90',CU:'t90',RS:'hilux',DW:'hilux'},dozer:{},
-  heli:{US:'apache',IL:'apache',EU:'apache',SA:'apache',AE:'apache',EG:'apache',KR:'apache',TR:'apache',IN:'apache',PK:'apache',RU:'mi24',KP:'mi24',IR:'mi24',CN:'mi24',UA:'mi24',CU:'mi24',RS:'mi24',DW:'mi24'},
-  jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',CU:'mig29',RS:'mig29',DW:'mig29'}};
-for(const f of ['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','CU','RS','DW'])RMAP.dozer[f]='jd550';
+const RMAP={tank:{RU:'t90',KP:'t90',IR:'t90',UA:'t90',CN:'t90',IN:'t90',EG:'t90',SY:'t90',PK:'t90',CU:'t90',RS:'hilux',DW:'hilux'},dozer:{},
+  heli:{US:'apache',IL:'apache',EU:'apache',SA:'apache',AE:'apache',EG:'apache',IQ:'mi28',SY:'mi24',KR:'apache',TR:'apache',IN:'apache',PK:'apache',RU:'mi24',KP:'mi24',IR:'mi24',CN:'mi24',UA:'mi24',CU:'mi24',RS:'mi24',DW:'mi24'},
+  jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',IQ:'f16',SY:'mig29',CU:'mig29',RS:'mig29',DW:'mig29'}};
+for(const f of ['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW'])RMAP.dozer[f]='jd550';
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
 // and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
-const WESTVEH=['US','TR','IL','EU','SA','AE','KR','EG'],EASTVEH=['RU','KP','IR','UA','CN','IN','CU','PK','RS','DW'];
-Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IL:'merkava',EU:'kf51',TR:'kf51'});
+const WESTVEH=['US','TR','IL','EU','SA','AE','KR','EG','IQ'],EASTVEH=['RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY'];
+Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',IL:'merkava',EU:'kf51',TR:'kf51'});
 // Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
 // Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
 // China keeps the T-90, South Korea the Abrams-like K1 stand-in)
@@ -15216,7 +15256,7 @@ RMAP.ship={};RMAP.boat={IR:'spb',RS:'spb',DW:'spb'};RMAP.fast={};for(const f in 
 Object.assign(RMOD,{subw:{m:'m_subw',fit:'z',size:84,dy:-2.6,tint:'#2f363b',tk:.82},sube:{m:'m_sube',fit:'z',size:80,dy:-2.4,tint:'#242b31',tk:.7},subm:{m:'m_subm',fit:'z',size:58,dy:-2,tint:'#303a38',tk:.95},cbat:{m:'m_cbat',fit:'z',size:40}});
 RMAP.sub={};for(const f of WESTVEH)RMAP.sub[f]='subw';for(const f of ['RU','KP','UA','CN','IN','CU','PK'])RMAP.sub[f]='sube';for(const f of ['IR','RS','DW'])RMAP.sub[f]='subm';
 RMAP.coast={};for(const f of [...WESTVEH,...EASTVEH])RMAP.coast[f]='cbat';
-for(const f of ['US','IL','TR','KR','SA','AE','EG'])RMAP.ship[f]='frw';RMAP.ship.EU='frg';
+for(const f of ['US','IL','TR','KR','SA','AE','EG','IQ','SY'])RMAP.ship[f]='frw';RMAP.ship.EU='frg';
 for(const f of ['RU','CN','KP','UA','IN','PK','CU','IR','RS','DW'])RMAP.ship[f]='fre';
 // the nation's own truck model, if it has arrived (AA trucks and rocket launchers are built on it)
 // their paint textures are dark (woodland camo, weathering): brightened so the national paint reads like the other vehicles'
@@ -15225,14 +15265,14 @@ const TEXB={m_abrams:2,m_merkava:2,m_kf51:1.6,m_msta:2.2,m_ural:1.9,m_m35:2.2,m_
 const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 // Infantry: three realistic rigged soldiers (Western desert-camo marine, Eastern green-camo, Middle-Eastern/militia woodland
 // fatigues) shared by the 18 nations; national colour is a tint over the camo. 'soldier' is the old stand-in.
-const SOLV={US:'sol_w',EU:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
+const SOLV={US:'sol_w',EU:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
-const MEFAC=new Set(['IR','RS','DW','SA','AE','EG']),BME={hq:{m:'b_hq_me',size:58},barracks:{m:'b_barr_me',size:54},factory:{m:'b_fact_me',size:62}};
+const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:58},barracks:{m:'b_barr_me',size:54},factory:{m:'b_fact_me',size:62}};
 function isSol(k){return k==='soldier'||(typeof k==='string'&&k.startsWith('sol_'));}
 function solKey(f){return SOLV[f]||'sol_w';}
 function truckKey(f){const rk=RMAP.harv[f];return rk&&MODELS.proto[RMOD[rk].m]?RMOD[rk].m:'truck';}
 const MIL_TANK={RS:{m:'technical',fit:'z',size:29},DW:{m:'technical',fit:'z',size:29},IM:{m:'toontank',fit:'z',size:32}};
-for(const f of ['US','IL','EU','SA','AE','EG','KR','TR','CN','PK','IN'])MIL_TANK[f]={m:'tankE',fit:'long',size:37};
+for(const f of ['US','IL','EU','SA','AE','EG','IQ','KR','TR','CN','PK','IN'])MIL_TANK[f]={m:'tankE',fit:'long',size:37};
 const PROPS={container:{fit:'x',size:28},containerG:{fit:'x',size:30},crate:{fit:'y',size:8},barrel:{fit:'y',size:8},sandbag:{fit:'x',size:16},watertower:{fit:'y',size:56},tent:{fit:'x',size:50},pallet:{fit:'x',size:10},fence:{fit:'x',size:24},missile:{fit:'y',size:26},sam:{fit:'y',size:24}};
 // The models are separate files next to the page (models/<key>.<hash>.glb.gz, listed in MODEL_FILES by orch/build.py).
 // A battle only waits for the models it can show: the shared ones (buildings, props, trees, infantry, generic vehicles)
@@ -15376,7 +15416,7 @@ const FLOOK={
   AE:{veh:'#c6b088',ca:'#a58e66',cb:'#83704f',uni:'#b6a27c',pat:0}, PK:{veh:'#6b6a48',ca:'#8b7a55',cb:'#3d3a2a',uni:'#77714f',pat:0},
   IN:{veh:'#6a6d48',ca:'#4b3e2a',cb:'#9e9468',uni:'#6f6f4f',pat:4}, CN:{veh:'#5c6a46',ca:'#3f4a33',cb:'#7d8662',uni:'#5e6a4c',pat:1},
   KP:{veh:'#4e5636',ca:'#3a3826',cb:'#2a2a20',uni:'#575c3e',pat:3}, KR:{veh:'#535d3c',ca:'#45392a',cb:'#2a2b23',uni:'#5d6347',pat:1},
-  EG:{veh:'#c1a97b',ca:'#9d855b',cb:'#7a6644',uni:'#ae976d',pat:3}, CU:{veh:'#59603f',ca:'#3e3a28',cb:'#7d7a55',uni:'#5f6345',pat:3},
+  EG:{veh:'#c1a97b',ca:'#9d855b',cb:'#7a6644',uni:'#ae976d',pat:3}, IQ:{veh:'#b9a57a',ca:'#8e7a52',cb:'#5f5a3a',uni:'#9c8f66',pat:3}, SY:{veh:'#8e8a62',ca:'#6a5e3c',cb:'#3f4630',uni:'#7c7a54',pat:0}, CU:{veh:'#59603f',ca:'#3e3a28',cb:'#7d7a55',uni:'#5f6345',pat:3},
   RS:{veh:'#8c7356',ca:'#5c4a37',cb:'#3a3027',uni:'#4a4f34',pat:2}, DW:{veh:'#c4a774',ca:'#9a7f56',cb:'#6e5b3e',uni:'#b7a47a',pat:2},
   IM:{veh:'#6a6a58',ca:'#4d4b3f',cb:'#8a8672',uni:'#6c6b57'}};
 // Each nation's own camouflage (pattern 0 blotch, 1 digital, 2 tiger stripe, 3 plain paint, 4 flecktarn dots,
@@ -15385,7 +15425,7 @@ const FLOOK={
 const CAMOX={US:{p:1,s:1.15,c:'#d6c9a4',t:'#3e5a8a',w:3},TR:{p:1,s:.85,c:'#6f6a4a',t:'#c8102e',w:4},IL:{p:3,s:1,c:'#8f8c7c',t:'#1f5fbf',w:4},EU:{p:4,s:1,c:'#2b3a22',t:'#2c4fa0',w:3},
   UA:{p:1,s:1.35,c:'#7a7a52',t:'#e1b80d',w:3},RU:{p:0,s:.7,c:'#8a8f6a',t:'#b22222',w:2},IR:{p:0,s:1.2,c:'#c4b48c',t:'#1f8a8a',w:1},SA:{p:6,s:1,c:'#e3d6b4',t:'#0f6b3a',w:4},
   AE:{p:3,s:1,c:'#cbb991',t:'#00843d',w:4},PK:{p:0,s:.95,c:'#5a6a3c',t:'#0b6b2b',w:4},IN:{p:5,s:1,c:'#7d7653',t:'#e07b14',w:4},CN:{p:1,s:1.6,c:'#46553a',t:'#c8102e',w:2},
-  KP:{p:3,s:1,c:'#4c5434',t:'#c8102e',w:5},KR:{p:1,s:1.1,c:'#3c4530',t:'#1f3f9a',w:2},EG:{p:6,s:1.1,c:'#ddd0aa',t:'#b8862b',w:4},CU:{p:0,s:1.5,c:'#4a5a34',t:'#1e4fa0',w:3},
+  KP:{p:3,s:1,c:'#4c5434',t:'#c8102e',w:5},KR:{p:1,s:1.1,c:'#3c4530',t:'#1f3f9a',w:2},EG:{p:6,s:1.1,c:'#ddd0aa',t:'#b8862b',w:4},IQ:{p:6,s:1.05,c:'#d6c79c',t:'#2f6b3a',w:4},SY:{p:0,s:1,c:'#b9aa80',t:'#a8352f',w:3},CU:{p:0,s:1.5,c:'#4a5a34',t:'#1e4fa0',w:3},
   RS:{p:2,s:1,c:'#2a2620',t:'#c9a227',w:1},DW:{p:2,s:.8,c:'#7c5a36',t:'#4a2f1c',w:1},IM:{p:3,s:1,c:'#6a6a58',t:'#888',w:0}};
 /* Each air force's real paint (Abdullah: realistic, never bright): b = base, p = pattern (0 blotch camo, 1 digital,
    3 plain), a/m/c = the camo colours; h = the helicopter scheme. Grey jets for the western/Gulf/Asian air forces,
@@ -15400,7 +15440,7 @@ const AIRX={US:{b:'#7f878d',p:3,h:{b:'#3e4335',p:3}},RU:{b:'#8f9ead',p:0,a:'#6c7
   KP:{b:'#596040',p:3,h:{b:'#4f5639',p:3}},CU:{b:'#666a4c',p:0,a:'#5a4c36',m:'#454a33',c:'#787a5a',s:1,h:{b:'#565c3e',p:3}},
   CN:{b:'#7c8a97',p:3,h:{b:'#59624a',p:3}},IN:{b:'#878d91',p:3,h:{b:'#575d47',p:3}},PK:{b:'#8a9095',p:3,h:{b:'#5b6045',p:3}},
   TR:{b:'#838a8e',p:3,h:{b:'#575d47',p:3}},EU:{b:'#80878b',p:3,h:{b:'#4b5143',p:3}},KR:{b:'#858b8f',p:3,h:{b:'#4f5541',p:3}},
-  SA:{b:'#8b9194',p:3,h:{b:'#b8a37e',p:3}},AE:{b:'#b7a17a',p:0,a:'#8f7a57',m:'#a08a64',c:'#c6b38f',s:1.1,h:{b:'#b8a37e',p:3}},EG:{b:'#8d9396',p:3,h:{b:'#b09a74',p:3}}};
+  SA:{b:'#8b9194',p:3,h:{b:'#b8a37e',p:3}},AE:{b:'#b7a17a',p:0,a:'#8f7a57',m:'#a08a64',c:'#c6b38f',s:1.1,h:{b:'#b8a37e',p:3}},EG:{b:'#8d9396',p:3,h:{b:'#b09a74',p:3}},IQ:{b:'#9a9a8c',p:3,h:{b:'#b4a27a',p:3}},SY:{b:'#8f8c80',p:3,h:{b:'#a89874',p:3}}};
 const AIRKEY=/^(jet|heli)$|^m_(su35|f15|f16|f18|j10|mig29|rafale|typhoon|ah1|apache|ka52|mi24|mi28|mi8|uh60)$/,HELIKEY=/^heli$|^m_(ah1|apache|ka52|mi24|mi28|mi8|uh60)$/;
 function airScheme(key,team){if(!team||!team.fac||!AIRKEY.test(key))return null;const X=AIRX[team.fac];if(!X)return null;return HELIKEY.test(key)?X.h:X;}
 function airCamoFreq(key){const P=MODELS.proto[key];if(!P)return 0;if(P._acf!=null)return P._acf;P.scene.updateMatrixWorld(true);let mx=0;P.scene.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();const sz=o.geometry.boundingBox.getSize(new THREE.Vector3());mx=Math.max(mx,sz.x,sz.y,sz.z);}});return P._acf=mx>0?3.2/mx:0;}
@@ -15449,6 +15489,8 @@ function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=doc
     case 'KR':rect('#fff',0,0,W,H);x.fillStyle='#cd2e3a';x.beginPath();x.arc(60,36,15,Math.PI,0);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(60,36,15,0,Math.PI);x.fill();circ(52.5,36,7.5,'#cd2e3a');circ(67.5,36,7.5,'#0047a0');
       x.save();for(const [cx,cy,ang] of [[24,14,.59],[96,58,.59],[96,14,-.59],[24,58,-.59]]){x.save();x.translate(cx,cy);x.rotate(ang);for(let b=0;b<3;b++)rect('#000',-9,-7+b*5,18,3);x.restore();}x.restore();break;
     case 'EG':hs(['#ce1126','#ffffff','#000000']);x.fillStyle='#c09300';x.beginPath();x.moveTo(60,27);x.lineTo(68,36);x.lineTo(64,46);x.lineTo(56,46);x.lineTo(52,36);x.closePath();x.fill();break;
+    case 'IQ':hs(['#ce1126','#ffffff','#000000']);x.fillStyle='#007a3d';x.font='bold 15px serif';x.textAlign='center';x.fillText('\u0627\u0644\u0644\u0647 \u0623\u0643\u0628\u0631',60,41);break;
+    case 'SY':hs(['#007a3d','#ffffff','#000000']);for(const sx of [44,60,76])star(sx,36,5,'#ce1126');break;
     case 'CU':for(let i=0;i<5;i++)rect(i%2?'#ffffff':'#002a8f',0,i*H/5,W,H/5+1);x.fillStyle='#cf142b';x.beginPath();x.moveTo(0,0);x.lineTo(54,36);x.lineTo(0,H);x.closePath();x.fill();star(17,36,10,'#fff');break;
     case 'RS':drawEmblem(x,'RS',true);break;
     case 'DW':drawEmblem(x,'DW',true);break;
@@ -15918,7 +15960,7 @@ function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
     if(!S.im)continue;const im=S.im;let i=0;
     for(const m of S.list){let q=m,v=true;while(q.parent){if(!q.visible){v=false;break;}q=q.parent;}if(!v||q!==SCN)continue;im.setMatrixAt(i,m.matrixWorld);if(S.col&&m.userData.dc)im.setColorAt(i,m.userData.dc);i++;}
     im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}}
-const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',CU:'#2e3a2c'};   // hero squad uniform colours
+const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',IQ:'#5f5f3e',SY:'#5a5a3c',CU:'#2e3a2c'};   // hero squad uniform colours
 function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='champ')c=Object.assign({},c,{tint:CHAMP_TINT[T.fac]||c.tint});if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
   if(e.kind==='aa'&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
   if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
@@ -16015,7 +16057,7 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
     if(MEFAC.has(T.fac)){const K=meKit(B,e.kind.length*97+s|0),h=s/2;if(e.kind==='turret'||e.kind==='sam'){const r=h+3;K.hesco(-r,-r,r,-r,4.5,3.2);K.hesco(r,-r,r,r,4.5,3.2);K.hesco(-r,-r,-r,r,4.5,3.2);K.hesco(-r,r,-5,r,4.5,3.2);K.hesco(5,r,r,r,4.5,3.2);}
       else if(s>40){K.twall(-h-3,-h+4,-h-3,-4,8);K.twall(-h+6,-h-3,h*.2,-h-3,8);K.bags(h+2,h-14,h+2,h+2,3);K.bags(h-12,h+2,h+2,h+2,3);}}
     const m=mesh(B.geo());o.add(m);P.main=m;}
-  const RT={US:'#bdb49c',EU:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];
+  const RT={US:'#bdb49c',EU:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];
   for(const q of cfg.list){const rc=q.col?{color:q.col}:(RT?{color:RT}:null);const m=instModel(q.m,rc,q.fit,q.size,q.ys,q.col?q.k:(RT?.42:undefined));if(!m)continue;m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
     if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);o.add(m);}}
   if(e.kind==='coast'){// emplacement: sandbag walls round the launcher and a small radar / command truck beside the pad (visual only)
@@ -16178,7 +16220,7 @@ function jetPlumeMat(){if(jetPlumeMat.m)return jetPlumeMat.m;const cv=document.c
    decals and a small kit (flags on poles, sandbags, ERA blocks, cope cage, red stars, antennas). The mesh geometry is
    built once per model+nation and shared; textures come from one shared atlas. On Low graphics (phones) ground vehicles
    skip the kit entirely; aircraft/ships keep only the cheap decals. Visuals only - nothing here touches the simulation. */
-const KFAC=['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','CU','RS','DW'];
+const KFAC=['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW'];
 const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=10;
 // extra atlas cells: 48-57 Persian digits (p:0..9), 58-67 Arabic-Indic digits (a:0..9), 68+ painted stencils (s:name)
 const KSTEN={shahed:68,qasef:69,ababil:70,kp:71,ru:72};
@@ -16304,7 +16346,7 @@ function kitDec(P,face,sg,a0,b0,w0,h0,cell,sub,o){o=o||{};const fa=o.fa||.8,fb=o
     return {kind:'surface',face,sg,a0,b0,w,h,cell,sub,c,n,up,fa,fb,cap:Math.max(W1,H1)*1.3,pa:pan.pa,pb:pan.pb,maxw:o.maxw,maxh:o.maxh,tag:o.tag||cell};}
   return null;}
 const NAVYP={west:'#8f989f',slav:'#6f8294',east:'#6a7e91',irgc:'#4d5a44',sand:'#a29271',olive:'#66694a'};
-function navyPaint(fac,m){const k={US:'west',IL:'west',EU:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
+function navyPaint(fac,m){const k={US:'west',IL:'west',EU:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',IQ:'west',SY:'slav',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
 function factionKit(e,c,o,yaw,m,T){if(!T||!T.fac||!c||!m)return;const low=typeof SET!=='undefined'&&SET.gfx==='low',fac=T.fac,k=e.kind;
   const air=k==='jet'||k==='heli'||k==='airlift',nav=k==='boat'||k==='ship'||k==='lander'||k==='sub'||k==='fast'||k==='minel'||k==='sweep',gnd=/^m_/.test(c.m)&&['tank','arty','aa','atgm','jeep','raidlead'].includes(k);
   if(!(air||nav||gnd)||(gnd&&low)||(c.squad&&c.squad.length>1))return;
