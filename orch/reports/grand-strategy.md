@@ -63,7 +63,7 @@ CLAUDE.md ("Grand strategy layer") and orch/GRAND-PICKS.md. This file is the des
 | Stage | Scope |
 |---|---|
 | S1 grand1 | map, provinces, armies, turns, battles in/out, basic economy (this) |
-| S2 grand2 | empire economy + province buildings, trade, autonomy, city chains, chokepoint/oil effects, SIGNATURES.md |
+| S2 grand2 (DONE) | empire economy + province buildings, trade, autonomy, city chains, chokepoint/oil effects, SIGNATURES.md |
 | S3 grand3 | generals, front lines, fort zones, supply limits, map strikes, fleets & sea zones, encirclement/sieges |
 | S4 grand4 | events, minor nations AI, seasons, diplomacy & peace talks (warscore), research, cabinet, national missions, heritage/holy sites |
 | S4b | diplomacy & government (call to arms, trust, great powers, reforms, prestige, hegemons) |
@@ -71,6 +71,17 @@ CLAUDE.md ("Grand strategy layer") and orch/GRAND-PICKS.md. This file is the des
 | S6 grand6 | fog, spies, proxy wars, insurgency, war weariness, coups, succession, scenarios, disasters, deterrence, volunteers, refugees, occupation, factions, reconstruction |
 | S7 grand7 | friends multiplayer (turn resolution is already deterministic) |
 | Integ. 2 | ledger, outliner, pause-on-events, advisor tips, bridge audit |
+
+## Stage 2 (grand2) — empire economy (`src/13g-grandeco.js`)
+Hooks into grand1: `grEcoBase/grEcoUn` (province income + unrest), `grEcoNations` (replaces the one-line cash update), `grEcoRecruit`, `grEcoAI` (AI empires), `grEcoLoot/Captured/Salvage`, `grEcoSlow` (movement). New state lives in `GC.w` (oil, crisis schedule, closed straits), `GC.op` (world-opinion hook), nation fields (`fuel food mp debt bank tw rat sell smug emb mer def fo fam px rep`) and province fields (`bq aut ad ct cty sc bm lo`); `grEcoInit` upgrades older saves.
+- **Buildings** (one at a time per province, paid up front, take 2–4 turns): Base, Airfield, Port, Factory, Refinery, Power plant, Air defence, Farms, Mines, Mountain Fortress (IR, RS, AF, KD, DW, KP; mountain provinces). They are records in `gmBuildings(pi)` (the mirror stage's list), so factory / airfield / AA / port / fortress / forts appear pre-built for the defender in that province's Fight-it battle and battle damage flows back. Nothing can be built inside a campaign battle.
+- **Money per turn** = province tax (buildings, city tier, autonomy, bombing, scorching) + trade + oil exports + signature income − army upkeep (`value×0.8%×(1+value/60k)` + garrisons, so it grows with size) − bond interest − fuel/food bought − strait patrols. **Trade**: 6 world trade nodes; each province adds value (towns, ports, linked own neighbours); a node pays 80% of its pool split by share × merchant weight (each merchant +50%); blockaded/occupied provinces add nothing; each embargo against you −25% (floor −65%); smuggling wins part back; closed straits cost rivals 4% (12% at war).
+- **Oil market**: price index = deterministic swing of the turn and seed (shown 4 turns ahead), ×1.45 in an oil shock, +8% per closed strait (max +40%). Each oil province makes 12 oil: split between fuel (refinery = full, otherwise 60%) and export (refinery sells +25%). **Fuel** stock is drawn by armies (vehicles 0.5, men 0.12); a shortfall is bought at the market price; at 0 the army moves at half speed (and grand3's jets cannot sortie: `N.fo`). **Food**, **power grid** (supply vs demand, blackout scales factory income and delays recruits), **manpower** (towns, bases, military cities, total war; infantry batches cost men), **imports** keep a nation from starving unless it is broke.
+- **Finance**: war bonds (borrow $1000 steps up to a limit, 3%/turn, default = −25% debt, −15% income, +6 unrest 3 turns); central bank (1%/turn, safe from spending, 60% lootable when the capital falls with 15% of cash); crises are scheduled from the seed (oil shock / banking panic / harvest failure / trade slump) and hit everyone equally.
+- **Policies**: total war, rationing, oil split, smuggling, embargo (max 3), merchants, strait closing (needs most of the strait's shores; $40/turn). **Province actions**: city growth chains (industrial / military / port / holy, up to tier 3), autonomy 0–3, strategic bombing (airfield within 3 provinces, $250), loot, scorched earth; all lower `GC.op` (world-opinion hook for grand4).
+- **Battles inherit**: unit records carry ammo; each turn armies refill (in supply 30, base 100); `a.fu` (fuel %) burns while marching and refills in supply; a live battle starts the side with `T.fuel = a.fu` and drains over 20 min, dry vehicles crawl (`T.dry`); leftovers go back. Salvage: 12% of the force value destroyed in a battle goes to the winner (RU ×2).
+- **Signatures**: `orch/SIGNATURES.md` (54 nations; economy ones live in `GR_SIG`).
+- **Not done / next**: battle supply trucks from the entry edge (logistics system 03c), jets from airfields (grand3 reads `N.fo` and airfield buildings), AI never plays total-war aggressively, no 3D map icons for buildings yet (province side panel shows them), blockade needs fleets (grand3).
 
 ## Known limits of stage 1 (handed to later stages)
 No fleets (armies sail as transports; hostile armies at sea do not fight), no allies, no peace deals (wars end when a nation is eliminated),

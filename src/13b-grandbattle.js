@@ -18,7 +18,7 @@ function grandPlace(team,recs,cx,cy,a,gr){const fac=G.teams[team].fac,ord={tank:
     const u=addUnit(team,k,p[0],p[1]);if(!u)return;u.hp=Math.max(1,Math.round(u.max*rec[1]/100));u.xp=rec[2];u.rank=grRankOf(rec[0],fac,rec[2]);if(u.s&&u.s.ammo)u.ammo=Math.max(1,Math.round(u.s.ammo*rec[3]/100));
     u.gr=rec;gr.ents.push([rec,u,team]);});}
 function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.att,pn:g.pn,ents:[],waves:g.waves||[],wi:0,aiT:1,fin:0,res:null,n0:[0,0],v0:[0,0],ret:0,fort:g.fort|0,mir:g.mir||null};
-  G.teams.forEach(T=>{T.ai=null;T.credits=0;});
+  G.teams.forEach((T,i)=>{T.ai=null;T.credits=0;if(g.fuel&&g.fuel[i]!=null){T.fuel=g.fuel[i];T.dry=T.fuel<=0?1:0;}});
   for(const t of [0,1]){const B=BASES[t],a=baseFacing(t),side=g.sides[t];const dx=Math.cos(a)*110,dy=Math.sin(a)*110;grandPlace(t,side,B[0]+dx,B[1]+dy,a,gr);}
   // the defender's forts: a few Defense Guns in front of its block (+ a SAM site for a capital)
   if(g.fort){const t=g.att===0?1:0,B=BASES[t],a=baseFacing(t);let placed=0;for(let k=0;k<90&&placed<g.fort;k++){const r=170+k*9,ang=a+((k%5)-2)*.45,px=B[0]+Math.cos(ang)*r,py=B[1]+Math.sin(ang)*r;
@@ -31,6 +31,7 @@ function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.
 function grandForce(t){let v=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)v+=(e.s.cost||400)*(.35+.65*e.hp/e.max);for(const w of G.grand.waves)if(!w.done&&w.side===t)for(const r of w.recs)v+=grCost(G.teams[t].fac,r[0]);return v;}
 function grandAlive(t){let n=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)n++;for(const w of G.grand.waves)if(!w.done&&w.side===t)n+=w.recs.length;return n;}
 function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
+  for(const T of G.teams){if(T.fuel==null)continue;T.fuel=Math.max(0,T.fuel-dt/1200);const d=T.fuel<=0?1:0;if(d&&!T.dry)try{log(T.id,'OUT OF FUEL! Vehicles crawl - the empire could not keep the army fuelled.','bad');}catch(e){}T.dry=d;}   // grand2: the army's fuel comes from the empire stock (G.grand.fuel), 20 min of full fuel
   for(const w of g.waves)if(!w.done&&g.t0>=w.t){w.done=1;const t=w.side,B=BASES[t],a=baseFacing(t),back=260;const cx=Math.max(80,Math.min(MAPW-80,B[0]-Math.cos(a)*back)),cy=Math.max(80,Math.min(MAPH-80,B[1]-Math.sin(a)*back));
     grandPlace(t,w.recs,cx,cy,a,g);try{log(t,'Reinforcements arrive: '+w.label,'g');}catch(e){}
     const fresh=G.ents.filter(e=>e.team===t&&!e.isB&&!e.dead&&e.gr&&w.recs.includes(e.gr));if(fresh.length&&t===1)act(1,{t:'go',ids:fresh.map(u=>u.id),x:g.ctr[0],y:g.ctr[1],mode:'amove'});}
@@ -56,7 +57,7 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
     const side=a.o===nat0?0:a.o===nat1?1:-1;if(side<0||!a.u.length)continue;if(wn[side]>=3)continue;if(GCM.P[a.at].land&&GC.prov[a.at].o!==a.o&&!grAtWar(a.o,GC.prov[a.at].o)&&GC.prov[a.at].o!==a.o)continue;
     const recs=a.u.slice(0,24);wn[side]++;waves.push({t:70+wn[side]*50,side,recs,label:a.nm,done:0,aid:a.id});rf.push(a.id);}
   const attTeam=meAtt?0:1,from=b.att.map(id=>(GC.armies.find(a=>a.id===id)||{}).from).find(f=>f>=0),gm=gmMap(b.p,from),
-    cfg={bi:{p:b.p},att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,mir:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]}};   // forts / SAM / airfield... come from the province's buildings (gmApply)
+    cfg={fuel:[grEcoSideFuel(meAtt?S:D),grEcoSideFuel(meAtt?D:S)],bi:{p:b.p},att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,mir:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]}};   // forts / SAM / airfield... come from the province's buildings (gmApply)
   GB_CUR={b,cfg,meAtt,nat0,nat1,rf};
   try{initAudio();}catch(e){}
   MODE='single';ME=0;setup.p=f0;setup.d=1;TERR_DEFER=true;
@@ -65,6 +66,7 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
 let GB_CUR=null;
 // write the survivors back and show the result
 function grandWriteBack(){const g=G.grand;try{gmWriteBack();}catch(e){console.error('gmWriteBack',e);}for(const [rec,e] of g.ents){const dead=e.dead||!G.byId.has(e.id);if(dead){rec.dead=1;continue;}rec[1]=Math.max(1,Math.round(e.hp/e.max*100));rec[2]=Math.round(e.xp||rec[2]);if(e.s&&e.s.ammo)rec[3]=Math.max(0,Math.min(100,Math.round((e.ammo||0)/e.s.ammo*100)));}
+  try{const bb=GB_CUR.b,m=GB_CUR.meAtt;[[m?'att':'def',0],[m?'def':'att',1]].forEach(([sd,t])=>{const T=G.teams[t];if(T&&T.fuel!=null)for(const s of grSideUnits(bb,sd))if(s.arr)s.arr.fu=Math.round(Math.max(0,T.fuel)*100);});}catch(e){}
   const strip=arr=>{for(let i=arr.length-1;i>=0;i--)if(arr[i].dead)arr.splice(i,1);};const b=GB_CUR.b;
   for(const s of grSideUnits(b,'att').concat(grSideUnits(b,'def')))strip(s.u);
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}

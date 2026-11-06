@@ -26,7 +26,7 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       the battle — jets fly in from the map edge, strike/patrol, then leave; sorties per battle limited by the wing's fuel/munitions
       stock; jets shot down are lost on the map too. Defender with an airfield in the province gets it in the battle (jets rearm
       there). **Helicopters and drones travel with the army** as normal units and rearm at the army's supply trucks.
-- [ ] **Supply = entry edge + trucks** (grand2 builds, extending the battle's existing logistics/convoy system in
+- [~] **Supply = entry edge + trucks** (grand2 built the first half: each army starts with its grand-map ammo + fuel, depots/bases resupply, out-of-fuel armies crawl on the map and in the battle; battle supply trucks from the entry edge still TODO) (grand2 builds, extending the battle's existing logistics/convoy system in
       `src/03c-logistics.js` — no second system): each army starts with its grand-map ammo/fuel (cut-off armies start low); the
       map edge it entered from is its supply point; supply trucks/convoys run from there along roads; cutting the road starves
       units (no ammo = can't fire, no fuel = vehicles stop); captured towns/depots become forward supply; the defender is supplied
@@ -64,15 +64,15 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       end) or Standard.
 
 ## Stage 2 (grand2 — empire economy)
-- [ ] **Province autonomy** (Abdullah 21:20, EU4): raise/lower autonomy per province — high autonomy = less tax & manpower
+- [x] **Province autonomy** (Abdullah 21:20, EU4): raise/lower autonomy per province — high autonomy = less tax & manpower
       but much calmer (good for restless conquests); lowering it takes time and raises unrest.
-- [ ] **Trade routes & merchants** (Abdullah 21:16, EU4-style): money flows between regions along trade routes (through
+- [x] **Trade routes & merchants** (Abdullah 21:16, EU4-style): money flows between regions along trade routes (through
       straits/chokepoints); send merchants to steer the flow toward your provinces; blockades and embargoes cut it.
-- [ ] **City upgrade chains** (Total War-style): cities grow through tiers and you choose what each becomes (industrial,
+- [x] **City upgrade chains** (Total War-style): cities grow through tiers and you choose what each becomes (industrial,
       military, port, holy city…) — ties into province buildings; the battle map reflects the city's tier/type.
-- [ ] **Mountain Fortress** (Abdullah 20:58, moved out of battles): a province building for mountain provinces (only IR, RS, AF, KD, DW, KP — Abdullah 21:03); it appears pre-built for the defender in that province's Fight-it battle.
-- [ ] Chokepoints have real effects: whoever holds a strait can close it — world trade income and the oil price shift for everyone.
-- [ ] Oil-prize regions feed the oil market/fuel economy.
+- [x] **Mountain Fortress** (Abdullah 20:58, moved out of battles): a province building for mountain provinces (only IR, RS, AF, KD, DW, KP — Abdullah 21:03); it appears pre-built for the defender in that province's Fight-it battle.
+- [x] Chokepoints have real effects: whoever holds a strait can close it — world trade income and the oil price shift for everyone.
+- [x] Oil-prize regions feed the oil market/fuel economy.
 
 ## Stage 3 (grand3 — military)
 - [ ] **Fort zones of control** (Abdullah 21:20, EU4): forts and Mountain Fortresses stop enemy armies moving past them into

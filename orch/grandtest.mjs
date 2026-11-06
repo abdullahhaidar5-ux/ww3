@@ -1,4 +1,4 @@
-// Grand campaign test (stage 1): determinism (10 AI turns twice, same hash), world map + menu, a Fight-it battle launched
+// Grand campaign test (stages 1-2): determinism (10 AI turns twice, same hash), world map + menu, a Fight-it battle launched
 // from the map holds EXACTLY the army's units (types and counts) and no production, survivors/losses flow back exactly,
 // the province is captured. Screenshots: orch/shots/grand1/.   node orch/grandtest.mjs
 import http from 'node:http';
@@ -52,6 +52,40 @@ try {
   console.log('determinism', JSON.stringify(det));
   if (det.a !== det.b || det.h0 !== det.h1) fails.push('determinism: same seed gave different hashes ' + det.a + ' vs ' + det.b);
   if (det.a === det.c) fails.push('determinism: different seeds gave the same hash'); if (det.provs < 120 || det.provs > 200) fails.push('map: ' + det.provs + ' land provinces');
+  // ---- grand2 economy: determinism over 15 turns with the economy on, no snowball / no stall, every mechanic reacts
+  const eco = await ev(() => {
+    const run = () => { grNew({ me: null, seed: 777, len: 'quick' }); const rows = []; const maj = grMajors(); let maxCash = 0;
+      for (let t = 1; t <= 15; t++) { grEndTurn(true); const r = []; for (const c of maj) { const N = GC.nat[c]; if (N.dead) continue; const g = (N.rep.tax || 0) + (N.rep.trade || 0) + (N.rep.oil || 0); r.push([c, Math.round(g), N.rep.up || 0, Math.round(N.inc)]); }
+        for (const c of Object.keys(GC.nat)) maxCash = Math.max(maxCash, GC.nat[c].cash); rows.push(r); }
+      return { h: grHash(), rows, maxCash, oil: [] }; };
+    const A = run(), B = run(); const prices = []; for (let t = 1; t <= 15; t++) prices.push(Math.round(grPriceAt(t)));
+    const last = A.rows[14], ratios = last.map(r => r[2] / Math.max(1, r[1])).sort((a, b) => a - b), neg = last.filter(r => r[3] < 0).length;
+    return { same: A.h === B.h, maxCash: Math.round(A.maxCash), alive: last.length, ratioMed: +ratios[Math.floor(ratios.length / 2)].toFixed(2), ratioMax: +ratios[ratios.length - 1].toFixed(2), neg, priceMin: Math.min(...prices), priceMax: Math.max(...prices), crises: GC.w.cr.length,
+      table: A.rows.filter((_, i) => i % 3 === 2 || i === 0).map((r, k) => 'T' + ([1, 3, 6, 9, 12, 15][k]) + ' ' + r.map(x => x[0] + ':' + x[1] + '/' + x[2]).join(' ')) }; });
+  console.log('economy (income/upkeep per empire)'); for (const l of eco.table) console.log('  ' + l);
+  console.log('economy', JSON.stringify({ ...eco, table: undefined }));
+  if (!eco.same) fails.push('economy: 15 AI turns twice gave different hashes');
+  if (eco.maxCash > 60000) fails.push('economy: snowball, a nation holds $' + eco.maxCash); if (eco.ratioMed > .6 || eco.ratioMed < .02) fails.push('economy: median upkeep/income ' + eco.ratioMed + ' out of band'); if (eco.ratioMax > 1.2) fails.push('economy: an empire pays ' + eco.ratioMax + 'x its income in upkeep');
+  if (eco.neg > eco.alive * .4) fails.push('economy: stall, ' + eco.neg + ' of ' + eco.alive + ' empires lose money every turn'); if (eco.priceMax - eco.priceMin < 25) fails.push('economy: oil price does not swing'); if (eco.crises < 2) fails.push('economy: no crises scheduled');
+  const mech = await ev(() => { const o = {}; grNew({ me: 'IR', seed: 31, len: 'quick' }); const me = 'IR', N = GC.nat[me]; const mine = grOwned(me);
+    const cap = GCM.P[N.cap]; N.cash = 9000; N.mp = 50; const c0 = N.cash; o.bErr = grBuild(me, cap.i, 'factory'); o.bPaid = c0 - N.cash; o.bBusy = grBuild(me, cap.i, 'power');
+    for (let i = 0; i < 4; i++) grEndTurn(true); o.built = grHas(cap.i, 'factory'); o.inBattleList = gmBuildings(cap.i).some(r => r[0] === 'factory');
+    const mt = mine.find(p => p.t === 'm'); o.mfortIR = mt ? grBuild(me, mt.i, 'mfort') : 'no mountain'; const tr = GCM.P.find(p => p.land && p.t === 'm' && GC.prov[p.i].o === 'US' || p.land && p.t === 'm' && GC.prov[p.i].o === 'CN'); o.mfortOther = tr ? grBuild(GC.prov[tr.i].o, tr.i, 'mfort') : 'no mountain';
+    N.cash = 5000; N.debt = 0; o.debtErr = grBorrow(me, 1000); const d1 = N.debt; grEndTurn(true); o.interest = N.rep.int; o.debt = d1;
+    N.bank = 0; N.cash = 3000; grBank(me, 1000); const foe = Object.keys(GC.nat).find(c => c !== me && !GC.nat[c].dead), f0 = GC.nat[foe].cash; grEcoLoot(me, foe); o.loot = Math.round(GC.nat[foe].cash - f0);
+    N.mp = 0; const pi = N.cap; o.manErr = grRecruit(me, pi, 'inf');
+    const st = GC.prov[pi]; o.aut1 = grAutonomy(me, pi, 2) + st.aut; grAutonomy(me, pi, 0); o.autSlow = st.aut === 2 && st.ad === 3;
+    const sp = mine.find(p => p.i !== N.cap && GC.prov[p.i].o === me); const base0 = grEcoBase(sp, GC.prov[sp.i]); grScorch(me, sp.i); o.scorch = [Math.round(base0), grEcoBase(sp, GC.prov[sp.i])];
+    const sk = grStraits().find(si => grStraitOwner(si)); const own = grStraitOwner(sk); const p0 = GC.w.oil; o.closeErr = grStraitClose(own, sk, true); o.closePrice = [p0, GC.w.oil]; grStraitClose(own, sk, false);
+    GC.nat[me].fo = 1; const army = GC.armies.find(a => a.o === me); const t0 = GC.turn; GC.turn = 4; o.slow = grEcoSlow(army); GC.turn = t0; GC.nat[me].fo = 0;
+    const fz = GCM.P.find(p => p.land && GC.prov[p.i].o !== me && grAtWar(me, GC.prov[p.i].o)); o.bombNoAf = fz ? grBomb(me, fz.i) : 'none'; o.sigUS = grSig('US').bondK; return o; });
+  console.log('economy mechanics', JSON.stringify(mech));
+  if (mech.bErr || mech.bPaid < 500) fails.push('economy: factory not paid/ordered ' + mech.bErr + ' ' + mech.bPaid); if (!/Already building/.test(mech.bBusy)) fails.push('economy: a second build in a busy province was allowed');
+  if (!mech.built || !mech.inBattleList) fails.push('economy: factory not finished / not in the battle building list'); if (mech.mfortIR !== '' && mech.mfortIR !== 'no mountain') fails.push('economy: Mountain Fortress refused for IR: ' + mech.mfortIR);
+  if (mech.mfortOther !== 'no mountain' && !/Only mountain/.test(mech.mfortOther)) fails.push('economy: Mountain Fortress allowed for a non-listed nation: ' + mech.mfortOther);
+  if (mech.debtErr || mech.interest !== 30) fails.push('economy: war bond interest ' + mech.interest + ' (want 30) ' + mech.debtErr); if (mech.loot < 600) fails.push('economy: capital loot took only ' + mech.loot);
+  if (!/manpower/.test(mech.manErr)) fails.push('economy: recruiting with no manpower allowed: ' + mech.manErr); if (!mech.autSlow) fails.push('economy: lowering autonomy was instant'); if (!(mech.scorch[0] > 0 && mech.scorch[1] === 0)) fails.push('economy: scorched earth income ' + mech.scorch);
+  if (mech.closeErr || !(mech.closePrice[1] > mech.closePrice[0])) fails.push('economy: closing a strait did not raise the oil price ' + mech.closePrice + ' ' + mech.closeErr); if (!mech.slow) fails.push('economy: out-of-fuel army not slowed'); if (!/airfield/.test(mech.bombNoAf)) fails.push('economy: bombing without an airfield allowed: ' + mech.bombNoAf);
   // ---- MIRROR (grandmirror): the battle map is generated from the province; towns, buildings, damage mirror both ways
   {
     const prov = await ev(() => { grNew({ me: 'IR', seed: 7, len: 'quick' }); const pick = (f) => GCM.P.findIndex(p => p.land && !p.map && f(p));
@@ -108,12 +142,17 @@ try {
   // ---- start as Iran, open the map
   await ev(() => { grNew({ me: 'IR', seed: 99, len: 'quick' }); grSave(); grandOpen(); guFit(null); guRedraw(); }); await shot('world-map');
   await ev(() => { guFit(GR_REGIONS[4][1]); guRedraw(); }); await shot('region-middle-east');
+  // grand2 screenshots (economy panel, province buildings): orch/shots/grand2/
+  const SH2 = path.join(ROOT, 'orch', 'shots', 'grand2'); fs.mkdirSync(SH2, { recursive: true });
+  const shot2 = async (n) => { await page.waitForTimeout(500); await page.screenshot({ path: path.join(SH2, n + '.png'), timeout: 120000 }).catch(() => console.log('  (screenshot skipped ' + n + ')')); };
+  await ev(() => { const N = GC.nat.IR; N.cash = 4000; grBuild('IR', N.cap, 'factory'); grBuild('IR', GC.nat.IR.home.find(i => i !== N.cap && GCM.P[i].oil) || N.cap, 'refinery'); grBorrow('IR', 1000); grEndTurn(true); GV.sel = N.cap; guCentre(N.cap, 2.4); grandMapRefresh(); guEcoToggle(); });
+  await shot2('economy-panel'); await ev(() => { const e = document.getElementById('gEco'); if (e) e.remove(); const N = GC.nat.IR; GV.sel = N.cap; grandMapRefresh(); }); await shot2('province-buildings');
   // ---- scenario: IR army next to an enemy garrison, march, end turn -> Fight-it prompt
   const sc = await ev(() => { const me = 'IR', foe = 'IQ'; grDeclare(me, foe); let pair = null;
     for (const p of GCM.P) if (p.land && GC.prov[p.i].o === me) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === foe && GC.prov[j].gar.length) { pair = [p.i, j]; break; } else if (pair) break;
     if (!pair) for (const p of GCM.P) if (p.land && GC.prov[p.i].o === foe) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === me) { pair = [j, p.i]; break; }
     if (!pair) return { err: 'no IR/foe border ' + foe };
-    const a = GC.armies.find(x => x.o === me); a.at = pair[0]; a.path = []; GV.sel = pair[0]; GV.selA = a.id; grandMapRefresh();
+    const a = GC.armies.find(x => x.o === me); a.fu = 30; a.at = pair[0]; a.path = []; GV.sel = pair[0]; GV.selA = a.id; grandMapRefresh();
     const r = grOrderMove(a.id, pair[1]); guCentre(pair[0], 2.4); guRedraw();
     return { foe, from: GCM.P[pair[0]].n, to: GCM.P[pair[1]].n, aid: a.id, ok: !!r.ok, units: a.u.length, to_i: pair[1] }; });
   console.log('scenario', JSON.stringify(sc)); if (sc.err || !sc.ok) { fails.push('scenario: ' + JSON.stringify(sc)); throw new Error('no scenario'); }
@@ -133,11 +172,12 @@ try {
   const bt = await ev(() => { const c = (t) => { const o = {}; for (const e of G.ents) if (e.team === t && !e.isB && !e.dead) o[e.kind] = (o[e.kind] || 0) + 1; return o; };
     const blds = t => G.ents.filter(e => e.team === t && e.isB).map(e => e.kind); const q0 = JSON.stringify(G.teams[0].q), cr = G.teams[0].credits;
     act(0, { t: 'q', k: 'inf' }); act(0, { t: 'bld', k: 'barracks', x: BASES[0][0], y: BASES[0][1] }); act(0, { t: 'up', k: 'x' });
-    return { me: c(0), foe: c(1), b0: blds(0), b1: blds(1), qSame: JSON.stringify(G.teams[0].q) === q0, cr, conq: !!G.conq, over: G.over, waves: G.grand.waves.length, att: G.grand.att, n0: G.grand.n0 }; });
+    return { me: c(0), foe: c(1), b0: blds(0), b1: blds(1), qSame: JSON.stringify(G.teams[0].q) === q0, cr, conq: !!G.conq, over: G.over, waves: G.grand.waves.length, att: G.grand.att, n0: G.grand.n0, fuel0: G.teams[0].fuel, fuel1: G.teams[1].fuel }; });
   console.log('battle', JSON.stringify(bt));
   const sameMap = (a, b) => { const k = new Set([...Object.keys(a), ...Object.keys(b)]); return [...k].every(x => (a[x] || 0) === (b[x] || 0)); };
   if (!sameMap(bt.me, exp.mine)) fails.push('battle: your units ' + JSON.stringify(bt.me) + ' != army ' + JSON.stringify(exp.mine));
   if (!sameMap(bt.foe, exp.theirs)) fails.push('battle: enemy units ' + JSON.stringify(bt.foe) + ' != expected ' + JSON.stringify(exp.theirs));
+  if (!(bt.fuel0 > .25 && bt.fuel0 < .31) || bt.fuel1 < .95) fails.push('battle: fuel not inherited from the army (' + bt.fuel0 + ' / ' + bt.fuel1 + ')');
   if (bt.b0.length) fails.push('battle: your side has buildings ' + bt.b0.join(',')); if (!bt.qSame) fails.push('battle: production queue changed'); if (bt.conq) fails.push('battle: still a Conquest base match');
   if (!bt.b1.length) fails.push('battle: defender has no forts'); if (bt.b1.some(k => !['turret', 'sam', 'airfield', 'factory', 'shipyard', 'fort'].includes(k))) fails.push('battle: enemy buildings other than the province buildings: ' + bt.b1.join(','));
   await ev(() => { renderFrame(0.016); }).catch(() => {}); await shot('battle-from-map');
