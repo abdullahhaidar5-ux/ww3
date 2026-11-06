@@ -17,7 +17,7 @@ function grRng(s){return mulberry((s|0)^0x5bd1e995);}
 function grHash(){if(!GC)return '';let s=GC.turn+'|'+GC.seed;for(const c of Object.keys(GC.nat).sort()){const n=GC.nat[c];s+='|'+c+':'+Math.round(n.cash)+','+n.cap+','+(n.dead?1:0);}
   for(const p of GC.prov)s+='|'+p.o+','+Math.round(p.un)+','+p.tax+','+p.gar.length+','+p.gar.reduce((a,r)=>a+r[1],0);
   for(const a of GC.armies)s+='|'+a.id+a.o+'@'+a.at+','+a.u.length+','+a.u.reduce((q,r)=>q+r[1]+r[2],0);
-  s+='|W'+Object.keys(GC.war).sort().join(',');try{s+=geHashStr();}catch(e){}let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16);}
+  s+='|W'+Object.keys(GC.war).sort().join(',');try{s+=geHashStr();}catch(e){}s+=(typeof grMilHash==='function'?grMilHash():'');let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16);}
 
 // ---------- static map ----------
 function grMap(){if(GCM)return GCM;const P=GM_P.map((r,i)=>({i,n:r[0],o:r[1],x:r[2],y:r[3],t:r[4],tw:r[5],fl:r[6]||'',map:r[7]||'',adj:r[8],sea:r[4]==='w',land:i<GM_LAND}));
@@ -64,7 +64,7 @@ function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(s
   const byReg={};for(const c of grMajors()){const r=grNat(c).reg;(byReg[r]=byReg[r]||[]).push(c);}
   for(const r of Object.keys(byReg).sort()){const L=byReg[r].sort((a,b)=>GCM.P[GC.nat[a].cap].x-GCM.P[GC.nat[b].cap].x);if(L.length>=2)for(let i=0;i<L.length;i++){const a=L[i],b=L[(i+1)%L.length];if(a!==b)GC.war[grWk(a,b)]=1;}}
   if(GC.me&&!Object.keys(GC.war).some(k=>k.split('|').includes(GC.me))){let best=null,bd=1e9;for(const c of grMajors())if(c!==GC.me){const d=grDist(GC.nat[c].cap,GC.nat[GC.me].cap);if(d<bd){bd=d;best=c;}}if(best)GC.war[grWk(GC.me,best)]=1;}
-  geEnsure();
+  geEnsure();grMilInit();
   grLog('The campaign begins. '+(GC.me?GCM.nats.get(GC.me).name+' takes the field.':'Observer mode.'),GC.me);
   return GC;}
 function grWk(a,b){return a<b?a+'|'+b:b+'|'+a;}
@@ -91,11 +91,11 @@ function grSupplied(a){const P=GCM.P,p=P[a.at];if(p.sea)return true;if(GC.prov[a
 
 // ---------- auto-resolve (deterministic strength battle from the same unit lists) ----------
 const GR_TDEF={m:.30,u:.15,r:.10,f:0,d:0,c:.05,j:.12,s:.10,w:0};
-function grDefMods(b){const p=GCM.P[b.p];let m=1.12+(GR_TDEF[p.t]||0);if(b.river)m+=.2;if(b.mtn)m+=.1;if(GC.prov[b.p].o0===b.dn)m+=.1;if(p.cap)m+=.08;return m;}
+function grDefMods(b){if(b.nav)return 1.05;const p=GCM.P[b.p];let m=1.12+(GR_TDEF[p.t]||0);if(b.river)m+=.2;if(b.mtn)m+=.1;if(GC.prov[b.p].o0===b.dn)m+=.1;if(p.cap)m+=.08;return m;}
 function grSideUnits(b,side){const out=[];const ids=side==='att'?b.att:b.def;for(const id of ids){const a=GC.armies.find(x=>x.id===id);if(a)out.push({fac:grNat(a.o).fac,u:a.u,arr:a});}
   if(side==='def'&&b.garr){const p=GC.prov[b.p];out.push({fac:grNat(p.o).fac,u:p.gar,arr:null});}return out;}
 function grSideVal(us){let v=0;for(const s of us)v+=grForce(s.fac,s.u);return v;}
-function grAuto(b,R){const A=grSideUnits(b,'att'),D=grSideUnits(b,'def');const sa=grSideVal(A)*(1+R()*.06),sd=grSideVal(D)*grDefMods(b)*(1+R()*.06);let pa=sa,pd=sd;
+function grAuto(b,R){const A=grSideUnits(b,'att'),D=grSideUnits(b,'def');let sa=grSideVal(A)*(1+R()*.06),sd=grSideVal(D)*grDefMods(b)*(1+R()*.06);{const a0=sa,d0=sd;sa*=grMilSideK(A,'att',d0);sd*=grMilSideK(D,'def',a0);if(b.nav){sa*=grMilNavK(A,D);sd*=grMilNavK(D,A);}}let pa=sa,pd=sd;
   for(let i=0;i<4;i++){const da=pa*.28,dd=pd*.28;pa=Math.max(0,pa-dd);pd=Math.max(0,pd-da);}
   const attWins=pa>pd,ka=sa?pa/sa:0,kd=sd?pd/sd:0;grApplyLoss(A,attWins?ka:ka*.5,R);grApplyLoss(D,attWins?kd*.5:kd,R);
   return {win:attWins?'att':'def',ka,kd,sa:Math.round(sa),sd:Math.round(sd)};}
@@ -114,7 +114,7 @@ function grQueue(auto){for(;;){if(GC.qi>=GC.q.length)return grFinishTurn();const
 function grBattleAuto(b){if(!b.att.some(id=>GC.armies.some(a=>a.id===id))){b.done=1;return null;}const R=grRng(GC.seed*7+GC.turn*131+b.p);const r=grAuto(b,R);grSettle(b,r.win,'auto');return r;}
 function grBattleDone(b,win,how){grSettle(b,win,how||'live');GC.qi++;grSave();return grQueue(false);}
 // who stays, who falls back, who dies. `win` is 'att' or 'def'; losers with a province to fall back to keep their survivors, the rest are lost
-function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
+function grSettle(b,win,how){if(!b.nav)grMilXp(b,win);if(b.nav)return grMilNavSettle(b,win,how);if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
   b.done=1;const pn=P[b.p].n;
   const losers=win==='att'?def:att,winners=win==='att'?att:def;
   for(const a of losers){a.path=[];if(!a.u.length){grDrop(a);continue;}
@@ -125,31 +125,34 @@ function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;   /* the 
   if(win==='att'){GC.prov[b.p].gar=[];}
   const an=GCM.nats.get(b.an).name,dn=GCM.nats.get(b.dn).name;
   grLog(pn+': '+(win==='att'?an+' beat '+dn:dn+' held against '+an)+(how==='live'?' (fought live)':how==='retreat'?' (withdrawal)':'')+'.',b.an===GC.me||b.dn===GC.me?GC.me:b.an);try{geSalvage(b,win);}catch(e){}}
-function grDrop(a){const i=GC.armies.indexOf(a);if(i>=0)GC.armies.splice(i,1);}
-function grRetreatTo(a,from){const P=GCM.P;let best=-1,bs=-1e9;for(const j of P[from].adj){if(!P[j].land)continue;const w=GC.prov[j].o;if(w!==a.o)continue;const s=-grDist(j,GC.nat[a.o].cap)*.01+(j===a.from?5:0);if(s>bs){bs=s;best=j;}}return best;}
+function grDrop(a){const i=GC.armies.indexOf(a);if(i>=0)GC.armies.splice(i,1);if(a.g)grMilLost(a);}
+function grRetreatTo(a,from){if(a.fl)return grMilNavRetreat(a,from);const P=GCM.P;let best=-1,bs=-1e9;for(const j of P[from].adj){if(!P[j].land)continue;const w=GC.prov[j].o;if(w!==a.o)continue;const s=-grDist(j,GC.nat[a.o].cap)*.01+(j===a.from?5:0);if(s>bs){bs=s;best=j;}}return best;}
 
 function grMovePhase(){GC.q=[];const P=GCM.P;
+  grMilPre();
   for(const a of GC.armies.slice().sort((x,y)=>x.id-y.id)){a.arr=0;if(!a.path.length)continue;const nx=a.path[0],c=grEdge(a.at,nx);
-    if(!c||(P[nx].land&&GC.prov[nx].o!==a.o&&!grAtWar(a.o,GC.prov[nx].o))){a.path=[];a.pg=0;continue;}   // order no longer legal (peace, border closed)
+    if(!c||(P[nx].land&&GC.prov[nx].o!==a.o&&!grAtWar(a.o,GC.prov[nx].o))||(a.fl&&P[nx].land&&(GC.prov[nx].o!==a.o||!P[nx].port))||grMilSeaBlocked(a,nx)){a.path=[];a.pg=0;continue;}   // order no longer legal (peace, border closed)
     if(geDry(a.o)&&(GC.turn&1))continue;   /* out of fuel: columns crawl, a step every other turn */
     a.pg++;if(a.pg>=c){a.from=a.at;a.at=nx;a.path.shift();a.pg=0;a.arr=GC.turn;}}
   // contested provinces: for each province (index order) and each nation that ARRIVED (code order) with someone hostile there
-  for(const p of P){if(!p.land)continue;const here=GC.armies.filter(a=>a.at===p.i);const arrN=[...new Set(here.filter(a=>a.arr===GC.turn).map(a=>a.o))].sort();
+  for(const p of P){if(!p.land)continue;const here=GC.armies.filter(a=>a.at===p.i&&!a.fl);const arrN=[...new Set(here.filter(a=>a.arr===GC.turn).map(a=>a.o))].sort();
     for(const A of arrN){const att=here.filter(a=>a.o===A&&a.arr===GC.turn),owner=GC.prov[p.i].o;
       const defArm=here.filter(a=>a.o!==A&&grAtWar(A,a.o)&&!(GC.q.some(b=>b.p===p.i&&b.att.includes(a.id))));
       const garr=owner!==A&&grAtWar(A,owner)&&GC.prov[p.i].gar.length>0;
       if(!defArm.length&&!garr)continue;
       const dn=garr?owner:defArm[0].o,from=att[0].from;
       GC.q.push({p:p.i,an:A,dn,att:att.map(a=>a.id),def:defArm.map(a=>a.id),garr,river:from>=0&&grRiver(from,p.i),mtn:p.t==='m',done:0});}}
-  GC.q.sort((x,y)=>x.p-y.p||(x.an<y.an?-1:1));for(const b of GC.q)b.v0=geBV(b);}
+  GC.q.sort((x,y)=>x.p-y.p||(x.an<y.an?-1:1));try{grMilNaval();}catch(e){console.error('grMilNaval',e);}
+  for(const b of GC.q)b.v0=geBV(b);}
 
 function grFinishTurn(){const P=GCM.P;try{gmRepair();}catch(e){}
   // capture: a province whose garrison is gone and which holds only enemy armies changes hands (the strongest occupier takes it)
-  for(const p of P){if(!p.land)continue;const st=GC.prov[p.i];const occ=GC.armies.filter(a=>a.at===p.i&&a.o!==st.o&&grAtWar(a.o,st.o)&&a.u.length);
-    if(!occ.length||st.gar.length)continue;if(GC.armies.some(a=>a.at===p.i&&a.o===st.o&&a.u.length))continue;
+  for(const p of P){if(!p.land)continue;const st=GC.prov[p.i];const occ=GC.armies.filter(a=>a.at===p.i&&!a.fl&&a.o!==st.o&&grAtWar(a.o,st.o)&&a.u.length);
+    if(!occ.length||st.gar.length)continue;if(GC.armies.some(a=>a.at===p.i&&!a.fl&&a.o===st.o&&a.u.length))continue;
     const by={};for(const a of occ)by[a.o]=(by[a.o]||0)+grArmyVal(a);const taker=Object.keys(by).sort((x,y)=>by[y]-by[x]||(x<y?-1:1))[0],prevO=st.o;
     st.o=taker;st.un=Math.min(100,st.un+35);st.cv=3;st.rq=[];try{gmCaptured(p.i,taker);}catch(e){}try{geCaptured(p.i,taker);}catch(e){}grLog(GCM.nats.get(taker).name+' captured '+p.n+' from '+GCM.nats.get(prevO).name+'.',taker===GC.me||prevO===GC.me?GC.me:taker);
     const pn=GC.nat[prevO];if(pn&&pn.cap===p.i){grLog(GCM.nats.get(prevO).name+' lost its capital! (peace talks come in stage 4)',prevO);try{geCapitalFell(prevO,taker);}catch(e){}const rest=P.filter(q=>q.land&&GC.prov[q.i].o===prevO).sort((x,y)=>y.dev-x.dev||x.i-y.i)[0];pn.cap=rest?rest.i:-1;}}
+  try{grMilTurn();}catch(e){console.error('grMilTurn',e);}
   // economy
   const R=grRng(GC.seed*13+GC.turn);const inc={};geTurnStart();
   for(const p of P){if(!p.land)continue;const st=GC.prov[p.i],c=st.o,N=grNat(c);
@@ -164,13 +167,13 @@ function grFinishTurn(){const P=GCM.P;try{gmRepair();}catch(e){}
     const keep=[];for(const q of st.rq){if(q[0]<=GC.turn){grArrive(c,p.i,q[1],q[2]);}else keep.push(q);}st.rq=keep;}
   geAfterProvinces(inc,R);   /* empire economy: trade, oil, fuel, food, manpower, upkeep, bonds, bank, actions, supply (13g-grandeco.js) */
   // supply: an army outside friendly reach loses men every turn; on a boat a little
-  for(const a of GC.armies){const p=P[a.at];if(grSupplied(a)){a.sup=0;continue;}a.sup++;const rate=p.sea?.03:(p.t==='d'||p.t==='m'||p.t==='s'?.11:.07);const lose=Math.floor(a.u.length*rate+R());
+  for(const a of GC.armies){const p=P[a.at];if(a.fl||grSupplied(a)){a.sup=0;continue;}a.sup++;const rate=p.sea?.03:(p.t==='d'||p.t==='m'||p.t==='s'?.11:.07);const lose=Math.floor(a.u.length*rate*(a.g&&a.g.tr==='log'?.5:1)+R());
     for(let i=0;i<lose;i++){let w=0;for(let j=1;j<a.u.length;j++)if(a.u[j][1]<a.u[w][1])w=j;a.u.splice(w,1);}for(const r of a.u)r[1]=Math.max(10,r[1]-4);if(lose)grLog(a.nm+' ('+GCM.nats.get(a.o).name+') lost '+lose+' to hunger and exposure at '+p.n+'.',a.o===GC.me?a.o:'');}
   for(const a of GC.armies.slice())if(!a.u.length)grDrop(a);
   // elimination, victory, next turn
-  for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;const has=P.some(p=>p.land&&GC.prov[p.i].o===c);const arm=GC.armies.some(a=>a.o===c);if(!has||(N.cap<0&&!arm)){N.dead=1;grLog(GCM.nats.get(c).name+' has been eliminated.',c);for(const a of GC.armies.slice())if(a.o===c)grDrop(a);for(const k of Object.keys(GC.war))if(k.split('|').includes(c))delete GC.war[k];}}
+  for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;const has=P.some(p=>p.land&&GC.prov[p.i].o===c);const arm=GC.armies.some(a=>a.o===c&&!a.fl);if(!has||(N.cap<0&&!arm)){N.dead=1;grLog(GCM.nats.get(c).name+' has been eliminated.',c);for(const a of GC.armies.slice())if(a.o===c)grDrop(a);for(const k of Object.keys(GC.war))if(k.split('|').includes(c))delete GC.war[k];}}
   GC.turn++;GC.ph='plan';GC.q=[];GC.qi=0;grJudge();grSave();}
-function grArrive(c,pi,k,n){const a=GC.armies.find(x=>x.o===c&&x.at===pi&&!x.path.length&&x.nm==='Reserve');const us=[];for(let i=0;i<n;i++)us.push([k,100,0,100]);if(a)a.u.push(...us);else{const b=grAddArmy(c,pi,us,'Reserve');}}
+function grArrive(c,pi,k,n){if(GR_NAVAL.includes(k))return grMilArrive(c,pi,k,n);const a=GC.armies.find(x=>x.o===c&&x.at===pi&&!x.path.length&&x.nm==='Reserve');const us=[];for(let i=0;i<n;i++)us.push([k,100,0,100]);if(a)a.u.push(...us);else{const b=grAddArmy(c,pi,us,'Reserve');}}
 
 // ---------- victory ----------
 function grScore(c){let s=0;const N=GC.nat[c];for(const p of GCM.P){if(!p.land||GC.prov[p.i].o!==c)continue;s+=10;}for(const w of N.wg)if(GC.prov[w].o===c)s+=25;let v=0;for(const a of GC.armies)if(a.o===c)v+=grArmyVal(a);return Math.round(s+v/2000);}
@@ -184,13 +187,13 @@ function grJudge(){if(!GC.me||GC.over)return;const me=GC.me;if(GC.nat[me].dead){
   if(GC.turn>GC.maxTurn){const sc=Object.keys(GC.nat).filter(c=>!GC.nat[c].dead).map(c=>[c,grScore(c)]).sort((a,b)=>b[1]-a[1]||(a[0]<b[0]?-1:1));GC.over=sc[0][0]===me?'win':'lose';GC.res='The campaign ends. '+GCM.nats.get(sc[0][0]).name+' leads with '+sc[0][1]+' points'+(sc[0][0]===me?'.':' (you: '+grScore(me)+').');}}
 
 // ---------- player orders ----------
-function grOrderMove(aid,to){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return {err:'no army'};const r=grPath(a.o,a.at,to);if(!r)return {err:'No route (check ports, seas and borders).'};
-  if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;return {ok:1,r};}
+function grOrderMove(aid,to){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return {err:'no army'};const r=a.fl?grFPath(a.o,a.at,to):grPath(a.o,a.at,to);if(!r)return {err:a.fl?'No sea route (fleets need sea zones and your own ports).':'No route (check ports, seas and borders).'};
+  if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;a.fr=0;return {ok:1,r};}
 function grDeclare(a,b){GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);}
 function grRecruit(c,pi,k){const st=GC.prov[pi];if(st.o!==c)return 'Not your province.';const fac=grNat(c).fac,rc=GR_RECRUIT.find(r=>r[0]===k);if(!rc||!grHasKind(fac,k))return 'Not available.';const T=geRecruitTerms(c,pi,k,rc[1]),cost=T.cost;
   if(GC.nat[c].cash<cost)return 'Not enough money.';if(GC.nat[c].e.man<T.man)return 'Not enough manpower ('+Math.round(GC.nat[c].e.man)+' of '+T.man+').';GC.nat[c].cash-=cost;GC.nat[c].e.man-=T.man;st.rq.push([GC.turn+T.turns,k,rc[1]]);return '';}
 function grSplit(aid){const a=GC.armies.find(x=>x.id===aid);if(!a||a.u.length<2)return null;const h=Math.floor(a.u.length/2);const mv=a.u.splice(a.u.length-h,h);const b=grAddArmy(a.o,a.at,mv);return b;}
-function grMerge(aid){const a=GC.armies.find(x=>x.id===aid);if(!a)return 0;let n=0;for(const b of GC.armies.slice())if(b!==a&&b.o===a.o&&b.at===a.at&&!b.path.length){a.u.push(...b.u);grDrop(b);n++;}return n;}
+function grMerge(aid){const a=GC.armies.find(x=>x.id===aid);if(!a)return 0;let n=0;for(const b of GC.armies.slice())if(b!==a&&b.o===a.o&&b.at===a.at&&!b.path.length&&!!b.fl===!!a.fl){a.u.push(...b.u);grMilMerge(a,b);grDrop(b);n++;}return n;}
 
 // ---------- AI empires ----------
 function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
@@ -202,8 +205,9 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
     if(grNat(c).major||wars.length){const front=mine.map(p=>[p,p.adj.filter(j=>P[j].land&&GC.prov[j].o!==c&&(wars.includes(GC.prov[j].o))).length*3+(p.i===N.cap?1:0)]).sort((a,b)=>b[1]-a[1]||a[0].i-b[0].i)[0][0];
       let guard=0;while(N.cash>1500&&guard++<6){const k=GR_RECRUIT.filter(r=>grHasKind(fac,r[0]))[Math.floor(R()*3.4)%4]||GR_RECRUIT[0];if(grRecruit(c,front.i,k[0]))break;}}
     // armies: merge idle ones at the same place, then march on the weakest reachable enemy province; keep the capital defended
-    const mineA=GC.armies.filter(a=>a.o===c).sort((a,b)=>a.id-b.id);for(const a of mineA)if(!a.path.length)grMerge(a.id);
-    for(const a of GC.armies.filter(x=>x.o===c&&!x.path.length).sort((x,y)=>x.id-y.id)){const val=grArmyVal(a);if(val<2500)continue;
+    grMilAI(c,R,wars);
+    const mineA=GC.armies.filter(a=>a.o===c&&!a.fl).sort((a,b)=>a.id-b.id);for(const a of mineA)if(!a.path.length)grMerge(a.id);
+    for(const a of GC.armies.filter(x=>x.o===c&&!x.path.length&&!x.fl&&!x.fr).sort((x,y)=>x.id-y.id)){const val=grArmyVal(a);if(val<2500)continue;
       const home=GCM.P[a.at].land&&GC.prov[a.at].o===c;let tgt=-1,ts=-1e9;
       const seen=new Set([a.at]);let fr=[a.at];for(let d=0;d<5&&fr.length;d++){const nx=[];for(const u of fr)for(const j of P[u].adj){if(seen.has(j))continue;seen.add(j);if(!P[j].sea)nx.push(j);else if(P[u].port||P[u].sea){nx.push(j);}
         if(P[j].land){const w=GC.prov[j].o;if(w!==c&&wars.includes(w)){const def=grProvDef(j)*1.25+GC.armies.filter(x=>x.at===j&&x.o===w).reduce((s,x)=>s+grArmyVal(x),0);const sc=(P[j].wg?40:0)+P[j].dev*4+(val/Math.max(300,def)-1)*30-d*8;if(def<val*1.1&&sc>ts){ts=sc;tgt=j;}}}}fr=nx;}
@@ -215,7 +219,7 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
 
 // ---------- save ----------
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){}}
-function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!o||o.v!==1)return null;GC=o;try{geEnsure();}catch(e){}return GC;}catch(e){return null;}}
+function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!o||o.v!==1)return null;GC=o;try{geEnsure();}catch(e){}grMilInit();return GC;}catch(e){return null;}}
 function grClear(){try{localStorage.removeItem(GR_KEY);}catch(e){}GC=null;}
 // test/AI-only: run n turns with every nation under AI control; battles auto-resolve
 function grRunAI(n){for(let i=0;i<n&&!GC.over;i++){grEndTurn(true);}return grHash();}

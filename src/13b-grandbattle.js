@@ -47,8 +47,10 @@ function grandAI(t){const g=G.grand,mine=G.ents.filter(e=>e.team===t&&!e.isB&&!e
   const attacker=g.att===t,close=Math.hypot(fx-cx,fy-cy)<720;
   if(attacker||close){const idle=mine.filter(e=>!e.order);if(idle.length)act(t,{t:'go',ids:idle.map(u=>u.id),x:fx,y:fy,mode:'amove'});}}
 function grandBattleStart(b){   // called by the grand-map UI: build the two unit lists and start the battle
+  if(b.nav)return grMilNavStart(b);
   const P=GCM.P[b.p],pst=GC.prov[b.p],me=GC.me,meAtt=b.an===me||(b.dn!==me&&b.att.some(id=>(GC.armies.find(a=>a.id===id)||{}).o===me));
   const S=grSideUnits(b,'att'),D=grSideUnits(b,'def'),flat=L=>{const o=[];for(const s of L)o.push(...s.u);return o;};
+  const mb1=grMilBattleRecs(S,'att',grSideVal(D)),mb2=grMilBattleRecs(D,'def',grSideVal(S));
   const side0=meAtt?flat(S):flat(D),side1=meAtt?flat(D):flat(S);
   const nat0=meAtt?b.an:b.dn,nat1=meAtt?b.dn:b.an;const f0=grNat(nat0).fac,f1=grNat(nat1).fac;
   // reinforcement waves: idle armies in neighbouring provinces of either side's nation (never an army already in this battle)
@@ -58,7 +60,7 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
     const recs=a.u.slice(0,24);wn[side]++;waves.push({t:70+wn[side]*50,side,recs,label:a.nm,done:0,aid:a.id});rf.push(a.id);}
   const attTeam=meAtt?0:1,from=b.att.map(id=>(GC.armies.find(a=>a.id===id)||{}).from).find(f=>f>=0),gm=gmMap(b.p,from),
     cfg={bi:{p:b.p},att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]}};   // forts / SAM / airfield... come from the province's buildings (gmApply)
-  GB_CUR={b,cfg,meAtt,nat0,nat1,rf};
+  GB_CUR={b,cfg,meAtt,nat0,nat1,rf,bumps:mb1.bumps.concat(mb2.bumps)};
   try{initAudio();}catch(e){}
   MODE='single';ME=0;setup.p=f0;setup.d=1;TERR_DEFER=true;
   try{newGame({seed:(GC.seed*31+GC.turn*977+b.p*13)|0,facs:[f0,f1],ai:[false,false],map:gm.key||grMapFor(P,b),tm:[0,1],bs:1,slot:0,st:gm.real?[0,1]:(attTeam===0?[0,1]:[1,0]),w:0,grand:cfg});}finally{TERR_DEFER=false;}
@@ -66,6 +68,7 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
 let GB_CUR=null;
 // write the survivors back and show the result
 function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def']:['def','att'];sd.forEach((side,t)=>{const T=G.teams[t];if(!T||T.fuel==null)return;for(const s of grSideUnits(GB_CUR.b,side))if(s.arr)s.arr.fu=Math.round(T.fuel*100);});}catch(e){}try{gmWriteBack();}catch(e){console.error('gmWriteBack',e);}for(const [rec,e] of g.ents){const dead=e.dead||!G.byId.has(e.id);if(dead){rec.dead=1;continue;}rec[1]=Math.max(1,Math.round(e.hp/e.max*100));rec[2]=Math.round(e.xp||rec[2]);if(e.s&&e.s.ammo)rec[3]=Math.max(0,Math.min(100,Math.round((e.ammo||0)/e.s.ammo*100)));}
+  try{grMilBattleEnd(GB_CUR);}catch(e){console.error('grMilBattleEnd',e);}
   const strip=arr=>{for(let i=arr.length-1;i>=0;i--)if(arr[i].dead)arr.splice(i,1);};const b=GB_CUR.b;
   for(const s of grSideUnits(b,'att').concat(grSideUnits(b,'def')))strip(s.u);
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}

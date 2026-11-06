@@ -301,7 +301,7 @@ function g3ShipGeo(){if(G3.ship)return G3.ship;const sh=new THREE.Shape();[[-5,-
 function g3FlagMesh(o,sx){const fac=grNat(o).fac,tex=flagTex(fac),m=new THREE.Mesh(G3.flagGeo||(G3.flagGeo=new THREE.PlaneGeometry(7,4.6,10,1).translate(3.5,0,0)),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
   m.material.onBeforeCompile=s=>{s.uniforms.uT=G3.flagT||(G3.flagT={value:0});s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nuniform float uT;').replace('#include <begin_vertex>','#include <begin_vertex>\n transformed.z+=sin(uT*3.2+transformed.x*.9+modelMatrix[3].x*.07)*.16*transformed.x;transformed.y+=sin(uT*2.1+transformed.x*.6)*.05*transformed.x;');};
   return m;}
-function g3Ent(a){let e=G3.arm.get(a.id);const sea=GCM.P[a.at].sea;
+function g3Ent(a){let e=G3.arm.get(a.id);const sea=GCM.P[a.at].sea||!!a.fl;
   if(e&&e.sea===sea&&e.o===a.o)return e;if(e){G3.ents.remove(e.g);}
   const g=new THREE.Group(),body=new THREE.Mesh(sea?g3ShipGeo():g3FigGeo(a.o),G3.matLit),fl=g3FlagMesh(a.o);
   body.scale.setScalar(1);g.add(body);if(sea){fl.position.set(-.2,10,0);fl.scale.setScalar(.85);}else fl.position.set(1.2,10.7,0);g.add(fl);

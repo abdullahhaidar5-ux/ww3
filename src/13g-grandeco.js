@@ -148,7 +148,7 @@ function geBegin(){const P=GCM.P;for(const c of Object.keys(GC.nat)){const N=GC.
     N.e.pw=dem<=0?1:Math.max(.25,Math.min(1,sup/dem));GE_ST[c]={own,towns,pw:N.e.pw,sup,dem};}}
 function geProvInc(p,st,c){   // extra province income from buildings, resources and the economy panel; the old basic formula is replaced
   const pw=(GE_ST[c]||{pw:1}).pw,eff=k=>geEff(p.i,k);let b=p.tw*60+(p.oil?60:0)+(p.farm?40:0)+(p.mine?60:0);
-  b+=eff('port')*50*(geFx(c,'port')?1.5:1)+eff('factory')*110*pw+eff('mine')*100*pw*(geFx(c,'mine')?1.3:1);
+  b+=eff('port')*(st.bk===GC.turn?0:50)*(geFx(c,'port')?1.5:1)+eff('factory')*110*pw+eff('mine')*100*pw*(geFx(c,'mine')?1.3:1);
   if(p.mine&&geFx(c,'mine'))b+=18;if(GC.nat[c]&&GC.nat[c].cap===p.i)b*=1.25;
   b*=1+.12*(st.tr|0)*(st.cf===0?1.6:1);if(st.cv>0)b*=.5;if(st.sc>GC.turn)b*=.5;if(st.lt>GC.turn)b*=.8;
   return b*(geFx(c,'tax')?1.05:1)*GE_AUT[st.au|0]*geIncMul(c)*(GC.nat[c].e.sanc?.88:1);}
@@ -165,7 +165,7 @@ function geTrade(c){   // trade routes between neighbouring provinces and over s
   const P=GCM.P,N=GC.nat[c],E=N.e,tm=Math.max(.35,1-.12*geClosed())*geIncMul(c);let t=0;const own=GE_ST[c].own;
   const ok=(o)=>o===c||(!grAtWar(c,o)&&!E.emb.includes(o)&&!(GC.nat[o].e.emb||[]).includes(c));
   for(const p of own){for(const j of p.adj){const q=P[j];if(q.land){const o=GC.prov[j].o;if(!ok(o)||GC.nat[o].dead)continue;const m=Math.min(p.tw,q.tw);t+=o===c?(i2(p.i,j)?m*4:0):m*4.5;}
-      else if(q.sea&&(p.port||geCount(p.i,'port'))){if(q.ck&&GC.eco.cl[j]&&GC.eco.cl[j]!==c)continue;
+      else if(q.sea&&(p.port||geCount(p.i,'port'))&&GC.prov[p.i].bk!==GC.turn){if(q.ck&&GC.eco.cl[j]&&GC.eco.cl[j]!==c)continue;
         for(const k of q.adj){const r=P[k];if(!r.land||k===p.i)continue;if(!(r.port||geCount(k,'port')))continue;const o=GC.prov[k].o;if(!ok(o)||GC.nat[o].dead)continue;t+=Math.min(p.tw,r.tw)*(o===c?1.5:3);}}}}
   // merchants: each skims a share of a province's trade routes toward you
   for(const m of E.mer){const q=P[m];if(!q||!q.land)continue;t+=(q.tw*5)*(GC.prov[m].o===c?.25:.9);}
