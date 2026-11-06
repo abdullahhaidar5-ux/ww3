@@ -1,0 +1,12 @@
+PAGEERR Unexpected token '<<'
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Timeout 60000ms exceeded.
+    at /home/runner/work/ww3/ww3/orch/tutorialtest.mjs:25:12 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v22.23.4
