@@ -69,7 +69,8 @@ function encBuild(en){const f=en.f,F=FACTIONS[f],T={id:0,fac:f,F,sup:F.sup,color
   G=stub;SCN=sc;let o=null;try{o=makeObj(e);}finally{G=g0;SCN=s0;}
   return o;}
 async function encShow(en){const my=++ENC.seq;ENC.sel=en;encInfo(en);encClear();const st=ENC.ov.querySelector('.emsg');st.textContent='Loading 3D model…';st.hidden=false;
-  try{await Promise.race([modelsFor([en.f]),new Promise(r=>setTimeout(r,6000))]);}catch(e){}
+  let late=false;const mp=Promise.resolve().then(()=>modelsFor([en.f]));try{await Promise.race([mp,new Promise(r=>setTimeout(()=>{late=true;r();},6000))]);}catch(e){}
+  if(late)mp.then(()=>{if(ENC.on&&ENC.sel===en&&my===ENC.seq)encShow(en);},()=>{});   // slow connection: show what there is now, redraw when the models arrive
   if(my!==ENC.seq||!ENC.on)return;
   try{encStage();const o=encBuild(en);if(!o)throw new Error('no model');o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.frustumCulled=false;}});
     // fit: put the object's footprint centre at the origin, stand it on the ground and frame it

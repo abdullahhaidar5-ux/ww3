@@ -13458,8 +13458,8 @@ function encStage(){const el=ENC.ov.querySelector('.ecv');if(ENC.r)return;
   const sc=new THREE.Scene();sc.background=lin('#2a2e2a');
   sc.add(new THREE.HemisphereLight(lin('#c4d4ef'),lin('#4d3f2c'),1.0*LUX));
   const sun=new THREE.DirectionalLight(lin('#ffe2bd'),2.5*LUX);sun.position.set(-260,340,200);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);const c=sun.shadow.camera;c.left=-160;c.right=160;c.top=160;c.bottom=-160;c.near=10;c.far=900;sc.add(sun);
-  const ground=new THREE.Mesh(new THREE.CircleGeometry(230,48).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({color:lin('#4a4d44'),roughness:1}));ground.receiveShadow=true;sc.add(ground);
-  const ring=new THREE.Mesh(new THREE.RingGeometry(150,153,64).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xc9a24a}));ring.position.y=.2;sc.add(ring);
+  const ground=new THREE.Mesh(new THREE.CircleGeometry(230,48).rotateX(-Math.PI/2),new THREE.MeshStandardMaterial({color:lin('#4a4d44'),roughness:1}));ground.receiveShadow=true;sc.add(ground);ENC.gnd=ground;
+  const ring=new THREE.Mesh(new THREE.RingGeometry(150,153,64).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xc9a24a}));ring.position.y=.2;sc.add(ring);ENC.rng=ring;
   ENC.r=r;ENC.scn=sc;ENC.cam=new THREE.PerspectiveCamera(36,1,1,3000);
   const dn=e=>{ENC.drag={x:e.clientX,y:e.clientY};ENC.idle=0;cv2.setPointerCapture&&cv2.setPointerCapture(e.pointerId);};
   cv2.addEventListener('pointerdown',dn);cv2.addEventListener('pointermove',e=>{if(!ENC.drag)return;ENC.yaw-=(e.clientX-ENC.drag.x)*.01;ENC.pitch=Math.max(.02,Math.min(1.3,ENC.pitch+(e.clientY-ENC.drag.y)*.006));ENC.drag={x:e.clientX,y:e.clientY};});
@@ -13473,17 +13473,18 @@ function encBuild(en){const f=en.f,F=FACTIONS[f],T={id:0,fac:f,F,sup:F.sup,color
   G=stub;SCN=sc;let o=null;try{o=makeObj(e);}finally{G=g0;SCN=s0;}
   return o;}
 async function encShow(en){const my=++ENC.seq;ENC.sel=en;encInfo(en);encClear();const st=ENC.ov.querySelector('.emsg');st.textContent='Loading 3D model…';st.hidden=false;
-  try{await Promise.race([modelsFor([en.f]),new Promise(r=>setTimeout(r,6000))]);}catch(e){}
+  let late=false;const mp=Promise.resolve().then(()=>modelsFor([en.f]));try{await Promise.race([mp,new Promise(r=>setTimeout(()=>{late=true;r();},6000))]);}catch(e){}
+  if(late)mp.then(()=>{if(ENC.on&&ENC.sel===en&&my===ENC.seq)encShow(en);},()=>{});   // slow connection: show what there is now, redraw when the models arrive
   if(my!==ENC.seq||!ENC.on)return;
   try{encStage();const o=encBuild(en);if(!o)throw new Error('no model');o.traverse(m=>{if(m.isMesh){m.castShadow=true;m.frustumCulled=false;}});
     // fit: put the object's footprint centre at the origin, stand it on the ground and frame it
     o.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(o),ctr=bb.getCenter(new THREE.Vector3()),sz=bb.getSize(new THREE.Vector3());
     const wrap=new THREE.Group();o.position.sub(new THREE.Vector3(ctr.x,bb.min.y-(o.position.y*0),ctr.z));wrap.add(o);wrap.userData.r=Math.max(sz.x,sz.y,sz.z)||40;
-    ENC.scn.add(wrap);ENC.obj=wrap;ENC.zoom=1;ENC.yaw=.7;ENC.pitch=.3;ENC.idle=performance.now();st.hidden=true;encStart();}
+    ENC.scn.add(wrap);ENC.obj=wrap;{const k=Math.max(.35,wrap.userData.r/75);ENC.gnd.scale.setScalar(k);ENC.rng.scale.setScalar(k);ENC.gnd.position.y=ENC.rng.position.y-.2;}ENC.zoom=1;ENC.yaw=.7;ENC.pitch=.3;ENC.idle=performance.now();st.hidden=true;encStart();}
   catch(err){console.warn('encyclopedia 3D',err);st.textContent='3D preview is not available for this entry on this device.';st.hidden=false;}}
 function encFrame(){ENC.raf=0;if(!ENC.on||!ENC.r)return;const o=ENC.obj,cv2=ENC.r.domElement,w=cv2.clientWidth,h=cv2.clientHeight;
   if(w>0&&h>0){const dp=Math.min(2,window.devicePixelRatio||1);if(cv2.width!==(w*dp|0)||cv2.height!==(h*dp|0)){ENC.r.setPixelRatio(dp);ENC.r.setSize(w,h,false);ENC.cam.aspect=w/h;ENC.cam.updateProjectionMatrix();}}
-  if(o){if(!ENC.drag&&performance.now()-ENC.idle>1800)ENC.yaw+=.006;const R=o.userData.r*1.9*ENC.zoom+40,p=ENC.pitch;ENC.cam.position.set(Math.sin(ENC.yaw)*Math.cos(p)*R,Math.sin(p)*R+o.userData.r*.18,Math.cos(ENC.yaw)*Math.cos(p)*R);ENC.cam.lookAt(0,o.userData.r*.22,0);
+  if(o){if(!ENC.drag&&performance.now()-ENC.idle>1800)ENC.yaw+=.006;const R=o.userData.r*1.55*ENC.zoom+30,p=ENC.pitch;ENC.cam.position.set(Math.sin(ENC.yaw)*Math.cos(p)*R,Math.sin(p)*R+o.userData.r*.18,Math.cos(ENC.yaw)*Math.cos(p)*R);ENC.cam.lookAt(0,o.userData.r*.22,0);
     ENC.r.shadowMap.needsUpdate=true;try{ENC.r.render(ENC.scn,ENC.cam);}catch(e){}}
   encStart();}
 function encStart(){if(!ENC.raf&&ENC.on)ENC.raf=requestAnimationFrame(encFrame);}
@@ -13515,7 +13516,7 @@ function encOpen(){if(!ENC.ov){const st=document.createElement('style');st.textC
 #enc[hidden]{display:none}
 #enc .etop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid #2d4a3a}
 #enc h1{margin:0 12px 0 0;font-size:22px;letter-spacing:.06em}#enc input,#enc select{font:inherit;font-size:15px;min-height:36px;padding:0 10px;background:#17211b;color:#e8efe9;border:1px solid #34503f;border-radius:6px}
-#enc input{flex:1;min-width:160px;max-width:280px}#enc .ecount{opacity:.65;font-size:13px}
+#enc input{flex:1;min-width:200px;max-width:300px}#enc .ecount{opacity:.65;font-size:13px}
 #enc .etypes{display:flex;gap:5px;flex-wrap:wrap}#enc .etypes button{font:inherit;font-size:14px;min-height:34px;padding:0 12px;border-radius:17px;background:#17211b;color:#cfe0d5;border:1px solid #34503f;cursor:pointer}#enc .etypes button.on{background:#c9892a;color:#17110a;border-color:#c9892a}
 #enc .eclose{margin-left:auto;font:inherit;font-weight:700;min-height:36px;padding:0 18px;border-radius:6px;border:1px solid #6a7a70;background:#222d26;color:#fff;cursor:pointer}
 #enc .ebody{flex:1;display:grid;grid-template-columns:minmax(220px,300px) 1fr minmax(260px,360px);min-height:0}
@@ -13525,7 +13526,7 @@ function encOpen(){if(!ENC.ov){const st=document.createElement('style');st.textC
 #enc .ehint{position:absolute;left:12px;bottom:10px;font-size:13px;opacity:.6;pointer-events:none}
 #enc .einfo{overflow:auto;border-left:1px solid #2d4a3a;padding:12px 14px}#enc .enat{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#c9a24a}#enc h2{margin:2px 0 10px;font-size:22px}
 #enc .erow{display:flex;gap:10px;padding:5px 0;border-bottom:1px solid #223229;font-size:15px}#enc .ek{width:84px;flex:none;opacity:.6;font-size:13px;text-transform:uppercase;letter-spacing:.05em;padding-top:1px}#enc .ev{flex:1}
-#enc .esec{margin-top:12px}#enc .esec .etx{font-size:15px;line-height:1.45;margin-top:3px}#enc .etx{font-size:15px;opacity:.9;padding:6px}
+#enc .esec{margin-top:12px}#enc .esec .ek{width:auto}#enc .esec .etx{font-size:15px;line-height:1.45;margin-top:3px}#enc .etx{font-size:15px;opacity:.9;padding:6px}
 @media(max-width:900px){#enc .ebody{grid-template-columns:1fr;grid-template-rows:180px 280px auto;overflow:auto}#enc .elist{border-right:0;border-bottom:1px solid #2d4a3a}#enc .einfo{border-left:0}}`;document.head.append(st);
     const ov=ENC.ov=encE('div');ov.id='enc';ov.hidden=true;
     const top=encE('div','etop');top.append(encE('h1','','📖 Encyclopedia'));
