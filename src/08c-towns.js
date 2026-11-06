@@ -56,7 +56,7 @@ FXH.tping=(team,x,y,k)=>{if(team!==ME||!G)return;(G.tpings=G.tpings||[]).push({x
 function townClose(){TP.ti=-1;if(TP.el)TP.el.style.display='none';}
 function townPick(sx,sy){if(!G||!G.towns)return false;const w=screenToWorld(sx,sy);const t=townAt(w,10);if(t){townOpen(t.i);return true;}townClose();return false;}
 function townOpen(i){TP.ti=i;if(!TP.el)townBuild();TP.el.style.display='block';TP.t=0;townPanelTick(true);}
-function townBuild(){if(!document.getElementById('townCss')){const st=document.createElement('style');st.id='townCss';st.textContent=`#townp{position:fixed;left:8px;top:64px;width:min(280px,calc(100vw - 16px));z-index:60;background:rgba(10,16,12,.94);border:1px solid #4a6a52;border-radius:8px;color:#e8f2e8;font:14px/1.35 system-ui,sans-serif;padding:10px 12px;display:none;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+function townBuild(){if(!document.getElementById('townCss')){const st=document.createElement('style');st.id='townCss';st.textContent=`#townp{position:fixed;left:8px;top:64px;width:min(280px,calc(100vw - 16px));z-index:60;background:rgba(10,16,12,.94);border:1px solid #4a6a52;border-radius:8px;color:#e8f2e8;font:14px/1.35 system-ui,sans-serif;padding:10px 12px;display:none;max-height:calc(100vh - 290px);overflow-y:auto;box-shadow:0 4px 18px rgba(0,0,0,.5)}
 #townp h4{margin:0 0 2px;font-size:16px}#townp .tm{color:#9fb5a4;font-size:12px}#townp .rb{display:flex;gap:6px;margin:8px 0}#townp .rb button{flex:1;min-height:44px;border-radius:6px;border:1px solid #4a6a52;background:#1c2a20;color:#e8f2e8;font-size:13px;font-weight:600;cursor:pointer}#townp .rb button.on{background:#3a6b46;border-color:#9be39b}#townp .rb button[disabled]{opacity:.45}
 #townp .bar{height:10px;background:rgba(255,255,255,.14);border-radius:5px;overflow:hidden;margin:4px 0}#townp .bar i{display:block;height:100%}#townp .x{position:absolute;right:6px;top:4px;width:34px;height:34px;background:none;border:0;color:#cfe0d2;font-size:22px;cursor:pointer}#townp .warn{color:#ffb4a8;font-weight:600}`;document.head.appendChild(st);}
   const d=document.createElement('div');d.id='townp';d.innerHTML='<button class="x" aria-label="Close">&times;</button><div id="tpb"></div>';d.addEventListener('pointerdown',e=>e.stopPropagation());d.addEventListener('contextmenu',e=>e.preventDefault());
@@ -75,10 +75,10 @@ function strikeSecs(T){let f;if(MODE==='client'&&G.sfd)f=G.sfd[T.id];else f=T._u
 function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){}
   // territory income next to the money
   const cr=$('credits');if(cr){let s=$('terrInc');if(!s){s=document.createElement('span');s.id='terrInc';s.style.cssText='font-size:11px;color:#9be39b;margin-left:6px;font-weight:600;white-space:nowrap';cr.parentNode.insertBefore(s,cr.nextSibling);}
-    const T=G.teams[ME],v=T?T.terr||0:0;const txt=v>0.05?'+$'+v.toFixed(1)+'/s':'';if(s.textContent!==txt){s.textContent=txt;s.title='Territory income: tax from your towns and hamlets. Press a town to change its tax rate.';}}
+    ecHud();}
   if(TP.ti<0||!TP.el)return;const n=performance.now();if(!force&&n-TP.t<250)return;TP.t=n;const t=G.towns[TP.ti];if(!t){townClose();return;}
   if(G.over){townClose();return;}
-  const mine=townsMine(t),reb=t.reb>G.t,kind=t.ham?'Hamlet':'Town',ow=t.ow>=0&&G.teams[t.ow]?G.teams[t.ow].F.name:null;let h=`<h4>${t.name}</h4><div class="tm">${kind}${ow?' &middot; held by '+ow:reb?' &middot; in rebel hands':' &middot; neutral'}</div>`;
+  const mine=townsMine(t),reb=t.reb>G.t,kind=EC_LV[t.lv==null?(t.ham?0:1):t.lv],ow=t.ow>=0&&G.teams[t.ow]?G.teams[t.ow].F.name:null;let h=`<h4>${t.name}</h4><div class="tm">${kind}${ow?' &middot; held by '+ow:reb?' &middot; in rebel hands':' &middot; neutral'}</div>`;
   const pk=TPERK[t.pk|0];
   if(mine){const ramp=Math.round(Math.min(1,(G.t-(t.hold||0))/T_RAMP)*50+50);
     h+=`<div style="margin-top:6px"><b>Tax +$${t.tax.toFixed(1)}/s</b> <span class="tm">${ramp<100?'(ramping '+ramp+'%)':''}${t.whole?' &middot; whole town +50%':''}</span></div>`;
@@ -87,7 +87,7 @@ function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){
     h+=`<div class="tm">Troops near: ${t.gar|0} &middot; enemy troops near: ${t.fr|0}</div>`;
     if(t.un>=70)h+='<div class="warn">Lower the tax or send troops - this town is about to revolt!</div>';
     else h+='<div class="tm">Tip: High tax in safe towns behind your lines, Low tax on the front line.</div>';
-    h+=lgTownHtml(t,mine);}
+    h+=lgTownHtml(t,mine);h+=ecTownHtml(t,mine);}
   else if(reb)h+=`<div class="warn" style="margin-top:6px">The locals revolted. Rebels hold it for ${Math.max(0,Math.ceil(t.reb-G.t))} s - clear them, then garrison infantry to capture.</div>`;
   else if(t.ow>=0)h+='<div class="tm" style="margin-top:6px">Enemy-held. Garrison infantry in its buildings to capture it'+(t.un>50?' &mdash; the locals are restless, it falls faster':'')+'.</div>';
   else h+='<div class="tm" style="margin-top:6px">Neutral. Garrison infantry in its buildings (more than half of the key buildings) to capture it.</div>';
