@@ -44,3 +44,4 @@ Abdullah picked these 2026-11-05 18:43. Conquest only. Same numbers for all 18 n
 - No separate irregular unit model; militia use the DW infantry model/khaki colour.
 - Power dependency is deliberately limited to SAM / Defence Gun / Coastal / Strike Center (no radar building exists; the minimap stays on).
 - Tutorial tip not added.
+- CI note: first gate run had one mpsync failure at t=121 s (2/11 live checks); it passes locally (0/23 out of tolerance) and other branches show the same flake — re-run for confirmation.
