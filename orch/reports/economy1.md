@@ -28,3 +28,7 @@ Starting income is unchanged (no town starts grown, fed bonus is only a unrest e
 - Farm plots can sit on shallow water on a few maps (passability check only); not yet filtered by water depth.
 - Mines are not in the map editor and not in the tutorial; no minimap tooltip for them yet; no voice lines.
 - Wildfire: only explosions burn fields (incendiary blasts count); there is no spreading fire.
+
+## Gate status at ship (2026-11-06)
+Local: smoke PASS (after final merge), tutorial PASS, smooth-pc PASS, economy probe OK (`node orch/economy1-test.mjs`). CI gate on the merged build: all green except **tutorial** and **smooth-mp**. Tutorial also fails in CI on other agents' branches (e.g. grandmirror run 42267257183) and passes locally with this change (first failure was mine: the taller town panel covered the command-bar tabs — fixed by capping the panel height). smooth-mp fails identically on plain `origin/main` in this sandbox (DESYNC/snapshot jitter), but passed in CI on an earlier economy1 run. Recheck both on the next gate run.
+The intermediate branch `orch/economy1` holds one bad commit (conflict markers, never merged to main); the clean history is `orch/economy1-final` and `main`.
