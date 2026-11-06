@@ -61,6 +61,10 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   anthem, equal strength) → 21. Every other country on the grand map is a **playable minor nation** (shared regional army/look, own
   flag/name/colours, no unique voices). The IM faction was removed on purpose. Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
+- **Mountain Shias (RS) identity** (Abdullah 2026-11-05 19:46 "make it more obvious"): unmistakably a Lebanese mountain Shia
+  resistance force through content — Lebanon home, Lebanese-dialect voices, Ashura/"Ya Hussein" religious motifs, tunnels, ATGM
+  teams, rocket barrages, drones, mountain forts. **Never** the real organisation's name, flag/emblem (or a close copy) or real
+  leaders' names/likeness; keep the name "Mountain Shias" and an original emblem.
 - **Audio:** real, professional military audio; top-quality unit voice acting in each nation's native language,
   including war slogans like "Labbaik ya Hussein". **Music = one shared soundtrack of real recorded tracks for all 18
   nations** (Abdullah, 2026-10-27, replacing the per-nation/region scores and the synthesized latmiyas): ~10–12 free
