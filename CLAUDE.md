@@ -88,7 +88,10 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   **Simultaneous turns**; **three linked theatres** (Middle East, Europe, Korea/East Asia); **solo vs AI empires first,
   friends multiplayer later** (turn resolution must be deterministic from state + orders + seed); **empire-level economy
   lives on the grand map** (war bonds, upkeep, fuel, manpower, oil market, crises… — not inside battles). Conquest battles
-  stay the tactical layer. Design/stages: `orch/reports/grand-strategy.md`.
+  stay the tactical layer. Design/stages: `orch/reports/grand-strategy.md`. **Grand-map multiplayer battles** (19:30): if
+  EITHER side wants "Fight it live", it's live (an away player's side is played by the battle AI); auto-resolve only if both
+  pick it; others keep planning and can spectate; several battles in a turn run at the same time. Grand campaigns live on
+  Cloudflare; battles stay cloud-first with the automatic strongest-PC fallback (19:27).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
   (Abdullah connected it 2026-10-26; since 2026-10-28 `.github/workflows/deploy-site.yml` also sends it from `main` on every
   push, status `deploy/site`, because Cloudflare's own builder got stuck — nothing to do at ship except check it serves the new version), and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi, republish
