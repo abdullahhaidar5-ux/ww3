@@ -24,8 +24,7 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 - [ ] **Battles start with your grand-map units** (Abdullah 2026-11-05 21:22, see CLAUDE.md "Grand strategy layer"): a Fight-it
       battle spawns exactly the armies' real units (types, counts, health, veterancy, ammo/fuel, general as hero unit) — no free
       Conquest base/money; defender adds the province's garrison, buildings, forts (Mountain Fortress pre-built); neighbouring
-      armies join as timed reinforcement waves; no new production inside the battle unless the province has a military building
-      (then only from the empire treasury, small); results (survivors, damage, veterancy, captured gear) go back exactly. Same rule
+      armies join as timed reinforcement waves; NO new production inside the battle at all (Abdullah 2026-11-06: "Army only"); results (survivors, damage, veterancy, captured gear) go back exactly. Same rule
       for auto-resolve strength. Test: an army of N units → battle has N units of those types; losses match after. Later stages
       (grand3 generals/sieges/supply limits, integrate2 bridge audit) keep this rule.
 - [ ] **Chokepoint straits** on the map (Hormuz, Suez/Red Sea, Bosporus, Gibraltar-style, Korea Strait…, stylised): sea-zone/province

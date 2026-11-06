@@ -119,7 +119,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   stay the tactical layer. **Fight-it battles start with exactly the units you have on the grand map** (Abdullah 2026-11-05
   21:22): every army in or next to the province brings its real units (same types, counts, health, veterancy, ammo/fuel, general as
   hero); no free Conquest base or $10,000 in campaign battles — the defender also gets the province's own garrison, buildings
-  and forts; armies next door can arrive as reinforcement waves; survivors, damage and veterancy go back to the map, the dead are
+  and forts; no building new units in the battle (Abdullah 2026-11-06 "Army only") — armies next door arrive as reinforcement waves; survivors, damage and veterancy go back to the map, the dead are
   gone. Standalone Conquest battles keep the normal equal start. Design/stages: `orch/reports/grand-strategy.md`; Abdullah's extra picks per stage (every grand stage
   helper must build its section too): `orch/GRAND-PICKS.md`. **Grand-map multiplayer battles** (19:30): if
   EITHER side wants "Fight it live", it's live (an away player's side is played by the battle AI); auto-resolve only if both
