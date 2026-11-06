@@ -113,6 +113,26 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 - [ ] **Reconstruction:** rebuild war-torn provinces (destroyed buildings, wrecked towns from battles) for loyalty, tax and world
       opinion.
 
+## Stage 5 — THE LOOK (Abdullah 2026-11-06 08:04, showed a Total War: Empire campaign-map screenshot: "it needs to look like this")
+Moved up: runs right after grand1. The grand map must look like a **Total War campaign map**, adapted to modern war:
+- [ ] **3D painted terrain**: real coastlines (public-domain Natural Earth data, reachable via GitHub), relief/hills, biome-painted
+      ground (green farmland, desert, steppe, snow, jungle) with soft texture detail; sea with the game's water shader, shallow
+      coastal colour, rivers; tilted perspective camera (default ~45° like the reference) with smooth pan/zoom/rotate.
+- [ ] **Dense instanced forests** and scrub/palms by biome; mountains with rock/snow.
+- [ ] **Settlements as small 3D towns** (reuse the regional town-look generator / building models at map scale; capitals bigger, ports
+      with docks, forts walled) — sized by province tier.
+- [ ] **Armies = one 3D soldier figure (the general, modern uniform of that nation) holding a big national flag on a pole**, with a
+      small unit-count plate; fleets = one ship model with flag; selected army gets a glowing ground ring; planned moves = green
+      arrow path along the ground (red for attack).
+- [ ] **Name banners**: province/city names on small banner plates floating above settlements (readable at every zoom, fade by zoom).
+- [ ] **Borders**: subtle coloured edge lines + soft owner tint on the ground only near borders/when toggled — not flat coloured blobs.
+- [ ] **UI layout like the reference**: bottom-centre army panel with one card per unit (portrait, count, health bar), round icon
+      buttons on the bottom-right (end turn, menus), minimap of the region bottom-left, thin top bar (treasury, turn/season, alerts).
+      Style: original art, modern military theme (no copying of the reference game's art/UI assets); free CC0/CC-BY only, credited.
+- [ ] **Performance/usage**: instancing + LOD (far = simple), one draw call per forest chunk, steady 60 fps on a mid PC
+      (add a grand-map smoothness check). Reuse the battle engine's Three.js setup, terrain/water shaders, models, flags — no new tech.
+- [ ] Plus the earlier stage-5 items below (living map, turn news, map modes).
+
 ## Stage 5 addition
 - [ ] **Map modes** (Abdullah 21:20): political, terrain, trade, supply, unrest, culture, alliances, development (one switcher).
 
