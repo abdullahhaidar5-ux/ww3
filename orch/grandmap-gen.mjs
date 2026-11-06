@@ -20,15 +20,48 @@ const NATS = []; for (let i = 0; i < NAT.length; i += 3) NATS.push([NAT[i], NAT[
 // flags: C capital, W war goal, O oil, F farm, M mine, P port
 const PR = `
 US|Washington|-77|39|u|4|CP|harbour
-US|Heartland|-92|40|f|3|FW|heartland
+US|New England|-71.5|42.5|u|3|P|
+US|New York|-75|42.8|u|4|P|
+US|Pennsylvania|-77.5|40.8|f|2|M|
+US|Appalachia|-82.5|37.5|m|2|M|
+US|Carolinas|-80|35.3|f|2|P|
+US|Deep South|-84|32.5|f|2|F|
+US|Florida|-81.8|28|c|3|P|
+US|Tennessee|-87|35.8|f|2||
+US|Ohio Valley|-84|40.2|u|3||
+US|Michigan|-85|43.5|u|2||
+US|Illinois|-89.5|40|u|3|F|
+US|Heartland|-92.5|38.3|f|3|FW|heartland
+US|Iowa|-93.5|42|f|2|F|
+US|Minnesota|-94.5|46|f|2||
+US|Dakotas|-100|45.5|f|2|F|
+US|Nebraska & Kansas|-98|39|f|2|F|
+US|Oklahoma|-97|35.5|f|2|O|
 US|Texas Gulf|-98|31|d|3|OP|
-US|California|-120|36|c|3|P|
-US|Rockies|-108|44|m|2|M|
+US|Louisiana|-91.8|30.8|c|2|OP|
+US|New Mexico|-106|34.5|d|2||
+US|Arizona|-111.5|34|d|2||
+US|Colorado|-105.5|39|m|2|M|
+US|Wyoming|-107.5|43|m|1||
+US|Montana & Idaho|-113|46.5|m|2|M|
+US|Nevada & Utah|-114|39.5|d|2|M|
+US|Oregon|-121|44|f|2||
+US|Puget Sound|-121|47.5|c|2|P|
+US|Northern California|-122|39.5|c|2|P|
+US|Southern California|-118|34.3|c|3|P|
 US|Alaska|-148|63|s|1|O|
+US|Hawaii|-157|20|c|1|P|
 CA|Ontario|-80|47|f|3|C|
-CA|Prairies|-105|53|f|2|OW|
-CA|Pacific Coast|-124|55|m|2|P|
-CA|Quebec|-69|50|s|2|P|
+CA|Quebec|-72|50|s|3|P|
+CA|Maritimes|-64|46|c|2|P|
+CA|Newfoundland|-57|49|c|1|P|
+CA|Manitoba|-98|54|f|2||
+CA|Saskatchewan|-106|53|f|2|F|
+CA|Alberta|-114|54|f|2|OW|
+CA|British Columbia|-125|54|m|2|P|
+CA|Yukon|-135|63|s|1|M|
+CA|Northwest Territories|-115|65|s|1|O|
+CA|Nunavut|-86|68|s|1||
 MX|Mexico City|-99|20|u|3|C|
 MX|Sonora|-110|29|d|2|W|
 MX|Yucatan|-89|19|j|2|P|
@@ -46,8 +79,18 @@ BR|Northeast|-38|-8|j|2|P|
 PE|Andes|-77|-11|m|2|CM|
 AR|Buenos Aires|-62|-35|f|3|CP|
 CL|Santiago|-71|-32|m|2|CM|
-GB|London|-1|51.5|u|3|CP|
-GB|Scotland|-4|56.7|s|2|W|
+GB|London|-0.1|51.5|u|3|CP|
+GB|South East|0.9|51.1|f|2|P|
+GB|South West|-3.6|50.7|f|2|P|
+GB|East Anglia|0.9|52.6|f|2|F|
+GB|Midlands|-1.6|52.6|u|3|M|
+GB|Wales|-3.7|52.3|m|2|M|
+GB|North West|-2.7|53.7|u|3|P|
+GB|Yorkshire|-1.2|53.9|f|2||
+GB|Northumbria|-1.9|55.1|f|2||
+GB|Scottish Lowlands|-3.8|55.8|u|3|W|
+GB|Scottish Highlands|-5|57.3|m|2||
+GB|Northern Ireland|-6.6|54.7|f|2|P|
 FR|Paris|2.4|48.6|u|3|C|
 FR|Provence|5|43.6|c|2|PW|
 DE|Berlin|13|52.5|u|3|C|
@@ -189,9 +232,17 @@ ID|Borneo|114|0.5|j|2|OM|
 PH|Manila|121|14.6|u|3|CP|
 PH|Mindanao|125.5|7.5|j|2|P|
 AU|Sydney|151|-33.5|u|3|CP|
-AU|Perth|116|-31.5|d|2|PM|
-AU|Outback|133|-23|d|1|MW|
-AU|Queensland|146|-22|f|2|F|
+AU|Victoria|144.5|-37|f|2|P|
+AU|Tasmania|146.5|-42|f|1|P|
+AU|South Australia|136.5|-33|d|2|M|
+AU|Perth|116|-31.5|d|2|P|
+AU|Pilbara|118.5|-22.5|d|1|MO|
+AU|Kimberley|127|-17.5|d|1||
+AU|Darwin|131|-12.5|c|1|P|
+AU|Red Centre|133|-24|d|1|MW|
+AU|Queensland|146|-23|f|2|F|
+AU|Far North Queensland|144.5|-16|j|1||
+AU|Brisbane|152.5|-27.5|u|2|P|
 NZ|New Zealand|174|-40|f|2|CP|
 `.trim().split('\n').map(l => l.split('|'));
 // sea zones: name|lon|lat|cost (turns to cross)|flag (choke = chokepoint strait, oil = giant oil sea? no)|big
