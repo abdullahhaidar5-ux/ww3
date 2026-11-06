@@ -1,0 +1,80 @@
+server at http://127.0.0.1:43403
+  ok   GET /health answers ok, with today's budget use
+  ok   GET /turn says "not configured" when no TURN key is set
+  ok   /turn refuses other websites
+  ok   /turn allows the ww3 Worker site
+  ok   /turn allows GitHub Pages
+  ok   sockets from other websites are refused
+  ok   joining a game nobody hosts is refused (nohost)
+  ok   host is welcomed with its id
+  ok   a second host for the same code is refused (taken)
+  ok   players are welcomed with the host id
+  ok   host is told each player joined
+  ok   a duplicate player id is refused
+  ok   player -> host arrives with the sender id
+  ok   players can only talk to the host (no player -> player)
+  ok   host -> everyone reaches every player
+  ok   host -> one player reaches that player
+  ok   ... and nobody else
+  ok   keep-alive ping is answered
+  ok   a batched host frame is regrouped: each player gets one frame with only its records
+  ok   a batched player frame reaches the host tagged with the sender
+  ok   a host coming back after a blip gets its players back
+  ok   players stay connected through a short host blip
+  ok   relay works through the new host connection
+  ok   an oversized player message closes that socket (1009)
+  ok   host is told the player left
+  ok   rate limit: 92 of 400 burst frames passed (expect ~90-120)
+  ok   one address may hold 8 sockets in a room, the 9th is refused (limit)
+  ok   room refuses a 12th player/spectator (full)
+  ok   players are told when the host leaves for good
+  ok   ... and their sockets are closed
+  ok   lobby welcomes viewers and sends the game list
+  ok   a hosted game shows up for other players (and only known fields are kept)
+  ok   GET /games lists it
+  ok   invalid game codes are dropped
+  ok   the game disappears when the host leaves the menu
+  ok   relay room: a host opens a password-protected game (subprotocol answered "ww3")
+  ok   relay room: joining without the password is refused (needpw)
+  ok   relay room: a wrong password is refused (badpw)
+  ok   relay room: the right password joins (host told)
+  ok   relay room: refused players never reach the host
+  ok   relay room: the server keeps only a salted hash (no password in what it stores)
+  ok   relay room: wrong guesses are rate-limited per address (!e badpw, !e badpw, !e badpw, !e badpw, !e badpw, !e pwlimit; then right password: !e pwlimit; other address: !w ww3-pwz7yd)
+  ok   game list: a protected game is marked pw:1 and no password is ever listed
+  ok   battle: the creator opens a password-protected battle on Cloudflare
+  ok   battle: listed with pw:1 (lock) and without the password
+  ok   battle: a custom map whose key does not match its code is refused (lobby stays on a built-in map)
+  ok   battle: joining without the password is refused (needpw)
+  ok   battle: a wrong password is refused (badpw)
+  ok   battle: the right password joins
+  ok   battle: the creator's own key gets back in without the password
+  ok   battle: the server keeps only a salted hash
+  ok   battle: wrong guesses are rate-limited per address (!e badpw, !e badpw, !e badpw, !e badpw, !e badpw, !e pwlimit)
+  ok   with a tiny allowance new relay rooms are refused ("busy" after 9 rooms, budget 90% used)
+
+SERVERTEST PASS
+lobby
+  ok   the spectator holds no seat (2 seats)
+  ok   the server lists the spectator
+  ok   the spectator is told it's watching (lobby spec:1)
+  ok   the lobby shows 1 watching (blob ns 1)
+  ok   the game list marks the battle watchable with 1 watching ({"c":"spec01","f":"US","s":"open","n":2,"m":"strait","mx":8,"cf":1,"sp":1,"ns":1})
+  ok   at most 4 spectators (4)
+  ok   the 5th spectator is told the battle is full of spectators
+battle
+  ok   battle started
+  ok   the spectator gets the start (sp 1, sv 1, 2 sides)
+  ok   the spectator has no side in the battle
+file:///home/runner/work/ww3/ww3/server/gen/battle-sim.js:2577
+function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
+                                           ^
+
+ReferenceError: ctTick is not defined
+    at simUpdate (file:///home/runner/work/ww3/ww3/server/gen/battle-sim.js:2577:44)
+    at B.step (file:///home/runner/work/ww3/ww3/server/gen/battle-sim.js:3872:38)
+    at BattleHost.tick (file:///home/runner/work/ww3/ww3/server/src/battle.js:317:74)
+    at run (file:///home/runner/work/ww3/ww3/orch/specserver.mjs:30:105)
+    at file:///home/runner/work/ww3/ww3/orch/specserver.mjs:54:7
+
+Node.js v22.23.4
