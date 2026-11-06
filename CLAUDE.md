@@ -153,6 +153,8 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 
 ## Ground rules for agents
 
+- **Kaizen** (Abdullah 2026-11-06 17:15 "faster and more efficient, kaizen, non-stop iterations"): read **`orch/BRIEF.md`** first (one-page state of the game, kept fresh by the kaizen loop) instead of re-reading many reports; follow `orch/KAIZEN.md` (measure → one small high-value change → prove → ship → log).
+
 - **DEADLINE Saturday 2026-11-07 20:00 Chicago (02:00Z Sun)** (Abdullah 2026-11-06 15:52 "this needs to be done by Saturday 8 pm, think of usage"): everything ships by then. Ship what is green in small pieces as you go; after Sat 18:00 Chicago start no new scope — finish, ship, or write the HANDOFF; never leave main broken. Prefer the cheapest approach that meets the spec; skip optional extras ("if time allows") when behind.
 
 - **Grand stages chain** (Abdullah 2026-11-06 "chain the stages"): if your branch is `orch/grand1`…`orch/grand7`, `orch/grand4b` or
