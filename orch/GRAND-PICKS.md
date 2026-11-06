@@ -3,6 +3,12 @@
 Abdullah picked these on 2026-11-05 19:38 after the stage helpers were already queued. **Each grand stage helper builds its section
 below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, no duplicates). Tick items off here when shipped.
 
+## ALL stages — the map (Abdullah 19:41)
+- The grand map is the **whole world with detail where it matters**, replacing "three theatres": detailed provinces around all
+  18 nations' homes (Middle East & North Africa, Europe/Russia, East Asia, South Asia, North America & Caribbean), oceans as a few
+  big sea lanes linking them (crossing takes turns; fleets/air lift needed). Every nation gets a fair home region. Stage 5's 3D map
+  covers this whole world map.
+
 ## Stage 1 (grand1 — map, provinces, armies, turns, battles)
 - [ ] **Chokepoint straits** on the map (Hormuz, Suez/Red Sea, Bosporus, Gibraltar-style, Korea Strait…, stylised): sea-zone/province
       pairs flagged as chokepoints (stage 2 gives them their economic effect).

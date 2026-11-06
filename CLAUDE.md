@@ -85,7 +85,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   supply runs on roads you build (convoys, cut-off towns, forward depots).
 - **Grand strategy layer** (Abdullah, 2026-11-05 19:16–19:20): the RTS battle is one layer under a Total War / EU4-style
   grand map where you run your empire and choose to fight each battle live ("Fight it") or auto-resolve; results flow back.
-  **Simultaneous turns**; **three linked theatres** (Middle East, Europe, Korea/East Asia); **solo vs AI empires first,
+  **Simultaneous turns**; **a world map with detail where it matters** (19:41, replaces "three theatres": detailed provinces around all 18 nations — Middle East & North Africa, Europe/Russia, East Asia, South Asia, North America & Caribbean — oceans as big sea lanes linking them); **solo vs AI empires first,
   friends multiplayer later** (turn resolution must be deterministic from state + orders + seed); **empire-level economy
   lives on the grand map** (war bonds, upkeep, fuel, manpower, oil market, crises… — not inside battles). Conquest battles
   stay the tactical layer. Design/stages: `orch/reports/grand-strategy.md`; Abdullah's extra picks per stage (every grand stage
