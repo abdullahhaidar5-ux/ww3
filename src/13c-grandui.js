@@ -24,10 +24,10 @@ function guPaint(){const idx=guCols(),P=GCM.P;if(!GV.img){GV.img=document.create
   cx.putImageData(id,0,0);GV.dirty=false;}
 function grNatRgb(c){const N=grNat(c);return N.rgb||(N.rgb=guRgb(N.color));}
 function guProvAt(wx,wy){const x=Math.floor(wx/2),y=Math.floor(wy/2);if(x<0||y<0||x>=GU_RW||y>=GU_RH)return -1;return GV.idx[y*GU_RW+x];}
-function guToWorld(sx,sy){return [(sx-GV.ox)/GV.z,(sy-GV.oy)/GV.z];}
-function guFit(r){const R=r||[0,0,GM_W,GM_H];const z=Math.min(GV.w/R[2],GV.h/R[3]);GV.z=z;GV.ox=(GV.w-R[2]*z)/2-R[0]*z;GV.oy=(GV.h-R[3]*z)/2-R[1]*z;guClamp();}
-function guClamp(){const zmin=Math.max(GV.w/GM_W,GV.h/GM_H)*.98;GV.z=Math.max(zmin,Math.min(6,GV.z));const mw=GM_W*GV.z,mh=GM_H*GV.z;GV.ox=mw<=GV.w?(GV.w-mw)/2:Math.min(0,Math.max(GV.w-mw,GV.ox));GV.oy=mh<=GV.h?(GV.h-mh)/2:Math.min(0,Math.max(GV.h-mh,GV.oy));}
-function guCentre(pi,z){const p=GCM.P[pi];if(z)GV.z=z;GV.ox=GV.w/2-p.x*GV.z;GV.oy=GV.h/2-p.y*GV.z;guClamp();}
+function guToWorld(sx,sy){if(GV.g3){const g=g3Ground(sx,sy);return g||[-1e4,-1e4];}return [(sx-GV.ox)/GV.z,(sy-GV.oy)/GV.z];}
+function guFit(r){if(GV.g3){g3Fit(r);return;}const R=r||[0,0,GM_W,GM_H];const z=Math.min(GV.w/R[2],GV.h/R[3]);GV.z=z;GV.ox=(GV.w-R[2]*z)/2-R[0]*z;GV.oy=(GV.h-R[3]*z)/2-R[1]*z;guClamp();}
+function guClamp(){if(GV.g3)return;const zmin=Math.max(GV.w/GM_W,GV.h/GM_H)*.98;GV.z=Math.max(zmin,Math.min(6,GV.z));const mw=GM_W*GV.z,mh=GM_H*GV.z;GV.ox=mw<=GV.w?(GV.w-mw)/2:Math.min(0,Math.max(GV.w-mw,GV.ox));GV.oy=mh<=GV.h?(GV.h-mh)/2:Math.min(0,Math.max(GV.h-mh,GV.oy));}
+function guCentre(pi,z){if(GV.g3){g3Centre(pi,z);return;}const p=GCM.P[pi];if(z)GV.z=z;GV.ox=GV.w/2-p.x*GV.z;GV.oy=GV.h/2-p.y*GV.z;guClamp();}
 
 // ---------- drawing ----------
 function guDraw(){GV.raf=0;const cv=GV.cv;if(!cv||!GC)return;if(GV.dirty)guPaint();const c=GV.ctx,P=GCM.P,z=GV.z;c.setTransform(1,0,0,1,0,0);c.fillStyle='#16324f';c.fillRect(0,0,GV.w,GV.h);
@@ -71,36 +71,36 @@ function guOutline(pi,color,w){const idx=GV.idx,c=GV.ctx,z=GV.z,k=z*2;c.fillStyl
   // edge cells of province pi from the cached raster (cheap enough for one province)
   const p=GCM.P[pi],x0=Math.max(1,Math.floor(p.x/2-110)),x1=Math.min(GU_RW-2,Math.floor(p.x/2+110)),y0=Math.max(1,Math.floor(p.y/2-90)),y1=Math.min(GU_RH-2,Math.floor(p.y/2+90));
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=y*GU_RW+x;if(idx[i]!==pi)continue;if(idx[i-1]!==pi||idx[i+1]!==pi||idx[i-GU_RW]!==pi||idx[i+GU_RW]!==pi)c.fillRect(x*k+GV.ox-s/2+k/2,y*k+GV.oy-s/2+k/2,s,s);}}
-function guRedraw(){if(!GV.raf)GV.raf=requestAnimationFrame(guDraw);}
+function guRedraw(){if(GV.g3){g3Refresh();return;}if(!GV.raf)GV.raf=requestAnimationFrame(guDraw);}
 
 // ---------- screen ----------
-function grandScreenShow(v){const e=document.getElementById('grandScreen');if(e)e.style.display=v?'flex':'none';if(v)guResize();}
-function guResize(){const cv=GV.cv,w=document.getElementById('gMapWrap');if(!cv||!w)return;const r=w.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);GV.w=r.width;GV.h=r.height;cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);cv.style.width=r.width+'px';cv.style.height=r.height+'px';GV.ctx=cv.getContext('2d');GV.ctx.setTransform(dpr,0,0,dpr,0,0);guClamp();guRedraw();}
+function grandScreenShow(v){G3.last=0;const e=document.getElementById('grandScreen');if(e)e.style.display=v?'flex':'none';if(v)guResize();}
+function guResize(){const cv=GV.cv,w=document.getElementById('gMapWrap');if(!cv||!w)return;const r=w.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);GV.w=r.width;GV.h=r.height;if(GV.g3){g3Resize();return;}cv.width=Math.round(r.width*dpr);cv.height=Math.round(r.height*dpr);cv.style.width=r.width+'px';cv.style.height=r.height+'px';GV.ctx=cv.getContext('2d');GV.ctx.setTransform(dpr,0,0,dpr,0,0);guClamp();guRedraw();}
 function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElementById('grandScreen');if(e)e.remove();
   e=guEl('div','position:fixed;inset:0;z-index:8000;background:#0b141d;color:#e8e4d8;display:flex;flex-direction:column;font-size:15px;user-select:none;');e.id='grandScreen';
   e.innerHTML=`<div id="gTop" style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#101c28;border-bottom:1px solid #2c4358;flex-wrap:wrap"></div>
   <div style="flex:1;display:flex;min-height:0"><div id="gMapWrap" style="flex:1;position:relative;min-width:0"><canvas id="gMap" style="display:block"></canvas><div id="gTip" style="position:absolute;pointer-events:none;display:none;background:rgba(10,16,22,.94);border:1px solid #4a6580;border-radius:6px;padding:6px 9px;font-size:14px;line-height:1.4;max-width:260px;z-index:3"></div><div id="gHint" style="position:absolute;left:10px;bottom:8px;font-size:13px;opacity:.75;pointer-events:none;text-shadow:0 1px 2px #000"></div></div>
   <div id="gSide" style="width:330px;max-width:38vw;background:#101c28;border-left:1px solid #2c4358;display:flex;flex-direction:column;min-height:0"><div id="gSel" style="padding:8px 10px;overflow:auto;flex:1.1;min-height:0"></div><div id="gLog" style="padding:6px 10px;overflow:auto;flex:.9;border-top:1px solid #2c4358;font-size:13px;line-height:1.45;min-height:0"></div></div></div>`;
   document.body.appendChild(e);GV.cv=document.getElementById('gMap');GV.idx=GV.idx||null;GV.dirty=true;guCols();
-  const cv=GV.cv;
+  const cv=GV.cv;GV.g3=false;try{GV.g3=g3Init(cv);}catch(e){console.error('3D grand map failed, using the flat map',e);g3Dispose();GV.g3=false;}
   cv.addEventListener('contextmenu',ev=>{ev.preventDefault();guRight(ev);});
-  cv.addEventListener('wheel',ev=>{ev.preventDefault();const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top,[wx,wy]=guToWorld(mx,my),f=Math.exp(-ev.deltaY*.0015);GV.z*=f;guClamp();GV.ox=mx-wx*GV.z;GV.oy=my-wy*GV.z;guClamp();guRedraw();},{passive:false});
-  cv.addEventListener('pointerdown',ev=>{if(ev.button!==0)return;cv.setPointerCapture(ev.pointerId);GV.drag={x:ev.clientX,y:ev.clientY,ox:GV.ox,oy:GV.oy,m:0};});
+  cv.addEventListener('wheel',ev=>{ev.preventDefault();if(GV.g3){g3Wheel(ev);return;}const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top,[wx,wy]=guToWorld(mx,my),f=Math.exp(-ev.deltaY*.0015);GV.z*=f;guClamp();GV.ox=mx-wx*GV.z;GV.oy=my-wy*GV.z;guClamp();guRedraw();},{passive:false});
+  cv.addEventListener('pointerdown',ev=>{if(GV.g3&&ev.button===1){ev.preventDefault();cv.setPointerCapture(ev.pointerId);GV.drag={x:ev.clientX,y:ev.clientY,btn:1,yaw:G3.camera.yaw,pitch:G3.camera.pitch,m:1};return;}if(ev.button!==0)return;cv.setPointerCapture(ev.pointerId);const r0=cv.getBoundingClientRect();GV.drag={x:ev.clientX,y:ev.clientY,ox:GV.ox,oy:GV.oy,m:0,g:GV.g3?g3Ground(ev.clientX-r0.left,ev.clientY-r0.top):null};});
   cv.addEventListener('pointermove',ev=>{const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;
-    if(GV.drag){const dx=ev.clientX-GV.drag.x,dy=ev.clientY-GV.drag.y;if(Math.abs(dx)+Math.abs(dy)>4)GV.drag.m=1;if(GV.drag.m){GV.ox=GV.drag.ox+dx;GV.oy=GV.drag.oy+dy;guClamp();guRedraw();return;}}
-    const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);if(h!==GV.hov){GV.hov=h;guRedraw();}guTip(h,mx,my);});
+    if(GV.drag){const dx=ev.clientX-GV.drag.x,dy=ev.clientY-GV.drag.y;if(Math.abs(dx)+Math.abs(dy)>4)GV.drag.m=1;if(GV.drag.m&&GV.g3){g3Drag(ev,mx,my);return;}if(GV.drag.m){GV.ox=GV.drag.ox+dx;GV.oy=GV.drag.oy+dy;guClamp();guRedraw();return;}}
+    const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);if(h!==GV.hov){GV.hov=h;guRedraw();}if(GV.g3&&GV.drag&&GV.drag.m)return;guTip(h,mx,my);});
   cv.addEventListener('pointerup',ev=>{const d=GV.drag;GV.drag=null;if(!d||d.m)return;const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;guClick(mx,my);});
   cv.addEventListener('pointerleave',()=>{GV.hov=-1;document.getElementById('gTip').style.display='none';guRedraw();});
   addEventListener('resize',()=>{if(document.getElementById('grandScreen'))guResize();});
   guResize();guFit(null);const me=GC.me&&GC.nat[GC.me];if(me){GV.sel=me.cap;guCentre(me.cap,2.0);}guRedraw();grandMapRefresh();
   if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guEndTurn();}
-    const k=ev.key.toLowerCase(),st=60;if(k==='w'||k==='arrowup')GV.oy+=st;else if(k==='s'||k==='arrowdown')GV.oy-=st;else if(k==='a'||k==='arrowleft')GV.ox+=st;else if(k==='d'||k==='arrowright')GV.ox-=st;else return;guClamp();guRedraw();});}}
+    if(GV.g3)return;const k=ev.key.toLowerCase(),st=60;if(k==='w'||k==='arrowup')GV.oy+=st;else if(k==='s'||k==='arrowdown')GV.oy-=st;else if(k==='a'||k==='arrowleft')GV.ox+=st;else if(k==='d'||k==='arrowright')GV.ox-=st;else return;guClamp();guRedraw();});}}
 function guTip(h,mx,my){const t=document.getElementById('gTip');if(!t)return;if(h<0||!GCM.P[h]){t.style.display='none';return;}const p=GCM.P[h];let html;
   if(p.sea){html='<b>'+p.n+'</b><br>'+(p.ck?'<span style="color:#ff9d8e">Chokepoint strait</span><br>':'')+'Sea zone · crossing takes '+p.cost+' turn'+(p.cost>1?'s':'');}
   else{const st=GC.prov[h],N=GCM.nats.get(st.o);html='<b>'+p.n+'</b> <span style="opacity:.7">'+N.name+'</span><br>'+guTerrName(p.t)+' · towns '+p.tw+(p.oil?' · oil':'')+(p.farm?' · farms':'')+(p.mine?' · mines':'')+(p.port?' · port':'')+'<br>Garrison '+st.gar.length+(st.o===GC.me?' · unrest '+Math.round(st.un)+'%':'')+(p.cap?'<br><span style="color:#ffd24a">Capital</span>':GC.nat[st.o]&&GC.nat[st.o].wg.includes(h)?'<br><span style="color:#ffd24a">War goal</span>':'');}
   t.innerHTML=html;t.style.display='block';t.style.left=Math.min(GV.w-270,mx+14)+'px';t.style.top=Math.min(GV.h-110,my+14)+'px';}
 function guTerrName(t){return {d:'Desert',m:'Mountains',f:'Farmland',u:'Urban',j:'Jungle/green',s:'Snow/tundra',c:'Coast',r:'River plain',w:'Sea'}[t]||t;}
-function guClick(mx,my){for(const c of GV.chips.slice().reverse())if(mx>=c.x&&mx<=c.x+c.w&&my>=c.y&&my<=c.y+c.h){const a=GC.armies.find(x=>x.id===c.aid);GV.selA=c.aid;if(a)GV.sel=a.at;guSide();guRedraw();return;}
+function guClick(mx,my){if(GV.g3){g3Click(mx,my);return;}for(const c of GV.chips.slice().reverse())if(mx>=c.x&&mx<=c.x+c.w&&my>=c.y&&my<=c.y+c.h){const a=GC.armies.find(x=>x.id===c.aid);GV.selA=c.aid;if(a)GV.sel=a.at;guSide();guRedraw();return;}
   const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);GV.sel=h;if(GV.selA){const a=GC.armies.find(x=>x.id===GV.selA);if(!a||a.at!==h)GV.selA=0;}guSide();guRedraw();}
 function guRight(ev){if(GC.ph!=='plan'||GV.busy||!GV.selA)return;const r=GV.cv.getBoundingClientRect(),[wx,wy]=guToWorld(ev.clientX-r.left,ev.clientY-r.top),h=guProvAt(wx,wy);if(h<0)return;guMoveTo(GV.selA,h);}
 function guMoveTo(aid,h){const res=grOrderMove(aid,h);if(res.err){GV.hint=res.err;guHint();return;}
@@ -109,7 +109,7 @@ function guMoveTo(aid,h){const res=grOrderMove(aid,h);if(res.err){GV.hint=res.er
 function guHint(){const e=document.getElementById('gHint');if(e)e.textContent=GV.hint||'';}
 
 // ---------- top bar, side panel, log ----------
-function grandMapRefresh(){GV.dirty=true;guTop();guSide();guLog();guRedraw();if(GC&&GC.over)guOver();}
+function grandMapRefresh(){if(GV.g3)g3Refreshed();GV.dirty=true;guTop();guSide();guLog();guRedraw();if(GC&&GC.over)guOver();}
 function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const me=GC.me?GC.nat[GC.me]:null,N=GC.me?grNat(GC.me):null;
   const score=GC.me?grScore(GC.me):0;
   t.innerHTML='';if(N){t.appendChild(guEl('span','display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #fff;background:'+N.color));t.appendChild(guEl('b','font-size:17px',GCM.nats.get(GC.me).name));}
@@ -119,7 +119,7 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   const rg=guEl('span','display:flex;gap:4px;flex-wrap:wrap;margin-left:auto');for(const [nm,r] of GR_REGIONS){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#dfe8f0;cursor:pointer;font-size:13px',nm);b.type='button';b.onclick=()=>{guFit(r);guRedraw();};rg.appendChild(b);}t.appendChild(rg);
   const end=guEl('button','padding:7px 18px;border-radius:6px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px;font-weight:bold',GC.ph==='plan'?'End turn ▶':'Resolving…');end.id='gEnd';end.type='button';end.disabled=GC.ph!=='plan'||!!GC.over;end.title='Enter';end.onclick=guEndTurn;t.appendChild(end);
   const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);}
-function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();grEndTurn(false);GV.busy=0;grandMapRefresh();}
+function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();}
 function guProvArmies(pi){return GC.armies.filter(a=>a.at===pi);}
 function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.innerHTML='';const pi=GV.sel;if(pi<0||!GCM.P[pi]){s.innerHTML='<div style="opacity:.7;line-height:1.6">Click a province to see it.<br>Select an army (click its flag), then <b>right-click</b> a province to march there. Armies cross seas between ports; oceans take several turns.<br>Press <b>Enter</b> or the green button to end the turn: everyone moves at once.</div>';return;}
   const p=GCM.P[pi];if(p.sea){s.innerHTML='<h2 style="margin:0 0 4px;font-size:19px">'+p.n+'</h2><div style="opacity:.8">Sea zone · '+p.cost+' turn'+(p.cost>1?'s':'')+' to cross'+(p.ck?'<br><span style="color:#ff9d8e">Chokepoint: whoever holds it will control trade (stage 2).</span>':'')+'</div>'+guArmyRows(pi);guBindArmies(s,pi);return;}
@@ -165,7 +165,7 @@ function guWithdraw(b){const me=GC.me;if(b.an===me){grBattleDone(b,'def','retrea
   grandMapRefresh();}
 // ---------- end of campaign ----------
 function guOver(){if(document.getElementById('gOver'))return;const win=GC.over==='win';const m=guModal('<div style="opacity:.7;font-size:13px">GRAND CAMPAIGN · TURN '+Math.min(GC.turn,GC.maxTurn)+'</div><h1 style="margin:2px 0 8px;font-size:30px;color:'+(win?'#9fd36b':'#e07a6a')+'">'+(win?'Victory':'Defeat')+'</h1><div style="line-height:1.5;margin-bottom:12px">'+GC.res+'</div>',[['Main menu',()=>{grClear();grandClose();},1],['Keep looking at the map',()=>{GC.me=null;grSave();},0]]);m.id='gModal';const d=guEl('span');d.id='gOver';m.appendChild(d);}
-function grandClose(){const e=document.getElementById('grandScreen');if(e)e.remove();const m=document.getElementById('gModal');if(m)m.remove();GV.cv=null;GV.img=null;try{$('menu').hidden=false;}catch(e){}}
+function grandClose(){g3Dispose();GV.g3=false;const e=document.getElementById('grandScreen');if(e)e.remove();const m=document.getElementById('gModal');if(m)m.remove();GV.cv=null;GV.img=null;try{$('menu').hidden=false;}catch(e){}}
 
 // ---------- menu: Grand campaign (Continue / New) ----------
 function grandMenu(){grMap();const saved=(()=>{try{return JSON.parse(localStorage.getItem(GR_KEY));}catch(e){return null;}})(),root=campEl('div');

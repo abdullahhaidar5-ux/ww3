@@ -17,14 +17,14 @@ const RMOD={t90:{m:'m_t90',fit:'z',size:40},hilux:{m:'m_hilux',fit:'z',size:30,e
   oplot:{m:'m_oplot',fit:'z',size:40},t72:{m:'m_t72',fit:'z',size:40},t62:{m:'m_t62',fit:'z',size:39},t55:{m:'m_t55',fit:'z',size:37},leo2:{m:'m_leo2',fit:'z',size:41},
   ural:{m:'m_ural',fit:'z',size:36},m35:{m:'m_m35',fit:'z',size:36},humvee:{m:'m_humvee',fit:'z',size:27},uh60:{m:'m_uh60',fit:'z',size:70},mi8:{m:'m_mi8',fit:'z',size:76}};
 const RMAP={tank:{RU:'t90',KP:'t90',IR:'t90',UA:'t90',CN:'t90',IN:'t90',EG:'t90',SY:'t90',PK:'t90',CU:'t90',RS:'hilux',DW:'hilux'},dozer:{},
-  heli:{US:'apache',IL:'apache',EU:'apache',SA:'apache',AE:'apache',EG:'apache',IQ:'mi28',SY:'mi24',KR:'apache',TR:'apache',IN:'apache',PK:'apache',RU:'mi24',KP:'mi24',IR:'mi24',CN:'mi24',UA:'mi24',CU:'mi24',RS:'mi24',DW:'mi24'},
-  jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',IQ:'f16',SY:'mig29',CU:'mig29',RS:'mig29',DW:'mig29'}};
-for(const f of ['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW'])RMAP.dozer[f]='jd550';
+  heli:{US:'apache',IL:'apache',EU:'apache',SA:'apache',AE:'apache',EG:'apache',IQ:'mi28',SY:'mi24',GB:'apache',AU:'apache',CA:'uh60',KR:'apache',TR:'apache',IN:'apache',PK:'apache',RU:'mi24',KP:'mi24',IR:'mi24',CN:'mi24',UA:'mi24',CU:'mi24',RS:'mi24',DW:'mi24'},
+  jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',IQ:'f16',GB:'typhoon',AU:'f18',CA:'f18',SY:'mig29',CU:'mig29',RS:'mig29',DW:'mig29'}};
+for(const f of ['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW','GB','AU','CA'])RMAP.dozer[f]='jd550';
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
 // and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
-const WESTVEH=['US','TR','IL','EU','SA','AE','KR','EG','IQ'],EASTVEH=['RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY'];
-Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',IL:'merkava',EU:'kf51',TR:'kf51'});
+const WESTVEH=['US','TR','IL','EU','SA','AE','KR','EG','IQ','GB','AU','CA'],EASTVEH=['RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY'];
+Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',GB:'kf51',AU:'abrams',CA:'kf51',IL:'merkava',EU:'kf51',TR:'kf51'});
 // Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
 // Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
 // China keeps the T-90, South Korea the Abrams-like K1 stand-in)
@@ -45,7 +45,7 @@ RMAP.ship={};RMAP.boat={IR:'spb',RS:'spb',DW:'spb'};RMAP.fast={};for(const f in 
 Object.assign(RMOD,{subw:{m:'m_subw',fit:'z',size:84,dy:-2.6,tint:'#2f363b',tk:.82},sube:{m:'m_sube',fit:'z',size:80,dy:-2.4,tint:'#242b31',tk:.7},subm:{m:'m_subm',fit:'z',size:58,dy:-2,tint:'#303a38',tk:.95},cbat:{m:'m_cbat',fit:'z',size:40}});
 RMAP.sub={};for(const f of WESTVEH)RMAP.sub[f]='subw';for(const f of ['RU','KP','UA','CN','IN','CU','PK'])RMAP.sub[f]='sube';for(const f of ['IR','RS','DW'])RMAP.sub[f]='subm';
 RMAP.coast={};for(const f of [...WESTVEH,...EASTVEH])RMAP.coast[f]='cbat';
-for(const f of ['US','IL','TR','KR','SA','AE','EG','IQ','SY'])RMAP.ship[f]='frw';RMAP.ship.EU='frg';
+for(const f of ['US','IL','TR','KR','SA','AE','EG','IQ','SY','GB','AU','CA'])RMAP.ship[f]='frw';RMAP.ship.EU='frg';
 for(const f of ['RU','CN','KP','UA','IN','PK','CU','IR','RS','DW'])RMAP.ship[f]='fre';
 // the nation's own truck model, if it has arrived (AA trucks and rocket launchers are built on it)
 // their paint textures are dark (woodland camo, weathering): brightened so the national paint reads like the other vehicles'
@@ -54,14 +54,14 @@ const TEXB={m_abrams:2,m_merkava:2,m_kf51:1.6,m_msta:2.2,m_ural:1.9,m_m35:2.2,m_
 const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 // Infantry: three realistic rigged soldiers (Western desert-camo marine, Eastern green-camo, Middle-Eastern/militia woodland
 // fatigues) shared by the 18 nations; national colour is a tint over the camo. 'soldier' is the old stand-in.
-const SOLV={US:'sol_w',EU:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
+const SOLV={US:'sol_w',EU:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
 const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:58},barracks:{m:'b_barr_me',size:54},factory:{m:'b_fact_me',size:62}};
 function isSol(k){return k==='soldier'||(typeof k==='string'&&k.startsWith('sol_'));}
 function solKey(f){return SOLV[f]||'sol_w';}
 function truckKey(f){const rk=RMAP.harv[f];return rk&&MODELS.proto[RMOD[rk].m]?RMOD[rk].m:'truck';}
 const MIL_TANK={RS:{m:'technical',fit:'z',size:29},DW:{m:'technical',fit:'z',size:29},IM:{m:'toontank',fit:'z',size:32}};
-for(const f of ['US','IL','EU','SA','AE','EG','IQ','KR','TR','CN','PK','IN'])MIL_TANK[f]={m:'tankE',fit:'long',size:37};
+for(const f of ['US','IL','EU','SA','AE','EG','IQ','KR','TR','CN','PK','IN','GB','AU','CA'])MIL_TANK[f]={m:'tankE',fit:'long',size:37};
 const PROPS={container:{fit:'x',size:28},containerG:{fit:'x',size:30},crate:{fit:'y',size:8},barrel:{fit:'y',size:8},sandbag:{fit:'x',size:16},watertower:{fit:'y',size:56},tent:{fit:'x',size:50},pallet:{fit:'x',size:10},fence:{fit:'x',size:24},missile:{fit:'y',size:26},sam:{fit:'y',size:24}};
 // The models are separate files next to the page (models/<key>.<hash>.glb.gz, listed in MODEL_FILES by orch/build.py).
 // A battle only waits for the models it can show: the shared ones (buildings, props, trees, infantry, generic vehicles)
@@ -205,6 +205,7 @@ const FLOOK={
   AE:{veh:'#c6b088',ca:'#a58e66',cb:'#83704f',uni:'#b6a27c',pat:0}, PK:{veh:'#6b6a48',ca:'#8b7a55',cb:'#3d3a2a',uni:'#77714f',pat:0},
   IN:{veh:'#6a6d48',ca:'#4b3e2a',cb:'#9e9468',uni:'#6f6f4f',pat:4}, CN:{veh:'#5c6a46',ca:'#3f4a33',cb:'#7d8662',uni:'#5e6a4c',pat:1},
   KP:{veh:'#4e5636',ca:'#3a3826',cb:'#2a2a20',uni:'#575c3e',pat:3}, KR:{veh:'#535d3c',ca:'#45392a',cb:'#2a2b23',uni:'#5d6347',pat:1},
+  GB:{veh:'#6e6f4c',ca:'#8a7a52',cb:'#3f4630',uni:'#7a7a56',pat:0}, AU:{veh:'#a89466',ca:'#7c8456',cb:'#5c4e32',uni:'#a4966a',pat:0}, CA:{veh:'#4f5a3a',ca:'#2f3a26',cb:'#8a7e5a',uni:'#56603f',pat:1},
   EG:{veh:'#c1a97b',ca:'#9d855b',cb:'#7a6644',uni:'#ae976d',pat:3}, IQ:{veh:'#b9a57a',ca:'#8e7a52',cb:'#5f5a3a',uni:'#9c8f66',pat:3}, SY:{veh:'#8e8a62',ca:'#6a5e3c',cb:'#3f4630',uni:'#7c7a54',pat:0}, CU:{veh:'#59603f',ca:'#3e3a28',cb:'#7d7a55',uni:'#5f6345',pat:3},
   RS:{veh:'#8c7356',ca:'#5c4a37',cb:'#3a3027',uni:'#4a4f34',pat:2}, DW:{veh:'#c4a774',ca:'#9a7f56',cb:'#6e5b3e',uni:'#b7a47a',pat:2},
   IM:{veh:'#6a6a58',ca:'#4d4b3f',cb:'#8a8672',uni:'#6c6b57'}};
@@ -214,7 +215,7 @@ const FLOOK={
 const CAMOX={US:{p:1,s:1.15,c:'#d6c9a4',t:'#3e5a8a',w:3},TR:{p:1,s:.85,c:'#6f6a4a',t:'#c8102e',w:4},IL:{p:3,s:1,c:'#8f8c7c',t:'#1f5fbf',w:4},EU:{p:4,s:1,c:'#2b3a22',t:'#2c4fa0',w:3},
   UA:{p:1,s:1.35,c:'#7a7a52',t:'#e1b80d',w:3},RU:{p:0,s:.7,c:'#8a8f6a',t:'#b22222',w:2},IR:{p:0,s:1.2,c:'#c4b48c',t:'#1f8a8a',w:1},SA:{p:6,s:1,c:'#e3d6b4',t:'#0f6b3a',w:4},
   AE:{p:3,s:1,c:'#cbb991',t:'#00843d',w:4},PK:{p:0,s:.95,c:'#5a6a3c',t:'#0b6b2b',w:4},IN:{p:5,s:1,c:'#7d7653',t:'#e07b14',w:4},CN:{p:1,s:1.6,c:'#46553a',t:'#c8102e',w:2},
-  KP:{p:3,s:1,c:'#4c5434',t:'#c8102e',w:5},KR:{p:1,s:1.1,c:'#3c4530',t:'#1f3f9a',w:2},EG:{p:6,s:1.1,c:'#ddd0aa',t:'#b8862b',w:4},IQ:{p:6,s:1.05,c:'#d6c79c',t:'#2f6b3a',w:4},SY:{p:0,s:1,c:'#b9aa80',t:'#a8352f',w:3},CU:{p:0,s:1.5,c:'#4a5a34',t:'#1e4fa0',w:3},
+  KP:{p:3,s:1,c:'#4c5434',t:'#c8102e',w:5},KR:{p:1,s:1.1,c:'#3c4530',t:'#1f3f9a',w:2},GB:{p:0,s:1,c:'#8a7a52',t:'#c8102e',w:3},AU:{p:0,s:1.1,c:'#b8a478',t:'#00843d',w:3},CA:{p:1,s:1,c:'#4f5a3a',t:'#d52b1e',w:3},EG:{p:6,s:1.1,c:'#ddd0aa',t:'#b8862b',w:4},IQ:{p:6,s:1.05,c:'#d6c79c',t:'#2f6b3a',w:4},SY:{p:0,s:1,c:'#b9aa80',t:'#a8352f',w:3},CU:{p:0,s:1.5,c:'#4a5a34',t:'#1e4fa0',w:3},
   RS:{p:2,s:1,c:'#2a2620',t:'#c9a227',w:1},DW:{p:2,s:.8,c:'#7c5a36',t:'#4a2f1c',w:1},IM:{p:3,s:1,c:'#6a6a58',t:'#888',w:0}};
 /* Each air force's real paint (Abdullah: realistic, never bright): b = base, p = pattern (0 blotch camo, 1 digital,
    3 plain), a/m/c = the camo colours; h = the helicopter scheme. Grey jets for the western/Gulf/Asian air forces,
@@ -229,7 +230,7 @@ const AIRX={US:{b:'#7f878d',p:3,h:{b:'#3e4335',p:3}},RU:{b:'#8f9ead',p:0,a:'#6c7
   KP:{b:'#596040',p:3,h:{b:'#4f5639',p:3}},CU:{b:'#666a4c',p:0,a:'#5a4c36',m:'#454a33',c:'#787a5a',s:1,h:{b:'#565c3e',p:3}},
   CN:{b:'#7c8a97',p:3,h:{b:'#59624a',p:3}},IN:{b:'#878d91',p:3,h:{b:'#575d47',p:3}},PK:{b:'#8a9095',p:3,h:{b:'#5b6045',p:3}},
   TR:{b:'#838a8e',p:3,h:{b:'#575d47',p:3}},EU:{b:'#80878b',p:3,h:{b:'#4b5143',p:3}},KR:{b:'#858b8f',p:3,h:{b:'#4f5541',p:3}},
-  SA:{b:'#8b9194',p:3,h:{b:'#b8a37e',p:3}},AE:{b:'#b7a17a',p:0,a:'#8f7a57',m:'#a08a64',c:'#c6b38f',s:1.1,h:{b:'#b8a37e',p:3}},EG:{b:'#8d9396',p:3,h:{b:'#b09a74',p:3}},IQ:{b:'#9a9a8c',p:3,h:{b:'#b4a27a',p:3}},SY:{b:'#8f8c80',p:3,h:{b:'#a89874',p:3}}};
+  SA:{b:'#8b9194',p:3,h:{b:'#b8a37e',p:3}},AE:{b:'#b7a17a',p:0,a:'#8f7a57',m:'#a08a64',c:'#c6b38f',s:1.1,h:{b:'#b8a37e',p:3}},GB:{b:'#7d8388',p:3,h:{b:'#4f5541',p:3}},AU:{b:'#868c90',p:3,h:{b:'#4f5541',p:3}},CA:{b:'#7f858a',p:3,h:{b:'#4b5143',p:3}},EG:{b:'#8d9396',p:3,h:{b:'#b09a74',p:3}},IQ:{b:'#9a9a8c',p:3,h:{b:'#b4a27a',p:3}},SY:{b:'#8f8c80',p:3,h:{b:'#a89874',p:3}}};
 const AIRKEY=/^(jet|heli)$|^m_(su35|f15|f16|f18|j10|mig29|rafale|typhoon|ah1|apache|ka52|mi24|mi28|mi8|uh60)$/,HELIKEY=/^heli$|^m_(ah1|apache|ka52|mi24|mi28|mi8|uh60)$/;
 function airScheme(key,team){if(!team||!team.fac||!AIRKEY.test(key))return null;const X=AIRX[team.fac];if(!X)return null;return HELIKEY.test(key)?X.h:X;}
 function airCamoFreq(key){const P=MODELS.proto[key];if(!P)return 0;if(P._acf!=null)return P._acf;P.scene.updateMatrixWorld(true);let mx=0;P.scene.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();const sz=o.geometry.boundingBox.getSize(new THREE.Vector3());mx=Math.max(mx,sz.x,sz.y,sz.z);}});return P._acf=mx>0?3.2/mx:0;}
@@ -277,6 +278,9 @@ function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=doc
     case 'KP':rect('#024fa2',0,0,W,H);rect('#fff',0,13,W,4);rect('#fff',0,H-17,W,4);rect('#ed1c27',0,17,W,H-34);circ(40,36,14,'#fff');star(40,36,13,'#ed1c27');break;
     case 'KR':rect('#fff',0,0,W,H);x.fillStyle='#cd2e3a';x.beginPath();x.arc(60,36,15,Math.PI,0);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(60,36,15,0,Math.PI);x.fill();circ(52.5,36,7.5,'#cd2e3a');circ(67.5,36,7.5,'#0047a0');
       x.save();for(const [cx,cy,ang] of [[24,14,.59],[96,58,.59],[96,14,-.59],[24,58,-.59]]){x.save();x.translate(cx,cy);x.rotate(ang);for(let b=0;b<3;b++)rect('#000',-9,-7+b*5,18,3);x.restore();}x.restore();break;
+    case 'GB':rect('#012169',0,0,W,H);x.strokeStyle='#fff';x.lineWidth=12;x.beginPath();x.moveTo(0,0);x.lineTo(W,H);x.moveTo(W,0);x.lineTo(0,H);x.stroke();x.strokeStyle='#c8102e';x.lineWidth=5;x.beginPath();x.moveTo(0,0);x.lineTo(W,H);x.moveTo(W,0);x.lineTo(0,H);x.stroke();rect('#fff',W/2-10,0,20,H);rect('#fff',0,H/2-10,W,20);rect('#c8102e',W/2-6,0,12,H);rect('#c8102e',0,H/2-6,W,12);break;
+    case 'AU':rect('#012169',0,0,W,H);x.save();x.beginPath();x.rect(0,0,W/2,H/2);x.clip();x.scale(.5,.5);x.strokeStyle='#fff';x.lineWidth=12;x.beginPath();x.moveTo(0,0);x.lineTo(W,H);x.moveTo(W,0);x.lineTo(0,H);x.stroke();x.strokeStyle='#c8102e';x.lineWidth=5;x.beginPath();x.moveTo(0,0);x.lineTo(W,H);x.moveTo(W,0);x.lineTo(0,H);x.stroke();rect('#fff',W/2-10,0,20,H);rect('#fff',0,H/2-10,W,20);rect('#c8102e',W/2-6,0,12,H);rect('#c8102e',0,H/2-6,W,12);x.restore();star(30,54,8,'#fff',7);for(const [a,b,r] of [[84,14,5],[98,30,5],[84,56,5],[70,34,5]])star(a,b,r,'#fff');break;
+    case 'CA':rect('#d52b1e',0,0,W,H);rect('#fff',W/4,0,W/2,H);x.fillStyle='#d52b1e';x.beginPath();x.moveTo(60,12);x.lineTo(65,26);x.lineTo(75,22);x.lineTo(71,40);x.lineTo(78,44);x.lineTo(62,50);x.lineTo(62,62);x.lineTo(58,62);x.lineTo(58,50);x.lineTo(42,44);x.lineTo(49,40);x.lineTo(45,22);x.lineTo(55,26);x.closePath();x.fill();break;
     case 'EG':hs(['#ce1126','#ffffff','#000000']);x.fillStyle='#c09300';x.beginPath();x.moveTo(60,27);x.lineTo(68,36);x.lineTo(64,46);x.lineTo(56,46);x.lineTo(52,36);x.closePath();x.fill();break;
     case 'IQ':hs(['#ce1126','#ffffff','#000000']);x.fillStyle='#007a3d';x.font='bold 15px serif';x.textAlign='center';x.fillText('\u0627\u0644\u0644\u0647 \u0623\u0643\u0628\u0631',60,41);break;
     case 'SY':hs(['#007a3d','#ffffff','#000000']);for(const sx of [44,60,76])star(sx,36,5,'#ce1126');break;
@@ -749,7 +753,7 @@ function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
     if(!S.im)continue;const im=S.im;let i=0;
     for(const m of S.list){let q=m,v=true;while(q.parent){if(!q.visible){v=false;break;}q=q.parent;}if(!v||q!==SCN)continue;im.setMatrixAt(i,m.matrixWorld);if(S.col&&m.userData.dc)im.setColorAt(i,m.userData.dc);i++;}
     im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}}
-const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',IQ:'#5f5f3e',SY:'#5a5a3c',CU:'#2e3a2c'};   // hero squad uniform colours
+const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',IQ:'#5f5f3e',GB:'#5a5a3e',AU:'#6a6246',CA:'#434d33',SY:'#5a5a3c',CU:'#2e3a2c'};   // hero squad uniform colours
 function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='champ')c=Object.assign({},c,{tint:CHAMP_TINT[T.fac]||c.tint});if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
   if(e.kind==='aa'&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
   if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
@@ -846,7 +850,7 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
     if(MEFAC.has(T.fac)){const K=meKit(B,e.kind.length*97+s|0),h=s/2;if(e.kind==='turret'||e.kind==='sam'){const r=h+3;K.hesco(-r,-r,r,-r,4.5,3.2);K.hesco(r,-r,r,r,4.5,3.2);K.hesco(-r,-r,-r,r,4.5,3.2);K.hesco(-r,r,-5,r,4.5,3.2);K.hesco(5,r,r,r,4.5,3.2);}
       else if(s>40){K.twall(-h-3,-h+4,-h-3,-4,8);K.twall(-h+6,-h-3,h*.2,-h-3,8);K.bags(h+2,h-14,h+2,h+2,3);K.bags(h-12,h+2,h+2,h+2,3);}}
     const m=mesh(B.geo());o.add(m);P.main=m;}
-  const RT={US:'#bdb49c',EU:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];
+  const RT={US:'#bdb49c',EU:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',GB:'#b3ae98',AU:'#c3b48c',CA:'#a9ad96',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];
   for(const q of cfg.list){const rc=q.col?{color:q.col}:(RT?{color:RT}:null);const m=instModel(q.m,rc,q.fit,q.size,q.ys,q.col?q.k:(RT?.42:undefined));if(!m)continue;m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
     if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);o.add(m);}}
   if(e.kind==='coast'){// emplacement: sandbag walls round the launcher and a small radar / command truck beside the pad (visual only)
@@ -1009,7 +1013,7 @@ function jetPlumeMat(){if(jetPlumeMat.m)return jetPlumeMat.m;const cv=document.c
    decals and a small kit (flags on poles, sandbags, ERA blocks, cope cage, red stars, antennas). The mesh geometry is
    built once per model+nation and shared; textures come from one shared atlas. On Low graphics (phones) ground vehicles
    skip the kit entirely; aircraft/ships keep only the cheap decals. Visuals only - nothing here touches the simulation. */
-const KFAC=['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW'];
+const KFAC=['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW','GB','AU','CA'];
 const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=10;
 // extra atlas cells: 48-57 Persian digits (p:0..9), 58-67 Arabic-Indic digits (a:0..9), 68+ painted stencils (s:name)
 const KSTEN={shahed:68,qasef:69,ababil:70,kp:71,ru:72};
@@ -1135,7 +1139,7 @@ function kitDec(P,face,sg,a0,b0,w0,h0,cell,sub,o){o=o||{};const fa=o.fa||.8,fb=o
     return {kind:'surface',face,sg,a0,b0,w,h,cell,sub,c,n,up,fa,fb,cap:Math.max(W1,H1)*1.3,pa:pan.pa,pb:pan.pb,maxw:o.maxw,maxh:o.maxh,tag:o.tag||cell};}
   return null;}
 const NAVYP={west:'#8f989f',slav:'#6f8294',east:'#6a7e91',irgc:'#4d5a44',sand:'#a29271',olive:'#66694a'};
-function navyPaint(fac,m){const k={US:'west',IL:'west',EU:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',IQ:'west',SY:'slav',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
+function navyPaint(fac,m){const k={US:'west',IL:'west',EU:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',IQ:'west',GB:'west',AU:'west',CA:'west',SY:'slav',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
 function factionKit(e,c,o,yaw,m,T){if(!T||!T.fac||!c||!m)return;const low=typeof SET!=='undefined'&&SET.gfx==='low',fac=T.fac,k=e.kind;
   const air=k==='jet'||k==='heli'||k==='airlift',nav=k==='boat'||k==='ship'||k==='lander'||k==='sub'||k==='fast'||k==='minel'||k==='sweep',gnd=/^m_/.test(c.m)&&['tank','arty','aa','atgm','jeep','raidlead'].includes(k);
   if(!(air||nav||gnd)||(gnd&&low)||(c.squad&&c.squad.length>1))return;
