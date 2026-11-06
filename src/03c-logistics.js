@@ -147,7 +147,7 @@ function lgConvoys(st){const D=G.lgd,L=G.lg;if(!G.conq||!L.reach)return;
       if((t.dl||0)>G.t+CVY_STOCK*.55)continue;const sc=(t.dl||0)-(t.fr>0?400:0)+Math.hypot(t.x-hq.x,t.y-hq.y)*.002;if(sc<bs){bs=sc;best=t;bn=tn;}}
     if(!best)continue;const r=lgRoute(T.id,T.id,bn);if(!r||r.pts.length<2)continue;
     T.credits-=CVY_COST;const u=addUnit(T.id,'harv',r.pts[0][0],r.pts[0][1]);u.cv={ti:best.isB?-1:best.i,dp:best.isB?best.id:0,pts:r.pts,i:1,ret:0,esc:0,w:0,k:0};D.cvl.push(u.id);D.v++;}}
-function updConvoy(u,dt){const c=u.cv;c.k+=dt;
+function updConvoy(u,dt){const c=u.cv;if(c.cav)return ecCaravan(u,dt);c.k+=dt;
   if(c.k>=1){c.k=0;let n=0;for(const e of nearby(u.x,u.y,CVY_ESC,CVY_N))if(!e.dead&&!e.isB&&e!==u&&e.team>=0&&ally(e.team,u.team)&&e.s&&!e.s.noAttack&&e.kind!=='harv')n++;c.esc=n>0?1:0;}
   const P=c.pts;if(c.i>=P.length){c.rep=1;u.dead=true;return;}
   const tp=P[c.i],E=G.lgd.cr[tp[2]];if(E&&E.t>G.t){c.w+=dt;if(c.w>20&&!c.ret){c.ret=1;c.pts=P.slice(0,c.i).reverse();c.i=0;c.w=0;}return;}c.w=0;
@@ -188,7 +188,7 @@ function terrUpdate(force){if(!G.conq||!G.towns)return null;const T=terrBuild();
 function terrAt(x,y){const T=G.terr;if(!T||!T.own)return -1;const i=Math.floor(x/TR_CELL),j=Math.floor(y/TR_CELL);if(i<0||j<0||i>=T.cw||j>=T.ch)return -1;return T.own[j*T.cw+i];}
 function terrEnemy(team,x,y){const o=terrAt(x,y);return o>=0&&!ally(o,team);}
 // ---- network packs (host -> clients, only the dynamic part; lives in teamGlobals) ----
-function lgPack(){const D=G.lgd;if(!D)return 0;lgFix(D);const L=G.lg,B=G.map.bridges||[],dy=[];for(let j=L.nS;j<L.N.length;j++){const e=G.byId.get(L.N[j].e);if(e)dy.push(e);}return{rb:D.rb.map(r=>[r.a,r.b,r.team,r.pts.flat(),r.dp||0]),mn:D.mn.map(m=>[m.id,m.team,m.x,m.y]),ck:D.ck.map(q=>[q.id,q.team,q.x,q.y,q.ei]),pt:D.pt.map(p=>[p.x,p.y,p.h,p.nx,p.ny,p.team]),bv:D.bv,bd:Object.keys(D.bd).map(k=>{const q=D.bd[k],c=q.ch;return[+k,q.dead?1:0,q.hp==null?100:Math.round(100*q.hp/lgBrMax(B[k])),c?Math.max(0,Math.ceil(c.t-G.t)):-1,c?c.team:-1,c?c.x:0,c?c.y:0];}),dc:dy.filter(e=>e.lcut).map(e=>e.id),ds:dy.filter(e=>e.dl>G.t).map(e=>e.id),pb:dy.filter(e=>e.blk).map(e=>e.id),al:G.towns.filter(t=>t.al).map(t=>t.i),cr:Object.keys(D.cr).map(k=>[+k,D.cr[k].x,D.cr[k].y,Math.round(D.cr[k].t-G.t)]),jb:D.job.map(j=>[j.id,j.team,j.a,j.b,Math.round(j.len),Math.round(j.prog/20)*20,j.pts.flat()]),cu:G.towns.filter(t=>t.cut).map(t=>t.i),tr:G.towns.filter(t=>t.trade).map(t=>t.i),cv:G.ents.filter(e=>e.cv&&!e.dead).map(e=>e.id),sk:G.towns.filter(t=>t.ow>=0&&t.dl>G.t).map(t=>t.i)};}
+function lgPack(){const D=G.lgd;if(!D)return 0;lgFix(D);const L=G.lg,B=G.map.bridges||[],dy=[];for(let j=L.nS;j<L.N.length;j++){const e=G.byId.get(L.N[j].e);if(e)dy.push(e);}return{rb:D.rb.map(r=>[r.a,r.b,r.team,r.pts.flat(),r.dp||0]),mn:D.mn.map(m=>[m.id,m.team,m.x,m.y]),ck:D.ck.map(q=>[q.id,q.team,q.x,q.y,q.ei]),pt:D.pt.map(p=>[p.x,p.y,p.h,p.nx,p.ny,p.team]),bv:D.bv,bd:Object.keys(D.bd).map(k=>{const q=D.bd[k],c=q.ch;return[+k,q.dead?1:0,q.hp==null?100:Math.round(100*q.hp/lgBrMax(B[k])),c?Math.max(0,Math.ceil(c.t-G.t)):-1,c?c.team:-1,c?c.x:0,c?c.y:0];}),dc:dy.filter(e=>e.lcut).map(e=>e.id),ds:dy.filter(e=>e.dl>G.t).map(e=>e.id),pb:dy.filter(e=>e.blk).map(e=>e.id),al:G.towns.filter(t=>t.al).map(t=>t.i),cr:Object.keys(D.cr).map(k=>[+k,D.cr[k].x,D.cr[k].y,Math.round(D.cr[k].t-G.t)]),jb:D.job.map(j=>[j.id,j.team,j.a,j.b,Math.round(j.len),Math.round(j.prog/20)*20,j.pts.flat()]),cu:G.towns.filter(t=>t.cut).map(t=>t.i),tr:G.towns.filter(t=>t.trade).map(t=>t.i),cv:G.ents.filter(e=>e.cv&&!e.cv.cav&&!e.dead).map(e=>e.id),sk:G.towns.filter(t=>t.ow>=0&&t.dl>G.t).map(t=>t.i)};}
 function lgApply(d){const D=G.lgd;if(!D||!d||typeof d!=='object')return;const un=a=>{const o=[];for(let i=0;i+1<a.length;i+=2)o.push([a[i],a[i+1]]);return o;};
   lgFix(D);let rs=0;if((d.rb||[]).length!==D.rb.length){D.rb=d.rb.map(r=>({a:r[0],b:r[1],team:r[2],pts:un(r[3]),dp:r[4]||0}));D.v++;rs=1;}
   D.mn=(d.mn||[]).map(m=>({id:m[0],team:m[1],x:m[2],y:m[3]}));D.ck=(d.ck||[]).map(q=>({id:q[0],team:q[1],x:q[2],y:q[3],ei:q[4],dg:[]}));
@@ -276,7 +276,8 @@ function lgCkTick(){const D=G.lgd;if(!D.ck.length)return;const ids=new Set();for
   D.ck=D.ck.filter(q=>{const ok=q.dg.some(i=>ids.has(i));if(!ok)log(q.team,'One of your road checkpoints was destroyed.','w');return ok;});if(D.ck.length!==n0)D.v++;}
 function lgToll(st){if(!G.conq||!G.lg.reach)return;const L=G.lg,D=G.lgd,got={};
   for(const q of D.ck){const T=G.teams[q.team];if(!T||T.out||T.reb)continue;const e=L.E[q.ei],r=L.reach[q.team];if(e&&r&&r[e.a]&&r[e.b])T.credits+=LG_TOLL*st;}
-  for(let j=L.nS;j<L.N.length;j++){const nd=L.N[j];if(!nd.port||got[nd.tm])continue;const e=G.byId.get(nd.e);if(!e||e.blk)continue;got[nd.tm]=1;const T=G.teams[nd.tm];if(T&&!T.out&&!T.reb)T.credits+=LG_SEA*st;}
+  for(let j=L.nS;j<L.N.length;j++){const nd=L.N[j];if(!nd.port)continue;const e=G.byId.get(nd.e);if(!e||e.blk)continue;const gk=got[nd.tm]|0;got[nd.tm]=gk+1;const T=G.teams[nd.tm];if(T&&!T.out&&!T.reb){const v=LG_SEA*(gk?.5:1)*(G.bs||1);T.credits+=v*st;T._sr=(T._sr||0)+v;}}
+  for(const T of G.teams){T.seaR=T._sr||0;T._sr=0;}
   for(let j=L.nS;j<L.N.length;j++){const nd=L.N[j];if(nd.port)continue;const e=G.byId.get(nd.e);if(!e||!(e.dl>G.t))continue;
     for(const u of nearby(e.x,e.y,SUP_R.depot,LG_N))if(!u.dead&&!u.isB&&u.team===e.team&&u.hp<u.max&&u.s&&u.s.dom==='ground'&&G.t-(u.lastHit||-99)>6&&Math.hypot(u.x-e.x,u.y-e.y)<SUP_R.depot)u.hp=Math.min(u.max,u.hp+u.max*.006*st);}}
 // ---- mines: checked every step (vehicles are fast) ----
