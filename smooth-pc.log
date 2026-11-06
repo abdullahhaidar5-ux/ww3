@@ -1,0 +1,21 @@
+[0s] pc: launching browser
+[0s] ctx
+[0s] guarded
+[0s] page
+[0s] pc: loading page
+[1s] pc: page loaded
+[61s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) could not run: page.waitForFunction: Timeout 60000ms exceeded.
+[61s] pc: launching browser
+[61s] ctx
+[61s] guarded
+[61s] page
+[61s] pc: loading page
+[61s] pc: page loaded
+[122s] pc attempt 2: REGRESSED
+
+                       pc        
+runtime 2.0 min
+
+SMOOTH FAIL: 1 problem(s)
+  - pc: could not run: page.waitForFunction: Timeout 60000ms exceeded.
