@@ -189,11 +189,11 @@ const FACTIONS={
   CU:F_('CU','Cuba','#2b59c3','es-CU','latin','Revolutionary fervour: everything costs 20% less but units have 10% fewer hit points; Grad rockets cost 20% less.',{cost:.8,hp:.9},'hacker',
     {inf:{name:'Revolutionary Infantry'},at:{name:'RPG Team'},hacker:{name:'Cyber Brigade'},aa:{name:'ZSU-23-4 Shilka'},tank:{name:'T-62 Tank'},arty:{name:'BM-21 Grad',rocket:true,splash:70,dmg:55,rof:3},heli:{name:'Mi-24 Hind'},jet:{name:'MiG-29 Fulcrum'},boat:{name:'Osa Missile Boat'},ship:{name:'Koni Frigate'}},
     {name:'Missile Bombardment',charge:160,n:6,dmg:490,r:80,spread:160},'guerrilla'),
-  RS:F_('RS','Mountain Shias','#b3262c','ar-LB','mideast','Drones, rockets and fortresses: the cheapest, toughest loitering drones, longer-ranged rocket launchers that fire faster, defence guns and tunnels that are far stronger, and infantry that dig in (30% less damage holding position). No air force or navy.',{cost:1,dugIn:.7},'hacker',
+  RS:F_('RS','Mountain Shias','#b3262c','ar-LB','mideast','The Lebanese mountain Shia resistance: stone villages of Bint Jbeil and the Bekaa, Ashura banners and Ya Hussein walls, rocket barrages, cheap strong drones, ATGM ambush teams, tunnels and mountain forts. Longer-ranged rockets that fire faster, far stronger defence guns and tunnels, infantry that dig in (30% less damage holding position). No air force or navy.',{cost:1,dugIn:.7},'hacker',
     Object.assign(MIL_UNITS({inf:'Mountain Guard',boat:'Fast Attack Skiff'}),{inf:{name:'Mountain Guard',hp:150},at:{name:'Mountain RPG Team',hp:140,rng:205},hacker:{name:'Signal Jammers'},
       drone:{name:'Shahed-136',cost:225,hp:100,spd:135,dmg:260,splash:72},arty:{name:'Medium Rocket Launcher',rocket:true,hp:260,rng:470,minr:90,dmg:68,splash:66,rof:3.2,cost:750,time:10}}),
     {name:'Mountain Rocket Storm',charge:150,n:14,dmg:300,r:65,spread:230},'bunkers',{extra:['drone'],noAir:true,noShip:true,militia:true}),
-  DW:F_('DW','Coffee Shias','#c8a46e','ar-YE','mideast','Technical raiders: tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 13% faster and cost 8% less. No air force.',{spd:1.13,cost:.92},'hero',
+  DW:F_('DW','Coffee Shias','#c8a46e','ar-YE','mideast','Yemeni highland raiders: tower-house towns of Sana\'a and the Sarawat, coffee terraces and Red Sea coast. Tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 13% faster and cost 8% less. No air force.',{spd:1.13,cost:.92},'hero',
     Object.assign(MIL_UNITS({inf:'Wolf Raiders',boat:'Raider Speedboat'}),{hero:{name:'Ghost Raider',demo:true},
       tank:{name:'Raider Technical',hp:370,spd:96,dmg:26,rof:.28,wpn:'gun',aa:1,cost:500,time:5},aa:{name:'ZU-23 Technical',hp:320,cost:400,spd:90},
       arty:{name:'Long-Range Rocket Truck',rocket:true,hp:280,rng:620,minr:120,dmg:74,splash:72,rof:4.2,cost:900,time:11}}),
@@ -226,6 +226,58 @@ const SPECIAL_TIP={atgm:()=>'Long-range wire-guided anti-tank missiles: outrange
   ew:u=>'Jams drones and guided weapons: nearby enemy drones burn out and aircraft and missiles do half damage to your units nearby. Enemies near it lose their minimap there. Radar spoof (button): fake attackers on enemy radar for 20 s.',cbr:u=>'Any enemy artillery or rocket launcher that fires anywhere on the map is revealed to you for 10 seconds.',
   jeep:u=>u.airSpot?'Fast recon patrol with long sight that guides the air force: enemies it can see take 30% more damage from your aircraft.':'Fast recon patrol with long sight.',raidlead:u=>'Nearby vehicles move 20% faster and do 20% more damage.',hacker:u=>'Disables enemy buildings; earns cash when idle.'};
 // Tunnel warfare: these factions can dig hidden Tunnel Networks. Units sent into any tunnel heal and can come out of any other.
+// ---- NEW NATIONS (nations-new1, Abdullah 2026-11-05 19:44): Iraq (IQ) and Syria (SY), national armed forces only. Built from Egypt's
+// complete table set (equal power per tier) with their own names, markings and flavour; the per-table copies happen in NAT_CLONE_TABLES below.
+const NEWNAT={
+ IQ:{base:'EG',name:'Iraq',color:'#3f7d4c',lang:'ar-IQ',doctrine:'Iraqi Army, two rivers & federal police: infantry cost 20% less and train faster, M1 Abrams tanks cost 15% less, and units fight 10% harder defending their own cities and the rivers.',mods:{infCost:.8,infTime:.85},
+  units:{inf:'Iraqi Army Squad',at:'Kornet Team',hero:'Golden Division Commando',aa:'Pantsir-S1',tank:'M1A1M Abrams',arty:'M109 Howitzer',heli:'Mi-28NE Havoc',jet:'F-16IQ Falcon',boat:'Shatt al-Arab River Boat',ship:'Ibn Khaldoun Patrol Ship'},
+  sup:{name:'Marsh Smoke',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Iraqi Army Drone Team'}],hero:['Golden Division Assault Team','demo'],
+  doct:{name:'Defence of the Two Rivers',homeland:1,shock:1},
+  pow:{name:'Reconstruction Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Oil Revenue Share'},recon:{name:'Tigris Watch',rm:.95},para:{name:'Air Assault Battalion'},barrage:{name:'Howitzer Barrage',nm:1.1,cdm:1.05},repair:{name:'Baghdad Depot Repair',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Golden Division Course','Federal Police Kit','Abrams Crew Training','Two Rivers Artillery','F-16 Integration','Havoc Maintenance','Basra Oil Revenue','Defence of the Cradle','River Patrol Refit']},
+ SY:{base:'EG',name:'Syria',color:'#a8352f',lang:'ar-SY',doctrine:'Syrian Arab Army, hardened defence: units are 8% tougher in vehicles, tanks and rocket artillery cost 12% less, and troops ambush hard from cover on their own ground (Levantine mountains, coast and plains).',mods:{vehHp:1.08,cost:.96},
+  units:{inf:'Syrian Army Squad',at:'Konkurs Team',hero:'Republican Guard Commando',aa:'ZSU-23-4 Shilka',tank:'T-72 Tank',arty:'2S1 Gvozdika',heli:'Mi-24 Hind',jet:'MiG-29 Fulcrum',boat:'Latakia Fast Attack Craft',ship:'Petya Corvette'},
+  sup:{name:'Missile Battery Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['saka',{name:'Republican Guard Assault Squad'}],hero:['Special Forces Regiment','demo'],
+  doct:{name:'Hardened Defence',homeland:1,ambush:1},
+  pow:{name:'Air Defence Umbrella',type:'shield',cd:200,r:280,desc:'Your forces in the area take 60% less damage for 20s'},
+  gp:{bounty:{name:'Spoils of Victory'},recon:{name:'Mountain Observation Posts',rm:.95},para:{name:'Heliborne Assault'},barrage:{name:'Fire Support Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Special Forces Course','Conscript Kit','Tank Crew Training','Gvozdika Fire Control','MiG Overhaul','Hind Maintenance','Levant Trade Revenue','Hardened Defence Doctrine','Coastal Patrol Refit']}};
+// ---- nations-anglo (Abdullah 2026-11-05 19:49): UK (GB), Australia (AU), Canada (CA): same NEWNAT mechanism/Egypt base as IQ/SY (equal power per tier).
+Object.assign(NEWNAT,{
+ GB:{base:'EG',name:'United Kingdom',color:'#c8102e',lang:'en-GB',doctrine:'British Armed Forces, combined arms: infantry train 15% faster and cost 10% less, Challenger tanks cost 10% less, and units fight 10% harder on home ground.',mods:{infCost:.9,infTime:.85},
+  units:{inf:'Rifle Section',at:'Javelin Team',hero:'SAS Troopers',aa:'Sky Sabre Launcher',tank:'Challenger 3',arty:'AS-90 Braveheart',heli:'AH-64E Apache',jet:'Eurofighter Typhoon',boat:'Archer-class Patrol Boat',ship:'Type 45 Destroyer'},
+  sup:{name:'Typhoon Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Royal Marines Recon Troop'}],hero:['Special Air Service','demo'],
+  doct:{name:'Combined Arms',homeland:1},
+  pow:{name:'Royal Engineers Resupply',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Defence Exports'},recon:{name:'Intelligence Sweep',rm:.95},para:{name:'Parachute Regiment Drop'},barrage:{name:'Gunner Barrage',nm:1.1,cdm:1.05},repair:{name:'REME Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Commando Course','MTP Combat Kit','Challenger Crew Training','Braveheart Fire Control','Typhoon Upgrade','Apache Maintenance','City of London Revenue','Special Relationship','Fleet Refit'],
+  uplink:'Storm Shadow Launch Centre',econ:'City of London Trading Floor',sub:'Astute-class Submarine',md:'Sky Sabre Battery',coast:'Harpoon Coastal Battery',trn:['Landing Craft Utility','Chinook HC6']},
+ AU:{base:'EG',name:'Australia',color:'#00843d',lang:'en-AU',doctrine:'Australian Defence Force, bush and coast: infantry cost 10% less, sea and air assets cost 3% less, and units fight 10% harder on their home ground.',mods:{infCost:.9,cost:.97},
+  units:{inf:'Digger Section',at:'Javelin Team',hero:'SASR Operators',aa:'NASAMS Launcher',tank:'M1A2 Abrams SEPv3',arty:'M777 Howitzer',heli:'AH-64E Apache',jet:'F-35A Lightning II',boat:'Armidale Patrol Boat',ship:'Hobart-class Destroyer'},
+  sup:{name:'Lightning Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Commando Recon Patrol'}],hero:['4th Commando Regiment','demo'],
+  doct:{name:'Defence of Australia',homeland:1},
+  pow:{name:'Outback Logistics Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Mining Boom'},recon:{name:'Coastwatch Sweep',rm:.95},para:{name:'Airborne Commandos'},barrage:{name:'Gunner Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Commando Course','AMCU Combat Kit','Abrams Crew Training','M777 Fire Control','F-35 Integration','Tiger Maintenance','Mining Revenue','Defence of the Continent','Collins Refit'],
+  uplink:'Strike Missile Command',econ:'Iron Ore Export Terminal',sub:'Collins-class Submarine',md:'NASAMS Battery',coast:'NSM Coastal Battery',trn:['Landing Craft Heavy','CH-47F Chinook']},
+ CA:{base:'EG',name:'Canada',color:'#d52b1e',lang:'en-CA',doctrine:'Canadian Armed Forces, northern defence: infantry cost 6% less, cold and forest ground is no hindrance, and units fight 10% harder defending home soil.',mods:{infCost:.94},
+  units:{inf:'Infantry Section',at:'Carl Gustaf Team',hero:'JTF2 Operators',aa:'Skyguard Launcher',tank:'Leopard 2A6M',arty:'M777 Howitzer',heli:'CH-146 Griffon',jet:'CF-18 Hornet',boat:'Kingston Patrol Boat',ship:'Halifax-class Frigate'},
+  sup:{name:'Hornet Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Canadian Rangers Patrol'}],hero:['Joint Task Force 2','demo'],
+  doct:{name:'Defence of the North',homeland:1},
+  pow:{name:'Arctic Supply Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Resource Exports'},recon:{name:'Northern Watch',rm:.95},para:{name:'Airborne Regiment Drop'},barrage:{name:'Gunner Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Commando Course','CADPAT Combat Kit','Leopard Crew Training','M777 Fire Control','CF-18 Upgrade','Griffon Maintenance','Resource Revenue','Defence of the North','Victoria Refit'],
+  uplink:'Strike Missile Command',econ:'Oil Sands Export Terminal',sub:'Victoria-class Submarine',md:'NASAMS Battery',coast:'Harpoon Coastal Battery',trn:['Landing Craft Utility','CH-147F Chinook']}});
+for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const q in B.units)u[q]=Object.assign({},B.units[q]);for(const q in N.units)u[q]=Object.assign({},u[q]||{},{name:N.units[q]});
+  FACTIONS[k]=Object.assign({},B,{code:k,name:N.name,color:N.color,lang:N.lang,doctrine:N.doctrine,mods:N.mods,units:u,sup:N.sup});
+  const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);
+  FACTIONS[k].units.champ=Object.assign({},u.champ||{},{name:N.hero[0],hab:N.hero[1]});HEROES[k]=N.hero;}
 for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctrine+=' Tunnel warfare: hidden tunnels move units across the map instantly.';}
 const FKEYS=Object.keys(FACTIONS);
 // Rock-paper-scissors: what each kind of unit beats and what beats it (shown in the unit tooltips).
@@ -423,6 +475,14 @@ const SUBN={US:'Virginia-class Submarine',TR:'Preveze-class Submarine',IL:'Dolph
 const MDN={US:'Patriot Battery',IL:'Iron Dome Battery',RU:'S-400 Triumf',CN:'HQ-9 Battery',IN:'Akash Battery',TR:'Hisar Battery',KR:'KM-SAM Battery',IR:'Bavar-373 Battery',EU:'SAMP/T Battery',UA:'NASAMS Battery',SA:'THAAD Battery',AE:'THAAD Battery',PK:'HQ-16 Battery',KP:'KN-06 Battery',EG:'S-300 Battery',CU:'S-125 Pechora Battery',RS:'Sayyad-4B Battery',DW:'Khordad-15 Battery'};   // Conquest: SAM sites are every nation's missile defence (they intercept part of a strike salvo)
 const COASTN={US:'Naval Strike Missile Battery',TR:'Atmaca Coastal Battery',IL:'Gabriel Coastal Battery',EU:'Exocet MM40 Battery',UA:'Neptune Coastal Battery',RU:'Bastion-P Coastal Battery',IR:'Noor / Qader Coastal Missiles',SA:'Harpoon Coastal Battery',AE:'Exocet Coastal Battery',PK:'Zarb Coastal Battery',IN:'BrahMos Coastal Battery',CN:'YJ-62 Coastal Battery',KP:'Kumsong Coastal Battery',KR:'Haeseong Coastal Battery',EG:'Otomat Coastal Battery',CU:'P-15 Termit Battery',RS:'Mountain Anti-Ship Rockets',DW:'Coffee Coast Rocket Battery'};
 const FASTN={IR:'Swarm Boat',RS:'Coastal Swarm Boat',DW:'Red Sea Skiff',US:'Patrol Boat',RU:'Raptor Patrol Boat',CN:'Type 022 Missile Boat',KP:'Sohae Rocket Boat',TR:'Fast Attack Craft',IL:'Shaldag Patrol Boat',UA:'Gunboat'};
+// nations-new1: copy Egypt's per-nation table rows to the new nations (names/flavour overridden from NEWNAT); other modules alias via NEWNAT[k].base.
+for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
+  for(const T of [UPLINK,ECON,COURAGE,GDOC_AI,BAL,XL,TRN,SUBN,MDN,COASTN]){if(T[b]!==undefined&&T[k]===undefined)T[k]=JSON.parse(JSON.stringify(T[b]));}
+  COURAGE[k]=1.16;NATPOW[k]=N.pow;GPOW[k]=Object.assign({},GPOW[b],N.gp);DOCT[k]=N.doct;
+  if(UPLINK[b])UPLINK[k]=[N.uplink||(k==='IQ'?'Rocket Command (Al-Faw)':'Missile Command (Qalamoun)'),UPLINK[b][1]];
+  ECON[k]=N.econ||(k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board');
+  if(N.sub)SUBN[k]=N.sub;if(N.md)MDN[k]=N.md;if(N.coast)COASTN[k]=N.coast;if(N.trn)TRN[k]=N.trn;
+  UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
 function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
