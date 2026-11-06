@@ -1,0 +1,14 @@
+desktop (1600×900, mouse)
+  FAIL page error: Unexpected token '<<'
+  FAIL page.waitForFunction: Timeout 60000ms exceeded. |     at openGame (/home/runner/work/ww3/ww3/orch/controls.mjs:78:14) |     at async file:///home/runner/work/ww3/ww3/orch/controls.mjs:214:20
+
+CONTROLS FAIL — 0/2 checks (61s); screenshots orch/out/controls-*.png
+page.waitForFunction: Timeout 120000ms exceeded.
+    at open (/home/runner/work/ww3/ww3/orch/walktest.mjs:67:14)
+    at async file:///home/runner/work/ww3/ww3/orch/walktest.mjs:184:27 {
+  log: [],
+  name: 'TimeoutError'
+}
+page error: Unexpected token '<<'
+FAIL harness: page.waitForFunction: Timeout 120000ms exceeded.
+WALKTEST FAIL (1)
