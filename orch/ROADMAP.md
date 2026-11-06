@@ -12,6 +12,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] S1 map, provinces, armies, simultaneous turns, Fight it / Auto-resolve battles with exactly your units, basic tax + unrest, save, Grand campaign menu (Missions renamed)
 - [done] S5a 3D Total War-style campaign map: real coastlines + rivers (Natural Earth), painted relief with mountains/snow, sea shader, forests/palms, 3D towns, one soldier + big national flag per army (ships at sea), move/attack arrows, name banners, army cards, minimap, 8 map modes, turn report card, battle smoke (2026-11-06)
 - [todo] S5b more living map: convoys, missile trails, burning cities after strikes (hooks ready: `GC.prov[i].burn`), GLB soldier models per nation
+- [done] S1b battles mirror the grand map: every province generates its own battle map (terrain, relief, sea side, river with bridge + ford, forests, roads, 2+ routes, army enters from its edge); towns, owners, unrest, tax, buildings and damage appear in the battle and go back
 - [next] S2 empire economy + province buildings, trade, autonomy, city chains, chokepoint and oil effects
 - [todo] S3 generals, front lines, fort zones, supply limits, map strikes, fleets and sea zones, encirclement and sieges
 - [todo] S4 events, minor nations, seasons, diplomacy and peace talks, research, cabinet, national missions, heritage and holy sites
