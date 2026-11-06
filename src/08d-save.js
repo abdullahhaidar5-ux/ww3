@@ -23,7 +23,7 @@ function svDel(id){return svTx(['meta','data'],'readwrite',tx=>{tx.objectStore('
 function svStorageMsg(e){const m=String(e&&e.message||e||'');return 'Your browser is blocking game storage ('+(m||'unknown')+'). Use "Download save" instead, or allow site data for this page.';}
 /* ---------- capture ---------- */
 function svThumb(){try{if(typeof mm==='undefined'||!mm||!mm.width)return null;const c=document.createElement('canvas');c.width=160;c.height=Math.max(1,Math.round(160*mm.height/mm.width));c.getContext('2d').drawImage(mm,0,0,c.width,c.height);return c.toDataURL('image/jpeg',.7);}catch(e){return null;}}
-function svCanSave(){return !!(G&&!G.over&&!G.rp&&MODE==='single'&&!window.LOADING&&G.ng&&!G.sandbox);}
+function svCanSave(){return !!(G&&!G.over&&!G.rp&&MODE==='single'&&!window.LOADING&&G.ng&&!G.sandbox&&!G.grand);}
 function svMeta(id,name,kind){const T=G.teams[ME]||G.teams[0],mp=MAPS[G.mapKey];return {id,name,kind,ts:Date.now(),fmt:SV_FMT,pv:NET_PV,map:G.mapKey,mapName:mp&&mp.name||G.mapKey,fac:T.fac,facName:T.F&&T.F.name||T.fac,
   t:Math.round(G.t),camp:G.camp?G.camp.id:null,n:G.teams.filter(x=>!x.reb).length,thumb:svThumb()};}
 async function svCapture(name,kind){

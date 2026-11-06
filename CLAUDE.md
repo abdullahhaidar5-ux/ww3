@@ -75,7 +75,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   shaken, forced peace talks, coups & civil war.
 - **Grand-map-only assets** (Abdullah 2026-11-05 20:58): the **Ayatollah**, the **Dear Leader**, the **Mountain Fortress** and the
   **Bunker Buster** leave the tactical (Conquest) battle and live on the grand map: Ayatollah/Dear Leader = national leader figures
-  (morale/loyalty, tour provinces, Fight-it battles there start with fervour), Mountain Fortress = a province building that
+  (morale/loyalty, tour provinces, Fight-it battles there start with fervour; their people clamour for war — high war support, slow war weariness, fast recruits, but long peace brings war-fever unrest; no capital-falls penalty — Abdullah 2026-11-06 08:11), Mountain Fortress = a province building that
   appears pre-built for the defender in that province's battles, Bunker Buster = a grand-map strike on fortified provinces.
   Zealous morale no longer depends on a cleric unit. Campaign missions keep working (scripted versions where a mission needs them).
   **Signature assets are unique, not copied** (Abdullah 21:02 "I don't like all countries having the same thing"): the clerical
@@ -120,10 +120,10 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   21:22): every army in or next to the province brings its real units (same types, counts, health, veterancy, ammo/fuel, general as
   hero); no free Conquest base or $10,000 in campaign battles — the defender also gets the province's own garrison, buildings
   and forts; no building new units in the battle (Abdullah 2026-11-06 "Army only") — armies next door arrive as reinforcement waves; survivors, damage and veterancy go back to the map, the dead are
-  gone. Standalone Conquest battles keep the normal equal start. Design/stages: `orch/reports/grand-strategy.md`; Abdullah's extra picks per stage (every grand stage
+  gone. **Battles mirror the grand map** (Abdullah 2026-11-06 08:09 "full mirror"): the Fight-it map is generated from the province (terrain, coast, rivers, forests, roads, town positions; real-place maps where they exist) and its towns match exactly both ways (names, size, owner, loyalty, buildings, damage). **Air & supply in campaign battles** (Abdullah 2026-11-06 08:08): jets come as limited sorties from grand-map airfields/carriers in range (helicopters/drones travel with the army); ammo/fuel = the army's grand-map stock, resupplied by trucks from the map edge it entered along roads (cut roads starve units; captured towns = forward supply). Standalone Conquest battles keep the normal equal start. Design/stages: `orch/reports/grand-strategy.md`; Abdullah's extra picks per stage (every grand stage
   helper must build its section too): `orch/GRAND-PICKS.md`. **Grand-map multiplayer battles** (19:30): if
   EITHER side wants "Fight it live", it's live (an away player's side is played by the battle AI); auto-resolve only if both
-  pick it; others keep planning and can spectate; several battles in a turn run at the same time. Grand campaigns live on
+  pick it; others keep planning and can spectate, an ally in the war can join a live battle as co-commander, and any empire in the war can send air/missile/drone support into it from its grand-map stocks (Abdullah 2026-11-06 07:51); several battles in a turn run at the same time; the battle time limit is the host's pick at campaign creation (30 / 60 default / no limit, then auto-resolve from where it stands) and waiting players can vote to end a battle early (Abdullah 2026-11-06 07:56). **Grand map look = a Total War-style 3D campaign map** (Abdullah 2026-11-06 08:04: painted 3D terrain, forests, small 3D towns, each army = one general figure with a big national flag, name banners, unit cards at the bottom; modern-war theme, original art — spec in GRAND-PICKS "Stage 5 — THE LOOK"). Grand campaigns live on
   Cloudflare; battles stay cloud-first with the automatic strongest-PC fallback (19:27).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
   (Abdullah connected it 2026-10-26; since 2026-10-28 `.github/workflows/deploy-site.yml` also sends it from `main` on every

@@ -20,23 +20,47 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
   (proved later by the balance tourneys / grandtest). Economy/building-type signatures → grand2 builds; military/strike-type →
   grand3; leader/political-type → grand6. New-nation helpers add their nation's row.
 
+## ALL stages — air & supply in campaign battles (Abdullah 2026-11-06 08:08; battles have no base, army only)
+- [ ] **Jets = sorties from airfields** (grand3 builds; grand2 provides the stocks): jets live in air wings at grand-map airfields
+      (and carriers in fleets); if an airfield/carrier is within range of the battle province, that side gets on-call sorties in
+      the battle — jets fly in from the map edge, strike/patrol, then leave; sorties per battle limited by the wing's fuel/munitions
+      stock; jets shot down are lost on the map too. Defender with an airfield in the province gets it in the battle (jets rearm
+      there). **Helicopters and drones travel with the army** as normal units and rearm at the army's supply trucks.
+- [ ] **Supply = entry edge + trucks** (grand2 builds, extending the battle's existing logistics/convoy system in
+      `src/03c-logistics.js` — no second system): each army starts with its grand-map ammo/fuel (cut-off armies start low); the
+      map edge it entered from is its supply point; supply trucks/convoys run from there along roads; cutting the road starves
+      units (no ammo = can't fire, no fuel = vehicles stop); captured towns/depots become forward supply; the defender is supplied
+      from the province's own towns and depots. Leftover ammo/fuel goes back to the army on the map.
+
+## Mirror stage (grandmirror — battles mirror the grand map, Abdullah 2026-11-06 08:09 "full mirror"; runs after grand5)
+- [ ] **Battle map generated from the province**: each province's Fight-it battle map is generated deterministically (seed =
+      province id) from its grand-map data: terrain/biome, relief, coast/sea side, rivers (with bridges/fords), forests, roads,
+      and **town positions**; the side each army entered from = its map edge. Hand-made real-place maps (Golan, Beqaa, DMZ…) are
+      used for their provinces when they exist. Every generated map passes the map-fairness rules as far as geography allows
+      (the defender's terrain advantage is intended; check both sides have ≥2 real routes).
+- [ ] **Towns mirror exactly, both ways**: same town names, size tier/upgrade chain type, owner, loyalty/unrest/tax, province
+      buildings (airfield, AA, fort, Mountain Fortress, factories, ports) and current damage appear in the battle (town-look
+      generator in the right regional style); after the battle, captured towns, loyalty changes, destroyed/damaged buildings and
+      rubble go back to the province (reconstruction on the map repairs them).
+- [ ] Fast: map generation < 2 s on a mid PC, cached per province until it changes; deterministic for multiplayer.
+
 ## Stage 1 (grand1 — map, provinces, armies, turns, battles)
-- [ ] **Menu names** (Abdullah 2026-11-06): main menu = Grand campaign · Conquest · Missions · Tutorial. Rename the old story
+- [x] **Menu names** (Abdullah 2026-11-06): main menu = Grand campaign · Conquest · Missions · Tutorial. Rename the old story
       "Campaign" to "Missions" everywhere players see it (menu, buttons, encyclopedia, What's new); keep its saves/progress working.
-- [ ] **Battles start with your grand-map units** (Abdullah 2026-11-05 21:22, see CLAUDE.md "Grand strategy layer"): a Fight-it
+- [x] **Battles start with your grand-map units** (Abdullah 2026-11-05 21:22, see CLAUDE.md "Grand strategy layer"): a Fight-it
       battle spawns exactly the armies' real units (types, counts, health, veterancy, ammo/fuel, general as hero unit) — no free
       Conquest base/money; defender adds the province's garrison, buildings, forts (Mountain Fortress pre-built); neighbouring
       armies join as timed reinforcement waves; NO new production inside the battle at all (Abdullah 2026-11-06: "Army only"); results (survivors, damage, veterancy, captured gear) go back exactly. Same rule
       for auto-resolve strength. Test: an army of N units → battle has N units of those types; losses match after. Later stages
       (grand3 generals/sieges/supply limits, integrate2 bridge audit) keep this rule.
-- [ ] **Chokepoint straits** on the map (Hormuz, Suez/Red Sea, Bosporus, Gibraltar-style, Korea Strait…, stylised): sea-zone/province
+- [x] **Chokepoint straits** on the map (Hormuz, Suez/Red Sea, Bosporus, Gibraltar-style, Korea Strait…, stylised): sea-zone/province
       pairs flagged as chokepoints (stage 2 gives them their economic effect).
-- [ ] **Oil fields as prizes:** a few giant oil regions, placed so no nation starts with an unfair share; marked on the map.
-- [ ] **Mountains & rivers matter:** crossing a major river or mountain pass costs extra movement/attrition; defenders there get a
+- [x] **Oil fields as prizes:** a few giant oil regions, placed so no nation starts with an unfair share; marked on the map.
+- [x] **Mountains & rivers matter:** crossing a major river or mountain pass costs extra movement/attrition; defenders there get a
       bonus in auto-resolve and the "Fight it" battle uses a matching map (river crossing / mountain pass).
-- [ ] **Capital & war-goal provinces:** each nation has 2–3 must-hold provinces (capital + 1–2 others, equal value across nations);
+- [x] **Capital & war-goal provinces:** each nation has 2–3 must-hold provinces (capital + 1–2 others, equal value across nations);
       losing them forces peace talks (stage 4 diplomacy handles the talks; stage 1 just flags and reports it).
-- [ ] **Quick campaigns:** campaign length option — Quick (20–30 turns, smaller start, faster economy, win by score/war goals at the
+- [x] **Quick campaigns:** campaign length option — Quick (20–30 turns, smaller start, faster economy, win by score/war goals at the
       end) or Standard.
 
 ## Stage 2 (grand2 — empire economy)
@@ -101,7 +125,7 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       time (no real parties or politicians; neutral); ties into factions at home, war weariness and coups.
 - [ ] **Ayatollah & Dear Leader** (Abdullah 20:58, moved out of battles): national leader figures on the grand map (IR/RS/DW
       clerical leader, KP Dear Leader; fictional, no real-person likeness; ONLY these four nations have a leader figure — others get different signature assets): boost
-      national morale/loyalty, can tour a province (Fight-it battles there start with fervour), danger if the capital falls.
+      national morale/loyalty, can tour a province (Fight-it battles there start with fervour). NO capital-falls penalty (Abdullah 2026-11-06 08:11 — replaced): instead **the population clamours for war** — high war support: war weariness grows much slower, recruits/volunteers come faster, declaring war costs little home morale; the flip side is **war fever** — long stretches of peace build unrest/pressure until you fight (or spend effort to calm it). Equal total value vs other nations' signatures.
 - [ ] **Occupation choices:** for each conquered province: annex (full tax, high unrest/insurgency), set up a friendly government
       (puppet: less tax, low unrest, may defect) or liberate (no tax, big world-opinion/loyalty gain); uses **Locals** for resistance.
 - [ ] **Factions at home:** military, business and clergy interest groups with demands and satisfaction; happy factions give
@@ -113,8 +137,43 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 - [ ] **Reconstruction:** rebuild war-torn provinces (destroyed buildings, wrecked towns from battles) for loyalty, tax and world
       opinion.
 
+## Stage 5 — THE LOOK (Abdullah 2026-11-06 08:04, showed a Total War: Empire campaign-map screenshot: "it needs to look like this")
+Moved up: runs right after grand1. The grand map must look like a **Total War campaign map**, adapted to modern war:
+- [ ] **3D painted terrain**: real coastlines (public-domain Natural Earth data, reachable via GitHub), relief/hills, biome-painted
+      ground (green farmland, desert, steppe, snow, jungle) with soft texture detail; sea with the game's water shader, shallow
+      coastal colour, rivers; tilted perspective camera (default ~45° like the reference) with smooth pan/zoom/rotate.
+- [ ] **Dense instanced forests** and scrub/palms by biome; mountains with rock/snow.
+- [ ] **Settlements as small 3D towns** (reuse the regional town-look generator / building models at map scale; capitals bigger, ports
+      with docks, forts walled) — sized by province tier.
+- [ ] **Armies = one 3D soldier figure (the general, modern uniform of that nation) holding a big national flag on a pole**, with a
+      small unit-count plate; fleets = one ship model with flag; selected army gets a glowing ground ring; planned moves = green
+      arrow path along the ground (red for attack).
+- [ ] **Name banners**: province/city names on small banner plates floating above settlements (readable at every zoom, fade by zoom).
+- [ ] **Borders**: subtle coloured edge lines + soft owner tint on the ground only near borders/when toggled — not flat coloured blobs.
+- [ ] **UI layout like the reference**: bottom-centre army panel with one card per unit (portrait, count, health bar), round icon
+      buttons on the bottom-right (end turn, menus), minimap of the region bottom-left, thin top bar (treasury, turn/season, alerts).
+      Style: original art, modern military theme (no copying of the reference game's art/UI assets); free CC0/CC-BY only, credited.
+- [ ] **Performance/usage**: instancing + LOD (far = simple), one draw call per forest chunk, steady 60 fps on a mid PC
+      (add a grand-map smoothness check). Reuse the battle engine's Three.js setup, terrain/water shaders, models, flags — no new tech.
+- [ ] Plus the earlier stage-5 items below (living map, turn news, map modes).
+
 ## Stage 5 addition
 - [ ] **Map modes** (Abdullah 21:20): political, terrain, trade, supply, unrest, culture, alliances, development (one switcher).
+
+## Stage 7 (grand7 — friends multiplayer; Abdullah 2026-11-06 07:51)
+- [ ] **Co-commander**: a human ally who is in that war (allied with a side, not just watching) can join a running live battle
+      from the campaign and take command of part of their side's army (the owner hands over units, or the ally gets the
+      reinforcement waves / a share); same normal battle-room join path; never more than 8 players in one battle.
+- [ ] **Support from the map**: any empire in the war — on either side — can send support into a running battle from its own
+      grand-map stocks and launch sites/airfields in range: air strike, missile, drone strike (uses the stage-3 map-strike rules
+      and costs). It arrives in the battle after a short delay as a normal power/strike for that side, with an on-screen notice
+      ("Allied air strike inbound"); air defence in the battle can intercept; stocks are spent even if shot down. Sent as an
+      ordinary battle command, so host, clients and replays stay in sync.
+
+- [ ] **Battle time limit = host's choice** (Abdullah 2026-11-06 07:56; replaces the fixed 30-min cap in the stage-7 prompt): set
+      when creating the campaign — 30 min / 60 min (default) / no limit; at the limit the battle is auto-resolved from its current
+      state. Players waiting on the turn can vote "end it now" (majority of the waiting humans) to auto-resolve early; the
+      fighters see a 60 s warning first. Solo campaigns: no limit.
 
 ## Integration 2
 - [ ] **Ledger** (Abdullah 21:20): statistics screen comparing all nations (army size, income, provinces, war history, graphs

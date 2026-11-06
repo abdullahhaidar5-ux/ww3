@@ -1570,5 +1570,5 @@ function tkPoll(){try{if(!G||!TK.on||TK.G!==G){if(!G||TK.G!==G)clearInterval(TK.
 }catch(e){}}
 if(typeof window!=='undefined'){window.__tk=TK;}
 try{tkApply();}catch(e){}
-{const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='News ticker (headlines scrolling across the top)';
+{const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='War news (headlines across the top + a small breaking-news picture-in-picture)';
   const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}

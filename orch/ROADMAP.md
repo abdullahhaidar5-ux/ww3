@@ -8,6 +8,16 @@ blocking · **[you]** waiting on a decision or action from Abdullah · **[paused
 planned, not started. Keep each line short and in player terms. Plan doc for the overhauls:
 https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 
+## Grand strategy (Abdullah 2026-11-05 19:16 — the world-map layer over the RTS; design: orch/reports/grand-strategy.md)
+- [done] S1 map, provinces, armies, simultaneous turns, Fight it / Auto-resolve battles with exactly your units, basic tax + unrest, save, Grand campaign menu (Missions renamed)
+- [next] S2 empire economy + province buildings, trade, autonomy, city chains, chokepoint and oil effects
+- [todo] S3 generals, front lines, fort zones, supply limits, map strikes, fleets and sea zones, encirclement and sieges
+- [todo] S4 events, minor nations, seasons, diplomacy and peace talks, research, cabinet, national missions, heritage and holy sites
+- [todo] S4b diplomacy and government (call to arms, trust, great powers, reforms, prestige, hegemons)
+- [todo] S5 3D world map, living map, turn news, map modes
+- [todo] S6 fog, spies, proxy wars, insurgency, war weariness, coups, succession, scenarios, disasters, factions at home
+- [todo] S7 friends multiplayer (turn resolution is already deterministic)
+
 ## Conquest (the only mode — Abdullah 2026-11-04)
 - [done] Towns and hamlets pay tax; you set Low / Normal / High / Extortionate per town; angry towns revolt (rebels) — High tax in safe towns, Low at the front
 - [done] Hamlets (small villages) on every map, placed fairly; minimap shows towns, hamlets, tax, unrest, rebels, alerts
