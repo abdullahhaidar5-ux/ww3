@@ -88,7 +88,8 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   **Simultaneous turns**; **three linked theatres** (Middle East, Europe, Korea/East Asia); **solo vs AI empires first,
   friends multiplayer later** (turn resolution must be deterministic from state + orders + seed); **empire-level economy
   lives on the grand map** (war bonds, upkeep, fuel, manpower, oil market, crises… — not inside battles). Conquest battles
-  stay the tactical layer. Design/stages: `orch/reports/grand-strategy.md`. **Grand-map multiplayer battles** (19:30): if
+  stay the tactical layer. Design/stages: `orch/reports/grand-strategy.md`; Abdullah's extra picks per stage (every grand stage
+  helper must build its section too): `orch/GRAND-PICKS.md`. **Grand-map multiplayer battles** (19:30): if
   EITHER side wants "Fight it live", it's live (an away player's side is played by the battle AI); auto-resolve only if both
   pick it; others keep planning and can spectate; several battles in a turn run at the same time. Grand campaigns live on
   Cloudflare; battles stay cloud-first with the automatic strongest-PC fallback (19:27).
