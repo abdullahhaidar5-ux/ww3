@@ -83,6 +83,12 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   `orch/HANDOFF-conquest.md`.
 - **Supply lines are in** (Abdullah, 2026-11-04 20:16 "Forget the rule about no supply lines"; replaces 2026-10-29):
   supply runs on roads you build (convoys, cut-off towns, forward depots).
+- **Grand strategy layer** (Abdullah, 2026-11-05 19:16–19:20): the RTS battle is one layer under a Total War / EU4-style
+  grand map where you run your empire and choose to fight each battle live ("Fight it") or auto-resolve; results flow back.
+  **Simultaneous turns**; **three linked theatres** (Middle East, Europe, Korea/East Asia); **solo vs AI empires first,
+  friends multiplayer later** (turn resolution must be deterministic from state + orders + seed); **empire-level economy
+  lives on the grand map** (war bonds, upkeep, fuel, manpower, oil market, crises… — not inside battles). Conquest battles
+  stay the tactical layer. Design/stages: `orch/reports/grand-strategy.md`.
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
   (Abdullah connected it 2026-10-26; since 2026-10-28 `.github/workflows/deploy-site.yml` also sends it from `main` on every
   push, status `deploy/site`, because Cloudflare's own builder got stuck — nothing to do at ship except check it serves the new version), and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi, republish
