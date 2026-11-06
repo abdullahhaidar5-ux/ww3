@@ -55,8 +55,11 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   Alt+right-click a spot (drive there, then unload); touch: tap a selected vehicle again to unload, tap ground with a
   garrisoned building selected. The Unload/Leave buttons may stay as extras.
   (Touch controls are no longer required — see "PC only" below.)
-- **Factions (18 live):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
-  **DW "Coffee Shias"**. The IM faction was removed on purpose; 18 is the intended count (no 19th planned). Shia factions = IR, RS, DW.
+- **Factions (18 live → 21):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
+  **DW "Coffee Shias" = Yemen** (Abdullah 2026-11-05 19:44: "make sure the Coffee Shias become Yemen" — DW's home, look, maps and
+  grand-map region are Yemen). **Adding full nations IQ Iraq, SY Syria, JP Japan** (19:45; own units, uniforms, buildings, voices,
+  anthem, equal strength) → 21. Every other country on the grand map is a **playable minor nation** (shared regional army/look, own
+  flag/name/colours, no unique voices). The IM faction was removed on purpose. Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
 - **Audio:** real, professional military audio; top-quality unit voice acting in each nation's native language,
   including war slogans like "Labbaik ya Hussein". **Music = one shared soundtrack of real recorded tracks for all 18
@@ -85,7 +88,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   supply runs on roads you build (convoys, cut-off towns, forward depots).
 - **Grand strategy layer** (Abdullah, 2026-11-05 19:16–19:20): the RTS battle is one layer under a Total War / EU4-style
   grand map where you run your empire and choose to fight each battle live ("Fight it") or auto-resolve; results flow back.
-  **Simultaneous turns**; **a world map with detail where it matters** (19:41, replaces "three theatres": detailed provinces around all 18 nations — Middle East & North Africa, Europe/Russia, East Asia, South Asia, North America & Caribbean — oceans as big sea lanes linking them); **solo vs AI empires first,
+  **Simultaneous turns**; **a world map with detail where it matters** (19:41, replaces "three theatres": detailed provinces around all full nations (21 incl. IQ/SY/JP; DW at home in Yemen) — Middle East & North Africa, Europe/Russia, East Asia, South Asia, North America & Caribbean — oceans as big sea lanes linking them); **solo vs AI empires first,
   friends multiplayer later** (turn resolution must be deterministic from state + orders + seed); **empire-level economy
   lives on the grand map** (war bonds, upkeep, fuel, manpower, oil market, crises… — not inside battles). Conquest battles
   stay the tactical layer. Design/stages: `orch/reports/grand-strategy.md`; Abdullah's extra picks per stage (every grand stage
@@ -104,7 +107,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   calm narrators; 20:36 after hearing the first tough pass for RS/DW/IR: "Tougher" — deeper, barked/shouted combat lines, grittier radio, still clear and human; 2026-10-30 06:08 he approved the second tough pass ("tough2", orch/voices-tough) as the level for all 18): use an expressive neural voice (XTTS-v2 for every language it covers — en, ar, tr,
   ru, zh, ko, hi/ur, es, fr, de; non-commercial licence accepted for this free game, as MMS already is) with radio
   treatment; Piper/MMS only where nothing more natural exists (fa, he, uk) and then the best-sounding option found. **Weapon/explosion sound: cinematic and
-  punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all 18 nations about equally strong.**
+  punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all nations (18, soon 21) about equally strong.**
 - **Priorities (Abdullah, 2026-10-28 18:34):** his group plays the **Shia factions (IR, RS, DW) most** — do their voices,
   uniforms and buildings first, in a **realistic military** style (IRGC/Hezbollah-style fatigues, Middle Eastern
   compounds and bunkers). The game targets **PC** (see "PC only"). Biggest pain:
