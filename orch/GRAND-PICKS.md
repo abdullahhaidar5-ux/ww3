@@ -165,7 +165,7 @@ Moved up: runs right after grand1. The grand map must look like a **Total War ca
 - [ ] Hand-tuned colour palette per region/biome (Levant olive hills, Arabian sand, Iranian plateau, steppe, European green, snow) and a final colour grade; matching dawn/dusk for turn changes is optional.
 ### look2 — Detail & life
 - [ ] Patchwork farm fields around towns, visible road and rail networks between towns (crisp ribbons), bridges.
-- [ ] Region-style towns at map scale (Middle Eastern flat roofs + minarets/domes, Lebanese stone villages, Yemeni tower houses, European red roofs, East Asian roofs…) via the town-look generator; ports with docks and ships; airfields/forts visible on provinces that have them.
+- [ ] **Replace the current boxy box-and-cylinder towns** (seen in orch/shots/grandsharp/after/2-army-town-close.png — breaks the "no cubes" rule) with real building meshes/models. Region-style towns at map scale (Middle Eastern flat roofs + minarets/domes, Lebanese stone villages, Yemeni tower houses, European red roofs, East Asian roofs…) via the town-look generator; ports with docks and ships; airfields/forts visible on provinces that have them.
 - [ ] Snow-capped peaks, rocky cliffs, varied forest (species by biome), palms in oases.
 - [ ] Waving flags on armies, smoke columns over contested provinces, fires on burning cities.
 - [ ] Weather and seasons on the map (snow cover in winter, rain/sand storms drifting, mud season tint), matching the turn's season.
