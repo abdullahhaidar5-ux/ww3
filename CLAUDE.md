@@ -59,7 +59,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   **DW "Coffee Shias" = Yemen** (Abdullah 2026-11-05 19:44: "make sure the Coffee Shias become Yemen" — DW's home, look, maps and
   grand-map region are Yemen). **Adding full nations IQ Iraq, SY Syria, JP Japan** (19:45; own units, uniforms, buildings, voices,
   anthem, equal strength) → 21; then (19:49) **15 more full nations**: GB, FR, DE, PL, AZ, JO, KD (Kurdistan
-  Region, Peshmerga), TW, VN, AU, PH, BR, VE, MX, CA + (19:56) **DZ, MA, NG, OM, IT, GR, ID, AF (stylised national army only), AR, CO** → **45 full nations** (the **EU retires as a nation** once FR, DE and PL are live — Abdullah 19:54: its units, voices and
+  Region, Peshmerga), TW, VN, AU, PH, BR, VE, MX, CA + (19:56) **DZ, MA, NG, OM, IT, GR, ID, AF (stylised national army only), AR, CO** + (20:37) **ES, ZA, TH, ET, LY, SD (LY/SD: stylised national armies only, no real factions), SE, KZ, CL** → **54 full nations** (the **EU retires as a nation** once FR, DE and PL are live — Abdullah 19:54: its units, voices and
   the Fulda map pass to FR/DE/PL, old EU saves load as DE; on the grand map the **European Union becomes an alliance** European
   nations can join, with a joint-operations bonus), built by `orch/nation-*` helpers following the
   nations-new1/2 pattern. Every other country on the grand map is a **playable minor nation** (shared regional army/look, own
@@ -68,12 +68,20 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 - **National morale styles** (Abdullah 2026-11-05 20:01): every nation has ONE battle morale style, different styles but **equal
   power** (proven by the balance tourneys): **Zealous** (slow to break, martyr banners, fervour when comrades fall — and losing a
   cleric/officer does **not** weaken them: they stay zealous; their cost is elsewhere, e.g. they hold ground and take heavier
-  losses), **Professional** (steady under artillery, rally fast near officers; heavy losses sap them more), **Strength in numbers**
-  (brave in big groups, shaky when isolated), **Home defenders** (much braver on home turf / near own towns, ordinary abroad).
-  Zealous = IR, RS, DW; every other nation gets the style that fits it (table in `orch/SYSTEMS.md`); new nation helpers pick one.
+  losses), **Professional** (steady under artillery, rally fast near officers; heavy losses sap them more), **Home defenders** (much braver on home turf / near own towns, ordinary abroad). A fifth, lowest-morale style **Firepower-reliant** (Abdullah 20:18: India, UAE, Saudi Arabia "below Home defenders"; 20:22: Israel too): they break sooner, especially when unsupported, balanced by stronger fire support so they stay equally strong.
+  Zealous = IR, RS, DW, **North Korea** (20:16; ideological flavour — political officers/party banners, not Shia motifs); **Russia and Cuba = Professional** (20:15); **China, Pakistan, Egypt = Professional; Vietnam, Brazil, Nigeria, Indonesia = Home defenders** (20:26 — no nation uses Strength in numbers now); **Ukraine = Professional, Jordan = Home defenders** (20:28); **Oman = Home defenders** (20:29); **South Africa, Thailand = Home defenders** (20:40); **Strength in numbers style removed entirely** (20:41) — four styles: Zealous, Professional, Home defenders, Firepower-reliant; the full assignment is in `orch/SYSTEMS.md` (set — balance by tuning numbers, not by moving nations).
   Grand-map national morale: raised/lowered by victories & defeats, casualties & war length, losing home/holy places (capital,
   war goals, heritage sites) and short national/religious-day boosts (equal value for all); on collapse: troops start battles
   shaken, forced peace talks, coups & civil war.
+- **Grand-map-only assets** (Abdullah 2026-11-05 20:58): the **Ayatollah**, the **Dear Leader**, the **Mountain Fortress** and the
+  **Bunker Buster** leave the tactical (Conquest) battle and live on the grand map: Ayatollah/Dear Leader = national leader figures
+  (morale/loyalty, tour provinces, Fight-it battles there start with fervour), Mountain Fortress = a province building that
+  appears pre-built for the defender in that province's battles, Bunker Buster = a grand-map strike on fortified provinces.
+  Zealous morale no longer depends on a cleric unit. Campaign missions keep working (scripted versions where a mission needs them).
+  **Signature assets are unique, not copied** (Abdullah 21:02 "I don't like all countries having the same thing"): the clerical
+  leader only for IR/RS/DW, the Dear Leader only for KP, the Mountain Fortress only for **IR, RS, AF, KD, DW and KP** (21:03), the **Bunker Buster only for some
+  nations (US, IL, RU, CN)**; every other nation gets a *different* signature asset of its own (not a copy), and overall strength
+  stays even through balancing. Table of who has what: `orch/SIGNATURES.md` (grand stage 2 writes it).
 - **Mountain Shias (RS) identity** (Abdullah 2026-11-05 19:46 "make it more obvious"): unmistakably a Lebanese mountain Shia
   resistance force through content — Lebanon home, Lebanese-dialect voices, Ashura/"Ya Hussein" religious motifs, tunnels, ATGM
   teams, rocket barrages, drones, mountain forts. **Never** the real organisation's name, flag/emblem (or a close copy) or real
