@@ -1,0 +1,277 @@
+map sweep: 58 maps, players 2/4/8, 1 game-min each, seed 1234 (boot 3s)
+
+STATIC  928 map/player-count/seed combinations (4 seeds), 0 with issues
+  strait       2p ok   1.0min 0.49ms/step peak 19/18/NaN earn 1760/1760 1st 12/13s (66s, start 64s)
+  strait       4p ok   1.0min 0.43ms/step peak 21/22/22/22/NaN earn 1936/1760/1936/1760 1st 13/12/12/13s (13s, start 11s)
+  strait       8p ok   1.0min 1.05ms/step peak 21/25/20/22/22/21/21/21/NaN earn 1600/1600/1440/1440/1760/1760/1760/1600 1st 14/13/14/14/13/14/13/13s (18s, start 14s)
+  rivers       2p ok   1.0min 0.23ms/step peak 21/19/NaN earn 1600/1760 1st 14/13s (10s, start 9s)
+  rivers       4p ok   1.0min 0.31ms/step peak 10/15/20/21/NaN earn 1760/1920/1936/1760 1st 13/12/12/12s (11s, start 10s)
+  delta        2p ok   1.0min 0.21ms/step peak 21/20/NaN earn 1600/1600 1st 14/14s (9s, start 8s)
+  delta        4p ok   1.0min 0.41ms/step peak 20/24/24/21/NaN earn 1600/1600/1760/1880 1st 14/14/13/12s (12s, start 11s)
+  oasis        2p ok   1.0min 0.20ms/step peak 8/18/NaN earn 1600/1720 1st 14/14s (9s, start 8s)
+  oasis        4p ok   1.0min 0.33ms/step peak 10/22/19/22/NaN earn 1936/1760/1720/1600 1st 12/13/14/15s (12s, start 10s)
+  oasis        8p ok   1.0min 0.91ms/step peak 22/22/19/21/20/22/21/19/NaN earn 1600/1760/1600/1760/1600/1600/1600/1600 1st 14/13/14/13/14/14/14/14s (17s, start 13s)
+  gulf         2p ok   1.0min 0.21ms/step peak 20/20/NaN earn 1856/1760 1st 13/13s (10s, start 10s)
+  gulf         4p ok   1.0min 0.37ms/step peak 27/23/22/18/NaN earn 1760/1760/1760/1760 1st 13/13/12/12s (11s, start 10s)
+  plateau      2p ok   1.0min 0.22ms/step peak 22/20/NaN earn 1760/1760 1st 13/12s (10s, start 9s)
+  plateau      4p ok   1.0min 0.34ms/step peak 21/20/24/9/NaN earn 1600/1600/1600/1760 1st 14/14/14/13s (12s, start 10s)
+  plateau      8p ok   1.0min 0.92ms/step peak 20/19/20/22/22/20/21/19/NaN earn 1600/1600/1440/960/1600/1760/1600/1600 1st 14/14/14/22/14/14/14/13s (17s, start 14s)
+  hormuz       2p ok   1.0min 0.28ms/step peak 21/22/NaN earn 1600/1760 1st 14/13s (9s, start 8s)
+  hormuz       4p ok   1.0min 0.27ms/step peak 19/18/20/19/NaN earn 1280/1760/1600/1600 1st 14/13/14/14s (11s, start 10s)
+  arctic       2p ok   1.0min 0.21ms/step peak 20/20/NaN earn 1760/1760 1st 13/13s (9s, start 8s)
+  arctic       4p ok   1.0min 0.34ms/step peak 19/20/18/21/NaN earn 1440/1440/1856/1760 1st 15/15/13/14s (11s, start 10s)
+  arctic       8p ok   1.0min 0.99ms/step peak 23/20/22/23/23/21/20/22/NaN earn 1600/1760/1760/1120/1440/1280/1440/1280 1st 15/13/12/15/15/15/15/15s (17s, start 14s)
+  islands      2p ok   1.0min 0.19ms/step peak 17/20/NaN earn 1920/1760 1st 13/12s (9s, start 8s)
+  islands      4p ok   1.0min 0.32ms/step peak 19/18/18/20/NaN earn 1760/1920/1760/1760 1st 12/12/13/12s (10s, start 9s)
+  zagros       2p ok   1.0min 0.19ms/step peak 20/19/NaN earn 1760/1760 1st 13/13s (9s, start 8s)
+  zagros       4p ok   1.0min 0.43ms/step peak 25/22/21/9/NaN earn 1600/1600/1600/1600 1st 13/14/14/14s (11s, start 10s)
+  zagros       8p ok   1.0min 0.89ms/step peak 22/19/22/18/21/23/21/21/NaN earn 1600/1600/1600/1720/1600/1600/1600/1936 1st 14/15/14/14/14/14/13/13s (17s, start 14s)
+  lebanon      2p ok   1.0min 0.21ms/step peak 20/20/NaN earn 1760/1760 1st 14/12s (10s, start 9s)
+  lebanon      4p ok   1.0min 0.45ms/step peak 21/19/21/24/NaN earn 1760/1960/1600/1600 1st 13/13/13/14s (13s, start 11s)
+  persia       2p ok   1.0min 0.18ms/step peak 22/20/NaN earn 1600/1600 1st 14/14s (9s, start 8s)
+  persia       4p ok   1.0min 0.45ms/step peak 22/20/20/21/NaN earn 1600/1760/1600/1760 1st 13/13/13/14s (12s, start 10s)
+  persia       8p ok   1.0min 0.89ms/step peak 24/20/20/20/20/21/19/18/NaN earn 1600/1600/1760/1600/1760/1760/1760/1600 1st 14/13/13/13/13/13/12/14s (18s, start 14s)
+  mesopotamia  2p ok   1.0min 0.18ms/step peak 20/20/NaN earn 1936/1760 1st 13/12s (10s, start 9s)
+  mesopotamia  4p ok   1.0min 0.48ms/step peak 20/20/20/21/NaN earn 1600/1960/1856/1600 1st 14/13/12/13s (12s, start 10s)
+  yemen        2p ok   1.0min 0.23ms/step peak 19/20/NaN earn 1760/1760 1st 13/13s (10s, start 9s)
+  yemen        4p ok   1.0min 0.32ms/step peak 15/19/20/19/NaN earn 1760/1760/1888/1760 1st 13/13/12/14s (12s, start 10s)
+  volga        2p ok   1.0min 0.18ms/step peak 20/19/NaN earn 1760/1760 1st 13/13s (8s, start 8s)
+  volga        4p ok   1.0min 0.30ms/step peak 19/17/19/20/NaN earn 1440/1584/1760/1760 1st 15/15/13/13s (12s, start 11s)
+  volga        8p ok   1.0min 0.90ms/step peak 20/21/21/19/23/20/21/22/NaN earn 1600/1280/1440/1600/1280/1600/1760/1440 1st 14/15/15/14/15/14/12/15s (18s, start 14s)
+  heartland    2p ok   1.0min 0.18ms/step peak 20/20/NaN earn 1600/1600 1st 13/13s (9s, start 9s)
+  heartland    4p ok   1.0min 0.44ms/step peak 22/25/23/21/NaN earn 1760/1600/1600/1600 1st 13/14/14/14s (11s, start 10s)
+  heartland    8p ok   1.0min 0.88ms/step peak 20/20/20/20/20/20/22/18/NaN earn 1920/1600/1600/1600/1760/1600/1760/1760 1st 13/13/14/14/13/14/13/13s (19s, start 15s)
+  bosphorus    2p ok   1.0min 0.18ms/step peak 19/20/NaN earn 1600/1760 1st 13/13s (9s, start 9s)
+  bosphorus    4p ok   1.0min 0.33ms/step peak 20/21/8/20/NaN earn 1600/1760/1440/1760 1st 13/13/14/13s (11s, start 10s)
+  bosphorus    8p ok   1.0min 0.52ms/step peak 21/21/19/20/8/8/22/8/NaN earn 1600/1600/1600/1760/1600/1600/1760/1600 1st 14/14/14/13/14/14/12/13s (16s, start 14s)
+  golan        2p ok   1.0min 0.20ms/step peak 19/20/NaN earn 1600/1760 1st 14/13s (9s, start 8s)
+  golan        4p ok   1.0min 0.36ms/step peak 21/19/19/22/NaN earn 1600/1696/1600/1760 1st 14/14/14/13s (12s, start 10s)
+  fulda        2p ok   1.0min 0.20ms/step peak 20/20/NaN earn 1600/1600 1st 14/13s (9s, start 9s)
+  fulda        4p ok   1.0min 0.41ms/step peak 21/20/21/20/NaN earn 1600/1760/1760/1600 1st 14/13/13/14s (12s, start 11s)
+  fulda        8p ok   1.0min 0.66ms/step peak 21/19/20/21/21/20/19/22/NaN earn 1600/1760/1600/1008/1760/1760/1600/1600 1st 13/12/13/21/12/14/14/14s (17s, start 15s)
+  dnipro       2p ok   1.0min 0.23ms/step peak 18/21/NaN earn 1760/1760 1st 13/13s (9s, start 8s)
+  dnipro       4p ok   1.0min 0.37ms/step peak 22/21/21/22/NaN earn 1760/1760/1760/1600 1st 13/13/14/14s (11s, start 10s)
+  dnipro       8p ok   1.0min 0.91ms/step peak 20/21/23/20/19/21/19/21/NaN earn 1600/1760/1600/1600/1760/1760/1600/1600 1st 14/13/13/13/13/13/14/15s (17s, start 14s)
+  rubalkhali   2p ok   1.0min 0.16ms/step peak 21/8/NaN earn 1760/1760 1st 13/13s (9s, start 9s)
+  rubalkhali   4p ok   1.0min 0.36ms/step peak 22/21/19/21/NaN earn 1600/1600/1600/1600 1st 14/14/14/15s (11s, start 10s)
+  rubalkhali   8p ok   1.0min 0.90ms/step peak 20/22/21/24/20/20/21/20/NaN earn 1600/1600/1600/1120/1600/1600/1600/1720 1st 14/14/14/21/14/14/14/14s (17s, start 14s)
+  emirates     2p ok   1.0min 0.16ms/step peak 8/20/NaN earn 1760/1760 1st 14/13s (9s, start 8s)
+  emirates     4p ok   1.0min 0.54ms/step peak 21/22/21/22/NaN earn 1600/1600/1600/1600 1st 13/14/14/14s (11s, start 9s)
+  indus        2p ok   1.0min 0.18ms/step peak 21/19/NaN earn 1760/1600 1st 13/13s (10s, start 9s)
+  indus        4p ok   1.0min 0.58ms/step peak 20/21/21/21/NaN earn 1600/1760/1760/1600 1st 13/13/13/14s (13s, start 10s)
+  kashmir      2p ok   1.0min 0.23ms/step peak 19/18/NaN earn 1760/1760 1st 13/13s (10s, start 9s)
+  kashmir      4p ok   1.0min 0.35ms/step peak 22/22/8/21/NaN earn 1760/1600/1440/1600 1st 13/13/14/14s (12s, start 10s)
+  taiwan       2p ok   1.0min 0.21ms/step peak 22/20/NaN earn 1600/1600 1st 14/14s (9s, start 8s)
+  taiwan       4p ok   1.0min 0.31ms/step peak 22/23/20/21/NaN earn 1600/1600/1600/1760 1st 14/14/14/13s (11s, start 10s)
+  honshu       2p ok   1.0min 0.20ms/step peak 20/20/NaN earn 1600/1600 1st 14/14s (8s, start 8s)
+  honshu       4p ok   1.0min 0.46ms/step peak 21/16/19/22/NaN earn 1600/1600/1720/1600 1st 14/14/14/14s (11s, start 9s)
+  dmz          2p ok   1.0min 0.23ms/step peak 19/20/NaN earn 1600/1600 1st 14/13s (10s, start 9s)
+  dmz          4p ok   1.0min 0.34ms/step peak 20/9/21/20/NaN earn 1760/1440/1600/1760 1st 13/14/13/14s (11s, start 10s)
+  dmz          8p ok   1.0min 0.97ms/step peak 20/19/21/21/20/20/21/21/NaN earn 1600/1800/1760/1600/1600/1760/1600/1600 1st 14/14/13/14/14/14/13/14s (18s, start 14s)
+  nile         2p ok   1.0min 0.20ms/step peak 22/20/NaN earn 1760/1600 1st 12/14s (10s, start 9s)
+  nile         4p ok   1.0min 0.44ms/step peak 21/20/8/21/NaN earn 1936/1760/1760/1600 1st 13/13/12/14s (12s, start 10s)
+  nile         8p ok   1.0min 0.98ms/step peak 17/24/17/20/20/20/23/21/NaN earn 1600/1600/1600/1600/1600/1760/1760/1600 1st 14/14/14/14/14/12/13/14s (19s, start 15s)
+  caribbean    2p ok   1.0min 0.25ms/step peak 20/19/NaN earn 1760/1760 1st 13/13s (9s, start 8s)
+  caribbean    4p ok   1.0min 0.45ms/step peak 21/20/19/22/NaN earn 1760/1760/1760/1760 1st 13/13/13/12s (11s, start 9s)
+  khyber       2p ok   1.0min 0.22ms/step peak 17/18/NaN earn 1920/1760 1st 12/12s (9s, start 8s)
+  euphrates    2p ok   1.0min 0.21ms/step peak 20/22/NaN earn 1760/1760 1st 13/13s (9s, start 8s)
+  caspian      2p ok   1.0min 0.20ms/step peak 21/21/NaN earn 1760/1760 1st 13/13s (9s, start 9s)
+  aleppo       2p ok   1.0min 0.19ms/step peak 22/20/NaN earn 1760/1760 1st 12/12s (9s, start 8s)
+  anatolia     2p ok   1.0min 0.18ms/step peak 21/22/NaN earn 1760/1760 1st 13/12s (9s, start 8s)
+  anatolia     4p ok   1.0min 0.35ms/step peak 20/21/20/21/NaN earn 1760/1600/1600/1600 1st 13/13/14/14s (12s, start 11s)
+  babelmandeb  2p ok   1.0min 0.22ms/step peak 18/21/NaN earn 1600/1760 1st 14/13s (9s, start 8s)
+  babelmandeb  4p ok   1.0min 0.30ms/step peak 8/18/20/20/NaN earn 1600/1600/1600/1600 1st 14/14/14/14s (11s, start 10s)
+  taiga        2p ok   1.0min 0.19ms/step peak 17/20/NaN earn 1760/1760 1st 13/13s (8s, start 8s)
+  taiga        4p ok   1.0min 0.33ms/step peak 22/21/21/21/NaN earn 1760/1760/1760/1760 1st 12/13/13/13s (12s, start 11s)
+  hawizeh      2p ok   1.0min 0.27ms/step peak 20/22/NaN earn 1600/1600 1st 14/14s (10s, start 9s)
+  hawizeh      4p ok   1.0min 0.30ms/step peak 18/20/19/22/NaN earn 1600/1760/1760/1600 1st 14/12/13/14s (11s, start 10s)
+  sahara       2p ok   1.0min 0.19ms/step peak 20/19/NaN earn 1600/1600 1st 14/14s (8s, start 8s)
+  sahara       4p ok   1.0min 0.32ms/step peak 19/19/19/23/NaN earn 1760/1920/1600/1600 1st 13/13/15/15s (11s, start 10s)
+  caucasus     2p ok   1.0min 0.21ms/step peak 20/20/NaN earn 1760/1760 1st 12/12s (9s, start 8s)
+  caucasus     4p ok   1.0min 0.37ms/step peak 21/21/21/22/NaN earn 1760/1936/1440/1440 1st 13/12/15/15s (11s, start 10s)
+  crimea       2p ok   1.0min 0.23ms/step peak 22/21/NaN earn 1760/1760 1st 13/13s (9s, start 8s)
+  crimea       4p ok   1.0min 0.33ms/step peak 23/23/21/23/NaN earn 1600/1760/1600/1600 1st 14/13/15/14s (11s, start 10s)
+  punjab       2p ok   1.0min 0.26ms/step peak 19/19/NaN earn 1600/1760 1st 13/13s (10s, start 9s)
+  punjab       4p ok   1.0min 0.34ms/step peak 21/25/22/20/NaN earn 1600/1600/1760/1600 1st 13/14/14/14s (12s, start 10s)
+  najd         2p ok   1.0min 0.19ms/step peak 22/21/NaN earn 1760/1760 1st 13/13s (9s, start 8s)
+  najd         4p ok   1.0min 0.41ms/step peak 19/19/8/21/NaN earn 1600/1600/1600/1760 1st 14/14/14/12s (11s, start 10s)
+  najd         8p ok   1.0min 0.86ms/step peak 21/21/17/20/22/8/25/19/NaN earn 1600/1600/1600/1936/1600/1600/1600/1600 1st 14/14/13/13/14/13/14/14s (18s, start 14s)
+  ural         2p ok   1.0min 0.22ms/step peak 18/19/NaN earn 1760/1760 1st 13/13s (9s, start 9s)
+  ural         4p ok   1.0min 0.46ms/step peak 24/21/20/20/NaN earn 1440/1440/1600/1280 1st 15/14/14/15s (11s, start 9s)
+  ural         8p ok   1.0min 0.93ms/step peak 20/21/22/23/20/17/21/22/NaN earn 1600/1760/1440/1600/1600/1760/1352/1440 1st 14/14/15/14/13/13/15/15s (17s, start 14s)
+  aegean       2p ok   1.0min 0.17ms/step peak 20/21/NaN earn 1600/1600 1st 14/14s (9s, start 8s)
+  aegean       4p ok   1.0min 0.35ms/step peak 20/20/24/21/NaN earn 1600/1600/1600/1600 1st 14/13/14/13s (11s, start 10s)
+  aegean       8p ok   1.0min 0.55ms/step peak 19/19/20/20/20/20/8/23/NaN earn 1600/1600/1760/1600/1600/1600/1696/1600 1st 14/14/13/13/14/14/13/13s (15s, start 13s)
+  yangtze      2p ok   1.0min 0.19ms/step peak 20/19/NaN earn 1600/1936 1st 13/13s (9s, start 8s)
+  yangtze      4p ok   1.0min 0.46ms/step peak 22/20/20/21/NaN earn 1600/1600/1600/1600 1st 14/14/14/13s (12s, start 10s)
+  yangtze      8p ok   1.0min 0.89ms/step peak 22/21/19/21/8/21/20/19/NaN earn 1760/1760/1600/1408/1600/1600/1600/1600 1st 13/13/13/20/14/14/13/14s (18s, start 14s)
+  kuwait       2p ok   1.0min 0.20ms/step peak 20/20/NaN earn 1760/1760 1st 13/13s (9s, start 8s)
+  kuwait       4p ok   1.0min 0.42ms/step peak 23/22/20/10/NaN earn 1760/1760/1600/1920 1st 13/13/14/12s (11s, start 10s)
+  kuwait       8p ok   1.0min 0.85ms/step peak 21/20/20/20/21/8/19/19/NaN earn 1600/1600/1440/1760/1600/1280/1600/1920 1st 14/14/14/13/14/14/13/13s (17s, start 14s)
+  rhine        2p ok   1.0min 0.17ms/step peak 21/21/NaN earn 1600/1760 1st 13/13s (9s, start 9s)
+  rhine        4p ok   1.0min 0.35ms/step peak 23/20/22/21/NaN earn 1600/1760/1600/1600 1st 13/13/13/13s (11s, start 10s)
+  rhine        8p ok   1.0min 1.00ms/step peak 20/22/22/21/20/21/19/23/NaN earn 1600/1600/1600/1600/1760/1880/1760/1600 1st 14/14/14/14/13/13/12/13s (18s, start 14s)
+  hindukush    2p ok   1.0min 0.18ms/step peak 21/26/NaN earn 1936/1760 1st 12/12s (9s, start 8s)
+  hindukush    4p ok   1.0min 0.46ms/step peak 21/21/22/21/NaN earn 1760/1936/1760/1760 1st 13/13/12/12s (12s, start 10s)
+  hindukush    8p ok   1.0min 0.59ms/step peak 22/21/21/23/20/20/20/24/NaN earn 1760/1760/1936/1760/1760/1760/1760/1760 1st 13/13/12/13/12/13/13/12s (16s, start 14s)
+  gulfoil      2p ok   1.0min 0.22ms/step peak 16/22/NaN earn 1600/1760 1st 13/12s (10s, start 9s)
+  gulfoil      4p ok   1.0min 0.34ms/step peak 20/22/21/21/NaN earn 1600/1600/1600/1600 1st 13/14/14/14s (11s, start 9s)
+  gulfoil      8p ok   1.0min 0.58ms/step peak 20/19/21/20/20/22/23/27/NaN earn 1760/1888/1600/1600/1600/1760/1600/1760 1st 13/13/13/13/14/13/14/12s (16s, start 13s)
+  coral        2p ok   1.0min 0.25ms/step peak 20/19/NaN earn 1600/1920 1st 14/12s (9s, start 8s)
+  harbour      2p ok   1.0min 0.23ms/step peak 15/21/NaN earn 1600/1600 1st 14/13s (9s, start 8s)
+  harbour      4p ok   1.0min 0.38ms/step peak 24/21/21/23/NaN earn 1600/1600/1600/1600 1st 13/14/14/14s (10s, start 9s)
+  atoll        2p ok   1.0min 0.20ms/step peak 21/22/NaN earn 1600/1600 1st 13/14s (8s, start 8s)
+  atoll        4p ok   1.0min 0.32ms/step peak 15/20/21/20/NaN earn 1600/1600/1936/1760 1st 14/14/12/12s (10s, start 9s)
+  atoll        8p ok   1.0min 0.83ms/step peak 20/20/20/21/19/22/21/22/NaN earn 1600/1600/1760/1760/1600/1600/1760/1760 1st 14/14/12/12/14/14/12/13s (16s, start 13s)
+  donbas       2p ok   1.0min 0.17ms/step peak 13/19/NaN earn 1760/1760 1st 14/14s (10s, start 9s)
+  donbas       4p ok   1.0min 0.34ms/step peak 19/21/20/21/NaN earn 1280/1880/1280/1600 1st 16/14/17/15s (12s, start 11s)
+  golanplateau 2p ok   1.0min 0.21ms/step peak 22/12/NaN earn 1600/1856 1st 14/12s (10s, start 9s)
+  golanplateau 4p ok   1.0min 0.32ms/step peak 20/22/21/21/NaN earn 1760/1760/1760/1760 1st 13/13/12/12s (12s, start 10s)
+  dmziron      2p ok   1.0min 0.26ms/step peak 20/21/NaN earn 1440/1600 1st 15/14s (10s, start 9s)
+  dmziron      4p ok   1.0min 0.35ms/step peak 19/18/19/19/NaN earn 1440/1536/1600/1600 1st 15/15/15/14s (12s, start 11s)
+  beqaa        2p ok   1.0min 0.22ms/step peak 19/18/NaN earn 1920/1600 1st 12/13s (10s, start 9s)
+  beqaa        4p ok   1.0min 0.37ms/step peak 20/21/20/18/NaN earn 1760/1760/1920/1760 1st 12/13/13/12s (12s, start 11s)
+  hormuzgate   2p ok   1.0min 0.21ms/step peak 20/21/NaN earn 1760/1936 1st 12/12s (9s, start 8s)
+  hormuzgate   4p ok   1.0min 0.33ms/step peak 20/19/17/21/NaN earn 1600/1760/1760/1600 1st 14/13/13/14s (11s, start 10s)
+  tihama       2p ok   1.0min 0.21ms/step peak 18/20/NaN earn 1760/2112 1st 13/12s (9s, start 8s)
+  tihama       4p ok   1.0min 0.32ms/step peak 19/13/21/22/NaN earn 1760/1600/1600/1600 1st 14/14/14/14s (11s, start 10s)
+
+BATTLES
+map          pl  min  ms/st  peak ents         harvest earned        result
+strait        2  1.0   0.49  19/18/NaN         2k/2k                 ok
+strait        4  1.0   0.43  21/22/22/22/NaN   2k/2k/2k/2k           ok
+strait        8  1.0   1.05  21/25/20/22/22/21/21/21/NaN 2k/2k/1k/1k/2k/2k/2k/2k ok
+rivers        2  1.0   0.23  21/19/NaN         2k/2k                 ok
+rivers        4  1.0   0.31  10/15/20/21/NaN   2k/2k/2k/2k           ok
+delta         2  1.0   0.21  21/20/NaN         2k/2k                 ok
+delta         4  1.0   0.41  20/24/24/21/NaN   2k/2k/2k/2k           ok
+oasis         2  1.0   0.20  8/18/NaN          2k/2k                 ok
+oasis         4  1.0   0.33  10/22/19/22/NaN   2k/2k/2k/2k           ok
+oasis         8  1.0   0.91  22/22/19/21/20/22/21/19/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+gulf          2  1.0   0.21  20/20/NaN         2k/2k                 ok
+gulf          4  1.0   0.37  27/23/22/18/NaN   2k/2k/2k/2k           ok
+plateau       2  1.0   0.22  22/20/NaN         2k/2k                 ok
+plateau       4  1.0   0.34  21/20/24/9/NaN    2k/2k/2k/2k           ok
+plateau       8  1.0   0.92  20/19/20/22/22/20/21/19/NaN 2k/2k/1k/960/2k/2k/2k/2k ok
+hormuz        2  1.0   0.28  21/22/NaN         2k/2k                 ok
+hormuz        4  1.0   0.27  19/18/20/19/NaN   1k/2k/2k/2k           ok
+arctic        2  1.0   0.21  20/20/NaN         2k/2k                 ok
+arctic        4  1.0   0.34  19/20/18/21/NaN   1k/1k/2k/2k           ok
+arctic        8  1.0   0.99  23/20/22/23/23/21/20/22/NaN 2k/2k/2k/1k/1k/1k/1k/1k ok
+islands       2  1.0   0.19  17/20/NaN         2k/2k                 ok
+islands       4  1.0   0.32  19/18/18/20/NaN   2k/2k/2k/2k           ok
+zagros        2  1.0   0.19  20/19/NaN         2k/2k                 ok
+zagros        4  1.0   0.43  25/22/21/9/NaN    2k/2k/2k/2k           ok
+zagros        8  1.0   0.89  22/19/22/18/21/23/21/21/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+lebanon       2  1.0   0.21  20/20/NaN         2k/2k                 ok
+lebanon       4  1.0   0.45  21/19/21/24/NaN   2k/2k/2k/2k           ok
+persia        2  1.0   0.18  22/20/NaN         2k/2k                 ok
+persia        4  1.0   0.45  22/20/20/21/NaN   2k/2k/2k/2k           ok
+persia        8  1.0   0.89  24/20/20/20/20/21/19/18/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+mesopotamia   2  1.0   0.18  20/20/NaN         2k/2k                 ok
+mesopotamia   4  1.0   0.48  20/20/20/21/NaN   2k/2k/2k/2k           ok
+yemen         2  1.0   0.23  19/20/NaN         2k/2k                 ok
+yemen         4  1.0   0.32  15/19/20/19/NaN   2k/2k/2k/2k           ok
+volga         2  1.0   0.18  20/19/NaN         2k/2k                 ok
+volga         4  1.0   0.30  19/17/19/20/NaN   1k/2k/2k/2k           ok
+volga         8  1.0   0.90  20/21/21/19/23/20/21/22/NaN 2k/1k/1k/2k/1k/2k/2k/1k ok
+heartland     2  1.0   0.18  20/20/NaN         2k/2k                 ok
+heartland     4  1.0   0.44  22/25/23/21/NaN   2k/2k/2k/2k           ok
+heartland     8  1.0   0.88  20/20/20/20/20/20/22/18/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+bosphorus     2  1.0   0.18  19/20/NaN         2k/2k                 ok
+bosphorus     4  1.0   0.33  20/21/8/20/NaN    2k/2k/1k/2k           ok
+bosphorus     8  1.0   0.52  21/21/19/20/8/8/22/8/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+golan         2  1.0   0.20  19/20/NaN         2k/2k                 ok
+golan         4  1.0   0.36  21/19/19/22/NaN   2k/2k/2k/2k           ok
+fulda         2  1.0   0.20  20/20/NaN         2k/2k                 ok
+fulda         4  1.0   0.41  21/20/21/20/NaN   2k/2k/2k/2k           ok
+fulda         8  1.0   0.66  21/19/20/21/21/20/19/22/NaN 2k/2k/2k/1k/2k/2k/2k/2k ok
+dnipro        2  1.0   0.23  18/21/NaN         2k/2k                 ok
+dnipro        4  1.0   0.37  22/21/21/22/NaN   2k/2k/2k/2k           ok
+dnipro        8  1.0   0.91  20/21/23/20/19/21/19/21/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+rubalkhali    2  1.0   0.16  21/8/NaN          2k/2k                 ok
+rubalkhali    4  1.0   0.36  22/21/19/21/NaN   2k/2k/2k/2k           ok
+rubalkhali    8  1.0   0.90  20/22/21/24/20/20/21/20/NaN 2k/2k/2k/1k/2k/2k/2k/2k ok
+emirates      2  1.0   0.16  8/20/NaN          2k/2k                 ok
+emirates      4  1.0   0.54  21/22/21/22/NaN   2k/2k/2k/2k           ok
+indus         2  1.0   0.18  21/19/NaN         2k/2k                 ok
+indus         4  1.0   0.58  20/21/21/21/NaN   2k/2k/2k/2k           ok
+kashmir       2  1.0   0.23  19/18/NaN         2k/2k                 ok
+kashmir       4  1.0   0.35  22/22/8/21/NaN    2k/2k/1k/2k           ok
+taiwan        2  1.0   0.21  22/20/NaN         2k/2k                 ok
+taiwan        4  1.0   0.31  22/23/20/21/NaN   2k/2k/2k/2k           ok
+honshu        2  1.0   0.20  20/20/NaN         2k/2k                 ok
+honshu        4  1.0   0.46  21/16/19/22/NaN   2k/2k/2k/2k           ok
+dmz           2  1.0   0.23  19/20/NaN         2k/2k                 ok
+dmz           4  1.0   0.34  20/9/21/20/NaN    2k/1k/2k/2k           ok
+dmz           8  1.0   0.97  20/19/21/21/20/20/21/21/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+nile          2  1.0   0.20  22/20/NaN         2k/2k                 ok
+nile          4  1.0   0.44  21/20/8/21/NaN    2k/2k/2k/2k           ok
+nile          8  1.0   0.98  17/24/17/20/20/20/23/21/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+caribbean     2  1.0   0.25  20/19/NaN         2k/2k                 ok
+caribbean     4  1.0   0.45  21/20/19/22/NaN   2k/2k/2k/2k           ok
+khyber        2  1.0   0.22  17/18/NaN         2k/2k                 ok
+euphrates     2  1.0   0.21  20/22/NaN         2k/2k                 ok
+caspian       2  1.0   0.20  21/21/NaN         2k/2k                 ok
+aleppo        2  1.0   0.19  22/20/NaN         2k/2k                 ok
+anatolia      2  1.0   0.18  21/22/NaN         2k/2k                 ok
+anatolia      4  1.0   0.35  20/21/20/21/NaN   2k/2k/2k/2k           ok
+babelmandeb   2  1.0   0.22  18/21/NaN         2k/2k                 ok
+babelmandeb   4  1.0   0.30  8/18/20/20/NaN    2k/2k/2k/2k           ok
+taiga         2  1.0   0.19  17/20/NaN         2k/2k                 ok
+taiga         4  1.0   0.33  22/21/21/21/NaN   2k/2k/2k/2k           ok
+hawizeh       2  1.0   0.27  20/22/NaN         2k/2k                 ok
+hawizeh       4  1.0   0.30  18/20/19/22/NaN   2k/2k/2k/2k           ok
+sahara        2  1.0   0.19  20/19/NaN         2k/2k                 ok
+sahara        4  1.0   0.32  19/19/19/23/NaN   2k/2k/2k/2k           ok
+caucasus      2  1.0   0.21  20/20/NaN         2k/2k                 ok
+caucasus      4  1.0   0.37  21/21/21/22/NaN   2k/2k/1k/1k           ok
+crimea        2  1.0   0.23  22/21/NaN         2k/2k                 ok
+crimea        4  1.0   0.33  23/23/21/23/NaN   2k/2k/2k/2k           ok
+punjab        2  1.0   0.26  19/19/NaN         2k/2k                 ok
+punjab        4  1.0   0.34  21/25/22/20/NaN   2k/2k/2k/2k           ok
+najd          2  1.0   0.19  22/21/NaN         2k/2k                 ok
+najd          4  1.0   0.41  19/19/8/21/NaN    2k/2k/2k/2k           ok
+najd          8  1.0   0.86  21/21/17/20/22/8/25/19/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+ural          2  1.0   0.22  18/19/NaN         2k/2k                 ok
+ural          4  1.0   0.46  24/21/20/20/NaN   1k/1k/2k/1k           ok
+ural          8  1.0   0.93  20/21/22/23/20/17/21/22/NaN 2k/2k/1k/2k/2k/2k/1k/1k ok
+aegean        2  1.0   0.17  20/21/NaN         2k/2k                 ok
+aegean        4  1.0   0.35  20/20/24/21/NaN   2k/2k/2k/2k           ok
+aegean        8  1.0   0.55  19/19/20/20/20/20/8/23/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+yangtze       2  1.0   0.19  20/19/NaN         2k/2k                 ok
+yangtze       4  1.0   0.46  22/20/20/21/NaN   2k/2k/2k/2k           ok
+yangtze       8  1.0   0.89  22/21/19/21/8/21/20/19/NaN 2k/2k/2k/1k/2k/2k/2k/2k ok
+kuwait        2  1.0   0.20  20/20/NaN         2k/2k                 ok
+kuwait        4  1.0   0.42  23/22/20/10/NaN   2k/2k/2k/2k           ok
+kuwait        8  1.0   0.85  21/20/20/20/21/8/19/19/NaN 2k/2k/1k/2k/2k/1k/2k/2k ok
+rhine         2  1.0   0.17  21/21/NaN         2k/2k                 ok
+rhine         4  1.0   0.35  23/20/22/21/NaN   2k/2k/2k/2k           ok
+rhine         8  1.0   1.00  20/22/22/21/20/21/19/23/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+hindukush     2  1.0   0.18  21/26/NaN         2k/2k                 ok
+hindukush     4  1.0   0.46  21/21/22/21/NaN   2k/2k/2k/2k           ok
+hindukush     8  1.0   0.59  22/21/21/23/20/20/20/24/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+gulfoil       2  1.0   0.22  16/22/NaN         2k/2k                 ok
+gulfoil       4  1.0   0.34  20/22/21/21/NaN   2k/2k/2k/2k           ok
+gulfoil       8  1.0   0.58  20/19/21/20/20/22/23/27/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+coral         2  1.0   0.25  20/19/NaN         2k/2k                 ok
+harbour       2  1.0   0.23  15/21/NaN         2k/2k                 ok
+harbour       4  1.0   0.38  24/21/21/23/NaN   2k/2k/2k/2k           ok
+atoll         2  1.0   0.20  21/22/NaN         2k/2k                 ok
+atoll         4  1.0   0.32  15/20/21/20/NaN   2k/2k/2k/2k           ok
+atoll         8  1.0   0.83  20/20/20/21/19/22/21/22/NaN 2k/2k/2k/2k/2k/2k/2k/2k ok
+donbas        2  1.0   0.17  13/19/NaN         2k/2k                 ok
+donbas        4  1.0   0.34  19/21/20/21/NaN   1k/2k/1k/2k           ok
+golanplateau  2  1.0   0.21  22/12/NaN         2k/2k                 ok
+golanplateau  4  1.0   0.32  20/22/21/21/NaN   2k/2k/2k/2k           ok
+dmziron       2  1.0   0.26  20/21/NaN         1k/2k                 ok
+dmziron       4  1.0   0.35  19/18/19/19/NaN   1k/2k/2k/2k           ok
+beqaa         2  1.0   0.22  19/18/NaN         2k/2k                 ok
+beqaa         4  1.0   0.37  20/21/20/18/NaN   2k/2k/2k/2k           ok
+hormuzgate    2  1.0   0.21  20/21/NaN         2k/2k                 ok
+hormuzgate    4  1.0   0.33  20/19/17/21/NaN   2k/2k/2k/2k           ok
+tihama        2  1.0   0.21  18/20/NaN         2k/2k                 ok
+tihama        4  1.0   0.32  19/13/21/22/NaN   2k/2k/2k/2k           ok
+peak memory (node + browser): 4747 MB
+
+MAPSWEEP PASS (1870s): 928 static checks, 134 battles — overviews in orch/out/maps/
