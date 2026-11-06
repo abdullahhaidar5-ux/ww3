@@ -20,7 +20,12 @@ building placement, minimap clicks, the L and F keys) and prints `TUTORIAL PASS`
 | 10 | tips | 40–60 word tips, 15–17 px text over the top of the screen, overlapped the setup banner and the town panel. | 1–2 sentence tip + one yellow "do this" line; box sits below the setup banner and right of the town panel. |
 | 11 | rescue | If every soldier died the player was stuck. | Reserves arrive when no soldier is left (garrisoned soldiers count as alive). |
 | 12 | end | Ended with a one-line toast. | "You're ready!" screen: 3 tips + **Start a real match** (same nation) / Main menu. |
-| 13 | enemy | Enemy never fights, win step had no pressure. | Enemy general (Easy AI) wakes up only at the last step. |
+| 13 | enemy / win | The enemy never does anything, so the last step has no pressure; waking the Easy AI was tried and **wiped a 14-soldier force in 30 s** (it builds a barracks and factory within seconds), so a new player could not win. | The enemy stays calm (no AI): it keeps its 2 base defenders and a lighter HQ (1500 HP); reserves + $2500 arrive at the last step. Still a long march (the map is 9000 units wide), so the tip says keep producing and use the minimap. |
+| 14 | start | The "Choose your General Doctrine" pop-up sat under the tip box. | Switched off in the tutorial. |
+
+Bugs found only by pinning the map seed and replaying on 3 different maps (all fixed): the move spot could land in the river or under the bottom HUD (now walkable ground, always on screen); it could lead into the red scouts so the 2 starting soldiers died (spot is sideways, scouts are 2 weaker ones farther out, you start with 3 more soldiers, reserves arrive up to 4 times); if the scouts were already dead the attack step had nothing to attack (it now spawns new ones); the civic step finished by itself when the panel was already open (now: press Low); during the retake fight the rebels hole up in the houses or the houses get shot to rubble, making the town impossible to take (tutorial rebels are weak, two stay, they leave the houses, and the town's houses cannot be destroyed).
+
+Test findings worth knowing: software rendering needs seconds per frame here and on CI, so the gate run stubs the GPU draw call (game logic and HUD run normally); a slow CI runner once needed over 20 min for the last fight, so the test now fast-forwards the battle clock between its real inputs (about 4 minutes in total) and pins the map seed (`TUT_SEED=n` to try another). The EW gate test failed once on an unrelated rubble-pathing flake and passed on re-run.
 
 Not changed on purpose: the civic step teaches "hold the town's perk building" — in the game civic buildings are part of each town
 (market / garage / clinic or mosque); players cannot build them, so the tutorial does not ask for it.
@@ -34,7 +39,7 @@ Skip step, Exit tutorial, restart from the menu and "Tutorial (replay)" after fi
 
 ## Files
 `src/08b-social.js` (tutorial only; no simulation change, so no servers-live PR needed), `orch/tutorialtest.mjs`,
-`.github/workflows/gate.yml` (new job `tutorial`), `orch/cigate.sh` (N 20 → 21), screenshots in `orch/shots/tutorial/`.
+`.github/workflows/gate.yml` (new job `tutorial`), `orch/cigate.sh` (N 20 → 21), screenshots (JPEG, 1920x1080, one per step) in `orch/shots/tutorial/`.
 
 ## Running it
 `node orch/tutorialtest.mjs` (gate: 1280x720, Low graphics, GPU drawing stubbed because software GL needs seconds per frame; ~10 min).

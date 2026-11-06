@@ -12923,7 +12923,7 @@ function bhOpen(){let ov=document.getElementById('myb');
 const tutHQ=()=>G.ents.find(e=>e.team===ME&&e.kind==='hq'&&!e.dead);
 const tutBld=k=>G.ents.find(e=>e.isB&&e.team===ME&&e.kind===k&&!e.dead);
 const tutInf=()=>G.ents.filter(e=>!e.isB&&e.team===ME&&e.kind==='inf'&&!e.dead).length;
-const tutFoe=()=>{const s=tutSquad()||tutHQ()||{x:0,y:0};let b=null,bd=1e9;for(const u of G.ents){if(u.isB||u.dead||u.team===ME||u.team===G.reb)continue;const d=Math.hypot(u.x-s.x,u.y-s.y);if(d<bd){bd=d;b=u;}}return b;};
+const tutFoe=()=>{const s=tutSquad()||tutHQ()||{x:0,y:0};let b=null,bd=1e9;for(const u of G.ents){if(u.isB||u.dead||u.team===ME||u.team===G.reb)continue;const d=Math.hypot(u.x-s.x,u.y-s.y);if(d<bd&&d<1200){bd=d;b=u;}}return b;};   // only enemies near your squad (not the far enemy base)
 const tutFoeHQ=()=>G.ents.find(e=>e.team!==ME&&e.team!==G.reb&&e.kind==='hq'&&!e.dead);
 function tutSquad(){const u=tutUnits();if(!u.length)return null;let x=0,y=0;for(const q of u){x+=q.x;y+=q.y;}return{x:x/u.length,y:y/u.length};}
 function tutTown(){const T=TUTS;const own=T.town&&T.town.ow===ME?T.town:G.towns.find(t=>t.ow===ME);if(own){T.town=own;return own;}
@@ -12938,11 +12938,13 @@ const TUT=[
  {k:'sel',t:'Welcome to Conquest! These are your soldiers.',a:'Left-click one, or drag a box around them, to select.',
   hl:()=>({w:tutSquad()}),cam:()=>tutSquad(),ok:()=>G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&!['harv','dozer','hacker'].includes(u.kind))},
  {k:'move',t:'Selected soldiers take orders with the RIGHT mouse button.',a:'Right-click the glowing spot to send them there.',
-  enter:()=>{const s=tutSquad(),hq=tutHQ();if(s){const a=Math.atan2(MAPH/2-s.y,MAPW/2-s.x),p=nearestPassXY('ground',s.x+Math.cos(a)*300,s.y+Math.sin(a)*300);TUTS.mk=p?{x:p[0],y:p[1]}:{x:s.x+250,y:s.y};}TUTS.pos=new Map(tutUnits().map(u=>[u.id,[u.x,u.y]]));},
+  enter:()=>{const s=tutSquad();if(s){let best=null;   /* walkable ground a short way off (never across water), preferably straight across the screen */
+      for(const R of [220,160,110,70]){for(const [dx,dy] of [[1,0],[-1,0],[.7,-.7],[-.7,-.7],[0,-1],[.7,.7],[-.7,.7],[0,1]]){const tx=s.x+dx*R,ty=s.y+dy*R,p=nearestPassXY('ground',tx,ty);if(p&&Math.hypot(p[0]-tx,p[1]-ty)<35){best={x:p[0],y:p[1]};break;}}if(best)break;}
+      TUTS.mk=best||{x:s.x+60,y:s.y+40};}TUTS.pos=new Map(tutUnits().map(u=>[u.id,[u.x,u.y]]));},
   hl:()=>({w:TUTS.mk}),cam:()=>{const s=tutSquad();return s&&TUTS.mk?{x:(s.x+TUTS.mk.x)/2,y:(s.y+TUTS.mk.y)/2}:s;},
-  ok:()=>{for(const u of tutUnits()){const p=TUTS.pos.get(u.id);if(p&&Math.hypot(u.x-p[0],u.y-p[1])>80)return true;}return false;}},
+  ok:()=>{for(const u of tutUnits()){const p=TUTS.pos.get(u.id);if(p&&Math.hypot(u.x-p[0],u.y-p[1])>(Math.hypot(TUTS.mk.x-p[0],TUTS.mk.y-p[1])>140?80:35))return true;}return false;}},
  {k:'atk',t:'Red soldiers are enemies. Your men also shoot on their own, but you choose the targets. (After an order they deselect: pick them again.)',a:'Select your soldiers, then right-click a red enemy to attack.',
-  enter:()=>{TUTS.k0=G.teams[ME].kills|0;if(!tutFoe()){const s=tutSquad()||tutHQ();if(s)for(let i=0;i<3;i++){const p=nearestPassXY('ground',s.x+330+i*30,s.y+i*25);if(p)addUnit(1,'inf',p[0],p[1]);}}},
+  enter:()=>{TUTS.k0=G.teams[ME].kills|0;if(!tutFoe()){const s=tutSquad()||tutHQ();if(s)for(let i=0;i<2;i++){const p=nearestPassXY('ground',s.x+330+i*30,s.y+i*25);const u=p&&Math.hypot(p[0]-s.x,p[1]-s.y)<700&&addUnit(1,'inf',p[0],p[1]);if(u)u.hp*=.7;}}},
   hl:()=>({w:tutFoe()}),cam:()=>tutFoe(),ok:()=>(G.teams[ME].kills|0)>TUTS.k0},
  {k:'setup',t:'Setup phase: in every match nobody can shoot for the first 90 seconds (timer at the top). Spend it building your base.',a:'Open Build, click Barracks, then click the ground next to your base.',
   enter:()=>{G.setupEnd=Math.max(G.setupEnd||0,G.t+75);},
@@ -12960,11 +12962,13 @@ const TUT=[
  {k:'unrest',t:'Angry locals fill the Unrest bar. At 100 the town REVOLTS and rebels throw you out. Let us watch one (yellow and red rings on the minimap warn you).',a:'Open the town panel (its minimap marker) and press Extortionate. Wait a few seconds.',
   hl:()=>tutTownHL(3),cam:()=>tutTown(),ok:()=>(G.teams[ME].revN|0)>0},
  {k:'retake',t:'Revolt! Rebels hold the town now. Reinforcements are arriving. Lesson: lower the tax before the bar fills.',a:'Select soldiers and right-click the ringed houses to take it back.',
-  enter:()=>{const t=tutTown(),h=tutHQ();if(t&&h&&tutUnits().length<10){const a=Math.atan2(h.y-t.y,h.x-t.x);tutSpawn(6,t.x+Math.cos(a)*330,t.y+Math.sin(a)*330);try{pushLog('Reinforcements have arrived.','w');}catch(e){}}},
+  enter:()=>{const t=tutTown(),h=tutHQ();if(t){for(const c of t.cells)if(c.g&&!c.g.dead&&c.g.team===G.reb&&c.occ&&c.occ.length){try{leaveGarrison(c);}catch(e){}}
+      let n=0;for(const u of (t.rebU||[])){if(!u||u.dead)continue;if(++n>2){try{kill(u,ME,null);}catch(e){u.dead=true;}}else u.hp*=.4;}}   /* only two weak rebels stay (the lesson is the tax, not a hard fight) and they do not hole up in the houses */   /* tutorial rebels are weak: the lesson is the tax, not a hard fight */
+    if(t&&h&&tutUnits().length<10){const a=Math.atan2(h.y-t.y,h.x-t.x);tutSpawn(6,t.x+Math.cos(a)*330,t.y+Math.sin(a)*330);try{pushLog('Reinforcements have arrived.','w');}catch(e){}}},
   hl:()=>({w:tutHouse()}),cam:()=>tutTown(),ok:()=>{const t=tutTown();return!!t&&t.ow===ME;}},
- {k:'civic',t:'Each town has one perk building (market: more tax; garage: repairs vehicles; clinic or mosque: heals soldiers, calms unrest). Hold it to get the perk.',a:'Open the town panel (minimap marker), read its perk line, press Low or Normal.',
+ {k:'civic',t:'Each town has one perk building (market: more tax; garage: repairs vehicles; clinic or mosque: heals soldiers, calms unrest). Hold it to get the perk.',a:'Open the town panel (minimap marker), read its perk line, then press Low (a freshly retaken town is touchy).',
   enter:()=>{TUTS.civ=0;},
-  hl:()=>tutTownHL(0),cam:()=>tutTown(),ok:()=>{const t=tutTown();if(!t||t.ow!==ME)return false;if(t.rate<=1&&TP.ti===t.i&&performance.now()-TUTS.e0>2500)return true;return false;}},
+  hl:()=>tutTownHL(0),cam:()=>tutTown(),ok:()=>{const t=tutTown();return!!t&&t.ow===ME&&t.rate===0;}},
  {k:'logi',t:'Towns need a road to your base. A town with no link is CUT OFF: no ammo and less tax. Your Construction Vehicle builds roads.',a:'Press L (or click Supply lines) to see your supply network.',
   hl:()=>LGU.btn?{el:LGU.btn}:null,cam:()=>tutHQ(),ok:()=>(typeof LGU!=='undefined'&&LGU.on)},
  {k:'pow',t:'Powers use your General points, and you have two to spend. (They cannot be used during the setup phase.)',a:'Open the Powers tab and click a power to buy it.',
@@ -13011,10 +13015,11 @@ function tutHLTick(){let h=document.getElementById('tutHL');if(!TUTS||!G||!G.tut
   const set=(x,y,w,hh,cls)=>{h.style.display='block';h.className=cls||'';h.style.left=x+'px';h.style.top=y+'px';h.style.width=w+'px';h.style.height=hh+'px';};
   if(el){const r=el.getBoundingClientRect();if(r.width<2){h.style.display='none';return;}set(r.left-4,r.top-4,r.width+8,r.height+8,'box'+(r.top<90?' low':''));return;}
   if(tg.mm){const r=mm.getBoundingClientRect();if(r.width<2){h.style.display='none';return;}set(r.left+tg.mm.x/MAPW*r.width-17,r.top+tg.mm.y/MAPH*r.height-17,34,34,'low');return;}
-  if(tg.w){const p=toScreen(tg.w.x,8,tg.w.y),W=innerWidth,H=innerHeight;
-    if(p.z<1&&p.x>40&&p.x<W-40&&p.y>110&&p.y<H-150){set(p.x-45,p.y-45,90,90,'');
+  if(tg.w){const p=toScreen(tg.w.x,8,tg.w.y),cr=cv.getBoundingClientRect(),W=innerWidth,H=Math.min(innerHeight,cr.bottom);
+    if(p.z<1&&p.x>40&&p.x<W-40&&p.y>110&&p.y<H-40){set(p.x-45,p.y-45,90,90,'');
       if(performance.now()-(TUTS.ping||0)>4000){TUTS.ping=performance.now();(G.tpings=G.tpings||[]).push({x:tg.w.x,y:tg.w.y,k:0,t:performance.now()});}}
-    else{const cx=W/2,cy=H/2;let dx=p.x-cx,dy=p.y-cy;if(p.z>1){dx=-dx;dy=-dy;}const m=Math.max(Math.abs(dx)/(cx-60),Math.abs(dy)/(cy-120))||1,ex=cx+dx/m,ey=cy+dy/m;
+    else{const tb=document.getElementById('tut'),top=tb&&!tb.hidden?tb.getBoundingClientRect().bottom+24:120,cx=W/2,hh=Math.max(40,(H-40-top)/2),cy=top+hh;let dx=p.x-cx,dy=p.y-cy;if(p.z>1){dx=-dx;dy=-dy;}const m=Math.max(Math.abs(dx)/(cx-60),Math.abs(dy)/hh)||1,ex=cx+dx/m,ey=cy+dy/m;   /* edge arrow: inside the game view, below the tip box */
+      
       set(ex-15,ey-15,30,30,'edge');h.firstChild.style.transform='rotate('+(Math.atan2(dy,dx)*180/Math.PI-90)+'deg)';
       if(performance.now()-(TUTS.ping||0)>4000){TUTS.ping=performance.now();(G.tpings=G.tpings||[]).push({x:tg.w.x,y:tg.w.y,k:0,t:performance.now()});}return;}
     h.firstChild.style.transform='';}
@@ -13023,7 +13028,10 @@ function tutLayout(){const el=document.getElementById('tut');if(!el||el.hidden)r
 function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&(!G||!G.tut))el.hidden=true;}if(!TUTS||!G||!G.tut||G.over||TUTS.wait||!$('menu').hidden)return;
   const me=G.teams[ME],k=TUT[TUTS.i].k;tutLayout();
   /* safety nets: never leave the player without soldiers; the unrest lesson is sped up so a revolt really happens within seconds */
-  if(!tutUnits().length&&!tutGarN()&&!G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='barracks'&&!e.dead&&e.built>=1&&e.q&&e.q.length)){const h=tutHQ();if(h&&!TUTS.rescue){TUTS.rescue=1;tutSpawn(5,h.x+60,h.y+130);try{pushLog('Reserves have arrived.','w');}catch(e){}}}
+  if(!tutUnits().length&&!tutGarN()&&!G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='barracks'&&!e.dead&&e.built>=1&&e.q&&e.q.length)){const h=tutHQ();if(h&&(TUTS.rescue|0)<4){TUTS.rescue=(TUTS.rescue|0)+1;tutSpawn(5,h.x+60,h.y+130);try{pushLog('Reserves have arrived.','w');}catch(e){}}}
+  if(TUTS.town){for(const c of TUTS.town.cells){const g=c.g;if(g&&!g.dead&&g.max&&g.team===ME&&g.hp<g.max*.4)g.hp=g.max*.4;}}   /* the tutorial town's houses cannot be shot to rubble (that would make the town impossible to take) */
+  if(k==='retake'&&TUTS.town){for(const c of TUTS.town.cells)if(c.g&&!c.g.dead&&c.g.team===G.reb&&c.occ&&c.occ.length){try{leaveGarrison(c);}catch(e){}}
+    if(performance.now()-TUTS.e0>8000){for(const u of G.ents.slice())if(!u.isB&&!u.dead&&u.team===G.reb&&Math.hypot(u.x-TUTS.town.x,u.y-TUTS.town.y)<600){try{kill(u,ME,null);}catch(e){u.dead=true;}}}}   /* after a few seconds the last rebels give up, so nothing contests the town */   /* rebels never hole up in the houses during the tutorial: they fight in the open and the houses stay free to take */
   if(k==='unrest'){const t=tutTown();if(t&&t.ow===ME&&t.rate>=3)t.un=Math.min(100,t.un+6);}
   let ok=false;try{ok=!!TUT[TUTS.i].ok();}catch(e){}
   if(ok)tutAdvance(false);}
@@ -13033,7 +13041,8 @@ function startTutorial(){MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&
   TERR_DEFER=true;try{newGame({w:setup.w|0,seed:(window.__tutSeed||Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
   const T=G.teams[0];G.tut=true;G.docDis=1;G.setupEnd=0;T.credits+=3000;T.gxp=Math.max(T.gxp|0,RANKS[1]);promoteGeneral(T);if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
   try{const hq=G.ents.find(e=>e.team===0&&e.kind==='hq'),a=Math.atan2(MAPH/2-hq.y,MAPW/2-hq.x);
-    for(let i=0;i<3;i++){const p=nearestPassXY('ground',hq.x+Math.cos(a)*380+rnd(-60,60),hq.y+Math.sin(a)*380+rnd(-60,60));if(p)addUnit(1,'inf',p[0],p[1]);}}catch(e){console.warn('tutorial spawn',e);}
+    for(let i=0;i<2;i++){const p=nearestPassXY('ground',hq.x+Math.cos(a)*470+rnd(-60,60),hq.y+Math.sin(a)*470+rnd(-60,60));const u=p&&addUnit(1,'inf',p[0],p[1]);if(u)u.hp*=.7;}
+    {const q=G.ents.find(e=>e.team===0&&e.kind==='inf'&&!e.dead);tutSpawn(3,q?q.x+45:hq.x+70,q?q.y+45:hq.y+140);}}catch(e){console.warn('tutorial spawn',e);}   // 3 more soldiers right next to the starting squad
   try{const eh=G.ents.find(e=>e.team===1&&e.kind==='hq');if(eh){eh.max=eh.hp=Math.min(eh.max,1500);}}catch(e){}   // a lighter enemy HQ so the finale does not drag on
   TUTS={i:0};afterStart();{const el=tutEl();for(const id of ['tutShow','tutSkip'])$(id).hidden=false;$('tutExit').textContent='Exit tutorial';}tutEnter();}
 function socialMenu(){const row=document.getElementById('openSettings');

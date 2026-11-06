@@ -14,6 +14,7 @@ await new Promise(r => server.listen(0, '127.0.0.1', r)); const ORIGIN = `http:/
 const browser = await pw.chromium.launch({ executablePath: exe, args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 // --shots: PC 1920x1080 at full graphics with a screenshot of every step (slow); the CI gate runs 1280x720 on Low graphics without screenshots
 const BIG = process.argv.includes('--shots'); const ctx = await browser.newContext({ viewport: BIG ? { width: 1920, height: 1080 } : { width: 1280, height: 720 } });
+await ctx.addInitScript((sd) => { window.__tutSeed = sd; }, +process.env.TUT_SEED || 4242);   // same map every run
 if (!BIG) await ctx.addInitScript(() => { try { localStorage.setItem('ww3_settings', JSON.stringify({ gfx: 'low' })); } catch (e) {} }); await guardContext(ctx);
 const page = await ctx.newPage(); await page.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue() : r.abort());
 let SHOTS = process.argv.includes('--shots'); const SHOTS_ON = SHOTS;
@@ -28,6 +29,7 @@ const info = await page.evaluate(() => ({ btn: document.getElementById('tutorial
 console.log('menu', JSON.stringify(info));
 
 const wait = (ms) => page.waitForTimeout(ms);
+const diag = async (label) => console.log('  DIAG', label, JSON.stringify(await ev(() => { try { const t = tutTown(), h = tutHQ(); return { t: G.t | 0, step: TUTS && TUTS.i + 1, town: t && { n: t.name, ow: t.ow, reb: t.reb, d: h && Math.round(Math.hypot(t.x - h.x, t.y - h.y)), cells: t.cells.map(c => [!!c.key, c.ow, !!c.g, (c.occ || []).length, c.cap, c.dead ? 1 : 0]) }, units: G.ents.filter(u => !u.isB && u.team === ME && !u.dead).map(u => [u.kind, u.x | 0, u.y | 0, u.order ? u.order.type : '', u.inGar ? 1 : 0]), sel: G.sel.length }; } catch (e) { return String(e); } })));
 // fast-forward the battle clock (software rendering and slow CI machines run the live loop at a fraction of real time); inputs stay real, only waiting is accelerated
 const ff = (sec) => page.evaluate((n) => { for (let k = 0; k < Math.ceil(n * 60) && G && !G.over; k++) simUpdate(1 / 60); }, sec);
 const shot = async (name) => { if (!SHOTS || !KEEP.test(name)) return; await ev(() => { R3.render = window.__realRender; }); await ev(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))))); await page.screenshot({ path: path.join(SH, name + '.jpg'), type: 'jpeg', quality: 78, timeout: 300000 }); await ev(() => { R3.render = () => {}; }); };
@@ -48,7 +50,7 @@ async function waitStep(i, timeout = 300000) {
   ok(!st.overlap, 'step ' + (i + 1) + ' tip box does not cover its own highlight ' + (st.overlap ? st.rects : ''));
   await shot(String(i + 1).padStart(2, '0') + '-' + st.k + '-tip'); return st;
 }
-async function done(i) { const t0 = Date.now(); for (;;) { if (await ev((i) => !TUTS || TUTS.i > i || TUTS.wait, i)) break; if (Date.now() - t0 > 600000) { bad('step ' + (i + 1) + ' did not complete'); throw new Error('stuck'); } await ff(3); await wait(150); } stepTimes.push(Math.round((Date.now() - t0) / 1000)); }
+async function done(i) { const t0 = Date.now(); for (;;) { if (await ev((i) => !TUTS || TUTS.i > i || TUTS.wait, i)) break; if (Date.now() - t0 > 600000) { bad('step ' + (i + 1) + ' did not complete'); await diag('stuck'); await ev(() => console.log(1)); throw new Error('stuck'); } await ff(3); await wait(150); } stepTimes.push(Math.round((Date.now() - t0) / 1000)); }
 const click = async (x, y, o = {}) => { await page.mouse.move(x, y); await page.mouse.click(x, y, o); };
 async function boxSelectSquad() {
   const sq = await ev(() => { const u = tutUnits(); let x = 0, y = 0; u.forEach(q => { x += q.x; y += q.y; }); return { x: x / u.length, y: y / u.length, n: u.length }; });
@@ -63,7 +65,7 @@ async function takeHouses(label) {
   for (let k = 0; k < 30; k++) {
     const st = await ev(() => { const t = tutTown(); if (t.ow === ME) return { done: true }; const c = t.cells.find(c => c.key && c.ow !== ME && !c.g && !c.dead) || t.cells.find(c => c.ow !== ME && !c.dead); const free = G.ents.filter(u => !u.isB && !u.dead && u.team === ME && u.kind === 'inf' && !u.order && !u.inGar);
       return { cell: c && { x: c.x, y: c.y }, unit: free[0] && { x: free[0].x, y: free[0].y }, n: free.length }; });
-    if (st.done) return true; if (!st.cell || !st.unit) { await wait(4000); continue; }
+    if (k < 6 || k % 10 === 0) console.log('    takeHouses', k, JSON.stringify(st)); if (st.done) return true; if (!st.cell || !st.unit) { await ff(4); await wait(200); continue; }
     await ev(([x, y]) => centerOn(x, y, true), [st.unit.x, st.unit.y]); let p = await scr(st.unit.x, st.unit.y, 8); await ev(() => { G.sel = []; }); await click(p.x, p.y); await page.waitForFunction(() => G.sel.length > 0, null, { timeout: 8000 }).catch(() => {});
     await ev(([x, y]) => centerOn(x, y, true), [st.cell.x, st.cell.y]); p = await scr(st.cell.x, st.cell.y, 6); await click(p.x, p.y, { button: 'right' }); await ff(6); await wait(200);
     if (k === 1) await shot(label + '-garrisoning');
@@ -102,10 +104,10 @@ try {
   // 1 select
   await waitStep(0); { const n = await boxSelectSquad(); ok(n > 0, 'drag-select picks up soldiers (' + n + ')'); } await done(0); await shotAfter(1, 'sel');
   // 2 move
-  await waitStep(1); { const m = await ev(() => TUTS.mk); const p = await scr(m.x, m.y, 0); await boxSelectSquad(); await click(p.x, p.y, { button: 'right' }); } await done(1); await shotAfter(2, 'move');
+  await waitStep(1); { const m = await ev(() => TUTS.mk); await boxSelectSquad(); await ev(() => { const q = TUT[TUTS.i].cam(); centerOn(q.x, q.y - 90, true); }); const p = await scr(m.x, m.y, 0); console.log('    marker at', Math.round(p.x), Math.round(p.y)); ok(p.x > 20 && p.x < 1260 && p.y > 215 && p.y < 520, 'the move marker is on screen below the tip box'); await click(p.x, p.y, { button: 'right' }); } await done(1); await shotAfter(2, 'move');
   // 3 attack
   await waitStep(2); { await boxSelectSquad(); const f = await ev(() => { const e = tutFoe(); return e ? { x: e.x, y: e.y } : null; }); ok(!!f, 'a red enemy exists to attack');
-    for (let k = 0; k < 6 && f; k++) { const fe = await ev(() => { const e = tutFoe(); return e ? { x: e.x, y: e.y } : null; }); if (!fe) break; await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p = await scr(fe.x, fe.y, 10); await boxSelectSquad().catch(() => 0); await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p2 = await scr(fe.x, fe.y, 10); await click(p2.x, p2.y, { button: 'right' }); await ff(8);
+    for (let k = 0; k < 6 && f; k++) { const fe = await ev(() => { const e = tutFoe(), q = tutSquad(); return e && q && Math.hypot(e.x - q.x, e.y - q.y) < 900 ? { x: e.x, y: e.y } : null; }); if (!fe) break;   /* only the nearby scouts, never the far enemy base */ await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p = await scr(fe.x, fe.y, 10); await boxSelectSquad().catch(() => 0); await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p2 = await scr(fe.x, fe.y, 10); await click(p2.x, p2.y, { button: 'right' }); await ff(8);
       if (await ev(() => TUTS.wait || TUTS.i > 2)) break; } }
   await done(2); await shotAfter(3, 'atk');
   // 4 setup + barracks
