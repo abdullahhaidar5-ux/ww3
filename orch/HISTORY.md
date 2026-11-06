@@ -251,3 +251,6 @@ Grand stage 2 — **empire economy on the grand map**. New `src/13g-grandeco.js`
 
 ## nations-a1 — Poland, Azerbaijan, Jordan, Kurdistan Region, Italy, Greece, Spain; EU retired (2026-11-06)
 First cut via NEWNAT, EU hidden from menus. See orch/reports/nations-a1.md. Open: voices, models, maps, tourney, servers-live PR.
+
+## 2026-11-06 — grand3 (orch/grand3, Sonnet 5.5, scheduled; chain stage 4)
+Grand stage 3 — **military on the grand map**. New `src/13i-grandmil.js` + `13j-grandmilui.js`: named fictional generals (4 traits, levels, killed/captured, hero in Fight-it with perks), front lines (hold / push / counter-attack with AI-assist for every empire), map strikes (missile, air raid, drone on buildings / armies / fleets, air defence intercepts, turn-log results), fleets and sea zones (fleets are armies of ships; sea battles auto or live on a naval map; blockades cut port income and sea trade; escorts for crossings; subs and mines), AI uses all of it, deterministic. Small hooks in 13-grand, 13b, 13c, 13g. Tests: `grandtest --only mil`. Screenshots `orch/shots/grand3/`. Not done: fort zones, supply limits, encirclement/sieges.

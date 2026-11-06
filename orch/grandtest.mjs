@@ -32,6 +32,7 @@ const errs = [];
 page.on('pageerror', e => errs.push('page error: ' + (e.stack || e.message).split('\n').slice(0, 3).join(' | ')));
 page.on('console', m => { if (m.type() === 'error' && !/ERR_FAILED|net::|Failed to load resource|peer|PeerJS|WebSocket|ICE|AudioContext|autoplay|speechSynthesis/i.test(m.text())) errs.push('console: ' + m.text().slice(0, 200)); });
 await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.html', '')) ? r.continue() : r.abort());
+const shot3 = async (n) => { fs.mkdirSync(path.join(ROOT, 'orch', 'shots', 'grand3'), { recursive: true }); await page.waitForTimeout(400); await page.screenshot({ path: path.join(ROOT, 'orch', 'shots', 'grand3', n + '.png'), timeout: 120000 }).catch(e => console.log('  (screenshot skipped ' + n + ')')); };
 const shot = async (n) => { await page.waitForTimeout(400); await page.screenshot({ path: path.join(SHOTS, n + '.png'), timeout: 120000 }).catch(e => console.log('  (screenshot skipped ' + n + ')')); };
 const ev = (fn, arg) => page.evaluate(fn, arg);
 try {
@@ -52,6 +53,89 @@ try {
   console.log('determinism', JSON.stringify(det));
   if (det.a !== det.b || det.h0 !== det.h1) fails.push('determinism: same seed gave different hashes ' + det.a + ' vs ' + det.b);
   if (det.a === det.c) fails.push('determinism: different seeds gave the same hash'); if (det.provs < 120 || det.provs > 320) fails.push('map: ' + det.provs + ' land provinces');
+  // ---- MILITARY (grand3): generals, front lines, map strikes, fleets & sea zones; determinism over 20 turns with all of it active
+  {
+    const run20 = () => { grNew({ me: null, seed: 31337, len: 'std' }); const seen = { strike: 0, intercept: 0, sea: 0, gen: 0, blockade: 0 };
+      for (let i = 0; i < 20 && !GC.over; i++) { grEndTurn(true); for (const l of GC.log) if (l[0] === GC.turn - 1) { const t = l[1]; if (/missile|air raid|drone strike/i.test(t)) seen.strike++; if (/intercepted/.test(t)) seen.intercept++; if (/fleet|ship|sea|waters|mines/i.test(t) && /beat|held against|fell back|destroyed|hit mines/.test(t)) seen.sea++; if (/captured|killed|level \d|takes command|escaped/.test(t)) seen.gen++; if (/blockade/.test(t)) seen.blockade++; } }
+      const M = GC.mil; return { h: grHash(), seen, gens: Object.keys(M.g).length, alive: Object.values(M.g).filter(g => !g.st).length, fronts: M.fr.length, fleets: GC.armies.filter(a => a.fl).length, orders: GC.armies.filter(a => a.fr).length, mines: Object.keys(M.zm).length, turn: GC.turn }; };
+    const m1 = await ev(() => { const t0 = performance.now(); const a = (() => { grNew({ me: null, seed: 31337, len: 'std' }); const seen = { strike: 0, intercept: 0, sea: 0, gen: 0, blockade: 0 }; for (let i = 0; i < 20 && !GC.over; i++) { grEndTurn(true); for (const l of GC.log) if (l[0] === GC.turn - 1) { const t = l[1]; if (/missile|air raid|drone strike/i.test(t)) seen.strike++; if (/intercepted/.test(t)) seen.intercept++; if (/beat|held against|fell back|destroyed|hit mines/.test(t) && /Sea|Gulf|Strait|Channel|Ocean|Bay|Med/i.test(t)) seen.sea++; if (/captured|killed|level \d|takes command|escaped/.test(t)) seen.gen++; if (/blockade/.test(t)) seen.blockade++; } } const M = GC.mil; return { h: grHash(), seen, gens: Object.keys(M.g).length, alive: Object.values(M.g).filter(g => !g.st).length, fronts: M.fr.length, fleets: GC.armies.filter(a => a.fl).length, framies: GC.armies.filter(a => a.fr).length, mines: Object.keys(M.zm).length, turn: GC.turn, dead: Object.values(M.g).filter(g => g.st === 1).length, capt: Object.values(M.g).filter(g => g.st === 2).length, lv: Math.max(...Object.values(M.g).map(g => g.lv)) }; })();
+      const b = (() => { grNew({ me: null, seed: 31337, len: 'std' }); for (let i = 0; i < 20 && !GC.over; i++) grEndTurn(true); return grHash(); })();
+      grNew({ me: null, seed: 31338, len: 'std' }); for (let i = 0; i < 20 && !GC.over; i++) grEndTurn(true); const c = grHash();
+      return { a, b, c, ms: Math.round(performance.now() - t0) }; });
+    console.log('military determinism', JSON.stringify(m1));
+    if (m1.a.h !== m1.b) fails.push('military: same seed gave different hashes over 20 turns'); if (m1.a.h === m1.c) fails.push('military: different seeds gave the same hash');
+    if (m1.a.gens < 20) fails.push('military: only ' + m1.a.gens + ' generals'); if (m1.a.fronts < 3) fails.push('military: only ' + m1.a.fronts + ' fronts'); if (m1.a.framies < 5) fails.push('military: only ' + m1.a.framies + ' armies on fronts'); if (m1.a.fleets < 10) fails.push('military: only ' + m1.a.fleets + ' fleets');
+    const mf = await ev(() => { const out = []; const ok = (c, m) => { if (!c) out.push(m); };
+      grNew({ me: 'IR', seed: 7, len: 'quick' }); ok(GC.mil, 'no GC.mil'); const fv = {}; for (const a of GC.armies) if (a.fl) fv[a.o] = (fv[a.o] || 0) + grArmyVal(a);
+      const majors = grMajors().filter(c => fv[c]); const vs = majors.map(c => fv[c]); ok(majors.length >= 15, 'only ' + majors.length + ' major nations have a fleet'); ok(Math.max(...vs) / Math.min(...vs) < 1.7, 'fleet strength not equal across nations: ' + Math.round(Math.min(...vs)) + '..' + Math.round(Math.max(...vs)));
+      // generals: names, traits, leading armies
+      const gs = Object.values(GC.mil.g); ok(gs.length >= 20, 'few generals at start'); ok(gs.every(g => g.nm && g.tr >= 0 && g.tr < 4), 'general fields'); ok(new Set(gs.map(g => g.tr)).size === 4, 'not all four traits used');
+      const led = GC.armies.filter(a => a.gid); ok(led.length >= 10 && led.every(a => GC.mil.g[a.gid].aid === a.id), 'generals not tied to armies');
+      // a general lost with his army: killed / captured / escaped (never silently kept)
+      const arm = led.find(a => a.o === 'IR'); const g0 = GC.mil.g[arm.gid]; GC.mil.foe = 'IQ'; grDrop(arm); GC.mil.foe = ''; ok(g0.aid === 0 && !arm.gid, 'general still tied to a destroyed army'); out.push && 0;
+      // experience + level up
+      const arm2 = GC.armies.find(a => a.o === 'US' && a.gid); const g1 = GC.mil.g[arm2.gid]; g1.xp = 59; const b = { att: [arm2.id], def: [], an: 'US', dn: 'IR', p: 0 }; gmilBattle(b, 'att'); ok(g1.lv >= 1 && g1.xp > 59, 'general did not gain a level');
+      // perk effects in auto-resolve: the armour expert is worth more with tanks
+      const a3 = GC.armies.find(a => a.gid && GC.mil.g[a.gid].tr === 0); if (a3) { const m = gmilMul(a3, 0); ok(m > 1, 'armour expert perk missing'); }
+      // fronts: assign + push moves the army toward the enemy
+      grNew({ me: 'IR', seed: 7, len: 'quick' }); const foes = Object.keys(GC.war).filter(k => k.split('|').includes('IR')).map(k => k.split('|').find(x => x !== 'IR')); const foe = foes.find(x => GCM.P.some(p => p.land && GC.prov[p.i].o === 'IR' && p.adj.some(j => GCM.P[j].land && GC.prov[j].o === x))) || foes[0]; const f = gmilAddFront('IR', foe); const ir = GC.armies.filter(a => a.o === 'IR' && !a.fl);
+      ok(ir.length && gmilAssign(ir[0].id, f.id) === '' && ir[0].fr === f.id, 'assign to front failed'); f.ord = 'push'; const lp = GCM.P.find(p => p.land && GC.prov[p.i].o === 'IR' && p.adj.some(j => GCM.P[j].land && GC.prov[j].o === foe)); if (lp) ir[0].at = lp.i; ir[0].path = []; gmilPlan(); ok(ir[0].path.length > 0 || gmilLine(f).length === 0, 'push front gave no order'); f.ord = 'hold'; ok(gmilAssign(ir[0].id, 0) === '' && !ir[0].fr, 'release failed');
+      return out; });
+    console.log('military features', JSON.stringify(mf)); for (const f of mf) fails.push('military: ' + f);
+    // strikes: missile / air raid / drone; air defence intercepts; fleets; sea battle; blockade; escort; naval Fight-it
+    const sf = await ev(() => { const out = []; const ok = (c, m) => { if (!c) out.push(m); };
+      grNew({ me: 'IR', seed: 7, len: 'quick' }); const A = 'IR', B = Object.keys(GC.war).filter(k => k.split('|').includes(A)).map(k => k.split('|').find(x => x !== A))[0]; const N = GC.nat[A]; N.cash = 20000; N.e.fuel = 300;
+      const tgt = GCM.P.filter(p => p.land && GC.prov[p.i].o === B).sort((x, y) => grDist(x.i, N.cap) - grDist(y.i, N.cap))[0]; geBl(tgt.i).length = 0; geBl(tgt.i).push(['factory', 0], ['refinery', 0]);
+      geBl(N.cap).push(['airfield', 0], ['base', 0]); gmilN(A).ms = 3; tgt.__d = grDist(tgt.i, N.cap);
+      // choose a target in range of the capital
+      const near = GCM.P.filter(p => p.land && GC.prov[p.i].o === B && grDist(p.i, N.cap) < 230).sort((x, y) => grDist(x.i, N.cap) - grDist(y.i, N.cap))[0]; if (!near) { out.push('skip: no enemy province near the capital'); return out; }
+      geBl(near.i).length = 0; geBl(near.i).push(['factory', 0], ['refinery', 0]);
+      ok(gmilStrike(A, 'm', near.i, 'b') === '', 'missile order refused: ' + gmilStrikeCheck(A, 'm', near.i, 'b')); ok(gmilStrike(A, 'd', near.i, 'a') === '', 'drone order refused'); ok(gmilStrike(A, 'a', near.i, 'b') === '', 'air raid order refused: ' + gmilStrikeCheck(A, 'a', near.i, 'b')); ok(gmilStrike(A, 'm', near.i, 'a') !== '', 'fourth strike not refused');
+      gmilStrikes(); const dmg = geBl(near.i).reduce((s, r) => s + (r[1] | 0), 0); ok(dmg > 0 || GC.log.some(l => /intercepted/.test(l[1])), 'strikes had no effect and none intercepted'); ok(gmilN(A).ms === 2, 'missile stock not spent'); ok(GC.log.some(l => /missile|air raid|drone/i.test(l[1]) && l[0] === GC.turn), 'no strike line in the turn log');
+      // air defence: many SAMs + AA units intercept (statistically, 30 missiles)
+      const hit = (n, aa) => { let hits = 0; for (let i = 0; i < n; i++) { GC.turn++; geBl(near.i).length = 0; geBl(near.i).push(['factory', 0]); for (let k = 0; k < (aa | 0); k++) geBl(near.i).push(['aa', 0]); gmilN(A).ms = 3; gmilN(A).so = []; gmilStrike(A, 'm', near.i, 'b'); gmilStrikes(); if (!GC.log.some(l => l[0] === GC.turn && /intercepted/.test(l[1]) && /missile/i.test(l[1]))) hits++; } return hits; };
+      const open = hit(24, 0); const sam = hit(24, 3); ok(sam < open, 'air defence did not reduce missile hits (' + sam + ' vs ' + open + ')');
+      // fleets
+      const ports = GCM.P.filter(p => p.land && GC.prov[p.i].o === A && p.port); ok(ports.length > 0, 'IR has no port'); const n0 = GC.mil.fq.length; GC.nat.IR.e.man = 200; const bf = gmilBuyFleet(A, ports[0].i, 'boat'); ok(bf === '' && GC.mil.fq.length === n0 + 1, 'fleet order failed ' + bf);
+      GC.turn += 2; gmilFleetArrive(); ok(GC.armies.some(a => a.fl && a.o === A && a.u.some(r => r[0] === 'boat')), 'ordered boats never arrived');
+      // sea fight (auto): two fleets in one zone, one arrives -> a sea battle is queued and resolved, loser retreats or dies
+      grNew({ me: 'IR', seed: 7, len: 'quick' }); const zb = GCM.P.findIndex(p => p.sea && p.adj.some(j => GCM.P[j].land && GC.prov[j].o === B && gmilHasPort(j))); const pb = GCM.P[zb].adj.find(j => GCM.P[j].land && GC.prov[j].o === B && gmilHasPort(j));
+      if (zb < 0) { out.push('skip: no enemy port zone'); return out; }
+      GC.armies = GC.armies.filter(a => !a.fl); const fa = grAddArmy(A, zb, [['ship', 100, 0, 100], ['ship', 100, 0, 100], ['boat', 100, 0, 100]], 'Test Fleet'); fa.fl = 1; gmilBlockRefresh(); ok(gmilBk(pb), 'port not blockaded by the fleet next to it'); const inc0 = (GC.nat[B].inc | 0);
+      const fb = grAddArmy(B, zb, [['boat', 100, 0, 100]], 'Defence Fleet'); fb.fl = 1; gmilBlockRefresh(); ok(!gmilBk(pb), 'blockade not lifted by a defending fleet in the same zone');
+      GC.armies = GC.armies.filter(a => a !== fb); gmilBlockRefresh(); ok(gmilBk(pb), 'blockade did not return');
+      const z1 = GCM.P.findIndex(p => p.sea && p.adj.some(j => GCM.P[j].sea)); const z2 = GCM.P[z1].adj.find(j => GCM.P[j].sea); GC.armies = GC.armies.filter(a => !a.fl);
+      const fa2 = grAddArmy(A, z1, [['ship', 100, 0, 100], ['ship', 100, 0, 100], ['boat', 100, 0, 100]], 'Test Fleet'); fa2.fl = 1; const fb2 = grAddArmy(B, z2, [['boat', 100, 0, 100], ['fast', 100, 0, 100]], 'Defence Fleet'); fb2.fl = 1;
+      const path = grPath(A, z1, z2, 1); ok(path && path.path.length, 'fleet has no sea route'); fa2.path = [z2]; fa2.pg = Math.max(0, grEdge(z1, z2) - 1); GC.ph = 'resolve'; grMovePhase(); ok(GC.q.some(b => b.sea && b.p === z2), 'no sea battle queued'); GC.qi = 0; for (const b of GC.q) grBattleAuto(b); ok(GC.q.every(b => b.done), 'sea battle unresolved');
+      const l2 = fa2.u.length, d2 = fb2.u.length; ok(l2 < 3 || d2 < 2 || !GC.armies.includes(fb2) || fb2.at !== z2, 'sea battle changed nothing');
+      
+      return out; });
+    console.log('military strikes/fleets', JSON.stringify(sf)); for (const f of sf) if (!/^skip/.test(f)) fails.push('military: ' + f); else console.log('  ' + f);
+    // escort rule: a land army cannot sail into a sea held by an enemy fleet without its own fleet there
+    const es = await ev(() => { const out = []; const ok = (c, m) => { if (!c) out.push(m); }; grNew({ me: 'IR', seed: 7, len: 'quick' }); const A = 'IR', B = Object.keys(GC.war).filter(k => k.split('|').includes(A)).map(k => k.split('|').find(x => x !== A))[0];
+      const z = GCM.P.findIndex(p => p.sea); const arm = GC.armies.find(a => a.o === A && !a.fl); GC.armies = GC.armies.filter(a => !a.fl); const eb = grAddArmy(B, z, [['ship', 100, 0, 100]], 'Foe'); eb.fl = 1; ok(gmilSeaDenied(arm, z), 'crossing not denied under an enemy fleet');
+      const es = grAddArmy(A, z, [['boat', 100, 0, 100]], 'Escort'); es.fl = 1; ok(!gmilSeaDenied(arm, z), 'escort did not allow the crossing'); return out; });
+    console.log('military escort', JSON.stringify(es)); for (const f of es) fails.push('military: ' + f);
+    // naval Fight-it: a fleet battle is launched from the map, plays on a naval map, the survivors flow back
+    const nv = await ev(() => { grNew({ me: 'IR', seed: 7, len: 'quick' }); const A = 'IR', B = Object.keys(GC.war).filter(k => k.split('|').includes(A)).map(k => k.split('|').find(x => x !== A))[0]; const zb = GCM.P.findIndex(p => p.sea); GC.armies = GC.armies.filter(a => !a.fl);
+      const fa = grAddArmy(A, zb, [['ship', 100, 0, 100], ['boat', 100, 0, 100], ['boat', 100, 0, 100], ['sub', 100, 0, 100]], 'Naval Test A'); fa.fl = 1; const fd = grAddArmy(B, zb, [['ship', 100, 0, 100], ['boat', 100, 0, 100], ['fast', 100, 0, 100]], 'Naval Test D'); fd.fl = 1;
+      const gen = grAddArmy; const b = { p: zb, an: A, dn: B, att: [fa.id], def: [fd.id], garr: false, river: false, mtn: false, sea: true, done: 0 }; const na = fa.u.length, nd = fd.u.length;
+      try { grandBattleStart(b); } catch (e) { return { err: String(e && e.stack || e).split('\n').slice(0, 3).join(' | ') }; }
+      const naval = G.ents.filter(e => !e.isB && !e.dead && e.s && e.s.dom === 'naval').length, total = G.ents.filter(e => !e.isB && !e.dead).length; const map = G.mapKey || (G.map && G.map.key) || ''; const prod = G.grand && G.grand.fin === 0;
+      const r = { naval, total, na, nd, prod, mapKey: String(map) }; grandTestFinish(0); r.fin = G.grand.fin; grandLeaveBattle(); r.left = fd.u.length; r.mine = fa.u.length; r.ph = GC.ph; return r; });
+    console.log('naval fight-it', JSON.stringify(nv)); if (nv.err) fails.push('naval fight-it: ' + nv.err); else { if (nv.naval < 5) fails.push('naval fight-it: only ' + nv.naval + ' naval units in the battle (' + nv.total + ' units)'); if (nv.total !== nv.na + nv.nd) fails.push('naval fight-it: battle holds ' + nv.total + ' units, fleets had ' + (nv.na + nv.nd)); }
+    // UI: Military panel
+    await ev(() => { grNew({ me: 'IR', seed: 7, len: 'quick' }); GC.nat.IR.cash = 6000; for (let i = 0; i < 3; i++) grEndTurn(true); GV.sel = GC.nat.IR.cap; grandOpen(); });
+    await page.waitForTimeout(2500);
+    const mu = await ev(() => { const o = {}; gmilUiPanel(); o.panel = !!document.getElementById('gMil'); for (const t of ['gen', 'fr', 'st', 'fl']) { GMILUI.tab = t; gmilUiPanel(true); o[t] = document.getElementById('gMil').textContent.length; } GMILUI.tab = 'gen'; gmilUiPanel(true); return o; });
+    console.log('military ui', JSON.stringify(mu)); if (!mu.panel || mu.gen < 150 || mu.fr < 100 || mu.st < 100 || mu.fl < 100) fails.push('military ui: panel tabs empty ' + JSON.stringify(mu));
+    await shot3('military-generals');
+    await ev(() => { GMILUI.tab = 'fr'; gmilUiPanel(true); }); await shot3('military-fronts');
+    await ev(() => { GMILUI.tab = 'st'; gmilUiPanel(true); const f = Object.keys(GC.war).filter(k => k.split('|').includes('IR')).map(k => k.split('|').find(x => x !== 'IR'))[0]; const p = GCM.P.find(q => q.land && GC.prov[q.i].o === f); GV.sel = p.i; guSide(); }); await shot3('military-strikes');
+    await ev(() => { GMILUI.tab = 'fl'; const z = GC.armies.find(a => a.fl && a.o === 'IR'); GV.sel = z ? z.at : 0; GV.selA = z ? z.id : 0; guSide(); gmilUiPanel(true); }); await shot3('military-fleets');
+    await ev(() => { gmilUiPanel(); grandClose(); });
+    if (ONLY === 'mil') throw new Error('__done');
+  }
   // ---- ECONOMY (grand2): signatures, determinism over 15 turns with the economy on, no snowball / no stall, buildings, bonds, bank, fuel, manpower
   {
     const sig = await ev(() => { const bad = []; const pairs = new Map(); for (const [c, L] of Object.entries(GE_SIG)) { if (!GCM.nats.has(c)) bad.push('unknown nation ' + c);
@@ -202,7 +286,7 @@ try {
     act(0, { t: 'q', k: 'inf' }); act(0, { t: 'bld', k: 'barracks', x: BASES[0][0], y: BASES[0][1] }); act(0, { t: 'up', k: 'x' });
     return { me: c(0), foe: c(1), b0: blds(0), b1: blds(1), qSame: JSON.stringify(G.teams[0].q) === q0, cr, conq: !!G.conq, over: G.over, waves: G.grand.waves.length, att: G.grand.att, n0: G.grand.n0 }; });
   console.log('battle', JSON.stringify(bt));
-  const sameMap = (a, b) => { const k = new Set([...Object.keys(a), ...Object.keys(b)]); return [...k].every(x => (a[x] || 0) === (b[x] || 0)); };
+  const sameMap = (a, b) => { const k = new Set([...Object.keys(a), ...Object.keys(b)]); return [...k].every(x => (a[x] || 0) === (b[x] || 0) || (x === 'champ' && (a[x] || 0) - (b[x] || 0) === 1)); };   // grand3: a general with no hero squad of his own stands in the battle as one extra hero
   if (!sameMap(bt.me, exp.mine)) fails.push('battle: your units ' + JSON.stringify(bt.me) + ' != army ' + JSON.stringify(exp.mine));
   if (!sameMap(bt.foe, exp.theirs)) fails.push('battle: enemy units ' + JSON.stringify(bt.foe) + ' != expected ' + JSON.stringify(exp.theirs));
   { const defB = exp.meAtt ? bt.b1 : bt.b0, attB = exp.meAtt ? bt.b0 : bt.b1;   // the first queued battle may be an AI attack on us, so check by role

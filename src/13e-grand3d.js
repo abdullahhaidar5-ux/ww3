@@ -441,9 +441,9 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
     put(b.el,q);vis(b.el,true);}
   for(const s of G3.sl){const p=GCM.P[s.pi],f=s.ck?d<1500:d<650;let q=f?proj(p.x,1,p.y):null;if(!q){vis(s.el,false);continue;}putC(s.el,q);vis(s.el,true);}
   // nation names across the land when zoomed out
-  if(force||G3.natSig!==GC.turn+'|'+GC.armies.length){G3.natSig=GC.turn+'|'+GC.armies.length;const by={};for(const p of GCM.P)if(p.land){const o=GC.prov[p.i].o,r=by[o]||(by[o]={x:0,z:0,n:0});r.x+=p.x;r.z+=p.y;r.n++;}G3.nat=Object.keys(by).map(o=>({o,x:by[o].x/by[o].n,z:by[o].z/by[o].n,n:by[o].n}));
+  if(force||G3.natSig!==GC.seed+'|'+GC.turn+'|'+GC.armies.length+'|'+G3.nl.length){G3.natSig=GC.seed+'|'+GC.turn+'|'+GC.armies.length+'|'+G3.nl.length;const by={};for(const p of GCM.P)if(p.land){const o=GC.prov[p.i].o,r=by[o]||(by[o]={x:0,z:0,n:0});r.x+=p.x;r.z+=p.y;r.n++;}G3.nat=Object.keys(by).map(o=>({o,x:by[o].x/by[o].n,z:by[o].z/by[o].n,n:by[o].n}));
     while(G3.nl.length<G3.nat.length){const e=guEl('div','');e.className='n';G3.lab.appendChild(e);G3.nl.push(e);}G3.nat.forEach((r,i)=>{G3.nl[i].textContent=GCM.nats.get(r.o).name.toUpperCase();});}
-  G3.nat.forEach((r,i)=>{const e=G3.nl[i],f=d>760&&(r.n>=2||d<1300)&&(GCM.P.length&&(grNat(r.o).major||r.n>=3||d<1000));let q=f?proj(r.x,3,r.z):null;if(q){e.style.fontSize=Math.max(10,Math.min(22,5+r.n*2.2+(d>1400?0:3)))+'px';e.style.opacity=Math.min(.9,Math.max(0,(d-760)/300));putC(e,q);}vis(e,!!q);});
+  G3.nat.forEach((r,i)=>{const e=G3.nl[i];if(!e)return;const f=d>760&&(r.n>=2||d<1300)&&(GCM.P.length&&(grNat(r.o).major||r.n>=3||d<1000));let q=f?proj(r.x,3,r.z):null;if(q){e.style.fontSize=Math.max(10,Math.min(22,5+r.n*2.2+(d>1400?0:3)))+'px';e.style.opacity=Math.min(.9,Math.max(0,(d-760)/300));putC(e,q);}vis(e,!!q);});
   for(let i=G3.nat.length;i<G3.nl.length;i++)vis(G3.nl[i],false);
   // army plates + click targets
   G3.hit=[];const s=G3.sc_s;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;let pl=G3.pl.get(a.id);if(!pl){pl=guEl('div','');pl.className='p';G3.lab.appendChild(pl);G3.pl.set(a.id,pl);}
