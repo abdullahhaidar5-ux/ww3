@@ -59,7 +59,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   **DW "Coffee Shias" = Yemen** (Abdullah 2026-11-05 19:44: "make sure the Coffee Shias become Yemen" — DW's home, look, maps and
   grand-map region are Yemen). **Adding full nations IQ Iraq, SY Syria, JP Japan** (19:45; own units, uniforms, buildings, voices,
   anthem, equal strength) → 21; then (19:49) **15 more full nations**: GB, FR, DE, PL, AZ, JO, KD (Kurdistan
-  Region, Peshmerga), TW, VN, AU, PH, BR, VE, MX, CA + (19:56) **DZ, MA, NG, OM, IT, GR, ID, AF (stylised national army only), AR, CO** + (20:37) **ES, ZA, TH, ET, LY, SD (LY/SD: stylised national armies only, no real factions), SE, KZ, CL** → **54 full nations** (the **EU retires as a nation** once FR, DE and PL are live — Abdullah 19:54: its units, voices and
+  Region, Peshmerga), TW, VN, AU, PH, BR, VE, MX, CA + (19:56) **DZ, MA, NG, OM, IT, GR, ID, AF (stylised national army only), AR, CO** + (20:37) **ES, ZA, TH, ET, LY, SD (LY/SD: stylised national armies only, no real factions), SE, KZ, CL** → **54 full nations** (GB, AU, CA first cut live 2026-11-06 via `NEWNAT`; voices/anthems still open) (the **EU retires as a nation** once FR, DE and PL are live — Abdullah 19:54: its units, voices and
   the Fulda map pass to FR/DE/PL, old EU saves load as DE; on the grand map the **European Union becomes an alliance** European
   nations can join, with a joint-operations bonus), built by `orch/nation-*` helpers following the
   nations-new1/2 pattern. Every other country on the grand map is a **playable minor nation** (shared regional army/look, own

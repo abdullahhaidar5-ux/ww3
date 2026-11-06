@@ -187,3 +187,6 @@ Moved up: runs right after grand1. The grand map must look like a **Total War ca
 - **DW "Coffee Shias" = Yemen**: grand-map home region is Yemen (Sana'a / Sarawat highlands, Tihama coast, Hodeidah, Mokha, Bab-el-Mandeb). Battle maps `yemen`, `tihama`, `babelmandeb` already list DW as home; town names for style `yemen` are now Yemeni (tower-house towns).
 - **RS "Mountain Shias"**: home = South Lebanon & the Bekaa (Bint Jbeil, Maroun al-Ras, Khiam, Nabatieh, Baalbek, Hermel, the Litani, southern Beirut suburbs). Battle town names for style `lebanon` use these places.
 - **IQ Iraq**: home = Mesopotamia (Baghdad, Karbala, Najaf, Basra, Mosul, Kirkuk, the marshes); battle maps `mesopotamia`, `euphrates`. **SY Syria**: home = the Levant (Damascus, Aleppo, Homs, Hama, Latakia, Tartus, Palmyra); battle maps `aleppo`, `euphrates`, `golanplateau`.
+
+## Home regions (nation-anglo, 2026-11-06)
+- **GB**: England, Scotland, Wales, N. Ireland as detailed provinces (London, Home Counties, Midlands, Scottish Lowlands/Highlands, Wales, Ulster) + Royal Navy bases (Portsmouth, Faslane). **AU**: Sydney/Brisbane/Melbourne/Perth/Darwin, Outback, Tasmania. **CA**: Ontario/Quebec, Maritimes, Prairies, BC, the Arctic north. Not yet added to the grand map data (stage owner: add detailed provinces).

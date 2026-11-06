@@ -80,7 +80,7 @@ def synth(eng, voice, lang, text, take, mood):
         v = _piper[voice]
         ls = T2.piper_ls(voice, mood)
         ns = [0.7, 0.8, 0.6][take % 3] if mood == 'cry' else [0.667, 0.55, 0.8][take % 3]
-        cfg = SynthesisConfig(length_scale=ls, noise_scale=ns, noise_w_scale=0.8)
+        cfg = SynthesisConfig(length_scale=ls, noise_scale=ns, noise_w_scale=0.8, **({'speaker_id': 1} if v.config.num_speakers > 1 and voice.startswith('uk_UA-') else {}))   # ukrainian_tts is multi-speaker: speaker 1 = the male 'mykyta' (battlefeel shouts, when the original mykyta/oleksa files are not around)
         w = np.concatenate([c.audio_float_array for c in v.synthesize(text, syn_config=cfg)])
         sr = v.config.sample_rate
     elif eng == 'mms':
