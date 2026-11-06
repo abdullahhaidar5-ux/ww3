@@ -16,7 +16,7 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 - No copies of another nation's special. **grand2 first writes `orch/SIGNATURES.md`**: one (or two) unique grand-map signature
   asset(s) per full nation, of different kinds (e.g. US carrier strike groups, RU strategic bombers, CN mass mobilisation, IL
   missile-defence umbrella, TR drone fleets, UK/FR special forces raids, IN/PK…, keep the Ayatollah = IR/RS/DW, Dear Leader = KP,
-  Mountain Fortress = RS, Bunker Buster = US/IL/RU/CN), with a one-line effect and a rough value so overall strength stays even
+  Mountain Fortress = IR, RS, AF, KD, DW, KP, Bunker Buster = US/IL/RU/CN), with a one-line effect and a rough value so overall strength stays even
   (proved later by the balance tourneys / grandtest). Economy/building-type signatures → grand2 builds; military/strike-type →
   grand3; leader/political-type → grand6. New-nation helpers add their nation's row.
 
@@ -32,7 +32,7 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       end) or Standard.
 
 ## Stage 2 (grand2 — empire economy)
-- [ ] **Mountain Fortress** (Abdullah 20:58, moved out of battles): a province building for mountain provinces (RS only — no copies for other nations); it appears pre-built for the defender in that province's Fight-it battle.
+- [ ] **Mountain Fortress** (Abdullah 20:58, moved out of battles): a province building for mountain provinces (only IR, RS, AF, KD, DW, KP — Abdullah 21:03); it appears pre-built for the defender in that province's Fight-it battle.
 - [ ] Chokepoints have real effects: whoever holds a strait can close it — world trade income and the oil price shift for everyone.
 - [ ] Oil-prize regions feed the oil market/fuel economy.
 
