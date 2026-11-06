@@ -1,0 +1,31 @@
+game servers configured but down (http://127.0.0.1:9)
+[3s] three pages loaded
+[3s] host lobby open, code pwn3eu
+[32s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+    [net battle start] host: {"t":0,"loading":true,"paused":true,"fp":{"tx":22,"rx":15,"txB":2360,"rxB":1175,"dropped":0},"slots":[{"k":1,"peer":"ww3p-tdsngqdj","seenAgo":503,"disc":0,"ai":false,"aiTook":false,"buf":0},{"k":2,"peer":"ww3p-x189rinm","seenAgo":135,"disc":0,"ai":false,"aiTook":false,"buf":0}],"sb":null,"ckOut":false}
+    [net battle start] client A: {"me":1,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-tdsngqdj","hostPeer":"ww3-pwn3eu","sb":false,"ck":false,"ents":0,"fp":{"tx":8,"rx":13,"txB":637,"rxB":1400,"dropped":0},"trace":[]}
+    [net battle start] client B: {"me":2,"mode":"client","loading":true,"paused":true,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-x189rinm","hostPeer":"ww3-pwn3eu","sb":false,"ck":false,"ents":0,"fp":{"tx":7,"rx":9,"txB":538,"rxB":960,"dropped":0},"trace":[]}
+    [net t=5s] host: {"t":5,"loading":false,"paused":false,"fp":{"tx":133,"rx":26,"txB":50950,"rxB":2358,"dropped":0},"slots":[{"k":1,"peer":"ww3p-tdsngqdj","seenAgo":-73072,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988},{"k":2,"peer":"ww3p-x189rinm","seenAgo":238,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988}],"sb":2,"ckOut":false}
+    [net t=5s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":5,"snapT":4.9,"rxAgo":4,"recon":false,"myPeer":"ww3p-tdsngqdj","hostPeer":"ww3-pwn3eu","sb":false,"ck":false,"ents":5,"fp":{"tx":14,"rx":66,"txB":1285,"rxB":18664,"dropped":0},"trace":[]}
+    [net t=5s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":5.5,"snapT":4.9,"rxAgo":5,"recon":false,"myPeer":"ww3p-x189rinm","hostPeer":"ww3-pwn3eu","sb":true,"ck":true,"ents":5,"fp":{"tx":12,"rx":67,"txB":1073,"rxB":32286,"dropped":0},"trace":[]}
+    [net t=10s] host: {"t":10,"loading":false,"paused":false,"fp":{"tx":236,"rx":43,"txB":99308,"rxB":8367,"dropped":0},"slots":[{"k":1,"peer":"ww3p-tdsngqdj","seenAgo":303,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076},{"k":2,"peer":"ww3p-x189rinm","seenAgo":989,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076}],"sb":2,"ckOut":false}
+    [net t=10s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":10,"snapT":10,"rxAgo":3,"recon":false,"myPeer":"ww3p-tdsngqdj","hostPeer":"ww3-pwn3eu","sb":false,"ck":false,"ents":6,"fp":{"tx":23,"rx":118,"txB":4534,"rxB":42046,"dropped":0},"trace":[]}
+    [net t=10s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":10.5,"snapT":10,"rxAgo":4,"recon":false,"myPeer":"ww3p-x189rinm","hostPeer":"ww3-pwn3eu","sb":true,"ck":true,"ents":6,"fp":{"tx":20,"rx":118,"txB":3833,"rxB":57262,"dropped":0},"trace":[]}
+    [net t=30s] host: {"t":30,"loading":false,"paused":false,"fp":{"tx":655,"rx":60,"txB":359302,"rxB":12575,"dropped":0},"slots":[{"k":1,"peer":"ww3p-tdsngqdj","seenAgo":233,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577},{"k":2,"peer":"ww3p-x189rinm","seenAgo":232,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577}],"sb":2,"ckOut":false}
+    [net t=30s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":30,"snapT":30,"rxAgo":3,"recon":false,"myPeer":"ww3p-tdsngqdj","hostPeer":"ww3-pwn3eu","sb":false,"ck":false,"ents":6,"fp":{"tx":31,"rx":318,"txB":6399,"rxB":147403,"dropped":0},"trace":[]}
+    [net t=30s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":30.5,"snapT":30,"rxAgo":3,"recon":false,"myPeer":"ww3p-x189rinm","hostPeer":"ww3-pwn3eu","sb":true,"ck":true,"ents":9,"fp":{"tx":29,"rx":337,"txB":6176,"rxB":211899,"dropped":0},"trace":[]}
+[169s] before: client A @1 min t=60s: host 62 entities, slot 1 sees 7 (own 7); its screen has 7; missing 0, extra 0, off-position 0, mismatched 0; credits host 7285 client 7285
+[170s] before: client B @1 min t=60s: host 62 entities, slot 2 sees 16 (own 16); its screen has 16; missing 0, extra 0, off-position 0, mismatched 0; credits host 7260 client 7260
+    [net no checkpoint] host: {"t":150,"loading":false,"paused":false,"fp":{"tx":3222,"rx":173,"txB":3064288,"rxB":42891,"dropped":0},"slots":[{"k":1,"peer":"ww3p-tdsngqdj","seenAgo":303,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":150.0000000000115},{"k":2,"peer":"ww3p-x189rinm","seenAgo":770,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":150.0000000000115}],"sb":2,"ckOut":false}
+    [net no checkpoint] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":150.5,"snapT":150,"rxAgo":5,"recon":false,"myPeer":"ww3p-tdsngqdj","hostPeer":"ww3-pwn3eu","sb":false,"ck":false,"ents":22,"fp":{"tx":88,"rx":1528,"txB":21913,"rxB":959223,"dropped":0},"trace":[]}
+    [net no checkpoint] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":151,"snapT":150,"rxAgo":5,"recon":false,"myPeer":"ww3p-x189rinm","hostPeer":"ww3-pwn3eu","sb":true,"ck":true,"ents":34,"fp":{"tx":85,"rx":1694,"txB":20978,"rxB":2105065,"dropped":0},"trace":[]}
+peak memory (node + browser, summed RSS): 4892 MB
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/pwn3eu?role=host&key=a2ishatxnxwizrb0he' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MIGRATE FAIL: client A (the standby) never received a checkpoint from the host, so nobody can take over (174s)
