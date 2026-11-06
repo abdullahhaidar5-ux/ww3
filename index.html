@@ -12952,7 +12952,7 @@ const TUT=[
   enter:()=>{TUTS.n0=tutInf();},
   hl:()=>{const b=tutBld('barracks');if(!b)return{w:tutHQ()};if(G.sel.includes(b)){const k=roster(G.teams[ME].fac).barracks[0];return{d:'#u_'+k};}return{w:b};},cam:()=>tutBld('barracks')||tutHQ(),
   ok:()=>tutInf()>TUTS.n0},
- {k:'town',t:'Towns and hamlets pay you TAX. To own one, hold MORE THAN HALF of its key houses (here 2 of 3). A house takes a few soldiers.',a:'Select soldiers and right-click the ringed house. Then send other soldiers into the next one.',
+ {k:'town',t:()=>{const t=TUTS&&tutTown(),K=t?t.cells.filter(c=>c.key).length||t.K:3;return 'Towns and hamlets pay you TAX. To own one, hold MORE THAN HALF of its key houses (here '+(Math.floor(K/2)+1)+' of '+K+'). A house takes a few soldiers.';},a:'Select soldiers and right-click the ringed house. Then send other soldiers into the next one.',
   enter:()=>{tutTown();const h=tutHQ();if(h&&tutInf()+tutGarN()<4)tutSpawn(3,h.x+70,h.y+140);},
   hl:()=>({w:tutHouse()}),cam:()=>tutTown(),ok:()=>G.towns.some(t=>t.ow===ME)},
  {k:'tax',t:'This town is far behind your front line, so it is safe: HIGH tax pays the most. Near the enemy use LOW, or the locals get angry.',a:'Click your town\'s marker on the minimap (bottom left), then press High.',
@@ -12988,7 +12988,7 @@ function tutUnits(){return G.ents.filter(u=>!u.isB&&u.team===ME&&!u.dead&&!['har
 function tutCam(){try{const s=TUT[TUTS.i];const p=s.cam&&s.cam();if(p)centerOn(p.x,p.y-90);}catch(e){}}   // a little north of the target so it sits below the tip box
 function tutShow(){if(!G||!G.tut||!TUTS)return;tutCam();try{const s=TUT[TUTS.i],h=s.hl&&s.hl();if(h&&h.w)centerOn(h.w.x,h.w.y-90);}catch(e){}}
 function tutRender(){const el=tutEl();if(!TUTS||!G||!G.tut){el.hidden=true;return;}el.hidden=false;const s=TUT[TUTS.i];
-  $('tutN').textContent=`Step ${TUTS.i+1}/${TUT.length}`;$('tutT').textContent=s.t;$('tutA').textContent='▶ '+s.a;el.classList.remove('ok');}
+  $('tutN').textContent=`Step ${TUTS.i+1}/${TUT.length}`;$('tutT').textContent=typeof s.t==='function'?s.t():s.t;$('tutA').textContent='▶ '+s.a;el.classList.remove('ok');}
 function tutEnter(){const s=TUT[TUTS.i];TUTS.e0=performance.now();try{if(s.enter)s.enter();}catch(e){console.warn('tutorial step',e);}tutRender();tutCam();TUTS.ping=0;}
 function tutAdvance(skip){if(!TUTS||!G||!G.tut)return;const el=tutEl();
   if(TUTS.i>=TUT.length-1){if(skip)tutExit();return;}
@@ -13030,7 +13030,7 @@ function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&
 setInterval(()=>{try{tutCheck();}catch(e){}},400);setInterval(()=>{try{tutHLTick();}catch(e){}},120);
 function startTutorial(){MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
   const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';
-  TERR_DEFER=true;try{newGame({w:setup.w|0,seed:(Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
+  TERR_DEFER=true;try{newGame({w:setup.w|0,seed:(window.__tutSeed||Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
   const T=G.teams[0];G.tut=true;G.docDis=1;G.setupEnd=0;T.credits+=3000;T.gxp=Math.max(T.gxp|0,RANKS[1]);promoteGeneral(T);if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
   try{const hq=G.ents.find(e=>e.team===0&&e.kind==='hq'),a=Math.atan2(MAPH/2-hq.y,MAPW/2-hq.x);
     for(let i=0;i<3;i++){const p=nearestPassXY('ground',hq.x+Math.cos(a)*380+rnd(-60,60),hq.y+Math.sin(a)*380+rnd(-60,60));if(p)addUnit(1,'inf',p[0],p[1]);}}catch(e){console.warn('tutorial spawn',e);}

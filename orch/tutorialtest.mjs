@@ -23,12 +23,14 @@ const errs = []; page.on('pageerror', e => { errs.push(e.message); console.log('
 await page.goto(ORIGIN + '/index.html', { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => typeof startTutorial === 'function', null, { timeout: 60000 });
 await page.evaluate(() => { try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} });
-if (BIG) await page.screenshot({ path: path.join(SH, '00-main-menu.png'), timeout: 300000 });
+if (BIG) await page.screenshot({ path: path.join(SH, '00-main-menu.jpg'), type: 'jpeg', quality: 78, timeout: 300000 });
 const info = await page.evaluate(() => ({ btn: document.getElementById('tutorial')?.textContent, vis: !!document.getElementById('tutorial')?.offsetParent }));
 console.log('menu', JSON.stringify(info));
 
 const wait = (ms) => page.waitForTimeout(ms);
-const shot = async (name) => { if (!SHOTS || !KEEP.test(name)) return; await ev(() => { R3.render = window.__realRender; }); await ev(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))))); await page.screenshot({ path: path.join(SH, name + '.png'), timeout: 300000 }); await ev(() => { R3.render = () => {}; }); };
+// fast-forward the battle clock (software rendering and slow CI machines run the live loop at a fraction of real time); inputs stay real, only waiting is accelerated
+const ff = (sec) => page.evaluate((n) => { for (let k = 0; k < Math.ceil(n * 60) && G && !G.over; k++) simUpdate(1 / 60); }, sec);
+const shot = async (name) => { if (!SHOTS || !KEEP.test(name)) return; await ev(() => { R3.render = window.__realRender; }); await ev(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))))); await page.screenshot({ path: path.join(SH, name + '.jpg'), type: 'jpeg', quality: 78, timeout: 300000 }); await ev(() => { R3.render = () => {}; }); };
 const ev = (f, a) => page.evaluate(f, a);
 const raf2 = () => ev(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
 const scr = async (x, y, h = 8) => { await raf2(); return ev(([x, y, h]) => { const p = toScreen(x, h, y); return { x: p.x, y: p.y, z: p.z }; }, [x, y, h]); };
@@ -39,14 +41,14 @@ async function waitStep(i, timeout = 300000) {
   let last = null; for (let n = 0; n < 40; n++) { const c = await ev(() => [cam.x, cam.y].join()); if (c === last) break; last = c; await wait(250); } await wait(400);
   const st = await ev(() => { const s = TUT[TUTS.i], hl = document.getElementById('tutHL'), box = document.getElementById('tut'), r = box.getBoundingClientRect();
     const h = hl && hl.style.display !== 'none' ? hl.getBoundingClientRect() : null; const ov = h && r.bottom > h.top && r.top < h.bottom && r.right > h.left && r.left < h.right;
-    return { k: s.k, text: s.t + ' ' + s.a, hl: !!h, hlCls: hl ? hl.className : '', overlap: !!ov, vis: !box.hidden, tutBottom: r.bottom, rects: JSON.stringify([r, h].map(q => q && [q.left | 0, q.top | 0, q.right | 0, q.bottom | 0])) }; });
+    return { k: s.k, text: (typeof s.t === 'function' ? s.t() : s.t) + ' ' + s.a, hl: !!h, hlCls: hl ? hl.className : '', overlap: !!ov, vis: !box.hidden, tutBottom: r.bottom, rects: JSON.stringify([r, h].map(q => q && [q.left | 0, q.top | 0, q.right | 0, q.bottom | 0])) }; });
   console.log('step', i + 1, st.k, '| highlight:', st.hl ? (st.hlCls || 'ring') : 'none', '| words:', st.text.split(/\s+/).length);
   ok(st.vis, 'step ' + (i + 1) + ' tip visible'); ok(st.text.split(/\s+/).length <= 50, 'step ' + (i + 1) + ' tip short (<=50 words)');
   if (st.k !== 'md') ok(st.hl, 'step ' + (i + 1) + ' has an arrow/ring on its target'); else console.log('    (highlight optional at this moment)');
   ok(!st.overlap, 'step ' + (i + 1) + ' tip box does not cover its own highlight ' + (st.overlap ? st.rects : ''));
   await shot(String(i + 1).padStart(2, '0') + '-' + st.k + '-tip'); return st;
 }
-async function done(i) { const t0 = Date.now(); await page.waitForFunction((i) => !TUTS || TUTS.i > i || TUTS.wait, i, { timeout: 420000, polling: 300 }).catch(() => { bad('step ' + (i + 1) + ' did not complete'); throw new Error('stuck'); }); stepTimes.push(Math.round((Date.now() - t0) / 1000)); }
+async function done(i) { const t0 = Date.now(); for (;;) { if (await ev((i) => !TUTS || TUTS.i > i || TUTS.wait, i)) break; if (Date.now() - t0 > 600000) { bad('step ' + (i + 1) + ' did not complete'); throw new Error('stuck'); } await ff(3); await wait(150); } stepTimes.push(Math.round((Date.now() - t0) / 1000)); }
 const click = async (x, y, o = {}) => { await page.mouse.move(x, y); await page.mouse.click(x, y, o); };
 async function boxSelectSquad() {
   const sq = await ev(() => { const u = tutUnits(); let x = 0, y = 0; u.forEach(q => { x += q.x; y += q.y; }); return { x: x / u.length, y: y / u.length, n: u.length }; });
@@ -63,7 +65,7 @@ async function takeHouses(label) {
       return { cell: c && { x: c.x, y: c.y }, unit: free[0] && { x: free[0].x, y: free[0].y }, n: free.length }; });
     if (st.done) return true; if (!st.cell || !st.unit) { await wait(4000); continue; }
     await ev(([x, y]) => centerOn(x, y, true), [st.unit.x, st.unit.y]); let p = await scr(st.unit.x, st.unit.y, 8); await ev(() => { G.sel = []; }); await click(p.x, p.y); await page.waitForFunction(() => G.sel.length > 0, null, { timeout: 8000 }).catch(() => {});
-    await ev(([x, y]) => centerOn(x, y, true), [st.cell.x, st.cell.y]); p = await scr(st.cell.x, st.cell.y, 6); await click(p.x, p.y, { button: 'right' }); await wait(5000);
+    await ev(([x, y]) => centerOn(x, y, true), [st.cell.x, st.cell.y]); p = await scr(st.cell.x, st.cell.y, 6); await click(p.x, p.y, { button: 'right' }); await ff(6); await wait(200);
     if (k === 1) await shot(label + '-garrisoning');
   } return false;
 }
@@ -84,7 +86,7 @@ try {
     for (const [dx, dy] of [[120, 90], [-140, 90], [150, -90], [-150, -100], [0, 170]]) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y); await wait(500);
       if (await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'barracks' && !e.dead))) { placed = true; break; } if (!(await ev(() => G.place === 'barracks'))) await page.click('#b_barracks'); }
     ok(placed, 'out of order: Barracks placed during step 1');
-    await page.waitForFunction(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'barracks' && !e.dead && e.built >= 1), null, { timeout: 240000, polling: 500 }).catch(() => bad('Barracks never finished'));
+    for (let k = 0; k < 100 && !(await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'barracks' && !e.dead && e.built >= 1))); k++) await ff(3); if (!(await ev(() => G.ents.some(e => e.isB && e.team === ME && e.kind === 'barracks' && !e.dead && e.built >= 1)))) bad('Barracks never finished');
     ok(await ev(() => TUTS.i === 0), 'out of order: the tutorial stays on step 1 (no crash, no skipping ahead)');
     for (let k = 0; k < 3; k++) { await page.click('#tutSkip'); await wait(250); }
     ok(await ev(() => TUTS.i === 3), 'Skip step moves to the next step (3 clicks -> step 4)');
@@ -103,7 +105,7 @@ try {
   await waitStep(1); { const m = await ev(() => TUTS.mk); const p = await scr(m.x, m.y, 0); await boxSelectSquad(); await click(p.x, p.y, { button: 'right' }); } await done(1); await shotAfter(2, 'move');
   // 3 attack
   await waitStep(2); { await boxSelectSquad(); const f = await ev(() => { const e = tutFoe(); return e ? { x: e.x, y: e.y } : null; }); ok(!!f, 'a red enemy exists to attack');
-    for (let k = 0; k < 6 && f; k++) { const fe = await ev(() => { const e = tutFoe(); return e ? { x: e.x, y: e.y } : null; }); if (!fe) break; await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p = await scr(fe.x, fe.y, 10); await boxSelectSquad().catch(() => 0); await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p2 = await scr(fe.x, fe.y, 10); await click(p2.x, p2.y, { button: 'right' }); await wait(6000);
+    for (let k = 0; k < 6 && f; k++) { const fe = await ev(() => { const e = tutFoe(); return e ? { x: e.x, y: e.y } : null; }); if (!fe) break; await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p = await scr(fe.x, fe.y, 10); await boxSelectSquad().catch(() => 0); await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p2 = await scr(fe.x, fe.y, 10); await click(p2.x, p2.y, { button: 'right' }); await ff(8);
       if (await ev(() => TUTS.wait || TUTS.i > 2)) break; } }
   await done(2); await shotAfter(3, 'atk');
   // 4 setup + barracks
@@ -151,11 +153,11 @@ try {
   await waitStep(13); { await ev(() => { const e = tutFoeHQ(), h = tutHQ(), a = Math.atan2(h.y - e.y, h.x - e.x); for (let i = 0; i < 20; i++) { const p = nearestPassXY('ground', e.x + Math.cos(a) * 500 + (i % 5) * 24, e.y + Math.sin(a) * 500 + Math.floor(i / 5) * 24); if (p) addUnit(ME, 'inf', p[0], p[1]); } });   // test shortcut: the strike force a player would train and march (~4 min) starts 500 units from the enemy base
     const en = await ev(() => { const q = tutFoeHQ(); return { x: q.x, y: q.y }; }); await shot('14b-enemy-base-far');
     if (await ev(() => LGU.on)) await page.keyboard.press('l');   // supply lines off again (a player would too): cheaper frames for the big fight
-    const tEnd = Date.now() + 16 * 60 * 1000;   // the sim crawls on slow CI machines: give the finale up to 16 minutes of wall time
+    const tEnd = Date.now() + 10 * 60 * 1000;   // the battle clock is fast-forwarded between orders; wall-time cap for slow machines
     for (let k = 0; Date.now() < tEnd; k++) { if (await ev(() => G.over)) break;
       const idle = await ev(() => tutUnits().filter(u => !u.order).length); if (k % 4 === 0 || idle > 3) { await ev(([x, y]) => centerOn(x, y, true), [en.x, en.y]); await ev(() => { G.sel = tutUnits(); }); const p = await scr(en.x, en.y, 0); await page.keyboard.press('f'); await click(p.x, p.y); }
       if (k % 2 === 0) console.log('    attack round', k, JSON.stringify(await ev(() => ({ t: G.t | 0, mine: tutUnits().length, foe: G.ents.filter(e => e.team === 1 && !e.dead).length }))));
-      await page.waitForFunction(() => G.over, null, { timeout: 45000, polling: 1000 }).catch(() => {}); if (k === 1) await shot('14c-attack'); } }
+      await ff(12); await wait(200); if (k === 1) await shot('14c-attack'); } }
   await page.waitForFunction(() => document.getElementById('tutReady'), null, { timeout: 300000 }).catch(() => bad('no "You are ready" screen after the win'));
   await wait(800); await shot('15-ready-screen');
   ok(await ev(() => !!document.getElementById('tutReady') && /3|Three/.test(document.getElementById('tutReady').innerText) && document.querySelectorAll('#tutReady li').length === 3), 'ready screen shows 3 tips');
