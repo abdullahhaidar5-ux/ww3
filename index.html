@@ -9144,7 +9144,7 @@ function plantObj(o){const grp=new THREE.Group(),B=Bld(),cn='#9a978d',cd='#6f6c6
   const flag=new THREE.Mesh(new THREE.PlaneGeometry(10,6),new THREE.MeshBasicMaterial({color:0x888888,side:THREE.DoubleSide}));flag.position.set(-36,22,-28);grp.add(flag);
   const pole=new THREE.Mesh(new THREE.CylinderGeometry(.4,.4,24,6),MAT.std);pole.position.set(-41,12,-28);grp.add(pole);
   grp.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
-  grp.position.set(o.x,groundH(o.x,o.y),o.y);grp.rotation.y=(o.x*.01)%6;WORLD.add(grp);return{grp,arm:null,flag,crank:null,pw:1};}
+  grp.scale.setScalar(1.6);grp.position.set(o.x,groundH(o.x,o.y),o.y);grp.rotation.y=(o.x*.01)%6;WORLD.add(grp);return{grp,arm:null,flag,crank:null,pw:1};}
 /* ================= 3D EFFECTS: particles, tracers, projectiles, decals, wrecks ================= */
 const PMAX=3500;const SHOCKS=[],FIRES=[];let shockI=0;
 let PN_=null,PA_=null,TRC=null,SCORCH=null,TRACKS=null,CRATER=null,crI=0,LIGHTS=[],WLIGHTS=[],MLIGHTS=[],mlI=0,FLARES=[],FLL=[];const COLS=[];
