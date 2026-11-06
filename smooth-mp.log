@@ -1,0 +1,30 @@
+[0s] mp: opening 3 pages
+[6s] mp: pages open
+[6s] mp: lobby 7u3b5f
+[7s] mp: clients joined
+[210s] mp: battle loaded on all pages
+[210s] mp: playing 40s
+[250s] mp: checking sync
+[262s] mp attempt 1: REGRESSED
+  (re-running once to rule out noise) client frame p95 ms rose to 427 (baseline 124.8, allowed up to 301.12; +242%)
+[262s] mp: opening 3 pages
+[267s] mp: pages open
+[267s] mp: lobby ck36wu
+[268s] mp: clients joined
+[465s] mp: battle loaded on all pages
+[465s] mp: playing 40s
+[505s] mp: checking sync
+[516s] mp attempt 2: REGRESSED
+
+                       mp        
+snap interval p95      157       
+snap jitter sd         66.92     
+order latency p95      115       
+client frame p95       309.3     
+client snaps           10        
+biggest snap (units)   18.53     
+desyncs                0         
+runtime 8.6 min
+
+SMOOTH FAIL: 1 problem(s)
+  - mp: client frame p95 ms rose to 309.3 (baseline 124.8, allowed up to 299.58; +148%)
