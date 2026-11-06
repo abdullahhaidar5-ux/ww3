@@ -191,3 +191,6 @@ Measured all 1,936 voice clips; deepened ~330 weak (high/thin) clips across all 
 
 ## 2026-11-05 — balance (orch/balance, Sonnet)
 Ran the first full Conquest balance on GitHub runners (new `balance.yml`, `aitourney --shard`, `balance_merge.py`): 18-nation Normal and Hard round robins (612 games each per run), Hard vs Normal, tax policies, home turf, mapfair rounds on flagged maps. Tuned 15 nations' numbers (IR/TR/KR/RS/EU down; SA/DW/PK/AE/UA/CN/EG/RU/IN/KP up), High tax unrest .6 -> .85; pooled win rates now 43-61%. Fixed two sim crashes from logistics (roads ending at a vanished depot node, lgJobs/lgSync) that broke 20-30% of AI battles. Hard beats Normal 93%, games 14-16 min median, none under 3 min. Open: heartland 6 / rubalkhali 6 seat 4 (and rubalkhali 8 seat 8) win far above share; hero A/B not measured. Report: orch/reports/balance-1105.md.
+
+## 2026-11-06 — units-new (orch/units-new, Sonnet 5.5, scheduled)
+Call-In Reinforcements power (K; $1200 + 1 point; same platoon for all nations; AI uses it), flares/chaff decoys with refill at the airfield, Fly low order (SAM-proof, gun-vulnerable), counter-battery map ping, drone swarm target spreading. Landers, airlift, counter-battery radar and drone swarms already existed. Not done: swarm pack, AI air assault, shoot-and-scoot, screenshots. See orch/reports/units-new.md.
