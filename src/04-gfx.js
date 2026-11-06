@@ -374,7 +374,7 @@ function buildWorld(tc){
       for(let v=0;v<NV;v++){rims[v].count=rcnt[v];WORLD.add(rims[v]);}}
     gm.count=n;gm.receiveShadow=true;gm.userData.noDepth=true;WORLD.add(gm);}
   // oil derricks
-  mats();G.oilObj=G.oil.map(o=>{const grp=new THREE.Group();const B=Bld(),fr='#4f555b',dk='#2c2e2c';
+  mats();G.oilObj=G.oil.map(o=>{if(o.pw)return plantObj(o);const grp=new THREE.Group();const B=Bld(),fr='#4f555b',dk='#2c2e2c';
     B.box(46,2.4,24,0,1.2,0,'#8a877d');B.box(10,1,10,20,2.6,0,'#6f6c63');
     for(const z of [-5,5]){B.box(2.2,32,2.2,-4,16,z*1.25,fr,z>0?-.16:.16,0,0);B.box(2.2,30,2.2,4,15,z*1.25,fr,z>0?-.16:.16,0,0);}
     B.box(10,1.4,1.4,0,8,-5.5,fr);B.box(10,1.4,1.4,0,8,5.5,fr);B.box(4,2,6,0,31,0,dk);
@@ -689,7 +689,10 @@ let WXT=-1,WXI=0,WXG=null,WXFX=1;const WXCITY={value:0},WXAMB={value:new THREE.V
 // "Random" is decided by the battle's seed, so it stays the same for the whole battle (and would match on every
 // machine of a multiplayer game if the condition is ever sent with the match start).
 function wxPick(i){i=i|0;if(i>=0&&i<WX.length)return i;if(i<0){const s=((typeof G!=='undefined'&&G&&G.seed)|0)>>>0;return wxRandIdx(s);}return 0;}
-function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){WXG=G;WXI=wxPick(i);}else if(typeof G==='undefined'||!G)WXI=wxPick(i);i=WXI;if(typeof G!=='undefined'&&G&&G.todM){const l=todLvl();WXT=G.todM<3?-1:l;i=l===2?4:l===1?3:i;}else WXT=-1;const w=WX[i];
+// Smooth time of day: blend two look presets (colours as hex strings, numbers, and number arrays) by f.
+const _wc1=new THREE.Color(),_wc2=new THREE.Color();
+function wxMix(A,B,f){if(f<=0)return A;if(f>=1)return B;const o={};for(const k in A){const a=A[k],b=B[k];if(typeof a==='number')o[k]=a+(b-a)*f;else if(Array.isArray(a))o[k]=a.map((v,j)=>v+(b[j]-v)*f);else if(typeof a==='string'&&a[0]==='#'){_wc1.set(a);_wc2.set(b);_wc1.lerp(_wc2,f);o[k]='#'+_wc1.getHexString();}else o[k]=f<.5?a:b;}return o;}
+function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){WXG=G;WXI=wxPick(i);}else if(typeof G==='undefined'||!G)WXI=wxPick(i);i=WXI;let WXB=null;if(typeof G!=='undefined'&&G&&G.todM){const l=todLvl();if(G.todM===3){const sg=todSeg(G.t);WXT=Math.round(sg.d*20);WXB=sg;i=sg.d>.5?(sg.a===1||sg.b===1?1:3):i;if(sg.d>=.8)i=4;}else{WXT=-1;i=l===2?4:l===1?3:i;}}else WXT=-1;const w=WXB?wxMix(WX[WXB.a],WX[WXB.b],WXB.f):WX[i];
   SUN.color.copy(lin(w.sun));SUN.intensity=w.si*LUX;SUNOFF=w.off;HEMI.color.copy(lin(w.sky));HEMI.groundColor.copy(lin(w.gnd));HEMI.intensity=w.hi*LUX;
   SCN.fog.color.copy(lin(w.fog));SCN.fog.near=w.fn;SCN.fog.far=w.ff;SUN.shadow.radius=w.sr;POST.cloud=w.cl;WXFX=w.fx;WXCITY.value=w.win;WXAMB.value.set(w.amb[0],w.amb[1],w.amb[2]);if(LAMPM)LAMPM.emissiveIntensity=w.lamp;
   if(POST.mFinal){const F=POST.mFinal.uniforms;F.expo.value=w.expo;if(F.gr)F.gr.value.set(w.gr[0],w.gr[1],w.gr[2]);if(F.sat)F.sat.value=w.sat;}

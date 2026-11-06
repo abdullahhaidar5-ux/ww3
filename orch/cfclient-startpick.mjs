@@ -231,6 +231,7 @@ async function mpSteps() {
   // (the pages stop drawing frames: two software-rendered battles in one test browser take minutes; bases, snapshots and
   // the host's own battle don't need them)
   await Promise.all([A, B].map(p => p.evaluate(() => { window.__stopLoop = true; })));
+  await B.evaluate(() => { GLB.g = NET.game; GLB.me.r = 1; glSend(); }); await A.waitForTimeout(1500);
   await A.evaluate(() => document.querySelector('#mpstatus .startbtn').click());
   const [a3, b3] = await Promise.all([mpBases(A, 'client', '3. Cloudflare leader', st3), mpBases(B, 'client', '3. Cloudflare friend', st3, true)]);
   if (JSON.stringify(a3.bases) !== JSON.stringify(b3.bases)) fail(`3. leader and friend disagree on the bases: ${JSON.stringify(a3.bases)} vs ${JSON.stringify(b3.bases)}`);
@@ -251,6 +252,7 @@ async function mpSteps() {
   // (the pages stop drawing frames: two software-rendered battles in one test browser take minutes; bases, snapshots and
   // the host's own battle don't need them)
   await Promise.all([A, B].map(p => p.evaluate(() => { window.__stopLoop = true; })));
+  await B.evaluate(() => { GLB.g = NET.game; GLB.me.r = 1; glSend(); }); await A.waitForTimeout(1500);
   await A.evaluate(() => document.querySelector('#mpstatus .startbtn').click());
   const [a4, b4] = await Promise.all([mpBases(A, 'host', '4. browser host', st4, true), mpBases(B, 'client', '4. browser-hosted friend', st4)]);
   if (JSON.stringify(a4.bases) !== JSON.stringify(b4.bases)) fail(`4. host and friend disagree on the bases: ${JSON.stringify(a4.bases)} vs ${JSON.stringify(b4.bases)}`);

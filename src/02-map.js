@@ -427,7 +427,7 @@ function mkMap(seed,mk,ssn){
   M.grid=grid;
   // Cities: blocks of buildings on a street grid. Building lots are impassable (units use the streets) and give
   // infantry cover; bases, supply and oil keep clear of them.
-  M.cities=[];M.cityBlds=[];M.hamlets=[];M.towers=[];M.roadNet=[];
+  M.cities=[];M.cityBlds=[];M.hamlets=[];M.towers=[];M.plants=[];M.roadNet=[];
   const CITIES=(D.cities||[]).concat(M.genCities||[]);
   // CENTRE PRIZE TOWN (Conquest "town bands"): one larger market town where every base is as equally far as the ground
   // allows - an existing city of the map when one sits there, else a new one. Chosen on the bare ground (before any city
@@ -541,6 +541,15 @@ function mkMap(seed,mk,ssn){
    const addT=p=>{if(p)M.towers.push({x:p.x,y:p.y});};
    if(NB===2)unit(0,1,addT,okT,.3*E);
    else if(NB>2){addT(best(p=>{let m=0;for(let i=0;i<NB;i++)m+=p.d[i];m/=NB;let v=0;for(let i=0;i<NB;i++)v+=Math.abs(p.d[i]-m);return v+.15*Math.abs(m-.5*E);},(p,rl)=>okT(p,rl,260)));}}
+  // POWER PLANTS (Infrastructure, Abdullah 2026-11-05): one per base (its own power station, same route length for everyone, on its side)
+  // plus neutral plants worth fighting for - a duel gets the centre/flank pair, 3+ bases get the most equal spot. Stored as M.plants;
+  // the sim turns them into capturable "oil-style" sites (pw:1) so capture, strikes, repair and networking all reuse the derrick code.
+  M.plants=[];
+  {const okP=(p,rl,sp)=>far(p,fmb*.7*rl)&&M.fields.every(f=>Math.hypot(f.x-p.x,f.y-p.y)>100)&&M.oil.every(o=>Math.hypot(o.x-p.x,o.y-p.y)>130)&&M.hamlets.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>130)&&M.towers.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>200*rl)&&M.plants.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>(sp||260)*rl)&&!M.cityNear(p.x,p.y,110);
+   const addP=h=>p=>{if(p)M.plants.push({x:p.x,y:p.y,home:h});};
+   for(let i=0;i<NB;i++)addP(i)(best(p=>Math.abs(p.d[i]-.13*E),(p,rl)=>mine(p,i,.08*E*rl)&&okP(p,rl,260)));
+   if(NB===2)unit(0,1,addP(-1),okP,.4*E);
+   else if(NB>2){addP(-1)(best(p=>{let m=0;for(let i=0;i<NB;i++)m+=p.d[i];m/=NB;let v=0;for(let i=0;i<NB;i++)v+=Math.abs(p.d[i]-m);return v+.15*Math.abs(m-.5*E);},(p,rl)=>okP(p,rl,260)));}}
   }
   // hamlets a custom map asks for (map editor)
   for(const [ox,oy] of (D.hamAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.hamlets.every(h=>Math.hypot(h.x-X,h.y-Y)>200))M.hamlets.push({x:X,y:Y});}
