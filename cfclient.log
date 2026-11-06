@@ -1,0 +1,91 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:34265
+[3s] pages loaded; this machine's host benchmark: 771
+  ✗ timed out waiting for Start to be enabled
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFOVER FAIL: timed out waiting for Start to be enabled (21s)
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:39091
+[3s] both pages loaded; the multiplayer menu offers "Play online" and "New battle"
+[7s] 1. three other battles take the 3 battle slots: !w started, !w started, !w started
+[7s]    server busy (busy) -> battle in this browser: "Your battle · codeZR68CDOnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join. You can also add co"
+[8s]    the 3 lobbies closed; battle slots in use: 0
+[9s] 2. lobby open on the server, code XAAKPA; creator status: "Your battle · codeXAAKPAOnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join."
+[9s]    friend joined: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[10s]    server lobby: humans US/team 1, RU/team 2; computer CN/team 2
+  ✗ timed out waiting for Start to be enabled
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E FAIL: timed out waiting for Start to be enabled (27s)
+local game server http://127.0.0.1:41927
+[3s] both pages loaded
+[3s] 1. protected battle open on Cloudflare, code FE496J; invite link http://127.0.0.1:45827/join.html#join=fe496j&pw=Yalla%202026%20%C3%B1
+[3s]    server keeps: {"mem":{"s":"Br5dBloWOOs9Hkm9Thz51g==","h":"c0zZ5gazDCe8GQb4CF4Ueukodo9yeO6lA58liuxwccw=","i":4000},"kept":null}
+[3s] 2. friend's game list: "🔒 United States · game FE496J · Straits of Thunder · 1/8 playersJoin"
+[4s]    "Play online" with no password: started its own battle (did not join the protected one)
+[4s]    wrong password -> "Wrong password. Try again.JoinCancel"
+[4s]    right password -> "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"; creator's lobby has 2 players
+[7s] 3. invite link joined in one go; address bar now /index.html#join=fe496j
+[7s] 4. browser-hosted 66NMVQ: join by code asks "🔒 Game 66NMVQ is password protected. Enter its password to join.JoinC"
+[29s]    right password -> friend: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFPASSWORD PASS (29s) — password-protected games: lock in the list, wrong password refused, right password and invite link join, server keeps only a hash, browser-hosted fallback checks it too
+local game server http://127.0.0.1:45989
+[2s] page loaded
+[52s] 1. skirmish (mouse): picks [0,3,-1,1], AI 2 Random -> spot 7; bases [[1239,5998],[6683,1174],[5803,6161],[9193,1174]]; HQs on their bases: true (preview 26462 bytes)
+[95s] 2. phone (touch only): picks [0,3,-1,1] made by tapping; picker fits in landscape too ({"cv":258,"over":0,"rows":true})
+[106s] 3. leader's Cloudflare lobby vbb4v0
+[106s]    friend joined
+[106s]    computer player added
+[107s]    lobby picks [4,2,6]
+  ✗ timed out waiting for 3. Cloudflare leader: the battle to start
+--- server log (tail) ---
+
+  warn: player console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: phone console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFSTARTPICK FAIL: timed out waiting for 3. Cloudflare leader: the battle to start (589s)
+local game server http://127.0.0.1:38715 (pages reach it through http://127.0.0.1:38583); over-budget server http://127.0.0.1:43739
+[4s] 0. menu: "▶ Play online" and "+ New battle"
+[4s] 1. server busy (busy) -> battle in this browser; lobby: "Your battle · codeV4T451OnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join. You can also add co"
+[4s] 2. lobby open on the server, code L2QCIC; creator status: "Your battle · codeL2QCICOnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join."
+[4s] friend's game list: "1 open battle · 0 in progressUnited States · game L2QCIC · Straits of Thunder · 1/8 playersJoin👁 Watch"
+[5s] friend joined with "Play online": "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[6s] server lobby (as the friend sees it): player US/team 1, player RU/team 2, computer CN/team 2
+  ✗ timed out waiting for Start to be enabled
+--- server log (tail) ---
+
+ ⛅️ wrangler 4.153.0 (update available 4.158.0)
+───────────────────────────────────────────────
+[custom build] Running: node build-sim.mjs
+[custom build] battle sim up to date: gen/battle-sim.js (552 KB)
+[custom build] 
+Your Worker has access to the following bindings:
+Binding                             Resource                  Mode
+env.ROOMS (GameRoom)                Durable Object            local
+env.LOBBY (Lobby)                   Durable Object            local
+env.BUDGET (Budget)                 Durable Object            local
+env.BATTLES (BattleRoom)            Durable Object            local
+env.OVERRUN_GUARD ("(hidden)")      Environment Variable      local
+
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:38715
+[wrangler:info] GET /health 200 OK (302ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (12ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (4ms)
+[wrangler:info] GET /turn 200 OK (5ms)
+[wrangler:info] GET /room/v4t451 101 Switching Protocols (20ms)
+[wrangler:info] GET /battle/l2qcic 101 Switching Protocols (19ms)
+[wrangler:info] GET /games 200 OK (3ms)
+[wrangler:info] GET /battle/l2qcic 101 Switching Protocols (5ms)
+
+creator log: []
+friend log: []
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT FAIL: timed out waiting for Start to be enabled (23s)
