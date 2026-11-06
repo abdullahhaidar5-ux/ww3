@@ -58,8 +58,10 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 - **Factions (18 live → 21):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
   **DW "Coffee Shias" = Yemen** (Abdullah 2026-11-05 19:44: "make sure the Coffee Shias become Yemen" — DW's home, look, maps and
   grand-map region are Yemen). **Adding full nations IQ Iraq, SY Syria, JP Japan** (19:45; own units, uniforms, buildings, voices,
-  anthem, equal strength) → 21; then (19:49) **15 more full nations**: GB, FR, DE, PL (EU stays as the joint European force), AZ, JO, KD (Kurdistan
-  Region, Peshmerga), TW, VN, AU, PH, BR, VE, MX, CA → **36 full nations**, built by `orch/nation-*` helpers following the
+  anthem, equal strength) → 21; then (19:49) **15 more full nations**: GB, FR, DE, PL, AZ, JO, KD (Kurdistan
+  Region, Peshmerga), TW, VN, AU, PH, BR, VE, MX, CA → **35 full nations** (the **EU retires as a nation** once FR, DE and PL are live — Abdullah 19:54: its units, voices and
+  the Fulda map pass to FR/DE/PL, old EU saves load as DE; on the grand map the **European Union becomes an alliance** European
+  nations can join, with a joint-operations bonus), built by `orch/nation-*` helpers following the
   nations-new1/2 pattern. Every other country on the grand map is a **playable minor nation** (shared regional army/look, own
   flag/name/colours, no unique voices). The IM faction was removed on purpose. Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
