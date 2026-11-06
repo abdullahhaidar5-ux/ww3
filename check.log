@@ -1,0 +1,19 @@
+git CONFLICT MARKERS found (18 lines) — a merge was left unfinished; resolve them (keep the right side, delete the marker lines). Nothing checked.
+  ✗ index.html:6766: <<<<<<< HEAD
+  ✗ index.html:6768: =======
+  ✗ index.html:6770: >>>>>>> origin/main
+  ✗ index.html:11675: <<<<<<< HEAD
+  ✗ index.html:11677: =======
+  ✗ index.html:11679: >>>>>>> origin/main
+  ✗ index.html:11919: <<<<<<< HEAD
+  ✗ index.html:11922: =======
+  ✗ index.html:11925: >>>>>>> origin/main
+  ✗ src/03-sim.js:421: <<<<<<< HEAD
+  ✗ src/03-sim.js:423: =======
+  ✗ src/03-sim.js:425: >>>>>>> origin/main
+  ✗ src/07a-hostsnap.js:13: <<<<<<< HEAD
+  ✗ src/07a-hostsnap.js:15: =======
+  ✗ src/07a-hostsnap.js:17: >>>>>>> origin/main
+  ✗ src/07b-ckpt.js:7: <<<<<<< HEAD
+  ✗ src/07b-ckpt.js:10: =======
+  ✗ src/07b-ckpt.js:13: >>>>>>> origin/main
