@@ -1,0 +1,114 @@
+menu {"btn":"▶ Tutorial: learn Conquest (10 min)","vis":true}
+-- out of order / skip / exit / restart
+step 1 sel | highlight: ring | words: 17
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   out of order: Barracks placed during step 1
+  ok   out of order: the tutorial stays on step 1 (no crash, no skipping ahead)
+  ok   Skip step moves to the next step (3 clicks -> step 4)
+  ok   a step already done earlier completes by itself (Barracks built before step 4)
+  ok   Exit tutorial hides the tips and arrow and leaves the battle running
+  ok   menu still offers the tutorial (not marked done after exiting)
+-- full playthrough
+step 1 sel | highlight: ring | words: 17
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   drag-select picks up soldiers (2)
+step 2 move | highlight: ring | words: 17
+  ok   step 2 tip visible
+  ok   step 2 tip short (<=50 words)
+  ok   step 2 has an arrow/ring on its target
+  ok   step 2 tip box does not cover its own highlight 
+step 3 atk | highlight: ring | words: 34
+  ok   step 3 tip visible
+  ok   step 3 tip short (<=50 words)
+  ok   step 3 has an arrow/ring on its target
+  ok   step 3 tip box does not cover its own highlight 
+  ok   a red enemy exists to attack
+step 4 setup | highlight: box | words: 34
+  ok   step 4 tip visible
+  ok   step 4 tip short (<=50 words)
+  ok   step 4 has an arrow/ring on its target
+  ok   step 4 tip box does not cover its own highlight 
+  ok   clicking Barracks arms placement
+  ok   Barracks placed with a click next to the base
+step 5 trn | highlight: ring | words: 21
+  ok   step 5 tip visible
+  ok   step 5 tip short (<=50 words)
+  ok   step 5 has an arrow/ring on its target
+  ok   step 5 tip box does not cover its own highlight 
+  ok   left-click selects the Barracks
+  ok   arrow points at the Units tab first
+step 6 town | highlight: ring | words: 42
+  ok   step 6 tip visible
+  ok   step 6 tip short (<=50 words)
+  ok   step 6 has an arrow/ring on its target
+  ok   step 6 tip box does not cover its own highlight 
+step 7 tax | highlight: low | words: 39
+  ok   step 7 tip visible
+  ok   step 7 tip short (<=50 words)
+  ok   step 7 has an arrow/ring on its target
+  ok   step 7 tip box does not cover its own highlight 
+  ok   clicking the town marker on the minimap opens its tax panel
+step 8 unrest | highlight: box | words: 43
+  ok   step 8 tip visible
+  ok   step 8 tip short (<=50 words)
+  ok   step 8 has an arrow/ring on its target
+  ok   step 8 tip box does not cover its own highlight 
+step 9 retake | highlight: ring | words: 28
+  ok   step 9 tip visible
+  ok   step 9 tip short (<=50 words)
+  ok   step 9 has an arrow/ring on its target
+  ok   step 9 tip box does not cover its own highlight 
+step 10 civic | highlight: low | words: 39
+  ok   step 10 tip visible
+  ok   step 10 tip short (<=50 words)
+  ok   step 10 has an arrow/ring on its target
+  ok   step 10 tip box does not cover its own highlight 
+step 11 logi | highlight: box | words: 36
+  ok   step 11 tip visible
+  ok   step 11 tip short (<=50 words)
+  ok   step 11 has an arrow/ring on its target
+  ok   step 11 tip box does not cover its own highlight 
+  ok   L key shows supply lines
+step 12 pow | highlight: box | words: 30
+  ok   step 12 tip visible
+  ok   step 12 tip short (<=50 words)
+  ok   step 12 has an arrow/ring on its target
+  ok   step 12 tip box does not cover its own highlight 
+  ok   a power button is visible
+step 13 md | highlight: box | words: 31
+  ok   step 13 tip visible
+  ok   step 13 tip short (<=50 words)
+    (highlight optional at this moment)
+  ok   step 13 tip box does not cover its own highlight 
+  ok   Missile defence is buildable
+  ok   missile defence placed
+step 14 win | highlight: edge | words: 40
+  ok   step 14 tip visible
+  ok   step 14 tip short (<=50 words)
+  ok   step 14 has an arrow/ring on its target
+  ok   step 14 tip box does not cover its own highlight 
+    attack round 0 {"t":260,"mine":31,"foe":6}
+    attack round 4 {"t":264,"mine":31,"foe":6}
+    attack round 8 {"t":267,"mine":31,"foe":4}
+    attack round 12 {"t":271,"mine":31,"foe":4}
+    attack round 16 {"t":274,"mine":26,"foe":4}
+    attack round 20 {"t":277,"mine":26,"foe":3}
+    attack round 24 {"t":281,"mine":26,"foe":2}
+    attack round 28 {"t":284,"mine":26,"foe":2}
+    attack round 32 {"t":287,"mine":26,"foe":1}
+    attack round 36 {"t":291,"mine":26,"foe":1}
+  FAIL no "You are ready" screen after the win
+  FAIL ready screen shows 3 tips
+  FAIL completion remembered
+  FAIL exception: page.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#tutGo')
+
+step seconds: [0,0,0,9,3,0,0,3,0,0,0,0,0] total 1425 s
+TUTORIAL FAIL (4)
