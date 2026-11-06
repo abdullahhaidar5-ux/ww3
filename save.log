@@ -1,0 +1,5 @@
+SAVETEST FAIL
+ - test threw: page.waitForFunction: Timeout 60000ms exceeded.
+    at Object.open (/home/runner/work/ww3/ww3/orch/savelib.mjs:53:16)
+    at async file:///home/runner/work/ww3/ww3/orch/savetest.mjs:16:13
+ - page error: Unexpected token '<<'
