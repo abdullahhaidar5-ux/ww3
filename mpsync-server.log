@@ -1,0 +1,29 @@
+game servers running locally at http://127.0.0.1:43927
+[3s] both pages loaded (menu model downloads done after 1s / 1s)
+[3s] host lobby open, code 2y4omf
+[3s] client's game list (from the server) shows game 2Y4OMF: {"role":"server","n":1,"id":"v54271994ad7b","ok":true}
+[3s] client joining
+[4s] client connected via ws: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[20s] battle: US vs RU on strait; client is slot 1
+[107s] both pages finished loading
+[107s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[107s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[129s] client order: 2/2 of the client's units moved on the host
+[137s] lag 1.6 s at host t=29.5 (host socket backlog 0 B, client rx 4.8 s ago)
+[137s] client first fell 1.6 s behind at host t=29.5s (US, RU)
+[137s] lag 1.7 s at host t=29.6 (host socket backlog 0 B, client rx 5.2 s ago)
+[138s] lag 1.8 s at host t=29.7 (host socket backlog 0 B, client rx 5.6 s ago)
+[138s] lag 29.8 s at host t=29.8 (host socket backlog 0 B, client rx 6.0 s ago)
+[171s] check @1.0 min t=60s: host 41 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 9721 client 9721
+[211s] lag 1.6 s at host t=96.4 (host socket backlog 0 B, client rx 4.8 s ago)
+[212s] lag 1.7 s at host t=96.5 (host socket backlog 0 B, client rx 5.2 s ago)
+[269s] check @2.5 min t=150s: host 46 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10732 client 10732
+[370s] check @4.0 min t=240s: host 51 entities, client side sees 11 (own 11); client has 11 (own 11); missing 0, extra 0, off-position 0, mismatched 0; credits host 10924 client 10924
+[378s] traffic host->client 2357 KB in 2595 messages, client->host 58 KB in 305; client lag max 97.40 game-s; 12 ms per 0.1 s step
+[378s] 24 live checks, 0 out of tolerance; up to 8 enemy entities were in the client's view at once
+[378s] relay traffic per player: host->player 645 frames (702 records), 589 KB raw / 148 KB compressed per game-minute; player->host 64 frames, 1.0 KB compressed per minute (orch/out/srv-traffic.json)
+peak memory (node + browser, summed RSS): 4526 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC FAIL: client fell 97.4 game-seconds behind the host (it should trail by at most a few 0.1 s snapshots) (378s)
