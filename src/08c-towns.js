@@ -93,7 +93,7 @@ function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){
   else h+='<div class="tm" style="margin-top:6px">Neutral. Garrison infantry in its buildings (more than half of the key buildings) to capture it.</div>';
   h+=hmPanel(t,mine,reb);
   if(pk[0])h+=`<div class="tm" style="margin-top:4px">Perk: <b>${pk[0]}</b> &mdash; ${pk[1]}</div>`;
-  TP.el.querySelector('#tpb').innerHTML=h;}
+  const tb=TP.el.querySelector('#tpb');if(TP.h!==h){TP.h=h;tb.innerHTML=h;}}   /* only rebuild when the text changed, so a click is never lost to a refresh */
 
 /* ---------- HEARTS & MINDS interface: home turf, local recruits, informants, bribes, propaganda towers ---------- */
 function homeLine(){const n=homeNames();return n.length?n.join(' & '):'';}
