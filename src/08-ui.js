@@ -161,7 +161,7 @@ function docUI(T){if(!G||!T)return;const lock=Object.keys(T.gperk||{}).length>0|
     const lb=document.createElement('button');lb.textContent='✕';lb.title='Later';lb.setAttribute('aria-label','Later');lb.style.cssText='pointer-events:auto;min-width:44px;min-height:44px;background:none;border:1px solid #667;color:#cbd;border-radius:8px';lb.onclick=()=>{G.docDis=1;ov.hidden=true;};bx.append(lb);}
   ov.hidden=false;}
 // One-click powers (Abdullah 2026-10-31): a no-target power fires at once; a targeted one aims (circle follows the cursor) and the next map click/tap fires it. Hotkeys below; Esc / right-click cancels.
-const POW_KEY={recon:'e',para:'c',barrage:'b',repair:'y',mil:'m',bb:'n',sanc:'u',flare:'l',nat:'j'};
+const POW_KEY={recon:'e',para:'c',barrage:'b',repair:'y',mil:'m',bb:'n',sanc:'u',reinf:'k',flare:'l',nat:'j'};
 function powGo(k){if(!G||G.over)return false;const T=G.teams[ME],P=T&&powInfo(k,T.fac);if(!P||!T.pw[k]||P.passive||T.pw[k].cd>0)return false;if(P.self){doAct({t:'pow',k,x:0,y:0});return true;}G.place=null;G.amove=false;G.defm=false;G.aim=k;updateUI();return true;}
 /* ---------- one-click powers: a strip of buttons always on screen; hotkey/button arms, next map click fires ---------- */
 let QPSIG='',QPEL=null,QPDRAG=null,QPSEEN=null,QPRDY=null,QPTIP=null,QPTK=null,QPLP=0,QPOFF=false;
