@@ -30,6 +30,7 @@ systems doing one job, merge them into the owner and note it here.
 | **Highlights, photo mode, voice commands** | extras.md | Kill-cam highlights, photo album (fun-extras) |
 | **Save / host-migration state** | `src/07b-ckpt.js` (ckEncode/ckRestore) | **Every** new sim state must be added here (saves AND host migration depend on it); savegame uses it, never a second serializer |
 | **Keys** | controls2.md / Controls rules in CLAUDE.md | Every new hotkey goes in the one key table; no reuse of W A S D, F, G, X, Alt/Ctrl/Shift combos already taken |
+| **Morale** | `moraleTick()` / `courageOf()` / `rallyZone()` / martyr banners in `src/03-sim.js` | **National morale styles** (CLAUDE.md): one style per nation as a small data table (`MORALE_STYLE[fac]`) read by moraleTick — Zealous (IR, RS, DW), Professional (e.g. US, GB, FR, DE, JP, KR, AU, CA, IT, GR, PL, AE, SA, JO, OM, TR), Strength in numbers (e.g. RU, CN, KP, VN, IN, PK, EG, NG, ID, BR), Home defenders (e.g. UA, TW, KD, IL, CU, SY, IQ, VE, AF, AZ, PH, MX, CO, AR, DZ, MA) — final assignment by the integration helper, balanced by tourney. Grand-map national morale = war weariness (grand6) feeds the starting fear of that nation's troops in Fight-it battles |
 | **Production** | normal build queues | Smart auto-build (battlefeel), battle groups (command-teams) |
 
 ## Grand map layer (campaign)
@@ -56,3 +57,4 @@ empire systems never inside a battle.
 5. Saves/host migration cover every new state (savetest in the gate).
 6. Key conflicts checked by the controls gate.
 7. Per-system performance budget kept inside smooth-pc / server headroom.
+8. **National morale styles** (Abdullah 20:01) — build the `MORALE_STYLE` table + moraleTick hooks for all live nations, show the style on the nation pick screen and in the encyclopedia, AI aware of it, balanced (integration helper 1; nation helpers set theirs).

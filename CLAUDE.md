@@ -65,6 +65,15 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   nations-new1/2 pattern. Every other country on the grand map is a **playable minor nation** (shared regional army/look, own
   flag/name/colours, no unique voices). The IM faction was removed on purpose. Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
+- **National morale styles** (Abdullah 2026-11-05 20:01): every nation has ONE battle morale style, different styles but **equal
+  power** (proven by the balance tourneys): **Zealous** (slow to break, martyr banners, fervour when comrades fall — and losing a
+  cleric/officer does **not** weaken them: they stay zealous; their cost is elsewhere, e.g. they hold ground and take heavier
+  losses), **Professional** (steady under artillery, rally fast near officers; heavy losses sap them more), **Strength in numbers**
+  (brave in big groups, shaky when isolated), **Home defenders** (much braver on home turf / near own towns, ordinary abroad).
+  Zealous = IR, RS, DW; every other nation gets the style that fits it (table in `orch/SYSTEMS.md`); new nation helpers pick one.
+  Grand-map national morale: raised/lowered by victories & defeats, casualties & war length, losing home/holy places (capital,
+  war goals, heritage sites) and short national/religious-day boosts (equal value for all); on collapse: troops start battles
+  shaken, forced peace talks, coups & civil war.
 - **Mountain Shias (RS) identity** (Abdullah 2026-11-05 19:46 "make it more obvious"): unmistakably a Lebanese mountain Shia
   resistance force through content — Lebanon home, Lebanese-dialect voices, Ashura/"Ya Hussein" religious motifs, tunnels, ATGM
   teams, rocket barrages, drones, mountain forts. **Never** the real organisation's name, flag/emblem (or a close copy) or real

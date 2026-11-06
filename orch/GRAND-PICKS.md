@@ -45,6 +45,10 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       (puppet: less tax, low unrest, may defect) or liberate (no tax, big world-opinion/loyalty gain); uses **Locals** for resistance.
 - [ ] **Factions at home:** military, business and clergy interest groups with demands and satisfaction; happy factions give
       bonuses, angry ones feed war weariness and coups; equal-value for all nations.
+- [ ] **National morale** (Abdullah 20:01; part of war weariness): raised/lowered by victories & defeats, casualties & war length,
+      losing home or holy places (capital, war-goal provinces, heritage/holy sites), short boosts on national & religious days
+      (Ashura, national days — equal value for every nation); on collapse: that nation's troops start Fight-it battles shaken
+      (high fear), forced peace talks (negotiate or face unrest), coups & civil war. Uses the battle morale styles (SYSTEMS.md).
 - [ ] **Reconstruction:** rebuild war-torn provinces (destroyed buildings, wrecked towns from battles) for loyalty, tax and world
       opinion.
 
