@@ -157,6 +157,29 @@ Moved up: runs right after grand1. The grand map must look like a **Total War ca
       (add a grand-map smoothness check). Reuse the battle engine's Three.js setup, terrain/water shaders, models, flags — no new tech.
 - [~] Living map: armies walk between provinces, battle smoke over fought-over provinces, turn-report news card done; convoys, missile trails, burning cities (needs stage-3 strikes; renderer already reads `GC.prov[i].burn`) still to do.
 
+## Look passes (Abdullah 2026-11-06 15:42 — after grandsharp, one Sonnet helper each, in this order; rendering/UI only, no rules)
+### look1 — Light & colour
+- [ ] Sun with soft real-time shadows (one cascaded shadow map over the visible area), ambient occlusion in valleys, hemisphere sky light.
+- [ ] Distance haze/aerial perspective and a soft sky gradient; drifting cloud shadows over the land (cheap projected noise).
+- [ ] Water: waves (normal maps), depth colour from shallow turquoise to deep blue, shoreline foam, sun glints, subtle reflections.
+- [ ] Hand-tuned colour palette per region/biome (Levant olive hills, Arabian sand, Iranian plateau, steppe, European green, snow) and a final colour grade; matching dawn/dusk for turn changes is optional.
+### look2 — Detail & life
+- [ ] Patchwork farm fields around towns, visible road and rail networks between towns (crisp ribbons), bridges.
+- [ ] Region-style towns at map scale (Middle Eastern flat roofs + minarets/domes, Lebanese stone villages, Yemeni tower houses, European red roofs, East Asian roofs…) via the town-look generator; ports with docks and ships; airfields/forts visible on provinces that have them.
+- [ ] Snow-capped peaks, rocky cliffs, varied forest (species by biome), palms in oases.
+- [ ] Waving flags on armies, smoke columns over contested provinces, fires on burning cities.
+- [ ] Weather and seasons on the map (snow cover in winter, rain/sand storms drifting, mud season tint), matching the turn's season.
+### look3 — UI polish
+- [ ] One modern-military UI skin for the grand map: frames, panels, buttons, icons (original, free fonts), readable on PC.
+- [ ] Unit cards show real pictures of each unit (render portraits from the game's own 3D models at build time), with count/health/veterancy.
+- [ ] Better name banners (nation colours, capital star, port/fort icons), minimap styling, turn/treasury top bar, tooltips.
+### look4 — Cinematic moments
+- [ ] "Fight it": the camera swoops down from the grand map into the province before the battle loads; after the battle it pulls back up to the map showing the result.
+- [ ] End of turn: a short sweep over the world while moves resolve (skippable).
+- [ ] Big events (capital falls, war declared, peace signed): a 2–3 s camera moment + news card (skippable; Settings toggle).
+All passes: steady 60 fps on a mid PC (grandsmooth), Settings "Grand map quality" covers anything heavy, free CC0/CC-BY assets credited,
+before/after screenshots of the same views in orch/shots/<pass>/.
+
 ## Stage 5 addition
 - [x] **Map modes** (Abdullah 21:20): political, terrain, trade, supply, unrest, culture, alliances, development (one switcher).
 
@@ -190,3 +213,6 @@ Moved up: runs right after grand1. The grand map must look like a **Total War ca
 
 ## Home regions (nation-anglo, 2026-11-06)
 - **GB**: England, Scotland, Wales, N. Ireland as detailed provinces (London, Home Counties, Midlands, Scottish Lowlands/Highlands, Wales, Ulster) + Royal Navy bases (Portsmouth, Faslane). **AU**: Sydney/Brisbane/Melbourne/Perth/Darwin, Outback, Tasmania. **CA**: Ontario/Quebec, Maritimes, Prairies, BC, the Arctic north. Not yet added to the grand map data (stage owner: add detailed provinces).
+
+## Home regions (nation-frde, 2026-11-06)
+- **FR France**: home = metropolitan France (Île-de-France / Paris, Normandy & Brittany coast, Lorraine-Alsace on the Rhine, the Rhône–Provence axis, Toulon naval base); battle maps `rhine`, `aegean` list FR; a French-village town style is still to do (currently the shared `europe` look). **DE Germany**: home = Germany (Rhine-Ruhr, Bavaria, Saxony, Berlin-Brandenburg, Hamburg/Kiel coast); takes over the Fulda Gap and Rhine Front as home maps. Detailed grand-map provinces belong to the grand stage that builds the Europe theatre.

@@ -55,7 +55,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   Alt+right-click a spot (drive there, then unload); touch: tap a selected vehicle again to unload, tap ground with a
   garrisoned building selected. The Unload/Leave buttons may stay as extras.
   (Touch controls are no longer required — see "PC only" below.)
-- **Factions (20 live → 21; IQ Iraq and SY Syria first cut live 2026-11-06, JP still to come):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
+- **Factions (22 live → 54; IQ Iraq and SY Syria first cut live 2026-11-06, FR France and DE Germany first cut live 2026-11-06 (nation-frde: EU-based rows, EU recorded voices shared until XTTS re-records), JP still to come):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
   **DW "Coffee Shias" = Yemen** (Abdullah 2026-11-05 19:44: "make sure the Coffee Shias become Yemen" — DW's home, look, maps and
   grand-map region are Yemen). **Adding full nations IQ Iraq, SY Syria, JP Japan** (19:45; own units, uniforms, buildings, voices,
   anthem, equal strength) → 21; then (19:49) **15 more full nations**: GB, FR, DE, PL, AZ, JO, KD (Kurdistan
@@ -152,6 +152,8 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   a phone (attached video files didn't open for him).
 
 ## Ground rules for agents
+
+- **DEADLINE Saturday 2026-11-07 20:00 Chicago (02:00Z Sun)** (Abdullah 2026-11-06 15:52 "this needs to be done by Saturday 8 pm, think of usage"): everything ships by then. Ship what is green in small pieces as you go; after Sat 18:00 Chicago start no new scope — finish, ship, or write the HANDOFF; never leave main broken. Prefer the cheapest approach that meets the spec; skip optional extras ("if time allows") when behind.
 
 - **Grand stages chain** (Abdullah 2026-11-06 "chain the stages"): if your branch is `orch/grand1`…`orch/grand7`, `orch/grand4b` or
   `orch/integrate2`, follow `orch/CHAIN.md` — its FIRST check before any other work, its LAST step (start the next stage) at the end.

@@ -9,7 +9,7 @@ function mwPower(team,key,x,y,P,L,M){const T=G.teams[team],en=e=>!e.dead&&e.team
     let plant=null;for(const o of G.oil||[]){if(!o.pw||o.dead||o.owner<0||ally(o.owner,team))continue;const d=Math.hypot(o.x-x,o.y-y);if(d<bd){bd=d;plant=o;best=null;}}
     if(!best&&!plant){log(team,'Nothing to hack there: aim near an enemy radio tower, Strike Center, SAM site, defence gun or power plant.','w');return false;}
     const vt=best?best.team:plant.owner,dur=Math.round(MW.HACK_T*M*mwFw(vt)),tx=best?best.x:plant.x,ty=best?best.y:plant.y,nm=best?(bstats(G.teams[vt].fac,best.kind).name||best.kind):'power plant';
-    if(best)best.dis=Math.max(best.dis||0,G.t+dur);else plant.sab=Math.max(plant.sab||0,G.t+dur);G.teams[vt].mwHit=1;
+    koSet(best||plant,dur,'hack');G.teams[vt].mwHit=1;
     FXE('cyb',[tx|0,ty|0,dur,vt,best?best.id:-1]);
     if(best&&(best.kind==='radio'||best.kind==='uplink'))FXE('mmst',[vt,dur]);
     log(team,`Cyber attack: enemy ${nm} is offline for ${dur} seconds.`,'g');
@@ -18,9 +18,9 @@ function mwPower(team,key,x,y,P,L,M){const T=G.teams[team],en=e=>!e.dead&&e.team
   if(key==='emp'){const R=P.r;FXE('emp',[x|0,y|0,R|0]);
     for(const O of G.teams)if(O.id!==team&&!ally(O.id,team)&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<R+250))log(O.id,'Warning: electromagnetic pulse incoming!','w');
     G.timers.push({t:1.4,fn:()=>{let n=0;for(const e of G.ents){if(!en(e)||Math.hypot(e.x-x,e.y-y)>R)continue;const k=mwFw(e.team);G.teams[e.team].mwHit=1;
-      if(e.isB){if(MW.EMPB.includes(e.kind)&&e.built>=1){e.dis=Math.max(e.dis||0,G.t+MW.EMP_T.bld*M*k);n++;}}
-      else if(e.s.dom==='air'){e.stun=Math.max(e.stun||0,G.t+MW.EMP_T.air*M*k);n++;}
-      else if(isVeh(e.s)||e.s.dom==='naval'){e.stun=Math.max(e.stun||0,G.t+MW.EMP_T.veh*M*k);n++;}}
+      if(e.isB){if(MW.EMPB.includes(e.kind)&&e.built>=1){koSet(e,MW.EMP_T.bld*M*k,'emp');n++;}}
+      else if(e.s.dom==='air'){koSet(e,MW.EMP_T.air*M*k,'emp');n++;}
+      else if(isVeh(e.s)||e.s.dom==='naval'){koSet(e,MW.EMP_T.veh*M*k,'emp');n++;}}
       log(team,`EMP Strike: ${n} enemy vehicles, aircraft and electronics knocked out.`,'g');pubNews('pow',team,-1,'EMP Strike');}});return true;}
   return false;}
 // GPS jamming: a guided shot (missile, ATGM, guided bomb) at anything inside an enemy EW truck's bubble may drift off target

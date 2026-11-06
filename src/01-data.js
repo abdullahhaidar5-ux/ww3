@@ -137,8 +137,19 @@ const MIL_UNITS=(n)=>({inf:{name:n.inf},at:{name:'RPG Team'},aa:{name:'ZU-23 Tec
 // then rally. Veteran ranks, heroes and morale auras steady them.
 // tiers (user): 1 Shia forces; 2 Cuba, North Korea, Russia, Ukraine; 3 Egypt, Turkey, Pakistan; 4 China, Israel, South Korea
 // (US and EU sit here too); 5 India, UAE, Saudi Arabia.
-const COURAGE={RS:1.6,IR:1.6,DW:1.6,KP:1.6,CU:1.42,RU:1.42,UA:1.42,EG:1.16,TR:1.16,PK:1.16,CN:1.03,IL:1.03,KR:1.03,US:1.03,EU:1.03,IN:.9,AE:.9,SA:.9};
-function courageOf(u){const T=G.teams[u.team];return (COURAGE[T.fac]||1)*(1+.12*(u.rank||0))*upgK(T,u.kind,'courage');}
+const COURAGE={};   // derived below from MORALE_STYLE (integrate1) - one table per nation, never edit by hand
+// National morale styles (Abdullah 2026-11-05 20:01-20:41): every nation has ONE style; styles differ, total power is equal. Numbers live here only.
+//  cour = base courage; loss = how hard comrades falling hits (x fear, zealous get fervour instead); art = suppression from shells x; off = officer rally x;
+//  home = courage x on home turf (own territory); lone = courage divided by this when no armour/artillery/air is near; sup = own artillery+air damage x; taken = damage taken x
+const MSTYLES={
+ zeal:{n:'Zealous',cour:1.6,loss:.2,ferv:.07,taken:1.07,zeal:1,desc:'Slow to break; fervour rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses.'},
+ prof:{n:'Professional',cour:1.25,loss:1.3,art:.7,off:1.9,desc:'Steady under artillery and quick to rally near officers; heavy losses sap them more than other armies.'},
+ home:{n:'Home defenders',cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
+ fire:{n:'Firepower-reliant',cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
+const MORALE_STYLE={};
+for(const[st,l]of Object.entries({zeal:'IR RS DW KP',prof:'US RU CU GB FR DE JP KR AU CA IT GR PL UA TR CN PK EG ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA',fire:'IN AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
+function msOf(fac){return MSTYLES[MORALE_STYLE[fac]||'home'];}
+function courageOf(u){const T=G.teams[u.team],ms=msOf(T.fac);let c=ms.cour*(1+.12*(u.rank||0))*upgK(T,u.kind,'courage');if(ms.home&&u.hm)c*=ms.home;if(ms.lone&&u.nsup)c/=ms.lone;return c;}
 function F_(code,name,color,lang,music,doctrine,mods,special,units,sup,fup,o={}){return Object.assign({code,name,color,lang,music,doctrine,mods,special,units,sup,fup},o);}
 const FACTIONS={
   US:F_('US','United States','#4a80e8','en-US','west','Air power & precision: weapons deal 8% more damage; F-35s and Apaches hit 25% harder and are tougher.',{dmg:1.08},'hero',
@@ -273,7 +284,28 @@ Object.assign(NEWNAT,{
   pow:{name:'Arctic Supply Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
   gp:{bounty:{name:'Resource Exports'},recon:{name:'Northern Watch',rm:.95},para:{name:'Airborne Regiment Drop'},barrage:{name:'Gunner Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
   upg:['Commando Course','CADPAT Combat Kit','Leopard Crew Training','M777 Fire Control','CF-18 Upgrade','Griffon Maintenance','Resource Revenue','Defence of the North','Victoria Refit'],
-  uplink:'Strike Missile Command',econ:'Oil Sands Export Terminal',sub:'Victoria-class Submarine',md:'NASAMS Battery',coast:'Harpoon Coastal Battery',trn:['Landing Craft Utility','CH-147F Chinook']}});
+  uplink:'Strike Missile Command',econ:'Oil Sands Export Terminal',sub:'Victoria-class Submarine',md:'NASAMS Battery',coast:'Harpoon Coastal Battery',trn:['Landing Craft Utility','CH-147F Chinook']},
+ // nations-frde (Abdullah 2026-11-05 19:49): France and Germany, national armed forces only; both built from the EU row (equal power per tier).
+ FR:{base:'EU',name:'France',color:'#2a4fb0',lang:'fr-FR',uplink:'Force Océanique Command (SCALP)',econ:'Marché de Rungis Hub',
+  doctrine:'Artillerie & génie: units self-repair, structures have 30% more hit points, all units cost 3% less, CAESAR guns hit 15% harder.',mods:{regen:3,bldHp:1.3,cost:.97},
+  units:{inf:'Section d\'Infanterie FELIN',at:'Équipe MMP',hero:'Tireur d\'élite FR-F2',aa:'Crotale NG',tank:'Leclerc XLR',arty:'CAESAR Howitzer',heli:'Tigre HAD',jet:'Rafale F4',boat:'Combattante Patrol Boat',ship:'FREMM Frégate'},
+  sup:{name:'SCALP Salvo',charge:150,n:4,dmg:685,r:80,spread:110},
+  special:['atgm',{name:'Équipe MMP Longue Portée'}],hero:['Commandos Marine / 13e RDP','strike'],
+  doct:{name:'Armée de Terre',homeland:1},
+  pow:{name:'Convoi de Ravitaillement',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Fonds de la Défense',m:.9},recon:{name:'Avion AWACS E-3F',rm:1.1,cdm:1.1},para:{name:'Brigade Parachutiste'},barrage:{name:'Feux de Barrage CAESAR'},repair:{name:'Service de Soutien',fx:'rearm',pm:1.1,rm:1.1,cdm:1.1}},
+  upg:['Formation Commando','Équipement FELIN','Équipages Leclerc','Artillerie CAESAR','Intégration Rafale','Maintenance Tigre','Recettes Exportation','Doctrine Interarmes','Refonte Patrouille Navale'],
+  sub:'Barracuda-class Submarine',md:'SAMP/T Battery',coast:'Exocet MM40 Battery',trn:['LCM Landing Craft','NH90 Caïman']},
+ DE:{base:'EU',name:'Germany',color:'#3a3a3a',lang:'de-DE',uplink:'Raketenkommando Nord (Taurus)',econ:'Handelskammer Frankfurt',
+  doctrine:'Panzertruppe & Heer: units self-repair, structures have 30% more hit points, all units cost 3% less, PzH 2000 guns hit 15% harder.',mods:{regen:3,bldHp:1.3,cost:.97},
+  units:{inf:'Panzergrenadier-Gruppe',at:'MILAN Team',hero:'KSK Scharfschütze',aa:'Skyranger 30',tank:'Leopard 2A7',arty:'PzH 2000 Howitzer',heli:'Tiger UHT',jet:'Eurofighter Typhoon',boat:'Schnellboot Gepard',ship:'F125 Fregatte'},
+  sup:{name:'Taurus Salvo',charge:150,n:4,dmg:685,r:80,spread:110},
+  special:['atgm',{name:'Jägerzug Panzerabwehr'}],hero:['Kommando Spezialkräfte','strike'],
+  doct:{name:'Panzertruppe',homeland:1},
+  pow:{name:'Nachschubkonvoi',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Verteidigungsfonds',m:.9},recon:{name:'AWACS Aufklärung',rm:1.1,cdm:1.1},para:{name:'Fallschirmjäger'},barrage:{name:'Artilleriefeuer PzH'},repair:{name:'Logistiktruppe',fx:'rearm',pm:1.1,rm:1.1,cdm:1.1}},
+  upg:['Spezialkräfte Ausbildung','Infanterie der Zukunft','Panzerbesatzungen','PzH Feuerleitung','Eurofighter Integration','Tiger Wartung','Exportüberschuss','Führen mit Aufträgen','Marine Modernisierung'],
+  sub:'Type 212CD Submarine',md:'IRIS-T SLM Battery',coast:'Naval Strike Missile Battery',trn:['LCM Landing Craft','NH90 Transport']}});
 for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const q in B.units)u[q]=Object.assign({},B.units[q]);for(const q in N.units)u[q]=Object.assign({},u[q]||{},{name:N.units[q]});
   FACTIONS[k]=Object.assign({},B,{code:k,name:N.name,color:N.color,lang:N.lang,doctrine:N.doctrine,mods:N.mods,units:u,sup:N.sup});
   const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);
@@ -287,9 +319,11 @@ const COUNTER={inf:'Beats AT teams and other infantry · Loses to tanks and arti
   drone:'Explodes on groups of vehicles and infantry · Loses to AA and rifle fire',heli:'Beats tanks and vehicles · Loses to AA and AT teams',jet:'Bombs buildings and vehicles · Loses to SAM sites and AA',
   boat:'Beats boats and helicopters near water · Loses to warships',ship:'Shells coasts and boats from long range · Loses to boats up close and aircraft'};
 const SHIA={IR:1,RS:1,DW:1};
-function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...(SHIA[fac]||fac==='KP'?['cleric']:[]),'spy'],factory:['aa','tank','arty',...(F.extra||[]),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift'],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
+/* integrate1: the Ayatollah / Dear Leader, Mountain Fortress and Bunker Buster live on the grand map now - not buildable in Conquest battles (missions and the sandbox keep them) */
+function conqBan(k){return(k==='cleric'||k==='fort'||k==='bb')&&typeof G!=='undefined'&&!!G&&!!G.conq&&!G.camp&&!G.sandbox;}
+function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...((SHIA[fac]||fac==='KP')&&!conqBan('cleric')?['cleric']:[]),'spy'],factory:['aa','tank','arty',...(F.extra||[]),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift'],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
 function allUnits(fac){const r=roster(fac);return CATS.flatMap(c=>r[c]);}
-function bldAllowed(fac,k){if(k==='econ'&&typeof G!=='undefined'&&G&&G.conq)return false;   /* Conquest: the Revenue Center is gone - territory pays
+function bldAllowed(fac,k){if(conqBan(k))return false;if(k==='econ'&&typeof G!=='undefined'&&G&&G.conq)return false;   /* Conquest: the Revenue Center is gone - territory pays
   */if(k==='tunnel'||k==='fort')return !!FACTIONS[fac].tunnels;return !(k==='airfield'&&FACTIONS[fac].noAir);}
 
 // Faction upgrades (generated by upgspec.py): every nation has its own nine, themed to its doctrine and scored so each
@@ -478,7 +512,7 @@ const FASTN={IR:'Swarm Boat',RS:'Coastal Swarm Boat',DW:'Red Sea Skiff',US:'Patr
 // nations-new1: copy Egypt's per-nation table rows to the new nations (names/flavour overridden from NEWNAT); other modules alias via NEWNAT[k].base.
 for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
   for(const T of [UPLINK,ECON,COURAGE,GDOC_AI,BAL,XL,TRN,SUBN,MDN,COASTN]){if(T[b]!==undefined&&T[k]===undefined)T[k]=JSON.parse(JSON.stringify(T[b]));}
-  COURAGE[k]=1.16;NATPOW[k]=N.pow;GPOW[k]=Object.assign({},GPOW[b],N.gp);DOCT[k]=N.doct;
+  if(N.morale)MORALE_STYLE[k]=N.morale;NATPOW[k]=N.pow;GPOW[k]=Object.assign({},GPOW[b],N.gp);DOCT[k]=N.doct;
   if(UPLINK[b])UPLINK[k]=[N.uplink||(k==='IQ'?'Rocket Command (Al-Faw)':'Missile Command (Qalamoun)'),UPLINK[b][1]];
   ECON[k]=N.econ||(k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board');
   if(N.sub)SUBN[k]=N.sub;if(N.md)MDN[k]=N.md;if(N.coast)COASTN[k]=N.coast;if(N.trn)TRN[k]=N.trn;
@@ -496,6 +530,6 @@ function lerpA(a,b,t){const d=((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;return a+d*M
 const KINDS=[...Object.keys(BASE),...Object.keys(STRUCT)];
 function shade(hex,f){const n=parseInt(hex.slice(1),16);const r=(n>>16)*f,g=(n>>8&255)*f,b=(n&255)*f;return `rgb(${Math.min(255,r)|0},${Math.min(255,g)|0},${Math.min(255,b)|0})`}
 // doctrine and courage lead every nation's description
-for(const k in FACTIONS){const F=FACTIONS[k],D=DOCT[k];if(!D||F._dt)continue;F._dt=1;const tr=Object.keys(DOCT_TXT).filter(q=>D[q]).map(q=>DOCT_TXT[q]);const c=COURAGE[k]||1,cl=k==='KP'?'unbreakable (never breaks)':['IR','RS','DW'].includes(k)?'unbreakable (never breaks while the Ayatollah lives)':c>=1.5?'unbreakable':c>=1.3?'very high':c>=1.15?'high':c>=1?'steady':'brittle';
-  F.doctrineName=D.name;F.docShort=`${D.name} · courage: ${cl.split(' (')[0]}`;F.doctrine=`Doctrine: ${D.name} (${tr.join('; ')}). Courage: ${cl}. `+F.doctrine;}
+for(const k in FACTIONS){const F=FACTIONS[k],D=DOCT[k];if(!D||F._dt)continue;F._dt=1;const tr=Object.keys(DOCT_TXT).filter(q=>D[q]).map(q=>DOCT_TXT[q]);const MS=msOf(k),cl=MS.n+' - '+MS.desc;
+  F.doctrineName=D.name;F.docShort=`${D.name} · morale: ${MS.n}`;F.moraleStyle=MS.n;F.doctrine=`Doctrine: ${D.name} (${tr.join('; ')}). Morale style: ${cl} `+F.doctrine;}
 

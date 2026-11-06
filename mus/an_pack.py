@@ -8,7 +8,7 @@ scores and their sample sheets on 2026-10-27; the anthem part moved here unchang
 Sources (all free; credited in the menu credits):
   * United States Navy Band national-anthem recordings (works of the US federal government: public domain), via
     Wikimedia Commons (US, EU) and the Internet Archive's mirror of navyband.navy.mil/media/ceremonial
-    (https://archive.org/details/us-navy-band-national-anthems-public-domain: IL, UA, CU, IN, CN, EG, PK, KR, RU). Compositions, all public domain: "The Star-Spangled Banner" (John Stafford Smith, d. 1836),
+    (https://archive.org/details/us-navy-band-national-anthems-public-domain: FR "La Marseillaise" (Rouget de Lisle, d. 1836), DE "Deutschlandlied" (Haydn, d. 1809; Hoffmann von Fallersleben, d. 1874), IL, UA, CU, IN, CN, EG, PK, KR, RU). Compositions, all public domain: "The Star-Spangled Banner" (John Stafford Smith, d. 1836),
     "Hatikvah" (melody arr. Samuel Cohen, d. 1940), "Shche ne vmerla Ukrainy" (Mykhailo Verbytskyi, d. 1870), the
     Anthem of Europe (Beethoven, "Ode to Joy", 1823; the Navy Band's own arrangement), "La Bayamesa" (Perucho
     Figueredo, d. 1870), "Jana Gana Mana" (Rabindranath Tagore, d. 1941), "March of the Volunteers" (Nie Er, d. 1935),
@@ -31,7 +31,8 @@ DL = sys.argv[1] if len(sys.argv) > 1 else '.'
 # code: (file in the download dir, start s, length s)
 ANTHEMS = {'US': ('an/US.ogg', 0, 26), 'IL': ('an/IL.mp3', 0, 26), 'UA': ('an/UA.mp3', 0, 26), 'EU': ('an/EU.ogg', 0, 26), 'CU': ('an/CU.mp3', 0, 26),
            'IN': ('an/IN.mp3', 0, 26), 'CN': ('an/CN.mp3', 0, 26), 'EG': ('an/EG.mp3', 0, 26),
-           'PK': ('an/PK.mp3', 0, 26), 'KR': ('an/KR.mp3', 0, 26), 'RU': ('an/RU.mp3', 0, 26)}
+           'PK': ('an/PK.mp3', 0, 26), 'KR': ('an/KR.mp3', 0, 26), 'RU': ('an/RU.mp3', 0, 26),
+           'FR': ('an/FR.mp3', 0, 26), 'DE': ('an/DE.mp3', 0, 26)}
 
 
 def anthems():

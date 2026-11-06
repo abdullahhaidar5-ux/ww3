@@ -48,7 +48,10 @@ function svAutoTick(){if(performance.now()-SAVE.autoT<SV_AUTO_MS)return;if(!svCa
 setInterval(()=>{try{svAutoTick();}catch(e){}},5000);
 /* ---------- state hash (positions, HP, money, town owners) - used by orch/savetest.mjs ---------- */
 function svStateHash(){let h=2166136261>>>0;const mix=v=>{h^=v|0;h=Math.imul(h,16777619)>>>0;};const f=x=>Math.round(x*10);
-  const L=G.ents.filter(e=>!e.dead).sort((a,b)=>a.id-b.id);for(const e of L){mix(e.id);mix(f(e.x));mix(f(e.y));mix(Math.round(e.hp));mix(e.team);}
+  const L=G.ents.filter(e=>!e.dead).sort((a,b)=>a.id-b.id);for(const e of L){mix(e.id);mix(f(e.x));mix(f(e.y));mix(Math.round(e.hp));mix(e.team);
+    /* integrate1: new battle systems are part of the hash, so a save that forgets them fails savetest: locals' allegiance, knocked-out time left, morale fear / rout, suppression, rank */
+    mix(e.loc?e.loc.charCodeAt(0):0);mix(Math.round(koLeft(e)*10));mix(Math.round((e.fear||0)*100));mix(Math.max(0,Math.round(((e.rout||0)-G.t)*10)));mix(Math.round((e.supp||0)*100));mix(e.rank|0);}
+  mix((G.mban||[]).length);mix((G.smokes||[]).length);mix((G.wnd||[]).length);
   for(const T of G.teams){mix(Math.round(T.credits));mix(T.kills|0);}for(const t of (G.towns||[])){mix(t.ow);mix(Math.round(t.un));mix(Math.round(t.rate*10));}
   return {h,units:L.length,money:G.teams.map(T=>Math.round(T.credits)),towns:(G.towns||[]).map(t=>t.ow).join(',')};}
 /* ---------- load ---------- */

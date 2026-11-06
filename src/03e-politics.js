@@ -36,8 +36,7 @@ function polRefugees(dt,U){if(!G.refs)G.refs=[];G.refs=G.refs.filter(r=>G.t<r.t0
     t.refT=G.t+28;const T=G.teams[t.ow];if(T&&!T.ai&&G.t>=(T.refMsg||0)){T.refMsg=G.t+60;log(t.ow,`Civilians are fleeing ${t.name}. They slow everyone on the road - take care not to hit them.`,'w');}}}
 
 /* ---- local militias (extends townRecruit / revolt rebels) ---- */
-function milMake(t,team,cost){const T=G.teams[team];t.mil=(t.mil||[]).filter(u=>!u.dead);const k=t.mil.length,q=nearestPassXY('ground',t.x+(k%2?30:-30),t.y+14+k*7)||[t.x,t.y];const u=addUnit(team,'inf',q[0],q[1]);if(!u)return null;
-  u.s=Object.assign({},u.s,{name:MIL_NAME[T.fac]||'Local Militia',hp:Math.round(u.s.hp*HM.MIL_HP),cost:cost});u.hp=u.max=u.s.hp;u.mil=t.i+1;t.mil.push(u);return u;}
+function milMake(t,team,cost){const T=G.teams[team];t.mil=(t.mil||[]).filter(u=>!u.dead);const k=t.mil.length,q=nearestPassXY('ground',t.x+(k%2?30:-30),t.y+14+k*7)||[t.x,t.y];return localSpawn(t,'own','inf',q[0],q[1],{team,cost});}
 function polMilitias(dt){if(G.t<G.setupEnd)return;
   for(const t of G.towns){if(t.ow<0||t.reb>G.t)continue;const T=G.teams[t.ow];if(!T||T.reb||T.out)continue;
     // loyal towns under attack raise free defenders for themselves
@@ -45,8 +44,8 @@ function polMilitias(dt){if(G.t<G.setupEnd)return;
       if(need>0){for(let i=0;i<need;i++)milMake(t,t.ow,recruitCost(t,t.ow));t.autoT=G.t+POL.MIL_AUTO_CD;if(!T.ai)log(t.ow,`The locals of ${t.name} take up arms to defend their town (free).`,'g');}}
     // angry towns arm rebels before they revolt
     if(t.un>=POL.INS_UN&&G.reb!=null&&G.teams[G.reb]&&G.t>=(t.insT||0)){t.rebU=(t.rebU||[]).filter(u=>!u.dead);
-      if(t.rebU.length<POL.INS_CAP){const a=(t.rebU.length+1)*2.399+t.i,q=nearestPassXY('ground',t.x+Math.cos(a)*(t.r*.7),t.y+Math.sin(a)*(t.r*.7))||[t.x,t.y];const u=addUnit(G.reb,'inf',q[0],q[1]);
-        if(u){u.hp*=.85;u.ins=1;t.rebU.push(u);t.insT=G.t+60;log(t.ow,`Angry locals in ${t.name} are taking up arms - lower the tax or send troops!`,'bad');FXE('tping',[t.ow,t.x|0,t.y|0,2]);}}
+      if(t.rebU.length<POL.INS_CAP){const a=(t.rebU.length+1)*2.399+t.i,q=nearestPassXY('ground',t.x+Math.cos(a)*(t.r*.7),t.y+Math.sin(a)*(t.r*.7))||[t.x,t.y];const u=localSpawn(t,'reb','inf',q[0],q[1],{ins:1});
+        if(u){t.insT=G.t+60;log(t.ow,`Angry locals in ${t.name} are taking up arms - lower the tax or send troops!`,'bad');FXE('tping',[t.ow,t.x|0,t.y|0,2]);}}
       else t.insT=G.t+20;}}}
 
 /* ---- propaganda: radio & TV station + leaflet drops (the neutral radio masts stay in updTowers) ---- */
@@ -86,8 +85,8 @@ function polSpyAct(u,j,tg){const team=u.team,T=G.teams[team],V=G.teams[tg.vt];if
   else if(j.k==='upg'){const c=Object.keys(V.upg||{}).filter(k=>V.upg[k]&&!T.upg[k]&&UPG[k]).sort((p,q)=>UPG[q].cost-UPG[p].cost||(p<q?-1:1));
     if(!c.length){log(team,'No technology here that we do not already have.','w');u.spCd=G.t+10;return;}
     const k=c[0];T.upg[k]=true;upgReset(T);done=true;const nm=(typeof upgName==='function'&&upgName(V.fac,k))||UPG[k].name||'research';log(team,`Our agent stole the plans for ${nm}!`,'g');msgV=`An enemy agent copied our ${nm} research!`;}
-  else if(j.k==='sab'){if(tg.o){tg.o.sab=G.t+POL.SPY_SAB_T;done=true;log(team,`Sabotage! The enemy power plant is down for ${POL.SPY_SAB_T} s.`,'g');msgV='Sabotage! One of our power plants is knocked out for a while.';}
-    else{tg.b.dis=Math.max(tg.b.dis||0,G.t+POL.SPY_SAB_T);done=true;log(team,`Sabotage! The enemy ${tg.b.kind==='radio'?'broadcast station':'Strike Center'} is knocked out for ${POL.SPY_SAB_T} s.`,'g');msgV=`Sabotage! Our ${bstats(V.fac,tg.b.kind).name} is knocked out for a while.`;}}
+  else if(j.k==='sab'){if(tg.o){koSet(tg.o,POL.SPY_SAB_T,'sabotage');done=true;log(team,`Sabotage! The enemy power plant is down for ${POL.SPY_SAB_T} s.`,'g');msgV='Sabotage! One of our power plants is knocked out for a while.';}
+    else{koSet(tg.b,POL.SPY_SAB_T,'sabotage');done=true;log(team,`Sabotage! The enemy ${tg.b.kind==='radio'?'broadcast station':'Strike Center'} is knocked out for ${POL.SPY_SAB_T} s.`,'g');msgV=`Sabotage! Our ${bstats(V.fac,tg.b.kind).name} is knocked out for a while.`;}}
   else if(j.k==='bribe'){const c=Math.round(POL.SPY_BRIBE_COST*(G.bs||1));if(T.credits<c){log(team,`Not enough money to pay agitators ($${c}).`,'w');u.spCd=G.t+10;return;}
     T.credits-=c;const t=tg.t;t.un=Math.min(100,t.un+POL.SPY_BRIBE);t.shock=Math.max(t.shock||0,G.t+30);done=true;log(team,`Agitators are at work in ${t.name}: unrest +${POL.SPY_BRIBE}.`,'g');msgV=`Paid agitators are stirring up ${t.name}!`;}
   if(done){u.spCd=G.t+POL.SPY_CD;u.detT=G.t+POL.SPY_EXPOSE;if(msgV&&!V.reb)log(tg.vt,msgV,'bad');FXE('tping',[tg.vt,bx,by,2]);FXE('txt',[bx,by,'AGENT',team,tg.vt]);}}

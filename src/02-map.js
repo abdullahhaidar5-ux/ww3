@@ -96,7 +96,7 @@ const MAPS={
     cities:[[820,1250,110,'lebanon'],[2150,1250,100,'mideast'],[1500,1820,80,'lebanon']],
     water(M,R){const ph=R()*6.28;M.lakes.push({x:560,y:880,r:200,rx:.8,wob:q=>.1*Math.sin(q*3+ph)});const jr=[];for(let y=1060;y<=MAPH+200;y+=40)jr.push([560+40*Math.sin(y*.01+ph),y]);M.rivers.push({pts:jr,hw:()=>34});M.bridgeAt=[[0,.5]];M.bridgeFrac=true;
       M.peaks.push({x:1700,y:250,r:200,rx:1.8,rot:.2},{x:1600,y:1000,r:80,rx:1.3,rot:.5},{x:2500,y:1500,r:75,rx:1.5,rot:-.3},{x:1250,y:1500,r:70,rx:1.4,rot:.8});}},
-  fulda:{plain:[6],name:'Fulda Gap',min:2,max:8,sym:'point',theme:'green',home:['EU','GB'],tag:'farmland · forests · winding river',desc:'Rolling German farmland, forests and half-timbered towns on the old Cold War invasion route. A winding river with four bridges.',
+  fulda:{plain:[6],name:'Fulda Gap',min:2,max:8,sym:'point',theme:'green',home:['DE','EU','GB'],tag:'farmland · forests · winding river',desc:'Rolling German farmland, forests and half-timbered towns on the old Cold War invasion route. A winding river with four bridges.',
     slots:[[400,1100],[2800,1100],[500,300],[2700,1900],[500,1900],[2700,300],[1200,1980],[2000,220]],
     cities:[[1150,700,120,'europe'],[2050,1500,120,'europe'],[1600,1100,95,'europe'],[700,1500,70,'europe'],[2500,700,70,'europe']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-200;x<=MAPW+200;x+=40)pts.push([x,1100+260*Math.sin(x*.0024+ph)+50*Math.sin(x*.009)]);
@@ -198,7 +198,7 @@ const MAPS={
   ural:{name:'Ural Ridge',min:6,max:8,sym:'point',theme:'snow',rough:1.3,home:['RU'],tag:'mountain wall · three passes · east vs west',desc:'The Urals split the map from north to south: one pass in the middle split by a fortress hill and a narrow track at each end. Four bases a side.',
     slots:[[420,830],[2780,1370],[420,1370],[2780,830],[420,330],[2780,1870],[420,1870],[2780,330]],cities:mirrorList([[1000,1100,90,'russia']],'p'),
     water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[1600,380],[1560,640],[1610,880]],40,24,2,ph),hw:()=>115});M.lakes.push({x:1050,y:560,r:70,rx:1.5,wob:a=>.1*Math.sin(a*3)});M.peaks.push({x:900,y:1700,r:70,rx:1.5,rot:.4});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:70,rx:1.2,rot:0});}},
-  aegean:{name:'Aegean Islands',min:6,max:8,sym:'point',theme:'green',home:['TR','EU','GB'],tag:'sea · island bridges · navy',desc:'Two coasts facing each other across the Aegean. Two islands carry bridges across the sea; the rock in the middle belongs to whoever rules the waves.',
+  aegean:{name:'Aegean Islands',min:6,max:8,sym:'point',theme:'green',home:['TR','EU','GB','FR'],tag:'sea · island bridges · navy',desc:'Two coasts facing each other across the Aegean. Two islands carry bridges across the sea; the rock in the middle belongs to whoever rules the waves.',
     slots:[[420,830],[2780,1370],[420,1370],[2780,830],[420,330],[2780,1870],[420,1870],[2780,330]],
     water(M,R){const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+60*Math.sin((y-1100)*.003),y]);M.rivers.push({pts,hw:()=>460});
       M.islands.push({x:1600,y:560,r:150,rx:1.25,rot:0,wob:a=>.08*Math.sin(a*3)});M.bridgeAng.push([1290,560,1,0],[1910,560,-1,0]);
@@ -211,7 +211,7 @@ const MAPS={
     slots:ring8(880),
     oilAt:[[1600,1100],...ring8(250)],
     water(M,R){for(const a of [-.39,-1.18])M.peaks.push({x:1600+Math.cos(a)*640,y:1100+Math.sin(a)*640,r:55,rx:1.5,rot:a+1.57});M.lakes.push({x:2150,y:1100,r:40,rx:1.3,wob:a=>.1*Math.cos(2*a)});mirrorMap(M,'x');mirrorMap(M,'y');}},
-  rhine:{name:'Rhine Front',min:8,max:8,sym:'point',theme:'green',home:['EU','GB'],tag:'river · four bridges · forest hills · four a side',desc:'Four armies on each bank of the Rhine: four bridges, river towns, and forested hills that hide flanking moves.',
+  rhine:{name:'Rhine Front',min:8,max:8,sym:'point',theme:'green',home:['DE','FR','EU','GB'],tag:'river · four bridges · forest hills · four a side',desc:'Four armies on each bank of the Rhine: four bridges, river towns, and forested hills that hide flanking moves.',
     slots:[[420,830],[2780,1370],[420,1370],[2780,830],[420,330],[2780,1870],[420,1870],[2780,330]],cities:mirrorList([[1300,560,90,'europe'],[1250,1650,80,'europe']],'p'),
     water(M,R){M.peaks.push({x:900,y:1100,r:70,rx:1.6,rot:1.5},{x:1050,y:300,r:60,rx:1.5,rot:.2});mirrorMap(M,'p');
       const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+120*Math.sin((y-1100)*.0032),y]);M.rivers.push({pts,hw:()=>78});M.bridgeAt=[[0,.2],[0,.4],[0,.6],[0,.8]];M.bridgeFrac=true;}},

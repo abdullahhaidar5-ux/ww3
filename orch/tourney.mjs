@@ -144,7 +144,7 @@ const PAGE = () => {
   };
   const sample = () => {
     const S = TR.st;
-    G.teams.forEach((T, i) => { const F = forceOf(T); const d = S.side[i]; d.peakU = Math.max(d.peakU, F.un); d.peakUV = Math.max(d.peakUV, F.uv); });
+    G.teams.forEach((T, i) => { const d = S.side[i]; if (!d) return; const F = forceOf(T); d.peakU = Math.max(d.peakU, F.un); d.peakUV = Math.max(d.peakUV, F.uv); });
     if (G.t >= S.nextT) { S.nextT += 60; S.trace.push([Math.round(G.t / 60), ...G.teams.map(T => { const F = forceOf(T); return [F.un, F.bn, T.credits | 0, T.built]; })]); }
   };
   TR.chunk = (steps) => {
