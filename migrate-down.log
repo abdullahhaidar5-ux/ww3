@@ -1,0 +1,10 @@
+game servers configured but down (http://127.0.0.1:9)
+peak memory (node + browser, summed RSS): 1303 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MIGRATE FAIL: clientB page error: Unexpected token '<<' (121s)
+  ✗ clientA page error: Unexpected token '<<'
+  ✗ host page error: Unexpected token '<<'
+  ✗ page.waitForFunction: Timeout 120000ms exceeded.
