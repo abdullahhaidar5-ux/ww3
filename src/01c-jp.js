@@ -21,7 +21,7 @@ TRN.JP=['Landing Craft Air Cushion','CH-47J Chinook'];
 SUBN.JP='Soryu-class Submarine';
 MDN.JP='Type 03 Chu-SAM Battery';
 COASTN.JP='Type 12 Coastal Missile Battery';
-BAL.JP={'_':0.9};
+BAL.JP={'_':0.85};
 // nine upgrades in the Japanese idiom, cloned from the shared tier layout (same price/time per tier as every nation)
 const names=['Ranger Training','Special Operations Course','Type 10 Fire Control','Hybrid Suspension Armour','F-35B/F-2 Avionics','Apache Upgrades','Keiretsu Contracts','FPS-5 Radar Network','Aegis Combat System'];
 UPGL.JP=[];
