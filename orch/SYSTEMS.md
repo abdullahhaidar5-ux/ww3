@@ -1,0 +1,58 @@
+# SYSTEMS — one system per idea (read before building anything)
+
+Abdullah 2026-11-05 19:34: "Let's get this all done intelligently. Suggest and implement any gaps. For example two militias. Fix that."
+Many helpers build in parallel, so the same idea keeps getting built twice. **Before adding a feature, find its row here and EXTEND
+the owner. Never add a second system for the same idea.** If your feature has no row, add one (same commit). If you find two
+systems doing one job, merge them into the owner and note it here.
+
+## Battle layer (one Conquest battle)
+
+| Idea | ONE owner (where it lives) | Everything below must extend it, not copy it |
+|---|---|---|
+| **Locals** — town loyalty, unrest, revolts, local armed groups | conquest.md + hearts-minds.md (`src/08c-towns.js`, town code in 03-sim) | Town militia recruit (hearts-minds), revolt rebels (conquest), **Fund Militia** power (tunnels-militia.md), neutral factions / militias (infra-militias), local militias + angry towns arm rebels (politics-intel), insurgency + proxy wars (grand6). **One "local armed group" entity** with an `allegiance` (owner / rebels / funded-by-team / neutral), one regional roster + looks, one AI. |
+| **Cover** | `coverAt()` / `tactic()` in `src/03b-tactics.js` | Foxholes/sandbags/trenches (tactics), rubble (rubble.md), collapsing buildings (battlefield), wrecks as cover (battlefeel), garrisons |
+| **Line of sight blockers** | fog/vision code (06-view + sim vision) | Smoke (`G.smokes`), wind-blown smoke grid (battlefeel), wildfire smoke, night/weather sight multipliers (daynight.md, weather-naval.md) |
+| **Conditions** (time of day, weather, season, wind) | daynight.md + weather-naval.md (`G.wx`) | Seasons (real-maps), changing weather / day-night in a match (atmosphere), grand-map seasons (grand4 sets the battle's conditions) |
+| **"Knocked out for a while" status** | one status with `{src, until}` on buildings/units | EMP (modern-war), cyber hack (modern-war), spy sabotage (politics-intel), blackout from power loss (infra-militias / grand2), vehicle crits (tactics) — one icon style, one minimap marker |
+| **Deception** | EW radar spoofs (`spoofs` in 03-sim, `G.spoofs`) | Decoy units (politics-intel), fog-of-war rumours on the grand map (grand6) |
+| **Jamming** | existing EW code (grep `jam`, ew in 03-sim/03b) | GPS jamming (modern-war), radio silence / intercepts |
+| **World opinion & sanctions** | sanctions.md (Sanctions power + smuggling already exist) | World opinion meter (politics-intel) drives sanctions and aid; in a grand campaign the meter lives on the **grand map** (grand2/grand4) and the battle only reports incidents to it |
+| **Supply, ammo, convoys, roads** | supply-towns.md + logistics.md (`src/03c-logistics.js`) | Trade caravans (economy1), fuel trucks, loot depots, embargo chokepoints, refugees on roads (politics-intel) |
+| **Battle money** | town tax (conquest) + oil/power (infra-militias) | Mines/factories/ports/farms/town growth (economy1). Empire money (bonds, upkeep, oil market, crises, manpower, fuel stock) is **grand map only** (grand2) |
+| **Destruction** | rubble.md (destructible cities) | Collapsing buildings stages (battlefield), dams/floods (battlefield), wildfires (battlefeel), scorched earth (grand2) |
+| **Doctrines / perks** | doctrines.md (General Doctrines) | Doctrine trees with commander points (command-teams). Grand research tree (grand4) unlocks units/tiers, it must not duplicate doctrine perks |
+| **Ceasefire** | in a standalone battle: command-teams | In a grand campaign, truces are made on the grand map (grand4 diplomacy); the battle shows them, doesn't create its own |
+| **Commanders** | heroes.md (hero squads + commander radio) | Grand-map generals (grand3) enter battles as the hero/commander unit |
+| **AI personalities** | coop-ai.md | Named AI generals, nemesis-style memory if ever added |
+| **Spectating** | replay-spec.md (replays + spectators) | Spectate live (modern-war), campaign battle spectators (grand7) |
+| **News / announcements** | one news feed component (create in modern-war: battle ticker) | Grand-map turn news (grand5), event pop-ups (grand4) use the same feed/card style |
+| **Encyclopedia / unit guide** | identity.md (unit guide) | Encyclopedia (fun-extras) extends the unit guide |
+| **Highlights, photo mode, voice commands** | extras.md | Kill-cam highlights, photo album (fun-extras) |
+| **Save / host-migration state** | `src/07b-ckpt.js` (ckEncode/ckRestore) | **Every** new sim state must be added here (saves AND host migration depend on it); savegame uses it, never a second serializer |
+| **Keys** | controls2.md / Controls rules in CLAUDE.md | Every new hotkey goes in the one key table; no reuse of W A S D, F, G, X, Alt/Ctrl/Shift combos already taken |
+| **Production** | normal build queues | Smart auto-build (battlefeel), battle groups (command-teams) |
+
+## Grand map layer (campaign)
+
+| Idea | ONE owner |
+|---|---|
+| Provinces, armies, turns, Fight-it / auto-resolve, save | grand1 (`orch/reports/grand-strategy.md`) |
+| Empire economy (all of it) + province buildings | grand2 |
+| Generals, front lines, map strikes, fleets & sea zones | grand3 |
+| Events, minor nations, seasons, diplomacy, research, cabinet, missions | grand4 |
+| 3D map, living map, turn news (uses the shared news feed) | grand5 |
+| Fog, spies, proxy wars + insurgency (use **Locals**), war weariness, coups, succession, scenarios, disasters, deterrence, volunteers, refugee flows | grand6 |
+| Friends multiplayer | grand7 |
+
+**Bridge rule:** a "Fight it" battle is a normal Conquest battle whose start state (forces, towns, buildings, money, conditions,
+locals' loyalty) comes from the province, and whose results go back. Battle systems are never re-implemented on the grand map, and
+empire systems never inside a battle.
+
+## Known gaps (being fixed by the integration helpers)
+1. Duplicates above merged in code (Locals first).
+2. One HUD: a single top bar, one alerts feed, toggleable map/minimap overlays (economy, supply, unrest, opinion, sonar, mines…).
+3. Teaching: tutorial + tooltips + encyclopedia entries for every new system; a grand-campaign tutorial.
+4. Sound for new systems (EMP, cyber glitch, sonar ping, fire, flood, medics, convoys) — free CC0/CC-BY, credited.
+5. Saves/host migration cover every new state (savetest in the gate).
+6. Key conflicts checked by the controls gate.
+7. Per-system performance budget kept inside smooth-pc / server headroom.
