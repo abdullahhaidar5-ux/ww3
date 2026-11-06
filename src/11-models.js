@@ -17,14 +17,14 @@ const RMOD={t90:{m:'m_t90',fit:'z',size:40},hilux:{m:'m_hilux',fit:'z',size:30,e
   oplot:{m:'m_oplot',fit:'z',size:40},t72:{m:'m_t72',fit:'z',size:40},t62:{m:'m_t62',fit:'z',size:39},t55:{m:'m_t55',fit:'z',size:37},leo2:{m:'m_leo2',fit:'z',size:41},
   ural:{m:'m_ural',fit:'z',size:36},m35:{m:'m_m35',fit:'z',size:36},humvee:{m:'m_humvee',fit:'z',size:27},uh60:{m:'m_uh60',fit:'z',size:70},mi8:{m:'m_mi8',fit:'z',size:76}};
 const RMAP={tank:{RU:'t90',KP:'t90',IR:'t90',UA:'t90',CN:'t90',IN:'t90',EG:'t90',SY:'t90',PK:'t90',CU:'t90',RS:'hilux',DW:'hilux'},dozer:{},
-  heli:{US:'apache',IL:'apache',EU:'apache',SA:'apache',AE:'apache',EG:'apache',IQ:'mi28',SY:'mi24',GB:'apache',AU:'apache',CA:'uh60',KR:'apache',TR:'apache',IN:'apache',PK:'apache',RU:'mi24',KP:'mi24',IR:'mi24',CN:'mi24',UA:'mi24',CU:'mi24',RS:'mi24',DW:'mi24'},
-  jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',IQ:'f16',GB:'typhoon',AU:'f18',CA:'f18',SY:'mig29',CU:'mig29',RS:'mig29',DW:'mig29'}};
-for(const f of ['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW','GB','AU','CA'])RMAP.dozer[f]='jd550';
+  heli:{US:'apache',IL:'apache',EU:'apache',FR:'apache',DE:'apache',SA:'apache',AE:'apache',EG:'apache',IQ:'mi28',SY:'mi24',GB:'apache',AU:'apache',CA:'uh60',KR:'apache',TR:'apache',IN:'apache',PK:'apache',RU:'mi24',KP:'mi24',IR:'mi24',CN:'mi24',UA:'mi24',CU:'mi24',RS:'mi24',DW:'mi24'},
+  jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',FR:'rafale',DE:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',IQ:'f16',GB:'typhoon',AU:'f18',CA:'f18',SY:'mig29',CU:'mig29',RS:'mig29',DW:'mig29'}};
+for(const f of ['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW','GB','AU','CA','PL','AZ','JO','KD','IT','GR','ES'])RMAP.dozer[f]='jd550';
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
 // and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
-const WESTVEH=['US','TR','IL','EU','SA','AE','KR','EG','IQ','GB','AU','CA'],EASTVEH=['RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY'];
-Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',GB:'kf51',AU:'abrams',CA:'kf51',IL:'merkava',EU:'kf51',TR:'kf51'});
+const WESTVEH=['US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES'],EASTVEH=['RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD'];
+Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',GB:'kf51',AU:'abrams',CA:'kf51',IL:'merkava',EU:'kf51',FR:'kf51',DE:'kf51',TR:'kf51'});
 // Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
 // Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
 // China keeps the T-90, South Korea the Abrams-like K1 stand-in)
@@ -45,7 +45,7 @@ RMAP.ship={};RMAP.boat={IR:'spb',RS:'spb',DW:'spb'};RMAP.fast={};for(const f in 
 Object.assign(RMOD,{subw:{m:'m_subw',fit:'z',size:84,dy:-2.6,tint:'#2f363b',tk:.82},sube:{m:'m_sube',fit:'z',size:80,dy:-2.4,tint:'#242b31',tk:.7},subm:{m:'m_subm',fit:'z',size:58,dy:-2,tint:'#303a38',tk:.95},cbat:{m:'m_cbat',fit:'z',size:40}});
 RMAP.sub={};for(const f of WESTVEH)RMAP.sub[f]='subw';for(const f of ['RU','KP','UA','CN','IN','CU','PK'])RMAP.sub[f]='sube';for(const f of ['IR','RS','DW'])RMAP.sub[f]='subm';
 RMAP.coast={};for(const f of [...WESTVEH,...EASTVEH])RMAP.coast[f]='cbat';
-for(const f of ['US','IL','TR','KR','SA','AE','EG','IQ','SY','GB','AU','CA'])RMAP.ship[f]='frw';RMAP.ship.EU='frg';
+for(const f of ['US','IL','TR','KR','SA','AE','EG','IQ','SY','GB','AU','CA','PL','AZ','JO','KD','IT','GR','ES'])RMAP.ship[f]='frw';RMAP.ship.EU='frg';
 for(const f of ['RU','CN','KP','UA','IN','PK','CU','IR','RS','DW'])RMAP.ship[f]='fre';
 // the nation's own truck model, if it has arrived (AA trucks and rocket launchers are built on it)
 // their paint textures are dark (woodland camo, weathering): brightened so the national paint reads like the other vehicles'
@@ -54,14 +54,14 @@ const TEXB={m_abrams:2,m_merkava:2,m_kf51:1.6,m_msta:2.2,m_ural:1.9,m_m35:2.2,m_
 const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 // Infantry: three realistic rigged soldiers (Western desert-camo marine, Eastern green-camo, Middle-Eastern/militia woodland
 // fatigues) shared by the 18 nations; national colour is a tint over the camo. 'soldier' is the old stand-in.
-const SOLV={US:'sol_w',EU:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
+const SOLV={US:'sol_w',EU:'sol_w',FR:'sol_w',DE:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
 const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:58},barracks:{m:'b_barr_me',size:54},factory:{m:'b_fact_me',size:62}};
 function isSol(k){return k==='soldier'||(typeof k==='string'&&k.startsWith('sol_'));}
 function solKey(f){return SOLV[f]||'sol_w';}
 function truckKey(f){const rk=RMAP.harv[f];return rk&&MODELS.proto[RMOD[rk].m]?RMOD[rk].m:'truck';}
 const MIL_TANK={RS:{m:'technical',fit:'z',size:29},DW:{m:'technical',fit:'z',size:29},IM:{m:'toontank',fit:'z',size:32}};
-for(const f of ['US','IL','EU','SA','AE','EG','IQ','KR','TR','CN','PK','IN','GB','AU','CA'])MIL_TANK[f]={m:'tankE',fit:'long',size:37};
+for(const f of ['US','IL','EU','FR','DE','SA','AE','EG','IQ','KR','TR','CN','PK','IN','GB','AU','CA','PL','JO','IT','GR','ES'])MIL_TANK[f]={m:'tankE',fit:'long',size:37};
 const PROPS={container:{fit:'x',size:28},containerG:{fit:'x',size:30},crate:{fit:'y',size:8},barrel:{fit:'y',size:8},sandbag:{fit:'x',size:16},watertower:{fit:'y',size:56},tent:{fit:'x',size:50},pallet:{fit:'x',size:10},fence:{fit:'x',size:24},missile:{fit:'y',size:26},sam:{fit:'y',size:24}};
 // The models are separate files next to the page (models/<key>.<hash>.glb.gz, listed in MODEL_FILES by orch/build.py).
 // A battle only waits for the models it can show: the shared ones (buildings, props, trees, infantry, generic vehicles)
@@ -199,7 +199,7 @@ const CAMOK={};function camoFreq(key){if(CAMOK[key]!==undefined)return;if(!['tan
 /* ---------- per-country looks: vehicle paint, camo blotches, uniform colour and national flag ---------- */
 const FLOOK={
   US:{veh:'#b8a47e',ca:'#7a6040',cb:'#4b4630',uni:'#a79a78',pat:1}, TR:{veh:'#5f6345',ca:'#4a3a26',cb:'#2a2c20',uni:'#5d6248',pat:1},
-  IL:{veh:'#8c8a7a',ca:'#6f6c60',cb:'#56544a',uni:'#6f6b4e',pat:3}, EU:{veh:'#55603f',ca:'#4b3d2a',cb:'#1e201b',uni:'#5c6447',pat:4},
+  IL:{veh:'#8c8a7a',ca:'#6f6c60',cb:'#56544a',uni:'#6f6b4e',pat:3}, EU:{veh:'#55603f',ca:'#4b3d2a',cb:'#1e201b',uni:'#5c6447',pat:4},FR:{veh:'#55603f',ca:'#4b3d2a',cb:'#1e201b',uni:'#5c6447',pat:4},DE:{veh:'#55603f',ca:'#4b3d2a',cb:'#1e201b',uni:'#5c6447',pat:4},
   UA:{veh:'#5a6340',ca:'#3e3a2a',cb:'#2c3024',uni:'#6a6b4c',pat:1}, RU:{veh:'#5d6a3e',ca:'#2b2b25',cb:'#a89a6e',uni:'#65684a',pat:0},
   IR:{veh:'#b5a072',ca:'#8a7651',cb:'#5c5240',uni:'#6f7a4a',pat:0}, SA:{veh:'#c2ac80',ca:'#a18a62',cb:'#7d6a4b',uni:'#b19c74',pat:3},
   AE:{veh:'#c6b088',ca:'#a58e66',cb:'#83704f',uni:'#b6a27c',pat:0}, PK:{veh:'#6b6a48',ca:'#8b7a55',cb:'#3d3a2a',uni:'#77714f',pat:0},
@@ -212,7 +212,7 @@ const FLOOK={
 // Each nation's own camouflage (pattern 0 blotch, 1 digital, 2 tiger stripe, 3 plain paint, 4 flecktarn dots,
 // 5 splinter, 6 chocolate-chip) at its own scale with a third colour, and its own building trim and wall finish
 // (wall 1 glazed-tile band, 2 concrete panels, 3 painted stripe, 4 stone courses, 5 slogan band).
-const CAMOX={US:{p:1,s:1.15,c:'#d6c9a4',t:'#3e5a8a',w:3},TR:{p:1,s:.85,c:'#6f6a4a',t:'#c8102e',w:4},IL:{p:3,s:1,c:'#8f8c7c',t:'#1f5fbf',w:4},EU:{p:4,s:1,c:'#2b3a22',t:'#2c4fa0',w:3},
+const CAMOX={US:{p:1,s:1.15,c:'#d6c9a4',t:'#3e5a8a',w:3},TR:{p:1,s:.85,c:'#6f6a4a',t:'#c8102e',w:4},IL:{p:3,s:1,c:'#8f8c7c',t:'#1f5fbf',w:4},EU:{p:4,s:1,c:'#2b3a22',t:'#2c4fa0',w:3},FR:{p:4,s:1,c:'#2b3a22',t:'#2c4fa0',w:3},DE:{p:4,s:1,c:'#2b3a22',t:'#2c4fa0',w:3},
   UA:{p:1,s:1.35,c:'#7a7a52',t:'#e1b80d',w:3},RU:{p:0,s:.7,c:'#8a8f6a',t:'#b22222',w:2},IR:{p:0,s:1.2,c:'#c4b48c',t:'#1f8a8a',w:1},SA:{p:6,s:1,c:'#e3d6b4',t:'#0f6b3a',w:4},
   AE:{p:3,s:1,c:'#cbb991',t:'#00843d',w:4},PK:{p:0,s:.95,c:'#5a6a3c',t:'#0b6b2b',w:4},IN:{p:5,s:1,c:'#7d7653',t:'#e07b14',w:4},CN:{p:1,s:1.6,c:'#46553a',t:'#c8102e',w:2},
   KP:{p:3,s:1,c:'#4c5434',t:'#c8102e',w:5},KR:{p:1,s:1.1,c:'#3c4530',t:'#1f3f9a',w:2},GB:{p:0,s:1,c:'#8a7a52',t:'#c8102e',w:3},AU:{p:0,s:1.1,c:'#b8a478',t:'#00843d',w:3},CA:{p:1,s:1,c:'#4f5a3a',t:'#d52b1e',w:3},EG:{p:6,s:1.1,c:'#ddd0aa',t:'#b8862b',w:4},IQ:{p:6,s:1.05,c:'#d6c79c',t:'#2f6b3a',w:4},SY:{p:0,s:1,c:'#b9aa80',t:'#a8352f',w:3},CU:{p:0,s:1.5,c:'#4a5a34',t:'#1e4fa0',w:3},
@@ -229,7 +229,7 @@ const AIRX={US:{b:'#7f878d',p:3,h:{b:'#3e4335',p:3}},RU:{b:'#8f9ead',p:0,a:'#6c7
   IL:{b:'#a99a7b',p:0,a:'#7e6a4c',m:'#6b6d52',c:'#bba985',s:1,h:{b:'#5f6050',p:3}},
   KP:{b:'#596040',p:3,h:{b:'#4f5639',p:3}},CU:{b:'#666a4c',p:0,a:'#5a4c36',m:'#454a33',c:'#787a5a',s:1,h:{b:'#565c3e',p:3}},
   CN:{b:'#7c8a97',p:3,h:{b:'#59624a',p:3}},IN:{b:'#878d91',p:3,h:{b:'#575d47',p:3}},PK:{b:'#8a9095',p:3,h:{b:'#5b6045',p:3}},
-  TR:{b:'#838a8e',p:3,h:{b:'#575d47',p:3}},EU:{b:'#80878b',p:3,h:{b:'#4b5143',p:3}},KR:{b:'#858b8f',p:3,h:{b:'#4f5541',p:3}},
+  TR:{b:'#838a8e',p:3,h:{b:'#575d47',p:3}},EU:{b:'#80878b',p:3,h:{b:'#4b5143',p:3}},FR:{b:'#80878b',p:3,h:{b:'#4b5143',p:3}},DE:{b:'#80878b',p:3,h:{b:'#4b5143',p:3}},KR:{b:'#858b8f',p:3,h:{b:'#4f5541',p:3}},
   SA:{b:'#8b9194',p:3,h:{b:'#b8a37e',p:3}},AE:{b:'#b7a17a',p:0,a:'#8f7a57',m:'#a08a64',c:'#c6b38f',s:1.1,h:{b:'#b8a37e',p:3}},GB:{b:'#7d8388',p:3,h:{b:'#4f5541',p:3}},AU:{b:'#868c90',p:3,h:{b:'#4f5541',p:3}},CA:{b:'#7f858a',p:3,h:{b:'#4b5143',p:3}},EG:{b:'#8d9396',p:3,h:{b:'#b09a74',p:3}},IQ:{b:'#9a9a8c',p:3,h:{b:'#b4a27a',p:3}},SY:{b:'#8f8c80',p:3,h:{b:'#a89874',p:3}}};
 const AIRKEY=/^(jet|heli)$|^m_(su35|f15|f16|f18|j10|mig29|rafale|typhoon|ah1|apache|ka52|mi24|mi28|mi8|uh60)$/,HELIKEY=/^heli$|^m_(ah1|apache|ka52|mi24|mi28|mi8|uh60)$/;
 function airScheme(key,team){if(!team||!team.fac||!AIRKEY.test(key))return null;const X=AIRX[team.fac];if(!X)return null;return HELIKEY.test(key)?X.h:X;}
@@ -266,6 +266,8 @@ function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=doc
     case 'US':for(let i=0;i<13;i++)rect(i%2?'#ffffff':'#b22234',0,i*H/13,W,H/13+1);rect('#3c3b6e',0,0,W*.42,H*7/13);x.fillStyle='#fff';for(let r=0;r<5;r++)for(let q=0;q<6;q++)circ(5+q*8.2,4.5+r*7.4,1.3,'#fff');break;
     case 'TR':rect('#e30a17',0,0,W,H);crescent(44,36,19,'#fff','#e30a17',.25);star(70,36,9,'#fff');break;
     case 'IL':rect('#fff',0,0,W,H);rect('#0038b8',0,8,W,10);rect('#0038b8',0,H-18,W,10);x.strokeStyle='#0038b8';x.lineWidth=3;for(const f of [1,-1]){x.beginPath();x.moveTo(60,36-14*f);x.lineTo(60+12,36+7*f);x.lineTo(60-12,36+7*f);x.closePath();x.stroke();}break;
+    case 'FR':rect('#0055a4',0,0,W/3,H);rect('#ffffff',W/3,0,W/3,H);rect('#ef4135',2*W/3,0,W/3,H);break;
+    case 'DE':rect('#000000',0,0,W,H/3);rect('#dd0000',0,H/3,W,H/3);rect('#ffce00',0,2*H/3,W,H/3);break;
     case 'EU':rect('#003399',0,0,W,H);for(let i=0;i<12;i++){const a=i/12*6.283;star(60+Math.cos(a)*22,36+Math.sin(a)*22,4.2,'#ffcc00');}break;
     case 'UA':hs(['#0057b7','#ffd700']);break;
     case 'RU':hs(['#ffffff','#0039a6','#d52b1e']);break;
@@ -288,7 +290,7 @@ function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=doc
     case 'RS':drawEmblem(x,'RS',true);break;
     case 'DW':drawEmblem(x,'DW',true);break;
     case 'IM':rect('#4d5a3a',0,0,W,H);x.fillStyle='#e8e6dc';x.beginPath();x.moveTo(30,54);x.lineTo(55,20);x.lineTo(66,36);x.lineTo(76,26);x.lineTo(92,54);x.closePath();x.fill();break;
-    default:rect('#888',0,0,W,H);}
+    default:if(NATX_FLAG[fac])NATX_FLAG[fac]({x,rect,hs,vs,star,circ,crescent,W,H});else rect('#888',0,0,W,H);}
   x.fillStyle='rgba(0,0,0,.08)';for(let i=0;i<W;i+=6)x.fillRect(i,0,3,H);
   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=4;return FLAGTEX[fac]=t;}
 // A soft sky/ground environment for reflections on painted metal (vehicles, aircraft, ships) and glass/steel on
@@ -753,7 +755,7 @@ function decalUpdate(){for(const k in DECAL.sets){const S=DECAL.sets[k];let n=0;
     if(!S.im)continue;const im=S.im;let i=0;
     for(const m of S.list){let q=m,v=true;while(q.parent){if(!q.visible){v=false;break;}q=q.parent;}if(!v||q!==SCN)continue;im.setMatrixAt(i,m.matrixWorld);if(S.col&&m.userData.dc)im.setColorAt(i,m.userData.dc);i++;}
     im.count=i;im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;}}
-const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',IQ:'#5f5f3e',GB:'#5a5a3e',AU:'#6a6246',CA:'#434d33',SY:'#5a5a3c',CU:'#2e3a2c'};   // hero squad uniform colours
+const CHAMP_TINT={US:'#5b5442',RU:'#454d33',IR:'#3a3b2b',RS:'#4b4a38',DW:'#6a5a3c',KP:'#485836',CN:'#3d5033',IL:'#4f5240',TR:'#4a4636',EU:'#3f4636',FR:'#3f4636',DE:'#3f4636',UA:'#4a5030',SA:'#6a5d44',AE:'#6a5d44',PK:'#43502f',IN:'#444a35',KR:'#41493a',EG:'#6a5f42',IQ:'#5f5f3e',GB:'#5a5a3e',AU:'#6a6246',CA:'#434d33',SY:'#5a5a3c',CU:'#2e3a2c'};   // hero squad uniform colours
 function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')return droneModel(e);const T=G.teams[e.team];let c=MCFG[e.kind];if(e.kind==='champ')c=Object.assign({},c,{tint:CHAMP_TINT[T.fac]||c.tint});if(e.kind==='tank'&&MIL_TANK[T.fac])c=MIL_TANK[T.fac];{const rk=e.kind==='aa'?(/Technical/.test(e.s.name||'')?'zu':'ozelot'):RMAP[e.kind]&&RMAP[e.kind][T.fac];if(rk&&MODELS.proto[RMOD[rk].m])c=Object.assign({},c,RMOD[rk],{extra:RMOD[rk].extra||(e.kind==='dozer'?null:c&&c.extra)});}
   if(e.kind==='aa'&&MODELS.proto.sam&&MODELS.proto[truckKey(T.fac)])c={m:truckKey(T.fac),fit:'z',size:34,extra:'samtruck'};
   if(e.kind==='arty'&&!(e.s&&e.s.rocket)&&RMAP.arty[T.fac]&&MODELS.proto[RMOD[RMAP.arty[T.fac]].m])c=RMOD[RMAP.arty[T.fac]];
@@ -850,7 +852,7 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
     if(MEFAC.has(T.fac)){const K=meKit(B,e.kind.length*97+s|0),h=s/2;if(e.kind==='turret'||e.kind==='sam'){const r=h+3;K.hesco(-r,-r,r,-r,4.5,3.2);K.hesco(r,-r,r,r,4.5,3.2);K.hesco(-r,-r,-r,r,4.5,3.2);K.hesco(-r,r,-5,r,4.5,3.2);K.hesco(5,r,r,r,4.5,3.2);}
       else if(s>40){K.twall(-h-3,-h+4,-h-3,-4,8);K.twall(-h+6,-h-3,h*.2,-h-3,8);K.bags(h+2,h-14,h+2,h+2,3);K.bags(h-12,h+2,h+2,h+2,3);}}
     const m=mesh(B.geo());o.add(m);P.main=m;}
-  const RT={US:'#bdb49c',EU:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',GB:'#b3ae98',AU:'#c3b48c',CA:'#a9ad96',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];
+  const RT={...NATX_RT,US:'#bdb49c',EU:'#b5b2a6',FR:'#b5b2a6',DE:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',GB:'#b3ae98',AU:'#c3b48c',CA:'#a9ad96',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];
   for(const q of cfg.list){const rc=q.col?{color:q.col}:(RT?{color:RT}:null);const m=instModel(q.m,rc,q.fit,q.size,q.ys,q.col?q.k:(RT?.42:undefined));if(!m)continue;m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
     if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);o.add(m);}}
   if(e.kind==='coast'){// emplacement: sandbag walls round the launcher and a small radar / command truck beside the pad (visual only)
@@ -1013,17 +1015,36 @@ function jetPlumeMat(){if(jetPlumeMat.m)return jetPlumeMat.m;const cv=document.c
    decals and a small kit (flags on poles, sandbags, ERA blocks, cope cage, red stars, antennas). The mesh geometry is
    built once per model+nation and shared; textures come from one shared atlas. On Low graphics (phones) ground vehicles
    skip the kit entirely; aircraft/ships keep only the cheap decals. Visuals only - nothing here touches the simulation. */
-const KFAC=['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW','GB','AU','CA'];
-const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=10;
+const KFAC=['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW','GB','AU','CA'];
+// nations-a1: Poland, Azerbaijan, Jordan, Kurdistan Region, Italy, Greece, Spain - looks on the shared models (visual only)
+const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
+{const L={PL:{tk:'kf51',he:'apache',je:'f16',sol:'sol_w',fl:{veh:'#6a6e4a',ca:'#8a7a52',cb:'#3a4030',uni:'#6f7350',pat:1},cx:{p:1,s:1,c:'#6a7048',t:'#dc143c',w:3},ax:{b:'#7d8388',p:3,h:{b:'#4f5541',p:3}},ch:'#4f5a3a',rt:'#b3ae98'},
+ AZ:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#8a8460',ca:'#6a6040',cb:'#3f3a2a',uni:'#7a7650',pat:0},cx:{p:0,s:1,c:'#8f8a62',t:'#00b5e2',w:3},ax:{b:'#8a9095',p:3,h:{b:'#5b6045',p:3}},ch:'#5f5f3e',rt:'#c3b48c',nv:'slav'},
+ JO:{tk:'leo2',he:'uh60',je:'f16',sol:'sol_w',fl:{veh:'#b0996c',ca:'#8e7a52',cb:'#5c5036',uni:'#a89468',pat:3},cx:{p:3,s:1,c:'#c4b080',t:'#007a3d',w:3},ax:{b:'#8d9296',p:3,h:{b:'#5b6045',p:3}},ch:'#6a6040',rt:'#d0bb90'},
+ KD:{tk:'t72',he:'uh60',je:'mig29',sol:'sol_w',fl:{veh:'#7c7a56',ca:'#5e5a3c',cb:'#3a3826',uni:'#6e6c48',pat:1},cx:{p:1,s:1,c:'#7a7852',t:'#ed1c24',w:3},ax:{b:'#8a9095',p:3,h:{b:'#5b6045',p:3}},ch:'#5a5a3c',rt:'#c3ae86',nv:'slav'},
+ IT:{tk:'leo2',he:'ah1',je:'typhoon',sol:'sol_w',fl:{veh:'#6c6f4a',ca:'#8a7a52',cb:'#3f4630',uni:'#6a6e4c',pat:1},cx:{p:1,s:1,c:'#6c7048',t:'#009246',w:3},ax:{b:'#80878b',p:3,h:{b:'#4b5143',p:3}},ch:'#4b5a3a',rt:'#b5b2a6'},
+ GR:{tk:'leo2',he:'apache',je:'f16',sol:'sol_w',fl:{veh:'#6f7048',ca:'#7a6a44',cb:'#3a3c2a',uni:'#707250',pat:1},cx:{p:1,s:1,c:'#707448',t:'#0d5eaf',w:3},ax:{b:'#7f858a',p:3,h:{b:'#4b5143',p:3}},ch:'#4a5638',rt:'#bdb49c'},
+ ES:{tk:'leo2',he:'apache',je:'typhoon',sol:'sol_w',fl:{veh:'#74724c',ca:'#8a7a52',cb:'#3f3c2a',uni:'#74724e',pat:1},cx:{p:1,s:1,c:'#767450',t:'#c60b1e',w:3},ax:{b:'#80878b',p:3,h:{b:'#4b5143',p:3}},ch:'#555a3a',rt:'#b8b09a'}};
+ for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;if(q.nv)NATX_NAVY[k]=q.nv;KFAC.push(k);}
+ NATX_FLAG.PL=c=>c.hs(['#ffffff','#dc143c']);
+ NATX_FLAG.AZ=c=>{c.hs(['#00b5e2','#ef3340','#509e2f']);c.crescent(54,36,10,'#fff','#ef3340',.3);c.star(70,36,5,'#fff',8);};
+ NATX_FLAG.JO=c=>{c.hs(['#000000','#ffffff','#007a3d']);const x=c.x;x.fillStyle='#ce1126';x.beginPath();x.moveTo(0,0);x.lineTo(50,36);x.lineTo(0,c.H);x.closePath();x.fill();c.star(16,36,6,'#fff',7);};
+ NATX_FLAG.KD=c=>{c.hs(['#ed1c24','#ffffff','#278e43']);c.circ(60,36,9,'#fbd44a');};
+ NATX_FLAG.IT=c=>c.vs(['#009246','#ffffff','#ce2b37']);
+ NATX_FLAG.GR=c=>{for(let i=0;i<9;i++)c.rect(i%2?'#ffffff':'#0d5eaf',0,i*c.H/9,c.W,c.H/9+1);c.rect('#0d5eaf',0,0,45,40);c.rect('#ffffff',18,0,9,40);c.rect('#ffffff',0,16,45,8);};
+ NATX_FLAG.ES=c=>{c.rect('#c60b1e',0,0,c.W,c.H);c.rect('#ffc400',0,c.H/4,c.W,c.H/2);};}
+
+const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=24;
 // extra atlas cells: 48-57 Persian digits (p:0..9), 58-67 Arabic-Indic digits (a:0..9), 68+ painted stencils (s:name)
 const KSTEN={shahed:68,qasef:69,ababil:70,kp:71,ru:72};
-function kitCellIdx(n){if(n==='star')return 36;if(n==='white')return 37;const t=n[0],v=n.slice(2);if(t==='f')return KFAC.indexOf(v);if(t==='r')return 18+KFAC.indexOf(v);if(t==='p')return 48+(+v);if(t==='a')return 58+(+v);if(t==='s')return KSTEN[v]||37;return 38+(+v);}
+function kfCell(i){return i<32?i:120+i-32;}function krCell(i){return i<32?80+i:152+i-32;}
+function kitCellIdx(n){if(n==='star')return 36;if(n==='white')return 37;const t=n[0],v=n.slice(2);if(t==='f')return kfCell(KFAC.indexOf(v));if(t==='r')return krCell(KFAC.indexOf(v));if(t==='p')return 48+(+v);if(t==='a')return 58+(+v);if(t==='s')return KSTEN[v]||37;return 38+(+v);}
 function kitUV(n,x0=0,y0=0,x1=1,y1=1){const i=kitCellIdx(n),cx=i%KCOLS,cy=(i/KCOLS)|0,W=KCOLS*KCW,H=KROWS*KCH;
   return {u0:(cx*KCW+x0*KCW)/W,u1:(cx*KCW+x1*KCW)/W,vt:1-(cy*KCH+y0*KCH)/H,vb:1-(cy*KCH+y1*KCH)/H};}
 function kitMat(){if(KIT.mat)return KIT.mat;const c=document.createElement('canvas');c.width=KCOLS*KCW;c.height=KROWS*KCH;const x=c.getContext('2d');
-  KFAC.forEach((f,i)=>{let img=null;try{img=flagTex(f).image;}catch(e){}const cx=(i%KCOLS)*KCW,cy=((i/KCOLS)|0)*KCH;
+  KFAC.forEach((f,i)=>{let img=null;try{img=flagTex(f).image;}catch(e){}const fi=kfCell(i),cx=(fi%KCOLS)*KCW,cy=((fi/KCOLS)|0)*KCH;
     if(img){x.drawImage(img,cx+4,cy+4,KCW-8,KCH-8);x.strokeStyle='rgba(20,20,20,.6)';x.lineWidth=2;x.strokeRect(cx+4,cy+4,KCW-8,KCH-8);}
-    const j=18+i,rx=(j%KCOLS)*KCW,ry=((j/KCOLS)|0)*KCH;x.save();x.beginPath();x.arc(rx+KCW/2,ry+KCH/2,28,0,7);x.clip();if(img)x.drawImage(img,rx+KCW/2-46,ry+KCH/2-28,92,56);x.restore();
+    const j=krCell(i),rx=(j%KCOLS)*KCW,ry=((j/KCOLS)|0)*KCH;x.save();x.beginPath();x.arc(rx+KCW/2,ry+KCH/2,28,0,7);x.clip();if(img)x.drawImage(img,rx+KCW/2-46,ry+KCH/2-28,92,56);x.restore();
     x.strokeStyle='rgba(235,235,225,.9)';x.lineWidth=3;x.beginPath();x.arc(rx+KCW/2,ry+KCH/2,28,0,7);x.stroke();});
   {const sx=(36%KCOLS)*KCW+KCW/2,sy=((36/KCOLS)|0)*KCH+KCH/2;x.fillStyle='#c8102e';x.strokeStyle='#e8e4da';x.lineWidth=2;x.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?12:29;x.lineTo(sx+Math.cos(a)*r,sy+Math.sin(a)*r*1.0);}x.closePath();x.fill();x.stroke();}
   {const wx=(37%KCOLS)*KCW,wy=((37/KCOLS)|0)*KCH;x.fillStyle='#fff';x.fillRect(wx,wy,KCW,KCH);}
@@ -1139,7 +1160,7 @@ function kitDec(P,face,sg,a0,b0,w0,h0,cell,sub,o){o=o||{};const fa=o.fa||.8,fb=o
     return {kind:'surface',face,sg,a0,b0,w,h,cell,sub,c,n,up,fa,fb,cap:Math.max(W1,H1)*1.3,pa:pan.pa,pb:pan.pb,maxw:o.maxw,maxh:o.maxh,tag:o.tag||cell};}
   return null;}
 const NAVYP={west:'#8f989f',slav:'#6f8294',east:'#6a7e91',irgc:'#4d5a44',sand:'#a29271',olive:'#66694a'};
-function navyPaint(fac,m){const k={US:'west',IL:'west',EU:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',IQ:'west',GB:'west',AU:'west',CA:'west',SY:'slav',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
+function navyPaint(fac,m){const k={...NATX_NAVY,US:'west',IL:'west',EU:'west',FR:'west',DE:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',IQ:'west',GB:'west',AU:'west',CA:'west',SY:'slav',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
 function factionKit(e,c,o,yaw,m,T){if(!T||!T.fac||!c||!m)return;const low=typeof SET!=='undefined'&&SET.gfx==='low',fac=T.fac,k=e.kind;
   const air=k==='jet'||k==='heli'||k==='airlift',nav=k==='boat'||k==='ship'||k==='lander'||k==='sub'||k==='fast'||k==='minel'||k==='sweep',gnd=/^m_/.test(c.m)&&['tank','arty','aa','atgm','jeep','raidlead'].includes(k);
   if(!(air||nav||gnd)||(gnd&&low)||(c.squad&&c.squad.length>1))return;
@@ -1234,7 +1255,7 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
         for(let i=0;i<4;i++){const z=(i-1.5)*dd/3.2;B.bar(bx-ww/2,y,z,bx-ww/2,y+u*.38,z,u*.03,col);}bag(bx,y,-dd*.2,'#6b6650');bag(bx+u*.1,y,dd*.18,'#57563f');roll(bx-u*.3,y+u*.2,0,dd*.8,'#4e5040');
         const fx=cx+L*.14,fy=tt.y-u*.35,s=sideAt(fx,fy);if(s){const n=9;for(let i=0;i<n;i++){const z=(i-(n-1)/2)*(s*1.6/n);for(let j=0;j<4;j++)B.ell(u*.06,u*.06,u*.06,fx,fy-j*u*.13,z,'#2a2b28');}}}
       if(fac==='TR'&&tank&&frontD)for(let i=0;i<5;i++)B.rbox(u*.16,u*.08,u*.62,frontD.x-u*.25,frontD.y+u*.05,(i-2)*u*.33,'#2c2d2a',0,0,.2);
-      if((fac==='EU'||fac==='CN'||fac==='KR')&&tank)smokeL(fac==='CN'?4:fac==='KR'?3:4);
+      if((fac==='EU'||fac==='FR'||fac==='DE'||fac==='CN'||fac==='KR')&&tank)smokeL(fac==='CN'?4:fac==='KR'?3:4);
       if((fac==='SA'||fac==='AE'||fac==='IN')&&rearD){bag(minx+L*.16,rearD.y,W*.2,'#8a7d5c');bag(minx+L*.16,rearD.y,-W*.18,'#77704f');if(fac!=='IN')for(let i=0;i<2;i++)jerry(minx+L*.08,rearD.y,(i-.5)*u*.22,'#7a7155');}
       if((fac==='PK'||fac==='CU'||fac==='KR'||fac==='IN')&&rearD)roll(minx+L*.12,rearD.y,0,W*.6,fac==='CU'?'#4f5236':'#5a5c3f');
       if(fac==='EG'&&frontD)for(let i=0;i<4;i++)sandbag(frontD.x-u*.35,frontD.y,(i-1.5)*u*.6,.15*i);
@@ -1242,6 +1263,6 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
       if(tank&&tt){const x=cx-L*.08,z=W*.13,d=P.down(x,z);if(d){const y=d.y;B.cyl(u*.32,u*.32,u*.08,10,x-u*.42,y+u*.18,z,LK.veh||'#555',0,0,1.2);B.cyl(u*.21,u*.26,u*.6,7,x,y+u*.22,z,LK.uni);
           B.ell(u*.11,u*.13,u*.11,x,y+u*.64,z,'#a07c5e');B.ell(u*.15,u*.08,u*.15,x,y+u*.73,z,fac==='US'||fac==='IL'?'#5d5a48':'#2c2e28');}
         const bs=sideAt(cx-L*.12,tt.y-u*.3);if(bs&&fac!=='IL')B.cyl(u*.14,u*.14,u*.8,8,cx-L*.12,tt.y-u*.3,-(bs+u*.12),'#5d5a44',0,0,Math.PI/2);}
-      if((fac==='US'||fac==='IL'||fac==='EU')&&k!=='jeep'){const rp=P.down(cx-L*.34,W*.2);if(rp){for(const sg of [1,-1])B.cyl(.07,.1,H*.8,4,cx-L*.34,rp.y+H*.38,sg*W*.2,'#202220',0,0,sg*.12);}}}
+      if((fac==='US'||fac==='IL'||fac==='EU'||fac==='FR'||fac==='DE')&&k!=='jeep'){const rp=P.down(cx-L*.34,W*.2);if(rp){for(const sg of [1,-1])B.cyl(.07,.1,H*.8,4,cx-L*.34,rp.y+H*.38,sg*W*.2,'#202220',0,0,sg*.12);}}}
   }
   {const g=B.geo();if(g)g.userData.P=P;return g;}}
