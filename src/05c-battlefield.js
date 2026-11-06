@@ -71,7 +71,7 @@ function bfFloodTick(dt){const D=G.dams;let active=false;if(D)for(const d of D)i
         const al=Math.min(.82,f*1.1);for(let v=0;v<4;v++){const vx=x+(v===1||v===2?S:0),vy=y+(v>=2?S:0),h=Math.max(groundH(vx,vy),WL)+1.2+f*1.6+Math.sin(tm*2.1+vx*.05+vy*.04)*.35*f;P.setXYZ(q*4+v,vx,h,vy);
           C.setXYZW(q*4+v,.06+.02*Math.sin(vx*.03+tm),.11,.115,al);}q++;}}}
   BFX.fl.geometry.setDrawRange(0,q*6);P.needsUpdate=true;C.needsUpdate=true;BFX.fl.visible=q>0;}
-function bfFxTick(dt){if(!G||!SCN||!G.terrain)return;try{bfWoundTick(dt);}catch(e){}try{bfCivTick(dt);}catch(e){}try{bfDamTick(dt);bfFloodTick(dt);}catch(e){}}
+function bfFxTick(dt){if(!G||!SCN||!G.terrain)return;try{bfWoundTick(dt);}catch(e){}try{bfCivTick(dt);}catch(e){}try{bfDamTick(dt);bfFloodTick(dt);}catch(e){}try{bfView(dt);}catch(e){}}
 // effect handlers (host and clients both run these; the state itself comes from the sim / the snapshot)
 (function(){const civd0=FXH.civd;
   FXH.civd=function(i,q){civd0(i,q);const c=G.civ&&G.civ[i];if(!c)return;BFX.civ.delete(c);try{bfDust(c.x,c.y,c.h,true);}catch(_){}};

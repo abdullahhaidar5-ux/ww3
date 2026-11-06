@@ -186,6 +186,9 @@ const PHR_FAC={
   JP:[['準備完了！','命令を待つ！'],['了解、移動する！','了解！'],['撃て！','敵発見、交戦！'],['部隊、準備よし！'],['基地が攻撃を受けている！']],
   KR:[['준비 완료!','명령 대기 중!'],['이동!','알겠습니다!'],['사격 개시!','적 발견!'],['부대 준비 완료!'],['기지가 공격받고 있습니다!']],
   CU:[['¡Listos, compañero!','¡A la orden!'],['¡Vamos, asere!','¡Dale!'],['¡Fuego!','¡Pa’lante!'],['¡La unidad está lista!'],['¡Nos atacan la base, compañeros!']],
+  GB:[['Ready, sir.','Standing by.','Right you are, sir.'],['Moving up!','On the move.','Wilco.'],['Engaging!','Contact, open fire!','Fire!'],['Section ready.','Reporting for duty, sir.'],['Our base is under attack!']],
+  AU:[['Ready to go, mate.','Standing by, boss.','Too easy, sir.'],['On our way!','Moving out, mate.','No worries.'],['Engaging!','Open fire!','Let ’em have it!'],['Section ready.','Ready for orders, sir.'],['The base is under attack, mate!']],
+  CA:[['Ready, sir.','Standing by, eh.','Good to go, sir.'],['Moving out!','On the move.','Roger.'],['Engaging!','Open fire!','Contact, fire!'],['Section ready.','Reporting, sir.'],['The base is under attack!']],
   US:[['Ready to roll.','Locked and loaded.','Standing by, sir.'],['Moving out!','Oscar Mike.','Roger that.'],['Engaging!','Weapons free!','Light ’em up!'],['Unit ready.','Reporting for duty.'],['Our base is under attack!']],
   RU:[['Готов.','Жду приказа, командир.'],['Выдвигаемся!','Так точно!'],['Огонь!','Цель вижу, работаем!'],['Подразделение готово.'],['База под огнём!']],
   UA:[['Готовий!','Чекаю наказу, командире.'],['Виконую!','Рухаємось!'],['Вогонь!','Бачу ціль, працюємо!'],['Підрозділ готовий.'],['Базу атакують!']],
@@ -212,6 +215,9 @@ const PHR_X={US:[["Taking fire!","Contact, we are pinned down!","Under fire, nee
 // with the ordinary acknowledgements. Native script for native voices; FCRY_ALT is a phonetic spelling for when the
 // device lacks that voice (read by a Spanish/Italian voice); FCRY_EN is used when only English is available.
 const FCRY={
+  GB:[['For King and country!'],['Up and at ’em!'],['Who dares wins!','For King and country!'],['Ready, sir. Cheerio!'],null],
+  AU:[['Aussie, Aussie, Aussie!'],['Let’s go, mate!'],['Lest we forget! Fire!','Aussie, Aussie, Aussie!'],['Ready, mate!'],null],
+  CA:[['For Canada!'],['Let’s go, eh!'],['For Canada! Fire!','Maple Leaf forever!'],['Ready, sir. For Canada!'],null],
   US:[['Hooah!','Semper Fi!'],['Let’s roll!','Oscar Mike.'],['Hooah! Weapons free!','Light ’em up!'],['Ready to roll, sir. Hooah!'],null],
   TR:[['Emret komutanım!','Vatan sana canım feda!'],['Bismillah, ilerliyoruz!'],['Allah Allah!','Şehitler ölmez, vatan bölünmez!'],['Ne mutlu Türküm diyene!'],null],
   IL:[['אחריי!'],['קדימה!'],['עם ישראל חי!','קדימה, הסתעעות!'],['עם ישראל חי!'],null],

@@ -245,6 +245,35 @@ const NEWNAT={
   pow:{name:'Air Defence Umbrella',type:'shield',cd:200,r:280,desc:'Your forces in the area take 60% less damage for 20s'},
   gp:{bounty:{name:'Spoils of Victory'},recon:{name:'Mountain Observation Posts',rm:.95},para:{name:'Heliborne Assault'},barrage:{name:'Fire Support Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
   upg:['Special Forces Course','Conscript Kit','Tank Crew Training','Gvozdika Fire Control','MiG Overhaul','Hind Maintenance','Levant Trade Revenue','Hardened Defence Doctrine','Coastal Patrol Refit']}};
+// ---- nations-anglo (Abdullah 2026-11-05 19:49): UK (GB), Australia (AU), Canada (CA): same NEWNAT mechanism/Egypt base as IQ/SY (equal power per tier).
+Object.assign(NEWNAT,{
+ GB:{base:'EG',name:'United Kingdom',color:'#c8102e',lang:'en-GB',doctrine:'British Armed Forces, combined arms: infantry train 15% faster and cost 10% less, Challenger tanks cost 10% less, and units fight 10% harder on home ground.',mods:{infCost:.9,infTime:.85},
+  units:{inf:'Rifle Section',at:'Javelin Team',hero:'SAS Troopers',aa:'Sky Sabre Launcher',tank:'Challenger 3',arty:'AS-90 Braveheart',heli:'AH-64E Apache',jet:'Eurofighter Typhoon',boat:'Archer-class Patrol Boat',ship:'Type 45 Destroyer'},
+  sup:{name:'Typhoon Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Royal Marines Recon Troop'}],hero:['Special Air Service','demo'],
+  doct:{name:'Combined Arms',homeland:1},
+  pow:{name:'Royal Engineers Resupply',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Defence Exports'},recon:{name:'Intelligence Sweep',rm:.95},para:{name:'Parachute Regiment Drop'},barrage:{name:'Gunner Barrage',nm:1.1,cdm:1.05},repair:{name:'REME Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Commando Course','MTP Combat Kit','Challenger Crew Training','Braveheart Fire Control','Typhoon Upgrade','Apache Maintenance','City of London Revenue','Special Relationship','Fleet Refit'],
+  uplink:'Storm Shadow Launch Centre',econ:'City of London Trading Floor',sub:'Astute-class Submarine',md:'Sky Sabre Battery',coast:'Harpoon Coastal Battery',trn:['Landing Craft Utility','Chinook HC6']},
+ AU:{base:'EG',name:'Australia',color:'#00843d',lang:'en-AU',doctrine:'Australian Defence Force, bush and coast: infantry cost 10% less, sea and air assets cost 3% less, and units fight 10% harder on their home ground.',mods:{infCost:.9,cost:.97},
+  units:{inf:'Digger Section',at:'Javelin Team',hero:'SASR Operators',aa:'NASAMS Launcher',tank:'M1A2 Abrams SEPv3',arty:'M777 Howitzer',heli:'AH-64E Apache',jet:'F-35A Lightning II',boat:'Armidale Patrol Boat',ship:'Hobart-class Destroyer'},
+  sup:{name:'Lightning Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Commando Recon Patrol'}],hero:['4th Commando Regiment','demo'],
+  doct:{name:'Defence of Australia',homeland:1},
+  pow:{name:'Outback Logistics Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Mining Boom'},recon:{name:'Coastwatch Sweep',rm:.95},para:{name:'Airborne Commandos'},barrage:{name:'Gunner Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Commando Course','AMCU Combat Kit','Abrams Crew Training','M777 Fire Control','F-35 Integration','Tiger Maintenance','Mining Revenue','Defence of the Continent','Collins Refit'],
+  uplink:'Strike Missile Command',econ:'Iron Ore Export Terminal',sub:'Collins-class Submarine',md:'NASAMS Battery',coast:'NSM Coastal Battery',trn:['Landing Craft Heavy','CH-47F Chinook']},
+ CA:{base:'EG',name:'Canada',color:'#d52b1e',lang:'en-CA',doctrine:'Canadian Armed Forces, northern defence: infantry cost 6% less, cold and forest ground is no hindrance, and units fight 10% harder defending home soil.',mods:{infCost:.94},
+  units:{inf:'Infantry Section',at:'Carl Gustaf Team',hero:'JTF2 Operators',aa:'Skyguard Launcher',tank:'Leopard 2A6M',arty:'M777 Howitzer',heli:'CH-146 Griffon',jet:'CF-18 Hornet',boat:'Kingston Patrol Boat',ship:'Halifax-class Frigate'},
+  sup:{name:'Hornet Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Canadian Rangers Patrol'}],hero:['Joint Task Force 2','demo'],
+  doct:{name:'Defence of the North',homeland:1},
+  pow:{name:'Arctic Supply Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Resource Exports'},recon:{name:'Northern Watch',rm:.95},para:{name:'Airborne Regiment Drop'},barrage:{name:'Gunner Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Commando Course','CADPAT Combat Kit','Leopard Crew Training','M777 Fire Control','CF-18 Upgrade','Griffon Maintenance','Resource Revenue','Defence of the North','Victoria Refit'],
+  uplink:'Strike Missile Command',econ:'Oil Sands Export Terminal',sub:'Victoria-class Submarine',md:'NASAMS Battery',coast:'Harpoon Coastal Battery',trn:['Landing Craft Utility','CH-147F Chinook']}});
 for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const q in B.units)u[q]=Object.assign({},B.units[q]);for(const q in N.units)u[q]=Object.assign({},u[q]||{},{name:N.units[q]});
   FACTIONS[k]=Object.assign({},B,{code:k,name:N.name,color:N.color,lang:N.lang,doctrine:N.doctrine,mods:N.mods,units:u,sup:N.sup});
   const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);
@@ -450,8 +479,9 @@ const FASTN={IR:'Swarm Boat',RS:'Coastal Swarm Boat',DW:'Red Sea Skiff',US:'Patr
 for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
   for(const T of [UPLINK,ECON,COURAGE,GDOC_AI,BAL,XL,TRN,SUBN,MDN,COASTN]){if(T[b]!==undefined&&T[k]===undefined)T[k]=JSON.parse(JSON.stringify(T[b]));}
   COURAGE[k]=1.16;NATPOW[k]=N.pow;GPOW[k]=Object.assign({},GPOW[b],N.gp);DOCT[k]=N.doct;
-  if(UPLINK[b])UPLINK[k]=[k==='IQ'?'Rocket Command (Al-Faw)':'Missile Command (Qalamoun)',UPLINK[b][1]];
-  ECON[k]=k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board';
+  if(UPLINK[b])UPLINK[k]=[N.uplink||(k==='IQ'?'Rocket Command (Al-Faw)':'Missile Command (Qalamoun)'),UPLINK[b][1]];
+  ECON[k]=N.econ||(k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board');
+  if(N.sub)SUBN[k]=N.sub;if(N.md)MDN[k]=N.md;if(N.coast)COASTN[k]=N.coast;if(N.trn)TRN[k]=N.trn;
   UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
