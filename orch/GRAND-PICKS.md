@@ -116,6 +116,16 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 ## Stage 5 addition
 - [ ] **Map modes** (Abdullah 21:20): political, terrain, trade, supply, unrest, culture, alliances, development (one switcher).
 
+## Stage 7 (grand7 — friends multiplayer; Abdullah 2026-11-06 07:51)
+- [ ] **Co-commander**: a human ally who is in that war (allied with a side, not just watching) can join a running live battle
+      from the campaign and take command of part of their side's army (the owner hands over units, or the ally gets the
+      reinforcement waves / a share); same normal battle-room join path; never more than 8 players in one battle.
+- [ ] **Support from the map**: any empire in the war — on either side — can send support into a running battle from its own
+      grand-map stocks and launch sites/airfields in range: air strike, missile, drone strike (uses the stage-3 map-strike rules
+      and costs). It arrives in the battle after a short delay as a normal power/strike for that side, with an on-screen notice
+      ("Allied air strike inbound"); air defence in the battle can intercept; stocks are spent even if shot down. Sent as an
+      ordinary battle command, so host, clients and replays stay in sync.
+
 ## Integration 2
 - [ ] **Ledger** (Abdullah 21:20): statistics screen comparing all nations (army size, income, provinces, war history, graphs
       over time).
