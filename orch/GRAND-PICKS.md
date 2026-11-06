@@ -125,7 +125,7 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       time (no real parties or politicians; neutral); ties into factions at home, war weariness and coups.
 - [ ] **Ayatollah & Dear Leader** (Abdullah 20:58, moved out of battles): national leader figures on the grand map (IR/RS/DW
       clerical leader, KP Dear Leader; fictional, no real-person likeness; ONLY these four nations have a leader figure — others get different signature assets): boost
-      national morale/loyalty, can tour a province (Fight-it battles there start with fervour), danger if the capital falls.
+      national morale/loyalty, can tour a province (Fight-it battles there start with fervour). NO capital-falls penalty (Abdullah 2026-11-06 08:11 — replaced): instead **the population clamours for war** — high war support: war weariness grows much slower, recruits/volunteers come faster, declaring war costs little home morale; the flip side is **war fever** — long stretches of peace build unrest/pressure until you fight (or spend effort to calm it). Equal total value vs other nations' signatures.
 - [ ] **Occupation choices:** for each conquered province: annex (full tax, high unrest/insurgency), set up a friendly government
       (puppet: less tax, low unrest, may defect) or liberate (no tax, big world-opinion/loyalty gain); uses **Locals** for resistance.
 - [ ] **Factions at home:** military, business and clergy interest groups with demands and satisfaction; happy factions give
