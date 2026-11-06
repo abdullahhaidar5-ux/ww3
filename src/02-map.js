@@ -374,7 +374,8 @@ function addComplexity(M,D){M.woods=M.woods||[];M.genCities=[];
       M.woods.push({x:A[0],y:A[1],r,seed:wi,ax:dx,ay:dy,m:0},{x:B[0],y:B[1],r,seed:wi,ax:dx,ay:dy,m:1});wi++;}
     // a village on each flank, past the ravine's ends
     for(const b of [-.57,.57]){const q=P(0,b);if(clr(q[0],q[1])>200*u)M.genCities.push([q[0],q[1],70,vs]);}}}
-function mkMap(seed,mk){
+function seasonOf(mk){const D=MAPS[mk];return D?(D.ssn||(D.theme==='snow'?3:1)):1;}
+function mkMap(seed,mk,ssn){
   mk=MAPS[mk]?mk:'strait';const D=MAPS[mk];
   srand=mulberry(seed);const R=srand;
   const M={seed,key:mk,name:D.name,rough:D.rough||1,theme:D.theme||'desert',rivers:[],lakes:[],islands:[],ridges:[],peaks:[],bridgeAng:[],bridges:[]};
@@ -558,6 +559,9 @@ function mkMap(seed,mk){
   // ROAD NET (Conquest): roads base -> rear towns -> middle hamlets -> centre prize town, on at least two routes. Pure
   // geometry on the ground grid (no random numbers), so host and clients lay identical roads; units move faster on them.
   if(!D.manual)try{buildRoadNet(M,grid);}catch(e){M.roadNet=[];}
+  // Season (look only; the layout above is identical in every season, so fairness doesn't change): winter = the snow theme,
+  // autumn = mud (ground tint, puddles, orange leaves; the sim slows off-road wheels, G.ssn), summer = green/desert as the map says.
+  ssn=ssn||seasonOf(mk);M.ssn=ssn;M.baseTheme=M.theme;if(ssn===3)M.theme='snow';else if(M.theme==='snow')M.theme='green';M.mud=ssn===2;
   return M;
 }
 // A* over the ground grid for one road (only cells units can walk: open ground and bridges). Returns map points or null.
@@ -779,7 +783,10 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
       const poly=(dx,dy)=>{t.beginPath();pts.forEach((p,q)=>q?t.lineTo(p[0]+dx,p[1]+dy):t.moveTo(p[0]+dx,p[1]+dy));t.closePath();};poly(r*.35,r*.3);t.fillStyle='rgba(25,22,14,.4)';t.fill();poly(0,0);const g=t.createLinearGradient(cx-r,cy-r,cx+r,cy+r);g.addColorStop(0,'#a59c86');g.addColorStop(.55,'#7a725f');g.addColorStop(1,'#4d473a');t.fillStyle=g;t.fill();t.strokeStyle='rgba(40,36,28,.5)';t.lineWidth=1;t.stroke();}}
   for(const c of M.cities){const g=t.createRadialGradient(c.x,c.y,0,c.x,c.y,c.r*1.15);g.addColorStop(0,'rgba(120,112,98,.55)');g.addColorStop(.85,'rgba(126,116,98,.35)');g.addColorStop(1,'rgba(126,116,98,0)');t.fillStyle=g;t.beginPath();t.arc(c.x,c.y,c.r*1.15,0,7);t.fill();}
   for(const b of M.cityBlds){t.fillStyle=b.style==='russia'?'#77736c':b.style==='america'?'#8a8278':'#b8a888';t.fillRect(b.x-b.w/2,b.y-b.d/2,b.w,b.d);}
-  if(draw){const CW=c.width,CH=c.height,id=t.getImageData(0,0,CW,CH),d=id.data;const SN=M.theme==='snow',GR=M.theme==='green';const WS=new Float32Array(CW);for(let x=0;x<CW;x++)WS[x]=Math.sin(x/TS*.0021);for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*16;if(GR&&!(d[i+2]>d[i]+10)){const gy=Math.max(Math.abs(d[i]-d[i+1]),Math.abs(d[i+1]-d[i+2])*.72),gk=Math.max(0,Math.min(1,(gy-5)/13));if(gk>0){const px=(i>>2)%CW,py=((i>>2)/CW)|0;const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,w=WS[px]*Math.cos(py/TS*.0017)*.5+.5;d[i]=d[i]*(1-gk)+(l*.42+30+18*w+n)*gk;d[i+1]=d[i+1]*(1-gk)+(l*.52+56+10*w+n)*gk;d[i+2]=d[i+2]*(1-gk)+(l*.3+22+n*.6)*gk;continue;}}if(SN&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=l*.42+128+n*.6;d[i+1]=l*.44+134+n*.6;d[i+2]=l*.45+146+n*.6;continue;}d[i]+=n;d[i+1]+=n;d[i+2]+=n*.8;}t.putImageData(id,0,0);
+  if(draw&&M.mud){ // Autumn mud: dark wet puddles with a grey-blue sheen (look only)
+    const np=Math.round(MAPW*MAPH/38000);for(let k=0;k<np;k++){const x=srand()*MAPW,y=srand()*MAPH;if(M.edge(x,y)>-50)continue;const r=26+srand()*70,sq=.35+srand()*.4,rot=srand()*3.14;
+      t.save();t.translate(x,y);t.rotate(rot);t.scale(1,sq);const g=t.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'rgba(92,100,106,.8)');g.addColorStop(.6,'rgba(40,34,26,.62)');g.addColorStop(1,'rgba(40,34,26,0)');t.fillStyle=g;t.beginPath();t.arc(0,0,r,0,6.2832);t.fill();t.restore();}}
+  if(draw){const CW=c.width,CH=c.height,id=t.getImageData(0,0,CW,CH),d=id.data;const SN=M.theme==='snow',GR=M.theme==='green',MUD=!!M.mud;const WS=new Float32Array(CW);for(let x=0;x<CW;x++)WS[x]=Math.sin(x/TS*.0021);for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*16;if(GR&&!MUD&&!(d[i+2]>d[i]+10)){const gy=Math.max(Math.abs(d[i]-d[i+1]),Math.abs(d[i+1]-d[i+2])*.72),gk=Math.max(0,Math.min(1,(gy-5)/13));if(gk>0){const px=(i>>2)%CW,py=((i>>2)/CW)|0;const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,w=WS[px]*Math.cos(py/TS*.0017)*.5+.5;d[i]=d[i]*(1-gk)+(l*.42+30+18*w+n)*gk;d[i+1]=d[i+1]*(1-gk)+(l*.52+56+10*w+n)*gk;d[i+2]=d[i+2]*(1-gk)+(l*.3+22+n*.6)*gk;continue;}}if(SN&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=l*.42+128+n*.6;d[i+1]=l*.44+134+n*.6;d[i+2]=l*.45+146+n*.6;continue;}if(MUD&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=d[i]*.12+(l*.4+34)*.88+n;d[i+1]=d[i+1]*.12+(l*.32+25)*.88+n;d[i+2]=d[i+2]*.12+(l*.2+15)*.88+n*.8;continue;}d[i]+=n;d[i+1]+=n;d[i+2]+=n*.8;}t.putImageData(id,0,0);
   const e=t.createRadialGradient(MAPW/2,MAPH/2,MAPH*.55,MAPW/2,MAPH/2,MAPW*.72);e.addColorStop(0,'rgba(0,0,0,0)');e.addColorStop(1,'rgba(0,0,0,.35)');t.fillStyle=e;t.fillRect(0,0,MAPW,MAPH);
   G.terrain=c;G.tctx=t;const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;th.getContext('2d').drawImage(c,0,0,th.width,th.height);G.thumb=th;}
   if(sim){buildHGrid();if(!draw&&typeof document!=='undefined'){const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;const q=th.getContext('2d');q.fillStyle='#a8825a';q.fillRect(0,0,th.width,th.height);G.thumb=th;}}

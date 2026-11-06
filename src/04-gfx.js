@@ -200,7 +200,7 @@ function borderTrees(){if(!G.treePos||G.treePos.length<40||!MODELS.ready)return;
 function borderLand(dtex){const M=G.map,BX=Math.max(MAPW,MAPH)*.7,W2=MAPW+2*BX,H2=MAPH+2*BX,sx=200,sy=Math.round(sx*H2/W2);
   const g=new THREE.PlaneGeometry(W2,H2,sx,sy);g.rotateX(-Math.PI/2);g.translate(MAPW/2,0,MAPH/2);const p=g.attributes.position,col=new Float32Array(p.count*3),FD=new Float32Array(p.count),CELL=W2/sx;
   const th=G.thumb,tw=th.width,thh=th.height,td=th.getContext('2d').getImageData(0,0,tw,thh).data;
-  const theme=M.theme,base=new THREE.Color(theme==='snow'?'#c4ccd4':theme==='green'?'#66733f':'#a88d60'),rock=new THREE.Color(theme==='snow'?'#e8edf2':theme==='green'?'#6d6656':'#9a8466');
+  const theme=M.theme,base=new THREE.Color(M.mud?'#6e5a3c':theme==='snow'?'#c4ccd4':theme==='green'?'#66733f':'#a88d60'),rock=new THREE.Color(M.mud?'#6a5e4c':theme==='snow'?'#e8edf2':theme==='green'?'#6d6656':'#9a8466');
   const n2=(x,y)=>{const s=Math.sin(x*.0021+Math.sin(y*.0013)*2)*Math.cos(y*.0018+Math.sin(x*.0011)*1.7);return s*.6+.4*Math.sin(x*.0057+y*.0043)*Math.cos(x*.0031-y*.0049);};
   const c=new THREE.Color(),tc=new THREE.Color();
   for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),cx=Math.max(1,Math.min(MAPW-1,x)),cz=Math.max(1,Math.min(MAPH-1,z)),dx=Math.max(0,-x,x-MAPW),dz=Math.max(0,-z,z-MAPH),d=Math.hypot(dx,dz);
@@ -410,7 +410,7 @@ function buildWorld(tc){
   // fog of war overlay
   {const fk=Math.min(1.4,Math.max(1,WK*.65));FOGC=document.createElement('canvas');FOGC.width=Math.round(480*fk);FOGC.height=Math.round(330*fk);FOGC.b=document.createElement('canvas');FOGC.b.width=FOGC.width;FOGC.b.height=FOGC.height;}FOGT=new THREE.CanvasTexture(FOGC);FOGT.magFilter=THREE.LinearFilter;
   FOGM=new THREE.Mesh(new THREE.PlaneGeometry(MAPW,MAPH).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x060a0f,transparent:true,alphaMap:FOGT,depthWrite:false}));FOGM.position.set(MAPW/2,46,MAPH/2);FOGM.renderOrder=2;WORLD.add(FOGM);
-  buildDecals();for(const [x,y,r] of (G.craters||[]))scorch(x,y,r);applyWeather(typeof setup!=='undefined'?(setup.w|0):0);
+  buildDecals();for(const [x,y,r] of (G.craters||[]))scorch(x,y,r);applyWeather(typeof setup!=='undefined'?wxBase(setup.w):0);
 }
 
 /* ---------- procedural model builder (merged, vertex-coloured) ---------- */
