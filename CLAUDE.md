@@ -55,9 +55,29 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   Alt+right-click a spot (drive there, then unload); touch: tap a selected vehicle again to unload, tap ground with a
   garrisoned building selected. The Unload/Leave buttons may stay as extras.
   (Touch controls are no longer required — see "PC only" below.)
-- **Factions (18 live):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
-  **DW "Coffee Shias"**. The IM faction was removed on purpose; 18 is the intended count (no 19th planned). Shia factions = IR, RS, DW.
+- **Factions (18 live → 21):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
+  **DW "Coffee Shias" = Yemen** (Abdullah 2026-11-05 19:44: "make sure the Coffee Shias become Yemen" — DW's home, look, maps and
+  grand-map region are Yemen). **Adding full nations IQ Iraq, SY Syria, JP Japan** (19:45; own units, uniforms, buildings, voices,
+  anthem, equal strength) → 21; then (19:49) **15 more full nations**: GB, FR, DE, PL, AZ, JO, KD (Kurdistan
+  Region, Peshmerga), TW, VN, AU, PH, BR, VE, MX, CA + (19:56) **DZ, MA, NG, OM, IT, GR, ID, AF (stylised national army only), AR, CO** → **45 full nations** (the **EU retires as a nation** once FR, DE and PL are live — Abdullah 19:54: its units, voices and
+  the Fulda map pass to FR/DE/PL, old EU saves load as DE; on the grand map the **European Union becomes an alliance** European
+  nations can join, with a joint-operations bonus), built by `orch/nation-*` helpers following the
+  nations-new1/2 pattern. Every other country on the grand map is a **playable minor nation** (shared regional army/look, own
+  flag/name/colours, no unique voices). The IM faction was removed on purpose. Shia factions = IR, RS, DW.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
+- **National morale styles** (Abdullah 2026-11-05 20:01): every nation has ONE battle morale style, different styles but **equal
+  power** (proven by the balance tourneys): **Zealous** (slow to break, martyr banners, fervour when comrades fall — and losing a
+  cleric/officer does **not** weaken them: they stay zealous; their cost is elsewhere, e.g. they hold ground and take heavier
+  losses), **Professional** (steady under artillery, rally fast near officers; heavy losses sap them more), **Strength in numbers**
+  (brave in big groups, shaky when isolated), **Home defenders** (much braver on home turf / near own towns, ordinary abroad).
+  Zealous = IR, RS, DW; every other nation gets the style that fits it (table in `orch/SYSTEMS.md`); new nation helpers pick one.
+  Grand-map national morale: raised/lowered by victories & defeats, casualties & war length, losing home/holy places (capital,
+  war goals, heritage sites) and short national/religious-day boosts (equal value for all); on collapse: troops start battles
+  shaken, forced peace talks, coups & civil war.
+- **Mountain Shias (RS) identity** (Abdullah 2026-11-05 19:46 "make it more obvious"): unmistakably a Lebanese mountain Shia
+  resistance force through content — Lebanon home, Lebanese-dialect voices, Ashura/"Ya Hussein" religious motifs, tunnels, ATGM
+  teams, rocket barrages, drones, mountain forts. **Never** the real organisation's name, flag/emblem (or a close copy) or real
+  leaders' names/likeness; keep the name "Mountain Shias" and an original emblem.
 - **Audio:** real, professional military audio; top-quality unit voice acting in each nation's native language,
   including war slogans like "Labbaik ya Hussein". **Music = one shared soundtrack of real recorded tracks for all 18
   nations** (Abdullah, 2026-10-27, replacing the per-nation/region scores and the synthesized latmiyas): ~10–12 free
@@ -83,6 +103,16 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   `orch/HANDOFF-conquest.md`.
 - **Supply lines are in** (Abdullah, 2026-11-04 20:16 "Forget the rule about no supply lines"; replaces 2026-10-29):
   supply runs on roads you build (convoys, cut-off towns, forward depots).
+- **Grand strategy layer** (Abdullah, 2026-11-05 19:16–19:20): the RTS battle is one layer under a Total War / EU4-style
+  grand map where you run your empire and choose to fight each battle live ("Fight it") or auto-resolve; results flow back.
+  **Simultaneous turns**; **a world map with detail where it matters** (19:41, replaces "three theatres": detailed provinces around all full nations (21 incl. IQ/SY/JP; DW at home in Yemen) — Middle East & North Africa, Europe/Russia, East Asia, South Asia, North America & Caribbean — oceans as big sea lanes linking them); **solo vs AI empires first,
+  friends multiplayer later** (turn resolution must be deterministic from state + orders + seed); **empire-level economy
+  lives on the grand map** (war bonds, upkeep, fuel, manpower, oil market, crises… — not inside battles). Conquest battles
+  stay the tactical layer. Design/stages: `orch/reports/grand-strategy.md`; Abdullah's extra picks per stage (every grand stage
+  helper must build its section too): `orch/GRAND-PICKS.md`. **Grand-map multiplayer battles** (19:30): if
+  EITHER side wants "Fight it live", it's live (an away player's side is played by the battle AI); auto-resolve only if both
+  pick it; others keep planning and can spectate; several battles in a turn run at the same time. Grand campaigns live on
+  Cloudflare; battles stay cloud-first with the automatic strongest-PC fallback (19:27).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
   (Abdullah connected it 2026-10-26; since 2026-10-28 `.github/workflows/deploy-site.yml` also sends it from `main` on every
   push, status `deploy/site`, because Cloudflare's own builder got stuck — nothing to do at ship except check it serves the new version), and the claude.ai artifact (Qt3bimPhr31eZEUpqndGUi, republish
@@ -94,7 +124,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   calm narrators; 20:36 after hearing the first tough pass for RS/DW/IR: "Tougher" — deeper, barked/shouted combat lines, grittier radio, still clear and human; 2026-10-30 06:08 he approved the second tough pass ("tough2", orch/voices-tough) as the level for all 18): use an expressive neural voice (XTTS-v2 for every language it covers — en, ar, tr,
   ru, zh, ko, hi/ur, es, fr, de; non-commercial licence accepted for this free game, as MMS already is) with radio
   treatment; Piper/MMS only where nothing more natural exists (fa, he, uk) and then the best-sounding option found. **Weapon/explosion sound: cinematic and
-  punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all 18 nations about equally strong.**
+  punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all nations (18, soon 21) about equally strong.**
 - **Priorities (Abdullah, 2026-10-28 18:34):** his group plays the **Shia factions (IR, RS, DW) most** — do their voices,
   uniforms and buildings first, in a **realistic military** style (IRGC/Hezbollah-style fatigues, Middle Eastern
   compounds and bunkers). The game targets **PC** (see "PC only"). Biggest pain:
@@ -110,6 +140,10 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   a phone (attached video files didn't open for him).
 
 ## Ground rules for agents
+
+- **One system per idea** (Abdullah, 2026-11-05 19:34 "two militias — fix that"): before building, read `orch/SYSTEMS.md`, find
+  the owner of your idea and extend it; never add a second system for the same job (add a row if it's new). New sim state goes
+  into the checkpoint (`src/07b-ckpt.js`) so saves and host migration keep working; new hotkeys go in the one key table.
 
 - Work only in your squad's files unless ORCH assigned otherwise; parallel agents share one repo.
 - Small, verifiable changes. Describe each change in plain words a player would understand.
