@@ -107,7 +107,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 - **Conquest is the only game mode** (Abdullah, 2026-11-04 19:49): same full base + money for all, everything
   unlocked, income from taxing towns/hamlets you hold (tax rate, unrest, revolts, civic buildings — "High tax in safe
   rear towns, Low tax on the front"), fair upgrades/powers/missile strikes, win = destroy the enemy base. ~$10,000 start,
-  ~90 s no-fire setup. Classic is removed from menus/lobby; campaign missions + tutorial stay. Spec/progress: `orch/reports/conquest.md`,
+  ~90 s no-fire setup. Classic is removed from menus/lobby; the old story missions + tutorial stay; the story missions are named **"Missions"** in the menu (Abdullah 2026-11-06 05:58) so "campaign" only ever means the grand campaign — main menu: Grand campaign · Conquest · Missions · Tutorial. Spec/progress: `orch/reports/conquest.md`,
   `orch/HANDOFF-conquest.md`.
 - **Supply lines are in** (Abdullah, 2026-11-04 20:16 "Forget the rule about no supply lines"; replaces 2026-10-29):
   supply runs on roads you build (convoys, cut-off towns, forward depots).

@@ -21,6 +21,8 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
   grand3; leader/political-type → grand6. New-nation helpers add their nation's row.
 
 ## Stage 1 (grand1 — map, provinces, armies, turns, battles)
+- [ ] **Menu names** (Abdullah 2026-11-06): main menu = Grand campaign · Conquest · Missions · Tutorial. Rename the old story
+      "Campaign" to "Missions" everywhere players see it (menu, buttons, encyclopedia, What's new); keep its saves/progress working.
 - [ ] **Battles start with your grand-map units** (Abdullah 2026-11-05 21:22, see CLAUDE.md "Grand strategy layer"): a Fight-it
       battle spawns exactly the armies' real units (types, counts, health, veterancy, ammo/fuel, general as hero unit) — no free
       Conquest base/money; defender adds the province's garrison, buildings, forts (Mountain Fortress pre-built); neighbouring
