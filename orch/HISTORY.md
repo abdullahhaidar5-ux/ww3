@@ -234,3 +234,6 @@ Abdullah 2026-11-05 19:01 picks. Shipped: **wildfires** (blasts light dry fields
 
 ## 2026-11-06 — economy1 (orch/economy1, Sonnet 5.5, scheduled)
 Abdullah 2026-11-05 19:04 picks (economy part 1). Shipped: **trade caravans** along roads between two of your towns (route on world + minimap, enemies can raid them), **food** bar per town with farm plots (burnt by shelling, cut-off starves), **quarries / mines / factories** beside the fairly placed hamlets (income; cheaper + faster production near a factory), **port trade** (extra ports half pay, HUD /min), **town growth** hamlet → town → city (more tax, militia, houses; shelled / starved towns shrink), **invest** power / water / paving, **rebuild after battle** (damage cuts tax until locals or engineers repair). New `src/03h-economy.js` + `src/08c-economy.js`; report `orch/reports/economy1.md`; shots `orch/shots/economy1/`. Sim change: servers-live PR needed.
+
+## integrate1 (2026-11-06, helper)
+Morale styles table + hooks (all live nations), Ayatollah/Dear Leader/Mountain Fortress/Bunker Buster removed from Conquest battles, localSpawn (one locals spawner), koSet (one knocked-out status), coverKind (one cover query), ONE HUD top bar + alerts + overlay switcher, What's new screen, savetest hash extended. Report: orch/reports/integrate1.md. Open items in HANDOFF-integrate1.md.
