@@ -126,6 +126,11 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       ("Allied air strike inbound"); air defence in the battle can intercept; stocks are spent even if shot down. Sent as an
       ordinary battle command, so host, clients and replays stay in sync.
 
+- [ ] **Battle time limit = host's choice** (Abdullah 2026-11-06 07:56; replaces the fixed 30-min cap in the stage-7 prompt): set
+      when creating the campaign — 30 min / 60 min (default) / no limit; at the limit the battle is auto-resolved from its current
+      state. Players waiting on the turn can vote "end it now" (majority of the waiting humans) to auto-resolve early; the
+      fighters see a 60 s warning first. Solo campaigns: no limit.
+
 ## Integration 2
 - [ ] **Ledger** (Abdullah 21:20): statistics screen comparing all nations (army size, income, provinces, war history, graphs
       over time).
