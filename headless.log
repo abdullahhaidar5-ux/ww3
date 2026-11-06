@@ -1,0 +1,79 @@
+  day {"inf":280,"tank":280,"heli":340,"b":340} 
+  night {"inf":168,"tank":252,"heli":306,"b":204}
+NIGHT PASS — night sight x0.6, thermal x0.9, dusk between, changing cycles
+node: 2 players [portable math: sin,cos,atan2,exp,pow] US vs RU vs DW on Straits of Thunder (strait), seed 1; sim loaded in 22 ms, battle set up in 1281 ms; map 33cbf75c5c79b96d
+  t=   0s  d4cf5e653309c7af
+  t=  10s  b33f57d641fa97d4  ents   30    65.5 ms CPU/game-s  5u2b 5u2b 16u0b
+  t=  20s  d3e947787108aa30  ents   38    71.8 ms CPU/game-s  7u3b 9u3b 16u0b
+  t=  30s  d586dc5b2de20a7f  ents   44    75.8 ms CPU/game-s  8u4b 12u4b 16u0b
+  t=  40s  7b4890e661504116  ents   48    86.9 ms CPU/game-s  10u5b 12u5b 16u0b
+  t=  50s  4ab8c77cd602dfce  ents   52    43.9 ms CPU/game-s  13u5b 13u5b 16u0b
+  t=  60s  f4bbacc31f4e7c36  ents   52    24.8 ms CPU/game-s  13u5b 12u6b 16u0b
+  t=  70s  8e109427d7c543cb  ents   52    20.4 ms CPU/game-s  13u5b 12u6b 16u0b
+  t=  80s  2fbcc9f116348da3  ents   52    33.4 ms CPU/game-s  14u5b 11u6b 16u0b
+  t=  90s  30c3c6e999db9379  ents   55    28.7 ms CPU/game-s  14u5b 14u6b 16u0b
+  t= 100s  1b35cb53e0756a52  ents   56    19.2 ms CPU/game-s  14u5b 15u6b 16u0b
+  t= 110s  5f6af0d59dbc69b0  ents   58    28.4 ms CPU/game-s  14u6b 16u6b 16u0b
+  t= 120s  872a0775aa6d8968  ents   58    20.9 ms CPU/game-s  14u6b 16u6b 16u0b
+  t= 130s  70f3839b4ee7d6e1  ents   58    20.0 ms CPU/game-s  14u6b 15u7b 16u0b
+  t= 140s  0a93e3b4448a06ca  ents   59    14.8 ms CPU/game-s  14u7b 14u8b 16u0b
+  t= 150s  1433bb09596a631c  ents   59    17.6 ms CPU/game-s  14u7b 14u8b 16u0b
+  t= 160s  1a25f48f0beb0861  ents   61    25.2 ms CPU/game-s  14u7b 16u8b 16u0b
+  t= 170s  3e1cdadd8ecaa68e  ents   63    24.7 ms CPU/game-s  14u7b 18u8b 16u0b
+  t= 180s  9b304a04c94d0e4e  ents   65    18.5 ms CPU/game-s  14u8b 19u8b 16u0b
+  t= 190s  346fd923f3e92ae9  ents   62    62.7 ms CPU/game-s  10u8b 20u8b 16u0b
+  t= 200s  392452d1295abffb  ents   65    30.6 ms CPU/game-s  10u8b 23u8b 16u0b
+  t= 210s  6da1d0684d7453ce  ents   65    70.2 ms CPU/game-s  10u8b 23u8b 16u0b
+  t= 220s  f6842d5591eff74e  ents   65    62.7 ms CPU/game-s  10u8b 23u8b 16u0b
+  t= 230s  934cab4f02f09395  ents   66    23.2 ms CPU/game-s  11u8b 23u8b 16u0b
+  t= 240s  772ecce29a387422  ents   67    53.1 ms CPU/game-s  11u8b 23u9b 16u0b
+  t= 250s  307b99aee2835906  ents   68    35.6 ms CPU/game-s  11u8b 24u9b 16u0b
+  t= 260s  0b0081aaaae27463  ents   68    51.6 ms CPU/game-s  11u8b 24u9b 16u0b
+  t= 270s  764e9f785c768ea6  ents   69    44.7 ms CPU/game-s  12u8b 24u9b 16u0b
+  t= 280s  7ec0c3f59bd80ec6  ents   69    24.8 ms CPU/game-s  12u8b 24u9b 16u0b
+  t= 290s  c9c58d19e250ad12  ents   69    72.5 ms CPU/game-s  12u8b 24u9b 16u0b
+  t= 300s  8f7a45bc35882a03  ents   70    54.2 ms CPU/game-s  12u8b 24u10b 16u0b
+
+final after 5.0 game-min: 70 entities, 0 projectiles in flight
+  slot 0 US: 12 units, 8 buildings, $163, built 15, lost 4, kills 3
+  slot 1 RU: 24 units, 10 buildings, $336, built 30, lost 3, kills 4
+  slot 2 DW: 16 units, 0 buildings, $0, built 0, lost 0, kills 0
+  sim cost: 40.9 ms of CPU per game-second on average (process CPU time; frozen pathfinding clock)
+  final hash 8f7a45bc35882a03
+
+browser (Chromium, real index.html, no drawing): US vs RU vs DW on Straits of Thunder; map 33cbf75c5c79b96d
+  t=   0s  d4cf5e653309c7af  same
+  t=  10s  b33f57d641fa97d4  same    26.5 ms/game-s in the page
+  t=  20s  d3e947787108aa30  same    20.8 ms/game-s in the page
+  t=  30s  d586dc5b2de20a7f  same    20.6 ms/game-s in the page
+  t=  40s  7b4890e661504116  same    21.9 ms/game-s in the page
+  t=  50s  4ab8c77cd602dfce  same    14.1 ms/game-s in the page
+  t=  60s  f4bbacc31f4e7c36  same    14.1 ms/game-s in the page
+  t=  70s  8e109427d7c543cb  same    13.8 ms/game-s in the page
+  t=  80s  2fbcc9f116348da3  same    15.4 ms/game-s in the page
+  t=  90s  30c3c6e999db9379  same    12.8 ms/game-s in the page
+  t= 100s  1b35cb53e0756a52  same    12.5 ms/game-s in the page
+  t= 110s  5f6af0d59dbc69b0  same    14.3 ms/game-s in the page
+  t= 120s  872a0775aa6d8968  same    12.6 ms/game-s in the page
+  t= 130s  70f3839b4ee7d6e1  same    10.9 ms/game-s in the page
+  t= 140s  0a93e3b4448a06ca  same    11.4 ms/game-s in the page
+  t= 150s  1433bb09596a631c  same    12.0 ms/game-s in the page
+  t= 160s  1a25f48f0beb0861  same    12.5 ms/game-s in the page
+  t= 170s  3e1cdadd8ecaa68e  same    11.1 ms/game-s in the page
+  t= 180s  9b304a04c94d0e4e  same    11.1 ms/game-s in the page
+  t= 190s  346fd923f3e92ae9  same    21.8 ms/game-s in the page
+  t= 200s  392452d1295abffb  same    15.0 ms/game-s in the page
+  t= 210s  6da1d0684d7453ce  same    20.9 ms/game-s in the page
+  t= 220s  f6842d5591eff74e  same    19.6 ms/game-s in the page
+  t= 230s  934cab4f02f09395  same    17.5 ms/game-s in the page
+  t= 240s  772ecce29a387422  same    19.6 ms/game-s in the page
+  t= 250s  307b99aee2835906  same    21.8 ms/game-s in the page
+  t= 260s  0b0081aaaae27463  same    17.9 ms/game-s in the page
+  t= 270s  764e9f785c768ea6  same    19.2 ms/game-s in the page
+  t= 280s  7ec0c3f59bd80ec6  same    15.7 ms/game-s in the page
+  t= 290s  c9c58d19e250ad12  same    37.5 ms/game-s in the page
+  t= 300s  8f7a45bc35882a03  same    36.7 ms/game-s in the page
+peak memory (node + browser, summed RSS): 1501 MB
+sim cost: Node 40.9 ms of CPU per game-second; Chromium 17.7 ms of wall-clock time per game-second in the page
+
+HEADLESS PASS — 31 state hashes identical (Node v22.23.4 vs Chromium), 5.0 game-min, 70 entities at the end
