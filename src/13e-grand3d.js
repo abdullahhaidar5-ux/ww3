@@ -204,7 +204,7 @@ function g3LineColors(){const L=G3.lines;if(!L||!GC)return;const pol=G3.mode==='
   for(const ch of L.land){const fr=GC.prov[ch.i].o!==GC.prov[ch.j].o;
     if(fr){const oc=pol?grNatRgb(GC.prov[ch.i].o):[60,60,60],oc2=pol?grNatRgb(GC.prov[ch.j].o):[60,60,60];
       g3SetLine(L.land_m,ch,.09+oc[0]/255*.2,.09+oc[1]/255*.2,.09+oc[2]/255*.2,.95,2.1,0);g3SetLine(L.cas_m,ch,.99,.97,.9,.28,5.2,0);}
-    else{g3SetLine(L.land_m,ch,.16,.16,.15,.34,1,0);g3SetLine(L.cas_m,ch,1,1,1,0,1,0);}}
+    else{g3SetLine(L.land_m,ch,.12,.11,.1,.7,1.5,0);g3SetLine(L.cas_m,ch,1,1,1,0,1,0);}}
   L.land_m.geometry.attributes.aCol.needsUpdate=L.land_m.geometry.attributes.aW.needsUpdate=true;L.cas_m.geometry.attributes.aCol.needsUpdate=L.cas_m.geometry.attributes.aW.needsUpdate=true;}
 function g3BuildLines(sc){const L={};G3.LU={uRes:{value:new THREE.Vector2(1600,900)},uPx:{value:1}};
   L.land=g3Chains('land');L.sea=g3Chains('sea');L.riv=g3RiverChains();

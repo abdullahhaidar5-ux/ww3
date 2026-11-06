@@ -6,7 +6,8 @@ const GU_RW=1200,GU_RH=600;   // cell raster resolution (half the world size)
 const GU_TERR={d:[222,196,140],m:[138,126,112],f:[150,182,100],u:[168,160,150],j:[72,142,82],s:[226,232,238],c:[176,192,150],r:[140,176,122]};
 function guEl(tag,css,html){return campEl(tag,css,html);}
 function guCols(){grMap();const N=GM_P.length,P=GCM.P;if(!GV.idx){const idx=new Uint16Array(GU_RW*GU_RH),sx=new Float32Array(N),sy=new Float32Array(N);P.forEach(p=>{sx[p.i]=p.x/2;sy[p.i]=p.y/2;});
-    for(let y=0;y<GU_RH;y++)for(let x=0;x<GU_RW;x++){let bi=0,bd=1e12;for(let i=0;i<N;i++){const dx=sx[i]-x,dy=sy[i]-y,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}idx[y*GU_RW+x]=bi;}GV.idx=idx;}
+    for(let y=0;y<GU_RH;y++)for(let x=0;x<GU_RW;x++){let bi=0,bd=1e12;for(let i=0;i<N;i++){const dx=sx[i]-x,dy=sy[i]-y,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}idx[y*GU_RW+x]=bi;}if(typeof GM_REAL!=='undefined'){const bin=atob(GM_REAL);let o=0,k=0;const rd=()=>{let v=0,sh=0,b;do{b=bin.charCodeAt(o++);v|=(b&127)<<sh;sh+=7;}while(b&128);return v;};while(o<bin.length){const v=rd(),run=rd();if(v)idx.fill(v-1,k,k+run);k+=run;}}   // real state/province borders (13f-grandreal.js) override the nearest-seed cells
+GV.idx=idx;}
   return GV.idx;}
 function guRgb(s){const m=/^#([0-9a-f]{6})$/i.exec(s);if(m){const n=parseInt(m[1],16);return [n>>16,(n>>8)&255,n&255];}const h=/hsl\((\d+),(\d+)%,(\d+)%\)/.exec(s);if(h){const H=+h[1]/360,S=+h[2]/100,L=+h[3]/100,f=n=>{const k=(n+H*12)%12,a=S*Math.min(L,1-L);return Math.round(255*(L-a*Math.max(-1,Math.min(k-3,9-k,1))));};return [f(0),f(8),f(4)];}return [140,140,140];}
 function guPaint(){const idx=guCols(),P=GCM.P;if(!GV.img){GV.img=document.createElement('canvas');GV.img.width=GU_RW;GV.img.height=GU_RH;}
