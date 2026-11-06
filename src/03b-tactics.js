@@ -44,14 +44,21 @@ function startDig(u){if(!digCan(u)||u.dig)return;if(G.dug&&G.dug.some(d=>d.k!=='
 function aiDig(u,dt){if(u.order||u.target||u.dig||u.rout>G.t||G.t-(u.mv||-9)<.5){u.idl=0;return;}u.idl=(u.idl||0)+dt;if(u.idl<7||!digCan(u))return;u.idl=-4-(u.id%8);
   let n=0;for(const d of G.dug||[])if(d.team===u.team&&d.k==='fox')n++;if(n<28)startDig(u);}
 // ---- sandbag lines / trench segments laid by a Construction Vehicle along a dragged line ----
-function wallPlan(k,x,y,x2,y2){const sp=k==='trench'?30:25,L=Math.hypot(x2-x,y2-y),n=Math.max(1,Math.min(10,Math.round(L/sp)+1)),a=L<4?0:Math.atan2(y2-y,x2-x),out=[];
+function wallPlan(k,x,y,x2,y2){const sp=k==='trench'?30:25,L=Math.hypot(x2-x,y2-y),n=Math.max(1,Math.min(14,Math.round(L/sp)+1)),a=L<4?0:Math.atan2(y2-y,x2-x),out=[];
   for(let i=0;i<n;i++){const f=n===1?0:i/(n-1);out.push({x:x+(x2-x)*f,y:y+(y2-y)*f,a});}return out;}
 function dozeWall(u,dt){const o=u.order;if(!o||o.type!=='wall')return false;if(!u.wl||!u.wl.length){u.wl=null;u.order=null;return false;}
   const s=u.wl[0],T=G.teams[u.team],C=DUG[s.k];if(!passXY('ground',s.x,s.y)){u.wl.shift();return true;}
   const d=Math.hypot(s.x-u.x,s.y-u.y);if(d>34){u.wb=0;navTo(u,s.x,s.y,dt);return true;}
   if(T.credits<C.cost){u.wn=(u.wn||0)+dt;if(u.wn>6){u.wl=null;u.order=null;if(u.team===ME)log(u.team,'Not enough supplies to finish the line.','w');}return true;}u.wn=0;
-  u.building=true;u.ang=s.a+1.57;u.lastFire=G.t;u.wb=(u.wb||0)+dt;
+  u.building=true;u.ang=s.a+1.57;u.lastFire=G.t;u.wb=(u.wb||0)+dt*(u.kind==='dozer'?1:.65);
   if(u.wb>=C.t){u.wb=0;T.credits-=C.cost;u.wl.shift();dugAdd(u.team,s.k,s.x,s.y,s.a);if(!u.wl.length){u.wl=null;u.order=null;}}return true;}
+// a dragged line: every selected builder (Construction Vehicle or infantry) takes its share of the pieces; a trench that starts or ends
+// near the end of one of ours snaps onto it, so trench lines join into one network
+function trenchSnap(team,x,y){let b=null,bd=46*46;for(const d of G.dug||[]){if(d.k!=='trench'||!ally(d.team,team))continue;const ca=Math.cos(d.a),sa=Math.sin(d.a);
+  for(const s of [-1,1]){const px=d.x+ca*DUG.trench.r*s,py=d.y+sa*DUG.trench.r*s,q=(px-x)**2+(py-y)**2;if(q<bd){bd=q;b=[px,py];}}}return b||[x,y];}
+function wallOrder(team,us,k,x,y,x2,y2){us=us.filter(u=>u&&(u.kind==='dozer'||digCan(u)));if(!us.length)return;if(k==='trench'){const a=trenchSnap(team,x,y),b=trenchSnap(team,x2,y2);x=a[0];y=a[1];x2=b[0];y2=b[1];}
+  us.sort((p,q)=>Math.hypot(p.x-x,p.y-y)-Math.hypot(q.x-x,q.y-y));const pl=wallPlan(k,x,y,x2,y2),n=us.length;
+  us.forEach((u,i)=>{const mine=pl.filter((_,j)=>j%n===i);if(!mine.length)return;u.wl=mine.map(p=>({x:p.x,y:p.y,a:p.a,k}));u.wb=0;u.wn=0;u.dig=null;u.order={type:'wall'};u.target=null;u.path=null;});}
 // ---- vehicle criticals ----
 const CRIT_TXT={1:'TRACKS OUT',2:'TURRET JAMMED',4:'ENGINE FIRE'};
 function critSpd(u){const c=u.crit|0;return !c?1:((c&1)?0:1)*((c&4)?.6:1);}
@@ -79,7 +86,7 @@ function dgPack(T){if(!G.dug)return null;if(T.dgV===G.dugV&&G.t<(T.dgT||0))retur
 function dgApply(L){G.dug=L.map(v=>({id:v[0],x:v[1],y:v[2],k:DUGK[v[3]]||'fox',a:v[4]/100,team:v[5],hp:1,max:1}));G.dugN=G.dug.length;G.dugV=(G.dugV|0)+1;G.dugId=Math.max(G.dugId|0,1);}
 // AI: after the first four minutes an idle Construction Vehicle throws up a sandbag line (or trench) across the approach in front of a base building
 function aiWalls(T,mine){if(T.ai.d<1||T.ai.t%9!==4||T.credits<450||G.t<240)return;let n=0;for(const d of G.dug||[])if(d.team===T.id&&d.k!=='fox')n++;if(n>=14)return;
-  const dz=mine.find(e=>!e.isB&&e.kind==='dozer'&&!e.order&&!e.dead);if(!dz)return;let foe=null,bd=1e12;for(const e of G.ents)if(e.isB&&!e.dead&&e.kind==='hq'&&!ally(e.team,T.id)){const d=(e.x-dz.x)**2+(e.y-dz.y)**2;if(d<bd){bd=d;foe=e;}}if(!foe)return;
+  let dzs=mine.filter(e=>!e.isB&&e.kind==='dozer'&&!e.order&&!e.dead).slice(0,2);if(!dzs.length){dzs=mine.filter(e=>!e.isB&&!e.dead&&!e.order&&!e.target&&!e.dig&&digCan(e)&&G.t-(e.mv||-9)>3).slice(0,4);if(dzs.length<3)return;}const dz=dzs[0];let foe=null,bd=1e12;for(const e of G.ents)if(e.isB&&!e.dead&&e.kind==='hq'&&!ally(e.team,T.id)){const d=(e.x-dz.x)**2+(e.y-dz.y)**2;if(d<bd){bd=d;foe=e;}}if(!foe)return;
   const bs=mine.filter(e=>e.isB&&e.built>=1&&(e.kind==='factory'||e.kind==='barracks'||e.kind==='hq'));if(!bs.length)return;const b=bs[(T.ai.t/9|0)%bs.length];
   const a=Math.atan2(foe.y-b.y,foe.x-b.x),r=b.size/2+80,cx=b.x+Math.cos(a)*r,cy=b.y+Math.sin(a)*r,px=-Math.sin(a)*75,py=Math.cos(a)*75,k=T.ai.d>=2&&T.credits>900?'trench':'sand';
-  act(T.id,{t:'wall',ids:[dz.id],k,x:cx-px,y:cy-py,x2:cx+px,y2:cy+py});}
+  act(T.id,{t:'wall',ids:dzs.map(e=>e.id),k,x:cx-px,y:cy-py,x2:cx+px,y2:cy+py});}
