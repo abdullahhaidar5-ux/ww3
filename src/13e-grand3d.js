@@ -35,7 +35,7 @@ function g3Fields(){if(G3.F)return G3.F;grMap();const W=GT_W,H=GT_H,idx=guCols()
   const px=new Uint8ClampedArray(W*H*4);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,h=Hh[k];
     const hl=Hh[y*W+Math.max(0,x-1)],hr=Hh[y*W+Math.min(W-1,x+1)],hu=Hh[Math.max(0,y-1)*W+x],hd=Hh[Math.min(H-1,y+1)*W+x];
-    const sh=1+Math.max(-.5,Math.min(.55,((hl-hr)*.9+(hu-hd)*.6)*.09));
+    const sh=1;   // relief shading comes from the mesh normals + the detail shader (a baked hillshade was soft at close zoom)
     const n1=g3Fbm(x*.05,y*.05,3)-.5,n2=g3Noise(x*.4,y*.4)-.5;let r=R[k],g=Gc[k],bl=B[k];
     const v=1+n1*.34+n2*.1;r*=v;g*=v;bl*=v;
     if(sw[k]>.3){const s=g3Smooth(.3,.6,sw[k]);r+=(214-r)*s*.8;g+=(222-g)*s*.8;bl+=(230-bl)*s*.8;}
@@ -43,9 +43,12 @@ function g3Fields(){if(G3.F)return G3.F;grMap();const W=GT_W,H=GT_H,idx=guCols()
     if(h>46){const t=g3Smooth(46,60,h);r+=(236-r)*t;g+=(240-g)*t;bl+=(246-bl)*t;}   // snow caps
     const beach=g3Smooth(.5,.58,Ls[k])*(1-g3Smooth(.58,.7,Ls[k]));r+=(214-r)*beach*.55;g+=(198-g)*beach*.55;bl+=(150-bl)*beach*.55;
     const o=k*4;px[o]=r*sh;px[o+1]=g*sh;px[o+2]=bl*sh;px[o+3]=255;}
-  for(const l of GT_RIV)for(let i=0;i+3<l.length;i+=2){let x0=l[i]/2,y0=l[i+1]/2;const x1=l[i+2]/2,y1=l[i+3]/2,n=Math.ceil(Math.hypot(x1-x0,y1-y0));
-    for(let s=0;s<=n;s++){const x=Math.round(x0+(x1-x0)*s/Math.max(1,n)),y=Math.round(y0+(y1-y0)*s/Math.max(1,n));if(x<0||y<0||x>=W||y>=H)continue;const k=y*W+x;if(Ls[k]<.55)continue;const o=k*4;px[o]=px[o]*.35+70*.65;px[o+1]=px[o+1]*.35+130*.65;px[o+2]=px[o+2]*.35+176*.65;}}
-  G3.F={W,H,idx,land,Ls,Lw,mw,Hh,px};return G3.F;}
+  // biome weights for the detail shader (RGBA bytes): rock, snow, sand, vegetation - sampled bilinear, tiny, the sharp part is the tiled detail
+  const dd0=new Float32Array(W*H),vg0=new Float32Array(W*H);for(let k=0;k<W*H;k++){const t=P[idx[k]].t;if(t==='d')dd0[k]=1;else if(t==='f'||t==='j'||t==='r'||t==='c')vg0[k]=1;}
+  const dw=g3Blur(dd0,W,H,6,2),vw=g3Blur(vg0,W,H,6,2),bw=new Uint8Array(W*H*4);
+  for(let k=0;k<W*H;k++){const h=Hh[k],coast=g3Smooth(.4,.8,Ls[k]),rock=Math.max(mw[k]*coast*.55,g3Smooth(24,40,h)),snow=Math.max(sw[k]>.3?g3Smooth(.3,.6,sw[k]):0,g3Smooth(46,60,h)),beach=g3Smooth(.5,.58,Ls[k])*(1-g3Smooth(.62,.8,Ls[k]));
+    const o=k*4;bw[o]=Math.min(255,rock*255);bw[o+1]=Math.min(255,snow*255);bw[o+2]=Math.min(255,Math.max(dw[k],beach)*255);bw[o+3]=Math.min(255,vw[k]*255);}
+  G3.F={W,H,idx,land,Ls,Lw,mw,Hh,px,bw};return G3.F;}
 function g3HeightAt(x,z){const F=G3.F;if(!F)return 0;const fx=Math.max(0,Math.min(F.W-1.001,x/2)),fy=Math.max(0,Math.min(F.H-1.001,z/2)),x0=fx|0,y0=fy|0,tx=fx-x0,ty=fy-y0,H=F.Hh,W=F.W;
   return (H[y0*W+x0]*(1-tx)+H[y0*W+x0+1]*tx)*(1-ty)+(H[(y0+1)*W+x0]*(1-tx)+H[(y0+1)*W+x0+1]*tx)*ty;}
 // ---- overlay texture: soft owner tint + subtle borders (political), or the data of the chosen map mode
@@ -70,16 +73,14 @@ function g3PaintOverlay(){const F=G3.F,W=F.W,H=F.H,idx=F.idx,P=GCM.P,Ls=F.Ls;if(
   const glow=pol?g3Blur(bord,W,H,6,2):null;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,i=idx[k],p=P[i],o=k*4;let r=0,g=0,b=0,a=0;
     const R=x+1<W?idx[k+1]:i,D=y+1<H?idx[k+W]:i;
-    if(p.sea){for(const j of [R,D])if(j!==i&&P[j].sea){r=150;g=190;b=225;a=Math.max(a,34);}
-      if(Ls[k]>.3)a=0;}
+    if(p.sea){a=0;}
     else if(Ls[k]>.5){const c=col[i],ed=g3Smooth(.5,.64,Ls[k]);let t=c[3];
       if(pol)t=.1+Math.min(.5,glow[k]*1.9);
       if(G3.mode==='culture'&&GC.prov[i].o!==GC.prov[i].o0&&((x+y)&7)<3)t*=.3;
       r=c[0];g=c[1];b=c[2];a=t*255*ed;
-      for(const j of [R,D]){if(j===i||!P[j].land)continue;const q=GC.prov[i].o!==GC.prov[j].o;
-        if(q){const oc=pol?grNatRgb(GC.prov[i].o):[40,40,40];r=oc[0]*.35;g=oc[1]*.35;b=oc[2]*.35;a=Math.max(a,225*ed);}
-        else if(a<70){r=r*.5;g=g*.5;b=b*.5;a=Math.max(a,52*ed);}}}
+      }
     d[o]=r;d[o+1]=g;d[o+2]=b;d[o+3]=a;}
+  if(G3.lines)g3LineColors();
   return d;}
 function g3IdxPixels(){const F=G3.F,n=F.W*F.H,d=new Uint8Array(n*4);for(let k=0;k<n;k++){const i=F.idx[k];d[k*4]=i&255;d[k*4+1]=i>>8;d[k*4+3]=255;}return d;}
 // ---- geometry helpers
@@ -146,12 +147,96 @@ function g3BuildForests(grp){const F=G3.F,A=G3_GEO(),T=g3Towns(),W=F.W,P=GCM.P,L
     a.forEach((r,i)=>{M.compose(new THREE.Vector3(r[0],r[1],r[2]),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r[4]),new THREE.Vector3(r[3],r[3]*(.9+g3Hash(i,3)*.3),r[3]));m.setMatrixAt(i,M);const v=.8+g3Hash(i,k.length)*.4;col.setRGB(v,v*(.95+g3Hash(i,5)*.1),v);m.setColorAt(i,col);});m.instanceMatrix.needsUpdate=true;grp.add(m);}
   G3.trees=n;}
 // ---- scene
+
+// ---- grandsharp (Abdullah 2026-11-06 13:54 "sharpen the graphics in the grand map by a lot") --------------------------------
+// Detail textures (tileable, generated here at start: 4 channels) + real line geometry for borders/rivers + adaptive pixel ratio.
+function g3PNoise(x,y,per){const xi=Math.floor(x),yi=Math.floor(y),fx=x-xi,fy=y-yi,u=fx*fx*(3-2*fx),v=fy*fy*(3-2*fy),m=q=>((q%per)+per)%per;
+  const h=(p,q)=>g3Hash(m(p)+per*7,m(q)),a=h(xi,yi),b=h(xi+1,yi),c=h(xi,yi+1),d=h(xi+1,yi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
+function g3PFbm(x,y,per,o){let s=0,a=.5,n=0,f=1;for(let i=0;i<o;i++){s+=a*g3PNoise(x*f/per*per,y*f,per*f);n+=a;f*=2;a*=.5;}return s/n;}
+function g3DetailTex(){const n=512,d=new Uint8Array(n*n*4),K=8;   // K = base lattice cells per tile
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){const u=x/n*K,v=y/n*K,o=(y*n+x)*4;
+    const f=g3PFbm(u,v,K,5);                                   // R: soft mottling / grass / field patches
+    const r=1-Math.abs(2*g3PFbm(u+3.1,v+1.7,K,5)-1);           // G: ridged rock + strata
+    const sd=g3PFbm(u*.35+9,v*1.9+4,K,4);                       // B: sand ripples (stretched, then thresholded into crests)
+    const rip=.5+.5*Math.sin((sd*14+u*.8)*3.14159);
+    const gr=g3PNoise(u*6,v*6,K*6)*.6+g3PNoise(u*13,v*13,K*13)*.4;   // A: fine grain
+    d[o]=Math.min(255,f*255*1.15);d[o+1]=Math.min(255,r*r*255*1.25);d[o+2]=Math.min(255,(rip*.7+sd*.3)*255);d[o+3]=Math.min(255,gr*255);}
+  const t=new THREE.DataTexture(d,n,n);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.generateMipmaps=true;t.anisotropy=16;t.needsUpdate=true;return t;}
+// province-boundary + river polylines traced from the 1200x600 province index, smoothed, drawn as screen-constant-width strips
+function g3Chains(kind){const F=G3.F,W=F.W,H=F.H,idx=F.idx,P=GCM.P,Ls=F.Ls,W1=W+1,E=[];   // E: [nodeA,nodeB,i,j]
+  for(let y=0;y<H-1;y++)for(let x=0;x<W-1;x++){const k=y*W+x,i=idx[k];
+    for(let q=0;q<2;q++){const nb=q?k+W:k+1,j=idx[nb];if(j===i)continue;
+      if(kind==='land'){if(!P[i].land||!P[j].land||Ls[k]<.5||Ls[nb]<.5)continue;}else{if(!P[i].sea||!P[j].sea||Ls[k]>.3||Ls[nb]>.3)continue;}
+      E.push(q?[(y+1)*W1+x,(y+1)*W1+x+1,i,j]:[y*W1+x+1,(y+1)*W1+x+1,i,j]);}}
+  const adj=new Map();E.forEach((e,n)=>{for(const c of [e[0],e[1]]){let a=adj.get(c);if(!a)adj.set(c,a=[]);a.push(n);}});
+  const key=e=>Math.min(e[2],e[3])*4096+Math.max(e[2],e[3]),used=new Uint8Array(E.length),out=[];
+  const stop=(c,from)=>{const a=adj.get(c);return a.length!==2||key(E[a[0]])!==key(E[a[1]]);};
+  const walk=(c0,n0)=>{const pts=[c0],e0=E[n0];let n=n0,c=c0;for(;;){used[n]=1;const e=E[n];c=e[0]===c?e[1]:e[0];pts.push(c);if(stop(c))break;const a=adj.get(c),nn=a[0]===n?a[1]:a[0];if(used[nn])break;n=nn;}return {pts,i:e0[2],j:e0[3]};};
+  for(const [c,a] of adj)if(stop(c))for(const n of a)if(!used[n])out.push(walk(c,n));
+  for(let n=0;n<E.length;n++)if(!used[n])out.push(walk(E[n][0],n));
+  for(const ch of out){let q=ch.pts.map(c=>[(c%W1)*2,Math.floor(c/W1)*2]);const closed=ch.pts[0]===ch.pts[ch.pts.length-1];
+    for(let pass=0;pass<3;pass++){const r=q.map((p,a)=>{if(!closed&&(a<2||a>q.length-3))return p;let sx=0,sz=0;for(let d=-2;d<=2;d++){const t=q[(a+d+q.length-1)%(q.length-(closed?1:0)||1)]||q[Math.max(0,Math.min(q.length-1,a+d))];sx+=t[0];sz+=t[1];}return [sx/5,sz/5];});if(closed)r[r.length-1]=r[0];q=r;}
+    ch.xy=q.filter((p,a)=>a%2===0||a===q.length-1);}
+  return out;}
+function g3RiverChains(){const out=[],Ls=G3.F.Ls,W=G3.F.W;for(const l of GT_RIV){let q=[];for(let i=0;i+1<l.length;i+=2)q.push([l[i],l[i+1]]);
+    for(let it=0;it<2;it++){const r=[q[0]];for(let a=0;a<q.length-1;a++){const A=q[a],B=q[a+1];r.push([A[0]*.75+B[0]*.25,A[1]*.75+B[1]*.25],[A[0]*.25+B[0]*.75,A[1]*.25+B[1]*.75]);}r.push(q[q.length-1]);q=r;}
+    out.push({xy:q,i:-1,j:-1});}return out;}
+function g3MeshH(x,z){const gx=Math.max(0,Math.min(599.99,x/4)),gz=Math.max(0,Math.min(299.99,z/4)),i=gx|0,j=gz|0,tx=gx-i,tz=gz-j,h=(a,b)=>g3HeightAt(a*4,b*4);
+  return h(i,j)*(1-tx)*(1-tz)+h(i+1,j)*tx*(1-tz)+h(i,j+1)*(1-tx)*tz+h(i+1,j+1)*tx*tz;}
+function g3LineMat(){return new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,uniforms:G3.LU,
+  vertexShader:`uniform vec2 uRes;uniform float uPx;attribute vec3 aP0,aP1;attribute vec2 aC;attribute vec4 aCol;attribute vec2 aW;varying vec4 vCol;varying float vD,vH;
+  void main(){vec4 c0=projectionMatrix*viewMatrix*vec4(aP0,1.),c1=projectionMatrix*viewMatrix*vec4(aP1,1.);vec2 s0=c0.xy/c0.w*uRes*.5,s1=c1.xy/c1.w*uRes*.5,d=s1-s0;float l=length(d);d=l>1e-4?d/l:vec2(1.,0.);vec2 n=vec2(-d.y,d.x);
+    vec3 pm=mix(aP0,aP1,aC.x);float dist=length(cameraPosition-pm);float hw=max(aW.x*uPx,aW.y*uRes.y/(.65*dist)+.0)*.5;hw=max(hw,.5*uPx);
+    vec4 c=mix(c0,c1,aC.x);float pad=hw+.75;vec2 off=n*aC.y*pad+d*(aC.x*2.-1.)*pad;c.xy+=off/(uRes*.5)*c.w;
+    vD=aC.y*pad;vH=hw;vCol=aCol;vCol.a*=1.-smoothstep(2600.,6800.,dist);gl_Position=c;}`,
+  fragmentShader:`varying vec4 vCol;varying float vD,vH;void main(){float cv=clamp(vH+.5-abs(vD),0.,1.);gl_FragColor=vec4(vCol.rgb,vCol.a*cv);if(gl_FragColor.a<.01)discard;}`});}
+// build one strip mesh from chains; col(chain)->[r,g,b,a,wpx,wworld,lift]
+function g3LineMesh(chains,sea,lift,casing){let ns=0;for(const c of chains)ns+=Math.max(0,c.xy.length-1);
+  const P0=new Float32Array(ns*12),P1=new Float32Array(ns*12),C=new Float32Array(ns*8),Col=new Float32Array(ns*16),Wd=new Float32Array(ns*8),ix=new Uint32Array(ns*6),rng=[];let s=0;
+  for(const ch of chains){const a0=s;for(let a=0;a+1<ch.xy.length;a++,s++){const A=ch.xy[a],B=ch.xy[a+1],ya=(sea?.12:Math.max(.2,g3MeshH(A[0],A[1])))+lift,yb=(sea?.12:Math.max(.2,g3MeshH(B[0],B[1])))+lift;
+    for(let v=0;v<4;v++){const o=(s*4+v)*3;P0[o]=A[0];P0[o+1]=ya;P0[o+2]=A[1];P1[o]=B[0];P1[o+1]=yb;P1[o+2]=B[1];C[(s*4+v)*2]=v>>1;C[(s*4+v)*2+1]=(v&1)?1:-1;}
+    const b=s*4;ix.set([b,b+1,b+2,b+2,b+1,b+3],s*6);}rng.push([a0,s]);ch.r=[a0,s];}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P0,3));g.setAttribute('aP0',new THREE.BufferAttribute(P0,3));g.setAttribute('aP1',new THREE.BufferAttribute(P1,3));g.setAttribute('aC',new THREE.BufferAttribute(C,2));
+  g.setAttribute('aCol',new THREE.BufferAttribute(Col,4));g.setAttribute('aW',new THREE.BufferAttribute(Wd,2));g.setIndex(new THREE.BufferAttribute(ix,1));g.boundingSphere=new THREE.Sphere(new THREE.Vector3(1200,0,600),3000);
+  const m=new THREE.Mesh(g,g3LineMat());m.frustumCulled=false;m.renderOrder=2;return m;}
+function g3SetLine(mesh,ch,r,g,b,a,wpx,wwd){const A=mesh.geometry.attributes,Co=A.aCol.array,Wd=A.aW.array;for(let s=ch.r[0];s<ch.r[1];s++)for(let v=0;v<4;v++){const o=(s*4+v)*4;Co[o]=r;Co[o+1]=g;Co[o+2]=b;Co[o+3]=a;Wd[(s*4+v)*2]=wpx;Wd[(s*4+v)*2+1]=wwd;}}
+function g3LineColors(){const L=G3.lines;if(!L||!GC)return;const pol=G3.mode==='political';
+  for(const ch of L.land){const fr=GC.prov[ch.i].o!==GC.prov[ch.j].o;
+    if(fr){const oc=pol?grNatRgb(GC.prov[ch.i].o):[60,60,60],oc2=pol?grNatRgb(GC.prov[ch.j].o):[60,60,60];
+      g3SetLine(L.land_m,ch,.09+oc[0]/255*.2,.09+oc[1]/255*.2,.09+oc[2]/255*.2,.95,2.1,0);g3SetLine(L.cas_m,ch,.99,.97,.9,.28,5.2,0);}
+    else{g3SetLine(L.land_m,ch,.12,.11,.1,.7,1.5,0);g3SetLine(L.cas_m,ch,1,1,1,0,1,0);}}
+  L.land_m.geometry.attributes.aCol.needsUpdate=L.land_m.geometry.attributes.aW.needsUpdate=true;L.cas_m.geometry.attributes.aCol.needsUpdate=L.cas_m.geometry.attributes.aW.needsUpdate=true;}
+function g3BuildLines(sc){const L={};G3.LU={uRes:{value:new THREE.Vector2(1600,900)},uPx:{value:1}};
+  L.land=g3Chains('land');L.sea=g3Chains('sea');L.riv=g3RiverChains();
+  L.land_m=g3LineMesh(L.land,false,.45);L.cas_m=g3LineMesh(L.land,false,.4);L.cas_m.renderOrder=1;
+  L.sea_m=g3LineMesh(L.sea,true,.2);for(const ch of L.sea)g3SetLine(L.sea_m,ch,.6,.78,.9,.2,1,0);
+  L.riv_m=g3LineMesh(L.riv,false,.35);for(const ch of L.riv)g3SetLine(L.riv_m,ch,.27,.5,.69,.95,1.2,1.15);
+  for(const m of [L.sea_m,L.cas_m,L.land_m,L.riv_m])sc.add(m);
+  G3.lines=L;g3LineColors();L.sea_m.geometry.attributes.aCol.needsUpdate=L.sea_m.geometry.attributes.aW.needsUpdate=L.riv_m.geometry.attributes.aCol.needsUpdate=L.riv_m.geometry.attributes.aW.needsUpdate=true;}
+// render quality: High (default) = pixel ratio up to 2, drops if the frame rate falls under 50; Ultra = up to 2.5, never drops below 1.5
+function g3Quality(){return SET.g3q==='ultra'?'ultra':'high';}
+function g3SetRatio(r){if(!G3.R)return;G3.ratio=r;G3.R.setPixelRatio(r);g3Resize();}
+function g3ApplyQuality(){if(!G3.R)return;const u=g3Quality()==='ultra',dpr=window.devicePixelRatio||1;G3.maxRatio=Math.max(1,Math.min(u?2.5:2,dpr));G3.minRatio=u?Math.min(1.5,G3.maxRatio):1;g3SetRatio(G3.maxRatio);G3.fpsN=0;G3.fpsT=0;}
+function g3Adapt(dt){if(!G3.R||dt>.25)return;G3.fpsT=(G3.fpsT||0)+dt;G3.fpsN=(G3.fpsN||0)+1;if(G3.fpsN<90)return;const fps=G3.fpsN/G3.fpsT;G3.fpsN=0;G3.fpsT=0;
+  if(fps<50&&G3.ratio>G3.minRatio+.01)g3SetRatio(Math.max(G3.minRatio,G3.ratio-.25));}
 function g3NoiseTex(){const n=128,d=new Uint8Array(n*n*4);for(let y=0;y<n;y++)for(let x=0;x<n;x++){const v=Math.round(255*(.6*g3Noise(x*.25,y*.25)+.4*g3Noise(x*.7,y*.7)));const o=(y*n+x)*4;d[o]=d[o+1]=d[o+2]=v;d[o+3]=255;}
   const t=new THREE.DataTexture(d,n,n);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.generateMipmaps=true;t.needsUpdate=true;return t;}
 function g3Tex(data,w,h,mip,nearest){const t=new THREE.DataTexture(data,w,h,THREE.RGBAFormat);t.flipY=false;t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;
-  if(nearest){t.minFilter=t.magFilter=THREE.NearestFilter;t.generateMipmaps=false;}else{t.magFilter=THREE.LinearFilter;t.minFilter=mip?THREE.LinearMipmapLinearFilter:THREE.LinearFilter;t.generateMipmaps=!!mip;t.anisotropy=8;}t.needsUpdate=true;return t;}
+  if(nearest){t.minFilter=t.magFilter=THREE.NearestFilter;t.generateMipmaps=false;}else{t.magFilter=THREE.LinearFilter;t.minFilter=mip?THREE.LinearMipmapLinearFilter:THREE.LinearFilter;t.generateMipmaps=!!mip;t.anisotropy=G3.aniso||8;}t.needsUpdate=true;return t;}
+const G3_DETAIL=`vec3 g3detail(vec3 c){vec2 wp=vWp.xz;vec4 bw=texture2D(uBW,vG3);float rock=bw.r,snow=bw.g,sand=bw.b,veg=bw.a,ls=texture2D(uSea,vG3).g;
+  vec2 p1=wp/20.,p2=wp/91.+.37,p3=wp/540.+.11;vec4 a1=texture2D(uDet,p1),a2=texture2D(uDet,p2),a3=texture2D(uDet,p3);
+  float e=1./512.;vec2 L=vec2(-.84,-.54);
+  float h1=mix(a1.r,a1.g,rock),h1x=mix(texture2D(uDet,p1+vec2(e,0.)).r,texture2D(uDet,p1+vec2(e,0.)).g,rock),h1z=mix(texture2D(uDet,p1+vec2(0.,e)).r,texture2D(uDet,p1+vec2(0.,e)).g,rock);
+  float h2=mix(a2.r,a2.g,rock),h2x=mix(texture2D(uDet,p2+vec2(e,0.)).r,texture2D(uDet,p2+vec2(e,0.)).g,rock),h2z=mix(texture2D(uDet,p2+vec2(0.,e)).r,texture2D(uDet,p2+vec2(0.,e)).g,rock);
+  float sl=dot(vec2(h1x-h1,h1z-h1),L)*1.1+dot(vec2(h2x-h2,h2z-h2),L)*.9;sl*=(.8+rock*1.4+sand*.5)*(1.-snow*.55)*14.;
+  float lum=1.+(a3.r-.5)*.30+(a2.r-.5)*.30+(a1.a-.5)*.32*(1.-snow*.6);
+  lum+=((a2.g-.5)*.65+(a1.g-.5)*.55)*rock;lum+=((a1.b-.5)*.45+(a2.b-.5)*.25)*sand*(1.-rock);
+  c*=clamp(lum*(1.-clamp(sl,-.45,.45)),.45,1.6);
+  c=mix(c,c*vec3(.86,1.04,.8),veg*(a2.r-.3)*.8);                        // patchy field / grass tint
+  float wet=smoothstep(.5,.56,ls)*(1.-smoothstep(.56,.7,ls));c*=1.-.2*wet;   // damp shoreline
+  return c;}`;
 function g3Init(cv){g3Dispose();let R;try{R=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});}catch(e){return false;}
-  if(!R.getContext())return false;R.outputColorSpace=THREE.LinearSRGBColorSpace;R.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));G3.R=R;G3.cv=cv;
+  if(!R.getContext())return false;R.outputColorSpace=THREE.LinearSRGBColorSpace;G3.R=R;G3.cv=cv;G3.aniso=Math.min(16,R.capabilities.getMaxAnisotropy?R.capabilities.getMaxAnisotropy():8);
   const F=g3Fields(),W=F.W,H=F.H,sc=new THREE.Scene(),haze=0x9db8c9;sc.background=new THREE.Color(haze);sc.fog=new THREE.Fog(haze,2600,6800);G3.sc=sc;
   G3.cam=new THREE.PerspectiveCamera(36,1.6,8,9000);G3.cc=Object.assign({},G3.camera);G3.time=0;G3.last=0;G3.keys.clear();G3.pos=new Map();G3.arm=new Map();G3.sig='';
   sc.add(new THREE.HemisphereLight(0xdbe8f4,0x8a7a5e,1.75));const sun=new THREE.DirectionalLight(0xfff0d2,1.7);sun.position.set(-1.1,1.6,-.7);sc.add(sun);
@@ -162,9 +247,9 @@ function g3Init(cv){g3Dispose();let R;try{R=new THREE.WebGLRenderer({canvas:cv,a
   let n=0;for(let j=0;j<GY;j++)for(let i=0;i<GX;i++){const a=j*(GX+1)+i,b=a+1,c=a+GX+1,d=c+1;ix[n++]=a;ix[n++]=c;ix[n++]=b;ix[n++]=b;ix[n++]=c;ix[n++]=d;}
   const tg=new THREE.BufferGeometry();tg.setAttribute('position',new THREE.BufferAttribute(pos,3));tg.setAttribute('uv',new THREE.BufferAttribute(uv,2));tg.setIndex(new THREE.BufferAttribute(ix,1));tg.computeVertexNormals();
   g3PaintOverlay();
-  const tGround=g3Tex(new Uint8Array(F.px.buffer),W,H,true),tOv=g3Tex(G3.ov,W,H,true),tIdx=g3Tex(g3IdxPixels(),W,H,false,true),tDet=g3NoiseTex();G3.tOv=tOv;
+  const tGround=g3Tex(new Uint8Array(F.px.buffer),W,H,true),tOv=g3Tex(G3.ov,W,H,true),tIdx=g3Tex(g3IdxPixels(),W,H,false,true),tDet=g3DetailTex(),tBW=g3Tex(F.bw,W,H,true);tDet.anisotropy=G3.aniso||8;G3.tOv=tOv;
   const sd=new Uint8Array(W*H*4);for(let k=0;k<W*H;k++){sd[k*4]=Math.min(255,F.Lw[k]*255);sd[k*4+1]=Math.min(255,F.Ls[k]*255);sd[k*4+3]=255;}const tSea=g3Tex(sd,W,H,false);
-  const U={uOv:{value:tOv},uIdx:{value:tIdx},uDet:{value:tDet},uSel:{value:-1},uHov:{value:-1},uRim:{value:2},uTime:{value:0},uSea:{value:tSea}};G3.U=U;
+  const U={uOv:{value:tOv},uIdx:{value:tIdx},uDet:{value:tDet},uSel:{value:-1},uHov:{value:-1},uRim:{value:2},uTime:{value:0},uSea:{value:tSea},uBW:{value:tBW}};G3.U=U;
   const rim=`float g3id(vec2 u){vec4 t=texture2D(uIdx,u);return floor(t.r*255.+.5)+256.*floor(t.g*255.+.5);}
     float g3m(vec2 uv,float id){vec2 e=vec2(uRim*.7/1200.,uRim*.7/600.);float m=0.;
       m+=(g3id(uv)==id?4.:0.);m+=(g3id(uv+vec2(e.x,0.))==id?2.:0.);m+=(g3id(uv-vec2(e.x,0.))==id?2.:0.);m+=(g3id(uv+vec2(0.,e.y))==id?2.:0.);m+=(g3id(uv-vec2(0.,e.y))==id?2.:0.);
@@ -175,9 +260,9 @@ function g3Init(cv){g3Dispose();let R;try{R=new THREE.WebGLRenderer({canvas:cv,a
       return c;}`;
   const tm=new THREE.MeshLambertMaterial({map:tGround});
   tm.onBeforeCompile=s=>{Object.assign(s.uniforms,U);
-    s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vG3;').replace('#include <uv_vertex>','#include <uv_vertex>\nvG3=uv;');
-    s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vG3;uniform sampler2D uOv,uIdx,uDet;uniform float uSel,uHov,uRim;\n'+rim)
-      .replace('#include <map_fragment>','#include <map_fragment>\n vec4 ov=texture2D(uOv,vG3);diffuseColor.rgb=mix(diffuseColor.rgb,ov.rgb,ov.a);diffuseColor.rgb*=.8+.4*texture2D(uDet,vG3*vec2(160.,80.)).r;diffuseColor.rgb=g3rim(diffuseColor.rgb,vG3);');};
+    s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vG3;varying vec3 vWp;').replace('#include <uv_vertex>','#include <uv_vertex>\nvG3=uv;vWp=(modelMatrix*vec4(position,1.)).xyz;');
+    s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vG3;varying vec3 vWp;uniform sampler2D uOv,uIdx,uDet,uBW,uSea;uniform float uSel,uHov,uRim;\n'+rim+G3_DETAIL)
+      .replace('#include <map_fragment>','#include <map_fragment>\n diffuseColor.rgb=g3detail(diffuseColor.rgb);vec4 ov=texture2D(uOv,vG3);diffuseColor.rgb=mix(diffuseColor.rgb,ov.rgb,ov.a);diffuseColor.rgb=g3rim(diffuseColor.rgb,vG3);');};
   const terr=new THREE.Mesh(tg,tm);sc.add(terr);G3.terr=terr;
   // sea
   const sm=new THREE.ShaderMaterial({uniforms:U,transparent:false,vertexShader:'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
@@ -188,18 +273,19 @@ function g3Init(cv){g3Dispose();let R;try{R=new THREE.WebGLRenderer({canvas:cv,a
       vec2 p=vW.xz;float w=sin(p.x*.31+uTime*1.1)+sin(p.y*.47-uTime*.8)+sin((p.x+p.y)*.19+uTime*.6)+sin((p.x-p.y)*.63-uTime*1.3)*.5;c*=1.+w*.028;
       vec3 V=normalize(cameraPosition-vW);vec3 N=normalize(vec3(cos(p.x*.31+uTime*1.1)*.05+cos((p.x-p.y)*.63-uTime*1.3)*.03,1.,cos(p.y*.47-uTime*.8)*.05+cos((p.x+p.y)*.19+uTime*.6)*.03));
       vec3 L=normalize(vec3(-.55,.8,-.4));c+=vec3(1.,.95,.8)*pow(max(dot(reflect(-L,N),V),0.),70.)*.45;
-      float foam=smoothstep(.36,.49,s.g)*(1.-smoothstep(.49,.6,s.g));c=mix(c,vec3(.92,.97,1.),foam*(.55+.35*sin(uTime*1.6+p.x*.4+p.y*.3)));
+      float fw=fwidth(s.g)+.004;float foam=smoothstep(.36,.49,s.g)*(1.-smoothstep(.49,.6,s.g));c=mix(c,vec3(.92,.97,1.),foam*.35*(.6+.4*sin(uTime*1.6+p.x*.4+p.y*.3)));
+      float crest=1.-smoothstep(fw*.6,fw*1.8,abs(s.g-(.52+.02*sin(uTime*.9+p.x*.2+p.y*.17))));c=mix(c,vec3(.96,.99,1.),crest*.8);   // crisp shoreline foam line, constant width on screen
       if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){vec4 ov=texture2D(uOv,cu);c=mix(c,ov.rgb,ov.a*.55);c=g3rimS(c,cu);}
       float dist=length(cameraPosition-vW);c=mix(c,vec3(.616,.722,.788),smoothstep(2600.,6800.,dist));gl_FragColor=vec4(c,1.);}`});
-  const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);
+  const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);
   const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);G3.static=grp;
   G3.ents=new THREE.Group();sc.add(G3.ents);G3.arrows=new THREE.Group();sc.add(G3.arrows);
   G3.ringM=new THREE.Mesh(new THREE.RingGeometry(.9,1.2,48).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffe27a,transparent:true,opacity:.9,depthTest:false}));G3.ringM.renderOrder=5;G3.ringM.visible=false;sc.add(G3.ringM);
-  g3UI();G3.miniDirty=true;g3Resize();
+  g3UI();G3.miniDirty=true;g3ApplyQuality();
   if(!G3.raf)G3.raf=requestAnimationFrame(g3Frame);return true;}
 function g3Dispose(){if(G3.raf){cancelAnimationFrame(G3.raf);G3.raf=0;}if(G3.sc){G3.sc.traverse(o=>{if(o.geometry&&o.geometry!==undefined&&!Object.values(G3.geo||{}).includes(o.geometry))o.geometry.dispose();});}
   if(G3.R){try{G3.R.dispose();G3.R.forceContextLoss();}catch(e){}}G3.R=null;G3.sc=null;G3.cam=null;G3.cv=null;G3.arm=new Map();G3.matLit=null;G3.tOv=null;}
-function g3Resize(){if(!G3.R||!GV.cv)return;const w=GV.w||GV.cv.clientWidth||800,h=GV.h||GV.cv.clientHeight||500;G3.R.setSize(w,h,false);GV.cv.style.width=w+'px';GV.cv.style.height=h+'px';G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.moved=true;}
+function g3Resize(){if(!G3.R||!GV.cv)return;const w=GV.w||GV.cv.clientWidth||800,h=GV.h||GV.cv.clientHeight||500;G3.R.setSize(w,h,false);if(G3.LU){const b=G3.R.getDrawingBufferSize(new THREE.Vector2());G3.LU.uRes.value.copy(b);G3.LU.uPx.value=G3.R.getPixelRatio();}GV.cv.style.width=w+'px';GV.cv.style.height=h+'px';G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.moved=true;}
 // ---- armies: one soldier (the general) with a big national flag; a ship with a flag for armies at sea
 function g3Uniform(o){const c=grNatRgb(o);return [Math.min(1,(c[0]*.5+90)/255),Math.min(1,(c[1]*.5+88)/255),Math.min(1,(c[2]*.45+66)/255)];}
 function g3FigGeo(o){const key='fig'+o;G3.figs=G3.figs||{};if(G3.figs[key])return G3.figs[key];const u=g3Uniform(o),dk=u.map(v=>v*.62),sk=[.82,.62,.48],cyl=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s);
@@ -288,6 +374,7 @@ function g3UI(){g3Css();const w=document.getElementById('gMapWrap');if(!w)return
   const mk=(t,tip,fn,cls)=>{const b=guEl('button','',t);b.type='button';b.title=tip;if(cls)b.className=cls;b.onclick=fn;bt.appendChild(b);return b;};
   mk('✉','Last turn report',()=>g3News(true));mk('⌖','Centre on your capital (Home)',()=>{const m=GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);});
   mk('☰','Show / hide the province panel',()=>{const s=document.getElementById('gSide');if(s){s.style.display=s.style.display==='none'?'flex':'none';setTimeout(guResize,30);}});
+  const qb=mk(g3Quality()==='ultra'?'✦✦':'✦','Grand map quality: High (default) / Ultra (sharper, heavier)',()=>{SET.g3q=g3Quality()==='ultra'?'high':'ultra';try{saveSet();}catch(e){}qb.textContent=g3Quality()==='ultra'?'✦✦':'✦';g3ApplyQuality();g3News&&0;});
   G3.endB=mk('▶','End turn (Enter)',guEndTurn,'end');
   const mc=document.createElement('canvas');mc.id='g3mini';mc.width=240*2;mc.height=120*2;mc.style.width='240px';mc.style.height='120px';u.appendChild(mc);G3.mc=mc;
   const mm=ev=>{const r=mc.getBoundingClientRect();G3.camera.x=Math.max(0,Math.min(2400,(ev.clientX-r.left)/240*2400));G3.camera.z=Math.max(0,Math.min(1200,(ev.clientY-r.top)/120*1200));};
@@ -350,7 +437,7 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
     if(d<1700&&(d<620||(d<1000&&(big||p.tw>=3))||(d<1700&&p.cap))){const tw=g3Towns().find(t=>t.pi===b.pi),x=tw?tw.x:p.x,z=tw?tw.z:p.y;q=proj(x,g3HeightAt(x,z)+9+(p.cap?3:0),z);}
     if(q){const key=Math.floor(q[0]/130)+'_'+Math.floor(q[1]/30);if(occ.has(key))q=null;else occ.add(key);}
     if(!q){vis(b.el,false);continue;}const own=GC.nat[st.o]&&GC.nat[st.o].cap===b.pi;
-    const html='<i style="background:'+grNat(st.o).color+'"></i>'+(own?'★ ':'')+p.n+(GC.me&&st.o===GC.me&&st.un>55?' <span style="color:#ff8d7c">!</span>':'');if(b.h!==html){b.h=html;b.el.innerHTML=html;}
+    const html='<i style="background:'+grNat(st.o).color+'"></i>'+(own?'★ ':'')+p.n+(GC.me&&st.o===GC.me&&st.un>55?' <span style="color:#ff8d7c">!</span>':'')+geIcons(b.pi);if(b.h!==html){b.h=html;b.el.innerHTML=html;}
     put(b.el,q);vis(b.el,true);}
   for(const s of G3.sl){const p=GCM.P[s.pi],f=s.ck?d<1500:d<650;let q=f?proj(p.x,1,p.y):null;if(!q){vis(s.el,false);continue;}putC(s.el,q);vis(s.el,true);}
   // nation names across the land when zoomed out
@@ -367,7 +454,7 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
   for(const [id,pl] of G3.pl)if(!G3.arm.has(id)){pl.remove();G3.pl.delete(id);}}
 function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!document.body.contains(GV.cv)||!GC){if(!GV.cv||!document.body.contains(GV.cv))g3Dispose();return;}
   const scr=document.getElementById('grandScreen');if(!scr||scr.style.display==='none'){G3.last=0;return;}
-  const dt=G3.last?Math.min(.1,(ts-G3.last)/1000):.016;G3.last=ts;G3.time+=dt;
+  const dt=G3.last?Math.min(.1,(ts-G3.last)/1000):.016;G3.last=ts;G3.time+=dt;g3Adapt(dt);
   // keys
   const c=G3.camera,K=G3.keys;if(K.size&&!document.getElementById('gModal')){const sp=c.d*.9*dt,sy=Math.sin(c.yaw),cy=Math.cos(c.yaw);let fx=0,fz=0;if(K.has('w')||K.has('arrowup'))fz-=1;if(K.has('s')||K.has('arrowdown'))fz+=1;if(K.has('a')||K.has('arrowleft'))fx-=1;if(K.has('d')||K.has('arrowright'))fx+=1;
     c.x=Math.max(0,Math.min(2400,c.x+(fx*cy+fz*sy)*sp));c.z=Math.max(0,Math.min(1200,c.z+(-fx*sy+fz*cy)*sp));if(K.has('q'))c.yaw+=dt*1.2;if(K.has('e'))c.yaw-=dt*1.2;if(K.has('r'))c.pitch=Math.min(1.3,c.pitch+dt*.8);if(K.has('f'))c.pitch=Math.max(.45,c.pitch-dt*.8);if(K.has('+')||K.has('='))c.d*=1-dt*1.5;if(K.has('-'))c.d*=1+dt*1.5;}
@@ -391,4 +478,4 @@ if(!window._g3Keys){window._g3Keys=1;const ok=ev=>{const t=ev.target&&ev.target.
   addEventListener('keydown',ev=>{if(!ok(ev)||ev.ctrlKey||ev.metaKey||ev.altKey)return;const k=ev.key.toLowerCase();if('wasdqerf+-='.includes(k)&&k.length===1||k.startsWith('arrow'))G3.keys.add(k);if(k==='home'){const m=GC&&GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);}});
   addEventListener('keyup',ev=>{G3.keys.delete(ev.key.toLowerCase());});addEventListener('blur',()=>G3.keys.clear());}
 (function g3Credits(){try{if(document.getElementById('neCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
-  const p=document.createElement('p');p.className='credits';p.id='neCred';p.textContent='Grand map coastlines, lakes and rivers: Natural Earth (public domain, naturalearthdata.com).';ps[ps.length-1].insertAdjacentElement('afterend',p);}catch(e){}})();
+  const p=document.createElement('p');p.className='credits';p.id='neCred';p.textContent='Grand map coastlines, lakes and rivers: Natural Earth (public domain, naturalearthdata.com). Grand map ground detail textures are generated in-game (original, no outside assets).';ps[ps.length-1].insertAdjacentElement('afterend',p);}catch(e){}})();

@@ -6,7 +6,8 @@ const GU_RW=1200,GU_RH=600;   // cell raster resolution (half the world size)
 const GU_TERR={d:[222,196,140],m:[138,126,112],f:[150,182,100],u:[168,160,150],j:[72,142,82],s:[226,232,238],c:[176,192,150],r:[140,176,122]};
 function guEl(tag,css,html){return campEl(tag,css,html);}
 function guCols(){grMap();const N=GM_P.length,P=GCM.P;if(!GV.idx){const idx=new Uint16Array(GU_RW*GU_RH),sx=new Float32Array(N),sy=new Float32Array(N);P.forEach(p=>{sx[p.i]=p.x/2;sy[p.i]=p.y/2;});
-    for(let y=0;y<GU_RH;y++)for(let x=0;x<GU_RW;x++){let bi=0,bd=1e12;for(let i=0;i<N;i++){const dx=sx[i]-x,dy=sy[i]-y,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}idx[y*GU_RW+x]=bi;}GV.idx=idx;}
+    for(let y=0;y<GU_RH;y++)for(let x=0;x<GU_RW;x++){let bi=0,bd=1e12;for(let i=0;i<N;i++){const dx=sx[i]-x,dy=sy[i]-y,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}idx[y*GU_RW+x]=bi;}if(typeof GM_REAL!=='undefined'){const bin=atob(GM_REAL);let o=0,k=0;const rd=()=>{let v=0,sh=0,b;do{b=bin.charCodeAt(o++);v|=(b&127)<<sh;sh+=7;}while(b&128);return v;};while(o<bin.length){const v=rd(),run=rd();if(v)idx.fill(v-1,k,k+run);k+=run;}}   // real state/province borders (13f-grandreal.js) override the nearest-seed cells
+GV.idx=idx;}
   return GV.idx;}
 function guRgb(s){const m=/^#([0-9a-f]{6})$/i.exec(s);if(m){const n=parseInt(m[1],16);return [n>>16,(n>>8)&255,n&255];}const h=/hsl\((\d+),(\d+)%,(\d+)%\)/.exec(s);if(h){const H=+h[1]/360,S=+h[2]/100,L=+h[3]/100,f=n=>{const k=(n+H*12)%12,a=S*Math.min(L,1-L);return Math.round(255*(L-a*Math.max(-1,Math.min(k-3,9-k,1))));};return [f(0),f(8),f(4)];}return [140,140,140];}
 function guPaint(){const idx=guCols(),P=GCM.P;if(!GV.img){GV.img=document.createElement('canvas');GV.img.width=GU_RW;GV.img.height=GU_RH;}
@@ -80,7 +81,7 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   e=guEl('div','position:fixed;inset:0;z-index:8000;background:#0b141d;color:#e8e4d8;display:flex;flex-direction:column;font-size:15px;user-select:none;');e.id='grandScreen';
   e.innerHTML=`<div id="gTop" style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#101c28;border-bottom:1px solid #2c4358;flex-wrap:wrap"></div>
   <div style="flex:1;display:flex;min-height:0"><div id="gMapWrap" style="flex:1;position:relative;min-width:0"><canvas id="gMap" style="display:block"></canvas><div id="gTip" style="position:absolute;pointer-events:none;display:none;background:rgba(10,16,22,.94);border:1px solid #4a6580;border-radius:6px;padding:6px 9px;font-size:14px;line-height:1.4;max-width:260px;z-index:3"></div><div id="gHint" style="position:absolute;left:10px;bottom:8px;font-size:13px;opacity:.75;pointer-events:none;text-shadow:0 1px 2px #000"></div></div>
-  <div id="gSide" style="width:330px;max-width:38vw;background:#101c28;border-left:1px solid #2c4358;display:flex;flex-direction:column;min-height:0"><div id="gSel" style="padding:8px 10px;overflow:auto;flex:1.1;min-height:0"></div><div id="gLog" style="padding:6px 10px;overflow:auto;flex:.9;border-top:1px solid #2c4358;font-size:13px;line-height:1.45;min-height:0"></div></div></div>`;
+  <div id="gSide" style="width:330px;max-width:38vw;background:#101c28;border-left:1px solid #2c4358;display:flex;flex-direction:column;min-height:0"><div id="gSel" style="padding:8px 10px;overflow:auto;flex:1.8;min-height:0"></div><div id="gLog" style="padding:6px 10px;overflow:auto;flex:.6;border-top:1px solid #2c4358;font-size:13px;line-height:1.45;min-height:0"></div></div></div>`;
   document.body.appendChild(e);GV.cv=document.getElementById('gMap');GV.idx=GV.idx||null;GV.dirty=true;guCols();
   const cv=GV.cv;GV.g3=false;try{GV.g3=g3Init(cv);}catch(e){console.error('3D grand map failed, using the flat map',e);g3Dispose();GV.g3=false;}
   cv.addEventListener('contextmenu',ev=>{ev.preventDefault();guRight(ev);});
@@ -116,6 +117,7 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   t.appendChild(guEl('span','opacity:.9','Turn <b>'+Math.min(GC.turn,GC.maxTurn)+'</b>/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')));
   if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/turn)</span>'));
   if(me)t.appendChild(guEl('span','opacity:.9','Score <b>'+score+'</b> · provinces <b>'+GCM.P.filter(p=>p.land&&GC.prov[p.i].o===GC.me).length+'</b>'));
+  try{geUiTop(t,me);}catch(e){console.error('geUiTop',e);}
   const rg=guEl('span','display:flex;gap:4px;flex-wrap:wrap;margin-left:auto');for(const [nm,r] of GR_REGIONS){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#dfe8f0;cursor:pointer;font-size:13px',nm);b.type='button';b.onclick=()=>{guFit(r);guRedraw();};rg.appendChild(b);}t.appendChild(rg);
   const end=guEl('button','padding:7px 18px;border-radius:6px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px;font-weight:bold',GC.ph==='plan'?'End turn ▶':'Resolving…');end.id='gEnd';end.type='button';end.disabled=GC.ph!=='plan'||!!GC.over;end.title='Enter';end.onclick=guEndTurn;t.appendChild(end);
   const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);}
@@ -134,6 +136,7 @@ function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.in
     const rc=guEl('div','margin:8px 0');rc.appendChild(guEl('div','opacity:.75;font-size:13px','Recruit here (arrives in 1–2 turns)'));const fac=grNat(GC.me).fac,g=guEl('div','display:flex;flex-wrap:wrap;gap:4px;margin-top:2px');
     for(const [k,n,t] of GR_RECRUIT){if(!grHasKind(fac,k))continue;const cost=grCost(fac,k)*n;const b=guEl('button','padding:5px 7px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:'+(GC.nat[GC.me].cash>=cost?'#fff':'#8a8f96')+';cursor:pointer;font-size:13px',n+'× '+grKindName(fac,k)+' $'+cost);b.type='button';b.title=cost+' · '+t+' turn(s)';b.onclick=()=>{const e=grRecruit(GC.me,pi,k);if(e){GV.hint=e;guHint();}else grSave();guSide();guTop();};g.appendChild(b);}
     rc.appendChild(g);if(st.rq.length)rc.appendChild(guEl('div','font-size:13px;opacity:.8;margin-top:3px','In training: '+st.rq.map(q=>q[2]+'× '+grKindName(fac,q[1])+' (turn '+q[0]+')').join(', ')));s.appendChild(rc);}
+  try{geUiProv(s,pi);}catch(e){console.error('geUiProv',e);}
   const ar=guEl('div');ar.innerHTML=guArmyRows(pi);s.appendChild(ar);guBindArmies(s,pi);}
 function guTopCash(){guTop();}
 function guArmyRows(pi){const L=guProvArmies(pi);if(!L.length)return '<div style="opacity:.6;margin-top:8px">No armies here.</div>';let h='<div style="margin-top:8px;font-weight:bold">Armies</div>';

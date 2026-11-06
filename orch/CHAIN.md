@@ -15,6 +15,7 @@ the moment it finishes**. Usage stays the same; the chain just removes the waiti
 | 7 | grand6 | trig_01DtGg8wDtZcpYEhqttMihsi | 2026-11-07 23:00 |
 | 8 | grand7 | trig_012iovw6hb9bkzDZ8K7ySJU4 | 2026-11-08 05:00 |
 | 9 | integrate2 | trig_01Fr8JSjqX6YggocaqLDGjBv | 2026-11-08 13:00 |
+| 10 | intuitive (first-time-player audit + fixes, Abdullah 2026-11-06 15:45) | trig_014ht4BpH9wsup6GGwhLkawp | 2026-11-08 19:00 |
 
 ## FIRST (before any other work — costs almost nothing)
 1. `git fetch -q origin` then check:

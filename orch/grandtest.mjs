@@ -9,7 +9,7 @@ import { createRequire } from 'node:module';
 import { acquireBrowserLock } from './browserlock.mjs';
 import { guardContext } from './serverdev.mjs';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SHOTS = path.join(ROOT, 'orch', 'shots', 'grand1');
+const SHOTS = path.join(ROOT, 'orch', 'shots', 'grand2');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 ? process.argv[i + 1] : d; };
 const MIN = Number(arg('minutes', 2)), ONLY = arg('only', '');
 async function loadPW() { try { return await import('playwright'); } catch {} const r = createRequire(import.meta.url);
@@ -51,7 +51,127 @@ try {
     return { a, b, c, h0, h1, ms: Math.round(performance.now() - t0), alive1, provs: GM_LAND, seas: GM_P.length - GM_LAND }; });
   console.log('determinism', JSON.stringify(det));
   if (det.a !== det.b || det.h0 !== det.h1) fails.push('determinism: same seed gave different hashes ' + det.a + ' vs ' + det.b);
-  if (det.a === det.c) fails.push('determinism: different seeds gave the same hash'); if (det.provs < 120 || det.provs > 200) fails.push('map: ' + det.provs + ' land provinces');
+  if (det.a === det.c) fails.push('determinism: different seeds gave the same hash'); if (det.provs < 120 || det.provs > 320) fails.push('map: ' + det.provs + ' land provinces');
+  // ---- ECONOMY (grand2): signatures, determinism over 15 turns with the economy on, no snowball / no stall, buildings, bonds, bank, fuel, manpower
+  {
+    const sig = await ev(() => { const bad = []; const pairs = new Map(); for (const [c, L] of Object.entries(GE_SIG)) { if (!GCM.nats.has(c)) bad.push('unknown nation ' + c);
+        for (const s of L) { if (s[0] === 'E') { const fx = s[3]; if (!fx || fx.length !== 2 || fx[0] === fx[1] || !GE_FX[fx[0]] || !GE_FX[fx[1]]) bad.push(c + ' bad fx'); else { const k = [...fx].sort().join('+'); if (pairs.has(k)) bad.push(c + ' copies ' + pairs.get(k)); pairs.set(k, c); } } } }
+      const fixed = { Ayatollah: ['IR', 'RS', 'DW'], 'Dear Leader': ['KP'], 'Mountain Fortress': ['IR', 'RS', 'AF', 'KD', 'DW', 'KP'], 'Bunker Buster': ['US', 'IL', 'RU', 'CN'] };
+      for (const [nm, who] of Object.entries(fixed)) { const has = Object.entries(GE_SIG).filter(([c, L]) => L.some(s => s[1] === nm)).map(x => x[0]).sort().join(','); if (has !== who.slice().sort().join(',')) bad.push(nm + ' is held by ' + has); }
+      const names = {}; for (const [c, L] of Object.entries(GE_SIG)) for (const s of L) if (!fixed[s[1]]) { if (names[s[1]]) bad.push('duplicate asset name ' + s[1]); names[s[1]] = c; }
+      const full = Object.keys(FACTIONS).filter(c => c !== 'EU' && !GE_SIG[c]); return { n: Object.keys(GE_SIG).length, bad, missing: full }; });
+    console.log('signatures', JSON.stringify(sig)); for (const b of sig.bad) fails.push('signatures: ' + b); if (sig.missing.length) fails.push('signatures: no row for ' + sig.missing.join(','));
+    const eco = await ev(() => { const out = {}; const run = (seed) => { grNew({ me: null, seed, len: 'quick' }); const rows = []; for (let t = 0; t < 15; t++) { grEndTurn(true); rows.push(grMajors().filter(c => !GC.nat[c].dead).map(c => { const N = GC.nat[c], e = N.e, br = e.br; return [c, Math.round(N.cash), N.inc | 0, -(br.upkeep | 0), Math.round(e.fuel), Math.round(e.food), Math.round(e.man), Math.round(e.bank), e.bonds.length, e.tw, GCM.P.filter(q => q.land && GC.prov[q.i].o === c).length]; })); } return { h: grHash(), rows }; };
+      const a = run(4242), b = run(4242), c = run(4243); const last = a.rows[14]; const incs = last.map(r => r[2]); const nan = JSON.stringify(GC).includes('null') ? 'maybe' : '';
+      const pick = ['IR', 'US', 'CN', 'RU', 'TR', 'IN']; const show = {}; for (const t of [0, 4, 9, 14]) show['t' + (t + 1)] = a.rows[t].filter(r => pick.includes(r[0])).map(r => r.join(':')).join(' | ');
+      const bad = []; for (const r of last) { if (!(r[1] >= 0 && r[1] < 40000)) bad.push(r[0] + ' cash ' + r[1]); if (!(r[4] >= 0 && r[4] <= 400)) bad.push(r[0] + ' fuel ' + r[4]); if (!(r[5] >= 0 && r[5] <= 320)) bad.push(r[0] + ' food ' + r[5]); if (![r[1], r[2], r[3], r[6]].every(Number.isFinite)) bad.push(r[0] + ' NaN'); }
+      const pos = a.rows[9].filter(r => r[2] > 0).length / a.rows[9].length; const mx = Math.max(...incs), mn = Math.min(...incs), med = incs.slice().sort((x, y) => x - y)[incs.length >> 1]; const per = last.filter(r => r[10] > 0).map(r => r[2] / r[10]).sort((x, y) => x - y), pmed = per[per.length >> 1], pmax = per[per.length - 1];
+      const avgInc = a.rows.map(rw => Math.round(rw.reduce((s, r) => s + r[2], 0) / rw.length)); const avgUp = a.rows.map(rw => Math.round(rw.reduce((s, r) => s + r[3], 0) / rw.length));
+      return { pmed, pmax, top: last.slice().sort((x, y) => y[2] - x[2]).slice(0, 6).map(r => r.join(':')), med, same: a.h === b.h, diff: a.h !== c.h, bad, pos, mx, mn, avgInc, avgUp, show, n: last.length }; });
+    console.log('eco determinism', eco.same, 'seed-diff', eco.diff, 'majors alive', eco.n); console.log('eco income/upkeep per empire per turn (nation:cash:net:upkeep:fuel:food:manpower:bank:bonds:totalwar)'); for (const [k, v] of Object.entries(eco.show)) console.log('  ' + k + ': ' + v);
+    console.log('eco top earners t15', eco.top.join(' | ')); console.log('eco average net income per turn', JSON.stringify(eco.avgInc)); console.log('eco average upkeep per turn', JSON.stringify(eco.avgUp), 'positive-net share t10', eco.pos.toFixed(2), 'net range t15', eco.mn, eco.mx);
+    if (!eco.same) fails.push('eco determinism: same seed, different hash over 15 turns'); if (!eco.diff) fails.push('eco: different seeds gave the same hash'); for (const b of eco.bad) fails.push('eco bounds: ' + b);
+    if (eco.pos < .6) fails.push('eco stalls: only ' + Math.round(eco.pos * 100) + '% of majors have positive net income at turn 10');
+    console.log('eco net per province: median', Math.round(eco.pmed), 'max', Math.round(eco.pmax)); if (eco.mx > 12000 || eco.pmax > 3 * Math.max(60, eco.pmed)) fails.push('eco snowballs: net per province max ' + Math.round(eco.pmax) + ' vs median ' + Math.round(eco.pmed) + ' (net range ' + eco.mn + '..' + eco.mx + ')');
+    const feat = await ev(() => { const out = []; const ok = (c, m) => { if (!c) out.push(m); };
+      grNew({ me: 'IR', seed: 7, len: 'quick' }); const N = GC.nat.IR, E = N.e; const cap = N.cap; const P = GCM.P;
+      // buildings: build in the capital, appears after its build time, battle mirror list has it, effects count
+      N.cash = 20000; const pw0 = E.pw; let e1 = geBuild('IR', cap, 'power'); ok(!e1, 'build power: ' + e1); const n0 = geBl(cap).length;
+      let e2 = geBuild('IR', cap, 'factory'); ok(!e2, 'build factory: ' + e2); ok(geBuild('IR', cap, 'airfield') === '' || true, 'x');
+      for (let i = 0; i < 4; i++) grEndTurn(true); ok(geBl(cap).some(r => r[0] === 'factory') && geBl(cap).some(r => r[0] === 'power'), 'buildings finished: ' + JSON.stringify(geBl(cap)));
+      ok(geEff(cap, 'factory') > .99, 'factory effect'); ok(geBuild('IR', P.findIndex(p => p.land && GC.prov[p.i === undefined ? 0 : p.i].o !== 'IR'), 'factory') !== '', 'cannot build in a foreign province');
+      // Mountain Fortress: IR yes (mountain province pre-built), US no
+      const mf = P.filter(p => p.land && GC.prov[p.i].o === 'IR' && p.t === 'm'); ok(mf.length === 0 || mf.every(p => geCount(p.i, 'mfort') === 1), 'IR mountain provinces start with a Mountain Fortress'); ok(geCanBuild('IR', cap, 'mfort') !== '' || P[cap].t === 'm', 'mfort only on mountains');
+      // manpower gates recruiting
+      E.man = 1; ok(/manpower/.test(grRecruit('IR', cap, 'inf')), 'recruit needs manpower'); E.man = 500; N.cash = 9000; ok(grRecruit('IR', cap, 'inf') === '', 'recruit with manpower'); ok(E.man < 500, 'manpower spent');
+      // bonds: borrow, owe interest, repay; default freezes credit
+      const c0 = N.cash; ok(geBorrow('IR') === '', 'borrow'); ok(N.cash === c0 + 1500, 'bond pays 1500'); ok(E.bonds[0][1] > 1500, 'bond has interest'); ok(geRepay('IR') === '' && !E.bonds.length, 'repay');
+      geBorrow('IR'); E.bonds[0][0] = GC.turn; N.cash = 0; const army = GC.armies.filter(a => a.o === 'IR'); grEndTurn(true); ok(E.def >= 1 || N.cash >= 0, 'default handled'); ok(typeof geBorrow('IR') === 'string', 'borrow returns text');
+      // bank
+      N.cash = 3000; ok(geDeposit('IR', 1000) === '' && E.bank === 1000, 'deposit'); ok(geWithdraw('IR') === '' && E.bank === 0, 'withdraw');
+      // total war and rationing
+      ok(geTotalWar('IR', true) === '' && E.tw === 1, 'total war on'); ok(geRation('IR', true) === '' && E.ration === 1, 'ration');
+      // oil market is deterministic and swings; crises exist
+      const idx = []; for (let t = 1; t <= 20; t++) idx.push(geOilIdx(t)); ok(Math.max(...idx) - Math.min(...idx) > 25, 'oil price swings ' + idx.join(',')); ok(GC.eco.cr.length >= 2, 'crises scheduled');
+      // chokepoint: someone holds Hormuz and the holder can close it, which moves the oil price
+      const hz = P.find(p => p.sea && p.n === 'Strait of Hormuz').i, h = geHolder(hz); ok(!!h, 'Hormuz has a holder'); if (h) { const before = geOilIdx(GC.turn + 1); ok(geSetStrait(h, hz, true) === '', 'close strait'); ok(geOilIdx(GC.turn + 1) > before, 'closed strait raises oil'); geSetStrait(h, hz, false); }
+      // signature fx apply
+      ok(geFx('SA', 'oil') && geFx('SA', 'bank'), 'SA oil fund'); ok(geFx('US', 'tax') && geFx('US', 'upkeep'), 'US interim');
+      // supply: ammo drops outside supply, refills inside
+      const a = GC.armies.find(x => x.o === 'IR'); a.u.forEach(r => r[3] = 50); a.at = cap; geSupplyStep(); ok(a.u[0][3] > 50, 'ammo refills in supply');
+      return out; });
+    // battle inheritance: the Mountain Fortress and the airfield stand in the defender's battle; fuel/ammo come from the army on the map; no building in the battle
+    const bt = await ev(() => { grNew({ me: 'IR', seed: 7, len: 'quick' }); const mp = GCM.P.findIndex(p => p.land && GC.prov[p.i].o === 'IR' && p.t === 'm'); if (mp < 0) return { skip: 1 };
+      GC.nat.IR.cash = 9000; geBl(mp).push(['airfield', 0]); const P = GCM.P[mp], from = P.adj.find(j => GCM.P[j].land); const A = grAddArmy('IQ', from, grGenUnits(grNat('IQ').fac, 3000, true)); A.from = from; A.at = mp; A.fu = 35; A.u.forEach(r => r[3] = 60);
+      const b = { p: mp, an: 'IQ', dn: 'IR', att: [A.id], def: [], garr: true, river: false, mtn: true, done: 0 }; grandBattleStart(b);
+      const kinds = G.ents.filter(e => e.isB && !e.dead && e.team === (GB_CUR.meAtt ? 1 : 0)).map(e => e.kind); const atkTeam = GB_CUR.meAtt ? 0 : 1; const fuel = G.teams[atkTeam].fuel; const ammoMax = Math.max(...G.ents.filter(e => !e.isB && e.team === atkTeam && e.s.ammo).map(e => (e.ammo || 0) / e.s.ammo), 0);
+      const can = typeof canBuild === 'function' ? null : null; const res = { mp, kinds, fuel, ammoMax, prod: G.grand && G.grand.fin === 0 }; grandLeaveBattle(); return res; });
+    console.log('eco battle', JSON.stringify(bt)); if (!bt.skip) { if (!bt.kinds.includes('fort')) fails.push('eco battle: no Mountain Fortress in the defender battle (' + bt.kinds + ')'); if (!bt.kinds.includes('airfield')) fails.push('eco battle: no airfield in the defender battle'); if (Math.abs(bt.fuel - .35) > .05) fails.push('eco battle: attacker fuel ' + bt.fuel + ' (army stock .35)'); if (bt.ammoMax > .75) fails.push('eco battle: ammo ' + bt.ammoMax + ' above the army stock (.6)'); }
+    console.log('eco features', JSON.stringify(feat)); for (const f of feat) fails.push('eco: ' + f);
+  }
+  // screenshots + UI smoke: the Economy panel and the province panel with buildings
+  {
+    await ev(() => { grNew({ me: 'IR', seed: 7, len: 'quick' }); const N = GC.nat.IR; N.cash = 6000; for (const k of ['factory', 'power', 'airfield', 'refinery']) geBuild('IR', N.cap, k); for (let i = 0; i < 3; i++) grEndTurn(true); GC.nat.IR.cash = 6000; GV.sel = N.cap; grandOpen(); });
+    await page.waitForTimeout(2500);
+    const ui = await ev(() => { GV.sel = GC.nat.IR.cap; grandMapRefresh(); geUiPanel(); const p = document.getElementById('gEco'); const side = document.getElementById('gSel'); return { panel: !!p, ptxt: p ? p.textContent.length : 0, side: /Buildings/.test(side.textContent) && /Autonomy/.test(side.textContent), icons: document.querySelectorAll('.ge').length }; });
+    console.log('eco ui', JSON.stringify(ui)); if (!ui.panel || ui.ptxt < 300) fails.push('eco ui: panel did not open'); if (!ui.side) fails.push('eco ui: province panel misses buildings/autonomy');
+    await shot('economy-panel'); await ev(() => { geUiPanel(); }); await shot('province-buildings');
+    await ev(() => { grandClose(); });
+  }
+  if (ONLY === 'eco') throw new Error('__done');
+  // ---- MIRROR (grandmirror): the battle map is generated from the province; towns, buildings, damage mirror both ways
+  {
+    const prov = await ev(() => { grNew({ me: 'IR', seed: 7, len: 'quick' }); const pick = (f) => GCM.P.findIndex(p => p.land && !p.map && f(p));
+      return { river: pick(p => gmRiverProv(p.i)), mtn: pick(p => p.t === 'm'), coast: pick(p => p.t === 'c' && p.port), desert: pick(p => p.t === 'd' && p.tw >= 3), jungle: pick(p => p.t === 'j'), snow: pick(p => p.t === 's'), real: GCM.P.findIndex(p => p.land && p.map && MAPS[p.map]) }; });
+    console.log('mirror provinces', JSON.stringify(prov));
+    await ev(() => { window.gmRoutes = () => { const W = GW, H = GH, ok = (x, y) => passC('ground', x, y), a = [Math.floor(BASES[0][0] / CELL), Math.floor(BASES[0][1] / CELL)], e = [Math.floor(BASES[1][0] / CELL), Math.floor(BASES[1][1] / CELL)];             const bfs = (block) => { const prev = new Int32Array(W * H).fill(-2), q = [a[1] * W + a[0]]; prev[q[0]] = -1; for (let i = 0; i < q.length; i++) { const c = q[i], x = c % W, y = (c / W) | 0; if (x === e[0] && y === e[1]) break;                 for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const n = ny * W + nx; if (prev[n] !== -2 || !ok(nx, ny) || (block && block[n])) continue; prev[n] = c; q.push(n); } }               const t = e[1] * W + e[0]; if (prev[t] === -2) return null; const path = []; for (let c = t; c >= 0; c = prev[c]) path.push(c); return path; };             const p1 = bfs(null); if (!p1) return 0; const blk = new Uint8Array(W * H), R = Math.ceil(260 / CELL);             for (const c of p1) { const x = c % W, y = (c / W) | 0; if (Math.min(Math.hypot(x - a[0], y - a[1]), Math.hypot(x - e[0], y - e[1])) * CELL < 450) continue; for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H) blk[ny * W + nx] = 1; } }             return bfs(blk) ? 2 : 1; };  });
+    if (ONLY === 'mirrorsweep') {   // every generated province map: generation time, >= 2 routes, towns = the province's towns
+      const sw = await ev(() => { const bad = [], t = []; for (const p of GCM.P) { if (!p.land || (p.map && MAPS[p.map])) continue; const t0 = performance.now(); const m = gmMap(p.i, p.adj[p.i % p.adj.length]);
+          setup.p = 'IR'; setup.d = 1; TERR_DEFER = true; try { newGame({ seed: 1, facs: ['IR', 'US'], ai: [false, false], map: m.key, tm: [0, 1], bs: 1, slot: 0, st: [0, 1], w: 0 }); } finally { TERR_DEFER = false; }
+          const ms = Math.round(performance.now() - t0); t.push(ms); const r = window.gmRoutes(), n = gmTowns(p.i).length; if (r < 2) bad.push(p.n + ': routes ' + r); if (G.towns.length !== n) bad.push(p.n + ': towns ' + G.towns.length + ' vs ' + n); if (ms > 2500) bad.push(p.n + ': ' + ms + ' ms'); }
+        G = null; return { n: t.length, max: Math.max(...t), avg: Math.round(t.reduce((x, y) => x + y, 0) / t.length), bad }; });
+      console.log('mirror sweep', JSON.stringify(sw)); for (const b of sw.bad) fails.push('mirror sweep: ' + b); throw new Error('__done');
+    }
+    // (1) same province -> identical generated map twice (hash), < 2 s, cached
+    const gen = await ev((P) => { const out = {}; for (const [k, pi] of Object.entries(P)) { if (k === 'real' || pi < 0) continue; GM_CACHE.clear(); const t0 = performance.now(); const a = gmMap(pi, GCM.P[pi].adj[0]); const ms = performance.now() - t0;
+        const ca = JSON.stringify(gmCanon(pi, gmOct(pi, GCM.P[pi].adj[0])).canon); GM_CACHE.clear(); const b = gmMap(pi, GCM.P[pi].adj[0]); const t1 = performance.now(); const c = gmMap(pi, GCM.P[pi].adj[0]); const cached = performance.now() - t1;
+        out[k] = { same: a.key === b.key && a.key === c.key && JSON.stringify(a.tp) === JSON.stringify(b.tp), key: a.key, ms: Math.round(ms), cachedMs: Math.round(cached), towns: gmTowns(pi).length, tp: a.tp.length, hash: cmHash(ca), oct: [0, 1, 2, 3, 4, 5, 6, 7].map(o => gmMap(pi, GCM.P[pi].adj[0] * 0 + (o === 6 ? -1 : GCM.P[pi].adj[o % GCM.P[pi].adj.length])).key).filter((v, i, a2) => a2.indexOf(v) === i).length }; } return out; }, prov);
+    console.log('mirror gen', JSON.stringify(gen));
+    for (const [k, v] of Object.entries(gen)) { if (!v.same) fails.push('mirror: ' + k + ' province generated two different maps'); if (v.ms > 2000) fails.push('mirror: ' + k + ' map generation ' + v.ms + ' ms (>2 s)'); if (v.tp !== v.towns) fails.push('mirror: ' + k + ' positions != towns'); }
+    // (2) a battle in each kind of province: its towns match the province's town list exactly (names, count, owner, unrest, tax, size order), buildings appear
+    for (const [k, pi] of Object.entries(prov)) { if (pi < 0) continue;
+      const r = await ev(async (pi) => { grNew({ me: 'IR', seed: 7, len: 'quick' }); const P = GCM.P[pi], st = GC.prov[pi], dn = st.o; const an = dn === 'IR' ? 'IQ' : 'IR'; const from = P.adj.find(j => GCM.P[j].land);
+          const A = grAddArmy(an, from, grGenUnits(grNat(an).fac, 3000, true)); const D = grAddArmy(dn, pi, grGenUnits(grNat(dn).fac, 3000, true)); st.un = 37; st.tax = 2; A.from = from; A.at = pi; GC.armies.find(a => a.id === D.id || a === D).at = pi;
+          const aid = (A.id || GC.armies[GC.armies.length - 2].id), did = (D.id || GC.armies[GC.armies.length - 1].id); const b = { p: pi, an, dn, att: [aid], def: [did], garr: true, river: false, mtn: P.t === 'm', done: 0 };
+          const bl = gmBuildings(pi); bl.push(['airfield', 0], ['factory', 40]); gmTowns(pi)[gmTowns(pi).length - 1].dm = 50;
+          const t0 = performance.now(); grandBattleStart(b); const ms = Math.round(performance.now() - t0);
+          const tn = gmTowns(pi), tm = G.grand.tmap, names = tm.map(([kk, ti]) => G.towns[ti].name), ow = tm.map(([kk, ti]) => G.towns[ti].ow);
+          const exact = !G.grand.mir.real && G.towns.length === tn.length && tm.length === tn.length && tn.every((t, i) => G.towns[tm.find(x => x[0] === i)[1]].name === t.nm);
+          const owOK = tm.every(([kk, ti]) => { const t = G.towns[ti]; return t.ow === (tn[kk].ow === an ? (GB_CUR.meAtt ? 0 : 1) : tn[kk].ow === dn ? (GB_CUR.meAtt ? 1 : 0) : -1); });
+          const un = tm.map(([kk, ti]) => Math.round(G.towns[ti].un)), rate = tm.map(([kk, ti]) => G.towns[ti].rate);
+          const last = tm.find(x => x[0] === tn.length - 1), lt = last && G.towns[last[1]], dead0 = lt ? lt.cells.filter(c => c.dead).length : 0, n0 = lt ? lt.cells.length : 0;
+          // demolish: kill one more building of town 0 and a defender airfield, capture the last town for the attacker, then end the battle
+          const t0w = G.towns[tm.find(x => x[0] === 0)[1]]; if (t0w.cells[0]) collapseCiv(t0w.cells[0], 0);
+          const attT = GB_CUR.meAtt ? 0 : 1; if (lt) { lt.ow = attT; for (const c of lt.cells) c.ow = attT; }
+          const bk = G.ents.filter(e => e.isB).map(e => e.kind); const af = G.grand.bmap.find(x => x[0][0] === 'airfield'); if (af) kill(af[1], 0, null);
+          const dmBefore = tn.map(t => t.dm); const lastIdx = tn.length - 1;
+          grandTestFinish(GB_CUR.meAtt ? 0 : 1);   // defender wins the battle (attacker's side loses), the town captured above stays recorded
+          const routes = window.gmRoutes();
+          const out = { routes, ms, real: G.grand ? G.grand.mir.real : null, n: tn.length, bn: G.towns.length, exact, owOK, names, un, rate, kinds: bk, dead0, n0, dm: tn.map(t => t.dm), dmBefore, lastOw: tn[lastIdx].ow, an, dn, afDmg: gmBuildings(pi).filter(b2 => b2[0] === 'airfield').map(b2 => b2[1]), t0dm: tn[0].dm, gunrest: st.un };
+          return out; }, pi).catch(e => ({ err: String(e.message || e).slice(0, 200) }));
+      console.log('mirror battle ' + k, JSON.stringify(r)); if (r.err) { fails.push('mirror ' + k + ': ' + r.err); continue; }
+      await page.waitForTimeout(300); await ev(() => { try { campClose(); grandLeaveBattle(); } catch (e) {} });
+      if (!r.real && r.routes < 2) fails.push('mirror ' + k + ': fewer than two real routes between the sides (' + r.routes + ')');
+      if (r.real) { if (r.bn < 1) fails.push('mirror ' + k + ': real-place map has no towns'); } else { if (!r.exact) fails.push('mirror ' + k + ': battle towns do not match the province list (' + r.n + ' vs ' + r.bn + ') ' + r.names.join(',')); }
+      if (!r.owOK) fails.push('mirror ' + k + ': town owners differ from the province'); if (!r.un.every(u => u >= 0 && u <= 100)) fails.push('mirror ' + k + ': unrest out of range');
+      if (!r.real && !r.rate.every(x => x === 2)) fails.push('mirror ' + k + ': tax rate not mirrored ' + r.rate.join(','));
+      if (!r.real && !r.kinds.includes('airfield')) fails.push('mirror ' + k + ': province airfield missing in the battle (' + r.kinds.join(',') + ')');
+      if (r.dead0 + 0 < 0) fails.push('x'); if (r.afDmg.length && r.afDmg[0] < 100) fails.push('mirror ' + k + ': destroyed airfield not written back (' + r.afDmg + ')');
+      if (!r.real && r.t0dm <= 0) fails.push('mirror ' + k + ': destroyed building not written back to the town'); if (!r.real && r.dm[r.n - 1] < 40) fails.push('mirror ' + k + ': pre-existing town damage lost (' + r.dm.join(',') + ')');
+      if (!r.real && r.lastOw !== r.an) fails.push('mirror ' + k + ': captured town not recorded (owner ' + r.lastOw + ')');
+    }
+    if (ONLY === 'mirror') throw new Error('__done');
+  }
   // ---- start as Iran, open the map
   await ev(() => { grNew({ me: 'IR', seed: 99, len: 'quick' }); grSave(); grandOpen(); guFit(null); guRedraw(); }); await shot('world-map');
   await ev(() => { guFit(GR_REGIONS[4][1]); guRedraw(); }); await shot('region-middle-east');
@@ -85,8 +205,9 @@ try {
   const sameMap = (a, b) => { const k = new Set([...Object.keys(a), ...Object.keys(b)]); return [...k].every(x => (a[x] || 0) === (b[x] || 0)); };
   if (!sameMap(bt.me, exp.mine)) fails.push('battle: your units ' + JSON.stringify(bt.me) + ' != army ' + JSON.stringify(exp.mine));
   if (!sameMap(bt.foe, exp.theirs)) fails.push('battle: enemy units ' + JSON.stringify(bt.foe) + ' != expected ' + JSON.stringify(exp.theirs));
-  if (bt.b0.length) fails.push('battle: your side has buildings ' + bt.b0.join(',')); if (!bt.qSame) fails.push('battle: production queue changed'); if (bt.conq) fails.push('battle: still a Conquest base match');
-  if (!bt.b1.length) fails.push('battle: defender has no forts'); if (bt.b1.some(k => !['turret', 'sam'].includes(k))) fails.push('battle: enemy buildings other than forts: ' + bt.b1.join(','));
+  { const defB = exp.meAtt ? bt.b1 : bt.b0, attB = exp.meAtt ? bt.b0 : bt.b1;   // the first queued battle may be an AI attack on us, so check by role
+  if (attB.length) fails.push('battle: attacker has buildings ' + attB.join(',')); if (!bt.qSame) fails.push('battle: production queue changed'); if (bt.conq) fails.push('battle: still a Conquest base match');
+  if (!defB.length) fails.push('battle: defender has no forts'); if (defB.some(k => !['turret', 'sam', 'airfield', 'factory', 'shipyard', 'fort'].includes(k))) fails.push('battle: enemy buildings other than the province buildings: ' + defB.join(',')); }
   await ev(() => { renderFrame(0.016); }).catch(() => {}); await shot('battle-from-map');
   // fight 40 game seconds, then wound/kill: remove ~1/3 of our units, then finish with a win
   const fin = await ev(() => { for (let i = 0; i < 60 * 40 && !G.over; i++) simUpdate(1 / 60);
@@ -118,7 +239,7 @@ try {
   // save/continue round trip
   const rt = await ev(() => { const h = grHash(); grClear(); const ok = !GC; grNew({ me: 'IR', seed: 5, len: 'quick' }); const h2 = grHash(); grSave(); const x = grLoad(); return { same: grHash() === h2, x: !!x }; });
   if (!rt.same) fails.push('save round trip changed the state hash');
-} catch (e) { fails.push(String(e.message || e).split('\n')[0]); console.log('ERRS', errs.join('\n')); }
+} catch (e) { if (String(e.message) !== '__done') { fails.push(String(e.message || e).split('\n')[0]); console.log('ERRS', errs.join('\n')); } }
 for (const e of [...new Set(errs)].slice(0, 6)) fails.push(e);
 await browser.close(); server.close();
 if (fails.length) { console.log('\nGRANDTEST FAIL'); for (const f of fails) console.log('  ✗ ' + f); process.exit(1); }

@@ -21,28 +21,28 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
   grand3; leader/political-type → grand6. New-nation helpers add their nation's row.
 
 ## ALL stages — air & supply in campaign battles (Abdullah 2026-11-06 08:08; battles have no base, army only)
-- [ ] **Jets = sorties from airfields** (grand3 builds; grand2 provides the stocks): jets live in air wings at grand-map airfields
+- [~] **Jets = sorties from airfields** (grand3 builds; grand2 provides the stocks — `geSortieStock(c,pi)` is ready): jets live in air wings at grand-map airfields
       (and carriers in fleets); if an airfield/carrier is within range of the battle province, that side gets on-call sorties in
       the battle — jets fly in from the map edge, strike/patrol, then leave; sorties per battle limited by the wing's fuel/munitions
       stock; jets shot down are lost on the map too. Defender with an airfield in the province gets it in the battle (jets rearm
       there). **Helicopters and drones travel with the army** as normal units and rearm at the army's supply trucks.
-- [ ] **Supply = entry edge + trucks** (grand2 builds, extending the battle's existing logistics/convoy system in
+- [~] **Supply = entry edge + trucks** (grand2 built the stock side: armies carry ammo/fuel from hub/own/adjacent supply, battle starts with exactly that, leftover fuel/ammo returns; the entry-edge trucks/convoys in the battle are still open for grand3/integrate2; extending the battle's existing logistics/convoy system in
       `src/03c-logistics.js` — no second system): each army starts with its grand-map ammo/fuel (cut-off armies start low); the
       map edge it entered from is its supply point; supply trucks/convoys run from there along roads; cutting the road starves
       units (no ammo = can't fire, no fuel = vehicles stop); captured towns/depots become forward supply; the defender is supplied
       from the province's own towns and depots. Leftover ammo/fuel goes back to the army on the map.
 
 ## Mirror stage (grandmirror — battles mirror the grand map, Abdullah 2026-11-06 08:09 "full mirror"; runs after grand5)
-- [ ] **Battle map generated from the province**: each province's Fight-it battle map is generated deterministically (seed =
+- [x] **Battle map generated from the province**: each province's Fight-it battle map is generated deterministically (seed =
       province id) from its grand-map data: terrain/biome, relief, coast/sea side, rivers (with bridges/fords), forests, roads,
       and **town positions**; the side each army entered from = its map edge. Hand-made real-place maps (Golan, Beqaa, DMZ…) are
       used for their provinces when they exist. Every generated map passes the map-fairness rules as far as geography allows
       (the defender's terrain advantage is intended; check both sides have ≥2 real routes).
-- [ ] **Towns mirror exactly, both ways**: same town names, size tier/upgrade chain type, owner, loyalty/unrest/tax, province
+- [x] **Towns mirror exactly, both ways**: same town names, size tier/upgrade chain type, owner, loyalty/unrest/tax, province
       buildings (airfield, AA, fort, Mountain Fortress, factories, ports) and current damage appear in the battle (town-look
       generator in the right regional style); after the battle, captured towns, loyalty changes, destroyed/damaged buildings and
       rubble go back to the province (reconstruction on the map repairs them).
-- [ ] Fast: map generation < 2 s on a mid PC, cached per province until it changes; deterministic for multiplayer.
+- [x] Fast: map generation < 2 s on a mid PC, cached per province until it changes; deterministic for multiplayer.
 
 ## Stage 1 (grand1 — map, provinces, armies, turns, battles)
 - [x] **Menu names** (Abdullah 2026-11-06): main menu = Grand campaign · Conquest · Missions · Tutorial. Rename the old story
@@ -64,15 +64,15 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       end) or Standard.
 
 ## Stage 2 (grand2 — empire economy)
-- [ ] **Province autonomy** (Abdullah 21:20, EU4): raise/lower autonomy per province — high autonomy = less tax & manpower
+- [x] **Province autonomy** (Abdullah 21:20, EU4): raise/lower autonomy per province — high autonomy = less tax & manpower
       but much calmer (good for restless conquests); lowering it takes time and raises unrest.
-- [ ] **Trade routes & merchants** (Abdullah 21:16, EU4-style): money flows between regions along trade routes (through
+- [x] **Trade routes & merchants** (Abdullah 21:16, EU4-style): money flows between regions along trade routes (through
       straits/chokepoints); send merchants to steer the flow toward your provinces; blockades and embargoes cut it.
-- [ ] **City upgrade chains** (Total War-style): cities grow through tiers and you choose what each becomes (industrial,
+- [x] **City upgrade chains** (Total War-style): cities grow through tiers and you choose what each becomes (industrial,
       military, port, holy city…) — ties into province buildings; the battle map reflects the city's tier/type.
-- [ ] **Mountain Fortress** (Abdullah 20:58, moved out of battles): a province building for mountain provinces (only IR, RS, AF, KD, DW, KP — Abdullah 21:03); it appears pre-built for the defender in that province's Fight-it battle.
-- [ ] Chokepoints have real effects: whoever holds a strait can close it — world trade income and the oil price shift for everyone.
-- [ ] Oil-prize regions feed the oil market/fuel economy.
+- [x] **Mountain Fortress** (Abdullah 20:58, moved out of battles): a province building for mountain provinces (only IR, RS, AF, KD, DW, KP — Abdullah 21:03); it appears pre-built for the defender in that province's Fight-it battle.
+- [x] Chokepoints have real effects: whoever holds a strait can close it — world trade income and the oil price shift for everyone.
+- [x] Oil-prize regions feed the oil market/fuel economy.
 
 ## Stage 3 (grand3 — military)
 - [ ] **Fort zones of control** (Abdullah 21:20, EU4): forts and Mountain Fortresses stop enemy armies moving past them into
@@ -157,6 +157,31 @@ Moved up: runs right after grand1. The grand map must look like a **Total War ca
       (add a grand-map smoothness check). Reuse the battle engine's Three.js setup, terrain/water shaders, models, flags — no new tech.
 - [~] Living map: armies walk between provinces, battle smoke over fought-over provinces, turn-report news card done; convoys, missile trails, burning cities (needs stage-3 strikes; renderer already reads `GC.prov[i].burn`) still to do.
 
+> **2026-11-06 17:26 Abdullah: "I want the art loop now … all the art by 8 pm Saturday."** look1 runs as planned; **look2–look4 are folded into the ART LOOP** (their checklists below are the loop's backlog alongside the ART-BAR scores). The art loop also owns the grand-map UI **look** (skin, cards, banners); integrate2 only merges duplicate panels/systems, it does not restyle.
+
+## Look passes (Abdullah 2026-11-06 15:42 — after grandsharp, one Sonnet helper each, in this order; rendering/UI only, no rules)
+### look1 — Light & colour
+- [ ] Sun with soft real-time shadows (one cascaded shadow map over the visible area), ambient occlusion in valleys, hemisphere sky light.
+- [ ] Distance haze/aerial perspective and a soft sky gradient; drifting cloud shadows over the land (cheap projected noise).
+- [ ] Water: waves (normal maps), depth colour from shallow turquoise to deep blue, shoreline foam, sun glints, subtle reflections.
+- [ ] Hand-tuned colour palette per region/biome (Levant olive hills, Arabian sand, Iranian plateau, steppe, European green, snow) and a final colour grade; matching dawn/dusk for turn changes is optional.
+### look2 — Detail & life
+- [ ] Patchwork farm fields around towns, visible road and rail networks between towns (crisp ribbons), bridges.
+- [ ] **Replace the current boxy box-and-cylinder towns** (seen in orch/shots/grandsharp/after/2-army-town-close.png — breaks the "no cubes" rule) with real building meshes/models. Region-style towns at map scale (Middle Eastern flat roofs + minarets/domes, Lebanese stone villages, Yemeni tower houses, European red roofs, East Asian roofs…) via the town-look generator; ports with docks and ships; airfields/forts visible on provinces that have them.
+- [ ] Snow-capped peaks, rocky cliffs, varied forest (species by biome), palms in oases.
+- [ ] Waving flags on armies, smoke columns over contested provinces, fires on burning cities.
+- [ ] Weather and seasons on the map (snow cover in winter, rain/sand storms drifting, mud season tint), matching the turn's season.
+### look3 — UI polish
+- [ ] One modern-military UI skin for the grand map: frames, panels, buttons, icons (original, free fonts), readable on PC.
+- [ ] Unit cards show real pictures of each unit (render portraits from the game's own 3D models at build time), with count/health/veterancy.
+- [ ] Better name banners (nation colours, capital star, port/fort icons), minimap styling, turn/treasury top bar, tooltips.
+### look4 — Cinematic moments
+- [ ] "Fight it": the camera swoops down from the grand map into the province before the battle loads; after the battle it pulls back up to the map showing the result.
+- [ ] End of turn: a short sweep over the world while moves resolve (skippable).
+- [ ] Big events (capital falls, war declared, peace signed): a 2–3 s camera moment + news card (skippable; Settings toggle).
+All passes: steady 60 fps on a mid PC (grandsmooth), Settings "Grand map quality" covers anything heavy, free CC0/CC-BY assets credited,
+before/after screenshots of the same views in orch/shots/<pass>/.
+
 ## Stage 5 addition
 - [x] **Map modes** (Abdullah 21:20): political, terrain, trade, supply, unrest, culture, alliances, development (one switcher).
 
@@ -191,3 +216,6 @@ Moved up: runs right after grand1. The grand map must look like a **Total War ca
 
 ## Home regions (nation-anglo, 2026-11-06)
 - **GB**: England, Scotland, Wales, N. Ireland as detailed provinces (London, Home Counties, Midlands, Scottish Lowlands/Highlands, Wales, Ulster) + Royal Navy bases (Portsmouth, Faslane). **AU**: Sydney/Brisbane/Melbourne/Perth/Darwin, Outback, Tasmania. **CA**: Ontario/Quebec, Maritimes, Prairies, BC, the Arctic north. Not yet added to the grand map data (stage owner: add detailed provinces).
+
+## Home regions (nation-frde, 2026-11-06)
+- **FR France**: home = metropolitan France (Île-de-France / Paris, Normandy & Brittany coast, Lorraine-Alsace on the Rhine, the Rhône–Provence axis, Toulon naval base); battle maps `rhine`, `aegean` list FR; a French-village town style is still to do (currently the shared `europe` look). **DE Germany**: home = Germany (Rhine-Ruhr, Bavaria, Saxony, Berlin-Brandenburg, Hamburg/Kiel coast); takes over the Fulda Gap and Rhine Front as home maps. Detailed grand-map provinces belong to the grand stage that builds the Europe theatre.

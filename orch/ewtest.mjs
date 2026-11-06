@@ -233,6 +233,7 @@ try {
   }
   // ---- Mountain Fortress + Bunker Buster ----
   const ft = await page.evaluate(() => {
+    G.sandbox = true;   // integrate1: fortress / bunker buster are banned in Conquest battles, still part of missions + sandbox
     const o = {}, me = ME, T = G.teams[me], en = G.teams.find(t => t.id !== me && !ally(t.id, me)); G.paused = true;
     T.fac = 'RS'; T.F = FACTIONS.RS; T.credits = 99999; const hq = hqOf(me);
     for (const k of ['factory']) if (!done(me, k)) addBld(me, k, hq.x + 200, hq.y, true);
@@ -263,6 +264,7 @@ try {
   ck('fortress: infantry waiting inside slowly heal', ft.healed, JSON.stringify(ft));
   ck('bunker buster: locked first 5 min, costs $2200, cooldown, destroys the fortress', ft.early === false && ft.fired && ft.paid && ft.cd && ft.dead, JSON.stringify(ft));
   const fc = await page.evaluate(() => {
+    G.sandbox = true;
     const me = ME, hq = hqOf(me), f = addBld(me, 'fort', hq.x + 140, hq.y - 140, true), n = G.ents.filter(e => e.kind === 'fort' && !e.dead).length;
     f.hp = f.max * .45;
     // its garrison (b.gar: units off the map) must survive a host takeover too
