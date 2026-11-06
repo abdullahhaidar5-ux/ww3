@@ -32,10 +32,10 @@ voice set as a stand-in). Balance: one quick tourney for the lane's nations (40�
 | A2 | CO Colombia | LAV, Black Hawk/AH-60 Arpía, Kfir/Super Tucano, Almirante Padilla, jungle/special forces (no guerrilla/cartel content) |
 | A2 | CL Chile | Leopard 2A4, Marder, Cougar/Black Hawk, F-16, Type 23, Scorpène, mountain troops |
 | A2 | SE Sweden | Strv 122, CV90, Archer, Gripen, Visby, Gotland-style sub, Arctic/archipelago forces |
-| B2 | DZ Algeria | T-90SA/T-72, BMP-2, Mi-28/Mi-24, Su-30MKA, MEKO, Kilo-style, S-300-style AD |
-| B2 | MA Morocco | M1A2/M60, M113/Ratel, AH-64, F-16, FREMM-style, desert berm defences |
-| B2 | NG Nigeria | light armour/MRAPs, Alpha Jet/Super Tucano/JF-17, Mi-35, patrol vessels, strong infantry (no non-state groups) |
-| B2 | ZA South Africa | Olifant, Ratel/Badger, Rooikat, Rooivalk, Gripen, Valour frigate, G6, bush infantry |
-| B2 | ET Ethiopia | T-72/T-55, BTR/BMP, Mi-35, Su-27, drones, highland infantry (no regional/ethnic armed groups) |
-| B2 | LY Libya | **stylised national army only** (no rival camps/governments/militias, flags, slogans, leaders; neutral emblem, plain colours); older Soviet-era armour, technicals/MRAPs, Mi-35, older jets, drones, coastal boats |
-| B2 | SD Sudan | **stylised national army only** (same rule as LY); T-72/T-55-style, BTR/technicals, Mi-24, older jets, Nile river boats, savanna/desert infantry |
+| B2 ✅ first cut 2026-11-06 | DZ Algeria | T-90SA/T-72, BMP-2, Mi-28/Mi-24, Su-30MKA, MEKO, Kilo-style, S-300-style AD |
+| B2 ✅ first cut 2026-11-06 | MA Morocco | M1A2/M60, M113/Ratel, AH-64, F-16, FREMM-style, desert berm defences |
+| B2 ✅ first cut 2026-11-06 | NG Nigeria | light armour/MRAPs, Alpha Jet/Super Tucano/JF-17, Mi-35, patrol vessels, strong infantry (no non-state groups) |
+| B2 ✅ first cut 2026-11-06 | ZA South Africa | Olifant, Ratel/Badger, Rooikat, Rooivalk, Gripen, Valour frigate, G6, bush infantry |
+| B2 ✅ first cut 2026-11-06 | ET Ethiopia | T-72/T-55, BTR/BMP, Mi-35, Su-27, drones, highland infantry (no regional/ethnic armed groups) |
+| B2 ✅ first cut 2026-11-06 | LY Libya | **stylised national army only** (no rival camps/governments/militias, flags, slogans, leaders; neutral emblem, plain colours); older Soviet-era armour, technicals/MRAPs, Mi-35, older jets, drones, coastal boats |
+| B2 ✅ first cut 2026-11-06 | SD Sudan | **stylised national army only** (same rule as LY); T-72/T-55-style, BTR/technicals, Mi-24, older jets, Nile river boats, savanna/desert infantry |
