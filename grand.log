@@ -1,0 +1,11 @@
+menu {"g":"Grand campaign","c":"Missions","s":"Conquest — deploy vs AI","t":true}
+determinism {"a":"7932c10","b":"7932c10","c":"69c22623","h0":"41efa0d8","h1":"41efa0d8","ms":315,"alive1":79,"provs":174,"seas":44}
+scenario {"foe":"IQ","from":"Zagros","to":"Baghdad","aid":55,"ok":true,"units":37,"to_i":75}
+expected {"meAtt":true,"mine":{"inf":28,"at":4,"tank":2,"arty":1,"aa":1,"champ":1},"theirs":{"inf":45,"at":7,"tank":3,"arty":1,"aa":1,"champ":1},"nMine":37,"waves":0,"prov":"Baghdad"}
+battle {"me":{"tank":2,"champ":1,"at":4,"inf":28,"aa":1,"arty":1},"foe":{"tank":3,"champ":1,"at":7,"inf":45,"aa":1,"arty":1},"b0":[],"b1":["sam"],"qSame":true,"cr":0,"conq":false,"over":false,"waves":0,"att":0,"n0":[37,58]}
+finish {"res":true,"before":{"alive":25,"kinds":{"inf":23,"aa":1,"arty":1},"hp":[50,50,50,50,50,50,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]},"meAtt":true,"bi":6}
+flowback {"n":25,"kinds":{"inf":23,"arty":1,"aa":1},"hp":[50,50,50,50,50,50,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]}
+after {"g":false,"grand":"flex","ph":"resolve","turn":1,"owner":"US"}
+turn {"log":["Russia captured Donbas from Ukraine.","Israel captured Latakia from Syria.","Iran captured Baghdad from Iraq.","UAE captured Hormozgan from Iran.","Pakistan captured Rajasthan from India.","South Korea captured Osaka from Japan."],"turn":2,"save":true}
+
+GRANDTEST PASS
