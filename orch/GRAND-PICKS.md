@@ -20,6 +20,18 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
   (proved later by the balance tourneys / grandtest). Economy/building-type signatures → grand2 builds; military/strike-type →
   grand3; leader/political-type → grand6. New-nation helpers add their nation's row.
 
+## ALL stages — air & supply in campaign battles (Abdullah 2026-11-06 08:08; battles have no base, army only)
+- [ ] **Jets = sorties from airfields** (grand3 builds; grand2 provides the stocks): jets live in air wings at grand-map airfields
+      (and carriers in fleets); if an airfield/carrier is within range of the battle province, that side gets on-call sorties in
+      the battle — jets fly in from the map edge, strike/patrol, then leave; sorties per battle limited by the wing's fuel/munitions
+      stock; jets shot down are lost on the map too. Defender with an airfield in the province gets it in the battle (jets rearm
+      there). **Helicopters and drones travel with the army** as normal units and rearm at the army's supply trucks.
+- [ ] **Supply = entry edge + trucks** (grand2 builds, extending the battle's existing logistics/convoy system in
+      `src/03c-logistics.js` — no second system): each army starts with its grand-map ammo/fuel (cut-off armies start low); the
+      map edge it entered from is its supply point; supply trucks/convoys run from there along roads; cutting the road starves
+      units (no ammo = can't fire, no fuel = vehicles stop); captured towns/depots become forward supply; the defender is supplied
+      from the province's own towns and depots. Leftover ammo/fuel goes back to the army on the map.
+
 ## Stage 1 (grand1 — map, provinces, armies, turns, battles)
 - [ ] **Menu names** (Abdullah 2026-11-06): main menu = Grand campaign · Conquest · Missions · Tutorial. Rename the old story
       "Campaign" to "Missions" everywhere players see it (menu, buttons, encyclopedia, What's new); keep its saves/progress working.
