@@ -1,0 +1,6 @@
+peak memory (node + browser, summed RSS): 1322 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+SMOKE FAIL (61s)
+  ✗ page error: Unexpected token '<<'
+  ✗ page.waitForFunction: Timeout 60000ms exceeded.
