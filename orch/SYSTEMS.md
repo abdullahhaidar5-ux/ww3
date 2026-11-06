@@ -57,4 +57,5 @@ empire systems never inside a battle.
 5. Saves/host migration cover every new state (savetest in the gate).
 6. Key conflicts checked by the controls gate.
 7. Per-system performance budget kept inside smooth-pc / server headroom.
+9. **Remove from Conquest battles** (Abdullah 20:58 — they move to the grand map, see GRAND-PICKS): the cleric unit (Ayatollah / Dear Leader), the Mountain Fortress building/standalone fortress map entry and the Bunker Buster power — from build lists, powers, AI, encyclopedia, tutorial; morale: drop the 'Ayatollah' rally zone and "unbreakable while the Ayatollah lives" but keep the Zealous style; keep campaign missions working (mission-scripted versions); old saves with these units load without crashing; balance re-checked.
 8. **National morale styles** (Abdullah 20:01) — build the `MORALE_STYLE` table + moraleTick hooks for all live nations, show the style on the nation pick screen and in the encyclopedia, AI aware of it, balanced (integration helper 1; nation helpers set theirs).

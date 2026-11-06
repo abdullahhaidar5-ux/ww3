@@ -73,6 +73,11 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   Grand-map national morale: raised/lowered by victories & defeats, casualties & war length, losing home/holy places (capital,
   war goals, heritage sites) and short national/religious-day boosts (equal value for all); on collapse: troops start battles
   shaken, forced peace talks, coups & civil war.
+- **Grand-map-only assets** (Abdullah 2026-11-05 20:58): the **Ayatollah**, the **Dear Leader**, the **Mountain Fortress** and the
+  **Bunker Buster** leave the tactical (Conquest) battle and live on the grand map: Ayatollah/Dear Leader = national leader figures
+  (morale/loyalty, tour provinces, Fight-it battles there start with fervour), Mountain Fortress = a province building that
+  appears pre-built for the defender in that province's battles, Bunker Buster = a grand-map strike on fortified provinces.
+  Zealous morale no longer depends on a cleric unit. Campaign missions keep working (scripted versions where a mission needs them).
 - **Mountain Shias (RS) identity** (Abdullah 2026-11-05 19:46 "make it more obvious"): unmistakably a Lebanese mountain Shia
   resistance force through content — Lebanon home, Lebanese-dialect voices, Ashura/"Ya Hussein" religious motifs, tunnels, ATGM
   teams, rocket barrages, drones, mountain forts. **Never** the real organisation's name, flag/emblem (or a close copy) or real

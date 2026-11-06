@@ -24,10 +24,14 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       end) or Standard.
 
 ## Stage 2 (grand2 — empire economy)
+- [ ] **Mountain Fortress** (Abdullah 20:58, moved out of battles): a province building for mountain provinces (RS signature, with
+      an equal-value fortification for other nations); it appears pre-built for the defender in that province's Fight-it battle.
 - [ ] Chokepoints have real effects: whoever holds a strait can close it — world trade income and the oil price shift for everyone.
 - [ ] Oil-prize regions feed the oil market/fuel economy.
 
 ## Stage 3 (grand3 — military)
+- [ ] **Bunker Buster** (Abdullah 20:58, moved out of battles): a grand-map strike on a province — wrecks fortified buildings
+      (Mountain Fortress, bunkers, air defence, bases) there; air defence can intercept; equal-value counterpart for every nation.
 - [ ] **Encirclement & sieges:** armies/provinces cut off from supply (by provinces, sea control, chokepoints) lose strength each
       turn and may surrender; besieged cities hold out on stockpiles (province buildings/rationing), and a siege battle can be
       fought live.
@@ -41,6 +45,9 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       nations (members get a joint-operations bonus: shared vision/supply, cheaper allied aid), with membership rules in diplomacy.
 
 ## Stage 6 (grand6 — hidden war, home front)
+- [ ] **Ayatollah & Dear Leader** (Abdullah 20:58, moved out of battles): national leader figures on the grand map (IR/RS/DW
+      clerical leader, KP Dear Leader; fictional, no real-person likeness; every nation gets an equal-value leader figure): boost
+      national morale/loyalty, can tour a province (Fight-it battles there start with fervour), danger if the capital falls.
 - [ ] **Occupation choices:** for each conquered province: annex (full tax, high unrest/insurgency), set up a friendly government
       (puppet: less tax, low unrest, may defect) or liberate (no tax, big world-opinion/loyalty gain); uses **Locals** for resistance.
 - [ ] **Factions at home:** military, business and clergy interest groups with demands and satisfaction; happy factions give
