@@ -61,7 +61,7 @@ const BASE={
   tank:{cls:'tank',hp:600,spd:58,rng:200,dmg:55,rof:1.6,wpn:'cannon',cost:800,time:10,from:'factory',armor:'heavy',r:14,dom:'ground'},
   arty:{cls:'arty',hp:280,spd:40,rng:420,dmg:72,rof:4,wpn:'shell',splash:55,minr:90,cost:1000,time:12,from:'factory',armor:'heavy',r:13,dom:'ground'},
   drone:{cls:'drone',hp:80,spd:125,rng:24,dmg:240,rof:1,wpn:'boom',splash:65,cost:350,time:5,from:'factory',armor:'air',r:8,dom:'air',alt:'low'},
-  heli:{cls:'heli',hp:430,spd:95,rng:235,dmg:46,rof:1.25,wpn:'at',cost:1300,time:14,from:'airfield',armor:'air',r:14,dom:'air',alt:'low'},
+  heli:{cls:'heli',dip:1,sonar:240,hp:430,spd:95,rng:235,dmg:46,rof:1.25,wpn:'at',cost:1300,time:14,from:'airfield',armor:'air',r:14,dom:'air',alt:'low'},
   jet:{cls:'jet',hp:320,spd:240,rng:250,dmg:230,rof:.55,wpn:'bomb',splash:40,ammo:2,cost:1600,time:16,from:'airfield',armor:'air',r:14,dom:'air',alt:'high'},
   // Transports: carry troops (and, by sea, vehicles). Board by clicking the transport with units selected;
   // select the transport and press Unload. Destroyed transports take their passengers with them.
@@ -70,7 +70,12 @@ const BASE={
   boat:{cls:'boat',sonar:170,hp:460,spd:92,rng:220,dmg:14,rof:.35,wpn:'gun',aa:2,cost:700,time:9,from:'shipyard',armor:'heavy',r:14,dom:'naval'},
   // Submarine: stealthy (hidden until it fires or an enemy ship / boat / coastal battery's sonar is close); torpedoes hit ships only.
   sub:{name:'Submarine',cls:'sub',hp:560,spd:54,rng:340,dmg:200,rof:5,wpn:'torp',splash:30,minr:50,cost:1500,time:16,from:'shipyard',armor:'heavy',r:18,dom:'naval',stealth:true,sub:1,sonar:230,navalOnly:1},
-  ship:{cls:'ship',sonar:300,hp:1400,spd:48,rng:540,dmg:90,rof:3.5,wpn:'shell',splash:62,minr:110,cost:2200,time:22,from:'shipyard',armor:'heavy',r:26,dom:'naval'},
+  // Navy 2: fast attack craft (cheap swarm boat: guns/rockets, +dmg per nearby sister boat; ships' CIWS and helicopters shred them),
+  // minelayer (F+click = lay mines along its path), minesweeper (finds and clears mines). Same stats for every nation.
+  fast:{name:'Fast Attack Craft',cls:'boat',hp:220,spd:132,rng:200,dmg:9,rof:.28,wpn:'gun',aa:1,cost:450,time:6,from:'shipyard',armor:'heavy',r:11,dom:'naval',swarm:1},
+  minel:{name:'Minelayer',cls:'boat',hp:520,spd:68,rng:0,dmg:0,rof:1,cost:800,time:10,from:'shipyard',armor:'heavy',r:16,dom:'naval',noAttack:1,minelay:1},
+  sweep:{name:'Minesweeper',cls:'boat',hp:420,spd:62,rng:0,dmg:0,rof:1,cost:650,time:9,from:'shipyard',armor:'heavy',r:15,dom:'naval',noAttack:1,sweep:1,mdet:260},
+  ship:{cls:'ship',sonar:300,hp:1400,spd:48,rng:540,dmg:90,rof:3.5,wpn:'shell',splash:62,minr:110,cost:2200,time:22,from:'shipyard',armor:'heavy',r:26,dom:'naval',door:{rng:240,dmg:12,rof:.2,wpn:'gun',aa:2}},
 };
 const STRUCT={
   hq:{name:'Command HQ',hp:3000,size:90,cost:2000,time:30},
@@ -219,7 +224,7 @@ const COUNTER={inf:'Beats AT teams and other infantry · Loses to tanks and arti
   drone:'Explodes on groups of vehicles and infantry · Loses to AA and rifle fire',heli:'Beats tanks and vehicles · Loses to AA and AT teams',jet:'Bombs buildings and vehicles · Loses to SAM sites and AA',
   boat:'Beats boats and helicopters near water · Loses to warships',ship:'Shells coasts and boats from long range · Loses to boats up close and aircraft'};
 const SHIA={IR:1,RS:1,DW:1};
-function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),'champ',...(SHIA[fac]||fac==='KP'?['cleric']:[])],factory:['aa','tank','arty',...(F.extra||[]),...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift'],shipyard:F.noShip?['boat','lander']:['boat','sub','ship','lander']};}
+function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),'champ',...(SHIA[fac]||fac==='KP'?['cleric']:[])],factory:['aa','tank','arty',...(F.extra||[]),...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift'],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
 function allUnits(fac){const r=roster(fac);return CATS.flatMap(c=>r[c]);}
 function bldAllowed(fac,k){if(k==='econ'&&typeof G!=='undefined'&&G&&G.conq)return false;   /* Conquest: the Revenue Center is gone - territory pays
   */if(k==='tunnel'||k==='fort')return !!FACTIONS[fac].tunnels;return !(k==='airfield'&&FACTIONS[fac].noAir);}
@@ -393,6 +398,8 @@ const sc={};
 const SUBN={US:'Virginia-class Submarine',TR:'Preveze-class Submarine',IL:'Dolphin-class Submarine',EU:'Barracuda-class Submarine',UA:'Kilo-class Submarine',RU:'Yasen-class Submarine',IR:'Ghadir Midget Submarine',SA:'Type 209 Submarine',AE:'Scorpene Submarine',PK:'Agosta 90B Submarine',IN:'Kalvari-class Submarine',CN:'Type 039 Yuan Submarine',KP:'Romeo-class Submarine',KR:'Son Won-il Submarine',EG:'Type 209/1400 Submarine',CU:'Foxtrot Submarine'};
 const MDN={US:'Patriot Battery',IL:'Iron Dome Battery',RU:'S-400 Triumf',CN:'HQ-9 Battery',IN:'Akash Battery',TR:'Hisar Battery',KR:'KM-SAM Battery',IR:'Bavar-373 Battery',EU:'SAMP/T Battery',UA:'NASAMS Battery',SA:'THAAD Battery',AE:'THAAD Battery',PK:'HQ-16 Battery',KP:'KN-06 Battery',EG:'S-300 Battery',CU:'S-125 Pechora Battery',RS:'Sayyad-4B Battery',DW:'Khordad-15 Battery'};   // Conquest: SAM sites are every nation's missile defence (they intercept part of a strike salvo)
 const COASTN={US:'Naval Strike Missile Battery',TR:'Atmaca Coastal Battery',IL:'Gabriel Coastal Battery',EU:'Exocet MM40 Battery',UA:'Neptune Coastal Battery',RU:'Bastion-P Coastal Battery',IR:'Noor / Qader Coastal Missiles',SA:'Harpoon Coastal Battery',AE:'Exocet Coastal Battery',PK:'Zarb Coastal Battery',IN:'BrahMos Coastal Battery',CN:'YJ-62 Coastal Battery',KP:'Kumsong Coastal Battery',KR:'Haeseong Coastal Battery',EG:'Otomat Coastal Battery',CU:'P-15 Termit Battery',RS:'Mountain Anti-Ship Rockets',DW:'Coffee Coast Rocket Battery'};
+const FASTN={IR:'Swarm Boat',RS:'Coastal Swarm Boat',DW:'Red Sea Skiff',US:'Patrol Boat',RU:'Raptor Patrol Boat',CN:'Type 022 Missile Boat',KP:'Sohae Rocket Boat',TR:'Fast Attack Craft',IL:'Shaldag Patrol Boat',UA:'Gunboat'};
+for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
 function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
   const s=Object.assign({},BASE[kind],(F.units||{})[kind]||{});s.kind=kind;if(kind==='cleric'&&fac==='KP')s.name='Dear Leader';{const X=(XL[fac]||{})[kind];if(X)for(const q in X)if(s[q]!=null)s[q]*=X[q];if(X)s.xl=1;}const inf=s.armor==='light',veh=s.armor==='heavy'||s.cls==='heli'||s.cls==='jet';
