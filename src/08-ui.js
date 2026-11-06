@@ -147,16 +147,16 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
   for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});}/* owned powers are used from the side rail / hotkey */},null,true);}
   sub('pow','Level up');for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
   sub('pow','General Doctrine (pick in the first 2 minutes)');for(const d of GDOC_KEYS){const D=GDOC[d];mk('pow','dc_'+d,D.name,'',D.blurb,()=>doAct({t:'doc',k:d}),null,true);}
-  sub('pow','Doctrine perks (1 point each)');for(const d of GDOC_KEYS)for(const p of GDOC[d].perks)mk('pow','dp_'+p.k,p.name,'',p.desc,()=>doAct({t:'dbuy',k:p.k}),null,true);
+  sub('pow','Doctrine tree (1 point per perk; tier 2 needs tier 1, tier 3 needs the perk it hangs from)');const fcN=(G&&G.teams[ME]&&G.teams[ME].fac)||setup.p;for(const d of GDOC_KEYS)for(const p of GDOC[d].perks)mk('pow','dp_'+p.k,'T'+p.t+' '+gdName(fcN,p),'',(p.req?'Needs '+gdName(fcN,GDOC_PERKS[p.req])+'. ':'Tree root. ')+p.desc,()=>doAct({t:'dbuy',k:p.k}),null,true);
   showTab(TAB);updateUI();}
 // General Doctrine picker: a big touch-friendly card for the first 2 minutes, plus the buttons in the Powers tab
 function docUI(T){if(!G||!T)return;const lock=Object.keys(T.gperk||{}).length>0||(G.t>GDOC_LATE&&!G.sandbox),pts=T.rank-T.spent;
-  for(const d of GDOC_KEYS){setBtn('dc_'+d,{dis:lock||T.gdoc===d,done:T.gdoc===d,cost:T.gdoc===d?'Your doctrine':lock?'Locked':'Pick (free)'});for(const p of GDOC[d].perks){const b=$('dp_'+p.k);if(!b)continue;const sh=T.gdoc===d,dv=sh?'':'none';if(b.style.display!==dv){b.style.display=dv;if(sh)fitBtnNames();}if(sh){const own=!!(T.gperk&&T.gperk[p.k]);setBtn('dp_'+p.k,{dis:own||pts<1,done:own,cost:own?'Active':'1 point'});}}}
+  for(const d of GDOC_KEYS){setBtn('dc_'+d,{dis:lock||T.gdoc===d,done:T.gdoc===d,cost:T.gdoc===d?'Your doctrine':lock?'Locked':'Pick (free)'});for(const p of GDOC[d].perks){const b=$('dp_'+p.k);if(!b)continue;const sh=T.gdoc===d,dv=sh?'':'none';if(b.style.display!==dv){b.style.display=dv;if(sh)fitBtnNames();}if(sh){const own=!!(T.gperk&&T.gperk[p.k]);const rq=gdReq(T,p);setBtn('dp_'+p.k,{dis:own||pts<1||!rq,done:own,cost:own?'Active':!rq?'Needs '+gdName(T.fac,GDOC_PERKS[p.req]):'1 point'});}}}
   if(!G.docSent&&setup.gdoc&&!T.gdoc&&G.t>.5&&!G.sandbox){G.docSent=1;doAct({t:'doc',k:setup.gdoc});}
   let ov=$('docPick');const show=!T.gdoc&&!lock&&!T.out&&!G.sandbox&&!G.docDis&&G.t>1&&!G.over&&!G.sel.length;
   if(!show){if(ov)ov.hidden=true;return;}
   if(!ov){ov=document.createElement('div');ov.id='docPick';ov.style.cssText='pointer-events:none;position:fixed;left:50%;top:6%;transform:translateX(-50%);z-index:40;background:rgba(10,14,12,.92);border:1px solid #8a9a6a;border-radius:10px;padding:6px 8px;max-width:min(96vw,520px);font:14px system-ui,sans-serif;color:#e8eedb;box-shadow:0 4px 24px #000a;text-align:center';
-    ov.innerHTML='<div style="font-weight:700;margin-bottom:4px;font-size:13px">Choose your General Doctrine <span style="font-weight:400;opacity:.7">(free, 4 perks each)</span></div><div id="docBtns" style="display:flex;gap:6px;align-items:stretch"></div>';
+    ov.innerHTML='<div style="font-weight:700;margin-bottom:4px;font-size:13px">Choose your General Doctrine <span style="font-weight:400;opacity:.7">(free, a 5-perk tree each)</span></div><div id="docBtns" style="display:flex;gap:6px;align-items:stretch"></div>';
     document.body.append(ov);const bx=ov.querySelector('#docBtns');for(const d of GDOC_KEYS){const b=document.createElement('button');b.style.cssText='pointer-events:auto;flex:1;min-height:44px;padding:4px 6px;background:#2c3a26;border:1px solid #8a9a6a;color:#f0f5e6;border-radius:8px;font:13px system-ui,sans-serif;touch-action:manipulation';b.textContent=GDOC[d].name;b.title=GDOC[d].blurb;b.onclick=()=>{doAct({t:'doc',k:d});ov.hidden=true;};bx.append(b);}
     const lb=document.createElement('button');lb.textContent='✕';lb.title='Later';lb.setAttribute('aria-label','Later');lb.style.cssText='pointer-events:auto;min-width:44px;min-height:44px;background:none;border:1px solid #667;color:#cbd;border-radius:8px';lb.onclick=()=>{G.docDis=1;ov.hidden=true;};bx.append(lb);}
   ov.hidden=false;}
@@ -257,7 +257,7 @@ function btnAt(x,y){for(const b of $('panel').children){if(!b.classList.contains
 function renderAllies(){const el=$('allyBox');if(!el||!G)return;const T=G.teams[ME];const A=G.teams.filter(O=>O.id!==ME&&ally(O.id,ME)&&!O.out);el.hidden=!A.length||!!G.sandbox;if(el.hidden)return;
   const key=A.map(O=>O.id).join(',');if(el.dataset.k!==key){el.dataset.k=key;el.innerHTML='<div class="lbl"><span>Allies</span><span id="allyt" style="font:12px var(--mono);color:var(--dim)">send money</span></div>';
     for(const O of A){const r=document.createElement('div');r.className='ar';r.innerHTML=`<b style="color:${O.color}">${O.F.name}</b>`+(GDOC[O.gdoc]?` <small style="opacity:.7">${GDOC[O.gdoc].short}</small>`:'');const sm=document.createElement('small');sm.dataset.c=O.id;r.append(sm);
-      for(const v of [250,1000,'½']){const b=document.createElement('button');b.textContent=v==='½'?'Half':'+$'+v;b.dataset.v=v;b.title=v==='½'?'Send half of your money':`Send $${v}`;b.onpointerdown=ev=>{ev.preventDefault();const amt=v==='½'?Math.floor(G.teams[ME].credits/2):v;doAct({t:'give',to:O.id,amt});};r.append(b);}el.append(r);}}
+      for(const v of [250,1000,'½']){const b=document.createElement('button');b.textContent=v==='½'?'Half':'+$'+v;b.dataset.v=v;b.title=v==='½'?'Send half of your money (10% fee, arrives after 4 s)':`Send $${v} (10% fee, arrives after 4 s)`;b.onpointerdown=ev=>{ev.preventDefault();const amt=v==='½'?Math.floor(G.teams[ME].credits/2):v;doAct({t:'give',to:O.id,amt});};r.append(b);}el.append(r);}}
   for(const sm of el.querySelectorAll('small[data-c]')){const O=G.teams[+sm.dataset.c];sm.textContent='$'+Math.floor(O.credits);}
   for(const b of el.querySelectorAll('button'))b.disabled=b.dataset.v==='½'?T.credits<100:T.credits<+b.dataset.v;}
 // Sanctions banner: shown to the sanctioned player with the cut and a countdown (T.sanc = sim time it ends; clients get it from the snapshot)
@@ -324,7 +324,7 @@ $('supbtn').onclick=()=>{G.place=null;G.aim='sup';};
 /* ---------- squads: group units so they move together ---------- */
 // Up to 5 squads. "Group selected" (or Ctrl/Shift + 1-5) puts the selection in a squad; click a squad button or press 1-5 to
 // select it, click twice to jump the camera to it. A squad moves in formation at the pace of its slowest unit.
-const SQN=5;function sqList(i){if(!G||!G.sq)return[];const ids=G.sq[i]||[];return ids.map(id=>G.byId.get(id)).filter(u=>u&&!u.dead&&u.team===ME);}
+const SQN=9;function sqList(i){if(!G||!G.sq)return[];const ids=G.sq[i]||[];return ids.map(id=>G.byId.get(id)).filter(u=>u&&!u.dead&&u.team===ME);}
 function sqOfSel(){const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(own.length<2)return -1;for(let i=1;i<=SQN;i++){const L=sqList(i);if(L.length&&L.length===own.length&&own.every(u=>L.includes(u)))return i;}return -1;}
 function sqAssign(i){const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(!own.length)return false;G.sq=G.sq||{};for(let k=1;k<=SQN;k++)if(k!==i&&G.sq[k])G.sq[k]=G.sq[k].filter(id=>!own.some(u=>u.id===id));G.sq[i]=own.map(u=>u.id);pushLog(`Squad ${i} formed: ${own.length} unit${own.length>1?'s':''}. It will move in formation.`,'g');sfxUI(520);renderSquads();return true;}
 let sqLast={i:0,t:0};function sqSelect(i){const L=sqList(i);if(!L.length)return;const now=performance.now();if(sqLast.i===i&&now-sqLast.t<450){const x=L.reduce((s,u)=>s+u.x,0)/L.length,y=L.reduce((s,u)=>s+u.y,0)/L.length;centerOn(x,y);}sqLast={i,t:now};G.sel=L.slice();speak(0);updateUI();renderSquads();}
@@ -568,7 +568,7 @@ window.addEventListener('pointercancel',e=>{touchCancel(e);if(drag&&e.pointerId=
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;MODK.ctrl=e.ctrlKey||e.metaKey||k==='Control'||k==='Meta';MODK.alt=e.altKey||k==='Alt';MODK.shift=e.shiftKey;if(!G||$('menu').hidden===false)return;if(k==='Alt')e.preventDefault();
   const gk=genKeys()&&!e.ctrlKey&&!e.metaKey&&!e.altKey;/* W A S D only scroll the camera in every scheme (Abdullah 2026-10-28): no A attack-move, no S stop (X stops) */
-  if(/^Digit[1-5]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
+  if(/^Digit[1-9]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
   if(k==='p'&&!G.over){e.preventDefault();togglePause();return;}
   if(k==='Escape'&&MLOCK.on){MLOCK.escK=performance.now();mlockCancelModes();mlockOff();return;}
   if(k==='Escape'&&menuOpen()){menuOpen(false);return;}
