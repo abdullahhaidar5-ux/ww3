@@ -33,16 +33,16 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       from the province's own towns and depots. Leftover ammo/fuel goes back to the army on the map.
 
 ## Mirror stage (grandmirror — battles mirror the grand map, Abdullah 2026-11-06 08:09 "full mirror"; runs after grand5)
-- [ ] **Battle map generated from the province**: each province's Fight-it battle map is generated deterministically (seed =
+- [x] **Battle map generated from the province**: each province's Fight-it battle map is generated deterministically (seed =
       province id) from its grand-map data: terrain/biome, relief, coast/sea side, rivers (with bridges/fords), forests, roads,
       and **town positions**; the side each army entered from = its map edge. Hand-made real-place maps (Golan, Beqaa, DMZ…) are
       used for their provinces when they exist. Every generated map passes the map-fairness rules as far as geography allows
       (the defender's terrain advantage is intended; check both sides have ≥2 real routes).
-- [ ] **Towns mirror exactly, both ways**: same town names, size tier/upgrade chain type, owner, loyalty/unrest/tax, province
+- [x] **Towns mirror exactly, both ways**: same town names, size tier/upgrade chain type, owner, loyalty/unrest/tax, province
       buildings (airfield, AA, fort, Mountain Fortress, factories, ports) and current damage appear in the battle (town-look
       generator in the right regional style); after the battle, captured towns, loyalty changes, destroyed/damaged buildings and
       rubble go back to the province (reconstruction on the map repairs them).
-- [ ] Fast: map generation < 2 s on a mid PC, cached per province until it changes; deterministic for multiplayer.
+- [x] Fast: map generation < 2 s on a mid PC, cached per province until it changes; deterministic for multiplayer.
 
 ## Stage 1 (grand1 — map, provinces, armies, turns, battles)
 - [x] **Menu names** (Abdullah 2026-11-06): main menu = Grand campaign · Conquest · Missions · Tutorial. Rename the old story
