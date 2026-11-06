@@ -115,3 +115,5 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 - [ ] **Pause on events**: settings for which events pause the game / pop up (war declared, revolt, province lost…).
 - [ ] **Advisor tips:** optional chief-of-staff hints on the grand map ("province 12 will revolt", "your east is undefended",
       "this strait closing will hurt your oil income"), toggle in Settings.
+
+- JP (Japan, added 2026-11-06 nations-new2): grand-map home region = Japan.

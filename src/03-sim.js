@@ -1354,11 +1354,11 @@ function updSupply(dt){if(G.lgd)lgMines(dt);G.supT=(G.supT||0)+dt;if(G.supT<.5)r
 const TAX=[{n:'Low',m:.6,u:-.8},{n:'Normal',m:1,u:-.1},{n:'High',m:1.5,u:.85},{n:'Extortionate',m:2.2,u:1.6}];
 const CQ_CP=.8,CQ_PW_FIRST=30,CQ_START=10000,CQ_SETUP=90,CQ_TRICKLE=2.5,CQ_OIL=.6,CQ_HARV=.3;   /* Conquest: start money, no-fire setup seconds, base trickle $/s, derrick and supply-truck income multipliers */
 const T_FRONT_R=560,T_KEYS=3,T_GAR_R=260,T_RAMP=90,T_REBEL_S=120;
-const TOWN_NAMES={me:['Qasr al-Nur','Tal Aswad','Kafr Nabil','Deir Zaman','Ain Rumman','Bayt Hanun','Wadi Khalil','Jabal Sami','Nahr Salim','Dar al-Amir','Suq Hamid','Bir Farid','Hayy al-Rawda','Marj Dabiq','Khirbet Noor','Sahl Zaid','Tell Mardikh','Bab al-Ain','Ras Qadir','Umm Hajar','Al-Zubayr','Hisn Karam','Wadi Ghazal','Qaryat Layl'],
+const TOWN_NAMES={jp:['Minato','Kawagoe','Sakurai','Higashi','Shimizu','Hakone','Nagano','Yokosuka','Matsue','Aoba','Kitami','Odawara','Tsuruga','Isahaya','Maizuru','Kure'],me:['Qasr al-Nur','Tal Aswad','Kafr Nabil','Deir Zaman','Ain Rumman','Bayt Hanun','Wadi Khalil','Jabal Sami','Nahr Salim','Dar al-Amir','Suq Hamid','Bir Farid','Hayy al-Rawda','Marj Dabiq','Khirbet Noor','Sahl Zaid','Tell Mardikh','Bab al-Ain','Ras Qadir','Umm Hajar','Al-Zubayr','Hisn Karam','Wadi Ghazal','Qaryat Layl'],
   ru:['Zarechye','Novoselo','Krasnaya Gora','Belaya Rechka','Volna','Sosnovka','Zvezdny','Kamenka','Yasnaya','Dubrovka','Lugovoye','Mirny','Pervomaysk','Slobodka','Vishnyovka','Berezov'],
   eu:['Marienthal','Rosenau','Bellmont','Saint-Aubin','Eichberg','Kirchdorf','Lindenau','Westbrook','Montfort','Altenburg','Villeneuve','Hartwick','Grunwald','Oakridge','San Mateo','Lisieux'],
   as:['Haeju','Sinchon','Jangsu','Baekma','Yongdae','Hwangsan','Mingshan','Qinghe','Daeho','Taesong','Linhai','Songjiang','Chongjin','Suyang','Anping','Hanyuan']};
-function townNames(style){return /russia/.test(style||'')?TOWN_NAMES.ru:/korea|asia/.test(style||'')?TOWN_NAMES.as:/europe|america|latin/.test(style||'')?TOWN_NAMES.eu:TOWN_NAMES.me;}
+function townNames(style){return /russia/.test(style||'')?TOWN_NAMES.ru:/korea|asia/.test(style||'')?TOWN_NAMES.as:/japan/.test(style||'')?TOWN_NAMES.jp:/europe|america|latin/.test(style||'')?TOWN_NAMES.eu:TOWN_NAMES.me;}
 function initTowns(){const M=G.map,src=[];G.towns=[];
   (M.cities||[]).forEach(c=>src.push({x:c.x,y:c.y,r:c.r,ham:!!c.ham,prize:!!c.prize,style:c.style,cells:[]}));
   for(const c of G.civ){c.ti=-1;if(c.ruin)continue;let bi=-1,bd=1e9;src.forEach((q,i)=>{const d=Math.hypot(c.x-q.x,c.y-q.y)/(q.r+CELL*.8);if(d<bd){bd=d;bi=i;}});if(bi>=0&&bd<=1.3)src[bi].cells.push(c);}
@@ -1447,9 +1447,9 @@ function townCmd(team,a){const t=G.towns&&G.towns[a.ti|0];if(!t||t.ow<0||!ally(t
    beyond what unrest already does). Host-authoritative, no RNG, fixed update order. ===== */
 const HM={LOY_UN:30,LOY_HOLD:120,MIL_CAP:4,MIL_CD:6,MIL_COST:70,MIL_HP:.8,INF_R:700,INF_T:6,INF_DELAY:2,BRIB_UN:50,BRIB_CD:150,BRIB_T:700,BRIB_H:250,TOW_R:900,TOW_CAP:10,
   TURF:{rise:.65,fall:1.25,cap:1.25,inf:1.3,rec:.85,brib:1.25,foe:1.15}};
-const MIL_NAME={US:'Local Auxiliaries',EU:'Local Auxiliaries',UA:'Territorial Volunteers',RU:'Local Militia',CN:'People\'s Militia',KP:'Worker-Peasant Militia',IR:'Volunteer Mobilization Fighters',RS:'Village Defence Fighters',DW:'Tribal Volunteers',
+const MIL_NAME={JP:'Local Defence Volunteers',US:'Local Auxiliaries',EU:'Local Auxiliaries',UA:'Territorial Volunteers',RU:'Local Militia',CN:'People\'s Militia',KP:'Worker-Peasant Militia',IR:'Volunteer Mobilization Fighters',RS:'Village Defence Fighters',DW:'Tribal Volunteers',
   TR:'Local Defence Volunteers',IL:'Territorial Reservists',SA:'Local Defence Volunteers',AE:'Local Defence Volunteers',PK:'Local Defence Volunteers',IN:'Local Defence Volunteers',EG:'Local Defence Volunteers',KR:'Local Defence Volunteers',CU:'Local Defence Volunteers'};
-const STATION={US:'Heartland Radio One',EU:'Continental Broadcast',UA:'Free Dnipro Radio',RU:'Rodina Radio',CN:'Central Plains TV',KP:'Homeland Broadcast',IR:'Voice of the Plateau',RS:'Voice of the Mountain',DW:'Coffee Coast Radio',
+const STATION={JP:'Nippon Broadcast',US:'Heartland Radio One',EU:'Continental Broadcast',UA:'Free Dnipro Radio',RU:'Rodina Radio',CN:'Central Plains TV',KP:'Homeland Broadcast',IR:'Voice of the Plateau',RS:'Voice of the Mountain',DW:'Coffee Coast Radio',
   TR:'Anatolia Radio',IL:'Levant Broadcast',SA:'Desert Kingdom Radio',AE:'Emirates Gulf Radio',PK:'Indus Radio',IN:'Subcontinent TV',EG:'Nile Valley Radio',KR:'Hangang Broadcast',CU:'Island Radio'};
 function mapHome(){const m=G&&MAPS[G.mapKey];return (m&&m.home)||[];}
 function teamHomeFlag(i){const T=G.teams[i];return !!(T&&!T.reb&&mapHome().includes(T.fac));}

@@ -275,6 +275,7 @@ function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=doc
     case 'IN':hs(['#ff9933','#ffffff','#138808']);x.strokeStyle='#000080';x.lineWidth=2;x.beginPath();x.arc(60,36,9,0,7);x.stroke();for(let i=0;i<12;i++){const a=i/12*6.283;x.beginPath();x.moveTo(60,36);x.lineTo(60+Math.cos(a)*9,36+Math.sin(a)*9);x.stroke();}break;
     case 'CN':rect('#de2910',0,0,W,H);star(22,20,12,'#ffde00');for(const [a,b] of [[42,8],[50,16],[50,28],[42,36]])star(a,b,4,'#ffde00');break;
     case 'KP':rect('#024fa2',0,0,W,H);rect('#fff',0,13,W,4);rect('#fff',0,H-17,W,4);rect('#ed1c27',0,17,W,H-34);circ(40,36,14,'#fff');star(40,36,13,'#ed1c27');break;
+    case 'JP':rect('#fff',0,0,W,H);circ(60,36,20,'#bc002d');break;
     case 'KR':rect('#fff',0,0,W,H);x.fillStyle='#cd2e3a';x.beginPath();x.arc(60,36,15,Math.PI,0);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(60,36,15,0,Math.PI);x.fill();circ(52.5,36,7.5,'#cd2e3a');circ(67.5,36,7.5,'#0047a0');
       x.save();for(const [cx,cy,ang] of [[24,14,.59],[96,58,.59],[96,14,-.59],[24,58,-.59]]){x.save();x.translate(cx,cy);x.rotate(ang);for(let b=0;b<3;b++)rect('#000',-9,-7+b*5,18,3);x.restore();}x.restore();break;
     case 'EG':hs(['#ce1126','#ffffff','#000000']);x.fillStyle='#c09300';x.beginPath();x.moveTo(60,27);x.lineTo(68,36);x.lineTo(64,46);x.lineTo(56,46);x.lineTo(52,36);x.closePath();x.fill();break;
@@ -1007,7 +1008,7 @@ function jetPlumeMat(){if(jetPlumeMat.m)return jetPlumeMat.m;const cv=document.c
    decals and a small kit (flags on poles, sandbags, ERA blocks, cope cage, red stars, antennas). The mesh geometry is
    built once per model+nation and shared; textures come from one shared atlas. On Low graphics (phones) ground vehicles
    skip the kit entirely; aircraft/ships keep only the cheap decals. Visuals only - nothing here touches the simulation. */
-const KFAC=['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','CU','RS','DW'];
+const KFAC=['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','CU','RS','DW','JP'];
 const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=10;
 // extra atlas cells: 48-57 Persian digits (p:0..9), 58-67 Arabic-Indic digits (a:0..9), 68+ painted stencils (s:name)
 const KSTEN={shahed:68,qasef:69,ababil:70,kp:71,ru:72};
@@ -1133,7 +1134,7 @@ function kitDec(P,face,sg,a0,b0,w0,h0,cell,sub,o){o=o||{};const fa=o.fa||.8,fb=o
     return {kind:'surface',face,sg,a0,b0,w,h,cell,sub,c,n,up,fa,fb,cap:Math.max(W1,H1)*1.3,pa:pan.pa,pb:pan.pb,maxw:o.maxw,maxh:o.maxh,tag:o.tag||cell};}
   return null;}
 const NAVYP={west:'#8f989f',slav:'#6f8294',east:'#6a7e91',irgc:'#4d5a44',sand:'#a29271',olive:'#66694a'};
-function navyPaint(fac,m){const k={US:'west',IL:'west',EU:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
+function navyPaint(fac,m){const k={US:'west',IL:'west',EU:'west',TR:'west',KR:'west',JP:'west',SA:'west',AE:'west',EG:'west',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
 function factionKit(e,c,o,yaw,m,T){if(!T||!T.fac||!c||!m)return;const low=typeof SET!=='undefined'&&SET.gfx==='low',fac=T.fac,k=e.kind;
   const air=k==='jet'||k==='heli'||k==='airlift',nav=k==='boat'||k==='ship'||k==='lander'||k==='sub'||k==='fast'||k==='minel'||k==='sweep',gnd=/^m_/.test(c.m)&&['tank','arty','aa','atgm','jeep','raidlead'].includes(k);
   if(!(air||nav||gnd)||(gnd&&low)||(c.squad&&c.squad.length>1))return;

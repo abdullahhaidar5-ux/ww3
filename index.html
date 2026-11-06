@@ -5371,6 +5371,40 @@ function shade(hex,f){const n=parseInt(hex.slice(1),16);const r=(n>>16)*f,g=(n>>
 for(const k in FACTIONS){const F=FACTIONS[k],D=DOCT[k];if(!D||F._dt)continue;F._dt=1;const tr=Object.keys(DOCT_TXT).filter(q=>D[q]).map(q=>DOCT_TXT[q]);const c=COURAGE[k]||1,cl=k==='KP'?'unbreakable (never breaks)':['IR','RS','DW'].includes(k)?'unbreakable (never breaks while the Ayatollah lives)':c>=1.5?'unbreakable':c>=1.3?'very high':c>=1.15?'high':c>=1?'steady':'brittle';
   F.doctrineName=D.name;F.docShort=`${D.name} · courage: ${cl.split(' (')[0]}`;F.doctrine=`Doctrine: ${D.name} (${tr.join('; ')}). Courage: ${cl}. `+F.doctrine;}
 
+// ---------- JAPAN (JP) — full nation (Abdullah 2026-11-05 19:45). Self-Defense Forces style, no real leaders.
+// One system per idea: JP is registered in the SAME per-nation tables as every other nation (FACTIONS, UPG/UPGL, NATPOW, GPOW,
+// DOCT, XL, TRN, SUBN, MDN, COASTN, UPLINK, ECON, HEROES, SPEC, COURAGE, BAL, GDOC_*). Loaded right after 01-data.js.
+(function(){
+FACTIONS.JP=F_('JP','Japan','#e8e8f0','ja-JP','eastasia','Maritime defence & precision: sensors see 12% farther, units self-repair, weapons deal 4% more damage, warships and submarines are 20% tougher and hit 10% harder, Type 10 tanks have better fire control.',{dmg:1.04,regen:3,sight:1.12},'hero',
+  {inf:{name:'JGSDF Rifle Squad'},at:{name:'Type 01 LMAT Team'},hero:{name:'Special Forces Group Commando',demo:true},aa:{name:'Type 87 SPAAG'},tank:{name:'Type 10 Tank'},arty:{name:'Type 99 Howitzer'},heli:{name:'AH-64DJP Apache'},jet:{name:'F-2 Viper Zero'},boat:{name:'Hayabusa Missile Boat'},ship:{name:'Maya-class Aegis Destroyer'}},
+  {name:'Type 12 Missile Salvo',charge:160,n:2,dmg:600,r:125,spread:80},'k2fcs');
+FKEYS.push('JP');
+UPLINK.JP=['Standoff Missile Command','vls'];
+ECON.JP='Electronics & Robotics Plant';
+COURAGE.JP=1.03;
+SPEC.JP=['hero',{name:'Special Forces Group Commando',mark:1}];
+HEROES.JP=['Special Forces Group Operators','strike'];
+GDOC_AI.JP='air';
+GDOC_FLV.JP={r3:'Type 99 Fire Drills',r4:'Domestic Foundry',a1:'Type 10 Assembly Line'};
+NATPOW.JP={name:'Type 12 Salvo',type:'precise',cd:180,r:80,desc:'Eight accurate guided shells on a tight area'};
+GPOW.JP=JSON.parse(JSON.stringify(GPOW.KR));
+DOCT.JP={name:'Active Defence',homeland:1};
+XL.JP={ship:{hp:1.2,dmg:1.1},sub:{hp:1.2,dmg:1.1},arty:{rof:.9}};
+TRN.JP=['Landing Craft Air Cushion','CH-47J Chinook'];
+SUBN.JP='Soryu-class Submarine';
+MDN.JP='Type 03 Chu-SAM Battery';
+COASTN.JP='Type 12 Coastal Missile Battery';
+BAL.JP={'_':0.9};
+// nine upgrades in the Japanese idiom, cloned from the shared tier layout (same price/time per tier as every nation)
+const names=['Ranger Training','Special Operations Course','Type 10 Fire Control','Hybrid Suspension Armour','F-35B/F-2 Avionics','Apache Upgrades','Keiretsu Contracts','FPS-5 Radar Network','Aegis Combat System'];
+UPGL.JP=[];
+for(let i=1;i<=9;i++){const o=JSON.parse(JSON.stringify(UPG['kr'+i]));o.name=names[i-1];o.fac='JP';UPG['jp'+i]=o;UPGL.JP.push('jp'+i);}
+{const TIER={barracks:[1300,1200,1100],factory:[1300,1100,1000],airfield:[1000,850],hq:[1400,1400,1200],shipyard:[650]},cnt={};
+ for(const k of UPGL.JP){const U=UPG[k],t=TIER[U.at];if(!t)continue;const n=cnt[U.at]=(cnt[U.at]||0);cnt[U.at]++;U.cost=t[Math.min(n,t.length-1)];U.time=Math.round(U.cost/46);}}
+// doctrine/courage text (same as the loop at the end of 01-data)
+{const F=FACTIONS.JP,D=DOCT.JP;const tr=Object.keys(DOCT_TXT).filter(q=>D[q]).map(q=>DOCT_TXT[q]);
+ F._dt=1;F.doctrineName=D.name;F.docShort=D.name+' · courage: steady';F.doctrine='Doctrine: '+D.name+' ('+tr.join('; ')+'). Courage: steady. '+F.doctrine;}
+})();
 /* ================= MAP: sea channel, bridges, grid, pathfinding ================= */
 const COSB=0.894,BT=[0.894,0.447],BN=[-0.447,0.894];
 /* Maps: each defines water features (rivers, lakes), bridges, base slots (in fill order) and a symmetry used to place supply fairly.
@@ -5505,6 +5539,11 @@ const MAPS={
     slots:[[450,1900],[2850,1600],[450,400],[2850,600],[700,1150],[2500,1100]],
     cities:[[900,800,150,'asia'],[2650,1850,140,'asia'],[2700,350,110,'korea']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let t=0;t<=1.0001;t+=.01){pts.push([1500+t*400+80*Math.sin(t*7+ph),-200+t*2600]);}M.rivers.push({pts,hw:(t,x)=>330});M.islands.push({x:1780,y:1000,r:60,rx:1.5,rot:.4,wob:q=>.1*Math.sin(q*3)});M.bridgeAng.push([1575,480,.988,-.152],[1835,1700,.988,-.152]);}},
+  honshu:{name:'Honshu Coast: Land of the Rising Sun',min:2,max:4,sym:'mirrorX',theme:'green',rough:1.25,home:['JP'],tag:'dense low-rise towns · bay · offshore islands · naval-friendly',desc:'A stylised Japanese coast: tight tiled-roof towns climb narrow valleys behind a central bay with island strongholds offshore. Two land routes through the hills and one by sea.',
+    slots:[[450,1900],[2750,1900],[450,1200],[2750,1200]],
+    cities:[[1600,1150,170,'japan'],[800,1500,100,'japan'],[2400,1500,100,'japan'],[1600,1850,90,'japan']],
+    water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,-70+30*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:()=>480});
+      for(const [x,y] of [[800,620],[1600,520],[2400,620]]){M.islands.push({x,y,r:110,rx:1,rot:0,wob:q=>.3*Math.max(0,Math.sin(q*6))});}M.bridgeAng.push([800,560,0,1],[2400,560,0,1]);}},
   dmz:{name:'Korean DMZ',min:2,max:8,sym:'mirrorY',rough:1.3,home:['KP','KR'],tag:'fortified border · river · mountain ridges',desc:'The most fortified border on Earth: the Imjin river, the demilitarised strip, mountain ridges to the east and capitals within artillery range.',
     slots:[[500,250],[500,1950],[1600,200],[1600,2000],[2700,250],[2700,1950],[1050,300],[1050,1900]],
     cities:[[1150,1850,150,'korea'],[1150,350,120,'asia'],[2250,1880,90,'korea'],[2250,330,80,'asia']],
@@ -5823,7 +5862,7 @@ function mkMap(seed,mk,ssn){
     for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){if(i<1||j<1||i>=GW-1||j>=GH-1)continue;const x=i*CELL+CELL/2,y=j*CELL+CELL/2,d=Math.hypot(x-cx,y-cy);if(d>r)continue;
       if(((i-sx)%4+4)%4===0||((j-sy)%4+4)%4===0)continue;if(grid[j*GW+i]!==0)continue;if(BASES.some(([bx,by])=>Math.hypot(bx-x,by-y)<400))continue;
       if(M.edge(x,y)>-50||M.mtn(x,y)>-40)continue;const core=1-d/r;if(CR()>.42+.6*core)continue;grid[j*GW+i]=3;
-      const tall=style==='russia'?18+core*46*CR():style==='america'?(core>.55?28+core*70*CR():8+CR()*5):style==='yemen'?16+CR()*22:style==='gulfcity'?(core>.35?45+core*110*CR():12+CR()*8):style==='korea'?24+core*50*CR():style==='asia'?14+core*38*CR():style==='europe'?9+CR()*9:style==='latin'?7+CR()*8:style==='southasia'?8+CR()*12:8+CR()*10+core*16*CR();
+      const tall=style==='russia'?18+core*46*CR():style==='america'?(core>.55?28+core*70*CR():8+CR()*5):style==='yemen'?16+CR()*22:style==='japan'?10+CR()*10+core*16*CR():style==='gulfcity'?(core>.35?45+core*110*CR():12+CR()*8):style==='korea'?24+core*50*CR():style==='asia'?14+core*38*CR():style==='europe'?9+CR()*9:style==='latin'?7+CR()*8:style==='southasia'?8+CR()*12:8+CR()*10+core*16*CR();
       if(CR()<.55&&tall<30){for(const [ox,oy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){if(CR()<.15)continue;M.cityBlds.push({x:x+ox*CELL*.24,y:y+oy*CELL*.24,w:CELL*(.36+CR()*.1),d:CELL*(.36+CR()*.1),h:tall*(.6+CR()*.7),style,core,v:CR()});}}
       else M.cityBlds.push({x,y,w:CELL*(.74+CR()*.18),d:CELL*(.74+CR()*.18),h:tall,style,core,v:CR()});}}}
   M.cityNear=(x,y,pad)=>M.cities.some(c=>Math.hypot(x-c.x,y-c.y)<c.r+(pad||0));
@@ -7624,11 +7663,11 @@ function updSupply(dt){if(G.lgd)lgMines(dt);G.supT=(G.supT||0)+dt;if(G.supT<.5)r
 const TAX=[{n:'Low',m:.6,u:-.8},{n:'Normal',m:1,u:-.1},{n:'High',m:1.5,u:.85},{n:'Extortionate',m:2.2,u:1.6}];
 const CQ_CP=.8,CQ_PW_FIRST=30,CQ_START=10000,CQ_SETUP=90,CQ_TRICKLE=2.5,CQ_OIL=.6,CQ_HARV=.3;   /* Conquest: start money, no-fire setup seconds, base trickle $/s, derrick and supply-truck income multipliers */
 const T_FRONT_R=560,T_KEYS=3,T_GAR_R=260,T_RAMP=90,T_REBEL_S=120;
-const TOWN_NAMES={me:['Qasr al-Nur','Tal Aswad','Kafr Nabil','Deir Zaman','Ain Rumman','Bayt Hanun','Wadi Khalil','Jabal Sami','Nahr Salim','Dar al-Amir','Suq Hamid','Bir Farid','Hayy al-Rawda','Marj Dabiq','Khirbet Noor','Sahl Zaid','Tell Mardikh','Bab al-Ain','Ras Qadir','Umm Hajar','Al-Zubayr','Hisn Karam','Wadi Ghazal','Qaryat Layl'],
+const TOWN_NAMES={jp:['Minato','Kawagoe','Sakurai','Higashi','Shimizu','Hakone','Nagano','Yokosuka','Matsue','Aoba','Kitami','Odawara','Tsuruga','Isahaya','Maizuru','Kure'],me:['Qasr al-Nur','Tal Aswad','Kafr Nabil','Deir Zaman','Ain Rumman','Bayt Hanun','Wadi Khalil','Jabal Sami','Nahr Salim','Dar al-Amir','Suq Hamid','Bir Farid','Hayy al-Rawda','Marj Dabiq','Khirbet Noor','Sahl Zaid','Tell Mardikh','Bab al-Ain','Ras Qadir','Umm Hajar','Al-Zubayr','Hisn Karam','Wadi Ghazal','Qaryat Layl'],
   ru:['Zarechye','Novoselo','Krasnaya Gora','Belaya Rechka','Volna','Sosnovka','Zvezdny','Kamenka','Yasnaya','Dubrovka','Lugovoye','Mirny','Pervomaysk','Slobodka','Vishnyovka','Berezov'],
   eu:['Marienthal','Rosenau','Bellmont','Saint-Aubin','Eichberg','Kirchdorf','Lindenau','Westbrook','Montfort','Altenburg','Villeneuve','Hartwick','Grunwald','Oakridge','San Mateo','Lisieux'],
   as:['Haeju','Sinchon','Jangsu','Baekma','Yongdae','Hwangsan','Mingshan','Qinghe','Daeho','Taesong','Linhai','Songjiang','Chongjin','Suyang','Anping','Hanyuan']};
-function townNames(style){return /russia/.test(style||'')?TOWN_NAMES.ru:/korea|asia/.test(style||'')?TOWN_NAMES.as:/europe|america|latin/.test(style||'')?TOWN_NAMES.eu:TOWN_NAMES.me;}
+function townNames(style){return /russia/.test(style||'')?TOWN_NAMES.ru:/korea|asia/.test(style||'')?TOWN_NAMES.as:/japan/.test(style||'')?TOWN_NAMES.jp:/europe|america|latin/.test(style||'')?TOWN_NAMES.eu:TOWN_NAMES.me;}
 function initTowns(){const M=G.map,src=[];G.towns=[];
   (M.cities||[]).forEach(c=>src.push({x:c.x,y:c.y,r:c.r,ham:!!c.ham,prize:!!c.prize,style:c.style,cells:[]}));
   for(const c of G.civ){c.ti=-1;if(c.ruin)continue;let bi=-1,bd=1e9;src.forEach((q,i)=>{const d=Math.hypot(c.x-q.x,c.y-q.y)/(q.r+CELL*.8);if(d<bd){bd=d;bi=i;}});if(bi>=0&&bd<=1.3)src[bi].cells.push(c);}
@@ -7717,9 +7756,9 @@ function townCmd(team,a){const t=G.towns&&G.towns[a.ti|0];if(!t||t.ow<0||!ally(t
    beyond what unrest already does). Host-authoritative, no RNG, fixed update order. ===== */
 const HM={LOY_UN:30,LOY_HOLD:120,MIL_CAP:4,MIL_CD:6,MIL_COST:70,MIL_HP:.8,INF_R:700,INF_T:6,INF_DELAY:2,BRIB_UN:50,BRIB_CD:150,BRIB_T:700,BRIB_H:250,TOW_R:900,TOW_CAP:10,
   TURF:{rise:.65,fall:1.25,cap:1.25,inf:1.3,rec:.85,brib:1.25,foe:1.15}};
-const MIL_NAME={US:'Local Auxiliaries',EU:'Local Auxiliaries',UA:'Territorial Volunteers',RU:'Local Militia',CN:'People\'s Militia',KP:'Worker-Peasant Militia',IR:'Volunteer Mobilization Fighters',RS:'Village Defence Fighters',DW:'Tribal Volunteers',
+const MIL_NAME={JP:'Local Defence Volunteers',US:'Local Auxiliaries',EU:'Local Auxiliaries',UA:'Territorial Volunteers',RU:'Local Militia',CN:'People\'s Militia',KP:'Worker-Peasant Militia',IR:'Volunteer Mobilization Fighters',RS:'Village Defence Fighters',DW:'Tribal Volunteers',
   TR:'Local Defence Volunteers',IL:'Territorial Reservists',SA:'Local Defence Volunteers',AE:'Local Defence Volunteers',PK:'Local Defence Volunteers',IN:'Local Defence Volunteers',EG:'Local Defence Volunteers',KR:'Local Defence Volunteers',CU:'Local Defence Volunteers'};
-const STATION={US:'Heartland Radio One',EU:'Continental Broadcast',UA:'Free Dnipro Radio',RU:'Rodina Radio',CN:'Central Plains TV',KP:'Homeland Broadcast',IR:'Voice of the Plateau',RS:'Voice of the Mountain',DW:'Coffee Coast Radio',
+const STATION={JP:'Nippon Broadcast',US:'Heartland Radio One',EU:'Continental Broadcast',UA:'Free Dnipro Radio',RU:'Rodina Radio',CN:'Central Plains TV',KP:'Homeland Broadcast',IR:'Voice of the Plateau',RS:'Voice of the Mountain',DW:'Coffee Coast Radio',
   TR:'Anatolia Radio',IL:'Levant Broadcast',SA:'Desert Kingdom Radio',AE:'Emirates Gulf Radio',PK:'Indus Radio',IN:'Subcontinent TV',EG:'Nile Valley Radio',KR:'Hangang Broadcast',CU:'Island Radio'};
 function mapHome(){const m=G&&MAPS[G.mapKey];return (m&&m.home)||[];}
 function teamHomeFlag(i){const T=G.teams[i];return !!(T&&!T.reb&&mapHome().includes(T.fac));}
@@ -8740,7 +8779,7 @@ function rubbleBld(B,b,P){const g=groundH(b.x,b.y),R=mulberry((b.x*7+b.y*3)|0),l
   for(let q=0;q<7;q++){const[x,z]=at(1.1),s=1.2+R()*2.2;B.rock(s*1.7,s*1.1,s*1.2,x,g+s*.25,z,rc[q%5],R()*.6,R()*3,R()*.6);}}
 const RCC={};function roofCol(c){return RCC[c]||(RCC[c]='#'+new THREE.Color(c).lerp(new THREE.Color('#8e8a82'),.42).getHexString());}
 function buildCity(){if(!G.map.cityBlds||!G.map.cityBlds.length)return;
-{const PAL={mideast:['#d8c9a8','#e6dcc6','#cbb48c','#efe8d8','#bfa883'],lebanon:['#efe7d6','#e4d6bc','#f4efe4','#d9cbb0'],yemen:['#8c6a4a','#a07a56','#7b5c40','#9c7b5c'],russia:['#a7a59c','#b8b1a3','#8f949a','#c2b7a0','#9aa3a8'],america:['#e9e4da','#c9d2da','#b88f6c','#d7d0c0','#8fa1b2'],turkey:['#efe9de','#e3d6c0','#f4eee4','#d8c9b0'],europe:['#efe6d2','#e2d2b4','#d8c8a8','#f2ead8'],gulfcity:['#9fb7c6','#c3d0d8','#7f98aa','#d9dde0','#b9a98c'],korea:['#d8d8d4','#c6cacc','#e4e2dc','#b8bec4'],asia:['#b7b2a8','#c9c3b6','#a6a49c','#d4cec0'],southasia:['#e2c49a','#d69a6a','#c8b08c','#e8d8b8','#b98a6a'],latin:['#f0d9a8','#9fd0c8','#f2b9a0','#e8e2d0','#b8d4e8']};
+{const PAL={mideast:['#d8c9a8','#e6dcc6','#cbb48c','#efe8d8','#bfa883'],lebanon:['#efe7d6','#e4d6bc','#f4efe4','#d9cbb0'],yemen:['#8c6a4a','#a07a56','#7b5c40','#9c7b5c'],russia:['#a7a59c','#b8b1a3','#8f949a','#c2b7a0','#9aa3a8'],america:['#e9e4da','#c9d2da','#b88f6c','#d7d0c0','#8fa1b2'],turkey:['#efe9de','#e3d6c0','#f4eee4','#d8c9b0'],europe:['#efe6d2','#e2d2b4','#d8c8a8','#f2ead8'],gulfcity:['#9fb7c6','#c3d0d8','#7f98aa','#d9dde0','#b9a98c'],japan:['#d9d6cc','#c3c7c9','#e6e2d6','#a9b0b6'],korea:['#d8d8d4','#c6cacc','#e4e2dc','#b8bec4'],asia:['#b7b2a8','#c9c3b6','#a6a49c','#d4cec0'],southasia:['#e2c49a','#d69a6a','#c8b08c','#e8d8b8','#b98a6a'],latin:['#f0d9a8','#9fd0c8','#f2b9a0','#e8e2d0','#b8d4e8']};
     const MOS=tlLandmarks(),CK=tlChunks(),OLD=CITYM&&G._cityMeshes||new Map(),NEW=new Map();
     for(const ck of CK){const sig=ck.items.map(([bi,b])=>{const cv=civAtXYAny(b.x,b.y);return cv&&cv.dead?1:0;}).join(''),old=OLD.get(ck.key);if(old&&old.sig===sig){NEW.set(ck.key,old);OLD.delete(ck.key);continue;}
     const B=Bld(),W=Bld(),BT=[];for(const [bi,b] of ck.items){const cv=civAtXYAny(b.x,b.y);if(cv&&cv.dead){rubbleBld(B,b,(PAL[b.style]||PAL.mideast));continue;}if(TL_ME[b.style]){tlMEBuilding(B,W,BT,b,PAL[b.style]||PAL.mideast,groundH(b.x,b.y)-1,MOS.get(bi)==='mosque',b.style==='mideast'||b.style==='lebanon');continue;}if(TL_KIND[b.style]&&TL_KIND[b.style]!=='me'&&tlOtherBuilding(B,W,BT,b,PAL[b.style]||PAL.mideast,groundH(b.x,b.y)-1,MOS.get(bi)==='church')){continue;}const g=groundH(b.x,b.y)-1,P=PAL[b.style]||PAL.mideast,col=P[Math.floor(b.v*P.length)%P.length],h=b.h,w=b.w,dd=b.d;
@@ -9495,7 +9534,7 @@ function tlMosques(){return [];const out=new Set(),M=G.map;if(!M.cities)return o
   return out;}
 
 // ---- stage 2: Europe / snow-country / Korea & East-Asia towns ------------------------------------------------------------
-const TL_KIND={mideast:'me',lebanon:'me',yemen:'me',southasia:'me',europe:'eu',russia:'eu',korea:'as',asia:'as'};
+const TL_KIND={mideast:'me',lebanon:'me',yemen:'me',southasia:'me',europe:'eu',russia:'eu',korea:'as',asia:'as',japan:'as'};
 const TL_TILE=['#9a4632','#7d3a2c','#a65a3a','#6a4a3a','#4d5560'],TL_PLEU=['#efe6d2','#e2d2b4','#d8c8a8','#f2ead8','#cfc3a6','#b9a98c'];
 // pitched roof: two tilted slabs with eaves + a wall-coloured gable-end prism. Ridge along the longer side. snow = white cap.
 function tlGable(pt,w,dd,top,rh,tile,wall,snow){const rz=dd>w*1.12,L=rz?dd:w,Wd=rz?w:dd,half=Wd/2+.9,a=Math.atan(rh/half),sw=half/Math.cos(a)+.15,off=half/2,y=top+(rh-.3)/2,ry=rz?Math.PI/2:0;
@@ -9530,7 +9569,7 @@ function tlOtherBuilding(B,W,BT,b,P,g,church,kind){
     return true;}
   // Korea / East Asia: low houses get a grey tile roof, taller blocks get roof clutter and ground-floor signs
   wall(w,h,dd,0,g,0,0);bx(w+.4,1.4,dd+.4,0,g+1.3,0,tlShade(col,.6));
-  if(h<26){const sq=Math.abs(w-dd)<5,tile=b.style==='korea'?'#4d5a66':'#5a4a44';
+  if(h<26){const sq=Math.abs(w-dd)<5,tile=b.style==='korea'||b.style==='japan'?'#4d5a66':'#5a4a44';
     if(sq){bx(w+2.4,.6,dd+2.4,0,g+h+.3,0,tile);pt(TL.cone4,(w+1.6)/1.414,Math.min(w,dd)*.34,(dd+1.6)/1.414,0,g+h+Math.min(w,dd)*.17+.6,0,tile,0,0,Math.PI/4);}
     else tlGable(pt,w,dd,g+h,Math.min(w,dd)*.3,tile,col,snow);}
   else{const top=g+h;bx(w+.4,1.3,.8,0,top+.65,dd/2,col);bx(w+.4,1.3,.8,0,top+.65,-dd/2,col);bx(.8,1.3,dd,-w/2,top+.65,0,col);bx(.8,1.3,dd,w/2,top+.65,0,col);
@@ -12924,7 +12963,7 @@ if($('sbClear'))$('sbClear').onclick=()=>{if(G&&G.sandbox){for(const e of G.ents
 Client-only and read-only: builds headlines from the battle messages this player already gets (pushLog) and from
 team/weather state it can see, then scrolls them across a thin strip at the very top. Never touches the simulation. */
 const TK={q:[],cur:0,G:null,seen:{},out:{},wx:'',loss:[],kill:[],on:true,el:null,txt:null,tm:0};
-const TK_ADJ={US:'American',TR:'Turkish',IL:'Israeli',EU:'European',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
+const TK_ADJ={JP:'Japanese',US:'American',TR:'Turkish',IL:'Israeli',EU:'European',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
 function tkAdj(code){return TK_ADJ[code]||'';}
 function tkAdjName(name){for(const c in FACTIONS)if(FACTIONS[c].name===name)return tkAdj(c)||name;return name;}
 function tkOwn(){try{return G.teams[ME].F.name;}catch(e){return 'Our';}}
@@ -14696,6 +14735,7 @@ const PHR_FAC={
   EG:[['جاهزين يا فندم.','تمام يا فندم.'],['ماشيين.','حاضر يا فندم.'],['اضرب!','يلّا يا رجّالة!'],['الكتيبة جاهزة يا فندم.'],['القاعدة بتضرب يا فندم!']],
   IR:[['آماده‌ایم فرمانده.','در خدمتیم.'],['حرکت می‌کنیم.','چشم فرمانده.'],['آتش!','بزنیدشون!'],['یگان آماده‌ست.'],['قرارگاه زیر آتش است!']],
   KP:[['준비됐습니다, 동무!','명령만 내리십시오!'],['전진한다!','알았습니다!'],['쏴라!','놈들을 쳐부숴라!'],['부대 준비 완료!'],['기지가 공격당하고 있다!']],
+  JP:[['準備完了！','命令を待つ！'],['了解、移動する！','了解！'],['撃て！','敵発見、交戦！'],['部隊、準備よし！'],['基地が攻撃を受けている！']],
   KR:[['준비 완료!','명령 대기 중!'],['이동!','알겠습니다!'],['사격 개시!','적 발견!'],['부대 준비 완료!'],['기지가 공격받고 있습니다!']],
   CU:[['¡Listos, compañero!','¡A la orden!'],['¡Vamos, asere!','¡Dale!'],['¡Fuego!','¡Pa’lante!'],['¡La unidad está lista!'],['¡Nos atacan la base, compañeros!']],
   US:[['Ready to roll.','Locked and loaded.','Standing by, sir.'],['Moving out!','Oscar Mike.','Roger that.'],['Engaging!','Weapons free!','Light ’em up!'],['Unit ready.','Reporting for duty.'],['Our base is under attack!']],
@@ -14740,6 +14780,7 @@ const FCRY={
   IN:[['जय हिंद!'],['आगे बढ़ो!'],['भारत माता की जय!','आयो गोरखाली!'],['जय हिंद!'],null],
   CN:[['为人民服务！'],['听党指挥！'],['冲啊！','保卫祖国！'],['为人民服务！'],null],
   KP:[['위대한 수령님을 위하여!'],['결사옹위!'],['김정은 동지 만세!','조국을 위하여!'],['위대한 수령님을 위하여!'],null],
+  JP:[['日本のために！'],['必勝！'],['日本万歳！','必勝！'],['国のために！準備よし！'],null],
   KR:[['충성!'],['필승!'],['대한민국 만세!','필승!'],['충성! 준비 완료!'],null],
   CU:[['¡Patria o muerte!'],['¡Adelante!'],['¡Venceremos!','¡Hasta la victoria siempre!'],['¡Patria o muerte!'],null]};
 const FCRY_ALT={
@@ -14756,7 +14797,7 @@ const FCRY_EN={TR:[['My life for the homeland!'],null,['Allah Allah!'],null,null
   RU:[['I serve Russia!'],null,['Urraaah! For the Motherland!'],null,null],IR:[['Ya Ali!'],null,['Labbaik ya Hussein!','Allahu Akbar!'],['Labbaik ya Hussein!'],null],RS:[['Ya Ali!'],null,['Labbaik ya Hussein!','Hayhat minna al-dhilla!'],['Labbaik ya Hussein!'],null],
   DW:[['Ya Ali!'],null,['Labbaik ya Hussein!','Allahu Akbar!'],null,null],SA:[['For the homeland!'],null,['Allahu Akbar!'],null,null],AE:[['Long live my country!'],null,['Allahu Akbar!'],null,null],EG:[['Long live Egypt!'],null,['Allahu Akbar! Long live Egypt!'],null,null],
   PK:[['Pakistan Zindabad!'],null,['Nara-e-Takbeer, Allahu Akbar!','Haideri!'],null,null],IN:[['Jai Hind!'],null,['Bharat Mata ki Jai!','Ayo Gorkhali!'],null,null],CN:[['Serve the people!'],null,['Charge! Defend the motherland!'],null,null],
-  KP:[['For the Great Leader!'],null,['Long live Comrade Kim Jong Un!','For the fatherland!'],['For the Great Leader!'],null],KR:[['Loyalty!'],null,['Pilseung! Certain victory!','Long live the Republic of Korea!'],null,null],CU:[['Patria o muerte!'],null,['Venceremos!'],null,null]};
+  KP:[['For the Great Leader!'],null,['Long live Comrade Kim Jong Un!','For the fatherland!'],['For the Great Leader!'],null],JP:[['For Japan!'],null,['Banzai! Victory is ours!','For the homeland!'],['For Japan! Ready!'],null],KR:[['Loyalty!'],null,['Pilseung! Certain victory!','Long live the Republic of Korea!'],null,null],CU:[['Patria o muerte!'],null,['Venceremos!'],null,null]};
 const LANG_PREF={es:['es-US','es-MX','es-419','es-ES','es'],'ar-lb':['ar-lb','ar-sy','ar-sa','ar'],'ar-ye':['ar-ye','ar-sa','ar-eg','ar']};
 // Prefer the most natural-sounding voice the device offers for the language: neural/"Natural" voices (Edge, Windows),
 // Siri/Premium/Enhanced voices (Apple), then Google voices; avoid compact and eSpeak voices that sound robotic.
@@ -15446,6 +15487,7 @@ function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=doc
     case 'IN':hs(['#ff9933','#ffffff','#138808']);x.strokeStyle='#000080';x.lineWidth=2;x.beginPath();x.arc(60,36,9,0,7);x.stroke();for(let i=0;i<12;i++){const a=i/12*6.283;x.beginPath();x.moveTo(60,36);x.lineTo(60+Math.cos(a)*9,36+Math.sin(a)*9);x.stroke();}break;
     case 'CN':rect('#de2910',0,0,W,H);star(22,20,12,'#ffde00');for(const [a,b] of [[42,8],[50,16],[50,28],[42,36]])star(a,b,4,'#ffde00');break;
     case 'KP':rect('#024fa2',0,0,W,H);rect('#fff',0,13,W,4);rect('#fff',0,H-17,W,4);rect('#ed1c27',0,17,W,H-34);circ(40,36,14,'#fff');star(40,36,13,'#ed1c27');break;
+    case 'JP':rect('#fff',0,0,W,H);circ(60,36,20,'#bc002d');break;
     case 'KR':rect('#fff',0,0,W,H);x.fillStyle='#cd2e3a';x.beginPath();x.arc(60,36,15,Math.PI,0);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(60,36,15,0,Math.PI);x.fill();circ(52.5,36,7.5,'#cd2e3a');circ(67.5,36,7.5,'#0047a0');
       x.save();for(const [cx,cy,ang] of [[24,14,.59],[96,58,.59],[96,14,-.59],[24,58,-.59]]){x.save();x.translate(cx,cy);x.rotate(ang);for(let b=0;b<3;b++)rect('#000',-9,-7+b*5,18,3);x.restore();}x.restore();break;
     case 'EG':hs(['#ce1126','#ffffff','#000000']);x.fillStyle='#c09300';x.beginPath();x.moveTo(60,27);x.lineTo(68,36);x.lineTo(64,46);x.lineTo(56,46);x.lineTo(52,36);x.closePath();x.fill();break;
@@ -16178,7 +16220,7 @@ function jetPlumeMat(){if(jetPlumeMat.m)return jetPlumeMat.m;const cv=document.c
    decals and a small kit (flags on poles, sandbags, ERA blocks, cope cage, red stars, antennas). The mesh geometry is
    built once per model+nation and shared; textures come from one shared atlas. On Low graphics (phones) ground vehicles
    skip the kit entirely; aircraft/ships keep only the cheap decals. Visuals only - nothing here touches the simulation. */
-const KFAC=['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','CU','RS','DW'];
+const KFAC=['US','TR','IL','EU','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','CU','RS','DW','JP'];
 const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=10;
 // extra atlas cells: 48-57 Persian digits (p:0..9), 58-67 Arabic-Indic digits (a:0..9), 68+ painted stencils (s:name)
 const KSTEN={shahed:68,qasef:69,ababil:70,kp:71,ru:72};
@@ -16304,7 +16346,7 @@ function kitDec(P,face,sg,a0,b0,w0,h0,cell,sub,o){o=o||{};const fa=o.fa||.8,fb=o
     return {kind:'surface',face,sg,a0,b0,w,h,cell,sub,c,n,up,fa,fb,cap:Math.max(W1,H1)*1.3,pa:pan.pa,pb:pan.pb,maxw:o.maxw,maxh:o.maxh,tag:o.tag||cell};}
   return null;}
 const NAVYP={west:'#8f989f',slav:'#6f8294',east:'#6a7e91',irgc:'#4d5a44',sand:'#a29271',olive:'#66694a'};
-function navyPaint(fac,m){const k={US:'west',IL:'west',EU:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
+function navyPaint(fac,m){const k={US:'west',IL:'west',EU:'west',TR:'west',KR:'west',JP:'west',SA:'west',AE:'west',EG:'west',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
 function factionKit(e,c,o,yaw,m,T){if(!T||!T.fac||!c||!m)return;const low=typeof SET!=='undefined'&&SET.gfx==='low',fac=T.fac,k=e.kind;
   const air=k==='jet'||k==='heli'||k==='airlift',nav=k==='boat'||k==='ship'||k==='lander'||k==='sub'||k==='fast'||k==='minel'||k==='sweep',gnd=/^m_/.test(c.m)&&['tank','arty','aa','atgm','jeep','raidlead'].includes(k);
   if(!(air||nav||gnd)||(gnd&&low)||(c.squad&&c.squad.length>1))return;
@@ -16410,6 +16452,16 @@ function kitGeo(e,c,fac,k,air,nav,P){const B=kitBuilder(),{bb,L,W,H,cx}=P,minx=b
       if((fac==='US'||fac==='IL'||fac==='EU')&&k!=='jeep'){const rp=P.down(cx-L*.34,W*.2);if(rp){for(const sg of [1,-1])B.cyl(.07,.1,H*.8,4,cx-L*.34,rp.y+H*.38,sg*W*.2,'#202220',0,0,sg*.12);}}}
   }
   {const g=B.geo();if(g)g.userData.P=P;return g;}}
+// ---------- JAPAN (JP) looks: registered in the same per-nation tables as every other nation (see 01c-jp.js).
+// JGSDF-style: Type 10 tank = the Abrams-family hull stand-in (Western silhouette, no free Type 10 model), Apache/F-2 stand-ins, west-grey navy.
+(function(){
+RMAP.dozer.JP='jd550';RMAP.heli.JP='apache';RMAP.jet.JP='f16';RMAP.tank.JP='abrams';RMAP.ship.JP='frw';
+WESTVEH.push('JP');SOLV.JP='sol_w';MIL_TANK.JP={m:'tankE',fit:'long',size:37};
+FLOOK.JP={veh:'#5a6240',ca:'#4a3f2c',cb:'#2c2d24',uni:'#626a48',pat:1};
+CAMOX.JP={p:1,s:1.05,c:'#3c4530',t:'#d9d9e2',w:2};
+AIRX.JP={b:'#858b8f',p:3,h:{b:'#4f5541',p:3}};
+CHAMP_TINT.JP='#4c5238';
+})();
 // ===== 12-campaign: single-player mini-campaign for the Shia factions (IR, RS, DW) =====
 // Five scripted missions on the real simulation and the existing maps. Scripting runs on the host of a single-player
 // battle only (MODE 'single'); skirmish and online play never touch this. Randomness is a seeded mulberry (c.R).

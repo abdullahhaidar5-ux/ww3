@@ -147,7 +147,7 @@ function tlMosques(){return [];const out=new Set(),M=G.map;if(!M.cities)return o
   return out;}
 
 // ---- stage 2: Europe / snow-country / Korea & East-Asia towns ------------------------------------------------------------
-const TL_KIND={mideast:'me',lebanon:'me',yemen:'me',southasia:'me',europe:'eu',russia:'eu',korea:'as',asia:'as'};
+const TL_KIND={mideast:'me',lebanon:'me',yemen:'me',southasia:'me',europe:'eu',russia:'eu',korea:'as',asia:'as',japan:'as'};
 const TL_TILE=['#9a4632','#7d3a2c','#a65a3a','#6a4a3a','#4d5560'],TL_PLEU=['#efe6d2','#e2d2b4','#d8c8a8','#f2ead8','#cfc3a6','#b9a98c'];
 // pitched roof: two tilted slabs with eaves + a wall-coloured gable-end prism. Ridge along the longer side. snow = white cap.
 function tlGable(pt,w,dd,top,rh,tile,wall,snow){const rz=dd>w*1.12,L=rz?dd:w,Wd=rz?w:dd,half=Wd/2+.9,a=Math.atan(rh/half),sw=half/Math.cos(a)+.15,off=half/2,y=top+(rh-.3)/2,ry=rz?Math.PI/2:0;
@@ -182,7 +182,7 @@ function tlOtherBuilding(B,W,BT,b,P,g,church,kind){
     return true;}
   // Korea / East Asia: low houses get a grey tile roof, taller blocks get roof clutter and ground-floor signs
   wall(w,h,dd,0,g,0,0);bx(w+.4,1.4,dd+.4,0,g+1.3,0,tlShade(col,.6));
-  if(h<26){const sq=Math.abs(w-dd)<5,tile=b.style==='korea'?'#4d5a66':'#5a4a44';
+  if(h<26){const sq=Math.abs(w-dd)<5,tile=b.style==='korea'||b.style==='japan'?'#4d5a66':'#5a4a44';
     if(sq){bx(w+2.4,.6,dd+2.4,0,g+h+.3,0,tile);pt(TL.cone4,(w+1.6)/1.414,Math.min(w,dd)*.34,(dd+1.6)/1.414,0,g+h+Math.min(w,dd)*.17+.6,0,tile,0,0,Math.PI/4);}
     else tlGable(pt,w,dd,g+h,Math.min(w,dd)*.3,tile,col,snow);}
   else{const top=g+h;bx(w+.4,1.3,.8,0,top+.65,dd/2,col);bx(w+.4,1.3,.8,0,top+.65,-dd/2,col);bx(.8,1.3,dd,-w/2,top+.65,0,col);bx(.8,1.3,dd,w/2,top+.65,0,col);
