@@ -8,7 +8,7 @@ const GR_KEY='ww3grand1';
 let GC=null;                       // the campaign state (JSON-safe; this is what is saved)
 let GCM=null;                      // the static map (built once from GM_P)
 const GR_TAX=['Low','Normal','High'],GR_TAXK=[.55,1,1.6],GR_TAXU=[-9,0,24];
-const GR_PROXY={NA:['US'],SAM:['US'],EU:['DE','EU','US'],ME:['SA','EG'],AF:['EG','SA'],SA:['IN','PK'],EA:['CN','KR'],SEA:['CN','KR'],OC:['US']};
+const GR_PROXY={NA:['US'],SAM:['US'],EU:['DE','FR','EU','US'],ME:['SA','EG'],AF:['EG','SA'],SA:['IN','PK'],EA:['CN','KR'],SEA:['CN','KR'],OC:['US']};
 const GR_REGIONS=[['World',null],['North America',[20,60,700,560]],['South America',[250,600,420,560]],['Europe & Russia',[800,40,720,470]],['Middle East & N. Africa',[1050,330,620,470]],['South Asia',[1380,380,440,380]],['East Asia',[1800,240,520,420]],['Africa',[820,620,500,560]],['SE Asia & Oceania',[1760,600,600,560]]];
 const GR_MIX=[['inf',.46],['at',.14],['tank',.16],['arty',.08],['aa',.06],['heli',.05]];
 const GR_RECRUIT=[['inf',4,1],['at',2,1],['tank',2,2],['arty',2,2],['aa',2,1],['heli',1,2]];   // kind, batch size, turns to arrive

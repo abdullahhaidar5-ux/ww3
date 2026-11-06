@@ -244,7 +244,26 @@ const NEWNAT={
   doct:{name:'Hardened Defence',homeland:1,ambush:1},
   pow:{name:'Air Defence Umbrella',type:'shield',cd:200,r:280,desc:'Your forces in the area take 60% less damage for 20s'},
   gp:{bounty:{name:'Spoils of Victory'},recon:{name:'Mountain Observation Posts',rm:.95},para:{name:'Heliborne Assault'},barrage:{name:'Fire Support Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
-  upg:['Special Forces Course','Conscript Kit','Tank Crew Training','Gvozdika Fire Control','MiG Overhaul','Hind Maintenance','Levant Trade Revenue','Hardened Defence Doctrine','Coastal Patrol Refit']}};
+  upg:['Special Forces Course','Conscript Kit','Tank Crew Training','Gvozdika Fire Control','MiG Overhaul','Hind Maintenance','Levant Trade Revenue','Hardened Defence Doctrine','Coastal Patrol Refit']},
+ // nations-frde (Abdullah 2026-11-05 19:49): France and Germany, national armed forces only; both built from the EU row (equal power per tier).
+ FR:{base:'EU',name:'France',color:'#2a4fb0',lang:'fr-FR',courage:1.03,uplink:'Force Océanique Command (SCALP)',econ:'Marché de Rungis Hub',
+  doctrine:'Artillerie & génie: units self-repair, structures have 30% more hit points, all units cost 3% less, CAESAR guns hit 15% harder.',mods:{regen:3,bldHp:1.3,cost:.97},
+  units:{inf:'Section d\'Infanterie FELIN',at:'Équipe MMP',hero:'Tireur d\'élite FR-F2',aa:'Crotale NG',tank:'Leclerc XLR',arty:'CAESAR Howitzer',heli:'Tigre HAD',jet:'Rafale F4',boat:'Combattante Patrol Boat',ship:'FREMM Frégate'},
+  sup:{name:'SCALP Salvo',charge:150,n:4,dmg:685,r:80,spread:110},
+  special:['atgm',{name:'Équipe MMP Longue Portée'}],hero:['Commandos Marine / 13e RDP','strike'],
+  doct:{name:'Armée de Terre',homeland:1},
+  pow:{name:'Convoi de Ravitaillement',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Fonds de la Défense',m:.9},recon:{name:'Avion AWACS E-3F',rm:1.1,cdm:1.1},para:{name:'Brigade Parachutiste'},barrage:{name:'Feux de Barrage CAESAR'},repair:{name:'Service de Soutien',fx:'rearm',pm:1.1,rm:1.1,cdm:1.1}},
+  upg:['Formation Commando','Équipement FELIN','Équipages Leclerc','Artillerie CAESAR','Intégration Rafale','Maintenance Tigre','Recettes Exportation','Doctrine Interarmes','Refonte Patrouille Navale']},
+ DE:{base:'EU',name:'Germany',color:'#3a3a3a',lang:'de-DE',courage:1.03,uplink:'Raketenkommando Nord (Taurus)',econ:'Handelskammer Frankfurt',
+  doctrine:'Panzertruppe & Heer: units self-repair, structures have 30% more hit points, all units cost 3% less, PzH 2000 guns hit 15% harder.',mods:{regen:3,bldHp:1.3,cost:.97},
+  units:{inf:'Panzergrenadier-Gruppe',at:'MILAN Team',hero:'KSK Scharfschütze',aa:'Skyranger 30',tank:'Leopard 2A7',arty:'PzH 2000 Howitzer',heli:'Tiger UHT',jet:'Eurofighter Typhoon',boat:'Schnellboot Gepard',ship:'F125 Fregatte'},
+  sup:{name:'Taurus Salvo',charge:150,n:4,dmg:685,r:80,spread:110},
+  special:['atgm',{name:'Jägerzug Panzerabwehr'}],hero:['Kommando Spezialkräfte','strike'],
+  doct:{name:'Panzertruppe',homeland:1},
+  pow:{name:'Nachschubkonvoi',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Verteidigungsfonds',m:.9},recon:{name:'AWACS Aufklärung',rm:1.1,cdm:1.1},para:{name:'Fallschirmjäger'},barrage:{name:'Artilleriefeuer PzH'},repair:{name:'Logistiktruppe',fx:'rearm',pm:1.1,rm:1.1,cdm:1.1}},
+  upg:['Spezialkräfte Ausbildung','Infanterie der Zukunft','Panzerbesatzungen','PzH Feuerleitung','Eurofighter Integration','Tiger Wartung','Exportüberschuss','Führen mit Aufträgen','Marine Modernisierung']}};
 for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const q in B.units)u[q]=Object.assign({},B.units[q]);for(const q in N.units)u[q]=Object.assign({},u[q]||{},{name:N.units[q]});
   FACTIONS[k]=Object.assign({},B,{code:k,name:N.name,color:N.color,lang:N.lang,doctrine:N.doctrine,mods:N.mods,units:u,sup:N.sup});
   const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);
@@ -449,9 +468,9 @@ const FASTN={IR:'Swarm Boat',RS:'Coastal Swarm Boat',DW:'Red Sea Skiff',US:'Patr
 // nations-new1: copy Egypt's per-nation table rows to the new nations (names/flavour overridden from NEWNAT); other modules alias via NEWNAT[k].base.
 for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
   for(const T of [UPLINK,ECON,COURAGE,GDOC_AI,BAL,XL,TRN,SUBN,MDN,COASTN]){if(T[b]!==undefined&&T[k]===undefined)T[k]=JSON.parse(JSON.stringify(T[b]));}
-  COURAGE[k]=1.16;NATPOW[k]=N.pow;GPOW[k]=Object.assign({},GPOW[b],N.gp);DOCT[k]=N.doct;
-  if(UPLINK[b])UPLINK[k]=[k==='IQ'?'Rocket Command (Al-Faw)':'Missile Command (Qalamoun)',UPLINK[b][1]];
-  ECON[k]=k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board';
+  COURAGE[k]=N.courage||1.16;NATPOW[k]=N.pow;GPOW[k]=Object.assign({},GPOW[b],N.gp);DOCT[k]=N.doct;
+  if(UPLINK[b])UPLINK[k]=[N.uplink||(k==='IQ'?'Rocket Command (Al-Faw)':'Missile Command (Qalamoun)'),UPLINK[b][1]];
+  ECON[k]=N.econ||(k==='IQ'?'Basra Oil Terminal':'Phosphate & Cotton Board');
   UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
