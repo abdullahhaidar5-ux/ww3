@@ -84,6 +84,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Live news ticker · [done] end-of-match kill-cam replay · [done] end-of-match stats page (awards, scoreboard, army graph, Share) · [next] one-tap army stances (Assault/Hold/Guerrilla)
 - [done] Bases always start on dry ground; all 28 maps checked by an automatic sweep
 - [done] AI builds and uses a navy on water maps
+- [done] Command & teams: battle plans (numbered arrows, Go/timer steps), named battle groups with Line/Column/Wedge, doctrine trees (3 tiers per doctrine), allied aid (fee + delay, give units), team pings/drawings/quick lines, free-for-all ceasefire offers
 - [done] Real-place maps: Donbas Steppe, Golan Plateau, Korean DMZ Iron Triangle, Lebanon Beqaa and Chouf, Yemen Tihama and Highlands, Strait of Hormuz Island Gate (all fair-checked, mirror-symmetric)
 - [done] Seasons on every map: Summer / Autumn mud / Winter snow (lobby option; looks + off-road movement; roads matter more)
 - [done] Fix AI blowouts: no general powers in the first 3 minutes, AI always builds an army

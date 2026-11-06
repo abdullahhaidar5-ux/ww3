@@ -112,7 +112,7 @@ function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(
 function ewPack(k){const v=ewView(k);return v.j.length||v.g.length||v.cd.length?{j:v.j,g:v.g,cd:v.cd}:null;}
 function teamMsg(T){const q={};for(const c of CATS)q[c]=T.q[c].map(i=>[i.kind,+(i.t/prodTime(T,stats(T.fac,i.kind))).toFixed(2)]);const rq={};for(const c in T.rq)if(T.rq[c])rq[c]=[T.rq[c].key,+(T.rq[c].t/UPG[T.rq[c].key].time).toFixed(2)];
   const pw={};for(const k in T.pw)pw[k]=[Math.ceil(T.pw[k].cd),T.pw[k].lv||1];
-  return{sn:T.sanc>G.t?+(T.sanc-G.t).toFixed(1):0,mo:(T.mart||0)>G.t?+(T.mart-G.t).toFixed(1):0,rb:(T.rebuy||0)>G.t?+(T.rebuy-G.t).toFixed(1):0,hb:(T.hrb||0)>G.t?+(T.hrb-G.t).toFixed(1):0,hc:G.ents.filter(e=>e.kind==='champ'&&e.team===T.id&&!e.dead).map(e=>[e.id,Math.max(0,+((e.habT||0)-G.t).toFixed(1))]),c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,dc:T.gdoc||'',dp:Object.keys(T.gperk||{}).join(','),pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),tn:T.tun.length,tk:tunKinds(T),fn:fortN(T.id),fk:fortKinds(T.id),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,ew:ewPack(T.id),mn:(G.mines||[]).filter(m=>m.team===T.id||(m.nav&&(ally(m.team,T.id)||(m.dt&&m.dt[T.id]>G.t)))).map(m=>[m.x,m.y,m.team,m.nav?1:0,m.team!==T.id&&!ally(m.team,T.id)?1:0]),...(dgPack(T)||{}),...(wdPack(T)||{}),...(damPack(T)||{}),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min((NET.cseq[NET.peers[T.id]]||0),NET.ckAk?(NET.ckAk[T.id]||0):0):0,to:NET.peers[T.id]};}
+  return{sn:T.sanc>G.t?+(T.sanc-G.t).toFixed(1):0,mo:(T.mart||0)>G.t?+(T.mart-G.t).toFixed(1):0,rb:(T.rebuy||0)>G.t?+(T.rebuy-G.t).toFixed(1):0,hb:(T.hrb||0)>G.t?+(T.hrb-G.t).toFixed(1):0,hc:G.ents.filter(e=>e.kind==='champ'&&e.team===T.id&&!e.dead).map(e=>[e.id,Math.max(0,+((e.habT||0)-G.t).toFixed(1))]),c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,dc:T.gdoc||'',dp:Object.keys(T.gperk||{}).join(','),pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),ct:ctPack(T.id),tn:T.tun.length,tk:tunKinds(T),fn:fortN(T.id),fk:fortKinds(T.id),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,ew:ewPack(T.id),mn:(G.mines||[]).filter(m=>m.team===T.id||(m.nav&&(ally(m.team,T.id)||(m.dt&&m.dt[T.id]>G.t)))).map(m=>[m.x,m.y,m.team,m.nav?1:0,m.team!==T.id&&!ally(m.team,T.id)?1:0]),...(dgPack(T)||{}),...(wdPack(T)||{}),...(damPack(T)||{}),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min((NET.cseq[NET.peers[T.id]]||0),NET.ckAk?(NET.ckAk[T.id]||0):0):0,to:NET.peers[T.id]};}
 // P2P: everything a player gets in one tick (snapshot chunks, effects, panel) travels as ONE bundle ('b') - about 10
 // messages a second per connection instead of ~17-24, less per-message overhead, and effects arrive with their snapshot.
 function netTick(dt){if(!hostP2P()||MODE!=='host'||!NET.game||!NET.peers)return netTick0(dt);const g=NET.game,real=g.emit,B=new Map();
@@ -147,7 +147,7 @@ function netTick0(dt){if(MODE!=='host'||!NET.game||!G||!NET.peers)return;discTic
 const VG={c:64,w:0,h:0,a:null,t:-1,AM:[]};
 function visGrid(){if(VG.t===G.t&&VG.a)return;const c=VG.c,w=Math.ceil(MAPW/c)+1,h=Math.ceil(MAPH/c)+1,N=G.teams.length;
   if(!VG.a||VG.w!==w||VG.h!==h){VG.a=new Uint8Array(w*h);VG.w=w;VG.h=h;}else VG.a.fill(0);const a=VG.a,AM=VG.AM;AM.length=N;
-  for(let i=0;i<N;i++){let m=0;for(let j=0;j<N;j++)if(ally(i,j))m|=1<<j;AM[i]=m;}
+  for(let i=0;i<N;i++){let m=0;for(let j=0;j<N;j++)if(sameTm(i,j))m|=1<<j;AM[i]=m;}
   // a cell counts as seen when its centre is within sight radius + half a cell (the client's own fog hole is drawn 8%
   // wider than the sight radius with a soft edge, so this matches what the player actually sees within a few metres)
   const disc=(x,y,R,m)=>{if(!m||!(R>0))return;const R2=(R+c*.5)**2,x0=Math.max(0,Math.floor((x-R)/c)),x1=Math.min(w-1,Math.floor((x+R)/c)),y0=Math.max(0,Math.floor((y-R)/c)),y1=Math.min(h-1,Math.floor((y+R)/c));
@@ -181,6 +181,8 @@ function evWho(v){const AM=VG.AM,own=v.own!=null?AM[v.own]|0:0;
     case 'txt':{const t=v[4],w=v[5];let m=(t>=0?1<<t:0)|(w>=0?1<<w:0);if(w===-2)m|=(AM[t]|0)|visAt(v[1],v[2],0);return m;}
     case 'log':return v[1]>=0?1<<v[1]:0;
     case 'give':return (1<<v[1])|(1<<v[2]);
+    case 'mping':case 'mdraw':case 'say':return ctMask(v[1]);                  // pings, drawings and quick lines: the sender's team only
+    case 'cfo':return (1<<v[1])|(1<<v[2]);case 'cfs':case 'cfb':return (1<<v[1])|(1<<v[2]);
     default:return 255;}}
 // what each player was last sent of an entity: r.t[k] = when it was last in k's snapshot as visible, r.m = players
 // that hold it as a remembered (fogged) building
