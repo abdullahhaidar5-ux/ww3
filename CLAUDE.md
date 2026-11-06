@@ -78,6 +78,10 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   (morale/loyalty, tour provinces, Fight-it battles there start with fervour), Mountain Fortress = a province building that
   appears pre-built for the defender in that province's battles, Bunker Buster = a grand-map strike on fortified provinces.
   Zealous morale no longer depends on a cleric unit. Campaign missions keep working (scripted versions where a mission needs them).
+  **Signature assets are unique, not copied** (Abdullah 21:02 "I don't like all countries having the same thing"): the clerical
+  leader only for IR/RS/DW, the Dear Leader only for KP, the Mountain Fortress only for RS, the **Bunker Buster only for some
+  nations (US, IL, RU, CN)**; every other nation gets a *different* signature asset of its own (not a copy), and overall strength
+  stays even through balancing. Table of who has what: `orch/SIGNATURES.md` (grand stage 2 writes it).
 - **Mountain Shias (RS) identity** (Abdullah 2026-11-05 19:46 "make it more obvious"): unmistakably a Lebanese mountain Shia
   resistance force through content — Lebanon home, Lebanese-dialect voices, Ashura/"Ya Hussein" religious motifs, tunnels, ATGM
   teams, rocket barrages, drones, mountain forts. **Never** the real organisation's name, flag/emblem (or a close copy) or real

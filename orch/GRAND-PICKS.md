@@ -12,6 +12,14 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
   nation** (pick it in the campaign setup; shared regional army, own flag/name/colours). Stage 5's 3D map
   covers this whole world map.
 
+## ALL stages — signature assets are UNIQUE (Abdullah 21:02 "I don't like all countries having the same thing")
+- No copies of another nation's special. **grand2 first writes `orch/SIGNATURES.md`**: one (or two) unique grand-map signature
+  asset(s) per full nation, of different kinds (e.g. US carrier strike groups, RU strategic bombers, CN mass mobilisation, IL
+  missile-defence umbrella, TR drone fleets, UK/FR special forces raids, IN/PK…, keep the Ayatollah = IR/RS/DW, Dear Leader = KP,
+  Mountain Fortress = RS, Bunker Buster = US/IL/RU/CN), with a one-line effect and a rough value so overall strength stays even
+  (proved later by the balance tourneys / grandtest). Economy/building-type signatures → grand2 builds; military/strike-type →
+  grand3; leader/political-type → grand6. New-nation helpers add their nation's row.
+
 ## Stage 1 (grand1 — map, provinces, armies, turns, battles)
 - [ ] **Chokepoint straits** on the map (Hormuz, Suez/Red Sea, Bosporus, Gibraltar-style, Korea Strait…, stylised): sea-zone/province
       pairs flagged as chokepoints (stage 2 gives them their economic effect).
@@ -24,14 +32,13 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       end) or Standard.
 
 ## Stage 2 (grand2 — empire economy)
-- [ ] **Mountain Fortress** (Abdullah 20:58, moved out of battles): a province building for mountain provinces (RS signature, with
-      an equal-value fortification for other nations); it appears pre-built for the defender in that province's Fight-it battle.
+- [ ] **Mountain Fortress** (Abdullah 20:58, moved out of battles): a province building for mountain provinces (RS only — no copies for other nations); it appears pre-built for the defender in that province's Fight-it battle.
 - [ ] Chokepoints have real effects: whoever holds a strait can close it — world trade income and the oil price shift for everyone.
 - [ ] Oil-prize regions feed the oil market/fuel economy.
 
 ## Stage 3 (grand3 — military)
 - [ ] **Bunker Buster** (Abdullah 20:58, moved out of battles): a grand-map strike on a province — wrecks fortified buildings
-      (Mountain Fortress, bunkers, air defence, bases) there; air defence can intercept; equal-value counterpart for every nation.
+      (Mountain Fortress, bunkers, air defence, bases) there; air defence can intercept; only US, IL, RU, CN have it (Abdullah 21:02); others counter fortresses with their own signature assets.
 - [ ] **Encirclement & sieges:** armies/provinces cut off from supply (by provinces, sea control, chokepoints) lose strength each
       turn and may surrender; besieged cities hold out on stockpiles (province buildings/rationing), and a siege battle can be
       fought live.
@@ -46,7 +53,7 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 
 ## Stage 6 (grand6 — hidden war, home front)
 - [ ] **Ayatollah & Dear Leader** (Abdullah 20:58, moved out of battles): national leader figures on the grand map (IR/RS/DW
-      clerical leader, KP Dear Leader; fictional, no real-person likeness; every nation gets an equal-value leader figure): boost
+      clerical leader, KP Dear Leader; fictional, no real-person likeness; ONLY these four nations have a leader figure — others get different signature assets): boost
       national morale/loyalty, can tour a province (Fight-it battles there start with fervour), danger if the capital falls.
 - [ ] **Occupation choices:** for each conquered province: annex (full tax, high unrest/insurgency), set up a friendly government
       (puppet: less tax, low unrest, may defect) or liberate (no tax, big world-opinion/loyalty gain); uses **Locals** for resistance.
