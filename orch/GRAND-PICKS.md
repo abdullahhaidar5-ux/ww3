@@ -21,22 +21,22 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
   grand3; leader/political-type → grand6. New-nation helpers add their nation's row.
 
 ## Stage 1 (grand1 — map, provinces, armies, turns, battles)
-- [ ] **Menu names** (Abdullah 2026-11-06): main menu = Grand campaign · Conquest · Missions · Tutorial. Rename the old story
+- [x] **Menu names** (Abdullah 2026-11-06): main menu = Grand campaign · Conquest · Missions · Tutorial. Rename the old story
       "Campaign" to "Missions" everywhere players see it (menu, buttons, encyclopedia, What's new); keep its saves/progress working.
-- [ ] **Battles start with your grand-map units** (Abdullah 2026-11-05 21:22, see CLAUDE.md "Grand strategy layer"): a Fight-it
+- [x] **Battles start with your grand-map units** (Abdullah 2026-11-05 21:22, see CLAUDE.md "Grand strategy layer"): a Fight-it
       battle spawns exactly the armies' real units (types, counts, health, veterancy, ammo/fuel, general as hero unit) — no free
       Conquest base/money; defender adds the province's garrison, buildings, forts (Mountain Fortress pre-built); neighbouring
       armies join as timed reinforcement waves; NO new production inside the battle at all (Abdullah 2026-11-06: "Army only"); results (survivors, damage, veterancy, captured gear) go back exactly. Same rule
       for auto-resolve strength. Test: an army of N units → battle has N units of those types; losses match after. Later stages
       (grand3 generals/sieges/supply limits, integrate2 bridge audit) keep this rule.
-- [ ] **Chokepoint straits** on the map (Hormuz, Suez/Red Sea, Bosporus, Gibraltar-style, Korea Strait…, stylised): sea-zone/province
+- [x] **Chokepoint straits** on the map (Hormuz, Suez/Red Sea, Bosporus, Gibraltar-style, Korea Strait…, stylised): sea-zone/province
       pairs flagged as chokepoints (stage 2 gives them their economic effect).
-- [ ] **Oil fields as prizes:** a few giant oil regions, placed so no nation starts with an unfair share; marked on the map.
-- [ ] **Mountains & rivers matter:** crossing a major river or mountain pass costs extra movement/attrition; defenders there get a
+- [x] **Oil fields as prizes:** a few giant oil regions, placed so no nation starts with an unfair share; marked on the map.
+- [x] **Mountains & rivers matter:** crossing a major river or mountain pass costs extra movement/attrition; defenders there get a
       bonus in auto-resolve and the "Fight it" battle uses a matching map (river crossing / mountain pass).
-- [ ] **Capital & war-goal provinces:** each nation has 2–3 must-hold provinces (capital + 1–2 others, equal value across nations);
+- [x] **Capital & war-goal provinces:** each nation has 2–3 must-hold provinces (capital + 1–2 others, equal value across nations);
       losing them forces peace talks (stage 4 diplomacy handles the talks; stage 1 just flags and reports it).
-- [ ] **Quick campaigns:** campaign length option — Quick (20–30 turns, smaller start, faster economy, win by score/war goals at the
+- [x] **Quick campaigns:** campaign length option — Quick (20–30 turns, smaller start, faster economy, win by score/war goals at the
       end) or Standard.
 
 ## Stage 2 (grand2 — empire economy)
