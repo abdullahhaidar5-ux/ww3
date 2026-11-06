@@ -11,15 +11,16 @@ systems doing one job, merge them into the owner and note it here.
 |---|---|---|
 | **Locals** — town loyalty, unrest, revolts, local armed groups | conquest.md + hearts-minds.md (`src/08c-towns.js`, town code in 03-sim) | Town militia recruit (hearts-minds), revolt rebels (conquest), **Fund Militia** power (tunnels-militia.md), neutral factions / militias (infra-militias), local militias + angry towns arm rebels (politics-intel: `milMake`/`polMilitias` in `src/03e-politics.js`), insurgency + proxy wars (grand6). **One "local armed group" entity** with an `allegiance` (owner / rebels / funded-by-team / neutral), one regional roster + looks, one AI. |
 | **Cover** | `coverAt()` / `tactic()` in `src/03b-tactics.js` | Foxholes/sandbags/trenches (tactics), rubble (rubble.md), collapsing buildings (battlefield), wrecks as cover (battlefeel), garrisons |
+| **Wounded & medics** | `src/03f-battlefield.js` (`G.wnd`, `wndMake` hooked in `applyDmg`) | Combat Medics (every nation, one unit), aid stations at HQ/Depot, squad-mate drag to cover, bleed-out; the old nation `revive` perk only covers blast deaths. Anything new that revives or heals the fallen extends this list |
 | **Line of sight blockers** | fog/vision code (06-view + sim vision) | Smoke (`G.smokes`), wind-blown smoke grid (battlefeel), wildfire smoke, night/weather sight multipliers (daynight.md, weather-naval.md) |
 | **Conditions** (time of day, weather, season, wind) | daynight.md + weather-naval.md (`G.wx`) | Seasons (real-maps), changing weather / day-night in a match (atmosphere), grand-map seasons (grand4 sets the battle's conditions) |
-| **"Knocked out for a while" status** | one status with `{src, until}` on buildings/units | EMP (modern-war), cyber hack (modern-war), spy sabotage (politics-intel), blackout from power loss (infra-militias / grand2), vehicle crits (tactics) — one icon style, one minimap marker |
+| **"Knocked out for a while" status** | one status with `{src, until}` on buildings/units | EMP (modern-war: `e.stun` units / `e.dis` buildings), cyber hack (modern-war: `e.dis`, plants `o.sab`; `03g-modern.js`), spy sabotage (politics-intel), blackout from power loss (infra-militias / grand2), vehicle crits (tactics) — one icon style, one minimap marker |
 | **Deception** | EW radar spoofs (`spoofs` in 03-sim, `G.spoofs`) | Decoy units (politics-intel), fog-of-war rumours on the grand map (grand6) |
 | **Jamming** | existing EW code (grep `jam`, ew in 03-sim/03b) | GPS jamming (modern-war), radio silence / intercepts |
 | **World opinion & sanctions** | sanctions.md (Sanctions power + smuggling already exist) | World opinion meter (politics-intel: `T.op`, `opHit()`, `polMul()` in `src/03e-politics.js`) drives sanctions and aid; in a grand campaign the meter lives on the **grand map** (grand2/grand4) and the battle only reports incidents to it |
 | **Supply, ammo, convoys, roads** | supply-towns.md + logistics.md (`src/03c-logistics.js`) | Trade caravans (economy1), fuel trucks, loot depots, embargo chokepoints, refugees on roads (politics-intel) |
 | **Battle money** | town tax (conquest) + oil/power (infra-militias) | Mines/factories/ports/farms/town growth (economy1). Empire money (bonds, upkeep, oil market, crises, manpower, fuel stock) is **grand map only** (grand2) |
-| **Destruction** | rubble.md (destructible cities) | Collapsing buildings stages (battlefield), dams/floods (battlefield), wildfires (battlefeel), scorched earth (grand2) |
+| **Destruction** | rubble.md (destructible cities) + `src/03f-battlefield.js` (building stages `c.stg`, rubble clearing `c.clr`, dams `G.dams` and floods `floodAt()`) | Collapsing buildings stages (battlefield), dams/floods (battlefield), wildfires (battlefeel), scorched earth (grand2) |
 | **Doctrines / perks** | doctrines.md (General Doctrines) | Doctrine trees with commander points (command-teams). Grand research tree (grand4) unlocks units/tiers, it must not duplicate doctrine perks |
 | **Ceasefire** | in a standalone battle: command-teams (`src/03d-command.js`: `cfOffer/cfAnswer/cfBreak`, `G.truce`; `ally()` honours it, `sameTm()` is the strict team test for vision/victory/aid) | In a grand campaign, truces are made on the grand map (grand4 diplomacy); the battle shows them, doesn't create its own |
 | **Commanders** | heroes.md (hero squads + commander radio) | Grand-map generals (grand3) enter battles as the hero/commander unit |
@@ -45,6 +46,16 @@ systems doing one job, merge them into the owner and note it here.
 | 3D map, living map, turn news (uses the shared news feed) | grand5 |
 | Fog, spies, proxy wars + insurgency (use **Locals**), war weariness, coups, succession, scenarios, disasters, deterrence, volunteers, refugee flows | grand6 |
 | Friends multiplayer | grand7 |
+| Grand-campaign state, turn order, armies (unit records `[kind, hp%, xp, ammo%]`), wars, save | grand1: `src/13-grand.js` (`GC`, `grEndTurn`, `grSave`); every later stage adds fields to `GC` and steps to `grFinishTurn`, never a second state or a second turn loop |
+| World map data (provinces, sea zones, adjacency, rivers) | `src/13-grandmap.js`, generated by `orch/grandmap-gen.mjs` — edit the generator tables, not the output |
+| Fight-it bridge (units in, survivors out; army-only battle; reinforcement waves) | `src/13b-grandbattle.js` + `G.grand` hooks in 03-sim; later stages (generals, forts, supply, sieges) extend `grandBattleStart` / `grandWriteBack` |
+| Auto-resolve | `grAuto` in 13-grand.js: same unit lists as Fight it; one function for every stage that changes battle odds |
+| Grand map screen, menus, prompts | `src/13c-grandui.js` (`GV`, `grandOpen`); 3D map (grand5) replaces the drawing, keeps the panels |
+| Grand-campaign state, turn order, armies (unit records `[kind, hp%, xp, ammo%]`), wars, save | grand1: `src/13-grand.js` (`GC`, `grEndTurn`, `grSave`); every later stage adds fields to `GC` and steps to `grFinishTurn`, never a second state or a second turn loop |
+| World map data (provinces, sea zones, adjacency, rivers) | `src/13-grandmap.js`, generated by `orch/grandmap-gen.mjs` — edit the generator tables, not the output |
+| Fight-it bridge (units in, survivors out; army-only battle; reinforcement waves) | `src/13b-grandbattle.js` + `G.grand` hooks in 03-sim; later stages (generals, forts, supply, sieges) extend `grandBattleStart` / `grandWriteBack` |
+| Auto-resolve | `grAuto` in 13-grand.js: same unit lists as Fight it; one function for every stage that changes battle odds |
+| Grand map screen, menus, prompts | `src/13c-grandui.js` (`GV`, `grandOpen`); 3D map (grand5) replaces the drawing, keeps the panels |
 
 **Bridge rule:** a "Fight it" battle is a normal Conquest battle whose start state (forces, towns, buildings, money, conditions,
 locals' loyalty) comes from the province, and whose results go back. Battle systems are never re-implemented on the grand map, and

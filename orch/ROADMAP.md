@@ -8,6 +8,16 @@ blocking · **[you]** waiting on a decision or action from Abdullah · **[paused
 planned, not started. Keep each line short and in player terms. Plan doc for the overhauls:
 https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 
+## Grand strategy (Abdullah 2026-11-05 19:16 — the world-map layer over the RTS; design: orch/reports/grand-strategy.md)
+- [done] S1 map, provinces, armies, simultaneous turns, Fight it / Auto-resolve battles with exactly your units, basic tax + unrest, save, Grand campaign menu (Missions renamed)
+- [next] S2 empire economy + province buildings, trade, autonomy, city chains, chokepoint and oil effects
+- [todo] S3 generals, front lines, fort zones, supply limits, map strikes, fleets and sea zones, encirclement and sieges
+- [todo] S4 events, minor nations, seasons, diplomacy and peace talks, research, cabinet, national missions, heritage and holy sites
+- [todo] S4b diplomacy and government (call to arms, trust, great powers, reforms, prestige, hegemons)
+- [todo] S5 3D world map, living map, turn news, map modes
+- [todo] S6 fog, spies, proxy wars, insurgency, war weariness, coups, succession, scenarios, disasters, factions at home
+- [todo] S7 friends multiplayer (turn resolution is already deterministic)
+
 ## Conquest (the only mode — Abdullah 2026-11-04)
 - [done] Towns and hamlets pay tax; you set Low / Normal / High / Extortionate per town; angry towns revolt (rebels) — High tax in safe towns, Low at the front
 - [done] Hamlets (small villages) on every map, placed fairly; minimap shows towns, hamlets, tax, unrest, rebels, alerts
@@ -19,6 +29,12 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Logistics: supply runs on roads (build roads, CUT OFF towns, cratering, convoys + ambushes, territory + front line)
 - [done] Logistics 2: forward depots + ports join the road network, mines + checkpoints (tolls), bridges blow / rebuild / pontoons, port blockades, airlift, AI uses it, tutorial step, road look per theme
 - [next] Fairness proof: 18-nation tourney + start positions + tax-policy comparison (needs a bigger machine)
+
+## Battlefield (Abdullah 2026-11-05 18:55)
+- [done] Digging in: infantry or Construction Vehicles lay sandbag / trench lines by dragging, pieces shared between builders, trenches snap into networks, duckboards + sandbag parapets, AI squads dig lines when no dozer is idle
+- [done] Collapsing buildings: three damage stages (cracked, smoking, burning), garrison bails out at the last stage, dust cloud on collapse, rubble cleared by Construction Vehicles (auto or the Clear rubble button)
+- [done] Dams and floods: Twin Rivers + Fulda Gap each have two mirrored dams; shell one and the valley floods for 3 minutes (slows everything, closes bridges, drowns infantry); AI uses it
+- [done] Medics and wounded: bullet-killed infantry go down wounded (red-cross icon, 32 s), Combat Medics (all nations) revive them with veterancy, squad mates drag them to cover, HQ/Depot aid stations, AI builds medics
 
 ## Phones and interface
 - [done] Phones can play: reachable build buttons, two-finger pan and pinch zoom, touch placement
