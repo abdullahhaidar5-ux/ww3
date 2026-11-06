@@ -374,7 +374,8 @@ function addComplexity(M,D){M.woods=M.woods||[];M.genCities=[];
       M.woods.push({x:A[0],y:A[1],r,seed:wi,ax:dx,ay:dy,m:0},{x:B[0],y:B[1],r,seed:wi,ax:dx,ay:dy,m:1});wi++;}
     // a village on each flank, past the ravine's ends
     for(const b of [-.57,.57]){const q=P(0,b);if(clr(q[0],q[1])>200*u)M.genCities.push([q[0],q[1],70,vs]);}}}
-function mkMap(seed,mk){
+function seasonOf(mk){const D=MAPS[mk];return D?(D.ssn||(D.theme==='snow'?3:1)):1;}
+function mkMap(seed,mk,ssn){
   mk=MAPS[mk]?mk:'strait';const D=MAPS[mk];
   srand=mulberry(seed);const R=srand;
   const M={seed,key:mk,name:D.name,rough:D.rough||1,theme:D.theme||'desert',rivers:[],lakes:[],islands:[],ridges:[],peaks:[],bridgeAng:[],bridges:[]};
@@ -426,7 +427,7 @@ function mkMap(seed,mk){
   M.grid=grid;
   // Cities: blocks of buildings on a street grid. Building lots are impassable (units use the streets) and give
   // infantry cover; bases, supply and oil keep clear of them.
-  M.cities=[];M.cityBlds=[];M.hamlets=[];M.towers=[];M.roadNet=[];
+  M.cities=[];M.cityBlds=[];M.hamlets=[];M.towers=[];M.plants=[];M.roadNet=[];
   const CITIES=(D.cities||[]).concat(M.genCities||[]);
   // CENTRE PRIZE TOWN (Conquest "town bands"): one larger market town where every base is as equally far as the ground
   // allows - an existing city of the map when one sits there, else a new one. Chosen on the bare ground (before any city
@@ -540,6 +541,15 @@ function mkMap(seed,mk){
    const addT=p=>{if(p)M.towers.push({x:p.x,y:p.y});};
    if(NB===2)unit(0,1,addT,okT,.3*E);
    else if(NB>2){addT(best(p=>{let m=0;for(let i=0;i<NB;i++)m+=p.d[i];m/=NB;let v=0;for(let i=0;i<NB;i++)v+=Math.abs(p.d[i]-m);return v+.15*Math.abs(m-.5*E);},(p,rl)=>okT(p,rl,260)));}}
+  // POWER PLANTS (Infrastructure, Abdullah 2026-11-05): one per base (its own power station, same route length for everyone, on its side)
+  // plus neutral plants worth fighting for - a duel gets the centre/flank pair, 3+ bases get the most equal spot. Stored as M.plants;
+  // the sim turns them into capturable "oil-style" sites (pw:1) so capture, strikes, repair and networking all reuse the derrick code.
+  M.plants=[];
+  {const okP=(p,rl,sp)=>far(p,fmb*.7*rl)&&M.fields.every(f=>Math.hypot(f.x-p.x,f.y-p.y)>100)&&M.oil.every(o=>Math.hypot(o.x-p.x,o.y-p.y)>130)&&M.hamlets.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>130)&&M.towers.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>200*rl)&&M.plants.every(h=>Math.hypot(h.x-p.x,h.y-p.y)>(sp||260)*rl)&&!M.cityNear(p.x,p.y,110);
+   const addP=h=>p=>{if(p)M.plants.push({x:p.x,y:p.y,home:h});};
+   for(let i=0;i<NB;i++)addP(i)(best(p=>Math.abs(p.d[i]-.13*E),(p,rl)=>mine(p,i,.08*E*rl)&&okP(p,rl,260)));
+   if(NB===2)unit(0,1,addP(-1),okP,.4*E);
+   else if(NB>2){addP(-1)(best(p=>{let m=0;for(let i=0;i<NB;i++)m+=p.d[i];m/=NB;let v=0;for(let i=0;i<NB;i++)v+=Math.abs(p.d[i]-m);return v+.15*Math.abs(m-.5*E);},(p,rl)=>okP(p,rl,260)));}}
   }
   // hamlets a custom map asks for (map editor)
   for(const [ox,oy] of (D.hamAt||[])){const X=ox*WK,Y=oy*WK;if(dry(X,Y,80)&&M.hamlets.every(h=>Math.hypot(h.x-X,h.y-Y)>200))M.hamlets.push({x:X,y:Y});}
@@ -558,6 +568,9 @@ function mkMap(seed,mk){
   // ROAD NET (Conquest): roads base -> rear towns -> middle hamlets -> centre prize town, on at least two routes. Pure
   // geometry on the ground grid (no random numbers), so host and clients lay identical roads; units move faster on them.
   if(!D.manual)try{buildRoadNet(M,grid);}catch(e){M.roadNet=[];}
+  // Season (look only; the layout above is identical in every season, so fairness doesn't change): winter = the snow theme,
+  // autumn = mud (ground tint, puddles, orange leaves; the sim slows off-road wheels, G.ssn), summer = green/desert as the map says.
+  ssn=ssn||seasonOf(mk);M.ssn=ssn;M.baseTheme=M.theme;if(ssn===3)M.theme='snow';else if(M.theme==='snow')M.theme='green';M.mud=ssn===2;
   return M;
 }
 // A* over the ground grid for one road (only cells units can walk: open ground and bridges). Returns map points or null.
@@ -594,7 +607,7 @@ let P_B=false;
 let P_H=false;
 function bocc(){if(!G.bocc||G.bdirty){G.bdirty=false;G.boccV=(G.boccV|0)+1;const o=G.bocc||(G.bocc=new Uint8Array(GW*GH));o.fill(0);for(const b of G.ents){if(!b.isB||b.dead)continue;const h=b.size/2-CELL*.25;
   const x0=Math.ceil((b.x-h)/CELL-.5),x1=Math.floor((b.x+h)/CELL-.5),y0=Math.ceil((b.y-h)/CELL-.5),y1=Math.floor((b.y+h)/CELL-.5);for(let cy=y0;cy<=y1;cy++)for(let cx=x0;cx<=x1;cx++)if(cx>=0&&cy>=0&&cx<GW&&cy<GH)o[cy*GW+cx]=1;}}return G.bocc;}
-function passC(dom,cx,cy){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;const i=cy*GW+cx,v=G.grid[i];if(dom==='naval')return v===1||v===2;if(v!==0&&v!==2)return false;if(P_H&&G.rub&&G.rub[i])return false;return !(P_B&&G.bocc&&G.bocc[i]);}
+function passC(dom,cx,cy){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;const i=cy*GW+cx,v=G.grid[i];if(dom==='naval')return v===1||v===2||v===4;if(v!==0&&v!==2)return false;if(P_H&&G.rub&&G.rub[i])return false;return !(P_B&&G.bocc&&G.bocc[i]);}
 function passXY(dom,x,y){return dom==='air'||passC(dom,Math.floor(x/CELL),Math.floor(y/CELL));}
 function los(dom,x0,y0,x1,y1){if(dom==='air')return true;const n=Math.ceil(Math.hypot(x1-x0,y1-y0)/16);for(let i=1;i<=n;i++){const t=i/n;if(!passXY(dom,x0+(x1-x0)*t,y0+(y1-y0)*t))return false;}return true;}
 function nearestPass(dom,cx,cy){if(passC(dom,cx,cy))return[cx,cy];for(let r=1;r<16;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;if(passC(dom,cx+dx,cy+dy))return[cx+dx,cy+dy];}return null;}
@@ -610,7 +623,7 @@ let P_W=null,P_Wv=-1,P_Wg=null;function wallCost(){if(P_W&&P_Wg===G.grid&&P_Wv==
 // A unit sent somewhere it can't reach (an island, across the sea) is re-targeted to the nearest cell it CAN reach
 // instead of letting the search scan the whole map first.
 const P_REG={};function regions(dom){const key=dom;let R=P_REG[key];if(R&&R.g===G.grid&&R.v===(G.gridV|0)&&R.a.length===GW*GH)return R.a;
-  const a=new Int32Array(GW*GH),pass=i=>{const v=G.grid[i];return dom==='naval'?(v===1||v===2):(v===0||v===2);};let id=0;const st=[];
+  const a=new Int32Array(GW*GH),pass=i=>{const v=G.grid[i];return dom==='naval'?(v===1||v===2||v===4):(v===0||v===2);};let id=0;const st=[];
   for(let i=0;i<a.length;i++){if(a[i]||!pass(i))continue;id++;a[i]=id;st.push(i);while(st.length){const c=st.pop(),cx=c%GW,cy=(c/GW)|0;
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(nx<0||ny<0||nx>=GW||ny>=GH)continue;const n=ny*GW+nx;if(a[n]||!pass(n))continue;if(dx&&dy&&(!pass(cy*GW+nx)||!pass(ny*GW+cx)))continue;a[n]=id;st.push(n);}}}
   P_REG[key]={a,g:G.grid,v:G.gridV|0};return a;}
@@ -779,7 +792,10 @@ function terrPaint(M,draw,sim){const TEXMAX=terrTexMax();
       const poly=(dx,dy)=>{t.beginPath();pts.forEach((p,q)=>q?t.lineTo(p[0]+dx,p[1]+dy):t.moveTo(p[0]+dx,p[1]+dy));t.closePath();};poly(r*.35,r*.3);t.fillStyle='rgba(25,22,14,.4)';t.fill();poly(0,0);const g=t.createLinearGradient(cx-r,cy-r,cx+r,cy+r);g.addColorStop(0,'#a59c86');g.addColorStop(.55,'#7a725f');g.addColorStop(1,'#4d473a');t.fillStyle=g;t.fill();t.strokeStyle='rgba(40,36,28,.5)';t.lineWidth=1;t.stroke();}}
   for(const c of M.cities){const g=t.createRadialGradient(c.x,c.y,0,c.x,c.y,c.r*1.15);g.addColorStop(0,'rgba(120,112,98,.55)');g.addColorStop(.85,'rgba(126,116,98,.35)');g.addColorStop(1,'rgba(126,116,98,0)');t.fillStyle=g;t.beginPath();t.arc(c.x,c.y,c.r*1.15,0,7);t.fill();}
   for(const b of M.cityBlds){t.fillStyle=b.style==='russia'?'#77736c':b.style==='america'?'#8a8278':'#b8a888';t.fillRect(b.x-b.w/2,b.y-b.d/2,b.w,b.d);}
-  if(draw){const CW=c.width,CH=c.height,id=t.getImageData(0,0,CW,CH),d=id.data;const SN=M.theme==='snow',GR=M.theme==='green';const WS=new Float32Array(CW);for(let x=0;x<CW;x++)WS[x]=Math.sin(x/TS*.0021);for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*16;if(GR&&!(d[i+2]>d[i]+10)){const gy=Math.max(Math.abs(d[i]-d[i+1]),Math.abs(d[i+1]-d[i+2])*.72),gk=Math.max(0,Math.min(1,(gy-5)/13));if(gk>0){const px=(i>>2)%CW,py=((i>>2)/CW)|0;const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,w=WS[px]*Math.cos(py/TS*.0017)*.5+.5;d[i]=d[i]*(1-gk)+(l*.42+30+18*w+n)*gk;d[i+1]=d[i+1]*(1-gk)+(l*.52+56+10*w+n)*gk;d[i+2]=d[i+2]*(1-gk)+(l*.3+22+n*.6)*gk;continue;}}if(SN&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=l*.42+128+n*.6;d[i+1]=l*.44+134+n*.6;d[i+2]=l*.45+146+n*.6;continue;}d[i]+=n;d[i+1]+=n;d[i+2]+=n*.8;}t.putImageData(id,0,0);
+  if(draw&&M.mud){ // Autumn mud: dark wet puddles with a grey-blue sheen (look only)
+    const np=Math.round(MAPW*MAPH/38000);for(let k=0;k<np;k++){const x=srand()*MAPW,y=srand()*MAPH;if(M.edge(x,y)>-50)continue;const r=26+srand()*70,sq=.35+srand()*.4,rot=srand()*3.14;
+      t.save();t.translate(x,y);t.rotate(rot);t.scale(1,sq);const g=t.createRadialGradient(0,0,0,0,0,r);g.addColorStop(0,'rgba(92,100,106,.8)');g.addColorStop(.6,'rgba(40,34,26,.62)');g.addColorStop(1,'rgba(40,34,26,0)');t.fillStyle=g;t.beginPath();t.arc(0,0,r,0,6.2832);t.fill();t.restore();}}
+  if(draw){const CW=c.width,CH=c.height,id=t.getImageData(0,0,CW,CH),d=id.data;const SN=M.theme==='snow',GR=M.theme==='green',MUD=!!M.mud;const WS=new Float32Array(CW);for(let x=0;x<CW;x++)WS[x]=Math.sin(x/TS*.0021);for(let i=0;i<d.length;i+=4){const n=(Math.random()-.5)*16;if(GR&&!MUD&&!(d[i+2]>d[i]+10)){const gy=Math.max(Math.abs(d[i]-d[i+1]),Math.abs(d[i+1]-d[i+2])*.72),gk=Math.max(0,Math.min(1,(gy-5)/13));if(gk>0){const px=(i>>2)%CW,py=((i>>2)/CW)|0;const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11,w=WS[px]*Math.cos(py/TS*.0017)*.5+.5;d[i]=d[i]*(1-gk)+(l*.42+30+18*w+n)*gk;d[i+1]=d[i+1]*(1-gk)+(l*.52+56+10*w+n)*gk;d[i+2]=d[i+2]*(1-gk)+(l*.3+22+n*.6)*gk;continue;}}if(SN&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=l*.42+128+n*.6;d[i+1]=l*.44+134+n*.6;d[i+2]=l*.45+146+n*.6;continue;}if(MUD&&!(d[i+2]>d[i]+10)){const l=d[i]*.3+d[i+1]*.59+d[i+2]*.11;d[i]=d[i]*.12+(l*.4+34)*.88+n;d[i+1]=d[i+1]*.12+(l*.32+25)*.88+n;d[i+2]=d[i+2]*.12+(l*.2+15)*.88+n*.8;continue;}d[i]+=n;d[i+1]+=n;d[i+2]+=n*.8;}t.putImageData(id,0,0);
   const e=t.createRadialGradient(MAPW/2,MAPH/2,MAPH*.55,MAPW/2,MAPH/2,MAPW*.72);e.addColorStop(0,'rgba(0,0,0,0)');e.addColorStop(1,'rgba(0,0,0,.35)');t.fillStyle=e;t.fillRect(0,0,MAPW,MAPH);
   G.terrain=c;G.tctx=t;const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;th.getContext('2d').drawImage(c,0,0,th.width,th.height);G.thumb=th;}
   if(sim){buildHGrid();if(!draw&&typeof document!=='undefined'){const th=document.createElement('canvas');th.width=mm.width;th.height=mm.height;const q=th.getContext('2d');q.fillStyle='#a8825a';q.fillRect(0,0,th.width,th.height);G.thumb=th;}}
@@ -808,7 +824,7 @@ function cmCanon(o){
   return{v:1,nm,n:sl.length,z:I(o.z,0,3),th,sl,rv:line(o.rv,40,90),rg:line(o.rg,60,90),rd:road(o.rd),
     lk:arr(o.lk,120).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],20,600)]),pk:arr(o.pk,200).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],12,200)]),
     wd:arr(o.wd,200).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],40,300)]),ct:arr(o.ct,40).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],40,260),I(q[3],0,CM_STYLES.length-1)]),
-    oil:pt(o.oil,40),fl:pt(o.fl,40),br:arr(o.br,40).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],-180,180)])};}
+    oil:pt(o.oil,40),hm:pt(o.hm,24),fl:pt(o.fl,40),br:arr(o.br,40).filter(Array.isArray).map(q=>[X(q[0]),Y(q[1]),I(q[2],-180,180)])};}
 function cmB64(js){return btoa(js).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
 function cmUnb64(t){t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return atob(t);}
 // text -> map data (accepts the bare code, a share link containing #map=CODE, or the JSON itself); null when it is not a map
@@ -816,7 +832,7 @@ function cmParse(src){try{if(src&&typeof src==='object')return src;src=String(sr
   if(m)return JSON.parse(cmUnb64(m[1]));if(src[0]==='{')return JSON.parse(src);}catch(e){}return null;}
 function cmBuild(c,key){const cities=c.ct.map(([x,y,r,s])=>[x,y,r,CM_STYLES[s]]);
   return{name:c.nm,min:2,max:c.sl.length,sym:'none',custom:1,cmKey:key,theme:c.th,tag:'custom map · '+CM_SIZES[c.z].toLowerCase(),desc:'A map made in the map editor.',
-    slots:c.sl.map(q=>q.slice()),plain:true,manual:!!(c.fl.length||c.oil.length),cscale:CM_SCALE[c.z],cities,oilAt:c.oil,fieldAt:c.fl,
+    slots:c.sl.map(q=>q.slice()),plain:true,manual:!!(c.fl.length||c.oil.length),cscale:CM_SCALE[c.z],cities,oilAt:c.oil,hamAt:c.hm||[],fieldAt:c.fl,
     water(M){for(const r of c.rv){const w=r[0],p=[];for(let i=1;i+1<r.length;i+=2)p.push([r[i],r[i+1]]);M.rivers.push({pts:cmDens(p,40),hw:()=>w});}
       for(const r of c.rg){const w=r[0],p=[];for(let i=1;i+1<r.length;i+=2)p.push([r[i],r[i+1]]);M.ridges.push({pts:cmDens(p,40),hw:()=>w});}
       for(const [x,y,r] of c.lk)M.lakes.push({x,y,r,rx:1,wob:()=>0});for(const [x,y,r] of c.pk)M.peaks.push({x,y,r,rx:1,rot:0});

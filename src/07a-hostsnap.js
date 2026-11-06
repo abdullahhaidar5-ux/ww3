@@ -10,7 +10,7 @@ const NET={room:null,user:null,game:null,code:null,opp:null,hostPeer:null,myPeer
 const FLG={built:1,cargo:2,dis:4,chg:8,hack:16,plant:32,land:64,hid:128,mem:256,mov:2048,busy:4096,nd:8192,stall:16384,supp:32768,mark:65536,rout:131072,shak:262144,last:524288,aband:1048576};
 // per-player streams and bundles (online edition / servers) vs one broadcast per topic (claude.ai artifact room)
 function hostP2P(){return NET.p2p!=null?!!NET.p2p:typeof window!=='undefined'&&!!window.WW3_P2P;}
-const CMD_T=['go','atk','atkOil','fld','q','dq','cb','bld','bldGo','tun','unl','board','up','sup','buy','pow','rally','stop','gar','atkCiv','ungar','give','def','line','ret','spoof','stance','resup','doc','dbuy','tax','recruit','bribe','dig','wall','fix','hab','road'];
+const CMD_T=['go','atk','atkOil','fld','q','dq','cb','bld','bldGo','tun','unl','board','up','sup','buy','pow','rally','stop','gar','atkCiv','ungar','give','def','line','ret','spoof','stance','resup','doc','dbuy','tax','recruit','bribe','dig','wall','clr','atkDam','fix','hab','road','lg','ping','spy','leaf'];
 function cleanCmd(a){if(!a||typeof a!=='object'||!CMD_T.includes(a.t))return null;const o={t:a.t};const num=v=>typeof v==='number'&&isFinite(v)?v:0;
   if(Array.isArray(a.ids))o.ids=a.ids.slice(0,300).map(v=>num(v)|0);o.x=Math.max(0,Math.min(MAPW,num(a.x)));o.y=Math.max(0,Math.min(MAPH,num(a.y)));o.tid=num(a.tid)|0;o.ti=Math.max(0,num(a.ti)|0);o.r=Math.max(0,Math.min(3,num(a.r)|0));o.fi=num(a.fi)|0;o.dz=num(a.dz)|0;o.ci=Math.max(0,num(a.ci)|0);o.to=Math.max(0,num(a.to)|0);o.amt=Math.max(0,Math.min(1e6,num(a.amt)));
   if(typeof a.k==='string'&&a.k.length<20)o.k=a.k;o.mode=a.mode==='amove'?'amove':'move';o.fm=a.fm?1:0;o.q=a.q?1:0;o.at=a.at?1:0;o.x2=Math.max(0,Math.min(MAPW,num(a.x2)));o.y2=Math.max(0,Math.min(MAPH,num(a.y2)));return o;}
@@ -106,13 +106,13 @@ function snapDrops(dr){if(!dr.length)return null;let c=NET.dyC;if(!c||c.t!==G.t|
 function hmPack(){const N=G.teams.length,th=[];if(G.towns)for(const t of G.towns){th.push(Math.round((t.pop==null?1:t.pop)*100),t.loy?1:0,(t.sm?1:0)+2*(t.mil?t.mil.filter(u=>!u.dead).length:0));for(let k=0;k<N;k++)th.push(Math.round((t.an&&t.an[k])||0));}return {th,tv:(G.tow||[]).map(w=>w.ow),tc:(G.tow||[]).map(w=>w.cp.map(v=>+v.toFixed(1))),bc:G.teams.map(T=>Math.max(0,Math.ceil((T.brT||0)-G.t)))};}
 function twPack(){const r=[];if(G.towns)for(const t of G.towns)if(t.ow>=0||t.reb>G.t)r.push(t.i,t.ow,t.rate,Math.round(t.un),Math.round(t.tax*10),t.why|0,t.reb>G.t?Math.ceil(t.reb-G.t):0,t.whole?1:0,t.fr|0,t.gar|0);return r;}
 function civPack(){const r=[];if(G.civ)for(const c of G.civ)if(!c.dead&&(c.ow>=0||c.cp>0))r.push(c.i,c.ow>=0?c.ow:-1,Math.round((c.cp||0)*100),c.cpT>=0?c.cpT:-1);return r;}
-function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0),cv=civPack(),tw=twPack(),hm=hmPack(),lg=lgPack(),bs=G.bse||[],sf=G.teams.map(T=>T.reb||!T._upl||!T.sup?-1:Math.round(100*T.charge/T.sup.charge)),gd=G.teams.map(O=>O.gdoc||'');NET.tgC={t:G.t,v:{fa,oil,out,cv,tw,hm,lg,bs,sf,gd},js:JSON.stringify([fa,oil,out,cv,tw,hm,lg,bs,sf,gd])};}
+function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(f=>f.amt|0),oil=G.oil.map(o=>[o.owner,o.cp.map(v=>+v.toFixed(1)),o.dead?1:0,Math.round(o.hp)]),out=G.teams.map(O=>O.out?1:0),cv=civPack(),tw=twPack(),hm=hmPack(),lg=lgPack(),bs=G.bse||[],sf=G.teams.map(T=>T.reb||!T._upl||!T.sup?-1:Math.round(100*T.charge/T.sup.charge)),gd=G.teams.map(O=>O.gdoc||''),ig=G.teams.map(O=>(O.blk?1:0)+(O.dry?2:0)+Math.round((O.fuel==null?1:O.fuel)*10)*4),po=G.teams.map(O=>Math.round(opOf(O)*10)),rf=(G.refs||[]).map(r=>[r.id,Math.round(r.x0),Math.round(r.y0),Math.round(r.dx*1000),Math.round(r.dy*1000),Math.round(r.t0*10),Math.round(r.dur*10),r.n,r.ow]);NET.tgC={t:G.t,v:{fa,oil,out,cv,tw,hm,lg,bs,sf,gd,ig,po,rf},js:JSON.stringify([fa,oil,out,cv,tw,hm,lg,bs,sf,gd,ig,po,rf])};}
   const C=NET.tgC,S=NET.tgS||(NET.tgS={}),last=S[k];if(last&&last.js===C.js&&G.t-last.t<1)return {};S[k]={js:C.js,t:G.t};return C.v;}
 // EW minimap data for this team only (enemy bubbles over its units, ghost contacts, own spoof cooldowns); null when empty
 function ewPack(k){const v=ewView(k);return v.j.length||v.g.length||v.cd.length?{j:v.j,g:v.g,cd:v.cd}:null;}
 function teamMsg(T){const q={};for(const c of CATS)q[c]=T.q[c].map(i=>[i.kind,+(i.t/prodTime(T,stats(T.fac,i.kind))).toFixed(2)]);const rq={};for(const c in T.rq)if(T.rq[c])rq[c]=[T.rq[c].key,+(T.rq[c].t/UPG[T.rq[c].key].time).toFixed(2)];
   const pw={};for(const k in T.pw)pw[k]=[Math.ceil(T.pw[k].cd),T.pw[k].lv||1];
-  return{sn:T.sanc>G.t?+(T.sanc-G.t).toFixed(1):0,mo:(T.mart||0)>G.t?+(T.mart-G.t).toFixed(1):0,rb:(T.rebuy||0)>G.t?+(T.rebuy-G.t).toFixed(1):0,hb:(T.hrb||0)>G.t?+(T.hrb-G.t).toFixed(1):0,hc:G.ents.filter(e=>e.kind==='champ'&&e.team===T.id&&!e.dead).map(e=>[e.id,Math.max(0,+((e.habT||0)-G.t).toFixed(1))]),c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,dc:T.gdoc||'',dp:Object.keys(T.gperk||{}).join(','),pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),tn:T.tun.length,tk:tunKinds(T),fn:fortN(T.id),fk:fortKinds(T.id),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,ew:ewPack(T.id),mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),...(dgPack(T)||{}),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min((NET.cseq[NET.peers[T.id]]||0),NET.ckAk?(NET.ckAk[T.id]||0):0):0,to:NET.peers[T.id]};}
+  return{sn:T.sanc>G.t?+(T.sanc-G.t).toFixed(1):0,mo:(T.mart||0)>G.t?+(T.mart-G.t).toFixed(1):0,rb:(T.rebuy||0)>G.t?+(T.rebuy-G.t).toFixed(1):0,hb:(T.hrb||0)>G.t?+(T.hrb-G.t).toFixed(1):0,hc:G.ents.filter(e=>e.kind==='champ'&&e.team===T.id&&!e.dead).map(e=>[e.id,Math.max(0,+((e.habT||0)-G.t).toFixed(1))]),c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,dc:T.gdoc||'',dp:Object.keys(T.gperk||{}).join(','),pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),ct:ctPack(T.id),tn:T.tun.length,tk:tunKinds(T),fn:fortN(T.id),fk:fortKinds(T.id),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,ew:ewPack(T.id),mn:(G.mines||[]).filter(m=>m.team===T.id||(m.nav&&(ally(m.team,T.id)||(m.dt&&m.dt[T.id]>G.t)))).map(m=>[m.x,m.y,m.team,m.nav?1:0,m.team!==T.id&&!ally(m.team,T.id)?1:0]),...(dgPack(T)||{}),...(wdPack(T)||{}),...(damPack(T)||{}),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min((NET.cseq[NET.peers[T.id]]||0),NET.ckAk?(NET.ckAk[T.id]||0):0):0,to:NET.peers[T.id]};}
 // P2P: everything a player gets in one tick (snapshot chunks, effects, panel) travels as ONE bundle ('b') - about 10
 // messages a second per connection instead of ~17-24, less per-message overhead, and effects arrive with their snapshot.
 function netTick(dt){if(!hostP2P()||MODE!=='host'||!NET.game||!NET.peers)return netTick0(dt);const g=NET.game,real=g.emit,B=new Map();
@@ -147,7 +147,7 @@ function netTick0(dt){if(MODE!=='host'||!NET.game||!G||!NET.peers)return;discTic
 const VG={c:64,w:0,h:0,a:null,t:-1,AM:[]};
 function visGrid(){if(VG.t===G.t&&VG.a)return;const c=VG.c,w=Math.ceil(MAPW/c)+1,h=Math.ceil(MAPH/c)+1,N=G.teams.length;
   if(!VG.a||VG.w!==w||VG.h!==h){VG.a=new Uint8Array(w*h);VG.w=w;VG.h=h;}else VG.a.fill(0);const a=VG.a,AM=VG.AM;AM.length=N;
-  for(let i=0;i<N;i++){let m=0;for(let j=0;j<N;j++)if(ally(i,j))m|=1<<j;AM[i]=m;}
+  for(let i=0;i<N;i++){let m=0;for(let j=0;j<N;j++)if(sameTm(i,j))m|=1<<j;AM[i]=m;}
   // a cell counts as seen when its centre is within sight radius + half a cell (the client's own fog hole is drawn 8%
   // wider than the sight radius with a soft edge, so this matches what the player actually sees within a few metres)
   const disc=(x,y,R,m)=>{if(!m||!(R>0))return;const R2=(R+c*.5)**2,x0=Math.max(0,Math.floor((x-R)/c)),x1=Math.min(w-1,Math.floor((x+R)/c)),y0=Math.max(0,Math.floor((y-R)/c)),y1=Math.min(h-1,Math.floor((y+R)/c));
@@ -170,6 +170,7 @@ function evWho(v){const AM=VG.AM,own=v.own!=null?AM[v.own]|0:0;
     case 'hack':return visAt(v[1],v[2],40);
     case 'flag':return own|visAt(v[1],v[2],40);                                // martyr banner: its side and whoever sees the spot
     case 'rank':return visAt(v[3],v[4],30);
+    case 'chf':return visAt(v[1],v[2],40);
     case 'flare':return true;                                                // everyone sees a flare go up
     case 'ping':case 'heal':case 'smoke':return own|visAt(v[1],v[2],+v[3]||0);
     case 'strike':return v[5]?255:own|visAt(v[1],v[2],(+v[4]||0)+40);      // superweapon-class warnings are global (alarm + "inbound" log)
@@ -180,6 +181,8 @@ function evWho(v){const AM=VG.AM,own=v.own!=null?AM[v.own]|0:0;
     case 'txt':{const t=v[4],w=v[5];let m=(t>=0?1<<t:0)|(w>=0?1<<w:0);if(w===-2)m|=(AM[t]|0)|visAt(v[1],v[2],0);return m;}
     case 'log':return v[1]>=0?1<<v[1]:0;
     case 'give':return (1<<v[1])|(1<<v[2]);
+    case 'mping':case 'mdraw':case 'say':return ctMask(v[1]);                  // pings, drawings and quick lines: the sender's team only
+    case 'cfo':return (1<<v[1])|(1<<v[2]);case 'cfs':case 'cfb':return (1<<v[1])|(1<<v[2]);
     default:return 255;}}
 // what each player was last sent of an entity: r.t[k] = when it was last in k's snapshot as visible, r.m = players
 // that hold it as a remembered (fogged) building

@@ -54,6 +54,7 @@ try {
   await B.evaluate(c => { initAudio(); setup.p = 'RU'; joinByCode(c); }, code);
   await wf(A, () => NET.cf.blob.seats.filter(s => s.h).length === 2, null, 60000, 'friend in the lobby');
   await A.evaluate(() => { NET.tm = [0, 1]; renderLobby(); });
+  await B.evaluate(() => { GLB.g = NET.game; GLB.me.r = 1; glSend(); }); await A.waitForTimeout(1500);
   await wf(A, () => !document.querySelector('#mpstatus .startbtn').disabled, null, 20000, 'Start enabled');
   await A.evaluate(() => { window.__stopLoop = true; }); await B.evaluate(() => { window.__stopLoop = true; });
   await A.evaluate(() => document.querySelector('#mpstatus .startbtn').click());

@@ -75,6 +75,7 @@ if (process.argv[2] === '--child') {
         fi: FAC[i], r, diffs: HVN ? [2, 1] : null, minutes: MIN, adj: ADJ, hset: HSET, dcs: DOC ? (() => { const pr = []; for (const a of DOCK) for (const b of DOCK) if (a !== b) pr.push([a, b]); return pr[k % pr.length]; })() : null });
       k++;
     }
+  { const sh = argS('shard', ''); if (sh) { const [si, sn] = sh.split('/').map(Number); for (let i = sched.length - 1; i >= 0; i--) if (sched[i].n % sn !== si) sched.splice(i, 1); } } // --shard i/N: every N-th game (seeds unchanged)
   if (PERS) for (const m of sched) { const a = (m.facs[0] === m.fi) === (m.r % 2 === 0) ? 0 : 1; m.pers = a ? [0, PERS] : [PERS, 0]; m.pa = a; }
   if (HVN) for (const m of sched) if (m.n % 2) { m.facs.reverse(); m.diffs = [1, 2]; } // Hard plays both slots
   console.log(`aitourney: ${sched.length} games, ${JOBS} at a time, ${MIN}-min cap, maps ${MAPS.join(',')}${HVN ? ', Hard vs Normal' : ', diff ' + DIFF}`);

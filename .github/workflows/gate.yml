@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down, migrate-dual,
-            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, smooth-pc, smooth-mp]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
+            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -42,7 +42,9 @@ jobs:
             check)          python3 orch/build.py --check ;;
             smooth-*)       node orch/smooth.mjs --profile "${T#smooth-}" ;;   # smoothness gate (orch/SMOOTH.md): pc / phone / multiplayer, vs orch/smooth-baseline.json
             servertest)     node orch/servertest.mjs && node orch/specserver.mjs ;;   # + spectators in a server battle
+            tutorial)       node orch/tutorialtest.mjs ;;   # plays the whole tutorial with real mouse/keyboard input (orch/tutorialtest.mjs)
             decals)         node orch/decalcheck.mjs --facs all ;;   # every marking on every unit type x all 18 nations lies on the model's surface and is not oversized (orch/decalcheck.mjs)
+            save)           node orch/savetest.mjs ;;   # save game: battle -> save -> load in a fresh page -> same state hash; Continue after a reload; file round trip; old saves refused (orch/savetest.mjs)
             ew)             if [ -f orch/ewtest.mjs ]; then node orch/ewtest.mjs; else echo "SKIP ew (no test)"; fi ;;   # electronic warfare: spoof/jamming + their host-migration checkpoint
             headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --night && node orch/headless.mjs --compare || echo "SKIP headless" ;;
             smoke4)         node orch/smoke.mjs --players 4 && node orch/replaytest.mjs ;;   # + a replay ends where the battle ended
@@ -72,9 +74,9 @@ jobs:
           esac > out.log 2>&1
           rc=$?
           tail -40 out.log
-          line=$(grep -E "^(SMOKE|MPSYNC|REPLAY|SPECSERVER|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|WALKTEST|TOUCH|PHONELOAD|AUDIO|EW|SMOOTH|CF[A-Z]*) (PASS|FAIL)|^SKIP|index.html is up to date|is out of date|Error" out.log | tail -1 | cut -c1-130)
+          line=$(grep -E "^(SMOKE|MPSYNC|REPLAY|SPECSERVER|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|WALKTEST|TOUCH|PHONELOAD|AUDIO|EW|SMOOTH|TUTORIAL|CF[A-Z]*) (PASS|FAIL)|^SKIP|index.html is up to date|is out of date|Error" out.log | tail -1 | cut -c1-130)
           state=failure; [ $rc -eq 0 ] && state=success
-          grep -qE "^(SMOKE|MPSYNC|REPLAY|SPECSERVER|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|WALKTEST|TOUCH|PHONELOAD|AUDIO|EW|SMOOTH|CF[A-Z]*) FAIL" out.log && state=failure
+          grep -qE "^(SMOKE|MPSYNC|REPLAY|SPECSERVER|MIGRATE|MAPSWEEP|SERVERTEST|HEADLESS|CONTROLS|WALKTEST|TOUCH|PHONELOAD|AUDIO|EW|SMOOTH|TUTORIAL|CF[A-Z]*) FAIL" out.log && state=failure
           desc=$(printf '%s' "${line:-exit $rc}" | sed 's/"/'"'"'/g')
           curl -s -o /dev/null -X POST -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.sha }}" \

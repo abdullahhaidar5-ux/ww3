@@ -176,6 +176,7 @@ async function main() {
   const seats = await B.evaluate(() => NET.cf.blob.seats);
   say(`server lobby (as the friend sees it): ${seats.map(s => `${s.h ? 'player' : 'computer'} ${s.f}/team ${s.tm + 1}`).join(', ')}`);
   if (!(await lobOk())) fail('lobby edits did not reach the server (teams / computer player)');
+  await B.evaluate(() => { GLB.g = NET.game; GLB.me.r = 1; glSend(); }); await A.waitForTimeout(1500);
   await waitFor(A, () => !document.querySelector('#mpstatus .startbtn').disabled, null, 15000, 'Start to be enabled');
   await shot(A, 'cf-lobby.png');
   await A.evaluate(() => { window.__stopLoop = true; }); await B.evaluate(() => { window.__stopLoop = true; });

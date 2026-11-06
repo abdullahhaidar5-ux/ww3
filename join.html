@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>You're invited to a World War 3 battle</title>
+<meta name="description" content="A friend invited you to a World War 3 battle. Tap the link: the game opens straight into their lobby. Free, in your browser, no install.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="World War 3">
+<meta property="og:title" content="You're invited to a World War 3 battle">
+<meta property="og:description" content="Tap to join your friend's lobby: pick a nation, press Ready, fight. Free in your browser, 18 nations, up to 8 players.">
+<meta property="og:image" content="https://abdullahhaidar5-ux.github.io/ww3/og-invite.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="You're invited to a World War 3 battle">
+<meta name="twitter:description" content="Tap to join your friend's lobby: pick a nation, press Ready, fight.">
+<meta name="twitter:image" content="https://abdullahhaidar5-ux.github.io/ww3/og-invite.jpg">
+<style>html,body{margin:0;height:100%;background:#0a0f0c;color:#e8efe9;font:18px system-ui,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center}a{color:#f5c85a}</style>
+</head><body><div><h1>⚔ World War 3</h1><p>Opening your friend's battle lobby…</p><p><a id="go" href="./index.html">Tap here if nothing happens</a></p></div>
+<script>
+// the invite code travels in the #fragment (never sent to a server); hand it to the game unchanged
+(function(){var h=location.hash||'';document.getElementById('go').href='./index.html'+h;location.replace('./index.html'+h);})();
+</script></body></html>

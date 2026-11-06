@@ -46,6 +46,7 @@ function drawTownsMini(c,sx,sy,now){if(!G||!G.towns)return;
       if(k==='sam'){if(!mine)continue;c.strokeStyle='rgba(120,200,255,.35)';c.lineWidth=1;c.setLineDash([2,3]);c.beginPath();c.arc(e.x*sx,e.y*sy,CQ_MD_R*sx,0,7);c.stroke();c.setLineDash([]);continue;}
       if(!mine&&!(e.vs&&e.vs[ME])&&!e.mem)continue;const x=e.x*sx,y=e.y*sy,T=G.teams[e.team];c.fillStyle='#000';c.beginPath();c.moveTo(x,y-6);c.lineTo(x+5.5,y+4);c.lineTo(x-5.5,y+4);c.closePath();c.fill();c.fillStyle=mine?'#74d08f':'#ff5a40';c.beginPath();c.moveTo(x,y-4.4);c.lineTo(x+3.9,y+2.6);c.lineTo(x-3.9,y+2.6);c.closePath();c.fill();
       const sec=T?strikeSecs(T):-1;if(sec>=0){const t=sec<=.5?'READY':Math.floor(sec/60)+':'+String(Math.floor(sec%60)).padStart(2,'0');c.fillStyle='#000';c.fillText(t,x+.7,y+14.2);c.fillStyle=mine?'#bfe8c4':'#ffd0c0';c.fillText(t,x,y+13.5);}}
+    if(G.inb&&G.inb.length){const n=performance.now();G.inb=G.inb.filter(q=>q.t>n-600);for(const q of G.inb){const left=Math.max(0,(q.t-n)/1000),x=q.x*sx,y=q.y*sy,p=.5+.5*Math.sin(n/120);c.strokeStyle='rgba(255,70,50,'+(.55+.45*p)+')';c.lineWidth=1.6;c.beginPath();c.arc(x,y,Math.max(3,q.r*sx),0,7);c.stroke();if(left>0){const t=Math.ceil(left)+'s';c.fillStyle='#000';c.fillText(t,x+.7,y-q.r*sx-2.3);c.fillStyle='#ffd0c0';c.fillText(t,x,y-q.r*sx-3);}}}
     c.restore();}
   // alert pings (unrest warnings, lost towns, revolts)
   if(G.tpings&&G.tpings.length){const n=performance.now();G.tpings=G.tpings.filter(q=>n-q.t<4500);for(const q of G.tpings){const a=(n-q.t)/4500,r=4+a*22;c.strokeStyle=q.k===2?'rgba(255,90,60,'+(1-a)+')':q.k===1?'rgba(255,170,60,'+(1-a)+')':'rgba(255,224,90,'+(1-a)+')';c.lineWidth=2;c.beginPath();c.arc(q.x*sx,q.y*sy,r,0,7);c.stroke();}}}
@@ -68,6 +69,7 @@ function cqBanner(){if(!G||!G.conq)return;if(G.over){const o=$('cqBn');if(o&&o.d
    for(const T of G.teams){if(T.reb||T.out||!T.sup)continue;const sec=strikeSecs(T);if(sec<0)continue;const mine=ally(T.id,ME);
      sl+=`<div style="font-size:12px;margin-top:2px;color:${mine?'#bfe8c4':'#ffb4a8'}">${T.F.name} ${UPLINK[T.fac]?UPLINK[T.fac][0]:'missile strike'}: ${sec<=0.5?'READY':'ready in '+tm(sec)}</div>`;}
    h+=sl;}
+  h+=polBannerHtml();
   if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
 function strikeSecs(T){let f;if(MODE==='client'&&G.sfd)f=G.sfd[T.id];else f=T._upl?100*T.charge/T.sup.charge:-1;if(f==null||f<0)return -1;return Math.max((1-f/100)*T.sup.charge/.5,G.t<CQ_STRIKE_MIN?CQ_STRIKE_MIN-G.t:0);}
 function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){}
@@ -91,7 +93,7 @@ function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){
   else h+='<div class="tm" style="margin-top:6px">Neutral. Garrison infantry in its buildings (more than half of the key buildings) to capture it.</div>';
   h+=hmPanel(t,mine,reb);
   if(pk[0])h+=`<div class="tm" style="margin-top:4px">Perk: <b>${pk[0]}</b> &mdash; ${pk[1]}</div>`;
-  TP.el.querySelector('#tpb').innerHTML=h;}
+  const tb=TP.el.querySelector('#tpb');if(TP.h!==h){TP.h=h;tb.innerHTML=h;}}   /* only rebuild when the text changed, so a click is never lost to a refresh */
 
 /* ---------- HEARTS & MINDS interface: home turf, local recruits, informants, bribes, propaganda towers ---------- */
 function homeLine(){const n=homeNames();return n.length?n.join(' & '):'';}
@@ -109,6 +111,7 @@ function hmPanel(t,mine,reb){let h='';const T=G.teams[ME];if(!T)return h;
     if(t.un>=HM.BRIB_UN){const p=bribePrice(t,ME),cd=Math.max(0,Math.ceil((T.brT||0)-G.t)),setup=G.t<G.setupEnd;
       h+=`<div style="margin-top:8px"><button data-act="bribe" style="width:100%;min-height:40px;border-radius:6px;border:1px solid #8a6a2a;background:#4a3a18;color:#ffe9b0;font-weight:600;cursor:pointer" ${(!bribeOk(t,ME)||T.credits<p)?'disabled':''}>Bribe the elders &mdash; $${p}</button><div class="tm">${setup?'Not during the setup phase.':cd>0?'Cooldown '+cd+' s.':T.credits<p?'Not enough money.':'The garrison is sent out, nobody is killed. Cheaper the angrier the locals.'}</div></div>`;}
     else h+=`<div class="tm" style="margin-top:6px">Elders cannot be bribed yet: unrest ${Math.round(t.un)}/${HM.BRIB_UN}.</div>`;}
+  h+=intelTownHtml(t);
   return h;}
 function towerAt(w){if(!G||!G.tow||!w)return null;for(const q of G.tow)if(Math.hypot(q.x-w.x,q.y-w.y)<70)return q;return null;}
 function towerName(q){const T=q.ow>=0&&G.teams[q.ow];return T?(STATION[T.fac]||'Radio tower'):'Neutral radio tower';}
@@ -128,3 +131,13 @@ function drawTowersMini(c,sx,sy,now){if(!G||!G.tow)return;
     for(const q of G.hums){const a=(n-q.t)/9000,x=q.x*sx,y=q.y*sy,r=3.5+Math.min(4,q.n*.5);c.globalAlpha=Math.max(0,1-a);c.strokeStyle='#ff9a3c';c.lineWidth=1.6;c.beginPath();c.moveTo(x,y-r);c.lineTo(x+r,y);c.lineTo(x,y+r);c.lineTo(x-r,y);c.closePath();c.stroke();const rr=r+a*10;c.globalAlpha=Math.max(0,.6-a);c.beginPath();c.arc(x,y,rr,0,7);c.stroke();c.globalAlpha=Math.max(0,1-a);c.fillStyle='#ffd9a8';c.fillText(q.n,x,y+3);}
     c.restore();}}
 FXH.hum=(team,x,y,n)=>{if(!G||!G.teams[ME]||!ally(team,ME))return;(G.hums=G.hums||[]).push({x,y,n,t:performance.now()});};
+
+// inbound missile countdown for the minimap (the global 'strike' warning carries the seconds to impact)
+{const _st=FXH.strike;FXH.strike=function(x,y,t,r,sup,arc){if(sup&&G)(G.inb=G.inb||[]).push({x,y,r,t:performance.now()+t*1000});return _st.apply(this,arguments);};}
+
+/* Infrastructure HUD (Abdullah 2026-11-05): a clear banner when OUR power grid is down (defences offline) and a fuel gauge when low. */
+function drawInfraHud(c){if(!G||G.over||!G.conq||!G.teams||!G.teams[ME])return;const T=G.teams[ME];const W=c.canvas.width/(window.devicePixelRatio&&c.canvas.width>1?1:1);
+  const lines=[];if(T.blk)lines.push(['\u26A1 BLACKOUT - no power: SAM sites, defence guns and strike centre OFFLINE. Recapture or repair a power plant (Construction Vehicle).','#ea5a40']);
+  if(T.dry)lines.push(['\u26FD OUT OF FUEL - vehicles slowed. Hold an oil derrick.','#e3b341']);else if(T.fuel!=null&&T.fuel<.3)lines.push(['\u26FD Fuel reserve low - hold an oil derrick.','#c9a24a']);
+  if(!lines.length)return;const pulse=.75+.25*Math.sin(performance.now()/260);c.save();c.font='700 14px Saira Condensed, system-ui, sans-serif';c.textAlign='center';
+  let y=96;for(const [t,col] of lines){const w=c.measureText(t).width+28;const x=(c.canvas.clientWidth||c.canvas.width)/2;c.globalAlpha=pulse;c.fillStyle='rgba(12,8,8,.82)';c.fillRect(x-w/2,y-16,w,24);c.fillStyle=col;c.fillRect(x-w/2,y-16,4,24);c.fillText(t,x,y);y+=28;}c.restore();}

@@ -12,11 +12,19 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Towns and hamlets pay tax; you set Low / Normal / High / Extortionate per town; angry towns revolt (rebels) — High tax in safe towns, Low at the front
 - [done] Hamlets (small villages) on every map, placed fairly; minimap shows towns, hamlets, tax, unrest, rebels, alerts
 - [done] Everything unlocked, $10,000 each, 90 s no-fire setup phase, territory pays the bills, win = destroy the enemy base
-- [doing] Fair missile strikes: minimum minute 8, costs money, 40% building cap, missile defence, public countdown (core rules in; launch-site reveal + minimap countdown next)
+- [done] Fair missile strikes: minimum minute 8, costs money, 40% building cap, nation-named missile defence with visible intercepts, launch site exposed + countdown on the minimap
 - [done] Bigger 2-4 player maps (+27%), town bands (rear villages / middle hamlets / centre prize town), roads with +15-30% speed, fair-start check (orch/bandfair.mjs)
 - [open] 3-player maps: the isolated start wins ~55% (close pair + loner) - needs new 3p layouts or AI tuning
-- [next] Fair upgrades and powers (same tier = same cost for every nation), tutorial polish, Classic menu wording, map-editor hamlets
+- [done] Fair upgrades (same tier = same cost for every nation), powers ranked by XP + calm-town command points, tutorial covers setup/towns/tax/unrest/civic, map-editor hamlets, AI raids rear towns
+- [done] Logistics: supply runs on roads (build roads, CUT OFF towns, cratering, convoys + ambushes, territory + front line)
+- [done] Logistics 2: forward depots + ports join the road network, mines + checkpoints (tolls), bridges blow / rebuild / pontoons, port blockades, airlift, AI uses it, tutorial step, road look per theme
 - [next] Fairness proof: 18-nation tourney + start positions + tax-policy comparison (needs a bigger machine)
+
+## Battlefield (Abdullah 2026-11-05 18:55)
+- [done] Digging in: infantry or Construction Vehicles lay sandbag / trench lines by dragging, pieces shared between builders, trenches snap into networks, duckboards + sandbag parapets, AI squads dig lines when no dozer is idle
+- [done] Collapsing buildings: three damage stages (cracked, smoking, burning), garrison bails out at the last stage, dust cloud on collapse, rubble cleared by Construction Vehicles (auto or the Clear rubble button)
+- [done] Dams and floods: Twin Rivers + Fulda Gap each have two mirrored dams; shell one and the valley floods for 3 minutes (slows everything, closes bridges, drowns infantry); AI uses it
+- [done] Medics and wounded: bullet-killed infantry go down wounded (red-cross icon, 32 s), Combat Medics (all nations) revive them with veterancy, squad mates drag them to cover, HQ/Depot aid stations, AI builds medics
 
 ## Phones and interface
 - [done] Phones can play: reachable build buttons, two-finger pan and pinch zoom, touch placement
@@ -76,6 +84,9 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Live news ticker · [done] end-of-match kill-cam replay · [done] end-of-match stats page (awards, scoreboard, army graph, Share) · [next] one-tap army stances (Assault/Hold/Guerrilla)
 - [done] Bases always start on dry ground; all 28 maps checked by an automatic sweep
 - [done] AI builds and uses a navy on water maps
+- [done] Command & teams: battle plans (numbered arrows, Go/timer steps), named battle groups with Line/Column/Wedge, doctrine trees (3 tiers per doctrine), allied aid (fee + delay, give units), team pings/drawings/quick lines, free-for-all ceasefire offers
+- [done] Real-place maps: Donbas Steppe, Golan Plateau, Korean DMZ Iron Triangle, Lebanon Beqaa and Chouf, Yemen Tihama and Highlands, Strait of Hormuz Island Gate (all fair-checked, mirror-symmetric)
+- [done] Seasons on every map: Summer / Autumn mud / Winter snow (lobby option; looks + off-road movement; roads matter more)
 - [done] Fix AI blowouts: no general powers in the first 3 minutes, AI always builds an army
 - [done] Balance round 2: AI fields tanks, weak nations (Israel, Turkey, Korea) strengthened
 - [done] Faster takeover when the host leaves a multiplayer battle (about 2 s)

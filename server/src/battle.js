@@ -138,7 +138,16 @@ export class BattleHost {
   event(id, t, d) {
     if (t === 'hello') { if (d && typeof d === 'object') { if (d.sp) this.spec(id); else this.hello(id, d.f, null); } }
     else if (t === 'cmd') { if (this.phase === 'battle') this.sim.cmd(id, d); }
+    else if (t === 'pick') { if (this.phase === 'lobby' && d && typeof d === 'object') this.pick(id, d); }
     else if (t === 'bset') { if (this.phase === 'lobby' && id === this.owner) this.configure(d || {}); }
+  }
+  // a friend in the lobby: nation, wanted team and Ready (the page's 'pick'); the leader's Start waits for everyone's Ready
+  pick(id, d) {
+    const P = this.players.get(id), i = this.order.indexOf(id); if (!P || i < 0) return;
+    if (typeof d.f === 'string' && this.sim.facs.includes(d.f)) P.f = d.f;
+    P.r = d.r ? 1 : 0;
+    if (typeof d.t === 'number' && d.t >= 0 && d.t < 8 && i > 0) this.tm[i] = d.t | 0;
+    this.sendLobby();
   }
   // a player's greeting (presence hi, or the 'hello' emit): takes a seat in the lobby / reconnects during the battle
   hello(id, f, tok) {
@@ -180,7 +189,7 @@ export class BattleHost {
   seats() {
     // st: the seat's picked start spot, only when one is picked (lobbies without picks look as before)
     const sp = v => (v >= 0 ? { st: v } : {});
-    return [...this.order.map((id, i) => ({ h: 1, f: this.players.get(id).f, tm: this.tm[i] | 0, ...sp(this.players.get(id).st) })), ...this.ais.map(a => ({ ai: 1, f: a.f, d: a.d, tm: a.tm, ...sp(a.st) }))];
+    return [...this.order.map((id, i) => ({ h: 1, f: this.players.get(id).f, tm: this.tm[i] | 0, r: this.players.get(id).r | 0, ...sp(this.players.get(id).st) })), ...this.ais.map(a => ({ ai: 1, f: a.f, d: a.d, tm: a.tm, ...sp(a.st) }))];
   }
   check() {
     const s = this.seats();
