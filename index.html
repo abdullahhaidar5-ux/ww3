@@ -6302,7 +6302,12 @@ function seenBy(team,e){return e.team===team||(e.vs&&e.vs[team]);}
 // "Random" Conditions: the battle's seed picks one of Clear/Golden/Overcast/Dusk/Night. Only Night changes the simulation (sight); the rest stay visual, as before.
 function wxRandIdx(sd){sd=(sd|0)>>>0;return (Math.imul(sd^0x9e3779b9,2654435761)>>>16)%5;}
 function todMode(w){return w===3?1:w===4?2:w===5?3:0;}
-function todLvl(){const m=G.todM|0;return m<3?m:[0,1,2,1][Math.floor((G.t%1200)/300)];}
+// Day/night cycle (lobby 'Day-night cycle'): one smooth 1200 s day. Keyframes [second, look-preset, darkness]: day -> dusk -> night -> dawn -> day.
+// Pure function of G.t, so every player (and the Cloudflare host) sees the same hour. todDark() 0..1 drives vision; the look blends between presets.
+const TOD_KF=[[0,0,0],[260,0,0],[400,3,.6],[460,3,.6],[580,4,1],[800,4,1],[930,1,.25],[1000,1,.25],[1120,0,0],[1200,0,0]];
+function todSeg(t){t=((t%1200)+1200)%1200;let i=0;while(i<TOD_KF.length-2&&t>=TOD_KF[i+1][0])i++;const a=TOD_KF[i],b=TOD_KF[i+1];return{a:a[1],b:b[1],f:Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0]))),d:a[2]+(b[2]-a[2])*Math.max(0,Math.min(1,(t-a[0])/(b[0]-a[0])))};}
+function todDark(){const m=G.todM|0;if(m<3)return m===2?1:m===1?.6:0;return todSeg(G.t).d;}
+function todLvl(){const m=G.todM|0;if(m<3)return m;const d=todSeg(G.t).d;return d<.2?0:d<.8?1:2;}
 function todThermal(m){if(m.isB)return false;const c=m.s.cls;return c==='tank'||c==='heli'||c==='jet'||c==='drone'||c==='hero'||!!m.s.camo;}
 // night vision: each nation's special-forces unit and the recon teams / patrols see as well at night as by day
 function todNV(m){return !m.isB&&(m.kind==='recon'||m.kind==='jeep'||m.kind===G.teams[m.team].F.special);}
@@ -7357,8 +7362,13 @@ function enterTunnel(u,b){const f=b&&b.kind==='fort';const T=G.teams[u.team],L=f
 function unloadTunnel(b){const f=b.kind==='fort';const T=G.teams[b.team];const L=f?fortUnits(b):T.tun;const n=L.length;if(!n)return;L.forEach((u,i)=>{const a=i/n*6.283+(f?(i*.37)%.3:Math.random()*.3),r=b.size/2+22+(i%3)*16;const p=nearestPassXY('ground',b.x+Math.cos(a)*r,b.y+Math.sin(a)*r)||[b.x,b.y];u.x=p[0];u.y=p[1];u.inTun=false;u.mv=G.t;u.ambT=G.t+3;G.ents.push(u);G.byId.set(u.id,u);});
   const out=L.slice();if(f)b.gar=[];else T.tun=[];log(b.team,`${n} unit${n>1?'s':''} came out of the ${f?'Mountain Fortress':'tunnel'}.`,'g');return out;}
 function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
-function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,t:0,next:1e9};return;}if(!G.wx)G.wx={k:'clear',t:0,next:150+Math.random()*90};const W=G.wx;W.t+=dt;if(W.t<W.next)return;W.t=0;const ks=weatherKinds(G.map.theme);
-  if(W.k==='clear'){W.k=ks[1+Math.floor(Math.random()*(ks.length-1))];W.next=55+Math.random()*45;}else{W.k='clear';W.next=170+Math.random()*120;}
+function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,t:0,next:1e9};return;}
+  // seeded (same for every player and the server): the next change is picked ahead of time and announced ~25 s before it arrives
+  if(!G.wxR)G.wxR=mulberry(((G.seed||1)*7919+13)|0);const R=G.wxR;
+  if(!G.wx)G.wx={k:'clear',t:0,next:150+R()*90,nk:null,fc:0};const W=G.wx;W.t+=dt;const ks=weatherKinds(G.map.theme);
+  if(!W.nk)W.nk=W.k==='clear'?ks[1+Math.floor(R()*(ks.length-1))]:'clear';
+  if(!W.fc&&W.t>=W.next-25){W.fc=1;const w=WEATHER[W.nk];for(const T of G.teams)log(T.id,W.nk==='clear'?'Forecast: the weather is about to clear.':`Forecast: ${w.name.toLowerCase()} rolling in within 25 seconds.`,'w');}
+  if(W.t<W.next)return;W.t=0;W.fc=0;W.k=W.nk;W.nk=null;W.next=W.k==='clear'?170+R()*120:55+R()*45;
   for(const T of G.teams){const w=WEATHER[W.k];log(T.id,W.k==='clear'?'The weather is clearing.':`Weather: ${w.name}. ${w.tip}`,'w');}}
 function simUpdate(dt){G.t+=dt;gdRecon(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
   if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[],mart:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam,id:e.id});if(s.cbr||(s.cls==='arty'&&gdHas(G.teams[e.team],'r1')))G.cbrTeams|=1<<e.team;}martyrTick();
@@ -8837,7 +8847,10 @@ let WXT=-1,WXI=0,WXG=null,WXFX=1;const WXCITY={value:0},WXAMB={value:new THREE.V
 // "Random" is decided by the battle's seed, so it stays the same for the whole battle (and would match on every
 // machine of a multiplayer game if the condition is ever sent with the match start).
 function wxPick(i){i=i|0;if(i>=0&&i<WX.length)return i;if(i<0){const s=((typeof G!=='undefined'&&G&&G.seed)|0)>>>0;return wxRandIdx(s);}return 0;}
-function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){WXG=G;WXI=wxPick(i);}else if(typeof G==='undefined'||!G)WXI=wxPick(i);i=WXI;if(typeof G!=='undefined'&&G&&G.todM){const l=todLvl();WXT=G.todM<3?-1:l;i=l===2?4:l===1?3:i;}else WXT=-1;const w=WX[i];
+// Smooth time of day: blend two look presets (colours as hex strings, numbers, and number arrays) by f.
+const _wc1=new THREE.Color(),_wc2=new THREE.Color();
+function wxMix(A,B,f){if(f<=0)return A;if(f>=1)return B;const o={};for(const k in A){const a=A[k],b=B[k];if(typeof a==='number')o[k]=a+(b-a)*f;else if(Array.isArray(a))o[k]=a.map((v,j)=>v+(b[j]-v)*f);else if(typeof a==='string'&&a[0]==='#'){_wc1.set(a);_wc2.set(b);_wc1.lerp(_wc2,f);o[k]='#'+_wc1.getHexString();}else o[k]=f<.5?a:b;}return o;}
+function applyWeather(i){if(!SUN)return;if(typeof G!=='undefined'&&G&&WXG!==G){WXG=G;WXI=wxPick(i);}else if(typeof G==='undefined'||!G)WXI=wxPick(i);i=WXI;let WXB=null;if(typeof G!=='undefined'&&G&&G.todM){const l=todLvl();if(G.todM===3){const sg=todSeg(G.t);WXT=Math.round(sg.d*20);WXB=sg;i=sg.d>.5?(sg.a===1||sg.b===1?1:3):i;if(sg.d>=.8)i=4;}else{WXT=-1;i=l===2?4:l===1?3:i;}}else WXT=-1;const w=WXB?wxMix(WX[WXB.a],WX[WXB.b],WXB.f):WX[i];
   SUN.color.copy(lin(w.sun));SUN.intensity=w.si*LUX;SUNOFF=w.off;HEMI.color.copy(lin(w.sky));HEMI.groundColor.copy(lin(w.gnd));HEMI.intensity=w.hi*LUX;
   SCN.fog.color.copy(lin(w.fog));SCN.fog.near=w.fn;SCN.fog.far=w.ff;SUN.shadow.radius=w.sr;POST.cloud=w.cl;WXFX=w.fx;WXCITY.value=w.win;WXAMB.value.set(w.amb[0],w.amb[1],w.amb[2]);if(LAMPM)LAMPM.emissiveIntensity=w.lamp;
   if(POST.mFinal){const F=POST.mFinal.uniforms;F.expo.value=w.expo;if(F.gr)F.gr.value.set(w.gr[0],w.gr[1],w.gr[2]);if(F.sat)F.sat.value=w.sat;}
@@ -9352,7 +9365,7 @@ function fxUpdate(dt){
 // Weather on screen: rain streaks, blowing sand, heavy snow and thick fog close in the view; the haze colour and
 // distance ease in and out as the weather changes.
 let RAIN=null,WXV={k:'clear',m:0};
-function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&todLvl()!==WXT)try{applyWeather(0);}catch(e){}const k=(G.wx&&G.wx.k)||'clear';if(WXV.base==null&&SCN.fog){WXV.base={c:SCN.fog.color.clone(),n:SCN.fog.near,f:SCN.fog.far};}const B=WXV.base;if(!B)return;
+function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&Math.round(todSeg(G.t).d*20)!==WXT)try{applyWeather(0);}catch(e){}const k=(G.wx&&G.wx.k)||'clear';if(WXV.base==null&&SCN.fog){WXV.base={c:SCN.fog.color.clone(),n:SCN.fog.near,f:SCN.fog.far};}const B=WXV.base;if(!B)return;
   if(WXV.k!==k){WXV.m=Math.max(0,WXV.m-dt*.5);if(WXV.m<=0)WXV.k=k;}else WXV.m=Math.min(1,WXV.m+dt*.35);const m=WXV.k==='clear'?0:WXV.m,K=WXV.k;
   const T={rain:{c:'#7d868c',n:500,f:3200},fog:{c:'#b9bdbb',n:150,f:1500},sandstorm:{c:'#b88a52',n:40,f:950},blizzard:{c:'#dfe6ee',n:150,f:1700},snow:{c:'#e3e9f0',n:220,f:2300}}[K];
   if(T){const tc=lin(T.c);SCN.fog.color.copy(B.c).lerp(tc,m*.85);SCN.fog.near=B.n+(T.n-B.n)*m;SCN.fog.far=B.f+(T.f-B.f)*m;}else{SCN.fog.color.lerp(B.c,Math.min(1,dt*2));SCN.fog.near+=(B.n-SCN.fog.near)*Math.min(1,dt*2);SCN.fog.far+=(B.f-SCN.fog.far)*Math.min(1,dt*2);}
@@ -9363,7 +9376,7 @@ function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&todLvl()!==WXT)
     RAIN.visible=m>.02;RAIN.material.opacity=.35*m;const p=RAIN.geometry.attributes.position.array,D=RAIN.userData.d,H=320;
     for(let i=0;i<D.length;i++){const d=D[i];d[2]-=dt*1.6;if(d[2]<0){d[2]+=1;d[0]=rnd(-1,1);d[1]=rnd(-1,1);}const x=cam.x+d[0]*R,y=cam.y+d[1]*R*.7,gh=groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y))),h=gh+d[2]*H;p.set([x,h,y,x+3,h+14,y],i*6);}
     RAIN.geometry.attributes.position.needsUpdate=true;}else if(RAIN)RAIN.visible=false;
-  const el=document.getElementById('wxchip');if(el){const W=WEATHER[k];const tl=G.todM?todLvl():0,tn=tl===2?'NIGHT':tl===1?(G.todM===3&&Math.floor((G.t%1200)/300)===3?'DAWN':'DUSK'):'';const on=k!=='clear'||!!tn;el.hidden=!on;if(on){const txt=(tn?tn+(k!=='clear'?' · ':' · sight '+(tl===2?'-40%':'-20%')+', thermal optics see further'):'')+(k!=='clear'?`${W.name.toUpperCase()} · vision ${Math.round((W.vis-1)*100)}% · accuracy ${Math.round((W.acc-1)*100)}%${W.air===0?' · jets grounded':''}`:'');if(el.textContent!==txt)el.textContent=txt;}}}
+  const el=document.getElementById('wxchip');if(el){const W=WEATHER[k];const tl=G.todM?todLvl():0,tn=tl===2?'NIGHT':tl===1?(G.todM===3&&(G.t%1200)>=800?'DAWN':'DUSK'):'';const on=k!=='clear'||!!tn;el.hidden=!on;if(on){const txt=(tn?tn+(k!=='clear'?' · ':' · sight '+(tl===2?'-40%':'-20%')+', thermal optics see further'):'')+(k!=='clear'?`${W.name.toUpperCase()} · vision ${Math.round((W.vis-1)*100)}% · accuracy ${Math.round((W.acc-1)*100)}%${W.air===0?' · jets grounded':''}`:'');if(el.textContent!==txt)el.textContent=txt;}}}
 /* ---------- Helicopter rotor wash ----------
    A helicopter's downwash blasts whatever is under it: a ring of dust rolls outward on land (powder snow on snow maps),
    white spray and a flattened, swirling ring on water. Strongest when the helicopter hovers low and slow; a fast pass
@@ -13806,8 +13819,8 @@ function initPost(){try{
     fragmentShader:`uniform sampler2D tex;varying vec2 vUv;void main(){vec3 c=texture2D(tex,vUv).rgb;if(!(c.r==c.r&&c.g==c.g&&c.b==c.b)||max(c.r,max(c.g,c.b))>1e4)c=vec3(0.);c=min(c,vec3(60.));float l=dot(c,vec3(.2126,.7152,.0722));gl_FragColor=vec4(c*smoothstep(.95,2.6,l),1.);}`});
   POST.mBlur=new THREE.ShaderMaterial({uniforms:{tex:{value:null},dir:{value:new THREE.Vector2()}},vertexShader:FSV,depthTest:false,depthWrite:false,
     fragmentShader:`uniform sampler2D tex;uniform vec2 dir;varying vec2 vUv;void main(){vec4 c=texture2D(tex,vUv)*.227;c+=texture2D(tex,vUv+dir*1.385)*.316;c+=texture2D(tex,vUv-dir*1.385)*.316;c+=texture2D(tex,vUv+dir*3.231)*.07;c+=texture2D(tex,vUv-dir*3.231)*.07;gl_FragColor=c;}`});
-  POST.mFinal=new THREE.ShaderMaterial({uniforms:{tex:{value:null},b1:{value:null},b2:{value:null},t:{value:0},flash:{value:0},res:{value:new THREE.Vector2(1,1)},expo:{value:.92},gr:{value:new THREE.Vector3(1,1,1)},sat:{value:1},tg:{value:new THREE.Vector3(1,1,1)},tsat:{value:1},film:{value:0},hz:{value:new THREE.Vector3(.62,.5,.36)}},vertexShader:FSV,depthTest:false,depthWrite:false,
-    fragmentShader:`uniform sampler2D tex,b1,b2,ao;uniform float t,flash,expo,aoK,fogK,sat,tsat,film;uniform vec3 gr,tg,hz;uniform vec2 res;varying vec2 vUv;
+  POST.mFinal=new THREE.ShaderMaterial({uniforms:{tex:{value:null},b1:{value:null},b2:{value:null},t:{value:0},flash:{value:0},res:{value:new THREE.Vector2(1,1)},expo:{value:.92},gr:{value:new THREE.Vector3(1,1,1)},sat:{value:1},tg:{value:new THREE.Vector3(1,1,1)},tsat:{value:1},film:{value:0},vm:{value:0},hz:{value:new THREE.Vector3(.62,.5,.36)}},vertexShader:FSV,depthTest:false,depthWrite:false,
+    fragmentShader:`uniform sampler2D tex,b1,b2,ao;uniform float t,flash,expo,aoK,fogK,sat,tsat,film,vm;uniform vec3 gr,tg,hz;uniform vec2 res;varying vec2 vUv;
       vec3 aces(vec3 x){x*=.6;return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
       float h(vec2 p){return fract(sin(dot(p,vec2(12.9898,78.233)))*43758.5453);}
       vec3 okc(vec3 c){return (c.r==c.r&&c.g==c.g&&c.b==c.b&&max(c.r,max(c.g,c.b))<1e4)?c:vec3(.5);}
@@ -13815,12 +13828,17 @@ function initPost(){try{
         vec3 n=texture2D(tex,vUv+vec2(px.x,0.)).rgb+texture2D(tex,vUv-vec2(px.x,0.)).rgb+texture2D(tex,vUv+vec2(0.,px.y)).rgb+texture2D(tex,vUv-vec2(0.,px.y)).rgb;
         c=c+(c-n*.25)*.35;vec4 oc4=texture2D(ao,vUv);vec3 oc=oc4.rgb;c*=mix(1.,oc.r,aoK)*mix(1.,oc.g,step(.01,aoK));float fgv=smoothstep(.05,.8,oc.b)*fogK;float lf=dot(c,vec3(.2126,.7152,.0722));c=mix(c,mix(vec3(lf),c,.55)*vec3(.58,.57,.58),fgv*.9);c=mix(c,hz*(.8+.4*lf),smoothstep(.32,.95,oc4.a)*.42*step(.01,aoK));
         vec3 bl=okc(texture2D(b1,vUv).rgb)*.75+okc(texture2D(b2,vUv).rgb)*.9;bl=min(bl,vec3(8.));c+=bl*.5;
-        c*=expo*gr*tg*(1.+flash*1.5);c=aces(c);
+        c*=expo*gr*tg*(1.+flash*1.5);float Lr=dot(c,vec3(.2126,.7152,.0722));
+        if(vm>1.5){float hot=smoothstep(1.3,3.4,Lr);float cool=.05+.2*pow(clamp(Lr*2.6,0.,1.),.6);float hh=max(cool,hot);c=vec3(hh);}
+        else if(vm>.5){float v=1.-exp(-Lr*3.6-.05);c=vec3(.22,1.,.34)*v*1.15;}
+        c=aces(c);
         float l=dot(c,vec3(.299,.587,.114));c=mix(vec3(l),c,.78*sat*tsat);c=mix(c*vec3(.95,.98,1.04),c,smoothstep(.05,.45,l));c=mix(c,c*vec3(1.02,1.,.95),.6);if(film>0.){float fl=dot(c,vec3(.299,.587,.114));c=mix(vec3(fl),c,.9);c=mix(c*vec3(.93,.98,1.07),c*vec3(1.07,1.01,.92),smoothstep(.2,.7,fl));c=clamp((c-.5)*1.1+.5,0.,1.);}
         c=pow(c,vec3(1./2.2));
         c=(c-.5)*1.1+.5;c+=vec3(.012,.004,-.012)*(1.-l)+vec3(.03,.012,-.02)*l;
         vec2 q=vUv-.5;c*=1.-dot(q,q)*.75;
-        c+=(h(vUv*res+t*61.)-.5)*.022;
+        c+=(h(vUv*res+t*61.)-.5)*(.022+.07*step(.5,vm)*step(vm,1.5));
+        if(vm>1.5){float g=dot(c,vec3(.333));c=vec3(g)+vec3(-.01,-.005,.015)*(1.-g);c=clamp((c-.08)*1.25,0.,1.);}
+        else if(vm>.5){vec2 q2=(vUv-.5)*vec2(res.x/res.y,1.);float ring=smoothstep(.62,.9,length(q2));c*=1.-ring*.85;c*=.94+.06*sin(vUv.y*res.y*1.2);}
         gl_FragColor=vec4(clamp(c,0.,1.),1.);}`});
   POST.mAO=new THREE.ShaderMaterial({uniforms:{dep:{value:null},near:{value:10},far:{value:9000},tanF:{value:new THREE.Vector2(1,1)},res:{value:new THREE.Vector2(1,1)},rad:{value:22},pm:{value:1},cw:{value:new THREE.Matrix4()},tt:{value:0},fogT:{value:null},mapS:{value:new THREE.Vector2(1,1)},cloudK:{value:1}},vertexShader:FSV,depthTest:false,depthWrite:false,
     fragmentShader:`uniform sampler2D dep;uniform float near,far,rad,pm,tt,cloudK;uniform mat4 cw;uniform vec2 tanF,res,mapS;uniform sampler2D fogT;varying vec2 vUv;
@@ -13872,7 +13890,7 @@ let _shN=0;function shadowDue(){_shN++;let lite=false;try{lite=(typeof GFX_PHONE
 function softP(on){for(const P of [PN_,PA_]){if(!P)continue;const u=P.m.uniforms;u.soft.value=on?1:0;P.m.depthTest=!on;if(on){u.dep.value=POST.dRT.depthTexture;u.sres.value.set(POST.w,POST.h);u.nf.value.set(CAM.near,CAM.far);}}}
 function pass(mat,target){POST.quad.material=mat;R3.setRenderTarget(target);R3.render(POST.scn,POST.cam);}
 function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.setRenderTarget(null);R3.shadowMap.needsUpdate=shadowDue();R3.render(SCN,CAM);return;}
-  sizePost();
+  sizePost();if(typeof visionTick==='function')try{visionTick(0);}catch(e){}
   const fogWas=FOGM?FOGM.visible:false;let postFog=false;
   if(POST.mAO&&POST.aoOn!==false&&!(POST.aoLv!=null&&QUAL.lv>=POST.aoLv)){if(FOGM&&FOGT){postFog=fogWas;FOGM.visible=false;}const hid=[];SCN.traverse(o=>{if(!o.visible)return;const m=o.material;if(o.userData.noDepth||o.isPoints||o.isLine||o.isSprite||(m&&(Array.isArray(m)?m[0].transparent:m.transparent))){o.visible=false;hid.push(o);}});
     const bg=SCN.background;SCN.overrideMaterial=POST.ovr;R3.setRenderTarget(POST.dRT);R3.clear();R3.render(SCN,CAM);SCN.overrideMaterial=null;for(const o of hid)o.visible=true;
@@ -13888,6 +13906,35 @@ function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.se
   const F=POST.mFinal.uniforms;F.tex.value=POST.rt.texture;F.b1.value=POST.bA.texture;F.b2.value=POST.bC.texture;F.t.value=performance.now()/1000%100;F.flash.value=flash;F.film.value=(!POST.phone&&QUAL.lv>=3)?1:0;postGrade(F);F.res.value.set(POST.w,POST.h);
   pass(POST.mFinal,null);}
 
+/* ================= NIGHT VISION & THERMAL (purely visual: same units seen, same fog of war) =================
+   N (or the NV button) cycles: normal -> green night vision -> white-hot thermal. Only offered when it is dark.
+   NV: the lit picture is brightened, tinted green, grainy, lights bloom. Thermal: ground is cool grey; units, engines,
+   aircraft and fires glow white-hot. Heat glows are soft points drawn only for units the player can already see. */
+const VISN={mode:0,pts:null,n:0,btn:null,t:0,cap:1600};
+function visionDark(){try{return G&&G.todM?todDark():0;}catch(e){return 0;}}
+function visionSet(m){VISN.mode=m;if(VISN.btn){VISN.btn.textContent=m===1?'NIGHT VISION':m===2?'THERMAL':'NORMAL VIEW';VISN.btn.dataset.m=m;}if(VISN.pts)VISN.pts.visible=m===2;}
+function visionCycle(){if(!G)return;if(visionDark()<.3&&VISN.mode===0)return;visionSet((VISN.mode+1)%3);}
+function visionBtn(){if(VISN.btn||typeof document==='undefined')return;const b=document.createElement('button');b.id='visbtn';b.type='button';b.hidden=true;b.title='Night vision / thermal (N)';
+  b.style.cssText='position:fixed;top:34px;right:6px;z-index:30;font:700 12px IBM Plex Mono,monospace;letter-spacing:.06em;padding:5px 10px;border:1px solid #6fd68a;border-radius:3px;background:rgba(5,12,8,.78);color:#8ff0a8;cursor:pointer';
+  b.onclick=()=>visionCycle();b.onmousedown=e=>e.stopPropagation();b.textContent='NORMAL VIEW';document.body.appendChild(b);VISN.btn=b;}
+if(typeof addEventListener!=='undefined')addEventListener('keydown',e=>{if(e.key!=='n'&&e.key!=='N')return;if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target&&e.target.tagName;if(t==='INPUT'||t==='SELECT'||t==='TEXTAREA')return;visionCycle();});
+function visionPts(){if(VISN.pts)return VISN.pts;const N=VISN.cap,g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(N*3),3).setUsage(THREE.DynamicDrawUsage));g.setAttribute('size',new THREE.BufferAttribute(new Float32Array(N),1).setUsage(THREE.DynamicDrawUsage));g.setAttribute('heat',new THREE.BufferAttribute(new Float32Array(N),1).setUsage(THREE.DynamicDrawUsage));
+  const m=new THREE.ShaderMaterial({transparent:true,depthWrite:false,depthTest:false,blending:THREE.AdditiveBlending,uniforms:{sc:{value:600}},
+    vertexShader:'attribute float size;attribute float heat;varying float vH;uniform float sc;void main(){vH=heat;vec4 mv=modelViewMatrix*vec4(position,1.);gl_PointSize=clamp(size*sc/-mv.z,2.,90.);gl_Position=projectionMatrix*mv;}',
+    fragmentShader:'varying float vH;void main(){vec2 q=gl_PointCoord-.5;float d=length(q)*2.;float a=smoothstep(1.,.15,d);gl_FragColor=vec4(vec3(1.)*vH*a,a);}'});
+  const p=new THREE.Points(g,m);p.frustumCulled=false;p.visible=false;p.renderOrder=40;p.userData.noDepth=true;SCN.add(p);VISN.pts=p;return p;}
+// heat of a unit: engines and aircraft glow most, riflemen a little, parked buildings only when they produce (factories)
+function heatOf(e){if(e.isB)return e.built>=1&&(e.kind==='power'||e.kind==='factory'||e.kind==='airfield')?[1.3,26]:null;const c=e.s&&e.s.cls;if(c==='jet'||c==='heli')return[4.5,48];if(c==='tank'||c==='veh'||c==='art'||c==='apc'||c==='truck'||c==='naval'||e.s.dom==='naval')return[3.8,42];if(c==='drone')return[3,20];return[3.4,15];}
+function visionTick(dt){visionBtn();const dk=visionDark();if(VISN.btn){const show=dk>=.3||VISN.mode>0;VISN.btn.hidden=!(G&&show&&$('menu')&&$('menu').hidden);}
+  if(VISN.mode&&dk<.3){visionSet(0);}
+  const F=POST.mFinal&&POST.mFinal.uniforms;if(F&&F.vm)F.vm.value=G?VISN.mode:0;if(VISN.pts)VISN.pts.visible=!!G&&VISN.mode===2;if(!G||VISN.mode!==2){return;}
+  const P=visionPts();P.visible=true;const pos=P.geometry.attributes.position,sz=P.geometry.attributes.size,ht=P.geometry.attributes.heat;let n=0;
+  for(const e of G.ents){if(e.dead||!vis(e))continue;const h=heatOf(e);if(!h)continue;if(n>=VISN.cap)break;const o=typeof OBJ!=='undefined'&&OBJ.get(e.id);
+    const x=o?o.position.x:e.x,y=o?o.position.y:groundH(e.x,e.y),z=o?o.position.z:e.y;if(!isFinite(x+y+z))continue;
+    const mv=e.mv!=null&&G.t-e.mv<1.5,fire=e.lastFire>0&&G.t-e.lastFire<2;const k=(mv||fire?1:.62)*(e.hp<e.max*.35?1.25:1);
+    pos.setXYZ(n,x,y+(e.isB?10:h[1]*.4),z);sz.setX(n,h[1]);ht.setX(n,h[0]*k);n++;}
+  pos.needsUpdate=sz.needsUpdate=ht.needsUpdate=true;P.geometry.setDrawRange(0,n);VISN.n=n;
+  const ty=Math.tan(CAM.fov*Math.PI/360);P.material.uniforms.sc.value=(typeof VH!=='undefined'?VH:800)*(typeof dpr!=='undefined'?dpr:1)/(2*ty);}
 let WALKSIGN=1;
 /* ================= ART ASSETS: real 3D models (Quaternius, Kenney, Zsky, KolosStudios, Alex Safayan, angelo raffaele Catalano, jeremy, Jarlan Perez via Poly Pizza) ================= */
 const MODELS={ready:false,proto:{},tinted:{},loading:null,flipX:{}};
