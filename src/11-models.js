@@ -19,11 +19,11 @@ const RMOD={t90:{m:'m_t90',fit:'z',size:40},hilux:{m:'m_hilux',fit:'z',size:30,e
 const RMAP={tank:{RU:'t90',KP:'t90',IR:'t90',UA:'t90',CN:'t90',IN:'t90',EG:'t90',SY:'t90',PK:'t90',CU:'t90',RS:'hilux',DW:'hilux'},dozer:{},
   heli:{US:'apache',IL:'apache',EU:'apache',FR:'apache',DE:'apache',SA:'apache',AE:'apache',EG:'apache',IQ:'mi28',SY:'mi24',GB:'apache',AU:'apache',CA:'uh60',KR:'apache',TR:'apache',IN:'apache',PK:'apache',RU:'mi24',KP:'mi24',IR:'mi24',CN:'mi24',UA:'mi24',CU:'mi24',RS:'mi24',DW:'mi24'},
   jet:{US:'f18',IL:'f16',TR:'f16',EU:'rafale',FR:'rafale',DE:'rafale',UA:'typhoon',RU:'su35',IR:'mig29',SA:'f15',AE:'f16',PK:'j10',IN:'rafale',CN:'j10',KP:'mig29',KR:'f15',EG:'rafale',IQ:'f16',GB:'typhoon',AU:'f18',CA:'f18',SY:'mig29',CU:'mig29',RS:'mig29',DW:'mig29'}};
-for(const f of ['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW','GB','AU','CA','PL','AZ','JO','KD','IT','GR','ES'])RMAP.dozer[f]='jd550';
+for(const f of ['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW','GB','AU','CA','PL','AZ','JO','KD','IT','GR','ES','TW','PH','VN','ID','TH','KZ','AF','OM'])RMAP.dozer[f]='jd550';
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
 // and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
-const WESTVEH=['US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES'],EASTVEH=['RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD'];
+const WESTVEH=['US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF'];
 Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',GB:'kf51',AU:'abrams',CA:'kf51',IL:'merkava',EU:'kf51',FR:'kf51',DE:'kf51',TR:'kf51'});
 // Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
 // Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
@@ -45,7 +45,7 @@ RMAP.ship={};RMAP.boat={IR:'spb',RS:'spb',DW:'spb'};RMAP.fast={};for(const f in 
 Object.assign(RMOD,{subw:{m:'m_subw',fit:'z',size:84,dy:-2.6,tint:'#2f363b',tk:.82},sube:{m:'m_sube',fit:'z',size:80,dy:-2.4,tint:'#242b31',tk:.7},subm:{m:'m_subm',fit:'z',size:58,dy:-2,tint:'#303a38',tk:.95},cbat:{m:'m_cbat',fit:'z',size:40}});
 RMAP.sub={};for(const f of WESTVEH)RMAP.sub[f]='subw';for(const f of ['RU','KP','UA','CN','IN','CU','PK'])RMAP.sub[f]='sube';for(const f of ['IR','RS','DW'])RMAP.sub[f]='subm';
 RMAP.coast={};for(const f of [...WESTVEH,...EASTVEH])RMAP.coast[f]='cbat';
-for(const f of ['US','IL','TR','KR','SA','AE','EG','IQ','SY','GB','AU','CA','PL','AZ','JO','KD','IT','GR','ES'])RMAP.ship[f]='frw';RMAP.ship.EU='frg';
+for(const f of ['US','IL','TR','KR','SA','AE','EG','IQ','SY','GB','AU','CA','PL','AZ','JO','KD','IT','GR','ES','TW','PH','ID','TH','OM'])RMAP.ship[f]='frw';RMAP.ship.EU='frg';
 for(const f of ['RU','CN','KP','UA','IN','PK','CU','IR','RS','DW'])RMAP.ship[f]='fre';
 // the nation's own truck model, if it has arrived (AA trucks and rocket launchers are built on it)
 // their paint textures are dark (woodland camo, weathering): brightened so the national paint reads like the other vehicles'
@@ -61,7 +61,7 @@ function isSol(k){return k==='soldier'||(typeof k==='string'&&k.startsWith('sol_
 function solKey(f){return SOLV[f]||'sol_w';}
 function truckKey(f){const rk=RMAP.harv[f];return rk&&MODELS.proto[RMOD[rk].m]?RMOD[rk].m:'truck';}
 const MIL_TANK={RS:{m:'technical',fit:'z',size:29},DW:{m:'technical',fit:'z',size:29},IM:{m:'toontank',fit:'z',size:32}};
-for(const f of ['US','IL','EU','FR','DE','SA','AE','EG','IQ','KR','TR','CN','PK','IN','GB','AU','CA','PL','JO','IT','GR','ES'])MIL_TANK[f]={m:'tankE',fit:'long',size:37};
+for(const f of ['US','IL','EU','FR','DE','SA','AE','EG','IQ','KR','TR','CN','PK','IN','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'])MIL_TANK[f]={m:'tankE',fit:'long',size:37};
 const PROPS={container:{fit:'x',size:28},containerG:{fit:'x',size:30},crate:{fit:'y',size:8},barrel:{fit:'y',size:8},sandbag:{fit:'x',size:16},watertower:{fit:'y',size:56},tent:{fit:'x',size:50},pallet:{fit:'x',size:10},fence:{fit:'x',size:24},missile:{fit:'y',size:26},sam:{fit:'y',size:24}};
 // The models are separate files next to the page (models/<key>.<hash>.glb.gz, listed in MODEL_FILES by orch/build.py).
 // A battle only waits for the models it can show: the shared ones (buildings, props, trees, infantry, generic vehicles)
@@ -1033,6 +1033,24 @@ const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
  NATX_FLAG.IT=c=>c.vs(['#009246','#ffffff','#ce2b37']);
  NATX_FLAG.GR=c=>{for(let i=0;i<9;i++)c.rect(i%2?'#ffffff':'#0d5eaf',0,i*c.H/9,c.W,c.H/9+1);c.rect('#0d5eaf',0,0,45,40);c.rect('#ffffff',18,0,9,40);c.rect('#ffffff',0,16,45,8);};
  NATX_FLAG.ES=c=>{c.rect('#c60b1e',0,0,c.W,c.H);c.rect('#ffc400',0,c.H/4,c.W,c.H/2);};}
+// nations-b1: Taiwan, Philippines, Vietnam, Indonesia, Thailand, Kazakhstan, Afghanistan (neutral stylised emblem), Oman - looks on the shared models (visual only)
+{const L={ TW:{tk:'abrams',he:'apache',je:'f16',sol:'sol_w',fl:{veh:'#6a7048',ca:'#4e5a38',cb:'#2f3626',uni:'#5d6a45',pat:1},cx:{p:1,s:1,c:'#d8d0b8',t:'#1c3f94',w:3},ax:{b:'#80878b',p:3,h:{b:'#4f5541',p:3}},ch:'#4f5a3a',rt:'#b5b2a6'},
+ PH:{tk:'kf51',he:'uh60',je:'f16',sol:'sol_w',fl:{veh:'#5c6a45',ca:'#8a7a4e',cb:'#33402c',uni:'#4e5c3a',pat:0},cx:{p:1,s:1,c:'#d6cdb0',t:'#0038a8',w:3},ax:{b:'#80878b',p:3,h:{b:'#4f5541',p:3}},ch:'#4a5a3a',rt:'#b9b4a2'},
+ VN:{tk:'t90',he:'mi24',je:'su35',sol:'sol_e',fl:{veh:'#5a6a3e',ca:'#3e4a2a',cb:'#8a7e50',uni:'#566640',pat:1},cx:{p:1,s:1,c:'#d9cfa6',t:'#da251d',w:3},ax:{b:'#878d91',p:3,h:{b:'#575d47',p:3}},ch:'#4e5a38',rt:'#b0aa94',nv:'slav'},
+ ID:{tk:'kf51',he:'apache',je:'su35',sol:'sol_w',fl:{veh:'#4e5a3c',ca:'#7a4a2e',cb:'#2c3624',uni:'#5a6a3a',pat:1},cx:{p:1,s:1,c:'#dcd2b4',t:'#c8102e',w:3},ax:{b:'#80878b',p:3,h:{b:'#4f5541',p:3}},ch:'#4a5535',rt:'#b9ad96'},
+ TH:{tk:'abrams',he:'uh60',je:'typhoon',sol:'sol_w',fl:{veh:'#5e6840',ca:'#8a7a4e',cb:'#2e3824',uni:'#58633d',pat:0},cx:{p:1,s:1,c:'#d9d0b0',t:'#2d2a4a',w:3},ax:{b:'#80878b',p:3,h:{b:'#4f5541',p:3}},ch:'#4c5636',rt:'#b7ae98'},
+ KZ:{tk:'t90',he:'mi24',je:'su35',sol:'sol_e',fl:{veh:'#8a8460',ca:'#5c6a44',cb:'#4a4030',uni:'#7a7a54',pat:3},cx:{p:1,s:1,c:'#c9c2a0',t:'#00afca',w:4},ax:{b:'#878d91',p:3,h:{b:'#575d47',p:3}},ch:'#5a5a3e',rt:'#b3ae9a',nv:'slav'},
+ AF:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#8a7e5c',ca:'#6a6244',cb:'#4a4430',uni:'#6a6a4a',pat:0},cx:{p:6,s:1,c:'#cdbf9c',t:'#5a6b45',w:4},ax:{b:'#878d91',p:3,h:{b:'#575d47',p:3}},ch:'#5a5a40',rt:'#c1b08a',nv:'slav'},
+ OM:{tk:'kf51',he:'uh60',je:'typhoon',sol:'sol_w',fl:{veh:'#b4a27a',ca:'#8a7a52',cb:'#6a5a3a',uni:'#b0a074',pat:0},cx:{p:6,s:1.05,c:'#e0d2ad',t:'#a30d2d',w:4},ax:{b:'#b7a17a',p:0,h:{b:'#b8a37e',p:3}},ch:'#6a5f42',rt:'#cdb68a'}};
+ for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;if(q.nv)NATX_NAVY[k]=q.nv;KFAC.push(k);}
+ NATX_FLAG.TW=c=>{const{x,rect,W,H}=c;rect('#fe0000',0,0,W,H);rect('#000095',0,0,W/2,H/2);x.fillStyle='#fff';x.beginPath();x.arc(30,18,8,0,7);x.fill();for(let i=0;i<12;i++){const a=i/12*6.283;x.beginPath();x.moveTo(30+Math.cos(a-.12)*8,18+Math.sin(a-.12)*8);x.lineTo(30+Math.cos(a)*13,18+Math.sin(a)*13);x.lineTo(30+Math.cos(a+.12)*8,18+Math.sin(a+.12)*8);x.fill();}};
+ NATX_FLAG.PH=c=>{const{x,rect,star,circ,W,H}=c;rect('#0038a8',0,0,W,H/2);rect('#ce1126',0,H/2,W,H/2);x.fillStyle='#fff';x.beginPath();x.moveTo(0,0);x.lineTo(52,H/2);x.lineTo(0,H);x.closePath();x.fill();circ(14,H/2,6,'#fcd116');star(7,H/2-14,3,'#fcd116');star(7,H/2+14,3,'#fcd116');star(26,H/2,3,'#fcd116');};
+ NATX_FLAG.VN=c=>{c.rect('#da251d',0,0,c.W,c.H);c.star(60,37,22,'#ffff00');};
+ NATX_FLAG.ID=c=>c.hs(['#ce1126','#ffffff']);
+ NATX_FLAG.TH=c=>{c.hs(['#a51931','#f4f5f8','#2d2a4a','#2d2a4a','#f4f5f8','#a51931']);c.rect('#2d2a4a',0,24,c.W,24);};
+ NATX_FLAG.KZ=c=>{const{x,rect,circ,W,H}=c;rect('#00afca',0,0,W,H);circ(60,34,14,'#fec50c');for(let i=0;i<16;i++){const a=i/16*6.283;x.fillStyle='#fec50c';x.beginPath();x.moveTo(60+Math.cos(a-.1)*15,34+Math.sin(a-.1)*15);x.lineTo(60+Math.cos(a)*21,34+Math.sin(a)*21);x.lineTo(60+Math.cos(a+.1)*15,34+Math.sin(a+.1)*15);x.fill();}};
+ NATX_FLAG.AF=c=>{c.hs(['#2f3b2a','#c9c2a2','#5a6b45']);c.circ(60,36,9,'#c9c2a2');c.circ(60,36,5,'#2f3b2a');};
+ NATX_FLAG.OM=c=>{const{x,rect,W,H}=c;rect('#fff',0,0,W,H/3);rect('#db161b',0,H/3,W,H/3);rect('#008000',0,2*H/3,W,H/3);rect('#db161b',0,0,28,H);x.fillStyle='#fff';x.fillRect(10,22,8,2);x.fillRect(8,30,12,3);x.fillRect(10,38,8,2);};}
 
 const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=24;
 // extra atlas cells: 48-57 Persian digits (p:0..9), 58-67 Arabic-Indic digits (a:0..9), 68+ painted stencils (s:name)

@@ -17,21 +17,21 @@ voice set as a stand-in). Balance: one quick tourney for the lane's nations (40�
 | A1 | ✅ IT Italy | Ariete-style, Centauro/Freccia, A129, Eurofighter/F-35, FREMM, Todaro-style sub, Alpini |
 | A1 | ✅ GR Greece | Leopard 2A6HEL, BMP-1/M113, AH-64, F-16/Rafale, Hydra/Belharra-style, Type 214-style sub, island defences |
 | A1 | ✅ ES Spain | Leopard 2E, Pizarro/Dragón, Tigre, Eurofighter/Harrier, F-100, S-80, Legion infantry |
-| B1 | TW Taiwan | M1A2T/CM-11, CM-32, AH-64/Cobra, F-16V/IDF, Kang Ding/Cheng Kung, Hai Kun-style sub, Hsiung Feng, coastal defence |
-| B1 | PH Philippines | light armour, Black Hawk/AW159, FA-50, Jose Rizal frigates, BrahMos-style battery, marines |
-| B1 | VN Vietnam | T-90S/T-54-style, BTR/BMP, Mi-24, Su-30, Gepard, Kilo-style, coastal missiles, strong infantry |
-| B1 | ID Indonesia | Leopard 2RI, Anoa, AH-64/Mi-35, Su-30/F-16, Martadinata, Type 209-style, marines |
-| B1 | TH Thailand | VT-4/M60, BTR-3, AH-1/Black Hawk, Gripen/F-16, Naresuan frigate, marines, jungle infantry |
-| B1 | KZ Kazakhstan | T-72/T-90-style, BTR-82/Arlan, Mi-35, Su-30SM, Caspian patrol boats, steppe mechanised |
-| B1 | AF Afghanistan | **stylised national army only**: no real factions/movements/governments' flags, emblems, slogans or leaders; neutral national-army emblem + plain national colours; light infantry, pickups/MRAPs, older Soviet-era armour, Mi-17, mortars/recoilless, mountain fighters |
-| B1 | OM Oman | Challenger 2-style, Piranha, NH90, Typhoon/F-16, Khareef corvettes, desert/coastal forces |
-| A2 | BR Brazil | Leopard 1/Guarani, Astros, Super Tucano, Gripen, Tamandaré, Riachuelo-style sub, jungle infantry |
-| A2 | VE Venezuela | T-72B1, BMP-3, Mi-35, Su-30, Smerch-style, S-300-style AD (no militia content) |
-| A2 | MX Mexico | light armour/MRAPs, Black Hawk, special forces, patrol vessels, marines (no cartel content) |
-| A2 | AR Argentina | TAM, VCTP, Pampa/Super Étendard-style, AW109/Huey, MEKO 360-style, TR-1700-style, mountain troops |
-| A2 | CO Colombia | LAV, Black Hawk/AH-60 Arpía, Kfir/Super Tucano, Almirante Padilla, jungle/special forces (no guerrilla/cartel content) |
-| A2 | CL Chile | Leopard 2A4, Marder, Cougar/Black Hawk, F-16, Type 23, Scorpène, mountain troops |
-| A2 | SE Sweden | Strv 122, CV90, Archer, Gripen, Visby, Gotland-style sub, Arctic/archipelago forces |
+| B1 | ✅ TW Taiwan | M1A2T/CM-11, CM-32, AH-64/Cobra, F-16V/IDF, Kang Ding/Cheng Kung, Hai Kun-style sub, Hsiung Feng, coastal defence |
+| B1 | ✅ PH Philippines | light armour, Black Hawk/AW159, FA-50, Jose Rizal frigates, BrahMos-style battery, marines |
+| B1 | ✅ VN Vietnam | T-90S/T-54-style, BTR/BMP, Mi-24, Su-30, Gepard, Kilo-style, coastal missiles, strong infantry |
+| B1 | ✅ ID Indonesia | Leopard 2RI, Anoa, AH-64/Mi-35, Su-30/F-16, Martadinata, Type 209-style, marines |
+| B1 | ✅ TH Thailand | VT-4/M60, BTR-3, AH-1/Black Hawk, Gripen/F-16, Naresuan frigate, marines, jungle infantry |
+| B1 | ✅ KZ Kazakhstan | T-72/T-90-style, BTR-82/Arlan, Mi-35, Su-30SM, Caspian patrol boats, steppe mechanised |
+| B1 | ✅ AF Afghanistan | **stylised national army only**: no real factions/movements/governments' flags, emblems, slogans or leaders; neutral national-army emblem + plain national colours; light infantry, pickups/MRAPs, older Soviet-era armour, Mi-17, mortars/recoilless, mountain fighters |
+| B1 | ✅ OM Oman | Challenger 2-style, Piranha, NH90, Typhoon/F-16, Khareef corvettes, desert/coastal forces |
+| A2 ✅ | BR Brazil | Leopard 1/Guarani, Astros, Super Tucano, Gripen, Tamandaré, Riachuelo-style sub, jungle infantry |
+| A2 ✅ | VE Venezuela | T-72B1, BMP-3, Mi-35, Su-30, Smerch-style, S-300-style AD (no militia content) |
+| A2 ✅ | MX Mexico | light armour/MRAPs, Black Hawk, special forces, patrol vessels, marines (no cartel content) |
+| A2 ✅ | AR Argentina | TAM, VCTP, Pampa/Super Étendard-style, AW109/Huey, MEKO 360-style, TR-1700-style, mountain troops |
+| A2 ✅ | CO Colombia | LAV, Black Hawk/AH-60 Arpía, Kfir/Super Tucano, Almirante Padilla, jungle/special forces (no guerrilla/cartel content) |
+| A2 ✅ | CL Chile | Leopard 2A4, Marder, Cougar/Black Hawk, F-16, Type 23, Scorpène, mountain troops |
+| A2 ✅ | SE Sweden | Strv 122, CV90, Archer, Gripen, Visby, Gotland-style sub, Arctic/archipelago forces |
 | B2 | DZ Algeria | T-90SA/T-72, BMP-2, Mi-28/Mi-24, Su-30MKA, MEKO, Kilo-style, S-300-style AD |
 | B2 | MA Morocco | M1A2/M60, M113/Ratel, AH-64, F-16, FREMM-style, desert berm defences |
 | B2 | NG Nigeria | light armour/MRAPs, Alpha Jet/Super Tucano/JF-17, Mi-35, patrol vessels, strong infantry (no non-state groups) |
