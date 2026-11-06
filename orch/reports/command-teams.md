@@ -1,0 +1,19 @@
+# Command & teams (2026-11-06)
+
+Abdullah's picks of 2026-11-05 18:49. One new sim file `src/03d-command.js`, one new UI file `src/08g-command.js` (the **Command** panel, left side). Screenshots: `orch/shots/command-teams/`. Test: `node orch/ctshots.mjs` (team game + free-for-all scenarios, prints CT PASS).
+
+**1. Battle plans** - select units, press **O** (or "Plan for selection"), click map points: each click adds a numbered step (Move / Assault = attack-move / Hold = guard). Per step choose its trigger: Auto (when the last step is reached), After 10 s, After 30 s, or On GO (button or **Enter**). Enter / "Finish plan" saves it, Esc cancels the drawing; the X in the panel cancels a running plan. Shown as numbered dashed arrows with labels. A plan runs in the player's own browser and only sends ordinary `go` / `def` orders, so multiplayer, host migration and the AI are untouched (a plan is not saved across host migration: re-draw it).
+
+**2. Battle groups** - the control groups are now 1-9 (Ctrl/Shift+number saves, number selects). Each shows in the panel with a name (click cycles Armour / Infantry / Assault / Recon / Support / Artillery / Air / Reserve + number, double-click types a name), health and ammo bars, a formation (Line / Column / Wedge) and one-click Select / Send (then click the map; Shift = attack-move) / Hold / Stop. Line is the game's own line order; Column and Wedge send up to 5 blocks to offsets.
+
+**3. Doctrine trees** - each of the four doctrines is now a tree: tier 1 root, two tier-2 branches, a capstone on each branch (5 perks, 1 point each; a perk needs the one it hangs from). New perks: Iron Fist, Dug In, Long-Range Sensors, Heavy Shells (plain stat perks, same size as the others). Nations only change perk NAMES (`GDOC_FLV`, e.g. "Detroit Assembly Line", "Wadi Booby Traps"); numbers are identical. Powers tab shows T1/T2/T3 and what each needs; the AI buys along the tree.
+
+**4. Allied aid** - money now goes through a 10% fee and a 4 s delivery delay (3 s cooldown) and logs both ends; "Give units" hands up to 12 selected combat units to a teammate (one gift per 20 s, not units under fire, not harvesters/dozers).
+
+**5. Pings & drawing** - keys `,` attack here, `.` defend here, `/` danger, `'` freehand line, `;` circle (then click/drag the map or minimap), or the panel buttons; allies see them 10 s on the map and minimap, drawings in the sender's colour. Eight quick lines go to the team's log. Team games only; rate-limited (0.5 s ping, 1.5 s drawing).
+
+**6. Ceasefire offers (free-for-all only: 3+ players, every player on their own team)** - offer 1 / 2 / 3 minutes to one player; they get a banner with Accept / Decline (25 s). During a truce units do not target each other (`ally()` honours it; `sameTm()` is the strict test for shared vision, victory and aid). Warning 10 s before it ends. Breaking it early: unrest +25 in all your towns, an "oathbreaker" tag for 4 minutes (nobody trusts you: AIs refuse, you cannot offer) and no new offer for 3 minutes. AI answer: refuses an oathbreaker; accepts if it is not the stronger side (<= 1.1x the offerer's army value) or has other enemies and is at most 1.6x as strong; deterministic, no RNG.
+
+Netcode: all new orders (`cf cfa cfd cfb mp md say gift`, plus the existing `give`) go through `act()`; truces/offers/oathbreakers ride in a new `ct` field of the per-player snapshot; pings/drawings/lines are new FX types filtered to the sender's team. State is in the checkpoint (`CK_G` truce/tOff/aidQ; team fields oath/cfCd/aidT/giftT are copied with the team). Simulation changed -> needs the main -> servers-live PR.
+
+Balance: perk numbers are in the range of the existing perks; a balance agent should re-run `node orch/aitourney.mjs --doctrines`. Ceasefire is never used by the AI on its own.

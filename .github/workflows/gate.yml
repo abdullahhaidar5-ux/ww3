@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down, migrate-dual,
-            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, smooth-pc, smooth-mp, tutorial]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
+            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -44,6 +44,7 @@ jobs:
             servertest)     node orch/servertest.mjs && node orch/specserver.mjs ;;   # + spectators in a server battle
             tutorial)       node orch/tutorialtest.mjs ;;   # plays the whole tutorial with real mouse/keyboard input (orch/tutorialtest.mjs)
             decals)         node orch/decalcheck.mjs --facs all ;;   # every marking on every unit type x all 18 nations lies on the model's surface and is not oversized (orch/decalcheck.mjs)
+            save)           node orch/savetest.mjs ;;   # save game: battle -> save -> load in a fresh page -> same state hash; Continue after a reload; file round trip; old saves refused (orch/savetest.mjs)
             ew)             if [ -f orch/ewtest.mjs ]; then node orch/ewtest.mjs; else echo "SKIP ew (no test)"; fi ;;   # electronic warfare: spoof/jamming + their host-migration checkpoint
             headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --night && node orch/headless.mjs --compare || echo "SKIP headless" ;;
             smoke4)         node orch/smoke.mjs --players 4 && node orch/replaytest.mjs ;;   # + a replay ends where the battle ended

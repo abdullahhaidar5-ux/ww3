@@ -69,6 +69,7 @@ function cqBanner(){if(!G||!G.conq)return;if(G.over){const o=$('cqBn');if(o&&o.d
    for(const T of G.teams){if(T.reb||T.out||!T.sup)continue;const sec=strikeSecs(T);if(sec<0)continue;const mine=ally(T.id,ME);
      sl+=`<div style="font-size:12px;margin-top:2px;color:${mine?'#bfe8c4':'#ffb4a8'}">${T.F.name} ${UPLINK[T.fac]?UPLINK[T.fac][0]:'missile strike'}: ${sec<=0.5?'READY':'ready in '+tm(sec)}</div>`;}
    h+=sl;}
+  h+=polBannerHtml();
   if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
 function strikeSecs(T){let f;if(MODE==='client'&&G.sfd)f=G.sfd[T.id];else f=T._upl?100*T.charge/T.sup.charge:-1;if(f==null||f<0)return -1;return Math.max((1-f/100)*T.sup.charge/.5,G.t<CQ_STRIKE_MIN?CQ_STRIKE_MIN-G.t:0);}
 function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){}
@@ -110,6 +111,7 @@ function hmPanel(t,mine,reb){let h='';const T=G.teams[ME];if(!T)return h;
     if(t.un>=HM.BRIB_UN){const p=bribePrice(t,ME),cd=Math.max(0,Math.ceil((T.brT||0)-G.t)),setup=G.t<G.setupEnd;
       h+=`<div style="margin-top:8px"><button data-act="bribe" style="width:100%;min-height:40px;border-radius:6px;border:1px solid #8a6a2a;background:#4a3a18;color:#ffe9b0;font-weight:600;cursor:pointer" ${(!bribeOk(t,ME)||T.credits<p)?'disabled':''}>Bribe the elders &mdash; $${p}</button><div class="tm">${setup?'Not during the setup phase.':cd>0?'Cooldown '+cd+' s.':T.credits<p?'Not enough money.':'The garrison is sent out, nobody is killed. Cheaper the angrier the locals.'}</div></div>`;}
     else h+=`<div class="tm" style="margin-top:6px">Elders cannot be bribed yet: unrest ${Math.round(t.un)}/${HM.BRIB_UN}.</div>`;}
+  h+=intelTownHtml(t);
   return h;}
 function towerAt(w){if(!G||!G.tow||!w)return null;for(const q of G.tow)if(Math.hypot(q.x-w.x,q.y-w.y)<70)return q;return null;}
 function towerName(q){const T=q.ow>=0&&G.teams[q.ow];return T?(STATION[T.fac]||'Radio tower'):'Neutral radio tower';}

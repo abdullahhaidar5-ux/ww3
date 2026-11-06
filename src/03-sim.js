@@ -23,7 +23,7 @@ function stSample(f){if(!G||!G.teams)return;if(!f&&G.stT!=null&&G.t<G.stT+stDt()
   G.teams.forEach((T,i)=>{const s=stOf(T);if(n[i]>s.pk)s.pk=n[i];if(s.ar.length>=720){const h=[];for(let k=0;k+1<s.ar.length;k+=2)h.push(Math.round((s.ar[k]+s.ar[k+1])/2));s.ar=h;s.dt=(s.dt||10)*2;}else s.ar.push(Math.round(v[i]/100));});}
 function endStats(w){const N=G.teams.length;return{v:1,t:Math.round(G.t),w,dt:stDt(),p:G.teams.map(T=>{const s=stOf(T),c0=s.c0!=null?s.c0:3000;
   let pk='',pn=0,pt=0;for(const k in s.pw){pt+=s.pw[k];if(s.pw[k]>pn){pn=s.pw[k];pk=k;}}
-  return{f:T.fac,gd:T.gdoc||'',n:(typeof NET!=='undefined'&&NET.pnames&&NET.pnames[T.id]?String(NET.pnames[T.id]).slice(0,24):undefined),c:T.color,tm:T.tm,ai:T.ai?1:0,b:T.built|0,lu:Math.max(0,(T.lost|0)-s.lb),lb:s.lb,ku:s.ku,kb:s.kb,
+  return{f:T.fac,op:Math.round(opOf(T)),ol:Math.round(T.opLow==null?opOf(T):T.opLow),gd:T.gdoc||'',n:(typeof NET!=='undefined'&&NET.pnames&&NET.pnames[T.id]?String(NET.pnames[T.id]).slice(0,24):undefined),c:T.color,tm:T.tm,ai:T.ai?1:0,b:T.built|0,lu:Math.max(0,(T.lost|0)-s.lb),lb:s.lb,ku:s.ku,kb:s.kb,
     me:Math.max(0,Math.round((T.credits||0)-c0+s.sp+(T.gave||0)-s.got)),ms:Math.round(s.sp),r:T.rank|0,ta:Math.round(T.out&&s.out!=null?s.out:G.t),
     vd:Math.round(s.vd),vl:Math.round(s.vl),fk:s.fk<0?-1:Math.round(s.fk),bk:s.bk,bn:s.bn,pk,pn,pt,ap:s.pk,out:T.out?1:0};}),a:G.teams.map(T=>stOf(T).ar.slice())};}
 // Battle over: the host tells the clients right away; showEnd (08-ui) shows the result screen in a browser.
@@ -60,12 +60,11 @@ function mkTeam(id,fac,ai){const F=FACTIONS[fac];return{id,fac,F,sup:F.sup,credi
   color:F.color,dark:shade(F.color,.45),built:0,lost:0,kills:0,gxp:0,rank:1,spent:0,pw:{},gdoc:'',gperk:{},reveals:[],ai:ai?mkAI(setup.d):null,st:stNew()};}
 // Alliances: players on the same team never fight, share vision and win together.
 // Allies can send each other money (in steps of $50, never more than you have).
-function giveMoney(from,to,amt){const A=G.teams[from],B=G.teams[to];if(!A||!B||from===to||!ally(from,to)||B.out||A.out)return false;amt=Math.floor(Math.min(+amt||0,A.credits)/50)*50;if(amt<50)return false;
-  A.credits-=amt;B.credits+=amt;stOf(B).got+=amt;A.gave=(A.gave||0)+amt;log(from,`Sent $${amt} to ${B.F.name}.`,'g');log(to,`${A.F.name} sent you $${amt}.`,'g');FXE('give',[from,to,amt]);return true;}
-function ally(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.teams[a]||!G.teams[b])return false;return G.teams[a].tm===G.teams[b].tm;}
+function giveMoney(from,to,amt){return ctGive(from,to,amt);}   // allied aid: fee + delay live in 03d-command
+function ally(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.teams[a]||!G.teams[b])return false;return G.teams[a].tm===G.teams[b].tm||(!!G.truce&&G.truce[a<b?a*32+b:b*32+a]>G.t);}   // a running truce (03d-command) counts as friendly for fire; sameTm() is the strict team test (vision, victory, aid)
 function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].max||o.camp)?o.map:'strait';setWorld(worldScaleFor(N,mk));setBases(N,mk,mk===o.map?(Array.isArray(o.st)?o.st:o.slot):-1);if(o.camp)while(BASES.length<N)BASES.push(BASES[BASES.length-1]);
-  const M=mkMap(o.seed,mk);
-  G={t:0,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
+  const wB=wxBase(o.w),ssn=wxSsn(o.w)||seasonOf(mk);const M=mkMap(o.seed,mk,ssn);
+  G={t:0,ssn,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
      map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};for(const k of G_LATE)G[k]=undefined;initCiv();initTowns();G.tow=(M.towers||[]).map((q,i)=>({i,x:q.x,y:q.y,ow:-1,cp:new Array(N).fill(0)}));G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});G.conq=!o.camp&&!o.sandbox;infraInit();
   G.bs=BATTLE;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));{const R=mkTeam(N,'DW',false);R.reb=true;R.tm=900;R.color='#8c7b58';R.dark=shade(R.color,.45);R.credits=0;G.teams.push(R);G.reb=N;}G.conq=!o.camp&&!o.sandbox;G.setupEnd=G.conq?CQ_SETUP:0;G.teams.forEach(T=>{T.credits=T.reb?0:G.conq?CQ_START:Math.round(3000*(1+(G.bs-1)*.8)/100)*100;stOf(T).c0=T.credits;});G.teams.forEach((T,i)=>{if(T.ai)T.gdoc=({tank:'arm',guer:'gue',arty:'art',air:'air'})[PERS[T.ai.p|0]&&PERS[T.ai.p|0].k]||GDOC_AI[T.fac]||'arm';else if(Array.isArray(o.gd)&&GDOC[o.gd[i]])T.gdoc=o.gd[i];});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
   {const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'];const cd=(p,q)=>{const a=hexRGB(p),b=hexRGB(q);return Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);};
@@ -74,7 +73,7 @@ function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].
   G.cover=new Uint8Array(GW*GH);for(const [x,y] of (G.treePos||[])){const cx=Math.floor(x/CELL),cy=Math.floor(y/CELL);if(cx>=0&&cy>=0&&cx<GW&&cy<GH)G.cover[cy*GW+cx]=Math.min(255,G.cover[cy*GW+cx]+1);}
   G.wood=G.cover.slice(); // trees per cell (before city cover is added): woods slow vehicles
   for(const b of (M.cityBlds||[])){const cx=Math.floor(b.x/CELL),cy=Math.floor(b.y/CELL);for(let j=-1;j<=1;j++)for(let i=-1;i<=1;i++){const X=cx+i,Y=cy+j;if(X>=0&&Y>=0&&X<GW&&Y<GH&&G.grid[Y*GW+X]!==3)G.cover[Y*GW+X]=Math.min(255,G.cover[Y*GW+X]+2);}}
-  G.todM=(o.w|0)<0?(wxRandIdx(G.seed)===4?2:0):todMode(o.w|0);G.flares=[];{const fx={6:'sandstorm',7:'rain',8:'snow'}[o.w|0];if(fx){G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};}}
+  G.todM=wB<0?(wxRandIdx(G.seed)===4?2:0):todMode(wB);G.flares=[];{const fx={6:'sandstorm',7:'rain',8:'snow'}[wB];if(fx){G.fixWx=fx;G.wx={k:fx,t:0,next:1e9};}}
   if(o.sandbox)G.sandbox=true;
   if(MODE!=='client'){
     if(o.camp)campSetup(o.camp);else for(let t=0;t<N;t++){const [bx,by]=BASES[t];const a=baseFacing(t),cx=Math.cos(a),cy=Math.sin(a);addBld(t,'hq',bx,by,true);addUnit(t,'harv',bx+cx*150-cy*60,by+cy*150+cx*60);addUnit(t,'dozer',bx+cx*120-cy*110,by+cy*120+cx*110);addUnit(t,'inf',bx+cx*130+cy*90,by+cy*130-cx*90);addUnit(t,'inf',bx+cx*150+cy*70,by+cy*150-cx*70);}
@@ -147,7 +146,7 @@ function todNV(m){return !m.isB&&(m.kind==='recon'||m.kind==='jeep'||m.kind===G.
 function todVis(m){const l=G.todM?todLvl():0;if(l===2&&todNV(m))return 1;return l===0?1:l===1?(todThermal(m)?.95:.8):(todThermal(m)?.9:.6);}
 function visR(m){const k=(G.teams[m.team].F.mods.sight||1)*(m.isB?Math.max(.75,wxNow().vis):wxNow().vis)*todVis(m);if(!m.isB&&m.s.vis)return m.s.vis*k;return (m.isB?340:m.s.dom==='air'?340:m.s.dom==='naval'?380:280)*k;}
 function detR(team,m){return(m.isB?170:150)*upgT(G.teams[team],'detect');}
-function hiddenNow(e){if((e.detT||0)>G.t)return false;if(e.stlT&&!e.isB){if(G.t-(e.mv||-99)<1&&e.mv!=null||e.lastFire>0)e.stlT=0;else return true;}if(!e.isB&&G.smokes&&G.smokes.length&&G.t-(e.lastFire||-9)>1.5)for(const S of G.smokes)if(S.t>G.t&&ally(S.team,e.team)&&Math.hypot(e.x-S.x,e.y-S.y)<S.r)return true;if(e.isB)return isTun(e)&&e.built>=1&&G.t-(e.lastFire||-9)>3;if(e.s.camo&&G.t-e.lastFire>3&&G.t-(e.mv||-9)>3)return true;if(G.t-e.lastFire<=2.5||e.planting)return false;if(e.s.stealth)return true;return !!(upgT(G.teams[e.team],'camo')&&isInf(e.s)&&G.t-(e.mv||-9)>3);}
+function hiddenNow(e){if((e.detT||0)>G.t)return false;if(e.stlT&&!e.isB){if(G.t-(e.mv||-99)<1&&e.mv!=null||e.lastFire>0)e.stlT=0;else return true;}if(!e.isB&&G.smokes&&G.smokes.length&&G.t-(e.lastFire||-9)>1.5)for(const S of G.smokes)if(S.t>G.t&&ally(S.team,e.team)&&Math.hypot(e.x-S.x,e.y-S.y)<S.r)return true;if(e.isB)return isTun(e)&&e.built>=1&&G.t-(e.lastFire||-9)>3;if(e.s.camo&&G.t-e.lastFire>3&&G.t-(e.mv||-9)>3)return true;if(G.t-e.lastFire<=(e.s.sub?6:2.5)||e.planting)return false;if(e.s.stealth)return true;return !!(upgT(G.teams[e.team],'camo')&&isInf(e.s)&&G.t-(e.mv||-9)>3);}
 
 /* ---------- production, research, building ---------- */
 function unitCount(team,kind){let n=0;for(const e of G.ents)if(!e.isB&&e.team===team&&e.kind===kind)n++;const q=G.teams[team].q[BASE[kind].from];for(const i of q)if(i.kind===kind)n++;return n;}
@@ -237,6 +236,9 @@ function loiter(u,dt){if(!u.lc||Math.hypot(u.lc.x-u.x,u.lc.y-u.y)>700)u.lc={x:u.
 // Roads (Conquest): units on a road drive/walk faster - wheeled +30%, tracked and infantry +15% - so the bigger maps don't feel slow.
 // Reads the road mask the map painter builds (same on host and clients), so it is deterministic.
 const ROAD_W=1.3,ROAD_T=1.15;
+// Seasons: Autumn mud slows wheeled vehicles (a lot) and tracked ones (a little) off the roads; Winter snow slows infantry (and a little the
+// vehicles) off the roads. Roads are never slowed, so they matter more. Deterministic: depends only on G.ssn and the road mask.
+function ssnK(u,whl,foot){const s=G.ssn;if(s!==2&&s!==3)return 1;const rm=G.roadMask;if(rm&&rm.d[((u.y/rm.C)|0)*rm.w+((u.x/rm.C)|0)])return 1;return s===2?(whl?.72:foot?1:.9):(foot?.84:whl?.88:.94);}
 function roadK(u,whl,foot){const rm=G.roadMask;if(!rm||!rm.d[((u.y/rm.C)|0)*rm.w+((u.x/rm.C)|0)])return 1;return whl?ROAD_W:ROAD_T;}
 function stepTo(u,x,y,dt,fin){if(u.s.dom==='air'&&isFW(u)){const t=u.target;let gx=x,gy=y;
     if(t&&!t.dead&&t.x===x&&t.y===y){const dd=Math.hypot(t.x-u.x,t.y-u.y);if(dd>420){const a=Math.atan2(t.y-u.y,t.x-u.x)+Math.PI/2,off=((u.id%5)-2)*Math.min(90,(dd-260)*.35);gx=t.x+Math.cos(a)*off;gy=t.y+Math.sin(a)*off;}}
@@ -247,7 +249,7 @@ function stepTo(u,x,y,dt,fin){if(u.s.dom==='air'&&isFW(u)){const t=u.target;let 
   const err=err0;u.hd+=Math.max(-tr,Math.min(tr,err));
   const ae=Math.abs(angDiff(u.hd,want)),foot=M[0]>=8;let f=foot?(ae<1.2?1:.35):Math.max(.12,Math.cos(Math.min(ae,1.45)));
   if(whl)f=Math.max(.35,Math.cos(Math.min(ae,1.2)));let sl=1;if(d==='ground'){const ca=Math.cos(u.hd),sa=Math.sin(u.hd),g0=groundH(u.x,u.y),g1=groundH(u.x+ca*14,u.y+sa*14),gr=(g1-g0)/14;sl=Math.max(.45,Math.min(1.15,1-gr*(M[0]>=8?.9:1.6)));}
-  const wx=wxNow();const UP=G.teams[u.team].upg;let top=u.s.spd*f*sl*(G.rubN&&d==='ground'?rubSlow(u):1)*(d==='ground'&&G.wood?woodSlow(u):1)*upgK(G.teams[u.team],u.kind,'spd')*(d==='ground'?wx.spd*roadK(u,whl,foot):d==='air'?(.75+.25*wx.air):1)*((u.supp||0)>.5?.6:1)*(u.crit?critSpd(u):1)*(u.dgS||1)*(isVeh(u.s)&&auraNear(u,'raid')?1.2:1)*((G.teams[u.team].raidT||0)>G.t&&u.s.armor==='heavy'?1.35:1)*(d==='ground'&&G.teams[u.team].dry&&isVeh(u.s)?FUEL_SLOW:1)*(G.smokes&&G.smokes.some(S=>S.t>G.t&&S.team===u.team&&Math.hypot(u.x-S.x,u.y-S.y)<S.r)?1.25:1)*(d==='ground'&&u.s.armor!=='heavy'&&G.t-(u.lastFire||-9)<3&&(DOCT[G.teams[u.team].fac]||{}).hitrun?1.25:1);if(u.order&&u.order.cap)top=Math.min(top,u.order.cap*f);if(fin){const brake=M[1]*1.4;top=Math.min(top,Math.sqrt(2*brake*Math.max(0,dist2-2))+4);}
+  const wx=wxNow();const UP=G.teams[u.team].upg;let top=u.s.spd*f*sl*(G.rubN&&d==='ground'?rubSlow(u):1)*(G.refs&&G.refs.length&&d==='ground'?refSlow(u):1)*(d==='ground'&&G.wood?woodSlow(u):1)*upgK(G.teams[u.team],u.kind,'spd')*(d==='ground'?wx.spd*roadK(u,whl,foot)*ssnK(u,whl,foot):d==='air'?(.75+.25*wx.air):1)*((u.supp||0)>.5?.6:1)*(u.crit?critSpd(u):1)*(u.dgS||1)*(isVeh(u.s)&&auraNear(u,'raid')?1.2:1)*((G.teams[u.team].raidT||0)>G.t&&u.s.armor==='heavy'?1.35:1)*(d==='ground'&&G.teams[u.team].dry&&isVeh(u.s)?FUEL_SLOW:1)*(G.smokes&&G.smokes.some(S=>S.t>G.t&&S.team===u.team&&Math.hypot(u.x-S.x,u.y-S.y)<S.r)?1.25:1)*(d==='ground'&&u.s.armor!=='heavy'&&G.t-(u.lastFire||-9)<3&&(DOCT[G.teams[u.team].fac]||{}).hitrun?1.25:1);if(u.order&&u.order.cap)top=Math.min(top,u.order.cap*f);if(fin){const brake=M[1]*1.4;top=Math.min(top,Math.sqrt(2*brake*Math.max(0,dist2-2))+4);}
   if(u.retreat)top*=1.15;
   if(d==='ground'&&!foot&&G.hash&&u.v>4){const la=u.r*2+12,px=u.x+Math.cos(u.hd)*la,py=u.y+Math.sin(u.hd)*la;for(const o of nearby(px,py,34,AV_N)){if(o===u||o.dead||o.isB||!o.s||o.s.dom!=='ground')continue;const dx=o.x-px,dy=o.y-py;if(dx*dx+dy*dy>(o.r+u.r*.8)*(o.r+u.r*.8))continue;
     if((o.v||0)>4&&Math.abs(angDiff(u.hd,o.ang||0))<.6)top=Math.min(top,Math.max(8,(o.v||0)*.95));else if(massOf(o)>=massOf(u)*.5){const ah=angDiff(u.hd,Math.atan2(o.y-u.y,o.x-u.x));u.hd-=Math.sign(ah||1)*Math.min(1.8*dt,.12);top*=.75;}break;}}
@@ -399,14 +401,14 @@ function tactic(e,wpn,src,splash){let m=1,tag=null;if(e.isB||!src||src.isB&&!src
 function specialMult(e,wpn,src){let m=1;if(src&&src.ambT>G.t)m*=1.5;if(src&&src.hambT>G.t)m*=2;  // tunnel ambush: +50% damage for 3 s after leaving a tunnel
   if(e.mark>G.t)m*=1.25;if((wpn==='shell'||wpn==='missile'||wpn==='bomb'||wpn==='super'||src&&src.s&&src.s.rocket)&&auraProtect(e,'dome')){m*=.45;if(G.t-(e.domeT||-9)>1.2){e.domeT=G.t;FXE('boom',[(e.x+rnd(-20,20))|0,(e.y+rnd(-20,20))|0,6,0]);}}
   if(!e.isB&&e.low&&e.s.dom==='air'&&(wpn==='gun'||wpn==='flak'))m*=1.35;   /* low flyers are exposed to guns and MANPADS */
-  if(src&&!src.isB&&(src.s.dom==='air'||src.kind==='drone'||wpn==='missile')&&auraProtect(e,'jam'))m*=.5;return m;}
+  if(src&&!src.isB&&(src.s.dom==='air'||src.kind==='drone'||wpn==='missile')&&auraProtect(e,'jam'))m*=.5;m*=navalMult(e,src);return m;}
 function applyDmg(e,d,wpn,team,src,splash){if(e.dead)return;if(e.mil===1&&team!=null&&team>=0&&team!==G.reb)milProvoke(e,team);if(G.curSid&&e.isB){const q=e._sd&&e._sd.id===G.curSid?e._sd:(e._sd={id:G.curSid,sum:0}),room=e.max*CQ_STRIKE_CAP-q.sum;if(room<=0)return;if(d>room)d=room;q.sum+=d;}if(e.kind==='fort'){if(wpn!=='bb')return;e.hp-=e.max*.55;e.lastHit=G.t;if(e.hp<=0)kill(e,team,src);return;}if(e.civ&&e.kind==='civb'){const m=VS[wpn]&&VS[wpn].bld;if(m)damageCiv(e.civ,d*m,team);return;}if(e.oil){const m=VS[wpn]&&VS[wpn].bld;if(m)damageOil(e.oil,d*m,team);return;}if(e.isB&&team!=null&&!ally(team,e.team)){const V=G.teams[e.team];if(G.t-(V.atkWarn??-99)>25){V.atkWarn=G.t;log(e.team,'Our base is under attack!','r:base');}}else if(!e.isB&&e.s&&!e.civ&&team!=null&&e.team!=null&&!ally(team,e.team)&&G.teams[e.team]){const V=G.teams[e.team];if(G.t-(V.fireWarn??-99)>14){V.fireWarn=G.t;log(e.team,'Our troops are under fire!','v5');}}const ar=e.isB?'bld':(e.landed?'heavy':e.s.armor);const m=VS[wpn][ar];if(!m)return;const tc=tactic(e,wpn,src,splash);const dd=d*m*dmgIn(e,wpn)*tc.m*specialMult(e,wpn,src)*(e.cv&&e.cv.esc?.55:1);if(src&&!src.isB&&src.s.mark&&!e.isB)e.mark=G.t+6;e.hp-=dd;e.lastHit=G.t;if(!e.isB&&e.hp>0&&e.s&&e.s.armor==='heavy'&&e.s.dom==='ground')critRoll(e,dd,wpn,src,splash);
   if(!e.isB&&canRout(e)){e.fear=(e.fear||0)+dd/e.max*(isInf(e.s)?1.25:.7)*(coverAt(e.x,e.y)&&isInf(e.s)?.7:1)*(auraNear(e,'morale')?.5:1)+(splash?.05:.02);}
   if(!e.isB&&isInf(e.s)&&!auraNear(e,'morale')&&!auraNear(e,'rof')){const bk=team!=null&&G.teams[team]&&(DOCT[G.teams[team].fac]||{}).barrage&&(wpn==='shell'||wpn==='rocket'||splash)?1.5:1;e.supp=Math.min(1,(e.supp||0)+(dd/e.max*1.4+(wpn==='gun'||wpn==='tower'?.06:.12))*bk*(G.rubN&&rubAt(e.x,e.y)?.6:1));if(bk>1&&canRout(e))e.fear=(e.fear||0)+.04;}
   if(tc.tag&&tc.m>1.05&&G.t-(e.tagT||-9)>1.6&&(tc.tag==='REAR HIT'||tc.tag==='SIDE HIT'||tc.tag==='HIGH GROUND')){e.tagT=G.t;FXE('txt',[e.x|0,e.y|0,tc.tag,team,e.team]);}
   if(e.hp<=0)kill(e,team,src);}
 const MOURN_T=40,REBUY_T=180;/* mourning buff 40 s < rebuy wait 180 s */
-function kill(e,team,src){if(e.dead)return;if(e.kind==='garrison'&&e.civ){collapseCiv(e.civ,team);return;}e.dead=true;if(e.kind==='fort'&&e.gar&&e.gar.length){try{unloadTunnel(e);log(e.team,'The Mountain Fortress fell - its garrison came out alive.','w');}catch(_){}}if(!e.isB&&!e.civ&&e.s&&e.team!=null&&G.teams[e.team]&&G.t-(G.teams[e.team].lostWarn??-99)>7){G.teams[e.team].lostWarn=G.t;log(e.team,'Unit lost.','r:lost');}if(!e.isB&&e.s&&isInf(e.s)&&!e.s.noAttack&&(e.s.cost||0)<=600&&!e.crew&&Math.random()<.35){let md=null;for(const o of nearby(e.x,e.y,170,DS_N))if(!o.dead&&o.team===e.team&&o.s&&o.s.revive&&Math.hypot(o.x-e.x,o.y-e.y)<170){md=o;break;}if(md){const kd=e.kind,tm=e.team;G.timers.push({t:8,fn:()=>{if(md.dead||G.teams[tm].out)return;const p=nearestPassXY('ground',md.x+rnd(-14,14),md.y+rnd(-14,14));if(!p)return;const n=addUnit(tm,kd,p[0],p[1]);if(n){n.hp=n.max*.3;FXE('txt',[n.x|0,n.y|0,'BACK IN ACTION',tm,-2]);}}});}}if(e.kind==='champ'&&!e.isB)heroFell(e);if(e.kind==='cleric'){const T=G.teams[e.team];T.mart=G.t+MOURN_T;T.rebuy=G.t+REBUY_T;T.clr=false;for(const O of G.teams)log(O.id,O.id===e.team||ally(O.id,e.team)?(T.fac==='KP'?'Our Dear Leader has fallen! Grief turns to fury: MOURNING: no fear, +15% damage, 10% less damage taken for 40 seconds. A new leader can be chosen in 3:00.':'Our Ayatollah has been martyred! MOURNING: no fear, +15% damage, 10% less damage taken for 40 seconds. A new Ayatollah can be chosen in 3:00.'):`The enemy ${T.fac==='KP'?'Dear Leader':'Ayatollah'} has fallen - expect his followers to fight without fear and harder for 40 seconds (mourning).`,O.id===e.team?'bad':'w');}if(!e.isB&&!e.civ&&e.s&&isInf(e.s)&&!e.s.noAttack&&!e.inTun&&e.team!=null&&G.teams[e.team]&&SHIA[G.teams[e.team].fac])martyrBanner(e);if(!e.isB&&e.s.dom==='ground'){for(const o of nearby(e.x,e.y,240,MOR_K)){if(o.dead||o.isB||o===e||!canRout(o))continue;if(o.team===e.team)o.fear=(o.fear||0)+(isInf(e.s)?.16:.26);else if(team!=null&&ally(o.team,team))o.fear=Math.max(0,(o.fear||0)-.08);}}if(e.cargo&&e.cargo.length){log(e.team,`The ${e.s.name} was destroyed with ${e.cargo.length} aboard.`,'bad');for(const c of e.cargo){c.dead=true;G.teams[c.team].lost++;stLost(c);}e.cargo=[];}if(e.isB)G.bdirty=true;G.byId.delete(e.id);FXE('die',[e.id,e.x|0,e.y|0,KINDS.indexOf(e.kind),e.isB?1:0,e.team]);G.teams[e.team].lost++;stLost(e);
+function kill(e,team,src){if(e.dead)return;if(e.kind==='garrison'&&e.civ){collapseCiv(e.civ,team);return;}e.dead=true;if(e.s&&e.s.fake)polKill(e,team);if(e.kind==='fort'&&e.gar&&e.gar.length){try{unloadTunnel(e);log(e.team,'The Mountain Fortress fell - its garrison came out alive.','w');}catch(_){}}if(!e.isB&&!e.civ&&e.s&&e.team!=null&&G.teams[e.team]&&G.t-(G.teams[e.team].lostWarn??-99)>7){G.teams[e.team].lostWarn=G.t;log(e.team,'Unit lost.','r:lost');}if(!e.isB&&e.s&&isInf(e.s)&&!e.s.noAttack&&(e.s.cost||0)<=600&&!e.crew&&Math.random()<.35){let md=null;for(const o of nearby(e.x,e.y,170,DS_N))if(!o.dead&&o.team===e.team&&o.s&&o.s.revive&&Math.hypot(o.x-e.x,o.y-e.y)<170){md=o;break;}if(md){const kd=e.kind,tm=e.team;G.timers.push({t:8,fn:()=>{if(md.dead||G.teams[tm].out)return;const p=nearestPassXY('ground',md.x+rnd(-14,14),md.y+rnd(-14,14));if(!p)return;const n=addUnit(tm,kd,p[0],p[1]);if(n){n.hp=n.max*.3;FXE('txt',[n.x|0,n.y|0,'BACK IN ACTION',tm,-2]);}}});}}if(e.kind==='champ'&&!e.isB)heroFell(e);if(e.kind==='cleric'){const T=G.teams[e.team];T.mart=G.t+MOURN_T;T.rebuy=G.t+REBUY_T;T.clr=false;for(const O of G.teams)log(O.id,O.id===e.team||ally(O.id,e.team)?(T.fac==='KP'?'Our Dear Leader has fallen! Grief turns to fury: MOURNING: no fear, +15% damage, 10% less damage taken for 40 seconds. A new leader can be chosen in 3:00.':'Our Ayatollah has been martyred! MOURNING: no fear, +15% damage, 10% less damage taken for 40 seconds. A new Ayatollah can be chosen in 3:00.'):`The enemy ${T.fac==='KP'?'Dear Leader':'Ayatollah'} has fallen - expect his followers to fight without fear and harder for 40 seconds (mourning).`,O.id===e.team?'bad':'w');}if(!e.isB&&!e.civ&&e.s&&isInf(e.s)&&!e.s.noAttack&&!e.inTun&&e.team!=null&&G.teams[e.team]&&SHIA[G.teams[e.team].fac])martyrBanner(e);if(!e.isB&&e.s.dom==='ground'){for(const o of nearby(e.x,e.y,240,MOR_K)){if(o.dead||o.isB||o===e||!canRout(o))continue;if(o.team===e.team)o.fear=(o.fear||0)+(isInf(e.s)?.16:.26);else if(team!=null&&ally(o.team,team))o.fear=Math.max(0,(o.fear||0)-.08);}}if(e.cargo&&e.cargo.length){log(e.team,`The ${e.s.name} was destroyed with ${e.cargo.length} aboard.`,'bad');for(const c of e.cargo){c.dead=true;G.teams[c.team].lost++;stLost(c);}e.cargo=[];}if(e.isB)G.bdirty=true;G.byId.delete(e.id);FXE('die',[e.id,e.x|0,e.y|0,KINDS.indexOf(e.kind),e.isB?1:0,e.team]);G.teams[e.team].lost++;stLost(e);
   if(!e.isB&&e.s){const V=G.teams[e.team];if(V&&V.pw&&V.pw.bounty&&((GPOW[V.fac]||{}).bounty||{}).fx==='salvage')V.credits+=Math.round((e.s.cost||0)*.15);}
   if(e.isB)log(e.team,`${e.s.name} destroyed.`,'w');
   if(team!=null&&!ally(team,e.team)){const T=G.teams[team],val=e.isB?(e.kind==='hq'?2000:Math.max(400,e.s.cost)):e.s.cost;T.kills++;stKill(T,e,val,src);T.gxp+=val;promoteGeneral(T);
@@ -663,8 +665,8 @@ function natPower(team,P,x,y){const T=G.teams[team],hq=hqOf(team),en=e=>!e.dead&
   return false;}
 // ---------- General Doctrines: pick (free, first GDOC_LATE seconds, before any perk), buy perks (1 rank point each), recon flights ----------
 function gdPick(team,k){const T=G.teams[team];if(!T||T.out||!GDOC[k]||T.gdoc===k)return false;if(Object.keys(T.gperk).length||(G.t>GDOC_LATE&&!G.sandbox))return false;T.gdoc=k;T._uk=null;log(team,`Doctrine: ${GDOC[k].name}. Buy its perks with general-rank points.`,'g');return true;}
-function gdBuy(team,k){const T=G.teams[team],p=GDOC_PERKS[k];if(!T||T.out||!p||p.doc!==T.gdoc||T.gperk[k]||T.rank-T.spent<1)return false;T.spent+=1;T.gperk[k]=1;T._uk=null;log(team,`${p.name}: ${p.desc}.`,'g');return true;}
-function aiPerk(id){const T=G.teams[id],D=GDOC[T.gdoc];if(!D)return false;for(const p of D.perks)if(!T.gperk[p.k])return gdBuy(id,p.k);return false;}
+function gdBuy(team,k){const T=G.teams[team],p=GDOC_PERKS[k];if(!T||T.out||!p||p.doc!==T.gdoc||T.gperk[k]||T.rank-T.spent<1||(p.req&&!T.gperk[p.req]))return false;T.spent+=1;T.gperk[k]=1;T._uk=null;log(team,`${p.name}: ${p.desc}.`,'g');return true;}
+function aiPerk(id){const T=G.teams[id],D=GDOC[T.gdoc];if(!D)return false;for(const p of D.perks)if(!T.gperk[p.k]&&(!p.req||T.gperk[p.req]))return gdBuy(id,p.k);return false;}
 function gdRecon(dt){for(const T of G.teams){if(T.out||!T.gdoc||!gdHas(T,'i2'))continue;T.rcT=(T.rcT||0)-dt;if(T.rcT>0)continue;T.rcT=75;const en=G.teams.filter(O=>O.id!==T.id&&!ally(O.id,T.id)&&!O.out);if(!en.length)continue;T.rcN=((T.rcN||0)+1);const O=en[T.rcN%en.length];const hq=hqOf(O.id);if(!hq)continue;const a=T.rcN*2.4;T.reveals.push({x:hq.x+Math.cos(a)*180,y:hq.y+Math.sin(a)*180,r:320,t:10});if(!T.ai)log(T.id,'Recon flight: enemy area revealed.','g');}}
 function powCost(T,key){const w=T.pw[key];return !w?1:(w.lv||1)>=3?99:(w.lv||1)+1;}
 function buyPower(team,key){const T=G.teams[team];if(!POWERS[key]||(key==='bb'&&T.pw[key]))return false;const c=powCost(T,key);if(T.rank-T.spent<c)return false;T.spent+=c;if(!T.pw[key]){T.pw[key]={cd:Math.max(0,(key==='bb'?300:POW_OPEN)-G.t,G.conq?(G.setupEnd||0)+CQ_PW_FIRST-G.t:0),lv:1};log(team,`${powInfo(key,T.fac).name} unlocked.`,'g');}else{T.pw[key].lv=(T.pw[key].lv||1)+1;log(team,`${powInfo(key,T.fac).name} upgraded to level ${T.pw[key].lv}.`,'g');}return true;}
@@ -736,6 +738,14 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'pow':usePower(team,a.k,a.x,a.y);break;
     case 'rally':G.teams[team].rally={x:a.x,y:a.y};break;
     case 'give':{giveMoney(team,a.to|0,a.amt);break;}
+    case 'cf':cfOffer(team,a.to|0,a.d|0);break;
+    case 'cfa':cfAnswer(team,a.f|0,true);break;
+    case 'cfd':cfAnswer(team,a.f|0,false);break;
+    case 'cfb':cfBreak(team,a.o|0);break;
+    case 'mp':ctPing(team,a.k,a.x,a.y);break;
+    case 'md':ctDraw(team,a.c,a.p);break;
+    case 'say':ctSay(team,a.i);break;
+    case 'gift':ctGift(team,a.ids,a.to|0);break;
     case 'tun':{const b=G.byId.get(a.tid);if(!b||!b.isB||b.team!==team||!isTun(b)||b.built<1)break;for(const u of own(a.ids))if(u.s.dom==='ground'&&u.kind!=='harv'&&u.kind!=='hacker'){u.order={type:'enter',target:b};u.target=null;u.path=null;}break;}
     case 'gar':{const c=G.civ&&G.civ[a.ci|0];if(!c||c.dead||(c.g&&!ally(c.g.team,team)))break;for(const u of own(a.ids))if(canGarrison(u)){u.order={type:'garrison',ci:c.i,x:c.x,y:c.y};u.target=null;u.guard=null;u.path=null;}break;}
     case 'atkCiv':{const c=G.civ&&G.civ[a.ci|0];if(!c||c.dead||c.g)break;const t=civTarget(c);for(const u of own(a.ids)){if(u.kind==='harv'||u.kind==='dozer'||u.kind==='hacker'||!canTarget(u.s,t))continue;u.order={type:'attack',target:t};u.guard=null;u.path=null;}break;}
@@ -745,6 +755,7 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
       else if(b&&!b.isB&&b.team===team&&b.s.cap){if(a.at){b.wq=null;setMove(b,a.x,a.y,'move');b.order.ul=1;b.ulO=1;}else{b.ulO=0;unloadTransport(b);}}break;}
     case 'board':{const tr=G.byId.get(a.tid);if(!tr||tr.isB||tr.team!==team||!tr.s.cap)break;for(const u of own(a.ids))if(canBoard(tr,u)){u.order={type:'board',target:tr};u.target=null;u.path=null;}break;}
     case 'spoof':{const u=G.byId.get(a.tid);if(u&&u.team===team)doSpoof(u);break;}
+    case 'ping':{for(const u of own(a.ids))sonarPing(u);break;}
     case 'hab':{const u=G.byId.get(a.tid);if(u&&u.team===team&&!u.dead)heroAbility(u);break;}
     case 'stance':{const v=a.v|0;if(v>=0&&v<=3)for(const u of own(a.ids))if(!u.s.noAttack)u.st=v;break;}
     case 'tax':{townCmd(team,a);break;}
@@ -752,6 +763,8 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'lg':{lgCmd(team,a);break;}
     case 'recruit':{townRecruit(team,a);break;}
     case 'bribe':{townBribe(team,a);break;}
+    case 'spy':{polSpyCmd(team,a);break;}
+    case 'leaf':{polLeaf(team,a);break;}
     case 'resup':{const P=supplyPoints()[team]||[];for(const u of own(a.ids)){if(!hasAmmo(u)||!P.length)continue;let b=null,bd=1e9;for(const p of P){const d=Math.hypot(p.x-u.x,p.y-u.y);if(d<bd){bd=d;b=p;}}if(!b)continue;const an=(u.id%12)*.5236,rr=Math.min(b.r*.5,60+(u.id%5)*18);setMove(u,b.x+Math.cos(an)*rr,b.y+Math.sin(an)*rr,'move');}break;}
     case 'low':{const v=a.v?1:0;for(const u of own(a.ids))if(!u.isB&&u.s.dom==='air'&&(u.s.cls==='heli'||u.s.cls==='jet'))u.low=v;break;}
     case 'stop':for(const u of own(a.ids)){u.order=null;u.target=null;u.path=null;u.dig=null;u.wl=null;}break;
@@ -805,12 +818,12 @@ const VISMAX=720;
 // Fog of war, once every 0.2 s. Each team's allies are a bitmask, so every nearby spotter is checked once for all the
 // teams it reveals to (instead of once per team): the cost no longer grows with the number of players.
 function updateVis(){buildHash();const N=G.teams.length;for(const e of G.ents)if(!e.dead)e._vr=visR(e);
-  const AM=new Array(N);for(let a=0;a<N;a++){let m=0;for(let b=0;b<N;b++)if(ally(a,b))m|=1<<b;AM[a]=m;}const ALL=(1<<N)-1;
+  const AM=new Array(N);for(let a=0;a<N;a++){let m=0;for(let b=0;b<N;b++)if(sameTm(a,b))m|=1<<b;AM[a]=m;}const ALL=(1<<N)-1;
   for(const e of G.ents){if(e.dead)continue;if(!e.vs||e.vs.length!==N)e.vs=new Array(N).fill(false);
     let seen=AM[e.team]|(1<<e.team);
     if(seen!==ALL){const hid=hiddenNow(e);const near=nearby(e.x,e.y,VISMAX+e.r,NB2);
       for(const m of near){const need=AM[m.team]&~seen;if(!need)continue;const dx=m.x-e.x,dy=m.y-e.y,d2=dx*dx+dy*dy;
-        if(!hid){const R=m._vr+e.r;if(d2<R*R)seen|=need;}else{for(let o=0;o<N;o++)if(need&(1<<o)){const R=(e.s.sub&&m.s&&m.s.sonar?m.s.sonar:detR(o,m))+e.r;if(d2<R*R)seen|=1<<o;}}
+        if(!hid){const R=m._vr+e.r;if(d2<R*R)seen|=need;}else{for(let o=0;o<N;o++)if(need&(1<<o)){const R=(e.s.sub?(sonarOf(m)||detR(o,m)):detR(o,m))+e.r;if(d2<R*R)seen|=1<<o;}}
         if(seen===ALL)break;}
       if(seen!==ALL)for(let o=0;o<N;o++){if(seen&(1<<o))continue;for(const r of G.teams[o].reveals){const dx=r.x-e.x,dy=r.y-e.y;if(dx*dx+dy*dy<r.r*r.r){seen|=1<<o;break;}}
         if(!(seen&(1<<o))&&e.cbrT>G.t&&(G.cbrTeams&(1<<o)))seen|=1<<o;}}
@@ -908,10 +921,11 @@ function aiCoastBuild(T,mine,anchor){const D=DIFF[T.ai.d??1];if(!G.map.hasWater|
 function aiNavyPick(T,mine,opts,anchor){const D=DIFF[T.ai.d??1],P=(G._nvp||{})[T.id]||aiNavyPlan(T,anchor);
   const fleet=mine.filter(e=>!e.isB&&e.s.dom==='naval'&&!e.s.noAttack),land=mine.filter(e=>!e.isB&&e.s.dom==='ground'&&!e.s.noAttack&&e.kind!=='harv').length;
   const cap=Math.max(1,Math.floor(Math.min(D.nvCap*(P.big?1:.5)*(G.bs||1),1+land*D.nvShare)));if(fleet.length+T.q.shipyard.length>=cap)return null;
+  {const n2=aiNavy2Pick(T,mine,opts,fleet);if(n2)return n2;}
   const foeNav=G.ents.filter(e=>!e.dead&&!e.isB&&e.s.dom==='naval'&&!e.s.noAttack&&!ally(e.team,T.id)).length,ships=fleet.filter(e=>e.s.cls==='ship').length+T.q.shipyard.filter(i=>i.kind==='ship').length;
   const subs=fleet.filter(e=>e.s.sub).length+T.q.shipyard.filter(i=>i.kind==='sub').length;if(opts.includes('sub')&&fleet.length>=2&&subs<Math.ceil(fleet.length*.25)&&(foeNav>0||G.t>600))return ['sub'];
   return [D.nvShip&&opts.includes('ship')&&ships<Math.floor((fleet.length+1)*(foeNav>fleet.length?.25:.45))?'ship':'boat'];}
-function aiNavyAct(T,mine){if(T.ai.t%2)return;const fleet=mine.filter(e=>!e.isB&&e.s.dom==='naval'&&!e.s.noAttack);if(!fleet.length)return;if(!(T.ai.st&&T.ai.st.fleetT))aiStat(T.ai,'fleetT',Math.round(G.t));
+function aiNavyAct(T,mine){if(T.ai.t%2)return;aiNavy2(T,mine);const fleet=mine.filter(e=>!e.isB&&e.s.dom==='naval'&&!e.s.noAttack);if(!fleet.length)return;if(!(T.ai.st&&T.ai.st.fleetT))aiStat(T.ai,'fleetT',Math.round(G.t));
   const D=DIFF[T.ai.d??1],id=T.id,P=(G._nvp||{})[id],go=(u,x,y)=>{if(u.target)return;const o=u.order;if(o&&!o.nv)return;if(o&&Math.hypot(o.x-x,o.y-y)<160)return;if(!o&&Math.hypot(u.x-x,u.y-y)<120)return;setMove(u,x+rnd(-40,40),y+rnd(-40,40),'amove');u.order.nv=1;};
   const myB=mine.filter(m=>m.isB),byB=new Map();for(const u of fleet){const b=bodyAt(u.x,u.y);if(!b)continue;if(!byB.has(b))byB.set(b,[]);byB.get(b).push(u);}
   for(const [b,F] of byB){let cx=0,cy=0;for(const u of F){cx+=u.x;cy+=u.y;}cx/=F.length;cy/=F.length;
@@ -1035,7 +1049,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
      const far=haulF||G.fields.filter(f=>f.amt>2500&&dps.every(b=>dist(b,f)>520)&&dist(f,anchor)<1500).sort((p,q)=>dist(p,anchor)-dist(q,anchor))[0];if(haulF){T.ai.depF=null;aiStat(T.ai,'haulDepot');}if(far){const p=aiFindSpot(id,'depot',{x:far.x,y:far.y});if(p&&Math.hypot(p[0]-far.x,p[1]-far.y)<260)placeBld(id,'depot',p[0],p[1]);}}}
   {const ec=mine.filter(e=>e.kind==='econ').length,left=G.fields.reduce((a,f)=>a+Math.max(0,f.amt),0)/Math.max(1,G.fields.length*9000);
    if(T.ai.t%13===7&&ec<4&&reqMet(id,'econ')&&!mine.some(e=>e.isB&&e.built<1)&&(G.t>480+ec*240||left<.35)&&T.credits>bstats(T.fac,'econ').cost+(left<.35?200:900)){const p=aiFindSpot(id,'econ',anchor);if(p)placeBld(id,'econ',p[0],p[1]);}}
-  if(T.ai.t%15===8&&T.credits>2500){const poor=G.teams.filter(O=>O.id!==id&&!O.out&&ally(O.id,id)&&O.credits<500).sort((a,b)=>(a.ai?1:0)-(b.ai?1:0))[0];if(poor)giveMoney(id,poor.id,Math.min(1500,Math.round(T.credits*.3)));}
+  if(T.ai.t%15===8&&T.credits>2500){const poor=G.teams.filter(O=>O.id!==id&&!O.out&&sameTm(O.id,id)&&O.credits<500).sort((a,b)=>(a.ai?1:0)-(b.ai?1:0))[0];if(poor)giveMoney(id,poor.id,Math.min(1500,Math.round(T.credits*.3)));}
   aiNavyBuild(T,mine,anchor);aiCoastBuild(T,mine,anchor);
   const nk=T.ai.re?null:ORD[T.ai.bi];if(nk&&!reqMet(id,nk)){if(++T.ai.rq>45){T.ai.bi++;T.ai.rq=0;}}else T.ai.rq=0;if(nk&&reqMet(id,nk)&&!mine.some(e=>e.isB&&e.built<1)){const s=bstats(T.fac,nk);if(T.credits>=s.cost){const p=aiFindSpot(id,nk,anchor);if(p){placeBld(id,nk,p[0],p[1]);T.ai.bi++;T.ai.nf=0;}else if(STRUCT[nk].shore||++T.ai.nf>8){T.ai.bi++;T.ai.nf=0;}}}
   // Saving up for the next building holds back unit purchases - but only for the Barracks and War Factory while the
@@ -1051,7 +1065,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   let vV=0,lV=0;for(const e of mine)if(!e.isB&&e.s.dom==='ground'&&!e.s.noAttack&&e.kind!=='harv'&&e.kind!=='dozer'&&e.kind!=='hacker'){lV+=e.s.cost;if(isVeh(e.s))vV+=e.s.cost;}
   for(const c of ['barracks','factory'])for(const it of T.q[c]){const s=stats(T.fac,it.kind);if(s.dom!=='ground'||s.noAttack)continue;lV+=s.cost;if(isVeh(s))vV+=s.cost;}
   const wantVeh=!thin&&done(id,'factory')&&vV<lV*.33;let vSv=0;
-  for(const cat of wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='champ').filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
+  for(const cat of wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='champ'&&k!=='spy'&&!BASE[k].fake).filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
     if(cat==='factory'){opts=enemyAir>=2?['aa','aa',...opts]:opts.filter(k=>k!=='aa'||srand()<.2);
       // Heavy-barrage doctrine (RU, CN, KP): keep a real artillery park - about a fifth of the army, 2 to 8 guns
       if(DC.barrage&&opts.includes('arty')&&unitCount(id,'arty')<Math.min(Math.round(8*(G.bs||1)),Math.max(2,Math.round(armyN*.2))))opts=['arty','arty','arty',...opts];}
@@ -1182,12 +1196,12 @@ function checkEnd(){if(G.sandbox||G.camp)return;const fall=[];
     for(const f of fall)if(ally(f[0].id,best.id)){f[2]=1;f[0].colT=null;f[0].colW=null;}}
   for(const [T,why,spared] of fall)if(!spared)capitulate(T,why);
   const alive=G.teams.filter(T=>!T.out&&!T.reb).map(T=>T.id);
-  if(alive.length<=1||alive.every(t=>ally(t,alive[0])))endGame(alive.length?alive[0]:-1,G.lastWhy?`The last enemy capitulated: ${G.lastWhy}`:'');}
+  if(alive.length<=1||alive.every(t=>sameTm(t,alive[0])))endGame(alive.length?alive[0]:-1,G.lastWhy?`The last enemy capitulated: ${G.lastWhy}`:'');}
 
-function specialTick(u,dt,o){const s=u.s;u.spT=(u.spT||0)-dt;if(u.spT>0)return;u.spT=1.2;
+function specialTick(u,dt,o){const s=u.s;u.spT=(u.spT||0)-dt;if(u.spT>0)return;u.spT=1.2;if(s.minelay||s.sweep)navy2Special(u,o);
   if(s.markAura){for(const e of G.ents)if(!e.dead&&!e.isB&&!ally(e.team,u.team)&&seenBy(u.team,e)&&Math.hypot(e.x-u.x,e.y-u.y)<s.markAura)e.mark=G.t+3;}
-  if((s.mines||(isInf(s)&&gdHas(G.teams[u.team],'g3')))&&!o&&!u.target&&G.t-(u.mineT||-9)>5&&G.t-u.lastHit>3){const mine=G.mines.filter(m=>m.team===u.team);if(mine.length<8&&!G.mines.some(m=>Math.hypot(m.x-u.x,m.y-u.y)<30)){u.mineT=G.t;G.mines.push({x:u.x|0,y:u.y|0,team:u.team,arm:G.t+2});}}}
-function updMines(){for(const m of G.mines){if(m.arm>G.t)continue;for(const e of nearby(m.x,m.y,22+(G.rmax||40),MN_N)){if(e.dead||e.isB||ally(e.team,m.team)||e.s.dom!=='ground'||!isVeh(e.s))continue;if(Math.abs(e.x-m.x)<22&&Math.hypot(e.x-m.x,e.y-m.y)<22){m.done=true;explode(m.x,m.y,40,260,m.team,'at');FXE('txt',[m.x,m.y,'MINE',m.team,e.team]);break;}}}if(G.mines.some(m=>m.done))G.mines=G.mines.filter(m=>!m.done);}
+  if((s.mines||(isInf(s)&&gdHas(G.teams[u.team],'g3')))&&!o&&!u.target&&G.t-(u.mineT||-9)>5&&G.t-u.lastHit>3){const mine=G.mines.filter(m=>m.team===u.team&&!m.nav);if(mine.length<8&&!G.mines.some(m=>Math.hypot(m.x-u.x,m.y-u.y)<30)){u.mineT=G.t;G.mines.push({x:u.x|0,y:u.y|0,team:u.team,arm:G.t+2});}}}
+function updMines(){if(G.t>=(G.n2T||0)){G.n2T=G.t+.5;navy2Detect();}for(const m of G.mines){if(m.arm>G.t)continue;if(m.nav){navMineBlast(m);continue;}for(const e of nearby(m.x,m.y,22+(G.rmax||40),MN_N)){if(e.dead||e.isB||ally(e.team,m.team)||e.s.dom!=='ground'||!isVeh(e.s))continue;if(Math.abs(e.x-m.x)<22&&Math.hypot(e.x-m.x,e.y-m.y)<22){m.done=true;explode(m.x,m.y,40,260,m.team,'at');FXE('txt',[m.x,m.y,'MINE',m.team,e.team]);break;}}}if(G.mines.some(m=>m.done))G.mines=G.mines.filter(m=>!m.done);}
 const TUN_CAP=12,FORT_CAP=20;function tunCap(id){return TUN_CAP;}
 // Mountain Fortress: infantry waiting in the tunnel network slowly heal (3 HP/s) while the team has a finished fortress
 function fortHeal(dt){for(const f of G.ents){if(f.kind!=='fort'||!f.gar||!f.gar.length||f.dead||f.built<1)continue;for(const u of f.gar)if(isInf(u.s)&&u.hp<u.max)u.hp=Math.min(u.max,u.hp+3*dt);}}
@@ -1215,12 +1229,12 @@ function wxNow(){return WEATHER[(G&&G.wx&&G.wx.k)||'clear']||WEATHER.clear;}
 function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,t:0,next:1e9};return;}
   // seeded (same for every player and the server): the next change is picked ahead of time and announced ~25 s before it arrives
   if(!G.wxR)G.wxR=mulberry(((G.seed||1)*7919+13)|0);const R=G.wxR;
-  if(!G.wx)G.wx={k:'clear',t:0,next:150+R()*90,nk:null,fc:0};const W=G.wx;W.t+=dt;const ks=weatherKinds(G.map.theme);
+  if(!G.wx)G.wx={k:'clear',t:0,next:150+R()*90,nk:null,fc:0};const W=G.wx;W.t+=dt;const ks=weatherKinds(G.map.mud?'green':G.map.theme);
   if(!W.nk)W.nk=W.k==='clear'?ks[1+Math.floor(R()*(ks.length-1))]:'clear';
   if(!W.fc&&W.t>=W.next-25){W.fc=1;const w=WEATHER[W.nk];for(const T of G.teams)log(T.id,W.nk==='clear'?'Forecast: the weather is about to clear.':`Forecast: ${w.name.toLowerCase()} rolling in within 25 seconds.`,'w');}
   if(W.t<W.next)return;W.t=0;W.fc=0;W.k=W.nk;W.nk=null;W.next=W.k==='clear'?170+R()*120:55+R()*45;
   for(const T of G.teams){const w=WEATHER[W.k];log(T.id,W.k==='clear'?'The weather is clearing.':`Weather: ${w.name}. ${w.tip}`,'w');}}
-function simUpdate(dt){G.t+=dt;gdRecon(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
+function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
   if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[],mart:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(e.fl<FL_MAX&&e.landed)e.fl=FL_MAX;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam,id:e.id});if(s.cbr||(s.cls==='arty'&&gdHas(G.teams[e.team],'r1')))G.cbrTeams|=1<<e.team;}martyrTick();
   if(G.aur.heal.length)for(const e of G.ents){if(e.dead||e.isB||e.hp>=e.max||e.s.dom==='air')continue;for(const a of G.aur.heal)if(a.team===e.team&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){e.hp=Math.min(e.max,e.hp+a.v*dt);break;}}
   if(G.aur.jam.length)for(const e of G.ents){if(e.dead||e.kind!=='drone')continue;for(const a of G.aur.jam)if(!ally(a.team,e.team)&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){applyDmg(e,30*dt,'flak',a.team,null);break;}}
@@ -1286,7 +1300,7 @@ function civAtXY(x,y){if(!G.civAt)return null;const c=G.civAt.get(Math.floor(y/C
 function canGarrison(u){return !u.isB&&!u.dead&&isInf(u.s)&&!u.s.noAttack&&u.kind!=='hacker'&&u.kind!=='harv'&&u.kind!=='dozer';}
 function civTarget(c){const ALL=new Array(16).fill(true);return c.tg||(c.tg={civ:c,isB:true,kind:'civb',x:c.x,y:c.y,r:16,size:32,team:-1,vs:ALL,s:{name:'City building',armor:'bld'},get dead(){return c.dead||!!c.g;},get hp(){return c.hp;},get max(){return c.max;}});}
 function damageCiv(c,d,team){if(c.dead||d<=0||c.g)return;c.hp-=d;c.hit=G.t;if(c.hp<=0)collapseCiv(c,team);}
-function collapseCiv(c,team){if(c.dead)return;c.dead=true;c.ow=-1;c.cp=0;c.hp=0;if(G.grid[c.k]===3)gridOpen(c.k);rubMark(c);if(G.cover)G.cover[c.k]=Math.min(255,(G.cover[c.k]||0)+2);G.civDirty=true;
+function collapseCiv(c,team){if(c.dead)return;polCiv(c,team);c.dead=true;c.ow=-1;c.cp=0;c.hp=0;if(G.grid[c.k]===3)gridOpen(c.k);rubMark(c);if(G.cover)G.cover[c.k]=Math.min(255,(G.cover[c.k]||0)+2);G.civDirty=true;
   const g=c.g;c.g=null;const occ=c.occ;c.occ=[];occ.forEach((u,i)=>{const a=i/Math.max(1,occ.length)*6.283;const p=nearestPassXY('ground',c.x+Math.cos(a)*30,c.y+Math.sin(a)*30)||[c.x,c.y];u.x=p[0];u.y=p[1];u.inTun=false;u.inGar=null;u.mv=G.t;u.order=null;u.target=null;u.hp*=.6;u.fear=(u.fear||0)+.5;G.ents.push(u);G.byId.set(u.id,u);});
   if(g&&!g.dead){g.dead=true;G.byId.delete(g.id);FXE('die',[g.id,g.x|0,g.y|0,KINDS.indexOf(g.kind),1,g.team]);}FXE('civd',[c.i]);if(occ.length)log(occ[0].team,`A building we held collapsed - ${occ.length} soldier${occ.length>1?'s':''} thrown clear.`,'w');}
 function enterGarrison(u,c){if(c.dead){u.order=null;return;}if(c.g&&!ally(c.g.team,u.team)){u.order=null;return;}if(c.occ.length>=c.cap){u.order=null;log(u.team,`That building is full (${c.cap} troops).`,'w');return;}
@@ -1358,7 +1372,7 @@ function initTowns(){const M=G.map,src=[];G.towns=[];
   if(G.teams)G.teams.forEach(T=>{T.terr=0;});}
 function townBase(t){return t.ham?.9+.9*t.K:(5.5+1.0*t.K)*(t.prize?1.5:1);}   // the centre prize town (market, always contested) pays +50%
 function townRestless(t){return t.ow>=0&&t.un>50;}
-function townIncome(t){if(t.ow<0)return 0;const hold=Math.min(1,(G.t-t.hold)/T_RAMP),ramp=.5+.5*hold;let v=townBase(t)*TAX[t.rate].m*ramp*(t.whole?1.5:1);if(t.pk===1&&!townRestless(t))v*=t.rate===0?1.4:1.25;if(townRestless(t))v*=.8;if(t.cut)v*=LG_CUT;else if(t.trade)v*=LG_TRADE;return v*(t.pop==null?1:t.pop)*(G.bs||1);}
+function townIncome(t){if(t.ow<0)return 0;const hold=Math.min(1,(G.t-t.hold)/T_RAMP),ramp=.5+.5*hold;let v=townBase(t)*TAX[t.rate].m*ramp*(t.whole?1.5:1);if(t.pk===1&&!townRestless(t))v*=t.rate===0?1.4:1.25;if(townRestless(t))v*=.8;if(t.cut)v*=LG_CUT;else if(t.trade)v*=LG_TRADE;return v*(t.pop==null?1:t.pop)*(G.bs||1)*polMul(G.teams[t.ow]);}
 function townRebelsLeft(t){let n=0;for(const u of t.rebU)if(!u.dead)n++;return n;}
 function townRevolt(t){const prev=t.ow;if(prev<0)return;const T=G.teams[prev];T.revN=(T.revN|0)+1;
   for(const c of t.cells){if(c.g){leaveGarrison(c);}c.ow=-1;c.cp=0;c.cpT=-1;}
@@ -1418,7 +1432,7 @@ function updTowns(st){if(!G.towns)return;const N=G.teams.length;lgTick(st);
       if(want!==t.rate&&(want<t.rate||G.t>=(t.rateT||0)||T.taxPol!=null)){t.rate=want;t.rateT=G.t+20;}
       if(t.loy&&G.t>=(t.milR||0)&&T.credits>500&&(nE>0||nG<2))townRecruit(t.ow,{ti:t.i});}   // AI: local militia in loyal towns
   }
-  hmTick(st,U,TF);
+  hmTick(st,U,TF);polTick(st,U);
   for(const T of G.teams)T.terr=terr[T.id]||0;
   if(G.conq){// base trickle (comeback floor) while the HQ stands, and the structure count behind "Enemy base: N of M structures left"
     const bn=new Array(N).fill(0),hq=new Array(N).fill(0);for(const e of G.ents){if(!e.isB||e.dead||e.built<1||e.kind==='garrison'||e.team<0||e.team>=N)continue;bn[e.team]++;if(e.kind==='hq')hq[e.team]=1;}
@@ -1453,18 +1467,17 @@ function updTowers(st,U){const N=G.teams.length;for(const t of G.towns)t.prop=0;
     for(let k=0;k<N;k++){if(present.length&&present.every(q=>ally(q,k))&&here[k]&&!ally(w.ow,k)){w.cp[k]+=st;if(w.cp[k]>=10){const prev=w.ow;w.ow=k;w.cp.fill(0);log(k,`${STATION[G.teams[k].fac]||'Radio tower'} is on the air from our tower - the enemy towns nearby grow restless.`,'g');if(prev>=0&&!ally(prev,k))log(prev,'The enemy seized our propaganda tower!','bad');}}else if(!here[k])w.cp[k]=Math.max(0,w.cp[k]-st*.5);}
     if(w.ow<0)continue;
     for(const t of G.towns){if(t.ow<0||Math.hypot(t.x-w.x,t.y-w.y)>HM.TOW_R)continue;t.prop+=ally(t.ow,w.ow)?-.35:.5;}}
-  for(const t of G.towns)if(t.prop>1.2)t.prop=1.2;}
-function collateral(x,y,r,d,team){if(team==null||team<0||d<12||!G.teams[team]||G.teams[team].reb)return;
+  for(const t of G.towns){t.prop+=polProp(t);if(t.prop>1.2)t.prop=1.2;else if(t.prop<-1.2)t.prop=-1.2;}}
+function collateral(x,y,r,d,team){if(team==null||team<0||d<12||!G.teams[team]||G.teams[team].reb)return;polBlast(x,y,r,d,team);
   for(const t of G.towns){if(Math.hypot(t.x-x,t.y-y)>t.r+r*.4)continue;const pts=Math.min(d,400)*Math.min(r,120)/1500;if(pts<.15)break;
     if(t.pop==null)t.pop=1;if(!t.an||t.an.length!==G.teams.length)t.an=new Array(G.teams.length).fill(0);
-    t.pop=Math.max(.45,t.pop-pts*.0012);t.an[team]=Math.min(100,t.an[team]+pts*.35);
+    t.pop=Math.max(.45,t.pop-pts*.0012);t.an[team]=Math.min(100,t.an[team]+pts*.35);opHit(team,pts*POL.COLL,'Shelling towns and civilians costs us world opinion.');
     if(G.t>=(t.cwT||0)){t.cwT=G.t+12;log(team,`Civilian casualties in ${t.name} - locals turn against you.`,'bad');if(t.ow>=0&&!ally(t.ow,team))log(t.ow,`Enemy fire is killing civilians in ${t.name} - the locals blame them.`,'w');FXE('tping',[team,t.x|0,t.y|0,1]);}
     break;}}
 function recruitCost(t,team){return Math.round(HM.MIL_COST*(turfOf(team)>0?HM.TURF.rec:1));}
 function townRecruit(team,a){const t=G.towns&&G.towns[a.ti|0],T=G.teams[team];if(!t||!T||T.out||T.reb||t.ow<0||!ally(t.ow,team)||t.reb>G.t||!t.loy)return;
   t.mil=(t.mil||[]).filter(u=>!u.dead);if(t.mil.length>=HM.MIL_CAP||G.t<(t.milR||0))return;const cost=recruitCost(t,team);if(T.credits<cost){if(!T.ai)log(team,'Not enough money to recruit locals.','w');return;}
-  const k=t.mil.length,q=nearestPassXY('ground',t.x+(k%2?30:-30),t.y+14+k*7)||[t.x,t.y];const u=addUnit(team,'inf',q[0],q[1]);if(!u)return;
-  u.s=Object.assign({},u.s,{name:MIL_NAME[T.fac]||'Local Militia',hp:Math.round(u.s.hp*HM.MIL_HP),cost:cost});u.hp=u.max=u.s.hp;u.mil=t.i+1;t.mil.push(u);t.milR=G.t+HM.MIL_CD;T.credits-=cost;
+  const u=milMake(t,team,cost);if(!u)return;t.milR=G.t+HM.MIL_CD;T.credits-=cost;
   if(!T.ai)log(team,`${u.s.name} join us in ${t.name} ($${cost}).`,'g');}
 function bribePrice(t,team){const un=Math.min(100,Math.max(HM.BRIB_UN,t.un)),f=1.15-.55*(un-HM.BRIB_UN)/(100-HM.BRIB_UN);let p=(t.ham?HM.BRIB_H:HM.BRIB_T)*f*(G.bs||1);if(turfOf(t.ow)>0)p*=HM.TURF.brib;return Math.round(p/10)*10;}
 function bribeOk(t,team){const T=G.teams[team];return !!(t&&T&&!T.out&&!T.reb&&t.ow>=0&&!ally(t.ow,team)&&!(t.reb>G.t)&&t.un>=HM.BRIB_UN&&G.t>=G.setupEnd&&G.t>=(T.brT||0)&&G.conq);}
@@ -1493,7 +1506,7 @@ function updOil(dt){const N=G.teams.length;const here=OIL_HERE.length===N?OIL_HE
   econTick(dt);}
 // income buildings pay every 2 seconds; a team's extra ones earn less each
 // Sanctions: income multiplier for a team (1 normally; 0.8 while sanctioned, 0.92 with Smuggling Routes). T.sanc = sim time it ends.
-function incMul(T){return T.sanc>G.t?(T.upg.smug?.92:.8):1;}
+function incMul(T){return (T.sanc>G.t?(T.upg.smug?.92:.8):1)*polMul(T);}
 function econTick(dt){G.ecT=(G.ecT||0)+dt;if(G.ecT<2)return;G.ecT-=2;for(const T of G.teams)if(T.sanc>G.t&&T.upg.smug&&!T.dummy)T.credits+=6;  // smuggling trickle: 3 cash/s while sanctioned
 const per={};for(const b of G.ents){if(b.dead||!b.isB||b.kind!=='econ'||b.built<1)continue;const k=per[b.team]=(per[b.team]||0)+1;const T=G.teams[b.team];if(T.dummy)continue;
   const v=b.s.inc*2*(ECON_RATE[k-1]||0)*((b.dis||0)>G.t?0:1)*incMul(T);b.acc=(b.acc||0)+v;const w=Math.floor(b.acc);if(w>0){b.acc-=w;T.credits+=w;}}}
@@ -1530,7 +1543,7 @@ function infraInit(){const M=G.map,N=G.N;if(!G.conq)return;
   for(const p of (M.plants||[])){const o={x:p.x,y:p.y,owner:(p.home>=0&&p.home<N)?p.home:-1,cp:new Array(N).fill(0),inc:0,pw:1,home:p.home};o.i=G.oil.length;o.hp=o.max=PW_HP;o.dead=false;o.burn=0;o.rep=0;G.oil.push(o);o.tg=oilTarget(o);o.tg.kind='plant';o.tg.s.name='Power plant';if(o.home>=0&&o.home<N)G.pgrid[o.home]=1;}}
 function oilNm(o){return o.pw?'power plant':'oil derrick';}
 function milNm(){return 'local militia';}
-function gridOn(team){for(const o of G.oil)if(o.pw&&!o.dead&&o.owner>=0&&ally(o.owner,team))return true;return false;}
+function gridOn(team){for(const o of G.oil)if(o.pw&&!o.dead&&!(o.sab>G.t)&&o.owner>=0&&ally(o.owner,team))return true;return false;}
 function powerOut(team){return !!(G.conq&&G.pgrid&&G.teams[team]&&!G.teams[team].reb&&G.pgrid.some((v,i)=>v&&ally(i,team))&&!gridOn(team));}
 function fuelDry(team){const T=G.teams[team];return !!(T&&G.conq&&T.fuel!=null&&T.fuel<=0);}
 function infraTick(dt){if(MODE==='client'||!G.conq||!G.oil)return;

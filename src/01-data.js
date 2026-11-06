@@ -10,6 +10,12 @@ const WEATHER={clear:{name:'Clear',vis:1,acc:1,spd:1,air:1},
   sandstorm:{name:'Sandstorm',vis:.55,acc:.8,spd:.88,air:0,tip:'Sandstorm: vision and accuracy slashed, jets grounded, helicopters and drones struggle.'},
   snow:{name:'Snow',vis:.8,acc:.92,spd:.9,air:.8,tip:'Deep snow slows ground units; vision and aircraft are a little worse.'},
   blizzard:{name:'Blizzard',vis:.6,acc:.85,spd:.8,air:0,tip:'Blizzard: snow slows everything, jets grounded, vision cut.'}};
+// Seasons (2026-11-06): the lobby 'Conditions' value w carries the weather/time-of-day in its ones digit (0-9, or -1 random) and the
+// season in its tens digit: 0 = the map's own default, 1 = Summer, 2 = Autumn mud, 3 = Winter snow. Same value on host, clients and server.
+function wxBase(w){w|=0;return w<0?-1:w%10;}
+function wxSsn(w){w|=0;return Math.min(3,(w<0?((-1-w)/10)|0:(w/10)|0));}
+function wxJoin(base,ssn){base|=0;ssn|=0;return base<0?-1-10*ssn:base+10*ssn;}
+const SEASONS=['Map default','Summer','Autumn mud','Winter snow'];
 function weatherKinds(theme){return theme==='snow'?['clear','blizzard','fog']:theme==='green'?['clear','rain','fog']:['clear','sandstorm','fog'];}
 // A duel is fought on a field 1.3x the 3200x2200 design (about 300 infantry-lengths across, like a classic RTS 1v1
 // map); each extra player adds room (8 players: 2.26x).
@@ -55,7 +61,7 @@ const BASE={
   tank:{cls:'tank',hp:600,spd:58,rng:200,dmg:55,rof:1.6,wpn:'cannon',cost:800,time:10,from:'factory',armor:'heavy',r:14,dom:'ground'},
   arty:{cls:'arty',hp:280,spd:40,rng:420,dmg:72,rof:4,wpn:'shell',splash:55,minr:90,cost:1000,time:12,from:'factory',armor:'heavy',r:13,dom:'ground'},
   drone:{cls:'drone',hp:80,spd:125,rng:24,dmg:240,rof:1,wpn:'boom',splash:65,cost:350,time:5,from:'factory',armor:'air',r:8,dom:'air',alt:'low'},
-  heli:{cls:'heli',hp:430,spd:95,rng:235,dmg:46,rof:1.25,wpn:'at',cost:1300,time:14,from:'airfield',armor:'air',r:14,dom:'air',alt:'low'},
+  heli:{cls:'heli',dip:1,sonar:240,hp:430,spd:95,rng:235,dmg:46,rof:1.25,wpn:'at',cost:1300,time:14,from:'airfield',armor:'air',r:14,dom:'air',alt:'low'},
   jet:{cls:'jet',hp:320,spd:240,rng:250,dmg:230,rof:.55,wpn:'bomb',splash:40,ammo:2,cost:1600,time:16,from:'airfield',armor:'air',r:14,dom:'air',alt:'high'},
   // Transports: carry troops (and, by sea, vehicles). Board by clicking the transport with units selected;
   // select the transport and press Unload. Destroyed transports take their passengers with them.
@@ -64,7 +70,12 @@ const BASE={
   boat:{cls:'boat',sonar:170,hp:460,spd:92,rng:220,dmg:14,rof:.35,wpn:'gun',aa:2,cost:700,time:9,from:'shipyard',armor:'heavy',r:14,dom:'naval'},
   // Submarine: stealthy (hidden until it fires or an enemy ship / boat / coastal battery's sonar is close); torpedoes hit ships only.
   sub:{name:'Submarine',cls:'sub',hp:560,spd:54,rng:340,dmg:200,rof:5,wpn:'torp',splash:30,minr:50,cost:1500,time:16,from:'shipyard',armor:'heavy',r:18,dom:'naval',stealth:true,sub:1,sonar:230,navalOnly:1},
-  ship:{cls:'ship',sonar:300,hp:1400,spd:48,rng:540,dmg:90,rof:3.5,wpn:'shell',splash:62,minr:110,cost:2200,time:22,from:'shipyard',armor:'heavy',r:26,dom:'naval'},
+  // Navy 2: fast attack craft (cheap swarm boat: guns/rockets, +dmg per nearby sister boat; ships' CIWS and helicopters shred them),
+  // minelayer (F+click = lay mines along its path), minesweeper (finds and clears mines). Same stats for every nation.
+  fast:{name:'Fast Attack Craft',cls:'boat',hp:220,spd:132,rng:200,dmg:9,rof:.28,wpn:'gun',aa:1,cost:450,time:6,from:'shipyard',armor:'heavy',r:11,dom:'naval',swarm:1},
+  minel:{name:'Minelayer',cls:'boat',hp:520,spd:68,rng:0,dmg:0,rof:1,cost:800,time:10,from:'shipyard',armor:'heavy',r:16,dom:'naval',noAttack:1,minelay:1},
+  sweep:{name:'Minesweeper',cls:'boat',hp:420,spd:62,rng:0,dmg:0,rof:1,cost:650,time:9,from:'shipyard',armor:'heavy',r:15,dom:'naval',noAttack:1,sweep:1,mdet:260},
+  ship:{cls:'ship',sonar:300,hp:1400,spd:48,rng:540,dmg:90,rof:3.5,wpn:'shell',splash:62,minr:110,cost:2200,time:22,from:'shipyard',armor:'heavy',r:26,dom:'naval',door:{rng:240,dmg:12,rof:.2,wpn:'gun',aa:2}},
 };
 const STRUCT={
   hq:{name:'Command HQ',hp:3000,size:90,cost:2000,time:30},
@@ -76,6 +87,7 @@ const STRUCT={
   sam:{name:'SAM Site',hp:650,size:34,cost:700,time:7,req:'barracks',rng:400,dmg:80,rof:1.5,wpn:'missile',aa:2,ground:false},
   coast:{name:'Coastal Missile Battery',hp:800,size:34,cost:1000,time:12,req:'barracks',shore:true,rng:520,dmg:150,rof:3.4,wpn:'missile',aa:0,navalOnly:1,sonar:260,desc:'Anti-ship missiles for the shore: hits warships, boats and landing craft (and spots submarines nearby), nothing else. Build it on the coast.'},
   tunnel:{name:'Tunnel Network',hp:900,size:40,cost:600,time:9,req:'barracks',rng:220,dmg:14,rof:.45,wpn:'gun',aa:1},
+  radio:{name:'Radio & TV Station',hp:1100,size:44,cost:1500,time:14,req:'barracks',limit:2,desc:'Broadcasts to the towns around it: your towns grow more loyal, enemy towns in range grow restless. Unlocks Leaflet Drops on enemy towns. Fragile - bomb the enemy one.'},
   uplink:{name:'Strike Center',hp:1800,size:70,cost:2500,time:20,req:'factory'},
   // Supply Depot: a forward drop-off point. Supply trucks unload at the nearest depot or HQ instead of driving home.
   depot:{name:'Supply Depot',hp:1000,size:54,cost:600,time:8,desc:'Supply trucks unload here instead of driving back to the HQ. Build one beside a far supply field. Also refills ammo of troops near it.'},
@@ -86,6 +98,16 @@ const STRUCT={
   econ:{name:'Revenue Center',hp:1100,size:58,cost:2000,time:25,req:'factory',inc:3.5,limit:4,desc:'Earns a slow, steady income: $210 a minute for the first, less for each extra one (max 4). Pays for itself in about 10 minutes.'},
   fort:{name:'Mountain Fortress',hp:5000,size:50,cost:2600,time:30,req:'factory',limit:1,rng:240,dmg:20,rof:.4,wpn:'gun',aa:1,desc:'One per player. A rock-cut bunker that works like a tunnel (units go in and come out of any tunnel) but holds 12 more units. Nothing can damage it except a Bunker Buster.'},
 };
+/* ---- POLITICS & INTEL (Abdullah 2026-11-05 18:55; orch/reports/politics-intel.md): spies, decoys, radio station, world opinion ---- */
+// Spy: disguised (hidden to the enemy like a stealth unit) until it acts or enemy infantry / a loyal town spots it. Same price for every nation.
+BASE.spy={name:'Infiltrator',cls:'inf',hp:70,spd:52,rng:0,dmg:0,rof:1,cost:1200,time:40,from:'barracks',armor:'light',r:7,dom:'ground',noAttack:true,stealth:true,spy:true,limit:2};
+// Decoys: inflatable / plywood fakes. They keep the real unit's look, name, size and speed (see stats()) but die in one hit and never fire.
+for(const [k,real,nm,cost] of [['dtank','tank','Decoy Tank',150],['dsam','aa','Decoy SAM Truck',120],['darty','arty','Decoy Artillery',150]])
+  BASE[k]=Object.assign({},BASE[real],{name:nm,hp:1,dmg:0,rng:0,rof:1,aa:0,ground:true,splash:0,minr:0,wpn:undefined,cost,time:5,from:'factory',noAttack:true,fake:real,limit:4});
+const POL={START:62,SANC_BELOW:38,SANC_MAX:.25,AID_ABOVE:72,AID_MAX:160,AID_EVERY:60,CLEAN_AFTER:45,CLEAN_RATE:.05,COLL:.07,CIVIC:1.5,REF:2,EXT:.025,
+  SPY_SPOT:70,SPY_ACT:46,SPY_STEAL:.15,SPY_STEAL_MAX:2000,SPY_CD:80,SPY_SAB_T:75,SPY_BRIBE:40,SPY_BRIBE_COST:350,SPY_EXPOSE:12,DEC_SPOT:55,
+  RAD_R:1100,RAD_LOY:-.45,RAD_UN:.55,LEAF_COST:300,LEAF_CD:100,LEAF_T:60,LEAF_UN:.9,LEAF_R:3200,
+  REF_R:1100,REF_MAX:10,REF_SLOW:.55,REF_LIFE:75,MIL_AUTO_CD:90,MIL_AUTO_UN:72,INS_UN:78,INS_CAP:2};
 // Classic RTS proportions (Command & Conquer / StarCraft): chunky readable infantry, tanks ~2.7x a soldier,
 // structures a little larger than the original game pieces.
 const BSC=1.15;for(const k in STRUCT)if(k!=='garrison')STRUCT[k].size=Math.round(STRUCT[k].size*BSC);
@@ -98,7 +120,7 @@ const ECON={US:'Arms Export Office',TR:'Grand Bazaar',IL:'Tech Startup Hub',EU:'
   SA:'Oil Ministry Office',AE:'Free Trade Zone',PK:'Textile Mill',IN:'IT Services Park',CN:'Export Factory',KP:'Overseas Labour Bureau',KR:'Electronics Plant',EG:'Suez Canal Toll House',
   CU:'Cigar Factory',RS:'Khums Treasury',DW:'Coffee Roastery'};
 const ECON_RATE=[1,.75,.55,.4];
-const BUILD_ORDER=['barracks','depot','econ','factory','airfield','shipyard','coast','turret','sam','tunnel','fort','uplink','hq'];
+const BUILD_ORDER=['barracks','depot','econ','factory','airfield','shipyard','coast','turret','sam','tunnel','fort','radio','uplink','hq'];
 const CATS=['hq','barracks','factory','airfield','shipyard'];
 const VS={
   gun:{light:1,heavy:.3,bld:.2,air:.5}, at:{light:.45,heavy:1.6,bld:1.1,air:1}, cannon:{light:.7,heavy:1.2,bld:1,air:0},
@@ -213,7 +235,7 @@ const COUNTER={inf:'Beats AT teams and other infantry · Loses to tanks and arti
   drone:'Explodes on groups of vehicles and infantry · Loses to AA and rifle fire',heli:'Beats tanks and vehicles · Loses to AA and AT teams',jet:'Bombs buildings and vehicles · Loses to SAM sites and AA',
   boat:'Beats boats and helicopters near water · Loses to warships',ship:'Shells coasts and boats from long range · Loses to boats up close and aircraft'};
 const SHIA={IR:1,RS:1,DW:1};
-function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),'champ',...(SHIA[fac]||fac==='KP'?['cleric']:[])],factory:['aa','tank','arty',...(F.extra||[]),...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift'],shipyard:F.noShip?['boat','lander']:['boat','sub','ship','lander']};}
+function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),'champ',...(SHIA[fac]||fac==='KP'?['cleric']:[]),'spy'],factory:['aa','tank','arty',...(F.extra||[]),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift'],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
 function allUnits(fac){const r=roster(fac);return CATS.flatMap(c=>r[c]);}
 function bldAllowed(fac,k){if(k==='econ'&&typeof G!=='undefined'&&G&&G.conq)return false;   /* Conquest: the Revenue Center is gone - territory pays
   */if(k==='tunnel'||k==='fort')return !!FACTIONS[fac].tunnels;return !(k==='airfield'&&FACTIONS[fac].noAir);}
@@ -242,28 +264,41 @@ function upgMatch(c,s,b){if(b)return c==='bld';switch(c){case 'all':return true;
 // perk.fx uses the upgrade format [stat, unit group, value] (folded into upgAgg); perk.cost = [group, multiplier] cheaper units/buildings; the rest are special-cased in 03-sim by key
 const GDOC={
  arm:{name:'Armour',short:'ARM',blurb:'Tanks and vehicles: faster production, tougher hulls, tank-hunter ambushes',perks:[
-  {k:'a1',name:'Assembly Line',desc:'Vehicles build 25% faster',fx:[['build','veh',.75]]},
-  {k:'a2',name:'Reactive Plating',desc:'Vehicles take 15% less damage',fx:[['taken','veh',.85]]},
-  {k:'a3',name:'Tank-Hunter Ambush',desc:'Tanks holding still or sitting in cover deal 25% more damage'},
-  {k:'a4',name:'Gun Stabilisers',desc:'Tanks shoot 12% faster and 10% farther, vehicles +8% damage',fx:[['rof','tank',.88],['rng','tank',1.1],['dmg','veh',1.08]]}]},
+  {k:'a1',t:1,name:'Assembly Line',desc:'Vehicles build 25% faster',fx:[['build','veh',.75]]},
+  {k:'a2',t:2,req:'a1',name:'Reactive Plating',desc:'Vehicles take 15% less damage',fx:[['taken','veh',.85]]},
+  {k:'a3',t:2,req:'a1',name:'Tank-Hunter Ambush',desc:'Tanks holding still or sitting in cover deal 25% more damage'},
+  {k:'a4',t:3,req:'a3',name:'Gun Stabilisers',desc:'Tanks shoot 12% faster and 10% farther, vehicles +8% damage',fx:[['rof','tank',.88],['rng','tank',1.1],['dmg','veh',1.08]]},
+  {k:'a5',t:3,req:'a2',name:'Iron Fist',desc:'Vehicles have 10% more health and move 5% faster',fx:[['hp','veh',1.1],['spd','veh',1.05]]}]},
  gue:{name:'Guerrilla',short:'GUE',blurb:'Infantry swarms: cheap, hidden, booby-trapped',perks:[
-  {k:'g1',name:'Cheap Recruits',desc:'Infantry cost 15% less',cost:['inf',.85]},
-  {k:'g2',name:'Hidden Ambush',desc:'Infantry holding still or in cover deal 25% more damage',},
-  {k:'g3',name:'Booby Traps',desc:'Idle infantry quietly lay hidden mines (up to 8)'},
-  {k:'g4',name:'Hit and Run',desc:'Infantry move 10% faster and take 5% less damage',fx:[['spd','inf',1.1],['taken','inf',.95]]}]},
+  {k:'g1',t:1,name:'Cheap Recruits',desc:'Infantry cost 15% less',cost:['inf',.85]},
+  {k:'g2',t:2,req:'g1',name:'Hidden Ambush',desc:'Infantry holding still or in cover deal 25% more damage'},
+  {k:'g3',t:2,req:'g1',name:'Booby Traps',desc:'Idle infantry quietly lay hidden mines (up to 8)'},
+  {k:'g4',t:3,req:'g2',name:'Hit and Run',desc:'Infantry move 10% faster and take 5% less damage',fx:[['spd','inf',1.1],['taken','inf',.95]]},
+  {k:'g5',t:3,req:'g3',name:'Dug In',desc:'Infantry have 10% more health',fx:[['hp','inf',1.1]]}]},
  air:{name:'Air',short:'AIR',blurb:'Airfields, recon flights and air superiority',perks:[
-  {k:'i1',name:'Cheap Airfields',desc:'Airfields cost 30% less',cost:['airfield',.7]},
-  {k:'i2',name:'Recon Flights',desc:'Every 75 seconds a recon flight reveals an enemy area for 10 seconds'},
-  {k:'i3',name:'Air Superiority',desc:'Aircraft deal 15% more damage and have 10% more health',fx:[['dmg','air',1.15],['hp','air',1.1]]},
-  {k:'i4',name:'Quick Turnaround',desc:'Aircraft cost 15% less and build 15% faster',cost:['air',.85],fx:[['build','air',.85]]}]},
+  {k:'i1',t:1,name:'Cheap Airfields',desc:'Airfields cost 30% less',cost:['airfield',.7]},
+  {k:'i2',t:2,req:'i1',name:'Recon Flights',desc:'Every 75 seconds a recon flight reveals an enemy area for 10 seconds'},
+  {k:'i3',t:2,req:'i1',name:'Air Superiority',desc:'Aircraft deal 15% more damage and have 10% more health',fx:[['dmg','air',1.15],['hp','air',1.1]]},
+  {k:'i4',t:3,req:'i3',name:'Quick Turnaround',desc:'Aircraft cost 15% less and build 15% faster',cost:['air',.85],fx:[['build','air',.85]]},
+  {k:'i5',t:3,req:'i2',name:'Long-Range Sensors',desc:'Aircraft weapons reach 10% farther',fx:[['rng','air',1.1]]}]},
  art:{name:'Artillery',short:'ART',blurb:'Guns that see everything: counter-battery radar and creeping barrage',perks:[
-  {k:'r1',name:'Counter-Battery Radar',desc:'Your artillery spots enemy guns the moment they fire'},
-  {k:'r2',name:'Creeping Barrage',desc:'Artillery shells burst 25% wider',fx:[['splash','arty',1.25]]},
-  {k:'r3',name:'Rapid Reload',desc:'Artillery reloads 12% faster and reaches 8% farther',fx:[['rof','arty',.88],['rng','arty',1.08]]},
-  {k:'r4',name:'Gun Foundry',desc:'Artillery costs 15% less',cost:['arty',.85]}]}};
+  {k:'r1',t:1,name:'Counter-Battery Radar',desc:'Your artillery spots enemy guns the moment they fire'},
+  {k:'r2',t:2,req:'r1',name:'Creeping Barrage',desc:'Artillery shells burst 25% wider',fx:[['splash','arty',1.25]]},
+  {k:'r3',t:2,req:'r1',name:'Rapid Reload',desc:'Artillery reloads 12% faster and reaches 8% farther',fx:[['rof','arty',.88],['rng','arty',1.08]]},
+  {k:'r4',t:3,req:'r3',name:'Gun Foundry',desc:'Artillery costs 15% less',cost:['arty',.85]},
+  {k:'r5',t:3,req:'r2',name:'Heavy Shells',desc:'Artillery shells hit 10% harder',fx:[['dmg','arty',1.1]]}]}};
 const GDOC_KEYS=Object.keys(GDOC);
 const GDOC_AI={US:'arm',RU:'art',IL:'air',IR:'gue',TR:'air',EU:'arm',UA:'art',SA:'air',AE:'air',PK:'arm',IN:'arm',CN:'art',KP:'art',KR:'art',EG:'arm',CU:'gue',RS:'gue',DW:'gue'};
 const GDOC_PERKS={};for(const d in GDOC)for(const p of GDOC[d].perks){p.doc=d;GDOC_PERKS[p.k]=p;}
+/* Doctrine TREES (command-teams, Abdullah 2026-11-05): tier 1 root, two tier-2 branches, a tier-3 capstone on each branch (a perk needs the one it hangs from).
+   The same numbers for every nation; a nation only changes the NAME of some perks (GDOC_FLV). Only ~4 rank points exist, so a general walks one branch. */
+const GDOC_FLV={US:{a1:'Detroit Assembly Line',a4:'Abrams Fire Control',i3:'Top Gun Doctrine',r4:'Redstone Foundry'},RU:{a1:'Uralvagonzavod Line',a5:'Kontakt Armour',r1:'Zoopark Radar',r5:'God of War Shells'},
+  CN:{a1:'Type-Line Production',r5:'Rocket Force Shells',g1:'People\'s War Recruits',g5:'Tunnel Warfare'},IR:{g3:'Hidden Mine Belts',g4:'Fast Attack Tactics',g5:'Hardened Positions',i2:'Drone Reconnaissance'},
+  RS:{g3:'Mountain Booby Traps',g4:'Ambush and Fade',g5:'Dug-In Fighters'},DW:{g3:'Wadi Booby Traps',g4:'Raid and Vanish',g5:'Terrain Masters'},
+  IL:{i2:'Aerial Reconnaissance',i3:'Air Dominance',i4:'Rapid Rearm',a3:'Merkava Ambush'},TR:{i2:'Drone Reconnaissance',a1:'Domestic Production Line'},KP:{r2:'Massed Barrage',r5:'Heavy Shell Stocks',g1:'Mass Mobilisation'},
+  UA:{g2:'Partisan Ambush',r1:'Counter-Battery Network',r3:'Rapid Fire Drills'},KR:{r3:'K9 Fire Drills',r4:'Domestic Foundry'},IN:{a1:'Arjun Production Line'},PK:{a2:'Al-Khalid Plating'}};
+function gdName(fac,p){const f=GDOC_FLV[fac];return (f&&f[p.k])||p.name;}
+function gdReq(T,p){return !p.req||gdHas(T,p.req);}
 const GDOC_LATE=120;   // doctrine can be picked / changed until this many seconds into the battle
 function gdHas(T,k){return !!(T&&T.gperk&&T.gperk[k]);}
 function gdCostK(T,s,b,kind){if(!T||!T.gdoc)return 1;let m=1;const D=GDOC[T.gdoc];if(!D)return 1;for(const p of D.perks){if(!p.cost||!gdHas(T,p.k))continue;const g=p.cost[0];if(b?g===kind:(g==='air'?s.dom==='air':upgMatch(g,s,false)))m*=p.cost[1];}return m;}
@@ -387,14 +422,16 @@ const sc={};
 const SUBN={US:'Virginia-class Submarine',TR:'Preveze-class Submarine',IL:'Dolphin-class Submarine',EU:'Barracuda-class Submarine',UA:'Kilo-class Submarine',RU:'Yasen-class Submarine',IR:'Ghadir Midget Submarine',SA:'Type 209 Submarine',AE:'Scorpene Submarine',PK:'Agosta 90B Submarine',IN:'Kalvari-class Submarine',CN:'Type 039 Yuan Submarine',KP:'Romeo-class Submarine',KR:'Son Won-il Submarine',EG:'Type 209/1400 Submarine',CU:'Foxtrot Submarine'};
 const MDN={US:'Patriot Battery',IL:'Iron Dome Battery',RU:'S-400 Triumf',CN:'HQ-9 Battery',IN:'Akash Battery',TR:'Hisar Battery',KR:'KM-SAM Battery',IR:'Bavar-373 Battery',EU:'SAMP/T Battery',UA:'NASAMS Battery',SA:'THAAD Battery',AE:'THAAD Battery',PK:'HQ-16 Battery',KP:'KN-06 Battery',EG:'S-300 Battery',CU:'S-125 Pechora Battery',RS:'Sayyad-4B Battery',DW:'Khordad-15 Battery'};   // Conquest: SAM sites are every nation's missile defence (they intercept part of a strike salvo)
 const COASTN={US:'Naval Strike Missile Battery',TR:'Atmaca Coastal Battery',IL:'Gabriel Coastal Battery',EU:'Exocet MM40 Battery',UA:'Neptune Coastal Battery',RU:'Bastion-P Coastal Battery',IR:'Noor / Qader Coastal Missiles',SA:'Harpoon Coastal Battery',AE:'Exocet Coastal Battery',PK:'Zarb Coastal Battery',IN:'BrahMos Coastal Battery',CN:'YJ-62 Coastal Battery',KP:'Kumsong Coastal Battery',KR:'Haeseong Coastal Battery',EG:'Otomat Coastal Battery',CU:'P-15 Termit Battery',RS:'Mountain Anti-Ship Rockets',DW:'Coffee Coast Rocket Battery'};
+const FASTN={IR:'Swarm Boat',RS:'Coastal Swarm Boat',DW:'Red Sea Skiff',US:'Patrol Boat',RU:'Raptor Patrol Boat',CN:'Type 022 Missile Boat',KP:'Sohae Rocket Boat',TR:'Fast Attack Craft',IL:'Shaldag Patrol Boat',UA:'Gunboat'};
+for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
 function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
-  const s=Object.assign({},BASE[kind],(F.units||{})[kind]||{});s.kind=kind;if(kind==='cleric'&&fac==='KP')s.name='Dear Leader';{const X=(XL[fac]||{})[kind];if(X)for(const q in X)if(s[q]!=null)s[q]*=X[q];if(X)s.xl=1;}const inf=s.armor==='light',veh=s.armor==='heavy'||s.cls==='heli'||s.cls==='jet';
+  const s=Object.assign({},BASE[kind],(F.units||{})[kind]||{});s.kind=kind;if(s.fake){const rs=stats(fac,s.fake);s.name=rs.name;s.r=rs.r;s.spd=rs.spd;s.cls=rs.cls;s.armor=rs.armor;s.hpShow=rs.hp;}if(kind==='cleric'&&fac==='KP')s.name='Dear Leader';{const X=(XL[fac]||{})[kind];if(X)for(const q in X)if(s[q]!=null)s[q]*=X[q];if(X)s.xl=1;}const inf=s.armor==='light',veh=s.armor==='heavy'||s.cls==='heli'||s.cls==='jet';
   let c=s.cost*(m.cost||1);if(inf)c*=(m.infCost||1);const B=BAL[fac];if(B)c*=(B._||1)*(B[kind]||1);s.cost=Math.round(c/25)*25;if(kind==='champ')s.cost=BASE.champ.cost;if(inf)s.time*=(m.infTime||1);
-  s.hp=Math.round(s.hp*(m.hp||1)*(veh?(m.vehHp||1):1));if(m.spd&&s.dom!=='air')s.spd*=m.spd;{const D=DOCT[fac]||{};if(D.barrage&&s.cls==='arty'){s.rng*=1.15;if(s.splash)s.splash*=1.3;s.rof*=.85;s.cost=Math.round(s.cost*.85/25)*25;}if(D.covert&&(s.cls==='inf'||s.cls==='at')&&s.dom==='ground'&&kind!=='hacker')s.camo=1;if(D.shock&&s.armor==='heavy'&&s.dom==='ground')s.spd*=1.1;}s.dmg*=(m.dmg||1);s.aggro=kind==='drone'?290:s.rng+90;if(s.aa===undefined)s.aa=0;return sc[k]=s;}
+  s.hp=Math.max(1,Math.round(s.hp*(m.hp||1)*(veh?(m.vehHp||1):1)));if(m.spd&&s.dom!=='air')s.spd*=m.spd;{const D=DOCT[fac]||{};if(D.barrage&&s.cls==='arty'){s.rng*=1.15;if(s.splash)s.splash*=1.3;s.rof*=.85;s.cost=Math.round(s.cost*.85/25)*25;}if(D.covert&&(s.cls==='inf'||s.cls==='at')&&s.dom==='ground'&&kind!=='hacker')s.camo=1;if(D.shock&&s.armor==='heavy'&&s.dom==='ground')s.spd*=1.1;}s.dmg*=(m.dmg||1);s.aggro=kind==='drone'?290:s.rng+90;if(s.aa===undefined)s.aa=0;return sc[k]=s;}
 function bstats(fac,kind){const k=fac+'#'+kind;if(sc[k])return sc[k];const m=FACTIONS[fac].mods||{};const s=Object.assign({},STRUCT[kind]);s.kind=kind;if(kind==='coast'&&COASTN[fac])s.name=COASTN[fac];if(kind==='sam'&&MDN[fac])s.name=MDN[fac];{const X=(XLB[fac]||{})[kind];if(X){for(const q in X)if(s[q]!=null)s[q]*=X[q];s.xl=1;}}
   if(kind==='econ'&&ECON[fac])s.name=ECON[fac];if(kind==='uplink'&&UPLINK[fac])s.name=UPLINK[fac][0];s.hp=Math.round(s.hp*(m.bldHp||1));s.cost=kind==='econ'?s.cost:Math.round(s.cost*(m.cost||1)/25)*25;if(s.dmg)s.dmg*=(m.dmg||1);s.aa=s.aa||0;s.armor='bld';return sc[k]=s;}
-const BH={garrison:18,econ:30,depot:19,tunnel:12,fort:16,hq:39,barracks:26,factory:34,airfield:19,shipyard:20,coast:12,turret:12,sam:12,uplink:30};
+const BH={garrison:18,econ:30,depot:19,tunnel:12,fort:16,radio:30,hq:39,barracks:26,factory:34,airfield:19,shipyard:20,coast:12,turret:12,sam:12,uplink:30};
 function lerpA(a,b,t){const d=((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;return a+d*Math.min(1,t);}
 const KINDS=[...Object.keys(BASE),...Object.keys(STRUCT)];
 function shade(hex,f){const n=parseInt(hex.slice(1),16);const r=(n>>16)*f,g=(n>>8&255)*f,b=(n&255)*f;return `rgb(${Math.min(255,r)|0},${Math.min(255,g)|0},${Math.min(255,b)|0})`}
