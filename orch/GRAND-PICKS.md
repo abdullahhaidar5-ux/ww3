@@ -32,6 +32,8 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       end) or Standard.
 
 ## Stage 2 (grand2 — empire economy)
+- [ ] **Province autonomy** (Abdullah 21:20, EU4): raise/lower autonomy per province — high autonomy = less tax & manpower
+      but much calmer (good for restless conquests); lowering it takes time and raises unrest.
 - [ ] **Trade routes & merchants** (Abdullah 21:16, EU4-style): money flows between regions along trade routes (through
       straits/chokepoints); send merchants to steer the flow toward your provinces; blockades and embargoes cut it.
 - [ ] **City upgrade chains** (Total War-style): cities grow through tiers and you choose what each becomes (industrial,
@@ -41,6 +43,10 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 - [ ] Oil-prize regions feed the oil market/fuel economy.
 
 ## Stage 3 (grand3 — military)
+- [ ] **Fort zones of control** (Abdullah 21:20, EU4): forts and Mountain Fortresses stop enemy armies moving past them into
+      the provinces behind until the fort is taken or besieged.
+- [ ] **Supply limits**: each province can feed only so many troops (by terrain, development, season, roads); bigger stacks
+      take attrition unless supplied by depots/convoys/rail — keeps doom-stacks in check.
 - [ ] **Regiment histories** (Abdullah 21:16): armies keep names, battle honours and traditions that give small bonuses as
       they survive campaigns (shown on the army card; carried into Fight-it battles as veterancy flavour).
 - [ ] **Bunker Buster** (Abdullah 20:58, moved out of battles): a grand-map strike on a province — wrecks fortified buildings
@@ -67,7 +73,20 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 - [ ] **European Union alliance** (Abdullah 2026-11-05 19:54): the EU is no longer a nation; it's a joinable alliance for European
       nations (members get a joint-operations bonus: shared vision/supply, cheaper allied aid), with membership rules in diplomacy.
 
+## Stage 4b (grand4b — diplomacy & government, Abdullah 21:20; also finishes anything left unticked in Stage 4)
+- [ ] **Call to arms & favours**: allies get called into your wars; helping them earns favours you spend to make them join.
+- [ ] **Trust & reputation**: keeping deals builds trust; breaking truces/betraying allies wrecks it — nobody signs with you.
+- [ ] **Great power ranking**: the top 8 nations by score are Great Powers (extra diplomatic weight, rivalries, can intervene).
+- [ ] **Annex client states**: loyal client states can be peacefully absorbed after enough turns.
+- [ ] **Government reforms**: a reform tree per government type (republic, monarchy, theocracy, party state…), nation flavour,
+      equal total value; ties into national laws and regime legitimacy.
+- [ ] **Prestige**: victories and great deeds raise it (better diplomacy & morale); humiliation lowers it.
+- [ ] **Hegemonies**: military / economic / naval hegemon bonuses while you hold the top spot.
+
 ## Stage 6 (grand6 — hidden war, home front)
+- [ ] **Cultures & acceptance** (Abdullah 21:20): provinces whose culture isn't accepted are less loyal until you accept it
+      (costs points/time; limited slots); neutral, respectful framing.
+- [ ] **Regime legitimacy**: a legitimacy bar for your government; low legitimacy feeds unrest, factions and coups.
 - [ ] **Overextension** (Abdullah 21:16): conquering too much at once raises unrest and admin strain until provinces are
       integrated (turns + garrison/civics); ties into occupation choices and coalitions.
 - [ ] **Politics at home**: fictional parties / factions and elections or regime-stability checks shift policies and laws over
@@ -86,6 +105,13 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 - [ ] **Reconstruction:** rebuild war-torn provinces (destroyed buildings, wrecked towns from battles) for loyalty, tax and world
       opinion.
 
+## Stage 5 addition
+- [ ] **Map modes** (Abdullah 21:20): political, terrain, trade, supply, unrest, culture, alliances, development (one switcher).
+
 ## Integration 2
+- [ ] **Ledger** (Abdullah 21:20): statistics screen comparing all nations (army size, income, provinces, war history, graphs
+      over time).
+- [ ] **Outliner**: side list of all your armies, fleets, sieges and build queues for quick control.
+- [ ] **Pause on events**: settings for which events pause the game / pop up (war declared, revolt, province lost…).
 - [ ] **Advisor tips:** optional chief-of-staff hints on the grand map ("province 12 will revolt", "your east is undefended",
       "this strait closing will hurt your oil income"), toggle in Settings.
