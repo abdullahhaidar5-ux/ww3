@@ -26,13 +26,10 @@ console.log('open ms', Date.now() - t0, 'g3', await ev(() => GV.g3), 'trees', aw
 const view = (x, z, d, yaw = 0, pitch = .86) => ev(a => { Object.assign(G3.camera, { x: a[0], z: a[1], d: a[2], yaw: a[3], pitch: a[4] }); Object.assign(G3.cc, G3.camera); G3.moved = true; }, [x, z, d, yaw, pitch]);
 await shot('00-first'); console.log('errs', JSON.stringify(errs));
 
-const pv = n => ev(n => { const p = GCM.P.find(q => q.n === n); return p ? [p.x, p.y] : null; }, n);
-const cap = await ev(() => { const c = GC.nat.GB.cap, p = GCM.P[c]; return [p.x, p.y, p.n]; }); console.log('GB cap', cap);
-await view(cap[0], cap[1] + 20, 260); await shot('01-britain-capital');
-await view(cap[0], cap[1] + 30, 520); await shot('02-britain-wide');
-await ev(() => { GC.me='AU'; }); 
-const au = await ev(() => { const p = GCM.P.find(q => q.o==='AU'||q.own==='AU'); return p ? [p.x,p.y,p.n] : null; }); console.log('AU', au);
-if (au) { await view(au[0], au[1] + 30, 420); await shot('03-australia'); }
-const ca = await ev(() => { const p = GCM.P.find(q => q.o==='CA'||q.own==='CA'); return p ? [p.x,p.y,p.n] : null; }); console.log('CA', ca);
-if (ca) { await view(ca[0], ca[1] + 30, 420); await shot('04-canada'); }
+
+await ev(() => guFit(GR_REGIONS[1][1])); await shot('10-north-america');
+const us = await ev(() => { const p = GCM.P.find(q => q.n === 'Illinois'); return [p.x, p.y]; }); await view(us[0], us[1] + 20, 330); await shot('14-us-states');
+await ev(() => guFit(GR_REGIONS[3][1])); await shot('11-europe');
+const gb = await ev(() => { const p = GCM.P.find(q => q.n === 'Greater London'); return [p.x, p.y]; }); await view(gb[0], gb[1] + 15, 150); await shot('12-britain-close');
+const au = await ev(() => { const p = GCM.P.find(q => q.n==='New South Wales'); return [p.x,p.y]; }); await view(au[0]-80, au[1] + 30, 330); await shot('13-australia');
 console.log('errs', JSON.stringify(errs)); await browser.close(); server.close();
