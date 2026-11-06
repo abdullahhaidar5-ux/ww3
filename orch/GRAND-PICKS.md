@@ -190,3 +190,6 @@ Moved up: runs right after grand1. The grand map must look like a **Total War ca
 
 ## Home regions (nation-anglo, 2026-11-06)
 - **GB**: England, Scotland, Wales, N. Ireland as detailed provinces (London, Home Counties, Midlands, Scottish Lowlands/Highlands, Wales, Ulster) + Royal Navy bases (Portsmouth, Faslane). **AU**: Sydney/Brisbane/Melbourne/Perth/Darwin, Outback, Tasmania. **CA**: Ontario/Quebec, Maritimes, Prairies, BC, the Arctic north. Not yet added to the grand map data (stage owner: add detailed provinces).
+
+## Home regions (nation-frde, 2026-11-06)
+- **FR France**: home = metropolitan France (Île-de-France / Paris, Normandy & Brittany coast, Lorraine-Alsace on the Rhine, the Rhône–Provence axis, Toulon naval base); battle maps `rhine`, `aegean` list FR; a French-village town style is still to do (currently the shared `europe` look). **DE Germany**: home = Germany (Rhine-Ruhr, Bavaria, Saxony, Berlin-Brandenburg, Hamburg/Kiel coast); takes over the Fulda Gap and Rhine Front as home maps. Detailed grand-map provinces belong to the grand stage that builds the Europe theatre.

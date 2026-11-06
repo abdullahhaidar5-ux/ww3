@@ -903,6 +903,9 @@ const LOAD_QUOTES={
   {q:'Masada shall not fall again.',a:'Yitzhak Lamdan, "Masada", 1927',o:'שֵׁנִית מְצָדָה לֹא תִּפֹּל',l:'he'},
   {q:'We shall fight the war as if there were no White Paper, and the White Paper as if there were no war.',a:'David Ben-Gurion, 1939'},
   {q:'We are a generation of settlement, and without the steel helmet and the cannon\'s muzzle we will not be able to plant a tree and build a house.',a:'Moshe Dayan, eulogy for Roi Rotberg, 1956'}],
+ FR:[{q:'France has lost a battle! But France has not lost the war!',a:'Charles de Gaulle, 1940',o:'La France a perdu une bataille ! Mais la France n\'a pas perdu la guerre !',l:'fr'},
+  {q:'Boldness, more boldness, always boldness!',a:'Georges Danton, 1792',o:'De l\'audace, encore de l\'audace, toujours de l\'audace !',l:'fr'}],
+ DE:[{q:'Whoever fights monsters should see to it that in the process he does not become a monster.',a:'Friedrich Nietzsche, 1886',o:'Wer mit Ungeheuern kämpft, mag zusehen, dass er nicht dabei zum Ungeheuer wird.',l:'de'}],
  EU:[{q:'We shall fight on the beaches, we shall fight on the landing grounds, we shall fight in the fields and in the streets, we shall fight in the hills; we shall never surrender.',a:'Winston Churchill, House of Commons, 4 June 1940'},
   {q:'Never in the field of human conflict was so much owed by so many to so few.',a:'Winston Churchill, House of Commons, 20 August 1940'},
   {q:'War is merely the continuation of policy by other means.',a:'Carl von Clausewitz, On War',o:'Der Krieg ist eine bloße Fortsetzung der Politik mit anderen Mitteln.',l:'de'},
@@ -1517,7 +1520,7 @@ if($('sbClear'))$('sbClear').onclick=()=>{if(G&&G.sandbox){for(const e of G.ents
 Client-only and read-only: builds headlines from the battle messages this player already gets (pushLog) and from
 team/weather state it can see, then scrolls them across a thin strip at the very top. Never touches the simulation. */
 const TK={q:[],cur:0,G:null,seen:{},out:{},wx:'',loss:[],kill:[],on:true,el:null,txt:null,tm:0};
-const TK_ADJ={US:'American',TR:'Turkish',IL:'Israeli',EU:'European',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',IQ:'Iraqi',SY:'Syrian',GB:'British',AU:'Australian',CA:'Canadian',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
+const TK_ADJ={US:'American',TR:'Turkish',IL:'Israeli',EU:'European',FR:'French',DE:'German',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',IQ:'Iraqi',SY:'Syrian',GB:'British',AU:'Australian',CA:'Canadian',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
 function tkAdj(code){return TK_ADJ[code]||'';}
 function tkAdjName(name){for(const c in FACTIONS)if(FACTIONS[c].name===name)return tkAdj(c)||name;return name;}
 function tkOwn(){try{return G.teams[ME].F.name;}catch(e){return 'Our';}}
