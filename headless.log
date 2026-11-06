@@ -1,0 +1,23 @@
+  day {"inf":280,"tank":280,"heli":340,"b":340} 
+  night {"inf":168,"tank":252,"heli":306,"b":204}
+NIGHT PASS — night sight x0.6, thermal x0.9, dusk between, changing cycles
+node: 2 players [portable math: sin,cos,atan2,exp,pow] US vs RU vs DW on Straits of Thunder (strait), seed 1; sim loaded in 12 ms, battle set up in 757 ms; map 33cbf75c5c79b96d
+  t=   0s  d4cf5e653309c7af
+ww3-sim.js:2562
+function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
+                                           ^
+
+ReferenceError: ctTick is not defined
+    at simUpdate (ww3-sim.js:2562:44)
+    at ww3-sim.js:3638:63
+    at sim (ww3-sim.js:3617:18)
+    at W.step (ww3-sim.js:3638:5)
+    at runNode (file:///home/runner/work/ww3/ww3/orch/headless.mjs:515:11)
+    at compare (file:///home/runner/work/ww3/ww3/orch/headless.mjs:648:16)
+    at file:///home/runner/work/ww3/ww3/orch/headless.mjs:824:124
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.4
+SKIP headless
