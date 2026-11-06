@@ -15,7 +15,7 @@ const MAPS={
     slots:[[420,260],[MAPW-420,MAPH-260],[420,MAPH-260],[MAPW-420,260],[360,1100],[MAPW-360,1100]],
     water(M,R){const p=[R()*6.28,R()*6.28];for(const [yc,ph] of [[690,p[0]],[MAPH-690,p[1]]]){const pts=[];for(let x=-200;x<=MAPW+200;x+=40)pts.push([x,yc+28*Math.sin(x*.0042+ph)+12*Math.sin(x*.011+ph*2)]);M.rivers.push({pts,hw:(t,x)=>96+14*Math.sin(x*.007+ph)});}
       M.bridgeAt=[[0,900],[0,2300],[1,900],[1,2300]];}},
-  delta:{home:['EG'],name:'Delta Inferno',min:2,max:6,sym:'mirrorX',tag:'river delta & coast',desc:'A river forks into two arms on its way to the sea. Five bridges.',
+  delta:{home:['EG','VN','TH'],name:'Delta Inferno',min:2,max:6,sym:'mirrorX',tag:'river delta & coast',desc:'A river forks into two arms on its way to the sea. Five bridges.',
     slots:[[420,420],[MAPW-420,420],[420,1380],[MAPW-420,1380],[1150,1960],[MAPW-1150,1960]],
     water(M,R){const ph=R()*6.28,J=[1600,820];const wig=(a,b,amp)=>{const pts=[];const n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/40);for(let i=0;i<=n;i++){const t=i/n,x=a[0]+(b[0]-a[0])*t,y=a[1]+(b[1]-a[1])*t,L=Math.hypot(b[0]-a[0],b[1]-a[1]),nx=-(b[1]-a[1])/L,ny=(b[0]-a[0])/L,w=amp*Math.sin(t*9+ph)*Math.sin(t*Math.PI);pts.push([x+nx*w,y+ny*w]);}return pts;};
       M.rivers.push({pts:wig([1600,-200],J,22),hw:()=>120});const L=wig(J,[260,MAPH+200],40),Rr=L.map(([x,y])=>[MAPW-x,y]);M.rivers.push({pts:L,hw:()=>100});M.rivers.push({pts:Rr,hw:()=>100});
@@ -24,7 +24,7 @@ const MAPS={
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1250,1100+Math.sin(a)*800]);return s;})(),
     water(M,R){const w=[R()*6.28,R()*6.28];M.lakes.push({x:1600,y:1100,r:300,rx:1.35,wob:a=>.1*Math.sin(a*3+w[0])+.06*Math.sin(a*5+w[1])});
       for(const a of [-1.1,2.04,.47,-2.67]){const x=1600+Math.cos(a)*1250,y=1100+Math.sin(a)*800;M.lakes.push({x,y,r:85,rx:1.2,wob:q=>.15*Math.sin(q*3+x)});}}},
-  gulf:{home:['SA','AE','JO'],name:'Gulf Coast Landings',min:2,max:4,sym:'mirrorX',tag:'desert shore · naval-heavy',desc:'Bases on a desert shore above the open sea. Naval power matters.',
+  gulf:{home:['SA','AE','JO','OM'],name:'Gulf Coast Landings',min:2,max:4,sym:'mirrorX',tag:'desert shore · naval-heavy',desc:'Bases on a desert shore above the open sea. Naval power matters.',
     slots:[[450,330],[MAPW-450,330],[520,1250],[MAPW-520,1250]],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,MAPH+60-90*Math.cos((x-1600)/1600*Math.PI*.5)*0+40*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:(t,x)=>470+120*Math.exp(-Math.pow((x-1600)/380,2))});
       // 2026-10-30: coastal hills to fight around and an island offshore (mirrored left-right like the rest)
@@ -32,7 +32,7 @@ const MAPS={
   plateau:{home:['EG','JO'],name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1280,1100+Math.sin(a)*820]);return s;})(),
     water(M){M.peaks.push({x:1020,y:720,r:75,rx:1.6,rot:.45},{x:1230,y:470,r:60,rx:1.4,rot:-.2},{x:880,y:1480,r:70,rx:1.4,rot:-.5});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:105,rx:1.5,rot:0});}},
-  hormuz:{home:['IR','AE'],name:'Strait of Hormuz',min:2,max:8,sym:'none',tag:'sea strait · naval-heavy',desc:'Iran faces the Arabian shore across the world\'s busiest oil chokepoint. Navies rule the strait; armies must go the long way round.',
+  hormuz:{home:['IR','AE','OM'],name:'Strait of Hormuz',min:2,max:8,sym:'none',tag:'sea strait · naval-heavy',desc:'Iran faces the Arabian shore across the world\'s busiest oil chokepoint. Navies rule the strait; armies must go the long way round.',
     slots:[[1650,270],[1750,1800],[450,330],[2750,1950],[2800,330],[480,1950],[1050,270],[1100,1830]],
     water(M,R){const ph=R()*6.28;const P=[[780,1280],[1150,1010],[1500,820],[1800,760],[2100,840],[2450,1080],[2800,1350],[3500,1720]];const pts=[];for(let i=0;i<P.length-1;i++){const a=P[i],b=P[i+1],n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/40);for(let k=0;k<n;k++){const t=k/n;pts.push([a[0]+(b[0]-a[0])*t+12*Math.sin((a[1]+t*(b[1]-a[1]))*.02+ph),a[1]+(b[1]-a[1])*t+14*Math.sin((a[0]+t*(b[0]-a[0]))*.013+ph)]);}}pts.push(P[P.length-1]);
       M.rivers.push({pts,hw:(t,x)=>150+190*Math.min(1,Math.abs(x-1720)/900)});
@@ -47,7 +47,7 @@ const MAPS={
       for(const [x,y] of [[560,470],[2640,1730],[560,1730],[2640,470]])M.islands.push({x,y,r:330,rx:1.45,rot:0,wob:q=>.1*Math.sin(q*3+w+x)+.05*Math.sin(q*7+y)});
       M.islands.push({x:1600,y:1100,r:250,rx:1.7,rot:0,wob:q=>.08*Math.sin(q*4+w)});
       for(const [x,y] of [[1050,770],[2150,1430],[1050,1430],[2150,770]]){const dx=1600-x,dy=1100-y,L=Math.hypot(dx,dy);M.bridgeAng.push([x,y,dx/L,dy/L]);}}},
-  zagros:{home:['IR','KD'],name:'Zagros: Mountain Fortress',min:2,max:8,sym:'point',rough:1.3,tag:'mountain ranges · three valleys',desc:'Two snow-capped ranges split the land into three valleys. Armies fight for the mountain passes.',
+  zagros:{home:['IR','KD','AF'],name:'Zagros: Mountain Fortress',min:2,max:8,sym:'point',rough:1.3,tag:'mountain ranges · three valleys',desc:'Two snow-capped ranges split the land into three valleys. Armies fight for the mountain passes.',
     slots:[[450,1100],[2750,1100],[450,380],[2750,1820],[450,1820],[2750,380],[1600,350],[1600,1850]],
     water(M,R){const ph=R()*6.28;const ridge=(y0,y1)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([1100+60*Math.sin(y*.004+ph)+20*Math.sin(y*.013),y]);return pts;};
       for(const [a,b] of [[-200,470],[740,1440],[1720,MAPH+200]]){const L=ridge(a,b);M.ridges.push({pts:L,hw:()=>105});M.ridges.push({pts:L.map(([x,y])=>[MAPW-x,MAPH-y]),hw:()=>105});}
@@ -76,7 +76,7 @@ const MAPS={
     water(M,R){const ph=R()*6.28;const cst=[];for(let y=-200;y<=MAPH+200;y+=40)cst.push([-60+50*Math.sin(y*.005+ph),y]);M.rivers.push({pts:cst,hw:()=>330});
       const ridge=(y0,y1,x0)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([x0+70*Math.sin(y*.004+ph),y]);return pts;};for(const [a,b] of [[-200,560],[820,1450],[1720,MAPH+200]])M.ridges.push({pts:ridge(a,b,1250),hw:()=>100});
       M.ridges.push({pts:ridge(1250,MAPH+200,2350),hw:()=>85});M.peaks.push({x:2350,y:500,r:90,rx:1.3,rot:.5});}},
-  volga:{home:['RU','CA'],name:'Volga Winter',min:2,max:8,sym:'none',theme:'snow',tag:'great river · city',desc:'The frozen Volga in winter: a great river city on the east bank, villages in the snow and three bridges to fight over.',
+  volga:{home:['RU','CA','KZ'],name:'Volga Winter',min:2,max:8,sym:'none',theme:'snow',tag:'great river · city',desc:'The frozen Volga in winter: a great river city on the east bank, villages in the snow and three bridges to fight over.',
     slots:[[400,1100],[2800,1100],[600,300],[2600,1900],[600,1900],[2600,300],[1000,650],[2200,1550]],sl4:[[600,300],[2600,1900],[600,1900],[2600,300]],
     cities:[[2000,1080,200,'russia'],[760,560,90,'russia'],[2560,1700,90,'russia'],[880,1600,80,'russia']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1560+190*Math.sin(y*.0026+ph)+40*Math.sin(y*.009+ph*2),y]);M.rivers.push({pts,hw:()=>140});M.bridgeAt=[[0,.22],[0,.5],[0,.8]];M.bridgeFrac=true;}},
@@ -128,7 +128,7 @@ const MAPS={
     cities:[[1600,1450,150,'southasia']],
     water(M,R){const ph=R()*6.28;M.lakes.push({x:1600,y:1000,r:150,rx:1.4,wob:q=>.12*Math.sin(q*3+ph)});
       const ridge=(y0,y1,x0)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([x0+60*Math.sin(y*.004+ph),y]);return pts;};for(const [a,b] of [[-200,620],[980,1350]]){M.ridges.push({pts:ridge(a,b,1000),hw:()=>100});M.ridges.push({pts:ridge(a,b,1000).map(([x,y])=>[MAPW-x,MAPH-y]),hw:()=>100});}}},
-  taiwan:{name:'Taiwan Strait',min:2,max:6,sym:'none',theme:'green',home:['CN'],tag:'sea strait · island · naval-heavy',desc:'Mainland China faces the island across the strait. Two long military causeways can be stormed, but navies, landing craft and air power decide who lands where.',
+  taiwan:{name:'Taiwan Strait',min:2,max:6,sym:'none',theme:'green',home:['CN','TW'],tag:'sea strait · island · naval-heavy',desc:'Mainland China faces the island across the strait. Two long military causeways can be stormed, but navies, landing craft and air power decide who lands where.',
     slots:[[450,1900],[2850,1600],[450,400],[2850,600],[700,1150],[2500,1100]],
     cities:[[900,800,150,'asia'],[2650,1850,140,'asia'],[2700,350,110,'korea']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let t=0;t<=1.0001;t+=.01){pts.push([1500+t*400+80*Math.sin(t*7+ph),-200+t*2600]);}M.rivers.push({pts,hw:(t,x)=>330});M.islands.push({x:1780,y:1000,r:60,rx:1.5,rot:.4,wob:q=>.1*Math.sin(q*3)});M.bridgeAng.push([1575,480,.988,-.152],[1835,1700,.988,-.152]);}},
@@ -142,13 +142,13 @@ const MAPS={
     cities:[[1050,1000,200,'mideast'],[2420,1100,90,'mideast'],[1100,1850,80,'mideast']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([820+60*Math.sin(y*.004+ph),y]);M.rivers.push({pts,hw:()=>75});
       const can=[];for(let y=-200;y<=MAPH+200;y+=40)can.push([2550+8*Math.sin(y*.002),y]);M.rivers.push({pts:can,hw:()=>38});M.bridgeAt=[[0,.25],[0,.5],[0,.78],[1,.3],[1,.7]];M.bridgeFrac=true;}},
-  caribbean:{name:'Caribbean Island',min:2,max:4,sym:'point',theme:'green',home:['CU','AU','ES'],tag:'tropical island · beaches · naval-heavy',desc:'A long tropical island in warm seas: Havana on the north shore, palm-fringed cays and landings on the beaches.',
+  caribbean:{name:'Caribbean Island',min:2,max:4,sym:'point',theme:'green',home:['CU','AU','ES','PH','ID'],tag:'tropical island · beaches · naval-heavy',desc:'A long tropical island in warm seas: Havana on the north shore, palm-fringed cays and landings on the beaches.',
     slots:[[700,900],[2500,1300],[1250,1450],[1950,750]],
     cities:[[1300,780,160,'latin'],[2150,1380,110,'latin']],
     water(M,R){M.lakes.push({x:1600,y:1100,r:6000,rx:1,wob:()=>0});const w=R()*6.28;M.islands.push({x:1600,y:1100,r:520,rx:2.6,rot:-.12,wob:q=>.12*Math.sin(q*3+w)+.07*Math.sin(q*7+w*2)});
       for(const [x,y] of [[500,300],[2700,1900],[2800,350],[400,1850]])M.islands.push({x,y,r:90,rx:1.6,rot:.4,wob:q=>.15*Math.sin(q*3+x)});}},
   // ---- 2026-10-30 maps (Maps squad): 20 more theatres, every one symmetric so each start position gets the same ground ----
-  khyber:{name:'Khyber Pass: Gate of Fortresses',min:2,max:2,sym:'point',rough:1.5,home:['PK'],tag:'mountain pass · two goat tracks · duel',desc:'A duel through the Spin Ghar range: one narrow pass split by a rock fort in the middle, and a long goat track along each edge to outflank it.',
+  khyber:{name:'Khyber Pass: Gate of Fortresses',min:2,max:2,sym:'point',rough:1.5,home:['PK','AF'],tag:'mountain pass · two goat tracks · duel',desc:'A duel through the Spin Ghar range: one narrow pass split by a rock fort in the middle, and a long goat track along each edge to outflank it.',
     slots:[[420,1500],[2780,700]],cities:mirrorList([[1020,1280,85,'southasia']],'p'),
     water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[1270,330],[1420,560],[1560,770]],40,25,2,ph),hw:()=>110},{pts:polyline([[640,330],[960,560]],40,18,2,ph),hw:()=>80});
       M.peaks.push({x:2250,y:330,r:80,rx:1.5,rot:.3});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:72,rx:1.25,rot:0});}},
@@ -156,7 +156,7 @@ const MAPS={
     slots:[[420,700],[2780,1500]],cities:mirrorList([[1180,430,110,'mideast'],[860,1700,75,'mideast']],'p'),
     water(M,R){M.lakes.push({x:900,y:1170,r:70,rx:1.7,wob:a=>.12*Math.sin(a*3)});M.peaks.push({x:1250,y:1820,r:70,rx:1.6,rot:.3});mirrorMap(M,'p');
       const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+110*Math.sin((y-1100)*.0035)+35*Math.sin((y-1100)*.011),y]);M.rivers.push({pts,hw:()=>92});M.bridgeAt=[[0,.18],[0,.5],[0,.82]];M.bridgeFrac=true;}},
-  caspian:{name:'Caspian Oil Coast',min:2,max:2,sym:'mirrorX',home:['RU','IR','AZ'],tag:'coast · central oil field · navy · duel',desc:'A duel on the Caspian shore: a rich oil field on the peninsula between the two bases, open sea to the south for the navies and hills to the north.',
+  caspian:{name:'Caspian Oil Coast',min:2,max:2,sym:'mirrorX',home:['RU','IR','AZ','KZ'],tag:'coast · central oil field · navy · duel',desc:'A duel on the Caspian shore: a rich oil field on the peninsula between the two bases, open sea to the south for the navies and hills to the north.',
     slots:[[480,1150],[2720,1150]],cities:[[1600,1080,110,'mideast'],...mirrorList([[980,520,90,'mideast']],'x')],oilAt:[[1600,1520],[1430,1650],[1770,1650]],
     water(M,R){const pts=[];for(let x=-300;x<=3500;x+=40)pts.push([x,2000+60*Math.cos((x-1600)*.004)]);M.rivers.push({pts,hw:()=>340});
       M.peaks.push({x:1000,y:860,r:70,rx:1.7,rot:.6});mirrorMap(M,'x');M.peaks.push({x:1600,y:330,r:100,rx:2.2,rot:0});M.islands.push({x:1600,y:1700,r:230,rx:1.7,rot:0,wob:a=>.06*Math.cos(2*a)});}},
