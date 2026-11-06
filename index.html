@@ -5371,6 +5371,21 @@ function shade(hex,f){const n=parseInt(hex.slice(1),16);const r=(n>>16)*f,g=(n>>
 for(const k in FACTIONS){const F=FACTIONS[k],D=DOCT[k];if(!D||F._dt)continue;F._dt=1;const tr=Object.keys(DOCT_TXT).filter(q=>D[q]).map(q=>DOCT_TXT[q]);const c=COURAGE[k]||1,cl=k==='KP'?'unbreakable (never breaks)':['IR','RS','DW'].includes(k)?'unbreakable (never breaks while the Ayatollah lives)':c>=1.5?'unbreakable':c>=1.3?'very high':c>=1.15?'high':c>=1?'steady':'brittle';
   F.doctrineName=D.name;F.docShort=`${D.name} · courage: ${cl.split(' (')[0]}`;F.doctrine=`Doctrine: ${D.name} (${tr.join('; ')}). Courage: ${cl}. `+F.doctrine;}
 
+/* ---------- modern war (Abdullah 2026-11-05 18:58): cyber attacks, EMP strike, GPS jamming, war news ----------
+   Same numbers for every nation; only the names are flavoured. Sim code: 03g-modern.js; effects/PiP/news: 08h-modern.js.
+   Hotkeys: [ = Hack, ] = EMP (every letter key already has a job). One firewall upgrade covers hack AND EMP. */
+const MW={HACK_T:25,EMP_T:{veh:7,air:5,bld:8},FW_K:.5,JAM_MISS:.5,JAM_D:[28,70],
+  HACKABLE:['radio','uplink','sam','turret','coast'],EMPB:['radio','uplink','sam','turret','coast']};
+POWERS.hack={name:'Cyber Attack',desc:'Hack ONE enemy radio tower, Strike Center, SAM site, defence gun or power plant near the target: it goes dark for about 25 seconds (a hacked radio tower or Strike Center also turns the enemy minimap to static). Their Hardened Firewall research halves it. Hotkey [',cd:150,r:240};
+POWERS.emp={name:'EMP Strike',desc:'A pulse knocks out enemy vehicles (7 s), aircraft (5 s, they hover and glide, no damage) and electronics: radio, Strike Centers, SAM sites and defence guns (8 s) in the area. Infantry are unaffected. Hardened Firewall halves it. Hotkey ]',cd:240,r:230};
+UPG.fw={name:'Hardened Firewall',at:'hq',cost:1300,time:28,desc:'Hardens your networks and electronics: enemy Cyber Attacks and EMP Strikes last half as long on your forces and buildings.'};
+{const _ul=upgList;upgList=function(f){const r=_ul(f);return r.includes('fw')?r:r.concat('fw');};}
+const MW_NAME={hack:{US:'Cyber Command Strike',TR:'Siber Harekat',IL:'Network Intrusion',EU:'Cyber Task Force',UA:'IT Army Raid',RU:'Grid Intrusion',IR:'Cyber Army Hack',SA:'Digital Defence Op',AE:'Signals Intrusion',PK:'Cyber Cell Strike',IN:'Cyber Agency Hack',CN:'Network Attack',KP:'Hacker Bureau Raid',KR:'Cyber Command Hack',EG:'Digital Raid',CU:'Cyber Guerrilla',RS:'Mountain Cyber Cell',DW:'Desert Cyber Cell'},
+  emp:{US:'Pulse Strike',TR:'Elektromanyetik Darbe',IL:'Pulse Strike',RU:'Radio-Electronic Strike',IR:'Electromagnetic Strike',CN:'EMP Pulse Strike',KP:'Pulse Bomb',IN:'Pulse Strike',PK:'Pulse Strike',KR:'Pulse Strike'}};
+{const _pi=powInfo;powInfo=function(k,fac){const P=_pi(k,fac);const n=(MW_NAME[k]||{})[fac];return n&&P?Object.assign({},P,{name:n}):P;};}
+// GPS jamming: every nation can build the EW Jamming Truck (it already jams drones and guided weapons); the nation-flavoured names stay
+{const NM={TR:'Elektronik Harp Aracı',UA:'EW Jamming Vehicle',SA:'EW Jamming Truck',AE:'EW Jamming Truck',PK:'EW Jamming Truck',IN:'EW Jamming Truck',KP:'Jamming Truck',KR:'EW Jamming Truck',EG:'EW Jamming Truck',CU:'Jamming Truck',RS:'Mountain EW Truck',DW:'Desert EW Truck',EU:'EW Jamming Truck'};
+  for(const k of Object.keys(FACTIONS)){const F=FACTIONS[k];if(!F||F.special==='ew'||(F.extra||[]).includes('ew'))continue;F.extra=[...(F.extra||[]),'ew'];F.units=F.units||{};F.units.ew=Object.assign({},F.units.ew||{},{name:NM[k]||'EW Jamming Truck'});}}
 /* ================= MAP: sea channel, bridges, grid, pathfinding ================= */
 const COSB=0.894,BT=[0.894,0.447],BN=[-0.447,0.894];
 /* Maps: each defines water features (rivers, lakes), bridges, base slots (in fill order) and a symmetry used to place supply fairly.
@@ -6637,8 +6652,8 @@ function fire(src,t,dmg,wpn,splash){if(G.conq&&G.t<G.setupEnd&&src.team!==G.reb&
   if(wpn==='gun'||wpn==='tower'||wpn==='snipe'||wpn==='flak'){applyDmg(t,dmg,wpn,src.team,src);FXE('tr',[ox|0,oy|0,h|0,(t.x+rnd(-4,4))|0,(t.y+rnd(-4,4))|0,tgtH(t)|0,wpn==='flak'?1:0]);return;}
   if(src.kind==='heli')FXE('salvo',[ox|0,oy|0,h|0,t.x|0,t.y|0,+ang.toFixed(2)]);
   const d=Math.hypot(t.x-ox,t.y-oy),spd=wpn==='torp'?170:wpn==='shell'?280:wpn==='at'||wpn==='missile'?430:wpn==='bomb'?380:640;
-  const p={x:ox,y:oy,tx:t.x,ty:t.y,tgt:t,p:0,len:Math.max(d,1),spd,dmg,wpn,splash:splash||0,team:src.team,src};G.proj.push(p);
-  FXE('pj',[ox|0,oy|0,h|0,t.x|0,t.y|0,tgtH(t)|0,spd,wpn,src.s.rocket?1:0]);}
+  const p={x:ox,y:oy,tx:t.x,ty:t.y,tgt:t,p:0,len:Math.max(d,1),spd,dmg,wpn,splash:splash||0,team:src.team,src};G.proj.push(p);mwJam(p,t);
+  FXE('pj',[ox|0,oy|0,h|0,p.tx|0,p.ty|0,tgtH(t)|0,spd,wpn,src.s.rocket?1:0]);}
 function srcH(e){if(e.isB)return BH[e.kind]*.8+6;if(e.s.dom==='air')return e.landed?4:(e.s.alt==='high'?110:55);return e.s.dom==='naval'?10:8;}
 function tgtH(e){if(e.oil)return 16;return e.isB?BH[e.kind]*.5:e.s.dom==='air'?(e.landed?4:(e.s.alt==='high'?110:55)):6;}
 // Tactics: armour is thickest at the front (side hits x1.2, rear hits x1.6), infantry in woods or beside buildings take
@@ -6887,9 +6902,9 @@ function updBld(b,dt){if(b.kind==='garrison')return updGarrison(b,dt);if(G.teams
 function flareDecoy(p){const t=p.tgt;if(p.wpn!=='missile'||t.isB||!t.s||t.landed||(t.s.cls!=='heli'&&t.s.cls!=='jet'))return false;
   if(t.fl===undefined)t.fl=FL_MAX;if(t.fl<=0||srand()>=.5)return false;t.fl--;FXE('chf',[t.x|0,t.y|0,(t.s.alt==='high'?110:55)|0,t.s.cls==='jet'?1:0]);
   if(t.fl===0)FXE('txt',[t.x|0,t.y|0,'OUT OF DECOYS',t.team,-1]);return true;}
-function updProj(dt){for(const p of G.proj){if(p.wpn!=='shell'&&p.wpn!=='bomb'&&!p.tgt.dead){p.tx=p.tgt.x;p.ty=p.tgt.y;}
+function updProj(dt){for(const p of G.proj){if(p.wpn!=='shell'&&p.wpn!=='bomb'&&!p.jm&&!p.tgt.dead){p.tx=p.tgt.x;p.ty=p.tgt.y;}
   const a=Math.atan2(p.ty-p.y,p.tx-p.x),st=p.spd*dt,rem=Math.hypot(p.tx-p.x,p.ty-p.y);p.p+=st;
-  if(rem<=st){p.done=true;const src=p.src&&!p.src.dead?p.src:null;if(p.splash)explode(p.tx,p.ty,p.splash,p.dmg,p.team,p.wpn,null,src);else if(!p.tgt.dead&&flareDecoy(p)){}else if(!p.tgt.dead){applyDmg(p.tgt,p.dmg,p.wpn,p.team,src);FXE('boom',[p.tx|0,p.ty|0,p.wpn==='at'||p.wpn==='missile'?9:7,0]);}}
+  if(rem<=st){p.done=true;const src=p.src&&!p.src.dead?p.src:null;if(p.splash)explode(p.tx,p.ty,p.splash,p.dmg,p.team,p.wpn,null,src);else if(p.jm){FXE('boom',[p.tx|0,p.ty|0,7,0]);}else if(!p.tgt.dead&&flareDecoy(p)){}else if(!p.tgt.dead){applyDmg(p.tgt,p.dmg,p.wpn,p.team,src);FXE('boom',[p.tx|0,p.ty|0,p.wpn==='at'||p.wpn==='missile'?9:7,0]);}}
   else{p.x+=Math.cos(a)*st;p.y+=Math.sin(a)*st;}}G.proj=G.proj.filter(p=>!p.done);}
 /* Conquest missile rules: no strike before minute 8, each launch costs money, ~5 min recharge (charge fills at half speed), one salvo can take
    at most 40% of any building's max HP, missile-defence batteries (SAM sites) intercept part of a salvo, strikes near a town raise its unrest. */
@@ -6981,6 +6996,7 @@ function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T
   else if(key==='repair'){for(const e of G.ents)if(e.team===team&&Math.hypot(e.x-x,e.y-y)<P.r)e.hp=Math.min(e.max,e.hp+e.max*(.4+.2*L)*(P.pm||1));FXE('heal',[x|0,y|0,P.r],team);}
   else if(key==='para'){const p=nearestPassXY('ground',x,y);if(!p)return false;const bb=BASES[team]||BASES[0],sx=bb[0]<MAPW/2?-100:MAPW+100,sy=bb[1]<MAPH/2?-100:MAPH+100;FXE('plane',[sx,sy,p[0]|0,p[1]|0,team]);
     G.timers.push({t:2.6,fn:()=>{const R=roster(T.fac).barracks;(()=>{const mx=P.mix||['inf','inf','inf','at','at','inf','at','inf','inf','at','inf'],nP=Math.max(2,Math.round((2+3*L)*(P.nm||1)));return Array.from({length:nP},(_,i)=>mx[i%mx.length]);})().forEach((k,i)=>{const q=nearestPassXY('ground',p[0]+rnd(-40,40),p[1]+rnd(-40,40))||p;const n=addUnit(team,k,q[0],q[1]);if(n&&P.fx==='vet'){n.rank=Math.max(n.rank||0,1);n.xp=Math.max(300,n.s.cost);}if(n&&P.fx==='dig')n.digT=1;if(n&&P.fx==='stealth')n.stlT=1;});log(team,'Paratroopers have landed.','g');}});}
+  else if(key==='hack'||key==='emp'){if(!mwPower(team,key,x,y,P,L,M))return false;}
   w.cd=P.cd;log(team,`${P.name} used.`);return true;}
 
 /* ---------- player actions (local input, AI and network commands all go through here) ---------- */
@@ -7358,6 +7374,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   if(T.pw.reinf&&T.pw.reinf.cd<=0&&T.ai.d>=1&&T.ai.t%5===3&&G.t>240&&T.credits>2600&&mine.filter(e=>!e.isB&&e.s.dom==='ground'&&!e.s.noAttack).length<14)usePower(id,'reinf',0,0);   // AI calls in reinforcements when its army is thin
   if(T.pw.mil&&T.pw.mil.cd<=0&&T.ai.d>=1&&T.ai.t%5===1&&G.t>360)usePower(id,'mil',0,0);  // AI funds a militia after 6 minutes
   if(T.pw.sanc&&T.pw.sanc.cd<=0&&T.ai.d>=1&&T.ai.t%5===3&&G.t>240)usePower(id,'sanc',0,0);
+  aiModern(id,T,mine,en);
   if(T.rank-T.spent>0){{let did=false;if(T.pw.nat&&aiPerk(id))did=true;if(!T.pw.bb&&T.ai.d>=1&&G.ents.some(e=>e.kind==='fort'&&!e.dead&&!ally(e.team,id)))did=buyPower(id,'bb');if(!did)for(const k of DC.barrage?['nat','barrage','bounty','repair','para','recon']:['nat','bounty','barrage','repair','para','recon'])if(!T.pw[k]){did=buyPower(id,k);break;}if(!did&&T.ai.d>=1&&!T.pw.sanc&&['nat','bounty','barrage','repair','para','recon'].every(k=>T.pw[k]))did=buyPower(id,'sanc');if(!did&&T.ai.d>=1&&T.pw.sanc&&!T.pw.mil)did=buyPower(id,'mil');if(!did&&T.ai.d>=1&&T.pw.mil&&!T.pw.reinf)did=buyPower(id,'reinf');if(!did)for(const k of DC.barrage?['barrage','nat','repair']:['nat','barrage','repair'])if(T.pw[k]&&buyPower(id,k))break;}}
   if(T.pw.nat&&T.pw.nat.cd<=0&&T.ai.t%5===2){const N=natPow(T.fac);const c=aiCluster(en);const army=mine.filter(e=>!e.isB);
     if(N.self){if(N.type==='cash'||N.type==='mercs'||army.some(u=>u.target))usePower(id,'nat',0,0);}
@@ -7510,7 +7527,7 @@ function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,
 function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
   if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[],mart:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(e.fl<FL_MAX&&e.landed)e.fl=FL_MAX;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam,id:e.id});if(s.cbr||(s.cls==='arty'&&gdHas(G.teams[e.team],'r1')))G.cbrTeams|=1<<e.team;}martyrTick();
   if(G.aur.heal.length)for(const e of G.ents){if(e.dead||e.isB||e.hp>=e.max||e.s.dom==='air')continue;for(const a of G.aur.heal)if(a.team===e.team&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){e.hp=Math.min(e.max,e.hp+a.v*dt);break;}}
-  if(G.aur.jam.length)for(const e of G.ents){if(e.dead||e.kind!=='drone')continue;for(const a of G.aur.jam)if(!ally(a.team,e.team)&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){applyDmg(e,30*dt,'flak',a.team,null);break;}}
+  if(G.aur.jam.length)for(const e of G.ents){if(e.dead||e.kind!=='drone')continue;for(const a of G.aur.jam)if(!ally(a.team,e.team)&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){applyDmg(e,30*dt,'flak',a.team,null);e.x+=srnd(-70,70)*dt;e.y+=srnd(-70,70)*dt;break;}}
   ewTick(dt);gprTick(dt);try{radioScan();}catch(_){}
   G.mT=(G.mT||0)-dt;if(G.mT<=0){G.mT=.2;updMines();}
   for(const T of G.teams){T._upl=false;T._tun=false;}for(const e of G.ents){if(!e.isB||e.dead||e.built<1)continue;const T=G.teams[e.team];if(!T)continue;if(e.kind==='tunnel')T._tun=true;else if(e.kind==='uplink'&&!(e.dis>G.t))T._upl=true;}
@@ -8766,6 +8783,42 @@ function damSync(){if(!G.dams)return;const M=G.map;G.fln=0;for(const d of G.dams
 function damAt(w){const D=G.dams;if(!D)return-1;for(const d of D){if(d.dead)continue;const nx=-d.ty,ny=d.tx,u=(w.x-d.x)*nx+(w.y-d.y)*ny,v=(w.x-d.x)*d.tx+(w.y-d.y)*d.ty;if(Math.abs(u)<d.w+20&&Math.abs(v)<46)return d.i;}return-1;}
 // AI: keep a couple of Combat Medics with the infantry (same medic, same price as the player's)
 function aiMedic(T,mine){if(T.ai.t%5!==3||T.credits<900)return;let inf=0,med=0;for(const e of mine)if(!e.isB&&!e.dead){if(e.kind==='medic')med++;else if(e.s&&isInf(e.s)&&!e.s.noAttack)inf++;}if(med>=2||inf<6)return;if(T.q&&T.q.barracks&&T.q.barracks.some(q=>q&&q.kind==='medic'))return;try{enqueue(T.id,'medic');}catch(_){}}
+/* ---------- modern war, simulation side (data in 01c-modern.js) ----------
+   Cyber Attack and EMP Strike are normal general powers (host-authoritative, order 'pow'). They only set timers that
+   already exist and are already saved/synced: building e.dis (offline until), unit e.stun, power plant o.sab.
+   GPS jamming extends the EW truck (G.aur.jam): guided shots at anything near an enemy jammer can drift off target. */
+function mwFw(team){const T=G.teams[team];return T&&T.upg&&T.upg.fw?MW.FW_K:1;}
+function mwPower(team,key,x,y,P,L,M){const T=G.teams[team],en=e=>!e.dead&&e.team>=0&&!ally(e.team,team);
+  if(key==='hack'){let best=null,bd=P.r;
+    for(const e of G.ents){if(!e.isB||!en(e)||e.built<1||!MW.HACKABLE.includes(e.kind))continue;const d=Math.hypot(e.x-x,e.y-y);if(d<bd){bd=d;best=e;}}
+    let plant=null;for(const o of G.oil||[]){if(!o.pw||o.dead||o.owner<0||ally(o.owner,team))continue;const d=Math.hypot(o.x-x,o.y-y);if(d<bd){bd=d;plant=o;best=null;}}
+    if(!best&&!plant){log(team,'Nothing to hack there: aim near an enemy radio tower, Strike Center, SAM site, defence gun or power plant.','w');return false;}
+    const vt=best?best.team:plant.owner,dur=Math.round(MW.HACK_T*M*mwFw(vt)),tx=best?best.x:plant.x,ty=best?best.y:plant.y,nm=best?(bstats(G.teams[vt].fac,best.kind).name||best.kind):'power plant';
+    if(best)best.dis=Math.max(best.dis||0,G.t+dur);else plant.sab=Math.max(plant.sab||0,G.t+dur);G.teams[vt].mwHit=1;
+    FXE('cyb',[tx|0,ty|0,dur,vt,best?best.id:-1]);
+    if(best&&(best.kind==='radio'||best.kind==='uplink'))FXE('mmst',[vt,dur]);
+    log(team,`Cyber attack: enemy ${nm} is offline for ${dur} seconds.`,'g');
+    log(vt,`CYBER ATTACK! Our ${nm} was hacked and is offline for ${dur} seconds.${G.teams[vt].upg&&G.teams[vt].upg.fw?'':' Research Hardened Firewall to halve it.'}`,'bad');
+    pubNews('pow',team,vt,'Cyber Attack');return true;}
+  if(key==='emp'){const R=P.r;FXE('emp',[x|0,y|0,R|0]);
+    for(const O of G.teams)if(O.id!==team&&!ally(O.id,team)&&G.ents.some(e=>e.team===O.id&&!e.dead&&Math.hypot(e.x-x,e.y-y)<R+250))log(O.id,'Warning: electromagnetic pulse incoming!','w');
+    G.timers.push({t:1.4,fn:()=>{let n=0;for(const e of G.ents){if(!en(e)||Math.hypot(e.x-x,e.y-y)>R)continue;const k=mwFw(e.team);G.teams[e.team].mwHit=1;
+      if(e.isB){if(MW.EMPB.includes(e.kind)&&e.built>=1){e.dis=Math.max(e.dis||0,G.t+MW.EMP_T.bld*M*k);n++;}}
+      else if(e.s.dom==='air'){e.stun=Math.max(e.stun||0,G.t+MW.EMP_T.air*M*k);n++;}
+      else if(isVeh(e.s)||e.s.dom==='naval'){e.stun=Math.max(e.stun||0,G.t+MW.EMP_T.veh*M*k);n++;}}
+      log(team,`EMP Strike: ${n} enemy vehicles, aircraft and electronics knocked out.`,'g');pubNews('pow',team,-1,'EMP Strike');}});return true;}
+  return false;}
+// GPS jamming: a guided shot (missile, ATGM, guided bomb) at anything inside an enemy EW truck's bubble may drift off target
+function mwJam(p,t){if(!G.aur||!G.aur.jam.length||!(p.wpn==='missile'||p.wpn==='at'||p.wpn==='bomb')||!auraProtect(t,'jam'))return;
+  if(srand()>=MW.JAM_MISS)return;const a=srand()*6.283,d=MW.JAM_D[0]+srand()*(MW.JAM_D[1]-MW.JAM_D[0]);p.tx+=Math.cos(a)*d;p.ty+=Math.sin(a)*d;p.jm=1;
+  if(G.t-(t.jmT||-9)>3){t.jmT=G.t;FXE('txt',[p.x|0,p.y|0,'JAMMED',p.team,t.team]);}}
+// AI: buys these only after its core powers, then uses them sensibly (hack a SAM/turret/radio near its army, EMP a vehicle cluster)
+function aiModern(id,T,mine,en){if(G.t<240)return;
+  if(T.rank-T.spent>0&&T.pw.nat&&T.pw.barrage&&T.pw.recon&&T.ai.d>=1){if(!T.pw.hack)buyPower(id,'hack');else if(!T.pw.emp)buyPower(id,'emp');}
+  if(!T.upg.fw&&!T.rq.hq&&done(id,'hq')&&T.credits>=UPG.fw.cost+600&&T.mwHit)startResearch(id,'fw');
+  const army=mine.filter(e=>!e.isB&&e.s.dom==='ground'&&!e.s.noAttack);if(army.length<4)return;
+  if(T.pw.hack&&T.pw.hack.cd<=0&&T.ai.t%5===1){let tg=null,bd=700;for(const e of G.ents){if(!e.isB||e.dead||ally(e.team,id)||e.team<0||e.built<1||!MW.HACKABLE.includes(e.kind)||!seenBy(id,e))continue;const d=Math.min(...army.slice(0,6).map(u=>Math.hypot(u.x-e.x,u.y-e.y)));if(d<bd){bd=d;tg=e;}}if(tg)usePower(id,'hack',tg.x,tg.y);}
+  if(T.pw.emp&&T.pw.emp.cd<=0&&T.ai.t%5===3){const V=G.ents.filter(e=>!e.dead&&!e.isB&&e.team>=0&&!ally(e.team,id)&&isVeh(e.s)&&seenBy(id,e));let best=null,bn=4;for(const v of V.slice(0,24)){let n=0;for(const w of V)if(Math.hypot(w.x-v.x,w.y-v.y)<190)n++;if(n>bn){bn=n;best=v;}}if(best)usePower(id,'emp',best.x,best.y);}}
 let BORDER_TEX=null;
 /* ================= 3D ENGINE: renderer, terrain, water, models ================= */
 const cv=$('cv'),hud=$('hud'),hx=hud.getContext('2d'),mm=$('mm'),mx=mm.getContext('2d');
@@ -13200,7 +13253,7 @@ function tkPoll(){try{if(!G||!TK.on||TK.G!==G){if(!G||TK.G!==G)clearInterval(TK.
 }catch(e){}}
 if(typeof window!=='undefined'){window.__tk=TK;}
 try{tkApply();}catch(e){}
-{const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='News ticker (headlines scrolling across the top)';
+{const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='War news (headlines across the top + a small breaking-news picture-in-picture)';
   const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}
 /* ================= AFTER-ACTION MAP: a timeline of the whole match on the end screen =================
    While you play, a light recorder notes (every ~8 s of game time) who holds which ground, who owns each town, where the
@@ -14804,6 +14857,54 @@ function ctUI(force){if(G&&CT.g!==G){CT.g=G;CT.plans=[];CT.marks=[];CT.draft=nul
   }
   if(force||h!==CT.sig){CT.sig=h;P.innerHTML=h;}P.hidden=false;}
 setInterval(()=>{try{if(!G){if(CTP)CTP.hidden=true;return;}ctPlanTick();ctUI();}catch(e){}},500);
+/* ---------- modern war, view side (sim in 03g-modern.js, data in 01c-modern.js) ----------
+   Effects for Cyber Attack / EMP, the minimap static, the GPS-jam ring (owner only), the "breaking news" picture-in-picture
+   (a 3 s corner camera cut to the event, rendered by the main renderer with a scissor, never takes input) and the
+   spectators' scoreboard. All view-only: nothing here touches the simulation. The News toggle in Settings covers the PiP too. */
+const MWV={pip:null,pipAt:0,hk:[],mm:0,cam:null,vp:null};
+POW_KEY.hack='[';POW_KEY.emp=']';
+(()=>{const st=document.createElement('style');st.textContent='#mwPip{position:fixed;left:14px;top:62px;width:240px;height:135px;z-index:40;border:2px solid #e23b33;box-shadow:0 4px 16px #000a;pointer-events:none;display:none}#mwPip .t{position:absolute;left:-2px;top:-20px;background:#e23b33;color:#fff;font:800 12px system-ui,sans-serif;letter-spacing:.08em;padding:2px 8px}#mwPip .x{position:absolute;left:0;right:0;bottom:0;background:rgba(8,10,12,.82);color:#fff;font:600 12px system-ui,sans-serif;padding:3px 7px}#mwFlash{position:fixed;inset:0;z-index:39;pointer-events:none;background:#7fd0ff;opacity:0;transition:opacity .5s}#mwScore{position:fixed;left:50%;top:58px;transform:translateX(-50%);z-index:59;background:rgba(10,14,12,.82);border:1px solid #4a5a48;border-radius:8px;padding:5px 10px;color:#e8eadf;font:600 13px system-ui,sans-serif;display:none}#mwScore div{display:flex;gap:10px;align-items:center;white-space:nowrap}#mwScore i{width:10px;height:10px;border-radius:50%;display:inline-block}#mwScore span{min-width:46px;text-align:right}';document.head.appendChild(st);})();
+function mwPipEl(show,label){let el=document.getElementById('mwPip');if(!el){el=document.createElement('div');el.id='mwPip';el.innerHTML='<div class="t">BREAKING NEWS</div><div class="x"></div>';document.body.appendChild(el);}
+  if(show){el.lastChild.textContent=label||'';}el.style.display=show?'block':'none';}
+function mwPipShow(x,y,label,delay){if(typeof SET!=='undefined'&&SET.tk===0)return;if(typeof MODE!=='undefined'&&MODE==='replay')return;
+  const g0=G,go=()=>{if(!G||G!==g0||G.over||(window.LOADING))return;const now=performance.now();if((MWV.pip&&MWV.pip.until>now)||now-MWV.pipAt<6000)return;MWV.pipAt=now;MWV.pip={x,y,until:now+3000,G};mwPipEl(true,label);};
+  if(delay>0)setTimeout(go,delay*1000);else go();}
+function mwPipRender(){const P=MWV.pip;if(!P)return;try{if(P.G!==G||performance.now()>P.until||G.over){MWV.pip=null;mwPipEl(false);return;}
+  const el=document.getElementById('mwPip'),r=el.getBoundingClientRect(),cr=R3.domElement.getBoundingClientRect();if(!r.width)return;
+  const c=MWV.cam||(MWV.cam=CAM.clone()),vp=MWV.vp||(MWV.vp=new THREE.Vector4());c.aspect=r.width/r.height;c.updateProjectionMatrix();
+  const gy=(typeof groundH==='function'?groundH(P.x,P.y):0)||0;c.position.set(P.x,gy+115,P.y+165);c.lookAt(P.x,gy,P.y);c.updateMatrixWorld();
+  R3.getViewport(vp);const x=r.left-cr.left+2,y=cr.height-(r.bottom-cr.top)+2,w=r.width-4,h=r.height-4;
+  R3.setRenderTarget(null);R3.setScissorTest(true);R3.setViewport(x,y,w,h);R3.setScissor(x,y,w,h);R3.clear();R3.render(SCN,c);R3.setScissorTest(false);R3.setViewport(vp);}catch(e){MWV.pip=null;mwPipEl(false);}}
+{const _rp=renderPost;renderPost=function(){_rp();if(MWV.pip)mwPipRender();};}
+// effects
+FXH.cyb=(x,y,dur,vt,id)=>{PINGS.push({x,y,r:90,t:0,d:1.4,c:0x39ff88});for(let i=0;i<34;i++)part({x:x+rnd(-26,26),y:y+rnd(-26,26),h:groundH(x,y)+rnd(2,50),vh:rnd(20,60),add:true,c:[.2,1,.5],s:rnd(2,4),d:rnd(.7,1.5)});
+  MWV.hk.push({x,y,until:performance.now()+dur*1000,vt});if(MWV.hk.length>12)MWV.hk.shift();mwPipShow(x,y,vt===ME?'CYBER ATTACK ON OUR NETWORK':'CYBER ATTACK: ENEMY SYSTEM OFFLINE',0);};
+FXH.emp=(x,y,r)=>{PINGS.push({x,y,r,t:0,d:1,c:0x66ccff});setTimeout(()=>{try{PINGS.push({x,y,r:r*.6,t:0,d:.9,c:0xaadfff});}catch(e){}},220);
+  for(let i=0;i<90;i++){const a=rnd(0,6.28),d=rnd(0,r);part({x:x+Math.cos(a)*d,y:y+Math.sin(a)*d,h:groundH(x,y)+rnd(2,34),vh:rnd(-10,40),add:true,c:[.5,.8,1],s:rnd(2,5),d:rnd(.3,.9)});}
+  const f=document.getElementById('mwFlash')||(()=>{const d=document.createElement('div');d.id='mwFlash';document.body.appendChild(d);return d;})();
+  if(typeof cam!=='undefined'&&Math.hypot(cam.x-x,cam.y-y)<r+cam.dist){f.style.transition='none';f.style.opacity='.45';void f.offsetWidth;f.style.transition='opacity .6s';f.style.opacity='0';}
+  mwPipShow(x,y,'ELECTROMAGNETIC PULSE',0);};
+FXH.mmst=(vt,dur)=>{if(vt===ME)MWV.mm=performance.now()+dur*1000;};
+{const _s=FXH.strike;FXH.strike=function(x,y,t,r,sup,arc){_s.apply(this,arguments);if(sup)mwPipShow(x,y,'MISSILE STRIKE',Math.max(0,(+t||2)-1.2));};}
+{const _t=FXH.tping;FXH.tping=function(team,x,y,k){_t.apply(this,arguments);if(team===ME&&(k===1||k===2))mwPipShow(x,y,k===2?'TOWN CAPTURED':'TOWN LOST',0);};}
+// HUD: hacked buildings glitch, our own GPS-jam bubbles
+{const _dh=drawHUD;drawHUD=function(){_dh();try{const c=hx,now=performance.now();c.setTransform(dpr,0,0,dpr,0,0);
+  MWV.hk=MWV.hk.filter(h=>h.until>now);
+  for(const h of MWV.hk){const p=toScreen(h.x,18,h.y);if(p.z>1||p.x<-50||p.y<-50||p.x>VW+50||p.y>VH+50)continue;const s=Math.max(26,60*PPU/4);
+    c.save();c.strokeStyle='#39ff88';c.fillStyle='#39ff88';c.lineWidth=1.6;c.globalAlpha=.55+.4*Math.random();
+    for(let i=0;i<3;i++){const j=(Math.random()-.5)*14;c.strokeRect(p.x-s+j,p.y-s*.7+i*6,s*2,s*1.4-i*10);}
+    c.font='bold 11px monospace';c.textAlign='center';c.fillText(Math.random()<.2?'0xDEAD':'OFFLINE',p.x,p.y-s-4);c.restore();}
+  const T=G&&G.teams[ME];if(T)for(const e of G.ents){if(e.dead||!e.s||!e.s.jam||e.team!==ME)continue;const pts=[];let ok=true;
+    for(let i=0;i<=40;i++){const a=i/40*6.2832,q=toScreen(e.x+Math.cos(a)*e.s.jam,2,e.y+Math.sin(a)*e.s.jam);if(q.z>1){ok=false;break;}pts.push(q);}
+    if(!ok)continue;c.save();c.strokeStyle='rgba(120,220,255,.55)';c.fillStyle='rgba(120,220,255,.05)';c.lineWidth=1.5;c.setLineDash([8,6]);c.lineDashOffset=-now/60;c.beginPath();pts.forEach((q,i)=>i?c.lineTo(q.x,q.y):c.moveTo(q.x,q.y));c.closePath();c.fill();c.stroke();c.restore();}
+  }catch(e){}};}
+// minimap static while our radio tower / Strike Center is hacked
+{const _dm=drawMini;drawMini=function(){_dm();const now=performance.now();if(MWV.mm>now){try{mx.save();mx.setTransform(1,0,0,1,0,0);const W=mm.width,H=mm.height;for(let i=0;i<220;i++){const g=(Math.random()*200)|0;mx.fillStyle='rgba('+g+','+g+','+g+',.55)';mx.fillRect(Math.random()*W,Math.random()*H,2+Math.random()*10,1+Math.random()*2);}
+  mx.fillStyle='rgba(0,0,0,.35)';mx.fillRect(0,0,W,H);mx.fillStyle='#39ff88';mx.font='bold '+Math.max(10,(W/12)|0)+'px monospace';mx.textAlign='center';mx.fillText('NO SIGNAL',W/2,H/2);mx.restore();}catch(e){}}};}
+// spectators: a small scoreboard under the spectate bar (units, buildings, kills, money)
+setInterval(()=>{try{let b=document.getElementById('mwScore');const on=G&&typeof NET!=='undefined'&&NET.spec&&!G.over&&!window.LOADING;if(!on){if(b)b.style.display='none';return;}
+  if(!b){b=document.createElement('div');b.id='mwScore';document.body.appendChild(b);}b.style.display='block';
+  b.innerHTML=G.teams.filter(T=>!T.reb&&!T.dummy).map(T=>{let u=0,bl=0;for(const e of G.ents)if(!e.dead&&e.team===T.id){if(e.isB)bl++;else u++;}return `<div><i style="background:${T.color}"></i><b>${T.F.name}${T.out?' (out)':''}</b><span>${u} units</span><span>${bl} bldgs</span><span>${T.kills|0} kills</span><span>$${Math.round(T.credits||0)}</span></div>`;}).join('');}catch(e){}},1000);
 /* ================= AUDIO ENGINE: layered weapons, reverb, stereo, cinematic regional score ================= */
 const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,musicOn:true,sfxOn:true,voiceOn:true,rate:{},style:null,next:0,step:0,timer:null,lastVoice:0,voices:[],heat:0,bar:0};
 try{const v=JSON.parse(localStorage.getItem('ww3_audio')||'{}');if(v.m===false)AU.musicOn=false;if(v.s===false)AU.sfxOn=false;if(v.v===false)AU.voiceOn=false;}catch(e){}
