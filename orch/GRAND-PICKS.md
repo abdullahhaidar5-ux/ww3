@@ -6,7 +6,7 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 ## ALL stages — the map (Abdullah 19:41)
 - The grand map is the **whole world with detail where it matters**, replacing "three theatres": detailed provinces around all
   18 nations' homes (Middle East & North Africa, Europe/Russia, East Asia, South Asia, North America & Caribbean), oceans as a few
-  big sea lanes linking them (crossing takes turns; fleets/air lift needed). Every nation gets a fair home region (35 full nations by 2026-11-07 — add detailed home provinces for South America and
+  big sea lanes linking them (crossing takes turns; fleets/air lift needed). Every nation gets a fair home region (45 full nations by 2026-11-08 — add detailed home provinces for South America and
   Oceania too, for BR/VE and AU). **DW (Coffee Shias) = Yemen.** Iraq, Syria and Japan are being added as full nations
   (orch/reports/nations-new*.md) — give them home regions now (AI/minor until they ship). Every other country is a **playable minor
   nation** (pick it in the campaign setup; shared regional army, own flag/name/colours). Stage 5's 3D map
