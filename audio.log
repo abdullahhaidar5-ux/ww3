@@ -1,0 +1,3 @@
+AUDIO FAIL: exception: page.waitForFunction: Timeout 60000ms exceeded.
+    at /home/runner/work/ww3/ww3/orch/audio.mjs:112:14
+SKIP audio (no test)
