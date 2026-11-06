@@ -1,0 +1,120 @@
+menu {"btn":"▶ Tutorial: learn Conquest (10 min)","vis":true}
+-- out of order / skip / exit / restart
+step 1 sel | highlight: ring | words: 17
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   out of order: Barracks placed during step 1
+  ok   out of order: the tutorial stays on step 1 (no crash, no skipping ahead)
+  ok   Skip step moves to the next step (3 clicks -> step 4)
+  ok   a step already done earlier completes by itself (Barracks built before step 4)
+  ok   Exit tutorial hides the tips and arrow and leaves the battle running
+  ok   menu still offers the tutorial (not marked done after exiting)
+-- full playthrough
+step 1 sel | highlight: ring | words: 17
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   drag-select picks up soldiers (6)
+step 2 move | highlight: ring | words: 17
+  ok   step 2 tip visible
+  ok   step 2 tip short (<=50 words)
+  ok   step 2 has an arrow/ring on its target
+  ok   step 2 tip box does not cover its own highlight 
+    marker at 872 447
+  ok   the move marker is on screen below the tip box
+step 3 atk | highlight: ring | words: 34
+  ok   step 3 tip visible
+  ok   step 3 tip short (<=50 words)
+  ok   step 3 has an arrow/ring on its target
+  ok   step 3 tip box does not cover its own highlight 
+  ok   a red enemy exists to attack
+step 4 setup | highlight: box | words: 34
+  ok   step 4 tip visible
+  ok   step 4 tip short (<=50 words)
+  ok   step 4 has an arrow/ring on its target
+  ok   step 4 tip box does not cover its own highlight 
+  ok   clicking Barracks arms placement
+  ok   Barracks placed with a click next to the base
+step 5 trn | highlight: ring | words: 21
+  ok   step 5 tip visible
+  ok   step 5 tip short (<=50 words)
+  ok   step 5 has an arrow/ring on its target
+  ok   step 5 tip box does not cover its own highlight 
+  ok   left-click selects the Barracks
+  ok   arrow points at the Units tab first
+step 6 town | highlight: ring | words: 42
+  ok   step 6 tip visible
+  ok   step 6 tip short (<=50 words)
+  ok   step 6 has an arrow/ring on its target
+  ok   step 6 tip box does not cover its own highlight 
+    takeHouses 0 {"cell":{"x":940,"y":4220},"unit":{"x":1862.5959257946088,"y":5041.268651496879},"n":6}
+    takeHouses 1 {"cell":{"x":940,"y":4220},"unit":{"x":1862.968494958982,"y":5067.038050680023},"n":5}
+    takeHouses 2 {"cell":{"x":940,"y":4220},"unit":{"x":1863.451529858237,"y":5093.19206734527},"n":4}
+    takeHouses 3 {"cell":{"x":940,"y":4220},"unit":{"x":1835.7226632504357,"y":5049.464254914367},"n":3}
+    takeHouses 4 {"cell":{"x":860,"y":4220},"unit":{"x":1836.7331921134069,"y":5081.05793728051},"n":2}
+    takeHouses 5 {"cell":{"x":860,"y":4220},"unit":{"x":1290.8337828889303,"y":5273.933827546842},"n":1}
+    takeHouses 10 {"cell":{"x":1020,"y":4300},"n":0}
+step 7 tax | highlight: low | words: 39
+  ok   step 7 tip visible
+  ok   step 7 tip short (<=50 words)
+  ok   step 7 has an arrow/ring on its target
+  ok   step 7 tip box does not cover its own highlight 
+  ok   clicking the town marker on the minimap opens its tax panel
+step 8 unrest | highlight: box | words: 43
+  ok   step 8 tip visible
+  ok   step 8 tip short (<=50 words)
+  ok   step 8 has an arrow/ring on its target
+  ok   step 8 tip box does not cover its own highlight 
+step 9 retake | highlight: ring | words: 28
+  ok   step 9 tip visible
+  ok   step 9 tip short (<=50 words)
+  ok   step 9 has an arrow/ring on its target
+  ok   step 9 tip box does not cover its own highlight 
+    takeHouses 0 {"cell":{"x":940,"y":4220},"unit":{"x":938.6382095920779,"y":4248.695882578786},"n":10}
+    takeHouses 1 {"cell":{"x":940,"y":4220},"unit":{"x":902.1227182318366,"y":4184.55869111065},"n":11}
+    takeHouses 2 {"cell":{"x":860,"y":4220},"unit":{"x":902.1227182318366,"y":4184.55869111065},"n":10}
+    takeHouses 3 {"cell":{"x":1020,"y":4300},"unit":{"x":974.1941903150017,"y":4442.5826617212915},"n":9}
+    takeHouses 4 {"cell":{"x":940,"y":4220},"unit":{"x":888.5024140740504,"y":4218.641387256849},"n":8}
+    takeHouses 5 {"cell":{"x":940,"y":4220},"unit":{"x":888.5024140740504,"y":4218.641387256849},"n":8}
+    takeHouses 10 {"cell":{"x":940,"y":4220},"unit":{"x":888.5024140740504,"y":4218.641387256849},"n":8}
+step 10 civic | highlight: box | words: 44
+  ok   step 10 tip visible
+  ok   step 10 tip short (<=50 words)
+  ok   step 10 has an arrow/ring on its target
+  ok   step 10 tip box does not cover its own highlight 
+step 11 logi | highlight: box | words: 36
+  ok   step 11 tip visible
+  ok   step 11 tip short (<=50 words)
+  ok   step 11 has an arrow/ring on its target
+  ok   step 11 tip box does not cover its own highlight 
+  ok   L key shows supply lines
+step 12 pow | highlight: box | words: 30
+  ok   step 12 tip visible
+  ok   step 12 tip short (<=50 words)
+  ok   step 12 has an arrow/ring on its target
+  ok   step 12 tip box does not cover its own highlight 
+  ok   a power button is visible
+step 13 md | highlight: box | words: 31
+  ok   step 13 tip visible
+  ok   step 13 tip short (<=50 words)
+    (highlight optional at this moment)
+  ok   step 13 tip box does not cover its own highlight 
+  ok   Missile defence is buildable
+  ok   missile defence placed
+step 14 win | highlight: edge | words: 40
+  ok   step 14 tip visible
+  ok   step 14 tip short (<=50 words)
+  ok   step 14 has an arrow/ring on its target
+  ok   step 14 tip box does not cover its own highlight 
+    attack round 0 {"t":286,"mine":34,"foe":5}
+    attack round 2 {"t":310,"mine":24,"foe":1}
+    attack round 4 {"t":334,"mine":24,"foe":1}
+  ok   ready screen shows 3 tips
+  ok   completion remembered
+  ok   real match starts with the same nation and an AI opponent
+  ok   after finishing, the menu button says Tutorial (replay)
+step seconds: [1,0,0,1,0,0,0,1,0,0,0,0,0] total 296 s
+TUTORIAL PASS
