@@ -182,3 +182,8 @@ Moved up: runs right after grand1. The grand map must look like a **Total War ca
 - [ ] **Pause on events**: settings for which events pause the game / pop up (war declared, revolt, province lost…).
 - [ ] **Advisor tips:** optional chief-of-staff hints on the grand map ("province 12 will revolt", "your east is undefended",
       "this strait closing will hurt your oil income"), toggle in Settings.
+
+## Home regions (nations-new1, 2026-11-06)
+- **DW "Coffee Shias" = Yemen**: grand-map home region is Yemen (Sana'a / Sarawat highlands, Tihama coast, Hodeidah, Mokha, Bab-el-Mandeb). Battle maps `yemen`, `tihama`, `babelmandeb` already list DW as home; town names for style `yemen` are now Yemeni (tower-house towns).
+- **RS "Mountain Shias"**: home = South Lebanon & the Bekaa (Bint Jbeil, Maroun al-Ras, Khiam, Nabatieh, Baalbek, Hermel, the Litani, southern Beirut suburbs). Battle town names for style `lebanon` use these places.
+- **IQ Iraq**: home = Mesopotamia (Baghdad, Karbala, Najaf, Basra, Mosul, Kirkuk, the marshes); battle maps `mesopotamia`, `euphrates`. **SY Syria**: home = the Levant (Damascus, Aleppo, Homs, Hama, Latakia, Tartus, Palmyra); battle maps `aleppo`, `euphrates`, `golanplateau`.

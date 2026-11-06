@@ -64,7 +64,7 @@ const MAPS={
     cities:[[1500,700,190,'mideast'],[900,1560,120,'mideast'],[2420,1640,140,'mideast']],
     water(M,R){const ph=R()*6.28;const ridge=(x0,x1)=>{const pts=[];for(let x=x0;x<=x1;x+=40)pts.push([x,330+40*Math.sin(x*.003+ph)]);return pts;};for(const [a,b] of [[-200,640],[900,1900],[2160,MAPW+200]])M.ridges.push({pts:ridge(a,b),hw:()=>110});
       M.lakes.push({x:1700,y:1320,r:210,rx:1.7,wob:q=>.12*Math.sin(q*3+ph)+.05*Math.sin(q*7)});}},
-  mesopotamia:{home:['IR','RS'],name:'Mesopotamia',min:2,max:6,sym:'none',tag:'two rivers · cities',desc:'Iraq between the Tigris and the Euphrates: Baghdad between the rivers, Basra by the Shatt al-Arab and bridges everywhere.',
+  mesopotamia:{home:['IR','RS','IQ'],name:'Mesopotamia',min:2,max:6,sym:'none',tag:'two rivers · cities',desc:'Iraq between the Tigris and the Euphrates: Baghdad between the rivers, Basra by the Shatt al-Arab and bridges everywhere.',
     slots:[[450,1620],[2880,360],[1300,2000],[2700,920],[600,160],[2150,240]],
     cities:[[1400,900,200,'mideast'],[2900,1880,130,'mideast'],[650,820,110,'mideast']],
     water(M,R){const ph=R()*6.28;const line=(a,b,amp,f)=>{const pts=[];const n=Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/40);for(let i=0;i<=n;i++){const t=i/n;pts.push([a[0]+(b[0]-a[0])*t+amp*Math.sin(t*f+ph),a[1]+(b[1]-a[1])*t+amp*Math.cos(t*f*.8+ph)]);}return pts;};
@@ -152,7 +152,7 @@ const MAPS={
     slots:[[420,1500],[2780,700]],cities:mirrorList([[1020,1280,85,'southasia']],'p'),
     water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[1270,330],[1420,560],[1560,770]],40,25,2,ph),hw:()=>110},{pts:polyline([[640,330],[960,560]],40,18,2,ph),hw:()=>80});
       M.peaks.push({x:2250,y:330,r:80,rx:1.5,rot:.3});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:72,rx:1.25,rot:0});}},
-  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armour.',
+  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR','IQ','SY'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armour.',
     slots:[[420,700],[2780,1500]],cities:mirrorList([[1180,430,110,'mideast'],[860,1700,75,'mideast']],'p'),
     water(M,R){M.lakes.push({x:900,y:1170,r:70,rx:1.7,wob:a=>.12*Math.sin(a*3)});M.peaks.push({x:1250,y:1820,r:70,rx:1.6,rot:.3});mirrorMap(M,'p');
       const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+110*Math.sin((y-1100)*.0035)+35*Math.sin((y-1100)*.011),y]);M.rivers.push({pts,hw:()=>92});M.bridgeAt=[[0,.18],[0,.5],[0,.82]];M.bridgeFrac=true;}},
@@ -160,7 +160,7 @@ const MAPS={
     slots:[[480,1150],[2720,1150]],cities:[[1600,1080,110,'mideast'],...mirrorList([[980,520,90,'mideast']],'x')],oilAt:[[1600,1520],[1430,1650],[1770,1650]],
     water(M,R){const pts=[];for(let x=-300;x<=3500;x+=40)pts.push([x,2000+60*Math.cos((x-1600)*.004)]);M.rivers.push({pts,hw:()=>340});
       M.peaks.push({x:1000,y:860,r:70,rx:1.7,rot:.6});mirrorMap(M,'x');M.peaks.push({x:1600,y:330,r:100,rx:2.2,rot:0});M.islands.push({x:1600,y:1700,r:230,rx:1.7,rot:0,wob:a=>.06*Math.cos(2*a)});}},
-  aleppo:{name:'Aleppo: Ruined City',min:2,max:2,sym:'point',rough:1.1,home:['RS','TR'],tag:'urban sprawl · citadel · street fighting · duel',desc:'A duel through a ruined city: a great old town around the citadel in the middle, suburbs on both sides and streets to fight down block by block.',
+  aleppo:{name:'Aleppo: Ruined City',min:2,max:2,sym:'point',rough:1.1,home:['RS','TR','SY'],tag:'urban sprawl · citadel · street fighting · duel',desc:'A duel through a ruined city: a great old town around the citadel in the middle, suburbs on both sides and streets to fight down block by block.',
     slots:[[430,1650],[2770,550]],cities:[[1600,1100,290,'mideast'],...mirrorList([[860,680,140,'mideast'],[1250,1880,100,'mideast']],'p')],
     water(M,R){M.peaks.push({x:700,y:260,r:80,rx:1.6,rot:.2});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:62,rx:1.3,rot:0});}},
   anatolia:{name:'Anatolian Mesa',min:3,max:4,sym:'quad',rough:1.4,home:['TR'],tag:'walled mesa · oil on top · four ways in',desc:'A rock-walled mesa in the middle of the highlands with oil on top. Four gaps lead up onto it, all equally far from every base.',
