@@ -394,7 +394,7 @@ function applyTeam(d){if(!G||!d)return;if(d.ct!==undefined)ctApply(d.ct);if(Arra
   if(Array.isArray(d.ig))d.ig.forEach((v,i)=>{const T=G.teams[i];if(T){T.blk=v&1;T.dry=(v>>1)&1;T.fuel=(v>>2)/10;}});
   if(Array.isArray(d.oil))d.oil.forEach((v,i)=>{const o=G.oil[i];if(o&&Array.isArray(v)){o.owner=v[0];if(Array.isArray(v[1]))o.cp=v[1].map(x=>+x||0);o.dead=!!v[2];o.hp=+v[3]||0;}});if(Array.isArray(d.out))d.out.forEach((x,i)=>{if(G.teams[i]&&x&&!G.teams[i].out){G.teams[i].out=true;if(i===ME&&!NET.spec)showElim();}});
   if(Array.isArray(d.cv)&&G.civ){for(const c of G.civ){c.ow=-1;c.cp=0;c.cpT=-1;}const v=d.cv;for(let i=0;i+3<v.length;i+=4){const c=G.civ[v[i]];if(c){c.ow=v[i+1];c.cp=v[i+2]/100;c.cpT=v[i+3];}}}
-  if(d.lg&&G.lgd)lgApply(d.lg);
+  if(d.lg&&G.lgd)lgApply(d.lg);if(d.hm&&d.hm.ec)ecApply(d.hm.ec);
   if(Array.isArray(d.bs))G.bse=d.bs;if(Array.isArray(d.sf))G.sfd=d.sf;if(typeof d.cq==='number')G.conq=!!d.cq;
   if(d.hm&&G.towns){const N=G.teams.length,S=3+N,v=d.hm.th||[];for(let i=0;i<G.towns.length&&(i+1)*S<=v.length;i++){const t=G.towns[i];t.pop=v[i*S]/100;t.loy=v[i*S+1];t.sm=v[i*S+2]&1;t.milN=v[i*S+2]>>1;t.an=v.slice(i*S+3,i*S+3+N);}(d.hm.tv||[]).forEach((o,i)=>{if(G.tow&&G.tow[i]){G.tow[i].ow=o;const c=(d.hm.tc||[])[i];if(c)G.tow[i].cp=c;}});(d.hm.bc||[]).forEach((x,i)=>{if(G.teams[i])G.teams[i].brT=G.t+x;});}
   if(Array.isArray(d.tw)&&G.towns){for(const t of G.towns){t.ow=-1;t.tax=0;t.reb=0;t.un=0;t.fr=0;t.gar=0;}const v=d.tw;for(let i=0;i+9<v.length;i+=10){const t=G.towns[v[i]];if(t){t.ow=v[i+1];t.rate=v[i+2];t.un=v[i+3];t.tax=v[i+4]/10;t.why=v[i+5];t.reb=v[i+6]>0?G.t+v[i+6]:0;t.whole=v[i+7];t.fr=v[i+8];t.gar=v[i+9];}}for(const T of G.teams)T.terr=0;for(const t of G.towns)if(t.ow>=0&&G.teams[t.ow])G.teams[t.ow].terr+=t.tax;}

@@ -75,10 +75,10 @@ function strikeSecs(T){let f;if(MODE==='client'&&G.sfd)f=G.sfd[T.id];else f=T._u
 function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){}
   // territory income next to the money
   const cr=$('credits');if(cr){let s=$('terrInc');if(!s){s=document.createElement('span');s.id='terrInc';s.style.cssText='font-size:11px;color:#9be39b;margin-left:6px;font-weight:600;white-space:nowrap';cr.parentNode.insertBefore(s,cr.nextSibling);}
-    const T=G.teams[ME],v=T?T.terr||0:0;const txt=v>0.05?'+$'+v.toFixed(1)+'/s':'';if(s.textContent!==txt){s.textContent=txt;s.title='Territory income: tax from your towns and hamlets. Press a town to change its tax rate.';}}
+    ecHud();}
   if(TP.ti<0||!TP.el)return;const n=performance.now();if(!force&&n-TP.t<250)return;TP.t=n;const t=G.towns[TP.ti];if(!t){townClose();return;}
   if(G.over){townClose();return;}
-  const mine=townsMine(t),reb=t.reb>G.t,kind=t.ham?'Hamlet':'Town',ow=t.ow>=0&&G.teams[t.ow]?G.teams[t.ow].F.name:null;let h=`<h4>${t.name}</h4><div class="tm">${kind}${ow?' &middot; held by '+ow:reb?' &middot; in rebel hands':' &middot; neutral'}</div>`;
+  const mine=townsMine(t),reb=t.reb>G.t,kind=EC_LV[t.lv==null?(t.ham?0:1):t.lv],ow=t.ow>=0&&G.teams[t.ow]?G.teams[t.ow].F.name:null;let h=`<h4>${t.name}</h4><div class="tm">${kind}${ow?' &middot; held by '+ow:reb?' &middot; in rebel hands':' &middot; neutral'}</div>`;
   const pk=TPERK[t.pk|0];
   if(mine){const ramp=Math.round(Math.min(1,(G.t-(t.hold||0))/T_RAMP)*50+50);
     h+=`<div style="margin-top:6px"><b>Tax +$${t.tax.toFixed(1)}/s</b> <span class="tm">${ramp<100?'(ramping '+ramp+'%)':''}${t.whole?' &middot; whole town +50%':''}</span></div>`;
@@ -87,7 +87,7 @@ function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){
     h+=`<div class="tm">Troops near: ${t.gar|0} &middot; enemy troops near: ${t.fr|0}</div>`;
     if(t.un>=70)h+='<div class="warn">Lower the tax or send troops - this town is about to revolt!</div>';
     else h+='<div class="tm">Tip: High tax in safe towns behind your lines, Low tax on the front line.</div>';
-    h+=lgTownHtml(t,mine);}
+    h+=lgTownHtml(t,mine);h+=ecTownHtml(t,mine);}
   else if(reb)h+=`<div class="warn" style="margin-top:6px">The locals revolted. Rebels hold it for ${Math.max(0,Math.ceil(t.reb-G.t))} s - clear them, then garrison infantry to capture.</div>`;
   else if(t.ow>=0)h+='<div class="tm" style="margin-top:6px">Enemy-held. Garrison infantry in its buildings to capture it'+(t.un>50?' &mdash; the locals are restless, it falls faster':'')+'.</div>';
   else h+='<div class="tm" style="margin-top:6px">Neutral. Garrison infantry in its buildings (more than half of the key buildings) to capture it.</div>';

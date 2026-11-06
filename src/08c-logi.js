@@ -28,7 +28,7 @@ function drawLogiWorld(c){if(!G||!G.lg||!G.lgd||G.over)return;
     if(todo.length>1){c.setLineDash([6,8]);c.strokeStyle='#f0d060';c.lineWidth=2;lgStroke(c,todo);c.setLineDash([]);}
     const fp=lgPoint(j,j.prog),p=toScreen(fp[0],groundH(fp[0],fp[1])+60,fp[1]);if(p.z<=1){c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-38,p.y-16,76,16);c.fillStyle='#f0d060';c.font='bold 11px system-ui,sans-serif';c.textAlign='center';c.fillText('ROAD '+Math.round(100*j.prog/Math.max(1,j.len))+'%',p.x,p.y-4);}}
   // supply convoys: a crate badge (green = yours / allied, red = enemy) + stocked towns
-  for(const e of G.ents){if(e.dead||!(e.cv||(G.lgCv&&G.lgCv.has(e.id)))||!inView(e.x,e.y,.1))continue;const p=toScreen(e.x,groundH(e.x,e.y)+34,e.y);if(p.z>1)continue;const fr=ally(e.team,ME);
+  for(const e of G.ents){if(e.dead||!((e.cv&&!e.cv.cav)||(G.lgCv&&G.lgCv.has(e.id)))||!inView(e.x,e.y,.1))continue;const p=toScreen(e.x,groundH(e.x,e.y)+34,e.y);if(p.z>1)continue;const fr=ally(e.team,ME);
     c.fillStyle='rgba(0,0,0,.78)';c.fillRect(p.x-15,p.y-18,30,14);c.fillStyle=fr?'#7ee88f':'#ff6a55';c.fillRect(p.x-9,p.y-15,8,8);c.fillRect(p.x+1,p.y-15,8,8);c.fillStyle='#fff';c.font='bold 8px system-ui,sans-serif';c.textAlign='center';c.fillText(fr?'SUP':'CVY',p.x,p.y-6);}
   // cut-off and trade-route tags on your towns
   for(const t of G.towns){if(!townsMine(t)||!inView(t.x,t.y,.1))continue;if(!t.cut&&!t.al&&!((t.trade||t.sk||t.dl>G.t)&&lgWanted()))continue;const p=toScreen(t.x,groundH(t.x,t.y)+(t.ham?70:110),t.y);if(p.z>1)continue;
@@ -44,7 +44,7 @@ function drawLogiMini(c,sx,sy){if(!G||!G.lg||!G.lgd)return;const L=G.lg,D=G.lgd;
   L.E.forEach((e,i)=>{const s=lgEdgeState(e,i);if(s===1){c.setLineDash([]);c.strokeStyle='rgba(95,224,122,.75)';c.lineWidth=1.6;}else{c.setLineDash([4,3]);c.strokeStyle='rgba(255,90,74,.9)';c.lineWidth=1.6;}
     c.beginPath();e.pts.forEach((p,k)=>k?c.lineTo(p[0]*sx,p[1]*sy):c.moveTo(p[0]*sx,p[1]*sy));c.stroke();});c.setLineDash([]);
   for(const t of G.towns)if(t.cut&&townsMine(t)){c.strokeStyle='#ff5a4a';c.lineWidth=2;c.beginPath();c.arc(t.x*sx,t.y*sy,8,0,7);c.stroke();}
-  for(const e of G.ents){if(e.dead||!(e.cv||(G.lgCv&&G.lgCv.has(e.id))))continue;c.fillStyle=ally(e.team,ME)?'#ffe45a':'#ff4a3a';c.fillRect(e.x*sx-2.5,e.y*sy-2.5,5,5);}
+  for(const e of G.ents){if(e.dead||!((e.cv&&!e.cv.cav)||(G.lgCv&&G.lgCv.has(e.id))))continue;c.fillStyle=ally(e.team,ME)?'#ffe45a':'#ff4a3a';c.fillRect(e.x*sx-2.5,e.y*sy-2.5,5,5);}
   try{drawLogiMini2(c,sx,sy);}catch(e){}
   c.restore();}
 function lgTownHtml(t,mine){if(!mine||!G.lg)return'';const T=G.teams[ME];let h='';
