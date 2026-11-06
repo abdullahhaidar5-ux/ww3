@@ -157,6 +157,8 @@ Moved up: runs right after grand1. The grand map must look like a **Total War ca
       (add a grand-map smoothness check). Reuse the battle engine's Three.js setup, terrain/water shaders, models, flags — no new tech.
 - [~] Living map: armies walk between provinces, battle smoke over fought-over provinces, turn-report news card done; convoys, missile trails, burning cities (needs stage-3 strikes; renderer already reads `GC.prov[i].burn`) still to do.
 
+> **2026-11-06 17:26 Abdullah: "I want the art loop now … all the art by 8 pm Saturday."** look1 runs as planned; **look2–look4 are folded into the ART LOOP** (their checklists below are the loop's backlog alongside the ART-BAR scores). The art loop also owns the grand-map UI **look** (skin, cards, banners); integrate2 only merges duplicate panels/systems, it does not restyle.
+
 ## Look passes (Abdullah 2026-11-06 15:42 — after grandsharp, one Sonnet helper each, in this order; rendering/UI only, no rules)
 ### look1 — Light & colour
 - [ ] Sun with soft real-time shadows (one cascaded shadow map over the visible area), ambient occlusion in valleys, hemisphere sky light.
