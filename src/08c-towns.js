@@ -132,3 +132,10 @@ FXH.hum=(team,x,y,n)=>{if(!G||!G.teams[ME]||!ally(team,ME))return;(G.hums=G.hums
 
 // inbound missile countdown for the minimap (the global 'strike' warning carries the seconds to impact)
 {const _st=FXH.strike;FXH.strike=function(x,y,t,r,sup,arc){if(sup&&G)(G.inb=G.inb||[]).push({x,y,r,t:performance.now()+t*1000});return _st.apply(this,arguments);};}
+
+/* Infrastructure HUD (Abdullah 2026-11-05): a clear banner when OUR power grid is down (defences offline) and a fuel gauge when low. */
+function drawInfraHud(c){if(!G||G.over||!G.conq||!G.teams||!G.teams[ME])return;const T=G.teams[ME];const W=c.canvas.width/(window.devicePixelRatio&&c.canvas.width>1?1:1);
+  const lines=[];if(T.blk)lines.push(['\u26A1 BLACKOUT - no power: SAM sites, defence guns and strike centre OFFLINE. Recapture or repair a power plant (Construction Vehicle).','#ea5a40']);
+  if(T.dry)lines.push(['\u26FD OUT OF FUEL - vehicles slowed. Hold an oil derrick.','#e3b341']);else if(T.fuel!=null&&T.fuel<.3)lines.push(['\u26FD Fuel reserve low - hold an oil derrick.','#c9a24a']);
+  if(!lines.length)return;const pulse=.75+.25*Math.sin(performance.now()/260);c.save();c.font='700 14px Saira Condensed, system-ui, sans-serif';c.textAlign='center';
+  let y=96;for(const [t,col] of lines){const w=c.measureText(t).width+28;const x=(c.canvas.clientWidth||c.canvas.width)/2;c.globalAlpha=pulse;c.fillStyle='rgba(12,8,8,.82)';c.fillRect(x-w/2,y-16,w,24);c.fillStyle=col;c.fillRect(x-w/2,y-16,4,24);c.fillText(t,x,y);y+=28;}c.restore();}
