@@ -1,0 +1,7 @@
+peak memory (node + browser, summed RSS): 1279 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC FAIL: client page error: Unexpected token '<<' (121s)
+  ✗ host page error: Unexpected token '<<'
+  ✗ page.waitForFunction: Timeout 120000ms exceeded.
