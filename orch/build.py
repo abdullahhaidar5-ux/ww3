@@ -485,7 +485,7 @@ ARTIFACT_URL = 'https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi'
 ARTIFACT_OUT = os.path.join(ROOT, 'orch', 'out', 'artifact')
 THREE_MARK = 'WW3_THREE="'  # first lines of the vendored Three.js bundle (orch/three/vendor.mjs)
 # Every room topic 07-net/07b-ckpt send in room mode, opened to Contributors ("interact"). 'b' (bundles) is P2P-only.
-ROOM_TOPICS = ['cmd', 'evt', 'hello', 'lobby', 'snap', 'start', 'team', 'ck', 'pong']
+ROOM_TOPICS = ['cmd', 'evt', 'hello', 'lobby', 'snap', 'start', 'team', 'ck', 'pong', 'lobr', 'pick']
 CAPABILITIES = {'room': {'topics': {t: 'interact' for t in ROOM_TOPICS}}, 'user': {'scopes': ['profile']}}
 # File types the artifact host serves (by extension). publish.json may only list these; the test harness
 # (orch/artifact-harness.mjs) serves only these too, so a refused type fails the artifact tests.
