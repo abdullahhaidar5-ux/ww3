@@ -6,7 +6,7 @@
    Layers: relief + painted ground (biome blur, hillshade, snow) | overlay texture (soft owner tint + subtle borders, map modes) |
    sea shader (depth colour, ripples, foam, sea-zone lines) | instanced forests/palms/scrub | instanced settlements |
    army figures (one soldier + national flag per army, ship for armies at sea) | move arrows | DOM banners/plates/cards/minimap. */
-const G3={F:null,R:null,sc:null,cam:null,cv:null,t0:0,raf:0,mode:'political',news:null,dirty:true,hit:[],mini:null,pos:new Map(),hot:new Map(),camera:{x:1200,z:600,d:1900,yaw:0,pitch:.86},cc:null};
+const G3={keys:new Set(),F:null,R:null,sc:null,cam:null,cv:null,t0:0,raf:0,mode:'political',news:null,dirty:true,hit:[],mini:null,pos:new Map(),hot:new Map(),camera:{x:1200,z:600,d:1900,yaw:0,pitch:.86},cc:null};
 const G3_MODES=[['political','Political'],['terrain','Terrain'],['trade','Trade & resources'],['supply','Supply'],['unrest','Unrest'],['culture','Culture / regions'],['alliances','Alliances & wars'],['development','Development']];
 const G3_BIOME={d:[206,180,126],m:[126,116,102],f:[116,152,78],u:[150,146,130],j:[56,116,62],s:[214,222,230],c:[158,172,116],r:[122,158,96]};
 function g3Hash(x,y){let h=(Math.imul(x|0,374761393)+Math.imul(y|0,668265263))|0;h=Math.imul(h^(h>>>13),1274126177);return ((h^(h>>>16))>>>0)/4294967295;}
@@ -153,7 +153,7 @@ function g3Tex(data,w,h,mip,nearest){const t=new THREE.DataTexture(data,w,h,THRE
 function g3Init(cv){g3Dispose();let R;try{R=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});}catch(e){return false;}
   if(!R.getContext())return false;R.outputColorSpace=THREE.LinearSRGBColorSpace;R.setPixelRatio(Math.min(1.5,window.devicePixelRatio||1));G3.R=R;G3.cv=cv;
   const F=g3Fields(),W=F.W,H=F.H,sc=new THREE.Scene(),haze=0x9db8c9;sc.background=new THREE.Color(haze);sc.fog=new THREE.Fog(haze,2600,6800);G3.sc=sc;
-  G3.cam=new THREE.PerspectiveCamera(36,1.6,8,9000);G3.cc=Object.assign({},G3.camera);G3.time=0;G3.last=0;G3.keys=new Set();G3.pos=new Map();G3.arm=new Map();G3.sig='';
+  G3.cam=new THREE.PerspectiveCamera(36,1.6,8,9000);G3.cc=Object.assign({},G3.camera);G3.time=0;G3.last=0;G3.keys.clear();G3.pos=new Map();G3.arm=new Map();G3.sig='';
   sc.add(new THREE.HemisphereLight(0xdbe8f4,0x8a7a5e,1.75));const sun=new THREE.DirectionalLight(0xfff0d2,1.7);sun.position.set(-1.1,1.6,-.7);sc.add(sun);
   G3.matLit=new THREE.MeshLambertMaterial({vertexColors:true});
   // terrain
