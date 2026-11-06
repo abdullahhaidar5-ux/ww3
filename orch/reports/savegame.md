@@ -19,4 +19,12 @@ Towns (only 12 of ~40 fields were saved: tax-rate timers, loyalty, garrisons, re
 ## Test
 `node orch/savetest.mjs` (new gate job `save`, `cigate.sh` now waits for 21 results): 5-minute AI battle → save → load in a fresh page → state hash right after load equals the saved one → both run 2 more minutes with the same random numbers → hashes must match → reload the page, Continue works → file round trip → old/damaged/foreign files refused. Deterministic mode lives in `orch/savelib.mjs`.
 
-RESULTS_PLACEHOLDER
+## Results
+- `node orch/savetest.mjs` (5 min battle → save → fresh page → +2 min, identical hash `3640833123` in both pages; Continue after a reload; file round trip; refusals): **SAVETEST PASS**. Packed save ≈ 22 KB for a 50-unit battle at 5:00; `ckEncode` 3–6 ms on the game thread.
+- `node orch/smoke.mjs`: SMOKE PASS. Full gate: see the push note in HISTORY.
+- Screenshots: `orch/shots/savegame/` (1 save dialog, 2 dialog with saves, 3 load list with thumbnails, 4 main menu with Continue, 5 a loaded battle).
+- Not done: the multiplayer part (host saves, clients get a toast, Load on an online save → Play online with seats) — spec and entry points in `orch/HANDOFF-savegame.md`.
+
+## Try it (2 minutes, PC)
+Open https://abdullahhaidar5-ux.github.io/ww3/ , start a skirmish, play a minute, press Esc → **Save game** → name it → Save. Press Esc → Quit battle. On the main menu press **Continue** — your battle comes back paused; press P.
+
