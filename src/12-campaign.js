@@ -29,7 +29,7 @@ const CH={
 
 // ---------- the five missions ----------
 const CAMPAIGN=[
-{id:'pass',n:1,title:'Hold the Pass',sub:'Mountain Shias · Ridge defence',fac:'RS',enemy:'EU',enemyName:'Invasion Force',map:'khyber',
+{id:'pass',n:1,title:'Hold the Pass',sub:'Mountain Shias · Ridge defence',fac:'RS',enemy:'DE',enemyName:'Invasion Force',map:'khyber',
  brief:['An invasion force is pushing up the only road into our valleys. Our main columns are still two hours away on the mountain tracks.','You hold a ridge above the road with a small garrison: riflemen, anti-tank teams, two tanks and a few emplacements. Hold it. Every minute you stand buys the valley time.','When the reinforcements arrive, do not let the enemy rest: take the fight back down the pass and destroy their forward base.'],
  obj:[['hold','Hold the ridge until reinforcements arrive'],['reinf','Reinforcements arrive'],['crush','Destroy the enemy forward base']],
  win:'The pass is ours. The valley is safe, and the road is closed to the invaders.',lose:'The ridge has fallen. The valley will have to be defended from the next line.',
@@ -91,7 +91,7 @@ const CAMPAIGN=[
   else if(!hq)c.lose('Headquarters was destroyed.');
   c.status=c.t<c.T?'Relief in '+campClock(c.T-c.t)+' · wave '+c.wave:null;}},
 
-{id:'town',n:4,title:'Retake the Town',sub:'Mountain Shias + Coffee Shias · Street fight',fac:'RS',ally:'DW',enemy:'EU',enemyName:'Occupation Force',map:'aleppo',
+{id:'town',n:4,title:'Retake the Town',sub:'Mountain Shias + Coffee Shias · Street fight',fac:'RS',ally:'DW',enemy:'DE',enemyName:'Occupation Force',map:'aleppo',
  brief:['An occupation force has seized the old town at the crossroads. Its streets and rooftops are held by infantry and anti-tank teams, with armour in the squares.','Mountain Shias and Coffee Shias fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.','Clear the town street by street. Put infantry into buildings to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves.'],
  obj:[['z0','Clear the southern approach'],['z1','Clear the west quarter'],['z2','Clear the east quarter'],['z3','Take the citadel square'],['z4','Clear the far gate'],['gar','Garrison a building to hold ground']],
  win:'The town is free. Both flags fly over the citadel.',lose:'The assault has failed. Our columns fall back.',
@@ -173,7 +173,7 @@ function campShow(inner){campClose();const e=campEl('div',CAMP_CSS);e.id='campSc
 function campBtn(txt,fn,ghost){const b=campEl('button','font-size:18px;padding:14px 22px;margin:6px 8px 6px 0;border-radius:8px;border:1px solid #6b7a55;background:'+(ghost?'transparent':'#4f6b32')+';color:#fff;cursor:pointer;min-height:48px;',txt);b.type='button';b.onclick=fn;return b;}
 function campMenu(){
   const s=campLoad(),root=campEl('div');
-  root.appendChild(campEl('h1','margin:6px 0 4px;font-size:30px;letter-spacing:.04em;','CAMPAIGN'));
+  root.appendChild(campEl('h1','margin:6px 0 4px;font-size:30px;letter-spacing:.04em;','MISSIONS'));
   root.appendChild(campEl('div','opacity:.75;margin-bottom:14px;','Five missions for the Shia factions. Replay any mission on Easy, Medium or Hard; your best times are saved on this device.'));
   for(const m of CAMPAIGN){const r=s[m.id]||{},done=Object.keys(r);const card=campEl('div','border:1px solid #3d4733;border-radius:10px;padding:12px 14px;margin:10px 0;background:rgba(40,48,32,.5);cursor:pointer;');
     card.innerHTML=`<div style="font-size:20px;font-weight:bold">${done.length?'✓ ':''}${m.n}. ${m.title}</div><div style="opacity:.8;font-size:15px">${m.sub}</div><div style="font-size:14px;opacity:.7;margin-top:4px">${done.length?CAMP_DIFF.filter(k=>r[k]).map(k=>k+' '+campClock(r[k])).join(' · '):'Not yet completed'}</div>`;
@@ -222,4 +222,4 @@ function campPanel(){
   el.innerHTML=`<b>${c.m.title}</b> <span style="opacity:.6">· ${CAMP_DIFF[c.diff]}</span><br>`+c.m.obj.map(o=>`<span style="${c.o[o[0]]?'color:#9fd36b':''}">${c.o[o[0]]?'☑':'☐'} ${o[1]}</span>`).join('<br>')+(c.status?`<br><b style="color:#f0d27a">${c.status}</b>`:'');
 }
 setInterval(()=>{try{campPanel();}catch(e){}},400);
-(function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Campaign';b.title='Five single-player missions for Iran, the Mountain Shias and the Coffee Shias';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();
+(function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Missions';b.title='Five single-player missions for Iran, the Mountain Shias and the Coffee Shias';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();

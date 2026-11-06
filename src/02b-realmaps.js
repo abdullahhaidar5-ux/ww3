@@ -15,7 +15,7 @@ Object.assign(MAPS,{
     slots:QS,cities:Q4([[1050,420,95,'russia'],[520,990,80,'russia']]).concat([[1600,1100,140,'russia']]),
     water(M,R){const ph=R()*6.28;M.rivers.push({pts:wig(-200,1600,x=>720+55*Math.sin(x*.0042+ph)+22*Math.sin(x*.012+ph*2)),hw:()=>52});M.bridgeAt=[[0,.5],[0,.86]];M.bridgeFrac=true;
       M.peaks.push({x:1150,y:1000,r:48,rx:1.6,rot:.4},{x:860,y:420,r:44,rx:1.3,rot:-.3},{x:300,y:560,r:40,rx:1.2,rot:.2});M.lakes.push({x:1330,y:470,r:62,rx:1.4,wob:q=>.1*Math.sin(q*3+ph)});mirrorMap(M,'x');mirrorMap(M,'y');}},
-  golanplateau:{name:'Golan Plateau',min:2,max:4,sym:'quad',theme:'green',rough:1.5,ssn:1,home:['IL','RS'],tag:'basalt plateau · valleys · lakes · passes',
+  golanplateau:{name:'Golan Plateau',min:2,max:4,sym:'quad',theme:'green',rough:1.5,ssn:1,home:['IL','RS','SY'],tag:'basalt plateau · valleys · lakes · passes',
     desc:'A raised basalt plateau in the middle, walled by ridges with narrow passes, and green valleys and lakes on both sides. Whoever holds the plateau town holds the passes.',
     slots:QS,cities:Q4([[640,400,100,'lebanon'],[1000,880,75,'mideast']]).concat([[1600,1100,130,'mideast']]),
     water(M,R){const ph=R()*6.28;const rg=[];for(let y=-200;y<=960;y+=40)rg.push([1280+34*Math.sin(y*.006+ph),y]);M.ridges.push({pts:rg,hw:()=>88});

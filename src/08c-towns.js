@@ -10,7 +10,7 @@ const TPERK=[['','No special building'],['Market','+25% tax (+40% on Low tax)'],
 let TP={ti:-1,el:null,t:0};
 function unrestCol(u){return u>=75?'#e5483c':u>=50?'#f0c040':'#5fcf72';}
 function townsMine(t){return t.ow>=0&&G.teams[ME]&&ally(t.ow,ME);}
-function drawTownsWorld(c){if(!G||!G.towns||G.over)return;const now=performance.now()/1000,ph=VW<561;
+function drawTownsWorld(c){if(!G||!G.towns||G.over||OVL.towns===false)return;const now=performance.now()/1000,ph=VW<561;
   for(const t of G.towns){if(!inView(t.x,t.y,.1))continue;const p=toScreen(t.x,groundH(t.x,t.y)+(t.ham?70:110),t.y);if(p.z>1)continue;
     const mine=townsMine(t),reb=t.reb>G.t;
     c.save();c.font=(ph?'bold 11px':'bold 12px')+' system-ui,sans-serif';c.textAlign='center';
@@ -26,7 +26,7 @@ function drawTownsWorld(c){if(!G||!G.towns||G.over)return;const now=performance.
     else if(t.ow>=0&&G.teams[t.ow]){c.fillStyle='rgba(8,12,10,.7)';const w=c.measureText(t.name).width+16,h=18;c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle=G.teams[t.ow].color;c.fillRect(p.x-w/2,p.y-h,4,h);c.fillStyle='#e8f2e8';c.fillText(t.name,p.x+2,p.y-5);}
     else{c.fillStyle='rgba(8,12,10,.55)';const w=c.measureText(t.name).width+12,h=16;c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle='#c9d2c6';c.fillText(t.name,p.x,p.y-4);}
     c.restore();}}
-function drawTownsMini(c,sx,sy,now){if(!G||!G.towns)return;
+function drawTownsMini(c,sx,sy,now){if(!G||!G.towns||OVL.towns===false)return;
   for(const t of G.towns){const x=t.x*sx,y=t.y*sy,s=t.ham?3.2:4.6,mine=townsMine(t),reb=t.reb>G.t;
     c.save();
     if(reb){c.fillStyle='#000';c.beginPath();c.moveTo(x,y-s-2);c.lineTo(x+s+2,y);c.lineTo(x,y+s+2);c.lineTo(x-s-2,y);c.closePath();c.fill();c.fillStyle='#d9693a';c.beginPath();c.moveTo(x,y-s);c.lineTo(x+s,y);c.lineTo(x,y+s);c.lineTo(x-s,y);c.closePath();c.fill();c.strokeStyle='#000';c.lineWidth=1.3;c.beginPath();c.moveTo(x-s*.6,y-s*.6);c.lineTo(x+s*.6,y+s*.6);c.moveTo(x+s*.6,y-s*.6);c.lineTo(x-s*.6,y+s*.6);c.stroke();}
@@ -56,29 +56,28 @@ FXH.tping=(team,x,y,k)=>{if(team!==ME||!G)return;(G.tpings=G.tpings||[]).push({x
 function townClose(){TP.ti=-1;if(TP.el)TP.el.style.display='none';}
 function townPick(sx,sy){if(!G||!G.towns)return false;const w=screenToWorld(sx,sy);const t=townAt(w,10);if(t){townOpen(t.i);return true;}townClose();return false;}
 function townOpen(i){TP.ti=i;if(!TP.el)townBuild();TP.el.style.display='block';TP.t=0;townPanelTick(true);}
-function townBuild(){if(!document.getElementById('townCss')){const st=document.createElement('style');st.id='townCss';st.textContent=`#townp{position:fixed;left:8px;top:64px;width:min(280px,calc(100vw - 16px));z-index:60;background:rgba(10,16,12,.94);border:1px solid #4a6a52;border-radius:8px;color:#e8f2e8;font:14px/1.35 system-ui,sans-serif;padding:10px 12px;display:none;box-shadow:0 4px 18px rgba(0,0,0,.5)}
+function townBuild(){if(!document.getElementById('townCss')){const st=document.createElement('style');st.id='townCss';st.textContent=`#townp{position:fixed;left:8px;top:64px;width:min(280px,calc(100vw - 16px));z-index:60;background:rgba(10,16,12,.94);border:1px solid #4a6a52;border-radius:8px;color:#e8f2e8;font:14px/1.35 system-ui,sans-serif;padding:10px 12px;display:none;max-height:calc(100vh - 290px);overflow-y:auto;box-shadow:0 4px 18px rgba(0,0,0,.5)}
 #townp h4{margin:0 0 2px;font-size:16px}#townp .tm{color:#9fb5a4;font-size:12px}#townp .rb{display:flex;gap:6px;margin:8px 0}#townp .rb button{flex:1;min-height:44px;border-radius:6px;border:1px solid #4a6a52;background:#1c2a20;color:#e8f2e8;font-size:13px;font-weight:600;cursor:pointer}#townp .rb button.on{background:#3a6b46;border-color:#9be39b}#townp .rb button[disabled]{opacity:.45}
 #townp .bar{height:10px;background:rgba(255,255,255,.14);border-radius:5px;overflow:hidden;margin:4px 0}#townp .bar i{display:block;height:100%}#townp .x{position:absolute;right:6px;top:4px;width:34px;height:34px;background:none;border:0;color:#cfe0d2;font-size:22px;cursor:pointer}#townp .warn{color:#ffb4a8;font-weight:600}`;document.head.appendChild(st);}
   const d=document.createElement('div');d.id='townp';d.innerHTML='<button class="x" aria-label="Close">&times;</button><div id="tpb"></div>';d.addEventListener('pointerdown',e=>e.stopPropagation());d.addEventListener('contextmenu',e=>e.preventDefault());
   d.querySelector('.x').onclick=townClose;d.addEventListener('click',e=>{const b=e.target.closest('button[data-r]');if(b&&TP.ti>=0){doAct({t:'tax',ti:TP.ti,r:+b.dataset.r});TP.t=0;setTimeout(()=>townPanelTick(true),60);}const a=e.target.closest('button[data-act]');if(a&&TP.ti>=0&&!a.disabled){doAct(a.dataset.act==='road'?{t:'road',ti:TP.ti,ids:G.sel.filter(u=>!u.isB&&u.kind==='dozer'&&u.team===ME).map(u=>u.id)}:{t:a.dataset.act,ti:TP.ti});TP.t=0;setTimeout(()=>townPanelTick(true),90);}});
   document.body.appendChild(d);TP.el=d;}
-function cqBanner(){if(!G||!G.conq)return;if(G.over){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}let b=$('cqBn');if(!b){b=document.createElement('div');b.id='cqBn';b.style.cssText='position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;font:600 14px/1.3 system-ui,sans-serif;color:#f4e9c2;text-shadow:0 1px 3px #000;max-width:calc(100vw - 150px)';document.body.appendChild(b);}
+function cqBanner(){if(!G||!G.conq)return;if(G.over){const o=$('cqBn');if(o&&o.dataset.h){o.dataset.h='';o.innerHTML='';}return;}let b=$('cqBn');if(!b){b=document.createElement('div');b.id='cqBn';b.style.cssText='position:fixed;top:42px;left:50%;transform:translateX(-50%);z-index:55;pointer-events:none;text-align:center;font:600 14px/1.3 system-ui,sans-serif;color:#f4e9c2;text-shadow:0 1px 3px #000;max-width:calc(100vw - 150px)';document.body.appendChild(b);}
   const setup=G.t<G.setupEnd;let h='';if(setup){const l=Math.max(0,Math.ceil(G.setupEnd-G.t));h=`<div style="background:rgba(60,45,10,.88);border:1px solid #d9b34a;border-radius:6px;padding:4px 12px;color:#ffe08a">SETUP PHASE ${Math.floor(l/60)}:${String(l%60).padStart(2,'0')} <span style="font-weight:400;font-size:12px">&middot; build up and grab towns &middot; no firing yet</span></div>`;}
   if(G.bse&&G.teams[ME]){let c=0,m=0,n=0;for(const T of G.teams){if(T.reb||T.out||ally(T.id,ME)||!G.bse[T.id])continue;c+=G.bse[T.id][0];m+=G.bse[T.id][1];n++;}if(n&&m)h+=`<div style="margin-top:3px;font-size:12px;opacity:.92">${n>1?'Enemy bases':'Enemy base'}: ${c} of ${m} structures left</div>`;}
   {const tm=x=>Math.floor(x/60)+':'+String(Math.floor(x%60)).padStart(2,'0');let sl='';
    for(const T of G.teams){if(T.reb||T.out||!T.sup)continue;const sec=strikeSecs(T);if(sec<0)continue;const mine=ally(T.id,ME);
      sl+=`<div style="font-size:12px;margin-top:2px;color:${mine?'#bfe8c4':'#ffb4a8'}">${T.F.name} ${UPLINK[T.fac]?UPLINK[T.fac][0]:'missile strike'}: ${sec<=0.5?'READY':'ready in '+tm(sec)}</div>`;}
    h+=sl;}
-  h+=polBannerHtml();
   if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
 function strikeSecs(T){let f;if(MODE==='client'&&G.sfd)f=G.sfd[T.id];else f=T._upl?100*T.charge/T.sup.charge:-1;if(f==null||f<0)return -1;return Math.max((1-f/100)*T.sup.charge/.5,G.t<CQ_STRIKE_MIN?CQ_STRIKE_MIN-G.t:0);}
 function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){}
   // territory income next to the money
   const cr=$('credits');if(cr){let s=$('terrInc');if(!s){s=document.createElement('span');s.id='terrInc';s.style.cssText='font-size:11px;color:#9be39b;margin-left:6px;font-weight:600;white-space:nowrap';cr.parentNode.insertBefore(s,cr.nextSibling);}
-    const T=G.teams[ME],v=T?T.terr||0:0;const txt=v>0.05?'+$'+v.toFixed(1)+'/s':'';if(s.textContent!==txt){s.textContent=txt;s.title='Territory income: tax from your towns and hamlets. Press a town to change its tax rate.';}}
+    ecHud();}
   if(TP.ti<0||!TP.el)return;const n=performance.now();if(!force&&n-TP.t<250)return;TP.t=n;const t=G.towns[TP.ti];if(!t){townClose();return;}
   if(G.over){townClose();return;}
-  const mine=townsMine(t),reb=t.reb>G.t,kind=t.ham?'Hamlet':'Town',ow=t.ow>=0&&G.teams[t.ow]?G.teams[t.ow].F.name:null;let h=`<h4>${t.name}</h4><div class="tm">${kind}${ow?' &middot; held by '+ow:reb?' &middot; in rebel hands':' &middot; neutral'}</div>`;
+  const mine=townsMine(t),reb=t.reb>G.t,kind=EC_LV[t.lv==null?(t.ham?0:1):t.lv],ow=t.ow>=0&&G.teams[t.ow]?G.teams[t.ow].F.name:null;let h=`<h4>${t.name}</h4><div class="tm">${kind}${ow?' &middot; held by '+ow:reb?' &middot; in rebel hands':' &middot; neutral'}</div>`;
   const pk=TPERK[t.pk|0];
   if(mine){const ramp=Math.round(Math.min(1,(G.t-(t.hold||0))/T_RAMP)*50+50);
     h+=`<div style="margin-top:6px"><b>Tax +$${t.tax.toFixed(1)}/s</b> <span class="tm">${ramp<100?'(ramping '+ramp+'%)':''}${t.whole?' &middot; whole town +50%':''}</span></div>`;
@@ -87,7 +86,7 @@ function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){
     h+=`<div class="tm">Troops near: ${t.gar|0} &middot; enemy troops near: ${t.fr|0}</div>`;
     if(t.un>=70)h+='<div class="warn">Lower the tax or send troops - this town is about to revolt!</div>';
     else h+='<div class="tm">Tip: High tax in safe towns behind your lines, Low tax on the front line.</div>';
-    h+=lgTownHtml(t,mine);}
+    h+=lgTownHtml(t,mine);h+=ecTownHtml(t,mine);}
   else if(reb)h+=`<div class="warn" style="margin-top:6px">The locals revolted. Rebels hold it for ${Math.max(0,Math.ceil(t.reb-G.t))} s - clear them, then garrison infantry to capture.</div>`;
   else if(t.ow>=0)h+='<div class="tm" style="margin-top:6px">Enemy-held. Garrison infantry in its buildings to capture it'+(t.un>50?' &mdash; the locals are restless, it falls faster':'')+'.</div>';
   else h+='<div class="tm" style="margin-top:6px">Neutral. Garrison infantry in its buildings (more than half of the key buildings) to capture it.</div>';

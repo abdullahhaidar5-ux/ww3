@@ -43,8 +43,8 @@ const ENC_BCOUNTER={hq:'Lose it and you cannot build any more: guard it with air
 const ENC_ARM={light:'Light (soldiers)',medium:'Medium',heavy:'Heavy (vehicle)',bld:'Structure',air:'Aircraft',ship:'Ship'};
 function encType(s,b){if(b)return 'bld';const c=s.cls;if(['inf','at','hacker','hero','champ','cleric'].includes(c))return 'inf';if(['heli','jet','drone','airlift'].includes(c)||s.dom==='air')return 'air';if(['boat','sub','ship','lander'].includes(c)||(s.dom&&s.dom!=='ground'))return 'sea';return 'veh';}
 function encEntries(){if(ENC.all)return ENC.all;const out=[];
-  for(const f of FKEYS){const seen=new Set();for(const k of allUnits(f)){if(seen.has(k)||!BASE[k])continue;seen.add(k);const s=stats(f,k);out.push({f,k,b:0,s,t:encType(s,0),n:s.name||k});}
-    for(const k of Object.keys(STRUCT)){if(k==='garrison'||k==='econ'||(k==='tunnel'||k==='fort')&&!FACTIONS[f].tunnels||k==='airfield'&&FACTIONS[f].noAir)continue;const s=bstats(f,k);out.push({f,k,b:1,s,t:'bld',n:s.name||k});}}
+  for(const f of FKEYS){const seen=new Set();for(const k of allUnits(f)){if(seen.has(k)||!BASE[k]||k==='cleric')continue;seen.add(k);const s=stats(f,k);out.push({f,k,b:0,s,t:encType(s,0),n:s.name||k});}
+    for(const k of Object.keys(STRUCT)){if(k==='garrison'||k==='econ'||k==='fort'||k==='tunnel'&&!FACTIONS[f].tunnels||k==='airfield'&&FACTIONS[f].noAir)continue;const s=bstats(f,k);out.push({f,k,b:1,s,t:'bld',n:s.name||k});}}
   return ENC.all=out;}
 const encE=(t,c,x)=>{const d=document.createElement(t);if(c)d.className=c;if(x!=null)d.textContent=x;return d;};
 // ----- the 3D part -----

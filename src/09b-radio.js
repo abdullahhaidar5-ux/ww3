@@ -6,7 +6,7 @@ const RADCLS={base:'w',air:'w',armL:'w',armR:'w',msl:'w',town_lost:'bad',town_ta
 const RADGAP={base:25,air:45,armL:40,armR:40,msl:8,lost:25,town_lost:10,town_taken:10,hero:0,hab:0};
 const RADS={last:{},any:-99,hide:0,el:null};
 const VOHB={};
-function vohLoad(fac){if(!AU.ctx||!VOH[fac]||VOHB[fac])return;VOHB[fac]='loading';fetch('vo/'+fac+'_h.mp3?v=1').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>decodeAB(AU.ctx,b)).then(buf=>{VOHB[fac]=buf;}).catch(e=>{VOHB[fac]='fail';});}
+function vohLoad(fac){if(!AU.ctx||!VOH[fac]||VOHB[fac])return;VOHB[fac]='loading';fetch('vo/'+(VO_SHEET[fac]||fac)+'_h.mp3?v=1').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>decodeAB(AU.ctx,b)).then(buf=>{VOHB[fac]=buf;}).catch(e=>{VOHB[fac]='fail';});}
 /* plays one clip of the nation's radio sheet; key = event/hero line key; returns true if a clip was started */
 function vohPlay(fac,key,over){const buf=VOHB[fac],M=VOH[fac];if(!buf||typeof buf==='string'||!M||!M[key]||!auOn())return false;
   const ent=M[key].find(a=>a&&a.length);if(!ent)return false;const c=AU.ctx;if(AU.voEnd&&c.currentTime<AU.voEnd-.05&&!over)return false;
