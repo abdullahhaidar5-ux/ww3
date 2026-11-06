@@ -24,6 +24,7 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
 Helper `realstart` builds it; later stages keep it true. Today (before): cash 2200 major / 900 minor, army value 1 / 0.5, same fuel/food for all, armies only at capital + 1 war-goal province, opening wars = a "ring" of majors per region.
 - **Real gaps, not shrunk:** each nation's start comes from real 2025-26 figures (look them up, cite sources in the report): GDP → cash and income; defence budget + active troops + equipment → army value and unit mix (more jets/ships/armour where real); oil/gas output → fuel stock and oil income; food self-sufficiency → food; population → manpower cap. US ≫ Jordan is fine. Non-state/small sides (RS Mountain Shias, DW Yemen, KD) use realistic sizes for what they are (militia-heavy: lots of infantry, ATGMs, rockets, drones, tunnels/forts, little armour/air).
 - **Real alliances at the start** (look up the current state, Nov 2026): NATO (incl. Sweden; Turkey is a member), US treaty/major partners (JP, KR, AU, PH, IL, Gulf states, JO, EG, MA, TW informal…), the Resistance bloc (IR + RS + DW and the Iraqi militias' leanings — check what Syria really is now), Russia's ties (CSTO/KZ, KP 2024 treaty), China–Pakistan, Turkey–Azerbaijan, India non-aligned, etc. Use grand4b's diplomacy system if it exists (alliances, defensive pacts, guarantees); if not yet, put them in ONE data table (`GR_REAL.al`) that grand4/4b will read — never a second diplomacy system. Allies start with shared vision/military access where real.
+- **Starting relations:** also seed real starting opinions (−100…+100) and rivalries between nation pairs in `GR_REAL` (e.g. close allies +75, historic rivals −100) — grand4b's Diplomacy screen (EU4-style, Stage 4b) shows and uses them.
 - **Opening wars = real conflicts as they stand in Nov 2026** (look them up), not the ring. Everyone else starts at peace with real tensions (claims/war goals) so wars can break out.
 - **Real placement:** armies on the real hot fronts (Russia–Ukraine line, Korean DMZ, Kashmir LoC, Israel–Lebanon border, Yemen fronts, Taiwan Strait, Greece–Turkey etc.), garrisons in big cities/bases, real overseas bases with realistic sizes (US: Gulf/Qatar/Bahrain/Kuwait, Korea, Japan/Okinawa, Germany, Poland, Italy, Djibouti, Diego Garcia; Russia: Syria if still there, else none; Turkey: N. Iraq/N. Syria/N. Cyprus; France: Djibouti/UAE/Africa; UK: Cyprus/Gulf; China: Djibouti…), and fleets in real sea zones (US carrier groups, Russian Black Sea/Pacific, Chinese PLAN, etc.) if grand3's fleets exist; if not, the fleet table waits in `GR_REAL` for grand3.
 - **Still a game:** the tactical rule "all nations equally strong" stays for unit-vs-unit balance in battles; the grand map is deliberately unequal. Small nations' fun comes from alliances, terrain, Mountain Fortress/home-defender morale and asymmetric tools — tell the player at nation pick ("Superpower / Great power / Regional power / Small power", difficulty shown).
@@ -115,6 +116,23 @@ Helper `realstart` builds it; later stages keep it true. Today (before): cash 22
       nations (members get a joint-operations bonus: shared vision/supply, cheaper allied aid), with membership rules in diplomacy.
 
 ## Stage 4b (grand4b — diplomacy & government, Abdullah 21:20; also finishes anything left unticked in Stage 4)
+- [ ] **DIPLOMACY SCREEN** (Abdullah 2026-11-06 17:53, showed EU4's Diplomacy panel: "We need something like this") — the layout
+      idea, our own modern-war art (no copied EU4 art/icons; the ART LOOP polishes the look after). One panel, opened from a top-bar
+      "Diplomacy" tab or by clicking any nation's flag/province owner:
+      · **Header**: big national flag, nation name + government type, leader as a title + fictional name (no real leaders — never
+        the real Mountain Shias leaders), power tier (Superpower / Great power / Regional power / Small power), key stats with icons
+        (cash & income, manpower, army strength, war support, prestige, stability, trust).
+      · **Rows of flag icons**: Enemies (at war) · Rivals · Allies · Client states · Guaranteed by/for · Trade partners · Military
+        access — each flag clickable (opens that nation).
+      · **Searchable nation list** (right side): flag, name, *their opinion of you* and *yours of them* in green/red; sort by name /
+        opinion / power; filter tabs All · Neighbours · At war · Allies · Great powers.
+      · **Selected nation → actions**: Propose alliance, Declare war (needs war goal), Offer peace, Improve relations, Send aid,
+        Guarantee, Military access, Sanctions, Trade deal, Call to arms. Each button shows the chance it's accepted and WHY
+        (hover list: "+25 shared enemy", "-50 rivals", "+20 same bloc", "-30 low trust"…), like EU4.
+      · **One opinion system**: one number per nation pair (alliances, rivalries, shared enemies, bloc/religion, world opinion
+        `geOpinion`, trust, recent actions); everything diplomatic reads it. Starting opinions/rivalries come from realstart's
+        `GR_REAL` table (real-world relations). Deterministic for multiplayer; saved in GC.
+      · PC-size, readable text (CLAUDE.md command-bar rule), Esc closes; screenshot in the report.
 - [ ] **Call to arms & favours**: allies get called into your wars; helping them earns favours you spend to make them join.
 - [ ] **Trust & reputation**: keeping deals builds trust; breaking truces/betraying allies wrecks it — nobody signs with you.
 - [ ] **Great power ranking**: the top 8 nations by score are Great Powers (extra diplomatic weight, rivalries, can intervene).
