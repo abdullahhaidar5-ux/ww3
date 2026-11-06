@@ -29,7 +29,7 @@ const CH={
 
 // ---------- the five missions ----------
 const CAMPAIGN=[
-{id:'pass',n:1,title:'Hold the Pass',sub:'Mountain Shias · Ridge defence',fac:'RS',enemy:'EU',enemyName:'Invasion Force',map:'khyber',
+{id:'pass',n:1,title:'Hold the Pass',sub:'Mountain Shias · Ridge defence',fac:'RS',enemy:'DE',enemyName:'Invasion Force',map:'khyber',
  brief:['An invasion force is pushing up the only road into our valleys. Our main columns are still two hours away on the mountain tracks.','You hold a ridge above the road with a small garrison: riflemen, anti-tank teams, two tanks and a few emplacements. Hold it. Every minute you stand buys the valley time.','When the reinforcements arrive, do not let the enemy rest: take the fight back down the pass and destroy their forward base.'],
  obj:[['hold','Hold the ridge until reinforcements arrive'],['reinf','Reinforcements arrive'],['crush','Destroy the enemy forward base']],
  win:'The pass is ours. The valley is safe, and the road is closed to the invaders.',lose:'The ridge has fallen. The valley will have to be defended from the next line.',
@@ -91,7 +91,7 @@ const CAMPAIGN=[
   else if(!hq)c.lose('Headquarters was destroyed.');
   c.status=c.t<c.T?'Relief in '+campClock(c.T-c.t)+' · wave '+c.wave:null;}},
 
-{id:'town',n:4,title:'Retake the Town',sub:'Mountain Shias + Coffee Shias · Street fight',fac:'RS',ally:'DW',enemy:'EU',enemyName:'Occupation Force',map:'aleppo',
+{id:'town',n:4,title:'Retake the Town',sub:'Mountain Shias + Coffee Shias · Street fight',fac:'RS',ally:'DW',enemy:'DE',enemyName:'Occupation Force',map:'aleppo',
  brief:['An occupation force has seized the old town at the crossroads. Its streets and rooftops are held by infantry and anti-tank teams, with armour in the squares.','Mountain Shias and Coffee Shias fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.','Clear the town street by street. Put infantry into buildings to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves.'],
  obj:[['z0','Clear the southern approach'],['z1','Clear the west quarter'],['z2','Clear the east quarter'],['z3','Take the citadel square'],['z4','Clear the far gate'],['gar','Garrison a building to hold ground']],
  win:'The town is free. Both flags fly over the citadel.',lose:'The assault has failed. Our columns fall back.',

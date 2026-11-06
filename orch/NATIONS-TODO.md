@@ -10,13 +10,13 @@ voice set as a stand-in). Balance: one quick tourney for the lane's nations (40�
 
 | Lane | Nation | Notes |
 |---|---|---|
-| A1 | PL Poland | K2/Abrams/Leopard, Rosomak, AH-64, F-16/F-35, Krab, HIMARS-style. **Then retire the EU nation** (FR/DE are live): EU leaves lobby/menus/AI lists; EU units/voices/maps pass to FR/DE/PL (Fulda → DE); old saves/replays/missions naming EU load as DE, never crash; no dead EU tables; update CLAUDE.md + SYSTEMS.md. |
-| A1 | AZ Azerbaijan | T-90-style, BTR-82-style, Mi-35, Su-25, Bayraktar-style drones, Polonez-style rockets, Caspian boats |
-| A1 | JO Jordan | Challenger/Al-Hussein-style tank, M113/Mbombe-style, Cobra/Black Hawk, F-16, special forces flavour |
-| A1 | KD Kurdistan Region | Peshmerga of the regional government; regional flag OK; no other Kurdish armed groups' names/flags/emblems; light infantry, MRAPs/technicals, older armour, mortars, ATGM teams, mountain fighters |
-| A1 | IT Italy | Ariete-style, Centauro/Freccia, A129, Eurofighter/F-35, FREMM, Todaro-style sub, Alpini |
-| A1 | GR Greece | Leopard 2A6HEL, BMP-1/M113, AH-64, F-16/Rafale, Hydra/Belharra-style, Type 214-style sub, island defences |
-| A1 | ES Spain | Leopard 2E, Pizarro/Dragón, Tigre, Eurofighter/Harrier, F-100, S-80, Legion infantry |
+| A1 | ✅ PL Poland | K2/Abrams/Leopard, Rosomak, AH-64, F-16/F-35, Krab, HIMARS-style. **Then retire the EU nation** (FR/DE are live): EU leaves lobby/menus/AI lists; EU units/voices/maps pass to FR/DE/PL (Fulda → DE); old saves/replays/missions naming EU load as DE, never crash; no dead EU tables; update CLAUDE.md + SYSTEMS.md. |
+| A1 | ✅ AZ Azerbaijan | T-90-style, BTR-82-style, Mi-35, Su-25, Bayraktar-style drones, Polonez-style rockets, Caspian boats |
+| A1 | ✅ JO Jordan | Challenger/Al-Hussein-style tank, M113/Mbombe-style, Cobra/Black Hawk, F-16, special forces flavour |
+| A1 | ✅ KD Kurdistan Region | Peshmerga of the regional government; regional flag OK; no other Kurdish armed groups' names/flags/emblems; light infantry, MRAPs/technicals, older armour, mortars, ATGM teams, mountain fighters |
+| A1 | ✅ IT Italy | Ariete-style, Centauro/Freccia, A129, Eurofighter/F-35, FREMM, Todaro-style sub, Alpini |
+| A1 | ✅ GR Greece | Leopard 2A6HEL, BMP-1/M113, AH-64, F-16/Rafale, Hydra/Belharra-style, Type 214-style sub, island defences |
+| A1 | ✅ ES Spain | Leopard 2E, Pizarro/Dragón, Tigre, Eurofighter/Harrier, F-100, S-80, Legion infantry |
 | B1 | TW Taiwan | M1A2T/CM-11, CM-32, AH-64/Cobra, F-16V/IDF, Kang Ding/Cheng Kung, Hai Kun-style sub, Hsiung Feng, coastal defence |
 | B1 | PH Philippines | light armour, Black Hawk/AW159, FA-50, Jose Rizal frigates, BrahMos-style battery, marines |
 | B1 | VN Vietnam | T-90S/T-54-style, BTR/BMP, Mi-24, Su-30, Gepard, Kilo-style, coastal missiles, strong infantry |

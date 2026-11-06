@@ -43,7 +43,7 @@ systems doing one job, merge them into the owner and note it here.
 | Idea | ONE owner |
 |---|---|
 | Provinces, armies, turns, Fight-it / auto-resolve, save | grand1 (`orch/reports/grand-strategy.md`) |
-| Empire economy (all of it) + province buildings | grand2 |
+| Empire economy (all of it) + province buildings + signature assets | grand2: `src/13g-grandeco.js` (state `GC.nat[c].e`, `GC.eco`; buildings = `GC.prov[i].bl` entries, the list the battle mirror reads; `GE_SIG` table → `orch/SIGNATURES.md` via `orch/signatures-gen.mjs`), screens in `src/13h-grandecoui.js`. Later stages read `geSortieStock`, `geArmySupply`, `geEff`, `geFx`, `geOpinion` — never a second economy, bank, fuel or trade system |
 | Generals, front lines, map strikes, fleets & sea zones | grand3 |
 | Events, minor nations, seasons, diplomacy, research, cabinet, missions | grand4 |
 | 3D map, living map, turn news (uses the shared news feed) | grand5 |
