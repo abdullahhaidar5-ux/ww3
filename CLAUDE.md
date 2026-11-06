@@ -123,7 +123,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   gone. Standalone Conquest battles keep the normal equal start. Design/stages: `orch/reports/grand-strategy.md`; Abdullah's extra picks per stage (every grand stage
   helper must build its section too): `orch/GRAND-PICKS.md`. **Grand-map multiplayer battles** (19:30): if
   EITHER side wants "Fight it live", it's live (an away player's side is played by the battle AI); auto-resolve only if both
-  pick it; others keep planning and can spectate; several battles in a turn run at the same time. Grand campaigns live on
+  pick it; others keep planning and can spectate, an ally in the war can join a live battle as co-commander, and any empire in the war can send air/missile/drone support into it from its grand-map stocks (Abdullah 2026-11-06 07:51); several battles in a turn run at the same time. Grand campaigns live on
   Cloudflare; battles stay cloud-first with the automatic strongest-PC fallback (19:27).
 - **Three live copies:** GitHub Pages (`main`), Cloudflare Workers `ww3` at https://ww3.abdullah-haidar5.workers.dev
   (Abdullah connected it 2026-10-26; since 2026-10-28 `.github/workflows/deploy-site.yml` also sends it from `main` on every
