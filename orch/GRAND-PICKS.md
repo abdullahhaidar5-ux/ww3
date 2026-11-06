@@ -20,6 +20,31 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
   (proved later by the balance tourneys / grandtest). Economy/building-type signatures → grand2 builds; military/strike-type →
   grand3; leader/political-type → grand6. New-nation helpers add their nation's row.
 
+## ALL stages — THE NATION PANEL (Abdullah 2026-11-06 17:53, showed EU4's nation window: "We need something like this" → "Not just diplomacy the full panel")
+ONE tabbed window for running your nation, like EU4's (same idea and layout, our own modern-war art and icons — no copied EU4
+art). Helper `nationpanel` builds the shell + every tab whose system already exists; **every later grand stage adds its screen
+as a tab here** (never a separate pop-up window). The ART LOOP owns its final look.
+- **Opens** from the top bar (flag button + "Nation"), from clicking any nation's flag (opens THAT nation's panel read-only /
+  with diplomacy actions), Esc closes. PC-size, big readable text.
+- **Header (on every tab)**: big flag, name + government type, leader (title + fictional name; no real leaders), heir/successor
+  if grand6 has it, power tier (Superpower / Great / Regional / Small), morale style, and a stat grid with icons + hover
+  explanations: cash & income/turn, manpower, army strength, fuel, food, war support, stability, prestige, trust, world opinion.
+- **Tab bar of icons** (show only tabs whose system exists; later stages add theirs via one register call, e.g.
+  `npTab(id, icon, title, render)`):
+  1. **Government** — leader, cabinet, laws, reforms, stability/legitimacy (grand4/4b)
+  2. **Diplomacy** — the EU4-style screen in Stage 4b (enemies/rivals/allies flag rows, searchable nation list with opinions, actions with acceptance reasons)
+  3. **Economy** — budget: income/expenses by source, tax, bonds, upkeep, fuel/food/oil (grand2's `geUiPanel` moves in here)
+  4. **Trade** — deals, oil market, sea lanes & chokepoints (grand2/grand4)
+  5. **Military** — all armies & fleets with unit cards, generals, manpower, sortie stock (air), recruit queue (grand1/3)
+  6. **Research & doctrines** — research tree (grand4)
+  7. **Home front** — war support, morale style, unrest, national/religious days, refugees (grand6)
+  8. **Missions & war goals** (grand4)
+  9. **Signature assets & decisions** — the nation's unique assets (Ayatollah / Dear Leader / Mountain Fortress / Bunker Buster / its own signature, `GE_SIG`), one-time decisions
+  10. **Intelligence** — spies, known enemy forces (grand6)
+  11. **Provinces** — sortable list: name, towns, tax, unrest, buildings, garrison; click = fly the map there
+  12. **Ledger** — compare all nations: economy, army, navy, manpower, territory, tier (uses realstart's numbers)
+- One system: extend the existing grand UI (`guSide`/`guTop` in src/13c-grandui.js, `geUiPanel`/`geUiTop` in src/13h-grandecoui.js) — move screens into tabs, no duplicate panels.
+
 ## ALL stages — REALISTIC START (Abdullah 2026-11-06 17:49 "starting economic strength, military strength, and placement of armies is realistic"; picks 17:53: "Realistic and factor in real world alliances" + "Real hot spots + bases")
 Helper `realstart` builds it; later stages keep it true. Today (before): cash 2200 major / 900 minor, army value 1 / 0.5, same fuel/food for all, armies only at capital + 1 war-goal province, opening wars = a "ring" of majors per region.
 - **Real gaps, not shrunk:** each nation's start comes from real 2025-26 figures (look them up, cite sources in the report): GDP → cash and income; defence budget + active troops + equipment → army value and unit mix (more jets/ships/armour where real); oil/gas output → fuel stock and oil income; food self-sufficiency → food; population → manpower cap. US ≫ Jordan is fine. Non-state/small sides (RS Mountain Shias, DW Yemen, KD) use realistic sizes for what they are (militia-heavy: lots of infantry, ATGMs, rockets, drones, tunnels/forts, little armour/air).
@@ -116,7 +141,7 @@ Helper `realstart` builds it; later stages keep it true. Today (before): cash 22
       nations (members get a joint-operations bonus: shared vision/supply, cheaper allied aid), with membership rules in diplomacy.
 
 ## Stage 4b (grand4b — diplomacy & government, Abdullah 21:20; also finishes anything left unticked in Stage 4)
-- [ ] **DIPLOMACY SCREEN** (Abdullah 2026-11-06 17:53, showed EU4's Diplomacy panel: "We need something like this") — the layout
+- [ ] **DIPLOMACY SCREEN** (= the Diplomacy tab of THE NATION PANEL; Abdullah 2026-11-06 17:53, showed EU4's Diplomacy panel: "We need something like this") — the layout
       idea, our own modern-war art (no copied EU4 art/icons; the ART LOOP polishes the look after). One panel, opened from a top-bar
       "Diplomacy" tab or by clicking any nation's flag/province owner:
       · **Header**: big national flag, nation name + government type, leader as a title + fictional name (no real leaders — never
