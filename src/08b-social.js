@@ -155,9 +155,10 @@ setInterval(()=>{try{tutCheck();}catch(e){}},400);setInterval(()=>{try{tutHLTick
 function startTutorial(){MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
   const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';
   TERR_DEFER=true;try{newGame({w:setup.w|0,seed:(Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
-  const T=G.teams[0];G.tut=true;G.setupEnd=0;T.credits+=3000;T.gxp=Math.max(T.gxp|0,RANKS[1]);promoteGeneral(T);if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
+  const T=G.teams[0];G.tut=true;G.docDis=1;G.setupEnd=0;T.credits+=3000;T.gxp=Math.max(T.gxp|0,RANKS[1]);promoteGeneral(T);if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
   try{const hq=G.ents.find(e=>e.team===0&&e.kind==='hq'),a=Math.atan2(MAPH/2-hq.y,MAPW/2-hq.x);
     for(let i=0;i<3;i++){const p=nearestPassXY('ground',hq.x+Math.cos(a)*380+rnd(-60,60),hq.y+Math.sin(a)*380+rnd(-60,60));if(p)addUnit(1,'inf',p[0],p[1]);}}catch(e){console.warn('tutorial spawn',e);}
+  try{const eh=G.ents.find(e=>e.team===1&&e.kind==='hq');if(eh){eh.max=eh.hp=Math.min(eh.max,1500);}}catch(e){}   // a lighter enemy HQ so the finale does not drag on
   TUTS={i:0};afterStart();{const el=tutEl();for(const id of ['tutShow','tutSkip'])$(id).hidden=false;$('tutExit').textContent='Exit tutorial';}tutEnter();}
 function socialMenu(){const row=document.getElementById('openSettings');
   if(row&&!$('openMyb')){const b=document.createElement('button');b.className='big ghost';b.id='openMyb';b.style.cssText='font-size:15px;padding:7px 16px;margin-left:6px';b.textContent='My battles';b.onclick=bhOpen;row.after(b);}

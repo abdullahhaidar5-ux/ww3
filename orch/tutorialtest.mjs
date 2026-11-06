@@ -16,7 +16,9 @@ const browser = await pw.chromium.launch({ executablePath: exe, args: ['--use-gl
 const BIG = process.argv.includes('--shots'); const ctx = await browser.newContext({ viewport: BIG ? { width: 1920, height: 1080 } : { width: 1280, height: 720 } });
 if (!BIG) await ctx.addInitScript(() => { try { localStorage.setItem('ww3_settings', JSON.stringify({ gfx: 'low' })); } catch (e) {} }); await guardContext(ctx);
 const page = await ctx.newPage(); await page.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue() : r.abort());
-const SHOTS = process.argv.includes('--shots'); const problems = []; const bad = (m) => { problems.push(m); console.log('  FAIL', m); }; const ok = (c, m) => { if (!c) bad(m); else console.log('  ok  ', m); };
+let SHOTS = process.argv.includes('--shots'); const SHOTS_ON = SHOTS;
+const KEEP = /^(00|01a|0[1-9]-.*-tip|1[0-4]-.*-tip|03-atk-after|06-town-after|08-revolt-after|04b|07b|10b|11b|12b|14c|15|16)/;   // a real 1920x1080 frame costs minutes in software GL: keep the useful ones
+const problems = []; const bad = (m) => { problems.push(m); console.log('  FAIL', m); }; const ok = (c, m) => { if (!c) bad(m); else console.log('  ok  ', m); };
 const errs = []; page.on('pageerror', e => { errs.push(e.message); console.log('PAGEERR', e.message); });
 await page.goto(ORIGIN + '/index.html', { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => typeof startTutorial === 'function', null, { timeout: 60000 });
@@ -26,7 +28,7 @@ const info = await page.evaluate(() => ({ btn: document.getElementById('tutorial
 console.log('menu', JSON.stringify(info));
 
 const wait = (ms) => page.waitForTimeout(ms);
-const shot = async (name) => { if (!SHOTS) return; await ev(() => { R3.render = window.__realRender; }); await ev(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))))); await page.screenshot({ path: path.join(SH, name + '.png'), timeout: 300000 }); await ev(() => { R3.render = () => {}; }); };
+const shot = async (name) => { if (!SHOTS || !KEEP.test(name)) return; await ev(() => { R3.render = window.__realRender; }); await ev(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => requestAnimationFrame(r))))); await page.screenshot({ path: path.join(SH, name + '.png'), timeout: 300000 }); await ev(() => { R3.render = () => {}; }); };
 const ev = (f, a) => page.evaluate(f, a);
 const raf2 = () => ev(() => new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r))));
 const scr = async (x, y, h = 8) => { await raf2(); return ev(([x, y, h]) => { const p = toScreen(x, h, y); return { x: p.x, y: p.y, z: p.z }; }, [x, y, h]); };
@@ -76,7 +78,7 @@ async function startTut() {
 async function reloadMenu() { await page.reload({ waitUntil: 'load', timeout: 120000 }); await page.waitForFunction(() => typeof startTutorial === 'function', null, { timeout: 60000 }); }
 try {
   // ---- part A: out-of-order play, Skip step, Exit tutorial, restart
-  console.log('-- out of order / skip / exit / restart');
+  console.log('-- out of order / skip / exit / restart'); SHOTS = false;
   await startTut(); await waitStep(0);
   { await page.click('#b_barracks'); const h = await ev(() => { const q = tutHQ(); return { x: q.x, y: q.y }; }); let placed = false;
     for (const [dx, dy] of [[120, 90], [-140, 90], [150, -90], [-150, -100], [0, 170]]) { await ev(([x, y]) => centerOn(x, y, true), [h.x, h.y]); const p = await scr(h.x + dx, h.y + dy, 0); await click(p.x, p.y); await wait(500);
@@ -92,7 +94,7 @@ try {
   await reloadMenu();
   ok(await ev(() => /Tutorial: learn/.test(document.getElementById('tutorial').textContent)), 'menu still offers the tutorial (not marked done after exiting)');
   // ---- part B: the full playthrough
-  console.log('-- full playthrough');
+  console.log('-- full playthrough'); SHOTS = SHOTS_ON;
   await startTut();
   await shot('01a-battle-start');
   // 1 select
@@ -146,7 +148,7 @@ try {
     ok(placed, 'missile defence placed'); }
   await done(12); await shotAfter(13, 'md');
   // 14 win: a real player trains an army; to keep the test short a strike force is added, then ordered with F + click
-  await waitStep(13); { await ev(() => { const e = tutFoeHQ(), h = tutHQ(), a = Math.atan2(h.y - e.y, h.x - e.x); for (let i = 0; i < 14; i++) { const p = nearestPassXY('ground', e.x + Math.cos(a) * 900 + (i % 5) * 24, e.y + Math.sin(a) * 900 + Math.floor(i / 5) * 24); if (p) addUnit(ME, 'inf', p[0], p[1]); } });   // test shortcut: the strike force a player would train and march (~4 min) starts 900 units from the enemy base
+  await waitStep(13); { await ev(() => { const e = tutFoeHQ(), h = tutHQ(), a = Math.atan2(h.y - e.y, h.x - e.x); for (let i = 0; i < 20; i++) { const p = nearestPassXY('ground', e.x + Math.cos(a) * 500 + (i % 5) * 24, e.y + Math.sin(a) * 500 + Math.floor(i / 5) * 24); if (p) addUnit(ME, 'inf', p[0], p[1]); } });   // test shortcut: the strike force a player would train and march (~4 min) starts 500 units from the enemy base
     const en = await ev(() => { const q = tutFoeHQ(); return { x: q.x, y: q.y }; }); await shot('14b-enemy-base-far');
     for (let k = 0; k < 40; k++) { if (await ev(() => G.over)) break; await ev(([x, y]) => centerOn(x, y, true), [en.x, en.y]);
       await ev(() => { G.sel = tutUnits(); }); if (k % 4 === 0) console.log('    attack round', k, JSON.stringify(await ev(() => ({ t: G.t | 0, mine: tutUnits().length, foe: G.ents.filter(e => e.team === 1 && !e.dead).length })))); const p = await scr(en.x, en.y, 0); await page.keyboard.press('f'); await click(p.x, p.y); await page.waitForFunction(() => G.over, null, { timeout: 15000, polling: 500 }).catch(() => {}); if (k === 1) await shot('14c-attack'); } }
