@@ -5180,28 +5180,41 @@ function upgMatch(c,s,b){if(b)return c==='bld';switch(c){case 'all':return true;
 // perk.fx uses the upgrade format [stat, unit group, value] (folded into upgAgg); perk.cost = [group, multiplier] cheaper units/buildings; the rest are special-cased in 03-sim by key
 const GDOC={
  arm:{name:'Armour',short:'ARM',blurb:'Tanks and vehicles: faster production, tougher hulls, tank-hunter ambushes',perks:[
-  {k:'a1',name:'Assembly Line',desc:'Vehicles build 25% faster',fx:[['build','veh',.75]]},
-  {k:'a2',name:'Reactive Plating',desc:'Vehicles take 15% less damage',fx:[['taken','veh',.85]]},
-  {k:'a3',name:'Tank-Hunter Ambush',desc:'Tanks holding still or sitting in cover deal 25% more damage'},
-  {k:'a4',name:'Gun Stabilisers',desc:'Tanks shoot 12% faster and 10% farther, vehicles +8% damage',fx:[['rof','tank',.88],['rng','tank',1.1],['dmg','veh',1.08]]}]},
+  {k:'a1',t:1,name:'Assembly Line',desc:'Vehicles build 25% faster',fx:[['build','veh',.75]]},
+  {k:'a2',t:2,req:'a1',name:'Reactive Plating',desc:'Vehicles take 15% less damage',fx:[['taken','veh',.85]]},
+  {k:'a3',t:2,req:'a1',name:'Tank-Hunter Ambush',desc:'Tanks holding still or sitting in cover deal 25% more damage'},
+  {k:'a4',t:3,req:'a3',name:'Gun Stabilisers',desc:'Tanks shoot 12% faster and 10% farther, vehicles +8% damage',fx:[['rof','tank',.88],['rng','tank',1.1],['dmg','veh',1.08]]},
+  {k:'a5',t:3,req:'a2',name:'Iron Fist',desc:'Vehicles have 10% more health and move 5% faster',fx:[['hp','veh',1.1],['spd','veh',1.05]]}]},
  gue:{name:'Guerrilla',short:'GUE',blurb:'Infantry swarms: cheap, hidden, booby-trapped',perks:[
-  {k:'g1',name:'Cheap Recruits',desc:'Infantry cost 15% less',cost:['inf',.85]},
-  {k:'g2',name:'Hidden Ambush',desc:'Infantry holding still or in cover deal 25% more damage',},
-  {k:'g3',name:'Booby Traps',desc:'Idle infantry quietly lay hidden mines (up to 8)'},
-  {k:'g4',name:'Hit and Run',desc:'Infantry move 10% faster and take 5% less damage',fx:[['spd','inf',1.1],['taken','inf',.95]]}]},
+  {k:'g1',t:1,name:'Cheap Recruits',desc:'Infantry cost 15% less',cost:['inf',.85]},
+  {k:'g2',t:2,req:'g1',name:'Hidden Ambush',desc:'Infantry holding still or in cover deal 25% more damage'},
+  {k:'g3',t:2,req:'g1',name:'Booby Traps',desc:'Idle infantry quietly lay hidden mines (up to 8)'},
+  {k:'g4',t:3,req:'g2',name:'Hit and Run',desc:'Infantry move 10% faster and take 5% less damage',fx:[['spd','inf',1.1],['taken','inf',.95]]},
+  {k:'g5',t:3,req:'g3',name:'Dug In',desc:'Infantry have 10% more health',fx:[['hp','inf',1.1]]}]},
  air:{name:'Air',short:'AIR',blurb:'Airfields, recon flights and air superiority',perks:[
-  {k:'i1',name:'Cheap Airfields',desc:'Airfields cost 30% less',cost:['airfield',.7]},
-  {k:'i2',name:'Recon Flights',desc:'Every 75 seconds a recon flight reveals an enemy area for 10 seconds'},
-  {k:'i3',name:'Air Superiority',desc:'Aircraft deal 15% more damage and have 10% more health',fx:[['dmg','air',1.15],['hp','air',1.1]]},
-  {k:'i4',name:'Quick Turnaround',desc:'Aircraft cost 15% less and build 15% faster',cost:['air',.85],fx:[['build','air',.85]]}]},
+  {k:'i1',t:1,name:'Cheap Airfields',desc:'Airfields cost 30% less',cost:['airfield',.7]},
+  {k:'i2',t:2,req:'i1',name:'Recon Flights',desc:'Every 75 seconds a recon flight reveals an enemy area for 10 seconds'},
+  {k:'i3',t:2,req:'i1',name:'Air Superiority',desc:'Aircraft deal 15% more damage and have 10% more health',fx:[['dmg','air',1.15],['hp','air',1.1]]},
+  {k:'i4',t:3,req:'i3',name:'Quick Turnaround',desc:'Aircraft cost 15% less and build 15% faster',cost:['air',.85],fx:[['build','air',.85]]},
+  {k:'i5',t:3,req:'i2',name:'Long-Range Sensors',desc:'Aircraft weapons reach 10% farther',fx:[['rng','air',1.1]]}]},
  art:{name:'Artillery',short:'ART',blurb:'Guns that see everything: counter-battery radar and creeping barrage',perks:[
-  {k:'r1',name:'Counter-Battery Radar',desc:'Your artillery spots enemy guns the moment they fire'},
-  {k:'r2',name:'Creeping Barrage',desc:'Artillery shells burst 25% wider',fx:[['splash','arty',1.25]]},
-  {k:'r3',name:'Rapid Reload',desc:'Artillery reloads 12% faster and reaches 8% farther',fx:[['rof','arty',.88],['rng','arty',1.08]]},
-  {k:'r4',name:'Gun Foundry',desc:'Artillery costs 15% less',cost:['arty',.85]}]}};
+  {k:'r1',t:1,name:'Counter-Battery Radar',desc:'Your artillery spots enemy guns the moment they fire'},
+  {k:'r2',t:2,req:'r1',name:'Creeping Barrage',desc:'Artillery shells burst 25% wider',fx:[['splash','arty',1.25]]},
+  {k:'r3',t:2,req:'r1',name:'Rapid Reload',desc:'Artillery reloads 12% faster and reaches 8% farther',fx:[['rof','arty',.88],['rng','arty',1.08]]},
+  {k:'r4',t:3,req:'r3',name:'Gun Foundry',desc:'Artillery costs 15% less',cost:['arty',.85]},
+  {k:'r5',t:3,req:'r2',name:'Heavy Shells',desc:'Artillery shells hit 10% harder',fx:[['dmg','arty',1.1]]}]}};
 const GDOC_KEYS=Object.keys(GDOC);
 const GDOC_AI={US:'arm',RU:'art',IL:'air',IR:'gue',TR:'air',EU:'arm',UA:'art',SA:'air',AE:'air',PK:'arm',IN:'arm',CN:'art',KP:'art',KR:'art',EG:'arm',CU:'gue',RS:'gue',DW:'gue'};
 const GDOC_PERKS={};for(const d in GDOC)for(const p of GDOC[d].perks){p.doc=d;GDOC_PERKS[p.k]=p;}
+/* Doctrine TREES (command-teams, Abdullah 2026-11-05): tier 1 root, two tier-2 branches, a tier-3 capstone on each branch (a perk needs the one it hangs from).
+   The same numbers for every nation; a nation only changes the NAME of some perks (GDOC_FLV). Only ~4 rank points exist, so a general walks one branch. */
+const GDOC_FLV={US:{a1:'Detroit Assembly Line',a4:'Abrams Fire Control',i3:'Top Gun Doctrine',r4:'Redstone Foundry'},RU:{a1:'Uralvagonzavod Line',a5:'Kontakt Armour',r1:'Zoopark Radar',r5:'God of War Shells'},
+  CN:{a1:'Type-Line Production',r5:'Rocket Force Shells',g1:'People\'s War Recruits',g5:'Tunnel Warfare'},IR:{g3:'Hidden Mine Belts',g4:'Fast Attack Tactics',g5:'Hardened Positions',i2:'Drone Reconnaissance'},
+  RS:{g3:'Mountain Booby Traps',g4:'Ambush and Fade',g5:'Dug-In Fighters'},DW:{g3:'Wadi Booby Traps',g4:'Raid and Vanish',g5:'Terrain Masters'},
+  IL:{i2:'Aerial Reconnaissance',i3:'Air Dominance',i4:'Rapid Rearm',a3:'Merkava Ambush'},TR:{i2:'Drone Reconnaissance',a1:'Domestic Production Line'},KP:{r2:'Massed Barrage',r5:'Heavy Shell Stocks',g1:'Mass Mobilisation'},
+  UA:{g2:'Partisan Ambush',r1:'Counter-Battery Network',r3:'Rapid Fire Drills'},KR:{r3:'K9 Fire Drills',r4:'Domestic Foundry'},IN:{a1:'Arjun Production Line'},PK:{a2:'Al-Khalid Plating'}};
+function gdName(fac,p){const f=GDOC_FLV[fac];return (f&&f[p.k])||p.name;}
+function gdReq(T,p){return !p.req||gdHas(T,p.req);}
 const GDOC_LATE=120;   // doctrine can be picked / changed until this many seconds into the battle
 function gdHas(T,k){return !!(T&&T.gperk&&T.gperk[k]);}
 function gdCostK(T,s,b,kind){if(!T||!T.gdoc)return 1;let m=1;const D=GDOC[T.gdoc];if(!D)return 1;for(const p of D.perks){if(!p.cost||!gdHas(T,p.k))continue;const g=p.cost[0];if(b?g===kind:(g==='air'?s.dom==='air':upgMatch(g,s,false)))m*=p.cost[1];}return m;}
@@ -6299,9 +6312,8 @@ function mkTeam(id,fac,ai){const F=FACTIONS[fac];return{id,fac,F,sup:F.sup,credi
   color:F.color,dark:shade(F.color,.45),built:0,lost:0,kills:0,gxp:0,rank:1,spent:0,pw:{},gdoc:'',gperk:{},reveals:[],ai:ai?mkAI(setup.d):null,st:stNew()};}
 // Alliances: players on the same team never fight, share vision and win together.
 // Allies can send each other money (in steps of $50, never more than you have).
-function giveMoney(from,to,amt){const A=G.teams[from],B=G.teams[to];if(!A||!B||from===to||!ally(from,to)||B.out||A.out)return false;amt=Math.floor(Math.min(+amt||0,A.credits)/50)*50;if(amt<50)return false;
-  A.credits-=amt;B.credits+=amt;stOf(B).got+=amt;A.gave=(A.gave||0)+amt;log(from,`Sent $${amt} to ${B.F.name}.`,'g');log(to,`${A.F.name} sent you $${amt}.`,'g');FXE('give',[from,to,amt]);return true;}
-function ally(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.teams[a]||!G.teams[b])return false;return G.teams[a].tm===G.teams[b].tm;}
+function giveMoney(from,to,amt){return ctGive(from,to,amt);}   // allied aid: fee + delay live in 03d-command
+function ally(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.teams[a]||!G.teams[b])return false;return G.teams[a].tm===G.teams[b].tm||(!!G.truce&&G.truce[a<b?a*32+b:b*32+a]>G.t);}   // a running truce (03d-command) counts as friendly for fire; sameTm() is the strict team test (vision, victory, aid)
 function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].max||o.camp)?o.map:'strait';setWorld(worldScaleFor(N,mk));setBases(N,mk,mk===o.map?(Array.isArray(o.st)?o.st:o.slot):-1);if(o.camp)while(BASES.length<N)BASES.push(BASES[BASES.length-1]);
   const wB=wxBase(o.w),ssn=wxSsn(o.w)||seasonOf(mk);const M=mkMap(o.seed,mk,ssn);
   G={t:0,ssn,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
@@ -6905,8 +6917,8 @@ function natPower(team,P,x,y){const T=G.teams[team],hq=hqOf(team),en=e=>!e.dead&
   return false;}
 // ---------- General Doctrines: pick (free, first GDOC_LATE seconds, before any perk), buy perks (1 rank point each), recon flights ----------
 function gdPick(team,k){const T=G.teams[team];if(!T||T.out||!GDOC[k]||T.gdoc===k)return false;if(Object.keys(T.gperk).length||(G.t>GDOC_LATE&&!G.sandbox))return false;T.gdoc=k;T._uk=null;log(team,`Doctrine: ${GDOC[k].name}. Buy its perks with general-rank points.`,'g');return true;}
-function gdBuy(team,k){const T=G.teams[team],p=GDOC_PERKS[k];if(!T||T.out||!p||p.doc!==T.gdoc||T.gperk[k]||T.rank-T.spent<1)return false;T.spent+=1;T.gperk[k]=1;T._uk=null;log(team,`${p.name}: ${p.desc}.`,'g');return true;}
-function aiPerk(id){const T=G.teams[id],D=GDOC[T.gdoc];if(!D)return false;for(const p of D.perks)if(!T.gperk[p.k])return gdBuy(id,p.k);return false;}
+function gdBuy(team,k){const T=G.teams[team],p=GDOC_PERKS[k];if(!T||T.out||!p||p.doc!==T.gdoc||T.gperk[k]||T.rank-T.spent<1||(p.req&&!T.gperk[p.req]))return false;T.spent+=1;T.gperk[k]=1;T._uk=null;log(team,`${p.name}: ${p.desc}.`,'g');return true;}
+function aiPerk(id){const T=G.teams[id],D=GDOC[T.gdoc];if(!D)return false;for(const p of D.perks)if(!T.gperk[p.k]&&(!p.req||T.gperk[p.req]))return gdBuy(id,p.k);return false;}
 function gdRecon(dt){for(const T of G.teams){if(T.out||!T.gdoc||!gdHas(T,'i2'))continue;T.rcT=(T.rcT||0)-dt;if(T.rcT>0)continue;T.rcT=75;const en=G.teams.filter(O=>O.id!==T.id&&!ally(O.id,T.id)&&!O.out);if(!en.length)continue;T.rcN=((T.rcN||0)+1);const O=en[T.rcN%en.length];const hq=hqOf(O.id);if(!hq)continue;const a=T.rcN*2.4;T.reveals.push({x:hq.x+Math.cos(a)*180,y:hq.y+Math.sin(a)*180,r:320,t:10});if(!T.ai)log(T.id,'Recon flight: enemy area revealed.','g');}}
 function powCost(T,key){const w=T.pw[key];return !w?1:(w.lv||1)>=3?99:(w.lv||1)+1;}
 function buyPower(team,key){const T=G.teams[team];if(!POWERS[key]||(key==='bb'&&T.pw[key]))return false;const c=powCost(T,key);if(T.rank-T.spent<c)return false;T.spent+=c;if(!T.pw[key]){T.pw[key]={cd:Math.max(0,(key==='bb'?300:POW_OPEN)-G.t,G.conq?(G.setupEnd||0)+CQ_PW_FIRST-G.t:0),lv:1};log(team,`${powInfo(key,T.fac).name} unlocked.`,'g');}else{T.pw[key].lv=(T.pw[key].lv||1)+1;log(team,`${powInfo(key,T.fac).name} upgraded to level ${T.pw[key].lv}.`,'g');}return true;}
@@ -6978,6 +6990,14 @@ function act(team,a){if(!G||G.over)return;const own=ids=>(ids||[]).map(i=>G.byId
     case 'pow':usePower(team,a.k,a.x,a.y);break;
     case 'rally':G.teams[team].rally={x:a.x,y:a.y};break;
     case 'give':{giveMoney(team,a.to|0,a.amt);break;}
+    case 'cf':cfOffer(team,a.to|0,a.d|0);break;
+    case 'cfa':cfAnswer(team,a.f|0,true);break;
+    case 'cfd':cfAnswer(team,a.f|0,false);break;
+    case 'cfb':cfBreak(team,a.o|0);break;
+    case 'mp':ctPing(team,a.k,a.x,a.y);break;
+    case 'md':ctDraw(team,a.c,a.p);break;
+    case 'say':ctSay(team,a.i);break;
+    case 'gift':ctGift(team,a.ids,a.to|0);break;
     case 'tun':{const b=G.byId.get(a.tid);if(!b||!b.isB||b.team!==team||!isTun(b)||b.built<1)break;for(const u of own(a.ids))if(u.s.dom==='ground'&&u.kind!=='harv'&&u.kind!=='hacker'){u.order={type:'enter',target:b};u.target=null;u.path=null;}break;}
     case 'gar':{const c=G.civ&&G.civ[a.ci|0];if(!c||c.dead||(c.g&&!ally(c.g.team,team)))break;for(const u of own(a.ids))if(canGarrison(u)){u.order={type:'garrison',ci:c.i,x:c.x,y:c.y};u.target=null;u.guard=null;u.path=null;}break;}
     case 'atkCiv':{const c=G.civ&&G.civ[a.ci|0];if(!c||c.dead||c.g)break;const t=civTarget(c);for(const u of own(a.ids)){if(u.kind==='harv'||u.kind==='dozer'||u.kind==='hacker'||!canTarget(u.s,t))continue;u.order={type:'attack',target:t};u.guard=null;u.path=null;}break;}
@@ -7047,7 +7067,7 @@ const VISMAX=720;
 // Fog of war, once every 0.2 s. Each team's allies are a bitmask, so every nearby spotter is checked once for all the
 // teams it reveals to (instead of once per team): the cost no longer grows with the number of players.
 function updateVis(){buildHash();const N=G.teams.length;for(const e of G.ents)if(!e.dead)e._vr=visR(e);
-  const AM=new Array(N);for(let a=0;a<N;a++){let m=0;for(let b=0;b<N;b++)if(ally(a,b))m|=1<<b;AM[a]=m;}const ALL=(1<<N)-1;
+  const AM=new Array(N);for(let a=0;a<N;a++){let m=0;for(let b=0;b<N;b++)if(sameTm(a,b))m|=1<<b;AM[a]=m;}const ALL=(1<<N)-1;
   for(const e of G.ents){if(e.dead)continue;if(!e.vs||e.vs.length!==N)e.vs=new Array(N).fill(false);
     let seen=AM[e.team]|(1<<e.team);
     if(seen!==ALL){const hid=hiddenNow(e);const near=nearby(e.x,e.y,VISMAX+e.r,NB2);
@@ -7277,7 +7297,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
      const far=haulF||G.fields.filter(f=>f.amt>2500&&dps.every(b=>dist(b,f)>520)&&dist(f,anchor)<1500).sort((p,q)=>dist(p,anchor)-dist(q,anchor))[0];if(haulF){T.ai.depF=null;aiStat(T.ai,'haulDepot');}if(far){const p=aiFindSpot(id,'depot',{x:far.x,y:far.y});if(p&&Math.hypot(p[0]-far.x,p[1]-far.y)<260)placeBld(id,'depot',p[0],p[1]);}}}
   {const ec=mine.filter(e=>e.kind==='econ').length,left=G.fields.reduce((a,f)=>a+Math.max(0,f.amt),0)/Math.max(1,G.fields.length*9000);
    if(T.ai.t%13===7&&ec<4&&reqMet(id,'econ')&&!mine.some(e=>e.isB&&e.built<1)&&(G.t>480+ec*240||left<.35)&&T.credits>bstats(T.fac,'econ').cost+(left<.35?200:900)){const p=aiFindSpot(id,'econ',anchor);if(p)placeBld(id,'econ',p[0],p[1]);}}
-  if(T.ai.t%15===8&&T.credits>2500){const poor=G.teams.filter(O=>O.id!==id&&!O.out&&ally(O.id,id)&&O.credits<500).sort((a,b)=>(a.ai?1:0)-(b.ai?1:0))[0];if(poor)giveMoney(id,poor.id,Math.min(1500,Math.round(T.credits*.3)));}
+  if(T.ai.t%15===8&&T.credits>2500){const poor=G.teams.filter(O=>O.id!==id&&!O.out&&sameTm(O.id,id)&&O.credits<500).sort((a,b)=>(a.ai?1:0)-(b.ai?1:0))[0];if(poor)giveMoney(id,poor.id,Math.min(1500,Math.round(T.credits*.3)));}
   aiNavyBuild(T,mine,anchor);aiCoastBuild(T,mine,anchor);
   const nk=T.ai.re?null:ORD[T.ai.bi];if(nk&&!reqMet(id,nk)){if(++T.ai.rq>45){T.ai.bi++;T.ai.rq=0;}}else T.ai.rq=0;if(nk&&reqMet(id,nk)&&!mine.some(e=>e.isB&&e.built<1)){const s=bstats(T.fac,nk);if(T.credits>=s.cost){const p=aiFindSpot(id,nk,anchor);if(p){placeBld(id,nk,p[0],p[1]);T.ai.bi++;T.ai.nf=0;}else if(STRUCT[nk].shore||++T.ai.nf>8){T.ai.bi++;T.ai.nf=0;}}}
   // Saving up for the next building holds back unit purchases - but only for the Barracks and War Factory while the
@@ -7424,7 +7444,7 @@ function checkEnd(){if(G.sandbox||G.camp)return;const fall=[];
     for(const f of fall)if(ally(f[0].id,best.id)){f[2]=1;f[0].colT=null;f[0].colW=null;}}
   for(const [T,why,spared] of fall)if(!spared)capitulate(T,why);
   const alive=G.teams.filter(T=>!T.out&&!T.reb).map(T=>T.id);
-  if(alive.length<=1||alive.every(t=>ally(t,alive[0])))endGame(alive.length?alive[0]:-1,G.lastWhy?`The last enemy capitulated: ${G.lastWhy}`:'');}
+  if(alive.length<=1||alive.every(t=>sameTm(t,alive[0])))endGame(alive.length?alive[0]:-1,G.lastWhy?`The last enemy capitulated: ${G.lastWhy}`:'');}
 
 function specialTick(u,dt,o){const s=u.s;u.spT=(u.spT||0)-dt;if(u.spT>0)return;u.spT=1.2;
   if(s.markAura){for(const e of G.ents)if(!e.dead&&!e.isB&&!ally(e.team,u.team)&&seenBy(u.team,e)&&Math.hypot(e.x-u.x,e.y-u.y)<s.markAura)e.mark=G.t+3;}
@@ -7462,7 +7482,7 @@ function weatherTick(dt){if(G.fixWx){if(!G.wx||G.wx.k!==G.fixWx)G.wx={k:G.fixWx,
   if(!W.fc&&W.t>=W.next-25){W.fc=1;const w=WEATHER[W.nk];for(const T of G.teams)log(T.id,W.nk==='clear'?'Forecast: the weather is about to clear.':`Forecast: ${w.name.toLowerCase()} rolling in within 25 seconds.`,'w');}
   if(W.t<W.next)return;W.t=0;W.fc=0;W.k=W.nk;W.nk=null;W.next=W.k==='clear'?170+R()*120:55+R()*45;
   for(const T of G.teams){const w=WEATHER[W.k];log(T.id,W.k==='clear'?'The weather is clearing.':`Weather: ${w.name}. ${w.tip}`,'w');}}
-function simUpdate(dt){G.t+=dt;gdRecon(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
+function simUpdate(dt){G.t+=dt;gdRecon(dt);ctTick(dt);stSample();G.pfTok=Math.min(PF_BURST,(G.pfTok==null?PF_BURST:G.pfTok)+dt*PF_RATE);G.pfMs=0;G.pfN=0;if(!G.sandbox)weatherTick(dt);if(G.sandbox)sandboxTick(dt);if(G.camp)campTick(dt);production(dt);fortHeal(dt);buildHash();if(!G.mines)G.mines=[];
   if(!G.aur)G.aur={morale:[],rof:[],heal:[],raid:[],dome:[],jam:[],mart:[]};for(const k in G.aur)G.aur[k].length=0;G.cbrTeams=0;for(const e of G.ents){if(e.dead||e.isB)continue;const s=e.s;if(e.fl<FL_MAX&&e.landed)e.fl=FL_MAX;if(s.aura)G.aur[s.aura.t].push({team:e.team,x:e.x,y:e.y,r:s.aura.r,v:s.aura.v,id:e.id});if(s.intercept)G.aur.dome.push({team:e.team,x:e.x,y:e.y,r:s.intercept});if(s.jam)G.aur.jam.push({team:e.team,x:e.x,y:e.y,r:s.jam,id:e.id});if(s.cbr||(s.cls==='arty'&&gdHas(G.teams[e.team],'r1')))G.cbrTeams|=1<<e.team;}martyrTick();
   if(G.aur.heal.length)for(const e of G.ents){if(e.dead||e.isB||e.hp>=e.max||e.s.dom==='air')continue;for(const a of G.aur.heal)if(a.team===e.team&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){e.hp=Math.min(e.max,e.hp+a.v*dt);break;}}
   if(G.aur.jam.length)for(const e of G.ents){if(e.dead||e.kind!=='drone')continue;for(const a of G.aur.jam)if(!ally(a.team,e.team)&&Math.hypot(a.x-e.x,a.y-e.y)<a.r){applyDmg(e,30*dt,'flak',a.team,null);break;}}
@@ -8317,6 +8337,77 @@ function lgDone(u,o){const D=G.lgd,L=G.lg,team=u.team,k=o.k;
   else if(k==='pont'){const p=o.pb;if(G.map.bridges.some(b=>Math.hypot(b.x-p.x,b.y-p.y)<240)||D.pt.filter(q=>q.team===team).length>=LG_PONT_MAX){G.teams[team].credits+=LGC.pont;log(team,'Pontoon cancelled - the crossing is taken.','w');return;}
     D.pt.push({x:p.x,y:p.y,h:p.h,nx:p.n[0],ny:p.n[1],team});lgPontSync();D.bd[G.map.bridges.length-1]={hp:800};D.bv++;D.v++;lgSync();for(const e of G.ents)if(!e.isB&&e.path&&e.s&&e.s.dom!=='air')e.path=null;
     for(const T of G.teams)if(!T.reb&&!T.out){log(T.id,ally(T.id,team)?'Pontoon bridge laid - ground forces can cross here now.':'The enemy has laid a pontoon bridge across the river!',ally(T.id,team)?'g':'bad');if(!ally(T.id,team))FXE('tping',[T.id,p.x,p.y,0]);}}}
+/* ---------- 03d-command: team play (Abdullah 2026-11-05 18:49 "command-teams") ----------
+   Ceasefire offers (free-for-all only), map pings + drawings + quick lines for allies, allied aid (money fee/delay,
+   gifting units). Everything arrives through act() (cases cf/cfa/cfd/cfb, mp, md, say, gift), so host, clients, replays
+   and host migration all see the same thing. No RNG. State: G.truce {pairKey: expiry}, G.tOff [{f,t,d,e,ai}], G.aidQ,
+   T.oath (oathbreaker until), T.cfCd, T.mpT, T.giftT, T.aidT (all in the checkpoint: CK_G + team keys).
+   Battle plans and battle groups are client-side (08g-command.js): they only issue ordinary orders. */
+const CF={DUR:[60,120,180],OFFER:25,OATH:240,COOL:180,UNREST:25,WARN:10,AID_FEE:.1,AID_DELAY:4,AID_CD:3,GIFT_CD:20,GIFT_MAX:12,
+  PING_CD:.5,DRAW_CD:1.5,SAY_CD:1.5,DRAW_PTS:14,LINES:['Attack here!','Defend here!','Danger!','Need money','Need help','Thanks','Well done','Wait for me']};
+function sameTm(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.teams[a]||!G.teams[b])return false;return G.teams[a].tm===G.teams[b].tm;}
+function truced(a,b){return !!(G&&G.truce)&&G.truce[a<b?a*32+b:b*32+a]>G.t;}
+function ctMask(t){let m=0;if(!G)return 0;for(let j=0;j<G.teams.length;j++)if(sameTm(t,j))m|=1<<j;return m;}
+/* free-for-all: three or more players, everybody on a team of their own; never in missions, the tutorial or the sandbox */
+function ctFFA(){if(!G||G.camp||G.tut||G.sandbox||G.rp)return false;const L=G.teams.filter(T=>!T.reb);return L.length>=3&&new Set(L.map(T=>T.tm)).size===L.length;}
+function ctPower(id){let p=0;for(const e of G.ents)if(e.team===id&&!e.dead&&!e.isB&&e.s&&e.kind!=='harv'&&e.kind!=='dozer')p+=e.s.cost||100;return p;}
+function ctName(id){const T=G.teams[id];return T?((T.F&&T.F.name)||T.fac):'?';}
+/* an AI answers sensibly: no deal with an oathbreaker, and it takes a truce when it is not the stronger side or when other enemies are on its back */
+function ctAiAnswer(to,from){const T=G.teams[to],F=G.teams[from];if(!T||!F||(F.oath||0)>G.t)return false;
+  const mine=ctPower(to),theirs=ctPower(from),others=G.teams.filter(O=>!O.reb&&!O.out&&O.id!==to&&O.id!==from&&!ally(O.id,to)).length;
+  if(mine<=theirs*1.1)return true;return others>=1&&mine<=theirs*1.6;}
+function cfOffer(from,to,di){if(!G.tOff)G.tOff=[];const A=G.teams[from],B=G.teams[to];di=di|0;if(!A||!B||from===to||A.out||B.out||A.reb||B.reb||di<0||di>2||!ctFFA())return false;
+  if(truced(from,to)||G.tOff.some(o=>o.f===from&&o.t===to))return false;
+  if((A.oath||0)>G.t){if(!A.ai)log(from,`Nobody trusts an oathbreaker for another ${Math.ceil(A.oath-G.t)} seconds.`,'w');return false;}
+  if((A.cfCd||0)>G.t){if(!A.ai)log(from,'You broke a truce too recently to offer another.','w');return false;}
+  if(G.tOff.filter(o=>o.f===from).length>=3)return false;
+  const dur=CF.DUR[di];G.tOff.push({f:from,t:to,d:dur,e:G.t+CF.OFFER,ai:B.ai?G.t+2:0});
+  if(!A.ai)log(from,`Truce offered to ${ctName(to)} for ${dur} seconds.`,'g');if(!B.ai)log(to,`${ctName(from)} offers a ${dur}-second truce. Accept or decline in the Allies box.`,'g');FXE('cfo',[from,to,dur]);return true;}
+function cfStart(a,b,dur){G.truce=G.truce||{};G.truce[a<b?a*32+b:b*32+a]=G.t+dur;G.tOff=G.tOff.filter(o=>!((o.f===a&&o.t===b)||(o.f===b&&o.t===a)));
+  for(const e of G.ents){if(e.dead||e.isB)continue;if(e.team!==a&&e.team!==b)continue;const t=e.target;if(t&&t.team!==e.team&&ally(e.team,t.team))e.target=null;
+    const o=e.order;if(o&&o.type==='attack'&&o.target&&ally(e.team,o.target.team)){e.order=null;e.path=null;}}
+  for(const x of [a,b]){const o=x===a?b:a;log(x,`Truce with ${ctName(o)}: ${dur} seconds without shooting each other. Breaking it early costs you dearly.`,'g');}
+  for(const T of G.teams)if(T.id!==a&&T.id!==b&&!T.reb&&!T.out)log(T.id,`${ctName(a)} and ${ctName(b)} agreed a ${dur}-second truce.`,'w');FXE('cfs',[a,b,dur]);}
+function cfAnswer(team,from,yes){const i=G.tOff.findIndex(o=>o.f===from&&o.t===team);if(i<0)return false;const o=G.tOff[i];G.tOff.splice(i,1);
+  if(yes&&!G.teams[from].out&&!G.teams[team].out&&!truced(from,team)){cfStart(from,team,o.d);return true;}
+  if(!G.teams[from].ai)log(from,`${ctName(team)} declined the truce.`,'w');return false;}
+function cfBreak(team,other){const k=team<other?team*32+other:other*32+team;if(!G.truce||!(G.truce[k]>G.t))return false;delete G.truce[k];const T=G.teams[team];
+  T.oath=G.t+CF.OATH;T.cfCd=G.t+CF.COOL;let n=0;if(G.towns)for(const t of G.towns)if(t.ow===team){t.un=Math.min(100,(t.un||0)+CF.UNREST);n++;}
+  log(team,`You broke the truce with ${ctName(other)}. Locals are uneasy (unrest +${CF.UNREST} in ${n} town${n===1?'':'s'}) and nobody will trust you for ${CF.OATH/60} minutes.`,'bad');
+  for(const O of G.teams)if(O.id!==team&&!O.reb&&!O.out)log(O.id,`${ctName(team)} BROKE its truce with ${ctName(other)} - oathbreaker!`,'w');FXE('cfb',[team,other]);return true;}
+function ctTick(dt){if(!G.tOff)G.tOff=[];if(!G.aidQ)G.aidQ=[];
+  for(let i=G.tOff.length-1;i>=0;i--){const o=G.tOff[i];if(G.t>=o.e){if(!G.teams[o.f].ai)log(o.f,`${ctName(o.t)} did not answer your truce offer.`,'w');G.tOff.splice(i,1);continue;}
+    if(o.ai&&G.t>=o.ai){const yes=ctAiAnswer(o.t,o.f);o.ai=0;cfAnswer(o.t,o.f,yes);}}
+  if(G.truce)for(const k in G.truce){const ex=G.truce[k],a=Math.floor(k/32),b=k%32;
+    if(ex<=G.t){delete G.truce[k];log(a,`The truce with ${ctName(b)} is over.`,'w');log(b,`The truce with ${ctName(a)} is over.`,'w');continue;}
+    if(ex-G.t<=CF.WARN&&!G.tWarn?.[k]){(G.tWarn=G.tWarn||{})[k]=1;log(a,`The truce with ${ctName(b)} ends in ${CF.WARN} seconds.`,'w');log(b,`The truce with ${ctName(a)} ends in ${CF.WARN} seconds.`,'w');}}
+  for(let i=G.aidQ.length-1;i>=0;i--){const q=G.aidQ[i];if(G.t<q.at)continue;G.aidQ.splice(i,1);const B=G.teams[q.to],A=G.teams[q.f];if(!B||B.out){if(A)A.credits+=q.amt;continue;}
+    B.credits+=q.amt;stOf(B).got+=q.amt;log(q.to,`${ctName(q.f)}'s aid arrived: $${q.amt}.`,'g');FXE('give',[q.f,q.to,q.amt]);}}
+/* allied aid: money goes through a 10% fee and a 4 s delay (and a short cooldown), so it cannot be bounced around for tricks */
+function ctGive(from,to,amt){const A=G.teams[from],B=G.teams[to];if(!A||!B||from===to||!sameTm(from,to)||B.out||A.out||(A.aidT||0)>G.t)return false;
+  amt=Math.floor(Math.min(+amt||0,A.credits)/50)*50;if(amt<50)return false;const net=Math.floor(amt*(1-CF.AID_FEE));
+  A.credits-=amt;A.gave=(A.gave||0)+amt;A.aidT=G.t+CF.AID_CD;(G.aidQ=G.aidQ||[]).push({f:from,to,amt:net,at:G.t+CF.AID_DELAY});
+  log(from,`Sent $${amt} to ${ctName(to)} (fee $${amt-net}). It arrives in ${CF.AID_DELAY} seconds.`,'g');return true;}
+/* give control of units to a teammate: up to 12 combat units, not while they are being shot at, one gift per 20 s */
+function ctGift(team,ids,to){const A=G.teams[team],B=G.teams[to];if(!A||!B||team===to||!sameTm(team,to)||A.out||B.out||(A.giftT||0)>G.t||!Array.isArray(ids))return false;
+  const us=ids.slice(0,40).map(i=>G.byId.get(i)).filter(u=>u&&!u.isB&&!u.dead&&u.team===team&&u.kind!=='harv'&&u.kind!=='dozer'&&!u.inTun&&!(u.cargo&&u.cargo.length)&&G.t-(u.hitT||-99)>5).slice(0,CF.GIFT_MAX);
+  if(!us.length)return false;A.giftT=G.t+CF.GIFT_CD;
+  for(const u of us){const fr=u.hp/u.max;u.team=to;u.order=null;u.target=null;u.path=null;u.wq=null;u.sq=0;u.aband=0;u.cp=0;try{const ns=stats(B.fac,u.kind);if(ns&&ns.hp){u.s=ns;u.max=ns.hp;u.hp=Math.max(1,ns.hp*fr);}}catch(e){}}
+  log(team,`Gave ${us.length} unit${us.length>1?'s':''} to ${ctName(to)}.`,'g');log(to,`${ctName(team)} gave you control of ${us.length} unit${us.length>1?'s':''}.`,'g');return true;}
+/* pings (0 attack here, 1 defend here, 2 danger), drawings (a short polyline or a circle) and quick lines: allies only */
+function ctPing(team,k,x,y){const T=G.teams[team];k=k|0;x=+x;y=+y;if(!T||T.out||k<0||k>2||!isFinite(x)||!isFinite(y)||(T.mpT||0)>G.t)return false;
+  T.mpT=G.t+CF.PING_CD;FXE('mping',[team,k,Math.max(0,Math.min(MAPW,x|0)),Math.max(0,Math.min(MAPH,y|0))],team);return true;}
+function ctDraw(team,c,pts){const T=G.teams[team];if(!T||T.out||(T.mdT||0)>G.t||!Array.isArray(pts)||pts.length<4||pts.length>CF.DRAW_PTS*2)return false;
+  const o=[];for(let i=0;i+1<pts.length;i+=2){const x=+pts[i],y=+pts[i+1];if(!isFinite(x)||!isFinite(y))return false;o.push(Math.max(0,Math.min(MAPW,x|0)),Math.max(0,Math.min(MAPH,y|0)));}
+  T.mdT=G.t+CF.DRAW_CD;FXE('mdraw',[team,c|0?1:0,o],team);return true;}
+function ctSay(team,i){const T=G.teams[team];i=i|0;if(!T||T.out||i<0||i>=CF.LINES.length||(T.sayT||0)>G.t)return false;T.sayT=G.t+CF.SAY_CD;FXE('say',[team,i],team);return true;}
+/* snapshot: running truces (everyone sees them), the offers aimed at / made by this team, oathbreakers; the client rebuilds G.truce / G.tOff from it */
+function ctPack(id){const tr=[],of=[],oa=[];if(G.truce)for(const k in G.truce){const r=G.truce[k]-G.t;if(r>0)tr.push([Math.floor(k/32),k%32,+r.toFixed(1)]);}
+  for(const o of G.tOff||[])if(o.f===id||o.t===id)of.push([o.f,o.t,o.d,+(o.e-G.t).toFixed(1)]);
+  for(const T of G.teams)if((T.oath||0)>G.t)oa.push([T.id,+(T.oath-G.t).toFixed(1)]);
+  return tr.length||of.length||oa.length?{tr,of,oa}:0;}
+function ctApply(d){if(!G)return;G.truce={};G.tOff=[];if(!d)return;for(const [a,b,r] of d.tr||[])G.truce[a<b?a*32+b:b*32+a]=G.t+r;
+  for(const [f,t,dd,r] of d.of||[])G.tOff.push({f,t,d:dd,e:G.t+r});for(const T of G.teams)T.oath=0;for(const [i,r] of d.oa||[])if(G.teams[i])G.teams[i].oath=G.t+r;}
 let BORDER_TEX=null;
 /* ================= 3D ENGINE: renderer, terrain, water, models ================= */
 const cv=$('cv'),hud=$('hud'),hx=hud.getContext('2d'),mm=$('mm'),mx=mm.getContext('2d');
@@ -10681,7 +10772,7 @@ function clientTick(dt){G.t+=dt;const now=G.t;
 function applyEvents(d){if(!d||!Array.isArray(d.e))return;for(const v of d.e){if(!Array.isArray(v))continue;const [type,...args]=v;if(type==='est'){if(G&&args[0]&&typeof args[0]==='object')G.endStats=args[0];continue;}if(!FXH[type]||type==='end'&&false)continue;
   if(type==='die'||type==='gone'){const e=G.byId.get(args[0]);if(e){e.dead=true;e.gone=true;G.byId.delete(e.id);if(G.sel.includes(e))G.sel=G.sel.filter(x=>x!==e);}}
   if(type==='log'&&args[0]!==ME)continue;try{FXH[type](...args);}catch(e){}}}
-function applyTeam(d){if(!G||!d)return;if(Array.isArray(d.dg))dgApply(d.dg);G.ewv=d.ew?Object.assign(d.ew,{rt:G.t}):null;if(typeof d.ak==='number'&&NET.cq&&NET.cq.length&&NET.cq[0].s<=d.ak){NET.cq=NET.cq.filter(c=>c.s>d.ak);if(NET.game)NET.game.presence({cq:NET.cq}).catch(()=>{});}if(typeof d.mg==='number')NET.gen=Math.max(NET.gen||0,d.mg|0);if(d.sb===0&&NET.isStandby){NET.isStandby=false;NET.lastCk=null;}const T=G.teams[ME];T.credits=d.c|0;for(const c of CATS)T.q[c]=(d.q&&d.q[c]||[]).map(([k,p])=>({kind:k,t:p*prodTime(T,stats(T.fac,k)),p}));
+function applyTeam(d){if(!G||!d)return;if(d.ct!==undefined)ctApply(d.ct);if(Array.isArray(d.dg))dgApply(d.dg);G.ewv=d.ew?Object.assign(d.ew,{rt:G.t}):null;if(typeof d.ak==='number'&&NET.cq&&NET.cq.length&&NET.cq[0].s<=d.ak){NET.cq=NET.cq.filter(c=>c.s>d.ak);if(NET.game)NET.game.presence({cq:NET.cq}).catch(()=>{});}if(typeof d.mg==='number')NET.gen=Math.max(NET.gen||0,d.mg|0);if(d.sb===0&&NET.isStandby){NET.isStandby=false;NET.lastCk=null;}const T=G.teams[ME];T.credits=d.c|0;for(const c of CATS)T.q[c]=(d.q&&d.q[c]||[]).map(([k,p])=>({kind:k,t:p*prodTime(T,stats(T.fac,k)),p}));
   T.rq={};for(const c in (d.rq||{})){const [k,p]=d.rq[c];if(UPG[k])T.rq[c]={key:k,t:p*UPG[k].time};}T.upg={};for(const k of d.u||[])if(UPG[k])T.upg[k]=true;upgReset(T);T.charge=+d.ch||0;T.sanc=d.sn>0?G.t+d.sn:0;T.mart=d.mo>0?G.t+d.mo:0;T.rebuy=d.rb>0?G.t+d.rb:0;T.hrb=d.hb>0?G.t+d.hb:0;if(Array.isArray(d.hc))for(const [hi,hc] of d.hc){const hu=G.byId.get(hi);if(hu)hu.habT=G.t+hc;}T.tunN=d.tn|0;if(Array.isArray(d.ac))for(const [i,c] of d.ac)if(G.teams[i])G.teams[i].credits=+c||0;T.tunK=d.tk&&typeof d.tk==='object'?d.tk:{};T.fortN=d.fn|0;T.fortK=d.fk&&typeof d.fk==='object'?d.fk:{};if(WEATHER[d.wx]){G.wx=G.wx||{t:0,next:1e9};G.wx.k=d.wx;}if(Array.isArray(d.mn))G.mines=d.mn.map(([x,y])=>({x,y,team:ME,arm:0}));T.gxp=d.gx|0;T.rank=d.rk|0||1;T.spent=d.sp|0;{const nd=d.dc||'',np=d.dp?d.dp.split(','):[];if(nd!==T.gdoc||np.length!==Object.keys(T.gperk||{}).length){T.gdoc=nd;T.gperk={};for(const k of np)if(GDOC_PERKS[k])T.gperk[k]=1;T._uk=null;}}
   T.pw={};for(const k in (d.pw||{}))if(POWERS[k]){const v=d.pw[k];T.pw[k]=Array.isArray(v)?{cd:+v[0]||0,lv:+v[1]||1}:{cd:+v||0,lv:1};}T.reveals=(d.rv||[]).map(([x,y,r,t])=>({x,y,r,t}));T.rally=d.rl?{x:d.rl[0],y:d.rl[1]}:null;
   if(Array.isArray(d.ig))d.ig.forEach((v,i)=>{const T=G.teams[i];if(T){T.blk=v&1;T.dry=(v>>1)&1;T.fuel=(v>>2)/10;}});
@@ -10814,7 +10905,7 @@ function teamGlobals(k){const g=NET.tgC;if(!g||g.t!==G.t){const fa=G.fields.map(
 function ewPack(k){const v=ewView(k);return v.j.length||v.g.length||v.cd.length?{j:v.j,g:v.g,cd:v.cd}:null;}
 function teamMsg(T){const q={};for(const c of CATS)q[c]=T.q[c].map(i=>[i.kind,+(i.t/prodTime(T,stats(T.fac,i.kind))).toFixed(2)]);const rq={};for(const c in T.rq)if(T.rq[c])rq[c]=[T.rq[c].key,+(T.rq[c].t/UPG[T.rq[c].key].time).toFixed(2)];
   const pw={};for(const k in T.pw)pw[k]=[Math.ceil(T.pw[k].cd),T.pw[k].lv||1];
-  return{sn:T.sanc>G.t?+(T.sanc-G.t).toFixed(1):0,mo:(T.mart||0)>G.t?+(T.mart-G.t).toFixed(1):0,rb:(T.rebuy||0)>G.t?+(T.rebuy-G.t).toFixed(1):0,hb:(T.hrb||0)>G.t?+(T.hrb-G.t).toFixed(1):0,hc:G.ents.filter(e=>e.kind==='champ'&&e.team===T.id&&!e.dead).map(e=>[e.id,Math.max(0,+((e.habT||0)-G.t).toFixed(1))]),c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,dc:T.gdoc||'',dp:Object.keys(T.gperk||{}).join(','),pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),tn:T.tun.length,tk:tunKinds(T),fn:fortN(T.id),fk:fortKinds(T.id),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,ew:ewPack(T.id),mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),...(dgPack(T)||{}),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min((NET.cseq[NET.peers[T.id]]||0),NET.ckAk?(NET.ckAk[T.id]||0):0):0,to:NET.peers[T.id]};}
+  return{sn:T.sanc>G.t?+(T.sanc-G.t).toFixed(1):0,mo:(T.mart||0)>G.t?+(T.mart-G.t).toFixed(1):0,rb:(T.rebuy||0)>G.t?+(T.rebuy-G.t).toFixed(1):0,hb:(T.hrb||0)>G.t?+(T.hrb-G.t).toFixed(1):0,hc:G.ents.filter(e=>e.kind==='champ'&&e.team===T.id&&!e.dead).map(e=>[e.id,Math.max(0,+((e.habT||0)-G.t).toFixed(1))]),c:Math.floor(T.credits),q,rq,u:Object.keys(T.upg),ch:+T.charge.toFixed(1),gx:T.gxp,rk:T.rank,sp:T.spent,dc:T.gdoc||'',dp:Object.keys(T.gperk||{}).join(','),pw,rv:T.reveals.map(r=>[r.x|0,r.y|0,r.r,+r.t.toFixed(1)]),rl:T.rally?[T.rally.x|0,T.rally.y|0]:null,...teamGlobals(T.id),ct:ctPack(T.id),tn:T.tun.length,tk:tunKinds(T),fn:fortN(T.id),fk:fortKinds(T.id),ac:G.teams.filter(O=>O.id!==T.id&&ally(O.id,T.id)).map(O=>[O.id,Math.floor(O.credits)]),wx:G.wx?G.wx.k:'clear',mg:NET.gen||0,sb:NET.sbSlot===T.id?1:0,ew:ewPack(T.id),mn:(G.mines||[]).filter(m=>m.team===T.id).map(m=>[m.x,m.y]),...(dgPack(T)||{}),gt:+G.t.toFixed(2),ak:NET.cseq&&NET.peers[T.id]?Math.min((NET.cseq[NET.peers[T.id]]||0),NET.ckAk?(NET.ckAk[T.id]||0):0):0,to:NET.peers[T.id]};}
 // P2P: everything a player gets in one tick (snapshot chunks, effects, panel) travels as ONE bundle ('b') - about 10
 // messages a second per connection instead of ~17-24, less per-message overhead, and effects arrive with their snapshot.
 function netTick(dt){if(!hostP2P()||MODE!=='host'||!NET.game||!NET.peers)return netTick0(dt);const g=NET.game,real=g.emit,B=new Map();
@@ -10849,7 +10940,7 @@ function netTick0(dt){if(MODE!=='host'||!NET.game||!G||!NET.peers)return;discTic
 const VG={c:64,w:0,h:0,a:null,t:-1,AM:[]};
 function visGrid(){if(VG.t===G.t&&VG.a)return;const c=VG.c,w=Math.ceil(MAPW/c)+1,h=Math.ceil(MAPH/c)+1,N=G.teams.length;
   if(!VG.a||VG.w!==w||VG.h!==h){VG.a=new Uint8Array(w*h);VG.w=w;VG.h=h;}else VG.a.fill(0);const a=VG.a,AM=VG.AM;AM.length=N;
-  for(let i=0;i<N;i++){let m=0;for(let j=0;j<N;j++)if(ally(i,j))m|=1<<j;AM[i]=m;}
+  for(let i=0;i<N;i++){let m=0;for(let j=0;j<N;j++)if(sameTm(i,j))m|=1<<j;AM[i]=m;}
   // a cell counts as seen when its centre is within sight radius + half a cell (the client's own fog hole is drawn 8%
   // wider than the sight radius with a soft edge, so this matches what the player actually sees within a few metres)
   const disc=(x,y,R,m)=>{if(!m||!(R>0))return;const R2=(R+c*.5)**2,x0=Math.max(0,Math.floor((x-R)/c)),x1=Math.min(w-1,Math.floor((x+R)/c)),y0=Math.max(0,Math.floor((y-R)/c)),y1=Math.min(h-1,Math.floor((y+R)/c));
@@ -10883,6 +10974,8 @@ function evWho(v){const AM=VG.AM,own=v.own!=null?AM[v.own]|0:0;
     case 'txt':{const t=v[4],w=v[5];let m=(t>=0?1<<t:0)|(w>=0?1<<w:0);if(w===-2)m|=(AM[t]|0)|visAt(v[1],v[2],0);return m;}
     case 'log':return v[1]>=0?1<<v[1]:0;
     case 'give':return (1<<v[1])|(1<<v[2]);
+    case 'mping':case 'mdraw':case 'say':return ctMask(v[1]);                  // pings, drawings and quick lines: the sender's team only
+    case 'cfo':return (1<<v[1])|(1<<v[2]);case 'cfs':case 'cfb':return (1<<v[1])|(1<<v[2]);
     default:return 255;}}
 // what each player was last sent of an entity: r.t[k] = when it was last in k's snapshot as visible, r.m = players
 // that hold it as a remembered (fogged) building
@@ -10949,7 +11042,7 @@ function specEvts(evs,SP){let e=evs.filter(v=>Array.isArray(v)),len=JSON.stringi
    drops out, the standby restores the latest checkpoint and carries on as the new host; everyone else reconnects to it.
    Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
-const CK_G=['milOk','t','nid','aiT','visT','endT','over','bs','cbrTeams','mT','ecT','wx','fixWx','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
+const CK_G=['truce','tOff','aidQ','milOk','t','nid','aiT','visT','endT','over','bs','cbrTeams','mT','ecT','wx','fixWx','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
   'spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams)
 const CK_TEAM_SKIP=new Set(['_uk','_ut','F','ai','id','fac','color','dark']);
 // (a unit that just went into a tunnel / the fortress / a city building is saved inside it: it leaves G.ents only at the
@@ -11201,16 +11294,16 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
   for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});}/* owned powers are used from the side rail / hotkey */},null,true);}
   sub('pow','Level up');for(const k in POWERS){const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
   sub('pow','General Doctrine (pick in the first 2 minutes)');for(const d of GDOC_KEYS){const D=GDOC[d];mk('pow','dc_'+d,D.name,'',D.blurb,()=>doAct({t:'doc',k:d}),null,true);}
-  sub('pow','Doctrine perks (1 point each)');for(const d of GDOC_KEYS)for(const p of GDOC[d].perks)mk('pow','dp_'+p.k,p.name,'',p.desc,()=>doAct({t:'dbuy',k:p.k}),null,true);
+  sub('pow','Doctrine tree (1 point per perk; tier 2 needs tier 1, tier 3 needs the perk it hangs from)');const fcN=(G&&G.teams[ME]&&G.teams[ME].fac)||setup.p;for(const d of GDOC_KEYS)for(const p of GDOC[d].perks)mk('pow','dp_'+p.k,'T'+p.t+' '+gdName(fcN,p),'',(p.req?'Needs '+gdName(fcN,GDOC_PERKS[p.req])+'. ':'Tree root. ')+p.desc,()=>doAct({t:'dbuy',k:p.k}),null,true);
   showTab(TAB);updateUI();}
 // General Doctrine picker: a big touch-friendly card for the first 2 minutes, plus the buttons in the Powers tab
 function docUI(T){if(!G||!T)return;const lock=Object.keys(T.gperk||{}).length>0||(G.t>GDOC_LATE&&!G.sandbox),pts=T.rank-T.spent;
-  for(const d of GDOC_KEYS){setBtn('dc_'+d,{dis:lock||T.gdoc===d,done:T.gdoc===d,cost:T.gdoc===d?'Your doctrine':lock?'Locked':'Pick (free)'});for(const p of GDOC[d].perks){const b=$('dp_'+p.k);if(!b)continue;const sh=T.gdoc===d,dv=sh?'':'none';if(b.style.display!==dv){b.style.display=dv;if(sh)fitBtnNames();}if(sh){const own=!!(T.gperk&&T.gperk[p.k]);setBtn('dp_'+p.k,{dis:own||pts<1,done:own,cost:own?'Active':'1 point'});}}}
+  for(const d of GDOC_KEYS){setBtn('dc_'+d,{dis:lock||T.gdoc===d,done:T.gdoc===d,cost:T.gdoc===d?'Your doctrine':lock?'Locked':'Pick (free)'});for(const p of GDOC[d].perks){const b=$('dp_'+p.k);if(!b)continue;const sh=T.gdoc===d,dv=sh?'':'none';if(b.style.display!==dv){b.style.display=dv;if(sh)fitBtnNames();}if(sh){const own=!!(T.gperk&&T.gperk[p.k]);const rq=gdReq(T,p);setBtn('dp_'+p.k,{dis:own||pts<1||!rq,done:own,cost:own?'Active':!rq?'Needs '+gdName(T.fac,GDOC_PERKS[p.req]):'1 point'});}}}
   if(!G.docSent&&setup.gdoc&&!T.gdoc&&G.t>.5&&!G.sandbox){G.docSent=1;doAct({t:'doc',k:setup.gdoc});}
   let ov=$('docPick');const show=!T.gdoc&&!lock&&!T.out&&!G.sandbox&&!G.docDis&&G.t>1&&!G.over&&!G.sel.length;
   if(!show){if(ov)ov.hidden=true;return;}
   if(!ov){ov=document.createElement('div');ov.id='docPick';ov.style.cssText='pointer-events:none;position:fixed;left:50%;top:6%;transform:translateX(-50%);z-index:40;background:rgba(10,14,12,.92);border:1px solid #8a9a6a;border-radius:10px;padding:6px 8px;max-width:min(96vw,520px);font:14px system-ui,sans-serif;color:#e8eedb;box-shadow:0 4px 24px #000a;text-align:center';
-    ov.innerHTML='<div style="font-weight:700;margin-bottom:4px;font-size:13px">Choose your General Doctrine <span style="font-weight:400;opacity:.7">(free, 4 perks each)</span></div><div id="docBtns" style="display:flex;gap:6px;align-items:stretch"></div>';
+    ov.innerHTML='<div style="font-weight:700;margin-bottom:4px;font-size:13px">Choose your General Doctrine <span style="font-weight:400;opacity:.7">(free, a 5-perk tree each)</span></div><div id="docBtns" style="display:flex;gap:6px;align-items:stretch"></div>';
     document.body.append(ov);const bx=ov.querySelector('#docBtns');for(const d of GDOC_KEYS){const b=document.createElement('button');b.style.cssText='pointer-events:auto;flex:1;min-height:44px;padding:4px 6px;background:#2c3a26;border:1px solid #8a9a6a;color:#f0f5e6;border-radius:8px;font:13px system-ui,sans-serif;touch-action:manipulation';b.textContent=GDOC[d].name;b.title=GDOC[d].blurb;b.onclick=()=>{doAct({t:'doc',k:d});ov.hidden=true;};bx.append(b);}
     const lb=document.createElement('button');lb.textContent='✕';lb.title='Later';lb.setAttribute('aria-label','Later');lb.style.cssText='pointer-events:auto;min-width:44px;min-height:44px;background:none;border:1px solid #667;color:#cbd;border-radius:8px';lb.onclick=()=>{G.docDis=1;ov.hidden=true;};bx.append(lb);}
   ov.hidden=false;}
@@ -11311,7 +11404,7 @@ function btnAt(x,y){for(const b of $('panel').children){if(!b.classList.contains
 function renderAllies(){const el=$('allyBox');if(!el||!G)return;const T=G.teams[ME];const A=G.teams.filter(O=>O.id!==ME&&ally(O.id,ME)&&!O.out);el.hidden=!A.length||!!G.sandbox;if(el.hidden)return;
   const key=A.map(O=>O.id).join(',');if(el.dataset.k!==key){el.dataset.k=key;el.innerHTML='<div class="lbl"><span>Allies</span><span id="allyt" style="font:12px var(--mono);color:var(--dim)">send money</span></div>';
     for(const O of A){const r=document.createElement('div');r.className='ar';r.innerHTML=`<b style="color:${O.color}">${O.F.name}</b>`+(GDOC[O.gdoc]?` <small style="opacity:.7">${GDOC[O.gdoc].short}</small>`:'');const sm=document.createElement('small');sm.dataset.c=O.id;r.append(sm);
-      for(const v of [250,1000,'½']){const b=document.createElement('button');b.textContent=v==='½'?'Half':'+$'+v;b.dataset.v=v;b.title=v==='½'?'Send half of your money':`Send $${v}`;b.onpointerdown=ev=>{ev.preventDefault();const amt=v==='½'?Math.floor(G.teams[ME].credits/2):v;doAct({t:'give',to:O.id,amt});};r.append(b);}el.append(r);}}
+      for(const v of [250,1000,'½']){const b=document.createElement('button');b.textContent=v==='½'?'Half':'+$'+v;b.dataset.v=v;b.title=v==='½'?'Send half of your money (10% fee, arrives after 4 s)':`Send $${v} (10% fee, arrives after 4 s)`;b.onpointerdown=ev=>{ev.preventDefault();const amt=v==='½'?Math.floor(G.teams[ME].credits/2):v;doAct({t:'give',to:O.id,amt});};r.append(b);}el.append(r);}}
   for(const sm of el.querySelectorAll('small[data-c]')){const O=G.teams[+sm.dataset.c];sm.textContent='$'+Math.floor(O.credits);}
   for(const b of el.querySelectorAll('button'))b.disabled=b.dataset.v==='½'?T.credits<100:T.credits<+b.dataset.v;}
 // Sanctions banner: shown to the sanctioned player with the cut and a countdown (T.sanc = sim time it ends; clients get it from the snapshot)
@@ -11376,7 +11469,7 @@ $('supbtn').onclick=()=>{G.place=null;G.aim='sup';};
 /* ---------- squads: group units so they move together ---------- */
 // Up to 5 squads. "Group selected" (or Ctrl/Shift + 1-5) puts the selection in a squad; click a squad button or press 1-5 to
 // select it, click twice to jump the camera to it. A squad moves in formation at the pace of its slowest unit.
-const SQN=5;function sqList(i){if(!G||!G.sq)return[];const ids=G.sq[i]||[];return ids.map(id=>G.byId.get(id)).filter(u=>u&&!u.dead&&u.team===ME);}
+const SQN=9;function sqList(i){if(!G||!G.sq)return[];const ids=G.sq[i]||[];return ids.map(id=>G.byId.get(id)).filter(u=>u&&!u.dead&&u.team===ME);}
 function sqOfSel(){const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(own.length<2)return -1;for(let i=1;i<=SQN;i++){const L=sqList(i);if(L.length&&L.length===own.length&&own.every(u=>L.includes(u)))return i;}return -1;}
 function sqAssign(i){const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(!own.length)return false;G.sq=G.sq||{};for(let k=1;k<=SQN;k++)if(k!==i&&G.sq[k])G.sq[k]=G.sq[k].filter(id=>!own.some(u=>u.id===id));G.sq[i]=own.map(u=>u.id);pushLog(`Squad ${i} formed: ${own.length} unit${own.length>1?'s':''}. It will move in formation.`,'g');sfxUI(520);renderSquads();return true;}
 let sqLast={i:0,t:0};function sqSelect(i){const L=sqList(i);if(!L.length)return;const now=performance.now();if(sqLast.i===i&&now-sqLast.t<450){const x=L.reduce((s,u)=>s+u.x,0)/L.length,y=L.reduce((s,u)=>s+u.y,0)/L.length;centerOn(x,y);}sqLast={i,t:now};G.sel=L.slice();speak(0);updateUI();renderSquads();}
@@ -11619,7 +11712,7 @@ window.addEventListener('pointercancel',e=>{touchCancel(e);if(drag&&e.pointerId=
 cv.addEventListener('contextmenu',e=>e.preventDefault());
 window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'))return;const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=true;MODK.ctrl=e.ctrlKey||e.metaKey||k==='Control'||k==='Meta';MODK.alt=e.altKey||k==='Alt';MODK.shift=e.shiftKey;if(!G||$('menu').hidden===false)return;if(k==='Alt')e.preventDefault();
   const gk=genKeys()&&!e.ctrlKey&&!e.metaKey&&!e.altKey;/* W A S D only scroll the camera in every scheme (Abdullah 2026-10-28): no A attack-move, no S stop (X stops) */
-  if(/^Digit[1-5]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
+  if(/^Digit[1-9]$/.test(e.code)){const i=+e.code.slice(5);if(e.ctrlKey||e.metaKey||e.shiftKey){e.preventDefault();sqAssign(i);}else sqSelect(i);}
   if(k==='p'&&!G.over){e.preventDefault();togglePause();return;}
   if(k==='Escape'&&MLOCK.on){MLOCK.escK=performance.now();mlockCancelModes();mlockOff();return;}
   if(k==='Escape'&&menuOpen()){menuOpen(false);return;}
@@ -13809,6 +13902,174 @@ function encClose(){ENC.on=false;ENC.seq++;if(ENC.ov)ENC.ov.hidden=true;encClear
 function encMenu(){const row=document.getElementById('openMyb')||document.getElementById('openSettings');
   if(row&&!document.getElementById('openEnc')){const b=document.createElement('button');b.className='big ghost';b.id='openEnc';b.style.cssText='font-size:15px;padding:7px 16px;margin-left:6px';b.textContent='Encyclopedia';b.title='Browse every unit and building of all 18 nations in 3D';b.onclick=()=>{try{initAudio();}catch(e){}encOpen();};row.after(b);}}
 try{encMenu();}catch(e){console.warn('encyclopedia menu',e);}
+/* ---------- 08g-command: the "Command" panel (Abdullah 2026-11-05 18:49 "command-teams") ----------
+   BATTLE PLANS  O (or the Plan button): click map points to add numbered steps (Move / Assault / Hold), each with its own trigger
+                 (Auto when the last step is reached, After 10 s / 30 s, or On Go). Enter finishes, Esc cancels. Plans run in this
+                 browser and only ever send ordinary orders (go / amove / def) through doAct, so multiplayer and AI are untouched.
+   BATTLE GROUPS the existing control groups 1-9 get a name, a formation (Line / Column / Wedge), strength + ammo and one-click orders.
+   PINGS & DRAWING  , attack here   . defend here   / danger   ' draw a line   ; draw a circle   (then click / drag the map or minimap).
+                 Allies see them for 10 s; quick lines go to the log of your team.
+   TRUCE (free-for-all only) and ALLIED AID (money with a fee, give selected units) sit in the same panel. */
+const CT={mode:null,plans:[],pid:0,pl:{type:'m',trig:'auto',sec:10},marks:[],draw:null,form:{},names:{},sendG:0,open:true,sig:''};
+const CT_COL={m:'#74d08f',a:'#ea5a40',h:'#6fb2ff'},CT_TN={m:'Move',a:'Assault',h:'Hold'};
+const CT_PING=[{n:'Attack here',c:'#ea5a40'},{n:'Defend here',c:'#6fb2ff'},{n:'Danger',c:'#f2c94c'}];
+const CT_GN=['Armour','Infantry','Assault','Recon','Support','Artillery','Air','Reserve'];
+const CT_FORMS=['line','column','wedge'];
+function ctMine(ids){return (ids||[]).map(i=>G.byId.get(i)).filter(u=>u&&!u.dead&&!u.isB&&u.team===ME);}
+function ctCentroid(us){let x=0,y=0;for(const u of us){x+=u.x;y+=u.y;}return us.length?{x:x/us.length,y:y/us.length}:null;}
+function ctClamp(x,y){return{x:Math.max(20,Math.min(MAPW-20,x)),y:Math.max(20,Math.min(MAPH-20,y))};}
+function ctFmt(s){s=Math.max(0,Math.ceil(s));return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+/* ---- formations: a Line is the game's own 'line' order; a Column and a Wedge send up to 5 blocks of units to offsets ---- */
+function ctFormSend(us,tx,ty,form,mode){if(!us.length)return;const c=ctCentroid(us);let hx=tx-c.x,hy=ty-c.y,L=Math.hypot(hx,hy);if(L<1){hx=0;hy=-1;L=1;}hx/=L;hy/=L;const px=-hy,py=hx,ids=us.map(u=>u.id),n=ids.length;mode=mode||'move';
+  if(form==='line'||n<3){const half=Math.max(30,Math.min(420,24*(n-1)/2)),a=ctClamp(tx+px*half,ty+py*half),b=ctClamp(tx-px*half,ty-py*half);doAct({t:'line',ids,x:a.x,y:a.y,x2:b.x,y2:b.y,mode});return;}
+  const k=Math.min(5,Math.ceil(n/3)),per=Math.ceil(n/k),sorted=us.slice().sort((p,q)=>(p.x-c.x)*px+(p.y-c.y)*py-((q.x-c.x)*px+(q.y-c.y)*py));
+  for(let j=0;j<k;j++){const blk=sorted.slice(j*per,(j+1)*per).map(u=>u.id);if(!blk.length)continue;let ox,oy;
+    if(form==='column'){ox=-hx*38*j;oy=-hy*38*j;}else{const r=Math.ceil(j/2),sg=j%2?1:-1;ox=-hx*34*r+px*46*r*sg;oy=-hy*34*r+py*46*r*sg;}
+    const p=ctClamp(tx+ox,ty+oy);doAct({t:'go',ids:blk,x:p.x,y:p.y,mode,fm:1});}}
+/* ---- battle plans ---- */
+function ctStepOrder(pl,s){const ids=ctMine(pl.ids).map(u=>u.id);if(!ids.length)return;
+  if(s.t==='h')doAct({t:'def',ids,x:s.x,y:s.y});else doAct({t:'go',ids,x:s.x,y:s.y,mode:s.t==='a'?'amove':'move',fm:ids.length>1?1:0});}
+function ctStepFire(pl){const s=pl.steps[pl.i+1];if(!s)return;ctStepOrder(pl,s);pl.i++;pl.st='move';pl.go=false;pl.tIss=G.t;pushLog(`Plan ${pl.n}: step ${pl.i+1} of ${pl.steps.length} (${CT_TN[s.t]}).`,'g');}
+function ctTrigOk(pl,s,since){return s.trig==='auto'||(s.trig==='timer'&&G.t-since>=s.sec)||(s.trig==='go'&&pl.go);}
+function ctPlanTick(){if(!G||G.over||G.paused||MODE==='spectate'||NET.spec)return;
+  for(let k=CT.plans.length-1;k>=0;k--){const pl=CT.plans[k],us=ctMine(pl.ids);if(!us.length){CT.plans.splice(k,1);continue;}
+    if(pl.st==='done'){if(G.t-pl.tDone>8)CT.plans.splice(k,1);continue;}
+    if(pl.st==='move'){const s=pl.steps[pl.i],near=us.filter(u=>Math.hypot(u.x-s.x,u.y-s.y)<120).length;
+      if(near>=Math.ceil(us.length*.7)||G.t-pl.tIss>100){pl.st='wait';pl.arr=G.t;if(s.t==='h'||pl.i===pl.steps.length-1){pl.st='done';pl.tDone=G.t;pushLog(`Plan ${pl.n} complete.`,'g');}}continue;}
+    const s=pl.steps[pl.i+1];if(!s){pl.st='done';pl.tDone=G.t;continue;}
+    if(ctTrigOk(pl,s,pl.i<0?pl.t0:pl.arr))ctStepFire(pl);}}
+function ctPlanStart(){const ids=selfSel().map(u=>u.id);if(!ids.length){pushLog('Select some units first, then draw their plan.','w');return;}CT.mode='plan';CT.draft={ids,steps:[]};ctUI();}
+function ctPlanFinish(){const d=CT.draft;CT.mode=null;CT.draft=null;if(!d||!d.steps.length){ctUI();return;}
+  for(const p of CT.plans)p.ids=p.ids.filter(i=>!d.ids.includes(i));CT.plans=CT.plans.filter(p=>p.ids.length);
+  const pl={n:++CT.pid,ids:d.ids,steps:d.steps,i:-1,st:'wait',t0:G.t,arr:G.t,go:false};CT.plans.push(pl);pushLog(`Plan ${pl.n} set: ${pl.steps.length} step${pl.steps.length>1?'s':''}.`,'g');sfxUI(520);ctPlanTick();ctUI();}
+function ctPlanCancel(){if(CT.mode==='plan'){CT.mode=null;CT.draft=null;ctUI();return;}}
+function ctGoAll(){let n=0;for(const pl of CT.plans)if(pl.st==='wait'&&pl.steps[pl.i+1]&&pl.steps[pl.i+1].trig==='go'){pl.go=true;n++;}if(n)sfxUI(660);ctPlanTick();ctUI();}
+/* ---- pings, drawings, quick lines (received) ---- */
+function ctMark(m){m.t0=performance.now()/1000;m.life=10;CT.marks.push(m);if(CT.marks.length>40)CT.marks.shift();}
+FXH.mping=function(team,k,x,y){if(!G||!sameTm(team,ME))return;ctMark({k,x,y,team,kind:'ping'});sfxUI(k===2?440:700);};
+FXH.mdraw=function(team,c,p){if(!G||!sameTm(team,ME))return;const pts=[];for(let i=0;i+1<p.length;i+=2)pts.push([p[i],p[i+1]]);ctMark({kind:c?'circle':'line',pts,team});};
+FXH.say=function(team,i){if(!G||!sameTm(team,ME)||!CF.LINES[i])return;pushLog(`${team===ME?'You':ctName(team)}: ${CF.LINES[i]}`,team===ME?'':'g');if(team!==ME)sfxUI(600);};
+FXH.cfo=function(f,t,d){};FXH.cfs=function(a,b,d){if(G&&(a===ME||b===ME))sfxUI(520);};FXH.cfb=function(a,b){if(G&&b===ME)sfxUI(300);};
+function ctTeamCol(t){return (G.teams[t]&&G.teams[t].color)||'#fff';}
+function ctDrawHud(c){if(!G||G.over)return;const now=performance.now()/1000;CT.marks=CT.marks.filter(m=>now-m.t0<m.life);
+  c.save();c.lineCap='round';c.lineJoin='round';
+  for(const m of CT.marks){const age=now-m.t0,a=Math.max(0,Math.min(1,(m.life-age)/2));c.globalAlpha=a;
+    if(m.kind==='ping'){const p=toScreen(m.x,groundH(m.x,m.y)+4,m.y);if(p.z>1)continue;const pc=CT_PING[m.k],r=14+6*Math.sin(age*6);c.strokeStyle=pc.c;c.fillStyle=pc.c;c.lineWidth=3;c.beginPath();c.arc(p.x,p.y,r,0,7);c.stroke();c.beginPath();c.arc(p.x,p.y,3,0,7);c.fill();
+      c.font='700 12px Saira Condensed, system-ui, sans-serif';c.textAlign='center';c.lineWidth=3;c.strokeStyle='rgba(0,0,0,.7)';const tx=pc.n+(m.team!==ME?' - '+ctName(m.team):'');c.strokeText(tx,p.x,p.y-r-6);c.fillText(tx,p.x,p.y-r-6);}
+    else{const col=ctTeamCol(m.team);c.strokeStyle=col;c.lineWidth=3.5;c.setLineDash([]);
+      if(m.kind==='circle'){const a0=m.pts[0],b0=m.pts[1]||a0,cc=toScreen(a0[0],groundH(a0[0],a0[1]),a0[1]);const R=Math.hypot(b0[0]-a0[0],b0[1]-a0[1]),e=toScreen(a0[0]+R,groundH(a0[0]+R,a0[1]),a0[1]);c.beginPath();c.arc(cc.x,cc.y,Math.max(8,Math.abs(e.x-cc.x)),0,7);c.stroke();}
+      else{c.beginPath();let st=false;for(const q of m.pts){const p=toScreen(q[0],groundH(q[0],q[1]),q[1]);if(!st){c.moveTo(p.x,p.y);st=true;}else c.lineTo(p.x,p.y);}c.stroke();
+        const n=m.pts.length;if(n>1){const A=m.pts[n-2],B=m.pts[n-1],pa=toScreen(A[0],groundH(A[0],A[1]),A[1]),pb=toScreen(B[0],groundH(B[0],B[1]),B[1]),an=Math.atan2(pb.y-pa.y,pb.x-pa.x);c.fillStyle=col;c.beginPath();c.moveTo(pb.x,pb.y);c.lineTo(pb.x-16*Math.cos(an-.45),pb.y-16*Math.sin(an-.45));c.lineTo(pb.x-16*Math.cos(an+.45),pb.y-16*Math.sin(an+.45));c.closePath();c.fill();}}}}
+  c.globalAlpha=1;
+  /* the stroke being drawn right now */
+  const D=CT.draw;if(D&&D.pts.length){c.strokeStyle=ctTeamCol(ME);c.lineWidth=3;c.setLineDash([6,4]);if(D.circle){const a0=D.pts[0],b0=D.pts[D.pts.length-1],cc=toScreen(a0[0],groundH(a0[0],a0[1]),a0[1]),R=Math.hypot(b0[0]-a0[0],b0[1]-a0[1]),e=toScreen(a0[0]+R,groundH(a0[0]+R,a0[1]),a0[1]);c.beginPath();c.arc(cc.x,cc.y,Math.max(4,Math.abs(e.x-cc.x)),0,7);c.stroke();}
+    else{c.beginPath();D.pts.forEach((q,i)=>{const p=toScreen(q[0],groundH(q[0],q[1]),q[1]);i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y);});c.stroke();}c.setLineDash([]);}
+  /* plans: numbered arrows from the group to each step */
+  const drafts=CT.plans.map(p=>({ids:p.ids,steps:p.steps,i:p.i,n:p.n,st:p.st,go:p.go}));if(CT.draft)drafts.push({ids:CT.draft.ids,steps:CT.draft.steps,i:-1,n:'+',st:'draft'});
+  for(const pl of drafts){const us=ctMine(pl.ids),cen=ctCentroid(us);if(!cen)continue;let prev=toScreen(cen.x,groundH(cen.x,cen.y),cen.y);
+    pl.steps.forEach((s,k)=>{const p=toScreen(s.x,groundH(s.x,s.y),s.y),done=k<=pl.i&&pl.st!=='move'||k<pl.i,col=done?'#8a948d':CT_COL[s.t];
+      c.strokeStyle=col;c.fillStyle=col;c.lineWidth=2.5;c.setLineDash([9,6]);c.beginPath();c.moveTo(prev.x,prev.y);c.lineTo(p.x,p.y);c.stroke();c.setLineDash([]);
+      const an=Math.atan2(p.y-prev.y,p.x-prev.x),mx2=(prev.x+p.x)/2,my2=(prev.y+p.y)/2;c.beginPath();c.moveTo(mx2+10*Math.cos(an),my2+10*Math.sin(an));c.lineTo(mx2-8*Math.cos(an-.6),my2-8*Math.sin(an-.6));c.lineTo(mx2-8*Math.cos(an+.6),my2-8*Math.sin(an+.6));c.closePath();c.fill();
+      c.beginPath();c.arc(p.x,p.y,13,0,7);c.fillStyle='rgba(10,14,12,.85)';c.fill();c.lineWidth=2.5;c.stroke();c.fillStyle='#fff';c.font='700 14px system-ui, sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(String(k+1),p.x,p.y+1);
+      c.font='700 11px Saira Condensed, system-ui, sans-serif';c.lineWidth=3;c.strokeStyle='rgba(0,0,0,.7)';const lab=CT_TN[s.t]+' '+(s.trig==='auto'?'':s.trig==='timer'?'· wait '+s.sec+'s':'· on GO');c.strokeText(lab,p.x,p.y+26);c.fillStyle=col;c.fillText(lab,p.x,p.y+26);c.textBaseline='alphabetic';prev=p;});}
+  c.restore();}
+function ctDrawMini(){if(!G||G.over||!CT.marks.length)return;const c=mx,W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=performance.now()/1000;c.save();c.lineWidth=2;
+  for(const m of CT.marks){const age=now-m.t0;c.globalAlpha=Math.max(0,Math.min(1,(m.life-age)/2));
+    if(m.kind==='ping'){const r=5+4*Math.abs(Math.sin(age*5));c.strokeStyle=CT_PING[m.k].c;c.beginPath();c.arc(m.x*sx,m.y*sy,r,0,7);c.stroke();c.fillStyle=CT_PING[m.k].c;c.fillRect(m.x*sx-1.5,m.y*sy-1.5,3,3);}
+    else if(m.kind==='circle'){const a=m.pts[0],b=m.pts[1]||a;c.strokeStyle=ctTeamCol(m.team);c.beginPath();c.arc(a[0]*sx,a[1]*sy,Math.max(3,Math.hypot(b[0]-a[0],b[1]-a[1])*sx),0,7);c.stroke();}
+    else{c.strokeStyle=ctTeamCol(m.team);c.beginPath();m.pts.forEach((q,i)=>i?c.lineTo(q[0]*sx,q[1]*sy):c.moveTo(q[0]*sx,q[1]*sy));c.stroke();}}
+  c.restore();}
+{const _dh=drawHUD;drawHUD=function(){_dh.apply(this,arguments);try{ctDrawHud(hx);}catch(e){}};const _dm=drawMini;drawMini=function(){_dm.apply(this,arguments);try{ctDrawMini();}catch(e){}};}
+/* ---- map clicks while a tool is armed (capture phase: the normal select / order handlers never see them) ---- */
+function ctWorldAt(e){if(e.target===mm){const r=mm.getBoundingClientRect();return{x:Math.max(0,Math.min(MAPW,(e.clientX-r.left)/r.width*MAPW)),y:Math.max(0,Math.min(MAPH,(e.clientY-r.top)/r.height*MAPH))};}
+  return e.target===cv?screenToWorld(mouse.x,mouse.y):null;}
+function ctToolDown(e){if(!CT.mode||CT.mode==='gsend'||!G||G.over||(e.target!==cv&&e.target!==mm))return;if(e.button!==0){if(e.button===2){e.preventDefault();e.stopImmediatePropagation();ctToolOff();}return;}
+  const w=ctWorldAt(e);if(!w)return;e.preventDefault();e.stopImmediatePropagation();const m=CT.mode;
+  if(m==='plan'){CT.draft.steps.push({t:CT.pl.type,x:w.x|0,y:w.y|0,trig:CT.pl.trig,sec:CT.pl.sec});if(CT.draft.steps.length>=8)ctPlanFinish();ctUI();return;}
+  if(m.startsWith('ping')){doAct({t:'mp',k:+m.slice(4),x:w.x,y:w.y});CT.mode=null;ctUI();return;}
+  if(m==='draw'||m==='circle'){CT.draw={circle:m==='circle',pts:[[w.x,w.y]],id:e.pointerId,mini:e.target===mm};}}
+function ctToolMove(e){const D=CT.draw;if(!D||(e.pointerId!==D.id))return;const w=ctWorldAt({target:D.mini?mm:cv,clientX:e.clientX,clientY:e.clientY});if(!w)return;const l=D.pts[D.pts.length-1];
+  if(D.circle){D.pts[1]=[w.x,w.y];D.pts.length=2;return;}if(Math.hypot(w.x-l[0],w.y-l[1])>(D.mini?500:70))D.pts.push([w.x,w.y]);}
+function ctToolUp(e){const D=CT.draw;if(!D||e.pointerId!==D.id)return;e.preventDefault();e.stopImmediatePropagation();CT.draw=null;CT.mode=null;ctUI();let pts=D.pts;
+  if(pts.length<2)return;if(D.circle)pts=[pts[0],pts[pts.length-1]];else while(pts.length>CF.DRAW_PTS){pts=pts.filter((_,i)=>i%2===0||i===pts.length-1);}
+  doAct({t:'md',c:D.circle?1:0,p:pts.flatMap(q=>[q[0]|0,q[1]|0])});}
+function ctToolOff(){CT.mode=null;CT.draft=null;CT.draw=null;ctUI();}
+window.addEventListener('pointerdown',ctToolDown,true);window.addEventListener('pointermove',ctToolMove,true);window.addEventListener('pointerup',ctToolUp,true);
+window.addEventListener('contextmenu',e=>{if(CT.mode&&(e.target===cv||e.target===mm)){e.preventDefault();e.stopImmediatePropagation();}},true);
+/* ---- keys (the one key table: O plan, Enter go / finish, , . / ping, ' draw, ; circle; Esc leaves a tool) ---- */
+window.addEventListener('keydown',e=>{if(!G||G.over||(e.target&&(e.target.tagName==='INPUT'||e.target.tagName==='SELECT'||e.target.tagName==='TEXTAREA'))||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key;
+  if(k==='Escape'&&CT.mode){e.stopImmediatePropagation();e.preventDefault();ctToolOff();return;}
+  if(k==='Enter'){if(CT.mode==='plan'){e.preventDefault();ctPlanFinish();}else if(CT.plans.some(p=>p.st==='wait'&&p.steps[p.i+1]&&p.steps[p.i+1].trig==='go')){e.preventDefault();ctGoAll();}return;}
+  if(k==='o'||k==='O'){e.preventDefault();CT.mode==='plan'?ctPlanFinish():ctPlanStart();return;}
+  const pm={',':'ping0','.':'ping1','/':'ping2',"'":'draw',';':'circle'}[k];if(pm&&ctTeamPlay()){e.preventDefault();CT.mode=CT.mode===pm?null:pm;CT.draft=null;ctUI();}},true);
+function ctTeamPlay(){return !!G&&!G.sandbox&&G.teams.some(O=>O.id!==ME&&!O.reb&&!O.out&&sameTm(O.id,ME));}
+/* ---- the panel ---- */
+let CTP=null;
+function ctEl(){if(CTP)return CTP;const st=document.createElement('style');st.textContent=`
+#cmdP{position:fixed;left:8px;bottom:236px;z-index:12;width:268px;max-height:46vh;overflow:auto;background:rgba(10,14,12,.9);border:1px solid #6b7a63;border-radius:8px;color:#e8efe4;font:12px system-ui,sans-serif;padding:6px 8px;user-select:none}
+#cmdP h4{margin:0 0 4px;font:700 13px Saira Condensed,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+#cmdP .sec{margin:5px 0 2px;color:#9fb08f;font:700 11px Saira Condensed,system-ui,sans-serif;letter-spacing:.07em;text-transform:uppercase}
+#cmdP button{background:#2c3a26;border:1px solid #6b7a63;color:#f0f5e6;border-radius:5px;font:600 11px system-ui,sans-serif;padding:3px 6px;min-height:24px;cursor:pointer;margin:1px 2px 1px 0}
+#cmdP button.on{background:#74d08f;color:#0a120c}#cmdP button:disabled{opacity:.4;cursor:default}
+#cmdP .row{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin:2px 0}
+#cmdP .bar{height:5px;background:#3a2a26;border-radius:3px;overflow:hidden;width:54px;display:inline-block;vertical-align:middle}#cmdP .bar i{display:block;height:100%}
+#cmdP small{opacity:.75}#cmdP .nm{font-weight:700;cursor:pointer;min-width:70px}
+#ctBanner{position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:41;background:rgba(14,22,16,.95);border:1px solid #74d08f;border-radius:8px;padding:6px 12px;color:#fff;font:600 14px system-ui,sans-serif;display:flex;gap:8px;align-items:center}
+#ctBanner button{background:#2c3a26;border:1px solid #74d08f;color:#fff;border-radius:6px;padding:4px 10px;font:700 13px system-ui,sans-serif;cursor:pointer}
+#planBar{position:fixed;left:50%;top:132px;transform:translateX(-50%);z-index:41;background:rgba(10,14,12,.94);border:1px solid #e3b341;border-radius:8px;padding:6px 10px;color:#fff;font:600 13px system-ui,sans-serif;display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:94vw}
+#planBar button{background:#2c3a26;border:1px solid #8a9a6a;color:#fff;border-radius:6px;padding:4px 9px;font:700 12px system-ui,sans-serif;cursor:pointer}#planBar button.on{background:#e3b341;color:#1a1204}`;document.head.append(st);
+  CTP=document.createElement('div');CTP.id='cmdP';CTP.hidden=true;document.body.append(CTP);
+  CTP.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-a]');if(!b||b.disabled)return;e.preventDefault();e.stopPropagation();ctAct(b.dataset.a,b.dataset.v,b.dataset.w);},true);
+  CTP.addEventListener('dblclick',e=>{const b=e.target.closest('[data-n]');if(!b)return;const v=prompt('Name this battle group',CT.names[b.dataset.n]||'');if(v!=null){CT.names[b.dataset.n]=v.slice(0,16);ctUI(true);}});
+  return CTP;}
+function ctBanner(){let b=$('ctBanner');const T=G&&G.teams[ME];const ofs=((G&&G.tOff)||[]).filter(o=>o.t===ME&&o.e>G.t&&!G.teams[o.f].out);
+  if(!ofs.length||!T){if(b)b.hidden=true;return;}const o=ofs[0];if(!b){b=document.createElement('div');b.id='ctBanner';document.body.append(b);}b.hidden=false;
+  const h=`<span>${ctName(o.f)} offers a ${o.d/60|0} min truce</span><small>${Math.ceil(o.e-G.t)} s</small><button data-y="1">Accept</button><button data-n="1">Decline</button>`;if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;
+    b.querySelector('[data-y]').onpointerdown=ev=>{ev.preventDefault();doAct({t:'cfa',f:o.f});};b.querySelector('[data-n]').onpointerdown=ev=>{ev.preventDefault();doAct({t:'cfd',f:o.f});};}}
+function ctPlanBar(){let b=$('planBar');if(CT.mode!=='plan'){if(b)b.hidden=true;return;}if(!b){b=document.createElement('div');b.id='planBar';document.body.append(b);
+    b.addEventListener('pointerdown',e=>{const x=e.target.closest('[data-a]');if(!x)return;e.preventDefault();e.stopPropagation();ctAct(x.dataset.a,x.dataset.v);});}
+  b.hidden=false;const P=CT.pl,n=CT.draft.steps.length,tr=[['auto','Auto'],['timer10','After 10 s'],['timer30','After 30 s'],['go','On GO']],cur=P.trig==='timer'?'timer'+P.sec:P.trig;
+  const h=`<b>Plan: click the map to add step ${n+1}</b>`+Object.keys(CT_TN).map(k=>`<button class="${P.type===k?'on':''}" data-a="ptype" data-v="${k}">${CT_TN[k]}</button>`).join('')+'<span>then</span>'+tr.map(t=>`<button class="${cur===t[0]?'on':''}" data-a="ptrig" data-v="${t[0]}">${t[1]}</button>`).join('')+`<button data-a="pfin">Done (Enter)</button><button data-a="pcan">Cancel (Esc)</button>`;
+  if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
+function ctAct(a,v,w){const T=G&&G.teams[ME];if(!G||!T)return;
+  switch(a){case 'tog':CT.open=!CT.open;break;case 'plan':CT.mode==='plan'?ctPlanFinish():ctPlanStart();return;case 'ptype':CT.pl.type=v;break;
+    case 'ptrig':if(v==='auto'||v==='go'){CT.pl.trig=v;}else{CT.pl.trig='timer';CT.pl.sec=+v.slice(5);}break;case 'pfin':ctPlanFinish();return;case 'pcan':ctPlanCancel();return;
+    case 'go':{const pl=CT.plans.find(p=>p.n===+v);if(pl){pl.go=true;sfxUI(660);ctPlanTick();}break;}case 'goall':ctGoAll();return;case 'pdel':CT.plans=CT.plans.filter(p=>p.n!==+v);pushLog('Plan cancelled.');break;
+    case 'tool':CT.mode=CT.mode===v?null:v;CT.draft=null;break;case 'say':doAct({t:'say',i:+v});break;
+    case 'gsel':sqSelect(+v);break;case 'gstop':doAct({t:'stop',ids:sqList(+v).map(u=>u.id)});break;case 'ghold':{const L=sqList(+v),c=ctCentroid(L);if(c){doAct({t:'def',ids:L.map(u=>u.id),x:c.x,y:c.y});speak(1);}break;}
+    case 'gform':{const i=+v;CT.form[i]=CT_FORMS[(CT_FORMS.indexOf(CT.form[i]||'line')+1)%3];break;}case 'gsend':CT.sendG=CT.sendG===+v?0:+v;CT.mode=CT.sendG?'gsend':null;break;
+    case 'gname':{const i=+v;CT.names[i]=CT_GN[(CT_GN.indexOf(String(CT.names[i]||'').split(' ')[0])+1)%CT_GN.length];break;}
+    case 'cf':doAct({t:'cf',to:+v,d:+w});break;case 'cfb':doAct({t:'cfb',o:+v});break;case 'cfx':doAct({t:'cfd',f:+v});break;
+    case 'gift':{const ids=selfSel().map(u=>u.id);if(!ids.length){pushLog('Select the units you want to give first.','w');break;}doAct({t:'gift',ids,to:+v});break;}
+    case 'give':doAct({t:'give',to:+v,amt:+w});break;}
+  ctUI(true);}
+/* a left click on the map sends the armed group there in its formation */
+window.addEventListener('pointerdown',e=>{if(CT.mode!=='gsend'||!G||e.button!==0||e.target!==cv&&e.target!==mm)return;const w=ctWorldAt(e);if(!w)return;e.preventDefault();e.stopImmediatePropagation();const i=CT.sendG;CT.mode=null;CT.sendG=0;
+  const us=sqList(i);ctFormSend(us,w.x,w.y,CT.form[i]||'line',MODK.shift?'amove':'move');speak(1);mark({x:w.x,y:w.y,r:20,t:0,d:.5,c:0x74d08f});ctUI(true);},true);
+function ctGroupName(i){return CT.names[i]?(CT_GN.includes(CT.names[i])?CT.names[i]+' '+i:CT.names[i]):'Group '+i;}
+function ctUI(force){if(G&&CT.g!==G){CT.g=G;CT.plans=[];CT.marks=[];CT.draft=null;CT.mode=null;CT.draw=null;CT.names={};CT.form={};CT.sendG=0;CT.pid=0;CT.sig='';}   // a new battle starts clean
+  if(!G||G.over||RP.on||NET.spec){if(CTP)CTP.hidden=true;const b=$('ctBanner');if(b)b.hidden=true;const q=$('planBar');if(q)q.hidden=true;return;}const P=ctEl(),T=G.teams[ME];if(!T||T.reb){P.hidden=true;return;}ctBanner();ctPlanBar();
+  const tp=ctTeamPlay(),ffa=ctFFA(),oth=G.teams.filter(O=>O.id!==ME&&!O.reb&&!O.out),sel=selfSel().length;
+  let h=`<h4 data-a="tog"><span>Command</span><small>${CT.open?'▾':'▸'}</small></h4>`;
+  if(CT.open){
+    h+=`<div class="sec">Battle plans · key O</div><div class="row"><button class="${CT.mode==='plan'?'on':''}" data-a="plan" ${sel||CT.mode==='plan'?'':'disabled'}>${CT.mode==='plan'?'Finish plan':'Plan for selection'}</button>${CT.plans.some(p=>p.st==='wait'&&p.steps[p.i+1]&&p.steps[p.i+1].trig==='go')?'<button data-a="goall">GO ▶ (Enter)</button>':''}</div>`;
+    for(const p of CT.plans){const nx=p.steps[p.i+1],txt=p.st==='done'?'done':p.st==='move'?`step ${p.i+1}/${p.steps.length} under way`:nx?(nx.trig==='go'?`step ${p.i+2}: waiting for GO`:nx.trig==='timer'?`step ${p.i+2} in ${ctFmt(nx.sec-(G.t-(p.i<0?p.t0:p.arr)))}`:`step ${p.i+2} next`):'done';
+      h+=`<div class="row"><b>Plan ${p.n}</b><small>${ctMine(p.ids).length} units · ${txt}</small>${nx&&nx.trig==='go'&&p.st==='wait'?`<button data-a="go" data-v="${p.n}">GO ▶</button>`:''}<button data-a="pdel" data-v="${p.n}">✕</button></div>`;}
+    h+='<div class="sec">Battle groups · keys 1-9 (Ctrl/Shift+number saves)</div>';let any=0;
+    for(let i=1;i<=SQN;i++){const L=sqList(i);if(!L.length)continue;any=1;const hp=L.reduce((s,u)=>s+u.hp,0)/Math.max(1,L.reduce((s,u)=>s+u.max,0)),am=L.filter(u=>u.amx>0),ap=am.length?am.reduce((s,u)=>s+u.am,0)/am.reduce((s,u)=>s+u.amx,0):-1,f=CT.form[i]||'line';
+      h+=`<div class="row" ><span class="nm" data-a="gname" data-v="${i}" data-n="${i}" title="Click: next name. Double-click: type a name">${ctGroupName(i)}</span><small>${L.length} units</small><span class="bar" title="Health ${Math.round(hp*100)}%"><i style="width:${Math.round(hp*100)}%;background:${hp>.6?'#74d08f':hp>.3?'#e3b341':'#ea5a40'}"></i></span>${ap>=0?`<span class="bar" title="Ammo ${Math.round(ap*100)}%"><i style="width:${Math.round(ap*100)}%;background:${ap>.4?'#6fb2ff':'#ea5a40'}"></i></span>`:''}</div>
+      <div class="row"><button data-a="gsel" data-v="${i}">Select</button><button class="${CT.sendG===i?'on':''}" data-a="gsend" data-v="${i}" title="Then click the map (Shift: attack-move)">Send</button><button data-a="gform" data-v="${i}" title="Formation when sent">${f[0].toUpperCase()+f.slice(1)}</button><button data-a="ghold" data-v="${i}">Hold</button><button data-a="gstop" data-v="${i}">Stop</button></div>`;}
+    if(!any)h+='<small>Select units and press Ctrl+1 to save a group.</small>';
+    if(tp){h+=`<div class="sec">Pings &amp; drawing</div><div class="row">`+CT_PING.map((p,i)=>`<button class="${CT.mode==='ping'+i?'on':''}" data-a="tool" data-v="ping${i}" style="border-color:${p.c}" title="${[',','.','/'][i]} then click the map or minimap">${p.n}</button>`).join('')+`<button class="${CT.mode==='draw'?'on':''}" data-a="tool" data-v="draw" title="' then drag on the map">Draw</button><button class="${CT.mode==='circle'?'on':''}" data-a="tool" data-v="circle" title="; then drag from the centre">Circle</button></div><div class="row">`+CF.LINES.map((l,i)=>`<button data-a="say" data-v="${i}">${l}</button>`).join('')+'</div>';
+      h+='<div class="sec">Aid for teammates</div>';for(const O of oth.filter(O=>sameTm(O.id,ME)))h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b><button data-a="give" data-v="${O.id}" data-w="500" title="10% fee, arrives after 4 s">$500</button><button data-a="give" data-v="${O.id}" data-w="2000">$2000</button><button data-a="gift" data-v="${O.id}" ${sel?'':'disabled'} title="Give the selected units (up to 12, one gift per 20 s)">Give units</button></div>`;}
+    if(ffa&&oth.length){h+='<div class="sec">Truce (free-for-all)</div>';
+      for(const O of oth){const tr=truced(ME,O.id),k=ME<O.id?ME*32+O.id:O.id*32+ME,out=(G.tOff||[]).find(o=>o.f===ME&&o.t===O.id),oath=(O.oath||0)>G.t,me=(T.oath||0)>G.t;
+        h+=`<div class="row"><b style="color:${O.color}">${ctName(O.id)}</b>${oath?'<small style="color:#ea5a40">oathbreaker</small>':''}`+(tr?`<small>truce ${ctFmt(G.truce[k]-G.t)}</small><button data-a="cfb" data-v="${O.id}" title="Breaking a truce: unrest in your towns and nobody trusts you for 4 minutes">Break</button>`
+          :out?`<small>offered · ${Math.ceil(out.e-G.t)} s</small>`:[60,120,180].map((d,di)=>`<button data-a="cf" data-v="${O.id}" data-w="${di}" ${me?'disabled':''}>${d/60} min</button>`).join(''))+'</div>';}
+      if((T.oath||0)>G.t)h+=`<small style="color:#ea5a40">You are an oathbreaker for ${ctFmt(T.oath-G.t)}.</small>`;}
+  }
+  if(force||h!==CT.sig){CT.sig=h;P.innerHTML=h;}P.hidden=false;}
+setInterval(()=>{try{if(!G){if(CTP)CTP.hidden=true;return;}ctPlanTick();ctUI();}catch(e){}},500);
 /* ================= AUDIO ENGINE: layered weapons, reverb, stereo, cinematic regional score ================= */
 const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,musicOn:true,sfxOn:true,voiceOn:true,rate:{},style:null,next:0,step:0,timer:null,lastVoice:0,voices:[],heat:0,bar:0};
 try{const v=JSON.parse(localStorage.getItem('ww3_audio')||'{}');if(v.m===false)AU.musicOn=false;if(v.s===false)AU.sfxOn=false;if(v.v===false)AU.voiceOn=false;}catch(e){}

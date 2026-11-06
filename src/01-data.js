@@ -248,28 +248,41 @@ function upgMatch(c,s,b){if(b)return c==='bld';switch(c){case 'all':return true;
 // perk.fx uses the upgrade format [stat, unit group, value] (folded into upgAgg); perk.cost = [group, multiplier] cheaper units/buildings; the rest are special-cased in 03-sim by key
 const GDOC={
  arm:{name:'Armour',short:'ARM',blurb:'Tanks and vehicles: faster production, tougher hulls, tank-hunter ambushes',perks:[
-  {k:'a1',name:'Assembly Line',desc:'Vehicles build 25% faster',fx:[['build','veh',.75]]},
-  {k:'a2',name:'Reactive Plating',desc:'Vehicles take 15% less damage',fx:[['taken','veh',.85]]},
-  {k:'a3',name:'Tank-Hunter Ambush',desc:'Tanks holding still or sitting in cover deal 25% more damage'},
-  {k:'a4',name:'Gun Stabilisers',desc:'Tanks shoot 12% faster and 10% farther, vehicles +8% damage',fx:[['rof','tank',.88],['rng','tank',1.1],['dmg','veh',1.08]]}]},
+  {k:'a1',t:1,name:'Assembly Line',desc:'Vehicles build 25% faster',fx:[['build','veh',.75]]},
+  {k:'a2',t:2,req:'a1',name:'Reactive Plating',desc:'Vehicles take 15% less damage',fx:[['taken','veh',.85]]},
+  {k:'a3',t:2,req:'a1',name:'Tank-Hunter Ambush',desc:'Tanks holding still or sitting in cover deal 25% more damage'},
+  {k:'a4',t:3,req:'a3',name:'Gun Stabilisers',desc:'Tanks shoot 12% faster and 10% farther, vehicles +8% damage',fx:[['rof','tank',.88],['rng','tank',1.1],['dmg','veh',1.08]]},
+  {k:'a5',t:3,req:'a2',name:'Iron Fist',desc:'Vehicles have 10% more health and move 5% faster',fx:[['hp','veh',1.1],['spd','veh',1.05]]}]},
  gue:{name:'Guerrilla',short:'GUE',blurb:'Infantry swarms: cheap, hidden, booby-trapped',perks:[
-  {k:'g1',name:'Cheap Recruits',desc:'Infantry cost 15% less',cost:['inf',.85]},
-  {k:'g2',name:'Hidden Ambush',desc:'Infantry holding still or in cover deal 25% more damage',},
-  {k:'g3',name:'Booby Traps',desc:'Idle infantry quietly lay hidden mines (up to 8)'},
-  {k:'g4',name:'Hit and Run',desc:'Infantry move 10% faster and take 5% less damage',fx:[['spd','inf',1.1],['taken','inf',.95]]}]},
+  {k:'g1',t:1,name:'Cheap Recruits',desc:'Infantry cost 15% less',cost:['inf',.85]},
+  {k:'g2',t:2,req:'g1',name:'Hidden Ambush',desc:'Infantry holding still or in cover deal 25% more damage'},
+  {k:'g3',t:2,req:'g1',name:'Booby Traps',desc:'Idle infantry quietly lay hidden mines (up to 8)'},
+  {k:'g4',t:3,req:'g2',name:'Hit and Run',desc:'Infantry move 10% faster and take 5% less damage',fx:[['spd','inf',1.1],['taken','inf',.95]]},
+  {k:'g5',t:3,req:'g3',name:'Dug In',desc:'Infantry have 10% more health',fx:[['hp','inf',1.1]]}]},
  air:{name:'Air',short:'AIR',blurb:'Airfields, recon flights and air superiority',perks:[
-  {k:'i1',name:'Cheap Airfields',desc:'Airfields cost 30% less',cost:['airfield',.7]},
-  {k:'i2',name:'Recon Flights',desc:'Every 75 seconds a recon flight reveals an enemy area for 10 seconds'},
-  {k:'i3',name:'Air Superiority',desc:'Aircraft deal 15% more damage and have 10% more health',fx:[['dmg','air',1.15],['hp','air',1.1]]},
-  {k:'i4',name:'Quick Turnaround',desc:'Aircraft cost 15% less and build 15% faster',cost:['air',.85],fx:[['build','air',.85]]}]},
+  {k:'i1',t:1,name:'Cheap Airfields',desc:'Airfields cost 30% less',cost:['airfield',.7]},
+  {k:'i2',t:2,req:'i1',name:'Recon Flights',desc:'Every 75 seconds a recon flight reveals an enemy area for 10 seconds'},
+  {k:'i3',t:2,req:'i1',name:'Air Superiority',desc:'Aircraft deal 15% more damage and have 10% more health',fx:[['dmg','air',1.15],['hp','air',1.1]]},
+  {k:'i4',t:3,req:'i3',name:'Quick Turnaround',desc:'Aircraft cost 15% less and build 15% faster',cost:['air',.85],fx:[['build','air',.85]]},
+  {k:'i5',t:3,req:'i2',name:'Long-Range Sensors',desc:'Aircraft weapons reach 10% farther',fx:[['rng','air',1.1]]}]},
  art:{name:'Artillery',short:'ART',blurb:'Guns that see everything: counter-battery radar and creeping barrage',perks:[
-  {k:'r1',name:'Counter-Battery Radar',desc:'Your artillery spots enemy guns the moment they fire'},
-  {k:'r2',name:'Creeping Barrage',desc:'Artillery shells burst 25% wider',fx:[['splash','arty',1.25]]},
-  {k:'r3',name:'Rapid Reload',desc:'Artillery reloads 12% faster and reaches 8% farther',fx:[['rof','arty',.88],['rng','arty',1.08]]},
-  {k:'r4',name:'Gun Foundry',desc:'Artillery costs 15% less',cost:['arty',.85]}]}};
+  {k:'r1',t:1,name:'Counter-Battery Radar',desc:'Your artillery spots enemy guns the moment they fire'},
+  {k:'r2',t:2,req:'r1',name:'Creeping Barrage',desc:'Artillery shells burst 25% wider',fx:[['splash','arty',1.25]]},
+  {k:'r3',t:2,req:'r1',name:'Rapid Reload',desc:'Artillery reloads 12% faster and reaches 8% farther',fx:[['rof','arty',.88],['rng','arty',1.08]]},
+  {k:'r4',t:3,req:'r3',name:'Gun Foundry',desc:'Artillery costs 15% less',cost:['arty',.85]},
+  {k:'r5',t:3,req:'r2',name:'Heavy Shells',desc:'Artillery shells hit 10% harder',fx:[['dmg','arty',1.1]]}]}};
 const GDOC_KEYS=Object.keys(GDOC);
 const GDOC_AI={US:'arm',RU:'art',IL:'air',IR:'gue',TR:'air',EU:'arm',UA:'art',SA:'air',AE:'air',PK:'arm',IN:'arm',CN:'art',KP:'art',KR:'art',EG:'arm',CU:'gue',RS:'gue',DW:'gue'};
 const GDOC_PERKS={};for(const d in GDOC)for(const p of GDOC[d].perks){p.doc=d;GDOC_PERKS[p.k]=p;}
+/* Doctrine TREES (command-teams, Abdullah 2026-11-05): tier 1 root, two tier-2 branches, a tier-3 capstone on each branch (a perk needs the one it hangs from).
+   The same numbers for every nation; a nation only changes the NAME of some perks (GDOC_FLV). Only ~4 rank points exist, so a general walks one branch. */
+const GDOC_FLV={US:{a1:'Detroit Assembly Line',a4:'Abrams Fire Control',i3:'Top Gun Doctrine',r4:'Redstone Foundry'},RU:{a1:'Uralvagonzavod Line',a5:'Kontakt Armour',r1:'Zoopark Radar',r5:'God of War Shells'},
+  CN:{a1:'Type-Line Production',r5:'Rocket Force Shells',g1:'People\'s War Recruits',g5:'Tunnel Warfare'},IR:{g3:'Hidden Mine Belts',g4:'Fast Attack Tactics',g5:'Hardened Positions',i2:'Drone Reconnaissance'},
+  RS:{g3:'Mountain Booby Traps',g4:'Ambush and Fade',g5:'Dug-In Fighters'},DW:{g3:'Wadi Booby Traps',g4:'Raid and Vanish',g5:'Terrain Masters'},
+  IL:{i2:'Aerial Reconnaissance',i3:'Air Dominance',i4:'Rapid Rearm',a3:'Merkava Ambush'},TR:{i2:'Drone Reconnaissance',a1:'Domestic Production Line'},KP:{r2:'Massed Barrage',r5:'Heavy Shell Stocks',g1:'Mass Mobilisation'},
+  UA:{g2:'Partisan Ambush',r1:'Counter-Battery Network',r3:'Rapid Fire Drills'},KR:{r3:'K9 Fire Drills',r4:'Domestic Foundry'},IN:{a1:'Arjun Production Line'},PK:{a2:'Al-Khalid Plating'}};
+function gdName(fac,p){const f=GDOC_FLV[fac];return (f&&f[p.k])||p.name;}
+function gdReq(T,p){return !p.req||gdHas(T,p.req);}
 const GDOC_LATE=120;   // doctrine can be picked / changed until this many seconds into the battle
 function gdHas(T,k){return !!(T&&T.gperk&&T.gperk[k]);}
 function gdCostK(T,s,b,kind){if(!T||!T.gdoc)return 1;let m=1;const D=GDOC[T.gdoc];if(!D)return 1;for(const p of D.perks){if(!p.cost||!gdHas(T,p.k))continue;const g=p.cost[0];if(b?g===kind:(g==='air'?s.dom==='air':upgMatch(g,s,false)))m*=p.cost[1];}return m;}
