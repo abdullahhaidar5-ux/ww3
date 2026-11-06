@@ -1,0 +1,48 @@
+game servers running locally at http://127.0.0.1:42693
+[4s] both pages loaded (menu model downloads done after 1s / 1s)
+[4s] host lobby open, code jp7p0v
+[5s] client's game list (from the server) shows game JP7P0V: {"role":"server","n":1,"id":"v8c285a84d071","ok":true}
+[5s] client joining
+[5s] client connected via ws: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[27s] battle: US vs RU on strait; client is slot 1
+[137s] both pages finished loading
+[137s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[137s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[159s] client order: 2/2 of the client's units moved on the host
+[195s] check @1.0 min t=60s: host 25 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 9721 client 9721
+[286s] check @2.5 min t=150s: host 30 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10648 client 10648
+[388s] check @4.0 min t=240s: host 34 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10924 client 10924
+[397s] traffic host->client 1917 KB in 2639 messages, client->host 55 KB in 293; client lag max 0.10 game-s; 5 ms per 0.1 s step
+[397s] 24 live checks, 0 out of tolerance; up to 0 enemy entities were in the client's view at once
+[398s] relay traffic per player: host->player 656 frames (706 records), 479 KB raw / 128 KB compressed per game-minute; player->host 64 frames, 1.0 KB compressed per minute (orch/out/srv-traffic.json)
+peak memory (node + browser, summed RSS): 4465 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC PASS (through the game servers) (398s) — screenshots orch/out/srv-mp-host.png, orch/out/srv-mp-client.png (this run: orch/out/runs/20261106-025453-mpsync-srv/)
+game servers running locally at http://127.0.0.1:38597
+[3s] both pages loaded (menu model downloads done after 1s / 1s)
+[4s] host lobby open, code oqszeq
+[4s] client's game list (from the server) shows game OQSZEQ: {"role":"server","n":1,"id":"v3704d304d585","ok":true}
+[4s] client joining
+[4s] client connected via ws: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[23s] battle: US vs RU on strait; client is slot 1
+[131s] both pages finished loading
+[131s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[132s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[153s] client order: 2/2 of the client's units moved on the host
+[189s] check @1.0 min t=60s: host 24 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 9721 client 9721
+[195s] --reconnect: the client's connection to the server is cut; it must reconnect
+[195s] --reconnect: after 0.6 s the client is reconnected via ws
+[196s] right after reconnecting t=66s: host 25 entities, client side sees 8 (own 8); client has 8 (own 8); missing 0, extra 0, off-position 0, mismatched 0; credits host 9438 client 9438
+[283s] check @2.5 min t=151s: host 30 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10817 client 10817
+[384s] check @4.0 min t=241s: host 35 entities, client side sees 11 (own 11); client has 12 (own 11); missing 0, extra 0, off-position 0, mismatched 0; credits host 10926 client 10926
+[394s] traffic host->client 2002 KB in 2646 messages, client->host 57 KB in 296; client lag max 0.10 game-s; 6 ms per 0.1 s step
+[394s] 24 live checks, 0 out of tolerance; up to 5 enemy entities were in the client's view at once
+[394s] --reconnect: at t=241s the client's side is still the player's
+[394s] relay traffic per player: host->player 656 frames (707 records), 498 KB raw / 132 KB compressed per game-minute; player->host 64 frames, 1.0 KB compressed per minute (orch/out/srv-traffic.json)
+peak memory (node + browser, summed RSS): 4424 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC PASS (through the game servers) (394s) — screenshots orch/out/srv-mp-host.png, orch/out/srv-mp-client.png (this run: orch/out/runs/20261106-030134-mpsync-srv/)
