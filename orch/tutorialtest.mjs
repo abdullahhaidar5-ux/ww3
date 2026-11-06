@@ -150,8 +150,12 @@ try {
   // 14 win: a real player trains an army; to keep the test short a strike force is added, then ordered with F + click
   await waitStep(13); { await ev(() => { const e = tutFoeHQ(), h = tutHQ(), a = Math.atan2(h.y - e.y, h.x - e.x); for (let i = 0; i < 20; i++) { const p = nearestPassXY('ground', e.x + Math.cos(a) * 500 + (i % 5) * 24, e.y + Math.sin(a) * 500 + Math.floor(i / 5) * 24); if (p) addUnit(ME, 'inf', p[0], p[1]); } });   // test shortcut: the strike force a player would train and march (~4 min) starts 500 units from the enemy base
     const en = await ev(() => { const q = tutFoeHQ(); return { x: q.x, y: q.y }; }); await shot('14b-enemy-base-far');
-    for (let k = 0; k < 40; k++) { if (await ev(() => G.over)) break; await ev(([x, y]) => centerOn(x, y, true), [en.x, en.y]);
-      await ev(() => { G.sel = tutUnits(); }); if (k % 4 === 0) console.log('    attack round', k, JSON.stringify(await ev(() => ({ t: G.t | 0, mine: tutUnits().length, foe: G.ents.filter(e => e.team === 1 && !e.dead).length })))); const p = await scr(en.x, en.y, 0); await page.keyboard.press('f'); await click(p.x, p.y); await page.waitForFunction(() => G.over, null, { timeout: 15000, polling: 500 }).catch(() => {}); if (k === 1) await shot('14c-attack'); } }
+    if (await ev(() => LGU.on)) await page.keyboard.press('l');   // supply lines off again (a player would too): cheaper frames for the big fight
+    const tEnd = Date.now() + 16 * 60 * 1000;   // the sim crawls on slow CI machines: give the finale up to 16 minutes of wall time
+    for (let k = 0; Date.now() < tEnd; k++) { if (await ev(() => G.over)) break;
+      const idle = await ev(() => tutUnits().filter(u => !u.order).length); if (k % 4 === 0 || idle > 3) { await ev(([x, y]) => centerOn(x, y, true), [en.x, en.y]); await ev(() => { G.sel = tutUnits(); }); const p = await scr(en.x, en.y, 0); await page.keyboard.press('f'); await click(p.x, p.y); }
+      if (k % 2 === 0) console.log('    attack round', k, JSON.stringify(await ev(() => ({ t: G.t | 0, mine: tutUnits().length, foe: G.ents.filter(e => e.team === 1 && !e.dead).length }))));
+      await page.waitForFunction(() => G.over, null, { timeout: 45000, polling: 1000 }).catch(() => {}); if (k === 1) await shot('14c-attack'); } }
   await page.waitForFunction(() => document.getElementById('tutReady'), null, { timeout: 300000 }).catch(() => bad('no "You are ready" screen after the win'));
   await wait(800); await shot('15-ready-screen');
   ok(await ev(() => !!document.getElementById('tutReady') && /3|Three/.test(document.getElementById('tutReady').innerText) && document.querySelectorAll('#tutReady li').length === 3), 'ready screen shows 3 tips');
