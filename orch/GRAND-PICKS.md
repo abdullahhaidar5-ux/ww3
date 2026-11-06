@@ -32,11 +32,17 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       end) or Standard.
 
 ## Stage 2 (grand2 — empire economy)
+- [ ] **Trade routes & merchants** (Abdullah 21:16, EU4-style): money flows between regions along trade routes (through
+      straits/chokepoints); send merchants to steer the flow toward your provinces; blockades and embargoes cut it.
+- [ ] **City upgrade chains** (Total War-style): cities grow through tiers and you choose what each becomes (industrial,
+      military, port, holy city…) — ties into province buildings; the battle map reflects the city's tier/type.
 - [ ] **Mountain Fortress** (Abdullah 20:58, moved out of battles): a province building for mountain provinces (only IR, RS, AF, KD, DW, KP — Abdullah 21:03); it appears pre-built for the defender in that province's Fight-it battle.
 - [ ] Chokepoints have real effects: whoever holds a strait can close it — world trade income and the oil price shift for everyone.
 - [ ] Oil-prize regions feed the oil market/fuel economy.
 
 ## Stage 3 (grand3 — military)
+- [ ] **Regiment histories** (Abdullah 21:16): armies keep names, battle honours and traditions that give small bonuses as
+      they survive campaigns (shown on the army card; carried into Fight-it battles as veterancy flavour).
 - [ ] **Bunker Buster** (Abdullah 20:58, moved out of battles): a grand-map strike on a province — wrecks fortified buildings
       (Mountain Fortress, bunkers, air defence, bases) there; air defence can intercept; only US, IL, RU, CN have it (Abdullah 21:02); others counter fortresses with their own signature assets.
 - [ ] **Encirclement & sieges:** armies/provinces cut off from supply (by provinces, sea control, chokepoints) lose strength each
@@ -44,6 +50,16 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       fought live.
 
 ## Stage 4 (grand4 — world & empire)
+- [ ] **Peace deals with warscore** (Abdullah 21:16, EU4): battles won, war goals taken and occupation build warscore; in peace
+      talks spend it on provinces, reparations, making the loser a client state, etc.; the AI accepts/declines by warscore.
+- [ ] **Justify wars first**: fabricate a claim / casus belli before declaring (takes turns, can be exposed by spies); war
+      without one costs world opinion and home morale.
+- [ ] **Coalitions**: expanding too fast (aggressive-expansion score) makes nearby nations form a defensive coalition against you.
+- [ ] **Truce timers**: after a peace deal the same two nations can't attack each other for N turns (breaking it = huge penalties).
+- [ ] **Client states**: defeated nations can become vassals that pay tribute and send troops; low loyalty → they break away.
+- [ ] **National laws**: conscription level, war economy, press freedom, trade policy… each with clear costs/benefits.
+- [ ] **Idea groups**: unlock groups of national perks over time (offensive, defensive, naval, espionage, economy) — distinct
+      from the research tree and doctrines (per SYSTEMS.md: no duplicate perks).
 - [ ] **Heritage & holy sites:** special provinces (shrines, ancient cities — every region gets some, equal value, respectful,
       no real-world claims) give loyalty/prestige to whoever protects them; damaging them costs heavily (world opinion, unrest,
       war weariness). Ties into national missions (e.g. protecting holy sites for the Shia factions).
@@ -52,6 +68,10 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       nations (members get a joint-operations bonus: shared vision/supply, cheaper allied aid), with membership rules in diplomacy.
 
 ## Stage 6 (grand6 — hidden war, home front)
+- [ ] **Overextension** (Abdullah 21:16): conquering too much at once raises unrest and admin strain until provinces are
+      integrated (turns + garrison/civics); ties into occupation choices and coalitions.
+- [ ] **Politics at home**: fictional parties / factions and elections or regime-stability checks shift policies and laws over
+      time (no real parties or politicians; neutral); ties into factions at home, war weariness and coups.
 - [ ] **Ayatollah & Dear Leader** (Abdullah 20:58, moved out of battles): national leader figures on the grand map (IR/RS/DW
       clerical leader, KP Dear Leader; fictional, no real-person likeness; ONLY these four nations have a leader figure — others get different signature assets): boost
       national morale/loyalty, can tour a province (Fight-it battles there start with fervour), danger if the capital falls.
