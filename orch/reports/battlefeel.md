@@ -39,4 +39,4 @@ saves money for it (that's the priority). Panel: U key or header click, small bo
 fire damage 5 hp/s infantry; ignition factors in `BF_HOT`; smoke block depth .55; hulk cap 36; auto-build 3 queued per factory.
 ## Not done / limits
 Fire is a soft block only (slow + damage + panic), not a hard path wall. AI teams do not use auto-build (they have their own production).
-Smoke grid restarts empty after host migration/load (fires, scorch, hulks are kept).
+Smoke, fires, scorch and hulks all survive saves and host migration (bfSmS, bfFire, bfScorch, bfHulk in CK_G; random draws are a pure hash).

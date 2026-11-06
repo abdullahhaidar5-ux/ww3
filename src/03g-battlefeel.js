@@ -12,11 +12,12 @@
              clearing orders of Construction Vehicles/Dozers remove it (rubDo -> hulkGone).
    AUTO-BUILD T.auto = {on, list:[{k,n}]}: standing "keep n of kind k" orders, topped up through enqueue() like a click.
    SHOUTS    short combat callouts triggered by real sim events, throttled, sent as FXE('shout',[type,x,y,team,medic]).
-   Saves/host migration: G.bfFire, G.bfScorch, G.bfHulk (plain arrays) are in CK_G; the dense grids are rebuilt (smoke restarts). */
+   Saves/host migration: G.bfFire, G.bfScorch, G.bfHulk, G.bfSmS (sparse smoke cells, refreshed every tick) and the timers are in CK_G;
+   the dense grids are rebuilt by bfSync() and every random draw is a pure hash (bfRnd), so a loaded save replays exactly. */
 const BF_SC=80,BF_HULK_MAX=36,BF_FIRE_MAX=420;
 const BF_SHOUT=['rpg','manDown','reload','grenade','contact','tank','medic'];
-let BF_R=null;
-function bfRnd(){if(!BF_R||BF_R.g!==G){const s=mulberry(((G.seed||1)*104729+977)|0);BF_R=function(){return s();};BF_R.g=G;}return BF_R();}
+// stateless seeded random in [0,1): a pure function of (seed, game clock, a, b), so a loaded save or a migrated host replays exactly
+function bfRnd(a,b){let h=((((G.seed||1)|0)^Math.imul(a|0,0x9E3779B1)^Math.imul(b|0,0x85EBCA6B)^Math.imul((G.t*20)|0,0xC2B2AE35))>>>0);h^=h>>>15;h=Math.imul(h,0x2C1B3C6D);h^=h>>>12;h=Math.imul(h,0x297A2D39);h^=h>>>15;return (h>>>0)/4294967296;}
 function bfWind(){const wk=(G.wx&&G.wx.k)||'clear',base=({clear:8,rain:12,fog:3,sandstorm:34,snow:10,blizzard:38})[wk]||8;const s0=(((G.seed||1)*2654435761)>>>0);
   const a=(s0%6283)/1000+.8*Math.sin(G.t/210)+.35*Math.sin(G.t/57+1.3),sp=base*(1+.35*Math.sin(G.t/91+(s0%7)));return{x:Math.cos(a)*sp,y:Math.sin(a)*sp,s:sp};}
 function bfInit(){if(G.bfD&&G.bfD.g===G)return;G.bfW=Math.ceil(MAPW/BF_SC);G.bfH=Math.ceil(MAPH/BF_SC);G.bfD=new Float32Array(G.bfW*G.bfH);G.bfD.g=G;G.bfD2=new Float32Array(G.bfW*G.bfH);G.bfN=0;
@@ -26,12 +27,12 @@ function bfSmokeAt(x,y){const D=G.bfD;if(!D)return 0;const i=Math.floor(x/BF_SC)
 // optical depth along a segment; true when a spotter cannot see through it (close targets are always visible)
 function smokeBlock(x0,y0,x1,y1){if(!G.bfN)return false;const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy);if(L<100)return false;const n=Math.min(24,Math.ceil(L/50)),st=L/n/BF_SC;let sum=0;
   for(let i=1;i<n;i++){sum+=bfSmokeAt(x0+dx*i/n,y0+dy*i/n)*st;if(sum>=.55)return true;}return false;}
-function bfSmkStep(dt,w){const W=G.bfW,H=G.bfH,A=G.bfD,B=G.bfD2,ax=w.x*dt/BF_SC,ay=w.y*dt/BF_SC,wk=(G.wx&&G.wx.k)||'clear',dec=Math.pow(wk==='rain'?.93:wk==='sandstorm'?.985:.96,dt);let n=0;
+function bfSmkStep(dt,w){const W=G.bfW,H=G.bfH,A=G.bfD,B=G.bfD2,ax=w.x*dt/BF_SC,ay=w.y*dt/BF_SC,wk=(G.wx&&G.wx.k)||'clear',dec=Math.pow(wk==='rain'?.93:wk==='sandstorm'?.985:.96,dt);let n=0;const S=[];
   const g=(x,y)=>x<0||y<0||x>=W||y>=H?0:A[y*W+x];
   for(let j=0;j<H;j++)for(let i=0;i<W;i++){const sx=i-ax,sy=j-ay,x0=Math.floor(sx),y0=Math.floor(sy),fx=sx-x0,fy=sy-y0;
     let v=g(x0,y0)*(1-fx)*(1-fy)+g(x0+1,y0)*fx*(1-fy)+g(x0,y0+1)*(1-fx)*fy+g(x0+1,y0+1)*fx*fy;
-    const nb=(g(i-1,j)+g(i+1,j)+g(i,j-1)+g(i,j+1))*.25;v=(v*.9+nb*.1)*dec-.002;if(v<.01)v=0;else if(v>1.5)v=1.5;B[j*W+i]=v;if(v>.08)n++;}
-  B.g=G;G.bfD=B;G.bfD2=A;G.bfN=n;}
+    const nb=(g(i-1,j)+g(i+1,j)+g(i,j-1)+g(i,j+1))*.25;v=(v*.9+nb*.1)*dec-.002;if(v<.01)v=0;else if(v>1.5)v=1.5;B[j*W+i]=v;if(v>0)S.push(j*W+i,v);if(v>.08)n++;}
+  B.g=G;G.bfD=B;G.bfD2=A;G.bfN=n;G.bfSmS=S;}
 function bfSmkAdd(x,y,v){const i=Math.floor(x/BF_SC),j=Math.floor(y/BF_SC);if(i<0||j<0||i>=G.bfW||j>=G.bfH)return;const k=j*G.bfW+i;G.bfD[k]=Math.min(1.5,G.bfD[k]+v);}
 // ---------- wildfire ----------
 function bfDry(){const s=G.ssn===3?0:G.ssn===2?.35:1,wk=(G.wx&&G.wx.k)||'clear',w=({clear:1,rain:.08,fog:.6,sandstorm:1.3,snow:0,blizzard:0})[wk];return s*(w==null?1:w);}
@@ -49,15 +50,15 @@ const BF_HOT={sup:.9,thermo:1,bomb:.4,boom:.35,super:.55,shell:.16,missile:.2,bb
 // called from explode(): a blast may light the ground it lands on
 function fireHit(x,y,r,wpn){if(MODE==='client')return;const dry=bfDry();if(dry<=.02)return;const p=(BF_HOT[wpn]||.08)*dry;if(p<=.01)return;bfInit();const F=bfFuel(),R=Math.min(80,Math.max(20,r*.9)),
     x0=Math.floor((x-R)/CELL),x1=Math.floor((x+R)/CELL),y0=Math.floor((y-R)/CELL),y1=Math.floor((y+R)/CELL);
-  for(let j=y0;j<=y1;j++)for(let i=x0;i<=x1;i++){if(i<0||j<0||i>=GW||j>=GH)continue;const k=j*GW+i,dx=i*CELL+CELL/2-x,dy=j*CELL+CELL/2-y;if(dx*dx+dy*dy>R*R||!F[k])continue;if(bfRnd()<p*F[k]/2.2)fireIgnite(k);}}
+  for(let j=y0;j<=y1;j++)for(let i=x0;i<=x1;i++){if(i<0||j<0||i>=GW||j>=GH)continue;const k=j*GW+i,dx=i*CELL+CELL/2-x,dy=j*CELL+CELL/2-y;if(dx*dx+dy*dy>R*R||!F[k])continue;if(bfRnd(k,(x|0)+3)<p*F[k]/2.2)fireIgnite(k);}}
 function fireSlow(u){if(!G.bfFN)return 1;return fireAt(u.x,u.y)?(isInf(u.s)?.5:.78):1;}
 function fireTick(dt,w){const L=G.bfFire;if(!L.length)return;const B=bfBurning(),F=bfFuel(),dry=bfDry(),wk=(G.wx&&G.wx.k)||'clear',ws=Math.min(1.6,w.s/10),wl=Math.hypot(w.x,w.y)||1,ux=w.x/wl,uy=w.y/wl;let j=0;
   const NB=[[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
   for(let q=0;q<L.length;q++){const f=L[q];const x=(f.k%GW)*CELL+CELL/2,y=((f.k/GW)|0)*CELL+CELL/2;
-    if(G.t>=f.e||(wk==='rain'&&bfRnd()<.05*dt)||G.ssn===3){B.delete(f.k);F[f.k]=0;G.bfScorch.push(f.k);(G.bfNewSc=G.bfNewSc||[]).push(f.k);continue;}
+    if(G.t>=f.e||(wk==='rain'&&bfRnd(f.k,99)<.05*dt)||G.ssn===3){B.delete(f.k);F[f.k]=0;G.bfScorch.push(f.k);(G.bfNewSc=G.bfNewSc||[]).push(f.k);continue;}
     L[j++]=f;bfSmkAdd(x,y,.3*dt*(f.h>=3?1.4:1));
     if(dry>.05)for(let n=0;n<8;n++){const cx=(f.k%GW)+NB[n][0],cy=((f.k/GW)|0)+NB[n][1];if(cx<0||cy<0||cx>=GW||cy>=GH)continue;const k=cy*GW+cx;if(!F[k]||B.has(k))continue;
-      const dl=Math.hypot(NB[n][0],NB[n][1]),al=(NB[n][0]*ux+NB[n][1]*uy)/dl,wf=Math.max(.12,1+.95*al*ws),pr=.085*F[k]/dl*dry*wf*dt;if(bfRnd()<pr)fireIgnite(k);}
+      const dl=Math.hypot(NB[n][0],NB[n][1]),al=(NB[n][0]*ux+NB[n][1]*uy)/dl,wf=Math.max(.12,1+.95*al*ws),pr=.085*F[k]/dl*dry*wf*dt;if(bfRnd(k,100+f.k+n)<pr)fireIgnite(k);}
     nearby(x,y,34,BF_NB);for(const e of BF_NB){if(e.dead||e.isB||!e.s||e.s.dom!=='ground'||Math.hypot(e.x-x,e.y-y)>30)continue;if(isInf(e.s)){applyDmg(e,5*dt,'gun',null,null,false);e.fear=(e.fear||0)+.05*dt;}else if(e.s.armor==='light')applyDmg(e,1.5*dt,'gun',null,null,false);}}
   L.length=j;G.bfFN=j;}
 // ---------- hulks ----------
@@ -68,10 +69,11 @@ function hulkAdd(e){if(MODE==='client'||!e.s||e.s.dom!=='ground'||!isVeh(e.s))re
   if(G.bfHulk.length>=BF_HULK_MAX)hulkGone(G.bfHulk[0].k,true);
   if(!G.rub||G.rub.length!==GW*GH){G.rub=new Uint8Array(GW*GH);G.rubN=0;}if(G.rub[k])return;G.rub[k]=1;G.rubN++;G.gridV=(G.gridV|0)+1;
   if(G.cover)G.cover[k]=Math.min(255,G.cover[k]+3);G.bfHulk.push({k,x:e.x|0,y:e.y|0,t:+G.t.toFixed(1)});
-  if(bfDry()>.05&&bfRnd()<.3*bfDry())fireIgnite(k);}
+  if(bfDry()>.05&&bfRnd(k,5)<.3*bfDry())fireIgnite(k);}
 function hulkGone(k,fade){const L=G.bfHulk;if(!L)return;const i=L.findIndex(h=>h.k===k);if(i<0)return;L.splice(i,1);if(G.cover)G.cover[k]=Math.max(0,G.cover[k]-3);
   if(G.rub&&G.rub[k]){G.rub[k]=0;G.rubN--;G.gridV=(G.gridV|0)+1;}FXE('bfh',[k,fade?1:0]);}
-function bfSync(){bfInit();if(!G.bfHulk.length)return;if(!G.rub||G.rub.length!==GW*GH){G.rub=new Uint8Array(GW*GH);G.rubN=0;}let c=0;for(const h of G.bfHulk){if(!G.rub[h.k]){G.rub[h.k]=1;G.rubN++;c++;}if(G.cover)G.cover[h.k]=Math.min(255,G.cover[h.k]+3);}if(c)G.gridV=(G.gridV|0)+1;}
+function bfSync(){G.bfD=null;bfInit();G.bfFN=G.bfFire.length;G.bfBurn=null;G.bfFuel=null;const S=G.bfSmS||[];let n=0;for(let i=0;i+1<S.length;i+=2){G.bfD[S[i]]=S[i+1];if(S[i+1]>.08)n++;}G.bfN=n;
+  if(!G.bfHulk.length)return;if(!G.rub||G.rub.length!==GW*GH){G.rub=new Uint8Array(GW*GH);G.rubN=0;}let c=0;for(const h of G.bfHulk){if(!G.rub[h.k]){G.rub[h.k]=1;G.rubN++;c++;}if(G.cover)G.cover[h.k]=Math.min(255,G.cover[h.k]+3);}if(c)G.gridV=(G.gridV|0)+1;}
 // ---------- the one tick (1 s steps) ----------
 function bfeelTick(dt){if(MODE==='client'||!G||G.over||!G.ents)return;bfInit();G.bfT+=dt;if(G.bfT<1)return;const st=G.bfT;G.bfT=0;const w=bfWind();G.bfWd=w;
   // grenade/screen smoke drifts with the wind (its disc is what hides units inside it) and feeds the grid
