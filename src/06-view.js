@@ -156,7 +156,7 @@ function drawSupplyTowns(c){if(!G||G.over)return;try{ammoRowTick();}catch(_){}
   if(G.civ)for(const k of G.civ){if(k.dead||!(k.ow>=0||k.cp>0)||!inView(k.x,k.y,.05)||(k.ti>=0&&!k.key&&!(k.cp>0)))continue;const p=toScreen(k.x,groundH(k.x,k.y)+40,k.y);if(p.z>1)continue;
     if(k.ow>=0&&G.teams[k.ow]){c.fillStyle='rgba(0,0,0,.65)';c.beginPath();c.arc(p.x,p.y,7,0,7);c.fill();c.fillStyle=G.teams[k.ow].color;c.beginPath();c.arc(p.x,p.y,5,0,7);c.fill();}
     if(k.cp>0&&k.cpT>=0&&G.teams[k.cpT]){c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-18,p.y-14,36,6);c.fillStyle=G.teams[k.cpT].color;c.fillRect(p.x-17,p.y-13,34*Math.min(1,k.cp),4);}}
-  try{drawLogiWorld(c);drawTownsWorld(c);drawTowersWorld(c);drawRefugeesWorld(c);townPanelTick();}catch(e){}try{drawInfraHud(c);}catch(e){}}
+  try{drawLogiWorld(c);drawTownsWorld(c);drawTowersWorld(c);drawRefugeesWorld(c);townPanelTick();hudTick();}catch(e){}try{drawInfraHud(c);}catch(e){}}
 // small pictograms on the health bar: broken track (orange), jammed turret (blue), engine fire (red)
 function critIcons(c,x,y,crit){let i=0;for(const b of [1,2,4]){if(!(crit&b))continue;const cx=x-i*14;i++;c.fillStyle='rgba(0,0,0,.78)';c.beginPath();c.arc(cx,y,6.2,0,7);c.fill();
     if(b===1){c.fillStyle='#f0a040';for(let q=-1;q<=1;q++)c.fillRect(cx-4.5+q*3.2+1.6,y-1.6,2.4,3.2);c.strokeStyle='#ff5a40';c.lineWidth=1.4;c.beginPath();c.moveTo(cx-4,y+4);c.lineTo(cx+4,y-4);c.stroke();}
@@ -290,6 +290,8 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
     else if(d==='naval'){const a=e.ang||0;c.save();c.translate(x,y);c.rotate(a);c.beginPath();c.moveTo(5,0);c.lineTo(1,2.6);c.lineTo(-4,2.2);c.lineTo(-4,-2.2);c.lineTo(1,-2.6);c.closePath();c.fill();c.stroke();c.restore();}
     else if(isInf(e.s)){c.beginPath();c.arc(x,y,1.9,0,7);c.fill();if(!own){c.stroke();}}
     else{c.fillRect(x-2.2,y-2.2,4.4,4.4);c.strokeRect(x-2.7,y-2.7,5.4,5.4);}
+    if(e.disv||(MODE!=='client'&&koLeft(e)>0)){c.strokeStyle='#7fd0ff';c.lineWidth=1.2;c.beginPath();c.moveTo(x-3,y-3);c.lineTo(x+3,y+3);c.moveTo(x+3,y-3);c.lineTo(x-3,y+3);c.stroke();}   // KNOCKED OUT (EMP/cyber/sabotage/blackout): one marker
+    {const lc=e.loc||(e.team===G.reb?'reb':null);if(lc){c.strokeStyle=lc==='reb'||lc==='neu'?'#d9a441':'#ffffffaa';c.lineWidth=1.1;c.beginPath();c.arc(x,y,3.7,0,7);c.stroke();}}   // LOCALS: one minimap marker for every local armed group
     if(SET.cb)idMiniMark(c,x,y,e.team,e.isB);if(sel.has(e)){c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();c.arc(x,y,4.5,0,7);c.stroke();}
     if(own&&G.t-(e.lastHit||-99)<1.2&&Math.random()<.04)MMC.push({x:e.x,y:e.y,t:now});}
   mmEW(c,sx,sy,now);
