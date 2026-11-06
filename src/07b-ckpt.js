@@ -5,7 +5,7 @@
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
 const CK_G=['truce','tOff','aidQ','milOk','t','nid','aiT','visT','endT','over','bs','cbrTeams','mT','ecT','wx','fixWx','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
   'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
-  'todM','humA','rebT','radT','stT','gprT','supT','prT','strikes','sq','pfTok','conq','setupEnd','reb','N','seed','mapKey','roadV'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
+  'todM','humA','rebT','radT','stT','gprT','supT','prT','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','conq','setupEnd','reb','N','seed','mapKey','roadV'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
 // (a unit that just went into a tunnel / the fortress / a city building is saved inside it: it leaves G.ents only at the
 // end of the sim step)
@@ -44,7 +44,7 @@ function ckRestore(ck){const N=G.teams.length;const {ents,byId,dec}=ckDecode(ck)
   ck.oil.forEach((o,i)=>{if(G.oil[i])Object.assign(G.oil[i],reb(o));});
   (ck.civ||[]).forEach((c,i)=>{const C=G.civ&&G.civ[i];if(C)for(const k in c)C[k]=reb(c[k]);});(ck.tw||[]).forEach((o,i)=>{const t=G.towns&&G.towns[i];if(t){const q={};for(const k in o)if(k[0]!=='$')q[k]=reb(o[k]);Object.assign(t,q);t.rebU=(o.$rebU||[]).map(id=>byId.get(id)).filter(Boolean);t.mil=(o.$mil||[]).map(id=>byId.get(id)).filter(Boolean);}});
   if(Array.isArray(ck.proj))G.proj=ck.proj.map(p=>{const o={};for(const k in p)o[k]=reb(p[k]);return o;}).filter(p=>p.src&&p.tgt);
-  if(ck.camp&&G.camp)for(const k in ck.camp){const v=reb(ck.camp[k]);if(typeof G.camp[k]!=='function')G.camp[k]=v;}(ck.tow||[]).forEach((o,i)=>{if(G.tow&&G.tow[i])Object.assign(G.tow[i],o);});(ck.brT||[]).forEach((x,i)=>{if(G.teams[i])G.teams[i].brT=x;});try{rubSync();}catch(e){}
+  if(ck.camp&&G.camp)for(const k in ck.camp){const v=reb(ck.camp[k]);if(typeof G.camp[k]!=='function')G.camp[k]=v;}(ck.tow||[]).forEach((o,i)=>{if(G.tow&&G.tow[i])Object.assign(G.tow[i],o);});(ck.brT||[]).forEach((x,i)=>{if(G.teams[i])G.teams[i].brT=x;});try{rubSync();bfSync();}catch(e){}
   ck.teams.forEach((t,i)=>{const T=G.teams[i];if(!T)return;for(const k in t){if(k==='$ai'||k==='$aiD'||k==='$aiS'||k==='aiTook')continue;T[k]=reb(t[k]);}T.ai=(t.$ai||t.aiTook)?mkAI(t.$aiD!=null?t.$aiD:1):null;if(T.ai&&t.$aiS){const S=reb(t.$aiS);for(const k in S)T.ai[k]=S[k];}T.aiTook=!!t.aiTook;});
   for(const e of ents){if(e.so&&e.order&&e.so!==e.order&&JSON.stringify(e.so)===JSON.stringify(e.order))e.so=e.order;}  // stall watch compares the order by identity
   for(const e of ents){const p=e.path,w=e.npW;if(w&&p&&p[0]&&w[0]===p[0][0]&&w[1]===p[0][1])e.npW=p[0];}  // path-progress watch compares the waypoint by identity
