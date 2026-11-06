@@ -1,0 +1,5 @@
+ERRS page error: Unexpected token '<<'
+
+GRANDTEST FAIL
+  ✗ page.waitForFunction: Timeout 60000ms exceeded.
+  ✗ page error: Unexpected token '<<'
