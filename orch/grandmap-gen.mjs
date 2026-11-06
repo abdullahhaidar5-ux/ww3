@@ -8,7 +8,7 @@ const W = 2400, H = 1200;
 const LX = [[-180,10],[-130,40],[-60,400],[-12,470],[70,1450],[90,1650],[120,1900],[145,2200],[180,2370]];
 const LY = [[75,40],[50,250],[10,700],[-10,820],[-45,1130],[-60,1180]];
 const pw = (k, v) => { for (let i = 1; i < k.length; i++) { const a = k[i-1], b = k[i]; const lo = Math.min(a[0], b[0]), hi = Math.max(a[0], b[0]); if (v >= lo && v <= hi) return a[1] + (b[1]-a[1]) * (v-a[0]) / (b[0]-a[0]); } return v < k[0][0] ? k[0][1] : k[k.length-1][1]; };
-const gx = lon => pw(LX, lon), gy = lat => pw(LY, lat);
+const gx = lon => pw(LX, Math.max(-180, Math.min(180, lon))), gy = lat => pw(LY, Math.max(-60, Math.min(75, lat)));
 // nation: code|name|region|colour (majors take their colour from FACTIONS at runtime)
 const NAT = `US|United States|NA|CA|Canada|NA|MX|Mexico|NA|CU|Cuba|NA|GT|Central America|NA|DO|Caribbean Isles|NA|VE|Venezuela|SAM|CO|Colombia|SAM|BR|Brazil|SAM|PE|Peru|SAM|AR|Argentina|SAM|CL|Chile|SAM|
 GB|Britain|EU|FR|France|EU|DE|Germany|EU|ES|Spain|EU|IT|Italy|EU|PL|Poland|EU|SE|Sweden|EU|NO|Norway|EU|FI|Finland|EU|GR|Greece|EU|RO|Romania|EU|BY|Belarus|EU|UA|Ukraine|EU|RU|Russia|EU|KZ|Kazakhstan|EU|UZ|Uzbekistan|EU|AZ|Azerbaijan|EU|
@@ -19,49 +19,6 @@ const NATS = []; for (let i = 0; i < NAT.length; i += 3) NATS.push([NAT[i], NAT[
 // province: owner|name|lon|lat|terrain|towns|flags|battle map     terrain d desert, m mountain, f farmland, u urban, j jungle, s snow, c coast
 // flags: C capital, W war goal, O oil, F farm, M mine, P port
 const PR = `
-US|Washington|-77|39|u|4|CP|harbour
-US|New England|-71.5|42.5|u|3|P|
-US|New York|-75|42.8|u|4|P|
-US|Pennsylvania|-77.5|40.8|f|2|M|
-US|Appalachia|-82.5|37.5|m|2|M|
-US|Carolinas|-80|35.3|f|2|P|
-US|Deep South|-84|32.5|f|2|F|
-US|Florida|-81.8|28|c|3|P|
-US|Tennessee|-87|35.8|f|2||
-US|Ohio Valley|-84|40.2|u|3||
-US|Michigan|-85|43.5|u|2||
-US|Illinois|-89.5|40|u|3|F|
-US|Heartland|-92.5|38.3|f|3|FW|heartland
-US|Iowa|-93.5|42|f|2|F|
-US|Minnesota|-94.5|46|f|2||
-US|Dakotas|-100|45.5|f|2|F|
-US|Nebraska & Kansas|-98|39|f|2|F|
-US|Oklahoma|-97|35.5|f|2|O|
-US|Texas Gulf|-98|31|d|3|OP|
-US|Louisiana|-91.8|30.8|c|2|OP|
-US|New Mexico|-106|34.5|d|2||
-US|Arizona|-111.5|34|d|2||
-US|Colorado|-105.5|39|m|2|M|
-US|Wyoming|-107.5|43|m|1||
-US|Montana & Idaho|-113|46.5|m|2|M|
-US|Nevada & Utah|-114|39.5|d|2|M|
-US|Oregon|-121|44|f|2||
-US|Puget Sound|-121|47.5|c|2|P|
-US|Northern California|-122|39.5|c|2|P|
-US|Southern California|-118|34.3|c|3|P|
-US|Alaska|-148|63|s|1|O|
-US|Hawaii|-157|20|c|1|P|
-CA|Ontario|-80|47|f|3|C|
-CA|Quebec|-72|50|s|3|P|
-CA|Maritimes|-64|46|c|2|P|
-CA|Newfoundland|-57|49|c|1|P|
-CA|Manitoba|-98|54|f|2||
-CA|Saskatchewan|-106|53|f|2|F|
-CA|Alberta|-114|54|f|2|OW|
-CA|British Columbia|-125|54|m|2|P|
-CA|Yukon|-135|63|s|1|M|
-CA|Northwest Territories|-115|65|s|1|O|
-CA|Nunavut|-86|68|s|1||
 MX|Mexico City|-99|20|u|3|C|
 MX|Sonora|-110|29|d|2|W|
 MX|Yucatan|-89|19|j|2|P|
@@ -79,18 +36,6 @@ BR|Northeast|-38|-8|j|2|P|
 PE|Andes|-77|-11|m|2|CM|
 AR|Buenos Aires|-62|-35|f|3|CP|
 CL|Santiago|-71|-32|m|2|CM|
-GB|London|-0.1|51.5|u|3|CP|
-GB|South East|0.9|51.1|f|2|P|
-GB|South West|-3.6|50.7|f|2|P|
-GB|East Anglia|0.9|52.6|f|2|F|
-GB|Midlands|-1.6|52.6|u|3|M|
-GB|Wales|-3.7|52.3|m|2|M|
-GB|North West|-2.7|53.7|u|3|P|
-GB|Yorkshire|-1.2|53.9|f|2||
-GB|Northumbria|-1.9|55.1|f|2||
-GB|Scottish Lowlands|-3.8|55.8|u|3|W|
-GB|Scottish Highlands|-5|57.3|m|2||
-GB|Northern Ireland|-6.6|54.7|f|2|P|
 FR|Paris|2.4|48.6|u|3|C|
 FR|Provence|5|43.6|c|2|PW|
 DE|Berlin|13|52.5|u|3|C|
@@ -231,18 +176,6 @@ ID|Sumatra|101|-1|j|2|OP|
 ID|Borneo|114|0.5|j|2|OM|
 PH|Manila|121|14.6|u|3|CP|
 PH|Mindanao|125.5|7.5|j|2|P|
-AU|Sydney|151|-33.5|u|3|CP|
-AU|Victoria|144.5|-37|f|2|P|
-AU|Tasmania|146.5|-42|f|1|P|
-AU|South Australia|136.5|-33|d|2|M|
-AU|Perth|116|-31.5|d|2|P|
-AU|Pilbara|118.5|-22.5|d|1|MO|
-AU|Kimberley|127|-17.5|d|1||
-AU|Darwin|131|-12.5|c|1|P|
-AU|Red Centre|133|-24|d|1|MW|
-AU|Queensland|146|-23|f|2|F|
-AU|Far North Queensland|144.5|-16|j|1||
-AU|Brisbane|152.5|-27.5|u|2|P|
 NZ|New Zealand|174|-40|f|2|CP|
 `.trim().split('\n').map(l => l.split('|'));
 // sea zones: name|lon|lat|cost (turns to cross)|flag (choke = chokepoint strait, oil = giant oil sea? no)|big
@@ -292,23 +225,34 @@ South Pacific East|-100|-25|3|
 Hudson Waters|-85|58|1|
 Arctic Sea|55|70|2|
 `.trim().split('\n').map(l => l.split('|'));
+// real state/province borders (orch/grandreal-prep.mjs -> grandreal-src.json): US states, CA provinces, GB regions, AU states
+const REAL = JSON.parse(fs.readFileSync(new URL('./grandreal-src.json', import.meta.url), 'utf8'));
+const RWd = 1200, RHt = 600, NONE = 65535, real = new Uint16Array(RWd * RHt).fill(NONE);
+REAL.forEach((q, k) => { const rows = Array.from({ length: RHt }, () => []);
+  for (const r of q.rings) for (let i = 0; i < r.length - 1; i++) { let x0 = gx(r[i][0]) / 2, y0 = gy(r[i][1]) / 2, x1 = gx(r[i+1][0]) / 2, y1 = gy(r[i+1][1]) / 2; if (y0 === y1) continue; if (y0 > y1) { [x0, x1] = [x1, x0]; [y0, y1] = [y1, y0]; }
+    for (let y = Math.max(0, Math.ceil(y0 - .5)); y < Math.min(RHt, Math.ceil(y1 - .5)); y++) rows[y].push(x0 + (x1 - x0) * ((y + .5 - y0) / (y1 - y0))); }
+  rows.forEach((xs, y) => { xs.sort((a, b) => a - b); for (let i = 0; i + 1 < xs.length; i += 2) for (let x = Math.max(0, Math.ceil(xs[i] - .5)); x <= Math.min(RWd - 1, Math.floor(xs[i+1] - .5)); x++) real[y * RWd + x] = k; }); });
 const seeds = [];
 for (const p of PR) seeds.push({ n: p[1], o: p[0], x: gx(+p[2]), y: gy(+p[3]), t: p[4], tw: +p[5], f: p[6] || '', m: p[7] || '', land: 1 });
+const REALBASE = seeds.length;
+REAL.forEach((q, k) => { let n = 0, sx = 0, sy = 0; for (let y = 0; y < RHt; y++) for (let x = 0; x < RWd; x++) if (real[y * RWd + x] === k) { n++; sx += x; sy += y; }
+  if (!n) { console.log('EMPTY real province', q.n); return; } const cx = sx / n, cy = sy / n; let bx = 0, by = 0, bd = 1e18; for (let y = 0; y < RHt; y++) for (let x = 0; x < RWd; x++) if (real[y * RWd + x] === k) { const d = (x - cx) ** 2 + (y - cy) ** 2; if (d < bd) { bd = d; bx = x; by = y; } }
+  seeds.push({ n: q.n, o: q.o, x: bx * 2, y: by * 2, t: q.t, tw: q.tw, f: q.f, m: q.m, land: 1, fixed: 1 }); });
 for (const s of SEAS) seeds.push({ n: s[0], x: gx(+s[1]), y: gy(+s[2]), c: +s[3], ck: s[4] === 'choke' ? 1 : 0, land: 0 });
 // relaxation: push apart seeds closer than MIN (bounded drift), deterministic
 const MIN = 27, x0 = seeds.map(s => s.x), y0 = seeds.map(s => s.y);
 for (let it = 0; it < 140; it++) { let moved = 0;
   for (let i = 0; i < seeds.length; i++) for (let j = i + 1; j < seeds.length; j++) { const a = seeds[i], b = seeds[j]; let dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy); const mn = MIN * ((a.land && b.land) ? 1 : .8);
-    if (d < mn) { if (d < .01) { dx = 1; dy = 0; d = 1; } const k = (mn - d) / 2 / d; a.x -= dx * k; a.y -= dy * k; b.x += dx * k; b.y += dy * k; moved++; } }
-  for (let i = 0; i < seeds.length; i++) { const s = seeds[i]; const dx = s.x - x0[i], dy = s.y - y0[i], d = Math.hypot(dx, dy); if (d > 36) { s.x = x0[i] + dx * 36 / d; s.y = y0[i] + dy * 36 / d; } s.x = Math.max(8, Math.min(W - 8, s.x)); s.y = Math.max(8, Math.min(H - 8, s.y)); }
+    if (d < mn) { if (a.fixed && b.fixed) continue; if (d < .01) { dx = 1; dy = 0; d = 1; } const k = (mn - d) / 2 / d, ka = a.fixed ? 0 : (b.fixed ? 2 * k : k), kb = b.fixed ? 0 : (a.fixed ? 2 * k : k); a.x -= dx * ka; a.y -= dy * ka; b.x += dx * kb; b.y += dy * kb; moved++; } }
+  for (let i = 0; i < seeds.length; i++) { const s = seeds[i]; if (s.fixed) continue; const dx = s.x - x0[i], dy = s.y - y0[i], d = Math.hypot(dx, dy); if (d > 36) { s.x = x0[i] + dx * 36 / d; s.y = y0[i] + dy * 36 / d; } s.x = Math.max(8, Math.min(W - 8, s.x)); s.y = Math.max(8, Math.min(H - 8, s.y)); }
   if (!moved) break; }
 for (const s of seeds) { s.x = Math.round(s.x); s.y = Math.round(s.y); }
 // raster adjacency at 1/4 scale
-const SC = 4, RW = W / SC, RH = H / SC, idx = new Uint16Array(RW * RH);
-for (let y = 0; y < RH; y++) for (let x = 0; x < RW; x++) { const px = x * SC + 2, py = y * SC + 2; let bi = 0, bd = 1e18; for (let i = 0; i < seeds.length; i++) { const dx = seeds[i].x - px, dy = seeds[i].y - py, d = dx * dx + dy * dy; if (d < bd) { bd = d; bi = i; } } idx[y * RW + x] = bi; }
+const SC = 2, RW = W / SC, RH = H / SC, idx = new Uint16Array(RW * RH);
+for (let y = 0; y < RH; y++) for (let x = 0; x < RW; x++) { const px = x * SC + 2, py = y * SC + 2; const rv = real[Math.min(RHt - 1, y * SC / 2 | 0) * RWd + Math.min(RWd - 1, x * SC / 2 | 0)]; if (rv !== NONE) { idx[y * RW + x] = REALBASE + rv; continue; } let bi = 0, bd = 1e18; for (let i = 0; i < seeds.length; i++) { if (seeds[i].fixed) continue; const dx = seeds[i].x - px, dy = seeds[i].y - py, d = dx * dx + dy * dy; if (d < bd) { bd = d; bi = i; } } idx[y * RW + x] = bi; }
 const adj = seeds.map(() => new Set());
 for (let y = 0; y < RH; y++) for (let x = 0; x < RW; x++) { const a = idx[y * RW + x]; if (x + 1 < RW) { const b = idx[y * RW + x + 1]; if (a !== b) { adj[a].add(b); adj[b].add(a); } } if (y + 1 < RH) { const b = idx[(y + 1) * RW + x]; if (a !== b) { adj[a].add(b); adj[b].add(a); } } }
-const nl = PR.length;
+const nl = PR.length + REAL.length;
 // A province must not touch a sea-only world edge; land-land links stay, plus manual straits
 const byName = n => seeds.findIndex(s => s.n === n);
 const extra = [['Istanbul','Izmir'],['Istanbul','Ankara'],['Havana','Santiago de Cuba'],['Sinai','Cairo']].map(([a, b]) => [byName(a), byName(b)]);   // bridge / canal / island-hop links
@@ -324,6 +268,9 @@ lines.push('// [name, owner, x, y, terrain (w = sea zone), towns (sea: turns to 
 lines.push('const GM_P=[\n' + out.map(r => JSON.stringify(r)).join(',\n') + '\n];');
 lines.push('const GM_LAND=' + nl + ';   // provinces 0..GM_LAND-1 are land, the rest sea zones');
 lines.push('const GM_RIVER=' + JSON.stringify(rivers.map(([a, b]) => [Math.min(a, b), Math.max(a, b)])) + ';   // major river crossings');
+{ const by = []; const put = n => { while (n >= 128) { by.push((n & 127) | 128); n >>= 7; } by.push(n); }; let cur = real[0] === NONE ? NONE : REALBASE + real[0], run = 0;
+  for (let i = 0; i < real.length; i++) { const v = real[i] === NONE ? NONE : REALBASE + real[i]; if (v === cur) run++; else { put(cur === NONE ? 0 : cur + 1); put(run); cur = v; run = 1; } } put(cur === NONE ? 0 : cur + 1); put(run);
+  fs.writeFileSync(new URL('../src/13f-grandreal.js', import.meta.url), '// Generated by orch/grandmap-gen.mjs - do not edit by hand. Real state/province borders (Natural Earth, public domain) for US/CA/GB/AU, baked as a 1200x600 province-index raster: (index+1 or 0 = none, run) varint pairs, base64.\nconst GM_REAL_W=1200,GM_REAL_H=600;\nconst GM_REAL=\'' + Buffer.from(by).toString('base64') + '\';\n'); }
 fs.writeFileSync(new URL('../src/13-grandmap.js', import.meta.url), lines.join('\n') + '\n');
 // report
 const near = []; for (let i = 0; i < nl; i++) for (let j = i + 1; j < nl; j++) { const d = Math.hypot(seeds[i].x - seeds[j].x, seeds[i].y - seeds[j].y); if (d < 24) near.push(seeds[i].n + '/' + seeds[j].n + ' ' + Math.round(d)); }

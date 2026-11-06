@@ -28,7 +28,8 @@ await shot('00-first'); console.log('errs', JSON.stringify(errs));
 
 
 await ev(() => guFit(GR_REGIONS[1][1])); await shot('10-north-america');
+const us = await ev(() => { const p = GCM.P.find(q => q.n === 'Illinois'); return [p.x, p.y]; }); await view(us[0], us[1] + 20, 330); await shot('14-us-states');
 await ev(() => guFit(GR_REGIONS[3][1])); await shot('11-europe');
-const gb = await ev(() => { const c = GC.nat.GB.cap, p = GCM.P[c]; return [p.x, p.y]; }); await view(gb[0], gb[1] + 15, 150); await shot('12-britain-close');
-const au = await ev(() => { const p = GCM.P.find(q => q.n==='Sydney'); return [p.x,p.y]; }); await view(au[0]-80, au[1] + 30, 330); await shot('13-australia');
+const gb = await ev(() => { const p = GCM.P.find(q => q.n === 'Greater London'); return [p.x, p.y]; }); await view(gb[0], gb[1] + 15, 150); await shot('12-britain-close');
+const au = await ev(() => { const p = GCM.P.find(q => q.n==='New South Wales'); return [p.x,p.y]; }); await view(au[0]-80, au[1] + 30, 330); await shot('13-australia');
 console.log('errs', JSON.stringify(errs)); await browser.close(); server.close();

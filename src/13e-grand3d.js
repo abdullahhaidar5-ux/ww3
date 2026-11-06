@@ -78,7 +78,7 @@ function g3PaintOverlay(){const F=G3.F,W=F.W,H=F.H,idx=F.idx,P=GCM.P,Ls=F.Ls;if(
       r=c[0];g=c[1];b=c[2];a=t*255*ed;
       for(const j of [R,D]){if(j===i||!P[j].land)continue;const q=GC.prov[i].o!==GC.prov[j].o;
         if(q){const oc=pol?grNatRgb(GC.prov[i].o):[40,40,40];r=oc[0]*.35;g=oc[1]*.35;b=oc[2]*.35;a=Math.max(a,225*ed);}
-        else if(a<70){r=r*.5;g=g*.5;b=b*.5;a=Math.max(a,52*ed);}}}
+        else{r=r*.35;g=g*.35;b=b*.35;a=Math.max(a,(pol?150:110)*ed);}}}   // province borders inside one empire (real states/provinces)
     d[o]=r;d[o+1]=g;d[o+2]=b;d[o+3]=a;}
   return d;}
 function g3IdxPixels(){const F=G3.F,n=F.W*F.H,d=new Uint8Array(n*4);for(let k=0;k<n;k++){const i=F.idx[k];d[k*4]=i&255;d[k*4+1]=i>>8;d[k*4+3]=255;}return d;}
