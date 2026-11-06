@@ -153,6 +153,9 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 
 ## Ground rules for agents
 
+- **Grand stages chain** (Abdullah 2026-11-06 "chain the stages"): if your branch is `orch/grand1`…`orch/grand7`, `orch/grand4b` or
+  `orch/integrate2`, follow `orch/CHAIN.md` — its FIRST check before any other work, its LAST step (start the next stage) at the end.
+
 - **One system per idea** (Abdullah, 2026-11-05 19:34 "two militias — fix that"): before building, read `orch/SYSTEMS.md`, find
   the owner of your idea and extend it; never add a second system for the same job (add a row if it's new). New sim state goes
   into the checkpoint (`src/07b-ckpt.js`) so saves and host migration keep working; new hotkeys go in the one key table.
