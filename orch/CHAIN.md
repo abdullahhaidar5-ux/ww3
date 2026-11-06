@@ -7,7 +7,7 @@ the moment it finishes**. Usage stays the same; the chain just removes the waiti
 |---|---|---|---|
 | 1 | grand1 | trig_01MSzbwrNFQr3pL8WjzHYPRQ | 2026-11-06 13:00 |
 | 2 | grand5 (moved up: the map's LOOK, Abdullah 2026-11-06 08:04) | trig_01Njh4bSPF5985qWdMQro6Yy | 2026-11-07 17:00 |
-| 2b | grandmirror (battles mirror the map, Abdullah 2026-11-06 08:09) | see orch/CHAIN-ids.md | 2026-11-07 08:30 |
+| 2b | grandmirror (battles mirror the map, Abdullah 2026-11-06 08:09) | trig_016cCZ2bTTv9X4CCYCpGGV5J | 2026-11-07 08:30 |
 | 3 | grand2 | trig_01HNEmcfdvDvGqYkz22bsWBL | 2026-11-06 21:00 |
 | 4 | grand3 | trig_01Xyp14g6U8dcjkEfpMc9t4M | 2026-11-07 04:00 |
 | 5 | grand4 | trig_01TixPPBWM54Wc3kBCqFpdjY | 2026-11-07 11:00 |
