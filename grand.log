@@ -1,0 +1,11 @@
+menu {"g":"Grand campaign","c":"Missions","s":"Conquest — deploy vs AI","t":true}
+determinism {"a":"249c4b9c","b":"249c4b9c","c":"8970187b","h0":"99410971","h1":"99410971","ms":359,"alive1":79,"provs":174,"seas":44}
+scenario {"foe":"IQ","from":"Zagros","to":"Baghdad","aid":55,"ok":true,"units":37,"to_i":75}
+expected {"meAtt":true,"mine":{"inf":28,"at":4,"tank":2,"arty":1,"aa":1,"champ":1},"theirs":{"inf":19,"at":3,"tank":1,"champ":1},"nMine":37,"waves":0,"prov":"Baghdad"}
+battle {"me":{"tank":2,"champ":1,"at":4,"inf":28,"aa":1,"arty":1},"foe":{"tank":1,"champ":1,"at":3,"inf":19},"b0":[],"b1":["sam"],"qSame":true,"cr":0,"conq":false,"over":false,"waves":0,"att":0,"n0":[37,24]}
+finish {"res":true,"before":{"alive":25,"kinds":{"inf":23,"aa":1,"arty":1},"hp":[50,50,50,50,50,50,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]},"meAtt":true,"bi":4}
+flowback {"n":25,"kinds":{"inf":23,"arty":1,"aa":1},"hp":[50,50,50,50,50,50,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]}
+after {"g":false,"grand":"flex","ph":"resolve","turn":1,"owner":"US"}
+turn {"log":["Hwanghae: China beat North Korea.","Russia captured Donbas from Ukraine.","Iran captured Baghdad from Iraq.","UAE captured Hormozgan from Iran.","Pakistan captured Rajasthan from India.","China captured Hwanghae from North Korea."],"turn":2,"save":true}
+
+GRANDTEST PASS
