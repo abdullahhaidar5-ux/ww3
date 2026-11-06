@@ -1,0 +1,24 @@
+// Screenshots for the save-game feature -> orch/shots/savegame/ (save dialog, load list with thumbnails, a loaded battle)
+import { boot, ROOT } from './savelib.mjs';
+import path from 'node:path';
+const OUT = path.join(ROOT, 'orch', 'shots', 'savegame');
+const B = await boot(); const P = await B.open();
+const shot = async (n) => { try { await P.screenshot({ path: path.join(OUT, n), timeout: 180000 }); console.log('shot', n); } catch (e) { console.log('shot failed', n, String(e.message).split('\n')[0]); } };
+await P.evaluate(() => { setup.n = 1; startSingle(); });
+await P.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 });
+await P.evaluate(() => { for (let i = 0; i < 3 * 3600; i++) simUpdate(1 / 60); try { renderFrame(.016); } catch (e) {} });
+console.log(JSON.stringify(await P.evaluate(() => { togglePause(true); const o = document.getElementById('pauseOv'), b = document.getElementById('svSave'); const r = b.getBoundingClientRect(); return { loading: !!window.LOADING, paused: G.paused, hidden: o.hidden, disp: getComputedStyle(o).display, rect: [r.x, r.y, r.width, r.height], menu: document.getElementById('menu').hidden }; }))); await P.waitForTimeout(500);
+await P.evaluate(() => document.getElementById('svSave').click()); await P.waitForTimeout(800); await shot('1-save-dialog.png');
+await P.evaluate(() => { document.getElementById('svName').value = 'Before the big push'; [...document.querySelectorAll('#svOv button')].find(b => b.textContent === 'Save').click(); });
+await P.waitForFunction(() => !document.getElementById('svOv'), null, { timeout: 60000 });
+await P.evaluate(async () => { for (let i = 0; i < 2 * 3600; i++) simUpdate(1 / 60); try { renderFrame(.016); } catch (e) {} await svSave('Second save, two minutes later', 'manual'); await svSave('Autosave', 'auto'); });
+await P.evaluate(() => document.getElementById('svSave').click()); await P.waitForTimeout(800); await shot('2-save-dialog-with-saves.png');
+await P.evaluate(() => { document.getElementById('svOv').remove(); quitGame(); });
+await P.waitForTimeout(1500);
+await P.evaluate(() => document.getElementById('svLoadBtn').click()); await P.waitForTimeout(1500); await shot('3-load-list.png');
+await P.evaluate(() => { document.getElementById('svLd').remove(); });
+await shot('4-main-menu-continue.png');
+await P.evaluate(() => document.getElementById('svContinue').click()); await P.waitForFunction(() => !window.LOADING && G && G.paused, null, { timeout: 600000, polling: 250 });
+await P.waitForTimeout(1500); await shot('5-loaded-battle.png');
+console.log('errors:', B.errs.slice(0, 3).join(' | ') || 'none');
+await B.close();
