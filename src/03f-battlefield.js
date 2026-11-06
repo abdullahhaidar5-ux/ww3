@@ -20,7 +20,7 @@ function wndMake(e,wpn,splash){if(MODE==='client'||e.isB||!e.s||!isInf(e.s)||e.c
   if(wpn!=='gun'&&wpn!=='snipe'&&wpn!=='tower')return null;if(e.hp<-e.max*.8)return null;wndInit();let n=0;for(const w of G.wnd)if(w.team===e.team)n++;if(n>=WND_MAX)return null;
   const R=mulberry((((G.seed|0)*2654435761)^(e.id*40503)^((G.t*60)|0))>>>0);if(R()>=.4)return null;
   return{id:G.wndId++,x:e.x,y:e.y,team:e.team,kind:e.kind,rank:e.rank|0,xp:e.xp||0,t0:G.t,until:G.t+WND_T,p:0,dr:0,md:0};}
-function wndAdd(w){wndInit();G.wnd.push(w);wndBump();FXE('txt',[w.x|0,w.y|0,'WOUNDED',w.team,-2]);}
+function wndAdd(w){try{shout(w,'medic');}catch(_){}wndInit();G.wnd.push(w);wndBump();FXE('txt',[w.x|0,w.y|0,'WOUNDED',w.team,-2]);}
 function wndDrop(i,why){const w=G.wnd[i];G.wnd.splice(i,1);wndBump();if(w.dr){const u=G.byId.get(w.dr);if(u)u.drg=0;}if(why)FXE('txt',[w.x|0,w.y|0,why,w.team,-2]);}
 function wndRevive(w){const p=nearestPassXY('ground',w.x,w.y)||[w.x,w.y];const n=addUnit(w.team,w.kind,p[0],p[1]);if(!n)return false;n.rank=w.rank|0;n.xp=w.xp||0;n.hp=Math.max(1,n.max*.45);n.fear=0;n.mv=G.t;
   FXE('txt',[n.x|0,n.y|0,'REVIVED',w.team,-2]);FXE('heal',[n.x|0,n.y|0,40],w.team);return true;}
@@ -65,7 +65,7 @@ function rubFind(u,R){if(!G.rubN)return-1;const cx0=Math.floor(u.x/CELL),cy0=Mat
 function rubClear(u,dt){const o=u.order;if(!o||o.type!=='clr')return false;if(!G.rub||!G.rub[o.k]){u.order=null;return false;}
   const x=(o.k%GW)*CELL+CELL/2,y=((o.k/GW)|0)*CELL+CELL/2,d=Math.hypot(x-u.x,y-u.y);if(d>CELL*1.3){navTo(u,x,y,dt);return true;}
   u.building=true;u.ang=Math.atan2(y-u.y,x-u.x);u.lastFire=G.t;o.p=(o.p||0)+dt;if(o.p>=7){rubDo(o.k);u.order=null;FXE('txt',[x|0,y|0,'ROAD CLEARED',u.team,-2]);}return true;}
-function rubDo(k){if(!G.rub||!G.rub[k])return;G.rub[k]=0;G.rubN--;const c=G.civAt&&G.civAt.get(k);if(c&&c.dead&&!c.ruin){c.clr=1;if(G.cover)G.cover[c.k]=Math.max(0,(G.cover[c.k]||0)-2);FXE('rubc',[c.i]);}G.gridV=(G.gridV|0)+1;G.civDirty=true;}
+function rubDo(k){if(!G.rub||!G.rub[k])return;G.rub[k]=0;G.rubN--;try{if(G.bfHulk&&G.bfHulk.length)hulkGone(k);}catch(_){}const c=G.civAt&&G.civAt.get(k);if(c&&c.dead&&!c.ruin){c.clr=1;if(G.cover)G.cover[c.k]=Math.max(0,(G.cover[c.k]||0)-2);FXE('rubc',[c.i]);}G.gridV=(G.gridV|0)+1;G.civDirty=true;}
 // idle Construction Vehicles clear rubble nearby when no enemy is around it
 function rubIdle(u){if(!G.rubN)return false;u.rcT=(u.rcT||0)-1;if(u.rcT>0)return false;u.rcT=3;const k=rubFind(u,280);if(k<0)return false;const x=(k%GW)*CELL+CELL/2,y=((k/GW)|0)*CELL+CELL/2;if(wndFoes(x,y,u.team,260))return false;u.order={type:'clr',k};u.path=null;return true;}
 
@@ -115,7 +115,7 @@ function aiDam(T,mine){const D=G.dams;if(!D||T.ai.d<1||T.ai.t%7!==2||G.t<150)ret
   for(const d of D){if(d.dead||!d.fc)continue;if(d.aiT&&G.t<d.aiT)continue;let en=0,fr=0;for(const e of G.ents){if(e.dead||e.isB||e.inTun||!e.s||e.s.dom!=='ground'||e.kind==='harv')continue;const c=d.fc.get(Math.floor(e.y/CELL)*GW+Math.floor(e.x/CELL));if(!c||c[0]>FL_LEN)continue;if(ally(e.team,T.id))fr++;else en++;}
     if(en<5||en<fr*2)continue;const U=mine.filter(e=>!e.isB&&!e.dead&&!e.inTun&&e.s.dom==='ground'&&e.s.dmg>0&&!e.s.noAttack&&e.kind!=='harv'&&e.kind!=='dozer'&&canTarget(e.s,d.tg)&&(e.s.armor==='heavy'||e.s.cls==='arty'));if(!U.length)continue;
     U.sort((a,b)=>Math.hypot(a.x-d.x,a.y-d.y)-Math.hypot(b.x-d.x,b.y-d.y));d.aiT=G.t+60;for(const u of U.slice(0,6)){u.order={type:'attack',target:d.tg};u.guard=null;u.path=null;}return;}}
-function bfTick(dt){if(G.wnd&&G.wnd.length)wndTick(dt);if(G.dams)floodTick(dt);}
+function bfTick(dt){bfeelTick(dt);if(G.wnd&&G.wnd.length)wndTick(dt);if(G.dams)floodTick(dt);}
 function damSync(){if(!G.dams)return;const M=G.map;G.fln=0;for(const d of G.dams){const rv=M.rivers[d.ri];if(!d.tg)Object.defineProperty(d,'tg',{value:damTarget(d),writable:true,enumerable:false});if(rv&&!d.fc)damCells(d,rv);if(d.dead&&!d.fin)G.fln++;}}
 function damAt(w){const D=G.dams;if(!D)return-1;for(const d of D){if(d.dead)continue;const nx=-d.ty,ny=d.tx,u=(w.x-d.x)*nx+(w.y-d.y)*ny,v=(w.x-d.x)*d.tx+(w.y-d.y)*d.ty;if(Math.abs(u)<d.w+20&&Math.abs(v)<46)return d.i;}return-1;}
 // AI: keep a couple of Combat Medics with the infantry (same medic, same price as the player's)
