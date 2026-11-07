@@ -1,0 +1,11 @@
+3D models: 3 of 83 ready=true  (page open to models ready: 2.4s)
+battle: 4 players IR vs US vs VE vs EG on strait
+loading screen finished after 111.9s
+3D models for this battle: 64 of 64
+after 4.0 game-min: 68 units, 36 structures, per team 21/23/21/21 (peak 21/25/23/24), last chunk 1705 ms
+peak memory (node + browser, summed RSS): 3381 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+SMOKE FAIL (228s)
+  ✗ console error: THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The "position" attribute is likely to have NaN values. r
