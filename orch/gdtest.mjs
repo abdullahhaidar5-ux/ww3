@@ -57,7 +57,7 @@ try {
     out.wars = Object.keys(GC.war).length; out.dp = Object.keys(GC.dp || {}).length;
     // events / achievements / news / web
     grNew({ me: 'IR', seed: 99, len: 'std' }); for (let i = 0; i < 40; i++) { grEndTurn(true); if (GC.ev && GC.ev.pend.length) { const p = GC.ev.pend[0]; gevChoose(p[0], p[1], 0); } }
-    out.gh = GC.gh && GC.gh.IR ? GC.gh.IR.length : 0; out.mis = GC.mis && GC.mis.IR ? GC.mis.IR.act.length + '/' + GC.mis.IR.done : 'none'; out.evHist = GC.ev ? GC.ev.hist.length : -1; out.evAI = GC.ev ? GC.ev.hist.filter(h => h[1] !== 'IR').length : -1; out.ach = GC.ach ? Object.values(GC.ach).reduce((a, l) => a + l.length, 0) : -1;
+    out.gh = GC.gh && GC.gh.IR ? GC.gh.IR.length : 0; out.gp = GC.gp ? GC.gp.length : 0; out.mis = GC.mis && GC.mis.IR ? GC.mis.IR.act.length + '/' + GC.mis.IR.done : 'none'; out.evHist = GC.ev ? GC.ev.hist.length : -1; out.evAI = GC.ev ? GC.ev.hist.filter(h => h[1] !== 'IR').length : -1; out.ach = GC.ach ? Object.values(GC.ach).reduce((a, l) => a + l.length, 0) : -1;
     out.news = gnewsMake(GC.turn - 1).length; gnewsShow(); gwebOpen(); out.web = !!document.getElementById('gWeb'); document.getElementById('gWeb') && document.getElementById('gWeb').remove();
     for (const r of GEV_ROWS) for (const o of r.o) for (const f of o.fx) if (f[0] === 'chain' && !GEV_ROWS.find(x => x.id === f[1])) out.badChain = f[1];
     // UI
@@ -75,6 +75,7 @@ try {
   if (!r.det) fails.push('determinism broken with diplomacy');
   if (r.evHist < 3 || r.evAI < 2) fails.push('events did not fire: ' + r.evHist + '/' + r.evAI); if (r.ach < 3) fails.push('no achievements'); if (!r.web) fails.push('web did not open'); if (r.badChain) fails.push('bad chain ' + r.badChain);
   if (r.gh < 30) fails.push('no graph history');
+  if (r.gp !== 8) fails.push('great powers ' + r.gp);
   if (!/^3/.test(r.mis)) fails.push('missions: ' + r.mis);
   const dt = await ev(() => (document.getElementById('npWin') || {}).innerText?.length || 0); if (!dt) fails.push('diplomacy tab did not render');
   if (!r.alertBtns) fails.push('alerts bar rendered no buttons');

@@ -53,7 +53,7 @@ function gdOnDeclare(a,b){const S=gdS();S.ws[grWk(a,b)]=GC.turn;if(GD_DEPTH>1)re
     for(const g of Array.from(new Set(call)).sort()){if(g===a||g===b||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
       if(GC.nat[g].ai||g===GC.me){GC.war[grWk(g,a)]=1;S.ws[grWk(g,a)]=GC.turn;grLog(gdName(g)+' joins the war against '+gdName(a)+' to defend '+gdName(b)+'.',g);}}}finally{GD_DEPTH--;}}
 // each turn: AI-vs-AI peace, AI offers peace to the player when losing, truces tick
-function gdTurn(){if(!GC||!GC.nat)return;const S=gdS();try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}const done=new Set();
+function gdTurn(){if(!GC||!GC.nat)return;const S=gdS();try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gdAI();}catch(e){console.error('gdAI',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}try{gpTurn();}catch(e){console.error('gpTurn',e);}const done=new Set();
   for(const k of Object.keys(GC.war).sort()){const [a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead){delete GC.war[k];continue;}
     const len=gdWarLen(a,b);if(len<8)continue;const [x,y]=gdScore(a,b);
     const loser=x>y?b:y>x?a:null,winner=loser===a?b:a;
@@ -63,6 +63,10 @@ function gdTurn(){if(!GC||!GC.nat)return;const S=gdS();try{gevTurn();}catch(e){c
     else if(pair===GC.me){if(!GC.nat[other].ai)continue;}
     else if(GC.nat[pair].ai&&GC.nat[other].ai&&(GC.turn+len)%3===0){gdPeace(pair,other);}}
   S.off=S.off.filter(o=>grAtWar(o[0],o[1])&&GC.turn-o[3]<8);}
+// AI diplomacy: now and then an AI major signs a pact with a friendly nation that shares an enemy (same checks as the player: gdCheck)
+function gdAI(){const R=grRng((GC.seed|0)*53+GC.turn*17);for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];const r=R(),r2=R();if(N.dead||!N.ai||!grNat(c).major||r>.06||gdAllies(c).length>=3)continue;
+  const l=Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grNat(o).major&&!grAllied(c,o)&&!grAtWar(c,o)&&grOpinion(c,o)>=20&&gdAllies(o).length<4).sort();if(!l.length)continue;const t=l[Math.floor(r2*l.length)];
+  if(gdCheck('ally',c,t).can)gdDo('ally',c,t);}}
 // --- alerts: peace offers (galertAdd is defined in 13m)
 if(typeof galertAdd==='function')galertAdd('peaceoffer','🕊','Peace offer',c=>{const o=gdS().off.filter(x=>x[1]===c);return o.length?{n:o.length,tip:o.map(x=>gdName(x[0])).join(', ')+' offer white peace',tab:'dip',go:()=>{NP.dt=o[0][0];npOpen(c,'dip');}}:null;});
 // --- the Diplomacy tab (replaces Lane B's read-only first cut; same tab id so the panel just uses this)
