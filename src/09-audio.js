@@ -515,7 +515,7 @@ function stopMusic(){myStop();stHalt();}
   ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
 (function propCredits(){try{if(document.getElementById('propCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
   const p=document.createElement('p');p.className='credits';p.id='propCred';
-  p.textContent='Props: Old Military Crate and Barrel 03 by Poly Haven contributors (polyhaven.com, CC0).';
+  p.textContent='Props: Old Military Crate and Barrel 03 by Poly Haven contributors (polyhaven.com, CC0). Building walls: Plaster001, Concrete034 and CorrugatedSteel005 from ambientCG.com (CC0).';
   ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
 (function sfxCredits(){try{if(document.getElementById('sfxCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
   const p=document.createElement('p');p.className='credits';p.id='sfxCred';

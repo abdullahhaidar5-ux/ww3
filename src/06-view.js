@@ -80,7 +80,7 @@ function syncScene(dt){const live=new Set();
       if(s.cls==='heli'&&!e.landed)rotorWash(e,o,dt);
       if(s.dom==='naval')shipWake(e,o,dt);
       if(e.kind==='sub'){const ud=o.userData;ud.sk=(ud.sk||0)+((e.hid?-6:0)-(ud.sk||0))*Math.min(1,dt*1.5);o.position.y+=ud.sk;} // submerged: sinks under the water, surfaces when it fires
-      if(s.dom==='ground'&&s.armor==='heavy')dustTrail(e,o,dt);
+      if(s.dom==='ground'&&!['inf','at','hero','hacker'].includes(s.cls))dustTrail(e,o,dt);// RF13: every moving ground vehicle, not just heavy armour
       if(P.props){for(const p of P.props)p.m.rotation[p.ax]+=dt*(p.ax==='x'?55:70);if(e.kind==='drone'){const ud=o.userData,prev=ud.pyd??ud.yaw;let tr=angDiff(prev,ud.yaw)/Math.max(dt,1e-3);ud.pyd=ud.yaw;const t=e.target,d=t&&!t.dead?Math.hypot(t.x-e.x,t.y-e.y):1e9;
           const dsp=Math.hypot(e.x-(ud.dpx??e.x),e.y-(ud.dpy??e.y))/Math.max(dt,1e-3);ud.dpx=e.x;ud.dpy=e.y;ud.dsv=(ud.dsv||0)+(Math.min(1,dsp/Math.max(40,e.s.spd))-(ud.dsv||0))*Math.min(1,dt*3);
           const fw=ud.dtype==='delta'||ud.dtype==='tb2'||ud.dtype==='mq'||ud.dtype==='lancet';ud.dp=(ud.dp||0)+(((d<170?.55*(1-d/170):0)+(fw?.04:.04+.26*ud.dsv))-(ud.dp||0))*Math.min(1,dt*4);if(ud.dtype==='delta'&&inView(e.x,e.y,.1)&&Math.random()<dt*10){const bx=e.x-Math.cos(ud.yaw)*12,by=e.y-Math.sin(ud.yaw)*12;part({x:bx,y:by,h:o.position.y,c:[.6,.6,.58],s:rnd(2.5,3.5),g:0,d:rnd(.8,1.3),a:.22,rise:.5});}o.rotation.order='YZX';o.rotation.z=-ud.dp;o.rotation.x=Math.max(-.75,Math.min(.75,tr*(fw?.55:.15)));

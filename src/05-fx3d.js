@@ -1,5 +1,6 @@
 /* ================= 3D EFFECTS: particles, tracers, projectiles, decals, wrecks ================= */
 const PMAX=3500;const SHOCKS=[],FIRES=[];let shockI=0;
+const NFL={x:0,y:0,hot:-99,cd:6};function FXE_flare(x,y){FLARES.push({x,y,r:260,d:16,t:0,acc:0});if(FLARES.length>6)FLARES.shift();}
 let PN_=null,PA_=null,TRC=null,SCORCH=null,TRACKS=null,CRATER=null,crI=0,LIGHTS=[],WLIGHTS=[],MLIGHTS=[],mlI=0,FLARES=[],FLL=[];const COLS=[];
 const fxPH=()=>typeof POST!=='undefined'&&!!POST.phone;
 const BMIS=[],DEBRIS=[];
@@ -111,7 +112,7 @@ function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.
 function fxLater(fn,ms){const rp=typeof KC!=='undefined'&&KC.on&&KC.R?KC.R:null;return setTimeout(()=>{if(rp&&KC.R!==rp)return;fn();},ms);}
 const FXH={
   hl(k,a,b,tx){if(typeof tkPublic==='function')tkPublic(k,a,b,tx);},
-  muz(x,y,h,a,s){try{if(typeof reMuz==='function')reMuz(x,y,a);}catch(_){}sfxShot(x,y,s);if(s>=13){const gh=groundH(x,y),ca=Math.cos(a),sa=Math.sin(a);for(let i=0;i<10;i++){const b=a+rnd(-1.3,1.3),v=rnd(30,90);part({x:x+ca*4,y:y+sa*4,h:h+rnd(-1,2),vx:Math.cos(b)*v+ca*40,vy:Math.sin(b)*v+sa*40,vh:rnd(4,18),f:.25,rise:rnd(6,14),c:i%3?C_SMOKE:[.62,.6,.56],c2:[.55,.53,.5],ck:.3,s:rnd(8,13),g:16,d:rnd(1.8,2.8),a:.62});}for(let i=0;i<12;i++){const b=rnd(0,6.28),v=rnd(40,80);part({x,y,h:gh+2,vx:Math.cos(b)*v,vy:Math.sin(b)*v,f:.1,c:C_DUST,s:rnd(5,8),g:10,d:rnd(.8,1.3),a:.35});}part({x:x+ca*8,y:y+sa*8,h,s:s*1.9,d:.08,add:true,c:[3.2,1.8,.6]});}// big guns: a hot core, a flame tongue down the barrel and two side jets from the muzzle brake, sized to the tank
+  muz(x,y,h,a,s){try{if(G&&G.todM&&todLvl()===2){NFL.x=x;NFL.y=y;NFL.hot=G.t;}}catch(_){}try{if(typeof reMuz==='function')reMuz(x,y,a);}catch(_){}sfxShot(x,y,s);if(s>=13){const gh=groundH(x,y),ca=Math.cos(a),sa=Math.sin(a);for(let i=0;i<10;i++){const b=a+rnd(-1.3,1.3),v=rnd(30,90);part({x:x+ca*4,y:y+sa*4,h:h+rnd(-1,2),vx:Math.cos(b)*v+ca*40,vy:Math.sin(b)*v+sa*40,vh:rnd(4,18),f:.25,rise:rnd(6,14),c:i%3?C_SMOKE:[.62,.6,.56],c2:[.55,.53,.5],ck:.3,s:rnd(8,13),g:16,d:rnd(1.8,2.8),a:.62});}for(let i=0;i<12;i++){const b=rnd(0,6.28),v=rnd(40,80);part({x,y,h:gh+2,vx:Math.cos(b)*v,vy:Math.sin(b)*v,f:.1,c:C_DUST,s:rnd(5,8),g:10,d:rnd(.8,1.3),a:.35});}part({x:x+ca*8,y:y+sa*8,h,s:s*1.9,d:.08,add:true,c:[3.2,1.8,.6]});}// big guns: a hot core, a flame tongue down the barrel and two side jets from the muzzle brake, sized to the tank
     // rather than one fuzzy ball bigger than the vehicle
     if(s>=13){const ca=Math.cos(a),sa=Math.sin(a);part({x,y,h,s:s*1.5,d:.06,add:true,c:[3.2,2.4,1.2]});part({x:x+ca*s*.8,y:y+sa*s*.8,h,s:s*1.15,d:.05,add:true,c:[2.8,1.5,.5]});
       if(!fxPH())for(const k of [-1,1])part({x:x+ca*2-sa*k*s*.45,y:y+sa*2+ca*k*s*.45,h,s:s*.6,d:.045,add:true,c:[2.6,1.3,.4]});}
@@ -275,6 +276,8 @@ function fxUpdate(dt){
   for(const b of BODIES){b.t+=dt;for(const g of b.figs){const k=Math.max(0,Math.min(1,(b.t-g.dl)/.45));const e=k*k*(3-2*k);g.f.rotation.z=g.dir*1.5*e+(g.rz||0)*e;g.f.rotation.x=g.rx*e;g.f.rotation.y=g.by+(g.yw||0)*e;g.f.position.y=g.base.y-e*(g.sp?.3:.6)+(Math.abs(g.rx)>1?e*1.1:0);if(g.rx>1&&g.rx<1.6)g.f.position.z=g.bz-e*3.2;if(k>0&&k<1&&!g.dust&&e>.9){g.dust=1;part({x:b.x,y:b.y,h:groundH(b.x,b.y)+1,vx:rnd(-12,12),vy:rnd(-12,12),c:C_DUST,s:rnd(4,6),g:6,d:.7,a:.4});}}
     if(b.t>50)b.o.position.y-=dt*1.2;if(b.t>58){b.done=true;SCN.remove(b.o);}}
   for(let i=BODIES.length-1;i>=0;i--)if(BODIES[i].done)BODIES.splice(i,1);
+  // RF15: at night, mortar illumination rounds go up over a fight you can see (view only, nothing in the simulation)
+  if(G&&G.todM&&todLvl()===2){NFL.cd-=dt;if(NFL.cd<=0&&G.t-NFL.hot<4&&FLARES.length<3&&inView(NFL.x,NFL.y,1.5)){FXE_flare(NFL.x+rnd(-70,70),NFL.y+rnd(-70,70));NFL.cd=rnd(14,22);}}
   {for(let i=FLARES.length-1;i>=0;i--){const F=FLARES[i];F.t+=dt;if(F.t>=F.d)FLARES.splice(i,1);}
    FLARES.sort((a,b)=>Math.hypot(a.x-CAM.position.x,a.y-CAM.position.z)-Math.hypot(b.x-CAM.position.x,b.y-CAM.position.z));
    for(let k=0;k<Math.max(FLL.length,0);k++){const L=FLL[k],F=FLARES[k];if(!F){L.intensity=0;continue;}const fade=Math.min(1,F.t/1.2)*Math.min(1,(F.d-F.t)/5),fl=.9+.1*Math.sin(F.t*23)*Math.sin(F.t*9.1),hh=groundH(F.x,F.y)+Math.max(90,210-F.t*4);L.position.set(F.x,hh,F.y);L.intensity=26*fade*fl*LUX;L.distance=F.r*2.2;}
@@ -303,7 +306,7 @@ function fxUpdate(dt){
 let RAIN=null,WXV={k:'clear',m:0};
 function weatherFX(dt){if(!G||!G.map||!CAM)return;if(G.todM===3&&Math.round(todSeg(G.t).d*20)!==WXT)try{applyWeather(0);}catch(e){}const k=(G.wx&&G.wx.k)||'clear';if(WXV.base==null&&SCN.fog){WXV.base={c:SCN.fog.color.clone(),n:SCN.fog.near,f:SCN.fog.far};}const B=WXV.base;if(!B)return;
   if(WXV.k!==k){WXV.m=Math.max(0,WXV.m-dt*.5);if(WXV.m<=0)WXV.k=k;}else WXV.m=Math.min(1,WXV.m+dt*.35);const m=WXV.k==='clear'?0:WXV.m,K=WXV.k;
-  const T={rain:{c:'#7d868c',n:500,f:3200},fog:{c:'#b9bdbb',n:150,f:1500},sandstorm:{c:'#b88a52',n:40,f:950},blizzard:{c:'#dfe6ee',n:150,f:1700},snow:{c:'#e3e9f0',n:220,f:2300}}[K];
+  const T={rain:{c:'#7d868c',n:500,f:3200},fog:{c:'#b9bdbb',n:150,f:1500},sandstorm:{c:'#b88a52',n:30,f:720},blizzard:{c:'#dfe6ee',n:150,f:1700},snow:{c:'#e3e9f0',n:220,f:2300}}[K];
   if(T){const tc=lin(T.c);SCN.fog.color.copy(B.c).lerp(tc,m*.85);SCN.fog.near=B.n+(T.n-B.n)*m;SCN.fog.far=B.f+(T.f-B.f)*m;}else{SCN.fog.color.lerp(B.c,Math.min(1,dt*2));SCN.fog.near+=(B.n-SCN.fog.near)*Math.min(1,dt*2);SCN.fog.far+=(B.f-SCN.fog.far)*Math.min(1,dt*2);}
   const R=Math.max(420,cam.dist*1.1);
   if(K==='sandstorm'&&m>.05){const n=(dt*90*m)|0;for(let i=0;i<n;i++){const x=cam.x+rnd(-R,R),y=cam.y+rnd(-R*.7,R*.7);part({x,y,h:groundH(Math.max(0,Math.min(MAPW,x)),Math.max(0,Math.min(MAPH,y)))+rnd(2,60),vx:rnd(90,160),vy:rnd(-15,15),vh:rnd(-4,8),f:.9,c:[.78,.6,.38],s:rnd(18,36),g:22,d:rnd(1.6,2.8),a:.3*m});}}
@@ -359,7 +362,7 @@ function dustTrail(e,o,dt){if(!o||!o.visible||!(dt>0)||!e.s||!G||!G.map)return;c
   // what is underfoot: water and bridge decks throw no dust; rain wets the ground (snow maps keep their powder)
   const M=G.map,th=M.theme==='snow'?'snow':M.theme==='green'?'green':'desert',gc=G.grid?G.grid[Math.floor(pz/CELL)*GW+Math.floor(px/CELL)]:0;
   if(gc===2||(M.isWater&&M.isWater(px,pz))||(G.wx&&G.wx.k==='rain'&&th!=='snow')){ud.tacc=0;return;}
-  const B=pBudget(),n0=PARTS.length;if(n0>B*.7)return;const busy=n0>B*.45?.5:1,amp=th==='desert'?1:th==='green'?.6:.45;
+  const B=pBudget(),n0=PARTS.length;if(n0>B*.7)return;const busy=n0>B*.45?.5:1,amp=(th==='desert'?1:th==='green'?.6:.45)*(G.wx&&G.wx.k==='sandstorm'?1.7:1);
   const r=e.r||12,sc=Math.min(1.5,Math.max(.8,r/12));ud.tacc=(ud.tacc||0)+dt*16*k*amp*busy*Math.min(1.2,B/1400)*sc;
   const a=ud.yaw??e.va??0,ca=Math.cos(a),sa=Math.sin(a),C=DUSTC[th],gh=groundH(px,pz),cap=B>=1100?28:16;let n=0;
   while(ud.tacc>=1&&n<3&&dustN<cap){ud.tacc-=1;n++;dustN++;const sd=(ud.tsd=-(ud.tsd||1)),w=r*rnd(.45,.65),bk=r*rnd(.75,1.05),x=px-ca*bk-sa*sd*w,y=pz-sa*bk+ca*sd*w,ov=rnd(4,12),bv=rnd(8,20)*(.5+k);
