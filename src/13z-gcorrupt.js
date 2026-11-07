@@ -22,11 +22,11 @@ function gcoPressure(c){const N=GC.nat[c],out=[];
 function gcoPurge(c){const N=gcoN(c);if(!N||!N.pp)return 'Not available.';if(N.cor<=0)return 'There is no corruption.';
   if(N.pp.pol<GCO_COST)return 'Needs '+GCO_COST+' Political points.';N.pp.pol-=GCO_COST;N.cor=Math.max(0,N.cor-5);GMOD_C.cache.clear();
   if(c===GC.me)grLog('An anti-corruption drive cuts corruption to '+Math.round(N.cor)+'%.',c);return '';}
-function gcoMonth(){if(!GC)return;for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;gcoN(c);if(N.coT===GC.turn)continue;N.coT=GC.turn;
+function gcrMonth(){if(!GC)return;for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;gcoN(c);if(N.coT===GC.turn)continue;N.coT=GC.turn;
     N.cor=Math.max(0,Math.min(GCO_MAX,N.cor+gcoPressure(c).reduce((s,x)=>s+x[1],0)));
     if(c!==GC.me&&N.cor>=10&&N.pp&&N.pp.pol>=GCO_COST+40)gcoPurge(c);}
   GMOD_C.cache.clear();}
-GMOD_HOOKS.push(gcoMonth);
+GMOD_HOOKS.push(gcrMonth);
 npTab('cor','🕳','Corruption',(code,body,c)=>{const N=gcoN(code),own=c.own&&code===GC.me,v=Math.round(N.cor*10)/10;
   const col=v<5?'#8fd18f':v<15?'#e8d27a':'#ff9a8a';
   let h='<div style="font-size:26px;margin-bottom:6px"><b style="color:'+col+'">Corruption '+v+'%</b></div>'+
