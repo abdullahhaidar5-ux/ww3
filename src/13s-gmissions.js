@@ -1,0 +1,19 @@
+// MISSIONS (lane G, B7): a short list of national goals for the human nation, GENERATED from the current state (no hand-written trees).
+// Each template = {k, make(c)->{arg,text} or null, done(c,m)->bool, reward:[effects in the ONE event vocabulary of 13p]}. State GC.mis={code:{act:[{k,arg,text,t0,base}],done:n}}.
+// Deterministic; only the human nation gets missions (AI nations need none). Rewards go through gevApply (cash / unrest / manpower / opinion / GMOD rows).
+function gmCount(c){return GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c).length;}
+function gmHeld(c,from){return GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c&&GC.prov[p.i].o0===from).length;}
+const GMIS_T=[
+ {k:'prov',make:c=>({arg:gmCount(c)+3,text:'Hold '+(gmCount(c)+3)+' provinces'}),done:(c,m)=>gmCount(c)>=m.arg,reward:[['cash',700],['mod','warSupport',.04,10]]},
+ {k:'ally',make:c=>({arg:gdAllies(c).length+1,text:'Have '+(gdAllies(c).length+1)+' allies'}),done:(c,m)=>gdAllies(c).length>=m.arg,reward:[['cash',500],['un',-4]]},
+ {k:'take',make:c=>{const e=gdEnemies(c).sort()[0]||gevNb(c)[0];if(!e)return null;return {arg:e,text:'Take a province from '+gdName(e),base:gmHeld(c,e)};},done:(c,m)=>gmHeld(c,m.arg)>m.base,reward:[['cash',800],['mod','warSupport',.06,10]]},
+ {k:'cash',make:c=>({arg:Math.round(GC.nat[c].cash+3000),text:'Save $'+Math.round(GC.nat[c].cash+3000).toLocaleString()}),done:(c,m)=>GC.nat[c].cash>=m.arg,reward:[['mod','fireSupport',.08,12]]},
+ {k:'peace',make:c=>gdEnemies(c).length?{arg:1,text:'Sign a peace with any enemy',base:gdEnemies(c).length}:null,done:(c,m)=>gdEnemies(c).length<m.base,reward:[['cash',400],['un',-5]]},
+ {k:'dec',make:c=>({arg:2,text:'Settle 2 national events',base:(GC.ev&&GC.ev.hist||[]).filter(h=>h[1]===c).length}),done:(c,m)=>(GC.ev&&GC.ev.hist||[]).filter(h=>h[1]===c).length>=m.base+2,reward:[['cash',300],['man',30]]},
+ {k:'guard',make:c=>{const n=gevNb(c).find(o=>!(gdS().gu[o]||[]).includes(c)&&!grAtWar(c,o));return n?{arg:n,text:'Guarantee '+gdName(n)}:null;},done:(c,m)=>(gdS().gu[m.arg]||[]).includes(c),reward:[['cash',300],['rel','$nb',8]]}];
+function gmisTurn(){if(!GC||!GC.me||!GC.nat[GC.me]||GC.nat[GC.me].dead)return;const c=GC.me;if(!GC.mis)GC.mis={};const S=GC.mis[c]||(GC.mis[c]={act:[],done:0,ndone:{}});
+  for(const m of S.act.slice()){const T=GMIS_T.find(t=>t.k===m.k);let ok=false;try{ok=T&&T.done(c,m);}catch(e){}if(ok){S.act=S.act.filter(x=>x!==m);S.done++;S.ndone[m.k]=(S.ndone[m.k]|0)+1;const l=gevApply(c,T.reward);grLog('Mission complete: '+m.text,c);try{gevToast(['🎯 Mission complete — '+m.text+'  '+l.join(' · ')]);}catch(e){}}}
+  for(let i=0;S.act.length<3&&i<GMIS_T.length*2;i++){const order=GMIS_T.slice().sort((a,b)=>(S.ndone[a.k]|0)-(S.ndone[b.k]|0)||(a.k<b.k?-1:1));const T=order.find(t=>!S.act.some(m=>m.k===t.k)&&(()=>{try{return !!t.make(c);}catch(e){return false;}})());if(!T)break;const m=T.make(c);S.act.push(Object.assign({k:T.k,t0:GC.turn},m));}}
+npTab('mis','🎯','Missions',(code,body)=>{if(code!==GC.me){body.innerHTML='<div style="opacity:.7">Missions are only tracked for your own nation.</div>';return;}const S=(GC.mis&&GC.mis[code])||{act:[],done:0};
+  body.innerHTML='<div style="margin-bottom:8px">National goals — finish one and a new one appears. Completed: <b>'+S.done+'</b></div>'+(S.act.map(m=>{const T=GMIS_T.find(t=>t.k===m.k);const rw=T.reward.map(f=>f[0]==='cash'?'+$'+f[1]:f[0]==='mod'?(GMOD_STATS[f[1]]||f[1])+' +'+Math.round(f[2]*100)+'%':f[0]==='un'?'unrest '+f[1]:f[0]==='man'?'+'+f[1]+' manpower':f[0]==='rel'?'opinion +'+f[2]:'').join(' · ');
+    return '<div style="padding:8px 12px;margin:5px 0;border:1px solid #c9a35a;border-radius:6px"><b>🎯 '+m.text+'</b><div style="opacity:.75;font-size:14px;margin-top:2px">Reward: '+rw+' · since turn '+m.t0+'</div></div>';}).join('')||'<div style="opacity:.7">No goals right now.</div>');},code=>code===GC.me);

@@ -288,3 +288,4 @@ Shipped: real elevation/bathymetry (Terrarium tiles) + Natural Earth I satellite
 - 2026-11-07 laneE (Sonnet): richer desert colour grade + one-line controls hint (no overlap); battle-look shot script orch/laneEshots.mjs. E1–E4 still open, see orch/HANDOFF-laneE.md
 - laneD (2026-11-07 D2 slice 2): fixed a committed merge-conflict in orch/newplayer.mjs (audit tool was unrunnable); audit now ignores in-menu false positives. Real findings left: encyclopedia names use "MBT" jargon (data rename, deferred). No game code changed.
 - laneG 2026-11-07 (Sonnet): alerts bar (13m), EU4-style Diplomacy tab + truces/guarantees/peace (13n), event/decision engine with chains (13p), headlines strip (13o), achievements tab (13q), diplomatic web (13r); orch/gdtest.mjs. Hooks in 13-grand (grDeclare/grEndTurn) and 13c (guTop/guEndTurn).
+- laneG 2026-11-07 (Sonnet): missions generator (13s), ledger graphs tab (13t), world crisis events; diplomatic web ◎ button.

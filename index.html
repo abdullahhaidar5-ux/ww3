@@ -20692,7 +20692,7 @@ function gdOnDeclare(a,b){const S=gdS();S.ws[grWk(a,b)]=GC.turn;if(GD_DEPTH>1)re
     for(const g of Array.from(new Set(call)).sort()){if(g===a||g===b||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
       if(GC.nat[g].ai||g===GC.me){GC.war[grWk(g,a)]=1;S.ws[grWk(g,a)]=GC.turn;grLog(gdName(g)+' joins the war against '+gdName(a)+' to defend '+gdName(b)+'.',g);}}}finally{GD_DEPTH--;}}
 // each turn: AI-vs-AI peace, AI offers peace to the player when losing, truces tick
-function gdTurn(){if(!GC||!GC.nat)return;const S=gdS();try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}const done=new Set();
+function gdTurn(){if(!GC||!GC.nat)return;const S=gdS();try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}const done=new Set();
   for(const k of Object.keys(GC.war).sort()){const [a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead){delete GC.war[k];continue;}
     const len=gdWarLen(a,b);if(len<8)continue;const [x,y]=gdScore(a,b);
     const loser=x>y?b:y>x?a:null,winner=loser===a?b:a;
@@ -20781,6 +20781,10 @@ const GEV_ROWS=[
  {id:'mutiny',t:'Grumbling in the barracks',x:'Pay is late and the garrison mutters about it.',w:2,c:'poor',o:[{t:'Pay them from reserves ($300)',fx:[['cash',-300]]},{t:'Promise pay next month',fx:[['un',9],['mod','warSupport',-.05,6]]}]},
  {id:'arms',t:'Arms dealers call',x:'Foreign agents offer surplus weapons at a discount.',w:2,c:'rich',o:[{t:'Buy a shipment ($500)',fx:[['cash',-500],['mod','fireSupport',.1,10]]},{t:'Refuse',fx:[]}]},
  {id:'rivalry',t:'Border incident',x:'Shots were exchanged at a frontier post. Both sides blame each other.',w:3,c:'nb',o:[{t:'Protest formally',fx:[['rel','$nb',-6]]},{t:'Offer a joint inquiry',fx:[['rel','$nb',8]]}]},
+ {id:'g_oil',g:1,t:'WORLD: oil price shock',x:'A supply scare sends fuel prices soaring across the world.',w:0,c:'always',o:[{t:'Pay the premium ($400)',fx:[['cash',-400]]},{t:'Ration fuel',fx:[['un',5],['mod','fireSupport',-.05,6]]}]},
+ {id:'g_cyber',g:1,t:'WORLD: cyber attack on banks',x:'Hackers have disrupted banking networks in many countries.',w:0,c:'always',o:[{t:'Restore from backups ($300)',fx:[['cash',-300]]},{t:'Freeze accounts and wait',fx:[['un',4],['cash',-100]]}]},
+ {id:'g_boom',g:1,t:'WORLD: trade boom',x:'Global demand is up and merchants are busy everywhere.',w:0,c:'always',o:[{t:'Tax the windfall',fx:[['cash',500],['un',3]]},{t:'Let merchants keep it',fx:[['cash',200],['un',-3]]}]},
+ {id:'g_summit',g:1,t:'WORLD: peace summit',x:'Leaders gather to calm tensions; every nation is pressed to act.',w:0,c:'always',o:[{t:'Attend and make concessions',fx:[['rel','$nb',10],['un',-3]]},{t:'Send a low-level delegation',fx:[['mod','warSupport',.03,6]]}]},
  {id:'techgift',t:'A university breakthrough',x:'Engineers have found a way to cut costs in the arms factories.',w:2,c:'always',o:[{t:'Fund the lab ($300)',fx:[['cash',-300],['mod','fireSupport',.08,12]]},{t:'Patent and sell it',fx:[['cash',350]]}]}];
 function gevCond(c,code){const nat=GC.nat[code];const foes=gdEnemies(code);
   const nb=gevNb(code);
@@ -20804,6 +20808,7 @@ function gevFire(code,id){const row=GEV_ROWS.find(r=>r.id===id);if(!row)return;c
 function gevChoose(code,id,i){const row=GEV_ROWS.find(r=>r.id===id);if(!row)return [];const S=gevS();S.pend=S.pend.filter(p=>!(p[0]===code&&p[1]===id));const o=row.o[i];const l=gevApply(code,o.fx);S.hist.push([GC.turn,code,id,i]);if(S.hist.length>200)S.hist.shift();grLog(gdName(code)+': '+row.t+' — '+o.t,code);return l;}
 // per turn (called from gdTurn): scheduled follow-ups first, then a seeded roll per nation (≈1 in 7 turns each)
 function gevTurn(){const S=gevS();const due=S.sch.filter(x=>x[0]<=GC.turn);S.sch=S.sch.filter(x=>x[0]>GC.turn);for(const [,c,id] of due)if(GC.nat[c]&&!GC.nat[c].dead)gevFire(c,id);
+  {const RG=grRng((GC.seed|0)*613+GC.turn*29),gs=GEV_ROWS.filter(e=>e.g);if(gs.length&&(S.lastG==null||GC.turn-S.lastG>=10)&&RG()<.08){const pick=gs[Math.floor(RG()*gs.length)];S.lastG=GC.turn;grLog(pick.t,'');for(const c of Object.keys(GC.nat).sort())if(!GC.nat[c].dead&&grNat(c).major)gevFire(c,pick.id);}}
   const R=grRng((GC.seed|0)*977+GC.turn*13);for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];const r=R(),r2=R();if(N.dead||!grNat(c).major)continue;if(S.last[c]!=null&&GC.turn-S.last[c]<5)continue;if(c===GC.me&&S.pend.length)continue;if(r>.17)continue;
     const ok=GEV_ROWS.filter(e=>e.w>0&&gevCond(e.c,c));if(!ok.length)continue;let tot=0;for(const e of ok)tot+=e.w;let x=r2*tot;let pick=ok[0];for(const e of ok){x-=e.w;if(x<=0){pick=e;break;}}gevFire(c,pick.id);}}
 function gevShow(){if(!GC||!GC.me)return;const S=gevS();const p=S.pend.find(x=>x[0]===GC.me);if(!p||document.getElementById('gModal'))return;const row=GEV_ROWS.find(r=>r.id===p[1]);if(!row)return;
@@ -20850,5 +20855,39 @@ function gwebOpen(){if(!GC)return;const old=document.getElementById('gWeb');if(o
   m.onclick=e=>{if(e.target===m)m.remove();};
   const esc=e=>{if(e.key==='Escape'){m.remove();document.removeEventListener('keydown',esc,true);}};document.addEventListener('keydown',esc,true);
   if(!nodes.length)box.appendChild(guEl('div','padding:20px;opacity:.7','No wars or alliances yet.'));}
+// MISSIONS (lane G, B7): a short list of national goals for the human nation, GENERATED from the current state (no hand-written trees).
+// Each template = {k, make(c)->{arg,text} or null, done(c,m)->bool, reward:[effects in the ONE event vocabulary of 13p]}. State GC.mis={code:{act:[{k,arg,text,t0,base}],done:n}}.
+// Deterministic; only the human nation gets missions (AI nations need none). Rewards go through gevApply (cash / unrest / manpower / opinion / GMOD rows).
+function gmCount(c){return GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c).length;}
+function gmHeld(c,from){return GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c&&GC.prov[p.i].o0===from).length;}
+const GMIS_T=[
+ {k:'prov',make:c=>({arg:gmCount(c)+3,text:'Hold '+(gmCount(c)+3)+' provinces'}),done:(c,m)=>gmCount(c)>=m.arg,reward:[['cash',700],['mod','warSupport',.04,10]]},
+ {k:'ally',make:c=>({arg:gdAllies(c).length+1,text:'Have '+(gdAllies(c).length+1)+' allies'}),done:(c,m)=>gdAllies(c).length>=m.arg,reward:[['cash',500],['un',-4]]},
+ {k:'take',make:c=>{const e=gdEnemies(c).sort()[0]||gevNb(c)[0];if(!e)return null;return {arg:e,text:'Take a province from '+gdName(e),base:gmHeld(c,e)};},done:(c,m)=>gmHeld(c,m.arg)>m.base,reward:[['cash',800],['mod','warSupport',.06,10]]},
+ {k:'cash',make:c=>({arg:Math.round(GC.nat[c].cash+3000),text:'Save $'+Math.round(GC.nat[c].cash+3000).toLocaleString()}),done:(c,m)=>GC.nat[c].cash>=m.arg,reward:[['mod','fireSupport',.08,12]]},
+ {k:'peace',make:c=>gdEnemies(c).length?{arg:1,text:'Sign a peace with any enemy',base:gdEnemies(c).length}:null,done:(c,m)=>gdEnemies(c).length<m.base,reward:[['cash',400],['un',-5]]},
+ {k:'dec',make:c=>({arg:2,text:'Settle 2 national events',base:(GC.ev&&GC.ev.hist||[]).filter(h=>h[1]===c).length}),done:(c,m)=>(GC.ev&&GC.ev.hist||[]).filter(h=>h[1]===c).length>=m.base+2,reward:[['cash',300],['man',30]]},
+ {k:'guard',make:c=>{const n=gevNb(c).find(o=>!(gdS().gu[o]||[]).includes(c)&&!grAtWar(c,o));return n?{arg:n,text:'Guarantee '+gdName(n)}:null;},done:(c,m)=>(gdS().gu[m.arg]||[]).includes(c),reward:[['cash',300],['rel','$nb',8]]}];
+function gmisTurn(){if(!GC||!GC.me||!GC.nat[GC.me]||GC.nat[GC.me].dead)return;const c=GC.me;if(!GC.mis)GC.mis={};const S=GC.mis[c]||(GC.mis[c]={act:[],done:0,ndone:{}});
+  for(const m of S.act.slice()){const T=GMIS_T.find(t=>t.k===m.k);let ok=false;try{ok=T&&T.done(c,m);}catch(e){}if(ok){S.act=S.act.filter(x=>x!==m);S.done++;S.ndone[m.k]=(S.ndone[m.k]|0)+1;const l=gevApply(c,T.reward);grLog('Mission complete: '+m.text,c);try{gevToast(['🎯 Mission complete — '+m.text+'  '+l.join(' · ')]);}catch(e){}}}
+  for(let i=0;S.act.length<3&&i<GMIS_T.length*2;i++){const order=GMIS_T.slice().sort((a,b)=>(S.ndone[a.k]|0)-(S.ndone[b.k]|0)||(a.k<b.k?-1:1));const T=order.find(t=>!S.act.some(m=>m.k===t.k)&&(()=>{try{return !!t.make(c);}catch(e){return false;}})());if(!T)break;const m=T.make(c);S.act.push(Object.assign({k:T.k,t0:GC.turn},m));}}
+npTab('mis','🎯','Missions',(code,body)=>{if(code!==GC.me){body.innerHTML='<div style="opacity:.7">Missions are only tracked for your own nation.</div>';return;}const S=(GC.mis&&GC.mis[code])||{act:[],done:0};
+  body.innerHTML='<div style="margin-bottom:8px">National goals — finish one and a new one appears. Completed: <b>'+S.done+'</b></div>'+(S.act.map(m=>{const T=GMIS_T.find(t=>t.k===m.k);const rw=T.reward.map(f=>f[0]==='cash'?'+$'+f[1]:f[0]==='mod'?(GMOD_STATS[f[1]]||f[1])+' +'+Math.round(f[2]*100)+'%':f[0]==='un'?'unrest '+f[1]:f[0]==='man'?'+'+f[1]+' manpower':f[0]==='rel'?'opinion +'+f[2]:'').join(' · ');
+    return '<div style="padding:8px 12px;margin:5px 0;border:1px solid #c9a35a;border-radius:6px"><b>🎯 '+m.text+'</b><div style="opacity:.75;font-size:14px;margin-top:2px">Reward: '+rw+' · since turn '+m.t0+'</div></div>';}).join('')||'<div style="opacity:.7">No goals right now.</div>');},code=>code===GC.me);
+// LEDGER GRAPHS over time (lane G, ⚡24): every living major's provinces and score recorded each turn (GC.gh = {code:[[turn,provs,score]]}, capped), drawn as line charts in a "Graphs" nation-panel tab.
+function ggTurn(){if(!GC||!GC.nat)return;if(!GC.gh)GC.gh={};const cnt={};for(const p of GCM.P)if(p.land)cnt[GC.prov[p.i].o]=(cnt[GC.prov[p.i].o]|0)+1;
+  for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead||!grNat(c).major)continue;const a=GC.gh[c]||(GC.gh[c]=[]);a.push([GC.turn,cnt[c]|0,grScore(c)]);if(a.length>150)a.shift();}}
+npTab('gr','📈','Graphs',(code,body)=>{const idx=NP.gk==='score'?2:1;const kind=idx===2?'score':'provinces';
+  const bar=guEl('div','display:flex;gap:6px;margin-bottom:8px');for(const [k,nm] of [['prov','Provinces'],['score','Score']]){const b=guEl('button','padding:3px 12px;border-radius:12px;border:1px solid '+((k==='score')===(idx===2)?'#c9a35a':'#3d5a73')+';background:transparent;color:#dfe8f0;cursor:pointer',nm);b.type='button';b.onclick=()=>{NP.gk=k;npDraw();};bar.appendChild(b);}body.appendChild(bar);
+  const H=GC.gh||{};const codes=Object.keys(H).filter(c=>H[c].length>1);if(!codes.length){body.appendChild(guEl('div','opacity:.7','Play a few turns and the history appears here.'));return;}
+  const last=c=>H[c][H[c].length-1][idx];codes.sort((a,b)=>last(b)-last(a));const show=codes.slice(0,6);if(!show.includes(code)&&H[code])show.push(code);if(GC.me&&!show.includes(GC.me)&&H[GC.me])show.push(GC.me);
+  const W=880,Hh=340,cv=document.createElement('canvas');cv.width=W;cv.height=Hh;cv.style.cssText='max-width:100%;height:auto;background:#0c1621;border-radius:6px';body.appendChild(cv);const g=cv.getContext('2d');
+  let mx=1,t0=1e9,t1=0;for(const c of show)for(const r of H[c]){mx=Math.max(mx,r[idx]);t0=Math.min(t0,r[0]);t1=Math.max(t1,r[0]);}if(t1===t0)t1=t0+1;
+  g.strokeStyle='#223546';g.fillStyle='#8aa0b4';g.font='12px sans-serif';for(let i=0;i<=4;i++){const y=20+(Hh-44)*i/4;g.beginPath();g.moveTo(44,y);g.lineTo(W-10,y);g.stroke();g.fillText(String(Math.round(mx*(1-i/4))),4,y+4);}
+  g.fillText('turn '+t0,44,Hh-6);g.fillText('turn '+t1,W-70,Hh-6);
+  const leg=guEl('div','display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:14px');
+  for(const c of show){const col=grNat(c).color||'#aaa';g.beginPath();H[c].forEach((r,i)=>{const x=44+(r[0]-t0)/(t1-t0)*(W-54),y=20+(Hh-44)*(1-r[idx]/mx);i?g.lineTo(x,y):g.moveTo(x,y);});g.strokeStyle=col;g.lineWidth=c===code||c===GC.me?3.5:1.8;g.stroke();
+    leg.appendChild(guEl('span','','<span style="display:inline-block;width:12px;height:4px;background:'+col+';margin-right:5px;vertical-align:middle"></span>'+gdName(c)+(c===GC.me?' (you)':'')+' <b>'+last(c)+'</b>'));}
+  body.appendChild(leg);});
 </script>
 </body></html>

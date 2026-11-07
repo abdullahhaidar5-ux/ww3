@@ -19,6 +19,10 @@ const GEV_ROWS=[
  {id:'mutiny',t:'Grumbling in the barracks',x:'Pay is late and the garrison mutters about it.',w:2,c:'poor',o:[{t:'Pay them from reserves ($300)',fx:[['cash',-300]]},{t:'Promise pay next month',fx:[['un',9],['mod','warSupport',-.05,6]]}]},
  {id:'arms',t:'Arms dealers call',x:'Foreign agents offer surplus weapons at a discount.',w:2,c:'rich',o:[{t:'Buy a shipment ($500)',fx:[['cash',-500],['mod','fireSupport',.1,10]]},{t:'Refuse',fx:[]}]},
  {id:'rivalry',t:'Border incident',x:'Shots were exchanged at a frontier post. Both sides blame each other.',w:3,c:'nb',o:[{t:'Protest formally',fx:[['rel','$nb',-6]]},{t:'Offer a joint inquiry',fx:[['rel','$nb',8]]}]},
+ {id:'g_oil',g:1,t:'WORLD: oil price shock',x:'A supply scare sends fuel prices soaring across the world.',w:0,c:'always',o:[{t:'Pay the premium ($400)',fx:[['cash',-400]]},{t:'Ration fuel',fx:[['un',5],['mod','fireSupport',-.05,6]]}]},
+ {id:'g_cyber',g:1,t:'WORLD: cyber attack on banks',x:'Hackers have disrupted banking networks in many countries.',w:0,c:'always',o:[{t:'Restore from backups ($300)',fx:[['cash',-300]]},{t:'Freeze accounts and wait',fx:[['un',4],['cash',-100]]}]},
+ {id:'g_boom',g:1,t:'WORLD: trade boom',x:'Global demand is up and merchants are busy everywhere.',w:0,c:'always',o:[{t:'Tax the windfall',fx:[['cash',500],['un',3]]},{t:'Let merchants keep it',fx:[['cash',200],['un',-3]]}]},
+ {id:'g_summit',g:1,t:'WORLD: peace summit',x:'Leaders gather to calm tensions; every nation is pressed to act.',w:0,c:'always',o:[{t:'Attend and make concessions',fx:[['rel','$nb',10],['un',-3]]},{t:'Send a low-level delegation',fx:[['mod','warSupport',.03,6]]}]},
  {id:'techgift',t:'A university breakthrough',x:'Engineers have found a way to cut costs in the arms factories.',w:2,c:'always',o:[{t:'Fund the lab ($300)',fx:[['cash',-300],['mod','fireSupport',.08,12]]},{t:'Patent and sell it',fx:[['cash',350]]}]}];
 function gevCond(c,code){const nat=GC.nat[code];const foes=gdEnemies(code);
   const nb=gevNb(code);
@@ -42,6 +46,7 @@ function gevFire(code,id){const row=GEV_ROWS.find(r=>r.id===id);if(!row)return;c
 function gevChoose(code,id,i){const row=GEV_ROWS.find(r=>r.id===id);if(!row)return [];const S=gevS();S.pend=S.pend.filter(p=>!(p[0]===code&&p[1]===id));const o=row.o[i];const l=gevApply(code,o.fx);S.hist.push([GC.turn,code,id,i]);if(S.hist.length>200)S.hist.shift();grLog(gdName(code)+': '+row.t+' — '+o.t,code);return l;}
 // per turn (called from gdTurn): scheduled follow-ups first, then a seeded roll per nation (≈1 in 7 turns each)
 function gevTurn(){const S=gevS();const due=S.sch.filter(x=>x[0]<=GC.turn);S.sch=S.sch.filter(x=>x[0]>GC.turn);for(const [,c,id] of due)if(GC.nat[c]&&!GC.nat[c].dead)gevFire(c,id);
+  {const RG=grRng((GC.seed|0)*613+GC.turn*29),gs=GEV_ROWS.filter(e=>e.g);if(gs.length&&(S.lastG==null||GC.turn-S.lastG>=10)&&RG()<.08){const pick=gs[Math.floor(RG()*gs.length)];S.lastG=GC.turn;grLog(pick.t,'');for(const c of Object.keys(GC.nat).sort())if(!GC.nat[c].dead&&grNat(c).major)gevFire(c,pick.id);}}
   const R=grRng((GC.seed|0)*977+GC.turn*13);for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];const r=R(),r2=R();if(N.dead||!grNat(c).major)continue;if(S.last[c]!=null&&GC.turn-S.last[c]<5)continue;if(c===GC.me&&S.pend.length)continue;if(r>.17)continue;
     const ok=GEV_ROWS.filter(e=>e.w>0&&gevCond(e.c,c));if(!ok.length)continue;let tot=0;for(const e of ok)tot+=e.w;let x=r2*tot;let pick=ok[0];for(const e of ok){x-=e.w;if(x<=0){pick=e;break;}}gevFire(c,pick.id);}}
 function gevShow(){if(!GC||!GC.me)return;const S=gevS();const p=S.pend.find(x=>x[0]===GC.me);if(!p||document.getElementById('gModal'))return;const row=GEV_ROWS.find(r=>r.id===p[1]);if(!row)return;

@@ -53,7 +53,7 @@ function gdOnDeclare(a,b){const S=gdS();S.ws[grWk(a,b)]=GC.turn;if(GD_DEPTH>1)re
     for(const g of Array.from(new Set(call)).sort()){if(g===a||g===b||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
       if(GC.nat[g].ai||g===GC.me){GC.war[grWk(g,a)]=1;S.ws[grWk(g,a)]=GC.turn;grLog(gdName(g)+' joins the war against '+gdName(a)+' to defend '+gdName(b)+'.',g);}}}finally{GD_DEPTH--;}}
 // each turn: AI-vs-AI peace, AI offers peace to the player when losing, truces tick
-function gdTurn(){if(!GC||!GC.nat)return;const S=gdS();try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}const done=new Set();
+function gdTurn(){if(!GC||!GC.nat)return;const S=gdS();try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}const done=new Set();
   for(const k of Object.keys(GC.war).sort()){const [a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead){delete GC.war[k];continue;}
     const len=gdWarLen(a,b);if(len<8)continue;const [x,y]=gdScore(a,b);
     const loser=x>y?b:y>x?a:null,winner=loser===a?b:a;
