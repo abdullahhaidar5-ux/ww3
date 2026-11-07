@@ -442,7 +442,7 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
     if(d<1700&&(d<620||(d<1000&&(big||p.tw>=3))||(d<1700&&p.cap))){const tw=g3Towns().find(t=>t.pi===b.pi),x=tw?tw.x:p.x,z=tw?tw.z:p.y;q=proj(x,g3HeightAt(x,z)+9+(p.cap?3:0),z);}
     if(q){const key=Math.floor(q[0]/130)+'_'+Math.floor(q[1]/30);if(occ.has(key))q=null;else occ.add(key);}
     if(!q){vis(b.el,false);continue;}const own=GC.nat[st.o]&&GC.nat[st.o].cap===b.pi;
-    const html='<i style="background:'+grNat(st.o).color+'"></i>'+(own?'★ ':'')+p.n+(GC.me&&st.o===GC.me&&st.un>55?' <span style="color:#ff8d7c">!</span>':'');if(b.h!==html){b.h=html;b.el.innerHTML=html;}
+    const html='<i style="background:'+grNat(st.o).color+'"></i>'+(own?'★ ':'')+p.n+(GC.me&&st.o===GC.me&&st.un>55?' <span style="color:#ff8d7c">!</span>':'')+geIcons(b.pi);if(b.h!==html){b.h=html;b.el.innerHTML=html;}
     put(b.el,q);vis(b.el,true);}
   for(const s of G3.sl){const p=GCM.P[s.pi],f=s.ck?d<1500:d<650;let q=f?proj(p.x,1,p.y):null;if(!q){vis(s.el,false);continue;}putC(s.el,q);vis(s.el,true);}
   // nation names across the land when zoomed out
