@@ -215,3 +215,12 @@ Grand campaign round 4 (Abdullah 22:22 "More?") — after the slice, then kaizen
 - [ ] **RG51 Advisor voice** (Lane D): voiced advisor (XTTS, the nation's language) warns and suggests.
 - [ ] **RG52 Tutorial campaign** (Lane D): short guided grand campaign.
 - [ ] **RG53 Statistics ledger** (Lane A): EU4-style ledger comparing every nation.
+Grand campaign round 5 (Abdullah 22:24) — after the slice, then kaizen; extend existing systems:
+- [ ] **RG54 Carrier groups** (Lane A): carriers project air sorties anywhere; losing one = national morale shock (B5c).
+- [ ] **RG55 Submarine war** (Lane A): hidden subs hunt sea lanes; convoys + escorts protect trade (uses RG1 lanes).
+- [ ] **RG56 Drone swarms** (Lane A): cheap long-range drone campaigns vs cities, oil, bases (one strike system with RG33 missiles).
+- [ ] **RG57 Air defence network** (Lane A): layered SAM umbrellas over provinces; gaps invite strikes (RG33 interceptors).
+- [ ] **RG58 Great-power AI** (Lane A): US/RU/CN AIs pursue real goals and intervene in wars.
+- [ ] **RG59 Natural disasters** (Lane G): earthquakes, floods, sandstorms; aid wins opinion (event engine).
+- [ ] **RG60 Pilgrimage season** (Lane G): Hajj and Arbaeen — truces expected, morale boost, attacks anger everyone (respectful; ties to RG17 holy sites).
+- [ ] **RG61 Global economy crash** (Lane B): recessions/booms ripple through trade + stability.
