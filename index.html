@@ -6741,6 +6741,48 @@ add([
  desc:'The southern tip: red granite mountains plunging into a narrow blue gulf, a border town on the coast and the wadi roads to the north. Mountain ranges with three passes decide it.',
  c:[[900,350,95,'gulfcity'],[1250,620,65,'mideast'],[600,900,65,'mideast']],cc:[1600,1100,110,'mideast'],
  sea:[1600,-400,640,2.4],rd:[[700,640,1180,760,92],[1280,880,1430,560,86],[470,700,530,940,70]],pk:[[1000,1000,90,1.6,.4],[1450,300,70,1.4,-.2]]},
+/* ---------- IRAQ (5 new; with mesopotamia + marsh = 6) ---------- */
+{k:'mosulcity',n:'Mosul: Old City on the Tigris',th:'desert',rg:1.15,home:['IQ','KD'],tag:'dense old city · river · bridges · dust',
+ desc:'A big northern Iraqi city split by the Tigris: a dense old quarter, five bridges, rubble-prone streets and open farmland and low hills around it. Whoever holds the bridges holds the city.',
+ c:[[760,520,120,'mideast'],[1150,300,85,'mideast'],[560,950,75,'mideast']],cc:[1600,1100,160,'mideast'],
+ riv:[[1000,-200,1100,1100,70,52]],br:[[0,.3],[0,.5],[0,.7],[0,.9]],rd:[[620,720,760,900,66]],pk:[[1350,760,60,1.4,.3]]},
+{k:'tigristowns',n:'Tigris: River Towns',th:'desert',rg:1.1,home:['IQ','IR'],tag:'wide river · palm groves · river towns',
+ desc:'The middle Tigris: a broad slow river with palm-grove towns on both banks, canals and a handful of bridges. Armies shuttle by the bridge towns while artillery covers the river.',
+ c:[[760,420,95,'mideast'],[1100,860,90,'mideast'],[540,880,70,'mideast']],cc:[1600,1100,140,'mideast'],
+ riv:[[1250,-200,1250,1100,70,70]],br:[[0,.3],[0,.62],[0,.9]],lk:[[800,640,55,1.3]],pk:[[1450,520,50,1.3,.4]]},
+{k:'anbardesert',n:'Anbar: Euphrates and Desert',th:'desert',rg:1.15,home:['IQ','SY','JO'],tag:'open desert · river valley · highway',
+ desc:'The western desert of Iraq: a green Euphrates strip with towns and dams, empty gravel plain, a long highway and wadis. Fast open fighting, with the river-valley towns as the prize.',
+ c:[[760,520,95,'mideast'],[1150,300,85,'mideast'],[560,900,70,'mideast']],cc:[1600,1100,130,'mideast'],
+ riv:[[200,760,1500,560,70,50]],br:[[0,.4],[0,.8]],rd:[[1100,860,1300,1020,64]],pk:[[1000,1000,60,1.6,.2]]},
+{k:'basraport',n:'Basra: Shatt al-Arab Port',th:'desert',rg:1.05,home:['IQ','IR'],fmb:300,tag:'estuary · port · refineries · islands',
+ desc:'The southern port: a wide tidal estuary with island flats, refineries and docks, canals and a causeway or two. Fleets and river craft fight for the waterway, tanks for the causeways.',
+ c:[[700,480,110,'gulfcity'],[1050,860,90,'gulfcity'],[1200,300,80,'mideast']],cc:[1600,1100,150,'gulfcity'],
+ sea:[1600,-380,640,2.2],riv:[[900,260,900,1100,60,56]],br:[[0,.55],[0,.85]],lk:[[1250,640,70,1.5]]},
+{k:'marshes',n:'Southern Marshes',th:'green',rg:1.0,home:['IQ','RV','IR'],tag:'reed marsh · lagoons · causeways · villages',
+ desc:'The great southern marshes: reed islands and shallow lagoons, canoe villages and narrow causeways. Few roads, many ambush lanes; the island market town in the middle supplies the winner.',
+ c:[[700,480,85,'mideast'],[1050,820,80,'mideast'],[1250,360,70,'mideast']],cc:[1600,1100,120,'mideast'],
+ lk:[[1000,560,150,1.3],[700,960,120,1.4],[1280,820,90,1.2],[1400,420,80,1.2]],riv:[[200,180,1500,1000,60,34]],br:[[0,.35],[0,.7]]},
+/* ---------- SYRIA (5 new; with aleppo = 6) ---------- */
+{k:'euphratesvalley',n:'Euphrates Valley and Dam',th:'desert',rg:1.2,home:['SY','IQ','TR'],tag:'river valley · dam lake · steppe',
+ desc:'The Syrian Euphrates: a green valley under a huge dam lake, steppe towns on the plateau above it and few crossings. The dam crossing is the objective every army wants.',
+ c:[[760,520,95,'mideast'],[1150,820,85,'mideast'],[580,950,70,'mideast']],cc:[1600,1100,130,'mideast'],
+ riv:[[1150,-200,1250,1100,60,60]],br:[[0,.55]],lk:[[1280,330,170,1.5]],rd:[[600,660,780,820,66]]},
+{k:'homsgap',n:'Homs Gap',th:'green',rg:1.25,home:['SY','RS','IL'],tag:'mountain gap · orchards · highway',
+ desc:'The wide gap between the coastal mountains and the Lebanese mountains: orchards and a river valley, the highway from the coast to the interior and a lake and an old fortress hill. A classic invasion route.',
+ c:[[760,470,100,'lebanon'],[1150,300,80,'mideast'],[560,900,75,'lebanon']],cc:[1600,1100,140,'mideast'],
+ rd:[[900,-60,980,620,90],[820,800,1000,1000,80]],lk:[[1280,760,90,1.4]],riv:[[300,620,1500,700,50,34]],br:[[0,.4],[0,.8]],pk:[[1200,420,60,1.4,-.3]]},
+{k:'latakiamtns',n:'Latakia: Coastal Mountains',th:'green',rg:1.55,home:['SY','TR'],fmb:300,tag:'forested mountains · coast · port',
+ desc:'Forested coastal mountains tumbling into the sea, a port city on the shore and winding valley roads. Hard to see and hard to move: ambush country.',
+ c:[[700,520,100,'gulfcity'],[1100,300,70,'lebanon'],[1000,900,70,'lebanon']],cc:[1600,1100,120,'lebanon'],
+ sea:[-340,1100,640,.72],rd:[[900,0,1100,500,86],[760,760,1140,940,80],[1250,860,1450,650,76]],pk:[[1000,640,80,1.4,.4],[1300,300,70,1.3,-.3]]},
+{k:'ghouta',n:'Damascus: Orchard Ring',th:'green',rg:1.0,home:['SY','IL','JO'],tag:'orchard belt · dense suburbs · desert edge',
+ desc:'An oasis capital ringed by orchards and canals: dense suburbs, irrigated groves hiding infantry and a bare desert plateau behind. Tight streets inside, open sight lines outside.',
+ c:[[700,520,125,'mideast'],[1050,820,100,'mideast'],[1200,330,90,'mideast'],[560,1000,80,'mideast']],cc:[1600,1100,160,'mideast'],
+ riv:[[600,300,1500,640,40,30]],br:[[0,.3],[0,.6],[0,.9]],rd:[[1300,860,1420,1060,70]],pk:[[1450,700,60,1.4,.3]]},
+{k:'palmyra',n:'Palmyra Desert',th:'desert',rg:1.15,home:['SY','IQ'],tag:'open desert · oasis · desert highway',
+ desc:'The Syrian desert: an oasis town with its ancient colonnaded ruins as scenery, bare ridges, gas fields and one long highway. Pure mobile warfare.',
+ c:[[760,500,90,'mideast'],[1150,820,80,'mideast'],[560,900,65,'mideast']],cc:[1600,1100,130,'mideast'],
+ rd:[[900,600,1250,520,70],[1300,900,1450,1000,66]],pk:[[1000,1000,70,1.7,.3],[1400,400,60,1.4,-.4]],lk:[[640,680,50,1.2]]},
 ]);
 }
 /* ================= SIMULATION (authoritative; runs in single-player and on the host) ================= */
@@ -15561,7 +15603,7 @@ try{encMenu();}catch(e){console.warn('encyclopedia menu',e);}
    PINGS & DRAWING  , attack here   . defend here   / danger   ' draw a line   ; draw a circle   (then click / drag the map or minimap).
                  Allies see them for 10 s; quick lines go to the log of your team.
    TRUCE (free-for-all only) and ALLIED AID (money with a fee, give selected units) sit in the same panel. */
-const CT={mode:null,plans:[],pid:0,pl:{type:'m',trig:'auto',sec:10},marks:[],draw:null,form:{},names:{},sendG:0,open:true,sig:''};
+const CT={mode:null,plans:[],pid:0,pl:{type:'m',trig:'auto',sec:10},marks:[],draw:null,form:{},names:{},sendG:0,open:false,sig:''};
 const CT_COL={m:'#74d08f',a:'#ea5a40',h:'#6fb2ff'},CT_TN={m:'Move',a:'Assault',h:'Hold'};
 const CT_PING=[{n:'Attack here',c:'#ea5a40'},{n:'Defend here',c:'#6fb2ff'},{n:'Danger',c:'#f2c94c'}];
 const CT_GN=['Armour','Infantry','Assault','Recon','Support','Artillery','Air','Reserve'];
@@ -21753,6 +21795,49 @@ function g3ShipTick(dt,s){
     D.position.set(x,.35+Math.sin(G3.time*1.3+sh.seed)*.12,z);D.rotation.set(0,Math.atan2(dx,dz),0,'YXZ');D.scale.setScalar(sc);D.updateMatrix();S.m[sh.k].setMatrixAt(cnt[sh.k]++,D.matrix);
     D.position.y=.2;D.scale.set(sc*2.3,1,sc*(6+3*Math.sin(G3.time*2+sh.seed)));D.position.x=x-Math.sin(D.rotation.y)*sc*4.4;D.position.z=z-Math.cos(D.rotation.y)*sc*4.4;D.updateMatrix();S.wk.setMatrixAt(w++,D.matrix);}
   for(let k=0;k<2;k++){S.m[k].count=cnt[k];S.m[k].instanceMatrix.needsUpdate=true;}S.wk.count=w;S.wk.instanceMatrix.needsUpdate=true;}
+// 13x-ginfl.js — lane B5b slice 1: INFLATION + ARMY UPKEEP SLIDER (EU4 economy), all as GMOD rows on the existing 'upkeep'/'income' stats
+// (13g-grandeco reads them). N.infl = inflation % (0..30) from unpaid/defaulted war bonds and an empty treasury; falls slowly; Political points cut it.
+// N.upk = army upkeep setting 0 lean / 1 normal / 2 full: lean = cheaper but slower rallying, full = dearer but faster rallying. Deterministic (state only).
+const GIN_MAX=30,GIN_COST=40,GIN_STEP=1; // inflation bands are whole 5% steps
+GMOD_COND.infl=(k,arg)=>{const N=GC&&GC.nat[k];return !!(N&&Math.min(6,Math.floor((N.infl||0)/5))===+arg);};
+GMOD_COND.upk=(k,arg)=>{const N=GC&&GC.nat[k];return !!(N&&(N.upk===undefined?1:N.upk|0)===+arg);};
+for(let b=1;b<=6;b++){const s='Inflation ('+(b*5)+'%+)';
+  GMOD_ROWS.push({id:'infl_up'+b,src:s,scope:'nation',stat:'upkeep',mul:1+.05*b,cond:'infl:'+b},
+    {id:'infl_inc'+b,src:s,scope:'nation',stat:'income',add:-.01*b,cond:'infl:'+b});}
+GMOD_ROWS.push({id:'upk_lo_c',src:'Lean army upkeep',scope:'nation',stat:'upkeep',mul:.8,cond:'upk:0'},
+  {id:'upk_lo_r',src:'Lean army upkeep',scope:'nation',stat:'rallySpeed',mul:.85,cond:'upk:0'},
+  {id:'upk_hi_c',src:'Full army upkeep',scope:'nation',stat:'upkeep',mul:1.2,cond:'upk:2'},
+  {id:'upk_hi_r',src:'Full army upkeep',scope:'nation',stat:'rallySpeed',mul:1.15,cond:'upk:2'});
+GMOD_STATS.upkeep=GMOD_STATS.upkeep||'Army upkeep';GMOD_STATS.income=GMOD_STATS.income||'Income';
+function ginN(c){const N=GC&&GC.nat[c];if(!N)return null;if(N.infl===undefined){N.infl=0;N.upk=1;}return N;}
+function ginCut(c){const N=ginN(c);if(!N||!N.pp)return 'Not available.';if(N.infl<=0)return 'There is no inflation.';
+  if(N.pp.pol<GIN_COST)return 'Needs '+GIN_COST+' Political points.';N.pp.pol-=GIN_COST;N.infl=Math.max(0,N.infl-5);GMOD_C.cache.clear();
+  if(c===GC.me)grLog('Austerity measures cut inflation to '+Math.round(N.infl)+'%.',c);return '';}
+function ginSet(c,v){const N=ginN(c);if(!N)return;N.upk=Math.max(0,Math.min(2,v|0));GMOD_C.cache.clear();}
+function ginPressure(c){const N=GC.nat[c],E=N.e||{},out=[];const nb=(E.bonds||[]).length;
+  if(nb)out.push([nb+' war bond'+(nb>1?'s':'')+' outstanding',.4*nb]);
+  if(E.defT>GC.turn)out.push(['Recent default',1.5]);
+  if(N.cash<=0&&(N.inc||0)<0)out.push(['Printing money to cover the deficit',1.5]);
+  if(!out.length)out.push(['Prices settle',-.3]);return out;}
+function ginMonth(){if(!GC)return;for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;ginN(c);if(N.inT===GC.turn)continue;N.inT=GC.turn;
+    N.infl=Math.max(0,Math.min(GIN_MAX,N.infl+ginPressure(c).reduce((s,x)=>s+x[1],0)));
+    if(c!==GC.me){if(N.infl>=10&&N.pp&&N.pp.pol>=GIN_COST+40)ginCut(c);}}
+  GMOD_C.cache.clear();}
+GMOD_HOOKS.push(ginMonth);
+npTab('fin','🏦','Finance',(code,body,c)=>{const N=ginN(code),own=c.own&&code===GC.me,inf=Math.round(N.infl*10)/10,u=N.upk|0;
+  const col=inf<5?'#8fd18f':inf<15?'#e8d27a':'#ff9a8a';
+  let h='<div style="font-size:26px;margin-bottom:6px"><b style="color:'+col+'">Inflation '+inf+'%</b></div>'+
+   '<div style="opacity:.85;margin-bottom:8px">Every 5% raises army upkeep by 5% and trims income by 1%. War bonds left unpaid, defaults and an empty treasury push it up; calm months and austerity bring it down.</div>'+
+   '<div style="margin:8px 0"><b>This month:</b> '+ginPressure(code).map(x=>x[0]+' ('+(x[1]>0?'+':'')+x[1]+')').join(', ')+'</div>'+
+   '<div style="margin:12px 0 4px"><b>Army upkeep:</b> <span style="opacity:.85">'+['Lean — 20% cheaper, slower rallying','Normal','Full — 20% dearer, faster rallying'][u]+'</span></div>';
+  const L=gmodLines('nation',code,'upkeep');if(L.length)h+='<div style="margin:8px 0;opacity:.85"><b>Upkeep modifiers:</b><br>'+L.join('<br>')+'</div>';
+  body.innerHTML=h;
+  if(own){const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;margin:6px 0 12px';
+    ['Lean','Normal','Full'].forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;b.style.cssText='font-size:16px;padding:5px 16px;cursor:pointer'+(i===u?';outline:2px solid #e8d27a':'');b.onclick=()=>{ginSet(code,i);npDraw();};row.appendChild(b);});body.appendChild(row);
+    const b=document.createElement('button');b.textContent='Austerity: -5% inflation (-'+GIN_COST+' Political points)';b.style.cssText='font-size:16px;padding:5px 16px;cursor:pointer';
+    b.disabled=N.infl<=0||!N.pp||N.pp.pol<GIN_COST;b.onclick=()=>{const e=ginCut(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);
+    const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Political points: '+Math.floor(N.pp?N.pp.pol:0);body.appendChild(p);}});
+alAdd('infl','🏦','Inflation',c=>{const N=ginN(c);return N&&N.infl>=10?{n:Math.round(N.infl)+'%',tip:'inflation is high — open the Finance tab',go:()=>npOpen(c,'fin')}:null;});
 // A5 FORCE LIMIT + ARMY TRADITION (laneA 2026-11-07, EU4-style; data rows in the ONE modifier engine 13k, no second upkeep system).
 // Force limit = the army value a nation can field at normal upkeep. It starts 15% above each nation's opening army (realistic start)
 // and grows/shrinks with the development it holds (conquest raises it, losing land lowers it); GMOD stat 'forceLimit' scales it.
