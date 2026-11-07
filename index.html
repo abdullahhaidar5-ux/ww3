@@ -22241,7 +22241,22 @@ function ocMonth(){if(!GC||!GC.prov)return;GC.occ=GC.occ||{};const P=GCM.P;
     const inc=S.inc+(S.sab&&R()<S.sab?S.inc*.6:0);
     if(inc>0){const lose=Math.round(ocInc(p,st)*inc*(guard&&S.sab?.5:1));const N=GC.nat[c];const take=N?Math.min(lose,Math.max(0,Math.floor(N.cash))):0;if(take>0){N.cash-=take;cost+=take;}}
     if(S.calm)st.un=Math.max(0,st.un-S.calm);
-    L.c+=cost;}}
+    L.c+=cost;}
+  ocSpread();ocAI();}
+// slice 2: insurgency spreads — a province with 3+ cells seeds a cell next door (same people, same occupier, terrain permitting)
+function ocSpread(){const P=GCM.P,R=grRng(GC.seed*31+GC.turn*733),seed=[];
+  for(const p of P){if(!p.land||!ocOccupied(p.i))continue;const st=GC.prov[p.i];if((st.rc|0)<3)continue;
+    for(const j of p.adj){const q=P[j];if(!q.land||!ocOccupied(j))continue;const s2=GC.prov[j];if(s2.o!==st.o||s2.o0!==st.o0||(s2.rc|0))continue;
+      const S=ocRow(j),max=S.rough&&!S.rough.includes(q.t)?(S.maxOpen|0):S.max;if(max>0&&R()<.3&&!seed.includes(j))seed.push(j);}}
+  for(const j of seed){GC.prov[j].rc=1;const st=GC.prov[j];grLog(ocRow(j).n+' spread to '+GCM.P[j].n+'.',st.o===GC.me?st.o:'');}}
+// slice 2: the AI answers like a real occupier — the nearest idle army (2 marches or less) goes to the worst cell province
+function ocAI(){const P=GCM.P;
+  for(const p of P.filter(p=>p.land&&ocOccupied(p.i)&&(GC.prov[p.i].rc|0)>=2).sort((x,y)=>(GC.prov[y.i].rc|0)-(GC.prov[x.i].rc|0)||x.i-y.i)){
+    const c=GC.prov[p.i].o,N=GC.nat[c];if(!N||!N.ai||N.dead||c===GC.me)continue;
+    if(GC.armies.some(a=>a.o===c&&(a.at===p.i||(a.path.length&&a.path[a.path.length-1]===p.i))))continue;
+    let best=null,bd=9;for(const a of GC.armies.filter(a=>a.o===c&&!a.fl&&!a.path.length&&a.u.length&&a.at!==GC.nat[c].cap).sort((x,y)=>x.id-y.id)){
+      let r=null;try{r=grPath(c,a.at,p.i);}catch(e){}if(!r||r.decl||!r.path||r.path.length>2)continue;if(r.path.length<bd){bd=r.path.length;best=[a,r.path];}}
+    if(best)best[0].path=best[1].slice();}}
 if(typeof GMOD_HOOKS==='object')GMOD_HOOKS.push(ocMonth);
 // province panel line (13c hook) — shown to everyone so a player sees what holding the land will cost before taking it
 function ocLine(pi){if(!GC||!ocOccupied(pi))return '';const st=GC.prov[pi],S=ocRow(pi),O=GCM.nats.get(st.o0),sty=MSTYLES[ocStyle(st.o0)];
