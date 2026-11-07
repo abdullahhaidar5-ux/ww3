@@ -93,7 +93,7 @@ if(typeof npTab==='function')npTab('gov','👤','Government',(code,body)=>{const
   const gs=GC.mil?Object.values(GC.mil.g).filter(g=>g.o===code&&!g.st).sort((a,b)=>a.id-b.id):[];
   h+=gs.map(g=>pplCard(pplGeneral(g))).join('')+'</div>';body.innerHTML=h;});
 /* portraits are OFF until Abdullah approves the art (orch/portraits/); the hooks exist so cards can adopt them later */
-function ptOn(){return false;}
+function ptOn(){return true;}   // Abdullah 2026-11-07 15:00: portraits round 3 approved — "Turn on now"
 function ptHtml(p,sz){const f=p&&p.id?String(p.id).replace(/[^A-Za-z0-9_-]/g,'_'):'';return f?'<img src="art/portraits/'+f+'.webp" width="'+sz+'" height="'+Math.round(sz*1.25)+'" alt="" style="flex:none;border-radius:3px" onerror="this.style.display=\'none\'">':'';}
 (function ptCredits(){try{if(document.getElementById('ptCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
   const p=document.createElement('p');p.className='credits';p.id='ptCred';
