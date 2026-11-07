@@ -442,3 +442,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneC 2026-11-07 19:xx: grand-map sea colour variation + distance-faded ripple shading (water 3.5 -> 3.8); shots orch/shots/laneC/q0,q1.
 
 - laneF 2026-11-07 19:45Z: RF10 last stand +25% damage (dmgOut, 03-sim). Chain: surrounded troops (who reacts: attackers who encircle pay in casualties); cost: pinned down; counter: break the ring/artillery. Smoke FAIL only on known NaN-geometry console error (unchanged main).
+- laneC 2026-11-07 20:xx: grand-map city lights + 5-min dusk cycle (⚡14), art-bar life 3.7→4.0 (src/13e-grand3d.js)

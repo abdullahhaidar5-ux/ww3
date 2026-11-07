@@ -32,7 +32,8 @@ const pv = n => ev(n => { const p = GCM.P.find(q => q.n === n); return [p.x, p.y
 const lv = await pv('South Lebanon');
 await shot0('x');
 async function shot0(){}
-await view(lv[0], lv[1] + 10, 160, 0.2, .62); await shot('smoke-peace'); 
+if (process.argv.includes('--night')) await ev(() => { G3.time = 125; });
+await view(lv[0], lv[1] + 10, 160, 0.2, .62); await shot('smoke-peace'); process.argv.includes('--night') && process.exit(0); 
 const info = await ev(() => { const p = GCM.P.find(q => q.n === 'South Lebanon'); const o = GC.prov[p.i].o; const en = ['IL','US','RU'].find(c => c !== o) ; GC.war[grWk(o, en)] = 1; GC.armies.push({ id: 9999, o: en, at: p.i, u: {}, path: [], pg: 0 }); G3.smokeT = 0; return [o, en]; });
 console.log('war', JSON.stringify(info));
 await page.waitForTimeout(2500); console.log('chim', await ev(() => !!G3.chim)); await shot('smoke-war');
