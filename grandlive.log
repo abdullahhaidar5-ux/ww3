@@ -1,0 +1,46 @@
+3.0s stale save in menu {"cont":false,"warn":true}
+17.0s map open
+20.0s march {"me":"IR","from":"Tehran","to":"Baku","foe":"AZ","ok":true,"units":37}
+23.3s fallback {"modal":true,"map":true,"G":false}
+36.4s prompt: BATTLE · CoastBakuAttackers — Iran37 units28 Basij Militia, 4 Anti-Tank Cell, 2 Karrar Tank, 1 Fateh-110 Launc
+37.0s Fight it live clicked
+46.3s {"L":true,"step":"Loading 3D models…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+47.6s {"L":true,"step":"Building the battlefield…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+49.2s {"L":true,"step":"Preparing graphics…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+109.0s {"L":true,"step":"Deploying forces…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+130.7s {"L":false,"step":"Ready","g":true,"grand":true,"t":0,"paused":false,"gs":"none","ents":67}
+131.7s {"L":false,"step":"Ready","g":true,"grand":true,"t":0.18,"paused":false,"gs":"none","ents":67}
+168.0s battle running: Generating terrain 8849, Loading 3D models 210, Building the battlefield 914, Building the battlefield 1563, Preparing graphics 59730, Deploying forces 37, Deploying forces 12280, total 84333
+GRANDLIVE PASS
+scenario {"foe":"AZ","ok":true,"from":"Tehran","to":"Baku","units":37}
+  [page] grandlive: grandBattleStart sync 610 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":63,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 8785 ms, Loading 3D models 204 ms, Building the battlefield 894 ms, Building the battlefield 1628 ms, Preparing graphics 24494 ms, Deploying forces 20 ms, Deploying forces 2507 ms, total 39321 ms
+live 1 43.5s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":63,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.4400000000000008,"p":false,"h":false,"fs":null}],"running":true}
+scenario {"foe":"AZ","ok":true,"from":"Tehran","to":"Baku","units":31}
+
+GRANDLIVE2 FAIL
+  ✗ page.click: Timeout 30000ms exceeded.
+17.2s map open
+17.2s start {"turn":1,"day":0,"date":"1 Jan 2026","spd":0,"ph":"plan","modal":false}
+19.6s after Space {"turn":1,"day":1,"date":"2 Jan 2026","spd":2,"ph":"plan","modal":false}
+28.2s month rolled {"turn":2,"day":29,"date":"30 Feb 2026","spd":5,"ph":"plan","modal":false}
+30.0s paused {"turn":2,"day":29,"date":"30 Feb 2026","spd":0,"ph":"plan","modal":false}
+30.1s march {"ok":true,"hint":"Baku: arrives ~1 Mar 2026 (1 month)"}
+34.4s slide [{"x":1220.8499999766755,"z":441.0000000258362,"f":0.92,"day":29},null]
+41.3s battle prompt {"turn":2,"day":0,"date":"1 Mar 2026","spd":3,"ph":"resolve","modal":true}
+45.2s AI mid-month {"n":2,"same":true,"cash":true,"f0":0}
+GRANDRT PASS
+occ {"cost":{"zeal":660,"prof":634,"home":587,"fire":608},"eff":{"zeal":24,"prof":0,"home":18,"fire":0},"ws":{"zeal":9,"prof":8.640909090909105,"home":8,"fire":8.290909090909082},"n":{"home":6,"prof":6,"zeal":6,"fire":6},"guard":3,"panel":true,"spread":1,"aiPath":[],"aiAns":true,"aiTo":57,"det":true}
+OCC PASS
+3.9s host open, code fdhk74
+15.2s friend joined as SA
+15.2s friend march reached host
+21.6s friend answered their own event
+39.1s month rolled on the friend's map
+41.9s friend paused the world
+60.5s friend chose Fight it live
+68.0s friend battle loaded and finished
+69.4s friend live battle settled on host: fought the battle for Riyadh live
+70.4s friend left, AI took over
+GNETTEST PASS
