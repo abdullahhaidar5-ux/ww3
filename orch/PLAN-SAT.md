@@ -247,9 +247,9 @@ Round 6 (Abdullah 22:26) — after the slice, then kaizen; extend existing syste
 - [ ] **RG63 False flags** (Lane G): stage an incident to justify war; risky if uncovered (same covert system).
 - [ ] **RG64 Defectors** (Lane G): enemy officers/units defect when their morale collapses (Zealous never defect — matches never-rout).
 - [ ] **RG65 POW exchanges** (Lane G): prisoners as a peace-talk/diplomacy item (RG16, RG50).
-- [ ] **RF7 Ammo & fuel in battle** (Lane F): ammo already exists — make running dry visible + trucks resupply under fire (extend, don't duplicate).
+- [x] **RF7 Ammo & fuel in battle** (Lane F): ammo already exists — make running dry visible + trucks resupply under fire (extend, don't duplicate). *(laneF 2026-11-07 audit: already built: ammo bars, blinking dry marker (06-view), "Out of ammo" alert + fall-back to supply circles (03-sim), supply circles/trucks)*
 - [ ] **RF8 Civilians in towns** (Lane F): civilians already exist — flee fighting; harm → world opinion (extend).
-- [ ] **RF9 Wounded & medevac** (Lane F): medics already exist — wounded dragged out return later (extend).
+- [x] **RF9 Wounded & medevac** (Lane F): medics already exist — wounded dragged out return later (extend). *(laneF 2026-11-07 audit: already built: 03f-battlefield wounded + medic revive)*
 - [x] **RF10 Last stand** (Lane F; laneF 2026-11-07: surrounded units already held ground pinned (supp .75); now also +25% damage in dmgOut while in last stand, all styles; cost = pinned, no retreat; 03-sim sim change): surrounded units get a desperate bonus (morale system, all styles).
 - [ ] **RF11 Battle music swells** (Lane D): music intensity rises with big clashes (09-audio calm↔combat, add a peak layer).
 Round 7 (Abdullah 22:28) — after the slice, then kaizen; extend existing systems:

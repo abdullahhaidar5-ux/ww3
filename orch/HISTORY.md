@@ -458,3 +458,5 @@ laneA 2026-11-07 A5b named battles: big Fight-it/auto battles become legends (wa
 
 laneA 2026-11-07 RG3 slice 2 spies→covert actions: Sabotage ($600, 3 months of -7% income/+6% upkeep/+1 unrest) and Counter-intelligence ($150/mo halves success, doubles exposure); chain: target's economy → AI blames/suspects enemies, answers with counter-intel; exposure → opinion hit incl. target's allies + lost spy ring; AI at war sabotages the player too. orch/covtest.mjs.
 - laneE DE-BLOCK slice 11: burning wrecks pool a warm fire glow on the sand beneath them, stronger at night (src/05-fx3d.js, view only, one additive particle per burn tick); local smoke timed out on slow box (>10 min), CI decides; no new shot
+- laneE DE-BLOCK slice 12: night tracer rounds throw a spark where they land (src/05-fx3d.js, view only); local smoke timed out >2 min on slow box, CI decides; no new shot
+- laneF 2026-11-07 23:40Z: audit — RF7 (ammo) and RF9 (wounded/medevac) were already built; ticked. No code change.
