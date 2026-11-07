@@ -1,0 +1,6 @@
+grandsmooth wide {"ms":2356,"calls":430,"tris":1311792}
+grandsmooth region {"ms":1891,"calls":256,"tris":1279164}
+grandsmooth close {"ms":1105,"calls":45,"tris":1237380}
+scene {"trees":2037,"towns":538,"armies":207}
+GRANDSMOOTH FAIL
+wide: 430 draw calls (budget 400)
