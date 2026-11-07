@@ -299,6 +299,7 @@ Abdullah 20:12/20:14 "Ugly ugly ugly … not everything has to be shoved into a 
 - laneA 2026-11-07 (03:00Z): A2 slice 1 — real time with pause on the grand map: date + play/pause + speeds 1–5 (Space, +/−, 1–5), months roll over by themselves, battles pause the clock, arrival dates on marches; gate orch/grandrt.mjs. Shots orch/shots/laneA/rt-*.png.
 
 - laneF 2026-11-07: A3 slice 1 — multi-army select on the grand map (Shift+click, Shift+drag box, double-click province), group right-click move, hover arrival date, selected-army cards with Merge/Split (src/13c-grandui.js).
+
 ### nation-rv (2026-11-07, Sonnet 5.5 scheduled run)
 RV "River Shias" added as a full first-cut nation (Iraqi Shia volunteer-brigade faction, own nation in south Iraq; fictional, no real group's name/emblem/leaders): NEWNAT row, Zealous, original black/green printed-cloth emblem (drawRV), grand map Basra + new Najaf (capital) + Southern Marshes, Resistance bloc, tense with IQ, signature "Call to the Shrines" levy. See orch/reports/nation-rv.md. Open: own voices/anthem, 3D models, balance tourney, servers-live PR.
 - laneA 2026-11-07 (04:00Z): A2 slice 2 — on the grand map, marching armies now walk along their road as the days pass instead of jumping at month end (display only, sim unchanged); grandrt checks it. Shot orch/shots/laneA/rt-3-sliding.png.
@@ -324,4 +325,5 @@ RV "River Shias" added as a full first-cut nation (Iraqi Shia volunteer-brigade 
 - laneD (2026-11-07 D1b slice 1): Conquest setup has Balance: Balanced/Realistic (solo only); Realistic scales start money by real military tier (src/03-sim realMul, saved in checkpoint). Smoke PASS; sim change -> servers-live PR note (MP not wired, so no server effect yet).
 - laneG 2026-11-07 (Sonnet, 4th session): RG17 holy sites (src/13w-gholy.js, data rows, GMOD war-support rows, capture penalty); test orch/hstest.mjs.
 - 2026-11-07 laneE (Sonnet): RF14 burning oil — destroyed derricks/plants belch a thick smoke column while burning, badly hurt ones smoulder (src/03g-battlefeel.js, via the smoke grid); smoke PASS. RF13, RF15, E1 still open
+- memaps (2026-11-07): Israel's 6 Conquest maps live — Negev Crater, Galilee Hills, Jordan Valley, Carmel Coast, Coastal Plain, Eilat/Sinai (src/02c-memaps.js, one data row each, quad-symmetric; mapfair static even + 4-player AI battles: no seat significant).
 - 2026-11-07 laneE (Sonnet): Middle Eastern HQ/barracks/factory models enlarged to fill their real footprints (src/11-models.js BME sizes 58/54/62 -> 74/60/72, visual only); smoke PASS; shot orch/shots/laneE/e2after-base.png. E1 (old boxy photo is stale: sol_* rigged models already live), E2 rest, E3, E4 still open
