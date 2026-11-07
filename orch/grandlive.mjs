@@ -55,6 +55,7 @@ try {
   if (!hasNew) throw new Error('Grand campaign menu has no New campaign');
   await click('button', '^New campaign'); await page.waitForTimeout(300);
   await ev(n => { const s = [...document.querySelectorAll('select')].find(x => [...x.options].some(o => o.value === n)); if (s) { s.value = n; s.onchange && s.onchange(); } }, NAT);
+  if (await ev(() => [...document.querySelectorAll('button')].some(b => /^Gulf flashpoint/.test(b.textContent)))) { await click('button', '^Gulf flashpoint'); await page.waitForTimeout(200); await shot('live-0-setup-scenario'); await click('button', '^Middle East 2026'); } else fails.push('setup has no scenario choice (RG6)');
   await click('button', '^Begin$'); }
   await page.waitForFunction(() => { const e = document.getElementById('grandScreen'); return e && e.style.display !== 'none'; }, null, { timeout: 60000 });
   await page.waitForTimeout(1500); console.log(el(), 'map open'); await shot('live-1-map');

@@ -16,7 +16,7 @@ function npDraw(){npClose();if(!GC||!NP.code)return;const code=NP.code,own=code=
   hd.appendChild(guEl('div','min-width:190px','<div style="font-size:22px;font-weight:bold">'+nm+'</div><div style="opacity:.8;font-size:14px">'+grRealClass(code)+(st?' · '+st.n+' morale':'')+(own?' · you':' · read-only')+'</div>'));
   const g=guEl('div','display:flex;gap:6px 18px;flex-wrap:wrap;font-size:15px;flex:1');
   const stat=(i,l,v,tip)=>{const d=guEl('div','white-space:nowrap','<span title="'+tip+'">'+i+' '+l+' <b>'+v+'</b></span>');g.appendChild(d);};
-  stat('💰','Cash',Math.round(S.N.cash).toLocaleString()+' ('+geSgn(S.N.inc||0)+'/turn)','Money in the bank and net income per turn');
+  stat('💰','Cash',Math.round(S.N.cash).toLocaleString()+' ('+geSgn(S.N.inc||0)+'/month)','Money in the bank and net income per month');
   stat('🛢','Fuel',Math.round(S.E.fuel||0),'Fuel stock: vehicles and aircraft stall without it');
   stat('🌾','Food',Math.round(S.E.food||0),'Food stock: hunger costs you troops and loyalty');
   stat('👥','Manpower',Math.round(S.E.man||0),'Recruits available to raise new units');
@@ -36,7 +36,7 @@ function npTable(body,head,rows,onRow){const t=guEl('table','width:100%;border-c
   for(const r of rows){const tr=guEl('tr','cursor:'+(onRow?'pointer':'default'));tr.innerHTML=r.cells.map(c=>'<td style="padding:5px 8px;border-bottom:1px solid #1f3246">'+c+'</td>').join('');if(onRow)tr.onclick=()=>onRow(r);tr.onmouseenter=()=>{tr.style.background='#1d3248';};tr.onmouseleave=()=>{tr.style.background='';};t.appendChild(tr);}body.appendChild(t);}
 function npFly(pi){npClose();try{guCentre(pi,2.4);guRedraw();}catch(e){}}
 // ---- tabs for systems that exist today (order = tab order)
-npTab('eco','💰','Economy',(code,body,c)=>{const N=c.S.N,E=c.S.E;let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 28px;max-width:640px">'+geRow('Cash','$'+Math.round(N.cash).toLocaleString())+geRow('Income per turn',geSgn(N.inc||0))+geRow('Fuel',Math.round(E.fuel||0),E.dry?'#ff9d8e':'')+geRow('Food',Math.round(E.food||0),E.starve?'#ff9d8e':'')+geRow('Manpower',Math.round(E.man||0))+geRow('Oil price index',GC.eco?GC.eco.oilIdx:'-')+'</div>';
+npTab('eco','💰','Economy',(code,body,c)=>{const N=c.S.N,E=c.S.E;let h='<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 28px;max-width:640px">'+geRow('Cash','$'+Math.round(N.cash).toLocaleString())+geRow('Income per month',geSgn(N.inc||0))+geRow('Fuel',Math.round(E.fuel||0),E.dry?'#ff9d8e':'')+geRow('Food',Math.round(E.food||0),E.starve?'#ff9d8e':'')+geRow('Manpower',Math.round(E.man||0))+geRow('Oil price index',GC.eco?GC.eco.oilIdx:'-')+'</div>';
   body.innerHTML=h;if(c.own){const b=guEl('button','margin-top:14px;padding:8px 16px;border-radius:6px;border:1px solid #c9a35a;background:#3a3020;color:#ffe6a8;cursor:pointer;font-size:15px','Open the full budget (bonds, buildings, trade, home front) ▸');b.type='button';b.onclick=()=>{npClose();geUiPanel();};body.appendChild(b);}});
 npTab('dip','🤝','Diplomacy',(code,body)=>{const al=[],en=[],rows=[];for(const c of Object.keys(GC.nat)){if(c===code||GC.nat[c].dead)continue;const o=grOpinion(code,c),w=grAtWar(code,c),a=grAllied(code,c);if(w)en.push(c);else if(a)al.push(c);rows.push({c,o,cells:['<b>'+GCM.nats.get(c).name+'</b>',w?'<span style="color:#ff9d8e">At war</span>':a?'<span style="color:#9fe39f">Allied</span>':'Peace','<b style="color:'+(o>=25?'#9fe39f':o<=-25?'#ff9d8e':'#e8e4d8')+'">'+(o>0?'+':'')+o+'</b>']});}
   rows.sort((a,b)=>Math.abs(b.o)-Math.abs(a.o)||(a.c<b.c?-1:1));const nm=c=>GCM.nats.get(c).name;
