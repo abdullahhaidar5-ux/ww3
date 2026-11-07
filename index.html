@@ -19726,21 +19726,21 @@ function grandClose(){g3Dispose();GV.g3=false;const e=document.getElementById('g
 function grandMenu(){grMap();const saved=(()=>{try{return JSON.parse(localStorage.getItem(GR_KEY));}catch(e){return null;}})(),root=campEl('div');
   root.appendChild(campEl('h1','margin:6px 0 4px;font-size:30px;letter-spacing:.04em;','GRAND CAMPAIGN'));
   root.appendChild(campEl('div','opacity:.75;margin-bottom:14px;line-height:1.5','Run a nation on the world map. Time runs like EU4: play, pause at any moment and give orders. When armies meet you can fight the battle yourself, with exactly the units you brought, or let the generals auto-resolve it.'));
-  const usable=saved&&!saved.over&&saved.me&&grSaveOk(saved);
-  if(saved&&!saved.over&&saved.me&&!usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campEl('div','margin:0 0 12px;padding:8px 10px;border:1px solid #8a6a3a;border-radius:6px;background:rgba(120,80,30,.25);line-height:1.5','Your saved campaign ('+n+', '+grMonStr(saved.turn)+') was made on an older world map and can\'t continue on the new one. Start a new campaign.'));}
-  if(usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campBtn('Continue — '+n+', '+grMonStr(saved.turn)+' (month '+saved.turn+'/'+saved.maxTurn+')',()=>{grLoad();campClose();grandOpen();}));}
+  const usable=saved&&!saved.over&&grSaveOk(saved);
+  if(saved&&!saved.over&&!usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campEl('div','margin:0 0 12px;padding:8px 10px;border:1px solid #8a6a3a;border-radius:6px;background:rgba(120,80,30,.25);line-height:1.5','Your saved campaign ('+n+', '+grMonStr(saved.turn)+') was made on an older world map and can\'t continue on the new one. Start a new campaign.'));}
+  if(usable){const n=saved.me?((GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me):'Observer';root.appendChild(campBtn('Continue — '+n+', '+grMonStr(saved.turn)+' (month '+saved.turn+'/'+saved.maxTurn+')',()=>{grLoad();campClose();grandOpen();}));}
   root.appendChild(campBtn('New campaign',()=>{grandSetup();},!!usable));root.appendChild(campBtn('Back',campClose,true));campShow(root);}
 function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))].filter(c=>!grNat(c).major).sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1);let nat='IR',len='quick';
   root.appendChild(campEl('h1','margin:6px 0 8px;font-size:28px','NEW GRAND CAMPAIGN'));root.appendChild(campEl('div','opacity:.8;margin-bottom:6px','Your nation'));
   const sel=campEl('select','font-size:18px;padding:8px;background:#1a2430;color:#fff;border:1px solid #6b7a55;border-radius:6px;min-width:300px');
   const og=(l,L)=>{const g=document.createElement('optgroup');g.label=l;for(const c of L){const o=document.createElement('option');o.value=c;o.textContent=GCM.nats.get(c).name;g.appendChild(o);}sel.appendChild(g);};
-  og('Full nations',majors.sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1));og('Minor nations (shared regional army)',minors);sel.value=nat;root.appendChild(sel);
-  const info=campEl('div','margin:10px 0;opacity:.85;line-height:1.5');const upd=()=>{nat=sel.value;const ps=GCM.P.filter(p=>p.land&&p.o===nat),N=grNat(nat);info.innerHTML=GCM.nats.get(nat).name+': <b>'+ps.length+'</b> provinces · capital '+(ps.find(p=>p.cap)||ps[0]).n+' · war goals '+ps.filter(p=>p.wg&&!p.cap).map(p=>p.n).join(', ')+'<br>'+(N.major?'Full nation: its own units and look.':'Minor nation: shared regional army, own flag and colours.')+' Every nation starts with the same strength.';};
+  {const o=document.createElement('option');o.value='';o.textContent='Observer — watch the AI run the whole world';sel.appendChild(o);}og('Full nations',majors.sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1));og('Minor nations (shared regional army)',minors);sel.value=nat;root.appendChild(sel);
+  const info=campEl('div','margin:10px 0;opacity:.85;line-height:1.5');const upd=()=>{nat=sel.value;if(!nat){info.textContent='Observer mode: no nation is yours. Every empire is run by the AI; pause, speed up and watch wars, alliances and crises unfold. Click any army or province to inspect it.';return;}const ps=GCM.P.filter(p=>p.land&&p.o===nat),N=grNat(nat);info.innerHTML=GCM.nats.get(nat).name+': <b>'+ps.length+'</b> provinces · capital '+(ps.find(p=>p.cap)||ps[0]).n+' · war goals '+ps.filter(p=>p.wg&&!p.cap).map(p=>p.n).join(', ')+'<br>'+(N.major?'Full nation: its own units and look.':'Minor nation: shared regional army, own flag and colours.')+' Every nation starts with the same strength.';};
   sel.onchange=upd;upd();root.appendChild(info);
   root.appendChild(campEl('div','opacity:.8;margin:8px 0 2px','Length'));const row=campEl('div');const bs=[['Quick — 25 months, win by war goals or score','quick'],['Standard — 60 months (5 years)','std']].map(([t,v])=>{const b=campBtn(t,()=>{len=v;bs.forEach(x=>x[0].style.background=x[1]===v?'#4f6b32':'transparent');},v!=='quick');return [b,v];});bs.forEach(x=>row.appendChild(x[0]));root.appendChild(row);
   root.appendChild(campEl('div','opacity:.8;margin:10px 0 2px','Scenario'));let sc='me26';const srow=campEl('div'),sinfo=campEl('div','margin:4px 0 6px;opacity:.8;font-size:14px;max-width:640px;line-height:1.4');
   const sbs=GR_SCEN.map(S=>{const b=campBtn(S.n+(S.id==='me26'?' ★':''),()=>{sc=S.id;sbs.forEach(x=>x[0].style.background=x[1]===sc?'#4f6b32':'transparent');sinfo.textContent=S.d;},S.id!=='me26');b.title=S.d;return [b,S.id];});sbs.forEach(x=>srow.appendChild(x[0]));sinfo.textContent=GR_SCEN[0].d;root.appendChild(srow);root.appendChild(sinfo);
-  root.appendChild(campBtn('Begin',()=>{grNew({me:nat,len,sc,seed:(Math.floor(Math.random()*1e9)||7)});grSave();campClose();grandOpen();}));root.appendChild(campBtn('Back',grandMenu,true));campShow(root);}
+  root.appendChild(campBtn('Begin',()=>{grNew({me:nat||null,len,sc,seed:(Math.floor(Math.random()*1e9)||7)});grSave();campClose();grandOpen();}));root.appendChild(campBtn('Back',grandMenu,true));campShow(root);}
 // main menu buttons: Grand campaign · Conquest · Missions · Tutorial (Abdullah 2026-11-06)
 (function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('grandBtn'))return;const b=document.createElement('button');b.className='big';b.id='grandBtn';b.type='button';b.textContent='Grand campaign';b.title='The world map: run a nation, fight the battles yourself or auto-resolve them';b.onclick=()=>{try{initAudio();}catch(e){}grandMenu();};
   const camp=document.getElementById('campaign')||sb;camp.parentNode.insertBefore(b,camp);const st=document.getElementById('start');if(st)st.textContent='Conquest — deploy vs AI';})();
@@ -22384,6 +22384,51 @@ npTab('cor','🕳','Corruption',(code,body,c)=>{const N=gcoN(code),own=c.own&&co
     b.disabled=N.cor<=0||!N.pp||N.pp.pol<GCO_COST;b.onclick=()=>{const e=gcoPurge(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);
     const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Political points: '+Math.floor(N.pp?N.pp.pol:0);body.appendChild(p);}});
 alAdd('cor','🕳','Corruption',c=>{const N=gcoN(c);return N&&N.cor>=12?{n:Math.round(N.cor)+'%',tip:'corruption is high — open the Corruption tab',go:()=>npOpen(c,'cor')}:null;});
+// 13z-gmarket.js — lane B5b slice 3: TRADE GOODS & WORLD PRICES (EU4 economy). Oil keeps its own index (GC.eco.oilIdx); this adds Grain, Metals and Wares.
+// Chain: each land province makes goods from its real profile (farm flag -> grain, mine -> metals, towns/dev -> wares); the WORLD PRICE of a good moves each month with
+// supply/demand (supply = everyone's output, cut by closed/blockaded straits; demand = start level, metals +2.5%/war from arms demand). Who reacts: producers earn more when prices rise
+// (income row), importers of grain get food-price unrest, everybody's army upkeep follows the metals price. Counter-play: grain subsidy (cash, 6 months); seize farms/mines, open straits.
+// Cost: subsidy burns cash. State GC.mk={t,p,d,h,sub} is JSON-safe, no random; monthly via GMOD_HOOKS; effects are GMOD rows (income/upkeep/unrest), nothing bespoke.
+const MK_G=[['grain','Grain','🌾'],['metals','Metals','⛏'],['wares','Wares','🏭']];
+function mkSt(){if(!GC.mk){GC.mk={t:-1,p:{grain:100,metals:100,wares:100},d:null,h:{grain:[],metals:[],wares:[]},hi:{},sub:{}};}return GC.mk;}
+function mkOut(i){const p=GCM.P[i];if(!p||!p.land)return null;return{grain:p.farm?2+p.tw*.5:0,metals:p.mine?2+p.tw*.5:0,wares:p.tw>=3?p.tw*.6+(p.dev>=6?1:0):0};}
+function mkTotals(){const T={grain:0,metals:0,wares:0},by={};for(const p of GCM.P){if(!p.land)continue;const o=GC.prov[p.i]&&GC.prov[p.i].o;if(!o||!GC.nat[o]||GC.nat[o].dead||gmilBk(p.i))continue;const g=mkOut(p.i);
+    const b=by[o]||(by[o]={grain:0,metals:0,wares:0,land:0});b.land++;for(const k in T){T[k]+=g[k];b[k]+=g[k];}}return{T,by};}
+function mkWars(){let n=0;for(const k of Object.keys(GC.war))if(GC.war[k])n++;return n;}
+function mkBlock(){let n=0;try{n=geClosed()*.03+geBlockN()*.02;}catch(e){}return Math.min(.3,n);}
+function mkBaseline(){const mk=mkSt();if(!mk.d){const t=mkTotals().T;mk.d={grain:Math.max(1,t.grain),metals:Math.max(1,t.metals),wares:Math.max(1,t.wares)};}return mk.d;}
+function mkBasket(c,by){const b=(by||mkTotals().by)[c];if(!b)return{r:1,w:0};const mk=mkSt();let v=0,w=0;for(const g of MK_G){v+=b[g[0]]*mk.p[g[0]]/100;w+=b[g[0]];}
+  const oi=((GC.eco&&GC.eco.oilIdx)||100)/100,no=GCM.P.filter(p=>p.oil&&GC.prov[p.i].o===c).length*3;v+=no*oi;w+=no;return{r:w>0?v/w:1,w};}
+function mkGrainDef(c,by){const b=(by||mkTotals().by)[c];return b?Math.max(0,b.land*.9-b.grain)/Math.max(1,b.land):0;}   // share of food need imported
+function mkSync(c,by){gmodRemove('mk_inc_'+c);gmodRemove('mk_upk_'+c);gmodRemove('mk_un_'+c);const mk=mkSt(),N=GC.nat[c];if(!N||N.dead)return;
+  const bk=mkBasket(c,by);if(bk.w>=1){const f=Math.max(-.15,Math.min(.15,.25*(bk.r-1)));if(Math.abs(f)>.004)gmodAdd({id:'mk_inc_'+c,src:'World prices (your goods)',scope:'nation',stat:'income',mul:1+f,t:c});}
+  const mp=mk.p.metals/100,uf=Math.max(-.08,Math.min(.1,.12*(mp-1)));if(Math.abs(uf)>.004)gmodAdd({id:'mk_upk_'+c,src:'Metals price (arms and vehicles)',scope:'nation',stat:'upkeep',mul:1+uf,t:c});
+  const gp=mk.p.grain,def=mkGrainDef(c,by),sb=mk.sub[c]&&mk.sub[c]>GC.turn;
+  if(gp>=130&&def>.25&&!sb)gmodAdd({id:'mk_un_'+c,src:'Food prices (imported grain)',scope:'nation',stat:'unrest',add:gp>=160?2:1,t:c});}
+function mkSubsidy(c){const N=GC.nat[c],mk=mkSt();if(!N)return 'Not available.';const cost=Math.max(100,Math.round(.1*Math.max(0,N.cash)));if(mk.sub[c]&&mk.sub[c]>GC.turn)return 'A subsidy is already running.';
+  if(N.cash<cost)return 'Needs $'+cost+'.';N.cash-=cost;mk.sub[c]=GC.turn+6;mkSync(c);if(c===GC.me)grLog('Bread subsidy for six months (-$'+cost+').',c);return '';}
+function mkMonth(){if(!GC||!GC.prov)return;const mk=mkSt();if(mk.t===GC.turn)return;mk.t=GC.turn;const d=mkBaseline(),{T,by}=mkTotals(),war=mkWars(),blk=mkBlock();
+  for(const g of MK_G){const k=g[0];let dem=d[k]*(k==='metals'?1+.025*Math.min(8,war):k==='wares'?1+.01*Math.min(10,war):1),sup=Math.max(1,T[k]*(1-blk));
+    const tgt=Math.max(60,Math.min(180,100*dem/sup)),old=mk.p[k];mk.p[k]=Math.round((old+.3*(tgt-old))*10)/10;const h=mk.h[k];h.push(Math.round(mk.p[k]));if(h.length>24)h.shift();
+    if(mk.p[k]>=140&&!mk.hi[k]){mk.hi[k]=1;grLog(g[1]+' prices spike to '+Math.round(mk.p[k])+'% — '+(k==='grain'?'import-dependent nations face bread unrest.':k==='metals'?'armies cost more to keep.':'manufacturers profit.'),GC.me);}
+    if(mk.p[k]<120)mk.hi[k]=0;}
+  for(const c of Object.keys(GC.nat))mkSync(c,by);}
+GMOD_HOOKS.push(mkMonth);
+function mkSpark(a){if(!a.length)return '';const mx=Math.max(...a,120),mn=Math.min(...a,80);return '<svg width="120" height="28" style="vertical-align:middle"><polyline fill="none" stroke="#9fd0ff" stroke-width="2" points="'+a.map((v,i)=>(i*(116/Math.max(1,a.length-1))+2).toFixed(1)+','+(26-(v-mn)/(mx-mn||1)*24).toFixed(1)).join(' ')+'"/></svg>';}
+npTab('mkt','🧺','World market',(code,body,c)=>{mkMonth();const mk=mkSt(),{T,by}=mkTotals(),own=c.own&&code===GC.me,b=by[code]||{grain:0,metals:0,wares:0,land:0};
+  const oi=(GC.eco&&GC.eco.oilIdx)||100;
+  let h='<div style="opacity:.85;margin-bottom:8px">Prices move with world supply and demand. Wars lift metals; closed or blockaded straits cut supply. Producers earn more at high prices; importers of grain suffer bread unrest; armies cost more to keep when metals are dear.</div>'+
+   '<table style="border-collapse:collapse;font-size:16px"><tr style="opacity:.7"><td style="padding:3px 14px 3px 0">Good</td><td>Price</td><td style="padding:0 14px">Last 2 years</td><td>Your output</td><td style="padding-left:14px">World output</td></tr>';
+  h+='<tr><td style="padding:3px 14px 3px 0">🛢 Oil</td><td><b>'+oi+'%</b></td><td style="padding:0 14px;opacity:.6">see Trade tab</td><td>'+GCM.P.filter(p=>p.oil&&GC.prov[p.i].o===code).length+' fields</td><td style="padding-left:14px">—</td></tr>';
+  for(const g of MK_G){const k=g[0],p=mk.p[k],col=p>=130?'#ff9a8a':p<=80?'#8fd18f':'#e8e4d8';h+='<tr><td style="padding:3px 14px 3px 0">'+g[2]+' '+g[1]+'</td><td><b style="color:'+col+'">'+Math.round(p)+'%</b></td><td style="padding:0 14px">'+mkSpark(mk.h[k])+'</td><td>'+(Math.round(b[k]*10)/10)+'</td><td style="padding-left:14px">'+Math.round(T[k])+'</td></tr>';}
+  h+='</table>';const bk=mkBasket(code,by),f=Math.max(-.15,Math.min(.15,.25*(bk.r-1)));
+  h+='<div style="margin:10px 0">Your goods basket sells at <b>'+Math.round(bk.r*100)+'%</b> of the base price: income '+(f>=0?'+':'')+Math.round(f*100)+'%. Grain imported: <b>'+Math.round(mkGrainDef(code,by)*100)+'%</b> of your food need.</div>';
+  const L=gmodLines('nation',code,'upkeep').concat(gmodLines('nation',code,'unrest')).filter(s=>/prices|Metals|Food/.test(s));if(L.length)h+='<div style="opacity:.85;margin:6px 0">'+L.join('<br>')+'</div>';
+  body.innerHTML=h;
+  if(own){const cost=Math.max(100,Math.round(.1*Math.max(0,GC.nat[code].cash))),on=mk.sub[code]&&mk.sub[code]>GC.turn,btn=document.createElement('button');
+    btn.textContent=on?'Bread subsidy running':'Bread subsidy: 6 months ($'+cost+')';btn.style.cssText='font-size:16px;padding:5px 16px;cursor:pointer';btn.disabled=!!on||GC.nat[code].cash<cost;
+    btn.onclick=()=>{const e=mkSubsidy(code);if(e)grLog(e,code);npDraw();};body.appendChild(btn);}});
+alAdd('mkt','🌾','Food prices',c=>{const mk=GC.mk;if(!mk||mk.p.grain<130)return null;const N=GC.nat[c];if(!N||mkGrainDef(c)<=.25||(mk.sub[c]&&mk.sub[c]>GC.turn))return null;return{n:Math.round(mk.p.grain)+'%',tip:'grain is dear and you import food — open the World market tab',go:()=>npOpen(c,'mkt')};});
 // 13z-gpeace.js — lane G item 22: EU4-STYLE PEACE-DEAL SCREEN. "Offer peace" opens a deal: your WAR SCORE (gdWarscore: armies on enemy land, war length) buys demands —
 // provinces (cost by development, x2 for the capital, x1.8 if none of your armies stand there), tribute (35% of their cash), vassalage. The loser's side: if the score is
 // negative you can pay tribute for peace. Reaction chain: taking land raises ALARM (13y coalitions form), the loser's opinion of you sinks per province, a vassal fights
