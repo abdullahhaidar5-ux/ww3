@@ -123,3 +123,7 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
     card, top bar) with game-icons.net icons (CC BY 3.0, credited); every lane composes screens from it in minutes.
 16. **Players are free QA.** Each session starts with `gh issue list --label player --state open --limit 5` and fixes anything in
     your files first (the in-game "Report a problem" button, D0d, files them).
+17. **Run 2–3 items at once inside your session** (Abdullah 19:03 "Faster?"): while you work your main item, hand independent ⚡
+    items in your lane to parallel subagents (Agent tool, `isolation: "worktree"`, `model: "sonnet"` — `"haiku"` for data/text),
+    each with the exact item text, file ownership and gate commands; you review each diff, gate, and ship them one by one.
+    Never two subagents on the same file.
