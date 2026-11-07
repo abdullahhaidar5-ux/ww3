@@ -6,5 +6,5 @@ function gnPick(ls){const T=GC.turn-1;let best=null,bi=-1;for(const l of ls){if(
 function gdNews(){if(!GC||!GC.me)return;const h=gnPick(GC.log);if(!h)return;let d=document.getElementById('gNews');if(d)d.remove();
   const host=document.getElementById('gMapWrap');if(!host)return;d=document.createElement('div');d.id='gNews';
   d.style.cssText='position:absolute;left:50%;top:8px;transform:translateX(-50%);max-width:70%;padding:8px 18px;background:#e9e2cf;color:#1a1a1a;border:2px solid #3a3226;box-shadow:0 4px 16px rgba(0,0,0,.5);font:bold 17px Georgia,serif;letter-spacing:.3px;z-index:6;cursor:pointer;opacity:0;transition:opacity .4s';
-  d.innerHTML='<div style="font-size:10px;letter-spacing:3px;opacity:.6;font-weight:normal">THE WORLD TRIBUNE · TURN '+(GC.turn-1)+'</div>'+h.replace(/</g,'&lt;');host.appendChild(d);d.onclick=()=>d.remove();
+  d.innerHTML='<div style="font-size:10px;letter-spacing:3px;opacity:.6;font-weight:normal">THE WORLD TRIBUNE · MONTH '+(GC.turn-1)+'</div>'+h.replace(/</g,'&lt;');host.appendChild(d);d.onclick=()=>d.remove();
   requestAnimationFrame(()=>{d.style.opacity='1';});setTimeout(()=>{d.style.opacity='0';setTimeout(()=>d.remove(),500);},7000);}

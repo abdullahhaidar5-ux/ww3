@@ -30,7 +30,7 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
     if(!grNat(b).major){W.push(['Minor nations rarely join blocs',-10]);s-=10;}
     if(gdAllies(b).some(x=>grAtWar(a,x))){W.push(['Their ally is your enemy',-40]);s-=40;}
     if(s<10&&ok)no('They decline (need 10, have '+Math.round(s)+')');W.push(['Total',Math.round(s)]);}
-  else if(act==='war'){if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until turn '+GC.tr[grWk(a,b)]);
+  else if(act==='war'){if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until month '+GC.tr[grWk(a,b)]);
     else if(GC.ph!=='plan')no('Wait for the planning phase');W.push(['War goal: border dispute / strategic rivalry',0]);W.push(['Stability: all your opinions fall',-10]);}
   else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (armies on enemy land, war length)',s]);
     const acc=GC.nat[b].ai?25:0;W.push(['They accept at',acc]);if(ok&&s<acc)no('They refuse (score '+s+' of '+acc+')');}
@@ -46,7 +46,7 @@ function gdAct(act,a,b){const c=gdChance(act,a,b);if(!c.ok)return c.note;const N
   else if(act==='alliance'){GC.alz=GC.alz||[];const g=GC.alz.find(x=>x[1].includes(a));if(g&&!g[1].includes(b))g[1].push(b);else if(!g)GC.alz.push([na+'–'+nb+' Pact',[a,b]]);gdRel(a,b,15);grLog(na+' and '+nb+' formed an alliance.',a);}
   else if(act==='break'){for(const g of GC.alz||[])if(g[1].includes(a)&&g[1].includes(b))g[1]=g[1].filter(x=>x!==b);GC.alz=(GC.alz||[]).filter(x=>x[1].length>1);gdRel(a,b,-25);grLog(na+' left its alliance with '+nb+'.',a);}
   else if(act==='war'){grDeclare(a,b);GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;for(const o of Object.keys(GC.nat))if(o!==a&&o!==b)gdRel(a,o,-3);gdRel(a,b,-30);}
-  else if(act==='peace'){delete GC.war[grWk(a,b)];GC.tr=GC.tr||{};GC.tr[grWk(a,b)]=GC.turn+6;grLog('Peace between '+na+' and '+nb+' — truce for 6 turns.',a);}
+  else if(act==='peace'){delete GC.war[grWk(a,b)];GC.tr=GC.tr||{};GC.tr[grWk(a,b)]=GC.turn+6;grLog('Peace between '+na+' and '+nb+' — truce for 6 months.',a);}
   try{grSave();}catch(e){}try{grandMapRefresh();}catch(e){}return '';}
 // ---------- UI: replaces the Diplomacy tab of the nation panel ----------
 (function(){
