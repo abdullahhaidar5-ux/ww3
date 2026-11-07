@@ -29,7 +29,7 @@ const MAPS={
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,MAPH+60-90*Math.cos((x-1600)/1600*Math.PI*.5)*0+40*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:(t,x)=>470+120*Math.exp(-Math.pow((x-1600)/380,2))});
       // 2026-10-30: coastal hills to fight around and an island offshore (mirrored left-right like the rest)
       M.peaks.push({x:1050,y:880,r:65,rx:1.6,rot:.5});mirrorMap(M,'x');M.peaks.push({x:1600,y:700,r:85,rx:1.9,rot:0});M.islands.push({x:1600,y:2020,r:80,rx:2.2,rot:0,wob:a=>.06*Math.cos(2*a)});}},
-  plateau:{home:['EG','JO'],name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
+  plateau:{home:['EG','JO','DZ','NG','ZA'],name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1280,1100+Math.sin(a)*820]);return s;})(),
     water(M){M.peaks.push({x:1020,y:720,r:75,rx:1.6,rot:.45},{x:1230,y:470,r:60,rx:1.4,rot:-.2},{x:880,y:1480,r:70,rx:1.4,rot:-.5});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:105,rx:1.5,rot:0});}},
   hormuz:{home:['IR','AE','OM'],name:'Strait of Hormuz',min:2,max:8,sym:'none',tag:'sea strait · naval-heavy',desc:'Iran faces the Arabian shore across the world\'s busiest oil chokepoint. Navies rule the strait; armies must go the long way round.',
@@ -109,7 +109,7 @@ const MAPS={
     cities:[[1300,950,190,'russia'],[1980,1050,170,'russia'],[700,1600,80,'europe'],[2600,600,80,'europe']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1640+150*Math.sin(y*.0028+ph),y]);M.rivers.push({pts,hw:()=>150});M.bridgeAt=[[0,.25],[0,.48],[0,.78]];M.bridgeFrac=true;
       M.islands.push({x:1650,y:620,r:60,rx:2,rot:1.4,wob:q=>.1*Math.sin(q*3)},{x:1640,y:1600,r:50,rx:1.8,rot:1.5,wob:q=>.1*Math.sin(q*4)});}},
-  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
+  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA','DZ','LY','MA'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1300,1100+Math.sin(a)*840]);return s;})(),
     cities:[[1600,1100,190,'mideast']],
     water(M,R){for(const [x,y] of [[900,700],[2300,1500],[2300,700],[900,1500]])M.lakes.push({x,y,r:55,rx:1.4,wob:q=>.15*Math.sin(q*3+x)});}},
@@ -128,16 +128,21 @@ const MAPS={
     cities:[[1600,1450,150,'southasia']],
     water(M,R){const ph=R()*6.28;M.lakes.push({x:1600,y:1000,r:150,rx:1.4,wob:q=>.12*Math.sin(q*3+ph)});
       const ridge=(y0,y1,x0)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([x0+60*Math.sin(y*.004+ph),y]);return pts;};for(const [a,b] of [[-200,620],[980,1350]]){M.ridges.push({pts:ridge(a,b,1000),hw:()=>100});M.ridges.push({pts:ridge(a,b,1000).map(([x,y])=>[MAPW-x,MAPH-y]),hw:()=>100});}}},
-  taiwan:{name:'Taiwan Strait',min:2,max:6,sym:'none',theme:'green',home:['CN','TW'],tag:'sea strait · island · naval-heavy',desc:'Mainland China faces the island across the strait. Two long military causeways can be stormed, but navies, landing craft and air power decide who lands where.',
+  taiwan:{name:'Taiwan Strait',min:2,max:6,sym:'none',theme:'green',home:['CN','TW','JP'],tag:'sea strait · island · naval-heavy',desc:'Mainland China faces the island across the strait. Two long military causeways can be stormed, but navies, landing craft and air power decide who lands where.',
     slots:[[450,1900],[2850,1600],[450,400],[2850,600],[700,1150],[2500,1100]],
     cities:[[900,800,150,'asia'],[2650,1850,140,'asia'],[2700,350,110,'korea']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let t=0;t<=1.0001;t+=.01){pts.push([1500+t*400+80*Math.sin(t*7+ph),-200+t*2600]);}M.rivers.push({pts,hw:(t,x)=>330});M.islands.push({x:1780,y:1000,r:60,rx:1.5,rot:.4,wob:q=>.1*Math.sin(q*3)});M.bridgeAng.push([1575,480,.988,-.152],[1835,1700,.988,-.152]);}},
+  honshu:{name:'Honshu Coast: Land of the Rising Sun',min:2,max:4,sym:'mirrorX',theme:'green',rough:1.25,home:['JP'],tag:'dense low-rise towns · bay · offshore islands · naval-friendly',desc:'A stylised Japanese coast: tight tiled-roof towns climb narrow valleys behind a central bay with island strongholds offshore. Two land routes through the hills and one by sea.',
+    slots:[[450,1900],[2750,1900],[450,1200],[2750,1200]],
+    cities:[[1600,1150,170,'japan'],[800,1500,100,'japan'],[2400,1500,100,'japan'],[1600,1850,90,'japan']],
+    water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,-70+30*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:()=>480});
+      for(const [x,y] of [[800,620],[1600,520],[2400,620]]){M.islands.push({x,y,r:110,rx:1,rot:0,wob:q=>.3*Math.max(0,Math.sin(q*6))});}M.bridgeAng.push([800,560,0,1],[2400,560,0,1]);}},
   dmz:{name:'Korean DMZ',min:2,max:8,sym:'mirrorY',rough:1.3,home:['KP','KR'],tag:'fortified border · river · mountain ridges',desc:'The most fortified border on Earth: the Imjin river, the demilitarised strip, mountain ridges to the east and capitals within artillery range.',
     slots:[[500,250],[500,1950],[1600,200],[1600,2000],[2700,250],[2700,1950],[1050,300],[1050,1900]],
     cities:[[1150,1850,150,'korea'],[1150,350,120,'asia'],[2250,1880,90,'korea'],[2250,330,80,'asia']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-200;x<=2200;x+=40)pts.push([x,1100+50*Math.sin(x*.005+ph)]);M.rivers.push({pts,hw:()=>58});M.bridgeAt=[[0,.25],[0,.6]];M.bridgeFrac=true;
       const ridge=(y0,y1)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([2550+50*Math.sin(y*.006),y]);return pts;};M.ridges.push({pts:ridge(560,940),hw:()=>95},{pts:ridge(1260,1640),hw:()=>95});}},
-  nile:{name:'Nile & Suez',min:2,max:8,sym:'none',home:['EG'],tag:'river · canal · desert',desc:'Cairo on the Nile and the Suez Canal to the east: green river banks in a sea of sand, with bridges and canal crossings to seize.',
+  nile:{name:'Nile & Suez',min:2,max:8,sym:'none',home:['EG','SD','ET'],tag:'river · canal · desert',desc:'Cairo on the Nile and the Suez Canal to the east: green river banks in a sea of sand, with bridges and canal crossings to seize.',
     slots:[[350,1100],[2850,1100],[350,300],[2850,1900],[350,1900],[2850,300],[2200,1950],[2200,250]],
     cities:[[1050,1000,200,'mideast'],[2420,1100,90,'mideast'],[1100,1850,80,'mideast']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([820+60*Math.sin(y*.004+ph),y]);M.rivers.push({pts,hw:()=>75});
@@ -450,7 +455,7 @@ function mkMap(seed,mk,ssn){
     for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){if(i<1||j<1||i>=GW-1||j>=GH-1)continue;const x=i*CELL+CELL/2,y=j*CELL+CELL/2,d=Math.hypot(x-cx,y-cy);if(d>r)continue;
       if(((i-sx)%4+4)%4===0||((j-sy)%4+4)%4===0)continue;if(grid[j*GW+i]!==0)continue;if(BASES.some(([bx,by])=>Math.hypot(bx-x,by-y)<400))continue;
       if(M.edge(x,y)>-50||M.mtn(x,y)>-40)continue;const core=1-d/r;if(CR()>.42+.6*core)continue;grid[j*GW+i]=3;
-      const tall=style==='russia'?18+core*46*CR():style==='america'?(core>.55?28+core*70*CR():8+CR()*5):style==='yemen'?16+CR()*22:style==='gulfcity'?(core>.35?45+core*110*CR():12+CR()*8):style==='korea'?24+core*50*CR():style==='asia'?14+core*38*CR():style==='europe'?9+CR()*9:style==='latin'?7+CR()*8:style==='southasia'?8+CR()*12:8+CR()*10+core*16*CR();
+      const tall=style==='russia'?18+core*46*CR():style==='america'?(core>.55?28+core*70*CR():8+CR()*5):style==='yemen'?16+CR()*22:style==='japan'?10+CR()*10+core*16*CR():style==='gulfcity'?(core>.35?45+core*110*CR():12+CR()*8):style==='korea'?24+core*50*CR():style==='asia'?14+core*38*CR():style==='europe'?9+CR()*9:style==='latin'?7+CR()*8:style==='southasia'?8+CR()*12:8+CR()*10+core*16*CR();
       if(CR()<.55&&tall<30){for(const [ox,oy] of [[-1,-1],[1,-1],[-1,1],[1,1]]){if(CR()<.15)continue;M.cityBlds.push({x:x+ox*CELL*.24,y:y+oy*CELL*.24,w:CELL*(.36+CR()*.1),d:CELL*(.36+CR()*.1),h:tall*(.6+CR()*.7),style,core,v:CR()});}}
       else M.cityBlds.push({x,y,w:CELL*(.74+CR()*.18),d:CELL*(.74+CR()*.18),h:tall,style,core,v:CR()});}}}
   M.cityNear=(x,y,pad)=>M.cities.some(c=>Math.hypot(x-c.x,y-c.y)<c.r+(pad||0));
