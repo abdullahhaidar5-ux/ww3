@@ -1,0 +1,19 @@
+3D models: 3 of 83 ready=true  (page open to models ready: 3.3s)
+battle: 4 players IR vs US vs MX vs TH on strait
+loading screen finished after 129.6s
+3D models for this battle: 61 of 61
+after 4.0 game-min: 82 units, 41 structures, per team 25/21/29/27 (peak 26/21/29/28), last chunk 1582 ms
+peak memory (node + browser, summed RSS): 3216 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+SMOKE PASS (306s) — screenshots in orch/out/*.png (this run: orch/out/runs/20261107-153953-smoke/)
+live battle: IR vs US on strait (loaded after 103 s)
+live end: t=180.06s, 65 units/buildings, hash 6c2d9e19; replay file 42 KB (14 KB per game-minute, 628 frames)
+replay loaded after 9 s: 628 frames, 19 keyframes
+replay to the end: hash 6c2d9e19 matches (65 units/buildings)
+screenshot orch/out/replay.png
+seek to 90 s showed 59 units/buildings
+seek to the middle, then to the end: hash 6c2d9e19 matches (65 units/buildings)
+(175 s)
+REPLAY PASS
