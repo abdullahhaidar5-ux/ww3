@@ -116,7 +116,13 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
 ## WORLD SIMULATOR rule (Abdullah 23:03) — applies to every lane item: see CLAUDE.md "IT'S A WORLD SIMULATOR". Each item's commit/HISTORY line lists its reaction chain (who reacts, second-order effects, counter-play, cost); an item that only adds a button with no world reaction is not done.
 
 ## Rules for every lane session — FAST + CHEAP (Abdullah 18:40 "Get creative and speed up development and save usage")
-0. **USAGE FREEZE (Abdullah 2026-11-07 07:40: 25% of his usage left until the deadline):** only **Lane C (grand-map towns / C-LOOK part 2), Lane E (battle DE-BLOCK), the grandlook helper and the realmap helper** keep working. **Lanes A, B, D, F, G and the portraits helper: stop immediately** — commit/push anything green you already have, write your HANDOFF, do NOT fire your own task again. Everyone still working: no optional extras, fewer re-shots, ship and stop when your item is done.
+0. **USAGE PLAN (Abdullah 2026-11-07 07:40 "25% usage still remains", 07:42 "We need to get it all done with 25%"):** "all" = the Saturday list below; everything else → kaizen after 20:00. Each lane does ONLY its listed items, cheapest way (Haiku subagents for data/text, no exploratory re-reads, one before/after shot per item, cigate once per item), ships each when green, then **stops without re-firing** when its list is done:
+   - **Lane A:** A-DATE (start 1 Nov 2026), A-REAL (AI war realism + 24-month test). **Lane B:** done — stop. **Lane D:** done — stop.
+   - **Lane F:** RF1 spotting & hiding, RF2 real armour hits, RF3 artillery delay (sim → servers-live PR comment).
+   - **Lane G:** RG5 TV news, RG10 nuclear programme + strike (with the follow-ons).
+   - **Lane E:** DE-BLOCK slices 2–4, then RF13 dust/sandstorms, RF15 night tracers & flares.
+   - **Lane C:** C-TOWNS (C-LOOK part 2). **grandlook helper:** C-LOOK parts 1+3. **realmap helper:** A-MAP. **portraits:** finish round 3 this run only, no new run.
+   - **Janitor:** keep running (Haiku, cheap).
 1. **FIRST:** `git fetch -q`. Stop only if **your own lane** has an unmerged `orch/lane<X>-*` branch pushed < 45 min ago. **Never wait for
    other helpers** (grand3, look1, rescue…): if your top item touches files another active branch is editing, take your next
    non-conflicting item instead and come back later.
