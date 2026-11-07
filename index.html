@@ -6734,11 +6734,13 @@ function mkTeam(id,fac,ai){const F=FACTIONS[fac];return{id,fac,F,sup:F.sup,credi
 // Allies can send each other money (in steps of $50, never more than you have).
 function giveMoney(from,to,amt){return ctGive(from,to,amt);}   // allied aid: fee + delay live in 03d-command
 function ally(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.teams[a]||!G.teams[b])return false;return G.teams[a].tm===G.teams[b].tm||(!!G.truce&&G.truce[a<b?a*32+b:b*32+a]>G.t);}   // a running truce (03d-command) counts as friendly for fire; sameTm() is the strict team test (vision, victory, aid)
+/* Realistic balance (Abdullah 2026-11-06 21:31): start money follows the nation's real-world military tier (GR_REAL mil figure); Balanced = equal */
+function realMul(f){if(!G||!G.real||typeof GR_REAL!=='object'||!GR_REAL.n[f])return 1;const m=GR_REAL.n[f][1];return m>=1.8?1.5:m>=.9?1.2:m>=.4?1:.8;}
 function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].max||o.camp)?o.map:'strait';setWorld(worldScaleFor(N,mk));setBases(N,mk,mk===o.map?(Array.isArray(o.st)?o.st:o.slot):-1);if(o.camp)while(BASES.length<N)BASES.push(BASES[BASES.length-1]);
   const wB=wxBase(o.w),ssn=wxSsn(o.w)||seasonOf(mk);const M=mkMap(o.seed,mk,ssn);
   G={t:0,ssn,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
      map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};for(const k of G_LATE)G[k]=undefined;initCiv();initDams();initTowns();G.tow=(M.towers||[]).map((q,i)=>({i,x:q.x,y:q.y,ow:-1,cp:new Array(N).fill(0)}));G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});G.conq=!o.camp&&!o.grand&&!o.sandbox;infraInit();
-  G.bs=BATTLE;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));{const R=mkTeam(N,'DW',false);R.reb=true;R.tm=900;R.color='#8c7b58';R.dark=shade(R.color,.45);R.credits=0;G.teams.push(R);G.reb=N;}G.conq=!o.camp&&!o.grand&&!o.sandbox;G.setupEnd=G.conq?CQ_SETUP:0;G.teams.forEach(T=>{T.credits=T.reb?0:G.conq?CQ_START:Math.round(3000*(1+(G.bs-1)*.8)/100)*100;stOf(T).c0=T.credits;});G.teams.forEach((T,i)=>{if(T.ai)T.gdoc=({tank:'arm',guer:'gue',arty:'art',air:'air'})[PERS[T.ai.p|0]&&PERS[T.ai.p|0].k]||GDOC_AI[T.fac]||'arm';else if(Array.isArray(o.gd)&&GDOC[o.gd[i]])T.gdoc=o.gd[i];});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
+  G.bs=BATTLE;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));{const R=mkTeam(N,'DW',false);R.reb=true;R.tm=900;R.color='#8c7b58';R.dark=shade(R.color,.45);R.credits=0;G.teams.push(R);G.reb=N;}G.conq=!o.camp&&!o.grand&&!o.sandbox;G.setupEnd=G.conq?CQ_SETUP:0;G.real=o.real?1:0;G.teams.forEach(T=>{T.credits=T.reb?0:G.conq?Math.round(CQ_START*realMul(T.fac)/100)*100:Math.round(3000*(1+(G.bs-1)*.8)/100)*100;stOf(T).c0=T.credits;});G.teams.forEach((T,i)=>{if(T.ai)T.gdoc=({tank:'arm',guer:'gue',arty:'art',air:'air'})[PERS[T.ai.p|0]&&PERS[T.ai.p|0].k]||GDOC_AI[T.fac]||'arm';else if(Array.isArray(o.gd)&&GDOC[o.gd[i]])T.gdoc=o.gd[i];});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
   {const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'];const cd=(p,q)=>{const a=hexRGB(p),b=hexRGB(q);return Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);};
    for(let i=1;i<N;i++){const T=G.teams[i];if(G.teams.slice(0,i).some(P=>cd(P.color,T.color)<.45)){const c=ALT.find(c=>G.teams.slice(0,i).every(P=>cd(P.color,c)>=.45))||ALT[i%ALT.length];T.color=c;T.dark=shade(c,.45);}}}
   paintTerrain(M);
@@ -9202,13 +9204,13 @@ function aiMedic(T,mine){if(T.ai.t%5!==3||T.credits<900)return;let inf=0,med=0;f
              it (more in summer/dry/sandstorm, none in rain-soaked or snowy weather), fire spreads downwind on a 1 s step, burns
              out and leaves scorched ground. Burning cells hurt and frighten infantry, slow every ground unit, and make smoke.
    HULKS     a destroyed tank/vehicle stays as a burned-out wreck: its cell joins the rubble grid (G.rub: tanks must route
-             around it, infantry cross it) and adds cover; smokes ~75 s; at most BF_HULK_MAX kept (oldest fades); the rubble
+             around it, infantry cross it) and adds cover; smokes ~75 s; at most BF_HULK_MAX (96) kept all battle (oldest fades); the rubble
              clearing orders of Construction Vehicles/Dozers remove it (rubDo -> hulkGone).
    AUTO-BUILD T.auto = {on, list:[{k,n}]}: standing "keep n of kind k" orders, topped up through enqueue() like a click.
    SHOUTS    short combat callouts triggered by real sim events, throttled, sent as FXE('shout',[type,x,y,team,medic]).
    Saves/host migration: G.bfFire, G.bfScorch, G.bfHulk, G.bfSmS (sparse smoke cells, refreshed every tick) and the timers are in CK_G;
    the dense grids are rebuilt by bfSync() and every random draw is a pure hash (bfRnd), so a loaded save replays exactly. */
-const BF_SC=80,BF_HULK_MAX=36,BF_FIRE_MAX=420;
+const BF_SC=80,BF_HULK_MAX=96,BF_FIRE_MAX=420;
 const BF_SHOUT=['rpg','manDown','reload','grenade','contact','tank','medic'];
 // stateless seeded random in [0,1): a pure function of (seed, game clock, a, b), so a loaded save or a migrated host replays exactly
 function bfRnd(a,b){let h=((((G.seed||1)|0)^Math.imul(a|0,0x9E3779B1)^Math.imul(b|0,0x85EBCA6B)^Math.imul((G.t*20)|0,0xC2B2AE35))>>>0);h^=h>>>15;h=Math.imul(h,0x2C1B3C6D);h^=h>>>12;h=Math.imul(h,0x297A2D39);h^=h>>>15;return (h>>>0)/4294967296;}
@@ -12249,7 +12251,7 @@ function specEvts(evs,SP){let e=evs.filter(v=>Array.isArray(v)),len=JSON.stringi
    drops out, the standby restores the latest checkpoint and carries on as the new host; everyone else reconnects to it.
    Entities, resource fields, oil derricks and civilian buildings referenced inside other objects are stored by id or
    index, unit stat blocks are shared through a table, and anything visual or derived is rebuilt after loading. */
-const CK_G=['truce','tOff','aidQ','milOk','t','nid','aiT','visT','endT','over','bs','cbrTeams','mT','ecT','wx','fixWx','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
+const CK_G=['truce','tOff','aidQ','milOk','t','nid','aiT','visT','endT','over','bs','real','cbrTeams','mT','ecT','wx','fixWx','ssn','mines','smokes','shields','craters','ruins','aiTT','sqOf',
   'refs','leaf','refId','polA','spoofs','mban','mbanN','dug','dugN','dugV','dugId','lgd','ec','wnd','wndN','wndV','wndId','dams','damV','fln',
   'todM','humA','rebT','radT','stT','gprT','supT','prT','strikes','sq','pfTok','bfFire','bfScorch','bfHulk','bfSmS','bfT','auT','bfFxT','bfSent','bfNewSc','conq','setupEnd','reb','N','seed','mapKey','roadV'];  // EW radar-spoof fake contacts and martyr banners (unit spfT, team mart/clr ride along on ents/teams); save games 2026-11-06: clocks, Conquest setup timer, strikes in flight
 const CK_TEAM_SKIP=new Set(['F','ai','id','fac','color','dark']);
@@ -13457,7 +13459,7 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
   if(!g.ldHold)pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
   // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
   setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}try{vohLoad(g.teams[ME].fac);}catch(_){}},0);}
-function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({w:setup.w|0,seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length)});G.teams.forEach((T,i)=>{if(T.ai)T.ai=mkAI(Math.max(0,Math.min(2,setup.d|0))+10*persCode((setup.pers||[])[i]));});}finally{TERR_DEFER=false;}afterStart();}
+function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({real:setup.real?1:0,w:setup.w|0,seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length)});G.teams.forEach((T,i)=>{if(T.ai)T.ai=mkAI(Math.max(0,Math.min(2,setup.d|0))+10*persCode((setup.pers||[])[i]));});}finally{TERR_DEFER=false;}afterStart();}
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
   MODE='single';ME=0;
@@ -15800,7 +15802,7 @@ function uiConfirm(msg,yes,cb,danger){return uiDialog(msg,{yes,danger},cb);}
 HUDS.help=false;
 function hudDeclutterCss(){if(document.getElementById('hudDcCss'))return;const st=document.createElement('style');st.id='hudDcCss';
   st.textContent='#hint{display:none!important}body.helpOn #hint{display:block!important}#lgBtn{display:none!important}'
-  +'#docPick{top:auto!important;bottom:250px!important}#townp{max-height:calc(100vh - 560px)!important;min-height:120px}'
+  +'#docPick{top:auto!important;left:auto!important;transform:none!important;right:10px!important;bottom:262px!important;opacity:.88;padding:4px 6px!important;max-width:380px!important}#docPick button{min-height:26px!important;font-size:12px!important;padding:2px 6px!important}#docPick>div:first-child{font-size:11px!important;margin-bottom:3px!important}#townp{max-height:calc(100vh - 560px)!important;min-height:120px}'
   +'#sqMake{display:none!important}#info .cmdrow.off{display:none!important}body.gbat #docPick,body.gbat #credits,body.gbat .sup{display:none!important}'
   +'body.gbat #autoP,body.gbat .tabs,body.gbat #lgBtn{display:none!important}body.gbat #panel>*:not(#gbRoster){display:none!important}'
   +'#gbRoster{display:flex!important;flex-wrap:wrap;gap:6px;align-content:flex-start;padding:8px 6px;grid-column:1/-1}#gbRoster button{font:600 15px system-ui,sans-serif;color:#f0f5e6;background:#2c3a26;border:1px solid #6b7a63;border-radius:6px;padding:6px 12px;cursor:pointer;min-height:38px}#gbRoster button:hover{background:#3d5236}#gbRoster .gbh{width:100%;font:600 13px system-ui;opacity:.7;text-transform:uppercase;letter-spacing:.06em}';
@@ -18966,7 +18968,7 @@ function grandPlace(team,recs,cx,cy,a,gr){const fac=G.teams[team].fac,ord={tank:
     const u=addUnit(team,k,p[0],p[1]);if(!u)return;u.hp=Math.max(1,Math.round(u.max*rec[1]/100));u.xp=rec[2];u.rank=grRankOf(rec[0],fac,rec[2]);if(u.s&&u.s.ammo)u.ammo=Math.max(1,Math.round(u.s.ammo*rec[3]/100));
     u.gr=rec;gr.ents.push([rec,u,team]);});}
 function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.att,pn:g.pn,ents:[],waves:g.waves||[],wi:0,aiT:1,fin:0,res:null,n0:[0,0],v0:[0,0],ret:0,fort:g.fort|0,mir:g.mir||null,gp:g.gp||null,hero:g.hero||[]};
-  G.teams.forEach(T=>{T.ai=null;T.credits=0;});
+  G.teams.forEach((T,i)=>{T.ai=null;T.credits=0;if(g.fv&&g.fv[i])T.fervor=1e9;});
   for(const t of [0,1]){const B=BASES[t],a=baseFacing(t),side=g.sides[t];const dx=Math.cos(a)*110,dy=Math.sin(a)*110;grandPlace(t,side,B[0]+dx,B[1]+dy,a,gr);}
   // the defender's forts: a few Defense Guns in front of its block (+ a SAM site for a capital)
   if(g.fort){const t=g.att===0?1:0,B=BASES[t],a=baseFacing(t);let placed=0;for(let k=0;k<90&&placed<g.fort;k++){const r=170+k*9,ang=a+((k%5)-2)*.45,px=B[0]+Math.cos(ang)*r,py=B[1]+Math.sin(ang)*r;
@@ -19015,7 +19017,7 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
     const side=a.o===nat0?0:a.o===nat1?1:-1;if(side<0||!a.u.length)continue;if(wn[side]>=3)continue;if(GCM.P[a.at].land&&GC.prov[a.at].o!==a.o&&!grAtWar(a.o,GC.prov[a.at].o)&&GC.prov[a.at].o!==a.o)continue;
     const recs=a.u.slice(0,24);wn[side]++;waves.push({t:70+wn[side]*50,side,recs,label:a.nm,done:0,aid:a.id});rf.push(a.id);}
   const attTeam=meAtt?0:1,from=b.att.map(id=>(GC.armies.find(a=>a.id===id)||{}).from).find(f=>f>=0),gm=P.sea?{key:'coral',real:0,tp:null}:gmMap(b.p,from),   /* a sea zone is fought on a naval map */
-    cfg={bi:{p:b.p},att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[]};
+    cfg={bi:{p:b.p},att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[],fv:[0,1].map(t=>{try{return ldrFervour(t?nat1:nat0,b.p)?1:0;}catch(e){return 0;}})};
   /* grand3: each side's best general stands in the battle as the hero squad (the army's own if it has one, else a fresh one) */
   try{const gp=[gmilPerk(meAtt?S:D),gmilPerk(meAtt?D:S)];cfg.gp=gp;[[side0,f0],[side1,f1]].forEach(([L,fc],t)=>{if(gp[t]&&grHasKind(fc,'champ')&&!L.some(r=>r[0]==='champ')){const r=['champ',100,Math.round(gp[t].lv*40),100];L.push(r);cfg.hero[t]=r;}});}catch(e){console.error('gmil hero',e);}   // forts / SAM / airfield... come from the province's buildings (gmApply)
   GB_CUR={b,cfg,meAtt,nat0,nat1,rf};
@@ -21330,6 +21332,53 @@ GMOD_COND.great=(k)=>!!(GC&&GC.gp&&GC.gp.includes(k));
 GMOD_ROWS.push({id:'gp_bonus',src:'Great Power',scope:'nation',stat:'warSupport',add:.03,cond:'great'});
 npTab('gp','👑','Great powers',(code,body)=>{const r=gpRank();body.innerHTML='<div style="margin-bottom:8px">The top '+GP_N+' nations by prestige are Great Powers (+3% war support). Prestige = score + allies + achievements + missions.</div>';
   npTable(body,['#','Nation','Prestige','Status'],r.slice(0,24).map(([c,v],i)=>({c,k:v,cells:[i+1,'<b>'+gdName(c)+(c===GC.me?' ◀':'')+'</b>',v,i<GP_N?'<span style="color:#ffe6a8">Great Power</span>':'Major']})),x=>{NP.code=x.c;npDraw();});});
+// NATIONAL LEADER FIGURES (lane G, AY): ONE shared Ayatollah leads IR+RS+DW (the Resistance bloc); KP has its own Dear Leader.
+// A leader stands in one province and tours: ~1 month per stop. While there: that province calms down (-3 unrest/month) and a
+// Fight-it battle there starts with fervour (units fearless). Nation-wide ("the people clamour for war"): +war support, faster manpower,
+// slower weariness (modifier rows, cond 'ldr'). Cost: 24 months of peace builds war-fever unrest. State GC.ldr = {AY:{at,tgt,eta,since,req}, DL:{..}, pc:{nation:peaceMonths}}.
+const LDR_DEF={AY:{title:'Supreme Ayatollah',who:()=>(typeof RES_BLOC!=='undefined'?RES_BLOC:['IR','RS','DW']),home:'IR',own:'IR'},
+               DL:{title:'Dear Leader',who:()=>['KP'],home:'KP',own:'KP'}};
+function ldrId(c){for(const k of Object.keys(LDR_DEF))if(LDR_DEF[k].who().includes(c))return k;return null;}
+function ldrProvs(k){const w=LDR_DEF[k].who(),o=[];if(!GC)return o;for(const p of GCM.P)if(p.land&&w.includes(GC.prov[p.i].o)&&!GC.nat[GC.prov[p.i].o].dead)o.push(p.i);return o;}
+function ldrS(k){if(!GC.ldr)GC.ldr={pc:{}};let L=GC.ldr[k];const ps=ldrProvs(k);
+  if(!L){const d=LDR_DEF[k],hn=GC.nat[d.home];L=GC.ldr[k]={at:hn&&!hn.dead?hn.cap:(ps[0]||0),tgt:-1,eta:0,since:GC.turn,req:-1};}
+  if(L.at!==undefined&&ps.length&&!ps.includes(L.at)){const hn=GC.nat[LDR_DEF[k].home];L.at=hn&&!hn.dead&&ps.includes(hn.cap)?hn.cap:ps[0];L.tgt=-1;}
+  return L;}
+function ldrName(k){try{const r=pplRoster(LDR_DEF[k].own);return LDR_DEF[k].title+' '+pplName(r.leader).replace(/^(Ayatollah|Dear Leader|Supreme Leader)\s*/,'');}catch(e){return LDR_DEF[k].title;}}
+function ldrPlayerRuns(k){return GC.me===LDR_DEF[k].own;}
+function ldrGo(k,pi){const L=ldrS(k);if(!ldrProvs(k).includes(pi)||pi===L.at)return false;L.tgt=pi;L.eta=GC.turn+1;grLog(ldrName(k)+' sets out for '+GCM.P[pi].n+'.',LDR_DEF[k].own);return true;}
+function ldrAt(c,pi){const k=ldrId(c);if(!k||!GC||!GC.ldr||!GC.ldr[k])return false;return GC.ldr[k].at===pi&&GC.ldr[k].tgt<0;}
+function ldrFervour(c,pi){return ldrAt(c,pi);}   // read by the Fight-it battle start
+GMOD_COND.ldr=(c)=>!!ldrId(c);
+GMOD_ROWS.push({id:'ldr_war',src:'The people clamour for war',scope:'nation',stat:'warSupport',add:.08,cond:'ldr'},
+               {id:'ldr_man',src:'Volunteers rally to the leader',scope:'nation',stat:'manpower',mul:1.12,cond:'ldr'},
+               {id:'ldr_wea',src:'Slow war weariness',scope:'nation',stat:'weariness',mul:.7,cond:'ldr'});
+function ldrMonth(){if(!GC||!GC.nat||!GC.prov)return;
+  for(const k of Object.keys(LDR_DEF)){if(!GC.nat[LDR_DEF[k].own])continue;const L=ldrS(k);
+    if(L.tgt>=0&&GC.turn>=L.eta){L.at=L.tgt;L.tgt=-1;L.since=GC.turn;grLog(ldrName(k)+' arrives in '+GCM.P[L.at].n+'.',LDR_DEF[k].own);}
+    if(L.tgt<0&&GC.prov[L.at]){const st=GC.prov[L.at];st.un=Math.max(0,st.un-3);}
+    // the AI (or an unplayed leader) tours the most restless province, or a visit an ally asked for
+    if(!ldrPlayerRuns(k)&&L.tgt<0&&GC.turn-L.since>=3){const ps=ldrProvs(k);let best=-1,bu=-1;
+      if(L.req>=0&&ps.includes(L.req)){best=L.req;}else for(const i of ps){const u=GC.prov[i].un;if(u>bu&&i!==L.at){bu=u;best=i;}}
+      L.req=-1;if(best>=0)ldrGo(k,best);}
+    // war-fever: long peace builds unrest in every nation he leads
+    for(const c of LDR_DEF[k].who()){const N=GC.nat[c];if(!N||N.dead)continue;const pc=GC.ldr.pc;
+      pc[c]=gdEnemies(c).length?0:(pc[c]||0)+1;
+      if(pc[c]>24)for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c){const st=GC.prov[p.i];st.un=Math.min(100,st.un+1);}}}}
+GMOD_HOOKS.push(ldrMonth);
+alAdd('ldr','🕌','Leader idle',(c)=>{const k=ldrId(c);if(!k||!ldrPlayerRuns(k)||!GC.ldr||!GC.ldr[k])return null;const L=GC.ldr[k];
+  return L.tgt<0&&GC.turn-L.since>=2?{n:1,tip:ldrName(k)+' is waiting in '+GCM.P[L.at].n+' — send him on tour.',go:()=>{try{npOpen(c,'ldr');}catch(e){}}}:null;});
+npTab('ldr','🕌','Leader',(code,body)=>{const k=ldrId(code);if(!k){body.textContent='';return;}const L=ldrS(k),mine=ldrPlayerRuns(k)&&code===GC.me,pc=(GC.ldr.pc[code]||0);
+  const peaceLine=pc>24?'<span style="color:#ffb3a8">War-fever: '+pc+' months of peace is stirring unrest.</span>':'Months of peace: '+pc+' (war-fever builds after 24).';
+  body.innerHTML='<div style="font-size:17px;margin-bottom:6px"><b>'+ldrName(k)+'</b></div><div>Stands in <b>'+GCM.P[L.at].n+'</b>'+(L.tgt>=0?' — travelling to <b>'+GCM.P[L.tgt].n+'</b>':'')+'.</div>'
+   +'<div style="margin:8px 0;opacity:.85">Where he stands: unrest falls each month and a battle there begins with fearless troops. Nation-wide: the people clamour for war (+8% war support, +12% manpower, weariness grows slower).</div><div>'+peaceLine+'</div>'
+   +(k==='AY'?'<div style="margin-top:6px;opacity:.8">One leader for the Resistance bloc: Iran, the Mountain Shias and Yemen share him and his effects.</div>':'');
+  const mk=(txt,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=txt;b.style.cssText='margin:4px 6px 0 0;padding:3px 10px;border-radius:12px;border:1px solid #3b556e;background:#16222e;color:#cfe3f5;cursor:pointer;font-size:14px';b.onclick=fn;return b;};
+  const lst=ldrProvs(k).filter(i=>i!==L.at).sort((a,b)=>GC.prov[b].un-GC.prov[a].un).slice(0,12);
+  const h=document.createElement('div');h.style.cssText='margin-top:10px;font-size:14px;opacity:.8';h.textContent=mine?'Send on tour (about a month per stop), restless provinces first:':(code!==LDR_DEF[k].own?'Ask for a visit (the ruler of '+gdName(LDR_DEF[k].own)+' decides the route):':'');body.appendChild(h);
+  if(mine||code!==LDR_DEF[k].own){const w=document.createElement('div');body.appendChild(w);
+    for(const i of lst){if(!mine&&GC.prov[i].o!==code)continue;w.appendChild(mk(GCM.P[i].n+' ('+Math.round(GC.prov[i].un)+'% unrest)',()=>{if(mine)ldrGo(k,i);else L.req=i;npDraw();}));}}},
+  (code)=>!!ldrId(code));
 // 13v-gwarsup.js — lane B4b: WAR SUPPORT, the ONE national war-support meter (0–100; this IS war weariness — A5/grand6 read wsOf(), no second meter).
 // State: N.ws (meter), N.wsE (battle/capture news waiting for the monthly tick), N.wsW (months at war), N.wsRl (turn of last rally). All in GC.nat -> saved with the campaign.
 // Deterministic (no random). Monthly hook on GMOD_HOOKS; effects are GMOD rows (low = fewer recruits, less income; high = more recruits).
@@ -21583,6 +21632,7 @@ function mxBuild(){
   opt('Doctrine','Your general’s battle doctrine: a free bonus for the whole battle. Or pick it in the first 2 minutes.',g('gdocSel'));
   opt('Conditions','Time of day and weather. Low sun, dusk and night change what you can see and how far.',g('wx'));
   opt('Season','Mud slows wheels, snow slows infantry. Roads matter more.',g('ssnRow'));
+  {const r=mxEl('div','seg');r.id='balRow';[['Balanced',0],['Realistic',1]].forEach(([t,v])=>{const b=mxEl('button','',t);b.onclick=()=>{setup.real=v;r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));};if(!!setup.real===!!v)b.classList.add('on');r.appendChild(b);});opt('Balance','Balanced: every nation equally strong. Realistic: richer armies start with more money, small nations less. Solo battles only for now.',r);}
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
   /* --- play online --- */
   const OL=scr('online','<h2 class="mxh">Play online</h2><p class="mxsub">Join an open battle, or start one with your nation and battlefield. Friends can join from the list or with an invite code.</p>');
