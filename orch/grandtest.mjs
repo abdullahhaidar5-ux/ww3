@@ -53,6 +53,10 @@ try {
   console.log('determinism', JSON.stringify(det));
   if (det.a !== det.b || det.h0 !== det.h1) fails.push('determinism: same seed gave different hashes ' + det.a + ' vs ' + det.b);
   if (det.a === det.c) fails.push('determinism: different seeds gave the same hash'); if (det.provs < 120 || det.provs > 320) fails.push('map: ' + det.provs + ' land provinces');
+  // ---- RG6 scenarios: Gulf flashpoint / Red Sea crisis are presets over the realistic start, deterministic
+  const scn = await ev(() => { const r = {}; for (const sc of ['me26', 'gulf', 'redsea']) { grNew({ me: 'IR', seed: 99, len: 'quick', sc }); r[sc] = { sc: GC.sc, irsa: grAtWar('IR', 'SA'), dwil: grAtWar('DW', 'IL'), armies: GC.armies.length, h: grHash() }; } grNew({ me: 'IR', seed: 99, len: 'quick', sc: 'gulf' }); r.again = grHash(); return r; });
+  console.log('scenarios', JSON.stringify(scn));
+  if (scn.me26.irsa || !scn.gulf.irsa || scn.gulf.sc !== 'gulf' || !scn.redsea.dwil || scn.gulf.armies <= scn.me26.armies || scn.again !== scn.gulf.h) fails.push('scenarios: ' + JSON.stringify(scn));
   // ---- MILITARY (grand3): generals, front lines, map strikes, fleets & sea zones; determinism over 20 turns with all of it active
   {
     const run20 = () => { grNew({ me: null, seed: 31337, len: 'std' }); const seen = { strike: 0, intercept: 0, sea: 0, gen: 0, blockade: 0 };

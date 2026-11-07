@@ -64,9 +64,26 @@ function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(s
   const byReg={};for(const c of grMajors()){const r=grNat(c).reg;(byReg[r]=byReg[r]||[]).push(c);}
   if(false)for(const r of Object.keys(byReg).sort()){const L=byReg[r].sort((a,b)=>GCM.P[GC.nat[a].cap].x-GCM.P[GC.nat[b].cap].x);if(L.length>=2)for(let i=0;i<L.length;i++){const a=L[i],b=L[(i+1)%L.length];if(a!==b)GC.war[grWk(a,b)]=1;}}
   if(GC.me&&!GR_REAL.wars.concat(GR_REAL.tn).some(x=>x.includes(GC.me))&&!Object.keys(GC.war).some(k=>k.split('|').includes(GC.me))){let best=null,bd=1e9;for(const c of grMajors())if(c!==GC.me){const d=grDist(GC.nat[c].cap,GC.nat[GC.me].cap);if(d<bd){bd=d;best=c;}}if(best)GC.war[grWk(GC.me,best)]=1;}
-  geEnsure();grRealApply(quick);
+  geEnsure();grRealApply(quick);GC.sc=GR_SCEN.some(x=>x.id===o.sc)?o.sc:'me26';grScenApply(GC.sc,quick);
   grLog('The campaign begins. '+(GC.me?GCM.nats.get(GC.me).name+' takes the field.':'Observer mode.'),GC.me);
   return GC;}
+/* RG6 scenario starts (laneA 2026-11-07): each scenario is a preset ON TOP of the realistic start (grRealApply) — extra opening wars,
+   opinions and front armies. Data rows only; deterministic (no RNG). 'me26' = the plain realistic start (featured: "Middle East 2026"). */
+const GR_SCEN=[
+ {id:'me26',n:'Middle East 2026',d:'The world as it stands in November 2026: Israel and the Mountain Shias at war, Russia and Ukraine at war, tense borders across the region.'},
+ {id:'gulf',n:'Gulf flashpoint',d:'Tankers burn in the Strait of Hormuz. Iran and its Resistance bloc are at war with Saudi Arabia and the UAE; the US is on the brink and Gulf neighbours pick sides.',
+  wars:[['IR','SA'],['IR','AE'],['DW','SA'],['DW','AE']],op:[['US','IR',-100],['QA','IR',-40],['KW','IR',-40],['OM','IR',-5],['IQ','SA',-25]],
+  fr:[['IR','SA',.25],['SA','IR',.25],['IR','AE',.15],['AE','IR',.2],['DW','SA',.2],['SA','DW',.15],['US','IR',.08]],
+  news:['Tankers ablaze in the Strait of Hormuz — Iran and Saudi Arabia are at war.','The UAE closes its airspace; Yemen\'s Coffee Shias fire on Saudi border posts.']},
+ {id:'redsea',n:'Red Sea crisis',d:'Shipping through Bab-el-Mandeb has stopped. Yemen\'s Coffee Shias are at war with Israel and Saudi Arabia; Egypt loses its canal trade and the Gulf watches.',
+  wars:[['DW','IL'],['DW','SA']],op:[['EG','DW',-60],['US','DW',-100],['AE','DW',-50]],
+  fr:[['DW','SA',.25],['SA','DW',.25],['EG','DW',.1]],
+  news:['Ships turn back at Bab-el-Mandeb — the Red Sea is a war zone.','Suez traffic collapses; Cairo warns Sanaa.']}];
+function grScenApply(id,quick){const S=GR_SCEN.find(x=>x.id===id);if(!S||!S.wars&&!S.op&&!S.fr)return;const has=c=>!!GC.nat[c]&&!GC.nat[c].dead;GC.rel=GC.rel||{};
+  for(const [a,b,v] of S.op||[])if(has(a)&&has(b))GC.rel[grWk(a,b)]=v;
+  for(const [a,b] of S.wars||[])if(has(a)&&has(b)){GC.war[grWk(a,b)]=1;GC.rel[grWk(a,b)]=-100;}
+  for(const [a,b,sh] of S.fr||[])if(has(a)&&has(b)){const at=grNearOwn(a,GC.nat[b].cap);if(at<0)continue;const V=GR_VBASE*grRealMil(a,grNat(a).major?1:.5)*(quick?.7:1);grAddArmy(a,at,grGenUnits(grNat(a).fac,V*sh,false),'Front Army');}
+  grLog('Scenario: '+S.n+'.',GC.me);for(const t of S.news||[])grLog(t,'');}
 function grWk(a,b){return a<b?a+'|'+b:b+'|'+a;}
 function grAtWar(a,b){return a!==b&&!!GC.war[grWk(a,b)];}
 function grDist(a,b){const A=GCM.P[a],B=GCM.P[b];return Math.hypot(A.x-B.x,A.y-B.y);}
