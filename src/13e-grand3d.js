@@ -109,7 +109,10 @@ const G3_GEO=()=>{if(G3.geo)return G3.geo;const cyl=(a,b,h,s)=>new THREE.Cylinde
   A.spire=g3Merge([[box(),g3M(0,.3,0,.8,.6,1.4),wall],[g3Prism(),g3M(0,.86,.1,.8,.5,1.1),roof],[box(),g3M(0,1.1,-.6,.5,1.7,.5),wall],[cone(.42,1.4,4),g3M(0,2.65,-.6),roof]]);
   A.disc=g3Merge([[cyl(1,1,.14,14),g3M(0,.07,0),[.52,.47,.38]]]);
   A.wall=g3Merge([[new THREE.CylinderGeometry(1,1,.9,28,1,true),g3M(0,.45,0),[.7,.64,.52]],[new THREE.CylinderGeometry(1,1,.12,28,1,true),g3M(0,.95,0),[.5,.44,.36]]]);
-  A.derrick=g3Merge([[cone(.5,3.2,4),g3M(0,1.6,0),[.25,.25,.28]],[cyl(.6,.6,.3,8),g3M(0,.15,0),[.2,.2,.2]]]);
+  {const st=[.62,.63,.66],dk=[.2,.2,.22],rd=[.8,.2,.15],lg=[];for(const [sx,sz] of [[1,1],[1,-1],[-1,1],[-1,-1]])lg.push([box(),g3M(sx*.42,2.4,sz*.42,.1,4.8,.1,0,-sz*.085,sx*.085),st]);
+  const br=[];for(const y of [1,2,3,4]){const w=.9-y*.15;for(const q of [-1,1]){br.push([box(),g3M(0,y,q*w*.5,w,.07,.07),st],[box(),g3M(q*w*.5,y,0,.07,.07,w),st]);}}
+  A.derrick=g3Merge([[box(),g3M(0,.1,0,1.9,.2,1.9),dk],...lg,...br,[box(),g3M(0,4.95,0,.5,.3,.5),dk],[box(),g3M(0,5.25,0,.12,.3,.12),rd],
+   [cyl(.55,.55,1.1,10),g3M(1.9,.6,.3),[.78,.78,.76]],[cyl(.5,.5,.9,10),g3M(1.9,.5,-1),[.7,.72,.7]],[cyl(.06,.09,3.6,5),g3M(-1.8,1.8,-.8),dk],[ico(.18),g3M(-1.8,3.7,-.8),[1,.62,.15]]]);}
   A.field=g3Merge([[cyl(1,1,.1,10),g3M(0,.05,0,1,1,.7),[.8,.72,.3]]]);
   A.spoil=g3Merge([[cone(1.2,1.6,7),g3M(0,.8,0),[.34,.32,.3]]]);
   A.pier=g3Merge([[box(),g3M(0,.15,0,1,.3,.14),[.45,.38,.3]],[box(),g3M(.3,.7,.4,.12,1.4,.12),[.8,.3,.2]],[box(),g3M(.3,1.35,.2,.06,.06,.5),[.8,.3,.2]]]);
@@ -134,7 +137,7 @@ function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],ro
       let kind=t.flat?(hv<.5?'court':'flat'):(hv<.4?'house':hv<.75?'gable':'row'),sy=s*(t.flat?.8+hv*.6:1);
       if(k===0&&(t.cap||t.t===0)){kind=t.flat?'mosque':'spire';sy=s;}else if(t.cap&&k<5){kind='tower';sy=s*1.5;}else if(t.n>14&&k%11===5){kind=t.flat?'mosque':'spire';sy=s;}
       push(kind,x,z,s,sy,s,ry,[v*TN[0],v*TN[1],v*TN[2]]);k++;}
-    if(p.oil&&t.t===0)for(let k=0;k<3;k++)push('derrick',t.x+20+k*6,t.z-18+k*3,2.4,2.4,2.4,0,[1,1,1]);
+    if(p.oil&&t.t===0)for(let k=0;k<3;k++)push('derrick',t.x+20+k*8,t.z-18+k*4,1.7,1.7,1.7,k*.7,[1,1,1]);
     if(p.farm&&t.t===0)for(let k=0;k<4;k++)push('field',t.x-24+(k%2)*11,t.z+18+(k>>1)*8,5,1,5,0,[.7+g3Hash(k,p.i)*.4,1,.8]);
     if(p.mine&&t.t===0)for(let k=0;k<2;k++)push('spoil',t.x+8+k*7,t.z+24,2.4,2,2.4,0,[1,1,1]);
     if(p.port&&t.t===0){for(let a=0;a<16;a++){const ang=a/16*6.283;let ok=false;for(let r=8;r<46;r+=3){const X=t.x+Math.cos(ang)*r,Z=t.z+Math.sin(ang)*r;if(g3HeightAt(X,Z)<-.2){push('pier',X-Math.cos(ang)*3,Z-Math.sin(ang)*3,10,1,6,-ang,[1,1,1]);ok=true;break;}}if(ok)break;}}}
@@ -262,6 +265,7 @@ const G3_DETAIL=`vec3 g3detail(vec3 c){vec2 wp=vWp.xz;vec4 bw=texture2D(uBW,vG3)
   float wet=smoothstep(.5,.56,ls)*(1.-smoothstep(.56,.7,ls));c*=1.-.2*wet;   // damp shoreline
   return c;}`;
 function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}if(G3.real&&G3.F&&!G3.F.lit){G3.F=null;G3.towns=null;}let R;try{R=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});}catch(e){return false;}
+  try{G3.vigS=new THREE.Scene();G3.vigC=new THREE.OrthographicCamera(-1,1,1,-1,0,1);G3.vigS.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.ShaderMaterial({transparent:true,depthTest:false,depthWrite:false,vertexShader:'varying vec2 u;void main(){u=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:'varying vec2 u;void main(){vec2 d=(u-vec2(.5,.52))*vec2(1.,.9);float v=smoothstep(.34,.82,length(d));vec3 c=mix(vec3(1.,.88,.66),vec3(.1,.18,.4),1.-u.y);gl_FragColor=vec4(mix(c,vec3(.02,.05,.1),v),v*.46+.055);}'})));}catch(e){G3.vigS=null;}  // studio grade: vignette + warm-top/cool-bottom wash, drawn in-canvas so HUD stays crisp
   if(!R.getContext())return false;R.outputColorSpace=THREE.LinearSRGBColorSpace;G3.R=R;G3.cv=cv;G3.aniso=Math.min(16,R.capabilities.getMaxAnisotropy?R.capabilities.getMaxAnisotropy():8);
   const F=g3Fields(),W=F.W,H=F.H,sc=new THREE.Scene(),haze=0x9db8c9;sc.background=new THREE.Color(haze);sc.fog=new THREE.Fog(haze,2200,6200);G3.sc=sc;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.02;g3Sky(sc);
   G3.cam=new THREE.PerspectiveCamera(36,1.6,8,9000);G3.cc=Object.assign({},G3.camera);G3.time=0;G3.last=0;G3.keys.clear();G3.pos=new Map();G3.arm=new Map();G3.sig='';
@@ -520,7 +524,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   const sig=GV.selA+'|'+GV.sel+'|'+GC.turn+'|'+GC.armies.length+'|'+GC.armies.reduce((a,x)=>a+x.u.length+x.path.length,0);
   if(sig!==G3.sig||G3.arrowDirty){G3.sig=sig;G3.arrowDirty=false;g3BuildArrows();g3Cards();G3.miniDirty=G3.miniDirty||0;}
   if(G3.ship)g3ShipTick(dt,s);
-  G3.R.render(G3.sc,G3.cam);
+  G3.R.render(G3.sc,G3.cam);if(G3.vigS){const ac=G3.R.autoClear;G3.R.autoClear=false;G3.R.render(G3.vigS,G3.vigC);G3.R.autoClear=ac;}
   if(mv||anim||G3.lblDirty||(G3.lf=(G3.lf||0)+1)%20===0){g3Labels(false);G3.lblDirty=false;}
   if(mv||(G3.lf%12===0)||G3.miniDirty)g3Mini();}
 if(!window._g3Keys){window._g3Keys=1;const ok=ev=>{const t=ev.target&&ev.target.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT')return false;const sc=document.getElementById('grandScreen');return !!sc&&sc.style.display!=='none'&&GV.g3&&!G;};
