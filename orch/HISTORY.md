@@ -272,3 +272,5 @@ Added DZ, MA, NG, ZA, ET, LY, SD (first cut, NEWNAT, Egypt base). See orch/repor
 
 ## laneD 2026-11-07 D2 slice
 Added orch/newplayer.mjs (menu audit via visible text). Top confusion: with 54 nations the Tutorial/Conquest/Grand campaign buttons sat ~3700px down the main menu. Fixed: quick-start row at the top (presses the real buttons) + compact scrollable nation list. Smoke PASS; smooth gate runs in CI.
+
+- laneB 2026-11-07 B2 first cut: Nation panel (src/13j-nationpanel.js, npTab register, 6 tabs, header stat grid, read-only view of other nations via Ledger/Diplomacy links).
