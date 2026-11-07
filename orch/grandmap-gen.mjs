@@ -327,8 +327,9 @@ function target(u) { const { lon, lat } = u; let t = 1600;
     for (let it = 0; it < 10; it++) { const sx = c.map(() => 0), sy = c.map(() => 0), sn = c.map(() => 0);
       for (let i = 0; i < ps.length; i++) { let bj = 0, bd = 1e18; c.forEach((q, j) => { const d = (X[i] - q[0]) ** 2 + (Y[i] - q[1]) ** 2; if (d < bd) { bd = d; bj = j; } }); lab[i] = bj; sx[bj] += X[i]; sy[bj] += Y[i]; sn[bj]++; }
       c = c.map((q, j) => sn[j] ? [sx[j] / sn[j], sy[j] / sn[j]] : q); }
-    const dirs = c.map(q => { const dx = q[0] - mx, dy = q[1] - my; return Math.abs(dx) > Math.abs(dy) * 1.2 ? (dx > 0 ? 'East' : 'West') : Math.abs(dy) > Math.abs(dx) * 1.2 ? (dy > 0 ? 'South' : 'North') : (dy > 0 ? 'South' : 'North') + (dx > 0 ? 'east' : 'west'); });
-    const orig = [u.n, u.ne], names = dirs.map(d => d + ' ' + u.n), ids = c.map((q, j) => j === 0 ? k : UN.push(Object.assign({}, u, { k: UN.length, px: 0 })) - 1);
+    const D8 = ['East', 'Southeast', 'South', 'Southwest', 'West', 'Northwest', 'North', 'Northeast'], dirs = c.map(q => D8[(Math.round(Math.atan2(q[1] - my, q[0] - mx) / (Math.PI / 4)) + 8) % 8]);
+    dirs.forEach((d, j) => { if (dirs.indexOf(d) !== j) dirs[j] = d + ' II'; });
+    const cw = /^(North|South|East|West|Central|Upper|Lower)/i.test(u.n), orig = [u.n, u.ne], names = dirs.map(d0 => { const [d, ii] = d0.split(' '); return (cw ? u.n + ' (' + d.toLowerCase() + ')' : d + ' ' + u.n) + (ii ? ' II' : ''); }), ids = c.map((q, j) => j === 0 ? k : UN.push(Object.assign({}, u, { k: UN.length, px: 0 })) - 1);
     ids.forEach((id, j) => { UN[id].n = names[j]; UN[id].ne = names[j]; const ll = unproj(c[j][0], c[j][1]); if (ll) { UN[id].lon = ll[0]; UN[id].lat = ll[1]; } UN[id].px = 0; UN[id].part = orig; });
     for (let i = 0; i < ps.length; i++) { U[ps[i]] = ids[lab[i]]; UN[ids[lab[i]]].px++; } } }
 const NU = UN.length;

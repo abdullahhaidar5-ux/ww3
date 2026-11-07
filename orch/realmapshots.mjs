@@ -27,7 +27,7 @@ console.log('open ms', Date.now() - t0, 'g3', await ev(() => GV.g3), 'trees', aw
 const view = (x, z, d, yaw = 0, pitch = .86) => ev(a => { Object.assign(G3.camera, { x: a[0], z: a[1], d: a[2], yaw: a[3], pitch: a[4] }); Object.assign(G3.cc, G3.camera); G3.moved = true; }, [x, z, d, yaw, pitch]);
 await shot('00-first'); console.log('errs', JSON.stringify(errs));
 const only = process.argv.includes('--only') ? process.argv[process.argv.indexOf('--only') + 1] : '';
-const box = cs => ev(cs => { const ps = GCM.P.filter(p => p.land && cs.includes(p.o)); const xs = ps.map(p => p.x), ys = ps.map(p => p.y); const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), m = .12 * Math.max(x1 - x0, y1 - y0); return [x0 - m, y0 - m, x1 - x0 + 2 * m, y1 - y0 + 2 * m]; }, cs);
+const box = cs => ev(cs => { const ps = GCM.P.filter(p => p.land && cs.includes(p.o) && p.x > 600 === GCM.P.filter(q => q.land && q.o === p.o).some(q => q.cap && q.x > 600)); const xs = ps.map(p => p.x), ys = ps.map(p => p.y); const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys), m = .12 * Math.max(x1 - x0, y1 - y0); return [x0 - m, y0 - m, x1 - x0 + 2 * m, y1 - y0 + 2 * m]; }, cs);
 const fit = r => ev(r => { guFit(r); G3.moved = true; }, r);
 await fit(null); await shot('world');
 await fit(await box(['IR', 'IQ', 'SY', 'SA', 'TR', 'EG', 'IL', 'RS', 'JO', 'KD', 'RV', 'DW', 'OM', 'AE', 'KW', 'QA'])); await shot('middle-east');

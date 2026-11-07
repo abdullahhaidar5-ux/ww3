@@ -35,7 +35,7 @@ px = (LON + 180) / 360 * N * 256
 merc = np.log(np.tan(np.pi / 4 + np.radians(LAT) / 2))
 py = (0.5 - merc / (2 * np.pi)) * N * 256 - T0 * 256
 el = cv2.remap(mos, px.astype(np.float32), py.astype(np.float32), cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE)
-el = np.where(OK, el, -4200.)   # outside the world outline: open ocean
+el = np.where(OK & (LAT > -59.5), el, -4200.)   # outside the world outline / Antarctica (not on the map): open ocean
 e16 = np.clip(el + 11000, 0, 65535).astype(np.uint16)
 rgb = np.zeros((1200, 2400, 3), np.uint8); rgb[..., 0] = e16 >> 8; rgb[..., 1] = e16 & 255
 os.makedirs(out, exist_ok=True)
@@ -46,6 +46,6 @@ im = np.asarray(Image.open(ne).convert('RGB'))
 LON, LAT, OK = grid(4096, 2048)
 mx = ((LON + 180) / 360 * im.shape[1] - .5).astype(np.float32); my = ((90 - LAT) / 180 * im.shape[0] - .5).astype(np.float32)
 col = cv2.remap(im, mx, my, cv2.INTER_AREA if False else cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
-col[~OK] = im[im.shape[0] // 2, int(im.shape[1] * 30 / 360)]   # outside the world outline: mid-Pacific water
+col[~OK | (LAT < -59.5)] = im[im.shape[0] // 2, int(im.shape[1] * 30 / 360)]   # outside the world outline / Antarctica: mid-Pacific water
 Image.fromarray(col).save(f'{out}/color.jpg', quality=84, optimize=True, progressive=True)
 print('done', os.path.getsize(f'{out}/elev.png'), os.path.getsize(f'{out}/color.jpg'))
