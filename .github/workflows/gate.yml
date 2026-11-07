@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down, migrate-dual,
-            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial, grand, grandsmooth, grandlive]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
+            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial, grand, grandsmooth, grandlive, decisions]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -42,6 +42,7 @@ jobs:
             check)          python3 orch/build.py --check && node orch/lint.mjs ;;   # + robot lint (orch/lint.mjs: no </script, no new hosts, banned names, no Math.random in grand sim)
             smooth-*)       node orch/smooth.mjs --profile "${T#smooth-}" ;;   # smoothness gate (orch/SMOOTH.md): pc / phone / multiplayer, vs orch/smooth-baseline.json
             servertest)     node orch/servertest.mjs && node orch/specserver.mjs ;;   # + spectators in a server battle
+            decisions)      node orch/decisions.mjs ;;   # audit: Abdullah's standing decisions as guards (no turn wording / End turn on the grand map, no Ayatollah/Fortress/Bunker Buster in Conquest, menu order, WASD camera-only, morale styles, Fight-it army-only)
             grand)          node orch/grandtest.mjs ;;   # grand campaign: 10 AI turns twice = same hash, Fight-it battle holds exactly the army's units + no production, survivors flow back, save round trip (orch/grandtest.mjs)
             grandsmooth)    node orch/grandsmooth.mjs ;;
             grandlive)      ( r=0; node orch/grandlive.mjs || r=1; node orch/grandlive2.mjs || r=1; node orch/grandrt.mjs || r=1; exit $r ) ;;   # Lane A1: menu -> Grand campaign -> New -> march -> End turn -> Fight it live loads and runs with no test hooks; old-map saves refused; failed battle start falls back   # 3D grand map (stage 5): draw calls / triangles / render-time budgets at wide, region and close views
