@@ -31,8 +31,9 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
     if(!grNat(b).major){W.push(['Minor nations rarely join blocs',-10]);s-=10;}
     if(gdAllies(b).some(x=>grAtWar(a,x))){W.push(['Their ally is your enemy',-40]);s-=40;}
     if(s<10&&ok)no('They decline (need 10, have '+Math.round(s)+')');W.push(['Total',Math.round(s)]);}
+  else if(act==='claim'){cost=GCL_COST;if(war)no('At war');else if(al)no('Already allied');else if(!gclPick(a,b))no('No province of theirs borders yours');else W.push(['Claim on '+gclPick(a,b).n+' ($'+GCL_COST+', lasts '+GCL_LEN+' months)',0]);W.push(['Justifies war and halves that province\'s price at peace',0]);W.push(['Their opinion of you -5',0]);}
   else if(act==='war'){if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until '+grMonStr(GC.tr[grWk(a,b)]));
-    else if(GC.ph!=='plan')no('Wait for the planning phase');W.push(['War goal: border dispute / strategic rivalry',0]);W.push(['Stability: all your opinions fall',-10]);}
+    else if(GC.ph!=='plan')no('Wait for the planning phase');if(gclJust(a,b))W.push(['Casus belli: your claim on '+gclList(a,b).map(x=>GCM.P[x[1]].n).join(', '),0]);else{W.push(['No casus belli: every nation\'s opinion of you -8, alarm +'+GCL_UNJUST_AE,0]);W.push(['Press a claim first to justify it',0]);}}
   else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (armies on enemy land, war length)',s]);
     W.push(['Opens the peace-deal screen: war score buys provinces, tribute or a vassal',0]);}
   else if(act==='guarantee'){cost=300;if(war)no('At war');else if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))no('Already guaranteed');W.push(['Costs $300, +15 opinion, shows resolve',0]);}
@@ -47,7 +48,8 @@ function gdAct(act,a,b){const c=gdChance(act,a,b);if(!c.ok)return c.note;const N
   else if(act==='guarantee'){GC.gu=GC.gu||[];GC.gu.push([a,b]);gdRel(a,b,15);grLog(na+' guarantees the independence of '+nb+'.',a);}
   else if(act==='alliance'){GC.alz=GC.alz||[];const g=GC.alz.find(x=>x[1].includes(a));if(g&&!g[1].includes(b))g[1].push(b);else if(!g)GC.alz.push([na+'–'+nb+' Pact',[a,b]]);gdRel(a,b,15);grLog(na+' and '+nb+' formed an alliance.',a);}
   else if(act==='break'){for(const g of GC.alz||[])if(g[1].includes(a)&&g[1].includes(b))g[1]=g[1].filter(x=>x!==b);GC.alz=(GC.alz||[]).filter(x=>x[1].length>1);gdRel(a,b,-25);grLog(na+' left its alliance with '+nb+'.',a);}
-  else if(act==='war'){grDeclare(a,b);GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;for(const o of Object.keys(GC.nat))if(o!==a&&o!==b)gdRel(a,o,-3);gdRel(a,b,-30);}
+  else if(act==='claim'){const e=gclFab(a,b);if(e)return e;}
+  else if(act==='war'){const j=gclJust(a,b);grDeclare(a,b);GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;for(const o of Object.keys(GC.nat))if(o!==a&&o!==b)gdRel(a,o,j?-1:-8);if(!j)N.ae=(N.ae||0)+GCL_UNJUST_AE;gdRel(a,b,-30);}
   else if(act==='peace'){delete GC.war[grWk(a,b)];GC.tr=GC.tr||{};GC.tr[grWk(a,b)]=GC.turn+6;grLog('Peace between '+na+' and '+nb+' — truce for 6 months.',a);}
   try{grSave();}catch(e){}try{grandMapRefresh();}catch(e){}return '';}
 // ---------- UI: replaces the Diplomacy tab of the nation panel ----------
@@ -56,7 +58,7 @@ const chip=(c,onc)=>{const n=grNat(c),d=document.createElement('span');d.title=G
   d.innerHTML='<span style="width:18px;height:12px;border:1px solid #fff;background:'+n.color+'"></span>'+GCM.nats.get(c).name;d.onclick=onc;return d;};
 const sel=c=>{GD.sel=c;npDraw();};
 const col=v=>v>=25?'#9fe39f':v<=-25?'#ff9d8e':'#e8e4d8';
-const ACTS=[['improve','Improve relations'],['aid','Send aid'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['war','Declare war']];
+const ACTS=[['improve','Improve relations'],['aid','Send aid'],['claim','Press a claim'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['war','Declare war']];
 npTab('dip','🤝','Diplomacy',(code,body)=>{const me=GC.me;if(!GD.sel||GD.sel===code||!GC.nat[GD.sel])GD.sel=Object.keys(GC.nat).find(c=>c!==code&&!GC.nat[c].dead&&grNat(c).major)||'';
   const row=(t,L)=>{const d=document.createElement('div');d.style.cssText='margin-bottom:4px';d.innerHTML='<span style="display:inline-block;width:92px;opacity:.7;font-size:13px">'+t+'</span>';if(!L.length)d.innerHTML+='<span style="opacity:.4">—</span>';for(const c of L)d.appendChild(chip(c,()=>sel(c)));return d;};
   const top=document.createElement('div');top.style.cssText='margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #2c4258';
