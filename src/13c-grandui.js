@@ -88,14 +88,19 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   cv.addEventListener('wheel',ev=>{ev.preventDefault();if(GV.g3){g3Wheel(ev);return;}const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top,[wx,wy]=guToWorld(mx,my),f=Math.exp(-ev.deltaY*.0015);GV.z*=f;guClamp();GV.ox=mx-wx*GV.z;GV.oy=my-wy*GV.z;guClamp();guRedraw();},{passive:false});
   cv.addEventListener('pointerdown',ev=>{if(GV.g3&&ev.button===1){ev.preventDefault();cv.setPointerCapture(ev.pointerId);GV.drag={x:ev.clientX,y:ev.clientY,btn:1,yaw:G3.camera.yaw,pitch:G3.camera.pitch,m:1};return;}if(ev.button!==0)return;cv.setPointerCapture(ev.pointerId);const r0=cv.getBoundingClientRect();GV.drag={x:ev.clientX,y:ev.clientY,ox:GV.ox,oy:GV.oy,m:0,g:GV.g3?g3Ground(ev.clientX-r0.left,ev.clientY-r0.top):null};});
   cv.addEventListener('pointermove',ev=>{const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;
-    if(GV.drag){const dx=ev.clientX-GV.drag.x,dy=ev.clientY-GV.drag.y;if(Math.abs(dx)+Math.abs(dy)>4)GV.drag.m=1;if(GV.drag.m&&GV.g3){g3Drag(ev,mx,my);return;}if(GV.drag.m){GV.ox=GV.drag.ox+dx;GV.oy=GV.drag.oy+dy;guClamp();guRedraw();return;}}
-    const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);if(h!==GV.hov){GV.hov=h;guRedraw();}if(GV.g3&&GV.drag&&GV.drag.m)return;guTip(h,mx,my);});
+    if(GV.drag){const dx=ev.clientX-GV.drag.x,dy=ev.clientY-GV.drag.y;if(Math.abs(dx)+Math.abs(dy)>8)GV.drag.m=1;if(GV.drag.m&&GV.g3){g3Drag(ev,mx,my);return;}if(GV.drag.m){GV.ox=GV.drag.ox+dx;GV.oy=GV.drag.oy+dy;guClamp();guRedraw();return;}}
+    const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);if(h!==GV.hov){GV.hov=h;guRedraw();}if(GV.g3&&GV.drag&&GV.drag.m)return;
+    const ah=GV.g3&&typeof g3HitAt==='function'?g3HitAt(mx,my):null;cv.style.cursor=ah?'pointer':'';if(ah){guArmyTip(ah.aid,mx,my);return;}guTip(h,mx,my);});
   cv.addEventListener('pointerup',ev=>{const d=GV.drag;GV.drag=null;if(!d||d.m)return;const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;guClick(mx,my);});
   cv.addEventListener('pointerleave',()=>{GV.hov=-1;document.getElementById('gTip').style.display='none';guRedraw();});
   addEventListener('resize',()=>{if(document.getElementById('grandScreen'))guResize();});
   guResize();guFit(null);const me=GC.me&&GC.nat[GC.me];if(me){GV.sel=me.cap;guCentre(me.cap,2.0);}guRedraw();grandMapRefresh();
   if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guEndTurn();}
     if(GV.g3)return;const k=ev.key.toLowerCase(),st=60;if(k==='w'||k==='arrowup')GV.oy+=st;else if(k==='s'||k==='arrowdown')GV.oy-=st;else if(k==='a'||k==='arrowleft')GV.ox+=st;else if(k==='d'||k==='arrowright')GV.ox-=st;else return;guClamp();guRedraw();});}}
+function guArmyTip(aid,mx,my){const t=document.getElementById('gTip'),a=GC.armies.find(x=>x.id===aid);if(!t||!a){if(t)t.style.display='none';return;}
+  const N=GCM.nats.get(a.o),mine=a.o===GC.me,P=GCM.P[a.at];const sea=P&&P.sea;
+  t.innerHTML='<b>'+a.nm+'</b><br>'+(N?N.name:a.o)+' · '+a.u.length+(sea?' ships/units at sea':' units')+(P?' · '+P.n:'')+'<br><span style="opacity:.8">'+(mine?'Click to select · right-click a province to move':'Click to inspect')+'</span>';
+  t.style.display='block';t.style.left=(mx+16)+'px';t.style.top=(my+16)+'px';}
 function guTip(h,mx,my){const t=document.getElementById('gTip');if(!t)return;if(h<0||!GCM.P[h]){t.style.display='none';return;}const p=GCM.P[h];let html;
   if(p.sea){html='<b>'+p.n+'</b><br>'+(p.ck?'<span style="color:#ff9d8e">Chokepoint strait</span><br>':'')+'Sea zone · crossing takes '+p.cost+' turn'+(p.cost>1?'s':'');}
   else{const st=GC.prov[h],N=GCM.nats.get(st.o);html='<b>'+p.n+'</b> <span style="opacity:.7">'+N.name+'</span><br>'+guTerrName(p.t)+' · towns '+p.tw+(p.oil?' · oil':'')+(p.farm?' · farms':'')+(p.mine?' · mines':'')+(p.port?' · port':'')+'<br>Garrison '+st.gar.length+(st.o===GC.me?' · unrest '+Math.round(st.un)+'%':'')+(p.cap?'<br><span style="color:#ffd24a">Capital</span>':GC.nat[st.o]&&GC.nat[st.o].wg.includes(h)?'<br><span style="color:#ffd24a">War goal</span>':'');}
