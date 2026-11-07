@@ -1,0 +1,16 @@
+artifact page written: orch/out/artifact/index.html (4319332 bytes, game 3475197 chars), 110 audio files + 82 model files (14.1 MB); publish arguments in orch/out/artifact/publish.json
+3D models: 3 of 83 ready=true  (page open to models ready: 2.6s)
+artifact edition: room true, three r186, PeerJS undefined, P2P shim false
+battle: 2 players IR vs US on strait
+loading screen finished after 104.0s
+3D models for this battle: 59 of 59
+after 4.0 game-min: 42 units, 21 structures, per team 21/26 (peak 24/26), last chunk 798 ms
+peak memory (node + browser, summed RSS): 2960 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+  warn: console (ignored, offline/headless): TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:43955/index.html:20991:32)
+    at buildPanels (http://127.0.0.1:43955/index.html:12243:245)
+    at g.terrain 
+
+SMOKE PASS (artifact edition) (206s) — screenshots in orch/out/art-*.png (this run: orch/out/runs/20261107-045214-smoke-art/)
