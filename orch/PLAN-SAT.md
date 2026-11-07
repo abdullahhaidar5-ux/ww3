@@ -121,7 +121,7 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
    - **Lane F:** RF1 spotting & hiding, RF2 real armour hits, RF3 artillery delay (sim → servers-live PR comment).
    - **Lane G:** RG5 TV news, RG10 nuclear programme + strike (with the follow-ons).
    - **Lane E:** DE-BLOCK slices 2–4, then RF13 dust/sandstorms, RF15 night tracers & flares.
-   - **Lane C:** C-TOWNS (C-LOOK part 2). **grandlook helper:** C-LOOK parts 1+3. **realmap helper:** A-MAP. **portraits:** finish round 3 this run only, no new run.
+   - **Lane C:** C-TOWNS (C-LOOK part 2). **grandlook helper:** C-LOOK parts 1+3. **realmap helper:** A-MAP. **portraits (PRIORITY, Abdullah 07:45 "Move portraits round 3 up"):** finish round 3; if not good yet, fire your own task once more (trig_0118ZwZ4LT1kVZzbtjswSpBS).
    - **Janitor:** keep running (Haiku, cheap).
 1. **FIRST:** `git fetch -q`. Stop only if **your own lane** has an unmerged `orch/lane<X>-*` branch pushed < 45 min ago. **Never wait for
    other helpers** (grand3, look1, rescue…): if your top item touches files another active branch is editing, take your next
