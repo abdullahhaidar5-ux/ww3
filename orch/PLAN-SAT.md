@@ -254,9 +254,9 @@ Round 7 (Abdullah 22:28) — after the slice, then kaizen; extend existing syste
 - [ ] **RG66 Regional militias** (Lane G): tribal/local forces to court on the grand map (the ONE Locals system).
 - [ ] **RG67 Faction storylines** (Lane G): event chains per nation (e.g. Iran's nuclear talks, Turkey's Kurdish question) — neutral wording, event engine.
 - [ ] **RG68 Rivalry bonuses** (Lane G): extra rewards for beating a historic rival (uses GR_REAL rivalries).
-- [ ] **RF13 Dust & sandstorms** (Lane E): vehicle dust trails + storms that cut vision (03g smoke/LOS, weather).
+- [x] **RF13 Dust & sandstorms** (Lane E): vehicle dust trails + storms that cut vision (03g smoke/LOS, weather).
 - [x] **RF14 Burning oil fields** (Lane E): huge black smoke columns when oil sites are hit.
-- [ ] **RF15 Night tracers & flares** (Lane E): night battles lit by tracers, flares, fires.
+- [x] **RF15 Night tracers & flares** (Lane E): night battles lit by tracers, flares, fires.
 - [x] **RF16 Lasting wrecks** (Lane E): burnt-out wrecks stay as cover all battle (03g G.bfHulk exists — extend).
 Round 8 (Abdullah 22:30) — check what exists first, extend it:
 - [ ] **RF17 Combined arms bonus** (Lane F): inf + armour + artillery near each other fight better (GMOD-style battle modifier).
