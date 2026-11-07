@@ -238,7 +238,7 @@ Grand campaign round 5 (Abdullah 22:24) — after the slice, then kaizen; extend
 - [ ] **RG56 Drone swarms** (Lane A): cheap long-range drone campaigns vs cities, oil, bases (one strike system with RG33 missiles).
 - [ ] **RG57 Air defence network** (Lane A): layered SAM umbrellas over provinces; gaps invite strikes (RG33 interceptors).
 - [ ] **RG58 Great-power AI** (Lane A): US/RU/CN AIs pursue real goals and intervene in wars.
-- [ ] **RG59 Natural disasters** (Lane G): earthquakes, floods, sandstorms; aid wins opinion (event engine).
+- [x] **RG59 Natural disasters** (DONE first cut laneG: flood, sandstorm and a neighbour's quake that wins opinion for relief teams, all as event-engine rows in `src/13p-gevents.js`; test `node orch/crisistest.mjs`; open: sandstorm on the map, aid to world-stage rows): earthquakes, floods, sandstorms; aid wins opinion (event engine).
 - [ ] **RG60 Pilgrimage season** (Lane G): Hajj and Arbaeen — truces expected, morale boost, attacks anger everyone (respectful; ties to RG17 holy sites).
 - [ ] **RG61 Global economy crash** (Lane B): recessions/booms ripple through trade + stability.
 Round 6 (Abdullah 22:26) — after the slice, then kaizen; extend existing systems:
