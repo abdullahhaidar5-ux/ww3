@@ -18580,7 +18580,7 @@ function grFinishTurn(){const P=GCM.P;try{gmRepair();}catch(e){}try{gmilBlockRef
   for(const p of P){if(!p.land)continue;const st=GC.prov[p.i];const occ=GC.armies.filter(a=>a.at===p.i&&a.o!==st.o&&grAtWar(a.o,st.o)&&a.u.length);
     if(!occ.length||st.gar.length)continue;if(GC.armies.some(a=>a.at===p.i&&a.o===st.o&&a.u.length))continue;
     const by={};for(const a of occ)by[a.o]=(by[a.o]||0)+grArmyVal(a);const taker=Object.keys(by).sort((x,y)=>by[y]-by[x]||(x<y?-1:1))[0],prevO=st.o;
-    st.o=taker;st.un=Math.min(100,st.un+35);st.cv=3;st.rq=[];try{gmCaptured(p.i,taker);}catch(e){}try{wsCaptured(prevO,taker);}catch(e){}try{geCaptured(p.i,taker);}catch(e){}grLog(GCM.nats.get(taker).name+' captured '+p.n+' from '+GCM.nats.get(prevO).name+'.',taker===GC.me||prevO===GC.me?GC.me:taker);
+    st.o=taker;st.un=Math.min(100,st.un+35);st.cv=3;st.rq=[];try{gmCaptured(p.i,taker);}catch(e){}try{hsCaptured(p.i,taker,prevO);}catch(e){}try{wsCaptured(prevO,taker);}catch(e){}try{geCaptured(p.i,taker);}catch(e){}grLog(GCM.nats.get(taker).name+' captured '+p.n+' from '+GCM.nats.get(prevO).name+'.',taker===GC.me||prevO===GC.me?GC.me:taker);
     const pn=GC.nat[prevO];if(pn&&pn.cap===p.i){grLog(GCM.nats.get(prevO).name+' lost its capital! (peace talks come in stage 4)',prevO);try{geCapitalFell(prevO,taker);}catch(e){}const rest=P.filter(q=>q.land&&GC.prov[q.i].o===prevO).sort((x,y)=>y.dev-x.dev||x.i-y.i)[0];pn.cap=rest?rest.i:-1;}}
   // economy
   const R=grRng(GC.seed*13+GC.turn);const inc={};geTurnStart();
@@ -21436,6 +21436,23 @@ npTab('home','🔥','Home front',(code,body,c)=>{const N=wsN(code),own=c.own&&co
     b.disabled=left>0||!N.pp||N.pp.pol<WS_COST;b.title=S.rally[1];b.onclick=()=>{const e=wsRally(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);
     const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Political points: '+Math.floor(N.pp?N.pp.pol:0)+(left>0?' · next rally in '+left+' months':'');body.appendChild(p);}});
 alAdd('ws','🔥','War support',c=>{const N=wsN(c);return N&&N.ws<35&&gdEnemies(c).length?{n:Math.round(N.ws)+'%',tip:'war support is low — open the Home front tab',go:()=>npOpen(c,'home')}:null;});
+// HOLY SITES (lane G, RG17): provinces that hold a faith's great shrines. Respectful and equal for every faith: each site you hold gives a small
+// war-support lift (national pride, modifier rows); taking one by force angers the world a little and its faith's home nation a lot, and unsettles the province.
+// Sites are DATA rows (province name, faith, name of the shrine city, home nation). No new sim state beyond GC.hs (the last-seen holder), saved with the campaign.
+const HS_ROWS=[
+ {p:'Hejaz',f:'Islam',n:'Mecca and Medina',h:'SA'},{p:'Baghdad',f:'Islam',n:'Najaf and Karbala',h:'IQ'},{p:'Khorasan',f:'Islam',n:'Mashhad',h:'IR'},
+ {p:'Tehran',f:'Islam',n:'Qom',h:'IR'},{p:'Tel Aviv',f:'Judaism, Christianity and Islam',n:'Jerusalem',h:'IL'}];
+function hsIdx(){if(!GCM._hs)GCM._hs=HS_ROWS.map(r=>{const p=GCM.P.find(q=>q.n===r.p);return p?Object.assign({i:p.i},r):null;}).filter(Boolean);return GCM._hs;}
+function hsCount(c){return hsIdx().filter(r=>GC.prov[r.i]&&GC.prov[r.i].o===c).length;}
+GMOD_COND.holy=(k,arg)=>!!GC&&hsCount(k)>=(+arg||1);
+GMOD_ROWS.push({id:'holy1',src:'Holds a holy site',scope:'nation',stat:'warSupport',add:.02,cond:'holy:1'},
+               {id:'holy2',src:'Holds two holy sites',scope:'nation',stat:'warSupport',add:.02,cond:'holy:2'});
+function hsCaptured(pi,taker,prev){const r=hsIdx().find(x=>x.i===pi);if(!r||!GC||taker===prev)return;
+  for(const c of Object.keys(GC.nat)){if(c===taker||GC.nat[c].dead)continue;try{gdRel(c,taker,c===r.h?-30:-6);}catch(e){}}
+  for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===taker&&p.i===pi){GC.prov[pi].un=Math.min(100,GC.prov[pi].un+10);}
+  grLog(gdName(taker)+' took '+r.n+' ('+r.f+'). The world watches; '+gdName(r.h)+' is outraged.',taker);
+  try{if(taker===GC.me||prev===GC.me||r.h===GC.me)gevToast(['🕌 '+r.n+' has changed hands']);}catch(e){}}
+function hsList(c){return hsIdx().filter(r=>GC.prov[r.i].o===c);}
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.

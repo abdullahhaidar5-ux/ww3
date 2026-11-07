@@ -179,7 +179,7 @@ Grand campaign round 2 (Abdullah 22:20 "Any more options for the grand campaign"
 - [ ] **RG14 Tech race** (Lane B): research drones, missiles, air defence, cyber; unlocks units (use the B ideas/power-points system).
 - [ ] **RG15 Cyber warfare** (Lane G): hack grids, banks, radar from the map (merge with RG3 spies — one covert-action system).
 - [ ] **RG16 Peace conferences** (Lane G): EU4-style peace deal screen: provinces, reparations, demilitarised zones (extend 13m peace).
-- [ ] **RG17 Holy sites** (Lane G): Mecca, Medina, Najaf, Karbala, Jerusalem, Qom… morale/opinion bonus; taking one angers the world. Respectful, equal for all faiths.
+- [x] **RG17 Holy sites** (laneG first cut `src/13w-gholy.js`, orch/hstest.mjs: 5 shrine provinces, +2%/+2% war support rows, capture angers the world; hooked in 13-grand capture line; pilgrimage/UN reactions open) (Lane G): Mecca, Medina, Najaf, Karbala, Jerusalem, Qom… morale/opinion bonus; taking one angers the world. Respectful, equal for all faiths.
 - [ ] **RG18 Volunteers** (Lane G): foreign volunteers join wars that matter to them (e.g. holy-site defence).
 - [ ] **RG19 Mercenaries/PMCs** (Lane B): hire fictional private military companies for cash (no real company names).
 - [ ] **RG20 Ceasefires & truces** (Lane G): temporary ceasefires that can break; UN peacekeepers on the line (extend GC.tr truces).
