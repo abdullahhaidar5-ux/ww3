@@ -4969,7 +4969,7 @@ const BASE={
   // inspires them: no fear and +10% damage for 30 seconds. One at a time; unarmed, so keep him safe.
   cleric:{name:'Ayatollah',cls:'inf',hp:320,spd:40,rng:0,dmg:0,rof:1,cost:1500,time:24,from:'barracks',armor:'light',r:8,dom:'ground',noAttack:true,vis:300,aura:{t:'morale',r:260},limit:1},
   // national specials (each nation gets one; see SPEC below)
-  atgm:{name:'MILAN ATGM Carrier',cls:'aa',hp:260,spd:96,rng:440,dmg:88,rof:3.4,wpn:'at',aa:0,cost:700,time:10,from:'factory',armor:'heavy',r:11,dom:'ground',limit:4},
+  atgm:{name:'MILAN Anti-Tank Carrier',cls:'aa',hp:260,spd:96,rng:440,dmg:88,rof:3.4,wpn:'at',aa:0,cost:700,time:10,from:'factory',armor:'heavy',r:11,dom:'ground',limit:4},
   saka:{name:"Sa'ka Thunderbolt Commandos",cls:'inf',hp:160,spd:60,rng:190,dmg:20,rof:.75,wpn:'gun',splash:16,aa:1,cost:450,time:8,from:'barracks',armor:'light',r:7,dom:'ground',limit:4},
   mortar:{name:'Mortar Team',cls:'inf',hp:110,spd:42,rng:390,minr:80,dmg:42,rof:3,wpn:'shell',splash:45,cost:500,time:9,from:'barracks',armor:'light',r:7,dom:'ground',limit:3},
   recon:{name:'Drone Recon Team',cls:'inf',hp:90,spd:50,rng:0,dmg:0,rof:1,cost:450,time:8,from:'barracks',armor:'light',r:7,dom:'ground',noAttack:true,vis:520,camo:1,markAura:320,limit:2},
@@ -5016,7 +5016,7 @@ const STRUCT={
   airfield:{name:'Airfield',hp:1500,size:96,cost:1500,time:15,req:'factory'},
   shipyard:{name:'Shipyard',hp:1400,size:70,cost:1200,time:12,req:'barracks',shore:true},
   turret:{name:'Defense Gun',hp:750,size:34,cost:600,time:6,req:'barracks',rng:290,dmg:30,rof:1.1,wpn:'tower'},
-  sam:{name:'SAM Site',hp:650,size:34,cost:700,time:7,req:'barracks',rng:400,dmg:80,rof:1.5,wpn:'missile',aa:2,ground:false},
+  sam:{name:'Anti-Air Missile Site',hp:650,size:34,cost:700,time:7,req:'barracks',rng:400,dmg:80,rof:1.5,wpn:'missile',aa:2,ground:false},
   coast:{name:'Coastal Missile Battery',hp:800,size:34,cost:1000,time:12,req:'barracks',shore:true,rng:520,dmg:150,rof:3.4,wpn:'missile',aa:0,navalOnly:1,sonar:260,desc:'Anti-ship missiles for the shore: hits warships, boats and landing craft (and spots submarines nearby), nothing else. Build it on the coast.'},
   tunnel:{name:'Tunnel Network',hp:900,size:40,cost:600,time:9,req:'barracks',rng:220,dmg:14,rof:.45,wpn:'gun',aa:1},
   radio:{name:'Radio & TV Station',hp:1100,size:44,cost:1500,time:14,req:'barracks',limit:2,desc:'Broadcasts to the towns around it: your towns grow more loyal, enemy towns in range grow restless. Unlocks Leaflet Drops on enemy towns. Fragile - bomb the enemy one.'},
@@ -5079,7 +5079,7 @@ const MSTYLES={   // rout = campaign battles: the side breaks below this share o
  home:{n:'Home defenders',rout:.2,routHome:.08,cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
  fire:{n:'Firepower-reliant',rout:.25,cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
 const MORALE_STYLE={};
-for(const[st,l]of Object.entries({zeal:'IR RS DW KP RV',prof:'US RU GB FR DE JP KR AU CA IT GR PL TR CN PK ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA IN UA CU EG',fire:'AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
+for(const[st,l]of Object.entries({zeal:'IR RS DW KP RV OB BI',prof:'US RU GB FR DE JP KR AU CA IT GR PL TR CN PK ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA IN UA CU EG',fire:'AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
 function msOf(fac){return MSTYLES[MORALE_STYLE[fac]||'home'];}
 function courageOf(u){const T=G.teams[u.team],ms=msOf(T.fac);let c=ms.cour*(1+.12*(u.rank||0))*upgK(T,u.kind,'courage');if(ms.home&&u.hm)c*=ms.home;if(ms.lone&&u.nsup)c/=ms.lone;return c;}
 function F_(code,name,color,lang,music,doctrine,mods,special,units,sup,fup,o={}){return Object.assign({code,name,color,lang,music,doctrine,mods,special,units,sup,fup},o);}
@@ -5106,7 +5106,7 @@ const FACTIONS={
     {inf:{name:'Basij Militia',hp:110},at:{name:'RPG Cell'},hacker:{name:'IRGC Cyber Team'},drone:{name:'Shahed-136'},aa:{name:'Mesbah AA Gun'},tank:{name:'Karrar Tank',hp:580},arty:{name:'Fateh-110 Launcher',rng:470,splash:65,rocket:true},heli:{name:'AH-1J Cobra'},jet:{name:'F-14 Tomcat'},boat:{name:'Seraj Fast Attack Craft',spd:110},ship:{name:'Moudge Frigate'}},
     {name:'Kheibar Missile Strike',charge:130,n:12,dmg:335,r:75,spread:200},'thermo',{extra:['drone']}),
   SA:F_('SA','Saudi Arabia','#1f9a54','ar-SA','mideast','Petro wealth & air force: oil pays 40% more, supply trucks carry 10% more, F-15SA jets cost 25% less and are tougher, air defence reaches 20% farther, all units cost 17% less.',{oil:1.4,harv:1.1,cost:.83},'hero',
-    {inf:{name:'Royal Land Forces Squad'},at:{name:'TOW Team'},hero:{name:'Special Forces Sniper',rng:330,dmg:150,rof:2.2},aa:{name:'Shahine SAM Vehicle'},tank:{name:'M1A2S Abrams'},arty:{name:'CAESAR Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'F-15SA Eagle'},boat:{name:'Fast Patrol Boat'},ship:{name:'Al Riyadh Frigate'}},
+    {inf:{name:'Royal Land Forces Squad'},at:{name:'TOW Team'},hero:{name:'Special Forces Sniper',rng:330,dmg:150,rof:2.2},aa:{name:'Shahine Anti-Air Vehicle'},tank:{name:'M1A2S Abrams'},arty:{name:'CAESAR Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'F-15SA Eagle'},boat:{name:'Fast Patrol Boat'},ship:{name:'Al Riyadh Frigate'}},
     {name:'Royal Air Strike',charge:150,n:5,dmg:625,r:75,spread:130},'awacs'),
   AE:F_('AE','United Arab Emirates','#b49a5e','ar-AE','mideast','High-tech wealth: weapons deal 25% more damage, units cost 5% less, oil pays 25% more, supply trucks carry 10% more, Pantsir air defence and Apaches hit 15% harder.',{dmg:1.25,cost:.95,oil:1.25,harv:1.1},'hero',
     {inf:{name:'Infantry Squad'},at:{name:'Javelin Team'},hero:{name:'Presidential Guard Commando',demo:true},aa:{name:'Pantsir-S1E'},tank:{name:'Leclerc Tank'},arty:{name:'G6 Rhino Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'Rafale'},boat:{name:'Ghannatha Patrol Boat'},ship:{name:'Baynunah Corvette'}},
@@ -5306,7 +5306,7 @@ Object.assign(NEWNAT,{
   gp:{bounty:{name:'Phosphate Exports'},recon:{name:'Border Watch',rm:.95},para:{name:'Royal Rapid Deployment'},barrage:{name:'Howitzer Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
   upg:['Special Forces Course','Desert Camo Kit','Tank Crew Training','Howitzer Fire Control','F-16 Integration','Cobra Maintenance','Dead Sea Revenue','Defence of the Kingdom','Aqaba Patrol Refit'],
   uplink:'Rocket Command (Aqaba)',econ:'Aqaba Port Authority',sub:'Coastal Midget Submarine',md:'Hawk Battery',coast:'Coastal Battery',trn:['Landing Craft','UH-60 Black Hawk']},
- KD:{base:'EG',name:'Kurdistan Region',color:'#e0a000',lang:'ku-KU',doctrine:'Regional Peshmerga forces, mountain fighters: infantry cost 15% less and train 10% faster, and troops ambush hard from cover in their own mountains and towns.',mods:{infCost:.85,infTime:.9},
+ KD:{base:'EG',name:'Kurdistan Region',color:'#e0a000',lang:'ku-KU',doctrine:'Regional Peshmerga forces, mountain fighters: infantry cost 15% less and train 10% faster, and troops ambush hard from cover in their own mountains and towns.',mods:{infCost:.85,infTime:.9,vehHp:.92},
   units:{inf:'Peshmerga Squad',at:'Milan Team',hero:'Special Peshmerga Commandos',aa:'Technical AA Gun',tank:'T-72 Tank',arty:'Mortar Battery',heli:'Mi-17 Gunship',jet:'Light Strike Aircraft',boat:'River Patrol Boat',ship:'Lake Patrol Ship'},
   sup:{name:'Mountain Mortar Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
   special:['recon',{name:'Mountain Scout Troop'}],hero:['Zerevani Special Forces','demo'],
@@ -5504,6 +5504,27 @@ Object.assign(NEWNAT,{
   gp:{bounty:{name:'Southern Oil Share'},recon:{name:'Marsh Watchers',rm:.95},para:{name:'Heliborne Volunteers'},barrage:{name:'Grad Barrage',nm:1.1,cdm:1.05},repair:{name:'Brigade Workshops',pm:1.2,rm:.9,cdm:1.05}},
   upg:['Shrine Guard Course','Volunteer Kit','T-72 Crew Training','Grad Fire Control','Frogfoot Overhaul','Hind Maintenance','Southern Oil Revenue','Defence of the Shrines','Marsh Boat Refit'],
   uplink:'Rocket Command (Marsh Depot)',econ:'Basra Oil Share Office',md:'Pantsir-style Battery',coast:'Shatt Coastal Battery',trn:['Marsh Landing Craft','Mi-8 Transport']}});
+// ---- nation-obbd (Abdullah 2026-11-06 21:26/21:29): OB "Olive Brigades" (fictional Gaza urban-resistance faction) and BI "Black Desert Insurgency" (fictional desert insurgent movement; code BI because BD = Bangladesh).
+// Inspired-by only: never a real group's name, flag, emblem, slogan or leader. Military-vs-military: no terror, hostage, suicide-attack or civilian-target mechanics. Both ZEALOUS (never rout). Egypt base = equal power per tier.
+Object.assign(NEWNAT,{
+ OB:{base:'EG',name:'Olive Brigades',color:'#3c6b3a',lang:'ar-PS',doctrine:'Olive Brigades, the dense-city defenders of Gaza: light, cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armour.',mods:{infCost:.85,infTime:.9,vehHp:.92},
+  units:{inf:'Brigade Fighter Squad',at:'RPG Ambush Team',hero:'Rubble Marksman Team',aa:'Improvised AA Truck',tank:'Armoured Bulldozer Carrier',arty:'Improvised Rocket Battery',heli:'Strike Drone Flight',jet:'Long-Range Rocket Salvo',boat:'Coastal Fishing Skiff',ship:'Coastal Patrol Launch'},
+  sup:{name:'Rocket Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Rooftop Observers'}],hero:['Rubble Marksman Team','demo'],
+  doct:{name:'Urban Labyrinth',ambush:1,homeland:1},
+  pow:{name:'Rubble Cover',type:'shield',cd:200,r:280,desc:'Your forces in the area take 60% less damage for 20s'},
+  gp:{bounty:{name:'Salvaged Supplies'},recon:{name:'Rooftop Watchers',rm:.95},para:{name:'Alley Reinforcements'},barrage:{name:'Mortar Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Aid Posts',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Marksman Course','Light Fighter Kit','Rubble Fighting Drills','Mortar Fire Control','Rocket Workshops','Drone Workshop','Remittance Fund','Defence of the City','Skiff Patrol Refit'],
+  uplink:'Rocket Workshop (Coastal Strip)',econ:'Aid & Remittance Board',md:'Rocket Battery',coast:'Coastal Lookout Post',trn:['Fishing Boat','Pickup Convoy']},
+ BI:{base:'EG',name:'Black Desert Insurgency',color:'#3b3b3f',lang:'ar-SY',doctrine:'Black Desert Insurgency, a raiding movement of the Syria-Iraq desert: captured technicals and light infantry (cost 12% less), raiders sprint 25% faster after firing and hit 20% harder from cover. Zealous: they never rout, but they pay in heavy losses and thin armour. Nobody makes treaties with them.',mods:{infCost:.88,vehHp:.95},
+  units:{inf:'Desert Raider Squad',at:'ATGM Raiding Team',hero:'Desert Sniper Team',aa:'ZU-23 Technical',tank:'Captured T-55 Group',arty:'Truck-Mounted Mortar',heli:'Small Strike Drone',jet:'Captured Rocket Salvo',boat:'River Skiff',ship:'River Patrol Launch'},
+  sup:{name:'Mortar Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['saka',{name:'Technical Raiders'}],hero:['Desert Sniper Team','demo'],
+  doct:{name:'Desert Raids',hitrun:1,ambush:1},
+  pow:{name:'Dust Screen',type:'smoke',cd:180,r:260,desc:'Smoke screen to move and withdraw under'},
+  gp:{bounty:{name:'Captured Equipment'},recon:{name:'Desert Scouts',rm:.95},para:{name:'Technical Convoy'},barrage:{name:'Mortar Barrage',nm:1.1,cdm:1.05},repair:{name:'Roadside Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Raider Course','Desert Fighter Kit','Captured Armour Crews','Mortar Fire Control','ATGM Stocks','Drone Workshop','Smuggling Routes','Desert Mobility','River Skiff Refit'],
+  uplink:'Rocket Depot (Desert)',econ:'Desert Trade Board',md:'Mortar Park',coast:'River Lookout Post',trn:['River Boat','Technical Convoy']}});
 for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const q in B.units)u[q]=Object.assign({},B.units[q]);for(const q in N.units)u[q]=Object.assign({},u[q]||{},{name:N.units[q]});
   FACTIONS[k]=Object.assign({},B,{code:k,name:N.name,color:N.color,lang:N.lang,doctrine:N.doctrine,mods:N.mods,units:u,sup:N.sup});
   const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);
@@ -5891,7 +5912,7 @@ const MAPS={
     cities:[[1300,950,190,'russia'],[1980,1050,170,'russia'],[700,1600,80,'europe'],[2600,600,80,'europe']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1640+150*Math.sin(y*.0028+ph),y]);M.rivers.push({pts,hw:()=>150});M.bridgeAt=[[0,.25],[0,.48],[0,.78]];M.bridgeFrac=true;
       M.islands.push({x:1650,y:620,r:60,rx:2,rot:1.4,wob:q=>.1*Math.sin(q*3)},{x:1640,y:1600,r:50,rx:1.8,rot:1.5,wob:q=>.1*Math.sin(q*4)});}},
-  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA','DZ','LY','MA'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
+  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA','DZ','LY','MA','BI'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1300,1100+Math.sin(a)*840]);return s;})(),
     cities:[[1600,1100,190,'mideast']],
     water(M,R){for(const [x,y] of [[900,700],[2300,1500],[2300,700],[900,1500]])M.lakes.push({x,y,r:55,rx:1.4,wob:q=>.15*Math.sin(q*3+x)});}},
@@ -5939,7 +5960,7 @@ const MAPS={
     slots:[[420,1500],[2780,700]],cities:mirrorList([[1020,1280,85,'southasia']],'p'),
     water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[1270,330],[1420,560],[1560,770]],40,25,2,ph),hw:()=>110},{pts:polyline([[640,330],[960,560]],40,18,2,ph),hw:()=>80});
       M.peaks.push({x:2250,y:330,r:80,rx:1.5,rot:.3});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:72,rx:1.25,rot:0});}},
-  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR','IQ','SY'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armour.',
+  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR','IQ','SY','BI'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armour.',
     slots:[[420,700],[2780,1500]],cities:mirrorList([[1180,430,110,'mideast'],[860,1700,75,'mideast']],'p'),
     water(M,R){M.lakes.push({x:900,y:1170,r:70,rx:1.7,wob:a=>.12*Math.sin(a*3)});M.peaks.push({x:1250,y:1820,r:70,rx:1.6,rot:.3});mirrorMap(M,'p');
       const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+110*Math.sin((y-1100)*.0035)+35*Math.sin((y-1100)*.011),y]);M.rivers.push({pts,hw:()=>92});M.bridgeAt=[[0,.18],[0,.5],[0,.82]];M.bridgeFrac=true;}},
@@ -5950,6 +5971,9 @@ const MAPS={
   aleppo:{name:'Aleppo: Ruined City',min:2,max:2,sym:'point',rough:1.1,home:['RS','TR','SY'],tag:'urban sprawl · citadel · street fighting · duel',desc:'A duel through a ruined city: a great old town around the citadel in the middle, suburbs on both sides and streets to fight down block by block.',
     slots:[[430,1650],[2770,550]],cities:[[1600,1100,290,'mideast'],...mirrorList([[860,680,140,'mideast'],[1250,1880,100,'mideast']],'p')],
     water(M,R){M.peaks.push({x:700,y:260,r:80,rx:1.6,rot:.2});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:62,rx:1.3,rot:0});}},
+  gaza:{name:'Gaza: Rubble Streets',min:2,max:2,sym:'point',rough:1.05,home:['OB','IL','EG'],tag:'dense coastal city · rubble · alleys · duel',desc:'A duel through a crowded coastal city: a thick old quarter in the middle, shattered blocks and rubble mounds on both sides, and narrow alleys to fight down house by house.',
+    slots:[[430,1650],[2770,550]],cities:[[1600,1100,300,'mideast'],...mirrorList([[900,640,150,'mideast'],[1180,1760,120,'mideast'],[640,1180,90,'mideast']],'p')],
+    water(M,R){M.peaks.push({x:820,y:300,r:70,rx:1.5,rot:.3});M.peaks.push({x:1120,y:1250,r:46,rx:1.4,rot:-.2});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:54,rx:1.3,rot:0});}},
   anatolia:{name:'Anatolian Mesa',min:3,max:4,sym:'quad',rough:1.4,home:['TR'],tag:'walled mesa · oil on top · four ways in',desc:'A rock-walled mesa in the middle of the highlands with oil on top. Four gaps lead up onto it, all equally far from every base.',
     slots:[[780,1100],[2420,1100],[1600,280],[1600,1920]],oilAt:[[1600,1100]],
     water(M,R){const arc=(c,s)=>{const pts=[];for(let t=c-s;t<=c+s+1e-9;t+=.05)pts.push([1600+Math.cos(t)*420,1100+Math.sin(t)*420]);return pts;};
@@ -5978,22 +6002,6 @@ const MAPS={
     slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'southasia'],...mirrorList([[1300,500,70,'southasia']],'p')],
     water(M,R){const ph=R()*6.28,side=[];for(let y=-200;y<=2400;y+=40)side.push([1020+40*Math.sin(y*.004+ph)+(y-1100)*.08,y]);M.rivers.push({pts:side,hw:()=>58});M.bridgeAt=[[0,.25],[0,.75]];M.bridgeFrac=true;mirrorMap(M,'p');
       const mid=[];for(let y=-200;y<=2400;y+=40)mid.push([1600+70*Math.sin((y-1100)*.004),y]);M.rivers.push({pts:mid,hw:()=>66});M.bridgeAt.push([2,.2],[2,.5],[2,.8]);}},
-  negev:{name:'Negev Desert',min:2,max:6,sym:'point',rough:1.1,home:['IL','EG'],tag:'open desert · craters · wadi crossings',desc:'Sun-baked Negev plateau: erosion craters and dry wadis break the sand into lanes around a crossroads town. Armour swings wide, but the crater rims decide who holds the middle.',
-    slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,120,'mideast']],
-    water(M,R){M.peaks.push({x:1000,y:700,r:90,rx:1.7,rot:.3},{x:1450,y:500,r:70,rx:1.4,rot:-.2},{x:1250,y:1500,r:80,rx:1.5,rot:.6});M.lakes.push({x:1220,y:1060,r:44,rx:1.3,wob:a=>.1*Math.sin(a*3)});mirrorMap(M,'p');}},
-  jordanvalley:{name:'Jordan Valley',min:2,max:6,sym:'mirrorX',theme:'green',rough:1.2,home:['IL','JO'],tag:'rift valley · river · ridges either side',desc:'A green rift valley with the Jordan River down the middle, steep ridges on both sides and bridges as the only fast way across.',
-    slots:[[560,300],[2640,300],[560,1900],[2640,1900],[420,1100],[2780,1100]],cities:[[800,1100,110,'mideast'],[2400,1100,110,'mideast']],
-    water(M,R){const ph=R()*6.28,pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1600+60*Math.sin(y*.004+ph),y]);M.rivers.push({pts,hw:()=>48});M.bridgeAt=[[0,.25],[0,.5],[0,.75]];M.bridgeFrac=true;
-      M.peaks.push({x:1050,y:560,r:85,rx:1.6,rot:.2},{x:1050,y:1640,r:85,rx:1.6,rot:-.2});mirrorMap(M,'x');}},
-  eilat:{name:'Sinai Border & Eilat',min:2,max:6,sym:'point',rough:1.5,home:['IL','EG'],tag:'rocky desert · gulf shore · mountain passes',desc:'Red granite mountains and dry canyons run down to the Gulf of Aqaba. Narrow passes funnel armies toward a port town at the centre.',
-    slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'mideast']],
-    water(M,R){M.peaks.push({x:1050,y:800,r:100,rx:1.8,rot:.6},{x:1500,y:520,r:85,rx:1.5,rot:.1},{x:1000,y:1500,r:80,rx:1.4,rot:-.5});M.ridges.push({pts:[[1250,420],[1350,700],[1300,900]],hw:()=>50});M.lakes.push({x:1560,y:1500,r:60,rx:1.4,wob:a=>.1*Math.sin(a*3)});mirrorMap(M,'p');}},
-  tigrismarsh:{name:'Tigris Marshes',min:2,max:6,sym:'point',theme:'green',rough:.9,home:['IQ','IR','RV'],tag:'reed marsh · river bends · causeways',desc:'Southern Iraq: reed marshes and slow river bends cut the plain into islands. Causeways and a river town in the middle are where armies must meet.',
-    slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'mideast']],
-    water(M,R){M.lakes.push({x:1180,y:760,r:90,rx:1.6,wob:a=>.12*Math.sin(a*3)},{x:1300,y:1500,r:80,rx:1.5,wob:a=>.1*Math.sin(a*4)});const ph=R()*6.28,pts=[];for(let x=-200;x<=3400;x+=40)pts.push([x,1100+90*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:()=>46});M.bridgeAt=[[0,.3],[0,.7]];M.bridgeFrac=true;mirrorMap(M,'p');}},
-  palmyra:{name:'Palmyra Desert',min:2,max:6,sym:'point',rough:1.3,home:['SY','IQ','IL'],tag:'Syrian desert · ruins · rocky ridges',desc:'The Syrian desert around an ancient oasis town: stony ridges and ruined walls give cover on the approaches, open sand in between.',
-    slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'mideast']],
-    water(M,R){M.peaks.push({x:1050,y:620,r:85,rx:1.7,rot:.4},{x:1400,y:1500,r:80,rx:1.5,rot:-.3},{x:1250,y:900,r:60,rx:1.3,rot:.1});M.lakes.push({x:1560,y:1060,r:40,rx:1.3,wob:a=>.1*Math.sin(a*3)});mirrorMap(M,'p');}},
   tihama:{name:'Tihama Coast',min:2,max:6,sym:'point',rough:1.4,home:['DW','SA'],tag:'Red Sea plain · escarpment · wadis',desc:'Yemen\'s hot Red Sea plain below a wall of mountains. Dry wadis are the roads and the port town in the middle is the prize.',
     slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'mideast']],
     water(M,R){M.peaks.push({x:1000,y:520,r:100,rx:1.8,rot:.5},{x:1100,y:1620,r:95,rx:1.7,rot:-.4});M.ridges.push({pts:[[1300,500],[1380,800],[1320,1000]],hw:()=>50});mirrorMap(M,'p');}},
@@ -8265,9 +8273,9 @@ function townCmd(team,a){if(G.grand)return;const t=G.towns&&G.towns[a.ti|0];if(!
 const HM={LOY_UN:30,LOY_HOLD:120,MIL_CAP:4,MIL_CD:6,MIL_COST:70,MIL_HP:.8,INF_R:700,INF_T:6,INF_DELAY:2,BRIB_UN:50,BRIB_CD:150,BRIB_T:700,BRIB_H:250,TOW_R:900,TOW_CAP:10,
   TURF:{rise:.65,fall:1.25,cap:1.25,inf:1.3,rec:.85,brib:1.25,foe:1.15}};
 const MIL_NAME={JP:'Local Defence Volunteers',US:'Local Auxiliaries',EU:'Local Auxiliaries',UA:'Territorial Volunteers',RU:'Local Militia',CN:'People\'s Militia',KP:'Worker-Peasant Militia',IR:'Volunteer Mobilization Fighters',RS:'Village Defence Fighters',DW:'Tribal Volunteers',
-  TR:'Local Defence Volunteers',IL:'Territorial Reservists',SA:'Local Defence Volunteers',AE:'Local Defence Volunteers',PK:'Local Defence Volunteers',IN:'Local Defence Volunteers',EG:'Local Defence Volunteers',GB:'Home Guard Volunteers',AU:'Army Reserve Volunteers',CA:'Canadian Rangers Volunteers',DZ:'Local Defence Volunteers',MA:'Local Defence Volunteers',NG:'Local Defence Volunteers',ZA:'Commando Reserve Volunteers',ET:'Local Defence Volunteers',LY:'Local Defence Volunteers',SD:'Local Defence Volunteers',JP:'Prefectural Disaster Volunteers',TW:'Reserve Mobilisation Force',PH:'Citizen Armed Force Geographical Unit',VN:'Self-Defence Militia',ID:'Hansip Civil Defence',TH:'Volunteer Defence Corps',KZ:'Territorial Defence Volunteers',AF:'Local Defence Volunteers',OM:'Tribal Home Guard',KR:'Local Defence Volunteers',CU:'Local Defence Volunteers'};
+  TR:'Local Defence Volunteers',IL:'Territorial Reservists',SA:'Local Defence Volunteers',AE:'Local Defence Volunteers',PK:'Local Defence Volunteers',IN:'Local Defence Volunteers',EG:'Local Defence Volunteers',GB:'Home Guard Volunteers',AU:'Army Reserve Volunteers',CA:'Canadian Rangers Volunteers',DZ:'Local Defence Volunteers',MA:'Local Defence Volunteers',NG:'Local Defence Volunteers',ZA:'Commando Reserve Volunteers',ET:'Local Defence Volunteers',LY:'Local Defence Volunteers',SD:'Local Defence Volunteers',JP:'Prefectural Disaster Volunteers',TW:'Reserve Mobilisation Force',PH:'Citizen Armed Force Geographical Unit',VN:'Self-Defence Militia',ID:'Hansip Civil Defence',TH:'Volunteer Defence Corps',KZ:'Territorial Defence Volunteers',AF:'Local Defence Volunteers',OB:'Neighbourhood Volunteers',BI:'Tribal Volunteers',OM:'Tribal Home Guard',KR:'Local Defence Volunteers',CU:'Local Defence Volunteers'};
 const STATION={JP:'Nippon Broadcast',US:'Heartland Radio One',EU:'Continental Broadcast',UA:'Free Dnipro Radio',RU:'Rodina Radio',CN:'Central Plains TV',KP:'Homeland Broadcast',IR:'Voice of the Plateau',RS:'Voice of the Mountain',DW:'Coffee Coast Radio',
-  TR:'Anatolia Radio',IL:'Levant Broadcast',SA:'Desert Kingdom Radio',AE:'Emirates Gulf Radio',PK:'Indus Radio',IN:'Subcontinent TV',EG:'Nile Valley Radio',GB:'Home Service Radio',AU:'Outback Radio',CA:'Northern Service Radio',DZ:'Maghreb Radio',MA:'Atlas Radio',NG:'Federal Radio',ZA:'Highveld Radio',ET:'Highland Radio',LY:'Coastal Radio',SD:'Nile Radio',JP:'Home Islands Broadcast',TW:'Strait Broadcast',PH:'Islands Radio',VN:'Voice of the Delta',ID:'Nusantara Radio',TH:'Chao Phraya Radio',KZ:'Steppe Broadcast',AF:'Highlands Radio',OM:'Gulf of Oman Radio',KR:'Hangang Broadcast',CU:'Island Radio'};
+  TR:'Anatolia Radio',IL:'Levant Broadcast',SA:'Desert Kingdom Radio',AE:'Emirates Gulf Radio',PK:'Indus Radio',IN:'Subcontinent TV',EG:'Nile Valley Radio',GB:'Home Service Radio',AU:'Outback Radio',CA:'Northern Service Radio',DZ:'Maghreb Radio',MA:'Atlas Radio',NG:'Federal Radio',ZA:'Highveld Radio',ET:'Highland Radio',LY:'Coastal Radio',SD:'Nile Radio',JP:'Home Islands Broadcast',TW:'Strait Broadcast',PH:'Islands Radio',VN:'Voice of the Delta',ID:'Nusantara Radio',TH:'Chao Phraya Radio',KZ:'Steppe Broadcast',AF:'Highlands Radio',OB:'Coastal Strip Radio',BI:'Desert Wireless',OM:'Gulf of Oman Radio',KR:'Hangang Broadcast',CU:'Island Radio'};
 function mapHome(){const m=G&&MAPS[G.mapKey];return (m&&m.home)||[];}
 function teamHomeFlag(i){const T=G.teams[i];return !!(T&&!T.reb&&mapHome().includes(T.fac));}
 // +1 = the locals favour this side (home nation, no home nation among its enemies), -1 = it is the stranger facing a home nation, 0 = neutral (or a mirror match: both home, effects cancel)
@@ -12792,7 +12800,7 @@ function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads
   if(s.length===1&&!s[0].isB&&(COUNTER[s[0].s.cls]||COUNTER[s[0].kind])&&!tip.textContent)tip.textContent=COUNTER[s[0].kind]||COUNTER[s[0].s.cls];
   {const ms=s.filter(e=>!e.isB).map(moraleOf).filter(Boolean);if(ms.length){const avg=ms.reduce((a,m)=>a+m.v,0)/ms.length,fl=ms.every(m=>m.st==='fearless'),ls=ms.filter(m=>m.st==='last').length,rt=ms.filter(m=>m.st==='routing').length;const T0=G.teams[s[0].team],why=NOBREAK[T0.fac]?'never break':T0.clr?'Ayatollah':(T0.mart||0)>G.t?'martyrdom':'fervor';const st=fl?'fearless':ls>ms.length/2?'last':rt>ms.length/2?'routing':avg>.66?'steady':avg>.35?'shaken':'breaking';
     const mb=document.createElement('div');mb.className='morale';mb.innerHTML=`<span class="ml">Morale</span><span class="mbar"><i style="width:${Math.round(avg*100)}%;background:${MOR_COL[st]}"></i></span><span class="mt" style="color:${MOR_COL[st]}">${fl?'Fearless ('+why+')':MOR_TXT[st]+(st==='last'?'':' '+Math.round(avg*100)+'%')}${rt&&!fl?' · '+rt+' routing':''}${ls&&st!=='last'?' · '+ls+' last stand':''}</span>`;
-    mb.title='Morale falls when units take fire, see comrades die or are outnumbered, and recovers out of combat. At zero they break and run back to base, ignoring orders, and take 25% extra damage while running. They rally fast near their HQ, an Ayatollah, a friendly-held building or an officer. Surrounded troops make a last stand instead (fearless but pinned). Crews bail out of badly damaged vehicles, which infantry can re-crew or capture. '+(fl?(NOBREAK[T0.fac]?'North Korean troops never break.':'While the Ayatollah lives, these troops never break.'):'Veterans, heroes, officers and cover help.');sp.after(mb);}}
+    mb.title='Morale falls when units take fire, see comrades die or are outnumbered, and recovers out of combat. At zero they break and run back to base, ignoring orders, and take 25% extra damage while running. They rally fast near their HQ, a friendly-held building or an officer. Surrounded troops make a last stand instead (fearless but pinned). Crews bail out of badly damaged vehicles, which infantry can re-crew or capture. '+(fl?(NOBREAK[T0.fac]?'North Korean troops never break.':'Zealous troops fight on and never break.'):'Veterans, heroes, officers and cover help.');sp.after(mb);}}
   {const h=ammoRowHTML(s);if(h){const ar=document.createElement('div');ar.className='morale';ar.id='ammoRow';ar.innerHTML=h;ar.title='Ammo: every shot spends one. Empty vehicles can\'t fire and infantry only plink with sidearms. Troops refill automatically inside a supply circle: near your HQ, a Supply Depot, a supply truck or a town you hold. Out of supply for a minute also stops healing.';el.append(ar);}}
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   else if(leftOrders()&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Click').replace(/right-click/g,'click');
@@ -14013,7 +14021,7 @@ if($('sbClear'))$('sbClear').onclick=()=>{if(G&&G.sandbox){for(const e of G.ents
 Client-only and read-only: builds headlines from the battle messages this player already gets (pushLog) and from
 team/weather state it can see, then scrolls them across a thin strip at the very top. Never touches the simulation. */
 const TK={q:[],cur:0,G:null,seen:{},out:{},wx:'',loss:[],kill:[],on:true,el:null,txt:null,tm:0};
-const TK_ADJ={US:'American',TR:'Turkish',IL:'Israeli',EU:'European',FR:'French',DE:'German',PL:'Polish',AZ:'Azerbaijani',JO:'Jordanian',KD:'Kurdish',IT:'Italian',GR:'Greek',ES:'Spanish',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',IQ:'Iraqi',SY:'Syrian',GB:'British',AU:'Australian',CA:'Canadian',DZ:'Algerian',MA:'Moroccan',NG:'Nigerian',ZA:'South African',ET:'Ethiopian',LY:'Libyan',SD:'Sudanese',JP:'Japanese',TW:'Taiwanese',PH:'Philippine',VN:'Vietnamese',ID:'Indonesian',TH:'Thai',KZ:'Kazakh',AF:'Afghan',OM:'Omani',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
+const TK_ADJ={OB:'Olive Brigades',BI:'Black Desert',US:'American',TR:'Turkish',IL:'Israeli',EU:'European',FR:'French',DE:'German',PL:'Polish',AZ:'Azerbaijani',JO:'Jordanian',KD:'Kurdish',IT:'Italian',GR:'Greek',ES:'Spanish',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',IQ:'Iraqi',SY:'Syrian',GB:'British',AU:'Australian',CA:'Canadian',DZ:'Algerian',MA:'Moroccan',NG:'Nigerian',ZA:'South African',ET:'Ethiopian',LY:'Libyan',SD:'Sudanese',JP:'Japanese',TW:'Taiwanese',PH:'Philippine',VN:'Vietnamese',ID:'Indonesian',TH:'Thai',KZ:'Kazakh',AF:'Afghan',OM:'Omani',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
 function tkAdj(code){return TK_ADJ[code]||'';}
 function tkAdjName(name){for(const c in FACTIONS)if(FACTIONS[c].name===name)return tkAdj(c)||name;return name;}
 function tkOwn(){try{return G.teams[ME].F.name;}catch(e){return 'Our';}}
@@ -14196,7 +14204,7 @@ const ID_MEDALS=(()=>{const n=(k,t,d)=>({k:'win_'+k,t,d,f:k,w:1});const M=[n('IR
   {k:'rs_fort',t:'Mountain Shias: Rock Stands',d:'Win as the Mountain Shias with your Mountain Fortress still standing.',f:'RS',w:1},
   {k:'fort20',t:'Hold the Mountain',d:'Keep a Mountain Fortress standing for 20 minutes in one battle.',w:1},
   {k:'ir_bb',t:'Fire and Fury',d:'Call in a Bunker Buster strike (any nation).',w:1}];
-  for(const k of ['US','TR','IL','EU','FR','DE','UA','RU','SA','AE','PK','IN','CN','KP','KR','EG','CU','GB','AU','CA','DZ','MA','NG','ZA','ET','LY','SD','PL','AZ','JO','KD','IT','GR','ES','JP','TW','PH','VN','ID','TH','KZ','AF','OM','RV'])M.push(n(k,FACTIONS[k].name+': Victory','Win a battle as '+FACTIONS[k].name+'.'));
+  for(const k of ['US','TR','IL','EU','FR','DE','UA','RU','SA','AE','PK','IN','CN','KP','KR','EG','CU','GB','AU','CA','DZ','MA','NG','ZA','ET','LY','SD','PL','AZ','JO','KD','IT','GR','ES','JP','TW','PH','VN','ID','TH','KZ','AF','OM','RV','OB','BI'])M.push(n(k,FACTIONS[k].name+': Victory','Win a battle as '+FACTIONS[k].name+'.'));
   M.push({k:'hard_1v3',t:'Outnumbered',d:'Win alone against three or more enemies on Hard.',w:1},{k:'iron_wall',t:'Iron Wall',d:'Win a battle (3+ minutes) losing fewer than 10 units.'},{k:'vet10',t:'Veteran Commander',d:'Finish 10 battles.'});return M;})();
 function idStore(){let s=null;try{s=JSON.parse(localStorage.getItem('ww3_medals')||'null');}catch(e){}if(!s||typeof s!=='object')s={};s.earned=s.earned||{};s.hist=Array.isArray(s.hist)?s.hist:[];s.n=s.n|0;return s;}
 function idSave(s){try{localStorage.setItem('ww3_medals',JSON.stringify(s));}catch(e){}}
@@ -16692,7 +16700,7 @@ for(const f of ['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN'
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
 // and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
-const WESTVEH=['JP','MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF'];
+const WESTVEH=['JP','MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF','OB','BI'];
 Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',GB:'kf51',AU:'abrams',CA:'kf51',IL:'merkava',EU:'kf51',FR:'kf51',DE:'kf51',TR:'kf51'});
 // Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
 // Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
@@ -17812,6 +17820,24 @@ const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
  NATX_FLAG.ET=c=>{c.hs(['#078930','#fcdd09','#da121a']);c.circ(60,36,11,'#0f47af');c.star(60,36,9,'#fcdd09');};
  NATX_FLAG.LY=c=>{c.rect('#4a4f55',0,0,c.W,c.H);c.rect('#a89466',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};
  NATX_FLAG.SD=c=>{c.rect('#4b5246',0,0,c.W,c.H);c.rect('#a89a6e',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};}
+// nation-obbd: Olive Brigades (OB) and Black Desert Insurgency (BI). Looks on shared models; ORIGINAL emblems in the printed-cloth style (no real group's banner, seal, shahada or slogan).
+{const L={ OB:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#6b6a52',ca:'#7a7556',cb:'#3a3a2c',uni:'#5d6048',pat:1},cx:{p:1,s:1,c:'#6b6a52',t:'#3c6b3a',w:3},ax:{b:'#878d91',p:3,h:{b:'#aeb09a',p:3}},ch:'#4a5036',rt:'#aeb09a',nv:'slav'},
+ BI:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#9a8a62',ca:'#a89a6c',cb:'#3a3a3e',uni:'#8f8460',pat:0},cx:{p:0,s:1,c:'#9a8a62',t:'#3b3b3f',w:3},ax:{b:'#878d91',p:3,h:{b:'#bfb08a',p:3}},ch:'#5a5238',rt:'#bfb08a',nv:'slav'}};
+ for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;if(q.nv)NATX_NAVY[k]=q.nv;KFAC.push(k);RMAP.dozer[k]='jd550';RMAP.ship[k]='frw';}
+ // OB: cream printed cloth, olive branch over a stylised city skyline, red/green/black foot band, name in Arabic
+ NATX_FLAG.OB=c=>{const{x,W,H}=c;emCloth(x,W,H,'#efe6cf',23);
+  x.fillStyle='#2b2b2b';x.fillRect(0,H*.84,W,H*.16);x.fillStyle='#b3262e';x.fillRect(0,H*.84,W*.34,H*.16);x.fillStyle='#2f6b3a';x.fillRect(W*.66,H*.84,W*.34,H*.16);
+  emText(x,'ألوية الزيتون',60,9,10.5,'#2f5a30');
+  x.fillStyle='#34382f';x.beginPath();x.moveTo(26,H*.84);for(const[px,py]of[[26,52],[31,52],[31,44],[37,44],[37,49],[42,49],[42,38],[47,38],[47,46],[53,46],[53,41],[57,41],[57,50],[63,50],[63,36],[69,36],[69,47],[75,47],[75,43],[81,43],[81,51],[87,51],[87,46],[94,46],[94,H*.84]])x.lineTo(px,py);x.closePath();x.fill();
+  x.strokeStyle='#3a5a22';x.lineWidth=1.3;x.lineCap='round';x.beginPath();x.moveTo(34,34);x.quadraticCurveTo(60,18,86,34);x.stroke();
+  for(let i=0;i<9;i++){const t=(i+.5)/9,bx=34+t*52,by=34-Math.sin(t*Math.PI)*12.4;for(const s of[-1,1]){x.save();x.translate(bx,by);x.rotate(s*-.9+(t<.5?-.3:.3));x.fillStyle=i%2?'#5f8a3a':'#4a7430';x.beginPath();x.ellipse(0,s*3.1,1.3,3.6,0,0,7);x.fill();x.restore();}}
+  x.fillStyle='#3c4a2a';for(const[ox,oy]of[[46,26.5],[60,23.5],[74,26.5]]){x.beginPath();x.arc(ox,oy+3,1.4,0,7);x.fill();}};
+ // BI: plain charcoal cloth, dune line and a broken (five-point, one arm missing) star; sombre, nothing like any real banner
+ NATX_FLAG.BI=c=>{const{x,W,H}=c;emCloth(x,W,H,'#34343a',31);
+  x.fillStyle='#8f8460';x.beginPath();x.moveTo(0,H);x.lineTo(0,H*.76);for(let i=0;i<=24;i++){const px=i*W/24;x.lineTo(px,H*.76+Math.sin(i*.9)*2.6-Math.sin(i*.37)*3);}x.lineTo(W,H);x.closePath();x.fill();
+  x.fillStyle='#6f6646';x.beginPath();x.moveTo(0,H);x.lineTo(0,H*.88);for(let i=0;i<=24;i++){const px=i*W/24;x.lineTo(px,H*.88+Math.sin(i*.7+1)*1.8);}x.lineTo(W,H);x.closePath();x.fill();
+  x.fillStyle='#b9b09a';x.beginPath();for(let i=0;i<10;i++){if(i===3||i===4)continue;const a=-1.5708+i*.62832,r=i%2?7:16;x.lineTo(60+Math.cos(a)*r,32+Math.sin(a)*r);}x.closePath();x.fill();
+  x.strokeStyle='rgba(0,0,0,.35)';x.lineWidth=.6;x.stroke();};}
  {const L={ JP:{tk:'abrams',he:'apache',je:'f16',sol:'sol_w',fl:{veh:'#5f6a45',ca:'#566340',cb:'#343a28',uni:'#56633f',pat:1},cx:{p:1,s:1,c:'#5f6a45',t:'#bc002d',w:3},ax:{b:'#878d91',p:3,h:{b:'#b3b6a8',p:3}},ch:'#4a5535',rt:'#b3b6a8'}};
  for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;KFAC.push(k);RMAP.dozer[k]='jd550';RMAP.ship[k]='frw';}
  NATX_FLAG.JP=c=>{c.rect('#fff',0,0,c.W,c.H);c.circ(60,36,16,'#bc002d');}}
@@ -18879,294 +18905,297 @@ function grClear(){try{localStorage.removeItem(GR_KEY);}catch(e){}GC=null;}
 function grRunAI(n){for(let i=0;i<n&&!GC.over;i++){grEndTurn(true);}return grHash();}
 // Generated by orch/grandmap-gen.mjs - do not edit by hand. The stylised grand-campaign world map (no real political claims).
 const GM_W=2400,GM_H=1200;
-const GM_NATS=[["US","United States","NA"],["CA","Canada","NA"],["MX","Mexico","NA"],["CU","Cuba","NA"],["GT","Central America","NA"],["DO","Caribbean Isles","NA"],["VE","Venezuela","SAM"],["CO","Colombia","SAM"],["BR","Brazil","SAM"],["PE","Peru","SAM"],["AR","Argentina","SAM"],["CL","Chile","SAM"],["GB","Britain","EU"],["FR","France","EU"],["DE","Germany","EU"],["ES","Spain","EU"],["IT","Italy","EU"],["PL","Poland","EU"],["SE","Sweden","EU"],["NO","Norway","EU"],["FI","Finland","EU"],["GR","Greece","EU"],["RO","Romania","EU"],["BY","Belarus","EU"],["UA","Ukraine","EU"],["RU","Russia","EU"],["KZ","Kazakhstan","EU"],["UZ","Uzbekistan","EU"],["AZ","Azerbaijan","EU"],["TR","Turkey","ME"],["SY","Syria","ME"],["RS","Mountain Shias","ME"],["IL","Israel","ME"],["JO","Jordan","ME"],["IQ","Iraq","ME"],["RV","River Shias","ME"],["KD","Kurdistan","ME"],["IR","Iran","ME"],["SA","Saudi Arabia","ME"],["AE","UAE","ME"],["OM","Oman","ME"],["KW","Kuwait","ME"],["QA","Qatar","ME"],["DW","Coffee Shias (Yemen)","ME"],["EG","Egypt","ME"],["LY","Libya","ME"],["SD","Sudan","ME"],["ET","Ethiopia","AF"],["DZ","Algeria","AF"],["MA","Morocco","AF"],["TN","Tunisia","AF"],["NG","Nigeria","AF"],["ML","Sahel","AF"],["TD","Chad","AF"],["CD","Congo","AF"],["KE","Kenya","AF"],["TZ","Tanzania","AF"],["AO","Angola","AF"],["ZA","South Africa","AF"],["PK","Pakistan","SA"],["IN","India","SA"],["AF","Afghanistan","SA"],["BD","Bangladesh","SA"],["NP","Nepal","SA"],["LK","Sri Lanka","SA"],["MM","Myanmar","SEA"],["TM","Turkmenistan","SA"],["CN","China","EA"],["KP","North Korea","EA"],["KR","South Korea","EA"],["JP","Japan","EA"],["TW","Taiwan","EA"],["MN","Mongolia","EA"],["VN","Vietnam","SEA"],["TH","Thailand","SEA"],["MY","Malaysia","SEA"],["ID","Indonesia","SEA"],["PH","Philippines","SEA"],["AU","Australia","OC"],["NZ","New Zealand","OC"]];   // [code, name, region]
+const GM_NATS=[["US","United States","NA"],["CA","Canada","NA"],["MX","Mexico","NA"],["CU","Cuba","NA"],["GT","Central America","NA"],["DO","Caribbean Isles","NA"],["VE","Venezuela","SAM"],["CO","Colombia","SAM"],["BR","Brazil","SAM"],["PE","Peru","SAM"],["AR","Argentina","SAM"],["CL","Chile","SAM"],["GB","Britain","EU"],["FR","France","EU"],["DE","Germany","EU"],["ES","Spain","EU"],["IT","Italy","EU"],["PL","Poland","EU"],["SE","Sweden","EU"],["NO","Norway","EU"],["FI","Finland","EU"],["GR","Greece","EU"],["RO","Romania","EU"],["BY","Belarus","EU"],["UA","Ukraine","EU"],["RU","Russia","EU"],["KZ","Kazakhstan","EU"],["UZ","Uzbekistan","EU"],["AZ","Azerbaijan","EU"],["TR","Turkey","ME"],["SY","Syria","ME"],["RS","Mountain Shias","ME"],["IL","Israel","ME"],["JO","Jordan","ME"],["IQ","Iraq","ME"],["KD","Kurdistan","ME"],["RV","River Shias","ME"],["OB","Olive Brigades","ME"],["BI","Black Desert Insurgency","ME"],["IR","Iran","ME"],["SA","Saudi Arabia","ME"],["AE","UAE","ME"],["OM","Oman","ME"],["KW","Kuwait","ME"],["QA","Qatar","ME"],["DW","Coffee Shias (Yemen)","ME"],["EG","Egypt","ME"],["LY","Libya","ME"],["SD","Sudan","ME"],["ET","Ethiopia","AF"],["DZ","Algeria","AF"],["MA","Morocco","AF"],["TN","Tunisia","AF"],["NG","Nigeria","AF"],["ML","Sahel","AF"],["TD","Chad","AF"],["CD","Congo","AF"],["KE","Kenya","AF"],["TZ","Tanzania","AF"],["AO","Angola","AF"],["ZA","South Africa","AF"],["PK","Pakistan","SA"],["IN","India","SA"],["AF","Afghanistan","SA"],["BD","Bangladesh","SA"],["NP","Nepal","SA"],["LK","Sri Lanka","SA"],["MM","Myanmar","SEA"],["TM","Turkmenistan","SA"],["CN","China","EA"],["KP","North Korea","EA"],["KR","South Korea","EA"],["JP","Japan","EA"],["TW","Taiwan","EA"],["MN","Mongolia","EA"],["VN","Vietnam","SEA"],["TH","Thailand","SEA"],["MY","Malaysia","SEA"],["ID","Indonesia","SEA"],["PH","Philippines","SEA"],["AU","Australia","OC"],["NZ","New Zealand","OC"]];   // [code, name, region]
 // [name, owner, x, y, terrain (w = sea zone), towns (sea: turns to cross), flags (sea: K = chokepoint), battle map, neighbours]
 const GM_P=[
-["Mexico City","MX",199,588,"u",3,"C","",[1,2,7,239]],
-["Sonora","MX",143,486,"d",2,"W","",[0,185,194,195,201,203,238,239]],
-["Yucatan","MX",251,599,"j",2,"P","",[0,3,4,5,7,240]],
-["Havana","CU",266,548,"u",3,"CP","caribbean",[2,4,5,170,239,241]],
-["Camaguey","CU",302,565,"j",2,"FW","caribbean",[2,3,5,170,241]],
-["Santiago de Cuba","CU",338,593,"m",2,"P","caribbean",[2,3,4,6,100,240,241]],
-["Hispaniola","DO",369,621,"j",2,"P","",[5,8,100,102,240]],
-["Central America","GT",246,666,"j",2,"P","",[0,2,9,14,240,279]],
-["Caracas","VE",364,706,"u",3,"COP","",[6,9,11,13,102,240]],
-["Bogota","CO",328,739,"m",2,"CM","",[7,8,11,14,240]],
-["Brasilia","BR",415,864,"f",3,"CF","",[11,12,13,14,275]],
+["Mexico City","MX",199,588,"u",3,"C","",[1,2,7,242]],
+["Sonora","MX",143,486,"d",2,"W","",[0,190,199,200,206,208,241,242]],
+["Yucatan","MX",251,599,"j",2,"P","",[0,3,4,5,7,243]],
+["Havana","CU",266,548,"u",3,"CP","caribbean",[2,4,5,175,242,244]],
+["Camaguey","CU",302,565,"j",2,"FW","caribbean",[2,3,5,175,244]],
+["Santiago de Cuba","CU",338,593,"m",2,"P","caribbean",[2,3,4,6,100,243,244]],
+["Hispaniola","DO",369,621,"j",2,"P","",[5,8,100,102,243]],
+["Central America","GT",246,666,"j",2,"P","",[0,2,9,14,243,282]],
+["Caracas","VE",364,706,"u",3,"COP","",[6,9,11,13,102,243]],
+["Bogota","CO",328,739,"m",2,"CM","",[7,8,11,14,243]],
+["Brasilia","BR",415,864,"f",3,"CF","",[11,12,13,14,278]],
 ["Amazonia","BR",385,784,"j",2,"M","",[8,9,10,13,14]],
-["Sao Paulo","BR",419,944,"u",3,"PW","",[10,14,15,16,275,276]],
-["Northeast","BR",432,808,"j",2,"P","",[8,10,11,102,274,275]],
-["Andes","PE",313,829,"m",2,"CM","",[7,9,10,11,12,16,279]],
-["Buenos Aires","AR",390,1041,"f",3,"CP","",[12,16,276]],
-["Santiago","CL",343,1015,"m",2,"CM","",[12,14,15,279]],
-["Paris","FR",642,266,"u",3,"C","",[18,20,21,217,218,219,220,222,223,224,225,226,227,244,245]],
-["Provence","FR",673,322,"c",2,"PW","",[17,20,21,23,24,101,246]],
+["Sao Paulo","BR",419,944,"u",3,"PW","",[10,14,15,16,278,279]],
+["Northeast","BR",432,808,"j",2,"P","",[8,10,11,102,277,278]],
+["Andes","PE",313,829,"m",2,"CM","",[7,9,10,11,12,16,282]],
+["Buenos Aires","AR",390,1041,"f",3,"CP","",[12,16,279]],
+["Santiago","CL",343,1015,"m",2,"CM","",[12,14,15,282]],
+["Paris","FR",642,266,"u",3,"C","",[18,20,21,222,223,224,225,227,228,229,230,231,232,247,248]],
+["Provence","FR",673,322,"c",2,"PW","",[17,20,21,23,24,101,249]],
 ["Berlin","DE",769,229,"u",3,"C","",[20,23,24,25,26,27]],
-["Rhine","DE",703,250,"f",3,"FW","rhine",[17,18,19,24,27,244]],
-["Madrid","ES",566,359,"f",2,"C","",[17,18,22,245,246]],
-["Andalusia","ES",560,394,"c",2,"PW","",[21,99,245,246,259]],
-["Rome","IT",763,340,"u",3,"CP","",[18,19,24,25,29,30,101,247]],
+["Rhine","DE",703,250,"f",3,"FW","rhine",[17,18,19,24,27,247]],
+["Madrid","ES",566,359,"f",2,"C","",[17,18,22,248,249]],
+["Andalusia","ES",560,394,"c",2,"PW","",[21,99,248,249,262]],
+["Rome","IT",763,340,"u",3,"CP","",[18,19,24,25,29,30,101,250]],
 ["Po Valley","IT",727,304,"f",3,"FW","",[18,19,20,23]],
 ["Warsaw","PL",864,233,"f",3,"C","",[19,23,26,28,30,31,35]],
 ["Stockholm","SE",817,174,"f",2,"CP","",[19,25,27,28]],
-["Norway","NO",709,153,"m",2,"CPO","",[19,20,26,243,244]],
+["Norway","NO",709,153,"m",2,"CPO","",[19,20,26,246,247]],
 ["Finland","FI",924,141,"s",2,"C","",[25,26,31,37]],
-["Athens","GR",894,385,"c",2,"CP","aegean",[23,30,49,90,95,247,258]],
-["Romania","RO",912,301,"f",2,"CO","",[23,25,29,34,35,47,258]],
+["Athens","GR",894,385,"c",2,"CP","aegean",[23,30,49,90,95,250,261]],
+["Romania","RO",912,301,"f",2,"CO","",[23,25,29,34,35,47,261]],
 ["Belarus","BY",948,221,"f",2,"C","",[25,28,32,35,37]],
 ["Kyiv","UA",984,246,"u",3,"C","dnipro",[31,33,34,35,36,37]],
-["Donbas","UA",1062,273,"f",3,"W","",[32,34,36,38,39,51,249]],
-["Odesa","UA",984,292,"c",2,"P","crimea",[30,32,33,47,249]],
+["Donbas","UA",1062,273,"f",3,"W","",[32,34,36,38,39,51,252]],
+["Odesa","UA",984,292,"c",2,"P","crimea",[30,32,33,47,252]],
 ["Lviv","UA",900,256,"f",2,"","",[25,30,31,32]],
-["Moscow","RU",1062,201,"u",4,"C","volga",[32,33,37,38,281]],
-["Leningrad","RU",972,163,"s",2,"P","arctic",[28,31,32,36,281]],
-["Volga","RU",1175,237,"f",3,"FW","volga",[33,36,39,40,250,281]],
-["Caucasus","RU",1139,312,"m",2,"O","caucasus",[33,38,45,51,65,67,250]],
-["Urals","RU",1330,200,"m",3,"M","ural",[38,41,43,46,250,281]],
-["Siberia","RU",1530,183,"s",2,"O","taiga",[40,43,133,136,281]],
-["Far East","RU",2020,200,"s",2,"P","",[128,135,136,138,145,269]],
+["Moscow","RU",1062,201,"u",4,"C","volga",[32,33,37,38,284]],
+["Leningrad","RU",972,163,"s",2,"P","arctic",[28,31,32,36,284]],
+["Volga","RU",1175,237,"f",3,"FW","volga",[33,36,39,40,253,284]],
+["Caucasus","RU",1139,312,"m",2,"O","caucasus",[33,38,45,51,65,67,253]],
+["Urals","RU",1330,200,"m",3,"M","ural",[38,41,43,46,253,284]],
+["Siberia","RU",1530,183,"s",2,"O","taiga",[40,43,133,136,284]],
+["Far East","RU",2020,200,"s",2,"P","",[128,135,136,138,145,272]],
 ["Kazakh Steppe","KZ",1414,267,"d",2,"CO","",[40,41,44,46,115,122,133]],
 ["Uzbekistan","UZ",1390,351,"d",2,"C","",[43,46,73,115,116,117]],
-["Baku","AZ",1205,359,"c",2,"COP","",[39,67,68,71,250]],
-["Turkmenistan","TM",1313,374,"d",2,"CO","",[40,43,44,68,73,250]],
-["Istanbul","TR",962,345,"u",4,"CP","bosphorus",[30,34,48,49,249,258]],
-["Ankara","TR",1014,365,"f",3,"W","anatolia",[47,50,51,53,249,258]],
-["Izmir","TR",936,385,"c",2,"P","aegean",[29,47,90,248,258]],
-["Cilicia","TR",1017,396,"c",2,"PF","",[48,53,54,56,248,258]],
-["East Anatolia","TR",1097,374,"m",2,"M","",[33,39,48,53,65,249]],
-["Damascus","SY",1084,442,"u",3,"C","",[53,55,57,58,62,66]],
-["Aleppo","SY",1077,405,"u",3,"W","aleppo",[48,50,51,52,54,55,58,65]],
-["Latakia","SY",1037,414,"c",2,"P","",[50,53,56,58,60]],
-["Deir ez-Zor","SY",1117,425,"d",2,"O","euphrates",[52,53,63,65,66]],
-["Beirut","RS",1005,422,"c",3,"CP","lebanon",[50,54,59,60,248]],
-["South Lebanon","RS",1047,456,"m",2,"W","lebanon",[52,58,59,60,61,62]],
-["Bekaa","RS",1058,432,"m",2,"F","lebanon",[52,53,54,57,60]],
-["Tel Aviv","IL",1010,461,"u",3,"CP","",[56,57,60,61,89,248,252]],
-["Galilee","IL",1027,439,"m",2,"W","golan",[54,56,57,58,59]],
-["Negev","IL",1031,478,"d",2,"M","",[57,59,62,78,91,252]],
-["Jordan","JO",1070,471,"d",2,"C","",[52,57,61,66,78]],
-["Baghdad","IQ",1144,438,"u",3,"C","mesopotamia",[55,64,65,66,67,71,236,237]],
-["Basra","RV",1174,467,"c",3,"OPW","mesopotamia",[63,66,70,71,74,79,236,237]],
-["Mosul","IQ",1126,400,"f",2,"O","",[39,51,53,55,63,67]],
-["Anbar","IQ",1109,451,"d",2,"","",[52,55,62,63,64,74,78,236]],
-["Kurdistan","KD",1161,405,"m",2,"CO","",[39,45,63,65,71]],
-["Tehran","IR",1228,411,"u",4,"C","persia",[45,46,69,70,71,73,250]],
-["Isfahan","IR",1237,448,"d",3,"F","persia",[68,70,72,73,254]],
-["Khuzestan","IR",1200,457,"d",3,"OW","hawizeh",[64,68,69,71,79,237,254]],
-["Zagros","IR",1180,426,"m",2,"M","zagros",[45,63,64,67,68,70]],
-["Hormozgan","IR",1290,499,"c",2,"P","hormuz",[69,73,82,114,253,254]],
+["Baku","AZ",1205,359,"c",2,"COP","",[39,67,68,253]],
+["Turkmenistan","TM",1313,374,"d",2,"CO","",[40,43,44,68,73,253]],
+["Istanbul","TR",962,345,"u",4,"CP","bosphorus",[30,34,48,49,252,261]],
+["Ankara","TR",1014,365,"f",3,"W","anatolia",[47,50,51,53,54,252,261]],
+["Izmir","TR",936,385,"c",2,"P","aegean",[29,47,90,251,261]],
+["Cilicia","TR",1017,395,"c",2,"PF","",[48,54,56,251,261]],
+["East Anatolia","TR",1097,374,"m",2,"M","",[33,39,48,53,65,252]],
+["Damascus","SY",1078,448,"u",3,"C","",[57,58,62,66,162]],
+["Aleppo","SY",1076,403,"u",3,"W","aleppo",[48,51,54,58,65,162]],
+["Latakia","SY",1039,410,"c",2,"P","",[48,50,53,56,58,60]],
+["Deir ez-Zor","SY",1118,427,"d",2,"O","euphrates",[63,65,66,161,162]],
+["Beirut","RS",1006,423,"c",3,"CP","lebanon",[50,54,59,60,251]],
+["South Lebanon","RS",1048,456,"m",2,"W","lebanon",[52,58,59,60,61,62]],
+["Bekaa","RS",1057,430,"m",2,"F","lebanon",[52,53,54,57,60,162]],
+["Tel Aviv","IL",1016,458,"u",3,"CP","",[56,57,60,61,160,251,255]],
+["Galilee","IL",1030,435,"m",2,"W","golan",[54,56,57,58,59]],
+["Negev","IL",1034,479,"d",2,"M","",[57,59,62,78,91,255]],
+["Jordan","JO",1068,473,"d",2,"C","",[52,57,61,66,78,158]],
+["Baghdad","IQ",1142,441,"u",3,"C","mesopotamia",[55,66,71,158,159,161]],
+["Basra","RV",1175,473,"c",3,"OPW","mesopotamia",[70,74,79,158,159]],
+["Mosul","IQ",1122,396,"f",2,"O","",[39,51,53,55,67,161,162]],
+["Anbar","IQ",1109,453,"d",2,"","",[52,55,62,63,158,162]],
+["Kurdistan","KD",1166,402,"m",2,"CO","",[39,45,65,68,71,161]],
+["Tehran","IR",1228,411,"u",4,"C","persia",[45,46,67,69,70,71,73,253]],
+["Isfahan","IR",1237,448,"d",3,"F","persia",[68,70,72,73,257]],
+["Khuzestan","IR",1200,457,"d",3,"OW","hawizeh",[64,68,69,71,79,159,257]],
+["Zagros","IR",1182,423,"m",2,"M","zagros",[63,67,68,70,159,161]],
+["Hormozgan","IR",1290,499,"c",2,"P","hormuz",[69,73,82,114,256,257]],
 ["Khorasan","IR",1321,410,"d",2,"F","",[44,46,68,69,72,114,117]],
-["Riyadh","SA",1172,535,"d",3,"C","rubalkhali",[64,66,75,76,77,78,79,80,87,236]],
-["Eastern Province","SA",1212,512,"d",3,"OPW","gulf",[74,79,80,254]],
-["Hejaz","SA",1091,568,"m",3,"P","",[74,77,78,88,96,251]],
+["Riyadh","SA",1172,535,"d",3,"C","rubalkhali",[64,75,76,77,79,80,87,158]],
+["Eastern Province","SA",1212,512,"d",3,"OPW","gulf",[74,79,80,257]],
+["Hejaz","SA",1091,568,"m",3,"P","",[74,77,78,88,96,158,254]],
 ["Asir","SA",1124,603,"m",2,"F","",[74,76,85,87,88]],
-["Tabuk","SA",1058,495,"d",2,"M","najd",[61,62,66,74,76,91,251]],
-["Kuwait","KW",1190,489,"c",2,"COP","kuwait",[64,70,74,75,254]],
-["Qatar","QA",1229,533,"c",2,"COP","",[74,75,81,87,254]],
-["Abu Dhabi","AE",1254,544,"c",3,"COP","emirates",[80,82,83,87,254]],
-["Dubai","AE",1281,527,"c",3,"PW","emirates",[72,81,83,253,254,255]],
-["Al Ain","AE",1281,554,"d",2,"M","",[81,82,84,87,255]],
-["Oman","OM",1307,582,"d",2,"CP","",[83,87,255,260,262]],
+["Tabuk","SA",1057,498,"d",2,"M","najd",[61,62,76,91,158,254]],
+["Kuwait","KW",1193,492,"c",2,"COP","kuwait",[64,70,74,75,257]],
+["Qatar","QA",1229,533,"c",2,"COP","",[74,75,81,87,257]],
+["Abu Dhabi","AE",1254,544,"c",3,"COP","emirates",[80,82,83,87,257]],
+["Dubai","AE",1281,527,"c",3,"PW","emirates",[72,81,83,256,257,258]],
+["Al Ain","AE",1281,554,"d",2,"M","",[81,82,84,87,258]],
+["Oman","OM",1307,582,"d",2,"CP","",[83,87,258,263,265]],
 ["Sanaa","DW",1143,637,"m",3,"C","yemen",[77,86,87,88]],
-["Aden","DW",1154,667,"c",2,"PW","babelmandeb",[85,87,88,256,257]],
-["Hadramawt","DW",1206,635,"d",2,"O","yemen",[74,77,80,81,83,84,85,86,256,262]],
-["Tihama","DW",1121,652,"c",2,"PF","yemen",[76,77,85,86,96,98,257]],
-["Cairo","EG",978,473,"u",4,"C","nile",[59,90,91,92,93,248,252]],
-["Alexandria","EG",941,462,"c",3,"PF","delta",[29,49,89,93,95,248]],
-["Sinai","EG",1031,505,"d",2,"W","plateau",[61,78,89,92,251,252]],
-["Upper Egypt","EG",1001,525,"d",3,"F","nile",[89,91,93,96,251,252]],
+["Aden","DW",1154,667,"c",2,"PW","babelmandeb",[85,87,88,259,260]],
+["Hadramawt","DW",1206,635,"d",2,"O","yemen",[74,77,80,81,83,84,85,86,259,265]],
+["Tihama","DW",1121,652,"c",2,"PF","yemen",[76,77,85,86,96,98,260]],
+["Cairo","EG",968,473,"u",4,"C","nile",[90,91,92,93,160,251,255]],
+["Alexandria","EG",941,462,"c",3,"PF","delta",[29,49,89,93,95,251]],
+["Sinai","EG",1031,506,"d",2,"W","plateau",[61,78,89,92,254,255]],
+["Upper Egypt","EG",1001,525,"d",3,"F","nile",[89,91,93,96,254,255]],
 ["Western Desert","EG",930,514,"d",1,"O","sahara",[89,90,92,95,96,97,103]],
-["Tripolitania","LY",787,447,"d",2,"CO","",[95,99,101,103,105,247]],
-["Cyrenaica","LY",882,458,"d",2,"O","",[29,90,93,94,103,247]],
-["Khartoum","SD",1003,636,"d",2,"C","",[76,88,92,93,97,98,107,251]],
+["Tripolitania","LY",787,447,"d",2,"CO","",[95,99,101,103,105,250]],
+["Cyrenaica","LY",882,458,"d",2,"O","",[29,90,93,94,103,250]],
+["Khartoum","SD",1003,636,"d",2,"C","",[76,88,92,93,97,98,107,254]],
 ["Darfur","SD",912,666,"d",1,"M","",[93,96,103,106,107,108]],
-["Addis Ababa","ET",1077,706,"m",2,"C","",[88,96,107,256,257]],
-["Algeria","DZ",649,441,"d",2,"COF","sahara",[22,94,100,101,102,105,246,259]],
-["Morocco","MA",542,453,"d",2,"CPM","",[5,6,99,102,241,259]],
-["Tunisia","TN",727,413,"c",2,"CP","",[18,23,94,99,246,247]],
-["Sahel","ML",590,621,"d",1,"CM","",[6,8,13,99,100,104,105,274]],
+["Addis Ababa","ET",1077,706,"m",2,"C","",[88,96,107,259,260]],
+["Algeria","DZ",649,441,"d",2,"COF","sahara",[22,94,100,101,102,105,249,262]],
+["Morocco","MA",542,453,"d",2,"CPM","",[5,6,99,102,244,262]],
+["Tunisia","TN",727,413,"c",2,"CP","",[18,23,94,99,249,250]],
+["Sahel","ML",590,621,"d",1,"CM","",[6,8,13,99,100,104,105,277]],
 ["Chad","TD",823,655,"d",1,"C","",[93,94,95,97,105,106]],
-["Lagos","NG",661,718,"j",3,"COP","",[102,105,274]],
-["Northern Nigeria","NG",727,683,"f",2,"F","",[94,99,102,103,104,106,109,274]],
+["Lagos","NG",661,718,"j",3,"COP","",[102,105,277]],
+["Northern Nigeria","NG",727,683,"f",2,"F","",[94,99,102,103,104,106,109,277]],
 ["Congo","CD",876,775,"j",2,"CM","",[97,103,105,108,109,110]],
-["Kenya","KE",1056,766,"f",2,"CP","",[96,97,98,108,262,277]],
-["Tanzania","TZ",1026,799,"j",2,"CP","",[97,106,107,110,277]],
-["Angola","AO",817,838,"f",2,"CO","",[105,106,110,111,274,278]],
-["Johannesburg","ZA",948,962,"u",3,"CM","",[106,108,109,111,277]],
-["Cape","ZA",840,1024,"c",2,"P","",[109,110,278]],
+["Kenya","KE",1056,766,"f",2,"CP","",[96,97,98,108,265,280]],
+["Tanzania","TZ",1026,799,"j",2,"CP","",[97,106,107,110,280]],
+["Angola","AO",817,838,"f",2,"CO","",[105,106,110,111,277,281]],
+["Johannesburg","ZA",948,962,"u",3,"CM","",[106,108,109,111,280]],
+["Cape","ZA",840,1024,"c",2,"P","",[109,110,281]],
 ["Punjab","PK",1480,455,"f",3,"CF","punjab",[115,116,117,118,122,123]],
-["Karachi","PK",1417,534,"c",3,"PW","",[114,119,123,255,260]],
-["Balochistan","PK",1385,487,"d",2,"M","",[72,73,113,117,123,253,255]],
+["Karachi","PK",1417,534,"c",3,"PW","",[114,119,123,258,263]],
+["Balochistan","PK",1385,487,"d",2,"M","",[72,73,113,117,123,256,258]],
 ["Khyber","PK",1457,423,"m",2,"W","khyber",[43,44,112,116,122]],
 ["Kabul","AF",1431,426,"m",2,"CM","hindukush",[44,112,115,117]],
 ["Kandahar","AF",1396,460,"d",2,"F","",[44,73,112,114,116,123]],
 ["Delhi","IN",1522,491,"u",4,"C","",[112,119,120,122,123,125]],
-["Mumbai","IN",1480,597,"u",4,"PW","",[113,118,120,121,123,260]],
-["Bengal","IN",1630,554,"f",3,"PF","",[118,119,121,124,125,127,261]],
-["Chennai","IN",1545,669,"c",3,"P","",[119,120,126,260,261]],
+["Mumbai","IN",1480,597,"u",4,"PW","",[113,118,120,121,123,263]],
+["Bengal","IN",1630,554,"f",3,"PF","",[118,119,121,124,125,127,264]],
+["Chennai","IN",1545,669,"c",3,"P","",[119,120,126,263,264]],
 ["Kashmir","IN",1512,424,"m",2,"W","kashmir",[43,112,115,118,125,133,134]],
 ["Rajasthan","IN",1468,516,"d",2,"","",[112,113,114,117,118,119]],
 ["Bangladesh","BD",1654,542,"f",2,"CPF","",[120,125,127,132,134]],
 ["Nepal","NP",1595,494,"m",2,"C","",[118,120,122,124,134]],
-["Sri Lanka","LK",1557,715,"j",2,"CP","",[121,153,260,261,263,264]],
-["Myanmar","MM",1700,576,"j",2,"COP","",[120,124,132,148,150,261]],
+["Sri Lanka","LK",1557,715,"j",2,"CP","",[121,153,263,264,266,267]],
+["Myanmar","MM",1700,576,"j",2,"COP","",[120,124,132,148,150,264]],
 ["Beijing","CN",1870,363,"u",4,"C","",[42,129,131,135,137,138,139]],
-["Shanghai","CN",1914,462,"u",4,"PW","yangtze",[128,131,139,147,266,267]],
-["Guangzhou","CN",1844,553,"c",3,"PF","",[131,132,147,148,155,265,266]],
-["Wuhan","CN",1846,468,"r",3,"F","yangtze",[128,129,130,132,135,266]],
+["Shanghai","CN",1914,462,"u",4,"PW","yangtze",[128,131,139,147,269,270]],
+["Guangzhou","CN",1844,553,"c",3,"PF","",[131,132,147,148,155,268,269]],
+["Wuhan","CN",1846,468,"r",3,"F","yangtze",[128,129,130,132,135,269]],
 ["Sichuan","CN",1767,468,"m",3,"M","",[124,127,130,131,134,135,136,148]],
 ["Xinjiang","CN",1610,334,"d",2,"O","",[41,43,122,134,136]],
 ["Tibet","CN",1640,453,"m",1,"","",[122,124,125,132,133,136]],
 ["Inner Mongolia","CN",1817,334,"d",2,"M","",[42,128,131,132,136]],
 ["Mongolia","MN",1767,278,"d",2,"C","",[41,42,132,133,134,135]],
 ["Pyongyang","KP",1970,370,"u",3,"C","dmz",[128,138,139,140,142]],
-["Hamgyong","KP",2003,342,"m",2,"WM","",[42,128,137,142,269]],
-["Hwanghae","KP",1954,391,"f",2,"F","",[128,129,137,140,267]],
-["Seoul","KR",1983,397,"u",4,"C","dmz",[137,139,141,142,267]],
-["Busan","KR",2009,415,"c",3,"PW","",[140,142,144,267,268,269]],
-["Gangwon","KR",2007,385,"m",2,"M","",[137,138,140,141,269]],
-["Tokyo","JP",2136,411,"u",4,"CP","harbour",[144,145,269,270,271]],
-["Osaka","JP",2086,427,"u",3,"PF","",[141,143,146,268,269,270]],
-["Hokkaido","JP",2174,327,"s",2,"W","",[42,143,269,271]],
-["Kyushu","JP",2031,451,"m",2,"PM","",[144,267,268,270]],
-["Taipei","TW",1912,538,"c",3,"CP","taiwan",[129,130,155,266,267,270]],
-["Hanoi","VN",1782,576,"u",3,"CF","",[127,130,132,150,265]],
-["Saigon","VN",1789,691,"u",3,"PF","",[150,151,154,265]],
-["Bangkok","TH",1738,658,"u",3,"CPF","",[127,148,149,151,261,264,265]],
-["Malaysia","MY",1753,735,"j",2,"CPO","",[149,150,152,153,154,264]],
-["Jakarta","ID",1790,797,"u",3,"CP","",[151,153,154,233,263,273]],
-["Sumatra","ID",1742,766,"j",2,"OP","",[126,151,152,263,264]],
-["Borneo","ID",1850,757,"j",2,"OM","",[149,151,152,155,156,233,265]],
-["Manila","PH",1912,648,"u",3,"CP","",[130,147,154,156,265,270]],
-["Mindanao","PH",1966,715,"j",2,"P","",[154,155,233,234,270,272]],
-["New Zealand","NZ",2341,1086,"f",2,"CP","",[272,273]],
-["Maine","US",352,300,"f",1,"P","",[159,205,206,241]],
-["Northern New England","US",336,318,"m",1,"","",[158,160,161,205,241]],
-["Southern New England","US",336,340,"u",3,"P","",[159,161,241]],
-["New York","US",318,328,"u",3,"P","",[159,160,162,163,204,205,241]],
-["New Jersey & Delaware","US",322,362,"u",2,"P","",[161,163,164,241]],
-["Pennsylvania","US",306,352,"f",2,"M","",[161,162,164,166,175,204]],
-["Maryland (Washington)","US",314,372,"u",3,"CP","harbour",[162,163,165,166,241]],
-["Virginia","US",302,390,"f",2,"P","",[164,166,167,173,174,241]],
-["West Virginia","US",292,378,"m",1,"M","",[163,164,165,174,175]],
-["North Carolina","US",300,412,"f",2,"P","",[165,168,169,173,239,241]],
-["South Carolina","US",292,430,"f",1,"P","",[167,169,239]],
-["Georgia","US",278,444,"f",2,"F","",[167,168,170,171,173,239]],
-["Florida","US",284,488,"c",3,"P","",[3,4,169,171,239]],
-["Alabama","US",262,442,"f",1,"","",[169,170,172,173,239]],
-["Mississippi","US",246,442,"f",1,"F","",[171,173,183,184,239]],
-["Tennessee","US",264,408,"f",2,"","",[165,167,169,171,172,174,182,183]],
-["Kentucky","US",268,390,"f",1,"","",[165,166,173,175,176,178,182]],
-["Ohio","US",282,356,"u",3,"","",[163,166,174,176,177,204]],
-["Indiana","US",264,362,"f",2,"","",[174,175,177,178]],
-["Michigan","US",266,306,"u",2,"","",[175,176,178,179,180,204]],
-["Illinois","US",248,360,"u",3,"F","",[174,176,177,179,181,182]],
-["Wisconsin","US",246,308,"f",2,"F","",[177,178,180,181]],
-["Minnesota","US",224,292,"f",2,"","",[177,179,181,189,190,204,209]],
-["Iowa","US",226,338,"f",1,"F","",[178,179,180,182,188,189]],
-["Missouri","US",232,380,"f",2,"W","heartland",[173,174,178,181,183,186,187,188]],
-["Arkansas","US",232,420,"f",1,"","",[172,173,182,184,185,186]],
-["Louisiana","US",234,462,"c",2,"OP","",[172,183,185,239]],
-["Texas","US",196,458,"d",4,"OP","",[1,183,184,186,194,239]],
-["Oklahoma","US",206,410,"f",1,"O","",[182,183,185,187,193,194]],
-["Kansas","US",202,378,"f",1,"F","",[182,186,188,193]],
-["Nebraska","US",194,344,"f",1,"F","",[181,182,187,189,192,193]],
-["South Dakota","US",192,312,"f",1,"","",[180,181,188,190,191,192]],
-["North Dakota","US",192,278,"f",1,"O","",[180,189,191,209,210]],
-["Montana","US",144,282,"m",1,"M","",[189,190,192,198,210,211,212]],
-["Wyoming","US",154,328,"m",1,"M","",[188,189,191,193,196,198]],
-["Colorado","US",164,372,"m",2,"M","",[186,187,188,192,194,196]],
-["New Mexico","US",162,424,"d",1,"","",[1,185,186,193,195]],
-["Arizona","US",134,426,"d",2,"","",[1,194,196,197,201]],
-["Utah","US",134,368,"d",1,"M","",[192,193,195,197,198]],
-["Nevada","US",108,368,"d",1,"M","",[195,196,198,200,201]],
-["Idaho","US",118,312,"m",1,"","",[191,192,196,197,199,200,212]],
-["Washington State","US",88,278,"c",3,"P","",[198,200,212,238]],
-["Oregon","US",88,316,"f",2,"","",[197,198,199,201,238]],
-["California","US",92,392,"c",4,"P","",[1,195,197,200,238]],
-["Alaska","US",26,128,"s",1,"O","",[212,213,238]],
+["Hamgyong","KP",2003,342,"m",2,"WM","",[42,128,137,142,272]],
+["Hwanghae","KP",1954,391,"f",2,"F","",[128,129,137,140,270]],
+["Seoul","KR",1983,397,"u",4,"C","dmz",[137,139,141,142,270]],
+["Busan","KR",2009,415,"c",3,"PW","",[140,142,144,270,271,272]],
+["Gangwon","KR",2007,385,"m",2,"M","",[137,138,140,141,272]],
+["Tokyo","JP",2136,411,"u",4,"CP","harbour",[144,145,272,273,274]],
+["Osaka","JP",2086,427,"u",3,"PF","",[141,143,146,271,272,273]],
+["Hokkaido","JP",2174,327,"s",2,"W","",[42,143,272,274]],
+["Kyushu","JP",2031,451,"m",2,"PM","",[144,270,271,273]],
+["Taipei","TW",1912,538,"c",3,"CP","taiwan",[129,130,155,269,270,273]],
+["Hanoi","VN",1782,576,"u",3,"CF","",[127,130,132,150,268]],
+["Saigon","VN",1789,691,"u",3,"PF","",[150,151,154,268]],
+["Bangkok","TH",1738,658,"u",3,"CPF","",[127,148,149,151,264,267,268]],
+["Malaysia","MY",1753,735,"j",2,"CPO","",[149,150,152,153,154,267]],
+["Jakarta","ID",1790,797,"u",3,"CP","",[151,153,154,238,266,276]],
+["Sumatra","ID",1742,766,"j",2,"OP","",[126,151,152,266,267]],
+["Borneo","ID",1850,757,"j",2,"OM","",[149,151,152,155,156,238,268]],
+["Manila","PH",1912,648,"u",3,"CP","",[130,147,154,156,268,273]],
+["Mindanao","PH",1966,715,"j",2,"P","",[154,155,238,239,273,275]],
+["New Zealand","NZ",2341,1086,"f",2,"CP","",[275,276]],
+["Najaf","RV",1137,468,"u",2,"CW","mesopotamia",[62,63,64,66,74,76,78,159]],
+["Southern Marshes","RV",1168,446,"f",2,"FO","hawizeh",[63,64,70,71,158,161]],
+["Gaza","OB",995,476,"u",2,"CPW","gaza",[59,89,251,255]],
+["Euphrates Badlands","BI",1142,414,"d",1,"CO","euphrates",[55,63,65,67,71,159]],
+["Syrian Badiya","BI",1092,425,"d",1,"W","",[52,53,55,58,65,66]],
+["Maine","US",352,300,"f",1,"P","",[164,210,211,244]],
+["Northern New England","US",336,318,"m",1,"","",[163,165,166,210,244]],
+["Southern New England","US",336,340,"u",3,"P","",[164,166,244]],
+["New York","US",318,328,"u",3,"P","",[164,165,167,168,209,210,244]],
+["New Jersey & Delaware","US",322,362,"u",2,"P","",[166,168,169,244]],
+["Pennsylvania","US",306,352,"f",2,"M","",[166,167,169,171,180,209]],
+["Maryland (Washington)","US",314,372,"u",3,"CP","harbour",[167,168,170,171,244]],
+["Virginia","US",302,390,"f",2,"P","",[169,171,172,178,179,244]],
+["West Virginia","US",292,378,"m",1,"M","",[168,169,170,179,180]],
+["North Carolina","US",300,412,"f",2,"P","",[170,173,174,178,242,244]],
+["South Carolina","US",292,430,"f",1,"P","",[172,174,242]],
+["Georgia","US",278,444,"f",2,"F","",[172,173,175,176,178,242]],
+["Florida","US",284,488,"c",3,"P","",[3,4,174,176,242]],
+["Alabama","US",262,442,"f",1,"","",[174,175,177,178,242]],
+["Mississippi","US",246,442,"f",1,"F","",[176,178,188,189,242]],
+["Tennessee","US",264,408,"f",2,"","",[170,172,174,176,177,179,187,188]],
+["Kentucky","US",268,390,"f",1,"","",[170,171,178,180,181,183,187]],
+["Ohio","US",282,356,"u",3,"","",[168,171,179,181,182,209]],
+["Indiana","US",264,362,"f",2,"","",[179,180,182,183]],
+["Michigan","US",266,306,"u",2,"","",[180,181,183,184,185,209]],
+["Illinois","US",248,360,"u",3,"F","",[179,181,182,184,186,187]],
+["Wisconsin","US",246,308,"f",2,"F","",[182,183,185,186]],
+["Minnesota","US",224,292,"f",2,"","",[182,184,186,194,195,209,214]],
+["Iowa","US",226,338,"f",1,"F","",[183,184,185,187,193,194]],
+["Missouri","US",232,380,"f",2,"W","heartland",[178,179,183,186,188,191,192,193]],
+["Arkansas","US",232,420,"f",1,"","",[177,178,187,189,190,191]],
+["Louisiana","US",234,462,"c",2,"OP","",[177,188,190,242]],
+["Texas","US",196,458,"d",4,"OP","",[1,188,189,191,199,242]],
+["Oklahoma","US",206,410,"f",1,"O","",[187,188,190,192,198,199]],
+["Kansas","US",202,378,"f",1,"F","",[187,191,193,198]],
+["Nebraska","US",194,344,"f",1,"F","",[186,187,192,194,197,198]],
+["South Dakota","US",192,312,"f",1,"","",[185,186,193,195,196,197]],
+["North Dakota","US",192,278,"f",1,"O","",[185,194,196,214,215]],
+["Montana","US",144,282,"m",1,"M","",[194,195,197,203,215,216,217]],
+["Wyoming","US",154,328,"m",1,"M","",[193,194,196,198,201,203]],
+["Colorado","US",164,372,"m",2,"M","",[191,192,193,197,199,201]],
+["New Mexico","US",162,424,"d",1,"","",[1,190,191,198,200]],
+["Arizona","US",134,426,"d",2,"","",[1,199,201,202,206]],
+["Utah","US",134,368,"d",1,"M","",[197,198,200,202,203]],
+["Nevada","US",108,368,"d",1,"M","",[200,201,203,205,206]],
+["Idaho","US",118,312,"m",1,"","",[196,197,201,202,204,205,217]],
+["Washington State","US",88,278,"c",3,"P","",[203,205,217,241]],
+["Oregon","US",88,316,"f",2,"","",[202,203,204,206,241]],
+["California","US",92,392,"c",4,"P","",[1,200,202,205,241]],
+["Alaska","US",26,128,"s",1,"O","",[217,218,241]],
 ["Hawaii","US",24,590,"c",1,"P","",[1]],
-["Ontario","CA",268,256,"f",4,"C","",[161,163,175,177,180,205,209,280]],
-["Quebec","CA",338,226,"s",3,"P","",[158,159,161,204,206,208,241,242,280]],
-["New Brunswick","CA",366,288,"f",1,"P","",[158,205,207,241,242]],
-["Nova Scotia & PEI","CA",382,302,"c",2,"P","",[206,241,242]],
-["Newfoundland and Labrador","CA",386,218,"c",1,"P","",[205,242,280]],
-["Manitoba","CA",206,210,"f",2,"","",[180,190,204,210,215,280]],
-["Saskatchewan","CA",162,214,"f",2,"F","",[190,191,209,211,214]],
-["Alberta","CA",118,206,"f",2,"OW","",[191,210,212,214]],
-["British Columbia","CA",72,214,"m",3,"P","",[191,198,199,202,211,213,214,238]],
-["Yukon","CA",42,146,"s",1,"M","",[202,212,214,238]],
-["Northwest Territories","CA",100,118,"s",1,"O","",[210,211,212,213,215,238,280]],
-["Nunavut","CA",240,100,"s",1,"","",[209,214,280]],
-["Greater London","GB",612,236,"u",4,"CP","",[217,219]],
-["South East England","GB",606,238,"f",3,"P","",[17,216,218,219,220,221]],
-["South West England","GB",576,240,"f",2,"P","",[17,217,221,225,245]],
-["East of England","GB",618,230,"f",2,"F","",[17,216,217,220]],
-["East Midlands","GB",604,224,"f",2,"","",[17,217,219,221,222,223]],
-["West Midlands","GB",586,228,"u",3,"M","",[217,218,220,222,225]],
-["North West England","GB",580,216,"u",3,"P","",[17,220,221,223,224,225,226]],
-["Yorkshire and the Humber","GB",598,216,"f",2,"","",[17,220,222,224]],
-["North East England","GB",590,206,"f",1,"","",[17,222,223,226,244]],
-["Wales","GB",568,230,"m",2,"M","",[17,218,221,222,245]],
-["Scottish Lowlands","GB",568,200,"u",3,"W","",[17,222,224,227,244,245]],
-["Scottish Highlands","GB",558,186,"m",2,"","",[17,226,242,243,244,245]],
-["Northern Ireland","GB",532,210,"f",2,"P","",[242,245]],
-["New South Wales","AU",2196,1014,"u",4,"CP","",[230,231,232,273]],
-["Victoria","AU",2180,1056,"f",3,"P","",[229,232,273]],
-["Queensland","AU",2174,924,"f",3,"FP","",[229,232,234,272,273]],
-["South Australia","AU",2088,998,"d",2,"M","",[229,230,231,233,234,273]],
-["Western Australia","AU",1934,954,"d",3,"MOP","",[152,154,156,232,234,273]],
-["Northern Territory","AU",2060,902,"d",1,"MW","",[156,231,232,233,272]],
-["Tasmania","AU",2206,1100,"f",1,"P","",[273]],
-["Najaf","RV",1136,464,"u",2,"CW","mesopotamia",[63,64,66,74,237]],
-["Southern Marshes","RV",1168,449,"f",2,"FO","hawizeh",[63,64,70,236]],
-["North Pacific East",null,34,340,"w",2,"","",[1,199,200,201,202,212,213,214,280]],
-["Gulf of Mexico",null,235,526,"w",1,"","",[0,1,3,167,168,169,170,171,172,184,185,241]],
+["Ontario","CA",268,256,"f",4,"C","",[166,168,180,182,185,210,214,283]],
+["Quebec","CA",338,226,"s",3,"P","",[163,164,166,209,211,213,244,245,283]],
+["New Brunswick","CA",366,288,"f",1,"P","",[163,210,212,244,245]],
+["Nova Scotia & PEI","CA",382,302,"c",2,"P","",[211,244,245]],
+["Newfoundland and Labrador","CA",386,218,"c",1,"P","",[210,245,283]],
+["Manitoba","CA",206,210,"f",2,"","",[185,195,209,215,220,283]],
+["Saskatchewan","CA",162,214,"f",2,"F","",[195,196,214,216,219]],
+["Alberta","CA",118,206,"f",2,"OW","",[196,215,217,219]],
+["British Columbia","CA",72,214,"m",3,"P","",[196,203,204,207,216,218,219,241]],
+["Yukon","CA",42,146,"s",1,"M","",[207,217,219,241]],
+["Northwest Territories","CA",100,118,"s",1,"O","",[215,216,217,218,220,241,283]],
+["Nunavut","CA",240,100,"s",1,"","",[214,219,283]],
+["Greater London","GB",612,236,"u",4,"CP","",[222,224]],
+["South East England","GB",606,238,"f",3,"P","",[17,221,223,224,225,226]],
+["South West England","GB",576,240,"f",2,"P","",[17,222,226,230,248]],
+["East of England","GB",618,230,"f",2,"F","",[17,221,222,225]],
+["East Midlands","GB",604,224,"f",2,"","",[17,222,224,226,227,228]],
+["West Midlands","GB",586,228,"u",3,"M","",[222,223,225,227,230]],
+["North West England","GB",580,216,"u",3,"P","",[17,225,226,228,229,230,231]],
+["Yorkshire and the Humber","GB",598,216,"f",2,"","",[17,225,227,229]],
+["North East England","GB",590,206,"f",1,"","",[17,227,228,231,247]],
+["Wales","GB",568,230,"m",2,"M","",[17,223,226,227,248]],
+["Scottish Lowlands","GB",568,200,"u",3,"W","",[17,227,229,232,247,248]],
+["Scottish Highlands","GB",558,186,"m",2,"","",[17,231,245,246,247,248]],
+["Northern Ireland","GB",532,210,"f",2,"P","",[245,248]],
+["New South Wales","AU",2196,1014,"u",4,"CP","",[235,236,237,276]],
+["Victoria","AU",2180,1056,"f",3,"P","",[234,237,276]],
+["Queensland","AU",2174,924,"f",3,"FP","",[234,237,239,275,276]],
+["South Australia","AU",2088,998,"d",2,"M","",[234,235,236,238,239,276]],
+["Western Australia","AU",1934,954,"d",3,"MOP","",[152,154,156,237,239,276]],
+["Northern Territory","AU",2060,902,"d",1,"MW","",[156,236,237,238,275]],
+["Tasmania","AU",2206,1100,"f",1,"P","",[276]],
+["North Pacific East",null,34,340,"w",2,"","",[1,204,205,206,207,217,218,219,283]],
+["Gulf of Mexico",null,235,526,"w",1,"","",[0,1,3,172,173,174,175,176,177,189,190,244]],
 ["Caribbean Sea",null,323,655,"w",1,"","",[2,5,6,7,8,9]],
-["West Atlantic",null,422,385,"w",3,"","",[3,4,5,100,158,159,160,161,162,164,165,167,205,206,207,239,242,245,259]],
-["East Atlantic",null,458,273,"w",2,"","",[205,206,207,208,227,228,241,243,245,280]],
-["Norwegian Sea",null,637,116,"w",1,"","",[27,227,242,244,245,280]],
-["North Sea",null,673,191,"w",1,"","",[17,20,27,224,226,227,243]],
-["Biscay",null,530,306,"w",1,"","",[17,21,22,218,225,226,227,228,241,242,243,259]],
+["West Atlantic",null,422,385,"w",3,"","",[3,4,5,100,163,164,165,166,167,169,170,172,210,211,212,242,245,248,262]],
+["East Atlantic",null,458,273,"w",2,"","",[210,211,212,213,232,233,244,246,248,283]],
+["Norwegian Sea",null,637,116,"w",1,"","",[27,232,245,247,248,283]],
+["North Sea",null,673,191,"w",1,"","",[17,20,27,229,231,232,246]],
+["Biscay",null,530,306,"w",1,"","",[17,21,22,223,230,231,232,233,244,245,246,262]],
 ["West Mediterranean",null,643,385,"w",1,"","",[18,21,22,99,101]],
 ["Central Mediterranean",null,793,417,"w",1,"","",[23,29,94,95,101]],
-["East Mediterranean",null,978,432,"w",1,"","",[49,50,56,59,89,90,258]],
+["East Mediterranean",null,978,432,"w",1,"","",[49,50,56,59,89,90,160,261]],
 ["Black Sea",null,1020,322,"w",1,"","",[33,34,47,48,51]],
 ["Caspian Sea",null,1229,331,"w",1,"","",[38,39,40,45,46,68]],
 ["Red Sea",null,1058,554,"w",1,"","",[76,78,91,92,96]],
-["Suez",null,1005,493,"w",1,"K","",[59,61,89,91,92]],
-["Strait of Hormuz",null,1301,518,"w",1,"K","",[72,82,114,255]],
+["Suez",null,1006,494,"w",1,"K","",[59,61,89,91,92,160]],
+["Strait of Hormuz",null,1301,518,"w",1,"K","",[72,82,114,258]],
 ["Persian Gulf",null,1230,498,"w",1,"","",[69,70,72,75,79,80,81,82]],
-["Gulf of Oman",null,1319,539,"w",1,"","",[82,83,84,113,114,253,260]],
-["Gulf of Aden",null,1181,682,"w",1,"","",[86,87,98,257,262]],
-["Bab-el-Mandeb",null,1125,673,"w",1,"K","",[86,88,98,256]],
-["Turkish Straits",null,951,363,"w",1,"K","",[29,30,47,48,49,50,248]],
-["Strait of Gibraltar",null,549,412,"w",1,"K","",[22,99,100,241,245]],
-["Arabian Sea",null,1390,599,"w",2,"","",[84,113,119,121,126,255,262,263]],
-["Bay of Bengal",null,1630,644,"w",2,"","",[120,121,126,127,150,264]],
-["Indian Ocean West",null,1235,760,"w",2,"","",[84,87,107,256,260,263,277]],
-["Indian Ocean South",null,1500,891,"w",3,"","",[126,152,153,260,262,277]],
-["Malacca Strait",null,1732,742,"w",1,"K","",[126,150,151,153,261]],
+["Gulf of Oman",null,1319,539,"w",1,"","",[82,83,84,113,114,256,263]],
+["Gulf of Aden",null,1181,682,"w",1,"","",[86,87,98,260,265]],
+["Bab-el-Mandeb",null,1125,673,"w",1,"K","",[86,88,98,259]],
+["Turkish Straits",null,951,363,"w",1,"K","",[29,30,47,48,49,50,251]],
+["Strait of Gibraltar",null,549,412,"w",1,"K","",[22,99,100,244,248]],
+["Arabian Sea",null,1390,599,"w",2,"","",[84,113,119,121,126,258,265,266]],
+["Bay of Bengal",null,1630,644,"w",2,"","",[120,121,126,127,150,267]],
+["Indian Ocean West",null,1235,760,"w",2,"","",[84,87,107,259,263,266,280]],
+["Indian Ocean South",null,1500,891,"w",3,"","",[126,152,153,263,265,280]],
+["Malacca Strait",null,1732,742,"w",1,"K","",[126,150,151,153,264]],
 ["South China Sea",null,1833,666,"w",2,"","",[130,148,149,150,154,155]],
 ["Taiwan Strait",null,1895,520,"w",1,"K","",[129,130,131,147]],
-["East China Sea",null,1972,475,"w",1,"","",[129,139,140,141,146,147,268,270]],
-["Korea Strait",null,2017,435,"w",1,"K","",[141,144,146,267]],
+["East China Sea",null,1972,475,"w",1,"","",[129,139,140,141,146,147,271,273]],
+["Korea Strait",null,2017,435,"w",1,"K","",[141,144,146,270]],
 ["Sea of Japan",null,2074,363,"w",1,"","",[42,138,141,142,143,144,145]],
-["Philippine Sea",null,2104,588,"w",2,"","",[143,144,146,147,155,156,267,271,272]],
-["West Pacific",null,2283,475,"w",3,"","",[143,145,270,272]],
-["South Pacific West",null,2297,864,"w",3,"","",[156,157,231,234,270,271,273]],
-["Tasman Sea",null,2273,1068,"w",2,"","",[152,157,229,230,231,232,233,235,272]],
-["Gulf of Guinea",null,649,748,"w",1,"","",[13,102,104,105,109,275,278]],
-["South Atlantic",null,458,926,"w",3,"","",[10,12,13,274,276,278]],
-["South Atlantic West",null,444,1086,"w",2,"","",[12,15,275,278]],
-["Mozambique Channel",null,1127,891,"w",2,"","",[107,108,110,262,263]],
-["Cape Waters",null,757,1068,"w",2,"","",[109,111,274,275,276]],
+["Philippine Sea",null,2104,588,"w",2,"","",[143,144,146,147,155,156,270,274,275]],
+["West Pacific",null,2283,475,"w",3,"","",[143,145,273,275]],
+["South Pacific West",null,2297,864,"w",3,"","",[156,157,236,239,273,274,276]],
+["Tasman Sea",null,2273,1068,"w",2,"","",[152,157,234,235,236,237,238,240,275]],
+["Gulf of Guinea",null,649,748,"w",1,"","",[13,102,104,105,109,278,281]],
+["South Atlantic",null,458,926,"w",3,"","",[10,12,13,277,279,281]],
+["South Atlantic West",null,444,1086,"w",2,"","",[12,15,278,281]],
+["Mozambique Channel",null,1127,891,"w",2,"","",[107,108,110,265,266]],
+["Cape Waters",null,757,1068,"w",2,"","",[109,111,277,278,279]],
 ["South Pacific East",null,194,953,"w",3,"","",[7,14,16]],
-["Hudson Waters",null,271,183,"w",1,"","",[204,205,208,209,214,215,238,242,243]],
+["Hudson Waters",null,271,183,"w",1,"","",[209,210,213,214,219,220,241,245,246]],
 ["Arctic Sea",null,1271,82,"w",2,"","",[36,37,38,40,41]]
 ];
-const GM_LAND=238;   // provinces 0..GM_LAND-1 are land, the rest sea zones
-const GM_RIVER=[[32,33],[32,35],[63,66],[63,65],[129,131],[19,20],[17,20],[89,92],[36,38],[53,55],[137,140],[140,142],[64,70]];   // major river crossings
+const GM_LAND=241;   // provinces 0..GM_LAND-1 are land, the rest sea zones
+const GM_RIVER=[[32,33],[32,35],[63,66],[129,131],[19,20],[17,20],[89,92],[36,38],[137,140],[140,142],[64,70]];   // major river crossings
 // ===== 13b-grandbattle: "Fight it" - a Conquest battle that holds EXACTLY the armies' real units =====
 // Abdullah 2026-11-05 21:22 + 2026-11-06 ("Army only"): no free base, no $10,000, nothing is built or bought in the battle
 // (03-sim act() ignores production orders while G.grand is set). Attackers and defenders start with the unit records of
@@ -19474,7 +19503,7 @@ function guArmyRows(pi){const L=guProvArmies(pi);if(!L.length)return '<div style
   return h;}
 function guBindArmies(s,pi){s.querySelectorAll('.gArmy').forEach(e=>{e.onclick=()=>{GV.selA=+e.dataset.a;guSide();guRedraw();};});
   s.querySelectorAll('.gActs button').forEach(b=>{b.style.cssText='padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;font-size:13px';b.onclick=()=>{const id=+b.parentNode.dataset.a;if(GC.ph!=='plan')return;if(b.dataset.act==='split'){const n=grSplit(id);if(n)GV.selA=n.id;}else if(b.dataset.act==='merge')grMerge(id);else if(b.dataset.act==='front')gmilCycleFront(id);else if(b.dataset.act==='mine')gmilMinesBtn(id);else{const a=GC.armies.find(x=>x.id===id);if(a){a.path=[];a.pg=0;}}grSave();guSide();guRedraw();};});}
-function guLog(){const l=document.getElementById('gLog');if(!l||!GC)return;const rows=GC.log.slice(-60).reverse().filter((r,i)=>i<45);l.innerHTML='<div style="font-weight:bold;margin-bottom:3px">War diary</div>'+rows.map(r=>'<div style="'+(r[2]&&r[2]===GC.me?'color:#ffe9a6':'opacity:.82')+'"><span style="opacity:.55">T'+r[0]+'</span> '+r[1]+'</div>').join('');}
+function guLog(){const l=document.getElementById('gLog');if(!l||!GC)return;const rows=GC.log.slice(-60).reverse().filter((r,i)=>i<45);l.innerHTML='<div style="font-weight:bold;margin-bottom:3px">War diary</div>'+rows.map(r=>'<div style="'+(r[2]&&r[2]===GC.me?'color:#ffe9a6':'opacity:.82')+'"><span style="opacity:.55">'+grDateStr(r[0],0)+'</span> '+r[1]+'</div>').join('');}
 function guConfirm(title,body,yes,no){guModal('<h2 style="margin:0 0 8px;font-size:21px">'+title+'</h2><div style="line-height:1.5;margin-bottom:12px">'+body+'</div>',[['Yes',yes,1],['No',no||null,0]]);}
 function guModal(html,btns){const old=document.getElementById('gModal');if(old)old.remove();const m=guEl('div','position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;');m.id='gModal';const c=guEl('div','background:#142231;border:1px solid #4a6580;border-radius:10px;padding:16px 20px;max-width:min(560px,92vw);color:#e8e4d8;font-size:16px;');c.innerHTML=html;
   const row=guEl('div','display:flex;gap:8px;flex-wrap:wrap');for(const [t,fn,pri] of btns){const b=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid '+(pri?'#7aa84f':'#6b7a8a')+';background:'+(pri?'#4f6b32':'transparent')+';color:#fff;cursor:pointer;font-size:16px',t);b.type='button';b.onclick=()=>{m.remove();if(fn)fn();};row.appendChild(b);}c.appendChild(row);m.appendChild(c);document.body.appendChild(m);return m;}
@@ -20199,7 +20228,7 @@ function gmWriteBack(){const g=G.grand,m=g&&g.mir;if(!m||!g.tmap)return;const tn
   for(const [rec,e] of g.bmap)rec[1]=(e.dead||!G.byId.has(e.id))?100:Math.max(0,Math.min(99,Math.round(100*(1-e.hp/e.max))));}
 // Generated by orch/grandmap-gen.mjs - do not edit by hand. Real state/province borders (Natural Earth, public domain) for US/CA/GB/AU, baked as a 1200x600 province-index raster: (index+1 or 0 = none, run) varint pairs, base64.
 const GM_REAL_W=1200,GM_REAL_H=600;
-const GM_REAL='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zQEFsAEBpAECogEQoQEHAKcIyQESxwEQwQESvQEUtgEPswEIsgEKzQEFsAECpAECogEQoQEIAKYIygELxgEPxQEIwQESvQEUtgEPswEIsgEKsAEBzQEDsAEDpAEOogEEoQEIAKYIygELxgEPxQEIwQESvQEUtgEPswEHsQEHsgEDsAECzQECsAEEpAEOogEEoQEIAKYIygELxgEPxQEIwQESvQEUtgEPswEHsQEHsAELpAEOogEEoQEHAKcIygELxgEPxQEIwQESvQEVtgEMswEJsQEHsAELpAEPogEDoQEFAAKhAQEApgjKAQvGAQ/FAQjBARK9ARW2AQyzAQmxAQewAQukAQ+jAQGiAQKhAQEArQjKAQvGAQ/FAQjBARK9ARW2AQyzAQmxAQewAQukAQ6jAQOiAQEAA6IBAQCqCMoBC8YBD8UBDcIBEr0BELYBDLMBCbEBB7ABC6QBDqMBAwABogEDAKsIygELxgEPxQENwgESvQEQtgEMswEJsQEHsAELpAEOowEDogECAKwIygEMxgEPxQENwgESvQEQtwELswEKsQEHsAELpAEOowECALAIygELxgEPxQENwgESvQEQtwELswEKsQEHsAELpAEPowECAK8IygELxgEPxQENwgESvQERtwEKswEKsQEHsAELpAEPowECAK8IygELxgEPxQENwgESvAERtwEKswEKsQEHsAELpAEOowEDALAIygEKxgEPxQENwgESvAEStwEJswEKsQEHsAEKpwEBpAENowEEALAIygEKxgEPxQENwgESvAEStwEKswEJsQEHsAEKpwEEpQEDpwEBpQEFowEEALEIygEKxgEPxQENwgESvAEStwEKswEJsQEHsAEJpwEFpQEBpwEDpQEFowEEALEIygEKxgEPxQENwgESvAEStwELswEIsQEHsAEIpwEJpgECpQECAAGlAQGjAQEAAaMBAQCyCMoBCsYBD8UBDcIBErwBE7cBCrMBCLEBB68BAbABB6cBCKYBA6UBBQC0CMoBCsYBD8UBDcIBErwBE7cBC7MBB7EBB68BArABBacBCaYBBKUBBKMBAQC0CMoBCsYBDsUBDcIBErwBE7cBC7MBB7EBBq8BBLABBKcBCKYBBaUBAQABpQECowEBALQIygEKxgEOxQENwgESvAETtwELswEHsQEGrwEHsAEBpwEGpgEBpwEBpgEFpQEEowEBALUIygEKxgENxQENwgESvAETtwELswEGsQEGrwEIpwEHpgEHpQEFALUIygELxgEMxQENwgESvAETtwELswEGsQEFrwEJpwEHpgEIAAKlAQIAtQjKAQEAAcoBCcYBDMUBDcIBErwBE7cBDLMBBbEBBK8BCqcBB6YBCQABpQEBALgIygEKxgELxQENwgESvAETtwENswEErwEOpwEGpgEKALkIygEMxgEKxQENwgESvAETtwENswEErwEPpwEFpgEKAAGmAQEAtwjKAQzGAQrFAQ3CARK8ARO3AQ2zAQSvAQ+mAQGnAQSmAQoAugjKAQzGAQnFAQ3CARK8ARO3AQ2zAQOvARCmAQGnAQKmAQsAuwjKAQ3GAQjFAQ3CARK8ARO3AQ2zAQGvAQGzAQGvAQ+mARAAuwjKAQzGAQjEAQ3DAQ+7ARa3AQ6vARCmAREAuwjKAQ3GAQfEAQ3DAQ+7ARa3AQ6vAQ+mARMAugjKAQ3GAQfEAQ3DAQ+7ARa3AQ2vAQSuARCoAQamAQkAugjKAQ7GAQbEAQ3DAQ+6AQi7AQ64AQy3AQGuARSoAQ8AugjKAQ/GAQXEAQ3DAQ+6AQi7AQ64AQu3AQKuAROoAQ8AvAjKAQ7GAQPEAQHGAQHEAQ3DAQ+6AQi7AQ64AQu3AQKuARKoARAAvAjKAQ/GAQLEAQ/DAQ+6AQi7AQ64AQyuARKoARIAuwjKAQ/GAQLEAQ/DAQ+6AQi7AQ64AQyuARGoARMAvAjKAQ/GAQHEAQ/DAQ+6AQi7AQ64AQyuARCoARQAvAjKAQ/GAQLEAQ7DAQ+6AQi7AQ64AQyuAQ+oARMAvwjKAQ/GAQHEAQ7DAQ+6AQi7AQ64AQyuAQ+oAQSpAQSoAQsAvwjKARDEAQ7DAQ+6AQi7AQ64AQutAQasAQaqAQepAQWoAQsAvwjKARDEAQ7DAQ+6AQi7AQ64AQutAQasAQaqAQapAQmoAQkAvgjKARDEAQ7DAQ+6AQi7AQ64AQqtAQesAQaqAQapAQqoAQYAwgjKAQ7EAQ7DAQ+6AQm7AQ24AQqtAQesAQaqAQepAQqoAQQAxQjKAQ3EAQ3DAQ+6AQq7AQy4AQqtAQesAQeqAQapAQqoAQMAxgjKAQzEAQ7DAQ+6AQ27AQm4AQmtAQesAQiqAQepAQqoAQIAyAjKAQrEAQ7DAQ+6AQ27AQa6AQK7AQG4AQmtAQesAQiqAQepAQqoAQEAygjKAQnEAQ7DAQ+6ARa4AQmtAQesAQiqAQipAQkAywjKAQnEAQ7DAQ+6ARe4AQitAQesAQiqAQipAQgAzQjKAQfEAQ/DAQ+6ARe4AQitAQesAQiqAQmpAQcAzQjKAQfEAQ/DAQ+6ARe4AQitAQesAQiqAQmpAQcAzgjKAQfEAQ7DAQ+6ARe4AQitAQesAQiqAQqpAQUAzwjKAQfEAQ7DAQ+6ARe5AQitAQesAQiqAQqpAQQA0AjKAQUAAcQBD8MBD7oBF7kBCK0BB6wBCKoBCqkBBADWCMQBD8MBD7oBF7kBCK0BB6wBCaoBCakBAgDaCMQBDcMBD7oBF7kBCK0BB6wBCaoBCqkBAQDbCMQBDMMBD7oBF7kBCK0BB6wBCaoBCqkBAQDdCMQBCsMBBroBIbkBB60BB6wBCKoBCwDfCMQBCcMBAgABwwEEugEguQEGrQEIrAEIqgELAOAIxAEIwwECAAW6ASC5AQatAQisAQmqAQkA4wjEAQbDAQIABroBH7kBBq0BCKwBCaoBCQDxCLoBILkBBa0BCKwBCKoBCgDyCLoBH7kBBa0BCKwBCaoBCQDyCLoBH7kBCa0BBKwBAqsBB6oBCQDzCLoBHrkBCa0BBKwBAqsBB6oBB6sBAgD0CLoBHLkBC60BA6wBAqsBAQABqwEOAPQIugEcuQEJAAG5AQGtAQEAA6wBAasBAQACqwENAPQIugEcuQEJAAyrAQsA9Ai6ARy5AQoAC6sBAwACqwEGAPQIugEGAAG6ARW5AQsAC6sBAQADqwEGAPUIugEEAAS6ARAAAboBAQAEuQEBAAK5AQUAEKsBBgD0CLoBBAAEugEQAAq5AQQAEKsBBgD1CLoBAwAFugEPAAq5AQEAAbkBAQABuQEBABCrAQUA9gi6AQEABroBDwAOuQEBABCrAQUA/gi6AQ0AIasBBAD+CLoBDAAiqwEEAP4IugEKACSrAQUA/Qi6AQkAJasBBQD+CLoBCAAkqwEGAP4IugEIACSrAQYA/gi6AQcAJasBBgD/CLoBBgAmqwEFAP8IugEGACarAQYA/gi6AQYAJqsBBgD/CLoBBQAmqwEGAP8IugEEACerAQYA/wi6AQUAJ6sBBQD/CLoBBQAnqwEFAP8IugEFACirAQQAgQm6AQMAKKsBBACCCboBAgAoqwEEAKwJqwEEAK0JqwEDAK0JqwEDAK4JqwECAK4JqwEBAMmhAswBAQCvCcwBAQCf0QjoAQEA9AjrAQEAOegBAwDmCOsBAQAE6wEBAAPrAQEAAesBAQAB6wEBADnoAQQA5AjrAQEAAesBBgAD6wEGADfoAQQA4wjrAQMAAesBBAAI6wEDADXoAQUA8wjrAQkAL+gBBgDpCOsBAQAH6wEPAALrAQIABOsBAgAf6AEIAOYI6wEfAALrAQQAHOgBCQDlCOsBJAAf6AEJAOII6wElAB/oAQsA4AjrASYAH+gBCwDgCOsBIwAi6AELAN8I6wEkACHoAQwA3gjrASUAAesBAQAB6wEBAB3oAQwAzAjqAQMADusBJgAD6wECABzoAQ0AxwjqAQkAC+sBJgAD6wEDAB3oAQwAxgjqAQsACesBJgAj6AEOAALoAQMAvAjqARAACusBIwAk6AEUALoI6gESAAHqAQQABOsBIwAl6AEUALgI6gESAAHqAQXrAQMAAesBJAAk6AEVALUI6gEUAAHqAQXrASoAIegBFgC0COoBG+sBLAAf6AEWALMI6gEc6wEuAB3oARYAtQjqARrrATEAGegBFwCzCOoBHOsBNAAW6AEXAKoI6gEBAATqASDrATUACugBAQAK6AEXAKoI6gEBAATqASDrATboAQEABugBAQAL6AEYAKgI6gEEAATqAR/rATboAQYADOgBGgCmCOoBBgAC6gEg6wE26AEHAAHoAQEACegBGgClCOoBKesBNugBCAAJ6AEcAKQI6gEp6wE26AELAAXoAR0ApAjqASnrATboAS0ApQjqASjrATboAS0ApAjqASnrATboASwAowjqASvrATboAS0AoQjqASzrATboAS0AoQjqASzrATboAS0AoAjqAS3rATboAS4AngjqAS7rATboAS8AmwjqATDrATboATAAlwjqATPrATboATEAjwjqATrrATboATIAjQjqATvrATboATMAiAjqAT/rATboATMAgwjqAUTrATboATMAgQjqAUbrATboATQA/wfqAUfrATboATQA/QfqAUnrATboATQA/AfqAUrrATboATUA9gfqAQEAAuoBTOsBNugBNQD4B+oBTesBNugBNQD1B+oBAgAB6gFN6wE26AE1AAHoAQEA8wfqAVDrATboATgA8gfqAVDrATboATgA8gfqAVDrATboATgA8gfqAVDrATboATgA8gfqAVDrATboATgA8QfqAVHrATboATkA8AfqAVHrATboATkA8AfqAVHrATboATsA7gfqAVHrATboATsA7gfqAVHrATboATsA7gfqAVHrATboATwA7gfqAVDrATboATwA7gfqAVDrATboAT0A7gfqAU/rATboAT4A6gfqAQEAAuoBT+sBNugBPgDrB+oBAQAC6gFO6wE26AE+AOoH6gEDAAHqAU7pAUjoASwA6gfqAQEAAeoBAQAB6gFO6QFI6AEsAOsH6gFR6QFI6AEsAOwH6gFQ6QFI6AEsAOwH6gFQ6QFI6AEsAO0H6gFP6QFI6AEsAO0H6gFP6QFI6AEtAOwH6gFP6QFI6AEsAO4H6gFO6QFI6AEsAO4H6gFO6QFI6AEtAO4H6gFN6QFI6AEq5gEDAO4H6gFN6QFI6AEj5gEC6AEE5gEEAO8H6gFM6QFI6AEi5gEF6AEC5gEEAO8H6gFM6QFI5gEn6AEB5gEFAPAH6gFL6QFI5gEsAPEH6gFL6QFI5gEsAPEH6gFL6QFI5gEsAPEH6gFL6QFI5gEsAPEH6gFL6QFI5gEsAPEH6gFL6QFI5gEsAPIH6gFK6QFI5gErAPMH6gFK6QFI5gEsAPMH6gFJ6QFI5gErAPQH6gFJ6QFI5gErAPUH6gFI6QEMAAPpATnmASsA9QfqAUcAEukBN+YBKwD1B+oBQwAc6QEx5gEqAPYH6gE+ACbpASzmASoA9gfqATQAMukBKuYBKgD2B+oBMQA26QEp5gEpAPcH6gEuADnpARUAAukBEuYBKQD3B+oBKwA96QETAAPpARLmASgA+AfqASoAQekBDwAD6QET5gEoAPUH6gEBAAHqASoAQukBDwAD6QET5gEnAPYH6gErAEXpAQoABekBFOYBJwD2B+oBFABd6QEHAAbpARXmAScA9gfqARMAXukBBQAI6QEDAAHpARHnAQjmAR8A+QfqAQ0AYekBBAAJ6QECAAPpARDnAQjmAR4A+wfqAQsAY+kBAgAK6QECAATpAQ/nAQnmAQHnAQPmARkA/QfqAQcAZ+kBAQAG6QEFAATpAQ/nAQ7mARgA8QjpAQMAB+kBD+cBD+YBFwD6COkBBAAC6QEK5wEQ5gERAAHmAQMA9AjpAQMABOkBAQAD6QEM5wET5gEOAAHmAQMA8AjpAQoAB+kBCucBFOYBBOcBAeYBDACCCekBCecBFuYBAucBBOYBAecBAuYBBQCECekBCOcBH+YBBQCFCekBB+cBIOYBBACFCekBB+cBIOYBBACFCekBB+cBIeYBAwCFCekBB+cBIuYBAgCGCekBBucBJACHCekBBecBIwCJCekBBOcBHwCSCecBFAAD5wEGAJQJ5wECAALnAQ4ABOcBBQCeCecBBwAH5wEEAKIJ5wEBAArnAQEAsAnnAQEAhRzsAQIArgnsAQIADOwBAQCvCewBAQCvCewBAQDWEuwBAwAG7AEBAKYJ7AEEAAPsAQMApgnsAQoApwnsAQkAqAnsAQgAqAnsAQgAqQnsAQYAqgnsAQYAqgnsAQcAqQnsAQYAqwnsAQMArgnsAQMArgnsAQEAj4ED';
+const GM_REAL='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0gEFtQEBqQECpwEQpgEHAKcIzgESzAEQxgESwgEUuwEPuAEItwEK0gEFtQECqQECpwEQpgEIAKYIzwELywEPygEIxgESwgEUuwEPuAEItwEKtQEB0gEDtQEDqQEOpwEEpgEIAKYIzwELywEPygEIxgESwgEUuwEPuAEHtgEHtwEDtQEC0gECtQEEqQEOpwEEpgEIAKYIzwELywEPygEIxgESwgEUuwEPuAEHtgEHtQELqQEOpwEEpgEHAKcIzwELywEPygEIxgESwgEVuwEMuAEJtgEHtQELqQEPpwEDpgEFAAKmAQEApgjPAQvLAQ/KAQjGARLCARW7AQy4AQm2AQe1AQupAQ+oAQGnAQKmAQEArQjPAQvLAQ/KAQjGARLCARW7AQy4AQm2AQe1AQupAQ6oAQOnAQEAA6cBAQCqCM8BC8sBD8oBDccBEsIBELsBDLgBCbYBB7UBC6kBDqgBAwABpwEDAKsIzwELywEPygENxwESwgEQuwEMuAEJtgEHtQELqQEOqAEDpwECAKwIzwEMywEPygENxwESwgEQvAELuAEKtgEHtQELqQEOqAECALAIzwELywEPygENxwESwgEQvAELuAEKtgEHtQELqQEPqAECAK8IzwELywEPygENxwESwgERvAEKuAEKtgEHtQELqQEPqAECAK8IzwELywEPygENxwESwQERvAEKuAEKtgEHtQELqQEOqAEDALAIzwEKywEPygENxwESwQESvAEJuAEKtgEHtQEKrAEBqQENqAEEALAIzwEKywEPygENxwESwQESvAEKuAEJtgEHtQEKrAEEqgEDrAEBqgEFqAEEALEIzwEKywEPygENxwESwQESvAEKuAEJtgEHtQEJrAEFqgEBrAEDqgEFqAEEALEIzwEKywEPygENxwESwQESvAELuAEItgEHtQEIrAEJqwECqgECAAGqAQGoAQEAAagBAQCyCM8BCssBD8oBDccBEsEBE7wBCrgBCLYBB7QBAbUBB6wBCKsBA6oBBQC0CM8BCssBD8oBDccBEsEBE7wBC7gBB7YBB7QBArUBBawBCasBBKoBBKgBAQC0CM8BCssBDsoBDccBEsEBE7wBC7gBB7YBBrQBBLUBBKwBCKsBBaoBAQABqgECqAEBALQIzwEKywEOygENxwESwQETvAELuAEHtgEGtAEHtQEBrAEGqwEBrAEBqwEFqgEEqAEBALUIzwEKywENygENxwESwQETvAELuAEGtgEGtAEIrAEHqwEHqgEFALUIzwELywEMygENxwESwQETvAELuAEGtgEFtAEJrAEHqwEIAAKqAQIAtQjPAQEAAc8BCcsBDMoBDccBEsEBE7wBDLgBBbYBBLQBCqwBB6sBCQABqgEBALgIzwEKywELygENxwESwQETvAENuAEEtAEOrAEGqwEKALkIzwEMywEKygENxwESwQETvAENuAEEtAEPrAEFqwEKAAGrAQEAtwjPAQzLAQrKAQ3HARLBARO8AQ24AQS0AQ+rAQGsAQSrAQoAugjPAQzLAQnKAQ3HARLBARO8AQ24AQO0ARCrAQGsAQKrAQsAuwjPAQ3LAQjKAQ3HARLBARO8AQ24AQG0AQG4AQG0AQ+rARAAuwjPAQzLAQjJAQ3IAQ/AARa8AQ60ARCrAREAuwjPAQ3LAQfJAQ3IAQ/AARa8AQ60AQ+rARMAugjPAQ3LAQfJAQ3IAQ/AARa8AQ20AQSzARCtAQarAQkAugjPAQ7LAQbJAQ3IAQ+/AQjAAQ69AQy8AQGzARStAQ8AugjPAQ/LAQXJAQ3IAQ+/AQjAAQ69AQu8AQKzAROtAQ8AvAjPAQ7LAQPJAQHLAQHJAQ3IAQ+/AQjAAQ69AQu8AQKzARKtARAAvAjPAQ/LAQLJAQ/IAQ+/AQjAAQ69AQyzARKtARIAuwjPAQ/LAQLJAQ/IAQ+/AQjAAQ69AQyzARGtARMAvAjPAQ/LAQHJAQ/IAQ+/AQjAAQ69AQyzARCtARQAvAjPAQ/LAQLJAQ7IAQ+/AQjAAQ69AQyzAQ+tARMAvwjPAQ/LAQHJAQ7IAQ+/AQjAAQ69AQyzAQ+tAQSuAQStAQsAvwjPARDJAQ7IAQ+/AQjAAQ69AQuyAQaxAQavAQeuAQWtAQsAvwjPARDJAQ7IAQ+/AQjAAQ69AQuyAQaxAQavAQauAQmtAQkAvgjPARDJAQ7IAQ+/AQjAAQ69AQqyAQexAQavAQauAQqtAQYAwgjPAQ7JAQ7IAQ+/AQnAAQ29AQqyAQexAQavAQeuAQqtAQQAxQjPAQ3JAQ3IAQ+/AQrAAQy9AQqyAQexAQevAQauAQqtAQMAxgjPAQzJAQ7IAQ+/AQ3AAQm9AQmyAQexAQivAQeuAQqtAQIAyAjPAQrJAQ7IAQ+/AQ3AAQa/AQLAAQG9AQmyAQexAQivAQeuAQqtAQEAygjPAQnJAQ7IAQ+/ARa9AQmyAQexAQivAQiuAQkAywjPAQnJAQ7IAQ+/ARe9AQiyAQexAQivAQiuAQgAzQjPAQfJAQ/IAQ+/ARe9AQiyAQexAQivAQmuAQcAzQjPAQfJAQ/IAQ+/ARe9AQiyAQexAQivAQmuAQcAzgjPAQfJAQ7IAQ+/ARe9AQiyAQexAQivAQquAQUAzwjPAQfJAQ7IAQ+/ARe+AQiyAQexAQivAQquAQQA0AjPAQUAAckBD8gBD78BF74BCLIBB7EBCK8BCq4BBADWCMkBD8gBD78BF74BCLIBB7EBCa8BCa4BAgDaCMkBDcgBD78BF74BCLIBB7EBCa8BCq4BAQDbCMkBDMgBD78BF74BCLIBB7EBCa8BCq4BAQDdCMkBCsgBBr8BIb4BB7IBB7EBCK8BCwDfCMkBCcgBAgAByAEEvwEgvgEGsgEIsQEIrwELAOAIyQEIyAECAAW/ASC+AQayAQixAQmvAQkA4wjJAQbIAQIABr8BH74BBrIBCLEBCa8BCQDxCL8BIL4BBbIBCLEBCK8BCgDyCL8BH74BBbIBCLEBCa8BCQDyCL8BH74BCbIBBLEBArABB68BCQDzCL8BHr4BCbIBBLEBArABB68BB7ABAgD0CL8BHL4BC7IBA7EBArABAQABsAEOAPQIvwEcvgEJAAG+AQGyAQEAA7EBAbABAQACsAENAPQIvwEcvgEJAAywAQsA9Ai/ARy+AQoAC7ABAwACsAEGAPQIvwEGAAG/ARW+AQsAC7ABAQADsAEGAPUIvwEEAAS/ARAAAb8BAQAEvgEBAAK+AQUAELABBgD0CL8BBAAEvwEQAAq+AQQAELABBgD1CL8BAwAFvwEPAAq+AQEAAb4BAQABvgEBABCwAQUA9gi/AQEABr8BDwAOvgEBABCwAQUA/gi/AQ0AIbABBAD+CL8BDAAisAEEAP4IvwEKACSwAQUA/Qi/AQkAJbABBQD+CL8BCAAksAEGAP4IvwEIACSwAQYA/gi/AQcAJbABBgD/CL8BBgAmsAEFAP8IvwEGACawAQYA/gi/AQYAJrABBgD/CL8BBQAmsAEGAP8IvwEEACewAQYA/wi/AQUAJ7ABBQD/CL8BBQAnsAEFAP8IvwEFACiwAQQAgQm/AQMAKLABBACCCb8BAgAosAEEAKwJsAEEAK0JsAEDAK0JsAEDAK4JsAECAK4JsAEBAMmhAtEBAQCvCdEBAQCf0QjtAQEA9AjwAQEAOe0BAwDmCPABAQAE8AEBAAPwAQEAAfABAQAB8AEBADntAQQA5AjwAQEAAfABBgAD8AEGADftAQQA4wjwAQMAAfABBAAI8AEDADXtAQUA8wjwAQkAL+0BBgDpCPABAQAH8AEPAALwAQIABPABAgAf7QEIAOYI8AEfAALwAQQAHO0BCQDlCPABJAAf7QEJAOII8AElAB/tAQsA4AjwASYAH+0BCwDgCPABIwAi7QELAN8I8AEkACHtAQwA3gjwASUAAfABAQAB8AEBAB3tAQwAzAjvAQMADvABJgAD8AECABztAQ0AxwjvAQkAC/ABJgAD8AEDAB3tAQwAxgjvAQsACfABJgAj7QEOAALtAQMAvAjvARAACvABIwAk7QEUALoI7wESAAHvAQQABPABIwAl7QEUALgI7wESAAHvAQXwAQMAAfABJAAk7QEVALUI7wEUAAHvAQXwASoAIe0BFgC0CO8BG/ABLAAf7QEWALMI7wEc8AEuAB3tARYAtQjvARrwATEAGe0BFwCzCO8BHPABNAAW7QEXAKoI7wEBAATvASDwATUACu0BAQAK7QEXAKoI7wEBAATvASDwATbtAQEABu0BAQAL7QEYAKgI7wEEAATvAR/wATbtAQYADO0BGgCmCO8BBgAC7wEg8AE27QEHAAHtAQEACe0BGgClCO8BKfABNu0BCAAJ7QEcAKQI7wEp8AE27QELAAXtAR0ApAjvASnwATbtAS0ApQjvASjwATbtAS0ApAjvASnwATbtASwAowjvASvwATbtAS0AoQjvASzwATbtAS0AoQjvASzwATbtAS0AoAjvAS3wATbtAS4AngjvAS7wATbtAS8AmwjvATDwATbtATAAlwjvATPwATbtATEAjwjvATrwATbtATIAjQjvATvwATbtATMAiAjvAT/wATbtATMAgwjvAUTwATbtATMAgQjvAUbwATbtATQA/wfvAUfwATbtATQA/QfvAUnwATbtATQA/AfvAUrwATbtATUA9gfvAQEAAu8BTPABNu0BNQD4B+8BTfABNu0BNQD1B+8BAgAB7wFN8AE27QE1AAHtAQEA8wfvAVDwATbtATgA8gfvAVDwATbtATgA8gfvAVDwATbtATgA8gfvAVDwATbtATgA8gfvAVDwATbtATgA8QfvAVHwATbtATkA8AfvAVHwATbtATkA8AfvAVHwATbtATsA7gfvAVHwATbtATsA7gfvAVHwATbtATsA7gfvAVHwATbtATwA7gfvAVDwATbtATwA7gfvAVDwATbtAT0A7gfvAU/wATbtAT4A6gfvAQEAAu8BT/ABNu0BPgDrB+8BAQAC7wFO8AE27QE+AOoH7wEDAAHvAU7uAUjtASwA6gfvAQEAAe8BAQAB7wFO7gFI7QEsAOsH7wFR7gFI7QEsAOwH7wFQ7gFI7QEsAOwH7wFQ7gFI7QEsAO0H7wFP7gFI7QEsAO0H7wFP7gFI7QEtAOwH7wFP7gFI7QEsAO4H7wFO7gFI7QEsAO4H7wFO7gFI7QEtAO4H7wFN7gFI7QEq6wEDAO4H7wFN7gFI7QEj6wEC7QEE6wEEAO8H7wFM7gFI7QEi6wEF7QEC6wEEAO8H7wFM7gFI6wEn7QEB6wEFAPAH7wFL7gFI6wEsAPEH7wFL7gFI6wEsAPEH7wFL7gFI6wEsAPEH7wFL7gFI6wEsAPEH7wFL7gFI6wEsAPEH7wFL7gFI6wEsAPIH7wFK7gFI6wErAPMH7wFK7gFI6wEsAPMH7wFJ7gFI6wErAPQH7wFJ7gFI6wErAPUH7wFI7gEMAAPuATnrASsA9QfvAUcAEu4BN+sBKwD1B+8BQwAc7gEx6wEqAPYH7wE+ACbuASzrASoA9gfvATQAMu4BKusBKgD2B+8BMQA27gEp6wEpAPcH7wEuADnuARUAAu4BEusBKQD3B+8BKwA97gETAAPuARLrASgA+AfvASoAQe4BDwAD7gET6wEoAPUH7wEBAAHvASoAQu4BDwAD7gET6wEnAPYH7wErAEXuAQoABe4BFOsBJwD2B+8BFABd7gEHAAbuARXrAScA9gfvARMAXu4BBQAI7gEDAAHuARHsAQjrAR8A+QfvAQ0AYe4BBAAJ7gECAAPuARDsAQjrAR4A+wfvAQsAY+4BAgAK7gECAATuAQ/sAQnrAQHsAQPrARkA/QfvAQcAZ+4BAQAG7gEFAATuAQ/sAQ7rARgA8QjuAQMAB+4BD+wBD+sBFwD6CO4BBAAC7gEK7AEQ6wERAAHrAQMA9AjuAQMABO4BAQAD7gEM7AET6wEOAAHrAQMA8AjuAQoAB+4BCuwBFOsBBOwBAesBDACCCe4BCewBFusBAuwBBOsBAewBAusBBQCECe4BCOwBH+sBBQCFCe4BB+wBIOsBBACFCe4BB+wBIOsBBACFCe4BB+wBIesBAwCFCe4BB+wBIusBAgCGCe4BBuwBJACHCe4BBewBIwCJCe4BBOwBHwCSCewBFAAD7AEGAJQJ7AECAALsAQ4ABOwBBQCeCewBBwAH7AEEAKIJ7AEBAArsAQEAsAnsAQEAhRzxAQIArgnxAQIADPEBAQCvCfEBAQCvCfEBAQDWEvEBAwAG8QEBAKYJ8QEEAAPxAQMApgnxAQoApwnxAQkAqAnxAQgAqAnxAQgAqQnxAQYAqgnxAQYAqgnxAQcAqQnxAQYAqwnxAQMArgnxAQMArgnxAQEAj4ED';
 /* ===== GRAND 2 - EMPIRE ECONOMY on the grand map (Abdullah 2026-11-05/06) =====
    One system (orch/SYSTEMS.md): everything about empire money lives here. Province buildings are the entries of GC.prov[i].bl
    (the same list the battle mirror reads: gmBuildings/gmApply place fort/aa/airfield/factory/port/mfort in that province's battle).
@@ -20263,6 +20292,8 @@ const GE_SIG={
  TH:[['E','Rice Bowl','Harvests and a calm home front.',['food','calm']]],
  ET:[['E','Highland Levies','A big recruit pool at low upkeep.',['manp','upkeep']]],
  LY:[['E','Oil Terminals','Oil and shipping.',['oil','port']]],
+ OB:[['M','Urban Labyrinth','Rubble-city home battles; some fallen fighters slip away and return after the battle.']],
+ BI:[['M','Desert Raids','Fast moves across desert provinces and recovering captured gear after won battles.']],
  SD:[['E','Gold Routes','Gold mines and smuggled trade.',['smug','mine']]],
  SE:[['E','Neutral Arms Exports','Arms sales and a cheap army.',['tax','upkeep']]],
  KZ:[['E','Steppe Uranium','Mines and thrifty fuel.',['mine','fuel']]],
@@ -20467,7 +20498,7 @@ function geBorrow(c){const N=GC.nat[c],E=N.e;if(E.defT>GC.turn)return 'Your cred
 function geRepay(c){const N=GC.nat[c],E=N.e;if(!E.bonds.length)return 'No bonds.';E.bonds.sort((a,b)=>a[0]-b[0]);const b=E.bonds[0];if(N.cash<b[1])return 'Needs $'+b[1]+'.';N.cash-=b[1];E.bonds.shift();return '';}
 function geDeposit(c,amt){const N=GC.nat[c];amt=Math.min(amt|0,Math.floor(N.cash));if(amt<=0)return 'No money.';N.cash-=amt;N.e.bank+=amt;return '';}
 function geWithdraw(c){const N=GC.nat[c];N.cash+=N.e.bank;N.e.bank=0;return '';}
-function geTotalWar(c,on){const E=GC.nat[c].e;if(!!on===!!E.tw)return '';if(on&&GC.turn<E.twT+4)return 'Total war can be switched on again in '+(E.twT+4-GC.turn)+' turns.';
+function geTotalWar(c,on){const E=GC.nat[c].e;if(!!on===!!E.tw)return '';if(on&&GC.turn<E.twT+4)return 'Total war can be switched on again in '+(E.twT+4-GC.turn)+' months.';
   if(on&&!Object.keys(GC.war).some(k=>k.split('|').includes(c)))return 'Only at war.';E.tw=on?1:0;E.twT=GC.turn;return '';}
 function geRation(c,on){GC.nat[c].e.ration=on?1:0;return '';}
 function geSellMode(c,m){GC.nat[c].e.sell=m?1:0;return '';}
@@ -20668,7 +20699,7 @@ const GMIL_NM={   // fictional name pools per culture [first names, family names
  de:[['Lukas','Jonas','Matthias','Anders','Stefan','Henrik','Konrad','Lars','Florian','Emil'],['Brandt','Lindqvist','Falk','Hartmann','Weiss','Sandberg','Keller','Nordin','Vogel','Reiter']],
  af:[['Kofi','Emeka','Sipho','Tesfaye','Chidi','Themba','Abebe','Musa','Jabari','Idris'],['Okafor','Mbeki','Tadesse','Nkosi','Abara','Dlamini','Bekele','Okoye','Mwangi','Adeyemi']],
  he:[['Eitan','Yossi','Amir','Noam','Gil','Oren','Ronen','Tomer','Ilan','Uri'],['Barak','Shalev','Peretz','Dayan','Navon','Harel','Sasson','Golan','Tamir','Avni']]};
-const GMIL_CUL={IR:'fa',SA:'ar',AE:'ar',EG:'ar',IQ:'ar',RV:'ar',SY:'ar',JO:'ar',DZ:'ar',MA:'ar',OM:'ar',LY:'ar',SD:'ar',DW:'ar',RS:'ar',KD:'ar',TR:'tr',AZ:'tr',RU:'ru',UA:'ru',PL:'ru',KZ:'ru',CN:'zh',TW:'zh',KP:'ko',KR:'ko',JP:'ja',VN:'sea',TH:'sea',PH:'sea',ID:'sea',IN:'sa',PK:'sa',AF:'sa',US:'en',GB:'en',AU:'en',CA:'en',ES:'la',IT:'la',FR:'la',BR:'la',MX:'la',AR:'la',CO:'la',CL:'la',VE:'la',CU:'la',DE:'de',SE:'de',GR:'de',NG:'af',ET:'af',ZA:'af',IL:'he'};
+const GMIL_CUL={IR:'fa',SA:'ar',AE:'ar',EG:'ar',IQ:'ar',RV:'ar',SY:'ar',JO:'ar',DZ:'ar',MA:'ar',OM:'ar',OB:'ar',BI:'ar',LY:'ar',SD:'ar',DW:'ar',RS:'ar',KD:'ar',TR:'tr',AZ:'tr',RU:'ru',UA:'ru',PL:'ru',KZ:'ru',CN:'zh',TW:'zh',KP:'ko',KR:'ko',JP:'ja',VN:'sea',TH:'sea',PH:'sea',ID:'sea',IN:'sa',PK:'sa',AF:'sa',US:'en',GB:'en',AU:'en',CA:'en',ES:'la',IT:'la',FR:'la',BR:'la',MX:'la',AR:'la',CO:'la',CL:'la',VE:'la',CU:'la',DE:'de',SE:'de',GR:'de',NG:'af',ET:'af',ZA:'af',IL:'he'};
 const GMIL_REGCUL={ME:'ar',AF:'af',SA:'sa',EA:'zh',SEA:'sea',EU:'de',NA:'en',SAM:'la'};
 const GMIL_FLEET=[['ship',.34],['boat',.26],['fast',.14],['sub',.26]];   // starting fleet mix (by value)
 const GMIL_NAVAL=['ship','boat','fast','sub','minel','sweep'];
@@ -20895,7 +20926,7 @@ const GR_REAL={
   PK:[.5,.9,80],UA:[.4,1.4,70],VN:[.5,.55,110],TH:[.6,.4,90],NG:[.5,.3,170],ZA:[.5,.35,80],AR:[.5,.3,100],CO:[.4,.3,130],CL:[.4,.3,80],
   GR:[.5,.5,80],RO:[.4,.4,90],KZ:[.5,.4,200],IQ:[.4,.45,230],RV:[.15,.35,110],QA:[.6,.25,260],KW:[.5,.25,260],OM:[.4,.3,200],DZ:[.4,.55,200],MA:[.3,.4,80],
   VE:[.2,.35,180],KP:[.15,.9,70],CU:[.1,.2,60],SY:[.1,.2,70],RS:[.15,.3,90],DW:[.1,.35,80],KD:[.25,.25,120],JO:[.2,.3,80],AZ:[.3,.4,200],BY:[.2,.4,100],
-  AF:[.1,.25,60],LY:[.15,.2,200],SD:[.08,.15,70],ET:[.15,.3,60],PH:[.4,.3,80]},
+  AF:[.1,.25,60],LY:[.15,.2,200],SD:[.08,.15,70],ET:[.15,.3,60],PH:[.4,.3,80],OB:[.04,.12,40],BI:[.04,.12,60]},
  // real alliances at the start (Nov 2026): members start friendly, never attack each other on their own
  al:[['NATO',['US','CA','GB','FR','DE','ES','IT','PL','SE','NO','FI','GR','RO','TR']],
   ['US partners',['US','JP','KR','AU','PH','IL','TW','JO','AE','QA','KW','MA','EG']],
@@ -20905,11 +20936,11 @@ const GR_REAL={
  op:[['US','CN',-45],['US','RU',-55],['US','IR',-90],['US','KP',-95],['RU','UA',-100],['RU','GB',-60],['RU','PL',-70],['RU','DE',-45],['IL','IR',-100],['IL','RS',-100],
   ['IL','DW',-95],['IL','TR',-55],['IN','PK',-85],['IN','CN',-45],['CN','TW',-90],['CN','JP',-55],['CN','PH',-50],['KP','KR',-95],['KP','JP',-70],['GR','TR',-50],
   ['SA','IR',-60],['EG','IL',-20],['AZ','IR',-35],['DE','US',20],['FR','DE',30],['IN','US',25],['IN','RU',35],['CN','RU',55],['CN','KP',40],['TR','RU',-10],
-  ['IQ','IR',45],['IQ','RV',-15],['RV','IR',60],['SY','IL',-35],['SY','TR',20],['KD','TR',-35],['DW','SA',-40],['UA','PL',55],['MA','DZ',-60],['ET','EG',-40],['ET','SD',-20]],
+  ['IQ','IR',45],['IQ','RV',-15],['RV','IR',60],['SY','IL',-35],['SY','TR',20],['KD','TR',-35],['DW','SA',-40],['UA','PL',55],['MA','DZ',-60],['ET','EG',-40],['ET','SD',-20],['IL','OB',-100],['EG','OB',-10],['BI','IL',-100],['BI','IR',-100],['BI','US',-100],['BI','SA',-100],['BI','TR',-100],['BI','RU',-100]],
  // opening wars as they stand in Nov 2026 (checked): Russia-Ukraine (5th year, no ceasefire); Israel vs the Lebanese Mountain Shias
- wars:[['RU','UA'],['IL','RS']],
+ wars:[['RU','UA'],['IL','RS'],['BI','SY'],['BI','IQ'],['BI','KD']],   // OB-IL: tense truce (ceasefire since Oct 2025, second phase deadlocked) - see tn; BI is at war with its neighbours and nobody treats with it
  // real tensions: each side keeps a covering army at the front; wars can break out here
- tn:[['KP','KR'],['CN','TW'],['IN','PK'],['GR','TR'],['IL','IR'],['IL','DW'],['AZ','IR'],['IN','CN'],['SA','DW']],
+ tn:[['IL','OB'],['KP','KR'],['CN','TW'],['IN','PK'],['GR','TR'],['IL','IR'],['IL','DW'],['AZ','IR'],['IN','CN'],['SA','DW']],
  // overseas bases [owner, host, share of the owner's start strength]: US Qatar/Kuwait/UAE/Jordan/Korea/Japan/Germany/Poland/Italy,
  // Russia in Syria (bases being renegotiated with Damascus), Turkey in Iraq's north & Syria, UK Gulf, France UAE
  bases:[['US','QA',.06],['US','KW',.04],['US','AE',.03],['US','JO',.02],['US','KR',.08],['US','JP',.08],['US','DE',.07],['US','PL',.04],['US','IT',.04],
@@ -20963,7 +20994,7 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
     for(const g of mine){const a=GC.armies.find(x=>x.id===g.aid);row('<b>'+gmilTitle(g)+' '+g.nm+'</b> · lv '+g.lv+' · xp '+Math.round(g.xp)+(g.lv<4?'/'+GMIL_LVN[g.lv]:'')+'<br><span style="color:#ffd24a">'+GMIL_TR[g.tr][0]+'</span> <span style="opacity:.75;font-size:12px">'+GMIL_TR[g.tr][1]+'</span><br><span style="font-size:13px">'+(g.st===1?'<span style="color:#ff9d8e">Killed in action</span>':g.st===2?'<span style="color:#ff9d8e">Captured by '+GCM.nats.get(g.by).name+'</span>':a?'Leads '+a.nm+' at '+GCM.P[a.at].n:'Awaiting an army')+'</span>');}
     const cap=Object.values(M.g).filter(g=>g.st===2&&g.by===me);for(const g of cap)row('<span style="opacity:.8">Prisoner: '+gmilTitle(g)+' '+g.nm+' ('+GCM.nats.get(g.o).name+')</span>');
     if(!mine.length)row('<span style="opacity:.7">No generals yet.</span>');}
-  else if(GMILUI.tab==='fr'){box.appendChild(guEl('div','opacity:.75;font-size:13px','A front is a line between you and one enemy. Armies assigned to it hold the weak spots, push into the weakest enemy province, or counter-attack to retake lost land. You can still march any army yourself (its own order wins that turn).'));
+  else if(GMILUI.tab==='fr'){box.appendChild(guEl('div','opacity:.75;font-size:13px','A front is a line between you and one enemy. Armies assigned to it hold the weak spots, push into the weakest enemy province, or counter-attack to retake lost land. You can still march any army yourself (its own order wins that month).'));
     const foes=Object.keys(GC.war).filter(k=>k.split('|').includes(me)).map(k=>k.split('|').find(x=>x!==me)).filter(x=>GC.nat[x]&&!GC.nat[x].dead).sort();
     for(const foe of foes){const f=gmilFronts(me).find(x=>x.foe===foe);const r=guEl('div','border-bottom:1px solid #243a50;padding:5px 0');r.appendChild(guEl('div','','<b>vs '+GCM.nats.get(foe).name+'</b> '+(f?'· '+gmilLine(f).length+' line provinces · '+GC.armies.filter(a=>a.fr===f.id).length+' armies':'')));
       if(!f)r.appendChild(gmilBtn('Open front',()=>{gmilAddFront(me,foe);gmilDone('');}));else{for(const o of ['hold','push','counter'])r.appendChild(gmilBtn(o==='hold'?'Hold':o==='push'?'Push':'Counter-attack',()=>{f.ord=o;gmilDone('');},f.ord===o));
@@ -21293,6 +21324,7 @@ function gdWarscore(a,b){let s=0;const k=grWk(a,b);const t=GC.turn-((GC.wsT&&GC.
 // chance(action,a,b) -> {ok:bool, why:[[text,v]], cost, note}  (a = actor, b = target)
 function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtWar(a,b),al=grAllied(a,b),big=(c)=>grRealClass(c);let ok=true,cost=0,note='';
   const no=m=>{ok=false;note=m;};
+  if((a==='BI'||b==='BI')&&act!=='war'&&act!=='break'){no('Outlaw movement: nobody makes treaties with them');W.push(['Everyone\'s enemy',-100]);return {ok:false,why:W,cost:0,note};}   // nation-obbd: BI can make no alliances, peace or aid
   if(act==='improve'){cost=200;if(war)no('At war');W.push(['Costs $200, adds +10 opinion',0]);}
   else if(act==='aid'){cost=600;if(war)no('At war');W.push(['Costs $600, adds +20 opinion',0]);}
   else if(act==='alliance'){if(war)no('At war');else if(al)no('Already allied');
@@ -21494,7 +21526,7 @@ function glgPeace(a,b){const k=grWk(a,b);delete GC.war[k];if(GC.wsT)delete GC.ws
   grLog('Peace between '+gdNatName(a)+' and '+gdNatName(b)+' — truce for 8 months.',a);}
 // a war was declared: the victim's allies and guarantors (AI nations and the player's allies) join against the aggressor, depth-limited
 function glgDeclare(a,b){GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;if(GLG_D>0)return;GLG_D++;
-  try{const call=(GC.alz||[]).filter(z=>z[1].includes(b)&&!z[1].includes(a)).flatMap(z=>z[1]).concat((GC.gu||[]).filter(g=>g[1]===b).map(g=>g[0]));
+  try{try{gcoJoin(a,b);}catch(e){}const call=(GC.alz||[]).filter(z=>z[1].includes(b)&&!z[1].includes(a)).flatMap(z=>z[1]).concat((GC.gu||[]).filter(g=>g[1]===b).map(g=>g[0]));
     for(const g of Array.from(new Set(call)).sort()){if(g===a||g===b||!GC.nat[g]||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
       GC.war[grWk(g,a)]=1;GC.wsT[grWk(g,a)]=GC.turn;grLog(gdNatName(g)+' joins the war against '+gdNatName(a)+' to defend '+gdNatName(b)+'.',g);}
     if(GC.vas){const side=(x,y)=>{for(const v of GC.vas){const j=v[0]===x?v[1]:v[1]===x?v[0]:null;if(j&&j!==y&&GC.nat[j]&&!GC.nat[j].dead&&!grAtWar(j,y)&&!grVasPair(j,y)){GC.war[grWk(j,y)]=1;GC.wsT[grWk(j,y)]=GC.turn;grLog(gdNatName(j)+' joins the war against '+gdNatName(y)+(v[0]===x?' as a vassal of ':' as overlord of ')+gdNatName(x)+'.',j);}}};side(a,b);side(b,a);}   // vassals (13i GR_VASSALS)
@@ -21884,6 +21916,60 @@ npTab('fin','🏦','Finance',(code,body,c)=>{const N=ginN(code),own=c.own&&code=
     b.disabled=N.infl<=0||!N.pp||N.pp.pol<GIN_COST;b.onclick=()=>{const e=ginCut(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);
     const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Political points: '+Math.floor(N.pp?N.pp.pol:0);body.appendChild(p);}});
 alAdd('infl','🏦','Inflation',c=>{const N=ginN(c);return N&&N.infl>=10?{n:Math.round(N.infl)+'%',tip:'inflation is high — open the Finance tab',go:()=>npOpen(c,'fin')}:null;});
+// 13x-gpropa.js — lane G B5c: PROPAGANDA WAR + WAR ECONOMY + GOVERNMENT <-> WAR SUPPORT. Everything rides the ONE war-support meter (wsOf, 13v-gwarsup) and the ONE modifier engine (GMOD).
+// Reaction chain: you spend Diplomatic points to hit an enemy's morale at home -> its war support drops (style decides how much) -> recruits/income fall, unrest rises, forced peace nears;
+// counter-play: the target can run counter-propaganda (halves hits for 6 months) and the world dislikes a propagandist a little; cost: 30 Diplomatic points + opinion.
+// State: N.pgT[target]=month of last hit, N.pgC=month counter-propaganda ends, N.pgH=month last hit on us, N.gvT=month of last government check. All in GC.nat (saved). Deterministic.
+const PG_COST=30, PG_CD=4, PG_HIT=12, PG_COUNTER=20, PG_CLEN=6;
+// how much each style shrugs off enemy messaging (x hit): Zealous hard to shake, Professional resistant, Home defenders shaken when fighting abroad, Firepower-reliant hurt by casualty news
+const PG_RES={zeal:.4,prof:.5,home:1,fire:1.25};
+// war economy: high war support lifts output; same size for every style, different story (equal value)
+const WE_ROWS=[['zeal','Volunteer labour'],['prof','Efficient war industry'],['home','Home-front drives'],['fire','Arms-industry output']];
+GMOD_COND.pws=(k,arg)=>{if(!GC||!GC.nat[k])return false;return wsStyle(k)===arg&&wsOf(k)>=60;};
+for(const [s,n] of WE_ROWS)GMOD_ROWS.push({id:'we_'+s,src:n+' (war support 60%+)',scope:'nation',stat:'income',mul:1.04,cond:'pws:'+s});
+// government <-> war support: one data row per style (what high / low support does to the government)
+const PG_GOV={zeal:{n:'Legitimacy',hi:'Fervour steadies the leadership: unrest eases in every province',lo:'The faithful grow restless: unrest creeps up'},
+  prof:{n:'Approval',hi:'Voters and the staff approve: stability rises at the two-yearly review',lo:'The review goes badly: stability falls'},
+  home:{n:'Unity',hi:'The nation is united: unrest eases',lo:'Home-front quarrels: unrest creeps up'},
+  fire:{n:'World opinion',hi:'Clean wins impress the world: opinion of us improves',lo:'Bad news abroad: opinion of us sours'}};
+function pgN(c){const N=GC&&GC.nat[c];if(!N)return null;if(!N.pgT)N.pgT={};return N;}
+function pgCountered(c){const N=pgN(c);return !!N&&(N.pgC||0)>GC.turn;}
+function pgCan(a,b){const N=pgN(a);if(!N||!N.pp)return 'Not available.';if(!GC.nat[b]||GC.nat[b].dead||!grAtWar(a,b))return 'Only at war with them.';
+  const l=GC.turn-(N.pgT[b]===undefined?-99:N.pgT[b]);if(l<PG_CD)return 'Again in '+(PG_CD-l)+' months.';if(N.pp.dip<PG_COST)return 'Needs '+PG_COST+' Diplomatic points.';return '';}
+function pgHitSize(a,b){const sk=wsStyle(b);let h=PG_HIT*(PG_RES[sk]||1);
+  if(sk==='home'){const abroad=GC.armies.some(x=>x.o===b&&x.u.length&&GC.prov[x.at]&&GC.prov[x.at].o!==b);h*=abroad?1.5:.6;}
+  if(sk==='fire'&&wsN(b).wsW>3)h*=1.2;if(pgCountered(b))h*=.5;return Math.round(h*10)/10;}
+function pgRun(a,b){const e=pgCan(a,b);if(e)return e;const N=pgN(a),T=wsN(b),h=pgHitSize(a,b);N.pp.dip-=PG_COST;N.pgT[b]=GC.turn;T.ws=Math.max(0,T.ws-h);GC.nat[b].pgH=GC.turn;
+  for(const c of Object.keys(GC.nat).sort())if(c!==a&&!GC.nat[c].dead&&c!==b)gdRel(c,a,-.5);try{gdRel(a,b,-6);}catch(x){}
+  if(a===GC.me||b===GC.me)grLog((a===GC.me?'Our broadcasts hit '+gdNatName(b)+': their war support -'+h+'.':gdNatName(a)+' runs propaganda against us: war support -'+h+'.'),a);return '';}
+function pgCounter(c){const N=pgN(c);if(!N||!N.pp)return 'Not available.';if(pgCountered(c))return 'Already running.';if(N.pp.dip<PG_COUNTER)return 'Needs '+PG_COUNTER+' Diplomatic points.';N.pp.dip-=PG_COUNTER;N.pgC=GC.turn+PG_CLEN;
+  if(c===GC.me)grLog('Counter-propaganda: enemy messaging counts half for '+PG_CLEN+' months.',c);return '';}
+function pgGov(c){const N=GC.nat[c],sk=wsStyle(c),v=wsOf(c);
+  if(sk==='zeal'||sk==='home'){const d=v>=65?-1:v<30?1:0;if(d)for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c){GC.prov[p.i].un=Math.max(0,Math.min(100,GC.prov[p.i].un+d));}}
+  else if(sk==='prof'){if(GC.turn%24===0&&N.gvT!==GC.turn){N.gvT=GC.turn;if(N.stab===undefined){N.stab=0;N.stP=0;}const d=v>=60?1:v<40?-1:0;N.stab=Math.max(-3,Math.min(3,N.stab+d));if(d&&c===GC.me)grLog('Two-yearly review: '+(d>0?'approval is high, stability rises.':'approval is low, stability falls.'),c);}}
+  else if(sk==='fire'){const d=v>=70?.5:v<40?-.5:0;if(d)for(const o of Object.keys(GC.nat).sort())if(o!==c&&!GC.nat[o].dead)gdRel(o,c,d);}}
+function pgMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead)continue;wsN(c);pgN(c);
+    if(c!==GC.me&&N.pp){ // AI: counter if hit, else hit the enemy whose morale is most breakable, in sorted order
+      if(N.pgH===GC.turn-1&&N.pp.dip>=PG_COUNTER+30)pgCounter(c);
+      const foes=gdEnemies(c).sort();if(foes.length&&N.pp.dip>=PG_COST+40){let best=null,bh=0;for(const f of foes){if(pgCan(c,f))continue;const h=pgHitSize(c,f);if(h>bh+1e-9){bh=h;best=f;}}if(best&&bh>=6)pgRun(c,best);}}
+    pgGov(c);}
+  GMOD_C.cache.clear();}
+GMOD_HOOKS.push(pgMonth);
+npTab('prop','📢','Propaganda',(code,body,c)=>{const N=pgN(code),sk=wsStyle(code),G=PG_GOV[sk];const own=c.own&&code===GC.me;
+  let h='<div style="opacity:.85;margin-bottom:8px">Messaging reaches the enemy home front. How far it gets depends on the target\'s national character: Zealous nations are hard to shake, Professional armies resist, Home defenders tire of fighting abroad, Firepower-reliant nations hate casualty news. Everyone is hit by the same size of effort; nobody has it easy.</div>'+
+  '<div style="margin:8px 0"><b>War economy:</b> war support 60%+ gives +4% income ('+WE_ROWS.find(r=>r[0]===sk)[1]+'). Now: '+Math.round(wsOf(code))+'%.</div>'+
+  '<div style="margin:8px 0"><b>'+G.n+':</b> '+G.hi+' (high), '+G.lo.charAt(0).toLowerCase()+G.lo.slice(1)+' (low).</div>'+
+  '<div style="margin:8px 0">'+(pgCountered(code)?'Counter-propaganda is running until month '+N.pgC+'.':'No counter-propaganda running.')+'</div>';
+  body.innerHTML=h;
+  if(!own)return;
+  const foes=gdEnemies(code).sort();const box=document.createElement('div');body.appendChild(box);
+  if(!foes.length)box.innerHTML='<i>Not at war — nobody to broadcast against.</i>';
+  for(const f of foes){const row=document.createElement('div');row.style.cssText='display:flex;gap:10px;align-items:center;margin:5px 0';const e=pgCan(code,f);
+    row.innerHTML='<span style="min-width:170px">'+gdNatName(f)+' — war support '+Math.round(wsOf(f))+'%</span>';const b=document.createElement('button');b.textContent='Broadcast (-'+PG_COST+' Dip, about -'+pgHitSize(code,f)+')';b.style.cssText='font-size:15px;padding:4px 12px;cursor:pointer';b.disabled=!!e;b.title=e||'Spend Diplomatic points to lower their war support';
+    b.onclick=()=>{const x=pgRun(code,f);if(x)grLog(x,code);npDraw();};row.appendChild(b);box.appendChild(row);}
+  const cb=document.createElement('button');cb.textContent='Counter-propaganda (-'+PG_COUNTER+' Dip, '+PG_CLEN+' months)';cb.style.cssText='font-size:15px;padding:4px 12px;cursor:pointer;margin-top:8px';const ce=pgCountered(code)?'Already running':'';cb.disabled=!!ce||!N.pp||N.pp.dip<PG_COUNTER;cb.onclick=()=>{const x=pgCounter(code);if(x)grLog(x,code);npDraw();};body.appendChild(cb);
+  const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Diplomatic points: '+Math.floor(N.pp?N.pp.dip:0);body.appendChild(p);});
+alAdd('prop','📢','Propaganda',c=>{const N=GC.nat[c];return N&&N.pgH===GC.turn?{n:'!',tip:'enemy propaganda hit our war support — consider counter-propaganda',go:()=>npOpen(c,'prop')}:null;});
 // 13x-gtrade.js — lane B5 slice 2: TRADE NODES (EU4-style) on top of grand2's trade/oil market (geTrade stays; this adds the shared "world trade" layer).
 // Every sea zone is a node. Its value = the ports around it (development, towns, oil exports x the oil price index), x1.5 at a chokepoint, x0.3 while the strait is closed;
 // 30% of a node's value flows downstream into the busiest neighbouring zone. Each nation's trade POWER there = its ports (blockaded ports count 0, a rival at war that holds the strait
@@ -21928,6 +22014,38 @@ npTab('trade','⚓','Trade',(code,body,c)=>{const N=GC.nat[code],own=c.own&&code
     else if(own&&s>0&&N.pp){const b=document.createElement('button');b.textContent='Push ('+GTR_PUSH+')';b.style.cssText='font-size:13px;cursor:pointer;padding:1px 6px';b.title='Spend Diplomatic points: +40% trade power here for a year';b.disabled=N.pp.dip<GTR_PUSH;b.onclick=()=>{const e=gtrPush(code,n.i);if(e)grLog(e,code);npDraw();};td.appendChild(b);}
     tr.appendChild(td);tbl.appendChild(tr);}
   body.appendChild(tbl);});
+// 13y-gcoal.js — lane G B6: ALARM (EU4 "aggressive expansion") + COALITIONS. Taking land alarms the world; past the threshold neighbours who dislike you band together,
+// sour on you, and JOIN any war you start (hooked in glgDeclare via gcoJoin). Counter-play: Ease tensions (Diplomatic points) or just stop conquering (alarm fades 5%/month);
+// cost: alarm also drops your opinion with everyone a little. Equal for every nation. State: N.ae (alarm), N.aeP (provinces seen last month), GC.coal={target:[members]}. Saved, deterministic.
+const AE_PER=3, AE_THR=8, AE_DECAY=.05, AE_EASE=40, AE_EASE_DIP=40;
+function aeN(c){const N=GC&&GC.nat[c];if(!N)return null;if(N.ae===undefined){N.ae=0;N.aeP=-1;}return N;}
+function aeCount(c){let n=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)n++;return n;}
+function gcoMembers(t){return (GC.coal&&GC.coal[t])||[];}
+function gcoForm(t){GC.coal=GC.coal||{};const mem=[];
+  for(const o of Object.keys(GC.nat).sort()){const N=GC.nat[o];if(o===t||N.dead||!N.ai||grAllied(o,t)||grVasPair&&grVasPair(o,t))continue;
+    if(gdOp(o,t)<10||gdNear(o,t)||gdNear(t,o)){if(gdOp(o,t)<=25)mem.push(o);}}
+  if(mem.length<2)return false;GC.coal[t]=mem;for(const o of mem)gdRel(o,t,-10);
+  grLog('A coalition forms against '+gdNatName(t)+': '+mem.slice(0,4).map(gdNatName).join(', ')+(mem.length>4?' and '+(mem.length-4)+' more':'')+' fear its expansion.',t);
+  if(t===GC.me)try{gevToast(['⚔ A coalition has formed against us ('+mem.length+' nations)']);}catch(e){}return true;}
+function gcoEase(c){const N=aeN(c);if(!N||!N.pp)return 'Not available.';if(N.ae<=0)return 'Nobody is alarmed.';if(N.pp.dip<AE_EASE_DIP)return 'Needs '+AE_EASE_DIP+' Diplomatic points.';
+  N.pp.dip-=AE_EASE_DIP;N.ae=Math.max(0,N.ae-AE_EASE);for(const o of gcoMembers(c))gdRel(o,c,4);if(N.ae<AE_THR/2&&GC.coal&&GC.coal[c]){delete GC.coal[c];if(c===GC.me)grLog('Tensions eased: the coalition against us dissolves.',c);}return '';}
+// called from glgDeclare: the aggressor's coalition members join the victim's side
+function gcoJoin(a,b){const m=gcoMembers(a);for(const g of m){if(g===a||g===b||!GC.nat[g]||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
+    GC.war[grWk(g,a)]=1;GC.wsT=GC.wsT||{};GC.wsT[grWk(g,a)]=GC.turn;grLog(gdNatName(g)+' joins the coalition war against '+gdNatName(a)+'.',g);}}
+function gcoMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead)continue;aeN(c);const n=aeCount(c);
+    if(N.aeP>=0&&n>N.aeP){const g=(n-N.aeP)*AE_PER;N.ae+=g;for(const o of Object.keys(GC.nat).sort())if(o!==c&&!GC.nat[o].dead)gdRel(o,c,-g*.3);}
+    N.aeP=n;N.ae=Math.max(0,N.ae*(1-AE_DECAY)-.1);
+    if(N.ae>=AE_THR&&!gcoMembers(c).length)gcoForm(c);
+    else if(N.ae<AE_THR/2&&gcoMembers(c).length){delete GC.coal[c];if(c===GC.me)grLog('The coalition against us has dissolved.',c);}
+    else if(c!==GC.me&&N.ae>=AE_THR&&N.pp&&N.pp.dip>=AE_EASE_DIP+50)gcoEase(c);}}
+GMOD_HOOKS.push(gcoMonth);
+npTab('coal','⚔','Alarm & coalitions',(code,body,c)=>{const N=aeN(code),own=c.own&&code===GC.me,m=gcoMembers(code),a=Math.round(N.ae*10)/10;const col=a>=AE_THR?'#ff9a8a':a>=AE_THR/2?'#e8d28a':'#8fd18f';
+  body.innerHTML='<div style="font-size:24px"><b style="color:'+col+'">Alarm '+a+'</b> <span style="opacity:.7;font-size:15px">(coalition forms at '+AE_THR+')</span></div>'+
+  '<div style="opacity:.85;margin:8px 0">Every province taken adds alarm, souring the world on you. Past the limit, nations that dislike you or border you form a coalition and join any war you start. Alarm fades slowly if you stop conquering.</div>'+
+  '<div style="margin:8px 0"><b>Coalition:</b> '+(m.length?m.map(gdNatName).join(', '):'none')+'</div>';
+  const inC=Object.keys(GC.coal||{}).filter(t=>GC.coal[t].includes(code));if(inC.length)body.insertAdjacentHTML('beforeend','<div style="margin:8px 0"><b>'+gdNatName(code)+' sits in the coalition against:</b> '+inC.map(gdNatName).join(', ')+'</div>');
+  if(own){const b=document.createElement('button');b.textContent='Ease tensions (-'+AE_EASE_DIP+' Dip, -'+AE_EASE+' alarm)';b.style.cssText='font-size:15px;padding:4px 14px;cursor:pointer';b.disabled=!!(gcoEase&&(N.ae<=0||!N.pp||N.pp.dip<AE_EASE_DIP));b.onclick=()=>{const e=gcoEase(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);}});
+alAdd('coal','⚔','Coalition',c=>{const m=gcoMembers(c);return m.length?{n:m.length,tip:'a coalition of '+m.length+' nations stands against us',go:()=>npOpen(c,'coal')}:null;});
 // A5 FORCE LIMIT + ARMY TRADITION (laneA 2026-11-07, EU4-style; data rows in the ONE modifier engine 13k, no second upkeep system).
 // Force limit = the army value a nation can field at normal upkeep. It starts 15% above each nation's opening army (realistic start)
 // and grows/shrinks with the development it holds (conquest raises it, losing land lowers it); GMOD stat 'forceLimit' scales it.
@@ -21950,6 +22068,39 @@ function gfTradMor(o){const N=GC&&GC.nat[o];return N?Math.floor((N.trad||0)/10):
 // top-bar chip (13c guTop hook): "Army 82k / 100k" — red when over the limit
 function gfChip(){if(!GC||!GC.me||!GC.nat[GC.me])return '';const v=geArmyVal(GC.me),L=grFL(GC.me),o=v>L,N=GC.nat[GC.me];
   return '<span title="Force limit: armies above it cost 50% more upkeep. It grows with the land you hold. Army tradition '+Math.round(N.trad||0)+'/100 (battles raise it; it lifts army morale)" style="opacity:.92'+(o?';color:#ff9d8e':'')+'">⚔ <b>'+Math.round(v/1000)+'k</b>/'+Math.round(L/1000)+'k · ★'+Math.round(N.trad||0)+'</span>';}
+// 13z-gresearch.js — lane G B7: RESEARCH (spend capital points on three tracks) + CABINET (each minister's skill adds a small bonus). All effects are GMOD rows; one buy function for player and AI.
+// Chain: points -> track level -> income / diplomacy points / manpower+fire support; counter-play: rivals out-research you (AI buys in fixed order); cost: the points are not spent on ideas, development or stability.
+// Cabinet: 4 fictional ministers per nation (pplRoster); skill 1-3 comes from the name (same every game); Foreign->Diplomatic points, Defence->Military points, Finance->income, Interior->Political points.
+// State: N.rs={gov,dip,mil} levels (saved). Deterministic.
+const RS_TRACKS={gov:{n:'Governance',pool:'pol',ic:'🏛',txt:'+2% income per level'},dip:{n:'Diplomacy',pool:'dip',ic:'🕊',txt:'+4% Diplomatic points per level'},mil:{n:'Armed forces',pool:'mil',ic:'🎖',txt:'+2% manpower and +3% fire support per level'}};
+const RS_COST=[40,55,70,90,110], RS_MAX=5;
+for(let L=1;L<=RS_MAX;L++){GMOD_ROWS.push({id:'rs_gov'+L,src:'Governance research '+L,scope:'nation',stat:'income',add:.02,cond:'rs:gov:'+L},
+  {id:'rs_dip'+L,src:'Diplomacy research '+L,scope:'nation',stat:'ppDip',add:.04,cond:'rs:dip:'+L},
+  {id:'rs_man'+L,src:'Armed forces research '+L,scope:'nation',stat:'manpower',add:.02,cond:'rs:mil:'+L},
+  {id:'rs_fire'+L,src:'Armed forces research '+L,scope:'nation',stat:'fireSupport',add:.03,cond:'rs:mil:'+L});}
+GMOD_COND.rs=(k,arg)=>{const N=GC&&GC.nat[k];if(!N||!N.rs)return false;const [t,l]=arg.split(':');return (N.rs[t]|0)>=+l;};
+const CAB=[['dip','ppDip','Foreign Affairs',.05],['mil','ppMil','Defence',.05],['pol','income','Finance',.015],['pol','ppPol','Interior',.05]]; // post -> [pool, stat, title, per skill]
+function cabSkill(c,i){try{const p=pplOf(c,'minister',i);return p?(pplHash(pplName(p))%3)+1:1;}catch(e){return 1;}}
+GMOD_COND.cab=(k,arg)=>{if(!GC||!GC.nat[k])return false;const [i,s]=arg.split(':');return cabSkill(k,+i)===+s;};
+for(let i=0;i<CAB.length;i++)for(let s=1;s<=3;s++)GMOD_ROWS.push({id:'cab'+i+'_'+s,src:'Minister of '+CAB[i][2]+' (skill '+s+')',scope:'nation',stat:CAB[i][1],add:CAB[i][3]*s,cond:'cab:'+i+':'+s});
+function rsN(c){const N=GC&&GC.nat[c];if(!N)return null;if(!N.rs)N.rs={gov:0,dip:0,mil:0};return N;}
+function rsBuy(c,t){const N=rsN(c);if(!N||!RS_TRACKS[t])return 'Not available.';gidN(c);const L=N.rs[t];if(L>=RS_MAX)return 'Fully researched.';const k=RS_TRACKS[t].pool;
+  if(N.pp[k]<RS_COST[L])return 'Needs '+RS_COST[L]+' '+GID_POOL[k]+' points.';N.pp[k]-=RS_COST[L];N.rs[t]=L+1;GMOD_C.cache.clear();
+  if(c===GC.me)grLog('Research: '+RS_TRACKS[t].n+' reaches level '+(L+1)+'.',c);return '';}
+function rsMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead||c===GC.me||!N.ai)continue;rsN(c);gidN(c);
+    // AI: buys the cheapest next level it can afford once its idea groups are served (keeps 60 points spare)
+    for(const t of ['gov','mil','dip']){const L=N.rs[t];if(L<RS_MAX&&N.pp[RS_TRACKS[t].pool]>=RS_COST[L]+60){rsBuy(c,t);break;}}}}
+GMOD_HOOKS.push(rsMonth);
+npTab('res','🔬','Research & cabinet',(code,body,c)=>{const N=rsN(code),own=c.own&&code===GC.me;gidN(code);body.innerHTML='';
+  const h=document.createElement('div');h.style.cssText='opacity:.85;margin-bottom:8px';h.textContent='Research costs capital points, so it competes with ideas, development and stability. Every nation has the same three tracks and the same costs.';body.appendChild(h);
+  for(const t of Object.keys(RS_TRACKS)){const T=RS_TRACKS[t],L=N.rs[t],row=document.createElement('div');row.style.cssText='display:flex;gap:12px;align-items:center;margin:6px 0';
+    row.innerHTML='<span style="min-width:200px">'+T.ic+' <b>'+T.n+'</b> — level '+L+'/'+RS_MAX+'</span><span style="opacity:.75;min-width:260px">'+T.txt+'</span>';
+    if(own){const b=document.createElement('button');b.style.cssText='font-size:15px;padding:4px 12px;cursor:pointer';b.textContent=L>=RS_MAX?'Done':'Research (-'+RS_COST[L]+' '+GID_POOL[T.pool]+')';b.disabled=L>=RS_MAX||N.pp[T.pool]<RS_COST[L];b.onclick=()=>{const e=rsBuy(code,t);if(e)grLog(e,code);npDraw();};row.appendChild(b);}
+    body.appendChild(row);}
+  const ch=document.createElement('div');ch.style.cssText='margin-top:14px';ch.innerHTML='<b>Cabinet</b> <span style="opacity:.7">(skill 1–3 from the minister; bonus to the matching pool)</span>';body.appendChild(ch);
+  for(let i=0;i<CAB.length;i++){let nm='?';try{nm=pplName(pplOf(code,'minister',i));}catch(e){}const s=cabSkill(code,i),r=document.createElement('div');r.style.margin='4px 0';
+    r.textContent='Minister of '+CAB[i][2]+': '+nm+' — skill '+'★'.repeat(s)+'☆'.repeat(3-s)+' ('+(CAB[i][1]==='income'?'+'+Math.round(CAB[i][3]*s*1000)/10+'% income':'+'+Math.round(CAB[i][3]*s*100)+'% '+({ppDip:'Diplomatic',ppMil:'Military',ppPol:'Political'})[CAB[i][1]]+' points')+')';body.appendChild(r);}});
+alAdd('res','🔬','Research',c=>{const N=rsN(c);if(!N||c!==GC.me)return null;gidN(c);for(const t of Object.keys(RS_TRACKS)){const L=N.rs[t];if(L<RS_MAX&&N.pp[RS_TRACKS[t].pool]>=RS_COST[L]+100)return {n:'!',tip:'enough points banked to research '+RS_TRACKS[t].n,go:()=>npOpen(c,'res')};}return null;});
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.
