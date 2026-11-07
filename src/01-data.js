@@ -410,6 +410,17 @@ Object.assign(NEWNAT,{
   gp:{bounty:{name:'Defence Exports'},recon:{name:'Aerial Reconnaissance',rm:.95},para:{name:'Parachute Brigade Drop'},barrage:{name:'Artillery Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
   upg:['Legion Course','Combat Kit','Leopard Crew Training','Howitzer Fire Control','Typhoon Upgrade','Tigre Maintenance','Iberian Trade Revenue','Expeditionary Doctrine','Fleet Refit'],
   uplink:'Strike Command (Rota)',econ:'Valencia Port Authority',sub:'S-80 Plus Submarine',md:'NASAMS Battery',coast:'Harpoon Coastal Battery',trn:['Landing Craft','NH90 Transport']}});
+// ---- nations-b3 (Abdullah 2026-11-05 19:45): JP Japan, national self-defence forces only (neutral wording); Egypt base, equal power per tier; Professional morale (set).
+Object.assign(NEWNAT,{
+ JP:{base:'EG',name:'Japan',color:'#bc002d',lang:'ja-JP',doctrine:'Japan Self-Defense Forces, layered defence: air and missile defence cost 10% less, vehicles are 5% tougher, and units fight 10% harder defending home islands.',mods:{vehHp:1.05},
+  units:{inf:'JGSDF Rifle Squad',at:'Type 01 LMAT Team',hero:'Amphibious Rapid Deployment Brigade',aa:'Type 03 Chu-SAM',tank:'Type 10 Tank',arty:'Type 99 Self-Propelled Howitzer',heli:'AH-64D Apache',jet:'F-35A Lightning II',boat:'Hayabusa Missile Boat',ship:'Maya-class Destroyer'},
+  sup:{name:'Type 12 Missile Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Reconnaissance Platoon'}],hero:['Special Forces Group','demo'],
+  doct:{name:'Layered Defence',homeland:1},
+  pow:{name:'Disaster Relief Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Industrial Exports'},recon:{name:'Island Early Warning',rm:.95},para:{name:'Airborne Brigade Drop'},barrage:{name:'Howitzer Barrage',nm:1.1,cdm:1.05},repair:{name:'Maintenance Depot Repair',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Rapid Deployment Course','Modern Rifle Kit','Type 10 Crew Training','Howitzer Fire Control','F-35 Integration','Apache Maintenance','Industrial Revenue','Layered Defence Doctrine','Coastal Patrol Refit'],
+  uplink:'Joint Missile Command',econ:'Keihin Industrial Zone',sub:'Soryu-class Submarine',md:'Patriot PAC-3 Battery',coast:'Type 12 Coastal Battery',trn:['Landing Craft Air Cushion','CH-47J Chinook']}});
 // ---- nations-b1 (Abdullah 2026-11-05 19:49/19:56/20:37): TW, PH, VN, ID, TH, KZ, AF, OM. Same NEWNAT mechanism, Egypt base (equal power per tier); morale style Home defenders (table above).
 Object.assign(NEWNAT,{
  TW:{base:'EG',name:'Taiwan',color:'#1c3f94',lang:'zh-TW',doctrine:'Republic of China Armed Forces, porcupine defence: coastal batteries and missile defence cost 10% less, infantry cost 6% less, and units fight 10% harder defending home soil.',mods:{infCost:.94},
