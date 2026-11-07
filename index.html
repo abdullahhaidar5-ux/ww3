@@ -19972,11 +19972,12 @@ const G3_GEO=()=>{if(G3.geo)return G3.geo;const cyl=(a,b,h,s)=>new THREE.Cylinde
   A.pier=g3Merge([[box(),g3M(0,.15,0,1,.3,.14),[.45,.38,.3]],[box(),g3M(.3,.7,.4,.12,1.4,.12),[.8,.3,.2]],[box(),g3M(.3,1.35,.2,.06,.06,.5),[.8,.3,.2]]]);
   return G3.geo=A;};
 function g3Land(x,z,rad){let best=null;for(let r=0;r<=rad;r+=3)for(let a=0;a<(r?12:1);a++){const t=a/12*6.283+r*.7,X=x+Math.cos(t)*r,Z=z+Math.sin(t)*r;if(g3HeightAt(X,Z)>1.3&&G3.F.Ls[Math.round(Z/2)*G3.F.W+Math.round(X/2)]>.66)return [X,Z];}return [x,z];}
+const G3_MEGA=new Set(['Tehran','Tel Aviv','Riyadh','Dubai','Cairo','Istanbul','Moscow','Beijing','Shanghai','Tokyo','Seoul','New York','London','Paris','Delhi','Mumbai','Karachi','Baghdad','Hong Kong','Singapore','Sao Paulo','Mexico City','Lagos']);
 const G3_STYLE={ME:'flat',AF:'flat',SA:'flat'};
 function g3Towns(){if(G3.towns)return G3.towns;const L=[];
   for(const p of GCM.P){if(!p.land)continue;const reg=(GCM.nats.get(p.o)||{}).reg,flat=G3_STYLE[reg]==='flat',base=g3Land(p.x,p.y,50);
     for(let t=0;t<p.tw;t++){let X=base[0],Z=base[1];if(t){const a=g3Hash(p.i,t)*6.283,r=15+g3Hash(t,p.i)*14,q=g3Land(base[0]+Math.cos(a)*r,base[1]+Math.sin(a)*r,10);X=q[0];Z=q[1];}
-      const cap=p.cap&&t===0;L.push({pi:p.i,x:X,z:Z,cap,n:cap?46:t===0?18:10,flat,east:reg==='EA'||reg==='SEA',t});}}
+      const cap=p.cap&&t===0;L.push({pi:p.i,x:X,z:Z,cap,n:cap?30:t===0?11:6,mega:G3_MEGA.has(p.n),flat,east:reg==='EA'||reg==='SEA',t});}}
   return G3.towns=L;}
 function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],row:[],court:[],flat:[],tower:[],mosque:[],spire:[],disc:[],wall:[],derrick:[],field:[],spoil:[],pier:[]};
   const SHK={house:1,gable:1,row:1,court:1,flat:1,tower:1,mosque:1,spire:1},SHD=[],sl=Math.hypot(G3L.sun[0],G3L.sun[2])||1,sdx=-G3L.sun[0]/sl,sdz=-G3L.sun[2]/sl,sth=Math.atan2(sdx,sdz);
@@ -19989,8 +19990,8 @@ function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],ro
     for(const [i,j] of cells){if(k>=t.n)break;if(g3Hash(i*7+3,j+t.pi)<.1)continue;const lx=(i+(g3Hash(i,j+4)-.5)*.35)*SP,lz=(j+(g3Hash(j,i+5)-.5)*.35)*SP+(i%2?SP*.2:0),x=t.x+lx*ct-lz*st,z=t.z+lx*st+lz*ct;if(g3HeightAt(x,z)<.7)continue;
       const TN=[[1,1,1],[.96,.9,.8],[.86,.94,1],[1,.88,.84],[.9,1,.9]][Math.floor(g3Hash(k+5,t.pi+2)*5)],hv=g3Hash(i+k,t.pi+4),s=2.5+g3Hash(k,t.pi)*1.1,ry=-th+(g3Hash(k,k+i)-.5)*.14+(g3Hash(i,j)<.5?0:Math.PI),v=.86+g3Hash(k+3,t.t)*.28;
       let kind=t.flat?(hv<.5?'court':'flat'):(hv<.4?'house':hv<.75?'gable':'row'),sy=s*(t.flat?.8+hv*.6:1);
-      if(k===0&&(t.cap||t.t===0)){kind=t.flat?'mosque':'spire';sy=s;}else if(t.cap&&k<5){kind='tower';sy=s*1.5;}else if(t.n>14&&k%11===5){kind=t.flat?'mosque':'spire';sy=s;}
-      push(kind,x,z,s,sy,s,ry,[v*TN[0],v*TN[1],v*TN[2]]);k++;}
+      if(k===0&&(t.cap||t.t===0)){kind=t.flat?'mosque':'spire';sy=s*.8;}else if(t.mega&&t.t===0&&k<4&&k%2===1){kind='tower';sy=s*1.4;}else if(t.cap&&k%7===4){kind=t.flat?'court':'row';sy=s*1.5;}
+      push(kind,x,z,kind==='mosque'?s*.8:s,sy,kind==='mosque'?s*.8:s,ry,[v*TN[0],v*TN[1],v*TN[2]]);k++;}
     if(p.oil&&t.t===0)for(let k=0;k<3;k++)push('derrick',t.x+20+k*8,t.z-18+k*4,1.7,1.7,1.7,k*.7,[1,1,1]);
     if(p.farm&&t.t===0)for(let k=0;k<4;k++)push('field',t.x-24+(k%2)*11,t.z+18+(k>>1)*8,5,1,5,0,[.7+g3Hash(k,p.i)*.4,1,.8]);
     if(p.mine&&t.t===0)for(let k=0;k<2;k++)push('spoil',t.x+8+k*7,t.z+24,2.4,2,2.4,0,[1,1,1]);
@@ -20630,6 +20631,7 @@ function geManCap(c){let t=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)
 // ---------- world: oil price, crises, chokepoints ----------
 function geOilIdx(turn){const E=GC.eco;let v=100+20*Math.sin(.62*turn+E.ph1)+9*Math.sin(1.9*turn+E.ph2);
   for(const k of Object.keys(E.cl))if(E.cl[k]&&['Strait of Hormuz','Suez','Bab-el-Mandeb','Malacca Strait'].includes(GCM.P[+k].n))v+=8;
+  if(typeof gpOilDelta==='function')v+=gpOilDelta();   // RG24: cut pipelines lift the price, working Hormuz/Suez bypass lines soften a closed strait
   v+=6*geBlockN();   // RG1: enemy warships sitting in Hormuz / Suez / Bab-el-Mandeb / Malacca / Bosporus push the oil price up
   const cr=geCrisis(turn);if(cr&&cr[2]==='shortage')v+=28;if(cr&&cr[2]==='boom')v+=6;return Math.round(Math.max(55,Math.min(190,v)));}
 function geCrisis(turn){for(const c of GC.eco.cr)if(turn>=c[0]&&turn<c[0]+c[1])return c;return null;}
@@ -22853,6 +22855,77 @@ npTab('au','🏳','Autonomy',(code,body,c)=>{const N=GC.nat[code],own=c.own&&cod
     if(own){const b=document.createElement('button');b.textContent='-10% ('+gauCost(x.p.i)+')';b.style.cssText='font-size:13px;cursor:pointer;padding:1px 6px';b.disabled=!N.pp||N.pp.pol<gauCost(x.p.i);
       b.onclick=()=>{const e=gauCut(code,x.p.i);if(e)grLog(e,code);npDraw();};td.appendChild(b);}tr.appendChild(td);tbl.appendChild(tr);}
   body.appendChild(tbl);});
+// 13zq-gpipe.js — lane B RG24: PIPELINES & GRIDS. Real oil/gas pipelines and one power link cross provinces; whoever holds (or wrecks) a route province decides if they flow.
+// Who reacts: the exporter (income), the customers/transit states (shortages, blackouts, lost fees -> unrest), the world oil price (a cut line adds to it; working Hormuz-bypass lines
+// soften a closed strait), AIs at war sabotage the enemy's line and repair their own, customers of a cut line dislike whoever cut it. Second order: unrest + income loss -> stability/war support.
+// Counter-play: station an army in a route province (saboteurs are caught), repair for cash, rebuild trade partners; the bypass lines (East-West, Habshan-Fujairah, Goreh-Jask, SUMED) exist for exactly that.
+// Costs: sabotage = 6 Military points (and -4 customer opinion), repair = $120. State: GC.pipe={cut:{id:untilTurn}, mT}. Monthly via GMOD_HOOKS; deterministic, no randomness beyond turn+code hashes.
+// Data (approximate real capacities, million barrels/day; the power link is the Iran->Iraq electricity/gas supply). byp = bypasses the Strait of Hormuz / Suez.
+const GPIP=[
+  {id:'kc',n:'Kirkuk–Ceyhan Pipeline',k:'oil',o:'IQ',cust:[],via:['KD','TR'],r:['Mosul','Kurdistan','Cilicia'],mb:1.0},
+  {id:'ew',n:'East–West Pipeline (Abqaiq–Yanbu)',k:'oil',o:'SA',cust:[],via:[],r:['Eastern Province','Riyadh','Hejaz'],mb:5.0,byp:'Strait of Hormuz'},
+  {id:'hf',n:'Habshan–Fujairah Pipeline',k:'oil',o:'AE',cust:[],via:[],r:['Abu Dhabi','Dubai'],mb:1.5,byp:'Strait of Hormuz'},
+  {id:'gj',n:'Goreh–Jask Pipeline',k:'oil',o:'IR',cust:[],via:[],r:['Khuzestan','Hormozgan'],mb:.3,byp:'Strait of Hormuz'},
+  {id:'btc',n:'Baku–Tbilisi–Ceyhan Pipeline',k:'oil',o:'AZ',cust:[],via:['TR'],r:['Baku','East Anatolia','Cilicia'],mb:1.2},
+  {id:'sm',n:'SUMED Pipeline (Suez–Mediterranean)',k:'oil',o:'EG',cust:[],via:[],r:['Sinai','Alexandria'],mb:2.0,byp:'Suez'},
+  {id:'ag',n:'Arab Gas Pipeline',k:'gas',o:'EG',cust:['JO','SY'],via:[],r:['Sinai','Jordan','Damascus'],mb:.4},
+  {id:'ig',n:'Iran–Iraq Power & Gas Link',k:'grid',o:'IR',cust:['IQ','RV'],via:[],r:['Khuzestan','Basra','Baghdad'],mb:.5}];
+const GPIP_SAB=6,GPIP_REP=120,GPIP_OUT=4,GPIP_KIND={oil:'Oil',gas:'Gas',grid:'Power'};
+function gpS(){if(!GC.pipe)GC.pipe={cut:{},mT:-1};return GC.pipe;}
+function gpOwn(p){return GC.nat&&GC.nat[p.o]&&!GC.nat[p.o].dead;}
+function gpProv(p){return p.r.map(n=>GCM.byName.get(n)).filter(i=>i!==undefined);}
+// why a line is not flowing ('' = flowing): a sabotage outage, or a route province held by someone at war with the owner
+function gpWhy(p){const S=gpS();if(!gpOwn(p))return 'Owner is gone.';const u=S.cut[p.id];if(u!==undefined&&u>=GC.turn)return 'Sabotaged — repairs finish in month '+u+'.';
+  for(const i of gpProv(p)){const h=GC.prov[i].o;if(h&&h!==p.o&&grAtWar(h,p.o))return 'Route cut: '+GCM.P[i].n+' is held by '+gdNatName(h)+'.';}return '';}
+function gpGuarded(p){const ps=new Set(gpProv(p));return GC.armies.some(a=>a.o===p.o&&ps.has(a.at));}
+function gpCutN(c,role){let n=0;for(const p of GPIP){if(!gpWhy(p))continue;if(role==='own'?p.o===c:role==='cust'?(p.cust.includes(c)):(p.via.includes(c)))n++;}return n;}
+function gpHormuzShut(n){const si=GCM.byName.get(n);if(si===undefined)return false;return !!(GC.eco&&GC.eco.cl&&GC.eco.cl[si])||(typeof geBlockaded==='function'&&!!geBlockaded(si));}
+// oil price effect: -2 per mb/d of working bypass lines while their strait is shut (the lines soak up the shock), +2.5 per mb/d of any cut oil line
+function gpOilDelta(){if(!GC||!GC.nat||typeof GCM==='undefined'||!GCM)return 0;let d=0;for(const p of GPIP){if(p.k!=='oil')continue;const w=gpWhy(p);if(w)d+=2.5*p.mb;else if(p.byp&&gpHormuzShut(p.byp))d-=2*p.mb;}return Math.round(Math.max(-10,Math.min(18,d)));}
+GMOD_COND.pipe=(k,arg)=>{if(!GC||!GC.nat||!GC.nat[k])return false;if(arg==='own')return gpCutN(k,'own')>0;if(arg==='cust')return gpCutN(k,'cust')>0;if(arg==='via')return gpCutN(k,'via')>0;
+  if(arg==='run'){let n=0;for(const p of GPIP)if(p.o===k){n++;if(gpWhy(p))return false;}return n>0;}return false;};
+GMOD_ROWS.push(
+  {id:'pip_own',src:'Export pipeline cut',scope:'nation',stat:'income',mul:.95,cond:'pipe:own'},{id:'pip_own_u',src:'Export pipeline cut',scope:'nation',stat:'unrest',add:1,cond:'pipe:own'},
+  {id:'pip_cust',src:'Fuel/power cut off (pipeline or grid)',scope:'nation',stat:'income',mul:.97,cond:'pipe:cust'},{id:'pip_cust_u',src:'Blackouts and shortages',scope:'nation',stat:'unrest',add:2,cond:'pipe:cust'},
+  {id:'pip_via',src:'Lost transit fees',scope:'nation',stat:'income',mul:.99,cond:'pipe:via'},
+  {id:'pip_run',src:'Pipeline revenue',scope:'nation',stat:'income',mul:1.03,cond:'pipe:run'});
+GMOD_STATS.unrest=GMOD_STATS.unrest||'Unrest';
+function gpSabotage(by,id){const p=GPIP.find(x=>x.id===id),S=gpS();if(!p||!gpOwn(p)||by===p.o||!GC.nat[by]||GC.nat[by].dead)return 'Not available.';
+  if(!grAtWar(by,p.o))return 'Only in a war against '+gdNatName(p.o)+'.';if(gpWhy(p))return 'Already not flowing.';const N=GC.nat[by];
+  if(by===GC.me){if(!N.pp)N.pp={pol:0,dip:0,mil:0};if(N.pp.mil<GPIP_SAB)return 'Needs '+GPIP_SAB+' Military points.';N.pp.mil-=GPIP_SAB;}
+  if(gpGuarded(p)){gdRel(p.o,by,-1);grLog('Saboteurs are caught near the '+p.n+' — '+gdNatName(p.o)+'\'s guards held the line.',by===GC.me||p.o===GC.me?GC.me:by);return '';}
+  S.cut[p.id]=GC.turn+GPIP_OUT;gpAnger(p,by);
+  grLog('The '+p.n+' is blown up — '+gdNatName(by)+' is blamed; '+gdNatName(p.o)+' loses its flow'+(p.cust.length?' and customers go dark':'')+'.',by===GC.me||p.o===GC.me||p.cust.includes(GC.me)?GC.me:by);return '';}
+function gpRepair(c,id){const p=GPIP.find(x=>x.id===id),S=gpS();if(!p||p.o!==c)return 'Not yours.';const u=S.cut[p.id];if(u===undefined||u<GC.turn)return 'Nothing to repair.';const N=GC.nat[c];
+  if(N.cash<GPIP_REP)return 'Needs $'+GPIP_REP+'.';N.cash-=GPIP_REP;delete S.cut[p.id];grLog(gdNatName(c)+' repairs the '+p.n+' for $'+GPIP_REP+'.',c);return '';}
+function gpAnger(p,by){for(const c of p.cust)if(GC.nat[c]&&!GC.nat[c].dead&&c!==by)gdRel(c,by,-4);for(const v of p.via)if(GC.nat[v]&&!GC.nat[v].dead&&v!==by)gdRel(v,by,-2);}
+function gpMonth(){if(!GC||!GC.nat||!GCM)return;const S=gpS();if(S.mT===GC.turn)return;S.mT=GC.turn;
+  for(const id of Object.keys(S.cut))if(S.cut[id]<GC.turn)delete S.cut[id];
+  for(const p of GPIP){if(!gpOwn(p))continue;const w=gpWhy(p);
+    if(w&&/^Route cut/.test(w)&&(GC.turn+p.id.charCodeAt(0))%6===0&&(p.o===GC.me||p.cust.includes(GC.me)||p.via.includes(GC.me)))grLog('The '+p.n+' is shut: '+w,GC.me);}
+  // AI: owners repair; nations at war sabotage the enemy line that hurts most, at most once per 4 months each
+  for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead||c===GC.me)continue;
+    for(const p of GPIP)if(p.o===c&&S.cut[p.id]!==undefined&&N.cash>GPIP_REP*3)gpRepair(c,p.id);
+    if((GC.turn+c.charCodeAt(0)+c.charCodeAt(1))%4!==0)continue;
+    const t=GPIP.filter(p=>gpOwn(p)&&p.o!==c&&grAtWar(c,p.o)&&!gpWhy(p)).sort((a,b)=>b.mb-a.mb||(a.id<b.id?-1:1))[0];
+    if(t&&(N.pp?N.pp.mil:99)>=GPIP_SAB){if(N.pp)N.pp.mil-=GPIP_SAB;gpSabotageAI(c,t);}}}
+function gpSabotageAI(by,p){const S=gpS();if(gpGuarded(p)){gdRel(p.o,by,-1);return;}S.cut[p.id]=GC.turn+GPIP_OUT;gpAnger(p,by);
+  grLog('The '+p.n+' is blown up — '+gdNatName(by)+' is blamed.',p.o===GC.me||p.cust.includes(GC.me)?GC.me:by);}
+GMOD_HOOKS.push(gpMonth);
+npTab('pipe','🛢','Pipelines & grids',(code,body,c)=>{const own=c.own&&code===GC.me;
+  let h='<div style="opacity:.85;margin-bottom:8px">Oil and gas pipelines and the Iran–Iraq power link only flow while every province on the route is safe. A cut line costs its owner income, darkens its customers (unrest) and lifts the world oil price; lines that bypass Hormuz or Suez soften a closed strait. In a war you can blow up an enemy line ('+GPIP_SAB+' Military points, '+GPIP_OUT+' months) unless an army guards the route. World oil effect now: <b>'+(gpOilDelta()>=0?'+':'')+gpOilDelta()+'</b>.</div>';
+  body.innerHTML=h;
+  for(const p of GPIP){const w=gpWhy(p),mine=p.o===code||p.cust.includes(code)||p.via.includes(code);
+    const row=document.createElement('div');row.style.cssText='margin:6px 0;padding:6px 8px;border:1px solid #2c4358;border-radius:4px;'+(mine?'':'opacity:.7');
+    row.innerHTML='<b>'+p.n+'</b> · '+GPIP_KIND[p.k]+' · '+p.mb+' mb/d · owner '+gdNatName(p.o)+(p.cust.length?' · customers '+p.cust.map(gdNatName).join(', '):'')+(p.via.length?' · transit '+p.via.map(gdNatName).join(', '):'')+(p.byp?' · bypasses '+p.byp:'')+'<br><span style="color:'+(w?'#ff9d8e':'#8fd694')+'">'+(w?w:'Flowing'+(gpGuarded(p)?' · guarded by an army':''))+'</span>';
+    if(own){const bar=document.createElement('div');bar.style.cssText='margin-top:4px';
+      if(p.o===code&&GC.pipe&&GC.pipe.cut[p.id]!==undefined&&GC.pipe.cut[p.id]>=GC.turn)bar.appendChild(gpBtn('Repair $'+GPIP_REP,()=>{const e=gpRepair(code,p.id);if(e)alert(e);npOpen(code,'pipe');}));
+      else if(!w&&p.o!==code&&grAtWar(code,p.o))bar.appendChild(gpBtn('Sabotage ('+GPIP_SAB+' Mil)',()=>{const e=gpSabotage(code,p.id);if(e)alert(e);npOpen(code,'pipe');}));
+      if(bar.firstChild)row.appendChild(bar);}
+    body.appendChild(row);}
+});
+function gpBtn(t,f){const b=document.createElement('button');b.textContent=t;b.style.cssText='font-size:14px;padding:3px 9px;cursor:pointer';b.onclick=f;return b;}
+alAdd('pipecut','🛢','Pipeline cut',c=>{const n=GC&&GC.nat&&GC.nat[c]?gpCutN(c,'own')+gpCutN(c,'cust'):0;return n?{n,tip:'A pipeline or power link that serves us is cut — open the pipelines tab',go:()=>npOpen(c,'pipe')}:null;});
 // 13zr-garms.js — lane B RG12: ARMS TRADE. Buy/sell tanks, helicopters, AA, artillery and ATGM teams between nations; deliveries arrive in the buyer's capital after 2 months.
 // Who reacts: the seller (cash, +opinion, caps its own yearly exports), the buyer's enemies (opinion of the seller drops), the UN (sanctioned nations can neither buy nor sell), embargoes.
 // Second order: arms money feeds the seller's treasury, arms flow to nations already at war, and a bloc partner's embargo shuts a supplier. Counter-play: embargo a rival (5 Diplomatic points)
@@ -22997,6 +23070,44 @@ GEV_ROWS.push(
  {id:'cr_pipe',t:'Pipeline sabotage',x:'An explosion has cut a major oil and gas pipeline; every market feels it.',w:1,c:'always',o:[
   {t:'Pay for emergency fuel ($400)',fx:[['cash',-400],['fn','oilx']]},
   {t:'Ration and wait',fx:[['un',4],['fn','oilx']]}]});
+// RG4 elections & refugees (lane G). NO new engine: approval reads the ONE war-support meter (13v) + provincial unrest; results are GMOD rows;
+// refugees are a monthly GMOD_HOOK moving unrest to peaceful neighbours. State GC.el = {nx:{code:month}, camp:{code:bonus}, ref:{code:pool}, log:[]} (saved with the campaign).
+// Electoral democracies as of Nov 2026 (data row; Ukraine's elections are suspended under martial law, so it is left out on purpose).
+const EL_DEM=['US','IL','GB','FR','DE','PL','IT','GR','ES','SE','JP','KR','TW','IN','AU','CA','BR','MX','AR','CO','CL','ZA','ID','PH','NG','TR','EU'];
+const EL_TERM=48, EL_CAMP=300, EL_LOSE_WS=-.08, EL_WIN_INC=.03;
+function elS(){if(!GC.el)GC.el={nx:{},camp:{},ref:{},log:[]};return GC.el;}
+function elHash(c){let h=7;for(let i=0;i<c.length;i++)h=(h*31+c.charCodeAt(i))%9973;return h;}
+function elIsDem(c){return EL_DEM.includes(c)&&GC.nat[c]&&!GC.nat[c].dead;}
+function elNext(c){const S=elS();if(S.nx[c]===undefined)S.nx[c]=(GC.turn||0)+6+elHash(c+(GC.seed||''))%EL_TERM;return S.nx[c];}
+function elUn(c){let s=0,n=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c){s+=GC.prov[p.i].un;n++;}return n?s/n:0;}
+function elApproval(c){const S=elS();const ws=typeof wsOf==='function'?wsOf(c):60;return Math.max(0,Math.min(100,Math.round(ws*.6+(100-Math.min(100,elUn(c)*1.5))*.4+(S.camp[c]||0))));}
+function elCampaign(c){const N=GC.nat[c],S=elS();if(!elIsDem(c))return 'No election to fight.';if(N.cash<EL_CAMP)return 'Need $'+EL_CAMP+'.';if((S.camp[c]||0)>=8)return 'The campaign is already at full strength.';N.cash-=EL_CAMP;S.camp[c]=8;return '';}
+function elHold(c){const S=elS(),N=GC.nat[c],a=elApproval(c),win=a>=50;S.nx[c]=GC.turn+EL_TERM;S.camp[c]=0;
+  if(win){gmodAdd({id:'el_win_'+c,src:'Election mandate',scope:'nation',stat:'income',add:EL_WIN_INC,t:c,until:GC.turn+12});}
+  else{gmodAdd({id:'el_lose_'+c,src:'New government',scope:'nation',stat:'warSupport',add:EL_LOSE_WS,t:c,until:GC.turn+12});
+    for(const e of gdEnemies(c))gdRel(c,e,10);
+    for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)GC.prov[p.i].un=Math.max(0,GC.prov[p.i].un-3);}
+  S.log.push([GC.turn,c,a,win?1:0]);if(S.log.length>60)S.log.shift();
+  grLog('Election in '+gdNatName(c)+': approval '+a+'% — '+(win?'the government is returned.':'the government falls'+(gdEnemies(c).length?' and the new cabinet seeks talks.':'.')),c);return win;}
+// refugees: front-line provinces of a nation at war send people out; peaceful neighbours take them in (unrest), the origin pays in rebuilding (income)
+function elRefugees(){const S=elS();
+  for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead)continue;const foes=gdEnemies(c);let pool=S.ref[c]||0;
+    if(foes.length){let front=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)for(const j of p.adj){const q=GCM.P[j];if(q&&q.land&&foes.includes(GC.prov[j].o)){front++;break;}}pool+=Math.min(6,front);}
+    pool*=.97;if(pool<.5)pool=0;pool=Math.min(100,pool);if(pool)S.ref[c]=Math.round(pool*10)/10;else delete S.ref[c];
+    if(pool>=4)gmodAdd({id:'el_rebuild_'+c,src:'Refugees & rebuilding',scope:'nation',stat:'income',add:-Math.min(.1,pool/400),t:c,until:GC.turn+2});
+    if(pool>=8){const cnt=new Map();for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)for(const j of p.adj){const q=GCM.P[j];if(q&&q.land){const o=GC.prov[j].o;if(o!==c&&GC.nat[o]&&!GC.nat[o].dead&&!gdEnemies(o).length)cnt.set(j,o);}}
+      for(const [j] of [...cnt].sort((a,b)=>a[0]-b[0]))GC.prov[j].un=Math.min(100,GC.prov[j].un+Math.min(2,pool/20));}}}
+function elMonth(){if(!GC||!GC.nat)return;const S=elS();elRefugees();
+  for(const c of Object.keys(GC.nat).sort()){if(!elIsDem(c))continue;if(GC.turn>=elNext(c))elHold(c);}}
+GMOD_HOOKS.push(elMonth);
+alAdd('elect','🗳','Election',c=>{if(!elIsDem(c))return null;const m=elNext(c)-GC.turn;return m<=6?{n:Math.max(0,m),tip:'Election in '+Math.max(0,m)+' months — approval '+elApproval(c)+'%. Campaign in the Elections tab.',go:()=>npOpen(c,'elect')}:null;});
+npTab('elect','🗳','Elections & refugees',(code,body,c)=>{const S=elS(),own=c.own&&code===GC.me;
+  let h='';if(elIsDem(code)){const a=elApproval(code),m=Math.max(0,elNext(code)-GC.turn),col=a>=50?'#7fd48a':'#ff9d8e';
+    h+='<div style="font-size:24px"><b style="color:'+col+'">Approval '+a+'%</b></div><div style="opacity:.85;margin:6px 0">Voters judge war support and unrest at home. Election in '+m+' months; at 50% or more the government is returned (+3% income for a year); below it a new cabinet takes over (war support -8% for a year, and it reaches out to enemies).'+((S.camp[code]||0)?' <b>Campaign running (+'+S.camp[code]+').</b>':'')+'</div>';}
+  else h+='<div style="opacity:.85;margin:6px 0">This nation holds no competitive elections; its stability rests on war support and unrest instead.</div>';
+  const pool=S.ref[code]||0;h+='<div style="margin:8px 0"><b>Refugees from the fighting: '+Math.round(pool)+'</b>'+(pool>=4?' — rebuilding costs reduce income.':'')+(pool>=8?' Neighbouring provinces are taking people in and feel the strain.':'')+'</div>';
+  const nb=Object.keys(S.ref).filter(o=>o!==code&&S.ref[o]>=8&&GCM&&gevNb(code).includes(o));if(nb.length)h+='<div style="margin:8px 0;color:#ffe6a8">Refugees are arriving from '+nb.map(gdNatName).join(', ')+' (unrest on the border).</div>';
+  body.innerHTML=h;if(own&&elIsDem(code)){const msg=document.createElement('div');msg.style.cssText='margin:8px 0;color:#ffe6a8';body.appendChild(msg);const b=document.createElement('button');b.textContent='Campaign ($'+EL_CAMP+')';b.title='+8 approval at the next election';b.style.cssText='font-size:15px;padding:4px 12px;cursor:pointer';b.onclick=()=>{const x=elCampaign(code);if(x)msg.textContent=x;else npDraw();};body.appendChild(b);}});
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.
