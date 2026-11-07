@@ -392,3 +392,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneD 2026-11-07: D2 slice 6 — 'RPG Team/Cell', 'TOW Team' unit names plain-worded to Anti-Tank (Missile) Team (names only, no sim change).
 
 - laneF 2026-11-07 12:50Z: A3 150-army perf test (orch/a3perf.mjs): select 150 armies 12 ms, cards 5 ms; no code change needed.
+- laneD 2026-11-07 D5 slice 1: grand-map first-minute coach card (13c guCoach, once via localStorage ww3_gcoach). Chain: new players learn pause/speed/orders so AI nations' real-time moves aren't missed. Local gates time out on cloud box; CI gates.
