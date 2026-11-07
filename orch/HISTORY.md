@@ -430,3 +430,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneE DE-BLOCK slice 6: macro dust/dark-soil ground blotches and dry scrub clumps round the base compounds so the sand stops reading as one flat tone (src/11-models.js groundKit, view only); local smoke timed out in this slow sandbox (baseline too), CI gates decide; no new shot
 - laneC 2026-11-07 12:xx: army count plates collision-culled (yours/selected first); C-LABELS part 2.
 - laneC 2026-11-07 18Z: no code (army plinth duplicated grandlook's g3Plinth on main); artbar note only.
+- laneG RG10 follow-on: an enemy-held capital (the programme site) now halts the nuclear programme (src/13zz-gnuke.js gnkMonth). Flight time stays at minutes (Abdullah 10:22 'Not realistic' — no month-long flight). Open: map flash, interceptors RG33/57, MP alerts, town wrecking.

@@ -18,6 +18,8 @@ function gnkMonth(){if(!GC||!GC.nat)return;if(GC.nuk&&GC.nuk.pend&&GC.nuk.pend.l
   const alive=Object.keys(GC.nat).filter(c=>!GC.nat[c].dead).sort();
   const R=grRng((GC.seed|0)*311+GC.turn*17);
   for(const c of alive){const N=gnkN(c),A=GC.nat[c];
+    // the programme site (the capital) is overrun by an enemy at war: the programme is halted and its progress is lost
+    if(N.st>=1&&N.st<=2&&A.cap>=0&&GC.prov[A.cap]&&GC.prov[A.cap].o!==c&&grAtWar(c,GC.prov[A.cap].o)){N.st=0;N.p=0;grLog(gnkName(c)+"'s nuclear programme site is overrun; the programme is halted.",c);}
     if(N.st>=1&&N.st<=2){N.p++;if(N.p>=GNK.months[N.st]){N.st++;N.p=0;if(N.st===3){N.w++;grLog('Nuclear test: '+gnkName(c)+' has tested a device.','');
         for(const o of alive)if(o!==c)gdRel(o,c,-12);}}}
     else if(N.st===3){N.p++;if(N.p%12===0&&N.w<GNK.cap){N.w++;}}
