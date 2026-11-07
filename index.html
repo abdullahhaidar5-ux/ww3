@@ -12983,6 +12983,7 @@ body.touchui #mode{white-space:normal;text-align:left;width:max-content;max-widt
 body.touchui #mode>span{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;padding-left:4px}
 body.touchui #mode[hidden]{display:none}
 #mode .mcx{pointer-events:auto;cursor:pointer;flex:none;background:var(--warn);color:#160806;border:0;font:700 13px var(--display);letter-spacing:.04em;text-transform:uppercase;padding:0 8px;min-height:34px}
+#hint{right:max(10px,min(46%,500px));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:#d3dcd6;background:linear-gradient(90deg,rgba(8,11,10,.62),rgba(8,11,10,.3));padding:3px 8px;border-radius:4px;width:fit-content;max-width:calc(100% - 520px)}
 body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);padding:4px 6px;left:6px;right:6px;bottom:6px}
 @media (max-width:760px),(max-height:520px){
   #wxchip{top:6px;left:auto;right:6px;transform:none;white-space:normal;text-align:right;max-width:calc(62% - 16px);font-size:10px;padding:3px 7px}
@@ -16428,7 +16429,7 @@ function sizePost(){const w=Math.max(2,Math.round(VW*dpr)),h=Math.max(2,Math.rou
 // Theatre colour grade (purely visual): desert maps run warm and dusty, snow maps cold and a little desaturated,
 // green maps neutral with a blue-grey distance haze; a dusk battle pushes everything toward red. Multiplies on top of
 // the battle-conditions grade set by applyWeather (04-gfx). The haze colour is used by the distance haze (AO pass).
-const TGRADE={desert:{tg:[1.05,1,.9],s:1.06,hz:[.7,.56,.4]},green:{tg:[.99,1.01,.98],s:.98,hz:[.56,.6,.63]},snow:{tg:[.93,.99,1.09],s:.86,hz:[.72,.78,.87]}};
+const TGRADE={desert:{tg:[1.06,1,.86],s:1.2,hz:[.7,.56,.4]},green:{tg:[.99,1.01,.98],s:.98,hz:[.56,.6,.63]},snow:{tg:[.93,.99,1.09],s:.86,hz:[.72,.78,.87]}};
 function postGrade(F){const th=(typeof G!=='undefined'&&G&&G.map&&G.map.theme)||'desert',T=TGRADE[th]||TGRADE.desert,dusk=typeof WXI!=='undefined'&&WXI===3;
   F.tg.value.set(T.tg[0]*(dusk?1.08:1),T.tg[1]*(dusk?.92:1),T.tg[2]*(dusk?.88:1));F.tsat.value=T.s;
   if(dusk)F.hz.value.set(T.hz[0]*.5+.31,T.hz[1]*.5+.18,T.hz[2]*.5+.15);else F.hz.value.set(T.hz[0],T.hz[1],T.hz[2]);}
@@ -16549,6 +16550,8 @@ const TEXB={m_abrams:2,m_merkava:2,m_kf51:1.6,m_msta:2.2,m_ural:1.9,m_m35:2.2,m_
 const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 // Infantry: three realistic rigged soldiers (Western desert-camo marine, Eastern green-camo, Middle-Eastern/militia woodland
 // fatigues) shared by the 18 nations; national colour is a tint over the camo. 'soldier' is the old stand-in.
+// laneE: foot soldiers read too small at gameplay height (Abdullah 2026-11-06 photo) - draw them ~18% bigger (visual only)
+for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.18;c._big=1;}}
 const SOLV={US:'sol_w',EU:'sol_w',FR:'sol_w',DE:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
 const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:58},barracks:{m:'b_barr_me',size:54},factory:{m:'b_fact_me',size:62}};
@@ -18550,6 +18553,9 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
   geAIAll();}   /* empire economy for AI nations: bonds, bank, buildings, total war, embargoes, merchants... (13g-grandeco.js) */
 
 // ---------- save ----------
+/* calendar: month 1 = January 2026; GC.day = days into the current month (0..29), ticked by the real-time clock in 13c */
+const GR_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1);return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){}}
 // a save made on an older world map (the province list changed, e.g. 2026-11-06 real borders 174 -> 236 land provinces) can't
 // continue: its province indices point at different places, so the map breaks and a Fight-it battle never loads (Lane A1)
@@ -19050,6 +19056,9 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   addEventListener('resize',()=>{if(document.getElementById('grandScreen'))guResize();});
   guResize();guFit(null);const me=GC.me&&GC.nat[GC.me];if(me){GV.sel=me.cap;guCentre(me.cap,2.0);}guRedraw();grandMapRefresh();
   if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guEndTurn();}
+    {const tg=ev.target&&ev.target.tagName;if(tg!=='INPUT'&&tg!=='TEXTAREA'&&tg!=='SELECT'&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&!document.getElementById('gModal')){   /* time keys (the grand map's key table): Space pause, + / − speed, 1–5 speed */
+      if(ev.key===' '){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));return;}if(ev.key==='+'||ev.key==='='){guSpeed((GV.spd||GV.lastSpd||1)+1);return;}if(ev.key==='-'||ev.key==='_'){if(GV.spd>1)guSpeed(GV.spd-1);return;}
+      if(ev.key>='1'&&ev.key<='5'&&ev.key.length===1){guSpeed(+ev.key);return;}}}
     if(GV.g3)return;const k=ev.key.toLowerCase(),st=60;if(k==='w'||k==='arrowup')GV.oy+=st;else if(k==='s'||k==='arrowdown')GV.oy-=st;else if(k==='a'||k==='arrowleft')GV.ox+=st;else if(k==='d'||k==='arrowright')GV.ox-=st;else return;guClamp();guRedraw();});}}
 function guArmyTip(aid,mx,my){const t=document.getElementById('gTip'),a=GC.armies.find(x=>x.id===aid);if(!t||!a){if(t)t.style.display='none';return;}
   const N=GCM.nats.get(a.o),mine=a.o===GC.me,P=GCM.P[a.at];const sea=P&&P.sea;
@@ -19065,7 +19074,7 @@ function guClick(mx,my){if(GV.g3){g3Click(mx,my);return;}for(const c of GV.chips
 function guRight(ev){if(GC.ph!=='plan'||GV.busy||!GV.selA)return;const r=GV.cv.getBoundingClientRect(),[wx,wy]=guToWorld(ev.clientX-r.left,ev.clientY-r.top),h=guProvAt(wx,wy);if(h<0)return;guMoveTo(GV.selA,h);}
 function guMoveTo(aid,h){const res=grOrderMove(aid,h);if(res.err){GV.hint=res.err;guHint();return;}
   if(res.decl){const w=GCM.nats.get(res.decl).name;guConfirm('Declare war on '+w+'?','Marching into '+GCM.P[h].n+' means war with '+w+'. Their allies and rivals may react.',()=>{const a=GC.armies.find(x=>x.id===aid);grDeclare(GC.me,res.decl);grOrderMove(aid,h);guSide();guRedraw();grSave();});return;}
-  GV.hint=GCM.P[h].n+': '+res.r.turns+' turn'+(res.r.turns>1?'s':'')+' away'+(res.r.path.some(j=>GCM.P[j].sea)?' (by sea)':'');guHint();guSide();guRedraw();grSave();}
+  GV.hint=GCM.P[h].n+': arrives ~'+grDateStr(GC.turn+res.r.turns,0)+' ('+res.r.turns+' month'+(res.r.turns>1?'s':'')+')'+(res.r.path.some(j=>GCM.P[j].sea)?' (by sea)':'');guHint();guSide();guRedraw();grSave();}
 function guHint(){const e=document.getElementById('gHint');if(e)e.textContent=GV.hint||'';}
 
 // ---------- top bar, side panel, log ----------
@@ -19073,7 +19082,7 @@ function grandMapRefresh(){if(GV.g3)g3Refreshed();GV.dirty=true;guTop();guSide()
 function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const me=GC.me?GC.nat[GC.me]:null,N=GC.me?grNat(GC.me):null;
   const score=GC.me?grScore(GC.me):0;
   t.innerHTML='';if(N){t.appendChild(guEl('span','display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #fff;background:'+N.color));t.appendChild(guEl('b','font-size:17px',GCM.nats.get(GC.me).name));}
-  t.appendChild(guEl('span','opacity:.9','Turn <b>'+Math.min(GC.turn,GC.maxTurn)+'</b>/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')));
+  t.appendChild(guEl('span','opacity:.9','<b id="gDate">'+(GC.ph==='plan'?grDateStr(GC.turn,GC.day|0):grDateStr(GC.turn+1,0))+'</b> <span style="opacity:.65">month '+Math.min(GC.turn,GC.maxTurn)+'/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')+'</span>'));guClockUI(t);
   if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/turn)</span>'));
   if(me)t.appendChild(guEl('span','opacity:.9','Score <b>'+score+'</b> · provinces <b>'+GCM.P.filter(p=>p.land&&GC.prov[p.i].o===GC.me).length+'</b>'));
   try{geUiTop(t,me);}catch(e){console.error('geUiTop',e);}try{gmilUiTop(t,me);}catch(e){console.error('gmilUiTop',e);}
@@ -19081,7 +19090,24 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   const end=guEl('button','padding:7px 18px;border-radius:6px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px;font-weight:bold',GC.ph==='plan'?'End turn ▶':'Resolving…');end.id='gEnd';end.type='button';end.disabled=GC.ph!=='plan'||!!GC.over;end.title='Enter';end.onclick=guEndTurn;t.appendChild(end);
   if(me&&typeof npOpen==='function'){const nb=guEl('button','padding:7px 14px;border-radius:6px;border:1px solid #c9a35a;background:#2a3a4c;color:#ffe6a8;cursor:pointer;font-size:15px;font-weight:bold','Nation');nb.type='button';nb.title='Open your nation panel';nb.onclick=()=>npOpen();t.appendChild(nb);}
   const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);}
-function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();}
+function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();}
+/* ---------- real time with pause (EU4 feel, lane A A2 slice 1) ----------
+   The calendar runs in days (30 a month); a month ending = the old End turn, so the simulation and its determinism are unchanged:
+   the result depends only on state + the orders standing when each month closes + seed. Starts paused (= the classic turn game).
+   Space = pause/resume, + / − or 1–5 = speed (grand-map keys; WASD stay camera-only). The clock waits while battles are pending,
+   a modal is open or a battle is being fought, so a battle starting pauses the map. GV.spd is this player's UI speed. */
+const GU_SPD=[0,.5,1,2.5,5,10];   /* days per second at speeds 1..5 (speed 5: a month in 3 s) */
+function guClockUI(t){const w=guEl('span','display:inline-flex;align-items:center;gap:3px;margin-left:2px');w.id='gClock';
+  const pb=guEl('button','padding:3px 9px;border-radius:5px;border:1px solid #7aa84f;background:'+(GV.spd?'#18293a':'#4f6b32')+';color:#fff;cursor:pointer;font-size:14px;min-width:30px',GV.spd?'❚❚':'▶');pb.type='button';pb.id='gPlay';pb.title=GV.spd?'Pause (Space)':'Play: days pass in real time (Space)';pb.onclick=()=>guSpeed(GV.spd?0:(GV.lastSpd||2));w.appendChild(pb);
+  for(let i=1;i<=5;i++){const b=guEl('button','width:11px;height:'+(8+i*2)+'px;padding:0;border-radius:2px;border:1px solid #6d8aa3;cursor:pointer;align-self:flex-end;background:'+((GV.lastSpd||2)>=i?(GV.spd?'#ffd24a':'#8a7a4a'):'#18293a'),'');b.type='button';b.title='Speed '+i+' (key '+i+', or + / −)';b.onclick=()=>guSpeed(i);w.appendChild(b);}
+  t.appendChild(w);}
+function guSpeed(s){s=Math.max(0,Math.min(5,s|0));if(s)GV.lastSpd=s;GV.spd=s;GV.clkT=performance.now();guTop();}
+function guClockTick(){const now=performance.now(),dt=Math.min(1,(now-(GV.clkT||now))/1000);GV.clkT=now;
+  if(!GV.spd||!GC||GC.over||GC.ph!=='plan'||GV.busy||G||document.getElementById('gModal'))return;const sc=document.getElementById('grandScreen');if(!sc||sc.style.display==='none'||document.hidden)return;
+  GV.dayF=(GV.dayF||0)+dt*GU_SPD[GV.spd];if(GV.dayF<1)return;const n=Math.floor(GV.dayF);GV.dayF-=n;GC.day=(GC.day|0)+n;
+  if(GC.day>=30){GC.day=0;GV.dayF=0;guEndTurn();return;}
+  const d=document.getElementById('gDate');if(d)d.textContent=grDateStr(GC.turn,GC.day);}
+if(!window._gClk){window._gClk=setInterval(()=>{try{guClockTick();}catch(e){console.error('guClockTick',e);}},100);}
 function guProvArmies(pi){return GC.armies.filter(a=>a.at===pi);}
 function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.innerHTML='';const pi=GV.sel;if(pi<0||!GCM.P[pi]){s.innerHTML='<div style="opacity:.7;line-height:1.6">Click a province to see it.<br>Select an army (click its flag), then <b>right-click</b> a province to march there. Armies cross seas between ports; oceans take several turns.<br>Press <b>Enter</b> or the green button to end the turn: everyone moves at once.</div>';return;}
   const p=GCM.P[pi];if(p.sea){s.innerHTML='<h2 style="margin:0 0 4px;font-size:19px">'+p.n+'</h2><div style="opacity:.8">Sea zone · '+p.cost+' turn'+(p.cost>1?'s':'')+' to cross'+(p.ck?'<br><span style="color:#ff9d8e">Chokepoint: whoever holds it will control trade (stage 2).</span>':'')+'</div>'+guArmyRows(pi);guBindArmies(s,pi);try{gmilUiProv(s,pi);}catch(e){console.error('gmilUiProv',e);}return;}
@@ -19536,7 +19562,7 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 `;document.head.appendChild(s);}
 function g3UI(){g3Css();const w=document.getElementById('gMapWrap');if(!w)return;let u=document.getElementById('g3ui');if(u)u.remove();u=guEl('div','');u.id='g3ui';w.appendChild(u);
   G3.lab=guEl('div','position:absolute;inset:0');u.appendChild(G3.lab);const md=guEl('div','');md.id='g3modes';G3_MODES.forEach(([k,n])=>{const b=guEl('button','',n);b.type='button';b.dataset.m=k;b.onclick=()=>g3SetMode(k);md.appendChild(b);});u.appendChild(md);
-  G3.bn=[];G3.nl=[];G3.pl=new Map();G3.sl=[];
+  G3.bn=[];G3.nl=[];G3.natSig="";G3.pl=new Map();G3.sl=[];
   const prio=GCM.P.filter(p=>p.land).sort((a,b)=>(b.cap-a.cap)||(b.wg-a.wg)||(b.tw-a.tw));for(const p of prio){const e=guEl('div','');e.className='b'+(p.cap?' cap':'');G3.lab.appendChild(e);G3.bn.push({el:e,pi:p.i,show:false});}
   for(const p of GCM.P)if(p.sea){const e=guEl('div','');e.className='s';e.textContent=(p.ck?'◆ ':'')+p.n;G3.lab.appendChild(e);G3.sl.push({el:e,pi:p.i,ck:p.ck});}
   const bt=guEl('div','');bt.id='g3btns';u.appendChild(bt);
@@ -19601,7 +19627,7 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
   const proj=(x,y,z)=>{v.set(x,y,z).project(cam);if(v.z>1||v.z<-1)return null;const X=(v.x*.5+.5)*w,Y=(-v.y*.5+.5)*h;if(X<-60||Y<-40||X>w+60||Y>h+40)return null;return [X,Y];};
   const put=(el,q,dx,dy)=>{const t='translate('+Math.round(q[0]+(dx||0))+'px,'+Math.round(q[1]+(dy||0))+'px)';if(el._t!==t){el._t=t;el.style.left='0';el.style.top='0';el.style.transform='translate(-50%,-100%) '+t;}};
   const putC=(el,q)=>{const t='translate('+Math.round(q[0])+'px,'+Math.round(q[1])+'px)';if(el._t!==t){el._t=t;el.style.transform='translate(-50%,-50%) '+t;}};
-  const vis=(el,f)=>{const s=f?'block':'none';if(el._v!==s){el._v=s;el.style.display=s;}};
+  const vis=(el,f)=>{if(!el)return;const s=f?'block':'none';if(el._v!==s){el._v=s;el.style.display=s;}};
   // province banners
   for(const b of G3.bn){const p=GCM.P[b.pi],st=GC.prov[b.pi];let q=null;const big=p.cap||p.wg;
     if(d<1700&&(d<620||(d<1000&&(big||p.tw>=3))||(d<1700&&p.cap))){const tw=g3Towns().find(t=>t.pi===b.pi),x=tw?tw.x:p.x,z=tw?tw.z:p.y;q=proj(x,g3HeightAt(x,z)+9+(p.cap?3:0),z);}
@@ -19646,7 +19672,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   if(mv||anim||G3.lblDirty||(G3.lf=(G3.lf||0)+1)%20===0){g3Labels(false);G3.lblDirty=false;}
   if(mv||(G3.lf%12===0)||G3.miniDirty)g3Mini();}
 if(!window._g3Keys){window._g3Keys=1;const ok=ev=>{const t=ev.target&&ev.target.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT')return false;const sc=document.getElementById('grandScreen');return !!sc&&sc.style.display!=='none'&&GV.g3&&!G;};
-  addEventListener('keydown',ev=>{if(!ok(ev)||ev.ctrlKey||ev.metaKey||ev.altKey)return;const k=ev.key.toLowerCase();if('wasdqerf+-='.includes(k)&&k.length===1||k.startsWith('arrow'))G3.keys.add(k);if(k==='home'){const m=GC&&GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);}});
+  addEventListener('keydown',ev=>{if(!ok(ev)||ev.ctrlKey||ev.metaKey||ev.altKey)return;const k=ev.key.toLowerCase();if('wasdqerf'.includes(k)&&k.length===1||k.startsWith('arrow'))G3.keys.add(k);if(k==='home'){const m=GC&&GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);}});
   addEventListener('keyup',ev=>{G3.keys.delete(ev.key.toLowerCase());});addEventListener('blur',()=>G3.keys.clear());}
 (function g3Credits(){try{if(document.getElementById('neCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
   const p=document.createElement('p');p.className='credits';p.id='neCred';p.textContent='Grand map coastlines, lakes and rivers: Natural Earth (public domain, naturalearthdata.com). Grand map ground detail textures are generated in-game (original, no outside assets). Grand map elevation and sea depth: Terrarium terrain tiles (Mapzen / AWS Open Data; derived from ETOPO1, GEBCO, SRTM and other public datasets). Satellite-style ground colour: Natural Earth I (public domain).';ps[ps.length-1].insertAdjacentElement('afterend',p);}catch(e){}})();

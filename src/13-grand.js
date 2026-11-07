@@ -215,6 +215,9 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
   geAIAll();}   /* empire economy for AI nations: bonds, bank, buildings, total war, embargoes, merchants... (13g-grandeco.js) */
 
 // ---------- save ----------
+/* calendar: month 1 = January 2026; GC.day = days into the current month (0..29), ticked by the real-time clock in 13c */
+const GR_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1);return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){}}
 // a save made on an older world map (the province list changed, e.g. 2026-11-06 real borders 174 -> 236 land provinces) can't
 // continue: its province indices point at different places, so the map breaks and a Fight-it battle never loads (Lane A1)
