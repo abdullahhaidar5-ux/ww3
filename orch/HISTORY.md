@@ -430,3 +430,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneE DE-BLOCK slice 6: macro dust/dark-soil ground blotches and dry scrub clumps round the base compounds so the sand stops reading as one flat tone (src/11-models.js groundKit, view only); local smoke timed out in this slow sandbox (baseline too), CI gates decide; no new shot
 - laneC 2026-11-07 12:xx: army count plates collision-culled (yours/selected first); C-LABELS part 2.
 - laneC 2026-11-07 18Z: no code (army plinth duplicated grandlook's g3Plinth on main); artbar note only.
+- laneE DE-BLOCK slice 2: ME HQ/barracks/factory get ray-placed rooftop clutter (AC units, water tanks, dish, antenna mast) and a mud-brick compound wall with gate pillars (src/11-models.js meRoofKit, visual only); PBR normal maps not yet; smoke NaN-bbox console error is pre-existing on main; shot orch/shots/laneE/k2-phone.jpg
