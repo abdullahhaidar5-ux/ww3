@@ -196,16 +196,9 @@ const MAPS={
     slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'southasia'],...mirrorList([[1300,500,70,'southasia']],'p')],
     water(M,R){const ph=R()*6.28,side=[];for(let y=-200;y<=2400;y+=40)side.push([1020+40*Math.sin(y*.004+ph)+(y-1100)*.08,y]);M.rivers.push({pts:side,hw:()=>58});M.bridgeAt=[[0,.25],[0,.75]];M.bridgeFrac=true;mirrorMap(M,'p');
       const mid=[];for(let y=-200;y<=2400;y+=40)mid.push([1600+70*Math.sin((y-1100)*.004),y]);M.rivers.push({pts:mid,hw:()=>66});M.bridgeAt.push([2,.2],[2,.5],[2,.8]);}},
-  negev:{name:'Negev Desert',min:2,max:6,sym:'point',rough:1.1,home:['IL','EG'],tag:'open desert · craters · wadi crossings',desc:'Sun-baked Negev plateau: erosion craters and dry wadis break the sand into lanes around a crossroads town. Armour swings wide, but the crater rims decide who holds the middle.',
-    slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,120,'mideast']],
-    water(M,R){M.peaks.push({x:1000,y:700,r:90,rx:1.7,rot:.3},{x:1450,y:500,r:70,rx:1.4,rot:-.2},{x:1250,y:1500,r:80,rx:1.5,rot:.6});M.lakes.push({x:1220,y:1060,r:44,rx:1.3,wob:a=>.1*Math.sin(a*3)});mirrorMap(M,'p');}},
-  jordanvalley:{name:'Jordan Valley',min:2,max:6,sym:'mirrorX',theme:'green',rough:1.2,home:['IL','JO'],tag:'rift valley · river · ridges either side',desc:'A green rift valley with the Jordan River down the middle, steep ridges on both sides and bridges as the only fast way across.',
-    slots:[[560,300],[2640,300],[560,1900],[2640,1900],[420,1100],[2780,1100]],cities:[[800,1100,110,'mideast'],[2400,1100,110,'mideast']],
-    water(M,R){const ph=R()*6.28,pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1600+60*Math.sin(y*.004+ph),y]);M.rivers.push({pts,hw:()=>48});M.bridgeAt=[[0,.25],[0,.5],[0,.75]];M.bridgeFrac=true;
-      M.peaks.push({x:1050,y:560,r:85,rx:1.6,rot:.2},{x:1050,y:1640,r:85,rx:1.6,rot:-.2});mirrorMap(M,'x');}},
-  eilat:{name:'Sinai Border & Eilat',min:2,max:6,sym:'point',rough:1.5,home:['IL','EG'],tag:'rocky desert · gulf shore · mountain passes',desc:'Red granite mountains and dry canyons run down to the Gulf of Aqaba. Narrow passes funnel armies toward a port town at the centre.',
+  tihama:{name:'Tihama Coast',min:2,max:6,sym:'point',rough:1.4,home:['DW','SA'],tag:'Red Sea plain · escarpment · wadis',desc:'Yemen\'s hot Red Sea plain below a wall of mountains. Dry wadis are the roads and the port town in the middle is the prize.',
     slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'mideast']],
-    water(M,R){M.peaks.push({x:1050,y:800,r:100,rx:1.8,rot:.6},{x:1500,y:520,r:85,rx:1.5,rot:.1},{x:1000,y:1500,r:80,rx:1.4,rot:-.5});M.ridges.push({pts:[[1250,420],[1350,700],[1300,900]],hw:()=>50});M.lakes.push({x:1560,y:1500,r:60,rx:1.4,wob:a=>.1*Math.sin(a*3)});mirrorMap(M,'p');}},
+    water(M,R){M.peaks.push({x:1000,y:520,r:100,rx:1.8,rot:.5},{x:1100,y:1620,r:95,rx:1.7,rot:-.4});M.ridges.push({pts:[[1300,500],[1380,800],[1320,1000]],hw:()=>50});mirrorMap(M,'p');}},
   najd:{name:'Najd Escarpment',min:6,max:8,sym:'quad',rough:1.2,home:['SA'],tag:'ring of cliffs · plateau oil · eight gaps',desc:'A ring of desert cliffs around the Najd plateau, with oil on top. Every base faces a cliff wall and has a gap on each side of it.',
     slots:ring8(880),oilAt:[[1600,1100]],
     water(M,R){const arc=(c,s)=>{const pts=[];for(let t=c-s;t<=c+s+1e-9;t+=.04)pts.push([1600+Math.cos(t)*450,1100+Math.sin(t)*450]);return pts;};
