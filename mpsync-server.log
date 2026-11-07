@@ -1,0 +1,31 @@
+game servers running locally at http://127.0.0.1:40947
+[6s] both pages loaded (menu model downloads done after 2s / 2s)
+[6s] host lobby open, code i9w38k
+[7s] client's game list (from the server) shows game I9W38K: {"role":"server","n":1,"id":"vaee4aee76d5c","ok":true}
+[7s] client joining
+[7s] client connected via ws: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[34s] battle: US vs RU on strait; client is slot 1
+[171s] both pages finished loading
+[171s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[172s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[194s] client order: 2/2 of the client's units moved on the host
+[230s] check @1.0 min t=60s: host 40 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 9721 client 9721
+[321s] check @2.5 min t=150s: host 47 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10984 client 10984
+[425s] check @4.0 min t=240s: host 52 entities, client side sees 11 (own 11); client has 11 (own 11); missing 0, extra 0, off-position 0, mismatched 0; credits host 11176 client 11176
+[434s] traffic host->client 2432 KB in 2639 messages, client->host 56 KB in 293; client lag max 0.10 game-s; 6 ms per 0.1 s step
+[434s] 24 live checks, 0 out of tolerance; up to 7 enemy entities were in the client's view at once
+[435s] relay traffic per player: host->player 657 frames (718 records), 608 KB raw / 156 KB compressed per game-minute; player->host 64 frames, 1.0 KB compressed per minute (orch/out/srv-traffic.json)
+peak memory (node + browser, summed RSS): 4658 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC FAIL: host console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:39571/index.html:21260:32)
+    at buildPanels (http://127.0.0.1:39571/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:39571/index.html:13439:34)
+    at afterStart (http://127.0.0.1:39571/index.html:13 (435s)
+  ✗ client console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:39571/index.html:21260:32)
+    at buildPanels (http://127.0.0.1:39571/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:39571/index.html:13439:34)
+    at afterStart (http://127.0.0.1:39571/index.html:13
