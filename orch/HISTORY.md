@@ -393,3 +393,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneD 2026-11-07: D2 slice 6 — 'RPG Team/Cell', 'TOW Team' unit names plain-worded to Anti-Tank (Missile) Team (names only, no sim change).
 
 - laneF 2026-11-07 12:50Z: A3 150-army perf test (orch/a3perf.mjs): select 150 armies 12 ms, cards 5 ms; no code change needed.
+- laneC 2026-11-07 13:xx UTC: C-TOWNS slice 1 — skyscrapers only in megacities, mid-rise elsewhere, fewer domes/minarets (src/13e-grand3d.js); smoke PASS, grandtest red on pre-existing eco-snowball assertion; pushed to branch only.

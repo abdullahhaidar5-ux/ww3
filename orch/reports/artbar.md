@@ -53,3 +53,6 @@ Objects 4 -> 4 (close-up fix): oil fields drew black cones (read as spikes in th
 
 ## 2026-11-07 11:xx UTC — laneC iteration 12 (shots: orch/shots/laneC/z0 before, z4 after)
 Light 3.5 -> 4 (est. 3.8): grand map gets a studio grade drawn inside the canvas (corner vignette + warm-top/cool-bottom wash, one extra fullscreen draw, HUD stays crisp). Others unchanged (geography 4, colour 4, water 3.5, objects 4, life 3.5, readability 4). Next lowest: life 3.5 (animated flags/city lights at night), then C0 UI kit.
+
+## 2026-11-07 13:xx UTC — laneC iteration 13 (no new shots: local box needs ~9 min per smoke)
+Objects 4 -> 4 (C-TOWNS first slice): skyscrapers only in real megacities (G3_MEGA list); other capitals get mid-rise row blocks; mosque/spire landmarks only in capitals and ~40% of other provinces' main towns (was every province + extra ones). Render-only. Terrain from Natural Earth and Total War army figures (C-LOOK 1, 3) still open. Smoke PASS; grandtest red on "eco snowballs" (sim/economy, not from this change).
