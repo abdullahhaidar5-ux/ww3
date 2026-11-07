@@ -45,7 +45,7 @@ try {
   await page.waitForFunction(() => { const b = document.getElementById('grandBtn'); return b && b.offsetParent !== null; }, null, { timeout: 120000 });
   const SAVE = arg('save', '');   // a saved campaign from an older build (old map): Continue must not lead into a broken battle
   if (SAVE) await ev((s) => { localStorage.setItem(GR_KEY, s); }, fs.readFileSync(SAVE, 'utf8'));
-  await page.click('#grandBtn');
+  await page.evaluate(() => document.getElementById('grandBtn').click());
   if (SAVE && await ev(() => [...document.querySelectorAll('#campScreen button')].some(b => /Continue/.test(b.textContent)))) { console.log('continuing old save'); await clickText('#campScreen button', 'Continue'); }
   else { await clickText('#campScreen button', 'New campaign');
   await ev((n) => { const s = document.querySelector('#campScreen select'); s.value = n; s.onchange(); }, NAT);
