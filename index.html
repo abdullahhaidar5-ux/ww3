@@ -12983,6 +12983,7 @@ body.touchui #mode{white-space:normal;text-align:left;width:max-content;max-widt
 body.touchui #mode>span{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;padding-left:4px}
 body.touchui #mode[hidden]{display:none}
 #mode .mcx{pointer-events:auto;cursor:pointer;flex:none;background:var(--warn);color:#160806;border:0;font:700 13px var(--display);letter-spacing:.04em;text-transform:uppercase;padding:0 8px;min-height:34px}
+#hint{right:max(10px,min(46%,500px));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:#d3dcd6;background:linear-gradient(90deg,rgba(8,11,10,.62),rgba(8,11,10,.3));padding:3px 8px;border-radius:4px;width:fit-content;max-width:calc(100% - 520px)}
 body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);padding:4px 6px;left:6px;right:6px;bottom:6px}
 @media (max-width:760px),(max-height:520px){
   #wxchip{top:6px;left:auto;right:6px;transform:none;white-space:normal;text-align:right;max-width:calc(62% - 16px);font-size:10px;padding:3px 7px}
@@ -16428,7 +16429,7 @@ function sizePost(){const w=Math.max(2,Math.round(VW*dpr)),h=Math.max(2,Math.rou
 // Theatre colour grade (purely visual): desert maps run warm and dusty, snow maps cold and a little desaturated,
 // green maps neutral with a blue-grey distance haze; a dusk battle pushes everything toward red. Multiplies on top of
 // the battle-conditions grade set by applyWeather (04-gfx). The haze colour is used by the distance haze (AO pass).
-const TGRADE={desert:{tg:[1.05,1,.9],s:1.06,hz:[.7,.56,.4]},green:{tg:[.99,1.01,.98],s:.98,hz:[.56,.6,.63]},snow:{tg:[.93,.99,1.09],s:.86,hz:[.72,.78,.87]}};
+const TGRADE={desert:{tg:[1.06,1,.86],s:1.2,hz:[.7,.56,.4]},green:{tg:[.99,1.01,.98],s:.98,hz:[.56,.6,.63]},snow:{tg:[.93,.99,1.09],s:.86,hz:[.72,.78,.87]}};
 function postGrade(F){const th=(typeof G!=='undefined'&&G&&G.map&&G.map.theme)||'desert',T=TGRADE[th]||TGRADE.desert,dusk=typeof WXI!=='undefined'&&WXI===3;
   F.tg.value.set(T.tg[0]*(dusk?1.08:1),T.tg[1]*(dusk?.92:1),T.tg[2]*(dusk?.88:1));F.tsat.value=T.s;
   if(dusk)F.hz.value.set(T.hz[0]*.5+.31,T.hz[1]*.5+.18,T.hz[2]*.5+.15);else F.hz.value.set(T.hz[0],T.hz[1],T.hz[2]);}
@@ -16549,6 +16550,8 @@ const TEXB={m_abrams:2,m_merkava:2,m_kf51:1.6,m_msta:2.2,m_ural:1.9,m_m35:2.2,m_
 const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 // Infantry: three realistic rigged soldiers (Western desert-camo marine, Eastern green-camo, Middle-Eastern/militia woodland
 // fatigues) shared by the 18 nations; national colour is a tint over the camo. 'soldier' is the old stand-in.
+// laneE: foot soldiers read too small at gameplay height (Abdullah 2026-11-06 photo) - draw them ~18% bigger (visual only)
+for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.18;c._big=1;}}
 const SOLV={US:'sol_w',EU:'sol_w',FR:'sol_w',DE:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
 const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:58},barracks:{m:'b_barr_me',size:54},factory:{m:'b_fact_me',size:62}};
