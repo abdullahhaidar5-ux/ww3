@@ -3,6 +3,7 @@
 // (roughly square-rooted) so a small power is weak but still playable. Sources + the per-nation table: orch/reports/realstart.md.
 // Deterministic: no random numbers here. grand4/4b's diplomacy reads `al`, `op`, `tn`; grand3 fleets read `fl`.
 //   n[code] = [econ, mil, oil] : econ x2200 starting cash, mil x GR_VBASE starting army value, oil = fuel stock (120 = normal)
+const RES_BLOC=['IR','RS','DW'];   // the Resistance bloc, led by the one shared Ayatollah; new Shia factions add their code here
 const GR_REAL={
  n:{US:[6,3,230],CN:[4.5,2.4,110],RU:[1.6,1.9,260],IN:[2.5,1.5,90],DE:[2.5,.9,80],JP:[2.3,.9,70],GB:[2.2,1,130],FR:[2.1,1,90],IT:[1.6,.7,80],
   BR:[1.5,.5,160],CA:[1.5,.5,200],KR:[1.5,1,70],AU:[1.3,.6,140],ES:[1.2,.5,80],MX:[1.2,.45,130],ID:[1,.5,140],SA:[1.2,.9,300],TR:[1,1.1,90],
@@ -14,7 +15,7 @@ const GR_REAL={
  // real alliances at the start (Nov 2026): members start friendly, never attack each other on their own
  al:[['NATO',['US','CA','GB','FR','DE','ES','IT','PL','SE','NO','FI','GR','RO','TR']],
   ['US partners',['US','JP','KR','AU','PH','IL','TW','JO','AE','QA','KW','MA','EG']],
-  ['Russia bloc',['RU','BY','KZ','KP']],['Axis of Resistance',['IR','RS','DW']],['China-Pakistan',['CN','PK']],
+  ['Russia bloc',['RU','BY','KZ','KP']],['Resistance bloc',RES_BLOC],['China-Pakistan',['CN','PK']],
   ['Turkey-Azerbaijan',['TR','AZ']],['Saudi-Pakistan',['SA','PK']],['Gulf',['SA','AE','QA','KW','OM']],['Russia-Iran',['RU','IR']]],
  // starting opinions beyond alliances (-100..100): rivalries and warm ties
  op:[['US','CN',-45],['US','RU',-55],['US','IR',-90],['US','KP',-95],['RU','UA',-100],['RU','GB',-60],['RU','PL',-70],['RU','DE',-45],['IL','IR',-100],['IL','RS',-100],
@@ -42,7 +43,7 @@ function grNearOwn(o,toCap){let best=-1,bd=1e9;for(const p of GCM.P){if(!p.land|
 // called from grNew after every nation exists. Wars, fronts, bases, alliances, opinions.
 function grRealApply(quick){
   const has=c=>!!GC.nat[c]&&!GC.nat[c].dead;const V=c=>GR_VBASE*(grRealMil(c,grNat(c).major?1:.5))*(quick?.7:1);
-  GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);GC.rel={};
+  GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);grResBloc();GC.rel={};
   for(const [a,b,v] of GR_REAL.op)if(has(a)&&has(b))GC.rel[grWk(a,b)]=v;
   for(const [a,b] of GR_REAL.wars)if(has(a)&&has(b))GC.war[grWk(a,b)]=1;
   const front=(a,b,sh,nm)=>{const at=grNearOwn(a,GC.nat[b].cap);if(at<0)return;const f=grNat(a).fac;grAddArmy(a,at,grGenUnits(f,V(a)*sh,false),nm);};
@@ -50,3 +51,11 @@ function grRealApply(quick){
   for(const [a,b] of GR_REAL.tn)if(has(a)&&has(b)){front(a,b,.15,'Border Guard');front(b,a,.15,'Border Guard');}
   for(const [o,h,sh] of GR_REAL.bases)if(has(o)&&has(h)){const at=GC.nat[h].cap;if(at>=0){const ba=grAddArmy(o,at,grGenUnits(grNat(o).fac,V(o)*sh,false),'Overseas Base');ba.bs=h;}}
   for(const c of Object.keys(GC.nat)){const r=GR_REAL.n[c];if(r&&GC.nat[c].e)GC.nat[c].e.fuel=r[2];}}
+
+/* The Resistance bloc (Abdullah 2026-11-06 21:23 + 22:16 "Make sure the resistance bloc is a thing"): IR, RS and DW (and any later Shia
+   faction added to RES_BLOC, e.g. the River Shias) are ONE permanent alliance while the single shared Ayatollah leads them. Members can't
+   leave it or fight each other; old saves ("Axis of Resistance") are renamed and topped up on load. One table, one helper. */
+function grResBloc(){if(!GC||!GC.nat)return;GC.alz=GC.alz||[];const m=RES_BLOC.filter(c=>GC.nat[c]);if(m.length<2)return;
+  let g=GC.alz.find(x=>x[0]==='Resistance bloc'||x[0]==='Axis of Resistance');if(!g){g=['Resistance bloc',[]];GC.alz.push(g);}g[0]='Resistance bloc';
+  for(const c of m)if(!g[1].includes(c))g[1].push(c);}
+function grInResBloc(a,b){return RES_BLOC.includes(a)&&RES_BLOC.includes(b)&&!!GC&&(GC.alz||[]).some(x=>x[0]==='Resistance bloc'&&x[1].includes(a)&&x[1].includes(b));}
