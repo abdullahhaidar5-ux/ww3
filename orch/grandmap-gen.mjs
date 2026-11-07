@@ -12,7 +12,7 @@ const gx = lon => pw(LX, Math.max(-180, Math.min(180, lon))), gy = lat => pw(LY,
 // nation: code|name|region|colour (majors take their colour from FACTIONS at runtime)
 const NAT = `US|United States|NA|CA|Canada|NA|MX|Mexico|NA|CU|Cuba|NA|GT|Central America|NA|DO|Caribbean Isles|NA|VE|Venezuela|SAM|CO|Colombia|SAM|BR|Brazil|SAM|PE|Peru|SAM|AR|Argentina|SAM|CL|Chile|SAM|
 GB|Britain|EU|FR|France|EU|DE|Germany|EU|ES|Spain|EU|IT|Italy|EU|PL|Poland|EU|SE|Sweden|EU|NO|Norway|EU|FI|Finland|EU|GR|Greece|EU|RO|Romania|EU|BY|Belarus|EU|UA|Ukraine|EU|RU|Russia|EU|KZ|Kazakhstan|EU|UZ|Uzbekistan|EU|AZ|Azerbaijan|EU|
-TR|Turkey|ME|SY|Syria|ME|RS|Mountain Shias|ME|IL|Israel|ME|JO|Jordan|ME|IQ|Iraq|ME|KD|Kurdistan|ME|OB|Olive Brigades|ME|BI|Black Desert Insurgency|ME|IR|Iran|ME|SA|Saudi Arabia|ME|AE|UAE|ME|OM|Oman|ME|KW|Kuwait|ME|QA|Qatar|ME|DW|Coffee Shias (Yemen)|ME|EG|Egypt|ME|LY|Libya|ME|SD|Sudan|ME|ET|Ethiopia|AF|DZ|Algeria|AF|MA|Morocco|AF|TN|Tunisia|AF|NG|Nigeria|AF|ML|Sahel|AF|TD|Chad|AF|CD|Congo|AF|KE|Kenya|AF|TZ|Tanzania|AF|AO|Angola|AF|ZA|South Africa|AF|
+TR|Turkey|ME|SY|Syria|ME|RS|Mountain Shias|ME|IL|Israel|ME|JO|Jordan|ME|IQ|Iraq|ME|KD|Kurdistan|ME|RV|River Shias|ME|OB|Olive Brigades|ME|BI|Black Desert Insurgency|ME|IR|Iran|ME|SA|Saudi Arabia|ME|AE|UAE|ME|OM|Oman|ME|KW|Kuwait|ME|QA|Qatar|ME|DW|Coffee Shias (Yemen)|ME|EG|Egypt|ME|LY|Libya|ME|SD|Sudan|ME|ET|Ethiopia|AF|DZ|Algeria|AF|MA|Morocco|AF|TN|Tunisia|AF|NG|Nigeria|AF|ML|Sahel|AF|TD|Chad|AF|CD|Congo|AF|KE|Kenya|AF|TZ|Tanzania|AF|AO|Angola|AF|ZA|South Africa|AF|
 PK|Pakistan|SA|IN|India|SA|AF|Afghanistan|SA|BD|Bangladesh|SA|NP|Nepal|SA|LK|Sri Lanka|SA|MM|Myanmar|SEA|TM|Turkmenistan|SA|
 CN|China|EA|KP|North Korea|EA|KR|South Korea|EA|JP|Japan|EA|TW|Taiwan|EA|MN|Mongolia|EA|VN|Vietnam|SEA|TH|Thailand|SEA|MY|Malaysia|SEA|ID|Indonesia|SEA|PH|Philippines|SEA|AU|Australia|OC|NZ|New Zealand|OC`.replace(/\n/g, '').split('|');
 const NATS = []; for (let i = 0; i < NAT.length; i += 3) NATS.push([NAT[i], NAT[i+1], NAT[i+2]]);
@@ -83,7 +83,7 @@ IL|Galilee|34.8|32.8|m|2|W|golan
 IL|Negev|35|29.6|d|2|M|
 JO|Jordan|37.3|30.9|d|2|C|
 IQ|Baghdad|44.4|33.3|u|3|C|mesopotamia
-IQ|Basra|47.6|30.4|c|3|OPW|mesopotamia
+RV|Basra|47.6|30.4|c|3|OPW|mesopotamia
 IQ|Mosul|42.8|36.4|f|2|O|
 IQ|Anbar|41.4|32.2|d|2||
 KD|Kurdistan|45.8|36.2|m|2|CO|
@@ -177,6 +177,8 @@ ID|Borneo|114|0.5|j|2|OM|
 PH|Manila|121|14.6|u|3|CP|
 PH|Mindanao|125.5|7.5|j|2|P|
 NZ|New Zealand|174|-40|f|2|CP|
+RV|Najaf|43.9|31.0|u|2|CW|mesopotamia
+RV|Southern Marshes|46.3|32.2|f|2|FO|hawizeh
 OB|Gaza|32.4|30.6|u|2|CPW|gaza
 BI|Euphrates Badlands|43.4|34.9|d|1|CO|euphrates
 BI|Syrian Badiya|40.4|33.8|d|1|W|
@@ -258,7 +260,7 @@ for (let y = 0; y < RH; y++) for (let x = 0; x < RW; x++) { const a = idx[y * RW
 const nl = PR.length + REAL.length;
 // A province must not touch a sea-only world edge; land-land links stay, plus manual straits
 const byName = n => seeds.findIndex(s => s.n === n);
-const extra = [['Istanbul','Izmir'],['Istanbul','Ankara'],['Havana','Santiago de Cuba'],['Sinai','Cairo']].map(([a, b]) => [byName(a), byName(b)]);   // bridge / canal / island-hop links
+const extra = [['Istanbul','Izmir'],['Istanbul','Ankara'],['Havana','Santiago de Cuba'],['Sinai','Cairo'],['Zagros','Baghdad']].map(([a, b]) => [byName(a), byName(b)]);   // bridge / canal / island-hop links
 for (const [a, b] of extra) if (a >= 0 && b >= 0) { adj[a].add(b); adj[b].add(a); }
 // land<->land links across a sea cell are NOT adjacent (that is the point of sea zones)
 const rivers = [['Kyiv','Donbas'],['Kyiv','Lviv'],['Baghdad','Anbar'],['Baghdad','Mosul'],['Wuhan','Shanghai'],['Berlin','Rhine'],['Paris','Rhine'],['Punjab','Karachi'],['Cairo','Upper Egypt'],['Moscow','Volga'],['Heartland','Washington'],['Deir ez-Zor','Aleppo'],['Seoul','Pyongyang'],['Seoul','Gangwon'],['Basra','Khuzestan']].map(([a, b]) => [byName(a), byName(b)]).filter(([a, b]) => a >= 0 && b >= 0 && adj[a].has(b));
