@@ -59,7 +59,7 @@ function sizePost(){const w=Math.max(2,Math.round(VW*dpr)),h=Math.max(2,Math.rou
 // Theatre colour grade (purely visual): desert maps run warm and dusty, snow maps cold and a little desaturated,
 // green maps neutral with a blue-grey distance haze; a dusk battle pushes everything toward red. Multiplies on top of
 // the battle-conditions grade set by applyWeather (04-gfx). The haze colour is used by the distance haze (AO pass).
-const TGRADE={desert:{tg:[1.05,1,.9],s:1.06,hz:[.7,.56,.4]},green:{tg:[.99,1.01,.98],s:.98,hz:[.56,.6,.63]},snow:{tg:[.93,.99,1.09],s:.86,hz:[.72,.78,.87]}};
+const TGRADE={desert:{tg:[1.06,1,.86],s:1.2,hz:[.7,.56,.4]},green:{tg:[.99,1.01,.98],s:.98,hz:[.56,.6,.63]},snow:{tg:[.93,.99,1.09],s:.86,hz:[.72,.78,.87]}};
 function postGrade(F){const th=(typeof G!=='undefined'&&G&&G.map&&G.map.theme)||'desert',T=TGRADE[th]||TGRADE.desert,dusk=typeof WXI!=='undefined'&&WXI===3;
   F.tg.value.set(T.tg[0]*(dusk?1.08:1),T.tg[1]*(dusk?.92:1),T.tg[2]*(dusk?.88:1));F.tsat.value=T.s;
   if(dusk)F.hz.value.set(T.hz[0]*.5+.31,T.hz[1]*.5+.18,T.hz[2]*.5+.15);else F.hz.value.set(T.hz[0],T.hz[1],T.hz[2]);}
