@@ -87,3 +87,4 @@ empire systems never inside a battle.
 | **Force limit + army tradition** (A5) | `src/13y-gforce.js` (`grFL`, `gfOver`, `gfBattle`, `gfChip`), state `N.fl0/N.dv0/N.trad` in `GC.nat` | Over-limit upkeep and tradition bonuses are GMOD rows (13k); tradition raises army max morale via `gmMorMax` (13b). War exhaustion = B4b war support, not here. |
 | **Grand fog of war + spies** (RG3) | `src/13-grand.js` (`grSeen`, `grSeenSet`, `grSpy`, `GR_SAT`), state `GC.spy` | Display only (player's view); sim/AI see everything. Sabotage/covert ops extend this, not a new system. |
 | **Scenario starts** (RG6) | `src/13-grand.js` `GR_SCEN` rows + `grScenApply`, state `GC.sc` | Presets on top of the realistic start (13i `grRealApply`); new start dates = new rows. |
+| **Mobilisation** (reserves call-up) | `src/13zm-gmobil.js` (laneB RG34): `N.mob` 0/1/2, `gmbSet`, GMOD rows, 🎖 npTab |
