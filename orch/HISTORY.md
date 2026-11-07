@@ -272,3 +272,4 @@ Added DZ, MA, NG, ZA, ET, LY, SD (first cut, NEWNAT, Egypt base). See orch/repor
 
 ## laneD 2026-11-07 D2 slice
 Added orch/newplayer.mjs (menu audit via visible text). Top confusion: with 54 nations the Tutorial/Conquest/Grand campaign buttons sat ~3700px down the main menu. Fixed: quick-start row at the top (presses the real buttons) + compact scrollable nation list. Smoke PASS; smooth gate runs in CI.
+- laneC 2026-11-07: C2/C3 grand map-mode panel restyled (framed, opaque); sea shader fresnel/ripples/glint; readability 2.5→3.5, water 2.5→3. Gate: smoke PASS, grandtest PASS.
