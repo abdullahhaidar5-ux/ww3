@@ -298,6 +298,8 @@ Abdullah 20:12/20:14 "Ugly ugly ugly … not everything has to be shoved into a 
 - laneD (2026-11-07 D2 slice 2): fixed a committed merge-conflict in orch/newplayer.mjs (audit tool was unrunnable); audit now ignores in-menu false positives. Real findings left: encyclopedia names use "MBT" jargon (data rename, deferred). No game code changed.
 - laneA 2026-11-07 (03:00Z): A2 slice 1 — real time with pause on the grand map: date + play/pause + speeds 1–5 (Space, +/−, 1–5), months roll over by themselves, battles pause the clock, arrival dates on marches; gate orch/grandrt.mjs. Shots orch/shots/laneA/rt-*.png.
 
+- laneF 2026-11-07: A3 slice 1 — multi-army select on the grand map (Shift+click, Shift+drag box, double-click province), group right-click move, hover arrival date, selected-army cards with Merge/Split (src/13c-grandui.js).
+
 ### nation-rv (2026-11-07, Sonnet 5.5 scheduled run)
 RV "River Shias" added as a full first-cut nation (Iraqi Shia volunteer-brigade faction, own nation in south Iraq; fictional, no real group's name/emblem/leaders): NEWNAT row, Zealous, original black/green printed-cloth emblem (drawRV), grand map Basra + new Najaf (capital) + Southern Marshes, Resistance bloc, tense with IQ, signature "Call to the Shrines" levy. See orch/reports/nation-rv.md. Open: own voices/anthem, 3D models, balance tourney, servers-live PR.
 - laneA 2026-11-07 (04:00Z): A2 slice 2 — on the grand map, marching armies now walk along their road as the days pass instead of jumping at month end (display only, sim unchanged); grandrt checks it. Shot orch/shots/laneA/rt-3-sliding.png.
@@ -312,6 +314,7 @@ RV "River Shias" added as a full first-cut nation (Iraqi Shia volunteer-brigade 
 - laneB 2026-11-07: B4 slice 2: cores + estates (src/13o-gstab.js; 13-grand.js core income/unrest hooks); smoke + grand determinism green.
 - laneB (B4b): war support meter 0–100 (13v-gwarsup.js): style-shaped battle/capture news, weariness, invasion, forced peace, rallies, Home front tab + header chip; orch/wstest.mjs; 1-line hooks in 13-grand.js grSettle/capture.
 - 2026-11-07 laneE (Sonnet): re-shot base view (e3before), assessed E1-E3 state, handoff updated; no src change
+- laneF 2026-11-07: A3b slice 1 — army morale bar (a.mor) on cards; per-style battle drain, monthly recovery/supply drain, auto-resolve strength scales 80-100% (src/13b-grandbattle.js, 3 one-line hooks in 13-grand.js).
 - laneG 2026-11-07 (Sonnet, 3rd session): AY/DL leader figures (src/13v-gleader.js): shared Ayatollah for IR/RS/DW + KP Dear Leader, tours, fervour battles (13b cfg.fv), GMOD rows, Leader tab; test orch/ldtest.mjs; grandtest gmod expectation now +8% for IR.
 - 2026-11-07 laneE (Sonnet): E3 scrub and rocks now thin out toward bases instead of a bare disc (src/04-gfx.js); shot orch/shots/laneE/e3after-base.png; E1 real model swap, E2, E4, E5 still open
 - laneD (2026-11-07 D2 slice 3): unit names no longer say "MBT" (Altay/Karrar/Leclerc/Al-Khalid/Arjun Tank) so the encyclopedia and build menu read plainly; newplayer audit clean. Smoke PASS; local smooth gate too slow here, CI gates it.
@@ -323,4 +326,5 @@ RV "River Shias" added as a full first-cut nation (Iraqi Shia volunteer-brigade 
 - laneC 2026-11-07 05Z: grand-map shipping lanes (tankers/container ships with wakes, 13w-gshipping.js); ART-BAR life 2.5→3.5; shots orch/shots/laneC/it4
 - laneG 2026-11-07 (Sonnet, 4th session): RG17 holy sites (src/13w-gholy.js, data rows, GMOD war-support rows, capture penalty); test orch/hstest.mjs.
 - 2026-11-07 laneE (Sonnet): RF14 burning oil — destroyed derricks/plants belch a thick smoke column while burning, badly hurt ones smoulder (src/03g-battlefeel.js, via the smoke grid); smoke PASS. RF13, RF15, E1 still open
+- memaps (2026-11-07): Israel's 6 Conquest maps live — Negev Crater, Galilee Hills, Jordan Valley, Carmel Coast, Coastal Plain, Eilat/Sinai (src/02c-memaps.js, one data row each, quad-symmetric; mapfair static even + 4-player AI battles: no seat significant).
 - 2026-11-07 laneE (Sonnet): Middle Eastern HQ/barracks/factory models enlarged to fill their real footprints (src/11-models.js BME sizes 58/54/62 -> 74/60/72, visual only); smoke PASS; shot orch/shots/laneE/e2after-base.png. E1 (old boxy photo is stale: sol_* rigged models already live), E2 rest, E3, E4 still open

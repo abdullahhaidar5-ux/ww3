@@ -94,7 +94,7 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   cv.addEventListener('pointerup',ev=>{const d=GV.drag;GV.drag=null;if(!d||d.m)return;const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;guClick(mx,my);});
   cv.addEventListener('pointerleave',()=>{GV.hov=-1;document.getElementById('gTip').style.display='none';guRedraw();});
   addEventListener('resize',()=>{if(document.getElementById('grandScreen'))guResize();});
-  guResize();guFit(null);const me=GC.me&&GC.nat[GC.me];if(me){GV.sel=me.cap;guCentre(me.cap,2.0);}guRedraw();grandMapRefresh();
+  gmInit(cv);guResize();guFit(null);const me=GC.me&&GC.nat[GC.me];if(me){GV.sel=me.cap;guCentre(me.cap,2.0);}guRedraw();grandMapRefresh();
   if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));}
     {const tg=ev.target&&ev.target.tagName;if(tg!=='INPUT'&&tg!=='TEXTAREA'&&tg!=='SELECT'&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&!document.getElementById('gModal')){   /* time keys (the grand map's key table): Space pause, + / − speed, 1–5 speed */
       if(ev.key===' '){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));return;}if(ev.key==='+'||ev.key==='='){guSpeed((GV.spd||GV.lastSpd||1)+1);return;}if(ev.key==='-'||ev.key==='_'){if(GV.spd>1)guSpeed(GV.spd-1);return;}
@@ -111,14 +111,14 @@ function guTip(h,mx,my){const t=document.getElementById('gTip');if(!t)return;if(
 function guTerrName(t){return {d:'Desert',m:'Mountains',f:'Farmland',u:'Urban',j:'Jungle/green',s:'Snow/tundra',c:'Coast',r:'River plain',w:'Sea'}[t]||t;}
 function guClick(mx,my){if(GV.g3){g3Click(mx,my);return;}for(const c of GV.chips.slice().reverse())if(mx>=c.x&&mx<=c.x+c.w&&my>=c.y&&my<=c.y+c.h){const a=GC.armies.find(x=>x.id===c.aid);GV.selA=c.aid;if(a)GV.sel=a.at;guSide();guRedraw();return;}
   const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);GV.sel=h;if(GV.selA){const a=GC.armies.find(x=>x.id===GV.selA);if(!a||a.at!==h)GV.selA=0;}guSide();guRedraw();}
-function guRight(ev){if(GC.ph!=='plan'||GV.busy||!GV.selA)return;const r=GV.cv.getBoundingClientRect(),[wx,wy]=guToWorld(ev.clientX-r.left,ev.clientY-r.top),h=guProvAt(wx,wy);if(h<0)return;guMoveTo(GV.selA,h);}
+function guRight(ev){if(GC.ph!=='plan'||GV.busy||!GV.selA)return;const r=GV.cv.getBoundingClientRect(),[wx,wy]=guToWorld(ev.clientX-r.left,ev.clientY-r.top),h=guProvAt(wx,wy);if(h<0)return;const ids=gmIds();for(const id of ids.slice(1))grOrderMove(id,h);guMoveTo(ids[0]||GV.selA,h);if(ids.length>1)gmPaint();}
 function guMoveTo(aid,h){const res=grOrderMove(aid,h);if(res.err){GV.hint=res.err;guHint();return;}
   if(res.decl){const w=GCM.nats.get(res.decl).name;guConfirm('Declare war on '+w+'?','Marching into '+GCM.P[h].n+' means war with '+w+'. Their allies and rivals may react.',()=>{const a=GC.armies.find(x=>x.id===aid);grDeclare(GC.me,res.decl);grOrderMove(aid,h);guSide();guRedraw();grSave();});return;}
   GV.hint=GCM.P[h].n+': arrives ~'+grDateStr(GC.turn+res.r.turns,0)+' ('+res.r.turns+' month'+(res.r.turns>1?'s':'')+')'+(res.r.path.some(j=>GCM.P[j].sea)?' (by sea)':'');guHint();guSide();guRedraw();grSave();}
 function guHint(){const e=document.getElementById('gHint');if(e)e.textContent=GV.hint||'';}
 
 // ---------- top bar, side panel, log ----------
-function grandMapRefresh(){if(GV.g3)g3Refreshed();GV.dirty=true;guTop();guSide();guLog();guRedraw();if(GC&&GC.over)guOver();}
+function grandMapRefresh(){if(GV.g3)g3Refreshed();GV.dirty=true;guTop();guSide();guLog();guRedraw();if(typeof gmPaint==="function")gmPaint();if(GC&&GC.over)guOver();}
 function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const me=GC.me?GC.nat[GC.me]:null,N=GC.me?grNat(GC.me):null;
   const score=GC.me?grScore(GC.me):0;
   t.innerHTML='';if(N){t.appendChild(guEl('span','display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #fff;background:'+N.color));t.appendChild(guEl('b','font-size:17px',GCM.nats.get(GC.me).name));}
@@ -216,3 +216,33 @@ function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new 
 // main menu buttons: Grand campaign · Conquest · Missions · Tutorial (Abdullah 2026-11-06)
 (function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('grandBtn'))return;const b=document.createElement('button');b.className='big';b.id='grandBtn';b.type='button';b.textContent='Grand campaign';b.title='The world map: run a nation, fight the battles yourself or auto-resolve them';b.onclick=()=>{try{initAudio();}catch(e){}grandMenu();};
   const camp=document.getElementById('campaign')||sb;camp.parentNode.insertBefore(b,camp);const st=document.getElementById('start');if(st)st.textContent='Conquest — deploy vs AI';})();
+
+/* ---------- A3 smooth army control (Lane F): multi-select, box, double-click, group orders, cards ----------
+   GV.selM = ids of 2+ selected own armies (GV.selA stays the "lead" army so every old panel keeps working). */
+GV.selM=GV.selM||new Set();
+function gmMine(id){const a=GC&&GC.armies.find(x=>x.id===id);return a&&a.o===GC.me?a:null;}
+function gmIds(){return GV.selM&&GV.selM.size>1?[...GV.selM].filter(gmMine):(GV.selA?[GV.selA]:[]);}
+function gmSet(ids){const L=[...new Set(ids)].filter(gmMine);GV.selM=L.length>1?new Set(L):new Set();GV.selA=L[0]||0;if(L[0])GV.sel=gmMine(L[0]).at;gmPaint();guSide();guRedraw();}
+function gmPts(){const o=[];if(GV.g3&&typeof G3!=='undefined'&&G3.hit)for(const h of G3.hit)o.push({aid:h.aid,x:h.x,y:h.y});else for(const c of GV.chips||[])o.push({aid:c.aid,x:c.x+c.w/2,y:c.y+c.h/2});return o;}
+function gmPaint(){try{if(!document.getElementById('gmCss')){const s=document.createElement('style');s.id='gmCss';s.textContent='#gMapWrap .p.gmsel{outline:2px solid #ffe27a;outline-offset:1px;border-radius:3px}#gmCards{position:absolute;left:8px;top:44px;max-height:62%;overflow:auto;display:flex;flex-direction:column;gap:3px;z-index:4;font-size:13px}#gmCards .c{background:rgba(10,16,22,.9);border:1px solid #4a6580;border-left:4px solid #ffe27a;border-radius:5px;padding:3px 8px;cursor:pointer;min-width:170px}#gmCards .c:hover{background:#18293a}#gmCards button{padding:3px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;font-size:12px;margin-right:4px}';document.head.appendChild(s);}
+  const ids=new Set(gmIds());if(typeof G3!=='undefined'&&G3.pl)for(const [id,el] of G3.pl)el.classList.toggle('gmsel',ids.has(id)&&ids.size>1);
+  const w=document.getElementById('gMapWrap');if(!w)return;let c=document.getElementById('gmCards');if(!c){c=document.createElement('div');c.id='gmCards';w.appendChild(c);}
+  if(ids.size<2){c.style.display='none';return;}c.style.display='flex';c.innerHTML='';
+  const hd=document.createElement('div');hd.innerHTML='<b>'+ids.size+' armies</b> <button data-k="m">Merge</button><button data-k="s">Split</button>';hd.style.cssText='background:rgba(10,16,22,.9);padding:3px 6px;border-radius:5px';c.appendChild(hd);
+  hd.querySelector('[data-k=m]').onclick=()=>{const L=gmIds();const seen=new Set();for(const id of L){const a=gmMine(id);if(!a||seen.has(a.at))continue;seen.add(a.at);grMerge(id);}gmSet(L.filter(gmMine));grSave();grandMapRefresh();};
+  hd.querySelector('[data-k=s]').onclick=()=>{const L=gmIds();for(const id of L)grSplit(id);gmSet(L.filter(gmMine));grSave();grandMapRefresh();};
+  for(const id of ids){const a=gmMine(id);if(!a)continue;const d=document.createElement('div');d.className='c';const p=GCM.P[a.at],dest=a.path&&a.path.length?GCM.P[a.path[a.path.length-1]]:null;d.innerHTML='<b>'+a.nm+'</b> · '+a.u.length+' units'+(typeof gmMorBar==='function'?gmMorBar(a):'')+'<br><span style="opacity:.75">'+(p?p.n:'')+(dest?' → '+dest.n:'')+'</span>';d.onclick=()=>gmSet([id]);c.appendChild(d);}}catch(e){console.error('gmPaint',e);}}
+function gmInit(cv){const wrap=document.getElementById('gMapWrap');let box=null,bd=null,lastH=-2;
+  const rel=ev=>{const r=cv.getBoundingClientRect();return [ev.clientX-r.left,ev.clientY-r.top];};
+  cv.addEventListener('pointerdown',ev=>{if(ev.button!==0||!ev.shiftKey||!GC||GC.ph!=='plan')return;ev.stopImmediatePropagation();cv.setPointerCapture(ev.pointerId);const [x,y]=rel(ev);bd={x,y,m:0};},true);
+  cv.addEventListener('pointermove',ev=>{if(bd){ev.stopImmediatePropagation();const [x,y]=rel(ev);if(Math.abs(x-bd.x)+Math.abs(y-bd.y)>6)bd.m=1;if(bd.m){if(!box){box=document.createElement('div');box.style.cssText='position:absolute;border:1px dashed #ffe27a;background:rgba(255,226,122,.12);pointer-events:none;z-index:5';wrap.appendChild(box);}box.style.left=Math.min(x,bd.x)+'px';box.style.top=Math.min(y,bd.y)+'px';box.style.width=Math.abs(x-bd.x)+'px';box.style.height=Math.abs(y-bd.y)+'px';}return;}
+    if(!GV.selA||GC.ph!=='plan')return;const [x,y]=rel(ev),[wx,wy]=guToWorld(x,y),h=guProvAt(wx,wy);if(h===lastH||h<0||!GCM.P[h])return;lastH=h;   /* arrival date while hovering, like EU4 */
+    const a=gmMine(GV.selA);if(a&&h!==a.at){const r=grPath(a.o,a.at,h,a.fl);if(r&&r.turns!=null){GV.hint='Right-click → '+GCM.P[h].n+': arrives ~'+grDateStr(GC.turn+r.turns,0)+' ('+r.turns+' mo)'+(gmIds().length>1?' · '+gmIds().length+' armies':'');guHint();}}},true);
+  cv.addEventListener('pointerup',ev=>{if(bd){ev.stopImmediatePropagation();const [x,y]=rel(ev),b=bd;bd=null;if(box){box.remove();box=null;}
+      const L=gmIds().slice();if(b.m){const x0=Math.min(x,b.x),x1=Math.max(x,b.x),y0=Math.min(y,b.y),y1=Math.max(y,b.y);for(const p of gmPts())if(p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1&&gmMine(p.aid))L.push(p.aid);}
+      else{const h=GV.g3&&typeof g3HitAt==='function'?g3HitAt(x,y):null;const id=h&&h.aid;if(id&&gmMine(id)){const i=L.indexOf(id);if(i>=0)L.splice(i,1);else L.push(id);}}
+      gmSet(L);return;}
+    if(!ev.shiftKey&&GV.drag&&!GV.drag.m&&GV.selM.size){GV.selM=new Set();setTimeout(gmPaint,0);}},true);
+  cv.addEventListener('dblclick',ev=>{if(!GC)return;const [x,y]=rel(ev),h0=GV.g3&&typeof g3HitAt==='function'?g3HitAt(x,y):null;let pi;if(h0){const a=GC.armies.find(q=>q.id===h0.aid);pi=a&&a.at;}else{const [wx,wy]=guToWorld(x,y);pi=guProvAt(wx,wy);}
+    if(pi==null||pi<0)return;gmSet(GC.armies.filter(a=>a.at===pi&&a.o===GC.me).map(a=>a.id));});
+  gmPaint();}
