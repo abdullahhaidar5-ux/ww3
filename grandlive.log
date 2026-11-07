@@ -1,0 +1,19 @@
+2.8s stale save in menu {"cont":true,"warn":true}
+16.9s map open
+25.1s march {"me":"IR","from":"Tehran","to":"Baku","foe":"AZ","ok":true,"units":37}
+30.3s fallback {"modal":true,"map":true,"G":false}
+32.8s end turn clicked
+36.7s prompt: BATTLE · CoastBakuAttackers — Iran37 units28 Basij Militia, 4 RPG Cell, 2 Karrar MBT, 1 Fateh-110 Launcher, 1 
+37.6s Fight it live clicked
+49.1s {"L":true,"step":"Loading 3D models…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+51.0s {"L":true,"step":"Building the battlefield…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+52.9s {"L":true,"step":"Preparing graphics…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+119.8s {"L":true,"step":"Deploying forces…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+139.0s {"L":false,"step":"Ready","g":true,"grand":true,"t":0,"paused":false,"gs":"none","ents":67}
+140.0s {"L":false,"step":"Ready","g":true,"grand":true,"t":0.18,"paused":false,"gs":"none","ents":67}
+170.3s battle running: Generating terrain 11012, Loading 3D models 255, Building the battlefield 1605, Building the battlefield 1843, Preparing graphics 66807, Deploying forces 17, Deploying forces 11221, total 93566
+GRANDLIVE FAIL
+  menu offers Continue for a campaign saved on an older world map
+
+GRANDLIVE2 FAIL
+  ✗ page.waitForFunction: Timeout 120000ms exceeded.
