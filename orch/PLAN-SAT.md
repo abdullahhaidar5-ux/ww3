@@ -170,7 +170,7 @@ Grand map:
 - [ ] **RG5 TV news broadcasts** (Lane G): fictional channel ticker + anchor card for big events (fictional anchors, no real channels/people), fed by the one event engine.
 - [x] **RG6 Scenario start dates** (Lane A) — **Done laneA 4a640a68:** setup has a Scenario row: Middle East 2026 ★ (realistic start), **Gulf flashpoint** (Iran + Coffee Shias at war with Saudi Arabia and the UAE, front armies, US hostile), **Red Sea crisis** (Coffee Shias vs Israel + Saudi Arabia); `GR_SCEN` rows in 13-grand.js, saved as `GC.sc`, checked in grandtest + grandlive. More start dates = more rows.: pick a starting crisis (Gulf flashpoint first, then others) — each a preset over the realistic start.
 - [ ] **RG7 Dynamic crises** (Lane G): coups, oil shocks, uprisings, border incidents as timed decisions in the event engine.
-- [ ] **RG8 Achievements** (Lane D): goals per nation (e.g. unite the Resistance bloc, hold Hormuz a year); one table, shown in the nation panel.
+- [x] **RG8 Achievements** (Lane D): goals per nation (e.g. unite the Resistance bloc, hold Hormuz a year); one table, shown in the nation panel. (f02856e)
 - [x] **Resistance bloc is a real thing** (22:16): `RES_BLOC` in 13i = IR, RS, DW (River Shias add their code there when they land); one permanent alliance "Resistance bloc", can't be left or fought inside, old "Axis of Resistance" saves renamed on load.
 Grand campaign round 2 (Abdullah 22:20 "Any more options for the grand campaign") — after the slice, then kaizen; extend existing systems, never a second one:
 - [ ] **RG9 Proxy wars** (Lane G): fund/arm rebels or an ally in another war without joining (uses Locals/insurgency + GMOD).
