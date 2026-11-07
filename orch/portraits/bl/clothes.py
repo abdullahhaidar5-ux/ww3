@@ -127,33 +127,37 @@ def head_frame(H):
     cx = 0.; cy = (V[m, 1].max() + V[m, 1].min()) / 2; w = np.percentile(np.abs(V[m, 0]), 99); d = (V[m, 1].max() - V[m, 1].min()) / 2
     return cx, cy, w, d, H.eyeY, H.top
 
-def peaked_cap(H, crown, band, badge, rng, tilt=.10, high=1.0, big=1.0, flare=1.0):
+def peaked_cap(H, crown, band, badge, rng, tilt=.17, high=1.0, big=1.12, flare=1.0):
+    """service cap that hugs the skull: band at the brow, slightly flaring saucer top, shiny visor, gold cord, cap badge"""
     cx, cy, w, d, ez, top = head_frame(H)
-    hw = w + .05; hd = d + .05; zb = ez + .27; span = top - zb + .05
-    prof = [(1.0, zb - .02), (1.0, zb + .26 * span / 1.1), (1.05, zb + .38 * span / 1.1), (1.16 * flare, zb + .66 * span / 1.1), (1.30 * flare * big, zb + .90 * span / 1.1),
-            (1.30 * flare * big, zb + .95 * span / 1.1), (1.0, zb + 1.0 * span / 1.1), (.55, zb + 1.02 * span / 1.1), (0.0, zb + 1.03 * span / 1.1)]
+    hw = w + .06; hd = d + .15; zb = ez + .36; Hh = top - zb + .02
+    prof = [(1.0, zb - .02), (1.0, zb + .14 * Hh), (1.02, zb + .40 * Hh), (1.0, zb + .70 * Hh), (1.05 * flare, zb + .86 * Hh), (1.17 * flare * big, zb + .955 * Hh),
+            (1.17 * flare * big, zb + .99 * Hh), (.92, zb + 1.015 * Hh), (.5, zb + 1.03 * Hh), (0.0, zb + 1.03 * Hh)]
     obs = [lathe('crown', prof, crown, rx=hw, ry=hd, cy=cy, tilt=tilt, seg=72)]
-    obs.append(lathe('band', [(1.012, zb - .025), (1.012, zb + .30 * span / 1.1)], band, rx=hw, ry=hd, cy=cy, tilt=tilt, seg=72))
-    # visor: front sector, drooping forward
+    obs.append(lathe('band', [(1.015, zb - .03), (1.015, zb + .17 * Hh)], band, rx=hw, ry=hd, cy=cy, tilt=tilt, seg=72))
+    obs.append(lathe('cord', [(1.03, zb + .17 * Hh), (1.03, zb + .20 * Hh)], badge, rx=hw, ry=hd, cy=cy, tilt=tilt, seg=72))
     V = []; F = []; k = 30; m = 6
     for i in range(k + 1):
-        th = math.pi * (.12 + .76 * i / k) + math.pi      # front half, y<0
-        ext = .55 * (math.sin(math.pi * i / k) ** .6 + .0)
+        th = math.pi * (.14 + .72 * i / k) + math.pi
+        ext = .32 * (math.sin(math.pi * i / k) ** .6)
         for r in range(m + 1):
             t = r / m
-            V.append([cx + math.cos(th) * hw * (1.0 + ext * t * .25), cy + math.sin(th) * (hd + ext * t * 1.1), zb - .03 - .17 * t ** 1.4 + .0])
+            V.append([cx + math.cos(th) * hw * (1.0 + ext * t * .2), cy + math.sin(th) * (hd + ext * t * 1.0), zb - .03 - .10 * t ** 1.5])
     for i in range(k):
         for r in range(m): a = i * (m + 1) + r; F.append([a, a + 1, a + m + 2, a + m + 1])
-    ob = _obj('visor', V, F, band); s = ob.modifiers.new('s', 'SOLIDIFY'); s.thickness = .025; obs.append(ob)
-    # badge + gold braid on the band
-    obs.append(lathe('badge', [(.0, 0), (.5, .0), (.5, .03)], badge, rx=.10, ry=.10, cx=0, cy=cy - hd * 1.0, cz=zb + .12, seg=24, tilt=-math.pi / 2 + .1))
+    ob = _obj('visor', V, F, band); s = ob.modifiers.new('s', 'SOLIDIFY'); s.thickness = .022; obs.append(ob)
+    obs.append(lathe('badge', [(.0, 0), (.5, .0), (.5, .03)], badge, rx=.11, ry=.11, cx=0, cy=cy - hd * 1.03, cz=zb + .10 * Hh, seg=24, tilt=-math.pi / 2 + .1))
     return obs
 
 def beret(H, cloth, band=None, tilt=.35, rng=None):
+    """wool beret: a flattened dome with a headband at the brow line, wider than the head, pulled down to one side"""
     cx, cy, w, d, ez, top = head_frame(H)
-    z0 = ez + .42
-    prof = [(1.0, z0), (1.12, z0 + .04), (1.28, z0 + .12), (1.24, z0 + .20), (1.0, z0 + .25), (.5, z0 + .27), (0, z0 + .27)]
-    ob = lathe('beret', prof, cloth, rx=w + .06, ry=d + .06, cy=cy, tilt=tilt, seg=72)
+    zb = ez + .34; Hh = top - zb + .06
+    prof = []
+    for t in np.linspace(0, 1, 18):
+        r = (1.02 + .32 * math.sin(math.pi * min(1, t * 1.12) ** .9)) * math.sqrt(max(0.0, 1 - t ** 3.6))
+        prof.append((r, zb - .03 + t * Hh))
+    ob = lathe('beret', prof, cloth, rx=w + .07, ry=d + .10, cy=cy, tilt=tilt * .5, seg=72)
     return [ob]
 
 def turban(H, cloth, rng, layers=5, big=1.0):
@@ -185,25 +189,32 @@ def turban(H, cloth, rng, layers=5, big=1.0):
     return obs
 
 def ghutra(H, cloth, agal, rng, flap=1.0):
+    """headcloth draped over the skull (front hem on the forehead line), falling in folds past the ears onto the shoulders and down the back;
+    black agal cord ring sits on top."""
     cx, cy, w, d, ez, top = head_frame(H); obs = []
-    zb = ez + .26
-    Hh = top + .10 - zb
-    prof = [(1.0 + .07 * math.sin(math.pi * min(1, t / .55)) * (t < .55) + .07 * (t >= .55) * math.cos((t - .55) / .45 * 1.2), zb + t * Hh) for t in np.linspace(0, 1, 14)]
-    prof = [(max(0., (1.07 * math.sqrt(max(0, 1 - (t / 1.0) ** 2.6)) if t > .3 else 1.0 + .07 * t / .3)), zb + t * Hh) for t in np.linspace(0, 1, 16)]
-    obs.append(lathe('dome', prof, cloth, rx=w + .10, ry=d + .10, cy=cy, seg=72, noise=.02, rng=rng))
-    obs[-1].modifiers.new('sol', 'SOLIDIFY').thickness = .03
-    obs.append(lathe('agal', [(1.0, zb + .50 * Hh), (1.08, zb + .52 * Hh), (1.10, zb + .58 * Hh), (1.08, zb + .64 * Hh), (1.0, zb + .66 * Hh)], agal, rx=w + .15, ry=d + .15, cy=cy, seg=72))
-    for sx in (-1, 1):
-        k = 14; m = 8; V = []; F = []
-        for i in range(k + 1):
-            t = i / k
-            x = sx * (w + .08 + .45 * t ** 1.3 + .05 * math.sin(t * 5)); z = (zb + .1) * (1 - t) + (H.chinY - .95) * t
-            for j in range(m + 1):
-                u = j / m; y = cy - .05 + .75 * u - .35 * t * u + .06 * math.sin(u * 5 + t * 6 + sx)
-                V.append([x + sx * .05 * math.sin(u * 9 + t * 3) * t, y, z])
-        for i in range(k):
-            for j in range(m): a = i * (m + 1) + j; F.append([a, a + 1, a + m + 2, a + m + 1])
-        ob = _obj('flap', V, F, cloth); ob.modifiers.new('sol', 'SOLIDIFY').thickness = .035; obs.append(ob)
+    zf = ez + .50; th_ = top + .10; zlow = H.chinY - .5; ph0 = math.radians(52)
+    ss = lambda x: (lambda t: t * t * (3 - 2 * t))(min(1, max(0, x)))
+    nphi = 96; nt = 30; V = []; F = []
+    for i in range(nt + 1):
+        t = i / nt
+        for j in range(nphi + 1):
+            ph = 2 * math.pi * j / nphi; dd = min(ph, 2 * math.pi - ph)      # angle from the front
+            hem = zf + (zlow - zf) * ss((dd - ph0 * .55) / (ph0 * .75))
+            z = th_ + (hem - th_) * t
+            u = (th_ - z) / (th_ - zf)
+            rr = math.sqrt(max(0.0, 1 - (1 - min(u, 1)) ** 2.2)) if u < 1 else 1.0
+            q = max(0.0, (th_ - z) - (th_ - zf)) / max(.1, (th_ - zlow) - (th_ - zf))
+            grow_ = (.04 + .70 * q ** 1.25) * (.5 + .5 * ss(dd / math.radians(100)))
+            fold = (.085 * math.sin(ph * 6 + q * 3.0) + .035 * math.sin(ph * 11 + 1.3 + q * 4)) * q ** .8
+            rx = (w + .09) * rr + grow_ + fold; ry = (d + .09) * rr + grow_ * .85 + fold
+            V.append([cx - rx * math.sin(ph), cy - ry * math.cos(ph), z + .02 * math.sin(ph * 5 + t * 9) * q])
+    for i in range(nt):
+        for j in range(nphi):
+            a = i * (nphi + 1) + j; F.append([a, a + 1, a + nphi + 2, a + nphi + 1])
+    ob = _obj('headcloth', V, F, cloth); w_ = ob.modifiers.new('weld', 'WELD'); w_.merge_threshold = .002; ss_ = ob.modifiers.new('sub', 'SUBSURF'); ss_.levels = 1; ss_.render_levels = 2; s_ = ob.modifiers.new('sol', 'SOLIDIFY'); s_.thickness = .03; obs.append(ob)
+    za = ez + .66
+    for k, dz in enumerate((0, .08)):
+        obs.append(lathe('agal%d' % k, [(1.0, za + dz - .035), (1.05, za + dz - .02), (1.06, za + dz + .02), (1.0, za + dz + .035)], agal, rx=w + .16, ry=d + .16, cy=cy, seg=72, tilt=.10))
     return obs
 
 def epaulettes(H, mat_board, mat_gold, rank=3):
@@ -242,3 +253,32 @@ def lapels(H, mat, off=.115):
             for i, q in enumerate(P): sp.points[i].co = (*q, 1)
             ob = bpy.data.objects.new('lapel', cu); bpy.context.collection.objects.link(ob); cu.materials.append(mat); out.append(ob)
     return out
+
+def ribbons(H, mat_list, rows=3, cols=4):
+    """service ribbons + a small medal bar on the wearer's left chest (our right of image), raycast onto the body and lifted over the jacket"""
+    from mathutils import Vector
+    from strands import Surf
+    S = H._S if hasattr(H, '_S') else Surf(H); H._S = S; obs = []
+    zt = H.chinY - .98
+    for r in range(rows):
+        for c in range(cols):
+            x = (.78 + c * .125); z = zt - r * .05
+            p, n = S.ray(x, z)
+            if p is None: continue
+            q = p + n * .135
+            bpy.ops.mesh.primitive_cube_add(size=1, location=tuple(q)); e = bpy.context.active_object
+            e.scale = (.115, .018, .042); e.rotation_euler = Vector(n).to_track_quat('Y', 'Z').to_euler()
+            e.data.materials.append(mat_list[(r * 3 + c * 5) % len(mat_list)]); obs.append(e)
+    return obs
+
+def collar_tabs(H, mat):
+    from mathutils import Vector
+    from strands import Surf
+    S = H._S if hasattr(H, '_S') else Surf(H); H._S = S; obs = []
+    for sx in (-1, 1):
+        p, n = S.ray(sx * .62, H.chinY - .62)
+        if p is None: continue
+        q = p + n * .15
+        bpy.ops.mesh.primitive_cube_add(size=1, location=tuple(q)); e = bpy.context.active_object
+        e.scale = (.20, .03, .085); e.rotation_euler = Vector(n).to_track_quat('Y', 'Z').to_euler(); e.data.materials.append(mat); obs.append(e)
+    return obs

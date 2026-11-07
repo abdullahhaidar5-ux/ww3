@@ -7,7 +7,7 @@ P = {p['id']: p for p in json.load(open(src))}; ids = [l.strip() for l in open(i
 F = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf', 15); F2 = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 12)
 cols = 8; tw, th = 252, 315; lab = 52; W = cols * tw + 20; rows = (len(ids) + cols - 1) // cols
 S = Image.new('RGB', (W, rows * (th + lab) + 70), (18, 16, 14)); dr = ImageDraw.Draw(S)
-dr.text((14, 12), 'WORLD WAR 3 - leaders, generals and cabinet (round 2: MakeHuman CC0 heads, Blender-rendered, painted)', font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf', 20), fill=(236, 210, 140))
+dr.text((14, 12), 'WORLD WAR 3 - leaders, generals and cabinet (round 3: MakeHuman heads, skins and suits, Blender-rendered, painted)', font=ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf', 20), fill=(236, 210, 140))
 dr.text((14, 40), 'All people fictional. Iran: ONE Supreme Ayatollah; RS, DW and RV each have their own Imam (sub-leaders).', font=F2, fill=(200, 190, 170))
 for i, k in enumerate(ids):
     p = P[k]; fn = re.sub(r'[^A-Za-z0-9_-]', '_', k)

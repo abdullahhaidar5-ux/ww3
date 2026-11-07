@@ -40,17 +40,21 @@ def make(p):
     def M(path, v): mods[path] = mods.get(path, 0) + v
     for nm in ('head-oval', 'head-round', 'head-rectangular', 'head-square', 'head-triangular', 'head-diamond'):
         if R.random() < .3: M('head/' + nm, float(R.random() * .6))
-    M('head/head-scale-horiz-incr', j(.4)); M('nose/nose-scale-vert-incr', j(.35)); M('nose/nose-scale-horiz-incr', j(.6)); M('nose/nose-point-up', j(.4)); M('nose/nose-hump-incr', max(0, j(.8)))
-    M('chin/chin-prominent-incr', j(.6)); M('chin/chin-width-incr', j(.6)); M('cheek/l-cheek-bones-incr', j(.5)); M('cheek/r-cheek-bones-incr', mods['cheek/l-cheek-bones-incr'])
+    M('head/head-scale-horiz-incr', j(.4) - (.5 if race.get('asian', 0) > .5 else 0)); M('head/head-fat-incr', -.35 if race.get('asian', 0) > .5 else 0); M('nose/nose-scale-vert-incr', j(.35)); M('nose/nose-scale-horiz-incr', j(.6)); M('nose/nose-point-up', j(.4)); M('nose/nose-hump-incr', max(0, j(.8)))
+    M('chin/chin-prominent-incr', j(.6)); M('chin/chin-width-incr', j(.6)); M('cheek/l-cheek-bones-incr', j(.5)); M('cheek/r-cheek-bones-incr', mods['cheek/l-cheek-bones-incr'] + j(.12))
     M('chin/chin-height-incr', j(.7)); M('chin/chin-cleft-incr', max(0, j(.8))); M('nose/nose-flaring-incr', j(.7)); M('nose/nose-scale-depth-incr', j(.6)); M('nose/nose-curve-convex', max(0, j(.7)))
-    ee = j(.3); M('eyes/l-eye-height1-incr', ee); M('eyes/r-eye-height1-incr', ee); M('eyes/l-eye-bag-incr', max(0, j(.8))); M('eyes/r-eye-bag-incr', mods['eyes/l-eye-bag-incr']); M('eyes/l-eye-push1-in', j(.4)); M('eyes/r-eye-push1-in', mods['eyes/l-eye-push1-in'])
-    M('forehead/forehead-nubian-incr', max(0, j(.8))); M('forehead/forehead-temple-incr', j(.5)); M('head/head-fat-incr', j(.4)); M('cheek/l-cheek-volume-incr', j(.6)); M('cheek/r-cheek-volume-incr', mods['cheek/l-cheek-volume-incr']); M('mouth/mouth-cupidsbow-incr', j(.5))
-    M('mouth/mouth-scale-horiz-incr', j(.5)); M('mouth/mouth-lowerlip-volume-incr', j(.5)); M('forehead/forehead-scale-vert-incr', j(.5)); M('eyebrows/eyebrows-trans-up', 0)
-    M('ears/l-ear-scale-incr', j(.4)); M('ears/r-ear-scale-incr', mods['ears/l-ear-scale-incr'])
+    ee = j(.3); M('eyes/l-eye-height1-incr', ee); M('eyes/r-eye-height1-incr', ee); M('eyes/l-eye-bag-incr', max(0, j(.8))); M('eyes/r-eye-bag-incr', mods['eyes/l-eye-bag-incr'] + j(.12)); M('eyes/l-eye-push1-in', j(.4)); M('eyes/r-eye-push1-in', mods['eyes/l-eye-push1-in'] + j(.12))
+    M('forehead/forehead-nubian-incr', max(0, j(.8))); M('forehead/forehead-temple-incr', j(.5)); M('head/head-fat-incr', j(.4)); M('cheek/l-cheek-volume-incr', j(.6)); M('cheek/r-cheek-volume-incr', mods['cheek/l-cheek-volume-incr'] + j(.12)); M('mouth/mouth-cupidsbow-incr', j(.25))
+    M('mouth/mouth-scale-horiz-incr', j(.5)); M('mouth/mouth-lowerlip-volume-incr', j(.2)); M('forehead/forehead-scale-vert-incr', j(.5)); M('eyebrows/eyebrows-trans-up', 0)
+    M('ears/l-ear-scale-incr', j(.4)); M('ears/r-ear-scale-incr', mods['ears/l-ear-scale-incr'] + j(.12))
     for k in list(mods):                       # MakeHuman modifier pairs are separate decr/incr targets: split sign
         if k.endswith('-incr') and mods[k] < 0 and not k.startswith('eyes/l-eye-bag'): mods[k.replace('-incr', '-decr')] = -mods[k]; mods[k] = 0
         if k == 'nose/nose-point-up' and mods[k] < 0: mods['nose/nose-point-down'] = -mods[k]; mods[k] = 0
+    for k_ in ('eyes/l-eye-height1-incr', 'eyes/r-eye-height1-incr', 'eyes/l-eye-corner1-up', 'eyes/r-eye-corner1-up'): M(k_, j(.12))
     mods.pop('eyebrows/eyebrows-trans-up', None)
+    if sx < .5:   # feminine face/neck cues
+        for k_, v_ in (('chin/chin-height-decr', .35), ('chin/chin-width-decr', .3), ('mouth/mouth-lowerlip-volume-incr', .35), ('mouth/mouth-upperlip-volume-incr', .2), ('eyes/l-eye-scale-incr', .5), ('eyes/r-eye-scale-incr', .5), ('neck/neck-scale-horiz-decr', .6), ('head/head-fat-decr', .3), ('nose/nose-scale-horiz-decr', .4), ('cheek/l-cheek-bones-incr', .4), ('cheek/r-cheek-bones-incr', .4), ('forehead/forehead-nubian-decr', .3)): mods[k_] = mods.get(k_, 0) + v_
+        for k_ in ('chin/chin-prominent-incr', 'chin/chin-prominent-decr'): mods.pop(k_, None)
     weight = float(np.clip(.5 + (L['build'] - .5) * .5 + (.06 if age > 55 else 0), .2, .85)); muscle = float(np.clip(.45 + (L['build'] - .5) * .2, .25, .7))
     body = dict(gender=sx, age=float(age), race=race, weight=weight, muscle=muscle, mods=mods)
     # hair
@@ -61,17 +65,17 @@ def make(p):
         sty = pick(R, {'crop': .35, 'side': .3, 'back': .2, 'bald': .15 if age > 50 else .04})
         afro = cul in ('ng', 'za', 'et') or (cul in ('ye', 'ur') and R.random() < .1)
         hair = dict(style=sty, col=hc, gray=gray)
-        if sty == 'crop': hair.update(len_top=.10, len_side=.045, comb=(0, -1, .2), lift=.5, grav=.1, count=24000, clump=.12)
-        elif sty == 'side': hair.update(len_top=.22, len_side=.06, comb=(0, -.4, 0), part=float(R.choice([-.45, .45])), part_amt=.8, lift=.4, grav=.25, count=26000, clump=.2)
-        elif sty == 'back': hair.update(len_top=.32, len_side=.07, comb=(0, 1, .3), lift=.3, grav=.28, count=26000, clump=.2)
+        if sty == 'crop': hair.update(len_top=.10, len_side=.045, comb=(0, -1, .2), lift=.5, grav=.1, count=90000, clump=.12, r=.0068)
+        elif sty == 'side': hair.update(len_top=.22, len_side=.06, comb=(0, -.4, 0), part=float(R.choice([-.45, .45])), part_amt=.4, lift=.4, grav=.25, count=90000, clump=.2, r=.0068)
+        elif sty == 'back': hair.update(len_top=.32, len_side=.07, comb=(0, 1, .3), lift=.3, grav=.28, count=90000, clump=.2, r=.0068)
         if afro and sty != 'bald': hair = dict(style='afro', col=hc, gray=gray * .8, len_top=.10, len_side=.04, comb=(0, 0, 1), lift=.9, grav=0, curl=.9, count=34000, clump=.05)
     else:
-        hair = dict(style='bob', col=hc, gray=gray, len_top=.5, len_side=.5, fade=.3, comb=(0, .15, -.2), part=float(R.choice([-.3, .3])), part_amt=.5, lift=.35, grav=.7, wave=.35, count=34000, clump=.3)
+        hair = dict(proxy=['elvs_hazel_hair', 'elvs_50s_updo', 'elvs_hazel_hair'][int(R.integers(0, 3))], style='bob', col=hc, gray=gray, len_top=.5, len_side=.5, fade=.3, comb=(0, .15, -.2), part=float(R.choice([-.3, .3])), part_amt=.5, lift=.35, grav=.7, wave=.35, count=34000, clump=.3)
     beard = None
     if sx > .5 and R.random() < C['beard']:
         kind = pick(R, {'stubble': .25, 'short': .35, 'full': .25, 'mous': .15, 'goatee': .0})
         beard = dict(kind=kind, len={'stubble': .035, 'short': .13, 'full': .22, 'mous': .12}[kind], count=22000 if kind != 'stubble' else 26000, curl=.3, under=1.0 if kind == 'stubble' else .85)
-        if kind == 'stubble': beard['r'] = .0022; beard['lift'] = .4
+        if kind == 'stubble': beard['r'] = .0034; beard['lift'] = .75; beard['len'] = .05; beard['under'] = .9
     SUITS = [(.13, .16, .27), (.22, .22, .25), (.10, .10, .12), (.30, .22, .16), (.26, .30, .32), (.16, .20, .17)]
     cloth = dict(kind='suit', col=SUITS[int(R.integers(0, len(SUITS)))] if c not in ('KP',) else NAT[c][0], col2=(.86, .85, .82), tie=NAT.get(c, NAT['DEF'])[3] if sx > .5 else None)
     headgear = None; hat = (.9, .9, .88); extra = {}
@@ -80,21 +84,25 @@ def make(p):
         sup = ttl == 'Supreme Ayatollah'; blk = (c in ('RS', 'RV')) or (ttl == 'Hojatoleslam' and R.random() < .5)
         cloth = dict(kind='robe', col=(.1, .09, .08) if c != 'DW' else (.32, .25, .17), col2=(.88, .87, .84))
         headgear = 'turban'; hat = (.05, .05, .06) if blk else (.74, .73, .70)
-        beard = dict(kind='long' if sup else 'full', len=.5 if sup else (.3 if ttl == 'Imam' else .16), count=30000, curl=.35, under=.9)
+        beard = dict(kind='long' if sup else ('full' if R.random() < .7 else 'short'), len=(.5 if sup else (.3 if ttl == 'Imam' else .16)) * float(.7 + .6 * R.random()), count=30000, curl=float(.15 + .4 * R.random()), under=.9)
+        extra['turban_big'] = float(.88 + .3 * R.random()); extra['turban_layers'] = int(R.integers(4, 7)); extra['turban_tilt'] = float((R.random() - .5) * .14)
         if sup or ttl == 'Imam': hair['gray'] = max(hair['gray'], .8); hc = 'gray'; hair['col'] = 'gray'
         age_boost = 0
     elif c in GULF and role in ('leader', 'heir'):
         cloth = dict(kind='robe', col=(.8, .79, .75), col2=(.8, .79, .75)); headgear = 'ghutra'; hat = (.78, .78, .76) if c != 'JO' else (.76, .72, .66)
         if beard is None: beard = dict(kind='short', len=.12, count=22000, curl=.2, under=.8)
     elif c == 'KP':
-        cloth = dict(kind='tunic', col=nat[0] if role != 'general' else nat[1])
-        if role in ('leader', 'heir'): hair.update(style='back', len_top=.14, comb=(0, 1, .2)); beard = None; extra['rimless'] = 1
+        cloth = dict(kind='tunic', col=nat[0] if role != 'general' else nat[1], tie=(.12, .1, .08))
+        if role in ('leader', 'heir'): hair.update(style='back', len_top=.14, len_side=.06, comb=(0, 1, .2), lift=.3, grav=.25, count=90000, clump=.15, r=.0068); beard = None; extra['rimless'] = 1
     elif role == 'general':
-        cloth = dict(kind='tunic', col=nat[1], col2=(.8, .8, .75)); headgear = pick(R, {'cap_peaked': .6, 'beret': .4}); hat = nat[2] if headgear == 'cap_peaked' else pick(R, {'x': 1}) and (.28, .08, .1) if c in ('IR',) else (.12, .12, .1)
+        cloth = dict(kind='tunic', col=nat[1], col2=(.8, .8, .75), tie=(.1, .09, .07)); headgear = pick(R, {'cap_peaked': .6, 'beret': .4}); hat = nat[2] if headgear == 'cap_peaked' else pick(R, {'x': 1}) and (.28, .08, .1) if c in ('IR',) else (.12, .12, .1)
         if c in ('IR',) and headgear == 'beret': hat = (.08, .1, .07)
         extra['epaulettes'] = 3 if age > 50 else 2
     if sx < .5: cloth['tie'] = None
-    iris = {'dark': (.16, .09, .045), 'eu': {0: (.20, .30, .50), 1: (.30, .24, .12), 2: (.25, .38, .25), 3: (.35, .20, .08)}[int(R.integers(0, 4))], 'mix': (.22, .13, .06)}[C['iris']]
+    # pack garments: male suit / service-dress jacket (retinted), female suit
+    if cloth['kind'] in ('suit', 'tunic') and not cleric:
+        cloth['suitp'] = 'toigo_female_suit' if sx < .5 else (['toigo_male_suit_tie_and_jacket', 'toigo_male_double-breasted_suit', 'toigo_male_suit_3', 'toigo_male_suit_tie_and_jacket'][int(R.integers(0, 4))] if cloth['kind'] == 'suit' else 'toigo_male_suit_tie_and_jacket')
+    iris = {'dark': (.24, .13, .06), 'eu': {0: (.20, .30, .50), 1: (.30, .24, .12), 2: (.25, .38, .25), 3: (.35, .20, .08)}[int(R.integers(0, 4))], 'mix': (.27, .16, .08)}[C['iris']]
     yellow = .3 if cul in ('ko', 'zh', 'ja', 'vi', 'th', 'id', 'ph', 'kz') else (.1 if cul in ('ru', 'uk', 'pl', 'de', 'se', 'en', 'fr') else 0.)
     return dict(id=p['id'], yellow=yellow, seed=int(L['h'] % 99991), tone=float(tone), iris=iris, body=body, hair=hair, beard=beard, cloth=cloth, headgear=headgear, hat=hat,
                 brow=1.0 + (.3 if sx > .5 else -.3), yaw=float(R.choice([-30, -24, -18, 18, 24, 30])), **extra, nm=p['ttl'] + ' ' + p['nm'] if p.get('ttl') else p['nm'], c=c, role=role)
