@@ -421,8 +421,10 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 
 - laneF 2026-11-07: RF1 hidden infantry in cover (scouts/drones/helis detect 1.7x), RF2 crew stun on hard flank hits, RF3 artillery spotting round + warning. Chain: enemy sees fewer troops -> scouts/drones matter; flank shots disable guns; shells give a reaction window; counter-play = scout, flank, move out. Smoke PASS.
 - laneC 2026-11-07 iteration 14: grand-map chimney smoke is light fading wisps instead of dark specks (src/13e-grand3d.js); visual only, no world state.
+- laneC 2026-11-07 17:xx: grand-map army plinths in nation colour + less washed-out uniforms (13e-grand3d g3FigGeo/g3Uniform); shots laneC/n0→n2.
 - realmap 2026-11-07: grand map = the real world. Natural Earth admin-0/1 in one Equal Earth projection (true sizes; Brazil/Russia/Canada proportional); provinces = real admin-1 regions (797, finest in Levant/Iraq/Gulf), 98 new real-country minors, full 2400x1200 province raster replaces Voronoi, terrain textures re-baked, 3D towns/armies scale with real province size; old names kept (orch/realmap/MAPPING.md), old saves refused by map signature. Shots orch/shots/realmap/.
 
 - laneA 2026-11-07: A2b slice 4 - online campaign chip shows which battle the world is waiting on, for host and every friend (src/13zn-gnet.js); gate: grandlive/gnettest green; controls/decisions/smooth-mp reds were other lanes' (gnuke wording, leader height).
 
 - laneC 2026-11-07 17:xx: C-LABELS — collision-culled grand-map labels (nation names then banners by priority); shots orch/shots/laneC/l0,l1.
+- laneE DE-BLOCK slice 6: macro dust/dark-soil ground blotches and dry scrub clumps round the base compounds so the sand stops reading as one flat tone (src/11-models.js groundKit, view only); local smoke timed out in this slow sandbox (baseline too), CI gates decide; no new shot

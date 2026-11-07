@@ -338,7 +338,7 @@ function g3Dispose(){if(G3.raf){cancelAnimationFrame(G3.raf);G3.raf=0;}if(G3.sc)
   if(G3.R){try{G3.R.dispose();G3.R.forceContextLoss();}catch(e){}}G3.R=null;G3.sc=null;G3.cam=null;G3.cv=null;G3.arm=new Map();G3.matLit=null;G3.tOv=null;}
 function g3Resize(){if(!G3.R||!GV.cv)return;const w=GV.w||GV.cv.clientWidth||800,h=GV.h||GV.cv.clientHeight||500;G3.R.setSize(w,h,false);if(G3.LU){const b=G3.R.getDrawingBufferSize(new THREE.Vector2());G3.LU.uRes.value.copy(b);G3.LU.uPx.value=G3.R.getPixelRatio();}GV.cv.style.width=w+'px';GV.cv.style.height=h+'px';G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.moved=true;}
 // ---- armies: one soldier (the general) with a big national flag; a ship with a flag for armies at sea
-function g3Uniform(o){const c=grNatRgb(o);return [Math.min(1,(c[0]*.5+90)/255),Math.min(1,(c[1]*.5+88)/255),Math.min(1,(c[2]*.45+66)/255)];}
+function g3Uniform(o){const c=grNatRgb(o);return [Math.min(1,(c[0]*.72+44)/255),Math.min(1,(c[1]*.72+42)/255),Math.min(1,(c[2]*.68+34)/255)];}
 function g3Soldier(u,dk,sk,ox,oz,sc,flag){const cyl=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s),M=(x,y,z,sx,sy,sz,rx,ry,rz)=>g3M(ox+x*sc,y*sc,oz+z*sc,(sx||1)*sc,(sy||1)*sc,(sz||1)*sc,rx||0,ry||0,rz||0),bk=[.2,.19,.17];
   const L=[[cyl(.34,.3,1.7,6),M(-.42,.85,0),dk],[cyl(.34,.3,1.7,6),M(.42,.85,0),dk],[cyl(.4,.38,.3,6),M(-.42,.15,.1),[.15,.12,.1]],[cyl(.4,.38,.3,6),M(.42,.15,.1),[.15,.12,.1]],
     [cyl(.85,.65,1.8,8),M(0,2.6,0),u],[cyl(.9,.9,.28,8),M(0,1.8,0),bk],[cyl(.15,.15,.3,6),M(0,3.6,0),sk],[new THREE.SphereGeometry(.5,8,6),M(0,4.05,0),sk],[new THREE.SphereGeometry(.6,8,5,0,Math.PI*2,0,Math.PI/2),M(0,4.14,0),dk],
@@ -349,6 +349,8 @@ function g3FigGeo(o,tier){tier=tier||0;const key='fig'+o+'_'+tier;G3.figs=G3.fig
   let L=g3Soldier(u,dk,sk,0,0,1,true);
   if(tier>=1)L=L.concat(g3Soldier(u,dk,sk,-3.4,-2.4,.82),g3Soldier(u,dk,sk,3.6,-2.2,.82));
   if(tier>=2)L=L.concat(g3Soldier(u,dk,sk,-6.4,-4.8,.78),g3Soldier(u,dk,sk,6.6,-4.6,.78),g3Soldier(u,dk,sk,0,-5.2,.8));
+  {const c=grNatRgb(o),pc=[c[0]/255*.55,c[1]/255*.55,c[2]/255*.55],r=tier>=2?6.2:tier>=1?4.6:2.3; /* plinth: dark rim + nation-colour disc so each army sits on a small base */
+   L.unshift([new THREE.CylinderGeometry(r+.5,r+.7,.5,20),g3M(0,.05,tier>=1?-2.4:0),[.12,.11,.1]],[new THREE.CylinderGeometry(r,r+.2,.45,20),g3M(0,.1,tier>=1?-2.4:0),pc]);}
   return G3.figs[key]=g3Merge(L);}
 function g3ShipGeo(){if(G3.ship)return G3.ship;const sh=new THREE.Shape();[[-5,-1.5],[3.5,-1.6],[5.8,0],[3.5,1.6],[-5,1.5]].forEach((q,i)=>i?sh.lineTo(q[0],q[1]):sh.moveTo(q[0],q[1]));
   const hull=new THREE.ExtrudeGeometry(sh,{depth:1.3,bevelEnabled:false}).rotateX(-Math.PI/2),cyl=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s),gr=[.5,.54,.58],dg=[.38,.42,.46];

@@ -17817,7 +17817,7 @@ function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',
   bx(2*R,.5,.3,0,4.8,-R+.7,pl);}
 // DE-BLOCK slice 3: tyre tracks out of the gate, scattered rocks and debris round the base (view only, shared geometry/material)
 let BKTRK=null,BKROCK=null;
-let BKAO=null,BKOIL=null;
+let BKAO=null,BKOIL=null,BKBLO=null,BKSCR=null;
 function groundKit(e,o,P){const h=e.size/2,R=h+(e.kind==='hq'?30:22);
   if(!BKTRK){const c=document.createElement('canvas');c.width=64;c.height=256;const x=c.getContext('2d');x.clearRect(0,0,64,256);for(const cx0 of [14,50]){for(let y=0;y<256;y+=5){x.fillStyle='rgba(52,40,26,'+(.38+Math.random()*.22)+')';x.fillRect(cx0-7,y,14,3);}x.fillStyle='rgba(60,46,30,.28)';x.fillRect(cx0-7,0,14,256);}
     const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;BKTRK=new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,fog:true});}
@@ -17837,6 +17837,12 @@ function groundKit(e,o,P){const h=e.size/2,R=h+(e.kind==='hq'?30:22);
     const t2=new THREE.CanvasTexture(c2);t2.colorSpace=THREE.SRGBColorSpace;BKOIL=new THREE.MeshBasicMaterial({map:t2,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3,fog:true});}
   {const ao=new THREE.Mesh(new THREE.PlaneGeometry(R*2.7,R*2.7),BKAO);ao.rotation.x=-Math.PI/2;ao.position.y=.3;ao.renderOrder=1;G3.add(ao);
    for(let i=0;i<5;i++){const s=3+rn(i+90)*5,m=new THREE.Mesh(new THREE.PlaneGeometry(s,s*(.7+rn(i+95)*.6)),BKOIL);m.rotation.x=-Math.PI/2;m.rotation.z=rn(i+99)*6.3;const a=rn(i+101)*6.283,d=h*(.9+rn(i+105)*.9);m.position.set(Math.cos(a)*d,.38,Math.abs(Math.sin(a))*d+4);m.renderOrder=3;G3.add(m);}}
+  // DE-BLOCK slice 6: macro ground blotches (dust/dark soil) + dry scrub clumps so the sand is not one flat tone (view only)
+  if(!BKBLO){const mk=(rgb)=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,2,32,32,32);g.addColorStop(0,'rgba('+rgb+',.34)');g.addColorStop(.6,'rgba('+rgb+',.16)');g.addColorStop(1,'rgba('+rgb+',0)');x.fillStyle=g;x.fillRect(0,0,64,64);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1,fog:true});};
+    BKBLO=[mk('196,170,120'),mk('70,54,36'),mk('150,138,100')];
+    const g=new THREE.IcosahedronGeometry(1,0),pa=g.attributes.position;for(let i=0;i<pa.count;i++)pa.setY(pa.getY(i)*.55);g.computeVertexNormals();BKSCR={g,m:[new THREE.MeshStandardMaterial({color:'#6b6a3c',roughness:1}),new THREE.MeshStandardMaterial({color:'#8a7a47',roughness:1}),new THREE.MeshStandardMaterial({color:'#5a5530',roughness:1})]};}
+  for(let i=0;i<9;i++){const s=(14+rn(i+120)*26),m=new THREE.Mesh(new THREE.PlaneGeometry(s,s*(.6+rn(i+125)*.7)),BKBLO[i%3]);m.rotation.x=-Math.PI/2;m.rotation.z=rn(i+130)*6.3;const a=rn(i+135)*6.283,d=R*(.5+rn(i+140)*1.5);m.position.set(Math.cos(a)*d,.31,Math.sin(a)*d);m.renderOrder=1;G3.add(m);}
+  for(let i=0;i<8;i++){const a=rn(i+150)*6.283,d=R+8+rn(i+155)*45,cx=Math.cos(a)*d,cz=Math.sin(a)*d;if(Math.abs(cx)<14&&cz>0)continue;for(let k=0;k<3+(rn(i+160)*3|0);k++){const sc=.9+rn(i*7+k)*1.5,m=new THREE.Mesh(BKSCR.g,BKSCR.m[(i+k)%3]);m.scale.set(sc*1.3,sc,sc*1.3);m.position.set(cx+(rn(i*5+k+170)-.5)*5,sc*.3,cz+(rn(i*5+k+180)-.5)*5);m.rotation.y=rn(i+k)*6.3;m.castShadow=true;G3.add(m);}}
   // debris by the wall: broken blocks, tyres, scrap sheets
   for(let i=0;i<7;i++){const a=rn(i+70)*6.283,d=R+3+rn(i+80)*10,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<12&&z>0)continue;const m=new THREE.Mesh(new THREE.BoxGeometry(1.2+rn(i)*2,.5+rn(i+5)*.9,1+rn(i+9)*2),BKROCK.m[(i+1)%3]);m.position.set(x,.35,z);m.rotation.set((rn(i+11)-.5)*.5,rn(i+12)*6.3,(rn(i+13)-.5)*.5);m.castShadow=m.receiveShadow=true;G3.add(m);}}
 function decorateBld(e,o){if(!MODELS.ready)return;const h=e.size/2;const P=new THREE.Group();o.add(P);
@@ -20829,7 +20835,7 @@ function g3Dispose(){if(G3.raf){cancelAnimationFrame(G3.raf);G3.raf=0;}if(G3.sc)
   if(G3.R){try{G3.R.dispose();G3.R.forceContextLoss();}catch(e){}}G3.R=null;G3.sc=null;G3.cam=null;G3.cv=null;G3.arm=new Map();G3.matLit=null;G3.tOv=null;}
 function g3Resize(){if(!G3.R||!GV.cv)return;const w=GV.w||GV.cv.clientWidth||800,h=GV.h||GV.cv.clientHeight||500;G3.R.setSize(w,h,false);if(G3.LU){const b=G3.R.getDrawingBufferSize(new THREE.Vector2());G3.LU.uRes.value.copy(b);G3.LU.uPx.value=G3.R.getPixelRatio();}GV.cv.style.width=w+'px';GV.cv.style.height=h+'px';G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.moved=true;}
 // ---- armies: one soldier (the general) with a big national flag; a ship with a flag for armies at sea
-function g3Uniform(o){const c=grNatRgb(o);return [Math.min(1,(c[0]*.5+90)/255),Math.min(1,(c[1]*.5+88)/255),Math.min(1,(c[2]*.45+66)/255)];}
+function g3Uniform(o){const c=grNatRgb(o);return [Math.min(1,(c[0]*.72+44)/255),Math.min(1,(c[1]*.72+42)/255),Math.min(1,(c[2]*.68+34)/255)];}
 function g3Soldier(u,dk,sk,ox,oz,sc,flag){const cyl=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s),M=(x,y,z,sx,sy,sz,rx,ry,rz)=>g3M(ox+x*sc,y*sc,oz+z*sc,(sx||1)*sc,(sy||1)*sc,(sz||1)*sc,rx||0,ry||0,rz||0),bk=[.2,.19,.17];
   const L=[[cyl(.34,.3,1.7,6),M(-.42,.85,0),dk],[cyl(.34,.3,1.7,6),M(.42,.85,0),dk],[cyl(.4,.38,.3,6),M(-.42,.15,.1),[.15,.12,.1]],[cyl(.4,.38,.3,6),M(.42,.15,.1),[.15,.12,.1]],
     [cyl(.85,.65,1.8,8),M(0,2.6,0),u],[cyl(.9,.9,.28,8),M(0,1.8,0),bk],[cyl(.15,.15,.3,6),M(0,3.6,0),sk],[new THREE.SphereGeometry(.5,8,6),M(0,4.05,0),sk],[new THREE.SphereGeometry(.6,8,5,0,Math.PI*2,0,Math.PI/2),M(0,4.14,0),dk],
@@ -20840,6 +20846,8 @@ function g3FigGeo(o,tier){tier=tier||0;const key='fig'+o+'_'+tier;G3.figs=G3.fig
   let L=g3Soldier(u,dk,sk,0,0,1,true);
   if(tier>=1)L=L.concat(g3Soldier(u,dk,sk,-3.4,-2.4,.82),g3Soldier(u,dk,sk,3.6,-2.2,.82));
   if(tier>=2)L=L.concat(g3Soldier(u,dk,sk,-6.4,-4.8,.78),g3Soldier(u,dk,sk,6.6,-4.6,.78),g3Soldier(u,dk,sk,0,-5.2,.8));
+  {const c=grNatRgb(o),pc=[c[0]/255*.55,c[1]/255*.55,c[2]/255*.55],r=tier>=2?6.2:tier>=1?4.6:2.3; /* plinth: dark rim + nation-colour disc so each army sits on a small base */
+   L.unshift([new THREE.CylinderGeometry(r+.5,r+.7,.5,20),g3M(0,.05,tier>=1?-2.4:0),[.12,.11,.1]],[new THREE.CylinderGeometry(r,r+.2,.45,20),g3M(0,.1,tier>=1?-2.4:0),pc]);}
   return G3.figs[key]=g3Merge(L);}
 function g3ShipGeo(){if(G3.ship)return G3.ship;const sh=new THREE.Shape();[[-5,-1.5],[3.5,-1.6],[5.8,0],[3.5,1.6],[-5,1.5]].forEach((q,i)=>i?sh.lineTo(q[0],q[1]):sh.moveTo(q[0],q[1]));
   const hull=new THREE.ExtrudeGeometry(sh,{depth:1.3,bevelEnabled:false}).rotateX(-Math.PI/2),cyl=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s),gr=[.5,.54,.58],dg=[.38,.42,.46];

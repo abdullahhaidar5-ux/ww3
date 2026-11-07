@@ -65,3 +65,5 @@ Life 3.5 -> 3.7 / readability 4: chimney smoke was dark grain dirtying the Levan
 
 ## 2026-11-07 17:xx UTC — laneC iteration 15 (shots: orch/shots/laneC/l0 before, l1 after)
 Readability 4 -> 4.3: C-LABELS — grand-map nation names and province banners now share one collision list (nation names biggest first, then banners by priority: your capital/selected, capitals, war-goal/big towns), so the Middle East no longer shows piled-up labels at world/region zoom. Visual only. Others unchanged. Next: army plates merge per province, C0 UI kit.
+## 2026-11-07 17:xx UTC — laneC iteration 15 (shots: orch/shots/laneC/n0 before, n2 after)
+Objects 4 -> 4.2: grand-map armies stand on a small dark-rimmed nation-colour plinth, and uniforms keep more of the nation colour (were washed grey), so every army reads by owner at a glance. Visual only. Others unchanged (geography 4, colour 4, light 3.5-4, water 3.5, life 3.7, readability 4). Local smoke/smooth timed out on the slow sandbox; grandtest ran clean.
