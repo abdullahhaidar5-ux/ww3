@@ -53,3 +53,6 @@ Objects 4 -> 4 (close-up fix): oil fields drew black cones (read as spikes in th
 
 ## 2026-11-07 11:xx UTC — laneC iteration 12 (shots: orch/shots/laneC/z0 before, z4 after)
 Light 3.5 -> 4 (est. 3.8): grand map gets a studio grade drawn inside the canvas (corner vignette + warm-top/cool-bottom wash, one extra fullscreen draw, HUD stays crisp). Others unchanged (geography 4, colour 4, water 3.5, objects 4, life 3.5, readability 4). Next lowest: life 3.5 (animated flags/city lights at night), then C0 UI kit.
+
+## 2026-11-07 13:xx UTC — laneC iteration 13 (shots: orch/shots/laneC/k0 before, k1 after)
+Objects 4 -> 4 (est. 4.2, Abdullah's "blocky"/skyscraper complaint): towns are ~40% smaller (capital 30 buildings, main town 11, others 6), skyscraper towers only in real megacities (Tehran, Cairo, Istanbul, Tel Aviv, Riyadh, Dubai...), blue mosque domes 20% smaller and one per main town, terrain shows between towns. Others unchanged. Next: C-LOOK 1 painted terrain, army figures.
