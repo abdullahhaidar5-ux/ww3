@@ -1,0 +1,50 @@
+4.2s stale save in menu {"cont":false,"warn":true}
+22.7s map open
+26.7s march {"me":"IR","from":"Tehran","to":"Baku","foe":"AZ","ok":true,"units":37}
+31.4s fallback {"modal":true,"map":true,"G":false}
+51.2s prompt: BATTLE · CoastBakuAttackers — Iran37 units28 Basij Militia, 4 RPG Cell, 2 Karrar Tank, 1 Fateh-110 Launcher, 1
+51.8s Fight it live clicked
+64.4s {"L":true,"step":"Loading 3D models…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+66.3s {"L":true,"step":"Building the battlefield…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+68.4s {"L":true,"step":"Preparing graphics…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+136.1s {"L":true,"step":"Deploying forces…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+157.9s {"L":false,"step":"Ready","g":true,"grand":true,"t":0,"paused":false,"gs":"none","ents":67}
+159.0s {"L":false,"step":"Ready","g":true,"grand":true,"t":0.24,"paused":false,"gs":"none","ents":67}
+202.1s battle running: Generating terrain 12110, Loading 3D models 232, Building the battlefield 1626, Building the battlefield 2088, Preparing graphics 67562, Deploying forces 52, Deploying forces 12723, total 97107
+GRANDLIVE PASS
+scenario {"foe":"AZ","ok":true,"from":"Tehran","to":"Baku","units":37}
+  [page] grandlive: grandBattleStart sync 577 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":63,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 11260 ms, Loading 3D models 234 ms, Building the battlefield 1495 ms, Building the battlefield 2157 ms, Preparing graphics 32638 ms, Deploying forces 50 ms, Deploying forces 3192 ms, total 51830 ms
+live 1 56.1s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":63,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.2000000000000006,"p":false,"h":false,"fs":null}],"running":true}
+scenario {"foe":"AZ","ok":true,"from":"Tehran","to":"Baku","units":31}
+  [page] grandlive: grandBattleStart sync 719 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":58,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 11976 ms, Loading 3D models 0 ms, Building the battlefield 1 ms, Building the battlefield 1017 ms, Preparing graphics 168 ms, Deploying forces 4 ms, Deploying forces 955 ms, total 14674 ms
+live 2 18.5s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":58,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.1200799999999935,"p":false,"h":false,"fs":null}],"running":true}
+
+GRANDLIVE2 PASS
+18.8s map open
+20.1s start {"turn":1,"day":0,"date":"1 Jan 2026","spd":0,"ph":"plan","modal":false}
+22.5s after Space {"turn":1,"day":1,"date":"2 Jan 2026","spd":2,"ph":"plan","modal":false}
+33.0s month rolled {"turn":3,"day":4,"date":"5 Mar 2026","spd":5,"ph":"plan","modal":false}
+34.8s paused {"turn":3,"day":4,"date":"5 Mar 2026","spd":0,"ph":"plan","modal":false}
+34.9s march {"ok":true,"hint":"Baku: arrives ~1 Apr 2026 (1 month)"}
+36.5s slide [{"x":1220.8499997113956,"z":441.0000003196846,"f":0.15039999999998446,"day":4},{"x":1220.8499997113956,"z":441.0000003196846,"f":0.28392499999997867,"day":8}]
+59.9s battle prompt {"turn":3,"day":0,"date":"1 Apr 2026","spd":3,"ph":"resolve","modal":true}
+66.8s AI mid-month {"n":1,"same":true,"cash":true,"f0":0}
+GRANDRT FAIL
+  marching army does not slide along its road as days pass [{"x":1220.8499997113956,"z":441.0000003196846,"f":0.15039999999998446,"day":4},{"x":1220.8499997113956,"z":441.0000003196846,"f":0.28392499999997867,"day":8}]
+occ {"cost":{"zeal":660,"prof":634,"home":587,"fire":608},"eff":{"zeal":24,"prof":0,"home":18,"fire":0},"ws":{"zeal":9,"prof":8.640909090909105,"home":8,"fire":8.290909090909082},"n":{"home":6,"prof":6,"zeal":6,"fire":6},"guard":3,"panel":true,"spread":1,"aiPath":[],"aiAns":true,"aiTo":57,"det":true}
+OCC PASS
+4.9s host open, code v1w0x0
+19.8s friend joined as SA
+19.9s friend march reached host
+24.9s friend answered their own event
+38.3s month rolled on the friend's map
+38.7s friend paused the world
+68.2s friend chose Fight it live
+78.7s friend battle loaded and finished
+79.9s friend live battle settled on host: fought the battle for Basra live
+82.8s friend left, AI took over
+GNETTEST PASS
