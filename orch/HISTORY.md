@@ -414,3 +414,5 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneE DE-BLOCK slice 4c: slice 2's procedural wall textures swapped for real ambientCG CC0 Plaster001/Concrete034/CorrugatedSteel005 colour+normal tiles (credited in menu); smoke PASS; shot orch/shots/laneE/n2-phone.jpg
 - laneE RF13: dust trails now follow every moving ground vehicle (trucks, jeeps, light armour, artillery, harvesters), thicker in sandstorms, sandstorm fog tightened (far 950→720); smoke PASS
 - laneE RF15: night battles — mortar illumination flares go up automatically over a fight in view (view only, no sim effect); with the brighter night tracers already live; smoke PASS; shot orch/shots/laneE/n2-phone.jpg
+
+- laneF 2026-11-07: RF1 hidden infantry in cover (scouts/drones/helis detect 1.7x), RF2 crew stun on hard flank hits, RF3 artillery spotting round + warning. Chain: enemy sees fewer troops -> scouts/drones matter; flank shots disable guns; shells give a reaction window; counter-play = scout, flank, move out. Smoke PASS.
