@@ -11013,6 +11013,7 @@ function fxUpdate(dt){
     if(vis&&w.t<(w.big?40:32)&&Math.random()<dt*(w.big?7:4.5)){const PH=fxPH();part({x:w.x+rnd(-5,5),y:w.y+rnd(-5,5),h:groundH(w.x,w.y)+8,vx:PH?rnd(5,9):rnd(6,12),rise:PH?rnd(40,56):rnd(34,48),c:Math.random()<.6?C_DARK:[.2,.19,.18],c2:[.44,.42,.39],ck:rnd(.25,.4),s:PH?rnd(4,7):rnd(7,11),g:PH?7:rnd(9,12),d:PH?rnd(3,4.2):rnd(5,7),a:.4*fade+.08});}
     if(vis&&burn&&Math.random()<dt*(w.big?14:10)){const fx=w.x+rnd(-9,9),fy=w.y+rnd(-9,9);part({x:fx,y:fy,h:groundH(fx,fy)+rnd(3,9),vx:rnd(-3,3),vy:rnd(-3,3),rise:rnd(14,26),add:true,c:Math.random()<.5?[2.6,1.1,.3]:[2.9,1.7,.6],s:rnd(4,8),g:-3,d:rnd(.35,.7),a:.85});}
     if(vis&&burn&&Math.random()<dt*2)part({x:w.x+rnd(-6,6),y:w.y+rnd(-6,6),h:groundH(w.x,w.y)+6,vx:rnd(-30,30),vy:rnd(-30,30),vh:rnd(30,70),add:true,c:C_SPARK,s:1.2,f:.6,grav:1,d:rnd(.4,.8)});
+    if(vis&&burn&&Math.random()<dt*3){const gl=w.big?30:20;part({x:w.x+rnd(-3,3),y:w.y+rnd(-3,3),h:groundH(w.x,w.y)+1.5,add:true,c:[1.5,.55,.14],s:gl,d:.5,a:(G&&G.todM&&todLvl()===2?.5:.16)*fade+.04});}// fire glow pooled on the sand under a burning wreck (stronger at night)
     if(burn&&!w.light&&LIGHTS.length){w.light=1;}
     if(w.t>(w.big?200:180))w.o.position.y-=dt*1.5;if(w.t>(w.big?210:188)){w.done=true;SCN.remove(w.o);}}
   smkTick(dt);
@@ -19386,7 +19387,7 @@ function grQueue(auto){for(;;){if(GC.qi>=GC.q.length)return grFinishTurn();const
 function grBattleAuto(b){if(!b.att.some(id=>GC.armies.some(a=>a.id===id))){b.done=1;return null;}const R=grRng(GC.seed*7+GC.turn*131+b.p);const r=grAuto(b,R);grSettle(b,r.win,'auto');return r;}
 function grBattleDone(b,win,how){grSettle(b,win,how||'live');GC.qi++;grSave();return grQueue(false);}
 // who stays, who falls back, who dies. `win` is 'att' or 'def'; losers with a province to fall back to keep their survivors, the rest are lost
-function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;try{gfBattle(b,win);}catch(e){console.error('gfBattle',e);}try{GC.mil.foe=win==='att'?b.an:b.dn;gmilBattle(b,win);}catch(e){console.error('gmilBattle',e);}   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
+function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;try{glBattle(b,win);}catch(e){console.error('glBattle',e);}try{gfBattle(b,win);}catch(e){console.error('gfBattle',e);}try{GC.mil.foe=win==='att'?b.an:b.dn;gmilBattle(b,win);}catch(e){console.error('gmilBattle',e);}   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
   b.done=1;const pn=P[b.p].n;
   const losers=win==='att'?def:att,winners=win==='att'?att:def;
   for(const a of losers){a.path=[];if(!a.u.length){grDrop(a);continue;}
@@ -20494,7 +20495,7 @@ setInterval(()=>{try{grandHud();}catch(e){}},1000);
 /* ---- A3b army morale (laneF): ONE bar per army, styles from MSTYLES (01-data); a.mor 0..100 saved with the army ---- */
 const GMOR_MAX={zeal:100,prof:100,home:90,fire:80};   /* base ceilings; home defenders get +10 on core land, see gmMorMax */
 function gmMorStyle(a){return MORALE_STYLE[(typeof grNat==='function'?grNat(a.o).fac:a.o)]||'home';}
-function gmMorMax(a){const s=gmMorStyle(a);let m=GMOR_MAX[s]||90;if(s==='home'&&GC&&GC.prov[a.at]&&GC.prov[a.at].o===a.o)m=100;try{m=Math.max(m,Math.min(100,m+gfTradMor(a.o)));}catch(e){}return m;}
+function gmMorMax(a){const s=gmMorStyle(a);let m=GMOR_MAX[s]||90;if(s==='home'&&GC&&GC.prov[a.at]&&GC.prov[a.at].o===a.o)m=100;try{m=Math.max(m,Math.min(100,m+gfTradMor(a.o)));}catch(e){}try{m=Math.min(100,m+glMor(a.o));}catch(e){}return m;}
 function gmMor(a){return a.mor==null?gmMorMax(a):Math.max(0,Math.min(gmMorMax(a),a.mor));}
 function gmMorMul(a){return .8+.2*gmMor(a)/100;}   /* auto-resolve strength: broken armies fight at 80% */
 function gmMorBattle(losers,winners){for(const a of losers){const s=gmMorStyle(a);let d=30;if(s==='zeal')d=15;else if(s==='prof')d=24;else if(s==='fire')d=40;
@@ -24329,6 +24330,31 @@ function gcfTurn(){if(!GC||!GC.tr||!GC.nat)return;const R=grRng((GC.seed|0)*449+
     if(r2<.33){delete GC.tr[k];GC.war[k]=1;GC.wsT=GC.wsT||{};GC.wsT[k]=GC.turn;
       grLog('The ceasefire between '+gdNatName(a)+' and '+gdNatName(b)+' has collapsed after a shooting incident on the line.',a);}
     else grLog('Ceasefire violation between '+gdNatName(a)+' and '+gdNatName(b)+'. Both sides blame each other.',a);}}
+// A5b NAMED BATTLES (laneA 2026-11-07): a clash of big armies becomes a legend. Rows in the ONE modifier engine (13k), no second system.
+// Chain: who reacts = the winner's people (war support up, army max morale up), the loser's nation remembers (smaller "never again" rally);
+// second order = war support feeds recruits/income/peace pressure (13v), army morale feeds Fight-it starts (13b gmMorMax);
+// counter-play = take the province back or win a bigger battle (the legend row is per battle, expires); cost = needs a real battle (both
+// sides >= 3000 army value and the weaker >= 30% of the stronger), 1 legend per province per year, so no cheap farming.
+// Style flavour (name only, EQUAL value for all four styles): Zealous martyr shrine · Professional regimental honours ·
+// Home defenders "never again" site · Firepower-reliant victory monument.
+const GLEG_NAME={zeal:'Martyrs’ shrine',prof:'Regimental honours',home:'“Never again” memorial',fire:'Victory monument'};
+const GLEG_MIN=3000,GLEG_RATIO=.3,GLEG_MONTHS=12;
+function glStyle(c){try{return MORALE_STYLE[grNat(c).fac]||MORALE_STYLE[c]||'home';}catch(e){return 'home';}}
+function glSide(ids){let v=0;for(const a of GC.armies)if(ids.includes(a.id))v+=grArmyVal(a);return v;}
+// call BEFORE the battle is settled (armies still at full strength). Returns the legend or null.
+function glBattle(b,win){if(!GC||!b)return null;const va=glSide(b.att||[]),vd=glSide(b.def||[]),hi=Math.max(va,vd),lo=Math.min(va,vd);
+  if(hi+lo<GLEG_MIN*2||lo<hi*GLEG_RATIO)return null;
+  if(!GC.leg)GC.leg=[];if(GC.leg.some(l=>l.p===b.p&&GC.turn-l.t<12))return null;
+  const w=win==='att'?b.an:b.dn,l=win==='att'?b.dn:b.an;if(!w||!l)return null;
+  const pn=GCM.P[b.p]?GCM.P[b.p].n:'?',st=glStyle(w),nm='Battle of '+pn,until=GC.turn+GLEG_MONTHS;
+  GC.leg.push({p:b.p,t:GC.turn,w,l,nm,st});if(GC.leg.length>60)GC.leg.shift();
+  gmodAdd({id:'leg_w_'+b.p+'_'+GC.turn,src:nm+' — '+GLEG_NAME[st],scope:'nation',stat:'warSupport',add:.04,t:w,until});
+  gmodAdd({id:'leg_a_'+b.p+'_'+GC.turn,src:nm+' — '+GLEG_NAME[st],scope:'nation',stat:'armyMor',add:2,t:w,until});
+  gmodAdd({id:'leg_l_'+b.p+'_'+GC.turn,src:nm+' — rally to avenge it',scope:'nation',stat:'warSupport',add:.02,t:l,until:GC.turn+6});
+  try{grLog(nm+': '+(grNat(w).n||w)+' win a battle that will be remembered — '+GLEG_NAME[st].toLowerCase()+' raised.',w);}catch(e){}
+  return GC.leg[GC.leg.length-1];}
+function glMor(o){try{return Math.round(gmod('nation',o,'armyMor',0));}catch(e){return 0;}}
+if(typeof GMOD_STATS==='object')GMOD_STATS.armyMor='Army max morale';
 // 13zz-gnuke.js — Lane G RG10 (first cut): NUCLEAR PROGRAMMES and the grand-map nuclear strike. Grand map only, never in battles.
 // Nuclear powers start with a few warheads (GNK.start). Anyone else (and Iran, part-way) can start a programme: enrichment → test-ready →
 // a test (world opinion drops, the first warhead appears) → one more warhead a year (max GNK.cap). Warheads cost upkeep every month.
