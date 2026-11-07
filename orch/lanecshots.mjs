@@ -37,4 +37,5 @@ const info = await ev(() => { const p = GCM.P.find(q => q.n === 'South Lebanon')
 console.log('war', JSON.stringify(info));
 await page.waitForTimeout(2500); console.log('chim', await ev(() => !!G3.chim)); await shot('smoke-war');
 const an = await pv('Anbar'); await view(an[0], an[1] + 10, 110, 0.3, .55); await page.waitForTimeout(1500); console.log('dbg', JSON.stringify(await ev(() => ({ v: G3.chim.visible, t: G3.chimU.uT.value, cam: G3.cc, par: !!G3.chim.parent, pv: G3.chim.parent && G3.chim.parent.visible, n: G3.chim.geometry.attributes.position.count, diag: (() => { const pr = G3.R.properties.get(G3.chim.material).currentProgram; return pr ? JSON.stringify(pr.diagnostics || 'nodiag').slice(0, 600) : 'noprog'; })(), pos: Array.from(G3.chim.geometry.attributes.position.array.slice(0, 6)), ph: Array.from(G3.chim.geometry.attributes.aPh.array.slice(0, 4)) })))); await shot('smoke-war-close');
-console.log('errs', JSON.stringify(errs)); await browser.close(); server.close();
+
+await browser.close(); server.close();
