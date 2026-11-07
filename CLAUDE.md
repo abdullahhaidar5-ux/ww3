@@ -163,6 +163,8 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 
 ## Ground rules for agents
 
+- **A decision is done only when its leftovers are gone** (Abdullah 2026-11-06 23:16 "Be smarter" — after finding a leftover End turn button and Ayatollah button): when you ship or change one of Abdullah's decisions, grep and play-test for **every trace of the old way** (buttons, hotkeys, menu items, tooltips, encyclopedia/what's-new text, AI build lists, tests, saves) and remove it in the same ship, then add a guard assertion (orch/smoke.mjs or orch/decisions.mjs) so it can't come back. Think like the player who'll open the game next.
+
 - **GOAL: a $75 studio game by Sat 2026-11-07 20:00 Chicago** (Abdullah 2026-11-06 18:02 "centralizing and becoming faster. Kaizen afterwards"): all work runs in the four lanes of **`orch/PLAN-SAT.md`** (one owner per file, one central prioritized list); Saturday's goal is a **Middle East vertical slice** at full quality (Abdullah 18:52; rest of the world just works); no other helpers until the deadline except the cheap Haiku **janitor** (keeps BRIEF.md/ROADMAP/PLAN-SAT ticks tidy and writes Abdullah's status).
 - **Kaizen** (Abdullah 2026-11-06 17:15 "faster and more efficient, kaizen, non-stop iterations"): read **`orch/BRIEF.md`** first (one-page state of the game, kept fresh by the kaizen loop) instead of re-reading many reports; follow `orch/KAIZEN.md` (measure → one small high-value change → prove → ship → log).
 - **Usage governor** (Abdullah 2026-11-06 17:18 "won't break usage but still occur constantly"): loops obey `orch/BUDGET.md` — max 4 helpers at once (loops back off when busy), max 12 iterations per loop per day, self-start only when quiet, stop cleanly on rate limits.
