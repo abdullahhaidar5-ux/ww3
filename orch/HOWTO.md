@@ -14,3 +14,6 @@
 
 ## Add a menu/pause/settings button without touching 08-ui.js
 New file `src/08k-*.js` (build.py picks up all src/*.js in name order); in an IIFE find `document.getElementById('openSettings'|'aSet'|'sDone')` and append/insert a button (see `08k-report.js` "Report a problem" → pre-filled GitHub issue, label `player`).
+
+## Add a monthly system / an idea
+Push a fn onto `GMOD_HOOKS` (13k) — called by `gmodMonth` each turn. New idea = one row in `GID_GROUPS` (13l); its effect is a modifier row on an existing stat (income, upkeep, manpower, ppPol/Dip/Mil, warSupport…).

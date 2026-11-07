@@ -54,6 +54,8 @@ const TEXB={m_abrams:2,m_merkava:2,m_kf51:1.6,m_msta:2.2,m_ural:1.9,m_m35:2.2,m_
 const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 // Infantry: three realistic rigged soldiers (Western desert-camo marine, Eastern green-camo, Middle-Eastern/militia woodland
 // fatigues) shared by the 18 nations; national colour is a tint over the camo. 'soldier' is the old stand-in.
+// laneE: foot soldiers read too small at gameplay height (Abdullah 2026-11-06 photo) - draw them ~18% bigger (visual only)
+for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.18;c._big=1;}}
 const SOLV={US:'sol_w',EU:'sol_w',FR:'sol_w',DE:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
 const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:58},barracks:{m:'b_barr_me',size:54},factory:{m:'b_fact_me',size:62}};
@@ -235,28 +237,61 @@ const AIRKEY=/^(jet|heli)$|^m_(su35|f15|f16|f18|j10|mig29|rafale|typhoon|ah1|apa
 function airScheme(key,team){if(!team||!team.fac||!AIRKEY.test(key))return null;const X=AIRX[team.fac];if(!X)return null;return HELIKEY.test(key)?X.h:X;}
 function airCamoFreq(key){const P=MODELS.proto[key];if(!P)return 0;if(P._acf!=null)return P._acf;P.scene.updateMatrixWorld(true);let mx=0;P.scene.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();const sz=o.geometry.boundingBox.getSize(new THREE.Vector3());mx=Math.max(mx,sz.x,sz.y,sz.z);}});return P._acf=mx>0?3.2/mx:0;}
 const FLAGTEX={};
-// Militia emblems, drawn on a 120x72 canvas: Mountain Shias carry the Zulfiqar (the forked double-bladed sword),
-// Coffee Shias a lion standing over a jambiya dagger.
+// Original emblems (Abdullah 2026-11-06 21:03 "make the logo for the mountain Shias and coffee Shias better"). 120x72 design space.
+function emGold(x,y0,y1){const g=x.createLinearGradient(0,y0,0,y1);g.addColorStop(0,'#fff0b8');g.addColorStop(.35,'#e2b955');g.addColorStop(.55,'#a87a22');g.addColorStop(.8,'#e6c46a');g.addColorStop(1,'#8a6218');return g;}
+function emLaurel(x,cx,cy,r,side,col){x.save();x.translate(cx,cy);for(let i=0;i<7;i++){const a=(side<0?Math.PI*.62:Math.PI*.38)+side*(-.14-i*.17),px=Math.cos(a)*r,py=Math.sin(a)*r;
+  x.save();x.translate(px,py);x.rotate(a+(side<0?-1.15:1.15)+Math.PI/2);x.fillStyle=col;x.beginPath();x.ellipse(0,0,1.7,4.2,0,0,7);x.fill();x.restore();}
+  x.strokeStyle=col;x.lineWidth=.9;x.beginPath();x.arc(0,0,r,side<0?Math.PI*.62-.1:Math.PI*.38+.1,side<0?Math.PI*.62+1.25:Math.PI*.38-1.25,side>0);x.stroke();x.restore();}
+function emRing(x,cx,cy,r,fillA,fillB){const g=x.createRadialGradient(cx-r*.3,cy-r*.35,r*.1,cx,cy,r);g.addColorStop(0,fillA);g.addColorStop(1,fillB);
+  x.fillStyle=g;x.beginPath();x.arc(cx,cy,r,0,7);x.fill();x.lineWidth=2.4;x.strokeStyle=emGold(x,cy-r,cy+r);x.beginPath();x.arc(cx,cy,r,0,7);x.stroke();
+  x.lineWidth=.6;x.strokeStyle='rgba(255,230,160,.55)';x.beginPath();x.arc(cx,cy,r-2.4,0,7);x.stroke();}
+function emZulfiqar(x,cx,cy,s){x.save();x.translate(cx,cy);x.scale(s,s);
+  const bl=x.createLinearGradient(0,-8,0,8);bl.addColorStop(0,'#ffffff');bl.addColorStop(.5,'#c9ccd1');bl.addColorStop(1,'#80858c');
+  x.fillStyle=bl;x.strokeStyle='#2a2d33';x.lineWidth=.8;x.beginPath();x.moveTo(-22,-3.2);x.lineTo(16,-4.4);x.quadraticCurveTo(31,-6.5,42,-12);x.lineTo(36,-4.8);x.quadraticCurveTo(28,-2.2,21,-.9);x.lineTo(21,.9);x.quadraticCurveTo(28,2.2,36,4.8);x.lineTo(42,12);x.quadraticCurveTo(31,6.5,16,4.4);x.lineTo(-22,3.2);x.closePath();x.fill();x.stroke();
+  x.strokeStyle='rgba(60,64,70,.6)';x.lineWidth=.6;x.beginPath();x.moveTo(-20,0);x.lineTo(19,0);x.stroke();
+  const gd=emGold(x,-11,11);x.fillStyle=gd;x.strokeStyle='#5a3d0c';x.lineWidth=.7;
+  x.beginPath();x.moveTo(-21,-11);x.quadraticCurveTo(-26,0,-21,11);x.lineTo(-25,11);x.quadraticCurveTo(-30,0,-25,-11);x.closePath();x.fill();x.stroke();
+  x.fillStyle='#2b1a10';x.fillRect(-40,-2.8,15,5.6);x.fillStyle=gd;for(let i=0;i<4;i++)x.fillRect(-38.5+i*3.6,-2.8,1,5.6);
+  x.beginPath();x.arc(-42,0,3.6,0,7);x.fill();x.stroke();x.restore();}
+function emText(x,t,cx,cy,px,col){x.save();x.font='700 '+px+'px "Noto Naskh Arabic","Amiri","Scheherazade New","Traditional Arabic","Times New Roman",serif';x.textAlign='center';x.textBaseline='middle';x.direction='rtl';
+  x.fillStyle='rgba(0,0,0,.6)';x.fillText(t,cx+.6,cy+.7);x.fillStyle=col;x.fillText(t,cx,cy);x.restore();}
 function drawEmblem(x,fac,bg){const W=120,H=72;
-  if(fac==='RS'){if(bg){x.fillStyle='#111';x.fillRect(0,0,W,H);x.fillStyle='#b3262c';x.fillRect(0,H*.7,W,H*.3);}
-    x.save();x.translate(60,32);x.rotate(-.12);const sil='#e9e7e1',gold='#d6b24a',dk='#2a2a2a';
-    // blade with the forked tip
-    x.fillStyle=sil;x.beginPath();x.moveTo(-26,-4);x.lineTo(14,-5.5);x.quadraticCurveTo(34,-8,47,-14);x.lineTo(40,-6.5);x.quadraticCurveTo(30,-3,20,-1);x.lineTo(20,1);x.quadraticCurveTo(30,3,40,6.5);x.lineTo(47,14);x.quadraticCurveTo(34,8,14,5.5);x.lineTo(-26,4);x.closePath();x.fill();
-    x.strokeStyle='#9a9890';x.lineWidth=1;x.beginPath();x.moveTo(-24,0);x.lineTo(18,0);x.stroke();
-    // crossguard, grip, pommel
-    x.fillStyle=gold;x.beginPath();x.moveTo(-26,-13);x.quadraticCurveTo(-31,0,-26,13);x.lineTo(-30,13);x.quadraticCurveTo(-35,0,-30,-13);x.closePath();x.fill();
-    x.fillStyle=dk;x.fillRect(-46,-3.2,17,6.4);x.fillStyle=gold;for(let i=0;i<4;i++)x.fillRect(-44+i*4,-3.2,1.2,6.4);x.beginPath();x.arc(-48,0,4.2,0,7);x.fill();x.restore();}
-  else if(fac==='DW'){if(bg){x.fillStyle='#4a2f1c';x.fillRect(0,0,W,H);x.fillStyle='#c8a46e';x.fillRect(0,H-12,W,12);}
-    const gold='#e2b64a',dk='#2b1c10';
-    // lion, facing right
-    x.fillStyle=gold;x.beginPath();x.ellipse(54,30,22,9,0,0,7);x.fill();
-    for(const [lx,ly] of [[38,36],[46,36],[62,36],[70,36]]){x.fillRect(lx-2.5,ly,5,12);x.fillRect(lx-3,ly+10,7,3);}
-    x.save();x.translate(80,22);x.fillStyle='#b8862e';x.beginPath();for(let i=0;i<=18;i++){const a=i/18*6.283,r=i%2?8:12.5;x.lineTo(Math.cos(a)*r,Math.sin(a)*r);}x.closePath();x.fill();x.fillStyle=gold;x.beginPath();x.arc(2,1,7,0,7);x.fill();x.fillRect(5,1,7,5);x.fillStyle=dk;x.beginPath();x.arc(4,-1.5,1.3,0,7);x.fill();x.restore();
-    x.strokeStyle=gold;x.lineWidth=2.6;x.lineCap='round';x.beginPath();x.moveTo(33,27);x.quadraticCurveTo(20,20,24,10);x.stroke();x.fillStyle='#b8862e';x.beginPath();x.arc(24,9,3,0,7);x.fill();
-    // jambiya: wide hilt and a sharply curved blade
-    x.save();x.translate(60,58);x.fillStyle='#d9d4c8';x.beginPath();x.moveTo(-6,-2.5);x.lineTo(16,-3);x.quadraticCurveTo(30,-3,33,-11);x.quadraticCurveTo(30,2,14,3);x.lineTo(-6,2.5);x.closePath();x.fill();
-    x.fillStyle=gold;x.fillRect(-9,-5,3,10);x.fillStyle=dk;x.fillRect(-24,-3,15,6);x.fillStyle=gold;x.beginPath();x.moveTo(-24,-3);x.lineTo(-30,-7);x.lineTo(-30,7);x.lineTo(-24,3);x.closePath();x.fill();x.restore();}}
-function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#111':'#4a2f1c';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
+  if(fac==='RS'){
+    if(bg){const g=x.createRadialGradient(60,30,6,60,34,72);g.addColorStop(0,'#1d1f1c');g.addColorStop(1,'#050505');x.fillStyle=g;x.fillRect(0,0,W,H);
+      const b=x.createLinearGradient(0,H*.79,0,H);b.addColorStop(0,'#8e1a1f');b.addColorStop(1,'#4c0b0e');x.fillStyle=b;x.fillRect(0,H*.79,W,H*.21);
+      x.fillStyle=emGold(x,H*.785,H*.8);x.fillRect(0,H*.785,W,1.1);emText(x,'يا حسين',60,H*.895,10.5,'#f2d68a');}
+    const cx=60,cy=29.5,r=21;emLaurel(x,cx,cy+1,r+4.2,-1,'#c9a446');emLaurel(x,cx,cy+1,r+4.2,1,'#c9a446');
+    emRing(x,cx,cy,r,'#21402a','#0a1a10');
+    x.save();x.beginPath();x.arc(cx,cy,r-1.3,0,7);x.clip();
+    const sky=x.createLinearGradient(0,cy-r,0,cy+4);sky.addColorStop(0,'#2a4a33');sky.addColorStop(1,'#11281a');x.fillStyle=sky;x.fillRect(cx-r,cy-r,2*r,2*r);
+    const m1=new Path2D('M36 40 L45 26 L49 30 L56 17 L63 28 L67 23 L77 36 L84 40 Z');const mg=x.createLinearGradient(0,17,0,40);mg.addColorStop(0,'#8f9a86');mg.addColorStop(.5,'#4f6249');mg.addColorStop(1,'#1d3020');x.fillStyle=mg;x.fill(m1);
+    x.fillStyle='#ecebe3';x.fill(new Path2D('M56 17 L59.4 22.3 L57.6 21.4 L56 23.2 L54.3 21.3 L52.6 22.4 Z'));x.fill(new Path2D('M45 26 L47.2 29.1 L45.6 28.5 L44.6 29.6 L43.2 28.6 Z'));x.fill(new Path2D('M67 23 L69.3 26.2 L67.6 25.5 L66.4 26.7 L65.1 25.6 Z'));
+    const m2=new Path2D('M36 44 L50 34 L58 38 L66 32 L84 44 Z');x.fillStyle='#173222';x.fill(m2);x.restore();
+    emZulfiqar(x,61.5,41,.6);
+  } else if(fac==='DW'){
+    if(bg){const g=x.createRadialGradient(60,30,6,60,34,72);g.addColorStop(0,'#5a3820');g.addColorStop(1,'#24150b');x.fillStyle=g;x.fillRect(0,0,W,H);
+      const t=[['#3f4a22',H*.80],['#58612b',H*.86],['#76763a',H*.92]];for(const [c,y] of t){x.fillStyle=c;x.beginPath();x.moveTo(0,H);x.lineTo(0,y);for(let i=0;i<=12;i++){const sx=i*10,yy=y+Math.sin(i*1.3)*1.4;x.lineTo(sx,yy);x.lineTo(sx+10,yy);}x.lineTo(W,H);x.closePath();x.fill();x.strokeStyle='rgba(235,220,150,.35)';x.lineWidth=.5;x.beginPath();for(let i=0;i<=12;i++){const sx=i*10,yy=y+Math.sin(i*1.3)*1.4;x.moveTo(sx,yy+.3);x.lineTo(sx+10,yy+.3);}x.stroke();}
+      x.fillStyle=emGold(x,H*.785,H*.8);x.fillRect(0,H*.785,W,1);emText(x,'اليمن',60,H*.9,10,'#f2d68a');}
+    const cx=60,cy=29.5,r=21;emRing(x,cx,cy,r,'#7a2a1a','#2c0d07');
+    x.save();x.beginPath();x.arc(cx,cy,r-1.3,0,7);x.clip();
+    // terraced hills inside the roundel
+    for(const [c,y] of [['#3b2a12',39],['#4f3a18',42],['#6a5222',45]]){x.fillStyle=c;x.beginPath();x.moveTo(cx-r,cy+r);x.lineTo(cx-r,y);for(let i=0;i<9;i++){const sx=cx-r+i*5.5;x.lineTo(sx,y-(i%2?1.2:0));x.lineTo(sx+5.5,y-(i%2?1.2:0));}x.lineTo(cx+r,cy+r);x.closePath();x.fill();}
+    x.restore();
+    // coffee branch: stem, leaves with midribs, cherries
+    x.strokeStyle='#4a3216';x.lineWidth=1.4;x.lineCap='round';x.beginPath();x.moveTo(47,40);x.quadraticCurveTo(57,26,74,17);x.stroke();
+    const leaf=(lx,ly,a,len)=>{x.save();x.translate(lx,ly);x.rotate(a);const lg=x.createLinearGradient(0,-3,0,3);lg.addColorStop(0,'#86b04e');lg.addColorStop(1,'#2f5420');x.fillStyle=lg;
+      x.beginPath();x.moveTo(0,0);x.quadraticCurveTo(len*.5,-4.2,len,0);x.quadraticCurveTo(len*.5,4.2,0,0);x.fill();x.strokeStyle='rgba(220,240,180,.55)';x.lineWidth=.5;x.beginPath();x.moveTo(.5,0);x.lineTo(len-1,0);x.stroke();x.restore();};
+    leaf(51,33.5,-2.1,12);leaf(55,30,.15,12);leaf(61,25,-2.4,11);leaf(65,23,-.05,12);leaf(70,19.5,-1.2,9);
+    const cherry=(ccx,ccy)=>{const cg=x.createRadialGradient(ccx-.9,ccy-.9,.3,ccx,ccy,2.6);cg.addColorStop(0,'#ff6a5a');cg.addColorStop(.6,'#c3141f');cg.addColorStop(1,'#6e0710');x.fillStyle=cg;x.beginPath();x.arc(ccx,ccy,2.5,0,7);x.fill();};
+    cherry(57.5,32.6);cherry(60.4,33.4);cherry(59,30.2);cherry(66.8,27);cherry(69.2,26.1);
+    // jambiya across the lower roundel: curved blade, wide flared hilt, belt sheath tip
+    x.save();x.translate(60,42);x.rotate(-.06);x.scale(.92,.92);const bl=x.createLinearGradient(0,-5,0,5);bl.addColorStop(0,'#ffffff');bl.addColorStop(.6,'#bfc3c8');bl.addColorStop(1,'#7c8188');
+    x.fillStyle=bl;x.strokeStyle='#2a2d33';x.lineWidth=.7;x.beginPath();x.moveTo(-4,-2);x.lineTo(12,-2.4);x.quadraticCurveTo(22,-2.6,25,-9);x.quadraticCurveTo(23,1.5,12,2.4);x.lineTo(-4,2);x.closePath();x.fill();x.stroke();
+    const gd=emGold(x,-7,7);x.fillStyle=gd;x.strokeStyle='#5a3d0c';x.fillRect(-6.5,-4,2.5,8);
+    x.fillStyle='#3a2414';x.fillRect(-17,-2.4,10.5,4.8);x.fillStyle=gd;x.beginPath();x.moveTo(-17,-2.4);x.lineTo(-23,-6.5);x.quadraticCurveTo(-25,0,-23,6.5);x.lineTo(-17,2.4);x.closePath();x.fill();x.stroke();
+    x.fillStyle=gd;x.beginPath();x.arc(-11.5,0,1.1,0,7);x.fill();x.restore();
+  }}
+function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#050505':'#24150b';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
 function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
   const rect=(col,a,b,w,h)=>{x.fillStyle=col;x.fillRect(a,b,w,h);};const hs=(cols)=>cols.forEach((col,i)=>rect(col,0,i*H/cols.length,W,H/cols.length+1));const vs=(cols)=>cols.forEach((col,i)=>rect(col,i*W/cols.length,0,W/cols.length+1,H));
   const star=(cx,cy,r,col,n=5)=>{x.fillStyle=col;x.beginPath();for(let i=0;i<n*2;i++){const a=-Math.PI/2+i*Math.PI/n,rr=i%2?r*.42:r;x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}x.closePath();x.fill();};

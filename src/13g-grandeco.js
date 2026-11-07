@@ -201,9 +201,9 @@ function geNation(c,R,inc){const N=GC.nat[c],E=N.e,S=GE_ST[c],br={};const own=S.
   if(E.food<25){const want=Math.min(50,40-E.food);const cost=want*5;if(N.cash+net>=cost){E.food+=want;net-=cost;br.fImp2=-Math.round(cost);}}
   E.starve=0;if(E.food<0){E.food=0;E.starve=1;}E.food=Math.min(320,E.food);
   // manpower
-  E.man=Math.min(geManCap(c),E.man+geManRegen(c));
+  E.man=Math.min(geManCap(c),E.man+geManRegen(c)*gmod('nation',c,'manpower',1));
   // upkeep (grows with army size), total war surcharge
-  const av=geArmyVal(c);let up=av*.018*(1+av/70000)*(geFx(c,'upkeep')?.88:1)*(E.tw?1.15:1);br.upkeep=-Math.round(up);net-=up;
+  const av=geArmyVal(c);let up=av*.018*(1+av/70000)*(geFx(c,'upkeep')?.88:1)*(E.tw?1.15:1)*gmod('nation',c,'upkeep',1);br.upkeep=-Math.round(up);net-=up;
   // war bonds: due bonds are repaid; a default costs credit and stability
   const keep=[];for(const b of E.bonds){if(b[0]>GC.turn){keep.push(b);continue;}if(N.cash+net>=b[1]){net-=b[1];br.bondPay=(br.bondPay||0)-b[1];}else{E.def++;E.defT=GC.turn+8;keep.push([GC.turn+4,Math.round(b[1]*1.2)]);grLog(GCM.nats.get(c).name+' defaulted on a war bond!',c===GC.me?c:'');}}E.bonds=keep;
   if(E.defT>GC.turn)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+2);}
@@ -213,7 +213,7 @@ function geNation(c,R,inc){const N=GC.nat[c],E=N.e,S=GE_ST[c],br={};const own=S.
   if(E.tw)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+3.5);}
   if(E.ration)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+3);}
   if(E.starve)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+8);}
-  N.cash+=net;N.inc=Math.round(net);E.br=br;
+  if(net>0)net*=gmod('nation',c,'income',1);N.cash+=net;N.inc=Math.round(net);E.br=br;
   if(N.cash<0){N.cash=0;for(const a of GC.armies)if(a.o===c&&a.u.length>3&&R()<.5){a.u.pop();}}
   E.hist.push([GC.turn,Math.round(net),Math.round(-br.upkeep)]);if(E.hist.length>30)E.hist.shift();}
 // ---------- supply state of armies (the battle reads it) ----------
