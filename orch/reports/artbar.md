@@ -62,3 +62,17 @@ Objects 4 -> 4 (est. 4.3, "blocky" complaint, C-TOWNS slice 2): Middle East flat
 
 ## 2026-11-07 16:xx UTC — laneC iteration 14 (shots: orch/shots/laneC/m0 before, m1 after)
 Life 3.5 -> 3.7 / readability 4: chimney smoke was dark grain dirtying the Levant view; now light soft wisps that fade out (war smoke stays dark). Visual only. Next lowest: water 3.5.
+
+## 2026-11-07 17:xx UTC — laneC iteration 15 (shots: orch/shots/laneC/l0 before, l1 after)
+Readability 4 -> 4.3: C-LABELS — grand-map nation names and province banners now share one collision list (nation names biggest first, then banners by priority: your capital/selected, capitals, war-goal/big towns), so the Middle East no longer shows piled-up labels at world/region zoom. Visual only. Others unchanged. Next: army plates merge per province, C0 UI kit.
+## 2026-11-07 17:xx UTC — laneC iteration 15 (shots: orch/shots/laneC/n0 before, n2 after)
+Objects 4 -> 4.2: grand-map armies stand on a small dark-rimmed nation-colour plinth, and uniforms keep more of the nation colour (were washed grey), so every army reads by owner at a glance. Visual only. Others unchanged (geography 4, colour 4, light 3.5-4, water 3.5, life 3.7, readability 4). Local smoke/smooth timed out on the slow sandbox; grandtest ran clean.
+
+## 2026-11-07 18:xx UTC — laneC iteration 15 (no code shipped)
+Built an army plinth + nation-colour ring; the grandlook helper had shipped its own `g3Plinth` + baked miniatures to main minutes earlier (same name, would have clashed), so mine was dropped. Scores unchanged (geography 4, colour 4, light 3.5-4, water 3.5, objects 4.2, life 3.7, readability 4). Next: verify grandlook minis at close zoom, painted terrain (C-LOOK 1 is in grandlook-bake), cloth banner size.
+
+## 2026-11-07 18:xx UTC — laneC iteration 16 (shots: orch/shots/laneC/p0 before, p1 after)
+Objects 4.2 -> 4.3: grand-map tankers/cargo ships were oversized against provinces; scaled ~35% down (floor and zoom factor). Visual only. Others unchanged (geo 4, colour 4, light 3.5-4, water 3.5, life 3.7, readability 4.3). NOTE: `node orch/smoke.mjs` FAILS on origin/main itself (THREE computeBoundingSphere NaN console error in the IR-vs-US strait battle) — verified identical on a clean main checkout, not from this change.
+
+## 2026-11-07 19:xx UTC — laneC iteration 17 (shots: orch/shots/laneC/q0 before, q1 after)
+Water 3.5 -> 3.8: open sea gets slow ocean-colour variation (cool/warm deep patches, soft light/dark drift) so it stops being one flat blue, and the fine ripple shading fades with distance (less streaking toward the horizon). Shader-only, grand map. Others unchanged (geo 4, colour 4, light 3.5-4, objects 4.3, life 3.7, readability 4.3). Gates: smoke/grandtest timed out on the slow sandbox (no failure seen, 0 page errors in shots); CI is the judge. Next lowest: light 3.5-4 (city lights at night).

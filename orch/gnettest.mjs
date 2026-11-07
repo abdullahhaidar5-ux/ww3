@@ -1,4 +1,4 @@
-// Lane A2b gate: online grand campaign, as two players. HOST: menu → Grand campaign → Online campaign → New campaign for
+// Lane A2b gate: online grand campaign, as two players. HOST: menu → Grand campaign → Play with friends → lobby →
 // friends → Begin (IR). FRIEND (second page): Grand campaign → Online campaign → types the code → Join → picks Saudi Arabia.
 // Checks: the friend's map opens as SA; the host's AI stops running SA; a march the friend orders reaches the host's world;
 // the host's clock carries the friend's map into the next month; the friend's Space pauses everyone; the friend leaving
@@ -53,21 +53,34 @@ try {
   // the host draws the flat map (SwiftShader can't run two 3D world maps at once in one process); the friend's page keeps 3D
   await host.evaluate(() => { window.g3Init = () => false; });
   await host.evaluate(() => localStorage.removeItem('ww3grand1'));
-  await click(host, '#grandBtn'); await click(host, 'button', '^Online campaign'); await click(host, 'button', '^New campaign for friends');
+  await click(host, '#grandBtn'); await click(host, 'button', '^Play with friends');
   await host.evaluate(() => { const s = [...document.querySelectorAll('select')].find(x => [...x.options].some(o => o.value === 'IR')); s.value = 'IR'; s.onchange && s.onchange(); });
-  await click(host, 'button', '^Begin$');
+  await click(host, 'button', '^Create lobby$');
+  await wait(host, () => GNT.lobby && GNT.code && document.getElementById('gnLobbyHost'), null, 60000, 'host lobby');
+  await shot(host, 'camplobby-host-1');
+  const code = await host.evaluate(() => GNT.code); console.log(el(), 'lobby open, code', code);
+  const cl = await open('friend');
+  await click(cl, '#grandBtn'); await click(cl, 'button', '^Join friends');
+  await cl.fill('#gnCode', code.toUpperCase()); await click(cl, '#gnJoinBtn');
+  await wait(cl, () => !!document.getElementById('gnLobbyCl') && !!document.getElementById('gnNat'), null, 30000, 'friend lobby screen');
+  const opts = await cl.evaluate(() => [...document.getElementById('gnNat').options].filter(o => !o.disabled).map(o => o.value));
+  if (opts.includes('IR')) fails.push('the creator\'s nation is offered to the friend');
+  await cl.evaluate(() => { const s = document.getElementById('gnNat'); s.value = 'SA'; s.onchange(); });
+  await wait(host, () => (GNT.hum.SA || {}).peer, null, 30000, 'host sees friend nation');
+  await wait(cl, () => GNT.nat === 'SA' && document.getElementById('gnReady'), null, 30000, 'friend confirmed as SA');
+  await wait(host, () => /Saudi/.test((document.getElementById('gnLobbyHost') || {}).textContent || ''), null, 15000, 'host lobby lists the friend');
+  const st0 = await host.evaluate(() => { const b = document.getElementById('gnStart'); return b && b.disabled; });
+  if (st0 !== true) fails.push('Start campaign was enabled before the friend ticked Ready');
+  await click(cl, '#gnReady');
+  await wait(host, () => { const b = document.getElementById('gnStart'); return b && !b.disabled && /Saudi/.test(document.getElementById('gnLobbyHost').textContent); }, null, 30000, 'host Start enabled after Ready');
+  await shot(host, 'camplobby-host-2'); await shot(cl, 'camplobby-friend');
+  { const lk = await host.evaluate(() => gnLink()); if (!/#gcamp=/.test(lk)) fails.push('invite link has no #gcamp= part: ' + lk); }
+  await click(host, '#gnStart');
   await wait(host, () => GNT.host && GNT.code && document.getElementById('grandScreen'), null, 60000, 'host map + room').catch(async e => { console.log(await host.evaluate(() => JSON.stringify({ on: GNT.on, host: GNT.host, code: GNT.code, wh: GNT.wantHost, gs: !!document.getElementById('grandScreen'), hint: GV.hint, room: !!NET.room }))); throw e; });
   await host.evaluate(() => { const m = document.getElementById('gModal'); if (m) { const b = [...m.querySelectorAll('button')].pop(); if (b) b.click(); } });
   await host.evaluate(() => { window.grBattlePrompt = b => { grBattleDone(b, grBattleAuto2(b), 'auto'); }; });   // the host's own battles: auto (not under test)
-  const code = await host.evaluate(() => GNT.code); console.log(el(), 'host open, code', code);
+  console.log(el(), 'campaign started');
   if (!/code/i.test(await host.evaluate(() => (document.getElementById('gnChip') || {}).textContent || ''))) fails.push('host map shows no online chip with the code');
-  const cl = await open('friend');
-  await click(cl, '#grandBtn'); await click(cl, 'button', '^Online campaign');
-  await cl.fill('#gnCode', code.toUpperCase()); await click(cl, '#gnJoinBtn');
-  await wait(cl, () => !!document.getElementById('gnNat'), null, 30000, 'nation pick screen').catch(async e => { console.log(await cl.evaluate(() => JSON.stringify({ note: (document.getElementById('gnNote') || {}).textContent, on: GNT.on, me: GNT.me, peers: GNT.g && GNT.g.peers().map(p => [p.peer, !!p.sameTab]) }))); console.log(await host.evaluate(() => JSON.stringify({ peers: GNT.g && GNT.g.peers().map(p => [p.peer, !!p.sameTab]) }))); throw e; });
-  const opts = await cl.evaluate(() => [...document.getElementById('gnNat').options].map(o => o.value));
-  if (opts.includes('IR')) fails.push('the host\'s nation is offered to the friend');
-  await cl.evaluate(() => { document.getElementById('gnNat').value = 'SA'; }); await click(cl, 'button', '^Lead this nation');
   await wait(cl, () => typeof GC !== 'undefined' && GC && GC.me === 'SA' && document.getElementById('grandScreen'), null, 180000, 'friend map as SA').catch(async e => { console.log(await cl.evaluate(() => JSON.stringify({ note: (document.getElementById('gnNote') || {}).textContent, nat: GNT.nat, got: GNT.got, parts: Object.keys(GNT.parts).length, me: typeof GC !== 'undefined' && GC && GC.me }))); console.log(await host.evaluate(() => JSON.stringify({ hum: GNT.hum, busy: GNT.busy, last: GNT.last.length }))); throw e; });
   console.log(el(), 'friend joined as SA');
   const h1 = await host.evaluate(() => ({ ai: GC.nat.SA.ai, me: GC.me, chip: (document.getElementById('gnChip') || {}).textContent }));
