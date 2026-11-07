@@ -42,7 +42,7 @@ const NAT = arg('nat', 'IR');
 try {
   // NOTE: no waiting for models to finish — a player clicks as soon as the menu shows.
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction(() => { const b = document.getElementById('grandBtn'); return b && b.offsetParent !== null; }, null, { timeout: 120000 });
+  await page.waitForFunction(() => { const b = document.getElementById('grandBtn'); return !!b && !!document.querySelector('#mxmenu .mxi'); }, null, { timeout: 120000 });  // menu v3: the title shows; the old grand button is parked hidden
   const SAVE = arg('save', '');   // a saved campaign from an older build (old map): Continue must not lead into a broken battle
   if (SAVE) await ev((s) => { localStorage.setItem(GR_KEY, s); }, fs.readFileSync(SAVE, 'utf8'));
   await page.evaluate(() => document.getElementById('grandBtn').click());
