@@ -55,6 +55,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   Alt+right-click a spot (drive there, then unload); touch: tap a selected vehicle again to unload, tap ground with a
   garrisoned building selected. The Unload/Leave buttons may stay as extras.
   (Touch controls are no longer required — see "PC only" below.)
+- **UI flow** (Abdullah 2026-11-06 20:14 "You can transition between windows and screens not everything has to be shoved into a single screen with big ugly button"): one job per screen or window, smooth transitions between them, Back/Esc one step back, elegant text menu items and small buttons — never cram everything onto one screen, no big ugly buttons. Applies to menus, setup, grand-map panels and the battle HUD.
 - **Factions (22 live → 54; IQ Iraq and SY Syria first cut live 2026-11-06, FR France and DE Germany first cut live 2026-11-06 (nation-frde: EU-based rows, EU recorded voices shared until XTTS re-records), JP Japan first cut live 2026-11-06 (nations-new2: full data, Honshu map, voices, anthem; 3D models still stand-ins); PL, AZ, JO, KD, IT, GR, ES first cut live 2026-11-06 (nations-a1; EU retired from menus, hidden base row only)):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
   **DW "Coffee Shias" = Yemen** (Abdullah 2026-11-05 19:44: "make sure the Coffee Shias become Yemen" — DW's home, look, maps and
   grand-map region are Yemen). **Adding full nations IQ Iraq, SY Syria, JP Japan** (19:45; own units, uniforms, buildings, voices,
