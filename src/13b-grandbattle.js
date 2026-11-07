@@ -86,11 +86,17 @@ function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def'
   const strip=arr=>{for(let i=arr.length-1;i>=0;i--)if(arr[i].dead)arr.splice(i,1);};const b=GB_CUR.b;
   for(const s of grSideUnits(b,'att').concat(grSideUnits(b,'def')))strip(s.u);
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}
+/* ⚡32 After-action report (laneF): what each side lost by unit type, how long it took, who is hurt, the best unit. Read-only on battle state. */
+function grandAAR(g){const d=campEl('div','font-size:14px;line-height:1.5;margin:0 0 12px;padding:8px 10px;border:1px solid #3d5a73;border-radius:6px;background:rgba(20,34,48,.6)');const sides=[{n:'You',l:{},w:0,a:0},{n:'Enemy',l:{},w:0,a:0}];let best=null;
+  for(const [rec,e,team] of g.ents){const S=sides[team===0?0:1],nm=(e.s&&(e.s.name||e.s.label))||e.kind||'unit';if(e.dead||!G.byId.has(e.id))S.l[nm]=(S.l[nm]|0)+1;else{S.a++;if(e.hp<e.max*.5)S.w++;}if(team===0&&(e.kills|0)>(best?best.k:0))best={k:e.kills|0,n:nm};}
+  const f=S=>{const k=Object.keys(S.l).sort((a,b)=>S.l[b]-S.l[a]).slice(0,4).map(n=>S.l[n]+' '+n).join(', ');return '<b>'+S.n+'</b>: lost '+(k||'nothing')+' · '+S.a+' survive'+(S.w?' ('+S.w+' badly hurt)':'');};
+  const m=Math.floor(g.t0/60),sc=Math.floor(g.t0%60);d.innerHTML='<div style="opacity:.7;font-size:12px;letter-spacing:1px">AFTER-ACTION REPORT · '+m+':'+(sc<10?'0':'')+sc+' of fighting</div>'+f(sides[0])+'<br>'+f(sides[1])+(best?'<br>Best unit: <b>'+best.n+'</b> with '+best.k+' kills':'');return d;}
 function grandBattleEnd(){const g=G.grand,c=GB_CUR;grandWriteBack();const T0=g.res.win===0,won=T0;
   const lost0=g.n0[0]-G.ents.filter(e=>e.team===0&&!e.isB&&!e.dead).length,lost1=g.n0[1]-G.ents.filter(e=>e.team===1&&!e.isB&&!e.dead).length;
   const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':g.res.how==='rout'?(won?'ENEMY ROUTED':'YOUR FORCE ROUTED'):'FORCE DESTROYED')));
   root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;color:'+(won?'#9fd36b':'#e07a6a'),won?'Victory':g.res.how==='retreat'?'Withdrawn':'Defeat'));
   root.appendChild(campEl('div','font-size:17px;line-height:1.6;margin-bottom:10px','Your losses: <b>'+lost0+'</b> of '+g.n0[0]+' units · Enemy losses: <b>'+lost1+'</b> of '+g.n0[1]+' units<br>Survivors keep their wounds and experience on the map; the dead are gone.'));
+  try{root.appendChild(grandAAR(g));}catch(e){}
   root.appendChild(campBtn('Return to the map',()=>{campClose();grandLeaveBattle();grBattleDone(c.b,(c.meAtt===won)?'att':'def',g.res.how==='retreat'?'retreat':'live');grandMapRefresh();}));
   campShow(root);}
 function grandLeaveBattle(){try{if(MODE!=='single')leaveNet();}catch(e){}MODE='single';ME=0;G=null;try{kcReset();}catch(e){}try{$('end').hidden=true;}catch(e){}const h=document.getElementById('gbHud');if(h)h.hidden=true;grandScreenShow(true);}
