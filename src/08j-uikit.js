@@ -114,10 +114,10 @@ function tipShow(el,x,y){let raw=el.dataset.tt;if(raw==null)return;let o;if(raw[
   tipFor=el;tipMove(x,y);tipEl.classList.add('on');}
 function tipMove(x,y){if(!tipEl)return;const w=tipEl.offsetWidth,h=tipEl.offsetHeight;let L=x+16,T=y+18;if(L+w>innerWidth-6)L=x-w-12;if(T+h>innerHeight-6)T=y-h-12;tipEl.style.left=Math.max(4,L)+'px';tipEl.style.top=Math.max(4,T)+'px';}
 function tipHide(){tipFor=null;if(tipEl)tipEl.classList.remove('on');}
-function tipAt(t){for(let e=t,i=0;e&&e!==document.body&&i<6;e=e.parentElement,i++){if(e.dataset&&e.dataset.tt!=null)return e;
-    if(e.title&&e.nodeType===1&&!e.closest('#cv,canvas')){e.dataset.tt=e.title;e.removeAttribute('title');return e;}}return null;}
+function tipAt(t){for(let e=t,i=0;e&&e!==document.body&&i<6;e=e.parentElement,i++){if(e.nodeType!==1)continue;   /* a fresh title (code may rewrite it) wins over an older converted one */
+    if(e.title&&typeof e.title==='string'){e.dataset.tt=e.title;e.removeAttribute('title');return e;}if(e.dataset&&e.dataset.tt!=null)return e;}return null;}
 document.addEventListener('mouseover',e=>{const el=tipAt(e.target);if(!el){if(tipFor)tipHide();return;}if(el!==tipFor)tipShow(el,e.clientX,e.clientY);},true);
-document.addEventListener('mousemove',e=>{if(tipFor){if(!tipFor.isConnected)tipHide();else tipMove(e.clientX,e.clientY);}},{passive:true});
+document.addEventListener('mousemove',e=>{if(tipFor){if(!tipFor.isConnected)tipHide();else if(tipFor.title){const el=tipFor;tipFor=null;tipAt(el);tipShow(el,e.clientX,e.clientY);}else tipMove(e.clientX,e.clientY);}},{passive:true});
 document.addEventListener('mousedown',()=>tipHide(),true);
 return {E,drawUnit,drawBld,icon,tabs,chip,sec,card,seg,link,tipHide};
 })();
