@@ -285,3 +285,5 @@ Shipped: real elevation/bathymetry (Terrarium tiles) + Natural Earth I satellite
 - laneD D0d: 'Report a problem' button (main menu, pause menu, Settings) opens a pre-filled GitHub issue labelled player (version, mode, nation, map, last errors; no personal data) — src/08k-report.js. Smoke PASS.
 - laneA 2026-11-07: A1 live Fight-it battle: campaigns saved on the old (pre real-borders) world map are refused with a note instead of breaking the map/battle; a battle that can't start falls back to auto-resolve with a message; new gate grandlive plays menu → New → march → End turn → Fight it live with no hooks (loads + runs). Shots orch/shots/laneA/.
 - laneA 2026-11-07 (02:10Z): A1 follow-up — orch/grandlive2.mjs (in gate/grandlive): two live Fight-it battles in a row (retreat, back to the map, fight again; 3D scene reused) load and run; passes. (A parallel laneA run had already shipped the A1 fix itself; this run's duplicate fix was dropped.)
+
+- laneB 2026-11-07 B3: power points (pol/dip/mil monthly) + national ideas (style trees + eco/mil/dip) as GMOD rows, 💡 tab in nation panel; gmod now drives income/upkeep/manpower.
