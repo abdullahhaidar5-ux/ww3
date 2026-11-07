@@ -428,3 +428,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 
 - laneC 2026-11-07 17:xx: C-LABELS — collision-culled grand-map labels (nation names then banners by priority); shots orch/shots/laneC/l0,l1.
 - laneE DE-BLOCK slice 6: macro dust/dark-soil ground blotches and dry scrub clumps round the base compounds so the sand stops reading as one flat tone (src/11-models.js groundKit, view only); local smoke timed out in this slow sandbox (baseline too), CI gates decide; no new shot
+- laneE DE-BLOCK slice 7: base buildings get dark window recesses with lintels/sills on every wall, a front door with canopy and a wall lamp (src/11-models.js facadeKit, view only); local smoke FAIL is a pre-existing NaN-geometry console error that also fails on unchanged main (control run) — needs an owner; shot orch/shots/laneE/t7-phone.jpg
