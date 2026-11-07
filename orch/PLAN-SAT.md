@@ -257,3 +257,4 @@ Round 8 (Abdullah 22:30) — check what exists first, extend it:
 (visible in the Middle East slice, cheap): **E** RF16 wrecks, RF14 burning oil, RF13 dust, RF15 night (after E1 soldiers) · **F** RF1 spotting, RF2 armour,
 RF3 artillery delay · **A** RG6 scenario "Gulf flashpoint", RG3 spies (with A6 fog) · **B** RG1 chokepoints & oil · **G** RG5 TV news, RG7 crises,
 RG17 holy sites · **D** RG8 achievements. Everything else → kaizen after Sat 20:00. Tick items here as they ship.
+- [ ] **A2c Turn leftovers** (Abdullah 22:30 "Why do we still have end turn?" — the End turn button is gone, 31308f7): Lane A sweeps every remaining "turn" wording/UI on the grand map → months/days ("+$X/turn" → "/month", "N turns to cross" → days, "Last turn report" → "Monthly report", truce "until turn N" → a date). Text only; the sim's month tick stays.
