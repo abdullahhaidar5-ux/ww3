@@ -137,7 +137,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   calm narrators; 20:36 after hearing the first tough pass for RS/DW/IR: "Tougher" — deeper, barked/shouted combat lines, grittier radio, still clear and human; 2026-10-30 06:08 he approved the second tough pass ("tough2", orch/voices-tough) as the level for all 18): use an expressive neural voice (XTTS-v2 for every language it covers — en, ar, tr,
   ru, zh, ko, hi/ur, es, fr, de; non-commercial licence accepted for this free game, as MMS already is) with radio
   treatment; Piper/MMS only where nothing more natural exists (fa, he, uk) and then the best-sounding option found. **Weapon/explosion sound: cinematic and
-  punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all nations (18, soon 21) about equally strong.**
+  punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all nations (18, soon 21) about equally strong** in Conquest's default **Balanced** mode — a lobby toggle **Realistic** (Abdullah 2026-11-06 21:31) makes fire support follow real-world power tiers instead; the grand campaign is always realistic.
 - **Priorities (Abdullah, 2026-10-28 18:34):** his group plays the **Shia factions (IR, RS, DW) most** — do their voices,
   uniforms and buildings first, in a **realistic military** style (IRGC/Hezbollah-style fatigues, Middle Eastern
   compounds and bunkers). The game targets **PC** (see "PC only"). Biggest pain:
