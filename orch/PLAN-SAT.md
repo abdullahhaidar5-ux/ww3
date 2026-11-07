@@ -13,6 +13,14 @@ section you need. After Sat 18:00 Chicago: no new items, only finish/ship; at 20
 balance3, grandmirror (done), look3/look4. Still finishing on their own: grand3 (→ fires Lane A when done), look1, rescue, nations-b2.
 Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 
+## VERTICAL SLICE = the Middle East first (Abdullah 2026-11-06 18:52, picked)
+Saturday's goal is a **Middle East campaign at full $75 quality**: Iran, Mountain Shias (Lebanon), Yemen (DW), Israel, Saudi Arabia,
+UAE, Oman, Iraq, Syria, Turkey, Jordan, Egypt, Kurdistan Region (+ the Gulf/Red Sea/East Med sea zones). **Every lane does its
+item for this region first** (art, towns, real data, morale, nation panel content, events/missions, battles there, voices),
+and the rest of the world only needs to *work*. Screenshots, the art-bar shots and Abdullah's 2-minute tests are taken there.
+A new campaign offers **"Middle East 2026"** as the featured start (whole world still playable). The other regions are
+polished in kaizen.
+
 ## The bar: a $75 studio game (whole game, not just the grand map)
 `orch/ART-BAR.md` (raised to $75, whole game) + **feel**: every click answers instantly (< 100 ms visible feedback), smooth
 60 fps with big armies on the grand map and ~300 units in battle, no dead ends, nothing that "never loads", readable PC UI.
