@@ -5676,7 +5676,7 @@ function gpowDesc(k,P,g){const f=(v,a,b)=>v&&Math.abs(v-1)>.01?(v>1?a:b)+' '+(v>
   const L=[f(g.m,'bounty','bounty'),f(g.rm,'radius','radius'),f(g.tm,'duration','duration'),f(g.nm,k==='barrage'?'shells':'troops',k==='barrage'?'shells':'troops'),f(g.dm,'shell damage','shell damage'),f(g.pm,'repair','repair'),f(g.cdm,'cooldown','cooldown'),g.mix===PARA_AT?'mostly anti-tank teams':g.mix===PARA_INF?'mostly riflemen':null].filter(Boolean);
   return P.desc+(L.length?' ('+L.join(', ')+')':'')+(g.fx?'. Special: '+GFX_TXT[g.fx]+(k!=='bounty'?' (cooldown +10%)':' (bounty −10%)'):'');}
 const GFX_TXT={vet:'troops arrive as veterans',dig:'troops arrive dug in (35% less damage until they move)',stealth:'troops land hidden and stay unseen until they move or fire',mark:'enemies in the area are marked - your forces do 25% more damage to them',detect:'also exposes hidden and stealthed enemy units in the area',fire:'leaves the ground burning for 8 seconds',emp:'disables enemy vehicles in the area for 4 seconds',smoke:'lays a smoke screen that hides your units inside it',rearm:'units in the area also fire 25% faster for 12 seconds',rally:'units in the area rally instantly and are fearless for 15 seconds',shield:'units in the area take 25% less damage for 12 seconds',salvage:'also refunds 15% of the cost of each unit you lose'};
-function powInfo(k,fac){const P=POWERS[k];if(!P)return null;if(k==='mil'){const n=MILNAME[fac]||'Local militia';return Object.assign({},P,{name:'Fund '+n,desc:P.desc.replace('a local militia','the '+n)});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N=natPow(fac);return Object.assign({},P,N);}
+function powInfo(k,fac){const P0=POWERS[k];if(!P0)return null;const RT=realRow(fac);const P=RT?Object.assign({},P0,{cd:P0.cd?Math.max(30,Math.round(P0.cd*RT.pcd)):P0.cd,n:P0.n?Math.max(1,Math.round(P0.n*RT.pn)):P0.n}):P0;if(k==='mil'){const n=MILNAME[fac]||'Local militia';return Object.assign({},P,{name:'Fund '+n,desc:P.desc.replace('a local militia','the '+n)});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N0=natPow(fac),N=RT?Object.assign({},N0,{cd:N0.cd?Math.max(30,Math.round(N0.cd*RT.pcd)):N0.cd,n:N0.n?Math.max(1,Math.round(N0.n*RT.pn)):N0.n}):N0;return Object.assign({},P,N);}
 // General ranks get steadily harder to earn; each promotion gives a point. Powers unlock for 1 point and can be
 // raised to level 2 (2 more points) and level 3 (3 more): bigger effect, shorter cooldown.
 const RANKS=[0,2500,7000,14000,24000,38000,56000,80000];
@@ -5738,9 +5738,26 @@ for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
   UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
-function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
+/* ---------- REALISTIC balance tiers (Abdullah 2026-11-06 21:31 "Would this all realistically have the same fire support?") ----------
+   ONE data table, rows not code paths. The lobby's Balance toggle picks Balanced (every nation equally strong, the default and
+   the only mode the tourneys balance) or Realistic (a nation's fire support follows its real-world power tier). Tier comes from
+   the grand campaign's GR_REAL military figure, so the two layers agree. Columns: cash start money, pcd general-power cooldown,
+   pn drones/sorties per power, sch missile-strike charge time, sdmg missile-strike damage, inf infantry cost, hv vehicle/aircraft
+   cost. Small powers pay for weak fire support with cheaper, more numerous infantry (and keep their guerrilla tools and
+   home-turf morale). The AI reads the same rows, so Hard AI plays the mode it is in. */
+const REAL_TIER=[['Superpower',1.8,{cash:1.5,pcd:.7,pn:1.5,sch:.7,sdmg:1.35,inf:1.1,hv:.85}],
+  ['Great power',.9,{cash:1.2,pcd:.85,pn:1.25,sch:.85,sdmg:1.15,inf:1.05,hv:.95}],
+  ['Regional power',.4,{cash:1,pcd:1,pn:1,sch:1,sdmg:1,inf:1,hv:1}],
+  ['Small power',0,{cash:.8,pcd:1.35,pn:.6,sch:1.4,sdmg:.7,inf:.8,hv:1.15}]];
+function realTierOf(fac){let m=.4;try{if(typeof GR_REAL==='object'&&GR_REAL.n[fac])m=GR_REAL.n[fac][1];}catch(e){}return REAL_TIER.find(r=>m>=r[1])||REAL_TIER[REAL_TIER.length-1];}
+function realTierName(fac){return realTierOf(fac)[0];}
+// null unless this battle is in Realistic mode - every caller then falls back to the equal Balanced numbers.
+function realRow(fac){try{if(typeof G!=='object'||!G||!G.real)return null;}catch(e){return null;}return realTierOf(fac)[2];}
+function realSup(fac){const R=realRow(fac),S=FACTIONS[fac].sup;if(!R)return S;
+  return Object.assign({},S,{charge:Math.round(S.charge*R.sch),dmg:Math.round(S.dmg*R.sdmg),n:Math.max(1,Math.round((S.n||1)*R.pn))});}
+function stats(fac,kind){const R=realRow(fac),k=fac+'|'+kind+(R?'|R':'');if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
   const s=Object.assign({},BASE[kind],(F.units||{})[kind]||{});s.kind=kind;if(s.fake){const rs=stats(fac,s.fake);s.name=rs.name;s.r=rs.r;s.spd=rs.spd;s.cls=rs.cls;s.armor=rs.armor;s.hpShow=rs.hp;}if(kind==='cleric'&&fac==='KP')s.name='Dear Leader';{const X=(XL[fac]||{})[kind];if(X)for(const q in X)if(s[q]!=null)s[q]*=X[q];if(X)s.xl=1;}const inf=s.armor==='light',veh=s.armor==='heavy'||s.cls==='heli'||s.cls==='jet';
-  let c=s.cost*(m.cost||1);if(inf)c*=(m.infCost||1);const B=BAL[fac];if(B)c*=(B._||1)*(B[kind]||1);s.cost=Math.round(c/25)*25;if(kind==='champ')s.cost=BASE.champ.cost;if(inf)s.time*=(m.infTime||1);
+  let c=s.cost*(m.cost||1);if(inf)c*=(m.infCost||1);const B=BAL[fac];if(B)c*=(B._||1)*(B[kind]||1);s.cost=Math.round(c/25)*25;if(R&&kind!=='champ')s.cost=Math.max(25,Math.round(s.cost*(inf?R.inf:R.hv)/25)*25);if(kind==='champ')s.cost=BASE.champ.cost;if(inf)s.time*=(m.infTime||1);
   s.hp=Math.max(1,Math.round(s.hp*(m.hp||1)*(veh?(m.vehHp||1):1)));if(m.spd&&s.dom!=='air')s.spd*=m.spd;{const D=DOCT[fac]||{};if(D.barrage&&s.cls==='arty'){s.rng*=1.15;if(s.splash)s.splash*=1.3;s.rof*=.85;s.cost=Math.round(s.cost*.85/25)*25;}if(D.covert&&(s.cls==='inf'||s.cls==='at')&&s.dom==='ground'&&kind!=='hacker')s.camo=1;if(D.shock&&s.armor==='heavy'&&s.dom==='ground')s.spd*=1.1;}s.dmg*=(m.dmg||1);s.aggro=kind==='drone'?290:s.rng+90;if(s.aa===undefined)s.aa=0;return sc[k]=s;}
 function bstats(fac,kind){const k=fac+'#'+kind;if(sc[k])return sc[k];const m=FACTIONS[fac].mods||{};const s=Object.assign({},STRUCT[kind]);s.kind=kind;if(kind==='coast'&&COASTN[fac])s.name=COASTN[fac];if(kind==='sam'&&MDN[fac])s.name=MDN[fac];{const X=(XLB[fac]||{})[kind];if(X){for(const q in X)if(s[q]!=null)s[q]*=X[q];s.xl=1;}}
   if(kind==='econ'&&ECON[fac])s.name=ECON[fac];if(kind==='uplink'&&UPLINK[fac])s.name=UPLINK[fac][0];s.hp=Math.round(s.hp*(m.bldHp||1));s.cost=kind==='econ'?s.cost:Math.round(s.cost*(m.cost||1)/25)*25;if(s.dmg)s.dmg*=(m.dmg||1);s.aa=s.aa||0;s.armor='bld';return sc[k]=s;}
@@ -6926,6 +6943,63 @@ add([
  desc:'The rainy north coast of Turkey: forested mountains with tea terraces dropping to a port-lined coast road, small valleys and ships offshore. Everything is narrow and green.',
  c:[[700,520,100,'gulfcity'],[1100,860,80,'turkey'],[1200,330,70,'turkey']],cc:[1600,1100,120,'turkey'],
  sea:[1600,-400,640,2.3],rd:[[760,640,1060,760,88],[1200,860,1420,640,84]],pk:[[1000,1000,80,1.5,.3]]},
+/* ---------- RIVER SHIAS (4 new; with marshes = 5), OLIVE BRIGADES (3 new; with gaza = 4), BLACK DESERT (3 new; with 2 desert maps = 5) ---------- */
+{k:'basraport',n:'Basra: Shatt al-Arab Port',th:'desert',rg:1.0,home:['IQ','RV','IR'],fmb:300,tag:'river port · date palms · refinery · canals',
+ desc:'The southern Iraqi port on the great river mouth: cranes and oil tanks, palm-lined canals, flat ground and a handful of bridges. Whoever holds the port town and the bridges feeds the whole south.',
+ c:[[700,480,110,'gulfcity'],[1100,820,85,'mideast'],[560,950,70,'mideast']],cc:[1600,1100,140,'gulfcity'],
+ riv:[[1180,-120,1280,1100,50,46]],br:[[0,.4],[0,.8]],sea:[1600,2300,640,1.9],pk:[[1000,1000,50,1.5,.3]]},
+{k:'amarah',n:'Amarah: Marsh Edge',th:'green',rg:.95,home:['RV','IQ','IR'],tag:'reed edge · river towns · levees · causeways',
+ desc:'Where the southern marshes meet the farmland: levee roads on raised banks, small river towns and reed lagoons that channel every advance. Cutting a causeway splits the map.',
+ c:[[760,500,95,'turkey'],[1150,780,80,'turkey'],[600,930,70,'turkey']],cc:[1600,1100,125,'turkey'],
+ lk:[[1250,420,150,1.6],[900,1000,100,1.3]],riv:[[1000,-100,1100,1100,40,34]],br:[[0,.5],[0,.85]],rd:[[560,640,720,800,56]]},
+{k:'samawa',n:'Samawa: Euphrates Farmland',th:'desert',rg:1.05,home:['RV','IQ','SA'],tag:'irrigated strip · desert both sides · highway',
+ desc:'A thin green strip of irrigated fields along the Euphrates with open desert on both sides and one long highway. Fast armour in the desert, tough fighting for the farm villages.',
+ c:[[820,470,90,'mideast'],[1100,900,80,'mideast'],[580,880,65,'mideast']],cc:[1600,1100,120,'mideast'],
+ riv:[[1100,-200,1180,1100,60,40]],br:[[0,.35],[0,.7]],rd:[[560,640,700,780,64]],pk:[[1400,500,60,1.4,.2]]},
+{k:'rumaila',n:'Rumaila: Oilfield Flats',th:'desert',rg:.9,home:['RV','IQ','IR','SA'],tag:'oil wells · pipelines · flat desert · border berms',
+ desc:'A vast southern oilfield: flat sand, flare stacks, pipeline berms and pump stations. Little cover, so the berms and the field camps are everything.',
+ c:[[900,480,95,'mideast'],[1250,780,75,'mideast'],[600,880,65,'mideast']],cc:[1600,1100,130,'mideast'],
+ rd:[[700,700,1100,640,60],[1250,950,1450,700,56]],pk:[[1000,1000,60,1.6,.3]]},
+{k:'rafahborder',n:'Rafah: Border Strip',th:'desert',rg:1.0,home:['OB','IL','EG'],fmb:300,tag:'border wall · tunnels · rubble · sand',
+ desc:'A crowded southern border town cut by a tall wall and a patrol road, with sand dunes on one side. Tight alleys, rubble and a few crossings decide it.',
+ c:[[760,480,105,'gulfcity'],[1100,780,90,'mideast'],[600,930,70,'mideast']],cc:[1600,1100,140,'gulfcity'],
+ sea:[-340,1100,640,.72],rd:[[980,60,1060,520,50],[1180,820,1400,940,56]],pk:[[1400,500,55,1.3,.2]]},
+{k:'gazaorchard',n:'Gaza: Orchards and Camps',th:'temperate',rg:1.0,home:['OB','IL'],tag:'dense camps · citrus orchards · coast road',
+ desc:'Packed housing blocks fringed by citrus orchards and farm plots, with one coastal highway. Orchards give cover for flanking; the blocks are slow and costly to clear.',
+ c:[[700,500,120,'gulfcity'],[1050,800,95,'mideast'],[1250,350,80,'mideast'],[560,980,75,'mideast']],cc:[1600,1100,145,'gulfcity'],
+ sea:[-340,1100,640,.72],rd:[[1300,700,1420,1000,60]],pk:[[1450,560,50,1.3,.2]]},
+{k:'gazaharbour',n:'Gaza: Harbour Quarter',th:'temperate',rg:.95,home:['OB','IL','EG'],fmb:300,tag:'fishing harbour · old quarter · seafront',
+ desc:'A small fishing harbour and a tight old quarter behind a long seafront road. Naval fire from the sea, rooftop fights and a bridge over a stream through the middle.',
+ c:[[700,520,115,'gulfcity'],[1000,860,85,'mideast'],[1200,320,75,'mideast']],cc:[1600,1100,135,'gulfcity'],
+ sea:[-340,1100,640,.72],riv:[[700,300,1600,600,36,28]],br:[[0,.4],[0,.8]]},
+{k:'deirez',n:'Euphrates: Desert River Towns',th:'desert',rg:1.1,home:['BI','SY','IQ'],tag:'river towns · desert both banks · bridges',
+ desc:'A ribbon of river towns on the Euphrates with raw desert on both banks. Bridges are the only crossings; raiders ride the wadis around them.',
+ c:[[820,480,90,'mideast'],[1100,860,80,'mideast'],[600,900,65,'mideast']],cc:[1600,1100,125,'mideast'],
+ riv:[[1100,-200,1200,1100,56,44]],br:[[0,.4],[0,.8]],rd:[[560,640,700,790,60]],pk:[[1450,480,60,1.4,.3]]},
+{k:'jazira',n:'Jazira: Badlands',th:'desert',rg:1.5,home:['BI','SY','IQ','KD'],tag:'broken badlands · wadis · lava hills · hideouts',
+ desc:'Broken stony badlands and old lava hills cut by dry wadis. Plenty of hiding ground for ambushes; a single crossroads town controls the roads.',
+ c:[[900,470,85,'mideast'],[1250,800,70,'mideast'],[600,900,65,'mideast']],cc:[1600,1100,115,'mideast'],
+ rd:[[700,620,1100,540,70],[1200,950,1450,760,64]],pk:[[1000,1000,90,1.8,.4],[1450,380,70,1.4,-.3],[700,330,55,1.3,.2]]},
+{k:'sinjardesert',n:'Border Desert: Smugglers Roads',th:'desert',rg:1.3,home:['BI','SY','IQ'],tag:'ridge · plains · smuggler tracks',
+ desc:'A long lonely ridge rising from open plain on the Syria-Iraq frontier, with tracks that dodge the main roads. Hold the ridge for the view or race the plain.',
+ c:[[760,500,85,'mideast'],[1150,820,75,'mideast'],[560,950,60,'mideast']],cc:[1600,1100,115,'mideast'],
+ rd:[[900,300,1150,900,80]],pk:[[1050,600,90,2.2,.9]]},
+{k:'gazanorth',n:'Gaza: Northern Farms',th:'temperate',rg:1.05,home:['OB','IL'],tag:'greenhouses · open farmland · built-up edge',
+ desc:'Flat farmland and greenhouse rows north of the city, with a built-up edge and a few sandy tracks. Open ground for armour, cover in the glasshouses and orchard walls.',
+ c:[[760,470,95,'mideast'],[1150,820,85,'gulfcity'],[580,950,70,'mideast']],cc:[1600,1100,135,'gulfcity'],
+ sea:[-340,1100,640,.72],rd:[[1250,640,1430,900,56]],pk:[[1430,480,50,1.3,.2]]},
+{k:'gazawadi',n:'Gaza: Wadi and Dunes',th:'desert',rg:1.15,home:['OB','IL','EG'],tag:'dry wadi · dunes · camps · one bridge',
+ desc:'A dry wadi running to the sea between high dunes, with camps and workshops on the banks. The wadi is the covered approach; the dune crests give the long shots.',
+ c:[[820,500,90,'mideast'],[1100,860,80,'gulfcity'],[600,900,65,'mideast']],cc:[1600,1100,125,'gulfcity'],
+ sea:[-340,1100,640,.72],riv:[[1150,-150,1250,1100,54,30]],br:[[0,.45],[0,.85]],pk:[[700,340,60,1.6,.3],[1430,620,55,1.5,-.2]]},
+{k:'najafplain',n:'Najaf: Desert Plain Approaches',th:'desert',rg:1.0,home:['RV','IQ','SA'],tag:'flat plain · city edge · cemeteries walls · highways',
+ desc:'The flat desert plain outside a big southern Iraqi city: walled compounds and long highways running into dense streets. Fast on the plain, grinding at the city edge. No shrine or holy ground is an objective here.',
+ c:[[760,480,110,'mideast'],[1150,800,85,'mideast'],[580,950,70,'mideast']],cc:[1600,1100,145,'gulfcity'],
+ rd:[[640,660,780,820,56],[1250,950,1450,760,52]],pk:[[1000,1010,55,1.5,.3]]},
+{k:'hamadesert',n:'Hama Desert: Pump Stations',th:'desert',rg:1.2,home:['BI','SY'],tag:'open desert · pipeline · pump stations · basalt',
+ desc:'Open eastern Syrian desert with a pipeline and its pump stations, basalt outcrops and gravel plains. The stations are the only ground worth holding.',
+ c:[[900,470,85,'mideast'],[1200,830,70,'mideast'],[600,920,65,'mideast']],cc:[1600,1100,115,'mideast'],
+ rd:[[700,640,1150,580,64]],pk:[[1000,1000,80,1.7,.4],[1430,400,60,1.4,-.3]]},
 ]);
 }
 /* ================= SIMULATION (authoritative; runs in single-player and on the host) ================= */
@@ -6986,19 +7060,19 @@ function aiCls(s){return s.dom==='air'?'air':isInf(s)?'inf':s.dom==='ground'&&(s
 // d = difficulty 0-2, plus 10 x personality code (so the existing difficulty channel carries it to clients' hosts and the server).
 function mkAI(d){d|=0;let p=d>=10?Math.floor(d/10):0;d=Math.max(0,Math.min(2,d%10));if(p===9)p=1+Math.floor(Math.random()*(PERS.length-1));if(!PERS[p])p=0;const D=DIFF[d];return{bi:0,wave:Math.max(4,Math.round(D.wave*((G&&G.bs)||BATTLE)*(PERS[p].wave||1))),inc:D.inc,t:0,d,p};}
 const setup={p:'IR',a:'US',d:1,n:1,bs:BATTLE};
-function mkTeam(id,fac,ai){const F=FACTIONS[fac];return{id,fac,F,sup:F.sup,credits:3000,charge:0,tun:[],q:{hq:[],barracks:[],factory:[],airfield:[],shipyard:[]},rq:{},upg:{},rally:null,
+function mkTeam(id,fac,ai){const F=FACTIONS[fac];return{id,fac,F,sup:realSup(fac),credits:3000,charge:0,tun:[],q:{hq:[],barracks:[],factory:[],airfield:[],shipyard:[]},rq:{},upg:{},rally:null,
   color:F.color,dark:shade(F.color,.45),built:0,lost:0,kills:0,gxp:0,rank:1,spent:0,pw:{},gdoc:'',gperk:{},reveals:[],ai:ai?mkAI(setup.d):null,st:stNew()};}
 // Alliances: players on the same team never fight, share vision and win together.
 // Allies can send each other money (in steps of $50, never more than you have).
 function giveMoney(from,to,amt){return ctGive(from,to,amt);}   // allied aid: fee + delay live in 03d-command
 function ally(a,b){if(a===b)return true;if(a==null||b==null||a<0||b<0||!G||!G.teams[a]||!G.teams[b])return false;return G.teams[a].tm===G.teams[b].tm||(!!G.truce&&G.truce[a<b?a*32+b:b*32+a]>G.t);}   // a running truce (03d-command) counts as friendly for fire; sameTm() is the strict team test (vision, victory, aid)
 /* Realistic balance (Abdullah 2026-11-06 21:31): start money follows the nation's real-world military tier (GR_REAL mil figure); Balanced = equal */
-function realMul(f){if(!G||!G.real||typeof GR_REAL!=='object'||!GR_REAL.n[f])return 1;const m=GR_REAL.n[f][1];return m>=1.8?1.5:m>=.9?1.2:m>=.4?1:.8;}
+function realMul(f){const R=realRow(f);return R?R.cash:1;}
 function newGame(o){const N=o.facs.length;const mk=MAPS[o.map]&&(N<=MAPS[o.map].max||o.camp)?o.map:'strait';setWorld(worldScaleFor(N,mk));setBases(N,mk,mk===o.map?(Array.isArray(o.st)?o.st:o.slot):-1);if(o.camp)while(BASES.length<N)BASES.push(BASES[BASES.length-1]);
   const wB=wxBase(o.w),ssn=wxSsn(o.w)||seasonOf(mk);const M=mkMap(o.seed,mk,ssn);
   G={t:0,ssn,ents:[],byId:new Map(),proj:[],strikes:[],timers:[],planes:[],nid:1,sel:[],place:null,aim:null,amove:false,msgs:[],aiT:2,visT:0,endT:3,over:false,uiT:0,out:[],
      map:M,mapKey:mk,grid:M.grid,fields:M.fields.map(f=>({...f})),oil:M.oil.map(f=>({...f,cp:new Array(N).fill(0)})),seed:o.seed,N};for(const k of G_LATE)G[k]=undefined;initCiv();initDams();initTowns();G.tow=(M.towers||[]).map((q,i)=>({i,x:q.x,y:q.y,ow:-1,cp:new Array(N).fill(0)}));G.oil.forEach((o,i)=>{o.i=i;o.hp=o.max=OIL_HP;o.dead=false;o.burn=0;o.rep=0;o.tg=oilTarget(o);});G.conq=!o.camp&&!o.grand&&!o.sandbox;infraInit();
-  G.bs=BATTLE;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));{const R=mkTeam(N,'DW',false);R.reb=true;R.tm=900;R.color='#8c7b58';R.dark=shade(R.color,.45);R.credits=0;G.teams.push(R);G.reb=N;}G.conq=!o.camp&&!o.grand&&!o.sandbox;G.setupEnd=G.conq?CQ_SETUP:0;G.real=o.real?1:0;G.teams.forEach(T=>{T.credits=T.reb?0:G.conq?Math.round(CQ_START*realMul(T.fac)/100)*100:Math.round(3000*(1+(G.bs-1)*.8)/100)*100;stOf(T).c0=T.credits;});G.teams.forEach((T,i)=>{if(T.ai)T.gdoc=({tank:'arm',guer:'gue',arty:'art',air:'air'})[PERS[T.ai.p|0]&&PERS[T.ai.p|0].k]||GDOC_AI[T.fac]||'arm';else if(Array.isArray(o.gd)&&GDOC[o.gd[i]])T.gdoc=o.gd[i];});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
+  G.bs=BATTLE;G.real=o.real?1:0;G.teams=o.facs.map((f,i)=>mkTeam(i,f,o.ai[i]));{const R=mkTeam(N,'DW',false);R.reb=true;R.tm=900;R.color='#8c7b58';R.dark=shade(R.color,.45);R.credits=0;G.teams.push(R);G.reb=N;}G.conq=!o.camp&&!o.grand&&!o.sandbox;G.setupEnd=G.conq?CQ_SETUP:0;G.real=o.real?1:0;G.teams.forEach(T=>{T.credits=T.reb?0:G.conq?Math.round(CQ_START*realMul(T.fac)/100)*100:Math.round(3000*(1+(G.bs-1)*.8)/100)*100;stOf(T).c0=T.credits;});G.teams.forEach((T,i)=>{if(T.ai)T.gdoc=({tank:'arm',guer:'gue',arty:'art',air:'air'})[PERS[T.ai.p|0]&&PERS[T.ai.p|0].k]||GDOC_AI[T.fac]||'arm';else if(Array.isArray(o.gd)&&GDOC[o.gd[i]])T.gdoc=o.gd[i];});G.teams.forEach((T,i)=>{T.tm=Array.isArray(o.tm)&&o.tm[i]!=null?o.tm[i]|0:100+i;});
   {const ALT=['#e8e8e8','#d98c3a','#36c2c9','#d94fa0','#a3d13a','#8b6cf6','#f2d14a','#e2483d','#4a80e8','#3fae5c','#c97b4a'];const cd=(p,q)=>{const a=hexRGB(p),b=hexRGB(q);return Math.abs(a.r-b.r)+Math.abs(a.g-b.g)+Math.abs(a.b-b.b);};
    for(let i=1;i<N;i++){const T=G.teams[i];if(G.teams.slice(0,i).some(P=>cd(P.color,T.color)<.45)){const c=ALT.find(c=>G.teams.slice(0,i).every(P=>cd(P.color,c)>=.45))||ALT[i%ALT.length];T.color=c;T.dark=shade(c,.45);}}}
   paintTerrain(M);
@@ -11999,6 +12073,10 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   // header
   const hd=E('div','lobhd');const l=E('div');l.append(E('div','lobk','Your battle · code'),E('div','lobcode',lobbyCode().toUpperCase()));{const c=E('div','lobk',cfNetText());c.id='cfNet';l.append(c);}
   const r=E('div','lobr');r.append(E('div','lobmap',mapN),E('div','lobn',`${nn} / ${mx} players`+((cfb?cfb.ns|0:(NET.lobbySpec||[]).length)?` · 👁 ${cfb?cfb.ns|0:(NET.lobbySpec||[]).length} watching`:'')));const pips=E('div','pips');for(let i=0;i<mx;i++){const d=E('i');if(i<nn)d.className='on';pips.append(d);}r.append(pips);hd.append(l,r);L.append(hd);
+  // Balance mode (Abdullah 2026-11-06 21:31): the host sets it here, everyone sees it on the loading card.
+  {const bl=E('div','lobwhy');const say=()=>setup.real?'Balance: Realistic — fire support follows real-world power (superpowers hit harder; small nations get cheaper infantry).':'Balance: Balanced — every nation equally strong.';
+   bl.textContent=say();const bb=E('button','',setup.real?'Switch to Balanced':'Switch to Realistic');bb.style.cssText='font-size:11px;padding:2px 7px;margin-left:4px';
+   bb.onclick=()=>{setup.real=setup.real?0:1;renderLobby();};bl.append(document.createTextNode(' '),bb);L.append(bl);}
   // start
   if(NET.hostNote)L.append(E('div','lobwhy',NET.hostNote));
   if(NET.pw)L.append(E('div','lobwhy','🔒 Password protected: only players with the password can join (the invite below includes it).'));
@@ -12058,7 +12136,7 @@ function lobSides(n){const nh=NET.lobby.length+1,cfb=NET.cf&&NET.cf.own&&NET.cf.
 function launchMP(){if(NET.cf&&NET.cf.own){if(MODE!=='single'||!NET.game)return;const c=cfCfg();NET.cf.pend=null;NET.game.emit('bset',Object.assign(c,{seed:(Math.random()*1e9)|0,start:1})).catch(()=>{});$('mpstatus').querySelectorAll('.startbtn').forEach(b=>{b.disabled=true;b.textContent='Starting…';});return;}
   if(MODE!=='single'||!NET.lobby.length)return;const seed=(Math.random()*1e9)|0;const ais=(NET.ais||[]).slice(0,Math.max(0,(MAPS[setup.map]||MAPS.strait).max-1-NET.lobby.length)).map(a=>({f:FKEYS.includes(a.f)?a.f:FKEYS[0],d:Math.max(0,Math.min(2,a.d|0)),p:persCode(a.p),tm:Math.max(0,Math.min(7,a.tm|0))}));const facs=[setup.p,...NET.lobby.map(p=>p.f),...ais.map(a=>a.f)];NET.peers=[null,...NET.lobby.map(p=>p.peer),...ais.map(()=>null)];NET.toks=[null,...NET.lobby.map(p=>p.tok||null),...ais.map(()=>null)];
   const aiD=[null,...NET.lobby.map(()=>null),...ais.map(a=>(a.d|0)+10*persCode(a.p))];NET.opp=NET.peers[1];
-  const map=setup.map||'strait',cmx=MAPS[map]&&MAPS[map].custom?{cm:customMapCode(map)}:{};const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};const ids=idLobbyIds().slice(0,facs.length);NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0,ids},sp,cmx)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined,sp:1}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0},sp,cmx);const LS=(NET.lobbySpec||[]).slice();NET.lobbySpec=[];startMP('host',seed,facs,0,map,tm,aiD,st,ids);NET.specs=[];for(const q of LS)specJoin(q);}
+  const map=setup.map||'strait',cmx=MAPS[map]&&MAPS[map].custom?{cm:customMapCode(map)}:{};const tm=lobbyTeams().slice(0,facs.length);while(tm.length<facs.length)tm.push(tm.length);const st=stClean(lobSt().slice(0,facs.length),facs.length),sp=st?{st}:{};const ids=idLobbyIds().slice(0,facs.length);const rl=setup.real?1:0;NET.lobby.forEach((p,i)=>NET.game.emit('start',Object.assign({pv:st?NET_PVS:NET_PV,seed,facs,slot:i+1,to:p.peer,map,tm,w:setup.w|0,ids,rl},sp,cmx)).catch(()=>{}));NET.room.presence({g:{c:NET.code,f:setup.p,s:'full',n:facs.length,m:map,pw:NET.pw?1:undefined,sp:1}}).catch(()=>{});NET.startInfo=Object.assign({seed,facs,map,tm,w:setup.w|0,rl},sp,cmx);const LS=(NET.lobbySpec||[]).slice();NET.lobbySpec=[];startMP('host',seed,facs,0,map,tm,aiD,st,ids,rl);NET.specs=[];for(const q of LS)specJoin(q);}
 // Joining: each player has a reconnect token for this game (kept for the browser tab), so if the link drops - or the
 // page is reloaded - they rejoin as the same commander. Client handlers are wired by wireClient() so a reconnect can
 // rebuild them on the new connection.
@@ -12080,7 +12158,7 @@ function wireClient(g){
   // An old host sends no 'w': the player's own menu choice stays, as before.
   if(typeof d.w==='number'&&d.w>=-31&&d.w<=39){if(NET.ownW==null)NET.ownW=setup.w;wxSet(d.w|0);}
   // sv: the host is the game server (Cloudflare), which has no side of its own, so this player may be slot 0
-  NET.sv=d.sv?1:0;NET.spec=d.sp?1:0;NET.specAll=NET.spec;NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm,null,stClean(d.st,d.facs.length),Array.isArray(d.ids)?d.ids.map(idClean):null);});
+  NET.sv=d.sv?1:0;NET.spec=d.sp?1:0;NET.specAll=NET.spec;NET.startW=performance.now();if(NET.game)NET.game.presence({ld:1}).catch(()=>{});startMP('client',d.seed|0,d.facs,sl,map,tm,null,stClean(d.st,d.facs.length),Array.isArray(d.ids)?d.ids.map(idClean):null,d.rl?1:0);});
   const ok=m=>m.peer===NET.hostPeer&&MODE==='client'&&(!m.data.to||m.data.to===NET.myPeer);
   g.on('snap',m=>{if(ok(m)){NET.lastRx=performance.now();if(m.data.to)NET.lastRxMe=NET.lastRx;applySnap(m.data);}});
   g.on('evt',m=>{if(ok(m)){NET.lastRx=performance.now();applyEvents(m.data);}});
@@ -13658,7 +13736,7 @@ function loadMap(mk,bases,cols,me,thumb){const cv=LOAD.cv;if(!cv)return;const c=
 // o: {mode, map, facs, tm, me, cols?, bases?}
 function loadShow(o){const el=loadUI(),D=MAPS[o.map]||MAPS.strait;
   el.querySelector('.lo-k').textContent='World War 3 · '+({sandbox:'Test Range',single:'Skirmish vs AI',host:'Multiplayer battle',client:'Multiplayer battle'}[o.mode]||'Battle');
-  el.querySelector('.lo-t').textContent=D.name;el.querySelector('.lo-d').textContent=D.desc||'';
+  el.querySelector('.lo-t').textContent=D.name;{let d=D.desc||'';try{if(G&&G.real){const ts=o.facs.map(f=>realTierName(f)),hi=ts.reduce((a,b)=>REAL_TIER.findIndex(r=>r[0]===b)<REAL_TIER.findIndex(r=>r[0]===a)?b:a),lo=ts.reduce((a,b)=>REAL_TIER.findIndex(r=>r[0]===b)>REAL_TIER.findIndex(r=>r[0]===a)?b:a);const hf=o.facs[ts.indexOf(hi)],lf=o.facs[ts.indexOf(lo)];d='REALISTIC BALANCE - fire support follows real-world power'+(hi!==lo?': '+((FACTIONS[hf]||{}).name||hf)+' ('+hi+') \u226B '+((FACTIONS[lf]||{}).name||lf)+' ('+lo+')':' - both sides are '+hi+'s')+'. '+d;}}catch(e){}el.querySelector('.lo-d').textContent=d;}
   const v=el.querySelector('.lo-v');v.innerHTML='';const tms=[];o.facs.forEach((f,i)=>{const t=o.tm&&o.tm[i]!=null?o.tm[i]:i;let g=tms.find(q=>q.t===t);if(!g)tms.push(g={t,m:[]});g.m.push(i);});
   tms.sort((a,b)=>(b.m.includes(o.me)?1:0)-(a.m.includes(o.me)?1:0));
   tms.forEach((g,k)=>{if(k){const vs=document.createElement('div');vs.className='lo-vs';vs.textContent='VS';v.append(vs);}const col=document.createElement('div');col.className='lo-tm';
@@ -13725,7 +13803,7 @@ function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
   MODE='single';ME=0;
   TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
-function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(!T.reb&&isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids,rl){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0,real:rl?1:0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(!T.reb&&isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');
@@ -20010,6 +20088,7 @@ const G3_DETAIL=`vec3 g3detail(vec3 c){vec2 wp=vWp.xz;vec4 bw=texture2D(uBW,vG3)
   float wet=smoothstep(.5,.56,ls)*(1.-smoothstep(.56,.7,ls));c*=1.-.2*wet;   // damp shoreline
   return c;}`;
 function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}if(G3.real&&G3.F&&!G3.F.lit){G3.F=null;G3.towns=null;}let R;try{R=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});}catch(e){return false;}
+  try{G3.vigS=new THREE.Scene();G3.vigC=new THREE.OrthographicCamera(-1,1,1,-1,0,1);G3.vigS.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.ShaderMaterial({transparent:true,depthTest:false,depthWrite:false,vertexShader:'varying vec2 u;void main(){u=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:'varying vec2 u;void main(){vec2 d=(u-vec2(.5,.52))*vec2(1.,.9);float v=smoothstep(.34,.82,length(d));vec3 c=mix(vec3(1.,.88,.66),vec3(.1,.18,.4),1.-u.y);gl_FragColor=vec4(mix(c,vec3(.02,.05,.1),v),v*.46+.055);}'})));}catch(e){G3.vigS=null;}  // studio grade: vignette + warm-top/cool-bottom wash, drawn in-canvas so HUD stays crisp
   if(!R.getContext())return false;R.outputColorSpace=THREE.LinearSRGBColorSpace;G3.R=R;G3.cv=cv;G3.aniso=Math.min(16,R.capabilities.getMaxAnisotropy?R.capabilities.getMaxAnisotropy():8);
   const F=g3Fields(),W=F.W,H=F.H,sc=new THREE.Scene(),haze=0x9db8c9;sc.background=new THREE.Color(haze);sc.fog=new THREE.Fog(haze,2200,6200);G3.sc=sc;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.02;g3Sky(sc);
   G3.cam=new THREE.PerspectiveCamera(36,1.6,8,9000);G3.cc=Object.assign({},G3.camera);G3.time=0;G3.last=0;G3.keys.clear();G3.pos=new Map();G3.arm=new Map();G3.sig='';
@@ -20268,7 +20347,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   const sig=GV.selA+'|'+GV.sel+'|'+GC.turn+'|'+GC.armies.length+'|'+GC.armies.reduce((a,x)=>a+x.u.length+x.path.length,0);
   if(sig!==G3.sig||G3.arrowDirty){G3.sig=sig;G3.arrowDirty=false;g3BuildArrows();g3Cards();G3.miniDirty=G3.miniDirty||0;}
   if(G3.ship)g3ShipTick(dt,s);
-  G3.R.render(G3.sc,G3.cam);
+  G3.R.render(G3.sc,G3.cam);if(G3.vigS){const ac=G3.R.autoClear;G3.R.autoClear=false;G3.R.render(G3.vigS,G3.vigC);G3.R.autoClear=ac;}
   if(mv||anim||G3.lblDirty||(G3.lf=(G3.lf||0)+1)%20===0){g3Labels(false);G3.lblDirty=false;}
   if(mv||(G3.lf%12===0)||G3.miniDirty)g3Mini();}
 if(!window._g3Keys){window._g3Keys=1;const ok=ev=>{const t=ev.target&&ev.target.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT')return false;const sc=document.getElementById('grandScreen');return !!sc&&sc.style.display!=='none'&&GV.g3&&!G;};
@@ -23012,7 +23091,7 @@ function mxBuild(){
   opt('Doctrine','Your general’s battle doctrine: a free bonus for the whole battle. Or pick it in the first 2 minutes.',g('gdocSel'));
   opt('Conditions','Time of day and weather. Low sun, dusk and night change what you can see and how far.',g('wx'));
   opt('Season','Mud slows wheels, snow slows infantry. Roads matter more.',g('ssnRow'));
-  {const r=mxEl('div','seg');r.id='balRow';[['Balanced',0],['Realistic',1]].forEach(([t,v])=>{const b=mxEl('button','',t);b.onclick=()=>{setup.real=v;r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));};if(!!setup.real===!!v)b.classList.add('on');r.appendChild(b);});opt('Balance','Balanced: every nation equally strong. Realistic: richer armies start with more money, small nations less. Solo battles only for now.',r);}
+  {const r=mxEl('div','seg');r.id='balRow';[['Balanced',0],['Realistic',1]].forEach(([t,v])=>{const b=mxEl('button','',t);b.onclick=()=>{setup.real=v;r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));};if(!!setup.real===!!v)b.classList.add('on');r.appendChild(b);});opt('Balance','Balanced: every nation equally strong - the default. Realistic: fire support follows real-world power - superpowers get more money, faster, bigger strikes and cheaper vehicles; small nations get weaker strikes but cheaper infantry. The host sets it for a multiplayer battle.',r);}
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
   /* --- play online --- */
   const OL=scr('online','<h2 class="mxh">Play online</h2><p class="mxsub">Join an open battle, or start one with your nation and battlefield. Friends can join from the list or with an invite code.</p>');
