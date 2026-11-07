@@ -35,6 +35,7 @@ await page.route('**/*', r => r.request().url().startsWith(URL0.replace('/index.
 const shot = async n => { await page.screenshot({ path: path.join(SHOTS, n + '.png'), timeout: 120000 }).catch(() => console.log('  (screenshot skipped ' + n + ')')); };
 const ev = (fn, a) => page.evaluate(fn, a);
 const click = async (sel, txt) => { const ok = await ev(([s, t]) => { const b = [...document.querySelectorAll(s)].find(x => !t || new RegExp(t).test(x.textContent)); if (!b) return false; b.click(); return true; }, [sel, txt]); if (!ok) throw new Error('no button ' + sel + ' ' + (txt || '')); };
+const t0 = Date.now(), el = () => ((Date.now() - t0) / 1000).toFixed(1) + 's';
 try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => !!document.getElementById('grandBtn'), null, { timeout: 60000 });
@@ -52,7 +53,7 @@ try {
   const s0 = await st(); console.log(el(), 'start', JSON.stringify(s0));
   if (s0.spd) fails.push('the clock should start paused');
   await page.waitForTimeout(1200); if ((await st()).day !== s0.day) fails.push('days pass while paused');
-  await page.keyboard.press('Space'); await page.waitForTimeout(1500); const s1 = await st(); console.log(el(), 'after Space', JSON.stringify(s1));
+  await page.keyboard.press('Space'); await page.waitForTimeout(4000); const s1 = await st(); console.log(el(), 'after Space', JSON.stringify(s1));
   if (!s1.spd || s1.day === s0.day) fails.push('Space does not start the clock ' + JSON.stringify(s1));
   await page.keyboard.press('5'); await shot('rt-1-running');
   await page.waitForFunction(t => GC.turn > t, s0.turn, { timeout: 20000, polling: 200 }).catch(() => fails.push('the month never rolled over at speed 5'));

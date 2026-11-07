@@ -122,7 +122,7 @@ function grandMapRefresh(){if(GV.g3)g3Refreshed();GV.dirty=true;guTop();guSide()
 function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const me=GC.me?GC.nat[GC.me]:null,N=GC.me?grNat(GC.me):null;
   const score=GC.me?grScore(GC.me):0;
   t.innerHTML='';if(N){t.appendChild(guEl('span','display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #fff;background:'+N.color));t.appendChild(guEl('b','font-size:17px',GCM.nats.get(GC.me).name));}
-  t.appendChild(guEl('span','opacity:.9','<b id="gDate">'+grDateStr(GC.turn,GC.day|0)+'</b> <span style="opacity:.65">month '+Math.min(GC.turn,GC.maxTurn)+'/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')+'</span>'));guClockUI(t);
+  t.appendChild(guEl('span','opacity:.9','<b id="gDate">'+(GC.ph==='plan'?grDateStr(GC.turn,GC.day|0):grDateStr(GC.turn+1,0))+'</b> <span style="opacity:.65">month '+Math.min(GC.turn,GC.maxTurn)+'/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')+'</span>'));guClockUI(t);
   if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/turn)</span>'));
   if(me)t.appendChild(guEl('span','opacity:.9','Score <b>'+score+'</b> · provinces <b>'+GCM.P.filter(p=>p.land&&GC.prov[p.i].o===GC.me).length+'</b>'));
   try{geUiTop(t,me);}catch(e){console.error('geUiTop',e);}try{gmilUiTop(t,me);}catch(e){console.error('gmilUiTop',e);}
@@ -142,7 +142,7 @@ function guClockUI(t){const w=guEl('span','display:inline-flex;align-items:cente
   for(let i=1;i<=5;i++){const b=guEl('button','width:11px;height:'+(8+i*2)+'px;padding:0;border-radius:2px;border:1px solid #6d8aa3;cursor:pointer;align-self:flex-end;background:'+((GV.lastSpd||2)>=i?(GV.spd?'#ffd24a':'#8a7a4a'):'#18293a'),'');b.type='button';b.title='Speed '+i+' (key '+i+', or + / −)';b.onclick=()=>guSpeed(i);w.appendChild(b);}
   t.appendChild(w);}
 function guSpeed(s){s=Math.max(0,Math.min(5,s|0));if(s)GV.lastSpd=s;GV.spd=s;GV.clkT=performance.now();guTop();}
-function guClockTick(){const now=performance.now(),dt=Math.min(.5,(now-(GV.clkT||now))/1000);GV.clkT=now;
+function guClockTick(){const now=performance.now(),dt=Math.min(1,(now-(GV.clkT||now))/1000);GV.clkT=now;
   if(!GV.spd||!GC||GC.over||GC.ph!=='plan'||GV.busy||G||document.getElementById('gModal'))return;const sc=document.getElementById('grandScreen');if(!sc||sc.style.display==='none'||document.hidden)return;
   GV.dayF=(GV.dayF||0)+dt*GU_SPD[GV.spd];if(GV.dayF<1)return;const n=Math.floor(GV.dayF);GV.dayF-=n;GC.day=(GC.day|0)+n;
   if(GC.day>=30){GC.day=0;GV.dayF=0;guEndTurn();return;}
