@@ -50,3 +50,6 @@ Colour 3.5 → 4: political mode now washes every province in its owner's colour
 
 ## 2026-11-07 10:3x UTC — laneC iteration 11 (shots: orch/shots/laneC/h0 before, h1 after)
 Objects 4 -> 4 (close-up fix): oil fields drew black cones (read as spikes in the water); now lattice drilling derricks with crown + beacon, storage tanks and a lit flare stack, scaled to the houses. Visual only. Others unchanged (geography 4, colour 4, light 3.5, water 3.5, life 3.5, readability 4). Next lowest: light/life 3.5 -> C0 UI kit.
+
+## 2026-11-07 11:xx UTC — laneC iteration 12 (shots: orch/shots/laneC/z0 before, z4 after)
+Light 3.5 -> 4 (est. 3.8): grand map gets a studio grade drawn inside the canvas (corner vignette + warm-top/cool-bottom wash, one extra fullscreen draw, HUD stays crisp). Others unchanged (geography 4, colour 4, water 3.5, objects 4, life 3.5, readability 4). Next lowest: life 3.5 (animated flags/city lights at night), then C0 UI kit.
