@@ -105,6 +105,22 @@ try {
   ck(cq.wasd, 'W A S D changed selection/orders in a battle (camera only)');
   ck(!cq.bodyHas, 'Conquest HUD text mentions a grand-map-only asset: ' + (cq.bodyHas && cq.bodyHas[0]));
   await shot('conquest-ir');
+  // Balance toggle (Abdullah 2026-11-06 21:31): Balanced must stay equal for everyone; Realistic must tier fire support
+  // (superpower strikes come faster/harder and its vehicles are cheaper; a small power's strikes are weaker but its
+  // infantry cheaper). Read as data on both settings, with the battle's own setting put back afterwards.
+  { const rb = await ev(() => { const rd = () => ({ cd: powInfo('barrage', 'US').cd, cdS: powInfo('barrage', 'OB').cd,
+        inf: stats('US', 'inf').cost, infS: stats('OB', 'inf').cost, tank: stats('US', 'tank').cost, tankS: stats('OB', 'tank').cost,
+        ch: realSup('US').charge, chS: realSup('OB').charge, dmg: realSup('US').dmg, dmgS: realSup('OB').dmg,
+        cash: realMul('US'), cashS: realMul('OB'), tier: [realTierName('US'), realTierName('OB')] });
+      const was = G.real; G.real = 0; const bal = rd(); G.real = 1; const real = rd(); G.real = was; return { bal, real }; });
+    const B = rb.bal, R = rb.real;
+    ck(B.cash === 1 && B.cashS === 1, 'Balanced mode no longer starts every nation on the same money: ' + JSON.stringify(B));
+    ck(R.tier[0] === 'Superpower' && R.tier[1] === 'Small power', 'Realistic tiers wrong: ' + R.tier.join('/'));
+    ck(R.cd < B.cd && R.ch < B.ch && R.dmg > B.dmg && R.cash > 1 && R.tank < B.tank,
+      'Realistic mode does not strengthen the superpower: ' + JSON.stringify([B, R]));
+    ck(R.cdS > B.cdS && R.chS > B.chS && R.dmgS < B.dmgS && R.cashS < 1,
+      'Realistic mode does not weaken the small power\'s fire support: ' + JSON.stringify([B, R]));
+    ck(R.infS < B.infS, 'Realistic mode does not give the small power cheaper infantry: ' + JSON.stringify([B, R])); }
   // Both AIs play 3 game-minutes: nobody may ever build/train a banned kind.
   await ev(() => { for (const T of G.teams) if (!T.ai && typeof mkAI === 'function') T.ai = mkAI(1); window.__bad = []; });
   for (let c = 0; c < 4; c++) await ev(() => { for (let i = 0; i < 1800 && !G.over; i++) simUpdate(1 / 60); for (const e of G.ents) if (['cleric', 'fort'].includes(e.kind)) window.__bad.push(e.kind); });
