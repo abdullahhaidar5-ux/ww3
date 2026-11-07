@@ -256,18 +256,7 @@ function emZulfiqar(x,cx,cy,s){x.save();x.translate(cx,cy);x.scale(s,s);
 function emText(x,t,cx,cy,px,col){x.save();x.font='700 '+px+'px "Noto Naskh Arabic","Amiri","Scheherazade New","Traditional Arabic","Times New Roman",serif';x.textAlign='center';x.textBaseline='middle';x.direction='rtl';
   x.fillStyle='rgba(0,0,0,.6)';x.fillText(t,cx+.6,cy+.7);x.fillStyle=col;x.fillText(t,cx,cy);x.restore();}
 function drawEmblem(x,fac,bg){const W=120,H=72;
-  if(fac==='RS'){
-    if(bg){const g=x.createRadialGradient(60,30,6,60,34,72);g.addColorStop(0,'#1d1f1c');g.addColorStop(1,'#050505');x.fillStyle=g;x.fillRect(0,0,W,H);
-      const b=x.createLinearGradient(0,H*.79,0,H);b.addColorStop(0,'#8e1a1f');b.addColorStop(1,'#4c0b0e');x.fillStyle=b;x.fillRect(0,H*.79,W,H*.21);
-      x.fillStyle=emGold(x,H*.785,H*.8);x.fillRect(0,H*.785,W,1.1);emText(x,'يا حسين',60,H*.895,10.5,'#f2d68a');}
-    const cx=60,cy=29.5,r=21;emLaurel(x,cx,cy+1,r+4.2,-1,'#c9a446');emLaurel(x,cx,cy+1,r+4.2,1,'#c9a446');
-    emRing(x,cx,cy,r,'#21402a','#0a1a10');
-    x.save();x.beginPath();x.arc(cx,cy,r-1.3,0,7);x.clip();
-    const sky=x.createLinearGradient(0,cy-r,0,cy+4);sky.addColorStop(0,'#2a4a33');sky.addColorStop(1,'#11281a');x.fillStyle=sky;x.fillRect(cx-r,cy-r,2*r,2*r);
-    const m1=new Path2D('M36 40 L45 26 L49 30 L56 17 L63 28 L67 23 L77 36 L84 40 Z');const mg=x.createLinearGradient(0,17,0,40);mg.addColorStop(0,'#8f9a86');mg.addColorStop(.5,'#4f6249');mg.addColorStop(1,'#1d3020');x.fillStyle=mg;x.fill(m1);
-    x.fillStyle='#ecebe3';x.fill(new Path2D('M56 17 L59.4 22.3 L57.6 21.4 L56 23.2 L54.3 21.3 L52.6 22.4 Z'));x.fill(new Path2D('M45 26 L47.2 29.1 L45.6 28.5 L44.6 29.6 L43.2 28.6 Z'));x.fill(new Path2D('M67 23 L69.3 26.2 L67.6 25.5 L66.4 26.7 L65.1 25.6 Z'));
-    const m2=new Path2D('M36 44 L50 34 L58 38 L66 32 L84 44 Z');x.fillStyle='#173222';x.fill(m2);x.restore();
-    emZulfiqar(x,61.5,41,.6);
+  if(fac==='RS'){drawRS(x,bg);
   } else if(fac==='DW'){
     if(bg){const g=x.createRadialGradient(60,30,6,60,34,72);g.addColorStop(0,'#5a3820');g.addColorStop(1,'#24150b');x.fillStyle=g;x.fillRect(0,0,W,H);
       const t=[['#3f4a22',H*.80],['#58612b',H*.86],['#76763a',H*.92]];for(const [c,y] of t){x.fillStyle=c;x.beginPath();x.moveTo(0,H);x.lineTo(0,y);for(let i=0;i<=12;i++){const sx=i*10,yy=y+Math.sin(i*1.3)*1.4;x.lineTo(sx,yy);x.lineTo(sx+10,yy);}x.lineTo(W,H);x.closePath();x.fill();x.strokeStyle='rgba(235,220,150,.35)';x.lineWidth=.5;x.beginPath();for(let i=0;i<=12;i++){const sx=i*10,yy=y+Math.sin(i*1.3)*1.4;x.moveTo(sx,yy+.3);x.lineTo(sx+10,yy+.3);}x.stroke();}
@@ -291,7 +280,32 @@ function drawEmblem(x,fac,bg){const W=120,H=72;
     x.fillStyle='#3a2414';x.fillRect(-17,-2.4,10.5,4.8);x.fillStyle=gd;x.beginPath();x.moveTo(-17,-2.4);x.lineTo(-23,-6.5);x.quadraticCurveTo(-25,0,-23,6.5);x.lineTo(-17,2.4);x.closePath();x.fill();x.stroke();
     x.fillStyle=gd;x.beginPath();x.arc(-11.5,0,1.1,0,7);x.fill();x.restore();
   }}
-function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#050505':'#24150b';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
+// Mountain Shias: printed cloth banner (Abdullah 21:19 "as realistic as you are allowed to") — real militia-banner style, our own emblem; never the real organisation's marks
+function emCloth(x,W,H,base,seed){x.fillStyle=base;x.fillRect(0,0,W,H);
+  for(let i=0;i<7;i++){const fx=i*W/6+((seed*37+i*53)%9)-4,g=x.createLinearGradient(fx-10,0,fx+10,0);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.5,i%2?'rgba(255,255,255,.10)':'rgba(70,40,0,.13)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(fx-10,0,20,H);}
+  let s=seed|0||7;const r=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
+  for(let i=0;i<900;i++){x.fillStyle=r()<.5?'rgba(0,0,0,.045)':'rgba(255,255,255,.05)';x.fillRect(r()*W,r()*H,.7,.7);}
+  x.strokeStyle='rgba(0,0,0,.05)';x.lineWidth=.3;for(let y=0;y<H;y+=1.6){x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();}}
+function drawRS(x,bg){const W=120,H=72,G='#0f6a2e',G2='#0a4d20';
+  if(bg){emCloth(x,W,H,'#f4c400',11);
+    const b=x.createLinearGradient(0,H*.8,0,H);b.addColorStop(0,'#b5141c');b.addColorStop(1,'#7e0c12');x.fillStyle=b;x.fillRect(0,H*.8,W,H*.2);
+    emText(x,'لبيك يا حسين',60,H*.9,9.5,'#fff4c8');
+    emText(x,'شيعة الجبل',60,8.6,10.5,G);}
+  const cx=60,cy=34.5,r=16.5;
+  // laurels (printed green)
+  emLaurel(x,cx,cy+1,r+4,-1,G);emLaurel(x,cx,cy+1,r+4,1,G);
+  // printed roundel: green ring, mountains in two greens, white snow
+  x.lineWidth=2.2;x.strokeStyle=G;x.beginPath();x.arc(cx,cy,r,0,7);x.stroke();x.lineWidth=.7;x.beginPath();x.arc(cx,cy,r-2.3,0,7);x.stroke();
+  x.save();x.beginPath();x.arc(cx,cy,r-3,0,7);x.clip();
+  x.fillStyle=G;x.fill(new Path2D('M40 46 L48 33 L51.5 36 L58 24 L64.5 34 L68 30 L80 46 Z'));
+  x.fillStyle='#fffbe8';x.fill(new Path2D('M58 24 L61.2 28.9 L59.6 28.1 L58 29.8 L56.4 28 L54.9 29 Z'));x.fill(new Path2D('M48 33 L50 35.9 L48.5 35.3 L47.6 36.3 L46.3 35.4 Z'));x.fill(new Path2D('M68 30 L70.1 33 L68.6 32.4 L67.5 33.5 L66.3 32.5 Z'));
+  x.fillStyle=G2;x.fill(new Path2D('M40 49 L52 40 L59 43 L66 38 L80 49 Z'));x.restore();
+  // Zulfiqar printed in green with a white edge line, across the roundel
+  x.save();x.translate(61,44.5);x.scale(.5,.5);x.fillStyle=G;x.strokeStyle='#fffbe8';x.lineWidth=1.1;
+  x.beginPath();x.moveTo(-22,-3.2);x.lineTo(16,-4.4);x.quadraticCurveTo(31,-6.5,42,-12);x.lineTo(36,-4.8);x.quadraticCurveTo(28,-2.2,21,-.9);x.lineTo(21,.9);x.quadraticCurveTo(28,2.2,36,4.8);x.lineTo(42,12);x.quadraticCurveTo(31,6.5,16,4.4);x.lineTo(-22,3.2);x.closePath();x.fill();x.stroke();
+  x.beginPath();x.moveTo(-21,-11);x.quadraticCurveTo(-26,0,-21,11);x.lineTo(-25,11);x.quadraticCurveTo(-30,0,-25,-11);x.closePath();x.fill();x.stroke();
+  x.fillRect(-40,-2.8,15,5.6);x.strokeRect(-40,-2.8,15,5.6);x.beginPath();x.arc(-42,0,3.6,0,7);x.fill();x.stroke();x.restore();}
+function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#f4c400':'#24150b';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
 function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
   const rect=(col,a,b,w,h)=>{x.fillStyle=col;x.fillRect(a,b,w,h);};const hs=(cols)=>cols.forEach((col,i)=>rect(col,0,i*H/cols.length,W,H/cols.length+1));const vs=(cols)=>cols.forEach((col,i)=>rect(col,i*W/cols.length,0,W/cols.length+1,H));
   const star=(cx,cy,r,col,n=5)=>{x.fillStyle=col;x.beginPath();for(let i=0;i<n*2;i++){const a=-Math.PI/2+i*Math.PI/n,rr=i%2?r*.42:r;x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}x.closePath();x.fill();};
