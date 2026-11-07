@@ -6,7 +6,7 @@
 const GP_TRIB=0.35, GP_PAY=0.25;
 function gpScore(a,b){return Math.max(-100,Math.min(100,Math.round(gdWarscore(a,b))));}
 function gpProvCost(pi,a){const p=GCM.P[pi],st=GC.prov[pi];let c=5+p.dev*1.2;if(GC.nat[st.o]&&GC.nat[st.o].cap===pi)c*=2;
-  if(!GC.armies.some(x=>x.o===a&&x.at===pi&&!x.fl&&x.u.length))c*=1.8;return Math.round(c);}
+  if(!GC.armies.some(x=>x.o===a&&x.at===pi&&!x.fl&&x.u.length))c*=1.8;if(typeof gclHas==='function'&&gclHas(a,pi))c*=0.5;return Math.round(c);}
 function gpVasCost(a,b){return 45+(grNat(b).major?25:0);}
 function gpCanVassal(a,b){return !grOverlord(a)&&!grOverlord(b)&&!grVasPair(a,b)&&!(GC.vas||[]).some(v=>v[0]===b);}
 function gpProvs(a,b){return GCM.P.filter(p=>p.land&&GC.prov[p.i].o===b).sort((x,y)=>y.dev-x.dev||x.i-y.i);}
@@ -22,6 +22,7 @@ function gpApply(a,b,d){const na=GCM.nats.get(a).name,nb=GCM.nats.get(b).name,A=
   let txt=[];
   if(d.pay){const m=Math.round(A.cash*GP_PAY);A.cash-=m;B.cash+=m;txt.push('paid $'+m);}
   for(const i of d.prov||[]){const st=GC.prov[i],p=GCM.P[i];st.o=a;st.un=Math.min(100,st.un+20);st.cv=3;st.rq=[];st.gar=[];try{geCaptured(i,a);}catch(x){}
+    if(typeof gclHas==='function'&&gclHas(a,i)){gclTaken(a,i);A.ae=Math.max(0,(A.ae||0)-1.5);}
     if(B.cap===i){const r=gpProvs(a,b).filter(q=>q.i!==i)[0];B.cap=r?r.i:-1;}}
   if((d.prov||[]).length)txt.push('took '+d.prov.map(i=>GCM.P[i].n).join(', '));
   if(d.trib){const m=Math.round(Math.max(0,B.cash)*GP_TRIB);A.cash+=m;B.cash-=m;txt.push('tribute $'+m);}
