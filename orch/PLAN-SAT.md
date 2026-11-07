@@ -108,6 +108,8 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
 
 **These rules override your scheduled-task prompt wherever they differ** (e.g. it says "ONE item" or "wait for grand3/look1/rescue" — follow the rules below instead).
 
+## WORLD SIMULATOR rule (Abdullah 23:03) — applies to every lane item: see CLAUDE.md "IT'S A WORLD SIMULATOR". Each item's commit/HISTORY line lists its reaction chain (who reacts, second-order effects, counter-play, cost); an item that only adds a button with no world reaction is not done.
+
 ## Rules for every lane session — FAST + CHEAP (Abdullah 18:40 "Get creative and speed up development and save usage")
 1. **FIRST:** `git fetch -q`. Stop only if **your own lane** has an unmerged `orch/lane<X>-*` branch pushed < 45 min ago. **Never wait for
    other helpers** (grand3, look1, rescue…): if your top item touches files another active branch is editing, take your next
