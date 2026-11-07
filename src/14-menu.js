@@ -123,7 +123,7 @@ function mxBuild(){
   const T=scr('title');T.innerHTML='<h1 id="mxlogo">World War <span>3</span></h1><p id="mxtag">Real-time modern warfare, from one battle to the whole world.</p>';
   const menu=mxEl('div');menu.id='mxmenu';T.appendChild(menu);
   const item=(t,fn,cls,tip)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''),t);b.type='button';b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);if(tip)b.title=tip;menu.appendChild(b);return b;};
-  MX.cont=item('Continue',()=>mxClick('svContinue'),'','Pick up your latest saved battle');MX.cont.hidden=true;
+  MX.cont=item('',()=>mxClick('svContinue'),'','Pick up your latest saved battle');MX.cont.hidden=true;
   item('Grand campaign',()=>mxClick('grandBtn'),'','Run a whole empire on a world map and fight the battles live');
   item('Conquest',()=>menuGo('c-map'),'','A battle vs the AI: pick a battlefield, a nation and your opponents');
   item('Missions',()=>mxClick('campaign'),'','The story missions');
@@ -197,7 +197,7 @@ function mxNatShow(f){f=f||document.querySelector('#pickP .fac.on');const d=docu
 function mxPlayersSync(){const n=(typeof setup!=='undefined'&&setup.n)||1;if(MX.cnt)MX.cnt.textContent='Computers · '+n;
   const bs=[...document.querySelectorAll('#aiN button')],i=bs.findIndex(b=>b.classList.contains('on'));if(MX.add)MX.add.disabled=!(bs[i+1]&&!bs[i+1].disabled);if(MX.rem)MX.rem.disabled=!(bs[i-1]);}
 function mxStartSync(){const s=document.getElementById('start');for(const b of [MX.startP,MX.startO]){if(!b||!s)continue;b.disabled=s.disabled;b.title=s.title||'';}}
-function mxContSync(){const c=document.getElementById('svContinue');if(!MX.cont||!c)return;MX.cont.hidden=c.hidden;if(!c.hidden){const t=(c.textContent||'').replace(/^\W*Continue\W*/i,'');MX.cont.textContent='';MX.cont.append('Continue',mxEl('small','',t));}}
+function mxContSync(){const c=document.getElementById('svContinue');if(!MX.cont||!c)return;MX.cont.hidden=c.hidden;if(c.hidden)MX.cont.textContent='';else{const t=(c.textContent||'').replace(/^\W*Continue\W*/i,'');MX.cont.textContent='';MX.cont.append('Continue',mxEl('small','',t));}}
 function mxPoll(){const m=document.getElementById('menu');if(!m||m.hidden)return;mxContSync();if(MX.cur==='c-players'||MX.cur==='c-opts'){mxStartSync();mxPlayersSync();}if(MX.cur==='c-nation')mxNatShow();}
 function mxCrumb(){const id=MX.cur,top=document.getElementById('mxtop'),cr=document.getElementById('mxcrumb');if(!top)return;top.hidden=id==='title';cr.innerHTML='';
   const st=MX_STEPS.findIndex(s=>s[0]===id);if(st>=0){cr.append(mxEl('b','','Conquest'));MX_STEPS.forEach(([sid,n],i)=>{cr.append(mxEl('i','','›'));const b=mxEl('button',sid===id?'cur':'',(i+1)+' '+n);b.type='button';if(sid!==id)b.onclick=()=>menuGo(sid,i<st);cr.append(b);});}
