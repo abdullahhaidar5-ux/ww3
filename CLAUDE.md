@@ -45,7 +45,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   Nov 2026 (look it up, don't guess); (4) **counter-play** — every action has a real-world answer the other side can take;
   (5) **costs** so nothing is free power. One shared world state (GMOD rows + the one event engine), so effects compound instead of
   living in separate mini-games. Tactical battles stay balanced games; the world around them is a simulation. Anticipate what a
-  player expects to follow — don't wait to be told.
+  player expects to follow — don't wait to be told. **If in doubt, make it realistic** (Abdullah 2026-11-07 10:23 — after a nuclear warhead was given a month-long flight: real timings, ranges, numbers and reactions always win over convenient game values; look them up).
 - **Vision:** massive columns of infantry and vehicles in intense combat, with aircraft and drones overhead.
   Graphics pushed toward Company of Heroes / Broken Arrow realism **in real gameplay**, not just staged shots.
   Most tactical/realistic gameplay possible: flanking, cover, suppression.

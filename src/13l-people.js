@@ -94,4 +94,8 @@ if(typeof npTab==='function')npTab('gov','👤','Government',(code,body)=>{const
   h+=gs.map(g=>pplCard(pplGeneral(g))).join('')+'</div>';body.innerHTML=h;});
 /* portraits are OFF until Abdullah approves the art (orch/portraits/); the hooks exist so cards can adopt them later */
 function ptOn(){return false;}
-function ptHtml(p,sz){return '';}
+function ptHtml(p,sz){const f=p&&p.id?String(p.id).replace(/[^A-Za-z0-9_-]/g,'_'):'';return f?'<img src="art/portraits/'+f+'.webp" width="'+sz+'" height="'+Math.round(sz*1.25)+'" alt="" style="flex:none;border-radius:3px" onerror="this.style.display=\'none\'">':'';}
+(function ptCredits(){try{if(document.getElementById('ptCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
+  const p=document.createElement('p');p.className='credits';p.id='ptCred';
+  p.textContent='Leader portraits (rendered offline): MakeHuman community base mesh, face targets, skins, eyebrows, eyelashes and clothes (CC0); women\'s hair by Elvaerwyn from the MakeHuman asset pack hair02 (CC-BY). All people are fictional.';
+  ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();

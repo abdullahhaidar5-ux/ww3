@@ -513,6 +513,10 @@ function stopMusic(){myStop();stHalt();}
   const p=document.createElement('p');p.className='credits';p.id='treeCred';
   p.textContent='Tree textures: Fir Tree 01, Island Tree 01 and Tree Small 02 leaf and needle photo scans by Rob Tuytel and Rico Cilliers, via Poly Haven (polyhaven.com, CC0).';
   ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
+(function propCredits(){try{if(document.getElementById('propCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
+  const p=document.createElement('p');p.className='credits';p.id='propCred';
+  p.textContent='Props: Old Military Crate and Barrel 03 by Poly Haven contributors (polyhaven.com, CC0). Building walls: Plaster001, Concrete034 and CorrugatedSteel005 from ambientCG.com (CC0).';
+  ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();
 (function sfxCredits(){try{if(document.getElementById('sfxCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
   const p=document.createElement('p');p.className='credits';p.id='sfxCred';
   p.textContent='Battle sounds (all via OpenGameArt.org): The Free Firearm Sound Library by Bart (CC0); Chaingun/pistol/rifle shots, 4 projectile launches and 2 High Quality Explosions by Michel Baradari (apollo-music.de, CC BY 3.0); Cannon fire and Battle at sea by Thimras (CC0); Explosions by EZduzziteh (CC0); Big Explosion by Lamoot (CC BY 3.0); Rocket Engine by theMinesAreShakin (CC0); Engine-loop heavy vehicle/tank by Nayckron (CC BY 3.0); Engine Sound by kurt (CC BY 3.0); Jet Engine Takeoff by dklon (CC BY 3.0); Helicopter SFX by WuxiaScrub (CC0); Mild Wind Background Noise by Bashar3A (CC0); AMB Rain Loop 1 by Kresiek The Furry (CC0); Background Rumble Noise by gryc (CC BY 3.0).';

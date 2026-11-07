@@ -1,5 +1,5 @@
-Shipped in the last 3 h: peace-deal screen, coalitions, propaganda war and research (laneG); world market, inflation and corruption (laneB); occupation insurgency and army retreats by morale style (laneA, laneF); online grand campaign with friends (laneA A2b s1); Middle East Conquest maps (laneD, memaps).
-Lanes: A (grand engine) is on the multiplayer grand campaign and smooth army control; B (grand systems) is on trade, market and the next RG items; C (look) has its UI kit C0 not started; D (content) has voices for the new nations next; E (battle look) is on the real infantry model swap E1 and buildings E2.
-Needs your tap: PR #24 (main → servers-live, 3 new Middle East maps) is open: https://github.com/abdullahhaidar5-ux/ww3/pull/24 — merge it to put the maps into Cloudflare battles.
+Shipped since 13:00Z: nuclear programmes and grand-map strikes, TV news, elections and refugees, pipelines and grids, mobilisation and arms trade (laneG, laneB); after-action report and allied morale sharing (laneF); soldiers, HQ compound and vehicle grime (laneE).
+Lanes: A (grand engine) on the multiplayer grand campaign and smooth army control; B (grand systems) on the open RG items after pipelines; C (look) on the grand map de-block and towns, UI kit C0 not started; D (content) on new nations' voices and the auto-balancer; E (battle look) on ground detail and vehicle wear.
+Needs your tap: PR #24 (main → servers-live, Middle East maps) is open: https://github.com/abdullahhaidar5-ux/ww3/pull/24 — merge it so Cloudflare battles get the new maps.
 Open player bug reports: none. Open design item: 3-player maps (isolated start wins about 55%).
-Deadline Sat 20:00 Chicago; no new scope after 18:00, so the lanes are finishing and shipping what is green.
+Deadline Sat 20:00 Chicago; no new scope after 18:00, so lanes are finishing and shipping what is green.

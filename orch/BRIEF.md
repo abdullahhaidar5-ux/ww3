@@ -1,56 +1,46 @@
-# BRIEF — one-page state of World War 3 (janitor, 2026-11-07 10:03Z = Sat 04:03 Chicago)
+# BRIEF — one-page state of World War 3 (janitor, 2026-11-07 16:00Z = Sat 10:00 Chicago)
 
 ## What the game is now
 Browser RTS in the style of C&C Generals, live at https://abdullahhaidar5-ux.github.io/ww3/ (also the ww3 Worker and the
 claude.ai artifact). PC only. Conquest is the only battle mode. The grand campaign is a Total War / EU4-style world map
 above it: provinces, armies, empire economy, morale styles, real time with pause, AI nations that act on their own.
-Battles are hosted on Cloudflare. Deadline: $75 studio-quality game by Sat 2026-11-07 20:00 Chicago; after 18:00 no new scope.
+Battles are hosted on Cloudflare. Deadline: $75 studio-quality game by Sat 2026-11-07 20:00 Chicago; no new scope after 18:00.
 
-## Live since the last brief (main, roughly 07:00Z–10:00Z)
-- Grand campaign: EU4 peace-deal screen (war score buys provinces, tribute, vassals), coalitions that join wars, research
-  tracks + cabinet bonuses, propaganda war, trade nodes, chokepoint blockades, corruption, inflation with a Finance tab.
-- World market: Grain / Metals / Wares goods with monthly prices and a bread subsidy (laneB B5b s3).
-- Occupation fights back by morale style: resistance cells that spread to neighbouring land (laneA A6 s1–2).
-- Armies that lose a battle retreat by morale style (laneF A3b s2). Path preview and Ctrl+click select-all-armies (A3 s2).
-- Online grand campaign with friends: host a campaign, friends lead a nation (laneA A2b s1, host-authoritative).
-- AI generals act on day ticks; army outliner (O) with multi-select; army squads and political owner colours on the map.
-- Conquest: Middle East Conquest maps for Iraq, Syria, Jordan, Kurdistan, Oman, Yemen, Egypt, Turkey and Israel; OB and BI
-  fictional factions; logistics stages 5b–10 (depots, ports, mines, bridge demolish and pontoons, airlift).
-- Battle look: rifle squads show 4 soldiers, Command panel starts collapsed, Middle Eastern HQ and barracks fill their footprints.
-- Player-facing names no longer use jargon (SAM → Anti-Air, ATGM → Anti-Tank, "MBT" removed).
+## Live since the last brief (main, 13:00Z–16:00Z)
+- Nuclear programmes and a two-step grand-map strike, with fallout and sanctions (RG10 first cut, laneG).
+- TV news lower-third fed by the event log, with fictional channels and anchors (RG5, laneG).
+- Elections and refugees: democracies vote on war support and unrest; wars create refugees (RG4, laneG).
+- Pipelines and grids: eight real lines, sabotage/guard/repair, oil price and income rows (RG24, laneB).
+- Mobilisation, call-up and stand-down (RG34), plus arms trade tab (RG12).
+- Army after-action report on the Fight-it result screen (laneF). Allied armies lift weaker ones' morale (A3b, laneF).
+- Grand-map first-minute coach card (D5, laneD). Battle-map readability: soldiers larger, HQ compound with PBR props,
+  tyre tracks and rocks, vehicle grime and mud (DE-BLOCK slices 1–4b, laneE).
+- Towns sparser and megacity-only towers; grand-map oil rigs and political colours (laneC).
+- Portraits round 3 asset-pack pipeline in art/portraits, flag OFF (portraits3).
 
-## Lanes — current item (see orch/PLAN-SAT.md for the full list)
-- **A — Grand engine:** A2b multiplayer grand campaign (slice 1 shipped; rest open); A3 smooth army control; A3b morale;
-  A4 leftovers; A5b morale extras on the map.
-- **B — Grand systems (EU4):** B5 trade nodes, B5b inflation/corruption/world market, B6 coalitions, B7 research shipped;
-  next: the open RG items queued in PLAN-SAT (arms trade, pipelines, economy crash).
-- **C — Look ($75 bar):** C0 UI kit (not started); C0b shortcuts; C2 grand map to ART-BAR ≥ 4.5; C3 UI skin; C4 battle graphics.
-- **D — Content & QA:** D1b Balanced/Realistic slice 1 shipped; D2 first-time-player fixes (slice 5 shipped); D3 voices and
-  anthems for the new nations (open); D4 auto-balancer; D5 cleanup; Middle East maps (D-ME) slices 1–2 shipped.
-- **E — Battle look (laneE):** E1 real soldier model (partial: 4-soldier squads); E2 buildings (partial); E3 ground detail
-  (open); E4 vehicle detail (open); E5 HUD readability (partial).
-- **F — Battle rules & grand battles:** outliner and multi-select shipped; RG47–RG50 battle prep, objectives, sieges, pursuit queued.
-- **G — Grand politics:** peace-deal screen, B5c propaganda, coalitions, RG8 achievements, RG17 holy sites and AY leader shipped;
-  open: RG2 UN votes, RG4 elections, RG5 news, RG7 crises.
-- **Vertical slice:** Middle East 2026 scenario (Gulf flashpoint, Red Sea crisis) is the start option; full quality first.
+## Lanes — current item (full list: orch/PLAN-SAT.md)
+- **A — Grand engine:** A2b online grand campaign (slices 1–3 shipped, more open); A3 smooth army control (open); A3b morale bar
+  + retreats (slices 1–2 and courage shipped, allied sharing new); A4 leftovers; A5 force limit + tradition (open); A6 occupation (slices 1–3).
+- **B — Grand systems (EU4):** B5 trade nodes, B5b economy (inflation, corruption, world market, autonomy shipped); RG24 pipelines
+  and RG34 mobilisation first cut; next: open RG items (mercenaries RG19, bases abroad RG46, economy crash RG61).
+- **C — Look ($75 bar):** C0 UI kit not started; C2 grand map to ART-BAR ≥ 4.5 (C-LOOK de-block and C-TOWNS in progress);
+  C3 UI skin; C4 battle graphics.
+- **D — Content & QA:** D2 first-time-player fixes (slice 6); D3 voices and anthems for new nations (open); D4 auto-balancer
+  slice 1 (tuning tool only); D5 cleanup (coach card shipped, slice 1); Middle East maps done (≥6 home maps per ME faction).
+- **E — Battle look:** E1 soldiers (4-soldier squads); E2 buildings (ME HQ/barracks/factory, PBR roof and wall clutter);
+  E3 ground detail (open: flat sand between objects); E4 vehicle wear (partial: grime, mud); E5 HUD readability (partial).
+- **F — Battle & armies:** campaign-battle rules, ⚡31 quick battle, after-action report, cover overlay, weather, generals' speech.
+- **G — Grand events & diplomacy:** RG5 TV, RG10 nukes, RG4 elections, RG7/RG43 crises, B6 claims, peace-deal screen shipped;
+  open: RG16 peace conferences and RG44 demilitarised zones (DMZ not built yet).
 
-## Known bugs / player reports
-- Open GitHub issues labelled `player`: none (checked via REST at 10:03Z).
+## Known bugs and open items
+- Player bug reports open: none (GitHub label `player`, checked 2026-11-07 16:00Z).
 - Open design item: 3-player maps (isolated start wins about 55%).
-- Portraits stay off: the 40-portrait sheet failed the quality bar (orch/HANDOFF-portraits.md).
-- Local smooth gate times out on the slow box; CI decides.
-
-## Open PRs needing Abdullah
-- **PR #24** main → servers-live: 3 new Middle East maps (+ other lane work). One-tap merge to deploy to Cloudflare battles:
-  https://github.com/abdullahhaidar5-ux/ww3/pull/24
+- Smooth and grand gates can time out on the slow sandbox box; CI is the judge.
+- Needs Abdullah: PR #24 (main → servers-live, Middle East maps) is open; merge it to put the maps into Cloudflare battles.
 
 ## Where to find things
-- `CLAUDE.md` — rules, standing decisions, the build and gate commands.
-- `orch/PLAN-SAT.md` — the central plan, lanes, the top unticked item per lane.
-- `orch/SYSTEMS.md` — one owner per system (read before adding any system).
-- `orch/HOWTO.md` — recipes: gate, adding a nation, adding a test, adding a grand panel.
-- `orch/HISTORY.md` — what each run shipped (append only). `orch/ROADMAP.md` — status of big workstreams.
-- `orch/ART-BAR.md` — the look bar. `orch/BUDGET.md` / `orch/KAIZEN.md` — usage limits and the kaizen loop.
-
-## Build and gate (every change)
-`python3 orch/build.py` → `node orch/smoke.mjs` (SMOKE PASS) → `node orch/smooth.mjs` (SMOOTH PASS). Commit src/ and index.html together.
+- How to work and test: orch/HOWTO.md · the central plan: orch/PLAN-SAT.md · what each system owns: orch/SYSTEMS.md
+- Standing decisions: CLAUDE.md · what shipped and when: orch/HISTORY.md · progress board: orch/ROADMAP.md
+- Phone summary for Abdullah: orch/STATUS.md · this brief: orch/BRIEF.md
+- Rule for every change: build.py → smoke.mjs (SMOKE PASS) → smooth.mjs (SMOOTH PASS) → commit src/ + index.html together.

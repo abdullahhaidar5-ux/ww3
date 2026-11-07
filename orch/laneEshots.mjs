@@ -17,8 +17,10 @@ await page.goto(ORIGIN + '/index.html', { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => typeof startSingle === 'function', null, { timeout: 60000 });
 await page.evaluate(([m, f]) => { try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} setup.n = 1; setup.p = f; try { setup.map = m; } catch (e) {} startSingle(); }, [MAP, FAC]);
 await page.waitForFunction(() => !window.LOADING, null, { timeout: 900000, polling: 500 });
+if(process.env.NIGHT)await page.evaluate(()=>{window.__NIGHT=1;});
+if(process.env.DEMO)await page.evaluate(()=>{window.__DEMO=1;});
 await page.evaluate(() => { for (const el of document.querySelectorAll('div')) if (/Choose your General Doctrine/.test(el.textContent) && el.getBoundingClientRect().height < 200) el.style.display = 'none'; for (const T of G.teams) if (T.ai) T.ai = null;
-  const hq = G.ents.find(e => e.team === ME && e.kind === 'hq'); centerOn(hq.x + 60, hq.y + 60, true); for (let i = 0; i < 30; i++) simUpdate(1 / 30); updateUI(); });
+  const hq = G.ents.find(e => e.team === ME && e.kind === 'hq'); if (window.__DEMO) { addBld(ME, 'barracks', hq.x + 170, hq.y + 10, true); addBld(ME, 'factory', hq.x + 20, hq.y + 150, true); addBld(ME, 'depot', hq.x + 180, hq.y + 150, true); } if (window.__NIGHT) { G.todM = 2; try { applyWeather(0); } catch (e) {} FXE_flare(hq.x + 60, hq.y + 40); NFL.hot = G.t; } centerOn(hq.x + 100, hq.y + 80, true); for (let i = 0; i < 30; i++) simUpdate(1 / 30); updateUI(); });
 await page.waitForTimeout(2500); if(!process.env.NOBASE){await page.screenshot({ path: path.join(SH, `${TAG}-base.png`), timeout: 300000 }); console.log('shot base');}
 await page.evaluate(() => { const inf = G.ents.filter(e => e.team === ME && !e.isB && e.kind === 'inf'); const e = inf[0]; if (e) { centerOn(e.x, e.y, true); cam.dist = 110; cam.td = 110; for (let i = 0; i < 5; i++) simUpdate(1 / 30); } });
 await page.waitForTimeout(2500); await page.screenshot({ path: path.join(SH, `${TAG}-close.png`), timeout: 300000 }); console.log('shot close');
