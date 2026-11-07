@@ -12073,6 +12073,10 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   // header
   const hd=E('div','lobhd');const l=E('div');l.append(E('div','lobk','Your battle · code'),E('div','lobcode',lobbyCode().toUpperCase()));{const c=E('div','lobk',cfNetText());c.id='cfNet';l.append(c);}
   const r=E('div','lobr');r.append(E('div','lobmap',mapN),E('div','lobn',`${nn} / ${mx} players`+((cfb?cfb.ns|0:(NET.lobbySpec||[]).length)?` · 👁 ${cfb?cfb.ns|0:(NET.lobbySpec||[]).length} watching`:'')));const pips=E('div','pips');for(let i=0;i<mx;i++){const d=E('i');if(i<nn)d.className='on';pips.append(d);}r.append(pips);hd.append(l,r);L.append(hd);
+  // Balance mode (Abdullah 2026-11-06 21:31): the host sets it here, everyone sees it on the loading card.
+  {const bl=E('div','lobwhy');const say=()=>setup.real?'Balance: Realistic — fire support follows real-world power (superpowers hit harder; small nations get cheaper infantry).':'Balance: Balanced — every nation equally strong.';
+   bl.textContent=say();const bb=E('button','',setup.real?'Switch to Balanced':'Switch to Realistic');bb.style.cssText='font-size:11px;padding:2px 7px;margin-left:4px';
+   bb.onclick=()=>{setup.real=setup.real?0:1;renderLobby();};bl.append(document.createTextNode(' '),bb);L.append(bl);}
   // start
   if(NET.hostNote)L.append(E('div','lobwhy',NET.hostNote));
   if(NET.pw)L.append(E('div','lobwhy','🔒 Password protected: only players with the password can join (the invite below includes it).'));
