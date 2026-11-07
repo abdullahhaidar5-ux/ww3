@@ -20921,9 +20921,9 @@ function g3NavyGeo(o){G3.mini=G3.mini||{};const key='navy_'+o;if(G3.mini[key]!==
   if(bb.max.z-bb.min.z>bb.max.x-bb.min.x)g.rotateY(Math.PI/2);g.computeBoundingBox();const L2=g.boundingBox.max.x-g.boundingBox.min.x,s=13/L2;g.scale(s,s,s);g.computeBoundingBox();g.translate(0,-g.boundingBox.min.y+.15,0);void len;
   return G3.mini[key]=g3MergeCol([g3Decimate(g,.3),g3ColGeo(new THREE.CylinderGeometry(.09,.09,5.4,6),[.55,.5,.4],g3M(-3.4,3.6,0))]);}
 // wake: white V trail behind a ship (child of the army group, local -x = astern)
-function g3WakeMesh(){if(G3.wakeM)return G3.wakeM.clone();const sh=new THREE.Shape();sh.moveTo(5,0);sh.lineTo(-20,6.5);sh.lineTo(-14,0);sh.lineTo(-20,-6.5);sh.closePath();const g=new THREE.ShapeGeometry(sh).rotateX(-Math.PI/2);
+function g3WakeMesh(){if(G3.wakeM)return G3.wakeM.clone();const sh=new THREE.Shape();sh.moveTo(5,0);sh.lineTo(-10,3.2);sh.lineTo(-7,0);sh.lineTo(-10,-3.2);sh.closePath();const g=new THREE.ShapeGeometry(sh).rotateX(-Math.PI/2);
   const cl=new Uint8Array(16*64*4);const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');const gr=x.createRadialGradient(40,32,2,26,32,34);gr.addColorStop(0,'rgba(255,255,255,.75)');gr.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);void cl;
-  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,opacity:.8}));m.position.y=.25;const uv=g.attributes.uv,p=g.attributes.position;for(let i=0;i<p.count;i++)uv.setXY(i,(p.getX(i)+20)/25,(p.getZ(i)+6.5)/13);G3.wakeM=m;return m.clone();}
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,opacity:.8}));m.position.y=.25;const uv=g.attributes.uv,p=g.attributes.position;for(let i=0;i<p.count;i++)uv.setXY(i,(p.getX(i)+10)/15,(p.getZ(i)+3.2)/6.4);G3.wakeM=m;return m.clone();}
 
 // the grand map only needs the three soldier rigs + one warship (not the 80 battle models): load just those, then rebuild the army figures once
 function g3LoadArmyModels(){if(G3.miniLoad||typeof parseModel!=='function'||typeof MODEL_FILES==='undefined')return;G3.miniLoad=1;
