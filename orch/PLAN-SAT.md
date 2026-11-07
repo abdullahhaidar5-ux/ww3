@@ -35,7 +35,7 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 - [ ] **A7** grand7 friends multiplayer on real time (lockstep, pause rules, live battles pause the map for everyone; others give orders while paused and can spectate; several battles from the same pause run together) — likely after the deadline.
 
 ## Lane B — Grand systems: EU4 mechanics (priority order)
-- [ ] **B1 Realistic start** — GRAND-PICKS "REALISTIC START" (real GDP/military/oil, real alliances + opinions, real wars, fronts, bases, fleets).
+- [x] **B1 Realistic start** (first cut, see orch/reports/realstart.md; follow-ups listed there) — GRAND-PICKS "REALISTIC START" (real GDP/military/oil, real alliances + opinions, real wars, fronts, bases, fleets).
 - [ ] **B2 Nation panel** — GRAND-PICKS "THE NATION PANEL" (EU4-style tabbed window; `npTab` register; every later item adds its tab).
 - [ ] **B3 Power points + ideas** (Abdullah 17:58): EU4 monarch points as **Political / Diplomatic / Military capital** (monthly from leader + advisors), spent on tech, development, coring, diplomacy, generals, stability; national ideas (unique per nation, equal value) + idea groups.
 - [ ] **B4 Stability, cores, estates**: stability −3…+3 (raise with Political capital; affects unrest/income/war support), coring conquered provinces (cost, time, overextension), estates (Army, Clergy/Ideology, Business, Workers) with loyalty/influence and privileges.

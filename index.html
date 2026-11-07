@@ -18275,17 +18275,17 @@ function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(s
   const codes=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))];
   GM_P.slice(0,GM_LAND).forEach((r,i)=>{GC.prov.push({o:r[1],o0:r[1],gar:[],tax:1,un:15,cv:0,rq:[]});});
   for(const c of codes){const N=grNat(c),ps=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c);const cap=ps.find(p=>p.cap)||ps[0];
-    GC.nat[c]={code:c,cash:N.major?2200:900,cap:cap.i,wg:ps.filter(p=>p.wg).map(p=>p.i),dead:0,an:0,ai:c!==GC.me,home:ps.map(p=>p.i)};
-    const V=GR_VBASE*(N.major?1:.5)*(quick?.7:1),sd=ps.reduce((a,p)=>a+p.dev,0),fac=N.fac;
+    GC.nat[c]={code:c,cash:grRealCash(c,N.major?2200:900),cap:cap.i,wg:ps.filter(p=>p.wg).map(p=>p.i),dead:0,an:0,ai:c!==GC.me,home:ps.map(p=>p.i)};
+    const V=GR_VBASE*grRealMil(c,N.major?1:.5)*(quick?.7:1),sd=ps.reduce((a,p)=>a+p.dev,0),fac=N.fac;
     for(const p of ps)GC.prov[p.i].gar=grGenUnits(fac,V*.5*p.dev/sd,false);
     const wgp=ps.find(p=>p.wg&&p.i!==cap.i);const capShare=wgp?.3:.5;
     grAddArmy(c,cap.i,grGenUnits(fac,V*capShare,true));if(wgp)grAddArmy(c,wgp.i,grGenUnits(fac,V*.2,false));}
   // opening wars: each region's majors fight in a ring (first and last of a pair only when the region has two or more), so every nation
   // starts with the same number of rivals; the player's nation always has at least one
   const byReg={};for(const c of grMajors()){const r=grNat(c).reg;(byReg[r]=byReg[r]||[]).push(c);}
-  for(const r of Object.keys(byReg).sort()){const L=byReg[r].sort((a,b)=>GCM.P[GC.nat[a].cap].x-GCM.P[GC.nat[b].cap].x);if(L.length>=2)for(let i=0;i<L.length;i++){const a=L[i],b=L[(i+1)%L.length];if(a!==b)GC.war[grWk(a,b)]=1;}}
-  if(GC.me&&!Object.keys(GC.war).some(k=>k.split('|').includes(GC.me))){let best=null,bd=1e9;for(const c of grMajors())if(c!==GC.me){const d=grDist(GC.nat[c].cap,GC.nat[GC.me].cap);if(d<bd){bd=d;best=c;}}if(best)GC.war[grWk(GC.me,best)]=1;}
-  geEnsure();
+  if(false)for(const r of Object.keys(byReg).sort()){const L=byReg[r].sort((a,b)=>GCM.P[GC.nat[a].cap].x-GCM.P[GC.nat[b].cap].x);if(L.length>=2)for(let i=0;i<L.length;i++){const a=L[i],b=L[(i+1)%L.length];if(a!==b)GC.war[grWk(a,b)]=1;}}
+  if(GC.me&&!GR_REAL.wars.concat(GR_REAL.tn).some(x=>x.includes(GC.me))&&!Object.keys(GC.war).some(k=>k.split('|').includes(GC.me))){let best=null,bd=1e9;for(const c of grMajors())if(c!==GC.me){const d=grDist(GC.nat[c].cap,GC.nat[GC.me].cap);if(d<bd){bd=d;best=c;}}if(best)GC.war[grWk(GC.me,best)]=1;}
+  geEnsure();grRealApply(quick);
   grLog('The campaign begins. '+(GC.me?GCM.nats.get(GC.me).name+' takes the field.':'Observer mode.'),GC.me);
   return GC;}
 function grWk(a,b){return a<b?a+'|'+b:b+'|'+a;}
@@ -18308,7 +18308,7 @@ function grPath(o,from,to){if(from===to)return {path:[],turns:0,decl:''};const P
     for(const j of P[u].adj){if(done.has(j))continue;const c=grEdge(u,j);if(!c)continue;if(!pass(j,j===to))continue;const nd=d+c;if(!dist.has(j)||nd<dist.get(j)){dist.set(j,nd);prev.set(j,u);open.push([nd,j]);}}}
   if(!dist.has(to))return null;const path=[];for(let c=to;c!==from;c=prev.get(c))path.unshift(c);
   const w=GC.prov[to]&&P[to].land?GC.prov[to].o:'';return {path,turns:dist.get(to),decl:(w&&w!==o&&!grAtWar(o,w))?w:''};}
-function grSupplied(a){const P=GCM.P,p=P[a.at];if(p.sea)return true;if(GC.prov[a.at].o===a.o)return true;return p.adj.some(j=>P[j].land&&GC.prov[j].o===a.o);}
+function grSupplied(a){const P=GCM.P,p=P[a.at];if(p.sea)return true;if(GC.prov[a.at].o===a.o||a.bs===GC.prov[a.at].o||(typeof grAllied==='function'&&grAllied(a.o,GC.prov[a.at].o)))return true;return p.adj.some(j=>P[j].land&&GC.prov[j].o===a.o);}
 
 // ---------- auto-resolve (deterministic strength battle from the same unit lists) ----------
 const GR_TDEF={m:.30,u:.15,r:.10,f:0,d:0,c:.05,j:.12,s:.10,w:0};
@@ -18418,7 +18418,7 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
   for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead||!N.ai)continue;const fac=grNat(c).fac,mine=P.filter(p=>p.land&&GC.prov[p.i].o===c);if(!mine.length)continue;
     const wars=Object.keys(GC.war).filter(k=>k.split('|').includes(c)).map(k=>k.split('|').find(x=>x!==c));
     // a nation at peace with everyone picks a fight with its weakest neighbour now and then (minor nations only defend)
-    if(!wars.length&&grNat(c).major&&GC.turn>=3&&R()<.3){let best=null,bv=1e18;for(const p of mine)for(const j of p.adj){const q=P[j];if(!q.land)continue;const w=GC.prov[j].o;if(w===c||GC.nat[w].dead)continue;const v=grProvDef(j)+GC.armies.filter(a=>a.at===j).reduce((s,a)=>s+grArmyVal(a),0);if(v<bv||(v===bv&&w<best)){bv=v;best=w;}}if(best){grDeclare(c,best);wars.push(best);}}
+    if(!wars.length&&grNat(c).major&&GC.turn>=3&&R()<.15){let best=null,bv=1e18;for(const p of mine)for(const j of p.adj){const q=P[j];if(!q.land)continue;const w=GC.prov[j].o;if(w===c||GC.nat[w].dead||grAllied(c,w)||grOpinion(c,w)>=40)continue;const v=grProvDef(j)+GC.armies.filter(a=>a.at===j).reduce((s,a)=>s+grArmyVal(a),0);if(v<bv||(v===bv&&w<best)){bv=v;best=w;}}if(best){grDeclare(c,best);wars.push(best);}}
     // recruit: keep a reserve, spend the rest at the frontier province (or the capital)
     if(grNat(c).major||wars.length){const front=mine.map(p=>[p,p.adj.filter(j=>P[j].land&&GC.prov[j].o!==c&&(wars.includes(GC.prov[j].o))).length*3+(p.i===N.cap?1:0)]).sort((a,b)=>b[1]-a[1]||a[0].i-b[0].i)[0][0];
       let guard=0;while(N.cash>1500&&guard++<6){const k=GR_RECRUIT.filter(r=>grHasKind(fac,r[0]))[Math.floor(R()*3.4)%4]||GR_RECRUIT[0];if(grRecruit(c,front.i,k[0]))break;}}
@@ -19976,5 +19976,57 @@ function geUiProv(s,pi){const p=GCM.P[pi],st=GC.prov[pi],me=GC.me;if(!p||!p.land
     const mi=E.mer.includes(pi);
   }else{const mi=E.mer.includes(pi);box.innerHTML='';box.appendChild(geBtn(mi?'Recall merchant':'Place merchant here',()=>geDone(geMerchant(me,pi,!mi)),true,'A merchant skims part of this province\'s trade toward you ($70/turn).'));}
   if(box.innerHTML||box.childNodes.length)s.appendChild(box);}
+// GR_REAL - the ONE data table for the grand campaign's realistic start (Abdullah 2026-11-06 17:53, lane B1). Figures are rounded
+// from 2025-26 public data (SIPRI 2025 military spending, IMF/World Bank GDP, EIA oil output, IISS troop counts), then squeezed
+// (roughly square-rooted) so a small power is weak but still playable. Sources + the per-nation table: orch/reports/realstart.md.
+// Deterministic: no random numbers here. grand4/4b's diplomacy reads `al`, `op`, `tn`; grand3 fleets read `fl`.
+//   n[code] = [econ, mil, oil] : econ x2200 starting cash, mil x GR_VBASE starting army value, oil = fuel stock (120 = normal)
+const GR_REAL={
+ n:{US:[6,3,230],CN:[4.5,2.4,110],RU:[1.6,1.9,260],IN:[2.5,1.5,90],DE:[2.5,.9,80],JP:[2.3,.9,70],GB:[2.2,1,130],FR:[2.1,1,90],IT:[1.6,.7,80],
+  BR:[1.5,.5,160],CA:[1.5,.5,200],KR:[1.5,1,70],AU:[1.3,.6,140],ES:[1.2,.5,80],MX:[1.2,.45,130],ID:[1,.5,140],SA:[1.2,.9,300],TR:[1,1.1,90],
+  TW:[1,.6,70],PL:[1,.8,80],IL:[.9,1,90],AE:[.9,.5,260],SE:[.8,.4,90],NO:[.9,.35,260],FI:[.5,.45,80],NL:[.9,.3,80],EG:[.5,.8,110],IR:[.6,1,230],
+  PK:[.5,.9,80],UA:[.4,1.4,70],VN:[.5,.55,110],TH:[.6,.4,90],NG:[.5,.3,170],ZA:[.5,.35,80],AR:[.5,.3,100],CO:[.4,.3,130],CL:[.4,.3,80],
+  GR:[.5,.5,80],RO:[.4,.4,90],KZ:[.5,.4,200],IQ:[.5,.5,230],QA:[.6,.25,260],KW:[.5,.25,260],OM:[.4,.3,200],DZ:[.4,.55,200],MA:[.3,.4,80],
+  VE:[.2,.35,180],KP:[.15,.9,70],CU:[.1,.2,60],SY:[.1,.2,70],RS:[.15,.3,90],DW:[.1,.35,80],KD:[.25,.25,120],JO:[.2,.3,80],AZ:[.3,.4,200],BY:[.2,.4,100],
+  AF:[.1,.25,60],LY:[.15,.2,200],SD:[.08,.15,70],ET:[.15,.3,60],PH:[.4,.3,80]},
+ // real alliances at the start (Nov 2026): members start friendly, never attack each other on their own
+ al:[['NATO',['US','CA','GB','FR','DE','ES','IT','PL','SE','NO','FI','GR','RO','TR']],
+  ['US partners',['US','JP','KR','AU','PH','IL','TW','JO','AE','QA','KW','MA','EG']],
+  ['Russia bloc',['RU','BY','KZ','KP']],['Axis of Resistance',['IR','RS','DW']],['China-Pakistan',['CN','PK']],
+  ['Turkey-Azerbaijan',['TR','AZ']],['Saudi-Pakistan',['SA','PK']],['Gulf',['SA','AE','QA','KW','OM']],['Russia-Iran',['RU','IR']]],
+ // starting opinions beyond alliances (-100..100): rivalries and warm ties
+ op:[['US','CN',-45],['US','RU',-55],['US','IR',-90],['US','KP',-95],['RU','UA',-100],['RU','GB',-60],['RU','PL',-70],['RU','DE',-45],['IL','IR',-100],['IL','RS',-100],
+  ['IL','DW',-95],['IL','TR',-55],['IN','PK',-85],['IN','CN',-45],['CN','TW',-90],['CN','JP',-55],['CN','PH',-50],['KP','KR',-95],['KP','JP',-70],['GR','TR',-50],
+  ['SA','IR',-60],['EG','IL',-20],['AZ','IR',-35],['DE','US',20],['FR','DE',30],['IN','US',25],['IN','RU',35],['CN','RU',55],['CN','KP',40],['TR','RU',-10],
+  ['IQ','IR',45],['SY','IL',-35],['SY','TR',20],['KD','TR',-35],['DW','SA',-40],['UA','PL',55],['MA','DZ',-60],['ET','EG',-40],['ET','SD',-20]],
+ // opening wars as they stand in Nov 2026 (checked): Russia-Ukraine (5th year, no ceasefire); Israel vs the Lebanese Mountain Shias
+ wars:[['RU','UA'],['IL','RS']],
+ // real tensions: each side keeps a covering army at the front; wars can break out here
+ tn:[['KP','KR'],['CN','TW'],['IN','PK'],['GR','TR'],['IL','IR'],['IL','DW'],['AZ','IR'],['IN','CN'],['SA','DW']],
+ // overseas bases [owner, host, share of the owner's start strength]: US Qatar/Kuwait/UAE/Jordan/Korea/Japan/Germany/Poland/Italy,
+ // Russia in Syria (bases being renegotiated with Damascus), Turkey in Iraq's north & Syria, UK Gulf, France UAE
+ bases:[['US','QA',.06],['US','KW',.04],['US','AE',.03],['US','JO',.02],['US','KR',.08],['US','JP',.08],['US','DE',.07],['US','PL',.04],['US','IT',.04],
+  ['RU','SY',.04],['TR','SY',.05],['TR','IQ',.03],['GB','OM',.03],['FR','AE',.03],['CN','PK',.02],['IL','SY',.03]],
+ // fleets waiting for grand3: [owner, sea zone, carrier groups]
+ fl:[['US','Western Pacific',2],['US','Mediterranean',1],['US','Arabian Sea',1],['RU','Black Sea',1],['CN','South China Sea',2],['GB','North Atlantic',1],['FR','Mediterranean',1],['IN','Indian Ocean',1]]};
+function grRealOn(){return typeof GR_REAL==='object';}
+function grRealMil(c,dflt){const r=GR_REAL.n[c];return r?r[1]:dflt;}
+function grRealCash(c,dflt){const r=GR_REAL.n[c];return r?Math.round(2200*r[0]):dflt;}
+function grRealClass(c){const r=GR_REAL.n[c];if(!r)return 'Small power';const s=r[0]*.4+r[1]*.6;return s>=2?'Superpower':s>=.9?'Great power':s>=.45?'Regional power':'Small power';}
+// alliances: `GC.rel` = {pairKey: opinion}; `GC.alz` = [[name,[codes]]]. Built once at campaign start, saved with the campaign.
+function grAllied(a,b){if(!GC||!GC.alz)return false;return GC.alz.some(x=>x[1].includes(a)&&x[1].includes(b));}
+function grOpinion(a,b){if(a===b)return 100;if(!GC)return 0;if(GC.war[grWk(a,b)])return -100;let v=(GC.rel&&GC.rel[grWk(a,b)])||0;if(grAllied(a,b))v=Math.max(v,75);return Math.max(-100,Math.min(100,v));}
+function grNearOwn(o,toCap){let best=-1,bd=1e9;for(const p of GCM.P){if(!p.land||GC.prov[p.i].o!==o)continue;const d=grDist(p.i,toCap);if(d<bd){bd=d;best=p.i;}}return best;}
+// called from grNew after every nation exists. Wars, fronts, bases, alliances, opinions.
+function grRealApply(quick){
+  const has=c=>!!GC.nat[c]&&!GC.nat[c].dead;const V=c=>GR_VBASE*(grRealMil(c,grNat(c).major?1:.5))*(quick?.7:1);
+  GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);GC.rel={};
+  for(const [a,b,v] of GR_REAL.op)if(has(a)&&has(b))GC.rel[grWk(a,b)]=v;
+  for(const [a,b] of GR_REAL.wars)if(has(a)&&has(b))GC.war[grWk(a,b)]=1;
+  const front=(a,b,sh,nm)=>{const at=grNearOwn(a,GC.nat[b].cap);if(at<0)return;const f=grNat(a).fac;grAddArmy(a,at,grGenUnits(f,V(a)*sh,false),nm);};
+  for(const [a,b] of GR_REAL.wars)if(has(a)&&has(b)){front(a,b,.3,'Front Army');front(b,a,.3,'Front Army');}
+  for(const [a,b] of GR_REAL.tn)if(has(a)&&has(b)){front(a,b,.15,'Border Guard');front(b,a,.15,'Border Guard');}
+  for(const [o,h,sh] of GR_REAL.bases)if(has(o)&&has(h)){const at=GC.nat[h].cap;if(at>=0){const ba=grAddArmy(o,at,grGenUnits(grNat(o).fac,V(o)*sh,false),'Overseas Base');ba.bs=h;}}
+  for(const c of Object.keys(GC.nat)){const r=GR_REAL.n[c];if(r&&GC.nat[c].e)GC.nat[c].e.fuel=r[2];}}
 </script>
 </body></html>

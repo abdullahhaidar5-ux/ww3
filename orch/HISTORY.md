@@ -259,3 +259,5 @@ Taiwan, Philippines, Vietnam, Indonesia, Thailand, Kazakhstan, Afghanistan (styl
 
 ## nations-b2 — 2026-11-06 (Sonnet 5.5)
 Added DZ, MA, NG, ZA, ET, LY, SD (first cut, NEWNAT, Egypt base). See orch/reports/nations-b2.md.
+
+- laneB 2026-11-07: B1 realistic start first cut — GR_REAL table (real cash/army/fuel gaps, NATO/Russia/Resistance etc. alliances, opinions, wars RU-UA + IL-RS, fronts, overseas bases); grandtest + smoke pass; report orch/reports/realstart.md
