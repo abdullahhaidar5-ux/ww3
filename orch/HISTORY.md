@@ -428,6 +428,7 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 
 - laneC 2026-11-07 17:xx: C-LABELS — collision-culled grand-map labels (nation names then banners by priority); shots orch/shots/laneC/l0,l1.
 - laneE DE-BLOCK slice 6: macro dust/dark-soil ground blotches and dry scrub clumps round the base compounds so the sand stops reading as one flat tone (src/11-models.js groundKit, view only); local smoke timed out in this slow sandbox (baseline too), CI gates decide; no new shot
+- lobbies2: battle lobby restyled via shared kit src/08d-lobkit.js (flag+nation+morale rows, You/Friend/Computer/Empty slots, ready+ping tags, invite card with Copy invite link, map facts card, join/leave toasts, 5 s ready countdown with Cancel, clearer connecting/error states); guest lobby uses the same kit; orch/lobbykit.mjs offline test. Open: lobby chat (needs a protocol change), campaign lobby 13zn-gnet restyle (waits for camplobby on main), Hücum-style 2-browser test not runnable in sandbox.
 - laneC 2026-11-07 12:xx: army count plates collision-culled (yours/selected first); C-LABELS part 2.
 - laneC 2026-11-07 18Z: no code (army plinth duplicated grandlook's g3Plinth on main); artbar note only.
 
