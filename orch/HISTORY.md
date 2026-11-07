@@ -438,3 +438,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneC 2026-11-07 18:xx: grand-map ships scaled down ~35% (p0->p1); smoke fails on clean main (NaN bounding sphere in battle geometry), not from this.
 - laneE DE-BLOCK slice 3: ground debris around ME main compounds (rubble rocks, tyre stacks, planks, split crates; src/11-models.js meRoofKit, visual only); Poly Haven rock GLBs skipped (multi-file gltf, existing rock geo used); shot orch/shots/laneE/k3-phone.jpg
 - laneE DE-BLOCK slice 4b: ground-vehicle hulls get a screen-derivative hammered-steel bump normal in the weather shader (src/11-models.js); shot orch/shots/laneE/k4-phone.jpg. RF13/RF15 were already live (ticked in PLAN-SAT)
+- laneC 2026-11-07 19:xx: grand-map sea colour variation + distance-faded ripple shading (water 3.5 -> 3.8); shots orch/shots/laneC/q0,q1.
