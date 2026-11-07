@@ -402,3 +402,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneE DE-BLOCK slice 4a: soldiers x1.7 (was x1.45) so squads read at gameplay height; smoke PASS; shot orch/shots/laneE/k1-base.png. Open: slice 2 (building PBR/rooftop clutter), 3 (tyre tracks, Poly Haven rocks), vehicle wear.
 - laneC 2026-11-07 13:xx: C-TOWNS first cut — smaller, sparser towns, skyscrapers only in megacities, smaller domes (src/13e-grand3d.js); shots orch/shots/laneC/k0|k1. Visual only.
 - laneE 2026-11-07 14:10Z: re-checked k1-base.png on main (green, deploy/site success): rigged squad, compound HQ, PBR props, dozer/truck all read as a real game; no src change. Open: DE-BLOCK slice 2 (rooftop clutter), 3 (tyre tracks/rocks), vehicle wear, RF13/RF15.
+- laneF 2026-11-07 15:10Z: A3b allied morale sharing (allied army in same/adjacent province lifts a weaker one up to +3\/month). Smoke PASS; grandtest no fails.
