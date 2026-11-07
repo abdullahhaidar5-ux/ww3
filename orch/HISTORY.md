@@ -420,3 +420,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 
 - laneF 2026-11-07: RF1 hidden infantry in cover (scouts/drones/helis detect 1.7x), RF2 crew stun on hard flank hits, RF3 artillery spotting round + warning. Chain: enemy sees fewer troops -> scouts/drones matter; flank shots disable guns; shells give a reaction window; counter-play = scout, flank, move out. Smoke PASS.
 - laneC 2026-11-07 iteration 14: grand-map chimney smoke is light fading wisps instead of dark specks (src/13e-grand3d.js); visual only, no world state.
+- laneC 2026-11-07 17:xx: grand-map army plinths in nation colour + less washed-out uniforms (13e-grand3d g3FigGeo/g3Uniform); shots laneC/n0→n2.
