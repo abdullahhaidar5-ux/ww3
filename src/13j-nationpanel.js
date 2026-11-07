@@ -16,7 +16,7 @@ function npDraw(){npClose();if(!GC||!NP.code)return;const code=NP.code,own=code=
   hd.appendChild(guEl('div','min-width:190px','<div style="font-size:22px;font-weight:bold">'+nm+'</div><div style="opacity:.8;font-size:14px">'+grRealClass(code)+(st?' · '+st.n+' morale':'')+(own?' · you':' · read-only')+'</div>'));
   const g=guEl('div','display:flex;gap:6px 18px;flex-wrap:wrap;font-size:15px;flex:1');
   const stat=(i,l,v,tip)=>{const d=guEl('div','white-space:nowrap','<span title="'+tip+'">'+i+' '+l+' <b>'+v+'</b></span>');g.appendChild(d);};
-  stat('💰','Cash',Math.round(S.N.cash).toLocaleString()+' ('+geSgn(S.N.inc||0)+'/mo)','Money in the bank and net income per month');
+  stat('💰','Cash',Math.round(S.N.cash).toLocaleString()+' ('+geSgn(S.N.inc||0)+'/month)','Money in the bank and net income per month');
   stat('🛢','Fuel',Math.round(S.E.fuel||0),'Fuel stock: vehicles and aircraft stall without it');
   stat('🌾','Food',Math.round(S.E.food||0),'Food stock: hunger costs you troops and loyalty');
   stat('👥','Manpower',Math.round(S.E.man||0),'Recruits available to raise new units');

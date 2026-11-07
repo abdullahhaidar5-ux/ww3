@@ -30,7 +30,7 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
     if(!grNat(b).major){W.push(['Minor nations rarely join blocs',-10]);s-=10;}
     if(gdAllies(b).some(x=>grAtWar(a,x))){W.push(['Their ally is your enemy',-40]);s-=40;}
     if(s<10&&ok)no('They decline (need 10, have '+Math.round(s)+')');W.push(['Total',Math.round(s)]);}
-  else if(act==='war'){if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until month '+GC.tr[grWk(a,b)]);
+  else if(act==='war'){if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until '+grMonStr(GC.tr[grWk(a,b)]));
     else if(GC.ph!=='plan')no('Wait for the planning phase');W.push(['War goal: border dispute / strategic rivalry',0]);W.push(['Stability: all your opinions fall',-10]);}
   else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (armies on enemy land, war length)',s]);
     const acc=GC.nat[b].ai?25:0;W.push(['They accept at',acc]);if(ok&&s<acc)no('They refuse (score '+s+' of '+acc+')');}

@@ -20,7 +20,7 @@ const GE_SIG={
  AE:[['E','Sovereign Wealth Fund','A deep treasury: war bonds are cheap and the central bank pays well.',['bond','bank']]],
  PK:[['M','Tactical Missile Corps','Short-range ballistic missiles on the army stack.']],
  IN:[['E','Population Dividend','The largest recruit pool and the best harvests.',['manp','food']]],
- CN:[['E','Mass Mobilisation','Factories and barracks month out units cheaply and quickly.',['build','recr']],['M','Bunker Buster','A grand-map strike that crushes fortified provinces.']],
+ CN:[['E','Mass Mobilisation','Factories and barracks turn out units cheaply and quickly.',['build','recr']],['M','Bunker Buster','A grand-map strike that crushes fortified provinces.']],
  KP:[['L','Dear Leader','National leader figure: loyalty and fervour, huge war support.'],['F','Mountain Fortress','Pre-built mountain bunker in mountain provinces.']],
  KR:[['E','Chaebol Arsenal','High-tech industry: richer taxes and a stronger power grid.',['tax','power']]],
  EG:[['E','Suez Dues','Canal dues and regional commerce.',['trade','tax']]],

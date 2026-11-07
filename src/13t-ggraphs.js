@@ -8,7 +8,7 @@ npTab('gr','📈','Graphs',(code,body)=>{const idx=NP.gk==='score'?2:1;const kin
   const W=880,Hh=340,cv=document.createElement('canvas');cv.width=W;cv.height=Hh;cv.style.cssText='max-width:100%;height:auto;background:#0c1621;border-radius:6px';body.appendChild(cv);const g=cv.getContext('2d');
   let mx=1,t0=1e9,t1=0;for(const c of show)for(const r of H[c]){mx=Math.max(mx,r[idx]);t0=Math.min(t0,r[0]);t1=Math.max(t1,r[0]);}if(t1===t0)t1=t0+1;
   g.strokeStyle='#223546';g.fillStyle='#8aa0b4';g.font='12px sans-serif';for(let i=0;i<=4;i++){const y=20+(Hh-44)*i/4;g.beginPath();g.moveTo(44,y);g.lineTo(W-10,y);g.stroke();g.fillText(String(Math.round(mx*(1-i/4))),4,y+4);}
-  g.fillText('month '+t0,44,Hh-6);g.fillText('month '+t1,W-70,Hh-6);
+  g.fillText(grMonStr(t0),44,Hh-6);g.fillText(grMonStr(t1),W-70,Hh-6);
   const leg=guEl('div','display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:14px');
   for(const c of show){const col=grNat(c).color||'#aaa';g.beginPath();H[c].forEach((r,i)=>{const x=44+(r[0]-t0)/(t1-t0)*(W-54),y=20+(Hh-44)*(1-r[idx]/mx);i?g.lineTo(x,y):g.moveTo(x,y);});g.strokeStyle=col;g.lineWidth=c===code||c===GC.me?3.5:1.8;g.stroke();
     leg.appendChild(guEl('span','','<span style="display:inline-block;width:12px;height:4px;background:'+col+';margin-right:5px;vertical-align:middle"></span>'+gdNatName(c)+(c===GC.me?' (you)':'')+' <b>'+last(c)+'</b>'));}

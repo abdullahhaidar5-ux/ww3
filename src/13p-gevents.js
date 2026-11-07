@@ -45,7 +45,7 @@ function gevFire(code,id){const row=GEV_ROWS.find(r=>r.id===id);if(!row)return;c
   if(code===GC.me&&!GC.nat[code].ai){S.pend.push([code,id]);return;}
   const o=row.o[Math.min(row.o.length-1,(row.ai!=null?row.ai:0))];gevApply(code,o.fx);S.hist.push([GC.turn,code,id,0]);}
 function gevChoose(code,id,i){const row=GEV_ROWS.find(r=>r.id===id);if(!row)return [];const S=gevS();S.pend=S.pend.filter(p=>!(p[0]===code&&p[1]===id));const o=row.o[i];const l=gevApply(code,o.fx);S.hist.push([GC.turn,code,id,i]);if(S.hist.length>200)S.hist.shift();grLog(gdNatName(code)+': '+row.t+' — '+o.t,code);return l;}
-// per turn (called from gdTurn): scheduled follow-ups first, then a seeded roll per nation (≈1 in 7 turns each)
+// per turn (called from gdTurn): scheduled follow-ups first, then a seeded roll per nation (≈1 in 7 months each)
 function gevTurn(){const S=gevS();const due=S.sch.filter(x=>x[0]<=GC.turn);S.sch=S.sch.filter(x=>x[0]>GC.turn);for(const [,c,id] of due)if(GC.nat[c]&&!GC.nat[c].dead)gevFire(c,id);
   {const RG=grRng((GC.seed|0)*613+GC.turn*29),gs=GEV_ROWS.filter(e=>e.g);if(gs.length&&(S.lastG==null||GC.turn-S.lastG>=10)&&RG()<.08){const pick=gs[Math.floor(RG()*gs.length)];S.lastG=GC.turn;grLog(pick.t,'');for(const c of Object.keys(GC.nat).sort())if(!GC.nat[c].dead&&grNat(c).major)gevFire(c,pick.id);}}
   const R=grRng((GC.seed|0)*977+GC.turn*13);for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];const r=R(),r2=R();if(N.dead||!grNat(c).major)continue;if(S.last[c]!=null&&GC.turn-S.last[c]<5)continue;if(c===GC.me&&S.pend.length)continue;if(r>.17)continue;

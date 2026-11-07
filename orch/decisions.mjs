@@ -23,7 +23,7 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
     if (/^\s*(\/\/|\/\*|\*)/.test(l)) return;
     const bare = l.replace(/\/\*.*?\*\//g, '');
     for (const m of bare.match(lit) || []) { if (m === "'turn'" || m === '"turn"') continue;
-      if (/\bturns?\b/i.test(m)) fails.push(`turn wording (EU4 real time, no turns): ${f}:${i + 1} ${m.slice(0, 80)}`); } }); }
+      if (/\bturns?\b/i.test(m.replace(/\bturn (back|out|around|into|up|down|over|away|on|off|to)\b/gi, ''))) fails.push(`turn wording (EU4 real time, no turns): ${f}:${i + 1} ${m.slice(0, 80)}`); } }); }
 for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach((l, i) => { if (/>T'\s*\+|'T'\s*\+\s*r\[0\]/.test(l)) fails.push(`"T<number>" turn shorthand shown to players: ${f}:${i + 1}`); });
 // 2. Controls (2026-10-28): W A S D only scroll the camera; A is not attack-move; F is; X is stop.
 { const hits = []; for (const f of srcFiles) SRC[f].split('\n').forEach((l, i) => { for (const m of l.matchAll(/\bkeys\.[wasd]\b/g)) hits.push([f, i + 1, l]); });
