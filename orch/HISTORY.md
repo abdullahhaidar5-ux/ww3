@@ -306,3 +306,4 @@ Abdullah 20:12/20:14 "Ugly ugly ugly … not everything has to be shoved into a 
 - laneD 2026-11-07: D0(a) auto-bisect — `.github/workflows/bisect.yml` + `orch/bisect.sh`: when a gate run is red on a main commit, bisects the failing test and comments the first bad commit. No game code changed.
 - laneB 2026-11-07: B4 slice 2: cores + estates (src/13o-gstab.js; 13-grand.js core income/unrest hooks); smoke + grand determinism green.
 - 2026-11-07 laneE (Sonnet): re-shot base view (e3before), assessed E1-E3 state, handoff updated; no src change
+- laneD (2026-11-07 D2 slice 3): unit names no longer say "MBT" (Altay/Karrar/Leclerc/Al-Khalid/Arjun Tank) so the encyclopedia and build menu read plainly; newplayer audit clean. Smoke PASS; local smooth gate too slow here, CI gates it.
