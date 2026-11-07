@@ -16,7 +16,7 @@ const OCC_STY={   // one row per morale style: the data, not code paths
  prof:{n:'Work to rule',ic:'🗂',max:0,grow:0,raid:0,un:0,ws:0,inc:.42,calm:3,tip:'Orderly and quiet, but officials work to rule: part of the income never arrives.'},
  home:{n:'Partisans',ic:'🌲',max:3,maxOpen:1,grow:.5,raid:.17,un:1.2,ws:.15,inc:0,calm:0,rough:'mjs',tip:'Partisans fight from the hills and forests; open land stays mostly quiet.'},
  fire:{n:'Sabotage',ic:'🔧',max:0,grow:0,raid:0,un:0,ws:0,inc:.33,sab:.35,calm:3,tip:'They comply on the surface but sabotage roads, depots and power lines.'}};
-const OCC_UNIT=110;   // money value of one raided garrison unit (for the cost ledger + equal-cost check)
+const OCC_UNIT=110, OCC_WS=440;   // OCC_WS: $440 of occupation losses (raided garrisons, withheld income) = -1 war support for the occupier at home (A6 slice 3)   // money value of one raided garrison unit (for the cost ledger + equal-cost check)
 function ocStyle(c){try{const n=grNat(c);return MORALE_STYLE[n.fac]||MORALE_STYLE[c]||'home';}catch(e){return 'home';}}
 function ocOccupied(pi){const st=GC&&GC.prov[pi];return !!st&&!!st.o0&&st.o!==st.o0&&GCM.P[pi].land;}
 function ocRow(pi){return OCC_STY[ocStyle(GC.prov[pi].o0)];}
@@ -38,7 +38,8 @@ function ocMonth(){if(!GC||!GC.prov)return;GC.occ=GC.occ||{};const P=GCM.P;
     const inc=S.inc+(S.sab&&R()<S.sab?S.inc*.6:0);
     if(inc>0){const lose=Math.round(ocInc(p,st)*inc*(guard&&S.sab?.5:1));const N=GC.nat[c];const take=N?Math.min(lose,Math.max(0,Math.floor(N.cash))):0;if(take>0){N.cash-=take;cost+=take;}}
     if(S.calm)st.un=Math.max(0,st.un-S.calm);
-    L.c+=cost;}
+    L.c+=cost;L.ws=(L.ws||0)+cost/OCC_WS;
+    if(cost&&typeof wsN==='function'){const W=wsN(c);if(W)W.ws=Math.max(0,W.ws-cost/OCC_WS);}}   /* slice 3: the occupation's cost wears down the occupier's war support at home (same rate for every style, so equal cost stays equal) */
   ocSpread();ocAI();}
 // slice 2: insurgency spreads — a province with 3+ cells seeds a cell next door (same people, same occupier, terrain permitting)
 function ocSpread(){const P=GCM.P,R=grRng(GC.seed*31+GC.turn*733),seed=[];
@@ -58,6 +59,6 @@ if(typeof GMOD_HOOKS==='object')GMOD_HOOKS.push(ocMonth);
 // province panel line (13c hook) — shown to everyone so a player sees what holding the land will cost before taking it
 function ocLine(pi){if(!GC||!ocOccupied(pi))return '';const st=GC.prov[pi],S=ocRow(pi),O=GCM.nats.get(st.o0),sty=MSTYLES[ocStyle(st.o0)];
   const lvl=S.max?(' <b>'+(st.rc|0)+'</b>'):'';
-  return '<div title="'+S.tip+' Counter: keep an army here'+(S.max?' (rolls them up)':S.sab?' (halves sabotage)':'')+', lower the tax, or give the land back in a peace deal." style="margin-top:4px;color:#ffc58e">'+S.ic+' Occupied '+(O?O.name:st.o0)+' land ('+sty.n+'): '+S.n+lvl+'</div>';}
+  return '<div title="'+S.tip+' Counter: keep an army here'+(S.max?' (rolls them up)':S.sab?' (halves sabotage)':'')+', lower the tax, or give the land back in a peace deal." style="margin-top:4px;color:#ffc58e">'+S.ic+' Occupied '+(O?O.name:st.o0)+' land ('+sty.n+'): '+S.n+lvl+(GC.occ&&GC.occ[st.o]&&GC.occ[st.o].ws>=.5?' · war support at home −'+GC.occ[st.o].ws.toFixed(0):'')+'</div>';}
 if(typeof alAdd==='function')alAdd('occ','🕯','Occupation unrest',c=>{const L=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c&&(GC.prov[p.i].rc|0)>=2).sort((x,y)=>(GC.prov[y.i].rc|0)-(GC.prov[x.i].rc|0)||x.i-y.i);
   return L.length?{n:L.length,tip:'Resistance or partisans are raiding your garrisons — station an army there',go:()=>alFly(L[0].i)}:null;});

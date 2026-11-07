@@ -21500,9 +21500,9 @@ const PPL_T={   // culture -> [first names, family names, patronymics (ru/uk onl
 const PPL_CUL={IR:'fa',RS:'lb',DW:'ye',RV:'iq',IQ:'iq',SY:'sy',SA:'gu',AE:'gu',OM:'gu',JO:'jo',EG:'eg',KD:'ku',TR:'tr',AZ:'az',IL:'he',RU:'ru',UA:'uk',KP:'ko',KR:'ko',CN:'zh',TW:'zh',JP:'ja',VN:'vi',IN:'hi',PK:'ur',AF:'af',ID:'id',PH:'ph',TH:'th',KZ:'kz',NG:'ng',ZA:'za',ET:'et',DZ:'eg',MA:'eg',LY:'eg',SD:'eg',CU:'la',VE:'la',MX:'la',AR:'la',CO:'la',CL:'la',BR:'br',ES:'es',FR:'fr',DE:'de',EU:'de',PL:'pl',IT:'it',GR:'gr',SE:'se',US:'en',GB:'en',AU:'en',CA:'en'};
 const PPL_REG={ME:'iq',AF:'ng',SA:'hi',EA:'zh',SEA:'id',EU:'de',NA:'en',SAM:'la'};
 const PPL_FF={ko:1,zh:1,ja:1,vi:1};   // family name first
-const PPL_CLERIC={IR:'cfa',RS:'clb',DW:'cye',RV:'cir'};   // nations whose head of state is always a cleric: ONE Supreme Ayatollah (IR); the Imams of RS, DW and RV are their own sub-leaders (Abdullah 2026-11-06 23:09); other clerics: Hojatoleslam
-const PPL_CLTTL={IR:'Supreme Ayatollah',RS:'Imam',DW:'Imam',RV:'Imam'};
-const PPL_HEAD={SA:'King',JO:'King',MA:'King',OM:'Sultan',AE:'President',GB:'Prime Minister',JP:'Prime Minister',IL:'Prime Minister',DE:'Chancellor',EU:'President',IN:'Prime Minister',ES:'Prime Minister',IT:'Prime Minister',PL:'Prime Minister',SE:'Prime Minister',GR:'Prime Minister',CA:'Prime Minister',AU:'Prime Minister',TR:'President',CN:'President',KP:'Dear Leader',IR:'Supreme Ayatollah',RS:'Imam',DW:'Imam',RV:'Imam',TH:'Prime Minister',VN:'General Secretary',KD:'President',AF:'Chairman',LY:'Chairman',SD:'Chairman',KZ:'President'};
+const PPL_CLERIC={IR:'cfa',RS:'clb',DW:'cye'};   // nations whose head of state is always a cleric: ONE Supreme Ayatollah (IR); the Imams of RS, DW and RV are their own sub-leaders (Abdullah 2026-11-06 23:09); other clerics: Hojatoleslam
+const PPL_CLTTL={IR:'Supreme Ayatollah',RS:'Secretary-General Sayyid',DW:'Leader of the Revolution Sayyid'};   // like the real world (Abdullah 23:09 "Make it like the real world", CLAUDE.md): RV is led by a Chairman (PPL_HEAD), not a cleric
+const PPL_HEAD={RV:'Chairman',SA:'King',JO:'King',MA:'King',OM:'Sultan',AE:'President',GB:'Prime Minister',JP:'Prime Minister',IL:'Prime Minister',DE:'Chancellor',EU:'President',IN:'Prime Minister',ES:'Prime Minister',IT:'Prime Minister',PL:'Prime Minister',SE:'Prime Minister',GR:'Prime Minister',CA:'Prime Minister',AU:'Prime Minister',TR:'President',CN:'President',KP:'Dear Leader',IR:'Supreme Ayatollah',RS:'Imam',DW:'Imam',RV:'Imam',TH:'Prime Minister',VN:'General Secretary',KD:'President',AF:'Chairman',LY:'Chairman',SD:'Chairman',KZ:'President'};
 const PPL_HEIR={SA:'Crown Prince',JO:'Crown Prince',MA:'Crown Prince',OM:'Crown Prince',AE:'Crown Prince',KP:'Successor',IR:'Designated successor',RS:'Designated successor',DW:'Designated successor',RV:'Designated successor'};
 const PPL_POSTS=['Minister of Foreign Affairs','Minister of Defence','Minister of Finance','Minister of the Interior'];
 const PPL_RANKS={fa:['Sarhang','Sartip Dovom','Sartip','Sarlashkar','Sardar'],ar:['Aqid','Amid','Liwa','Fariq','Fariq Awwal'],en:['Colonel','Brigadier','Major General','Lieutenant General','General']};
@@ -21839,13 +21839,14 @@ function gevApply(code,fx){const N=GC.nat[code],R=grRng((GC.seed|0)*31+GC.turn*1
    else if(k==='chain'){gevS().sch.push([GC.turn+f[2],code,f[1]]);}}
   return lines;}
 function gevFire(code,id){const row=GEV_ROWS.find(r=>r.id===id);if(!row)return;const S=gevS();S.last[code]=GC.turn;
-  if(code===GC.me&&!GC.nat[code].ai){S.pend.push([code,id]);return;}
+  if(!GC.nat[code].ai){S.pend.push([code,id]);return;}   /* every human leader answers their own events: the host (GC.me) and online friends (ai=false, laneA A2b) */
   const o=row.o[Math.min(row.o.length-1,(row.ai!=null?row.ai:0))];gevApply(code,o.fx);S.hist.push([GC.turn,code,id,0]);}
 function gevChoose(code,id,i){const row=GEV_ROWS.find(r=>r.id===id);if(!row)return [];const S=gevS();S.pend=S.pend.filter(p=>!(p[0]===code&&p[1]===id));const o=row.o[i];const l=gevApply(code,o.fx);S.hist.push([GC.turn,code,id,i]);if(S.hist.length>200)S.hist.shift();grLog(gdNatName(code)+': '+row.t+' — '+o.t,code);return l;}
 // per turn (called from gdTurn): scheduled follow-ups first, then a seeded roll per nation (≈1 in 7 months each)
-function gevTurn(){const S=gevS();const due=S.sch.filter(x=>x[0]<=GC.turn);S.sch=S.sch.filter(x=>x[0]>GC.turn);for(const [,c,id] of due)if(GC.nat[c]&&!GC.nat[c].dead)gevFire(c,id);
+function gevTurn(){const S=gevS();for(const p of S.pend.slice())if(!GC.nat[p[0]]||GC.nat[p[0]].dead||GC.nat[p[0]].ai){const row=GEV_ROWS.find(r=>r.id===p[1]);S.pend=S.pend.filter(x=>x!==p);if(row&&GC.nat[p[0]]&&!GC.nat[p[0]].dead){gevApply(p[0],row.o[Math.min(row.o.length-1,row.ai!=null?row.ai:0)].fx);S.hist.push([GC.turn,p[0],p[1],0]);}}   /* a friend who left: their generals answer the open events */
+  const due=S.sch.filter(x=>x[0]<=GC.turn);S.sch=S.sch.filter(x=>x[0]>GC.turn);for(const [,c,id] of due)if(GC.nat[c]&&!GC.nat[c].dead)gevFire(c,id);
   {const RG=grRng((GC.seed|0)*613+GC.turn*29),gs=GEV_ROWS.filter(e=>e.g);if(gs.length&&(S.lastG==null||GC.turn-S.lastG>=10)&&RG()<.08){const pick=gs[Math.floor(RG()*gs.length)];S.lastG=GC.turn;grLog(pick.t,'');for(const c of Object.keys(GC.nat).sort())if(!GC.nat[c].dead&&grNat(c).major)gevFire(c,pick.id);}}
-  const R=grRng((GC.seed|0)*977+GC.turn*13);for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];const r=R(),r2=R();if(N.dead||!grNat(c).major)continue;if(S.last[c]!=null&&GC.turn-S.last[c]<5)continue;if(c===GC.me&&S.pend.length)continue;if(r>.17)continue;
+  const R=grRng((GC.seed|0)*977+GC.turn*13);for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];const r=R(),r2=R();if(N.dead||!grNat(c).major)continue;if(S.last[c]!=null&&GC.turn-S.last[c]<5)continue;if(S.pend.some(p=>p[0]===c))continue;if(r>.17)continue;
     const ok=GEV_ROWS.filter(e=>e.w>0&&gevCond(e.c,c));if(!ok.length)continue;let tot=0;for(const e of ok)tot+=e.w;let x=r2*tot;let pick=ok[0];for(const e of ok){x-=e.w;if(x<=0){pick=e;break;}}gevFire(c,pick.id);}}
 function gevShow(){if(!GC||!GC.me)return;const S=gevS();const p=S.pend.find(x=>x[0]===GC.me);if(!p||document.getElementById('gModal'))return;const row=GEV_ROWS.find(r=>r.id===p[1]);if(!row)return;
   const bs=row.o.map((o,i)=>[o.t,()=>{const l=gevChoose(GC.me,row.id,i);try{guTop();grandMapRefresh();}catch(e){}gevToast(l);gevShow();},i===0?1:0]);
@@ -22335,7 +22336,7 @@ const OCC_STY={   // one row per morale style: the data, not code paths
  prof:{n:'Work to rule',ic:'🗂',max:0,grow:0,raid:0,un:0,ws:0,inc:.42,calm:3,tip:'Orderly and quiet, but officials work to rule: part of the income never arrives.'},
  home:{n:'Partisans',ic:'🌲',max:3,maxOpen:1,grow:.5,raid:.17,un:1.2,ws:.15,inc:0,calm:0,rough:'mjs',tip:'Partisans fight from the hills and forests; open land stays mostly quiet.'},
  fire:{n:'Sabotage',ic:'🔧',max:0,grow:0,raid:0,un:0,ws:0,inc:.33,sab:.35,calm:3,tip:'They comply on the surface but sabotage roads, depots and power lines.'}};
-const OCC_UNIT=110;   // money value of one raided garrison unit (for the cost ledger + equal-cost check)
+const OCC_UNIT=110, OCC_WS=440;   // OCC_WS: $440 of occupation losses (raided garrisons, withheld income) = -1 war support for the occupier at home (A6 slice 3)   // money value of one raided garrison unit (for the cost ledger + equal-cost check)
 function ocStyle(c){try{const n=grNat(c);return MORALE_STYLE[n.fac]||MORALE_STYLE[c]||'home';}catch(e){return 'home';}}
 function ocOccupied(pi){const st=GC&&GC.prov[pi];return !!st&&!!st.o0&&st.o!==st.o0&&GCM.P[pi].land;}
 function ocRow(pi){return OCC_STY[ocStyle(GC.prov[pi].o0)];}
@@ -22357,7 +22358,8 @@ function ocMonth(){if(!GC||!GC.prov)return;GC.occ=GC.occ||{};const P=GCM.P;
     const inc=S.inc+(S.sab&&R()<S.sab?S.inc*.6:0);
     if(inc>0){const lose=Math.round(ocInc(p,st)*inc*(guard&&S.sab?.5:1));const N=GC.nat[c];const take=N?Math.min(lose,Math.max(0,Math.floor(N.cash))):0;if(take>0){N.cash-=take;cost+=take;}}
     if(S.calm)st.un=Math.max(0,st.un-S.calm);
-    L.c+=cost;}
+    L.c+=cost;L.ws=(L.ws||0)+cost/OCC_WS;
+    if(cost&&typeof wsN==='function'){const W=wsN(c);if(W)W.ws=Math.max(0,W.ws-cost/OCC_WS);}}   /* slice 3: the occupation's cost wears down the occupier's war support at home (same rate for every style, so equal cost stays equal) */
   ocSpread();ocAI();}
 // slice 2: insurgency spreads — a province with 3+ cells seeds a cell next door (same people, same occupier, terrain permitting)
 function ocSpread(){const P=GCM.P,R=grRng(GC.seed*31+GC.turn*733),seed=[];
@@ -22377,7 +22379,7 @@ if(typeof GMOD_HOOKS==='object')GMOD_HOOKS.push(ocMonth);
 // province panel line (13c hook) — shown to everyone so a player sees what holding the land will cost before taking it
 function ocLine(pi){if(!GC||!ocOccupied(pi))return '';const st=GC.prov[pi],S=ocRow(pi),O=GCM.nats.get(st.o0),sty=MSTYLES[ocStyle(st.o0)];
   const lvl=S.max?(' <b>'+(st.rc|0)+'</b>'):'';
-  return '<div title="'+S.tip+' Counter: keep an army here'+(S.max?' (rolls them up)':S.sab?' (halves sabotage)':'')+', lower the tax, or give the land back in a peace deal." style="margin-top:4px;color:#ffc58e">'+S.ic+' Occupied '+(O?O.name:st.o0)+' land ('+sty.n+'): '+S.n+lvl+'</div>';}
+  return '<div title="'+S.tip+' Counter: keep an army here'+(S.max?' (rolls them up)':S.sab?' (halves sabotage)':'')+', lower the tax, or give the land back in a peace deal." style="margin-top:4px;color:#ffc58e">'+S.ic+' Occupied '+(O?O.name:st.o0)+' land ('+sty.n+'): '+S.n+lvl+(GC.occ&&GC.occ[st.o]&&GC.occ[st.o].ws>=.5?' · war support at home −'+GC.occ[st.o].ws.toFixed(0):'')+'</div>';}
 if(typeof alAdd==='function')alAdd('occ','🕯','Occupation unrest',c=>{const L=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c&&(GC.prov[p.i].rc|0)>=2).sort((x,y)=>(GC.prov[y.i].rc|0)-(GC.prov[x.i].rc|0)||x.i-y.i);
   return L.length?{n:L.length,tip:'Resistance or partisans are raiding your garrisons — station an army there',go:()=>alFly(L[0].i)}:null;});
 // 13z-gcorrupt.js — lane B5b slice 2: CORRUPTION (EU4 economy). N.cor = corruption % (0..25), all effects are GMOD rows (upkeep/income/unrest).
@@ -22785,7 +22787,7 @@ function gnBatDone(b,win,how){const B=GNT.bat;GNT.bat=null;const ids=new Set([..
   const arm=GC.armies.filter(a=>ids.has(a.id)).map(a=>({id:a.id,u:a.u,fu:a.fu,at:a.at}));
   gnSend({k:'bres',qi:B.qi,t:B.t,win,how,auto:how==='auto'?1:0,arm});GV.hint='Battle result sent — the world moves on.';try{guHint();}catch(e){}
   const s=GNT.stash;GNT.stash=null;if(s)gnApply(s[0],s[1]);else try{grandMapRefresh();}catch(e){}}
-// 13zp-gautonomy.js — lane B5b slice 4: PROVINCE AUTONOMY (EU4 economy). st.au = 0..100 per province, saved with GC.prov. All effects are GMOD rows (nation scope, banded).
+// 13zp-gautonomy.js — lane B5b slice 4: PROVINCE AUTONOMY (EU4 economy). st.ap = 0..100 per province (NOT st.au: that is 13g's Direct/Local/Autonomous level 0..2, laneA fix 2026-11-07), saved with GC.prov. All effects are GMOD rows (nation scope, banded).
 // Who reacts: a freshly conquered or non-core province starts at 40% autonomy (locals run their own affairs); it drifts down 1 point a month (2 if core, 0 while stability <= -1).
 // Second order: the nation's dev-weighted average autonomy cuts income and recruits but also calms unrest (self-rule). Counter-play: pay Political points to cut one province by 10
 // (cost grows with its development); the AI does it when it has spare points. Cost: reduced income/manpower until you pay. Deterministic (state only), monthly via GMOD_HOOKS.
@@ -22796,19 +22798,19 @@ for(let b=1;b<=5;b++){const s='Provincial autonomy ('+(b*8)+'%+ average)';
     {id:'au_man'+b,src:s,scope:'nation',stat:'manpower',mul:1-.04*b,cond:'au:'+b},
     {id:'au_un'+b,src:s,scope:'nation',stat:'unrest',add:-.5*b,cond:'au:'+b});}
 GMOD_STATS.unrest=GMOD_STATS.unrest||'Unrest';
-function gauSt(pi){const st=GC.prov[pi];if(st.au===undefined){st.au=0;st.auO=st.o;}return st;}
+function gauSt(pi){const st=GC.prov[pi];if(st.ap===undefined){st.ap=0;st.auO=st.o;if(st.au>2){st.ap=st.au|0;st.au=0;st.aut=0;}}return st;}   /* saves from 11:07Z put the % in st.au: move it */
 function gauAvg(c){const k='au'+c;if(GC.auC&&GC.auC.t===GC.turn&&GC.auC[k]!==undefined)return GC.auC[k];
-  let s=0,w=0;for(const p of GCM.P){if(!p.land)continue;const st=GC.prov[p.i];if(st.o!==c)continue;const d=p.dev||1;s+=d*(st.au||0);w+=d;}
+  let s=0,w=0;for(const p of GCM.P){if(!p.land)continue;const st=GC.prov[p.i];if(st.o!==c)continue;const d=p.dev||1;s+=d*(st.ap||0);w+=d;}
   const v=w?s/w:0;if(!GC.auC||GC.auC.t!==GC.turn)GC.auC={t:GC.turn};GC.auC[k]=v;return v;}
 function gauCost(pi){return Math.round(GAU_COST*(1+(GCM.P[pi].dev||1)/15));}
-function gauCut(c,pi){const N=GC.nat[c],st=GC.prov[pi];if(!N||!st||st.o!==c)return 'Not your province.';gauSt(pi);if(st.au<=0)return 'No autonomy to remove.';
-  const cost=gauCost(pi);if(!N.pp||N.pp.pol<cost)return 'Needs '+cost+' Political points.';N.pp.pol-=cost;st.au=Math.max(0,st.au-10);GMOD_C.cache.clear();
-  if(c===GC.me)grLog('Cut autonomy in '+GCM.P[pi].n+' to '+st.au+'%.',c);return '';}
+function gauCut(c,pi){const N=GC.nat[c],st=GC.prov[pi];if(!N||!st||st.o!==c)return 'Not your province.';gauSt(pi);if(st.ap<=0)return 'No autonomy to remove.';
+  const cost=gauCost(pi);if(!N.pp||N.pp.pol<cost)return 'Needs '+cost+' Political points.';N.pp.pol-=cost;st.ap=Math.max(0,st.ap-10);GMOD_C.cache.clear();
+  if(c===GC.me)grLog('Cut autonomy in '+GCM.P[pi].n+' to '+st.ap+'%.',c);return '';}
 function gauMonth(){if(!GC)return;for(const p of GCM.P){if(!p.land)continue;const st=gauSt(p.i);
-    if(st.auO!==st.o){st.auO=st.o;st.au=(typeof gsIsCore==='function'?gsIsCore(st):st.o===st.o0)?0:GAU_NEW;}   // new owner: locals keep their own rule
-    else if(st.au>0){const N=GC.nat[st.o],core=typeof gsIsCore==='function'?gsIsCore(st):true;if(!N||(N.stab|0)>-1)st.au=Math.max(0,st.au-(core?2:1));}}
+    if(st.auO!==st.o){st.auO=st.o;st.ap=(typeof gsIsCore==='function'?gsIsCore(st):st.o===st.o0)?0:GAU_NEW;}   // new owner: locals keep their own rule
+    else if(st.ap>0){const N=GC.nat[st.o],core=typeof gsIsCore==='function'?gsIsCore(st):true;if(!N||(N.stab|0)>-1)st.ap=Math.max(0,st.ap-(core?2:1));}}
   for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead||c===GC.me||!N.pp||N.pp.pol<GAU_COST+60)continue;
-    let best=-1,bv=9;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c&&(GC.prov[p.i].au||0)>bv){bv=GC.prov[p.i].au;best=p.i;}
+    let best=-1,bv=9;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c&&(GC.prov[p.i].ap||0)>bv){bv=GC.prov[p.i].ap;best=p.i;}
     if(best>=0&&N.pp.pol>=gauCost(best)+60)gauCut(c,best);}
   GC.auC=null;GMOD_C.cache.clear();}
 GMOD_HOOKS.push(gauMonth);
@@ -22817,7 +22819,7 @@ npTab('au','🏳','Autonomy',(code,body,c)=>{const N=GC.nat[code],own=c.own&&cod
    '<div style="opacity:.85;margin-bottom:8px">Every 8% of average autonomy trims income by 1.2% and recruits by 4%, but calms unrest. Conquered and non-core provinces start at '+GAU_NEW+'% and slowly settle down; core provinces settle twice as fast. Pay Political points to cut a province by 10%.</div>';
   const L=['income','manpower','unrest'].flatMap(s=>gmodLines('nation',code,s)).filter(s=>/autonomy/.test(s));if(L.length)h+='<div style="margin:8px 0;opacity:.85">'+L.join('<br>')+'</div>';
   body.innerHTML=h;
-  const ps=c.S.ps.map(p=>({p,au:gauSt(p.i).au})).filter(x=>x.au>0).sort((a,b)=>b.au-a.au||a.p.i-b.p.i).slice(0,14);
+  const ps=c.S.ps.map(p=>({p,au:gauSt(p.i).ap})).filter(x=>x.au>0).sort((a,b)=>b.au-a.au||a.p.i-b.p.i).slice(0,14);
   if(!ps.length){body.appendChild(document.createTextNode('No province has any autonomy.'));return;}
   const tbl=document.createElement('table');tbl.style.cssText='width:100%;border-collapse:collapse;font-size:15px';tbl.innerHTML='<tr><th style="text-align:left;padding:4px 8px">Province</th><th>Autonomy</th><th></th></tr>';
   for(const x of ps){const tr=document.createElement('tr');tr.innerHTML='<td style="padding:4px 8px"><b>'+x.p.n+'</b></td><td style="text-align:center">'+x.au+'%</td>';const td=document.createElement('td');td.style.textAlign='center';

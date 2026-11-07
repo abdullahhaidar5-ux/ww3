@@ -40,12 +40,12 @@ try {
   await page.waitForFunction(() => typeof grNew === 'function' && typeof gauCut === 'function', null, { timeout: 60000 });
   const r = await ev(() => { grNew({ me: 'IR', seed: 777, len: 'std' }); const out = {}; const N = GC.nat.IR; N.pp = N.pp || { pol: 0, dip: 0, mil: 0 }; N.pp.pol = 500;
     const mine = GCM.P.filter(p => p.land && GC.prov[p.i].o === 'IR').map(p => p.i); const pi = mine[0];
-    for (const i of mine) GC.prov[i].au = 0; GC.prov[pi].au = 100; for (const i of mine.slice(1, 6)) GC.prov[i].au = 100; GC.auC = null; GMOD_C.cache.clear();
-    const m1 = gmod('nation', 'IR', 'manpower', 1); for (const i of mine) GC.prov[i].au = 0; GC.auC = null; GMOD_C.cache.clear(); const m0 = gmod('nation', 'IR', 'manpower', 1);
-    out.eff = m1 < m0; GC.prov[pi].au = 50; out.e = gauCut('IR', pi); out.after = GC.prov[pi].au; out.paid = N.pp.pol < 500;
+    for (const i of mine) GC.prov[i].ap = 0; GC.prov[pi].ap = 100; for (const i of mine.slice(1, 6)) GC.prov[i].ap = 100; GC.auC = null; GMOD_C.cache.clear();
+    const m1 = gmod('nation', 'IR', 'manpower', 1); for (const i of mine) GC.prov[i].ap = 0; GC.auC = null; GMOD_C.cache.clear(); const m0 = gmod('nation', 'IR', 'manpower', 1);
+    out.eff = m1 < m0; GC.prov[pi].ap = 50; out.e = gauCut('IR', pi); out.after = GC.prov[pi].ap; out.paid = N.pp.pol < 500;
     const other = GCM.P.find(p => p.land && GC.prov[p.i].o !== 'IR'); GC.prov[other.i].auO = 'ZZ';
-    for (let i = 0; i < 6 && !GC.over; i++) grEndTurn(true); out.reset = GC.prov[other.i].au >= 0 && GC.prov[other.i].auO === GC.prov[other.i].o;
-    GC.prov[pi].au = 30; for (let i = 0; i < 3 && !GC.over; i++) grEndTurn(true); out.decay = GC.prov[pi].au < 30;
+    for (let i = 0; i < 6 && !GC.over; i++) grEndTurn(true); out.reset = GC.prov[other.i].ap >= 0 && GC.prov[other.i].auO === GC.prov[other.i].o;
+    GC.prov[pi].ap = 30; for (let i = 0; i < 3 && !GC.over; i++) grEndTurn(true); out.decay = GC.prov[pi].ap < 30;
     npOpen('IR', 'au'); out.tab = !!document.getElementById('npWin') && /autonomy/i.test(document.getElementById('npWin').textContent); return out; });
   console.log('au', JSON.stringify(r));
   if (r.e || !r.eff || r.after !== 40 || !r.paid) fails.push('au cut/effects'); if (!r.tab) fails.push('au tab'); if (!r.reset || !r.decay) fails.push('au conquest/decay');
