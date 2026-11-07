@@ -19703,17 +19703,24 @@ function gmPaint(){try{if(!document.getElementById('gmCss')){const s=document.cr
   hd.querySelector('[data-k=m]').onclick=()=>{const L=gmIds();const seen=new Set();for(const id of L){const a=gmMine(id);if(!a||seen.has(a.at))continue;seen.add(a.at);grMerge(id);}gmSet(L.filter(gmMine));grSave();grandMapRefresh();};
   hd.querySelector('[data-k=s]').onclick=()=>{const L=gmIds();for(const id of L)grSplit(id);gmSet(L.filter(gmMine));grSave();grandMapRefresh();};
   for(const id of ids){const a=gmMine(id);if(!a)continue;const d=document.createElement('div');d.className='c';const p=GCM.P[a.at],dest=a.path&&a.path.length?GCM.P[a.path[a.path.length-1]]:null;d.innerHTML='<b>'+a.nm+'</b> · '+a.u.length+' units'+(typeof gmMorBar==='function'?gmMorBar(a):'')+'<br><span style="opacity:.75">'+(p?p.n:'')+(dest?' → '+dest.n:'')+'</span>';d.onclick=()=>gmSet([id]);c.appendChild(d);}}catch(e){console.error('gmPaint',e);}}
+/* A3 path preview (laneF): dashed route line from the selected army to the hovered province; one SVG, rebuilt only when the hovered province changes. */
+function gmPreview(path){try{const w=document.getElementById('gMapWrap');if(!w)return;let sv=document.getElementById('gmPrev');if(!path||path.length<2){if(sv)sv.style.display='none';return;}
+  if(!sv){sv=document.createElementNS('http://www.w3.org/2000/svg','svg');sv.id='gmPrev';sv.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:4';sv.innerHTML='<polyline fill="none" stroke="#ffe27a" stroke-width="3" stroke-dasharray="9 6" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/><circle r="6" fill="#ffe27a" stroke="#000" stroke-width="1.5"/>';w.appendChild(sv);}
+  const pts=[];for(const pi of path){const q=GCM.P[pi];if(!q)continue;if(GV.g3&&typeof G3!=='undefined'&&G3.cam){const v=new THREE.Vector3(q.x,2,q.y).project(G3.cam);pts.push([(v.x+1)/2*GV.w,(1-v.y)/2*GV.h]);}else pts.push([q.x*GV.z+GV.ox,q.y*GV.z+GV.oy]);}
+  if(pts.length<2){sv.style.display='none';return;}sv.style.display='';sv.firstChild.setAttribute('points',pts.map(q=>q[0].toFixed(0)+','+q[1].toFixed(0)).join(' '));const e=pts[pts.length-1],c=sv.lastChild;c.setAttribute('cx',e[0].toFixed(0));c.setAttribute('cy',e[1].toFixed(0));}catch(e){}}
 function gmInit(cv){const wrap=document.getElementById('gMapWrap');let box=null,bd=null,lastH=-2;
   const rel=ev=>{const r=cv.getBoundingClientRect();return [ev.clientX-r.left,ev.clientY-r.top];};
   cv.addEventListener('pointerdown',ev=>{if(ev.button!==0||!ev.shiftKey||!GC||GC.ph!=='plan')return;ev.stopImmediatePropagation();cv.setPointerCapture(ev.pointerId);const [x,y]=rel(ev);bd={x,y,m:0};},true);
   cv.addEventListener('pointermove',ev=>{if(bd){ev.stopImmediatePropagation();const [x,y]=rel(ev);if(Math.abs(x-bd.x)+Math.abs(y-bd.y)>6)bd.m=1;if(bd.m){if(!box){box=document.createElement('div');box.style.cssText='position:absolute;border:1px dashed #ffe27a;background:rgba(255,226,122,.12);pointer-events:none;z-index:5';wrap.appendChild(box);}box.style.left=Math.min(x,bd.x)+'px';box.style.top=Math.min(y,bd.y)+'px';box.style.width=Math.abs(x-bd.x)+'px';box.style.height=Math.abs(y-bd.y)+'px';}return;}
     if(!GV.selA||GC.ph!=='plan')return;const [x,y]=rel(ev),[wx,wy]=guToWorld(x,y),h=guProvAt(wx,wy);if(h===lastH||h<0||!GCM.P[h])return;lastH=h;   /* arrival date while hovering, like EU4 */
-    const a=gmMine(GV.selA);if(a&&h!==a.at){const r=grPath(a.o,a.at,h,a.fl);if(r&&r.turns!=null){GV.hint='Right-click → '+GCM.P[h].n+': arrives ~'+grDateStr(GC.turn+r.turns,0)+' ('+r.turns+' mo)'+(gmIds().length>1?' · '+gmIds().length+' armies':'');guHint();}}},true);
+    const a=gmMine(GV.selA);if(a&&h!==a.at){const r=grPath(a.o,a.at,h,a.fl);if(r&&r.turns!=null){GV.hint='Right-click → '+GCM.P[h].n+': arrives ~'+grDateStr(GC.turn+r.turns,0)+' ('+r.turns+' mo)'+(gmIds().length>1?' · '+gmIds().length+' armies':'');guHint();gmPreview([a.at].concat(r.path||[]));}}},true);
+  cv.addEventListener('wheel',()=>gmPreview(null),true);cv.addEventListener('pointerdown',()=>{gmPreview(null);lastH=-2;},true);
   cv.addEventListener('pointerup',ev=>{if(bd){ev.stopImmediatePropagation();const [x,y]=rel(ev),b=bd;bd=null;if(box){box.remove();box=null;}
       const L=gmIds().slice();if(b.m){const x0=Math.min(x,b.x),x1=Math.max(x,b.x),y0=Math.min(y,b.y),y1=Math.max(y,b.y);for(const p of gmPts())if(p.x>=x0&&p.x<=x1&&p.y>=y0&&p.y<=y1&&gmMine(p.aid))L.push(p.aid);}
       else{const h=GV.g3&&typeof g3HitAt==='function'?g3HitAt(x,y):null;const id=h&&h.aid;if(id&&gmMine(id)){const i=L.indexOf(id);if(i>=0)L.splice(i,1);else L.push(id);}}
       gmSet(L);return;}
     if(!ev.shiftKey&&GV.drag&&!GV.drag.m&&GV.selM.size){GV.selM=new Set();setTimeout(gmPaint,0);}},true);
+  cv.addEventListener('pointerdown',ev=>{if(ev.button!==0||!(ev.ctrlKey||ev.metaKey)||!GC||GC.ph!=='plan')return;const [x,y]=rel(ev),h=GV.g3&&typeof g3HitAt==='function'?g3HitAt(x,y):null;if(!h||!gmMine(h.aid))return;ev.stopImmediatePropagation();gmSet(gmPts().filter(p=>gmMine(p.aid)&&p.x>=0&&p.y>=0&&p.x<=GV.w&&p.y<=GV.h).map(p=>p.aid));},true);   /* Ctrl+click an army = all your armies in view */
   cv.addEventListener('dblclick',ev=>{if(!GC)return;const [x,y]=rel(ev),h0=GV.g3&&typeof g3HitAt==='function'?g3HitAt(x,y):null;let pi;if(h0){const a=GC.armies.find(q=>q.id===h0.aid);pi=a&&a.at;}else{const [wx,wy]=guToWorld(x,y);pi=guProvAt(wx,wy);}
     if(pi==null||pi<0)return;gmSet(GC.armies.filter(a=>a.at===pi&&a.o===GC.me).map(a=>a.id));});
   gmPaint();}
@@ -20062,12 +20069,17 @@ function g3Dispose(){if(G3.raf){cancelAnimationFrame(G3.raf);G3.raf=0;}if(G3.sc)
 function g3Resize(){if(!G3.R||!GV.cv)return;const w=GV.w||GV.cv.clientWidth||800,h=GV.h||GV.cv.clientHeight||500;G3.R.setSize(w,h,false);if(G3.LU){const b=G3.R.getDrawingBufferSize(new THREE.Vector2());G3.LU.uRes.value.copy(b);G3.LU.uPx.value=G3.R.getPixelRatio();}GV.cv.style.width=w+'px';GV.cv.style.height=h+'px';G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.moved=true;}
 // ---- armies: one soldier (the general) with a big national flag; a ship with a flag for armies at sea
 function g3Uniform(o){const c=grNatRgb(o);return [Math.min(1,(c[0]*.5+90)/255),Math.min(1,(c[1]*.5+88)/255),Math.min(1,(c[2]*.45+66)/255)];}
-function g3FigGeo(o){const key='fig'+o;G3.figs=G3.figs||{};if(G3.figs[key])return G3.figs[key];const u=g3Uniform(o),dk=u.map(v=>v*.62),sk=[.82,.62,.48],cyl=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s);
-  const g=g3Merge([[cyl(.34,.3,1.7,6),g3M(-.42,.85,0),dk],[cyl(.34,.3,1.7,6),g3M(.42,.85,0),dk],[cyl(.4,.38,.3,6),g3M(-.42,.15,.1),[.15,.12,.1]],[cyl(.4,.38,.3,6),g3M(.42,.15,.1),[.15,.12,.1]],
-    [cyl(.85,.65,1.8,8),g3M(0,2.6,0),u],[cyl(.15,.15,.3,6),g3M(0,3.6,0),sk],[new THREE.SphereGeometry(.5,8,6),g3M(0,4.05,0),sk],[new THREE.SphereGeometry(.58,8,5,0,Math.PI*2,0,Math.PI/2),g3M(0,4.12,0),dk],
-    [cyl(.2,.2,1.6,5),g3M(-1.0,2.7,.1,1,1,1,0,0,.15),u],[cyl(.2,.2,1.5,5),g3M(1.05,3.1,0,1,1,1,0,0,-.1),u],[cyl(.1,.1,2.6,5),g3M(-.5,2.7,.75,1,1,1,0,Math.PI/2.3,0),[.15,.15,.16]],
-    [cyl(.09,.09,12.5,6),g3M(1.2,6.6,0),[.5,.42,.3]],[new THREE.SphereGeometry(.28,6,4),g3M(1.2,12.9,0),[.9,.75,.2]]]);
-  return G3.figs[key]=g;}
+function g3Soldier(u,dk,sk,ox,oz,sc,flag){const cyl=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s),M=(x,y,z,sx,sy,sz,rx,ry,rz)=>g3M(ox+x*sc,y*sc,oz+z*sc,(sx||1)*sc,(sy||1)*sc,(sz||1)*sc,rx||0,ry||0,rz||0),bk=[.2,.19,.17];
+  const L=[[cyl(.34,.3,1.7,6),M(-.42,.85,0),dk],[cyl(.34,.3,1.7,6),M(.42,.85,0),dk],[cyl(.4,.38,.3,6),M(-.42,.15,.1),[.15,.12,.1]],[cyl(.4,.38,.3,6),M(.42,.15,.1),[.15,.12,.1]],
+    [cyl(.85,.65,1.8,8),M(0,2.6,0),u],[cyl(.9,.9,.28,8),M(0,1.8,0),bk],[cyl(.15,.15,.3,6),M(0,3.6,0),sk],[new THREE.SphereGeometry(.5,8,6),M(0,4.05,0),sk],[new THREE.SphereGeometry(.6,8,5,0,Math.PI*2,0,Math.PI/2),M(0,4.14,0),dk],
+    [new THREE.BoxGeometry(1.1,1.5,.55),M(0,2.8,-.75),dk.map(v=>v*.8)],[cyl(.2,.2,1.6,5),M(-1.0,2.7,.1,1,1,1,0,0,.15),u],[cyl(.2,.2,1.5,5),M(1.05,3.1,0,1,1,1,0,0,-.1),u],[cyl(.1,.1,2.8,5),M(-.5,2.7,.8,1,1,1,0,Math.PI/2.3,0),bk],[cyl(.09,.09,.5,5),M(-.5,2.55,1.5,1,1,1,0,Math.PI/2.3,0),bk]];
+  if(flag)L.push([cyl(.09,.09,12.5,6),M(1.2,6.6,0),[.5,.42,.3]],[new THREE.SphereGeometry(.28,6,4),M(1.2,12.9,0),[.9,.75,.2]]);return L;}
+function g3Tier(n){return n<5?0:n<12?1:2;}
+function g3FigGeo(o,tier){tier=tier||0;const key='fig'+o+'_'+tier;G3.figs=G3.figs||{};if(G3.figs[key])return G3.figs[key];const u=g3Uniform(o),dk=u.map(v=>v*.62),sk=[.82,.62,.48];
+  let L=g3Soldier(u,dk,sk,0,0,1,true);
+  if(tier>=1)L=L.concat(g3Soldier(u,dk,sk,-3.4,-2.4,.82),g3Soldier(u,dk,sk,3.6,-2.2,.82));
+  if(tier>=2)L=L.concat(g3Soldier(u,dk,sk,-6.4,-4.8,.78),g3Soldier(u,dk,sk,6.6,-4.6,.78),g3Soldier(u,dk,sk,0,-5.2,.8));
+  return G3.figs[key]=g3Merge(L);}
 function g3ShipGeo(){if(G3.ship)return G3.ship;const sh=new THREE.Shape();[[-5,-1.5],[3.5,-1.6],[5.8,0],[3.5,1.6],[-5,1.5]].forEach((q,i)=>i?sh.lineTo(q[0],q[1]):sh.moveTo(q[0],q[1]));
   const hull=new THREE.ExtrudeGeometry(sh,{depth:1.3,bevelEnabled:false}).rotateX(-Math.PI/2),cyl=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s),gr=[.5,.54,.58],dg=[.38,.42,.46];
   return G3.ship=g3Merge([[hull,g3M(0,-.1,0),[.42,.46,.5]],[cyl(1.2,1.5,1.4,8),g3M(-1.2,2,0),gr],[cyl(.8,.9,1.2,8),g3M(-1.2,3.2,0),dg],[cyl(.35,.4,1.2,8),g3M(-2.2,3.2,0),[.25,.25,.28]],
@@ -20076,10 +20088,10 @@ function g3FlagMesh(o,sx){const fac=grNat(o).fac,tex=flagTex(fac),m=new THREE.Me
   m.material.onBeforeCompile=s=>{s.uniforms.uT=G3.flagT||(G3.flagT={value:0});s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nuniform float uT;').replace('#include <begin_vertex>','#include <begin_vertex>\n transformed.z+=sin(uT*3.2+transformed.x*.9+modelMatrix[3].x*.07)*.16*transformed.x;transformed.y+=sin(uT*2.1+transformed.x*.6)*.05*transformed.x;');};
   return m;}
 function g3Ent(a){let e=G3.arm.get(a.id);const sea=GCM.P[a.at].sea;
-  if(e&&e.sea===sea&&e.o===a.o)return e;if(e){G3.ents.remove(e.g);}
-  const g=new THREE.Group(),body=new THREE.Mesh(sea?g3ShipGeo():g3FigGeo(a.o),G3.matLit),fl=g3FlagMesh(a.o);
+  if(e&&e.sea===sea&&e.o===a.o&&(sea||e.tier===g3Tier(a.u.length)))return e;if(e){G3.ents.remove(e.g);}
+  const g=new THREE.Group(),tier=g3Tier(a.u.length),body=new THREE.Mesh(sea?g3ShipGeo():g3FigGeo(a.o,tier),G3.matLit),fl=g3FlagMesh(a.o);
   body.scale.setScalar(1);g.add(body);if(sea){fl.position.set(-.2,10,0);fl.scale.setScalar(.85);}else fl.position.set(1.2,10.7,0);g.add(fl);
-  const old=e;e={g,sea,o:a.o,pi:a.at,x:0,z:0,fx:0,fz:0,mv:1,tt:1,face:0,aid:a.id,plate:old?old.plate:null};G3.ents.add(g);G3.arm.set(a.id,e);return e;}
+  const old=e;e={g,sea,tier,o:a.o,pi:a.at,x:0,z:0,fx:0,fz:0,mv:1,tt:1,face:0,aid:a.id,plate:old?old.plate:null};G3.ents.add(g);G3.arm.set(a.id,e);return e;}
 function g3Anchors(s){const by=new Map();for(const a of GC.armies){if(!by.has(a.at))by.set(a.at,[]);by.get(a.at).push(a);}
   const out=new Map();for(const [pi,L] of by){L.sort((a,b)=>(b.o===GC.me)-(a.o===GC.me)||a.id-b.id);const p=GCM.P[pi],tw=!p.sea?g3Towns().find(t=>t.pi===pi):null,bx=tw?tw.x:p.x,bz=(tw?tw.z:p.y)+(p.sea?0:(tw&&tw.cap?30:20)*Math.min(1.6,Math.max(1,s*.6)));
     L.forEach((a,k)=>out.set(a.id,[bx+(k-(L.length-1)/2)*(p.sea?20:13)*s,bz]));}
@@ -20237,13 +20249,13 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   const c=G3.camera,K=G3.keys;if(K.size&&!document.getElementById('gModal')){const sp=c.d*.9*dt,sy=Math.sin(c.yaw),cy=Math.cos(c.yaw);let fx=0,fz=0;if(K.has('w')||K.has('arrowup'))fz-=1;if(K.has('s')||K.has('arrowdown'))fz+=1;if(K.has('a')||K.has('arrowleft'))fx-=1;if(K.has('d')||K.has('arrowright'))fx+=1;
     c.x=Math.max(0,Math.min(2400,c.x+(fx*cy+fz*sy)*sp));c.z=Math.max(0,Math.min(1200,c.z+(-fx*sy+fz*cy)*sp));if(K.has('q'))c.yaw+=dt*1.2;if(K.has('e'))c.yaw-=dt*1.2;if(K.has('r'))c.pitch=Math.min(1.3,c.pitch+dt*.8);if(K.has('f'))c.pitch=Math.max(.45,c.pitch-dt*.8);if(K.has('+')||K.has('='))c.d*=1-dt*1.5;if(K.has('-'))c.d*=1+dt*1.5;}
   c.d=Math.max(70,Math.min(2300,c.d));const cc=G3.cc,kk=Math.min(1,dt*11);let mv=0;for(const k of ['x','z','d','yaw','pitch']){const df=c[k]-cc[k];if(Math.abs(df)>1e-3){cc[k]+=df*kk;mv=1;}}if(mv||G3.moved){g3CamApply(cc);G3.moved=false;mv=1;}
-  const s=Math.max(1.35,Math.min(3.6,cc.d/330));G3.sc_s=s;G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;if(G3.chimU){G3.chimU.uT.value=G3.time;G3.chimU.uPx.value=(G3.R.domElement.height||900)*.9;G3.chim.visible=cc.d<1100;}
+  const s=Math.max(1.1,Math.min(3.6,cc.d/330));G3.sc_s=s;G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;if(G3.chimU){G3.chimU.uT.value=G3.time;G3.chimU.uPx.value=(G3.R.domElement.height||900)*.9;G3.chim.visible=cc.d<1100;}
   G3.U.uSel.value=GV.sel>=0?GV.sel:-1;G3.U.uHov.value=GV.hov>=0&&GV.hov!==GV.sel?GV.hov:-1;
   // armies
   const anc=g3Anchors(s);let anim=0;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const t=anc.get(a.id);if(!t)continue;
     if(e.tt<1){e.tt=Math.min(1,e.tt+dt/1.5);const k=e.tt*e.tt*(3-2*e.tt);e.x=e.fx+(t[0]-e.fx)*k;e.z=e.fz+(t[1]-e.fz)*k;anim=1;e.face=Math.atan2(t[0]-e.fx,t[1]-e.fz);}
     else if(e.mv){e.x=t[0];e.z=t[1];e.mv=0;}else{e.x+=(t[0]-e.x)*Math.min(1,dt*8);e.z+=(t[1]-e.z)*Math.min(1,dt*8);}
-    const y=e.sea?.5+Math.sin(G3.time*1.4+e.aid)*.35:Math.max(.3,g3HeightAt(e.x,e.z))+(e.tt<1?Math.abs(Math.sin(G3.time*9))*.5:0);e.g.position.set(e.x,y,e.z);e.g.scale.setScalar(s*(e.sea?1.1:1));e.g.rotation.y=cc.yaw;
+    const y=e.sea?.5+Math.sin(G3.time*1.4+e.aid)*.35:Math.max(.3,g3HeightAt(e.x,e.z))+(e.tt<1?Math.abs(Math.sin(G3.time*9))*.5:0);e.g.position.set(e.x,y,e.z);e.g.scale.setScalar(s*(e.sea?1.1:1));e.g.rotation.y=cc.yaw;{const f=e.g.children[1];if(f&&!e.sea)f.scale.setScalar(Math.max(.5,Math.min(1,cc.d/300)));}
     if(e.sea)e.g.children[0].rotation.y=Math.PI/2*0;}
   // selection ring
   const sa=GV.selA&&G3.arm.get(GV.selA);if(sa){G3.ringM.visible=true;G3.ringM.position.set(sa.x,sa.g.position.y+.4,sa.z);G3.ringM.scale.setScalar(s*(sa.sea?7:5)*(1+.06*Math.sin(G3.time*4)));}else G3.ringM.visible=false;
@@ -21480,7 +21492,7 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
   else if(act==='war'){if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until '+grMonStr(GC.tr[grWk(a,b)]));
     else if(GC.ph!=='plan')no('Wait for the planning phase');W.push(['War goal: border dispute / strategic rivalry',0]);W.push(['Stability: all your opinions fall',-10]);}
   else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (armies on enemy land, war length)',s]);
-    const acc=GC.nat[b].ai?25:0;W.push(['They accept at',acc]);if(ok&&s<acc)no('They refuse (score '+s+' of '+acc+')');}
+    W.push(['Opens the peace-deal screen: war score buys provinces, tribute or a vassal',0]);}
   else if(act==='guarantee'){cost=300;if(war)no('At war');else if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))no('Already guaranteed');W.push(['Costs $300, +15 opinion, shows resolve',0]);}
   else if(act==='break'){if(!al)no('Not allied');else if(typeof grInResBloc==='function'&&grInResBloc(a,b))no('The Resistance bloc is permanent while the Ayatollah leads it');W.push(['Opinion -25',0]);}
   if(typeof grOverlord==='function'&&ok){const ov=grOverlord(a);if(ov&&(act==='war'||act==='alliance'||act==='guarantee'||act==='peace'||act==='break'))no('Your overlord, '+GCM.nats.get(ov).name+', decides this');const sv=grOverlord(b);if(act==='break'&&sv===a)no(GCM.nats.get(b).name+' is your vassal');if(act==='war'&&sv)no(GCM.nats.get(b).name+' is a vassal of '+GCM.nats.get(sv).name+' — declare war on its overlord');}
@@ -22315,6 +22327,65 @@ npTab('cor','🕳','Corruption',(code,body,c)=>{const N=gcoN(code),own=c.own&&co
     b.disabled=N.cor<=0||!N.pp||N.pp.pol<GCO_COST;b.onclick=()=>{const e=gcoPurge(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);
     const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Political points: '+Math.floor(N.pp?N.pp.pol:0);body.appendChild(p);}});
 alAdd('cor','🕳','Corruption',c=>{const N=gcoN(c);return N&&N.cor>=12?{n:Math.round(N.cor)+'%',tip:'corruption is high — open the Corruption tab',go:()=>npOpen(c,'cor')}:null;});
+// 13z-gpeace.js — lane G item 22: EU4-STYLE PEACE-DEAL SCREEN. "Offer peace" opens a deal: your WAR SCORE (gdWarscore: armies on enemy land, war length) buys demands —
+// provinces (cost by development, x2 for the capital, x1.8 if none of your armies stand there), tribute (35% of their cash), vassalage. The loser's side: if the score is
+// negative you can pay tribute for peace. Reaction chain: taking land raises ALARM (13y coalitions form), the loser's opinion of you sinks per province, a vassal fights
+// beside its overlord (13i), conquered provinces start restless (unrest +20) and the truce is 12 months (6 for white peace). Cost: every point of score spent is gone.
+// Counter-play: hold ground (armies on their land lower your score), keep allies in the fight, grow strong enough that the score never goes your way. Deterministic, no new state.
+const GP_TRIB=0.35, GP_PAY=0.25;
+function gpScore(a,b){return Math.max(-100,Math.min(100,Math.round(gdWarscore(a,b))));}
+function gpProvCost(pi,a){const p=GCM.P[pi],st=GC.prov[pi];let c=5+p.dev*1.2;if(GC.nat[st.o]&&GC.nat[st.o].cap===pi)c*=2;
+  if(!GC.armies.some(x=>x.o===a&&x.at===pi&&!x.fl&&x.u.length))c*=1.8;return Math.round(c);}
+function gpVasCost(a,b){return 45+(grNat(b).major?25:0);}
+function gpCanVassal(a,b){return !grOverlord(a)&&!grOverlord(b)&&!grVasPair(a,b)&&!(GC.vas||[]).some(v=>v[0]===b);}
+function gpProvs(a,b){return GCM.P.filter(p=>p.land&&GC.prov[p.i].o===b).sort((x,y)=>y.dev-x.dev||x.i-y.i);}
+// deal = {prov:[idx], trib:bool, vas:bool, pay:bool}; returns {cost, score, ok, why}
+function gpEval(a,b,d){const s=gpScore(a,b);let cost=0;for(const i of d.prov||[])cost+=gpProvCost(i,a);if(d.trib)cost+=15;if(d.vas)cost+=gpVasCost(a,b);
+  const rest=gpProvs(a,b).length-(d.prov||[]).length;let ok=true,why='';
+  if(d.pay){return {cost:0,score:s,ok:true,why:'Pay '+Math.round(GC.nat[a].cash*GP_PAY)+' to end the war'};}
+  if(cost>Math.max(0,s)){ok=false;why='Not enough war score ('+cost+' of '+Math.max(0,s)+')';}
+  else if(!cost&&s<-10){ok=false;why='They refuse a white peace while winning — pay tribute or keep fighting';}
+  if(ok&&(d.prov||[]).length&&rest<1&&!d.vas){ok=false;why='Leave them at least one province (or make them a vassal)';}
+  return {cost,score:s,ok,why};}
+function gpApply(a,b,d){const na=GCM.nats.get(a).name,nb=GCM.nats.get(b).name,A=GC.nat[a],B=GC.nat[b];const e=gpEval(a,b,d);if(!e.ok)return e.why;
+  let txt=[];
+  if(d.pay){const m=Math.round(A.cash*GP_PAY);A.cash-=m;B.cash+=m;txt.push('paid $'+m);}
+  for(const i of d.prov||[]){const st=GC.prov[i],p=GCM.P[i];st.o=a;st.un=Math.min(100,st.un+20);st.cv=3;st.rq=[];st.gar=[];try{geCaptured(i,a);}catch(x){}
+    if(B.cap===i){const r=gpProvs(a,b).filter(q=>q.i!==i)[0];B.cap=r?r.i:-1;}}
+  if((d.prov||[]).length)txt.push('took '+d.prov.map(i=>GCM.P[i].n).join(', '));
+  if(d.trib){const m=Math.round(Math.max(0,B.cash)*GP_TRIB);A.cash+=m;B.cash-=m;txt.push('tribute $'+m);}
+  if(d.vas){GC.vas=GC.vas||[];GC.vas.push([a,b]);txt.push(nb+' became a vassal');}
+  delete GC.war[grWk(a,b)];GC.tr=GC.tr||{};GC.tr[grWk(a,b)]=GC.turn+((d.prov||[]).length||d.vas||d.trib?12:6);
+  gdRel(a,b,d.pay?5:-20-5*(d.prov||[]).length-(d.vas?15:0));
+  grLog('Peace between '+na+' and '+nb+(txt.length?': '+na+' '+txt.join('; '):' (white peace)')+'.',a);
+  try{grSave();}catch(x){}try{grandMapRefresh();}catch(x){}try{if(typeof npDraw==='function')npDraw();}catch(x){}return '';}
+function gpOpen(a,b){const old=document.getElementById('gpDeal');if(old)old.remove();
+  const d={prov:[],trib:false,vas:false,pay:false},nb=GCM.nats.get(b).name;
+  const m=guEl('div','position:fixed;inset:0;z-index:8600;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center');m.id='gpDeal';
+  const c=guEl('div','background:#142231;border:1px solid #4a6580;border-radius:10px;padding:16px 20px;width:min(620px,94vw);max-height:88vh;overflow:auto;color:#e8e4d8;font-size:15px');m.appendChild(c);
+  function draw(){const e=gpEval(a,b,d),s=e.score;c.innerHTML='';
+    c.appendChild(guEl('h3','margin:0 0 4px;font-weight:600;font-size:20px','Peace with '+nb));
+    const bar=guEl('div','height:10px;border-radius:5px;background:#0d1822;margin:6px 0 4px;position:relative;overflow:hidden');
+    bar.appendChild(guEl('div','position:absolute;left:0;top:0;bottom:0;width:'+Math.max(0,Math.min(100,s))+'%;background:#6fae4a'));
+    if(s>0)bar.appendChild(guEl('div','position:absolute;left:0;top:0;bottom:0;width:'+Math.min(100,e.cost)+'%;background:'+(e.ok?'#c9a35a':'#b5605a')+';opacity:.85'));c.appendChild(bar);
+    c.appendChild(guEl('div','opacity:.85;margin-bottom:8px','War score '+s+(s>0?' — spending '+e.cost:' — you are losing the war')+'. '+(s>0?'Armies on their land and a long war raise it.':'')));
+    const row=(chk,label,cost,on,tip)=>{const r=guEl('label','display:flex;gap:8px;align-items:center;padding:4px 6px;border-bottom:1px solid #22384b;cursor:pointer;'+(on?'background:#1b3045':''));const i=document.createElement('input');i.type='checkbox';i.checked=on;i.onchange=()=>{chk(i.checked);draw();};r.appendChild(i);
+      r.appendChild(guEl('span','flex:1',label));r.appendChild(guEl('span','opacity:.8;font-size:13px',tip||''));r.appendChild(guEl('b','min-width:34px;text-align:right;color:#ffe6a8',cost?String(cost):'—'));c.appendChild(r);};
+    if(s>0){c.appendChild(guEl('div','margin-top:6px;opacity:.7;font-size:13px','DEMANDS'));
+      const ps=gpProvs(a,b);const lst=guEl('div','max-height:200px;overflow:auto;border:1px solid #22384b;border-radius:6px');c.appendChild(lst);const keep=c;
+      for(const p of ps.slice(0,40)){const cost=gpProvCost(p.i,a),on=d.prov.includes(p.i);const r=guEl('label','display:flex;gap:8px;align-items:center;padding:3px 6px;cursor:pointer;'+(on?'background:#1b3045':''));const i=document.createElement('input');i.type='checkbox';i.checked=on;i.onchange=()=>{if(i.checked)d.prov.push(p.i);else d.prov=d.prov.filter(x=>x!==p.i);draw();};r.appendChild(i);
+        r.appendChild(guEl('span','flex:1',p.n+(GC.nat[b].cap===p.i?' ★ capital':'')));r.appendChild(guEl('span','opacity:.7;font-size:13px','dev '+p.dev));r.appendChild(guEl('b','min-width:34px;text-align:right;color:#ffe6a8',String(cost)));lst.appendChild(r);}
+      row(v=>d.trib=v,'War tribute — '+Math.round(Math.max(0,GC.nat[b].cash)*GP_TRIB)+' cash',15,d.trib);
+      if(gpCanVassal(a,b))row(v=>d.vas=v,'Make '+nb+' your vassal (fights beside you, pays no tribute)',gpVasCost(a,b),d.vas);}
+    else row(v=>d.pay=v,'Pay '+Math.round(GC.nat[a].cash*GP_PAY)+' cash to end the war',0,d.pay);
+    c.appendChild(guEl('div','margin:8px 0;color:'+(e.ok?'#9fe39f':'#ffb3a8'),e.ok?(d.prov.length||d.trib||d.vas||d.pay?'They will accept.':'White peace — nothing changes hands. Truce 6 months.'):e.why));
+    const br=guEl('div','display:flex;gap:8px');const sg=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px','Sign peace');sg.type='button';sg.disabled=!e.ok;if(!e.ok)sg.style.opacity='.45';
+    sg.onclick=()=>{const r=gpApply(a,b,d);if(r){draw();}else m.remove();};const cn=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid #6b7a8a;background:transparent;color:#fff;cursor:pointer;font-size:16px','Keep fighting');cn.type='button';cn.onclick=()=>m.remove();br.appendChild(sg);br.appendChild(cn);c.appendChild(br);}
+  m.addEventListener('keydown',ev=>{if(ev.key==='Escape')m.remove();});m.onclick=ev=>{if(ev.target===m)m.remove();};document.body.appendChild(m);draw();return m;}
+// "Offer peace" in the Diplomacy tab opens the screen instead of a flat yes/no
+(function(){const _act=gdAct;gdAct=function(act,a,b){if(act==='peace'&&a===GC.me){const c=gdChance(act,a,b);if(!c.ok)return c.note;gpOpen(a,b);return '';}return _act(act,a,b);};
+if(typeof alAdd==='function')alAdd('peace','🕊','Peace terms',c=>{let best=null;for(const o of Object.keys(GC.nat)){if(o===c||GC.nat[o].dead||!grAtWar(c,o))continue;const s=gpScore(c,o);if(s>=30&&(!best||s>best.s))best={o,s};}
+  return best?{n:best.s,tip:'you are winning against '+GCM.nats.get(best.o).name+' — open the peace screen',go:()=>gpOpen(c,best.o)}:null;});})();
 // 13z-gresearch.js — lane G B7: RESEARCH (spend capital points on three tracks) + CABINET (each minister's skill adds a small bonus). All effects are GMOD rows; one buy function for player and AI.
 // Chain: points -> track level -> income / diplomacy points / manpower+fire support; counter-play: rivals out-research you (AI buys in fixed order); cost: the points are not spent on ideas, development or stability.
 // Cabinet: 4 fictional ministers per nation (pplRoster); skill 1-3 comes from the name (same every game); Foreign->Diplomatic points, Defence->Military points, Finance->income, Interior->Political points.

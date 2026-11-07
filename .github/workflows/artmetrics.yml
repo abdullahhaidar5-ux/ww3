@@ -1,0 +1,22 @@
+# Art metrics on every main push (orch/artmetrics.mjs): numbers into the run summary + artifact, never blocks anything.
+name: Art metrics
+on:
+  push: { branches: [main], paths: ['src/**', 'index.html'] }
+  workflow_dispatch:
+permissions: { contents: read }
+jobs:
+  metrics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    continue-on-error: true
+    env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+      - run: node orch/artmetrics.mjs --no-lock | tee -a "$GITHUB_STEP_SUMMARY" | tail -12
+      - uses: actions/upload-artifact@v4
+        with: { name: artmetrics, path: 'orch/reports/artmetrics.md' }
