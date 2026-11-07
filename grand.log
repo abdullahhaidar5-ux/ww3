@@ -1,0 +1,24 @@
+menu {"g":"Grand campaign","c":"Missions","s":"Conquest — deploy vs AI","t":true}
+determinism {"a":"fa639725","b":"fa639725","c":"bacb38a6","h0":"78399fba","h1":"78399fba","ms":51834,"alive1":172,"provs":797,"seas":44}
+scenarios {"me26":{"sc":"me26","irsa":false,"dwil":false,"armies":308,"h":"f71bb099"},"gulf":{"sc":"gulf","irsa":true,"dwil":false,"armies":315,"h":"cb9f58b8"},"redsea":{"sc":"redsea","irsa":false,"dwil":true,"armies":311,"h":"e919332f"},"again":"cb9f58b8"}
+fog {"foes":287,"seen":69,"e":"","after":true,"own":true,"cash":4600,"hashSame":true}
+forcelimit {"v0":27275,"L":31366,"under":true,"t0":10,"t1":16,"over":true,"up":1.5,"allUnder":true,"chip":true}
+military determinism {"a":{"h":"8371c445","seen":{"strike":1149,"intercept":118,"sea":20,"gen":220,"blockade":0},"gens":227,"alive":206,"fronts":49,"fleets":35,"framies":24,"mines":0,"turn":21,"dead":11,"capt":10,"lv":3},"b":"8371c445","c":"353ec6be","ms":110880}
+military features []
+military strikes/fleets []
+military escort []
+naval fight-it {"naval":7,"total":7,"na":4,"nd":3,"prod":true,"mapKey":"coral","fin":1,"left":3,"mine":4,"ph":"plan"}
+military ui {"panel":true,"gen":491,"fr":294,"st":368,"fl":488}
+signatures {"n":57,"bad":[],"missing":[]}
+ERRS 
+page.evaluate: TypeError: Cannot read properties of undefined (reading 'x')
+    at grDist (http://127.0.0.1:46815/index.html:18940:74)
+    at grRetreatTo (http://127.0.0.1:46815/index.html:18999:165)
+    at grSettle (http://127.0.0.1:46815/index.html:18990:87)
+    at grBattleAuto (http://127.0.0.1:46815/index.html:18983:159)
+    at grQueue (http://127.0.0.1:46815/index.html:18982:5)
+    at grEndTurn (http://127.0.0.1:46815/index.html:18978:249)
+
+GRANDTEST FAIL
+  ✗ map: 797 land provinces
+  ✗ page.evaluate: TypeError: Cannot read properties of undefined (reading 'x')
