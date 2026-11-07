@@ -345,3 +345,4 @@ RV "River Shias" added as a full first-cut nation (Iraqi Shia volunteer-brigade 
 - laneD (2026-11-07 D2 slice 4): player-facing names no longer use jargon: SAM Site → Anti-Air Missile Site, Shahine SAM Vehicle → Anti-Air Vehicle, MILAN ATGM Carrier → Anti-Tank Carrier (display names only, keys unchanged). Reaction chain: none (wording; no sim change, no servers-live PR). Smoke PASS; smooth gate in CI.
 - 2026-11-07 laneD D-ME slice 2: 3 more Middle East Conquest maps (Tigris Marshes, Palmyra Desert, Tihama Coast) for IQ/RV/SY/DW; map data only; smoke PASS, mapfair static even.
 - 2026-11-07 laneD D-ME dedupe: removed 5 hand-written ME maps from 02-map.js that duplicated the memaps helper's 02c-memaps.js rows (negev, jordanvalley, eilat, tigrismarsh, palmyra); kept Tihama Coast (DW). CI gates.
+- laneC it6: water shader upgrade superseded by identical work already on main; no code shipped, ART-BAR note only.

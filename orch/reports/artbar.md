@@ -36,3 +36,6 @@ Life 2.5 → 3: every town now breathes faint chimney smoke (one GPU-animated Po
 
 ## 2026-11-07 06:2x UTC — laneC iteration 6 (shots: orch/shots/laneC/it6)
 Water 3 → 3.5: five crossing sharpened swell trains drive the sea normals (peaked crests), sky-gradient reflection with warm sun side replaces the flat fresnel tint, whitecaps on open-water crests, light through thin crests in shallows; all fade with distance so far views stay calm. Shader-only, no sim. Others unchanged (geography 4, colour 3.5, light 3.5, objects 3.5, life 3.5, readability 3.5). Next: army figures/ships, UI kit C0, PBR close-up tiles.
+
+## 2026-11-07 06:5x UTC — laneC iteration 6 (no code shipped)
+Built a sea-shader upgrade (sky reflection, whitecaps, sparkle); main received an equivalent one (5-train swell, sky reflection, whitecaps) minutes earlier, so mine was dropped to avoid a conflict. Water ≈ 3.5 on main now. Next lowest for Lane C: C0 UI kit / C3 UI skin (readability 3.5), then objects/colour/light 3.5.
