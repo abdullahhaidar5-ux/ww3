@@ -94,7 +94,7 @@ const GR_TDEF={m:.30,u:.15,r:.10,f:0,d:0,c:.05,j:.12,s:.10,w:0};
 function grDefMods(b){const p=GCM.P[b.p];if(p.sea)return gmilSeaDef(b);let m=1.12+(GR_TDEF[p.t]||0);if(b.river)m+=.2;if(b.mtn)m+=.1;if(GC.prov[b.p].o0===b.dn)m+=.1;if(p.cap)m+=.08;return m;}
 function grSideUnits(b,side){const out=[];const ids=side==='att'?b.att:b.def;for(const id of ids){const a=GC.armies.find(x=>x.id===id);if(a)out.push({fac:grNat(a.o).fac,u:a.u,arr:a});}
   if(side==='def'&&b.garr){const p=GC.prov[b.p];out.push({fac:grNat(p.o).fac,u:p.gar,arr:null});}return out;}
-function grSideVal(us,def){let v=0;for(const s of us)v+=grForce(s.fac,s.u)*(def!==undefined&&s.arr?gmilMul(s.arr,def):1);return v;}
+function grSideVal(us,def){let v=0;for(const s of us)v+=grForce(s.fac,s.u)*(def!==undefined&&s.arr?gmilMul(s.arr,def):1)*(s.arr&&typeof gmMorMul==='function'?gmMorMul(s.arr):1);return v;}
 function grAuto(b,R){const A=grSideUnits(b,'att'),D=grSideUnits(b,'def');const sa=grSideVal(A,0)*(1+R()*.06),sd=grSideVal(D,1)*grDefMods(b)*(1+R()*.06);let pa=sa,pd=sd;
   for(let i=0;i<4;i++){const da=pa*.28,dd=pd*.28;pa=Math.max(0,pa-dd);pd=Math.max(0,pd-da);}
   const attWins=pa>pd,ka=sa?pa/sa:0,kd=sd?pd/sd:0;grApplyLoss(A,attWins?ka:ka*.5,R);grApplyLoss(D,attWins?kd*.5:kd,R);
@@ -120,6 +120,7 @@ function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;try{GC.mil
   for(const a of losers){a.path=[];if(!a.u.length){grDrop(a);continue;}
     let to=a.fl?gmilFleetRetreat(a,b.p):(win==='def'&&a.from>=0&&a.from!==b.p)?a.from:grRetreatTo(a,b.p);
     if(to<0){grLog(a.nm+' ('+GCM.nats.get(a.o).name+') was destroyed at '+pn+'.',a.o);grDrop(a);}else{a.at=to;a.sup=0;grLog(a.nm+' ('+GCM.nats.get(a.o).name+') fell back from '+pn+'.',a.o);}}
+  try{gmMorBattle(losers,winners);}catch(e){}
   for(const a of winners){a.path=[];a.from=-1;for(const r of a.u)r[2]+=40;}
   for(const a of GC.armies.slice())if(!a.u.length)grDrop(a);
   if(win==='att'&&GC.prov[b.p]){GC.prov[b.p].gar=[];}
@@ -144,7 +145,7 @@ function grMovePhase(){GC.q=[];const P=GCM.P;
       GC.q.push({p:p.i,an:A,dn,att:att.map(a=>a.id),def:defArm.map(a=>a.id),garr,river:from>=0&&grRiver(from,p.i),mtn:p.t==='m',sea:!p.land,done:0});}}
   GC.q.sort((x,y)=>x.p-y.p||(x.an<y.an?-1:1));for(const b of GC.q)b.v0=geBV(b);}
 
-function grFinishTurn(){const P=GCM.P;try{gmRepair();}catch(e){}try{gmilBlockRefresh();}catch(e){}
+function grFinishTurn(){const P=GCM.P;try{gmMorTurn();}catch(e){}try{gmRepair();}catch(e){}try{gmilBlockRefresh();}catch(e){}
   // capture: a province whose garrison is gone and which holds only enemy armies changes hands (the strongest occupier takes it)
   for(const p of P){if(!p.land)continue;const st=GC.prov[p.i];const occ=GC.armies.filter(a=>a.at===p.i&&a.o!==st.o&&grAtWar(a.o,st.o)&&a.u.length);
     if(!occ.length||st.gar.length)continue;if(GC.armies.some(a=>a.at===p.i&&a.o===st.o&&a.u.length))continue;
