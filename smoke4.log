@@ -1,0 +1,23 @@
+3D models: 2 of 83 ready=true  (page open to models ready: 2.9s)
+battle: 4 players IR vs US vs MA vs TR on strait
+loading screen finished after 116.4s
+3D models for this battle: 61 of 61
+after 4.0 game-min: 76 units, 26 structures, per team 23/22/18/17 (peak 24/22/23/18), last chunk 1012 ms
+peak memory (node + browser, summed RSS): 3210 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: console (ignored, offline/headless): TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:46377/index.html:21247:32)
+    at buildPanels (http://127.0.0.1:46377/index.html:12512:245)
+    at g.terrain 
+
+SMOKE PASS (242s) — screenshots in orch/out/*.png (this run: orch/out/runs/20261107-052154-smoke/)
+live battle: IR vs US on strait (loaded after 95 s)
+live end: t=180s, 67 units/buildings, hash e62aa02f; replay file 56 KB (19 KB per game-minute, 675 frames)
+replay loaded after 10 s: 675 frames, 19 keyframes
+replay to the end: hash e62aa02f matches (67 units/buildings)
+screenshot orch/out/replay.png
+seek to 90 s showed 60 units/buildings
+seek to the middle, then to the end: hash e62aa02f matches (67 units/buildings)
+(146 s)
+REPLAY PASS
