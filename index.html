@@ -18271,7 +18271,7 @@ function grKindName(fac,k){try{return stats(fac,k).name;}catch(e){return k;}}
 
 // ---------- new campaign ----------
 function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(seed);
-  GC={v:1,seed,len:quick?'quick':'std',maxTurn:quick?25:60,turn:1,me:o.me===undefined?'IR':o.me,nat:{},prov:[],armies:[],aid:1,war:{},log:[],q:[],qi:0,ph:'plan',over:null,res:null};
+  GC={v:1,ms:grMapSig(),seed,len:quick?'quick':'std',maxTurn:quick?25:60,turn:1,me:o.me===undefined?'IR':o.me,nat:{},prov:[],armies:[],aid:1,war:{},log:[],q:[],qi:0,ph:'plan',over:null,res:null};
   const codes=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))];
   GM_P.slice(0,GM_LAND).forEach((r,i)=>{GC.prov.push({o:r[1],o0:r[1],gar:[],tax:1,un:15,cv:0,rq:[]});});
   for(const c of codes){const N=grNat(c),ps=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c);const cap=ps.find(p=>p.cap)||ps[0];
@@ -18436,7 +18436,11 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
 
 // ---------- save ----------
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){}}
-function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!o||o.v!==1)return null;GC=o;try{geEnsure();}catch(e){}return GC;}catch(e){return null;}}
+// a save made on an older world map (the province list changed, e.g. 2026-11-06 real borders 174 -> 236 land provinces) can't
+// continue: its province indices point at different places, so the map breaks and a Fight-it battle never loads (Lane A1)
+function grMapSig(){grMap();let h=0;for(const p of GCM.P){const s=p.n+'/'+p.adj.length;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;}return GCM.P.length+':'+(h>>>0).toString(36);}
+function grSaveOk(o){if(!o||o.v!==1||!Array.isArray(o.prov))return false;grMap();return o.ms?o.ms===grMapSig():o.prov.length===GCM.P.length;}
+function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!grSaveOk(o))return null;if(!o.ms)o.ms=grMapSig();GC=o;try{geEnsure();}catch(e){}return GC;}catch(e){return null;}}
 function grClear(){try{localStorage.removeItem(GR_KEY);}catch(e){}GC=null;}
 // test/AI-only: run n turns with every nation under AI control; battles auto-resolve
 function grRunAI(n){for(let i=0;i<n&&!GC.over;i++){grEndTurn(true);}return grHash();}
@@ -18794,6 +18798,9 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
   try{newGame({seed:(GC.seed*31+GC.turn*977+b.p*13)|0,facs:[f0,f1],ai:[false,false],map:gm.key||grMapFor(P,b),tm:[0,1],bs:1,slot:0,st:gm.real?[0,1]:(attTeam===0?[0,1]:[1,0]),w:0,grand:cfg});}finally{TERR_DEFER=false;}
   afterStart();}
 let GB_CUR=null;
+// the "Fight it live" button: never a dead end — if the battle can't be built, say so, put the map back and auto-resolve it (Lane A1)
+function grandFightLive(b){grandScreenShow(false);try{grandBattleStart(b);}catch(e){console.error('Fight it live failed',e);try{LOAD.tok++;loadHide();}catch(_){}G=null;GB_CUR=null;MODE='single';ME=0;
+  grandScreenShow(true);guModal('<div style="font-size:19px;font-weight:bold;margin-bottom:6px">The live battle could not start</div><div style="opacity:.8;margin-bottom:10px">'+String(e&&e.message||e).replace(/[<&]/g,'').slice(0,160)+'</div>The generals will auto-resolve this battle instead.',[['OK',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},1]]);}}
 // write the survivors back and show the result
 function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def']:['def','att'];sd.forEach((side,t)=>{const T=G.teams[t];if(!T||T.fuel==null)return;for(const s of grSideUnits(GB_CUR.b,side))if(s.arr)s.arr.fu=Math.round(T.fuel*100);});}catch(e){}try{gmWriteBack();}catch(e){console.error('gmWriteBack',e);}for(const [rec,e] of g.ents){const dead=e.dead||!G.byId.has(e.id);if(dead){rec.dead=1;continue;}rec[1]=Math.max(1,Math.round(e.hp/e.max*100));rec[2]=Math.round(e.xp||rec[2]);if(e.s&&e.s.ammo)rec[3]=Math.max(0,Math.min(100,Math.round((e.ammo||0)/e.s.ammo*100)));}
   const strip=arr=>{for(let i=arr.length-1;i>=0;i--)if(arr[i].dead)arr.splice(i,1);};const b=GB_CUR.b;
@@ -18980,7 +18987,7 @@ function grBattlePrompt(b){grandScreenShow(true);guCentre(b.p,2.2);GV.sel=b.p;GV
   const html='<div style="opacity:.7;font-size:13px">BATTLE · '+(b.river?'river crossing · ':'')+(b.mtn?'mountain pass · ':'')+guTerrName(P.t)+'</div><h2 style="margin:2px 0 8px;font-size:24px">'+P.n+'</h2>'
    +'<div style="display:flex;gap:14px;margin-bottom:8px"><div style="flex:1"><b style="color:#ffb59a">Attackers</b> — '+GCM.nats.get(b.an).name+'<br>'+nUnits(S)+' units<br><span style="font-size:13px;opacity:.8">'+cnt(S)+'</span></div><div style="flex:1"><b style="color:#9fd0ff">Defenders</b> — '+GCM.nats.get(b.dn).name+'<br>'+nUnits(D)+' units'+(b.garr?' (incl. garrison)':'')+'<br><span style="font-size:13px;opacity:.8">'+cnt(D)+'</span></div></div>'
    +'<div style="height:10px;border-radius:5px;background:#3b6ea8;overflow:hidden;margin:4px 0 2px"><div style="width:'+pct+'%;height:100%;background:#d0583d"></div></div><div style="font-size:13px;opacity:.8;margin-bottom:10px">Attackers '+pct+'% · Defenders '+(100-pct)+'% (terrain, river and home-turf bonuses included). Fight it live: you command exactly these units; nothing can be built.</div>';
-  guModal(html,[['Fight it live',()=>{grandScreenShow(false);grandBattleStart(b);},1],['Auto-resolve',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},0],...(canWithdraw?[['Withdraw',()=>{guWithdraw(b);},0]]:[])]);}
+  guModal(html,[['Fight it live',()=>{grandFightLive(b);},1],['Auto-resolve',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},0],...(canWithdraw?[['Withdraw',()=>{guWithdraw(b);},0]]:[])]);}
 function grBattleAuto2(b){const R=grRng(GC.seed*7+GC.turn*131+b.p);return grAuto(b,R).win;}
 function guWithdraw(b){const me=GC.me;if(b.an===me){grBattleDone(b,'def','retreat');}
   else{for(const a of GC.armies.filter(x=>b.def.includes(x.id)&&x.o===me)){const to=grRetreatTo(a,b.p);if(to>=0){a.at=to;a.path=[];grLog(a.nm+' withdrew from '+GCM.P[b.p].n+'.',me);}}b.def=b.def.filter(id=>GC.armies.some(a=>a.id===id&&a.at===b.p));
@@ -18994,8 +19001,10 @@ function grandClose(){g3Dispose();GV.g3=false;const e=document.getElementById('g
 function grandMenu(){grMap();const saved=(()=>{try{return JSON.parse(localStorage.getItem(GR_KEY));}catch(e){return null;}})(),root=campEl('div');
   root.appendChild(campEl('h1','margin:6px 0 4px;font-size:30px;letter-spacing:.04em;','GRAND CAMPAIGN'));
   root.appendChild(campEl('div','opacity:.75;margin-bottom:14px;line-height:1.5','Run a nation on the world map. Everyone plans at once, then all orders resolve together. When armies meet you can fight the battle yourself, with exactly the units you brought, or let the generals auto-resolve it.'));
-  if(saved&&saved.v===1&&!saved.over&&saved.me){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campBtn('Continue — '+n+', turn '+saved.turn+'/'+saved.maxTurn,()=>{grLoad();campClose();grandOpen();}));}
-  root.appendChild(campBtn('New campaign',()=>{grandSetup();},!!(saved&&!saved.over)));root.appendChild(campBtn('Back',campClose,true));campShow(root);}
+  const usable=saved&&!saved.over&&saved.me&&grSaveOk(saved);
+  if(saved&&!saved.over&&saved.me&&!usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campEl('div','margin:0 0 12px;padding:8px 10px;border:1px solid #8a6a3a;border-radius:6px;background:rgba(120,80,30,.25);line-height:1.5','Your saved campaign ('+n+', turn '+saved.turn+') was made on an older world map and can\'t continue on the new one. Start a new campaign.'));}
+  if(usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campBtn('Continue — '+n+', turn '+saved.turn+'/'+saved.maxTurn,()=>{grLoad();campClose();grandOpen();}));}
+  root.appendChild(campBtn('New campaign',()=>{grandSetup();},!!usable));root.appendChild(campBtn('Back',campClose,true));campShow(root);}
 function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))].filter(c=>!grNat(c).major).sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1);let nat='IR',len='quick';
   root.appendChild(campEl('h1','margin:6px 0 8px;font-size:28px','NEW GRAND CAMPAIGN'));root.appendChild(campEl('div','opacity:.8;margin-bottom:6px','Your nation'));
   const sel=campEl('select','font-size:18px;padding:8px;background:#1a2430;color:#fff;border:1px solid #6b7a55;border-radius:6px;min-width:300px');
