@@ -15,11 +15,11 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] S1b battles mirror the grand map: every province generates its own battle map (terrain, relief, sea side, river with bridge + ford, forests, roads, 2+ routes, army enters from its edge); towns, owners, unrest, tax, buildings and damage appear in the battle and go back
 - [done] S2 empire economy: province buildings (11 kinds, appear in that province's battle), autonomy, city tiers + focus, trade routes + merchants + embargoes + sanctions/smuggling, chokepoint closing, oil market + fuel/refineries, food + rationing, power grid, manpower, progressive upkeep, war bonds, central bank (lootable), total war, deterministic crises, salvage, bombing/loot/scorched earth, AI uses all of it; orch/SIGNATURES.md (54 nations); armies' ammo/fuel from the empire stock
 - [done] S3 military: named generals (4 traits, levels, killed/captured, hero in Fight-it), front lines (hold/push/counter, AI-assist), map strikes (missile/air raid/drone, air-defence intercepts), fleets + sea zones (sea battles auto or live on a naval map, blockades cut port income, escorts for crossings, subs, mines), AI uses all. Still todo from S3: fort zones, supply limits, encirclement and sieges
-- [doing] S4 events (events + world crises, diplomatic web, AI peace/pacts, great powers, achievements shipped by laneG; seasons, research, cabinet, national missions, heritage sites open), minor nations, seasons, diplomacy and peace talks, research, cabinet, national missions, heritage and holy sites
-- [todo] S4b diplomacy and government (call to arms, trust, great powers, reforms, prestige, hegemons)
-- [todo] S5 3D world map, living map, turn news, map modes
-- [todo] S6 fog, spies, proxy wars, insurgency, war weariness, coups, succession, scenarios, disasters, factions at home
-- [todo] S7 friends multiplayer (turn resolution is already deterministic)
+- [doing] S4 events (events + world crises, diplomatic web, AI peace/pacts, great powers, achievements, peace-deal screen, coalitions, UN votes, research + cabinet bonuses, elections, refugees, TV news, nuclear first cut shipped; seasons, national missions, heritage sites open), minor nations, seasons, diplomacy and peace talks, research, cabinet, national missions, heritage and holy sites
+- [doing] S4b diplomacy and government (call to arms, trust, great powers, reforms, prestige, hegemons)
+- [doing] S5 3D world map, living map, turn news, map modes
+- [doing] S6 fog, spies, proxy wars, insurgency, war weariness, coups, succession, scenarios, disasters, factions at home
+- [doing] S7 friends multiplayer (turn resolution is already deterministic)
 
 ## Conquest (the only mode — Abdullah 2026-11-04)
 - [done] Towns and hamlets pay tax; you set Low / Normal / High / Extortionate per town; angry towns revolt (rebels) — High tax in safe towns, Low at the front

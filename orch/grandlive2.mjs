@@ -65,7 +65,8 @@ try {
     const r = grOrderMove(a.id, pair[1]); GC.armies.filter(x => x.o !== me).forEach(x => { x.path = []; });
     return { foe, ok: !!r.ok, from: GCM.P[pair[0]].n, to: GCM.P[pair[1]].n, units: a.u.length }; }, NAT);
   console.log('scenario', JSON.stringify(sc)); if (sc.err || !sc.ok) throw new Error('scenario ' + JSON.stringify(sc));
-  await clickText('#grandScreen button', 'End turn');
+  await page.click('#gPlay', { timeout: 10000 }).catch(() => ev(() => document.getElementById('gPlay').click()));   /* slow CI: a pop-up can sit over the button for a moment */ await page.keyboard.press('5'); // no End turn any more: play time at speed 5 like a player (month ≈ 3 s)
+
   await page.waitForFunction(() => !!document.getElementById('gModal'), null, { timeout: 120000 });
   // there may be several battles queued; take the first one live
   await shot('live2-prompt' + round);
@@ -91,7 +92,8 @@ try {
       t = performance.now(); for (let i = 0; i < 10; i++) simUpdate(1 / 60); o.sim = Math.round((performance.now() - t) / 10); o.ents = G.ents.length; o.map = G.mapKey; o.W = MAPW + 'x' + MAPH;
       try { o.calls = R3.info.render.calls; o.tris = R3.info.render.triangles; o.geo = R3.info.memory.geometries; } catch (e) {} o.FT = FT.slice(-10).map(x => Math.round(x * 1000)); return o; });
     console.log('PROFILE', JSON.stringify(pr)); }
-  if (round === 1) { await page.click('#gbRet'); await page.waitForFunction(() => [...document.querySelectorAll('#campScreen button')].some(b => /Return to the map/.test(b.textContent)), null, { timeout: 60000 });
+  if (round === 1) { await page.click('#gbRet'); await page.waitForTimeout(300); await ev(() => { const b = [...document.querySelectorAll('#uiDlg button')].find(x => /^Retreat$/.test(x.textContent)); if (b) b.click(); });   /* Retreat asks first (game's own confirm) */
+    await page.waitForFunction(() => [...document.querySelectorAll('#campScreen button')].some(b => /Return to the map/.test(b.textContent)), null, { timeout: 60000 });
     await clickText('#campScreen button', 'Return to the map'); await page.waitForTimeout(800);
     for (let k = 0; k < 6 && await ev(() => !!document.getElementById('gModal')); k++) await clickText('#gModal button', 'Auto-resolve|OK|Continue|Close');
     await page.waitForFunction(() => document.getElementById('grandScreen') && document.getElementById('grandScreen').style.display !== 'none' && GC.ph === 'plan', null, { timeout: 60000 }).catch(() => fails.push('map did not come back to planning after the battle')); }

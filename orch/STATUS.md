@@ -1,5 +1,5 @@
-Shipped in the last 3 h: grand-map events and world crises, diplomatic web, AI peace and pacts, great powers, achievements and missions (laneG); nation-panel stability with a Political-point raise (laneB B4 slice 1); power points and national ideas (laneB B3); battle declutter with one command strip; a bisect workflow that names the first bad commit on a red gate.
-Lanes: A (grand engine) is on real time with pause, then army control and morale bars; B (grand systems) is on stability, war support and development; C (look) is on the UI kit C0, not started; D (content and QA) is on the Balanced/Realistic toggle D1b, first-time-player fixes and voices for the new nations; E (battle units) is on the real infantry model swap E1.
-Needs your tap: merge PR #23 (main → servers-live, new nations) so Cloudflare battles get them: https://github.com/abdullahhaidar5-ux/ww3/pull/23
-Open player bug reports: none right now. Open design item: 3-player maps (isolated start wins about 55%).
-Deadline Sat 20:00 Chicago; no new scope after 18:00, so the lanes are finishing and shipping what is green.
+Shipped since 13:00Z: nuclear programmes and grand-map strikes, TV news, elections and refugees, pipelines and grids, mobilisation and arms trade (laneG, laneB); after-action report and allied morale sharing (laneF); soldiers, HQ compound and vehicle grime (laneE).
+Lanes: A (grand engine) on the multiplayer grand campaign and smooth army control; B (grand systems) on the open RG items after pipelines; C (look) on the grand map de-block and towns, UI kit C0 not started; D (content) on new nations' voices and the auto-balancer; E (battle look) on ground detail and vehicle wear.
+Needs your tap: PR #24 (main → servers-live, Middle East maps) is open: https://github.com/abdullahhaidar5-ux/ww3/pull/24 — merge it so Cloudflare battles get the new maps.
+Open player bug reports: none. Open design item: 3-player maps (isolated start wins about 55%).
+Deadline Sat 20:00 Chicago; no new scope after 18:00, so lanes are finishing and shipping what is green.

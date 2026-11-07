@@ -37,7 +37,7 @@ const BASE={
   // inspires them: no fear and +10% damage for 30 seconds. One at a time; unarmed, so keep him safe.
   cleric:{name:'Ayatollah',cls:'inf',hp:320,spd:40,rng:0,dmg:0,rof:1,cost:1500,time:24,from:'barracks',armor:'light',r:8,dom:'ground',noAttack:true,vis:300,aura:{t:'morale',r:260},limit:1},
   // national specials (each nation gets one; see SPEC below)
-  atgm:{name:'MILAN ATGM Carrier',cls:'aa',hp:260,spd:96,rng:440,dmg:88,rof:3.4,wpn:'at',aa:0,cost:700,time:10,from:'factory',armor:'heavy',r:11,dom:'ground',limit:4},
+  atgm:{name:'MILAN Anti-Tank Carrier',cls:'aa',hp:260,spd:96,rng:440,dmg:88,rof:3.4,wpn:'at',aa:0,cost:700,time:10,from:'factory',armor:'heavy',r:11,dom:'ground',limit:4},
   saka:{name:"Sa'ka Thunderbolt Commandos",cls:'inf',hp:160,spd:60,rng:190,dmg:20,rof:.75,wpn:'gun',splash:16,aa:1,cost:450,time:8,from:'barracks',armor:'light',r:7,dom:'ground',limit:4},
   mortar:{name:'Mortar Team',cls:'inf',hp:110,spd:42,rng:390,minr:80,dmg:42,rof:3,wpn:'shell',splash:45,cost:500,time:9,from:'barracks',armor:'light',r:7,dom:'ground',limit:3},
   recon:{name:'Drone Recon Team',cls:'inf',hp:90,spd:50,rng:0,dmg:0,rof:1,cost:450,time:8,from:'barracks',armor:'light',r:7,dom:'ground',noAttack:true,vis:520,camo:1,markAura:320,limit:2},
@@ -84,7 +84,7 @@ const STRUCT={
   airfield:{name:'Airfield',hp:1500,size:96,cost:1500,time:15,req:'factory'},
   shipyard:{name:'Shipyard',hp:1400,size:70,cost:1200,time:12,req:'barracks',shore:true},
   turret:{name:'Defense Gun',hp:750,size:34,cost:600,time:6,req:'barracks',rng:290,dmg:30,rof:1.1,wpn:'tower'},
-  sam:{name:'SAM Site',hp:650,size:34,cost:700,time:7,req:'barracks',rng:400,dmg:80,rof:1.5,wpn:'missile',aa:2,ground:false},
+  sam:{name:'Anti-Air Missile Site',hp:650,size:34,cost:700,time:7,req:'barracks',rng:400,dmg:80,rof:1.5,wpn:'missile',aa:2,ground:false},
   coast:{name:'Coastal Missile Battery',hp:800,size:34,cost:1000,time:12,req:'barracks',shore:true,rng:520,dmg:150,rof:3.4,wpn:'missile',aa:0,navalOnly:1,sonar:260,desc:'Anti-ship missiles for the shore: hits warships, boats and landing craft (and spots submarines nearby), nothing else. Build it on the coast.'},
   tunnel:{name:'Tunnel Network',hp:900,size:40,cost:600,time:9,req:'barracks',rng:220,dmg:14,rof:.45,wpn:'gun',aa:1},
   radio:{name:'Radio & TV Station',hp:1100,size:44,cost:1500,time:14,req:'barracks',limit:2,desc:'Broadcasts to the towns around it: your towns grow more loyal, enemy towns in range grow restless. Unlocks Leaflet Drops on enemy towns. Fragile - bomb the enemy one.'},
@@ -128,7 +128,7 @@ const VS={
   flak:{light:.6,heavy:.2,bld:.1,air:1.6}, missile:{light:.5,heavy:1,bld:.6,air:1.5}, snipe:{light:3,heavy:.08,bld:.05,air:0},
   bb:{light:1,heavy:1,bld:1.6,air:0}, bomb:{light:1,heavy:1.3,bld:1.4,air:0}, super:{light:1,heavy:1,bld:1,air:.5}, demo:{light:0,heavy:0,bld:1,air:0},
 };
-const MIL_UNITS=(n)=>({inf:{name:n.inf},at:{name:'RPG Team'},aa:{name:'ZU-23 Technical',hp:240,cost:450,spd:80},tank:{name:n.tank||'Armed Technical',hp:n.tankHp||300,spd:n.tankSpd||88,dmg:18,rof:.35,wpn:'gun',aa:1,cost:500,time:6},
+const MIL_UNITS=(n)=>({inf:{name:n.inf},at:{name:'Anti-Tank Team'},aa:{name:'ZU-23 Technical',hp:240,cost:450,spd:80},tank:{name:n.tank||'Armed Technical',hp:n.tankHp||300,spd:n.tankSpd||88,dmg:18,rof:.35,wpn:'gun',aa:1,cost:500,time:6},
   arty:{name:n.arty||'Rocket Truck',rocket:n.arty?false:true,hp:220,cost:800},boat:{name:n.boat,hp:320,spd:120,cost:450}});
 // Courage: how much punishment a nation's soldiers take before they break and fall back. Based on how each
 // military is commonly perceived: the Shia forces' martyrdom ethos (Imam Hussein at Karbala) makes them the hardest
@@ -147,7 +147,7 @@ const MSTYLES={   // rout = campaign battles: the side breaks below this share o
  home:{n:'Home defenders',rout:.2,routHome:.08,cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
  fire:{n:'Firepower-reliant',rout:.25,cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
 const MORALE_STYLE={};
-for(const[st,l]of Object.entries({zeal:'IR RS DW KP',prof:'US RU GB FR DE JP KR AU CA IT GR PL TR CN PK ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA IN UA CU EG',fire:'AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
+for(const[st,l]of Object.entries({zeal:'IR RS DW KP RV OB BI',prof:'US RU GB FR DE JP KR AU CA IT GR PL TR CN PK ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA IN UA CU EG',fire:'AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
 function msOf(fac){return MSTYLES[MORALE_STYLE[fac]||'home'];}
 function courageOf(u){const T=G.teams[u.team],ms=msOf(T.fac);let c=ms.cour*(1+.12*(u.rank||0))*upgK(T,u.kind,'courage');if(ms.home&&u.hm)c*=ms.home;if(ms.lone&&u.nsup)c/=ms.lone;return c;}
 function F_(code,name,color,lang,music,doctrine,mods,special,units,sup,fup,o={}){return Object.assign({code,name,color,lang,music,doctrine,mods,special,units,sup,fup},o);}
@@ -156,7 +156,7 @@ const FACTIONS={
     {inf:{name:'Marine Squad'},at:{name:'Javelin Team'},hero:{name:'Delta Operator',demo:true},aa:{name:'M-SHORAD Stryker'},tank:{name:'M1 Abrams'},arty:{name:'M109 Paladin'},heli:{name:'AH-64 Apache'},jet:{name:'F-35A Lightning'},boat:{name:'Mark VI Patrol Boat'},ship:{name:'Arleigh Burke Destroyer'}},
     {name:'Tomahawk Salvo',charge:150,n:6,dmg:405,r:85,spread:150},'training'),
   TR:F_('TR','Turkey','#d23a52','tr-TR','mideast','Drone superpower: Bayraktar/Kargu drones cost 10% less, build faster, are tougher and hit harder.',{cost:1},'hero',
-    {inf:{name:'Mehmetçik Squad'},at:{name:'OMTAS Team'},hero:{name:'Maroon Beret Commando',demo:true},drone:{name:'Kargu Loitering Drone'},aa:{name:'Korkut SPAAG'},tank:{name:'Altay MBT'},arty:{name:'T-155 Fırtına'},heli:{name:'T129 ATAK'},jet:{name:'KAAN Fighter'},boat:{name:'Kılıç Patrol Boat'},ship:{name:'Istif Frigate'}},
+    {inf:{name:'Mehmetçik Squad'},at:{name:'OMTAS Team'},hero:{name:'Maroon Beret Commando',demo:true},drone:{name:'Kargu Loitering Drone'},aa:{name:'Korkut SPAAG'},tank:{name:'Altay Tank'},arty:{name:'T-155 Fırtına'},heli:{name:'T129 ATAK'},jet:{name:'KAAN Fighter'},boat:{name:'Kılıç Patrol Boat'},ship:{name:'Istif Frigate'}},
     {name:'Tayfun Missile Strike',charge:160,n:2,dmg:600,r:125,spread:90},'datalink',{extra:['drone']}),
   IL:F_('IL','Israel','#7fd3f0','he-IL','mideast','Iron Dome & missile defence: units are 10% tougher, hit 5% harder and cost 4% less, enemy strikes and missiles do 50% damage to you, SAM sites reach 30% farther and hit harder, Merkava tanks are extra tough, Spike missiles hit hard.',{supResist:.5,cost:.96,hp:1.1,dmg:1.05},'hero',
     {inf:{name:'Infantry Squad'},at:{name:'Spike Team',dmg:60},hero:{name:'Sayeret Commando',demo:true},aa:{name:'Machbet SPAAG'},tank:{name:'Merkava Mk4',hp:820},arty:{name:'M109 Doher'},heli:{name:'AH-64 Saraf'},jet:{name:'F-35I Adir'},boat:{name:'Shaldag Patrol Boat'},ship:{name:'Sa’ar 6 Corvette'}},
@@ -171,19 +171,19 @@ const FACTIONS={
     {inf:{name:'Motor Rifle Squad'},at:{name:'Kornet Team'},hacker:{name:'GRU Cyber Unit'},aa:{name:'Pantsir-S1'},tank:{name:'T-90M'},arty:{name:'TOS-1A',rng:280,minr:50,splash:95,dmg:66,rof:3.5,rocket:true},heli:{name:'Ka-52 Alligator'},jet:{name:'Su-34 Fullback'},boat:{name:'Raptor Patrol Boat'},ship:{name:'Admiral Gorshkov Frigate'}},
     {name:'Iskander Strike',charge:160,n:2,dmg:555,r:130,spread:90},'reactive'),
   IR:F_('IR','Iran','#3fae5c','fa-IR','mideast','Missiles & cheap drones: Shahed drones cost 25% less and build almost twice as fast, Fateh missile launchers fire 12% farther and hit 15% harder, the Kheibar barrage charges faster.',{infCost:1},'hacker',
-    {inf:{name:'Basij Militia',hp:110},at:{name:'RPG Cell'},hacker:{name:'IRGC Cyber Team'},drone:{name:'Shahed-136'},aa:{name:'Mesbah AA Gun'},tank:{name:'Karrar MBT',hp:580},arty:{name:'Fateh-110 Launcher',rng:470,splash:65,rocket:true},heli:{name:'AH-1J Cobra'},jet:{name:'F-14 Tomcat'},boat:{name:'Seraj Fast Attack Craft',spd:110},ship:{name:'Moudge Frigate'}},
+    {inf:{name:'Basij Militia',hp:110},at:{name:'Anti-Tank Cell'},hacker:{name:'IRGC Cyber Team'},drone:{name:'Shahed-136'},aa:{name:'Mesbah AA Gun'},tank:{name:'Karrar Tank',hp:580},arty:{name:'Fateh-110 Launcher',rng:470,splash:65,rocket:true},heli:{name:'AH-1J Cobra'},jet:{name:'F-14 Tomcat'},boat:{name:'Seraj Fast Attack Craft',spd:110},ship:{name:'Moudge Frigate'}},
     {name:'Kheibar Missile Strike',charge:130,n:12,dmg:335,r:75,spread:200},'thermo',{extra:['drone']}),
   SA:F_('SA','Saudi Arabia','#1f9a54','ar-SA','mideast','Petro wealth & air force: oil pays 40% more, supply trucks carry 10% more, F-15SA jets cost 25% less and are tougher, air defence reaches 20% farther, all units cost 17% less.',{oil:1.4,harv:1.1,cost:.83},'hero',
-    {inf:{name:'Royal Land Forces Squad'},at:{name:'TOW Team'},hero:{name:'Special Forces Sniper',rng:330,dmg:150,rof:2.2},aa:{name:'Shahine SAM Vehicle'},tank:{name:'M1A2S Abrams'},arty:{name:'CAESAR Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'F-15SA Eagle'},boat:{name:'Fast Patrol Boat'},ship:{name:'Al Riyadh Frigate'}},
+    {inf:{name:'Royal Land Forces Squad'},at:{name:'Anti-Tank Missile Team'},hero:{name:'Special Forces Sniper',rng:330,dmg:150,rof:2.2},aa:{name:'Shahine Anti-Air Vehicle'},tank:{name:'M1A2S Abrams'},arty:{name:'CAESAR Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'F-15SA Eagle'},boat:{name:'Fast Patrol Boat'},ship:{name:'Al Riyadh Frigate'}},
     {name:'Royal Air Strike',charge:150,n:5,dmg:625,r:75,spread:130},'awacs'),
   AE:F_('AE','United Arab Emirates','#b49a5e','ar-AE','mideast','High-tech wealth: weapons deal 25% more damage, units cost 5% less, oil pays 25% more, supply trucks carry 10% more, Pantsir air defence and Apaches hit 15% harder.',{dmg:1.25,cost:.95,oil:1.25,harv:1.1},'hero',
-    {inf:{name:'Infantry Squad'},at:{name:'Javelin Team'},hero:{name:'Presidential Guard Commando',demo:true},aa:{name:'Pantsir-S1E'},tank:{name:'Leclerc MBT'},arty:{name:'G6 Rhino Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'Rafale'},boat:{name:'Ghannatha Patrol Boat'},ship:{name:'Baynunah Corvette'}},
+    {inf:{name:'Infantry Squad'},at:{name:'Javelin Team'},hero:{name:'Presidential Guard Commando',demo:true},aa:{name:'Pantsir-S1E'},tank:{name:'Leclerc Tank'},arty:{name:'G6 Rhino Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'Rafale'},boat:{name:'Ghannatha Patrol Boat'},ship:{name:'Baynunah Corvette'}},
     {name:'Precision Air Strike',charge:145,n:4,dmg:755,r:75,spread:110},'contracts'),
   PK:F_('PK','Pakistan','#2f8f3a','ur-PK','southasia','Hardened forces & tank hunters: infantry cost 28% less, vehicles have 30% more hit points, anti-tank teams hit 20% harder.',{infCost:.72,vehHp:1.3},'hero',
-    {inf:{name:'Infantry Squad'},at:{name:'Baktar-Shikan Team'},hero:{name:'SSG Commando',demo:true},aa:{name:'Type 87 AA Gun'},tank:{name:'Al-Khalid MBT'},arty:{name:'SH-15 Howitzer'},heli:{name:'AH-1Z Viper'},jet:{name:'JF-17 Thunder'},boat:{name:'Jalalat Missile Boat'},ship:{name:'Tughril Frigate'}},
+    {inf:{name:'Infantry Squad'},at:{name:'Baktar-Shikan Team'},hero:{name:'SSG Commando',demo:true},aa:{name:'Type 87 AA Gun'},tank:{name:'Al-Khalid Tank'},arty:{name:'SH-15 Howitzer'},heli:{name:'AH-1Z Viper'},jet:{name:'JF-17 Thunder'},boat:{name:'Jalalat Missile Boat'},ship:{name:'Tughril Frigate'}},
     {name:'Shaheen Missile Strike',charge:165,n:1,dmg:710,r:165,spread:0},'tankhunt'),
   IN:F_('IN','India','#ff9933','hi-IN','southasia','Massive army & BrahMos navy: everything costs 11% less, units are 5% tougher, warships have 25% more hit points.',{cost:.89,hp:1.05},'hero',
-    {inf:{name:'Infantry Squad'},at:{name:'Nag Missile Team'},hero:{name:'MARCOS Commando',demo:true},aa:{name:'Tunguska SPAAG'},tank:{name:'Arjun MBT'},arty:{name:'Pinaka Rockets',rocket:true,splash:70,dmg:60,rof:3.2},heli:{name:'HAL Prachand'},jet:{name:'Tejas Fighter'},boat:{name:'Veer Missile Boat'},ship:{name:'Kolkata Destroyer'}},
+    {inf:{name:'Infantry Squad'},at:{name:'Nag Missile Team'},hero:{name:'MARCOS Commando',demo:true},aa:{name:'Tunguska SPAAG'},tank:{name:'Arjun Tank'},arty:{name:'Pinaka Rockets',rocket:true,splash:70,dmg:60,rof:3.2},heli:{name:'HAL Prachand'},jet:{name:'Tejas Fighter'},boat:{name:'Veer Missile Boat'},ship:{name:'Kolkata Destroyer'}},
     {name:'BrahMos Salvo',charge:155,n:3,dmg:670,r:95,spread:100},'coldstart'),
   CN:F_('CN','China','#e3493a','zh-CN','eastasia','Mass mobilization & blue-water navy: infantry cost 42% less and train 40% faster, everything else costs 5% less, warships are 30% tougher and hit 15% harder, rocket artillery hits 10% harder.',{infCost:.58,infTime:.6,cost:.95},'hacker',
     {inf:{name:'PLA Rifle Squad'},at:{name:'HJ-12 Team'},hacker:{name:'PLA Cyber Team'},aa:{name:'PGZ-09 SPAAG'},tank:{name:'Type 99A',hp:660},arty:{name:'PHL-03 Rockets',splash:72,dmg:58,rof:3.2,rocket:true},heli:{name:'Z-10 Attack Helo'},jet:{name:'J-20 Fighter'},boat:{name:'Type 022 Missile Boat'},ship:{name:'Type 055 Destroyer'}},
@@ -198,10 +198,10 @@ const FACTIONS={
     {inf:{name:'Infantry Squad'},at:{name:'Kornet Team'},hero:{name:'Unit 777 Commando',demo:true},aa:{name:'ZSU-23-4 Shilka'},tank:{name:'M1A1 Abrams'},arty:{name:'K9 Thunder'},heli:{name:'Ka-52 Alligator'},jet:{name:'Rafale'},boat:{name:'Ramadan Missile Boat'},ship:{name:'Tahya Misr Frigate'}},
     {name:'Air Strike',charge:150,n:5,dmg:720,r:70,spread:130},'crews'),
   CU:F_('CU','Cuba','#2b59c3','es-CU','latin','Revolutionary fervour: everything costs 20% less but units have 10% fewer hit points; Grad rockets cost 20% less.',{cost:.8,hp:.9},'hacker',
-    {inf:{name:'Revolutionary Infantry'},at:{name:'RPG Team'},hacker:{name:'Cyber Brigade'},aa:{name:'ZSU-23-4 Shilka'},tank:{name:'T-62 Tank'},arty:{name:'BM-21 Grad',rocket:true,splash:70,dmg:55,rof:3},heli:{name:'Mi-24 Hind'},jet:{name:'MiG-29 Fulcrum'},boat:{name:'Osa Missile Boat'},ship:{name:'Koni Frigate'}},
+    {inf:{name:'Revolutionary Infantry'},at:{name:'Anti-Tank Team'},hacker:{name:'Cyber Brigade'},aa:{name:'ZSU-23-4 Shilka'},tank:{name:'T-62 Tank'},arty:{name:'BM-21 Grad',rocket:true,splash:70,dmg:55,rof:3},heli:{name:'Mi-24 Hind'},jet:{name:'MiG-29 Fulcrum'},boat:{name:'Osa Missile Boat'},ship:{name:'Koni Frigate'}},
     {name:'Missile Bombardment',charge:160,n:6,dmg:490,r:80,spread:160},'guerrilla'),
   RS:F_('RS','Mountain Shias','#b3262c','ar-LB','mideast','The Lebanese mountain Shia resistance: stone villages of Bint Jbeil and the Bekaa, Ashura banners and Ya Hussein walls, rocket barrages, cheap strong drones, ATGM ambush teams, tunnels and mountain forts. Longer-ranged rockets that fire faster, far stronger defence guns and tunnels, infantry that dig in (30% less damage holding position). No air force or navy.',{cost:1,dugIn:.7},'hacker',
-    Object.assign(MIL_UNITS({inf:'Mountain Guard',boat:'Fast Attack Skiff'}),{inf:{name:'Mountain Guard',hp:150},at:{name:'Mountain RPG Team',hp:140,rng:205},hacker:{name:'Signal Jammers'},
+    Object.assign(MIL_UNITS({inf:'Mountain Guard',boat:'Fast Attack Skiff'}),{inf:{name:'Mountain Guard',hp:150},at:{name:'Mountain Anti-Tank Team',hp:140,rng:205},hacker:{name:'Signal Jammers'},
       drone:{name:'Shahed-136',cost:225,hp:100,spd:135,dmg:260,splash:72},arty:{name:'Medium Rocket Launcher',rocket:true,hp:260,rng:470,minr:90,dmg:68,splash:66,rof:3.2,cost:750,time:10}}),
     {name:'Mountain Rocket Storm',charge:150,n:14,dmg:300,r:65,spread:230},'bunkers',{extra:['drone'],noAir:true,noShip:true,militia:true}),
   DW:F_('DW','Coffee Shias','#c8a46e','ar-YE','mideast','Yemeni highland raiders: tower-house towns of Sana\'a and the Sarawat, coffee terraces and Red Sea coast. Tough, fast armed technicals and long-range rocket trucks that outrange enemy artillery. Units move 13% faster and cost 8% less. No air force.',{spd:1.13,cost:.92},'hero',
@@ -366,7 +366,7 @@ Object.assign(NEWNAT,{
   upg:['Commando Course','Digital Camo Kit','T-90 Crew Training','Rocket Fire Control','Su-25 Overhaul','Hind Maintenance','Caspian Energy Revenue','Defence of the Homeland','Caspian Flotilla Refit'],
   uplink:'Rocket Forces Command',econ:'Baku Oil Terminal',sub:'Caspian Midget Submarine',md:'Barak-8 Battery',coast:'Caspian Coastal Battery',trn:['Caspian Landing Craft','Mi-17 Transport']},
  JO:{base:'EG',name:'Jordan',color:'#007a3d',lang:'ar-JO',doctrine:'Jordan Armed Forces, desert guard: infantry cost 10% less and train 10% faster, and troops fight hard defending their own desert and borders.',mods:{infCost:.9,infTime:.9},
-  units:{inf:'Arab Army Squad',at:'TOW Team',hero:'Special Forces Commandos',aa:'Hawk Launcher',tank:'Al-Hussein Tank',arty:'M109 Howitzer',heli:'AH-1F Cobra',jet:'F-16AM Falcon',boat:'Aqaba Patrol Boat',ship:'Aqaba Patrol Ship'},
+  units:{inf:'Arab Army Squad',at:'Anti-Tank Missile Team',hero:'Special Forces Commandos',aa:'Hawk Launcher',tank:'Al-Hussein Tank',arty:'M109 Howitzer',heli:'AH-1F Cobra',jet:'F-16AM Falcon',boat:'Aqaba Patrol Boat',ship:'Aqaba Patrol Ship'},
   sup:{name:'Border Guard Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
   special:['recon',{name:'Desert Patrol Troop'}],hero:['Royal Special Forces','demo'],
   doct:{name:'Desert Guard',homeland:1},
@@ -374,7 +374,7 @@ Object.assign(NEWNAT,{
   gp:{bounty:{name:'Phosphate Exports'},recon:{name:'Border Watch',rm:.95},para:{name:'Royal Rapid Deployment'},barrage:{name:'Howitzer Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
   upg:['Special Forces Course','Desert Camo Kit','Tank Crew Training','Howitzer Fire Control','F-16 Integration','Cobra Maintenance','Dead Sea Revenue','Defence of the Kingdom','Aqaba Patrol Refit'],
   uplink:'Rocket Command (Aqaba)',econ:'Aqaba Port Authority',sub:'Coastal Midget Submarine',md:'Hawk Battery',coast:'Coastal Battery',trn:['Landing Craft','UH-60 Black Hawk']},
- KD:{base:'EG',name:'Kurdistan Region',color:'#e0a000',lang:'ku-KU',doctrine:'Regional Peshmerga forces, mountain fighters: infantry cost 15% less and train 10% faster, and troops ambush hard from cover in their own mountains and towns.',mods:{infCost:.85,infTime:.9},
+ KD:{base:'EG',name:'Kurdistan Region',color:'#e0a000',lang:'ku-KU',doctrine:'Regional Peshmerga forces, mountain fighters: infantry cost 15% less and train 10% faster, and troops ambush hard from cover in their own mountains and towns.',mods:{infCost:.85,infTime:.9,vehHp:.92},
   units:{inf:'Peshmerga Squad',at:'Milan Team',hero:'Special Peshmerga Commandos',aa:'Technical AA Gun',tank:'T-72 Tank',arty:'Mortar Battery',heli:'Mi-17 Gunship',jet:'Light Strike Aircraft',boat:'River Patrol Boat',ship:'Lake Patrol Ship'},
   sup:{name:'Mountain Mortar Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
   special:['recon',{name:'Mountain Scout Troop'}],hero:['Zerevani Special Forces','demo'],
@@ -507,7 +507,7 @@ Object.assign(NEWNAT,{ DZ:{base:'EG',name:'Algeria',color:'#1b7a3d',lang:'ar-DZ'
   upg:['Commando Course','ANP Combat Kit','T-90 Crew Training','Msta Fire Control','Su-30 Integration','Havoc Maintenance','Hydrocarbon Revenue','Defence of the Maghreb','Coastal Refit'],
   uplink:'Missile Command (Tamanrasset)',econ:'Hassi Messaoud Export Terminal',sub:'Kilo-class Submarine',md:'S-300PMU2 Battery',coast:'Bastion Coastal Battery',trn:['Landing Ship','Mi-171 Transport']},
  MA:{base:'EG',name:'Morocco',color:'#b3262e',lang:'ar-MA',doctrine:'Royal Armed Forces, desert berm: structures have 20% more hit points, tanks cost 5% less, and units fight 10% harder on their home ground.',mods:{bldHp:1.2,cost:.97},
-  units:{inf:'FAR Infantry Section',at:'TOW Team',hero:'Royal Guard Commando',aa:'Skyguard Launcher',tank:'M1A2 Abrams SEPv3',arty:'CAESAR Howitzer',heli:'AH-64E Apache',jet:'F-16C Block 52',boat:'Coastal Patrol Boat',ship:'FREMM Mohammed VI'},
+  units:{inf:'FAR Infantry Section',at:'Anti-Tank Missile Team',hero:'Royal Guard Commando',aa:'Skyguard Launcher',tank:'M1A2 Abrams SEPv3',arty:'CAESAR Howitzer',heli:'AH-64E Apache',jet:'F-16C Block 52',boat:'Coastal Patrol Boat',ship:'FREMM Mohammed VI'},
   sup:{name:'Falcon Strike',charge:150,n:5,dmg:720,r:70,spread:130},
   special:['recon',{name:'FAR Atlas Recon Patrol'}],hero:['Royal Guard Special Forces','demo'],
   doct:{name:'Desert Berm',homeland:1},
@@ -560,6 +560,39 @@ Object.assign(NEWNAT,{ DZ:{base:'EG',name:'Algeria',color:'#1b7a3d',lang:'ar-DZ'
   gp:{bounty:{name:'Gum Arabic Exports'},recon:{name:'Savanna Observation Posts',rm:.95},para:{name:'Airborne Company'},barrage:{name:'D-30 Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
   upg:['Special Forces Course','Army Combat Kit','Tank Crew Training','D-30 Fire Control','Jet Overhaul','Hind Maintenance','Nile Revenue','Defence of the Nile','River Patrol Refit'],
   uplink:'Rocket Command (Nile Valley)',econ:'Port Sudan Terminal',md:'Pechora Battery',coast:'Coastal Defence Battery',trn:['Landing Craft','Mi-8 Transport']}});
+// ---- nation-rv (Abdullah 2026-11-06 21:24 "Somehow incorporate the Iraqi PMF as a faction" -> "River Shias", own nation in south Iraq): a fictional faction inspired by Iraqi Shia
+// volunteer brigades raised to defend the shrines and the south. Never the real organisation's name, flag/emblem or leaders. Egypt base (equal power per tier), Zealous morale (never routs).
+Object.assign(NEWNAT,{
+ RV:{base:'EG',name:'River Shias',color:'#1f7a3a',lang:'ar-IQ',doctrine:'Volunteer brigades of the south, defenders of the shrines: infantry cost 18% less and train faster, units ambush hard from cover and fight 15% harder near their own buildings, and they never rout. Mixed militia and state-issued gear.',mods:{infCost:.82,infTime:.85},
+  units:{inf:'Volunteer Brigade Squad',at:'Kornet Team',hero:'Shrine Guard Commandos',aa:'ZU-23 Technical',tank:'T-72 Tank',arty:'Grad Rocket Launcher',heli:'Mi-35 Hind',jet:'Su-25 Frogfoot',boat:'Marsh Boat',ship:'Shatt Patrol Boat'},
+  sup:{name:'Grad Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Marsh Scout Team'}],hero:['Shrine Guard Assault Team','demo'],
+  doct:{name:'Defence of the Shrines',homeland:1,ambush:1},
+  pow:{name:'Call of the Volunteers',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Southern Oil Share'},recon:{name:'Marsh Watchers',rm:.95},para:{name:'Heliborne Volunteers'},barrage:{name:'Grad Barrage',nm:1.1,cdm:1.05},repair:{name:'Brigade Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Shrine Guard Course','Volunteer Kit','T-72 Crew Training','Grad Fire Control','Frogfoot Overhaul','Hind Maintenance','Southern Oil Revenue','Defence of the Shrines','Marsh Boat Refit'],
+  uplink:'Rocket Command (Marsh Depot)',econ:'Basra Oil Share Office',md:'Pantsir-style Battery',coast:'Shatt Coastal Battery',trn:['Marsh Landing Craft','Mi-8 Transport']}});
+// ---- nation-obbd (Abdullah 2026-11-06 21:26/21:29): OB "Olive Brigades" (fictional Gaza urban-resistance faction) and BI "Black Desert Insurgency" (fictional desert insurgent movement; code BI because BD = Bangladesh).
+// Inspired-by only: never a real group's name, flag, emblem, slogan or leader. Military-vs-military: no terror, hostage, suicide-attack or civilian-target mechanics. Both ZEALOUS (never rout). Egypt base = equal power per tier.
+Object.assign(NEWNAT,{
+ OB:{base:'EG',name:'Olive Brigades',color:'#3c6b3a',lang:'ar-PS',doctrine:'Olive Brigades, the dense-city defenders of Gaza: light, cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armour.',mods:{infCost:.85,infTime:.9,vehHp:.92},
+  units:{inf:'Brigade Fighter Squad',at:'RPG Ambush Team',hero:'Rubble Marksman Team',aa:'Improvised AA Truck',tank:'Armoured Bulldozer Carrier',arty:'Improvised Rocket Battery',heli:'Strike Drone Flight',jet:'Long-Range Rocket Salvo',boat:'Coastal Fishing Skiff',ship:'Coastal Patrol Launch'},
+  sup:{name:'Rocket Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Rooftop Observers'}],hero:['Rubble Marksman Team','demo'],
+  doct:{name:'Urban Labyrinth',ambush:1,homeland:1},
+  pow:{name:'Rubble Cover',type:'shield',cd:200,r:280,desc:'Your forces in the area take 60% less damage for 20s'},
+  gp:{bounty:{name:'Salvaged Supplies'},recon:{name:'Rooftop Watchers',rm:.95},para:{name:'Alley Reinforcements'},barrage:{name:'Mortar Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Aid Posts',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Marksman Course','Light Fighter Kit','Rubble Fighting Drills','Mortar Fire Control','Rocket Workshops','Drone Workshop','Remittance Fund','Defence of the City','Skiff Patrol Refit'],
+  uplink:'Rocket Workshop (Coastal Strip)',econ:'Aid & Remittance Board',md:'Rocket Battery',coast:'Coastal Lookout Post',trn:['Fishing Boat','Pickup Convoy']},
+ BI:{base:'EG',name:'Black Desert Insurgency',color:'#3b3b3f',lang:'ar-SY',doctrine:'Black Desert Insurgency, a raiding movement of the Syria-Iraq desert: captured technicals and light infantry (cost 12% less), raiders sprint 25% faster after firing and hit 20% harder from cover. Zealous: they never rout, but they pay in heavy losses and thin armour. Nobody makes treaties with them.',mods:{infCost:.88,vehHp:.95},
+  units:{inf:'Desert Raider Squad',at:'ATGM Raiding Team',hero:'Desert Sniper Team',aa:'ZU-23 Technical',tank:'Captured T-55 Group',arty:'Truck-Mounted Mortar',heli:'Small Strike Drone',jet:'Captured Rocket Salvo',boat:'River Skiff',ship:'River Patrol Launch'},
+  sup:{name:'Mortar Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['saka',{name:'Technical Raiders'}],hero:['Desert Sniper Team','demo'],
+  doct:{name:'Desert Raids',hitrun:1,ambush:1},
+  pow:{name:'Dust Screen',type:'smoke',cd:180,r:260,desc:'Smoke screen to move and withdraw under'},
+  gp:{bounty:{name:'Captured Equipment'},recon:{name:'Desert Scouts',rm:.95},para:{name:'Technical Convoy'},barrage:{name:'Mortar Barrage',nm:1.1,cdm:1.05},repair:{name:'Roadside Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Raider Course','Desert Fighter Kit','Captured Armour Crews','Mortar Fire Control','ATGM Stocks','Drone Workshop','Smuggling Routes','Desert Mobility','River Skiff Refit'],
+  uplink:'Rocket Depot (Desert)',econ:'Desert Trade Board',md:'Mortar Park',coast:'River Lookout Post',trn:['River Boat','Technical Convoy']}});
 for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const q in B.units)u[q]=Object.assign({},B.units[q]);for(const q in N.units)u[q]=Object.assign({},u[q]||{},{name:N.units[q]});
   FACTIONS[k]=Object.assign({},B,{code:k,name:N.name,color:N.color,lang:N.lang,doctrine:N.doctrine,mods:N.mods,units:u,sup:N.sup});
   const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);
@@ -711,7 +744,7 @@ function gpowDesc(k,P,g){const f=(v,a,b)=>v&&Math.abs(v-1)>.01?(v>1?a:b)+' '+(v>
   const L=[f(g.m,'bounty','bounty'),f(g.rm,'radius','radius'),f(g.tm,'duration','duration'),f(g.nm,k==='barrage'?'shells':'troops',k==='barrage'?'shells':'troops'),f(g.dm,'shell damage','shell damage'),f(g.pm,'repair','repair'),f(g.cdm,'cooldown','cooldown'),g.mix===PARA_AT?'mostly anti-tank teams':g.mix===PARA_INF?'mostly riflemen':null].filter(Boolean);
   return P.desc+(L.length?' ('+L.join(', ')+')':'')+(g.fx?'. Special: '+GFX_TXT[g.fx]+(k!=='bounty'?' (cooldown +10%)':' (bounty −10%)'):'');}
 const GFX_TXT={vet:'troops arrive as veterans',dig:'troops arrive dug in (35% less damage until they move)',stealth:'troops land hidden and stay unseen until they move or fire',mark:'enemies in the area are marked - your forces do 25% more damage to them',detect:'also exposes hidden and stealthed enemy units in the area',fire:'leaves the ground burning for 8 seconds',emp:'disables enemy vehicles in the area for 4 seconds',smoke:'lays a smoke screen that hides your units inside it',rearm:'units in the area also fire 25% faster for 12 seconds',rally:'units in the area rally instantly and are fearless for 15 seconds',shield:'units in the area take 25% less damage for 12 seconds',salvage:'also refunds 15% of the cost of each unit you lose'};
-function powInfo(k,fac){const P=POWERS[k];if(!P)return null;if(k==='mil'){const n=MILNAME[fac]||'Local militia';return Object.assign({},P,{name:'Fund '+n,desc:P.desc.replace('a local militia','the '+n)});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N=natPow(fac);return Object.assign({},P,N);}
+function powInfo(k,fac){const P0=POWERS[k];if(!P0)return null;const RT=realRow(fac);const P=RT?Object.assign({},P0,{cd:P0.cd?Math.max(30,Math.round(P0.cd*RT.pcd)):P0.cd,n:P0.n?Math.max(1,Math.round(P0.n*RT.pn)):P0.n}):P0;if(k==='mil'){const n=MILNAME[fac]||'Local militia';return Object.assign({},P,{name:'Fund '+n,desc:P.desc.replace('a local militia','the '+n)});}if(!P.nat){const g=(GPOW[fac]||{})[k];if(!g)return P;return Object.assign({},P,g,{name:g.name||P.name,desc:gpowDesc(k,P,g),cd:P.cd?Math.round(P.cd*(g.cdm||1)*(g.fx?1.1:1)):P.cd,r:P.r?Math.round(P.r*(g.rm||1)):P.r});}const N0=natPow(fac),N=RT?Object.assign({},N0,{cd:N0.cd?Math.max(30,Math.round(N0.cd*RT.pcd)):N0.cd,n:N0.n?Math.max(1,Math.round(N0.n*RT.pn)):N0.n}):N0;return Object.assign({},P,N);}
 // General ranks get steadily harder to earn; each promotion gives a point. Powers unlock for 1 point and can be
 // raised to level 2 (2 more points) and level 3 (3 more): bigger effect, shorter cooldown.
 const RANKS=[0,2500,7000,14000,24000,38000,56000,80000];
@@ -773,9 +806,26 @@ for(const k in NEWNAT){const N=NEWNAT[k],b=N.base;
   UPGL[k]=[];N.upg.forEach((nm,i)=>{const o=Object.assign({},UPG[b+(i+1)]),id=k.toLowerCase()+(i+1);o.name=nm;o.fac=k;UPG[id]=o;UPGL[k].push(id);});}
 for(const f in FASTN){const F=FACTIONS[f];if(F){F.units=F.units||{};F.units.fast=Object.assign({name:FASTN[f]},F.units.fast||{});}}
 for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.units.sub=Object.assign({name:SUBN[f]},F.units.sub||{});}}
-function stats(fac,kind){const k=fac+'|'+kind;if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
+/* ---------- REALISTIC balance tiers (Abdullah 2026-11-06 21:31 "Would this all realistically have the same fire support?") ----------
+   ONE data table, rows not code paths. The lobby's Balance toggle picks Balanced (every nation equally strong, the default and
+   the only mode the tourneys balance) or Realistic (a nation's fire support follows its real-world power tier). Tier comes from
+   the grand campaign's GR_REAL military figure, so the two layers agree. Columns: cash start money, pcd general-power cooldown,
+   pn drones/sorties per power, sch missile-strike charge time, sdmg missile-strike damage, inf infantry cost, hv vehicle/aircraft
+   cost. Small powers pay for weak fire support with cheaper, more numerous infantry (and keep their guerrilla tools and
+   home-turf morale). The AI reads the same rows, so Hard AI plays the mode it is in. */
+const REAL_TIER=[['Superpower',1.8,{cash:1.5,pcd:.7,pn:1.5,sch:.7,sdmg:1.35,inf:1.1,hv:.85}],
+  ['Great power',.9,{cash:1.2,pcd:.85,pn:1.25,sch:.85,sdmg:1.15,inf:1.05,hv:.95}],
+  ['Regional power',.4,{cash:1,pcd:1,pn:1,sch:1,sdmg:1,inf:1,hv:1}],
+  ['Small power',0,{cash:.8,pcd:1.35,pn:.6,sch:1.4,sdmg:.7,inf:.8,hv:1.15}]];
+function realTierOf(fac){let m=.4;try{if(typeof GR_REAL==='object'&&GR_REAL.n[fac])m=GR_REAL.n[fac][1];}catch(e){}return REAL_TIER.find(r=>m>=r[1])||REAL_TIER[REAL_TIER.length-1];}
+function realTierName(fac){return realTierOf(fac)[0];}
+// null unless this battle is in Realistic mode - every caller then falls back to the equal Balanced numbers.
+function realRow(fac){try{if(typeof G!=='object'||!G||!G.real)return null;}catch(e){return null;}return realTierOf(fac)[2];}
+function realSup(fac){const R=realRow(fac),S=FACTIONS[fac].sup;if(!R)return S;
+  return Object.assign({},S,{charge:Math.round(S.charge*R.sch),dmg:Math.round(S.dmg*R.sdmg),n:Math.max(1,Math.round((S.n||1)*R.pn))});}
+function stats(fac,kind){const R=realRow(fac),k=fac+'|'+kind+(R?'|R':'');if(sc[k])return sc[k];const F=FACTIONS[fac],m=F.mods||{};
   const s=Object.assign({},BASE[kind],(F.units||{})[kind]||{});s.kind=kind;if(s.fake){const rs=stats(fac,s.fake);s.name=rs.name;s.r=rs.r;s.spd=rs.spd;s.cls=rs.cls;s.armor=rs.armor;s.hpShow=rs.hp;}if(kind==='cleric'&&fac==='KP')s.name='Dear Leader';{const X=(XL[fac]||{})[kind];if(X)for(const q in X)if(s[q]!=null)s[q]*=X[q];if(X)s.xl=1;}const inf=s.armor==='light',veh=s.armor==='heavy'||s.cls==='heli'||s.cls==='jet';
-  let c=s.cost*(m.cost||1);if(inf)c*=(m.infCost||1);const B=BAL[fac];if(B)c*=(B._||1)*(B[kind]||1);s.cost=Math.round(c/25)*25;if(kind==='champ')s.cost=BASE.champ.cost;if(inf)s.time*=(m.infTime||1);
+  let c=s.cost*(m.cost||1);if(inf)c*=(m.infCost||1);const B=BAL[fac];if(B)c*=(B._||1)*(B[kind]||1);s.cost=Math.round(c/25)*25;if(R&&kind!=='champ')s.cost=Math.max(25,Math.round(s.cost*(inf?R.inf:R.hv)/25)*25);if(kind==='champ')s.cost=BASE.champ.cost;if(inf)s.time*=(m.infTime||1);
   s.hp=Math.max(1,Math.round(s.hp*(m.hp||1)*(veh?(m.vehHp||1):1)));if(m.spd&&s.dom!=='air')s.spd*=m.spd;{const D=DOCT[fac]||{};if(D.barrage&&s.cls==='arty'){s.rng*=1.15;if(s.splash)s.splash*=1.3;s.rof*=.85;s.cost=Math.round(s.cost*.85/25)*25;}if(D.covert&&(s.cls==='inf'||s.cls==='at')&&s.dom==='ground'&&kind!=='hacker')s.camo=1;if(D.shock&&s.armor==='heavy'&&s.dom==='ground')s.spd*=1.1;}s.dmg*=(m.dmg||1);s.aggro=kind==='drone'?290:s.rng+90;if(s.aa===undefined)s.aa=0;return sc[k]=s;}
 function bstats(fac,kind){const k=fac+'#'+kind;if(sc[k])return sc[k];const m=FACTIONS[fac].mods||{};const s=Object.assign({},STRUCT[kind]);s.kind=kind;if(kind==='coast'&&COASTN[fac])s.name=COASTN[fac];if(kind==='sam'&&MDN[fac])s.name=MDN[fac];{const X=(XLB[fac]||{})[kind];if(X){for(const q in X)if(s[q]!=null)s[q]*=X[q];s.xl=1;}}
   if(kind==='econ'&&ECON[fac])s.name=ECON[fac];if(kind==='uplink'&&UPLINK[fac])s.name=UPLINK[fac][0];s.hp=Math.round(s.hp*(m.bldHp||1));s.cost=kind==='econ'?s.cost:Math.round(s.cost*(m.cost||1)/25)*25;if(s.dmg)s.dmg*=(m.dmg||1);s.aa=s.aa||0;s.armor='bld';return sc[k]=s;}

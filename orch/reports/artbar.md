@@ -28,3 +28,37 @@ Readability 2.5 → 3.5 (map-mode panel now a framed opaque "MAP MODE" panel, no
 
 ## 2026-11-07 03:3x UTC — laneC iteration 3 (shots: orch/shots/laneC/it3)
 Light 3 → 3.5, objects 3 → 3.5: every town building now throws a soft sun-direction shadow (one extra instanced mesh, same sun vector as the baked terrain shadows), so towns sit on the ground instead of floating. Others unchanged (geography 4, colour 3.5, water 3, readability 3.5, life 2.5, perf 3.5 est.). Next lowest: life (smoke/animated flags), armies/ships figures, UI kit C0.
+
+## 2026-11-07 05:5x UTC — laneC iteration 5 (shots: orch/shots/laneC/it5)
+Life 2.5 → 3.5: shipping lanes — ~18–46 tankers and container ships (`src/13w-gshipping.js`) sail the real sea-province links with wakes (visual only, no sim state; they never cross land: links are sampled against the height field). World reaction chain: trade lanes visibly busy (tie to oil market / Straits later). Others unchanged (geography 4, colour 3.5, light 3.5, water 3, objects 3.5, readability 3.5). Next: water normal maps, army figures, UI kit C0.
+## 2026-11-07 04:xx UTC — laneC iteration 4 (shots: orch/shots/laneC/it4)
+Life 2.5 → 3: every town now breathes faint chimney smoke (one GPU-animated Points draw, ~8k puffs, hidden when zoomed out past d 1100; capitals 5 sources, towns 1–3). Besieged-province smoke already existed (g3BuildSmoke, ⚡15) — mine is `g3BuildChim`. Subtle by design; others unchanged. Next lowest: water 3, colour 3.5/light 3.5/objects 3.5 (soldier figures still blocky), UI kit C0.
+
+## 2026-11-07 06:2x UTC — laneC iteration 6 (shots: orch/shots/laneC/it6)
+Water 3 → 3.5: five crossing sharpened swell trains drive the sea normals (peaked crests), sky-gradient reflection with warm sun side replaces the flat fresnel tint, whitecaps on open-water crests, light through thin crests in shallows; all fade with distance so far views stay calm. Shader-only, no sim. Others unchanged (geography 4, colour 3.5, light 3.5, objects 3.5, life 3.5, readability 3.5). Next: army figures/ships, UI kit C0, PBR close-up tiles.
+
+## 2026-11-07 07:xx UTC — laneC iteration 7 (shots: orch/shots/laneC/it7 before, it8 after)
+Readability 3.5 → 4: the map-mode legend ran behind the army cards and was clipped; it now sits above the minimap, wrapped in a framed box. Army cards are ~14% bigger with larger text. Others unchanged (geography 4, colour 3.5, light 3.5, water 3.5, objects 3.5, life 3.5). Next lowest: objects (blocky army figures, oversized flags at close zoom), colour/light, UI kit C0.
+## 2026-11-07 06:5x UTC — laneC iteration 6 (no code shipped)
+Built a sea-shader upgrade (sky reflection, whitecaps, sparkle); main received an equivalent one (5-train swell, sky reflection, whitecaps) minutes earlier, so mine was dropped to avoid a conflict. Water ≈ 3.5 on main now. Next lowest for Lane C: C0 UI kit / C3 UI skin (readability 3.5), then objects/colour/light 3.5.
+
+## 2026-11-07 08:xx UTC — laneC iteration 9 (shots: orch/shots/laneC/f0 before, f1 after)
+Objects 3.5 → 4: armies are now squads, not one lone figure — 1 / 3 / 6 soldiers by army size (<5, <12, 12+), each with backpack, rifle and helmet; flags shrink as you zoom in (they dwarfed the figure) and the zoom floor of figures is smaller. Visual only. Others unchanged (geography 4, colour 3.5, light 3.5, water 3.5, life 3.5, readability 4). Next lowest: colour/light/life 3.5 → C0 UI kit.
+
+## 2026-11-07 09:xx UTC — laneC iteration 10 (shots: orch/shots/laneC/g0 before, g1 after)
+Colour 3.5 → 4: political mode now washes every province in its owner's colour (interior alpha .10 → .24, borders up to .66) so blocs/empires read at a glance — before, the land was uniform beige with only a thin border glow. Others unchanged (geography 4, light 3.5, water 3.5, objects 4, life 3.5, readability 4). Next lowest: light/life 3.5 → C0 UI kit.
+
+## 2026-11-07 10:3x UTC — laneC iteration 11 (shots: orch/shots/laneC/h0 before, h1 after)
+Objects 4 -> 4 (close-up fix): oil fields drew black cones (read as spikes in the water); now lattice drilling derricks with crown + beacon, storage tanks and a lit flare stack, scaled to the houses. Visual only. Others unchanged (geography 4, colour 4, light 3.5, water 3.5, life 3.5, readability 4). Next lowest: light/life 3.5 -> C0 UI kit.
+
+## 2026-11-07 11:xx UTC — laneC iteration 12 (shots: orch/shots/laneC/z0 before, z4 after)
+Light 3.5 -> 4 (est. 3.8): grand map gets a studio grade drawn inside the canvas (corner vignette + warm-top/cool-bottom wash, one extra fullscreen draw, HUD stays crisp). Others unchanged (geography 4, colour 4, water 3.5, objects 4, life 3.5, readability 4). Next lowest: life 3.5 (animated flags/city lights at night), then C0 UI kit.
+
+## 2026-11-07 13:xx UTC — laneC iteration 13 (shots: orch/shots/laneC/k0 before, k1 after)
+Objects 4 -> 4 (est. 4.2, Abdullah's "blocky"/skyscraper complaint): towns are ~40% smaller (capital 30 buildings, main town 11, others 6), skyscraper towers only in real megacities (Tehran, Cairo, Istanbul, Tel Aviv, Riyadh, Dubai...), blue mosque domes 20% smaller and one per main town, terrain shows between towns. Others unchanged. Next: C-LOOK 1 painted terrain, army figures.
+
+## 2026-11-07 15:xx UTC — laneC iteration 14 (shots: orch/shots/laneC/m0 before, m1 after)
+Objects 4 -> 4 (est. 4.3, "blocky" complaint, C-TOWNS slice 2): Middle East flat-roof houses were near-cubes; now low and wide (height ~half), varied footprints, 8 wall tints (whitewash/ochre/terracotta), ~20% fewer buildings per town, towers shorter and glass-blue instead of grey slabs. Much more land visible between towns. Others unchanged (geography 4, colour 4, light 3.5-4, water 3.5, life 3.5, readability 4). Next: C-LOOK 1 painted terrain, army figures.
+
+## 2026-11-07 16:xx UTC — laneC iteration 14 (shots: orch/shots/laneC/m0 before, m1 after)
+Life 3.5 -> 3.7 / readability 4: chimney smoke was dark grain dirtying the Levant view; now light soft wisps that fade out (war smoke stays dark). Visual only. Next lowest: water 3.5.
