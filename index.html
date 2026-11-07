@@ -17807,8 +17807,24 @@ function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',
   for(const [x,z] of [[-R,-R],[R,-R],[-R,R],[R,R],[-gate,R],[gate,R]])post(x,z);
   bx(gate*2+2.2,1.2,2.2,0,6.4,R,rf);
   bx(2*R,.5,.3,0,4.8,-R+.7,pl);}
+// DE-BLOCK slice 3: tyre tracks out of the gate, scattered rocks and debris round the base (view only, shared geometry/material)
+let BKTRK=null,BKROCK=null;
+function groundKit(e,o,P){const h=e.size/2,R=h+(e.kind==='hq'?30:22);
+  if(!BKTRK){const c=document.createElement('canvas');c.width=64;c.height=256;const x=c.getContext('2d');x.clearRect(0,0,64,256);for(const cx0 of [14,50]){for(let y=0;y<256;y+=5){x.fillStyle='rgba(52,40,26,'+(.38+Math.random()*.22)+')';x.fillRect(cx0-7,y,14,3);}x.fillStyle='rgba(60,46,30,.28)';x.fillRect(cx0-7,0,14,256);}
+    const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;BKTRK=new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,fog:true});}
+  if(!BKROCK){const g=new THREE.IcosahedronGeometry(1,1),pa=g.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i),y=pa.getY(i),z=pa.getZ(i),n=1+.28*Math.sin(x*3.1+z*2.3)*Math.cos(y*2.7+x)+.12*Math.sin(z*7.7+y*5.1);pa.setXYZ(i,x*n,y*n*.62,z*n);}g.computeVertexNormals();BKROCK={g,m:[bkMat('concrete','#8d8573',1.5),bkMat('concrete','#a39984',1.5),bkMat('concrete','#776f60',1.5)]};}
+  const r=((e.x|0)*131+(e.y|0)*71+e.kind.length)&1023,rn=i=>{const q=Math.sin((r+1)*(i+1)*12.9898)*43758.5453;return q-Math.floor(q);};
+  const G3=new THREE.Group();P.add(G3);
+  // two curved tyre-track ribbons from the gate toward the front
+  for(let k=0;k<2;k++){const L=70+k*30,w=5.5,bend=(rn(k+40)-.5)*30,pl=new THREE.PlaneGeometry(w,L,1,8);pl.rotateX(-Math.PI/2);const pp=pl.attributes.position,uu=pl.attributes.uv;for(let i=0;i<pp.count;i++){const t=(pp.getZ(i)+L/2)/L;pp.setX(i,pp.getX(i)+bend*t*t);pp.setZ(i,pp.getZ(i)+L/2+R);uu.setY(i,uu.getY(i)*L/40);}
+    const m=new THREE.Mesh(pl,BKTRK);m.position.set((k?-1:1)*(k?4:2),.35,0);m.renderOrder=2;G3.add(m);}
+  // rocks: 3 clusters, bigger ones outside the wall
+  const nr=9+(rn(3)*6|0);for(let i=0;i<nr;i++){const a=rn(i)*6.283,d=R+14+rn(i+9)*60,sx=1.3+rn(i+20)*3.6,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<14&&z>0)continue;
+    const m=new THREE.Mesh(BKROCK.g,BKROCK.m[i%3]);m.scale.set(sx,sx*(.8+rn(i+30)*.6),sx*(.8+rn(i+50)*.5));m.position.set(x,sx*.22,z);m.rotation.y=rn(i+60)*6.3;m.castShadow=m.receiveShadow=true;G3.add(m);}
+  // debris by the wall: broken blocks, tyres, scrap sheets
+  for(let i=0;i<7;i++){const a=rn(i+70)*6.283,d=R+3+rn(i+80)*10,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<12&&z>0)continue;const m=new THREE.Mesh(new THREE.BoxGeometry(1.2+rn(i)*2,.5+rn(i+5)*.9,1+rn(i+9)*2),BKROCK.m[(i+1)%3]);m.position.set(x,.35,z);m.rotation.set((rn(i+11)-.5)*.5,rn(i+12)*6.3,(rn(i+13)-.5)*.5);m.castShadow=m.receiveShadow=true;G3.add(m);}}
 function decorateBld(e,o){if(!MODELS.ready)return;const h=e.size/2;const P=new THREE.Group();o.add(P);
-  if(['hq','barracks','factory','depot'].includes(e.kind)){try{roofKit(e,o,P);}catch(err){console.warn('roofKit',err);}}
+  if(['hq','barracks','factory','depot'].includes(e.kind)){try{roofKit(e,o,P);}catch(err){console.warn('roofKit',err);}try{groundKit(e,o,P);}catch(err){console.warn('groundKit',err);}}
   const T=G.teams[e.team];if(T&&MEFAC.has(T.fac)&&(e.kind==='turret'||e.kind==='sam')){propObj('crate',h+6,h+4,.3,P);return;}// HESCO ring instead of sandbag props
   if(e.kind==='hq'){propObj('watertower',-h-14,-h+6,0,P);propObj('container',h+20,-h+18,Math.PI/2,P);propObj('containerG',h+20,-h+52,Math.PI/2,P);propObj('barrel',-h-8,h+6,0,P);propObj('barrel',-h-14,h+10,0,P);propObj('fence',-14,h+16,0,P);for(let i=-2;i<=2;i++)propObj('sandbag',i*13,h+30+(i%2)*2,(i%2)*.12,P);propObj('sandbag',-34,h+22,1.2,P);propObj('sandbag',34,h+22,-1.2,P);propObj('crate',h+6,h+18,.3,P);}
   else if(e.kind==='barracks'){propObj('tent',0,h+30,0,P);propObj('sandbag',-h-6,h-8,Math.PI/2,P);propObj('sandbag',h+6,h-8,Math.PI/2,P);propObj('crate',h+8,-h+6,.3,P);propObj('crate',h+12,-h+14,0,P);}
