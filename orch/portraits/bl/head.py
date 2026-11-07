@@ -38,7 +38,7 @@ def build(spec, name='p'):
     P = mh.macro(spec['gender'], spec['age'], spec['race'], spec.get('weight', .5), spec.get('muscle', .5))
     P = mh.apply(P, spec.get('mods', {}))
     ob, keep = mh.make_mesh(P, name)
-    H = Head(); H.spec = spec; H.keep = keep; H.ob = ob
+    H = Head(); H.spec = spec; H.keep = keep; H.ob = ob; H.Pfull = P
     Pk = P[keep]; H.Pmh = Pk
     faces = [list(p.vertices) for p in ob.data.polygons]; H.faces = faces
     H.adj = adjacency(len(Pk), faces)
