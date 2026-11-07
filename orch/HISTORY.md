@@ -369,3 +369,4 @@ laneG 2026-11-07 (08:25Z): item 22 EU4 peace-deal screen (src/13z-gpeace.js): wa
 laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (Lane B economy, not the peace screen) and grandlive timeout were red on the peace branch; not caused by 13z-gpeace.js (AI never calls gdAct).
 - laneC 2026-11-07: grand-map political mode shows owner colour across provinces (colour 3.5 -> 4), shots orch/shots/laneC/g0|g1
 - laneE 2026-11-07 09:35Z: re-verified base view on main (shot h1before) — no regressions, no src change; open E1 kit/LOD, E2 sandbag props, E3 AO/decals.
+- laneC 2026-11-07 10:3x: grand-map oil derricks rebuilt as lattice rigs + tanks + flare stack (were black cones); chain: Khuzestan/Gulf oil provinces now read as oil country (src/13e-grand3d.js).

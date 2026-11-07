@@ -19851,7 +19851,10 @@ const G3_GEO=()=>{if(G3.geo)return G3.geo;const cyl=(a,b,h,s)=>new THREE.Cylinde
   A.spire=g3Merge([[box(),g3M(0,.3,0,.8,.6,1.4),wall],[g3Prism(),g3M(0,.86,.1,.8,.5,1.1),roof],[box(),g3M(0,1.1,-.6,.5,1.7,.5),wall],[cone(.42,1.4,4),g3M(0,2.65,-.6),roof]]);
   A.disc=g3Merge([[cyl(1,1,.14,14),g3M(0,.07,0),[.52,.47,.38]]]);
   A.wall=g3Merge([[new THREE.CylinderGeometry(1,1,.9,28,1,true),g3M(0,.45,0),[.7,.64,.52]],[new THREE.CylinderGeometry(1,1,.12,28,1,true),g3M(0,.95,0),[.5,.44,.36]]]);
-  A.derrick=g3Merge([[cone(.5,3.2,4),g3M(0,1.6,0),[.25,.25,.28]],[cyl(.6,.6,.3,8),g3M(0,.15,0),[.2,.2,.2]]]);
+  {const st=[.62,.63,.66],dk=[.2,.2,.22],rd=[.8,.2,.15],lg=[];for(const [sx,sz] of [[1,1],[1,-1],[-1,1],[-1,-1]])lg.push([box(),g3M(sx*.42,2.4,sz*.42,.1,4.8,.1,0,-sz*.085,sx*.085),st]);
+  const br=[];for(const y of [1,2,3,4]){const w=.9-y*.15;for(const q of [-1,1]){br.push([box(),g3M(0,y,q*w*.5,w,.07,.07),st],[box(),g3M(q*w*.5,y,0,.07,.07,w),st]);}}
+  A.derrick=g3Merge([[box(),g3M(0,.1,0,1.9,.2,1.9),dk],...lg,...br,[box(),g3M(0,4.95,0,.5,.3,.5),dk],[box(),g3M(0,5.25,0,.12,.3,.12),rd],
+   [cyl(.55,.55,1.1,10),g3M(1.9,.6,.3),[.78,.78,.76]],[cyl(.5,.5,.9,10),g3M(1.9,.5,-1),[.7,.72,.7]],[cyl(.06,.09,3.6,5),g3M(-1.8,1.8,-.8),dk],[ico(.18),g3M(-1.8,3.7,-.8),[1,.62,.15]]]);}
   A.field=g3Merge([[cyl(1,1,.1,10),g3M(0,.05,0,1,1,.7),[.8,.72,.3]]]);
   A.spoil=g3Merge([[cone(1.2,1.6,7),g3M(0,.8,0),[.34,.32,.3]]]);
   A.pier=g3Merge([[box(),g3M(0,.15,0,1,.3,.14),[.45,.38,.3]],[box(),g3M(.3,.7,.4,.12,1.4,.12),[.8,.3,.2]],[box(),g3M(.3,1.35,.2,.06,.06,.5),[.8,.3,.2]]]);
@@ -19876,7 +19879,7 @@ function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],ro
       let kind=t.flat?(hv<.5?'court':'flat'):(hv<.4?'house':hv<.75?'gable':'row'),sy=s*(t.flat?.8+hv*.6:1);
       if(k===0&&(t.cap||t.t===0)){kind=t.flat?'mosque':'spire';sy=s;}else if(t.cap&&k<5){kind='tower';sy=s*1.5;}else if(t.n>14&&k%11===5){kind=t.flat?'mosque':'spire';sy=s;}
       push(kind,x,z,s,sy,s,ry,[v*TN[0],v*TN[1],v*TN[2]]);k++;}
-    if(p.oil&&t.t===0)for(let k=0;k<3;k++)push('derrick',t.x+20+k*6,t.z-18+k*3,2.4,2.4,2.4,0,[1,1,1]);
+    if(p.oil&&t.t===0)for(let k=0;k<3;k++)push('derrick',t.x+20+k*8,t.z-18+k*4,1.7,1.7,1.7,k*.7,[1,1,1]);
     if(p.farm&&t.t===0)for(let k=0;k<4;k++)push('field',t.x-24+(k%2)*11,t.z+18+(k>>1)*8,5,1,5,0,[.7+g3Hash(k,p.i)*.4,1,.8]);
     if(p.mine&&t.t===0)for(let k=0;k<2;k++)push('spoil',t.x+8+k*7,t.z+24,2.4,2,2.4,0,[1,1,1]);
     if(p.port&&t.t===0){for(let a=0;a<16;a++){const ang=a/16*6.283;let ok=false;for(let r=8;r<46;r+=3){const X=t.x+Math.cos(ang)*r,Z=t.z+Math.sin(ang)*r;if(g3HeightAt(X,Z)<-.2){push('pier',X-Math.cos(ang)*3,Z-Math.sin(ang)*3,10,1,6,-ang,[1,1,1]);ok=true;break;}}if(ok)break;}}}
