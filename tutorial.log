@@ -1,0 +1,87 @@
+menu {"btn":"▶ Tutorial: learn Conquest (10 min)","vis":true}
+-- out of order / skip / exit / restart
+step 1 sel | highlight: ring | words: 17
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   out of order: Barracks placed during step 1
+  ok   out of order: the tutorial stays on step 1 (no crash, no skipping ahead)
+  ok   Skip step moves to the next step (3 clicks -> step 4)
+  ok   a step already done earlier completes by itself (Barracks built before step 4)
+  ok   Exit tutorial hides the tips and arrow and leaves the battle running
+  ok   menu still offers the tutorial (not marked done after exiting)
+-- full playthrough
+step 1 sel | highlight: ring | words: 17
+  ok   step 1 tip visible
+  ok   step 1 tip short (<=50 words)
+  ok   step 1 has an arrow/ring on its target
+  ok   step 1 tip box does not cover its own highlight 
+  ok   drag-select picks up soldiers (6)
+step 2 move | highlight: ring | words: 17
+  ok   step 2 tip visible
+  ok   step 2 tip short (<=50 words)
+  ok   step 2 has an arrow/ring on its target
+  ok   step 2 tip box does not cover its own highlight 
+    marker at 438 417
+  ok   the move marker is on screen below the tip box
+step 3 atk | highlight: ring | words: 34
+  ok   step 3 tip visible
+  ok   step 3 tip short (<=50 words)
+  ok   step 3 has an arrow/ring on its target
+  ok   step 3 tip box does not cover its own highlight 
+  ok   a red enemy exists to attack
+step 4 setup | highlight: box | words: 34
+  ok   step 4 tip visible
+  ok   step 4 tip short (<=50 words)
+  ok   step 4 has an arrow/ring on its target
+  ok   step 4 tip box does not cover its own highlight 
+  ok   clicking Barracks arms placement
+  ok   Barracks placed with a click next to the base
+step 5 trn | highlight: ring | words: 21
+  ok   step 5 tip visible
+  ok   step 5 tip short (<=50 words)
+  ok   step 5 has an arrow/ring on its target
+  ok   step 5 tip box does not cover its own highlight 
+  ok   left-click selects the Barracks
+  ok   arrow points at the Units tab first
+step 6 town | highlight: ring | words: 42
+  ok   step 6 tip visible
+  ok   step 6 tip short (<=50 words)
+  ok   step 6 has an arrow/ring on its target
+  ok   step 6 tip box does not cover its own highlight 
+    takeHouses 0 {"cell":{"x":940,"y":4220},"unit":{"x":1512.537748670188,"y":5101.099125771569},"n":6}
+    takeHouses 1 {"cell":{"x":940,"y":4220},"unit":{"x":1524.8738289388027,"y":5106.742158974867},"n":5}
+    takeHouses 2 {"cell":{"x":940,"y":4220},"unit":{"x":1145.3,"y":5265.151029963582},"n":4}
+    takeHouses 3 {"cell":{"x":940,"y":4220},"unit":{"x":1523.2895600681875,"y":5083.86104222541},"n":3}
+    takeHouses 4 {"cell":{"x":860,"y":4220},"unit":{"x":1510.8727869451072,"y":5114.294738649945},"n":2}
+    takeHouses 5 {"cell":{"x":860,"y":4220},"unit":{"x":1303.5808138179316,"y":5281.351460311275},"n":1}
+    takeHouses 10 {"cell":{"x":1020,"y":4300},"n":0}
+step 7 tax | highlight: low | words: 39
+  ok   step 7 tip visible
+  ok   step 7 tip short (<=50 words)
+  ok   step 7 has an arrow/ring on its target
+  ok   step 7 tip box does not cover its own highlight 
+  ok   clicking the town marker on the minimap opens its tax panel
+step 8 unrest | highlight: box | words: 43
+  ok   step 8 tip visible
+  ok   step 8 tip short (<=50 words)
+  ok   step 8 has an arrow/ring on its target
+  ok   step 8 tip box does not cover its own highlight 
+step 9 retake | highlight: ring | words: 28
+  ok   step 9 tip visible
+  ok   step 9 tip short (<=50 words)
+  ok   step 9 has an arrow/ring on its target
+  ok   step 9 tip box does not cover its own highlight 
+    takeHouses 0 {"cell":{"x":940,"y":4220},"unit":{"x":968.4602209657578,"y":4217.79061493354},"n":12}
+    takeHouses 1 {"cell":{"x":940,"y":4220},"unit":{"x":903.801116255172,"y":4179.832899792117},"n":12}
+    takeHouses 2 {"cell":{"x":940,"y":4220},"unit":{"x":903.801116255172,"y":4179.832899792117},"n":12}
+    takeHouses 3 {"cell":{"x":940,"y":4220},"unit":{"x":903.801116255172,"y":4179.832899792117},"n":12}
+    takeHouses 4 {"cell":{"x":940,"y":4220},"unit":{"x":903.801116255172,"y":4179.832899792117},"n":12}
+    takeHouses 5 {"cell":{"x":940,"y":4220},"unit":{"x":903.801116255172,"y":4179.832899792117},"n":12}
+    takeHouses 10 {"cell":{"x":940,"y":4220},"unit":{"x":903.801116255172,"y":4179.832899792117},"n":12}
+    takeHouses 20 {"cell":{"x":940,"y":4220},"unit":{"x":903.801116255172,"y":4179.832899792117},"n":12}
+  FAIL step 9 did not complete
+  DIAG stuck {"t":9088,"step":9,"town":{"n":"Qasr al-Nur","ow":-1,"reb":0,"d":1053,"cells":[[true,-1,false,0,4,0],[true,-1,false,0,4,0],[true,-1,false,0,4,0],[false,-1,false,0,4,0],[false,-1,false,0,4,0]]},"units":[["harv",2159,1626,"",0],["dozer",1253,5316,"",0],["inf",874,4179,"",0],["inf",940,4246,"",0],["inf",880,4206,"",0],["inf",934,4191,"",0],["inf",880,4223,"",0],["inf",829,4218,"",0],["inf",1018,4514,"",0],["inf",933,4549,"",0],["inf",983,4464,"",0],["inf",1020,4533,"",0],["inf",934,4578,"",0],["inf",968,4393,"",0]],"sel":0}
+step seconds: [1,0,0,1,0,0,0,2] total 840 s
+TUTORIAL FAIL (1)
