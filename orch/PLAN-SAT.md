@@ -148,3 +148,79 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
     items in your lane to parallel subagents (Agent tool, `isolation: "worktree"`, `model: "sonnet"` — `"haiku"` for data/text),
     each with the exact item text, file ownership and gate commands; you review each diff, gate, and ship them one by one.
     Never two subagents on the same file.
+
+## REALISM & FUN PICKS (Abdullah 2026-11-06 22:15 "Options to make the game more realistic and fun") — Middle East slice first, rest → kaizen after Sat
+Battle (sim changes → servers-live PR comment):
+- [ ] **RF1 Spotting & hiding** (Lane F): infantry in forest/buildings stay hidden until they fire or a scout/drone spots them; extend the existing fog/vision code in 03-sim (one vision system).
+- [ ] **RF2 Real armour hits** (Lane F): front/side/rear armour + angle; heavy hits knock out tracks (immobile), turret (no fire) or crew instead of only HP; flank shots matter.
+- [ ] **RF3 Artillery delay** (Lane F): call-in → spotting round → salvo after a flight time; counter-battery radar lets enemy guns fire back at yours (extend the existing counter-battery code).
+- [ ] **RF4 Collapsing buildings** (Lane E): extend 03f's 3 damage stages: floors fall one by one, rubble/craters become cover (reuse rubble + cover rules).
+- [ ] **RF5 Cinematic moments** (Lane E): short slow-mo camera on huge explosions/tank kills, Settings toggle, never in multiplayer sim (view-only).
+- [ ] **RF6 Named veteran squads** (Lane F): squads get names + ranks, promotions; carried both ways through the grand campaign with the army.
+Grand map:
+- [ ] **RG1 Chokepoints & oil** (Lane B): Hormuz, Suez, Bab el-Mandeb, Malacca, Bosporus as sea-lane nodes that warships can blockade; world oil price swings feed the B5b economy.
+- [ ] **RG2 UN votes & sanctions** (Lane G): Security Council with 5 vetoes, votes on condemnations/sanctions; sanctions = GMOD rows on trade + stability.
+- [ ] **RG3 Spies & intelligence** (Lane A, with A6 fog): enemy armies hidden unless spotted; spies, satellites, sabotage as actions.
+- [ ] **RG4 Elections & refugees** (Lane G): democracies hold elections (war support decides), wars create refugees (unrest next door) and rebuilding costs.
+- [ ] **RG5 TV news broadcasts** (Lane G): fictional channel ticker + anchor card for big events (fictional anchors, no real channels/people), fed by the one event engine.
+- [ ] **RG6 Scenario start dates** (Lane A): pick a starting crisis (Gulf flashpoint first, then others) — each a preset over the realistic start.
+- [ ] **RG7 Dynamic crises** (Lane G): coups, oil shocks, uprisings, border incidents as timed decisions in the event engine.
+- [ ] **RG8 Achievements** (Lane D): goals per nation (e.g. unite the Resistance bloc, hold Hormuz a year); one table, shown in the nation panel.
+- [x] **Resistance bloc is a real thing** (22:16): `RES_BLOC` in 13i = IR, RS, DW (River Shias add their code there when they land); one permanent alliance "Resistance bloc", can't be left or fought inside, old "Axis of Resistance" saves renamed on load.
+Grand campaign round 2 (Abdullah 22:20 "Any more options for the grand campaign") — after the slice, then kaizen; extend existing systems, never a second one:
+- [ ] **RG9 Proxy wars** (Lane G): fund/arm rebels or an ally in another war without joining (uses Locals/insurgency + GMOD).
+- [ ] **RG10 Nuclear deterrence** (Lane G): nukes never fire; owning them = deterrence modifier on AI war decisions + ally guarantees.
+- [ ] **RG11 Naval invasions** (Lane F): landing ships, beachhead, marine assault as a Fight-it battle type (coast map from the province).
+- [ ] **RG12 Arms trade** (Lane B): buy/sell tanks, jets, drones between nations; embargoes (RG2 sanctions) block deals.
+- [ ] **RG13 Generals' traits** (Lane F): generals gain traits (desert expert, siege master, reckless…) that carry into battles.
+- [ ] **RG14 Tech race** (Lane B): research drones, missiles, air defence, cyber; unlocks units (use the B ideas/power-points system).
+- [ ] **RG15 Cyber warfare** (Lane G): hack grids, banks, radar from the map (merge with RG3 spies — one covert-action system).
+- [ ] **RG16 Peace conferences** (Lane G): EU4-style peace deal screen: provinces, reparations, demilitarised zones (extend 13m peace).
+- [ ] **RG17 Holy sites** (Lane G): Mecca, Medina, Najaf, Karbala, Jerusalem, Qom… morale/opinion bonus; taking one angers the world. Respectful, equal for all faiths.
+- [ ] **RG18 Volunteers** (Lane G): foreign volunteers join wars that matter to them (e.g. holy-site defence).
+- [ ] **RG19 Mercenaries/PMCs** (Lane B): hire fictional private military companies for cash (no real company names).
+- [ ] **RG20 Ceasefires & truces** (Lane G): temporary ceasefires that can break; UN peacekeepers on the line (extend GC.tr truces).
+- [ ] **RG21 Seasons & weather** (Lane A): summer heat, winter mud, sandstorms slow armies; carry into the battle's weather.
+- [ ] **RG22 Ironman mode** (Lane A): one save, no reloads, set at campaign creation.
+- [ ] **RG23 Victory conditions** (Lane A): domination, economy, alliance leadership, holy sites — picked at creation.
+Grand campaign round 3 (Abdullah 22:21 "More?") — after the slice, then kaizen; extend existing systems:
+- [ ] **RG24 Pipelines & grids** (Lane B): oil/gas pipelines and power lines across provinces, cut or protect (feeds RG1 oil price, RG15 cyber).
+- [ ] **RG25 Reconstruction** (Lane B): rebuild ruined cities after battles (battle damage flows back), foreign aid speeds it.
+- [ ] **RG26 Black markets** (Lane B): smuggling routes for sanctioned nations; costs corruption + opinion.
+- [ ] **RG27 Food & water** (Lane B): droughts, dams on Tigris/Euphrates/Nile, famine unrest.
+- [ ] **RG28 Cabinet ministers** (Lane G): hire/fire ministers (skills, loyalty), scandals, coups; uses the portraits + names work.
+- [ ] **RG29 Factions at home** (Lane G): hardliners, reformers, military, clergy pull on decisions (extend B4 estates — same system).
+- [ ] **RG30 Leader succession** (Lane G): leaders age, die, get overthrown; successors change the nation (incl. the shared Ayatollah).
+- [ ] **RG31 Secret treaties** (Lane G): hidden pacts revealed when war breaks out (a hidden flag on GC.alz entries).
+- [ ] **RG32 Air campaigns** (Lane A): bombing/air-superiority over provinces before ground war (uses air sorties from airfields).
+- [ ] **RG33 Missile duels** (Lane A): ballistic missiles vs air defence across the map; interceptor stocks run out.
+- [ ] **RG34 Mobilisation** (Lane B): call up reserves — big army fast, economy + morale pay.
+- [ ] **RG35 Fortification lines** (Lane A): trenches/border lines province by province; appear in that province's battles.
+- [ ] **RG36 Player diplomacy** (Lane A, with A2b MP): private chat + deal offers between players.
+- [ ] **RG37 Shared victory** (Lane A): allied players win together as a bloc.
+- [ ] **RG38 Spectator mode** (Lane A): watch any live battle or the grand map without playing.
+Grand campaign round 4 (Abdullah 22:22 "More?") — after the slice, then kaizen; extend existing systems:
+- [ ] **RG39 Media & propaganda** (Lane G): state TV, censorship, info-war → war support at home/abroad (merge with B5c propaganda pick + RG5 news).
+- [ ] **RG40 Protests & strikes** (Lane G): protests, general strikes, crackdowns (opinion cost); same unrest system.
+- [ ] **RG41 Diaspora** (Lane G): emigrant communities send money, lobby foreign governments (opinion GMOD rows).
+- [ ] **RG42 Minorities** (Lane G): Kurds, Druze, Baloch, etc. with loyalty to win/lose (extend cores/culture, neutral wording).
+- [ ] **RG43 Border incidents** (Lane G): skirmishes that escalate or calm (part of RG7 crises).
+- [ ] **RG44 Demilitarised zones** (Lane G): from peace deals (RG16), no army may enter.
+- [ ] **RG45 Occupation zones** (Lane G): split a defeated enemy between victors.
+- [ ] **RG46 Bases abroad** (Lane B): lease bases in friendly nations (range, influence); the realistic start already places some.
+- [ ] **RG47 Pre-battle plan** (Lane F): before Fight-it: deployment zone, flank route, air support.
+- [ ] **RG48 Battle objectives** (Lane F): grand map sets goals (seize the bridge, hold the town, evacuate).
+- [ ] **RG49 Siege battles** (Lane F): besieged city battles with low supply + civilians to protect.
+- [ ] **RG50 Pursuit battles** (Lane F): chase a routed army, capture prisoners/equipment (ties to the rout rule).
+- [ ] **RG51 Advisor voice** (Lane D): voiced advisor (XTTS, the nation's language) warns and suggests.
+- [ ] **RG52 Tutorial campaign** (Lane D): short guided grand campaign.
+- [ ] **RG53 Statistics ledger** (Lane A): EU4-style ledger comparing every nation.
+Grand campaign round 5 (Abdullah 22:24) — after the slice, then kaizen; extend existing systems:
+- [ ] **RG54 Carrier groups** (Lane A): carriers project air sorties anywhere; losing one = national morale shock (B5c).
+- [ ] **RG55 Submarine war** (Lane A): hidden subs hunt sea lanes; convoys + escorts protect trade (uses RG1 lanes).
+- [ ] **RG56 Drone swarms** (Lane A): cheap long-range drone campaigns vs cities, oil, bases (one strike system with RG33 missiles).
+- [ ] **RG57 Air defence network** (Lane A): layered SAM umbrellas over provinces; gaps invite strikes (RG33 interceptors).
+- [ ] **RG58 Great-power AI** (Lane A): US/RU/CN AIs pursue real goals and intervene in wars.
+- [ ] **RG59 Natural disasters** (Lane G): earthquakes, floods, sandstorms; aid wins opinion (event engine).
+- [ ] **RG60 Pilgrimage season** (Lane G): Hajj and Arbaeen — truces expected, morale boost, attacks anger everyone (respectful; ties to RG17 holy sites).
+- [ ] **RG61 Global economy crash** (Lane B): recessions/booms ripple through trade + stability.

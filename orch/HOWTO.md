@@ -15,6 +15,9 @@
 ## Add a menu/pause/settings button without touching 08-ui.js
 New file `src/08k-*.js` (build.py picks up all src/*.js in name order); in an IIFE find `document.getElementById('openSettings'|'aSet'|'sDone')` and append/insert a button (see `08k-report.js` "Report a problem" → pre-filled GitHub issue, label `player`).
 
+## People names and portraits (portraits lane)
+Names: `pplRoster(code)` -> {leader, heir|null, cab[4]}; `pplName(p)` -> "Ayatollah Mahdi Tabrizi"; `pplOf(code,'leader'|'heir'|'minister',i)`; generals via `pplGeneral(g)`. Add a culture row in `PPL_T` + `PPL_CUL`. Cards: `pplCard(p)`; hook for Lanes F/G: put `pplCard`/`pplName` in event pop-ups, diplomacy and army cards. Portraits: `ptOn()` (src/13l-people.js, false) gates pictures; the renderer is build-time only: `sh orch/portraits/fetch.sh DIR` (MakeHuman CC0, credit "MakeHuman community"), `node orch/portraits/make-people.mjs && node orch/portraits/prep.mjs && python3 orch/portraits/mhmorph.py DIR orch/portraits/specs.json orch/portraits/meshes.json`, symlink `three` into orch/portraits, serve it, open `sheet.html?cols=8&w=240`. Current output is WIP (see HISTORY); do not enable until it passes the EU4 bar.
+
 ## Add a menu screen (title menu v3, `src/14-menu.js`)
 1. In `mxBuild()` add `const S=scr('myid','<h2 class="mxh">Title</h2><p class="mxsub">one line</p>')`, put your content in it (MOVE an existing node, don't rebuild it) and a footer with `foot(S, go('Next →', fn))`.
 2. Add a title entry with `item('Label', ()=>menuGo('myid'))` (order: Grand campaign · Conquest · Missions · Tutorial · Play online · Load game · Settings · Extras · Credits) and a name in `MX_TITLES` (breadcrumb); use `MX_STEPS` for a multi-step flow.
