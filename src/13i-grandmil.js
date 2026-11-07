@@ -22,7 +22,7 @@ const GMIL_NM={   // fictional name pools per culture [first names, family names
  de:[['Lukas','Jonas','Matthias','Anders','Stefan','Henrik','Konrad','Lars','Florian','Emil'],['Brandt','Lindqvist','Falk','Hartmann','Weiss','Sandberg','Keller','Nordin','Vogel','Reiter']],
  af:[['Kofi','Emeka','Sipho','Tesfaye','Chidi','Themba','Abebe','Musa','Jabari','Idris'],['Okafor','Mbeki','Tadesse','Nkosi','Abara','Dlamini','Bekele','Okoye','Mwangi','Adeyemi']],
  he:[['Eitan','Yossi','Amir','Noam','Gil','Oren','Ronen','Tomer','Ilan','Uri'],['Barak','Shalev','Peretz','Dayan','Navon','Harel','Sasson','Golan','Tamir','Avni']]};
-const GMIL_CUL={IR:'fa',SA:'ar',AE:'ar',EG:'ar',IQ:'ar',SY:'ar',JO:'ar',DZ:'ar',MA:'ar',OM:'ar',LY:'ar',SD:'ar',DW:'ar',RS:'ar',KD:'ar',TR:'tr',AZ:'tr',RU:'ru',UA:'ru',PL:'ru',KZ:'ru',CN:'zh',TW:'zh',KP:'ko',KR:'ko',JP:'ja',VN:'sea',TH:'sea',PH:'sea',ID:'sea',IN:'sa',PK:'sa',AF:'sa',US:'en',GB:'en',AU:'en',CA:'en',ES:'la',IT:'la',FR:'la',BR:'la',MX:'la',AR:'la',CO:'la',CL:'la',VE:'la',CU:'la',DE:'de',SE:'de',GR:'de',NG:'af',ET:'af',ZA:'af',IL:'he'};
+const GMIL_CUL={IR:'fa',SA:'ar',AE:'ar',EG:'ar',IQ:'ar',RV:'ar',SY:'ar',JO:'ar',DZ:'ar',MA:'ar',OM:'ar',LY:'ar',SD:'ar',DW:'ar',RS:'ar',KD:'ar',TR:'tr',AZ:'tr',RU:'ru',UA:'ru',PL:'ru',KZ:'ru',CN:'zh',TW:'zh',KP:'ko',KR:'ko',JP:'ja',VN:'sea',TH:'sea',PH:'sea',ID:'sea',IN:'sa',PK:'sa',AF:'sa',US:'en',GB:'en',AU:'en',CA:'en',ES:'la',IT:'la',FR:'la',BR:'la',MX:'la',AR:'la',CO:'la',CL:'la',VE:'la',CU:'la',DE:'de',SE:'de',GR:'de',NG:'af',ET:'af',ZA:'af',IL:'he'};
 const GMIL_REGCUL={ME:'ar',AF:'af',SA:'sa',EA:'zh',SEA:'sea',EU:'de',NA:'en',SAM:'la'};
 const GMIL_FLEET=[['ship',.34],['boat',.26],['fast',.14],['sub',.26]];   // starting fleet mix (by value)
 const GMIL_NAVAL=['ship','boat','fast','sub','minel','sweep'];
@@ -120,7 +120,7 @@ function gmilSeaStep(){const M=GC.mil,R=grRng(GC.seed*43+GC.turn*5);
 function gmilSites(c,pi,rng,type){const P=GCM.P;let best=-1,bd=1e9;
   for(const p of P){if(!p.land||GC.prov[p.i].o!==c)continue;const ok=type==='d'?(geCount(p.i,'base')+geCount(p.i,'airfield')>0||GC.armies.some(a=>a.o===c&&a.at===p.i&&!a.fl&&a.u.length>2)):type==='a'?geEff(p.i,'airfield')>0:(geCount(p.i,'base')+geCount(p.i,'airfield')>0||p.cap);
     if(!ok)continue;const d=grDist(p.i,pi);if(d<=rng&&d<bd){bd=d;best=p.i;}}return best;}
-function gmilStrikeCheck(c,type,pi,k){const N=GC.nat[c],E=N.e,S=GMIL_ST[type],M=gmilN(c),p=GCM.P[pi];if(!S||!p)return 'Unknown strike.';if(M.so.length>=3)return 'Three strikes a turn at most.';
+function gmilStrikeCheck(c,type,pi,k){const N=GC.nat[c],E=N.e,S=GMIL_ST[type],M=gmilN(c),p=GCM.P[pi];if(!S||!p)return 'Unknown strike.';if(M.so.length>=3)return 'Three strikes a month at most.';
   if(M.so.some(o=>o.t===type&&o.pi===pi&&o.k===k))return 'Already ordered.';
   if(p.land){const o=GC.prov[pi].o;if(o===c||!grAtWar(c,o))return 'Only at nations you are at war with.';if(k==='f')return 'Fleets are at sea.';}
   else{if(k!=='f')return 'Only fleets at sea.';if(!GC.armies.some(a=>a.at===pi&&a.fl&&grAtWar(a.o,c)))return 'No enemy fleet there.';}

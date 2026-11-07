@@ -145,6 +145,18 @@ function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],ro
   if(SHD.length){const sm=new THREE.InstancedMesh(new THREE.BoxGeometry(1,.05,1),new THREE.MeshBasicMaterial({color:0x1a1208,transparent:true,opacity:.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),SHD.length),M=new THREE.Matrix4();
     SHD.forEach((r,i)=>{M.compose(new THREE.Vector3(r[0],r[1],r[2]),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r[6]),new THREE.Vector3(r[3],r[4],r[5]));sm.setMatrixAt(i,M);});
     sm.instanceMatrix.needsUpdate=true;sm.castShadow=false;sm.renderOrder=2;grp.add(sm);}}
+// life: chimney smoke from every town (besieged provinces use g3BuildSmoke below) (GPU-animated points, one draw call)
+function g3BuildChim(grp){const T=g3Towns(),pos=[],ph=[],sz=[],pid=[],kind=[];
+  for(const t of T){const nS=t.cap?5:t.t===0?3:1;for(let s=0;s<nS;s++){const a=g3Hash(t.pi*3+s,t.t+7)*6.283,r=g3Hash(s+2,t.pi+t.t)*(t.cap?16:9),x=t.x+Math.cos(a)*r,z=t.z+Math.sin(a)*r,y=g3HeightAt(x,z)+4;
+    for(let k=0;k<7;k++){pos.push(x,y,z);ph.push((k+g3Hash(k,s+t.pi))/7);sz.push(.7+g3Hash(k+5,s)*.5);pid.push(t.pi);kind.push(s===0?1:0);}}}
+  if(!pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('aPh',new THREE.Float32BufferAttribute(ph,1));g.setAttribute('aSz',new THREE.Float32BufferAttribute(sz,1));
+  const war=new Float32Array(pid.length);g.setAttribute('aWar',new THREE.BufferAttribute(war,1));
+  const U=G3.chimU={uT:{value:0},uPx:{value:900}};
+  const m=new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,vertexShader:`uniform float uT,uPx;attribute float aPh,aSz,aWar;varying float vA;varying float vW;
+    void main(){float life=fract(aPh+uT*(.05+.05*aWar));float h=life*(34.+aWar*34.);vec3 p=position+vec3(h*.55+life*life*10.,h,h*.18);vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+    float base=(3.2+aWar*9.)*aSz*(.5+life*1.4);gl_PointSize=clamp(base*uPx/-mv.z,0.,90.);vA=smoothstep(0.,.12,life)*(1.-life)*(1.1+.3*aWar);vW=aWar;}`,
+    fragmentShader:`varying float vA;varying float vW;void main(){vec2 q=gl_PointCoord-.5;float d=length(q);if(d>.5)discard;float a=vA*(1.-smoothstep(.05,.5,d));vec3 c=mix(vec3(.3,.28,.27),vec3(.12,.1,.09),vW);gl_FragColor=vec4(c,a);}`});
+  const pts=new THREE.Points(g,m);pts.frustumCulled=false;pts.renderOrder=6;grp.add(pts);G3.chim=pts;}
 // forests, palms, scrub by biome: one instanced mesh per tree type (a few thousand instances each)
 function g3BuildForests(grp){const F=G3.F,A=G3_GEO(),T=g3Towns(),W=F.W,P=GCM.P,L={conifer:[],broad:[],palm:[],scrub:[]};
   const near=(x,z)=>{for(const t of T)if(Math.abs(t.x-x)<40&&Math.abs(t.z-z)<40&&Math.hypot(t.x-x,t.z-z)<(t.cap?36:26))return true;return false;};
@@ -295,9 +307,9 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}if(G3.real&&G3.F&&!G
       if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){vec4 ov=texture2D(uOv,cu);c=mix(c,ov.rgb,ov.a*.55);c=g3rimS(c,cu);}
       float dist=length(cameraPosition-vW);c*=mix(g3cloud(vW.xz,uTime),1.,smoothstep(1500.,4200.,dist));c=mix(c,vec3(.616,.722,.788),smoothstep(2200.,6200.,dist));gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
   const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);
-  const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);G3.static=grp;
+  const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);g3BuildChim(grp);G3.static=grp;
   G3.ents=new THREE.Group();sc.add(G3.ents);G3.arrows=new THREE.Group();sc.add(G3.arrows);
-  G3.ringM=new THREE.Mesh(new THREE.RingGeometry(.9,1.2,48).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffe27a,transparent:true,opacity:.9,depthTest:false}));G3.ringM.renderOrder=5;G3.ringM.visible=false;sc.add(G3.ringM);
+  G3.ringM=new THREE.Mesh(new THREE.RingGeometry(.9,1.2,48).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffe27a,transparent:true,opacity:.9,depthTest:false}));G3.ringM.renderOrder=5;G3.ringM.visible=false;sc.add(G3.ringM);try{g3ShipInit(sc);}catch(e){G3.ship=null;}
   g3UI();G3.miniDirty=true;g3ApplyQuality();try{cv.style.filter='contrast(1.06) saturate(1.18)';const w=document.getElementById('gMapWrap');if(w&&!document.getElementById('g3vig')){const v=document.createElement('div');v.id='g3vig';v.style.cssText='position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 58%,rgba(4,10,18,.34) 100%)';w.insertBefore(v,cv.nextSibling);}}catch(e){}
   if(!G3.raf)G3.raf=requestAnimationFrame(g3Frame);return true;}
 function g3Dispose(){if(G3.raf){cancelAnimationFrame(G3.raf);G3.raf=0;}if(G3.sc){G3.sc.traverse(o=>{if(o.geometry&&o.geometry!==undefined&&!Object.values(G3.geo||{}).includes(o.geometry))o.geometry.dispose();});}
@@ -325,7 +337,9 @@ function g3Ent(a){let e=G3.arm.get(a.id);const sea=GCM.P[a.at].sea;
   const old=e;e={g,sea,o:a.o,pi:a.at,x:0,z:0,fx:0,fz:0,mv:1,tt:1,face:0,aid:a.id,plate:old?old.plate:null};G3.ents.add(g);G3.arm.set(a.id,e);return e;}
 function g3Anchors(s){const by=new Map();for(const a of GC.armies){if(!by.has(a.at))by.set(a.at,[]);by.get(a.at).push(a);}
   const out=new Map();for(const [pi,L] of by){L.sort((a,b)=>(b.o===GC.me)-(a.o===GC.me)||a.id-b.id);const p=GCM.P[pi],tw=!p.sea?g3Towns().find(t=>t.pi===pi):null,bx=tw?tw.x:p.x,bz=(tw?tw.z:p.y)+(p.sea?0:(tw&&tw.cap?30:20)*Math.min(1.6,Math.max(1,s*.6)));
-    L.forEach((a,k)=>out.set(a.id,[bx+(k-(L.length-1)/2)*(p.sea?20:13)*s,bz]));}return out;}
+    L.forEach((a,k)=>out.set(a.id,[bx+(k-(L.length-1)/2)*(p.sea?20:13)*s,bz]));}
+  for(const a of GC.armies){const f=typeof grSlide==='function'?grSlide(a):0;if(f>0){const A=out.get(a.id),q=GCM.P[a.path[0]],tw=!q.sea?g3Towns().find(t=>t.pi===q.i):null,bx=tw?tw.x:q.x,bz=tw?tw.z:q.y;out.set(a.id,[A[0]+(bx-A[0])*f,A[1]+(bz-A[1])*f]);}}   /* laneA hook: marching armies slide along the road as days pass */
+  return out;}
 function g3SyncArmies(){if(!G3.ents||!GC)return;const ids=new Set(GC.armies.map(a=>a.id));for(const [id,e] of G3.arm)if(!ids.has(id)){G3.ents.remove(e.g);if(e.plate)e.plate.remove();G3.arm.delete(id);}
   for(const a of GC.armies){const had=G3.arm.has(a.id),e=g3Ent(a);if(had&&e.pi!==a.at&&G3.animOK){e.fx=e.x;e.fz=e.z;e.tt=0;e.mv=1;}e.pi=a.at;e.n=a.u.length;e.o=a.o;}
   G3.hot.clear();for(const p of GCM.P)if(p.land){const st=GC.prov[p.i];if(st.hot!=null&&GC.turn-st.hot<=1)G3.hot.set(p.i,1);if(st.burn>0)G3.hot.set(p.i,2);}
@@ -389,10 +403,10 @@ function g3UI(){g3Css();const w=document.getElementById('gMapWrap');if(!w)return
   for(const p of GCM.P)if(p.sea){const e=guEl('div','');e.className='s';e.textContent=(p.ck?'◆ ':'')+p.n;G3.lab.appendChild(e);G3.sl.push({el:e,pi:p.i,ck:p.ck});}
   const bt=guEl('div','');bt.id='g3btns';u.appendChild(bt);
   const mk=(t,tip,fn,cls)=>{const b=guEl('button','',t);b.type='button';b.title=tip;if(cls)b.className=cls;b.onclick=fn;bt.appendChild(b);return b;};
-  mk('✉','Last turn report',()=>g3News(true));mk('⌖','Centre on your capital (Home)',()=>{const m=GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);});
+  mk('✉','Monthly report',()=>g3News(true));mk('⌖','Centre on your capital (Home)',()=>{const m=GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);});
   mk('☰','Show / hide the province panel',()=>{const s=document.getElementById('gSide');if(s){s.style.display=s.style.display==='none'?'flex':'none';setTimeout(guResize,30);}});
   const qb=mk(g3Quality()==='ultra'?'✦✦':'✦','Grand map quality: High (default) / Ultra (sharper, heavier)',()=>{SET.g3q=g3Quality()==='ultra'?'high':'ultra';try{saveSet();}catch(e){}qb.textContent=g3Quality()==='ultra'?'✦✦':'✦';g3ApplyQuality();g3News&&0;});
-  G3.endB=mk('▶','End turn (Enter)',guEndTurn,'end');
+  G3.endB=mk('▶','Play / pause time (Space)',()=>{guSpeed(GV.spd?0:(GV.lastSpd||2));G3.endB.textContent=GV.spd?'❚❚':'▶';},'end');
   const mc=document.createElement('canvas');mc.id='g3mini';mc.width=240*2;mc.height=120*2;mc.style.width='240px';mc.style.height='120px';u.appendChild(mc);G3.mc=mc;
   const mm=ev=>{const r=mc.getBoundingClientRect();G3.camera.x=Math.max(0,Math.min(2400,(ev.clientX-r.left)/240*2400));G3.camera.z=Math.max(0,Math.min(1200,(ev.clientY-r.top)/120*1200));};
   mc.addEventListener('pointerdown',ev=>{mc.setPointerCapture(ev.pointerId);mm(ev);mc._d=1;ev.stopPropagation();});mc.addEventListener('pointermove',ev=>{if(mc._d)mm(ev);});mc.addEventListener('pointerup',()=>{mc._d=0;});
@@ -418,9 +432,9 @@ function g3Cards(){const el=G3.cardsEl;if(!el||!GC)return;el.innerHTML='';const 
   if(pi>=0&&GCM.P[pi]&&GCM.P[pi].land){const L=guProvArmies(pi);if(L.length){const tabs=guEl('div','');tabs.className='row tabs';for(const x of L){const b=guEl('button','',x.nm+' ('+x.u.length+')');b.type='button';if(a&&a.id===x.id)b.className='on';b.onclick=()=>{GV.selA=x.id;guSide();g3Refresh();};tabs.appendChild(b);}el.appendChild(tabs);}}
   if(a){const t=guEl('div','',a.nm+' · '+GCM.nats.get(a.o).name+' · '+a.u.length+' units'+(a.path.length?' · marching':''));t.className='ttl';el.appendChild(t);g3CardRow(el,a.u,a.o);}
   else if(pi>=0&&GC.prov[pi]){const st=GC.prov[pi];if(st.gar.length){const t=guEl('div','','Garrison of '+GCM.P[pi].n+' · '+GCM.nats.get(st.o).name);t.className='ttl';el.appendChild(t);g3CardRow(el,st.gar,st.o);}}}
-function g3News(force){const E=G3.newsEl;if(!E||!GC)return;const t=force?GC.turn-1:G3.newsTurn;if(!t||t<1){if(force){E.innerHTML='<h3>Turn report</h3>Nothing yet - end your first turn.';E.style.display='block';}return;}
+function g3News(force){const E=G3.newsEl;if(!E||!GC)return;const t=force?GC.turn-1:G3.newsTurn;if(!t||t<1){if(force){E.innerHTML='<h3>Monthly report</h3>Nothing yet - let the first month pass (press Space).';E.style.display='block';}return;}
   const rows=GC.log.filter(r=>r[0]===t).map(r=>r).sort((a,b)=>(b[2]===GC.me)-(a[2]===GC.me));if(!rows.length&&!force)return;
-  E.innerHTML='<h3>Turn '+t+' report</h3>'+(rows.slice(0,8).map(r=>'<div style="'+(r[2]&&r[2]===GC.me?'color:#ffe9a6':'opacity:.88')+'">• '+r[1]+'</div>').join('')||'<div style="opacity:.7">A quiet turn.</div>')+(rows.length>8?'<div style="opacity:.6">…and '+(rows.length-8)+' more in the log</div>':'')+'<div style="opacity:.5;font-size:11px;margin-top:4px">click to close</div>';
+  E.innerHTML='<h3>Report — '+grMonStr(t)+'</h3>'+(rows.slice(0,8).map(r=>'<div style="'+(r[2]&&r[2]===GC.me?'color:#ffe9a6':'opacity:.88')+'">• '+r[1]+'</div>').join('')||'<div style="opacity:.7">A quiet month.</div>')+(rows.length>8?'<div style="opacity:.6">…and '+(rows.length-8)+' more in the log</div>':'')+'<div style="opacity:.5;font-size:11px;margin-top:4px">click to close</div>';
   E.style.display='block';clearTimeout(G3.nt);G3.nt=setTimeout(()=>{if(E)E.style.display='none';},16000);}
 function g3Mini(){const F=G3.F,mc=G3.mc;if(!mc||!F)return;if(!G3.mb){const c=document.createElement('canvas');c.width=F.W;c.height=F.H;const x=c.getContext('2d'),im=x.createImageData(F.W,F.H),d=im.data;
     for(let k=0;k<F.W*F.H;k++){const o=k*4,l=F.Ls[k];if(l>.5){const po=F.PW?((Math.floor(((k/F.W)|0)*F.PH/F.H))*F.PW+Math.floor((k%F.W)*F.PW/F.W))*4:o;d[o]=F.px[po];d[o+1]=F.px[po+1];d[o+2]=F.px[po+2];}else{const s=Math.min(1,F.Lw[k]*1.4);d[o]=14+s*50;d[o+1]=44+s*80;d[o+2]=78+s*70;}d[o+3]=255;}x.putImageData(im,0,0);G3.mb=c;G3.mo=document.createElement('canvas');G3.mo.width=F.W;G3.mo.height=F.H;}
@@ -466,7 +480,7 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
   // army plates + click targets
   G3.hit=[];const s=G3.sc_s;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;let pl=G3.pl.get(a.id);if(!pl){pl=guEl('div','');pl.className='p';G3.lab.appendChild(pl);G3.pl.set(a.id,pl);}
     const q=proj(e.g.position.x,e.g.position.y+(e.sea?6:3)*s,e.g.position.z),top=proj(e.g.position.x,e.g.position.y+13*s,e.g.position.z),mine=a.o===GC.me,sel=a.id===GV.selA;
-    if(!q){vis(pl,false);continue;}
+    if(!q||!grSeen(a)){vis(pl,false);e.g.visible=!!q&&grSeen(a);continue;}e.g.visible=true;   /* laneA RG3 fog hook */
     {const ft=proj(e.g.position.x,e.g.position.y+28*s,e.g.position.z),yT=ft?ft[1]:(top?top[1]:q[1]-40);   // whole figure is the target: flag top → number badge (Abdullah 19:58 "not being able to click on armies or navies")
      G3.hit.push({aid:a.id,x:q[0],y:top?(q[1]+top[1])/2:q[1],r:Math.max(16,top?Math.abs(q[1]-top[1])*.7:16),y0:Math.min(yT,q[1])-10,y1:q[1]+38,w:Math.max(24,top?Math.abs(q[1]-top[1])*.6:24)});}
     const show=d<1100||mine||sel;if(show){const t=''+a.u.length;if(pl._h!==t+(mine?1:0)+(sel?1:0)){pl._h=t+(mine?1:0)+(sel?1:0);pl.textContent=t;pl.className='p'+(mine?' me':'')+(sel?' sel':'');}putC(pl,[q[0],q[1]+12]);pl.style.transform='translate(-50%,0) translate('+Math.round(q[0])+'px,'+Math.round(q[1]+16)+'px)';}vis(pl,show);}
@@ -478,7 +492,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   const c=G3.camera,K=G3.keys;if(K.size&&!document.getElementById('gModal')){const sp=c.d*.9*dt,sy=Math.sin(c.yaw),cy=Math.cos(c.yaw);let fx=0,fz=0;if(K.has('w')||K.has('arrowup'))fz-=1;if(K.has('s')||K.has('arrowdown'))fz+=1;if(K.has('a')||K.has('arrowleft'))fx-=1;if(K.has('d')||K.has('arrowright'))fx+=1;
     c.x=Math.max(0,Math.min(2400,c.x+(fx*cy+fz*sy)*sp));c.z=Math.max(0,Math.min(1200,c.z+(-fx*sy+fz*cy)*sp));if(K.has('q'))c.yaw+=dt*1.2;if(K.has('e'))c.yaw-=dt*1.2;if(K.has('r'))c.pitch=Math.min(1.3,c.pitch+dt*.8);if(K.has('f'))c.pitch=Math.max(.45,c.pitch-dt*.8);if(K.has('+')||K.has('='))c.d*=1-dt*1.5;if(K.has('-'))c.d*=1+dt*1.5;}
   c.d=Math.max(70,Math.min(2300,c.d));const cc=G3.cc,kk=Math.min(1,dt*11);let mv=0;for(const k of ['x','z','d','yaw','pitch']){const df=c[k]-cc[k];if(Math.abs(df)>1e-3){cc[k]+=df*kk;mv=1;}}if(mv||G3.moved){g3CamApply(cc);G3.moved=false;mv=1;}
-  const s=Math.max(1.35,Math.min(3.6,cc.d/330));G3.sc_s=s;G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;
+  const s=Math.max(1.35,Math.min(3.6,cc.d/330));G3.sc_s=s;G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;if(G3.chimU){G3.chimU.uT.value=G3.time;G3.chimU.uPx.value=(G3.R.domElement.height||900)*.9;G3.chim.visible=cc.d<1100;}
   G3.U.uSel.value=GV.sel>=0?GV.sel:-1;G3.U.uHov.value=GV.hov>=0&&GV.hov!==GV.sel?GV.hov:-1;
   // armies
   const anc=g3Anchors(s);let anim=0;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const t=anc.get(a.id);if(!t)continue;
@@ -490,6 +504,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   const sa=GV.selA&&G3.arm.get(GV.selA);if(sa){G3.ringM.visible=true;G3.ringM.position.set(sa.x,sa.g.position.y+.4,sa.z);G3.ringM.scale.setScalar(s*(sa.sea?7:5)*(1+.06*Math.sin(G3.time*4)));}else G3.ringM.visible=false;
   const sig=GV.selA+'|'+GV.sel+'|'+GC.turn+'|'+GC.armies.length+'|'+GC.armies.reduce((a,x)=>a+x.u.length+x.path.length,0);
   if(sig!==G3.sig||G3.arrowDirty){G3.sig=sig;G3.arrowDirty=false;g3BuildArrows();g3Cards();G3.miniDirty=G3.miniDirty||0;}
+  if(G3.ship)g3ShipTick(dt,s);
   G3.R.render(G3.sc,G3.cam);
   if(mv||anim||G3.lblDirty||(G3.lf=(G3.lf||0)+1)%20===0){g3Labels(false);G3.lblDirty=false;}
   if(mv||(G3.lf%12===0)||G3.miniDirty)g3Mini();}

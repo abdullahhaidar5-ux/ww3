@@ -68,7 +68,7 @@ function uiConfirm(msg,yes,cb,danger){return uiDialog(msg,{yes,danger},cb);}
 HUDS.help=false;
 function hudDeclutterCss(){if(document.getElementById('hudDcCss'))return;const st=document.createElement('style');st.id='hudDcCss';
   st.textContent='#hint{display:none!important}body.helpOn #hint{display:block!important}#lgBtn{display:none!important}'
-  +'#docPick{top:auto!important;bottom:250px!important}#townp{max-height:calc(100vh - 560px)!important;min-height:120px}'
+  +'#docPick{top:auto!important;left:auto!important;transform:none!important;right:10px!important;bottom:262px!important;opacity:.88;padding:4px 6px!important;max-width:380px!important}#docPick button{min-height:26px!important;font-size:12px!important;padding:2px 6px!important}#docPick>div:first-child{font-size:11px!important;margin-bottom:3px!important}#townp{max-height:calc(100vh - 560px)!important;min-height:120px}'
   +'#sqMake{display:none!important}#info .cmdrow.off{display:none!important}body.gbat #docPick,body.gbat #credits,body.gbat .sup{display:none!important}'
   +'body.gbat #autoP,body.gbat .tabs,body.gbat #lgBtn{display:none!important}body.gbat #panel>*:not(#gbRoster){display:none!important}'
   +'#gbRoster{display:flex!important;flex-wrap:wrap;gap:6px;align-content:flex-start;padding:8px 6px;grid-column:1/-1}#gbRoster button{font:600 15px system-ui,sans-serif;color:#f0f5e6;background:#2c3a26;border:1px solid #6b7a63;border-radius:6px;padding:6px 12px;cursor:pointer;min-height:38px}#gbRoster button:hover{background:#3d5236}#gbRoster .gbh{width:100%;font:600 13px system-ui;opacity:.7;text-transform:uppercase;letter-spacing:.06em}';

@@ -18,7 +18,7 @@ function grandPlace(team,recs,cx,cy,a,gr){const fac=G.teams[team].fac,ord={tank:
     const u=addUnit(team,k,p[0],p[1]);if(!u)return;u.hp=Math.max(1,Math.round(u.max*rec[1]/100));u.xp=rec[2];u.rank=grRankOf(rec[0],fac,rec[2]);if(u.s&&u.s.ammo)u.ammo=Math.max(1,Math.round(u.s.ammo*rec[3]/100));
     u.gr=rec;gr.ents.push([rec,u,team]);});}
 function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.att,pn:g.pn,ents:[],waves:g.waves||[],wi:0,aiT:1,fin:0,res:null,n0:[0,0],v0:[0,0],ret:0,fort:g.fort|0,mir:g.mir||null,gp:g.gp||null,hero:g.hero||[]};
-  G.teams.forEach(T=>{T.ai=null;T.credits=0;});
+  G.teams.forEach((T,i)=>{T.ai=null;T.credits=0;if(g.fv&&g.fv[i])T.fervor=1e9;});
   for(const t of [0,1]){const B=BASES[t],a=baseFacing(t),side=g.sides[t];const dx=Math.cos(a)*110,dy=Math.sin(a)*110;grandPlace(t,side,B[0]+dx,B[1]+dy,a,gr);}
   // the defender's forts: a few Defense Guns in front of its block (+ a SAM site for a capital)
   if(g.fort){const t=g.att===0?1:0,B=BASES[t],a=baseFacing(t);let placed=0;for(let k=0;k<90&&placed<g.fort;k++){const r=170+k*9,ang=a+((k%5)-2)*.45,px=B[0]+Math.cos(ang)*r,py=B[1]+Math.sin(ang)*r;
@@ -67,7 +67,7 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
     const side=a.o===nat0?0:a.o===nat1?1:-1;if(side<0||!a.u.length)continue;if(wn[side]>=3)continue;if(GCM.P[a.at].land&&GC.prov[a.at].o!==a.o&&!grAtWar(a.o,GC.prov[a.at].o)&&GC.prov[a.at].o!==a.o)continue;
     const recs=a.u.slice(0,24);wn[side]++;waves.push({t:70+wn[side]*50,side,recs,label:a.nm,done:0,aid:a.id});rf.push(a.id);}
   const attTeam=meAtt?0:1,from=b.att.map(id=>(GC.armies.find(a=>a.id===id)||{}).from).find(f=>f>=0),gm=P.sea?{key:'coral',real:0,tp:null}:gmMap(b.p,from),   /* a sea zone is fought on a naval map */
-    cfg={bi:{p:b.p},att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[]};
+    cfg={bi:{p:b.p},att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[],fv:[0,1].map(t=>{try{return ldrFervour(t?nat1:nat0,b.p)?1:0;}catch(e){return 0;}})};
   /* grand3: each side's best general stands in the battle as the hero squad (the army's own if it has one, else a fresh one) */
   try{const gp=[gmilPerk(meAtt?S:D),gmilPerk(meAtt?D:S)];cfg.gp=gp;[[side0,f0],[side1,f1]].forEach(([L,fc],t)=>{if(gp[t]&&grHasKind(fc,'champ')&&!L.some(r=>r[0]==='champ')){const r=['champ',100,Math.round(gp[t].lv*40),100];L.push(r);cfg.hero[t]=r;}});}catch(e){console.error('gmil hero',e);}   // forts / SAM / airfield... come from the province's buildings (gmApply)
   GB_CUR={b,cfg,meAtt,nat0,nat1,rf};
@@ -106,3 +106,21 @@ function grandHud(){let el=document.getElementById('gbHud');const on=!!(G&&G.gra
     const c={},nm={};for(const u of G.ents)if(u.team===ME&&!u.isB&&!u.dead){c[u.kind]=(c[u.kind]||0)+1;nm[u.kind]=(u.s&&u.s.name)||u.kind;}const sig=JSON.stringify(c);
     if(r.dataset.sig!==sig){r.dataset.sig=sig;r.innerHTML='<div class="gbh">Your army &middot; click a type to select it</div>';for(const k of Object.keys(c).sort((a,b)=>c[b]-c[a])){const b=campEl('button','',nm[k]+' &times;'+c[k]);b.type='button';b.onclick=()=>{G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&u.kind===k);if(G.sel.length)speak(0);updateUI();};r.appendChild(b);}}}}
 setInterval(()=>{try{grandHud();}catch(e){}},1000);
+
+/* ---- A3b army morale (laneF): ONE bar per army, styles from MSTYLES (01-data); a.mor 0..100 saved with the army ---- */
+const GMOR_MAX={zeal:100,prof:100,home:90,fire:80};   /* base ceilings; home defenders get +10 on core land, see gmMorMax */
+function gmMorStyle(a){return MORALE_STYLE[(typeof grNat==='function'?grNat(a.o).fac:a.o)]||'home';}
+function gmMorMax(a){const s=gmMorStyle(a);let m=GMOR_MAX[s]||90;if(s==='home'&&GC&&GC.prov[a.at]&&GC.prov[a.at].o===a.o)m=100;try{m=Math.max(m,Math.min(100,m+gfTradMor(a.o)));}catch(e){}return m;}
+function gmMor(a){return a.mor==null?gmMorMax(a):Math.max(0,Math.min(gmMorMax(a),a.mor));}
+function gmMorMul(a){return .8+.2*gmMor(a)/100;}   /* auto-resolve strength: broken armies fight at 80% */
+function gmMorBattle(losers,winners){for(const a of losers){const s=gmMorStyle(a);let d=30;if(s==='zeal')d=15;else if(s==='prof')d=24;else if(s==='fire')d=40;
+    a.mor=Math.max(5,gmMor(a)-d);
+    if(s==='zeal'&&a.u.length>2){const k=Math.max(1,Math.round(a.u.length*.15));a.u.splice(a.u.length-k,k);}}   /* zealous fight on: heavier losses, steadier bar */
+  for(const a of winners)a.mor=Math.max(10,gmMor(a)-8);}
+function gmMorTurn(){for(const a of GC.armies){if(a.fl)continue;const m=gmMor(a),mx=gmMorMax(a);let d=0;
+    const ok=GC.prov[a.at]&&(GC.prov[a.at].o===a.o||(typeof grAllied==='function'&&grAllied(a.o,GC.prov[a.at].o)));
+    let sup=true;try{sup=grSupplied(a);}catch(e){}
+    if(ok&&sup)d=a.path&&a.path.length?1:(gmMorStyle(a)==='prof'?9:7);else if(sup)d=2;else d=-4;
+    if(a.path&&a.path.length)d-=2;   /* forced march */
+    a.mor=Math.max(0,Math.min(mx,m+d));}}
+function gmMorBar(a){const m=Math.round(gmMor(a)),c=m>66?'#6fbf5a':m>33?'#e0b043':'#d9534f';return '<span title="Morale '+m+'%" style="display:inline-block;width:46px;height:6px;background:#222;border:1px solid #567;border-radius:3px;vertical-align:middle;margin-left:4px"><span style="display:block;height:100%;width:'+m+'%;background:'+c+'"></span></span>';}
