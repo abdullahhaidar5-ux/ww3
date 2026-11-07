@@ -773,7 +773,8 @@ function dlBuild(o,yaw,B,P,T){
   const body=mesh(B.geo());body.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85});body.castShadow=true;body.receiveShadow=true;yaw.add(body);yaw.scale.setScalar(.888);/* same height as a soldier (MCFG.inf.size 14) */
   const ring=new THREE.Mesh(new THREE.RingGeometry(7,7.8,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:new THREE.Color(T.color),transparent:true,opacity:.32,depthWrite:false}));ring.position.y=1.2;ring.renderOrder=2;o.add(ring);o.userData.parts.tring=ring;
   SCN.add(o);return o;}
-function clericModel(e){const T=G.teams[e.team],o=new THREE.Group(),yaw=new THREE.Group();o.add(yaw);o.userData.parts={body:yaw};o.userData.model=true;o.userData.cleric=true;
+function clericModel(e){const o=clericModel0(e);if(o&&o.userData.parts&&o.userData.parts.body&&!o.userData._big){o.userData.parts.body.scale.multiplyScalar(1.7);o.userData._big=1;}return o;}// leaders stand as tall as the x1.7 soldiers
+function clericModel0(e){const T=G.teams[e.team],o=new THREE.Group(),yaw=new THREE.Group();o.add(yaw);o.userData.parts={body:yaw};o.userData.model=true;o.userData.cleric=true;
   const DL=T&&T.fac==='KP',B=Bld(),skin=DL?'#d8b48e':'#c69a78',robe=DL?'#3a3d3f':'#a8a397',aba=DL?'#2a2c2e':'#3b2d23',trim=DL?'#2a2c2e':'#b8963e',tur='#101010',beard=DL?(DL?'#d8b48e':'#ecebe6'):'#ecebe6',P=(g,x,y,z,c,rx=0,ry=0,rz=0)=>{const m=new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,rz)),new THREE.Vector3(1,1,1));B._p.push({g,m,c:lin(c)});};
   if(DL)return dlBuild(o,yaw,B,P,T);
   // qaba: smooth lathe from hem to shoulders, with soft folds
