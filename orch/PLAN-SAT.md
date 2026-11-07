@@ -234,3 +234,12 @@ Round 6 (Abdullah 22:26) — after the slice, then kaizen; extend existing syste
 - [ ] **RF9 Wounded & medevac** (Lane F): medics already exist — wounded dragged out return later (extend).
 - [ ] **RF10 Last stand** (Lane F): surrounded units get a desperate bonus (morale system, all styles).
 - [ ] **RF11 Battle music swells** (Lane D): music intensity rises with big clashes (09-audio calm↔combat, add a peak layer).
+Round 7 (Abdullah 22:28) — after the slice, then kaizen; extend existing systems:
+- [ ] **RF12 Faction unique units** (Lane D): every nation 2 signature units of its own (not copies), balanced; NEWNAT data rows.
+- [ ] **RG66 Regional militias** (Lane G): tribal/local forces to court on the grand map (the ONE Locals system).
+- [ ] **RG67 Faction storylines** (Lane G): event chains per nation (e.g. Iran's nuclear talks, Turkey's Kurdish question) — neutral wording, event engine.
+- [ ] **RG68 Rivalry bonuses** (Lane G): extra rewards for beating a historic rival (uses GR_REAL rivalries).
+- [ ] **RF13 Dust & sandstorms** (Lane E): vehicle dust trails + storms that cut vision (03g smoke/LOS, weather).
+- [ ] **RF14 Burning oil fields** (Lane E): huge black smoke columns when oil sites are hit.
+- [ ] **RF15 Night tracers & flares** (Lane E): night battles lit by tracers, flares, fires.
+- [ ] **RF16 Lasting wrecks** (Lane E): burnt-out wrecks stay as cover all battle (03g G.bfHulk exists — extend).
