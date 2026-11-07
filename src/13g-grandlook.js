@@ -11,17 +11,21 @@ function g3LoadReal(){if(G3.real||G3.realTry)return;G3.realTry=1;
     G3.real={E,EW:e.width,EH:e.height,col:c.data,CW:c.width,CH:c.height};}).catch(()=>{G3.realFail=1;});}
 // ground colour grade (satellite -> rich, slightly warm, a little darker than the washed-out raster)
 function g3GradeColor(col,n){const o=new Uint8ClampedArray(n*4);
-  for(let k=0;k<n;k++){let r=col[k*4]/255,g=col[k*4+1]/255,b=col[k*4+2]/255;const l=.3*r+.59*g+.11*b,sat=1.45;r=l+(r-l)*sat;g=l+(g-l)*sat;b=l+(b-l)*sat;
+  for(let k=0;k<n;k++){let r=col[k*4]/255,g=col[k*4+1]/255,b=col[k*4+2]/255;const l=.3*r+.59*g+.11*b,sat=1.85;r=l+(r-l)*sat;g=l+(g-l)*sat;b=l+(b-l)*sat;
     r=Math.pow(Math.max(0,r),1.3)*.96;g=Math.pow(Math.max(0,g),1.24)*.95;b=Math.pow(Math.max(0,b),1.34)*.93;
     const o4=k*4;o[o4]=r*255;o[o4+1]=g*255;o[o4+2]=b*255;o[o4+3]=255;}
   return o;}
 // Called at the end of g3Fields(): swaps the hand-shaped relief/colour for the real data and bakes sun shadows + valley AO + relief normals.
 function g3RealFields(F){const R=G3.real,W=F.W,H=F.H,E=R.E,EW=R.EW,Hh=F.Hh,Ls=F.Ls,Lw=F.Lw,N=W*H;
   const hm=new Float32Array(N);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const o=2*y*EW+2*x;hm[y*W+x]=(E[o]+E[o+1]+E[o+EW]+E[o+EW+1])/4;}
-  const SC=.0095;F.hm=hm;
+  const SC=.0078;F.hm=hm;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,ls=Ls[k],m=hm[k],coast=g3Smooth(.4,.8,ls),n=g3Fbm(x*.02,y*.02,4);
     const landH=coast*(1+n*1.3)+Math.max(0,m)*SC;
     const sea=Math.min(-.8+Math.min(0,Math.max(m,-4500))/500,-.8-4*Math.pow(1-Lw[k],2));Hh[k]=sea+(landH-sea)*g3Smooth(.42,.6,ls);}
+  // flatten the ground around every land province's towns so cities stay readable even in real mountains (Tehran sits against the Alborz)
+  {const fl=new Float32Array(N);for(const q of GCM.P){if(!q.land)continue;const cx=Math.round(q.x/2),cy=Math.round(q.y/2);
+    for(let dy=-40;dy<=40;dy++){const y=cy+dy;if(y<0||y>=H)continue;for(let dx=-40;dx<=40;dx++){const x=cx+dx;if(x<0||x>=W)continue;const w=1-g3Smooth(12,38,Math.hypot(dx,dy));if(w>fl[y*W+x])fl[y*W+x]=w;}}}
+    const b2=g3Blur(Hh,W,H,10,2);for(let k=0;k<N;k++)if(Ls[k]>.5&&fl[k]>0)Hh[k]+=(b2[k]-Hh[k])*fl[k]*.92;F.fl=fl;}
   // colour: graded satellite base at its own resolution
   const CW=R.CW,CH=R.CH;F.PW=CW;F.PH=CH;F.px=g3GradeColor(R.col,CW*CH);
   // biome weights for the detail shader from real data: rock (steep/high), snow (high/polar), sand (desert colour), vegetation (green)
@@ -44,7 +48,7 @@ function g3RealFields(F){const R=G3.real,W=F.W,H=F.H,E=R.E,EW=R.EW,Hh=F.Hh,Ls=F.
   const LW=EW,LH=R.EH,lit=new Uint8Array(LW*LH*4),h2=new Float32Array(LW*LH);
   for(let y=0;y<LH;y++){const fy=Math.max(0,Math.min(H-1.001,(y+.5)/2-.5)),y0=fy|0,ty=fy-y0;for(let x=0;x<LW;x++){const fx=Math.max(0,Math.min(W-1.001,(x+.5)/2-.5)),x0=fx|0,tx=fx-x0;
     const a=y0*W+x0,up=(Hh[a]*(1-tx)+Hh[a+1]*tx)*(1-ty)+(Hh[a+W]*(1-tx)+Hh[a+W+1]*tx)*ty,um=(hm[a]*(1-tx)+hm[a+1]*tx)*(1-ty)+(hm[a+W]*(1-tx)+hm[a+W+1]*tx)*ty,m=E[y*LW+x];
-    h2[y*LW+x]=up+(m>0&&um>0?(m-um)*SC:0);}}
+    h2[y*LW+x]=up+(m>0&&um>0?(m-um)*SC*(1-F.fl[a]*.9):0);}}
   for(let y=0;y<LH;y++)for(let x=0;x<LW;x++){const k=y*LW+x,xl=Math.max(0,x-1),xr=Math.min(LW-1,x+1),yu=Math.max(0,y-1),yd=Math.min(LH-1,y+1);
     const nx=-(h2[y*LW+xr]-h2[y*LW+xl])/2,nz=-(h2[yd*LW+x]-h2[yu*LW+x])/2,q=((y>>1)*W+(x>>1)),o=k*4;
     lit[o]=Math.max(0,Math.min(255,(nx*.7*.25+.5)*255));lit[o+1]=Math.max(0,Math.min(255,(nz*.7*.25+.5)*255));lit[o+2]=Math.min(255,sh[q]*255);lit[o+3]=Math.min(255,ao[q]*235);}
@@ -52,3 +56,14 @@ function g3RealFields(F){const R=G3.real,W=F.W,H=F.H,E=R.E,EW=R.EW,Hh=F.Hh,Ls=F.
 // water depth for the sea shader (0 shore .. 1 abyss) from the real bathymetry
 function g3SeaDepth(F,k){return F.hm?Math.max(0,Math.min(1,-F.hm[k]/3800)):Math.max(0,Math.min(1,(1-F.Lw[k])*1.2));}
 if(typeof window!=='undefined')setTimeout(()=>{try{g3LoadReal();}catch(e){}},1500);
+
+// drifting cloud shadows: cheap value-noise on the world xz plane (shared by terrain + sea shaders); returns a multiplier ~0.78..1
+const G3_CLOUD=`float g3ch(vec2 q){return fract(sin(dot(q,vec2(127.1,311.7)))*43758.5453);}
+float g3cn(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(g3ch(i),g3ch(i+vec2(1.,0.)),f.x),mix(g3ch(i+vec2(0.,1.)),g3ch(i+vec2(1.,1.)),f.x),f.y);}
+float g3cloud(vec2 w,float t){vec2 q=w/520.+vec2(t*.012,t*.006);float n=g3cn(q)*.6+g3cn(q*2.3+7.)*.3+g3cn(q*5.1)*.1;return 1.-.26*smoothstep(.52,.78,n);}`;
+// sky dome: horizon haze -> deeper blue overhead, warm glow around the sun; follows the camera
+function g3Sky(sc){const m=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,toneMapped:false,
+  vertexShader:'varying vec3 vD;void main(){vD=position;vec4 p=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*p;gl_Position.z=gl_Position.w*.99999;}',
+  fragmentShader:`varying vec3 vD;void main(){vec3 d=normalize(vD);float h=clamp(d.y,0.,1.);vec3 hz=vec3(.616,.722,.788),top=vec3(.20,.40,.68);vec3 c=mix(hz,top,pow(h,.55));
+    vec3 L=normalize(vec3(-1.,.75,-.45));float sd=max(dot(d,L),0.);c+=vec3(1.,.82,.55)*(pow(sd,6.)*.22+pow(sd,90.)*.8);gl_FragColor=vec4(c,1.);}`});
+  const sk=new THREE.Mesh(new THREE.SphereGeometry(8000,24,12),m);sk.frustumCulled=false;sk.renderOrder=-10;sc.add(sk);G3.sky=sk;}
