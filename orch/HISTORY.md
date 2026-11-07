@@ -434,3 +434,5 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneC 2026-11-07 18Z: no code (army plinth duplicated grandlook's g3Plinth on main); artbar note only.
 - laneE DE-BLOCK slice 2: ME HQ/barracks/factory get ray-placed rooftop clutter (AC units, water tanks, dish, antenna mast) and a mud-brick compound wall with gate pillars (src/11-models.js meRoofKit, visual only); PBR normal maps not yet; smoke NaN-bbox console error is pre-existing on main; shot orch/shots/laneE/k2-phone.jpg
 - laneC 2026-11-07 18:xx: grand-map ships scaled down ~35% (p0->p1); smoke fails on clean main (NaN bounding sphere in battle geometry), not from this.
+- laneE DE-BLOCK slice 3: ground debris around ME main compounds (rubble rocks, tyre stacks, planks, split crates; src/11-models.js meRoofKit, visual only); Poly Haven rock GLBs skipped (multi-file gltf, existing rock geo used); shot orch/shots/laneE/k3-phone.jpg
+- laneE DE-BLOCK slice 4b: ground-vehicle hulls get a screen-derivative hammered-steel bump normal in the weather shader (src/11-models.js); shot orch/shots/laneE/k4-phone.jpg. RF13/RF15 were already live (ticked in PLAN-SAT)
