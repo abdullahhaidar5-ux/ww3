@@ -1,0 +1,40 @@
+menu {"g":"Grand campaign","c":"Missions","s":"Conquest — deploy vs AI","t":true}
+determinism {"a":"90d696ab","b":"90d696ab","c":"cc1cd467","h0":"81b9345c","h1":"81b9345c","ms":1697,"alive1":71,"provs":236,"seas":44}
+military determinism {"a":{"h":"e5b0451f","seen":{"strike":891,"intercept":107,"sea":5,"gen":113,"blockade":0},"gens":112,"alive":90,"fronts":34,"fleets":41,"framies":11,"mines":0,"turn":21,"dead":11,"capt":11,"lv":3},"b":"e5b0451f","c":"174b9d3a","ms":2744}
+military features []
+military strikes/fleets []
+military escort []
+naval fight-it {"naval":7,"total":7,"na":4,"nd":3,"prod":true,"mapKey":"coral","fin":1,"left":3,"mine":4,"ph":"plan"}
+military ui {"panel":true,"gen":474,"fr":298,"st":365,"fl":488}
+signatures {"n":54,"bad":[],"missing":[]}
+eco determinism true seed-diff true majors alive 41
+eco income/upkeep per empire per turn (nation:cash:net:upkeep:fuel:food:manpower:bank:bonds:totalwar)
+  t1: RU:2618:1788:180:261:137:214:0:0:0:7 | TR:1875:1225:720:73:129:140:0:0:0:5 | IR:2313:1543:600:222:143:208:0:0:0:6 | IN:1125:925:1221:65:133:153:0:0:0:6 | CN:2965:759:2119:72:98:226:1764:0:0:8 | US:11452:8072:3251:186:167:802:3220:0:0:46
+  t5: RU:2270:1286:191:266:102:270:0:2:1:6 | TR:1150:776:924:50:82:240:0:0:1:5 | IR:1673:1182:502:185:161:284:0:0:1:6 | IN:631:-683:1612:50:99:284:0:0:1:5 | CN:306:-1143:2154:50:40:312:0:1:1:8 | US:10072:4483:3708:50:262:1180:5960:0:0:46
+  t10: RU:1332:887:133:271:83:256:0:2:1:6 | TR:1340:87:924:50:40:242:0:1:1:5 | IR:1072:177:0:205:198:102:0:1:1:1 | IN:491:-41:1058:50:64:340:0:1:1:7 | CN:0:-959:1596:50:30:340:0:1:1:7 | US:5962:3717:4711:38:320:1320:0:2:0:50
+  t15: RU:3169:1044:135:265:90:256:0:1:1:6 | TR:1284:917:996:50:26:239:0:1:1:5 | IN:1565:1168:765:50:124:382:0:1:0:8 | CN:0:-957:1191:50:40:270:0:1:0:6 | US:4831:3767:5377:50:320:1390:0:2:0:52
+eco top earners t15 US:4831:3767:5377:50:320:1390:0:2:0:52 | CA:2561:1912:1059:70:320:382:0:2:1:12 | AU:1982:1906:309:232:229:312:0:2:0:7 | GB:2152:1272:1126:50:151:494:0:1:1:13 | IN:1565:1168:765:50:124:382:0:1:0:8 | TH:2126:1163:221:42:320:186:0:1:0:3
+eco average net income per turn [889,799,642,585,435,343,294,264,388,365,482,501,429,748,592]
+eco average upkeep per turn [381,389,392,417,423,402,422,432,426,430,450,455,451,463,475] positive-net share t10 0.80 net range t15 -957 3767
+eco net per province: median 131 max 507
+eco battle {"mp":71,"kinds":["turret","fort","airfield"],"fuel":0.35,"ammoMax":0,"prod":true}
+eco features []
+eco ui {"panel":true,"ptxt":1059,"side":true,"icons":38}
+mirror provinces {"river":17,"mtn":9,"coast":18,"desert":185,"jungle":2,"snow":28,"real":3}
+mirror gen {"river":{"same":true,"key":"cm_1jeatmrxdum5u","ms":2,"cachedMs":0,"towns":3,"tp":3,"hash":"4evdov16488xy","oct":6},"mtn":{"same":true,"key":"cm_b5z0k01t8svxg","ms":0,"cachedMs":0,"towns":2,"tp":2,"hash":"1xwl87x1mhfr8f","oct":5},"coast":{"same":true,"key":"cm_1xip5ug1jsw93e","ms":0,"cachedMs":0,"towns":2,"tp":2,"hash":"16zaunbe4gqtj","oct":6},"desert":{"same":true,"key":"cm_1d2h68xubp5sd","ms":0,"cachedMs":0,"towns":4,"tp":4,"hash":"ptknjl1167k9n","oct":6},"jungle":{"same":true,"key":"cm_1dwvbwh1euqqkp","ms":0,"cachedMs":0,"towns":2,"tp":2,"hash":"1m1dwtt1kivnld","oct":6},"snow":{"same":true,"key":"cm_jssxbk9u6lv6","ms":0,"cachedMs":0,"towns":2,"tp":2,"hash":"1f1bdc413g80np","oct":5}}
+mirror battle river {"routes":2,"ms":352,"real":false,"n":3,"bn":3,"exact":true,"owOK":true,"names":["Paris","Kirchdorf","Villeneuve"],"un":[32,42,42],"rate":[2,2,2],"kinds":["sam","turret","airfield","factory"],"dead0":14,"n0":30,"dm":[1,0,50],"dmBefore":[0,0,50],"lastOw":"IR","an":"IR","dn":"FR","afDmg":[100],"t0dm":1,"gunrest":39}
+mirror battle mtn {"routes":2,"ms":637,"real":false,"n":2,"bn":2,"exact":true,"owOK":true,"names":["Bogota","Marienthal"],"un":[37,38],"rate":[2,2],"kinds":["sam","turret","airfield","factory"],"dead0":4,"n0":10,"dm":[1,50],"dmBefore":[0,50],"lastOw":"IR","an":"IR","dn":"CO","afDmg":[100],"t0dm":1,"gunrest":38}
+mirror battle coast {"routes":2,"ms":187,"real":false,"n":2,"bn":2,"exact":true,"owOK":true,"names":["Provence","Lindenau"],"un":[38,37],"rate":[2,2],"kinds":["shipyard","turret","airfield","factory"],"dead0":5,"n0":12,"dm":[3,50],"dmBefore":[0,50],"lastOw":"IR","an":"IR","dn":"FR","afDmg":[100],"t0dm":3,"gunrest":38}
+mirror battle desert {"routes":2,"ms":238,"real":false,"n":4,"bn":4,"exact":true,"owOK":true,"names":["Texas","Lisieux","Eichberg","Altenburg"],"un":[38,40,35,33],"rate":[2,2,2,2],"kinds":["shipyard","turret","turret","airfield","factory"],"dead0":1,"n0":4,"dm":[2,0,0,50],"dmBefore":[0,0,0,50],"lastOw":"IR","an":"IR","dn":"US","afDmg":[100],"t0dm":2,"gunrest":37}
+mirror battle jungle {"routes":2,"ms":227,"real":false,"n":2,"bn":2,"exact":true,"owOK":true,"names":["Yucatan","Hartwick"],"un":[44,32],"rate":[2,2],"kinds":["shipyard","turret","airfield","factory"],"dead0":17,"n0":34,"dm":[4,50],"dmBefore":[0,50],"lastOw":"IR","an":"IR","dn":"MX","afDmg":[100],"t0dm":4,"gunrest":38}
+mirror battle snow {"routes":2,"ms":185,"real":false,"n":2,"bn":2,"exact":true,"owOK":true,"names":["Finland","Montfort"],"un":[40,43],"rate":[2,2],"kinds":["sam","airfield","factory"],"dead0":15,"n0":31,"dm":[1,50],"dmBefore":[0,50],"lastOw":"IR","an":"IR","dn":"FI","afDmg":[100],"t0dm":1,"gunrest":42}
+mirror battle real {"routes":2,"ms":628,"real":true,"n":3,"bn":14,"exact":false,"owOK":true,"names":["Havana","Saint-Aubin","Montfort"],"un":[35,37,40],"rate":[2,2,2],"kinds":["shipyard","sam","turret","airfield","factory"],"dead0":20,"n0":40,"dm":[1,0,50],"dmBefore":[0,0,50],"lastOw":"IR","an":"IR","dn":"CU","afDmg":[100],"t0dm":1,"gunrest":37}
+scenario {"foe":"IQ","from":"Khuzestan","to":"Basra","aid":49,"ok":true,"units":37,"to_i":64}
+expected {"meAtt":true,"mine":{"inf":28,"at":4,"tank":2,"arty":1,"aa":1,"champ":1},"theirs":{"inf":39,"at":7,"tank":3,"champ":1},"nMine":37,"waves":0,"prov":"Basra"}
+battle {"me":{"tank":2,"champ":1,"at":4,"inf":28,"aa":1,"arty":1},"foe":{"tank":3,"champ":1,"at":7,"inf":39},"b0":[],"b1":["turret","turret"],"qSame":true,"cr":0,"conq":false,"over":false,"waves":2,"att":0,"n0":[37,50]}
+finish {"res":true,"before":{"alive":25,"kinds":{"inf":23,"aa":1,"arty":1},"hp":[50,50,50,50,50,50,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]},"meAtt":true,"bi":4}
+flowback {"n":25,"kinds":{"inf":23,"arty":1,"aa":1},"hp":[50,50,50,50,50,50,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100]}
+after {"g":false,"grand":"flex","ph":"plan","turn":3,"owner":"MX"}
+turn {"log":["South Lebanon: Mountain Shias held against Israel.","Bekaa: Israel beat Mountain Shias.","Tel Aviv: Israel held against Mountain Shias.","Basra: Iran beat Iraq (fought live).","Israel captured Bekaa from Mountain Shias.","Iran captured Basra from Iraq."],"turn":3,"save":true}
+
+GRANDTEST PASS
