@@ -288,7 +288,7 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
   try{G3.vigS=new THREE.Scene();G3.vigC=new THREE.OrthographicCamera(-1,1,1,-1,0,1);G3.vigS.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.ShaderMaterial({uniforms:(G3.vigU={uN:{value:0}}),transparent:true,depthTest:false,depthWrite:false,vertexShader:'varying vec2 u;void main(){u=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:'uniform float uN;varying vec2 u;void main(){vec2 d=(u-vec2(.5,.52))*vec2(1.,.9);float v=smoothstep(.34,.82,length(d));vec3 c=mix(vec3(1.,.88,.66),vec3(.1,.18,.4),1.-u.y);vec4 g=vec4(mix(c,vec3(.02,.05,.1),v),v*.46+.055);float a=g.a+uN*.36;gl_FragColor=vec4(mix(g.rgb,vec3(.03,.06,.16),uN*.36/max(a,.001)),a);}'})));}catch(e){G3.vigS=null;}  // studio grade: vignette + warm-top/cool-bottom wash, drawn in-canvas so HUD stays crisp
   if(!R.getContext())return false;R.outputColorSpace=THREE.LinearSRGBColorSpace;G3.R=R;G3.cv=cv;G3.aniso=Math.min(16,R.capabilities.getMaxAnisotropy?R.capabilities.getMaxAnisotropy():8);
   const F=g3Fields(),W=F.W,H=F.H,sc=new THREE.Scene(),haze=0x9db8c9;sc.background=new THREE.Color(haze);sc.fog=new THREE.Fog(haze,2200,6200);G3.sc=sc;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.02;g3Sky(sc);
-  G3.cam=new THREE.PerspectiveCamera(36,1.6,8,9000);G3.cc=Object.assign({},G3.camera);G3.time=0;G3.last=0;G3.keys.clear();G3.pos=new Map();G3.arm=new Map();G3.sig='';
+  G3.cam=new THREE.PerspectiveCamera(36,1.6,8,9000);G3.cc=Object.assign({},G3.camera);G3.time=0;G3.last=0;G3.keys.clear();G3.pos=new Map();G3.arm=new Map();G3.sig='';G3.batG=null;G3.bat=null;
   sc.add(new THREE.HemisphereLight(0xcfe0f2,0x8a7a5e,2.0));const sun=new THREE.DirectionalLight(0xfff0d2,3.5);sun.position.set(G3L.sun[0],G3L.sun[1],G3L.sun[2]);sc.add(sun);
   G3.matLit=new THREE.MeshLambertMaterial({vertexColors:true});
   // terrain
@@ -348,7 +348,7 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
   g3UI();G3.miniDirty=true;g3ApplyQuality();try{cv.style.filter='contrast(1.06) saturate(1.18)';const w=document.getElementById('gMapWrap');if(w&&!document.getElementById('g3vig')){const v=document.createElement('div');v.id='g3vig';v.style.cssText='position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 58%,rgba(4,10,18,.34) 100%)';w.insertBefore(v,cv.nextSibling);}}catch(e){}
   if(!G3.raf)G3.raf=requestAnimationFrame(g3Frame);return true;}
 function g3Dispose(){if(G3.raf){cancelAnimationFrame(G3.raf);G3.raf=0;}if(G3.sc){G3.sc.traverse(o=>{if(o.geometry&&o.geometry!==undefined&&!Object.values(G3.geo||{}).includes(o.geometry))o.geometry.dispose();});}
-  if(G3.R){try{G3.R.dispose();G3.R.forceContextLoss();}catch(e){}}G3.R=null;G3.sc=null;G3.cam=null;G3.cv=null;G3.arm=new Map();G3.matLit=null;G3.tOv=null;}
+  if(G3.R){try{G3.R.dispose();G3.R.forceContextLoss();}catch(e){}}G3.R=null;G3.sc=null;G3.cam=null;G3.cv=null;G3.arm=new Map();G3.batG=null;G3.bat=null;G3.matLit=null;G3.tOv=null;}
 function g3Resize(){if(!G3.R||!GV.cv)return;const w=GV.w||GV.cv.clientWidth||800,h=GV.h||GV.cv.clientHeight||500;G3.R.setSize(w,h,false);if(G3.LU){const b=G3.R.getDrawingBufferSize(new THREE.Vector2());G3.LU.uRes.value.copy(b);G3.LU.uPx.value=G3.R.getPixelRatio();}GV.cv.style.width=w+'px';GV.cv.style.height=h+'px';G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.moved=true;}
 // ---- armies: one soldier (the general) with a big national flag; a ship with a flag for armies at sea
 function g3Uniform(o){const c=grNatRgb(o);return [Math.min(1,(c[0]*.72+44)/255),Math.min(1,(c[1]*.72+42)/255),Math.min(1,(c[2]*.68+34)/255)];}
@@ -369,14 +369,34 @@ function g3ShipGeo(){if(G3.ship)return G3.ship;const sh=new THREE.Shape();[[-5,-
   const hull=new THREE.ExtrudeGeometry(sh,{depth:1.3,bevelEnabled:false}).rotateX(-Math.PI/2),cyl=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s),gr=[.5,.54,.58],dg=[.38,.42,.46];
   return G3.ship=g3Merge([[hull,g3M(0,-.1,0),[.42,.46,.5]],[cyl(1.2,1.5,1.4,8),g3M(-1.2,2,0),gr],[cyl(.8,.9,1.2,8),g3M(-1.2,3.2,0),dg],[cyl(.35,.4,1.2,8),g3M(-2.2,3.2,0),[.25,.25,.28]],
     [cyl(.5,.5,.7,8),g3M(2.2,1.65,0),dg],[cyl(.1,.1,2.2,5),g3M(2.2,1.7,0,1,1,1,0,0,Math.PI/2).multiply(g3M(0,0,0)),[.2,.2,.22]],[cyl(.09,.09,9,6),g3M(-.2,5.8,0),[.5,.42,.3]]]);}
-function g3FlagMesh(o,sx){const fac=grNat(o).fac,tex=flagTex(fac),m=new THREE.Mesh(G3.flagGeo||(G3.flagGeo=new THREE.PlaneGeometry(7,4.6,10,1).translate(3.5,0,0)),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
-  m.material.onBeforeCompile=s=>{s.uniforms.uT=G3.flagT||(G3.flagT={value:0});s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nuniform float uT;').replace('#include <begin_vertex>','#include <begin_vertex>\n transformed.z+=sin(uT*3.2+transformed.x*.9+modelMatrix[3].x*.07)*.16*transformed.x;transformed.y+=sin(uT*2.1+transformed.x*.6)*.05*transformed.x;');};
+function g3FlagMat(tex,inst){const m=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}),mx=inst?'instanceMatrix[3].x':'modelMatrix[3].x';
+  m.onBeforeCompile=s=>{s.uniforms.uT=G3.flagT||(G3.flagT={value:0});s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nuniform float uT;').replace('#include <begin_vertex>','#include <begin_vertex>\n transformed.z+=sin(uT*3.2+transformed.x*.9+'+mx+'*.07)*.16*transformed.x;transformed.y+=sin(uT*2.1+transformed.x*.6)*.05*transformed.x;');};
   return m;}
+function g3FlagMesh(o,sx){const fac=grNat(o).fac,tex=flagTex(fac),m=new THREE.Mesh(G3.flagGeo||(G3.flagGeo=new THREE.PlaneGeometry(7,4.6,10,1).translate(3.5,0,0)),g3FlagMat(tex,false));
+  return m;}
+/* perf (laneC PERF 2026-11-07): army bodies, flags and wakes are drawn as pooled InstancedMeshes (one draw per miniature / flag / wake kind)
+   instead of 2-3 meshes per army; the per-army Group still carries position/scale and its meshes stay in it, hidden, as the matrix source */
+function g3PoolMesh(map,key,geo,mat,lst,col){let p=map.get(key);if(!p){p={im:null,cap:0,n:0,geo,mat};map.set(key,p);}
+  if(p.n>=p.cap){const old=p.im;p.cap=Math.max(16,p.cap*2);p.im=new THREE.InstancedMesh(p.geo,p.mat,p.cap);p.im.frustumCulled=false;p.im.count=0;if(col){p.im.setColorAt(0,col);}if(old){p.im.instanceMatrix.array.set(old.instanceMatrix.array);if(old.instanceColor)p.im.instanceColor.array.set(old.instanceColor.array);G3.batG.remove(old);old.dispose();}G3.batG.add(p.im);}
+  if(col)p.im.setColorAt(p.n,col);p.im.setMatrixAt(p.n++,lst);}
+/* far zoom: one generic token per size (tinted per nation by instance colour) so 300 armies need ~5 body draws, not one per nation */
+function g3FarGeo(tier,sea){G3.farG=G3.farG||{};const k=tier+(sea?'s':'');if(G3.farG[k])return G3.farG[k];const R=sea?5:(tier>=2?5.2:tier>=1?4.4:3.2),a=sea?new THREE.BoxGeometry(R*1.9,2.6,R*.8).translate(0,1.8,0):new THREE.CylinderGeometry(R*.9,R,1.1,10).translate(0,.55,0),b=sea?new THREE.BoxGeometry(R*.7,2.4,R*.5).translate(-R*.2,4,0):new THREE.ConeGeometry(R*.62,8+tier*1.5,8).translate(0,1.1+(8+tier*1.5)/2,0);
+  const g=g3MergeCol([a,b].map(q=>{q=q.index?q.toNonIndexed():q;const n=q.attributes.position.count,c=new Float32Array(n*3).fill(1);q.setAttribute('color',new THREE.BufferAttribute(c,3));return q;}));return G3.farG[k]=g;}
+function g3FarCol(o){G3.farC=G3.farC||{};if(!G3.farC[o]){const c=typeof grNatRgb==='function'?grNatRgb(o):[90,100,60];G3.farC[o]=new THREE.Color(Math.min(1,c[0]/255*1.25+.06),Math.min(1,c[1]/255*1.25+.06),Math.min(1,c[2]/255*1.25+.06));}return G3.farC[o];}
+function g3Batch(){if(!G3.ents||!G3.sc)return;if(!G3.batG){G3.batG=new THREE.Group();G3.sc.add(G3.batG);G3.bat={b:new Map(),f:new Map(),w:new Map()};}
+  for(const m of [G3.bat.b,G3.bat.f,G3.bat.w])for(const p of m.values())p.n=0;
+  G3.ents.updateMatrixWorld(true);const far=G3.cc&&G3.cc.d>1400;
+  for(const e of G3.arm.values()){if(!e.g.visible)continue;const c=e.g.children,bd=c[0];let fl=null,wk=null;for(let i=1;i<c.length;i++){if(c[i].userData.wk)wk=c[i];else fl=c[i];}
+    if(far){const fg=g3FarGeo(e.tier,e.sea);g3PoolMesh(G3.bat.b,'far'+fg.uuid,fg,bd.material,bd.matrixWorld,g3FarCol(e.o));}else g3PoolMesh(G3.bat.b,bd.geometry.uuid,bd.geometry,bd.material,bd.matrixWorld);
+    if(fl)g3PoolMesh(G3.bat.f,fl.material.map.uuid,fl.geometry,G3.bat.fm&&G3.bat.fm.get(fl.material.map.uuid)||g3FlagInstMat(fl.material.map),fl.matrixWorld);
+    if(wk)g3PoolMesh(G3.bat.w,'w',wk.geometry,wk.material,wk.matrixWorld);}
+  for(const m of [G3.bat.b,G3.bat.f,G3.bat.w])for(const p of m.values())if(p.im){p.im.count=p.n;p.im.instanceMatrix.needsUpdate=true;}}
+function g3FlagInstMat(tex){const M=G3.bat.fm||(G3.bat.fm=new Map());let m=M.get(tex.uuid);if(!m){m=g3FlagMat(tex,true);M.set(tex.uuid,m);}return m;}
 function g3Ent(a){let e=G3.arm.get(a.id);const sea=GCM.P[a.at].sea,tier=g3Tier(a.u.length),mg=sea?g3NavyGeo(a.o):g3MiniGeo(a.o,tier);   /* grandlook: baked soldier/ship miniature when the models are loaded */
   if(e&&e.sea===sea&&e.o===a.o&&(sea||e.tier===tier)&&!!e.mini===!!mg)return e;if(e){G3.ents.remove(e.g);}
   const g=new THREE.Group(),body=new THREE.Mesh(mg||(sea?g3ShipGeo():g3FigGeo(a.o,tier)),G3.matLit),fl=g3FlagMesh(a.o);
-  body.scale.setScalar(1);g.add(body);
-  if(mg){const R=tier>=2?5.2:tier>=1?4.4:3.2;fl.scale.setScalar(.54);if(sea){fl.position.set(-3.4,5.5,0);g.add(g3WakeMesh());}else fl.position.set(R*.62+.1,10.4,-R*.42);}
+  body.scale.setScalar(1);body.visible=false;fl.visible=false;g.add(body);
+  if(mg){const R=tier>=2?5.2:tier>=1?4.4:3.2;fl.scale.setScalar(.54);if(sea){fl.position.set(-3.4,5.5,0);{const wk=g3WakeMesh();wk.visible=false;wk.userData.wk=1;g.add(wk);}}else fl.position.set(R*.62+.1,10.4,-R*.42);}
   else{if(sea){fl.position.set(-.2,10,0);fl.scale.setScalar(.85);}else fl.position.set(1.2,10.7,0);}g.add(fl);
   const old=e;e={g,sea,tier,mini:!!mg,o:a.o,pi:a.at,x:0,z:0,fx:0,fz:0,mv:1,tt:1,face:0,aid:a.id,plate:old?old.plate:null};G3.ents.add(g);G3.arm.set(a.id,e);return e;}
 function g3Anchors(s){const by=new Map();for(const a of GC.armies){if(!by.has(a.at))by.set(a.at,[]);by.get(a.at).push(a);}
@@ -554,6 +574,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
     else if(e.mv){e.x=t[0];e.z=t[1];e.mv=0;}else{e.x+=(t[0]-e.x)*Math.min(1,dt*8);e.z+=(t[1]-e.z)*Math.min(1,dt*8);}
     const y=e.sea?.5+Math.sin(G3.time*1.4+e.aid)*.35:Math.max(.3,g3HeightAt(e.x,e.z))+(e.tt<1?Math.abs(Math.sin(G3.time*9))*.5:0);e.g.position.set(e.x,y,e.z);e.g.scale.setScalar(s*(e.sea?1.1:1));e.g.rotation.y=cc.yaw;{const f=e.g.children[1];if(f&&!e.sea)f.scale.setScalar(Math.max(.5,Math.min(1,cc.d/300)));}
     if(e.sea)e.g.children[0].rotation.y=Math.PI/2*0;}
+  g3Batch();
   // selection ring
   const sa=GV.selA&&G3.arm.get(GV.selA);if(sa){G3.ringM.visible=true;G3.ringM.position.set(sa.x,sa.g.position.y+.4,sa.z);G3.ringM.scale.setScalar(s*(sa.sea?7:5)*(1+.06*Math.sin(G3.time*4)));}else G3.ringM.visible=false;
   const sig=GV.selA+'|'+GV.sel+'|'+GC.turn+'|'+GC.armies.length+'|'+GC.armies.reduce((a,x)=>a+x.u.length+x.path.length,0);
