@@ -3,7 +3,7 @@
 // a caught saboteur sours the target's opinion of the sender (and a little its allies') and loses the spy ring in that country. Second order: income down -> less cash for
 // armies/upkeep, +1 unrest while the damage lasts; the target blames the right enemy only if the operation was exposed (otherwise "unknown saboteurs").
 // Counter-play: Counter-intelligence ($150/month) halves success and doubles exposure; a garrison army cannot stop it, only security can. Cost: $600 per attempt, spent even on failure.
-// State: N.sabU (turn the damage ends), N.ci (1 = counter-intel on), N.sabN (hits suffered), GC.covT (month guard). Deterministic: grRng(seed, turn, codes). Monthly via GMOD_HOOKS.
+// State: N.sabU (month index the damage ends), N.ci (1 = counter-intel on), N.sabN (hits suffered), GC.covT (month guard). Deterministic: grRng(seed, turn, codes). Monthly via GMOD_HOOKS.
 const GCV_COST=600,GCV_M=3,GCV_CI=150,GCV_BASE=.62,GCV_EXPO=.22;
 GMOD_COND.cov=(k,arg)=>{const N=GC&&GC.nat[k];return !!N&&arg==='sab'&&(N.sabU|0)>=GC.turn&&GC.turn>0;};
 GMOD_ROWS.push({id:'cov_sab_inc',src:'Sabotage',scope:'nation',stat:'income',mul:.93,cond:'cov:sab'},{id:'cov_sab_up',src:'Sabotage',scope:'nation',stat:'upkeep',mul:1.06,cond:'cov:sab'},
