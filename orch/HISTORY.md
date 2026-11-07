@@ -420,3 +420,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 
 - laneF 2026-11-07: RF1 hidden infantry in cover (scouts/drones/helis detect 1.7x), RF2 crew stun on hard flank hits, RF3 artillery spotting round + warning. Chain: enemy sees fewer troops -> scouts/drones matter; flank shots disable guns; shells give a reaction window; counter-play = scout, flank, move out. Smoke PASS.
 - laneC 2026-11-07 iteration 14: grand-map chimney smoke is light fading wisps instead of dark specks (src/13e-grand3d.js); visual only, no world state.
+- laneG 2026-11-07 17:xx UTC: RG59/RG40/RG41/RG60/RG18 event rows (floods, sandstorms, pilgrim season, general strike, protests, remittances, volunteers) in src/13p-gevents.js; RG10 nuclear programme halts while the capital is occupied (13zz-gnuke.js); RG30 leader succession (src/13zy-gsucc.js, orch/sucktest.mjs PASS). Smoke PASS.
