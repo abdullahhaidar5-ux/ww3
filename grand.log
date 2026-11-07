@@ -1,0 +1,35 @@
+menu {"g":"Grand campaign","c":"Missions","s":"Conquest — deploy vs AI","t":true}
+determinism {"a":"fce9e9e5","b":"fce9e9e5","c":"f468d447","h0":"fe3f0b00","h1":"fe3f0b00","ms":515,"alive1":78,"provs":236,"seas":44}
+signatures {"n":54,"bad":[],"missing":[]}
+eco determinism true seed-diff true majors alive 38
+eco income/upkeep per empire per turn (nation:cash:net:upkeep:fuel:food:manpower:bank:bonds:totalwar)
+  t1: RU:4378:1884:218:119:139:218:0:1:0:8 | TR:2129:1479:343:108:137:140:0:0:0:5 | IR:2223:1523:318:115:148:196:0:0:0:5 | IN:1453:1153:361:108:149:199:0:0:0:5 | CN:4553:2215:296:113:146:258:0:1:0:8 | US:10563:9013:323:115:208:893:0:1:0:45
+  t5: RU:2509:1435:149:121:158:255:0:2:0:6 | TR:2537:1312:279:65:126:162:0:1:0:6 | IR:2265:534:249:97:134:223:0:0:1:4 | IN:2054:1008:0:107:215:200:0:2:1:3 | CN:2234:1475:191:88:175:152:0:2:1:7 | US:11137:5607:492:95:320:970:0:1:0:38
+  t10: RU:1004:986:0:130:190:200:0:2:1:4 | TR:3346:2279:226:34:163:224:0:1:0:9 | IR:3154:436:48:94:126:200:0:1:0:4 | CN:1643:1078:332:74:204:284:0:2:1:7 | US:5603:4233:1196:50:320:928:0:1:1:37
+  t15: RU:1112:689:9:177:196:158:0:1:1:3 | TR:1756:989:462:33:217:274:0:1:0:9 | IR:1580:657:0:146:153:158:0:1:1:3 | CN:1801:1798:194:74:293:410:0:1:0:10 | US:3600:2951:1336:50:320:872:0:0:1:35
+eco top earners t15 US:3600:2951:1336:50:320:872:0:0:1:35 | PK:3831:2354:404:50:142:470:0:2:0:11 | CN:1801:1798:194:74:293:410:0:1:0:10 | CA:2567:1654:103:165:320:508:0:1:1:16 | SA:2217:1594:131:43:252:326:0:1:0:7 | MX:2131:1343:167:84:41:321:0:1:0:10
+eco average net income per turn [923,848,739,813,639,691,644,550,594,575,331,518,549,652,598]
+eco average upkeep per turn [318,310,301,296,300,266,269,272,269,265,268,262,242,244,252] positive-net share t10 0.87 net range t15 -431 2951
+eco net per province: median 145 max 464
+eco battle {"mp":71,"kinds":["turret","fort","airfield"],"fuel":0.35,"ammoMax":0,"prod":true}
+eco features []
+eco ui {"panel":true,"ptxt":1063,"side":true,"icons":124}
+mirror provinces {"river":17,"mtn":9,"coast":18,"desert":185,"jungle":2,"snow":28,"real":3}
+mirror gen {"river":{"same":true,"key":"cm_1jeatmrxdum5u","ms":4,"cachedMs":0,"towns":3,"tp":3,"hash":"4evdov16488xy","oct":6},"mtn":{"same":true,"key":"cm_b5z0k01t8svxg","ms":0,"cachedMs":0,"towns":2,"tp":2,"hash":"1xwl87x1mhfr8f","oct":5},"coast":{"same":true,"key":"cm_1xip5ug1jsw93e","ms":0,"cachedMs":0,"towns":2,"tp":2,"hash":"16zaunbe4gqtj","oct":6},"desert":{"same":true,"key":"cm_1d2h68xubp5sd","ms":0,"cachedMs":0,"towns":4,"tp":4,"hash":"ptknjl1167k9n","oct":6},"jungle":{"same":true,"key":"cm_1dwvbwh1euqqkp","ms":0,"cachedMs":0,"towns":2,"tp":2,"hash":"1m1dwtt1kivnld","oct":6},"snow":{"same":true,"key":"cm_jssxbk9u6lv6","ms":0,"cachedMs":0,"towns":2,"tp":2,"hash":"1f1bdc413g80np","oct":5}}
+mirror battle river {"routes":2,"ms":538,"real":false,"n":3,"bn":3,"exact":true,"owOK":true,"names":["Paris","Kirchdorf","Villeneuve"],"un":[32,42,42],"rate":[2,2,2],"kinds":["sam","turret","airfield","factory"],"dead0":14,"n0":30,"dm":[1,0,50],"dmBefore":[0,0,50],"lastOw":"IR","an":"IR","dn":"FR","afDmg":[100],"t0dm":1,"gunrest":39}
+mirror battle mtn {"routes":2,"ms":343,"real":false,"n":2,"bn":2,"exact":true,"owOK":true,"names":["Bogota","Marienthal"],"un":[37,38],"rate":[2,2],"kinds":["sam","turret","airfield","factory"],"dead0":4,"n0":10,"dm":[1,50],"dmBefore":[0,50],"lastOw":"IR","an":"IR","dn":"CO","afDmg":[100],"t0dm":1,"gunrest":38}
+mirror battle coast {"routes":2,"ms":154,"real":false,"n":2,"bn":2,"exact":true,"owOK":true,"names":["Provence","Lindenau"],"un":[38,37],"rate":[2,2],"kinds":["shipyard","turret","airfield","factory"],"dead0":5,"n0":12,"dm":[3,50],"dmBefore":[0,50],"lastOw":"IR","an":"IR","dn":"FR","afDmg":[100],"t0dm":3,"gunrest":38}
+mirror battle desert {"routes":2,"ms":186,"real":false,"n":4,"bn":4,"exact":true,"owOK":true,"names":["Texas","Lisieux","Eichberg","Altenburg"],"un":[38,40,35,33],"rate":[2,2,2,2],"kinds":["shipyard","turret","turret","airfield","factory"],"dead0":1,"n0":4,"dm":[2,0,0,50],"dmBefore":[0,0,0,50],"lastOw":"IR","an":"IR","dn":"US","afDmg":[100],"t0dm":2,"gunrest":37}
+mirror battle jungle {"routes":2,"ms":136,"real":false,"n":2,"bn":2,"exact":true,"owOK":true,"names":["Yucatan","Hartwick"],"un":[44,32],"rate":[2,2],"kinds":["shipyard","turret","airfield","factory"],"dead0":17,"n0":34,"dm":[4,50],"dmBefore":[0,50],"lastOw":"IR","an":"IR","dn":"MX","afDmg":[100],"t0dm":4,"gunrest":38}
+mirror battle snow {"routes":2,"ms":128,"real":false,"n":2,"bn":2,"exact":true,"owOK":true,"names":["Finland","Montfort"],"un":[40,43],"rate":[2,2],"kinds":["sam","airfield","factory"],"dead0":15,"n0":31,"dm":[1,50],"dmBefore":[0,50],"lastOw":"IR","an":"IR","dn":"FI","afDmg":[100],"t0dm":1,"gunrest":42}
+mirror battle real {"routes":2,"ms":528,"real":true,"n":3,"bn":14,"exact":false,"owOK":true,"names":["Havana","Saint-Aubin","Montfort"],"un":[35,37,40],"rate":[2,2,2],"kinds":["shipyard","sam","turret","airfield","factory"],"dead0":20,"n0":40,"dm":[1,0,50],"dmBefore":[0,0,50],"lastOw":"IR","an":"IR","dn":"CU","afDmg":[100],"t0dm":1,"gunrest":37}
+scenario {"foe":"IQ","from":"Khuzestan","to":"Basra","aid":49,"ok":true,"units":37,"to_i":64}
+expected {"meAtt":false,"mine":{"inf":6,"at":1},"theirs":{"inf":23,"at":3,"tank":1,"arty":1,"aa":1},"nMine":7,"waves":0,"prov":"Hormozgan"}
+battle {"me":{"at":1,"inf":6},"foe":{"tank":1,"at":3,"inf":23,"aa":1,"arty":1},"b0":["shipyard","turret"],"b1":[],"qSame":true,"cr":0,"conq":false,"over":false,"waves":0,"att":1,"n0":[7,29]}
+finish {"res":true,"before":{"alive":5,"kinds":{"inf":5},"hp":[50,50,50,50,50]},"meAtt":false,"bi":3}
+flowback {"n":5,"kinds":{"inf":5},"hp":[50,50,50,50,50]}
+after {"g":false,"grand":"flex","ph":"plan","turn":2,"owner":"MX"}
+turn {"log":["Osaka: South Korea beat Japan.","California: Mexico beat United States.","Russia captured Donbas from Ukraine.","Pakistan captured Rajasthan from India.","South Korea captured Osaka from Japan.","Mexico captured California from United States."],"turn":2,"save":true}
+
+GRANDTEST FAIL
+  ✗ eco snowballs: net per province max 464 vs median 145 (net range -431..2951)
