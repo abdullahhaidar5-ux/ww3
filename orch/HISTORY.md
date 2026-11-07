@@ -398,3 +398,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - 2026-11-07 laneG: RG4 elections & refugees (src/13zw-gelect.js, orch/eltest.mjs) — democracies hold elections on war support + unrest, wars create refugees.
 - laneD 2026-11-07 D5 slice 1: grand-map first-minute coach card (13c guCoach, once via localStorage ww3_gcoach). Chain: new players learn pause/speed/orders so AI nations' real-time moves aren't missed. Local gates time out on cloud box; CI gates.
 - laneE DE-BLOCK slice 1: Poly Haven CC0 crate (Old Military Crate) + barrel (Barrel 03) photoreal PBR models replace plain box/cylinder props; credit added. Shot orch/shots/laneE/j1-base.png
+- laneE DE-BLOCK slice 4a: soldiers x1.7 (was x1.45) so squads read at gameplay height; smoke PASS; shot orch/shots/laneE/k1-base.png. Open: slice 2 (building PBR/rooftop clutter), 3 (tyre tracks, Poly Haven rocks), vehicle wear.
