@@ -1,0 +1,6 @@
+grandsmooth wide {"ms":2984,"calls":203,"tris":1431200}
+grandsmooth region {"ms":3151,"calls":193,"tris":2826624}
+grandsmooth close {"ms":1473,"calls":31,"tris":1310376}
+scene {"trees":2048,"towns":542,"armies":208}
+GRANDSMOOTH FAIL
+region: 2826624 triangles (budget 2M)
