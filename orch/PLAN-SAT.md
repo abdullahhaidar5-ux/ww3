@@ -243,3 +243,17 @@ Round 7 (Abdullah 22:28) — after the slice, then kaizen; extend existing syste
 - [ ] **RF14 Burning oil fields** (Lane E): huge black smoke columns when oil sites are hit.
 - [ ] **RF15 Night tracers & flares** (Lane E): night battles lit by tracers, flares, fires.
 - [ ] **RF16 Lasting wrecks** (Lane E): burnt-out wrecks stay as cover all battle (03g G.bfHulk exists — extend).
+Round 8 (Abdullah 22:30) — check what exists first, extend it:
+- [ ] **RF17 Combined arms bonus** (Lane F): inf + armour + artillery near each other fight better (GMOD-style battle modifier).
+- [ ] **RF18 Unit fatigue** (Lane F): long marches/fights tire troops; rest restores; carried from the grand map.
+- [ ] **RF19 Engineers** (Lane F): build bridges, clear mines, blow roads mid-battle.
+- [ ] **RF20 Snipers & spotters** (Lane F): long-range marksmen pin officers and call artillery (ties to RF1/RF3).
+- [ ] **RF21 River crossings** (Lane F): bridges as key points; blowing them changes the battle (02-map rivers from the province).
+- [ ] **RF22 Elevation advantage** (Lane F): high ground sees and shoots further.
+- [ ] **RF23 Mountain passes** (Lane F): narrow passes a small force can hold (map gen from province terrain).
+- [ ] **RF24 Urban tunnels** (Lane F): tunnels already exist for RS — extend to city tunnel networks for surprise attacks, Shia factions first.
+
+**LIST LOCKED (Abdullah 22:30 "Build now").** Order inside every lane: your current lane items first, then these picks — **Saturday picks first**
+(visible in the Middle East slice, cheap): **E** RF16 wrecks, RF14 burning oil, RF13 dust, RF15 night (after E1 soldiers) · **F** RF1 spotting, RF2 armour,
+RF3 artillery delay · **A** RG6 scenario "Gulf flashpoint", RG3 spies (with A6 fog) · **B** RG1 chokepoints & oil · **G** RG5 TV news, RG7 crises,
+RG17 holy sites · **D** RG8 achievements. Everything else → kaizen after Sat 20:00. Tick items here as they ship.
