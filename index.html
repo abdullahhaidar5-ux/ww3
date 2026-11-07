@@ -12571,7 +12571,8 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
     b.onclick=on;if(onR)b.oncontextmenu=e=>{e.preventDefault();onR();};el.append(b);return b;};
   const sub=(tab,txt)=>{const d=document.createElement('div');d.className='sub';d.dataset.tab=tab;d.textContent=txt;el.append(d);};
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k);mk('build','b_'+k,s.name,'$'+s.cost,null,()=>{if(T.credits<s.cost||!reqMet(ME,k))return;G.aim=null;G.place=G.place===k?null:k;});}
-  const R=roster(T.fac);for(const c of CATS){sub('units',STRUCT[c].name);for(const k of R[c]){const s=stats(T.fac,k);mk('units','u_'+k,s.fake?'Decoy '+s.name:s.name,'$'+s.cost,null,()=>{if(!(MODE==='client'?true:enqueue(ME,k)))pushLog('Not enough credits or missing building.','w');else if(MODE==='client')doAct({t:'q',k});},()=>doAct({t:'dq',k}));}}
+  const R=roster(T.fac);for(const c of CATS){sub('units',STRUCT[c].name);for(const k of R[c]){if(conqBan(k))continue;   /* Ayatollah/Dear Leader live on the grand map (Abdullah 23:14 "why is the ayatollah unit still in battle") */
+    const s=stats(T.fac,k);mk('units','u_'+k,s.fake?'Decoy '+s.name:s.name,'$'+s.cost,null,()=>{if(!(MODE==='client'?true:enqueue(ME,k)))pushLog('Not enough credits or missing building.','w');else if(MODE==='client')doAct({t:'q',k});},()=>doAct({t:'dq',k}));}}
   const ups=upgList(T.fac);for(const c of CATS){const list=ups.filter(k=>UPG[k].at===c);if(!list.length)continue;sub('upg',STRUCT[c].name);for(const k of list){const U=UPG[k];mk('upg','g_'+k,upgName(T.fac,k)+(U.sp?' ★':''),'$'+U.cost,U.desc,()=>doAct({t:'up',k}),null,true);}}
   for(const k in POWERS){if(conqBan(k))continue;const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});}/* owned powers are used from the side rail / hotkey */},null,true);}
   sub('pow','Level up');for(const k in POWERS){if(conqBan(k))continue;const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
@@ -12710,7 +12711,7 @@ function doCancel(sh){const c=cancelInfo();if(!c)return false;
   try{sfxUI(380);}catch(_){}updateUI();return true;}
 function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);mournBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k),ok=reqMet(ME,k);if(conqBan(k)){const hb=$('b_'+k);if(hb)hb.hidden=true;continue;}if(!bldAllowed(T.fac,k)){setBtn('b_'+k,{dis:true,cost:'Not available',title:k==='econ'?'Conquest: towns and hamlets pay the money - capture them and set their tax.':conqBan(k)?'The Mountain Fortress now lives on the grand map (pre-built for the defender).':'This faction has no air force'});continue;}const lim=s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===ME&&e.kind===k).length>=s.limit;setBtn('b_'+k,{dis:!ok||T.credits<s.cost||lim,cost:lim?'Max '+s.limit:'$'+s.cost,on:G.place===k,title:ok?(STRUCT[k].desc||(STRUCT[k].shore?'Place on the shoreline':'')):`Requires ${STRUCT[STRUCT[k].req].name}`});}
-  for(const k of allUnits(T.fac)){const s=stats(T.fac,k),q=T.q[s.from]||[],n=q.filter(x=>x.kind===k).length,has=done(ME,s.from);const first=q[0]&&q[0].kind===k?(q[0].p!=null?q[0].p:q[0].t/prodTime(T,s)):0;
+  for(const k of allUnits(T.fac)){if(conqBan(k))continue;const s=stats(T.fac,k),q=T.q[s.from]||[],n=q.filter(x=>x.kind===k).length,has=done(ME,s.from);const first=q[0]&&q[0].kind===k?(q[0].p!=null?q[0].p:q[0].t/prodTime(T,s)):0;
     const lk=specLock(T,k);const rbw=k==='cleric'&&(T.rebuy||0)>G.t?Math.ceil(T.rebuy-G.t):k==='champ'&&(T.hrb||0)>G.t?Math.ceil(T.hrb-G.t):0;setBtn('u_'+k,{dis:lk||!has||rbw>0||(T.credits<s.cost&&!n),cost:rbw?'Wait '+rebuyFmt(rbw):lk?`General rank ${k==='champ'?HERO_RANK:SPEC_RANK}`:k===T.F.special?'$'+s.cost+(T.rank>=6?' · Elite':T.rank>=4?' · Veteran':''):'$'+s.cost,q:n?'×'+n:'',p:first,title:(rbw?`A new leader can be chosen in ${rebuyFmt(rbw)}. `:'')+(lk?(k==='champ'?`Unlocks at general rank ${HERO_RANK}. `:`Unlocks at general rank ${SPEC_RANK}; gets Veteran (+20%) at rank 4 and Elite (+40%) at rank 6. `):'')+(k==='champ'&&s.hab&&HAB[s.hab]?`Ability: ${HAB[s.hab].n} - ${HAB[s.hab].d} Cooldown ${HERO_CD} s; press E. Only one alive; ${HERO_REBUY} s wait after it falls. `:'')+(has?'':`Requires ${STRUCT[s.from].name}. `)+(k===T.F.special&&SPECIAL_TIP[k]?SPECIAL_TIP[k](s)+' ':'')+(COUNTER[k]||COUNTER[s.cls]||'')});}
   for(const k of upgList(T.fac)){const U=UPG[k],r=T.rq[U.at],mine=r&&r.key===k;setBtn('g_'+k,{dis:T.upg[k]||!done(ME,U.at)||(!!r&&!mine)||T.credits<U.cost&&!mine,done:T.upg[k],cost:T.upg[k]?'Researched':mine?'Researching…':'$'+U.cost,p:mine?r.t/U.time:0,title:done(ME,U.at)?'':`Requires ${STRUCT[U.at].name}`});}
   docUI(T);const pts=T.rank-T.spent;for(const k in POWERS){const P=powInfo(k,T.fac),w=T.pw[k];const lv=w?(w.lv||1):0;setBtn('p_'+k,{dis:w?true:pts<1,done:!!w,on:G.aim===k,cost:w?('Lv '+lv+' · '+(P.passive?'Active':'use it on the side rail'+(POW_KEY[k]?' ['+POW_KEY[k].toUpperCase()+']':''))):`Unlock · 1 point`});
@@ -16665,7 +16666,7 @@ const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.45;c._big=1;}}
 const SOLV={US:'sol_w',EU:'sol_w',FR:'sol_w',DE:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
-const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:58},barracks:{m:'b_barr_me',size:54},factory:{m:'b_fact_me',size:62}};
+const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:74},barracks:{m:'b_barr_me',size:60},factory:{m:'b_fact_me',size:72}};
 function isSol(k){return k==='soldier'||(typeof k==='string'&&k.startsWith('sol_'));}
 function solKey(f){return SOLV[f]||'sol_w';}
 function truckKey(f){const rk=RMAP.harv[f];return rk&&MODELS.proto[RMOD[rk].m]?RMOD[rk].m:'truck';}
@@ -18692,7 +18693,7 @@ function grFinishTurn(){const P=GCM.P;try{gmRepair();}catch(e){}try{gmilBlockRef
   for(const p of P){if(!p.land)continue;const st=GC.prov[p.i];const occ=GC.armies.filter(a=>a.at===p.i&&a.o!==st.o&&grAtWar(a.o,st.o)&&a.u.length);
     if(!occ.length||st.gar.length)continue;if(GC.armies.some(a=>a.at===p.i&&a.o===st.o&&a.u.length))continue;
     const by={};for(const a of occ)by[a.o]=(by[a.o]||0)+grArmyVal(a);const taker=Object.keys(by).sort((x,y)=>by[y]-by[x]||(x<y?-1:1))[0],prevO=st.o;
-    st.o=taker;st.un=Math.min(100,st.un+35);st.cv=3;st.rq=[];try{gmCaptured(p.i,taker);}catch(e){}try{wsCaptured(prevO,taker);}catch(e){}try{geCaptured(p.i,taker);}catch(e){}grLog(GCM.nats.get(taker).name+' captured '+p.n+' from '+GCM.nats.get(prevO).name+'.',taker===GC.me||prevO===GC.me?GC.me:taker);
+    st.o=taker;st.un=Math.min(100,st.un+35);st.cv=3;st.rq=[];try{gmCaptured(p.i,taker);}catch(e){}try{hsCaptured(p.i,taker,prevO);}catch(e){}try{wsCaptured(prevO,taker);}catch(e){}try{geCaptured(p.i,taker);}catch(e){}grLog(GCM.nats.get(taker).name+' captured '+p.n+' from '+GCM.nats.get(prevO).name+'.',taker===GC.me||prevO===GC.me?GC.me:taker);
     const pn=GC.nat[prevO];if(pn&&pn.cap===p.i){grLog(GCM.nats.get(prevO).name+' lost its capital! (peace talks come in stage 4)',prevO);try{geCapitalFell(prevO,taker);}catch(e){}const rest=P.filter(q=>q.land&&GC.prov[q.i].o===prevO).sort((x,y)=>y.dev-x.dev||x.i-y.i)[0];pn.cap=rest?rest.i:-1;}}
   // economy
   const R=grRng(GC.seed*13+GC.turn);const inc={};geTurnStart();
@@ -18730,7 +18731,7 @@ function grJudge(){if(!GC.me||GC.over)return;const me=GC.me;if(GC.nat[me].dead){
 // ---------- player orders ----------
 function grOrderMove(aid,to){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return {err:'no army'};const r=grPath(a.o,a.at,to,a.fl);if(!r)return {err:a.fl?'Fleets sail between sea zones only.':'No route (check ports, seas and borders).'};
   if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;return {ok:1,r};}
-function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);try{glgDeclare(a,b);}catch(e){console.error('glgDeclare',e);}}   // laneG: allies/guarantors join
+function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;if(typeof grOverlord==='function'&&grOverlord(a))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);try{glgDeclare(a,b);}catch(e){console.error('glgDeclare',e);}}   // laneG: allies/guarantors join
 function grRecruit(c,pi,k){const st=GC.prov[pi];if(st.o!==c)return 'Not your province.';const fac=grNat(c).fac,rc=GR_RECRUIT.find(r=>r[0]===k);if(!rc||!grHasKind(fac,k))return 'Not available.';const T=geRecruitTerms(c,pi,k,rc[1]),cost=T.cost;
   if(GC.nat[c].cash<cost)return 'Not enough money.';if(GC.nat[c].e.man<T.man)return 'Not enough manpower ('+Math.round(GC.nat[c].e.man)+' of '+T.man+').';GC.nat[c].cash-=cost;GC.nat[c].e.man-=T.man;st.rq.push([GC.turn+T.turns,k,rc[1]]);return '';}
 function grSplit(aid){const a=GC.armies.find(x=>x.id===aid);if(!a||a.u.length<2)return null;const h=Math.floor(a.u.length/2);const mv=a.u.splice(a.u.length-h,h);const b=grAddArmy(a.o,a.at,mv);if(a.fl)b.fl=1;return b;}
@@ -18768,7 +18769,7 @@ function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){
 // continue: its province indices point at different places, so the map breaks and a Fight-it battle never loads (Lane A1)
 function grMapSig(){grMap();let h=0;for(const p of GCM.P){const s=p.n+'/'+p.adj.length;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;}return GCM.P.length+':'+(h>>>0).toString(36);}
 function grSaveOk(o){if(!o||o.v!==1||!Array.isArray(o.prov))return false;grMap();return o.ms?o.ms===grMapSig():o.prov.length===GCM.P.length;}
-function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!grSaveOk(o))return null;if(!o.ms)o.ms=grMapSig();GC=o;try{geEnsure();}catch(e){}try{grResBloc();}catch(e){}return GC;}catch(e){return null;}}
+function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!grSaveOk(o))return null;if(!o.ms)o.ms=grMapSig();GC=o;try{geEnsure();}catch(e){}try{grResBloc();grVasInit();}catch(e){}return GC;}catch(e){return null;}}
 function grClear(){try{localStorage.removeItem(GR_KEY);}catch(e){}GC=null;}
 // test/AI-only: run n turns with every nation under AI control; battles auto-resolve
 function grRunAI(n){for(let i=0;i<n&&!GC.over;i++){grEndTurn(true);}return grHash();}
@@ -19539,6 +19540,18 @@ function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],ro
   if(SHD.length){const sm=new THREE.InstancedMesh(new THREE.BoxGeometry(1,.05,1),new THREE.MeshBasicMaterial({color:0x1a1208,transparent:true,opacity:.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),SHD.length),M=new THREE.Matrix4();
     SHD.forEach((r,i)=>{M.compose(new THREE.Vector3(r[0],r[1],r[2]),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r[6]),new THREE.Vector3(r[3],r[4],r[5]));sm.setMatrixAt(i,M);});
     sm.instanceMatrix.needsUpdate=true;sm.castShadow=false;sm.renderOrder=2;grp.add(sm);}}
+// life: chimney smoke from every town (besieged provinces use g3BuildSmoke below) (GPU-animated points, one draw call)
+function g3BuildChim(grp){const T=g3Towns(),pos=[],ph=[],sz=[],pid=[],kind=[];
+  for(const t of T){const nS=t.cap?5:t.t===0?3:1;for(let s=0;s<nS;s++){const a=g3Hash(t.pi*3+s,t.t+7)*6.283,r=g3Hash(s+2,t.pi+t.t)*(t.cap?16:9),x=t.x+Math.cos(a)*r,z=t.z+Math.sin(a)*r,y=g3HeightAt(x,z)+4;
+    for(let k=0;k<7;k++){pos.push(x,y,z);ph.push((k+g3Hash(k,s+t.pi))/7);sz.push(.7+g3Hash(k+5,s)*.5);pid.push(t.pi);kind.push(s===0?1:0);}}}
+  if(!pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('aPh',new THREE.Float32BufferAttribute(ph,1));g.setAttribute('aSz',new THREE.Float32BufferAttribute(sz,1));
+  const war=new Float32Array(pid.length);g.setAttribute('aWar',new THREE.BufferAttribute(war,1));
+  const U=G3.chimU={uT:{value:0},uPx:{value:900}};
+  const m=new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,vertexShader:`uniform float uT,uPx;attribute float aPh,aSz,aWar;varying float vA;varying float vW;
+    void main(){float life=fract(aPh+uT*(.05+.05*aWar));float h=life*(34.+aWar*34.);vec3 p=position+vec3(h*.55+life*life*10.,h,h*.18);vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+    float base=(3.2+aWar*9.)*aSz*(.5+life*1.4);gl_PointSize=clamp(base*uPx/-mv.z,0.,90.);vA=smoothstep(0.,.12,life)*(1.-life)*(1.1+.3*aWar);vW=aWar;}`,
+    fragmentShader:`varying float vA;varying float vW;void main(){vec2 q=gl_PointCoord-.5;float d=length(q);if(d>.5)discard;float a=vA*(1.-smoothstep(.05,.5,d));vec3 c=mix(vec3(.3,.28,.27),vec3(.12,.1,.09),vW);gl_FragColor=vec4(c,a);}`});
+  const pts=new THREE.Points(g,m);pts.frustumCulled=false;pts.renderOrder=6;grp.add(pts);G3.chim=pts;}
 // forests, palms, scrub by biome: one instanced mesh per tree type (a few thousand instances each)
 function g3BuildForests(grp){const F=G3.F,A=G3_GEO(),T=g3Towns(),W=F.W,P=GCM.P,L={conifer:[],broad:[],palm:[],scrub:[]};
   const near=(x,z)=>{for(const t of T)if(Math.abs(t.x-x)<40&&Math.abs(t.z-z)<40&&Math.hypot(t.x-x,t.z-z)<(t.cap?36:26))return true;return false;};
@@ -19689,7 +19702,7 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}if(G3.real&&G3.F&&!G
       if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){vec4 ov=texture2D(uOv,cu);c=mix(c,ov.rgb,ov.a*.55);c=g3rimS(c,cu);}
       float dist=length(cameraPosition-vW);c*=mix(g3cloud(vW.xz,uTime),1.,smoothstep(1500.,4200.,dist));c=mix(c,vec3(.616,.722,.788),smoothstep(2200.,6200.,dist));gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
   const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);
-  const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);G3.static=grp;
+  const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);g3BuildChim(grp);G3.static=grp;
   G3.ents=new THREE.Group();sc.add(G3.ents);G3.arrows=new THREE.Group();sc.add(G3.arrows);
   G3.ringM=new THREE.Mesh(new THREE.RingGeometry(.9,1.2,48).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffe27a,transparent:true,opacity:.9,depthTest:false}));G3.ringM.renderOrder=5;G3.ringM.visible=false;sc.add(G3.ringM);
   g3UI();G3.miniDirty=true;g3ApplyQuality();try{cv.style.filter='contrast(1.06) saturate(1.18)';const w=document.getElementById('gMapWrap');if(w&&!document.getElementById('g3vig')){const v=document.createElement('div');v.id='g3vig';v.style.cssText='position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 58%,rgba(4,10,18,.34) 100%)';w.insertBefore(v,cv.nextSibling);}}catch(e){}
@@ -19874,7 +19887,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   const c=G3.camera,K=G3.keys;if(K.size&&!document.getElementById('gModal')){const sp=c.d*.9*dt,sy=Math.sin(c.yaw),cy=Math.cos(c.yaw);let fx=0,fz=0;if(K.has('w')||K.has('arrowup'))fz-=1;if(K.has('s')||K.has('arrowdown'))fz+=1;if(K.has('a')||K.has('arrowleft'))fx-=1;if(K.has('d')||K.has('arrowright'))fx+=1;
     c.x=Math.max(0,Math.min(2400,c.x+(fx*cy+fz*sy)*sp));c.z=Math.max(0,Math.min(1200,c.z+(-fx*sy+fz*cy)*sp));if(K.has('q'))c.yaw+=dt*1.2;if(K.has('e'))c.yaw-=dt*1.2;if(K.has('r'))c.pitch=Math.min(1.3,c.pitch+dt*.8);if(K.has('f'))c.pitch=Math.max(.45,c.pitch-dt*.8);if(K.has('+')||K.has('='))c.d*=1-dt*1.5;if(K.has('-'))c.d*=1+dt*1.5;}
   c.d=Math.max(70,Math.min(2300,c.d));const cc=G3.cc,kk=Math.min(1,dt*11);let mv=0;for(const k of ['x','z','d','yaw','pitch']){const df=c[k]-cc[k];if(Math.abs(df)>1e-3){cc[k]+=df*kk;mv=1;}}if(mv||G3.moved){g3CamApply(cc);G3.moved=false;mv=1;}
-  const s=Math.max(1.35,Math.min(3.6,cc.d/330));G3.sc_s=s;G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;
+  const s=Math.max(1.35,Math.min(3.6,cc.d/330));G3.sc_s=s;G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;if(G3.chimU){G3.chimU.uT.value=G3.time;G3.chimU.uPx.value=(G3.R.domElement.height||900)*.9;G3.chim.visible=cc.d<1100;}
   G3.U.uSel.value=GV.sel>=0?GV.sel:-1;G3.U.uHov.value=GV.hov>=0&&GV.hov!==GV.sel?GV.hov:-1;
   // armies
   const anc=g3Anchors(s);let anim=0;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const t=anc.get(a.id);if(!t)continue;
@@ -20683,6 +20696,13 @@ function gmilHashStr(){const M=GC.mil;if(!M)return '';let s='|M';for(const id of
 // (roughly square-rooted) so a small power is weak but still playable. Sources + the per-nation table: orch/reports/realstart.md.
 // Deterministic: no random numbers here. grand4/4b's diplomacy reads `al`, `op`, `tn`; grand3 fleets read `fl`.
 //   n[code] = [econ, mil, oil] : econ x2200 starting cash, mil x GR_VBASE starting army value, oil = fuel stock (120 = normal)
+/* VASSALS (EU4-style subjects; Abdullah 2026-11-06 23:10 "Make Syria a vassal of Turkey"): GC.vas=[[overlord,subject],...]. A subject fights in
+   its overlord's wars and the overlord defends it (grAllied counts the pair, so laneG's glgDeclare joins them), it can't declare war, make
+   alliances, guarantee or make peace on its own, and it can't leave. Economy (tribute, liberty desire, independence wars, annexation) = Lane G. */
+const GR_VASSALS=[['TR','SY']];
+function grVasPair(a,b){return !!(GC&&GC.vas&&GC.vas.some(v=>(v[0]===a&&v[1]===b)||(v[0]===b&&v[1]===a)));}
+function grOverlord(c){const v=GC&&GC.vas&&GC.vas.find(x=>x[1]===c);return v?v[0]:null;}
+function grVasInit(){if(!GC||!GC.nat||GC.vas)return;GC.vas=GR_VASSALS.filter(v=>GC.nat[v[0]]&&GC.nat[v[1]]).map(v=>v.slice());}
 const RES_BLOC=['IR','RS','DW','RV'];   // the Resistance bloc, led by the one shared Ayatollah; new Shia factions add their code here
 const GR_REAL={
  n:{US:[6,3,230],CN:[4.5,2.4,110],RU:[1.6,1.9,260],IN:[2.5,1.5,90],DE:[2.5,.9,80],JP:[2.3,.9,70],GB:[2.2,1,130],FR:[2.1,1,90],IT:[1.6,.7,80],
@@ -20717,13 +20737,13 @@ function grRealMil(c,dflt){const r=GR_REAL.n[c];return r?r[1]:dflt;}
 function grRealCash(c,dflt){const r=GR_REAL.n[c];return r?Math.round(2200*r[0]):dflt;}
 function grRealClass(c){const r=GR_REAL.n[c];if(!r)return 'Small power';const s=r[0]*.4+r[1]*.6;return s>=2?'Superpower':s>=.9?'Great power':s>=.45?'Regional power':'Small power';}
 // alliances: `GC.rel` = {pairKey: opinion}; `GC.alz` = [[name,[codes]]]. Built once at campaign start, saved with the campaign.
-function grAllied(a,b){if(!GC||!GC.alz)return false;return GC.alz.some(x=>x[1].includes(a)&&x[1].includes(b));}
+function grAllied(a,b){if(!GC)return false;if(grVasPair(a,b))return true;if(!GC.alz)return false;return GC.alz.some(x=>x[1].includes(a)&&x[1].includes(b));}
 function grOpinion(a,b){if(a===b)return 100;if(!GC)return 0;if(GC.war[grWk(a,b)])return -100;let v=(GC.rel&&GC.rel[grWk(a,b)])||0;if(grAllied(a,b))v=Math.max(v,75);return Math.max(-100,Math.min(100,v));}
 function grNearOwn(o,toCap){let best=-1,bd=1e9;for(const p of GCM.P){if(!p.land||GC.prov[p.i].o!==o)continue;const d=grDist(p.i,toCap);if(d<bd){bd=d;best=p.i;}}return best;}
 // called from grNew after every nation exists. Wars, fronts, bases, alliances, opinions.
 function grRealApply(quick){
   const has=c=>!!GC.nat[c]&&!GC.nat[c].dead;const V=c=>GR_VBASE*(grRealMil(c,grNat(c).major?1:.5))*(quick?.7:1);
-  GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);grResBloc();GC.rel={};
+  GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);grResBloc();grVasInit();GC.rel={};
   for(const [a,b,v] of GR_REAL.op)if(has(a)&&has(b))GC.rel[grWk(a,b)]=v;
   for(const [a,b] of GR_REAL.wars)if(has(a)&&has(b))GC.war[grWk(a,b)]=1;
   const front=(a,b,sh,nm)=>{const at=grNearOwn(a,GC.nat[b].cap);if(at<0)return;const f=grNat(a).fac;grAddArmy(a,at,grGenUnits(f,V(a)*sh,false),nm);};
@@ -21101,6 +21121,7 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
     const acc=GC.nat[b].ai?25:0;W.push(['They accept at',acc]);if(ok&&s<acc)no('They refuse (score '+s+' of '+acc+')');}
   else if(act==='guarantee'){cost=300;if(war)no('At war');else if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))no('Already guaranteed');W.push(['Costs $300, +15 opinion, shows resolve',0]);}
   else if(act==='break'){if(!al)no('Not allied');else if(typeof grInResBloc==='function'&&grInResBloc(a,b))no('The Resistance bloc is permanent while the Ayatollah leads it');W.push(['Opinion -25',0]);}
+  if(typeof grOverlord==='function'&&ok){const ov=grOverlord(a);if(ov&&(act==='war'||act==='alliance'||act==='guarantee'||act==='peace'||act==='break'))no('Your overlord, '+GCM.nats.get(ov).name+', decides this');const sv=grOverlord(b);if(act==='break'&&sv===a)no(GCM.nats.get(b).name+' is your vassal');if(act==='war'&&sv)no(GCM.nats.get(b).name+' is a vassal of '+GCM.nats.get(sv).name+' — declare war on its overlord');}
   if(cost&&cash<cost&&ok)no('Not enough cash ($'+cost+')');
   if(GC.me!==a)no('Only your own nation acts');
   return {ok,why:W,cost,note};}
@@ -21289,7 +21310,9 @@ function glgPeace(a,b){const k=grWk(a,b);delete GC.war[k];if(GC.wsT)delete GC.ws
 function glgDeclare(a,b){GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;if(GLG_D>0)return;GLG_D++;
   try{const call=(GC.alz||[]).filter(z=>z[1].includes(b)&&!z[1].includes(a)).flatMap(z=>z[1]).concat((GC.gu||[]).filter(g=>g[1]===b).map(g=>g[0]));
     for(const g of Array.from(new Set(call)).sort()){if(g===a||g===b||!GC.nat[g]||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
-      GC.war[grWk(g,a)]=1;GC.wsT[grWk(g,a)]=GC.turn;grLog(gdNatName(g)+' joins the war against '+gdNatName(a)+' to defend '+gdNatName(b)+'.',g);}}finally{GLG_D--;}}
+      GC.war[grWk(g,a)]=1;GC.wsT[grWk(g,a)]=GC.turn;grLog(gdNatName(g)+' joins the war against '+gdNatName(a)+' to defend '+gdNatName(b)+'.',g);}
+    if(GC.vas){const side=(x,y)=>{for(const v of GC.vas){const j=v[0]===x?v[1]:v[1]===x?v[0]:null;if(j&&j!==y&&GC.nat[j]&&!GC.nat[j].dead&&!grAtWar(j,y)&&!grVasPair(j,y)){GC.war[grWk(j,y)]=1;GC.wsT[grWk(j,y)]=GC.turn;grLog(gdNatName(j)+' joins the war against '+gdNatName(y)+(v[0]===x?' as a vassal of ':' as overlord of ')+gdNatName(x)+'.',j);}}};side(a,b);side(b,a);}   // vassals (13i GR_VASSALS)
+  }finally{GLG_D--;}}
 function glgTurn(){if(!GC||!GC.nat)return;
   try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}try{gpTurn();}catch(e){console.error('gpTurn',e);}
   GC.off=GC.off||[];
@@ -21584,6 +21607,23 @@ npTab('dev','🏗','Development',(code,body,c)=>{const N=GC.nat[code],own=c.own&
     tbl.appendChild(tr);}
   body.appendChild(tbl);});
 alAdd('dev','🏗','Development',c=>{const N=GC.nat[c];if(!N||!N.pp)return null;const m=Math.max(N.pp.pol,N.pp.dip,N.pp.mil);return m>=150?{n:'+',tip:'you have spare capital points — develop a province',go:()=>npOpen(c,'dev')}:null;});
+// HOLY SITES (lane G, RG17): provinces that hold a faith's great shrines. Respectful and equal for every faith: each site you hold gives a small
+// war-support lift (national pride, modifier rows); taking one by force angers the world a little and its faith's home nation a lot, and unsettles the province.
+// Sites are DATA rows (province name, faith, name of the shrine city, home nation). No new sim state beyond GC.hs (the last-seen holder), saved with the campaign.
+const HS_ROWS=[
+ {p:'Hejaz',f:'Islam',n:'Mecca and Medina',h:'SA'},{p:'Baghdad',f:'Islam',n:'Najaf and Karbala',h:'IQ'},{p:'Khorasan',f:'Islam',n:'Mashhad',h:'IR'},
+ {p:'Tehran',f:'Islam',n:'Qom',h:'IR'},{p:'Tel Aviv',f:'Judaism, Christianity and Islam',n:'Jerusalem',h:'IL'}];
+function hsIdx(){if(!GCM._hs)GCM._hs=HS_ROWS.map(r=>{const p=GCM.P.find(q=>q.n===r.p);return p?Object.assign({i:p.i},r):null;}).filter(Boolean);return GCM._hs;}
+function hsCount(c){return hsIdx().filter(r=>GC.prov[r.i]&&GC.prov[r.i].o===c).length;}
+GMOD_COND.holy=(k,arg)=>!!GC&&hsCount(k)>=(+arg||1);
+GMOD_ROWS.push({id:'holy1',src:'Holds a holy site',scope:'nation',stat:'warSupport',add:.02,cond:'holy:1'},
+               {id:'holy2',src:'Holds two holy sites',scope:'nation',stat:'warSupport',add:.02,cond:'holy:2'});
+function hsCaptured(pi,taker,prev){const r=hsIdx().find(x=>x.i===pi);if(!r||!GC||taker===prev)return;
+  for(const c of Object.keys(GC.nat)){if(c===taker||GC.nat[c].dead)continue;try{gdRel(c,taker,c===r.h?-30:-6);}catch(e){}}
+  for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===taker&&p.i===pi){GC.prov[pi].un=Math.min(100,GC.prov[pi].un+10);}
+  grLog(gdNatName(taker)+' took '+r.n+' ('+r.f+'). The world watches; '+gdNatName(r.h)+' is outraged.',taker);
+  try{if(taker===GC.me||prev===GC.me||r.h===GC.me)gevToast(['🕌 '+r.n+' has changed hands']);}catch(e){}}
+function hsList(c){return hsIdx().filter(r=>GC.prov[r.i].o===c);}
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.
