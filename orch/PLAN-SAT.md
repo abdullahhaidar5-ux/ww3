@@ -163,7 +163,7 @@ Battle (sim changes → servers-live PR comment):
 - [ ] **RF5 Cinematic moments** (Lane E): short slow-mo camera on huge explosions/tank kills, Settings toggle, never in multiplayer sim (view-only).
 - [ ] **RF6 Named veteran squads** (Lane F): squads get names + ranks, promotions; carried both ways through the grand campaign with the army.
 Grand map:
-- [ ] **RG1 Chokepoints & oil** (Lane B): Hormuz, Suez, Bab el-Mandeb, Malacca, Bosporus as sea-lane nodes that warships can blockade; world oil price swings feed the B5b economy.
+- [x] **RG1 Chokepoints & oil** (Lane B; DONE first cut laneB 2026-11-07: warships in a chokepoint zone blockade it for nations at war with them — trade through it cut, +6 oil price each, fleet's own presence breaks it, AI fleets favour straits, Chokepoints list shows BLOCKADED; test `node orch/chokepointtest.mjs`): Hormuz, Suez, Bab el-Mandeb, Malacca, Bosporus as sea-lane nodes that warships can blockade; world oil price swings feed the B5b economy.
 - [ ] **RG2 UN votes & sanctions** (Lane G): Security Council with 5 vetoes, votes on condemnations/sanctions; sanctions = GMOD rows on trade + stability.
 - [~] **RG3 Spies & intelligence** (Lane A, with A6 fog) — **slice 1 laneA ecb83054:** fog of war on the grand map (enemy armies hidden unless in/next to your or allied land/armies; spy-satellite nations see 2 deep), **Send spies $400** on an enemy province reveals all that nation's armies for 3 months (display only, sim/AI unchanged; grandtest fog check). Open: sabotage action, AI spies.: enemy armies hidden unless spotted; spies, satellites, sabotage as actions.
 - [ ] **RG4 Elections & refugees** (Lane G): democracies hold elections (war support decides), wars create refugees (unrest next door) and rebuilding costs.
