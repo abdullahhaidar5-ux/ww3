@@ -15,5 +15,10 @@
 ## Add a menu/pause/settings button without touching 08-ui.js
 New file `src/08k-*.js` (build.py picks up all src/*.js in name order); in an IIFE find `document.getElementById('openSettings'|'aSet'|'sDone')` and append/insert a button (see `08k-report.js` "Report a problem" → pre-filled GitHub issue, label `player`).
 
+## Add a menu screen (title menu v3, `src/14-menu.js`)
+1. In `mxBuild()` add `const S=scr('myid','<h2 class="mxh">Title</h2><p class="mxsub">one line</p>')`, put your content in it (MOVE an existing node, don't rebuild it) and a footer with `foot(S, go('Next →', fn))`.
+2. Add a title entry with `item('Label', ()=>menuGo('myid'))` (order: Grand campaign · Conquest · Missions · Tutorial · Play online · Load game · Settings · Extras · Credits) and a name in `MX_TITLES` (breadcrumb); use `MX_STEPS` for a multi-step flow.
+3. `menuGo(id)` slides forward, `menuBack()` / Esc one step back, `menuHome()` resets (runs whenever `#menu` is shown again); do per-screen refresh in `mxEnter(id)`. Controls added later by other modules into the old `#menu .card` are hidden: click them from a new item (`mxClick('id')`).
+4. Check: `node orch/menushots.mjs <tag> title,myid` (shots in orch/shots/menu/) and `node orch/menuhud.mjs`.
 ## Add a monthly system / an idea
 Push a fn onto `GMOD_HOOKS` (13k) — called by `gmodMonth` each turn. New idea = one row in `GID_GROUPS` (13l); its effect is a modifier row on an existing stat (income, upkeep, manpower, ppPol/Dip/Mil, warSupport…).
