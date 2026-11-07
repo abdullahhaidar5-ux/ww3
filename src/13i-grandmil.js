@@ -162,13 +162,13 @@ function gmilAddFront(c,foe){let f=GC.mil.fr.find(x=>x.o===c&&x.foe===foe);if(f)
 function gmilLine(f){const P=GCM.P;return P.filter(p=>p.land&&GC.prov[p.i].o===f.o&&p.adj.some(j=>P[j].land&&GC.prov[j].o===f.foe));}
 function gmilEnemyAt(foe,j){return GC.prov[j].o===foe?grProvDef(j)+GC.armies.filter(x=>x.at===j&&x.o===foe&&!x.fl).reduce((s,x)=>s+grArmyVal(x),0):0;}
 function gmilAssign(aid,fid){const a=GC.armies.find(x=>x.id===aid);if(!a||a.fl)return 'Armies only.';if(!fid){a.fr=0;return '';}const f=GC.mil.fr.find(x=>x.id===fid);if(!f||f.o!==a.o)return 'No such front.';a.fr=fid;return '';}
-function gmilPlanFront(f,plan){const P=GCM.P,c=f.o,line=gmilLine(f);if(!line.length)return;const arms=GC.armies.filter(a=>a.fr===f.id&&a.o===c&&!a.fl&&!a.path.length&&a.u.length).sort((x,y)=>x.id-y.id);
+function gmilPlanFront(f,plan){const P=GCM.P,c=f.o,line=gmilLine(f);if(!line.length)return;const cap=GC.nat[c].cap,arms=GC.armies.filter(a=>a.fr===f.id&&a.o===c&&!a.fl&&!a.path.length&&a.u.length&&!(a.at===cap&&typeof grCapHeld==='function'&&grCapHeld(c,a)<grCapThreat(c)*1.2)).sort((x,y)=>x.id-y.id);   /* A-REAL: the capital's guard stays when it is threatened */
   const threat=pi=>{let t=0;for(const j of P[pi].adj)if(P[j].land&&GC.prov[j].o===f.foe)t+=gmilEnemyAt(f.foe,j)*.5;return t;};
   const defNow=pi=>grProvDef(pi)*.5+GC.armies.filter(x=>x.at===pi&&x.o===c&&!x.fl).reduce((s,x)=>s+grArmyVal(x),0)+(plan[pi]||0);
   for(const a of arms){const val=grArmyVal(a)*gmilMul(a,0);let tgt=-1,ts=-1e9;
     if(f.ord!=='hold'){   // push / counter-attack: weakest worthwhile enemy province within 3 hops of land
       const seen=new Set([a.at]);let fr=[a.at];for(let d=0;d<3&&fr.length;d++){const nx=[];for(const u of fr)for(const j of P[u].adj){if(seen.has(j)||!P[j].land)continue;seen.add(j);nx.push(j);if(GC.prov[j].o!==f.foe)continue;
-          const def=gmilEnemyAt(f.foe,j)*1.25;let sc=(P[j].wg?40:0)+P[j].dev*4+(val/Math.max(300,def)-1)*30-d*8;
+          if(typeof grNukStop==='function'&&grNukStop(c,j,f.foe))continue;const def=gmilEnemyAt(f.foe,j)*1.25*(1+(typeof grDepth==='function'?grDepth(j,c,f.foe):0));let sc=(P[j].wg?40:0)+P[j].dev*4+(val/Math.max(300,def)-1)*30-d*8;
           if(f.ord==='counter'){sc+=GC.prov[j].o0===c?60:-15;}
           const need=f.ord==='counter'?1.0:1.12;if(def<val*need&&sc>ts){ts=sc;tgt=j;}}fr=nx;}}
     if(tgt>=0){const r=grPath(c,a.at,tgt);if(r&&!r.decl&&r.path.length){a.path=r.path;a.pg=0;plan[tgt]=(plan[tgt]||0)+val;continue;}}
