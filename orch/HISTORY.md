@@ -391,3 +391,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneD 2026-11-07: D2 slice 6 — 'RPG Team/Cell', 'TOW Team' unit names plain-worded to Anti-Tank (Missile) Team (names only, no sim change).
 
 - laneF 2026-11-07 12:50Z: A3 150-army perf test (orch/a3perf.mjs): select 150 armies 12 ms, cards 5 ms; no code change needed.
+- laneE DE-BLOCK slice 1: Poly Haven CC0 crate (Old Military Crate) + barrel (Barrel 03) photoreal PBR models replace plain box/cylinder props; credit added. Shot orch/shots/laneE/j1-base.png
