@@ -1,0 +1,51 @@
+// ===== 13j-grandmilui: Military panel + province/sea-zone controls for grand stage 3 (generals, fronts, strikes, fleets) =====
+let GMILUI={tab:'gen'};
+function gmilDone(r){if(r){GV.hint=r;guHint();}else{grSave();}guTop();guSide();gmilUiPanel(true);try{grandMapRefresh();}catch(e){}}
+function gmilBtn(txt,fn,on,title){const b=guEl('button','padding:5px 8px;border-radius:5px;border:1px solid '+(on?'#ffe27a':'#3d5a73')+';background:'+(on?'#41572a':'#18293a')+';color:#fff;cursor:pointer;font-size:13px;margin:2px 3px 2px 0',txt);b.type='button';if(title)b.title=title;b.onclick=fn;return b;}
+function gmilUiTop(t,me){if(!me||!GC.mil)return;const b=guEl('button','padding:6px 12px;border-radius:6px;border:1px solid #8aa6c9;background:#1f3047;color:#d6e6ff;cursor:pointer;font-size:14px','Military');b.id='gMilBtn';b.type='button';b.onclick=()=>gmilUiPanel();t.appendChild(b);}
+function gmilArmyTag(a){const g=gmilGen(a),f=gmilFrontOf(a);let h='';if(g)h+=' <span style="color:#ffd24a;font-size:12px" title="'+GMIL_TR[g.tr][1]+'">★ '+gmilTitle(g)+' '+g.nm+' (lv '+g.lv+')</span>';if(f)h+=' <span style="font-size:12px;color:#9fd3ff">· front vs '+GCM.nats.get(f.foe).name+' ('+f.ord+')</span>';if(a.fl)h+=' <span style="font-size:12px;color:#9fd3ff">· fleet'+(a.mine?' · laying mines':'')+'</span>';return h;}
+function gmilActBtns(a){let h='';if(!a.fl)h+='<button data-act="front">'+(a.fr?'Next front / release':'Assign to front')+'</button>';else if(a.u.some(r=>r[0]==='minel'))h+='<button data-act="mine">'+(a.mine?'Stop mines':'Lay mines')+'</button>';return h;}
+function gmilCycleFront(id){const a=GC.armies.find(x=>x.id===id);if(!a||a.o!==GC.me||GC.ph!=='plan')return;const L=gmilFronts(GC.me);for(const foe of Object.keys(GC.war).filter(k=>k.split('|').includes(GC.me)).map(k=>k.split('|').find(x=>x!==GC.me)).sort())if(GC.nat[foe]&&!GC.nat[foe].dead&&!L.some(f=>f.foe===foe))L.push(gmilAddFront(GC.me,foe));
+  if(!L.length){GV.hint='You are at war with nobody.';guHint();return;}const i=a.fr?L.findIndex(f=>f.id===a.fr):-1;a.fr=i+1<L.length?L[i+1].id:0;a.path=[];a.pg=0;}
+function gmilMinesBtn(id){const a=GC.armies.find(x=>x.id===id);if(!a)return;const e=gmilMines(a);if(e){GV.hint=e;guHint();}}
+function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(old&&!refreshOnly){old.remove();return;}if(!old&&refreshOnly)return;if(!GC||!GC.me||!GC.mil)return;const me=GC.me,M=GC.mil;
+  const host=document.getElementById('grandScreen');if(!host)return;let el=old;if(!el){el=guEl('div','position:absolute;top:56px;right:340px;bottom:12px;width:380px;max-width:52vw;z-index:8200;background:#101c28ee;border:1px solid #8aa6c9;border-radius:8px;padding:10px 12px;overflow:auto;font-size:14px;line-height:1.45;color:#e8e4d8');el.id='gMil';host.appendChild(el);}
+  el.innerHTML='';el.appendChild(guEl('div','display:flex;justify-content:space-between;align-items:center','<b style="font-size:17px;color:#d6e6ff">Military</b><span style="opacity:.7">'+GCM.nats.get(me).name+'</span>'));
+  const tabs=guEl('div','margin:6px 0');for(const [k,n] of [['gen','Generals'],['fr','Fronts'],['st','Strikes'],['fl','Fleets']])tabs.appendChild(gmilBtn(n,()=>{GMILUI.tab=k;gmilUiPanel(true);},GMILUI.tab===k));el.appendChild(tabs);
+  const box=guEl('div');el.appendChild(box);const row=(h,css)=>box.appendChild(guEl('div',css||'border-bottom:1px solid #243a50;padding:4px 0',h));
+  if(GMILUI.tab==='gen'){const mine=Object.values(M.g).filter(g=>g.o===me).sort((a,b)=>a.id-b.id);
+    box.appendChild(guEl('div','opacity:.75;font-size:13px','Generals lead armies, gain experience from battles and can be killed or captured if their army is destroyed. In a Fight-it battle they stand as the hero squad with their perk.'));
+    for(const g of mine){const a=GC.armies.find(x=>x.id===g.aid);row('<b>'+gmilTitle(g)+' '+g.nm+'</b> · lv '+g.lv+' · xp '+Math.round(g.xp)+(g.lv<4?'/'+GMIL_LVN[g.lv]:'')+'<br><span style="color:#ffd24a">'+GMIL_TR[g.tr][0]+'</span> <span style="opacity:.75;font-size:12px">'+GMIL_TR[g.tr][1]+'</span><br><span style="font-size:13px">'+(g.st===1?'<span style="color:#ff9d8e">Killed in action</span>':g.st===2?'<span style="color:#ff9d8e">Captured by '+GCM.nats.get(g.by).name+'</span>':a?'Leads '+a.nm+' at '+GCM.P[a.at].n:'Awaiting an army')+'</span>');}
+    const cap=Object.values(M.g).filter(g=>g.st===2&&g.by===me);for(const g of cap)row('<span style="opacity:.8">Prisoner: '+gmilTitle(g)+' '+g.nm+' ('+GCM.nats.get(g.o).name+')</span>');
+    if(!mine.length)row('<span style="opacity:.7">No generals yet.</span>');}
+  else if(GMILUI.tab==='fr'){box.appendChild(guEl('div','opacity:.75;font-size:13px','A front is a line between you and one enemy. Armies assigned to it hold the weak spots, push into the weakest enemy province, or counter-attack to retake lost land. You can still march any army yourself (its own order wins that turn).'));
+    const foes=Object.keys(GC.war).filter(k=>k.split('|').includes(me)).map(k=>k.split('|').find(x=>x!==me)).filter(x=>GC.nat[x]&&!GC.nat[x].dead).sort();
+    for(const foe of foes){const f=gmilFronts(me).find(x=>x.foe===foe);const r=guEl('div','border-bottom:1px solid #243a50;padding:5px 0');r.appendChild(guEl('div','','<b>vs '+GCM.nats.get(foe).name+'</b> '+(f?'· '+gmilLine(f).length+' line provinces · '+GC.armies.filter(a=>a.fr===f.id).length+' armies':'')));
+      if(!f)r.appendChild(gmilBtn('Open front',()=>{gmilAddFront(me,foe);gmilDone('');}));else{for(const o of ['hold','push','counter'])r.appendChild(gmilBtn(o==='hold'?'Hold':o==='push'?'Push':'Counter-attack',()=>{f.ord=o;gmilDone('');},f.ord===o));
+        const sel=GC.armies.find(a=>a.id===GV.selA&&a.o===me&&!a.fl);r.appendChild(gmilBtn('Assign selected army',()=>{if(!sel)return gmilDone('Select one of your armies first.');gmilDone(gmilAssign(sel.id,f.id));},false,sel?sel.nm:'select an army on the map first'));
+        for(const a of GC.armies.filter(x=>x.fr===f.id)){r.appendChild(guEl('div','font-size:13px;opacity:.85','• '+a.nm+' at '+GCM.P[a.at].n+' '+(a.path.length?'→ '+GCM.P[a.path[a.path.length-1]].n:'')));}}
+      box.appendChild(r);}
+    if(!foes.length)row('<span style="opacity:.7">You are not at war.</span>');}
+  else if(GMILUI.tab==='st'){const Q=gmilN(me);box.appendChild(guEl('div','opacity:.75;font-size:13px','Missiles, air raids and drone strikes hit an enemy province (buildings or armies) or an enemy fleet at sea. Click an enemy province or sea zone on the map and use its Strike buttons. Air defence in the target intercepts. Max 3 a turn.'));
+    row('Missiles in stock: <b>'+Q.ms+'</b>/'+GMIL_MS_MAX+' (one more every 3 turns)');box.appendChild(gmilBtn('Buy missile $'+GMIL_MISSILE_COST,()=>gmilDone(gmilBuyMissile(me))));
+    row('<b>Ordered this turn</b>');for(const o of Q.so)box.appendChild(guEl('div','font-size:13px','• '+GMIL_ST[o.t].n+' → '+GCM.P[o.pi].n+' ('+(o.k==='b'?'buildings':o.k==='a'?'armies':'fleet')+')'));
+    if(!Q.so.length)box.appendChild(guEl('div','opacity:.65;font-size:13px','Nothing yet.'));
+    if(Q.so.length)box.appendChild(gmilBtn('Cancel all (refund)',()=>{for(const o of Q.so){if(o.t==='m')Q.ms++;else{GC.nat[me].cash+=GMIL_ST[o.t].cost;if(GC.nat[me].e)GC.nat[me].e.fuel+=GMIL_ST[o.t].fuel;}}Q.so=[];gmilDone('');}));}
+  else{box.appendChild(guEl('div','opacity:.75;font-size:13px','Fleets sail between sea zones (select one, right-click a zone). A fleet at sea next to an enemy port blockades it: port income and sea trade stop. Armies crossing a sea held by an enemy fleet wait in port unless one of your fleets escorts them (same zone). Subs hide; patrol boats find them; mines hurt enemies.'));
+    for(const a of gmilFleets(me)){row('<b>'+a.nm+'</b> at '+GCM.P[a.at].n+' · '+a.u.length+' ships · value '+Math.round(grArmyVal(a)/100)/10+'k'+(a.path.length?' → '+GCM.P[a.path[a.path.length-1]].n:'')+(a.mine?' · mines':''));}
+    if(!gmilFleets(me).length)row('<span style="opacity:.7">No fleets.</span>');
+    const bk=Object.keys(M.bk).filter(i=>GC.prov[i].o===me);if(bk.length)row('<span style="color:#ff9d8e">Blockaded: '+bk.map(i=>GCM.P[i].n).join(', ')+'</span>');
+    box.appendChild(guEl('div','margin-top:6px;font-weight:bold','Build ships (select one of your port provinces)'));
+    const pi=GV.sel;if(pi>=0&&GCM.P[pi]&&GCM.P[pi].land&&GC.prov[pi].o===me&&gmilHasPort(pi)){const fac=grNat(me).fac;for(const [k,n] of GMIL_BUY){if(!grHasKind(fac,k))continue;const cost=grCost(fac,k)*n;box.appendChild(gmilBtn(n+'× '+grKindName(fac,k)+' $'+cost,()=>gmilDone(gmilBuyFleet(me,pi,k)),false,'arrives in 2 turns'));}}
+    else box.appendChild(guEl('div','opacity:.65;font-size:13px','Click one of your port provinces first.'));
+    if(M.fq.some(q=>q.o===me))box.appendChild(guEl('div','font-size:13px;margin-top:4px','In the yards: '+M.fq.filter(q=>q.o===me).map(q=>q.n+'× '+grKindName(grNat(me).fac,q.k)+' (turn '+q.t+')').join(', ')));}
+}
+// controls inside the province / sea-zone side panel
+function gmilUiProv(s,pi){if(!GC.me||!GC.mil||GC.over)return;const p=GCM.P[pi],me=GC.me,box=guEl('div','margin:8px 0;border-top:1px solid #243a50;padding-top:6px');let any=false;
+  const strikeRow=(k)=>{box.appendChild(guEl('div','opacity:.75;font-size:13px','Strike '+(k==='f'?'the fleet':'this province')+' (missiles in stock: '+gmilN(me).ms+')'));
+    for(const t of ['m','a','d'])for(const kk of (k==='f'?['f']:['b','a'])){const e=gmilStrikeCheck(me,t,pi,kk);const b=gmilBtn(GMIL_ST[t].n+' · '+(kk==='b'?'buildings':kk==='a'?'armies':'ships'),()=>{if(GC.ph!=='plan')return;gmilDone(gmilStrike(me,t,pi,kk));},false,e||'Order it');if(e)b.style.opacity='.55';box.appendChild(b);}any=true;};
+  if(p.land&&GC.prov[pi].o!==me&&grAtWar(me,GC.prov[pi].o)){strikeRow('p');}
+  else if(p.sea&&GC.armies.some(a=>a.at===pi&&a.fl&&grAtWar(a.o,me))){strikeRow('f');}
+  if(p.sea){const z=GC.mil.zm[pi];if(z)box.appendChild(guEl('div','font-size:13px;margin-top:4px;color:#9fd3ff','Mines here: '+z.n+' ('+GCM.nats.get(z.o).name+')'));any=any||!!z;}
+  if(p.land&&GC.prov[pi].o===me&&gmilHasPort(pi)){box.appendChild(guEl('div','font-size:13px;opacity:.8','Port: build ships in the Military panel (Fleets tab).'));any=true;if(gmilBk(pi))box.appendChild(guEl('div','font-size:13px;color:#ff9d8e','Under naval blockade: port income and sea trade stopped.'));}
+  if(any)s.appendChild(box);}

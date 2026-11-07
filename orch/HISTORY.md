@@ -256,6 +256,9 @@ Grand stage 2 — **empire economy on the grand map**. New `src/13g-grandeco.js`
 ## nations-a1 — Poland, Azerbaijan, Jordan, Kurdistan Region, Italy, Greece, Spain; EU retired (2026-11-06)
 First cut via NEWNAT, EU hidden from menus. See orch/reports/nations-a1.md. Open: voices, models, maps, tourney, servers-live PR.
 
+## 2026-11-06 — grand3 (orch/grand3, Sonnet 5.5, scheduled; chain stage 4)
+Grand stage 3 — **military on the grand map**. New `src/13i-grandmil.js` + `13j-grandmilui.js`: named fictional generals (4 traits, levels, killed/captured, hero in Fight-it with perks), front lines (hold / push / counter-attack with AI-assist for every empire), map strikes (missile, air raid, drone on buildings / armies / fleets, air defence intercepts, turn-log results), fleets and sea zones (fleets are armies of ships; sea battles auto or live on a naval map; blockades cut port income and sea trade; escorts for crossings; subs and mines), AI uses all of it, deterministic. Small hooks in 13-grand, 13b, 13c, 13g. Tests: `grandtest --only mil`. Screenshots `orch/shots/grand3/`. Not done: fort zones, supply limits, encirclement/sieges.
+
 ## 2026-11-07 — rescue (Sonnet 5.5, scheduled)
 Japan (JP) rescued: orch/nations-new2 had stalled 5 h with JP complete but unmerged; merged main (8 conflicts: kit/navy lists, anthem tables, TK_ADJ, headless sim list), rebuilt, smoke PASS, 17+ CI gates green. Open: gate/grand "eco snowballs" fails on main itself (not JP); gate/smooth-mp once regressed, mpsync-server hit a runner port clash after passing. JP still uses stand-in 3D models; radio/hero voice sheets open.
 ## 2026-11-06 — nations-b1 (orch/nations-b1, Sonnet 5.5, scheduled)
@@ -272,5 +275,12 @@ Added DZ, MA, NG, ZA, ET, LY, SD (first cut, NEWNAT, Egypt base). See orch/repor
 
 ## laneD 2026-11-07 D2 slice
 Added orch/newplayer.mjs (menu audit via visible text). Top confusion: with 54 nations the Tutorial/Conquest/Grand campaign buttons sat ~3700px down the main menu. Fixed: quick-start row at the top (presses the real buttons) + compact scrollable nation list. Smoke PASS; smooth gate runs in CI.
+- laneC 2026-11-07: C2/C3 grand map-mode panel restyled (framed, opaque); sea shader fresnel/ripples/glint; readability 2.5→3.5, water 2.5→3. Gate: smoke PASS, grandtest PASS.
+- laneD (2026-11-07 D0e): orch/lint.mjs robot checks wired into gate job `check`; KP voice-line text no longer names a real leader.
 - laneB 2026-11-07: B2 nation panel — tabbed window (Nation button in top bar, Esc closes) with header stats and tabs Economy, Diplomacy (read-only, uses grOpinion), Military, Provinces, Ledger; other stages add tabs with npTab(); shots orch/shots/laneB/
 - laneB 2026-11-07: B2.5 one modifier engine (src/13k-gmod.js: GMOD rows, gmod() evaluator, monthly cache/expiry, Modifiers tab, grandtest check); smooth gate timed out locally (grand-only change) — left to CI.
+
+## look1 — real geography + light for the 3D grand map (2026-11-07, Sonnet helper)
+Shipped: real elevation/bathymetry (Terrarium tiles) + Natural Earth I satellite colour baked by `orch/look1-bake.py` into `grand/elev.png`, `grand/color.jpg` (lazy-loaded, procedural fallback); `src/13g-grandlook.js` (real relief, graded colour, baked sun shadows/AO/relief normals, town flattening, cloud shadows, sky dome); ACES tone map, vignette, sea depth colour/glint/fresnel in 13e. Credits added in menu. Shots: orch/shots/look1/. Scores: orch/reports/artbar.md. Gate: grandsmooth, smooth-pc, smoke pass; `grand` fails on origin/main too (eco snowballs, rules), tutorial/mpsync flaky/unrelated. Open: water normal maps, PBR tiles, object shadows, bloom.
+- laneD D0d: 'Report a problem' button (main menu, pause menu, Settings) opens a pre-filled GitHub issue labelled player (version, mode, nation, map, last errors; no personal data) — src/08k-report.js. Smoke PASS.
+- laneA 2026-11-07: A1 live Fight-it battle: campaigns saved on the old (pre real-borders) world map are refused with a note instead of breaking the map/battle; a battle that can't start falls back to auto-resolve with a message; new gate grandlive plays menu → New → march → End turn → Fight it live with no hooks (loads + runs). Shots orch/shots/laneA/.
