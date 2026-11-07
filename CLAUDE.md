@@ -37,6 +37,15 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 
 ## Abdullah's standing decisions (do not reverse without him asking)
 
+- **IT'S A WORLD SIMULATOR** (Abdullah 2026-11-06 23:03 "You need to catch on we are creating a world simulator"): the grand campaign
+  simulates the real world, and every feature is designed by asking **"what would really happen?"** — never as an isolated button.
+  For each feature, before building, write down and build its chain: (1) **who reacts** — AI nations by their real interests and
+  alliances, populations (unrest, war support, refugees), markets (oil, trade, prices), the UN/blocs, the media; (2) **second-order
+  effects** across systems (a strike → prices → stability → elections → alliances…); (3) **realistic starting state and data** for
+  Nov 2026 (look it up, don't guess); (4) **counter-play** — every action has a real-world answer the other side can take;
+  (5) **costs** so nothing is free power. One shared world state (GMOD rows + the one event engine), so effects compound instead of
+  living in separate mini-games. Tactical battles stay balanced games; the world around them is a simulation. Anticipate what a
+  player expects to follow — don't wait to be told.
 - **Vision:** massive columns of infantry and vehicles in intense combat, with aircraft and drones overhead.
   Graphics pushed toward Company of Heroes / Broken Arrow realism **in real gameplay**, not just staged shots.
   Most tactical/realistic gameplay possible: flanking, cover, suppression.
