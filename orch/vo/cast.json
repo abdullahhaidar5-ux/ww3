@@ -124,5 +124,15 @@
    "Damien Black"
   ],
   "cmd": "Viktor Eka"
+ },
+ "JP": {
+  "eng": "xtts",
+  "lang": "ja",
+  "sold": [
+   "Damien Black",
+   "Baldur Sanjin",
+   "Dionisio Schuyler"
+  ],
+  "cmd": "Viktor Eka"
  }
 }

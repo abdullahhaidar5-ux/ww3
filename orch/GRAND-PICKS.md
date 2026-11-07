@@ -260,6 +260,7 @@ before/after screenshots of the same views in orch/shots/<pass>/.
 - [ ] **Advisor tips:** optional chief-of-staff hints on the grand map ("province 12 will revolt", "your east is undefended",
       "this strait closing will hurt your oil income"), toggle in Settings.
 
+- JP (Japan, added 2026-11-06 nations-new2): grand-map home region = Japan.
 ## Home regions (nations-new1, 2026-11-06)
 - **DW "Coffee Shias" = Yemen**: grand-map home region is Yemen (Sana'a / Sarawat highlands, Tihama coast, Hodeidah, Mokha, Bab-el-Mandeb). Battle maps `yemen`, `tihama`, `babelmandeb` already list DW as home; town names for style `yemen` are now Yemeni (tower-house towns).
 - **RS "Mountain Shias"**: home = South Lebanon & the Bekaa (Bint Jbeil, Maroun al-Ras, Khiam, Nabatieh, Baalbek, Hermel, the Litani, southern Beirut suburbs). Battle town names for style `lebanon` use these places.
