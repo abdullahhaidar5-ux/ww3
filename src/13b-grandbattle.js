@@ -31,7 +31,13 @@ function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.
   try{if(typeof centerOn==='function'){const B=BASES[0];setTimeout(()=>{try{centerOn(B[0],B[1]);}catch(e){}},50);}}catch(e){}}
 function grandForce(t){let v=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)v+=(e.s.cost||400)*(.35+.65*e.hp/e.max);for(const w of G.grand.waves)if(!w.done&&w.side===t)for(const r of w.recs)v+=grCost(G.teams[t].fac,r[0]);return v;}
 function grandAlive(t){let n=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)n++;for(const w of G.grand.waves)if(!w.done&&w.side===t)n+=w.recs.length;return n;}
+function grandRoutAt(t,g){const m=msOf((G.teams[t]||{}).fac);if(!m)return .15;if(m.rout===0)return 0;return (m.routHome!=null&&t!==g.att)?m.routHome:(m.rout!=null?m.rout:.15);}   // from the ONE morale table (MSTYLES)
 function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
+  for(const T of G.teams)if(T.credits)T.credits=0;   // army only: no battle money at all (Abdullah 20:10 "why is money generating if I can't build units"); the empire's money lives on the grand map
+  // a side with nobody left on the field never waits for a timer (Abdullah 2026-11-06 19:56 "I was killed, shouldn't it end immediately"):
+  // its next reinforcement wave arrives at once; with no waves left, the wipe check below ends the battle this tick
+  for(let s=0;s<2;s++){let f=0;for(const e of G.ents)if(e.team===s&&!e.isB&&!e.dead){f=1;break;}
+    if(!f){let nw=null;for(const w of g.waves)if(!w.done&&w.side===s&&(!nw||w.t<nw.t))nw=w;if(nw&&nw.t>g.t0)nw.t=g.t0;}}
   for(const w of g.waves)if(!w.done&&g.t0>=w.t){w.done=1;const t=w.side,B=BASES[t],a=baseFacing(t),back=260;const cx=Math.max(80,Math.min(MAPW-80,B[0]-Math.cos(a)*back)),cy=Math.max(80,Math.min(MAPH-80,B[1]-Math.sin(a)*back));
     grandPlace(t,w.recs,cx,cy,a,g);try{log(t,'Reinforcements arrive: '+w.label,'g');}catch(e){}
     const fresh=G.ents.filter(e=>e.team===t&&!e.isB&&!e.dead&&e.gr&&w.recs.includes(e.gr));if(fresh.length&&t===1)act(1,{t:'go',ids:fresh.map(u=>u.id),x:g.ctr[0],y:g.ctr[1],mode:'amove'});}
@@ -39,6 +45,10 @@ function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
   const n0=grandAlive(0),n1=grandAlive(1);let win=-1,how='';
   if(!n0&&!n1){win=g.att===0?1:0;how='wipe';}else if(!n0){win=1;how='wipe';}else if(!n1){win=0;how='wipe';}
   else if(g.t0>=g.limit){const v0=grandForce(0),v1=grandForce(1);win=v0>v1*1.0001?0:v1>v0*1.0001?1:(g.att===0?1:0);how='time';}
+  // rout (Abdullah 2026-11-06 20:09 "why haven't I won this round yet" — 24 vs 4): a side below its morale style's rout share of the other's strength
+  // (reinforcements on the way included) for 10 s breaks and flees; checked every 2 s, sim time only (deterministic)
+  if(win<0){g.rtT=(g.rtT||0)-dt;if(g.rtT<=0){g.rtT=2;const v0=grandForce(0),v1=grandForce(1),lo=v0<v1?0:1,r=Math.min(v0,v1)/Math.max(1,Math.max(v0,v1));
+    if(r<grandRoutAt(lo,g)){if(g.rtS!==lo){g.rtS=lo;g.rtA=g.t0;}else if(g.t0-g.rtA>=10){win=1-lo;how='rout';}}else g.rtS=-1;}}
   if(win>=0){g.fin=1;g.res={win,how};G.over=true;G.winner=win;try{grandBattleEnd();}catch(e){console.error('grandBattleEnd',e);}}}
 // the enemy side: attackers advance on the other force, defenders hold until something comes within reach
 function grandAI(t){const g=G.grand,mine=G.ents.filter(e=>e.team===t&&!e.isB&&!e.dead&&!e.s.noAttack&&(!e.order||e.order.type===undefined));if(!mine.length)return;
@@ -66,6 +76,9 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
   try{newGame({seed:(GC.seed*31+GC.turn*977+b.p*13)|0,facs:[f0,f1],ai:[false,false],map:gm.key||grMapFor(P,b),tm:[0,1],bs:1,slot:0,st:gm.real?[0,1]:(attTeam===0?[0,1]:[1,0]),w:0,grand:cfg});}finally{TERR_DEFER=false;}
   afterStart();}
 let GB_CUR=null;
+// the "Fight it live" button: never a dead end — if the battle can't be built, say so, put the map back and auto-resolve it (Lane A1)
+function grandFightLive(b){grandScreenShow(false);try{grandBattleStart(b);}catch(e){console.error('Fight it live failed',e);try{LOAD.tok++;loadHide();}catch(_){}G=null;GB_CUR=null;MODE='single';ME=0;
+  grandScreenShow(true);guModal('<div style="font-size:19px;font-weight:bold;margin-bottom:6px">The live battle could not start</div><div style="opacity:.8;margin-bottom:10px">'+String(e&&e.message||e).replace(/[<&]/g,'').slice(0,160)+'</div>The generals will auto-resolve this battle instead.',[['OK',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},1]]);}}
 // write the survivors back and show the result
 function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def']:['def','att'];sd.forEach((side,t)=>{const T=G.teams[t];if(!T||T.fuel==null)return;for(const s of grSideUnits(GB_CUR.b,side))if(s.arr)s.arr.fu=Math.round(T.fuel*100);});}catch(e){}try{gmWriteBack();}catch(e){console.error('gmWriteBack',e);}for(const [rec,e,team] of g.ents){const dead=e.dead||!G.byId.has(e.id);if(dead){rec.dead=1;if(rec[0]==='champ'&&g.gp&&g.gp[team]){try{gmilHeroFell(g.gp[team].gid);}catch(e){}}continue;}rec[1]=Math.max(1,Math.round(e.hp/e.max*100));rec[2]=Math.round(e.xp||rec[2]);if(e.s&&e.s.ammo)rec[3]=Math.max(0,Math.min(100,Math.round((e.ammo||0)/e.s.ammo*100)));}
   const strip=arr=>{for(let i=arr.length-1;i>=0;i--)if(arr[i].dead)arr.splice(i,1);};const b=GB_CUR.b;
@@ -73,7 +86,7 @@ function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def'
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}
 function grandBattleEnd(){const g=G.grand,c=GB_CUR;grandWriteBack();const T0=g.res.win===0,won=T0;
   const lost0=g.n0[0]-G.ents.filter(e=>e.team===0&&!e.isB&&!e.dead).length,lost1=g.n0[1]-G.ents.filter(e=>e.team===1&&!e.isB&&!e.dead).length;
-  const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':'FORCE DESTROYED')));
+  const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':g.res.how==='rout'?(won?'ENEMY ROUTED':'YOUR FORCE ROUTED'):'FORCE DESTROYED')));
   root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;color:'+(won?'#9fd36b':'#e07a6a'),won?'Victory':g.res.how==='retreat'?'Withdrawn':'Defeat'));
   root.appendChild(campEl('div','font-size:17px;line-height:1.6;margin-bottom:10px','Your losses: <b>'+lost0+'</b> of '+g.n0[0]+' units · Enemy losses: <b>'+lost1+'</b> of '+g.n0[1]+' units<br>Survivors keep their wounds and experience on the map; the dead are gone.'));
   root.appendChild(campBtn('Return to the map',()=>{campClose();grandLeaveBattle();grBattleDone(c.b,(c.meAtt===won)?'att':'def',g.res.how==='retreat'?'retreat':'live');grandMapRefresh();}));

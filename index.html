@@ -5073,11 +5073,11 @@ const COURAGE={};   // derived below from MORALE_STYLE (integrate1) - one table 
 // National morale styles (Abdullah 2026-11-05 20:01-20:41): every nation has ONE style; styles differ, total power is equal. Numbers live here only.
 //  cour = base courage; loss = how hard comrades falling hits (x fear, zealous get fervour instead); art = suppression from shells x; off = officer rally x;
 //  home = courage x on home turf (own territory); lone = courage divided by this when no armour/artillery/air is near; sup = own artillery+air damage x; taken = damage taken x
-const MSTYLES={
- zeal:{n:'Zealous',cour:1.6,loss:.2,ferv:.07,taken:1.07,zeal:1,desc:'Slow to break; fervour rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses.'},
- prof:{n:'Professional',cour:1.25,loss:1.3,art:.7,off:1.9,desc:'Steady under artillery and quick to rally near officers; heavy losses sap them more than other armies.'},
- home:{n:'Home defenders',cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
- fire:{n:'Firepower-reliant',cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
+const MSTYLES={   // rout = campaign battles: the side breaks below this share of the enemy's strength for 10 s (0 = never; Abdullah 2026-11-06 20:12 "base routing on morale system, zealous never routes"); routHome = when defending its own province
+ zeal:{n:'Zealous',rout:0,cour:1.6,loss:.2,ferv:.07,taken:1.07,zeal:1,desc:'Slow to break; fervour rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses.'},
+ prof:{n:'Professional',rout:.15,cour:1.25,loss:1.3,art:.7,off:1.9,desc:'Steady under artillery and quick to rally near officers; heavy losses sap them more than other armies.'},
+ home:{n:'Home defenders',rout:.2,routHome:.08,cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
+ fire:{n:'Firepower-reliant',rout:.25,cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
 const MORALE_STYLE={};
 for(const[st,l]of Object.entries({zeal:'IR RS DW KP',prof:'US RU CU GB FR DE JP KR AU CA IT GR PL UA TR CN PK EG ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA',fire:'IN AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
 function msOf(fac){return MSTYLES[MORALE_STYLE[fac]||'home'];}
@@ -15767,6 +15767,38 @@ const WHATS_NEW=[
 function whatsNewPage(){const o=idOv('idNew',"What's new"),b=o.querySelector('.idbody');b.innerHTML='';for(const [h,t] of WHATS_NEW){const d=document.createElement('div');d.style.cssText='margin:10px 0;text-align:left';const a=document.createElement('div');a.style.cssText='font:700 17px system-ui,sans-serif;color:#f4e9c2';a.textContent=h;const p=document.createElement('div');p.style.cssText='font:500 15px/1.4 system-ui,sans-serif;color:#dfe5da';p.textContent=t;d.append(a,p);b.appendChild(d);}o.hidden=false;}
 (function(){const op=document.getElementById('openSettings');if(op&&op.parentNode){const b=document.createElement('button');b.className='big ghost';b.style.cssText='font-size:15px;padding:7px 16px';b.textContent="What's new";b.onclick=whatsNewPage;op.parentNode.appendChild(b);}
 })();
+/* Battle HUD never shows over the menus (Abdullah 2026-11-06 19:52 photo: "Why do these buttons remain" — the top bar, alerts feed,
+   Supply lines button, Conquest banner and town panel stayed on screen after leaving a battle). One rule: while the main menu is open,
+   body gets .inMenu and every battle-only overlay is hidden; nothing else changes. */
+function hudMenuWatch(){const m=document.getElementById('menu');if(!m||hudMenuWatch.on)return;hudMenuWatch.on=1;
+  const st=document.createElement('style');st.textContent='body.inMenu #hudBar,body.inMenu #hudFeed,body.inMenu #lgBtn,body.inMenu #cqBn,body.inMenu #townp{display:none!important}';document.head.appendChild(st);
+  const sync=()=>document.body.classList.toggle('inMenu',!m.hidden);sync();new MutationObserver(sync).observe(m,{attributes:true,attributeFilter:['hidden']});}
+if(typeof document!=='undefined'){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hudMenuWatch);else hudMenuWatch();}
+// "Report a problem" — one click opens a pre-filled GitHub issue (label `player`). No personal data: only version, mode, nation, map, last console errors.
+(function(){
+const ERR=[];
+function push(s){try{ERR.push(String(s).slice(0,240));if(ERR.length>20)ERR.shift();}catch(e){}}
+window.addEventListener('error',e=>push((e&&e.message||'error')+(e&&e.filename?' @'+String(e.filename).split('/').pop()+':'+e.lineno:'')));
+window.addEventListener('unhandledrejection',e=>push('promise: '+(e&&e.reason&&e.reason.message||e&&e.reason||'')));
+const ce=console.error;console.error=function(){try{push(Array.prototype.map.call(arguments,a=>a&&a.message||String(a)).join(' '));}catch(e){}return ce.apply(console,arguments);};
+function info(){let g='menu';try{if(typeof G!=='undefined'&&G){g='mode='+MODE+' nation='+(G.pl&&G.pl[ME]&&G.pl[ME].fac||'?')+' map='+(G.map&&(G.map.name||G.map.id)||G.mapId||'?')+' t='+Math.round(G.t||0)+'s';}}catch(e){}
+  try{if(window.GC&&GC.on)g+=' grand-map day='+(GC.day||'?');}catch(e){}return g;}
+function report(){
+  const body='**What happened?** (write here)\n\n**What did you expect?**\n\n---\n_Auto-filled, no personal data:_\n- Page: '+location.pathname+'\n- State: '+info()+'\n- Browser: '+navigator.userAgent.slice(0,120)+'\n- Screen: '+innerWidth+'x'+innerHeight+'\n- Last errors:\n```\n'+(ERR.length?ERR.join('\n'):'none')+'\n```\n';
+  const url='https://github.com/abdullahhaidar5-ux/ww3/issues/new?labels=player&title='+encodeURIComponent('Problem: ')+'&body='+encodeURIComponent(body).slice(0,6000);
+  window.open(url,'_blank','noopener');}
+window.wwReportProblem=report;
+function mk(cls,id){const b=document.createElement('button');b.className=cls;b.id=id;b.textContent='Report a problem';b.title='Opens a pre-filled bug report (needs a free GitHub account)';b.onclick=report;return b;}
+function add(){
+  const op=document.getElementById('openSettings');
+  if(op&&op.parentNode&&!document.getElementById('rpMenu')){const b=mk('big ghost','rpMenu');b.style.cssText='font-size:15px;padding:7px 16px';op.parentNode.appendChild(b);}
+  const s=document.getElementById('aSet');
+  if(s&&s.parentNode&&!document.getElementById('rpPause')){const b=mk(s.className,'rpPause');b.setAttribute('role','menuitem');s.parentNode.insertBefore(b,s.nextSibling);}
+  const st=document.getElementById('sDone');
+  if(st&&st.parentNode&&!document.getElementById('rpSet')){const b=mk('ghost','rpSet');st.parentNode.insertBefore(b,st);}
+}
+add();setTimeout(add,1500);
+})();
 /* ================= AUDIO ENGINE: layered weapons, reverb, stereo, cinematic regional score ================= */
 const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,musicOn:true,sfxOn:true,voiceOn:true,rate:{},style:null,next:0,step:0,timer:null,lastVoice:0,voices:[],heat:0,bar:0};
 try{const v=JSON.parse(localStorage.getItem('ww3_audio')||'{}');if(v.m===false)AU.musicOn=false;if(v.s===false)AU.sfxOn=false;if(v.v===false)AU.voiceOn=false;}catch(e){}
@@ -18354,7 +18386,7 @@ function grKindName(fac,k){try{return stats(fac,k).name;}catch(e){return k;}}
 
 // ---------- new campaign ----------
 function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(seed);
-  GC={v:1,seed,len:quick?'quick':'std',maxTurn:quick?25:60,turn:1,me:o.me===undefined?'IR':o.me,nat:{},prov:[],armies:[],aid:1,war:{},log:[],q:[],qi:0,ph:'plan',over:null,res:null};
+  GC={v:1,ms:grMapSig(),seed,len:quick?'quick':'std',maxTurn:quick?25:60,turn:1,me:o.me===undefined?'IR':o.me,nat:{},prov:[],armies:[],aid:1,war:{},log:[],q:[],qi:0,ph:'plan',over:null,res:null};
   const codes=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))];
   GM_P.slice(0,GM_LAND).forEach((r,i)=>{GC.prov.push({o:r[1],o0:r[1],gar:[],tax:1,un:15,cv:0,rq:[]});});
   for(const c of codes){const N=grNat(c),ps=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c);const cap=ps.find(p=>p.cap)||ps[0];
@@ -18474,7 +18506,7 @@ function grFinishTurn(){const P=GCM.P;try{gmRepair();}catch(e){}try{gmilBlockRef
   for(const a of GC.armies.slice())if(!a.u.length)grDrop(a);
   // elimination, victory, next turn
   for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;const has=P.some(p=>p.land&&GC.prov[p.i].o===c);const arm=GC.armies.some(a=>a.o===c);if(!has||(N.cap<0&&!arm)){N.dead=1;grLog(GCM.nats.get(c).name+' has been eliminated.',c);for(const a of GC.armies.slice())if(a.o===c)grDrop(a);for(const k of Object.keys(GC.war))if(k.split('|').includes(c))delete GC.war[k];}}
-  GC.turn++;GC.ph='plan';GC.q=[];GC.qi=0;grJudge();grSave();}
+  GC.turn++;GC.ph='plan';GC.q=[];GC.qi=0;try{gmodMonth(GC.turn);}catch(e){}grJudge();grSave();}
 function grArrive(c,pi,k,n){const a=GC.armies.find(x=>x.o===c&&x.at===pi&&!x.path.length&&x.nm==='Reserve');const us=[];for(let i=0;i<n;i++)us.push([k,100,0,100]);if(a)a.u.push(...us);else{const b=grAddArmy(c,pi,us,'Reserve');}}
 
 // ---------- victory ----------
@@ -18520,7 +18552,11 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
 
 // ---------- save ----------
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){}}
-function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!o||o.v!==1)return null;GC=o;try{geEnsure();}catch(e){}return GC;}catch(e){return null;}}
+// a save made on an older world map (the province list changed, e.g. 2026-11-06 real borders 174 -> 236 land provinces) can't
+// continue: its province indices point at different places, so the map breaks and a Fight-it battle never loads (Lane A1)
+function grMapSig(){grMap();let h=0;for(const p of GCM.P){const s=p.n+'/'+p.adj.length;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;}return GCM.P.length+':'+(h>>>0).toString(36);}
+function grSaveOk(o){if(!o||o.v!==1||!Array.isArray(o.prov))return false;grMap();return o.ms?o.ms===grMapSig():o.prov.length===GCM.P.length;}
+function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!grSaveOk(o))return null;if(!o.ms)o.ms=grMapSig();GC=o;try{geEnsure();}catch(e){}return GC;}catch(e){return null;}}
 function grClear(){try{localStorage.removeItem(GR_KEY);}catch(e){}GC=null;}
 // test/AI-only: run n turns with every nation under AI control; battles auto-resolve
 function grRunAI(n){for(let i=0;i<n&&!GC.over;i++){grEndTurn(true);}return grHash();}
@@ -18845,7 +18881,13 @@ function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.
   try{if(typeof centerOn==='function'){const B=BASES[0];setTimeout(()=>{try{centerOn(B[0],B[1]);}catch(e){}},50);}}catch(e){}}
 function grandForce(t){let v=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)v+=(e.s.cost||400)*(.35+.65*e.hp/e.max);for(const w of G.grand.waves)if(!w.done&&w.side===t)for(const r of w.recs)v+=grCost(G.teams[t].fac,r[0]);return v;}
 function grandAlive(t){let n=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)n++;for(const w of G.grand.waves)if(!w.done&&w.side===t)n+=w.recs.length;return n;}
+function grandRoutAt(t,g){const m=msOf((G.teams[t]||{}).fac);if(!m)return .15;if(m.rout===0)return 0;return (m.routHome!=null&&t!==g.att)?m.routHome:(m.rout!=null?m.rout:.15);}   // from the ONE morale table (MSTYLES)
 function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
+  for(const T of G.teams)if(T.credits)T.credits=0;   // army only: no battle money at all (Abdullah 20:10 "why is money generating if I can't build units"); the empire's money lives on the grand map
+  // a side with nobody left on the field never waits for a timer (Abdullah 2026-11-06 19:56 "I was killed, shouldn't it end immediately"):
+  // its next reinforcement wave arrives at once; with no waves left, the wipe check below ends the battle this tick
+  for(let s=0;s<2;s++){let f=0;for(const e of G.ents)if(e.team===s&&!e.isB&&!e.dead){f=1;break;}
+    if(!f){let nw=null;for(const w of g.waves)if(!w.done&&w.side===s&&(!nw||w.t<nw.t))nw=w;if(nw&&nw.t>g.t0)nw.t=g.t0;}}
   for(const w of g.waves)if(!w.done&&g.t0>=w.t){w.done=1;const t=w.side,B=BASES[t],a=baseFacing(t),back=260;const cx=Math.max(80,Math.min(MAPW-80,B[0]-Math.cos(a)*back)),cy=Math.max(80,Math.min(MAPH-80,B[1]-Math.sin(a)*back));
     grandPlace(t,w.recs,cx,cy,a,g);try{log(t,'Reinforcements arrive: '+w.label,'g');}catch(e){}
     const fresh=G.ents.filter(e=>e.team===t&&!e.isB&&!e.dead&&e.gr&&w.recs.includes(e.gr));if(fresh.length&&t===1)act(1,{t:'go',ids:fresh.map(u=>u.id),x:g.ctr[0],y:g.ctr[1],mode:'amove'});}
@@ -18853,6 +18895,10 @@ function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
   const n0=grandAlive(0),n1=grandAlive(1);let win=-1,how='';
   if(!n0&&!n1){win=g.att===0?1:0;how='wipe';}else if(!n0){win=1;how='wipe';}else if(!n1){win=0;how='wipe';}
   else if(g.t0>=g.limit){const v0=grandForce(0),v1=grandForce(1);win=v0>v1*1.0001?0:v1>v0*1.0001?1:(g.att===0?1:0);how='time';}
+  // rout (Abdullah 2026-11-06 20:09 "why haven't I won this round yet" — 24 vs 4): a side below its morale style's rout share of the other's strength
+  // (reinforcements on the way included) for 10 s breaks and flees; checked every 2 s, sim time only (deterministic)
+  if(win<0){g.rtT=(g.rtT||0)-dt;if(g.rtT<=0){g.rtT=2;const v0=grandForce(0),v1=grandForce(1),lo=v0<v1?0:1,r=Math.min(v0,v1)/Math.max(1,Math.max(v0,v1));
+    if(r<grandRoutAt(lo,g)){if(g.rtS!==lo){g.rtS=lo;g.rtA=g.t0;}else if(g.t0-g.rtA>=10){win=1-lo;how='rout';}}else g.rtS=-1;}}
   if(win>=0){g.fin=1;g.res={win,how};G.over=true;G.winner=win;try{grandBattleEnd();}catch(e){console.error('grandBattleEnd',e);}}}
 // the enemy side: attackers advance on the other force, defenders hold until something comes within reach
 function grandAI(t){const g=G.grand,mine=G.ents.filter(e=>e.team===t&&!e.isB&&!e.dead&&!e.s.noAttack&&(!e.order||e.order.type===undefined));if(!mine.length)return;
@@ -18880,6 +18926,9 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
   try{newGame({seed:(GC.seed*31+GC.turn*977+b.p*13)|0,facs:[f0,f1],ai:[false,false],map:gm.key||grMapFor(P,b),tm:[0,1],bs:1,slot:0,st:gm.real?[0,1]:(attTeam===0?[0,1]:[1,0]),w:0,grand:cfg});}finally{TERR_DEFER=false;}
   afterStart();}
 let GB_CUR=null;
+// the "Fight it live" button: never a dead end — if the battle can't be built, say so, put the map back and auto-resolve it (Lane A1)
+function grandFightLive(b){grandScreenShow(false);try{grandBattleStart(b);}catch(e){console.error('Fight it live failed',e);try{LOAD.tok++;loadHide();}catch(_){}G=null;GB_CUR=null;MODE='single';ME=0;
+  grandScreenShow(true);guModal('<div style="font-size:19px;font-weight:bold;margin-bottom:6px">The live battle could not start</div><div style="opacity:.8;margin-bottom:10px">'+String(e&&e.message||e).replace(/[<&]/g,'').slice(0,160)+'</div>The generals will auto-resolve this battle instead.',[['OK',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},1]]);}}
 // write the survivors back and show the result
 function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def']:['def','att'];sd.forEach((side,t)=>{const T=G.teams[t];if(!T||T.fuel==null)return;for(const s of grSideUnits(GB_CUR.b,side))if(s.arr)s.arr.fu=Math.round(T.fuel*100);});}catch(e){}try{gmWriteBack();}catch(e){console.error('gmWriteBack',e);}for(const [rec,e,team] of g.ents){const dead=e.dead||!G.byId.has(e.id);if(dead){rec.dead=1;if(rec[0]==='champ'&&g.gp&&g.gp[team]){try{gmilHeroFell(g.gp[team].gid);}catch(e){}}continue;}rec[1]=Math.max(1,Math.round(e.hp/e.max*100));rec[2]=Math.round(e.xp||rec[2]);if(e.s&&e.s.ammo)rec[3]=Math.max(0,Math.min(100,Math.round((e.ammo||0)/e.s.ammo*100)));}
   const strip=arr=>{for(let i=arr.length-1;i>=0;i--)if(arr[i].dead)arr.splice(i,1);};const b=GB_CUR.b;
@@ -18887,7 +18936,7 @@ function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def'
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}
 function grandBattleEnd(){const g=G.grand,c=GB_CUR;grandWriteBack();const T0=g.res.win===0,won=T0;
   const lost0=g.n0[0]-G.ents.filter(e=>e.team===0&&!e.isB&&!e.dead).length,lost1=g.n0[1]-G.ents.filter(e=>e.team===1&&!e.isB&&!e.dead).length;
-  const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':'FORCE DESTROYED')));
+  const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':g.res.how==='rout'?(won?'ENEMY ROUTED':'YOUR FORCE ROUTED'):'FORCE DESTROYED')));
   root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;color:'+(won?'#9fd36b':'#e07a6a'),won?'Victory':g.res.how==='retreat'?'Withdrawn':'Defeat'));
   root.appendChild(campEl('div','font-size:17px;line-height:1.6;margin-bottom:10px','Your losses: <b>'+lost0+'</b> of '+g.n0[0]+' units · Enemy losses: <b>'+lost1+'</b> of '+g.n0[1]+' units<br>Survivors keep their wounds and experience on the map; the dead are gone.'));
   root.appendChild(campBtn('Return to the map',()=>{campClose();grandLeaveBattle();grBattleDone(c.b,(c.meAtt===won)?'att':'def',g.res.how==='retreat'?'retreat':'live');grandMapRefresh();}));
@@ -18994,14 +19043,19 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   cv.addEventListener('wheel',ev=>{ev.preventDefault();if(GV.g3){g3Wheel(ev);return;}const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top,[wx,wy]=guToWorld(mx,my),f=Math.exp(-ev.deltaY*.0015);GV.z*=f;guClamp();GV.ox=mx-wx*GV.z;GV.oy=my-wy*GV.z;guClamp();guRedraw();},{passive:false});
   cv.addEventListener('pointerdown',ev=>{if(GV.g3&&ev.button===1){ev.preventDefault();cv.setPointerCapture(ev.pointerId);GV.drag={x:ev.clientX,y:ev.clientY,btn:1,yaw:G3.camera.yaw,pitch:G3.camera.pitch,m:1};return;}if(ev.button!==0)return;cv.setPointerCapture(ev.pointerId);const r0=cv.getBoundingClientRect();GV.drag={x:ev.clientX,y:ev.clientY,ox:GV.ox,oy:GV.oy,m:0,g:GV.g3?g3Ground(ev.clientX-r0.left,ev.clientY-r0.top):null};});
   cv.addEventListener('pointermove',ev=>{const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;
-    if(GV.drag){const dx=ev.clientX-GV.drag.x,dy=ev.clientY-GV.drag.y;if(Math.abs(dx)+Math.abs(dy)>4)GV.drag.m=1;if(GV.drag.m&&GV.g3){g3Drag(ev,mx,my);return;}if(GV.drag.m){GV.ox=GV.drag.ox+dx;GV.oy=GV.drag.oy+dy;guClamp();guRedraw();return;}}
-    const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);if(h!==GV.hov){GV.hov=h;guRedraw();}if(GV.g3&&GV.drag&&GV.drag.m)return;guTip(h,mx,my);});
+    if(GV.drag){const dx=ev.clientX-GV.drag.x,dy=ev.clientY-GV.drag.y;if(Math.abs(dx)+Math.abs(dy)>8)GV.drag.m=1;if(GV.drag.m&&GV.g3){g3Drag(ev,mx,my);return;}if(GV.drag.m){GV.ox=GV.drag.ox+dx;GV.oy=GV.drag.oy+dy;guClamp();guRedraw();return;}}
+    const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);if(h!==GV.hov){GV.hov=h;guRedraw();}if(GV.g3&&GV.drag&&GV.drag.m)return;
+    const ah=GV.g3&&typeof g3HitAt==='function'?g3HitAt(mx,my):null;cv.style.cursor=ah?'pointer':'';if(ah){guArmyTip(ah.aid,mx,my);return;}guTip(h,mx,my);});
   cv.addEventListener('pointerup',ev=>{const d=GV.drag;GV.drag=null;if(!d||d.m)return;const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;guClick(mx,my);});
   cv.addEventListener('pointerleave',()=>{GV.hov=-1;document.getElementById('gTip').style.display='none';guRedraw();});
   addEventListener('resize',()=>{if(document.getElementById('grandScreen'))guResize();});
   guResize();guFit(null);const me=GC.me&&GC.nat[GC.me];if(me){GV.sel=me.cap;guCentre(me.cap,2.0);}guRedraw();grandMapRefresh();
   if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guEndTurn();}
     if(GV.g3)return;const k=ev.key.toLowerCase(),st=60;if(k==='w'||k==='arrowup')GV.oy+=st;else if(k==='s'||k==='arrowdown')GV.oy-=st;else if(k==='a'||k==='arrowleft')GV.ox+=st;else if(k==='d'||k==='arrowright')GV.ox-=st;else return;guClamp();guRedraw();});}}
+function guArmyTip(aid,mx,my){const t=document.getElementById('gTip'),a=GC.armies.find(x=>x.id===aid);if(!t||!a){if(t)t.style.display='none';return;}
+  const N=GCM.nats.get(a.o),mine=a.o===GC.me,P=GCM.P[a.at];const sea=P&&P.sea;
+  t.innerHTML='<b>'+a.nm+'</b><br>'+(N?N.name:a.o)+' · '+a.u.length+(sea?' ships/units at sea':' units')+(P?' · '+P.n:'')+'<br><span style="opacity:.8">'+(mine?'Click to select · right-click a province to move':'Click to inspect')+'</span>';
+  t.style.display='block';t.style.left=(mx+16)+'px';t.style.top=(my+16)+'px';}
 function guTip(h,mx,my){const t=document.getElementById('gTip');if(!t)return;if(h<0||!GCM.P[h]){t.style.display='none';return;}const p=GCM.P[h];let html;
   if(p.sea){html='<b>'+p.n+'</b><br>'+(p.ck?'<span style="color:#ff9d8e">Chokepoint strait</span><br>':'')+'Sea zone · crossing takes '+p.cost+' turn'+(p.cost>1?'s':'');}
   else{const st=GC.prov[h],N=GCM.nats.get(st.o);html='<b>'+p.n+'</b> <span style="opacity:.7">'+N.name+'</span><br>'+guTerrName(p.t)+' · towns '+p.tw+(p.oil?' · oil':'')+(p.farm?' · farms':'')+(p.mine?' · mines':'')+(p.port?' · port':'')+'<br>Garrison '+st.gar.length+(st.o===GC.me?' · unrest '+Math.round(st.un)+'%':'')+(p.cap?'<br><span style="color:#ffd24a">Capital</span>':GC.nat[st.o]&&GC.nat[st.o].wg.includes(h)?'<br><span style="color:#ffd24a">War goal</span>':'');}
@@ -19067,7 +19121,7 @@ function grBattlePrompt(b){grandScreenShow(true);guCentre(b.p,2.2);GV.sel=b.p;GV
   const html='<div style="opacity:.7;font-size:13px">BATTLE · '+(b.river?'river crossing · ':'')+(b.mtn?'mountain pass · ':'')+guTerrName(P.t)+'</div><h2 style="margin:2px 0 8px;font-size:24px">'+P.n+'</h2>'
    +'<div style="display:flex;gap:14px;margin-bottom:8px"><div style="flex:1"><b style="color:#ffb59a">Attackers</b> — '+GCM.nats.get(b.an).name+'<br>'+nUnits(S)+' units<br><span style="font-size:13px;opacity:.8">'+cnt(S)+'</span></div><div style="flex:1"><b style="color:#9fd0ff">Defenders</b> — '+GCM.nats.get(b.dn).name+'<br>'+nUnits(D)+' units'+(b.garr?' (incl. garrison)':'')+'<br><span style="font-size:13px;opacity:.8">'+cnt(D)+'</span></div></div>'
    +'<div style="height:10px;border-radius:5px;background:#3b6ea8;overflow:hidden;margin:4px 0 2px"><div style="width:'+pct+'%;height:100%;background:#d0583d"></div></div><div style="font-size:13px;opacity:.8;margin-bottom:10px">Attackers '+pct+'% · Defenders '+(100-pct)+'% (terrain, river and home-turf bonuses included). Fight it live: you command exactly these units; nothing can be built.</div>';
-  guModal(html,[['Fight it live',()=>{grandScreenShow(false);grandBattleStart(b);},1],['Auto-resolve',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},0],...(canWithdraw?[['Withdraw',()=>{guWithdraw(b);},0]]:[])]);}
+  guModal(html,[['Fight it live',()=>{grandFightLive(b);},1],['Auto-resolve',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},0],...(canWithdraw?[['Withdraw',()=>{guWithdraw(b);},0]]:[])]);}
 function grBattleAuto2(b){const R=grRng(GC.seed*7+GC.turn*131+b.p);return grAuto(b,R).win;}
 function guWithdraw(b){const me=GC.me;if(b.an===me){grBattleDone(b,'def','retreat');}
   else{for(const a of GC.armies.filter(x=>b.def.includes(x.id)&&x.o===me)){const to=grRetreatTo(a,b.p);if(to>=0){a.at=to;a.path=[];grLog(a.nm+' withdrew from '+GCM.P[b.p].n+'.',me);}}b.def=b.def.filter(id=>GC.armies.some(a=>a.id===id&&a.at===b.p));
@@ -19081,8 +19135,10 @@ function grandClose(){g3Dispose();GV.g3=false;const e=document.getElementById('g
 function grandMenu(){grMap();const saved=(()=>{try{return JSON.parse(localStorage.getItem(GR_KEY));}catch(e){return null;}})(),root=campEl('div');
   root.appendChild(campEl('h1','margin:6px 0 4px;font-size:30px;letter-spacing:.04em;','GRAND CAMPAIGN'));
   root.appendChild(campEl('div','opacity:.75;margin-bottom:14px;line-height:1.5','Run a nation on the world map. Everyone plans at once, then all orders resolve together. When armies meet you can fight the battle yourself, with exactly the units you brought, or let the generals auto-resolve it.'));
-  if(saved&&saved.v===1&&!saved.over&&saved.me){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campBtn('Continue — '+n+', turn '+saved.turn+'/'+saved.maxTurn,()=>{grLoad();campClose();grandOpen();}));}
-  root.appendChild(campBtn('New campaign',()=>{grandSetup();},!!(saved&&!saved.over)));root.appendChild(campBtn('Back',campClose,true));campShow(root);}
+  const usable=saved&&!saved.over&&saved.me&&grSaveOk(saved);
+  if(saved&&!saved.over&&saved.me&&!usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campEl('div','margin:0 0 12px;padding:8px 10px;border:1px solid #8a6a3a;border-radius:6px;background:rgba(120,80,30,.25);line-height:1.5','Your saved campaign ('+n+', turn '+saved.turn+') was made on an older world map and can\'t continue on the new one. Start a new campaign.'));}
+  if(usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campBtn('Continue — '+n+', turn '+saved.turn+'/'+saved.maxTurn,()=>{grLoad();campClose();grandOpen();}));}
+  root.appendChild(campBtn('New campaign',()=>{grandSetup();},!!usable));root.appendChild(campBtn('Back',campClose,true));campShow(root);}
 function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))].filter(c=>!grNat(c).major).sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1);let nat='IR',len='quick';
   root.appendChild(campEl('h1','margin:6px 0 8px;font-size:28px','NEW GRAND CAMPAIGN'));root.appendChild(campEl('div','opacity:.8;margin-bottom:6px','Your nation'));
   const sel=campEl('select','font-size:18px;padding:8px;background:#1a2430;color:#fff;border:1px solid #6b7a55;border-radius:6px;min-width:300px');
@@ -19535,7 +19591,8 @@ function g3Wheel(ev){const c=G3.camera,r=GV.cv.getBoundingClientRect(),g=g3Groun
   if(g){const k=1-nd/c.d;c.x+=(g[0]-c.x)*k*.9;c.z+=(g[1]-c.z)*k*.9;}c.d=nd;G3.moved=true;}
 function g3Drag(ev,mx,my){const d=GV.drag;if(!d)return;if(d.btn===1){const c=G3.camera,cc=G3.cc;c.yaw=cc.yaw=d.yaw-(ev.clientX-d.x)*.006;c.pitch=cc.pitch=Math.max(.45,Math.min(1.3,d.pitch+(ev.clientY-d.y)*.004));G3.moved=true;return;}
   const g=g3Ground(mx,my);if(!g||!d.g)return;const c=G3.camera,cc=G3.cc;c.x=cc.x=Math.max(0,Math.min(2400,cc.x+d.g[0]-g[0]));c.z=cc.z=Math.max(0,Math.min(1200,cc.z+d.g[1]-g[1]));G3.moved=true;}
-function g3Click(mx,my){let best=null,bd=1e9;for(const h of G3.hit){const dd=Math.hypot(mx-h.x,my-h.y);if(dd<h.r&&dd<bd){bd=dd;best=h;}}
+function g3HitAt(mx,my){let best=null,bd=1e9;for(const h of G3.hit){const inBox=h.y0!=null&&Math.abs(mx-h.x)<=h.w&&my>=h.y0&&my<=h.y1;const dd=Math.hypot(mx-h.x,my-h.y);if((inBox||dd<h.r)&&dd<bd){bd=dd;best=h;}}return best;}
+function g3Click(mx,my){const best=g3HitAt(mx,my);
   if(best){const a=GC.armies.find(x=>x.id===best.aid);GV.selA=best.aid;if(a)GV.sel=a.at;guSide();g3Refresh();return;}
   const g=g3Ground(mx,my);if(!g)return;const h=guProvAt(g[0],g[1]);GV.sel=h;if(GV.selA){const a=GC.armies.find(x=>x.id===GV.selA);if(!a||a.at!==h)GV.selA=0;}guSide();g3Refresh();}
 function g3Refresh(){G3.sig='';G3.arrowDirty=true;}
@@ -19563,7 +19620,8 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
   G3.hit=[];const s=G3.sc_s;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;let pl=G3.pl.get(a.id);if(!pl){pl=guEl('div','');pl.className='p';G3.lab.appendChild(pl);G3.pl.set(a.id,pl);}
     const q=proj(e.g.position.x,e.g.position.y+(e.sea?6:3)*s,e.g.position.z),top=proj(e.g.position.x,e.g.position.y+13*s,e.g.position.z),mine=a.o===GC.me,sel=a.id===GV.selA;
     if(!q){vis(pl,false);continue;}
-    G3.hit.push({aid:a.id,x:q[0],y:top?(q[1]+top[1])/2:q[1],r:Math.max(16,top?Math.abs(q[1]-top[1])*.7:16)});
+    {const ft=proj(e.g.position.x,e.g.position.y+28*s,e.g.position.z),yT=ft?ft[1]:(top?top[1]:q[1]-40);   // whole figure is the target: flag top → number badge (Abdullah 19:58 "not being able to click on armies or navies")
+     G3.hit.push({aid:a.id,x:q[0],y:top?(q[1]+top[1])/2:q[1],r:Math.max(16,top?Math.abs(q[1]-top[1])*.7:16),y0:Math.min(yT,q[1])-10,y1:q[1]+38,w:Math.max(24,top?Math.abs(q[1]-top[1])*.6:24)});}
     const show=d<1100||mine||sel;if(show){const t=''+a.u.length;if(pl._h!==t+(mine?1:0)+(sel?1:0)){pl._h=t+(mine?1:0)+(sel?1:0);pl.textContent=t;pl.className='p'+(mine?' me':'')+(sel?' sel':'');}putC(pl,[q[0],q[1]+12]);pl.style.transform='translate(-50%,0) translate('+Math.round(q[0])+'px,'+Math.round(q[1]+16)+'px)';}vis(pl,show);}
   for(const [id,pl] of G3.pl)if(!G3.arm.has(id)){pl.remove();G3.pl.delete(id);}}
 function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!document.body.contains(GV.cv)||!GC){if(!GV.cv||!document.body.contains(GV.cv))g3Dispose();return;}
@@ -20527,5 +20585,36 @@ npTab('prov','🏙','Provinces',(code,body,c)=>{const rows=c.S.ps.map(p=>{const 
   body.innerHTML='<div style="margin-bottom:8px">'+rows.length+' provinces, richest first. Click to fly there.</div>';npTable(body,['Province','Terrain','Tax','Unrest','Garrison'],rows,r=>npFly(r.pi));});
 npTab('led','📊','Ledger',(code,body)=>{const rows=[];for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead||!grNat(c).major)continue;const S=npStat(c);rows.push({c,k:S.army,cells:['<b>'+GCM.nats.get(c).name+(c===code?' ◀':'')+'</b>',grRealClass(c),S.prov,Math.round(N.cash).toLocaleString(),S.army.toLocaleString(),grScore(c)]});}
   rows.sort((a,b)=>b.k-a.k);body.innerHTML='<div style="margin-bottom:8px">Every living major nation, strongest army first. Click to open its panel.</div>';npTable(body,['Nation','Tier','Provinces','Cash','Army','Score'],rows,r=>{NP.code=r.c;npDraw();});});
+// THE ONE MODIFIER ENGINE (lane B2.5, EU4-style). Every grand-map bonus/penalty from ideas, estates, stability, war support, rallies,
+// morale-style perks, named battles, war economy, inflation, corruption, autonomy... is a ROW here — never a new code path.
+//   row = {id, src:'Zealous fervour', scope:'nation'|'army'|'province', stat:'warSupport', add:0.1 | mul:1.25, cond:'style:zeal', t:target, until:month}
+//   static rows live in GMOD_ROWS (code, conditions by name); temporary/event rows live in GC.mod (saved with the campaign, deterministic).
+//   gmod(scope,obj,stat,base=0)  -> (base+sum add)*product mul     gmodLines(scope,obj,stat) -> ['+10% from Zealous fervour', ...]
+// obj = nation code | army object | province index.  Cached per month; gmodMonth(m) is the ONE monthly hook (expiry + cache reset).
+const GMOD_COND={
+  always:()=>true,
+  style:(k,arg)=>{try{const n=grNat(k);return (MORALE_STYLE[n.fac]||MORALE_STYLE[k])===arg;}catch(e){return false;}}};
+const GMOD_ROWS=[
+  {id:'sty_zeal',src:'Zealous fervour',scope:'nation',stat:'warSupport',add:.10,cond:'style:zeal'},
+  {id:'sty_prof',src:'Professional officers',scope:'nation',stat:'rallySpeed',mul:1.25,cond:'style:prof'},
+  {id:'sty_home',src:'Home defenders',scope:'nation',stat:'homeMorale',mul:1.4,cond:'style:home'},
+  {id:'sty_fire',src:'Firepower doctrine',scope:'nation',stat:'fireSupport',mul:1.1,cond:'style:fire'}];
+const GMOD_C={m:-1,g:null,cache:new Map()};
+function gmodKey(scope,obj){return scope==='army'?(obj&&(obj.id!==undefined?obj.id:obj.nm)):obj;}
+function gmodCond(row,key){if(row.t!==undefined&&row.t!==key)return false;const c=row.cond||'always';const i=c.indexOf(':');const f=GMOD_COND[i<0?c:c.slice(0,i)];if(!f)return false;try{return !!f(key,i<0?'':c.slice(i+1));}catch(e){return false;}}
+function gmodRows(scope,obj,stat){const key=gmodKey(scope,obj),out=[];
+  for(const r of GMOD_ROWS)if(r.scope===scope&&(!stat||r.stat===stat)&&gmodCond(r,key))out.push(r);
+  if(GC&&GC.mod)for(const r of GC.mod)if(r.scope===scope&&(!stat||r.stat===stat)&&(r.until===undefined||r.until>=GC.turn)&&gmodCond(r,key))out.push(r);
+  return out;}
+function gmod(scope,obj,stat,base){base=base||0;if(GMOD_C.g!==GC){GMOD_C.g=GC;GMOD_C.cache.clear();}const ck=scope+'|'+gmodKey(scope,obj)+'|'+stat+'|'+base,hit=GMOD_C.cache.get(ck);if(hit!==undefined)return hit;
+  let a=0,m=1;for(const r of gmodRows(scope,obj,stat)){if(r.add)a+=r.add;if(r.mul)m*=r.mul;}const v=(base+a)*m;GMOD_C.cache.set(ck,v);return v;}
+function gmodLines(scope,obj,stat){return gmodRows(scope,obj,stat).map(r=>(r.add?(r.add>0?'+':'')+Math.round(r.add*100)+'%':'x'+r.mul)+' from '+r.src+(r.until!==undefined?' (until month '+r.until+')':''));}
+function gmodAdd(row){if(!GC)return;if(!GC.mod)GC.mod=[];GC.mod=GC.mod.filter(r=>r.id!==row.id);GC.mod.push(row);GMOD_C.cache.clear();}
+function gmodRemove(id){if(!GC||!GC.mod)return;GC.mod=GC.mod.filter(r=>r.id!==id);GMOD_C.cache.clear();}
+function gmodMonth(m){if(!GC)return;if(m===undefined)m=GC.turn;GMOD_C.m=m;GMOD_C.g=GC;if(GC.mod)GC.mod=GC.mod.filter(r=>r.until===undefined||r.until>=m);GMOD_C.cache.clear();}
+// Nation panel tab: every modifier that applies to this nation, with its source.
+const GMOD_STATS={warSupport:'War support',rallySpeed:'Rally speed',homeMorale:'Home-ground morale',fireSupport:'Fire support'};
+npTab('mods','✨','Modifiers',(code,body)=>{const rows=gmodRows('nation',code);
+  body.innerHTML='<div style="opacity:.8;margin-bottom:8px">Every bonus and penalty on this nation, and where it comes from.</div>'+(rows.length?rows.map(r=>'<div style="padding:5px 0;border-bottom:1px solid #2c4258"><b>'+(GMOD_STATS[r.stat]||r.stat)+'</b> '+(r.add?(r.add>0?'+':'')+Math.round(r.add*100)+'%':'x'+r.mul)+' <span style="opacity:.75">— '+r.src+(r.until!==undefined?', until month '+r.until:'')+'</span></div>').join(''):'<i>No modifiers.</i>');});
 </script>
 </body></html>

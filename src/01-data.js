@@ -141,11 +141,11 @@ const COURAGE={};   // derived below from MORALE_STYLE (integrate1) - one table 
 // National morale styles (Abdullah 2026-11-05 20:01-20:41): every nation has ONE style; styles differ, total power is equal. Numbers live here only.
 //  cour = base courage; loss = how hard comrades falling hits (x fear, zealous get fervour instead); art = suppression from shells x; off = officer rally x;
 //  home = courage x on home turf (own territory); lone = courage divided by this when no armour/artillery/air is near; sup = own artillery+air damage x; taken = damage taken x
-const MSTYLES={
- zeal:{n:'Zealous',cour:1.6,loss:.2,ferv:.07,taken:1.07,zeal:1,desc:'Slow to break; fervour rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses.'},
- prof:{n:'Professional',cour:1.25,loss:1.3,art:.7,off:1.9,desc:'Steady under artillery and quick to rally near officers; heavy losses sap them more than other armies.'},
- home:{n:'Home defenders',cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
- fire:{n:'Firepower-reliant',cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
+const MSTYLES={   // rout = campaign battles: the side breaks below this share of the enemy's strength for 10 s (0 = never; Abdullah 2026-11-06 20:12 "base routing on morale system, zealous never routes"); routHome = when defending its own province
+ zeal:{n:'Zealous',rout:0,cour:1.6,loss:.2,ferv:.07,taken:1.07,zeal:1,desc:'Slow to break; fervour rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses.'},
+ prof:{n:'Professional',rout:.15,cour:1.25,loss:1.3,art:.7,off:1.9,desc:'Steady under artillery and quick to rally near officers; heavy losses sap them more than other armies.'},
+ home:{n:'Home defenders',rout:.2,routHome:.08,cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
+ fire:{n:'Firepower-reliant',rout:.25,cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
 const MORALE_STYLE={};
 for(const[st,l]of Object.entries({zeal:'IR RS DW KP',prof:'US RU CU GB FR DE JP KR AU CA IT GR PL UA TR CN PK EG ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA',fire:'IN AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
 function msOf(fac){return MSTYLES[MORALE_STYLE[fac]||'home'];}
