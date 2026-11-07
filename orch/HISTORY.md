@@ -339,3 +339,4 @@ RV "River Shias" added as a full first-cut nation (Iraqi Shia volunteer-brigade 
 - 2026-11-07 laneE (Sonnet): Command panel (battle plans/groups) starts collapsed to a slim header so it no longer covers the base view (src/08g-command.js, view only); smoke PASS; smooth gate times out locally, CI decides; shots orch/shots/laneE/f1-base.png (before) f2-base.png (after). E1 model swap, E2, E4 still open
 - 2026-11-07 laneA (Opus): A5 slice 1 force limit + army tradition (4c37b53d, src/13y-gforce.js, GMOD rows, top-bar ⚔ chip); grandtest PASS.
 - 2026-11-07 laneD D-ME slice 2: 3 more Middle East Conquest maps (Tigris Marshes, Palmyra Desert, Tihama Coast) for IQ/RV/SY/DW; map data only; smoke PASS, mapfair static even.
+- 2026-11-07 laneD D-ME dedupe: removed 5 hand-written ME maps from 02-map.js that duplicated the memaps helper's 02c-memaps.js rows (negev, jordanvalley, eilat, tigrismarsh, palmyra); kept Tihama Coast (DW). CI gates.
