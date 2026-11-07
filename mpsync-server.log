@@ -1,0 +1,23 @@
+game servers running locally at http://127.0.0.1:39863
+[6s] both pages loaded (menu model downloads done after 4s / 4s)
+[7s] host lobby open, code wzd5e4
+[7s] client's game list (from the server) shows game WZD5E4: {"role":"server","n":1,"id":"v377e673dff7e","ok":true}
+[7s] client joining
+[7s] client connected via ws: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[22s] battle: US vs RU on strait; client is slot 1
+[113s] both pages finished loading
+[113s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[113s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[135s] client order: 2/2 of the client's units moved on the host
+[171s] check @1.0 min t=60s: host 42 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 9721 client 9721
+[263s] check @2.5 min t=150s: host 47 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10984 client 10984
+[363s] check @4.0 min t=240s: host 51 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10840 client 10840
+[369s] traffic host->client 2471 KB in 2635 messages, client->host 55 KB in 288; client lag max 0.10 game-s; 4 ms per 0.1 s step
+[369s] 24 live checks, 0 out of tolerance; up to 2 enemy entities were in the client's view at once
+[369s] relay traffic per player: host->player 656 frames (716 records), 618 KB raw / 155 KB compressed per game-minute; player->host 64 frames, 1.0 KB compressed per minute (orch/out/srv-traffic.json)
+peak memory (node + browser, summed RSS): 4885 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC FAIL: host console error: THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The "position" attribute is likely to have NaN values. r (370s)
+  ✗ client console error: THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The "position" attribute is likely to have NaN values. r
