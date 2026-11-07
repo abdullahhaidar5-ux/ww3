@@ -116,6 +116,7 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
 ## WORLD SIMULATOR rule (Abdullah 23:03) — applies to every lane item: see CLAUDE.md "IT'S A WORLD SIMULATOR". Each item's commit/HISTORY line lists its reaction chain (who reacts, second-order effects, counter-play, cost); an item that only adds a button with no world reaction is not done.
 
 ## Rules for every lane session — FAST + CHEAP (Abdullah 18:40 "Get creative and speed up development and save usage")
+0. **USAGE FREEZE (Abdullah 2026-11-07 07:40: 25% of his usage left until the deadline):** only **Lane C (grand-map towns / C-LOOK part 2), Lane E (battle DE-BLOCK), the grandlook helper and the realmap helper** keep working. **Lanes A, B, D, F, G and the portraits helper: stop immediately** — commit/push anything green you already have, write your HANDOFF, do NOT fire your own task again. Everyone still working: no optional extras, fewer re-shots, ship and stop when your item is done.
 1. **FIRST:** `git fetch -q`. Stop only if **your own lane** has an unmerged `orch/lane<X>-*` branch pushed < 45 min ago. **Never wait for
    other helpers** (grand3, look1, rescue…): if your top item touches files another active branch is editing, take your next
    non-conflicting item instead and come back later.
