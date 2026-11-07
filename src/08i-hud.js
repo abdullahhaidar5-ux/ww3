@@ -34,7 +34,7 @@ function hudTick(force){try{hudDeclutter();}catch(e){}if(!G||!G.teams||!G.teams[
 const HD_KEYS=HUD_OV.map(q=>q[0]);
 /* ---------- What's new (one screen, newest first) ---------- */
 const WHATS_NEW=[
- ['Online grand campaign','Grand campaign → Online campaign: open your campaign to friends or join theirs by code. Each friend leads a free nation (the AI runs the rest), sees the world through its own fog, and anyone can pause; the host sets the speed.'],
+ ['Online grand campaign','Grand campaign → Play with friends: pick a scenario and your nation, then share the invite code or link; friends pick a nation and tick Ready in the lobby, you press Start. Or Grand campaign → Join friends to enter theirs by code. Each friend leads a free nation (the AI runs the rest), sees the world through its own fog, and anyone can pause; the host sets the speed.'],
  ['Morale styles','Every nation now fights with one of four styles: Zealous (slow to break, banners rally the faithful, heavier losses), Professional (steady under artillery, rally fast near officers), Home defenders (much braver on home turf) and Firepower-reliant (break sooner, but stronger fire support). The style shows on the nation pick screen and in the Encyclopedia.'],
  ['One HUD','A single top bar now shows money, income, supply, world opinion and an Alerts button (click it for the last warnings). The Towns / Supply / Opinion / Sonar / Mines buttons switch the map and minimap layers on and off.'],
  ['Grand-map assets','The Ayatollah, the Dear Leader, the Mountain Fortress and the Bunker Buster are no longer in Conquest battles; they live on the grand map.'],
