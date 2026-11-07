@@ -368,7 +368,8 @@ function g3Ent(a){let e=G3.arm.get(a.id);const sea=GCM.P[a.at].sea,tier=g3Tier(a
   const old=e;e={g,sea,tier,mini:!!mg,o:a.o,pi:a.at,x:0,z:0,fx:0,fz:0,mv:1,tt:1,face:0,aid:a.id,plate:old?old.plate:null};G3.ents.add(g);G3.arm.set(a.id,e);return e;}
 function g3Anchors(s){const by=new Map();for(const a of GC.armies){if(!by.has(a.at))by.set(a.at,[]);by.get(a.at).push(a);}
   const out=new Map();for(const [pi,L] of by){L.sort((a,b)=>(b.o===GC.me)-(a.o===GC.me)||a.id-b.id);const p=GCM.P[pi],tw=!p.sea?g3Towns().find(t=>t.pi===pi):null,bx=tw?tw.x:p.x,bz=(tw?tw.z:p.y)+(p.sea?0:(tw&&tw.cap?30:20)*Math.min(1.6,Math.max(1,s*.6)));
-    L.forEach((a,k)=>out.set(a.id,[bx+(k-(L.length-1)/2)*(p.sea?20:13)*s,bz]));}
+    const G=[];for(const a of L){let g=G.find(x=>x.o===a.o);if(!g)G.push(g={o:a.o,L:[]});g.L.push(a);}   // C-LOOK3: same-nation stack in one province = one figure + total count
+    G.forEach((g,k)=>{const ax=bx+(k-(G.length-1)/2)*(p.sea?20:13)*s,lead=g.L[0];lead.g3n=g.L.reduce((t,x)=>t+x.u.length,0);lead.g3sel=g.L.some(x=>x.id===GV.selA);for(const a of g.L){a.g3lead=a===lead;out.set(a.id,[ax,bz]);}});}
   for(const a of GC.armies){const f=typeof grSlide==='function'?grSlide(a):0;if(f>0){const A=out.get(a.id),q=GCM.P[a.path[0]],tw=!q.sea?g3Towns().find(t=>t.pi===q.i):null,bx=tw?tw.x:q.x,bz=tw?tw.z:q.y;out.set(a.id,[A[0]+(bx-A[0])*f,A[1]+(bz-A[1])*f]);}}   /* laneA hook: marching armies slide along the road as days pass */
   return out;}
 function g3SyncArmies(){if(!G3.ents||!GC)return;const ids=new Set(GC.armies.map(a=>a.id));for(const [id,e] of G3.arm)if(!ids.has(id)){G3.ents.remove(e.g);if(e.plate)e.plate.remove();G3.arm.delete(id);}
@@ -522,14 +523,15 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
   // army plates + click targets
   G3.hit=[];const s=G3.sc_s;
   /* C-LABELS: army count plates — yours/selected first, then others; a plate that would sit on another one is hidden (zoom in to split the stack) */
-  const plOK=new Set();{const pr=[],pq=[];for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e||!grSeen(a))continue;const q=proj(e.g.position.x,e.g.position.y+(e.sea?6:3)*s,e.g.position.z);if(q)pr.push({a,q,k:a.id===GV.selA?2:a.o===GC.me?1:0});}
+  const plOK=new Set();{const pr=[],pq=[];for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e||!grSeen(a)||a.g3lead===false)continue;const q=proj(e.g.position.x,e.g.position.y+(e.sea?6:3)*s,e.g.position.z);if(q)pr.push({a,q,k:a.id===GV.selA?2:a.o===GC.me?1:0});}
     pr.sort((u,w)=>w.k-u.k);for(const r of pr){let bad=false;if(r.k<1)for(const o of pq)if(Math.abs(o[0]-r.q[0])<30&&Math.abs(o[1]-r.q[1])<20){bad=true;break;}if(!bad){plOK.add(r.a.id);pq.push(r.q);}}}
   for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;let pl=G3.pl.get(a.id);if(!pl){pl=guEl('div','');pl.className='p';G3.lab.appendChild(pl);G3.pl.set(a.id,pl);}
-    const q=proj(e.g.position.x,e.g.position.y+(e.sea?6:3)*s,e.g.position.z),top=proj(e.g.position.x,e.g.position.y+13*s,e.g.position.z),mine=a.o===GC.me,sel=a.id===GV.selA;
+    const q=proj(e.g.position.x,e.g.position.y+(e.sea?6:3)*s,e.g.position.z),top=proj(e.g.position.x,e.g.position.y+13*s,e.g.position.z),mine=a.o===GC.me,sel=a.id===GV.selA||!!a.g3sel;
+    if(a.g3lead===false){vis(pl,false);e.g.visible=false;continue;}
     if(!q||!grSeen(a)){vis(pl,false);e.g.visible=!!q&&grSeen(a);continue;}e.g.visible=true;   /* laneA RG3 fog hook */
     {const ft=proj(e.g.position.x,e.g.position.y+28*s,e.g.position.z),yT=ft?ft[1]:(top?top[1]:q[1]-40);   // whole figure is the target: flag top → number badge (Abdullah 19:58 "not being able to click on armies or navies")
      G3.hit.push({aid:a.id,x:q[0],y:top?(q[1]+top[1])/2:q[1],r:Math.max(16,top?Math.abs(q[1]-top[1])*.7:16),y0:Math.min(yT,q[1])-10,y1:q[1]+38,w:Math.max(24,top?Math.abs(q[1]-top[1])*.6:24)});}
-    const show=(d<1100||mine||sel)&&plOK.has(a.id);if(show){const t=''+a.u.length;let hs=0,ms=0;for(const u of a.u){hs+=u.hp||0;ms+=u.max||0;}const st=ms>0?Math.max(0,Math.min(100,Math.round(100*hs/ms))):100;if(pl._h!==t+(mine?1:0)+(sel?1:0)+'|'+st){pl._h=t+(mine?1:0)+(sel?1:0)+'|'+st;pl.style.setProperty('--st',st+'%');pl.style.setProperty('--sc',st>66?'#6fcf6f':st>33?'#e0b73c':'#d9534f');pl.textContent=t;pl.className='p'+(mine?' me':'')+(sel?' sel':'');}putC(pl,[q[0],q[1]+12]);pl.style.transform='translate(-50%,0) translate('+Math.round(q[0])+'px,'+Math.round(q[1]+16)+'px)';}vis(pl,show);}
+    const show=(d<1100||mine||sel)&&plOK.has(a.id);if(show){const t=''+(a.g3n||a.u.length);let hs=0,ms=0;for(const u of a.u){hs+=u.hp||0;ms+=u.max||0;}const st=ms>0?Math.max(0,Math.min(100,Math.round(100*hs/ms))):100;if(pl._h!==t+(mine?1:0)+(sel?1:0)+'|'+st){pl._h=t+(mine?1:0)+(sel?1:0)+'|'+st;pl.style.setProperty('--st',st+'%');pl.style.setProperty('--sc',st>66?'#6fcf6f':st>33?'#e0b73c':'#d9534f');pl.textContent=t;pl.className='p'+(mine?' me':'')+(sel?' sel':'');}putC(pl,[q[0],q[1]+12]);pl.style.transform='translate(-50%,0) translate('+Math.round(q[0])+'px,'+Math.round(q[1]+16)+'px)';}vis(pl,show);}
   for(const [id,pl] of G3.pl)if(!G3.arm.has(id)){pl.remove();G3.pl.delete(id);}}
 function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!document.body.contains(GV.cv)||!GC){if(!GV.cv||!document.body.contains(GV.cv))g3Dispose();return;}
   const scr=document.getElementById('grandScreen');if(!scr||scr.style.display==='none'){G3.last=0;return;}
@@ -538,16 +540,16 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   const c=G3.camera,K=G3.keys;if(K.size&&!document.getElementById('gModal')){const sp=c.d*.9*dt,sy=Math.sin(c.yaw),cy=Math.cos(c.yaw);let fx=0,fz=0;if(K.has('w')||K.has('arrowup'))fz-=1;if(K.has('s')||K.has('arrowdown'))fz+=1;if(K.has('a')||K.has('arrowleft'))fx-=1;if(K.has('d')||K.has('arrowright'))fx+=1;
     c.x=Math.max(0,Math.min(2400,c.x+(fx*cy+fz*sy)*sp));c.z=Math.max(0,Math.min(1200,c.z+(-fx*sy+fz*cy)*sp));if(K.has('q'))c.yaw+=dt*1.2;if(K.has('e'))c.yaw-=dt*1.2;if(K.has('r'))c.pitch=Math.min(1.3,c.pitch+dt*.8);if(K.has('f'))c.pitch=Math.max(.45,c.pitch-dt*.8);if(K.has('+')||K.has('='))c.d*=1-dt*1.5;if(K.has('-'))c.d*=1+dt*1.5;}
   c.d=Math.max(32,Math.min(2300,c.d));const cc=G3.cc,kk=Math.min(1,dt*11);let mv=0;for(const k of ['x','z','d','yaw','pitch']){const df=c[k]-cc[k];if(Math.abs(df)>1e-3){cc[k]+=df*kk;mv=1;}}if(mv||G3.moved){g3CamApply(cc);G3.moved=false;mv=1;}
-  const s=Math.max(.45,Math.min(3.6,cc.d/330));   /* realmap: provinces are real-sized, so figures shrink further when zoomed in */G3.sc_s=s;G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;if(G3.chimU){G3.chimU.uT.value=G3.time;G3.chimU.uPx.value=(G3.R.domElement.height||900)*.9;G3.chim.visible=cc.d<1100;}
+  const s=Math.max(.45,Math.min(3.6,cc.d/330));   /* realmap: provinces are real-sized, so figures shrink further when zoomed in */const sf=Math.max(.9,Math.min(6.5,cc.d/330*1.9));G3.sc_s=sf;   /* C-LOOK3: army figures keep a near-constant on-screen size at every zoom */G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;if(G3.chimU){G3.chimU.uT.value=G3.time;G3.chimU.uPx.value=(G3.R.domElement.height||900)*.9;G3.chim.visible=cc.d<1100;}
   G3.U.uSel.value=GV.sel>=0?GV.sel:-1;G3.U.uHov.value=GV.hov>=0&&GV.hov!==GV.sel?GV.hov:-1;
   // armies
-  const anc=g3Anchors(s);let anim=0;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const t=anc.get(a.id);if(!t)continue;
+  const anc=g3Anchors(sf);let anim=0;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const t=anc.get(a.id);if(!t)continue;
     if(e.tt<1){e.tt=Math.min(1,e.tt+dt/1.5);const k=e.tt*e.tt*(3-2*e.tt);e.x=e.fx+(t[0]-e.fx)*k;e.z=e.fz+(t[1]-e.fz)*k;anim=1;e.face=Math.atan2(t[0]-e.fx,t[1]-e.fz);}
     else if(e.mv){e.x=t[0];e.z=t[1];e.mv=0;}else{e.x+=(t[0]-e.x)*Math.min(1,dt*8);e.z+=(t[1]-e.z)*Math.min(1,dt*8);}
-    const y=e.sea?.5+Math.sin(G3.time*1.4+e.aid)*.35:Math.max(.3,g3HeightAt(e.x,e.z))+(e.tt<1?Math.abs(Math.sin(G3.time*9))*.5:0);e.g.position.set(e.x,y,e.z);e.g.scale.setScalar(s*(e.sea?1.1:1));e.g.rotation.y=cc.yaw;{const f=e.g.children[1];if(f&&!e.sea)f.scale.setScalar(Math.max(.5,Math.min(1,cc.d/300)));}
+    const y=e.sea?.5+Math.sin(G3.time*1.4+e.aid)*.35:Math.max(.3,g3HeightAt(e.x,e.z))+(e.tt<1?Math.abs(Math.sin(G3.time*9))*.5:0);e.g.position.set(e.x,y,e.z);e.g.scale.setScalar(sf*(e.sea?1.1:1));e.g.rotation.y=cc.yaw;{const f=e.g.children[1];if(f&&!e.sea)f.scale.setScalar(Math.max(.5,Math.min(1,cc.d/300)));}
     if(e.sea)e.g.children[0].rotation.y=Math.PI/2*0;}
   // selection ring
-  const sa=GV.selA&&G3.arm.get(GV.selA);if(sa){G3.ringM.visible=true;G3.ringM.position.set(sa.x,sa.g.position.y+.4,sa.z);G3.ringM.scale.setScalar(s*(sa.sea?7:5)*(1+.06*Math.sin(G3.time*4)));}else G3.ringM.visible=false;
+  const sa=GV.selA&&G3.arm.get(GV.selA);if(sa){G3.ringM.visible=true;G3.ringM.position.set(sa.x,sa.g.position.y+.4,sa.z);G3.ringM.scale.setScalar(sf*(sa.sea?7:5)*(1+.06*Math.sin(G3.time*4)));}else G3.ringM.visible=false;
   const sig=GV.selA+'|'+GV.sel+'|'+GC.turn+'|'+GC.armies.length+'|'+GC.armies.reduce((a,x)=>a+x.u.length+x.path.length,0);
   if(sig!==G3.sig||G3.arrowDirty){G3.sig=sig;G3.arrowDirty=false;g3BuildArrows();g3Cards();G3.miniDirty=G3.miniDirty||0;}
   if(G3.ship)g3ShipTick(dt,s);
