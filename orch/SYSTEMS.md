@@ -69,6 +69,7 @@ empire systems never inside a battle.
 
 | **HUD** | `src/08i-hud.js` (integrate1) | ONE top bar (money, income, supply, opinion, Alerts) + ONE alerts feed (`pushLog` -> `hudAlert`, kinds `bad`/`w`) + overlay switcher (`OVL.*` flags read by the draw code: towns, supply (=L), opinion, sonar, mines). New alerts need nothing extra: log them with kind `bad`/`w`. New overlays: add a flag to `OVL` + `HUD_OV` and guard the draw call. |
 | **What's new** | `WHATS_NEW` in `src/08i-hud.js` | One list, newest first; the menu button opens it |
+| **Online grand campaign** (friends on one world map) | `src/13zn-gnet.js` (laneA A2b): host's browser runs the one campaign; friends' orders = whitelisted sim functions (`GNT_W`) re-run on the host as that nation; host sends gzip snapshots + day ticks | New player actions on the grand map must be ONE sim function taking the nation (or army id) first — add it to `GNT_W`, never mutate `GC` inline in a click handler, or online friends' clicks are lost. Battle rooms stay 07-net's |
 
 ## Known gaps (being fixed by the integration helpers)
 *integrate1 status (2026-11-06): 1 partly done (Locals spawner, knocked-out status, cover, HUD merged; Deception, Jamming, Spectating/News/Encyclopedia merges still open), 2 HUD done except separate economy/unrest/front-line overlays, 3 What's new done (tutorial steps + tooltips + encyclopedia entries for new systems still open), 4 sounds open, 5 savetest hash now covers locals/knocked-out/morale state, 6 keys open, 7 smooth-pc passes, 8 DONE, 9 DONE (see orch/reports/integrate1.md).*
