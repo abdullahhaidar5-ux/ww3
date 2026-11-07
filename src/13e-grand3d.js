@@ -124,16 +124,17 @@ const G3_GEO=()=>{if(G3.geo)return G3.geo;const cyl=(a,b,h,s)=>new THREE.Cylinde
   A.pier=g3Merge([[box(),g3M(0,.15,0,1,.3,.14),[.45,.38,.3]],[box(),g3M(.3,.7,.4,.12,1.4,.12),[.8,.3,.2]],[box(),g3M(.3,1.35,.2,.06,.06,.5),[.8,.3,.2]]]);
   return G3.geo=A;};
 function g3Land(x,z,rad){let best=null;for(let r=0;r<=rad;r+=3)for(let a=0;a<(r?12:1);a++){const t=a/12*6.283+r*.7,X=x+Math.cos(t)*r,Z=z+Math.sin(t)*r;if(g3HeightAt(X,Z)>1.3&&G3.F.Ls[Math.round(Z/2)*G3.F.W+Math.round(X/2)]>.66)return [X,Z];}return [x,z];}
+const G3_MEGA=new Set(['Tehran','Tel Aviv','Riyadh','Dubai','Cairo','Istanbul','Moscow','Beijing','Shanghai','Tokyo','Seoul','New York','London','Paris','Delhi','Mumbai','Karachi','Baghdad','Hong Kong','Singapore','Sao Paulo','Mexico City','Lagos']);
 const G3_STYLE={ME:'flat',AF:'flat',SA:'flat'};
 function g3Towns(){if(G3.towns)return G3.towns;const L=[],ar=g3PArea();
   for(const p of GCM.P){if(!p.land)continue;const reg=(GCM.nats.get(p.o)||{}).reg,flat=G3_STYLE[reg]==='flat',sc=Math.max(.3,Math.min(1,Math.sqrt(ar[p.i])/28)),base=g3Land(p.x,p.y,Math.round(50*sc));   // realmap: towns scale with the real province size
     for(let t=0;t<p.tw;t++){let X=base[0],Z=base[1];if(t){const a=g3Hash(p.i,t)*6.283,r=(15+g3Hash(t,p.i)*14)*sc,q=g3Land(base[0]+Math.cos(a)*r,base[1]+Math.sin(a)*r,10);X=q[0];Z=q[1];}
-      const cap=p.cap&&t===0;L.push({pi:p.i,x:X,z:Z,cap,n:Math.round((cap?46:t===0?18:10)*Math.max(.45,sc)),sc,flat,east:reg==='EA'||reg==='SEA',t});}}
+      const cap=p.cap&&t===0;L.push({pi:p.i,x:X,z:Z,cap,n:Math.max(3,Math.round((cap?30:t===0?11:6)*Math.max(.5,sc))),sc,mega:G3_MEGA.has(p.n),flat,east:reg==='EA'||reg==='SEA',t});}}
   return G3.towns=L;}
 function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],row:[],court:[],flat:[],tower:[],mosque:[],spire:[],disc:[],wall:[],derrick:[],field:[],spoil:[],pier:[]};
   const SHK={house:1,gable:1,row:1,court:1,flat:1,tower:1,mosque:1,spire:1},SHD=[],sl=Math.hypot(G3L.sun[0],G3L.sun[2])||1,sdx=-G3L.sun[0]/sl,sdz=-G3L.sun[2]/sl,sth=Math.atan2(sdx,sdz);
   const push=(k,x,z,sx,sy,sz,ry,col)=>{const h=g3HeightAt(x,z);by[k].push([x,h,z,sx,sy,sz,ry,col]);if(SHK[k]){const len=sy*2*(k==='tower'||k==='spire'?1.2:1)+sx*.6;SHD.push([x+sdx*len*.4,h+.2,z+sdz*len*.4,sx*.95,1,len,sth,[1,1,1]]);}};
-  for(const t of T){const p=GCM.P[t.pi],sc=t.sc||1,SP=4.5*sc,R=Math.sqrt(t.n*SP*SP/3.14)+3.5;push('disc',t.x,t.z,R*.82,1,R*.82,0,[1.22,1.18,1.08]);
+  for(const t of T){const p=GCM.P[t.pi],sc=t.sc||1,SP=4.5*sc,R=Math.sqrt(t.n*SP*SP/3.14)+3.5*sc;push('disc',t.x,t.z,R*.82,1,R*.82,0,[1.22,1.18,1.08]);
     if(t.cap||p.wg&&t.t===0)by.wall.push([t.x,g3HeightAt(t.x,t.z),t.z,R+2,1,R+2,0,[1,1,1]]);
     const th=g3Hash(t.pi,t.t+31)*3.1416,ct=Math.cos(th),st=Math.sin(th),R2=Math.ceil(R/SP)+1,cells=[];
     for(let i=-R2;i<=R2;i++)for(let j=-R2;j<=R2;j++){if(i%4===0&&j%4===0&&(i||j))continue;if(i===0&&j!==0&&Math.abs(j)%2===1)continue;const d=Math.hypot(i,j)+(g3Hash(i+9,j+t.pi)-.5)*1.1;if(d*SP>R)continue;cells.push([i,j,d]);}
@@ -141,8 +142,8 @@ function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],ro
     for(const [i,j] of cells){if(k>=t.n)break;if(g3Hash(i*7+3,j+t.pi)<.1)continue;const lx=(i+(g3Hash(i,j+4)-.5)*.35)*SP,lz=(j+(g3Hash(j,i+5)-.5)*.35)*SP+(i%2?SP*.2:0),x=t.x+lx*ct-lz*st,z=t.z+lx*st+lz*ct;if(g3HeightAt(x,z)<.7)continue;
       const TN=[[1,1,1],[.96,.9,.8],[.86,.94,1],[1,.88,.84],[.9,1,.9]][Math.floor(g3Hash(k+5,t.pi+2)*5)],hv=g3Hash(i+k,t.pi+4),s=(2.5+g3Hash(k,t.pi)*1.1)*sc,ry=-th+(g3Hash(k,k+i)-.5)*.14+(g3Hash(i,j)<.5?0:Math.PI),v=.86+g3Hash(k+3,t.t)*.28;
       let kind=t.flat?(hv<.5?'court':'flat'):(hv<.4?'house':hv<.75?'gable':'row'),sy=s*(t.flat?.8+hv*.6:1);
-      if(k===0&&(t.cap||t.t===0)){kind=t.flat?'mosque':'spire';sy=s;}else if(t.cap&&k<5){kind='tower';sy=s*1.5;}else if(t.n>14&&k%11===5){kind=t.flat?'mosque':'spire';sy=s;}
-      push(kind,x,z,s,sy,s,ry,[v*TN[0],v*TN[1],v*TN[2]]);k++;}
+      if(k===0&&(t.cap||t.t===0)){kind=t.flat?'mosque':'spire';sy=s*.8;}else if(t.mega&&t.t===0&&k<4&&k%2===1){kind='tower';sy=s*1.4;}else if(t.cap&&k%7===4){kind=t.flat?'court':'row';sy=s*1.5;}
+      push(kind,x,z,kind==='mosque'?s*.8:s,sy,kind==='mosque'?s*.8:s,ry,[v*TN[0],v*TN[1],v*TN[2]]);k++;}
     if(p.oil&&t.t===0)for(let k=0;k<3;k++)push('derrick',t.x+(20+k*8)*sc,t.z+(-18+k*4)*sc,1.7*sc,1.7*sc,1.7*sc,k*.7,[1,1,1]);
     if(p.farm&&t.t===0)for(let k=0;k<4;k++)push('field',t.x+(-24+(k%2)*11)*sc,t.z+(18+(k>>1)*8)*sc,5*sc,1,5*sc,0,[.7+g3Hash(k,p.i)*.4,1,.8]);
     if(p.mine&&t.t===0)for(let k=0;k<2;k++)push('spoil',t.x+(8+k*7)*sc,t.z+24*sc,2.4*sc,2*sc,2.4*sc,0,[1,1,1]);
