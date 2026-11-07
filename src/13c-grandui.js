@@ -2,11 +2,11 @@
 // Left-click selects (province or army chip), right-click orders the selected army (move / attack), wheel zooms, drag pans.
 // Menu: "Grand campaign" (Continue / New) lives next to Conquest, Missions, Tutorial on the main menu.
 const GV={cv:null,ctx:null,w:0,h:0,z:1,ox:0,oy:0,sel:-1,selA:0,hov:-1,img:null,idx:null,dirty:true,chips:[],drag:null,busy:0,raf:0,hint:''};
-const GU_RW=1200,GU_RH=600;   // cell raster resolution (half the world size)
+const GU_RW=typeof GM_REAL_FULL!=='undefined'?GM_REAL_W:1200,GU_RH=typeof GM_REAL_FULL!=='undefined'?GM_REAL_H:600,GU_K=GM_W/GU_RW;   // province raster resolution (realmap: the full real-world raster, 1 px = 1 map unit)
 const GU_TERR={d:[222,196,140],m:[138,126,112],f:[150,182,100],u:[168,160,150],j:[72,142,82],s:[226,232,238],c:[176,192,150],r:[140,176,122]};
 function guEl(tag,css,html){return campEl(tag,css,html);}
-function guCols(){grMap();const N=GM_P.length,P=GCM.P;if(!GV.idx){const idx=new Uint16Array(GU_RW*GU_RH),sx=new Float32Array(N),sy=new Float32Array(N);P.forEach(p=>{sx[p.i]=p.x/2;sy[p.i]=p.y/2;});
-    for(let y=0;y<GU_RH;y++)for(let x=0;x<GU_RW;x++){let bi=0,bd=1e12;for(let i=0;i<N;i++){const dx=sx[i]-x,dy=sy[i]-y,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}idx[y*GU_RW+x]=bi;}if(typeof GM_REAL!=='undefined'){const bin=atob(GM_REAL);let o=0,k=0;const rd=()=>{let v=0,sh=0,b;do{b=bin.charCodeAt(o++);v|=(b&127)<<sh;sh+=7;}while(b&128);return v;};while(o<bin.length){const v=rd(),run=rd();if(v)idx.fill(v-1,k,k+run);k+=run;}}   // real state/province borders (13f-grandreal.js) override the nearest-seed cells
+function guCols(){grMap();const N=GM_P.length,P=GCM.P;if(!GV.idx){const idx=new Uint16Array(GU_RW*GU_RH),sx=new Float32Array(N),sy=new Float32Array(N);P.forEach(p=>{sx[p.i]=p.x/GU_K;sy[p.i]=p.y/GU_K;});
+    if(typeof GM_REAL_FULL==='undefined')for(let y=0;y<GU_RH;y++)for(let x=0;x<GU_RW;x++){let bi=0,bd=1e12;for(let i=0;i<N;i++){const dx=sx[i]-x,dy=sy[i]-y,d=dx*dx+dy*dy;if(d<bd){bd=d;bi=i;}}idx[y*GU_RW+x]=bi;}if(typeof GM_REAL!=='undefined'){const bin=atob(GM_REAL);let o=0,k=0;const rd=()=>{let v=0,sh=0,b;do{b=bin.charCodeAt(o++);v|=(b&127)<<sh;sh+=7;}while(b&128);return v;};while(o<bin.length){const v=rd(),run=rd();if(v)idx.fill(v-1,k,k+run);k+=run;}}   // real state/province borders (13f-grandreal.js) override the nearest-seed cells
 GV.idx=idx;}
   return GV.idx;}
 function guRgb(s){const m=/^#([0-9a-f]{6})$/i.exec(s);if(m){const n=parseInt(m[1],16);return [n>>16,(n>>8)&255,n&255];}const h=/hsl\((\d+),(\d+)%,(\d+)%\)/.exec(s);if(h){const H=+h[1]/360,S=+h[2]/100,L=+h[3]/100,f=n=>{const k=(n+H*12)%12,a=S*Math.min(L,1-L);return Math.round(255*(L-a*Math.max(-1,Math.min(k-3,9-k,1))));};return [f(0),f(8),f(4)];}return [140,140,140];}
@@ -24,10 +24,10 @@ function guPaint(){const idx=guCols(),P=GCM.P;if(!GV.img){GV.img=document.create
     const o=k*4;d[o]=r;d[o+1]=g;d[o+2]=b;d[o+3]=255;}
   cx.putImageData(id,0,0);GV.dirty=false;}
 function grNatRgb(c){const N=grNat(c);return N.rgb||(N.rgb=guRgb(N.color));}
-function guProvAt(wx,wy){const x=Math.floor(wx/2),y=Math.floor(wy/2);if(x<0||y<0||x>=GU_RW||y>=GU_RH)return -1;return GV.idx[y*GU_RW+x];}
+function guProvAt(wx,wy){const x=Math.floor(wx/GU_K),y=Math.floor(wy/GU_K);if(x<0||y<0||x>=GU_RW||y>=GU_RH)return -1;return GV.idx[y*GU_RW+x];}
 function guToWorld(sx,sy){if(GV.g3){const g=g3Ground(sx,sy);return g||[-1e4,-1e4];}return [(sx-GV.ox)/GV.z,(sy-GV.oy)/GV.z];}
 function guFit(r){if(GV.g3){g3Fit(r);return;}const R=r||[0,0,GM_W,GM_H];const z=Math.min(GV.w/R[2],GV.h/R[3]);GV.z=z;GV.ox=(GV.w-R[2]*z)/2-R[0]*z;GV.oy=(GV.h-R[3]*z)/2-R[1]*z;guClamp();}
-function guClamp(){if(GV.g3)return;const zmin=Math.max(GV.w/GM_W,GV.h/GM_H)*.98;GV.z=Math.max(zmin,Math.min(6,GV.z));const mw=GM_W*GV.z,mh=GM_H*GV.z;GV.ox=mw<=GV.w?(GV.w-mw)/2:Math.min(0,Math.max(GV.w-mw,GV.ox));GV.oy=mh<=GV.h?(GV.h-mh)/2:Math.min(0,Math.max(GV.h-mh,GV.oy));}
+function guClamp(){if(GV.g3)return;const zmin=Math.max(GV.w/GM_W,GV.h/GM_H)*.98;GV.z=Math.max(zmin,Math.min(24,GV.z));const mw=GM_W*GV.z,mh=GM_H*GV.z;GV.ox=mw<=GV.w?(GV.w-mw)/2:Math.min(0,Math.max(GV.w-mw,GV.ox));GV.oy=mh<=GV.h?(GV.h-mh)/2:Math.min(0,Math.max(GV.h-mh,GV.oy));}
 function guCentre(pi,z){if(GV.g3){g3Centre(pi,z);return;}const p=GCM.P[pi];if(z)GV.z=z;GV.ox=GV.w/2-p.x*GV.z;GV.oy=GV.h/2-p.y*GV.z;guClamp();}
 
 // ---------- drawing ----------
@@ -68,9 +68,9 @@ function guDraw(){GV.raf=0;const cv=GV.cv;if(!cv||!GC)return;if(GV.dirty)guPaint
   // province under the cursor tooltip is DOM; nothing more to draw
 }
 function guStar(c,x,y,R,r){c.beginPath();for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r:R;c.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q);}c.closePath();c.fill();c.stroke();}
-function guOutline(pi,color,w){const idx=GV.idx,c=GV.ctx,z=GV.z,k=z*2;c.fillStyle=color;const s=Math.max(w,k*1.15);
+function guOutline(pi,color,w){const idx=GV.idx,c=GV.ctx,z=GV.z,k=z*GU_K;c.fillStyle=color;const s=Math.max(w,k*1.15);
   // edge cells of province pi from the cached raster (cheap enough for one province)
-  const p=GCM.P[pi],x0=Math.max(1,Math.floor(p.x/2-110)),x1=Math.min(GU_RW-2,Math.floor(p.x/2+110)),y0=Math.max(1,Math.floor(p.y/2-90)),y1=Math.min(GU_RH-2,Math.floor(p.y/2+90));
+  const p=GCM.P[pi],R=220/GU_K,x0=Math.max(1,Math.floor(p.x/GU_K-R)),x1=Math.min(GU_RW-2,Math.floor(p.x/GU_K+R)),y0=Math.max(1,Math.floor(p.y/GU_K-R*.8)),y1=Math.min(GU_RH-2,Math.floor(p.y/GU_K+R*.8));
   for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const i=y*GU_RW+x;if(idx[i]!==pi)continue;if(idx[i-1]!==pi||idx[i+1]!==pi||idx[i-GU_RW]!==pi||idx[i+GU_RW]!==pi)c.fillRect(x*k+GV.ox-s/2+k/2,y*k+GV.oy-s/2+k/2,s,s);}}
 function guRedraw(){if(GV.g3){g3Refresh();return;}if(!GV.raf)GV.raf=requestAnimationFrame(guDraw);}
 
