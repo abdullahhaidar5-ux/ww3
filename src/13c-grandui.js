@@ -81,7 +81,7 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   e=guEl('div','position:fixed;inset:0;z-index:8000;background:#0b141d;color:#e8e4d8;display:flex;flex-direction:column;font-size:15px;user-select:none;');e.id='grandScreen';
   e.innerHTML=`<div id="gTop" style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#101c28;border-bottom:1px solid #2c4358;flex-wrap:wrap"></div>
   <div style="flex:1;display:flex;min-height:0"><div id="gMapWrap" style="flex:1;position:relative;min-width:0"><canvas id="gMap" style="display:block"></canvas><div id="gTip" style="position:absolute;pointer-events:none;display:none;background:rgba(10,16,22,.94);border:1px solid #4a6580;border-radius:6px;padding:6px 9px;font-size:14px;line-height:1.4;max-width:260px;z-index:3"></div><div id="gHint" style="position:absolute;left:10px;bottom:8px;font-size:13px;opacity:.75;pointer-events:none;text-shadow:0 1px 2px #000"></div></div>
-  <div id="gSide" style="width:330px;max-width:38vw;background:#101c28;border-left:1px solid #2c4358;display:flex;flex-direction:column;min-height:0"><div id="gSel" style="padding:8px 10px;overflow:auto;flex:1.8;min-height:0"></div><div id="gLog" style="padding:6px 10px;overflow:auto;flex:.6;border-top:1px solid #2c4358;font-size:13px;line-height:1.45;min-height:0"></div></div></div>`;
+  <div id="gSide" style="width:380px;max-width:40vw;background:#101c28;border-left:1px solid #2c4358;display:flex;flex-direction:column;min-height:0"><div id="gSel" style="padding:8px 10px;overflow:auto;flex:1.8;min-height:0"></div><div id="gLog" style="padding:6px 10px;overflow:auto;flex:.6;border-top:1px solid #2c4358;font-size:13px;line-height:1.45;min-height:0"></div></div></div>`;
   document.body.appendChild(e);GV.cv=document.getElementById('gMap');GV.idx=GV.idx||null;GV.dirty=true;guCols();
   const cv=GV.cv;GV.g3=false;try{GV.g3=g3Init(cv);}catch(e){console.error('3D grand map failed, using the flat map',e);g3Dispose();GV.g3=false;}
   cv.addEventListener('contextmenu',ev=>{ev.preventDefault();guRight(ev);});
@@ -160,27 +160,46 @@ if(!window._gClk){window._gClk=setInterval(()=>{try{guClockTick();}catch(e){cons
 function guProvArmies(pi){return GC.armies.filter(a=>a.at===pi&&grSeen(a));}
 function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.innerHTML='';const pi=GV.sel;if(pi<0||!GCM.P[pi]){s.innerHTML='<div style="opacity:.7;line-height:1.6">Click a province to see it.<br>Select an army (click its flag), then <b>right-click</b> a province to march there. Armies cross seas between ports; oceans take several weeks.<br>Time runs like EU4: <b>Space</b> or ▶ to play or pause, keys <b>1–5</b> for speed. Give orders while paused.</div>';return;}
   const p=GCM.P[pi];if(p.sea){s.innerHTML='<h2 style="margin:0 0 4px;font-size:19px">'+p.n+'</h2><div style="opacity:.8">Sea zone · ~'+(p.cost*30)+' days to cross'+(p.ck?'<br><span style="color:#ff9d8e">Chokepoint: whoever holds it will control trade (stage 2).</span>':'')+'</div>'+guArmyRows(pi);guBindArmies(s,pi);try{gmilUiProv(s,pi);}catch(e){console.error('gmilUiProv',e);}return;}
-  const st=GC.prov[pi],N=GCM.nats.get(st.o),mine=st.o===GC.me;
-  let h='<div style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:14px;border-radius:3px;border:1px solid #fff;background:'+grNat(st.o).color+'"></span><h2 style="margin:0;font-size:19px">'+p.n+'</h2></div>';
-  h+='<div style="opacity:.85;margin:2px 0 6px">'+N.name+' · '+guTerrName(p.t)+(p.cap?' · <span style="color:#ffd24a">capital</span>':GC.nat[st.o]&&GC.nat[st.o].wg.includes(pi)?' · <span style="color:#ffd24a">war goal</span>':'')+'</div>';
-  h+='<div>Towns '+p.tw+(p.oil?' · oil':'')+(p.farm?' · farms':'')+(p.mine?' · mines':'')+(p.port?' · port':'')+'</div>';
-  h+='<div>Garrison <b>'+st.gar.length+'</b> units (value '+Math.round(grProvDef(pi)/100)/10+'k)'+(mine?' · Unrest <b style="color:'+(st.un>55?'#ff9d8e':'#e8e4d8')+'">'+Math.round(st.un)+'%</b>':'')+'</div>';
-  if(typeof ocLine==='function')h+=ocLine(pi);   /* A6 occupation reaction (13y-goccupy.js) */
-  s.innerHTML=h;
-  if(mine){const row=guEl('div','margin:8px 0 4px');row.appendChild(guEl('div','opacity:.75;font-size:13px','Tax (more money, more unrest)'));const seg=guEl('div','display:flex;gap:4px;margin-top:2px');
-    GR_TAX.forEach((n,i)=>{const b=guEl('button','flex:1;padding:5px;border-radius:5px;border:1px solid '+(st.tax===i?'#ffe27a':'#3d5a73')+';background:'+(st.tax===i?'#41572a':'#18293a')+';color:#fff;cursor:pointer',n);b.type='button';b.onclick=()=>{grSetTax(GC.me,pi,i);grSave();guSide();guTopCash();};seg.appendChild(b);});row.appendChild(seg);s.appendChild(row);
-    const rc=guEl('div','margin:8px 0');rc.appendChild(guEl('div','opacity:.75;font-size:13px','Recruit here (arrives in 1–2 months)'));const fac=grNat(GC.me).fac,g=guEl('div','display:flex;flex-wrap:wrap;gap:4px;margin-top:2px');
-    for(const [k,n,t] of GR_RECRUIT){if(!grHasKind(fac,k))continue;const cost=grCost(fac,k)*n;const b=guEl('button','padding:5px 7px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:'+(GC.nat[GC.me].cash>=cost?'#fff':'#8a8f96')+';cursor:pointer;font-size:13px',n+'× '+grKindName(fac,k)+' $'+cost);b.type='button';b.title=cost+' · '+t+' month(s)';b.onclick=()=>{const e=grRecruit(GC.me,pi,k);if(e){GV.hint=e;guHint();}else grSave();guSide();guTop();};g.appendChild(b);
-      const mq=(GC.mac||[]).find(m=>m.p===pi&&m.k===k),rb=guEl('button','padding:5px 6px;border-radius:5px;border:1px solid '+(mq?'#ffe27a':'#3d5a73')+';background:#18293a;color:'+(mq?'#ffe27a':'#9fb3c4')+';cursor:pointer;font-size:13px;margin-left:-4px','↻');rb.type='button';rb.title=mq?'Standing order ON: recruits this every month while you can pay it. Click to stop.':'Standing order: repeat this recruit every month here until money runs out';rb.onclick=()=>{gmMacroToggle(pi,k);guSide();};g.appendChild(rb);}
-    rc.appendChild(g);if(st.rq.length)rc.appendChild(guEl('div','font-size:13px;opacity:.8;margin-top:3px','In training: '+st.rq.map(q=>q[2]+'× '+grKindName(fac,q[1])+' (due '+grMonStr(q[0])+')').join(', ')));s.appendChild(rc);}
-  if(!mine&&GC.me&&GC.nat[st.o]&&!grFriend(GC.me,st.o))guSpyRow(s,pi,st.o);
-  try{geUiProv(s,pi);}catch(e){console.error('geUiProv',e);}try{gmilUiProv(s,pi);}catch(e){console.error('gmilUiProv',e);}
-  const ar=guEl('div');ar.innerHTML=guArmyRows(pi);s.appendChild(ar);guBindArmies(s,pi);}
+  const st=GC.prov[pi],N=GCM.nats.get(st.o),mine=st.o===GC.me,me=GC.me;
+  /* ingameui slice 1: header (flag, name, owner, badges, stat chips) + tabs Overview · Recruit · Build · Govern (UK kit, 08j-uikit.js) */
+  const root=guEl('div','');root.className='uk';s.appendChild(root);
+  const hd=guEl('div','');hd.className='uk-hd';try{hd.appendChild(esFlagEl(grNat(st.o).fac,36,24));}catch(e){}
+  const ht=guEl('div','min-width:0');ht.innerHTML='<h2></h2><div class="uk-sub"></div>';ht.querySelector('h2').textContent=p.n;
+  const wg=GC.nat[st.o]&&GC.nat[st.o].wg.includes(pi);ht.querySelector('.uk-sub').innerHTML=N.name+' · '+guTerrName(p.t)+(p.cap?'<span class="uk-badge">Capital</span>':wg?'<span class="uk-badge red">War goal</span>':'');hd.appendChild(ht);root.appendChild(hd);
+  const ch=guEl('div','');ch.className='uk-chips';
+  ch.appendChild(UK.chip('🏘',p.tw,'Towns — tax, recruits and battle objectives'));
+  ch.appendChild(UK.chip('🛡',st.gar.length,'Garrison — '+st.gar.length+' units, strength '+Math.round(grProvDef(pi)/100)/10+'k'));
+  if(mine)ch.appendChild(UK.chip('✊',Math.round(st.un)+'%','Unrest — above 55% risks revolts and strikes',st.un>55?'warn':st.un<20?'good':''));
+  if(mine)ch.appendChild(UK.chip('💰',GR_TAX[st.tax],'Tax rate — set it on the Govern tab'));
+  const res=[p.oil&&['🛢','Oil'],p.farm&&['🌾','Farms'],p.mine&&['⛏','Mines'],p.port&&['⚓','Port']].filter(Boolean);for(const r of res)ch.appendChild(UK.chip(r[0],r[1],r[1]+' in this province'));
+  root.appendChild(ch);
+  const ov=guEl('div','');let sp='';if(typeof ocLine==='function')sp=ocLine(pi);if(sp)ov.insertAdjacentHTML('beforeend',sp);   /* A6 occupation reaction (13y-goccupy.js) */
+  if(!mine){if(me&&GC.nat[st.o]&&!grFriend(me,st.o))guSpyRow(ov,pi,st.o);try{geUiProv(ov,pi);}catch(e){console.error('geUiProv',e);}try{gmilUiProv(ov,pi);}catch(e){console.error('gmilUiProv',e);}
+    const ar=guEl('div');ar.innerHTML=guArmyRows(pi);ov.appendChild(ar);root.appendChild(ov);guBindArmies(s,pi);return;}
+  const fac=grNat(me).fac,rq=st.rq.length,bq=st.bq.length;
+  const P=UK.tabs(root,[['ov','Overview'],['rec','Recruit',rq||''],['bld','Build',bq||''],['gov','Govern']],GV.pvTab,k=>{GV.pvTab=k;});
+  P.ov.appendChild(ov);try{gmilUiProv(P.ov,pi);}catch(e){console.error('gmilUiProv',e);}const ar=guEl('div');ar.innerHTML=guArmyRows(pi);P.ov.appendChild(ar);
+  /* Recruit: unit cards */
+  P.rec.appendChild(UK.sec('Recruit here','arrives in 1–2 months'));const g=guEl('div','');g.className='uk-list';
+  for(const [k,n] of GR_RECRUIT){if(!grHasKind(fac,k))continue;let T;try{T=geRecruitTerms(me,pi,k,n);}catch(e){T={cost:grCost(fac,k)*n,man:0,turns:1};}
+    const N2=GC.nat[me],why=N2.cash<T.cost?'Not enough money ($'+Math.round(N2.cash)+' of $'+T.cost+')':(N2.e&&N2.e.man<T.man)?'Not enough manpower ('+Math.round(N2.e.man)+' of '+T.man+')':'';
+    const cv=document.createElement('canvas');cv.width=88;cv.height=68;try{g3Icon(cv,k,me);}catch(e){}
+    const mq=(GC.mac||[]).find(m=>m.p===pi&&m.k===k),nm=grKindName(fac,k);
+    const c=UK.card({icon:cv,name:nm,count:'×'+n,meta:'<b>$'+T.cost+'</b> · '+T.turns+' mo',on:!why,why,desc:'Train '+n+' '+nm+' in '+p.n+'. They join the garrison when ready.',rows:[['Cost','$'+T.cost],['Manpower',T.man],['Ready in',T.turns+' month'+(T.turns>1?'s':'')]],
+      onclick:()=>{const e=grRecruit(me,pi,k);if(e){GV.hint=e;guHint();}else grSave();guSide();guTop();},onDenied:()=>{GV.hint=why;guHint();}});
+    const rp=guEl('span','','↻');rp.className='rp'+(mq?' on':'');rp.dataset.tt=mq?'Repeat order ON — recruits this every month while you can pay. Click to stop.':'Repeat order — recruit this here every month until money runs out';rp.onclick=e=>{e.stopPropagation();gmMacroToggle(pi,k);guSide();};c.appendChild(rp);g.appendChild(c);}
+  P.rec.appendChild(g);
+  if(rq){const q=guEl('div','');q.className='uk-q';q.textContent='In training: '+st.rq.map(q=>q[2]+'× '+grKindName(fac,q[1])+' (due '+grMonStr(q[0])+')').join(' · ');P.rec.appendChild(q);}
+  /* Build + Govern (13h geUiBuild / geUiGovern) */
+  try{geUiBuild(P.bld,pi);}catch(e){console.error('geUiBuild',e);}
+  P.gov.appendChild(UK.sec('Tax','more money, more unrest'));P.gov.appendChild(UK.seg(GR_TAX,st.tax,i=>{grSetTax(me,pi,i);grSave();guSide();guTopCash();},['Low tax — calmer, less money (good on the front)','Normal tax','High tax — more money, more unrest (good in safe rear towns)']));
+  try{geUiGovern(P.gov,pi);}catch(e){console.error('geUiGovern',e);}
+  guBindArmies(s,pi);}
 function guSpyRow(s,pi,o){const seenP=(grSeenSet()||new Set()).has(pi),sp=GC.spy&&(GC.spy[GC.me+'>'+o]|0)>=GC.turn;   /* RG3 fog of war + spies */
   const r=guEl('div','margin:6px 0 2px;font-size:13px;opacity:.85',sp?'🕵 Our spies report every '+GCM.nats.get(o).name+' army (until '+grMonStr(GC.turn+1+((GC.spy[GC.me+'>'+o]|0)-GC.turn))+').':seenP?'👁 In sight of our lines.':'🌫 Fog of war: armies here are hidden. Move closer or send spies.');s.appendChild(r);
   if(!sp){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;margin-top:2px','🕵 Send spies $'+GR_SPY_COST);b.type='button';b.title='Reveal every '+GCM.nats.get(o).name+' army on the map for '+GR_SPY_M+' months';b.onclick=()=>{const e=grSpy(GC.me,o);GV.hint=e||'Spies sent into '+GCM.nats.get(o).name+'.';guSide();guTop();if(typeof g3Refresh==='function')g3Refresh();guRedraw&&guRedraw();};s.appendChild(b);}}
 function guTopCash(){guTop();}
-function guArmyRows(pi){const L=guProvArmies(pi);if(!L.length)return '<div style="opacity:.6;margin-top:8px">No armies here.</div>';let h='<div style="margin-top:8px;font-weight:bold">Armies</div>';
+function guArmyRows(pi){const L=guProvArmies(pi);if(!L.length)return '<div style="opacity:.6;margin-top:8px">No armies here.</div>';let h='<div class="uk-sec">Armies here</div>';
   for(const a of L){const mine=a.o===GC.me,f=grNat(a.o).fac,counts={};for(const r of a.u)counts[r[0]]=(counts[r[0]]||0)+1;const txt=Object.keys(counts).map(k=>counts[k]+' '+grKindName(f,k)).join(', ');
     h+='<div class="gArmy" data-a="'+a.id+'" style="border:1px solid '+(a.id===GV.selA?'#ffe27a':'#2c4358')+';border-radius:6px;padding:5px 7px;margin:4px 0;background:'+(a.id===GV.selA?'#1d3045':'#14222f')+';cursor:pointer"><span style="display:inline-block;width:10px;height:10px;background:'+grNat(a.o).color+';border:1px solid #fff;margin-right:5px"></span><b>'+a.nm+'</b>'+gmilArmyTag(a)+' <span style="opacity:.75">('+GCM.nats.get(a.o).name+')</span><br><span style="font-size:13px;opacity:.9">'+a.u.length+' units · value '+Math.round(grArmyVal(a)/100)/10+'k'+(a.sup?' · <span style="color:#ff9d8e">out of supply</span>':'')+'</span><br><span style="font-size:12px;opacity:.7">'+txt+'</span>'+(a.path.length?'<br><span style="font-size:12px;color:#ffe27a">→ '+GCM.P[a.path[a.path.length-1]].n+'</span>':'')+'</div>';
     if(mine&&a.id===GV.selA)h+='<div class="gActs" data-a="'+a.id+'" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px"><button data-act="split">Split in half</button><button data-act="merge">Merge here</button><button data-act="stop">Cancel orders</button>'+gmilActBtns(a)+'</div>';}
