@@ -62,3 +62,6 @@ Objects 4 -> 4 (est. 4.3, "blocky" complaint, C-TOWNS slice 2): Middle East flat
 
 ## 2026-11-07 16:xx UTC — laneC iteration 14 (shots: orch/shots/laneC/m0 before, m1 after)
 Life 3.5 -> 3.7 / readability 4: chimney smoke was dark grain dirtying the Levant view; now light soft wisps that fade out (war smoke stays dark). Visual only. Next lowest: water 3.5.
+
+## 2026-11-07 17:xx UTC — laneC iteration 15 (shots: orch/shots/laneC/l0 before, l1 after)
+Readability 4 -> 4.3: C-LABELS — grand-map nation names and province banners now share one collision list (nation names biggest first, then banners by priority: your capital/selected, capitals, war-goal/big towns), so the Middle East no longer shows piled-up labels at world/region zoom. Visual only. Others unchanged. Next: army plates merge per province, C0 UI kit.

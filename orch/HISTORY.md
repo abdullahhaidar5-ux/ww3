@@ -424,3 +424,5 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - realmap 2026-11-07: grand map = the real world. Natural Earth admin-0/1 in one Equal Earth projection (true sizes; Brazil/Russia/Canada proportional); provinces = real admin-1 regions (797, finest in Levant/Iraq/Gulf), 98 new real-country minors, full 2400x1200 province raster replaces Voronoi, terrain textures re-baked, 3D towns/armies scale with real province size; old names kept (orch/realmap/MAPPING.md), old saves refused by map signature. Shots orch/shots/realmap/.
 
 - laneA 2026-11-07: A2b slice 4 - online campaign chip shows which battle the world is waiting on, for host and every friend (src/13zn-gnet.js); gate: grandlive/gnettest green; controls/decisions/smooth-mp reds were other lanes' (gnuke wording, leader height).
+
+- laneC 2026-11-07 17:xx: C-LABELS — collision-culled grand-map labels (nation names then banners by priority); shots orch/shots/laneC/l0,l1.
