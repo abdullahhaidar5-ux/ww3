@@ -62,3 +62,6 @@ Objects 4 -> 4 (est. 4.3, "blocky" complaint, C-TOWNS slice 2): Middle East flat
 
 ## 2026-11-07 16:xx UTC — laneC iteration 14 (shots: orch/shots/laneC/m0 before, m1 after)
 Life 3.5 -> 3.7 / readability 4: chimney smoke was dark grain dirtying the Levant view; now light soft wisps that fade out (war smoke stays dark). Visual only. Next lowest: water 3.5.
+
+## 2026-11-07 17:xx UTC — laneC iteration 15 (shots: orch/shots/laneC/n0 before, n2 after)
+Objects 4 -> 4 (est. 4.2, C-LOOK item 3 slice): every land army now stands on a stone plinth with a nation-colour ring (Total War piece look); visual only, ships unchanged. Others unchanged (geography 4, colour 4, light 3.5-4, water 3.5, life 3.7, readability 4). Next: painted terrain (C-LOOK 1), cloth banner size.

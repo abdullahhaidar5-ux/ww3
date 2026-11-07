@@ -356,10 +356,14 @@ function g3ShipGeo(){if(G3.ship)return G3.ship;const sh=new THREE.Shape();[[-5,-
 function g3FlagMesh(o,sx){const fac=grNat(o).fac,tex=flagTex(fac),m=new THREE.Mesh(G3.flagGeo||(G3.flagGeo=new THREE.PlaneGeometry(7,4.6,10,1).translate(3.5,0,0)),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));
   m.material.onBeforeCompile=s=>{s.uniforms.uT=G3.flagT||(G3.flagT={value:0});s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nuniform float uT;').replace('#include <begin_vertex>','#include <begin_vertex>\n transformed.z+=sin(uT*3.2+transformed.x*.9+modelMatrix[3].x*.07)*.16*transformed.x;transformed.y+=sin(uT*2.1+transformed.x*.6)*.05*transformed.x;');};
   return m;}
+/* laneC: Total War-style plinth — stone base + nation-colour ring under every land army (visual only) */
+function g3Plinth(o){const P=G3.plin||(G3.plin={geo:new THREE.CylinderGeometry(6.8,7.6,1.2,28).translate(0,-.45,0),rg:new THREE.RingGeometry(4.2,6.5,40).rotateX(-Math.PI/2).translate(0,.7,0),stone:new THREE.MeshLambertMaterial({color:0x6a645a}),col:{}});
+  let rm=P.col[o];if(!rm){const c=grNatRgb(o);rm=P.col[o]=new THREE.MeshBasicMaterial({color:new THREE.Color(c[0]/255,c[1]/255,c[2]/255),side:THREE.DoubleSide});}
+  const g=new THREE.Group();g.add(new THREE.Mesh(P.geo,P.stone));g.add(new THREE.Mesh(P.rg,rm));return g;}
 function g3Ent(a){let e=G3.arm.get(a.id);const sea=GCM.P[a.at].sea;
   if(e&&e.sea===sea&&e.o===a.o&&(sea||e.tier===g3Tier(a.u.length)))return e;if(e){G3.ents.remove(e.g);}
   const g=new THREE.Group(),tier=g3Tier(a.u.length),body=new THREE.Mesh(sea?g3ShipGeo():g3FigGeo(a.o,tier),G3.matLit),fl=g3FlagMesh(a.o);
-  body.scale.setScalar(1);g.add(body);if(sea){fl.position.set(-.2,10,0);fl.scale.setScalar(.85);}else fl.position.set(1.2,10.7,0);g.add(fl);
+  body.scale.setScalar(1);g.add(body);if(!sea){try{g.add(g3Plinth(a.o));}catch(e){}}if(sea){fl.position.set(-.2,10,0);fl.scale.setScalar(.85);}else fl.position.set(1.2,10.7,0);g.add(fl);
   const old=e;e={g,sea,tier,o:a.o,pi:a.at,x:0,z:0,fx:0,fz:0,mv:1,tt:1,face:0,aid:a.id,plate:old?old.plate:null};G3.ents.add(g);G3.arm.set(a.id,e);return e;}
 function g3Anchors(s){const by=new Map();for(const a of GC.armies){if(!by.has(a.at))by.set(a.at,[]);by.get(a.at).push(a);}
   const out=new Map();for(const [pi,L] of by){L.sort((a,b)=>(b.o===GC.me)-(a.o===GC.me)||a.id-b.id);const p=GCM.P[pi],tw=!p.sea?g3Towns().find(t=>t.pi===pi):null,bx=tw?tw.x:p.x,bz=(tw?tw.z:p.y)+(p.sea?0:(tw&&tw.cap?30:20)*Math.min(1.6,Math.max(1,s*.6)));
