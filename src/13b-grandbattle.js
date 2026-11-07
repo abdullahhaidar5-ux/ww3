@@ -139,5 +139,12 @@ function gmMorTurn(){for(const a of GC.armies){if(a.fl)continue;const m=gmMor(a)
     let sup=true;try{sup=grSupplied(a);}catch(e){}
     if(ok&&sup)d=a.path&&a.path.length?1:(gmMorStyle(a)==='prof'?9:7);else if(sup)d=2;else d=-4;
     if(a.path&&a.path.length)d-=2;   /* forced march */
-    a.mor=Math.max(0,Math.min(mx,m+d));}}
+    a.mor=Math.max(0,Math.min(mx,m+d));}
+  /* allied sharing (Abdullah pick 11): an allied army in the same/adjacent province lifts a weaker one a little (+3 max); computed from a snapshot so order doesn't matter */
+  if(typeof grAllied==='function'){const snap=GC.armies.map(a=>a.fl?-1:gmMor(a));
+    GC.armies.forEach((a,i)=>{if(a.fl)return;let best=-1;
+      GC.armies.forEach((b,j)=>{if(j===i||b.fl||b.o===a.o||snap[j]<0||snap[j]<=snap[i])return;
+        if(!(b.at===a.at||((GC.prov[a.at]&&GC.prov[a.at].adj)||[]).indexOf(b.at)>=0))return;
+        let al=false;try{al=grAllied(a.o,b.o);}catch(e){}if(al&&snap[j]>best)best=snap[j];});
+      if(best>=0)a.mor=Math.min(gmMorMax(a),gmMor(a)+Math.min(3,Math.ceil((best-snap[i])/10)));});}}
 function gmMorBar(a){const m=Math.round(gmMor(a)),c=m>66?'#6fbf5a':m>33?'#e0b043':'#d9534f';return '<span title="Morale '+m+'%" style="display:inline-block;width:46px;height:6px;background:#222;border:1px solid #567;border-radius:3px;vertical-align:middle;margin-left:4px"><span style="display:block;height:100%;width:'+m+'%;background:'+c+'"></span></span>';}

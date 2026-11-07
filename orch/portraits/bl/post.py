@@ -29,9 +29,9 @@ def paint(rgba, bg_top, bg_bot, seed=0, size=(336, 420), rim=(1, .9, .75), frame
     comp = fg * a + bg * (1 - a)
     # soften the subject: edge preserving + kuwahara for a painted feel
     c8 = np.clip(comp * 255, 0, 255).astype(np.uint8)
-    kw = .35 * kuwahara(c8, 2) / 255.0 + .65 * c8 / 255.0
+    kw = .42 * kuwahara(c8, 2) / 255.0 + .58 * c8 / 255.0
     det = comp - cv2.GaussianBlur(comp, (0, 0), 1.6)           # keep some fine detail (hair, pores)
-    out = kw + det * .35
+    out = kw + det * .34
     # brush-stroke texture: directional noise modulating luminance
     st = cv2.GaussianBlur(rng.random((h, w)).astype(np.float32), (0, 0), 1.2) - .5
     st = cv2.GaussianBlur(st, (0, 0), sigmaX=5, sigmaY=.9)

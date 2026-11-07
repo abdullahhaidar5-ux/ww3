@@ -8,7 +8,7 @@ def reset():
     try: sc.cycles.denoiser = 'OPENIMAGEDENOISE'
     except Exception: pass
     sc.render.resolution_x = 560; sc.render.resolution_y = 700
-    sc.view_settings.view_transform = 'Standard'; sc.view_settings.exposure = -.15
+    sc.view_settings.view_transform = 'Standard'; sc.view_settings.exposure = -.25
     sc.render.film_transparent = False
     return sc
 def world(sc, col=(.06, .05, .045)):
