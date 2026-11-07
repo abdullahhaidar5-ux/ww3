@@ -50,6 +50,21 @@ try {
     return out; });
   console.log('peacetest', JSON.stringify(r));
   if (r.score < 20 || !r.bad || !r.applied || !r.peace || !r.tribute || !r.alert || !r.owner) fails.push('peace ' + JSON.stringify(r));
+  // RG16 reparations + RG44 demilitarised zone (laneG): paid once, zone blocks every path (AI too) for 24 months
+  const z = await ev(() => { const out = {};
+    grNew({ me: 'IR', seed: 5, len: 'std' });
+    const a = 'IR', bp = GCM.P.find(p => p.land && GC.prov[p.i] && GC.prov[p.i].o !== a && (p.adj || []).some(j => GC.prov[j] && GC.prov[j].o === a) && GC.nat[GC.prov[p.i].o] && grNat(GC.prov[p.i].o).major && !grAllied(a, GC.prov[p.i].o));
+    const b = bp ? GC.prov[bp.i].o : 'IR';
+    GC.war[grWk(a, b)] = 1; GC.wsT = {}; GC.wsT[grWk(a, b)] = GC.turn - 20;
+    const zone = gpDmzProv(a, b, { prov: [] }); out.zone = zone;
+    GC.nat[b].cash = 1000; const c0 = GC.nat[a].cash;
+    const r1 = gpApply(a, b, { prov: [], trib: false, rep: true, dmz: zone >= 0 }); out.applied = r1 === '';
+    out.rep = GC.nat[a].cash - c0 === Math.round(1000 * GP_REP); out.dmz = gdDmz(zone); out.until = GC.dmz && GC.dmz[zone] === GC.turn + GP_DMZ_MONTHS;
+    GC.war[grWk(a, b)] = 1; const src = zone >= 0 ? GCM.P[zone].adj.find(j => GC.prov[j].o === a) : undefined;
+    out.blocked = src === undefined || grPath(a, src, zone) === null;
+    return out; });
+  console.log('dmztest', JSON.stringify(z));
+  if (z.zone < 0 || !z.applied || !z.rep || !z.dmz || !z.until || !z.blocked) fails.push('dmz ' + JSON.stringify(z));
 } catch (e) { fails.push('exception: ' + e.message); }
 if (errs.length) fails.push(...errs.slice(0, 5));
 await browser.close(); server.close();

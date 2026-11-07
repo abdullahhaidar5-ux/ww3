@@ -115,7 +115,7 @@ function grEdge(a,b){const A=GCM.P[a],B=GCM.P[b];if(A.land&&B.land)return 1+((gr
 // shortest path for nation `o` (Dijkstra, ties by index => deterministic). Foreign provinces are open only when at war (or the goal itself,
 // which then means declaring war). Returns {path,turns,decl} or null.
 function grPath(o,from,to,fl){if(from===to)return {path:[],turns:0,decl:''};const P=GCM.P,dist=new Map([[from,0]]),prev=new Map(),open=[[0,from]],done=new Set();
-  const pass=(j,goal)=>{const q=P[j];if(fl&&!q.sea)return false;if(q.sea)return true;const w=GC.prov[j].o;return w===o||grAtWar(o,w)||goal;};
+  const pass=(j,goal)=>{const q=P[j];if(fl&&!q.sea)return false;if(q.sea)return true;if(gdDmz(j))return false;/* RG44 demilitarised zone */const w=GC.prov[j].o;return w===o||grAtWar(o,w)||goal;};
   while(open.length){open.sort((x,y)=>x[0]-y[0]||x[1]-y[1]);const [d,u]=open.shift();if(done.has(u))continue;done.add(u);if(u===to)break;
     for(const j of P[u].adj){if(done.has(j))continue;const c=grEdge(u,j);if(!c)continue;if(!pass(j,j===to))continue;const nd=d+c;if(!dist.has(j)||nd<dist.get(j)){dist.set(j,nd);prev.set(j,u);open.push([nd,j]);}}}
   if(!dist.has(to))return null;const path=[];for(let c=to;c!==from;c=prev.get(c))path.unshift(c);
@@ -179,7 +179,7 @@ function grRetreatTo(a,from){const P=GCM.P;let best=-1,bs=-1e9;for(const j of P[
 
 function grMovePhase(){GC.q=[];const P=GCM.P;
   for(const a of GC.armies.slice().sort((x,y)=>x.id-y.id)){a.arr=0;if(!a.path.length)continue;const nx=a.path[0],c=grEdge(a.at,nx);
-    if(!c||(P[nx].land&&GC.prov[nx].o!==a.o&&!grAtWar(a.o,GC.prov[nx].o))){a.path=[];a.pg=0;continue;}   // order no longer legal (peace, border closed)
+    if(!c||(P[nx].land&&GC.prov[nx].o!==a.o&&!grAtWar(a.o,GC.prov[nx].o))||gdDmz(nx)){a.path=[];a.pg=0;continue;}   // order no longer legal (peace, border closed, demilitarised zone)
     if(gmilSeaDenied(a,nx))continue;   /* no escort and the sea is held by an enemy fleet: the column waits in port */
     if(geDry(a.o)&&(GC.turn&1))continue;   /* out of fuel: columns crawl, a step every other turn */
     a.pg++;if(a.pg>=c){a.from=a.at;a.at=nx;a.path.shift();a.pg=0;a.arr=GC.turn;}}
