@@ -18881,6 +18881,7 @@ function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.
 function grandForce(t){let v=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)v+=(e.s.cost||400)*(.35+.65*e.hp/e.max);for(const w of G.grand.waves)if(!w.done&&w.side===t)for(const r of w.recs)v+=grCost(G.teams[t].fac,r[0]);return v;}
 function grandAlive(t){let n=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)n++;for(const w of G.grand.waves)if(!w.done&&w.side===t)n+=w.recs.length;return n;}
 function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
+  for(const T of G.teams)if(T.credits)T.credits=0;   // army only: no battle money at all (Abdullah 20:10 "why is money generating if I can't build units"); the empire's money lives on the grand map
   // a side with nobody left on the field never waits for a timer (Abdullah 2026-11-06 19:56 "I was killed, shouldn't it end immediately"):
   // its next reinforcement wave arrives at once; with no waves left, the wipe check below ends the battle this tick
   for(let s=0;s<2;s++){let f=0;for(const e of G.ents)if(e.team===s&&!e.isB&&!e.dead){f=1;break;}
