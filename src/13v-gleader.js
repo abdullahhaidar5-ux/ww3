@@ -41,7 +41,7 @@ npTab('ldr','🕌','Leader',(code,body)=>{const k=ldrId(code);if(!k){body.textCo
    +(k==='AY'?'<div style="margin-top:6px;opacity:.8">One leader for the Resistance bloc: Iran, the Mountain Shias and Yemen share him and his effects.</div>':'');
   const mk=(txt,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=txt;b.style.cssText='margin:4px 6px 0 0;padding:3px 10px;border-radius:12px;border:1px solid #3b556e;background:#16222e;color:#cfe3f5;cursor:pointer;font-size:14px';b.onclick=fn;return b;};
   const lst=ldrProvs(k).filter(i=>i!==L.at).sort((a,b)=>GC.prov[b].un-GC.prov[a].un).slice(0,12);
-  const h=document.createElement('div');h.style.cssText='margin-top:10px;font-size:14px;opacity:.8';h.textContent=mine?'Send on tour (about a month per stop), restless provinces first:':(code!==LDR_DEF[k].own?'Ask for a visit (the ruler of '+gdName(LDR_DEF[k].own)+' decides the route):':'');body.appendChild(h);
+  const h=document.createElement('div');h.style.cssText='margin-top:10px;font-size:14px;opacity:.8';h.textContent=mine?'Send on tour (about a month per stop), restless provinces first:':(code!==LDR_DEF[k].own?'Ask for a visit (the ruler of '+gdNatName(LDR_DEF[k].own)+' decides the route):':'');body.appendChild(h);
   if(mine||code!==LDR_DEF[k].own){const w=document.createElement('div');body.appendChild(w);
     for(const i of lst){if(!mine&&GC.prov[i].o!==code)continue;w.appendChild(mk(GCM.P[i].n+' ('+Math.round(GC.prov[i].un)+'% unrest)',()=>{if(mine)ldrGo(k,i);else L.req=i;npDraw();}));}}},
   (code)=>!!ldrId(code));

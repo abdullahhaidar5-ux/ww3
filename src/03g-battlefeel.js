@@ -80,6 +80,8 @@ function bfeelTick(dt){if(MODE==='client'||!G||G.over||!G.ents)return;bfInit();G
   if(G.smokes)for(const S of G.smokes){if(S.t<=G.t)continue;S.x=Math.max(0,Math.min(MAPW,S.x+w.x*st*.7));S.y=Math.max(0,Math.min(MAPH,S.y+w.y*st*.7));const R=Math.ceil(S.r/BF_SC);
     for(let j=-R;j<=R;j++)for(let i=-R;i<=R;i++)if(i*i+j*j<=R*R+1)bfSmkAdd(S.x+i*BF_SC*.9,S.y+j*BF_SC*.9,.55*st);}
   for(const h of G.bfHulk){const age=G.t-h.t;if(age<75)bfSmkAdd(h.x,h.y,(age<40?.16:.09)*st);}
+  // RF14 burning oil: a destroyed derrick/plant belches a thick black column while it burns; a badly hurt one smoulders
+  if(G.oil)for(const o of G.oil){if(o.dead&&o.burn>0)bfSmkAdd(o.x,o.y,(.45+.25*Math.min(1,o.burn/45))*st);else if(!o.dead&&o.hp<o.max*.5)bfSmkAdd(o.x,o.y,.12*st);}
   fireTick(st,w);bfSmkStep(st,w);
   if(G.bfScorch.length>1500)G.bfScorch.splice(0,G.bfScorch.length-1500);
   // effects for every screen (small): wind + densest smoke cells, burning cells, new scorch, every ~2 s

@@ -3,13 +3,13 @@
 // (roughly square-rooted) so a small power is weak but still playable. Sources + the per-nation table: orch/reports/realstart.md.
 // Deterministic: no random numbers here. grand4/4b's diplomacy reads `al`, `op`, `tn`; grand3 fleets read `fl`.
 //   n[code] = [econ, mil, oil] : econ x2200 starting cash, mil x GR_VBASE starting army value, oil = fuel stock (120 = normal)
-const RES_BLOC=['IR','RS','DW'];   // the Resistance bloc, led by the one shared Ayatollah; new Shia factions add their code here
+const RES_BLOC=['IR','RS','DW','RV'];   // the Resistance bloc, led by the one shared Ayatollah; new Shia factions add their code here
 const GR_REAL={
  n:{US:[6,3,230],CN:[4.5,2.4,110],RU:[1.6,1.9,260],IN:[2.5,1.5,90],DE:[2.5,.9,80],JP:[2.3,.9,70],GB:[2.2,1,130],FR:[2.1,1,90],IT:[1.6,.7,80],
   BR:[1.5,.5,160],CA:[1.5,.5,200],KR:[1.5,1,70],AU:[1.3,.6,140],ES:[1.2,.5,80],MX:[1.2,.45,130],ID:[1,.5,140],SA:[1.2,.9,300],TR:[1,1.1,90],
   TW:[1,.6,70],PL:[1,.8,80],IL:[.9,1,90],AE:[.9,.5,260],SE:[.8,.4,90],NO:[.9,.35,260],FI:[.5,.45,80],NL:[.9,.3,80],EG:[.5,.8,110],IR:[.6,1,230],
   PK:[.5,.9,80],UA:[.4,1.4,70],VN:[.5,.55,110],TH:[.6,.4,90],NG:[.5,.3,170],ZA:[.5,.35,80],AR:[.5,.3,100],CO:[.4,.3,130],CL:[.4,.3,80],
-  GR:[.5,.5,80],RO:[.4,.4,90],KZ:[.5,.4,200],IQ:[.5,.5,230],QA:[.6,.25,260],KW:[.5,.25,260],OM:[.4,.3,200],DZ:[.4,.55,200],MA:[.3,.4,80],
+  GR:[.5,.5,80],RO:[.4,.4,90],KZ:[.5,.4,200],IQ:[.4,.45,230],RV:[.15,.35,110],QA:[.6,.25,260],KW:[.5,.25,260],OM:[.4,.3,200],DZ:[.4,.55,200],MA:[.3,.4,80],
   VE:[.2,.35,180],KP:[.15,.9,70],CU:[.1,.2,60],SY:[.1,.2,70],RS:[.15,.3,90],DW:[.1,.35,80],KD:[.25,.25,120],JO:[.2,.3,80],AZ:[.3,.4,200],BY:[.2,.4,100],
   AF:[.1,.25,60],LY:[.15,.2,200],SD:[.08,.15,70],ET:[.15,.3,60],PH:[.4,.3,80]},
  // real alliances at the start (Nov 2026): members start friendly, never attack each other on their own
@@ -21,7 +21,7 @@ const GR_REAL={
  op:[['US','CN',-45],['US','RU',-55],['US','IR',-90],['US','KP',-95],['RU','UA',-100],['RU','GB',-60],['RU','PL',-70],['RU','DE',-45],['IL','IR',-100],['IL','RS',-100],
   ['IL','DW',-95],['IL','TR',-55],['IN','PK',-85],['IN','CN',-45],['CN','TW',-90],['CN','JP',-55],['CN','PH',-50],['KP','KR',-95],['KP','JP',-70],['GR','TR',-50],
   ['SA','IR',-60],['EG','IL',-20],['AZ','IR',-35],['DE','US',20],['FR','DE',30],['IN','US',25],['IN','RU',35],['CN','RU',55],['CN','KP',40],['TR','RU',-10],
-  ['IQ','IR',45],['SY','IL',-35],['SY','TR',20],['KD','TR',-35],['DW','SA',-40],['UA','PL',55],['MA','DZ',-60],['ET','EG',-40],['ET','SD',-20]],
+  ['IQ','IR',45],['IQ','RV',-15],['RV','IR',60],['SY','IL',-35],['SY','TR',20],['KD','TR',-35],['DW','SA',-40],['UA','PL',55],['MA','DZ',-60],['ET','EG',-40],['ET','SD',-20]],
  // opening wars as they stand in Nov 2026 (checked): Russia-Ukraine (5th year, no ceasefire); Israel vs the Lebanese Mountain Shias
  wars:[['RU','UA'],['IL','RS']],
  // real tensions: each side keeps a covering army at the front; wars can break out here
