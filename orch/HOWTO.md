@@ -29,3 +29,6 @@ Push a fn onto `GMOD_HOOKS` (13k) — called by `gmodMonth` each turn. New idea 
 ## Middle East map templates for the Fight-it generator (memaps, for Lane F)
 `src/02c-memaps.js` holds one data row per real-geography Conquest map (`MAPS[key]`, `home` = nations). No grand-map province→template hook exists yet
 (grep `MAPS[` in `src/13-grand.js` finds none); to mirror a province, pick `Object.keys(MAPS).filter(k=>MAPS[k].home.includes(nationCode))` and match the row's `tag` (coast, river, desert, mountains, urban, marsh).
+
+## Add a trade good / world price (13z-gmarket.js)
+Add a row to `MK_G` and an output formula in `mkOut`; prices live in `GC.mk.p`, effects are GMOD rows built in `mkSync`. Test: `node orch/mktest.mjs`.
