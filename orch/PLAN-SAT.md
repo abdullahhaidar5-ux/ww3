@@ -13,6 +13,13 @@ section you need. After Sat 18:00 Chicago: no new items, only finish/ship; at 20
 balance3, grandmirror (done), look3/look4. Still finishing on their own: grand3 (→ fires Lane A when done), look1, rescue, nations-b2.
 Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 
+## STALINGRAD (Abdullah 2026-11-06 20:15 "We're doing Stalingrad style development"): seven lanes attack at once, nobody waits, nobody retreats
+Items move to the new lanes (the item text stays where it is above; the new owner ticks it):
+- **Lane F takes:** A1 (if still open) · A3 smooth army control · A3b army morale bar + retreats · A5b morale extras on the map · campaign-battle rules (rout, wipe, army-only logic) · ⚡21 outliner · ⚡23 macro-builder · ⚡28 observer · ⚡31 quick battle · 33 cover overlay · 32 after-action report · 36 bridges/dams to map · 40 battle weather · 38 hero moments · 39 generals' speech.
+- **Lane A keeps:** A2 real time · A2b multiplayer grand campaign · A4 grand3 leftovers · A5 force limit + tradition · A6 hidden war · 27 ironman · 34 600-unit battles · 37 replay links · 42 spectator links · 41 co-op.
+- **Lane G takes:** B2b alerts bar · B6 diplomacy (EU4) · B7 events/research/missions/cabinet · B8 great powers/reforms/prestige · B5c propaganda/government/war economy · ⚡16 headlines · ⚡25 diplomatic web · ⚡26 achievements · 22 peace-deal screen · 24 ledger graphs · 30 town blurbs · 48 event chains · 49 crisis generator · 29 alternative start dates · 44 clan colours.
+- **Lane B keeps:** B1 realistic start · B2 nation panel · B2.5 modifier engine · B3 power points + ideas · B4 stability/cores/estates · B4b war support + rallies + recruiting · B5 development + trade nodes · B5b EU4 economy.
+
 ## VERTICAL SLICE = the Middle East first (Abdullah 2026-11-06 18:52, picked)
 Saturday's goal is a **Middle East campaign at full $75 quality**: Iran, Mountain Shias (Lebanon), Yemen (DW), Israel, Saudi Arabia,
 UAE, Oman, Iraq, Syria, Turkey, Jordan, Egypt, Kurdistan Region (+ the Gulf/Red Sea/East Med sea zones). **Every lane does its
@@ -51,6 +58,8 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
 | **C — Look ($75)** | Sonnet | `src/13d-grandterrain.js`, `13e-grand3d.js`, CSS/skin of every panel, `orch/ART-BAR.md` (battle rendering moved to Lane E) | `trig_0196kYnG3DBmhFHiNbNqisD6` (ex art loop; hourly :07 + self-fire) |
 | **D — Content & QA** | Sonnet | `01-data` rosters, `11z-nations*`, `vo/`, `mus/`, balance numbers, wording/tooltips/tutorial, saves, `orch/newplayer.mjs` | `trig_01QkuM1b8miRMAF9NcwxC8bB` (hourly :47 + self-fire) |
 | **E — Battle look (TOP PRIORITY, Abdullah 19:30 "Battle looks terrible")** | Sonnet | battle rendering: `src/04-gfx.js`, `05-fx3d.js`, `10-post.js`, `11-models.js`, `models/` (Lane C keeps the grand map 13d/13e + UI skin) | `trig_01X46fRzVkWLJH7JGNAXtDGx` (hourly :17 + self-fire) |
+| **F — Grand feel & campaign battles** (Abdullah 20:15 "Stalingrad style development") | Sonnet | `src/13c-grandui.js` (input, selection, outliner), `src/13b-grandbattle.js` (campaign battle rules), army cards | `trig_LANE_F` (hourly :29 + self-fire) |
+| **G — Government, diplomacy & events** (20:15) | Sonnet | new grand files `src/13j*`+ for diplomacy/events/government (economy stays Lane B's 13g/13h/13i) | `trig_LANE_G` (hourly :53 + self-fire) |
 
 ## Lane A — Grand engine & feel (priority order)
 - [x] **A1 FIX: the live battle never loads** (Abdullah 18:00). Reproduce exactly as a player: menu → Grand campaign → march into an enemy → Fight it live, in a real (non-test-hook) browser path with models loading; find why it hangs (loader, mirror map generation, missing data for new nations, exception); fix; add that exact path to the gate so it can't regress. — **Done 8db5c8b8:** cause = a campaign saved before the 2026-11-06 real-borders map (174 → 236 land provinces) still showed as Continue; its province numbers point at different places, so the map broke and Fight it never loaded. Old-map saves are now refused with a clear note (map signature `GC.ms`), a battle that fails to build shows a message, puts the map back and auto-resolves (`grandFightLive`), and gate `grandlive` (orch/grandlive.mjs) plays the real path from the menu (New → march → End turn → Fight it live, no hooks) — a fresh campaign's battle loads and runs.
