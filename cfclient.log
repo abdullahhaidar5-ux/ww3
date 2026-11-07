@@ -1,0 +1,168 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:34107
+[4s] pages loaded; this machine's host benchmark: 35
+[91s] 1. battle YCMQ6P running on the server: true; slots creator 0, friend 1
+[95s] 2. server's standby: slot 1 (benchmarks the server holds: 40, 900)
+[95s] 3. the server is made to fall behind real time (it gets only a third of the real time)
+[123s]    after 28.0 s: server battle closed (last window 0.521x real time); creator client (room gen 1), friend host
+[129s] 4. after the takeover, t=17 s: new host 26 entities, creator's side sees 5; creator's page: missing 0, off-position 0, mismatched 0; credits host 10126 page 10126
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFOVER PASS (129s) — the server picked the strong PC as standby, handed the battle to it when it fell behind real time, and the other player stayed in sync
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:41007
+[3s] both pages loaded; the multiplayer menu offers "Play online" and "New battle"
+[8s] 1. three other battles take the 3 battle slots: !w started, !w started, !w started
+[9s]    server busy (busy) -> battle in this browser: "Your battle · codeA88LRJOnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join. You can also add co"
+[10s]    the 3 lobbies closed; battle slots in use: 0
+[10s] 2. lobby open on the server, code 0L7R93; creator status: "Your battle · code0L7R93OnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join."
+[10s]    friend joined: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[12s]    server lobby: humans US/team 1, RU/team 2; computer CN/team 2
+[30s] 3. battle started on the server (battle, held for loading screens: true); creator is slot 0, friend slot 1
+[101s]    both pages past the loading screen (rd: true, true); battle running: true
+[107s]    slot 0's order: 2/2 of its units moved on the server
+[107s]    slot 1's order: 2/2 of its units moved on the server
+[107s]    in-battle readout (creator): "60 FPS · ping 240 ms"
+[192s]    check @1.5 min slot 0 t=91s: server 53 entities, this side sees 6; page has 6; missing 0, extra 0, off-position 0, mismatched 0; credits server 10634 page 10634
+[194s]    check @1.5 min slot 1 t=91s: server 53 entities, this side sees 24; page has 25; missing 0, extra 0, off-position 0, mismatched 0; credits server 10684 page 10684
+[194s] 4. the friend's connection to the server is cut
+[194s]    after 0.6 s the friend is reconnected via wsb
+[200s]    after reconnect slot 1 t=95s: server 53 entities, this side sees 26; page has 27; missing 0, extra 0, off-position 0, mismatched 0; credits server 10779 page 10779
+[209s] 5. the battle's object is evicted at t=104 s (as on a redeploy)
+[210s]    after 1.8 s: server battle at t=99 s; creator client via wsb (room gen 0), friend client via wsb (room gen 0)
+[215s]    after restart slot 0 t=102s: server 51 entities, this side sees 8; page has 8; missing 0, extra 0, off-position 0, mismatched 0; credits server 10830 page 10830
+[216s]    after restart slot 1 t=102s: server 51 entities, this side sees 25; page has 26; missing 0, extra 0, off-position 0, mismatched 0; credits server 10796 page 10796
+[225s] 6. today's use is pushed past 75%; standby (checkpoint holder) is slot 1; pages holding a checkpoint: false,true
+[227s]    after 2.1 s: server battle closed, today at 76.3%, battles allowed: false; creator client (room gen 1, last update 0.1 s ago), friend host
+[230s]    new browser host at t=113 s with 51 entities; the other player's side is still theirs; its last update 0.1 s ago
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E PASS (231s) — battle hosted by the real BattleRoom (wrangler dev): busy fallback, lobby, start, sync, orders, reconnect, server restart, budget hand-over all OK
+local game server http://127.0.0.1:33539
+[3s] both pages loaded
+  ✗ page.fill: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#hostpw')
+    - locator resolved to <input id="hostpw" maxlength="64" type="password" spellcheck="false" autocomplete="new-password" title="Optional. Leave empty for a game anyone can join." placeholder="🔒 Password (optional): for a private battle" aria-label="Password for your game (optional): only friends who know it can join"/>
+    - fill("Yalla 2026 ñ")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    59 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+
+--- server log (tail) ---
+
+creator status: 
+friend status: 
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFPASSWORD FAIL: page.fill: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#hostpw')
+    - locator resolved to <input id="hostpw" maxlength="64" type="password" spellcheck="false" autocomplete="new-password" title="Optional. Leave empty for a game anyone can join." placeholder="🔒 Password (optional): for a private battle" aria-label="Password for your game (optional): only friends who know it can join"/>
+    - fill("Yalla 2026 ñ")
+  - attempting fill action
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and editable
+      - element is not visible
+    - retrying fill action
+      - waiting 100ms
+    59 × waiting for element to be visible, enabled and editable
+       - element is not visible
+     - retrying fill action
+       - waiting 500ms
+ (34s)
+local game server http://127.0.0.1:42139
+[2s] page loaded
+  ✗ locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#aiN button[data-n="3"]')
+    - locator resolved to <button data-n="3" title="Fight 3 computer opponents">3</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    55 × waiting for element to be visible, enabled and stable
+       - element is not visible
+     - retrying click action
+       - waiting 500ms
+
+--- server log (tail) ---
+
+  warn: player console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFSTARTPICK FAIL: locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#aiN button[data-n="3"]')
+    - locator resolved to <button data-n="3" title="Fight 3 computer opponents">3</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    55 × waiting for element to be visible, enabled and stable
+       - element is not visible
+     - retrying click action
+       - waiting 500ms
+ (33s)
+local game server http://127.0.0.1:39103 (pages reach it through http://127.0.0.1:35273); over-budget server http://127.0.0.1:34755
+[3s] 0. menu: "▶ Play online" and "+ New battle"
+[4s] 1. server busy (busy) -> battle in this browser; lobby: "Your battle · code96FAQ8OnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join. You can also add co"
+[4s] 2. lobby open on the server, code WRD28A; creator status: "Your battle · codeWRD28AOnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join."
+[4s] friend's game list: "1 open battle · 0 in progressUnited States · game WRD28A · Straits of Thunder · 1/8 playersJoin👁 Watch"
+[5s] friend joined with "Play online": "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[6s] server lobby (as the friend sees it): player US/team 1, player RU/team 2, computer CN/team 2
+[25s] 3. battle started; creator is slot 0, friend slot 1
+[99s] both pages past the loading screen
+[100s]   creator: {"mode":"client","me":0,"snapT":62.3,"rx":82,"recon":false,"via":"wsb","peer":"ww3p-idsof348","host":"ww3-wrd28a","gen":0,"ai":false}
+[100s]   friend: {"mode":"client","me":1,"snapT":69.9,"rx":9,"recon":false,"via":"wsb","peer":"ww3p-lecrcoxs","host":"ww3-wrd28a","gen":0,"ai":false}
+[100s]   proxy sockets: [{"path":"/lobby","code":null,"id":null},{"path":"/lobby","code":null,"id":null},{"path":"/battle/wrd28a","code":"wrd28a","id":"ww3p-idsof348"},{"path":"/battle/wrd28a","code":"wrd28a","id":"ww3p-lecrcoxs"}]
+[105s] the server's battle clock advances on the creator's page: 73.1 s -> 75.1 s
+[109s] slot 0's orders acknowledged by the server; 2/2 of its units moved in the server's updates
+[109s] slot 1's orders acknowledged by the server; 2/2 of its units moved in the server's updates
+[109s] in-battle readout (creator): "60 FPS · ping 139 ms"
+[120s] @1.5 min slot 0: server checkpoint (6.5 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[120s] @1.5 min slot 1: server checkpoint (6.5 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[120s] @1.5 min: the pages' latest states are 0.00 s apart; 8 things both see, 0 differ
+[120s] 4. the friend's connection to the server is cut (1 socket)
+[121s]   back after 0.6 s
+[124s] friend reconnected via wsb (room gen 0); its side has 6 units/buildings (had 6)
+[133s] after the friend reconnected slot 0: server checkpoint (3.5 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[133s] after the friend reconnected slot 1: server checkpoint (3.5 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[133s] after the friend reconnected: the pages' latest states are 0.00 s apart; 5 things both see, 0 differ
+[143s] 5. the server restarted (battle at 113 s); pages reconnect
+[145s]   back after 1.5 s
+[145s] after the restart: creator client via wsb gen 0, friend client via wsb gen 0
+[149s] the server picked the battle up: clock now 113 s
+[149s] after the server restart slot 0: server checkpoint (0.6 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[149s] after the server restart slot 1: server checkpoint (0.6 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[149s] after the server restart: the pages' latest states are 0.00 s apart; 5 things both see, 0 differ
+[158s] 6. the server's battle vanishes for good; pages holding a checkpoint: true,false
+[160s] after 2.1 s: creator host, friend client (room gen 1, last update 0.1 s ago)
+[163s] new browser host at t=124 s with 53 entities; the other player's side is still theirs; its last update 0.1 s ago
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT PASS (163s) — Play online on the real server: menu, silent busy fallback, lobby, one-tap join, start, sync, orders, reconnect, server restart, takeover, no hosting wording all OK
