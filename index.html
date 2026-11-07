@@ -19669,21 +19669,21 @@ function grandClose(){g3Dispose();GV.g3=false;const e=document.getElementById('g
 function grandMenu(){grMap();const saved=(()=>{try{return JSON.parse(localStorage.getItem(GR_KEY));}catch(e){return null;}})(),root=campEl('div');
   root.appendChild(campEl('h1','margin:6px 0 4px;font-size:30px;letter-spacing:.04em;','GRAND CAMPAIGN'));
   root.appendChild(campEl('div','opacity:.75;margin-bottom:14px;line-height:1.5','Run a nation on the world map. Time runs like EU4: play, pause at any moment and give orders. When armies meet you can fight the battle yourself, with exactly the units you brought, or let the generals auto-resolve it.'));
-  const usable=saved&&!saved.over&&saved.me&&grSaveOk(saved);
-  if(saved&&!saved.over&&saved.me&&!usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campEl('div','margin:0 0 12px;padding:8px 10px;border:1px solid #8a6a3a;border-radius:6px;background:rgba(120,80,30,.25);line-height:1.5','Your saved campaign ('+n+', '+grMonStr(saved.turn)+') was made on an older world map and can\'t continue on the new one. Start a new campaign.'));}
-  if(usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campBtn('Continue — '+n+', '+grMonStr(saved.turn)+' (month '+saved.turn+'/'+saved.maxTurn+')',()=>{grLoad();campClose();grandOpen();}));}
+  const usable=saved&&!saved.over&&grSaveOk(saved);
+  if(saved&&!saved.over&&!usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campEl('div','margin:0 0 12px;padding:8px 10px;border:1px solid #8a6a3a;border-radius:6px;background:rgba(120,80,30,.25);line-height:1.5','Your saved campaign ('+n+', '+grMonStr(saved.turn)+') was made on an older world map and can\'t continue on the new one. Start a new campaign.'));}
+  if(usable){const n=saved.me?((GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me):'Observer';root.appendChild(campBtn('Continue — '+n+', '+grMonStr(saved.turn)+' (month '+saved.turn+'/'+saved.maxTurn+')',()=>{grLoad();campClose();grandOpen();}));}
   root.appendChild(campBtn('New campaign',()=>{grandSetup();},!!usable));root.appendChild(campBtn('Back',campClose,true));campShow(root);}
 function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))].filter(c=>!grNat(c).major).sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1);let nat='IR',len='quick';
   root.appendChild(campEl('h1','margin:6px 0 8px;font-size:28px','NEW GRAND CAMPAIGN'));root.appendChild(campEl('div','opacity:.8;margin-bottom:6px','Your nation'));
   const sel=campEl('select','font-size:18px;padding:8px;background:#1a2430;color:#fff;border:1px solid #6b7a55;border-radius:6px;min-width:300px');
   const og=(l,L)=>{const g=document.createElement('optgroup');g.label=l;for(const c of L){const o=document.createElement('option');o.value=c;o.textContent=GCM.nats.get(c).name;g.appendChild(o);}sel.appendChild(g);};
-  og('Full nations',majors.sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1));og('Minor nations (shared regional army)',minors);sel.value=nat;root.appendChild(sel);
-  const info=campEl('div','margin:10px 0;opacity:.85;line-height:1.5');const upd=()=>{nat=sel.value;const ps=GCM.P.filter(p=>p.land&&p.o===nat),N=grNat(nat);info.innerHTML=GCM.nats.get(nat).name+': <b>'+ps.length+'</b> provinces · capital '+(ps.find(p=>p.cap)||ps[0]).n+' · war goals '+ps.filter(p=>p.wg&&!p.cap).map(p=>p.n).join(', ')+'<br>'+(N.major?'Full nation: its own units and look.':'Minor nation: shared regional army, own flag and colours.')+' Every nation starts with the same strength.';};
+  {const o=document.createElement('option');o.value='';o.textContent='Observer — watch the AI run the whole world';sel.appendChild(o);}og('Full nations',majors.sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1));og('Minor nations (shared regional army)',minors);sel.value=nat;root.appendChild(sel);
+  const info=campEl('div','margin:10px 0;opacity:.85;line-height:1.5');const upd=()=>{nat=sel.value;if(!nat){info.textContent='Observer mode: no nation is yours. Every empire is run by the AI; pause, speed up and watch wars, alliances and crises unfold. Click any army or province to inspect it.';return;}const ps=GCM.P.filter(p=>p.land&&p.o===nat),N=grNat(nat);info.innerHTML=GCM.nats.get(nat).name+': <b>'+ps.length+'</b> provinces · capital '+(ps.find(p=>p.cap)||ps[0]).n+' · war goals '+ps.filter(p=>p.wg&&!p.cap).map(p=>p.n).join(', ')+'<br>'+(N.major?'Full nation: its own units and look.':'Minor nation: shared regional army, own flag and colours.')+' Every nation starts with the same strength.';};
   sel.onchange=upd;upd();root.appendChild(info);
   root.appendChild(campEl('div','opacity:.8;margin:8px 0 2px','Length'));const row=campEl('div');const bs=[['Quick — 25 months, win by war goals or score','quick'],['Standard — 60 months (5 years)','std']].map(([t,v])=>{const b=campBtn(t,()=>{len=v;bs.forEach(x=>x[0].style.background=x[1]===v?'#4f6b32':'transparent');},v!=='quick');return [b,v];});bs.forEach(x=>row.appendChild(x[0]));root.appendChild(row);
   root.appendChild(campEl('div','opacity:.8;margin:10px 0 2px','Scenario'));let sc='me26';const srow=campEl('div'),sinfo=campEl('div','margin:4px 0 6px;opacity:.8;font-size:14px;max-width:640px;line-height:1.4');
   const sbs=GR_SCEN.map(S=>{const b=campBtn(S.n+(S.id==='me26'?' ★':''),()=>{sc=S.id;sbs.forEach(x=>x[0].style.background=x[1]===sc?'#4f6b32':'transparent');sinfo.textContent=S.d;},S.id!=='me26');b.title=S.d;return [b,S.id];});sbs.forEach(x=>srow.appendChild(x[0]));sinfo.textContent=GR_SCEN[0].d;root.appendChild(srow);root.appendChild(sinfo);
-  root.appendChild(campBtn('Begin',()=>{grNew({me:nat,len,sc,seed:(Math.floor(Math.random()*1e9)||7)});grSave();campClose();grandOpen();}));root.appendChild(campBtn('Back',grandMenu,true));campShow(root);}
+  root.appendChild(campBtn('Begin',()=>{grNew({me:nat||null,len,sc,seed:(Math.floor(Math.random()*1e9)||7)});grSave();campClose();grandOpen();}));root.appendChild(campBtn('Back',grandMenu,true));campShow(root);}
 // main menu buttons: Grand campaign · Conquest · Missions · Tutorial (Abdullah 2026-11-06)
 (function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('grandBtn'))return;const b=document.createElement('button');b.className='big';b.id='grandBtn';b.type='button';b.textContent='Grand campaign';b.title='The world map: run a nation, fight the battles yourself or auto-resolve them';b.onclick=()=>{try{initAudio();}catch(e){}grandMenu();};
   const camp=document.getElementById('campaign')||sb;camp.parentNode.insertBefore(b,camp);const st=document.getElementById('start');if(st)st.textContent='Conquest — deploy vs AI';})();
@@ -22467,6 +22467,54 @@ npTab('res','🔬','Research & cabinet',(code,body,c)=>{const N=rsN(code),own=c.
   for(let i=0;i<CAB.length;i++){let nm='?';try{nm=pplName(pplOf(code,'minister',i));}catch(e){}const s=cabSkill(code,i),r=document.createElement('div');r.style.margin='4px 0';
     r.textContent='Minister of '+CAB[i][2]+': '+nm+' — skill '+'★'.repeat(s)+'☆'.repeat(3-s)+' ('+(CAB[i][1]==='income'?'+'+Math.round(CAB[i][3]*s*1000)/10+'% income':'+'+Math.round(CAB[i][3]*s*100)+'% '+({ppDip:'Diplomatic',ppMil:'Military',ppPol:'Political'})[CAB[i][1]]+' points')+')';body.appendChild(r);}});
 alAdd('res','🔬','Research',c=>{const N=rsN(c);if(!N||c!==GC.me)return null;gidN(c);for(const t of Object.keys(RS_TRACKS)){const L=N.rs[t];if(L<RS_MAX&&N.pp[RS_TRACKS[t].pool]>=RS_COST[L]+100)return {n:'!',tip:'enough points banked to research '+RS_TRACKS[t].n,go:()=>npOpen(c,'res')};}return null;});
+// 13zm-gmobil.js — lane B RG34: MOBILISATION (call up reserves). N.mob = 0 peacetime / 1 partial / 2 general, N.mobT = turn it last changed, N.mobM = months mobilised.
+// Who reacts: neighbours that are not allies lose trust in you every month you stay mobilised and (AI) mobilise back; allies approve. Second order: reserves pulled from
+// factories cut income, raise army upkeep and breed unrest; a long mobilisation with no war drags the economy further ("prolonged"); war support rises while the nation is under arms.
+// Counter-play: a neighbour's mobilisation shows as an alert; you can answer with your own call-up, talks (Diplomacy tab) or a deterrent ally. Cost: Military points + 3-month lock.
+// All effects are GMOD rows; the one-off call-up fills the manpower pool. Deterministic (state only), monthly via GMOD_HOOKS.
+const GMB_COST=[0,30,60],GMB_FILL=[0,.15,.35],GMB_LOCK=3,GMB_NAME=['Peacetime footing','Partial mobilisation','General mobilisation'];
+GMOD_COND.mob=(k,arg)=>{const N=GC&&GC.nat[k];if(!N)return false;const l=N.mob|0;return arg==='long'?(l>0&&(N.mobM|0)>12):l===+arg;};
+GMOD_ROWS.push(
+  {id:'mob1_man',src:GMB_NAME[1],scope:'nation',stat:'manpower',mul:1.25,cond:'mob:1'},{id:'mob1_inc',src:GMB_NAME[1],scope:'nation',stat:'income',mul:.96,cond:'mob:1'},
+  {id:'mob1_up',src:GMB_NAME[1],scope:'nation',stat:'upkeep',mul:1.1,cond:'mob:1'},{id:'mob1_ws',src:GMB_NAME[1],scope:'nation',stat:'warSupport',add:.04,cond:'mob:1'},
+  {id:'mob2_man',src:GMB_NAME[2],scope:'nation',stat:'manpower',mul:1.6,cond:'mob:2'},{id:'mob2_inc',src:GMB_NAME[2],scope:'nation',stat:'income',mul:.88,cond:'mob:2'},
+  {id:'mob2_up',src:GMB_NAME[2],scope:'nation',stat:'upkeep',mul:1.3,cond:'mob:2'},{id:'mob2_ws',src:GMB_NAME[2],scope:'nation',stat:'warSupport',add:.1,cond:'mob:2'},
+  {id:'mob2_un',src:GMB_NAME[2],scope:'nation',stat:'unrest',add:2,cond:'mob:2'},
+  {id:'mobL_inc',src:'Prolonged mobilisation',scope:'nation',stat:'income',mul:.95,cond:'mob:long'},{id:'mobL_un',src:'Prolonged mobilisation',scope:'nation',stat:'unrest',add:2,cond:'mob:long'});
+GMOD_STATS.unrest=GMOD_STATS.unrest||'Unrest';
+function gmbLv(c){const N=GC&&GC.nat[c];return N?(N.mob|0):0;}
+function gmbStyleFill(c){const s=typeof wsStyle==='function'?wsStyle(c):'prof';return s==='home'?1.1:s==='fire'?.75:1;} // home defenders muster fast, firepower-reliant armies lean on kit not bodies
+function gmbSet(c,lv){const N=GC&&GC.nat[c];if(!N||N.dead)return 'Not available.';lv=lv|0;const cur=N.mob|0;if(lv===cur)return '';
+  if(N.mobT!==undefined&&GC.turn-N.mobT<GMB_LOCK)return 'The reserves were just reorganised — wait '+(GMB_LOCK-(GC.turn-N.mobT))+' more month(s).';
+  if(lv>cur){if(!N.pp)N.pp={pol:0,dip:0,mil:0};if(c===GC.me){if(N.pp.mil<GMB_COST[lv])return 'Needs '+GMB_COST[lv]+' Military points.';N.pp.mil-=GMB_COST[lv];}
+    const E=N.e;if(E){const add=Math.round(geManCap(c)*(GMB_FILL[lv]-GMB_FILL[cur])*gmbStyleFill(c));E.man=Math.min(geManCap(c)*1.5,E.man+add);}}
+  N.mob=lv;N.mobT=GC.turn;if(!lv)N.mobM=0;GMOD_C.cache.clear();
+  grLog(GCM.nats.get(c).name+(lv?' orders '+GMB_NAME[lv].toLowerCase()+'.':' stands the reserves down.'),c);
+  for(const o of Object.keys(GC.nat))if(o!==c&&!GC.nat[o].dead&&o===GC.me&&lv>cur&&gdNear(c,o)&&!grAllied(c,o)&&!grAtWar(c,o))grLog('Warning: '+GCM.nats.get(c).name+' is mobilising on our border.',o);
+  return '';}
+function gmbAlarmed(c){ // neighbours (non-allies, not at war) that are mobilised and do not like us
+  return Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&(GC.nat[o].mob|0)>0&&!grAllied(c,o)&&!grAtWar(c,o)&&gdNear(o,c));}
+function gmbMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead)continue;if(N.mobMT===GC.turn)continue;N.mobMT=GC.turn;
+    const lv=N.mob|0;if(lv){N.mobM=(N.mobM|0)+1;
+      for(const o of Object.keys(GC.nat).sort()){if(o===c||GC.nat[o].dead||grAtWar(c,o))continue;
+        if(grAllied(c,o))gdRel(c,o,1);else if(gdNear(c,o)&&gdOp(o,c)>-60)gdRel(c,o,lv===2?-4:-2);}}
+    if(c===GC.me)continue;
+    const foes=gdEnemies(c).sort(),inv=GC.armies.some(a=>foes.includes(a.o)&&GC.prov[a.at]&&GC.prov[a.at].o===c&&a.u.length);
+    const threat=gmbAlarmed(c).length>0;let want=lv;
+    if(inv)want=2;else if(foes.length||threat)want=Math.max(lv,1);else if(lv&&(GC.turn-(N.mobT||0))>=6)want=0;
+    if(want!==lv)gmbSet(c,want);}
+  GMOD_C.cache.clear();}
+GMOD_HOOKS.push(gmbMonth);
+npTab('mob','🎖','Mobilisation',(code,body,c)=>{const N=GC.nat[code],own=c.own&&code===GC.me,lv=N.mob|0;
+  let h='<div style="font-size:26px;margin-bottom:6px"><b>'+GMB_NAME[lv]+'</b>'+(lv?' <span style="opacity:.7;font-size:16px">('+(N.mobM|0)+' months)</span>':'')+'</div>'+
+   '<div style="opacity:.85;margin-bottom:8px">Call up the reserves for a bigger army fast. Partial: +25% manpower growth, +15% of the pool at once, income -4%, upkeep +10%. General: +60% growth, +35% of the pool, income -12%, upkeep +30%, unrest +2, war support +10. Neighbours who are not your allies grow wary every month you stay under arms — and may mobilise back. After a year with no peace the economy suffers more.</div>';
+  const L=gmodLines('nation',code,'income').concat(gmodLines('nation',code,'manpower')).filter(s=>/mobilisation/i.test(s));if(L.length)h+='<div style="margin:8px 0;opacity:.85">'+L.join('<br>')+'</div>';
+  const al=gmbAlarmed(code);if(al.length)h+='<div style="margin:8px 0;color:#ffb36b">Mobilised on our border: '+al.map(o=>GCM.nats.get(o).name).join(', ')+'</div>';
+  body.innerHTML=h;
+  if(own)[0,1,2].forEach(i=>{if(i===lv)return;const b=document.createElement('button');b.textContent=(i>lv?'Order ':'Stand down to ')+GMB_NAME[i].toLowerCase()+(i>lv?' (-'+GMB_COST[i]+' Military points)':'');
+    b.style.cssText='font-size:16px;padding:5px 16px;cursor:pointer;margin:0 8px 6px 0';b.onclick=()=>{const e=gmbSet(code,i);if(e)grLog(e,code);npDraw();};body.appendChild(b);});
+  if(own){const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Military points: '+Math.floor(N.pp?N.pp.mil:0);body.appendChild(p);}});
+alAdd('mobn','🎖','Neighbour mobilising',c=>{const a=gmbAlarmed(c);return a.length?{n:a.length,tip:GCM.nats.get(a[0]).name+' is mobilised on our border — consider answering',go:()=>npOpen(c,'mob')}:null;});
 /* ---------- A2b multiplayer grand campaign, slice 1 (lane A, 2026-11-07) ----------
    Grand campaign → "Play online with friends": the host's browser runs the one authoritative campaign (the same real-time
    clock, AI and month-end resolution as solo); friends join by code or from the list, each picks a free nation (the AI stops
