@@ -12847,9 +12847,10 @@ async function esShare(){const S=ES.S;if(!S)return;let b=ES.blob;
 function btnHTML(id,name,cost,desc){return `<button class="btn" id="${id}"><span class="n"></span><span class="c"></span>${desc!=null?'<span class="d"></span>':''}<span class="q"></span><span class="p"></span></button>`;}
 function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const mk=(tab,id,name,cost,desc,on,onR,wide)=>{const b=document.createElement('button');b.className='btn'+(wide?' wide':'');b.id=id;b.dataset.tab=tab;
     b.innerHTML=`<span class="n"></span><span class="c"></span>${desc?'<span class="d"></span>':''}<span class="q"></span><span class="p"></span>`;b.querySelector('.n').textContent=name;b.querySelector('.c').textContent=cost;if(desc)b.querySelector('.d').textContent=desc;b.dataset.nm=name;if(desc)b.dataset.desc=desc;
-    b.onclick=on;if(onR)b.oncontextmenu=e=>{e.preventDefault();onR();};el.append(b);return b;};
+    b.onclick=on;if(onR)b.oncontextmenu=e=>{e.preventDefault();onR();};if(tab==='build'||tab==='units'){const cv=document.createElement('canvas');cv.className='uic';cv.width=72;cv.height=56;try{const k=id.slice(2),x=cv.getContext('2d');if(tab==='build')UK.drawBld(x,k,72,56);else UK.drawUnit(x,k,72,56,T.color||'#7a8a6a');}catch(e){}b.prepend(cv);b.classList.add('hasic');}el.append(b);return b;};   /* ingameui slice 2: silhouette icon cards */
   const sub=(tab,txt)=>{const d=document.createElement('div');d.className='sub';d.dataset.tab=tab;d.textContent=txt;el.append(d);};
-  for(const k of BUILD_ORDER){const s=bstats(T.fac,k);mk('build','b_'+k,s.name,'$'+s.cost,null,()=>{if(T.credits<s.cost||!reqMet(ME,k))return;G.aim=null;G.place=G.place===k?null:k;});}
+  const BG=[['Base',['hq','barracks','factory','airfield','shipyard','depot']],['Support',['econ','radio','uplink']],['Defence',['turret','sam','coast','fort','tunnel']]],bo=[];for(const [n,L] of BG){const ks=L.filter(k=>BUILD_ORDER.includes(k));if(ks.length)bo.push([n,ks]);}const rest=BUILD_ORDER.filter(k=>!bo.some(g=>g[1].includes(k)));if(rest.length)bo.push(['Other',rest]);   /* ingameui: BUILD grouped like UNITS */
+  for(const [gn,ks] of bo){sub('build',gn);for(const k of ks){const s=bstats(T.fac,k);mk('build','b_'+k,s.name,'$'+s.cost,null,()=>{if(T.credits<s.cost||!reqMet(ME,k))return;G.aim=null;G.place=G.place===k?null:k;});}}
   const R=roster(T.fac);for(const c of CATS){sub('units',STRUCT[c].name);for(const k of R[c]){if(conqBan(k))continue;   /* Ayatollah/Dear Leader live on the grand map (Abdullah 23:14 "why is the ayatollah unit still in battle") */
     const s=stats(T.fac,k);mk('units','u_'+k,s.fake?'Decoy '+s.name:s.name,'$'+s.cost,null,()=>{if(!(MODE==='client'?true:enqueue(ME,k)))pushLog('Not enough credits or missing building.','w');else if(MODE==='client')doAct({t:'q',k});},()=>doAct({t:'dq',k}));}}
   const ups=upgList(T.fac);for(const c of CATS){const list=ups.filter(k=>UPG[k].at===c);if(!list.length)continue;sub('upg',STRUCT[c].name);for(const k of list){const U=UPG[k];mk('upg','g_'+k,upgName(T.fac,k)+(U.sp?' ★':''),'$'+U.cost,U.desc,()=>doAct({t:'up',k}),null,true);}}
@@ -13014,7 +13015,10 @@ function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads
   {const h=ammoRowHTML(s);if(h){const ar=document.createElement('div');ar.className='morale';ar.id='ammoRow';ar.innerHTML=h;ar.title='Ammo: every shot spends one. Empty vehicles can\'t fire and infantry only plink with sidearms. Troops refill automatically inside a supply circle: near your HQ, a Supply Depot, a supply truck or a town you hold. Out of supply for a minute also stops healing.';el.append(ar);}}
   if(TOUCHUI&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Tap').replace(/right-click/g,'tap');
   else if(leftOrders()&&tip.textContent)tip.textContent=tip.textContent.replace(/Right-click/g,'Click').replace(/right-click/g,'click');
-  el.append(b,sp);if(tip.textContent)el.append(tip);
+  if(s.length===1&&!s[0].isB){const e=s[0],u=document.createElement('div'),tx=document.createElement('div'),hp=Math.max(0,Math.min(1,e.hp/e.max));u.className='ukU';tx.className='ukUt';u.append(UK.icon(e.kind,(G.teams[e.team]||{}).color),tx);   /* ingameui slice 2: selected-unit card */
+    if(e.rank)b.textContent=b.textContent.replace(' · '+VET[e.rank],'');tx.append(b);if(e.rank){const v=document.createElement('span');v.className='ukV';v.textContent='★'.repeat(e.rank)+' '+VET[e.rank];tx.append(v);}const hb=document.createElement('i');hb.className='ukHp';hb.innerHTML='<b style="width:'+Math.round(hp*100)+'%;background:'+(hp>.66?'#6fc24a':hp>.33?'#e3b83a':'#d9503f')+'"></b>';tx.append(hb,sp);el.append(u);}
+  else if(s.length>1&&s.every(e=>!e.isB)){const c={};for(const e of s)c[e.kind]=(c[e.kind]||0)+1;const g=document.createElement('div');g.className='ukG';for(const k of Object.keys(c).slice(0,8)){const w=document.createElement('span'),n=document.createElement('em');n.textContent='×'+c[k];w.append(UK.icon(k,(G.teams[s[0].team]||{}).color),n);w.dataset.tt=c[k]+'× '+(s.find(e=>e.kind===k).s.name);g.append(w);}el.append(g,b,sp);}
+  else el.append(b,sp);if(tip.textContent)el.append(tip);
   {const can=s.some(u=>!u.isB&&u.team===ME&&!u.s.noAttack);const r=document.createElement('div');r.className='cmdrow'+(can?'':' off');const bd=document.createElement('button');bd.textContent=(s.some(u=>u.defend)?'✓ ':'')+'Guard (G)';bd.onclick=()=>{G.defm=!G.defm;G.amove=false;updateUI();};const ba=document.createElement('button');ba.textContent='Attack (F)';ba.title='Advance to the spot you click and fight everything on the way';ba.onclick=()=>{G.amove=!G.amove;G.defm=false;updateUI();};if(G.amove){ba.classList.add('on');ba.textContent=TOUCHUI?'⚔ Attack: tap map…':'⚔ Attack: click map…';}bd.textContent=G.defm?(TOUCHUI?'🛡 Guard: tap map…':'🛡 Guard: click map…'):'🛡 '+bd.textContent;if(G.defm)bd.classList.add('on');bd.title='Hold the spot you click: engage anything that comes near it, then return';const bs=document.createElement('button');bs.textContent='■ Stop (X)';bs.onclick=()=>{doAct({t:'stop',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});};const br=document.createElement('button');br.textContent=s.some(u=>u.retreat)?'↩ Retreating…':'↩ Retreat (R)';br.title='Run back to the nearest HQ, barracks or factory: a bit faster and harder to hit, no stopping to fight';br.onclick=()=>{doAct({t:'ret',ids:s.filter(u=>!u.isB&&u.team===ME).map(u=>u.id)});speak(2);};const bv=document.createElement('button');bv.className='stanceBtn';bv.textContent=stanceLabel()+' (V)';bv.title='Army stance — click or press V to cycle Assault / Hold / Guerrilla';bv.onclick=cycleStance;const bcn=document.createElement('button');bcn.className='cnBtn';bcn.textContent='✕ Cancel';{const ci=cancelInfo();bcn.disabled=!ci;bcn.title=ci?ci.tip+' (Backspace / Delete)':'Nothing to cancel (select a building with a queue or a builder)';bcn.onclick=e=>doCancel(e.shiftKey);if(ci)r.classList.remove('off');}const bt=document.createElement('button');bt.textContent='▣ Type (T)';bt.title='Select every one of your units on the map that is the same type as the selection (hotkey T)';bt.onclick=selectTypes;const bq=document.createElement('button');bq.textContent='⛽ Resupply (Z)';bq.title='Send the selected units to the nearest supply point (HQ, Supply Depot, supply truck or held town) to refill ammo';bq.onclick=resupplySel;r.append(ba,bd,bt,bs,br,bv,bq,bcn);if(!can){const why='Select combat units to use orders';for(const x of r.children){if(x===bcn)continue;x.disabled=true;x.title=why;}}else{ba.title+=' (hotkey F)';bs.title='Stop: halt and hold fire position (hotkey X)';}if(can)el.append(r);else el.append(r);try{tactRow(el,s);if(typeof lgRow==='function')lgRow(el,s);}catch(_){}}
   {const ap=$('app'),o=!!el.querySelector('.cmdrow:not(.off)');if(ap.classList.contains('orders')!==o)ap.classList.toggle('orders',o);}
   {const trs=s.filter(u=>!u.isB&&u.s&&u.s.cap&&u.team===ME&&!u.dead);if(trs.length>1&&trs.length===s.filter(u=>!u.isB).length){const ub=document.createElement('button');ub.className='btn wide';ub.style.marginTop='6px';ub.textContent='Unload all '+trs.length+' transports';ub.title=(TOUCHUI?'Or tap one of them again':'Or right-click one of them')+' to unload them all';ub.onpointerdown=ev=>{ev.preventDefault();for(const tr of trs)doAct({t:'unl',tid:tr.id});};el.append(ub);}}
@@ -16259,6 +16263,173 @@ function hudDeclutter(){hudDeclutterCss();const on=!!(G&&!G.over&&G.teams&&G.tea
  '#app #hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;right:520px;opacity:.7}'+
  '#sqs button.empty{opacity:.55}#sqs button.empty small{display:none}#sqs button.empty{min-width:0;padding-left:7px;padding-right:7px}';
  document.head.append(st);})();
+// ===== In-game UI kit (ingameui 2026-11-07, Abdullah 12:06 "Menus in game need to be much more intuitive and professional").
+// ONE set of in-game components, styled like the redesigned main menu (Saira Condensed headers, gold accent, quiet panels):
+// UK.tabs (text tab bar, one pane shown), UK.chip (icon + number), UK.sec (small caps header), UK.card (icon card with
+// name/count/cost/time, disabled reason on hover), UK.seg (segmented choice), UK.tip (the one tooltip style, see slice 4).
+// Used by: grand-map province panel (13c guSide), battle command panel, pause menu. Extend here, never add a second kit.
+const UK=(function(){
+const E=(t,c,x)=>{const d=document.createElement(t);if(c)d.className=c;if(x!=null)d.textContent=x;return d;};
+const st=E('style');st.id='ukCss';st.textContent=`
+.uk{font:14px/1.4 var(--mono,monospace);color:#e6e2d6}
+.uk-hd{display:flex;align-items:center;gap:10px;margin:0 0 6px}
+.uk-hd canvas{width:36px;height:24px;border-radius:2px;box-shadow:0 0 0 1px rgba(255,255,255,.35),0 2px 6px rgba(0,0,0,.5);flex:none}
+.uk-hd h2{margin:0;font:600 24px/1 var(--display,sans-serif);letter-spacing:.02em;color:#f2ead2}
+.uk-sub{font-size:13px;color:#a9b4bd;margin-top:2px}
+.uk-badge{display:inline-block;font:600 11px/1 var(--display,sans-serif);letter-spacing:.12em;text-transform:uppercase;padding:3px 6px;border-radius:3px;border:1px solid #e3b341;color:#e3b341;margin-left:6px;vertical-align:1px}
+.uk-badge.red{border-color:#e07a68;color:#ff9d8e}
+.uk-chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 10px}
+.uk-chip{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:4px;background:#0c1620;border:1px solid #23384b;font-size:13px;cursor:default}
+.uk-chip i{font-style:normal;opacity:.9}.uk-chip b{color:#f2ead2;font-weight:600}.uk-chip.warn b{color:#ff9d8e}.uk-chip.good b{color:#9ee07a}
+.uk-tabs{display:flex;gap:2px;border-bottom:1px solid #2c4358;margin:4px 0 10px}
+.uk-tab{flex:1;background:none;border:0;border-bottom:2px solid transparent;color:#8fa2b2;font:600 15px/1 var(--display,sans-serif);letter-spacing:.05em;white-space:nowrap;text-transform:uppercase;padding:8px 2px 7px;cursor:pointer;transition:color .15s,border-color .15s}
+.uk-tab:hover{color:#e6e2d6}.uk-tab.on{color:#e3b341;border-bottom-color:#e3b341}
+.uk-tab sup{font:600 10px var(--mono,monospace);color:#e3b341;margin-left:3px;letter-spacing:0}
+.uk-pane{display:none}.uk-pane.on{display:block;animation:ukIn .18s ease-out}
+@keyframes ukIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.uk-sec{font:600 12px/1 var(--display,sans-serif);letter-spacing:.16em;text-transform:uppercase;color:#8fa2b2;margin:12px 0 6px;display:flex;justify-content:space-between;align-items:baseline;gap:6px}
+.uk-sec:first-child{margin-top:2px}.uk-sec span{font:12px var(--mono,monospace);letter-spacing:0;text-transform:none;color:#a9b4bd}
+.uk-note{font-size:13px;color:#a9b4bd;margin:4px 0}
+.uk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.uk-list{display:grid;grid-template-columns:1fr;gap:5px}
+.uk-list .uk-card .ic{width:52px;height:38px}.uk-list .uk-card .mt{padding-right:0}.uk-list .uk-card .ct{top:50%;transform:translateY(-50%);right:34px;font-size:14px}
+.uk-card{position:relative;display:flex;gap:8px;align-items:center;text-align:left;padding:6px;border-radius:5px;background:linear-gradient(#162636,#111d29);border:1px solid #2a4157;color:#e6e2d6;cursor:pointer;font:inherit;min-width:0;transition:border-color .12s,background .12s,transform .12s}
+.uk-card:hover{border-color:#e3b341;background:linear-gradient(#1c3044,#14222f)}.uk-card:active{transform:translateY(1px)}
+.uk-card.off{opacity:.5;cursor:not-allowed;filter:grayscale(.6)}.uk-card.off:hover{border-color:#2a4157}
+.uk-card.sel{border-color:#e3b341;box-shadow:inset 0 0 0 1px #e3b341}
+.uk-card .ic{flex:none;width:44px;height:34px;border-radius:3px;display:flex;align-items:center;justify-content:center;font:700 16px var(--display,sans-serif);overflow:hidden}
+.uk-card .ic canvas{width:100%;height:100%}
+.uk-card .tx{min-width:0;flex:1}.uk-card .nm{font:600 15px/1.1 var(--display,sans-serif);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uk-card .mt{padding-right:20px;font-size:12px;color:#a9b4bd;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.uk-card .mt b{color:#e3b341;font-weight:600}
+.uk-card .ct{position:absolute;top:3px;right:5px;font:600 12px var(--mono,monospace);color:#e3b341}
+.uk-list .uk-card .rp{top:50%;bottom:auto;transform:translateY(-50%);font-size:15px;padding:2px 6px}
+.uk-card .rp{position:absolute;bottom:3px;right:4px;font-size:12px;padding:0 4px;border-radius:3px;color:#8fa2b2;border:1px solid transparent}
+.uk-card .rp:hover{color:#fff;border-color:#4a6580}.uk-card .rp.on{color:#e3b341;border-color:#e3b341}
+.uk-seg{display:flex;border:1px solid #2c4358;border-radius:5px;overflow:hidden}
+.uk-seg button{flex:1;background:#101c28;border:0;border-right:1px solid #2c4358;color:#a9b4bd;font:600 14px/1 var(--display,sans-serif);letter-spacing:.06em;padding:7px 4px;cursor:pointer}
+.uk-seg button:last-child{border-right:0}.uk-seg button:hover{color:#fff}.uk-seg button.on{background:#3a3418;color:#f2d27a}
+.uk-link{background:none;border:0;padding:4px 0;color:#e3b341;font:600 14px var(--display,sans-serif);letter-spacing:.06em;cursor:pointer;text-transform:uppercase}
+.uk-link:hover{color:#ffe08a;text-decoration:underline}.uk-link.dim{color:#8fa2b2}
+.uk-acts{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:6px}
+.uk-q{font-size:12px;color:#c9c3b0;margin-top:6px;padding:5px 7px;border-left:2px solid #e3b341;background:#0c1620}
+/* battle command panel (slice 2): silhouette icon cards, selected-unit card */
+#panel .btn.hasic{padding-left:47px!important}
+#panel .btn .uic{position:absolute;left:4px;top:50%;transform:translateY(-50%);width:38px;height:30px;border-radius:2px;background:linear-gradient(180deg,#36473d,#141b17);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+#panel .btn.on .uic{box-shadow:inset 0 0 0 1px var(--accent,#e3b341)}
+#info .ukU{display:flex;gap:9px;align-items:center;margin:0 0 4px}
+#info .ukU img{width:52px;height:40px;flex:none;border-radius:3px;background:linear-gradient(180deg,#36473d,#141b17);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+#info .ukUt{min-width:0;flex:1}#info .ukUt b{display:block;font:600 16px/1.1 var(--display,sans-serif)}
+#info .ukHp{display:block;height:5px;background:#0008;border-radius:2px;margin:3px 0 2px;overflow:hidden}#info .ukHp b{display:block;height:100%}
+#info .ukV{font:600 11px var(--display,sans-serif);letter-spacing:.12em;text-transform:uppercase;color:var(--accent,#e3b341)}
+#info .ukG{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 4px}#info .ukG span{position:relative}#info .ukG img{width:40px;height:30px;border-radius:2px;background:linear-gradient(180deg,#36473d,#141b17)}
+#info .ukG em{position:absolute;right:2px;bottom:0;font:600 11px var(--mono,monospace);font-style:normal;color:#fff;text-shadow:0 1px 2px #000}
+#ukTip{position:fixed;z-index:99990;pointer-events:none;max-width:320px;background:rgba(14,19,17,.97);border:1px solid #4a5a52;border-left:3px solid var(--accent,#e3b341);border-radius:2px;padding:8px 10px;color:#e6e2d6;font:13px/1.4 var(--mono,monospace);box-shadow:0 8px 24px rgba(0,0,0,.55);opacity:0;transition:opacity .12s}
+#ukTip.on{opacity:1}#ukTip .t{font:700 15px/1.15 var(--display,sans-serif);letter-spacing:.02em;color:#f2ead2;margin-bottom:3px}
+#ukTip .d{color:#b9c2c9}#ukTip .r{display:flex;justify-content:space-between;gap:12px;border-top:1px solid #23384b;margin-top:5px;padding-top:4px;color:#e3b341}
+#ukTip .w{color:#ff9d8e;margin-top:4px}
+`;
+(document.head||document.documentElement).appendChild(st);
+function drawUnit(c,k,W,H,col){c.save();c.translate(W/2,H/2);const s=Math.min(W/100,H/76);c.scale(s,s);
+  c.fillStyle='#e9e4d4';c.strokeStyle='#e9e4d4';c.lineWidth=3;const cx=0,cy=0;
+  if(k==='tank'||/tank|mbt|ifv|apc|veh/.test(k)){c.fillRect(cx-26,cy+4,52,12);c.beginPath();c.ellipse(cx,cy+2,15,9,0,0,7);c.fill();c.fillRect(cx,cy-1,32,4);c.fillStyle='#0008';for(let i=-22;i<=22;i+=11){c.beginPath();c.arc(cx+i,cy+11,4,0,7);c.fill();}}
+  else if(k==='arty'||/arty|mlrs|how/.test(k)){c.beginPath();c.moveTo(cx-22,cy+14);c.lineTo(cx+22,cy-14);c.lineWidth=7;c.stroke();c.lineWidth=3;c.beginPath();c.arc(cx-8,cy+14,8,0,7);c.stroke();}
+  else if(k==='aa'){c.lineWidth=5;c.beginPath();c.moveTo(cx-6,cy+12);c.lineTo(cx-14,cy-18);c.moveTo(cx+6,cy+12);c.lineTo(cx+14,cy-18);c.stroke();c.fillRect(cx-16,cy+10,32,8);}
+  else if(k==='heli'||/heli|chop/.test(k)){c.beginPath();c.ellipse(cx,cy+3,14,8,0,0,7);c.fill();c.fillRect(cx+10,cy+1,22,3);c.fillRect(cx-26,cy-12,52,3);c.fillRect(cx-1,cy-10,3,8);}
+  else if(/jet|airlift|plane|bomb/.test(k)){c.beginPath();c.moveTo(cx+30,cy);c.lineTo(cx-22,cy-4);c.lineTo(cx-22,cy+4);c.closePath();c.fill();c.beginPath();c.moveTo(cx+4,cy);c.lineTo(cx-10,cy-22);c.lineTo(cx-16,cy-22);c.lineTo(cx-8,cy);c.lineTo(cx-16,cy+22);c.lineTo(cx-10,cy+22);c.closePath();c.fill();c.fillRect(cx-26,cy-9,6,18);}
+  else if(/boat|fast|ship|sub|lander|minel|sweep|carrier/.test(k)){c.beginPath();c.moveTo(cx-30,cy+4);c.lineTo(cx+30,cy+4);c.lineTo(cx+22,cy+14);c.lineTo(cx-26,cy+14);c.closePath();c.fill();if(k!=='sub'){c.fillRect(cx-8,cy-8,16,12);c.fillRect(cx-2,cy-18,3,10);}else{c.fillRect(cx-4,cy-4,10,8);}}
+  else if(/harv|truck|supply|dozer/.test(k)){c.fillRect(cx-24,cy-8,30,18);c.fillRect(cx+8,cy-2,16,12);c.fillStyle='#0008';for(const i of [-16,0,16]){c.beginPath();c.arc(cx+i,cy+13,5,0,7);c.fill();}if(k==='dozer'){c.fillStyle='#e9e4d4';c.fillRect(cx+24,cy-4,5,16);}}
+  else if(k==='medic'){c.fillRect(cx-5,cy-16,10,32);c.fillRect(cx-16,cy-5,32,10);}
+  else if(k==='champ'||k==='cleric'){c.beginPath();for(let i=0;i<10;i++){const r=i%2?8:20,a=-Math.PI/2+i*Math.PI/5;c.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}c.closePath();c.fill();}
+  else{c.beginPath();c.arc(cx,cy-9,8,0,7);c.fill();c.beginPath();c.arc(cx,cy-12,10,3.14,6.28);c.fillStyle=col;c.fill();c.fillStyle='#e9e4d4';c.beginPath();c.moveTo(cx-18,cy+20);c.quadraticCurveTo(cx-18,cy+2,cx,cy+2);c.quadraticCurveTo(cx+18,cy+2,cx+18,cy+20);c.fill();if(k==='at'){c.fillRect(cx+8,cy-4,26,5);}}
+  c.restore();}
+/* building silhouettes for the battle BUILD tab (same hand as drawUnit) */
+function drawBld(c,k,W,H){c.save();c.translate(W/2,H/2);const s=Math.min(W/100,H/76);c.scale(s,s);c.fillStyle='#e9e4d4';c.strokeStyle='#e9e4d4';c.lineWidth=3;
+  if(/factory/.test(k)){c.beginPath();c.moveTo(-28,16);for(let i=0;i<3;i++){c.lineTo(-28+i*16,-2);c.lineTo(-12+i*16,-10);c.lineTo(-12+i*16,-2);}c.lineTo(22,16);c.closePath();c.fill();c.fillRect(22,-22,7,38);}
+  else if(/airfield/.test(k)){c.fillRect(-30,10,60,6);c.fillRect(-6,-16,10,26);c.fillRect(-12,-24,22,9);}
+  else if(/shipyard|coast/.test(k)){c.fillRect(-28,8,56,8);c.fillRect(-18,-22,5,30);c.fillRect(-18,-22,34,4);c.fillRect(12,-18,2,16);}
+  else if(/depot/.test(k)){for(const [x,y] of [[-22,0],[-4,0],[14,0],[-13,-16],[5,-16]])c.fillRect(x,y,15,14);}
+  else if(/econ|oil/.test(k)){c.beginPath();c.moveTo(-16,16);c.lineTo(0,-24);c.lineTo(16,16);c.stroke();c.beginPath();c.moveTo(-10,0);c.lineTo(10,0);c.moveTo(-6,-10);c.lineTo(6,-10);c.stroke();c.fillRect(-20,14,40,4);}
+  else if(/turret|gun|sam|battery|missile/.test(k)){c.fillRect(-20,4,40,12);c.beginPath();c.arc(0,4,11,Math.PI,0);c.fill();c.lineWidth=5;c.beginPath();c.moveTo(4,-2);c.lineTo(28,-16);c.stroke();}
+  else if(/tunnel/.test(k)){c.beginPath();c.moveTo(-26,16);c.lineTo(-26,0);c.arc(0,0,26,Math.PI,0);c.lineTo(26,16);c.closePath();c.fill();c.fillStyle='#101a24';c.beginPath();c.moveTo(-12,16);c.lineTo(-12,2);c.arc(0,2,12,Math.PI,0);c.lineTo(12,16);c.fill();}
+  else if(/fort/.test(k)){c.beginPath();c.moveTo(-28,16);c.lineTo(-22,-6);c.lineTo(22,-6);c.lineTo(28,16);c.closePath();c.fill();c.fillStyle='#101a24';c.fillRect(-14,0,28,4);}
+  else if(/radio|uplink/.test(k)){c.beginPath();c.moveTo(-12,16);c.lineTo(0,-24);c.lineTo(12,16);c.stroke();c.beginPath();c.arc(0,-24,6,0,7);c.stroke();c.beginPath();c.arc(0,-24,13,-.9,.9);c.stroke();}
+  else if(/hq/.test(k)){c.fillRect(-28,-2,56,18);c.fillRect(-12,-14,24,12);c.fillRect(10,-30,2,18);c.fillRect(12,-30,12,7);}
+  else{c.fillRect(-26,-4,52,20);c.beginPath();c.moveTo(-30,-4);c.lineTo(0,-20);c.lineTo(30,-4);c.closePath();c.fill();}
+  c.restore();}
+function tabs(host,list,cur,onPick){const bar=E('div','uk-tabs'),panes={};let pick=list.some(t=>t[0]===cur)?cur:list[0][0];
+  for(const [k,label,badge] of list){const b=E('button','uk-tab'+(k===pick?' on':''),label);b.type='button';b.dataset.pt=k;if(badge){const s=E('sup','',String(badge));b.appendChild(s);}
+    b.onclick=()=>{bar.querySelectorAll('.uk-tab').forEach(x=>x.classList.toggle('on',x===b));for(const q in panes)panes[q].classList.toggle('on',q===k);if(onPick)onPick(k);};bar.appendChild(b);
+    panes[k]=E('div','uk-pane'+(k===pick?' on':''));panes[k].dataset.pane=k;}
+  host.appendChild(bar);for(const [k] of list)host.appendChild(panes[k]);return panes;}
+function chip(icon,val,label,tone){const c=E('span','uk-chip'+(tone?' '+tone:''));c.innerHTML='<i>'+icon+'</i><b></b>';c.querySelector('b').textContent=val;if(label)c.dataset.tt=label;return c;}
+function sec(title,right){const d=E('div','uk-sec',title);if(right!=null){const s=E('span','',right);d.appendChild(s);}return d;}
+function card(o){const b=E('button','uk-card'+(o.on===false?' off':'')+(o.sel?' sel':''));b.type='button';const ic=E('div','ic');
+  if(o.icon instanceof HTMLElement)ic.appendChild(o.icon);else{ic.textContent=o.icon||'';ic.style.background=(o.col||'#4a6580')+'33';ic.style.border='1px solid '+(o.col||'#4a6580');ic.style.color=o.col||'#e6e2d6';}
+  b.appendChild(ic);const tx=E('div','tx');tx.appendChild(E('div','nm',o.name));const mt=E('div','mt');mt.innerHTML=o.meta||'';tx.appendChild(mt);b.appendChild(tx);
+  if(o.count)b.appendChild(E('span','ct',o.count));
+  b.dataset.tt=JSON.stringify({t:o.name,d:o.desc||'',r:o.rows||[],w:o.on===false?(o.why||''):''});
+  b.onclick=e=>{if(e.target.classList.contains('rp'))return;if(o.on===false){if(o.onDenied)o.onDenied();return;}if(o.onclick)o.onclick();};return b;}
+function seg(names,cur,fn,tips){const s=E('div','uk-seg');names.forEach((n,i)=>{const b=E('button',i===cur?'on':'',n);b.type='button';if(tips&&tips[i])b.dataset.tt=tips[i];b.onclick=()=>fn(i);s.appendChild(b);});return s;}
+function link(t,fn,tip,dim){const b=E('button','uk-link'+(dim?' dim':''),t);b.type='button';if(tip)b.dataset.tt=tip;b.onclick=fn;return b;}
+/* ---- the one tooltip: any element with data-tt (plain text or JSON {t,d,r:[[k,v]],w}) or a title attribute inside game UI ---- */
+const icC={};function icon(k,col,bld){const key=k+'|'+col+'|'+(bld?1:0);let u=icC[key];if(!u){const cv=document.createElement('canvas');cv.width=104;cv.height=80;const x=cv.getContext('2d');try{if(bld)drawBld(x,k,104,80);else drawUnit(x,k,104,80,col||'#7a8a6a');}catch(e){}u=icC[key]=cv.toDataURL();}const im=document.createElement('img');im.src=u;im.alt='';return im;}
+let tipEl=null,tipFor=null;
+function tipShow(el,x,y){let raw=el.dataset.tt;if(raw==null)return;let o;if(raw[0]==='{'){try{o=JSON.parse(raw);}catch(e){o={d:raw};}}else{const L=raw.split(/\n| — | - (?=[A-Z])/);o=L.length>1&&L[0].length<40?{t:L[0],d:L.slice(1).join(' ')}:{d:raw};}
+  if(!o.t&&!o.d)return;if(!tipEl){tipEl=E('div');tipEl.id='ukTip';document.body.appendChild(tipEl);}
+  tipEl.innerHTML='';if(o.t)tipEl.appendChild(E('div','t',o.t));if(o.d)tipEl.appendChild(E('div','d',o.d));for(const r of (o.r||[])){const d=E('div','r');d.appendChild(E('span','',r[0]));d.appendChild(E('b','',String(r[1])));tipEl.appendChild(d);}if(o.w)tipEl.appendChild(E('div','w',o.w));
+  tipFor=el;tipMove(x,y);tipEl.classList.add('on');}
+function tipMove(x,y){if(!tipEl)return;const w=tipEl.offsetWidth,h=tipEl.offsetHeight;let L=x+16,T=y+18;if(L+w>innerWidth-6)L=x-w-12;if(T+h>innerHeight-6)T=y-h-12;tipEl.style.left=Math.max(4,L)+'px';tipEl.style.top=Math.max(4,T)+'px';}
+function tipHide(){tipFor=null;if(tipEl)tipEl.classList.remove('on');}
+function tipAt(t){for(let e=t,i=0;e&&e!==document.body&&i<6;e=e.parentElement,i++){if(e.nodeType!==1)continue;   /* a fresh title (code may rewrite it) wins over an older converted one */
+    if(e.title&&typeof e.title==='string'){e.dataset.tt=e.title;e.removeAttribute('title');return e;}if(e.dataset&&e.dataset.tt!=null)return e;}return null;}
+document.addEventListener('mouseover',e=>{const el=tipAt(e.target);if(!el){if(tipFor)tipHide();return;}if(el!==tipFor)tipShow(el,e.clientX,e.clientY);},true);
+document.addEventListener('mousemove',e=>{if(tipFor){if(!tipFor.isConnected)tipHide();else if(tipFor.title){const el=tipFor;tipFor=null;tipAt(el);tipShow(el,e.clientX,e.clientY);}else tipMove(e.clientX,e.clientY);}},{passive:true});
+document.addEventListener('mousedown',()=>tipHide(),true);
+return {E,drawUnit,drawBld,icon,tabs,chip,sec,card,seg,link,tipHide};
+})();
+/* ===== ingameui slice 3: pause menu = one centred panel with a vertical text menu; Settings in tabs; Esc = one step back ===== */
+(function(){const $$=id=>document.getElementById(id);
+  const st=document.createElement('style');st.textContent=`
+#pauseOv.ukP{display:flex;align-items:center;justify-content:center}#pauseOv[hidden]{display:none!important}
+#pauseOv.ukP .card{width:min(380px,92vw);padding:26px 30px 22px;background:linear-gradient(180deg,rgba(24,31,27,.97),rgba(14,19,17,.97));border:1px solid #3d4d44;border-top:2px solid var(--accent,#e3b341);box-shadow:0 18px 50px rgba(0,0,0,.6);text-align:left;animation:ukIn .2s ease-out}
+#pauseOv.ukP h1{font:600 34px/1 var(--display,sans-serif);letter-spacing:.14em;text-transform:uppercase;margin:0 0 6px;color:#f2ead2}
+#pauseOv.ukP #pauseSub{font:13px/1.45 var(--mono,monospace);color:var(--dim,#8a9a92);margin:0 0 16px}
+#pauseOv.ukP .ukMenu{display:flex;flex-direction:column;border-top:1px solid #2c3833}
+#pauseOv.ukP .ukMenu button{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;width:100%;padding:11px 4px;border-bottom:1px solid #2c3833;font:600 19px/1 var(--display,sans-serif);letter-spacing:.08em;text-transform:uppercase;color:#cfd8d2;cursor:pointer;transition:color .12s,padding .12s,background .12s}
+#pauseOv.ukP .ukMenu button::after{content:'›';opacity:0;color:var(--accent,#e3b341);transition:opacity .12s}
+#pauseOv.ukP .ukMenu button:hover,#pauseOv.ukP .ukMenu button:focus-visible{color:var(--accent,#e3b341);padding-left:10px;background:rgba(227,179,65,.05)}#pauseOv.ukP .ukMenu button:hover::after{opacity:1}
+#pauseOv.ukP .ukMenu button.pri{color:var(--accent,#e3b341)}#pauseOv.ukP .ukMenu button.dng{color:#d99a8e}#pauseOv.ukP .ukMenu button[hidden]{display:none}
+#pauseOv.ukP .ukMenu .gap{height:10px;border-bottom:1px solid #2c3833}
+#pauseOv.ukP .ukKeys{margin-top:12px;font:12px var(--mono,monospace);color:var(--dim,#8a9a92)}
+#settings .uk-tabs{margin:2px 0 12px}#settings .uk-tab{font-size:16px}
+#settings .uk-pane .label:first-child{margin-top:0}
+#settings .uk-pane .sethd{display:none}`;document.head.appendChild(st);
+  function pauseInstall(){const ov=$$('pauseOv');if(!ov||ov.classList.contains('ukP'))return;const card=ov.querySelector('.card'),row=card&&card.querySelector('.row');if(!row)return;ov.classList.add('ukP');
+    const m=document.createElement('nav');m.className='ukMenu';m.setAttribute('role','menu');const add=(b,cls)=>{if(!b)return;b.className=cls||'';b.setAttribute('role','menuitem');m.append(b);};
+    const mk=(id,t,fn,tip)=>{const b=document.createElement('button');b.type='button';b.id=id;b.textContent=t;b.onclick=fn;if(tip)b.dataset.tt=tip;return b;};
+    add($$('resumeBtn'),'pri');
+    add(mk('pSettings','Settings',()=>{try{openSettings();}catch(e){}},'Graphics, sound, mouse and gameplay options'));
+    add($$('svSave'));
+    add(mk('pLoad','Load game',()=>{try{svLoadDialog();}catch(e){}},'Load a saved battle'));
+    add(mk('pEnc','Encyclopedia',()=>{try{encOpen();}catch(e){}},'Every unit, building and nation, with counters'));
+    const g=document.createElement('div');g.className='gap';m.append(g);
+    add($$('pRestart'));const q=$$('pQuit');if(q){q.textContent='Quit to menu';add(q,'dng');}
+    row.replaceWith(m);const k=document.createElement('div');k.className='ukKeys';k.textContent='Esc or P — resume';card.append(k);}
+  /* Settings: one tab per job (Gameplay · Controls · Graphics · Audio); rows keep their ids and handlers, only move into panes */
+  const SET_TAB=[['aud',/^(sMus|sTrk|myF|myN|myNx|sFx|sVo)/,/music|soundtrack|volume|voice|radio chatter|sound/i],['gfx',/^(sGfx|sFps|sHp)/,/graphic|quality|frame-rate|shadow|resolution|painterly|bloom|\bfps\b|health bar/i],['ctl',/^(sScr|sZm|sInv|sDbl|sTol|sMmc|sMpan|sEdge|sM[A-Z])/,/mouse|scroll|zoom|click|cursor|hotkey|keyboard|camera|drag/i]];
+  function setTabs(){const body=$$('setBody');if(!body)return;let P=body._ukP;
+    if(!P){const h1=body.querySelector('h1');const host=document.createElement('div');P=body._ukP=UK.tabs(host,[['game','Gameplay'],['ctl','Controls'],['gfx','Graphics'],['aud','Audio']],(UK._setTab||'gfx'),k=>{UK._setTab=k;});
+      const kids=[...host.childNodes];if(h1)h1.after(...kids);else body.prepend(...kids);body._ukBar=kids[0];}
+    const panes=new Set(Object.values(P));let cur=null;
+    for(const el of [...body.children]){if(el===body._ukBar||panes.has(el)||el.tagName==='H1')continue;
+      if(el.classList.contains('sethd')){el.remove();continue;}
+      if(el.classList.contains('label')||el.id==='relayBox'||!cur){const nid=el.nextElementSibling?el.nextElementSibling.id||'':'',tx=el.textContent||'';const r=SET_TAB.find(t=>t[1].test(el.id)||t[1].test(nid))||SET_TAB.find(t=>t[2].test(tx));cur=P[r?r[0]:'game'];if(el.id==='relayBox')cur=P.game;}
+      cur.append(el);}
+    for(const k in P){const b=body._ukBar.querySelector('[data-pt="'+k+'"]');if(b)b.hidden=!P[k].children.length;}}
+  try{pauseInstall();}catch(e){console.warn('ukPause',e);}
+  try{const o=openSettings;openSettings=function(){o.apply(this,arguments);try{setTabs();}catch(e){console.warn('ukSet',e);}};const b1=$$('openSettings'),b2=$$('aSet');if(b1)b1.onclick=openSettings;if(b2)b2.onclick=openSettings;}catch(e){}
+  /* Esc steps back one window: Settings → (pause menu / main menu) */
+  addEventListener('keydown',e=>{if(e.key!=='Escape')return;const s=$$('settings');if(s&&!s.hidden){e.preventDefault();e.stopImmediatePropagation();s.hidden=true;}},true);
+})();
 // "Report a problem" — one click opens a pre-filled GitHub issue (label `player`). No personal data: only version, mode, nation, map, last console errors.
 (function(){
 const ERR=[];
@@ -20417,7 +20588,7 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   e=guEl('div','position:fixed;inset:0;z-index:8000;background:#0b141d;color:#e8e4d8;display:flex;flex-direction:column;font-size:15px;user-select:none;');e.id='grandScreen';
   e.innerHTML=`<div id="gTop" style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:#101c28;border-bottom:1px solid #2c4358;flex-wrap:wrap"></div>
   <div style="flex:1;display:flex;min-height:0"><div id="gMapWrap" style="flex:1;position:relative;min-width:0"><canvas id="gMap" style="display:block"></canvas><div id="gTip" style="position:absolute;pointer-events:none;display:none;background:rgba(10,16,22,.94);border:1px solid #4a6580;border-radius:6px;padding:6px 9px;font-size:14px;line-height:1.4;max-width:260px;z-index:3"></div><div id="gHint" style="position:absolute;left:10px;bottom:8px;font-size:13px;opacity:.75;pointer-events:none;text-shadow:0 1px 2px #000"></div></div>
-  <div id="gSide" style="width:330px;max-width:38vw;background:#101c28;border-left:1px solid #2c4358;display:flex;flex-direction:column;min-height:0"><div id="gSel" style="padding:8px 10px;overflow:auto;flex:1.8;min-height:0"></div><div id="gLog" style="padding:6px 10px;overflow:auto;flex:.6;border-top:1px solid #2c4358;font-size:13px;line-height:1.45;min-height:0"></div></div></div>`;
+  <div id="gSide" style="width:380px;max-width:40vw;background:#101c28;border-left:1px solid #2c4358;display:flex;flex-direction:column;min-height:0"><div id="gSel" style="padding:8px 10px;overflow:auto;flex:1.8;min-height:0"></div><div id="gLog" style="padding:6px 10px;overflow:auto;flex:.6;border-top:1px solid #2c4358;font-size:13px;line-height:1.45;min-height:0"></div></div></div>`;
   document.body.appendChild(e);GV.cv=document.getElementById('gMap');GV.idx=GV.idx||null;GV.dirty=true;guCols();
   const cv=GV.cv;GV.g3=false;try{GV.g3=g3Init(cv);}catch(e){console.error('3D grand map failed, using the flat map',e);g3Dispose();GV.g3=false;}
   cv.addEventListener('contextmenu',ev=>{ev.preventDefault();guRight(ev);});
@@ -20496,27 +20667,46 @@ if(!window._gClk){window._gClk=setInterval(()=>{try{guClockTick();}catch(e){cons
 function guProvArmies(pi){return GC.armies.filter(a=>a.at===pi&&grSeen(a));}
 function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.innerHTML='';const pi=GV.sel;if(pi<0||!GCM.P[pi]){s.innerHTML='<div style="opacity:.7;line-height:1.6">Click a province to see it.<br>Select an army (click its flag), then <b>right-click</b> a province to march there. Armies cross seas between ports; oceans take several weeks.<br>Time runs like EU4: <b>Space</b> or ▶ to play or pause, keys <b>1–5</b> for speed. Give orders while paused.</div>';return;}
   const p=GCM.P[pi];if(p.sea){s.innerHTML='<h2 style="margin:0 0 4px;font-size:19px">'+p.n+'</h2><div style="opacity:.8">Sea zone · ~'+(p.cost*30)+' days to cross'+(p.ck?'<br><span style="color:#ff9d8e">Chokepoint: whoever holds it will control trade (stage 2).</span>':'')+'</div>'+guArmyRows(pi);guBindArmies(s,pi);try{gmilUiProv(s,pi);}catch(e){console.error('gmilUiProv',e);}return;}
-  const st=GC.prov[pi],N=GCM.nats.get(st.o),mine=st.o===GC.me;
-  let h='<div style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:14px;border-radius:3px;border:1px solid #fff;background:'+grNat(st.o).color+'"></span><h2 style="margin:0;font-size:19px">'+p.n+'</h2></div>';
-  h+='<div style="opacity:.85;margin:2px 0 6px">'+N.name+' · '+guTerrName(p.t)+(p.cap?' · <span style="color:#ffd24a">capital</span>':GC.nat[st.o]&&GC.nat[st.o].wg.includes(pi)?' · <span style="color:#ffd24a">war goal</span>':'')+'</div>';
-  h+='<div>Towns '+p.tw+(p.oil?' · oil':'')+(p.farm?' · farms':'')+(p.mine?' · mines':'')+(p.port?' · port':'')+'</div>';
-  h+='<div>Garrison <b>'+st.gar.length+'</b> units (value '+Math.round(grProvDef(pi)/100)/10+'k)'+(mine?' · Unrest <b style="color:'+(st.un>55?'#ff9d8e':'#e8e4d8')+'">'+Math.round(st.un)+'%</b>':'')+'</div>';
-  if(typeof ocLine==='function')h+=ocLine(pi);   /* A6 occupation reaction (13y-goccupy.js) */
-  s.innerHTML=h;
-  if(mine){const row=guEl('div','margin:8px 0 4px');row.appendChild(guEl('div','opacity:.75;font-size:13px','Tax (more money, more unrest)'));const seg=guEl('div','display:flex;gap:4px;margin-top:2px');
-    GR_TAX.forEach((n,i)=>{const b=guEl('button','flex:1;padding:5px;border-radius:5px;border:1px solid '+(st.tax===i?'#ffe27a':'#3d5a73')+';background:'+(st.tax===i?'#41572a':'#18293a')+';color:#fff;cursor:pointer',n);b.type='button';b.onclick=()=>{grSetTax(GC.me,pi,i);grSave();guSide();guTopCash();};seg.appendChild(b);});row.appendChild(seg);s.appendChild(row);
-    const rc=guEl('div','margin:8px 0');rc.appendChild(guEl('div','opacity:.75;font-size:13px','Recruit here (arrives in 1–2 months)'));const fac=grNat(GC.me).fac,g=guEl('div','display:flex;flex-wrap:wrap;gap:4px;margin-top:2px');
-    for(const [k,n,t] of GR_RECRUIT){if(!grHasKind(fac,k))continue;const cost=grCost(fac,k)*n;const b=guEl('button','padding:5px 7px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:'+(GC.nat[GC.me].cash>=cost?'#fff':'#8a8f96')+';cursor:pointer;font-size:13px',n+'× '+grKindName(fac,k)+' $'+cost);b.type='button';b.title=cost+' · '+t+' month(s)';b.onclick=()=>{const e=grRecruit(GC.me,pi,k);if(e){GV.hint=e;guHint();}else grSave();guSide();guTop();};g.appendChild(b);
-      const mq=(GC.mac||[]).find(m=>m.p===pi&&m.k===k),rb=guEl('button','padding:5px 6px;border-radius:5px;border:1px solid '+(mq?'#ffe27a':'#3d5a73')+';background:#18293a;color:'+(mq?'#ffe27a':'#9fb3c4')+';cursor:pointer;font-size:13px;margin-left:-4px','↻');rb.type='button';rb.title=mq?'Standing order ON: recruits this every month while you can pay it. Click to stop.':'Standing order: repeat this recruit every month here until money runs out';rb.onclick=()=>{gmMacroToggle(pi,k);guSide();};g.appendChild(rb);}
-    rc.appendChild(g);if(st.rq.length)rc.appendChild(guEl('div','font-size:13px;opacity:.8;margin-top:3px','In training: '+st.rq.map(q=>q[2]+'× '+grKindName(fac,q[1])+' (due '+grMonStr(q[0])+')').join(', ')));s.appendChild(rc);}
-  if(!mine&&GC.me&&GC.nat[st.o]&&!grFriend(GC.me,st.o))guSpyRow(s,pi,st.o);
-  try{geUiProv(s,pi);}catch(e){console.error('geUiProv',e);}try{gmilUiProv(s,pi);}catch(e){console.error('gmilUiProv',e);}
-  const ar=guEl('div');ar.innerHTML=guArmyRows(pi);s.appendChild(ar);guBindArmies(s,pi);}
+  const st=GC.prov[pi],N=GCM.nats.get(st.o),mine=st.o===GC.me,me=GC.me;
+  /* ingameui slice 1: header (flag, name, owner, badges, stat chips) + tabs Overview · Recruit · Build · Govern (UK kit, 08j-uikit.js) */
+  const root=guEl('div','');root.className='uk';s.appendChild(root);
+  const hd=guEl('div','');hd.className='uk-hd';try{hd.appendChild(esFlagEl(grNat(st.o).fac,36,24));}catch(e){}
+  const ht=guEl('div','min-width:0');ht.innerHTML='<h2></h2><div class="uk-sub"></div>';ht.querySelector('h2').textContent=p.n;
+  const wg=GC.nat[st.o]&&GC.nat[st.o].wg.includes(pi);ht.querySelector('.uk-sub').innerHTML=N.name+' · '+guTerrName(p.t)+(p.cap?'<span class="uk-badge">Capital</span>':wg?'<span class="uk-badge red">War goal</span>':'');hd.appendChild(ht);root.appendChild(hd);
+  const ch=guEl('div','');ch.className='uk-chips';
+  ch.appendChild(UK.chip('🏘',p.tw,'Towns — tax, recruits and battle objectives'));
+  ch.appendChild(UK.chip('🛡',st.gar.length,'Garrison — '+st.gar.length+' units, strength '+Math.round(grProvDef(pi)/100)/10+'k'));
+  if(mine)ch.appendChild(UK.chip('✊',Math.round(st.un)+'%','Unrest — above 55% risks revolts and strikes',st.un>55?'warn':st.un<20?'good':''));
+  if(mine)ch.appendChild(UK.chip('💰',GR_TAX[st.tax],'Tax rate — set it on the Govern tab'));
+  const res=[p.oil&&['🛢','Oil'],p.farm&&['🌾','Farms'],p.mine&&['⛏','Mines'],p.port&&['⚓','Port']].filter(Boolean);for(const r of res)ch.appendChild(UK.chip(r[0],r[1],r[1]+' in this province'));
+  root.appendChild(ch);
+  const ov=guEl('div','');let sp='';if(typeof ocLine==='function')sp=ocLine(pi);if(sp)ov.insertAdjacentHTML('beforeend',sp);   /* A6 occupation reaction (13y-goccupy.js) */
+  if(!mine){if(me&&GC.nat[st.o]&&!grFriend(me,st.o))guSpyRow(ov,pi,st.o);try{geUiProv(ov,pi);}catch(e){console.error('geUiProv',e);}try{gmilUiProv(ov,pi);}catch(e){console.error('gmilUiProv',e);}
+    const ar=guEl('div');ar.innerHTML=guArmyRows(pi);ov.appendChild(ar);root.appendChild(ov);guBindArmies(s,pi);return;}
+  const fac=grNat(me).fac,rq=st.rq.length,bq=st.bq.length;
+  const P=UK.tabs(root,[['ov','Overview'],['rec','Recruit',rq||''],['bld','Build',bq||''],['gov','Govern']],GV.pvTab,k=>{GV.pvTab=k;});
+  P.ov.appendChild(ov);try{gmilUiProv(P.ov,pi);}catch(e){console.error('gmilUiProv',e);}const ar=guEl('div');ar.innerHTML=guArmyRows(pi);P.ov.appendChild(ar);
+  /* Recruit: unit cards */
+  P.rec.appendChild(UK.sec('Recruit here','arrives in 1–2 months'));const g=guEl('div','');g.className='uk-list';
+  for(const [k,n] of GR_RECRUIT){if(!grHasKind(fac,k))continue;let T;try{T=geRecruitTerms(me,pi,k,n);}catch(e){T={cost:grCost(fac,k)*n,man:0,turns:1};}
+    const N2=GC.nat[me],why=N2.cash<T.cost?'Not enough money ($'+Math.round(N2.cash)+' of $'+T.cost+')':(N2.e&&N2.e.man<T.man)?'Not enough manpower ('+Math.round(N2.e.man)+' of '+T.man+')':'';
+    const cv=document.createElement('canvas');cv.width=88;cv.height=68;try{g3Icon(cv,k,me);}catch(e){}
+    const mq=(GC.mac||[]).find(m=>m.p===pi&&m.k===k),nm=grKindName(fac,k);
+    const c=UK.card({icon:cv,name:nm,count:'×'+n,meta:'<b>$'+T.cost+'</b> · '+T.turns+' mo',on:!why,why,desc:'Train '+n+' '+nm+' in '+p.n+'. They join the garrison when ready.',rows:[['Cost','$'+T.cost],['Manpower',T.man],['Ready in',T.turns+' month'+(T.turns>1?'s':'')]],
+      onclick:()=>{const e=grRecruit(me,pi,k);if(e){GV.hint=e;guHint();}else grSave();guSide();guTop();},onDenied:()=>{GV.hint=why;guHint();}});
+    const rp=guEl('span','','↻');rp.className='rp'+(mq?' on':'');rp.dataset.tt=mq?'Repeat order ON — recruits this every month while you can pay. Click to stop.':'Repeat order — recruit this here every month until money runs out';rp.onclick=e=>{e.stopPropagation();gmMacroToggle(pi,k);guSide();};c.appendChild(rp);g.appendChild(c);}
+  P.rec.appendChild(g);
+  if(rq){const q=guEl('div','');q.className='uk-q';q.textContent='In training: '+st.rq.map(q=>q[2]+'× '+grKindName(fac,q[1])+' (due '+grMonStr(q[0])+')').join(' · ');P.rec.appendChild(q);}
+  /* Build + Govern (13h geUiBuild / geUiGovern) */
+  try{geUiBuild(P.bld,pi);}catch(e){console.error('geUiBuild',e);}
+  P.gov.appendChild(UK.sec('Tax','more money, more unrest'));P.gov.appendChild(UK.seg(GR_TAX,st.tax,i=>{grSetTax(me,pi,i);grSave();guSide();guTopCash();},['Low tax — calmer, less money (good on the front)','Normal tax','High tax — more money, more unrest (good in safe rear towns)']));
+  try{geUiGovern(P.gov,pi);}catch(e){console.error('geUiGovern',e);}
+  guBindArmies(s,pi);}
 function guSpyRow(s,pi,o){const seenP=(grSeenSet()||new Set()).has(pi),sp=GC.spy&&(GC.spy[GC.me+'>'+o]|0)>=GC.turn;   /* RG3 fog of war + spies */
   const r=guEl('div','margin:6px 0 2px;font-size:13px;opacity:.85',sp?'🕵 Our spies report every '+GCM.nats.get(o).name+' army (until '+grMonStr(GC.turn+1+((GC.spy[GC.me+'>'+o]|0)-GC.turn))+').':seenP?'👁 In sight of our lines.':'🌫 Fog of war: armies here are hidden. Move closer or send spies.');s.appendChild(r);
   if(!sp){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;margin-top:2px','🕵 Send spies $'+GR_SPY_COST);b.type='button';b.title='Reveal every '+GCM.nats.get(o).name+' army on the map for '+GR_SPY_M+' months';b.onclick=()=>{const e=grSpy(GC.me,o);GV.hint=e||'Spies sent into '+GCM.nats.get(o).name+'.';guSide();guTop();if(typeof g3Refresh==='function')g3Refresh();guRedraw&&guRedraw();};s.appendChild(b);}}
 function guTopCash(){guTop();}
-function guArmyRows(pi){const L=guProvArmies(pi);if(!L.length)return '<div style="opacity:.6;margin-top:8px">No armies here.</div>';let h='<div style="margin-top:8px;font-weight:bold">Armies</div>';
+function guArmyRows(pi){const L=guProvArmies(pi);if(!L.length)return '<div style="opacity:.6;margin-top:8px">No armies here.</div>';let h='<div class="uk-sec">Armies here</div>';
   for(const a of L){const mine=a.o===GC.me,f=grNat(a.o).fac,counts={};for(const r of a.u)counts[r[0]]=(counts[r[0]]||0)+1;const txt=Object.keys(counts).map(k=>counts[k]+' '+grKindName(f,k)).join(', ');
     h+='<div class="gArmy" data-a="'+a.id+'" style="border:1px solid '+(a.id===GV.selA?'#ffe27a':'#2c4358')+';border-radius:6px;padding:5px 7px;margin:4px 0;background:'+(a.id===GV.selA?'#1d3045':'#14222f')+';cursor:pointer"><span style="display:inline-block;width:10px;height:10px;background:'+grNat(a.o).color+';border:1px solid #fff;margin-right:5px"></span><b>'+a.nm+'</b>'+gmilArmyTag(a)+' <span style="opacity:.75">('+GCM.nats.get(a.o).name+')</span><br><span style="font-size:13px;opacity:.9">'+a.u.length+' units · value '+Math.round(grArmyVal(a)/100)/10+'k'+(a.sup?' · <span style="color:#ff9d8e">out of supply</span>':'')+'</span><br><span style="font-size:12px;opacity:.7">'+txt+'</span>'+(a.path.length?'<br><span style="font-size:12px;color:#ffe27a">→ '+GCM.P[a.path[a.path.length-1]].n+'</span>':'')+'</div>';
     if(mine&&a.id===GV.selA)h+='<div class="gActs" data-a="'+a.id+'" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px"><button data-act="split">Split in half</button><button data-act="merge">Merge here</button><button data-act="stop">Cancel orders</button>'+gmilActBtns(a)+'</div>';}
@@ -20795,6 +20985,19 @@ function g3BuildChim(grp){const T=g3Towns(),pos=[],ph=[],sz=[],pid=[],kind=[];
     float base=(3.2+aWar*9.)*aSz*(.5+life*1.4);gl_PointSize=clamp(base*uPx/-mv.z,0.,90.);vA=smoothstep(0.,.2,life)*(1.-life)*(1.-life)*(.85+.9*aWar);vW=aWar;}`,
     fragmentShader:`varying float vA;varying float vW;void main(){vec2 q=gl_PointCoord-.5;float d=length(q);if(d>.5)discard;float a=vA*(1.-smoothstep(.0,.5,d));vec3 c=mix(vec3(.62,.6,.57),vec3(.14,.12,.1),vW);gl_FragColor=vec4(c,a);}`});
   const pts=new THREE.Points(g,m);pts.frustumCulled=false;pts.renderOrder=6;grp.add(pts);G3.chim=pts;}
+// life: warm city lights (lamp glow in every town, bigger halos on capitals/megacities; additive points, one draw call, twinkle in the shader)
+function g3BuildLights(grp){const T=g3Towns(),pos=[],ph=[],sz=[];
+  for(const t of T){const n=t.cap?9:t.mega?8:t.t===0?4:2,R=(t.cap?15:t.mega?13:8)*(t.sc||1);
+    for(let k=0;k<n;k++){const a=g3Hash(t.pi*5+k,t.t+3)*6.283,r=Math.sqrt(g3Hash(k+9,t.pi+t.t))*R,x=t.x+Math.cos(a)*r,z=t.z+Math.sin(a)*r;
+      pos.push(x,g3HeightAt(x,z)+2.2,z);ph.push(g3Hash(k,t.pi*7+t.t)*6.283);sz.push(.6+g3Hash(k+2,t.pi)*.5);}
+    if(t.cap||t.mega){pos.push(t.x,g3HeightAt(t.x,t.z)+3,t.z);ph.push(0);sz.push(t.cap?5.5:4);}}   // big soft halo (size > 3 = halo)
+  if(!pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('aPh',new THREE.Float32BufferAttribute(ph,1));g.setAttribute('aSz',new THREE.Float32BufferAttribute(sz,1));
+  const U=G3.lightU={uT:{value:0},uPx:{value:900},uFar:{value:0},uNight:{value:0}};
+  const m=new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,vertexShader:`uniform float uT,uPx,uFar,uNight;attribute float aPh,aSz;varying float vA;varying float vH;
+    void main(){vec4 mv=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mv;float halo=step(3.,aSz);vH=halo;float tw=.8+.2*sin(uT*(1.3+aPh*.3)+aPh*9.);
+    float s=halo>.5?aSz*(7.+uFar*5.):aSz*2.2;gl_PointSize=clamp(s*uPx/-mv.z,halo>.5?6.:2.5,halo>.5?150.:14.);vA=(halo>.5?(.3+.2*uFar)*(.5+1.8*uNight):.55+.6*uNight)*tw;}`,
+    fragmentShader:`varying float vA;varying float vH;void main(){vec2 q=gl_PointCoord-.5;float d=length(q);if(d>.5)discard;float f=1.-smoothstep(0.,.5,d);f=vH>.5?f*f:f*f*f;gl_FragColor=vec4(vec3(1.,.74,.38)*(vH>.5?.9:1.1),f*vA);}`});
+  const pts=new THREE.Points(g,m);pts.frustumCulled=false;pts.renderOrder=7;grp.add(pts);G3.lights=pts;}
 // forests, palms, scrub by biome: one instanced mesh per tree type (a few thousand instances each)
 function g3BuildForests(grp){const F=G3.F,A=G3_GEO(),T=g3Towns(),W=F.W,P=GCM.P,L={conifer:[],broad:[],palm:[],scrub:[]};
   const near=(x,z)=>{for(const t of T)if(Math.abs(t.x-x)<40&&Math.abs(t.z-z)<40&&Math.hypot(t.x-x,t.z-z)<(t.cap?36:26))return true;return false;};
@@ -20900,7 +21103,7 @@ const G3_DETAIL=`vec3 g3detail(vec3 c){vec2 wp=vWp.xz;vec4 bw=texture2D(uBW,vG3)
   float wet=smoothstep(.5,.56,ls)*(1.-smoothstep(.56,.7,ls));c*=1.-.2*wet;   // damp shoreline
   return c;}`;
 function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels();}catch(e){}if(G3.real&&G3.F&&!G3.F.lit){G3.F=null;G3.towns=null;}let R;try{R=new THREE.WebGLRenderer({canvas:cv,antialias:true,powerPreference:'high-performance'});}catch(e){return false;}
-  try{G3.vigS=new THREE.Scene();G3.vigC=new THREE.OrthographicCamera(-1,1,1,-1,0,1);G3.vigS.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.ShaderMaterial({transparent:true,depthTest:false,depthWrite:false,vertexShader:'varying vec2 u;void main(){u=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:'varying vec2 u;void main(){vec2 d=(u-vec2(.5,.52))*vec2(1.,.9);float v=smoothstep(.34,.82,length(d));vec3 c=mix(vec3(1.,.88,.66),vec3(.1,.18,.4),1.-u.y);gl_FragColor=vec4(mix(c,vec3(.02,.05,.1),v),v*.46+.055);}'})));}catch(e){G3.vigS=null;}  // studio grade: vignette + warm-top/cool-bottom wash, drawn in-canvas so HUD stays crisp
+  try{G3.vigS=new THREE.Scene();G3.vigC=new THREE.OrthographicCamera(-1,1,1,-1,0,1);G3.vigS.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),new THREE.ShaderMaterial({uniforms:(G3.vigU={uN:{value:0}}),transparent:true,depthTest:false,depthWrite:false,vertexShader:'varying vec2 u;void main(){u=uv;gl_Position=vec4(position.xy,0.,1.);}',fragmentShader:'uniform float uN;varying vec2 u;void main(){vec2 d=(u-vec2(.5,.52))*vec2(1.,.9);float v=smoothstep(.34,.82,length(d));vec3 c=mix(vec3(1.,.88,.66),vec3(.1,.18,.4),1.-u.y);vec4 g=vec4(mix(c,vec3(.02,.05,.1),v),v*.46+.055);float a=g.a+uN*.36;gl_FragColor=vec4(mix(g.rgb,vec3(.03,.06,.16),uN*.36/max(a,.001)),a);}'})));}catch(e){G3.vigS=null;}  // studio grade: vignette + warm-top/cool-bottom wash, drawn in-canvas so HUD stays crisp
   if(!R.getContext())return false;R.outputColorSpace=THREE.LinearSRGBColorSpace;G3.R=R;G3.cv=cv;G3.aniso=Math.min(16,R.capabilities.getMaxAnisotropy?R.capabilities.getMaxAnisotropy():8);
   const F=g3Fields(),W=F.W,H=F.H,sc=new THREE.Scene(),haze=0x9db8c9;sc.background=new THREE.Color(haze);sc.fog=new THREE.Fog(haze,2200,6200);G3.sc=sc;R.toneMapping=THREE.ACESFilmicToneMapping;R.toneMappingExposure=1.02;g3Sky(sc);
   G3.cam=new THREE.PerspectiveCamera(36,1.6,8,9000);G3.cc=Object.assign({},G3.camera);G3.time=0;G3.last=0;G3.keys.clear();G3.pos=new Map();G3.arm=new Map();G3.sig='';
@@ -20957,7 +21160,7 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
       if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){vec4 ov=texture2D(uOv,cu);c=mix(c,ov.rgb,ov.a*.55);c=g3rimS(c,cu);}
       float dist=length(cameraPosition-vW);c*=mix(g3cloud(vW.xz,uTime),1.,smoothstep(1500.,4200.,dist));c=mix(c,vec3(.616,.722,.788),smoothstep(2200.,6200.,dist));gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
   const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);
-  const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);g3BuildChim(grp);G3.static=grp;
+  const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);g3BuildChim(grp);g3BuildLights(grp);G3.static=grp;
   G3.ents=new THREE.Group();sc.add(G3.ents);G3.arrows=new THREE.Group();sc.add(G3.arrows);
   G3.ringM=new THREE.Mesh(new THREE.RingGeometry(.9,1.2,48).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffe27a,transparent:true,opacity:.9,depthTest:false}));G3.ringM.renderOrder=5;G3.ringM.visible=false;sc.add(G3.ringM);try{g3ShipInit(sc);}catch(e){G3.ship=null;}
   g3UI();G3.miniDirty=true;g3ApplyQuality();try{cv.style.filter='contrast(1.06) saturate(1.18)';const w=document.getElementById('gMapWrap');if(w&&!document.getElementById('g3vig')){const v=document.createElement('div');v.id='g3vig';v.style.cssText='position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 58%,rgba(4,10,18,.34) 100%)';w.insertBefore(v,cv.nextSibling);}}catch(e){}
@@ -21077,12 +21280,7 @@ function g3SetMode(m,quiet){G3.mode=m;document.querySelectorAll('#g3modes button
   const hint={political:'Owner colours at the borders; thin lines mark frontiers.',terrain:'Terrain only, no tint.',trade:'Amber = oil, farms, mines and ports.',supply:'Green = supplied from the capital; red = cut off.',unrest:'Red = restless provinces.',culture:'Colour = culture region; striped = occupied land.',alliances:'Green = you, red = at war with you, grey = neutral.',development:'Darker blue = more developed.'}[m];
   G3.leg.textContent=(G3_MODES.find(x=>x[0]===m)||[0,m])[1]+' — '+hint;if(!quiet&&G3.R){g3PaintOverlay();G3.tOv.needsUpdate=true;G3.miniDirty=true;}}
 function g3Icon(cv,k,o){const c=cv.getContext('2d'),W=cv.width,H=cv.height,col=grNat(o).color,rg=grNatRgb(o);const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgb('+rg.map(v=>Math.round(v*.55)).join(',')+')');g.addColorStop(1,'#101a24');c.fillStyle=g;c.fillRect(0,0,W,H);
-  c.fillStyle='#e9e4d4';c.strokeStyle='#e9e4d4';c.lineWidth=3;const cx=W/2,cy=H/2;
-  if(k==='tank'||/tank|mbt|ifv|apc|veh/.test(k)){c.fillRect(cx-26,cy+4,52,12);c.beginPath();c.ellipse(cx,cy+2,15,9,0,0,7);c.fill();c.fillRect(cx,cy-1,32,4);c.fillStyle='#0008';for(let i=-22;i<=22;i+=11){c.beginPath();c.arc(cx+i,cy+11,4,0,7);c.fill();}}
-  else if(k==='arty'||/arty|mlrs|how/.test(k)){c.beginPath();c.moveTo(cx-22,cy+14);c.lineTo(cx+22,cy-14);c.lineWidth=7;c.stroke();c.lineWidth=3;c.beginPath();c.arc(cx-8,cy+14,8,0,7);c.stroke();}
-  else if(k==='aa'){c.lineWidth=5;c.beginPath();c.moveTo(cx-6,cy+12);c.lineTo(cx-14,cy-18);c.moveTo(cx+6,cy+12);c.lineTo(cx+14,cy-18);c.stroke();c.fillRect(cx-16,cy+10,32,8);}
-  else if(k==='heli'||/heli|chop/.test(k)){c.beginPath();c.ellipse(cx,cy+3,14,8,0,0,7);c.fill();c.fillRect(cx+10,cy+1,22,3);c.fillRect(cx-26,cy-12,52,3);c.fillRect(cx-1,cy-10,3,8);}
-  else{c.beginPath();c.arc(cx,cy-9,8,0,7);c.fill();c.beginPath();c.arc(cx,cy-12,10,3.14,6.28);c.fillStyle=col;c.fill();c.fillStyle='#e9e4d4';c.beginPath();c.moveTo(cx-18,cy+20);c.quadraticCurveTo(cx-18,cy+2,cx,cy+2);c.quadraticCurveTo(cx+18,cy+2,cx+18,cy+20);c.fill();if(k==='at'){c.fillRect(cx+8,cy-4,26,5);}}}
+  UK.drawUnit(c,k,W,H,col);}   /* ingameui: silhouettes live in the UI kit (08j) so battle cards use the same ones */
 function g3CardRow(parent,us,o){const f=grNat(o).fac,by={};for(const r of us){const k=r[0],b=by[k]||(by[k]={n:0,hp:0,xp:0});b.n++;b.hp+=r[1];b.xp+=grRankOf(k,f,r[2]);}
   const row=guEl('div','');row.className='row';for(const k of Object.keys(by)){const b=by[k],hp=Math.round(b.hp/b.n),c=guEl('div','');c.className='card';const cv=document.createElement('canvas');cv.width=124;cv.height=92;g3Icon(cv,k,o);c.appendChild(cv);
     const cn=guEl('div','');cn.className='cnt';cn.textContent='×'+b.n;c.appendChild(cn);const h=guEl('div','');h.className='hp';h.innerHTML='<b style="width:'+hp+'%;background:'+(hp>66?'#6fc24a':hp>33?'#e3b83a':'#d9503f')+'"></b>';c.appendChild(h);
@@ -21166,7 +21364,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   const c=G3.camera,K=G3.keys;if(K.size&&!document.getElementById('gModal')){const sp=c.d*.9*dt,sy=Math.sin(c.yaw),cy=Math.cos(c.yaw);let fx=0,fz=0;if(K.has('w')||K.has('arrowup'))fz-=1;if(K.has('s')||K.has('arrowdown'))fz+=1;if(K.has('a')||K.has('arrowleft'))fx-=1;if(K.has('d')||K.has('arrowright'))fx+=1;
     c.x=Math.max(0,Math.min(2400,c.x+(fx*cy+fz*sy)*sp));c.z=Math.max(0,Math.min(1200,c.z+(-fx*sy+fz*cy)*sp));if(K.has('q'))c.yaw+=dt*1.2;if(K.has('e'))c.yaw-=dt*1.2;if(K.has('r'))c.pitch=Math.min(1.3,c.pitch+dt*.8);if(K.has('f'))c.pitch=Math.max(.45,c.pitch-dt*.8);if(K.has('+')||K.has('='))c.d*=1-dt*1.5;if(K.has('-'))c.d*=1+dt*1.5;}
   c.d=Math.max(32,Math.min(2300,c.d));const cc=G3.cc,kk=Math.min(1,dt*11);let mv=0;for(const k of ['x','z','d','yaw','pitch']){const df=c[k]-cc[k];if(Math.abs(df)>1e-3){cc[k]+=df*kk;mv=1;}}if(mv||G3.moved){g3CamApply(cc);G3.moved=false;mv=1;}
-  const s=Math.max(.45,Math.min(3.6,cc.d/330));   /* realmap: provinces are real-sized, so figures shrink further when zoomed in */G3.sc_s=s;G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;if(G3.chimU){G3.chimU.uT.value=G3.time;G3.chimU.uPx.value=(G3.R.domElement.height||900)*.9;G3.chim.visible=cc.d<1100;}
+  const s=Math.max(.45,Math.min(3.6,cc.d/330));   /* realmap: provinces are real-sized, so figures shrink further when zoomed in */G3.sc_s=s;G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;if(G3.chimU){G3.chimU.uT.value=G3.time;G3.chimU.uPx.value=(G3.R.domElement.height||900)*.9;G3.chim.visible=cc.d<1100;}if(G3.vigU){const ph=(G3.time%300)/300,n=Math.max(0,Math.min(1,(Math.sin(ph*6.2832-1.2)-.1)*2.2));G3.vigU.uN.value=n;if(G3.lightU)G3.lightU.uNight.value=n;}if(G3.lightU){G3.lightU.uT.value=G3.time;G3.lightU.uPx.value=(G3.R.domElement.height||900)*.9;G3.lightU.uFar.value=Math.max(0,Math.min(1,(cc.d-300)/900));}
   G3.U.uSel.value=GV.sel>=0?GV.sel:-1;G3.U.uHov.value=GV.hov>=0&&GV.hov!==GV.sel?GV.hov:-1;
   // armies
   const anc=g3Anchors(s);let anim=0;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const t=anc.get(a.id);if(!t)continue;
@@ -21781,22 +21979,29 @@ function geUiPanel(refreshOnly){const old=document.getElementById('gEco');if(old
   d=sec('Merchants ('+E.mer.length+' of '+geMerchants(me)+')');d.appendChild(guEl('div','font-size:13px',E.mer.length?'Placed in: '+E.mer.map(m=>GCM.P[m].n).join(', ')+' ('+E.mer.length*70+'/month upkeep)':'Select a province and press "Place merchant" to steer trade your way.'));if(E.mer.length){r=row();r.appendChild(geBtn('Recall all',()=>{E.mer=[];geDone('');}));d.appendChild(r);}
   d=sec('Chokepoints (the holder can close a strait: world trade and the oil price shift)');for(const s of geStraits()){const h2=geHolder(s.i),cl=GC.eco.cl[s.i];const dv=guEl('div','display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13px');dv.appendChild(guEl('span','','<b>'+s.n+'</b> · '+(h2?GCM.nats.get(h2).name:'nobody')+(cl?' <span style="color:#ff9d8e">CLOSED</span>':'')+(geBlockaded(s.i)?' <span style="color:#ffb86b">BLOCKADED by '+GCM.nats.get(geBlockaded(s.i)).name+' fleet — park your own fleet here to break it</span>':'')));if(h2===me)dv.appendChild(geBtn(cl?'Reopen':'Close',()=>geDone(geSetStrait(me,s.i,!cl))));d.appendChild(dv);}
   const x=guEl('button','position:absolute;top:6px;right:8px;background:none;border:none;color:#e8e4d8;font-size:18px;cursor:pointer','×');x.onclick=()=>{el.remove();};el.appendChild(x);}
+/* ingameui slice 1: the province panel's Build and Govern tabs (13c guSide) — buildings as icon cards with slots, one tab per job */
+function geUiBuild(box,pi){const p=GCM.P[pi],st=GC.prov[pi],me=GC.me;if(!p||!p.land||!me||st.o!==me)return;const bl=geBl(pi),used=geUsed(pi),sl=geSlots(pi);
+  box.appendChild(UK.sec('Buildings',used+' / '+sl+' slots'));const sw=guEl('div','display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px');
+  for(const r of bl){const B=GE_B[r[0]],d=guEl('span','display:inline-flex;align-items:center;gap:5px;padding:4px 7px;border-radius:4px;font-size:13px;background:'+B[4]+'22;border:1px solid '+B[4]);d.innerHTML='<b style="color:'+B[4]+'">'+B[3]+'</b> '+B[0]+(r[1]>0?' <span style="color:#ff9d8e">−'+r[1]+'%</span>':'');d.dataset.tt=JSON.stringify({t:B[0],d:B[5],r:r[1]>0?[['Damaged',r[1]+'%']]:[]});sw.appendChild(d);}
+  for(let i=used;i<sl;i++){const d=guEl('span','display:inline-block;width:30px;height:27px;border-radius:4px;border:1px dashed #3a5168');d.dataset.tt='Empty building slot';sw.appendChild(d);}box.appendChild(sw);
+  if(st.bq.length){const q=guEl('div','');q.className='uk-q';q.textContent='Under construction: '+st.bq.map(q=>GE_B[q[1]][0]+' (due '+grMonStr(q[0])+')').join(' · ');box.appendChild(q);}
+  box.appendChild(UK.sec('Construct','click to order'));const g=guEl('div','');g.className='uk-grid';
+  for(const k of GE_BKEYS){const why=geCanBuild(me,pi,k);if(why&&/foreign|Not your|Unknown|no Mountain|mountain|No farmland|No mining|Not on the coast|Already has|oil province/i.test(why))continue;const B=GE_B[k],c=geCost(me,k);
+    g.appendChild(UK.card({icon:B[3],col:B[4],name:B[0],meta:'<b>$'+c+'</b> · '+B[2]+' mo',on:!why,why,desc:B[5],rows:[['Cost','$'+c],['Build time',B[2]+' months'],['Slots',used+' / '+sl]],onclick:()=>geDone(geBuild(me,pi,k)),onDenied:()=>{GV.hint=why;guHint();}}));}
+  box.appendChild(g);}
+function geUiGovern(box,pi){const p=GCM.P[pi],st=GC.prov[pi],me=GC.me;if(!p||!p.land||!me||st.o!==me)return;const E=GC.nat[me].e,cur=st.aut===undefined?st.au:st.aut;
+  box.appendChild(UK.sec('Autonomy',st.au!==st.aut&&st.aut!==undefined?'changing to '+GE_AU[st.aut]+'…':''));
+  box.appendChild(UK.seg(GE_AU,cur,i=>geDone(geAutonomy(me,pi,i)),['Direct rule — full tax and manpower; most unrest','Local rule — calmer, less tax and manpower','Autonomous — calmest, least tax and manpower. Lowering autonomy later takes time and stirs unrest']));
+  box.appendChild(UK.sec('City',(['Town','City','Metropolis'][st.tr|0])+(st.cf>=0?' · '+GE_CITY[st.cf]:'')+(st.ctp?' · growing, done '+grMonStr(st.ctp):'')));
+  if((st.tr|0)<2&&!st.ctp){const g=guEl('div','');g.className='uk-grid';const cc=geCityCost(st);GE_CITY.forEach((n,i)=>{if((st.tr|0)>0&&st.cf!==i)return;const ok=GC.nat[me].cash>=cc&&!(i===2&&!p.coast);
+      g.appendChild(UK.card({icon:'▲',col:'#e3b341',name:'Grow: '+n,meta:'<b>$'+cc+'</b>',on:ok,why:i===2&&!p.coast?'Needs a coast':'Not enough money',desc:n==='Industrial'?'+12% income a tier, cheaper recruits':n==='Military'?'+garrison, faster training, a fort in the battle':n==='Port'?'a port in the battle, trade':'much calmer',onclick:()=>geDone(geCity(me,pi,i))}));});box.appendChild(g);}
+  box.appendChild(UK.sec('Actions'));const r3=guEl('div','');r3.className='uk-acts';const mi=E.mer.includes(pi);
+  r3.appendChild(UK.link(mi?'Recall merchant':'Place merchant',()=>geDone(geMerchant(me,pi,!mi)),'A merchant skims part of this province\'s trade toward you.'));
+  if(!p.cap)r3.appendChild(UK.link('Scorched earth $150',()=>guConfirm('Scorched earth?','Destroys the works here and halves income for 5 months, +25 unrest. An enemy taking it gets nothing.',()=>geDone(geAct(me,'scorch',pi))),'Destroys the works and halves income for 5 months, +25 unrest; an enemy taking it gets nothing.',1));box.appendChild(r3);
+  if(E.ord.some(o=>o[1]===pi))box.appendChild(guEl('div','font-size:12px;color:#ffd24a;margin-top:4px','Ordered this month: '+E.ord.filter(o=>o[1]===pi).map(o=>o[0]).join(', ')));}
 function geUiProv(s,pi){const p=GCM.P[pi],st=GC.prov[pi],me=GC.me;if(!p||!p.land||!me)return;const mine=st.o===me,E=GC.nat[me].e;
   const box=guEl('div','margin:8px 0;border-top:1px solid #2c4358;padding-top:6px');
-  if(mine){
-    const bl=geBl(pi);let h='<div style="opacity:.75;font-size:13px">Buildings ('+geUsed(pi)+'/'+geSlots(pi)+' slots)</div>';
-    h+='<div style="display:flex;flex-wrap:wrap;gap:4px;margin:2px 0">'+(bl.length?bl.map(r=>'<span title="'+GE_B[r[0]][5]+'" style="padding:2px 6px;border-radius:4px;background:'+GE_B[r[0]][4]+'33;border:1px solid '+GE_B[r[0]][4]+';font-size:12px">'+GE_B[r[0]][0]+(r[1]>0?' <span style="color:#ff9d8e">-'+r[1]+'%</span>':'')+'</span>').join(''):'<span style="opacity:.6">none</span>')+'</div>';
-    if(st.bq.length)h+='<div style="font-size:12px;opacity:.8">Under construction: '+st.bq.map(q=>GE_B[q[1]][0]+' (due '+grMonStr(q[0])+')').join(', ')+'</div>';
-    box.innerHTML=h;const row=guEl('div','display:flex;flex-wrap:wrap;gap:4px;margin-top:3px');
-    for(const k of GE_BKEYS){const why=geCanBuild(me,pi,k);if(why&&/foreign|Not your|Unknown|no Mountain|mountain|No farmland|No mining|Not on the coast|Already has|oil province/i.test(why))continue;
-      row.appendChild(geBtn(GE_B[k][0]+' $'+geCost(me,k),()=>geDone(geBuild(me,pi,k)),!why,why||GE_B[k][5]));}box.appendChild(row);
-    const au=guEl('div','margin-top:6px');au.appendChild(guEl('div','opacity:.75;font-size:13px','Autonomy (high = calmer, less tax and manpower; lowering it takes time and stirs unrest)'));const seg=guEl('div','display:flex;gap:4px;margin-top:2px');
-    GE_AU.forEach((n,i)=>{const on=(st.aut===undefined?st.au:st.aut)===i;const b=guEl('button','flex:1;padding:4px;border-radius:5px;border:1px solid '+(on?'#ffe27a':'#3d5a73')+';background:'+(on?'#41572a':'#18293a')+';color:#fff;cursor:pointer;font-size:12px',n);b.type='button';b.onclick=()=>geDone(geAutonomy(me,pi,i));seg.appendChild(b);});au.appendChild(seg);if(st.au!==st.aut&&st.aut!==undefined)au.appendChild(guEl('div','font-size:12px;opacity:.75','Changing to '+GE_AU[st.aut]+'…'));box.appendChild(au);
-    const cy=guEl('div','margin-top:6px');cy.appendChild(guEl('div','opacity:.75;font-size:13px','City: '+(['Town','City','Metropolis'][st.tr|0])+(st.cf>=0?' · '+GE_CITY[st.cf]:'')+(st.ctp?' (growing, done '+grMonStr(st.ctp)+')':'')));
-    if((st.tr|0)<2&&!st.ctp){const r2=guEl('div','display:flex;flex-wrap:wrap;gap:4px;margin-top:2px');GE_CITY.forEach((n,i)=>{if((st.tr|0)>0&&st.cf!==i)return;r2.appendChild(geBtn('Grow: '+n+' $'+geCityCost(st),()=>geDone(geCity(me,pi,i)),GC.nat[me].cash>=geCityCost(st)&&!(i===2&&!p.coast),n==='Industrial'?'+12% income a tier, cheaper recruits':n==='Military'?'+garrison, faster training, a fort in the battle':n==='Port'?'a port in the battle, trade':'much calmer'));});cy.appendChild(r2);}box.appendChild(cy);
-    const r3=guEl('div','display:flex;flex-wrap:wrap;gap:4px;margin-top:6px');const mi=E.mer.includes(pi);r3.appendChild(geBtn(mi?'Recall merchant':'Place merchant',()=>geDone(geMerchant(me,pi,!mi))));
-    if(!p.cap)r3.appendChild(geBtn('Scorched earth $150',()=>geDone(geAct(me,'scorch',pi)),true,'Destroys the works and halves income for 5 months, +25 unrest; an enemy taking it gets nothing.'));box.appendChild(r3);
-    if(E.ord.some(o=>o[1]===pi))box.appendChild(guEl('div','font-size:12px;color:#ffd24a;margin-top:2px','Ordered this month: '+E.ord.filter(o=>o[1]===pi).map(o=>o[0]).join(', ')));
+  if(mine){geUiBuild(box,pi);geUiGovern(box,pi);   /* ingameui: the province panel calls these per tab */
   }else if(grAtWar(me,st.o)){
     box.innerHTML='<div style="opacity:.75;font-size:13px">Economic war</div>';const row=guEl('div','display:flex;flex-wrap:wrap;gap:4px;margin-top:3px');
     row.appendChild(geBtn('Strategic bombing $250',()=>geDone(geAct(me,'bomb',pi)),true,'Needs an airfield within range. Damages a factory, refinery, power plant, mine, port or airfield (AA halves it). 8 fuel.'));

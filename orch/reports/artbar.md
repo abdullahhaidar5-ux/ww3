@@ -76,3 +76,6 @@ Objects 4.2 -> 4.3: grand-map tankers/cargo ships were oversized against provinc
 
 ## 2026-11-07 19:xx UTC — laneC iteration 17 (shots: orch/shots/laneC/q0 before, q1 after)
 Water 3.5 -> 3.8: open sea gets slow ocean-colour variation (cool/warm deep patches, soft light/dark drift) so it stops being one flat blue, and the fine ripple shading fades with distance (less streaking toward the horizon). Shader-only, grand map. Others unchanged (geo 4, colour 4, light 3.5-4, objects 4.3, life 3.7, readability 4.3). Gates: smoke/grandtest timed out on the slow sandbox (no failure seen, 0 page errors in shots); CI is the judge. Next lowest: light 3.5-4 (city lights at night).
+
+## 2026-11-07 20:xx UTC — laneC iteration 18 (shots: orch/shots/laneC/r3 night close-up)
+Life 3.7 -> 4.0 (est.): city lights + a slow dusk cycle on the grand map (5-min loop): warm twinkling lamp glow in every town, halos on capitals/megacities, and the studio grade darkens to blue dusk so the lights show. Daytime unchanged. One extra additive draw call. Others unchanged (geo 4, colour 4, light 4, water 3.8, objects 4.3, readability 4.3). Gates: build --check OK; grandtest ran clean with no FAIL but timed out on the slow sandbox; smoke known-failing on main (NaN bounding sphere).
