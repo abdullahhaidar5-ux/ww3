@@ -18,5 +18,10 @@ New file `src/08k-*.js` (build.py picks up all src/*.js in name order); in an II
 ## People names and portraits (portraits lane)
 Names: `pplRoster(code)` -> {leader, heir|null, cab[4]}; `pplName(p)` -> "Ayatollah Mahdi Tabrizi"; `pplOf(code,'leader'|'heir'|'minister',i)`; generals via `pplGeneral(g)`. Add a culture row in `PPL_T` + `PPL_CUL`. Cards: `pplCard(p)`; hook for Lanes F/G: put `pplCard`/`pplName` in event pop-ups, diplomacy and army cards. Portraits: `ptOn()` (src/13l-people.js, false) gates pictures; the renderer is build-time only: `sh orch/portraits/fetch.sh DIR` (MakeHuman CC0, credit "MakeHuman community"), `node orch/portraits/make-people.mjs && node orch/portraits/prep.mjs && python3 orch/portraits/mhmorph.py DIR orch/portraits/specs.json orch/portraits/meshes.json`, symlink `three` into orch/portraits, serve it, open `sheet.html?cols=8&w=240`. Current output is WIP (see HISTORY); do not enable until it passes the EU4 bar.
 
+## Add a menu screen (title menu v3, `src/14-menu.js`)
+1. In `mxBuild()` add `const S=scr('myid','<h2 class="mxh">Title</h2><p class="mxsub">one line</p>')`, put your content in it (MOVE an existing node, don't rebuild it) and a footer with `foot(S, go('Next →', fn))`.
+2. Add a title entry with `item('Label', ()=>menuGo('myid'))` (order: Grand campaign · Conquest · Missions · Tutorial · Play online · Load game · Settings · Extras · Credits) and a name in `MX_TITLES` (breadcrumb); use `MX_STEPS` for a multi-step flow.
+3. `menuGo(id)` slides forward, `menuBack()` / Esc one step back, `menuHome()` resets (runs whenever `#menu` is shown again); do per-screen refresh in `mxEnter(id)`. Controls added later by other modules into the old `#menu .card` are hidden: click them from a new item (`mxClick('id')`).
+4. Check: `node orch/menushots.mjs <tag> title,myid` (shots in orch/shots/menu/) and `node orch/menuhud.mjs`.
 ## Add a monthly system / an idea
 Push a fn onto `GMOD_HOOKS` (13k) — called by `gmodMonth` each turn. New idea = one row in `GID_GROUPS` (13l); its effect is a modifier row on an existing stat (income, upkeep, manpower, ppPol/Dip/Mil, warSupport…).
