@@ -393,3 +393,5 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneD 2026-11-07: D2 slice 6 — 'RPG Team/Cell', 'TOW Team' unit names plain-worded to Anti-Tank (Missile) Team (names only, no sim change).
 
 - laneF 2026-11-07 12:50Z: A3 150-army perf test (orch/a3perf.mjs): select 150 armies 12 ms, cards 5 ms; no code change needed.
+
+- 2026-11-07 laneG: RG4 elections & refugees (src/13zw-gelect.js, orch/eltest.mjs) — democracies hold elections on war support + unrest, wars create refugees.
