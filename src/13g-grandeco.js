@@ -60,6 +60,8 @@ const GE_SIG={
  TH:[['E','Rice Bowl','Harvests and a calm home front.',['food','calm']]],
  ET:[['E','Highland Levies','A big recruit pool at low upkeep.',['manp','upkeep']]],
  LY:[['E','Oil Terminals','Oil and shipping.',['oil','port']]],
+ OB:[['M','Urban Labyrinth','Rubble-city home battles; some fallen fighters slip away and return after the battle.']],
+ BI:[['M','Desert Raids','Fast moves across desert provinces and recovering captured gear after won battles.']],
  SD:[['E','Gold Routes','Gold mines and smuggled trade.',['smug','mine']]],
  SE:[['E','Neutral Arms Exports','Arms sales and a cheap army.',['tax','upkeep']]],
  KZ:[['E','Steppe Uranium','Mines and thrifty fuel.',['mine','fuel']]],

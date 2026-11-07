@@ -12,7 +12,7 @@ const gx = lon => pw(LX, Math.max(-180, Math.min(180, lon))), gy = lat => pw(LY,
 // nation: code|name|region|colour (majors take their colour from FACTIONS at runtime)
 const NAT = `US|United States|NA|CA|Canada|NA|MX|Mexico|NA|CU|Cuba|NA|GT|Central America|NA|DO|Caribbean Isles|NA|VE|Venezuela|SAM|CO|Colombia|SAM|BR|Brazil|SAM|PE|Peru|SAM|AR|Argentina|SAM|CL|Chile|SAM|
 GB|Britain|EU|FR|France|EU|DE|Germany|EU|ES|Spain|EU|IT|Italy|EU|PL|Poland|EU|SE|Sweden|EU|NO|Norway|EU|FI|Finland|EU|GR|Greece|EU|RO|Romania|EU|BY|Belarus|EU|UA|Ukraine|EU|RU|Russia|EU|KZ|Kazakhstan|EU|UZ|Uzbekistan|EU|AZ|Azerbaijan|EU|
-TR|Turkey|ME|SY|Syria|ME|RS|Mountain Shias|ME|IL|Israel|ME|JO|Jordan|ME|IQ|Iraq|ME|KD|Kurdistan|ME|IR|Iran|ME|SA|Saudi Arabia|ME|AE|UAE|ME|OM|Oman|ME|KW|Kuwait|ME|QA|Qatar|ME|DW|Coffee Shias (Yemen)|ME|EG|Egypt|ME|LY|Libya|ME|SD|Sudan|ME|ET|Ethiopia|AF|DZ|Algeria|AF|MA|Morocco|AF|TN|Tunisia|AF|NG|Nigeria|AF|ML|Sahel|AF|TD|Chad|AF|CD|Congo|AF|KE|Kenya|AF|TZ|Tanzania|AF|AO|Angola|AF|ZA|South Africa|AF|
+TR|Turkey|ME|SY|Syria|ME|RS|Mountain Shias|ME|IL|Israel|ME|JO|Jordan|ME|IQ|Iraq|ME|KD|Kurdistan|ME|OB|Olive Brigades|ME|BI|Black Desert Insurgency|ME|IR|Iran|ME|SA|Saudi Arabia|ME|AE|UAE|ME|OM|Oman|ME|KW|Kuwait|ME|QA|Qatar|ME|DW|Coffee Shias (Yemen)|ME|EG|Egypt|ME|LY|Libya|ME|SD|Sudan|ME|ET|Ethiopia|AF|DZ|Algeria|AF|MA|Morocco|AF|TN|Tunisia|AF|NG|Nigeria|AF|ML|Sahel|AF|TD|Chad|AF|CD|Congo|AF|KE|Kenya|AF|TZ|Tanzania|AF|AO|Angola|AF|ZA|South Africa|AF|
 PK|Pakistan|SA|IN|India|SA|AF|Afghanistan|SA|BD|Bangladesh|SA|NP|Nepal|SA|LK|Sri Lanka|SA|MM|Myanmar|SEA|TM|Turkmenistan|SA|
 CN|China|EA|KP|North Korea|EA|KR|South Korea|EA|JP|Japan|EA|TW|Taiwan|EA|MN|Mongolia|EA|VN|Vietnam|SEA|TH|Thailand|SEA|MY|Malaysia|SEA|ID|Indonesia|SEA|PH|Philippines|SEA|AU|Australia|OC|NZ|New Zealand|OC`.replace(/\n/g, '').split('|');
 const NATS = []; for (let i = 0; i < NAT.length; i += 3) NATS.push([NAT[i], NAT[i+1], NAT[i+2]]);
@@ -177,6 +177,9 @@ ID|Borneo|114|0.5|j|2|OM|
 PH|Manila|121|14.6|u|3|CP|
 PH|Mindanao|125.5|7.5|j|2|P|
 NZ|New Zealand|174|-40|f|2|CP|
+OB|Gaza|32.4|30.6|u|2|CPW|gaza
+BI|Euphrates Badlands|43.4|34.9|d|1|CO|euphrates
+BI|Syrian Badiya|40.4|33.8|d|1|W|
 `.trim().split('\n').map(l => l.split('|'));
 // sea zones: name|lon|lat|cost (turns to cross)|flag (choke = chokepoint strait, oil = giant oil sea? no)|big
 const SEAS = `
