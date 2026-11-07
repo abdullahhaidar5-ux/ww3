@@ -1,0 +1,31 @@
+3.0s stale save in menu {"cont":false,"warn":true}
+17.1s map open
+22.2s march {"me":"IR","from":"Tehran","to":"Baku","foe":"AZ","ok":true,"units":37}
+25.6s fallback {"modal":true,"map":true,"G":false}
+38.5s prompt: BATTLE · CoastBakuAttackers — Iran37 units28 Basij Militia, 4 RPG Cell, 2 Karrar Tank, 1 Fateh-110 Launcher, 1
+39.0s Fight it live clicked
+49.1s {"L":true,"step":"Loading 3D models…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+50.2s {"L":true,"step":"Building the battlefield…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+51.8s {"L":true,"step":"Preparing graphics…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+100.8s {"L":true,"step":"Deploying forces…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+115.8s {"L":false,"step":"Ready","g":true,"grand":true,"t":0,"paused":false,"gs":"none","ents":67}
+116.8s {"L":false,"step":"Ready","g":true,"grand":true,"t":0.18,"paused":false,"gs":"none","ents":67}
+139.9s battle running: Generating terrain 9522, Loading 3D models 166, Building the battlefield 862, Building the battlefield 1597, Preparing graphics 49012, Deploying forces 22, Deploying forces 8779, total 70670
+GRANDLIVE PASS
+scenario {"foe":"AZ","ok":true,"from":"Tehran","to":"Baku","units":37}
+  [page] grandlive: grandBattleStart sync 496 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":63,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 9471 ms, Loading 3D models 175 ms, Building the battlefield 964 ms, Building the battlefield 1359 ms, Preparing graphics 22718 ms, Deploying forces 19 ms, Deploying forces 2496 ms, total 37904 ms
+live 1 41.9s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":63,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.560000000000001,"p":false,"h":false,"fs":null}],"running":true}
+
+GRANDLIVE2 FAIL
+  ✗ page.waitForFunction: Timeout 60000ms exceeded.
+15.7s map open
+15.7s start {"turn":1,"day":0,"date":"1 Jan 2026","spd":0,"ph":"plan","modal":false}
+20.9s after Space {"turn":1,"day":3,"date":"4 Jan 2026","spd":2,"ph":"plan","modal":false}
+28.2s month rolled {"turn":2,"day":19,"date":"20 Feb 2026","spd":5,"ph":"plan","modal":false}
+30.0s paused {"turn":2,"day":19,"date":"20 Feb 2026","spd":0,"ph":"plan","modal":false}
+30.1s march {"ok":true,"hint":"Baku: arrives ~1 Mar 2026 (1 month)"}
+35.8s slide [{"x":1219.224999997738,"z":441.00000000278385,"f":0.653299999999969,"day":19},{"x":1202.7623972782444,"z":374.0989728431192,"f":0.863174999999969,"day":25}]
+43.2s battle prompt {"turn":2,"day":0,"date":"1 Mar 2026","spd":3,"ph":"resolve","modal":true}
+GRANDRT PASS
