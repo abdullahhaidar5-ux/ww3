@@ -33,3 +33,9 @@ Light 3 → 3.5, objects 3 → 3.5: every town building now throws a soft sun-di
 Life 2.5 → 3.5: shipping lanes — ~18–46 tankers and container ships (`src/13w-gshipping.js`) sail the real sea-province links with wakes (visual only, no sim state; they never cross land: links are sampled against the height field). World reaction chain: trade lanes visibly busy (tie to oil market / Straits later). Others unchanged (geography 4, colour 3.5, light 3.5, water 3, objects 3.5, readability 3.5). Next: water normal maps, army figures, UI kit C0.
 ## 2026-11-07 04:xx UTC — laneC iteration 4 (shots: orch/shots/laneC/it4)
 Life 2.5 → 3: every town now breathes faint chimney smoke (one GPU-animated Points draw, ~8k puffs, hidden when zoomed out past d 1100; capitals 5 sources, towns 1–3). Besieged-province smoke already existed (g3BuildSmoke, ⚡15) — mine is `g3BuildChim`. Subtle by design; others unchanged. Next lowest: water 3, colour 3.5/light 3.5/objects 3.5 (soldier figures still blocky), UI kit C0.
+
+## 2026-11-07 06:2x UTC — laneC iteration 6 (shots: orch/shots/laneC/it6)
+Water 3 → 3.5: five crossing sharpened swell trains drive the sea normals (peaked crests), sky-gradient reflection with warm sun side replaces the flat fresnel tint, whitecaps on open-water crests, light through thin crests in shallows; all fade with distance so far views stay calm. Shader-only, no sim. Others unchanged (geography 4, colour 3.5, light 3.5, objects 3.5, life 3.5, readability 3.5). Next: army figures/ships, UI kit C0, PBR close-up tiles.
+
+## 2026-11-07 06:5x UTC — laneC iteration 6 (no code shipped)
+Built a sea-shader upgrade (sky reflection, whitecaps, sparkle); main received an equivalent one (5-train swell, sky reflection, whitecaps) minutes earlier, so mine was dropped to avoid a conflict. Water ≈ 3.5 on main now. Next lowest for Lane C: C0 UI kit / C3 UI skin (readability 3.5), then objects/colour/light 3.5.

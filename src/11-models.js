@@ -6,7 +6,7 @@ const MCFG={
   mortar:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],extra:'mortar'},recon:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#4a5242',tk:.5},officer:{m:'soldier',fit:'y',size:15.7,tint:'#3d4a36',tk:.5},medic:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#e8e4da',tk:.35},
   commissar:{m:'soldier',fit:'y',size:15.7,tint:'#5b4a3a',tk:.5},sapper:{m:'soldier',fit:'y',size:14.0,squad:[[3,-4],[-3,4]],tint:'#6a5a3c',tk:.4},guer:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#4c5a3a',tk:.55},atk:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]],tint:'#3c4434',tk:.5},
   idome:{m:'truck',fit:'z',size:36,extra:'samtruck'},ew:{m:'truck',fit:'z',size:35,extra:'dish'},cbr:{m:'truck',fit:'z',size:35,extra:'dish'},jeep:{m:'truck',fit:'z',size:26},atgm:{m:'truck',fit:'z',size:27,extra:'samtruck',tint:'#55603f',tk:.4},saka:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]],tint:'#a08a5c',tk:.5},raidlead:{m:'truck',fit:'z',size:28,extra:'mg'},
-  inf:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7]]},at:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]]},hacker:{m:'soldier',fit:'y',size:13.1,squad:[[3,-4],[-3,4]]},
+  inf:{m:'soldier',fit:'y',size:14.0,squad:[[5,0],[-4,-7],[-4,7],[-11,0]]},at:{m:'soldier',fit:'y',size:14.0,squad:[[3,-5],[-3,5]]},hacker:{m:'soldier',fit:'y',size:13.1,squad:[[3,-4],[-3,4]]},
   hero:{m:'soldier',fit:'y',size:15.7,tint:'#2c302b',tk:.6},champ:{m:'soldier',fit:'y',size:19.5,tint:'#262a26',tk:.62},heli:{m:'heli',fit:'z',size:54},airlift:{m:'heli',fit:'z',size:72,tint:'#59604f',tk:.5},lander:{m:'boat',fit:'z',size:52,tint:'#6f7478',tk:.5},drone:{m:'drone',fit:'z',size:18,tint:'#7d8287',tk:.8},jet:{m:'jet',fit:'z',size:46},boat:{m:'boat',fit:'z',size:42,tint:'#7a8590',tk:.9},fast:{m:'boat',fit:'z',size:30,tint:'#7a8590',tk:.9},minel:{m:'boat',fit:'z',size:50,tint:'#6d7570',tk:.9},sweep:{m:'boat',fit:'z',size:46,tint:'#7d8a82',tk:.9},ship:{m:'ship',fit:'z',size:118,tint:'#7d8792',tk:.88},
 };
 // Realistic models (Objaverse / Sketchfab, CC-BY - authors credited in the menu): each nation fields the hardware it
@@ -23,7 +23,7 @@ for(const f of ['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN'
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
 // and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
-const WESTVEH=['JP','MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF'];
+const WESTVEH=['JP','MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF','OB','BI'];
 Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',GB:'kf51',AU:'abrams',CA:'kf51',IL:'merkava',EU:'kf51',FR:'kf51',DE:'kf51',TR:'kf51'});
 // Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
 // Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
@@ -1143,6 +1143,24 @@ const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
  NATX_FLAG.ET=c=>{c.hs(['#078930','#fcdd09','#da121a']);c.circ(60,36,11,'#0f47af');c.star(60,36,9,'#fcdd09');};
  NATX_FLAG.LY=c=>{c.rect('#4a4f55',0,0,c.W,c.H);c.rect('#a89466',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};
  NATX_FLAG.SD=c=>{c.rect('#4b5246',0,0,c.W,c.H);c.rect('#a89a6e',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};}
+// nation-obbd: Olive Brigades (OB) and Black Desert Insurgency (BI). Looks on shared models; ORIGINAL emblems in the printed-cloth style (no real group's banner, seal, shahada or slogan).
+{const L={ OB:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#6b6a52',ca:'#7a7556',cb:'#3a3a2c',uni:'#5d6048',pat:1},cx:{p:1,s:1,c:'#6b6a52',t:'#3c6b3a',w:3},ax:{b:'#878d91',p:3,h:{b:'#aeb09a',p:3}},ch:'#4a5036',rt:'#aeb09a',nv:'slav'},
+ BI:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#9a8a62',ca:'#a89a6c',cb:'#3a3a3e',uni:'#8f8460',pat:0},cx:{p:0,s:1,c:'#9a8a62',t:'#3b3b3f',w:3},ax:{b:'#878d91',p:3,h:{b:'#bfb08a',p:3}},ch:'#5a5238',rt:'#bfb08a',nv:'slav'}};
+ for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;if(q.nv)NATX_NAVY[k]=q.nv;KFAC.push(k);RMAP.dozer[k]='jd550';RMAP.ship[k]='frw';}
+ // OB: cream printed cloth, olive branch over a stylised city skyline, red/green/black foot band, name in Arabic
+ NATX_FLAG.OB=c=>{const{x,W,H}=c;emCloth(x,W,H,'#efe6cf',23);
+  x.fillStyle='#2b2b2b';x.fillRect(0,H*.84,W,H*.16);x.fillStyle='#b3262e';x.fillRect(0,H*.84,W*.34,H*.16);x.fillStyle='#2f6b3a';x.fillRect(W*.66,H*.84,W*.34,H*.16);
+  emText(x,'ألوية الزيتون',60,9,10.5,'#2f5a30');
+  x.fillStyle='#34382f';x.beginPath();x.moveTo(26,H*.84);for(const[px,py]of[[26,52],[31,52],[31,44],[37,44],[37,49],[42,49],[42,38],[47,38],[47,46],[53,46],[53,41],[57,41],[57,50],[63,50],[63,36],[69,36],[69,47],[75,47],[75,43],[81,43],[81,51],[87,51],[87,46],[94,46],[94,H*.84]])x.lineTo(px,py);x.closePath();x.fill();
+  x.strokeStyle='#3a5a22';x.lineWidth=1.3;x.lineCap='round';x.beginPath();x.moveTo(34,34);x.quadraticCurveTo(60,18,86,34);x.stroke();
+  for(let i=0;i<9;i++){const t=(i+.5)/9,bx=34+t*52,by=34-Math.sin(t*Math.PI)*12.4;for(const s of[-1,1]){x.save();x.translate(bx,by);x.rotate(s*-.9+(t<.5?-.3:.3));x.fillStyle=i%2?'#5f8a3a':'#4a7430';x.beginPath();x.ellipse(0,s*3.1,1.3,3.6,0,0,7);x.fill();x.restore();}}
+  x.fillStyle='#3c4a2a';for(const[ox,oy]of[[46,26.5],[60,23.5],[74,26.5]]){x.beginPath();x.arc(ox,oy+3,1.4,0,7);x.fill();}};
+ // BI: plain charcoal cloth, dune line and a broken (five-point, one arm missing) star; sombre, nothing like any real banner
+ NATX_FLAG.BI=c=>{const{x,W,H}=c;emCloth(x,W,H,'#34343a',31);
+  x.fillStyle='#8f8460';x.beginPath();x.moveTo(0,H);x.lineTo(0,H*.76);for(let i=0;i<=24;i++){const px=i*W/24;x.lineTo(px,H*.76+Math.sin(i*.9)*2.6-Math.sin(i*.37)*3);}x.lineTo(W,H);x.closePath();x.fill();
+  x.fillStyle='#6f6646';x.beginPath();x.moveTo(0,H);x.lineTo(0,H*.88);for(let i=0;i<=24;i++){const px=i*W/24;x.lineTo(px,H*.88+Math.sin(i*.7+1)*1.8);}x.lineTo(W,H);x.closePath();x.fill();
+  x.fillStyle='#b9b09a';x.beginPath();for(let i=0;i<10;i++){if(i===3||i===4)continue;const a=-1.5708+i*.62832,r=i%2?7:16;x.lineTo(60+Math.cos(a)*r,32+Math.sin(a)*r);}x.closePath();x.fill();
+  x.strokeStyle='rgba(0,0,0,.35)';x.lineWidth=.6;x.stroke();};}
  {const L={ JP:{tk:'abrams',he:'apache',je:'f16',sol:'sol_w',fl:{veh:'#5f6a45',ca:'#566340',cb:'#343a28',uni:'#56633f',pat:1},cx:{p:1,s:1,c:'#5f6a45',t:'#bc002d',w:3},ax:{b:'#878d91',p:3,h:{b:'#b3b6a8',p:3}},ch:'#4a5535',rt:'#b3b6a8'}};
  for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;KFAC.push(k);RMAP.dozer[k]='jd550';RMAP.ship[k]='frw';}
  NATX_FLAG.JP=c=>{c.rect('#fff',0,0,c.W,c.H);c.circ(60,36,16,'#bc002d');}}
