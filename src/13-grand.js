@@ -101,7 +101,8 @@ function grSpy(me,t){const N=GC.nat[me];if(!N||!GC.nat[t]||grFriend(me,t))return
   N.cash-=GR_SPY_COST;GC.spy[me+'>'+t]=GC.turn+GR_SPY_M-1;GR_SEEN=null;grLog('Our spies are inside '+GCM.nats.get(t).name+' — all their armies are on our maps until '+grMonStr(GC.turn+GR_SPY_M)+'.',me);return '';}
 function grWk(a,b){return a<b?a+'|'+b:b+'|'+a;}
 function grAtWar(a,b){return a!==b&&!!GC.war[grWk(a,b)];}
-function grDist(a,b){const A=GCM.P[a],B=GCM.P[b];return Math.hypot(A.x-B.x,A.y-B.y);}
+function grDist(a,b){const A=GCM.P[a],B=GCM.P[b];if(!A||!B)return 0;   /* a lost capital (-1) must not crash a retreat */
+  return Math.hypot(A.x-B.x,A.y-B.y);}
 function grLog(t,nat){GC.log.push([GC.turn,t,nat||'']);if(GC.log.length>240)GC.log.shift();}
 function grAddArmy(o,at,us,name){const N=GC.nat[o];N.an++;const a={id:GC.aid++,o,at,u:us,path:[],pg:0,nm:name||(N.an+(N.an===1?'st':N.an===2?'nd':N.an===3?'rd':'th')+' Army'),from:-1,sup:0,arr:0};GC.armies.push(a);return a;}
 function grArmyVal(a){return grForce(grNat(a.o).fac,a.u);}
