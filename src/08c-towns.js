@@ -14,7 +14,7 @@ function drawTownsWorld(c){if(!G||!G.towns||G.over||OVL.towns===false)return;con
   for(const t of G.towns){if(!inView(t.x,t.y,.1))continue;const p=toScreen(t.x,groundH(t.x,t.y)+(t.ham?70:110),t.y);if(p.z>1)continue;
     const mine=townsMine(t),reb=t.reb>G.t;
     c.save();c.font=(ph?'bold 11px':'bold 12px')+' system-ui,sans-serif';c.textAlign='center';
-    if(mine){const w=ph?96:112,h=ph?38:42,x=p.x-w/2,y=p.y-h;c.fillStyle='rgba(8,12,10,.78)';c.fillRect(x,y,w,h);c.strokeStyle=G.teams[t.ow].color;c.lineWidth=1.5;c.strokeRect(x,y,w,h);
+    if(mine&&!G.grand){const w=ph?96:112,h=ph?38:42,x=p.x-w/2,y=p.y-h;c.fillStyle='rgba(8,12,10,.78)';c.fillRect(x,y,w,h);c.strokeStyle=G.teams[t.ow].color;c.lineWidth=1.5;c.strokeRect(x,y,w,h);
       const hot=t.un>=85&&((now*4)%1<.5);if(hot){c.strokeStyle='#ff3b30';c.lineWidth=3;c.strokeRect(x-2,y-2,w+4,h+4);}
       // tax-rate badge: letter in a shape (square Low/Normal, up-triangle High, diamond Extortionate)
       c.fillStyle=t.rate>=3?'#e5483c':t.rate===2?'#f0c040':t.rate===1?'#bcd0c4':'#5fcf72';const bx=x+11,by=y+11;c.beginPath();if(t.rate===2){c.moveTo(bx,by-8);c.lineTo(bx+8,by+7);c.lineTo(bx-8,by+7);}else if(t.rate===3){c.moveTo(bx,by-9);c.lineTo(bx+9,by);c.lineTo(bx,by+9);c.lineTo(bx-9,by);}else c.rect(bx-8,by-8,16,16);c.closePath();c.fill();
@@ -35,7 +35,7 @@ function drawTownsMini(c,sx,sy,now){if(!G||!G.towns||OVL.towns===false)return;
       if(own){c.fillStyle=G.teams[t.ow].color;shape();c.fill();}else{c.fillStyle='rgba(20,24,20,.9)';shape();c.fill();c.strokeStyle='#b9c2b3';c.lineWidth=1.3;shape();c.stroke();}
       // capture in progress: arc round the marker in the capturing side's colour
       let cpm=0,cpT=-1;for(const k of t.cells)if(k.key&&k.cp>cpm&&k.cpT>=0){cpm=k.cp;cpT=k.cpT;}if(cpm>0&&G.teams[cpT]){c.strokeStyle=G.teams[cpT].color;c.lineWidth=2.2;c.beginPath();c.arc(x,y,s+4,-1.57,-1.57+6.283*Math.min(1,cpm));c.stroke();}
-      if(mine){// tax-rate pips and unrest rings
+      if(mine&&!G.grand){// tax-rate pips and unrest rings
         c.fillStyle='#f4f4f4';for(let i=0;i<=t.rate;i++){c.fillRect(x-s+i*2.4,y+s+3,1.6,2.2);}
         if(t.un>50){const crit=t.un>=75,pulse=t.un>=90?.5+.5*Math.sin(now*9):1;c.strokeStyle=crit?'#ff4a3a':'#ffd24a';c.globalAlpha=crit?.55+.45*pulse:1;c.lineWidth=crit?2.2:1.6;if(!crit)c.setLineDash([2.4,1.8]);c.beginPath();c.arc(x,y,s+(crit?5.5:3.4),0,7);c.stroke();c.setLineDash([]);if(t.un>=90){c.lineWidth=1.2;c.beginPath();c.arc(x,y,s+8+pulse*2,0,7);c.stroke();}}}}
     c.restore();}
@@ -79,6 +79,7 @@ function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){
   if(G.over){townClose();return;}
   const mine=townsMine(t),reb=t.reb>G.t,kind=EC_LV[t.lv==null?(t.ham?0:1):t.lv],ow=t.ow>=0&&G.teams[t.ow]?G.teams[t.ow].F.name:null;let h=`<h4>${t.name}</h4><div class="tm">${kind}${ow?' &middot; held by '+ow:reb?' &middot; in rebel hands':' &middot; neutral'}</div>`;
   const pk=TPERK[t.pk|0];
+  if(G.grand){h+=`<div style="margin-top:6px">Loyalty ${Math.round(100-Math.min(100,t.un))}%${t.cut?' &middot; <b style="color:#ff9a8a">cut off from supply</b>':''}</div>`;const tb2=TP.el.querySelector('#tpb');if(TP.h!==h){TP.h=h;tb2.innerHTML=h;}return;}
   if(mine){const ramp=Math.round(Math.min(1,(G.t-(t.hold||0))/T_RAMP)*50+50);
     h+=`<div style="margin-top:6px"><b>Tax +$${t.tax.toFixed(1)}/s</b> <span class="tm">${ramp<100?'(ramping '+ramp+'%)':''}${t.whole?' &middot; whole town +50%':''}</span></div>`;
     h+='<div class="rb">'+TAXN.map((n,i)=>`<button data-r="${i}" class="${t.rate===i?'on':''}">${n}<br><span style="font-weight:400;font-size:11px">${i===0?'-40% tax':i===1?'':i===2?'+50%':'+120%'}</span></button>`).join('')+'</div>';

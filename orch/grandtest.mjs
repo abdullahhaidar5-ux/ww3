@@ -283,8 +283,13 @@ try {
   const bt = await ev(() => { const c = (t) => { const o = {}; for (const e of G.ents) if (e.team === t && !e.isB && !e.dead) o[e.kind] = (o[e.kind] || 0) + 1; return o; };
     const blds = t => G.ents.filter(e => e.team === t && e.isB).map(e => e.kind); const q0 = JSON.stringify(G.teams[0].q), cr = G.teams[0].credits;
     act(0, { t: 'q', k: 'inf' }); act(0, { t: 'bld', k: 'barracks', x: BASES[0][0], y: BASES[0][1] }); act(0, { t: 'up', k: 'x' });
-    return { me: c(0), foe: c(1), b0: blds(0), b1: blds(1), qSame: JSON.stringify(G.teams[0].q) === q0, cr, conq: !!G.conq, over: G.over, waves: G.grand.waves.length, att: G.grand.att, n0: G.grand.n0 }; });
+    let refused = null; { const t = G.towns && G.towns[0]; if (t) { t.ow = 0; t.reb = 0; t.loy = 1; const T = G.teams[0]; T.credits = 5000; const snap = () => JSON.stringify([t.rate, t.inv | 0, G.ents.length, T.credits, G.lgd && G.lgd.job ? G.lgd.job.length : 0]); const s0 = snap();
+      for (const a of [{ t: 'tax', ti: 0, r: (t.rate + 1) % 4 }, { t: 'eco', ti: 0, k: 0 }, { t: 'recruit', ti: 0 }, { t: 'road', ti: 0, ids: [] }, { t: 'lg', ti: 0 }, { t: 'bribe', ti: 0 }]) act(0, a);
+      try { townRecruit(0, { ti: 0 }); townCmd(0, { ti: 0, r: (t.rate + 1) % 4 }); ecCmd(0, { ti: 0, k: 0 }); } catch (e) {}
+      refused = snap() === s0; } }
+    return { me: c(0), foe: c(1), b0: blds(0), b1: blds(1), qSame: JSON.stringify(G.teams[0].q) === q0, cr, conq: !!G.conq, over: G.over, waves: G.grand.waves.length, att: G.grand.att, n0: G.grand.n0, refused }; });
   console.log('battle', JSON.stringify(bt));
+  if (bt.refused === false) fails.push('battle: town recruit/invest/tax/road actions were NOT refused in a Fight-it battle');
   const sameMap = (a, b) => { const k = new Set([...Object.keys(a), ...Object.keys(b)]); return [...k].every(x => (a[x] || 0) === (b[x] || 0) || (x === 'champ' && (a[x] || 0) - (b[x] || 0) === 1)); };   // grand3: a general with no hero squad of his own stands in the battle as one extra hero
   if (!sameMap(bt.me, exp.mine)) fails.push('battle: your units ' + JSON.stringify(bt.me) + ' != army ' + JSON.stringify(exp.mine));
   if (!sameMap(bt.foe, exp.theirs)) fails.push('battle: enemy units ' + JSON.stringify(bt.foe) + ' != expected ' + JSON.stringify(exp.theirs));

@@ -1,0 +1,40 @@
+# When a ship-gate run goes red, find the first bad commit automatically and comment it on the commit
+# (orch/bisect.sh). Free runners, no model tokens. Only for commits that are on main (fast-forwarded there).
+name: Gate bisect
+on:
+  workflow_run:
+    workflows: ['Ship gate (parallel)']
+    types: [completed]
+permissions:
+  contents: read
+  statuses: read
+  actions: read
+jobs:
+  bisect:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env: { GH_TOKEN: '${{ github.token }}', PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, ref: '${{ github.event.workflow_run.head_sha }}' }
+      - name: Only if on main
+        id: m
+        run: |
+          git fetch -q origin main
+          git merge-base --is-ancestor HEAD origin/main && echo "ok=1" >> $GITHUB_OUTPUT || echo "not on main, skip"
+      - uses: actions/setup-node@v4
+        if: steps.m.outputs.ok
+        with: { node-version: 22 }
+      - name: Bisect the first red test
+        if: steps.m.outputs.ok
+        run: |
+          SHA=${{ github.event.workflow_run.head_sha }}
+          T=$(gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/statuses?per_page=100" --jq '[.[]|select((.context|startswith("gate/")) and .state!="success" and .state!="pending")][0].context' | sed 's#^gate/##')
+          [ -z "$T" ] || [ "$T" = null ] && { echo "no failing status found"; exit 0; }
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          (cd server && npm ci --no-audit --no-fund >/dev/null) || true
+          R=$(bash orch/bisect.sh "$SHA" "$T" | tail -1)
+          echo "$R"
+          gh api "repos/$GITHUB_REPOSITORY/commits/$SHA/comments" -f body="Gate **$T** is red. Auto-bisect: first bad commit → \`${R#BISECT }\`. (orch/bisect.sh; the commit's lane is the one in its message.)" >/dev/null || true

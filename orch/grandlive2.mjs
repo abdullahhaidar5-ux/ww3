@@ -42,10 +42,10 @@ const NAT = arg('nat', 'IR');
 try {
   // NOTE: no waiting for models to finish — a player clicks as soon as the menu shows.
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
-  await page.waitForFunction(() => { const b = document.getElementById('grandBtn'); return b && b.offsetParent !== null; }, null, { timeout: 120000 });
+  await page.waitForFunction(() => { const b = document.getElementById('grandBtn'); return !!b && !!document.querySelector('#mxmenu .mxi'); }, null, { timeout: 120000 });  // menu v3: the title shows; the old grand button is parked hidden
   const SAVE = arg('save', '');   // a saved campaign from an older build (old map): Continue must not lead into a broken battle
   if (SAVE) await ev((s) => { localStorage.setItem(GR_KEY, s); }, fs.readFileSync(SAVE, 'utf8'));
-  await page.click('#grandBtn');
+  await page.evaluate(() => document.getElementById('grandBtn').click());
   if (SAVE && await ev(() => [...document.querySelectorAll('#campScreen button')].some(b => /Continue/.test(b.textContent)))) { console.log('continuing old save'); await clickText('#campScreen button', 'Continue'); }
   else { await clickText('#campScreen button', 'New campaign');
   await ev((n) => { const s = document.querySelector('#campScreen select'); s.value = n; s.onchange(); }, NAT);
@@ -65,7 +65,8 @@ try {
     const r = grOrderMove(a.id, pair[1]); GC.armies.filter(x => x.o !== me).forEach(x => { x.path = []; });
     return { foe, ok: !!r.ok, from: GCM.P[pair[0]].n, to: GCM.P[pair[1]].n, units: a.u.length }; }, NAT);
   console.log('scenario', JSON.stringify(sc)); if (sc.err || !sc.ok) throw new Error('scenario ' + JSON.stringify(sc));
-  await clickText('#grandScreen button', 'End turn');
+  await page.click('#gPlay'); await page.keyboard.press('5'); // no End turn any more: play time at speed 5 like a player (month ≈ 3 s)
+
   await page.waitForFunction(() => !!document.getElementById('gModal'), null, { timeout: 120000 });
   // there may be several battles queued; take the first one live
   await shot('live2-prompt' + round);
