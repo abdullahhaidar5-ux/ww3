@@ -49,6 +49,10 @@ try {
     // counter-play: an army sitting in a zealous province rolls the cells up
     const zp = (pick.zeal || [])[0]; if (zp !== undefined) { const st = GC.prov[zp]; st.o = 'US'; st.rc = 4; GC.armies.push({ id: 99999, o: 'US', at: zp, path: [], pg: 0, u: [['inf', 100, 0, 100]] }); ocMonth(); out.guard = st.rc; GC.armies.pop();
       GV.sel = zp; try { guSide(); } catch (e) {} out.panel = /Resistance cells/.test((document.getElementById('gSide') || document.body).textContent); }
+    // slice 2: spread to a neighbour + the AI sends an idle army to the worst cell province
+    { const P = GCM.P; let pr = null; for (const p of P) { if (!p.land || p.cap) continue; const st = GC.prov[p.i]; if (ocStyle(st.o0) !== 'zeal') continue; const j = p.adj.find(j => P[j].land && !P[j].cap && GC.prov[j].o0 === st.o0); if (j !== undefined) { pr = [p.i, j]; break; } }
+      if (pr) { const occ = 'TR'; for (const i of pr) { GC.prov[i].o = occ; GC.prov[i].rc = 0; } GC.prov[pr[0]].rc = 3; let k = 0; for (; k < 20 && !(GC.prov[pr[1]].rc | 0); k++) { GC.turn++; ocSpread(); } out.spread = GC.prov[pr[1]].rc | 0;
+        GC.nat[occ].ai = 1; for (const x of GC.armies) if (x.o === occ && x.path.length && x.path[x.path.length - 1] === pr[0]) x.path = []; const a = { id: 99998, o: occ, at: pr[1], path: [], pg: 0, u: [['inf', 100, 0, 100], ['inf', 100, 0, 100]] }; GC.armies.push(a); GC.prov[pr[1]].rc = 0; GC.prov[pr[0]].rc = 3; ocAI(); out.aiPath = a.path.slice(); out.aiAns = GC.armies.some(x => x.o === occ && (x.at === pr[0] || (x.path.length && x.path[x.path.length - 1] === pr[0]))); out.aiTo = pr[0]; GC.armies.pop(); } }
     // determinism: the same seed gives the same occupation result
     const h = []; for (let k = 0; k < 2; k++) { grNew({ me: 'US', seed: 99, len: 'std' }); for (const pi of (pick.zeal || []).concat(pick.home || [])) GC.prov[pi].o = 'US'; for (let m = 0; m < 6; m++) ocMonth(); h.push(GCM.P.filter(p => p.land).map(p => (GC.prov[p.i].rc | 0) + ':' + GC.prov[p.i].gar.length).join(',')); }
     out.det = h[0] === h[1]; return out; });
@@ -57,7 +61,7 @@ try {
   if (!(mn > 0 && mx / mn < 2)) fails.push('occ: unequal cost ' + JSON.stringify(r.cost));
   if (!(r.eff.zeal > 0 && r.eff.home > 0)) fails.push('occ: no cells/partisans');
   if (!(r.guard <= 3)) fails.push('occ: army does not roll cells up'); if (!r.panel) fails.push('occ: panel line missing');
-  if (!r.det) fails.push('occ: not deterministic'); if (errs.length) fails.push(errs.join('|'));
+  if (!r.det) fails.push('occ: not deterministic'); if (!(r.spread >= 1)) fails.push('occ: cells do not spread'); if (!r.aiAns) fails.push('occ: AI does not answer cells ' + JSON.stringify(r.aiPath)); if (errs.length) fails.push(errs.join('|'));
   console.log(fails.length ? 'OCC FAIL ' + fails.join('; ') : 'OCC PASS'); globalThis.__bad = fails.length;
 } catch (e) { console.log('OCC ERROR', e.message); globalThis.__bad = 1; }
 await browser.close(); server.close(); process.exit(globalThis.__bad ? 1 : 0);
