@@ -20783,6 +20783,13 @@ function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new 
 /* ---------- A3 smooth army control (Lane F): multi-select, box, double-click, group orders, cards ----------
    GV.selM = ids of 2+ selected own armies (GV.selA stays the "lead" army so every old panel keeps working). */
 GV.selM=GV.selM||new Set();
+/* select all (Abdullah 2026-11-07 16:17-16:23): Ctrl+A = all your armies, N = all your navies (Ctrl+N belongs to the browser);
+   Ctrl+D drones / Ctrl+M missiles come when those exist as map units (PLAN-SAT SEL). Also buttons in the bottom campaign bar. */
+function gmSelAll(sea){if(!GC||!GC.armies)return;const L=GC.armies.filter(a=>a.o===GC.me&&!!(GCM.P[a.at]&&GCM.P[a.at].sea)===!!sea).map(a=>a.id);if(L.length)gmSet(L);else if(typeof gevToast==='function')try{gevToast([sea?'You have no navies':'You have no armies']);}catch(e){}}
+if(typeof window!=='undefined'&&!window._gSelAll){window._gSelAll=1;addEventListener('keydown',ev=>{const gs=document.getElementById('grandScreen');if(!gs||gs.style.display==='none'||(typeof G!=='undefined'&&G))return;
+  const tg=ev.target&&ev.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT'||document.getElementById('gModal'))return;const k=(ev.key||'').toLowerCase();
+  if((ev.ctrlKey||ev.metaKey)&&!ev.shiftKey&&!ev.altKey&&k==='a'){ev.preventDefault();gmSelAll(false);}
+  else if(!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&k==='n'){ev.preventDefault();gmSelAll(true);}});}
 function gmMine(id){const a=GC&&GC.armies.find(x=>x.id===id);return a&&a.o===GC.me?a:null;}
 function gmIds(){return GV.selM&&GV.selM.size>1?[...GV.selM].filter(gmMine):(GV.selA?[GV.selA]:[]);}
 function gmSet(ids){const L=[...new Set(ids)].filter(gmMine);GV.selM=L.length>1?new Set(L):new Set();GV.selA=L[0]||0;if(L[0])GV.sel=gmMine(L[0]).at;gmPaint();guSide();guRedraw();}
@@ -21279,7 +21286,7 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 #g3ui .k{pointer-events:auto}
 #g3modes{position:absolute;left:10px;top:10px;width:150px;display:flex;flex-direction:column;gap:2px;padding:6px 5px 5px;border:1px solid #6b5a33;border-radius:6px;background:linear-gradient(#162433,#0b141f);box-shadow:0 4px 14px #000a,inset 0 1px 0 #ffffff18;z-index:3}#g3modes:before{content:'MAP MODE';font:700 10px/12px system-ui,sans-serif;letter-spacing:.16em;color:#d8b865;padding:1px 4px 4px;border-bottom:1px solid #6b5a3380;margin-bottom:3px}
 #g3modes button{pointer-events:auto;text-align:left;padding:4px 8px;border-radius:3px;border:1px solid transparent;background:transparent;color:#cfe0ee;font-size:12.5px;cursor:pointer;white-space:nowrap}#g3modes button:hover{background:#243a4e;border-color:#3d5a73}
-#g3modes:not(.open) button:not(.on){display:none}#g3modes:not(.open){width:auto}#g3modes:not(.open) button.on:after{content:'  ▾';opacity:.7}#g3modes:not(.open):before{display:none}
+#g3btns #g3modes{position:relative;left:auto;top:auto;align-self:flex-end}#g3modes:not(.open) button:not(.on){display:none}#g3modes:not(.open){width:auto}#g3modes:not(.open) button.on:after{content:'  ▾';opacity:.7}#g3modes:not(.open):before{display:none}
 #g3modes button.on{background:linear-gradient(#3b5d7a,#2a4660);border-color:#d8b865;color:#fff;font-weight:600}
 #g3btns{position:absolute;right:14px;bottom:16px;display:flex;gap:10px;align-items:flex-end}
 #g3btns button{pointer-events:auto;width:46px;height:46px;border-radius:50%;border:2px solid #b99a45;background:radial-gradient(#33485d,#142130);color:#f3ecd8;font-size:20px;cursor:pointer;box-shadow:0 3px 8px #000a}
@@ -21310,6 +21317,8 @@ function g3UI(){g3Css();const w=document.getElementById('gMapWrap');if(!w)return
   mk('✉','Monthly report',()=>g3News(true));mk('⌖','Centre on your capital (Home)',()=>{const m=GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);});
   mk('☰','Show / hide the province panel',()=>{const s=document.getElementById('gSide');if(s){s.style.display=s.style.display==='none'?'flex':'none';setTimeout(guResize,30);}});
   const qb=mk(g3Quality()==='ultra'?'✦✦':'✦','Grand map quality: High (default) / Ultra (sharper, heavier)',()=>{SET.g3q=g3Quality()==='ultra'?'high':'ultra';try{saveSet();}catch(e){}qb.textContent=g3Quality()==='ultra'?'✦✦':'✦';g3ApplyQuality();g3News&&0;});
+  mk('⚔','Select all your armies (Ctrl+A)',()=>gmSelAll(false));mk('⚓','Select all your navies (N)',()=>gmSelAll(true));
+  bt.insertBefore(md,bt.firstChild);   /* map-mode menu lives in the bottom campaign bar (Abdullah 2026-11-07 16:16) */
   G3.endB=mk('▶','Play / pause time (Space)',()=>{guSpeed(GV.spd?0:(GV.lastSpd||2));G3.endB.textContent=GV.spd?'❚❚':'▶';},'end');G3.endB.style.display='none';   /* one play control only: the clock at the top (Abdullah 2026-11-07 16:15 "don't have two go buttons") */
   const mc=document.createElement('canvas');mc.id='g3mini';mc.width=240*2;mc.height=120*2;mc.style.width='240px';mc.style.height='120px';u.appendChild(mc);G3.mc=mc;
   const mm=ev=>{const r=mc.getBoundingClientRect();G3.camera.x=Math.max(0,Math.min(2400,(ev.clientX-r.left)/240*2400));G3.camera.z=Math.max(0,Math.min(1200,(ev.clientY-r.top)/120*1200));};
