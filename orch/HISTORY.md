@@ -393,3 +393,5 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneD 2026-11-07: D2 slice 6 — 'RPG Team/Cell', 'TOW Team' unit names plain-worded to Anti-Tank (Missile) Team (names only, no sim change).
 
 - laneF 2026-11-07 12:50Z: A3 150-army perf test (orch/a3perf.mjs): select 150 armies 12 ms, cards 5 ms; no code change needed.
+
+- 2026-11-07 grandlook: C-LOOK parts 1+3 — grand terrain from Natural Earth HYP_HR_SR_OB_DR (world 4096 + Middle East 4096px tile), armies = baked rigged-soldier general miniatures on plinths with nation ring, small wave banner, strength bar, frigate+wake for navies. Not done: stack merge, soft painted borders. Before/after: orch/shots/grandlook/.
