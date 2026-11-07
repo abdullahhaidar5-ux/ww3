@@ -45,7 +45,7 @@ try {
     const t = fr[0], o0 = gdOp(t, 'IR'); out.imp = gdAct('improve', 'IR', t); out.d = gdOp(t, 'IR') - o0;
     out.war = gdAct('war', 'IR', t); out.atWar = grAtWar('IR', t); GC.wsT[grWk('IR', t)] = 1; GC.turn = 30; out.pe = gdChance('peace', 'IR', t).note; for (const a of GC.armies) if (a.o === 'IR') { GC.armies.push({ ...a, id: 9999, at: GC.nat[t].cap }); break; }
     const p = gdAct('peace', 'IR', t); out.peace = p; out.truce = gdTruce('IR', t); out.rewar = (gdAct('war', 'IR', t));
-    out.h = grHash(); return out; });
+    out.news = (() => { grEndTurn(true); return typeof gdNews === 'function' ? (gdNews(), !!document.getElementById('gNews') || 'none') : 'nofn'; })(); out.h = grHash(); return out; });
   console.log('gd', JSON.stringify(r));
   if (!r.alerts) fails.push('no alerts bar'); if (!r.tab) fails.push('diplomacy tab missing'); if (!(r.d > 0)) fails.push('improve did nothing'); if (!r.atWar) fails.push('war not declared');
   await page.evaluate(() => npOpen('IR', 'dip')); await shot('diplomacy'); await page.evaluate(() => { npClose(); }); await shot('alerts');
