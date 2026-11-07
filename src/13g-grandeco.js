@@ -133,6 +133,7 @@ function geManCap(c){let t=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)
 // ---------- world: oil price, crises, chokepoints ----------
 function geOilIdx(turn){const E=GC.eco;let v=100+20*Math.sin(.62*turn+E.ph1)+9*Math.sin(1.9*turn+E.ph2);
   for(const k of Object.keys(E.cl))if(E.cl[k]&&['Strait of Hormuz','Suez','Bab-el-Mandeb','Malacca Strait'].includes(GCM.P[+k].n))v+=8;
+  if(typeof gpOilDelta==='function')v+=gpOilDelta();   // RG24: cut pipelines lift the price, working Hormuz/Suez bypass lines soften a closed strait
   v+=6*geBlockN();   // RG1: enemy warships sitting in Hormuz / Suez / Bab-el-Mandeb / Malacca / Bosporus push the oil price up
   const cr=geCrisis(turn);if(cr&&cr[2]==='shortage')v+=28;if(cr&&cr[2]==='boom')v+=6;return Math.round(Math.max(55,Math.min(190,v)));}
 function geCrisis(turn){for(const c of GC.eco.cr)if(turn>=c[0]&&turn<c[0]+c[1])return c;return null;}

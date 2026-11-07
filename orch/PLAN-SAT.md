@@ -191,7 +191,7 @@ Grand campaign round 2 (Abdullah 22:20 "Any more options for the grand campaign"
 - [ ] **RG22 Ironman mode** (Lane A): one save, no reloads, set at campaign creation.
 - [ ] **RG23 Victory conditions** (Lane A): domination, economy, alliance leadership, holy sites — picked at creation.
 Grand campaign round 3 (Abdullah 22:21 "More?") — after the slice, then kaizen; extend existing systems:
-- [ ] **RG24 Pipelines & grids** (Lane B): oil/gas pipelines and power lines across provinces, cut or protect (feeds RG1 oil price, RG15 cyber).
+- [x] **RG24 Pipelines & grids** (DONE first cut laneB 2026-11-07 `src/13zq-gpipe.js`, test `node orch/pipetest.mjs`: 8 real lines (Kirkuk–Ceyhan, East–West, Habshan–Fujairah, Goreh–Jask, BTC, SUMED, Arab Gas, Iran–Iraq power link) flow unless sabotaged or a route province is held by an enemy of the owner; cut = owner income −5%/customers unrest +2 + oil price up, working Hormuz/Suez bypass lines soften a closed strait; sabotage 6 Mil (guarded route = caught), repair $120, AI sabotages/repairs; 🛢 tab + alert; map lines open) (Lane B): oil/gas pipelines and power lines across provinces, cut or protect (feeds RG1 oil price, RG15 cyber).
 - [ ] **RG25 Reconstruction** (Lane B): rebuild ruined cities after battles (battle damage flows back), foreign aid speeds it.
 - [ ] **RG26 Black markets** (Lane B): smuggling routes for sanctioned nations; costs corruption + opinion.
 - [ ] **RG27 Food & water** (Lane B): droughts, dams on Tigris/Euphrates/Nile, famine unrest.
