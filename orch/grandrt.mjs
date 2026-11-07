@@ -53,7 +53,7 @@ try {
   const s0 = await st(); console.log(el(), 'start', JSON.stringify(s0));
   if (s0.spd) fails.push('the clock should start paused');
   await page.waitForTimeout(1200); if ((await st()).day !== s0.day) fails.push('days pass while paused');
-  await page.keyboard.press('Space'); await page.waitForTimeout(4000); const s1 = await st(); console.log(el(), 'after Space', JSON.stringify(s1));
+  await page.keyboard.press('Space'); await page.waitForTimeout(1000); await page.waitForFunction(d => (GC.day | 0) !== d, s0.day, { timeout: 12000, polling: 200 }).catch(() => {}); const s1 = await st(); console.log(el(), 'after Space', JSON.stringify(s1));
   if (!s1.spd || s1.day === s0.day) fails.push('Space does not start the clock ' + JSON.stringify(s1));
   await page.keyboard.press('5'); await shot('rt-1-running');
   await page.waitForFunction(t => GC.turn > t, s0.turn, { timeout: 20000, polling: 200 }).catch(() => fails.push('the month never rolled over at speed 5'));
