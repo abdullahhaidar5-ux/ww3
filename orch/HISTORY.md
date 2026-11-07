@@ -258,3 +258,15 @@ First cut via NEWNAT, EU hidden from menus. See orch/reports/nations-a1.md. Open
 
 ## 2026-11-07 — rescue (Sonnet 5.5, scheduled)
 Japan (JP) rescued: orch/nations-new2 had stalled 5 h with JP complete but unmerged; merged main (8 conflicts: kit/navy lists, anthem tables, TK_ADJ, headless sim list), rebuilt, smoke PASS, 17+ CI gates green. Open: gate/grand "eco snowballs" fails on main itself (not JP); gate/smooth-mp once regressed, mpsync-server hit a runner port clash after passing. JP still uses stand-in 3D models; radio/hero voice sheets open.
+## 2026-11-06 — nations-b1 (orch/nations-b1, Sonnet 5.5, scheduled)
+Taiwan, Philippines, Vietnam, Indonesia, Thailand, Kazakhstan, Afghanistan (stylised national army), Oman added as full first-cut nations via NEWNAT (units, upgrades, doctrine, flags, camo, home maps, names). Smoke pass, 52-game AI tourney 45-56%, no errors. Report: orch/reports/nations-b1.md.
+
+## nations-b2 — 2026-11-06 (Sonnet 5.5)
+Added DZ, MA, NG, ZA, ET, LY, SD (first cut, NEWNAT, Egypt base). See orch/reports/nations-b2.md.
+- laneC 2026-11-07: C1 towns rebuilt as dense street-grid settlements (hip/gable/row/courtyard house meshes, lighter pads); objects 2→3. Gate: smoke PASS; grandtest only fails eco-snowball (sim, not mine); smooth not run (grand-render only).
+- laneD 2026-11-07: D1 JP Japan first cut via NEWNAT (JGSDF units, Home Islands radio, flag/look on shared models, Taiwan Strait map home); SMOKE PASS; voices/anthems stand in until D3.
+- laneD 2026-11-07: D2 slice 1: orch/newplayer.mjs (lists visible menu controls, flags cryptic/no-tooltip ones) + hover hints for Deploy vs AI, Replay, Map Editor, Join by code, sidebar tabs. D2 stays open (grand map real-time pass, remaining confusions).
+- laneD 2026-11-07: D2 slice 2: hover hints for player-count, conditions, sidebar tabs (newplayer.mjs now flags only sidebar tabs, fixed at runtime); SMOKE PASS; smooth gate left to CI (sandbox too slow). D2 stays open (grand map pass).
+
+## laneD 2026-11-07 D2 slice
+Added orch/newplayer.mjs (menu audit via visible text). Top confusion: with 54 nations the Tutorial/Conquest/Grand campaign buttons sat ~3700px down the main menu. Fixed: quick-start row at the top (presses the real buttons) + compact scrollable nation list. Smoke PASS; smooth gate runs in CI.

@@ -1,4 +1,7 @@
-# ART BAR — the grand map must look like a $60 studio game (Abdullah 2026-11-06 16:59)
+# ART BAR — the WHOLE game must look and feel like a $75 studio game (Abdullah 2026-11-06 18:02, raised from $60 grand-map-only at 16:59)
+
+Applies to the grand map, the nation panel/UI, and battles in real gameplay. Plus FEEL: instant click feedback (< 100 ms), smooth
+60 fps with big armies, smooth army selection, no loading that hangs.
 
 "Ok this is still very bad. Make it look like a 60 dollar studio game. That's the goal. Don't stop."
 
