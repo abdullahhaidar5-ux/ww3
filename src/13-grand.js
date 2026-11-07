@@ -12,6 +12,7 @@ const GR_PROXY={NA:['US'],SAM:['US'],EU:['DE','FR','EU','US'],ME:['SA','EG'],AF:
 const GR_REGIONS=[['World',null],['North America',[20,60,700,560]],['South America',[250,600,420,560]],['Europe & Russia',[800,40,720,470]],['Middle East & N. Africa',[1050,330,620,470]],['South Asia',[1380,380,440,380]],['East Asia',[1800,240,520,420]],['Africa',[820,620,500,560]],['SE Asia & Oceania',[1760,600,600,560]]];
 const GR_MIX=[['inf',.46],['at',.14],['tank',.16],['arty',.08],['aa',.06],['heli',.05]];
 const GR_RECRUIT=[['inf',4,1],['at',2,1],['tank',2,2],['arty',2,2],['aa',2,1],['heli',1,2]];   // kind, batch size, turns to arrive
+const GR_HOLY=new Set(['Najaf']);   // provinces with a holy city (RV Call to the Shrines)
 const GR_VBASE=42000;              // start strength (unit value) of every full nation - same for all (Abdullah: all nations equally strong)
 function grRng(s){return mulberry((s|0)^0x5bd1e995);}
 function grHash(){if(!GC)return '';let s=GC.turn+'|'+GC.seed;for(const c of Object.keys(GC.nat).sort()){const n=GC.nat[c];s+='|'+c+':'+Math.round(n.cash)+','+n.cap+','+(n.dead?1:0);}
@@ -134,6 +135,9 @@ function grMovePhase(){GC.q=[];const P=GCM.P;
     if(gmilSeaDenied(a,nx))continue;   /* no escort and the sea is held by an enemy fleet: the column waits in port */
     if(geDry(a.o)&&(GC.turn&1))continue;   /* out of fuel: columns crawl, a step every other turn */
     a.pg++;if(a.pg>=c){a.from=a.at;a.at=nx;a.path.shift();a.pg=0;a.arr=GC.turn;}}
+  // RV signature "Call to the Shrines" (Abdullah 2026-11-06 21:24): an enemy marching into an RV province with a holy city raises a free volunteer levy there (once per 6 turns)
+  for(const p of P){if(!p.land||!GR_HOLY.has(p.n))continue;const st=GC.prov[p.i];if(st.o!=='RV'||(st.lv&&GC.turn-st.lv<6))continue;
+    if(GC.armies.some(a=>a.at===p.i&&a.arr===GC.turn&&a.o!=='RV'&&grAtWar(a.o,'RV'))){st.lv=GC.turn;st.gar.push(...grGenUnits('RV',3000,false));grLog('Call to the Shrines: volunteers rise at '+p.n+'!','RV');}}
   // contested provinces: for each province (index order) and each nation that ARRIVED (code order) with someone hostile there
   for(const p of P){const here=GC.armies.filter(a=>a.at===p.i);if(!p.land&&!here.some(a=>a.fl))continue;const arrN=[...new Set(here.filter(a=>a.arr===GC.turn).map(a=>a.o))].sort();
     for(const A of arrN){const att=here.filter(a=>a.o===A&&a.arr===GC.turn),owner=p.land?GC.prov[p.i].o:'';

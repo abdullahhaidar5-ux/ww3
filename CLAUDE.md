@@ -64,13 +64,13 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   the Fulda map pass to FR/DE/PL, old EU saves load as DE; on the grand map the **European Union becomes an alliance** European
   nations can join, with a joint-operations bonus), built by `orch/nation-*` helpers following the
   nations-new1/2 pattern. Every other country on the grand map is a **playable minor nation** (shared regional army/look, own
-  flag/name/colours, no unique voices). The IM faction was removed on purpose. Shia factions = IR, RS, DW.
+  flag/name/colours, no unique voices). The IM faction was removed on purpose. Shia factions = IR, RS, DW, RV. **RV "River Shias"** (Abdullah 2026-11-06 21:24 "Somehow incorporate the Iraqi PMF as a faction": name River Shias, own nation in south Iraq) = fictional Iraqi Shia volunteer-brigade faction, own nation in south Iraq (Najaf, Basra, the marshes), Zealous, member of the Resistance bloc; **never** the real organisation's name, flag/emblem or leaders.
 - Keep the Mountain Shias' upgrade name **"Radwan Training"** exactly as is.
 - **National morale styles** (Abdullah 2026-11-05 20:01): every nation has ONE battle morale style, different styles but **equal
   power** (proven by the balance tourneys): **Zealous** (slow to break, martyr banners, fervour when comrades fall — and losing a
   cleric/officer does **not** weaken them: they stay zealous; their cost is elsewhere, e.g. they hold ground and take heavier
   losses), **Professional** (steady under artillery, rally fast near officers; heavy losses sap them more), **Home defenders** (much braver on home turf / near own towns, ordinary abroad). A fifth, lowest-morale style **Firepower-reliant** (Abdullah 20:18: India, UAE, Saudi Arabia "below Home defenders"; 20:22: Israel too): they break sooner, especially when unsupported, balanced by stronger fire support so they stay equally strong.
-  **Routing follows the morale style** (Abdullah 2026-11-06 20:12): **Zealous (IR, RS, DW, KP) never rout** — they fight to the last, cost: heavier losses; Professional rout below 15% of the enemy's strength, Home defenders below 8% at home / 20% abroad, Firepower-reliant below 25% (`rout` in `MSTYLES`). Zealous = IR, RS, DW, **North Korea** (20:16; ideological flavour — political officers/party banners, not Shia motifs); **Russia and Cuba = Professional** (20:15); **China, Pakistan, Egypt = Professional; Vietnam, Brazil, Nigeria, Indonesia = Home defenders** (20:26 — no nation uses Strength in numbers now); **Ukraine = Professional, Jordan = Home defenders** (20:28); **Oman = Home defenders** (20:29); **South Africa, Thailand = Home defenders** (20:40); **Strength in numbers style removed entirely** (20:41) — four styles: Zealous, Professional, Home defenders, Firepower-reliant; the full assignment is in `orch/SYSTEMS.md` (set — balance by tuning numbers, not by moving nations).
+  **Routing follows the morale style** (Abdullah 2026-11-06 20:12): **Zealous (IR, RS, DW, RV, KP) never rout** — they fight to the last, cost: heavier losses; Professional rout below 15% of the enemy's strength, Home defenders below 8% at home / 20% abroad, Firepower-reliant below 25% (`rout` in `MSTYLES`). Zealous = IR, RS, DW, **North Korea** (20:16; ideological flavour — political officers/party banners, not Shia motifs); **Russia and Cuba = Professional** (20:15); **China, Pakistan, Egypt = Professional; Vietnam, Brazil, Nigeria, Indonesia = Home defenders** (20:26 — no nation uses Strength in numbers now); **Ukraine = Professional, Jordan = Home defenders** (20:28); **Oman = Home defenders** (20:29); **South Africa, Thailand = Home defenders** (20:40); **Strength in numbers style removed entirely** (20:41) — four styles: Zealous, Professional, Home defenders, Firepower-reliant; the full assignment is in `orch/SYSTEMS.md` (set — balance by tuning numbers, not by moving nations).
   Grand-map national morale: raised/lowered by victories & defeats, casualties & war length, losing home/holy places (capital,
   war goals, heritage sites) and short national/religious-day boosts (equal value for all); on collapse: troops start battles
   shaken, forced peace talks, coups & civil war.
@@ -80,7 +80,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   appears pre-built for the defender in that province's battles, Bunker Buster = a grand-map strike on fortified provinces.
   Zealous morale no longer depends on a cleric unit. Campaign missions keep working (scripted versions where a mission needs them).
   **Signature assets are unique, not copied** (Abdullah 21:02 "I don't like all countries having the same thing"): the clerical
-  leader only for IR/RS/DW — **one single Ayatollah leads all three Shia factions** (Abdullah 2026-11-06 21:23; resides in Iran, IR/RS/DW in a permanent alliance while he leads them), the Dear Leader only for KP, the Mountain Fortress only for **IR, RS, AF, KD, DW and KP** (21:03), the **Bunker Buster only for some
+  leader only for IR/RS/DW (RV River Shias benefit from his effects and he can tour RV provinces; RV's own signature is "Call to the Shrines") — **one single Ayatollah leads all three Shia factions** (Abdullah 2026-11-06 21:23; resides in Iran, IR/RS/DW in a permanent alliance while he leads them), the Dear Leader only for KP, the Mountain Fortress only for **IR, RS, AF, KD, DW and KP** (21:03), the **Bunker Buster only for some
   nations (US, IL, RU, CN)**; every other nation gets a *different* signature asset of its own (not a copy), and overall strength
   stays even through balancing. Table of who has what: `orch/SIGNATURES.md` (grand stage 2 writes it).
 - **Mountain Shias (RS) identity** (Abdullah 2026-11-05 19:46 "make it more obvious"): unmistakably a Lebanese mountain Shia
@@ -92,7 +92,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   nations** (Abdullah, 2026-10-27, replacing the per-nation/region scores and the synthesized latmiyas): ~10–12 free
   tracks (CC0/CC-BY credited, or public-domain military band) — menu, calm, combat, victory/defeat — switching calm ↔
   combat with the fighting; Abdullah picks the tracks from a shortlist. Nation identity = its anthem at battle start
-  and on victory. Shia factions (IR, RS, DW) use the shared soundtrack too; real recorded latmiyas may be added later
+  and on victory. Shia factions (IR, RS, DW, RV) use the shared soundtrack too; real recorded latmiyas may be added later
   if freely licensed ones are found.
 - Multiplayer: up to 8 players. Never break multiplayer sync — host and clients must agree. **Battles are hosted on
   Cloudflare** (Abdullah, 2026-10-27 19:28: Cloudflare is the default and **no hosting button or wording at all** —
@@ -138,7 +138,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   ru, zh, ko, hi/ur, es, fr, de; non-commercial licence accepted for this free game, as MMS already is) with radio
   treatment; Piper/MMS only where nothing more natural exists (fa, he, uk) and then the best-sounding option found. **Weapon/explosion sound: cinematic and
   punchy**, like a war film. **AI Hard = smarter tactics only, no extra money**; **all nations (18, soon 21) about equally strong** in Conquest's default **Balanced** mode — a lobby toggle **Realistic** (Abdullah 2026-11-06 21:31) makes fire support follow real-world power tiers instead; the grand campaign is always realistic.
-- **Priorities (Abdullah, 2026-10-28 18:34):** his group plays the **Shia factions (IR, RS, DW) most** — do their voices,
+- **Priorities (Abdullah, 2026-10-28 18:34):** his group plays the **Shia factions (IR, RS, DW, RV) most** — do their voices,
   uniforms and buildings first, in a **realistic military** style (IRGC/Hezbollah-style fatigues, Middle Eastern
   compounds and bunkers). The game targets **PC** (see "PC only"). Biggest pain:
   **looks and performance** — better looks only where it stays smooth. Next focus after current work: **graphics

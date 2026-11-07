@@ -147,7 +147,7 @@ const MSTYLES={   // rout = campaign battles: the side breaks below this share o
  home:{n:'Home defenders',rout:.2,routHome:.08,cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
  fire:{n:'Firepower-reliant',rout:.25,cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
 const MORALE_STYLE={};
-for(const[st,l]of Object.entries({zeal:'IR RS DW KP',prof:'US RU CU GB FR DE JP KR AU CA IT GR PL UA TR CN PK EG ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA',fire:'IN AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
+for(const[st,l]of Object.entries({zeal:'IR RS DW KP RV',prof:'US RU CU GB FR DE JP KR AU CA IT GR PL UA TR CN PK EG ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA',fire:'IN AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
 function msOf(fac){return MSTYLES[MORALE_STYLE[fac]||'home'];}
 function courageOf(u){const T=G.teams[u.team],ms=msOf(T.fac);let c=ms.cour*(1+.12*(u.rank||0))*upgK(T,u.kind,'courage');if(ms.home&&u.hm)c*=ms.home;if(ms.lone&&u.nsup)c/=ms.lone;return c;}
 function F_(code,name,color,lang,music,doctrine,mods,special,units,sup,fup,o={}){return Object.assign({code,name,color,lang,music,doctrine,mods,special,units,sup,fup},o);}
@@ -560,6 +560,18 @@ Object.assign(NEWNAT,{ DZ:{base:'EG',name:'Algeria',color:'#1b7a3d',lang:'ar-DZ'
   gp:{bounty:{name:'Gum Arabic Exports'},recon:{name:'Savanna Observation Posts',rm:.95},para:{name:'Airborne Company'},barrage:{name:'D-30 Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
   upg:['Special Forces Course','Army Combat Kit','Tank Crew Training','D-30 Fire Control','Jet Overhaul','Hind Maintenance','Nile Revenue','Defence of the Nile','River Patrol Refit'],
   uplink:'Rocket Command (Nile Valley)',econ:'Port Sudan Terminal',md:'Pechora Battery',coast:'Coastal Defence Battery',trn:['Landing Craft','Mi-8 Transport']}});
+// ---- nation-rv (Abdullah 2026-11-06 21:24 "Somehow incorporate the Iraqi PMF as a faction" -> "River Shias", own nation in south Iraq): a fictional faction inspired by Iraqi Shia
+// volunteer brigades raised to defend the shrines and the south. Never the real organisation's name, flag/emblem or leaders. Egypt base (equal power per tier), Zealous morale (never routs).
+Object.assign(NEWNAT,{
+ RV:{base:'EG',name:'River Shias',color:'#1f7a3a',lang:'ar-IQ',doctrine:'Volunteer brigades of the south, defenders of the shrines: infantry cost 18% less and train faster, units ambush hard from cover and fight 15% harder near their own buildings, and they never rout. Mixed militia and state-issued gear.',mods:{infCost:.82,infTime:.85},
+  units:{inf:'Volunteer Brigade Squad',at:'Kornet Team',hero:'Shrine Guard Commandos',aa:'ZU-23 Technical',tank:'T-72 Tank',arty:'Grad Rocket Launcher',heli:'Mi-35 Hind',jet:'Su-25 Frogfoot',boat:'Marsh Boat',ship:'Shatt Patrol Boat'},
+  sup:{name:'Grad Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Marsh Scout Team'}],hero:['Shrine Guard Assault Team','demo'],
+  doct:{name:'Defence of the Shrines',homeland:1,ambush:1},
+  pow:{name:'Call of the Volunteers',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Southern Oil Share'},recon:{name:'Marsh Watchers',rm:.95},para:{name:'Heliborne Volunteers'},barrage:{name:'Grad Barrage',nm:1.1,cdm:1.05},repair:{name:'Brigade Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Shrine Guard Course','Volunteer Kit','T-72 Crew Training','Grad Fire Control','Frogfoot Overhaul','Hind Maintenance','Southern Oil Revenue','Defence of the Shrines','Marsh Boat Refit'],
+  uplink:'Rocket Command (Marsh Depot)',econ:'Basra Oil Share Office',md:'Pantsir-style Battery',coast:'Shatt Coastal Battery',trn:['Marsh Landing Craft','Mi-8 Transport']}});
 for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const q in B.units)u[q]=Object.assign({},B.units[q]);for(const q in N.units)u[q]=Object.assign({},u[q]||{},{name:N.units[q]});
   FACTIONS[k]=Object.assign({},B,{code:k,name:N.name,color:N.color,lang:N.lang,doctrine:N.doctrine,mods:N.mods,units:u,sup:N.sup});
   const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);

@@ -293,3 +293,6 @@ Shipped: real elevation/bathymetry (Terrarium tiles) + Natural Earth I satellite
 - 2026-11-07 laneE (Sonnet): foot soldiers drawn ~18% bigger at gameplay height (src/11-models.js). E1 real model swap still open.
 - laneD (2026-11-07 D2 slice 2): fixed a committed merge-conflict in orch/newplayer.mjs (audit tool was unrunnable); audit now ignores in-menu false positives. Real findings left: encyclopedia names use "MBT" jargon (data rename, deferred). No game code changed.
 - laneA 2026-11-07 (03:00Z): A2 slice 1 — real time with pause on the grand map: date + play/pause + speeds 1–5 (Space, +/−, 1–5), months roll over by themselves, battles pause the clock, arrival dates on marches; gate orch/grandrt.mjs. Shots orch/shots/laneA/rt-*.png.
+
+### nation-rv (2026-11-07, Sonnet 5.5 scheduled run)
+RV "River Shias" added as a full first-cut nation (Iraqi Shia volunteer-brigade faction, own nation in south Iraq; fictional, no real group's name/emblem/leaders): NEWNAT row, Zealous, original black/green printed-cloth emblem (drawRV), grand map Basra + new Najaf (capital) + Southern Marshes, Resistance bloc, tense with IQ, signature "Call to the Shrines" levy. See orch/reports/nation-rv.md. Open: own voices/anthem, 3D models, balance tourney, servers-live PR.
