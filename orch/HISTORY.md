@@ -304,3 +304,4 @@ Abdullah 20:12/20:14 "Ugly ugly ugly … not everything has to be shoved into a 
 - laneE (2026-11-07 03:50Z): infantry models +23% bigger at gameplay height (src/11-models.js MCFG soldier size x1.45) so soldiers read as people; smoke PASS; local smooth gate times out on slow box. Shot orch/shots/laneE/after3-base.png
 - laneD 2026-11-07: D0(a) auto-bisect — `.github/workflows/bisect.yml` + `orch/bisect.sh`: when a gate run is red on a main commit, bisects the failing test and comments the first bad commit. No game code changed.
 - laneB 2026-11-07: B4 slice 2: cores + estates (src/13o-gstab.js; 13-grand.js core income/unrest hooks); smoke + grand determinism green.
+- 2026-11-07 laneE (Sonnet): re-shot base view (e3before), assessed E1-E3 state, handoff updated; no src change
