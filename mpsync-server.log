@@ -1,0 +1,36 @@
+game servers running locally at http://127.0.0.1:38527
+[3s] both pages loaded (menu model downloads done after 1s / 1s)
+[3s] host lobby open, code foajig
+[4s] client's game list (from the server) shows game FOAJIG: {"role":"server","n":1,"id":"v76c7e844727a","ok":true}
+[4s] client joining
+[4s] client connected via ws: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[20s] battle: US vs RU on strait; client is slot 1
+[104s] both pages finished loading
+[104s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[105s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[126s] client order: 2/2 of the client's units moved on the host
+[163s] check @1.0 min t=60s: host 42 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 9721 client 9721
+[254s] check @2.5 min t=150s: host 48 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10984 client 10984
+[354s] check @4.0 min t=240s: host 53 entities, client side sees 12 (own 11); client has 13 (own 11); missing 0, extra 0, off-position 0, mismatched 0; credits host 10924 client 10924
+[363s] traffic host->client 2400 KB in 2631 messages, client->host 55 KB in 285; client lag max 0.30 game-s; 5 ms per 0.1 s step
+[363s] 24 live checks, 0 out of tolerance; up to 13 enemy entities were in the client's view at once
+[363s] relay traffic per player: host->player 655 frames (715 records), 600 KB raw / 155 KB compressed per game-minute; player->host 63 frames, 1.0 KB compressed per minute (orch/out/srv-traffic.json)
+peak memory (node + browser, summed RSS): 4521 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MPSYNC PASS (through the game servers) (364s) — screenshots orch/out/srv-mp-host.png, orch/out/srv-mp-client.png (this run: orch/out/runs/20261107-002123-mpsync-srv/)
+file:///home/runner/work/ww3/ww3/orch/serverdev.mjs:44
+    if (exited !== null) throw new Error('wrangler dev exited (' + exited + '):\n' + log.slice(-3000));
+                               ^
+
+Error: wrangler dev exited (1):
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mAddress already in use (127.0.0.1:37569). Please check that you are not already running a server on this address or specify a different port with --port.[0m
+
+
+🪵  Logs were written to "/home/runner/.config/.wrangler/logs/wrangler-2026-11-07_00-27-27_623.log"
+
+    at startServer (file:///home/runner/work/ww3/ww3/orch/serverdev.mjs:44:32)
+    at async file:///home/runner/work/ww3/ww3/orch/mpsync.mjs:108:24
+
+Node.js v22.23.4
