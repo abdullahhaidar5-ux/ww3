@@ -1575,3 +1575,14 @@ if(typeof window!=='undefined'){window.__tk=TK;}
 try{tkApply();}catch(e){}
 {const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='War news (headlines across the top + a small breaking-news picture-in-picture)';
   const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}
+/* ---------- laneD D2 (first-time-player audit): with 54 nations the real start buttons were ~3700px down the menu.
+   A quick-start row sits at the top (it just presses the real buttons below), and the nation list is a compact,
+   scrollable grid (the chosen nation keeps its full card). ---------- */
+(function(){const card=document.querySelector('#menu .card');if(!card||document.getElementById('quickGo'))return;
+  const st=document.createElement('style');st.textContent='#pickP{max-height:330px;overflow-y:auto;padding-right:4px}#pickP .fac:not(.on) .dc,#pickP .fac:not(.on) .sp,#pickP .fac:not(.on) .sw{display:none}#pickP .fac:not(.on){padding:6px 8px;align-items:center}#quickGo button{font-size:15px;padding:10px 18px}';document.head.append(st);
+  const row=document.createElement('div');row.id='quickGo';row.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px';
+  const defs=[['▶ Tutorial',/tutorial/i,'First time? A guided 10-minute battle.',false],['Grand campaign',/^grand campaign/i,'Run a whole empire on a world map and fight the battles live.',true],['Conquest',/^conquest/i,'A quick battle vs the AI with the nation and battlefield picked below.',true],['Missions',/^missions/i,'The story missions.',true]];
+  for(const [t,re,tip,ghost] of defs){const b=document.createElement('button');b.type='button';b.className='big'+(ghost?'':' ghost');b.textContent=t;b.title=tip;
+    b.onclick=()=>{const tgt=[...document.querySelectorAll('#menu .mode button, #menu #tutorial')].find(x=>re.test((x.textContent||'').trim()));if(tgt){tgt.scrollIntoView({block:'center'});tgt.click();}};row.append(b);}
+  const nl=card.querySelector('.label');if(nl&&nl.textContent.trim()==='Your nation')nl.textContent='Your nation (scroll the list — the Battlefield and start buttons are below)';
+  const first=card.querySelector('.row');(first||card.querySelector('h1')).after(row);})();
