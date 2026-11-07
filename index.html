@@ -18881,6 +18881,10 @@ function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.
 function grandForce(t){let v=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)v+=(e.s.cost||400)*(.35+.65*e.hp/e.max);for(const w of G.grand.waves)if(!w.done&&w.side===t)for(const r of w.recs)v+=grCost(G.teams[t].fac,r[0]);return v;}
 function grandAlive(t){let n=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)n++;for(const w of G.grand.waves)if(!w.done&&w.side===t)n+=w.recs.length;return n;}
 function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
+  // a side with nobody left on the field never waits for a timer (Abdullah 2026-11-06 19:56 "I was killed, shouldn't it end immediately"):
+  // its next reinforcement wave arrives at once; with no waves left, the wipe check below ends the battle this tick
+  for(let s=0;s<2;s++){let f=0;for(const e of G.ents)if(e.team===s&&!e.isB&&!e.dead){f=1;break;}
+    if(!f){let nw=null;for(const w of g.waves)if(!w.done&&w.side===s&&(!nw||w.t<nw.t))nw=w;if(nw&&nw.t>g.t0)nw.t=g.t0;}}
   for(const w of g.waves)if(!w.done&&g.t0>=w.t){w.done=1;const t=w.side,B=BASES[t],a=baseFacing(t),back=260;const cx=Math.max(80,Math.min(MAPW-80,B[0]-Math.cos(a)*back)),cy=Math.max(80,Math.min(MAPH-80,B[1]-Math.sin(a)*back));
     grandPlace(t,w.recs,cx,cy,a,g);try{log(t,'Reinforcements arrive: '+w.label,'g');}catch(e){}
     const fresh=G.ents.filter(e=>e.team===t&&!e.isB&&!e.dead&&e.gr&&w.recs.includes(e.gr));if(fresh.length&&t===1)act(1,{t:'go',ids:fresh.map(u=>u.id),x:g.ctr[0],y:g.ctr[1],mode:'amove'});}
@@ -18888,6 +18892,10 @@ function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
   const n0=grandAlive(0),n1=grandAlive(1);let win=-1,how='';
   if(!n0&&!n1){win=g.att===0?1:0;how='wipe';}else if(!n0){win=1;how='wipe';}else if(!n1){win=0;how='wipe';}
   else if(g.t0>=g.limit){const v0=grandForce(0),v1=grandForce(1);win=v0>v1*1.0001?0:v1>v0*1.0001?1:(g.att===0?1:0);how='time';}
+  // rout (Abdullah 2026-11-06 20:09 "why haven't I won this round yet" — 24 vs 4): a side below 15% of the other's strength
+  // (reinforcements on the way included) for 10 s breaks and flees; checked every 2 s, sim time only (deterministic)
+  if(win<0){g.rtT=(g.rtT||0)-dt;if(g.rtT<=0){g.rtT=2;const v0=grandForce(0),v1=grandForce(1),lo=v0<v1?0:1,r=Math.min(v0,v1)/Math.max(1,Math.max(v0,v1));
+    if(r<.15){if(g.rtS!==lo){g.rtS=lo;g.rtA=g.t0;}else if(g.t0-g.rtA>=10){win=1-lo;how='rout';}}else g.rtS=-1;}}
   if(win>=0){g.fin=1;g.res={win,how};G.over=true;G.winner=win;try{grandBattleEnd();}catch(e){console.error('grandBattleEnd',e);}}}
 // the enemy side: attackers advance on the other force, defenders hold until something comes within reach
 function grandAI(t){const g=G.grand,mine=G.ents.filter(e=>e.team===t&&!e.isB&&!e.dead&&!e.s.noAttack&&(!e.order||e.order.type===undefined));if(!mine.length)return;
@@ -18925,7 +18933,7 @@ function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def'
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}
 function grandBattleEnd(){const g=G.grand,c=GB_CUR;grandWriteBack();const T0=g.res.win===0,won=T0;
   const lost0=g.n0[0]-G.ents.filter(e=>e.team===0&&!e.isB&&!e.dead).length,lost1=g.n0[1]-G.ents.filter(e=>e.team===1&&!e.isB&&!e.dead).length;
-  const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':'FORCE DESTROYED')));
+  const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':g.res.how==='rout'?(won?'ENEMY ROUTED':'YOUR FORCE ROUTED'):'FORCE DESTROYED')));
   root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;color:'+(won?'#9fd36b':'#e07a6a'),won?'Victory':g.res.how==='retreat'?'Withdrawn':'Defeat'));
   root.appendChild(campEl('div','font-size:17px;line-height:1.6;margin-bottom:10px','Your losses: <b>'+lost0+'</b> of '+g.n0[0]+' units · Enemy losses: <b>'+lost1+'</b> of '+g.n0[1]+' units<br>Survivors keep their wounds and experience on the map; the dead are gone.'));
   root.appendChild(campBtn('Return to the map',()=>{campClose();grandLeaveBattle();grBattleDone(c.b,(c.meAtt===won)?'att':'def',g.res.how==='retreat'?'retreat':'live');grandMapRefresh();}));
@@ -19032,14 +19040,19 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   cv.addEventListener('wheel',ev=>{ev.preventDefault();if(GV.g3){g3Wheel(ev);return;}const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top,[wx,wy]=guToWorld(mx,my),f=Math.exp(-ev.deltaY*.0015);GV.z*=f;guClamp();GV.ox=mx-wx*GV.z;GV.oy=my-wy*GV.z;guClamp();guRedraw();},{passive:false});
   cv.addEventListener('pointerdown',ev=>{if(GV.g3&&ev.button===1){ev.preventDefault();cv.setPointerCapture(ev.pointerId);GV.drag={x:ev.clientX,y:ev.clientY,btn:1,yaw:G3.camera.yaw,pitch:G3.camera.pitch,m:1};return;}if(ev.button!==0)return;cv.setPointerCapture(ev.pointerId);const r0=cv.getBoundingClientRect();GV.drag={x:ev.clientX,y:ev.clientY,ox:GV.ox,oy:GV.oy,m:0,g:GV.g3?g3Ground(ev.clientX-r0.left,ev.clientY-r0.top):null};});
   cv.addEventListener('pointermove',ev=>{const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;
-    if(GV.drag){const dx=ev.clientX-GV.drag.x,dy=ev.clientY-GV.drag.y;if(Math.abs(dx)+Math.abs(dy)>4)GV.drag.m=1;if(GV.drag.m&&GV.g3){g3Drag(ev,mx,my);return;}if(GV.drag.m){GV.ox=GV.drag.ox+dx;GV.oy=GV.drag.oy+dy;guClamp();guRedraw();return;}}
-    const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);if(h!==GV.hov){GV.hov=h;guRedraw();}if(GV.g3&&GV.drag&&GV.drag.m)return;guTip(h,mx,my);});
+    if(GV.drag){const dx=ev.clientX-GV.drag.x,dy=ev.clientY-GV.drag.y;if(Math.abs(dx)+Math.abs(dy)>8)GV.drag.m=1;if(GV.drag.m&&GV.g3){g3Drag(ev,mx,my);return;}if(GV.drag.m){GV.ox=GV.drag.ox+dx;GV.oy=GV.drag.oy+dy;guClamp();guRedraw();return;}}
+    const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);if(h!==GV.hov){GV.hov=h;guRedraw();}if(GV.g3&&GV.drag&&GV.drag.m)return;
+    const ah=GV.g3&&typeof g3HitAt==='function'?g3HitAt(mx,my):null;cv.style.cursor=ah?'pointer':'';if(ah){guArmyTip(ah.aid,mx,my);return;}guTip(h,mx,my);});
   cv.addEventListener('pointerup',ev=>{const d=GV.drag;GV.drag=null;if(!d||d.m)return;const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;guClick(mx,my);});
   cv.addEventListener('pointerleave',()=>{GV.hov=-1;document.getElementById('gTip').style.display='none';guRedraw();});
   addEventListener('resize',()=>{if(document.getElementById('grandScreen'))guResize();});
   guResize();guFit(null);const me=GC.me&&GC.nat[GC.me];if(me){GV.sel=me.cap;guCentre(me.cap,2.0);}guRedraw();grandMapRefresh();
   if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guEndTurn();}
     if(GV.g3)return;const k=ev.key.toLowerCase(),st=60;if(k==='w'||k==='arrowup')GV.oy+=st;else if(k==='s'||k==='arrowdown')GV.oy-=st;else if(k==='a'||k==='arrowleft')GV.ox+=st;else if(k==='d'||k==='arrowright')GV.ox-=st;else return;guClamp();guRedraw();});}}
+function guArmyTip(aid,mx,my){const t=document.getElementById('gTip'),a=GC.armies.find(x=>x.id===aid);if(!t||!a){if(t)t.style.display='none';return;}
+  const N=GCM.nats.get(a.o),mine=a.o===GC.me,P=GCM.P[a.at];const sea=P&&P.sea;
+  t.innerHTML='<b>'+a.nm+'</b><br>'+(N?N.name:a.o)+' · '+a.u.length+(sea?' ships/units at sea':' units')+(P?' · '+P.n:'')+'<br><span style="opacity:.8">'+(mine?'Click to select · right-click a province to move':'Click to inspect')+'</span>';
+  t.style.display='block';t.style.left=(mx+16)+'px';t.style.top=(my+16)+'px';}
 function guTip(h,mx,my){const t=document.getElementById('gTip');if(!t)return;if(h<0||!GCM.P[h]){t.style.display='none';return;}const p=GCM.P[h];let html;
   if(p.sea){html='<b>'+p.n+'</b><br>'+(p.ck?'<span style="color:#ff9d8e">Chokepoint strait</span><br>':'')+'Sea zone · crossing takes '+p.cost+' turn'+(p.cost>1?'s':'');}
   else{const st=GC.prov[h],N=GCM.nats.get(st.o);html='<b>'+p.n+'</b> <span style="opacity:.7">'+N.name+'</span><br>'+guTerrName(p.t)+' · towns '+p.tw+(p.oil?' · oil':'')+(p.farm?' · farms':'')+(p.mine?' · mines':'')+(p.port?' · port':'')+'<br>Garrison '+st.gar.length+(st.o===GC.me?' · unrest '+Math.round(st.un)+'%':'')+(p.cap?'<br><span style="color:#ffd24a">Capital</span>':GC.nat[st.o]&&GC.nat[st.o].wg.includes(h)?'<br><span style="color:#ffd24a">War goal</span>':'');}
@@ -19575,7 +19588,8 @@ function g3Wheel(ev){const c=G3.camera,r=GV.cv.getBoundingClientRect(),g=g3Groun
   if(g){const k=1-nd/c.d;c.x+=(g[0]-c.x)*k*.9;c.z+=(g[1]-c.z)*k*.9;}c.d=nd;G3.moved=true;}
 function g3Drag(ev,mx,my){const d=GV.drag;if(!d)return;if(d.btn===1){const c=G3.camera,cc=G3.cc;c.yaw=cc.yaw=d.yaw-(ev.clientX-d.x)*.006;c.pitch=cc.pitch=Math.max(.45,Math.min(1.3,d.pitch+(ev.clientY-d.y)*.004));G3.moved=true;return;}
   const g=g3Ground(mx,my);if(!g||!d.g)return;const c=G3.camera,cc=G3.cc;c.x=cc.x=Math.max(0,Math.min(2400,cc.x+d.g[0]-g[0]));c.z=cc.z=Math.max(0,Math.min(1200,cc.z+d.g[1]-g[1]));G3.moved=true;}
-function g3Click(mx,my){let best=null,bd=1e9;for(const h of G3.hit){const dd=Math.hypot(mx-h.x,my-h.y);if(dd<h.r&&dd<bd){bd=dd;best=h;}}
+function g3HitAt(mx,my){let best=null,bd=1e9;for(const h of G3.hit){const inBox=h.y0!=null&&Math.abs(mx-h.x)<=h.w&&my>=h.y0&&my<=h.y1;const dd=Math.hypot(mx-h.x,my-h.y);if((inBox||dd<h.r)&&dd<bd){bd=dd;best=h;}}return best;}
+function g3Click(mx,my){const best=g3HitAt(mx,my);
   if(best){const a=GC.armies.find(x=>x.id===best.aid);GV.selA=best.aid;if(a)GV.sel=a.at;guSide();g3Refresh();return;}
   const g=g3Ground(mx,my);if(!g)return;const h=guProvAt(g[0],g[1]);GV.sel=h;if(GV.selA){const a=GC.armies.find(x=>x.id===GV.selA);if(!a||a.at!==h)GV.selA=0;}guSide();g3Refresh();}
 function g3Refresh(){G3.sig='';G3.arrowDirty=true;}
@@ -19603,7 +19617,8 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
   G3.hit=[];const s=G3.sc_s;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;let pl=G3.pl.get(a.id);if(!pl){pl=guEl('div','');pl.className='p';G3.lab.appendChild(pl);G3.pl.set(a.id,pl);}
     const q=proj(e.g.position.x,e.g.position.y+(e.sea?6:3)*s,e.g.position.z),top=proj(e.g.position.x,e.g.position.y+13*s,e.g.position.z),mine=a.o===GC.me,sel=a.id===GV.selA;
     if(!q){vis(pl,false);continue;}
-    G3.hit.push({aid:a.id,x:q[0],y:top?(q[1]+top[1])/2:q[1],r:Math.max(16,top?Math.abs(q[1]-top[1])*.7:16)});
+    {const ft=proj(e.g.position.x,e.g.position.y+28*s,e.g.position.z),yT=ft?ft[1]:(top?top[1]:q[1]-40);   // whole figure is the target: flag top → number badge (Abdullah 19:58 "not being able to click on armies or navies")
+     G3.hit.push({aid:a.id,x:q[0],y:top?(q[1]+top[1])/2:q[1],r:Math.max(16,top?Math.abs(q[1]-top[1])*.7:16),y0:Math.min(yT,q[1])-10,y1:q[1]+38,w:Math.max(24,top?Math.abs(q[1]-top[1])*.6:24)});}
     const show=d<1100||mine||sel;if(show){const t=''+a.u.length;if(pl._h!==t+(mine?1:0)+(sel?1:0)){pl._h=t+(mine?1:0)+(sel?1:0);pl.textContent=t;pl.className='p'+(mine?' me':'')+(sel?' sel':'');}putC(pl,[q[0],q[1]+12]);pl.style.transform='translate(-50%,0) translate('+Math.round(q[0])+'px,'+Math.round(q[1]+16)+'px)';}vis(pl,show);}
   for(const [id,pl] of G3.pl)if(!G3.arm.has(id)){pl.remove();G3.pl.delete(id);}}
 function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!document.body.contains(GV.cv)||!GC){if(!GV.cv||!document.body.contains(GV.cv))g3Dispose();return;}

@@ -32,6 +32,10 @@ function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.
 function grandForce(t){let v=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)v+=(e.s.cost||400)*(.35+.65*e.hp/e.max);for(const w of G.grand.waves)if(!w.done&&w.side===t)for(const r of w.recs)v+=grCost(G.teams[t].fac,r[0]);return v;}
 function grandAlive(t){let n=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)n++;for(const w of G.grand.waves)if(!w.done&&w.side===t)n+=w.recs.length;return n;}
 function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
+  // a side with nobody left on the field never waits for a timer (Abdullah 2026-11-06 19:56 "I was killed, shouldn't it end immediately"):
+  // its next reinforcement wave arrives at once; with no waves left, the wipe check below ends the battle this tick
+  for(let s=0;s<2;s++){let f=0;for(const e of G.ents)if(e.team===s&&!e.isB&&!e.dead){f=1;break;}
+    if(!f){let nw=null;for(const w of g.waves)if(!w.done&&w.side===s&&(!nw||w.t<nw.t))nw=w;if(nw&&nw.t>g.t0)nw.t=g.t0;}}
   for(const w of g.waves)if(!w.done&&g.t0>=w.t){w.done=1;const t=w.side,B=BASES[t],a=baseFacing(t),back=260;const cx=Math.max(80,Math.min(MAPW-80,B[0]-Math.cos(a)*back)),cy=Math.max(80,Math.min(MAPH-80,B[1]-Math.sin(a)*back));
     grandPlace(t,w.recs,cx,cy,a,g);try{log(t,'Reinforcements arrive: '+w.label,'g');}catch(e){}
     const fresh=G.ents.filter(e=>e.team===t&&!e.isB&&!e.dead&&e.gr&&w.recs.includes(e.gr));if(fresh.length&&t===1)act(1,{t:'go',ids:fresh.map(u=>u.id),x:g.ctr[0],y:g.ctr[1],mode:'amove'});}
@@ -39,6 +43,10 @@ function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
   const n0=grandAlive(0),n1=grandAlive(1);let win=-1,how='';
   if(!n0&&!n1){win=g.att===0?1:0;how='wipe';}else if(!n0){win=1;how='wipe';}else if(!n1){win=0;how='wipe';}
   else if(g.t0>=g.limit){const v0=grandForce(0),v1=grandForce(1);win=v0>v1*1.0001?0:v1>v0*1.0001?1:(g.att===0?1:0);how='time';}
+  // rout (Abdullah 2026-11-06 20:09 "why haven't I won this round yet" — 24 vs 4): a side below 15% of the other's strength
+  // (reinforcements on the way included) for 10 s breaks and flees; checked every 2 s, sim time only (deterministic)
+  if(win<0){g.rtT=(g.rtT||0)-dt;if(g.rtT<=0){g.rtT=2;const v0=grandForce(0),v1=grandForce(1),lo=v0<v1?0:1,r=Math.min(v0,v1)/Math.max(1,Math.max(v0,v1));
+    if(r<.15){if(g.rtS!==lo){g.rtS=lo;g.rtA=g.t0;}else if(g.t0-g.rtA>=10){win=1-lo;how='rout';}}else g.rtS=-1;}}
   if(win>=0){g.fin=1;g.res={win,how};G.over=true;G.winner=win;try{grandBattleEnd();}catch(e){console.error('grandBattleEnd',e);}}}
 // the enemy side: attackers advance on the other force, defenders hold until something comes within reach
 function grandAI(t){const g=G.grand,mine=G.ents.filter(e=>e.team===t&&!e.isB&&!e.dead&&!e.s.noAttack&&(!e.order||e.order.type===undefined));if(!mine.length)return;
@@ -76,7 +84,7 @@ function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def'
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}
 function grandBattleEnd(){const g=G.grand,c=GB_CUR;grandWriteBack();const T0=g.res.win===0,won=T0;
   const lost0=g.n0[0]-G.ents.filter(e=>e.team===0&&!e.isB&&!e.dead).length,lost1=g.n0[1]-G.ents.filter(e=>e.team===1&&!e.isB&&!e.dead).length;
-  const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':'FORCE DESTROYED')));
+  const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':g.res.how==='rout'?(won?'ENEMY ROUTED':'YOUR FORCE ROUTED'):'FORCE DESTROYED')));
   root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;color:'+(won?'#9fd36b':'#e07a6a'),won?'Victory':g.res.how==='retreat'?'Withdrawn':'Defeat'));
   root.appendChild(campEl('div','font-size:17px;line-height:1.6;margin-bottom:10px','Your losses: <b>'+lost0+'</b> of '+g.n0[0]+' units · Enemy losses: <b>'+lost1+'</b> of '+g.n0[1]+' units<br>Survivors keep their wounds and experience on the map; the dead are gone.'));
   root.appendChild(campBtn('Return to the map',()=>{campClose();grandLeaveBattle();grBattleDone(c.b,(c.meAtt===won)?'att':'def',g.res.how==='retreat'?'retreat':'live');grandMapRefresh();}));
