@@ -28,7 +28,7 @@ function gdNatName(c){const n=GCM.nats.get(c);return n?n.name:c;}
 function gevCond(c,code){const nat=GC.nat[code];const foes=gdEnemies(code);
   const nb=gevNb(code);
   switch(c){case 'always':return true;case 'peace':return !foes.length;case 'war':return foes.length>0;case 'foe':return foes.length>0;case 'poor':return nat.cash<600;case 'rich':return nat.cash>2500;
-   case 'nb':return !!nb.length;case 'nbwar':return nb.some(o=>gdEnemies(o).length>0);}return true;}
+   case 'nb':return !!nb.length;case 'nbwar':return nb.some(o=>gdEnemies(o).length>0);}return typeof gcrCond==='function'?gcrCond(c,code):true;}
 function gevNb(code){const s=new Set();for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===code)for(const j of p.adj){const q=GCM.P[j];if(q&&q.land&&GC.prov[j].o!==code&&!GC.nat[GC.prov[j].o].dead)s.add(GC.prov[j].o);}return Array.from(s).sort();}
 function gevS(){if(!GC.ev)GC.ev={last:{},sch:[],pend:[],hist:[]};return GC.ev;}
 function gevApply(code,fx){const N=GC.nat[code],R=grRng((GC.seed|0)*31+GC.turn*11+code.charCodeAt(0));const lines=[];
@@ -39,6 +39,7 @@ function gevApply(code,fx){const N=GC.nat[code],R=grRng((GC.seed|0)*31+GC.turn*1
    else if(k==='rel'){let w=f[1];if(w==='$nb'){const l=gevNb(code);w=l.length?l[Math.floor(R()*l.length)]:null;}else if(w==='$foe'){const l=gdEnemies(code);w=l.length?l[Math.floor(R()*l.length)]:null;}
      if(w){gdRel(code,w,f[2]);lines.push('Opinion of '+gdNatName(w)+' '+(f[2]>0?'+':'')+f[2]);}}
    else if(k==='mod'){gmodAdd({id:'ev_'+code+'_'+f[1]+'_'+GC.turn,src:'Event',scope:'nation',stat:f[1],add:f[2],t:code,until:GC.turn+f[3]});lines.push((GMOD_STATS[f[1]]||f[1])+' '+(f[2]>0?'+':'')+Math.round(f[2]*100)+'% for '+f[3]+' months');}
+   else if(k==='fn'){const r=(typeof GCR_FN!=='undefined'&&GCR_FN[f[1]])?GCR_FN[f[1]](code):'';if(r)lines.push(r);}
    else if(k==='chain'){gevS().sch.push([GC.turn+f[2],code,f[1]]);}}
   return lines;}
 function gevFire(code,id){const row=GEV_ROWS.find(r=>r.id===id);if(!row)return;const S=gevS();S.last[code]=GC.turn;

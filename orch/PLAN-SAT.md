@@ -171,7 +171,7 @@ Grand map:
 - [ ] **RG4 Elections & refugees** (Lane G): democracies hold elections (war support decides), wars create refugees (unrest next door) and rebuilding costs.
 - [ ] **RG5 TV news broadcasts** (Lane G): fictional channel ticker + anchor card for big events (fictional anchors, no real channels/people), fed by the one event engine.
 - [x] **RG6 Scenario start dates** (Lane A) — **Done laneA 4a640a68:** setup has a Scenario row: Middle East 2026 ★ (realistic start), **Gulf flashpoint** (Iran + Coffee Shias at war with Saudi Arabia and the UAE, front armies, US hostile), **Red Sea crisis** (Coffee Shias vs Israel + Saudi Arabia); `GR_SCEN` rows in 13-grand.js, saved as `GC.sc`, checked in grandtest + grandlive. More start dates = more rows.: pick a starting crisis (Gulf flashpoint first, then others) — each a preset over the realistic start.
-- [ ] **RG7 Dynamic crises** (Lane G): coups, oil shocks, uprisings, border incidents as timed decisions in the event engine.
+- [x] **RG7 Dynamic crises** (DONE first cut laneG `src/13zv-gcrisis.js`, test `node orch/crisistest.mjs`: border crisis→clash chain, coup plot, uprising, pipeline sabotage lifting world prices — rows in the event engine + `['fn',name]` world reactions) (Lane G): coups, oil shocks, uprisings, border incidents as timed decisions in the event engine.
 - [x] **RG8 Achievements** (Lane D): goals per nation (e.g. unite the Resistance bloc, hold Hormuz a year); one table, shown in the nation panel. (f02856e)
 - [x] **Resistance bloc is a real thing** (22:16): `RES_BLOC` in 13i = IR, RS, DW (River Shias add their code there when they land); one permanent alliance "Resistance bloc", can't be left or fought inside, old "Axis of Resistance" saves renamed on load.
 Grand campaign round 2 (Abdullah 22:20 "Any more options for the grand campaign") — after the slice, then kaizen; extend existing systems, never a second one:
@@ -211,7 +211,7 @@ Grand campaign round 4 (Abdullah 22:22 "More?") — after the slice, then kaizen
 - [ ] **RG40 Protests & strikes** (Lane G): protests, general strikes, crackdowns (opinion cost); same unrest system.
 - [ ] **RG41 Diaspora** (Lane G): emigrant communities send money, lobby foreign governments (opinion GMOD rows).
 - [ ] **RG42 Minorities** (Lane G): Kurds, Druze, Baloch, etc. with loyalty to win/lose (extend cores/culture, neutral wording).
-- [ ] **RG43 Border incidents** (Lane G): skirmishes that escalate or calm (part of RG7 crises).
+- [x] **RG43 Border incidents** (DONE with RG7: bi_esc/bi_clash chain) (Lane G): skirmishes that escalate or calm (part of RG7 crises).
 - [ ] **RG44 Demilitarised zones** (Lane G): from peace deals (RG16), no army may enter.
 - [ ] **RG45 Occupation zones** (Lane G): split a defeated enemy between victors.
 - [ ] **RG46 Bases abroad** (Lane B): lease bases in friendly nations (range, influence); the realistic start already places some.
