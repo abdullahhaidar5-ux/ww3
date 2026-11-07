@@ -59,6 +59,7 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 
 ## Lane D — Content & QA (priority order)
 - [x] **D1** Nations done: Japan (JP) first cut live 2026-11-07 (laneD); voices/anthems pending D3.
+- [ ] **D0 Free-compute tooling (do first, ~1 h, saves every lane time and tokens):** (a) `.github/workflows/bisect.yml` — on a red gate on main, auto `git bisect` with the failing test and comment the first bad commit + author lane on the commit; (b) `orch/artmetrics.mjs` — headless shots of the ART-BAR standard views → numbers (fps, draw calls, colour range, edge/boxiness score, empty-space %) into orch/reports/artmetrics.md, run in CI on every main push; (c) seed `orch/HOWTO.md` with the recipes you know (gate, NEWNAT nation, adding a test, adding a grand UI panel).
 - [ ] **D2 First-time-player audit** (intuitive spec, trigger prompt in HISTORY of the plan): orch/newplayer.mjs + fix the top 15 confusions (wording, hints, Esc, feedback) — includes the grand map with real time.
 - [ ] **D3 Voices + anthems** for all new nations (one batch; voices-new spec) — ship per group.
 - [ ] **D4 Balance**: battle round robin all nations + grand campaign fairness given the realistic start (balance3 spec).
@@ -85,3 +86,11 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 7. **Cut, don't polish.** Ship the smallest version that a player can see and use, tick it, move on; polish goes to kaizen.
 8. Tick the item + one HISTORY line (heading "lane<X>"). LAST: fire your own scheduled task once if items remain and it's before
    Sat 20:00 Chicago. Rate limit → orch/HANDOFF-lane<X>.md, push, stop (hourly schedule resumes).
+9. **Feature flags for big work.** Ship big changes in small pieces behind a flag (e.g. `GC.rt` "Real time (beta)" in Settings,
+   default off until it's complete, then flip the default). Lands on main early, never breaks the current game, no long-lived branches.
+10. **Recipes, not rediscovery.** Before exploring, read `orch/HOWTO.md`; when you figure out how to do something (add a tab, a
+    modifier row, a test, a nation, a unit card), append a ≤ 5-line recipe there. The next helper skips the exploring.
+11. **Scripts and free CI over model tokens.** Real-world figures from public datasets fetched by script (GitHub-hosted CSVs, e.g.
+    World Bank/SIPRI mirrors) instead of many web searches; art scoring numbers (fps, colour range, "boxiness"/edge stats, draw
+    calls) computed by script/CI and only glanced at; heavy runs (balance, AI campaigns, screenshot sets) on GitHub runners.
+12. **When CI goes red, let the machine bisect** (D0's workflow) — read its one-line answer instead of hunting by hand.
