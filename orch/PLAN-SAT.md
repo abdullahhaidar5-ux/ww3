@@ -224,3 +224,13 @@ Grand campaign round 5 (Abdullah 22:24) — after the slice, then kaizen; extend
 - [ ] **RG59 Natural disasters** (Lane G): earthquakes, floods, sandstorms; aid wins opinion (event engine).
 - [ ] **RG60 Pilgrimage season** (Lane G): Hajj and Arbaeen — truces expected, morale boost, attacks anger everyone (respectful; ties to RG17 holy sites).
 - [ ] **RG61 Global economy crash** (Lane B): recessions/booms ripple through trade + stability.
+Round 6 (Abdullah 22:26) — after the slice, then kaizen; extend existing systems:
+- [ ] **RG62 Covert strikes on generals** (Lane G): covert op vs enemy (fictional) generals; exposure → world opinion hit (one covert-action system with RG3/RG15).
+- [ ] **RG63 False flags** (Lane G): stage an incident to justify war; risky if uncovered (same covert system).
+- [ ] **RG64 Defectors** (Lane G): enemy officers/units defect when their morale collapses (Zealous never defect — matches never-rout).
+- [ ] **RG65 POW exchanges** (Lane G): prisoners as a peace-talk/diplomacy item (RG16, RG50).
+- [ ] **RF7 Ammo & fuel in battle** (Lane F): ammo already exists — make running dry visible + trucks resupply under fire (extend, don't duplicate).
+- [ ] **RF8 Civilians in towns** (Lane F): civilians already exist — flee fighting; harm → world opinion (extend).
+- [ ] **RF9 Wounded & medevac** (Lane F): medics already exist — wounded dragged out return later (extend).
+- [ ] **RF10 Last stand** (Lane F): surrounded units get a desperate bonus (morale system, all styles).
+- [ ] **RF11 Battle music swells** (Lane D): music intensity rises with big clashes (09-audio calm↔combat, add a peak layer).
