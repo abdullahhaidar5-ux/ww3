@@ -1,0 +1,21 @@
+menu {"g":"Grand campaign","c":"Missions","s":"Conquest — deploy vs AI","t":true}
+determinism {"a":"8e6f2b40","b":"8e6f2b40","c":"c5ce326d","h0":"78399fba","h1":"78399fba","ms":53098,"alive1":175,"provs":797,"seas":44}
+scenarios {"me26":{"sc":"me26","irsa":false,"dwil":false,"armies":308,"h":"f71bb099"},"gulf":{"sc":"gulf","irsa":true,"dwil":false,"armies":315,"h":"cb9f58b8"},"redsea":{"sc":"redsea","irsa":false,"dwil":true,"armies":311,"h":"e919332f"},"again":"cb9f58b8"}
+fog {"foes":287,"seen":69,"e":"","after":true,"own":true,"cash":4600,"hashSame":true}
+forcelimit {"v0":27275,"L":31366,"under":true,"t0":10,"t1":16,"over":true,"up":1.5,"allUnder":true,"chip":true}
+military determinism {"a":{"h":"1556c60b","seen":{"strike":987,"intercept":140,"sea":12,"gen":197,"blockade":0},"gens":222,"alive":208,"fronts":40,"fleets":37,"framies":22,"mines":0,"turn":21,"dead":7,"capt":7,"lv":3},"b":"1556c60b","c":"62d2cd88","ms":108987}
+military features []
+military strikes/fleets []
+military escort []
+naval fight-it {"naval":7,"total":7,"na":4,"nd":3,"prod":true,"mapKey":"coral","fin":1,"left":3,"mine":4,"ph":"plan"}
+military ui {"panel":true,"gen":491,"fr":293,"st":368,"fl":488}
+ERRS 
+page.evaluate: TypeError: Cannot read properties of undefined (reading 'i')
+    at eval (eval at evaluate (:311:30), <anonymous>:1:237)
+    at UtilityScript.evaluate (<anonymous>:313:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at ev (/home/runner/work/ww3/ww3/orch/grandtest.mjs:37:30)
+    at /home/runner/work/ww3/ww3/orch/grandtest.mjs:149:11
+
+GRANDTEST FAIL
+  ✗ page.evaluate: TypeError: Cannot read properties of undefined (reading 'i')
