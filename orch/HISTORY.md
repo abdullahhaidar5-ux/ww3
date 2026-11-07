@@ -356,3 +356,4 @@ laneC 2026-11-07 iteration 7: grand-map legend moved clear of army cards, bigger
 
 - laneB 2026-11-07: B5b slice 2 — corruption (13z-gcorrupt.js, cortest.mjs). Chain: overspending/low stability/inflation/sprawl -> corruption -> dearer upkeep, leaked income, unrest (feeds Home front/stability); counter-play = Political-point purge (AI does it); cost 50 Pol per -5%.
 - laneA 2026-11-07 (08:10Z): A6 slice 2 (7a87f2b4): resistance spreads to neighbouring occupied provinces of the same people; AI occupiers answer by sending the nearest idle army to garrison the worst one (rolls cells up). Chain: cells → spread → more raids/unrest → occupier ties down armies. occtest/grandtest/smoke PASS.
+laneC 2026-11-07 iteration 9: grand-map armies drawn as squads (1/3/6 soldiers by size, backpacks, rifles), flags shrink when zoomed in (objects 3.5->4); visual only, no sim state; shots orch/shots/laneC/f1.
