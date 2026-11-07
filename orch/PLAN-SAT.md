@@ -13,6 +13,32 @@ section you need. After Sat 18:00 Chicago: no new items, only finish/ship; at 20
 balance3, grandmirror (done), look3/look4. Still finishing on their own: grand3 (→ fires Lane A when done), look1, rescue, nations-b2.
 Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 
+## VERTICAL SLICE = the Middle East first (Abdullah 2026-11-06 18:52, picked)
+Saturday's goal is a **Middle East campaign at full $75 quality**: Iran, Mountain Shias (Lebanon), Yemen (DW), Israel, Saudi Arabia,
+UAE, Oman, Iraq, Syria, Turkey, Jordan, Egypt, Kurdistan Region (+ the Gulf/Red Sea/East Med sea zones). **Every lane does its
+item for this region first** (art, towns, real data, morale, nation panel content, events/missions, battles there, voices),
+and the rest of the world only needs to *work*. Screenshots, the art-bar shots and Abdullah's 2-minute tests are taken there.
+A new campaign offers **"Middle East 2026"** as the featured start (whole world still playable). The other regions are
+polished in kaizen.
+
+## Lane E — Battle look (TOP PRIORITY; Abdullah 2026-11-06 19:30 sent a photo of a Conquest battle: blocky box soldiers, box guns, white box HQ → "None of this at all" = "Battle looks terrible")
+Judge only **real gameplay at normal camera height** (his photo's view: IR base in the desert, 3 IRGC infantry). Middle East
+nations first (IR, RS, DW, IL, SA, IQ, SY, TR). Every step: before/after shots from that same view; smooth-pc / smooth-mp stay green.
+- [ ] **E1 Real-looking infantry**: replace the boxy `soldier`/`sol_m/e/w` models with proper human soldiers — realistic proportions, helmets/caps, vests, webbing, backpacks, real rifle silhouettes, rigged + walk/run/shoot/prone animations. Source: CC0/CC-BY rigged human models reachable via GitHub/npm (credited), or build a high-quality procedural soldier (capsule/lathe limbs, bevelled armour, proper weapons) if no free model fits; uniforms per nation via textures/tints (IRGC/RS fatigues etc.). Keep instancing so 300 units stay smooth (LOD: full model near, simpler far).
+- [ ] **E2 Real buildings**: HQ, barracks, factory, depots → believable Middle Eastern compounds/military buildings (walls, roofs, windows, sandbags, antennas, wear), not white boxes; same free-art rule.
+- [ ] **E3 Ground & light**: terrain texture detail (tracks, rocks, scrub, dust), soft shadows/AO, colour grading toward CoH/Broken Arrow; no washed-out flat beige.
+- [ ] **E4 Vehicles & weapons detail pass** (existing m_* models: materials, decals, wear) + muzzle flashes/tracers/explosions checked at gameplay zoom.
+- [ ] **E5 HUD readability over the 3D** (only what blocks the view: overlapping help text, labels) — coordinate with Lane C's UI kit.
+
+## THE 50 (Abdullah 2026-11-06 18:57: "All let's go")
+Order inside each lane: your numbered items first, **except ⚡ items** (cheap, high value) which you slot in as soon as your current
+item ships. Everything else after your list. **Target: ALL of it shipped by Sat 20:00** (Abdullah 19:00 "Just get it done") — smallest playable slice of each, then the next; no deferring by choice. Middle East slice first, always.
+- **Lane D:** ⚡1 golden replay (record a 2-min human play as an input replay, re-run every push) · ⚡2 picture diffs on every push (CI) · ⚡3 acceptance check written before each item · ⚡5 skip tests for unchanged files · 47 nation encyclopedia (Haiku, neutral) · 50 tutorial built from the golden replay · 43 weekly challenge seed + leaderboard (local/static only) · 46 procedural flags for rebels/minor factions · 6 code diet (dead phone/Classic code) and 7 split giant files → **after the deadline** (touch every lane's files) · 10 kill list → kaizen.
+- **Lane A:** ⚡21 outliner (armies/fleets/sieges list) · ⚡23 macro-builder · ⚡28 observer mode · ⚡31 quick battle anywhere · 27 ironman · 33 cover/suppression under the cursor · 32 after-action report · 36 bridges/dams carry back to the map · 40 battle weather = map weather · 37 replay links · 42 spectator links · 38 hero moments · 39 generals' pre-battle speech (lines from Lane D voices) · 34 600-unit battles (impostors/LOD) · 41 co-op grand campaign (= A7, the first multiplayer target).
+- **Lane B:** ⚡16 newspaper headlines between months (event engine) · ⚡25 diplomatic web view · ⚡26 achievements per nation · 22 EU4 peace-deal screen (with B6) · 24 ledger graphs over time · 30 town blurbs (Haiku, neutral) · 48 event chains from real tensions (neutral) · 49 random-crisis scenario generator · 29 alternative start dates (neutral) · 44 clan colours/emblems (original).
+- **Lane C:** ⚡14 city lights at night · ⚡15 war scars (smoke over besieged cities, scorched land) · ⚡18 photo/cinematic camera · 11 seasons on the map · 12 weather fronts · 13 shipping lanes with moving tankers/cargo ships (real units' traffic, not decoration aircraft) · 19 procedural insignia · 20 fictional leader portraits (procedural, no real people) · 35 night battles (flares, NV view) · 17 music intensity follows war support (with Lane D audio).
+- **Orchestrator / everyone:** 4 decision log = CLAUDE.md "standing decisions" + GRAND-PICKS — check them before asking Abdullah anything · 8 model tag: Haiku for text/data rows, Sonnet default, Opus only Lane A engine work · 9 night shift: risky rebuilds 23:00–09:00 Chicago, visible polish 16:00–22:00 · ~~45 Discord results posting~~ — **dropped** (Abdullah 18:59 "Forget #45"; don't build it).
+
 ## The bar: a $75 studio game (whole game, not just the grand map)
 `orch/ART-BAR.md` (raised to $75, whole game) + **feel**: every click answers instantly (< 100 ms visible feedback), smooth
 60 fps with big armies on the grand map and ~300 units in battle, no dead ends, nothing that "never loads", readable PC UI.
@@ -22,8 +48,9 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 |---|---|---|---|
 | **A — Grand engine & feel** | Opus (sim/determinism) | `src/13-grand.js`, `13b-grandbattle.js`, `13f-grandmirror.js`, `13c-grandui.js` (input/selection), grand AI, `orch/grandtest.mjs` | `trig_01Gx98id1Z38KSG4R5rAdU94` (hourly :23 + self-fire) |
 | **B — Grand systems (EU4 mechanics)** | Sonnet | `src/13g-grandeco.js`, `13h-grandecoui.js`, new `13i+` grand system files, nation panel | `trig_013LUzLCpqMyGsfK9ojXXmY8` (hourly :11 + self-fire) |
-| **C — Look ($75)** | Sonnet | `src/13d-grandterrain.js`, `13e-grand3d.js`, `04-gfx`, `05-fx3d`, `10-post`, `11-models`, CSS/skin of every panel, `orch/ART-BAR.md` | `trig_0196kYnG3DBmhFHiNbNqisD6` (ex art loop; hourly :07 + self-fire) |
+| **C — Look ($75)** | Sonnet | `src/13d-grandterrain.js`, `13e-grand3d.js`, CSS/skin of every panel, `orch/ART-BAR.md` (battle rendering moved to Lane E) | `trig_0196kYnG3DBmhFHiNbNqisD6` (ex art loop; hourly :07 + self-fire) |
 | **D — Content & QA** | Sonnet | `01-data` rosters, `11z-nations*`, `vo/`, `mus/`, balance numbers, wording/tooltips/tutorial, saves, `orch/newplayer.mjs` | `trig_01QkuM1b8miRMAF9NcwxC8bB` (hourly :47 + self-fire) |
+| **E — Battle look (TOP PRIORITY, Abdullah 19:30 "Battle looks terrible")** | Sonnet | battle rendering: `src/04-gfx.js`, `05-fx3d.js`, `10-post.js`, `11-models.js`, `models/` (Lane C keeps the grand map 13d/13e + UI skin) | `trig_LANE_E` (hourly :17 + self-fire) |
 
 ## Lane A — Grand engine & feel (priority order)
 - [x] **A1 FIX: the live battle never loads** (Abdullah 18:00). Reproduce exactly as a player: menu → Grand campaign → march into an enemy → Fight it live, in a real (non-test-hook) browser path with models loading; find why it hangs (loader, mirror map generation, missing data for new nations, exception); fix; add that exact path to the gate so it can't regress. — **Done 8db5c8b8:** cause = a campaign saved before the 2026-11-06 real-borders map (174 → 236 land provinces) still showed as Continue; its province numbers point at different places, so the map broke and Fight it never loaded. Old-map saves are now refused with a clear note (map signature `GC.ms`), a battle that fails to build shows a message, puts the map back and auto-resolves (`grandFightLive`), and gate `grandlive` (orch/grandlive.mjs) plays the real path from the menu (New → march → End turn → Fight it live, no hooks) — a fresh campaign's battle loads and runs.
@@ -37,8 +64,10 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 - [ ] **A7** grand7 friends multiplayer on real time (lockstep, pause rules, live battles pause the map for everyone; others give orders while paused and can spectate; several battles from the same pause run together) — likely after the deadline.
 
 ## Lane B — Grand systems: EU4 mechanics (priority order)
-- [ ] **B1 Realistic start** — GRAND-PICKS "REALISTIC START" (real GDP/military/oil, real alliances + opinions, real wars, fronts, bases, fleets).
-- [ ] **B2 Nation panel** — GRAND-PICKS "THE NATION PANEL" (EU4-style tabbed window; `npTab` register; every later item adds its tab).
+- [x] **B1 Realistic start** (first cut, see orch/reports/realstart.md; follow-ups listed there) — GRAND-PICKS "REALISTIC START" (real GDP/military/oil, real alliances + opinions, real wars, fronts, bases, fleets).
+- [x] **B2 Nation panel** (shell + Economy/Diplomacy(read-only)/Military/Provinces/Ledger tabs via `npTab`, `src/13j-nationpanel.js`; flag-click open + Government/Home front/etc. tabs come with their systems) — GRAND-PICKS "THE NATION PANEL" (EU4-style tabbed window; `npTab` register; every later item adds its tab).
+- [ ] **B2.5 ONE modifier engine (EU4-style, do this before B3)** — `GMOD` rows `{id, src, scope: nation|army|province, stat, add|mul, cond, until}` + `gmod(scope, obj, stat)` evaluator with a per-month cache; every later B/A item (ideas, estates, stability, war support effects, rallies, style perks from `MSTYLES`, named battles, war economy, inflation, corruption, autonomy) is data rows, shown in tooltips as "+10% from Zealous fervour" lines. Saves on checkpoint; deterministic.
+- [ ] **B2b EU4 alerts bar**: a row of icons along the top that light up when something needs you (idle army, money negative, can raise stability, rebels, peace offer, war declared, unspent capital) — click = jump to it. Built on the UI kit; every later system adds its alert with one call.
 - [ ] **B3 Power points + ideas** (Abdullah 17:58): EU4 monarch points as **Political / Diplomatic / Military capital** (monthly from leader + advisors), spent on tech, development, coring, diplomacy, generals, stability; national ideas (unique per nation, equal value) + idea groups. **Style idea trees** (Abdullah 18:29 pick 10): each morale style gets its own national-idea tree (e.g. Zealous: fervour/martyrdom/volunteers; Professional: staff/training/discipline; Home defenders: fortified homeland/militia/terrain; Firepower-reliant: air power/artillery/precision) — equal total value, nation-flavoured names.
 - [ ] **B4 Stability, cores, estates**: stability −3…+3 (raise with Political capital; affects unrest/income/war support), coring conquered provinces (cost, time, overextension), estates (Army, Clergy/Ideology, Business, Workers) with loyalty/influence and privileges.
 - [ ] **B4b War support (national morale)** (Abdullah 18:25, picked 2): ONE nation-level war-support meter (this IS war weariness/exhaustion — A5 and grand6 use it, no second meter): victories, defeats, casualties, war length, occupied home/holy places, national/religious days (equal value), Ayatollah/Dear Leader clamour; low → unrest, slower recruits, forced peace talks, coups (later). Shaped by morale style: **Zealous** casualties raise it at first (martyrs) up to a cap, leaders keep it high; **Professional** stable, slow steady drain from losses; **Home defenders** surge in defensive wars / when invaded, low appetite for wars abroad; **Firepower-reliant** rises with clean victories, drops sharply with casualties. Shown in the nation panel header + Home front tab; feeds every army's morale recovery (A3b). **Rallies** (pick 9): spend Political capital on a style-flavoured rally to lift war support (commemorations/party rallies, military parades, defend-the-homeland drives, weapons showcases) — equal value, cooldown. **Recruiting by style** (pick 6, in grand2's manpower system): Zealous volunteer surges after martyr losses/holy days; Professional recruit slower but units start with veterancy; Home defenders get a free militia levy when invaded; Firepower-reliant recruit fewer men but better-equipped units — equal total value.
@@ -50,7 +79,9 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 - [ ] **B8** grand4b rest: great powers, reforms, prestige, hegemonies. (grand6 home-front items → kaizen.)
 
 ## Lane C — Look: $75 studio (priority order; ART-BAR scores decide inside each)
-- [ ] **C1** look1's leftovers + replace boxy towns (GRAND-PICKS look2).
+- [ ] **C0 UI kit (first, ~1 h):** one set of studio-grade components (panel frame, tab bar, flag row, ledger table, slider, tooltip, unit card, top bar, buttons) + game-icons.net icon set (CC BY 3.0, credited) in one small file; Lane B/A screens use it. Then C3 later only polishes the kit.
+- [ ] **C0b Studio-feel shortcuts (biggest look-per-token wins, Abdullah 18:52 "more creativity"):** (1) **NASA Blue Marble / Natural Earth rasters** (public domain; reachable via npm packages such as three-globe's bundled textures or GitHub mirrors) as the grand map's base colour + relief → instant real-world look; (2) a **painterly post filter** (Kuwahara/oil-paint shader, grand map only, toggle in Settings) for the "painted Total War map" feel; (3) **reuse the battle's own 3D models as miniatures** on the grand map (generals = real unit models with flags, towns = real building models scaled down) — no new art, perfect consistency; (4) **map → battle zoom transition**: the camera dives from the province into the battle as it loads, with a loading card (province name, forces, season, tip); (5) **juice pass**: eased panel slides, hover glows, number count-ups, map pulses on events; (6) **UI sound kit** (CC0, e.g. Kenney UI audio): clicks, panel whooshes, map ambience, alert stings.
+- [~] **C1** look1 leftovers + replace boxy towns — towns rebuilt 2026-11-07 (laneC: hip/gable/row/courtyard houses on a rotated street grid, lighter pads); look1 leftovers still open.
 - [ ] **C2** Grand map to ART-BAR ≥ 4.5 on every item (geography, colour, light, water, objects, life, performance).
 - [ ] **C3** UI skin: one studio-grade style for top bar, nation panel, army cards, tooltips, battle HUD/sidebar (big readable text, icons, framed panels, consistent fonts), smooth panel animations.
 - [ ] **C4** Battle graphics pass in real gameplay (terrain, lighting, explosions, units at 300 on screen) — CoH/Broken Arrow direction.
@@ -58,14 +89,51 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 
 ## Lane D — Content & QA (priority order)
 - [x] **D1** Nations done: Japan (JP) first cut live 2026-11-07 (laneD); voices/anthems pending D3.
-- [ ] **D2 First-time-player audit** (intuitive spec, trigger prompt in HISTORY of the plan): orch/newplayer.mjs + fix the top 15 confusions (wording, hints, Esc, feedback) — includes the grand map with real time.
+- [ ] **D0 (e-lint DONE; a–d remain) Free-compute tooling (do first, ~1 h, saves every lane time and tokens):** (a) `.github/workflows/bisect.yml` — on a red gate on main, auto `git bisect` with the failing test and comment the first bad commit + author lane on the commit; (b) `orch/artmetrics.mjs` — headless shots of the ART-BAR standard views → numbers (fps, draw calls, colour range, edge/boxiness score, empty-space %) into orch/reports/artmetrics.md, run in CI on every main push; (c) seed `orch/HOWTO.md` with the recipes you know (gate, NEWNAT nation, adding a test, adding a grand UI panel); (d) **"Report a problem" button** (menu + pause + grand map): opens a pre-filled GitHub issue link (title, game version, last 20 console errors, mode/nation/map — no personal data) labelled `player`, so Abdullah's friends file bugs in one click; (e) **free robot checks in gate.yml**: a lint script (no `</script` in src, no hand edits to index.html, no new external URLs, banned real-leader/organisation names list, `Math.random`/`Date.now` inside grand sim code = error) and a **determinism fuzzer** (grand sim 200 days twice from the same seed → identical hash).
+- [ ] **D2 (slice 1 DONE; continue with more confusions) (first slice shipped 2026-11-07 laneD: orch/newplayer.mjs + menu quick-start row & compact nation list; more confusions remain)** First-time-player audit (intuitive spec, trigger prompt in HISTORY of the plan): orch/newplayer.mjs + fix the top 15 confusions (wording, hints, Esc, feedback) — includes the grand map with real time.
 - [ ] **D3 Voices + anthems** for all new nations (one batch; voices-new spec) — ship per group.
-- [ ] **D4 Balance**: battle round robin all nations + grand campaign fairness given the realistic start (balance3 spec).
+- [ ] **D4 Auto-balancer** (replaces hand balancing): a script on GitHub runners plays AI-vs-AI round robins, nudges unit numbers toward 50 % win rates (small hill-climbing steps, only numbers in 01-data, per-tier identical), repeats, and opens a PR with the table — model tokens only to review the final table. Grand campaign: same idea with AI-only campaigns for the morale styles' equal power.
 - [ ] **D5 Integration/cleanup**: duplicates from SYSTEMS.md "Open" notes, saves round-trip, campaign tutorial (integrate2 spec).
 
-## Rules for every lane iteration (cheap + fast)
-1. FIRST: `git fetch -q`; if your lane has an unmerged `orch/lane<X>-*` branch pushed < 60 min ago → stop ("lane busy"). Lane A also stops while `origin/orch/grand3` is unmerged and pushed < 60 min ago; Lane C while `orch/look1` is; Lane D while `orch/rescue`/`orch/nations-*` is (they finish their own work).
-2. Branch `orch/lane<X>-<UTC yyyymmddhhmm>`, push early. Merge origin/main before shipping. Fast-forward pushes only.
-3. Gate: `python3 orch/build.py` · `node orch/smoke.mjs 2>&1 | grep -E "SMOKE (PASS|FAIL)"` · `node orch/grandtest.mjs 2>&1 | tail -3` (grand changes) · `bash orch/cigate.sh` (blocking). Green → push to main. Sim/data change → comment on the open main→servers-live PR.
-4. Tick the item here + one HISTORY line (heading "lane<X>"). Screens for Abdullah in `orch/shots/lane<X>/`.
-5. LAST: fire your own scheduled task once (Claude_Code_Remote `fire_trigger`) if your lane has unticked items and it's before Sat 20:00 Chicago. Rate limit → HANDOFF-lane<X>.md, push, stop (the hourly schedule resumes).
+**These rules override your scheduled-task prompt wherever they differ** (e.g. it says "ONE item" or "wait for grand3/look1/rescue" — follow the rules below instead).
+
+## Rules for every lane session — FAST + CHEAP (Abdullah 18:40 "Get creative and speed up development and save usage")
+1. **FIRST:** `git fetch -q`. Stop only if **your own lane** has an unmerged `orch/lane<X>-*` branch pushed < 45 min ago. **Never wait for
+   other helpers** (grand3, look1, rescue…): if your top item touches files another active branch is editing, take your next
+   non-conflicting item instead and come back later.
+2. **One session = several items.** Keep going item after item in the same session (no re-clone, no re-reading) until ~3 h or
+   your context is ~60 % full; ship after every item. Re-read nothing you already read this session.
+3. **Background gate.** Per item: `python3 orch/build.py` + `node orch/smoke.mjs 2>&1 | grep -E "SMOKE (PASS|FAIL)"` + the one
+   targeted test (`node orch/grandtest.mjs 2>&1 | tail -3` for grand work). Then start `bash orch/cigate.sh > /tmp/cig.log 2>&1 &`
+   (run_in_background) and **begin the next item while it runs**; when it's green, merge origin/main and fast-forward push. Red →
+   fix before anything else. Never leave main broken.
+4. **Delegate cheap work to Haiku.** Bulk data entry (country figures, idea/event/mission rows, names, tooltips, wording, credits)
+   goes to a subagent with `model: "haiku"` (Agent tool) with exact file + format instructions; you review the diff only.
+5. **Data, not code.** Every EU4/morale effect is a **row** in the ONE modifier table (B2.5) — no new bespoke code paths for ideas,
+   estates, rallies, style perks, named battles, war economy… One engine, many rows: faster to build, cheaper to read.
+6. **Read less.** `orch/BRIEF.md` + this file + only the spec section of your item. grep -n + ≤ 120-line ranges. Command output
+   via `tail`/`grep`. Self-review screenshots ≤ 400 px (one contact sheet per item); full-size only for Abdullah's 1–2 pictures.
+7. **Cut, don't polish.** Ship the smallest version that a player can see and use, tick it, move on; polish goes to kaizen.
+8. Tick the item + one HISTORY line (heading "lane<X>"). LAST: fire your own scheduled task once if items remain and it's before
+   Sat 20:00 Chicago. Rate limit → orch/HANDOFF-lane<X>.md, push, stop (hourly schedule resumes).
+9. **Feature flags for big work.** Ship big changes in small pieces behind a flag (e.g. `GC.rt` "Real time (beta)" in Settings,
+   default off until it's complete, then flip the default). Lands on main early, never breaks the current game, no long-lived branches.
+10. **Recipes, not rediscovery.** Before exploring, read `orch/HOWTO.md`; when you figure out how to do something (add a tab, a
+    modifier row, a test, a nation, a unit card), append a ≤ 5-line recipe there. The next helper skips the exploring.
+11. **Scripts and free CI over model tokens.** Real-world figures from public datasets fetched by script (GitHub-hosted CSVs, e.g.
+    World Bank/SIPRI mirrors) instead of many web searches; art scoring numbers (fps, colour range, "boxiness"/edge stats, draw
+    calls) computed by script/CI and only glanced at; heavy runs (balance, AI campaigns, screenshot sets) on GitHub runners.
+12. **When CI goes red, let the machine bisect** (D0's workflow) — read its one-line answer instead of hunting by hand.
+13. **Generators, not hand-writing.** Content comes from templates × data: events = ~20 templates × nations × situations;
+    mission trees from each nation's region/rivals/holy places; idea trees from `MSTYLES` + region; tooltips and encyclopedia
+    pages auto-generated from the modifier/data tables ("+10% from Zealous fervour"). Write the generator once, never the rows.
+14. **Fuse systems.** Events, decisions, disasters, named battles, rallies, propaganda = ONE event/decision engine (EU4 style:
+    trigger → options → modifier rows). AI empires choose with weights in data (utility AI), not bespoke code.
+15. **Build screens from one UI kit.** Lane C builds the kit first (panel, tab bar, flag row, ledger table, slider, tooltip, unit
+    card, top bar) with game-icons.net icons (CC BY 3.0, credited); every lane composes screens from it in minutes.
+16. **Players are free QA.** Each session starts with `gh issue list --label player --state open --limit 5` and fixes anything in
+    your files first (the in-game "Report a problem" button, D0d, files them).
+17. **Run 2–3 items at once inside your session** (Abdullah 19:03 "Faster?"): while you work your main item, hand independent ⚡
+    items in your lane to parallel subagents (Agent tool, `isolation: "worktree"`, `model: "sonnet"` — `"haiku"` for data/text),
+    each with the exact item text, file ownership and gate commands; you review each diff, gate, and ship them one by one.
+    Never two subagents on the same file.

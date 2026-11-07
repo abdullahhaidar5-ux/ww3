@@ -278,6 +278,7 @@ function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=doc
     case 'IN':hs(['#ff9933','#ffffff','#138808']);x.strokeStyle='#000080';x.lineWidth=2;x.beginPath();x.arc(60,36,9,0,7);x.stroke();for(let i=0;i<12;i++){const a=i/12*6.283;x.beginPath();x.moveTo(60,36);x.lineTo(60+Math.cos(a)*9,36+Math.sin(a)*9);x.stroke();}break;
     case 'CN':rect('#de2910',0,0,W,H);star(22,20,12,'#ffde00');for(const [a,b] of [[42,8],[50,16],[50,28],[42,36]])star(a,b,4,'#ffde00');break;
     case 'KP':rect('#024fa2',0,0,W,H);rect('#fff',0,13,W,4);rect('#fff',0,H-17,W,4);rect('#ed1c27',0,17,W,H-34);circ(40,36,14,'#fff');star(40,36,13,'#ed1c27');break;
+    case 'JP':rect('#fff',0,0,W,H);circ(60,36,20,'#bc002d');break;
     case 'KR':rect('#fff',0,0,W,H);x.fillStyle='#cd2e3a';x.beginPath();x.arc(60,36,15,Math.PI,0);x.fill();x.fillStyle='#0047a0';x.beginPath();x.arc(60,36,15,0,Math.PI);x.fill();circ(52.5,36,7.5,'#cd2e3a');circ(67.5,36,7.5,'#0047a0');
       x.save();for(const [cx,cy,ang] of [[24,14,.59],[96,58,.59],[96,14,-.59],[24,58,-.59]]){x.save();x.translate(cx,cy);x.rotate(ang);for(let b=0;b<3;b++)rect('#000',-9,-7+b*5,18,3);x.restore();}x.restore();break;
     case 'GB':rect('#012169',0,0,W,H);x.strokeStyle='#fff';x.lineWidth=12;x.beginPath();x.moveTo(0,0);x.lineTo(W,H);x.moveTo(W,0);x.lineTo(0,H);x.stroke();x.strokeStyle='#c8102e';x.lineWidth=5;x.beginPath();x.moveTo(0,0);x.lineTo(W,H);x.moveTo(W,0);x.lineTo(0,H);x.stroke();rect('#fff',W/2-10,0,20,H);rect('#fff',0,H/2-10,W,20);rect('#c8102e',W/2-6,0,12,H);rect('#c8102e',0,H/2-6,W,12);break;
@@ -1015,7 +1016,7 @@ function jetPlumeMat(){if(jetPlumeMat.m)return jetPlumeMat.m;const cv=document.c
    decals and a small kit (flags on poles, sandbags, ERA blocks, cope cage, red stars, antennas). The mesh geometry is
    built once per model+nation and shared; textures come from one shared atlas. On Low graphics (phones) ground vehicles
    skip the kit entirely; aircraft/ships keep only the cheap decals. Visuals only - nothing here touches the simulation. */
-const KFAC=['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW','GB','AU','CA'];
+const KFAC=['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN','CN','KP','KR','EG','IQ','SY','CU','RS','DW','GB','AU','CA','JP'];
 // nations-a1: Poland, Azerbaijan, Jordan, Kurdistan Region, Italy, Greece, Spain - looks on the shared models (visual only)
 const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
 {const L={PL:{tk:'kf51',he:'apache',je:'f16',sol:'sol_w',fl:{veh:'#6a6e4a',ca:'#8a7a52',cb:'#3a4030',uni:'#6f7350',pat:1},cx:{p:1,s:1,c:'#6a7048',t:'#dc143c',w:3},ax:{b:'#7d8388',p:3,h:{b:'#4f5541',p:3}},ch:'#4f5a3a',rt:'#b3ae98'},
@@ -1200,7 +1201,7 @@ function kitDec(P,face,sg,a0,b0,w0,h0,cell,sub,o){o=o||{};const fa=o.fa||.8,fb=o
     return {kind:'surface',face,sg,a0,b0,w,h,cell,sub,c,n,up,fa,fb,cap:Math.max(W1,H1)*1.3,pa:pan.pa,pb:pan.pb,maxw:o.maxw,maxh:o.maxh,tag:o.tag||cell};}
   return null;}
 const NAVYP={west:'#8f989f',slav:'#6f8294',east:'#6a7e91',irgc:'#4d5a44',sand:'#a29271',olive:'#66694a'};
-function navyPaint(fac,m){const k={...NATX_NAVY,US:'west',IL:'west',EU:'west',FR:'west',DE:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',IQ:'west',GB:'west',AU:'west',CA:'west',SY:'slav',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
+function navyPaint(fac,m){const k={...NATX_NAVY,US:'west',IL:'west',EU:'west',FR:'west',DE:'west',TR:'west',KR:'west',SA:'west',AE:'west',EG:'west',IQ:'west',GB:'west',AU:'west',CA:'west',JP:'west',SY:'slav',UA:'slav',IN:'slav',PK:'slav',CU:'slav',RU:'slav',CN:'east',KP:'east',IR:'irgc',RS:'sand',DW:'olive'}[fac]||'west';return NAVYP[k];}
 function factionKit(e,c,o,yaw,m,T){if(!T||!T.fac||!c||!m)return;const low=typeof SET!=='undefined'&&SET.gfx==='low',fac=T.fac,k=e.kind;
   const air=k==='jet'||k==='heli'||k==='airlift',nav=k==='boat'||k==='ship'||k==='lander'||k==='sub'||k==='fast'||k==='minel'||k==='sweep',gnd=/^m_/.test(c.m)&&['tank','arty','aa','atgm','jeep','raidlead'].includes(k);
   if(!(air||nav||gnd)||(gnd&&low)||(c.squad&&c.squad.length>1))return;

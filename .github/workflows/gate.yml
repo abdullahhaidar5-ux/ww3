@@ -39,7 +39,7 @@ jobs:
           set +e
           T='${{ matrix.t }}'
           case "$T" in
-            check)          python3 orch/build.py --check ;;
+            check)          python3 orch/build.py --check && node orch/lint.mjs ;;   # + robot lint (orch/lint.mjs: no </script, no new hosts, banned names, no Math.random in grand sim)
             smooth-*)       node orch/smooth.mjs --profile "${T#smooth-}" ;;   # smoothness gate (orch/SMOOTH.md): pc / phone / multiplayer, vs orch/smooth-baseline.json
             servertest)     node orch/servertest.mjs && node orch/specserver.mjs ;;   # + spectators in a server battle
             grand)          node orch/grandtest.mjs ;;   # grand campaign: 10 AI turns twice = same hash, Fight-it battle holds exactly the army's units + no production, survivors flow back, save round trip (orch/grandtest.mjs)
