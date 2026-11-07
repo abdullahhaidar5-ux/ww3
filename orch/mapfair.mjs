@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const argS = (k, d) => { const i = process.argv.indexOf('--' + k); return i > 0 && process.argv[i + 1] != null ? process.argv[i + 1] : d; };
 const has = k => process.argv.includes('--' + k);
-const ALL = ['US', 'TR', 'IL', 'EU', 'UA', 'RU', 'IR', 'SA', 'AE', 'PK', 'IN', 'CN', 'KP', 'KR', 'EG', 'CU', 'RS', 'DW'];
+const ALL = ['US', 'TR', 'IL', 'EU', 'UA', 'RU', 'IR', 'SA', 'AE', 'PK', 'IN', 'CN', 'KP', 'KR', 'EG', 'CU', 'RS', 'DW', 'JP'];
 
 const STATIC_FN = `globalThis.__fairStatic=(k,n,seed)=>{setWorld(worldScaleFor(n,k));setBases(n,k,-1);const sv=srand;let M;try{M=mkMap(seed,k);}finally{srand=sv;}
   const cell=(x,y)=>Math.floor(y/CELL)*GW+Math.floor(x/CELL),DB=BASES.map(([x,y])=>gridDist(M.grid,x,y)),DC=gridDist(M.grid,MAPW/2,MAPH/2);

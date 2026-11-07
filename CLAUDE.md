@@ -55,7 +55,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   Alt+right-click a spot (drive there, then unload); touch: tap a selected vehicle again to unload, tap ground with a
   garrisoned building selected. The Unload/Leave buttons may stay as extras.
   (Touch controls are no longer required — see "PC only" below.)
-- **Factions (22 live → 54; IQ Iraq and SY Syria first cut live 2026-11-06, FR France and DE Germany first cut live 2026-11-06 (nation-frde: EU-based rows, EU recorded voices shared until XTTS re-records), JP still to come; PL, AZ, JO, KD, IT, GR, ES first cut live 2026-11-06 (nations-a1; EU retired from menus, hidden base row only)):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
+- **Factions (22 live → 54; IQ Iraq and SY Syria first cut live 2026-11-06, FR France and DE Germany first cut live 2026-11-06 (nation-frde: EU-based rows, EU recorded voices shared until XTTS re-records), JP Japan first cut live 2026-11-06 (nations-new2: full data, Honshu map, voices, anthem; 3D models still stand-ins); PL, AZ, JO, KD, IT, GR, ES first cut live 2026-11-06 (nations-a1; EU retired from menus, hidden base row only)):** US, TR, IL, EU, UA, RU, IR, SA, AE, PK, IN, CN, KP, KR, EG, CU, **RS "Mountain Shias"**,
   **DW "Coffee Shias" = Yemen** (Abdullah 2026-11-05 19:44: "make sure the Coffee Shias become Yemen" — DW's home, look, maps and
   grand-map region are Yemen). **Adding full nations IQ Iraq, SY Syria, JP Japan** (19:45; own units, uniforms, buildings, voices,
   anthem, equal strength) → 21; then (19:49) **15 more full nations**: GB, FR, DE, PL, AZ, JO, KD (Kurdistan
@@ -153,7 +153,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 
 ## Ground rules for agents
 
-- **GOAL: a $75 studio game by Sat 2026-11-07 20:00 Chicago** (Abdullah 2026-11-06 18:02 "centralizing and becoming faster. Kaizen afterwards"): all work runs in the four lanes of **`orch/PLAN-SAT.md`** (one owner per file, one central prioritized list); no other helpers until the deadline.
+- **GOAL: a $75 studio game by Sat 2026-11-07 20:00 Chicago** (Abdullah 2026-11-06 18:02 "centralizing and becoming faster. Kaizen afterwards"): all work runs in the four lanes of **`orch/PLAN-SAT.md`** (one owner per file, one central prioritized list); Saturday's goal is a **Middle East vertical slice** at full quality (Abdullah 18:52; rest of the world just works); no other helpers until the deadline except the cheap Haiku **janitor** (keeps BRIEF.md/ROADMAP/PLAN-SAT ticks tidy and writes Abdullah's status).
 - **Kaizen** (Abdullah 2026-11-06 17:15 "faster and more efficient, kaizen, non-stop iterations"): read **`orch/BRIEF.md`** first (one-page state of the game, kept fresh by the kaizen loop) instead of re-reading many reports; follow `orch/KAIZEN.md` (measure → one small high-value change → prove → ship → log).
 - **Usage governor** (Abdullah 2026-11-06 17:18 "won't break usage but still occur constantly"): loops obey `orch/BUDGET.md` — max 4 helpers at once (loops back off when busy), max 12 iterations per loop per day, self-start only when quiet, stop cleanly on rate limits.
 
