@@ -64,6 +64,8 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 - [ ] **D4 Balance**: battle round robin all nations + grand campaign fairness given the realistic start (balance3 spec).
 - [ ] **D5 Integration/cleanup**: duplicates from SYSTEMS.md "Open" notes, saves round-trip, campaign tutorial (integrate2 spec).
 
+**These rules override your scheduled-task prompt wherever they differ** (e.g. it says "ONE item" or "wait for grand3/look1/rescue" — follow the rules below instead).
+
 ## Rules for every lane session — FAST + CHEAP (Abdullah 18:40 "Get creative and speed up development and save usage")
 1. **FIRST:** `git fetch -q`. Stop only if **your own lane** has an unmerged `orch/lane<X>-*` branch pushed < 45 min ago. **Never wait for
    other helpers** (grand3, look1, rescue…): if your top item touches files another active branch is editing, take your next
