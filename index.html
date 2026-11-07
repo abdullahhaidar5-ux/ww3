@@ -5079,7 +5079,7 @@ const MSTYLES={   // rout = campaign battles: the side breaks below this share o
  home:{n:'Home defenders',rout:.2,routHome:.08,cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
  fire:{n:'Firepower-reliant',rout:.25,cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
 const MORALE_STYLE={};
-for(const[st,l]of Object.entries({zeal:'IR RS DW KP',prof:'US RU CU GB FR DE JP KR AU CA IT GR PL UA TR CN PK EG ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA',fire:'IN AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
+for(const[st,l]of Object.entries({zeal:'IR RS DW KP',prof:'US RU GB FR DE JP KR AU CA IT GR PL TR CN PK ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA IN UA CU EG',fire:'AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
 function msOf(fac){return MSTYLES[MORALE_STYLE[fac]||'home'];}
 function courageOf(u){const T=G.teams[u.team],ms=msOf(T.fac);let c=ms.cour*(1+.12*(u.rank||0))*upgK(T,u.kind,'courage');if(ms.home&&u.hm)c*=ms.home;if(ms.lone&&u.nsup)c/=ms.lone;return c;}
 function F_(code,name,color,lang,music,doctrine,mods,special,units,sup,fup,o={}){return Object.assign({code,name,color,lang,music,doctrine,mods,special,units,sup,fup},o);}
@@ -12504,7 +12504,7 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
     b.onclick=on;if(onR)b.oncontextmenu=e=>{e.preventDefault();onR();};el.append(b);return b;};
   const sub=(tab,txt)=>{const d=document.createElement('div');d.className='sub';d.dataset.tab=tab;d.textContent=txt;el.append(d);};
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k);mk('build','b_'+k,s.name,'$'+s.cost,null,()=>{if(T.credits<s.cost||!reqMet(ME,k))return;G.aim=null;G.place=G.place===k?null:k;});}
-  const R=roster(T.fac);for(const c of CATS){sub('units',STRUCT[c].name);for(const k of R[c]){const s=stats(T.fac,k);mk('units','u_'+k,s.name,'$'+s.cost,null,()=>{if(!(MODE==='client'?true:enqueue(ME,k)))pushLog('Not enough credits or missing building.','w');else if(MODE==='client')doAct({t:'q',k});},()=>doAct({t:'dq',k}));}}
+  const R=roster(T.fac);for(const c of CATS){sub('units',STRUCT[c].name);for(const k of R[c]){const s=stats(T.fac,k);mk('units','u_'+k,s.fake?'Decoy '+s.name:s.name,'$'+s.cost,null,()=>{if(!(MODE==='client'?true:enqueue(ME,k)))pushLog('Not enough credits or missing building.','w');else if(MODE==='client')doAct({t:'q',k});},()=>doAct({t:'dq',k}));}}
   const ups=upgList(T.fac);for(const c of CATS){const list=ups.filter(k=>UPG[k].at===c);if(!list.length)continue;sub('upg',STRUCT[c].name);for(const k of list){const U=UPG[k];mk('upg','g_'+k,upgName(T.fac,k)+(U.sp?' ★':''),'$'+U.cost,U.desc,()=>doAct({t:'up',k}),null,true);}}
   for(const k in POWERS){if(conqBan(k))continue;const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});}/* owned powers are used from the side rail / hotkey */},null,true);}
   sub('pow','Level up');for(const k in POWERS){if(conqBan(k))continue;const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
@@ -15586,7 +15586,7 @@ function ctEl(){if(CTP)return CTP;const st=document.createElement('style');st.te
 #cmdP button.on{background:#74d08f;color:#0a120c}#cmdP button:disabled{opacity:.4;cursor:default}
 #cmdP .row{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin:2px 0}
 #cmdP .bar{height:5px;background:#3a2a26;border-radius:3px;overflow:hidden;width:54px;display:inline-block;vertical-align:middle}#cmdP .bar i{display:block;height:100%}
-#cmdP small{opacity:.75}#cmdP .nm{font-weight:700;cursor:pointer;min-width:70px}
+#cmdP .abc{margin-left:auto;margin-right:8px;font:600 11px system-ui,sans-serif;letter-spacing:0;text-transform:none;background:#2c3a26;border:1px solid #6b7a63;border-radius:10px;padding:1px 8px;color:#dfe8d6}#cmdP .abc:hover{background:#3a4c33}#cmdP small{opacity:.75}#cmdP .nm{font-weight:700;cursor:pointer;min-width:70px}
 #ctBanner{position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:41;background:rgba(14,22,16,.95);border:1px solid #74d08f;border-radius:8px;padding:6px 12px;color:#fff;font:600 14px system-ui,sans-serif;display:flex;gap:8px;align-items:center}
 #ctBanner button{background:#2c3a26;border:1px solid #74d08f;color:#fff;border-radius:6px;padding:4px 10px;font:700 13px system-ui,sans-serif;cursor:pointer}
 #planBar{position:fixed;left:50%;top:132px;transform:translateX(-50%);z-index:41;background:rgba(10,14,12,.94);border:1px solid #e3b341;border-radius:8px;padding:6px 10px;color:#fff;font:600 13px system-ui,sans-serif;display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:94vw}
@@ -15605,7 +15605,7 @@ function ctPlanBar(){let b=$('planBar');if(CT.mode!=='plan'){if(b)b.hidden=true;
   const h=`<b>Plan: click the map to add step ${n+1}</b>`+Object.keys(CT_TN).map(k=>`<button class="${P.type===k?'on':''}" data-a="ptype" data-v="${k}">${CT_TN[k]}</button>`).join('')+'<span>then</span>'+tr.map(t=>`<button class="${cur===t[0]?'on':''}" data-a="ptrig" data-v="${t[0]}">${t[1]}</button>`).join('')+`<button data-a="pfin">Done (Enter)</button><button data-a="pcan">Cancel (Esc)</button>`;
   if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
 function ctAct(a,v,w){const T=G&&G.teams[ME];if(!G||!T)return;
-  switch(a){case 'tog':CT.open=!CT.open;break;case 'plan':CT.mode==='plan'?ctPlanFinish():ctPlanStart();return;case 'ptype':CT.pl.type=v;break;
+  switch(a){case 'tog':CT.open=!CT.open;if(CT.open&&typeof AB!=='undefined'&&AB.open){AB.open=false;AB.sig='';abUI();}break;case 'abtog':if(typeof abAct==='function'){abAct('open');if(AB.open)CT.open=false;}break;case 'plan':CT.mode==='plan'?ctPlanFinish():ctPlanStart();return;case 'ptype':CT.pl.type=v;break;
     case 'ptrig':if(v==='auto'||v==='go'){CT.pl.trig=v;}else{CT.pl.trig='timer';CT.pl.sec=+v.slice(5);}break;case 'pfin':ctPlanFinish();return;case 'pcan':ctPlanCancel();return;
     case 'go':{const pl=CT.plans.find(p=>p.n===+v);if(pl){pl.go=true;sfxUI(660);ctPlanTick();}break;}case 'goall':ctGoAll();return;case 'pdel':CT.plans=CT.plans.filter(p=>p.n!==+v);pushLog('Plan cancelled.');break;
     case 'tool':CT.mode=CT.mode===v?null:v;CT.draft=null;break;case 'say':doAct({t:'say',i:+v});break;
@@ -15623,7 +15623,8 @@ function ctGroupName(i){return CT.names[i]?(CT_GN.includes(CT.names[i])?CT.names
 function ctUI(force){if(G&&CT.g!==G){CT.g=G;CT.plans=[];CT.marks=[];CT.draft=null;CT.mode=null;CT.draw=null;CT.names={};CT.form={};CT.sendG=0;CT.pid=0;CT.sig='';}   // a new battle starts clean
   if(!G||G.over||RP.on||NET.spec){if(CTP)CTP.hidden=true;const b=$('ctBanner');if(b)b.hidden=true;const q=$('planBar');if(q)q.hidden=true;return;}const P=ctEl(),T=G.teams[ME];if(!T||T.reb){P.hidden=true;return;}ctBanner();ctPlanBar();
   const tp=ctTeamPlay(),ffa=ctFFA(),oth=G.teams.filter(O=>O.id!==ME&&!O.reb&&!O.out),sel=selfSel().length;
-  let h=`<h4 data-a="tog"><span>Command</span><small>${CT.open?'▾':'▸'}</small></h4>`;
+  const abA=typeof abMine==='function'?abMine():null,abT=abA&&abA.list.length?(abA.on!==false?' · ● on':' · ❚❚ paused'):'';
+  let h=`<h4 data-a="tog"><span>Command</span><span class="abc" data-a="abtog" title="Auto-build: standing production orders (key U)">Auto-build [U]${abT}</span><small>${CT.open?'▾':'▸'}</small></h4>`;
   if(CT.open){
     h+=`<div class="sec">Battle plans · key O</div><div class="row"><button class="${CT.mode==='plan'?'on':''}" data-a="plan" ${sel||CT.mode==='plan'?'':'disabled'}>${CT.mode==='plan'?'Finish plan':'Plan for selection'}</button>${CT.plans.some(p=>p.st==='wait'&&p.steps[p.i+1]&&p.steps[p.i+1].trig==='go')?'<button data-a="goall">GO ▶ (Enter)</button>':''}</div>`;
     for(const p of CT.plans){const nx=p.steps[p.i+1],txt=p.st==='done'?'done':p.st==='move'?`step ${p.i+1}/${p.steps.length} under way`:nx?(nx.trig==='go'?`step ${p.i+2}: waiting for GO`:nx.trig==='timer'?`step ${p.i+2} in ${ctFmt(nx.sec-(G.t-(p.i<0?p.t0:p.arr)))}`:`step ${p.i+2} next`):'done';
@@ -15650,7 +15651,7 @@ setInterval(()=>{try{if(!G){if(CTP)CTP.hidden=true;return;}ctPlanTick();ctUI();}
    order; the sim (03g-battlefeel.js bfAutoTick) queues units through enqueue() exactly like a click, at most 3 per factory. */
 const AB={open:false,sig:'',el:null,pick:'',n:6};
 function abEl(){if(AB.el)return AB.el;const st=document.createElement('style');st.textContent=`
-#autoP{position:fixed;left:284px;bottom:236px;z-index:12;width:236px;background:rgba(10,14,12,.9);border:1px solid #6b7a63;border-radius:8px;color:#e8efe4;font:12px system-ui,sans-serif;padding:5px 8px;user-select:none}
+#autoP{position:fixed;left:8px;bottom:272px;z-index:12;width:236px;background:rgba(10,14,12,.9);border:1px solid #6b7a63;border-radius:8px;color:#e8efe4;font:12px system-ui,sans-serif;padding:5px 8px;user-select:none}
 #autoP h4{margin:0;font:700 13px Saira Condensed,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
 #autoP button,#autoP select,#autoP input{background:#2c3a26;border:1px solid #6b7a63;color:#f0f5e6;border-radius:5px;font:600 11px system-ui,sans-serif;padding:2px 6px;min-height:22px;cursor:pointer;margin:1px 2px 1px 0}
 #autoP input{width:44px;cursor:text}#autoP button.on{background:#74d08f;color:#0a120c}#autoP button.off{background:#8a3a2a}
@@ -15669,8 +15670,9 @@ function abAct(a,k,v){if(!G||G.over)return;const A=abMine();
   else if(a==='del')doAct({t:'auto',k,ti:0});else if(a==='up')doAct({t:'auto',k,ci:1});else if(a==='dn')doAct({t:'auto',k,ci:2});else if(a==='clr')doAct({t:'auto',k:'_clr'});
   AB.sig='';setTimeout(abUI,60);}
 function abUI(){const d=abEl();if(!G||G.over||!G.teams[ME]||MODE==='spectate'||(typeof NET!=='undefined'&&NET.spec)){d.hidden=true;return;}const T=G.teams[ME],A=T.auto,R=roster(T.fac);
+  if(!AB.open){d.hidden=true;AB.sig='';return;}if(typeof CT!=='undefined'&&CT.open){CT.open=false;if(typeof ctUI==='function')ctUI(true);}d.style.bottom=(236+(typeof CTP!=='undefined'&&CTP&&!CTP.hidden?CTP.offsetHeight+4:0))+'px';
   const sig=[AB.open,A?JSON.stringify(A):'',AB.pick,AB.n,Math.floor(G.t/3)].join('|');if(sig===AB.sig)return;AB.sig=sig;d.hidden=false;
-  const on=!A||A.on!==false,tot=A?A.list.length:0;let h=`<h4 data-a="open"><span>Auto-build <small style="display:inline;opacity:.6">[U]</small></span><span>${tot?(on?'● on':'❚❚ paused'):''} ${AB.open?'▾':'▸'}</span></h4>`;
+  const on=!A||A.on!==false,tot=A?A.list.length:0;let h=`<h4 data-a="open"><span>Auto-build <small style="display:inline;opacity:.6">[U]</small></span><span>${tot?(on?'● on':'❚❚ paused'):''} ▾</span></h4>`;
   if(AB.open){const opts=[];for(const c of CATS)for(const k of (R[c]||[])){const s=stats(T.fac,k);if(!s||k==='cleric'||k==='champ')continue;opts.push([k,s.name,s.cost]);}if(!AB.pick&&opts.length)AB.pick=opts[0][0];
     h+=`<div style="margin-top:4px">`;
     if(A)for(const it of A.list){const s=stats(T.fac,it.k),have=unitCount(ME,it.k);h+=`<div class="row"><span class="nm" title="${s.name}">${s.name}</span><span class="have">${have}/${it.n}</span><button data-a="dec" data-k="${it.k}">−</button><button data-a="inc" data-k="${it.k}">+</button><button data-a="up" data-k="${it.k}">▲</button><button data-a="dn" data-k="${it.k}">▼</button><button data-a="del" data-k="${it.k}">×</button></div>`;}
@@ -15808,6 +15810,14 @@ function hudDeclutter(){hudDeclutterCss();const on=!!(G&&!G.over&&G.teams&&G.tea
   if(on&&!seen&&G.t<45&&!G.grand)help=true;else if(on&&!seen&&G.t>=45){try{localStorage.setItem('ww3_helpSeen','1');}catch(e){}}
   document.body.classList.toggle('helpOn',!!help);
   const sb=document.getElementById('setBody');if(sb&&!document.getElementById('sHelpLine')){const r=document.createElement('label');r.style.cssText='display:flex;gap:8px;align-items:center;margin:10px 0;font-size:15px;cursor:pointer';r.innerHTML='<input type="checkbox" id="sHelpLine"> Always show the controls help line at the bottom of the battle';const c=r.querySelector('input');c.checked=!!SET.helpLine;c.onchange=()=>{SET.helpLine=c.checked?1:0;saveSet();};sb.append(r);}}
+/* ---------- bottom dock (declutter2, Abdullah 2026-11-06 20:30 "shouldn't be side by side, too cluttered"): the bottom of the battle screen reads as
+   one tidy panel. Command + Auto-build are ONE strip (08g/08h); the Supply lines button is gone (the top bar's Supply switch and key L do it);
+   the controls hint is one quiet line that never runs under the order buttons; empty battle-group slots shrink to their number. View-only CSS. */
+(function(){if(typeof document==='undefined')return;const st=document.createElement('style');st.textContent=
+ 'body #lgBtn{display:none!important}'+
+ '#app #hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;right:520px;opacity:.7}'+
+ '#sqs button.empty{opacity:.55}#sqs button.empty small{display:none}#sqs button.empty{min-width:0;padding-left:7px;padding-right:7px}';
+ document.head.append(st);})();
 // "Report a problem" — one click opens a pre-filled GitHub issue (label `player`). No personal data: only version, mode, nation, map, last console errors.
 (function(){
 const ERR=[];
@@ -16585,7 +16595,7 @@ const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 // Infantry: three realistic rigged soldiers (Western desert-camo marine, Eastern green-camo, Middle-Eastern/militia woodland
 // fatigues) shared by the 18 nations; national colour is a tint over the camo. 'soldier' is the old stand-in.
 // laneE: foot soldiers read too small at gameplay height (Abdullah 2026-11-06 photo) - draw them ~18% bigger (visual only)
-for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.18;c._big=1;}}
+for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.45;c._big=1;}}
 const SOLV={US:'sol_w',EU:'sol_w',FR:'sol_w',DE:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
 const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:58},barracks:{m:'b_barr_me',size:54},factory:{m:'b_fact_me',size:62}};
@@ -16767,28 +16777,75 @@ const AIRKEY=/^(jet|heli)$|^m_(su35|f15|f16|f18|j10|mig29|rafale|typhoon|ah1|apa
 function airScheme(key,team){if(!team||!team.fac||!AIRKEY.test(key))return null;const X=AIRX[team.fac];if(!X)return null;return HELIKEY.test(key)?X.h:X;}
 function airCamoFreq(key){const P=MODELS.proto[key];if(!P)return 0;if(P._acf!=null)return P._acf;P.scene.updateMatrixWorld(true);let mx=0;P.scene.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();const sz=o.geometry.boundingBox.getSize(new THREE.Vector3());mx=Math.max(mx,sz.x,sz.y,sz.z);}});return P._acf=mx>0?3.2/mx:0;}
 const FLAGTEX={};
-// Militia emblems, drawn on a 120x72 canvas: Mountain Shias carry the Zulfiqar (the forked double-bladed sword),
-// Coffee Shias a lion standing over a jambiya dagger.
+// Original emblems (Abdullah 2026-11-06 21:03 "make the logo for the mountain Shias and coffee Shias better"). 120x72 design space.
+function emGold(x,y0,y1){const g=x.createLinearGradient(0,y0,0,y1);g.addColorStop(0,'#fff0b8');g.addColorStop(.35,'#e2b955');g.addColorStop(.55,'#a87a22');g.addColorStop(.8,'#e6c46a');g.addColorStop(1,'#8a6218');return g;}
+function emLaurel(x,cx,cy,r,side,col){x.save();x.translate(cx,cy);for(let i=0;i<7;i++){const a=(side<0?Math.PI*.62:Math.PI*.38)+side*(-.14-i*.17),px=Math.cos(a)*r,py=Math.sin(a)*r;
+  x.save();x.translate(px,py);x.rotate(a+(side<0?-1.15:1.15)+Math.PI/2);x.fillStyle=col;x.beginPath();x.ellipse(0,0,1.7,4.2,0,0,7);x.fill();x.restore();}
+  x.strokeStyle=col;x.lineWidth=.9;x.beginPath();x.arc(0,0,r,side<0?Math.PI*.62-.1:Math.PI*.38+.1,side<0?Math.PI*.62+1.25:Math.PI*.38-1.25,side>0);x.stroke();x.restore();}
+function emRing(x,cx,cy,r,fillA,fillB){const g=x.createRadialGradient(cx-r*.3,cy-r*.35,r*.1,cx,cy,r);g.addColorStop(0,fillA);g.addColorStop(1,fillB);
+  x.fillStyle=g;x.beginPath();x.arc(cx,cy,r,0,7);x.fill();x.lineWidth=2.4;x.strokeStyle=emGold(x,cy-r,cy+r);x.beginPath();x.arc(cx,cy,r,0,7);x.stroke();
+  x.lineWidth=.6;x.strokeStyle='rgba(255,230,160,.55)';x.beginPath();x.arc(cx,cy,r-2.4,0,7);x.stroke();}
+function emZulfiqar(x,cx,cy,s){x.save();x.translate(cx,cy);x.scale(s,s);
+  const bl=x.createLinearGradient(0,-8,0,8);bl.addColorStop(0,'#ffffff');bl.addColorStop(.5,'#c9ccd1');bl.addColorStop(1,'#80858c');
+  x.fillStyle=bl;x.strokeStyle='#2a2d33';x.lineWidth=.8;x.beginPath();x.moveTo(-22,-3.2);x.lineTo(16,-4.4);x.quadraticCurveTo(31,-6.5,42,-12);x.lineTo(36,-4.8);x.quadraticCurveTo(28,-2.2,21,-.9);x.lineTo(21,.9);x.quadraticCurveTo(28,2.2,36,4.8);x.lineTo(42,12);x.quadraticCurveTo(31,6.5,16,4.4);x.lineTo(-22,3.2);x.closePath();x.fill();x.stroke();
+  x.strokeStyle='rgba(60,64,70,.6)';x.lineWidth=.6;x.beginPath();x.moveTo(-20,0);x.lineTo(19,0);x.stroke();
+  const gd=emGold(x,-11,11);x.fillStyle=gd;x.strokeStyle='#5a3d0c';x.lineWidth=.7;
+  x.beginPath();x.moveTo(-21,-11);x.quadraticCurveTo(-26,0,-21,11);x.lineTo(-25,11);x.quadraticCurveTo(-30,0,-25,-11);x.closePath();x.fill();x.stroke();
+  x.fillStyle='#2b1a10';x.fillRect(-40,-2.8,15,5.6);x.fillStyle=gd;for(let i=0;i<4;i++)x.fillRect(-38.5+i*3.6,-2.8,1,5.6);
+  x.beginPath();x.arc(-42,0,3.6,0,7);x.fill();x.stroke();x.restore();}
+function emText(x,t,cx,cy,px,col){x.save();x.font='700 '+px+'px "Noto Naskh Arabic","Amiri","Scheherazade New","Traditional Arabic","Times New Roman",serif';x.textAlign='center';x.textBaseline='middle';x.direction='rtl';
+  x.fillStyle='rgba(0,0,0,.6)';x.fillText(t,cx+.6,cy+.7);x.fillStyle=col;x.fillText(t,cx,cy);x.restore();}
 function drawEmblem(x,fac,bg){const W=120,H=72;
-  if(fac==='RS'){if(bg){x.fillStyle='#111';x.fillRect(0,0,W,H);x.fillStyle='#b3262c';x.fillRect(0,H*.7,W,H*.3);}
-    x.save();x.translate(60,32);x.rotate(-.12);const sil='#e9e7e1',gold='#d6b24a',dk='#2a2a2a';
-    // blade with the forked tip
-    x.fillStyle=sil;x.beginPath();x.moveTo(-26,-4);x.lineTo(14,-5.5);x.quadraticCurveTo(34,-8,47,-14);x.lineTo(40,-6.5);x.quadraticCurveTo(30,-3,20,-1);x.lineTo(20,1);x.quadraticCurveTo(30,3,40,6.5);x.lineTo(47,14);x.quadraticCurveTo(34,8,14,5.5);x.lineTo(-26,4);x.closePath();x.fill();
-    x.strokeStyle='#9a9890';x.lineWidth=1;x.beginPath();x.moveTo(-24,0);x.lineTo(18,0);x.stroke();
-    // crossguard, grip, pommel
-    x.fillStyle=gold;x.beginPath();x.moveTo(-26,-13);x.quadraticCurveTo(-31,0,-26,13);x.lineTo(-30,13);x.quadraticCurveTo(-35,0,-30,-13);x.closePath();x.fill();
-    x.fillStyle=dk;x.fillRect(-46,-3.2,17,6.4);x.fillStyle=gold;for(let i=0;i<4;i++)x.fillRect(-44+i*4,-3.2,1.2,6.4);x.beginPath();x.arc(-48,0,4.2,0,7);x.fill();x.restore();}
-  else if(fac==='DW'){if(bg){x.fillStyle='#4a2f1c';x.fillRect(0,0,W,H);x.fillStyle='#c8a46e';x.fillRect(0,H-12,W,12);}
-    const gold='#e2b64a',dk='#2b1c10';
-    // lion, facing right
-    x.fillStyle=gold;x.beginPath();x.ellipse(54,30,22,9,0,0,7);x.fill();
-    for(const [lx,ly] of [[38,36],[46,36],[62,36],[70,36]]){x.fillRect(lx-2.5,ly,5,12);x.fillRect(lx-3,ly+10,7,3);}
-    x.save();x.translate(80,22);x.fillStyle='#b8862e';x.beginPath();for(let i=0;i<=18;i++){const a=i/18*6.283,r=i%2?8:12.5;x.lineTo(Math.cos(a)*r,Math.sin(a)*r);}x.closePath();x.fill();x.fillStyle=gold;x.beginPath();x.arc(2,1,7,0,7);x.fill();x.fillRect(5,1,7,5);x.fillStyle=dk;x.beginPath();x.arc(4,-1.5,1.3,0,7);x.fill();x.restore();
-    x.strokeStyle=gold;x.lineWidth=2.6;x.lineCap='round';x.beginPath();x.moveTo(33,27);x.quadraticCurveTo(20,20,24,10);x.stroke();x.fillStyle='#b8862e';x.beginPath();x.arc(24,9,3,0,7);x.fill();
-    // jambiya: wide hilt and a sharply curved blade
-    x.save();x.translate(60,58);x.fillStyle='#d9d4c8';x.beginPath();x.moveTo(-6,-2.5);x.lineTo(16,-3);x.quadraticCurveTo(30,-3,33,-11);x.quadraticCurveTo(30,2,14,3);x.lineTo(-6,2.5);x.closePath();x.fill();
-    x.fillStyle=gold;x.fillRect(-9,-5,3,10);x.fillStyle=dk;x.fillRect(-24,-3,15,6);x.fillStyle=gold;x.beginPath();x.moveTo(-24,-3);x.lineTo(-30,-7);x.lineTo(-30,7);x.lineTo(-24,3);x.closePath();x.fill();x.restore();}}
-function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#111':'#4a2f1c';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
+  if(fac==='RS'){drawRS(x,bg);
+  } else if(fac==='DW'){
+    if(bg){const g=x.createRadialGradient(60,30,6,60,34,72);g.addColorStop(0,'#5a3820');g.addColorStop(1,'#24150b');x.fillStyle=g;x.fillRect(0,0,W,H);
+      const t=[['#3f4a22',H*.80],['#58612b',H*.86],['#76763a',H*.92]];for(const [c,y] of t){x.fillStyle=c;x.beginPath();x.moveTo(0,H);x.lineTo(0,y);for(let i=0;i<=12;i++){const sx=i*10,yy=y+Math.sin(i*1.3)*1.4;x.lineTo(sx,yy);x.lineTo(sx+10,yy);}x.lineTo(W,H);x.closePath();x.fill();x.strokeStyle='rgba(235,220,150,.35)';x.lineWidth=.5;x.beginPath();for(let i=0;i<=12;i++){const sx=i*10,yy=y+Math.sin(i*1.3)*1.4;x.moveTo(sx,yy+.3);x.lineTo(sx+10,yy+.3);}x.stroke();}
+      x.fillStyle=emGold(x,H*.785,H*.8);x.fillRect(0,H*.785,W,1);emText(x,'اليمن',60,H*.9,10,'#f2d68a');}
+    const cx=60,cy=29.5,r=21;emRing(x,cx,cy,r,'#7a2a1a','#2c0d07');
+    x.save();x.beginPath();x.arc(cx,cy,r-1.3,0,7);x.clip();
+    // terraced hills inside the roundel
+    for(const [c,y] of [['#3b2a12',39],['#4f3a18',42],['#6a5222',45]]){x.fillStyle=c;x.beginPath();x.moveTo(cx-r,cy+r);x.lineTo(cx-r,y);for(let i=0;i<9;i++){const sx=cx-r+i*5.5;x.lineTo(sx,y-(i%2?1.2:0));x.lineTo(sx+5.5,y-(i%2?1.2:0));}x.lineTo(cx+r,cy+r);x.closePath();x.fill();}
+    x.restore();
+    // coffee branch: stem, leaves with midribs, cherries
+    x.strokeStyle='#4a3216';x.lineWidth=1.4;x.lineCap='round';x.beginPath();x.moveTo(47,40);x.quadraticCurveTo(57,26,74,17);x.stroke();
+    const leaf=(lx,ly,a,len)=>{x.save();x.translate(lx,ly);x.rotate(a);const lg=x.createLinearGradient(0,-3,0,3);lg.addColorStop(0,'#86b04e');lg.addColorStop(1,'#2f5420');x.fillStyle=lg;
+      x.beginPath();x.moveTo(0,0);x.quadraticCurveTo(len*.5,-4.2,len,0);x.quadraticCurveTo(len*.5,4.2,0,0);x.fill();x.strokeStyle='rgba(220,240,180,.55)';x.lineWidth=.5;x.beginPath();x.moveTo(.5,0);x.lineTo(len-1,0);x.stroke();x.restore();};
+    leaf(51,33.5,-2.1,12);leaf(55,30,.15,12);leaf(61,25,-2.4,11);leaf(65,23,-.05,12);leaf(70,19.5,-1.2,9);
+    const cherry=(ccx,ccy)=>{const cg=x.createRadialGradient(ccx-.9,ccy-.9,.3,ccx,ccy,2.6);cg.addColorStop(0,'#ff6a5a');cg.addColorStop(.6,'#c3141f');cg.addColorStop(1,'#6e0710');x.fillStyle=cg;x.beginPath();x.arc(ccx,ccy,2.5,0,7);x.fill();};
+    cherry(57.5,32.6);cherry(60.4,33.4);cherry(59,30.2);cherry(66.8,27);cherry(69.2,26.1);
+    // jambiya across the lower roundel: curved blade, wide flared hilt, belt sheath tip
+    x.save();x.translate(60,42);x.rotate(-.06);x.scale(.92,.92);const bl=x.createLinearGradient(0,-5,0,5);bl.addColorStop(0,'#ffffff');bl.addColorStop(.6,'#bfc3c8');bl.addColorStop(1,'#7c8188');
+    x.fillStyle=bl;x.strokeStyle='#2a2d33';x.lineWidth=.7;x.beginPath();x.moveTo(-4,-2);x.lineTo(12,-2.4);x.quadraticCurveTo(22,-2.6,25,-9);x.quadraticCurveTo(23,1.5,12,2.4);x.lineTo(-4,2);x.closePath();x.fill();x.stroke();
+    const gd=emGold(x,-7,7);x.fillStyle=gd;x.strokeStyle='#5a3d0c';x.fillRect(-6.5,-4,2.5,8);
+    x.fillStyle='#3a2414';x.fillRect(-17,-2.4,10.5,4.8);x.fillStyle=gd;x.beginPath();x.moveTo(-17,-2.4);x.lineTo(-23,-6.5);x.quadraticCurveTo(-25,0,-23,6.5);x.lineTo(-17,2.4);x.closePath();x.fill();x.stroke();
+    x.fillStyle=gd;x.beginPath();x.arc(-11.5,0,1.1,0,7);x.fill();x.restore();
+  }}
+// Mountain Shias: printed cloth banner (Abdullah 21:19 "as realistic as you are allowed to") — real militia-banner style, our own emblem; never the real organisation's marks
+function emCloth(x,W,H,base,seed){x.fillStyle=base;x.fillRect(0,0,W,H);
+  for(let i=0;i<7;i++){const fx=i*W/6+((seed*37+i*53)%9)-4,g=x.createLinearGradient(fx-10,0,fx+10,0);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.5,i%2?'rgba(255,255,255,.10)':'rgba(70,40,0,.13)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(fx-10,0,20,H);}
+  let s=seed|0||7;const r=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
+  for(let i=0;i<900;i++){x.fillStyle=r()<.5?'rgba(0,0,0,.045)':'rgba(255,255,255,.05)';x.fillRect(r()*W,r()*H,.7,.7);}
+  x.strokeStyle='rgba(0,0,0,.05)';x.lineWidth=.3;for(let y=0;y<H;y+=1.6){x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();}}
+function drawRS(x,bg){const W=120,H=72,G='#0f6a2e',G2='#0a4d20';
+  if(bg){emCloth(x,W,H,'#f4c400',11);
+    const b=x.createLinearGradient(0,H*.8,0,H);b.addColorStop(0,'#b5141c');b.addColorStop(1,'#7e0c12');x.fillStyle=b;x.fillRect(0,H*.8,W,H*.2);
+    emText(x,'لبيك يا حسين',60,H*.9,9.5,'#fff4c8');
+    emText(x,'شيعة الجبل',60,8.6,10.5,G);}
+  const cx=60,cy=34.5,r=16.5;
+  // laurels (printed green)
+  emLaurel(x,cx,cy+1,r+4,-1,G);emLaurel(x,cx,cy+1,r+4,1,G);
+  // printed roundel: green ring, mountains in two greens, white snow
+  x.lineWidth=2.2;x.strokeStyle=G;x.beginPath();x.arc(cx,cy,r,0,7);x.stroke();x.lineWidth=.7;x.beginPath();x.arc(cx,cy,r-2.3,0,7);x.stroke();
+  x.save();x.beginPath();x.arc(cx,cy,r-3,0,7);x.clip();
+  x.fillStyle=G;x.fill(new Path2D('M40 46 L48 33 L51.5 36 L58 24 L64.5 34 L68 30 L80 46 Z'));
+  x.fillStyle='#fffbe8';x.fill(new Path2D('M58 24 L61.2 28.9 L59.6 28.1 L58 29.8 L56.4 28 L54.9 29 Z'));x.fill(new Path2D('M48 33 L50 35.9 L48.5 35.3 L47.6 36.3 L46.3 35.4 Z'));x.fill(new Path2D('M68 30 L70.1 33 L68.6 32.4 L67.5 33.5 L66.3 32.5 Z'));
+  x.fillStyle=G2;x.fill(new Path2D('M40 49 L52 40 L59 43 L66 38 L80 49 Z'));x.restore();
+  // Zulfiqar printed in green with a white edge line, across the roundel
+  x.save();x.translate(61,44.5);x.scale(.5,.5);x.fillStyle=G;x.strokeStyle='#fffbe8';x.lineWidth=1.1;
+  x.beginPath();x.moveTo(-22,-3.2);x.lineTo(16,-4.4);x.quadraticCurveTo(31,-6.5,42,-12);x.lineTo(36,-4.8);x.quadraticCurveTo(28,-2.2,21,-.9);x.lineTo(21,.9);x.quadraticCurveTo(28,2.2,36,4.8);x.lineTo(42,12);x.quadraticCurveTo(31,6.5,16,4.4);x.lineTo(-22,3.2);x.closePath();x.fill();x.stroke();
+  x.beginPath();x.moveTo(-21,-11);x.quadraticCurveTo(-26,0,-21,11);x.lineTo(-25,11);x.quadraticCurveTo(-30,0,-25,-11);x.closePath();x.fill();x.stroke();
+  x.fillRect(-40,-2.8,15,5.6);x.strokeRect(-40,-2.8,15,5.6);x.beginPath();x.arc(-42,0,3.6,0,7);x.fill();x.stroke();x.restore();}
+function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#f4c400':'#24150b';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
 function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
   const rect=(col,a,b,w,h)=>{x.fillStyle=col;x.fillRect(a,b,w,h);};const hs=(cols)=>cols.forEach((col,i)=>rect(col,0,i*H/cols.length,W,H/cols.length+1));const vs=(cols)=>cols.forEach((col,i)=>rect(col,i*W/cols.length,0,W/cols.length+1,H));
   const star=(cx,cy,r,col,n=5)=>{x.fillStyle=col;x.beginPath();for(let i=0;i<n*2;i++){const a=-Math.PI/2+i*Math.PI/n,rr=i%2?r*.42:r;x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}x.closePath();x.fill();};
@@ -18559,7 +18616,7 @@ function grJudge(){if(!GC.me||GC.over)return;const me=GC.me;if(GC.nat[me].dead){
 // ---------- player orders ----------
 function grOrderMove(aid,to){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return {err:'no army'};const r=grPath(a.o,a.at,to,a.fl);if(!r)return {err:a.fl?'Fleets sail between sea zones only.':'No route (check ports, seas and borders).'};
   if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;return {ok:1,r};}
-function grDeclare(a,b){GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);}
+function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);}
 function grRecruit(c,pi,k){const st=GC.prov[pi];if(st.o!==c)return 'Not your province.';const fac=grNat(c).fac,rc=GR_RECRUIT.find(r=>r[0]===k);if(!rc||!grHasKind(fac,k))return 'Not available.';const T=geRecruitTerms(c,pi,k,rc[1]),cost=T.cost;
   if(GC.nat[c].cash<cost)return 'Not enough money.';if(GC.nat[c].e.man<T.man)return 'Not enough manpower ('+Math.round(GC.nat[c].e.man)+' of '+T.man+').';GC.nat[c].cash-=cost;GC.nat[c].e.man-=T.man;st.rq.push([GC.turn+T.turns,k,rc[1]]);return '';}
 function grSplit(aid){const a=GC.armies.find(x=>x.id===aid);if(!a||a.u.length<2)return null;const h=Math.floor(a.u.length/2);const mv=a.u.splice(a.u.length-h,h);const b=grAddArmy(a.o,a.at,mv);if(a.fl)b.fl=1;return b;}
@@ -19126,8 +19183,8 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   const rg=guEl('span','display:flex;gap:4px;flex-wrap:wrap;margin-left:auto');for(const [nm,r] of GR_REGIONS){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#dfe8f0;cursor:pointer;font-size:13px',nm);b.type='button';b.onclick=()=>{guFit(r);guRedraw();};rg.appendChild(b);}t.appendChild(rg);
   const end=guEl('button','padding:7px 18px;border-radius:6px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px;font-weight:bold',GC.ph==='plan'?'End turn ▶':'Resolving…');end.id='gEnd';end.type='button';end.disabled=GC.ph!=='plan'||!!GC.over;end.title='Enter';end.onclick=guEndTurn;t.appendChild(end);
   if(me&&typeof npOpen==='function'){const nb=guEl('button','padding:7px 14px;border-radius:6px;border:1px solid #c9a35a;background:#2a3a4c;color:#ffe6a8;cursor:pointer;font-size:15px;font-weight:bold','Nation');nb.type='button';nb.title='Open your nation panel';nb.onclick=()=>npOpen();t.appendChild(nb);}
-  const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);}
-function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();}
+  const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);try{alBar();}catch(e){console.error('alBar',e);}}  // hook: Lane G alerts bar (13l-galerts.js)
+function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();try{gdNews();}catch(e){}}
 /* ---------- real time with pause (EU4 feel, lane A A2 slice 1) ----------
    The calendar runs in days (30 a month); a month ending = the old End turn, so the simulation and its determinism are unchanged:
    the result depends only on state + the orders standing when each month closes + seed. Starts paused (= the classic turn game).
@@ -19341,7 +19398,8 @@ function g3Towns(){if(G3.towns)return G3.towns;const L=[];
       const cap=p.cap&&t===0;L.push({pi:p.i,x:X,z:Z,cap,n:cap?46:t===0?18:10,flat,east:reg==='EA'||reg==='SEA',t});}}
   return G3.towns=L;}
 function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],row:[],court:[],flat:[],tower:[],mosque:[],spire:[],disc:[],wall:[],derrick:[],field:[],spoil:[],pier:[]};
-  const push=(k,x,z,sx,sy,sz,ry,col)=>by[k].push([x,g3HeightAt(x,z),z,sx,sy,sz,ry,col]);
+  const SHK={house:1,gable:1,row:1,court:1,flat:1,tower:1,mosque:1,spire:1},SHD=[],sl=Math.hypot(G3L.sun[0],G3L.sun[2])||1,sdx=-G3L.sun[0]/sl,sdz=-G3L.sun[2]/sl,sth=Math.atan2(sdx,sdz);
+  const push=(k,x,z,sx,sy,sz,ry,col)=>{const h=g3HeightAt(x,z);by[k].push([x,h,z,sx,sy,sz,ry,col]);if(SHK[k]){const len=sy*2*(k==='tower'||k==='spire'?1.2:1)+sx*.6;SHD.push([x+sdx*len*.4,h+.2,z+sdz*len*.4,sx*.95,1,len,sth,[1,1,1]]);}};
   for(const t of T){const p=GCM.P[t.pi],SP=4.5,R=Math.sqrt(t.n*SP*SP/3.14)+3.5;push('disc',t.x,t.z,R*.82,1,R*.82,0,[1.22,1.18,1.08]);
     if(t.cap||p.wg&&t.t===0)by.wall.push([t.x,g3HeightAt(t.x,t.z),t.z,R+2,1,R+2,0,[1,1,1]]);
     const th=g3Hash(t.pi,t.t+31)*3.1416,ct=Math.cos(th),st=Math.sin(th),R2=Math.ceil(R/SP)+1,cells=[];
@@ -19359,7 +19417,10 @@ function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],ro
   const col=new THREE.Color();
   for(const k of Object.keys(by)){const L=by[k];if(!L.length)continue;const m=new THREE.InstancedMesh(A[k],G3.matLit,L.length),M=new THREE.Matrix4();
     L.forEach((r,i)=>{M.compose(new THREE.Vector3(r[0],r[1],r[2]),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r[6]),new THREE.Vector3(r[3],r[4],r[5]));m.setMatrixAt(i,M);col.setRGB(r[7][0],r[7][1],r[7][2]);m.setColorAt(i,col);});
-    m.instanceMatrix.needsUpdate=true;m.castShadow=false;grp.add(m);}}
+    m.instanceMatrix.needsUpdate=true;m.castShadow=false;grp.add(m);}
+  if(SHD.length){const sm=new THREE.InstancedMesh(new THREE.BoxGeometry(1,.05,1),new THREE.MeshBasicMaterial({color:0x1a1208,transparent:true,opacity:.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),SHD.length),M=new THREE.Matrix4();
+    SHD.forEach((r,i)=>{M.compose(new THREE.Vector3(r[0],r[1],r[2]),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r[6]),new THREE.Vector3(r[3],r[4],r[5]));sm.setMatrixAt(i,M);});
+    sm.instanceMatrix.needsUpdate=true;sm.castShadow=false;sm.renderOrder=2;grp.add(sm);}}
 // forests, palms, scrub by biome: one instanced mesh per tree type (a few thousand instances each)
 function g3BuildForests(grp){const F=G3.F,A=G3_GEO(),T=g3Towns(),W=F.W,P=GCM.P,L={conifer:[],broad:[],palm:[],scrub:[]};
   const near=(x,z)=>{for(const t of T)if(Math.abs(t.x-x)<40&&Math.abs(t.z-z)<40&&Math.hypot(t.x-x,t.z-z)<(t.cap?36:26))return true;return false;};
@@ -20025,9 +20086,9 @@ function geNation(c,R,inc){const N=GC.nat[c],E=N.e,S=GE_ST[c],br={};const own=S.
   if(E.food<25){const want=Math.min(50,40-E.food);const cost=want*5;if(N.cash+net>=cost){E.food+=want;net-=cost;br.fImp2=-Math.round(cost);}}
   E.starve=0;if(E.food<0){E.food=0;E.starve=1;}E.food=Math.min(320,E.food);
   // manpower
-  E.man=Math.min(geManCap(c),E.man+geManRegen(c));
+  E.man=Math.min(geManCap(c),E.man+geManRegen(c)*gmod('nation',c,'manpower',1));
   // upkeep (grows with army size), total war surcharge
-  const av=geArmyVal(c);let up=av*.018*(1+av/70000)*(geFx(c,'upkeep')?.88:1)*(E.tw?1.15:1);br.upkeep=-Math.round(up);net-=up;
+  const av=geArmyVal(c);let up=av*.018*(1+av/70000)*(geFx(c,'upkeep')?.88:1)*(E.tw?1.15:1)*gmod('nation',c,'upkeep',1);br.upkeep=-Math.round(up);net-=up;
   // war bonds: due bonds are repaid; a default costs credit and stability
   const keep=[];for(const b of E.bonds){if(b[0]>GC.turn){keep.push(b);continue;}if(N.cash+net>=b[1]){net-=b[1];br.bondPay=(br.bondPay||0)-b[1];}else{E.def++;E.defT=GC.turn+8;keep.push([GC.turn+4,Math.round(b[1]*1.2)]);grLog(GCM.nats.get(c).name+' defaulted on a war bond!',c===GC.me?c:'');}}E.bonds=keep;
   if(E.defT>GC.turn)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+2);}
@@ -20037,7 +20098,7 @@ function geNation(c,R,inc){const N=GC.nat[c],E=N.e,S=GE_ST[c],br={};const own=S.
   if(E.tw)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+3.5);}
   if(E.ration)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+3);}
   if(E.starve)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+8);}
-  N.cash+=net;N.inc=Math.round(net);E.br=br;
+  if(net>0)net*=gmod('nation',c,'income',1);N.cash+=net;N.inc=Math.round(net);E.br=br;
   if(N.cash<0){N.cash=0;for(const a of GC.armies)if(a.o===c&&a.u.length>3&&R()<.5){a.u.pop();}}
   E.hist.push([GC.turn,Math.round(net),Math.round(-br.upkeep)]);if(E.hist.length>30)E.hist.shift();}
 // ---------- supply state of armies (the battle reads it) ----------
@@ -20661,6 +20722,7 @@ const GMOD_ROWS=[
   {id:'sty_prof',src:'Professional officers',scope:'nation',stat:'rallySpeed',mul:1.25,cond:'style:prof'},
   {id:'sty_home',src:'Home defenders',scope:'nation',stat:'homeMorale',mul:1.4,cond:'style:home'},
   {id:'sty_fire',src:'Firepower doctrine',scope:'nation',stat:'fireSupport',mul:1.1,cond:'style:fire'}];
+const GMOD_HOOKS=[];   // monthly systems register here (ideas/power points, later stability, war support...): GMOD_HOOKS.push(fn)
 const GMOD_C={m:-1,g:null,cache:new Map()};
 function gmodKey(scope,obj){return scope==='army'?(obj&&(obj.id!==undefined?obj.id:obj.nm)):obj;}
 function gmodCond(row,key){if(row.t!==undefined&&row.t!==key)return false;const c=row.cond||'always';const i=c.indexOf(':');const f=GMOD_COND[i<0?c:c.slice(0,i)];if(!f)return false;try{return !!f(key,i<0?'':c.slice(i+1));}catch(e){return false;}}
@@ -20673,10 +20735,207 @@ function gmod(scope,obj,stat,base){base=base||0;if(GMOD_C.g!==GC){GMOD_C.g=GC;GM
 function gmodLines(scope,obj,stat){return gmodRows(scope,obj,stat).map(r=>(r.add?(r.add>0?'+':'')+Math.round(r.add*100)+'%':'x'+r.mul)+' from '+r.src+(r.until!==undefined?' (until month '+r.until+')':''));}
 function gmodAdd(row){if(!GC)return;if(!GC.mod)GC.mod=[];GC.mod=GC.mod.filter(r=>r.id!==row.id);GC.mod.push(row);GMOD_C.cache.clear();}
 function gmodRemove(id){if(!GC||!GC.mod)return;GC.mod=GC.mod.filter(r=>r.id!==id);GMOD_C.cache.clear();}
-function gmodMonth(m){if(!GC)return;if(m===undefined)m=GC.turn;GMOD_C.m=m;GMOD_C.g=GC;if(GC.mod)GC.mod=GC.mod.filter(r=>r.until===undefined||r.until>=m);GMOD_C.cache.clear();}
+function gmodMonth(m){if(!GC)return;if(m===undefined)m=GC.turn;GMOD_C.m=m;GMOD_C.g=GC;if(GC.mod)GC.mod=GC.mod.filter(r=>r.until===undefined||r.until>=m);GMOD_C.cache.clear();for(const f of GMOD_HOOKS)try{f(m);}catch(e){console.error('monthly hook',e);}GMOD_C.cache.clear();}
 // Nation panel tab: every modifier that applies to this nation, with its source.
 const GMOD_STATS={warSupport:'War support',rallySpeed:'Rally speed',homeMorale:'Home-ground morale',fireSupport:'Fire support'};
 npTab('mods','✨','Modifiers',(code,body)=>{const rows=gmodRows('nation',code);
   body.innerHTML='<div style="opacity:.8;margin-bottom:8px">Every bonus and penalty on this nation, and where it comes from.</div>'+(rows.length?rows.map(r=>'<div style="padding:5px 0;border-bottom:1px solid #2c4258"><b>'+(GMOD_STATS[r.stat]||r.stat)+'</b> '+(r.add?(r.add>0?'+':'')+Math.round(r.add*100)+'%':'x'+r.mul)+' <span style="opacity:.75">— '+r.src+(r.until!==undefined?', until month '+r.until:'')+'</span></div>').join(''):'<i>No modifiers.</i>');});
+// 13l-galerts.js — Lane G: EU4-style alerts bar on the grand map (B2b). Registry: alAdd(id,icon,title,test(code)->{n,tip,go}|null).
+// Every later system adds its alert with one alAdd call. Pure read-only UI: no sim state, nothing to checkpoint.
+const AL={list:[]};
+function alAdd(id,icon,title,test){const i=AL.list.findIndex(a=>a.id===id);const a={id,icon,title,test};if(i>=0)AL.list[i]=a;else AL.list.push(a);}
+function alFly(pi){try{if(typeof npClose==='function')npClose();guCentre(pi,2.4);GV.sel=pi;guRedraw();guSide();}catch(e){}}
+function alBar(){const t=document.getElementById('gTop');if(!t||!GC||!GC.me)return;let b=document.getElementById('gAlerts');
+  if(!b){b=document.createElement('div');b.id='gAlerts';b.style.cssText='display:flex;gap:6px;align-items:center;padding:3px 10px;background:#0d1822;border-bottom:1px solid #22384b;min-height:26px;font-size:13px;flex-wrap:wrap';t.insertAdjacentElement('afterend',b);}
+  b.innerHTML='';const code=GC.me;let any=0;
+  for(const a of AL.list){let r=null;try{r=a.test(code);}catch(e){console.error('alert',a.id,e);}if(!r||!r.n)continue;any++;
+    const el=document.createElement('button');el.type='button';el.title=a.title+(r.tip?' — '+r.tip:'');
+    el.style.cssText='padding:2px 9px;border-radius:12px;border:1px solid '+(r.bad?'#b5605a':'#c9a35a')+';background:#1a2a3a;color:'+(r.bad?'#ffb3a8':'#ffe6a8')+';cursor:pointer;font-size:13px';
+    el.innerHTML=a.icon+' <b>'+r.n+'</b> <span style="opacity:.75">'+a.title+'</span>';el.onclick=()=>{try{r.go&&r.go();}catch(e){console.error(e);}};b.appendChild(el);}
+  if(!any){const s=document.createElement('span');s.style.cssText='opacity:.5';s.textContent='Nothing needs you right now.';b.appendChild(s);}}
+(function(){
+const my=c=>GC.armies.filter(a=>a.o===c&&!a.fl);
+alAdd('idle','💤','Idle armies',c=>{const as=my(c).filter(a=>!a.path.length&&a.u.length);return as.length?{n:as.length,tip:'click to jump to the next one',go:()=>{AL.i=((AL.i||0)+1)%as.length;alFly(as[AL.i].at);}}:null;});
+alAdd('cash','💸','Losing money',c=>{const N=GC.nat[c];return (N.inc||0)<0||N.cash<0?{n:Math.round(N.inc||0),bad:1,tip:'income is negative — open the economy tab',go:()=>npOpen(c,'eco')}:null;});
+alAdd('hoard','💰','Unspent cash',c=>{const N=GC.nat[c];return N.cash>=8000&&(N.inc||0)>=0?{n:Math.floor(N.cash/1000)+'k',tip:'recruit, build or develop',go:()=>npOpen(c,'eco')}:null;});
+alAdd('unrest','🔥','Unrest',c=>{const ps=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c&&GC.prov[p.i].un>=60);return ps.length?{n:ps.length,bad:1,tip:'provinces near revolt — lower the tax there',go:()=>alFly(ps[0].i)}:null;});
+alAdd('war','⚔','At war',c=>{const w=Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grAtWar(c,o));return w.length?{n:w.length,bad:1,tip:w.map(o=>GCM.nats.get(o).name).join(', '),go:()=>npOpen(c,'dip')}:null;});
+alAdd('supply','🚚','Out of supply',c=>{const as=my(c).filter(a=>a.sup);return as.length?{n:as.length,bad:1,tip:'armies cut off from supply',go:()=>alFly(as[0].at)}:null;});
+})();
+(function(){alAdd('truce','🕊','Truces ending',c=>{const k=Object.keys(GC.tr||{}).filter(x=>x.split('|').includes(c)&&GC.tr[x]===GC.turn+1);return k.length?{n:k.length,tip:'a truce ends next turn',go:()=>npOpen(c,'dip')}:null;});})();
+// B3 POWER POINTS + NATIONAL IDEAS (lane B, EU4-style). Three pools — Political (pol), Diplomatic (dip), Military (mil) — grow every month
+// via the ONE monthly hook (gmodMonth -> GMOD_HOOKS). Points are spent on ideas; every idea is only a ROW in the modifier table (GMOD_ROWS,
+// cond 'idea:<id>'), never bespoke code. Each morale style has its own 4-idea tree (equal total value, different flavour) + 3 groups for everyone.
+// State: GC.nat[c].pp={pol,dip,mil,t} and GC.nat[c].idea=[ids] (saved with the campaign). Deterministic: no random, AI buys in a fixed order.
+const GID_POOL={pol:'Political',dip:'Diplomatic',mil:'Military'};
+const GID_COST=[30,45,60,80];
+// idea = [id, name, pool, stat, add|mul, description]
+const GID_GROUPS={
+  zeal:{name:'Martyrdom & Fervour',tree:1,ideas:[
+    ['zl1','Volunteers\' Call','mil','manpower',{mul:1.15},'+15% manpower'],
+    ['zl2','Faith in the Cause','pol','warSupport',{add:.06},'+6% war support'],
+    ['zl3','Hold the Line','mil','homeMorale',{mul:1.15},'+15% home-ground morale'],
+    ['zl4','Cost of Sacrifice','pol','upkeep',{mul:.93},'-7% army upkeep']]},
+  prof:{name:'Staff & Training',tree:1,ideas:[
+    ['pf1','Reserve Registers','mil','manpower',{mul:1.15},'+15% manpower'],
+    ['pf2','Officer Corps','pol','warSupport',{add:.06},'+6% war support'],
+    ['pf3','Staff College','mil','rallySpeed',{mul:1.15},'+15% rally speed'],
+    ['pf4','Logistics Corps','pol','upkeep',{mul:.93},'-7% army upkeep']]},
+  home:{name:'Fortified Homeland',tree:1,ideas:[
+    ['hm1','Territorial Militia','mil','manpower',{mul:1.15},'+15% manpower'],
+    ['hm2','Defend the Hearth','pol','warSupport',{add:.06},'+6% war support'],
+    ['hm3','Known Ground','mil','homeMorale',{mul:1.15},'+15% home-ground morale'],
+    ['hm4','Local Depots','pol','upkeep',{mul:.93},'-7% army upkeep']]},
+  fire:{name:'Fire Support Doctrine',tree:1,ideas:[
+    ['fr1','Mobile Reserves','mil','manpower',{mul:1.15},'+15% manpower'],
+    ['fr2','Public Confidence','pol','warSupport',{add:.06},'+6% war support'],
+    ['fr3','Precision Fires','mil','fireSupport',{mul:1.15},'+15% fire support'],
+    ['fr4','Munitions Contracts','pol','upkeep',{mul:.93},'-7% army upkeep']]},
+  eco:{name:'Economic Ideas',ideas:[
+    ['ec1','Trade Ledgers','pol','income',{mul:1.04},'+4% income'],
+    ['ec2','Tax Reform','pol','income',{mul:1.04},'+4% income'],
+    ['ec3','Customs Union','pol','income',{mul:1.04},'+4% income'],
+    ['ec4','Industrial Plan','pol','ppPol',{mul:1.15},'+15% Political points']]},
+  dip:{name:'Diplomatic Ideas',ideas:[
+    ['dp1','Embassy Network','dip','ppDip',{mul:1.15},'+15% Diplomatic points'],
+    ['dp2','Cultural Exchange','dip','income',{mul:1.03},'+3% income'],
+    ['dp3','Treaty Bureau','dip','ppDip',{mul:1.15},'+15% Diplomatic points'],
+    ['dp4','Grand Alliances','dip','ppPol',{mul:1.1},'+10% Political points']]},
+  mil:{name:'Military Ideas',ideas:[
+    ['ml1','Conscription Law','mil','manpower',{mul:1.1},'+10% manpower'],
+    ['ml2','Quartermaster Corps','mil','upkeep',{mul:.95},'-5% army upkeep'],
+    ['ml3','War College','mil','ppMil',{mul:1.15},'+15% Military points'],
+    ['ml4','Veteran Cadres','mil','manpower',{mul:1.1},'+10% manpower']]}};
+const GID_ORDER=['eco','mil','dip'];   // groups open to everyone, after the nation's own style tree
+GMOD_COND.idea=(k,arg)=>{const N=GC&&GC.nat[k];return !!(N&&N.idea&&N.idea.indexOf(arg)>=0);};
+for(const g of Object.keys(GID_GROUPS))for(const i of GID_GROUPS[g].ideas){const r={id:'idea_'+i[0],src:i[1],scope:'nation',stat:i[3],cond:'idea:'+i[0]};if(i[4].add)r.add=i[4].add;if(i[4].mul)r.mul=i[4].mul;GMOD_ROWS.push(r);}
+function gidStyle(c){try{return MORALE_STYLE[grNat(c).fac]||MORALE_STYLE[c]||'prof';}catch(e){return 'prof';}}
+function gidGroups(c){return [gidStyle(c)].concat(GID_ORDER);}
+function gidN(c){const N=GC&&GC.nat[c];if(!N)return null;if(!N.pp)N.pp={pol:20,dip:20,mil:20,t:GC.turn};if(!N.idea)N.idea=[];return N;}
+function gidMonthGain(c){const N=GC.nat[c],own=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c).length;let war=false;try{war=Object.keys(GC.nat).some(o=>o!==c&&!GC.nat[o].dead&&grAtWar(c,o));}catch(e){}
+  const na=GC.armies.filter(a=>a.o===c).length;
+  return {pol:gmod('nation',c,'ppPol',2+Math.min(4,Math.floor(own/8))),dip:gmod('nation',c,'ppDip',2+(war?0:1)),mil:gmod('nation',c,'ppMil',2+(war?1:0)+Math.min(3,Math.floor(na/4)))};}
+function gidNext(c,g){const N=gidN(c);for(const i of GID_GROUPS[g].ideas)if(N.idea.indexOf(i[0])<0)return i;return null;}
+function gidLevel(c,g){const N=gidN(c);return GID_GROUPS[g].ideas.filter(i=>N.idea.indexOf(i[0])>=0).length;}
+// the ONE buy function (player button and AI both): returns an error string or '' on success
+function gidBuy(c,g){const N=gidN(c);if(!N||!GID_GROUPS[g]||gidGroups(c).indexOf(g)<0)return 'Not available.';const i=gidNext(c,g);if(!i)return 'All ideas in this group are adopted.';
+  const cost=GID_COST[gidLevel(c,g)];if(N.pp[i[2]]<cost)return 'Needs '+cost+' '+GID_POOL[i[2]]+' points.';N.pp[i[2]]-=cost;N.idea.push(i[0]);GMOD_C.cache.clear();
+  if(c===GC.me)grLog('Adopted the idea "'+i[1]+'" ('+i[5]+').',c);return '';}
+function gidMonth(){if(!GC)return;for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;gidN(c);if(N.pp.t===GC.turn)continue;N.pp.t=GC.turn;const g=gidMonthGain(c);
+    for(const k of ['pol','dip','mil'])N.pp[k]=Math.min(999,Math.round((N.pp[k]+g[k])*100)/100);
+    if(c!==GC.me){for(let n=0;n<3;n++){let bought=false;for(const grp of gidGroups(c)){if(!gidBuy(c,grp)){bought=true;break;}}if(!bought)break;}}}}
+GMOD_HOOKS.push(gidMonth);
+GMOD_STATS.manpower='Manpower';GMOD_STATS.upkeep='Army upkeep';GMOD_STATS.income='Income';GMOD_STATS.ppPol='Political points';GMOD_STATS.ppDip='Diplomatic points';GMOD_STATS.ppMil='Military points';
+npTab('idea','💡','Ideas & points',(code,body,c)=>{const N=gidN(code),own=c.own&&code===GC.me,g=gidMonthGain(code);
+  let h='<div style="display:flex;gap:28px;margin-bottom:10px;font-size:17px">'+['pol','dip','mil'].map(k=>'<div><b>'+GID_POOL[k]+'</b> '+Math.floor(N.pp[k])+' <span style="opacity:.7">(+'+(Math.round(g[k]*10)/10)+'/month)</span></div>').join('')+'</div>'+
+  '<div style="opacity:.8;margin-bottom:8px">Points grow every month. Spend them on ideas; each group unlocks in order and every next idea costs more.</div>';
+  body.innerHTML=h;
+  for(const grp of gidGroups(code)){const G=GID_GROUPS[grp],box=document.createElement('div');box.style.cssText='margin:10px 0;padding:8px 10px;border:1px solid #34506a;border-radius:6px';
+    box.innerHTML='<div style="font-size:17px;margin-bottom:4px"><b>'+G.name+'</b>'+(G.tree?' <span style="opacity:.7">— national tree</span>':'')+'</div>';
+    G.ideas.forEach((i,ix)=>{const has=N.idea.indexOf(i[0])>=0,row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:10px;padding:3px 0;opacity:'+(has?1:.85);
+      const nxt=!has&&ix===gidLevel(code,grp);row.innerHTML='<span style="width:20px">'+(has?'✔':ix+1)+'</span><span style="flex:1"><b>'+i[1]+'</b> <span style="opacity:.75">— '+i[5]+'</span></span><span style="opacity:.7">'+(has?'adopted':GID_COST[ix]+' '+GID_POOL[i[2]])+'</span>';
+      if(nxt&&own){const b=document.createElement('button');b.textContent='Adopt';b.style.cssText='font-size:15px;padding:2px 12px;cursor:pointer';b.disabled=N.pp[i[2]]<GID_COST[ix];b.onclick=()=>{const e=gidBuy(code,grp);if(e&&typeof grLog==='function')grLog(e,code);npDraw();};row.appendChild(b);}
+      box.appendChild(row);});body.appendChild(box);}});
+// 13m-gdiplo.js — Lane G B6: EU4-style diplomacy. ONE opinion = grOpinion (13i) + these factor lines; actions are DETERMINISTIC
+// (accept when score >= threshold, no dice) and always show WHY. State lives in GC (saved with the campaign): GC.rel pair opinions,
+// GC.alz alliances, GC.tr truces {pairKey:untilTurn}, GC.gu guarantees [[by,for]], GC.wsT war start turns {pairKey:turn}.
+const GD={sel:'',flt:'all',sort:'op',q:''};
+function gdTruce(a,b){return !!(GC&&GC.tr&&GC.tr[grWk(a,b)]>GC.turn);}
+function gdRel(a,b,d){GC.rel=GC.rel||{};const k=grWk(a,b);GC.rel[k]=Math.max(-100,Math.min(100,(GC.rel[k]||0)+d));}
+function gdEnemies(c){return Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grAtWar(c,o));}
+function gdAllies(c){return Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grAllied(c,o));}
+function gdNear(a,b){return GCM.P.some(p=>p.land&&GC.prov[p.i].o===a&&p.adj.some(j=>GCM.P[j].land&&GC.prov[j].o===b));}
+// factor lines [text, value] explaining the opinion between a and b
+function gdWhy(a,b){const L=[],base=(GC.rel&&GC.rel[grWk(a,b)])||0;if(base)L.push([base>0?'Friendly history':'Bad blood',base]);
+  if(grAllied(a,b))L.push(['Allied',40]);if(gdTruce(a,b))L.push(['Truce in force',5]);
+  const se=gdEnemies(a).filter(e=>grAtWar(b,e));if(se.length)L.push(['Shared enemies ('+se.map(e=>GCM.nats.get(e).name).join(', ')+')',20*se.length]);
+  const ea=gdEnemies(a).filter(e=>grAllied(b,e)),eb=gdEnemies(b).filter(e=>grAllied(a,e));if(ea.length||eb.length)L.push(['Allied with the other\'s enemy',-25*(ea.length+eb.length)]);
+  if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))L.push(['You guarantee them',10]);
+  if(GC.gu&&GC.gu.some(g=>g[0]===b&&g[1]===a))L.push(['They guarantee you',10]);
+  return L;}
+function gdOp(a,b){if(grAtWar(a,b))return -100;const w=gdWhy(a,b);let v=0;for(const x of w)v+=x[1];return Math.max(-100,Math.min(100,v));}
+function gdWarscore(a,b){let s=0;const k=grWk(a,b);const t=GC.turn-((GC.wsT&&GC.wsT[k])||1);
+  for(const ar of GC.armies){if(ar.fl)continue;if(ar.o===a&&GC.prov[ar.at]&&GC.prov[ar.at].o===b)s+=12;if(ar.o===b&&GC.prov[ar.at]&&GC.prov[ar.at].o===a)s-=12;}
+  s+=Math.min(30,t*2);return s;}
+// chance(action,a,b) -> {ok:bool, why:[[text,v]], cost, note}  (a = actor, b = target)
+function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtWar(a,b),al=grAllied(a,b),big=(c)=>grRealClass(c);let ok=true,cost=0,note='';
+  const no=m=>{ok=false;note=m;};
+  if(act==='improve'){cost=200;if(war)no('At war');W.push(['Costs $200, adds +10 opinion',0]);}
+  else if(act==='aid'){cost=600;if(war)no('At war');W.push(['Costs $600, adds +20 opinion',0]);}
+  else if(act==='alliance'){if(war)no('At war');else if(al)no('Already allied');
+    const se=gdEnemies(a).filter(e=>grAtWar(b,e)).length;let s=op*0.5-15;W.push(['Their opinion of you',Math.round(op*0.5)]);W.push(['Baseline caution',-15]);
+    if(se){W.push(['Shared enemies',15*se]);s+=15*se;}
+    if(!grNat(b).major){W.push(['Minor nations rarely join blocs',-10]);s-=10;}
+    if(gdAllies(b).some(x=>grAtWar(a,x))){W.push(['Their ally is your enemy',-40]);s-=40;}
+    if(s<10&&ok)no('They decline (need 10, have '+Math.round(s)+')');W.push(['Total',Math.round(s)]);}
+  else if(act==='war'){if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until turn '+GC.tr[grWk(a,b)]);
+    else if(GC.ph!=='plan')no('Wait for the planning phase');W.push(['War goal: border dispute / strategic rivalry',0]);W.push(['Stability: all your opinions fall',-10]);}
+  else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (armies on enemy land, war length)',s]);
+    const acc=GC.nat[b].ai?25:0;W.push(['They accept at',acc]);if(ok&&s<acc)no('They refuse (score '+s+' of '+acc+')');}
+  else if(act==='guarantee'){cost=300;if(war)no('At war');else if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))no('Already guaranteed');W.push(['Costs $300, +15 opinion, shows resolve',0]);}
+  else if(act==='break'){if(!al)no('Not allied');W.push(['Opinion -25',0]);}
+  if(cost&&cash<cost&&ok)no('Not enough cash ($'+cost+')');
+  if(GC.me!==a)no('Only your own nation acts');
+  return {ok,why:W,cost,note};}
+function gdAct(act,a,b){const c=gdChance(act,a,b);if(!c.ok)return c.note;const N=GC.nat[a],na=GCM.nats.get(a).name,nb=GCM.nats.get(b).name;N.cash-=c.cost;
+  if(act==='improve'){gdRel(a,b,10);}
+  else if(act==='aid'){gdRel(a,b,20);grLog(na+' sent aid to '+nb+'.',a);}
+  else if(act==='guarantee'){GC.gu=GC.gu||[];GC.gu.push([a,b]);gdRel(a,b,15);grLog(na+' guarantees the independence of '+nb+'.',a);}
+  else if(act==='alliance'){GC.alz=GC.alz||[];const g=GC.alz.find(x=>x[1].includes(a));if(g&&!g[1].includes(b))g[1].push(b);else if(!g)GC.alz.push([na+'–'+nb+' Pact',[a,b]]);gdRel(a,b,15);grLog(na+' and '+nb+' formed an alliance.',a);}
+  else if(act==='break'){for(const g of GC.alz||[])if(g[1].includes(a)&&g[1].includes(b))g[1]=g[1].filter(x=>x!==b);GC.alz=(GC.alz||[]).filter(x=>x[1].length>1);gdRel(a,b,-25);grLog(na+' left its alliance with '+nb+'.',a);}
+  else if(act==='war'){grDeclare(a,b);GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;for(const o of Object.keys(GC.nat))if(o!==a&&o!==b)gdRel(a,o,-3);gdRel(a,b,-30);}
+  else if(act==='peace'){delete GC.war[grWk(a,b)];GC.tr=GC.tr||{};GC.tr[grWk(a,b)]=GC.turn+6;grLog('Peace between '+na+' and '+nb+' — truce for 6 turns.',a);}
+  try{grSave();}catch(e){}try{grandMapRefresh();}catch(e){}return '';}
+// ---------- UI: replaces the Diplomacy tab of the nation panel ----------
+(function(){
+const chip=(c,onc)=>{const n=grNat(c),d=document.createElement('span');d.title=GCM.nats.get(c).name;d.style.cssText='display:inline-flex;align-items:center;gap:5px;margin:2px 4px 2px 0;padding:2px 7px 2px 3px;border:1px solid #3d5a73;border-radius:4px;background:#16273a;font-size:13px;cursor:pointer';
+  d.innerHTML='<span style="width:18px;height:12px;border:1px solid #fff;background:'+n.color+'"></span>'+GCM.nats.get(c).name;d.onclick=onc;return d;};
+const sel=c=>{GD.sel=c;npDraw();};
+const col=v=>v>=25?'#9fe39f':v<=-25?'#ff9d8e':'#e8e4d8';
+const ACTS=[['improve','Improve relations'],['aid','Send aid'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['war','Declare war']];
+npTab('dip','🤝','Diplomacy',(code,body)=>{const me=GC.me;if(!GD.sel||GD.sel===code||!GC.nat[GD.sel])GD.sel=Object.keys(GC.nat).find(c=>c!==code&&!GC.nat[c].dead&&grNat(c).major)||'';
+  const row=(t,L)=>{const d=document.createElement('div');d.style.cssText='margin-bottom:4px';d.innerHTML='<span style="display:inline-block;width:92px;opacity:.7;font-size:13px">'+t+'</span>';if(!L.length)d.innerHTML+='<span style="opacity:.4">—</span>';for(const c of L)d.appendChild(chip(c,()=>sel(c)));return d;};
+  const top=document.createElement('div');top.style.cssText='margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #2c4258';
+  const gu=(GC.gu||[]).filter(g=>g[0]===code).map(g=>g[1]),gb=(GC.gu||[]).filter(g=>g[1]===code).map(g=>g[0]);
+  const tr=Object.keys(GC.tr||{}).filter(k=>GC.tr[k]>GC.turn&&k.split('|').includes(code)).map(k=>k.split('|').find(x=>x!==code));
+  top.appendChild(row('Enemies',gdEnemies(code)));top.appendChild(row('Allies',gdAllies(code)));top.appendChild(row('Guarantees',gu));top.appendChild(row('Guaranteed by',gb));top.appendChild(row('Truces',tr));body.appendChild(top);
+  const wrap=document.createElement('div');wrap.style.cssText='display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap';body.appendChild(wrap);
+  const L=document.createElement('div');L.style.cssText='flex:1.1;min-width:300px';wrap.appendChild(L);const R=document.createElement('div');R.style.cssText='flex:1;min-width:300px';wrap.appendChild(R);
+  const bar=document.createElement('div');bar.style.cssText='display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;align-items:center';
+  const mk=(lab,cur,set,opts)=>{for(const [k,n] of opts){const b=document.createElement('button');b.type='button';b.textContent=n;b.style.cssText='padding:3px 9px;border-radius:12px;border:1px solid '+(cur===k?'#c9a35a':'#34506a')+';background:'+(cur===k?'#2a3a4c':'#15222f')+';color:#dfe8f0;cursor:pointer;font-size:13px';b.onclick=()=>{set(k);npDraw();};bar.appendChild(b);}};
+  mk('f',GD.flt,k=>GD.flt=k,[['all','All'],['near','Neighbours'],['war','At war'],['ally','Allies'],['great','Great powers']]);
+  const q=document.createElement('input');q.placeholder='Search…';q.value=GD.q;q.style.cssText='padding:3px 8px;border-radius:12px;border:1px solid #34506a;background:#0f1a26;color:#e8e4d8;font-size:13px;width:110px';q.oninput=()=>{GD.q=q.value;lst();};bar.appendChild(q);
+  const so=document.createElement('button');so.type='button';so.textContent='Sort: '+(GD.sort==='op'?'opinion':GD.sort==='pw'?'power':'name');so.style.cssText='padding:3px 9px;border-radius:12px;border:1px solid #34506a;background:#15222f;color:#dfe8f0;cursor:pointer;font-size:13px';so.onclick=()=>{GD.sort=GD.sort==='op'?'pw':GD.sort==='pw'?'nm':'op';npDraw();};bar.appendChild(so);L.appendChild(bar);
+  const box=document.createElement('div');box.style.cssText='max-height:340px;overflow:auto;border:1px solid #2c4258;border-radius:6px';L.appendChild(box);
+  function lst(){box.innerHTML='';let cs=Object.keys(GC.nat).filter(c=>c!==code&&!GC.nat[c].dead&&(grNat(c).major||GD.flt!=='all'||GD.q));
+    if(GD.flt==='near')cs=cs.filter(c=>{try{return gdNear(code,c);}catch(e){return false;}});if(GD.flt==='war')cs=cs.filter(c=>grAtWar(code,c));if(GD.flt==='ally')cs=cs.filter(c=>grAllied(code,c));if(GD.flt==='great')cs=cs.filter(c=>/power/.test(grRealClass(c))&&!/Small|Regional/.test(grRealClass(c)));
+    const q2=GD.q.trim().toLowerCase();if(q2)cs=cs.filter(c=>GCM.nats.get(c).name.toLowerCase().includes(q2));
+    const pw=c=>npStat(c).army;cs.sort((x,y)=>GD.sort==='op'?gdOp(code,y)-gdOp(code,x):GD.sort==='pw'?pw(y)-pw(x):GCM.nats.get(x).name.localeCompare(GCM.nats.get(y).name));
+    for(const c of cs.slice(0,60)){const o1=gdOp(code,c),o2=gdOp(c,code),r=document.createElement('div');r.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 8px;cursor:pointer;border-bottom:1px solid #1d3042;'+(GD.sel===c?'background:#2a3a4c':'');
+      r.innerHTML='<span style="width:20px;height:13px;border:1px solid #fff;background:'+grNat(c).color+'"></span><span style="flex:1"><b>'+GCM.nats.get(c).name+'</b> <span style="opacity:.55;font-size:12px">'+grRealClass(c)+'</span></span>'+(grAtWar(code,c)?'<span style="color:#ff9d8e;font-size:12px">war</span>':grAllied(code,c)?'<span style="color:#9fe39f;font-size:12px">ally</span>':'')+'<b title="Their opinion of you" style="color:'+col(o1)+';min-width:34px;text-align:right">'+(o1>0?'+':'')+o1+'</b>';
+      r.onclick=()=>sel(c);box.appendChild(r);}
+    if(!cs.length)box.innerHTML='<div style="padding:10px;opacity:.6">No nation matches.</div>';}
+  lst();
+  const t=GD.sel;if(!t){R.textContent='Select a nation.';return;}
+  R.innerHTML='<div style="font-size:19px;font-weight:bold;margin-bottom:2px">'+GCM.nats.get(t).name+'</div><div style="opacity:.75;font-size:13px;margin-bottom:6px">'+grRealClass(t)+' · opinion of '+GCM.nats.get(code).name+' <b style="color:'+col(gdOp(t,code))+'">'+gdOp(t,code)+'</b></div>';
+  const ws=gdWhy(t,code),wl=document.createElement('div');wl.style.cssText='font-size:13px;margin-bottom:8px;line-height:1.5';for(const [x,v] of ws)wl.innerHTML+='<div><b style="color:'+(v>0?'#9fe39f':v<0?'#ff9d8e':'#aaa')+';display:inline-block;width:34px">'+(v>0?'+':'')+v+'</b>'+x+'</div>';if(!ws.length)wl.innerHTML='<div style="opacity:.5">No history yet.</div>';R.appendChild(wl);
+  if(code!==me||GC.me===t){const n=document.createElement('div');n.style.cssText='opacity:.6;font-size:13px';n.textContent=code!==me?'Open your own panel to act.':'';R.appendChild(n);return;}
+  const ab=document.createElement('div');ab.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
+  for(const [k,n] of ACTS){const ch=gdChance(k,me,t);if(!ch.ok&&/^(Not allied|Not at war|Already)/.test(ch.note))continue;const b=document.createElement('button');b.type='button';b.textContent=n;
+    b.title=ch.why.map(w=>(w[1]>0?'+':'')+(w[1]||'')+' '+w[0]).join('\n')+(ch.ok?'':'\n✖ '+ch.note);
+    b.style.cssText='padding:5px 11px;border-radius:6px;border:1px solid '+(ch.ok?(k==='war'?'#b5605a':'#7aa84f'):'#3d4a58')+';background:#16273a;color:'+(ch.ok?'#fff':'#7d8794')+';cursor:pointer;font-size:14px';
+    b.onclick=()=>{const e=gdAct(k,me,t);const m=document.createElement('div');m.style.cssText='margin-top:8px;font-size:13px;color:#ffb3a8';if(e){m.textContent=e;R.appendChild(m);}else npDraw();};ab.appendChild(b);}
+  R.appendChild(ab);const hint=document.createElement('div');hint.style.cssText='margin-top:8px;font-size:12px;opacity:.55';hint.textContent='Hover a button to see the chance and why. Answers are fixed by the numbers — no dice.';R.appendChild(hint);});
+})();
+// 13n-gnews.js — Lane G ⚡16: newspaper headline after each turn, generated from the turn's log lines (templates, no hand-written rows).
+// Read-only UI over GC.log; nothing to save. Neutral wording, nation names only.
+const GN={tpl:[[/declared war on/,['WAR: {t}','{t} — the world holds its breath','Guns speak: {t}']],[/captured .* from/,['{t}','FRONT: {t}','Banner changes hands: {t}']],[/Peace between|peace/i,['PEACE: {t}','Guns fall silent: {t}']],[/lost its capital/,['CAPITAL FALLS: {t}']],[/Revolt in/,['UNREST: {t}']],[/alliance|guarantee/i,['PACT: {t}','DIPLOMACY: {t}']],[/eliminated/,['END OF A STATE: {t}']]]};
+function gnPick(ls){const T=GC.turn-1;let best=null,bi=-1;for(const l of ls){if(l[0]!==T)continue;for(let i=0;i<GN.tpl.length;i++){const [re,arr]=GN.tpl[i];if(re.test(l[1])){const w=(GN.tpl.length-i)+(l[2]===GC.me?8:0);if(!best||w>bi){best={t:l[1].replace(/\.$/,''),arr};bi=w;}break;}}}
+  if(!best)return null;return best.arr[(GC.seed+GC.turn)%best.arr.length].replace('{t}',best.t);}
+function gdNews(){if(!GC||!GC.me)return;const h=gnPick(GC.log);if(!h)return;let d=document.getElementById('gNews');if(d)d.remove();
+  const host=document.getElementById('gMapWrap');if(!host)return;d=document.createElement('div');d.id='gNews';
+  d.style.cssText='position:absolute;left:50%;top:8px;transform:translateX(-50%);max-width:70%;padding:8px 18px;background:#e9e2cf;color:#1a1a1a;border:2px solid #3a3226;box-shadow:0 4px 16px rgba(0,0,0,.5);font:bold 17px Georgia,serif;letter-spacing:.3px;z-index:6;cursor:pointer;opacity:0;transition:opacity .4s';
+  d.innerHTML='<div style="font-size:10px;letter-spacing:3px;opacity:.6;font-weight:normal">THE WORLD TRIBUNE · TURN '+(GC.turn-1)+'</div>'+h.replace(/</g,'&lt;');host.appendChild(d);d.onclick=()=>d.remove();
+  requestAnimationFrame(()=>{d.style.opacity='1';});setTimeout(()=>{d.style.opacity='0';setTimeout(()=>d.remove(),500);},7000);}
 </script>
 </body></html>
