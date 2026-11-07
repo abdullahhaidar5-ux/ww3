@@ -18827,7 +18827,7 @@ const GM_RIVER=[[32,33],[32,35],[63,66],[63,65],[129,131],[19,20],[17,20],[89,92
 // (cost x health) wins, the defender on a tie; the player may also Retreat. Survivors, wounds and experience are written back
 // into the very same records, the dead are removed (grandBattleEnd -> grBattleDone).
 const GB_LIMIT=900;
-const GB_NOROUT=['IR','RS','DW'];   // Shia factions never rout — they fight to the last (Abdullah 2026-11-06 20:11); their cost: no escape, heavier losses
+const GB_NOROUT=['IR','RS','DW','KP'];   // Shia factions + North Korea (Abdullah 20:12) never rout — they fight to the last (Abdullah 2026-11-06 20:11); their cost: no escape, heavier losses
 function grMapFor(p,b){const ok=k=>k&&MAPS[k]&&(MAPS[k].min||2)<=2;if(ok(p.map))return p.map;if(b&&b.river&&ok('rivers'))return 'rivers';if(b&&b.mtn&&ok('khyber'))return 'khyber';
   return {d:'oasis',m:'zagros',f:'heartland',u:'mesopotamia',j:'caribbean',s:'arctic',c:'harbour',r:'rivers'}[p.t]||'oasis';}
 function grFacKind(fac,k){return grHasKind(fac,k)?k:'inf';}
