@@ -120,7 +120,7 @@ function gmilSeaStep(){const M=GC.mil,R=grRng(GC.seed*43+GC.turn*5);
 function gmilSites(c,pi,rng,type){const P=GCM.P;let best=-1,bd=1e9;
   for(const p of P){if(!p.land||GC.prov[p.i].o!==c)continue;const ok=type==='d'?(geCount(p.i,'base')+geCount(p.i,'airfield')>0||GC.armies.some(a=>a.o===c&&a.at===p.i&&!a.fl&&a.u.length>2)):type==='a'?geEff(p.i,'airfield')>0:(geCount(p.i,'base')+geCount(p.i,'airfield')>0||p.cap);
     if(!ok)continue;const d=grDist(p.i,pi);if(d<=rng&&d<bd){bd=d;best=p.i;}}return best;}
-function gmilStrikeCheck(c,type,pi,k){const N=GC.nat[c],E=N.e,S=GMIL_ST[type],M=gmilN(c),p=GCM.P[pi];if(!S||!p)return 'Unknown strike.';if(M.so.length>=3)return 'Three strikes a turn at most.';
+function gmilStrikeCheck(c,type,pi,k){const N=GC.nat[c],E=N.e,S=GMIL_ST[type],M=gmilN(c),p=GCM.P[pi];if(!S||!p)return 'Unknown strike.';if(M.so.length>=3)return 'Three strikes a month at most.';
   if(M.so.some(o=>o.t===type&&o.pi===pi&&o.k===k))return 'Already ordered.';
   if(p.land){const o=GC.prov[pi].o;if(o===c||!grAtWar(c,o))return 'Only at nations you are at war with.';if(k==='f')return 'Fleets are at sea.';}
   else{if(k!=='f')return 'Only fleets at sea.';if(!GC.armies.some(a=>a.at===pi&&a.fl&&grAtWar(a.o,c)))return 'No enemy fleet there.';}

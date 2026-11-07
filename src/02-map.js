@@ -199,6 +199,9 @@ const MAPS={
     slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'southasia'],...mirrorList([[1300,500,70,'southasia']],'p')],
     water(M,R){const ph=R()*6.28,side=[];for(let y=-200;y<=2400;y+=40)side.push([1020+40*Math.sin(y*.004+ph)+(y-1100)*.08,y]);M.rivers.push({pts:side,hw:()=>58});M.bridgeAt=[[0,.25],[0,.75]];M.bridgeFrac=true;mirrorMap(M,'p');
       const mid=[];for(let y=-200;y<=2400;y+=40)mid.push([1600+70*Math.sin((y-1100)*.004),y]);M.rivers.push({pts:mid,hw:()=>66});M.bridgeAt.push([2,.2],[2,.5],[2,.8]);}},
+  tihama:{name:'Tihama Coast',min:2,max:6,sym:'point',rough:1.4,home:['DW','SA'],tag:'Red Sea plain · escarpment · wadis',desc:'Yemen\'s hot Red Sea plain below a wall of mountains. Dry wadis are the roads and the port town in the middle is the prize.',
+    slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'mideast']],
+    water(M,R){M.peaks.push({x:1000,y:520,r:100,rx:1.8,rot:.5},{x:1100,y:1620,r:95,rx:1.7,rot:-.4});M.ridges.push({pts:[[1300,500],[1380,800],[1320,1000]],hw:()=>50});mirrorMap(M,'p');}},
   najd:{name:'Najd Escarpment',min:6,max:8,sym:'quad',rough:1.2,home:['SA'],tag:'ring of cliffs · plateau oil · eight gaps',desc:'A ring of desert cliffs around the Najd plateau, with oil on top. Every base faces a cliff wall and has a gap on each side of it.',
     slots:ring8(880),oilAt:[[1600,1100]],
     water(M,R){const arc=(c,s)=>{const pts=[];for(let t=c-s;t<=c+s+1e-9;t+=.04)pts.push([1600+Math.cos(t)*450,1100+Math.sin(t)*450]);return pts;};

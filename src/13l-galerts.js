@@ -20,4 +20,4 @@ alAdd('unrest','🔥','Unrest',c=>{const ps=GCM.P.filter(p=>p.land&&GC.prov[p.i]
 alAdd('war','⚔','At war',c=>{const w=Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grAtWar(c,o));return w.length?{n:w.length,bad:1,tip:w.map(o=>GCM.nats.get(o).name).join(', '),go:()=>npOpen(c,'dip')}:null;});
 alAdd('supply','🚚','Out of supply',c=>{const as=my(c).filter(a=>a.sup);return as.length?{n:as.length,bad:1,tip:'armies cut off from supply',go:()=>alFly(as[0].at)}:null;});
 })();
-(function(){alAdd('truce','🕊','Truces ending',c=>{const k=Object.keys(GC.tr||{}).filter(x=>x.split('|').includes(c)&&GC.tr[x]===GC.turn+1);return k.length?{n:k.length,tip:'a truce ends next turn',go:()=>npOpen(c,'dip')}:null;});})();
+(function(){alAdd('truce','🕊','Truces ending',c=>{const k=Object.keys(GC.tr||{}).filter(x=>x.split('|').includes(c)&&GC.tr[x]===GC.turn+1);return k.length?{n:k.length,tip:'a truce ends next month',go:()=>npOpen(c,'dip')}:null;});})();

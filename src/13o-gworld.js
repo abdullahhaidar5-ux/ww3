@@ -6,10 +6,10 @@ function glgWarLen(a,b){GC.wsT=GC.wsT||{};const k=grWk(a,b);if(GC.wsT[k]==null)G
 function glgScore(a,b){let x=0,y=0;for(const p of GCM.P){if(!p.land)continue;const s=GC.prov[p.i];if(s.o===a&&s.o0===b)x++;else if(s.o===b&&s.o0===a)y++;}return [x,y];}
 function glgPeace(a,b){const k=grWk(a,b);delete GC.war[k];if(GC.wsT)delete GC.wsT[k];GC.tr=GC.tr||{};GC.tr[k]=GC.turn+8;gdRel(a,b,15);
   for(const ar of GC.armies){const e=ar.o===a?b:ar.o===b?a:null;if(e&&GCM.P[ar.at].land&&GC.prov[ar.at].o===e){const d=grNearOwn(ar.o,ar.at);if(d>=0){ar.at=d;ar.path=[];ar.pg=0;ar.from=-1;}}}
-  grLog('Peace between '+gdNatName(a)+' and '+gdNatName(b)+' — truce for 8 turns.',a);}
+  grLog('Peace between '+gdNatName(a)+' and '+gdNatName(b)+' — truce for 8 months.',a);}
 // a war was declared: the victim's allies and guarantors (AI nations and the player's allies) join against the aggressor, depth-limited
 function glgDeclare(a,b){GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;if(GLG_D>0)return;GLG_D++;
-  try{const call=(GC.alz||[]).filter(z=>z[1].includes(b)&&!z[1].includes(a)).flatMap(z=>z[1]).concat((GC.gu||[]).filter(g=>g[1]===b).map(g=>g[0]));
+  try{try{gcoJoin(a,b);}catch(e){}const call=(GC.alz||[]).filter(z=>z[1].includes(b)&&!z[1].includes(a)).flatMap(z=>z[1]).concat((GC.gu||[]).filter(g=>g[1]===b).map(g=>g[0]));
     for(const g of Array.from(new Set(call)).sort()){if(g===a||g===b||!GC.nat[g]||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
       GC.war[grWk(g,a)]=1;GC.wsT[grWk(g,a)]=GC.turn;grLog(gdNatName(g)+' joins the war against '+gdNatName(a)+' to defend '+gdNatName(b)+'.',g);}
     if(GC.vas){const side=(x,y)=>{for(const v of GC.vas){const j=v[0]===x?v[1]:v[1]===x?v[0]:null;if(j&&j!==y&&GC.nat[j]&&!GC.nat[j].dead&&!grAtWar(j,y)&&!grVasPair(j,y)){GC.war[grWk(j,y)]=1;GC.wsT[grWk(j,y)]=GC.turn;grLog(gdNatName(j)+' joins the war against '+gdNatName(y)+(v[0]===x?' as a vassal of ':' as overlord of ')+gdNatName(x)+'.',j);}}};side(a,b);side(b,a);}   // vassals (13i GR_VASSALS)
@@ -27,5 +27,5 @@ function glgTurn(){if(!GC||!GC.nat)return;
     const l=Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grNat(o).major&&!grAllied(c,o)&&!grAtWar(c,o)&&gdOp(o,c)>=20&&gdAllies(o).length<4).sort();if(!l.length)continue;const t=l[Math.floor(r2*l.length)];
     GC.alz=GC.alz||[];const g=GC.alz.find(x=>x[1].includes(c));if(g&&!g[1].includes(t))g[1].push(t);else if(!g)GC.alz.push([gdNatName(c)+'–'+gdNatName(t)+' Pact',[c,t]]);gdRel(c,t,15);grLog(gdNatName(c)+' and '+gdNatName(t)+' formed an alliance.',c);}}
 // alert: an AI nation asks the player for peace (accepting = same as the Diplomacy tab's peace, no strings)
-if(typeof alAdd==='function')alAdd('peaceoffer','🕊','Peace offer',c=>{const o=(GC.off||[]).filter(x=>x[1]===c);return o.length?{n:o.length,tip:o.map(x=>gdNatName(x[0])).join(', ')+' ask for peace',go:()=>{const w=o[0][0];guConfirm(gdNatName(w)+' asks for peace','Accept a truce of 8 turns with '+gdNatName(w)+'? Their armies leave your land and yours leave theirs.',()=>glgAcceptPeace(w,c),()=>{GC.off=GC.off.filter(x=>x!==o[0]);try{guTop();}catch(e){}});}}:null;});
+if(typeof alAdd==='function')alAdd('peaceoffer','🕊','Peace offer',c=>{const o=(GC.off||[]).filter(x=>x[1]===c);return o.length?{n:o.length,tip:o.map(x=>gdNatName(x[0])).join(', ')+' ask for peace',go:()=>{const w=o[0][0];guConfirm(gdNatName(w)+' asks for peace','Accept a truce of 8 months with '+gdNatName(w)+'? Their armies leave your land and yours leave theirs.',()=>glgAcceptPeace(w,c),()=>{GC.off=GC.off.filter(x=>x!==o[0]);try{guTop();}catch(e){}});}}:null;});
 function glgAcceptPeace(a,b){glgPeace(a,b);GC.off=(GC.off||[]).filter(o=>!(o[0]===a&&o[1]===b));try{guTop();grandMapRefresh();}catch(e){}}

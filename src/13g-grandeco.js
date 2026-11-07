@@ -80,11 +80,11 @@ function geSigName(c){const a=GE_SIG[c];return a?a.map(s=>s[1]).join(' + '):'-';
 // ---------- province buildings ----------
 // key: [name, cost, turns, letter, colour, help]
 const GE_B={
- base:['Military base',650,2,'B','#c9a35a','Recruits here arrive 1 turn sooner, +2 garrison room, resupplies armies in and next to it.'],
+ base:['Military base',650,2,'B','#c9a35a','Recruits here arrive 1 month sooner, +2 garrison room, resupplies armies in and next to it.'],
  airfield:['Airfield',850,3,'A','#8fc4e8','Air wings live here: sorties reach battles in range, and the airfield stands in this province\'s battle.'],
  port:['Port',550,2,'P','#6fb0d8','+50 income, sea trade, a shipyard in this province\'s battle (coast only).'],
  factory:['Factory',750,3,'F','#d9a05a','+110 income, recruits cost 8% less (3 max). Needs power.'],
- refinery:['Refinery',700,3,'R','#a58bd0','Makes 16 fuel a turn from oil. Needs power and an oil province or oil stock.'],
+ refinery:['Refinery',700,3,'R','#a58bd0','Makes 16 fuel a month from oil. Needs power and an oil province or oil stock.'],
  power:['Power plant',700,3,'E','#f2d95a','+14 on the power grid. Blackouts slow factories and recruiting.'],
  aa:['Air defence',380,2,'D','#9ad07f','A SAM site in this province\'s battle; halves bombing damage here.'],
  farm:['Irrigation',450,2,'G','#b8d96a','+6 food (farm provinces only).'],
@@ -267,7 +267,7 @@ function geBorrow(c){const N=GC.nat[c],E=N.e;if(E.defT>GC.turn)return 'Your cred
 function geRepay(c){const N=GC.nat[c],E=N.e;if(!E.bonds.length)return 'No bonds.';E.bonds.sort((a,b)=>a[0]-b[0]);const b=E.bonds[0];if(N.cash<b[1])return 'Needs $'+b[1]+'.';N.cash-=b[1];E.bonds.shift();return '';}
 function geDeposit(c,amt){const N=GC.nat[c];amt=Math.min(amt|0,Math.floor(N.cash));if(amt<=0)return 'No money.';N.cash-=amt;N.e.bank+=amt;return '';}
 function geWithdraw(c){const N=GC.nat[c];N.cash+=N.e.bank;N.e.bank=0;return '';}
-function geTotalWar(c,on){const E=GC.nat[c].e;if(!!on===!!E.tw)return '';if(on&&GC.turn<E.twT+4)return 'Total war can be switched on again in '+(E.twT+4-GC.turn)+' turns.';
+function geTotalWar(c,on){const E=GC.nat[c].e;if(!!on===!!E.tw)return '';if(on&&GC.turn<E.twT+4)return 'Total war can be switched on again in '+(E.twT+4-GC.turn)+' months.';
   if(on&&!Object.keys(GC.war).some(k=>k.split('|').includes(c)))return 'Only at war.';E.tw=on?1:0;E.twT=GC.turn;return '';}
 function geRation(c,on){GC.nat[c].e.ration=on?1:0;return '';}
 function geSellMode(c,m){GC.nat[c].e.sell=m?1:0;return '';}
