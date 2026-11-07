@@ -36,7 +36,7 @@ nations first (IR, RS, DW, IL, SA, IQ, SY, TR). Every step: before/after shots f
 - [ ] **E2 Real buildings**: HQ, barracks, factory, depots → believable Middle Eastern compounds/military buildings (walls, roofs, windows, sandbags, antennas, wear), not white boxes; same free-art rule.
 - [ ] **E3 Ground & light**: terrain texture detail (tracks, rocks, scrub, dust), soft shadows/AO, colour grading toward CoH/Broken Arrow; no washed-out flat beige.
 - [ ] **E4 Vehicles & weapons detail pass** (existing m_* models: materials, decals, wear) + muzzle flashes/tracers/explosions checked at gameplay zoom.
-- [ ] **E5 HUD readability over the 3D** (only what blocks the view: overlapping help text, labels) — coordinate with Lane C's UI kit.
+- [ ] **E5 HUD readability (partial: doctrine picker now a slim corner strip, laneE 2026-11-07) over the 3D** (only what blocks the view: overlapping help text, labels) — coordinate with Lane C's UI kit.
 
 ## THE 50 (Abdullah 2026-11-06 18:57: "All let's go")
 Order inside each lane: your numbered items first, **except ⚡ items** (cheap, high value) which you slot in as soon as your current
