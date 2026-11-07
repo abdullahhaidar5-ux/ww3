@@ -15603,7 +15603,7 @@ try{encMenu();}catch(e){console.warn('encyclopedia menu',e);}
    PINGS & DRAWING  , attack here   . defend here   / danger   ' draw a line   ; draw a circle   (then click / drag the map or minimap).
                  Allies see them for 10 s; quick lines go to the log of your team.
    TRUCE (free-for-all only) and ALLIED AID (money with a fee, give selected units) sit in the same panel. */
-const CT={mode:null,plans:[],pid:0,pl:{type:'m',trig:'auto',sec:10},marks:[],draw:null,form:{},names:{},sendG:0,open:true,sig:''};
+const CT={mode:null,plans:[],pid:0,pl:{type:'m',trig:'auto',sec:10},marks:[],draw:null,form:{},names:{},sendG:0,open:false,sig:''};
 const CT_COL={m:'#74d08f',a:'#ea5a40',h:'#6fb2ff'},CT_TN={m:'Move',a:'Assault',h:'Hold'};
 const CT_PING=[{n:'Attack here',c:'#ea5a40'},{n:'Defend here',c:'#6fb2ff'},{n:'Danger',c:'#f2c94c'}];
 const CT_GN=['Armour','Infantry','Assault','Recon','Support','Artillery','Air','Reserve'];
@@ -18657,7 +18657,7 @@ function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(s
   const byReg={};for(const c of grMajors()){const r=grNat(c).reg;(byReg[r]=byReg[r]||[]).push(c);}
   if(false)for(const r of Object.keys(byReg).sort()){const L=byReg[r].sort((a,b)=>GCM.P[GC.nat[a].cap].x-GCM.P[GC.nat[b].cap].x);if(L.length>=2)for(let i=0;i<L.length;i++){const a=L[i],b=L[(i+1)%L.length];if(a!==b)GC.war[grWk(a,b)]=1;}}
   if(GC.me&&!GR_REAL.wars.concat(GR_REAL.tn).some(x=>x.includes(GC.me))&&!Object.keys(GC.war).some(k=>k.split('|').includes(GC.me))){let best=null,bd=1e9;for(const c of grMajors())if(c!==GC.me){const d=grDist(GC.nat[c].cap,GC.nat[GC.me].cap);if(d<bd){bd=d;best=c;}}if(best)GC.war[grWk(GC.me,best)]=1;}
-  geEnsure();grRealApply(quick);GC.sc=GR_SCEN.some(x=>x.id===o.sc)?o.sc:'me26';grScenApply(GC.sc,quick);
+  geEnsure();grRealApply(quick);GC.sc=GR_SCEN.some(x=>x.id===o.sc)?o.sc:'me26';grScenApply(GC.sc,quick);try{for(const c of Object.keys(GC.nat))gfInit(c);}catch(e){console.error('gfInit',e);}
   grLog('The campaign begins. '+(GC.me?GCM.nats.get(GC.me).name+' takes the field.':'Observer mode.'),GC.me);
   return GC;}
 /* RG6 scenario starts (laneA 2026-11-07): each scenario is a preset ON TOP of the realistic start (grRealApply) — extra opening wars,
@@ -18738,7 +18738,7 @@ function grQueue(auto){for(;;){if(GC.qi>=GC.q.length)return grFinishTurn();const
 function grBattleAuto(b){if(!b.att.some(id=>GC.armies.some(a=>a.id===id))){b.done=1;return null;}const R=grRng(GC.seed*7+GC.turn*131+b.p);const r=grAuto(b,R);grSettle(b,r.win,'auto');return r;}
 function grBattleDone(b,win,how){grSettle(b,win,how||'live');GC.qi++;grSave();return grQueue(false);}
 // who stays, who falls back, who dies. `win` is 'att' or 'def'; losers with a province to fall back to keep their survivors, the rest are lost
-function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;try{GC.mil.foe=win==='att'?b.an:b.dn;gmilBattle(b,win);}catch(e){console.error('gmilBattle',e);}   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
+function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;try{gfBattle(b,win);}catch(e){console.error('gfBattle',e);}try{GC.mil.foe=win==='att'?b.an:b.dn;gmilBattle(b,win);}catch(e){console.error('gmilBattle',e);}   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
   b.done=1;const pn=P[b.p].n;
   const losers=win==='att'?def:att,winners=win==='att'?att:def;
   for(const a of losers){a.path=[];if(!a.u.length){grDrop(a);continue;}
@@ -19260,7 +19260,7 @@ setInterval(()=>{try{grandHud();}catch(e){}},1000);
 /* ---- A3b army morale (laneF): ONE bar per army, styles from MSTYLES (01-data); a.mor 0..100 saved with the army ---- */
 const GMOR_MAX={zeal:100,prof:100,home:90,fire:80};   /* base ceilings; home defenders get +10 on core land, see gmMorMax */
 function gmMorStyle(a){return MORALE_STYLE[(typeof grNat==='function'?grNat(a.o).fac:a.o)]||'home';}
-function gmMorMax(a){const s=gmMorStyle(a);let m=GMOR_MAX[s]||90;if(s==='home'&&GC&&GC.prov[a.at]&&GC.prov[a.at].o===a.o)m=100;return m;}
+function gmMorMax(a){const s=gmMorStyle(a);let m=GMOR_MAX[s]||90;if(s==='home'&&GC&&GC.prov[a.at]&&GC.prov[a.at].o===a.o)m=100;try{m=Math.max(m,Math.min(100,m+gfTradMor(a.o)));}catch(e){}return m;}
 function gmMor(a){return a.mor==null?gmMorMax(a):Math.max(0,Math.min(gmMorMax(a),a.mor));}
 function gmMorMul(a){return .8+.2*gmMor(a)/100;}   /* auto-resolve strength: broken armies fight at 80% */
 function gmMorBattle(losers,winners){for(const a of losers){const s=gmMorStyle(a);let d=30;if(s==='zeal')d=15;else if(s==='prof')d=24;else if(s==='fire')d=40;
@@ -19400,7 +19400,7 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   const score=GC.me?grScore(GC.me):0;
   t.innerHTML='';if(N){t.appendChild(guEl('span','display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #fff;background:'+N.color));t.appendChild(guEl('b','font-size:17px',GCM.nats.get(GC.me).name));}
   t.appendChild(guEl('span','opacity:.9','<b id="gDate">'+(GC.ph==='plan'?grDateStr(GC.turn,GC.day|0):grDateStr(GC.turn+1,0))+'</b> <span style="opacity:.65">month '+Math.min(GC.turn,GC.maxTurn)+'/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')+'</span>'));guClockUI(t);
-  if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/month)</span>'));
+  if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/month)</span>'));if(me&&typeof gfChip==='function')t.appendChild(guEl('span','',gfChip()));   /* A5 force limit chip */
   if(me)t.appendChild(guEl('span','opacity:.9','Score <b>'+score+'</b> · provinces <b>'+GCM.P.filter(p=>p.land&&GC.prov[p.i].o===GC.me).length+'</b>'));
   try{geUiTop(t,me);}catch(e){console.error('geUiTop',e);}try{gmilUiTop(t,me);}catch(e){console.error('gmilUiTop',e);}
   const rg=guEl('span','display:flex;gap:4px;flex-wrap:wrap;margin-left:auto');for(const [nm,r] of GR_REGIONS){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#dfe8f0;cursor:pointer;font-size:13px',nm);b.type='button';b.onclick=()=>{guFit(r);guRedraw();};rg.appendChild(b);}t.appendChild(rg);
@@ -19847,8 +19847,18 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}if(G3.real&&G3.F&&!G
       vec2 p=vW.xz;float w=sin(p.x*.31+uTime*1.1)+sin(p.y*.47-uTime*.8)+sin((p.x+p.y)*.19+uTime*.6)+sin((p.x-p.y)*.63-uTime*1.3)*.5;c*=1.+w*.028;
       vec3 V=normalize(cameraPosition-vW);vec3 N=normalize(vec3(cos(p.x*.31+uTime*1.1)*.05+cos((p.x-p.y)*.63-uTime*1.3)*.03,1.,cos(p.y*.47-uTime*.8)*.05+cos((p.x+p.y)*.19+uTime*.6)*.03));
       N=normalize(N+vec3(sin(p.x*1.7+uTime*2.1)*cos(p.y*1.3-uTime*1.7),0.,cos(p.x*1.1-uTime*1.9)*sin(p.y*1.9+uTime*1.4))*.022*(1.-smoothstep(300.,1400.,length(cameraPosition-vW))));
-      float fdd=length(cameraPosition-vW);N=normalize(mix(N,vec3(0.,1.,0.),smoothstep(500.,3200.,fdd)*.92));vec3 L=normalize(vec3(-1.,.75,-.45));vec3 Rf=reflect(-L,N);float gl=max(dot(Rf,V),0.);c+=vec3(1.,.93,.78)*(pow(gl,60.)*.5+pow(gl,500.)*2.4);
-      float fr=pow(1.-max(dot(N,V),0.),4.);c=mix(c,vec3(.50,.68,.84),clamp(fr*.55,0.,.6));
+      float fdd=length(cameraPosition-vW);
+      // swell: 5 crossing sharpened wave trains (peaked crests, flat troughs) -> bumpy normals + whitecaps in open water
+      float cr=0.;vec2 gw=vec2(0.);
+      {vec2 D[5];D[0]=vec2(.86,.5);D[1]=vec2(-.5,.87);D[2]=vec2(.97,-.26);D[3]=vec2(-.8,-.6);D[4]=vec2(.2,.98);
+       float K[5];K[0]=.21;K[1]=.34;K[2]=.52;K[3]=.83;K[4]=1.3;float A[5];A[0]=1.;A[1]=.8;A[2]=.55;A[3]=.35;A[4]=.2;float Sp[5];Sp[0]=.7;Sp[1]=.9;Sp[2]=1.1;Sp[3]=1.5;Sp[4]=1.9;
+       for(int i=0;i<5;i++){float ph=dot(D[i],p)*K[i]+uTime*Sp[i]+float(i)*1.7;float sn=.5+.5*sin(ph);float pk=sn*sn;cr+=pk*A[i];gw+=A[i]*sn*cos(ph)*K[i]*D[i];}
+       cr/=2.9;}
+      float wfade=1.-smoothstep(350.,2200.,fdd);N=normalize(N+vec3(-gw.x,0.,-gw.y)*.05*wfade);
+      N=normalize(mix(N,vec3(0.,1.,0.),smoothstep(500.,3200.,fdd)*.92));vec3 L=normalize(vec3(-1.,.75,-.45));vec3 Rf=reflect(-L,N);float gl=max(dot(Rf,V),0.);c+=vec3(1.,.93,.78)*(pow(gl,60.)*.5+pow(gl,500.)*2.4);
+      float fr=pow(1.-max(dot(N,V),0.),4.);vec3 Rv=reflect(-V,N);float sk=clamp(Rv.y,0.,1.);vec3 skyC=mix(vec3(.74,.82,.9),vec3(.28,.5,.8),pow(sk,.55));skyC+=vec3(.5,.38,.2)*pow(max(dot(Rv,L),0.),8.)*.35;c=mix(c,skyC,clamp(.06+fr*.62,0.,.7));
+      c+=vec3(.05,.2,.2)*smoothstep(.55,1.,cr)*(1.-smoothstep(.3,.7,dp))*wfade;   // light through thin crests in shallows
+      float cap=smoothstep(.72,.95,cr)*smoothstep(.25,.6,dp)*(.55+.45*sin(p.x*.9+p.y*1.3+uTime*.7))*(.35+.65*wfade);c=mix(c,vec3(.93,.97,1.),clamp(cap*.5,0.,.55));
       float fw=fwidth(s.g)+.004;float foam=smoothstep(.36,.49,s.g)*(1.-smoothstep(.49,.6,s.g));c=mix(c,vec3(.92,.97,1.),foam*.35*(.6+.4*sin(uTime*1.6+p.x*.4+p.y*.3)));
       float crest=1.-smoothstep(fw*.6,fw*1.8,abs(s.g-(.52+.02*sin(uTime*.9+p.x*.2+p.y*.17))));c=mix(c,vec3(.96,.99,1.),crest*.8);   // crisp shoreline foam line, constant width on screen
       if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){vec4 ov=texture2D(uOv,cu);c=mix(c,ov.rgb,ov.a*.55);c=g3rimS(c,cu);}
@@ -21152,6 +21162,7 @@ const PPL_T={   // culture -> [first names, family names, patronymics (ru/uk onl
  lb:['Hadi Ali Mahmoud Hussein Jawad Nabil Bilal Ziad Fadi Kassem Rida Ammar Mustafa Samer Yasser Ghassan','Amili Jaber Zein Hamadeh Khalil Saleh Bazzi Shehab Mroue Ghandour Nasser Fakih Bitar Mazraani Charafeddine Hijazi'],
  clb:['Hadi Jawad Abbas Ammar Mohammad Hasan Kassem Rida Ibrahim Mortada','Amili Zein Jaber Hamadeh Shehab Mroue Charafeddine Mousawi Sadeq Baalbaki Tyrawi Nabatieh'],
  ye:['Abdulsalam Yahya Nasser Hamoud Saleh Mansour Hashim Fouad Ahmed Murad Zaid Abdullatif Najib Jamil Adel Taha','al-Sanaani al-Hamdani al-Raymi al-Shami al-Wazir al-Madani al-Khawlani al-Yafei al-Hadrami al-Quhali al-Dhamari al-Ansi al-Marwani al-Jabri'],
+ cir:['Hussein Ali Mohammad Mahdi Jawad Muhsin Baqir Abbas Hasan Kazim Sadiq Hamid','al-Hilli al-Karbalai al-Mousawi al-Gharawi al-Kufi al-Saadi al-Jaberi al-Nasiri al-Zubaidi al-Rubaie al-Fatlawi al-Moussawi'],
  cye:['Yahya Hamoud Mansour Zaid Hashim Murad Najm Ahmed Hussein Abdulwahab','al-Sanaani al-Hamdani al-Raymi al-Wazir al-Madani al-Khawlani al-Dhamari al-Ansi al-Marwani al-Saadi'],
  iq:['Haider Ali Mustafa Hussein Karrar Zaid Ahmed Omar Salam Qasim Jabbar Rafid Thamer Ayad Falah Hakim','al-Tamimi al-Jubouri al-Obeidi al-Shammari al-Saadi al-Rubaie al-Zubaidi al-Bayati al-Dulaimi al-Hashimi al-Azzawi al-Kinani al-Nuaimi al-Ani'],
  sy:['Karim Nabil Samir Walid Tariq Salim Rami Fouad Jamal Bassel Majd Anas Wael Adnan Ghiath Mazen','Haddad Mansour Khoury Darwish Najjar Sabbagh Hakim Farouk Rahal Shami Hamwi Atassi Kurdi Jaber Halabi Zaidan'],
@@ -21188,12 +21199,13 @@ const PPL_T={   // culture -> [first names, family names, patronymics (ru/uk onl
  es:['Javier Alvaro Sergio Pablo Fernando Ramon Gonzalo Iker Adrian Rubén Marcos Ismael Julian Cristobal Ignacio Guillermo','Gallego Herrera Castillo Dominguez Vazquez Santana Molina Cabrera Prieto Fuentes Aguilar Benitez Calvo Ledesma Cordero Pascual','','Marta Carmen Pilar Elena Beatriz Rocio Irene Teresa'],
  se:['Erik Anders Lars Johan Mikael Nils Per Gustav Henrik Oskar Fredrik Magnus Olof Stefan Hakan Sven','Lindqvist Sandberg Nordin Eklund Holmgren Bergstrom Forsberg Sjoberg Lundgren Engstrom Wallin Dahlberg Hedlund Ostlund Samuelsson Granath','','Karin Ingrid Annika Maria Elin Sofia Helena Astrid'],
  en:['James Robert Marcus Daniel Edward Thomas Philip Gordon Neil Walter Richard Andrew Graham Nigel Jonathan Martin','Hollis Kendrick Whitaker Barlow Ashby Crane Mercer Pryor Langley Thorne Blackwood Caldwell Fairfax Harlow Rutledge Sterling','','Eleanor Katherine Margaret Olivia Rebecca Helen Susan Victoria']};
-const PPL_CUL={IR:'fa',RS:'lb',DW:'ye',IQ:'iq',SY:'sy',SA:'gu',AE:'gu',OM:'gu',JO:'jo',EG:'eg',KD:'ku',TR:'tr',AZ:'az',IL:'he',RU:'ru',UA:'uk',KP:'ko',KR:'ko',CN:'zh',TW:'zh',JP:'ja',VN:'vi',IN:'hi',PK:'ur',AF:'af',ID:'id',PH:'ph',TH:'th',KZ:'kz',NG:'ng',ZA:'za',ET:'et',DZ:'eg',MA:'eg',LY:'eg',SD:'eg',CU:'la',VE:'la',MX:'la',AR:'la',CO:'la',CL:'la',BR:'br',ES:'es',FR:'fr',DE:'de',EU:'de',PL:'pl',IT:'it',GR:'gr',SE:'se',US:'en',GB:'en',AU:'en',CA:'en'};
+const PPL_CUL={IR:'fa',RS:'lb',DW:'ye',RV:'iq',IQ:'iq',SY:'sy',SA:'gu',AE:'gu',OM:'gu',JO:'jo',EG:'eg',KD:'ku',TR:'tr',AZ:'az',IL:'he',RU:'ru',UA:'uk',KP:'ko',KR:'ko',CN:'zh',TW:'zh',JP:'ja',VN:'vi',IN:'hi',PK:'ur',AF:'af',ID:'id',PH:'ph',TH:'th',KZ:'kz',NG:'ng',ZA:'za',ET:'et',DZ:'eg',MA:'eg',LY:'eg',SD:'eg',CU:'la',VE:'la',MX:'la',AR:'la',CO:'la',CL:'la',BR:'br',ES:'es',FR:'fr',DE:'de',EU:'de',PL:'pl',IT:'it',GR:'gr',SE:'se',US:'en',GB:'en',AU:'en',CA:'en'};
 const PPL_REG={ME:'iq',AF:'ng',SA:'hi',EA:'zh',SEA:'id',EU:'de',NA:'en',SAM:'la'};
 const PPL_FF={ko:1,zh:1,ja:1,vi:1};   // family name first
-const PPL_CLERIC={IR:'cfa',RS:'clb',DW:'cye'};   // nations whose leader is always an Ayatollah (other clerics: Hojatoleslam)
-const PPL_HEAD={SA:'King',JO:'King',MA:'King',OM:'Sultan',AE:'President',GB:'Prime Minister',JP:'Prime Minister',IL:'Prime Minister',DE:'Chancellor',EU:'President',IN:'Prime Minister',ES:'Prime Minister',IT:'Prime Minister',PL:'Prime Minister',SE:'Prime Minister',GR:'Prime Minister',CA:'Prime Minister',AU:'Prime Minister',TR:'President',CN:'President',KP:'Dear Leader',IR:'Ayatollah',RS:'Ayatollah',DW:'Ayatollah',TH:'Prime Minister',VN:'General Secretary',KD:'President',AF:'Chairman',LY:'Chairman',SD:'Chairman',KZ:'President'};
-const PPL_HEIR={SA:'Crown Prince',JO:'Crown Prince',MA:'Crown Prince',OM:'Crown Prince',AE:'Crown Prince',KP:'Successor',IR:'Designated successor',RS:'Designated successor',DW:'Designated successor'};
+const PPL_CLERIC={IR:'cfa',RS:'clb',DW:'cye',RV:'cir'};   // nations whose head of state is always a cleric: ONE Supreme Ayatollah (IR); the Imams of RS, DW and RV are their own sub-leaders (Abdullah 2026-11-06 23:09); other clerics: Hojatoleslam
+const PPL_CLTTL={IR:'Supreme Ayatollah',RS:'Imam',DW:'Imam',RV:'Imam'};
+const PPL_HEAD={SA:'King',JO:'King',MA:'King',OM:'Sultan',AE:'President',GB:'Prime Minister',JP:'Prime Minister',IL:'Prime Minister',DE:'Chancellor',EU:'President',IN:'Prime Minister',ES:'Prime Minister',IT:'Prime Minister',PL:'Prime Minister',SE:'Prime Minister',GR:'Prime Minister',CA:'Prime Minister',AU:'Prime Minister',TR:'President',CN:'President',KP:'Dear Leader',IR:'Supreme Ayatollah',RS:'Imam',DW:'Imam',RV:'Imam',TH:'Prime Minister',VN:'General Secretary',KD:'President',AF:'Chairman',LY:'Chairman',SD:'Chairman',KZ:'President'};
+const PPL_HEIR={SA:'Crown Prince',JO:'Crown Prince',MA:'Crown Prince',OM:'Crown Prince',AE:'Crown Prince',KP:'Successor',IR:'Designated successor',RS:'Designated successor',DW:'Designated successor',RV:'Designated successor'};
 const PPL_POSTS=['Minister of Foreign Affairs','Minister of Defence','Minister of Finance','Minister of the Interior'];
 const PPL_RANKS={fa:['Sarhang','Sartip Dovom','Sartip','Sarlashkar','Sardar'],ar:['Aqid','Amid','Liwa','Fariq','Fariq Awwal'],en:['Colonel','Brigadier','Major General','Lieutenant General','General']};
 function pplHash(s){let h=2166136261;s=''+s;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
@@ -21211,7 +21223,7 @@ function pplLook(key,c,sx,role){const h=pplHash(key+'|'+c),R=grRng(h|0),n=(typeo
   return {h,sx,age:role==='heir'?28+Math.floor(R()*14):role==='leader'?(PPL_CLERIC[c]?62+Math.floor(R()*14):52+Math.floor(R()*18)):role==='general'?46+Math.floor(R()*16):42+Math.floor(R()*20),reg:n.reg||'',cul:pplCul(c),beard:R(),build:R(),tone:R()};}
 function pplMakePerson(c,role,idx,R,post,used){used=used||{};for(let t=0;t<8;t++){const p=pplMakePerson1(c,role,idx,R,post),k=p.nm.split(' ').filter(w=>w.length>3).pop();if(!used[p.nm]&&!used['f'+k]||t===7){used[p.nm]=1;used['f'+k]=1;return p;}}}
 function pplMakePerson1(c,role,idx,R,post){const cul=pplCul(c),cl=PPL_CLERIC[c];let ttl='',nm,sx='m',tab=cul;
-  if(role==='leader'){ttl=PPL_HEAD[c]||'President';if(cl){tab=cl;ttl='Ayatollah';}}
+  if(role==='leader'){ttl=PPL_HEAD[c]||'President';if(cl){tab=cl;ttl=PPL_CLTTL[c]||'Supreme Ayatollah';}}
   else if(role==='heir'){ttl=PPL_HEIR[c]||'Heir';if(cl){tab=cl;ttl='Hojatoleslam';}}
   else if(role==='minister'){ttl='';if(cl&&R()<.4){tab=cl;ttl='Hojatoleslam';}
     else if(PPL_T[cul]&&PPL_T[cul][3]&&R()<.22)sx='f';}
@@ -21808,6 +21820,71 @@ function g3ShipTick(dt,s){
     D.position.set(x,.35+Math.sin(G3.time*1.3+sh.seed)*.12,z);D.rotation.set(0,Math.atan2(dx,dz),0,'YXZ');D.scale.setScalar(sc);D.updateMatrix();S.m[sh.k].setMatrixAt(cnt[sh.k]++,D.matrix);
     D.position.y=.2;D.scale.set(sc*2.3,1,sc*(6+3*Math.sin(G3.time*2+sh.seed)));D.position.x=x-Math.sin(D.rotation.y)*sc*4.4;D.position.z=z-Math.cos(D.rotation.y)*sc*4.4;D.updateMatrix();S.wk.setMatrixAt(w++,D.matrix);}
   for(let k=0;k<2;k++){S.m[k].count=cnt[k];S.m[k].instanceMatrix.needsUpdate=true;}S.wk.count=w;S.wk.instanceMatrix.needsUpdate=true;}
+// 13x-ginfl.js — lane B5b slice 1: INFLATION + ARMY UPKEEP SLIDER (EU4 economy), all as GMOD rows on the existing 'upkeep'/'income' stats
+// (13g-grandeco reads them). N.infl = inflation % (0..30) from unpaid/defaulted war bonds and an empty treasury; falls slowly; Political points cut it.
+// N.upk = army upkeep setting 0 lean / 1 normal / 2 full: lean = cheaper but slower rallying, full = dearer but faster rallying. Deterministic (state only).
+const GIN_MAX=30,GIN_COST=40,GIN_STEP=1; // inflation bands are whole 5% steps
+GMOD_COND.infl=(k,arg)=>{const N=GC&&GC.nat[k];return !!(N&&Math.min(6,Math.floor((N.infl||0)/5))===+arg);};
+GMOD_COND.upk=(k,arg)=>{const N=GC&&GC.nat[k];return !!(N&&(N.upk===undefined?1:N.upk|0)===+arg);};
+for(let b=1;b<=6;b++){const s='Inflation ('+(b*5)+'%+)';
+  GMOD_ROWS.push({id:'infl_up'+b,src:s,scope:'nation',stat:'upkeep',mul:1+.05*b,cond:'infl:'+b},
+    {id:'infl_inc'+b,src:s,scope:'nation',stat:'income',add:-.01*b,cond:'infl:'+b});}
+GMOD_ROWS.push({id:'upk_lo_c',src:'Lean army upkeep',scope:'nation',stat:'upkeep',mul:.8,cond:'upk:0'},
+  {id:'upk_lo_r',src:'Lean army upkeep',scope:'nation',stat:'rallySpeed',mul:.85,cond:'upk:0'},
+  {id:'upk_hi_c',src:'Full army upkeep',scope:'nation',stat:'upkeep',mul:1.2,cond:'upk:2'},
+  {id:'upk_hi_r',src:'Full army upkeep',scope:'nation',stat:'rallySpeed',mul:1.15,cond:'upk:2'});
+GMOD_STATS.upkeep=GMOD_STATS.upkeep||'Army upkeep';GMOD_STATS.income=GMOD_STATS.income||'Income';
+function ginN(c){const N=GC&&GC.nat[c];if(!N)return null;if(N.infl===undefined){N.infl=0;N.upk=1;}return N;}
+function ginCut(c){const N=ginN(c);if(!N||!N.pp)return 'Not available.';if(N.infl<=0)return 'There is no inflation.';
+  if(N.pp.pol<GIN_COST)return 'Needs '+GIN_COST+' Political points.';N.pp.pol-=GIN_COST;N.infl=Math.max(0,N.infl-5);GMOD_C.cache.clear();
+  if(c===GC.me)grLog('Austerity measures cut inflation to '+Math.round(N.infl)+'%.',c);return '';}
+function ginSet(c,v){const N=ginN(c);if(!N)return;N.upk=Math.max(0,Math.min(2,v|0));GMOD_C.cache.clear();}
+function ginPressure(c){const N=GC.nat[c],E=N.e||{},out=[];const nb=(E.bonds||[]).length;
+  if(nb)out.push([nb+' war bond'+(nb>1?'s':'')+' outstanding',.4*nb]);
+  if(E.defT>GC.turn)out.push(['Recent default',1.5]);
+  if(N.cash<=0&&(N.inc||0)<0)out.push(['Printing money to cover the deficit',1.5]);
+  if(!out.length)out.push(['Prices settle',-.3]);return out;}
+function ginMonth(){if(!GC)return;for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;ginN(c);if(N.inT===GC.turn)continue;N.inT=GC.turn;
+    N.infl=Math.max(0,Math.min(GIN_MAX,N.infl+ginPressure(c).reduce((s,x)=>s+x[1],0)));
+    if(c!==GC.me){if(N.infl>=10&&N.pp&&N.pp.pol>=GIN_COST+40)ginCut(c);}}
+  GMOD_C.cache.clear();}
+GMOD_HOOKS.push(ginMonth);
+npTab('fin','🏦','Finance',(code,body,c)=>{const N=ginN(code),own=c.own&&code===GC.me,inf=Math.round(N.infl*10)/10,u=N.upk|0;
+  const col=inf<5?'#8fd18f':inf<15?'#e8d27a':'#ff9a8a';
+  let h='<div style="font-size:26px;margin-bottom:6px"><b style="color:'+col+'">Inflation '+inf+'%</b></div>'+
+   '<div style="opacity:.85;margin-bottom:8px">Every 5% raises army upkeep by 5% and trims income by 1%. War bonds left unpaid, defaults and an empty treasury push it up; calm months and austerity bring it down.</div>'+
+   '<div style="margin:8px 0"><b>This month:</b> '+ginPressure(code).map(x=>x[0]+' ('+(x[1]>0?'+':'')+x[1]+')').join(', ')+'</div>'+
+   '<div style="margin:12px 0 4px"><b>Army upkeep:</b> <span style="opacity:.85">'+['Lean — 20% cheaper, slower rallying','Normal','Full — 20% dearer, faster rallying'][u]+'</span></div>';
+  const L=gmodLines('nation',code,'upkeep');if(L.length)h+='<div style="margin:8px 0;opacity:.85"><b>Upkeep modifiers:</b><br>'+L.join('<br>')+'</div>';
+  body.innerHTML=h;
+  if(own){const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;margin:6px 0 12px';
+    ['Lean','Normal','Full'].forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;b.style.cssText='font-size:16px;padding:5px 16px;cursor:pointer'+(i===u?';outline:2px solid #e8d27a':'');b.onclick=()=>{ginSet(code,i);npDraw();};row.appendChild(b);});body.appendChild(row);
+    const b=document.createElement('button');b.textContent='Austerity: -5% inflation (-'+GIN_COST+' Political points)';b.style.cssText='font-size:16px;padding:5px 16px;cursor:pointer';
+    b.disabled=N.infl<=0||!N.pp||N.pp.pol<GIN_COST;b.onclick=()=>{const e=ginCut(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);
+    const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Political points: '+Math.floor(N.pp?N.pp.pol:0);body.appendChild(p);}});
+alAdd('infl','🏦','Inflation',c=>{const N=ginN(c);return N&&N.infl>=10?{n:Math.round(N.infl)+'%',tip:'inflation is high — open the Finance tab',go:()=>npOpen(c,'fin')}:null;});
+// A5 FORCE LIMIT + ARMY TRADITION (laneA 2026-11-07, EU4-style; data rows in the ONE modifier engine 13k, no second upkeep system).
+// Force limit = the army value a nation can field at normal upkeep. It starts 15% above each nation's opening army (realistic start)
+// and grows/shrinks with the development it holds (conquest raises it, losing land lowers it); GMOD stat 'forceLimit' scales it.
+// Over the limit: upkeep x1.5 (row 'fl_over'). Army tradition 0-100: battles raise it (winner +6, loser +2), it fades 2%/month;
+// it raises every army's max morale (+1 per 10, hook in 13b gmMorMax) and at 50+/80+ adds manpower/war-support rows.
+// State: N.fl0 (start limit), N.dv0 (start development), N.trad — all in GC.nat, so saves and determinism keep working.
+function gfDev(c){let d=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i]&&GC.prov[p.i].o===c)d+=p.dev||1;return d;}
+function gfInit(c){const N=GC&&GC.nat[c];if(!N)return null;if(N.fl0===undefined){N.fl0=Math.max(4000,Math.round(geArmyVal(c)*1.15));N.dv0=Math.max(1,gfDev(c));}if(N.trad===undefined)N.trad=10;return N;}
+function grFL(c){const N=gfInit(c);if(!N)return 0;return Math.round(N.fl0*Math.max(.25,gfDev(c)/N.dv0)*gmod('nation',c,'forceLimit',1));}
+function gfOver(c){const N=GC&&GC.nat[c];return !!N&&!N.dead&&geArmyVal(c)>grFL(c);}
+GMOD_COND.overfl=k=>gfOver(k);
+GMOD_COND.trad=(k,arg)=>{const N=GC&&GC.nat[k];return !!N&&(N.trad|0)>=(+arg||0);};
+GMOD_ROWS.push({id:'fl_over',src:'Over force limit',scope:'nation',stat:'upkeep',mul:1.5,cond:'overfl'},
+  {id:'trad50',src:'Army tradition 50+',scope:'nation',stat:'manpower',add:.10,cond:'trad:50'},
+  {id:'trad80',src:'Army tradition 80+',scope:'nation',stat:'warSupport',add:.03,cond:'trad:80'});
+if(typeof GMOD_STATS==='object'){GMOD_STATS.upkeep=GMOD_STATS.upkeep||'Army upkeep';GMOD_STATS.manpower=GMOD_STATS.manpower||'Manpower';GMOD_STATS.forceLimit='Force limit';}
+GMOD_HOOKS.push(()=>{for(const c of Object.keys(GC.nat)){const N=gfInit(c);if(N&&!N.dead)N.trad=Math.round(N.trad*.98*10)/10;}});
+function gfBattle(b,win){for(const [c,w] of [[b.an,win==='att'],[b.dn,win!=='att']]){const N=gfInit(c);if(N)N.trad=Math.min(100,(N.trad||0)+(w?6:2));}}
+function gfTradMor(o){const N=GC&&GC.nat[o];return N?Math.floor((N.trad||0)/10):0;}
+// top-bar chip (13c guTop hook): "Army 82k / 100k" — red when over the limit
+function gfChip(){if(!GC||!GC.me||!GC.nat[GC.me])return '';const v=geArmyVal(GC.me),L=grFL(GC.me),o=v>L,N=GC.nat[GC.me];
+  return '<span title="Force limit: armies above it cost 50% more upkeep. It grows with the land you hold. Army tradition '+Math.round(N.trad||0)+'/100 (battles raise it; it lifts army morale)" style="opacity:.92'+(o?';color:#ff9d8e':'')+'">⚔ <b>'+Math.round(v/1000)+'k</b>/'+Math.round(L/1000)+'k · ★'+Math.round(N.trad||0)+'</span>';}
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.
