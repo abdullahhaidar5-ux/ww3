@@ -187,7 +187,7 @@ async function skirmishSteps() {
   const st1 = await skirmishPicks(A, false);
   await shot(A, 'startpick-desktop.png', { clip: await pickerClip(A), fullPage: true });
   const pv = await A.evaluate(() => { const cv = document.getElementById('mapCv'); return cv.toDataURL().length; });
-  await A.locator('#start').click({ timeout: 240000 });   // the click starts the battle (a long first step)
+  await A.evaluate(() => document.getElementById('start').click());   // the click starts the battle (a long first step)
   await inBattle(A, 'single');
   const b1 = await expectBases(A, '1. skirmish', st1);
   // the side left on Random is where the preview showed it (slotOrder with the same picks)

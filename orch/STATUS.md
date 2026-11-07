@@ -1,5 +1,5 @@
-Shipped in the last 3 h: first cuts of Taiwan, Philippines, Vietnam, Indonesia, Thailand, Kazakhstan, Afghanistan, Oman, Algeria, Morocco, Nigeria, South Africa, Ethiopia, Libya, Sudan, plus Japan playable; new street-grid towns; menu quick-start and hover hints.
-Lanes: A (grand engine) is on the live-battle loading bug A1; B (grand systems) is on the realistic start B1; C (look) is on the UI kit C0; D (content and QA) is on first-time-player fixes (D2) and voices for the new nations.
+Shipped in the last 3 h: grand-map events and world crises, diplomatic web, AI peace and pacts, great powers, achievements and missions (laneG); nation-panel stability with a Political-point raise (laneB B4 slice 1); power points and national ideas (laneB B3); battle declutter with one command strip; a bisect workflow that names the first bad commit on a red gate.
+Lanes: A (grand engine) is on real time with pause, then army control and morale bars; B (grand systems) is on stability, war support and development; C (look) is on the UI kit C0, not started; D (content and QA) is on the Balanced/Realistic toggle D1b, first-time-player fixes and voices for the new nations; E (battle units) is on the real infantry model swap E1.
 Needs your tap: merge PR #23 (main → servers-live, new nations) so Cloudflare battles get them: https://github.com/abdullahhaidar5-ux/ww3/pull/23
-Open player bug reports: none right now. Known bug still open: the Fight-it live battle never loads from the grand map (A1).
+Open player bug reports: none right now. Open design item: 3-player maps (isolated start wins about 55%).
 Deadline Sat 20:00 Chicago; no new scope after 18:00, so the lanes are finishing and shipping what is green.
