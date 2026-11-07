@@ -255,3 +255,6 @@ Grand stage 2 — **empire economy on the grand map**. New `src/13g-grandeco.js`
 
 ## nations-a1 — Poland, Azerbaijan, Jordan, Kurdistan Region, Italy, Greece, Spain; EU retired (2026-11-06)
 First cut via NEWNAT, EU hidden from menus. See orch/reports/nations-a1.md. Open: voices, models, maps, tourney, servers-live PR.
+
+## 2026-11-07 — rescue (Sonnet 5.5, scheduled)
+Japan (JP) rescued: orch/nations-new2 had stalled 5 h with JP complete but unmerged; merged main (8 conflicts: kit/navy lists, anthem tables, TK_ADJ, headless sim list), rebuilt, smoke PASS, 17+ CI gates green. Open: gate/grand "eco snowballs" fails on main itself (not JP); gate/smooth-mp once regressed, mpsync-server hit a runner port clash after passing. JP still uses stand-in 3D models; radio/hero voice sheets open.
