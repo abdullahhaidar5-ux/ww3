@@ -38,7 +38,7 @@ function bhOpen(){let ov=document.getElementById('myb');
    <div class="label">Last ${Math.min(20,a.length)} battles</div><div style="overflow-x:auto"><table><tr><th>Day</th><th>Nation</th><th>Result</th><th>Time</th><th>Map</th><th>Opponents</th><th title="units built / lost">B/L</th></tr>${rows}</table></div>`
    :`<div class="none">No finished battles yet. Win or lose one and it shows up here.</div>`)+
    `<div class="row" style="margin-top:12px"><button class="big ghost" id="mybClose">Close</button>`+(a.length?`<button class="big ghost" id="mybClear">Clear history</button>`:'')+`</div></div>`;
-  ov.hidden=false;$('mybClose').onclick=()=>{ov.hidden=true;};const c=$('mybClear');if(c)c.onclick=()=>{if(confirm('Delete your saved battle history on this device?')){bhSave([]);bhOpen();}};}
+  ov.hidden=false;$('mybClose').onclick=()=>{ov.hidden=true;};const c=$('mybClear');if(c)c.onclick=()=>{uiConfirm('Delete your saved battle history on this device?','Delete',()=>{bhSave([]);bhOpen();},1);};}
 
 /* ---------- Tutorial ---------- */
 /* A guided first Conquest battle (single-player, passive/calm enemy). Each step: t = what and why (short), a = the ONE thing to do,

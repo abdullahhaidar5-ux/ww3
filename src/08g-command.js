@@ -116,7 +116,7 @@ function ctEl(){if(CTP)return CTP;const st=document.createElement('style');st.te
 #planBar button{background:#2c3a26;border:1px solid #8a9a6a;color:#fff;border-radius:6px;padding:4px 9px;font:700 12px system-ui,sans-serif;cursor:pointer}#planBar button.on{background:#e3b341;color:#1a1204}`;document.head.append(st);
   CTP=document.createElement('div');CTP.id='cmdP';CTP.hidden=true;document.body.append(CTP);
   CTP.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-a]');if(!b||b.disabled)return;e.preventDefault();e.stopPropagation();ctAct(b.dataset.a,b.dataset.v,b.dataset.w);},true);
-  CTP.addEventListener('dblclick',e=>{const b=e.target.closest('[data-n]');if(!b)return;const v=prompt('Name this battle group',CT.names[b.dataset.n]||'');if(v!=null){CT.names[b.dataset.n]=v.slice(0,16);ctUI(true);}});
+  CTP.addEventListener('dblclick',e=>{const b=e.target.closest('[data-n]');if(!b)return;const n=b.dataset.n;uiDialog('Name this battle group',{input:1,def:CT.names[n]||'',yes:'Save'},v=>{CT.names[n]=String(v).slice(0,16);ctUI(true);});});
   return CTP;}
 function ctBanner(){let b=$('ctBanner');const T=G&&G.teams[ME];const ofs=((G&&G.tOff)||[]).filter(o=>o.t===ME&&o.e>G.t&&!G.teams[o.f].out);
   if(!ofs.length||!T){if(b)b.hidden=true;return;}const o=ofs[0];if(!b){b=document.createElement('div');b.id='ctBanner';document.body.append(b);}b.hidden=false;
