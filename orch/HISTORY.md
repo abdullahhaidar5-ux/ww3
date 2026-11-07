@@ -308,3 +308,4 @@ Abdullah 20:12/20:14 "Ugly ugly ugly … not everything has to be shoved into a 
 - 2026-11-07 laneE (Sonnet): re-shot base view (e3before), assessed E1-E3 state, handoff updated; no src change
 - 2026-11-07 laneE (Sonnet): E3 scrub and rocks now thin out toward bases instead of a bare disc (src/04-gfx.js); shot orch/shots/laneE/e3after-base.png; E1 real model swap, E2, E4, E5 still open
 - laneD (2026-11-07 D2 slice 3): unit names no longer say "MBT" (Altay/Karrar/Leclerc/Al-Khalid/Arjun Tank) so the encyclopedia and build menu read plainly; newplayer audit clean. Smoke PASS; local smooth gate too slow here, CI gates it.
+- 2026-11-07 laneE (Sonnet): RF16 lasting wrecks: burnt-out vehicles kept as cover up to 96 per battle (was 36), src/03g-battlefeel.js (sim change: servers-live PR needed); RF13/14/15 and E1-E5 still open
