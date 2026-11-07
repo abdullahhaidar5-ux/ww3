@@ -1,0 +1,26 @@
+2.2s stale save in menu {"cont":false,"warn":true}
+13.0s map open
+17.3s march {"me":"IR","from":"Tehran","to":"Baku","foe":"AZ","ok":true,"units":37}
+19.9s fallback {"modal":true,"map":true,"G":false}
+21.7s end turn clicked
+25.4s prompt: BATTLE · CoastBakuAttackers — Iran37 units28 Basij Militia, 4 RPG Cell, 2 Karrar MBT, 1 Fateh-110 Launcher, 1 
+25.9s Fight it live clicked
+34.5s {"L":true,"step":"Loading 3D models…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+35.8s {"L":true,"step":"Building the battlefield…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+37.3s {"L":true,"step":"Preparing graphics…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+81.7s {"L":true,"step":"Deploying forces…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+94.0s {"L":false,"step":"Ready","g":true,"grand":true,"t":0,"paused":false,"gs":"none","ents":67}
+95.0s {"L":false,"step":"Ready","g":true,"grand":true,"t":0.18,"paused":false,"gs":"none","ents":67}
+114.1s battle running: Generating terrain 8251, Loading 3D models 178, Building the battlefield 1068, Building the battlefield 1374, Preparing graphics 44432, Deploying forces 14, Deploying forces 7182, total 63130
+GRANDLIVE PASS
+
+GRANDLIVE2 FAIL
+  ✗ page.waitForFunction: Timeout 120000ms exceeded.
+11.4s map open
+11.4s start {"turn":1,"day":0,"date":"1 Jan 2026","spd":0,"ph":"plan","modal":false}
+16.6s after Space {"turn":1,"day":3,"date":"4 Jan 2026","spd":2,"ph":"plan","modal":false}
+23.9s month rolled {"turn":2,"day":17,"date":"18 Feb 2026","spd":5,"ph":"plan","modal":false}
+25.7s paused {"turn":2,"day":17,"date":"18 Feb 2026","spd":0,"ph":"plan","modal":false}
+25.8s march {"ok":true,"hint":"Baku: arrives ~1 Mar 2026 (1 month)"}
+33.4s battle prompt {"turn":2,"day":0,"date":"1 Mar 2026","spd":5,"ph":"resolve","modal":true}
+GRANDRT PASS
