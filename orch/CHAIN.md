@@ -1,3 +1,6 @@
+> **2026-11-06 18:05 — superseded by `orch/PLAN-SAT.md` (four lanes).** grand3 is the last chain stage still running; its LAST step
+> fires the row below it, which is now **Lane A**. All rows below grand3 are disabled and live on as Lane A/B/D items.
+
 # CHAIN — grand stages start each other (Abdullah 2026-11-06 06:20 "chain the stages")
 
 Every stage below also has its own scheduled start time as a fallback. To avoid idle hours, each stage **starts the next one
@@ -10,7 +13,8 @@ the moment it finishes**. Usage stays the same; the chain just removes the waiti
 | 2b | grandmirror (battles mirror the map, Abdullah 2026-11-06 08:09) | trig_016cCZ2bTTv9X4CCYCpGGV5J | 2026-11-07 08:30 |
 | 3 | grand2 | trig_01HNEmcfdvDvGqYkz22bsWBL | 2026-11-06 21:00 |
 | 4 | grand3 | trig_01Xyp14g6U8dcjkEfpMc9t4M | 2026-11-07 04:00 |
-| 5 | grand4 | trig_01TixPPBWM54Wc3kBCqFpdjY | 2026-11-07 11:00 |
+| 5 | **Lane A** (replaces grand4…intuitive; PLAN-SAT.md) | trig_01Gx98id1Z38KSG4R5rAdU94 | hourly :23 Chicago |
+| — | grand4 (disabled → Lane B items) | trig_01TixPPBWM54Wc3kBCqFpdjY | — |
 | 6 | grand4b | trig_018QBVULJjHr22A7QwaEGQQ3 | 2026-11-07 16:00 |
 | 7 | grand6 | trig_01DtGg8wDtZcpYEhqttMihsi | 2026-11-07 23:00 |
 | 8 | grand7 | trig_012iovw6hb9bkzDZ8K7ySJU4 | 2026-11-08 05:00 |
