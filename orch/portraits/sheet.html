@@ -1,0 +1,13 @@
+<!doctype html><meta charset=utf-8><body style="margin:0;background:#10151c;color:#e8dcc0;font:13px sans-serif">
+<script type=importmap>{"imports":{"three":"./three/build/three.module.js"}}</script>
+<script type=module>
+import {renderPortrait} from './render.js';
+const specs=await (await fetch('specs.json')).json(),M=await (await fetch('meshes.json')).json();
+const q=new URLSearchParams(location.search),W=+(q.get('w')||240),H=Math.round(W*1.25),cols=+(q.get('cols')||8);
+const wrap=document.createElement('div');wrap.style.cssText=`display:grid;grid-template-columns:repeat(${cols},${W+14}px);gap:10px 6px;padding:10px`;document.body.appendChild(wrap);
+const lim=+(q.get('n')||specs.length);
+for(const s of specs.slice(0,lim)){const cell=document.createElement('div');cell.style.cssText='text-align:center;width:'+(W+14)+'px';
+  const c=renderPortrait(s,M.meshes[s.id],M.F,W,H);c.style.cssText='display:block;margin:auto';cell.appendChild(c);
+  const t=document.createElement('div');t.style.cssText='margin-top:3px;font-size:'+(W>200?13:11)+'px;line-height:1.25';t.innerHTML='<b>'+((s.ttl?s.ttl+' ':'')+s.name)+'</b><br><span style="opacity:.65">'+s.c+' · '+(s.post||s.role)+'</span>';cell.appendChild(t);wrap.appendChild(cell);}
+window.done=1;
+</script>

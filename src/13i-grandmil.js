@@ -32,11 +32,11 @@ const GMIL_MISSILE_COST=450,GMIL_MS_MAX=6;
 function gmilNew(){return {g:{},gid:1,fr:[],fid:1,zm:{},fq:[],n:{},bk:{},foe:'',nx:{}};}
 function gmilN(c){const M=GC.mil;return M.n[c]||(M.n[c]={ms:2,so:[]});}
 function gmilCul(c){return GMIL_CUL[c]||GMIL_REGCUL[(grNat(c)||{}).reg]||'en';}
-function gmilName(c,R){const L=GMIL_NM[gmilCul(c)]||GMIL_NM.en;return L[0][Math.floor(R()*L[0].length)]+' '+L[1][Math.floor(R()*L[1].length)];}
+function gmilName(c,R){if(typeof pplGenName==='function')return pplGenName(c,R);const L=GMIL_NM[gmilCul(c)]||GMIL_NM.en;return L[0][Math.floor(R()*L[0].length)]+' '+L[1][Math.floor(R()*L[1].length)];}
 function gmilRng(a,b){return grRng(((GC.seed*131+GC.turn*17+(a|0)*7+(b|0))|0));}
 function gmilGen(a){return a&&a.gid&&GC.mil?GC.mil.g[a.gid]||null:null;}
 function gmilLv(g){let l=0;while(l<4&&g.xp>=GMIL_LVN[l])l++;return l;}
-function gmilTitle(g){return ['Colonel','Brigadier','Major General','Lieutenant General','General'][g.lv|0];}
+function gmilTitle(g){if(typeof pplRank==='function')return pplRank(g.o,g.lv);return ['Colonel','Brigadier','Major General','Lieutenant General','General'][g.lv|0];}
 function gmilMaxGens(c){const n=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c).length;return Math.min(6,2+Math.floor(n/5));}
 function gmilIsNaval(k){return GMIL_NAVAL.includes(k);}
 
