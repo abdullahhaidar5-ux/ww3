@@ -88,14 +88,22 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   cv.addEventListener('wheel',ev=>{ev.preventDefault();if(GV.g3){g3Wheel(ev);return;}const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top,[wx,wy]=guToWorld(mx,my),f=Math.exp(-ev.deltaY*.0015);GV.z*=f;guClamp();GV.ox=mx-wx*GV.z;GV.oy=my-wy*GV.z;guClamp();guRedraw();},{passive:false});
   cv.addEventListener('pointerdown',ev=>{if(GV.g3&&ev.button===1){ev.preventDefault();cv.setPointerCapture(ev.pointerId);GV.drag={x:ev.clientX,y:ev.clientY,btn:1,yaw:G3.camera.yaw,pitch:G3.camera.pitch,m:1};return;}if(ev.button!==0)return;cv.setPointerCapture(ev.pointerId);const r0=cv.getBoundingClientRect();GV.drag={x:ev.clientX,y:ev.clientY,ox:GV.ox,oy:GV.oy,m:0,g:GV.g3?g3Ground(ev.clientX-r0.left,ev.clientY-r0.top):null};});
   cv.addEventListener('pointermove',ev=>{const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;
-    if(GV.drag){const dx=ev.clientX-GV.drag.x,dy=ev.clientY-GV.drag.y;if(Math.abs(dx)+Math.abs(dy)>4)GV.drag.m=1;if(GV.drag.m&&GV.g3){g3Drag(ev,mx,my);return;}if(GV.drag.m){GV.ox=GV.drag.ox+dx;GV.oy=GV.drag.oy+dy;guClamp();guRedraw();return;}}
-    const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);if(h!==GV.hov){GV.hov=h;guRedraw();}if(GV.g3&&GV.drag&&GV.drag.m)return;guTip(h,mx,my);});
+    if(GV.drag){const dx=ev.clientX-GV.drag.x,dy=ev.clientY-GV.drag.y;if(Math.abs(dx)+Math.abs(dy)>8)GV.drag.m=1;if(GV.drag.m&&GV.g3){g3Drag(ev,mx,my);return;}if(GV.drag.m){GV.ox=GV.drag.ox+dx;GV.oy=GV.drag.oy+dy;guClamp();guRedraw();return;}}
+    const [wx,wy]=guToWorld(mx,my),h=guProvAt(wx,wy);if(h!==GV.hov){GV.hov=h;guRedraw();}if(GV.g3&&GV.drag&&GV.drag.m)return;
+    const ah=GV.g3&&typeof g3HitAt==='function'?g3HitAt(mx,my):null;cv.style.cursor=ah?'pointer':'';if(ah){guArmyTip(ah.aid,mx,my);return;}guTip(h,mx,my);});
   cv.addEventListener('pointerup',ev=>{const d=GV.drag;GV.drag=null;if(!d||d.m)return;const r=cv.getBoundingClientRect(),mx=ev.clientX-r.left,my=ev.clientY-r.top;guClick(mx,my);});
   cv.addEventListener('pointerleave',()=>{GV.hov=-1;document.getElementById('gTip').style.display='none';guRedraw();});
   addEventListener('resize',()=>{if(document.getElementById('grandScreen'))guResize();});
   guResize();guFit(null);const me=GC.me&&GC.nat[GC.me];if(me){GV.sel=me.cap;guCentre(me.cap,2.0);}guRedraw();grandMapRefresh();
   if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guEndTurn();}
+    {const tg=ev.target&&ev.target.tagName;if(tg!=='INPUT'&&tg!=='TEXTAREA'&&tg!=='SELECT'&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&!document.getElementById('gModal')){   /* time keys (the grand map's key table): Space pause, + / − speed, 1–5 speed */
+      if(ev.key===' '){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));return;}if(ev.key==='+'||ev.key==='='){guSpeed((GV.spd||GV.lastSpd||1)+1);return;}if(ev.key==='-'||ev.key==='_'){if(GV.spd>1)guSpeed(GV.spd-1);return;}
+      if(ev.key>='1'&&ev.key<='5'&&ev.key.length===1){guSpeed(+ev.key);return;}}}
     if(GV.g3)return;const k=ev.key.toLowerCase(),st=60;if(k==='w'||k==='arrowup')GV.oy+=st;else if(k==='s'||k==='arrowdown')GV.oy-=st;else if(k==='a'||k==='arrowleft')GV.ox+=st;else if(k==='d'||k==='arrowright')GV.ox-=st;else return;guClamp();guRedraw();});}}
+function guArmyTip(aid,mx,my){const t=document.getElementById('gTip'),a=GC.armies.find(x=>x.id===aid);if(!t||!a){if(t)t.style.display='none';return;}
+  const N=GCM.nats.get(a.o),mine=a.o===GC.me,P=GCM.P[a.at];const sea=P&&P.sea;
+  t.innerHTML='<b>'+a.nm+'</b><br>'+(N?N.name:a.o)+' · '+a.u.length+(sea?' ships/units at sea':' units')+(P?' · '+P.n:'')+'<br><span style="opacity:.8">'+(mine?'Click to select · right-click a province to move':'Click to inspect')+'</span>';
+  t.style.display='block';t.style.left=(mx+16)+'px';t.style.top=(my+16)+'px';}
 function guTip(h,mx,my){const t=document.getElementById('gTip');if(!t)return;if(h<0||!GCM.P[h]){t.style.display='none';return;}const p=GCM.P[h];let html;
   if(p.sea){html='<b>'+p.n+'</b><br>'+(p.ck?'<span style="color:#ff9d8e">Chokepoint strait</span><br>':'')+'Sea zone · crossing takes '+p.cost+' turn'+(p.cost>1?'s':'');}
   else{const st=GC.prov[h],N=GCM.nats.get(st.o);html='<b>'+p.n+'</b> <span style="opacity:.7">'+N.name+'</span><br>'+guTerrName(p.t)+' · towns '+p.tw+(p.oil?' · oil':'')+(p.farm?' · farms':'')+(p.mine?' · mines':'')+(p.port?' · port':'')+'<br>Garrison '+st.gar.length+(st.o===GC.me?' · unrest '+Math.round(st.un)+'%':'')+(p.cap?'<br><span style="color:#ffd24a">Capital</span>':GC.nat[st.o]&&GC.nat[st.o].wg.includes(h)?'<br><span style="color:#ffd24a">War goal</span>':'');}
@@ -106,7 +114,7 @@ function guClick(mx,my){if(GV.g3){g3Click(mx,my);return;}for(const c of GV.chips
 function guRight(ev){if(GC.ph!=='plan'||GV.busy||!GV.selA)return;const r=GV.cv.getBoundingClientRect(),[wx,wy]=guToWorld(ev.clientX-r.left,ev.clientY-r.top),h=guProvAt(wx,wy);if(h<0)return;guMoveTo(GV.selA,h);}
 function guMoveTo(aid,h){const res=grOrderMove(aid,h);if(res.err){GV.hint=res.err;guHint();return;}
   if(res.decl){const w=GCM.nats.get(res.decl).name;guConfirm('Declare war on '+w+'?','Marching into '+GCM.P[h].n+' means war with '+w+'. Their allies and rivals may react.',()=>{const a=GC.armies.find(x=>x.id===aid);grDeclare(GC.me,res.decl);grOrderMove(aid,h);guSide();guRedraw();grSave();});return;}
-  GV.hint=GCM.P[h].n+': '+res.r.turns+' turn'+(res.r.turns>1?'s':'')+' away'+(res.r.path.some(j=>GCM.P[j].sea)?' (by sea)':'');guHint();guSide();guRedraw();grSave();}
+  GV.hint=GCM.P[h].n+': arrives ~'+grDateStr(GC.turn+res.r.turns,0)+' ('+res.r.turns+' month'+(res.r.turns>1?'s':'')+')'+(res.r.path.some(j=>GCM.P[j].sea)?' (by sea)':'');guHint();guSide();guRedraw();grSave();}
 function guHint(){const e=document.getElementById('gHint');if(e)e.textContent=GV.hint||'';}
 
 // ---------- top bar, side panel, log ----------
@@ -114,7 +122,7 @@ function grandMapRefresh(){if(GV.g3)g3Refreshed();GV.dirty=true;guTop();guSide()
 function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const me=GC.me?GC.nat[GC.me]:null,N=GC.me?grNat(GC.me):null;
   const score=GC.me?grScore(GC.me):0;
   t.innerHTML='';if(N){t.appendChild(guEl('span','display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #fff;background:'+N.color));t.appendChild(guEl('b','font-size:17px',GCM.nats.get(GC.me).name));}
-  t.appendChild(guEl('span','opacity:.9','Turn <b>'+Math.min(GC.turn,GC.maxTurn)+'</b>/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')));
+  t.appendChild(guEl('span','opacity:.9','<b id="gDate">'+(GC.ph==='plan'?grDateStr(GC.turn,GC.day|0):grDateStr(GC.turn+1,0))+'</b> <span style="opacity:.65">month '+Math.min(GC.turn,GC.maxTurn)+'/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')+'</span>'));guClockUI(t);
   if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/turn)</span>'));
   if(me)t.appendChild(guEl('span','opacity:.9','Score <b>'+score+'</b> · provinces <b>'+GCM.P.filter(p=>p.land&&GC.prov[p.i].o===GC.me).length+'</b>'));
   try{geUiTop(t,me);}catch(e){console.error('geUiTop',e);}try{gmilUiTop(t,me);}catch(e){console.error('gmilUiTop',e);}
@@ -122,7 +130,24 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   const end=guEl('button','padding:7px 18px;border-radius:6px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px;font-weight:bold',GC.ph==='plan'?'End turn ▶':'Resolving…');end.id='gEnd';end.type='button';end.disabled=GC.ph!=='plan'||!!GC.over;end.title='Enter';end.onclick=guEndTurn;t.appendChild(end);
   if(me&&typeof npOpen==='function'){const nb=guEl('button','padding:7px 14px;border-radius:6px;border:1px solid #c9a35a;background:#2a3a4c;color:#ffe6a8;cursor:pointer;font-size:15px;font-weight:bold','Nation');nb.type='button';nb.title='Open your nation panel';nb.onclick=()=>npOpen();t.appendChild(nb);}
   const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);}
-function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();}
+function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();}
+/* ---------- real time with pause (EU4 feel, lane A A2 slice 1) ----------
+   The calendar runs in days (30 a month); a month ending = the old End turn, so the simulation and its determinism are unchanged:
+   the result depends only on state + the orders standing when each month closes + seed. Starts paused (= the classic turn game).
+   Space = pause/resume, + / − or 1–5 = speed (grand-map keys; WASD stay camera-only). The clock waits while battles are pending,
+   a modal is open or a battle is being fought, so a battle starting pauses the map. GV.spd is this player's UI speed. */
+const GU_SPD=[0,.5,1,2.5,5,10];   /* days per second at speeds 1..5 (speed 5: a month in 3 s) */
+function guClockUI(t){const w=guEl('span','display:inline-flex;align-items:center;gap:3px;margin-left:2px');w.id='gClock';
+  const pb=guEl('button','padding:3px 9px;border-radius:5px;border:1px solid #7aa84f;background:'+(GV.spd?'#18293a':'#4f6b32')+';color:#fff;cursor:pointer;font-size:14px;min-width:30px',GV.spd?'❚❚':'▶');pb.type='button';pb.id='gPlay';pb.title=GV.spd?'Pause (Space)':'Play: days pass in real time (Space)';pb.onclick=()=>guSpeed(GV.spd?0:(GV.lastSpd||2));w.appendChild(pb);
+  for(let i=1;i<=5;i++){const b=guEl('button','width:11px;height:'+(8+i*2)+'px;padding:0;border-radius:2px;border:1px solid #6d8aa3;cursor:pointer;align-self:flex-end;background:'+((GV.lastSpd||2)>=i?(GV.spd?'#ffd24a':'#8a7a4a'):'#18293a'),'');b.type='button';b.title='Speed '+i+' (key '+i+', or + / −)';b.onclick=()=>guSpeed(i);w.appendChild(b);}
+  t.appendChild(w);}
+function guSpeed(s){s=Math.max(0,Math.min(5,s|0));if(s)GV.lastSpd=s;GV.spd=s;GV.clkT=performance.now();guTop();}
+function guClockTick(){const now=performance.now(),dt=Math.min(1,(now-(GV.clkT||now))/1000);GV.clkT=now;
+  if(!GV.spd||!GC||GC.over||GC.ph!=='plan'||GV.busy||G||document.getElementById('gModal'))return;const sc=document.getElementById('grandScreen');if(!sc||sc.style.display==='none'||document.hidden)return;
+  GV.dayF=(GV.dayF||0)+dt*GU_SPD[GV.spd];if(GV.dayF<1)return;const n=Math.floor(GV.dayF);GV.dayF-=n;GC.day=(GC.day|0)+n;
+  if(GC.day>=30){GC.day=0;GV.dayF=0;guEndTurn();return;}
+  const d=document.getElementById('gDate');if(d)d.textContent=grDateStr(GC.turn,GC.day);}
+if(!window._gClk){window._gClk=setInterval(()=>{try{guClockTick();}catch(e){console.error('guClockTick',e);}},100);}
 function guProvArmies(pi){return GC.armies.filter(a=>a.at===pi);}
 function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.innerHTML='';const pi=GV.sel;if(pi<0||!GCM.P[pi]){s.innerHTML='<div style="opacity:.7;line-height:1.6">Click a province to see it.<br>Select an army (click its flag), then <b>right-click</b> a province to march there. Armies cross seas between ports; oceans take several turns.<br>Press <b>Enter</b> or the green button to end the turn: everyone moves at once.</div>';return;}
   const p=GCM.P[pi];if(p.sea){s.innerHTML='<h2 style="margin:0 0 4px;font-size:19px">'+p.n+'</h2><div style="opacity:.8">Sea zone · '+p.cost+' turn'+(p.cost>1?'s':'')+' to cross'+(p.ck?'<br><span style="color:#ff9d8e">Chokepoint: whoever holds it will control trade (stage 2).</span>':'')+'</div>'+guArmyRows(pi);guBindArmies(s,pi);try{gmilUiProv(s,pi);}catch(e){console.error('gmilUiProv',e);}return;}

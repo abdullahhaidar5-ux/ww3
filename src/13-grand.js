@@ -170,7 +170,7 @@ function grFinishTurn(){const P=GCM.P;try{gmRepair();}catch(e){}try{gmilBlockRef
   for(const a of GC.armies.slice())if(!a.u.length)grDrop(a);
   // elimination, victory, next turn
   for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;const has=P.some(p=>p.land&&GC.prov[p.i].o===c);const arm=GC.armies.some(a=>a.o===c);if(!has||(N.cap<0&&!arm)){N.dead=1;grLog(GCM.nats.get(c).name+' has been eliminated.',c);for(const a of GC.armies.slice())if(a.o===c)grDrop(a);for(const k of Object.keys(GC.war))if(k.split('|').includes(c))delete GC.war[k];}}
-  GC.turn++;GC.ph='plan';GC.q=[];GC.qi=0;grJudge();grSave();}
+  GC.turn++;GC.ph='plan';GC.q=[];GC.qi=0;try{gmodMonth(GC.turn);}catch(e){}grJudge();grSave();}
 function grArrive(c,pi,k,n){const a=GC.armies.find(x=>x.o===c&&x.at===pi&&!x.path.length&&x.nm==='Reserve');const us=[];for(let i=0;i<n;i++)us.push([k,100,0,100]);if(a)a.u.push(...us);else{const b=grAddArmy(c,pi,us,'Reserve');}}
 
 // ---------- victory ----------
@@ -215,6 +215,9 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
   geAIAll();}   /* empire economy for AI nations: bonds, bank, buildings, total war, embargoes, merchants... (13g-grandeco.js) */
 
 // ---------- save ----------
+/* calendar: month 1 = January 2026; GC.day = days into the current month (0..29), ticked by the real-time clock in 13c */
+const GR_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1);return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){}}
 // a save made on an older world map (the province list changed, e.g. 2026-11-06 real borders 174 -> 236 land provinces) can't
 // continue: its province indices point at different places, so the map breaks and a Fight-it battle never loads (Lane A1)
