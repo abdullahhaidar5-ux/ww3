@@ -261,3 +261,6 @@ Taiwan, Philippines, Vietnam, Indonesia, Thailand, Kazakhstan, Afghanistan (styl
 Added DZ, MA, NG, ZA, ET, LY, SD (first cut, NEWNAT, Egypt base). See orch/reports/nations-b2.md.
 - laneD 2026-11-07: D1 JP Japan first cut via NEWNAT (JGSDF units, Home Islands radio, flag/look on shared models, Taiwan Strait map home); SMOKE PASS; voices/anthems stand in until D3.
 - laneD 2026-11-07: D2 slice 1: orch/newplayer.mjs (lists visible menu controls, flags cryptic/no-tooltip ones) + hover hints for Deploy vs AI, Replay, Map Editor, Join by code, sidebar tabs. D2 stays open (grand map real-time pass, remaining confusions).
+
+## 2026-11-06 — nations-new2 (orch/nations-new2, Sonnet 5.5, scheduled)
+Japan: shipped onto main's existing nations-b3 JP the Japanese voices (XTTS-v2 ja, 33 clips), Kimigayo anthem excerpt and a balance tune (BAL.JP 0.85, 46%). Fuller JP data/map/town style remain on branch orch/nations-new2 awaiting a port. See orch/reports/nations-new2.md.

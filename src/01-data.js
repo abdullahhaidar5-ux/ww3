@@ -729,6 +729,7 @@ const VET=['','Veteran','Elite','Heroic'];
 // Round 4 (504 Node games after the cycle-14 AI tactics, orch/aitourney.mjs): DW -7%, IR -6%, IN -2%, EG -3%, TR -4%, CU -4%, RU -1% cheaper;
 // CN +2%, PK +3% dearer.
 const BAL={"US":{"arty":0.895,"_":0.988,"jet":1.001},"TR":{"arty":0.906,"drone":0.913,"_":0.838},"IL":{"arty":0.861,"_":0.858},"EU":{"arty":0.923,"_":0.898},"UA":{"arty":0.861,"drone":0.83,"_":0.945},"RU":{"arty":1.456,"_":0.93,"inf":0.908,"at":0.951},"IR":{"arty":0.963,"_":0.945,"inf":1.04,"at":1.058},"SA":{"arty":0.861,"jet":1.039,"_":1.112},"AE":{"arty":0.903,"_":0.907},"PK":{"arty":0.903,"_":0.973,"at":1.08,"inf":1.026},"IN":{"_":1.0},"CN":{"inf":1.202,"at":1.142,"_":1.05,"jet":0.999},"KP":{"arty":1.306,"_":1.164},"KR":{"_":0.862},"EG":{"arty":0.861,"_":0.95,"inf":1.139,"at":1.062},"CU":{"_":1.043},"RS":{"inf":1.006,"at":1.044,"tank":0.72,"aa":1.115,"arty":1.161,"drone":1.22,"boat":1.15,"_":1.213},"DW":{"tank":1.116,"aa":1.383,"boat":1.15,"_":1.15,"at":0.952}};
+BAL.JP={'_':0.85}; // nations-new2: tuned with aitourney --vs JP (35% at 1.0 -> ~50%)
 // Military signatures: what each nation's forces excel at (multipliers on that nation's units/structures).
 // The balance factors (BAL, from bal2.js) then even out each nation's overall value, so strengths cost something elsewhere.
 // Military doctrine: how each nation fights, layered on top of its stat bonuses.

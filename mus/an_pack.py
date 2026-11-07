@@ -32,7 +32,7 @@ DL = sys.argv[1] if len(sys.argv) > 1 else '.'
 ANTHEMS = {'US': ('an/US.ogg', 0, 26), 'IL': ('an/IL.mp3', 0, 26), 'UA': ('an/UA.mp3', 0, 26), 'EU': ('an/EU.ogg', 0, 26), 'CU': ('an/CU.mp3', 0, 26),
            'IN': ('an/IN.mp3', 0, 26), 'CN': ('an/CN.mp3', 0, 26), 'EG': ('an/EG.mp3', 0, 26),
            'PK': ('an/PK.mp3', 0, 26), 'KR': ('an/KR.mp3', 0, 26), 'RU': ('an/RU.mp3', 0, 26),
-           'FR': ('an/FR.mp3', 0, 26), 'DE': ('an/DE.mp3', 0, 26)}
+           'FR': ('an/FR.mp3', 0, 26), 'DE': ('an/DE.mp3', 0, 26), 'JP': ('an/JP.mp3', 0, 26)}
 
 
 def anthems():
