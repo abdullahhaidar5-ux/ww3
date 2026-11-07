@@ -27,6 +27,7 @@ const GE_SIG={
  CU:[['E','Black-Market Networks','Smuggling pays double and wrecks are stripped for parts.',['smug','salv']]],
  RS:[['L','Ayatollah','Clerical leader: morale and loyalty, tours provinces, their people clamour for war.'],['F','Mountain Fortress','Pre-built mountain bunker in mountain provinces.']],
  DW:[['L','Ayatollah','Clerical leader: morale and loyalty, tours provinces, their people clamour for war.'],['F','Mountain Fortress','Pre-built mountain bunker in mountain provinces.']],
+ RV:[['M','Call to the Shrines','When an enemy enters a province with a holy city, a free volunteer levy rises there.']],
  IQ:[['E','Oil-for-Reconstruction','Oil money rebuilds quickly.',['oil','build']]],
  SY:[['E','Salvage Brigades','Rubble becomes cash and the army lives lean.',['salv','upkeep']]],
  JP:[['E','Precision Industry','Efficient plants: a stable grid and a cheaper army.',['power','upkeep']]],
