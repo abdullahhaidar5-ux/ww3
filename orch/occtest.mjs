@@ -43,7 +43,7 @@ try {
       let cost = 0, eff = 0;
       for (const pi of pick[s] || []) { const st = GC.prov[pi]; const save = JSON.stringify(st), cash = GC.nat.US.cash; st.o = 'US'; st.rc = 0; st.un = 30; st.tax = 1;
         if (st.gar.length < 6) for (let k = st.gar.length; k < 6; k++) st.gar.push(['inf', 100, 0, 100]);
-        for (let m = 0; m < 12; m++) { GC.turn++; const g0 = st.gar.length, c0 = GC.nat.US.cash; ocMonth(); cost += (g0 - st.gar.length) * OCC_UNIT + (c0 - GC.nat.US.cash); if (st.gar.length < 6) st.gar.push(['inf', 100, 0, 100]); }
+        for (let m = 0; m < 12; m++) { GC.turn++; const g0 = st.gar.length, c0 = GC.nat.US.cash; const w0 = wsOf('US'); ocMonth(); cost += (g0 - st.gar.length) * OCC_UNIT + (c0 - GC.nat.US.cash); out.ws = out.ws || {}; out.ws[s] = (out.ws[s] || 0) + (w0 - wsOf('US')); GC.nat.US.ws = 60; if (st.gar.length < 6) st.gar.push(['inf', 100, 0, 100]); }
         eff += st.rc | 0; Object.assign(st, JSON.parse(save)); delete st.rc; if (!JSON.parse(save).rc) st.rc = 0; GC.nat.US.cash = cash; }
       out.cost[s] = Math.round(cost / Math.max(1, (pick[s] || []).length)); out.eff[s] = eff; out.n = Object.fromEntries(Object.entries(pick).map(([k, v]) => [k, v.length])); }
     // counter-play: an army sitting in a zealous province rolls the cells up
@@ -60,6 +60,7 @@ try {
   const fails = []; const cs = Object.values(r.cost); const mn = Math.min(...cs), mx = Math.max(...cs);
   if (!(mn > 0 && mx / mn < 2)) fails.push('occ: unequal cost ' + JSON.stringify(r.cost));
   if (!(r.eff.zeal > 0 && r.eff.home > 0)) fails.push('occ: no cells/partisans');
+  for (const k of Object.keys(r.cost)) if (r.cost[k] > 0 && !((r.ws || {})[k] > 0)) fails.push('occ: occupying ' + k + ' land costs no war support at home ' + JSON.stringify(r.ws));
   if (!(r.guard <= 3)) fails.push('occ: army does not roll cells up'); if (!r.panel) fails.push('occ: panel line missing');
   if (!r.det) fails.push('occ: not deterministic'); if (!(r.spread >= 1)) fails.push('occ: cells do not spread'); if (!r.aiAns) fails.push('occ: AI does not answer cells ' + JSON.stringify(r.aiPath)); if (errs.length) fails.push(errs.join('|'));
   console.log(fails.length ? 'OCC FAIL ' + fails.join('; ') : 'OCC PASS'); globalThis.__bad = fails.length;
