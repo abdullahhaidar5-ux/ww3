@@ -24,9 +24,12 @@ function gnRun(nat,f,a){if(!gnOk(nat,f,a))return;const me=GC.me,fn=GNT.orig[f]||
   try{fn.apply(null,a);}catch(e){console.error('gnRun',f,e);}finally{GC.me=me;}GNT.dirty=1;GNT.ui=1;}
 function gnSend(m){if(GNT.g)GNT.g.emit('gcmd',m).catch(()=>{});}
 /* client: route the whitelisted actions to the host (and still run them locally for instant feedback); no local clock/saves */
-function gnHook(on){const L=Object.keys(GNT_W).concat(['grSave','guClockTick','guEndTurn','guSpeed']);
+function gnHook(on){const L=Object.keys(GNT_W).concat(['grSave','guClockTick','guEndTurn','guSpeed','grBattleDone','grandFightLive']);
   for(const f of L){if(on){if(typeof window[f]!=='function'||GNT.orig[f])continue;GNT.orig[f]=window[f];const o=GNT.orig[f];
-      window[f]=f==='grSave'||f==='guEndTurn'||f==='guClockTick'?function(){}:f==='guSpeed'?function(s){gnSend({k:'spd',s:s|0});}:function(...a){gnSend({k:'cmd',f,a});return o.apply(this,a);};}
+      window[f]=f==='grSave'||f==='guEndTurn'||f==='guClockTick'?function(){}:f==='guSpeed'?function(s){gnSend({k:'spd',s:s|0});}
+        :f==='grBattleDone'?function(b,w,h){return GNT.bat?gnBatDone(b,w,h):o.apply(this,arguments);}
+        :f==='grandFightLive'?function(b){if(GNT.bat){GNT.bat.go=1;gnSend({k:'bgo',qi:GNT.bat.qi});}return o.apply(this,arguments);}
+        :function(...a){gnSend({k:'cmd',f,a});return o.apply(this,a);};}
     else if(GNT.orig[f]){window[f]=GNT.orig[f];}}
   if(!on)GNT.orig={};}
 function gnFree(){const taken=new Set([GC.me,...Object.keys(GNT.hum)]);return grMajors().filter(c=>GC.nat[c]&&!GC.nat[c].dead&&!taken.has(c)).sort((a,b)=>gnName(a)<gnName(b)?-1:1);}
@@ -44,8 +47,9 @@ async function gnHost(){if(GNT.on||!GC||!GC.me)return 'busy';const R=await gnRoo
     GNT.hum[n]={tok:String(d.tok||''),peer:m.peer};GC.nat[n].ai=false;grLog(gnName(n)+' is now led by a friend.',n);gnEmit('gwel',{to:m.peer,nat:n});GNT.last='';GNT.dirty=1;GNT.ui=1;gnChip();});
   g.on('gcmd',m=>{if(m.sameTab)return;const d=m.data||{},h=Object.entries(GNT.hum).find(([c,x])=>x.peer===m.peer);if(!h)return;
     if(d.k==='spd'){const s=d.s|0;GNT.orig.guSpeed?GNT.orig.guSpeed(s?(GV.lastSpd||2):0):guSpeed(s?(GV.lastSpd||2):0);GV.hint=gnName(h[0])+(s?' resumed the clock.':' paused the clock.');try{guHint();}catch(e){}GNT.dayK='';return;}
+    if(d.k==='bgo'||d.k==='bres'){gnBatMsg(h[0],d);return;}
     if(d.k==='cmd'&&typeof d.f==='string')gnRun(h[0],d.f,d.a);});
-  g.onPeers(ch=>{for(const q of ch.left){const h=Object.entries(GNT.hum).find(([c,x])=>x.peer===q.peer);if(!h)continue;h[1].peer=null;if(GC&&GC.nat[h[0]]){GC.nat[h[0]].ai=true;grLog(gnName(h[0])+'\'s leader left; the generals take over.',h[0]);}GNT.dirty=1;GNT.ui=1;gnChip();}});
+  g.onPeers(ch=>{for(const q of ch.left){const h=Object.entries(GNT.hum).find(([c,x])=>x.peer===q.peer);if(!h)continue;h[1].peer=null;if(GC&&GC.nat[h[0]]){GC.nat[h[0]].ai=true;grLog(gnName(h[0])+'\'s leader left; the generals take over.',h[0]);}if(GNT.bw&&GNT.bw.nat===h[0])gnBatAuto('left');GNT.dirty=1;GNT.ui=1;gnChip();}});
   try{await R.presence({gg:{c:code,n:gnName(GC.me),d:grMonStr(GC.turn)}});}catch(e){}
   gnChip();return '';}
 function gnEmit(t,d){if(GNT.g)return GNT.g.emit(t,d).catch(()=>{});}
@@ -64,15 +68,19 @@ async function gnJoin(raw){if(GNT.on)return 'busy';const code=String(raw||'').to
     if(d.nat){GNT.nat=d.nat;gnHook(true);gnNote('Joined as '+gnName(d.nat)+'. Waiting for the world…');return;}if(d.free)gnPickUI(d);});
   g.on('gst',m=>{if(m.sameTab||!GNT.nat)return;const d=m.data||{};const P=GNT.parts[d.id]=GNT.parts[d.id]||[];P[d.i]=d.p;
     if(P.filter(x=>x!=null).length<d.n)return;delete GNT.parts[d.id];ckUnpack(P.join('')).then(o=>gnApply(o,d.day)).catch(e=>console.error('gnApply',e));});
+  g.on('gbat',m=>{const d=m.data||{};if(d.to!==GNT.me||!GNT.nat)return;GNT.bat={qi:d.qi|0,t:d.t|0};gnBatTry();});
+  g.on('gbx',m=>{const d=m.data||{};if(d.to!==GNT.me||!GNT.bat)return;GNT.bat=null;if(typeof G!=='undefined'&&G&&G.grand){try{campClose();}catch(e){}grandLeaveBattle();}
+    const x=document.getElementById('gModal');if(x)x.remove();const s=GNT.stash;GNT.stash=null;if(s)gnApply(s[0],s[1]);
+    guModal('<b>The battle was auto-resolved</b><div style="opacity:.8;margin-top:6px">'+(d.why==='host'?'The host chose to auto-resolve it.':'No answer in time — the generals fought it.')+'</div>',[['OK',null,1]]);});
   g.on('gday',m=>{if(!GNT.nat||!GC)return;const d=m.data||{};if(d.t===GC.turn)GC.day=d.d|0;const sp=d.s|0;if(sp!==(GV.spd|0)){GV.spd=sp;if(d.ls)GV.lastSpd=d.ls;try{guTop();}catch(e){}}
     const e=document.getElementById('gDate');if(e&&GC.turn===d.t)e.textContent=grDateStr(GC.turn,GC.day|0);});
   g.onPeers(ch=>{if(GNT.cl&&ch.left.some(q=>q.peer===GNT.hostPeer)){gnLeave();try{grandClose();}catch(e){}gnNote('The host closed the campaign.');}});
   let n=0;const hi=()=>{if(!GNT.cl||GNT.nat||GNT.free||n++>12){clearInterval(GNT.hiI);if(GNT.cl&&!GNT.nat&&!GNT.free&&n>12){gnLeave();gnNote('The campaign did not answer.');}return;}
     if(!GNT.me){const q=g.peers().find(x=>x.sameTab);if(q)GNT.me=q.peer;}gnEmit('ghi',{tok:GNT.tok});};
   hi();GNT.hiI=setInterval(hi,1500);return '';}
-function gnApply(o,day){if(!GNT.cl||!o||!Array.isArray(o.prov))return;const first=!GC||!GNT.got;GC=o;GC.me=GNT.nat;GC.day=day|0;GNT.got=1;
+function gnApply(o,day){if(!GNT.cl||!o||!Array.isArray(o.prov))return;if(GNT.bat&&GNT.bat.shown){GNT.stash=[o,day];return;}   /* never swap the world under a battle in progress */const first=!GC||!GNT.got;GC=o;GC.me=GNT.nat;GC.day=day|0;GNT.got=1;
   if(!GNT.hostPeer&&GNT.g){const q=GNT.g.peers().find(x=>!x.sameTab);if(q)GNT.hostPeer=q.peer;}
-  if(first||!document.getElementById('grandScreen')){campClose();grandOpen();}else{try{grandMapRefresh();}catch(e){console.error('gn refresh',e);}}}
+  if(first||!document.getElementById('grandScreen')){campClose();grandOpen();}else{try{grandMapRefresh();}catch(e){console.error('gn refresh',e);}}gnBatTry();}
 function gnLeave(){clearInterval(GNT.hiI);gnHook(false);if(GNT.g){try{GNT.g.leave().catch(()=>{});}catch(e){}}if(GNT.host&&typeof NET!=='undefined'&&NET.room)NET.room.presence({gg:null}).catch(()=>{});
   const wasCl=GNT.cl;Object.assign(GNT,{on:0,host:0,cl:0,code:'',g:null,nat:'',hum:{},last:'',parts:{},free:null,got:0,hostPeer:null,me:null});
   if(wasCl){GC=null;try{grLoad();}catch(e){}}const c=document.getElementById('gnChip');if(c)c.remove();}
@@ -112,3 +120,42 @@ function gnChip(){const sc=document.getElementById('grandScreen');let c=document
   const _go=grandOpen;grandOpen=function(){_go();if(GNT.wantHost&&GC&&!GNT.on){GNT.wantHost=0;gnHost().then(e=>{if(e){GV.hint=e;try{guHint();}catch(_){}}});}gnChip();};
   const _gc=grandClose;grandClose=function(){_gc();if(GNT.on){const h=GNT.host;gnLeave();if(h)GNT.wantHost=0;}};
   if(!window._gnI)window._gnI=setInterval(()=>{try{gnHostTick();}catch(e){console.error('gnHostTick',e);}},250);})();
+
+/* ---------- A2b slice 2: a friend fights their own battles live (lane A, 2026-11-07) ----------
+   Month end on the host: a battle a connected friend's nation is in (and the host's own nation is not) is no longer
+   auto-resolved. The host pushes the world, asks that friend (gbat) and waits with the clock stopped — exactly like a
+   solo player's battle prompt. The friend gets the normal Fight it live / Auto-resolve / Withdraw prompt on their own map;
+   live = the full battle in their browser (their side commanded by them, the other by the battle AI, as for any away
+   player). The friend sends back the survivors (units, wounds, xp, ammo, fuel, positions) and who won; the host checks the
+   armies belong to that battle (no new units) and settles it through the same grBattleDone as a solo live battle, so war
+   support, tradition, morale, occupation and the AI react the same way. No answer in 90 s, the friend leaving, or the host
+   pressing Auto-resolve now = the generals auto-resolve it (same dice as solo). Open: host vs friend both live (the
+   friend's side is the battle AI now), spectating, a general falling in a friend's battle is not sent yet. */
+function gnBattleFor(b){if(!GNT.host||!GC)return '';const inv=new Set([b.an,b.dn]);for(const s of grSideUnits(b,'att').concat(grSideUnits(b,'def')))if(s.arr)inv.add(s.arr.o);
+  if(GC.me&&inv.has(GC.me))return '';for(const c of [b.an,b.dn,...[...inv].sort()]){const h=GNT.hum[c];if(h&&h.peer)return c;}return '';}
+function gnBattleAsk(b,nat){const qi=GC.qi,w=GNT.bw={qi,nat,t:GC.turn,go:0,p:b.p};GNT.last='';
+  gnPush().catch(e=>console.error('gnPush',e)).then(()=>{if(GNT.bw===w&&GNT.hum[nat])gnEmit('gbat',{to:GNT.hum[nat].peer,qi,t:GC.turn});});
+  clearTimeout(GNT.bwT);GNT.bwT=setTimeout(()=>{if(GNT.bw===w&&!w.go)gnBatAuto('late');},90000);gnBatUI();}
+function gnBatUI(){const w=GNT.bw;if(!w)return;const P=GCM.P[w.p];
+  GNT.bwM=guModal('<div style="opacity:.7;font-size:13px">BATTLE · '+grMonStr(GC.turn).toUpperCase()+'</div><h2 style="margin:2px 0 8px;font-size:22px">'+P.n+'</h2><div style="margin-bottom:12px">'
+    +(w.go?'<b>'+gnName(w.nat)+'</b> is fighting this battle live. The map waits for the result.':'Waiting for <b>'+gnName(w.nat)+'</b> to choose: fight it live or auto-resolve…')+'</div>',[['Auto-resolve now',()=>{GNT.bwM=null;gnBatAuto('host');},0]]);}
+function gnBatEnd(){const w=GNT.bw;GNT.bw=null;clearTimeout(GNT.bwT);if(GNT.bwM){GNT.bwM.remove();GNT.bwM=null;}return w;}
+function gnBatAuto(why){const w=gnBatEnd();if(!w||GC.turn!==w.t||GC.qi!==w.qi)return;const b=GC.q[w.qi];const h=GNT.hum[w.nat];
+  if(why!=='friend'&&h&&h.peer)gnEmit('gbx',{to:h.peer,why});GNT.dirty=1;GNT.ui=1;grBattleDone(b,grBattleAuto2(b),'auto');try{grandMapRefresh();}catch(e){}}
+function gnBatMsg(nat,d){const w=GNT.bw;if(!w||w.nat!==nat||(d.qi|0)!==w.qi)return;
+  if(d.k==='bgo'){w.go=1;clearTimeout(GNT.bwT);gnBatUI();return;}
+  if(d.auto||(d.t|0)!==w.t){gnBatAuto('friend');return;}
+  const b=GC.q[w.qi],adj=GCM.P[b.p].adj,ids=new Set([...b.att,...b.def]);
+  for(const r of Array.isArray(d.arm)?d.arm.slice(0,40):[]){const a=GC.armies.find(x=>x.id===r.id);if(!a||!(ids.has(a.id)||(adj.includes(a.at)&&!a.path.length)))continue;
+    if(Array.isArray(r.u)&&r.u.length<=a.u.length)a.u=r.u.filter(x=>Array.isArray(x)&&typeof x[0]==='string'&&a.u.some(y=>y[0]===x[0])).map(x=>x.slice(0,8).map(v=>typeof v==='number'?Math.max(0,Math.min(1e4,v)):v));
+    if(typeof r.fu==='number')a.fu=Math.max(0,Math.min(a.fu==null?100:a.fu,r.fu));
+    if(a.o===nat&&a.at===b.p&&typeof r.at==='number'&&adj.includes(r.at)&&grRetreatTo(a,b.p)===r.at){a.at=r.at;a.path=[];}}   /* a defender's Withdraw */
+  b.def=b.def.filter(id=>GC.armies.some(a=>a.id===id&&a.at===b.p));gnBatEnd();GNT.dirty=1;GNT.ui=1;
+  grLog(gnName(nat)+' fought the battle for '+GCM.P[b.p].n+' live.',nat);grBattleDone(b,d.win==='att'?'att':'def',d.how==='retreat'?'retreat':'live');try{grandMapRefresh();}catch(e){}}
+/* friend side */
+function gnBatTry(){const B=GNT.bat;if(!B||B.shown||!GC||GC.turn!==B.t||GC.qi!==B.qi)return;const b=GC.q[B.qi];if(!b||b.done)return;B.shown=1;B.ids=[...b.att,...b.def];
+  setTimeout(()=>{if(GNT.bat===B)grBattlePrompt(b);},0);}
+function gnBatDone(b,win,how){const B=GNT.bat;GNT.bat=null;const ids=new Set([...(B.ids||[]),...b.att,...b.def,...((typeof GB_CUR!=='undefined'&&GB_CUR&&GB_CUR.b===b&&GB_CUR.rf)||[])]);
+  const arm=GC.armies.filter(a=>ids.has(a.id)).map(a=>({id:a.id,u:a.u,fu:a.fu,at:a.at}));
+  gnSend({k:'bres',qi:B.qi,t:B.t,win,how,auto:how==='auto'?1:0,arm});GV.hint='Battle result sent — the world moves on.';try{guHint();}catch(e){}
+  const s=GNT.stash;GNT.stash=null;if(s)gnApply(s[0],s[1]);else try{grandMapRefresh();}catch(e){}}

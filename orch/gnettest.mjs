@@ -58,6 +58,7 @@ try {
   await click(host, 'button', '^Begin$');
   await wait(host, () => GNT.host && GNT.code && document.getElementById('grandScreen'), null, 60000, 'host map + room').catch(async e => { console.log(await host.evaluate(() => JSON.stringify({ on: GNT.on, host: GNT.host, code: GNT.code, wh: GNT.wantHost, gs: !!document.getElementById('grandScreen'), hint: GV.hint, room: !!NET.room }))); throw e; });
   await host.evaluate(() => { const m = document.getElementById('gModal'); if (m) { const b = [...m.querySelectorAll('button')].pop(); if (b) b.click(); } });
+  await host.evaluate(() => { window.grBattlePrompt = b => { grBattleDone(b, grBattleAuto2(b), 'auto'); }; });   // the host's own battles: auto (not under test)
   const code = await host.evaluate(() => GNT.code); console.log(el(), 'host open, code', code);
   if (!/code/i.test(await host.evaluate(() => (document.getElementById('gnChip') || {}).textContent || ''))) fails.push('host map shows no online chip with the code');
   const cl = await open('friend');
@@ -83,6 +84,7 @@ try {
   const forged = await cl.evaluate(() => { const a = GC.armies.find(x => x.o === 'IR' && !x.path.length && !x.fl); if (!a) return null; GNT.g.emit('gcmd', { k: 'cmd', f: 'grSplit', a: [a.id] }); return { id: a.id, n: a.u.length }; });
   // host plays at speed 5: the friend's calendar follows into the next month
   const turn0 = await cl.evaluate(() => GC.turn);
+  await cl.evaluate(() => { window.__autoRes = setInterval(() => { const m = document.getElementById('gModal'); if (m && /Fight it live/.test(m.textContent)) { const b = [...m.querySelectorAll('button')].find(x => /^Auto-resolve/.test(x.textContent)); if (b) b.click(); } }, 500); });   // SA's opening wars: auto here
   await host.bringToFront(); await host.evaluate(() => guSpeed(5));
   await wait(cl, t => GC.turn > t && GC.me === 'SA', turn0, 150000, 'friend map reaches the next month').catch(async e => { console.log('host', await host.evaluate(() => JSON.stringify({ t: GC.turn, d: GC.day, spd: GV.spd, hid: document.hidden, ph: GC.ph, busy: GV.busy, modal: !!document.getElementById('gModal'), G: !!G, last: GNT.last.length }))); console.log('friend', await cl.evaluate(() => JSON.stringify({ t: GC.turn, d: GC.day, me: GC.me }))); throw e; });
   console.log(el(), 'month rolled on the friend\'s map');
@@ -95,6 +97,32 @@ try {
   await wait(cl, () => !GV.spd, null, 40000, 'friend clock shows paused');
   console.log(el(), 'friend paused the world');
   await shot(cl, 'gnet-friend-SA'); await shot(host, 'gnet-host-IR');
+  // A2b slice 2: the friend's battle waits for the friend, who fights it live; the result settles on the host's world
+  await cl.evaluate(() => clearInterval(window.__autoRes));
+  const tgt = await cl.evaluate(() => { const near = a => { const s = new Set(GCM.P[a.at].adj); for (const k of GCM.P[a.at].adj) for (const m of GCM.P[k].adj) s.add(m); return [...s].sort((x, y) => x - y); };
+    for (const a of GC.armies.filter(x => x.o === 'SA' && x.u.length >= 2 && !x.fl)) for (const j of near(a)) { const P = GCM.P[j]; if (!P.land || !GC.prov[j]) continue; const o = GC.prov[j].o; if (!o || o === 'SA' || o === 'IR' || GC.armies.some(x => x.at === j && x.o === 'IR')) continue;
+      if (!grAtWar('SA', o)) grDeclare('SA', o); a.path = []; const r = grOrderMove(a.id, j); if (!r.err) return { id: a.id, to: j, o, t: GC.turn }; window.__why = [a.id, j, o, r.err, grAtWar('SA', o), GC.ph]; } return { dbg: JSON.stringify([window.__why, GC.armies.filter(x => x.o === 'SA').map(x => [x.id, x.at, x.u.length, !!x.fl])]).slice(0, 600) }; });
+  if (tgt && tgt.dbg) { console.log('dbg', tgt.dbg); } if (!tgt || tgt.dbg) fails.push('friend found no enemy province to attack'); else {
+    await wait(host, m => { const a = GC.armies.find(x => x.id === m.id); return a && a.path.length && grAtWar('SA', m.o); }, tgt, 40000, 'friend attack order on host');
+    await host.bringToFront(); await host.evaluate(() => guSpeed(5));
+    let fought = 0; const tEnd = Date.now() + 300000;
+    while (Date.now() < tEnd) {
+      const st = await cl.evaluate(() => ({ modal: (document.getElementById('gModal') || {}).textContent || '', inb: !!(typeof G !== 'undefined' && G && G.grand), fin: !!(typeof G !== 'undefined' && G && G.grand && G.grand.fin), t: GC && GC.turn }));
+      const hs = await host.evaluate(() => ({ t: GC.turn, ph: GC.ph, wait: !!GNT.bw, live: [...document.querySelectorAll('#gLog *, #gLog')].some(e => / live\./.test(e.textContent)) || (GC.log || []).some(l => / live\./.test(JSON.stringify(l))) }));
+      if (fought && hs.t > tgt.t && hs.ph === 'plan' && !hs.wait) break;
+      if (st.inb) { if (!st.fin) { await cl.evaluate(() => grandTestFinish(0)); console.log(el(), 'friend battle loaded and finished'); }
+        await cl.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /^Return to the map/.test(x.textContent)); if (b) b.click(); }); fought = 1; }
+      else if (/Fight it live/.test(st.modal)) { if (!fought) { await host.bringToFront(); if (!await host.evaluate(() => !!GNT.bw && GC.ph !== 'plan')) fails.push('host did not wait for the friend\'s battle'); await shot(host, 'gnet-host-waits');
+          await cl.bringToFront(); await shot(cl, 'gnet-friend-prompt'); await click(cl, '#gModal button', '^Fight it live'); console.log(el(), 'friend chose Fight it live'); }
+        else await click(cl, '#gModal button', '^Auto-resolve'); }
+      else if (/^OK$/.test(await cl.evaluate(() => { const b = document.querySelector('#gModal button'); return b ? b.textContent : ''; }))) await cl.evaluate(() => document.querySelector('#gModal button').click());
+      await new Promise(r => setTimeout(r, 1000)); }
+    const hf = await host.evaluate(m => ({ t: GC.turn, ph: GC.ph, log: JSON.stringify(GC.log || []).match(/fought the battle for [^"]* live/) }), tgt);
+    if (!fought) fails.push('the friend was never asked to fight their battle live');
+    else if (!hf.log) fails.push('the friend\'s live battle result never settled on the host');
+    else if (!(hf.t > tgt.t && hf.ph === 'plan')) fails.push('the host map did not move on after the friend\'s battle: ' + JSON.stringify(hf));
+    else console.log(el(), 'friend live battle settled on host:', hf.log[0]);
+    await host.evaluate(() => guSpeed(0)); }
   // the friend leaves: SA back to the AI
   await click(cl, 'button', '^Save & exit');
   await wait(host, () => GC.nat.SA.ai === true, null, 15000, 'SA handed back to the AI');
