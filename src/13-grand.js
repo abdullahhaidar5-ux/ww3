@@ -164,7 +164,7 @@ function grFinishTurn(){const P=GCM.P;try{gmRepair();}catch(e){}try{gmilBlockRef
     const cap=Math.max(2,Math.round(p.dev*1.1))+2*geCount(p.i,'base')+(st.cf===1?(st.tr|0):0);if(st.gar.length<cap&&st.cv===0&&R()<.7){const fac=N.fac;st.gar.push([(st.gar.length%3===2&&grHasKind(fac,'at'))?'at':'inf',100,0,100]);}
     const keep=[];for(const q of st.rq){if(q[0]<=GC.turn){grArrive(c,p.i,q[1],q[2]);}else keep.push(q);}st.rq=keep;}
   geAfterProvinces(inc,R);try{gmilTurnEnd();}catch(e){console.error('gmilTurnEnd',e);}   /* empire economy: trade, oil, fuel, food, manpower, upkeep, bonds, bank, actions, supply (13g-grandeco.js) */
-  // supply: an army outside friendly reach loses men every turn; on a boat a little
+  // supply: an army outside friendly reach loses men every month; on a boat a little
   for(const a of GC.armies){const p=P[a.at];if(grSupplied(a)){a.sup=0;continue;}a.sup++;const rate=p.sea?.03:(p.t==='d'||p.t==='m'||p.t==='s'?.11:.07);const lose=Math.floor(a.u.length*rate+R());
     for(let i=0;i<lose;i++){let w=0;for(let j=1;j<a.u.length;j++)if(a.u[j][1]<a.u[w][1])w=j;a.u.splice(w,1);}for(const r of a.u)r[1]=Math.max(10,r[1]-4);if(lose)grLog(a.nm+' ('+GCM.nats.get(a.o).name+') lost '+lose+' to hunger and exposure at '+p.n+'.',a.o===GC.me?a.o:'');}
   for(const a of GC.armies.slice())if(!a.u.length)grDrop(a);
@@ -219,6 +219,7 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
 const GR_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 /* real time: how far (0..0.92) a marching army has got along its current road, from progress months + days into this month (display only, sim unchanged) */
 function grSlide(a){if(!GC||GC.ph!=='plan'||!a.path||!a.path.length)return 0;const c=grEdge(a.at,a.path[0]);if(!c)return 0;const d=Math.min(29.99,(GC.day|0)+((typeof GV!=='undefined'&&GV.dayF)||0));return Math.max(0,Math.min(.92,((a.pg|0)+d/30)/c));}
+function grMonStr(turn){const m=Math.max(0,(turn|0)-1);return GR_MON[m%12]+' '+(2026+Math.floor(m/12));}   /* A2c: month label for former 'turn N' wording */
 function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1);return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){}}
 // a save made on an older world map (the province list changed, e.g. 2026-11-06 real borders 174 -> 236 land provinces) can't

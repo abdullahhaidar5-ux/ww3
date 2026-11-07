@@ -77,11 +77,11 @@ function geSigName(c){const a=GE_SIG[c];return a?a.map(s=>s[1]).join(' + '):'-';
 // ---------- province buildings ----------
 // key: [name, cost, turns, letter, colour, help]
 const GE_B={
- base:['Military base',650,2,'B','#c9a35a','Recruits here arrive 1 turn sooner, +2 garrison room, resupplies armies in and next to it.'],
+ base:['Military base',650,2,'B','#c9a35a','Recruits here arrive 1 month sooner, +2 garrison room, resupplies armies in and next to it.'],
  airfield:['Airfield',850,3,'A','#8fc4e8','Air wings live here: sorties reach battles in range, and the airfield stands in this province\'s battle.'],
  port:['Port',550,2,'P','#6fb0d8','+50 income, sea trade, a shipyard in this province\'s battle (coast only).'],
  factory:['Factory',750,3,'F','#d9a05a','+110 income, recruits cost 8% less (3 max). Needs power.'],
- refinery:['Refinery',700,3,'R','#a58bd0','Makes 16 fuel a turn from oil. Needs power and an oil province or oil stock.'],
+ refinery:['Refinery',700,3,'R','#a58bd0','Makes 16 fuel a month from oil. Needs power and an oil province or oil stock.'],
  power:['Power plant',700,3,'E','#f2d95a','+14 on the power grid. Blackouts slow factories and recruiting.'],
  aa:['Air defence',380,2,'D','#9ad07f','A SAM site in this province\'s battle; halves bombing damage here.'],
  farm:['Irrigation',450,2,'G','#b8d96a','+6 food (farm provinces only).'],
