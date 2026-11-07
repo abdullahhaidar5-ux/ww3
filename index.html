@@ -11013,6 +11013,7 @@ function fxUpdate(dt){
     if(vis&&w.t<(w.big?40:32)&&Math.random()<dt*(w.big?7:4.5)){const PH=fxPH();part({x:w.x+rnd(-5,5),y:w.y+rnd(-5,5),h:groundH(w.x,w.y)+8,vx:PH?rnd(5,9):rnd(6,12),rise:PH?rnd(40,56):rnd(34,48),c:Math.random()<.6?C_DARK:[.2,.19,.18],c2:[.44,.42,.39],ck:rnd(.25,.4),s:PH?rnd(4,7):rnd(7,11),g:PH?7:rnd(9,12),d:PH?rnd(3,4.2):rnd(5,7),a:.4*fade+.08});}
     if(vis&&burn&&Math.random()<dt*(w.big?14:10)){const fx=w.x+rnd(-9,9),fy=w.y+rnd(-9,9);part({x:fx,y:fy,h:groundH(fx,fy)+rnd(3,9),vx:rnd(-3,3),vy:rnd(-3,3),rise:rnd(14,26),add:true,c:Math.random()<.5?[2.6,1.1,.3]:[2.9,1.7,.6],s:rnd(4,8),g:-3,d:rnd(.35,.7),a:.85});}
     if(vis&&burn&&Math.random()<dt*2)part({x:w.x+rnd(-6,6),y:w.y+rnd(-6,6),h:groundH(w.x,w.y)+6,vx:rnd(-30,30),vy:rnd(-30,30),vh:rnd(30,70),add:true,c:C_SPARK,s:1.2,f:.6,grav:1,d:rnd(.4,.8)});
+    if(vis&&burn&&Math.random()<dt*3){const gl=w.big?30:20;part({x:w.x+rnd(-3,3),y:w.y+rnd(-3,3),h:groundH(w.x,w.y)+1.5,add:true,c:[1.5,.55,.14],s:gl,d:.5,a:(G&&G.todM&&todLvl()===2?.5:.16)*fade+.04});}// fire glow pooled on the sand under a burning wreck (stronger at night)
     if(burn&&!w.light&&LIGHTS.length){w.light=1;}
     if(w.t>(w.big?200:180))w.o.position.y-=dt*1.5;if(w.t>(w.big?210:188)){w.done=true;SCN.remove(w.o);}}
   smkTick(dt);
