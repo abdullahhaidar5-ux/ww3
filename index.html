@@ -7126,7 +7126,7 @@ function hpMult(team,kind){return upgK(G.teams[team],kind,'hp');}
 // interception, EW jamming, counter-battery radar, laser marking, hidden mines and ambushes.
 function auraNear(u,t){const L=G.aur&&G.aur[t];if(!L)return false;for(const a of L)if(a.team===u.team&&a.id!==u.id&&Math.abs(a.x-u.x)<a.r&&Math.hypot(a.x-u.x,a.y-u.y)<a.r)return true;return false;}
 function auraProtect(e,t){const L=G.aur&&G.aur[t];if(!L)return false;for(const a of L)if(ally(a.team,e.team)&&Math.hypot(a.x-e.x,a.y-e.y)<a.r)return true;return false;}
-function dmgOut(src){if(src.isB)return wxNow().acc;const T=G.teams[src.team],c=src.s.cls;let m=[1,1.2,1.35,1.5][src.rank||0]*wxNow().acc;if(src.rlyT>G.t)m*=1.25;{const ms=msOf(T.fac);if(ms.sup&&(c==='arty'||src.s.dom==='air'))m*=ms.sup;}if(isInf(src.s)&&auraNear(src,'morale'))m*=1.2;if(isInf(src.s)&&auraNear(src,'mart'))m*=1.1;if(isVeh(src.s)&&auraNear(src,'raid'))m*=1.2;
+function dmgOut(src){if(src.isB)return wxNow().acc;const T=G.teams[src.team],c=src.s.cls;let m=[1,1.2,1.35,1.5][src.rank||0]*wxNow().acc;if(src.rlyT>G.t)m*=1.25;if(src.last>G.t)m*=1.25;/* RF10 last stand: surrounded troops fight with desperate +25% damage (cost: pinned down, supp .75) */{const ms=msOf(T.fac);if(ms.sup&&(c==='arty'||src.s.dom==='air'))m*=ms.sup;}if(isInf(src.s)&&auraNear(src,'morale'))m*=1.2;if(isInf(src.s)&&auraNear(src,'mart'))m*=1.1;if(isVeh(src.s)&&auraNear(src,'raid'))m*=1.2;
   if((T.mart||0)>G.t)m*=1.15;/* mourning: +15% damage for 40 s after the Ayatollah / Dear Leader falls (rebuy wait is 180 s, so dying never pays) */ /* martyrdom banner: Shia infantry fighting where a comrade fell hit 10% harder while it flies (Abdullah 2026-10-30) */if(isInf(src.s)&&auraNear(src,'mart'))m*=1.1;if((T.fervor||0)>G.t&&(!T.fervInf||isInf(src.s)))m*=T.fervK||1.15;{const D=DOCT[T.fac];if(D){if(D.shock&&src.order&&(src.order.type==='amove'||src.order.type==='attack'||G.t-(src.mv||-9)<4))m*=1.15;
     if(D.ambush&&(isInf(src.s)||c==='drone')&&(G.t-(src.mv||-9)>3||coverAt(src.x,src.y)))m*=1.2;
     if(D.homeland){if(G.t-(src.hlT||-9)>2){src.hlT=G.t;src.hl=false;for(const b of nearby(src.x,src.y,700,MOR_H))if(b.isB&&b.team===src.team&&!b.dead){src.hl=true;break;}}if(src.hl)m*=1.15;}}}
@@ -11451,7 +11451,7 @@ function bfCivTick(dt){if(!G.civ)return;if(BFX.civG!==G){BFX.civG=G;BFX.civ.clea
     if(st>1&&Math.random()<dt*4)part({x:c.x+rnd(-10,10),y:c.y+rnd(-10,10),h:h+rnd(-6,0),vx:rnd(-2,2),vy:rnd(-2,2),rise:rnd(14,24),add:true,c:Math.random()<.5?[2.6,1.1,.3]:[2.9,1.7,.6],s:rnd(4,8),g:-3,d:rnd(.3,.7),a:.9});}}
 /* ---------- the dam and the flood ---------- */
 function bfDamBuild(){if(BFX.damG===G)return;for(const o of BFX.dam)SCN.remove(o.g);BFX.dam=[];BFX.damG=G;if(!G.dams)return;
-  const conc=new THREE.MeshStandardMaterial({color:0x9c9a92,roughness:.96,metalness:0,side:THREE.DoubleSide});
+  const conc=typeof bkMat==='function'?bkMat('concrete','#9c9a92',7):new THREE.MeshStandardMaterial({color:0x9c9a92,roughness:.96,metalness:0});conc.side=THREE.DoubleSide;conc.roughness=.96;
   for(const d of G.dams){const g=new THREE.Group(),R=d.w*1.5,half=Math.asin(Math.min(.98,d.w/R)),H=36,y0=WL-14;
     const arc=(a0,a1,r,h,y,mat)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,18,1,true,a0,a1-a0),mat);m.position.set(0,y+h/2,-R);m.castShadow=true;m.receiveShadow=true;return m;};
     // the cylinder's angle 0 points to +z; the arc is centred on 0 and bulges toward +z (upstream)
@@ -11461,6 +11461,13 @@ function bfDamBuild(){if(BFX.damG===G)return;for(const o of BFX.dam)SCN.remove(o
     const back=arc(-half,half,R-7,H-2,y0,conc);   // the downstream face, so the wall has thickness
     const walk=new THREE.Mesh(new THREE.RingGeometry(R-7,R+1.6,24,1,-Math.PI/2-half,half*2),para);walk.rotation.x=-Math.PI/2;walk.position.set(0,y0+H+.5,-R);
     g.add(parts.l,parts.m,parts.r,crest,back,walk);
+    // DE-BLOCK slice 8: spillway gates, buttress ribs on the downstream face, road lamps/rail on the crest, wet stain at the base
+    try{const dk=new THREE.MeshStandardMaterial({color:0x2a2c2e,roughness:.5,metalness:.5}),ct=new THREE.MeshStandardMaterial({color:0x8a8880,roughness:.95}),wet=new THREE.MeshStandardMaterial({color:0x4d4a42,roughness:.6,transparent:true,opacity:.55});
+     const pl=(a,r,y,w,h,dd,m)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w,h,dd),m);q.position.set(Math.sin(a)*r,y,-R+Math.cos(a)*r);q.rotation.y=a;q.castShadow=true;g.add(q);return q;};
+     for(let k=-3;k<=3;k++){const a=k*half*.26;pl(a,R+1.2,y0+H-6,7,9,1.6,dk);pl(a,R+1.2,y0+H+1.8,8,2,2.4,ct);}   // spillway gates + piers
+     for(let k=-5;k<=5;k++){const a=k*half*.19;pl(a,R-7.4,y0+H*.5,2.4,H-2,2.2,ct);}   // buttresses
+     for(let k=-9;k<=9;k++){const a=k*half*.105;const q=pl(a,R+1.4,y0+H+3.2,.5,2.2,.5,dk);if(k%3===0){pl(a,R-1.2,y0+H+7,.35,7,.35,dk);pl(a,R-1.2,y0+H+10.4,1.8,.5,.9,dk);}}
+     const sw=new THREE.Mesh(new THREE.CylinderGeometry(R-7.3,R-7.3,5,18,1,true,-half,half*2),wet);sw.position.set(0,y0+2.5,-R);g.add(sw);}catch(_e){}
     const rk=rockGeo(41+d.i,1,.8,.4),rm=new THREE.MeshStandardMaterial({color:0x7d776a,roughness:1});
     for(const s of [-1,1]){const b=new THREE.Mesh(rk,rm);b.position.set(s*d.w*.97,y0+H*.5,-R+R*Math.cos(half*.98));b.scale.set(26,H*.7,22);g.add(b);}
     const tw=new THREE.Mesh(new THREE.CylinderGeometry(5,6.4,24,10),new THREE.MeshStandardMaterial({color:0xb7b3a6,roughness:.9}));tw.position.set(-d.w*.8,y0+H+10,-R+R*Math.cos(half*.8)-4);g.add(tw);
@@ -14843,12 +14850,33 @@ function ecViewSync(){if(!G||!G.ec||!G.towns||typeof SCN==='undefined'||!SCN)ret
   // mines (headframe + spoil heap), quarries (pit + heaps), factories (hall + chimneys); a flag in the owner's colour
   for(const p of G.ec.pts){const y=groundH(p.x,p.y),g=new THREE.Group(),mat=c=>ecMat(c),add=(geo,m,x,yy,z,rx,ry,rz,sx,sy,sz)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,yy,z);o.rotation.set(rx||0,ry||0,rz||0);if(sx)o.scale.set(sx,sy,sz);g.add(o);return o;};
     const cyl=new THREE.CylinderGeometry(1,1,1,10),cone=new THREE.ConeGeometry(1,1,9),box=new THREE.BoxGeometry(1,1,1);
-    if(p.k===1){add(cone,mat('#5d5348'),-26,13,10,0,0,0,34,26,30);add(cyl,mat('#1b1a18'),22,1.5,12,0,0,0,18,3,18);   // spoil heap, dark shaft
-      add(cyl,mat('#6b4a2c'),-6,23,-8,0,0,.28,1.6,50,1.6);add(cyl,mat('#6b4a2c'),10,23,-8,0,0,-.28,1.6,50,1.6);add(box,mat('#6b4a2c'),2,47,-8,0,0,0,24,2.4,3);add(cyl,mat('#3b3a38'),2,41,-8,Math.PI/2,0,0,7,2,7);   // headframe + winding wheel
-      add(box,mat('#7a6c58'),30,5,-16,0,0,0,26,10,16);}
-    else if(p.k===0){add(cyl,mat('#2c2822'),0,1.2,0,0,0,0,46,2.4,46);add(cyl,mat('#9a917e'),0,2.4,0,0,0,0,38,1,38);add(cone,mat('#a69c88'),-48,10,14,0,0,0,24,20,24);add(cone,mat('#8b826f'),-66,7,-12,0,0,0,18,14,18);add(cone,mat('#a69c88'),50,8,-24,0,0,0,20,16,20);
-      add(box,mat('#c79a2c'),20,6,36,0,0,0,18,10,10);add(box,mat('#3e3b38'),20,12,36,0,0,0,6,6,6);}
-    else{add(box,mat('#8c8f90'),0,12,0,0,0,0,76,24,38);add(TL.gable,mat('#5f6466'),0,24,0,0,0,0,80,14,42);add(cyl,mat('#7b4a3a'),-26,34,-26,0,0,0,5,44,5);add(cyl,mat('#7b4a3a'),-8,32,-26,0,0,0,4,40,4);add(box,mat('#4a4d4f'),44,5,20,0,0,0,18,10,18);add(box,mat('#3a3c3d'),0,2,32,0,0,0,60,3,26);}
+    // DE-BLOCK slice 8: real-looking sites (PBR concrete/tin/plaster, lumpy rock, terraces, lattice, sawtooth roofs)
+    const pbr=(k,c,r)=>typeof bkMat==='function'?bkMat(k,c,r):mat(c),rkM=pbr('concrete','#8b8272',3),rkD=pbr('concrete','#6a6254',3),tinM=pbr('tin','#8a8d8f',3),plM=pbr('plaster','#a89c84',2),dkM=mat('#25272a'),stM=mat('#4a4c4e'),
+      lump=(sd,detail)=>{const gg=new THREE.IcosahedronGeometry(1,detail||2),pa=gg.attributes.position;for(let q=0;q<pa.count;q++){const x=pa.getX(q),yv=pa.getY(q),z=pa.getZ(q),n=1+.22*Math.sin(x*3.3+sd)*Math.cos(z*2.9+yv*2)+.1*Math.sin(z*8+yv*6+sd*2);pa.setXYZ(q,x*n,Math.max(yv,0)*n,z*n);}gg.computeVertexNormals();return gg;};
+    if(p.k===1){add(lump(1,3),rkD,-26,0,10,0,0,0,34,26,30);add(lump(5,2),rkM,-44,0,26,0,0,0,16,10,14);
+      add(cyl,mat('#141312'),22,1.5,12,0,0,0,18,3,18);add(cyl,rkM,22,2.6,12,0,0,0,21,1.4,21).rotation.x=0;
+      for(const [x,z] of [[-8,-8],[12,-8]]){for(let t=0;t<5;t++){add(cyl,mat('#6b4a2c'),x*(1-t*.07)+1,5+t*10,z,0,0,x<0?.14:-.14,1.1,12,1.1);}}
+      for(const x of [-6,10]){for(let t=0;t<4;t++){add(box,mat('#6b4a2c'),2,6+t*11,-8,0,0,t%2?.5:-.5,24,1,1);}}
+      add(box,mat('#6b4a2c'),2,47,-8,0,0,0,24,2.4,3);add(cyl,mat('#3b3a38'),2,41,-8,Math.PI/2,0,0,7,2,7);add(cyl,mat('#c9a227'),2,41,-8,Math.PI/2,0,0,2.4,3,2.4);
+      add(box,tinM,30,5,-16,0,0,0,26,10,16);add(box,dkM,30,10.4,-16,0,0,.0,28,1,18);add(box,stM,18,3,-24,0,0,0,10,6,8);
+      for(let t=0;t<3;t++)add(box,dkM,4+t*7,1.6,26,0,0,0,5,3,3.2),add(cyl,dkM,4+t*7,.8,24.2,0,0,Math.PI/2,1.2,5,1.2);
+      add(box,mat('#2b2b2b'),0,.4,26,0,0,0,40,.5,1.2);}
+    else if(p.k===0){add(cyl,mat('#2c2822'),0,1.2,0,0,0,0,50,2.4,50);
+      add(cyl,mat('#3a342a'),0,1.5,0,0,0,0,40,.6,40);for(let t=0;t<3;t++){const r0=18+t*9,wl=new THREE.CylinderGeometry(r0,r0,6,20,1,true,.5,4.4),lg=new THREE.RingGeometry(r0,r0+9,20,1,.5,4.4);lg.rotateX(-Math.PI/2);const m1=new THREE.Mesh(wl,t%2?rkD:rkM);m1.position.set(0,3+t*6,0);m1.material.side=THREE.DoubleSide;g.add(m1);const m2=new THREE.Mesh(lg,rkM);m2.position.set(0,6+t*6,0);g.add(m2);}
+      for(let a=0;a<5;a++){const aa=a*1.26+.4;add(lump(a*3,1),a%2?rkD:rkM,Math.cos(aa)*60,0,Math.sin(aa)*60,0,aa,0,10+a%3*4,5+a%2*4,10+a%3*3);}
+      add(lump(2,2),pbr('concrete','#a69c88',2),-52,0,14,0,0,0,24,20,24);add(lump(4,2),rkM,-70,0,-12,0,0,0,18,14,18);add(lump(7,2),pbr('concrete','#a69c88',2),52,0,-24,0,0,0,22,17,22);
+      // conveyor + hopper, crusher shed, dump truck
+      add(box,stM,22,9,24,0,0,.42,34,1.6,3.4);for(let t=0;t<5;t++)add(cyl,dkM,8+t*7,5+t*2.9,24,Math.PI/2,0,0,.7,4,.7);
+      add(box,tinM,38,8,30,0,0,0,16,14,14);add(box,dkM,38,15.4,30,0,0,0,18,1,16);add(cone,mat('#9a8f7a'),38,2,40,0,0,0,10,10,10);
+      add(box,mat('#c79a2c'),-14,3.4,46,0,0,0,16,4.6,8);add(box,mat('#c79a2c'),-20,7.2,46,0,0,-.5,10,5,8.4);add(box,mat('#2a2a2a'),-8,6.2,46,0,0,0,5,5,7);
+      for(const [x,z] of [[-18,41.5],[-18,50.5],[-9,41.5],[-9,50.5]])add(cyl,dkM,x,2,z,Math.PI/2,0,0,2.6,2,2.6);}
+    else{add(box,pbr('plaster','#9a9c9c',3),0,10,0,0,0,0,76,20,38);
+      for(let t=0;t<4;t++){add(box,tinM,-27+t*18+.5,24.3,0,0,0,-.42,18,1,40);add(box,mat('#9fb4bd'),-27+t*18-8,23.2,0,0,0,0,.5,6.4,38);add(box,plM,-27+t*18+8.6,22.2,0,0,0,0,.6,4.4,40);}
+      for(let t=0;t<6;t++)add(box,dkM,-30+t*12,12,19.2,0,0,0,7,5,.4);add(box,dkM,28,6,19.3,0,0,0,10,12,.4);
+      for(const [x,h,r] of [[-26,48,2.8],[-8,42,2.4]]){add(cyl,pbr('concrete','#8a5c4a',2),x,h/2,-26,0,0,0,r,h,r);for(let t=0;t<3;t++)add(cyl,mat(t%2?'#d8d4cc':'#a33a2c'),x,h-3-t*5,-26,0,0,0,r*1.06,2.2,r*1.06);}
+      add(cyl,tinM,44,8,22,0,0,0,9,16,9);add(cyl,tinM,56,7,28,0,0,0,7,14,7);add(cyl,tinM,-46,6,10,0,0,0,6,12,6);add(cyl,mat('#7d8184'),30,17,-12,0,0,Math.PI/2,1.4,50,1.4);add(cyl,mat('#7d8184'),30,14,-8,0,0,Math.PI/2,1.1,50,1.1);
+      for(let t=0;t<5;t++)add(box,stM,18+t*11,7,-14,0,0,0,1.2,14,1.2);
+      add(box,dkM,0,1.2,32,0,0,0,60,2.4,26);for(let t=0;t<4;t++)add(box,mat(['#7a3b2c','#35557a','#cfae3a','#4a6a46'][t]),-20+t*12,3.6,32,0,0,0,10,5,4);}
     const tc=p.ow>=0&&G.teams[p.ow]?G.teams[p.ow].color:'#bbbbbb';add(cyl,mat('#d8d8d8'),34,26,-30,0,0,0,1.4,52,1.4);add(box,mat(tc),44,46,-30,0,0,0,18,10,1.2);
     g.position.set(p.x,y,p.y);g.rotation.y=(p.i*1.7)%6.28;g.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});grp.add(g);}
   SCN.add(grp);ECV.grp=grp;}
@@ -16182,7 +16210,7 @@ function hudTick(force){try{hudDeclutter();}catch(e){}if(!G||!G.teams||!G.teams[
 const HD_KEYS=HUD_OV.map(q=>q[0]);
 /* ---------- What's new (one screen, newest first) ---------- */
 const WHATS_NEW=[
- ['Online grand campaign','Grand campaign → Online campaign: open your campaign to friends or join theirs by code. Each friend leads a free nation (the AI runs the rest), sees the world through its own fog, and anyone can pause; the host sets the speed.'],
+ ['Online grand campaign','Grand campaign → Play with friends: pick a scenario and your nation, then share the invite code or link; friends pick a nation and tick Ready in the lobby, you press Start. Or Grand campaign → Join friends to enter theirs by code. Each friend leads a free nation (the AI runs the rest), sees the world through its own fog, and anyone can pause; the host sets the speed.'],
  ['Morale styles','Every nation now fights with one of four styles: Zealous (slow to break, banners rally the faithful, heavier losses), Professional (steady under artillery, rally fast near officers), Home defenders (much braver on home turf) and Firepower-reliant (break sooner, but stronger fire support). The style shows on the nation pick screen and in the Encyclopedia.'],
  ['One HUD','A single top bar now shows money, income, supply, world opinion and an Alerts button (click it for the last warnings). The Towns / Supply / Opinion / Sonar / Mines buttons switch the map and minimap layers on and off.'],
  ['Grand-map assets','The Ayatollah, the Dear Leader, the Mountain Fortress and the Bunker Buster are no longer in Conquest battles; they live on the grand map.'],
@@ -17322,8 +17350,11 @@ function weather(m,amt,camo){if(!m||m.userData.wx)return;m.userData.wx=1;amt=amt
       {float hq=vWP.y-vOY;vec3 b0=diffuseColor.rgb;float l0=dot(b0,vec3(.3,.59,.11));
        if(wKind>1.5){/*aircraft: panel lines, sun-faded top, exhaust soot streaks*/vec3 pp=vOP*.9;float pl=1.-smoothstep(0.,.05,abs(fract(pp.x*.55)-.5)*2.-.9)*0.;float gx=min(abs(fract(pp.x*.42)-.5),abs(fract(pp.z*.37)-.5));diffuseColor.rgb*=1.-.16*(1.-smoothstep(.0,.012,gx))*step(.04,l0);float so=wn(vec3(pp.x*.5,pp.y*2.,pp.z*14.));diffuseColor.rgb*=1.-.22*smoothstep(.55,.85,so);diffuseColor.rgb=mix(diffuseColor.rgb,diffuseColor.rgb*1.12+vec3(.03),smoothstep(.5,1.,vWN.y)*.25);}
        else if(wKind>.5){/*ships: rust runs, salt stain, waterline grime*/float rs=wn(vec3(vOP.x*3.,vOP.y*.35,vOP.z*3.));float rr=smoothstep(.62,.8,rs)*(1.-smoothstep(0.,6.,hq));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.34,.17,.09)*(.7+.5*gn),rr*.6);float sl=1.-smoothstep(0.,2.4,hq);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.07,.08,.07),sl*.55);diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.78,.78,.74),smoothstep(.6,.85,wn(vWP*vec3(.9,.2,.9)))*(1.-sl)*.12);}
-       else{/*ground: sun-faded top, rust streaks, mud on lower hull, snow settling on up-facing*/diffuseColor.rgb=mix(diffuseColor.rgb,vec3(l0)*1.08+vec3(.03,.025,.015),smoothstep(.55,1.,vWN.y)*.18*wAmt);float rs=wn(vec3(vOP.x*4.,vOP.y*.5,vOP.z*4.));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.30,.16,.09)*(.7+.5*gn),smoothstep(.72,.9,rs)*.28*wAmt*step(.04,l0));if(wEnv.w>.5)diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.86,.88,.92),smoothstep(.62,.95,vWN.y)*.42*wAmt);}}`).replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n{vec3 bp=vWP*2.3;float b0=wn(bp);vec3 bg=vec3(wn(bp+vec3(.35,0.,0.))-b0,wn(bp+vec3(0.,.35,0.))-b0,wn(bp+vec3(0.,0.,.35))-b0);float bs=(wAmt>.9&&wAmt<1.2)?.55:.18;normal=normalize(normal+(viewMatrix*vec4(bg,0.)).xyz*bs);}').replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=clamp(roughnessFactor+(.5-gn)*.25*wAmt,.3,1.);').replace('#include <dithering_fragment>','#include <dithering_fragment>\n{vec3 vv=normalize(vViewPosition);float rim=pow(1.-clamp(dot(normalize(normal),vv),0.,1.),3.);gl_FragColor.rgb+=vec3(.55,.62,.75)*rim*.22*wAmt*(1.-.6*wRefl);if(wRefl>0.){vec3 Vw=normalize(cameraPosition-vWP),Nw=normalize(vWN+vec3(0.,1e-4,0.));float ndv=clamp(dot(Nw,Vw),0.,1.);vec3 Rw=reflect(-Vw,Nw);vec3 env=Rw.y>0.?mix(vec3(.6,.64,.68),vec3(.33,.48,.74),smoothstep(0.,.6,Rw.y)):vec3(.23,.2,.16);float fr=.04+.96*pow(1.-ndv,5.);float sp=pow(max(dot(Rw,vec3(-.66,.57,-.46)),0.),70.);float lu=dot(gl_FragColor.rgb,vec3(.33));gl_FragColor.rgb=mix(gl_FragColor.rgb,env*(.5+.5*lu),clamp(fr*.5*wRefl,0.,.6))+vec3(1.,.93,.8)*sp*.5*wRefl;}if(wCamo>0.){float up=clamp(vWN.y/max(length(vWN),1e-4),0.,1.);gl_FragColor.rgb+=vec3(.42,.5,.62)*rim*.18+vec3(.06,.07,.08)*up*up;}}');};
-  m.customProgramCacheKey=()=>'wx'+(m.userData.wk||0)+amt+'_'+camo+'_'+(m.userData.camoP||0)+'_'+(m.userData.wall||0);}
+       else{/*ground: sun-faded top, rust streaks, mud on lower hull, snow settling on up-facing*/diffuseColor.rgb=mix(diffuseColor.rgb,vec3(l0)*1.08+vec3(.03,.025,.015),smoothstep(.55,1.,vWN.y)*.18*wAmt);float rs=wn(vec3(vOP.x*4.,vOP.y*.5,vOP.z*4.));diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.30,.16,.09)*(.7+.5*gn),smoothstep(.72,.9,rs)*.28*wAmt*step(.04,l0));if(wEnv.w>.5)diffuseColor.rgb=mix(diffuseColor.rgb,vec3(.86,.88,.92),smoothstep(.62,.95,vWN.y)*.42*wAmt);}}`).replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n{vec3 bp=vWP*2.3;float b0=wn(bp);vec3 bg=vec3(wn(bp+vec3(.35,0.,0.))-b0,wn(bp+vec3(0.,.35,0.))-b0,wn(bp+vec3(0.,0.,.35))-b0);float bs=(wAmt>.9&&wAmt<1.2)?.55:.18;normal=normalize(normal+(viewMatrix*vec4(bg,0.)).xyz*bs);}').replace('#include <roughnessmap_fragment>','#include <roughnessmap_fragment>\nroughnessFactor=clamp(roughnessFactor+(.5-gn)*.25*wAmt,.3,1.);').replace('#include <dithering_fragment>','#include <dithering_fragment>\n{vec3 vv=normalize(vViewPosition);float rim=pow(1.-clamp(dot(normalize(normal),vv),0.,1.),3.);gl_FragColor.rgb+=vec3(.55,.62,.75)*rim*.22*wAmt*(1.-.6*wRefl);if(wRefl>0.){vec3 Vw=normalize(cameraPosition-vWP),Nw=normalize(vWN+vec3(0.,1e-4,0.));float ndv=clamp(dot(Nw,Vw),0.,1.);vec3 Rw=reflect(-Vw,Nw);vec3 env=Rw.y>0.?mix(vec3(.6,.64,.68),vec3(.33,.48,.74),smoothstep(0.,.6,Rw.y)):vec3(.23,.2,.16);float fr=.04+.96*pow(1.-ndv,5.);float sp=pow(max(dot(Rw,vec3(-.66,.57,-.46)),0.),70.);float lu=dot(gl_FragColor.rgb,vec3(.33));gl_FragColor.rgb=mix(gl_FragColor.rgb,env*(.5+.5*lu),clamp(fr*.5*wRefl,0.,.6))+vec3(1.,.93,.8)*sp*.5*wRefl;}if(wCamo>0.){float up=clamp(vWN.y/max(length(vWN),1e-4),0.,1.);gl_FragColor.rgb+=vec3(.42,.5,.62)*rim*.18+vec3(.06,.07,.08)*up*up;}}');
+    // DE-BLOCK 4b: vehicle hulls get a fine hammered-steel / dent bump (screen-derivative normal perturbation of a noise height) so they stop reading as smooth plastic
+    sh.fragmentShader=sh.fragmentShader.replace('#include <normal_fragment_maps>',`#include <normal_fragment_maps>
+      if(wCamo>0.&&wKind<1.5){float bh=wn(vOP*2.3)*.55+wn(vOP*7.1)*.3+wn(vOP*19.)*.15;vec3 bx=dFdx(-vViewPosition),by=dFdy(-vViewPosition);float bdx=dFdx(bh),bdy=dFdy(bh);vec3 r1=cross(by,normal),r2=cross(normal,bx);float dt=dot(bx,r1);if(abs(dt)>1e-12){vec3 gr=sign(dt)*(bdx*r1+bdy*r2);normal=normalize(abs(dt)*normal-.15*gr);}}`);};
+  m.customProgramCacheKey=()=>'wxb'+(m.userData.wk||0)+amt+'_'+camo+'_'+(m.userData.camoP||0)+'_'+(m.userData.wall||0);}
 function normScale(obj,fit,size){obj.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(obj),sz=bb.getSize(new THREE.Vector3());const dim=fit==='y'?sz.y:fit==='x'?sz.x:(fit==='xz'||fit==='long')?Math.max(sz.x,sz.z):sz.z;const s=size/Math.max(.001,dim);const c=bb.getCenter(new THREE.Vector3());return{s,cx:c.x,cz:c.z,my:bb.min.y,xl:sz.x>sz.z};}
 const CAMOK={};function camoFreq(key){if(CAMOK[key]!==undefined)return;if(!['tank','tankE','tankW','truck','technical','toontank'].includes(key)){CAMOK[key]=0;return;}const P=MODELS.proto[key];P.scene.updateMatrixWorld(true);let mx=0;P.scene.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();const b=o.geometry.boundingBox,sz=b.getSize(new THREE.Vector3());mx=Math.max(mx,sz.x,sz.y,sz.z);}});CAMOK[key]=mx>0?4/mx:0;}
 /* ---------- per-country looks: vehicle paint, camo blotches, uniform colour and national flag ---------- */
@@ -18052,6 +18083,15 @@ function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',
   for(const [x,z] of [[-R,-R],[R,-R],[-R,R],[R,R],[-gate,R],[gate,R]])post(x,z);
   bx(gate*2+2.2,1.2,2.2,0,6.4,R,rf);
   bx(2*R,.5,.3,0,4.8,-R+.7,pl);}
+// DE-BLOCK slice 7: facade detail — dark window recesses with lintel+sill, a door and a wall lamp on each wall of HQ/barracks/factory/depot (view only)
+function facadeKit(e,o,P){let bb=null,bv=0;const fl=o.userData.parts&&o.userData.parts.flag,sz0=new THREE.Vector3();for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz0);const v=sz0.x*sz0.y*sz0.z;if(v>bv){bv=v;bb=q;}}if(!bb)return;
+  if(!isFinite(bb.max.y)||bb.max.y<8)return;const sx=bb.max.x-bb.min.x,sz=bb.max.z-bb.min.z,hy=bb.max.y,cx=(bb.max.x+bb.min.x)/2,cz=(bb.max.z+bb.min.z)/2;if(sx<10||sz<10||sx>400)return;
+  if(!window.BKFW){window.BKFW={g:new THREE.BoxGeometry(1,1,1),w:new THREE.MeshStandardMaterial({color:0x14181b,roughness:.35,metalness:.4}),t:new THREE.MeshStandardMaterial({color:0x8d8776,roughness:.9}),l:new THREE.MeshBasicMaterial({color:0xffd9a0})};}
+  const F=window.BKFW,G=new THREE.Group();P.add(G);const by=Math.max(5,hy*.5);const add=(m,w,h,d,x,y,z)=>{const q=new THREE.Mesh(F.g,m);q.scale.set(w,h,d);q.position.set(x,y,z);G.add(q);return q;};
+  for(const [ax,sg] of [[0,1],[0,-1],[1,1],[1,-1]]){const L=ax?sz:sx,n=Math.max(2,Math.floor(L/13)),off=ax?(sg>0?bb.max.x:bb.min.x):(sg>0?bb.max.z:bb.min.z);
+    for(let i=0;i<n;i++){const u=(i+.5)/n*L-L/2;if(ax===0&&sg>0&&Math.abs(u)<5)continue;const x=ax?off+sg*.12:cx+u,z=ax?cz+u:off+sg*.12;
+      const ww=ax?.5:5,wd=ax?5:.5;add(F.w,ww,3.4,wd,x,by,z);add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by-2,z+(ax?0:sg*.2));add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by+2,z+(ax?0:sg*.2));}}
+  add(F.w,5.5,6.5,.6,cx,3.3,bb.max.z+.15);add(F.t,7,.7,1.2,cx,6.8,bb.max.z+.3);add(F.l,.9,.9,.5,cx+4.6,7.6,bb.max.z+.35);}
 // DE-BLOCK slice 3: tyre tracks out of the gate, scattered rocks and debris round the base (view only, shared geometry/material)
 let BKTRK=null,BKROCK=null;
 let BKAO=null,BKOIL=null,BKBLO=null,BKSCR=null;
@@ -18083,7 +18123,7 @@ function groundKit(e,o,P){const h=e.size/2,R=h+(e.kind==='hq'?30:22);
   // debris by the wall: broken blocks, tyres, scrap sheets
   for(let i=0;i<7;i++){const a=rn(i+70)*6.283,d=R+3+rn(i+80)*10,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<12&&z>0)continue;const m=new THREE.Mesh(new THREE.BoxGeometry(1.2+rn(i)*2,.5+rn(i+5)*.9,1+rn(i+9)*2),BKROCK.m[(i+1)%3]);m.position.set(x,.35,z);m.rotation.set((rn(i+11)-.5)*.5,rn(i+12)*6.3,(rn(i+13)-.5)*.5);m.castShadow=m.receiveShadow=true;G3.add(m);}}
 function decorateBld(e,o){if(!MODELS.ready)return;const h=e.size/2;const P=new THREE.Group();o.add(P);
-  if(['hq','barracks','factory','depot'].includes(e.kind)){try{roofKit(e,o,P);}catch(err){console.warn('roofKit',err);}try{groundKit(e,o,P);}catch(err){console.warn('groundKit',err);}}
+  if(['hq','barracks','factory','depot'].includes(e.kind)){try{roofKit(e,o,P);}catch(err){console.warn('roofKit',err);}try{groundKit(e,o,P);}catch(err){console.warn('groundKit',err);}try{facadeKit(e,o,P);}catch(err){console.warn('facadeKit',err);}}
   const T=G.teams[e.team];if(T&&MEFAC.has(T.fac)&&(e.kind==='turret'||e.kind==='sam')){propObj('crate',h+6,h+4,.3,P);return;}// HESCO ring instead of sandbag props
   if(e.kind==='hq'){propObj('watertower',-h-14,-h+6,0,P);propObj('container',h+20,-h+18,Math.PI/2,P);propObj('containerG',h+20,-h+52,Math.PI/2,P);propObj('barrel',-h-8,h+6,0,P);propObj('barrel',-h-14,h+10,0,P);propObj('fence',-14,h+16,0,P);for(let i=-2;i<=2;i++)propObj('sandbag',i*13,h+30+(i%2)*2,(i%2)*.12,P);propObj('sandbag',-34,h+22,1.2,P);propObj('sandbag',34,h+22,-1.2,P);propObj('crate',h+6,h+18,.3,P);}
   else if(e.kind==='barracks'){propObj('tent',0,h+30,0,P);propObj('sandbag',-h-6,h-8,Math.PI/2,P);propObj('sandbag',h+6,h-8,Math.PI/2,P);propObj('crate',h+8,-h+6,.3,P);propObj('crate',h+12,-h+14,0,P);}
@@ -18105,6 +18145,31 @@ const BMOD={hq:{slab:1,list:[{m:'b_hq',fit:'xz',size:70,ys:.62,x:6,z:4},{m:'b_ra
   turret:{slab:1,list:[{m:'b_turret',fit:'xz',size:30,part:'gun',col:'#5a5d4c',k:.85}]},
   sam:{slab:1,list:[{m:'sam',fit:'y',size:24,part:'gun',col:'#62664f',k:.6}]},
   uplink:{list:[{m:'b_radar',fit:'y',size:30,x:-26,z:26,part:'dish',col:'#8a908c',k:.82}]}};
+// DE-BLOCK 2 (laneE): Middle Eastern HQ/barracks/factory get rooftop clutter (AC units, water tanks, dish, antenna mast) placed by
+// ray-casting the model's real roof, plus a mud-brick compound wall with a gate and pillars on the front. Visual only; one merged mesh.
+function meRoofKit(o,m,e,T){const B=Bld(),R=mulberry(e.kind.length*131+(e.size|0)),h=e.size/2,tc='#'+new THREE.Color(T.color).lerp(new THREE.Color('#5a5c54'),.3).getHexString();
+  m.updateMatrixWorld(true);const bb=new THREE.Box3().setFromObject(m),rc=new THREE.Raycaster(),dn=new THREE.Vector3(0,-1,0),pt=new THREE.Vector3(),want=['ac','tank','ac','dish','mast','ac','tank'];let wi=0;
+  const hs=[];for(let i=0;i<40&&wi<want.length;i++){const x=bb.min.x+(bb.max.x-bb.min.x)*(.15+R()*.7),z=bb.min.z+(bb.max.z-bb.min.z)*(.15+R()*.7);rc.set(pt.set(x,bb.max.y+4,z),dn);const hit=rc.intersectObject(m,true)[0];
+    if(!hit||!hit.face||hit.point.y<bb.max.y*.45||hit.face.normal.clone().transformDirection(hit.object.matrixWorld).y<.9)continue;const y=hit.point.y;if(hs.some(q=>Math.hypot(q[0]-x,q[1]-z)<7))continue;hs.push([x,z]);
+    const k=want[wi++];if(k==='ac'){B.box(4,2.4,2.8,x,y+1.2,z,'#9a9a92');B.cyl(.9,.9,.3,8,x,y+2.5,z,'#2c2c2a');B.box(4.2,.25,3,x,y+.1,z,'#6e6e68');}
+    else if(k==='tank'){for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])B.box(.4,1.6,.4,x+a*1.3,y+.8,z+b*1.3,'#4a4a46');B.cyl(2.1,2.1,3.4,10,x,y+3.3,z,'#2f4a5e');B.cyl(2.2,2.2,.35,10,x,y+5.1,z,'#222a30');}
+    else if(k==='dish'){B.cyl(.35,.35,3,5,x,y+1.5,z,'#55564f');B.cyl(2.6,.4,.9,12,x,y+3.4,z,'#d4d2c6',.7,.6,0);B.cyl(.12,.12,2,4,x,y+4.2,z,'#3a3a35',.7,.6,0);}
+    else{B.cyl(.22,.22,15,5,x,y+7.5,z,'#3a3a35');B.box(5,.2,.2,x,y+12,z,'#3a3a35');B.box(3.5,.2,.2,x,y+9.5,z,'#3a3a35');B.box(.5,.5,.5,x,y+15.2,z,'#c0392b');}}
+  // compound wall with a gate: front (+z) with a 14-unit gap, short returns, gate pillars with lamp caps
+  const wc='#b49d74',cap='#a08a64',zf=h+9,xe=h+5,W=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(z1-z0,x1-x0),x=(x0+x1)/2,z=(z0+z1)/2;B.box(L,6,1.5,x,3,z,wc,0,-a,0);B.box(L+.5,.7,2.1,x,6.3,z,cap,0,-a,0);for(let i=1;i<L/9;i++){const t=i*9/L;B.box(1.2,6.8,1.9,x0+(x1-x0)*t,3.4,z0+(z1-z0)*t,cap,0,-a,0);}};
+  W(-xe,zf,-7,zf);W(7,zf,xe,zf);W(-xe,zf,-xe,zf-26);W(xe,zf,xe,zf-26);
+  for(const gx of [-7,7]){B.box(2.6,9,2.6,gx,4.5,zf,cap);B.box(3.2,.8,3.2,gx,9.2,zf,'#8d785a');B.box(1.1,1.1,1.1,gx,10.1,zf,'#e8dfb0');}
+  B.box(14,.4,3,0,.25,zf,'#6d665a');
+  // slice 9: guard towers on the two far wall corners (legs, cabin with dark slit, roof, floodlight) and a camo-net lean-to beside the gate
+  for(const [tx,tz] of [[-xe,zf-26],[xe,zf-26]]){for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])B.box(.7,12,.7,tx+a*1.8,6,tz+b*1.8,'#5b5a50');B.box(.4,.4,5,tx,5,tz,'#5b5a50');B.box(5.6,.6,5.6,tx,12.2,tz,'#6b6a5e');B.box(5,2.6,5,tx,13.8,tz,'#8a8368');B.box(5.1,.9,3.8,tx,14.2,tz,'#15130f');B.box(6.4,.5,6.4,tx,15.4,tz,tc);B.box(5.6,1,.5,tx,12.9,tz+2.8,'#9a8f6e');B.box(.5,.5,.5,tx+(tx<0?3.4:-3.4),15.2,tz+2,'#e8dfb0');}
+  B.box(12,.3,9,-xe+10,5.2,zf-6,'#59604a',0,0,.2);for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])B.box(.4,5,.4,-xe+10+a*5.6,2.5,zf-6+b*4.2,'#4a4a44');
+  // DE-BLOCK 3: ground debris around the compound: rubble rocks, tyre stacks, planks and a split crate (seeded, merged, visual only)
+  for(let i=0;i<14;i++){const a=R()*6.283,d=h+4+R()*16,x=Math.cos(a)*d,z=Math.sin(a)*d;if(z>h+4&&Math.abs(x)<10)continue;const t=R();
+    if(t<.5){const w=1.4+R()*3.2;B.rock(w,w*.6,w*(.8+R()*.4),x,w*.22,z,['#a89878','#988a6c','#b3a483'][i%3],0,R()*6,0,i);}
+    else if(t<.7){for(let k=0;k<2+(i%2);k++)B.cyl(1.25,1.25,.9,10,x+(k%2)*.4,.45+k*.9,z,'#1d1d1b');}
+    else if(t<.9){B.box(5+R()*3,.3,.8,x,.2,z,'#6f5a3d',0,R()*3,.05);B.box(4,.3,.8,x+1,.5,z+.6,'#7a6446',0,R()*3,-.04);}
+    else{B.box(2.6,1.6,2.2,x,.8,z,'#6b6343',0,R()*3,0);B.box(2.4,.3,2,x+1.2,1.9,z,'#6b6343',0,R()*3,.5);}}
+  const g=mesh(B.geo());g.castShadow=true;o.add(g);}
 function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.fac)&&BME[e.kind]&&MODELS.proto[BME[e.kind].m])cfg=Object.assign({},cfg,{list:cfg.list.map((q,i)=>i?q:Object.assign({},q,{m:BME[e.kind].m,size:BME[e.kind].size,ys:1}))});if(cfg&&e.kind==='shipyard'&&MEFAC.has(T.fac))cfg={list:cfg.list.filter(q=>q.part).map(q=>Object.assign({},q,{y:4}))};// ME naval base: code-built quay (04-gfx meGeo), keep the crane model
   if(!cfg||!cfg.list.every(q=>MODELS.proto[q.m]))return false;const P=o.userData.parts;
   if(!['turret','sam'].includes(e.kind)){const fg=new THREE.Group(),h2=e.size/2;fg.position.set(-h2+4,0,h2-4);const pole=new THREE.Mesh(new THREE.CylinderGeometry(.35,.45,30,6),new THREE.MeshStandardMaterial({color:0x8a8d90,metalness:.6,roughness:.4}));pole.position.y=15;pole.castShadow=true;fg.add(pole);
@@ -18117,7 +18182,7 @@ function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.
     const m=mesh(B.geo());o.add(m);P.main=m;}
   const RT={...NATX_RT,US:'#bdb49c',EU:'#b5b2a6',FR:'#b5b2a6',DE:'#b5b2a6',KR:'#b2b0a0',IR:'#c9b48a',SA:'#d2bd92',AE:'#d6c49c',EG:'#cdb68a',IQ:'#cbb68a',GB:'#b3ae98',AU:'#c3b48c',CA:'#a9ad96',SY:'#c3ae86',PK:'#c2b08a',IN:'#c7a98a',RS:'#c4ae84',DW:'#cbb58b',IM:'#a69a80',TR:'#c9b79a',IL:'#cfc3a6',RU:'#8b9479',CN:'#9a9c84',KP:'#848a72',CU:'#a8a07e',UA:'#949a84'}[T.fac];
   for(const q of cfg.list){const rc=q.col?{color:q.col}:(RT?{color:RT}:null);const m=instModel(q.m,rc,q.fit,q.size,q.ys,q.col?q.k:(RT?.42:undefined));if(!m)continue;m.traverse(c=>{if(c.isMesh){c.castShadow=true;c.receiveShadow=true;}});
-    if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);o.add(m);}}
+    if(q.part){const g=new THREE.Group();g.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);g.add(m);o.add(g);P[q.part]=g;}else{m.position.set(q.x||0,q.y??(cfg.slab?2.4:0),q.z||0);if(MEFAC.has(T.fac)&&BME[e.kind]&&q===cfg.list[0])try{meRoofKit(o,m,e,T);}catch(er){}o.add(m);}}
   if(e.kind==='coast'){// emplacement: sandbag walls round the launcher and a small radar / command truck beside the pad (visual only)
     const h=e.size/2,B=Bld();for(let i=-2;i<=2;i++){const sb=propObj('sandbag',-h*.92,i*h*.36,Math.PI/2,o);if(sb)sb.position.y=2.4;}
     for(const sd of [-1,1])for(let i=0;i<3;i++){const sb=propObj('sandbag',-h*.5+i*h*.42,sd*h*.97,0,o);if(sb)sb.position.y=2.4;}
@@ -20681,7 +20746,7 @@ function grandMenu(){grMap();const saved=(()=>{try{return JSON.parse(localStorag
   if(usable){const n=saved.me?((GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me):'Observer';root.appendChild(campBtn('Continue — '+n+', '+grMonStr(saved.turn)+' (month '+saved.turn+'/'+saved.maxTurn+')',()=>{grLoad();campClose();grandOpen();}));}
   root.appendChild(campBtn('New campaign',()=>{grandSetup();},!!usable));root.appendChild(campBtn('Back',campClose,true));campShow(root);}
 function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))].filter(c=>!grNat(c).major).sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1);let nat='IR',len='quick';
-  root.appendChild(campEl('h1','margin:6px 0 8px;font-size:28px','NEW GRAND CAMPAIGN'));root.appendChild(campEl('div','opacity:.8;margin-bottom:6px','Your nation'));
+  root.appendChild(campEl('h1','margin:6px 0 8px;font-size:28px',GNT.wantHost?'CAMPAIGN WITH FRIENDS':'NEW GRAND CAMPAIGN'));root.appendChild(campEl('div','opacity:.8;margin-bottom:6px','Your nation'));
   const sel=campEl('select','font-size:18px;padding:8px;background:#1a2430;color:#fff;border:1px solid #6b7a55;border-radius:6px;min-width:300px');
   const og=(l,L)=>{const g=document.createElement('optgroup');g.label=l;for(const c of L){const o=document.createElement('option');o.value=c;o.textContent=GCM.nats.get(c).name;g.appendChild(o);}sel.appendChild(g);};
   {const o=document.createElement('option');o.value='';o.textContent='Observer — watch the AI run the whole world';sel.appendChild(o);}og('Full nations',majors.sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1));og('Minor nations (shared regional army)',minors);sel.value=nat;root.appendChild(sel);
@@ -20690,7 +20755,7 @@ function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new 
   root.appendChild(campEl('div','opacity:.8;margin:8px 0 2px','Length'));const row=campEl('div');const bs=[['Quick — 25 months, win by war goals or score','quick'],['Standard — 60 months (5 years)','std']].map(([t,v])=>{const b=campBtn(t,()=>{len=v;bs.forEach(x=>x[0].style.background=x[1]===v?'#4f6b32':'transparent');},v!=='quick');return [b,v];});bs.forEach(x=>row.appendChild(x[0]));root.appendChild(row);
   root.appendChild(campEl('div','opacity:.8;margin:10px 0 2px','Scenario'));let sc='me26';const srow=campEl('div'),sinfo=campEl('div','margin:4px 0 6px;opacity:.8;font-size:14px;max-width:640px;line-height:1.4');
   const sbs=GR_SCEN.map(S=>{const b=campBtn(S.n+(S.id==='me26'?' ★':''),()=>{sc=S.id;sbs.forEach(x=>x[0].style.background=x[1]===sc?'#4f6b32':'transparent');sinfo.textContent=S.d;},S.id!=='me26');b.title=S.d;return [b,S.id];});sbs.forEach(x=>srow.appendChild(x[0]));sinfo.textContent=GR_SCEN[0].d;root.appendChild(srow);root.appendChild(sinfo);
-  root.appendChild(campBtn('Begin',()=>{grNew({me:nat||null,len,sc,seed:(Math.floor(Math.random()*1e9)||7)});grSave();campClose();grandOpen();}));root.appendChild(campBtn('Back',grandMenu,true));campShow(root);}
+  root.appendChild(campBtn(GNT.wantHost?'Create lobby':'Begin',()=>{if(GNT.wantHost&&!nat){info.textContent='Pick a nation — friends need a lobby with someone leading.';return;}grNew({me:nat||null,len,sc,seed:(Math.floor(Math.random()*1e9)||7)});grSave();if(GNT.wantHost){gnLobby();return;}campClose();grandOpen();}));root.appendChild(campBtn('Back',grandMenu,true));campShow(root);}
 // main menu buttons: Grand campaign · Conquest · Missions · Tutorial (Abdullah 2026-11-06)
 (function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('grandBtn'))return;const b=document.createElement('button');b.className='big';b.id='grandBtn';b.type='button';b.textContent='Grand campaign';b.title='The world map: run a nation, fight the battles yourself or auto-resolve them';b.onclick=()=>{try{initAudio();}catch(e){}grandMenu();};
   const camp=document.getElementById('campaign')||sb;camp.parentNode.insertBefore(b,camp);const st=document.getElementById('start');if(st)st.textContent='Conquest — deploy vs AI';})();
@@ -21062,7 +21127,7 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
     ${rim.replace('vec3 g3rim','vec3 g3rimS')}
     void main(){vec2 uv=vec2(vW.x/2400.,vW.z/1200.);vec2 cu=clamp(uv,0.,1.);vec4 s=texture2D(uSea,cu);float oo=max(max(-uv.x,uv.x-1.),max(-uv.y,uv.y-1.));s.g*=1.-smoothstep(0.,.004,oo);float sh=s.r,dp=mix(s.b,1.,smoothstep(0.,.03,oo));dp=mix(.85,dp,smoothstep(0.,.05,uv.y));
       vec3 deep=vec3(.025,.11,.235),mid=vec3(.05,.26,.42),sha=vec3(.12,.55,.58);vec3 c=mix(sha,mid,smoothstep(.0,.14,dp));c=mix(c,deep,smoothstep(.12,.6,dp));
-      vec2 p=vW.xz;float w=sin(p.x*.31+uTime*1.1)+sin(p.y*.47-uTime*.8)+sin((p.x+p.y)*.19+uTime*.6)+sin((p.x-p.y)*.63-uTime*1.3)*.5;c*=1.+w*.028;
+      vec2 p=vW.xz;float w=sin(p.x*.31+uTime*1.1)+sin(p.y*.47-uTime*.8)+sin((p.x+p.y)*.19+uTime*.6)+sin((p.x-p.y)*.63-uTime*1.3)*.5;c*=1.+w*.028*(1.-smoothstep(500.,2400.,length(cameraPosition-vW)));{float nz=sin(p.x*.0093+sin(p.y*.0141)*1.9)*sin(p.y*.0117+cos(p.x*.0087)*1.7)+.5*sin(p.x*.021+p.y*.017+2.);c=mix(c,c*vec3(.82,.96,1.12),clamp(nz*.5+.15,0.,1.)*smoothstep(.25,.6,dp)*.55);c*=1.+nz*.05*smoothstep(.3,.7,dp);}
       vec3 V=normalize(cameraPosition-vW);vec3 N=normalize(vec3(cos(p.x*.31+uTime*1.1)*.05+cos((p.x-p.y)*.63-uTime*1.3)*.03,1.,cos(p.y*.47-uTime*.8)*.05+cos((p.x+p.y)*.19+uTime*.6)*.03));
       N=normalize(N+vec3(sin(p.x*1.7+uTime*2.1)*cos(p.y*1.3-uTime*1.7),0.,cos(p.x*1.1-uTime*1.9)*sin(p.y*1.9+uTime*1.4))*.022*(1.-smoothstep(300.,1400.,length(cameraPosition-vW))));
       float fdd=length(cameraPosition-vW);
@@ -23135,7 +23200,7 @@ function g3ShipTick(dt,s){
     sh.t+=dt*sh.sp*(100/Math.max(40,Math.hypot(P[sh.b].x-P[sh.a].x,P[sh.b].y-P[sh.a].y)))*1.5;
     if(sh.t>=1){sh.t=0;const prev=sh.a;sh.a=sh.b;const L=S.nb.get(sh.a)||[],F=L.filter(j=>j!==prev),pool=F.length?F:L;sh.b=pool[(g3Hash(sh.seed*31+((G3.time*10)|0),sh.a)*pool.length)|0];}
     const A=P[sh.a],B=P[sh.b],dx=B.x-A.x,dz=B.y-A.y,len=Math.hypot(dx,dz)||1,nx=-dz/len,nz=dx/len;
-    const x=A.x+dx*sh.t+nx*sh.off,z=A.y+dz*sh.t+nz*sh.off,sc=Math.max(1.6,s*1.15);
+    const x=A.x+dx*sh.t+nx*sh.off,z=A.y+dz*sh.t+nz*sh.off,sc=Math.max(1.1,s*.75);
     D.position.set(x,.35+Math.sin(G3.time*1.3+sh.seed)*.12,z);D.rotation.set(0,Math.atan2(dx,dz),0,'YXZ');D.scale.setScalar(sc);D.updateMatrix();S.m[sh.k].setMatrixAt(cnt[sh.k]++,D.matrix);
     D.position.y=.2;D.scale.set(sc*2.3,1,sc*(6+3*Math.sin(G3.time*2+sh.seed)));D.position.x=x-Math.sin(D.rotation.y)*sc*4.4;D.position.z=z-Math.cos(D.rotation.y)*sc*4.4;D.updateMatrix();S.wk.setMatrixAt(w++,D.matrix);}
   for(let k=0;k<2;k++){S.m[k].count=cnt[k];S.m[k].instanceMatrix.needsUpdate=true;}S.wk.count=w;S.wk.instanceMatrix.needsUpdate=true;}
@@ -23654,7 +23719,7 @@ alAdd('mobn','🎖','Neighbour mobilising',c=>{const a=gmbAlarmed(c);return a.le
    auto-resolve for now), spectating / co-commanding a battle.
    World chain: a friend's nation is a real actor in the one shared world state — AI nations, events, war support and the
    markets react to its actions exactly as to the host's (same GMOD rows, same event engine); no separate mini-game. */
-const GNT={on:0,host:0,cl:0,code:'',g:null,nat:'',hum:{},orig:{},last:'',lastT:0,dayK:'',parts:{},tok:'',free:null,dirty:0,ui:0};
+const GNT={on:0,host:0,cl:0,code:'',g:null,nat:'',hum:{},orig:{},last:'',lastT:0,dayK:'',parts:{},tok:'',free:null,dirty:0,ui:0,lobby:0,pend:{},lob:null,lobC:0,rdy:0};
 /* name → index of the nation argument, or 'a' = first argument is an army id that must belong to the sender */
 const GNT_W={grOrderMove:'a',grSplit:'a',grMerge:'a',gmilAssign:'a',grRecruit:0,grDeclare:0,grSpy:0,gdAct:1,gdvBuy:0,geAutonomy:0,geAct:0,geBorrow:0,geBuild:0,
   geCity:0,geDeposit:0,geEmbargo:0,geMerchant:0,geRation:0,geRepay:0,geSellMode:0,geSetStrait:0,geTotalWar:0,geWithdraw:0,gidBuy:0,ginCut:0,ginSet:0,gstRaise:0,
@@ -23686,21 +23751,25 @@ async function gnHost(){if(GNT.on||!GC||!GC.me)return 'busy';const R=await gnRoo
   NET.code=oc;Object.assign(GNT,{on:1,host:1,cl:0,code,g,hum:{},last:'',dirty:1});
   g.on('ghi',m=>{if(m.sameTab)return;const d=m.data||{},tok=String(d.tok||'');const h=Object.entries(GNT.hum).find(([c,x])=>x.tok&&x.tok===tok);
     if(h){h[1].peer=m.peer;GC.nat[h[0]].ai=false;grLog(gnName(h[0])+' is back at the table.',h[0]);gnEmit('gwel',{to:m.peer,nat:h[0]});GNT.last='';GNT.dirty=1;GNT.ui=1;return;}
-    gnEmit('gwel',{to:m.peer,free:gnFree(),host:GC.me,date:grDateStr(GC.turn,GC.day|0)});});
-  g.on('gpick',m=>{if(m.sameTab)return;const d=m.data||{},n=d.n;if(!gnFree().includes(n)){gnEmit('gwel',{to:m.peer,free:gnFree(),host:GC.me,taken:n});return;}
-    GNT.hum[n]={tok:String(d.tok||''),peer:m.peer};GC.nat[n].ai=false;grLog(gnName(n)+' is now led by a friend.',n);gnEmit('gwel',{to:m.peer,nat:n});GNT.last='';GNT.dirty=1;GNT.ui=1;gnChip();});
+    if(GNT.lobby){GNT.pend[m.peer]=1;GNT.lsig='';}gnEmit('gwel',{to:m.peer,free:gnFree(),host:GC.me,date:grDateStr(GC.turn,GC.day|0),lobby:GNT.lobby?1:0});});
+  g.on('gpick',m=>{if(m.sameTab)return;const d=m.data||{},n=d.n,tok=String(d.tok||''),old=GNT.lobby&&Object.entries(GNT.hum).find(([c,x])=>x.tok&&x.tok===tok);
+    if(old&&old[0]===n){gnEmit('gwel',{to:m.peer,nat:n,lobby:1});return;}
+    if(!gnFree().includes(n)){gnEmit('gwel',{to:m.peer,free:gnFree(),host:GC.me,taken:n,lobby:GNT.lobby?1:0,date:grDateStr(GC.turn,GC.day|0)});return;}
+    if(old){delete GNT.hum[old[0]];GC.nat[old[0]].ai=true;}delete GNT.pend[m.peer];GNT.lsig='';
+    GNT.hum[n]={tok,peer:m.peer,rdy:0};GC.nat[n].ai=false;grLog(gnName(n)+' is now led by a friend.',n);gnEmit('gwel',{to:m.peer,nat:n,lobby:GNT.lobby?1:0});GNT.last='';GNT.dirty=1;GNT.ui=1;gnChip();});
+  g.on('grdy',m=>{if(m.sameTab||!GNT.lobby)return;const h=Object.entries(GNT.hum).find(([c,x])=>x.peer===m.peer);if(h){h[1].rdy=(m.data||{}).r?1:0;GNT.lsig='';}});
   g.on('gcmd',m=>{if(m.sameTab)return;const d=m.data||{},h=Object.entries(GNT.hum).find(([c,x])=>x.peer===m.peer);if(!h)return;
     if(d.k==='spd'){const s=d.s|0;GNT.orig.guSpeed?GNT.orig.guSpeed(s?(GV.lastSpd||2):0):guSpeed(s?(GV.lastSpd||2):0);GV.hint=gnName(h[0])+(s?' resumed the clock.':' paused the clock.');try{guHint();}catch(e){}GNT.dayK='';return;}
     if(d.k==='bgo'||d.k==='bres'){gnBatMsg(h[0],d);return;}
     if(d.k==='cmd'&&typeof d.f==='string')gnRun(h[0],d.f,d.a);});
-  g.onPeers(ch=>{for(const q of ch.left){const h=Object.entries(GNT.hum).find(([c,x])=>x.peer===q.peer);if(!h)continue;h[1].peer=null;if(GC&&GC.nat[h[0]]){GC.nat[h[0]].ai=true;grLog(gnName(h[0])+'\'s leader left; the generals take over.',h[0]);}if(GNT.bw&&GNT.bw.nat===h[0])gnBatAuto('left');GNT.dirty=1;GNT.ui=1;gnChip();}});
+  g.onPeers(ch=>{for(const q of ch.left){delete GNT.pend[q.peer];GNT.lsig='';const h=Object.entries(GNT.hum).find(([c,x])=>x.peer===q.peer);if(!h)continue;h[1].peer=null;if(GNT.lobby){delete GNT.hum[h[0]];if(GC&&GC.nat[h[0]])GC.nat[h[0]].ai=true;continue;}if(GC&&GC.nat[h[0]]){GC.nat[h[0]].ai=true;grLog(gnName(h[0])+'\'s leader left; the generals take over.',h[0]);}if(GNT.bw&&GNT.bw.nat===h[0])gnBatAuto('left');GNT.dirty=1;GNT.ui=1;gnChip();}});
   try{await R.presence({gg:{c:code,n:gnName(GC.me),d:grMonStr(GC.turn)}});}catch(e){}
   gnChip();return '';}
 function gnEmit(t,d){if(GNT.g)return GNT.g.emit(t,d).catch(()=>{});}
 async function gnPush(){const d=GC.day;GC.day=0;const js=JSON.stringify(GC);GC.day=d;if(js===GNT.last)return;GNT.last=js;
   const s=await ckPack(JSON.parse(js)),id=Math.random().toString(36).slice(2,8),n=Math.ceil(s.length/GNT_PART);
   for(let i=0;i<n;i++)await gnEmit('gst',{id,i,n,p:s.slice(i*GNT_PART,(i+1)*GNT_PART),day:GC.day|0});}
-function gnHostTick(){if(!GNT.host||!GC||!GNT.g)return;const now=performance.now();
+function gnHostTick(){if(!GNT.host||!GC||!GNT.g)return;const now=performance.now();if(GNT.lobby){gnLobbyTick();return;}
   const k=GC.turn+'.'+(GC.day|0)+'.'+(GV.spd|0);if(k!==GNT.dayK){GNT.dayK=k;gnEmit('gday',{t:GC.turn,d:GC.day|0,s:GV.spd|0,ls:GV.lastSpd|0});}
   if(GNT.ui){GNT.ui=0;try{grandMapRefresh();}catch(e){}}
   if(Object.values(GNT.hum).some(h=>h.peer)&&(GNT.dirty||now-GNT.lastT>1500)&&!GNT.busy){GNT.dirty=0;GNT.lastT=now;GNT.busy=1;gnPush().catch(e=>console.error('gnPush',e)).finally(()=>{GNT.busy=0;});}}
@@ -23708,8 +23777,10 @@ function gnHostTick(){if(!GNT.host||!GC||!GNT.g)return;const now=performance.now
 async function gnJoin(raw){if(GNT.on)return 'busy';const code=String(raw||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);if(code.length<4)return 'That is not a campaign code.';
   const R=await gnRoom();if(!R)return 'Online play is not available here.';let g;try{g=await joinT('gc-'+code,20000,0);}catch(e){console.warn('gnJoin',e&&(e.message||e.type),e&&e.why);return 'No online campaign with code '+code.toUpperCase()+' was found.';}
   Object.assign(GNT,{on:1,host:0,cl:1,code,g,nat:'',parts:{},tok:joinTok('g'+code),free:null});
-  g.on('gwel',m=>{const d=m.data||{};if(d.to&&d.to!==GNT.me)return;if(GNT.nat)return;
-    if(d.nat){GNT.nat=d.nat;gnHook(true);gnNote('Joined as '+gnName(d.nat)+'. Waiting for the world…');return;}if(d.free)gnPickUI(d);});
+  g.on('gwel',m=>{const d=m.data||{};if(d.to&&d.to!==GNT.me)return;if(d.lobby){GNT.lobC=1;if(!GNT.hostPeer&&!m.sameTab)GNT.hostPeer=m.peer;}if(GNT.nat&&!(GNT.lobC&&(d.nat||d.free)))return;
+    if(d.nat){GNT.nat=d.nat;if(GNT.lobC){gnLobbyClient();return;}gnHook(true);gnNote('Joined as '+gnName(d.nat)+'. Waiting for the world…');return;}
+    if(d.free){if(d.lobby){GNT.free=d.free;GNT.lob=Object.assign(GNT.lob||{pl:[]},{host:d.host,date:d.date,free:d.free});gnLobbyClient(d.taken);}else gnPickUI(d);}});
+  g.on('glob',m=>{if(m.sameTab||!GNT.cl||GNT.got)return;GNT.lobC=1;GNT.hostPeer=m.peer;GNT.lob=m.data||{pl:[]};if(GNT.free||GNT.nat)gnLobbyClient();});
   g.on('gst',m=>{if(m.sameTab||!GNT.nat)return;const d=m.data||{};const P=GNT.parts[d.id]=GNT.parts[d.id]||[];P[d.i]=d.p;
     if(P.filter(x=>x!=null).length<d.n)return;delete GNT.parts[d.id];ckUnpack(P.join('')).then(o=>gnApply(o,d.day)).catch(e=>console.error('gnApply',e));});
   g.on('gbat',m=>{const d=m.data||{};if(d.to!==GNT.me||!GNT.nat)return;GNT.bat={qi:d.qi|0,t:d.t|0};gnBatTry();});
@@ -23722,28 +23793,71 @@ async function gnJoin(raw){if(GNT.on)return 'busy';const code=String(raw||'').to
   let n=0;const hi=()=>{if(!GNT.cl||GNT.nat||GNT.free||n++>12){clearInterval(GNT.hiI);if(GNT.cl&&!GNT.nat&&!GNT.free&&n>12){gnLeave();gnNote('The campaign did not answer.');}return;}
     if(!GNT.me){const q=g.peers().find(x=>x.sameTab);if(q)GNT.me=q.peer;}gnEmit('ghi',{tok:GNT.tok});};
   hi();GNT.hiI=setInterval(hi,1500);return '';}
-function gnApply(o,day){if(!GNT.cl||!o||!Array.isArray(o.prov))return;if(GNT.bat&&GNT.bat.shown){GNT.stash=[o,day];return;}   /* never swap the world under a battle in progress */const first=!GC||!GNT.got;GC=o;GC.me=GNT.nat;GC.day=day|0;GNT.got=1;
+function gnApply(o,day){if(!GNT.cl||!o||!Array.isArray(o.prov))return;if(GNT.bat&&GNT.bat.shown){GNT.stash=[o,day];return;}   /* never swap the world under a battle in progress */const first=!GC||!GNT.got;if(first&&GNT.lobC){GNT.lobC=0;gnHook(true);}GC=o;GC.me=GNT.nat;GC.day=day|0;GNT.got=1;
   if(!GNT.hostPeer&&GNT.g){const q=GNT.g.peers().find(x=>!x.sameTab);if(q)GNT.hostPeer=q.peer;}
   if(first||!document.getElementById('grandScreen')){campClose();grandOpen();}else{try{grandMapRefresh();}catch(e){console.error('gn refresh',e);}}gnBatTry();try{gnChip();}catch(e){}}
 function gnLeave(){clearInterval(GNT.hiI);gnHook(false);if(GNT.g){try{GNT.g.leave().catch(()=>{});}catch(e){}}if(GNT.host&&typeof NET!=='undefined'&&NET.room)NET.room.presence({gg:null}).catch(()=>{});
-  const wasCl=GNT.cl;Object.assign(GNT,{on:0,host:0,cl:0,code:'',g:null,nat:'',hum:{},last:'',parts:{},free:null,got:0,hostPeer:null,me:null});
+  const wasCl=GNT.cl;Object.assign(GNT,{lobby:0,pend:{},lob:null,lobC:0,rdy:0,lsig:'',on:0,host:0,cl:0,code:'',g:null,nat:'',hum:{},last:'',parts:{},free:null,got:0,hostPeer:null,me:null});
   if(wasCl){GC=null;try{grLoad();}catch(e){}}const c=document.getElementById('gnChip');if(c)c.remove();}
 /* ---- screens (one job per screen; Back = one step back) ---- */
 function gnNote(t){const e=document.getElementById('gnNote');if(e)e.textContent=t;else if(!document.getElementById('grandScreen')){gnMenu(t);}}
 function gnList(){if(typeof NET==='undefined'||!NET.room)return [];try{return NET.room.peers().filter(p=>!p.sameTab&&p.presence&&p.presence.gg&&p.presence.gg.c);}catch(e){return [];}}
-function gnMenu(msg){grMap();const root=campEl('div');root.appendChild(campEl('h1','margin:6px 0 4px;font-size:28px;letter-spacing:.04em','ONLINE CAMPAIGN'));
-  root.appendChild(campEl('div','opacity:.75;margin-bottom:12px;line-height:1.5','Play one world with friends. The host runs the campaign; each friend leads a free nation, the AI runs the rest. Anyone can pause; the host sets the speed.'));
+function gnMenu(msg){grMap();const root=campEl('div');root.appendChild(campEl('h1','margin:6px 0 4px;font-size:28px;letter-spacing:.04em','JOIN FRIENDS'));
+  root.appendChild(campEl('div','opacity:.75;margin-bottom:12px;line-height:1.5','Join a friend\'s campaign lobby: pick your nation, tick Ready, and the AI runs everyone else. A campaign that is already running takes you in as a free nation.'));
   const note=campEl('div','min-height:22px;margin:4px 0 8px;color:#ffd27a');note.id='gnNote';note.textContent=msg||'';root.appendChild(note);
-  const saved=(()=>{try{return JSON.parse(localStorage.getItem(GR_KEY));}catch(e){return null;}})(),ok=saved&&!saved.over&&saved.me&&grSaveOk(saved);
-  root.appendChild(campEl('div','opacity:.8;margin:6px 0 2px','Host'));
-  if(ok)root.appendChild(campBtn('Open my campaign to friends — '+gnName(saved.me)+', '+grMonStr(saved.turn),async()=>{grLoad();note.textContent='Opening…';const e=await gnHost();if(e){note.textContent=e;return;}campClose();grandOpen();}));
-  root.appendChild(campBtn('New campaign for friends',()=>{GNT.wantHost=1;grandSetup();},!!ok));
-  root.appendChild(campEl('div','opacity:.8;margin:12px 0 2px','Join a friend'));const L=gnList();
+  root.appendChild(campEl('div','opacity:.8;margin:6px 0 2px','Open campaigns'));const L=gnList();
   for(const p of L){const g=p.presence.gg;root.appendChild(campBtn(g.n+' · '+(g.d||'')+' · code '+String(g.c).toUpperCase(),async()=>{note.textContent='Joining…';const e=await gnJoin(g.c);if(e)note.textContent=e;},true));}
-  if(!L.length)root.appendChild(campEl('div','opacity:.6;margin:2px 0 6px;font-size:14px','No open campaigns right now. Ask your friend for the code.'));
+  if(!L.length)root.appendChild(campEl('div','opacity:.6;margin:2px 0 6px;font-size:14px','No open campaigns right now. Ask your friend for the code or the invite link.'));
+  root.appendChild(campEl('div','opacity:.8;margin:12px 0 2px','Or type the code'));
   const row=campEl('div','display:flex;gap:8px;align-items:center;margin:6px 0');const inp=campEl('input','font-size:18px;padding:10px;width:150px;text-transform:uppercase;background:#1a2430;color:#fff;border:1px solid #6b7a55;border-radius:6px');inp.id='gnCode';inp.placeholder='CODE';inp.maxLength=8;
   const jb=campBtn('Join',async()=>{note.textContent='Joining…';const e=await gnJoin(inp.value);if(e)note.textContent=e;});jb.id='gnJoinBtn';inp.onkeydown=e=>{if(e.key==='Enter')jb.click();};row.appendChild(inp);row.appendChild(jb);root.appendChild(row);
+  const saved=(()=>{try{return JSON.parse(localStorage.getItem(GR_KEY));}catch(e){return null;}})(),ok=saved&&!saved.over&&saved.me&&grSaveOk(saved);
+  if(ok)root.appendChild(campBtn('Invite friends into my saved campaign — '+gnName(saved.me)+', '+grMonStr(saved.turn),async()=>{grLoad();note.textContent='Opening…';const e=await gnHost();if(e){note.textContent=e;return;}campClose();grandOpen();},true));
   root.appendChild(campBtn('Back',grandMenu,true));campShow(root);}
+/* ---- campaign lobby (before the world starts): slots, nation, ready, invite; same flow as the battle lobby ---- */
+function gnFlag(c){const e=campEl('span','display:inline-block;width:30px;height:20px;border-radius:2px;vertical-align:middle;margin-right:8px;background:#34414f;overflow:hidden');
+  try{const t=typeof esFlag==='function'&&esFlag(c);if(t&&t.toDataURL){const i=new Image();i.src=t.toDataURL();i.style.cssText='width:30px;height:20px;display:block';e.appendChild(i);}}catch(_){}return e;}
+function gnLink(){let b='';try{b=typeof inviteBase==='function'?inviteBase():location.href.split('#')[0];}catch(_){b=location.href.split('#')[0];}return b+'#gcamp='+GNT.code;}
+function gnCopy(t,msg,el){try{navigator.clipboard.writeText(t);}catch(_){}if(el){const o=el.textContent;el.textContent=msg;setTimeout(()=>{el.textContent=o;},1600);}}
+function gnSlot(nat,who,tick,mid){const r=campEl('div','display:flex;align-items:center;gap:6px;padding:7px 10px;margin:3px 0;border:1px solid #3a4a5a;border-radius:6px;background:rgba(20,30,40,.6);min-height:34px');
+  r.appendChild(campEl('div','width:120px;opacity:.85',who));const n=campEl('div','flex:1;display:flex;align-items:center');if(nat){n.appendChild(gnFlag(nat));}if(mid&&mid.nodeType)n.appendChild(mid);else n.appendChild(campEl('span',nat?'':'opacity:.45',nat?gnName(nat):(mid||'Empty')));r.appendChild(n);
+  r.appendChild(campEl('div','width:60px;text-align:right;font-size:20px;color:#8fd36a',tick?'&#10003;':''));return r;}
+function gnLobbyRoster(){const pl=[[GC.me,'You (creator)',1]];let i=0;for(const [c,h] of Object.entries(GNT.hum)){if(!h.peer)continue;i++;pl.push([c,'Friend '+i,h.rdy?1:0]);}return pl;}
+async function gnLobby(){GNT.wantHost=0;GNT.lobby=1;GNT.pend={};const e=await gnHost();
+  if(e){GNT.lobby=0;const root=campEl('div');root.appendChild(campEl('h1','margin:6px 0 8px;font-size:28px','CAMPAIGN LOBBY'));root.appendChild(campEl('div','color:#ffd27a;margin:8px 0 14px',e));root.appendChild(campBtn('Back',()=>{gnLeave();grandMenu();},true));campShow(root);return;}
+  GNT.lsig='';gnLobbyTick();}
+function gnLobbyTick(){if(!GNT.lobby||!GC)return;const pl=gnLobbyRoster(),sig=JSON.stringify([pl,Object.keys(GNT.pend).length,GNT.code]),now=performance.now();
+  if(sig!==GNT.lsig||now-(GNT.lT||0)>2500){GNT.lT=now;gnEmit('glob',{host:GC.me,date:grDateStr(GC.turn,GC.day|0),sc:(GR_SCEN.find(x=>x.id===GC.sc)||{}).n||'',len:GC.len==='std'?'Standard — 60 months':'Quick — 25 months',pl:pl.map(x=>[x[0],x[1],x[2]]),free:gnFree()});}
+  if(sig===GNT.lsig&&document.getElementById('gnLobbyHost'))return;GNT.lsig=sig;gnLobbyHostUI(pl);}
+function gnLobbyHostUI(pl){const root=campEl('div');root.id='gnLobbyHost';root.appendChild(campEl('h1','margin:6px 0 2px;font-size:28px;letter-spacing:.04em','CAMPAIGN LOBBY'));
+  const sc=(GR_SCEN.find(x=>x.id===GC.sc)||{}).n||'';root.appendChild(campEl('div','opacity:.8;margin-bottom:10px;line-height:1.5','<b>'+sc+'</b> · '+(GC.len==='std'?'Standard, 60 months':'Quick, 25 months')+' · starts '+grDateStr(GC.turn,GC.day|0)));
+  const inv=campEl('div','display:flex;align-items:center;gap:10px;margin:6px 0 12px;flex-wrap:wrap');inv.appendChild(campEl('span','opacity:.8','Invite code'));inv.appendChild(campEl('b','font-size:26px;letter-spacing:.15em;color:#ffd27a',GNT.code.toUpperCase()));
+  const cb=campBtn('Copy invite link',()=>gnCopy(gnLink(),'Link copied',cb),true);cb.id='gnCopyLink';cb.style.cssText+=';padding:6px 12px;font-size:14px;min-height:0';inv.appendChild(cb);root.appendChild(inv);
+  for(let i=0;i<8;i++){const p=pl[i];if(p)root.appendChild(gnSlot(p[0],p[1],p[2]));else if(i-pl.length<Object.keys(GNT.pend).length)root.appendChild(gnSlot(null,'Friend','','choosing a nation…'));else root.appendChild(gnSlot(null,'—',0,'Empty'));}
+  const waiting=pl.filter(x=>!x[2]).length,go=campBtn('Start campaign',()=>{if(go.disabled)return;gnLobbyStart();});go.id='gnStart';if(waiting){go.disabled=true;go.style.opacity='.45';}root.appendChild(go);
+  root.appendChild(campEl('div','opacity:.65;font-size:14px;margin:2px 0 8px',waiting?'Waiting for '+waiting+' friend'+(waiting>1?'s':'')+' to tick Ready.':'AI empires run every nation that is not picked.'));
+  root.appendChild(campBtn('Back',()=>{GNT.lobby=0;gnLeave();grandMenu();},true));campShow(root);}
+function gnLobbyStart(){GNT.lobby=0;GNT.pend={};GNT.dirty=1;GNT.last='';GNT.ui=0;campClose();grandOpen();}
+function gnLobbyClient(taken){const L=GNT.lob||{pl:[]},free=GNT.free||L.free||[],mine=GNT.nat,sig=JSON.stringify([L,mine,GNT.rdy,taken||'']);if(sig===GNT.lcs&&document.getElementById('gnLobbyCl'))return;GNT.lcs=sig;
+  const root=campEl('div');root.id='gnLobbyCl';root.appendChild(campEl('h1','margin:6px 0 2px;font-size:28px;letter-spacing:.04em','CAMPAIGN LOBBY'));
+  root.appendChild(campEl('div','opacity:.8;margin-bottom:10px;line-height:1.5',(L.sc?'<b>'+L.sc+'</b> · ':'')+(L.len||'')+(L.date?' · starts '+L.date:'')+(L.host?'<br>Created by <b>'+gnName(L.host)+'</b>':'')+(taken?'<br><span style="color:#ffd27a">'+gnName(taken)+' was just taken — pick another.</span>':'')));
+  const note=campEl('div','min-height:20px;color:#ffd27a;margin:4px 0');note.id='gnNote';
+  const taken0=new Set((L.pl||[]).map(x=>x[0]));const ME=['IR','RS','DW','RV','IL','SA','AE','OM','IQ','SY','TR','JO','EG','KD'];
+  const all=[...new Set([...free,...(mine?[mine]:[]),...taken0])].filter(Boolean).sort((a,b)=>(ME.includes(a)?0:1)-(ME.includes(b)?0:1)||(gnName(a)<gnName(b)?-1:1));
+  const sel=campEl('select','font-size:18px;padding:6px;background:#1a2430;color:#fff;border:1px solid #6b7a55;border-radius:6px;min-width:260px');sel.id='gnNat';
+  if(!mine){const o=document.createElement('option');o.value='';o.textContent='Pick your nation…';sel.appendChild(o);}
+  for(const c of all){const o=document.createElement('option');o.value=c;const t=c!==mine&&!free.includes(c);o.disabled=t;o.textContent=gnName(c)+(t?' (taken)':'');sel.appendChild(o);}sel.value=mine||'';
+  sel.onchange=()=>{if(!sel.value)return;GNT.rdy=0;GNT.lcs='';note.textContent='Asking…';gnEmit('gpick',{n:sel.value,tok:GNT.tok});};
+  for(const x of (L.pl||[])){if(x[0]===mine)continue;root.appendChild(gnSlot(x[0],x[0]===L.host?'Creator':x[1],x[2]));}
+  const me=gnSlot(mine||null,'You',GNT.rdy,sel);me.style.borderColor='#6b7a55';root.appendChild(me);
+  for(let i=(L.pl||[]).length+(mine?0:1);i<8;i++)root.appendChild(gnSlot(null,'—',0,'Empty'));
+  const rb=campBtn(GNT.rdy?'Ready ✓ (tap to undo)':'Ready',()=>{if(!GNT.nat){note.textContent='Pick a nation first.';return;}GNT.rdy=GNT.rdy?0:1;GNT.lcs='';gnEmit('grdy',{r:GNT.rdy});gnLobbyClient();});rb.id='gnReady';root.appendChild(rb);
+  root.appendChild(campEl('div','opacity:.65;font-size:14px;margin:2px 0 8px','The creator starts the campaign when everyone is ready.'));
+  root.appendChild(campBtn('Back',()=>{gnLeave();gnMenu();},true));root.appendChild(note);campShow(root);}
+/* invite link: …/#gcamp=CODE opens the game straight into this lobby */
+(function(){const m=/[#&]gcamp=([a-z0-9]{4,8})/i.exec(location.hash||'');if(!m)return;const code=m[1];try{history.replaceState(null,'',location.href.split('#')[0]);}catch(_){}
+  let n=0;const t=setInterval(()=>{if(++n>120){clearInterval(t);return;}if(typeof NET==='undefined'||!NET.room||typeof gnJoin!=='function'||!document.getElementById('grandBtn'))return;clearInterval(t);
+    gnJoin(code).then(e=>{if(e)gnMenu(e);}).catch(()=>{});},500);})();
 function gnPickUI(d){GNT.free=d.free;const root=campEl('div');root.appendChild(campEl('h1','margin:6px 0 4px;font-size:28px','PICK YOUR NATION'));
   root.appendChild(campEl('div','opacity:.8;margin-bottom:10px;line-height:1.5','Host: <b>'+gnName(d.host)+'</b> · '+(d.date||'')+(d.taken?'<br><span style="color:#ffd27a">'+gnName(d.taken)+' was just taken — pick another.</span>':'')));
   const note=campEl('div','min-height:20px;color:#ffd27a');note.id='gnNote';
@@ -23759,10 +23873,12 @@ function gnChip(){const sc=document.getElementById('grandScreen');let c=document
   c.innerHTML=GNT.host?'Online · code <b>'+GNT.code.toUpperCase()+'</b> · '+(fr.length?'with '+fr.join(', '):'waiting for friends'):'Online · you lead <b>'+gnName(GNT.nat)+'</b>';
   {const b=GC&&GC.ph==='resolve'&&GC.q&&GC.q[GC.qi];   /* A2b: everyone sees which battle the map is waiting on */
    if(b&&!b.done&&GCM.P[b.p])c.innerHTML+='<div style="margin-top:3px;color:#ffb35c">&#9876; Battle for <b>'+GCM.P[b.p].n+'</b>: '+gnName(b.an)+' vs '+gnName(b.dn)+' — the map waits for the result</div>';}
-  c.title=GNT.host?'Click to copy the invite code':'';c.onclick=()=>{if(!GNT.host)return;const t='Join my World War 3 grand campaign: Grand campaign → Online campaign → code '+GNT.code.toUpperCase();try{navigator.clipboard.writeText(t);GV.hint='Invite copied: code '+GNT.code.toUpperCase();guHint();}catch(e){}};}
+  c.title=GNT.host?'Click to copy the invite code':'';c.onclick=()=>{if(!GNT.host)return;const t='Join my World War 3 grand campaign: '+gnLink()+' (or Grand campaign → Join friends → code '+GNT.code.toUpperCase()+')';try{navigator.clipboard.writeText(t);GV.hint='Invite copied: code '+GNT.code.toUpperCase();guHint();}catch(e){}};}
 /* hooks: the menu gets the Online item; New campaign for friends hosts once the map opens; leaving the map leaves the room */
 (function(){const _gm=grandMenu;grandMenu=function(){_gm();const s=document.getElementById('campScreen');if(!s)return;const bs=[...s.querySelectorAll('button')],back=bs.find(b=>b.textContent==='Back');
-    const b=campBtn('Online campaign — with friends',()=>gnMenu(),true);b.id='gnMenuBtn';if(back)back.parentNode.insertBefore(b,back);else s.firstChild.appendChild(b);};
+    const hint=campEl('div','opacity:.8;margin:10px 0 2px;font-size:15px','Play with friends — invite them with a code or link.');GNT.wantHost=0;
+    const p=campBtn('Play with friends',()=>{GNT.wantHost=1;grandSetup();});p.id='gnPlayBtn';const b=campBtn('Join friends',()=>gnMenu(),true);b.id='gnMenuBtn';
+    for(const e of [hint,p,b]){if(back)back.parentNode.insertBefore(e,back);else s.firstChild.appendChild(e);}};
   const _go=grandOpen;grandOpen=function(){_go();if(GNT.wantHost&&GC&&!GNT.on){GNT.wantHost=0;gnHost().then(e=>{if(e){GV.hint=e;try{guHint();}catch(_){}}});}gnChip();};
   const _gc=grandClose;grandClose=function(){_gc();if(GNT.on){const h=GNT.host;gnLeave();if(h)GNT.wantHost=0;}};
   if(!window._gnI)window._gnI=setInterval(()=>{try{gnHostTick();}catch(e){console.error('gnHostTick',e);}},250);})();

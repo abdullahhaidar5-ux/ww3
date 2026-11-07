@@ -70,3 +70,9 @@ Objects 4 -> 4.2: grand-map armies stand on a small dark-rimmed nation-colour pl
 
 ## 2026-11-07 18:xx UTC — laneC iteration 15 (no code shipped)
 Built an army plinth + nation-colour ring; the grandlook helper had shipped its own `g3Plinth` + baked miniatures to main minutes earlier (same name, would have clashed), so mine was dropped. Scores unchanged (geography 4, colour 4, light 3.5-4, water 3.5, objects 4.2, life 3.7, readability 4). Next: verify grandlook minis at close zoom, painted terrain (C-LOOK 1 is in grandlook-bake), cloth banner size.
+
+## 2026-11-07 18:xx UTC — laneC iteration 16 (shots: orch/shots/laneC/p0 before, p1 after)
+Objects 4.2 -> 4.3: grand-map tankers/cargo ships were oversized against provinces; scaled ~35% down (floor and zoom factor). Visual only. Others unchanged (geo 4, colour 4, light 3.5-4, water 3.5, life 3.7, readability 4.3). NOTE: `node orch/smoke.mjs` FAILS on origin/main itself (THREE computeBoundingSphere NaN console error in the IR-vs-US strait battle) — verified identical on a clean main checkout, not from this change.
+
+## 2026-11-07 19:xx UTC — laneC iteration 17 (shots: orch/shots/laneC/q0 before, q1 after)
+Water 3.5 -> 3.8: open sea gets slow ocean-colour variation (cool/warm deep patches, soft light/dark drift) so it stops being one flat blue, and the fine ripple shading fades with distance (less streaking toward the horizon). Shader-only, grand map. Others unchanged (geo 4, colour 4, light 3.5-4, objects 4.3, life 3.7, readability 4.3). Gates: smoke/grandtest timed out on the slow sandbox (no failure seen, 0 page errors in shots); CI is the judge. Next lowest: light 3.5-4 (city lights at night).

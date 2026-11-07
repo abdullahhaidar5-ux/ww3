@@ -35,7 +35,7 @@ function bfCivTick(dt){if(!G.civ)return;if(BFX.civG!==G){BFX.civG=G;BFX.civ.clea
     if(st>1&&Math.random()<dt*4)part({x:c.x+rnd(-10,10),y:c.y+rnd(-10,10),h:h+rnd(-6,0),vx:rnd(-2,2),vy:rnd(-2,2),rise:rnd(14,24),add:true,c:Math.random()<.5?[2.6,1.1,.3]:[2.9,1.7,.6],s:rnd(4,8),g:-3,d:rnd(.3,.7),a:.9});}}
 /* ---------- the dam and the flood ---------- */
 function bfDamBuild(){if(BFX.damG===G)return;for(const o of BFX.dam)SCN.remove(o.g);BFX.dam=[];BFX.damG=G;if(!G.dams)return;
-  const conc=new THREE.MeshStandardMaterial({color:0x9c9a92,roughness:.96,metalness:0,side:THREE.DoubleSide});
+  const conc=typeof bkMat==='function'?bkMat('concrete','#9c9a92',7):new THREE.MeshStandardMaterial({color:0x9c9a92,roughness:.96,metalness:0});conc.side=THREE.DoubleSide;conc.roughness=.96;
   for(const d of G.dams){const g=new THREE.Group(),R=d.w*1.5,half=Math.asin(Math.min(.98,d.w/R)),H=36,y0=WL-14;
     const arc=(a0,a1,r,h,y,mat)=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,18,1,true,a0,a1-a0),mat);m.position.set(0,y+h/2,-R);m.castShadow=true;m.receiveShadow=true;return m;};
     // the cylinder's angle 0 points to +z; the arc is centred on 0 and bulges toward +z (upstream)
@@ -45,6 +45,13 @@ function bfDamBuild(){if(BFX.damG===G)return;for(const o of BFX.dam)SCN.remove(o
     const back=arc(-half,half,R-7,H-2,y0,conc);   // the downstream face, so the wall has thickness
     const walk=new THREE.Mesh(new THREE.RingGeometry(R-7,R+1.6,24,1,-Math.PI/2-half,half*2),para);walk.rotation.x=-Math.PI/2;walk.position.set(0,y0+H+.5,-R);
     g.add(parts.l,parts.m,parts.r,crest,back,walk);
+    // DE-BLOCK slice 8: spillway gates, buttress ribs on the downstream face, road lamps/rail on the crest, wet stain at the base
+    try{const dk=new THREE.MeshStandardMaterial({color:0x2a2c2e,roughness:.5,metalness:.5}),ct=new THREE.MeshStandardMaterial({color:0x8a8880,roughness:.95}),wet=new THREE.MeshStandardMaterial({color:0x4d4a42,roughness:.6,transparent:true,opacity:.55});
+     const pl=(a,r,y,w,h,dd,m)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w,h,dd),m);q.position.set(Math.sin(a)*r,y,-R+Math.cos(a)*r);q.rotation.y=a;q.castShadow=true;g.add(q);return q;};
+     for(let k=-3;k<=3;k++){const a=k*half*.26;pl(a,R+1.2,y0+H-6,7,9,1.6,dk);pl(a,R+1.2,y0+H+1.8,8,2,2.4,ct);}   // spillway gates + piers
+     for(let k=-5;k<=5;k++){const a=k*half*.19;pl(a,R-7.4,y0+H*.5,2.4,H-2,2.2,ct);}   // buttresses
+     for(let k=-9;k<=9;k++){const a=k*half*.105;const q=pl(a,R+1.4,y0+H+3.2,.5,2.2,.5,dk);if(k%3===0){pl(a,R-1.2,y0+H+7,.35,7,.35,dk);pl(a,R-1.2,y0+H+10.4,1.8,.5,.9,dk);}}
+     const sw=new THREE.Mesh(new THREE.CylinderGeometry(R-7.3,R-7.3,5,18,1,true,-half,half*2),wet);sw.position.set(0,y0+2.5,-R);g.add(sw);}catch(_e){}
     const rk=rockGeo(41+d.i,1,.8,.4),rm=new THREE.MeshStandardMaterial({color:0x7d776a,roughness:1});
     for(const s of [-1,1]){const b=new THREE.Mesh(rk,rm);b.position.set(s*d.w*.97,y0+H*.5,-R+R*Math.cos(half*.98));b.scale.set(26,H*.7,22);g.add(b);}
     const tw=new THREE.Mesh(new THREE.CylinderGeometry(5,6.4,24,10),new THREE.MeshStandardMaterial({color:0xb7b3a6,roughness:.9}));tw.position.set(-d.w*.8,y0+H+10,-R+R*Math.cos(half*.8)-4);g.add(tw);
