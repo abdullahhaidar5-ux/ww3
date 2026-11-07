@@ -5073,11 +5073,11 @@ const COURAGE={};   // derived below from MORALE_STYLE (integrate1) - one table 
 // National morale styles (Abdullah 2026-11-05 20:01-20:41): every nation has ONE style; styles differ, total power is equal. Numbers live here only.
 //  cour = base courage; loss = how hard comrades falling hits (x fear, zealous get fervour instead); art = suppression from shells x; off = officer rally x;
 //  home = courage x on home turf (own territory); lone = courage divided by this when no armour/artillery/air is near; sup = own artillery+air damage x; taken = damage taken x
-const MSTYLES={
- zeal:{n:'Zealous',cour:1.6,loss:.2,ferv:.07,taken:1.07,zeal:1,desc:'Slow to break; fervour rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses.'},
- prof:{n:'Professional',cour:1.25,loss:1.3,art:.7,off:1.9,desc:'Steady under artillery and quick to rally near officers; heavy losses sap them more than other armies.'},
- home:{n:'Home defenders',cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
- fire:{n:'Firepower-reliant',cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
+const MSTYLES={   // rout = campaign battles: the side breaks below this share of the enemy's strength for 10 s (0 = never; Abdullah 2026-11-06 20:12 "base routing on morale system, zealous never routes"); routHome = when defending its own province
+ zeal:{n:'Zealous',rout:0,cour:1.6,loss:.2,ferv:.07,taken:1.07,zeal:1,desc:'Slow to break; fervour rises as comrades fall and banners rally the faithful. They hold their ground, so they take heavier losses.'},
+ prof:{n:'Professional',rout:.15,cour:1.25,loss:1.3,art:.7,off:1.9,desc:'Steady under artillery and quick to rally near officers; heavy losses sap them more than other armies.'},
+ home:{n:'Home defenders',rout:.2,routHome:.08,cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
+ fire:{n:'Firepower-reliant',rout:.25,cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
 const MORALE_STYLE={};
 for(const[st,l]of Object.entries({zeal:'IR RS DW KP',prof:'US RU CU GB FR DE JP KR AU CA IT GR PL UA TR CN PK EG ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA',fire:'IN AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
 function msOf(fac){return MSTYLES[MORALE_STYLE[fac]||'home'];}
@@ -18827,7 +18827,6 @@ const GM_RIVER=[[32,33],[32,35],[63,66],[63,65],[129,131],[19,20],[17,20],[89,92
 // (cost x health) wins, the defender on a tie; the player may also Retreat. Survivors, wounds and experience are written back
 // into the very same records, the dead are removed (grandBattleEnd -> grBattleDone).
 const GB_LIMIT=900;
-const GB_NOROUT=['IR','RS','DW','KP'];   // Shia factions + North Korea (Abdullah 20:12) never rout — they fight to the last (Abdullah 2026-11-06 20:11); their cost: no escape, heavier losses
 function grMapFor(p,b){const ok=k=>k&&MAPS[k]&&(MAPS[k].min||2)<=2;if(ok(p.map))return p.map;if(b&&b.river&&ok('rivers'))return 'rivers';if(b&&b.mtn&&ok('khyber'))return 'khyber';
   return {d:'oasis',m:'zagros',f:'heartland',u:'mesopotamia',j:'caribbean',s:'arctic',c:'harbour',r:'rivers'}[p.t]||'oasis';}
 function grFacKind(fac,k){return grHasKind(fac,k)?k:'inf';}
@@ -18852,6 +18851,7 @@ function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.
   try{if(typeof centerOn==='function'){const B=BASES[0];setTimeout(()=>{try{centerOn(B[0],B[1]);}catch(e){}},50);}}catch(e){}}
 function grandForce(t){let v=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)v+=(e.s.cost||400)*(.35+.65*e.hp/e.max);for(const w of G.grand.waves)if(!w.done&&w.side===t)for(const r of w.recs)v+=grCost(G.teams[t].fac,r[0]);return v;}
 function grandAlive(t){let n=0;for(const e of G.ents)if(e.team===t&&!e.isB&&!e.dead)n++;for(const w of G.grand.waves)if(!w.done&&w.side===t)n+=w.recs.length;return n;}
+function grandRoutAt(t,g){const m=msOf((G.teams[t]||{}).fac);if(!m)return .15;if(m.rout===0)return 0;return (m.routHome!=null&&t!==g.att)?m.routHome:(m.rout!=null?m.rout:.15);}   // from the ONE morale table (MSTYLES)
 function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
   for(const T of G.teams)if(T.credits)T.credits=0;   // army only: no battle money at all (Abdullah 20:10 "why is money generating if I can't build units"); the empire's money lives on the grand map
   // a side with nobody left on the field never waits for a timer (Abdullah 2026-11-06 19:56 "I was killed, shouldn't it end immediately"):
@@ -18865,10 +18865,10 @@ function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
   const n0=grandAlive(0),n1=grandAlive(1);let win=-1,how='';
   if(!n0&&!n1){win=g.att===0?1:0;how='wipe';}else if(!n0){win=1;how='wipe';}else if(!n1){win=0;how='wipe';}
   else if(g.t0>=g.limit){const v0=grandForce(0),v1=grandForce(1);win=v0>v1*1.0001?0:v1>v0*1.0001?1:(g.att===0?1:0);how='time';}
-  // rout (Abdullah 2026-11-06 20:09 "why haven't I won this round yet" — 24 vs 4): a side below 15% of the other's strength
+  // rout (Abdullah 2026-11-06 20:09 "why haven't I won this round yet" — 24 vs 4): a side below its morale style's rout share of the other's strength
   // (reinforcements on the way included) for 10 s breaks and flees; checked every 2 s, sim time only (deterministic)
   if(win<0){g.rtT=(g.rtT||0)-dt;if(g.rtT<=0){g.rtT=2;const v0=grandForce(0),v1=grandForce(1),lo=v0<v1?0:1,r=Math.min(v0,v1)/Math.max(1,Math.max(v0,v1));
-    if(r<.15&&!GB_NOROUT.includes((G.teams[lo]||{}).fac)){if(g.rtS!==lo){g.rtS=lo;g.rtA=g.t0;}else if(g.t0-g.rtA>=10){win=1-lo;how='rout';}}else g.rtS=-1;}}
+    if(r<grandRoutAt(lo,g)){if(g.rtS!==lo){g.rtS=lo;g.rtA=g.t0;}else if(g.t0-g.rtA>=10){win=1-lo;how='rout';}}else g.rtS=-1;}}
   if(win>=0){g.fin=1;g.res={win,how};G.over=true;G.winner=win;try{grandBattleEnd();}catch(e){console.error('grandBattleEnd',e);}}}
 // the enemy side: attackers advance on the other force, defenders hold until something comes within reach
 function grandAI(t){const g=G.grand,mine=G.ents.filter(e=>e.team===t&&!e.isB&&!e.dead&&!e.s.noAttack&&(!e.order||e.order.type===undefined));if(!mine.length)return;
