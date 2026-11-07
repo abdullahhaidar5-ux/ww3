@@ -308,6 +308,7 @@ RV "River Shias" added as a full first-cut nation (Iraqi Shia volunteer-brigade 
 - 2026-11-07 laneC: town sun-shadows (instanced) on grand map; light/objects +0.5 (artbar it3)
 - laneE (2026-11-07 03:50Z): infantry models +23% bigger at gameplay height (src/11-models.js MCFG soldier size x1.45) so soldiers read as people; smoke PASS; local smooth gate times out on slow box. Shot orch/shots/laneE/after3-base.png
 - laneD 2026-11-07: D0(a) auto-bisect — `.github/workflows/bisect.yml` + `orch/bisect.sh`: when a gate run is red on a main commit, bisects the failing test and comments the first bad commit. No game code changed.
+- 2026-11-07 laneC it4: grand-map chimney smoke over every town (g3BuildChim, 13e); life 2.5→3; shots orch/shots/laneC/it4.
 - laneB 2026-11-07: B4 slice 2: cores + estates (src/13o-gstab.js; 13-grand.js core income/unrest hooks); smoke + grand determinism green.
 - laneB (B4b): war support meter 0–100 (13v-gwarsup.js): style-shaped battle/capture news, weariness, invasion, forced peace, rallies, Home front tab + header chip; orch/wstest.mjs; 1-line hooks in 13-grand.js grSettle/capture.
 - 2026-11-07 laneE (Sonnet): re-shot base view (e3before), assessed E1-E3 state, handoff updated; no src change
@@ -319,4 +320,6 @@ RV "River Shias" added as a full first-cut nation (Iraqi Shia volunteer-brigade 
 - 2026-11-07 laneE (Sonnet): RF16 lasting wrecks: burnt-out vehicles kept as cover up to 96 per battle (was 36), src/03g-battlefeel.js (sim change: servers-live PR needed); RF13/14/15 and E1-E5 still open
 - 2026-11-07 laneE (Sonnet): doctrine picker shrunk to a slim bottom-right strip so it no longer covers the base view (src/08i-hud.js); smoke PASS; shot orch/shots/laneE/e5after-base.png. E1 real soldier model, E2, E4 still open
 - laneD (2026-11-07 D1b slice 1): Conquest setup has Balance: Balanced/Realistic (solo only); Realistic scales start money by real military tier (src/03-sim realMul, saved in checkpoint). Smoke PASS; sim change -> servers-live PR note (MP not wired, so no server effect yet).
+- laneG 2026-11-07 (Sonnet, 4th session): RG17 holy sites (src/13w-gholy.js, data rows, GMOD war-support rows, capture penalty); test orch/hstest.mjs.
 - 2026-11-07 laneE (Sonnet): RF14 burning oil — destroyed derricks/plants belch a thick smoke column while burning, badly hurt ones smoulder (src/03g-battlefeel.js, via the smoke grid); smoke PASS. RF13, RF15, E1 still open
+- 2026-11-07 laneE (Sonnet): Middle Eastern HQ/barracks/factory models enlarged to fill their real footprints (src/11-models.js BME sizes 58/54/62 -> 74/60/72, visual only); smoke PASS; shot orch/shots/laneE/e2after-base.png. E1 (old boxy photo is stale: sol_* rigged models already live), E2 rest, E3, E4 still open

@@ -11,7 +11,9 @@ function glgPeace(a,b){const k=grWk(a,b);delete GC.war[k];if(GC.wsT)delete GC.ws
 function glgDeclare(a,b){GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;if(GLG_D>0)return;GLG_D++;
   try{const call=(GC.alz||[]).filter(z=>z[1].includes(b)&&!z[1].includes(a)).flatMap(z=>z[1]).concat((GC.gu||[]).filter(g=>g[1]===b).map(g=>g[0]));
     for(const g of Array.from(new Set(call)).sort()){if(g===a||g===b||!GC.nat[g]||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
-      GC.war[grWk(g,a)]=1;GC.wsT[grWk(g,a)]=GC.turn;grLog(gdNatName(g)+' joins the war against '+gdNatName(a)+' to defend '+gdNatName(b)+'.',g);}}finally{GLG_D--;}}
+      GC.war[grWk(g,a)]=1;GC.wsT[grWk(g,a)]=GC.turn;grLog(gdNatName(g)+' joins the war against '+gdNatName(a)+' to defend '+gdNatName(b)+'.',g);}
+    if(GC.vas){const side=(x,y)=>{for(const v of GC.vas){const j=v[0]===x?v[1]:v[1]===x?v[0]:null;if(j&&j!==y&&GC.nat[j]&&!GC.nat[j].dead&&!grAtWar(j,y)&&!grVasPair(j,y)){GC.war[grWk(j,y)]=1;GC.wsT[grWk(j,y)]=GC.turn;grLog(gdNatName(j)+' joins the war against '+gdNatName(y)+(v[0]===x?' as a vassal of ':' as overlord of ')+gdNatName(x)+'.',j);}}};side(a,b);side(b,a);}   // vassals (13i GR_VASSALS)
+  }finally{GLG_D--;}}
 function glgTurn(){if(!GC||!GC.nat)return;
   try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}try{gpTurn();}catch(e){console.error('gpTurn',e);}
   GC.off=GC.off||[];
