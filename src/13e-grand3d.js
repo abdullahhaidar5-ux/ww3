@@ -520,12 +520,16 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
     put(b.el,q);vis(b.el,true);}
   for(const s of G3.sl){const p=GCM.P[s.pi],f=s.ck?d<1500:d<650;let q=f?proj(p.x,1,p.y):null;if(!q){vis(s.el,false);continue;}putC(s.el,q);vis(s.el,true);}
   // army plates + click targets
-  G3.hit=[];const s=G3.sc_s;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;let pl=G3.pl.get(a.id);if(!pl){pl=guEl('div','');pl.className='p';G3.lab.appendChild(pl);G3.pl.set(a.id,pl);}
+  G3.hit=[];const s=G3.sc_s;
+  /* C-LABELS: army count plates — yours/selected first, then others; a plate that would sit on another one is hidden (zoom in to split the stack) */
+  const plOK=new Set();{const pr=[],pq=[];for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e||!grSeen(a))continue;const q=proj(e.g.position.x,e.g.position.y+(e.sea?6:3)*s,e.g.position.z);if(q)pr.push({a,q,k:a.id===GV.selA?2:a.o===GC.me?1:0});}
+    pr.sort((u,w)=>w.k-u.k);for(const r of pr){let bad=false;if(r.k<1)for(const o of pq)if(Math.abs(o[0]-r.q[0])<30&&Math.abs(o[1]-r.q[1])<20){bad=true;break;}if(!bad){plOK.add(r.a.id);pq.push(r.q);}}}
+  for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;let pl=G3.pl.get(a.id);if(!pl){pl=guEl('div','');pl.className='p';G3.lab.appendChild(pl);G3.pl.set(a.id,pl);}
     const q=proj(e.g.position.x,e.g.position.y+(e.sea?6:3)*s,e.g.position.z),top=proj(e.g.position.x,e.g.position.y+13*s,e.g.position.z),mine=a.o===GC.me,sel=a.id===GV.selA;
     if(!q||!grSeen(a)){vis(pl,false);e.g.visible=!!q&&grSeen(a);continue;}e.g.visible=true;   /* laneA RG3 fog hook */
     {const ft=proj(e.g.position.x,e.g.position.y+28*s,e.g.position.z),yT=ft?ft[1]:(top?top[1]:q[1]-40);   // whole figure is the target: flag top → number badge (Abdullah 19:58 "not being able to click on armies or navies")
      G3.hit.push({aid:a.id,x:q[0],y:top?(q[1]+top[1])/2:q[1],r:Math.max(16,top?Math.abs(q[1]-top[1])*.7:16),y0:Math.min(yT,q[1])-10,y1:q[1]+38,w:Math.max(24,top?Math.abs(q[1]-top[1])*.6:24)});}
-    const show=d<1100||mine||sel;if(show){const t=''+a.u.length;let hs=0,ms=0;for(const u of a.u){hs+=u.hp||0;ms+=u.max||0;}const st=ms>0?Math.max(0,Math.min(100,Math.round(100*hs/ms))):100;if(pl._h!==t+(mine?1:0)+(sel?1:0)+'|'+st){pl._h=t+(mine?1:0)+(sel?1:0)+'|'+st;pl.style.setProperty('--st',st+'%');pl.style.setProperty('--sc',st>66?'#6fcf6f':st>33?'#e0b73c':'#d9534f');pl.textContent=t;pl.className='p'+(mine?' me':'')+(sel?' sel':'');}putC(pl,[q[0],q[1]+12]);pl.style.transform='translate(-50%,0) translate('+Math.round(q[0])+'px,'+Math.round(q[1]+16)+'px)';}vis(pl,show);}
+    const show=(d<1100||mine||sel)&&plOK.has(a.id);if(show){const t=''+a.u.length;let hs=0,ms=0;for(const u of a.u){hs+=u.hp||0;ms+=u.max||0;}const st=ms>0?Math.max(0,Math.min(100,Math.round(100*hs/ms))):100;if(pl._h!==t+(mine?1:0)+(sel?1:0)+'|'+st){pl._h=t+(mine?1:0)+(sel?1:0)+'|'+st;pl.style.setProperty('--st',st+'%');pl.style.setProperty('--sc',st>66?'#6fcf6f':st>33?'#e0b73c':'#d9534f');pl.textContent=t;pl.className='p'+(mine?' me':'')+(sel?' sel':'');}putC(pl,[q[0],q[1]+12]);pl.style.transform='translate(-50%,0) translate('+Math.round(q[0])+'px,'+Math.round(q[1]+16)+'px)';}vis(pl,show);}
   for(const [id,pl] of G3.pl)if(!G3.arm.has(id)){pl.remove();G3.pl.delete(id);}}
 function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!document.body.contains(GV.cv)||!GC){if(!GV.cv||!document.body.contains(GV.cv))g3Dispose();return;}
   const scr=document.getElementById('grandScreen');if(!scr||scr.style.display==='none'){G3.last=0;return;}
