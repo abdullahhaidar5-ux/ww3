@@ -12,6 +12,7 @@ function grOverlord(c){const v=GC&&GC.vas&&GC.vas.find(x=>x[1]===c);return v?v[0
 function grVasInit(){if(!GC||!GC.nat||GC.vas)return;GC.vas=GR_VASSALS.filter(v=>GC.nat[v[0]]&&GC.nat[v[1]]).map(v=>v.slice());}
 const RES_BLOC=['IR','RS','DW','RV'];   // the Resistance bloc, led by the one shared Ayatollah; new Shia factions add their code here
 const GR_REAL={
+ asof:[2026,11],   // A-DATE: the world these figures describe = the grand campaign's start date (1 Nov 2026)
  n:{US:[6,3,230],CN:[4.5,2.4,110],RU:[1.6,1.9,260],IN:[2.5,1.5,90],DE:[2.5,.9,80],JP:[2.3,.9,70],GB:[2.2,1,130],FR:[2.1,1,90],IT:[1.6,.7,80],
   BR:[1.5,.5,160],CA:[1.5,.5,200],KR:[1.5,1,70],AU:[1.3,.6,140],ES:[1.2,.5,80],MX:[1.2,.45,130],ID:[1,.5,140],SA:[1.2,.9,300],TR:[1,1.1,90],
   TW:[1,.6,70],PL:[1,.8,80],IL:[.9,1,90],AE:[.9,.5,260],SE:[.8,.4,90],NO:[.9,.35,260],FI:[.5,.45,80],NL:[.9,.3,80],EG:[.5,.8,110],IR:[.6,1,230],
