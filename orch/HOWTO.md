@@ -11,3 +11,6 @@
 
 ## Lint (free robot checks)
 `node orch/lint.mjs` → LINT PASS/FAIL in 1 s (runs in gate job `check`). Fails on `</script` in src, a new external host (edit HOSTS in the file only with Abdullah's OK), real-leader/organisation names, `Math.random`/`Date.now` in grand SIM files (13-grand, 13b, 13f, 13g, 13i+; add `// lint-ok` on a line to waive).
+
+## Add a menu/pause/settings button without touching 08-ui.js
+New file `src/08k-*.js` (build.py picks up all src/*.js in name order); in an IIFE find `document.getElementById('openSettings'|'aSet'|'sDone')` and append/insert a button (see `08k-report.js` "Report a problem" → pre-filled GitHub issue, label `player`).
