@@ -12504,7 +12504,7 @@ function buildPanels(){const T=G.teams[ME],el=$('panel');el.innerHTML='';const m
     b.onclick=on;if(onR)b.oncontextmenu=e=>{e.preventDefault();onR();};el.append(b);return b;};
   const sub=(tab,txt)=>{const d=document.createElement('div');d.className='sub';d.dataset.tab=tab;d.textContent=txt;el.append(d);};
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k);mk('build','b_'+k,s.name,'$'+s.cost,null,()=>{if(T.credits<s.cost||!reqMet(ME,k))return;G.aim=null;G.place=G.place===k?null:k;});}
-  const R=roster(T.fac);for(const c of CATS){sub('units',STRUCT[c].name);for(const k of R[c]){const s=stats(T.fac,k);mk('units','u_'+k,s.name,'$'+s.cost,null,()=>{if(!(MODE==='client'?true:enqueue(ME,k)))pushLog('Not enough credits or missing building.','w');else if(MODE==='client')doAct({t:'q',k});},()=>doAct({t:'dq',k}));}}
+  const R=roster(T.fac);for(const c of CATS){sub('units',STRUCT[c].name);for(const k of R[c]){const s=stats(T.fac,k);mk('units','u_'+k,s.fake?'Decoy '+s.name:s.name,'$'+s.cost,null,()=>{if(!(MODE==='client'?true:enqueue(ME,k)))pushLog('Not enough credits or missing building.','w');else if(MODE==='client')doAct({t:'q',k});},()=>doAct({t:'dq',k}));}}
   const ups=upgList(T.fac);for(const c of CATS){const list=ups.filter(k=>UPG[k].at===c);if(!list.length)continue;sub('upg',STRUCT[c].name);for(const k of list){const U=UPG[k];mk('upg','g_'+k,upgName(T.fac,k)+(U.sp?' ★':''),'$'+U.cost,U.desc,()=>doAct({t:'up',k}),null,true);}}
   for(const k in POWERS){if(conqBan(k))continue;const P=powInfo(k,T.fac);mk('pow','p_'+k,P.name,'',P.desc,()=>{if(!T.pw[k]){doAct({t:'buy',k});}/* owned powers are used from the side rail / hotkey */},null,true);}
   sub('pow','Level up');for(const k in POWERS){if(conqBan(k))continue;const P=powInfo(k,T.fac);mk('pow','pu_'+k,'▲ '+P.name,'',P.passive?'Bigger bounty per level':'Level 2: about 40% stronger, 15% faster cooldown. Level 3: about 80% stronger, 30% faster.',()=>doAct({t:'buy',k}),null,true);}
@@ -15583,7 +15583,7 @@ function ctEl(){if(CTP)return CTP;const st=document.createElement('style');st.te
 #cmdP button.on{background:#74d08f;color:#0a120c}#cmdP button:disabled{opacity:.4;cursor:default}
 #cmdP .row{display:flex;flex-wrap:wrap;align-items:center;gap:2px;margin:2px 0}
 #cmdP .bar{height:5px;background:#3a2a26;border-radius:3px;overflow:hidden;width:54px;display:inline-block;vertical-align:middle}#cmdP .bar i{display:block;height:100%}
-#cmdP small{opacity:.75}#cmdP .nm{font-weight:700;cursor:pointer;min-width:70px}
+#cmdP .abc{margin-left:auto;margin-right:8px;font:600 11px system-ui,sans-serif;letter-spacing:0;text-transform:none;background:#2c3a26;border:1px solid #6b7a63;border-radius:10px;padding:1px 8px;color:#dfe8d6}#cmdP .abc:hover{background:#3a4c33}#cmdP small{opacity:.75}#cmdP .nm{font-weight:700;cursor:pointer;min-width:70px}
 #ctBanner{position:fixed;left:50%;top:150px;transform:translateX(-50%);z-index:41;background:rgba(14,22,16,.95);border:1px solid #74d08f;border-radius:8px;padding:6px 12px;color:#fff;font:600 14px system-ui,sans-serif;display:flex;gap:8px;align-items:center}
 #ctBanner button{background:#2c3a26;border:1px solid #74d08f;color:#fff;border-radius:6px;padding:4px 10px;font:700 13px system-ui,sans-serif;cursor:pointer}
 #planBar{position:fixed;left:50%;top:132px;transform:translateX(-50%);z-index:41;background:rgba(10,14,12,.94);border:1px solid #e3b341;border-radius:8px;padding:6px 10px;color:#fff;font:600 13px system-ui,sans-serif;display:flex;gap:6px;align-items:center;flex-wrap:wrap;max-width:94vw}
@@ -15602,7 +15602,7 @@ function ctPlanBar(){let b=$('planBar');if(CT.mode!=='plan'){if(b)b.hidden=true;
   const h=`<b>Plan: click the map to add step ${n+1}</b>`+Object.keys(CT_TN).map(k=>`<button class="${P.type===k?'on':''}" data-a="ptype" data-v="${k}">${CT_TN[k]}</button>`).join('')+'<span>then</span>'+tr.map(t=>`<button class="${cur===t[0]?'on':''}" data-a="ptrig" data-v="${t[0]}">${t[1]}</button>`).join('')+`<button data-a="pfin">Done (Enter)</button><button data-a="pcan">Cancel (Esc)</button>`;
   if(b.dataset.h!==h){b.dataset.h=h;b.innerHTML=h;}}
 function ctAct(a,v,w){const T=G&&G.teams[ME];if(!G||!T)return;
-  switch(a){case 'tog':CT.open=!CT.open;break;case 'plan':CT.mode==='plan'?ctPlanFinish():ctPlanStart();return;case 'ptype':CT.pl.type=v;break;
+  switch(a){case 'tog':CT.open=!CT.open;if(CT.open&&typeof AB!=='undefined'&&AB.open){AB.open=false;AB.sig='';abUI();}break;case 'abtog':if(typeof abAct==='function'){abAct('open');if(AB.open)CT.open=false;}break;case 'plan':CT.mode==='plan'?ctPlanFinish():ctPlanStart();return;case 'ptype':CT.pl.type=v;break;
     case 'ptrig':if(v==='auto'||v==='go'){CT.pl.trig=v;}else{CT.pl.trig='timer';CT.pl.sec=+v.slice(5);}break;case 'pfin':ctPlanFinish();return;case 'pcan':ctPlanCancel();return;
     case 'go':{const pl=CT.plans.find(p=>p.n===+v);if(pl){pl.go=true;sfxUI(660);ctPlanTick();}break;}case 'goall':ctGoAll();return;case 'pdel':CT.plans=CT.plans.filter(p=>p.n!==+v);pushLog('Plan cancelled.');break;
     case 'tool':CT.mode=CT.mode===v?null:v;CT.draft=null;break;case 'say':doAct({t:'say',i:+v});break;
@@ -15620,7 +15620,8 @@ function ctGroupName(i){return CT.names[i]?(CT_GN.includes(CT.names[i])?CT.names
 function ctUI(force){if(G&&CT.g!==G){CT.g=G;CT.plans=[];CT.marks=[];CT.draft=null;CT.mode=null;CT.draw=null;CT.names={};CT.form={};CT.sendG=0;CT.pid=0;CT.sig='';}   // a new battle starts clean
   if(!G||G.over||RP.on||NET.spec){if(CTP)CTP.hidden=true;const b=$('ctBanner');if(b)b.hidden=true;const q=$('planBar');if(q)q.hidden=true;return;}const P=ctEl(),T=G.teams[ME];if(!T||T.reb){P.hidden=true;return;}ctBanner();ctPlanBar();
   const tp=ctTeamPlay(),ffa=ctFFA(),oth=G.teams.filter(O=>O.id!==ME&&!O.reb&&!O.out),sel=selfSel().length;
-  let h=`<h4 data-a="tog"><span>Command</span><small>${CT.open?'▾':'▸'}</small></h4>`;
+  const abA=typeof abMine==='function'?abMine():null,abT=abA&&abA.list.length?(abA.on!==false?' · ● on':' · ❚❚ paused'):'';
+  let h=`<h4 data-a="tog"><span>Command</span><span class="abc" data-a="abtog" title="Auto-build: standing production orders (key U)">Auto-build [U]${abT}</span><small>${CT.open?'▾':'▸'}</small></h4>`;
   if(CT.open){
     h+=`<div class="sec">Battle plans · key O</div><div class="row"><button class="${CT.mode==='plan'?'on':''}" data-a="plan" ${sel||CT.mode==='plan'?'':'disabled'}>${CT.mode==='plan'?'Finish plan':'Plan for selection'}</button>${CT.plans.some(p=>p.st==='wait'&&p.steps[p.i+1]&&p.steps[p.i+1].trig==='go')?'<button data-a="goall">GO ▶ (Enter)</button>':''}</div>`;
     for(const p of CT.plans){const nx=p.steps[p.i+1],txt=p.st==='done'?'done':p.st==='move'?`step ${p.i+1}/${p.steps.length} under way`:nx?(nx.trig==='go'?`step ${p.i+2}: waiting for GO`:nx.trig==='timer'?`step ${p.i+2} in ${ctFmt(nx.sec-(G.t-(p.i<0?p.t0:p.arr)))}`:`step ${p.i+2} next`):'done';
@@ -15647,7 +15648,7 @@ setInterval(()=>{try{if(!G){if(CTP)CTP.hidden=true;return;}ctPlanTick();ctUI();}
    order; the sim (03g-battlefeel.js bfAutoTick) queues units through enqueue() exactly like a click, at most 3 per factory. */
 const AB={open:false,sig:'',el:null,pick:'',n:6};
 function abEl(){if(AB.el)return AB.el;const st=document.createElement('style');st.textContent=`
-#autoP{position:fixed;left:284px;bottom:236px;z-index:12;width:236px;background:rgba(10,14,12,.9);border:1px solid #6b7a63;border-radius:8px;color:#e8efe4;font:12px system-ui,sans-serif;padding:5px 8px;user-select:none}
+#autoP{position:fixed;left:8px;bottom:272px;z-index:12;width:236px;background:rgba(10,14,12,.9);border:1px solid #6b7a63;border-radius:8px;color:#e8efe4;font:12px system-ui,sans-serif;padding:5px 8px;user-select:none}
 #autoP h4{margin:0;font:700 13px Saira Condensed,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
 #autoP button,#autoP select,#autoP input{background:#2c3a26;border:1px solid #6b7a63;color:#f0f5e6;border-radius:5px;font:600 11px system-ui,sans-serif;padding:2px 6px;min-height:22px;cursor:pointer;margin:1px 2px 1px 0}
 #autoP input{width:44px;cursor:text}#autoP button.on{background:#74d08f;color:#0a120c}#autoP button.off{background:#8a3a2a}
@@ -15666,8 +15667,9 @@ function abAct(a,k,v){if(!G||G.over)return;const A=abMine();
   else if(a==='del')doAct({t:'auto',k,ti:0});else if(a==='up')doAct({t:'auto',k,ci:1});else if(a==='dn')doAct({t:'auto',k,ci:2});else if(a==='clr')doAct({t:'auto',k:'_clr'});
   AB.sig='';setTimeout(abUI,60);}
 function abUI(){const d=abEl();if(!G||G.over||!G.teams[ME]||MODE==='spectate'||(typeof NET!=='undefined'&&NET.spec)){d.hidden=true;return;}const T=G.teams[ME],A=T.auto,R=roster(T.fac);
+  if(!AB.open){d.hidden=true;AB.sig='';return;}if(typeof CT!=='undefined'&&CT.open){CT.open=false;if(typeof ctUI==='function')ctUI(true);}d.style.bottom=(236+(typeof CTP!=='undefined'&&CTP&&!CTP.hidden?CTP.offsetHeight+4:0))+'px';
   const sig=[AB.open,A?JSON.stringify(A):'',AB.pick,AB.n,Math.floor(G.t/3)].join('|');if(sig===AB.sig)return;AB.sig=sig;d.hidden=false;
-  const on=!A||A.on!==false,tot=A?A.list.length:0;let h=`<h4 data-a="open"><span>Auto-build <small style="display:inline;opacity:.6">[U]</small></span><span>${tot?(on?'● on':'❚❚ paused'):''} ${AB.open?'▾':'▸'}</span></h4>`;
+  const on=!A||A.on!==false,tot=A?A.list.length:0;let h=`<h4 data-a="open"><span>Auto-build <small style="display:inline;opacity:.6">[U]</small></span><span>${tot?(on?'● on':'❚❚ paused'):''} ▾</span></h4>`;
   if(AB.open){const opts=[];for(const c of CATS)for(const k of (R[c]||[])){const s=stats(T.fac,k);if(!s||k==='cleric'||k==='champ')continue;opts.push([k,s.name,s.cost]);}if(!AB.pick&&opts.length)AB.pick=opts[0][0];
     h+=`<div style="margin-top:4px">`;
     if(A)for(const it of A.list){const s=stats(T.fac,it.k),have=unitCount(ME,it.k);h+=`<div class="row"><span class="nm" title="${s.name}">${s.name}</span><span class="have">${have}/${it.n}</span><button data-a="dec" data-k="${it.k}">−</button><button data-a="inc" data-k="${it.k}">+</button><button data-a="up" data-k="${it.k}">▲</button><button data-a="dn" data-k="${it.k}">▼</button><button data-a="del" data-k="${it.k}">×</button></div>`;}
@@ -15773,6 +15775,14 @@ function hudMenuWatch(){const m=document.getElementById('menu');if(!m||hudMenuWa
   const st=document.createElement('style');st.textContent='body.inMenu #hudBar,body.inMenu #hudFeed,body.inMenu #lgBtn,body.inMenu #cqBn,body.inMenu #townp{display:none!important}';document.head.appendChild(st);
   const sync=()=>document.body.classList.toggle('inMenu',!m.hidden);sync();new MutationObserver(sync).observe(m,{attributes:true,attributeFilter:['hidden']});}
 if(typeof document!=='undefined'){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hudMenuWatch);else hudMenuWatch();}
+/* ---------- bottom dock (declutter2, Abdullah 2026-11-06 20:30 "shouldn't be side by side, too cluttered"): the bottom of the battle screen reads as
+   one tidy panel. Command + Auto-build are ONE strip (08g/08h); the Supply lines button is gone (the top bar's Supply switch and key L do it);
+   the controls hint is one quiet line that never runs under the order buttons; empty battle-group slots shrink to their number. View-only CSS. */
+(function(){if(typeof document==='undefined')return;const st=document.createElement('style');st.textContent=
+ 'body #lgBtn{display:none!important}'+
+ '#app #hint{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;right:520px;opacity:.7}'+
+ '#sqs button.empty{opacity:.55}#sqs button.empty small{display:none}#sqs button.empty{min-width:0;padding-left:7px;padding-right:7px}';
+ document.head.append(st);})();
 // "Report a problem" — one click opens a pre-filled GitHub issue (label `player`). No personal data: only version, mode, nation, map, last console errors.
 (function(){
 const ERR=[];
