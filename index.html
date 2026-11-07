@@ -18618,7 +18618,7 @@ function grJudge(){if(!GC.me||GC.over)return;const me=GC.me;if(GC.nat[me].dead){
 // ---------- player orders ----------
 function grOrderMove(aid,to){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return {err:'no army'};const r=grPath(a.o,a.at,to,a.fl);if(!r)return {err:a.fl?'Fleets sail between sea zones only.':'No route (check ports, seas and borders).'};
   if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;return {ok:1,r};}
-function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);try{glgDeclare(a,b);}catch(e){console.error('glgDeclare',e);}}   // laneG: allies/guarantors join
+function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;if(typeof grOverlord==='function'&&grOverlord(a))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);try{glgDeclare(a,b);}catch(e){console.error('glgDeclare',e);}}   // laneG: allies/guarantors join
 function grRecruit(c,pi,k){const st=GC.prov[pi];if(st.o!==c)return 'Not your province.';const fac=grNat(c).fac,rc=GR_RECRUIT.find(r=>r[0]===k);if(!rc||!grHasKind(fac,k))return 'Not available.';const T=geRecruitTerms(c,pi,k,rc[1]),cost=T.cost;
   if(GC.nat[c].cash<cost)return 'Not enough money.';if(GC.nat[c].e.man<T.man)return 'Not enough manpower ('+Math.round(GC.nat[c].e.man)+' of '+T.man+').';GC.nat[c].cash-=cost;GC.nat[c].e.man-=T.man;st.rq.push([GC.turn+T.turns,k,rc[1]]);return '';}
 function grSplit(aid){const a=GC.armies.find(x=>x.id===aid);if(!a||a.u.length<2)return null;const h=Math.floor(a.u.length/2);const mv=a.u.splice(a.u.length-h,h);const b=grAddArmy(a.o,a.at,mv);if(a.fl)b.fl=1;return b;}
@@ -18656,7 +18656,7 @@ function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){
 // continue: its province indices point at different places, so the map breaks and a Fight-it battle never loads (Lane A1)
 function grMapSig(){grMap();let h=0;for(const p of GCM.P){const s=p.n+'/'+p.adj.length;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;}return GCM.P.length+':'+(h>>>0).toString(36);}
 function grSaveOk(o){if(!o||o.v!==1||!Array.isArray(o.prov))return false;grMap();return o.ms?o.ms===grMapSig():o.prov.length===GCM.P.length;}
-function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!grSaveOk(o))return null;if(!o.ms)o.ms=grMapSig();GC=o;try{geEnsure();}catch(e){}try{grResBloc();}catch(e){}return GC;}catch(e){return null;}}
+function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!grSaveOk(o))return null;if(!o.ms)o.ms=grMapSig();GC=o;try{geEnsure();}catch(e){}try{grResBloc();grVasInit();}catch(e){}return GC;}catch(e){return null;}}
 function grClear(){try{localStorage.removeItem(GR_KEY);}catch(e){}GC=null;}
 // test/AI-only: run n turns with every nation under AI control; battles auto-resolve
 function grRunAI(n){for(let i=0;i<n&&!GC.over;i++){grEndTurn(true);}return grHash();}
@@ -20568,6 +20568,13 @@ function gmilHashStr(){const M=GC.mil;if(!M)return '';let s='|M';for(const id of
 // (roughly square-rooted) so a small power is weak but still playable. Sources + the per-nation table: orch/reports/realstart.md.
 // Deterministic: no random numbers here. grand4/4b's diplomacy reads `al`, `op`, `tn`; grand3 fleets read `fl`.
 //   n[code] = [econ, mil, oil] : econ x2200 starting cash, mil x GR_VBASE starting army value, oil = fuel stock (120 = normal)
+/* VASSALS (EU4-style subjects; Abdullah 2026-11-06 23:10 "Make Syria a vassal of Turkey"): GC.vas=[[overlord,subject],...]. A subject fights in
+   its overlord's wars and the overlord defends it (grAllied counts the pair, so laneG's glgDeclare joins them), it can't declare war, make
+   alliances, guarantee or make peace on its own, and it can't leave. Economy (tribute, liberty desire, independence wars, annexation) = Lane G. */
+const GR_VASSALS=[['TR','SY']];
+function grVasPair(a,b){return !!(GC&&GC.vas&&GC.vas.some(v=>(v[0]===a&&v[1]===b)||(v[0]===b&&v[1]===a)));}
+function grOverlord(c){const v=GC&&GC.vas&&GC.vas.find(x=>x[1]===c);return v?v[0]:null;}
+function grVasInit(){if(!GC||!GC.nat||GC.vas)return;GC.vas=GR_VASSALS.filter(v=>GC.nat[v[0]]&&GC.nat[v[1]]).map(v=>v.slice());}
 const RES_BLOC=['IR','RS','DW'];   // the Resistance bloc, led by the one shared Ayatollah; new Shia factions add their code here
 const GR_REAL={
  n:{US:[6,3,230],CN:[4.5,2.4,110],RU:[1.6,1.9,260],IN:[2.5,1.5,90],DE:[2.5,.9,80],JP:[2.3,.9,70],GB:[2.2,1,130],FR:[2.1,1,90],IT:[1.6,.7,80],
@@ -20602,13 +20609,13 @@ function grRealMil(c,dflt){const r=GR_REAL.n[c];return r?r[1]:dflt;}
 function grRealCash(c,dflt){const r=GR_REAL.n[c];return r?Math.round(2200*r[0]):dflt;}
 function grRealClass(c){const r=GR_REAL.n[c];if(!r)return 'Small power';const s=r[0]*.4+r[1]*.6;return s>=2?'Superpower':s>=.9?'Great power':s>=.45?'Regional power':'Small power';}
 // alliances: `GC.rel` = {pairKey: opinion}; `GC.alz` = [[name,[codes]]]. Built once at campaign start, saved with the campaign.
-function grAllied(a,b){if(!GC||!GC.alz)return false;return GC.alz.some(x=>x[1].includes(a)&&x[1].includes(b));}
+function grAllied(a,b){if(!GC)return false;if(grVasPair(a,b))return true;if(!GC.alz)return false;return GC.alz.some(x=>x[1].includes(a)&&x[1].includes(b));}
 function grOpinion(a,b){if(a===b)return 100;if(!GC)return 0;if(GC.war[grWk(a,b)])return -100;let v=(GC.rel&&GC.rel[grWk(a,b)])||0;if(grAllied(a,b))v=Math.max(v,75);return Math.max(-100,Math.min(100,v));}
 function grNearOwn(o,toCap){let best=-1,bd=1e9;for(const p of GCM.P){if(!p.land||GC.prov[p.i].o!==o)continue;const d=grDist(p.i,toCap);if(d<bd){bd=d;best=p.i;}}return best;}
 // called from grNew after every nation exists. Wars, fronts, bases, alliances, opinions.
 function grRealApply(quick){
   const has=c=>!!GC.nat[c]&&!GC.nat[c].dead;const V=c=>GR_VBASE*(grRealMil(c,grNat(c).major?1:.5))*(quick?.7:1);
-  GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);grResBloc();GC.rel={};
+  GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);grResBloc();grVasInit();GC.rel={};
   for(const [a,b,v] of GR_REAL.op)if(has(a)&&has(b))GC.rel[grWk(a,b)]=v;
   for(const [a,b] of GR_REAL.wars)if(has(a)&&has(b))GC.war[grWk(a,b)]=1;
   const front=(a,b,sh,nm)=>{const at=grNearOwn(a,GC.nat[b].cap);if(at<0)return;const f=grNat(a).fac;grAddArmy(a,at,grGenUnits(f,V(a)*sh,false),nm);};
@@ -20986,6 +20993,7 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
     const acc=GC.nat[b].ai?25:0;W.push(['They accept at',acc]);if(ok&&s<acc)no('They refuse (score '+s+' of '+acc+')');}
   else if(act==='guarantee'){cost=300;if(war)no('At war');else if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))no('Already guaranteed');W.push(['Costs $300, +15 opinion, shows resolve',0]);}
   else if(act==='break'){if(!al)no('Not allied');else if(typeof grInResBloc==='function'&&grInResBloc(a,b))no('The Resistance bloc is permanent while the Ayatollah leads it');W.push(['Opinion -25',0]);}
+  if(typeof grOverlord==='function'&&ok){const ov=grOverlord(a);if(ov&&(act==='war'||act==='alliance'||act==='guarantee'||act==='peace'||act==='break'))no('Your overlord, '+GCM.nats.get(ov).name+', decides this');const sv=grOverlord(b);if(act==='break'&&sv===a)no(GCM.nats.get(b).name+' is your vassal');if(act==='war'&&sv)no(GCM.nats.get(b).name+' is a vassal of '+GCM.nats.get(sv).name+' — declare war on its overlord');}
   if(cost&&cash<cost&&ok)no('Not enough cash ($'+cost+')');
   if(GC.me!==a)no('Only your own nation acts');
   return {ok,why:W,cost,note};}
@@ -21174,7 +21182,9 @@ function glgPeace(a,b){const k=grWk(a,b);delete GC.war[k];if(GC.wsT)delete GC.ws
 function glgDeclare(a,b){GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;if(GLG_D>0)return;GLG_D++;
   try{const call=(GC.alz||[]).filter(z=>z[1].includes(b)&&!z[1].includes(a)).flatMap(z=>z[1]).concat((GC.gu||[]).filter(g=>g[1]===b).map(g=>g[0]));
     for(const g of Array.from(new Set(call)).sort()){if(g===a||g===b||!GC.nat[g]||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
-      GC.war[grWk(g,a)]=1;GC.wsT[grWk(g,a)]=GC.turn;grLog(gdName(g)+' joins the war against '+gdName(a)+' to defend '+gdName(b)+'.',g);}}finally{GLG_D--;}}
+      GC.war[grWk(g,a)]=1;GC.wsT[grWk(g,a)]=GC.turn;grLog(gdName(g)+' joins the war against '+gdName(a)+' to defend '+gdName(b)+'.',g);}
+    if(GC.vas){const side=(x,y)=>{for(const v of GC.vas){const j=v[0]===x?v[1]:v[1]===x?v[0]:null;if(j&&j!==y&&GC.nat[j]&&!GC.nat[j].dead&&!grAtWar(j,y)&&!grVasPair(j,y)){GC.war[grWk(j,y)]=1;GC.wsT[grWk(j,y)]=GC.turn;grLog(gdName(j)+' joins the war against '+gdName(y)+(v[0]===x?' as a vassal of ':' as overlord of ')+gdName(x)+'.',j);}}};side(a,b);side(b,a);}   // vassals (13i GR_VASSALS)
+  }finally{GLG_D--;}}
 function glgTurn(){if(!GC||!GC.nat)return;
   try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}try{gpTurn();}catch(e){console.error('gpTurn',e);}
   GC.off=GC.off||[];
