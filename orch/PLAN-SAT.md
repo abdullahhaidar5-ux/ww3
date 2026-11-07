@@ -166,9 +166,9 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
 
 ## REALISM & FUN PICKS (Abdullah 2026-11-06 22:15 "Options to make the game more realistic and fun") — Middle East slice first, rest → kaizen after Sat
 Battle (sim changes → servers-live PR comment):
-- [x] **RF1 Spotting & hiding** (Lane F): infantry in forest/buildings stay hidden until they fire or a scout/drone spots them; extend the existing fog/vision code in 03-sim (one vision system).
-- [x] **RF2 Real armour hits** (Lane F): front/side/rear armour + angle; heavy hits knock out tracks (immobile), turret (no fire) or crew instead of only HP; flank shots matter.
-- [x] **RF3 Artillery delay** (Lane F): call-in → spotting round → salvo after a flight time; counter-battery radar lets enemy guns fire back at yours (extend the existing counter-battery code).
+- [x] **RF1 Spotting & hiding** (Lane F; laneF 2026-11-07: still infantry in forest/buildings hide until they fire or an enemy gets within 150 (scouts/drones/helis 260); 03-sim hiddenNow/detR): infantry in forest/buildings stay hidden until they fire or a scout/drone spots them; extend the existing fog/vision code in 03-sim (one vision system).
+- [x] **RF2 Real armour hits** (Lane F; laneF 2026-11-07: already live — 03-sim tactic() front/side/rear x0.8/1.2/1.6 + 03b critRoll rear 30%/side 17%/front 5% knocks out tracks/turret/crew; nothing to add): front/side/rear armour + angle; heavy hits knock out tracks (immobile), turret (no fire) or crew instead of only HP; flank shots matter.
+- [x] **RF3 Artillery delay** (Lane F; laneF 2026-11-07: already live — shells are non-homing projectiles (spd 280) so movers dodge, firing arty is revealed to enemy counter-battery radar (cbrT) and engaged; nothing to add): call-in → spotting round → salvo after a flight time; counter-battery radar lets enemy guns fire back at yours (extend the existing counter-battery code).
 - [ ] **RF4 Collapsing buildings** (Lane E): extend 03f's 3 damage stages: floors fall one by one, rubble/craters become cover (reuse rubble + cover rules).
 - [ ] **RF5 Cinematic moments** (Lane E): short slow-mo camera on huge explosions/tank kills, Settings toggle, never in multiplayer sim (view-only).
 - [ ] **RF6 Named veteran squads** (Lane F): squads get names + ranks, promotions; carried both ways through the grand campaign with the army.
