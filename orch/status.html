@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WW3 Saturday Tracker</title>
+<style>
+:root{--bg:#0e110f;--card:#171c18;--line:#2a322c;--tx:#ece6cf;--mut:#9aa596;--ok:#6fcf7f;--run:#f0c25a;--todo:#5f6a62;--acc:#f0c25a}
+@media (prefers-color-scheme:light){:root{--bg:#f4f1e8;--card:#fff;--line:#e2dccb;--tx:#1d1f1a;--mut:#6b6f63;--ok:#2f9a45;--run:#b7861a;--todo:#b9bdb2;--acc:#9a6f0e}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:4px 0 2px}.sub{color:var(--mut);font-size:13px}
+.top{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.stat{flex:1;min-width:140px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font-size:24px}.stat span{color:var(--mut);font-size:12px}
+.bar{height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin:6px 0 16px}.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .6s}
+.lane{background:var(--card);border:1px solid var(--line);border-radius:10px;margin:10px 0;padding:6px 12px}
+.lane h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:6px 0}
+.it{display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--line)}.it:first-of-type{border-top:0}
+.dot{flex:none;width:11px;height:11px;border-radius:50%;margin-top:5px;background:var(--todo)}.ok .dot{background:var(--ok)}.run .dot{background:var(--run)}
+.it small{display:block;color:var(--mut);font-size:12px}
+.feed{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 12px;margin-top:14px}
+.feed div{padding:6px 0;border-top:1px solid var(--line);font-size:13px}.feed div:first-of-type{border-top:0}.feed em{color:var(--mut);font-style:normal;font-size:12px}
+a{color:var(--acc)}
+</style></head><body><div class="wrap">
+<h1>World War 3 · Saturday tracker</h1>
+<div class="sub">Deadline Sat 7 Nov, 8:00 pm Chicago · refreshes every minute · <a href="../">Play the game</a></div>
+<div class="top"><div class="stat"><b id="cnt">…</b><span>items done</span></div><div class="stat"><b id="left">…</b><span>until 8:00 pm</span></div><div class="stat"><b id="upd">…</b><span>last update to the game</span></div></div>
+<div class="bar"><i id="pb"></i></div>
+<div id="lanes"></div>
+<div class="feed"><h2 style="font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:6px 0">Latest changes</h2><div id="feed">Loading…</div></div>
+</div>
+<script>
+// Saturday list (orch/PLAN-SAT.md "USAGE PLAN"). done = PLAN-SAT box ticked OR a HISTORY.md line matches; running = a HISTORY line mentions it but not done.
+const ITEMS=[
+ ['Real-world map',[
+  ['A-MAP','Real borders and sizes (Natural Earth)',/realmap/i,/realmap.*(ship|live|done|green)/i]]],
+ ['Grand-map look',[
+  ['C-LOOK1','Painted real-Earth terrain',/grandlook/i,/grandlook.*terrain.*(ship|live|done)/i],
+  ['C-LOOK3','Total War-style army figures',/grandlook.*arm/i,/grandlook.*arm.*(ship|live|done)/i],
+  ['C-TOWNS','Towns: villages, cities, megacities',/C-TOWNS/i,null]]],
+ ['Battle look',[
+  ['DB1','De-block 1: real crates and barrels',/Open: slice 1|slice 1.*(WIP|started)/i,/DE-BLOCK slice 1/i],
+  ['DB2','De-block 2: buildings with real materials',/Open: slice 2|slice 2.*(WIP|started)/i,/DE-BLOCK slice 2/i].*(ship|PASS|live)/i],
+  ['DB3','De-block 3: textured ground, tracks, rocks',/Open: slice 3|slice 3.*(WIP|started)/i,/DE-BLOCK slice 3/i],
+  ['DB4','De-block 4: bigger soldiers, worn vehicles',/Open: slice 4|slice 4.*(WIP|started)/i,/DE-BLOCK slice 4/i],
+  ['RF13','Dust and sandstorms',null,null],
+  ['RF15','Night tracers and flares',null,null]]],
+ ['Battle rules',[
+  ['RF1','Hidden units and spotting',null,null],['RF2','Front/side/rear armour',null,null],['RF3','Artillery delay and counter-battery',null,null]]],
+ ['Government',[
+  ['RG5','TV news broadcasts',null,null],['RG10','Nuclear programme and strike',null,null]]],
+ ['Grand engine',[
+  ['A-DATE','Start date 1 Nov 2026',null,null],['A-REAL','Realistic AI wars',null,null]]],
+ ['Portraits',[
+  ['PORT','Portraits round 3 (sheet for your approval)',/portraits3/i,/portraits3.*(sheet|ship|live)/i]]]
+];
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+async function txt(u){try{const r=await fetch(u+'?t='+Date.now(),{cache:'no-store'});return r.ok?await r.text():''}catch(e){return ''}}
+async function load(){
+ const [plan,hist]=await Promise.all([txt('PLAN-SAT.md'),txt('HISTORY.md')]);
+ const hl=hist.split('\n').filter(l=>l.trim());
+ let n=0,d=0,html='';
+ for(const [lane,its] of ITEMS){html+='<div class="lane"><h2>'+esc(lane)+'</h2>';
+  for(const [id,name,runRe,doneRe] of its){n++;
+   const ticked=new RegExp('- \\[x\\] \\*\\*'+id.replace(/[-]/g,'\\-')+'[ *]').test(plan);
+   const done=ticked||(doneRe&&hl.some(l=>doneRe.test(l)));
+   const run=!done&&((runRe&&hl.some(l=>runRe.test(l)))||new RegExp(id.replace('-','\\-')+'.*(slice|first cut|WIP)','i').test(hist));
+   if(done)d++;
+   html+='<div class="it '+(done?'ok':run?'run':'')+'"><span class="dot"></span><div>'+esc(name)+'<small>'+(done?'Done':run?'In progress':'Queued')+' · '+id+'</small></div></div>';}
+  html+='</div>';}
+ document.getElementById('lanes').innerHTML=html;
+ document.getElementById('cnt').textContent=d+' / '+n;document.getElementById('pb').style.width=(100*d/n)+'%';
+ try{const r=await fetch('https://api.github.com/repos/abdullahhaidar5-ux/ww3/commits?per_page=12');const c=await r.json();
+  const rows=c.filter(x=>!/janitor|^merge|Merge |HISTORY|screenshot|shots/i.test(x.commit.message)).slice(0,8);
+  document.getElementById('feed').innerHTML=rows.map(x=>{const t=new Date(x.commit.committer.date);return '<div>'+esc(x.commit.message.split('\n')[0].slice(0,110))+'<br><em>'+t.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})+'</em></div>'}).join('')||'—';
+  if(c[0]){const m=Math.round((Date.now()-new Date(c[0].commit.committer.date))/60000);document.getElementById('upd').textContent=m<60?m+' min ago':Math.round(m/60)+' h ago';}
+ }catch(e){document.getElementById('feed').textContent='(change feed unavailable right now)';}
+}
+function clock(){const end=Date.UTC(2026,10,8,2,0,0),ms=end-Date.now();const el=document.getElementById('left');
+ if(ms<=0){el.textContent='Deadline passed';return}const h=Math.floor(ms/3.6e6),m=Math.floor(ms%3.6e6/6e4);el.textContent=h+' h '+String(m).padStart(2,'0')+' m';}
+load();clock();setInterval(load,60000);setInterval(clock,20000);
+</script></body></html>
