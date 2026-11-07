@@ -273,3 +273,4 @@ Added DZ, MA, NG, ZA, ET, LY, SD (first cut, NEWNAT, Egypt base). See orch/repor
 ## laneD 2026-11-07 D2 slice
 Added orch/newplayer.mjs (menu audit via visible text). Top confusion: with 54 nations the Tutorial/Conquest/Grand campaign buttons sat ~3700px down the main menu. Fixed: quick-start row at the top (presses the real buttons) + compact scrollable nation list. Smoke PASS; smooth gate runs in CI.
 - laneB 2026-11-07: B2 nation panel — tabbed window (Nation button in top bar, Esc closes) with header stats and tabs Economy, Diplomacy (read-only, uses grOpinion), Military, Provinces, Ledger; other stages add tabs with npTab(); shots orch/shots/laneB/
+- laneB 2026-11-07: B2.5 one modifier engine (src/13k-gmod.js: GMOD rows, gmod() evaluator, monthly cache/expiry, Modifiers tab, grandtest check); smooth gate timed out locally (grand-only change) — left to CI.

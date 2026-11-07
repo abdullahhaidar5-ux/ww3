@@ -169,7 +169,7 @@ function grFinishTurn(){const P=GCM.P;try{gmRepair();}catch(e){}
   for(const a of GC.armies.slice())if(!a.u.length)grDrop(a);
   // elimination, victory, next turn
   for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;const has=P.some(p=>p.land&&GC.prov[p.i].o===c);const arm=GC.armies.some(a=>a.o===c);if(!has||(N.cap<0&&!arm)){N.dead=1;grLog(GCM.nats.get(c).name+' has been eliminated.',c);for(const a of GC.armies.slice())if(a.o===c)grDrop(a);for(const k of Object.keys(GC.war))if(k.split('|').includes(c))delete GC.war[k];}}
-  GC.turn++;GC.ph='plan';GC.q=[];GC.qi=0;grJudge();grSave();}
+  GC.turn++;GC.ph='plan';GC.q=[];GC.qi=0;try{gmodMonth(GC.turn);}catch(e){}grJudge();grSave();}
 function grArrive(c,pi,k,n){const a=GC.armies.find(x=>x.o===c&&x.at===pi&&!x.path.length&&x.nm==='Reserve');const us=[];for(let i=0;i<n;i++)us.push([k,100,0,100]);if(a)a.u.push(...us);else{const b=grAddArmy(c,pi,us,'Reserve');}}
 
 // ---------- victory ----------

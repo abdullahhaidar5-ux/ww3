@@ -240,6 +240,9 @@ try {
   // save/continue round trip
   const rt = await ev(() => { const h = grHash(); grClear(); const ok = !GC; grNew({ me: 'IR', seed: 5, len: 'quick' }); const h2 = grHash(); grSave(); const x = grLoad(); return { same: grHash() === h2, x: !!x }; });
   if (!rt.same) fails.push('save round trip changed the state hash');
+  // B2.5 modifier engine: style row, temporary row expiry, save round trip
+  const gm = await ev(() => { grNew({ me: 'IR', seed: 5, len: 'quick' }); const w0 = gmod('nation', 'IR', 'warSupport', 1); gmodAdd({ id: 't1', src: 'Test', scope: 'nation', stat: 'warSupport', add: .2, t: 'IR', until: GC.turn + 1 }); const w1 = gmod('nation', 'IR', 'warSupport', 1); grSave(); const x = grLoad(); const w2 = gmod('nation', 'IR', 'warSupport', 1); gmodMonth(GC.turn + 2); return { w0, w1, w2, w3: gmod('nation', 'IR', 'warSupport', 1), n: (GC.mod || []).length, l: gmodLines('nation', 'IR', 'warSupport').length }; });
+  if (!(Math.abs(gm.w0 - 1.1) < 1e-9 && Math.abs(gm.w1 - 1.3) < 1e-9 && Math.abs(gm.w2 - 1.3) < 1e-9 && Math.abs(gm.w3 - 1.1) < 1e-9 && gm.n === 0)) fails.push('gmod engine: ' + JSON.stringify(gm));
 } catch (e) { if (String(e.message) !== '__done') { fails.push(String(e.message || e).split('\n')[0]); console.log('ERRS', errs.join('\n')); } }
 for (const e of [...new Set(errs)].slice(0, 6)) fails.push(e);
 await browser.close(); server.close();
