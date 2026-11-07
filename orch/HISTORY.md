@@ -310,3 +310,5 @@ Abdullah 20:12/20:14 "Ugly ugly ugly … not everything has to be shoved into a 
 - 2026-11-07 laneE (Sonnet): re-shot base view (e3before), assessed E1-E3 state, handoff updated; no src change
 - 2026-11-07 laneE (Sonnet): E3 scrub and rocks now thin out toward bases instead of a bare disc (src/04-gfx.js); shot orch/shots/laneE/e3after-base.png; E1 real model swap, E2, E4, E5 still open
 - laneD (2026-11-07 D2 slice 3): unit names no longer say "MBT" (Altay/Karrar/Leclerc/Al-Khalid/Arjun Tank) so the encyclopedia and build menu read plainly; newplayer audit clean. Smoke PASS; local smooth gate too slow here, CI gates it.
+- laneB (B5 s1): province development (13w-gdev.js): Tax/Production/Manpower levels bought with the three capital points, GMOD income/manpower rows, AI develops, Development tab; orch/devtest.mjs.
+  (laneB note: grandtest 'eco snowballs' currently fails on main independent of laneB hooks — Colombia CO net/province 717 even with 13v/13w hooks off; comes from the new NEWNAT nations (laneD); needs a tune or a looser per-province check.)
