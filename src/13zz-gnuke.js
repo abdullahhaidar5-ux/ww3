@@ -8,13 +8,14 @@
 // Neutral: no real places' casualty figures, no real leaders. Equal rules for every nation.
 const GNK={start:{US:3,RU:3,CN:2,GB:1,FR:1,IN:1,PK:1,KP:1,IL:1},pre:{IR:2},
   names:['No programme','Enrichment','Test-ready','Warhead (tested)'],months:[0,6,6,0],
-  cost:1500,upkeep:150,cap:6,fallout:36,strikeCost:0,aiGap:24};
+  cost:1500,upkeep:150,cap:6,fallout:36,strikeCost:0,aiGap:24,flight:0};   // real ICBMs/IRBMs land in ~10-30 minutes: impact is immediate on the map; the target gets a launch-detected alert (Abdullah 2026-11-07 10:22 "Not realistic" about a month-long flight)
 function gnkN(c){if(!GC.nuk)GC.nuk={n:{},fo:{},pend:[]};const S=GC.nuk;if(!S.n[c]){const w=GNK.start[c]||0;S.n[c]={st:w?3:(GNK.pre[c]||0),p:0,w:w,last:-99};}return S.n[c];}
 function gnkName(c){return typeof gdNatName==='function'?gdNatName(c):c;}
 function gnkStart(c){const N=gnkN(c),A=GC.nat[c];if(N.st!==0)return 'The programme is already running.';if(A.cash<GNK.cost)return 'Costs $'+GNK.cost+'.';
   A.cash-=GNK.cost;N.st=1;N.p=0;grLog(gnkName(c)+' starts a nuclear programme.',c);return '';}
 // one month: programme stages, tests, warhead growth, upkeep, fallout, AI decisions
-function gnkMonth(){if(!GC||!GC.nat)return;const alive=Object.keys(GC.nat).filter(c=>!GC.nat[c].dead).sort();
+function gnkMonth(){if(!GC||!GC.nat)return;if(GC.nuk&&GC.nuk.pend&&GC.nuk.pend.length){const due=GC.nuk.pend.filter(x=>x[2]<=GC.turn);GC.nuk.pend=GC.nuk.pend.filter(x=>x[2]>GC.turn);for(const x of due)gnkImpact(x[0],x[1],x[3]);}
+  const alive=Object.keys(GC.nat).filter(c=>!GC.nat[c].dead).sort();
   const R=grRng((GC.seed|0)*311+GC.turn*17);
   for(const c of alive){const N=gnkN(c),A=GC.nat[c];
     if(N.st>=1&&N.st<=2){N.p++;if(N.p>=GNK.months[N.st]){N.st++;N.p=0;if(N.st===3){N.w++;grLog('Nuclear test: '+gnkName(c)+' has tested a device.','');
@@ -34,7 +35,15 @@ function gnkMonth(){if(!GC||!GC.nat)return;const alive=Object.keys(GC.nat).filte
 // the strike. pi must be an enemy land province of a nation at war with the launcher. ai: no confirm needed (its own decision)
 function gnkLaunch(c,pi,ai,noRet){const N=gnkN(c),p=GCM.P[pi];if(!p||!p.land)return 'Not a land province.';const o=GC.prov[pi].o;
   if(N.w<1)return 'No warheads.';if(o===c||!grAtWar(c,o))return 'Only enemy provinces at war with you.';
-  N.w--;N.last=GC.turn;const st=GC.prov[pi];st.un=Math.min(100,(st.un||0)+45);st.gar=[];
+  N.w--;N.last=GC.turn;GC.nuk.pend=GC.nuk.pend||[];if(GNK.flight>0)GC.nuk.pend.push([c,pi,GC.turn+GNK.flight,noRet?1:0,o]);   /* travel time: the warhead lands GNK.flight months later */
+  grLog('Launch detected: nuclear warheads fired at '+p.n+' ('+gnkName(o)+'). Impact within minutes.',c);
+  if(o===GC.me||c===GC.me)try{gevToast(['☢ Launch detected — warheads hit '+p.n+' within minutes']);}catch(x){}
+  if(!(GNK.flight>0))gnkImpact(c,pi,noRet?1:0);
+  return '';}
+// impact (a month after launch): the province is hit unless the front has moved since the launch
+function gnkImpact(c,pi,noRet){const p=GCM.P[pi],o=GC.prov[pi].o;
+  if(o===c||!grAtWar(c,o)){grLog('The warheads over '+p.n+' are called back: the front has changed.',c);return;}
+  const st=GC.prov[pi];st.un=Math.min(100,(st.un||0)+45);st.gar=[];
   for(const b of gmBuildings(pi))b[1]=100;                      /* every building in the province is destroyed (damage 100) */
   GC.armies=GC.armies.filter(a=>!(a.at===pi&&!a.fl));          /* armies in the province are lost */
   GC.nuk.fo[pi]=GC.turn+GNK.fallout;
@@ -55,7 +64,7 @@ function gnkPickTarget(c){const N=gnkN(c);if(N.w<1)return;const ts=gnkTargets(c)
   const bs=ts.map(pi=>[GCM.P[pi].n+' ('+(GC.nat[GC.prov[pi].o]&&GC.nat[GC.prov[pi].o].cap===pi?'capital':gnkName(GC.prov[pi].o))+')',()=>gnkConfirm(c,pi)]);bs.push(['Back',()=>npOpen(c,'nuke')]);
   guModal('<h2 style="margin:0 0 8px;font-size:20px">☢ Choose a target</h2><div style="opacity:.8;margin-bottom:6px">Enemy provinces in reach. The next screen asks you to confirm.</div>',bs);}
 function gnkConfirm(c,pi){const o=GC.prov[pi].o;
-  guModal('<h2 style="margin:0 0 8px;font-size:20px">Launch on '+GCM.P[pi].n+'?</h2><div style="line-height:1.5">This destroys the buildings and garrison there, kills armies in the province and leaves fallout for three years. Sanctions follow, the world turns against '+gnkName(c)+', and '+gnkName(o)+' may answer with its own warheads.</div>',
+  guModal('<h2 style="margin:0 0 8px;font-size:20px">Launch on '+GCM.P[pi].n+'?</h2><div style="line-height:1.5">Warheads hit within minutes; early-warning radars see the launch, so the target and the world know who fired. On impact they destroy the buildings and garrison there, kill armies in the province and leave fallout for three years. Sanctions follow, the world turns against '+gnkName(c)+', and '+gnkName(o)+' may answer with its own warheads.</div>',
     [['Launch',()=>{const e=gnkLaunch(c,pi,false);if(e)grLog(e,c);try{guTop();grandMapRefresh();}catch(x){}npOpen(c,'nuke');},1],['Back',()=>gnkPickTarget(c)]]);}
 // the nation-panel tab: stage, warheads, actions (own nation only); small menu buttons
 function gnkRow(label,val){return '<div style="display:flex;justify-content:space-between;gap:24px;padding:3px 0;border-bottom:1px solid #26384a"><span style="opacity:.75">'+label+'</span><b>'+val+'</b></div>';}
@@ -71,3 +80,4 @@ if(typeof npTab==='function')npTab('nuke','☢','Nuclear',(code,body,c)=>{const 
     if(N.w>0&&N.st>=0)row.appendChild(gnkBtn('Launch a strike…',()=>gnkPickTarget(code)));}
 });
 GMOD_HOOKS.push(gnkMonth);
+alAdd('nukein','☢','Inbound',c=>{if(!c||!GC.nuk||!GC.nuk.pend)return null;const n=GC.nuk.pend.filter(x=>x[4]===c).length;return n?{n,tip:'Nuclear warheads are inbound on one of your provinces',go:()=>npOpen(c,'nuke')}:null;});

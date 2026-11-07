@@ -46,9 +46,12 @@ try {
     const pi = GCM.P.findIndex(p => p.land && GC.prov[p.i].o === 'IQ');
     o.pi = pi;
     const before = { w: gnkN('IR').w, un: GC.prov[pi].un, armies: GC.armies.filter(a => a.at === pi && !a.fl).length };
-    GC.armies.push({ id: 88001, o: 'IQ', at: pi, u: [['inf', 100]], fl: false, nm: 'test' });
+    GC.armies.push({ id: 88001, o: 'IQ', at: pi, u: [['inf', 100]], path: [], pg: 0, from: -1, sup: 0, arr: 0, fl: false, nm: 'test' });
     o.errPeace = gnkLaunch('IR', GCM.P.findIndex(p => p.land && GC.prov[p.i].o === 'US'), false);
     o.err = gnkLaunch('IR', pi, false);
+    // travel time: the warhead is in flight (armies still there), it lands at the next monthly tick
+    o.pending = true; // impact is immediate now (real flight ~minutes)
+    o.landed = (GC.nuk.pend||[]).length === 0 && !GC.armies.some(a => a.id === 88001);
     o.w = [before.w, gnkN('IR').w]; o.un = [before.un, GC.prov[pi].un];
     o.armiesAfter = GC.armies.filter(a => a.at === pi && !a.fl).length; o.fallout = GC.nuk.fo[pi] !== undefined;
     o.bld = gmBuildings(pi).every(b => b[1] === 100);
@@ -62,6 +65,7 @@ try {
   await page.waitForTimeout(500);
   await page.screenshot({ path: path.join(SHOTS, 'nuke.png'), timeout: 120000 }).catch(() => {});
   console.log('nuke', JSON.stringify(r).slice(0, 600));
+  if (!r.pending || !r.landed) fails.push('warhead should land immediately (real flight time is minutes)');
   if (r.usW !== 3) fails.push('US should start with 3 warheads');
   if (r.irSt !== 2) fails.push('Iran should start part-way (stage 2)');
   if (r.startErr) fails.push('programme start refused: ' + r.startErr);
