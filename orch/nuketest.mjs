@@ -55,9 +55,14 @@ try {
     o.w = [before.w, gnkN('IR').w]; o.un = [before.un, GC.prov[pi].un];
     o.armiesAfter = GC.armies.filter(a => a.at === pi && !a.fl).length; o.fallout = GC.nuk.fo[pi] !== undefined;
     o.bld = gmBuildings(pi).every(b => b[1] === 100);
+    o.flash = !!document.querySelector('[data-gnk-flash]');  /* the strike flash appears for the launcher / victim */
     o.lostWorld = GC.rel[grWk('US', 'IR')];
     // a month of fallout keeps unrest up; the panel shows the status
     gnkMonth(); o.unAfterMonth = GC.prov[pi].un;
+    // occupation: Egypt's programme site (its capital) is taken by Iraq at war → a programme with no warhead is destroyed
+    GC.nat.EG.cash = 5000; o.egStart = gnkStart('EG'); GC.war[grWk('EG', 'IQ')] = 1;
+    o.egCap = GC.nat.EG.cap; if (o.egCap >= 0) GC.prov[o.egCap].o = 'IQ';
+    gnkMonth(); o.egAfter = gnkN('EG').st; o.egLog = GC.log.some(l => /programme site: the programme is destroyed/.test(l[1]));
     npOpen('IR', 'nuke'); const nw = document.getElementById('npWin');
     o.tab = !!nw && /Nuclear status/.test(nw.textContent) && /Warheads/.test(nw.textContent) && !/Launch a strike/.test(nw.textContent);  /* no warheads left: no launch button */
     return o;
@@ -80,6 +85,9 @@ try {
   if (!r.fallout) fails.push('no fallout recorded');
   if (!r.bld) fails.push('buildings survived the strike');
   if (!(r.lostWorld < 0)) fails.push('world opinion of the launcher did not fall');
+  if (!r.flash) fails.push('no strike flash shown to the launcher');
+  if (r.egStart) fails.push('Egypt programme start refused: ' + r.egStart);
+  if (r.egCap < 0 || r.egAfter !== 0 || !r.egLog) fails.push('occupied programme site did not destroy the programme (stage ' + r.egAfter + ')');
   if (!r.tab) fails.push('nuclear tab: status missing, or launch offered with no warheads');
 } catch (e) { fails.push('exception: ' + e.message.slice(0, 200)); }
 if (errs.length) fails.push(...errs.slice(0, 3));

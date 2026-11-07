@@ -23868,14 +23868,20 @@ const GNK={start:{US:3,RU:3,CN:2,GB:1,FR:1,IN:1,PK:1,KP:1,IL:1},pre:{IR:2},
   cost:1500,upkeep:150,cap:6,fallout:36,strikeCost:0,aiGap:24,flight:0};   // real ICBMs/IRBMs land in ~10-30 minutes: impact is immediate on the map; the target gets a launch-detected alert (Abdullah 2026-11-07 10:22 "Not realistic" about a month-long flight)
 function gnkN(c){if(!GC.nuk)GC.nuk={n:{},fo:{},pend:[]};const S=GC.nuk;if(!S.n[c]){const w=GNK.start[c]||0;S.n[c]={st:w?3:(GNK.pre[c]||0),p:0,w:w,last:-99};}return S.n[c];}
 function gnkName(c){return typeof gdNatName==='function'?gdNatName(c):c;}
-function gnkStart(c){const N=gnkN(c),A=GC.nat[c];if(N.st!==0)return 'The programme is already running.';if(A.cash<GNK.cost)return 'Costs $'+GNK.cost+'.';
-  A.cash-=GNK.cost;N.st=1;N.p=0;grLog(gnkName(c)+' starts a nuclear programme.',c);return '';}
+function gnkStart(c){const N=gnkN(c),A=GC.nat[c];if(N.st!==0)return 'The programme is already running.';if(A.cash<GNK.cost)return 'Costs $'+GNK.cost+'.';if(gnkOccupied(c))return 'Enemy troops hold the capital: the site is not safe.';
+  A.cash-=GNK.cost;N.st=1;N.p=0;N.site=gnkCap(c);grLog(gnkName(c)+' starts a nuclear programme.',c);return '';}
+// the programme site = the nation's capital (set when the programme starts). Enemy troops or a lost capital occupy it.
+function gnkCap(c){const k=GC.nat[c]&&GC.nat[c].cap;return k>=0&&GC.prov[k]?k:-1;}
+function gnkOccupied(c){const N=gnkN(c);const s=N.site!=null?N.site:gnkCap(c);return s>=0&&GC.prov[s]&&GC.prov[s].o!==c&&grAtWar(c,GC.prov[s].o);}
 // one month: programme stages, tests, warhead growth, upkeep, fallout, AI decisions
 function gnkMonth(){if(!GC||!GC.nat)return;if(GC.nuk&&GC.nuk.pend&&GC.nuk.pend.length){const due=GC.nuk.pend.filter(x=>x[2]<=GC.turn);GC.nuk.pend=GC.nuk.pend.filter(x=>x[2]>GC.turn);for(const x of due)gnkImpact(x[0],x[1],x[3]);}
   const alive=Object.keys(GC.nat).filter(c=>!GC.nat[c].dead).sort();
   const R=grRng((GC.seed|0)*311+GC.turn*17);
   for(const c of alive){const N=gnkN(c),A=GC.nat[c];
-    if(N.st>=1&&N.st<=2){N.p++;if(N.p>=GNK.months[N.st]){N.st++;N.p=0;if(N.st===3){N.w++;grLog('Nuclear test: '+gnkName(c)+' has tested a device.','');
+    const occ=gnkOccupied(c);
+    if(occ&&N.st>=1&&N.w===0){N.st=0;N.p=0;grLog('Enemy troops hold the '+gnkName(c)+' programme site: the programme is destroyed.',c);}
+    else if(occ){/* frozen: the site is held by enemy troops, no stage or warhead progress */}
+    else if(N.st>=1&&N.st<=2){N.p++;if(N.p>=GNK.months[N.st]){N.st++;N.p=0;if(N.st===3){N.w++;grLog('Nuclear test: '+gnkName(c)+' has tested a device.','');
         for(const o of alive)if(o!==c)gdRel(o,c,-12);}}}
     else if(N.st===3){N.p++;if(N.p%12===0&&N.w<GNK.cap){N.w++;}}
     if(N.w>0)A.cash-=Math.min(Math.max(0,A.cash),N.w*GNK.upkeep);   /* upkeep never pushes the treasury below zero (it drains what is there) */
@@ -23883,7 +23889,7 @@ function gnkMonth(){if(!GC||!GC.nat)return;if(GC.nuk&&GC.nuk.pend&&GC.nuk.pend.l
     if(N.st>=1&&N.st<3)for(const o of alive)if(o!==c)gdRel(o,c,-1);
     // AI nations at war with a nuclear power may start their own programme (cascade); rare and seeded
     if(!A.ai)continue;
-    if(N.st===0&&A.cash>2500&&alive.some(o=>o!==c&&GC.nat[o]&&(gnkN(o).w>0)&&grAtWar(c,o))&&R()<.03){N.st=1;N.p=0;grLog(gnkName(c)+' is reported to be starting a nuclear programme.',c);}
+    if(N.st===0&&A.cash>2500&&!gnkOccupied(c)&&alive.some(o=>o!==c&&GC.nat[o]&&(gnkN(o).w>0)&&grAtWar(c,o))&&R()<.03){N.st=1;N.p=0;N.site=gnkCap(c);grLog(gnkName(c)+' is reported to be starting a nuclear programme.',c);}
     // last resort: the capital is held by an enemy army and the nation has warheads → strike the occupied capital
     if(N.w>0&&N.st===3&&GC.turn-N.last>=GNK.aiGap){const cap=A.cap;if(cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c)))gnkLaunch(c,cap,true);}
   }
@@ -23907,6 +23913,7 @@ function gnkImpact(c,pi,noRet){const p=GCM.P[pi],o=GC.prov[pi].o;
   for(const x of Object.keys(GC.nat)){if(GC.nat[x].dead||x===c)continue;gdRel(x,c,grAllied(x,c)?-35:-22);}
   gmodAdd({id:'nuk_ws_'+c,src:'Nuclear strike',scope:'nation',stat:'warSupport',add:-.15,t:c,until:GC.turn+12});
   grLog('Nuclear strike on '+p.n+' by '+gnkName(c)+'. Fallout covers the province.',c);
+  if(GC.me==null||c===GC.me||o===GC.me)gnkFlash(p.n);
   try{unPropose(o,'sanction',c,true);}catch(e){}
   if(!noRet&&gnkN(o).w>0&&grAtWar(o,c)){   /* a nuclear victim answers: an AI victim strikes the launcher's capital at once; a human gets a log line */
     if(GC.nat[o].ai&&GC.nat[c].cap>=0)gnkLaunch(o,GC.nat[c].cap,true,true);
@@ -23925,6 +23932,12 @@ function gnkConfirm(c,pi){const o=GC.prov[pi].o;
     [['Launch',()=>{const e=gnkLaunch(c,pi,false);if(e)grLog(e,c);try{guTop();grandMapRefresh();}catch(x){}npOpen(c,'nuke');},1],['Back',()=>gnkPickTarget(c)]]);}
 // the nation-panel tab: stage, warheads, actions (own nation only); small menu buttons
 function gnkRow(label,val){return '<div style="display:flex;justify-content:space-between;gap:24px;padding:3px 0;border-bottom:1px solid #26384a"><span style="opacity:.75">'+label+'</span><b>'+val+'</b></div>';}
+// the strike flash: a short white-orange flash with the place name (local display only; the sim never reads it)
+function gnkFlash(place){try{if(typeof document==='undefined'||!document.body)return;const d=document.createElement('div');d.setAttribute('data-gnk-flash','');
+  d.style.cssText='position:fixed;inset:0;z-index:9999;pointer-events:none;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 58%,#fff 0%,#ffe9a8 16%,#ff9a3c 38%,#7a2a08 70%,rgba(20,6,0,.9) 100%);opacity:0;transition:opacity .2s ease-in';
+  const t=document.createElement('div');t.textContent='☢ Nuclear strike: '+place;t.style.cssText='font:700 22px system-ui,sans-serif;color:#fff;text-shadow:0 2px 10px #000;letter-spacing:.04em';d.appendChild(t);
+  document.body.appendChild(d);requestAnimationFrame(()=>{d.style.opacity='1';});
+  setTimeout(()=>{d.style.transition='opacity 1.6s ease-out';d.style.opacity='0';},700);setTimeout(()=>{try{d.remove();}catch(e){}},2400);}catch(e){}}
 function gnkBtn(label,fn){const b=document.createElement('button');b.textContent=label;b.style.cssText='font:15px system-ui,sans-serif;padding:6px 14px;margin:6px 8px 0 0;background:#1e3347;color:#e8f0f7;border:1px solid #4a6a88;border-radius:5px;cursor:pointer';b.onclick=fn;return b;}
 if(typeof npTab==='function')npTab('nuke','☢','Nuclear',(code,body,c)=>{const own=code===GC.me,N=gnkN(code),A=GC.nat[code];
   const stage=GNK.names[N.st]||'';const nextM=N.st>=1&&N.st<=2?' (next stage in '+Math.max(0,GNK.months[N.st]-N.p)+' months)':'';

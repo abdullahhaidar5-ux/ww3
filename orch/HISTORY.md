@@ -426,3 +426,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 
 - laneA 2026-11-07: A2b slice 4 - online campaign chip shows which battle the world is waiting on, for host and every friend (src/13zn-gnet.js); gate: grandlive/gnettest green; controls/decisions/smooth-mp reds were other lanes' (gnuke wording, leader height).
 - laneE DE-BLOCK slice 6: macro dust/dark-soil ground blotches and dry scrub clumps round the base compounds so the sand stops reading as one flat tone (src/11-models.js groundKit, view only); local smoke timed out in this slow sandbox (baseline too), CI gates decide; no new shot
+- laneG 2026-11-07: RG10 nuclear follow-ons — programme site = capital; enemy troops in it freeze the programme (warheads kept) or destroy a programme with no warhead; launch shows a strike flash over the screen; nuketest asserts both; RG5 (TV news) and RG10 are the lane's list, now done.
