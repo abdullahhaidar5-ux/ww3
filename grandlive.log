@@ -1,0 +1,34 @@
+2.5s stale save in menu {"cont":false,"warn":true}
+7.2s map open
+17.3s march {"me":"IR","from":"Tehran","to":"Baku","foe":"AZ","ok":true,"units":37}
+22.5s fallback {"modal":true,"map":true,"G":false}
+22.9s end turn clicked
+30.1s prompt: BATTLE · CoastBakuAttackers — Iran37 units28 Basij Militia, 4 RPG Cell, 2 Karrar MBT, 1 Fateh-110 Launcher, 1 
+30.9s Fight it live clicked
+41.7s {"L":true,"step":"Loading 3D models…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+43.2s {"L":true,"step":"Preparing graphics…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+52.7s {"L":true,"step":"Deploying forces…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+89.8s {"L":false,"step":"Ready","g":true,"grand":true,"t":0,"paused":false,"gs":"none","ents":67}
+90.8s {"L":false,"step":"Ready","g":true,"grand":true,"t":0.06,"paused":false,"gs":"none","ents":67}
+121.9s battle running: Generating terrain 10404, Loading 3D models 141, Building the battlefield 395, Building the battlefield 765, Preparing graphics 9459, Deploying forces 18, Deploying forces 36696, total 58636
+GRANDLIVE PASS
+scenario {"foe":"AZ","ok":true,"from":"Tehran","to":"Baku","units":37}
+  [page] grandlive: grandBattleStart sync 767 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":63,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 11837 ms, Loading 3D models 155 ms, Building the battlefield 339 ms, Building the battlefield 839 ms, Preparing graphics 3183 ms, Deploying forces 16 ms, Deploying forces 7225 ms, total 24346 ms
+live 1 28.3s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":63,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.1799600000000041,"p":false,"h":false,"fs":null}],"running":true}
+scenario {"foe":"AZ","ok":true,"from":"Tehran","to":"Baku","units":37}
+  [page] grandlive: grandBattleStart sync 721 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":63,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 9780 ms, Loading 3D models 0 ms, Building the battlefield 1 ms, Building the battlefield 1009 ms, Preparing graphics 256 ms, Deploying forces 4 ms, Deploying forces 699 ms, total 12291 ms
+live 2 16.4s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":63,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.1566666666666672,"p":false,"h":false,"fs":null}],"running":true}
+
+GRANDLIVE2 PASS
+7.0s map open
+7.0s start {"turn":1,"day":0,"date":"1 Jan 2026","spd":0,"ph":"plan","modal":false}
+12.3s after Space {"turn":1,"day":3,"date":"4 Jan 2026","spd":2,"ph":"plan","modal":false}
+22.0s month rolled {"turn":3,"day":2,"date":"3 Mar 2026","spd":5,"ph":"plan","modal":false}
+23.8s paused {"turn":3,"day":2,"date":"3 Mar 2026","spd":0,"ph":"plan","modal":false}
+23.9s march {"ok":true,"hint":"Baku: arrives ~1 Apr 2026 (1 month)"}
+35.8s battle prompt {"turn":3,"day":0,"date":"1 Apr 2026","spd":5,"ph":"resolve","modal":true}
+GRANDRT PASS
