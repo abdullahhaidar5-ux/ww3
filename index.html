@@ -21466,7 +21466,7 @@ function glgPeace(a,b){const k=grWk(a,b);delete GC.war[k];if(GC.wsT)delete GC.ws
   grLog('Peace between '+gdNatName(a)+' and '+gdNatName(b)+' — truce for 8 months.',a);}
 // a war was declared: the victim's allies and guarantors (AI nations and the player's allies) join against the aggressor, depth-limited
 function glgDeclare(a,b){GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;if(GLG_D>0)return;GLG_D++;
-  try{const call=(GC.alz||[]).filter(z=>z[1].includes(b)&&!z[1].includes(a)).flatMap(z=>z[1]).concat((GC.gu||[]).filter(g=>g[1]===b).map(g=>g[0]));
+  try{try{gcoJoin(a,b);}catch(e){}const call=(GC.alz||[]).filter(z=>z[1].includes(b)&&!z[1].includes(a)).flatMap(z=>z[1]).concat((GC.gu||[]).filter(g=>g[1]===b).map(g=>g[0]));
     for(const g of Array.from(new Set(call)).sort()){if(g===a||g===b||!GC.nat[g]||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
       GC.war[grWk(g,a)]=1;GC.wsT[grWk(g,a)]=GC.turn;grLog(gdNatName(g)+' joins the war against '+gdNatName(a)+' to defend '+gdNatName(b)+'.',g);}
     if(GC.vas){const side=(x,y)=>{for(const v of GC.vas){const j=v[0]===x?v[1]:v[1]===x?v[0]:null;if(j&&j!==y&&GC.nat[j]&&!GC.nat[j].dead&&!grAtWar(j,y)&&!grVasPair(j,y)){GC.war[grWk(j,y)]=1;GC.wsT[grWk(j,y)]=GC.turn;grLog(gdNatName(j)+' joins the war against '+gdNatName(y)+(v[0]===x?' as a vassal of ':' as overlord of ')+gdNatName(x)+'.',j);}}};side(a,b);side(b,a);}   // vassals (13i GR_VASSALS)
@@ -21856,6 +21856,60 @@ npTab('fin','🏦','Finance',(code,body,c)=>{const N=ginN(code),own=c.own&&code=
     b.disabled=N.infl<=0||!N.pp||N.pp.pol<GIN_COST;b.onclick=()=>{const e=ginCut(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);
     const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Political points: '+Math.floor(N.pp?N.pp.pol:0);body.appendChild(p);}});
 alAdd('infl','🏦','Inflation',c=>{const N=ginN(c);return N&&N.infl>=10?{n:Math.round(N.infl)+'%',tip:'inflation is high — open the Finance tab',go:()=>npOpen(c,'fin')}:null;});
+// 13x-gpropa.js — lane G B5c: PROPAGANDA WAR + WAR ECONOMY + GOVERNMENT <-> WAR SUPPORT. Everything rides the ONE war-support meter (wsOf, 13v-gwarsup) and the ONE modifier engine (GMOD).
+// Reaction chain: you spend Diplomatic points to hit an enemy's morale at home -> its war support drops (style decides how much) -> recruits/income fall, unrest rises, forced peace nears;
+// counter-play: the target can run counter-propaganda (halves hits for 6 months) and the world dislikes a propagandist a little; cost: 30 Diplomatic points + opinion.
+// State: N.pgT[target]=month of last hit, N.pgC=month counter-propaganda ends, N.pgH=month last hit on us, N.gvT=month of last government check. All in GC.nat (saved). Deterministic.
+const PG_COST=30, PG_CD=4, PG_HIT=12, PG_COUNTER=20, PG_CLEN=6;
+// how much each style shrugs off enemy messaging (x hit): Zealous hard to shake, Professional resistant, Home defenders shaken when fighting abroad, Firepower-reliant hurt by casualty news
+const PG_RES={zeal:.4,prof:.5,home:1,fire:1.25};
+// war economy: high war support lifts output; same size for every style, different story (equal value)
+const WE_ROWS=[['zeal','Volunteer labour'],['prof','Efficient war industry'],['home','Home-front drives'],['fire','Arms-industry output']];
+GMOD_COND.pws=(k,arg)=>{if(!GC||!GC.nat[k])return false;return wsStyle(k)===arg&&wsOf(k)>=60;};
+for(const [s,n] of WE_ROWS)GMOD_ROWS.push({id:'we_'+s,src:n+' (war support 60%+)',scope:'nation',stat:'income',mul:1.04,cond:'pws:'+s});
+// government <-> war support: one data row per style (what high / low support does to the government)
+const PG_GOV={zeal:{n:'Legitimacy',hi:'Fervour steadies the leadership: unrest eases in every province',lo:'The faithful grow restless: unrest creeps up'},
+  prof:{n:'Approval',hi:'Voters and the staff approve: stability rises at the two-yearly review',lo:'The review goes badly: stability falls'},
+  home:{n:'Unity',hi:'The nation is united: unrest eases',lo:'Home-front quarrels: unrest creeps up'},
+  fire:{n:'World opinion',hi:'Clean wins impress the world: opinion of us improves',lo:'Bad news abroad: opinion of us sours'}};
+function pgN(c){const N=GC&&GC.nat[c];if(!N)return null;if(!N.pgT)N.pgT={};return N;}
+function pgCountered(c){const N=pgN(c);return !!N&&(N.pgC||0)>GC.turn;}
+function pgCan(a,b){const N=pgN(a);if(!N||!N.pp)return 'Not available.';if(!GC.nat[b]||GC.nat[b].dead||!grAtWar(a,b))return 'Only at war with them.';
+  const l=GC.turn-(N.pgT[b]===undefined?-99:N.pgT[b]);if(l<PG_CD)return 'Again in '+(PG_CD-l)+' months.';if(N.pp.dip<PG_COST)return 'Needs '+PG_COST+' Diplomatic points.';return '';}
+function pgHitSize(a,b){const sk=wsStyle(b);let h=PG_HIT*(PG_RES[sk]||1);
+  if(sk==='home'){const abroad=GC.armies.some(x=>x.o===b&&x.u.length&&GC.prov[x.at]&&GC.prov[x.at].o!==b);h*=abroad?1.5:.6;}
+  if(sk==='fire'&&wsN(b).wsW>3)h*=1.2;if(pgCountered(b))h*=.5;return Math.round(h*10)/10;}
+function pgRun(a,b){const e=pgCan(a,b);if(e)return e;const N=pgN(a),T=wsN(b),h=pgHitSize(a,b);N.pp.dip-=PG_COST;N.pgT[b]=GC.turn;T.ws=Math.max(0,T.ws-h);GC.nat[b].pgH=GC.turn;
+  for(const c of Object.keys(GC.nat).sort())if(c!==a&&!GC.nat[c].dead&&c!==b)gdRel(c,a,-.5);try{gdRel(a,b,-6);}catch(x){}
+  if(a===GC.me||b===GC.me)grLog((a===GC.me?'Our broadcasts hit '+gdNatName(b)+': their war support -'+h+'.':gdNatName(a)+' runs propaganda against us: war support -'+h+'.'),a);return '';}
+function pgCounter(c){const N=pgN(c);if(!N||!N.pp)return 'Not available.';if(pgCountered(c))return 'Already running.';if(N.pp.dip<PG_COUNTER)return 'Needs '+PG_COUNTER+' Diplomatic points.';N.pp.dip-=PG_COUNTER;N.pgC=GC.turn+PG_CLEN;
+  if(c===GC.me)grLog('Counter-propaganda: enemy messaging counts half for '+PG_CLEN+' months.',c);return '';}
+function pgGov(c){const N=GC.nat[c],sk=wsStyle(c),v=wsOf(c);
+  if(sk==='zeal'||sk==='home'){const d=v>=65?-1:v<30?1:0;if(d)for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c){GC.prov[p.i].un=Math.max(0,Math.min(100,GC.prov[p.i].un+d));}}
+  else if(sk==='prof'){if(GC.turn%24===0&&N.gvT!==GC.turn){N.gvT=GC.turn;if(N.stab===undefined){N.stab=0;N.stP=0;}const d=v>=60?1:v<40?-1:0;N.stab=Math.max(-3,Math.min(3,N.stab+d));if(d&&c===GC.me)grLog('Two-yearly review: '+(d>0?'approval is high, stability rises.':'approval is low, stability falls.'),c);}}
+  else if(sk==='fire'){const d=v>=70?.5:v<40?-.5:0;if(d)for(const o of Object.keys(GC.nat).sort())if(o!==c&&!GC.nat[o].dead)gdRel(o,c,d);}}
+function pgMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead)continue;wsN(c);pgN(c);
+    if(c!==GC.me&&N.pp){ // AI: counter if hit, else hit the enemy whose morale is most breakable, in sorted order
+      if(N.pgH===GC.turn-1&&N.pp.dip>=PG_COUNTER+30)pgCounter(c);
+      const foes=gdEnemies(c).sort();if(foes.length&&N.pp.dip>=PG_COST+40){let best=null,bh=0;for(const f of foes){if(pgCan(c,f))continue;const h=pgHitSize(c,f);if(h>bh+1e-9){bh=h;best=f;}}if(best&&bh>=6)pgRun(c,best);}}
+    pgGov(c);}
+  GMOD_C.cache.clear();}
+GMOD_HOOKS.push(pgMonth);
+npTab('prop','📢','Propaganda',(code,body,c)=>{const N=pgN(code),sk=wsStyle(code),G=PG_GOV[sk];const own=c.own&&code===GC.me;
+  let h='<div style="opacity:.85;margin-bottom:8px">Messaging reaches the enemy home front. How far it gets depends on the target\'s national character: Zealous nations are hard to shake, Professional armies resist, Home defenders tire of fighting abroad, Firepower-reliant nations hate casualty news. Everyone is hit by the same size of effort; nobody has it easy.</div>'+
+  '<div style="margin:8px 0"><b>War economy:</b> war support 60%+ gives +4% income ('+WE_ROWS.find(r=>r[0]===sk)[1]+'). Now: '+Math.round(wsOf(code))+'%.</div>'+
+  '<div style="margin:8px 0"><b>'+G.n+':</b> '+G.hi+' (high), '+G.lo.charAt(0).toLowerCase()+G.lo.slice(1)+' (low).</div>'+
+  '<div style="margin:8px 0">'+(pgCountered(code)?'Counter-propaganda is running until month '+N.pgC+'.':'No counter-propaganda running.')+'</div>';
+  body.innerHTML=h;
+  if(!own)return;
+  const foes=gdEnemies(code).sort();const box=document.createElement('div');body.appendChild(box);
+  if(!foes.length)box.innerHTML='<i>Not at war — nobody to broadcast against.</i>';
+  for(const f of foes){const row=document.createElement('div');row.style.cssText='display:flex;gap:10px;align-items:center;margin:5px 0';const e=pgCan(code,f);
+    row.innerHTML='<span style="min-width:170px">'+gdNatName(f)+' — war support '+Math.round(wsOf(f))+'%</span>';const b=document.createElement('button');b.textContent='Broadcast (-'+PG_COST+' Dip, about -'+pgHitSize(code,f)+')';b.style.cssText='font-size:15px;padding:4px 12px;cursor:pointer';b.disabled=!!e;b.title=e||'Spend Diplomatic points to lower their war support';
+    b.onclick=()=>{const x=pgRun(code,f);if(x)grLog(x,code);npDraw();};row.appendChild(b);box.appendChild(row);}
+  const cb=document.createElement('button');cb.textContent='Counter-propaganda (-'+PG_COUNTER+' Dip, '+PG_CLEN+' months)';cb.style.cssText='font-size:15px;padding:4px 12px;cursor:pointer;margin-top:8px';const ce=pgCountered(code)?'Already running':'';cb.disabled=!!ce||!N.pp||N.pp.dip<PG_COUNTER;cb.onclick=()=>{const x=pgCounter(code);if(x)grLog(x,code);npDraw();};body.appendChild(cb);
+  const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Diplomatic points: '+Math.floor(N.pp?N.pp.dip:0);body.appendChild(p);});
+alAdd('prop','📢','Propaganda',c=>{const N=GC.nat[c];return N&&N.pgH===GC.turn?{n:'!',tip:'enemy propaganda hit our war support — consider counter-propaganda',go:()=>npOpen(c,'prop')}:null;});
 // 13x-gtrade.js — lane B5 slice 2: TRADE NODES (EU4-style) on top of grand2's trade/oil market (geTrade stays; this adds the shared "world trade" layer).
 // Every sea zone is a node. Its value = the ports around it (development, towns, oil exports x the oil price index), x1.5 at a chokepoint, x0.3 while the strait is closed;
 // 30% of a node's value flows downstream into the busiest neighbouring zone. Each nation's trade POWER there = its ports (blockaded ports count 0, a rival at war that holds the strait
@@ -21900,6 +21954,38 @@ npTab('trade','⚓','Trade',(code,body,c)=>{const N=GC.nat[code],own=c.own&&code
     else if(own&&s>0&&N.pp){const b=document.createElement('button');b.textContent='Push ('+GTR_PUSH+')';b.style.cssText='font-size:13px;cursor:pointer;padding:1px 6px';b.title='Spend Diplomatic points: +40% trade power here for a year';b.disabled=N.pp.dip<GTR_PUSH;b.onclick=()=>{const e=gtrPush(code,n.i);if(e)grLog(e,code);npDraw();};td.appendChild(b);}
     tr.appendChild(td);tbl.appendChild(tr);}
   body.appendChild(tbl);});
+// 13y-gcoal.js — lane G B6: ALARM (EU4 "aggressive expansion") + COALITIONS. Taking land alarms the world; past the threshold neighbours who dislike you band together,
+// sour on you, and JOIN any war you start (hooked in glgDeclare via gcoJoin). Counter-play: Ease tensions (Diplomatic points) or just stop conquering (alarm fades 5%/month);
+// cost: alarm also drops your opinion with everyone a little. Equal for every nation. State: N.ae (alarm), N.aeP (provinces seen last month), GC.coal={target:[members]}. Saved, deterministic.
+const AE_PER=3, AE_THR=8, AE_DECAY=.05, AE_EASE=40, AE_EASE_DIP=40;
+function aeN(c){const N=GC&&GC.nat[c];if(!N)return null;if(N.ae===undefined){N.ae=0;N.aeP=-1;}return N;}
+function aeCount(c){let n=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)n++;return n;}
+function gcoMembers(t){return (GC.coal&&GC.coal[t])||[];}
+function gcoForm(t){GC.coal=GC.coal||{};const mem=[];
+  for(const o of Object.keys(GC.nat).sort()){const N=GC.nat[o];if(o===t||N.dead||!N.ai||grAllied(o,t)||grVasPair&&grVasPair(o,t))continue;
+    if(gdOp(o,t)<10||gdNear(o,t)||gdNear(t,o)){if(gdOp(o,t)<=25)mem.push(o);}}
+  if(mem.length<2)return false;GC.coal[t]=mem;for(const o of mem)gdRel(o,t,-10);
+  grLog('A coalition forms against '+gdNatName(t)+': '+mem.slice(0,4).map(gdNatName).join(', ')+(mem.length>4?' and '+(mem.length-4)+' more':'')+' fear its expansion.',t);
+  if(t===GC.me)try{gevToast(['⚔ A coalition has formed against us ('+mem.length+' nations)']);}catch(e){}return true;}
+function gcoEase(c){const N=aeN(c);if(!N||!N.pp)return 'Not available.';if(N.ae<=0)return 'Nobody is alarmed.';if(N.pp.dip<AE_EASE_DIP)return 'Needs '+AE_EASE_DIP+' Diplomatic points.';
+  N.pp.dip-=AE_EASE_DIP;N.ae=Math.max(0,N.ae-AE_EASE);for(const o of gcoMembers(c))gdRel(o,c,4);if(N.ae<AE_THR/2&&GC.coal&&GC.coal[c]){delete GC.coal[c];if(c===GC.me)grLog('Tensions eased: the coalition against us dissolves.',c);}return '';}
+// called from glgDeclare: the aggressor's coalition members join the victim's side
+function gcoJoin(a,b){const m=gcoMembers(a);for(const g of m){if(g===a||g===b||!GC.nat[g]||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
+    GC.war[grWk(g,a)]=1;GC.wsT=GC.wsT||{};GC.wsT[grWk(g,a)]=GC.turn;grLog(gdNatName(g)+' joins the coalition war against '+gdNatName(a)+'.',g);}}
+function gcoMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead)continue;aeN(c);const n=aeCount(c);
+    if(N.aeP>=0&&n>N.aeP){const g=(n-N.aeP)*AE_PER;N.ae+=g;for(const o of Object.keys(GC.nat).sort())if(o!==c&&!GC.nat[o].dead)gdRel(o,c,-g*.3);}
+    N.aeP=n;N.ae=Math.max(0,N.ae*(1-AE_DECAY)-.1);
+    if(N.ae>=AE_THR&&!gcoMembers(c).length)gcoForm(c);
+    else if(N.ae<AE_THR/2&&gcoMembers(c).length){delete GC.coal[c];if(c===GC.me)grLog('The coalition against us has dissolved.',c);}
+    else if(c!==GC.me&&N.ae>=AE_THR&&N.pp&&N.pp.dip>=AE_EASE_DIP+50)gcoEase(c);}}
+GMOD_HOOKS.push(gcoMonth);
+npTab('coal','⚔','Alarm & coalitions',(code,body,c)=>{const N=aeN(code),own=c.own&&code===GC.me,m=gcoMembers(code),a=Math.round(N.ae*10)/10;const col=a>=AE_THR?'#ff9a8a':a>=AE_THR/2?'#e8d28a':'#8fd18f';
+  body.innerHTML='<div style="font-size:24px"><b style="color:'+col+'">Alarm '+a+'</b> <span style="opacity:.7;font-size:15px">(coalition forms at '+AE_THR+')</span></div>'+
+  '<div style="opacity:.85;margin:8px 0">Every province taken adds alarm, souring the world on you. Past the limit, nations that dislike you or border you form a coalition and join any war you start. Alarm fades slowly if you stop conquering.</div>'+
+  '<div style="margin:8px 0"><b>Coalition:</b> '+(m.length?m.map(gdNatName).join(', '):'none')+'</div>';
+  const inC=Object.keys(GC.coal||{}).filter(t=>GC.coal[t].includes(code));if(inC.length)body.insertAdjacentHTML('beforeend','<div style="margin:8px 0"><b>'+gdNatName(code)+' sits in the coalition against:</b> '+inC.map(gdNatName).join(', ')+'</div>');
+  if(own){const b=document.createElement('button');b.textContent='Ease tensions (-'+AE_EASE_DIP+' Dip, -'+AE_EASE+' alarm)';b.style.cssText='font-size:15px;padding:4px 14px;cursor:pointer';b.disabled=!!(gcoEase&&(N.ae<=0||!N.pp||N.pp.dip<AE_EASE_DIP));b.onclick=()=>{const e=gcoEase(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);}});
+alAdd('coal','⚔','Coalition',c=>{const m=gcoMembers(c);return m.length?{n:m.length,tip:'a coalition of '+m.length+' nations stands against us',go:()=>npOpen(c,'coal')}:null;});
 // A5 FORCE LIMIT + ARMY TRADITION (laneA 2026-11-07, EU4-style; data rows in the ONE modifier engine 13k, no second upkeep system).
 // Force limit = the army value a nation can field at normal upkeep. It starts 15% above each nation's opening army (realistic start)
 // and grows/shrinks with the development it holds (conquest raises it, losing land lowers it); GMOD stat 'forceLimit' scales it.
@@ -21922,6 +22008,39 @@ function gfTradMor(o){const N=GC&&GC.nat[o];return N?Math.floor((N.trad||0)/10):
 // top-bar chip (13c guTop hook): "Army 82k / 100k" — red when over the limit
 function gfChip(){if(!GC||!GC.me||!GC.nat[GC.me])return '';const v=geArmyVal(GC.me),L=grFL(GC.me),o=v>L,N=GC.nat[GC.me];
   return '<span title="Force limit: armies above it cost 50% more upkeep. It grows with the land you hold. Army tradition '+Math.round(N.trad||0)+'/100 (battles raise it; it lifts army morale)" style="opacity:.92'+(o?';color:#ff9d8e':'')+'">⚔ <b>'+Math.round(v/1000)+'k</b>/'+Math.round(L/1000)+'k · ★'+Math.round(N.trad||0)+'</span>';}
+// 13z-gresearch.js — lane G B7: RESEARCH (spend capital points on three tracks) + CABINET (each minister's skill adds a small bonus). All effects are GMOD rows; one buy function for player and AI.
+// Chain: points -> track level -> income / diplomacy points / manpower+fire support; counter-play: rivals out-research you (AI buys in fixed order); cost: the points are not spent on ideas, development or stability.
+// Cabinet: 4 fictional ministers per nation (pplRoster); skill 1-3 comes from the name (same every game); Foreign->Diplomatic points, Defence->Military points, Finance->income, Interior->Political points.
+// State: N.rs={gov,dip,mil} levels (saved). Deterministic.
+const RS_TRACKS={gov:{n:'Governance',pool:'pol',ic:'🏛',txt:'+2% income per level'},dip:{n:'Diplomacy',pool:'dip',ic:'🕊',txt:'+4% Diplomatic points per level'},mil:{n:'Armed forces',pool:'mil',ic:'🎖',txt:'+2% manpower and +3% fire support per level'}};
+const RS_COST=[40,55,70,90,110], RS_MAX=5;
+for(let L=1;L<=RS_MAX;L++){GMOD_ROWS.push({id:'rs_gov'+L,src:'Governance research '+L,scope:'nation',stat:'income',add:.02,cond:'rs:gov:'+L},
+  {id:'rs_dip'+L,src:'Diplomacy research '+L,scope:'nation',stat:'ppDip',add:.04,cond:'rs:dip:'+L},
+  {id:'rs_man'+L,src:'Armed forces research '+L,scope:'nation',stat:'manpower',add:.02,cond:'rs:mil:'+L},
+  {id:'rs_fire'+L,src:'Armed forces research '+L,scope:'nation',stat:'fireSupport',add:.03,cond:'rs:mil:'+L});}
+GMOD_COND.rs=(k,arg)=>{const N=GC&&GC.nat[k];if(!N||!N.rs)return false;const [t,l]=arg.split(':');return (N.rs[t]|0)>=+l;};
+const CAB=[['dip','ppDip','Foreign Affairs',.05],['mil','ppMil','Defence',.05],['pol','income','Finance',.015],['pol','ppPol','Interior',.05]]; // post -> [pool, stat, title, per skill]
+function cabSkill(c,i){try{const p=pplOf(c,'minister',i);return p?(pplHash(pplName(p))%3)+1:1;}catch(e){return 1;}}
+GMOD_COND.cab=(k,arg)=>{if(!GC||!GC.nat[k])return false;const [i,s]=arg.split(':');return cabSkill(k,+i)===+s;};
+for(let i=0;i<CAB.length;i++)for(let s=1;s<=3;s++)GMOD_ROWS.push({id:'cab'+i+'_'+s,src:'Minister of '+CAB[i][2]+' (skill '+s+')',scope:'nation',stat:CAB[i][1],add:CAB[i][3]*s,cond:'cab:'+i+':'+s});
+function rsN(c){const N=GC&&GC.nat[c];if(!N)return null;if(!N.rs)N.rs={gov:0,dip:0,mil:0};return N;}
+function rsBuy(c,t){const N=rsN(c);if(!N||!RS_TRACKS[t])return 'Not available.';gidN(c);const L=N.rs[t];if(L>=RS_MAX)return 'Fully researched.';const k=RS_TRACKS[t].pool;
+  if(N.pp[k]<RS_COST[L])return 'Needs '+RS_COST[L]+' '+GID_POOL[k]+' points.';N.pp[k]-=RS_COST[L];N.rs[t]=L+1;GMOD_C.cache.clear();
+  if(c===GC.me)grLog('Research: '+RS_TRACKS[t].n+' reaches level '+(L+1)+'.',c);return '';}
+function rsMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead||c===GC.me||!N.ai)continue;rsN(c);gidN(c);
+    // AI: buys the cheapest next level it can afford once its idea groups are served (keeps 60 points spare)
+    for(const t of ['gov','mil','dip']){const L=N.rs[t];if(L<RS_MAX&&N.pp[RS_TRACKS[t].pool]>=RS_COST[L]+60){rsBuy(c,t);break;}}}}
+GMOD_HOOKS.push(rsMonth);
+npTab('res','🔬','Research & cabinet',(code,body,c)=>{const N=rsN(code),own=c.own&&code===GC.me;gidN(code);body.innerHTML='';
+  const h=document.createElement('div');h.style.cssText='opacity:.85;margin-bottom:8px';h.textContent='Research costs capital points, so it competes with ideas, development and stability. Every nation has the same three tracks and the same costs.';body.appendChild(h);
+  for(const t of Object.keys(RS_TRACKS)){const T=RS_TRACKS[t],L=N.rs[t],row=document.createElement('div');row.style.cssText='display:flex;gap:12px;align-items:center;margin:6px 0';
+    row.innerHTML='<span style="min-width:200px">'+T.ic+' <b>'+T.n+'</b> — level '+L+'/'+RS_MAX+'</span><span style="opacity:.75;min-width:260px">'+T.txt+'</span>';
+    if(own){const b=document.createElement('button');b.style.cssText='font-size:15px;padding:4px 12px;cursor:pointer';b.textContent=L>=RS_MAX?'Done':'Research (-'+RS_COST[L]+' '+GID_POOL[T.pool]+')';b.disabled=L>=RS_MAX||N.pp[T.pool]<RS_COST[L];b.onclick=()=>{const e=rsBuy(code,t);if(e)grLog(e,code);npDraw();};row.appendChild(b);}
+    body.appendChild(row);}
+  const ch=document.createElement('div');ch.style.cssText='margin-top:14px';ch.innerHTML='<b>Cabinet</b> <span style="opacity:.7">(skill 1–3 from the minister; bonus to the matching pool)</span>';body.appendChild(ch);
+  for(let i=0;i<CAB.length;i++){let nm='?';try{nm=pplName(pplOf(code,'minister',i));}catch(e){}const s=cabSkill(code,i),r=document.createElement('div');r.style.margin='4px 0';
+    r.textContent='Minister of '+CAB[i][2]+': '+nm+' — skill '+'★'.repeat(s)+'☆'.repeat(3-s)+' ('+(CAB[i][1]==='income'?'+'+Math.round(CAB[i][3]*s*1000)/10+'% income':'+'+Math.round(CAB[i][3]*s*100)+'% '+({ppDip:'Diplomatic',ppMil:'Military',ppPol:'Political'})[CAB[i][1]]+' points')+')';body.appendChild(r);}});
+alAdd('res','🔬','Research',c=>{const N=rsN(c);if(!N||c!==GC.me)return null;gidN(c);for(const t of Object.keys(RS_TRACKS)){const L=N.rs[t];if(L<RS_MAX&&N.pp[RS_TRACKS[t].pool]>=RS_COST[L]+100)return {n:'!',tip:'enough points banked to research '+RS_TRACKS[t].n,go:()=>npOpen(c,'res')};}return null;});
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.

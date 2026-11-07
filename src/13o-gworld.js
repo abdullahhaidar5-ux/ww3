@@ -9,7 +9,7 @@ function glgPeace(a,b){const k=grWk(a,b);delete GC.war[k];if(GC.wsT)delete GC.ws
   grLog('Peace between '+gdNatName(a)+' and '+gdNatName(b)+' — truce for 8 months.',a);}
 // a war was declared: the victim's allies and guarantors (AI nations and the player's allies) join against the aggressor, depth-limited
 function glgDeclare(a,b){GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;if(GLG_D>0)return;GLG_D++;
-  try{const call=(GC.alz||[]).filter(z=>z[1].includes(b)&&!z[1].includes(a)).flatMap(z=>z[1]).concat((GC.gu||[]).filter(g=>g[1]===b).map(g=>g[0]));
+  try{try{gcoJoin(a,b);}catch(e){}const call=(GC.alz||[]).filter(z=>z[1].includes(b)&&!z[1].includes(a)).flatMap(z=>z[1]).concat((GC.gu||[]).filter(g=>g[1]===b).map(g=>g[0]));
     for(const g of Array.from(new Set(call)).sort()){if(g===a||g===b||!GC.nat[g]||GC.nat[g].dead||grAtWar(g,a)||grAllied(g,a)||gdTruce(g,a))continue;
       GC.war[grWk(g,a)]=1;GC.wsT[grWk(g,a)]=GC.turn;grLog(gdNatName(g)+' joins the war against '+gdNatName(a)+' to defend '+gdNatName(b)+'.',g);}
     if(GC.vas){const side=(x,y)=>{for(const v of GC.vas){const j=v[0]===x?v[1]:v[1]===x?v[0]:null;if(j&&j!==y&&GC.nat[j]&&!GC.nat[j].dead&&!grAtWar(j,y)&&!grVasPair(j,y)){GC.war[grWk(j,y)]=1;GC.wsT[grWk(j,y)]=GC.turn;grLog(gdNatName(j)+' joins the war against '+gdNatName(y)+(v[0]===x?' as a vassal of ':' as overlord of ')+gdNatName(x)+'.',j);}}};side(a,b);side(b,a);}   // vassals (13i GR_VASSALS)
