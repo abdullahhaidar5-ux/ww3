@@ -66,7 +66,11 @@ try {
     let f = tryFind(); if (!f) { for (const a of GC.armies.filter(x => x.o === me && x.u.length && !x.fl)) { for (const j of GCM.P[a.at].adj) { const P = GCM.P[j]; if (P.land && GC.prov[j].o !== me) { foe = GC.prov[j].o; break; } } if (foe) break; } if (foe) grDeclare(me, foe); f = tryFind(); }
     if (!f) return { err: 'no army next to an enemy' }; const [a, j] = f; GV.selA = a.id; GV.sel = a.at; const r = grOrderMove(a.id, j); guMoveTo(a.id, j); grandMapRefresh(); return { ok: !!(r && r.ok), hint: GV.hint }; });
   console.log(el(), 'march', JSON.stringify(sc)); if (!/arrives ~/.test(sc.hint || '')) fails.push('move hint shows no arrival date: ' + sc.hint);
-  await page.keyboard.press('Space');
+  // the marching army must slide along its road as days pass (not jump at month end)
+  const pos = () => ev(() => { const e = G3 && G3.arm && G3.arm.get(GV.selA); const a = GC.armies.find(x => x.id === GV.selA); return e ? { x: e.x, z: e.z, f: a ? grSlide(a) : -1, day: GC.day | 0 } : null; });
+  const p0 = await pos(); await ev(() => guSpeed(3)); await page.waitForTimeout(2600); const p1 = await pos(); console.log(el(), 'slide', JSON.stringify([p0, p1]));
+  if (p0 && p1 && !(p1.f > p0.f && Math.hypot(p1.x - p0.x, p1.z - p0.z) > 1)) fails.push('marching army does not slide along its road as days pass ' + JSON.stringify([p0, p1]));
+  await shot('rt-3-sliding');
   await page.waitForFunction(() => { const m = document.getElementById('gModal'); return m && /Fight it live/.test(m.textContent); }, null, { timeout: 60000, polling: 200 }).catch(() => fails.push('no battle prompt after the month closed'));
   const b1 = await st(); await page.waitForTimeout(2000); const b2 = await st(); console.log(el(), 'battle prompt', JSON.stringify(b2)); await shot('rt-2-battle-pauses');
   if (b1.day !== b2.day || b1.turn !== b2.turn) fails.push('the clock runs while a battle prompt is open');
