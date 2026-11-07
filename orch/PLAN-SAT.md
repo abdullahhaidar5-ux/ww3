@@ -249,7 +249,7 @@ Round 6 (Abdullah 22:26) — after the slice, then kaizen; extend existing syste
 - [ ] **RF7 Ammo & fuel in battle** (Lane F): ammo already exists — make running dry visible + trucks resupply under fire (extend, don't duplicate).
 - [ ] **RF8 Civilians in towns** (Lane F): civilians already exist — flee fighting; harm → world opinion (extend).
 - [ ] **RF9 Wounded & medevac** (Lane F): medics already exist — wounded dragged out return later (extend).
-- [ ] **RF10 Last stand** (Lane F): surrounded units get a desperate bonus (morale system, all styles).
+- [x] **RF10 Last stand** (Lane F; laneF 2026-11-07: surrounded units already held ground pinned (supp .75); now also +25% damage in dmgOut while in last stand, all styles; cost = pinned, no retreat; 03-sim sim change): surrounded units get a desperate bonus (morale system, all styles).
 - [ ] **RF11 Battle music swells** (Lane D): music intensity rises with big clashes (09-audio calm↔combat, add a peak layer).
 Round 7 (Abdullah 22:28) — after the slice, then kaizen; extend existing systems:
 - [ ] **RF12 Faction unique units** (Lane D): every nation 2 signature units of its own (not copies), balanced; NEWNAT data rows.
