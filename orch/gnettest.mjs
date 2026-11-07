@@ -80,6 +80,15 @@ try {
   // the friend sets a province's tax (the Low/Normal/High buttons call grSetTax)
   const tx = await cl.evaluate(() => { const p = GCM.P.find(q => q.land && GC.prov[q.i].o === 'SA'); const v = GC.prov[p.i].tax === 0 ? 2 : 0; grSetTax('SA', p.i, v); return { pi: p.i, v }; });
   if (!await host.waitForFunction(t => GC.prov[t.pi].tax === t.v, tx, { timeout: 40000, polling: 250 }).then(() => true, () => false)) fails.push('the friend\'s tax order never reached the host');
+  // A2b slice 3: a friend's event lands on the friend's own map (not auto-picked by the host's AI) and their choice settles on the host
+  await host.evaluate(() => { gevFire('SA', 'trade'); GNT.dirty = 1; GNT.last = ''; });
+  const evq = await host.evaluate(() => (GC.ev.pend || []).some(p => p[0] === 'SA' && p[1] === 'trade'));
+  if (!evq) fails.push('the host auto-picked the friend\'s event instead of asking the friend');
+  else if (!await cl.waitForFunction(() => (GC.ev && GC.ev.pend || []).some(p => p[0] === 'SA' && p[1] === 'trade'), null, { timeout: 40000, polling: 250 }).then(() => true, () => false)) fails.push('the friend\'s event never reached the friend');
+  else { await cl.evaluate(() => { gevShow(); }); const mb = await cl.evaluate(() => { const m = document.getElementById('gModal'); const b = m && [...m.querySelectorAll('button')].find(x => /Decline politely/.test(x.textContent)); if (b) b.click(); return !!b; });
+    if (!mb) fails.push('the friend saw no event window');
+    else if (!await host.waitForFunction(() => (GC.ev.hist || []).some(h => h[1] === 'SA' && h[2] === 'trade' && h[3] === 1) && !(GC.ev.pend || []).some(p => p[0] === 'SA'), null, { timeout: 40000, polling: 250 }).then(() => true, () => false)) fails.push('the friend\'s event choice never settled on the host');
+    else console.log(el(), 'friend answered their own event'); }
   // a forged order for someone else's army is refused
   const forged = await cl.evaluate(() => { const a = GC.armies.find(x => x.o === 'IR' && !x.path.length && !x.fl); if (!a) return null; GNT.g.emit('gcmd', { k: 'cmd', f: 'grSplit', a: [a.id] }); return { id: a.id, n: a.u.length }; });
   // host plays at speed 5: the friend's calendar follows into the next month
@@ -127,6 +136,8 @@ try {
   await click(cl, 'button', '^Save & exit');
   await wait(host, () => GC.nat.SA.ai === true, null, 15000, 'SA handed back to the AI');
   console.log(el(), 'friend left, AI took over');
+  { const lp = await host.evaluate(() => { gevS().pend.push(['SA', 'trade']); gevTurn(); return (GC.ev.pend || []).some(p => p[0] === 'SA'); });
+    if (lp) fails.push('an event left open by a friend who quit was never answered by the AI'); }
 } catch (e) { fails.push('error: ' + e.message); }
 if (errs.length) fails.push(...errs.slice(0, 6));
 await browser.close(); server.close();
