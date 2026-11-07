@@ -23141,7 +23141,7 @@ function gnkMonth(){if(!GC||!GC.nat)return;const alive=Object.keys(GC.nat).filte
     if(N.st>=1&&N.st<=2){N.p++;if(N.p>=GNK.months[N.st]){N.st++;N.p=0;if(N.st===3){N.w++;grLog('Nuclear test: '+gnkName(c)+' has tested a device.','');
         for(const o of alive)if(o!==c)gdRel(o,c,-12);}}}
     else if(N.st===3){N.p++;if(N.p%12===0&&N.w<GNK.cap){N.w++;}}
-    if(N.w>0)A.cash-=N.w*GNK.upkeep;
+    if(N.w>0)A.cash-=Math.min(Math.max(0,A.cash),N.w*GNK.upkeep);   /* upkeep never pushes the treasury below zero (it drains what is there) */
     // a programme is seen: the world grows wary of it (slow, every month until it becomes a warhead)
     if(N.st>=1&&N.st<3)for(const o of alive)if(o!==c)gdRel(o,c,-1);
     // AI nations at war with a nuclear power may start their own programme (cascade); rare and seeded
