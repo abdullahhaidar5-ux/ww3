@@ -29,7 +29,7 @@ const GEV_ROWS=[
  {id:'strikegen',t:'General strike called',x:'Unions have called a nationwide stoppage over the cost of living.',w:2,c:'peace',o:[{t:'Agree a wage deal ($450)',fx:[['cash',-450],['un',-6]]},{t:'Break the strike',fx:[['un',12],['mod','warSupport',-.04,6],['cash',200]]}]},
  {id:'protest',t:'Protests in the capital',x:'Crowds have gathered outside government buildings demanding change.',w:2,c:'peace',o:[{t:'Open talks with the organisers ($150)',fx:[['cash',-150],['un',-5]]},{t:'Disperse the crowds',fx:[['un',10],['mod','warSupport',-.03,4]]}]},
  {id:'diaspora',t:'Money from abroad',x:'Emigrant communities have sent home a wave of remittances.',w:2,c:'always',o:[{t:'Invest it in local banks',fx:[['cash',350]]},{t:'Give it directly to families',fx:[['un',-4],['cash',150]]}]},
- {id:'volunteers',t:'Foreign volunteers arrive',x:'Fighters from abroad offer to join the war effort.',w:1,c:'war',o:[{t:'Accept them into the army',fx:[['man',30],['un',3]]},{t:'Turn them away',fx:[['mod','warSupport',.02,4]]}]},
+ {id:'volunteers',t:'Foreign volunteers arrive',x:'Fighters from abroad offer to join the war effort.',w:1,c:'war',o:[{t:'Accept them into the army',fx:[['man',30],['un',3]]},{t:'Send them home',fx:[['mod','warSupport',.02,4]]}]},
  {id:'techgift',t:'A university breakthrough',x:'Engineers have found a way to cut costs in the arms factories.',w:2,c:'always',o:[{t:'Fund the lab ($300)',fx:[['cash',-300],['mod','fireSupport',.08,12]]},{t:'Patent and sell it',fx:[['cash',350]]}]}];
 function gdNatName(c){const n=GCM.nats.get(c);return n?n.name:c;}
 function gevCond(c,code){const nat=GC.nat[code];const foes=gdEnemies(code);
