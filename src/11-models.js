@@ -1001,6 +1001,9 @@ function meRoofKit(o,m,e,T){const B=Bld(),R=mulberry(e.kind.length*131+(e.size|0
   W(-xe,zf,-7,zf);W(7,zf,xe,zf);W(-xe,zf,-xe,zf-26);W(xe,zf,xe,zf-26);
   for(const gx of [-7,7]){B.box(2.6,9,2.6,gx,4.5,zf,cap);B.box(3.2,.8,3.2,gx,9.2,zf,'#8d785a');B.box(1.1,1.1,1.1,gx,10.1,zf,'#e8dfb0');}
   B.box(14,.4,3,0,.25,zf,'#6d665a');
+  // slice 9: guard towers on the two far wall corners (legs, cabin with dark slit, roof, floodlight) and a camo-net lean-to beside the gate
+  for(const [tx,tz] of [[-xe,zf-26],[xe,zf-26]]){for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])B.box(.7,12,.7,tx+a*1.8,6,tz+b*1.8,'#5b5a50');B.box(.4,.4,5,tx,5,tz,'#5b5a50');B.box(5.6,.6,5.6,tx,12.2,tz,'#6b6a5e');B.box(5,2.6,5,tx,13.8,tz,'#8a8368');B.box(5.1,.9,3.8,tx,14.2,tz,'#15130f');B.box(6.4,.5,6.4,tx,15.4,tz,tc);B.box(5.6,1,.5,tx,12.9,tz+2.8,'#9a8f6e');B.box(.5,.5,.5,tx+(tx<0?3.4:-3.4),15.2,tz+2,'#e8dfb0');}
+  B.box(12,.3,9,-xe+10,5.2,zf-6,'#59604a',0,0,.2);for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])B.box(.4,5,.4,-xe+10+a*5.6,2.5,zf-6+b*4.2,'#4a4a44');
   const g=mesh(B.geo());g.castShadow=true;o.add(g);}
 function bldModel(e,o,T){let cfg=MODELS.ready&&BMOD[e.kind];if(cfg&&MEFAC.has(T.fac)&&BME[e.kind]&&MODELS.proto[BME[e.kind].m])cfg=Object.assign({},cfg,{list:cfg.list.map((q,i)=>i?q:Object.assign({},q,{m:BME[e.kind].m,size:BME[e.kind].size,ys:1}))});if(cfg&&e.kind==='shipyard'&&MEFAC.has(T.fac))cfg={list:cfg.list.filter(q=>q.part).map(q=>Object.assign({},q,{y:4}))};// ME naval base: code-built quay (04-gfx meGeo), keep the crane model
   if(!cfg||!cfg.list.every(q=>MODELS.proto[q.m]))return false;const P=o.userData.parts;
