@@ -75,7 +75,7 @@ const openTown = async () => { const m = await ev(() => { const t = tutTown(), r
 const shotAfter = async (n, name) => { await wait(500); await shot(String(n).padStart(2, '0') + '-' + name + '-after'); };
 
 async function startTut() {
-  await page.click('#tutorial');
+  await ev(() => document.getElementById('tutorial').click());
   await page.waitForFunction(() => !window.LOADING && G && G.tut && TUTS, null, { timeout: 900000, polling: 500 });
   await ev((big) => { try { MLOCK.broken = true; mlockOff(); } catch (e) {} window.__realRender = R3.render; R3.render = () => {}; SET.spd = 3; }, BIG);   // no GPU drawing between screenshots (software GL needs seconds per frame) - the game logic and the HUD run normally; --shots draws real frames just for each screenshot
 }

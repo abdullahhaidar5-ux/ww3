@@ -122,7 +122,8 @@ function g3Towns(){if(G3.towns)return G3.towns;const L=[];
       const cap=p.cap&&t===0;L.push({pi:p.i,x:X,z:Z,cap,n:cap?46:t===0?18:10,flat,east:reg==='EA'||reg==='SEA',t});}}
   return G3.towns=L;}
 function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],row:[],court:[],flat:[],tower:[],mosque:[],spire:[],disc:[],wall:[],derrick:[],field:[],spoil:[],pier:[]};
-  const push=(k,x,z,sx,sy,sz,ry,col)=>by[k].push([x,g3HeightAt(x,z),z,sx,sy,sz,ry,col]);
+  const SHK={house:1,gable:1,row:1,court:1,flat:1,tower:1,mosque:1,spire:1},SHD=[],sl=Math.hypot(G3L.sun[0],G3L.sun[2])||1,sdx=-G3L.sun[0]/sl,sdz=-G3L.sun[2]/sl,sth=Math.atan2(sdx,sdz);
+  const push=(k,x,z,sx,sy,sz,ry,col)=>{const h=g3HeightAt(x,z);by[k].push([x,h,z,sx,sy,sz,ry,col]);if(SHK[k]){const len=sy*2*(k==='tower'||k==='spire'?1.2:1)+sx*.6;SHD.push([x+sdx*len*.4,h+.2,z+sdz*len*.4,sx*.95,1,len,sth,[1,1,1]]);}};
   for(const t of T){const p=GCM.P[t.pi],SP=4.5,R=Math.sqrt(t.n*SP*SP/3.14)+3.5;push('disc',t.x,t.z,R*.82,1,R*.82,0,[1.22,1.18,1.08]);
     if(t.cap||p.wg&&t.t===0)by.wall.push([t.x,g3HeightAt(t.x,t.z),t.z,R+2,1,R+2,0,[1,1,1]]);
     const th=g3Hash(t.pi,t.t+31)*3.1416,ct=Math.cos(th),st=Math.sin(th),R2=Math.ceil(R/SP)+1,cells=[];
@@ -140,7 +141,10 @@ function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],ro
   const col=new THREE.Color();
   for(const k of Object.keys(by)){const L=by[k];if(!L.length)continue;const m=new THREE.InstancedMesh(A[k],G3.matLit,L.length),M=new THREE.Matrix4();
     L.forEach((r,i)=>{M.compose(new THREE.Vector3(r[0],r[1],r[2]),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r[6]),new THREE.Vector3(r[3],r[4],r[5]));m.setMatrixAt(i,M);col.setRGB(r[7][0],r[7][1],r[7][2]);m.setColorAt(i,col);});
-    m.instanceMatrix.needsUpdate=true;m.castShadow=false;grp.add(m);}}
+    m.instanceMatrix.needsUpdate=true;m.castShadow=false;grp.add(m);}
+  if(SHD.length){const sm=new THREE.InstancedMesh(new THREE.BoxGeometry(1,.05,1),new THREE.MeshBasicMaterial({color:0x1a1208,transparent:true,opacity:.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),SHD.length),M=new THREE.Matrix4();
+    SHD.forEach((r,i)=>{M.compose(new THREE.Vector3(r[0],r[1],r[2]),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r[6]),new THREE.Vector3(r[3],r[4],r[5]));sm.setMatrixAt(i,M);});
+    sm.instanceMatrix.needsUpdate=true;sm.castShadow=false;sm.renderOrder=2;grp.add(sm);}}
 // forests, palms, scrub by biome: one instanced mesh per tree type (a few thousand instances each)
 function g3BuildForests(grp){const F=G3.F,A=G3_GEO(),T=g3Towns(),W=F.W,P=GCM.P,L={conifer:[],broad:[],palm:[],scrub:[]};
   const near=(x,z)=>{for(const t of T)if(Math.abs(t.x-x)<40&&Math.abs(t.z-z)<40&&Math.hypot(t.x-x,t.z-z)<(t.cap?36:26))return true;return false;};

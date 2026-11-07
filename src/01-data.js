@@ -147,7 +147,7 @@ const MSTYLES={   // rout = campaign battles: the side breaks below this share o
  home:{n:'Home defenders',rout:.2,routHome:.08,cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
  fire:{n:'Firepower-reliant',rout:.25,cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
 const MORALE_STYLE={};
-for(const[st,l]of Object.entries({zeal:'IR RS DW KP',prof:'US RU CU GB FR DE JP KR AU CA IT GR PL UA TR CN PK EG ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA',fire:'IN AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
+for(const[st,l]of Object.entries({zeal:'IR RS DW KP',prof:'US RU GB FR DE JP KR AU CA IT GR PL TR CN PK ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA IN UA CU EG',fire:'AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
 function msOf(fac){return MSTYLES[MORALE_STYLE[fac]||'home'];}
 function courageOf(u){const T=G.teams[u.team],ms=msOf(T.fac);let c=ms.cour*(1+.12*(u.rank||0))*upgK(T,u.kind,'courage');if(ms.home&&u.hm)c*=ms.home;if(ms.lone&&u.nsup)c/=ms.lone;return c;}
 function F_(code,name,color,lang,music,doctrine,mods,special,units,sup,fup,o={}){return Object.assign({code,name,color,lang,music,doctrine,mods,special,units,sup,fup},o);}
