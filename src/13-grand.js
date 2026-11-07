@@ -155,9 +155,9 @@ function grFinishTurn(){const P=GCM.P;try{gmRepair();}catch(e){}try{gmilBlockRef
   const R=grRng(GC.seed*13+GC.turn);const inc={};geTurnStart();
   for(const p of P){if(!p.land)continue;const st=GC.prov[p.i],c=st.o,N=grNat(c);
     const base=geProvInc(p,st,c);   /* resources + buildings + city tier x autonomy x crises (13g-grandeco.js) */
-    const inc1=Math.round(base*GR_TAXK[st.tax]*(1-Math.min(.8,st.un/160)));inc[c]=(inc[c]||0)+inc1;
+    const core=gsIsCore(st);const inc1=Math.round(base*GR_TAXK[st.tax]*(1-Math.min(.8,st.un/160))*(core?1:.7));inc[c]=(inc[c]||0)+inc1;
     // unrest drifts toward a target set by the tax rate, recent conquest and being a foreign province
-    const tgt=18+GR_TAXU[st.tax]+GE_AUU[st.au|0]-(geFx(c,'calm')?3:0)-6*(st.tr|0)*(st.cf===3?1.5:.3)+(st.o!==st.o0?15:0)+(st.cv>0?25:0)-(GC.nat[c]&&GC.nat[c].cap===p.i?10:0);
+    const tgt=18+GR_TAXU[st.tax]+GE_AUU[st.au|0]-(geFx(c,'calm')?3:0)-6*(st.tr|0)*(st.cf===3?1.5:.3)+(core?0:15)+gmod('nation',c,'unrest',0)+(st.cv>0?25:0)-(GC.nat[c]&&GC.nat[c].cap===p.i?10:0);
     if(st.aut!==undefined&&st.aut!==st.au){if(st.auC>0)st.auC--;else{if(st.aut<st.au){st.au=Math.max(st.aut,st.au-1);st.un=Math.min(100,st.un+10);st.auC=3;}else st.au=Math.min(st.aut,st.au+1);}}st.un+= (tgt-st.un)*.18;st.un=Math.max(0,Math.min(100,st.un));if(st.cv>0)st.cv--;
     if(st.un>72&&R()<.3){const n=Math.floor(st.gar.length/2);st.gar.length=st.gar.length-n;st.un=45;grLog('Revolt in '+p.n+'! The garrison lost '+n+' units.',c===GC.me?c:'');}
     // garrison regrows one unit a turn up to its share, recruits arrive
