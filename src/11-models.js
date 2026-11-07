@@ -58,7 +58,7 @@ const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.45;c._big=1;}}
 const SOLV={US:'sol_w',EU:'sol_w',FR:'sol_w',DE:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
-const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:58},barracks:{m:'b_barr_me',size:54},factory:{m:'b_fact_me',size:62}};
+const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:74},barracks:{m:'b_barr_me',size:60},factory:{m:'b_fact_me',size:72}};
 function isSol(k){return k==='soldier'||(typeof k==='string'&&k.startsWith('sol_'));}
 function solKey(f){return SOLV[f]||'sol_w';}
 function truckKey(f){const rk=RMAP.harv[f];return rk&&MODELS.proto[RMOD[rk].m]?RMOD[rk].m:'truck';}
@@ -256,7 +256,8 @@ function emZulfiqar(x,cx,cy,s){x.save();x.translate(cx,cy);x.scale(s,s);
 function emText(x,t,cx,cy,px,col){x.save();x.font='700 '+px+'px "Noto Naskh Arabic","Amiri","Scheherazade New","Traditional Arabic","Times New Roman",serif';x.textAlign='center';x.textBaseline='middle';x.direction='rtl';
   x.fillStyle='rgba(0,0,0,.6)';x.fillText(t,cx+.6,cy+.7);x.fillStyle=col;x.fillText(t,cx,cy);x.restore();}
 function drawEmblem(x,fac,bg){const W=120,H=72;
-  if(fac==='RS'){drawRS(x,bg);
+  if(fac==='RV'){drawRV(x,bg);
+  } else if(fac==='RS'){drawRS(x,bg);
   } else if(fac==='DW'){
     if(bg){const g=x.createRadialGradient(60,30,6,60,34,72);g.addColorStop(0,'#5a3820');g.addColorStop(1,'#24150b');x.fillStyle=g;x.fillRect(0,0,W,H);
       const t=[['#3f4a22',H*.80],['#58612b',H*.86],['#76763a',H*.92]];for(const [c,y] of t){x.fillStyle=c;x.beginPath();x.moveTo(0,H);x.lineTo(0,y);for(let i=0;i<=12;i++){const sx=i*10,yy=y+Math.sin(i*1.3)*1.4;x.lineTo(sx,yy);x.lineTo(sx+10,yy);}x.lineTo(W,H);x.closePath();x.fill();x.strokeStyle='rgba(235,220,150,.35)';x.lineWidth=.5;x.beginPath();for(let i=0;i<=12;i++){const sx=i*10,yy=y+Math.sin(i*1.3)*1.4;x.moveTo(sx,yy+.3);x.lineTo(sx+10,yy+.3);}x.stroke();}
@@ -305,7 +306,28 @@ function drawRS(x,bg){const W=120,H=72,G='#0f6a2e',G2='#0a4d20';
   x.beginPath();x.moveTo(-22,-3.2);x.lineTo(16,-4.4);x.quadraticCurveTo(31,-6.5,42,-12);x.lineTo(36,-4.8);x.quadraticCurveTo(28,-2.2,21,-.9);x.lineTo(21,.9);x.quadraticCurveTo(28,2.2,36,4.8);x.lineTo(42,12);x.quadraticCurveTo(31,6.5,16,4.4);x.lineTo(-22,3.2);x.closePath();x.fill();x.stroke();
   x.beginPath();x.moveTo(-21,-11);x.quadraticCurveTo(-26,0,-21,11);x.lineTo(-25,11);x.quadraticCurveTo(-30,0,-25,-11);x.closePath();x.fill();x.stroke();
   x.fillRect(-40,-2.8,15,5.6);x.strokeRect(-40,-2.8,15,5.6);x.beginPath();x.arc(-42,0,3.6,0,7);x.fill();x.stroke();x.restore();}
-function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#f4c400':'#24150b';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
+// River Shias (RV): original printed cloth banner in the Mountain Shias' style - black field, green printing, shrine dome & two minarets over twin wavy rivers, ring + laurels. Our own mark; never a real organisation's.
+function drawRV(x,bg){const W=120,H=72,G='#25b24f',G2='#157a35',GL='#8be0a4';
+  if(bg){emCloth(x,W,H,'#0b0c0b',23);
+    const b=x.createLinearGradient(0,H*.8,0,H);b.addColorStop(0,'#b5141c');b.addColorStop(1,'#7e0c12');x.fillStyle=b;x.fillRect(0,H*.8,W,H*.2);
+    emText(x,'لبيك يا حسين',60,H*.9,9.5,'#fff4c8');
+    emText(x,'شيعة الرافدين',60,8.6,10.5,G);}
+  const cx=60,cy=34.5,r=16.5;
+  emLaurel(x,cx,cy+1,r+4,-1,G);emLaurel(x,cx,cy+1,r+4,1,G);
+  x.lineWidth=2.2;x.strokeStyle=G;x.beginPath();x.arc(cx,cy,r,0,7);x.stroke();x.lineWidth=.7;x.beginPath();x.arc(cx,cy,r-2.3,0,7);x.stroke();
+  x.save();x.beginPath();x.arc(cx,cy,r-3,0,7);x.clip();
+  // shrine: central dome on a drum, two slim minarets with caps, low hall
+  x.fillStyle=G;
+  x.fillRect(46,39,28,5);x.fillRect(53,34,14,6);
+  x.beginPath();x.moveTo(52,34);x.bezierCurveTo(52,22,68,22,68,34);x.closePath();x.fill();
+  x.fillRect(59.4,21,1.2,4);x.beginPath();x.arc(60,20.6,1.2,0,7);x.fill();
+  for(const mx of [45.5,74.5]){x.fillRect(mx-1,28,2,12);x.beginPath();x.moveTo(mx-1.8,28);x.lineTo(mx,24);x.lineTo(mx+1.8,28);x.closePath();x.fill();x.fillRect(mx-2.2,31,4.4,1.2);}
+  x.fillStyle='#0b0c0b';x.beginPath();x.moveTo(57.5,44);x.lineTo(57.5,38.5);x.quadraticCurveTo(60,35.5,62.5,38.5);x.lineTo(62.5,44);x.closePath();x.fill();
+  // twin rivers: two wavy lines under the shrine
+  x.strokeStyle=GL;x.lineWidth=1.5;x.lineCap='round';
+  for(const yy of [47.3,51.3]){x.beginPath();for(let i=0;i<=24;i++){const px=42+i*1.55,py=yy+Math.sin(i*.9+yy)*1.2;i?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();}
+  x.restore();}
+function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#f4c400':fac==='RV'?'#0b0c0b':'#24150b';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
 function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
   const rect=(col,a,b,w,h)=>{x.fillStyle=col;x.fillRect(a,b,w,h);};const hs=(cols)=>cols.forEach((col,i)=>rect(col,0,i*H/cols.length,W,H/cols.length+1));const vs=(cols)=>cols.forEach((col,i)=>rect(col,i*W/cols.length,0,W/cols.length+1,H));
   const star=(cx,cy,r,col,n=5)=>{x.fillStyle=col;x.beginPath();for(let i=0;i<n*2;i++){const a=-Math.PI/2+i*Math.PI/n,rr=i%2?r*.42:r;x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}x.closePath();x.fill();};
@@ -339,6 +361,7 @@ function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=doc
     case 'CU':for(let i=0;i<5;i++)rect(i%2?'#ffffff':'#002a8f',0,i*H/5,W,H/5+1);x.fillStyle='#cf142b';x.beginPath();x.moveTo(0,0);x.lineTo(54,36);x.lineTo(0,H);x.closePath();x.fill();star(17,36,10,'#fff');break;
     case 'RS':drawEmblem(x,'RS',true);break;
     case 'DW':drawEmblem(x,'DW',true);break;
+    case 'RV':drawEmblem(x,'RV',true);break;
     case 'IM':rect('#4d5a3a',0,0,W,H);x.fillStyle='#e8e6dc';x.beginPath();x.moveTo(30,54);x.lineTo(55,20);x.lineTo(66,36);x.lineTo(76,26);x.lineTo(92,54);x.closePath();x.fill();break;
     default:if(NATX_FLAG[fac])NATX_FLAG[fac]({x,rect,hs,vs,star,circ,crescent,W,H});else rect('#888',0,0,W,H);}
   x.fillStyle='rgba(0,0,0,.08)';for(let i=0;i<W;i+=6)x.fillRect(i,0,3,H);

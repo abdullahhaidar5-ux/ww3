@@ -31,3 +31,5 @@ Light 3 → 3.5, objects 3 → 3.5: every town building now throws a soft sun-di
 
 ## 2026-11-07 05:xx UTC — laneC iteration 4 (shots: orch/shots/laneC/it4)
 Life 2.5 → 3.5: shipping lanes — ~18–46 tankers and container ships (`src/13w-gshipping.js`) sail the real sea-province links with wakes (visual only, no sim state; they never cross land: links are sampled against the height field). World reaction chain: trade lanes visibly busy (tie to oil market / Straits later). Others unchanged (geography 4, colour 3.5, light 3.5, water 3, objects 3.5, readability 3.5). Next: water normal maps, army figures, UI kit C0.
+## 2026-11-07 04:xx UTC — laneC iteration 4 (shots: orch/shots/laneC/it4)
+Life 2.5 → 3: every town now breathes faint chimney smoke (one GPU-animated Points draw, ~8k puffs, hidden when zoomed out past d 1100; capitals 5 sources, towns 1–3). Besieged-province smoke already existed (g3BuildSmoke, ⚡15) — mine is `g3BuildChim`. Subtle by design; others unchanged. Next lowest: water 3, colour 3.5/light 3.5/objects 3.5 (soldier figures still blocky), UI kit C0.

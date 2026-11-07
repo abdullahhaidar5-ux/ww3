@@ -145,6 +145,18 @@ function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],ro
   if(SHD.length){const sm=new THREE.InstancedMesh(new THREE.BoxGeometry(1,.05,1),new THREE.MeshBasicMaterial({color:0x1a1208,transparent:true,opacity:.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}),SHD.length),M=new THREE.Matrix4();
     SHD.forEach((r,i)=>{M.compose(new THREE.Vector3(r[0],r[1],r[2]),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r[6]),new THREE.Vector3(r[3],r[4],r[5]));sm.setMatrixAt(i,M);});
     sm.instanceMatrix.needsUpdate=true;sm.castShadow=false;sm.renderOrder=2;grp.add(sm);}}
+// life: chimney smoke from every town (besieged provinces use g3BuildSmoke below) (GPU-animated points, one draw call)
+function g3BuildChim(grp){const T=g3Towns(),pos=[],ph=[],sz=[],pid=[],kind=[];
+  for(const t of T){const nS=t.cap?5:t.t===0?3:1;for(let s=0;s<nS;s++){const a=g3Hash(t.pi*3+s,t.t+7)*6.283,r=g3Hash(s+2,t.pi+t.t)*(t.cap?16:9),x=t.x+Math.cos(a)*r,z=t.z+Math.sin(a)*r,y=g3HeightAt(x,z)+4;
+    for(let k=0;k<7;k++){pos.push(x,y,z);ph.push((k+g3Hash(k,s+t.pi))/7);sz.push(.7+g3Hash(k+5,s)*.5);pid.push(t.pi);kind.push(s===0?1:0);}}}
+  if(!pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('aPh',new THREE.Float32BufferAttribute(ph,1));g.setAttribute('aSz',new THREE.Float32BufferAttribute(sz,1));
+  const war=new Float32Array(pid.length);g.setAttribute('aWar',new THREE.BufferAttribute(war,1));
+  const U=G3.chimU={uT:{value:0},uPx:{value:900}};
+  const m=new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,vertexShader:`uniform float uT,uPx;attribute float aPh,aSz,aWar;varying float vA;varying float vW;
+    void main(){float life=fract(aPh+uT*(.05+.05*aWar));float h=life*(34.+aWar*34.);vec3 p=position+vec3(h*.55+life*life*10.,h,h*.18);vec4 mv=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*mv;
+    float base=(3.2+aWar*9.)*aSz*(.5+life*1.4);gl_PointSize=clamp(base*uPx/-mv.z,0.,90.);vA=smoothstep(0.,.12,life)*(1.-life)*(1.1+.3*aWar);vW=aWar;}`,
+    fragmentShader:`varying float vA;varying float vW;void main(){vec2 q=gl_PointCoord-.5;float d=length(q);if(d>.5)discard;float a=vA*(1.-smoothstep(.05,.5,d));vec3 c=mix(vec3(.3,.28,.27),vec3(.12,.1,.09),vW);gl_FragColor=vec4(c,a);}`});
+  const pts=new THREE.Points(g,m);pts.frustumCulled=false;pts.renderOrder=6;grp.add(pts);G3.chim=pts;}
 // forests, palms, scrub by biome: one instanced mesh per tree type (a few thousand instances each)
 function g3BuildForests(grp){const F=G3.F,A=G3_GEO(),T=g3Towns(),W=F.W,P=GCM.P,L={conifer:[],broad:[],palm:[],scrub:[]};
   const near=(x,z)=>{for(const t of T)if(Math.abs(t.x-x)<40&&Math.abs(t.z-z)<40&&Math.hypot(t.x-x,t.z-z)<(t.cap?36:26))return true;return false;};
@@ -295,7 +307,7 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}if(G3.real&&G3.F&&!G
       if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){vec4 ov=texture2D(uOv,cu);c=mix(c,ov.rgb,ov.a*.55);c=g3rimS(c,cu);}
       float dist=length(cameraPosition-vW);c*=mix(g3cloud(vW.xz,uTime),1.,smoothstep(1500.,4200.,dist));c=mix(c,vec3(.616,.722,.788),smoothstep(2200.,6200.,dist));gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
   const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);
-  const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);G3.static=grp;
+  const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);g3BuildChim(grp);G3.static=grp;
   G3.ents=new THREE.Group();sc.add(G3.ents);G3.arrows=new THREE.Group();sc.add(G3.arrows);
   G3.ringM=new THREE.Mesh(new THREE.RingGeometry(.9,1.2,48).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xffe27a,transparent:true,opacity:.9,depthTest:false}));G3.ringM.renderOrder=5;G3.ringM.visible=false;sc.add(G3.ringM);try{g3ShipInit(sc);}catch(e){G3.ship=null;}
   g3UI();G3.miniDirty=true;g3ApplyQuality();try{cv.style.filter='contrast(1.06) saturate(1.18)';const w=document.getElementById('gMapWrap');if(w&&!document.getElementById('g3vig')){const v=document.createElement('div');v.id='g3vig';v.style.cssText='position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 58%,rgba(4,10,18,.34) 100%)';w.insertBefore(v,cv.nextSibling);}}catch(e){}
@@ -480,7 +492,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   const c=G3.camera,K=G3.keys;if(K.size&&!document.getElementById('gModal')){const sp=c.d*.9*dt,sy=Math.sin(c.yaw),cy=Math.cos(c.yaw);let fx=0,fz=0;if(K.has('w')||K.has('arrowup'))fz-=1;if(K.has('s')||K.has('arrowdown'))fz+=1;if(K.has('a')||K.has('arrowleft'))fx-=1;if(K.has('d')||K.has('arrowright'))fx+=1;
     c.x=Math.max(0,Math.min(2400,c.x+(fx*cy+fz*sy)*sp));c.z=Math.max(0,Math.min(1200,c.z+(-fx*sy+fz*cy)*sp));if(K.has('q'))c.yaw+=dt*1.2;if(K.has('e'))c.yaw-=dt*1.2;if(K.has('r'))c.pitch=Math.min(1.3,c.pitch+dt*.8);if(K.has('f'))c.pitch=Math.max(.45,c.pitch-dt*.8);if(K.has('+')||K.has('='))c.d*=1-dt*1.5;if(K.has('-'))c.d*=1+dt*1.5;}
   c.d=Math.max(70,Math.min(2300,c.d));const cc=G3.cc,kk=Math.min(1,dt*11);let mv=0;for(const k of ['x','z','d','yaw','pitch']){const df=c[k]-cc[k];if(Math.abs(df)>1e-3){cc[k]+=df*kk;mv=1;}}if(mv||G3.moved){g3CamApply(cc);G3.moved=false;mv=1;}
-  const s=Math.max(1.35,Math.min(3.6,cc.d/330));G3.sc_s=s;G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;
+  const s=Math.max(1.35,Math.min(3.6,cc.d/330));G3.sc_s=s;G3.U.uRim.value=Math.max(1.2,Math.min(4,cc.d/420));G3.U.uTime.value=G3.time;(G3.flagT||(G3.flagT={value:0})).value=G3.time;if(G3.chimU){G3.chimU.uT.value=G3.time;G3.chimU.uPx.value=(G3.R.domElement.height||900)*.9;G3.chim.visible=cc.d<1100;}
   G3.U.uSel.value=GV.sel>=0?GV.sel:-1;G3.U.uHov.value=GV.hov>=0&&GV.hov!==GV.sel?GV.hov:-1;
   // armies
   const anc=g3Anchors(s);let anim=0;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const t=anc.get(a.id);if(!t)continue;
