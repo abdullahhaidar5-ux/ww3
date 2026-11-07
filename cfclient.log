@@ -1,0 +1,218 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:37783
+[3s] pages loaded; this machine's host benchmark: 78
+  ✗ friend console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:38729/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:38729/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:38729/index.html:13438:34)
+    at afterStart (http://127.0.0.1:38729/index.html:13
+  ✗ creator console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:38729/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:38729/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:38729/index.html:13438:34)
+    at afterStart (http://127.0.0.1:38729/index.html:13
+[108s] 1. battle 9NGU4R running on the server: true; slots creator 0, friend 1
+[112s] 2. server's standby: slot 1 (benchmarks the server holds: 40, 900)
+[112s] 3. the server is made to fall behind real time (it gets only a third of the real time)
+[139s]    after 27.6 s: server battle closed (last window 0.524x real time); creator client (room gen 1), friend host
+[145s] 4. after the takeover, t=17 s: new host 26 entities, creator's side sees 5; creator's page: missing 0, off-position 0, mismatched 0; credits host 10125 page 10125
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFOVER FAIL: friend console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:38729/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:38729/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:38729/index.html:13438:34)
+    at afterStart (http://127.0.0.1:38729/index.html:13 (145s)
+  ✗ creator console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:38729/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:38729/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:38729/index.html:13438:34)
+    at afterStart (http://127.0.0.1:38729/index.html:13
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:42875
+[3s] both pages loaded; the multiplayer menu offers "Play online" and "New battle"
+[7s] 1. three other battles take the 3 battle slots: !w started, !w started, !w started
+[7s]    server busy (busy) -> battle in this browser: "Your battle · code07T7MUOnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join. You can also add co"
+[8s]    the 3 lobbies closed; battle slots in use: 0
+[8s] 2. lobby open on the server, code TNXN9A; creator status: "Your battle · codeTNXN9AOnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join."
+[9s]    friend joined: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[10s]    server lobby: humans US/team 1, RU/team 2; computer CN/team 2
+[30s] 3. battle started on the server (battle, held for loading screens: true); creator is slot 0, friend slot 1
+  ✗ friend console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:32783/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:32783/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:32783/index.html:13438:34)
+    at afterStart (http://127.0.0.1:32783/index.html:13
+  ✗ creator console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:32783/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:32783/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:32783/index.html:13438:34)
+    at afterStart (http://127.0.0.1:32783/index.html:13
+[114s]    both pages past the loading screen (rd: true, true); battle running: true
+[120s]    slot 0's order: 2/2 of its units moved on the server
+[120s]    slot 1's order: 2/2 of its units moved on the server
+[120s]    in-battle readout (creator): "60 FPS · ping 411 ms"
+[206s]    check @1.5 min slot 0 t=91s: server 55 entities, this side sees 8; page has 8; missing 0, extra 0, off-position 0, mismatched 0; credits server 10718 page 10718
+[207s]    check @1.5 min slot 1 t=91s: server 55 entities, this side sees 30; page has 30; missing 0, extra 0, off-position 0, mismatched 0; credits server 10684 page 10684
+[207s] 4. the friend's connection to the server is cut
+[208s]    after 0.6 s the friend is reconnected via wsb
+[213s]    after reconnect slot 1 t=96s: server 54 entities, this side sees 31; page has 31; missing 0, extra 0, off-position 0, mismatched 0; credits server 10779 page 10779
+[222s] 5. the battle's object is evicted at t=105 s (as on a redeploy)
+[225s]    after 2.4 s: server battle at t=99 s; creator client via wsb (room gen 0), friend client via wsb (room gen 0)
+[229s]    after restart slot 0 t=102s: server 52 entities, this side sees 6; page has 6; missing 0, extra 0, off-position 0, mismatched 0; credits server 10914 page 10914
+[230s]    after restart slot 1 t=102s: server 52 entities, this side sees 25; page has 26; missing 0, extra 0, off-position 0, mismatched 0; credits server 10796 page 10796
+[239s] 6. today's use is pushed past 75%; standby (checkpoint holder) is slot 0; pages holding a checkpoint: true,false
+[242s]    after 2.5 s: server battle closed, today at 76.3%, battles allowed: false; creator host, friend client (room gen 1, last update 0.1 s ago)
+[245s]    new browser host at t=114 s with 52 entities; the other player's side is still theirs; its last update 0.1 s ago
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E FAIL: friend console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:32783/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:32783/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:32783/index.html:13438:34)
+    at afterStart (http://127.0.0.1:32783/index.html:13 (245s)
+  ✗ creator console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:32783/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:32783/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:32783/index.html:13438:34)
+    at afterStart (http://127.0.0.1:32783/index.html:13
+local game server http://127.0.0.1:35065
+[3s] both pages loaded
+[4s] 1. protected battle open on Cloudflare, code 0S567Y; invite link http://127.0.0.1:43059/join.html#join=0s567y&pw=Yalla%202026%20%C3%B1
+[4s]    server keeps: {"mem":{"s":"5VLxcy48hAGMBLQOWZ61bA==","h":"Qw5GY4zzkNr+VWFreua3TQ1+SfINQ/cGoaFMp0Z2/Dk=","i":4000},"kept":null}
+[6s] 2. friend's game list: "🔒 United States · game 0S567Y · Straits of Thunder · 1/8 playersJoin"
+[6s]    "Play online" with no password: started its own battle (did not join the protected one)
+[6s]    wrong password -> "Wrong password. Try again.JoinCancel"
+[6s]    right password -> "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"; creator's lobby has 2 players
+[9s] 3. invite link joined in one go; address bar now /index.html#join=0s567y
+[9s] 4. browser-hosted O4IQ3B: join by code asks "🔒 Game O4IQ3B is password protected. Enter its password to join.JoinC"
+[31s]    right password -> friend: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFPASSWORD PASS (31s) — password-protected games: lock in the list, wrong password refused, right password and invite link join, server keeps only a hash, browser-hosted fallback checks it too
+local game server http://127.0.0.1:34449
+[2s] page loaded
+  ✗ player console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:42697/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:42697/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:42697/index.html:13438:34)
+    at afterStart (http://127.0.0.1:42697/index.html:13
+[52s] 1. skirmish (mouse): picks [0,3,-1,1], AI 2 Random -> spot 7; bases [[1239,5998],[6683,1174],[5803,6161],[9193,1174]]; HQs on their bases: true (preview 26462 bytes)
+[93s] 2. phone (touch only): picks [0,3,-1,1] made by tapping; picker fits in landscape too ({"cv":258,"over":0,"rows":true})
+[105s] 3. leader's Cloudflare lobby s0jtmh
+[105s]    friend joined
+[105s]    computer player added
+[106s]    lobby picks [4,2,6]
+  ✗ friend console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:42697/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:42697/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:42697/index.html:13438:34)
+    at afterStart (http://127.0.0.1:42697/index.html:13
+[178s] 3. Cloudflare battle S0JTMH: picks [4,2,6]; both see bases [[1159,3508],[3508,5612],[5429,5765]]; the friend's HQ in the server's snapshots stands on its spot
+[216s]    computer player added
+[228s] 4. browser-hosted MPZFQD: picks [4,2,6]; host and friend both see bases [[1159,3508],[3508,5612],[5429,5765]]; the host's HQs stand on them
+--- server log (tail) ---
+
+  warn: player console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: phone console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFSTARTPICK FAIL: player console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:42697/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:42697/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:42697/index.html:13438:34)
+    at afterStart (http://127.0.0.1:42697/index.html:13 (229s)
+  ✗ friend console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:42697/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:42697/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:42697/index.html:13438:34)
+    at afterStart (http://127.0.0.1:42697/index.html:13
+local game server http://127.0.0.1:42245 (pages reach it through http://127.0.0.1:39927); over-budget server http://127.0.0.1:42873
+[3s] 0. menu: "▶ Play online" and "+ New battle"
+[4s] 1. server busy (busy) -> battle in this browser; lobby: "Your battle · codeV1LP8POnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join. You can also add co"
+[4s] 2. lobby open on the server, code DROZY4; creator status: "Your battle · codeDROZY4OnlineStraits of Thunder1 / 8 players▶ Start battleWaiting for at least one more player to join."
+[4s] friend's game list: "1 open battle · 0 in progressUnited States · game DROZY4 · Straits of Thunder · 1/8 playersJoin👁 Watch"
+[4s] friend joined with "Play online": "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[6s] server lobby (as the friend sees it): player US/team 1, player RU/team 2, computer CN/team 2
+[28s] 3. battle started; creator is slot 0, friend slot 1
+  ✗ friend console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:43877/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:43877/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:43877/index.html:13438:34)
+    at afterStart (http://127.0.0.1:43877/index.html:13
+  ✗ creator console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:43877/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:43877/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:43877/index.html:13438:34)
+    at afterStart (http://127.0.0.1:43877/index.html:13
+[119s] both pages past the loading screen
+[119s]   creator: {"mode":"client","me":0,"snapT":88.4,"rx":5,"recon":false,"via":"wsb","peer":"ww3p-jv9wpgzw","host":"ww3-drozy4","gen":0,"ai":false}
+[119s]   friend: {"mode":"client","me":1,"snapT":88.5,"rx":0,"recon":false,"via":"wsb","peer":"ww3p-y7y7svk0","host":"ww3-drozy4","gen":0,"ai":false}
+[119s]   proxy sockets: [{"path":"/lobby","code":null,"id":null},{"path":"/lobby","code":null,"id":null},{"path":"/battle/drozy4","code":"drozy4","id":"ww3p-jv9wpgzw"},{"path":"/battle/drozy4","code":"drozy4","id":"ww3p-y7y7svk0"}]
+[124s] the server's battle clock advances on the creator's page: 91.5 s -> 93.5 s
+[133s] slot 0's orders acknowledged by the server; 2/2 of its units moved in the server's updates
+[133s] slot 1's orders acknowledged by the server; 2/2 of its units moved in the server's updates
+[133s] in-battle readout (creator): "60 FPS · ping 40 ms"
+[133s] @1.7 min slot 0: server checkpoint (2.9 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[133s] @1.7 min slot 1: server checkpoint (2.9 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[133s] @1.7 min: the pages' latest states are 0.00 s apart; 4 things both see, 0 differ
+[133s] 4. the friend's connection to the server is cut (1 socket)
+[134s]   back after 0.6 s
+[137s] friend reconnected via wsb (room gen 0); its side has 6 units/buildings (had 6)
+[146s] after the friend reconnected slot 0: server checkpoint (7.9 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[146s] after the friend reconnected slot 1: server checkpoint (7.9 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[146s] after the friend reconnected: the pages' latest states are 0.00 s apart; 0 things both see, 0 differ
+[157s] 5. the server restarted (battle at 125 s); pages reconnect
+[159s]   back after 1.8 s
+[159s] after the restart: creator client via wsb gen 0, friend client via wsb gen 0
+[163s] the server picked the battle up: clock now 128 s
+[163s] after the server restart slot 0: server checkpoint (0.6 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[163s] after the server restart slot 1: server checkpoint (0.6 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[163s] after the server restart: the pages' latest states are 0.00 s apart; 0 things both see, 0 differ
+[172s] 6. the server's battle vanishes for good; pages holding a checkpoint: true,false
+[174s] after 1.9 s: creator host, friend client (room gen 1, last update 0.1 s ago)
+[177s] new browser host at t=140 s with 54 entities; the other player's side is still theirs; its last update 0.1 s ago
+--- server log (tail) ---
+
+ ⛅️ wrangler 4.153.0 (update available 4.158.0)
+───────────────────────────────────────────────
+[custom build] Running: node build-sim.mjs
+[custom build] battle sim up to date: gen/battle-sim.js (735 KB)
+[custom build] 
+Your Worker has access to the following bindings:
+Binding                             Resource                  Mode
+env.ROOMS (GameRoom)                Durable Object            local
+env.LOBBY (Lobby)                   Durable Object            local
+env.BUDGET (Budget)                 Durable Object            local
+env.BATTLES (BattleRoom)            Durable Object            local
+env.OVERRUN_GUARD ("(hidden)")      Environment Variable      local
+
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:41423
+[wrangler:info] GET /health 200 OK (309ms)
+battle drozy4 picked up from its checkpoint (4 s old)
+[wrangler:info] GET /battle/drozy4 101 Switching Protocols (1195ms)
+[wrangler:info] GET /battle/drozy4 101 Switching Protocols (7ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (4ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (4ms)
+[wrangler:info] GET /turn 200 OK (3ms)
+[wrangler:info] GET /room/drozy4-m1 101 Switching Protocols (10ms)
+[wrangler:info] GET /turn 200 OK (2ms)
+[wrangler:info] GET /room/drozy4-m1 101 Switching Protocols (4ms)
+
+creator log: ["Russia's commander reconnected.","Connection lost for a moment. The battle goes on; the other commanders are reconnecting.","Connection lost. Reconnecting…","Forecast: fog rolling in within 25 seconds.","Reconnected."]
+friend log: ["Reconnected.","Russia's commander reconnected.","Connection lost for a moment. The battle goes on; the other commanders are reconnecting.","Connection lost. Reconnecting…","Forecast: fog rolling in within 25 seconds."]
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT FAIL: friend console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:43877/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:43877/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:43877/index.html:13438:34)
+    at afterStart (http://127.0.0.1:43877/index.html:13 (178s)
+  ✗ creator console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:43877/index.html:20644:32)
+    at buildPanels (http://127.0.0.1:43877/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:43877/index.html:13438:34)
+    at afterStart (http://127.0.0.1:43877/index.html:13
