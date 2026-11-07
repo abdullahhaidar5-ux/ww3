@@ -21559,7 +21559,7 @@ GMOD_ROWS.push({id:'holy1',src:'Holds a holy site',scope:'nation',stat:'warSuppo
 function hsCaptured(pi,taker,prev){const r=hsIdx().find(x=>x.i===pi);if(!r||!GC||taker===prev)return;
   for(const c of Object.keys(GC.nat)){if(c===taker||GC.nat[c].dead)continue;try{gdRel(c,taker,c===r.h?-30:-6);}catch(e){}}
   for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===taker&&p.i===pi){GC.prov[pi].un=Math.min(100,GC.prov[pi].un+10);}
-  grLog(gdName(taker)+' took '+r.n+' ('+r.f+'). The world watches; '+gdName(r.h)+' is outraged.',taker);
+  grLog(gdNatName(taker)+' took '+r.n+' ('+r.f+'). The world watches; '+gdNatName(r.h)+' is outraged.',taker);
   try{if(taker===GC.me||prev===GC.me||r.h===GC.me)gevToast(['🕌 '+r.n+' has changed hands']);}catch(e){}}
 function hsList(c){return hsIdx().filter(r=>GC.prov[r.i].o===c);}
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
