@@ -85,6 +85,20 @@ function grScenApply(id,quick){const S=GR_SCEN.find(x=>x.id===id);if(!S||!S.wars
   for(const [a,b] of S.wars||[])if(has(a)&&has(b)){GC.war[grWk(a,b)]=1;GC.rel[grWk(a,b)]=-100;}
   for(const [a,b,sh] of S.fr||[])if(has(a)&&has(b)){const at=grNearOwn(a,GC.nat[b].cap);if(at<0)continue;const V=GR_VBASE*grRealMil(a,grNat(a).major?1:.5)*(quick?.7:1);grAddArmy(a,at,grGenUnits(grNat(a).fac,V*sh,false),'Front Army');}
   grLog('Scenario: '+S.n+'.',GC.me);for(const t of S.news||[])grLog(t,'');}
+/* RG3 fog of war + spies (laneA 2026-11-07): what the PLAYER sees on the grand map. Display/UI only — the sim and the AI are unchanged,
+   so it stays deterministic and identical for every player. You see armies of yourself and allies, and any army in or next to a
+   province you or your allies hold or stand in; nations with spy satellites (GR_SAT) see two provinces deep; "Send spies" on an
+   enemy province reveals all that nation's armies for GR_SPY_M months. */
+const GR_SAT=['US','CN','RU','IL','IN','FR','GB','JP'],GR_SPY_COST=400,GR_SPY_M=3;let GR_SEEN=null;
+function grFriend(a,b){return a===b||(typeof grAllied==='function'&&grAllied(a,b));}
+function grSeenSet(){if(!GC||!GC.me)return null;let sig=GC.turn*31+(GC.day|0);for(const a of GC.armies)sig=(sig*7+a.at*13+a.id)%1000000007;const k=GC.me+'|'+sig+'|'+GC.armies.length;
+  if(GR_SEEN&&GR_SEEN.k===k)return GR_SEEN.s;const me=GC.me,fr={},s=new Set(),seed=[];const F=c=>fr[c]!==undefined?fr[c]:(fr[c]=grFriend(me,c));
+  for(const p of GCM.P)if(p.land&&F(GC.prov[p.i].o))seed.push(p.i);for(const a of GC.armies)if(F(a.o))seed.push(a.at);
+  const deep=GR_SAT.includes(me)?2:1;let ring=seed;for(const i of seed)s.add(i);for(let d=0;d<deep;d++){const nx=[];for(const i of ring)for(const j of GCM.P[i].adj||[])if(!s.has(j)){s.add(j);nx.push(j);}ring=nx;}
+  GR_SEEN={k,s};return s;}
+function grSeen(a){if(!GC||!GC.me||!a)return true;if(grFriend(GC.me,a.o))return true;if(GC.spy&&(GC.spy[GC.me+'>'+a.o]|0)>=GC.turn)return true;const s=grSeenSet();return !s||s.has(a.at);}
+function grSpy(me,t){const N=GC.nat[me];if(!N||!GC.nat[t]||grFriend(me,t))return 'Not an enemy';if(N.cash<GR_SPY_COST)return 'Needs $'+GR_SPY_COST;GC.spy=GC.spy||{};if((GC.spy[me+'>'+t]|0)>=GC.turn)return 'Spies already there';
+  N.cash-=GR_SPY_COST;GC.spy[me+'>'+t]=GC.turn+GR_SPY_M-1;GR_SEEN=null;grLog('Our spies are inside '+GCM.nats.get(t).name+' — all their armies are on our maps until '+grMonStr(GC.turn+GR_SPY_M)+'.',me);return '';}
 function grWk(a,b){return a<b?a+'|'+b:b+'|'+a;}
 function grAtWar(a,b){return a!==b&&!!GC.war[grWk(a,b)];}
 function grDist(a,b){const A=GCM.P[a],B=GCM.P[b];return Math.hypot(A.x-B.x,A.y-B.y);}

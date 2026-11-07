@@ -57,6 +57,12 @@ try {
   const scn = await ev(() => { const r = {}; for (const sc of ['me26', 'gulf', 'redsea']) { grNew({ me: 'IR', seed: 99, len: 'quick', sc }); r[sc] = { sc: GC.sc, irsa: grAtWar('IR', 'SA'), dwil: grAtWar('DW', 'IL'), armies: GC.armies.length, h: grHash() }; } grNew({ me: 'IR', seed: 99, len: 'quick', sc: 'gulf' }); r.again = grHash(); return r; });
   console.log('scenarios', JSON.stringify(scn));
   if (scn.me26.irsa || !scn.gulf.irsa || scn.gulf.sc !== 'gulf' || !scn.redsea.dwil || scn.gulf.armies <= scn.me26.armies || scn.again !== scn.gulf.h) fails.push('scenarios: ' + JSON.stringify(scn));
+  // ---- RG3 fog of war + spies: far enemy armies hidden from the player, spies reveal a nation, sim hash unchanged by looking
+  const fog = await ev(() => { grNew({ me: 'IR', seed: 77, len: 'quick' }); const h0 = grHash(); const foes = GC.armies.filter(a => !grFriend('IR', a.o)); const seen = foes.filter(a => grSeen(a)).length;
+    const far = foes.find(a => !grSeen(a)); GC.nat.IR.cash = 5000; const e = far ? grSpy('IR', far.o) : 'none hidden'; const after = far ? grSeen(far) : false; const own = GC.armies.filter(a => a.o === 'IR').every(a => grSeen(a));
+    return { foes: foes.length, seen, e, after, own, cash: GC.nat.IR.cash, hashSame: (() => { grNew({ me: 'IR', seed: 77, len: 'quick' }); return grHash() === h0; })() }; });
+  console.log('fog', JSON.stringify(fog));
+  if (!(fog.seen < fog.foes) || fog.seen === 0 || fog.e !== '' || !fog.after || !fog.own || fog.cash !== 5000 - 400 || !fog.hashSame) fails.push('fog/spies: ' + JSON.stringify(fog));
   // ---- MILITARY (grand3): generals, front lines, map strikes, fleets & sea zones; determinism over 20 turns with all of it active
   {
     const run20 = () => { grNew({ me: null, seed: 31337, len: 'std' }); const seen = { strike: 0, intercept: 0, sea: 0, gen: 0, blockade: 0 };

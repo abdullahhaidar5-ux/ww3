@@ -59,7 +59,7 @@ function guDraw(){GV.raf=0;const cv=GV.cv;if(!cv||!GC)return;if(GV.dirty)guPaint
     if(z>=1.7){c.font=(p.cap?'bold ':'')+fs+'px sans-serif';c.fillStyle='rgba(0,0,0,.6)';c.fillText(p.n,X+1,Y+41);c.fillStyle='#fff';c.fillText(p.n,X,Y+40);}
     if(GC.me&&st.o===GC.me&&st.un>55&&z>=.9){c.fillStyle='#e0533f';c.font='bold '+fs+'px sans-serif';c.fillText('!',X+16*Math.min(z,1.4),Y-12);}}
   // army chips (own first), stacked left to right under the province
-  const by={};for(const a of GC.armies)(by[a.at]=by[a.at]||[]).push(a);
+  const by={};for(const a of GC.armies)if(grSeen(a))(by[a.at]=by[a.at]||[]).push(a);
   for(const k of Object.keys(by)){const p=P[k],L=by[k].sort((a,b)=>(b.o===GC.me)-(a.o===GC.me)||a.id-b.id),X=sx(p.x),Y=sy(p.y);const show=z>=.9||L.some(a=>a.o===GC.me)||L.length;let n=0;
     const lim=z<1.2?2:5;const shown=L.slice(0,lim);const cw=26,w0=shown.length*(cw+3)-3;shown.forEach((a,i)=>{const x=X-w0/2+i*(cw+3),y=Y+(z>=1.2?20:8);const mine=a.o===GC.me;
       c.fillStyle=grNat(a.o).color;c.strokeStyle=a.id===GV.selA?'#ffe27a':mine?'#fff':'rgba(0,0,0,.7)';c.lineWidth=a.id===GV.selA?3:mine?1.8:1.2;c.fillRect(x,y,cw,15);c.strokeRect(x,y,cw,15);
@@ -100,7 +100,7 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
       if(ev.key===' '){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));return;}if(ev.key==='+'||ev.key==='='){guSpeed((GV.spd||GV.lastSpd||1)+1);return;}if(ev.key==='-'||ev.key==='_'){if(GV.spd>1)guSpeed(GV.spd-1);return;}
       if(ev.key>='1'&&ev.key<='5'&&ev.key.length===1){guSpeed(+ev.key);return;}}}
     if(GV.g3)return;const k=ev.key.toLowerCase(),st=60;if(k==='w'||k==='arrowup')GV.oy+=st;else if(k==='s'||k==='arrowdown')GV.oy-=st;else if(k==='a'||k==='arrowleft')GV.ox+=st;else if(k==='d'||k==='arrowright')GV.ox-=st;else return;guClamp();guRedraw();});}}
-function guArmyTip(aid,mx,my){const t=document.getElementById('gTip'),a=GC.armies.find(x=>x.id===aid);if(!t||!a){if(t)t.style.display='none';return;}
+function guArmyTip(aid,mx,my){const t=document.getElementById('gTip'),a=GC.armies.find(x=>x.id===aid);if(!t||!a||!grSeen(a)){if(t)t.style.display='none';return;}
   const N=GCM.nats.get(a.o),mine=a.o===GC.me,P=GCM.P[a.at];const sea=P&&P.sea;
   t.innerHTML='<b>'+a.nm+'</b><br>'+(N?N.name:a.o)+' · '+a.u.length+(sea?' ships/units at sea':' units')+(P?' · '+P.n:'')+'<br><span style="opacity:.8">'+(mine?'Click to select · right-click a province to move':'Click to inspect')+'</span>';
   t.style.display='block';t.style.left=(mx+16)+'px';t.style.top=(my+16)+'px';}
@@ -148,8 +148,8 @@ function guClockTick(){const now=performance.now(),dt=Math.min(1,(now-(GV.clkT||
   if(GC.day>=30){GC.day=0;GV.dayF=0;guEndTurn();return;}
   const d=document.getElementById('gDate');if(d)d.textContent=grDateStr(GC.turn,GC.day);}
 if(!window._gClk){window._gClk=setInterval(()=>{try{guClockTick();}catch(e){console.error('guClockTick',e);}},100);}
-function guProvArmies(pi){return GC.armies.filter(a=>a.at===pi);}
-function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.innerHTML='';const pi=GV.sel;if(pi<0||!GCM.P[pi]){s.innerHTML='<div style="opacity:.7;line-height:1.6">Click a province to see it.<br>Select an army (click its flag), then <b>right-click</b> a province to march there. Armies cross seas between ports; oceans take several turns.<br>Time runs like EU4: <b>Space</b> or ▶ to play or pause, keys <b>1–5</b> for speed. Give orders while paused.</div>';return;}
+function guProvArmies(pi){return GC.armies.filter(a=>a.at===pi&&grSeen(a));}
+function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.innerHTML='';const pi=GV.sel;if(pi<0||!GCM.P[pi]){s.innerHTML='<div style="opacity:.7;line-height:1.6">Click a province to see it.<br>Select an army (click its flag), then <b>right-click</b> a province to march there. Armies cross seas between ports; oceans take several weeks.<br>Time runs like EU4: <b>Space</b> or ▶ to play or pause, keys <b>1–5</b> for speed. Give orders while paused.</div>';return;}
   const p=GCM.P[pi];if(p.sea){s.innerHTML='<h2 style="margin:0 0 4px;font-size:19px">'+p.n+'</h2><div style="opacity:.8">Sea zone · ~'+(p.cost*30)+' days to cross'+(p.ck?'<br><span style="color:#ff9d8e">Chokepoint: whoever holds it will control trade (stage 2).</span>':'')+'</div>'+guArmyRows(pi);guBindArmies(s,pi);try{gmilUiProv(s,pi);}catch(e){console.error('gmilUiProv',e);}return;}
   const st=GC.prov[pi],N=GCM.nats.get(st.o),mine=st.o===GC.me;
   let h='<div style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:14px;border-radius:3px;border:1px solid #fff;background:'+grNat(st.o).color+'"></span><h2 style="margin:0;font-size:19px">'+p.n+'</h2></div>';
@@ -162,8 +162,12 @@ function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.in
     const rc=guEl('div','margin:8px 0');rc.appendChild(guEl('div','opacity:.75;font-size:13px','Recruit here (arrives in 1–2 months)'));const fac=grNat(GC.me).fac,g=guEl('div','display:flex;flex-wrap:wrap;gap:4px;margin-top:2px');
     for(const [k,n,t] of GR_RECRUIT){if(!grHasKind(fac,k))continue;const cost=grCost(fac,k)*n;const b=guEl('button','padding:5px 7px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:'+(GC.nat[GC.me].cash>=cost?'#fff':'#8a8f96')+';cursor:pointer;font-size:13px',n+'× '+grKindName(fac,k)+' $'+cost);b.type='button';b.title=cost+' · '+t+' month(s)';b.onclick=()=>{const e=grRecruit(GC.me,pi,k);if(e){GV.hint=e;guHint();}else grSave();guSide();guTop();};g.appendChild(b);}
     rc.appendChild(g);if(st.rq.length)rc.appendChild(guEl('div','font-size:13px;opacity:.8;margin-top:3px','In training: '+st.rq.map(q=>q[2]+'× '+grKindName(fac,q[1])+' (due '+grMonStr(q[0])+')').join(', ')));s.appendChild(rc);}
+  if(!mine&&GC.me&&GC.nat[st.o]&&!grFriend(GC.me,st.o))guSpyRow(s,pi,st.o);
   try{geUiProv(s,pi);}catch(e){console.error('geUiProv',e);}try{gmilUiProv(s,pi);}catch(e){console.error('gmilUiProv',e);}
   const ar=guEl('div');ar.innerHTML=guArmyRows(pi);s.appendChild(ar);guBindArmies(s,pi);}
+function guSpyRow(s,pi,o){const seenP=(grSeenSet()||new Set()).has(pi),sp=GC.spy&&(GC.spy[GC.me+'>'+o]|0)>=GC.turn;   /* RG3 fog of war + spies */
+  const r=guEl('div','margin:6px 0 2px;font-size:13px;opacity:.85',sp?'🕵 Our spies report every '+GCM.nats.get(o).name+' army (until '+grMonStr(GC.turn+1+((GC.spy[GC.me+'>'+o]|0)-GC.turn))+').':seenP?'👁 In sight of our lines.':'🌫 Fog of war: armies here are hidden. Move closer or send spies.');s.appendChild(r);
+  if(!sp){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;margin-top:2px','🕵 Send spies $'+GR_SPY_COST);b.type='button';b.title='Reveal every '+GCM.nats.get(o).name+' army on the map for '+GR_SPY_M+' months';b.onclick=()=>{const e=grSpy(GC.me,o);GV.hint=e||'Spies sent into '+GCM.nats.get(o).name+'.';guSide();guTop();if(typeof g3Refresh==='function')g3Refresh();guRedraw&&guRedraw();};s.appendChild(b);}}
 function guTopCash(){guTop();}
 function guArmyRows(pi){const L=guProvArmies(pi);if(!L.length)return '<div style="opacity:.6;margin-top:8px">No armies here.</div>';let h='<div style="margin-top:8px;font-weight:bold">Armies</div>';
   for(const a of L){const mine=a.o===GC.me,f=grNat(a.o).fac,counts={};for(const r of a.u)counts[r[0]]=(counts[r[0]]||0)+1;const txt=Object.keys(counts).map(k=>counts[k]+' '+grKindName(f,k)).join(', ');
