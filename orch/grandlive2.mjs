@@ -65,7 +65,8 @@ try {
     const r = grOrderMove(a.id, pair[1]); GC.armies.filter(x => x.o !== me).forEach(x => { x.path = []; });
     return { foe, ok: !!r.ok, from: GCM.P[pair[0]].n, to: GCM.P[pair[1]].n, units: a.u.length }; }, NAT);
   console.log('scenario', JSON.stringify(sc)); if (sc.err || !sc.ok) throw new Error('scenario ' + JSON.stringify(sc));
-  await clickText('#grandScreen button', 'End turn');
+  await page.click('#gPlay'); await page.keyboard.press('5'); // no End turn any more: play time at speed 5 like a player (month ≈ 3 s)
+
   await page.waitForFunction(() => !!document.getElementById('gModal'), null, { timeout: 120000 });
   // there may be several battles queued; take the first one live
   await shot('live2-prompt' + round);

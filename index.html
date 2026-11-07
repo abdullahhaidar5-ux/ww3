@@ -5088,7 +5088,7 @@ const FACTIONS={
     {inf:{name:'Marine Squad'},at:{name:'Javelin Team'},hero:{name:'Delta Operator',demo:true},aa:{name:'M-SHORAD Stryker'},tank:{name:'M1 Abrams'},arty:{name:'M109 Paladin'},heli:{name:'AH-64 Apache'},jet:{name:'F-35A Lightning'},boat:{name:'Mark VI Patrol Boat'},ship:{name:'Arleigh Burke Destroyer'}},
     {name:'Tomahawk Salvo',charge:150,n:6,dmg:405,r:85,spread:150},'training'),
   TR:F_('TR','Turkey','#d23a52','tr-TR','mideast','Drone superpower: Bayraktar/Kargu drones cost 10% less, build faster, are tougher and hit harder.',{cost:1},'hero',
-    {inf:{name:'Mehmetçik Squad'},at:{name:'OMTAS Team'},hero:{name:'Maroon Beret Commando',demo:true},drone:{name:'Kargu Loitering Drone'},aa:{name:'Korkut SPAAG'},tank:{name:'Altay MBT'},arty:{name:'T-155 Fırtına'},heli:{name:'T129 ATAK'},jet:{name:'KAAN Fighter'},boat:{name:'Kılıç Patrol Boat'},ship:{name:'Istif Frigate'}},
+    {inf:{name:'Mehmetçik Squad'},at:{name:'OMTAS Team'},hero:{name:'Maroon Beret Commando',demo:true},drone:{name:'Kargu Loitering Drone'},aa:{name:'Korkut SPAAG'},tank:{name:'Altay Tank'},arty:{name:'T-155 Fırtına'},heli:{name:'T129 ATAK'},jet:{name:'KAAN Fighter'},boat:{name:'Kılıç Patrol Boat'},ship:{name:'Istif Frigate'}},
     {name:'Tayfun Missile Strike',charge:160,n:2,dmg:600,r:125,spread:90},'datalink',{extra:['drone']}),
   IL:F_('IL','Israel','#7fd3f0','he-IL','mideast','Iron Dome & missile defence: units are 10% tougher, hit 5% harder and cost 4% less, enemy strikes and missiles do 50% damage to you, SAM sites reach 30% farther and hit harder, Merkava tanks are extra tough, Spike missiles hit hard.',{supResist:.5,cost:.96,hp:1.1,dmg:1.05},'hero',
     {inf:{name:'Infantry Squad'},at:{name:'Spike Team',dmg:60},hero:{name:'Sayeret Commando',demo:true},aa:{name:'Machbet SPAAG'},tank:{name:'Merkava Mk4',hp:820},arty:{name:'M109 Doher'},heli:{name:'AH-64 Saraf'},jet:{name:'F-35I Adir'},boat:{name:'Shaldag Patrol Boat'},ship:{name:'Sa’ar 6 Corvette'}},
@@ -5103,19 +5103,19 @@ const FACTIONS={
     {inf:{name:'Motor Rifle Squad'},at:{name:'Kornet Team'},hacker:{name:'GRU Cyber Unit'},aa:{name:'Pantsir-S1'},tank:{name:'T-90M'},arty:{name:'TOS-1A',rng:280,minr:50,splash:95,dmg:66,rof:3.5,rocket:true},heli:{name:'Ka-52 Alligator'},jet:{name:'Su-34 Fullback'},boat:{name:'Raptor Patrol Boat'},ship:{name:'Admiral Gorshkov Frigate'}},
     {name:'Iskander Strike',charge:160,n:2,dmg:555,r:130,spread:90},'reactive'),
   IR:F_('IR','Iran','#3fae5c','fa-IR','mideast','Missiles & cheap drones: Shahed drones cost 25% less and build almost twice as fast, Fateh missile launchers fire 12% farther and hit 15% harder, the Kheibar barrage charges faster.',{infCost:1},'hacker',
-    {inf:{name:'Basij Militia',hp:110},at:{name:'RPG Cell'},hacker:{name:'IRGC Cyber Team'},drone:{name:'Shahed-136'},aa:{name:'Mesbah AA Gun'},tank:{name:'Karrar MBT',hp:580},arty:{name:'Fateh-110 Launcher',rng:470,splash:65,rocket:true},heli:{name:'AH-1J Cobra'},jet:{name:'F-14 Tomcat'},boat:{name:'Seraj Fast Attack Craft',spd:110},ship:{name:'Moudge Frigate'}},
+    {inf:{name:'Basij Militia',hp:110},at:{name:'RPG Cell'},hacker:{name:'IRGC Cyber Team'},drone:{name:'Shahed-136'},aa:{name:'Mesbah AA Gun'},tank:{name:'Karrar Tank',hp:580},arty:{name:'Fateh-110 Launcher',rng:470,splash:65,rocket:true},heli:{name:'AH-1J Cobra'},jet:{name:'F-14 Tomcat'},boat:{name:'Seraj Fast Attack Craft',spd:110},ship:{name:'Moudge Frigate'}},
     {name:'Kheibar Missile Strike',charge:130,n:12,dmg:335,r:75,spread:200},'thermo',{extra:['drone']}),
   SA:F_('SA','Saudi Arabia','#1f9a54','ar-SA','mideast','Petro wealth & air force: oil pays 40% more, supply trucks carry 10% more, F-15SA jets cost 25% less and are tougher, air defence reaches 20% farther, all units cost 17% less.',{oil:1.4,harv:1.1,cost:.83},'hero',
     {inf:{name:'Royal Land Forces Squad'},at:{name:'TOW Team'},hero:{name:'Special Forces Sniper',rng:330,dmg:150,rof:2.2},aa:{name:'Shahine SAM Vehicle'},tank:{name:'M1A2S Abrams'},arty:{name:'CAESAR Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'F-15SA Eagle'},boat:{name:'Fast Patrol Boat'},ship:{name:'Al Riyadh Frigate'}},
     {name:'Royal Air Strike',charge:150,n:5,dmg:625,r:75,spread:130},'awacs'),
   AE:F_('AE','United Arab Emirates','#b49a5e','ar-AE','mideast','High-tech wealth: weapons deal 25% more damage, units cost 5% less, oil pays 25% more, supply trucks carry 10% more, Pantsir air defence and Apaches hit 15% harder.',{dmg:1.25,cost:.95,oil:1.25,harv:1.1},'hero',
-    {inf:{name:'Infantry Squad'},at:{name:'Javelin Team'},hero:{name:'Presidential Guard Commando',demo:true},aa:{name:'Pantsir-S1E'},tank:{name:'Leclerc MBT'},arty:{name:'G6 Rhino Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'Rafale'},boat:{name:'Ghannatha Patrol Boat'},ship:{name:'Baynunah Corvette'}},
+    {inf:{name:'Infantry Squad'},at:{name:'Javelin Team'},hero:{name:'Presidential Guard Commando',demo:true},aa:{name:'Pantsir-S1E'},tank:{name:'Leclerc Tank'},arty:{name:'G6 Rhino Howitzer'},heli:{name:'AH-64 Apache'},jet:{name:'Rafale'},boat:{name:'Ghannatha Patrol Boat'},ship:{name:'Baynunah Corvette'}},
     {name:'Precision Air Strike',charge:145,n:4,dmg:755,r:75,spread:110},'contracts'),
   PK:F_('PK','Pakistan','#2f8f3a','ur-PK','southasia','Hardened forces & tank hunters: infantry cost 28% less, vehicles have 30% more hit points, anti-tank teams hit 20% harder.',{infCost:.72,vehHp:1.3},'hero',
-    {inf:{name:'Infantry Squad'},at:{name:'Baktar-Shikan Team'},hero:{name:'SSG Commando',demo:true},aa:{name:'Type 87 AA Gun'},tank:{name:'Al-Khalid MBT'},arty:{name:'SH-15 Howitzer'},heli:{name:'AH-1Z Viper'},jet:{name:'JF-17 Thunder'},boat:{name:'Jalalat Missile Boat'},ship:{name:'Tughril Frigate'}},
+    {inf:{name:'Infantry Squad'},at:{name:'Baktar-Shikan Team'},hero:{name:'SSG Commando',demo:true},aa:{name:'Type 87 AA Gun'},tank:{name:'Al-Khalid Tank'},arty:{name:'SH-15 Howitzer'},heli:{name:'AH-1Z Viper'},jet:{name:'JF-17 Thunder'},boat:{name:'Jalalat Missile Boat'},ship:{name:'Tughril Frigate'}},
     {name:'Shaheen Missile Strike',charge:165,n:1,dmg:710,r:165,spread:0},'tankhunt'),
   IN:F_('IN','India','#ff9933','hi-IN','southasia','Massive army & BrahMos navy: everything costs 11% less, units are 5% tougher, warships have 25% more hit points.',{cost:.89,hp:1.05},'hero',
-    {inf:{name:'Infantry Squad'},at:{name:'Nag Missile Team'},hero:{name:'MARCOS Commando',demo:true},aa:{name:'Tunguska SPAAG'},tank:{name:'Arjun MBT'},arty:{name:'Pinaka Rockets',rocket:true,splash:70,dmg:60,rof:3.2},heli:{name:'HAL Prachand'},jet:{name:'Tejas Fighter'},boat:{name:'Veer Missile Boat'},ship:{name:'Kolkata Destroyer'}},
+    {inf:{name:'Infantry Squad'},at:{name:'Nag Missile Team'},hero:{name:'MARCOS Commando',demo:true},aa:{name:'Tunguska SPAAG'},tank:{name:'Arjun Tank'},arty:{name:'Pinaka Rockets',rocket:true,splash:70,dmg:60,rof:3.2},heli:{name:'HAL Prachand'},jet:{name:'Tejas Fighter'},boat:{name:'Veer Missile Boat'},ship:{name:'Kolkata Destroyer'}},
     {name:'BrahMos Salvo',charge:155,n:3,dmg:670,r:95,spread:100},'coldstart'),
   CN:F_('CN','China','#e3493a','zh-CN','eastasia','Mass mobilization & blue-water navy: infantry cost 42% less and train 40% faster, everything else costs 5% less, warships are 30% tougher and hit 15% harder, rocket artillery hits 10% harder.',{infCost:.58,infTime:.6,cost:.95},'hacker',
     {inf:{name:'PLA Rifle Squad'},at:{name:'HJ-12 Team'},hacker:{name:'PLA Cyber Team'},aa:{name:'PGZ-09 SPAAG'},tank:{name:'Type 99A',hp:660},arty:{name:'PHL-03 Rockets',splash:72,dmg:58,rof:3.2,rocket:true},heli:{name:'Z-10 Attack Helo'},jet:{name:'J-20 Fighter'},boat:{name:'Type 022 Missile Boat'},ship:{name:'Type 055 Destroyer'}},
@@ -9843,11 +9843,11 @@ function buildWorld(tc){
     const gmat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:1,vertexColors:true});window.WINDU={value:0};window.WINDS={value:1};
     gmat.onBeforeCompile=sh=>{sh.uniforms.wt=WINDU;sh.uniforms.ws=WINDS;sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform float wt;uniform float ws;').replace('#include <begin_vertex>','#include <begin_vertex>\n{/* gentle coherent sway: slow, small, phase follows position (a wave rolling over the field), base stays put, blade length kept */vec4 ip=instanceMatrix*vec4(0.,0.,0.,1.);float k=clamp(transformed.y/8.,0.,1.);k*=k;float ph=ip.x*.021+ip.z*.017;float w=sin(wt*.85+ph)*.65+sin(wt*1.4+ph*1.7+1.3)*.2;float a=w*k*.45*ws;transformed.x+=a;transformed.z+=a*.45;transformed.y-=a*a*1.2/max(transformed.y,1.);}');};
     const AREA=Math.max(1,MAPW*MAPH/(3200*2200)),NG=Math.round(9000*Math.min(2,AREA)),gm=new THREE.InstancedMesh(gg,gmat,NG);let n=0;const gc=new THREE.Color();const R=mulberry(G.seed+99);
-    for(let k=0;k<NG*3&&n<NG;k++){const x=R()*MAPW,y=R()*MAPH,M=G.map;if(Math.abs(M.depth(x,y))<M.hw(x)+40)continue;if(BASES.some(([bx,by])=>Math.abs(x-bx)<290&&Math.abs(y-by)<290))continue;if(G.fields.some(f=>Math.hypot(f.x-x,f.y-y)<70))continue;if(G.map.hasMtn&&G.map.mf(x,y)>-40)continue;if(G.roadMask){const q=G.roadMask;if(q.d[(y/q.C|0)*q.w+(x/q.C|0)]&&R()<.9)continue;}
+    for(let k=0;k<NG*3&&n<NG;k++){const x=R()*MAPW,y=R()*MAPH,M=G.map;if(Math.abs(M.depth(x,y))<M.hw(x)+40)continue;if(BASES.some(([bx,by])=>Math.hypot(x-bx,y-by)<120||(Math.abs(x-bx)<290&&Math.abs(y-by)<290&&R()<.55)))continue;/* E3: scrub thins out toward bases instead of a bare disc */if(G.fields.some(f=>Math.hypot(f.x-x,f.y-y)<70))continue;if(G.map.hasMtn&&G.map.mf(x,y)>-40)continue;if(G.roadMask){const q=G.roadMask;if(q.d[(y/q.C|0)*q.w+(x/q.C|0)]&&R()<.9)continue;}
       if(Math.hypot(groundH(x+6,y)-groundH(x-6,y),groundH(x,y+6)-groundH(x,y-6))/12>.4)continue;const cl=Math.sin(x*.013)*Math.cos(y*.011)+Math.sin(x*.031+y*.017)*.5;if(cl<.1&&R()<.7)continue;const s=.7+R()*1.0;TMPM.compose(TMP.set(x,groundH(x,y),y),TMPQ.setFromAxisAngle(new THREE.Vector3(0,1,0),R()*6),new THREE.Vector3(s,s*(.6+R()*.7),s));gm.setMatrixAt(n,TMPM);const dry=R()<.7;if(G.map.theme==='snow'){if(R()<.55)continue;gc.setHSL(.09+R()*.03,.18+R()*.1,.36+R()*.14).convertSRGBToLinear();}else gc.setHSL(dry?.1+R()*.03:.19+R()*.05,dry?.2+R()*.1:.18+R()*.1,dry?.33+R()*.1:.19+R()*.07).convertSRGBToLinear();gm.setColorAt(n,gc);n++;}
     {/* boulders: 4 irregular noise-pushed shapes (smooth normals, flattened, sunk into the ground), never box-like */const rmat=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.97});if(typeof weather==='function')weather(rmat,1.3,0);const NR=Math.round(2200*Math.min(2.5,AREA)),NV=4,rims=[],rcnt=[0,0,0,0];
       for(let v=0;v<NV;v++){const im=new THREE.InstancedMesh(rockGeo(v*3+1,v<2?1:2,.55+v*.06,.3+v*.05),rmat,Math.ceil(NR/NV)+8);im.castShadow=true;im.receiveShadow=true;im.userData.noDepth=true;rims.push(im);}const rc=new THREE.Color();let rn=0;
-      for(let k=0;k<NR*3&&rn<NR;k++){const x=R()*MAPW,y=R()*MAPH,M=G.map;if(Math.abs(M.depth(x,y))<M.hw(x)+20)continue;if(BASES.some(([bx,by])=>Math.abs(x-bx)<280&&Math.abs(y-by)<280))continue;if(G.roadMask){const q=G.roadMask;if(q.d[(y/q.C|0)*q.w+(x/q.C|0)])continue;}
+      for(let k=0;k<NR*3&&rn<NR;k++){const x=R()*MAPW,y=R()*MAPH,M=G.map;if(Math.abs(M.depth(x,y))<M.hw(x)+20)continue;if(BASES.some(([bx,by])=>Math.hypot(x-bx,y-by)<130||(Math.abs(x-bx)<280&&Math.abs(y-by)<280&&R()<.6)))continue;/* E3: rocks around bases, clear of the build area */if(G.roadMask){const q=G.roadMask;if(q.d[(y/q.C|0)*q.w+(x/q.C|0)])continue;}
         const s2=R()<.9?.5+R()*1.2:1.6+R()*2.6,v=rn%NV,im=rims[v];if(rcnt[v]>=im.instanceMatrix.count)continue;TMPM.compose(TMP.set(x,groundH(x,y)-s2*.16,y),TMPQ.setFromEuler(new THREE.Euler((R()-.5)*.35,R()*6.3,(R()-.5)*.35)),new THREE.Vector3(s2*(1+R()*.7),s2*(.8+R()*.5),s2*(.8+R()*.6)));im.setMatrixAt(rcnt[v],TMPM);rc.setHSL(.07+R()*.05,.1+R()*.14,R()<.3?.36+R()*.1:.5+R()*.16).convertSRGBToLinear();im.setColorAt(rcnt[v],rc);rcnt[v]++;rn++;}
       for(let v=0;v<NV;v++){rims[v].count=rcnt[v];WORLD.add(rims[v]);}}
     gm.count=n;gm.receiveShadow=true;gm.userData.noDepth=true;WORLD.add(gm);}
@@ -18646,13 +18646,15 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
 // ---------- save ----------
 /* calendar: month 1 = January 2026; GC.day = days into the current month (0..29), ticked by the real-time clock in 13c */
 const GR_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+/* real time: how far (0..0.92) a marching army has got along its current road, from progress months + days into this month (display only, sim unchanged) */
+function grSlide(a){if(!GC||GC.ph!=='plan'||!a.path||!a.path.length)return 0;const c=grEdge(a.at,a.path[0]);if(!c)return 0;const d=Math.min(29.99,(GC.day|0)+((typeof GV!=='undefined'&&GV.dayF)||0));return Math.max(0,Math.min(.92,((a.pg|0)+d/30)/c));}
 function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1);return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){}}
 // a save made on an older world map (the province list changed, e.g. 2026-11-06 real borders 174 -> 236 land provinces) can't
 // continue: its province indices point at different places, so the map breaks and a Fight-it battle never loads (Lane A1)
 function grMapSig(){grMap();let h=0;for(const p of GCM.P){const s=p.n+'/'+p.adj.length;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;}return GCM.P.length+':'+(h>>>0).toString(36);}
 function grSaveOk(o){if(!o||o.v!==1||!Array.isArray(o.prov))return false;grMap();return o.ms?o.ms===grMapSig():o.prov.length===GCM.P.length;}
-function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!grSaveOk(o))return null;if(!o.ms)o.ms=grMapSig();GC=o;try{geEnsure();}catch(e){}return GC;}catch(e){return null;}}
+function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!grSaveOk(o))return null;if(!o.ms)o.ms=grMapSig();GC=o;try{geEnsure();}catch(e){}try{grResBloc();}catch(e){}return GC;}catch(e){return null;}}
 function grClear(){try{localStorage.removeItem(GR_KEY);}catch(e){}GC=null;}
 // test/AI-only: run n turns with every nation under AI control; battles auto-resolve
 function grRunAI(n){for(let i=0;i<n&&!GC.over;i++){grEndTurn(true);}return grHash();}
@@ -19149,7 +19151,7 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   cv.addEventListener('pointerleave',()=>{GV.hov=-1;document.getElementById('gTip').style.display='none';guRedraw();});
   addEventListener('resize',()=>{if(document.getElementById('grandScreen'))guResize();});
   guResize();guFit(null);const me=GC.me&&GC.nat[GC.me];if(me){GV.sel=me.cap;guCentre(me.cap,2.0);}guRedraw();grandMapRefresh();
-  if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guEndTurn();}
+  if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));}
     {const tg=ev.target&&ev.target.tagName;if(tg!=='INPUT'&&tg!=='TEXTAREA'&&tg!=='SELECT'&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&!document.getElementById('gModal')){   /* time keys (the grand map's key table): Space pause, + / − speed, 1–5 speed */
       if(ev.key===' '){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));return;}if(ev.key==='+'||ev.key==='='){guSpeed((GV.spd||GV.lastSpd||1)+1);return;}if(ev.key==='-'||ev.key==='_'){if(GV.spd>1)guSpeed(GV.spd-1);return;}
       if(ev.key>='1'&&ev.key<='5'&&ev.key.length===1){guSpeed(+ev.key);return;}}}
@@ -19181,7 +19183,7 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   if(me)t.appendChild(guEl('span','opacity:.9','Score <b>'+score+'</b> · provinces <b>'+GCM.P.filter(p=>p.land&&GC.prov[p.i].o===GC.me).length+'</b>'));
   try{geUiTop(t,me);}catch(e){console.error('geUiTop',e);}try{gmilUiTop(t,me);}catch(e){console.error('gmilUiTop',e);}
   const rg=guEl('span','display:flex;gap:4px;flex-wrap:wrap;margin-left:auto');for(const [nm,r] of GR_REGIONS){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#dfe8f0;cursor:pointer;font-size:13px',nm);b.type='button';b.onclick=()=>{guFit(r);guRedraw();};rg.appendChild(b);}t.appendChild(rg);
-  const end=guEl('button','padding:7px 18px;border-radius:6px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px;font-weight:bold',GC.ph==='plan'?'End turn ▶':'Resolving…');end.id='gEnd';end.type='button';end.disabled=GC.ph!=='plan'||!!GC.over;end.title='Enter';end.onclick=guEndTurn;t.appendChild(end);
+  /* No End turn button (Abdullah 2026-11-06 22:30 "Why do we still have end turn?"): time runs EU4-style; the clock's play/pause + speeds are the only control. */
   if(me&&typeof npOpen==='function'){const nb=guEl('button','padding:7px 14px;border-radius:6px;border:1px solid #c9a35a;background:#2a3a4c;color:#ffe6a8;cursor:pointer;font-size:15px;font-weight:bold','Nation');nb.type='button';nb.title='Open your nation panel';nb.onclick=()=>npOpen();t.appendChild(nb);}
   const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);try{alBar();}catch(e){console.error('alBar',e);}}  // hook: Lane G alerts bar (13l-galerts.js)
 function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();try{gdNews();}catch(e){}}
@@ -19203,7 +19205,7 @@ function guClockTick(){const now=performance.now(),dt=Math.min(1,(now-(GV.clkT||
   const d=document.getElementById('gDate');if(d)d.textContent=grDateStr(GC.turn,GC.day);}
 if(!window._gClk){window._gClk=setInterval(()=>{try{guClockTick();}catch(e){console.error('guClockTick',e);}},100);}
 function guProvArmies(pi){return GC.armies.filter(a=>a.at===pi);}
-function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.innerHTML='';const pi=GV.sel;if(pi<0||!GCM.P[pi]){s.innerHTML='<div style="opacity:.7;line-height:1.6">Click a province to see it.<br>Select an army (click its flag), then <b>right-click</b> a province to march there. Armies cross seas between ports; oceans take several turns.<br>Press <b>Enter</b> or the green button to end the turn: everyone moves at once.</div>';return;}
+function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.innerHTML='';const pi=GV.sel;if(pi<0||!GCM.P[pi]){s.innerHTML='<div style="opacity:.7;line-height:1.6">Click a province to see it.<br>Select an army (click its flag), then <b>right-click</b> a province to march there. Armies cross seas between ports; oceans take several turns.<br>Time runs like EU4: <b>Space</b> or ▶ to play or pause, keys <b>1–5</b> for speed. Give orders while paused.</div>';return;}
   const p=GCM.P[pi];if(p.sea){s.innerHTML='<h2 style="margin:0 0 4px;font-size:19px">'+p.n+'</h2><div style="opacity:.8">Sea zone · '+p.cost+' turn'+(p.cost>1?'s':'')+' to cross'+(p.ck?'<br><span style="color:#ff9d8e">Chokepoint: whoever holds it will control trade (stage 2).</span>':'')+'</div>'+guArmyRows(pi);guBindArmies(s,pi);try{gmilUiProv(s,pi);}catch(e){console.error('gmilUiProv',e);}return;}
   const st=GC.prov[pi],N=GCM.nats.get(st.o),mine=st.o===GC.me;
   let h='<div style="display:flex;align-items:center;gap:8px"><span style="width:14px;height:14px;border-radius:3px;border:1px solid #fff;background:'+grNat(st.o).color+'"></span><h2 style="margin:0;font-size:19px">'+p.n+'</h2></div>';
@@ -19601,7 +19603,9 @@ function g3Ent(a){let e=G3.arm.get(a.id);const sea=GCM.P[a.at].sea;
   const old=e;e={g,sea,o:a.o,pi:a.at,x:0,z:0,fx:0,fz:0,mv:1,tt:1,face:0,aid:a.id,plate:old?old.plate:null};G3.ents.add(g);G3.arm.set(a.id,e);return e;}
 function g3Anchors(s){const by=new Map();for(const a of GC.armies){if(!by.has(a.at))by.set(a.at,[]);by.get(a.at).push(a);}
   const out=new Map();for(const [pi,L] of by){L.sort((a,b)=>(b.o===GC.me)-(a.o===GC.me)||a.id-b.id);const p=GCM.P[pi],tw=!p.sea?g3Towns().find(t=>t.pi===pi):null,bx=tw?tw.x:p.x,bz=(tw?tw.z:p.y)+(p.sea?0:(tw&&tw.cap?30:20)*Math.min(1.6,Math.max(1,s*.6)));
-    L.forEach((a,k)=>out.set(a.id,[bx+(k-(L.length-1)/2)*(p.sea?20:13)*s,bz]));}return out;}
+    L.forEach((a,k)=>out.set(a.id,[bx+(k-(L.length-1)/2)*(p.sea?20:13)*s,bz]));}
+  for(const a of GC.armies){const f=typeof grSlide==='function'?grSlide(a):0;if(f>0){const A=out.get(a.id),q=GCM.P[a.path[0]],tw=!q.sea?g3Towns().find(t=>t.pi===q.i):null,bx=tw?tw.x:q.x,bz=tw?tw.z:q.y;out.set(a.id,[A[0]+(bx-A[0])*f,A[1]+(bz-A[1])*f]);}}   /* laneA hook: marching armies slide along the road as days pass */
+  return out;}
 function g3SyncArmies(){if(!G3.ents||!GC)return;const ids=new Set(GC.armies.map(a=>a.id));for(const [id,e] of G3.arm)if(!ids.has(id)){G3.ents.remove(e.g);if(e.plate)e.plate.remove();G3.arm.delete(id);}
   for(const a of GC.armies){const had=G3.arm.has(a.id),e=g3Ent(a);if(had&&e.pi!==a.at&&G3.animOK){e.fx=e.x;e.fz=e.z;e.tt=0;e.mv=1;}e.pi=a.at;e.n=a.u.length;e.o=a.o;}
   G3.hot.clear();for(const p of GCM.P)if(p.land){const st=GC.prov[p.i];if(st.hot!=null&&GC.turn-st.hot<=1)G3.hot.set(p.i,1);if(st.burn>0)G3.hot.set(p.i,2);}
@@ -19668,7 +19672,7 @@ function g3UI(){g3Css();const w=document.getElementById('gMapWrap');if(!w)return
   mk('✉','Last turn report',()=>g3News(true));mk('⌖','Centre on your capital (Home)',()=>{const m=GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);});
   mk('☰','Show / hide the province panel',()=>{const s=document.getElementById('gSide');if(s){s.style.display=s.style.display==='none'?'flex':'none';setTimeout(guResize,30);}});
   const qb=mk(g3Quality()==='ultra'?'✦✦':'✦','Grand map quality: High (default) / Ultra (sharper, heavier)',()=>{SET.g3q=g3Quality()==='ultra'?'high':'ultra';try{saveSet();}catch(e){}qb.textContent=g3Quality()==='ultra'?'✦✦':'✦';g3ApplyQuality();g3News&&0;});
-  G3.endB=mk('▶','End turn (Enter)',guEndTurn,'end');
+  G3.endB=mk('▶','Play / pause time (Space)',()=>{guSpeed(GV.spd?0:(GV.lastSpd||2));G3.endB.textContent=GV.spd?'❚❚':'▶';},'end');
   const mc=document.createElement('canvas');mc.id='g3mini';mc.width=240*2;mc.height=120*2;mc.style.width='240px';mc.style.height='120px';u.appendChild(mc);G3.mc=mc;
   const mm=ev=>{const r=mc.getBoundingClientRect();G3.camera.x=Math.max(0,Math.min(2400,(ev.clientX-r.left)/240*2400));G3.camera.z=Math.max(0,Math.min(1200,(ev.clientY-r.top)/120*1200));};
   mc.addEventListener('pointerdown',ev=>{mc.setPointerCapture(ev.pointerId);mm(ev);mc._d=1;ev.stopPropagation();});mc.addEventListener('pointermove',ev=>{if(mc._d)mm(ev);});mc.addEventListener('pointerup',()=>{mc._d=0;});
@@ -20360,11 +20364,11 @@ const GMIL_MISSILE_COST=450,GMIL_MS_MAX=6;
 function gmilNew(){return {g:{},gid:1,fr:[],fid:1,zm:{},fq:[],n:{},bk:{},foe:'',nx:{}};}
 function gmilN(c){const M=GC.mil;return M.n[c]||(M.n[c]={ms:2,so:[]});}
 function gmilCul(c){return GMIL_CUL[c]||GMIL_REGCUL[(grNat(c)||{}).reg]||'en';}
-function gmilName(c,R){const L=GMIL_NM[gmilCul(c)]||GMIL_NM.en;return L[0][Math.floor(R()*L[0].length)]+' '+L[1][Math.floor(R()*L[1].length)];}
+function gmilName(c,R){if(typeof pplGenName==='function')return pplGenName(c,R);const L=GMIL_NM[gmilCul(c)]||GMIL_NM.en;return L[0][Math.floor(R()*L[0].length)]+' '+L[1][Math.floor(R()*L[1].length)];}
 function gmilRng(a,b){return grRng(((GC.seed*131+GC.turn*17+(a|0)*7+(b|0))|0));}
 function gmilGen(a){return a&&a.gid&&GC.mil?GC.mil.g[a.gid]||null:null;}
 function gmilLv(g){let l=0;while(l<4&&g.xp>=GMIL_LVN[l])l++;return l;}
-function gmilTitle(g){return ['Colonel','Brigadier','Major General','Lieutenant General','General'][g.lv|0];}
+function gmilTitle(g){if(typeof pplRank==='function')return pplRank(g.o,g.lv);return ['Colonel','Brigadier','Major General','Lieutenant General','General'][g.lv|0];}
 function gmilMaxGens(c){const n=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c).length;return Math.min(6,2+Math.floor(n/5));}
 function gmilIsNaval(k){return GMIL_NAVAL.includes(k);}
 
@@ -20562,6 +20566,7 @@ function gmilHashStr(){const M=GC.mil;if(!M)return '';let s='|M';for(const id of
 // (roughly square-rooted) so a small power is weak but still playable. Sources + the per-nation table: orch/reports/realstart.md.
 // Deterministic: no random numbers here. grand4/4b's diplomacy reads `al`, `op`, `tn`; grand3 fleets read `fl`.
 //   n[code] = [econ, mil, oil] : econ x2200 starting cash, mil x GR_VBASE starting army value, oil = fuel stock (120 = normal)
+const RES_BLOC=['IR','RS','DW'];   // the Resistance bloc, led by the one shared Ayatollah; new Shia factions add their code here
 const GR_REAL={
  n:{US:[6,3,230],CN:[4.5,2.4,110],RU:[1.6,1.9,260],IN:[2.5,1.5,90],DE:[2.5,.9,80],JP:[2.3,.9,70],GB:[2.2,1,130],FR:[2.1,1,90],IT:[1.6,.7,80],
   BR:[1.5,.5,160],CA:[1.5,.5,200],KR:[1.5,1,70],AU:[1.3,.6,140],ES:[1.2,.5,80],MX:[1.2,.45,130],ID:[1,.5,140],SA:[1.2,.9,300],TR:[1,1.1,90],
@@ -20573,7 +20578,7 @@ const GR_REAL={
  // real alliances at the start (Nov 2026): members start friendly, never attack each other on their own
  al:[['NATO',['US','CA','GB','FR','DE','ES','IT','PL','SE','NO','FI','GR','RO','TR']],
   ['US partners',['US','JP','KR','AU','PH','IL','TW','JO','AE','QA','KW','MA','EG']],
-  ['Russia bloc',['RU','BY','KZ','KP']],['Axis of Resistance',['IR','RS','DW']],['China-Pakistan',['CN','PK']],
+  ['Russia bloc',['RU','BY','KZ','KP']],['Resistance bloc',RES_BLOC],['China-Pakistan',['CN','PK']],
   ['Turkey-Azerbaijan',['TR','AZ']],['Saudi-Pakistan',['SA','PK']],['Gulf',['SA','AE','QA','KW','OM']],['Russia-Iran',['RU','IR']]],
  // starting opinions beyond alliances (-100..100): rivalries and warm ties
  op:[['US','CN',-45],['US','RU',-55],['US','IR',-90],['US','KP',-95],['RU','UA',-100],['RU','GB',-60],['RU','PL',-70],['RU','DE',-45],['IL','IR',-100],['IL','RS',-100],
@@ -20601,7 +20606,7 @@ function grNearOwn(o,toCap){let best=-1,bd=1e9;for(const p of GCM.P){if(!p.land|
 // called from grNew after every nation exists. Wars, fronts, bases, alliances, opinions.
 function grRealApply(quick){
   const has=c=>!!GC.nat[c]&&!GC.nat[c].dead;const V=c=>GR_VBASE*(grRealMil(c,grNat(c).major?1:.5))*(quick?.7:1);
-  GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);GC.rel={};
+  GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);grResBloc();GC.rel={};
   for(const [a,b,v] of GR_REAL.op)if(has(a)&&has(b))GC.rel[grWk(a,b)]=v;
   for(const [a,b] of GR_REAL.wars)if(has(a)&&has(b))GC.war[grWk(a,b)]=1;
   const front=(a,b,sh,nm)=>{const at=grNearOwn(a,GC.nat[b].cap);if(at<0)return;const f=grNat(a).fac;grAddArmy(a,at,grGenUnits(f,V(a)*sh,false),nm);};
@@ -20609,6 +20614,14 @@ function grRealApply(quick){
   for(const [a,b] of GR_REAL.tn)if(has(a)&&has(b)){front(a,b,.15,'Border Guard');front(b,a,.15,'Border Guard');}
   for(const [o,h,sh] of GR_REAL.bases)if(has(o)&&has(h)){const at=GC.nat[h].cap;if(at>=0){const ba=grAddArmy(o,at,grGenUnits(grNat(o).fac,V(o)*sh,false),'Overseas Base');ba.bs=h;}}
   for(const c of Object.keys(GC.nat)){const r=GR_REAL.n[c];if(r&&GC.nat[c].e)GC.nat[c].e.fuel=r[2];}}
+
+/* The Resistance bloc (Abdullah 2026-11-06 21:23 + 22:16 "Make sure the resistance bloc is a thing"): IR, RS and DW (and any later Shia
+   faction added to RES_BLOC, e.g. the River Shias) are ONE permanent alliance while the single shared Ayatollah leads them. Members can't
+   leave it or fight each other; old saves ("Axis of Resistance") are renamed and topped up on load. One table, one helper. */
+function grResBloc(){if(!GC||!GC.nat)return;GC.alz=GC.alz||[];const m=RES_BLOC.filter(c=>GC.nat[c]);if(m.length<2)return;
+  let g=GC.alz.find(x=>x[0]==='Resistance bloc'||x[0]==='Axis of Resistance');if(!g){g=['Resistance bloc',[]];GC.alz.push(g);}g[0]='Resistance bloc';
+  for(const c of m)if(!g[1].includes(c))g[1].push(c);}
+function grInResBloc(a,b){return RES_BLOC.includes(a)&&RES_BLOC.includes(b)&&!!GC&&(GC.alz||[]).some(x=>x[0]==='Resistance bloc'&&x[1].includes(a)&&x[1].includes(b));}
 // ===== 13j-grandmilui: Military panel + province/sea-zone controls for grand stage 3 (generals, fronts, strikes, fleets) =====
 let GMILUI={tab:'gen'};
 function gmilDone(r){if(r){GV.hint=r;guHint();}else{grSave();}guTop();guSide();gmilUiPanel(true);try{grandMapRefresh();}catch(e){}}
@@ -20838,6 +20851,101 @@ npTab('idea','💡','Ideas & points',(code,body,c)=>{const N=gidN(code),own=c.ow
       const nxt=!has&&ix===gidLevel(code,grp);row.innerHTML='<span style="width:20px">'+(has?'✔':ix+1)+'</span><span style="flex:1"><b>'+i[1]+'</b> <span style="opacity:.75">— '+i[5]+'</span></span><span style="opacity:.7">'+(has?'adopted':GID_COST[ix]+' '+GID_POOL[i[2]])+'</span>';
       if(nxt&&own){const b=document.createElement('button');b.textContent='Adopt';b.style.cssText='font-size:15px;padding:2px 12px;cursor:pointer';b.disabled=N.pp[i[2]]<GID_COST[ix];b.onclick=()=>{const e=gidBuy(code,grp);if(e&&typeof grLog==='function')grLog(e,code);npDraw();};row.appendChild(b);}
       box.appendChild(row);});body.appendChild(box);}});
+/* People: names (+ portrait hooks in 13m-portraits.js). One owner for every named person on the grand map: national leaders, heirs,
+   cabinet ministers, generals. Every person is FICTIONAL (plausible combinations of common first/family names for the nation's
+   culture, never a real leader or general). Deterministic from the campaign seed; the roster is kept in GC.ppl (saved with the
+   campaign). Generals keep their own record in GC.mil.g (13i-grandmil.js) and take their names from here (pplGenName / pplRank).
+   API: pplName(p) -> "Ayatollah Mahdi Tabrizi"; pplRoster(c) -> {leader, heir|null, cab:[4]}; pplOf(c,role) ; pplGeneral(g) -> person. */
+const PPL_T={   // culture -> [first names, family names, patronymics (ru/uk only), female first names (optional)]
+ fa:['Behnam Kaveh Dariush Arman Reza Shahin Farhad Nima Babak Omid Mehrdad Kamran Siavash Parviz Bahram Hamid Javad Saeed','Karimzadeh Rostami Nouri Sadeghi Farahani Zandi Mirzaei Tavakoli Bahrami Heidari Ghorbani Sharifi Azizi Moradi Jalali Soltani Hashemi Dehghan'],
+ cfa:['Mahdi Abbas Hossein Mohsen Jafar Morteza Reza Hadi Sadegh Ebrahim Kazem Taqi','Tabrizi Shirazi Isfahani Mashhadi Qomi Kermani Yazdi Hamadani Gilani Zanjani Najafabadi Rashti'],
+ lb:['Hadi Ali Mahmoud Hussein Jawad Nabil Bilal Ziad Fadi Kassem Rida Ammar Mustafa Samer Yasser Ghassan','Amili Jaber Zein Hamadeh Khalil Saleh Bazzi Shehab Mroue Ghandour Nasser Fakih Bitar Mazraani Charafeddine Hijazi'],
+ clb:['Hadi Jawad Abbas Ammar Mohammad Hasan Kassem Rida Ibrahim Mortada','Amili Zein Jaber Hamadeh Shehab Mroue Charafeddine Mousawi Sadeq Baalbaki Tyrawi Nabatieh'],
+ ye:['Abdulsalam Yahya Nasser Hamoud Saleh Mansour Hashim Fouad Ahmed Murad Zaid Abdullatif Najib Jamil Adel Taha','al-Sanaani al-Hamdani al-Raymi al-Shami al-Wazir al-Madani al-Khawlani al-Yafei al-Hadrami al-Quhali al-Dhamari al-Ansi al-Marwani al-Jabri'],
+ cye:['Yahya Hamoud Mansour Zaid Hashim Murad Najm Ahmed Hussein Abdulwahab','al-Sanaani al-Hamdani al-Raymi al-Wazir al-Madani al-Khawlani al-Dhamari al-Ansi al-Marwani al-Saadi'],
+ iq:['Haider Ali Mustafa Hussein Karrar Zaid Ahmed Omar Salam Qasim Jabbar Rafid Thamer Ayad Falah Hakim','al-Tamimi al-Jubouri al-Obeidi al-Shammari al-Saadi al-Rubaie al-Zubaidi al-Bayati al-Dulaimi al-Hashimi al-Azzawi al-Kinani al-Nuaimi al-Ani'],
+ sy:['Karim Nabil Samir Walid Tariq Salim Rami Fouad Jamal Bassel Majd Anas Wael Adnan Ghiath Mazen','Haddad Mansour Khoury Darwish Najjar Sabbagh Hakim Farouk Rahal Shami Hamwi Atassi Kurdi Jaber Halabi Zaidan'],
+ gu:['Khalid Faisal Sultan Majid Nasser Turki Saud Rashid Hamad Mishal Badr Salman Abdulaziz Fahad Hamdan Zayed','al-Rashid al-Harbi al-Qahtani al-Otaibi al-Mutairi al-Dosari al-Shehri al-Ghamdi al-Nuaimi al-Mazrouei al-Kaabi al-Suwaidi al-Falasi al-Mansoori al-Ketbi al-Zaabi'],
+ jo:['Ayman Hazem Mazen Nashat Khaled Omar Zaid Ghazi Awni Hussam Rakan Bassam Maher Sami Raed Fares','al-Majali al-Tarawneh al-Zoubi al-Kilani al-Hiyari al-Khasawneh al-Rawashdeh al-Maaytah al-Fayez al-Qudah al-Shboul al-Momani al-Bataineh al-Sarhan al-Omari'],
+ eg:['Hossam Tarek Amr Sherif Wael Mostafa Khaled Ashraf Magdy Hany Ayman Essam Medhat Sameh Yasser Adel','Abdelaziz El-Sayed Fathy Mansour Hegazy Zaki Soliman Ghoneim Selim Radwan Sabry Naguib El-Gohary Bakr Shaaban Taha Kamel'],
+ ku:['Bakhtiar Karwan Dilshad Hawre Aram Rebwar Shwan Sirwan Peshraw Zana Kamaran Azad Nawzad Hemin Serbest Dana','Hawrami Shaways Mukriyani Rawandzi Jaff Berwari Soran Sindi Dizayi Baban Hamawandi Surchi Khoshnaw Pizhdar Zerevani'],
+ tr:['Murat Selim Kemal Orhan Cem Emre Burak Volkan Tolga Altan Hakan Levent Serdar Erkan Ismail Mehmet Ugur','Yildirim Demirel Aksoy Kaplan Arslan Erdem Tekin Sezer Polat Koc Aydin Ozturk Celik Kurt Dogan Yalcin Bozkurt Tuncer','','Ayse Elif Zeynep Selin Deniz Burcu Ebru Gulsen'],
+ az:['Rashad Elchin Vugar Farid Kamran Orkhan Tural Samir Nijat Rovshan Anar Elnur Ilgar Zaur Natig Rafiq','Aliyarov Hasanov Guliyev Mammadov Huseynov Ismayilov Rahimov Safarov Najafov Jabbarov Karimov Valiyev Abbasov Aslanov Bagirov Mustafayev'],
+ he:['Eitan Yossi Amir Noam Gil Oren Ronen Tomer Ilan Uri Dror Itai Nadav Shaul Yair Guy','Shaham Shalev Peretz Navon Harel Sasson Golan Tamir Avni Ben-Ami Carmel Mizrahi Rosen Segal Dagan Yaron','','Noa Maya Tamar Shira Yael Dana Michal Orly'],
+ ru:['Dmitri Andrei Viktor Anatoly Gleb Roman Yevgeny Stepan Kirill Lev Konstantin Vadim Oleg Timur Nikolai Arkady','Vorontsov Kalinin Sokolov Baranov Lebedev Orlov Zhukovsky Belov Gromov Rybakov Kuznetsov Melnikov Tarasov Zimin Ushakov Berezin','Andreyevich Viktorovich Sergeyevich Pavlovich Nikolayevich Ivanovich Petrovich Mikhailovich Alexeyevich Borisovich Yuryevich Olegovich'],
+ uk:['Taras Oleksandr Bohdan Yaroslav Mykola Vasyl Ihor Andriy Roman Danylo Maksym Volodymyr Petro Stepan Oleh Yuriy','Kovalenko Shevchuk Bondarenko Tkachenko Kravets Melnyk Savchenko Lysenko Marchenko Romanyuk Hrytsenko Polishchuk Moroz Pavlenko Kostenko Zinchenko','Andriyovych Petrovych Oleksandrovych Mykolayovych Volodymyrovych Ivanovych Ihorovych Vasylovych Bohdanovych Yuriyovych'],
+ ko:['Min-jun Seung Dae-ho Joon Hyun Tae-yang Sung Ji-hoon Woo Kang Jin-ho Dong-hyun Young-soo Hyeok Sang-chul Gwang-ho','Baek Ryu Seo Yoon Han Cho Jang Moon Shin Kwon Choi Kang Lim Hwang Oh Song','','Ji-woo Min-seo Soo-jin Hye-won Yeon-hee Eun-ji Na-yeon Seo-yeon'],
+ zh:['Wei Jun Hao Bo Lin Feng Tao Yong Ming Kai Jian Guang Hua Lei Qiang Zhong','Zhao Liang Xu Gu Shen Han Tang Peng Luo Jiang Cai Fan Dong Lu Yao Zhou','','Mei Xiu Ying Lan Yan Hui Jing Fang'],
+ ja:['Haruto Kenji Daisuke Takeshi Ryo Shin Akira Naoki Hideo Jun Koji Masato Satoru Tetsu Yuji Kazuki','Aizawa Hoshino Kuroda Miyake Sakurai Tsuda Narita Okabe Fujisawa Nomura Hayashida Kitano Morita Ishikura Sugita Takagi','','Yuki Haruka Aoi Mika Rina Sakura Nanami Emi'],
+ vi:['Minh Tuan Hung Dung Long Quang Thanh Hai Nam Phuc Khoa Son Hoang Viet Cuong Duc','Nguyen Tran Le Pham Hoang Vu Dang Bui Do Ngo Duong Ly Truong Dinh Trinh Mai'],
+ hi:['Arjun Vikram Rohan Sanjay Naveen Rajiv Anil Pradeep Suresh Manoj Deepak Harish Kiran Vivek Ashok Girish','Rathore Chauhan Nair Verma Iyer Reddy Menon Bhatia Kulkarni Deshmukh Thakur Rawat Malhotra Sengupta Pillai Joshi','','Anjali Priya Kavya Meera Sunita Neha Divya Radha'],
+ ur:['Imran Aamir Kabir Faisal Zubair Tariq Naeem Shoaib Adnan Salman Usman Waqar Rizwan Jawad Asif Bilal','Malik Bhatti Qureshi Gill Khattak Chaudhry Mirza Awan Cheema Gondal Warraich Niazi Sheikh Abbasi Lodhi Durrani'],
+ af:['Abdul Gul Najib Rahim Sami Wahid Jawid Farid Hamid Zalmay Atiq Nasir Ehsan Sayed Latif Mirwais','Ahmadzai Yousafzai Noorzai Barakzai Safi Wardak Popalzai Shinwari Mangal Hotak Kakar Faizi Rahimi Karokhel Sultani Tokhi'],
+ id:['Arief Bayu Dewa Agus Budi Eko Hendra Wawan Joko Rizal Surya Teguh Bambang Dedi Gunawan Rudi','Pratama Santoso Wijaya Saputra Hidayat Nugroho Kusuma Susanto Setiawan Wibowo Siregar Lubis Harahap Purnomo Hartono Sembiring','','Dewi Sari Putri Ayu Lestari Wulan Rina Intan'],
+ ph:['Ramon Jose Carlo Emilio Rodel Alfredo Benigno Dante Ferdie Gerardo Nestor Rey Virgilio Lorenzo Teodoro Arnel','Dela Cruz Bautista Villanueva Mercado Aquino Santos Reyes Manalo Dizon Magsaysay Panganiban Soriano Tolentino Valencia Cabrera Ocampo','','Maria Liza Rosario Corazon Teresita Luz Imelda Divina'],
+ th:['Somchai Niran Anurak Chaiyo Prasert Surachai Wichai Thanet Kittipong Sakda Anan Boonmee Chatchai Pichit Narong Decha','Wongsakul Rattana Srisai Thongchai Boonsri Jaidee Phetcharat Suksai Chantarasri Kaewmanee Pongpan Saetang Sirikul Ruangrit Prakobkit Intharat'],
+ kz:['Nurlan Askar Bauyrzhan Daulet Erlan Marat Sanzhar Talgat Yerbol Zhanat Berik Kairat Aidos Ruslan Bolat Almas','Nurgaliyev Sadykov Akhmetov Kassymov Dosmukhamedov Tulegenov Baimukhanov Omarov Zhaksybekov Temirbayev Utepov Abenov Mukhametov Seitkali Ospanov Kenzhebayev'],
+ ng:['Chidi Emeka Obinna Tunde Segun Bayo Ikenna Kelechi Femi Yusuf Musa Ibrahim Uche Chukwuma Dayo Sani','Okafor Abara Adeyemi Okoye Balogun Eze Nwosu Adebayo Ogunleye Bello Danjuma Olawale Umeh Obi Lawal Okonkwo'],
+ za:['Sipho Themba Thabo Lwazi Bongani Mandla Johan Pieter Willem Andile Sizwe Kobus Dumisani Gerhard Lungile Riaan','Mbatha Nkosi Dlamini Zulu Khumalo Naidoo van der Merwe Botha Mokoena Ndlovu Pretorius Mahlangu Venter Sithole Jacobs Cele'],
+ et:['Tesfaye Abebe Dawit Haile Getachew Yonas Bekele Mulugeta Henok Tadesse Solomon Girma Berhanu Fikru Yared Kebede','Bekele Tadesse Alemayehu Gebre-Selassie Wolde Tsegaye Assefa Negash Tekle Mengistu Desta Worku Lemma Abera Gizaw Demissie'],
+ la:['Alejandro Rafael Mateo Joaquin Luciano Enzo Tiago Emilio Bruno Hugo Santiago Ignacio Esteban Gustavo Ricardo Andres','Salcedo Ibarra Montoya Ferreira Duarte Romero Vidal Navarro Cardoso Bellini Rojas Quintero Paredes Olivares Mendoza Ortega','','Valentina Camila Lucia Isabel Marisol Paula Daniela Renata'],
+ br:['Rodrigo Thiago Gustavo Leandro Caio Bruno Henrique Marcelo Fabio Rafael Vinicius Eduardo Murilo Cassio Otavio Lucas','Ferreira Cardoso Albuquerque Teixeira Carvalho Monteiro Barbosa Nogueira Siqueira Magalhaes Pacheco Guimaraes Amaral Rezende Cavalcanti Ribeiro','','Beatriz Larissa Juliana Camila Fernanda Aline Renata Patricia'],
+ fr:['Julien Antoine Etienne Thibault Mathieu Olivier Laurent Gaspard Remy Benoit Alexandre Hugues Sebastien Maxime Guillaume Pascal','Delmas Moreau Lefevre Roussel Gauthier Marchand Fontaine Brunet Lacroix Perrin Duval Mercier Girard Blanchard Chevalier Vasseur','','Camille Margaux Elodie Claire Sophie Isabelle Helene Juliette'],
+ de:['Lukas Jonas Matthias Anders Stefan Henrik Konrad Lars Florian Emil Dieter Markus Tobias Jens Ralf Christoph','Brandt Falk Hartmann Weiss Keller Vogel Reiter Lang Berger Roth Winkler Kessler Neumann Albrecht Vollmer Hofmann','','Anna Katrin Sabine Julia Marlene Greta Ingrid Lena'],
+ pl:['Tomasz Marek Piotr Krzysztof Pawel Jakub Wojciech Lech Andrzej Jan Michal Zbigniew Bartosz Rafal Kazimierz Dariusz','Kowalczyk Wisniewski Zielinski Jankowski Lewandowski Kaminski Wojciechowski Szymanski Dabrowski Kozlowski Mazur Krawczyk Piotrowski Grabowski Pawlak Michalski','','Agnieszka Katarzyna Magdalena Joanna Ewa Monika Zofia Halina'],
+ it:['Lorenzo Matteo Alessandro Davide Riccardo Stefano Giorgio Fabrizio Massimo Paolo Gianluca Enrico Claudio Salvatore Roberto Vittorio','Rossetti Moretti Bianchi Ferrari Conti Greco Bruno Gallo Costa Fontana Barbieri Ricci Marino Vitale Santoro Caruso','','Giulia Chiara Francesca Elena Silvia Laura Federica Marta'],
+ gr:['Nikos Giorgos Dimitris Kostas Yannis Stavros Thanasis Manolis Vassilis Panagiotis Christos Spyros Alexandros Lefteris Sotiris Petros','Papadakis Karras Pappas Vlachos Nikolaidis Georgiou Antonopoulos Katsaros Mavridis Kontos Theodorou Galanis Stavrou Alexiou Oikonomou Kyriakos'],
+ es:['Javier Alvaro Sergio Pablo Fernando Ramon Gonzalo Iker Adrian Rubén Marcos Ismael Julian Cristobal Ignacio Guillermo','Gallego Herrera Castillo Dominguez Vazquez Santana Molina Cabrera Prieto Fuentes Aguilar Benitez Calvo Ledesma Cordero Pascual','','Marta Carmen Pilar Elena Beatriz Rocio Irene Teresa'],
+ se:['Erik Anders Lars Johan Mikael Nils Per Gustav Henrik Oskar Fredrik Magnus Olof Stefan Hakan Sven','Lindqvist Sandberg Nordin Eklund Holmgren Bergstrom Forsberg Sjoberg Lundgren Engstrom Wallin Dahlberg Hedlund Ostlund Samuelsson Granath','','Karin Ingrid Annika Maria Elin Sofia Helena Astrid'],
+ en:['James Robert Marcus Daniel Edward Thomas Philip Gordon Neil Walter Richard Andrew Graham Nigel Jonathan Martin','Hollis Kendrick Whitaker Barlow Ashby Crane Mercer Pryor Langley Thorne Blackwood Caldwell Fairfax Harlow Rutledge Sterling','','Eleanor Katherine Margaret Olivia Rebecca Helen Susan Victoria']};
+const PPL_CUL={IR:'fa',RS:'lb',DW:'ye',IQ:'iq',SY:'sy',SA:'gu',AE:'gu',OM:'gu',JO:'jo',EG:'eg',KD:'ku',TR:'tr',AZ:'az',IL:'he',RU:'ru',UA:'uk',KP:'ko',KR:'ko',CN:'zh',TW:'zh',JP:'ja',VN:'vi',IN:'hi',PK:'ur',AF:'af',ID:'id',PH:'ph',TH:'th',KZ:'kz',NG:'ng',ZA:'za',ET:'et',DZ:'eg',MA:'eg',LY:'eg',SD:'eg',CU:'la',VE:'la',MX:'la',AR:'la',CO:'la',CL:'la',BR:'br',ES:'es',FR:'fr',DE:'de',EU:'de',PL:'pl',IT:'it',GR:'gr',SE:'se',US:'en',GB:'en',AU:'en',CA:'en'};
+const PPL_REG={ME:'iq',AF:'ng',SA:'hi',EA:'zh',SEA:'id',EU:'de',NA:'en',SAM:'la'};
+const PPL_FF={ko:1,zh:1,ja:1,vi:1};   // family name first
+const PPL_CLERIC={IR:'cfa',RS:'clb',DW:'cye'};   // nations whose leader is always an Ayatollah (other clerics: Hojatoleslam)
+const PPL_HEAD={SA:'King',JO:'King',MA:'King',OM:'Sultan',AE:'President',GB:'Prime Minister',JP:'Prime Minister',IL:'Prime Minister',DE:'Chancellor',EU:'President',IN:'Prime Minister',ES:'Prime Minister',IT:'Prime Minister',PL:'Prime Minister',SE:'Prime Minister',GR:'Prime Minister',CA:'Prime Minister',AU:'Prime Minister',TR:'President',CN:'President',KP:'Dear Leader',IR:'Ayatollah',RS:'Ayatollah',DW:'Ayatollah',TH:'Prime Minister',VN:'General Secretary',KD:'President',AF:'Chairman',LY:'Chairman',SD:'Chairman',KZ:'President'};
+const PPL_HEIR={SA:'Crown Prince',JO:'Crown Prince',MA:'Crown Prince',OM:'Crown Prince',AE:'Crown Prince',KP:'Successor',IR:'Designated successor',RS:'Designated successor',DW:'Designated successor'};
+const PPL_POSTS=['Minister of Foreign Affairs','Minister of Defence','Minister of Finance','Minister of the Interior'];
+const PPL_RANKS={fa:['Sarhang','Sartip Dovom','Sartip','Sarlashkar','Sardar'],ar:['Aqid','Amid','Liwa','Fariq','Fariq Awwal'],en:['Colonel','Brigadier','Major General','Lieutenant General','General']};
+function pplHash(s){let h=2166136261;s=''+s;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function pplCul(c){if(PPL_CUL[c])return PPL_CUL[c];const n=(typeof grNat==='function'?grNat(c):null)||{};return PPL_REG[n.reg]||'en';}
+function pplTab(k){const t=PPL_T[k]||PPL_T.en;if(!t._p)t._p=[0,1,2,3].map(i=>t[i]?t[i].split(' '):[]);return t._p;}
+function pplPick(a,R){return a[Math.floor(R()*a.length)];}
+/* a name in the culture's own order; f=1 uses the female first names where the table has them */
+function pplMakeName(cul,R,f,tabKey){const T=pplTab(tabKey||cul),fn=(f&&T[3].length)?T[3]:T[0],a=pplPick(fn,R),b=pplPick(T[1],R);
+  if(PPL_FF[cul])return b+' '+a;
+  if(T[2].length){const pat=pplPick(T[2],R);return a+' '+pat+' '+b;}
+  return a+' '+b;}
+function pplGenName(c,R){return pplMakeName(pplCul(c),R,0);}
+function pplRank(c,lv){const cul=pplCul(c),k=cul==='fa'?'fa':(['lb','ye','iq','sy','gu','jo','eg'].includes(cul)?'ar':'en');return PPL_RANKS[k][Math.max(0,Math.min(4,lv|0))];}
+function pplLook(key,c,sx,role){const h=pplHash(key+'|'+c),R=grRng(h|0),n=(typeof grNat==='function'?grNat(c):null)||{};   // look seeds for the portrait renderer
+  return {h,sx,age:role==='heir'?28+Math.floor(R()*14):role==='leader'?(PPL_CLERIC[c]?62+Math.floor(R()*14):52+Math.floor(R()*18)):role==='general'?46+Math.floor(R()*16):42+Math.floor(R()*20),reg:n.reg||'',cul:pplCul(c),beard:R(),build:R(),tone:R()};}
+function pplMakePerson(c,role,idx,R,post,used){used=used||{};for(let t=0;t<8;t++){const p=pplMakePerson1(c,role,idx,R,post),k=p.nm.split(' ').filter(w=>w.length>3).pop();if(!used[p.nm]&&!used['f'+k]||t===7){used[p.nm]=1;used['f'+k]=1;return p;}}}
+function pplMakePerson1(c,role,idx,R,post){const cul=pplCul(c),cl=PPL_CLERIC[c];let ttl='',nm,sx='m',tab=cul;
+  if(role==='leader'){ttl=PPL_HEAD[c]||'President';if(cl){tab=cl;ttl='Ayatollah';}}
+  else if(role==='heir'){ttl=PPL_HEIR[c]||'Heir';if(cl){tab=cl;ttl='Hojatoleslam';}}
+  else if(role==='minister'){ttl='';if(cl&&R()<.4){tab=cl;ttl='Hojatoleslam';}
+    else if(PPL_T[cul]&&PPL_T[cul][3]&&R()<.22)sx='f';}
+  if(role==='leader'&&c==='KP'){tab='ko';}
+  nm=pplMakeName(cul,R,sx==='f'?1:0,tab);
+  const id=c+':'+role+idx;return {id,c,role,post:post||'',ttl,nm,sx,look:pplLook(id,c,sx,role)};}
+function pplRoster(c){if(!GC)return null;if(!GC.ppl)GC.ppl={};let r=GC.ppl[c];if(r)return r;
+  const R=grRng(((GC.seed|0)*977)^pplHash('ppl'+c));const U={};r={leader:pplMakePerson(c,'leader',0,R,'Head of state',U),heir:null,cab:[]};
+  if(PPL_HEIR[c]&&(PPL_CLERIC[c]||c==='KP'||R()<1))r.heir=pplMakePerson(c,'heir',0,R,PPL_HEIR[c],U);
+  for(let i=0;i<PPL_POSTS.length;i++)r.cab.push(pplMakePerson(c,'minister',i,R,PPL_POSTS[i],U));
+  GC.ppl[c]=r;return r;}
+/* the person behind a general record from GC.mil.g */
+function pplGeneral(g){if(!g)return null;const id='g'+g.id+g.o;return {id,c:g.o,role:'general',post:'Commander',ttl:pplRank(g.o,g.lv),nm:g.nm,sx:'m',look:pplLook(id,g.o,'m','general')};}
+function pplName(p){return p?(p.ttl?p.ttl+' ':'')+p.nm:'';}
+function pplOf(c,role,i){const r=pplRoster(c);return !r?null:role==='leader'?r.leader:role==='heir'?r.heir:r.cab[i|0]||null;}
+/* Government tab on the nation panel: leader, heir, cabinet, generals (names always; portrait pictures only when ptOn() says so) */
+function pplCard(p){const img=(typeof ptOn==='function'&&ptOn())?ptHtml(p,72):'';return '<div style="display:flex;gap:10px;align-items:center;padding:6px 8px;border-bottom:1px solid #1f3247">'+img+'<div><div style="font-size:16px;color:#ffe6a8">'+pplName(p)+'</div><div style="font-size:13px;opacity:.7">'+(p.post||'')+'</div></div></div>';}
+if(typeof npTab==='function')npTab('gov','👤','Government',(code,body)=>{const r=pplRoster(code);if(!r){body.textContent='';return;}
+  let h='<div style="max-width:560px">'+pplCard(r.leader)+(r.heir?pplCard(r.heir):'')+r.cab.map(pplCard).join('');
+  const gs=GC.mil?Object.values(GC.mil.g).filter(g=>g.o===code&&!g.st).sort((a,b)=>a.id-b.id):[];
+  h+=gs.map(g=>pplCard(pplGeneral(g))).join('')+'</div>';body.innerHTML=h;});
+/* portraits are OFF until Abdullah approves the art (orch/portraits/); the hooks exist so cards can adopt them later */
+function ptOn(){return false;}
+function ptHtml(p,sz){return '';}
 // 13m-gdiplo.js — Lane G B6: EU4-style diplomacy. ONE opinion = grOpinion (13i) + these factor lines; actions are DETERMINISTIC
 // (accept when score >= threshold, no dice) and always show WHY. State lives in GC (saved with the campaign): GC.rel pair opinions,
 // GC.alz alliances, GC.tr truces {pairKey:untilTurn}, GC.gu guarantees [[by,for]], GC.wsT war start turns {pairKey:turn}.
@@ -20875,7 +20983,7 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
   else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (armies on enemy land, war length)',s]);
     const acc=GC.nat[b].ai?25:0;W.push(['They accept at',acc]);if(ok&&s<acc)no('They refuse (score '+s+' of '+acc+')');}
   else if(act==='guarantee'){cost=300;if(war)no('At war');else if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))no('Already guaranteed');W.push(['Costs $300, +15 opinion, shows resolve',0]);}
-  else if(act==='break'){if(!al)no('Not allied');W.push(['Opinion -25',0]);}
+  else if(act==='break'){if(!al)no('Not allied');else if(typeof grInResBloc==='function'&&grInResBloc(a,b))no('The Resistance bloc is permanent while the Ayatollah leads it');W.push(['Opinion -25',0]);}
   if(cost&&cash<cost&&ok)no('Not enough cash ($'+cost+')');
   if(GC.me!==a)no('Only your own nation acts');
   return {ok,why:W,cost,note};}
