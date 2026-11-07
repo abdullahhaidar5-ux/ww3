@@ -16941,7 +16941,7 @@ const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 // Infantry: three realistic rigged soldiers (Western desert-camo marine, Eastern green-camo, Middle-Eastern/militia woodland
 // fatigues) shared by the 18 nations; national colour is a tint over the camo. 'soldier' is the old stand-in.
 // laneE: foot soldiers read too small at gameplay height (Abdullah 2026-11-06 photo) - draw them ~18% bigger (visual only)
-for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.45;c._big=1;}}
+for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.7;c._big=1;}}
 const SOLV={US:'sol_w',EU:'sol_w',FR:'sol_w',DE:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
 const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:74},barracks:{m:'b_barr_me',size:60},factory:{m:'b_fact_me',size:72}};
@@ -19495,11 +19495,17 @@ function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def'
   const strip=arr=>{for(let i=arr.length-1;i>=0;i--)if(arr[i].dead)arr.splice(i,1);};const b=GB_CUR.b;
   for(const s of grSideUnits(b,'att').concat(grSideUnits(b,'def')))strip(s.u);
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}
+/* ⚡32 After-action report (laneF): what each side lost by unit type, how long it took, who is hurt, the best unit. Read-only on battle state. */
+function grandAAR(g){const d=campEl('div','font-size:14px;line-height:1.5;margin:0 0 12px;padding:8px 10px;border:1px solid #3d5a73;border-radius:6px;background:rgba(20,34,48,.6)');const sides=[{n:'You',l:{},w:0,a:0},{n:'Enemy',l:{},w:0,a:0}];let best=null;
+  for(const [rec,e,team] of g.ents){const S=sides[team===0?0:1],nm=(e.s&&(e.s.name||e.s.label))||e.kind||'unit';if(e.dead||!G.byId.has(e.id))S.l[nm]=(S.l[nm]|0)+1;else{S.a++;if(e.hp<e.max*.5)S.w++;}if(team===0&&(e.kills|0)>(best?best.k:0))best={k:e.kills|0,n:nm};}
+  const f=S=>{const k=Object.keys(S.l).sort((a,b)=>S.l[b]-S.l[a]).slice(0,4).map(n=>S.l[n]+' '+n).join(', ');return '<b>'+S.n+'</b>: lost '+(k||'nothing')+' · '+S.a+' survive'+(S.w?' ('+S.w+' badly hurt)':'');};
+  const m=Math.floor(g.t0/60),sc=Math.floor(g.t0%60);d.innerHTML='<div style="opacity:.7;font-size:12px;letter-spacing:1px">AFTER-ACTION REPORT · '+m+':'+(sc<10?'0':'')+sc+' of fighting</div>'+f(sides[0])+'<br>'+f(sides[1])+(best?'<br>Best unit: <b>'+best.n+'</b> with '+best.k+' kills':'');return d;}
 function grandBattleEnd(){const g=G.grand,c=GB_CUR;grandWriteBack();const T0=g.res.win===0,won=T0;
   const lost0=g.n0[0]-G.ents.filter(e=>e.team===0&&!e.isB&&!e.dead).length,lost1=g.n0[1]-G.ents.filter(e=>e.team===1&&!e.isB&&!e.dead).length;
   const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':g.res.how==='rout'?(won?'ENEMY ROUTED':'YOUR FORCE ROUTED'):'FORCE DESTROYED')));
   root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;color:'+(won?'#9fd36b':'#e07a6a'),won?'Victory':g.res.how==='retreat'?'Withdrawn':'Defeat'));
   root.appendChild(campEl('div','font-size:17px;line-height:1.6;margin-bottom:10px','Your losses: <b>'+lost0+'</b> of '+g.n0[0]+' units · Enemy losses: <b>'+lost1+'</b> of '+g.n0[1]+' units<br>Survivors keep their wounds and experience on the map; the dead are gone.'));
+  try{root.appendChild(grandAAR(g));}catch(e){}
   root.appendChild(campBtn('Return to the map',()=>{campClose();grandLeaveBattle();grBattleDone(c.b,(c.meAtt===won)?'att':'def',g.res.how==='retreat'?'retreat':'live');grandMapRefresh();}));
   campShow(root);}
 function grandLeaveBattle(){try{if(MODE!=='single')leaveNet();}catch(e){}MODE='single';ME=0;G=null;try{kcReset();}catch(e){}try{$('end').hidden=true;}catch(e){}const h=document.getElementById('gbHud');if(h)h.hidden=true;grandScreenShow(true);}
