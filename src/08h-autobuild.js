@@ -5,7 +5,7 @@
    order; the sim (03g-battlefeel.js bfAutoTick) queues units through enqueue() exactly like a click, at most 3 per factory. */
 const AB={open:false,sig:'',el:null,pick:'',n:6};
 function abEl(){if(AB.el)return AB.el;const st=document.createElement('style');st.textContent=`
-#autoP{position:fixed;left:284px;bottom:236px;z-index:12;width:236px;background:rgba(10,14,12,.9);border:1px solid #6b7a63;border-radius:8px;color:#e8efe4;font:12px system-ui,sans-serif;padding:5px 8px;user-select:none}
+#autoP{position:fixed;left:8px;bottom:272px;z-index:12;width:236px;background:rgba(10,14,12,.9);border:1px solid #6b7a63;border-radius:8px;color:#e8efe4;font:12px system-ui,sans-serif;padding:5px 8px;user-select:none}
 #autoP h4{margin:0;font:700 13px Saira Condensed,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
 #autoP button,#autoP select,#autoP input{background:#2c3a26;border:1px solid #6b7a63;color:#f0f5e6;border-radius:5px;font:600 11px system-ui,sans-serif;padding:2px 6px;min-height:22px;cursor:pointer;margin:1px 2px 1px 0}
 #autoP input{width:44px;cursor:text}#autoP button.on{background:#74d08f;color:#0a120c}#autoP button.off{background:#8a3a2a}
@@ -24,8 +24,9 @@ function abAct(a,k,v){if(!G||G.over)return;const A=abMine();
   else if(a==='del')doAct({t:'auto',k,ti:0});else if(a==='up')doAct({t:'auto',k,ci:1});else if(a==='dn')doAct({t:'auto',k,ci:2});else if(a==='clr')doAct({t:'auto',k:'_clr'});
   AB.sig='';setTimeout(abUI,60);}
 function abUI(){const d=abEl();if(!G||G.over||!G.teams[ME]||MODE==='spectate'||(typeof NET!=='undefined'&&NET.spec)){d.hidden=true;return;}const T=G.teams[ME],A=T.auto,R=roster(T.fac);
+  if(!AB.open){d.hidden=true;AB.sig='';return;}if(typeof CT!=='undefined'&&CT.open){CT.open=false;if(typeof ctUI==='function')ctUI(true);}d.style.bottom=(236+(typeof CTP!=='undefined'&&CTP&&!CTP.hidden?CTP.offsetHeight+4:0))+'px';
   const sig=[AB.open,A?JSON.stringify(A):'',AB.pick,AB.n,Math.floor(G.t/3)].join('|');if(sig===AB.sig)return;AB.sig=sig;d.hidden=false;
-  const on=!A||A.on!==false,tot=A?A.list.length:0;let h=`<h4 data-a="open"><span>Auto-build <small style="display:inline;opacity:.6">[U]</small></span><span>${tot?(on?'● on':'❚❚ paused'):''} ${AB.open?'▾':'▸'}</span></h4>`;
+  const on=!A||A.on!==false,tot=A?A.list.length:0;let h=`<h4 data-a="open"><span>Auto-build <small style="display:inline;opacity:.6">[U]</small></span><span>${tot?(on?'● on':'❚❚ paused'):''} ▾</span></h4>`;
   if(AB.open){const opts=[];for(const c of CATS)for(const k of (R[c]||[])){const s=stats(T.fac,k);if(!s||k==='cleric'||k==='champ')continue;opts.push([k,s.name,s.cost]);}if(!AB.pick&&opts.length)AB.pick=opts[0][0];
     h+=`<div style="margin-top:4px">`;
     if(A)for(const it of A.list){const s=stats(T.fac,it.k),have=unitCount(ME,it.k);h+=`<div class="row"><span class="nm" title="${s.name}">${s.name}</span><span class="have">${have}/${it.n}</span><button data-a="dec" data-k="${it.k}">−</button><button data-a="inc" data-k="${it.k}">+</button><button data-a="up" data-k="${it.k}">▲</button><button data-a="dn" data-k="${it.k}">▼</button><button data-a="del" data-k="${it.k}">×</button></div>`;}
