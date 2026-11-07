@@ -19683,7 +19683,7 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   /* No End turn button (Abdullah 2026-11-06 22:30 "Why do we still have end turn?"): time runs EU4-style; the clock's play/pause + speeds are the only control. */
   if(me&&typeof npOpen==='function'){const nb=guEl('button','padding:7px 14px;border-radius:6px;border:1px solid #c9a35a;background:#2a3a4c;color:#ffe6a8;cursor:pointer;font-size:15px;font-weight:bold','Nation');nb.type='button';nb.title='Open your nation panel';nb.onclick=()=>npOpen();t.appendChild(nb);}
   const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);try{alBar();}catch(e){console.error('alBar',e);}}  // hook: Lane G alerts bar (13l-galerts.js)
-function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();try{gdNews();}catch(e){}}
+function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();try{gdNews();}catch(e){}try{gtvShow();}catch(e){}}
 /* ---------- real time with pause (EU4 feel, lane A A2 slice 1) ----------
    The calendar runs in days (30 a month); a month ending = the old End turn, so the simulation and its determinism are unchanged:
    the result depends only on state + the orders standing when each month closes + seed. Starts paused (= the classic turn game).
@@ -23091,6 +23091,34 @@ npTab('elect','🗳','Elections & refugees',(code,body,c)=>{const S=elS(),own=c.
   const pool=S.ref[code]||0;h+='<div style="margin:8px 0"><b>Refugees from the fighting: '+Math.round(pool)+'</b>'+(pool>=4?' — rebuilding costs reduce income.':'')+(pool>=8?' Neighbouring provinces are taking people in and feel the strain.':'')+'</div>';
   const nb=Object.keys(S.ref).filter(o=>o!==code&&S.ref[o]>=8&&GCM&&gevNb(code).includes(o));if(nb.length)h+='<div style="margin:8px 0;color:#ffe6a8">Refugees are arriving from '+nb.map(gdNatName).join(', ')+' (unrest on the border).</div>';
   body.innerHTML=h;if(own&&elIsDem(code)){const msg=document.createElement('div');msg.style.cssText='margin:8px 0;color:#ffe6a8';body.appendChild(msg);const b=document.createElement('button');b.textContent='Campaign ($'+EL_CAMP+')';b.title='+8 approval at the next election';b.style.cssText='font-size:15px;padding:4px 12px;cursor:pointer';b.onclick=()=>{const x=elCampaign(code);if(x)msg.textContent=x;else npDraw();};body.appendChild(b);}});
+// 13zx-gtv.js — Lane G RG5: TV news broadcasts. Presentation only: a lower-third "broadcast" card after the turn for the
+// biggest story of the month. Fed by GC.log (the one event engine writes there through grLog: world events, war, capitals,
+// peace, revolts, pacts). Nothing is saved. Fictional channels and fictional anchors only — no real networks or people.
+const GTV_CH=[{n:'Meridian 24',c:'#b8322a'},{n:'Global Eye',c:'#1f6fb2'},{n:'Horizon News',c:'#2e8b57'},{n:'Continental Wire',c:'#6f4fa0'},{n:'Northstar TV',c:'#c27a12'}];
+const GTV_AN=['Mara Lind','Tomas Verhoeven','Ines Kalder','Samir Dorn','Yuki Tanabe','Ada Okafor','Lukas Brandt','Priya Venkat'];
+const GTV_BIG=/declared war|capital|eliminated|peace|nuclear|coup|revolt|captured|WORLD:|pact|alliance|guarantee/i;
+const GTV_HOT=/declared war|capital|eliminated|nuclear|coup/i;
+let GTV_LAST=-1;
+// the month's biggest story: world events weigh most, then our own nation's news, then anything hot (war, capitals, nukes)
+function gtvPick(){if(!GC||!GC.log)return null;const T=GC.turn-1;let best=null,bw=-1;
+  for(const l of GC.log){if(l[0]!==T||!(l[2]===''||GTV_BIG.test(l[1])))continue;
+    const w=(l[2]===''?3:0)+(l[2]===GC.me?4:0)+(GTV_HOT.test(l[1])?5:0)+(/WORLD:/.test(l[1])?2:0);if(w>bw){bw=w;best=l;}}
+  return best;}
+function gtvShow(){if(!GC||!GC.me||GTV_LAST===GC.turn)return;const b=gtvPick();if(!b)return;GTV_LAST=GC.turn;
+  const host=document.getElementById('gMapWrap');if(!host)return;let old=document.getElementById('gTV');if(old)old.remove();
+  const seed=GC.seed|0,ch=GTV_CH[(seed+GC.turn)%GTV_CH.length],an=GTV_AN[(seed*7+GC.turn*3)%GTV_AN.length];
+  const hot=GTV_HOT.test(b[1]);const d=document.createElement('div');d.id='gTV';
+  d.style.cssText='position:absolute;left:0;right:0;bottom:0;display:flex;align-items:stretch;height:66px;background:rgba(14,18,26,.94);border-top:3px solid '+ch.c+';box-shadow:0 -6px 18px rgba(0,0,0,.45);color:#f4f1ea;font:15px system-ui,sans-serif;z-index:6;cursor:pointer;transform:translateY(20px);opacity:0;transition:opacity .4s,transform .4s';
+  const tag=document.createElement('div');tag.style.cssText='background:'+ch.c+';color:#fff;min-width:150px;display:flex;flex-direction:column;justify-content:center;padding:0 14px;font-weight:700;letter-spacing:.5px';
+  const live=document.createElement('span');live.textContent=(hot?'BREAKING':'LIVE')+' ● ';live.style.cssText='font-size:11px;opacity:.9';
+  const cn=document.createElement('span');cn.textContent=ch.n;cn.style.cssText='font-size:15px';tag.appendChild(live);tag.appendChild(cn);
+  const body=document.createElement('div');body.style.cssText='flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 16px;min-width:0';
+  const hd=document.createElement('div');hd.textContent=b[1].replace(/\.$/,'');hd.style.cssText='font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  const sub=document.createElement('div');sub.textContent='Anchor '+an+' · '+grMonStr(GC.turn-1);sub.style.cssText='font-size:11px;opacity:.65;margin-top:2px;letter-spacing:.3px';
+  body.appendChild(hd);body.appendChild(sub);d.appendChild(tag);d.appendChild(body);host.appendChild(d);
+  d.onclick=()=>d.remove();
+  requestAnimationFrame(()=>{d.style.opacity='1';d.style.transform='translateY(0)';});
+  setTimeout(()=>{if(!d.isConnected)return;d.style.opacity='0';d.style.transform='translateY(20px)';setTimeout(()=>d.remove(),450);},9000);}
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.

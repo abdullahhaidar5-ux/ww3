@@ -137,7 +137,7 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   /* No End turn button (Abdullah 2026-11-06 22:30 "Why do we still have end turn?"): time runs EU4-style; the clock's play/pause + speeds are the only control. */
   if(me&&typeof npOpen==='function'){const nb=guEl('button','padding:7px 14px;border-radius:6px;border:1px solid #c9a35a;background:#2a3a4c;color:#ffe6a8;cursor:pointer;font-size:15px;font-weight:bold','Nation');nb.type='button';nb.title='Open your nation panel';nb.onclick=()=>npOpen();t.appendChild(nb);}
   const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);try{alBar();}catch(e){console.error('alBar',e);}}  // hook: Lane G alerts bar (13l-galerts.js)
-function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();try{gdNews();}catch(e){}}
+function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();try{gdNews();}catch(e){}try{gtvShow();}catch(e){}}
 /* ---------- real time with pause (EU4 feel, lane A A2 slice 1) ----------
    The calendar runs in days (30 a month); a month ending = the old End turn, so the simulation and its determinism are unchanged:
    the result depends only on state + the orders standing when each month closes + seed. Starts paused (= the classic turn game).
