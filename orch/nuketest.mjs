@@ -48,7 +48,11 @@ try {
     const before = { w: gnkN('IR').w, un: GC.prov[pi].un, armies: GC.armies.filter(a => a.at === pi && !a.fl).length };
     GC.armies.push({ id: 88001, o: 'IQ', at: pi, u: [['inf', 100]], fl: false, nm: 'test' });
     o.errPeace = gnkLaunch('IR', GCM.P.findIndex(p => p.land && GC.prov[p.i].o === 'US'), false);
+    GNK.intercept = 0;   /* the test checks the landing itself (interceptors off) */
     o.err = gnkLaunch('IR', pi, false);
+    o.inFlight = GC.nuk.pend.filter(m => m.c === 'IR').length;
+    GC.turn += GNK.travel; gnkMonth();   /* the warhead lands one month later */
+    o.inFlightAfter = GC.nuk.pend.filter(m => m.c === 'IR').length;
     o.w = [before.w, gnkN('IR').w]; o.un = [before.un, GC.prov[pi].un];
     o.armiesAfter = GC.armies.filter(a => a.at === pi && !a.fl).length; o.fallout = GC.nuk.fo[pi] !== undefined;
     o.bld = gmBuildings(pi).every(b => b[1] === 100);
@@ -71,6 +75,7 @@ try {
   if (!r.errPeace) fails.push('strike on a non-enemy should be refused');
   if (r.err) fails.push('strike refused: ' + r.err);
   if (r.w[1] !== r.w[0] - 1) fails.push('strike did not use a warhead');
+  if (r.inFlight !== 1 || r.inFlightAfter !== 0) fails.push('warhead did not travel: it should be in flight for one month');
   if (!(r.un[1] > r.un[0])) fails.push('strike did not raise unrest there');
   if (r.armiesAfter !== 0) fails.push('armies in the province survived the strike');
   if (!r.fallout) fails.push('no fallout recorded');
