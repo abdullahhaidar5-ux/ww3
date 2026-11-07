@@ -1,5 +1,14 @@
-# HANDOFF laneG (2026-11-07 ~15:20 UTC, branch orch/laneG-202611071400)
-Shipped to main: RG5 TV news lower-third (src/13zx-gtv.js, test orch/tvtest.mjs PASS) and RG10 nuclear first cut (src/13zz-gnuke.js, npTab 'nuke', test orch/nuketest.mjs PASS). HISTORY line added.
-Gate: smoke PASS; grandtest red only on 'eco: closed strait raises oil' (Lane B economy, not touched by these modules).
-Self-fire of trig_016YWv2VUhewLR5Wq1PTVqzr was denied by the auto-mode classifier; the hourly :53 schedule continues.
-Next, in order: RG10 follow-ons (world-map flash + mushroom cloud, travel time, interceptors RG33/57, occupation stops the programme, human-victim retaliation prompt, town population wrecking); then remaining Lane G items in PLAN-SAT (RG9 proxy wars, RG15 cyber, RG16 peace conferences, RG18 volunteers, B7/B8 rest).
+# HANDOFF laneG — 2026-11-07 (branch orch/laneG-202611071800)
+
+Lane G's list (PLAN-SAT rule 0): RG5 TV news (done earlier), RG10 nuclear strike follow-ons (done here).
+
+Shipped on the branch (commit 8d6f0318): programme site = capital; enemy troops in the site freeze a programme with
+warheads or destroy one with none; strike flash overlay; nuketest asserts both. Tests: nuketest PASS, grandtest PASS.
+
+NOT on main yet: smoke gate is red on origin/main independent of this branch. Error:
+"THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN" during the battle smoke run. Most likely from
+laneE fa4ec296 (DE-BLOCK slice 6, src/11-models.js groundKit). Owner laneE should fix it; then merge this branch.
+
+Open RG10 follow-ons: 3D mushroom cloud on the map, RG33/57 interceptors (Lane A), town-population wrecking (no population
+field exists yet), multiplayer alert beyond the existing toast. cigate.sh not run (browser lock contention; grandtest
+alone took ~45 min on this machine).
