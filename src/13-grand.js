@@ -108,7 +108,7 @@ function grApplyLoss(sides,k,R){for(const s of sides){const n=s.u.length,lose=Ma
 
 // ---------- the turn ----------
 // Order: AI plans (while the player already has theirs) -> movement -> contested provinces (battles) -> capture -> economy -> next turn.
-function grEndTurn(auto){if(!GC||GC.over||GC.ph!=='plan')return;GC.ph='resolve';grAIPlan();gmilPlan();gmilStrikes();grMovePhase();GC.qi=0;grQueue(auto);}
+function grEndTurn(auto){if(!GC||GC.over||GC.ph!=='plan')return;GC.ph='resolve';try{glgTurn();}catch(e){console.error('glgTurn',e);}grAIPlan();gmilPlan();gmilStrikes();grMovePhase();GC.qi=0;grQueue(auto);}
 function grQueue(auto){for(;;){if(GC.qi>=GC.q.length)return grFinishTurn();const b=GC.q[GC.qi];
     if(!auto&&GC.me&&!b.done&&typeof grBattlePrompt==='function'&&(b.an===GC.me||b.dn===GC.me||grSideUnits(b,'att').concat(grSideUnits(b,'def')).some(s=>s.arr&&s.arr.o===GC.me)))return grBattlePrompt(b);   // UI continues via grBattleDone
     grBattleAuto(b);GC.qi++;}}
@@ -191,7 +191,7 @@ function grJudge(){if(!GC.me||GC.over)return;const me=GC.me;if(GC.nat[me].dead){
 // ---------- player orders ----------
 function grOrderMove(aid,to){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return {err:'no army'};const r=grPath(a.o,a.at,to,a.fl);if(!r)return {err:a.fl?'Fleets sail between sea zones only.':'No route (check ports, seas and borders).'};
   if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;return {ok:1,r};}
-function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);}
+function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);try{glgDeclare(a,b);}catch(e){console.error('glgDeclare',e);}}   // laneG: allies/guarantors join
 function grRecruit(c,pi,k){const st=GC.prov[pi];if(st.o!==c)return 'Not your province.';const fac=grNat(c).fac,rc=GR_RECRUIT.find(r=>r[0]===k);if(!rc||!grHasKind(fac,k))return 'Not available.';const T=geRecruitTerms(c,pi,k,rc[1]),cost=T.cost;
   if(GC.nat[c].cash<cost)return 'Not enough money.';if(GC.nat[c].e.man<T.man)return 'Not enough manpower ('+Math.round(GC.nat[c].e.man)+' of '+T.man+').';GC.nat[c].cash-=cost;GC.nat[c].e.man-=T.man;st.rq.push([GC.turn+T.turns,k,rc[1]]);return '';}
 function grSplit(aid){const a=GC.armies.find(x=>x.id===aid);if(!a||a.u.length<2)return null;const h=Math.floor(a.u.length/2);const mv=a.u.splice(a.u.length-h,h);const b=grAddArmy(a.o,a.at,mv);if(a.fl)b.fl=1;return b;}

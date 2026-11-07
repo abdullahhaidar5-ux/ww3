@@ -296,3 +296,9 @@ Shipped: real elevation/bathymetry (Terrarium tiles) + Natural Earth I satellite
 
 ### nation-rv (2026-11-07, Sonnet 5.5 scheduled run)
 RV "River Shias" added as a full first-cut nation (Iraqi Shia volunteer-brigade faction, own nation in south Iraq; fictional, no real group's name/emblem/leaders): NEWNAT row, Zealous, original black/green printed-cloth emblem (drawRV), grand map Basra + new Najaf (capital) + Southern Marshes, Resistance bloc, tense with IQ, signature "Call to the Shrines" levy. See orch/reports/nation-rv.md. Open: own voices/anthem, 3D models, balance tourney, servers-live PR.
+- laneG 2026-11-07 (Sonnet, 2nd session, on top of main's 13l/13m/13n): events+world crises (13p), achievements (13q), diplomatic web (13r), missions (13s), ledger graphs (13t), great powers/prestige (13u), world tick + AI joins/peace/pacts/peace-offer alert (13o); test orch/lgtest.mjs.
+
+- laneB 2026-11-07 B4 slice 1: stability -3..+3 (13m-grandstab.js): monthly drift, modifier rows, raise with Political points, nation-panel tab + alert. (Duplicate alerts bar dropped: laneG shipped B2b first.)
+- 2026-11-07 laneC: town sun-shadows (instanced) on grand map; light/objects +0.5 (artbar it3)
+- laneE (2026-11-07 03:50Z): infantry models +23% bigger at gameplay height (src/11-models.js MCFG soldier size x1.45) so soldiers read as people; smoke PASS; local smooth gate times out on slow box. Shot orch/shots/laneE/after3-base.png
+- laneD 2026-11-07: D0(a) auto-bisect — `.github/workflows/bisect.yml` + `orch/bisect.sh`: when a gate run is red on a main commit, bisects the failing test and comments the first bad commit. No game code changed.
