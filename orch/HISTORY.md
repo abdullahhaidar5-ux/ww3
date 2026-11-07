@@ -443,3 +443,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneC 2026-11-07 19:xx: grand-map sea colour variation + distance-faded ripple shading (water 3.5 -> 3.8); shots orch/shots/laneC/q0,q1.
 
 - laneF 2026-11-07 19:45Z: RF10 last stand +25% damage (dmgOut, 03-sim). Chain: surrounded troops (who reacts: attackers who encircle pay in casualties); cost: pinned down; counter: break the ring/artillery. Smoke FAIL only on known NaN-geometry console error (unchanged main).
+- laneE DE-BLOCK slice 10 (smooth-first fix): every building's prop kit (sandbags, crates, rocks, scrub, decals, containers) is merged per material into single meshes (src/11-models.js mergeKit, view only, same pixels); local smooth-pc no longer flags draw calls (was 2568 vs 1725 budget), only load time on this slow box; smoke shows only the pre-existing NaN-geometry console error; CI decides
