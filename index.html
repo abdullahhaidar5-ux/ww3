@@ -10866,7 +10866,7 @@ const FXH={
     else{const ca=Math.cos(a),sa=Math.sin(a),L=s*rnd(.55,.85);part({x,y,h,s:s*1.15,d:.045,add:true,c:[3,2.3,1.2]});part({x:x+ca*L,y:y+sa*L,h,s:s*.8,d:.04,add:true,c:[2.8,1.5,.5]});
       if(!fxPH())part({x:x+ca*L*1.9,y:y+sa*L*1.9,h,s:s*.5,d:.035,add:true,c:[2.2,1,.3]});if(s<=6&&!fxPH()&&Math.random()<.5)part({x:x+ca*3,y:y+sa*3,h,vx:ca*rnd(20,40),vy:sa*rnd(20,40),vh:rnd(2,6),f:.2,c:[.5,.49,.46],s:rnd(2,3),g:7,d:rnd(.35,.6),a:.32});}
     if(s>9)mlight(x,y,h,s>=13?3:2.2,s>=13?200:150);if(s>9)for(let i=0;i<3;i++)part({x,y,h,vx:Math.cos(a)*rnd(20,50),vy:Math.sin(a)*rnd(20,50),c:C_SMOKE,s:rnd(4,7),g:12,d:rnd(.5,.9),a:.5});},
-  tr(x1,y1,h1,x2,y2,h2,flak){if(MLIGHTS.length&&Math.random()<.35)mlight(x1,y1,h1,flak?1.6:1.1,90);TRACERS.push({a:[x1,h1,y1],b:[x2,h2,y2],t:0,d:.09,c:flak?[3,1.5,.5]:[3,1.9,.7]});if(flak){part({x:x2,y:y2,h:h2,s:7,d:.12,add:true,c:C_FIRE});part({x:x2,y:y2,h:h2,s:5,g:7,d:.8,c:[.3,.29,.27],c2:[.5,.48,.45],ck:.3,a:.5});}
+  tr(x1,y1,h1,x2,y2,h2,flak){if(MLIGHTS.length&&Math.random()<.35)mlight(x1,y1,h1,flak?1.6:1.1,90);TRACERS.push({a:[x1,h1,y1],b:[x2,h2,y2],t:0,d:.09,c:flak?[3,1.5,.5]:[3,1.9,.7]});if(!flak&&G&&G.todM&&todLvl()===2&&Math.random()<.5)fxLater(()=>part({x:x2,y:y2,h:h2,add:true,c:C_SPARK,s:3.2,d:.1,a:.8}),90);// night: tracer rounds spark where they land (view only)if(flak){part({x:x2,y:y2,h:h2,s:7,d:.12,add:true,c:C_FIRE});part({x:x2,y:y2,h:h2,s:5,g:7,d:.8,c:[.3,.29,.27],c2:[.5,.48,.45],ck:.3,a:.5});}
     else if(h2<10){if(ricoHit(x2,y2))ricochet(x1,y1,x2,y2);else if(Math.random()<.4)part({x:x2,y:y2,h:groundH(x2,y2)+1,vx:rnd(-20,20),vy:rnd(-20,20),vh:rnd(10,30),c:C_DUST,s:3,g:6,d:.4,a:.6});}},
   salvo(x,y,h,tx,ty,ang){const sx=Math.cos(ang),sy=Math.sin(ang),px=-sy,py=sx;
     for(let i=0;i<3;i++){const side=i%2?1:-1,ox=x+px*side*5,oy=y+py*side*5,ix=tx+rnd(-18,18)+sx*rnd(-10,20),iy=ty+rnd(-18,18)+sy*rnd(-10,20);const len=Math.max(1,Math.hypot(ix-ox,iy-oy));VPROJ.push({x:ox,y:oy,h,sx:ox,sy:oy,sh:h,tx:ix,ty:iy,th:groundH(ix,iy)+1,spd:520,wpn:'missile',rocket:1,len,p:-i*55,vis:1});}
@@ -20783,6 +20783,13 @@ function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new 
 /* ---------- A3 smooth army control (Lane F): multi-select, box, double-click, group orders, cards ----------
    GV.selM = ids of 2+ selected own armies (GV.selA stays the "lead" army so every old panel keeps working). */
 GV.selM=GV.selM||new Set();
+/* select all (Abdullah 2026-11-07 16:17-16:23): Ctrl+A = all your armies, N = all your navies (Ctrl+N belongs to the browser);
+   Ctrl+D drones / Ctrl+M missiles come when those exist as map units (PLAN-SAT SEL). Also buttons in the bottom campaign bar. */
+function gmSelAll(sea){if(!GC||!GC.armies)return;const L=GC.armies.filter(a=>a.o===GC.me&&!!(GCM.P[a.at]&&GCM.P[a.at].sea)===!!sea).map(a=>a.id);if(L.length)gmSet(L);else if(typeof gevToast==='function')try{gevToast([sea?'You have no navies':'You have no armies']);}catch(e){}}
+if(typeof window!=='undefined'&&!window._gSelAll){window._gSelAll=1;addEventListener('keydown',ev=>{const gs=document.getElementById('grandScreen');if(!gs||gs.style.display==='none'||(typeof G!=='undefined'&&G))return;
+  const tg=ev.target&&ev.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT'||document.getElementById('gModal'))return;const k=(ev.key||'').toLowerCase();
+  if((ev.ctrlKey||ev.metaKey)&&!ev.shiftKey&&!ev.altKey&&k==='a'){ev.preventDefault();gmSelAll(false);}
+  else if(!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&k==='n'){ev.preventDefault();gmSelAll(true);}});}
 function gmMine(id){const a=GC&&GC.armies.find(x=>x.id===id);return a&&a.o===GC.me?a:null;}
 function gmIds(){return GV.selM&&GV.selM.size>1?[...GV.selM].filter(gmMine):(GV.selA?[GV.selA]:[]);}
 function gmSet(ids){const L=[...new Set(ids)].filter(gmMine);GV.selM=L.length>1?new Set(L):new Set();GV.selA=L[0]||0;if(L[0])GV.sel=gmMine(L[0]).at;gmPaint();guSide();guRedraw();}
@@ -21279,6 +21286,7 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 #g3ui .k{pointer-events:auto}
 #g3modes{position:absolute;left:10px;top:10px;width:150px;display:flex;flex-direction:column;gap:2px;padding:6px 5px 5px;border:1px solid #6b5a33;border-radius:6px;background:linear-gradient(#162433,#0b141f);box-shadow:0 4px 14px #000a,inset 0 1px 0 #ffffff18;z-index:3}#g3modes:before{content:'MAP MODE';font:700 10px/12px system-ui,sans-serif;letter-spacing:.16em;color:#d8b865;padding:1px 4px 4px;border-bottom:1px solid #6b5a3380;margin-bottom:3px}
 #g3modes button{pointer-events:auto;text-align:left;padding:4px 8px;border-radius:3px;border:1px solid transparent;background:transparent;color:#cfe0ee;font-size:12.5px;cursor:pointer;white-space:nowrap}#g3modes button:hover{background:#243a4e;border-color:#3d5a73}
+#g3btns #g3modes{position:relative;left:auto;top:auto;align-self:flex-end}#g3modes:not(.open) button:not(.on){display:none}#g3modes:not(.open){width:auto}#g3modes:not(.open) button.on:after{content:'  ▾';opacity:.7}#g3modes:not(.open):before{display:none}
 #g3modes button.on{background:linear-gradient(#3b5d7a,#2a4660);border-color:#d8b865;color:#fff;font-weight:600}
 #g3btns{position:absolute;right:14px;bottom:16px;display:flex;gap:10px;align-items:flex-end}
 #g3btns button{pointer-events:auto;width:46px;height:46px;border-radius:50%;border:2px solid #b99a45;background:radial-gradient(#33485d,#142130);color:#f3ecd8;font-size:20px;cursor:pointer;box-shadow:0 3px 8px #000a}
@@ -21299,7 +21307,8 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 #g3leg{position:absolute;left:12px;bottom:146px;max-width:236px;font-size:12px;line-height:1.3;color:#f1f5f9;text-shadow:0 1px 2px #000;background:#0c1721d8;border:1px solid #3b4d5f;padding:4px 9px;border-radius:5px}
 `;document.head.appendChild(s);}
 function g3UI(){g3Css();const w=document.getElementById('gMapWrap');if(!w)return;let u=document.getElementById('g3ui');if(u)u.remove();u=guEl('div','');u.id='g3ui';w.appendChild(u);
-  G3.lab=guEl('div','position:absolute;inset:0');u.appendChild(G3.lab);const md=guEl('div','');md.id='g3modes';G3_MODES.forEach(([k,n])=>{const b=guEl('button','',n);b.type='button';b.dataset.m=k;b.onclick=()=>g3SetMode(k);md.appendChild(b);});u.appendChild(md);
+  G3.lab=guEl('div','position:absolute;inset:0');u.appendChild(G3.lab);const md=guEl('div','');md.id='g3modes';G3_MODES.forEach(([k,n])=>{const b=guEl('button','',n);b.type='button';b.dataset.m=k;b.onclick=ev=>{ev.stopPropagation();if(!md.classList.contains('open')){md.classList.add('open');return;}g3SetMode(k);md.classList.remove('open');};md.appendChild(b);});u.appendChild(md);   /* map mode menu folds away (Abdullah 2026-11-07 16:14 "Hide the map menu don't make it stay visible"): only the current mode shows; click it to open the list */
+  document.addEventListener('pointerdown',ev=>{if(!md.contains(ev.target))md.classList.remove('open');});
   G3.bn=[];G3.nl=[];G3.natSig="";G3.pl=new Map();G3.sl=[];
   const prio=GCM.P.filter(p=>p.land).sort((a,b)=>(b.cap-a.cap)||(b.wg-a.wg)||(b.tw-a.tw));for(const p of prio){const e=guEl('div','');e.className='b'+(p.cap?' cap':'');G3.lab.appendChild(e);G3.bn.push({el:e,pi:p.i,show:false});}
   for(const p of GCM.P)if(p.sea){const e=guEl('div','');e.className='s';e.textContent=(p.ck?'◆ ':'')+p.n;G3.lab.appendChild(e);G3.sl.push({el:e,pi:p.i,ck:p.ck});}
@@ -21308,7 +21317,9 @@ function g3UI(){g3Css();const w=document.getElementById('gMapWrap');if(!w)return
   mk('✉','Monthly report',()=>g3News(true));mk('⌖','Centre on your capital (Home)',()=>{const m=GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);});
   mk('☰','Show / hide the province panel',()=>{const s=document.getElementById('gSide');if(s){s.style.display=s.style.display==='none'?'flex':'none';setTimeout(guResize,30);}});
   const qb=mk(g3Quality()==='ultra'?'✦✦':'✦','Grand map quality: High (default) / Ultra (sharper, heavier)',()=>{SET.g3q=g3Quality()==='ultra'?'high':'ultra';try{saveSet();}catch(e){}qb.textContent=g3Quality()==='ultra'?'✦✦':'✦';g3ApplyQuality();g3News&&0;});
-  G3.endB=mk('▶','Play / pause time (Space)',()=>{guSpeed(GV.spd?0:(GV.lastSpd||2));G3.endB.textContent=GV.spd?'❚❚':'▶';},'end');
+  mk('⚔','Select all your armies (Ctrl+A)',()=>gmSelAll(false));mk('⚓','Select all your navies (N)',()=>gmSelAll(true));
+  bt.insertBefore(md,bt.firstChild);   /* map-mode menu lives in the bottom campaign bar (Abdullah 2026-11-07 16:16) */
+  G3.endB=mk('▶','Play / pause time (Space)',()=>{guSpeed(GV.spd?0:(GV.lastSpd||2));G3.endB.textContent=GV.spd?'❚❚':'▶';},'end');G3.endB.style.display='none';   /* one play control only: the clock at the top (Abdullah 2026-11-07 16:15 "don't have two go buttons") */
   const mc=document.createElement('canvas');mc.id='g3mini';mc.width=240*2;mc.height=120*2;mc.style.width='240px';mc.style.height='120px';u.appendChild(mc);G3.mc=mc;
   const mm=ev=>{const r=mc.getBoundingClientRect();G3.camera.x=Math.max(0,Math.min(2400,(ev.clientX-r.left)/240*2400));G3.camera.z=Math.max(0,Math.min(1200,(ev.clientY-r.top)/120*1200));};
   mc.addEventListener('pointerdown',ev=>{mc.setPointerCapture(ev.pointerId);mm(ev);mc._d=1;ev.stopPropagation();});mc.addEventListener('pointermove',ev=>{if(mc._d)mm(ev);});mc.addEventListener('pointerup',()=>{mc._d=0;});
@@ -24156,6 +24167,58 @@ npTab('arms','🛒','Arms trade',(code,body,c)=>{const own=c.own&&code===GC.me,S
   const foes=gdEnemies(code).sort();if(foes.length){const d=document.createElement('div');d.style.cssText='margin-top:10px';d.textContent='Embargo an enemy ('+GAR_EMB_COST+' Dip, '+GAR_EMB_LEN+' months): ';for(const t of foes.slice(0,5)){const b=document.createElement('button');b.textContent=gdNatName(t);b.style.cssText='font-size:14px;padding:3px 9px;margin:0 6px 4px 0;cursor:pointer';b.onclick=()=>{const e=garEmbargo(code,t);if(e)grLog(e,code);npDraw();};d.appendChild(b);}body.appendChild(d);}
 });
 alAdd('arms','🛒','Arms delivery',c=>{const S=GC&&GC.arms;const d=S&&S.q.filter(x=>x.b===c);return d&&d.length?{n:d.length,tip:'Arms deliveries on the way — open the arms trade tab',go:()=>npOpen(c,'arms')}:null;});
+// 13zs-gcovert.js — lane A RG3 slice 2: SABOTAGE + COUNTER-INTELLIGENCE (the covert-action system; spies in 13-grand.js grSpy are its first action).
+// Who reacts: the target loses oil/rail/factory output (GMOD rows) for 3 months; AI nations at war sabotage each other and switch counter-intelligence on after being hit;
+// a caught saboteur sours the target's opinion of the sender (and a little its allies') and loses the spy ring in that country. Second order: income down -> less cash for
+// armies/upkeep, +1 unrest while the damage lasts; the target blames the right enemy only if the operation was exposed (otherwise "unknown saboteurs").
+// Counter-play: Counter-intelligence ($150/month) halves success and doubles exposure; a garrison army cannot stop it, only security can. Cost: $600 per attempt, spent even on failure.
+// State: N.sabU (month index the damage ends), N.ci (1 = counter-intel on), N.sabN (hits suffered), GC.covT (month guard). Deterministic: grRng(seed, turn, codes). Monthly via GMOD_HOOKS.
+const GCV_COST=600,GCV_M=3,GCV_CI=150,GCV_BASE=.62,GCV_EXPO=.22;
+GMOD_COND.cov=(k,arg)=>{const N=GC&&GC.nat[k];return !!N&&arg==='sab'&&(N.sabU|0)>=GC.turn&&GC.turn>0;};
+GMOD_ROWS.push({id:'cov_sab_inc',src:'Sabotage',scope:'nation',stat:'income',mul:.93,cond:'cov:sab'},{id:'cov_sab_up',src:'Sabotage',scope:'nation',stat:'upkeep',mul:1.06,cond:'cov:sab'},
+  {id:'cov_sab_un',src:'Sabotage',scope:'nation',stat:'unrest',add:1,cond:'cov:sab'});
+GMOD_STATS.unrest=GMOD_STATS.unrest||'Unrest';
+function gcvH(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h|0;}
+function gcvRoll(a,t,k){return grRng((GC.seed|0)^gcvH(a+'>'+t+'#'+k)^(GC.turn*7919))();}
+function gcvActive(t){const N=GC&&GC.nat[t];return !!N&&(N.sabU|0)>=GC.turn;}
+function gcvChance(a,t){let p=GCV_BASE;if(GC.nat[t].ci)p*=.5;if(GC.spy&&(GC.spy[a+'>'+t]|0)>=GC.turn)p+=.12;return Math.min(.9,p);}
+function gcvSabotage(a,t){const A=GC&&GC.nat[a],T=GC&&GC.nat[t];if(!A||!T||A.dead||T.dead||a===t)return 'Not available.';
+  if(grAllied(a,t))return 'You do not sabotage an ally.';if(gcvActive(t))return 'Their networks are already burning.';if(A.cash<GCV_COST)return 'Needs $'+GCV_COST+'.';
+  A.cash-=GCV_COST;GC.cov=GC.cov||{};const win=gcvRoll(a,t,'win')<gcvChance(a,t);let expo=gcvRoll(a,t,'exp')<GCV_EXPO*(T.ci?2:1)*(grAtWar(a,t)?.5:1);if(!win&&gcvRoll(a,t,'f')<.5)expo=true;
+  const an=GCM.nats.get(a).name,tn=GCM.nats.get(t).name;
+  if(win){T.sabU=GC.turn+GCV_M-1;T.sabN=(T.sabN|0)+1;T.sabT=GC.turn;GMOD_C.cache.clear();
+    grLog('Sabotage inside '+tn+': pipelines, rail and depots hit until '+grMonStr(GC.turn+GCV_M)+(expo?' — our hand was seen.':'.'),a);
+    const foes=gdEnemies(t).sort();grLog('Sabotage in '+tn+': power, rail and fuel depots hit (income down until '+grMonStr(GC.turn+GCV_M)+'). '+(expo?'Traced to '+an+'.':foes.length?'Suspects: '+GCM.nats.get(foes[0]).name+' — unproven.':'Unknown saboteurs.'),t);}
+  else grLog('Our saboteurs in '+tn+' failed'+(expo?' and were caught.':' and slipped out.'),a);
+  if(expo){gdRel(a,t,-30);for(const o of Object.keys(GC.nat))if(o!==a&&o!==t&&!GC.nat[o].dead&&grAllied(t,o))gdRel(a,o,-8);
+    if(GC.spy&&GC.spy[a+'>'+t]!==undefined)delete GC.spy[a+'>'+t];GR_SEEN=null;
+    if(t===GC.me||a===GC.me)grLog(an+' caught sabotaging '+tn+' — the world is told; opinion of '+an+' falls.',t===GC.me?t:a);}
+  return '';}
+function gcvCI(c,on){const N=GC&&GC.nat[c];if(!N||N.dead)return 'Not available.';N.ci=on?1:0;GMOD_C.cache.clear();return '';}
+function gcvMonth(){if(!GC||GC.covT===GC.turn)return;GC.covT=GC.turn;
+  for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead)continue;
+    if(N.ci){if(N.cash>=GCV_CI)N.cash-=GCV_CI;else N.ci=0;}
+    if(c===GC.me)continue;
+    const foes=gdEnemies(c).sort();
+    if(!N.ci&&(N.sabN|0)>0&&(foes.length||GC.turn-(N.sabT|0)<12)&&N.cash>GCV_CI*8)N.ci=1;           // AI answers a hit with security
+    else if(N.ci&&!foes.length&&GC.turn-(N.sabT|0)>=6)N.ci=0;
+    if(foes.length&&N.cash>GCV_COST*4){const t=foes[(gcvH(c+GC.turn)>>>0)%foes.length];if(!gcvActive(t)&&gcvRoll(c,t,'ai')<.3)gcvSabotage(c,t);}}
+  GMOD_C.cache.clear();}
+GMOD_HOOKS.push(gcvMonth);
+GNT_W.gcvSabotage=0;GNT_W.gcvCI=0;
+function gcvTargets(c){const L=Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&!grAllied(c,o));
+  L.sort((x,y)=>(grAtWar(c,y)-grAtWar(c,x))||(gdOp(c,x)-gdOp(c,y))||(x<y?-1:1));return L.slice(0,8);}
+npTab('cov','🕵','Intelligence',(code,body,c)=>{const N=GC.nat[code],own=c.own&&code===GC.me;
+  let h='<div style="font-size:26px;margin-bottom:6px"><b>'+(N.ci?'Counter-intelligence ON':'Counter-intelligence off')+'</b></div>'+
+   '<div style="opacity:.85;margin-bottom:8px">Spies reveal an enemy\'s armies. Sabotage ($'+GCV_COST+') cuts a rival\'s income 7% and raises its upkeep and unrest for '+GCV_M+' months, but it can be exposed and then the world turns against the sender. Counter-intelligence ($'+GCV_CI+'/month) halves enemy sabotage and doubles the chance they are caught. The AI at war does the same to you.</div>';
+  if(gcvActive(code))h+='<div style="margin:8px 0;color:#ff9d8e">Sabotage damage until '+grMonStr(N.sabU+1)+' ('+(N.sabN|0)+' hit'+((N.sabN|0)===1?'':'s')+' so far).</div>';
+  body.innerHTML=h;if(!own)return;
+  const mk=(t,fn)=>{const b=document.createElement('button');b.textContent=t;b.type='button';b.style.cssText='font-size:15px;padding:4px 12px;cursor:pointer;margin:0 8px 6px 0';b.onclick=()=>{const e=fn();if(e)grLog(e,code);guTop();npDraw();};return b;};
+  body.appendChild(mk(N.ci?'Stand down counter-intelligence':'Start counter-intelligence ($'+GCV_CI+'/month)',()=>gcvCI(code,!N.ci)));
+  for(const t of gcvTargets(code)){const row=document.createElement('div');row.style.cssText='margin:6px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap';
+    const l=document.createElement('span');l.style.cssText='min-width:170px';l.textContent=GCM.nats.get(t).name+(grAtWar(code,t)?' (at war)':'')+(gcvActive(t)?' — burning':'');row.appendChild(l);
+    row.appendChild(mk('Spies $'+GR_SPY_COST,()=>grSpy(code,t)));row.appendChild(mk('Sabotage $'+GCV_COST+' · '+Math.round(gcvChance(code,t)*100)+'%',()=>gcvSabotage(code,t)));body.appendChild(row);}});
+alAdd('cov','🕵','Sabotage',c=>gcvActive(c)&&c===GC.me?{n:1,tip:'Sabotage is hurting our income — start counter-intelligence',go:()=>npOpen(c,'cov')}:null);
 // 13zu-gun.js — lane G RG2: UN SECURITY COUNCIL (condemnations + sanctions). 15 seats: 5 permanent with a VETO (US, RU, CN, GB, FR) + 10 elected (rotate yearly, seeded).
 // A resolution needs 9 yes votes and no veto. Members vote by real interests: allies of the target and friends (opinion >= 40) shield it; a permanent member always vetoes a measure aimed at itself.
 // Effects are GMOD rows only: condemnation = -2% war support 6 months + opinion hit; sanctions = income x0.9 and -3% war support for 12 months + bigger opinion hit.
