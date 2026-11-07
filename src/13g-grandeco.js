@@ -265,7 +265,7 @@ function geBorrow(c){const N=GC.nat[c],E=N.e;if(E.defT>GC.turn)return 'Your cred
 function geRepay(c){const N=GC.nat[c],E=N.e;if(!E.bonds.length)return 'No bonds.';E.bonds.sort((a,b)=>a[0]-b[0]);const b=E.bonds[0];if(N.cash<b[1])return 'Needs $'+b[1]+'.';N.cash-=b[1];E.bonds.shift();return '';}
 function geDeposit(c,amt){const N=GC.nat[c];amt=Math.min(amt|0,Math.floor(N.cash));if(amt<=0)return 'No money.';N.cash-=amt;N.e.bank+=amt;return '';}
 function geWithdraw(c){const N=GC.nat[c];N.cash+=N.e.bank;N.e.bank=0;return '';}
-function geTotalWar(c,on){const E=GC.nat[c].e;if(!!on===!!E.tw)return '';if(on&&GC.turn<E.twT+4)return 'Total war can be switched on again in '+(E.twT+4-GC.turn)+' turns.';
+function geTotalWar(c,on){const E=GC.nat[c].e;if(!!on===!!E.tw)return '';if(on&&GC.turn<E.twT+4)return 'Total war can be switched on again in '+(E.twT+4-GC.turn)+' months.';
   if(on&&!Object.keys(GC.war).some(k=>k.split('|').includes(c)))return 'Only at war.';E.tw=on?1:0;E.twT=GC.turn;return '';}
 function geRation(c,on){GC.nat[c].e.ration=on?1:0;return '';}
 function geSellMode(c,m){GC.nat[c].e.sell=m?1:0;return '';}
