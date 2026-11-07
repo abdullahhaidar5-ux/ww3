@@ -63,6 +63,13 @@ try {
     return { foes: foes.length, seen, e, after, own, cash: GC.nat.IR.cash, hashSame: (() => { grNew({ me: 'IR', seed: 77, len: 'quick' }); return grHash() === h0; })() }; });
   console.log('fog', JSON.stringify(fog));
   if (!(fog.seen < fog.foes) || fog.seen === 0 || fog.e !== '' || !fog.after || !fog.own || fog.cash !== 5000 - 400 || !fog.hashSame) fails.push('fog/spies: ' + JSON.stringify(fog));
+  // ---- A5 force limit + tradition: start under the limit, over it = upkeep x1.5 via the modifier engine, battles raise tradition
+  const fl = await ev(() => { grNew({ me: 'IR', seed: 55, len: 'quick' }); const v0 = geArmyVal('IR'), L = grFL('IR'), under = !gfOver('IR'); const t0 = GC.nat.IR.trad;
+    gfBattle({ an: 'IR', dn: 'AZ' }, 'att'); const t1 = GC.nat.IR.trad; const A = GC.armies.find(a => a.o === 'IR'); A.u = A.u.concat(grGenUnits(grNat('IR').fac, L, false)); GMOD_C.cache.clear();
+    const over = gfOver('IR'), up = gmod('nation', 'IR', 'upkeep', 1); const allUnder = Object.keys(GC.nat).filter(c => c !== 'IR' && !GC.nat[c].dead).every(c => !gfOver(c));
+    return { v0, L, under, t0, t1, over, up, allUnder, chip: /⚔/.test(gfChip()) }; });
+  console.log('forcelimit', JSON.stringify(fl));
+  if (!fl.under || !fl.over || Math.abs(fl.up - 1.5) > .01 || !(fl.t1 > fl.t0) || !fl.allUnder || !fl.chip) fails.push('force limit/tradition: ' + JSON.stringify(fl));
   // ---- MILITARY (grand3): generals, front lines, map strikes, fleets & sea zones; determinism over 20 turns with all of it active
   {
     const run20 = () => { grNew({ me: null, seed: 31337, len: 'std' }); const seen = { strike: 0, intercept: 0, sea: 0, gen: 0, blockade: 0 };
@@ -338,9 +345,12 @@ try {
   const rt = await ev(() => { const h = grHash(); grClear(); const ok = !GC; grNew({ me: 'IR', seed: 5, len: 'quick' }); const h2 = grHash(); grSave(); const x = grLoad(); return { same: grHash() === h2, x: !!x }; });
   if (!rt.same) fails.push('save round trip changed the state hash');
   // B2.5 modifier engine: style row, temporary row expiry, save round trip
-  const gm = await ev(() => { grNew({ me: 'IR', seed: 5, len: 'quick' }); const w0 = gmod('nation', 'IR', 'warSupport', 1); gmodAdd({ id: 't1', src: 'Test', scope: 'nation', stat: 'warSupport', add: .2, t: 'IR', until: GC.turn + 1 }); const w1 = gmod('nation', 'IR', 'warSupport', 1); grSave(); const x = grLoad(); const w2 = gmod('nation', 'IR', 'warSupport', 1); gmodMonth(GC.turn + 2); return { w0, w1, w2, w3: gmod('nation', 'IR', 'warSupport', 1), n: (GC.mod || []).length, l: gmodLines('nation', 'IR', 'warSupport').length }; });
+  const gm = await ev(() => { grNew({ me: 'IR', seed: 5, len: 'quick' }); const w0 = gmod('nation', 'IR', 'warSupport', 1); gmodAdd({ id: 't1', src: 'Test', scope: 'nation', stat: 'warSupport', add: .2, t: 'IR', until: GC.turn + 1 }); const w1 = gmod('nation', 'IR', 'warSupport', 1); grSave(); const x = grLoad(); const w2 = gmod('nation', 'IR', 'warSupport', 1); gmodMonth(GC.turn + 2); return { w0, w1, w2, w3: gmod('nation', 'IR', 'warSupport', 1), n: (GC.mod || []).filter(r => !/^trade_/.test(r.id)).length, l: gmodLines('nation', 'IR', 'warSupport').length }; });
   // IR: Zealous +10% and the shared Ayatollah (13v) +8% war support
   if (!(gm.w0 > 1.1 && gm.w0 < 1.3 && Math.abs(gm.w1 - gm.w0 - .2) < 1e-9 && Math.abs(gm.w2 - gm.w0 - .2) < 1e-9 && Math.abs(gm.w3 - gm.w0) < 1e-9 && gm.n === 0)) fails.push('gmod engine: ' + JSON.stringify(gm));
+  // laneF ⚡21 outliner: O lists my armies; clicking a row selects it
+  const ol = await ev(() => { grNew({ me: 'IR', seed: 5, len: 'quick' }); grandOpen(); GV.outl = true; gmPaint(); const o = document.getElementById('gmOutl'); const rows = o ? o.querySelectorAll('.oi').length : -1; const mine = GC.armies.filter(a => a.o === GC.me).length; if (rows > 0) o.querySelector('.oi').click(); const sel = gmIds().length; GV.outl = false; gmPaint(); const hid = document.getElementById('gmOutl').style.display === 'none'; return { rows, mine, sel, hid }; });
+  if (!(ol.rows === ol.mine && ol.rows > 0 && ol.sel === 1 && ol.hid)) fails.push('outliner: ' + JSON.stringify(ol));
 } catch (e) { if (String(e.message) !== '__done') { fails.push(String(e.message || e).split('\n')[0]); console.log('ERRS', errs.join('\n')); console.log(String(e.stack).split('\n').slice(0, 7).join('\n')); } }
 for (const e of [...new Set(errs)].slice(0, 6)) fails.push(e);
 await browser.close(); server.close();

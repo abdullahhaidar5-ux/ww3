@@ -98,6 +98,7 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));}
     {const tg=ev.target&&ev.target.tagName;if(tg!=='INPUT'&&tg!=='TEXTAREA'&&tg!=='SELECT'&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&!document.getElementById('gModal')){   /* time keys (the grand map's key table): Space pause, + / − speed, 1–5 speed */
       if(ev.key===' '){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));return;}if(ev.key==='+'||ev.key==='='){guSpeed((GV.spd||GV.lastSpd||1)+1);return;}if(ev.key==='-'||ev.key==='_'){if(GV.spd>1)guSpeed(GV.spd-1);return;}
+      if(ev.key==='o'||ev.key==='O'){GV.outl=!GV.outl;gmPaint();return;}
       if(ev.key>='1'&&ev.key<='5'&&ev.key.length===1){guSpeed(+ev.key);return;}}}
     if(GV.g3)return;const k=ev.key.toLowerCase(),st=60;if(k==='w'||k==='arrowup')GV.oy+=st;else if(k==='s'||k==='arrowdown')GV.oy-=st;else if(k==='a'||k==='arrowleft')GV.ox+=st;else if(k==='d'||k==='arrowright')GV.ox-=st;else return;guClamp();guRedraw();});}}
 function guArmyTip(aid,mx,my){const t=document.getElementById('gTip'),a=GC.armies.find(x=>x.id===aid);if(!t||!a||!grSeen(a)){if(t)t.style.display='none';return;}
@@ -123,7 +124,7 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   const score=GC.me?grScore(GC.me):0;
   t.innerHTML='';if(N){t.appendChild(guEl('span','display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #fff;background:'+N.color));t.appendChild(guEl('b','font-size:17px',GCM.nats.get(GC.me).name));}
   t.appendChild(guEl('span','opacity:.9','<b id="gDate">'+(GC.ph==='plan'?grDateStr(GC.turn,GC.day|0):grDateStr(GC.turn+1,0))+'</b> <span style="opacity:.65">month '+Math.min(GC.turn,GC.maxTurn)+'/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')+'</span>'));guClockUI(t);
-  if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/month)</span>'));
+  if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/month)</span>'));if(me&&typeof gfChip==='function')t.appendChild(guEl('span','',gfChip()));   /* A5 force limit chip */
   if(me)t.appendChild(guEl('span','opacity:.9','Score <b>'+score+'</b> · provinces <b>'+GCM.P.filter(p=>p.land&&GC.prov[p.i].o===GC.me).length+'</b>'));
   try{geUiTop(t,me);}catch(e){console.error('geUiTop',e);}try{gmilUiTop(t,me);}catch(e){console.error('gmilUiTop',e);}
   const rg=guEl('span','display:flex;gap:4px;flex-wrap:wrap;margin-left:auto');for(const [nm,r] of GR_REGIONS){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#dfe8f0;cursor:pointer;font-size:13px',nm);b.type='button';b.onclick=()=>{guFit(r);guRedraw();};rg.appendChild(b);}t.appendChild(rg);
@@ -234,7 +235,7 @@ function gmSet(ids){const L=[...new Set(ids)].filter(gmMine);GV.selM=L.length>1?
 function gmPts(){const o=[];if(GV.g3&&typeof G3!=='undefined'&&G3.hit)for(const h of G3.hit)o.push({aid:h.aid,x:h.x,y:h.y});else for(const c of GV.chips||[])o.push({aid:c.aid,x:c.x+c.w/2,y:c.y+c.h/2});return o;}
 function gmPaint(){try{if(!document.getElementById('gmCss')){const s=document.createElement('style');s.id='gmCss';s.textContent='#gMapWrap .p.gmsel{outline:2px solid #ffe27a;outline-offset:1px;border-radius:3px}#gmCards{position:absolute;left:8px;top:44px;max-height:62%;overflow:auto;display:flex;flex-direction:column;gap:3px;z-index:4;font-size:13px}#gmCards .c{background:rgba(10,16,22,.9);border:1px solid #4a6580;border-left:4px solid #ffe27a;border-radius:5px;padding:3px 8px;cursor:pointer;min-width:170px}#gmCards .c:hover{background:#18293a}#gmCards button{padding:3px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;font-size:12px;margin-right:4px}';document.head.appendChild(s);}
   const ids=new Set(gmIds());if(typeof G3!=='undefined'&&G3.pl)for(const [id,el] of G3.pl)el.classList.toggle('gmsel',ids.has(id)&&ids.size>1);
-  const w=document.getElementById('gMapWrap');if(!w)return;let c=document.getElementById('gmCards');if(!c){c=document.createElement('div');c.id='gmCards';w.appendChild(c);}
+  const w=document.getElementById('gMapWrap');if(!w)return;gmOutliner(w);let c=document.getElementById('gmCards');if(!c){c=document.createElement('div');c.id='gmCards';w.appendChild(c);}
   if(ids.size<2){c.style.display='none';return;}c.style.display='flex';c.innerHTML='';
   const hd=document.createElement('div');hd.innerHTML='<b>'+ids.size+' armies</b> <button data-k="m">Merge</button><button data-k="s">Split</button>';hd.style.cssText='background:rgba(10,16,22,.9);padding:3px 6px;border-radius:5px';c.appendChild(hd);
   hd.querySelector('[data-k=m]').onclick=()=>{const L=gmIds();const seen=new Set();for(const id of L){const a=gmMine(id);if(!a||seen.has(a.at))continue;seen.add(a.at);grMerge(id);}gmSet(L.filter(gmMine));grSave();grandMapRefresh();};
@@ -254,3 +255,15 @@ function gmInit(cv){const wrap=document.getElementById('gMapWrap');let box=null,
   cv.addEventListener('dblclick',ev=>{if(!GC)return;const [x,y]=rel(ev),h0=GV.g3&&typeof g3HitAt==='function'?g3HitAt(x,y):null;let pi;if(h0){const a=GC.armies.find(q=>q.id===h0.aid);pi=a&&a.at;}else{const [wx,wy]=guToWorld(x,y);pi=guProvAt(wx,wy);}
     if(pi==null||pi<0)return;gmSet(GC.armies.filter(a=>a.at===pi&&a.o===GC.me).map(a=>a.id));});
   gmPaint();}
+
+/* ⚡21 Outliner (laneF): O toggles a list of all your armies/fleets — status, morale, destination + arrival; click = jump to it, idle ones flagged. Rebuilt only when its contents change. */
+function gmOutliner(w){let o=document.getElementById('gmOutl');if(!o){o=document.createElement('div');o.id='gmOutl';o.style.cssText='position:absolute;right:8px;top:44px;width:250px;max-height:60%;overflow:auto;z-index:4;font-size:12.5px;background:rgba(10,16,22,.92);border:1px solid #4a6580;border-radius:6px;padding:4px 6px';w.appendChild(o);}
+  if(!GV.outl||!GC||!GC.me){o.style.display='none';return;}o.style.display='block';
+  const mine=GC.armies.filter(a=>a.o===GC.me).sort((x,y)=>(x.fl?1:0)-(y.fl?1:0)||x.nm.localeCompare(y.nm)),sel=new Set(gmIds());
+  const sig=GC.turn+'|'+GC.day+'|'+mine.map(a=>a.id+':'+a.at+':'+(a.path?a.path.length:0)+':'+a.u.length+':'+Math.round(a.mor==null?100:a.mor)+(sel.has(a.id)?'s':'')).join(',');
+  if(o._sig===sig)return;o._sig=sig;
+  let h='<div style="display:flex;justify-content:space-between;opacity:.8;margin-bottom:3px"><b>Outliner · '+mine.length+'</b><span>O closes</span></div>';
+  if(!mine.length)h+='<div style="opacity:.6">No armies.</div>';
+  for(const a of mine){const p=GCM.P[a.at],mv=a.path&&a.path.length,dest=mv?GCM.P[a.path[a.path.length-1]]:null,idle=!mv&&!a.fl&&GC.ph==='plan'&&p&&p.o===GC.me;
+    h+='<div class="oi" data-a="'+a.id+'" style="padding:2px 4px;border-left:3px solid '+(sel.has(a.id)?'#ffe27a':mv?'#6fa8dc':'#556')+';margin-bottom:2px;cursor:pointer"><b>'+(a.fl?'⚓ ':'')+a.nm+'</b> · '+a.u.length+(typeof gmMorBar==='function'?' '+gmMorBar(a):'')+'<br><span style="opacity:.75">'+(p?p.n:'?')+(dest?' → '+dest.n:(idle?' · idle':''))+'</span></div>';}
+  o.innerHTML=h;o.querySelectorAll('.oi').forEach(e=>{e.onclick=ev=>{const id=+e.dataset.a,a=gmMine(id);if(!a)return;if(ev.shiftKey)gmSet([...gmIds(),id]);else gmSet([id]);GV.sel=a.at;try{guCentre(a.at);}catch(x){}grandMapRefresh();};});}
