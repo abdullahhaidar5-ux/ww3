@@ -415,3 +415,4 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneE DE-BLOCK slice 4c: slice 2's procedural wall textures swapped for real ambientCG CC0 Plaster001/Concrete034/CorrugatedSteel005 colour+normal tiles (credited in menu); smoke PASS; shot orch/shots/laneE/n2-phone.jpg
 - laneE RF13: dust trails now follow every moving ground vehicle (trucks, jeeps, light armour, artillery, harvesters), thicker in sandstorms, sandstorm fog tightened (far 950→720); smoke PASS
 - laneE RF15: night battles — mortar illumination flares go up automatically over a fight in view (view only, no sim effect); with the brighter night tracers already live; smoke PASS; shot orch/shots/laneE/n2-phone.jpg
+- laneC 2026-11-07 iteration 14: grand-map chimney smoke is light fading wisps instead of dark specks (src/13e-grand3d.js); visual only, no world state.

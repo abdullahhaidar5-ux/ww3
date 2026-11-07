@@ -59,3 +59,6 @@ Objects 4 -> 4 (est. 4.2, Abdullah's "blocky"/skyscraper complaint): towns are ~
 
 ## 2026-11-07 15:xx UTC — laneC iteration 14 (shots: orch/shots/laneC/m0 before, m1 after)
 Objects 4 -> 4 (est. 4.3, "blocky" complaint, C-TOWNS slice 2): Middle East flat-roof houses were near-cubes; now low and wide (height ~half), varied footprints, 8 wall tints (whitewash/ochre/terracotta), ~20% fewer buildings per town, towers shorter and glass-blue instead of grey slabs. Much more land visible between towns. Others unchanged (geography 4, colour 4, light 3.5-4, water 3.5, life 3.5, readability 4). Next: C-LOOK 1 painted terrain, army figures.
+
+## 2026-11-07 16:xx UTC — laneC iteration 14 (shots: orch/shots/laneC/m0 before, m1 after)
+Life 3.5 -> 3.7 / readability 4: chimney smoke was dark grain dirtying the Levant view; now light soft wisps that fade out (war smoke stays dark). Visual only. Next lowest: water 3.5.
