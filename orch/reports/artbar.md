@@ -25,3 +25,6 @@ Next lowest: light/water (no shadows, flat water), objects (ships, soldier figur
 
 ## 2026-11-07 01:3x UTC — laneC iteration 2 (shots: orch/shots/laneC/it2)
 Readability 2.5 → 3.5 (map-mode panel now a framed opaque "MAP MODE" panel, no banner bleed-through); water 2.5 → 3 (fresnel sky tint, finer ripples, wider sun glint, shallow-water shimmer). Others unchanged. Next: light (shadows/AO on towns), army figures, UI kit (C0).
+
+## 2026-11-07 03:3x UTC — laneC iteration 3 (shots: orch/shots/laneC/it3)
+Light 3 → 3.5, objects 3 → 3.5: every town building now throws a soft sun-direction shadow (one extra instanced mesh, same sun vector as the baked terrain shadows), so towns sit on the ground instead of floating. Others unchanged (geography 4, colour 3.5, water 3, readability 3.5, life 2.5, perf 3.5 est.). Next lowest: life (smoke/animated flags), armies/ships figures, UI kit C0.

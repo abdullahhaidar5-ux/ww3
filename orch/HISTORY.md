@@ -289,3 +289,4 @@ Shipped: real elevation/bathymetry (Terrarium tiles) + Natural Earth I satellite
 - 2026-11-07 laneE (Sonnet): foot soldiers drawn ~18% bigger at gameplay height (src/11-models.js). E1 real model swap still open.
 - laneD (2026-11-07 D2 slice 2): fixed a committed merge-conflict in orch/newplayer.mjs (audit tool was unrunnable); audit now ignores in-menu false positives. Real findings left: encyclopedia names use "MBT" jargon (data rename, deferred). No game code changed.
 - laneA 2026-11-07 (03:00Z): A2 slice 1 — real time with pause on the grand map: date + play/pause + speeds 1–5 (Space, +/−, 1–5), months roll over by themselves, battles pause the clock, arrival dates on marches; gate orch/grandrt.mjs. Shots orch/shots/laneA/rt-*.png.
+- 2026-11-07 laneC: town sun-shadows (instanced) on grand map; light/objects +0.5 (artbar it3)
