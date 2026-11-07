@@ -38,7 +38,7 @@ function bhOpen(){let ov=document.getElementById('myb');
    <div class="label">Last ${Math.min(20,a.length)} battles</div><div style="overflow-x:auto"><table><tr><th>Day</th><th>Nation</th><th>Result</th><th>Time</th><th>Map</th><th>Opponents</th><th title="units built / lost">B/L</th></tr>${rows}</table></div>`
    :`<div class="none">No finished battles yet. Win or lose one and it shows up here.</div>`)+
    `<div class="row" style="margin-top:12px"><button class="big ghost" id="mybClose">Close</button>`+(a.length?`<button class="big ghost" id="mybClear">Clear history</button>`:'')+`</div></div>`;
-  ov.hidden=false;$('mybClose').onclick=()=>{ov.hidden=true;};const c=$('mybClear');if(c)c.onclick=()=>{if(confirm('Delete your saved battle history on this device?')){bhSave([]);bhOpen();}};}
+  ov.hidden=false;$('mybClose').onclick=()=>{ov.hidden=true;};const c=$('mybClear');if(c)c.onclick=()=>{uiConfirm('Delete your saved battle history on this device?','Delete',()=>{bhSave([]);bhOpen();},1);};}
 
 /* ---------- Tutorial ---------- */
 /* A guided first Conquest battle (single-player, passive/calm enemy). Each step: t = what and why (short), a = the ONE thing to do,
@@ -93,8 +93,8 @@ const TUT=[
  {k:'civic',t:'Each town has one perk building (market: more tax; garage: repairs vehicles; clinic or mosque: heals soldiers, calms unrest). Hold it to get the perk.',a:'Open the town panel (minimap marker), read its perk line, then press Low (a freshly retaken town is touchy).',
   enter:()=>{TUTS.civ=0;},
   hl:()=>tutTownHL(0),cam:()=>tutTown(),ok:()=>{const t=tutTown();return!!t&&t.ow===ME&&t.rate===0;}},
- {k:'logi',t:'Towns need a road to your base. A town with no link is CUT OFF: no ammo and less tax. Your Construction Vehicle builds roads.',a:'Press L (or click Supply lines) to see your supply network.',
-  hl:()=>LGU.btn?{el:LGU.btn}:null,cam:()=>tutHQ(),ok:()=>(typeof LGU!=='undefined'&&LGU.on)},
+ {k:'logi',t:'Towns need a road to your base. A town with no link is CUT OFF: no ammo and less tax. Your Construction Vehicle builds roads.',a:'Press L (or open Layers at the top and pick Supply) to see your supply network.',
+  hl:()=>{const b=document.getElementById('hudLyB');return b?{el:b}:null;},cam:()=>tutHQ(),ok:()=>(typeof LGU!=='undefined'&&LGU.on)},
  {k:'pow',t:'Powers use your General points, and you have two to spend. (They cannot be used during the setup phase.)',a:'Open the Powers tab and click a power to buy it.',
   enter:()=>{TUTS.s0=G.teams[ME].spent|0;TUTS.p0=Object.keys(G.teams[ME].pw).length;if(G.t<G.setupEnd)G.setupEnd=G.t;},
   hl:()=>{if(typeof TAB!=='undefined'&&TAB==='pow'){const b=[...document.querySelectorAll('#panel button[id^="p_"]')].find(x=>x.offsetParent&&!x.disabled);return b?{el:b}:null;}return{d:'.tabs button[data-tab="pow"]'};},cam:()=>tutHQ(),

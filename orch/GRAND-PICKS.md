@@ -20,6 +20,41 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
   (proved later by the balance tourneys / grandtest). Economy/building-type signatures → grand2 builds; military/strike-type →
   grand3; leader/political-type → grand6. New-nation helpers add their nation's row.
 
+## ALL stages — THE NATION PANEL (Abdullah 2026-11-06 17:53, showed EU4's nation window: "We need something like this" → "Not just diplomacy the full panel")
+ONE tabbed window for running your nation, like EU4's (same idea and layout, our own modern-war art and icons — no copied EU4
+art). Helper `nationpanel` builds the shell + every tab whose system already exists; **every later grand stage adds its screen
+as a tab here** (never a separate pop-up window). The ART LOOP owns its final look.
+- **Opens** from the top bar (flag button + "Nation"), from clicking any nation's flag (opens THAT nation's panel read-only /
+  with diplomacy actions), Esc closes. PC-size, big readable text.
+- **Header (on every tab)**: big flag, name + government type, leader (title + fictional name; no real leaders), heir/successor
+  if grand6 has it, power tier (Superpower / Great / Regional / Small), morale style, and a stat grid with icons + hover
+  explanations: cash & income/turn, manpower, army strength, fuel, food, war support, stability, prestige, trust, world opinion.
+- **Tab bar of icons** (show only tabs whose system exists; later stages add theirs via one register call, e.g.
+  `npTab(id, icon, title, render)`):
+  1. **Government** — leader, cabinet, laws, reforms, stability/legitimacy (grand4/4b)
+  2. **Diplomacy** — the EU4-style screen in Stage 4b (enemies/rivals/allies flag rows, searchable nation list with opinions, actions with acceptance reasons)
+  3. **Economy** — budget: income/expenses by source, tax, bonds, upkeep, fuel/food/oil (grand2's `geUiPanel` moves in here)
+  4. **Trade** — deals, oil market, sea lanes & chokepoints (grand2/grand4)
+  5. **Military** — all armies & fleets with unit cards, generals, manpower, sortie stock (air), recruit queue (grand1/3)
+  6. **Research & doctrines** — research tree (grand4)
+  7. **Home front** — war support, morale style, unrest, national/religious days, refugees (grand6)
+  8. **Missions & war goals** (grand4)
+  9. **Signature assets & decisions** — the nation's unique assets (Ayatollah / Dear Leader / Mountain Fortress / Bunker Buster / its own signature, `GE_SIG`), one-time decisions
+  10. **Intelligence** — spies, known enemy forces (grand6)
+  11. **Provinces** — sortable list: name, towns, tax, unrest, buildings, garrison; click = fly the map there
+  12. **Ledger** — compare all nations: economy, army, navy, manpower, territory, tier (uses realstart's numbers)
+- One system: extend the existing grand UI (`guSide`/`guTop` in src/13c-grandui.js, `geUiPanel`/`geUiTop` in src/13h-grandecoui.js) — move screens into tabs, no duplicate panels.
+
+## ALL stages — REALISTIC START (Abdullah 2026-11-06 17:49 "starting economic strength, military strength, and placement of armies is realistic"; picks 17:53: "Realistic and factor in real world alliances" + "Real hot spots + bases")
+Helper `realstart` builds it; later stages keep it true. Today (before): cash 2200 major / 900 minor, army value 1 / 0.5, same fuel/food for all, armies only at capital + 1 war-goal province, opening wars = a "ring" of majors per region.
+- **Real gaps, not shrunk:** each nation's start comes from real 2025-26 figures (look them up, cite sources in the report): GDP → cash and income; defence budget + active troops + equipment → army value and unit mix (more jets/ships/armour where real); oil/gas output → fuel stock and oil income; food self-sufficiency → food; population → manpower cap. US ≫ Jordan is fine. Non-state/small sides (RS Mountain Shias, DW Yemen, KD) use realistic sizes for what they are (militia-heavy: lots of infantry, ATGMs, rockets, drones, tunnels/forts, little armour/air).
+- **Real alliances at the start** (look up the current state, Nov 2026): NATO (incl. Sweden; Turkey is a member), US treaty/major partners (JP, KR, AU, PH, IL, Gulf states, JO, EG, MA, TW informal…), the Resistance bloc (IR + RS + DW and the Iraqi militias' leanings — check what Syria really is now), Russia's ties (CSTO/KZ, KP 2024 treaty), China–Pakistan, Turkey–Azerbaijan, India non-aligned, etc. Use grand4b's diplomacy system if it exists (alliances, defensive pacts, guarantees); if not yet, put them in ONE data table (`GR_REAL.al`) that grand4/4b will read — never a second diplomacy system. Allies start with shared vision/military access where real.
+- **Starting relations:** also seed real starting opinions (−100…+100) and rivalries between nation pairs in `GR_REAL` (e.g. close allies +75, historic rivals −100) — grand4b's Diplomacy screen (EU4-style, Stage 4b) shows and uses them.
+- **Opening wars = real conflicts as they stand in Nov 2026** (look them up), not the ring. Everyone else starts at peace with real tensions (claims/war goals) so wars can break out.
+- **Real placement:** armies on the real hot fronts (Russia–Ukraine line, Korean DMZ, Kashmir LoC, Israel–Lebanon border, Yemen fronts, Taiwan Strait, Greece–Turkey etc.), garrisons in big cities/bases, real overseas bases with realistic sizes (US: Gulf/Qatar/Bahrain/Kuwait, Korea, Japan/Okinawa, Germany, Poland, Italy, Djibouti, Diego Garcia; Russia: Syria if still there, else none; Turkey: N. Iraq/N. Syria/N. Cyprus; France: Djibouti/UAE/Africa; UK: Cyprus/Gulf; China: Djibouti…), and fleets in real sea zones (US carrier groups, Russian Black Sea/Pacific, Chinese PLAN, etc.) if grand3's fleets exist; if not, the fleet table waits in `GR_REAL` for grand3.
+- **Still a game:** the tactical rule "all nations equally strong" stays for unit-vs-unit balance in battles; the grand map is deliberately unequal. Small nations' fun comes from alliances, terrain, Mountain Fortress/home-defender morale and asymmetric tools — tell the player at nation pick ("Superpower / Great power / Regional power / Small power", difficulty shown).
+- **Proof:** a table in `orch/reports/realstart.md` (nation, real figure, game value), screenshots of the opening map (fronts + bases), and `orch/grandtest.mjs` passes; AI empires survive 10 quick turns without instant collapse of every small nation.
+
 ## ALL stages — air & supply in campaign battles (Abdullah 2026-11-06 08:08; battles have no base, army only)
 - [~] **Jets = sorties from airfields** (grand3 builds; grand2 provides the stocks — `geSortieStock(c,pi)` is ready): jets live in air wings at grand-map airfields
       (and carriers in fleets); if an airfield/carrier is within range of the battle province, that side gets on-call sorties in
@@ -106,6 +141,23 @@ below in addition to its own prompt** (follow `orch/SYSTEMS.md`: extend owners, 
       nations (members get a joint-operations bonus: shared vision/supply, cheaper allied aid), with membership rules in diplomacy.
 
 ## Stage 4b (grand4b — diplomacy & government, Abdullah 21:20; also finishes anything left unticked in Stage 4)
+- [ ] **DIPLOMACY SCREEN** (= the Diplomacy tab of THE NATION PANEL; Abdullah 2026-11-06 17:53, showed EU4's Diplomacy panel: "We need something like this") — the layout
+      idea, our own modern-war art (no copied EU4 art/icons; the ART LOOP polishes the look after). One panel, opened from a top-bar
+      "Diplomacy" tab or by clicking any nation's flag/province owner:
+      · **Header**: big national flag, nation name + government type, leader as a title + fictional name (no real leaders — never
+        the real Mountain Shias leaders), power tier (Superpower / Great power / Regional power / Small power), key stats with icons
+        (cash & income, manpower, army strength, war support, prestige, stability, trust).
+      · **Rows of flag icons**: Enemies (at war) · Rivals · Allies · Client states · Guaranteed by/for · Trade partners · Military
+        access — each flag clickable (opens that nation).
+      · **Searchable nation list** (right side): flag, name, *their opinion of you* and *yours of them* in green/red; sort by name /
+        opinion / power; filter tabs All · Neighbours · At war · Allies · Great powers.
+      · **Selected nation → actions**: Propose alliance, Declare war (needs war goal), Offer peace, Improve relations, Send aid,
+        Guarantee, Military access, Sanctions, Trade deal, Call to arms. Each button shows the chance it's accepted and WHY
+        (hover list: "+25 shared enemy", "-50 rivals", "+20 same bloc", "-30 low trust"…), like EU4.
+      · **One opinion system**: one number per nation pair (alliances, rivalries, shared enemies, bloc/religion, world opinion
+        `geOpinion`, trust, recent actions); everything diplomatic reads it. Starting opinions/rivalries come from realstart's
+        `GR_REAL` table (real-world relations). Deterministic for multiplayer; saved in GC.
+      · PC-size, readable text (CLAUDE.md command-bar rule), Esc closes; screenshot in the report.
 - [ ] **Call to arms & favours**: allies get called into your wars; helping them earns favours you spend to make them join.
 - [ ] **Trust & reputation**: keeping deals builds trust; breaking truces/betraying allies wrecks it — nobody signs with you.
 - [ ] **Great power ranking**: the top 8 nations by score are Great Powers (extra diplomatic weight, rivalries, can intervene).
@@ -208,6 +260,7 @@ before/after screenshots of the same views in orch/shots/<pass>/.
 - [ ] **Advisor tips:** optional chief-of-staff hints on the grand map ("province 12 will revolt", "your east is undefended",
       "this strait closing will hurt your oil income"), toggle in Settings.
 
+- JP (Japan, added 2026-11-06 nations-new2): grand-map home region = Japan.
 ## Home regions (nations-new1, 2026-11-06)
 - **DW "Coffee Shias" = Yemen**: grand-map home region is Yemen (Sana'a / Sarawat highlands, Tihama coast, Hodeidah, Mokha, Bab-el-Mandeb). Battle maps `yemen`, `tihama`, `babelmandeb` already list DW as home; town names for style `yemen` are now Yemeni (tower-house towns).
 - **RS "Mountain Shias"**: home = South Lebanon & the Bekaa (Bint Jbeil, Maroun al-Ras, Khiam, Nabatieh, Baalbek, Hermel, the Litani, southern Beirut suburbs). Battle town names for style `lebanon` use these places.

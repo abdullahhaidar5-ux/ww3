@@ -1,0 +1,259 @@
+# PLAN-SAT — one central plan until Sat 2026-11-07 20:00 Chicago (02:00Z Sun)
+
+Abdullah 2026-11-06 18:02: **"Let's get this to a 75 dollar studio game by Saturday. That's goal. That is going to mean studying
+everything we have going on now and centralizing and becoming faster. Kaizen afterwards."**
+
+This file replaces the grand chain, the one-shot stage helpers and the look passes. **Four lanes**, each one self-firing loop
+(hourly fallback), each owning its own files so they never wait on each other. Every iteration: read `orch/BRIEF.md` + this
+file → take the **top unticked item of your lane** → ship it green in ~1 h → tick it here (`[x]` + one line: what + commit) →
+fire yourself again. The old stage specs (GRAND-PICKS sections, grand-strategy.md) are the detail for each item — read only the
+section you need. After Sat 18:00 Chicago: no new items, only finish/ship; at 20:00 everything left moves to kaizen.
+
+**Disabled 2026-11-06 18:05 (folded into lanes):** grand4, grand4b, grand6, grand7, integrate2, intuitive, nationpanel, voices-new,
+balance3, grandmirror (done), look3/look4. Still finishing on their own: grand3 (→ fires Lane A when done), look1, rescue, nations-b2.
+Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
+
+## STALINGRAD (Abdullah 2026-11-06 20:15 "We're doing Stalingrad style development"): seven lanes attack at once, nobody waits, nobody retreats
+Items move to the new lanes (the item text stays where it is above; the new owner ticks it):
+- **Lane F takes:** A1 (if still open) · A3 smooth army control · A3b army morale bar + retreats · A5b morale extras on the map · campaign-battle rules (rout, wipe, army-only logic) · ⚡21 outliner · ⚡23 macro-builder · ⚡28 observer · ⚡31 quick battle · 33 cover overlay · 32 after-action report · 36 bridges/dams to map · 40 battle weather · 38 hero moments · 39 generals' speech.
+- **Lane A keeps:** A2 real time · A2b multiplayer grand campaign · A4 grand3 leftovers · A5 force limit + tradition · A6 hidden war · 27 ironman · 34 600-unit battles · 37 replay links · 42 spectator links · 41 co-op.
+- **Lane G takes:** B2b alerts bar · B6 diplomacy (EU4) · B7 events/research/missions/cabinet · B8 great powers/reforms/prestige · B5c propaganda/government/war economy · ⚡16 headlines · ⚡25 diplomatic web · ⚡26 achievements · 22 peace-deal screen · 24 ledger graphs · 30 town blurbs · 48 event chains · 49 crisis generator · 29 alternative start dates · 44 clan colours.
+- **Lane G also takes (Abdullah 21:19 "How does an ayatollah work in the game" — today it is only a line in the signature table, no effects yet): AY Ayatollah + Dear Leader mechanics** — **ONE Ayatollah leads all three Shia factions** (Abdullah 21:23 "Make him the leader of all the shia factions a single leader"): a single shared Supreme Ayatollah is the national leader of IR, RS and DW at once (one person, one portrait, one name — if the names/portraits helper made three Ayatollahs, merge them into this one); he resides in Iran; whoever plays Iran moves him (AI if nobody), RS/DW players can request a visit; while he leads them IR, RS and DW are in a permanent alliance ("the Resistance bloc"), his effects apply to all three and he can tour any of their provinces; succession picks a new shared Ayatollah. (KP: its own Dear Leader), a figure on the grand map with a portrait (portraits helper): **tours one province at a time** (move him like a small army; ~1 month per stop): that province +loyalty, −unrest, faster recruits there, and any Fight-it battle there starts with **fervour** (units start rallied/brave); nationwide **"the people clamour for war"**: high war support, slow war weariness, faster recruitment — but long peace (no war for ~2 years) builds war-fever unrest; no capital-falls penalty; equal total value vs other nations' signature assets. All as GMOD modifier rows + one small leader object in the campaign save; shown in the nation panel header/Government tab and on the map (figure + banner).
+- **Lane B keeps:** B1 realistic start · B2 nation panel · B2.5 modifier engine · B3 power points + ideas · B4 stability/cores/estates · B4b war support + rallies + recruiting · B5 development + trade nodes · B5b EU4 economy.
+
+## VERTICAL SLICE = the Middle East first (Abdullah 2026-11-06 18:52, picked)
+Saturday's goal is a **Middle East campaign at full $75 quality**: Iran, Mountain Shias (Lebanon), Yemen (DW), Israel, Saudi Arabia,
+UAE, Oman, Iraq, Syria, Turkey, Jordan, Egypt, Kurdistan Region (+ the Gulf/Red Sea/East Med sea zones). **Every lane does its
+item for this region first** (art, towns, real data, morale, nation panel content, events/missions, battles there, voices),
+and the rest of the world only needs to *work*. Screenshots, the art-bar shots and Abdullah's 2-minute tests are taken there.
+A new campaign offers **"Middle East 2026"** as the featured start (whole world still playable). The other regions are
+polished in kaizen.
+
+## Lane E — Battle look (TOP PRIORITY; Abdullah 2026-11-06 19:30 sent a photo of a Conquest battle: blocky box soldiers, box guns, white box HQ → "None of this at all" = "Battle looks terrible")
+Judge only **real gameplay at normal camera height** (his photo's view: IR base in the desert, 3 IRGC infantry). Middle East
+nations first (IR, RS, DW, IL, SA, IQ, SY, TR). Every step: before/after shots from that same view; smooth-pc / smooth-mp stay green.
+- [ ] **E1 Real-looking infantry**: replace the boxy `soldier`/`sol_m/e/w` models with proper human soldiers — realistic proportions, helmets/caps, vests, webbing, backpacks, real rifle silhouettes, rigged + walk/run/shoot/prone animations. Source: CC0/CC-BY rigged human models reachable via GitHub/npm (credited), or build a high-quality procedural soldier (capsule/lathe limbs, bevelled armour, proper weapons) if no free model fits; uniforms per nation via textures/tints (IRGC/RS fatigues etc.). Keep instancing so 300 units stay smooth (LOD: full model near, simpler far).
+- [ ] **E2 Real buildings**: HQ, barracks, factory, depots → believable Middle Eastern compounds/military buildings (walls, roofs, windows, sandbags, antennas, wear), not white boxes; same free-art rule.
+- [ ] **E3 Ground & light**: terrain texture detail (tracks, rocks, scrub, dust), soft shadows/AO, colour grading toward CoH/Broken Arrow; no washed-out flat beige.
+- [ ] **E4 Vehicles & weapons detail pass** (existing m_* models: materials, decals, wear) + muzzle flashes/tracers/explosions checked at gameplay zoom.
+- [ ] **E5 HUD readability over the 3D** (only what blocks the view: overlapping help text, labels) — coordinate with Lane C's UI kit.
+
+## THE 50 (Abdullah 2026-11-06 18:57: "All let's go")
+Order inside each lane: your numbered items first, **except ⚡ items** (cheap, high value) which you slot in as soon as your current
+item ships. Everything else after your list. **Target: ALL of it shipped by Sat 20:00** (Abdullah 19:00 "Just get it done") — smallest playable slice of each, then the next; no deferring by choice. Middle East slice first, always.
+- **Lane D:** ⚡1 golden replay (record a 2-min human play as an input replay, re-run every push) · ⚡2 picture diffs on every push (CI) · ⚡3 acceptance check written before each item · ⚡5 skip tests for unchanged files · 47 nation encyclopedia (Haiku, neutral) · 50 tutorial built from the golden replay · 43 weekly challenge seed + leaderboard (local/static only) · 46 procedural flags for rebels/minor factions · 6 code diet (dead phone/Classic code) and 7 split giant files → **after the deadline** (touch every lane's files) · 10 kill list → kaizen.
+- **Lane A:** ⚡21 outliner (armies/fleets/sieges list) · ⚡23 macro-builder · ⚡28 observer mode · ⚡31 quick battle anywhere · 27 ironman · 33 cover/suppression under the cursor · 32 after-action report · 36 bridges/dams carry back to the map · 40 battle weather = map weather · 37 replay links · 42 spectator links · 38 hero moments · 39 generals' pre-battle speech (lines from Lane D voices) · 34 600-unit battles (impostors/LOD) · 41 co-op grand campaign (= A7, the first multiplayer target).
+- **Lane B:** ⚡16 newspaper headlines between months (event engine) · ⚡25 diplomatic web view · ⚡26 achievements per nation · 22 EU4 peace-deal screen (with B6) · 24 ledger graphs over time · 30 town blurbs (Haiku, neutral) · 48 event chains from real tensions (neutral) · 49 random-crisis scenario generator · 29 alternative start dates (neutral) · 44 clan colours/emblems (original).
+- **Lane C:** ⚡14 city lights at night · ⚡15 war scars (smoke over besieged cities, scorched land) · ⚡18 photo/cinematic camera · 11 seasons on the map · 12 weather fronts · 13 shipping lanes with moving tankers/cargo ships (real units' traffic, not decoration aircraft) · 19 procedural insignia · 20 fictional leader portraits (procedural, no real people) · 35 night battles (flares, NV view) · 17 music intensity follows war support (with Lane D audio).
+- **Orchestrator / everyone:** 4 decision log = CLAUDE.md "standing decisions" + GRAND-PICKS — check them before asking Abdullah anything · 8 model tag: Haiku for text/data rows, Sonnet default, Opus only Lane A engine work · 9 night shift: risky rebuilds 23:00–09:00 Chicago, visible polish 16:00–22:00 · ~~45 Discord results posting~~ — **dropped** (Abdullah 18:59 "Forget #45"; don't build it).
+
+## The bar: a $75 studio game (whole game, not just the grand map)
+`orch/ART-BAR.md` (raised to $75, whole game) + **feel**: every click answers instantly (< 100 ms visible feedback), smooth
+60 fps with big armies on the grand map and ~300 units in battle, no dead ends, nothing that "never loads", readable PC UI.
+
+## Lane ownership (one owner per file — touch another lane's files only for a one-line hook, and say so in the commit)
+| Lane | Model | Owns | Scheduled task |
+|---|---|---|---|
+| **A — Grand engine & feel** | Opus (sim/determinism) | `src/13-grand.js`, `13b-grandbattle.js`, `13f-grandmirror.js`, `13c-grandui.js` (input/selection), grand AI, `orch/grandtest.mjs` | `trig_01Gx98id1Z38KSG4R5rAdU94` (hourly :23 + self-fire) |
+| **B — Grand systems (EU4 mechanics)** | Sonnet | `src/13g-grandeco.js`, `13h-grandecoui.js`, new `13i+` grand system files, nation panel | `trig_013LUzLCpqMyGsfK9ojXXmY8` (hourly :11 + self-fire) |
+| **C — Look ($75)** | Sonnet | `src/13d-grandterrain.js`, `13e-grand3d.js`, CSS/skin of every panel, `orch/ART-BAR.md` (battle rendering moved to Lane E) | `trig_0196kYnG3DBmhFHiNbNqisD6` (ex art loop; hourly :07 + self-fire) |
+| **D — Content & QA** | Sonnet | `01-data` rosters, `11z-nations*`, `vo/`, `mus/`, balance numbers, wording/tooltips/tutorial, saves, `orch/newplayer.mjs` | `trig_01QkuM1b8miRMAF9NcwxC8bB` (hourly :47 + self-fire) |
+| **E — Battle look (TOP PRIORITY, Abdullah 19:30 "Battle looks terrible")** | Sonnet | battle rendering: `src/04-gfx.js`, `05-fx3d.js`, `10-post.js`, `11-models.js`, `models/` (Lane C keeps the grand map 13d/13e + UI skin) | `trig_01X46fRzVkWLJH7JGNAXtDGx` (hourly :17 + self-fire) |
+| **F — Grand feel & campaign battles** (Abdullah 20:15 "Stalingrad style development") | Sonnet | `src/13c-grandui.js` (input, selection, outliner), `src/13b-grandbattle.js` (campaign battle rules), army cards | `trig_01MuTKXemr5eUj1aP8TRfoSH` (hourly :29 + self-fire) |
+| **G — Government, diplomacy & events** (20:15) | Sonnet | new grand files `src/13j*`+ for diplomacy/events/government (economy stays Lane B's 13g/13h/13i) | `trig_016YWv2VUhewLR5Wq1PTVqzr` (hourly :53 + self-fire) |
+
+## Lane A — Grand engine & feel (priority order)
+- [x] **A1 FIX: the live battle never loads** (Abdullah 18:00). Reproduce exactly as a player: menu → Grand campaign → march into an enemy → Fight it live, in a real (non-test-hook) browser path with models loading; find why it hangs (loader, mirror map generation, missing data for new nations, exception); fix; add that exact path to the gate so it can't regress. — **Done 8db5c8b8:** cause = a campaign saved before the 2026-11-06 real-borders map (174 → 236 land provinces) still showed as Continue; its province numbers point at different places, so the map broke and Fight it never loaded. Old-map saves are now refused with a clear note (map signature `GC.ms`), a battle that fails to build shows a message, puts the map back and auto-resolves (`grandFightLive`), and gate `grandlive` (orch/grandlive.mjs) plays the real path from the menu (New → march → End turn → Fight it live, no hooks) — a fresh campaign's battle loads and runs.
+- [ ] **A2 Real time with pause (EU4)** (Abdullah 17:58 "EU4 real-time + pause"; replaces simultaneous turns): days tick, speeds 1–5, Space = pause, +/− speed (add to the one key table; WASD stay camera-only), date shown in the top bar; economy/upkeep monthly; armies move continuously along paths with arrival dates; orders allowed while paused; a battle starting pauses the map and shows Fight it / Auto-resolve; AI thinks on ticks. Deterministic: state + timestamped orders + seed (multiplayer = lockstep later; any player can pause, host sets speed). Old turn saves load (convert turn → date). — **Slice 1 shipped (laneA, e1fc51b2+21f6998f):** calendar date in the top bar (month 1 = Jan 2026, `GC.day` 0–29, `grDateStr`), ▶/❚❚ + 5 speed pips, Space pause, +/− and 1–5 speed (13c key handler; 13e no longer zooms on +/−), a month closing = the old End turn (sim/determinism unchanged; starts paused = classic turns), the clock waits while battles/modals are open, march hints show the arrival date; gate `orch/grandrt.mjs` (in gate/grandlive). **Open:** armies sliding continuously along paths between month ends, AI acting on day ticks, host-set speed for MP.
+- [ ] **A2b MULTIPLAYER GRAND CAMPAIGN — moved up** (Abdullah 2026-11-06 20:13 "Allow multiplayer conquest and grand campaign then"): build it right after the real-time engine (A2), on its lockstep design: "Grand campaign → Play online" (create/join by code or list, each friend picks a nation, empty nations AI), Cloudflare-hosted like battles with the automatic PC fallback, any player can pause, host sets speed, live battles pause the map for everyone (others give orders while paused and can spectate or join as co-commander), several battles from the same pause run together, rejoin anytime. Use the grand7 spec in GRAND-PICKS Stage 7 for the details. Conquest online already works ("Play online") — make sure it stays one click from the menu. Servers deploy only when Abdullah merges the main→servers-live PR.
+- [ ] **A3 Smooth army control (EU4 feel)** (Abdullah 18:00 "the smoothness of selecting large armies on the map … way too clunky"): box-select many armies, Shift adds, Ctrl+click selects all of one nation's armies in view, double-click selects all armies in that province, right-click = move with a path preview + arrival date while hovering, merge/split/detach buttons + hotkeys, selected armies' unit cards at the bottom (Total War style), hover tooltips, instant feedback; 60 fps with 150+ armies on the map (profile, cache, no per-frame DOM rebuilds).
+- [ ] **A3b Army morale bar + retreats by morale style** (Abdullah 18:25, picked 1 + 3): every army on the grand map has a morale bar (0–100%, EU4-style) drained by battles, forced marches, attrition, no supply, encirclement and map strikes; recovers monthly in friendly land / near supply; army tradition (A5) raises the max; it sets the starting courage of that army's units in Fight-it battles and drives auto-resolve. Each style (read `MSTYLES`/`msOf()` in 01-data — the ONE morale table, add grand numbers there): **Zealous** high max, unhurt by losing its general, but **won't retreat** after a lost battle (fights on, heavy losses); **Professional** steady under map strikes, recovers fast near a general/HQ, heavy casualties drain it more, **retreats in good order** (keeps more units); **Home defenders** big bonus in own/core provinces, weak deep in enemy land, **fall back to the nearest home town and dig in**; **Firepower-reliant** low base, strong with own airfields/artillery/sortie cover in range, collapses when cut off, **break fast but lose fewer men** (pull back under air cover). Equal power — prove with auto-resolve sims (each style wins ~equally across mirrored setups). Bar shown on the army banner + army cards. **Allied morale** (Abdullah 18:29 pick 11): allied armies in the same/adjacent province share morale (the higher one lifts the lower a little); Firepower-reliant armies get a boost when an allied air power (airfield/sorties in range) supports them.
+- [ ] **A4** grand3 leftovers (generals, front lines, map strikes, fleets & sea zones) — whatever grand3 (running now) leaves unticked.
+- [ ] **A5 Force limit + tradition** (Abdullah 17:58): army/navy force limit (over it = expensive upkeep), army/navy tradition (from battles; better generals, higher max army morale A3b), mercenaries/volunteer companies; war exhaustion = Lane B's war-support meter (B4b), not a second one.
+- [ ] **A5b Morale extras on the map** (Abdullah 18:31, all picked; all read the ONE `MSTYLES` table, equal total value per style): **named battles** — big battles become legends with lasting province/national morale bonuses (martyr shrines / regimental honours / "never again" sites / victory monuments); **surrender & POWs** — broken armies can surrender, prisoners held and traded in peace deals (B6) (Zealous never, Professional in good order when hopeless, Home defenders only abroad, Firepower-reliant sooner when cut off); **capital under threat** — Zealous fortified last stand, Professional relocate the capital, Home defenders whole-nation mobilisation, Firepower-reliant allies more willing to join; **sieges** — hold-out time by style (Zealous longest, Professional steady but supplies drain, Home defenders longer in home towns, Firepower-reliant short unless relieved by air); **pre-battle war cry** — every Fight-it battle opens with a short style boost + voice line (war cry / briefing / homeland call / air-support call-in; lines from Lane D's voices).
+- [ ] **A6** grand6 military/hidden-war items in priority: fog on the map, insurgency, war weariness hookup, coups (rest → kaizen). **Occupation reaction by style** (Abdullah 18:29 pick 12, uses the ONE Locals system `localSpawn`): occupied Zealous lands grow resistance cells (raids, IEDs), Professional lands stay orderly (low insurgency, quiet admin), Home-defender lands raise partisans in hills/forests, Firepower-reliant lands comply but sabotage (supply/infrastructure hits); equal total cost to the occupier.
+
+## Lane B — Grand systems: EU4 mechanics (priority order)
+- [x] **B1 Realistic start** (first cut, see orch/reports/realstart.md; follow-ups listed there) — GRAND-PICKS "REALISTIC START" (real GDP/military/oil, real alliances + opinions, real wars, fronts, bases, fleets).
+- [x] **B2 Nation panel** (shell + Economy/Diplomacy(read-only)/Military/Provinces/Ledger tabs via `npTab`, `src/13j-nationpanel.js`; flag-click open + Government/Home front/etc. tabs come with their systems) — GRAND-PICKS "THE NATION PANEL" (EU4-style tabbed window; `npTab` register; every later item adds its tab).
+- [x] **B2.5 ONE modifier engine (EU4-style, do this before B3)** — `GMOD` rows `{id, src, scope: nation|army|province, stat, add|mul, cond, until}` + `gmod(scope, obj, stat)` evaluator with a per-month cache; every later B/A item (ideas, estates, stability, war support effects, rallies, style perks from `MSTYLES`, named battles, war economy, inflation, corruption, autonomy) is data rows, shown in tooltips as "+10% from Zealous fervour" lines. Saves on checkpoint; deterministic. — DONE: `src/13k-gmod.js` (`gmod/gmodAdd/gmodMonth/gmodLines`, rows in `GMOD_ROWS` + saved `GC.mod`, nation-panel Modifiers tab; gmodMonth called per turn from grFinishTurn).
+- [x] **B2b EU4 alerts bar** (laneG: `src/13l-galerts.js`, `alAdd` registry): a row of icons along the top that light up when something needs you (idle army, money negative, can raise stability, rebels, peace offer, war declared, unspent capital) — click = jump to it. Built on the UI kit; every later system adds its alert with one call.
+- [x] **B3 Power points + ideas** (DONE first cut: `src/13l-grandideas.js`, Political/Diplomatic/Military pools via monthly `GMOD_HOOKS`, 4 style trees + Eco/Mil/Dip groups as modifier rows, AI buys in fixed order, nation-panel 💡 tab; income/upkeep/manpower now read gmod; spend on tech/dev/coring/generals comes with B4/B5) (Abdullah 17:58): EU4 monarch points as **Political / Diplomatic / Military capital** (monthly from leader + advisors), spent on tech, development, coring, diplomacy, generals, stability; national ideas (unique per nation, equal value) + idea groups. **Style idea trees** (Abdullah 18:29 pick 10): each morale style gets its own national-idea tree (e.g. Zealous: fervour/martyrdom/volunteers; Professional: staff/training/discipline; Home defenders: fortified homeland/militia/terrain; Firepower-reliant: air power/artillery/precision) — equal total value, nation-flavoured names.
+- [x] **B4 Stability, cores, estates** — DONE: stability = `src/13m-grandstab.js` (⚖ tab); cores (6-month coring with Political points, non-core −30% income/+15 unrest) + 4 estates with loyalty/influence/privileges = `src/13o-gstab.js` (🏛 Cores & estates tab + alert), all as GMOD rows; shot orch/shots/laneB/b4-estates.png. Left for later: overextension, estate events.
+- [ ] **B4b War support (national morale)** (Abdullah 18:25, picked 2): ONE nation-level war-support meter (this IS war weariness/exhaustion — A5 and grand6 use it, no second meter): victories, defeats, casualties, war length, occupied home/holy places, national/religious days (equal value), Ayatollah/Dear Leader clamour; low → unrest, slower recruits, forced peace talks, coups (later). Shaped by morale style: **Zealous** casualties raise it at first (martyrs) up to a cap, leaders keep it high; **Professional** stable, slow steady drain from losses; **Home defenders** surge in defensive wars / when invaded, low appetite for wars abroad; **Firepower-reliant** rises with clean victories, drops sharply with casualties. Shown in the nation panel header + Home front tab; feeds every army's morale recovery (A3b). **Rallies** (pick 9): spend Political capital on a style-flavoured rally to lift war support (commemorations/party rallies, military parades, defend-the-homeland drives, weapons showcases) — equal value, cooldown. **Recruiting by style** (pick 6, in grand2's manpower system): Zealous volunteer surges after martyr losses/holy days; Professional recruit slower but units start with veterancy; Home defenders get a free militia levy when invaded; Firepower-reliant recruit fewer men but better-equipped units — equal total value.
+- [ ] **B5 Development + trade nodes**: develop provinces (tax/production/manpower) with capital points; trade flows through EU4-style trade nodes along sea lanes/chokepoints to collectors; merchants steer it (extends grand2's oil market/trade — one system).
+- [ ] **B5b EU4-level economy** (Abdullah 18:09 "Will this have eu4 level economy?" → add all four): **trade goods** per province (oil, gas, grain, steel, electronics, arms, minerals… from the province's real profile) with world **prices** that move with supply/demand and crises, feeding production income and trade value; **inflation** (from printing money / bonds / gold-like windfalls; raises costs; reduce with Political capital or advisors); **army & navy upkeep sliders** (lower = cheaper but lower morale/readiness, EU4-style); **autonomy** per province (high = less income/manpower but less unrest; lower it with capital points) and **corruption** (from overspending/low stability; raises costs). All in grand2's economy (13g-grandeco.js), shown in the nation panel's Economy tab (income/expense ledger lines for each).
+- [ ] **B5c Morale ↔ empire** (Abdullah 18:31, picked): **propaganda war** — spend capital to lower an enemy's war support (Zealous hard to shake, Professional resistant, Home defenders shaken when fighting abroad, Firepower-reliant hurt by casualty news); **war support ↔ government** — drives leader legitimacy (Zealous), elections/approval (Professional), unity government when invaded (Home defenders), opinion swings (Firepower-reliant); **war economy** — high war support boosts factory output (volunteer labour / efficiency / home-front drives / arms industry). All through B4b's one war-support meter; equal value.
+- [~] **B6 Diplomacy (EU4)** (laneG first cut `src/13m-gdiplo.js`; claims, coalitions, client states, call to arms open): grand4 diplomacy + grand4b + the DIPLOMACY SCREEN (opinions, relations limit, alliances, guarantees, access, call to arms, favours, trust, coalitions/aggressive expansion, claims/casus belli, warscore peace deals, truces, client states).
+- [~] **B7** (laneG: events engine src/13p-gevents.js 16 rows + 4 world crises (⚡49) with choices/chains, AI picks, GMOD effects; missions generator src/13s-gmissions.js + Missions tab; research/cabinet open) grand4 rest: events with choices, research via capital points, missions, cabinet/advisors (generate points), seasons, minor nations.
+- [~] **B8** (laneG: great powers + prestige src/13u-gprestige.js, top 8 = Great Powers with GMOD bonus; reforms/hegemonies open) grand4b rest: great powers, reforms, prestige, hegemonies. (grand6 home-front items → kaizen.)
+
+## Lane C — Look: $75 studio (priority order; ART-BAR scores decide inside each)
+- [ ] **C0 UI kit (first, ~1 h):** one set of studio-grade components (panel frame, tab bar, flag row, ledger table, slider, tooltip, unit card, top bar, buttons) + game-icons.net icon set (CC BY 3.0, credited) in one small file; Lane B/A screens use it. Then C3 later only polishes the kit.
+- [ ] **C0b Studio-feel shortcuts (biggest look-per-token wins, Abdullah 18:52 "more creativity"):** (1) **NASA Blue Marble / Natural Earth rasters** (public domain; reachable via npm packages such as three-globe's bundled textures or GitHub mirrors) as the grand map's base colour + relief → instant real-world look; (2) a **painterly post filter** (Kuwahara/oil-paint shader, grand map only, toggle in Settings) for the "painted Total War map" feel; (3) **reuse the battle's own 3D models as miniatures** on the grand map (generals = real unit models with flags, towns = real building models scaled down) — no new art, perfect consistency; (4) **map → battle zoom transition**: the camera dives from the province into the battle as it loads, with a loading card (province name, forces, season, tip); (5) **juice pass**: eased panel slides, hover glows, number count-ups, map pulses on events; (6) **UI sound kit** (CC0, e.g. Kenney UI audio): clicks, panel whooshes, map ambience, alert stings.
+- [~] **C1** look1 leftovers + replace boxy towns — towns rebuilt 2026-11-07 (laneC: hip/gable/row/courtyard houses on a rotated street grid, lighter pads); look1 leftovers still open.
+- [ ] **C2** Grand map to ART-BAR ≥ 4.5 on every item (geography, colour, light, water, objects, life, performance).
+- [ ] **C3** UI skin: one studio-grade style for top bar, nation panel, army cards, tooltips, battle HUD/sidebar (big readable text, icons, framed panels, consistent fonts), smooth panel animations.
+- [ ] **C4** Battle graphics pass in real gameplay (terrain, lighting, explosions, units at 300 on screen) — CoH/Broken Arrow direction.
+- [ ] **C5** look4 cinematic moments (battle start/end, turn news cards) — cut first if behind.
+
+## Lane D — Content & QA (priority order)
+- [x] **D1** Nations done: Japan (JP) first cut live 2026-11-07 (laneD); voices/anthems pending D3.
+- [ ] **D0 (e-lint, c-HOWTO seed, d-Report button, a-bisect DONE; b remains) Free-compute tooling (do first, ~1 h, saves every lane time and tokens):** (a) `.github/workflows/bisect.yml` — on a red gate on main, auto `git bisect` with the failing test and comment the first bad commit + author lane on the commit; (b) `orch/artmetrics.mjs` — headless shots of the ART-BAR standard views → numbers (fps, draw calls, colour range, edge/boxiness score, empty-space %) into orch/reports/artmetrics.md, run in CI on every main push; (c) seed `orch/HOWTO.md` with the recipes you know (gate, NEWNAT nation, adding a test, adding a grand UI panel); (d) **"Report a problem" button** (menu + pause + grand map): opens a pre-filled GitHub issue link (title, game version, last 20 console errors, mode/nation/map — no personal data) labelled `player`, so Abdullah's friends file bugs in one click; (e) **free robot checks in gate.yml**: a lint script (no `</script` in src, no hand edits to index.html, no new external URLs, banned real-leader/organisation names list, `Math.random`/`Date.now` inside grand sim code = error) and a **determinism fuzzer** (grand sim 200 days twice from the same seed → identical hash).
+- [ ] **D1b "Realistic" toggle for Conquest** (Abdullah 2026-11-06 21:31 "Would this all realistically have the same fire support?" → picked "Add a Realistic toggle"): lobby option **Balance: Balanced (default) / Realistic**, set by the host, synced in multiplayer and saved in replays/saves. Realistic = each nation's fire support follows its real-world power tier (from Lane B's GR_REAL table: Superpower / Great / Regional / Small): air-strike and missile powers (count, size, cooldown), artillery/air unit availability and cost, starting money scale; small and militia factions partly compensate with more and cheaper infantry, guerrilla tools (ambush, tunnels, drones, rockets) and home-turf morale — but it is deliberately NOT equal. Balanced = today's equal-strength rules. One data table of tier multipliers in 01-data (rows, not code paths); the AI uses the same rules; show the mode on the loading card and nation cards ("Realistic: USA ≫ Black Desert Insurgency"). Tests: determinism + a quick AI-vs-AI check that Realistic gives the stronger tier a clear edge and Balanced stays 40–60 %.
+- [ ] **D2 (slice 1 DONE; continue with more confusions) (first slice shipped 2026-11-07 laneD: orch/newplayer.mjs + menu quick-start row & compact nation list; more confusions remain)** First-time-player audit (intuitive spec, trigger prompt in HISTORY of the plan): orch/newplayer.mjs + fix the top 15 confusions (wording, hints, Esc, feedback) — includes the grand map with real time.
+- [ ] **D3 Voices + anthems** for all new nations (one batch; voices-new spec) — ship per group.
+- [ ] **D4 Auto-balancer** (replaces hand balancing): a script on GitHub runners plays AI-vs-AI round robins, nudges unit numbers toward 50 % win rates (small hill-climbing steps, only numbers in 01-data, per-tier identical), repeats, and opens a PR with the table — model tokens only to review the final table. Grand campaign: same idea with AI-only campaigns for the morale styles' equal power.
+- [ ] **D5 Integration/cleanup**: duplicates from SYSTEMS.md "Open" notes, saves round-trip, campaign tutorial (integrate2 spec).
+
+**These rules override your scheduled-task prompt wherever they differ** (e.g. it says "ONE item" or "wait for grand3/look1/rescue" — follow the rules below instead).
+
+## Rules for every lane session — FAST + CHEAP (Abdullah 18:40 "Get creative and speed up development and save usage")
+1. **FIRST:** `git fetch -q`. Stop only if **your own lane** has an unmerged `orch/lane<X>-*` branch pushed < 45 min ago. **Never wait for
+   other helpers** (grand3, look1, rescue…): if your top item touches files another active branch is editing, take your next
+   non-conflicting item instead and come back later.
+2. **One session = several items.** Keep going item after item in the same session (no re-clone, no re-reading) until ~3 h or
+   your context is ~60 % full; ship after every item. Re-read nothing you already read this session.
+3. **Background gate.** Per item: `python3 orch/build.py` + `node orch/smoke.mjs 2>&1 | grep -E "SMOKE (PASS|FAIL)"` + the one
+   targeted test (`node orch/grandtest.mjs 2>&1 | tail -3` for grand work). Then start `bash orch/cigate.sh > /tmp/cig.log 2>&1 &`
+   (run_in_background) and **begin the next item while it runs**; when it's green, merge origin/main and fast-forward push. Red →
+   fix before anything else. Never leave main broken.
+4. **Delegate cheap work to Haiku.** Bulk data entry (country figures, idea/event/mission rows, names, tooltips, wording, credits)
+   goes to a subagent with `model: "haiku"` (Agent tool) with exact file + format instructions; you review the diff only.
+5. **Data, not code.** Every EU4/morale effect is a **row** in the ONE modifier table (B2.5) — no new bespoke code paths for ideas,
+   estates, rallies, style perks, named battles, war economy… One engine, many rows: faster to build, cheaper to read.
+6. **Read less.** `orch/BRIEF.md` + this file + only the spec section of your item. grep -n + ≤ 120-line ranges. Command output
+   via `tail`/`grep`. Self-review screenshots ≤ 400 px (one contact sheet per item); full-size only for Abdullah's 1–2 pictures.
+7. **Cut, don't polish.** Ship the smallest version that a player can see and use, tick it, move on; polish goes to kaizen.
+8. Tick the item + one HISTORY line (heading "lane<X>"). LAST: fire your own scheduled task once if items remain and it's before
+   Sat 20:00 Chicago. Rate limit → orch/HANDOFF-lane<X>.md, push, stop (hourly schedule resumes).
+9. **Feature flags for big work.** Ship big changes in small pieces behind a flag (e.g. `GC.rt` "Real time (beta)" in Settings,
+   default off until it's complete, then flip the default). Lands on main early, never breaks the current game, no long-lived branches.
+10. **Recipes, not rediscovery.** Before exploring, read `orch/HOWTO.md`; when you figure out how to do something (add a tab, a
+    modifier row, a test, a nation, a unit card), append a ≤ 5-line recipe there. The next helper skips the exploring.
+11. **Scripts and free CI over model tokens.** Real-world figures from public datasets fetched by script (GitHub-hosted CSVs, e.g.
+    World Bank/SIPRI mirrors) instead of many web searches; art scoring numbers (fps, colour range, "boxiness"/edge stats, draw
+    calls) computed by script/CI and only glanced at; heavy runs (balance, AI campaigns, screenshot sets) on GitHub runners.
+12. **When CI goes red, let the machine bisect** (D0's workflow) — read its one-line answer instead of hunting by hand.
+13. **Generators, not hand-writing.** Content comes from templates × data: events = ~20 templates × nations × situations;
+    mission trees from each nation's region/rivals/holy places; idea trees from `MSTYLES` + region; tooltips and encyclopedia
+    pages auto-generated from the modifier/data tables ("+10% from Zealous fervour"). Write the generator once, never the rows.
+14. **Fuse systems.** Events, decisions, disasters, named battles, rallies, propaganda = ONE event/decision engine (EU4 style:
+    trigger → options → modifier rows). AI empires choose with weights in data (utility AI), not bespoke code.
+15. **Build screens from one UI kit.** Lane C builds the kit first (panel, tab bar, flag row, ledger table, slider, tooltip, unit
+    card, top bar) with game-icons.net icons (CC BY 3.0, credited); every lane composes screens from it in minutes.
+16. **Players are free QA.** Each session starts with `gh issue list --label player --state open --limit 5` and fixes anything in
+    your files first (the in-game "Report a problem" button, D0d, files them).
+17. **Run 2–3 items at once inside your session** (Abdullah 19:03 "Faster?"): while you work your main item, hand independent ⚡
+    items in your lane to parallel subagents (Agent tool, `isolation: "worktree"`, `model: "sonnet"` — `"haiku"` for data/text),
+    each with the exact item text, file ownership and gate commands; you review each diff, gate, and ship them one by one.
+    Never two subagents on the same file.
+
+## REALISM & FUN PICKS (Abdullah 2026-11-06 22:15 "Options to make the game more realistic and fun") — Middle East slice first, rest → kaizen after Sat
+Battle (sim changes → servers-live PR comment):
+- [ ] **RF1 Spotting & hiding** (Lane F): infantry in forest/buildings stay hidden until they fire or a scout/drone spots them; extend the existing fog/vision code in 03-sim (one vision system).
+- [ ] **RF2 Real armour hits** (Lane F): front/side/rear armour + angle; heavy hits knock out tracks (immobile), turret (no fire) or crew instead of only HP; flank shots matter.
+- [ ] **RF3 Artillery delay** (Lane F): call-in → spotting round → salvo after a flight time; counter-battery radar lets enemy guns fire back at yours (extend the existing counter-battery code).
+- [ ] **RF4 Collapsing buildings** (Lane E): extend 03f's 3 damage stages: floors fall one by one, rubble/craters become cover (reuse rubble + cover rules).
+- [ ] **RF5 Cinematic moments** (Lane E): short slow-mo camera on huge explosions/tank kills, Settings toggle, never in multiplayer sim (view-only).
+- [ ] **RF6 Named veteran squads** (Lane F): squads get names + ranks, promotions; carried both ways through the grand campaign with the army.
+Grand map:
+- [ ] **RG1 Chokepoints & oil** (Lane B): Hormuz, Suez, Bab el-Mandeb, Malacca, Bosporus as sea-lane nodes that warships can blockade; world oil price swings feed the B5b economy.
+- [ ] **RG2 UN votes & sanctions** (Lane G): Security Council with 5 vetoes, votes on condemnations/sanctions; sanctions = GMOD rows on trade + stability.
+- [ ] **RG3 Spies & intelligence** (Lane A, with A6 fog): enemy armies hidden unless spotted; spies, satellites, sabotage as actions.
+- [ ] **RG4 Elections & refugees** (Lane G): democracies hold elections (war support decides), wars create refugees (unrest next door) and rebuilding costs.
+- [ ] **RG5 TV news broadcasts** (Lane G): fictional channel ticker + anchor card for big events (fictional anchors, no real channels/people), fed by the one event engine.
+- [ ] **RG6 Scenario start dates** (Lane A): pick a starting crisis (Gulf flashpoint first, then others) — each a preset over the realistic start.
+- [ ] **RG7 Dynamic crises** (Lane G): coups, oil shocks, uprisings, border incidents as timed decisions in the event engine.
+- [ ] **RG8 Achievements** (Lane D): goals per nation (e.g. unite the Resistance bloc, hold Hormuz a year); one table, shown in the nation panel.
+- [x] **Resistance bloc is a real thing** (22:16): `RES_BLOC` in 13i = IR, RS, DW (River Shias add their code there when they land); one permanent alliance "Resistance bloc", can't be left or fought inside, old "Axis of Resistance" saves renamed on load.
+Grand campaign round 2 (Abdullah 22:20 "Any more options for the grand campaign") — after the slice, then kaizen; extend existing systems, never a second one:
+- [ ] **RG9 Proxy wars** (Lane G): fund/arm rebels or an ally in another war without joining (uses Locals/insurgency + GMOD).
+- [ ] **RG10 Nuclear deterrence** (Lane G): nukes never fire; owning them = deterrence modifier on AI war decisions + ally guarantees.
+- [ ] **RG11 Naval invasions** (Lane F): landing ships, beachhead, marine assault as a Fight-it battle type (coast map from the province).
+- [ ] **RG12 Arms trade** (Lane B): buy/sell tanks, jets, drones between nations; embargoes (RG2 sanctions) block deals.
+- [ ] **RG13 Generals' traits** (Lane F): generals gain traits (desert expert, siege master, reckless…) that carry into battles.
+- [ ] **RG14 Tech race** (Lane B): research drones, missiles, air defence, cyber; unlocks units (use the B ideas/power-points system).
+- [ ] **RG15 Cyber warfare** (Lane G): hack grids, banks, radar from the map (merge with RG3 spies — one covert-action system).
+- [ ] **RG16 Peace conferences** (Lane G): EU4-style peace deal screen: provinces, reparations, demilitarised zones (extend 13m peace).
+- [ ] **RG17 Holy sites** (Lane G): Mecca, Medina, Najaf, Karbala, Jerusalem, Qom… morale/opinion bonus; taking one angers the world. Respectful, equal for all faiths.
+- [ ] **RG18 Volunteers** (Lane G): foreign volunteers join wars that matter to them (e.g. holy-site defence).
+- [ ] **RG19 Mercenaries/PMCs** (Lane B): hire fictional private military companies for cash (no real company names).
+- [ ] **RG20 Ceasefires & truces** (Lane G): temporary ceasefires that can break; UN peacekeepers on the line (extend GC.tr truces).
+- [ ] **RG21 Seasons & weather** (Lane A): summer heat, winter mud, sandstorms slow armies; carry into the battle's weather.
+- [ ] **RG22 Ironman mode** (Lane A): one save, no reloads, set at campaign creation.
+- [ ] **RG23 Victory conditions** (Lane A): domination, economy, alliance leadership, holy sites — picked at creation.
+Grand campaign round 3 (Abdullah 22:21 "More?") — after the slice, then kaizen; extend existing systems:
+- [ ] **RG24 Pipelines & grids** (Lane B): oil/gas pipelines and power lines across provinces, cut or protect (feeds RG1 oil price, RG15 cyber).
+- [ ] **RG25 Reconstruction** (Lane B): rebuild ruined cities after battles (battle damage flows back), foreign aid speeds it.
+- [ ] **RG26 Black markets** (Lane B): smuggling routes for sanctioned nations; costs corruption + opinion.
+- [ ] **RG27 Food & water** (Lane B): droughts, dams on Tigris/Euphrates/Nile, famine unrest.
+- [ ] **RG28 Cabinet ministers** (Lane G): hire/fire ministers (skills, loyalty), scandals, coups; uses the portraits + names work.
+- [ ] **RG29 Factions at home** (Lane G): hardliners, reformers, military, clergy pull on decisions (extend B4 estates — same system).
+- [ ] **RG30 Leader succession** (Lane G): leaders age, die, get overthrown; successors change the nation (incl. the shared Ayatollah).
+- [ ] **RG31 Secret treaties** (Lane G): hidden pacts revealed when war breaks out (a hidden flag on GC.alz entries).
+- [ ] **RG32 Air campaigns** (Lane A): bombing/air-superiority over provinces before ground war (uses air sorties from airfields).
+- [ ] **RG33 Missile duels** (Lane A): ballistic missiles vs air defence across the map; interceptor stocks run out.
+- [ ] **RG34 Mobilisation** (Lane B): call up reserves — big army fast, economy + morale pay.
+- [ ] **RG35 Fortification lines** (Lane A): trenches/border lines province by province; appear in that province's battles.
+- [ ] **RG36 Player diplomacy** (Lane A, with A2b MP): private chat + deal offers between players.
+- [ ] **RG37 Shared victory** (Lane A): allied players win together as a bloc.
+- [ ] **RG38 Spectator mode** (Lane A): watch any live battle or the grand map without playing.
+Grand campaign round 4 (Abdullah 22:22 "More?") — after the slice, then kaizen; extend existing systems:
+- [ ] **RG39 Media & propaganda** (Lane G): state TV, censorship, info-war → war support at home/abroad (merge with B5c propaganda pick + RG5 news).
+- [ ] **RG40 Protests & strikes** (Lane G): protests, general strikes, crackdowns (opinion cost); same unrest system.
+- [ ] **RG41 Diaspora** (Lane G): emigrant communities send money, lobby foreign governments (opinion GMOD rows).
+- [ ] **RG42 Minorities** (Lane G): Kurds, Druze, Baloch, etc. with loyalty to win/lose (extend cores/culture, neutral wording).
+- [ ] **RG43 Border incidents** (Lane G): skirmishes that escalate or calm (part of RG7 crises).
+- [ ] **RG44 Demilitarised zones** (Lane G): from peace deals (RG16), no army may enter.
+- [ ] **RG45 Occupation zones** (Lane G): split a defeated enemy between victors.
+- [ ] **RG46 Bases abroad** (Lane B): lease bases in friendly nations (range, influence); the realistic start already places some.
+- [ ] **RG47 Pre-battle plan** (Lane F): before Fight-it: deployment zone, flank route, air support.
+- [ ] **RG48 Battle objectives** (Lane F): grand map sets goals (seize the bridge, hold the town, evacuate).
+- [ ] **RG49 Siege battles** (Lane F): besieged city battles with low supply + civilians to protect.
+- [ ] **RG50 Pursuit battles** (Lane F): chase a routed army, capture prisoners/equipment (ties to the rout rule).
+- [ ] **RG51 Advisor voice** (Lane D): voiced advisor (XTTS, the nation's language) warns and suggests.
+- [ ] **RG52 Tutorial campaign** (Lane D): short guided grand campaign.
+- [ ] **RG53 Statistics ledger** (Lane A): EU4-style ledger comparing every nation.
+Grand campaign round 5 (Abdullah 22:24) — after the slice, then kaizen; extend existing systems:
+- [ ] **RG54 Carrier groups** (Lane A): carriers project air sorties anywhere; losing one = national morale shock (B5c).
+- [ ] **RG55 Submarine war** (Lane A): hidden subs hunt sea lanes; convoys + escorts protect trade (uses RG1 lanes).
+- [ ] **RG56 Drone swarms** (Lane A): cheap long-range drone campaigns vs cities, oil, bases (one strike system with RG33 missiles).
+- [ ] **RG57 Air defence network** (Lane A): layered SAM umbrellas over provinces; gaps invite strikes (RG33 interceptors).
+- [ ] **RG58 Great-power AI** (Lane A): US/RU/CN AIs pursue real goals and intervene in wars.
+- [ ] **RG59 Natural disasters** (Lane G): earthquakes, floods, sandstorms; aid wins opinion (event engine).
+- [ ] **RG60 Pilgrimage season** (Lane G): Hajj and Arbaeen — truces expected, morale boost, attacks anger everyone (respectful; ties to RG17 holy sites).
+- [ ] **RG61 Global economy crash** (Lane B): recessions/booms ripple through trade + stability.
+Round 6 (Abdullah 22:26) — after the slice, then kaizen; extend existing systems:
+- [ ] **RG62 Covert strikes on generals** (Lane G): covert op vs enemy (fictional) generals; exposure → world opinion hit (one covert-action system with RG3/RG15).
+- [ ] **RG63 False flags** (Lane G): stage an incident to justify war; risky if uncovered (same covert system).
+- [ ] **RG64 Defectors** (Lane G): enemy officers/units defect when their morale collapses (Zealous never defect — matches never-rout).
+- [ ] **RG65 POW exchanges** (Lane G): prisoners as a peace-talk/diplomacy item (RG16, RG50).
+- [ ] **RF7 Ammo & fuel in battle** (Lane F): ammo already exists — make running dry visible + trucks resupply under fire (extend, don't duplicate).
+- [ ] **RF8 Civilians in towns** (Lane F): civilians already exist — flee fighting; harm → world opinion (extend).
+- [ ] **RF9 Wounded & medevac** (Lane F): medics already exist — wounded dragged out return later (extend).
+- [ ] **RF10 Last stand** (Lane F): surrounded units get a desperate bonus (morale system, all styles).
+- [ ] **RF11 Battle music swells** (Lane D): music intensity rises with big clashes (09-audio calm↔combat, add a peak layer).
+Round 7 (Abdullah 22:28) — after the slice, then kaizen; extend existing systems:
+- [ ] **RF12 Faction unique units** (Lane D): every nation 2 signature units of its own (not copies), balanced; NEWNAT data rows.
+- [ ] **RG66 Regional militias** (Lane G): tribal/local forces to court on the grand map (the ONE Locals system).
+- [ ] **RG67 Faction storylines** (Lane G): event chains per nation (e.g. Iran's nuclear talks, Turkey's Kurdish question) — neutral wording, event engine.
+- [ ] **RG68 Rivalry bonuses** (Lane G): extra rewards for beating a historic rival (uses GR_REAL rivalries).
+- [ ] **RF13 Dust & sandstorms** (Lane E): vehicle dust trails + storms that cut vision (03g smoke/LOS, weather).
+- [ ] **RF14 Burning oil fields** (Lane E): huge black smoke columns when oil sites are hit.
+- [ ] **RF15 Night tracers & flares** (Lane E): night battles lit by tracers, flares, fires.
+- [ ] **RF16 Lasting wrecks** (Lane E): burnt-out wrecks stay as cover all battle (03g G.bfHulk exists — extend).
+Round 8 (Abdullah 22:30) — check what exists first, extend it:
+- [ ] **RF17 Combined arms bonus** (Lane F): inf + armour + artillery near each other fight better (GMOD-style battle modifier).
+- [ ] **RF18 Unit fatigue** (Lane F): long marches/fights tire troops; rest restores; carried from the grand map.
+- [ ] **RF19 Engineers** (Lane F): build bridges, clear mines, blow roads mid-battle.
+- [ ] **RF20 Snipers & spotters** (Lane F): long-range marksmen pin officers and call artillery (ties to RF1/RF3).
+- [ ] **RF21 River crossings** (Lane F): bridges as key points; blowing them changes the battle (02-map rivers from the province).
+- [ ] **RF22 Elevation advantage** (Lane F): high ground sees and shoots further.
+- [ ] **RF23 Mountain passes** (Lane F): narrow passes a small force can hold (map gen from province terrain).
+- [ ] **RF24 Urban tunnels** (Lane F): tunnels already exist for RS — extend to city tunnel networks for surprise attacks, Shia factions first.
+
+**LIST LOCKED (Abdullah 22:30 "Build now").** Order inside every lane: your current lane items first, then these picks — **Saturday picks first**
+(visible in the Middle East slice, cheap): **E** RF16 wrecks, RF14 burning oil, RF13 dust, RF15 night (after E1 soldiers) · **F** RF1 spotting, RF2 armour,
+RF3 artillery delay · **A** RG6 scenario "Gulf flashpoint", RG3 spies (with A6 fog) · **B** RG1 chokepoints & oil · **G** RG5 TV news, RG7 crises,
+RG17 holy sites · **D** RG8 achievements. Everything else → kaizen after Sat 20:00. Tick items here as they ship.

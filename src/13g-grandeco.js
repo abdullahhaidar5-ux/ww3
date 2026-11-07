@@ -122,7 +122,7 @@ function geNewNat(c,N){return {fuel:120,food:140,man:0,bank:0,bonds:[],def:0,def
 function geEnsure(){if(!GC)return;if(!GC.eco){const R=mulberry((GC.seed|0)*2654435761>>>0);
     const cr=[];const types=['crash','shortage','famine','credit','boom'];let t=4+Math.floor(R()*3);const n=GC.maxTurn+10;while(t<n){const ty=types[Math.floor(R()*types.length)];cr.push([t,3+Math.floor(R()*2),ty]);t+=8+Math.floor(R()*5);}
     GC.eco={ph1:R()*6.283,ph2:R()*6.283,cr,cl:{},hold:{},oilIdx:100};}
-  for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(!N.e){N.e=geNewNat(c,N);}}
+  for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(!N.e){N.e=geNewNat(c,N);}}try{gmilEnsure();}catch(e){console.error('gmilEnsure',e);}
   for(const p of GCM.P){if(!p.land)continue;const st=GC.prov[p.i];if(st.bq===undefined)st.bq=[];if(st.au===undefined){st.au=0;st.aut=0;st.auC=0;}if(st.tr===undefined){st.tr=0;st.cf=-1;st.ctp=0;}if(st.lt===undefined)st.lt=0;if(st.sc===undefined)st.sc=0;
     const bl=geBl(p.i);if(!st.mfd&&GE_MFORT.includes(st.o0||st.o)&&p.t==='m'&&!bl.some(r=>r[0]==='mfort'))bl.push(['mfort',0]);st.mfd=1;}
   for(const c of Object.keys(GC.nat)){const N=GC.nat[c],e=N.e;if(e.man<=0&&!e.mi){e.mi=1;e.man=Math.round(geManCap(c)*.6);}}}
@@ -148,7 +148,7 @@ function geBegin(){const P=GCM.P;for(const c of Object.keys(GC.nat)){const N=GC.
     N.e.pw=dem<=0?1:Math.max(.25,Math.min(1,sup/dem));GE_ST[c]={own,towns,pw:N.e.pw,sup,dem};}}
 function geProvInc(p,st,c){   // extra province income from buildings, resources and the economy panel; the old basic formula is replaced
   const pw=(GE_ST[c]||{pw:1}).pw,eff=k=>geEff(p.i,k);let b=p.tw*60+(p.oil?60:0)+(p.farm?40:0)+(p.mine?60:0);
-  b+=eff('port')*50*(geFx(c,'port')?1.5:1)+eff('factory')*110*pw+eff('mine')*100*pw*(geFx(c,'mine')?1.3:1);
+  b+=eff('port')*50*(geFx(c,'port')?1.5:1)*(gmilBk(p.i)?.25:1)+eff('factory')*110*pw+eff('mine')*100*pw*(geFx(c,'mine')?1.3:1);
   if(p.mine&&geFx(c,'mine'))b+=18;if(GC.nat[c]&&GC.nat[c].cap===p.i)b*=1.25;
   b*=1+.12*(st.tr|0)*(st.cf===0?1.6:1);if(st.cv>0)b*=.5;if(st.sc>GC.turn)b*=.5;if(st.lt>GC.turn)b*=.8;
   return b*(geFx(c,'tax')?1.05:1)*GE_AUT[st.au|0]*geIncMul(c)*(GC.nat[c].e.sanc?.88:1);}
@@ -165,8 +165,8 @@ function geTrade(c){   // trade routes between neighbouring provinces and over s
   const P=GCM.P,N=GC.nat[c],E=N.e,tm=Math.max(.35,1-.12*geClosed())*geIncMul(c);let t=0;const own=GE_ST[c].own;
   const ok=(o)=>o===c||(!grAtWar(c,o)&&!E.emb.includes(o)&&!(GC.nat[o].e.emb||[]).includes(c));
   for(const p of own){for(const j of p.adj){const q=P[j];if(q.land){const o=GC.prov[j].o;if(!ok(o)||GC.nat[o].dead)continue;const m=Math.min(p.tw,q.tw);t+=o===c?(i2(p.i,j)?m*4:0):m*4.5;}
-      else if(q.sea&&(p.port||geCount(p.i,'port'))){if(q.ck&&GC.eco.cl[j]&&GC.eco.cl[j]!==c)continue;
-        for(const k of q.adj){const r=P[k];if(!r.land||k===p.i)continue;if(!(r.port||geCount(k,'port')))continue;const o=GC.prov[k].o;if(!ok(o)||GC.nat[o].dead)continue;t+=Math.min(p.tw,r.tw)*(o===c?1.5:3);}}}}
+      else if(q.sea&&(p.port||geCount(p.i,'port'))&&!gmilBk(p.i)){if(q.ck&&GC.eco.cl[j]&&GC.eco.cl[j]!==c)continue;
+        for(const k of q.adj){const r=P[k];if(!r.land||k===p.i)continue;if(!(r.port||geCount(k,'port'))||gmilBk(k))continue;const o=GC.prov[k].o;if(!ok(o)||GC.nat[o].dead)continue;t+=Math.min(p.tw,r.tw)*(o===c?1.5:3);}}}}
   // merchants: each skims a share of a province's trade routes toward you
   for(const m of E.mer){const q=P[m];if(!q||!q.land)continue;t+=(q.tw*5)*(GC.prov[m].o===c?.25:.9);}
   return t*tm*(geFx(c,'trade')?1.35:1)*(E.sanc?.5:1)*.62;}
@@ -201,9 +201,9 @@ function geNation(c,R,inc){const N=GC.nat[c],E=N.e,S=GE_ST[c],br={};const own=S.
   if(E.food<25){const want=Math.min(50,40-E.food);const cost=want*5;if(N.cash+net>=cost){E.food+=want;net-=cost;br.fImp2=-Math.round(cost);}}
   E.starve=0;if(E.food<0){E.food=0;E.starve=1;}E.food=Math.min(320,E.food);
   // manpower
-  E.man=Math.min(geManCap(c),E.man+geManRegen(c));
+  E.man=Math.min(geManCap(c),E.man+geManRegen(c)*gmod('nation',c,'manpower',1));
   // upkeep (grows with army size), total war surcharge
-  const av=geArmyVal(c);let up=av*.018*(1+av/70000)*(geFx(c,'upkeep')?.88:1)*(E.tw?1.15:1);br.upkeep=-Math.round(up);net-=up;
+  const av=geArmyVal(c);let up=av*.018*(1+av/70000)*(geFx(c,'upkeep')?.88:1)*(E.tw?1.15:1)*gmod('nation',c,'upkeep',1);br.upkeep=-Math.round(up);net-=up;
   // war bonds: due bonds are repaid; a default costs credit and stability
   const keep=[];for(const b of E.bonds){if(b[0]>GC.turn){keep.push(b);continue;}if(N.cash+net>=b[1]){net-=b[1];br.bondPay=(br.bondPay||0)-b[1];}else{E.def++;E.defT=GC.turn+8;keep.push([GC.turn+4,Math.round(b[1]*1.2)]);grLog(GCM.nats.get(c).name+' defaulted on a war bond!',c===GC.me?c:'');}}E.bonds=keep;
   if(E.defT>GC.turn)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+2);}
@@ -213,7 +213,7 @@ function geNation(c,R,inc){const N=GC.nat[c],E=N.e,S=GE_ST[c],br={};const own=S.
   if(E.tw)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+3.5);}
   if(E.ration)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+3);}
   if(E.starve)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+8);}
-  N.cash+=net;N.inc=Math.round(net);E.br=br;
+  if(net>0)net*=gmod('nation',c,'income',1);N.cash+=net;N.inc=Math.round(net);E.br=br;
   if(N.cash<0){N.cash=0;for(const a of GC.armies)if(a.o===c&&a.u.length>3&&R()<.5){a.u.pop();}}
   E.hist.push([GC.turn,Math.round(net),Math.round(-br.upkeep)]);if(E.hist.length>30)E.hist.shift();}
 // ---------- supply state of armies (the battle reads it) ----------
