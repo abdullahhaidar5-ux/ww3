@@ -51,7 +51,7 @@ if (process.argv[2] === '--child') {
     process.send(r);
   });
 } else {
-  const ALL = ['US', 'TR', 'IL', 'EU', 'UA', 'RU', 'IR', 'SA', 'AE', 'PK', 'IN', 'CN', 'KP', 'KR', 'EG', 'CU', 'RS', 'DW'];
+  const ALL = ['US', 'TR', 'IL', 'EU', 'UA', 'RU', 'IR', 'SA', 'AE', 'PK', 'IN', 'CN', 'KP', 'KR', 'EG', 'CU', 'RS', 'DW', 'JP'];
   const FAC = argS('factions', '') ? argS('factions').split(',').map(s => s.trim().toUpperCase()) : ALL;
   const VS = argS('vs', '') ? argS('vs').split(',').map(s => s.trim().toUpperCase()) : null;
   const MAPS = argS('maps', 'strait,oasis,plateau,fulda,zagros').split(',');

@@ -235,6 +235,8 @@ The grand map is now a Total War-style 3D campaign map. New `src/13e-grand3d.js`
 ## 2026-11-06 — battlefeel (orch/battlefeel, Sonnet 5.5, scheduled)
 Abdullah 2026-11-05 19:01 picks. Shipped: **wildfires** (blasts light dry fields/forest, fire spreads downwind, burns out to scorched ground, hurts/frightens infantry, slows units, makes smoke; summer/dry/sandstorm more, rain/snow none), **wind-blown smoke** (one seeded wind; grenade screens, burning wrecks and fires feed a coarse smoke grid that drifts, thins and really blocks ground line of sight), **wrecks as cover** (destroyed vehicles stay as hulks on the rubble grid: tanks route around, infantry use them as cover, ~75 s smoke, cap 36, dozers clear), **soldier shouts** (7 sim-triggered callouts, throttled, positional, radio-treated off screen; all 18 nations' lines written in `tools/voices/shout_lines.py`), **smart auto-build** (standing "keep N of unit" orders, priority order, pause, U-key panel, `auto` command). Report `orch/reports/battlefeel.md`, test `orch/feelshots.mjs`, shots `orch/shots/battlefeel/`. Sim change: needs a main->servers-live PR.
 
+## 2026-11-06 — nations-new2 (orch/nations-new2, Sonnet 5.5, scheduled)
+Japan (JP) finished: full playable nation (data, looks, flag, Honshu map, Japanese towns), Japanese voices (XTTS-v2 ja on CPU, 33 clips), Kimigayo anthem excerpt, Professional morale, balanced to ~50% vs the field (BAL.JP 0.85), headless sim list fixed (01c-jp.js was missing). Real models, camo texture, radio/hero voice sheets and Hard-AI check still open — see orch/reports/nations-new2.md.
 ## 2026-11-06 — nation-frde (orch/nation-frde, Sonnet 5.5, scheduled)
 FR France and DE Germany added as full playable nations from the EU row (NEWNAT in 01-data: own unit names, upgrades, doctrine/power names, flags, anthem excerpts from the US Navy Band public-domain recordings, EU recorded voice sheets shared, German device-speech lines, loading quotes, home maps). Fixed the vehicle-kit flag atlas overlap (now 14 rows, roundels at cell 80+) and the tourney harness crash on extra militia teams. Not done: XTTS re-records, FR/DE town-look styles, full balance tourney, grand-map provinces. See orch/reports/nation-frde.md.
 ## 2026-11-06 — economy1 (orch/economy1, Sonnet 5.5, scheduled)
@@ -254,6 +256,8 @@ Grand stage 2 — **empire economy on the grand map**. New `src/13g-grandeco.js`
 ## nations-a1 — Poland, Azerbaijan, Jordan, Kurdistan Region, Italy, Greece, Spain; EU retired (2026-11-06)
 First cut via NEWNAT, EU hidden from menus. See orch/reports/nations-a1.md. Open: voices, models, maps, tourney, servers-live PR.
 
+## 2026-11-07 — rescue (Sonnet 5.5, scheduled)
+Japan (JP) rescued: orch/nations-new2 had stalled 5 h with JP complete but unmerged; merged main (8 conflicts: kit/navy lists, anthem tables, TK_ADJ, headless sim list), rebuilt, smoke PASS, 17+ CI gates green. Open: gate/grand "eco snowballs" fails on main itself (not JP); gate/smooth-mp once regressed, mpsync-server hit a runner port clash after passing. JP still uses stand-in 3D models; radio/hero voice sheets open.
 ## 2026-11-06 — nations-b1 (orch/nations-b1, Sonnet 5.5, scheduled)
 Taiwan, Philippines, Vietnam, Indonesia, Thailand, Kazakhstan, Afghanistan (stylised national army), Oman added as full first-cut nations via NEWNAT (units, upgrades, doctrine, flags, camo, home maps, names). Smoke pass, 52-game AI tourney 45-56%, no errors. Report: orch/reports/nations-b1.md.
 
