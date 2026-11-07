@@ -5,7 +5,7 @@
 const GLB={landing:null,me:{f:null,t:-1,r:0},roster:null,el:null,sent:0};
 (function(){const s=document.createElement('style');s.textContent=`
 #glob{position:fixed;inset:0;z-index:300;background:rgba(6,9,8,.94);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit;color:#e8efe9}
-#glob .gbox{width:min(560px,100%);max-height:100%;overflow:auto;background:#121a16;border:1px solid #2d4a3a;border-radius:10px;padding:18px 18px 16px;box-shadow:0 10px 40px #000a}
+#glob .gbox{animation:lkIn .25s ease-out;width:min(600px,100%);max-height:100%;overflow:auto;background:#121a16;border:1px solid #2d4a3a;border-radius:10px;padding:18px 18px 16px;box-shadow:0 10px 40px #000a}
 #glob h2{margin:0 0 2px;font-size:22px;letter-spacing:.04em}#glob .gsub{opacity:.7;font-size:14px;margin-bottom:12px}
 #glob .grow{display:flex;align-items:center;gap:8px;padding:8px 10px;margin:5px 0;border-radius:7px;background:#1a2620;border-left:4px solid var(--tc,#7fb8e6);font-size:16px}
 #glob .grow.me{background:#1f3329;outline:1px solid #3e6b52}#glob .grow b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -14,10 +14,11 @@ const GLB={landing:null,me:{f:null,t:-1,r:0},roster:null,el:null,sent:0};
 #glob .gtag.on,.seat .tag.rdy.on{background:#2a7a45;color:#fff}.seat .tag.rdy{background:#5a3a2a}
 #glob .gbtn{display:block;width:100%;margin-top:10px;padding:13px;font-size:19px;font-weight:700;border-radius:8px;border:0;cursor:pointer;background:#c9892a;color:#17110a}
 #glob .gbtn.on{background:#2a9a55;color:#fff}#glob .gbtn.sec{background:#2a3a33;color:#cfe0d5;font-size:15px;font-weight:500;padding:9px}
+#glob .gopen{opacity:.55;border-left-style:dashed;font-style:italic;font-size:14px}#glob .grow .lkflag{margin-right:2px}#glob .grow .tag{font-size:11px;padding:2px 7px;border-radius:9px;background:#26352d}
 #glob .gnote{margin-top:10px;font-size:14px;opacity:.75}
 .startbtn.rdyok{box-shadow:0 0 0 2px #53e08a,0 0 22px #53e08a99;animation:rdyp 1.4s ease-in-out infinite}@keyframes rdyp{50%{box-shadow:0 0 0 2px #53e08a,0 0 34px #53e08a}}
 `;document.head.appendChild(s);})();
-function glName(r,k){return r.me?'You':r.h?'Leader':'Player '+(k+1);}
+function glName(r,k){return r.me?'You':r.h?'Leader':'Friend '+k;}
 // what the lobby looks like to a guest: from the Cloudflare blob or the browser host's roster
 function glData(){const B=NET.cf&&NET.cf.blob;
   if(B&&!B.own&&Array.isArray(B.seats)){const rows=B.seats.filter(s=>s.h).map((s,k)=>({me:k===(B.you|0),h:k===0,f:s.f,tm:s.tm|0,rd:s.r}));
@@ -38,8 +39,9 @@ function glRender(){const guest=MODE==='single'&&NET.game&&NET.code==='join'&&!(
   const E=(t,c,x)=>{const d=document.createElement(t);if(c)d.className=c;if(x!=null)d.textContent=x;return d;};
   const box=E('div','gbox');
   if(!D){ // still connecting (or watching): mirror the status line
-    box.append(E('h2','','⚔ World War 3'),E('div','gsub',GLB.landing?'Joining your friend\'s battle '+String(GLB.landing).toUpperCase()+'…':(NET.wantSpec?'Watching…':'Connecting…')));
-    const st=($('mpstatus')&&$('mpstatus').textContent||'').trim();if(st)box.append(E('div','gnote',st.slice(0,220)));
+    const st=($('mpstatus')&&$('mpstatus').textContent||'').trim(),bad=/not found|not a game|different versions|full|refused|wrong|Too many/i.test(st);
+    box.append(E('h2','','⚔ World War 3'),LK.empty(bad?st.slice(0,220):GLB.landing?'Joining battle '+String(GLB.landing).toUpperCase():(NET.wantSpec?'Watching':'Connecting'),bad,!bad));
+    if(!bad&&st)box.append(E('div','gnote',st.slice(0,220)));
     const b=E('button','gbtn sec','Back to menu');b.onclick=()=>{GLB.landing=null;try{leaveNet();}catch(e){}glRender();};box.append(b);
     const key='c'+(NET.game?1:0)+st;if(GLB.key!==key||!GLB.el.firstChild){GLB.key=key;GLB.el.innerHTML='';GLB.el.append(box);}
     if(!NET.game&&GLB.landing&&GLB.t0&&performance.now()-GLB.t0>22000&&!/Looking|Joining|Connecting/.test(st)){GLB.landing=null;}
@@ -47,17 +49,20 @@ function glRender(){const guest=MODE==='single'&&NET.game&&NET.code==='join'&&!(
   GLB.landing=null;if(!GLB.me.f)GLB.me.f=setup.p;
   const mine=D.rows.find(r=>r.me),mx=Math.max(D.mx||0,D.rows.length);
   const mapN=(MAPS[D.map]||{}).name||'';
-  box.append(E('h2','','⚔ Battle lobby'),E('div','gsub',(mapN?mapN+' · ':'')+D.rows.length+' / '+mx+' players · waiting for the leader to start'));
+  box.append(E('h2','','⚔ Battle lobby'),LK.mapCard(D.map,D.rows.length,mx),E('div','gsub',(mapN?mapN+' · ':'')+D.rows.length+' / '+mx+' players · waiting for the leader to start'));
   D.rows.forEach((r,k)=>{const row=E('div','grow'+(r.me?' me':''));row.style.setProperty('--tc',TEAM_COL[(r.tm|0)%8]);
-    if(r.ai){row.append(E('b','','Computer'),E('span','gtag','AI'),E('span','gtag',FACTIONS[r.f]?FACTIONS[r.f].name:r.f),E('span','gtag','Team '+((r.tm|0)+1)));box.append(row);return;}
-    row.append(E('b','',glName(r,k)));
+    if(r.ai){row.append(LK.fac(r.f),E('b','','Computer'),E('span','gtag','AI'),E('span','gtag','Team '+((r.tm|0)+1)));box.append(row);return;}
+    row.append(LK.flag(r.me?GLB.me.f:r.f),E('b','',glName(r,k)));if(r.me){const pg=LK.ping();if(pg)row.append(pg);}
     if(r.me){const fs=document.createElement('select');fs.setAttribute('aria-label','Your nation');for(const f of FKEYS){const o=document.createElement('option');o.value=f;o.textContent=FACTIONS[f].name;fs.append(o);}fs.value=GLB.me.f;
       fs.onchange=()=>{GLB.me.f=fs.value;setup.p=fs.value;try{facCards();}catch(e){}glSend();};
       const ts=document.createElement('select');ts.setAttribute('aria-label','Your team');for(let t=0;t<Math.max(2,Math.min(mx,8));t++){const o=document.createElement('option');o.value=t;o.textContent='Team '+(t+1);ts.append(o);}ts.value=r.tm|0;
       ts.onchange=()=>{GLB.me.t=+ts.value;glSend();};row.append(fs,ts);}
-    else{row.append(E('span','gtag',FACTIONS[r.f]?FACTIONS[r.f].name:r.f),E('span','gtag','Team '+((r.tm|0)+1)));}
+    else{row.append(LK.nat(r.f),E('span','gtag','Team '+((r.tm|0)+1)));}
     if(r.h)row.append(E('span','gtag on','Leader'));else if(r.rd!=null||r.me)row.append(E('span','gtag'+((r.me?GLB.me.r:r.rd)?' on':''),(r.me?GLB.me.r:r.rd)?'✔ Ready':'Not ready'));
     box.append(row);});
+  for(let i=D.rows.length;i<mx;i++)box.append(E('div','grow gopen','Empty · waiting for a friend'));
+  LK.watch('g',D.rows.filter(r=>!r.me).map((r,k)=>r.ai?'Computer '+(k+1):r.h?'The leader':'Friend '+(k+1)+' ('+((FACTIONS[r.f]||{}).name||r.f)+')'));
+  if(D.rows.every(r=>r.h||r.ai||(r.me?GLB.me.r:r.rd)))box.append(E('div','gnote','Everyone is ready — the leader can start any moment.'));
   const rb=E('button','gbtn'+(GLB.me.r?' on':''),GLB.me.r?'✔ Ready — tap to change':'I\'m ready');rb.onclick=()=>{GLB.me.r=GLB.me.r?0:1;glSend();glRender();};box.append(rb);
   const lv=E('button','gbtn sec','Leave lobby');lv.onclick=()=>{try{leaveNet();}catch(e){}GLB.landing=null;glRender();};box.append(lv);
   box.append(E('div','gnote','Pick your nation and team, then press Ready. The leader starts the battle when everyone is ready.'));

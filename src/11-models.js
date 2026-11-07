@@ -924,6 +924,15 @@ function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',
   for(const [x,z] of [[-R,-R],[R,-R],[-R,R],[R,R],[-gate,R],[gate,R]])post(x,z);
   bx(gate*2+2.2,1.2,2.2,0,6.4,R,rf);
   bx(2*R,.5,.3,0,4.8,-R+.7,pl);}
+// DE-BLOCK slice 7: facade detail — dark window recesses with lintel+sill, a door and a wall lamp on each wall of HQ/barracks/factory/depot (view only)
+function facadeKit(e,o,P){let bb=null,bv=0;const fl=o.userData.parts&&o.userData.parts.flag,sz0=new THREE.Vector3();for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz0);const v=sz0.x*sz0.y*sz0.z;if(v>bv){bv=v;bb=q;}}if(!bb)return;
+  if(!isFinite(bb.max.y)||bb.max.y<8)return;const sx=bb.max.x-bb.min.x,sz=bb.max.z-bb.min.z,hy=bb.max.y,cx=(bb.max.x+bb.min.x)/2,cz=(bb.max.z+bb.min.z)/2;if(sx<10||sz<10||sx>400)return;
+  if(!window.BKFW){window.BKFW={g:new THREE.BoxGeometry(1,1,1),w:new THREE.MeshStandardMaterial({color:0x14181b,roughness:.35,metalness:.4}),t:new THREE.MeshStandardMaterial({color:0x8d8776,roughness:.9}),l:new THREE.MeshBasicMaterial({color:0xffd9a0})};}
+  const F=window.BKFW,G=new THREE.Group();P.add(G);const by=Math.max(5,hy*.5);const add=(m,w,h,d,x,y,z)=>{const q=new THREE.Mesh(F.g,m);q.scale.set(w,h,d);q.position.set(x,y,z);G.add(q);return q;};
+  for(const [ax,sg] of [[0,1],[0,-1],[1,1],[1,-1]]){const L=ax?sz:sx,n=Math.max(2,Math.floor(L/13)),off=ax?(sg>0?bb.max.x:bb.min.x):(sg>0?bb.max.z:bb.min.z);
+    for(let i=0;i<n;i++){const u=(i+.5)/n*L-L/2;if(ax===0&&sg>0&&Math.abs(u)<5)continue;const x=ax?off+sg*.12:cx+u,z=ax?cz+u:off+sg*.12;
+      const ww=ax?.5:5,wd=ax?5:.5;add(F.w,ww,3.4,wd,x,by,z);add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by-2,z+(ax?0:sg*.2));add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by+2,z+(ax?0:sg*.2));}}
+  add(F.w,5.5,6.5,.6,cx,3.3,bb.max.z+.15);add(F.t,7,.7,1.2,cx,6.8,bb.max.z+.3);add(F.l,.9,.9,.5,cx+4.6,7.6,bb.max.z+.35);}
 // DE-BLOCK slice 3: tyre tracks out of the gate, scattered rocks and debris round the base (view only, shared geometry/material)
 let BKTRK=null,BKROCK=null;
 let BKAO=null,BKOIL=null,BKBLO=null,BKSCR=null;
@@ -955,7 +964,7 @@ function groundKit(e,o,P){const h=e.size/2,R=h+(e.kind==='hq'?30:22);
   // debris by the wall: broken blocks, tyres, scrap sheets
   for(let i=0;i<7;i++){const a=rn(i+70)*6.283,d=R+3+rn(i+80)*10,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<12&&z>0)continue;const m=new THREE.Mesh(new THREE.BoxGeometry(1.2+rn(i)*2,.5+rn(i+5)*.9,1+rn(i+9)*2),BKROCK.m[(i+1)%3]);m.position.set(x,.35,z);m.rotation.set((rn(i+11)-.5)*.5,rn(i+12)*6.3,(rn(i+13)-.5)*.5);m.castShadow=m.receiveShadow=true;G3.add(m);}}
 function decorateBld(e,o){if(!MODELS.ready)return;const h=e.size/2;const P=new THREE.Group();o.add(P);
-  if(['hq','barracks','factory','depot'].includes(e.kind)){try{roofKit(e,o,P);}catch(err){console.warn('roofKit',err);}try{groundKit(e,o,P);}catch(err){console.warn('groundKit',err);}}
+  if(['hq','barracks','factory','depot'].includes(e.kind)){try{roofKit(e,o,P);}catch(err){console.warn('roofKit',err);}try{groundKit(e,o,P);}catch(err){console.warn('groundKit',err);}try{facadeKit(e,o,P);}catch(err){console.warn('facadeKit',err);}}
   const T=G.teams[e.team];if(T&&MEFAC.has(T.fac)&&(e.kind==='turret'||e.kind==='sam')){propObj('crate',h+6,h+4,.3,P);return;}// HESCO ring instead of sandbag props
   if(e.kind==='hq'){propObj('watertower',-h-14,-h+6,0,P);propObj('container',h+20,-h+18,Math.PI/2,P);propObj('containerG',h+20,-h+52,Math.PI/2,P);propObj('barrel',-h-8,h+6,0,P);propObj('barrel',-h-14,h+10,0,P);propObj('fence',-14,h+16,0,P);for(let i=-2;i<=2;i++)propObj('sandbag',i*13,h+30+(i%2)*2,(i%2)*.12,P);propObj('sandbag',-34,h+22,1.2,P);propObj('sandbag',34,h+22,-1.2,P);propObj('crate',h+6,h+18,.3,P);}
   else if(e.kind==='barracks'){propObj('tent',0,h+30,0,P);propObj('sandbag',-h-6,h-8,Math.PI/2,P);propObj('sandbag',h+6,h-8,Math.PI/2,P);propObj('crate',h+8,-h+6,.3,P);propObj('crate',h+12,-h+14,0,P);}

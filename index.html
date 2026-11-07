@@ -12077,7 +12077,8 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   const el=$('mpstatus');el.innerHTML='';const L=E('div','lob');
   // header
   const hd=E('div','lobhd');const l=E('div');l.append(E('div','lobk','Your battle · code'),E('div','lobcode',lobbyCode().toUpperCase()));{const c=E('div','lobk',cfNetText());c.id='cfNet';l.append(c);}
-  const r=E('div','lobr');r.append(E('div','lobmap',mapN),E('div','lobn',`${nn} / ${mx} players`+((cfb?cfb.ns|0:(NET.lobbySpec||[]).length)?` · 👁 ${cfb?cfb.ns|0:(NET.lobbySpec||[]).length} watching`:'')));const pips=E('div','pips');for(let i=0;i<mx;i++){const d=E('i');if(i<nn)d.className='on';pips.append(d);}r.append(pips);hd.append(l,r);L.append(hd);
+  const r=E('div','lobr');r.append(E('div','lobmap',mapN),E('div','lobn',`${nn} / ${mx} players`+((cfb?cfb.ns|0:(NET.lobbySpec||[]).length)?` · 👁 ${cfb?cfb.ns|0:(NET.lobbySpec||[]).length} watching`:'')));const pips=E('div','pips');for(let i=0;i<mx;i++){const d=E('i');if(i<nn)d.className='on';pips.append(d);}r.append(pips);hd.append(l,r);L.append(hd);L.append(LK.invite(lobbyCode(),inviteLink(),inviteText()));
+  {const nm=['You'];NET.lobby.forEach((p,k)=>nm.push((p.by&&names[p.by]&&names[p.by].name)||'Friend '+(k+1)+' ('+((FACTIONS[p.f]||{}).name||p.f)+')'));LK.watch('b',nm.slice(1));}
   // Balance mode (Abdullah 2026-11-06 21:31): the host sets it here, everyone sees it on the loading card.
   {const bl=E('div','lobwhy');const say=()=>setup.real?'Balance: Realistic — fire support follows real-world power (superpowers hit harder; small nations get cheaper infantry).':'Balance: Balanced — every nation equally strong.';
    bl.textContent=say();const bb=E('button','',setup.real?'Switch to Balanced':'Switch to Realistic');bb.style.cssText='font-size:11px;padding:2px 7px;margin-left:4px';
@@ -12086,13 +12087,13 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   if(NET.hostNote)L.append(E('div','lobwhy',NET.hostNote));
   if(NET.pw)L.append(E('div','lobwhy','🔒 Password protected: only players with the password can join (the invite below includes it).'));
   const sb=E('button','big startbtn',nn>=2?`▶ Start ${nn}-player battle`:'▶ Start battle');const rdys=cfb?(cfb.seats||[]).filter(s=>s.h).slice(1).map(s=>s.r):NET.lobby.map(p=>p.r?1:0),waitN=rdys.filter(v=>v===0).length,blocked0=nh<2||!teamsOk||!!cfb&&!cfb.ok&&!(NET.cf.pend);
-  sb.disabled=blocked0||waitN>0;if(!sb.disabled&&rdys.length)sb.classList.add('rdyok');sb.onclick=()=>launchMP();L.append(sb);
+  sb.disabled=blocked0||waitN>0;if(!sb.disabled&&rdys.length)sb.classList.add('rdyok');sb.onclick=()=>launchMP();L.append(sb);{const cl=LK.cdLine(()=>!sb.disabled&&sb.classList.contains('rdyok'),launchMP);if(cl)L.append(cl);}
   if(waitN>0&&!blocked0){const sa=E('button','chip','Start anyway');sa.title='Start without waiting for everybody to press Ready';sa.onclick=()=>launchMP();L.append(sa);}
   L.append(E('div','lobwhy',cfb&&cfb.why&&!NET.cf.pend?String(cfb.why):nh<2?(NET.ais.length?'Waiting for at least one friend to join (to play only against the computer, use Deploy vs AI on the main menu).':'Waiting for at least one more player to join. You can also add computer players below.'):!teamsOk?'Everyone is on one team: put someone on another team to start.':waitN>0?`Waiting for ${waitN} friend${waitN>1?'s':''} to press Ready…`:rdys.length?'Everyone is ready: press Start!':'Everyone ready? Press Start. Players can still join until you do.'));
   // battlefield: the leader may change it here (the menu's own map list does the work, so both stay in step)
-  {const ms=$('mapSel'),row=E('div','lobmapsel');if(ms){const sel=ms.cloneNode(true);sel.id='lobMap';sel.setAttribute('aria-label','Battlefield for this battle');sel.value=mk;sel.onchange=()=>{ms.value=sel.value;if(ms.onchange)ms.onchange();};row.append(E('span','lobk','Battlefield'),sel);L.append(row);}}
+  const MS=E('div','lkmsec');{const ms=$('mapSel'),row=E('div','lobmapsel');if(ms){const sel=ms.cloneNode(true);sel.id='lobMap';sel.setAttribute('aria-label','Battlefield for this battle');sel.value=mk;sel.onchange=()=>{ms.value=sel.value;if(ms.onchange)ms.onchange();};row.append(E('span','lobk','Battlefield'),sel);MS.append(row);}}
   // start spots: the map with its numbered spots; tap one to hand it to the next side, or use each seat's Start menu
-  const sides=lobSides(nn),stv=lobSt();{const cv=E('canvas','spcv');cv.id='lobSpots';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Start positions: tap a numbered spot to choose who starts there');spotsDraw(cv,mk,sides,stv);cv.onclick=e=>{const k=spotsHit(cv,e,mk,nn);if(k<0)return;try{sfxUI(700);}catch(_){}lobSet(spotsCycle(lobSt(),k));};L.append(cv,E('div','spnote',spotsNote(stv,sides)));}
+  const sides=lobSides(nn),stv=lobSt();MS.append(LK.mapCard(mk,nn,mx));{const cv=E('canvas','spcv');cv.id='lobSpots';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Start positions: tap a numbered spot to choose who starts there');spotsDraw(cv,mk,sides,stv);cv.onclick=e=>{const k=spotsHit(cv,e,mk,nn);if(k<0)return;try{sfxUI(700);}catch(_){}lobSet(spotsCycle(lobSt(),k));};MS.append(cv,E('div','spnote',spotsNote(stv,sides)));}
   // seats
   const sh=E('div','lobsec');sh.append(E('span','','Players'));const pre=E('span','presets');
   const pb=(lab,fn)=>{const b=E('button','chip',lab);b.onclick=()=>{NET.tm=NET.tm.map((_,i)=>fn(i));NET.ais.forEach((a,j)=>a.tm=fn(nh+j));renderLobby();};pre.append(b);};
@@ -12102,27 +12103,20 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
     if(NET.ais.length){const ds=document.createElement('select');ds.setAttribute('aria-label','Difficulty of all computer players');ds.title='Difficulty of all computer players';const o0=document.createElement('option');o0.textContent='All AI: set level…';o0.value='';ds.append(o0);['Easy','Normal','Hard'].forEach((n,d)=>{const o=document.createElement('option');o.value=d;o.textContent='All AI: '+n;ds.append(o);});ds.onchange=()=>{if(ds.value==='')return;NET.ais.forEach(a=>a.d=+ds.value);renderLobby();if(NET.cf&&NET.cf.own)cfPush();};pre.append(ds);}}
   sh.append(pre);L.append(sh);
   const seats=E('div','seats');
-  const seat=(i,nm,f,host,rd)=>{const row=E('div','seat');row.style.setProperty('--tc',TEAM_COL[NET.tm[i]%8]);row.append(E('span','sn',String(i+1)));const who=E('div','who');who.append(E('b','',nm));if(host)who.append(E('span','tag','leader'));else if(rd!=null)who.append(E('span','tag rdy'+(rd?' on':''),rd?'✔ Ready':'Not ready'));row.append(who);
-    const fc=E('span','sfac');fc.append(E('span','fcode',f),E('span','fname',FACTIONS[f].name));row.append(fc);
+  const seat=(i,nm,f,host,rd)=>{const row=E('div','seat');row.style.setProperty('--tc',TEAM_COL[NET.tm[i]%8]);row.append(E('span','sn',String(i+1)));const who=E('div','who');who.append(E('b','',nm));if(nm==='You'){who.append(E('span','tag you','You'));const pg=LK.ping();if(pg)who.append(pg);}if(host)who.append(E('span','tag','leader'));else if(rd!=null)who.append(E('span','tag rdy'+(rd?' on':''),rd?'✔ Ready':'Not ready'));row.append(who);
+    const fc=E('span','sfac');fc.append(LK.fac(f));row.append(fc);
     const s=document.createElement('select');s.setAttribute('aria-label','Team for '+nm);for(let t=0;t<Math.max(2,nn);t++){const o=document.createElement('option');o.value=t;o.textContent='Team '+(t+1);s.append(o);}s.value=NET.tm[i];s.onchange=()=>{NET.tm[i]=+s.value;renderLobby();};const sc=E('div','sel2');sc.append(s,spotsSel(i,mk,sides,stv,lobSet,lobSt));row.append(sc);seats.append(row);};
-  if(cfb){const hs=(cfb.seats||[]).filter(s=>s.h),you=cfb.you|0;hs.forEach((s,k)=>seat(k,k===you?'You':'Player '+(k+1),FKEYS.includes(s.f)?s.f:'US',k===0,k===0?undefined:s.r));}
-  else{seat(0,'You',setup.p,true);NET.lobby.forEach((p,k)=>seat(k+1,(p.by&&names[p.by]&&names[p.by].name)||'Player '+(k+2),p.f,false,p.r?1:0));}
+  if(cfb){const hs=(cfb.seats||[]).filter(s=>s.h),you=cfb.you|0;hs.forEach((s,k)=>seat(k,k===you?'You':'Friend '+k,FKEYS.includes(s.f)?s.f:'US',k===0,k===0?undefined:s.r));}
+  else{seat(0,'You',setup.p,true);NET.lobby.forEach((p,k)=>seat(k+1,(p.by&&names[p.by]&&names[p.by].name)||'Friend '+(k+1),p.f,false,p.r?1:0));}
   // computer players: faction, difficulty and team are the host's to set; a joining human takes a computer seat if the map is full
   NET.ais.forEach((a,j)=>{const i=nh+j;const row=E('div','seat ai');row.style.setProperty('--tc',TEAM_COL[a.tm%8]);row.append(E('span','sn',String(i+1)));
-    const who=E('div','who');const top=E('div','aitop');top.append(E('b','','Computer'),E('span','tag','AI'));const ctl=E('div','aictl');who.append(top,ctl);const ds=document.createElement('select');ds.setAttribute('aria-label','Difficulty of computer player '+(i+1));
+    const who=E('div','who');const top=E('div','aitop');top.append(E('b','','Computer'),E('span','tag','AI · '+['Easy','Normal','Hard'][a.d|0]));const ctl=E('div','aictl');who.append(top,ctl);const ds=document.createElement('select');ds.setAttribute('aria-label','Difficulty of computer player '+(i+1));
     ['Easy','Normal','Hard'].forEach((n,d)=>{const o=document.createElement('option');o.value=d;o.textContent=n;ds.append(o);});ds.value=a.d;ds.onchange=()=>{a.d=+ds.value;};
     const x=E('button','seatx','✕');x.title='Remove this computer player';x.setAttribute('aria-label','Remove computer player '+(i+1));x.onclick=()=>{NET.ais.splice(j,1);renderLobby();};top.append(x);row.append(who);
     const fs=document.createElement('select');fs.className='sfacsel';fs.setAttribute('aria-label','Nation of computer player '+(i+1));for(const k of FKEYS){const o=document.createElement('option');o.value=k;o.textContent=FACTIONS[k].name;fs.append(o);}fs.value=a.f;fs.onchange=()=>{a.f=fs.value;};ctl.append(fs,ds,persSel(()=>persCode(a.p),v=>{a.p=v;if(NET.cf&&NET.cf.own)cfPush();},'Style of computer player '+(i+1)));
     const ts=document.createElement('select');ts.setAttribute('aria-label','Team for computer player '+(i+1));for(let t=0;t<Math.max(2,nn);t++){const o=document.createElement('option');o.value=t;o.textContent='Team '+(t+1);ts.append(o);}ts.value=a.tm;ts.onchange=()=>{a.tm=+ts.value;renderLobby();};const sc=E('div','sel2');sc.append(ts,spotsSel(i,mk,sides,stv,lobSet,lobSt));row.append(sc);seats.append(row);});
-  for(let i=nn;i<mx;i++){const row=E('div','seat open');row.append(E('span','sn',String(i+1)),E('div','who','Open seat · waiting for a player'));if(i===nn){const ab=E('button','chip addai','+ Add computer player');ab.onclick=()=>{const used=new Set([setup.p,...NET.lobby.map(p=>p.f),...NET.ais.map(a=>a.f)]);const f=FKEYS.find(k=>!used.has(k))||FKEYS[(Math.random()*FKEYS.length)|0];NET.ais.push({f,d:setup.d==null?1:setup.d,tm:nn%Math.max(2,nn+1)});renderLobby();};row.append(ab);}seats.append(row);}
-  L.append(seats);
-  // invite
-  L.append(E('div','lobsec','Invite players'));const st=E('ol','steps');
-  if(window.WW3_P2P){st.append(E('li','','Copy the invite below and send it to your friends (text, Discord, email…).'));st.append(E('li','','They open the game, go to Multiplayer and type your code into “Join by code”. No account needed.'));}
-  else{  st.append(E('li','','Open this game’s Share menu (top of the page) and add each friend by email. They need a claude.ai account and must be signed in.'));
-  st.append(E('li','','Send them the invite below. They open the link, go to Multiplayer and press Join, or type the code into “Join by code”.'));}
-  st.append(E('li','','When everyone shows up in the seats above, press Start.'));L.append(st);
-  const iv=E('div','invite');const inp=document.createElement('input');inp.readOnly=true;inp.value=inviteText();inp.setAttribute('aria-label','Invite to share');inp.onfocus=()=>inp.select();const cb=E('button','big','Copy invite');cb.onclick=()=>copyText(inviteText(),cb);iv.append(inp,cb);L.append(iv);
+  for(let i=nn;i<mx;i++){const row=E('div','seat open');row.append(E('span','sn',String(i+1)),E('div','who','Empty · waiting for a friend'));if(i===nn){const ab=E('button','chip addai','+ Add computer');ab.onclick=()=>{const used=new Set([setup.p,...NET.lobby.map(p=>p.f),...NET.ais.map(a=>a.f)]);const f=FKEYS.find(k=>!used.has(k))||FKEYS[(Math.random()*FKEYS.length)|0];NET.ais.push({f,d:setup.d==null?1:setup.d,tm:nn%Math.max(2,nn+1)});renderLobby();};row.append(ab);}seats.append(row);}
+  L.append(seats,MS);
   el.append(L);
   // a Cloudflare battle is listed in the game list by the server itself; the owner's edits go to the server
   if(cfb){cfPush();return;}
@@ -12259,7 +12253,7 @@ function hostPower(){if(NET.hp>0)return NET.hp;let n=0,x=1;const a=new Float64Ar
   let coarse=false;try{coarse=matchMedia('(pointer:coarse)').matches&&!matchMedia('(pointer:fine)').matches;}catch(e){}
   const cores=Math.min(16,(typeof navigator!=='undefined'&&navigator.hardwareConcurrency)||2);
   return NET.hp=Math.max(1,Math.min(1e5,Math.round(n*(coarse?.35:1)*(1+cores/16))));}
-function leaveNet(){if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}NET.spec=0;NET.specAll=0;NET.wantSpec=0;NET.specs=[];NET.lobbySpec=[];NET.isSpec={};document.body.classList.remove('spec');NET.cf=null;NET.joined=0;NET.sv=0;NET.hostNote='';clearInterval(NET.helloI);clearInterval(NET.pingI);NET.ping=0;NET.pings={};if(NET.game)NET.game.leave().catch(()=>{});NET.game=null;NET.code=null;NET.opp=null;NET.hostPeer=null;NET.lobby=[];NET.peers=null;if(NET.room)NET.room.presence({g:null}).catch(()=>{});mpIn(0);}
+function leaveNet(){try{LK.forget('b');LK.forget('g');LK.cd.t0=0;LK.cd.off=0;}catch(e){}if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}NET.spec=0;NET.specAll=0;NET.wantSpec=0;NET.specs=[];NET.lobbySpec=[];NET.isSpec={};document.body.classList.remove('spec');NET.cf=null;NET.joined=0;NET.sv=0;NET.hostNote='';clearInterval(NET.helloI);clearInterval(NET.pingI);NET.ping=0;NET.pings={};if(NET.game)NET.game.leave().catch(()=>{});NET.game=null;NET.code=null;NET.opp=null;NET.hostPeer=null;NET.lobby=[];NET.peers=null;if(NET.room)NET.room.presence({g:null}).catch(()=>{});mpIn(0);}
 /* ---------- password-protected games (online edition only) ----------
    The creator may type a password under "Play online" / "New battle" (a new private battle). The game list shows a 🔒 and never carries the password; joiners
    are asked for it. The server checks it (relay room and Cloudflare battle: salted hash, rate-limited; server/src/
@@ -15428,7 +15422,7 @@ function drawInfraHud(c){if(!G||G.over||!G.conq||!G.teams||!G.teams[ME])return;c
 const GLB={landing:null,me:{f:null,t:-1,r:0},roster:null,el:null,sent:0};
 (function(){const s=document.createElement('style');s.textContent=`
 #glob{position:fixed;inset:0;z-index:300;background:rgba(6,9,8,.94);display:flex;align-items:center;justify-content:center;padding:16px;font-family:inherit;color:#e8efe9}
-#glob .gbox{width:min(560px,100%);max-height:100%;overflow:auto;background:#121a16;border:1px solid #2d4a3a;border-radius:10px;padding:18px 18px 16px;box-shadow:0 10px 40px #000a}
+#glob .gbox{animation:lkIn .25s ease-out;width:min(600px,100%);max-height:100%;overflow:auto;background:#121a16;border:1px solid #2d4a3a;border-radius:10px;padding:18px 18px 16px;box-shadow:0 10px 40px #000a}
 #glob h2{margin:0 0 2px;font-size:22px;letter-spacing:.04em}#glob .gsub{opacity:.7;font-size:14px;margin-bottom:12px}
 #glob .grow{display:flex;align-items:center;gap:8px;padding:8px 10px;margin:5px 0;border-radius:7px;background:#1a2620;border-left:4px solid var(--tc,#7fb8e6);font-size:16px}
 #glob .grow.me{background:#1f3329;outline:1px solid #3e6b52}#glob .grow b{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -15437,10 +15431,11 @@ const GLB={landing:null,me:{f:null,t:-1,r:0},roster:null,el:null,sent:0};
 #glob .gtag.on,.seat .tag.rdy.on{background:#2a7a45;color:#fff}.seat .tag.rdy{background:#5a3a2a}
 #glob .gbtn{display:block;width:100%;margin-top:10px;padding:13px;font-size:19px;font-weight:700;border-radius:8px;border:0;cursor:pointer;background:#c9892a;color:#17110a}
 #glob .gbtn.on{background:#2a9a55;color:#fff}#glob .gbtn.sec{background:#2a3a33;color:#cfe0d5;font-size:15px;font-weight:500;padding:9px}
+#glob .gopen{opacity:.55;border-left-style:dashed;font-style:italic;font-size:14px}#glob .grow .lkflag{margin-right:2px}#glob .grow .tag{font-size:11px;padding:2px 7px;border-radius:9px;background:#26352d}
 #glob .gnote{margin-top:10px;font-size:14px;opacity:.75}
 .startbtn.rdyok{box-shadow:0 0 0 2px #53e08a,0 0 22px #53e08a99;animation:rdyp 1.4s ease-in-out infinite}@keyframes rdyp{50%{box-shadow:0 0 0 2px #53e08a,0 0 34px #53e08a}}
 `;document.head.appendChild(s);})();
-function glName(r,k){return r.me?'You':r.h?'Leader':'Player '+(k+1);}
+function glName(r,k){return r.me?'You':r.h?'Leader':'Friend '+k;}
 // what the lobby looks like to a guest: from the Cloudflare blob or the browser host's roster
 function glData(){const B=NET.cf&&NET.cf.blob;
   if(B&&!B.own&&Array.isArray(B.seats)){const rows=B.seats.filter(s=>s.h).map((s,k)=>({me:k===(B.you|0),h:k===0,f:s.f,tm:s.tm|0,rd:s.r}));
@@ -15461,8 +15456,9 @@ function glRender(){const guest=MODE==='single'&&NET.game&&NET.code==='join'&&!(
   const E=(t,c,x)=>{const d=document.createElement(t);if(c)d.className=c;if(x!=null)d.textContent=x;return d;};
   const box=E('div','gbox');
   if(!D){ // still connecting (or watching): mirror the status line
-    box.append(E('h2','','⚔ World War 3'),E('div','gsub',GLB.landing?'Joining your friend\'s battle '+String(GLB.landing).toUpperCase()+'…':(NET.wantSpec?'Watching…':'Connecting…')));
-    const st=($('mpstatus')&&$('mpstatus').textContent||'').trim();if(st)box.append(E('div','gnote',st.slice(0,220)));
+    const st=($('mpstatus')&&$('mpstatus').textContent||'').trim(),bad=/not found|not a game|different versions|full|refused|wrong|Too many/i.test(st);
+    box.append(E('h2','','⚔ World War 3'),LK.empty(bad?st.slice(0,220):GLB.landing?'Joining battle '+String(GLB.landing).toUpperCase():(NET.wantSpec?'Watching':'Connecting'),bad,!bad));
+    if(!bad&&st)box.append(E('div','gnote',st.slice(0,220)));
     const b=E('button','gbtn sec','Back to menu');b.onclick=()=>{GLB.landing=null;try{leaveNet();}catch(e){}glRender();};box.append(b);
     const key='c'+(NET.game?1:0)+st;if(GLB.key!==key||!GLB.el.firstChild){GLB.key=key;GLB.el.innerHTML='';GLB.el.append(box);}
     if(!NET.game&&GLB.landing&&GLB.t0&&performance.now()-GLB.t0>22000&&!/Looking|Joining|Connecting/.test(st)){GLB.landing=null;}
@@ -15470,17 +15466,20 @@ function glRender(){const guest=MODE==='single'&&NET.game&&NET.code==='join'&&!(
   GLB.landing=null;if(!GLB.me.f)GLB.me.f=setup.p;
   const mine=D.rows.find(r=>r.me),mx=Math.max(D.mx||0,D.rows.length);
   const mapN=(MAPS[D.map]||{}).name||'';
-  box.append(E('h2','','⚔ Battle lobby'),E('div','gsub',(mapN?mapN+' · ':'')+D.rows.length+' / '+mx+' players · waiting for the leader to start'));
+  box.append(E('h2','','⚔ Battle lobby'),LK.mapCard(D.map,D.rows.length,mx),E('div','gsub',(mapN?mapN+' · ':'')+D.rows.length+' / '+mx+' players · waiting for the leader to start'));
   D.rows.forEach((r,k)=>{const row=E('div','grow'+(r.me?' me':''));row.style.setProperty('--tc',TEAM_COL[(r.tm|0)%8]);
-    if(r.ai){row.append(E('b','','Computer'),E('span','gtag','AI'),E('span','gtag',FACTIONS[r.f]?FACTIONS[r.f].name:r.f),E('span','gtag','Team '+((r.tm|0)+1)));box.append(row);return;}
-    row.append(E('b','',glName(r,k)));
+    if(r.ai){row.append(LK.fac(r.f),E('b','','Computer'),E('span','gtag','AI'),E('span','gtag','Team '+((r.tm|0)+1)));box.append(row);return;}
+    row.append(LK.flag(r.me?GLB.me.f:r.f),E('b','',glName(r,k)));if(r.me){const pg=LK.ping();if(pg)row.append(pg);}
     if(r.me){const fs=document.createElement('select');fs.setAttribute('aria-label','Your nation');for(const f of FKEYS){const o=document.createElement('option');o.value=f;o.textContent=FACTIONS[f].name;fs.append(o);}fs.value=GLB.me.f;
       fs.onchange=()=>{GLB.me.f=fs.value;setup.p=fs.value;try{facCards();}catch(e){}glSend();};
       const ts=document.createElement('select');ts.setAttribute('aria-label','Your team');for(let t=0;t<Math.max(2,Math.min(mx,8));t++){const o=document.createElement('option');o.value=t;o.textContent='Team '+(t+1);ts.append(o);}ts.value=r.tm|0;
       ts.onchange=()=>{GLB.me.t=+ts.value;glSend();};row.append(fs,ts);}
-    else{row.append(E('span','gtag',FACTIONS[r.f]?FACTIONS[r.f].name:r.f),E('span','gtag','Team '+((r.tm|0)+1)));}
+    else{row.append(LK.nat(r.f),E('span','gtag','Team '+((r.tm|0)+1)));}
     if(r.h)row.append(E('span','gtag on','Leader'));else if(r.rd!=null||r.me)row.append(E('span','gtag'+((r.me?GLB.me.r:r.rd)?' on':''),(r.me?GLB.me.r:r.rd)?'✔ Ready':'Not ready'));
     box.append(row);});
+  for(let i=D.rows.length;i<mx;i++)box.append(E('div','grow gopen','Empty · waiting for a friend'));
+  LK.watch('g',D.rows.filter(r=>!r.me).map((r,k)=>r.ai?'Computer '+(k+1):r.h?'The leader':'Friend '+(k+1)+' ('+((FACTIONS[r.f]||{}).name||r.f)+')'));
+  if(D.rows.every(r=>r.h||r.ai||(r.me?GLB.me.r:r.rd)))box.append(E('div','gnote','Everyone is ready — the leader can start any moment.'));
   const rb=E('button','gbtn'+(GLB.me.r?' on':''),GLB.me.r?'✔ Ready — tap to change':'I\'m ready');rb.onclick=()=>{GLB.me.r=GLB.me.r?0:1;glSend();glRender();};box.append(rb);
   const lv=E('button','gbtn sec','Leave lobby');lv.onclick=()=>{try{leaveNet();}catch(e){}GLB.landing=null;glRender();};box.append(lv);
   box.append(E('div','gnote','Pick your nation and team, then press Ready. The leader starts the battle when everyone is ready.'));
@@ -15489,6 +15488,73 @@ function glRender(){const guest=MODE==='single'&&NET.game&&NET.code==='join'&&!(
 // invite link landing: the game opens straight into the battle's lobby instead of the menu
 function glLanding(code){GLB.landing=code;GLB.t0=performance.now();glRender();}
 setInterval(()=>{try{glRender();}catch(e){}},500);
+/* ---------- 08d-lobkit: the shared lobby component (battle lobby now, the grand-campaign lobby 13zn-gnet next) ----------
+   UI only, no sim state, no network messages. One look for every lobby: flag + nation + morale style, slot states
+   (You / Friend / Computer / Empty), ready + ping tags, an invite card with a prominent "Copy invite link", a map facts
+   card, join/leave toasts and a short "everyone is ready" countdown. Lobbies call LK.* and keep their own data. */
+const LK=(function(){
+const E=(t,c,x)=>{const d=document.createElement(t);if(c)d.className=c;if(x!=null)d.textContent=x;return d;};
+const st=document.createElement('style');st.id='lkCss';st.textContent=`
+.lob{gap:10px!important;border-radius:10px;padding:14px!important;animation:lkIn .25s ease-out}
+@keyframes lkIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.lob .lobk{font-size:11px;letter-spacing:.14em;text-transform:uppercase;opacity:.65}
+.lkinv{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--accent,#c9892a);border-radius:8px;background:linear-gradient(180deg,#c9892a14,#0000)}
+.lkinv .lkr{display:flex;gap:8px;align-items:center}.lkinv input{flex:1;min-width:0;background:var(--panel,#121a16);border:1px solid var(--line,#2d4a3a);color:var(--fg,#e8efe9);padding:8px 10px;border-radius:6px;font:13px var(--mono,monospace)}
+.lkinv .lkcopy{background:var(--accent,#c9892a);color:#17110a;font-weight:700;border:0;border-radius:6px;padding:8px 14px;cursor:pointer;white-space:nowrap}
+.lkinv .lkcode{background:none;border:1px solid var(--line,#2d4a3a);color:inherit;border-radius:6px;padding:7px 10px;cursor:pointer;font-size:12px}
+.lkinv .lkh{font-size:12px;opacity:.7}
+.lkflag{width:30px;height:18px;border-radius:2px;box-shadow:0 0 0 1px #0008;vertical-align:middle;flex:none}
+.lknat{display:flex;flex-direction:column;line-height:1.15;min-width:0}.lknat b{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lknat i{font-style:normal;font-size:11px;opacity:.65}
+.lkfc{display:flex;align-items:center;gap:7px;min-width:0}
+.seat{border-radius:7px;transition:background .2s,border-color .2s}.seat:hover{background:#1c2a23}
+.seat .tag{font-size:10px;padding:1px 7px;border-radius:9px;background:#33443b;text-transform:uppercase;letter-spacing:.06em;margin-left:6px;vertical-align:middle}
+.seat .tag.you{background:#2d5a7a;color:#fff}.seat .tag.ping{background:#26352d;text-transform:none;letter-spacing:0}
+.seat.open{opacity:.75;border-style:dashed}.seat.open .who{font-style:italic;opacity:.8}
+.lkmap{display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid var(--line,#2d4a3a);border-radius:8px;background:#0f1713}
+.lkmap .lkt{font-weight:700;font-size:14px}.lkmap .lkf{display:flex;flex-wrap:wrap;gap:6px}.lkmap .lkf span{font-size:11px;padding:2px 8px;border-radius:9px;background:#26352d}.lkmap .lkd{font-size:12px;opacity:.7}
+.lkcd{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px;border-radius:8px;background:#1c4a2d;border:1px solid #53e08a;font-weight:700;animation:lkIn .2s}
+.lkcd button{font-size:12px;padding:3px 10px}
+#lkToasts{position:fixed;right:14px;bottom:14px;z-index:900;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+#lkToasts div{background:#14201a;border:1px solid #3e6b52;color:#e8efe9;padding:8px 14px;border-radius:8px;font-size:13px;box-shadow:0 6px 22px #0009;animation:lkIn .2s}
+.lkempty{padding:14px;text-align:center;opacity:.8;font-size:14px}.lkempty.err{color:#f0a090}
+.lkempty .lkdots::after{content:'';animation:lkd 1.2s steps(4) infinite}@keyframes lkd{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+`;document.head.appendChild(st);
+const K={E};
+// small national flag (the same drawing the 3D flags use)
+K.flag=function(f){const c=E('canvas','lkflag');c.width=60;c.height=36;try{const im=flagTex(f).image;c.getContext('2d').drawImage(im,0,0,60,36);}catch(e){const x=c.getContext('2d');x.fillStyle=(FACTIONS[f]&&FACTIONS[f].color)||'#555';x.fillRect(0,0,60,36);}return c;};
+// nation name + morale style, under a flag
+K.nat=function(f){const d=E('div','lknat');let ms='';try{ms=msOf(f).n;}catch(e){}d.append(E('b','',(FACTIONS[f]&&FACTIONS[f].name)||f),E('i','',ms?ms+' morale':''));return d;};
+K.fac=function(f){const d=E('div','lkfc');d.append(K.flag(f),K.nat(f));return d;};
+K.ping=function(){return NET.ping?E('span','tag ping','● '+Math.round(NET.ping)+' ms'):null;};
+// invite card: code + one prominent "Copy invite link"
+K.invite=function(code,link,text){const d=E('div','lkinv');d.append(E('div','lkh','Invite friends — send the link, or give them this code under Play online › Join by code'));
+  const r=E('div','lkr');const inp=document.createElement('input');inp.readOnly=true;inp.value=link;inp.setAttribute('aria-label','Invite link');inp.onfocus=()=>inp.select();
+  const b=E('button','lkcopy','Copy invite link');b.onclick=()=>copyText(text||link,b);const c=E('button','lkcode','Copy code');c.onclick=()=>copyText(String(code).toUpperCase(),c);r.append(inp,b,c);d.append(r);return d;};
+// map card: name + facts from the map's own data
+K.mapCard=function(mk,nn,mx){const m=MAPS[mk]||{},d=E('div','lkmap');d.append(E('div','lkt',m.name||mk));const f=E('div','lkf');
+  if(m.tag)f.append(E('span','',m.tag));f.append(E('span','',(m.min||2)+'–'+(m.max||mx||8)+' players'));if(m.sym)f.append(E('span','',m.sym==='point'?'Symmetric starts':'Mirrored starts'));if(nn)f.append(E('span','',nn+' in this battle'));
+  d.append(f);if(m.desc)d.append(E('div','lkd',m.desc));return d;};
+K.empty=function(msg,err,dots){const d=E('div','lkempty'+(err?' err':''));d.append(document.createTextNode(msg));if(dots)d.append(E('span','lkdots'));return d;};
+// toasts
+K.toast=function(msg){let h=document.getElementById('lkToasts');if(!h){h=E('div');h.id='lkToasts';document.body.appendChild(h);}const t=E('div','',msg);h.append(t);setTimeout(()=>{t.style.transition='opacity .4s';t.style.opacity=0;setTimeout(()=>t.remove(),450);},3400);};
+// who came and who went between two renders of a lobby: names = array of labels. First call just remembers.
+K.watch=function(key,names){const prev=K['_w'+key];K['_w'+key]=names.slice();if(!prev)return;
+  for(const n of names)if(!prev.includes(n))K.toast('➜ '+n+' joined');for(const n of prev)if(!names.includes(n))K.toast('← '+n+' left');};
+K.forget=function(key){K['_w'+key]=null;};
+// "everyone is ready" countdown for the leader: ok() says whether Start is still possible; go() starts the battle
+K.cd={t0:0,off:0,ok:null,go:null,iv:0};
+K.cdLine=function(ok,go){const C=K.cd;C.ok=ok;C.go=go;
+  if(!ok()){C.t0=0;C.off=0;return null;}
+  if(C.off){return null;}
+  if(!C.t0)C.t0=performance.now();
+  const d=E('div','lkcd');const t=E('span','','Everyone is ready — starting in 5…');t.id='lkcdt';const b=E('button','chip','Cancel');b.onclick=()=>{C.off=1;C.t0=0;d.remove();};d.append(t,b);
+  if(!C.iv)C.iv=setInterval(K.cdTick,200);return d;};
+K.cdTick=function(){const C=K.cd;if(!C.t0){if(C.iv&&!document.getElementById('lkcdt')){clearInterval(C.iv);C.iv=0;}return;}
+  if(!C.ok||!C.ok()||!document.querySelector('.startbtn')){C.t0=0;return;}
+  const left=Math.ceil(5-(performance.now()-C.t0)/1000),t=document.getElementById('lkcdt');
+  if(left<=0){C.t0=0;C.off=1;try{C.go();}catch(e){}return;}
+  if(t)t.textContent='Everyone is ready — starting in '+left+'…';};
+return K;})();
 /* ================= SAVE GAMES (Abdullah 2026-11-05: "Make it so a game can be saved.") =================
    Builds on the host-migration checkpoint (07b-ckpt.js: ckEncode / ckRestore / ckPack / ckUnpack) - there is no second
    serializer. A save = the checkpoint (whole battle) + what is needed to rebuild the match around it: the newGame()
@@ -17815,6 +17881,15 @@ function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',
   for(const [x,z] of [[-R,-R],[R,-R],[-R,R],[R,R],[-gate,R],[gate,R]])post(x,z);
   bx(gate*2+2.2,1.2,2.2,0,6.4,R,rf);
   bx(2*R,.5,.3,0,4.8,-R+.7,pl);}
+// DE-BLOCK slice 7: facade detail — dark window recesses with lintel+sill, a door and a wall lamp on each wall of HQ/barracks/factory/depot (view only)
+function facadeKit(e,o,P){let bb=null,bv=0;const fl=o.userData.parts&&o.userData.parts.flag,sz0=new THREE.Vector3();for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz0);const v=sz0.x*sz0.y*sz0.z;if(v>bv){bv=v;bb=q;}}if(!bb)return;
+  if(!isFinite(bb.max.y)||bb.max.y<8)return;const sx=bb.max.x-bb.min.x,sz=bb.max.z-bb.min.z,hy=bb.max.y,cx=(bb.max.x+bb.min.x)/2,cz=(bb.max.z+bb.min.z)/2;if(sx<10||sz<10||sx>400)return;
+  if(!window.BKFW){window.BKFW={g:new THREE.BoxGeometry(1,1,1),w:new THREE.MeshStandardMaterial({color:0x14181b,roughness:.35,metalness:.4}),t:new THREE.MeshStandardMaterial({color:0x8d8776,roughness:.9}),l:new THREE.MeshBasicMaterial({color:0xffd9a0})};}
+  const F=window.BKFW,G=new THREE.Group();P.add(G);const by=Math.max(5,hy*.5);const add=(m,w,h,d,x,y,z)=>{const q=new THREE.Mesh(F.g,m);q.scale.set(w,h,d);q.position.set(x,y,z);G.add(q);return q;};
+  for(const [ax,sg] of [[0,1],[0,-1],[1,1],[1,-1]]){const L=ax?sz:sx,n=Math.max(2,Math.floor(L/13)),off=ax?(sg>0?bb.max.x:bb.min.x):(sg>0?bb.max.z:bb.min.z);
+    for(let i=0;i<n;i++){const u=(i+.5)/n*L-L/2;if(ax===0&&sg>0&&Math.abs(u)<5)continue;const x=ax?off+sg*.12:cx+u,z=ax?cz+u:off+sg*.12;
+      const ww=ax?.5:5,wd=ax?5:.5;add(F.w,ww,3.4,wd,x,by,z);add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by-2,z+(ax?0:sg*.2));add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by+2,z+(ax?0:sg*.2));}}
+  add(F.w,5.5,6.5,.6,cx,3.3,bb.max.z+.15);add(F.t,7,.7,1.2,cx,6.8,bb.max.z+.3);add(F.l,.9,.9,.5,cx+4.6,7.6,bb.max.z+.35);}
 // DE-BLOCK slice 3: tyre tracks out of the gate, scattered rocks and debris round the base (view only, shared geometry/material)
 let BKTRK=null,BKROCK=null;
 let BKAO=null,BKOIL=null,BKBLO=null,BKSCR=null;
@@ -17846,7 +17921,7 @@ function groundKit(e,o,P){const h=e.size/2,R=h+(e.kind==='hq'?30:22);
   // debris by the wall: broken blocks, tyres, scrap sheets
   for(let i=0;i<7;i++){const a=rn(i+70)*6.283,d=R+3+rn(i+80)*10,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<12&&z>0)continue;const m=new THREE.Mesh(new THREE.BoxGeometry(1.2+rn(i)*2,.5+rn(i+5)*.9,1+rn(i+9)*2),BKROCK.m[(i+1)%3]);m.position.set(x,.35,z);m.rotation.set((rn(i+11)-.5)*.5,rn(i+12)*6.3,(rn(i+13)-.5)*.5);m.castShadow=m.receiveShadow=true;G3.add(m);}}
 function decorateBld(e,o){if(!MODELS.ready)return;const h=e.size/2;const P=new THREE.Group();o.add(P);
-  if(['hq','barracks','factory','depot'].includes(e.kind)){try{roofKit(e,o,P);}catch(err){console.warn('roofKit',err);}try{groundKit(e,o,P);}catch(err){console.warn('groundKit',err);}}
+  if(['hq','barracks','factory','depot'].includes(e.kind)){try{roofKit(e,o,P);}catch(err){console.warn('roofKit',err);}try{groundKit(e,o,P);}catch(err){console.warn('groundKit',err);}try{facadeKit(e,o,P);}catch(err){console.warn('facadeKit',err);}}
   const T=G.teams[e.team];if(T&&MEFAC.has(T.fac)&&(e.kind==='turret'||e.kind==='sam')){propObj('crate',h+6,h+4,.3,P);return;}// HESCO ring instead of sandbag props
   if(e.kind==='hq'){propObj('watertower',-h-14,-h+6,0,P);propObj('container',h+20,-h+18,Math.PI/2,P);propObj('containerG',h+20,-h+52,Math.PI/2,P);propObj('barrel',-h-8,h+6,0,P);propObj('barrel',-h-14,h+10,0,P);propObj('fence',-14,h+16,0,P);for(let i=-2;i<=2;i++)propObj('sandbag',i*13,h+30+(i%2)*2,(i%2)*.12,P);propObj('sandbag',-34,h+22,1.2,P);propObj('sandbag',34,h+22,-1.2,P);propObj('crate',h+6,h+18,.3,P);}
   else if(e.kind==='barracks'){propObj('tent',0,h+30,0,P);propObj('sandbag',-h-6,h-8,Math.PI/2,P);propObj('sandbag',h+6,h-8,Math.PI/2,P);propObj('crate',h+8,-h+6,.3,P);propObj('crate',h+12,-h+14,0,P);}
@@ -22893,7 +22968,7 @@ function g3ShipTick(dt,s){
     sh.t+=dt*sh.sp*(100/Math.max(40,Math.hypot(P[sh.b].x-P[sh.a].x,P[sh.b].y-P[sh.a].y)))*1.5;
     if(sh.t>=1){sh.t=0;const prev=sh.a;sh.a=sh.b;const L=S.nb.get(sh.a)||[],F=L.filter(j=>j!==prev),pool=F.length?F:L;sh.b=pool[(g3Hash(sh.seed*31+((G3.time*10)|0),sh.a)*pool.length)|0];}
     const A=P[sh.a],B=P[sh.b],dx=B.x-A.x,dz=B.y-A.y,len=Math.hypot(dx,dz)||1,nx=-dz/len,nz=dx/len;
-    const x=A.x+dx*sh.t+nx*sh.off,z=A.y+dz*sh.t+nz*sh.off,sc=Math.max(1.6,s*1.15);
+    const x=A.x+dx*sh.t+nx*sh.off,z=A.y+dz*sh.t+nz*sh.off,sc=Math.max(1.1,s*.75);
     D.position.set(x,.35+Math.sin(G3.time*1.3+sh.seed)*.12,z);D.rotation.set(0,Math.atan2(dx,dz),0,'YXZ');D.scale.setScalar(sc);D.updateMatrix();S.m[sh.k].setMatrixAt(cnt[sh.k]++,D.matrix);
     D.position.y=.2;D.scale.set(sc*2.3,1,sc*(6+3*Math.sin(G3.time*2+sh.seed)));D.position.x=x-Math.sin(D.rotation.y)*sc*4.4;D.position.z=z-Math.cos(D.rotation.y)*sc*4.4;D.updateMatrix();S.wk.setMatrixAt(w++,D.matrix);}
   for(let k=0;k<2;k++){S.m[k].count=cnt[k];S.m[k].instanceMatrix.needsUpdate=true;}S.wk.count=w;S.wk.instanceMatrix.needsUpdate=true;}
