@@ -455,3 +455,5 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 
 laneA 2026-11-07 A5b named battles: big Fight-it/auto battles become legends (war support + army morale rows by winner, loser avenges); chain: winner's people, recruits/income via war support, retake province as counter, needs a real battle as cost. orch/legtest.mjs.
 - laneE DE-BLOCK slice 4c: ground vehicles get lower-hull dust/mud gradient, wheel-splash darkening and bare-metal edge wear in the weather shader (src/11-models.js, view only); local smoke FAIL only on the known NaN-geometry console error (unchanged main), smoothness left to CI; shot orch/shots/laneE/m1-phone.jpg
+
+laneA 2026-11-07 RG3 slice 2 spies→covert actions: Sabotage ($600, 3 months of -7% income/+6% upkeep/+1 unrest) and Counter-intelligence ($150/mo halves success, doubles exposure); chain: target's economy → AI blames/suspects enemies, answers with counter-intel; exposure → opinion hit incl. target's allies + lost spy ring; AI at war sabotages the player too. orch/covtest.mjs.
