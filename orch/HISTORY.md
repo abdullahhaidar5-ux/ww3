@@ -294,6 +294,9 @@ Shipped: real elevation/bathymetry (Terrarium tiles) + Natural Earth I satellite
 - 2026-11-07 laneE (Sonnet): foot soldiers drawn ~18% bigger at gameplay height (src/11-models.js). E1 real model swap still open.
 - laneD (2026-11-07 D2 slice 2): fixed a committed merge-conflict in orch/newplayer.mjs (audit tool was unrunnable); audit now ignores in-menu false positives. Real findings left: encyclopedia names use "MBT" jargon (data rename, deferred). No game code changed.
 - laneA 2026-11-07 (03:00Z): A2 slice 1 — real time with pause on the grand map: date + play/pause + speeds 1–5 (Space, +/−, 1–5), months roll over by themselves, battles pause the clock, arrival dates on marches; gate orch/grandrt.mjs. Shots orch/shots/laneA/rt-*.png.
+- laneG 2026-11-07 (Sonnet, 2nd session, on top of main's 13l/13m/13n): events+world crises (13p), achievements (13q), diplomatic web (13r), missions (13s), ledger graphs (13t), great powers/prestige (13u), world tick + AI joins/peace/pacts/peace-offer alert (13o); test orch/lgtest.mjs.
+
+- laneB 2026-11-07 B4 slice 1: stability -3..+3 (13m-grandstab.js): monthly drift, modifier rows, raise with Political points, nation-panel tab + alert. (Duplicate alerts bar dropped: laneG shipped B2b first.)
 - 2026-11-07 laneC: town sun-shadows (instanced) on grand map; light/objects +0.5 (artbar it3)
 - laneE (2026-11-07 03:50Z): infantry models +23% bigger at gameplay height (src/11-models.js MCFG soldier size x1.45) so soldiers read as people; smoke PASS; local smooth gate times out on slow box. Shot orch/shots/laneE/after3-base.png
 - laneD 2026-11-07: D0(a) auto-bisect — `.github/workflows/bisect.yml` + `orch/bisect.sh`: when a gate run is red on a main commit, bisects the failing test and comments the first bad commit. No game code changed.
