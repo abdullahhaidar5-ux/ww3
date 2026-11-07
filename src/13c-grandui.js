@@ -144,8 +144,10 @@ function guClockUI(t){const w=guEl('span','display:inline-flex;align-items:cente
 function guSpeed(s){s=Math.max(0,Math.min(5,s|0));if(s)GV.lastSpd=s;GV.spd=s;GV.clkT=performance.now();guTop();}
 function guClockTick(){const now=performance.now(),dt=Math.min(1,(now-(GV.clkT||now))/1000);GV.clkT=now;
   if(!GV.spd||!GC||GC.over||GC.ph!=='plan'||GV.busy||G||document.getElementById('gModal'))return;const sc=document.getElementById('grandScreen');if(!sc||sc.style.display==='none'||document.hidden)return;
-  GV.dayF=(GV.dayF||0)+dt*GU_SPD[GV.spd];if(GV.dayF<1)return;const n=Math.floor(GV.dayF);GV.dayF-=n;GC.day=(GC.day|0)+n;
+  GV.dayF=(GV.dayF||0)+dt*GU_SPD[GV.spd];if(GV.dayF<1)return;const n=Math.floor(GV.dayF);GV.dayF-=n;const d0=GC.day|0;GC.day=d0+n;
   if(GC.day>=30){GC.day=0;GV.dayF=0;guEndTurn();return;}
+  /* A2: AI generals act on day ticks (10, 20) — enemy columns set off mid-month and can be seen coming */
+  for(const k of [10,20])if(d0<k&&GC.day>=k&&grAIMid(k)){try{grandMapRefresh();}catch(e){}}
   const d=document.getElementById('gDate');if(d)d.textContent=grDateStr(GC.turn,GC.day);}
 if(!window._gClk){window._gClk=setInterval(()=>{try{guClockTick();}catch(e){console.error('guClockTick',e);}},100);}
 function guProvArmies(pi){return GC.armies.filter(a=>a.at===pi&&grSeen(a));}

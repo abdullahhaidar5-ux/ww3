@@ -75,6 +75,12 @@ try {
   await page.waitForFunction(() => { const m = document.getElementById('gModal'); return m && /Fight it live/.test(m.textContent); }, null, { timeout: 60000, polling: 200 }).catch(() => fails.push('no battle prompt after the month closed'));
   const b1 = await st(); await page.waitForTimeout(2000); const b2 = await st(); console.log(el(), 'battle prompt', JSON.stringify(b2)); await shot('rt-2-battle-pauses');
   if (b1.day !== b2.day || b1.turn !== b2.turn) fails.push('the clock runs while a battle prompt is open');
+  // A2: AI generals act on day ticks (10, 20): deterministic, army orders only (no recruiting/spending), mid-month columns slide from their departure day
+  const ai = await ev(() => { const s = JSON.stringify(GC); const run = () => { GC = JSON.parse(s); GC.ph = 'plan'; GC.day = 10; const cash = Object.values(GC.nat).map(n => n.cash | 0).join(); const idle = new Set(GC.armies.filter(a => !a.path.length).map(a => a.id)); const n = grAIMid(10); GV.dayF = 0;
+      const moved = GC.armies.filter(a => idle.has(a.id) && a.path.length); return { n, sig: GC.armies.map(a => a.id + ':' + a.path.join('-')).join(','), cash: cash === Object.values(GC.nat).map(n => n.cash | 0).join(), f0: moved.length ? grSlide(moved[0]) : 0 }; };
+    const r1 = run(), r2 = run(); GC = JSON.parse(s); return { n: r1.n, same: r1.sig === r2.sig && r1.n === r2.n, cash: r1.cash, f0: r1.f0 }; });
+  console.log(el(), 'AI mid-month', JSON.stringify(ai));
+  if (!ai.same) fails.push('mid-month AI orders are not deterministic'); if (!ai.cash) fails.push('mid-month AI spent money (should only give army orders)'); if (ai.f0 > 0.01) fails.push('a column that set off mid-month jumps along its road');
 } catch (e) { fails.push('error: ' + e.message); }
 if (errs.length) fails.push(...errs.slice(0, 5));
 await browser.close(); server.close();
