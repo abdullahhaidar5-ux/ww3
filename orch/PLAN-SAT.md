@@ -39,6 +39,7 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 ## Lane B — Grand systems: EU4 mechanics (priority order)
 - [ ] **B1 Realistic start** — GRAND-PICKS "REALISTIC START" (real GDP/military/oil, real alliances + opinions, real wars, fronts, bases, fleets).
 - [ ] **B2 Nation panel** — GRAND-PICKS "THE NATION PANEL" (EU4-style tabbed window; `npTab` register; every later item adds its tab).
+- [ ] **B2.5 ONE modifier engine (EU4-style, do this before B3)** — `GMOD` rows `{id, src, scope: nation|army|province, stat, add|mul, cond, until}` + `gmod(scope, obj, stat)` evaluator with a per-month cache; every later B/A item (ideas, estates, stability, war support effects, rallies, style perks from `MSTYLES`, named battles, war economy, inflation, corruption, autonomy) is data rows, shown in tooltips as "+10% from Zealous fervour" lines. Saves on checkpoint; deterministic.
 - [ ] **B3 Power points + ideas** (Abdullah 17:58): EU4 monarch points as **Political / Diplomatic / Military capital** (monthly from leader + advisors), spent on tech, development, coring, diplomacy, generals, stability; national ideas (unique per nation, equal value) + idea groups. **Style idea trees** (Abdullah 18:29 pick 10): each morale style gets its own national-idea tree (e.g. Zealous: fervour/martyrdom/volunteers; Professional: staff/training/discipline; Home defenders: fortified homeland/militia/terrain; Firepower-reliant: air power/artillery/precision) — equal total value, nation-flavoured names.
 - [ ] **B4 Stability, cores, estates**: stability −3…+3 (raise with Political capital; affects unrest/income/war support), coring conquered provinces (cost, time, overextension), estates (Army, Clergy/Ideology, Business, Workers) with loyalty/influence and privileges.
 - [ ] **B4b War support (national morale)** (Abdullah 18:25, picked 2): ONE nation-level war-support meter (this IS war weariness/exhaustion — A5 and grand6 use it, no second meter): victories, defeats, casualties, war length, occupied home/holy places, national/religious days (equal value), Ayatollah/Dear Leader clamour; low → unrest, slower recruits, forced peace talks, coups (later). Shaped by morale style: **Zealous** casualties raise it at first (martyrs) up to a cap, leaders keep it high; **Professional** stable, slow steady drain from losses; **Home defenders** surge in defensive wars / when invaded, low appetite for wars abroad; **Firepower-reliant** rises with clean victories, drops sharply with casualties. Shown in the nation panel header + Home front tab; feeds every army's morale recovery (A3b). **Rallies** (pick 9): spend Political capital on a style-flavoured rally to lift war support (commemorations/party rallies, military parades, defend-the-homeland drives, weapons showcases) — equal value, cooldown. **Recruiting by style** (pick 6, in grand2's manpower system): Zealous volunteer surges after martyr losses/holy days; Professional recruit slower but units start with veterancy; Home defenders get a free militia levy when invaded; Firepower-reliant recruit fewer men but better-equipped units — equal total value.
@@ -63,9 +64,22 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 - [ ] **D4 Balance**: battle round robin all nations + grand campaign fairness given the realistic start (balance3 spec).
 - [ ] **D5 Integration/cleanup**: duplicates from SYSTEMS.md "Open" notes, saves round-trip, campaign tutorial (integrate2 spec).
 
-## Rules for every lane iteration (cheap + fast)
-1. FIRST: `git fetch -q`; if your lane has an unmerged `orch/lane<X>-*` branch pushed < 60 min ago → stop ("lane busy"). Lane A also stops while `origin/orch/grand3` is unmerged and pushed < 60 min ago; Lane C while `orch/look1` is; Lane D while `orch/rescue`/`orch/nations-*` is (they finish their own work).
-2. Branch `orch/lane<X>-<UTC yyyymmddhhmm>`, push early. Merge origin/main before shipping. Fast-forward pushes only.
-3. Gate: `python3 orch/build.py` · `node orch/smoke.mjs 2>&1 | grep -E "SMOKE (PASS|FAIL)"` · `node orch/grandtest.mjs 2>&1 | tail -3` (grand changes) · `bash orch/cigate.sh` (blocking). Green → push to main. Sim/data change → comment on the open main→servers-live PR.
-4. Tick the item here + one HISTORY line (heading "lane<X>"). Screens for Abdullah in `orch/shots/lane<X>/`.
-5. LAST: fire your own scheduled task once (Claude_Code_Remote `fire_trigger`) if your lane has unticked items and it's before Sat 20:00 Chicago. Rate limit → HANDOFF-lane<X>.md, push, stop (the hourly schedule resumes).
+## Rules for every lane session — FAST + CHEAP (Abdullah 18:40 "Get creative and speed up development and save usage")
+1. **FIRST:** `git fetch -q`. Stop only if **your own lane** has an unmerged `orch/lane<X>-*` branch pushed < 45 min ago. **Never wait for
+   other helpers** (grand3, look1, rescue…): if your top item touches files another active branch is editing, take your next
+   non-conflicting item instead and come back later.
+2. **One session = several items.** Keep going item after item in the same session (no re-clone, no re-reading) until ~3 h or
+   your context is ~60 % full; ship after every item. Re-read nothing you already read this session.
+3. **Background gate.** Per item: `python3 orch/build.py` + `node orch/smoke.mjs 2>&1 | grep -E "SMOKE (PASS|FAIL)"` + the one
+   targeted test (`node orch/grandtest.mjs 2>&1 | tail -3` for grand work). Then start `bash orch/cigate.sh > /tmp/cig.log 2>&1 &`
+   (run_in_background) and **begin the next item while it runs**; when it's green, merge origin/main and fast-forward push. Red →
+   fix before anything else. Never leave main broken.
+4. **Delegate cheap work to Haiku.** Bulk data entry (country figures, idea/event/mission rows, names, tooltips, wording, credits)
+   goes to a subagent with `model: "haiku"` (Agent tool) with exact file + format instructions; you review the diff only.
+5. **Data, not code.** Every EU4/morale effect is a **row** in the ONE modifier table (B2.5) — no new bespoke code paths for ideas,
+   estates, rallies, style perks, named battles, war economy… One engine, many rows: faster to build, cheaper to read.
+6. **Read less.** `orch/BRIEF.md` + this file + only the spec section of your item. grep -n + ≤ 120-line ranges. Command output
+   via `tail`/`grep`. Self-review screenshots ≤ 400 px (one contact sheet per item); full-size only for Abdullah's 1–2 pictures.
+7. **Cut, don't polish.** Ship the smallest version that a player can see and use, tick it, move on; polish goes to kaizen.
+8. Tick the item + one HISTORY line (heading "lane<X>"). LAST: fire your own scheduled task once if items remain and it's before
+   Sat 20:00 Chicago. Rate limit → orch/HANDOFF-lane<X>.md, push, stop (hourly schedule resumes).
