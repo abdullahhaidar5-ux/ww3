@@ -118,6 +118,7 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
 ## WORLD SIMULATOR rule (Abdullah 23:03) — applies to every lane item: see CLAUDE.md "IT'S A WORLD SIMULATOR". Each item's commit/HISTORY line lists its reaction chain (who reacts, second-order effects, counter-play, cost); an item that only adds a button with no world reaction is not done.
 
 ## Rules for every lane session — FAST + CHEAP (Abdullah 18:40 "Get creative and speed up development and save usage")
+00. **SMOOTH FIRST (Abdullah 14:11/14:15):** smooth-pc and grandsmooth are red on main (battle draw calls 2568 vs budget 1725 after DE-BLOCK props; grand map 558 vs 400). Lanes E and C fix their own regression before anything else; no look change ships without a local SMOOTH PASS (CLAUDE.md "Smooth first").
 0. **USAGE PLAN (Abdullah 2026-11-07 07:40 "25% usage still remains", 07:42 "We need to get it all done with 25%"):** "all" = the Saturday list below; everything else → kaizen after 20:00. Each lane does ONLY its listed items, cheapest way (Haiku subagents for data/text, no exploratory re-reads, one before/after shot per item, cigate once per item), ships each when green, then **stops without re-firing** when its list is done:
    - **Lane A:** A-DATE (start 1 Nov 2026), A-REAL (AI war realism + 24-month test). **Lane B:** done — stop. **Lane D:** done — stop.
    - **Lane F:** RF1 spotting & hiding, RF2 real armour hits, RF3 artillery delay (sim → servers-live PR comment).
@@ -192,7 +193,7 @@ Grand campaign round 2 (Abdullah 22:20 "Any more options for the grand campaign"
 - [ ] **RG13 Generals' traits** (Lane F): generals gain traits (desert expert, siege master, reckless…) that carry into battles.
 - [ ] **RG14 Tech race** (Lane B): research drones, missiles, air defence, cyber; unlocks units (use the B ideas/power-points system).
 - [ ] **RG15 Cyber warfare** (Lane G): hack grids, banks, radar from the map (merge with RG3 spies — one covert-action system).
-- [ ] **RG16 Peace conferences** (Lane G): EU4-style peace deal screen: provinces, reparations, demilitarised zones (extend 13m peace).
+- [x] **RG16 Peace conferences** (DONE first cut laneG `src/13z-gpeace.js`, test `node orch/gptest.mjs`: peace screen gets reparations = 15% of the loser's cash once, costs 10 war score; open: conference rounds, AI-proposed terms): EU4-style peace deal screen: provinces, reparations, demilitarised zones (extend 13m peace).
 - [x] **RG17 Holy sites** (laneG first cut `src/13w-gholy.js`, orch/hstest.mjs: 5 shrine provinces, +2%/+2% war support rows, capture angers the world; hooked in 13-grand capture line; pilgrimage/UN reactions open) (Lane G): Mecca, Medina, Najaf, Karbala, Jerusalem, Qom… morale/opinion bonus; taking one angers the world. Respectful, equal for all faiths.
 - [ ] **RG18 Volunteers** (Lane G): foreign volunteers join wars that matter to them (e.g. holy-site defence).
 - [ ] **RG19 Mercenaries/PMCs** (Lane B): hire fictional private military companies for cash (no real company names).
@@ -222,7 +223,7 @@ Grand campaign round 4 (Abdullah 22:22 "More?") — after the slice, then kaizen
 - [ ] **RG41 Diaspora** (Lane G): emigrant communities send money, lobby foreign governments (opinion GMOD rows).
 - [ ] **RG42 Minorities** (Lane G): Kurds, Druze, Baloch, etc. with loyalty to win/lose (extend cores/culture, neutral wording).
 - [x] **RG43 Border incidents** (DONE with RG7: bi_esc/bi_clash chain) (Lane G): skirmishes that escalate or calm (part of RG7 crises).
-- [ ] **RG44 Demilitarised zones** (Lane G): from peace deals (RG16), no army may enter.
+- [x] **RG44 Demilitarised zones** (DONE first cut laneG: peace-screen zone on a loser border province, 24 months, blocks grPath + move phase for everyone incl. AI; one-line hooks in 13-grand.js pass/move; open: violation incident, DMZ on the map): from peace deals (RG16), no army may enter.
 - [ ] **RG45 Occupation zones** (Lane G): split a defeated enemy between victors.
 - [ ] **RG46 Bases abroad** (Lane B): lease bases in friendly nations (range, influence); the realistic start already places some.
 - [ ] **RG47 Pre-battle plan** (Lane F): before Fight-it: deployment zone, flank route, air support.
