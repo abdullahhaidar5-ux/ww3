@@ -32,3 +32,6 @@ Push a fn onto `GMOD_HOOKS` (13k) — called by `gmodMonth` each turn. New idea 
 
 ## Add a trade good / world price (13z-gmarket.js)
 Add a row to `MK_G` and an output formula in `mkOut`; prices live in `GC.mk.p`, effects are GMOD rows built in `mkSync`. Test: `node orch/mktest.mjs`.
+
+## Add a random event or a world-news row (Lane G, src/13p-gevents.js)
+Append one object to `GEV_ROWS`: `{id,t,x,w:weight,c:condition,o:[{t:'choice',fx:[...]}]}`. Conditions: `always|peace|war|foe|poor|rich|nb|nbwar` (or a `gcrCond` name). Effects: `['cash',n]`, `['un',n]` (every province), `['man',n]`, `['rel','$nb'|'$foe'|CODE,n]`, `['mod',stat,add,months]` (GMOD row), `['chain',id,months]`, `['fn',name]` (GCR_FN). Test with `node orch/eltest.mjs`.
