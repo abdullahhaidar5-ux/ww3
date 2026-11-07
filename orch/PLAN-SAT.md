@@ -21,6 +21,15 @@ and the rest of the world only needs to *work*. Screenshots, the art-bar shots a
 A new campaign offers **"Middle East 2026"** as the featured start (whole world still playable). The other regions are
 polished in kaizen.
 
+## Lane E — Battle look (TOP PRIORITY; Abdullah 2026-11-06 19:30 sent a photo of a Conquest battle: blocky box soldiers, box guns, white box HQ → "None of this at all" = "Battle looks terrible")
+Judge only **real gameplay at normal camera height** (his photo's view: IR base in the desert, 3 IRGC infantry). Middle East
+nations first (IR, RS, DW, IL, SA, IQ, SY, TR). Every step: before/after shots from that same view; smooth-pc / smooth-mp stay green.
+- [ ] **E1 Real-looking infantry**: replace the boxy `soldier`/`sol_m/e/w` models with proper human soldiers — realistic proportions, helmets/caps, vests, webbing, backpacks, real rifle silhouettes, rigged + walk/run/shoot/prone animations. Source: CC0/CC-BY rigged human models reachable via GitHub/npm (credited), or build a high-quality procedural soldier (capsule/lathe limbs, bevelled armour, proper weapons) if no free model fits; uniforms per nation via textures/tints (IRGC/RS fatigues etc.). Keep instancing so 300 units stay smooth (LOD: full model near, simpler far).
+- [ ] **E2 Real buildings**: HQ, barracks, factory, depots → believable Middle Eastern compounds/military buildings (walls, roofs, windows, sandbags, antennas, wear), not white boxes; same free-art rule.
+- [ ] **E3 Ground & light**: terrain texture detail (tracks, rocks, scrub, dust), soft shadows/AO, colour grading toward CoH/Broken Arrow; no washed-out flat beige.
+- [ ] **E4 Vehicles & weapons detail pass** (existing m_* models: materials, decals, wear) + muzzle flashes/tracers/explosions checked at gameplay zoom.
+- [ ] **E5 HUD readability over the 3D** (only what blocks the view: overlapping help text, labels) — coordinate with Lane C's UI kit.
+
 ## THE 50 (Abdullah 2026-11-06 18:57: "All let's go")
 Order inside each lane: your numbered items first, **except ⚡ items** (cheap, high value) which you slot in as soon as your current
 item ships. Everything else after your list. **Target: ALL of it shipped by Sat 20:00** (Abdullah 19:00 "Just get it done") — smallest playable slice of each, then the next; no deferring by choice. Middle East slice first, always.
@@ -39,8 +48,9 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
 |---|---|---|---|
 | **A — Grand engine & feel** | Opus (sim/determinism) | `src/13-grand.js`, `13b-grandbattle.js`, `13f-grandmirror.js`, `13c-grandui.js` (input/selection), grand AI, `orch/grandtest.mjs` | `trig_01Gx98id1Z38KSG4R5rAdU94` (hourly :23 + self-fire) |
 | **B — Grand systems (EU4 mechanics)** | Sonnet | `src/13g-grandeco.js`, `13h-grandecoui.js`, new `13i+` grand system files, nation panel | `trig_013LUzLCpqMyGsfK9ojXXmY8` (hourly :11 + self-fire) |
-| **C — Look ($75)** | Sonnet | `src/13d-grandterrain.js`, `13e-grand3d.js`, `04-gfx`, `05-fx3d`, `10-post`, `11-models`, CSS/skin of every panel, `orch/ART-BAR.md` | `trig_0196kYnG3DBmhFHiNbNqisD6` (ex art loop; hourly :07 + self-fire) |
+| **C — Look ($75)** | Sonnet | `src/13d-grandterrain.js`, `13e-grand3d.js`, CSS/skin of every panel, `orch/ART-BAR.md` (battle rendering moved to Lane E) | `trig_0196kYnG3DBmhFHiNbNqisD6` (ex art loop; hourly :07 + self-fire) |
 | **D — Content & QA** | Sonnet | `01-data` rosters, `11z-nations*`, `vo/`, `mus/`, balance numbers, wording/tooltips/tutorial, saves, `orch/newplayer.mjs` | `trig_01QkuM1b8miRMAF9NcwxC8bB` (hourly :47 + self-fire) |
+| **E — Battle look (TOP PRIORITY, Abdullah 19:30 "Battle looks terrible")** | Sonnet | battle rendering: `src/04-gfx.js`, `05-fx3d.js`, `10-post.js`, `11-models.js`, `models/` (Lane C keeps the grand map 13d/13e + UI skin) | `trig_LANE_E` (hourly :17 + self-fire) |
 
 ## Lane A — Grand engine & feel (priority order)
 - [ ] **A1 FIX: the live battle never loads** (Abdullah 18:00). Reproduce exactly as a player: menu → Grand campaign → march into an enemy → Fight it live, in a real (non-test-hook) browser path with models loading; find why it hangs (loader, mirror map generation, missing data for new nations, exception); fix; add that exact path to the gate so it can't regress.
