@@ -3,6 +3,13 @@
 // (roughly square-rooted) so a small power is weak but still playable. Sources + the per-nation table: orch/reports/realstart.md.
 // Deterministic: no random numbers here. grand4/4b's diplomacy reads `al`, `op`, `tn`; grand3 fleets read `fl`.
 //   n[code] = [econ, mil, oil] : econ x2200 starting cash, mil x GR_VBASE starting army value, oil = fuel stock (120 = normal)
+/* VASSALS (EU4-style subjects; Abdullah 2026-11-06 23:10 "Make Syria a vassal of Turkey"): GC.vas=[[overlord,subject],...]. A subject fights in
+   its overlord's wars and the overlord defends it (grAllied counts the pair, so laneG's glgDeclare joins them), it can't declare war, make
+   alliances, guarantee or make peace on its own, and it can't leave. Economy (tribute, liberty desire, independence wars, annexation) = Lane G. */
+const GR_VASSALS=[['TR','SY']];
+function grVasPair(a,b){return !!(GC&&GC.vas&&GC.vas.some(v=>(v[0]===a&&v[1]===b)||(v[0]===b&&v[1]===a)));}
+function grOverlord(c){const v=GC&&GC.vas&&GC.vas.find(x=>x[1]===c);return v?v[0]:null;}
+function grVasInit(){if(!GC||!GC.nat||GC.vas)return;GC.vas=GR_VASSALS.filter(v=>GC.nat[v[0]]&&GC.nat[v[1]]).map(v=>v.slice());}
 const RES_BLOC=['IR','RS','DW'];   // the Resistance bloc, led by the one shared Ayatollah; new Shia factions add their code here
 const GR_REAL={
  n:{US:[6,3,230],CN:[4.5,2.4,110],RU:[1.6,1.9,260],IN:[2.5,1.5,90],DE:[2.5,.9,80],JP:[2.3,.9,70],GB:[2.2,1,130],FR:[2.1,1,90],IT:[1.6,.7,80],
@@ -37,13 +44,13 @@ function grRealMil(c,dflt){const r=GR_REAL.n[c];return r?r[1]:dflt;}
 function grRealCash(c,dflt){const r=GR_REAL.n[c];return r?Math.round(2200*r[0]):dflt;}
 function grRealClass(c){const r=GR_REAL.n[c];if(!r)return 'Small power';const s=r[0]*.4+r[1]*.6;return s>=2?'Superpower':s>=.9?'Great power':s>=.45?'Regional power':'Small power';}
 // alliances: `GC.rel` = {pairKey: opinion}; `GC.alz` = [[name,[codes]]]. Built once at campaign start, saved with the campaign.
-function grAllied(a,b){if(!GC||!GC.alz)return false;return GC.alz.some(x=>x[1].includes(a)&&x[1].includes(b));}
+function grAllied(a,b){if(!GC)return false;if(grVasPair(a,b))return true;if(!GC.alz)return false;return GC.alz.some(x=>x[1].includes(a)&&x[1].includes(b));}
 function grOpinion(a,b){if(a===b)return 100;if(!GC)return 0;if(GC.war[grWk(a,b)])return -100;let v=(GC.rel&&GC.rel[grWk(a,b)])||0;if(grAllied(a,b))v=Math.max(v,75);return Math.max(-100,Math.min(100,v));}
 function grNearOwn(o,toCap){let best=-1,bd=1e9;for(const p of GCM.P){if(!p.land||GC.prov[p.i].o!==o)continue;const d=grDist(p.i,toCap);if(d<bd){bd=d;best=p.i;}}return best;}
 // called from grNew after every nation exists. Wars, fronts, bases, alliances, opinions.
 function grRealApply(quick){
   const has=c=>!!GC.nat[c]&&!GC.nat[c].dead;const V=c=>GR_VBASE*(grRealMil(c,grNat(c).major?1:.5))*(quick?.7:1);
-  GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);grResBloc();GC.rel={};
+  GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);grResBloc();grVasInit();GC.rel={};
   for(const [a,b,v] of GR_REAL.op)if(has(a)&&has(b))GC.rel[grWk(a,b)]=v;
   for(const [a,b] of GR_REAL.wars)if(has(a)&&has(b))GC.war[grWk(a,b)]=1;
   const front=(a,b,sh,nm)=>{const at=grNearOwn(a,GC.nat[b].cap);if(at<0)return;const f=grNat(a).fac;grAddArmy(a,at,grGenUnits(f,V(a)*sh,false),nm);};
