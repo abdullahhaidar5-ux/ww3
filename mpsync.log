@@ -1,0 +1,27 @@
+[10s] both pages loaded (menu model downloads done after 6s / 6s)
+[10s] host lobby open, code fhe62d
+[10s] client joining
+[35s] battle: US vs RU on strait; client is slot 1
+[180s] both pages finished loading
+[180s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[181s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[183s] client order: 2/2 of the client's units moved on the host
+[185s] check @1.0 min t=60s: host 41 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 9721 client 9721
+[185s] --reconnect: the client's connection is cut for 12 game-s
+[185s] --reconnect: the client (now showing 0 entities, 0 own) thinks it lost the host and reconnects
+[186s] --reconnect: after 0.2 s the client is reconnected
+[186s] right after reconnecting t=77s: host 43 entities, client side sees 8 (own 8); client has 8 (own 8); missing 0, extra 0, off-position 0, mismatched 0; credits host 9550 client 9550
+[189s] check @2.5 min t=150s: host 49 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10648 client 10648
+[207s] check @4.0 min t=240s: host 56 entities, client side sees 11 (own 11); client has 11 (own 11); missing 0, extra 0, off-position 0, mismatched 0; credits host 11092 client 11092
+[218s] traffic host->client 2349 KB in 2532 messages, client->host 18 KB in 99; client lag max 0.00 game-s; 17 ms per 0.5 s step
+[218s] 23 live checks, 0 out of tolerance; up to 1 enemy entities were in the client's view at once
+[218s] --reconnect: at t=240s the client's side is still the player's
+peak memory (node + browser, summed RSS): 4210 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: client console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/fhe62d?role=host&key=2sqclszsi49kdpjirn' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+
+MPSYNC FAIL: host console error: THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The "position" attribute is likely to have NaN values. r (218s)
+  ✗ client console error: THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The "position" attribute is likely to have NaN values. r
