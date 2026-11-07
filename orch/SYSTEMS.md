@@ -48,7 +48,7 @@ systems doing one job, merge them into the owner and note it here.
 | Events, minor nations, seasons, diplomacy, research, cabinet, missions | grand4 |
 | Nation panel (EU4-style tabbed nation window: header + tabs Government, Diplomacy, Economy, Trade, Military, Research, Home front, Missions, Signature assets, Intelligence, Provinces, Ledger) | nationpanel (`npTab()` register); every grand stage adds its screen as a tab, no separate windows |
 | 3D map, living map, turn news (uses the shared news feed) | grand5 |
-| Fog, spies, proxy wars + insurgency (use **Locals**), war weariness, coups, succession, scenarios, disasters, deterrence, volunteers, refugee flows | grand6 |
+| Fog, spies, proxy wars + insurgency (use **Locals**; occupation reaction by morale style = `src/13y-goccupy.js` OCC_STY rows on grand unrest/garrison), war weariness, coups, succession, scenarios, disasters, deterrence, volunteers, refugee flows | grand6 |
 | Friends multiplayer | grand7 |
 | Grand-map rendering + UI look (terrain, water, light, objects, skin, cards, banners, camera moments) | ART LOOP (orch/ART-BAR.md) — after look1; grand stages add data/panels, the loop styles them |
 | Grand-campaign state, turn order, armies (unit records `[kind, hp%, xp, ammo%]`), wars, save | grand1: `src/13-grand.js` (`GC`, `grEndTurn`, `grSave`); every later stage adds fields to `GC` and steps to `grFinishTurn`, never a second state or a second turn loop |

@@ -133,6 +133,7 @@ function geManCap(c){let t=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)
 // ---------- world: oil price, crises, chokepoints ----------
 function geOilIdx(turn){const E=GC.eco;let v=100+20*Math.sin(.62*turn+E.ph1)+9*Math.sin(1.9*turn+E.ph2);
   for(const k of Object.keys(E.cl))if(E.cl[k]&&['Strait of Hormuz','Suez','Bab-el-Mandeb','Malacca Strait'].includes(GCM.P[+k].n))v+=8;
+  v+=6*geBlockN();   // RG1: enemy warships sitting in Hormuz / Suez / Bab-el-Mandeb / Malacca / Bosporus push the oil price up
   const cr=geCrisis(turn);if(cr&&cr[2]==='shortage')v+=28;if(cr&&cr[2]==='boom')v+=6;return Math.round(Math.max(55,Math.min(190,v)));}
 function geCrisis(turn){for(const c of GC.eco.cr)if(turn>=c[0]&&turn<c[0]+c[1])return c;return null;}
 const GE_CRN={crash:'Market crash',shortage:'Oil shortage',famine:'Bad harvests',credit:'Credit crunch',boom:'Trade boom'};
@@ -141,6 +142,11 @@ function geHolder(si){   // who holds a strait: the nation with the most port-pr
   const P=GCM.P,sc={};for(const j of P[si].adj){const q=P[j];if(!q.land)continue;const o=GC.prov[j].o;if(GC.nat[o]&&GC.nat[o].dead)continue;if(!(q.port||geCount(j,'port')))continue;sc[o]=(sc[o]||0)+q.dev;}
   let best='',bv=0;for(const o of Object.keys(sc).sort())if(sc[o]>bv||(sc[o]===bv&&bv>0&&o<best)){bv=sc[o];best=o;}return bv>=2?best:'';}
 function geStraits(){return GCM.P.filter(p=>p.sea&&p.ck);}
+// RG1: warships in a chokepoint zone blockade it for every nation at war with the fleet's owner (counter-play: park your own fleet there to break it)
+function geFleetsAt(si){const r=[];for(const a of GC.armies)if(a.fl&&a.at===si&&a.u.length)r.push(a.o);return r;}
+function geSeaBlock(si,c){const f=geFleetsAt(si);if(!f.length||f.includes(c))return '';for(const o of f)if(grAtWar(c,o))return o;return '';}
+function geBlockaded(si){const f=geFleetsAt(si);if(!f.length)return '';for(const j of GCM.P[si].adj){const q=GCM.P[j];if(!q.land)continue;const o=GC.prov[j].o;if(GC.nat[o]&&!GC.nat[o].dead&&!f.includes(o)){for(const x of f)if(grAtWar(o,x))return x;}}return '';}
+function geBlockN(){let n=0;for(const s of geStraits())if(geBlockaded(s.i))n++;return n;}
 function geClosed(){let n=0;for(const k of Object.keys(GC.eco.cl))if(GC.eco.cl[k])n++;return n;}
 function geSetStrait(c,si,on){const p=GCM.P[si];if(!p||!p.ck)return 'Not a chokepoint.';if(geHolder(si)!==c)return 'You do not hold this strait.';GC.eco.cl[si]=on?c:0;return '';}
 // ---------- nation stats ----------
@@ -168,13 +174,13 @@ function geTrade(c){   // trade routes between neighbouring provinces and over s
   const P=GCM.P,N=GC.nat[c],E=N.e,tm=Math.max(.35,1-.12*geClosed())*geIncMul(c);let t=0;const own=GE_ST[c].own;
   const ok=(o)=>o===c||(!grAtWar(c,o)&&!E.emb.includes(o)&&!(GC.nat[o].e.emb||[]).includes(c));
   for(const p of own){for(const j of p.adj){const q=P[j];if(q.land){const o=GC.prov[j].o;if(!ok(o)||GC.nat[o].dead)continue;const m=Math.min(p.tw,q.tw);t+=o===c?(i2(p.i,j)?m*4:0):m*4.5;}
-      else if(q.sea&&(p.port||geCount(p.i,'port'))&&!gmilBk(p.i)){if(q.ck&&GC.eco.cl[j]&&GC.eco.cl[j]!==c)continue;
+      else if(q.sea&&(p.port||geCount(p.i,'port'))&&!gmilBk(p.i)){if(q.ck&&((GC.eco.cl[j]&&GC.eco.cl[j]!==c)||geSeaBlock(j,c)))continue;
         for(const k of q.adj){const r=P[k];if(!r.land||k===p.i)continue;if(!(r.port||geCount(k,'port'))||gmilBk(k))continue;const o=GC.prov[k].o;if(!ok(o)||GC.nat[o].dead)continue;t+=Math.min(p.tw,r.tw)*(o===c?1.5:3);}}}}
   // merchants: each skims a share of a province's trade routes toward you
   for(const m of E.mer){const q=P[m];if(!q||!q.land)continue;t+=(q.tw*5)*(GC.prov[m].o===c?.25:.9);}
   return t*tm*(geFx(c,'trade')?1.35:1)*(E.sanc?.5:1)*.62;}
 function i2(a,b){return a<b;}   // count a same-owner pair once
-function geHashStr(){if(!GC||!GC.eco)return '';let s='|E'+GC.eco.oilIdx+','+geClosed();for(const c of Object.keys(GC.nat).sort()){const e=GC.nat[c].e;if(!e)continue;s+='|'+c+':'+Math.round(e.fuel)+','+Math.round(e.food)+','+Math.round(e.man)+','+Math.round(e.bank)+','+e.bonds.length+','+e.tw+','+e.def;}
+function geHashStr(){if(!GC||!GC.eco)return '';let s='|E'+GC.eco.oilIdx+','+geClosed()+','+geBlockN();for(const c of Object.keys(GC.nat).sort()){const e=GC.nat[c].e;if(!e)continue;s+='|'+c+':'+Math.round(e.fuel)+','+Math.round(e.food)+','+Math.round(e.man)+','+Math.round(e.bank)+','+e.bonds.length+','+e.tw+','+e.def;}
   for(const p of GC.prov)s+=','+(p.bl?p.bl.length:0)+(p.bq?p.bq.length:0)+(p.au|0)+(p.tr|0);return s;}
 function geNation(c,R,inc){const N=GC.nat[c],E=N.e,S=GE_ST[c],br={};const own=S.own;const idx=GC.eco.oilIdx;
   br.tax=Math.round(inc||0);let net=inc||0;
