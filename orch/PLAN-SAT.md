@@ -201,7 +201,7 @@ Grand campaign round 3 (Abdullah 22:21 "More?") — after the slice, then kaizen
 - [ ] **RG31 Secret treaties** (Lane G): hidden pacts revealed when war breaks out (a hidden flag on GC.alz entries).
 - [ ] **RG32 Air campaigns** (Lane A): bombing/air-superiority over provinces before ground war (uses air sorties from airfields).
 - [ ] **RG33 Missile duels** (Lane A): ballistic missiles vs air defence across the map; interceptor stocks run out.
-- [ ] **RG34 Mobilisation** (Lane B): call up reserves — big army fast, economy + morale pay.
+- [x] **RG34 Mobilisation** (Lane B; DONE first cut laneB 2026-11-07 `src/13zm-gmobil.js`, test `node orch/mobtest.mjs`): partial/general call-up for Military points (instant manpower fill, 3-month lock), income/upkeep/unrest rows, war support up; non-allied neighbours lose trust monthly and AI mobilises back; 🎖 tab + border alert.
 - [ ] **RG35 Fortification lines** (Lane A): trenches/border lines province by province; appear in that province's battles.
 - [ ] **RG36 Player diplomacy** (Lane A, with A2b MP): private chat + deal offers between players.
 - [ ] **RG37 Shared victory** (Lane A): allied players win together as a bloc.
