@@ -1,0 +1,22 @@
+menu {"btn":"▶ Tutorial: learn Conquest (10 min)","vis":false}
+-- out of order / skip / exit / restart
+  FAIL exception: page.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('#tutorial')
+    - locator resolved to <button id="tutorial" class="big ghost" title="A guided first Conquest battle against a calm enemy (about 10 minutes). Single-player only.">▶ Tutorial: learn Conquest (10 min)</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    50 × waiting for element to be visible, enabled and stable
+       - element is not visible
+     - retrying click action
+       - waiting 500ms
+
+step seconds: [] total 30 s
+TUTORIAL FAIL (1)
