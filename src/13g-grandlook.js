@@ -6,8 +6,8 @@ const G3L={sun:[-1.0,.75,-.45]};   // direction TOWARDS the sun (x east, y up, z
 function g3LoadReal(){if(G3.real||G3.realTry)return;G3.realTry=1;
   const ld=u=>fetch(u).then(r=>{if(!r.ok)throw new Error(u);return r.blob();}).then(b=>createImageBitmap(b,{colorSpaceConversion:'none',premultiplyAlpha:'none'}));
   const px=(bm)=>{const c=document.createElement('canvas');c.width=bm.width;c.height=bm.height;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bm,0,0);return x.getImageData(0,0,c.width,c.height);};
-  Promise.all([ld('grand/elev.png?v=1'),ld('grand/color.jpg?v=2'),ld('grand/hi_me.jpg?v=1').catch(()=>null)]).then(([eb,cb,hb])=>{
-    if(hb){try{const h=px(hb);G3.hi={d:g3GradeColor(h.data,h.width*h.height),w:h.width,h:h.height,r:[860/2400,300/1200,560/2400,400/1200]};}catch(e){G3.hi=null;}}
+  Promise.all([ld('grand/elev.png?v=2'),ld('grand/color.jpg?v=3'),ld('grand/hi_me.jpg?v=2').catch(()=>null)]).then(([eb,cb,hb])=>{
+    if(hb){try{const h=px(hb);G3.hi={d:g3GradeColor(h.data,h.width*h.height),w:h.width,h:h.height,r:[.555,.22333333,.14,.25]};}catch(e){G3.hi=null;}}
     const e=px(eb),c=px(cb),E=new Float32Array(e.width*e.height);for(let k=0;k<E.length;k++)E[k]=e.data[k*4]*256+e.data[k*4+1]-11000;
     G3.real={E,EW:e.width,EH:e.height,col:c.data,CW:c.width,CH:c.height};}).catch(()=>{G3.realFail=1;});}
 // ground colour grade (satellite -> rich, slightly warm, a little darker than the washed-out raster)

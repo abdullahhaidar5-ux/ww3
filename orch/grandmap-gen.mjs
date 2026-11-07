@@ -1,14 +1,11 @@
-// Generates src/13-grandmap.js: the stylised world map of the grand campaign (Abdullah 2026-11-05 19:41).
-//   node orch/grandmap-gen.mjs        (deterministic; edit the tables below, rerun, rebuild)
-// Provinces are Voronoi cells around seed points. Seeds are written in lon/lat and warped by a piecewise-linear
-// projection that magnifies the five focus regions; a relaxation pass keeps every seed >= MIN px from its neighbours.
-// Adjacency comes from the cell raster, so what you see is what connects. Output is baked (no runtime randomness).
+// Generates src/13-grandmap.js + src/13f-grandreal.js: the grand-campaign WORLD MAP (realmap, Abdullah 2026-11-07 06:55 "make the grand
+// map size and countries proportional" / "Brazil is really off"; it's a world simulator, so the map is the real world).
+//   python3 orch/look1-bake.py ... && python3 -I orch/realmap-prep.py NE10_DIR && node orch/grandmap-gen.mjs && node orch/grand3d-gen.mjs NE50_DIR
+// Geography: Natural Earth 1:10m admin-0/admin-1 (public domain), ONE Equal Earth projection (orch/grandproj.mjs): real shapes and
+// true relative sizes, no regional magnification. Provinces are real admin-1 regions (merged where small, split where huge and empty);
+// detail comes from MORE provinces where the game happens, not from enlarging land. The old province rows below are anchors (their
+// names, owners, towns, flags and battle maps are kept); orch/realmap/MAPPING.md lists where each now is. Deterministic, no randomness.
 import fs from 'node:fs';
-const W = 2400, H = 1200;
-const LX = [[-180,10],[-130,40],[-60,400],[-12,470],[70,1450],[90,1650],[120,1900],[145,2200],[180,2370]];
-const LY = [[75,40],[50,250],[10,700],[-10,820],[-45,1130],[-60,1180]];
-const pw = (k, v) => { for (let i = 1; i < k.length; i++) { const a = k[i-1], b = k[i]; const lo = Math.min(a[0], b[0]), hi = Math.max(a[0], b[0]); if (v >= lo && v <= hi) return a[1] + (b[1]-a[1]) * (v-a[0]) / (b[0]-a[0]); } return v < k[0][0] ? k[0][1] : k[k.length-1][1]; };
-const gx = lon => pw(LX, Math.max(-180, Math.min(180, lon))), gy = lat => pw(LY, Math.max(-60, Math.min(75, lat)));
 // nation: code|name|region|colour (majors take their colour from FACTIONS at runtime)
 const NAT = `US|United States|NA|CA|Canada|NA|MX|Mexico|NA|CU|Cuba|NA|GT|Central America|NA|DO|Caribbean Isles|NA|VE|Venezuela|SAM|CO|Colombia|SAM|BR|Brazil|SAM|PE|Peru|SAM|AR|Argentina|SAM|CL|Chile|SAM|
 GB|Britain|EU|FR|France|EU|DE|Germany|EU|ES|Spain|EU|IT|Italy|EU|PL|Poland|EU|SE|Sweden|EU|NO|Norway|EU|FI|Finland|EU|GR|Greece|EU|RO|Romania|EU|BY|Belarus|EU|UA|Ukraine|EU|RU|Russia|EU|KZ|Kazakhstan|EU|UZ|Uzbekistan|EU|AZ|Azerbaijan|EU|
@@ -230,55 +227,232 @@ South Pacific East|-100|-25|3|
 Hudson Waters|-85|58|1|
 Arctic Sea|55|70|2|
 `.trim().split('\n').map(l => l.split('|'));
-// real state/province borders (orch/grandreal-prep.mjs -> grandreal-src.json): US states, CA provinces, GB regions, AU states
-const REAL = JSON.parse(fs.readFileSync(new URL('./grandreal-src.json', import.meta.url), 'utf8'));
-const RWd = 1200, RHt = 600, NONE = 65535, real = new Uint16Array(RWd * RHt).fill(NONE);
-REAL.forEach((q, k) => { const rows = Array.from({ length: RHt }, () => []);
-  for (const r of q.rings) for (let i = 0; i < r.length - 1; i++) { let x0 = gx(r[i][0]) / 2, y0 = gy(r[i][1]) / 2, x1 = gx(r[i+1][0]) / 2, y1 = gy(r[i+1][1]) / 2; if (y0 === y1) continue; if (y0 > y1) { [x0, x1] = [x1, x0]; [y0, y1] = [y1, y0]; }
-    for (let y = Math.max(0, Math.ceil(y0 - .5)); y < Math.min(RHt, Math.ceil(y1 - .5)); y++) rows[y].push(x0 + (x1 - x0) * ((y + .5 - y0) / (y1 - y0))); }
-  rows.forEach((xs, y) => { xs.sort((a, b) => a - b); for (let i = 0; i + 1 < xs.length; i += 2) for (let x = Math.max(0, Math.ceil(xs[i] - .5)); x <= Math.min(RWd - 1, Math.floor(xs[i+1] - .5)); x++) real[y * RWd + x] = k; }); });
-const seeds = [];
-for (const p of PR) seeds.push({ n: p[1], o: p[0], x: gx(+p[2]), y: gy(+p[3]), t: p[4], tw: +p[5], f: p[6] || '', m: p[7] || '', land: 1 });
-const REALBASE = seeds.length;
-REAL.forEach((q, k) => { let n = 0, sx = 0, sy = 0; for (let y = 0; y < RHt; y++) for (let x = 0; x < RWd; x++) if (real[y * RWd + x] === k) { n++; sx += x; sy += y; }
-  if (!n) { console.log('EMPTY real province', q.n); return; } const cx = sx / n, cy = sy / n; let bx = 0, by = 0, bd = 1e18; for (let y = 0; y < RHt; y++) for (let x = 0; x < RWd; x++) if (real[y * RWd + x] === k) { const d = (x - cx) ** 2 + (y - cy) ** 2; if (d < bd) { bd = d; bx = x; by = y; } }
-  seeds.push({ n: q.n, o: q.o, x: bx * 2, y: by * 2, t: q.t, tw: q.tw, f: q.f, m: q.m, land: 1, fixed: 1 }); });
-for (const s of SEAS) seeds.push({ n: s[0], x: gx(+s[1]), y: gy(+s[2]), c: +s[3], ck: s[4] === 'choke' ? 1 : 0, land: 0 });
-// relaxation: push apart seeds closer than MIN (bounded drift), deterministic
-const MIN = 27, x0 = seeds.map(s => s.x), y0 = seeds.map(s => s.y);
-for (let it = 0; it < 140; it++) { let moved = 0;
-  for (let i = 0; i < seeds.length; i++) for (let j = i + 1; j < seeds.length; j++) { const a = seeds[i], b = seeds[j]; let dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy); const mn = MIN * ((a.land && b.land) ? 1 : .8);
-    if (d < mn) { if (a.fixed && b.fixed) continue; if (d < .01) { dx = 1; dy = 0; d = 1; } const k = (mn - d) / 2 / d, ka = a.fixed ? 0 : (b.fixed ? 2 * k : k), kb = b.fixed ? 0 : (a.fixed ? 2 * k : k); a.x -= dx * ka; a.y -= dy * ka; b.x += dx * kb; b.y += dy * kb; moved++; } }
-  for (let i = 0; i < seeds.length; i++) { const s = seeds[i]; if (s.fixed) continue; const dx = s.x - x0[i], dy = s.y - y0[i], d = Math.hypot(dx, dy); if (d > 36) { s.x = x0[i] + dx * 36 / d; s.y = y0[i] + dy * 36 / d; } s.x = Math.max(8, Math.min(W - 8, s.x)); s.y = Math.max(8, Math.min(H - 8, s.y)); }
-  if (!moved) break; }
-for (const s of seeds) { s.x = Math.round(s.x); s.y = Math.round(s.y); }
-// raster adjacency at 1/4 scale
-const SC = 2, RW = W / SC, RH = H / SC, idx = new Uint16Array(RW * RH);
-for (let y = 0; y < RH; y++) for (let x = 0; x < RW; x++) { const px = x * SC + 2, py = y * SC + 2; const rv = real[Math.min(RHt - 1, y * SC / 2 | 0) * RWd + Math.min(RWd - 1, x * SC / 2 | 0)]; if (rv !== NONE) { idx[y * RW + x] = REALBASE + rv; continue; } let bi = 0, bd = 1e18; for (let i = 0; i < seeds.length; i++) { if (seeds[i].fixed) continue; const dx = seeds[i].x - px, dy = seeds[i].y - py, d = dx * dx + dy * dy; if (d < bd) { bd = d; bi = i; } } idx[y * RW + x] = bi; }
-const adj = seeds.map(() => new Set());
-for (let y = 0; y < RH; y++) for (let x = 0; x < RW; x++) { const a = idx[y * RW + x]; if (x + 1 < RW) { const b = idx[y * RW + x + 1]; if (a !== b) { adj[a].add(b); adj[b].add(a); } } if (y + 1 < RH) { const b = idx[(y + 1) * RW + x]; if (a !== b) { adj[a].add(b); adj[b].add(a); } } }
-const nl = PR.length + REAL.length;
-// A province must not touch a sea-only world edge; land-land links stay, plus manual straits
-const byName = n => seeds.findIndex(s => s.n === n);
-const extra = [['Istanbul','Izmir'],['Istanbul','Ankara'],['Havana','Santiago de Cuba'],['Sinai','Cairo'],['Zagros','Baghdad']].map(([a, b]) => [byName(a), byName(b)]);   // bridge / canal / island-hop links
-for (const [a, b] of extra) if (a >= 0 && b >= 0) { adj[a].add(b); adj[b].add(a); }
-// land<->land links across a sea cell are NOT adjacent (that is the point of sea zones)
-const rivers = [['Kyiv','Donbas'],['Kyiv','Lviv'],['Baghdad','Anbar'],['Baghdad','Mosul'],['Wuhan','Shanghai'],['Berlin','Rhine'],['Paris','Rhine'],['Punjab','Karachi'],['Cairo','Upper Egypt'],['Moscow','Volga'],['Heartland','Washington'],['Deir ez-Zor','Aleppo'],['Seoul','Pyongyang'],['Seoul','Gangwon'],['Basra','Khuzestan']].map(([a, b]) => [byName(a), byName(b)]).filter(([a, b]) => a >= 0 && b >= 0 && adj[a].has(b));
+// ---------------- realmap (2026-11-07): real countries, real admin-1 provinces, one Equal Earth projection ----------------
+// Old provinces above are ANCHORS: each keeps its name/owner/terrain/towns/flags/battle map and claims the real admin-1 units at
+// its (corrected) position or the explicit members below; the rest of every country is grown into extra provinces from its
+// own admin-1 units, finer where the game happens (Middle East, Europe, East/South Asia, North America), coarse where land is empty.
+const FIX = {   // real positions for anchors whose old seed was placed for the old warped layout
+  'Damascus':[36.3,33.5],'Aleppo':[37.2,36.2],'Latakia':[35.9,35.6],'Deir ez-Zor':[40.1,35.3],'Beirut':[35.5,33.89],'South Lebanon':[35.4,33.3],'Bekaa':[36.0,33.85],
+  'Tel Aviv':[34.8,32.08],'Galilee':[35.4,32.9],'Negev':[34.9,30.8],'Jordan':[36.0,31.95],'Baghdad':[44.4,33.3],'Basra':[47.6,30.5],'Mosul':[43.1,36.3],'Anbar':[43.3,33.4],
+  'Kurdistan':[44.0,36.2],'Tehran':[51.4,35.7],'Isfahan':[51.7,32.7],'Khuzestan':[48.7,31.3],'Zagros':[47.0,34.3],'Hormozgan':[56.3,27.2],'Khorasan':[59.6,36.3],
+  'Riyadh':[46.7,24.7],'Eastern Province':[49.6,26.3],'Hejaz':[39.8,21.4],'Asir':[42.5,18.2],'Tabuk':[36.6,28.4],'Kuwait':[47.9,29.3],'Qatar':[51.4,25.3],
+  'Abu Dhabi':[54.4,24.2],'Dubai':[55.3,25.2],'Al Ain':[55.7,24.2],'Oman':[58.4,23.6],'Sanaa':[44.2,15.35],'Aden':[45.03,12.8],'Hadramawt':[49.0,15.9],'Tihama':[43.0,14.8],
+  'Cairo':[31.24,30.04],'Alexandria':[29.9,31.2],'Sinai':[33.8,30.0],'Upper Egypt':[32.6,25.7],'Western Desert':[27.5,27.0],'Gaza':[34.4,31.45],
+  'Euphrates Badlands':[41.2,34.4],'Syrian Badiya':[38.6,34.5],'Najaf':[44.3,31.9],'Southern Marshes':[47.1,31.8],'Baku':[49.9,40.4],'Tripolitania':[13.2,32.9],
+  'Cyrenaica':[20.1,32.1],'Khartoum':[32.5,15.6],'Darfur':[24.9,13.5],'Addis Ababa':[38.75,9.0],'Istanbul':[29.0,41.05],'Izmir':[27.2,38.4],'Cilicia':[35.0,37.0],
+  'Ankara':[32.9,39.9],'East Anatolia':[41.2,39.9],'Havana':[-82.4,23.1],'Camaguey':[-77.9,21.4],'Santiago de Cuba':[-75.8,20.0],'Hispaniola':[-70.2,18.8],
+  'Central America':[-86.3,13.0],'Caracas':[-66.9,10.4],'Bogota':[-74.1,4.7],'Andes':[-76.0,-10.0],'Lagos':[3.4,6.6],'Kenya':[36.8,-1.3],'Tanzania':[35.7,-6.2],
+  'Cape':[19.5,-33.5],'Johannesburg':[28.0,-26.2],'Sao Paulo':[-47.0,-23.0],'Northeast':[-39.0,-8.0],'Amazonia':[-63.0,-4.0],'Brasilia':[-47.9,-15.8],
+  'Buenos Aires':[-60.5,-35.5],'Santiago':[-70.7,-33.4],'Mexico City':[-99.1,19.4],'Sonora':[-110.9,29.1],'Yucatan':[-89.0,20.0],'Leningrad':[30.3,59.9],
+  'Moscow':[37.6,55.75],'Volga':[45.0,51.5],'Caucasus':[43.5,43.5],'Urals':[60.6,56.8],'Siberia':[83.0,55.0],'Far East':[135.0,48.5],'Kyiv':[30.5,50.45],
+  'Donbas':[37.8,48.0],'Odesa':[30.7,46.5],'Lviv':[24.0,49.8],'Taipei':[121.5,25.0],'Tokyo':[139.7,35.7],'Osaka':[135.5,34.7],'Hokkaido':[142.8,43.2],'Kyushu':[130.7,32.6],
+  'Pyongyang':[125.75,39.0],'Hamgyong':[129.5,41.5],'Hwanghae':[125.5,38.3],'Seoul':[127.0,37.55],'Busan':[129.0,35.2],'Gangwon':[128.3,37.8],
+  'Shanghai':[121.4,31.2],'Guangzhou':[113.3,23.1],'Beijing':[116.4,39.9],'Karachi':[67.0,24.9],'Mumbai':[72.9,19.1],'Chennai':[80.2,13.1],'Kashmir':[75.0,34.0],
+  'Bengal':[88.3,22.6],'Delhi':[77.2,28.6],'Punjab':[74.3,31.5],'Khyber':[71.5,34.0],'Kabul':[69.2,34.5],'Kandahar':[65.7,31.6],'Balochistan':[66.0,28.5],
+  'Saigon':[106.7,10.8],'Hanoi':[105.8,21.0],'Bangkok':[100.5,13.75],'Manila':[121.0,14.6],'Mindanao':[125.0,7.5],'Jakarta':[106.8,-6.2],'Sumatra':[101.0,0.0],
+  'Borneo':[114.0,-1.0],'Malaysia':[101.7,3.1],'Sri Lanka':[80.7,7.5],'Paris':[2.35,48.85],'Provence':[5.4,43.5],'Berlin':[13.4,52.5],'Rhine':[7.0,51.0],
+  'Madrid':[-3.7,40.4],'Andalusia':[-5.0,37.4],'Rome':[12.5,41.9],'Po Valley':[9.2,45.4],'Warsaw':[21.0,52.2],'Stockholm':[18.0,59.3],'Athens':[23.7,38.0],
+  'New Zealand':[174.8,-41.0],'Morocco':[-6.8,33.0],'Tunisia':[10.2,36.4],'Algeria':[3.0,36.0],'Norway':[10.7,59.9],'Finland':[25.0,60.2],
+};
+const MEM = {   // explicit admin-1 members (A3:name, NE English or native name) for faction homes and holy places
+  'Beirut':['LBN:Beirut','LBN:Mount Lebanon','LBN:North'],'South Lebanon':['LBN:South','LBN:Nabatieh'],'Bekaa':['LBN:Beqaa'],
+  'Tel Aviv':['ISR:Tel Aviv','ISR:Central','ISR:Jerusalem'],'Galilee':['ISR:Northern','ISR:Haifa'],'Negev':['ISR:Southern'],'Gaza':['PSX:Gaza'],
+  'Kurdistan':['IRQ:Erbil','IRQ:Duhok','IRQ:Sulaymaniyah'],'Basra':['IRQ:Basra','IRQ:Dhi Qar'],'Najaf':['IRQ:Najaf','IRQ:Karbala','IRQ:Al-Qādisiyyah'],
+  'Southern Marshes':['IRQ:Maysan'],'Baghdad':['IRQ:Baghdad','IRQ:Babylon'],'Tehran':['IRN:Tehran','IRN:Qom','IRN:Alborz'],'Khorasan':['IRN:Razavi Khorasan'],
+  'Hejaz':['SAU:Makkah','SAU:Al Madinah'],'Kuwait':['KWT:*'],'Qatar':['QAT:*'],'Dubai':['ARE:Emirate of Dubai','ARE:Emirate of Sharjah','ARE:Emirate of Ajman','ARE:Emirate of Umm Al Quwain','ARE:Emirate of Ras Al Khaimah','ARE:Emirate of Fujairah','ARE:Fujairah','ARE:Sayh Mudayrah'],
+  'Sanaa':['YEM:Sanaa','YEM:\'Amran','YEM:Dhamar','YEM:Al Mahwit','YEM:Raymah'],'Aden':['YEM:\'Adan','YEM:Lahij','YEM:Ad Dali\'','YEM:Abyan'],'Tihama':['YEM:Al Hudaydah','YEM:Hajjah'],
+  'Hadramawt':['YEM:Hadhramaut'],'Cairo':['EGY:Cairo','EGY:Giza','EGY:Qalyubia','EGY:Monufia'],'Sinai':['EGY:North Sinai','EGY:South Sinai'],
+};
+// country (NE adm0_a3) -> game nation. Grouped minors stay as the game already had them; every other real country becomes its own minor.
+const A3C = { USA:'US',PRI:'US',CAN:'CA',MEX:'MX',CUB:'CU',USG:'CU',GTM:'GT',BLZ:'GT',HND:'GT',SLV:'GT',NIC:'GT',CRI:'GT',PAN:'GT',
+  DOM:'DO',HTI:'DO',JAM:'DO',BHS:'DO',TTO:'DO',ATG:'DO',BRB:'DO',DMA:'DO',GRD:'DO',KNA:'DO',LCA:'DO',VCT:'DO',
+  VEN:'VE',COL:'CO',BRA:'BR',PER:'PE',ARG:'AR',CHL:'CL',GBR:'GB',IMN:'GB',FLK:'GB',FRA:'FR',DEU:'DE',ESP:'ES',ITA:'IT',POL:'PL',SWE:'SE',NOR:'NO',FIN:'FI',ALD:'FI',
+  GRC:'GR',ROU:'RO',BLR:'BY',UKR:'UA',RUS:'RU',KAZ:'KZ',KAB:'KZ',UZB:'UZ',AZE:'AZ',TUR:'TR',SYR:'SY',LBN:'RS',ISR:'IL',JOR:'JO',IRQ:'IQ',IRN:'IR',SAU:'SA',ARE:'AE',
+  OMN:'OM',KWT:'KW',QAT:'QA',YEM:'DW',EGY:'EG',LBY:'LY',SDN:'SD',ETH:'ET',DZA:'DZ',MAR:'MA',SAH:'MA',TUN:'TN',NGA:'NG',MLI:'ML',NER:'ML',BFA:'ML',TCD:'TD',COD:'CD',
+  KEN:'KE',TZA:'TZ',AGO:'AO',ZAF:'ZA',PAK:'PK',IND:'IN',AFG:'AF',BGD:'BD',NPL:'NP',LKA:'LK',MMR:'MM',TKM:'TM',CHN:'CN',HKG:'CN',MAC:'CN',PRK:'KP',KOR:'KR',JPN:'JP',
+  TWN:'TW',MNG:'MN',VNM:'VN',THA:'TH',MYS:'MY',IDN:'ID',PHL:'PH',AUS:'AU',NZL:'NZ',
+  GRL:'DK',FRO:'DK',DNK:'DK',SOL:'SO',CYN:'CY',NCL:'FR',PYF:'FR',GUF:'FR',SRB:'XS',BDI:'XB',PSX:'PS' };
+const UOWN = { 'PSX:Gaza':'OB','IRQ:Duhok':'KD','IRQ:Erbil':'KD','IRQ:Sulaymaniyah':'KD','IRQ:Basra':'RV','IRQ:Najaf':'RV','IRQ:Karbala':'RV','IRQ:Al-Qādisiyyah':'RV',
+  'IRQ:Dhi Qar':'RV','IRQ:Maysan':'RV','IRQ:Al Muthanna':'RV' };
+const MINNAME = { PS:'Palestine', XS:'Serbia', XB:'Burundi', SO:'Somalia', CY:'Cyprus', DK:'Denmark' };
+const KEEP = new Set(['SGP','BHR','MLT','LUX','CYP','BRN','MUS','SYC','COM','CPV','STP','FJI']), MINPX = 14;
+const SEALINK = [['Suez','East Mediterranean'],['Turkish Straits','Black Sea'],['Turkish Straits','East Mediterranean'],['Strait of Gibraltar','West Mediterranean'],
+  ['Strait of Gibraltar','East Atlantic'],['Bab-el-Mandeb','Red Sea'],['Bab-el-Mandeb','Gulf of Aden'],['Strait of Hormuz','Persian Gulf'],['Strait of Hormuz','Gulf of Oman'],
+  ['West Pacific','North Pacific East'],['South Pacific West','South Pacific East']];   // + the date line: the Pacific wraps around
+const LANDLINK = [['Eastern Province','Bahrain'],['Malaysia','Singapore']];   // causeways / bridges between land provinces
+// ---- load the building blocks (orch/realmap-prep.py)
+import zlib from 'node:zlib'; import { proj, unproj, W, H } from './grandproj.mjs';
+const J = JSON.parse(fs.readFileSync(new URL('./realmap/a1.json', import.meta.url), 'utf8'));
+const UB = zlib.gunzipSync(fs.readFileSync(new URL('./realmap/a1.bin.gz', import.meta.url))), N0 = W * H;
+const U = new Int32Array(N0); for (let i = 0; i < N0; i++) { const v = UB[2 * i] | (UB[2 * i + 1] << 8); U[i] = v === 65535 ? -1 : v; }
+const UN = J.u.map((r, k) => { const [en, ne] = String(r[2]).split('|'); const ll = r[6] != null ? [r[6], r[7]] : (unproj(r[13], r[14]) || [0, 0]);
+  return { k, a3: r[0], adm: r[1], n: en, ne: ne || en, lvl: r[3], iso: r[4] || '', reg: r[5] || '', lon: ll[0], lat: ll[1], px: 0, el: r[10], es: r[11], rgb: r[12] }; });
+for (let i = 0; i < N0; i++) if (U[i] >= 0) UN[U[i]].px++;
+// admin-0 slivers -> the nearest admin-1 unit of the same country (or keep it when the country has no admin-1 at all)
+{ const has = new Set(UN.filter(u => u.lvl === 1 && u.px).map(u => u.a3)); const q = []; const dist = new Int32Array(N0).fill(-1);
+  for (let i = 0; i < N0; i++) if (U[i] >= 0 && UN[U[i]].lvl === 1) { dist[i] = 0; q.push(i); }
+  for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W; for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) { if (j < 0 || j >= N0 || dist[j] >= 0 || U[j] < 0) continue; const u = UN[U[j]]; if (u.lvl !== 0 || !has.has(u.a3) || UN[U[i]].a3 !== u.a3) continue; dist[j] = 0; U[j] = U[i]; q.push(j); } } }
+UN.forEach(u => u.px = 0); for (let i = 0; i < N0; i++) if (U[i] >= 0) UN[U[i]].px++;
+// ---- owners
+const OLDCODES = new Set(NATS.map(n => n[0])), cpx = {}; UN.forEach(u => { const c = A3C[u.a3] || u.a3; cpx[c] = (cpx[c] || 0) + u.px; });
+const newMin = new Map();   // a3 -> [code, name, region]
+const regOf = (lon, lat) => lon < -30 ? (lat > 13 ? 'NA' : 'SAM') : lat < -10 && lon > 110 ? 'OC' : lon < 60 && lat > 36 ? 'EU' : lon < 63 && lat > 12 && lon > 25 ? 'ME' : lon < 52 ? 'AF' : lon < 97 ? 'SA' : lat > 20 ? 'EA' : 'SEA';
+function ownerOf(u) { const o = UOWN[u.a3 + ':' + u.n] || UOWN[u.a3 + ':' + u.ne]; if (o) return o; const c = A3C[u.a3]; if (c) return c;
+  if (newMin.has(u.a3)) return newMin.get(u.a3)[0];
+  if ((cpx[u.a3] || 0) < 20 && !KEEP.has(u.a3)) return null;
+  let code = (u.iso.slice(0, 2) || u.a3.slice(0, 2)).toUpperCase(); const used = new Set([...OLDCODES, ...[...newMin.values()].map(v => v[0]), 'IM', 'EU', 'BI', 'RS', 'KD', 'DW', 'RV', 'OB']);
+  if (used.has(code)) { for (const ch of 'XQZYJW') { const c2 = ch + u.a3[0]; if (!used.has(c2)) { code = c2; break; } } }
+  newMin.set(u.a3, [code, MINNAME[code] || u.adm, regOf(u.lon, u.lat)]); return code; }
+UN.forEach(u => { u.o = u.px ? ownerOf(u) : null; });
+// far-flung specks (Bouvet, Chatham, Easter Island...) leave their owner: they would drag armies, labels and supply across an ocean
+{ const big = {}; UN.forEach(u => { if (u.o && (!big[u.o] || u.px > big[u.o].px)) big[u.o] = u; });
+  UN.forEach(u => { if (!u.o || u.px >= 40) return; const b = big[u.o], [x, y] = proj(u.lon, u.lat), [bx, by] = proj(b.lon, b.lat); if (Math.hypot(x - bx, y - by) > 350) u.o = null; }); }
+for (const [a3, c] of Object.entries(A3C)) if (!OLDCODES.has(c) && ![...newMin.values()].some(v => v[0] === c)) { const u = UN.find(x => x.a3 === a3 && x.px); if (u) newMin.set('@' + c, [c, MINNAME[c] || u.adm, regOf(u.lon, u.lat)]); }
+// ---- targets: province size (px, 1 px ~ 210 km2) by where the game happens; deserts / tundra / ice get far fewer provinces
+function target(u) { const { lon, lat } = u; let t = 1600;
+  if (lon > 33 && lon < 49 && lat > 29 && lat < 38.5) t = 110; else if (lon > 25 && lon < 63 && lat > 12 && lat < 43) t = 220;
+  else if (lon > -11 && lon < 42 && lat > 35 && lat < 71) t = 380; else if (lon > 27 && lon < 62 && lat > 42 && lat < 70) t = 700;
+  else if (lon > 97 && lon < 146 && lat > 18 && lat < 54) t = 480; else if (lon > 60 && lon < 97 && lat > 5 && lat < 37) t = 450;
+  else if (lon < -52 && lon > -170 && lat > 14 && lat < 72) t = 900;
+  const [r, g, b] = u.rgb, desert = r - b > 40 && r > g && r + g + b > 430, cold = Math.abs(lat) > 60 || u.el > 3500;
+  return t * (desert || cold ? 2.5 : 1); }
+// ---- split oversized single units into compass parts (k-means on pixel positions, deterministic init)
+{ const pixOf = new Map(); for (let i = 0; i < N0; i++) if (U[i] >= 0) { const k = U[i]; if (!pixOf.has(k)) pixOf.set(k, []); pixOf.get(k).push(i); }
+  const base = UN.length;
+  for (let k = 0; k < base; k++) { const u = UN[k]; if (!u.o || u.lvl !== 1) continue; const T = target(u); if (u.px <= 2.6 * T) continue; const kk = Math.min(4, Math.round(u.px / T)); if (kk < 2) continue;
+    const ps = pixOf.get(k), X = ps.map(i => i % W), Y = ps.map(i => (i / W) | 0); const mx = X.reduce((a, b) => a + b) / X.length, my = Y.reduce((a, b) => a + b) / Y.length;
+    let c = [[X[0], Y[0]]]; { let bi = 0, bd = -1; for (let i = 0; i < ps.length; i++) { const d = (X[i] - mx) ** 2 + (Y[i] - my) ** 2; if (d > bd) { bd = d; bi = i; } } c = [[X[bi], Y[bi]]]; }
+    while (c.length < kk) { let bi = 0, bd = -1; for (let i = 0; i < ps.length; i++) { let d = 1e18; for (const q of c) d = Math.min(d, (X[i] - q[0]) ** 2 + (Y[i] - q[1]) ** 2); if (d > bd) { bd = d; bi = i; } } c.push([X[bi], Y[bi]]); }
+    const lab = new Int32Array(ps.length);
+    for (let it = 0; it < 10; it++) { const sx = c.map(() => 0), sy = c.map(() => 0), sn = c.map(() => 0);
+      for (let i = 0; i < ps.length; i++) { let bj = 0, bd = 1e18; c.forEach((q, j) => { const d = (X[i] - q[0]) ** 2 + (Y[i] - q[1]) ** 2; if (d < bd) { bd = d; bj = j; } }); lab[i] = bj; sx[bj] += X[i]; sy[bj] += Y[i]; sn[bj]++; }
+      c = c.map((q, j) => sn[j] ? [sx[j] / sn[j], sy[j] / sn[j]] : q); }
+    const D8 = ['East', 'Southeast', 'South', 'Southwest', 'West', 'Northwest', 'North', 'Northeast'], dirs = c.map(q => D8[(Math.round(Math.atan2(q[1] - my, q[0] - mx) / (Math.PI / 4)) + 8) % 8]);
+    dirs.forEach((d, j) => { if (dirs.indexOf(d) !== j) dirs[j] = d + ' II'; });
+    const cw = /^(North|South|East|West|Central|Upper|Lower)/i.test(u.n), orig = [u.n, u.ne], names = dirs.map(d0 => { const [d, ii] = d0.split(' '); return (cw ? u.n + ' (' + d.toLowerCase() + ')' : d + ' ' + u.n) + (ii ? ' II' : ''); }), ids = c.map((q, j) => j === 0 ? k : UN.push(Object.assign({}, u, { k: UN.length, px: 0 })) - 1);
+    ids.forEach((id, j) => { UN[id].n = names[j]; UN[id].ne = names[j]; const ll = unproj(c[j][0], c[j][1]); if (ll) { UN[id].lon = ll[0]; UN[id].lat = ll[1]; } UN[id].px = 0; UN[id].part = orig; });
+    for (let i = 0; i < ps.length; i++) { U[ps[i]] = ids[lab[i]]; UN[ids[lab[i]]].px++; } } }
+const NU = UN.length;
+// ---- unit adjacency (raster, 4-neighbour)
+const uadj = UN.map(() => new Set());
+for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x, a = U[i]; if (a < 0) continue; if (x + 1 < W) { const b = U[i + 1]; if (b >= 0 && b !== a) { uadj[a].add(b); uadj[b].add(a); } } if (y + 1 < H) { const b = U[i + W]; if (b >= 0 && b !== a) { uadj[a].add(b); uadj[b].add(a); } } }
+// ---- provinces: anchors first
+const PV = [];   // {n,o,t,tw,f,m,units:Set,pt:[x,y]|null,auto}
+const uprov = new Int32Array(NU).fill(-1), shared = new Map();   // unit -> [province ids] when several anchors sit in one unit
+const findUnits = key => { const [a3, nm] = key.split(':'); return UN.filter(u => u.a3 === a3 && u.o && (nm === '*' || u.n === nm || u.ne === nm || (u.part && u.part.includes(nm)))).map(u => u.k); };
+const claim = (pi, k) => { if (uprov[k] === -1) { uprov[k] = pi; return; } if (uprov[k] === pi) return; const s = shared.get(k) || [uprov[k]]; if (!s.includes(pi)) s.push(pi); shared.set(k, s); };
+const SNAPO = { BI: { 'Euphrates Badlands': 'IQ', 'Syrian Badiya': 'SY' } };   // fictional factions carve their home out of a real country's land
+function snap(o, lon, lat, n) { if (SNAPO[o]) o = SNAPO[o][n] || o; const [px, py] = proj(lon, lat); const x0 = Math.round(px), y0 = Math.round(py);
+  for (let r = 0; r < 140; r++) { let best = null, bd = 1e9; for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; const x = x0 + dx, y = y0 + dy; if (x < 0 || y < 0 || x >= W || y >= H) continue; const k = U[y * W + x]; if (k < 0 || UN[k].o !== o) continue; const d = dx * dx + dy * dy; if (d < bd) { bd = d; best = [x, y]; } } if (best) return best; }
+  return null; }
+const REALT = fs.readFileSync(new URL('./grandreal-prep.mjs', import.meta.url), 'utf8').match(/const T = `([\s\S]*?)`/)[1].trim().split('\n').map(l => l.split('|'));
+for (const p of PR) { const [o, n, lon0, lat0, t, tw, f, m] = p; const [lon, lat] = FIX[n] || [+lon0, +lat0]; const pi = PV.length;
+  const pv = { n, o, t, tw: +tw, f: f || '', m: m || '', units: new Set(), pt: null, auto: 0 }; PV.push(pv);
+  if (MEM[n]) { for (const key of MEM[n]) for (const k of findUnits(key)) claim(pi, k); const k0 = [...findUnits(MEM[n][0])][0]; if (k0 !== undefined) pv.pt = proj(UN[k0].lon, UN[k0].lat).map(Math.round); continue; }
+  const s = snap(o, lon, lat, n); if (!s) { console.log('anchor has no land of its owner', n, o); continue; } pv.pt = s; claim(pi, U[s[1] * W + s[0]]); }
+for (const [o, n, t, tw, f, m, mem] of REALT) { const [a3, list] = mem.split(':'), names = list.split(','), pi = PV.length;
+  const ks = UN.filter(u => u.a3 === a3 && u.o && (a3 === 'GBR' ? names.includes(u.reg) : (names.includes(u.ne) || names.includes(u.n) || (u.part && u.part.some(x => names.includes(x)))))).map(u => u.k);
+  if (!ks.length) { console.log('NO MATCH', n); continue; } PV.push({ n, o, t, tw: +tw, f: f || '', m: m || '', units: new Set(), pt: null, auto: 0 }); ks.forEach(k => claim(pi, k)); }
+// ---- grow every owner's free units into its provinces, opening new provinces where a province would get too big
+const upx = k => UN[k].px;
+PV.forEach((p, i) => p.px = 0); for (let k = 0; k < NU; k++) if (uprov[k] >= 0) { const s = shared.get(k); if (s) s.forEach(pi => PV[pi].px += upx(k) / s.length); else PV[uprov[k]].px += upx(k); }
+const owners = [...new Set(UN.filter(u => u.o && u.px).map(u => u.o))].sort();
+for (const o of owners) { const free = new Set(UN.filter(u => u.o === o && u.px && uprov[u.k] < 0).map(u => u.k));
+  while (free.size) { let best = null, bv = 1e18;
+    for (const k of free) { const T = target(UN[k]); for (const j of uadj[k]) { const pi = uprov[j]; if (pi < 0 || PV[pi].o !== o) continue; const v = PV[pi].px + upx(k); if (v <= T * 1.15 && v < bv) { bv = v; best = [k, pi]; } } }
+    if (best) { const [k, pi] = best; uprov[k] = pi; PV[pi].px += upx(k); free.delete(k); continue; }
+    let sk = -1, sv = -1; for (const k of free) { const adjP = [...uadj[k]].some(j => uprov[j] >= 0 && PV[uprov[j]].o === o); const v = upx(k) + (adjP ? 1e6 : 0); if (v > sv) { sv = v; sk = k; } }
+    const u = UN[sk]; uprov[sk] = PV.length; PV.push({ n: u.n, o, t: '', tw: 1, f: '', m: '', units: new Set(), pt: null, auto: 1, px: upx(sk) }); free.delete(sk); } }
+// merge auto provinces that stayed small into a same-owner neighbour (or the nearest one for islands)
+const pcen = pi => { let sx = 0, sy = 0, n = 0; for (let k = 0; k < NU; k++) if (uprov[k] === pi) { const [x, y] = proj(UN[k].lon, UN[k].lat); sx += x * upx(k); sy += y * upx(k); n += upx(k); } return n ? [sx / n, sy / n] : [0, 0]; };
+for (let pass = 0; pass < 6; pass++) for (let pi = 0; pi < PV.length; pi++) { const p = PV[pi]; if (!p.auto || p.dead) continue; const ks = []; for (let k = 0; k < NU; k++) if (uprov[k] === pi) ks.push(k);
+  if (!ks.length) { p.dead = 1; continue; } const T = Math.min(...ks.map(k => target(UN[k]))); if (p.px >= T * .3) continue;
+  let to = -1, tv = 1e18; for (const k of ks) for (const j of uadj[k]) { const q = uprov[j]; if (q >= 0 && q !== pi && PV[q].o === p.o && !PV[q].dead && PV[q].px < tv) { tv = PV[q].px; to = q; } }
+  if (to < 0) { const c = pcen(pi); for (let q = 0; q < PV.length; q++) if (q !== pi && PV[q].o === p.o && !PV[q].dead && (PV[q].px > 0)) { const d = Math.hypot(...pcen(q).map((v, i) => v - c[i])); if (d < tv && d < 160) { tv = d; to = q; } } }
+  if (to < 0) continue; for (const k of ks) uprov[k] = to; PV[to].px += p.px; p.px = 0; p.dead = 1; }
+// ---- province raster
+const NONE = -1, PIX = new Int32Array(N0).fill(NONE);
+const sharedPts = new Map(); for (const [k, s] of shared) sharedPts.set(k, s.map(pi => PV[pi].pt ? [pi, PV[pi].pt] : null).filter(Boolean));
+for (let i = 0; i < N0; i++) { const k = U[i]; if (k < 0 || !UN[k].o) continue; const sp = sharedPts.get(k);
+  if (sp && sp.length > 1) { const x = i % W, y = (i / W) | 0; let bp = sp[0][0], bd = 1e18; for (const [pi, q] of sp) { const d = (x - q[0]) ** 2 + (y - q[1]) ** 2; if (d < bd) { bd = d; bp = pi; } } PIX[i] = bp; }
+  else if (uprov[k] >= 0) PIX[i] = uprov[k]; }
+// drop dead/empty provinces, renumber land 0..L-1 (anchors keep their order first)
+const alive = PV.map((p, i) => i).filter(i => !PV[i].dead); const cnt = new Int32Array(PV.length); for (let i = 0; i < N0; i++) if (PIX[i] >= 0) cnt[PIX[i]]++;
+const live = alive.filter(i => cnt[i] > 0); PV.filter((p, i) => !p.auto && !live.includes(i)).forEach(p => console.log('LOST anchor', p.n));
+const remap = new Int32Array(PV.length).fill(-1); live.forEach((pi, j) => remap[pi] = j); for (let i = 0; i < N0; i++) if (PIX[i] >= 0) PIX[i] = remap[PIX[i]];
+const LP = live.map(pi => PV[pi]), NL = LP.length;
+// ---- sea zones: flood the water from the sea seeds (contiguous zones); enclosed lakes and dropped specks go to the nearest land
+const L50 = zlib.gunzipSync(fs.readFileSync(new URL('./realmap/land50.bin.gz', import.meta.url)));   // ocean vs lakes / river gaps inside the land
+for (let i = 0; i < N0; i++) if (L50[i] && PIX[i] === NONE) { const ll = unproj(i % W + .5, ((i / W) | 0) + .5); if (!ll || ll[1] < -59.5) L50[i] = 0; }   // Antarctica is not on the map: open ocean
+const seaSeeds = SEAS.map(s => { const [x, y] = proj(+s[1], +s[2]).map(Math.round); let best = null, bd = 1e9; for (let r = 0; r < 120 && !best; r++) for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= W || yy >= H || PIX[yy * W + xx] !== NONE || L50[yy * W + xx]) continue; const d = dx * dx + dy * dy; if (d < bd) { bd = d; best = yy * W + xx; } } if (best === null) console.log('sea seed on land', s[0]); return best; });
+const OUT = new Uint8Array(N0); for (let i = 0; i < N0; i++) OUT[i] = unproj(i % W + .5, ((i / W) | 0) + .5) ? 0 : 1;   // outside the Equal Earth outline
+{ const q = []; seaSeeds.forEach((i, s) => { if (i !== null && PIX[i] === NONE) { PIX[i] = NL + s; q.push(i); } });
+  for (let pass = 0; pass < 2; pass++) { for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W; for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) if (j >= 0 && j < N0 && PIX[j] === NONE && !L50[j] && (pass || !OUT[j])) { PIX[j] = PIX[i]; q.push(j); } }
+    if (!pass) { const q0 = q.splice(0); for (const i of q0) { const x = i % W; if ([x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W].some(j => j >= 0 && j < N0 && OUT[j] && PIX[j] === NONE)) q.push(i); } } }   // ocean inside the world first, then the margins
+  const q2 = []; for (let i = 0; i < N0; i++) if (PIX[i] >= 0 && PIX[i] < NL) q2.push(i);
+  for (let h = 0; h < q2.length; h++) { const i = q2[h], x = i % W; for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) if (j >= 0 && j < N0 && PIX[j] === NONE) { PIX[j] = PIX[i]; q2.push(j); } }
+  const q3 = []; for (let i = 0; i < N0; i++) if (PIX[i] >= NL) q3.push(i);   // leftovers (Antarctica, dropped specks): the nearest sea zone
+  for (let h = 0; h < q3.length; h++) { const i = q3[h], x = i % W; for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) if (j >= 0 && j < N0 && PIX[j] === NONE) { PIX[j] = PIX[i]; q3.push(j); } }
+  for (let i = 0; i < N0; i++) if (PIX[i] === NONE) PIX[i] = NL; }
+// tiny provinces (Gaza, Bahrain, Singapore...) grow into their own coastal water so they can be clicked
+{ const pc = new Int32Array(NL); for (let i = 0; i < N0; i++) if (PIX[i] < NL) pc[PIX[i]]++;
+  for (let pi = 0; pi < NL; pi++) for (let it = 0; it < 4 && pc[pi] < MINPX; it++) { const add = []; for (let i = 0; i < N0; i++) { if (PIX[i] !== pi) continue; const x = i % W; for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W, i - W - 1, i - W + 1, i + W - 1, i + W + 1]) if (j >= 0 && j < N0 && PIX[j] >= NL) add.push(j); }
+    for (const j of add) if (PIX[j] >= NL && pc[pi] < MINPX + 4) { PIX[j] = pi; pc[pi]++; } } }
+// ---- adjacency
+const adj = Array.from({ length: NL + SEAS.length }, () => new Set());
+for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x, a = PIX[i]; if (OUT[i]) continue; if (x + 1 < W && !OUT[i + 1]) { const b = PIX[i + 1]; if (a !== b) { adj[a].add(b); adj[b].add(a); } } if (y + 1 < H && !OUT[i + W]) { const b = PIX[i + W]; if (a !== b) { adj[a].add(b); adj[b].add(a); } } }
+// same-owner land across a strait of <= 3 px (Messina, Danish belts, Japanese straits...): a ferry/bridge link
+for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const a = PIX[y * W + x]; if (a >= NL) continue;
+  for (const [dx, dy] of [[1, 0], [0, 1], [1, 1], [1, -1]]) { let sea = 0; for (let s = 1; s <= 4; s++) { const xx = x + dx * s, yy = y + dy * s; if (xx < 0 || yy < 0 || xx >= W || yy >= H) break; const b = PIX[yy * W + xx]; if (b >= NL) { sea++; continue; } if (b !== a && sea && LP[b].o === LP[a].o) { adj[a].add(b); adj[b].add(a); } break; } } }
+const pidx = n => { const i = LP.findIndex(p => p.n === n); if (i >= 0) return i; const s = SEAS.findIndex(q => q[0] === n); return s >= 0 ? NL + s : -1; };
+for (const [a, b] of [...SEALINK, ...LANDLINK, ['Istanbul', 'Izmir'], ['Sinai', 'Cairo']]) { const i = pidx(a), j = pidx(b); if (i >= 0 && j >= 0) { adj[i].add(j); adj[j].add(i); } }
+// ---- names: unique, readable
+{ const seen = new Map(); LP.forEach(p => seen.set(p.n, (seen.get(p.n) || 0) + 1)); const anchorN = new Set(LP.filter(p => !p.auto).map(p => p.n));
+  for (const p of LP) if (p.auto && (seen.get(p.n) > 1 || anchorN.has(p.n) || SEAS.some(s => s[0] === p.n))) { const nm = (NATS.find(n => n[0] === p.o) || [...newMin.values()].find(v => v[0] === p.o) || [0, p.o])[1]; p.n = p.n + ' (' + nm + ')'; }
+  const s2 = new Map(); for (const p of LP) { const c = s2.get(p.n) || 0; s2.set(p.n, c + 1); if (c) p.n += ' ' + (c + 1); } }
+// ---- label point = the pixel deepest inside the province (distance to its border); terrain from the real land
+const dist = new Int32Array(N0).fill(-1); { const q = []; for (let i = 0; i < N0; i++) { const x = i % W, a = PIX[i]; if ((x > 0 && PIX[i - 1] !== a) || (x < W - 1 && PIX[i + 1] !== a) || (i >= W && PIX[i - W] !== a) || (i + W < N0 && PIX[i + W] !== a)) { dist[i] = 0; q.push(i); } }
+  for (let h = 0; h < q.length; h++) { const i = q[h], x = i % W; for (const j of [x > 0 ? i - 1 : -1, x < W - 1 ? i + 1 : -1, i - W, i + W]) if (j >= 0 && j < N0 && dist[j] < 0 && PIX[j] === PIX[i]) { dist[j] = dist[i] + 1; q.push(j); } } }
+const lab = new Int32Array(NL + SEAS.length).fill(-1), labD = new Float64Array(NL + SEAS.length).fill(-1);
+for (let i = 0; i < N0; i++) { const a = PIX[i]; const d = dist[i] + (a < NL && LP[a].pt ? -0.02 * Math.hypot(i % W - LP[a].pt[0], ((i / W) | 0) - LP[a].pt[1]) : 0); if (d > labD[a]) { labD[a] = d; lab[a] = i; } }
+const st = Array.from({ length: NL }, () => ({ n: 0, el: 0, es: 0, r: 0, g: 0, b: 0, lat: 0 }));
+for (let i = 0; i < N0; i++) { const a = PIX[i]; if (a >= NL || U[i] < 0) continue; const u = UN[U[i]], s = st[a]; s.n++; s.el += u.el; s.es += u.es; s.r += u.rgb[0]; s.g += u.rgb[1]; s.b += u.rgb[2]; s.lat += u.lat; }
+for (let a = 0; a < NL; a++) { const p = LP[a]; if (p.t) continue; const s = st[a], n = Math.max(1, s.n), el = s.el / n, es = s.es / n, r = s.r / n, g = s.g / n, b = s.b / n, lat = s.lat / n;
+  const coast = [...adj[a]].some(j => j >= NL); p.t = Math.abs(lat) > 60 || el > 3600 ? 's' : el > 1300 || es > 520 ? 'm' : (r - b > 40 && r > g && r + g + b > 430) ? 'd' : (Math.abs(lat) < 14 && g >= r && r + g + b < 420) ? 'j' : coast ? 'c' : 'f'; }
+// nations: old table + every new real-country minor that owns land
+const ownersLive = new Set(LP.map(p => p.o)); const NATS2 = NATS.filter(n => ownersLive.has(n[0])).concat([...newMin.values()].filter(v => ownersLive.has(v[0])).sort((a, b) => a[0] < b[0] ? -1 : 1));
+NATS.filter(n => !ownersLive.has(n[0])).forEach(n => console.log('nation lost all land', n[0]));
+seaSeeds.forEach((i, j) => { if (i !== null && PIX[i] === NL + j) lab[NL + j] = i; });   // a sea zone sits where its seed is (not in a far corner of the ocean)
+const seeds = [...LP.map((p, a) => ({ n: p.n, o: p.o, x: lab[a] % W, y: (lab[a] / W) | 0, t: p.t, tw: p.tw, f: p.f, m: p.m, land: 1 })),
+  ...SEAS.map((s, j) => ({ n: s[0], x: lab[NL + j] % W, y: (lab[NL + j] / W) | 0, c: +s[3], ck: s[4] === 'choke' ? 1 : 0, land: 0 }))];
+const nl = NL, byName = n => seeds.findIndex(s => s.n === n);
+const rivers = [['Kyiv','Donbas'],['Kyiv','Lviv'],['Baghdad','Anbar'],['Baghdad','Mosul'],['Wuhan','Shanghai'],['Berlin','Rhine'],['Paris','Rhine'],['Punjab','Karachi'],['Cairo','Upper Egypt'],['Moscow','Volga'],['Deir ez-Zor','Aleppo'],['Seoul','Pyongyang'],['Seoul','Gangwon'],['Basra','Khuzestan'],['Baghdad','Najaf'],['Basra','Southern Marshes']].map(([a, b]) => [byName(a), byName(b)]).filter(([a, b]) => a >= 0 && b >= 0 && adj[a].has(b));
+// quick-jump regions (lon/lat boxes, projected)
+const box = (l0, b0, l1, b1) => { const pts = []; for (let i = 0; i <= 8; i++) for (const lat of [b0, b1, b0 + (b1 - b0) * i / 8]) for (const lon of [l0, l1, l0 + (l1 - l0) * i / 8]) pts.push(proj(lon, lat)); const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]); const x0 = Math.min(...xs), y0 = Math.min(...ys); return [Math.round(x0), Math.round(y0), Math.round(Math.max(...xs) - x0), Math.round(Math.max(...ys) - y0)]; };
+const REGIONS = [['World', null], ['North America', box(-130, 14, -55, 62)], ['South America', box(-82, -56, -34, 13)], ['Europe & Russia', box(-12, 36, 60, 70)], ['Middle East & N. Africa', box(-8, 12, 63, 42)], ['South Asia', box(60, 5, 97, 37)], ['East Asia', box(97, 18, 146, 54)], ['Africa', box(-18, -35, 52, 20)], ['SE Asia & Oceania', box(92, -47, 179, 22)], ['Levant & Iraq', box(33, 29, 49, 38)]];
+// ---- output
 const lines = [];
-lines.push('// Generated by orch/grandmap-gen.mjs - do not edit by hand. The stylised grand-campaign world map (no real political claims).');
+lines.push('// Generated by orch/grandmap-gen.mjs - do not edit by hand. The grand-campaign world map: real countries and admin-1 provinces (Natural Earth, public domain), Equal Earth projection (no political claims beyond the game factions; borders as in Natural Earth).');
 lines.push('const GM_W=' + W + ',GM_H=' + H + ';');
-lines.push('const GM_NATS=' + JSON.stringify(NATS) + ';   // [code, name, region]');
+lines.push('const GM_NATS=' + JSON.stringify(NATS2) + ';   // [code, name, region]');
 const out = seeds.map((s, i) => s.land ? [s.n, s.o, s.x, s.y, s.t, s.tw, s.f, s.m, [...adj[i]].sort((a, b) => a - b)] : [s.n, null, s.x, s.y, 'w', s.c, s.ck ? 'K' : '', '', [...adj[i]].sort((a, b) => a - b)]);
 lines.push('// [name, owner, x, y, terrain (w = sea zone), towns (sea: turns to cross), flags (sea: K = chokepoint), battle map, neighbours]');
 lines.push('const GM_P=[\n' + out.map(r => JSON.stringify(r)).join(',\n') + '\n];');
 lines.push('const GM_LAND=' + nl + ';   // provinces 0..GM_LAND-1 are land, the rest sea zones');
 lines.push('const GM_RIVER=' + JSON.stringify(rivers.map(([a, b]) => [Math.min(a, b), Math.max(a, b)])) + ';   // major river crossings');
-{ const by = []; const put = n => { while (n >= 128) { by.push((n & 127) | 128); n >>= 7; } by.push(n); }; let cur = real[0] === NONE ? NONE : REALBASE + real[0], run = 0;
-  for (let i = 0; i < real.length; i++) { const v = real[i] === NONE ? NONE : REALBASE + real[i]; if (v === cur) run++; else { put(cur === NONE ? 0 : cur + 1); put(run); cur = v; run = 1; } } put(cur === NONE ? 0 : cur + 1); put(run);
-  fs.writeFileSync(new URL('../src/13f-grandreal.js', import.meta.url), '// Generated by orch/grandmap-gen.mjs - do not edit by hand. Real state/province borders (Natural Earth, public domain) for US/CA/GB/AU, baked as a 1200x600 province-index raster: (index+1 or 0 = none, run) varint pairs, base64.\nconst GM_REAL_W=1200,GM_REAL_H=600;\nconst GM_REAL=\'' + Buffer.from(by).toString('base64') + '\';\n'); }
+lines.push('const GM_REGIONS=' + JSON.stringify(REGIONS) + ';   // quick-jump views [name, [x, y, w, h]]\nGR_REGIONS.splice(0,GR_REGIONS.length,...GM_REGIONS);   // 13-grand.js loads first: swap in the real-map views');
+{ const by = []; const put = n => { while (n >= 128) { by.push((n & 127) | 128); n >>= 7; } by.push(n); }; let cur = PIX[0], run = 0;
+  for (let i = 0; i < N0; i++) { if (PIX[i] === cur) run++; else { put(cur + 1); put(run); cur = PIX[i]; run = 1; } } put(cur + 1); put(run);
+  lines.push('// the whole map as a province-index raster ' + W + 'x' + H + ' (1 px = 1 map unit): (index+1, run) varint pairs, base64');
+  lines.push('const GM_REAL_W=' + W + ',GM_REAL_H=' + H + ',GM_REAL_FULL=1;\nconst GM_REAL=\'' + Buffer.from(by).toString('base64') + '\';');
+  fs.writeFileSync(new URL('../src/13f-grandreal.js', import.meta.url), '// Generated by orch/grandmap-gen.mjs. realmap (2026-11-07): the province raster now lives in 13-grandmap.js (GM_REAL, the whole real-world map).\n');
+  console.log('raster b64 KB', Math.round(Buffer.from(by).length * 4 / 3 / 1024)); }
+{ const b = Buffer.alloc(N0 * 2); for (let i = 0; i < N0; i++) b.writeUInt16LE(PIX[i], 2 * i); fs.writeFileSync(new URL('./realmap/prov.bin.gz', import.meta.url), zlib.gzipSync(b, { level: 9 })); }
 fs.writeFileSync(new URL('../src/13-grandmap.js', import.meta.url), lines.join('\n') + '\n');
-// report
-const near = []; for (let i = 0; i < nl; i++) for (let j = i + 1; j < nl; j++) { const d = Math.hypot(seeds[i].x - seeds[j].x, seeds[i].y - seeds[j].y); if (d < 24) near.push(seeds[i].n + '/' + seeds[j].n + ' ' + Math.round(d)); }
-const isolated = seeds.slice(0, nl).filter((s, i) => ![...adj[i]].some(j => j < nl || seeds[j].land === 0)).map(s => s.n);
-const landless = seeds.slice(0, nl).filter((s, i) => ![...adj[i]].some(j => j < nl)).map(s => s.n);
-console.log('provinces', nl, 'seas', seeds.length - nl, 'rivers', rivers.length, 'close:', near.join(', ') || 'none', '| no land neighbour:', landless.join(', '));
+// old -> new mapping table (every old province name is kept; this lists where it now is)
+{ const old = PR.map(p => p[1]).concat(REALT.map(r => r[1])); const rows = old.map(n => { const i = byName(n); return '| ' + n + ' | ' + (i >= 0 ? i + ' | ' + seeds[i].o + ' | ' + seeds[i].x + ',' + seeds[i].y : '— | — | lost') + ' |'; });
+  fs.writeFileSync(new URL('./realmap/MAPPING.md', import.meta.url), '# realmap: old province -> new province index (generated by orch/grandmap-gen.mjs)\nNames are unchanged; indexes changed (saves made before realmap are refused with a message by grSaveOk/grMapSig).\n\n| old name | new index | owner | x,y |\n|---|---|---|---|\n' + rows.join('\n') + '\n'); }
+const pc = new Int32Array(nl); for (let i = 0; i < N0; i++) if (PIX[i] < nl) pc[PIX[i]]++;
+const small = seeds.slice(0, nl).map((s, i) => [s.n, pc[i]]).filter(r => r[1] < MINPX).map(r => r.join(':'));
+const landless = seeds.slice(0, nl).filter((s, i) => ![...adj[i]].some(j => j < nl)).length, iso = seeds.slice(0, nl).filter((s, i) => !adj[i].size).map(s => s.n);
+console.log('provinces', nl, 'seas', seeds.length - nl, 'nations', NATS2.length, '(new minors ' + (NATS2.length - NATS.filter(n => ownersLive.has(n[0])).length) + ')', 'rivers', rivers.length, '| island provinces', landless, '| isolated:', iso.join(', ') || 'none', '| tiny:', small.join(', ') || 'none');
