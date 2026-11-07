@@ -259,3 +259,4 @@ Taiwan, Philippines, Vietnam, Indonesia, Thailand, Kazakhstan, Afghanistan (styl
 
 ## nations-b2 — 2026-11-06 (Sonnet 5.5)
 Added DZ, MA, NG, ZA, ET, LY, SD (first cut, NEWNAT, Egypt base). See orch/reports/nations-b2.md.
+- laneC 2026-11-07: C1 towns rebuilt as dense street-grid settlements (hip/gable/row/courtyard house meshes, lighter pads); objects 2→3. Gate: smoke PASS; grandtest only fails eco-snowball (sim, not mine); smooth not run (grand-render only).

@@ -45,7 +45,7 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 - [ ] **B8** grand4b rest: great powers, reforms, prestige, hegemonies. (grand6 home-front items → kaizen.)
 
 ## Lane C — Look: $75 studio (priority order; ART-BAR scores decide inside each)
-- [ ] **C1** look1's leftovers + replace boxy towns (GRAND-PICKS look2).
+- [~] **C1** look1 leftovers + replace boxy towns — towns rebuilt 2026-11-07 (laneC: hip/gable/row/courtyard houses on a rotated street grid, lighter pads); look1 leftovers still open.
 - [ ] **C2** Grand map to ART-BAR ≥ 4.5 on every item (geography, colour, light, water, objects, life, performance).
 - [ ] **C3** UI skin: one studio-grade style for top bar, nation panel, army cards, tooltips, battle HUD/sidebar (big readable text, icons, framed panels, consistent fonts), smooth panel animations.
 - [ ] **C4** Battle graphics pass in real gameplay (terrain, lighting, explosions, units at 300 on screen) — CoH/Broken Arrow direction.
