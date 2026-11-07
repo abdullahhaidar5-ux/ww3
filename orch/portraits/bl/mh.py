@@ -20,6 +20,7 @@ def load_base():
 def target(path):
     if path not in _T:
         d = np.zeros_like(_V)
+        if not os.path.exists(D + 'targets/' + path + '.target'): _T[path] = d; return d
         for ln in open(D + 'targets/' + path + '.target'):
             if ln[0] == '#' or not ln.strip(): continue
             p = ln.split(); d[int(p[0])] = [float(x) for x in p[1:4]]

@@ -55,7 +55,7 @@ const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 // Infantry: three realistic rigged soldiers (Western desert-camo marine, Eastern green-camo, Middle-Eastern/militia woodland
 // fatigues) shared by the 18 nations; national colour is a tint over the camo. 'soldier' is the old stand-in.
 // laneE: foot soldiers read too small at gameplay height (Abdullah 2026-11-06 photo) - draw them ~18% bigger (visual only)
-for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.45;c._big=1;}}
+for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.7;c._big=1;}}
 const SOLV={US:'sol_w',EU:'sol_w',FR:'sol_w',DE:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
 const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:74},barracks:{m:'b_barr_me',size:60},factory:{m:'b_fact_me',size:72}};
@@ -893,7 +893,52 @@ function modelFor(e){if(!MODELS.ready||e.isB)return null;if(e.kind==='drone')ret
   SCN.add(o);return o;}
 function playAnim(o,name,dt){const L=o.userData.mixers;if(!L)return;for(const M of L){if(M.cur!==name){const clip=M.anims.find(a=>a.name.toLowerCase().includes(name))||M.anims[0];if(clip){M.mix.stopAllAction();M.mix.clipAction(clip).play();}M.cur=name;}M.mix.update(dt);}}
 function propObj(key,x,z,rot,parent){const c=PROPS[key];if(!c||!MODELS.proto[key])return;const m=instModel(key,null,c.fit,c.size);if(!m)return;m.position.set(x,0,z);m.rotation.y=rot||0;m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});parent.add(m);return m;}
+// DE-BLOCK slice 2: procedural PBR concrete/plaster/corrugated materials (canvas colour + normal map, no external art), roof clutter, parapets, compound wall with gate
+const BKM={};
+function bkTex(kind){if(BKM[kind])return BKM[kind];const N=128,cv=document.createElement('canvas');cv.width=cv.height=N;const cx=cv.getContext('2d'),H=new Float32Array(N*N);let sd=kind.length*7919+13;const rn=()=>(sd=(sd*1664525+1013904223)>>>0)/4294967296;
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){let v=0;if(kind==='tin')v=.5+.5*Math.sin(x/N*Math.PI*2*10)+rn()*.08;else{v=rn()*.5;if(kind==='concrete'&&(x%32===0||y%32===0))v-=.5;}H[y*N+x]=v;}
+  for(let pass=0;pass<(kind==='tin'?0:2);pass++){const C=H.slice();for(let y=0;y<N;y++)for(let x=0;x<N;x++)H[y*N+x]=(C[y*N+x]*2+C[((y+1)%N)*N+x]+C[((y+N-1)%N)*N+x]+C[y*N+(x+1)%N]+C[y*N+(x+N-1)%N])/6;}
+  const im=cx.createImageData(N,N),nm=document.createElement('canvas');nm.width=nm.height=N;const nx=nm.getContext('2d'),ni=nx.createImageData(N,N);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const i=y*N+x,v=H[i],dx=H[y*N+(x+1)%N]-H[y*N+(x+N-1)%N],dy=H[((y+1)%N)*N+x]-H[((y+N-1)%N)*N+x],k=kind==='tin'?.6:1.4;let a=-dx*k,b=-dy*k,l=Math.hypot(a,b,1);a/=l;b/=l;const c=1/l,j=i*4;
+    ni.data[j]=(a*.5+.5)*255;ni.data[j+1]=(b*.5+.5)*255;ni.data[j+2]=(c*.5+.5)*255;ni.data[j+3]=255;const g=kind==='tin'?150+v*70:170+v*70-(kind==='plaster'&&y>N*.8?18:0);im.data[j]=g;im.data[j+1]=g;im.data[j+2]=g;im.data[j+3]=255;}
+  cx.putImageData(im,0,0);nx.putImageData(ni,0,0);const t=new THREE.CanvasTexture(cv),n=new THREE.CanvasTexture(nm);for(const q of [t,n]){q.wrapS=q.wrapT=THREE.RepeatWrapping;}t.colorSpace=THREE.SRGBColorSpace;return BKM[kind]={t,n};}
+function bkMat(kind,col,rep){const T=bkTex(kind),t=T.t.clone(),n=T.n.clone();t.needsUpdate=n.needsUpdate=true;t.repeat.set(rep,rep);n.repeat.set(rep,rep);return new THREE.MeshStandardMaterial({color:col,map:t,normalMap:n,normalScale:new THREE.Vector2(.9,.9),roughness:kind==='tin'?.55:.93,metalness:kind==='tin'?.45:0});}
+function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',2),pl=bkMat('plaster','#b8a98a',2),tin=bkMat('tin','#8c9096',2),dk=new THREE.MeshStandardMaterial({color:0x2c2e2b,roughness:.8,metalness:.3});
+  let top=BH[k]/BSC;try{const bb=new THREE.Box3(),fl=o.userData.parts&&o.userData.parts.flag;for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;bb.expandByObject(c);}if(isFinite(bb.max.y)&&bb.max.y>6)top=bb.max.y;}catch(_){}
+  const G2=new THREE.Group();P.add(G2);const bx=(w,hh,d,x,y,z,m,ry)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),m);q.position.set(x,y,z);if(ry)q.rotation.y=ry;q.castShadow=q.receiveShadow=true;G2.add(q);return q;};
+  const cy=(r1,r2,l,x,y,z,m,sg)=>{const q=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,l,sg||10),m);q.position.set(x,y,z);q.castShadow=q.receiveShadow=true;G2.add(q);return q;};
+  const w=h*.78;
+  for(const sd of [-1,1]){bx(w*2,1.6,1.1,0,top+.8,sd*w,rf);bx(1.1,1.6,w*2,sd*w,top+.8,0,rf);}
+  const r=((e.x|0)*31+(e.y|0)*17)&255,rn=i=>((r*(i+3)*2654435761)>>>0)/4294967296;
+  for(let i=0;i<3;i++){const x=-w*.6+i*w*.55,z=-w*.45+rn(i)*w*.5;bx(4.2,2.6,3.2,x,top+1.3,z,tin);bx(3.4,1.6,.2,x,top+1.5,z+1.65,dk);}
+  {const x=w*.45,z=-w*.35;for(const [a,b] of [[-1,-1],[1,-1],[-1,1],[1,1]])bx(.4,2.2,.4,x+a*1.3,top+1.1,z+b*1.3,dk);cy(2.1,2.1,3.4,x,top+3.9,z,tin,14);cy(.2,1.8,.9,x,top+6.1,z,tin,14);}
+  {const dsh=cy(2.4,.3,.7,-w*.55,top+3.4,w*.5,tin,14);dsh.rotation.set(.9,.5,0);cy(.15,.15,3,-w*.55,top+1.5,w*.5,dk,6);}
+  for(let i=0;i<2;i++){const x=w*.2+i*3,z=w*.45;cy(.12,.12,9+i*4,x,top+4.5+i*2,z,dk,5);bx(2.6,.15,.15,x,top+7+i*3,z,dk);}
+  if(k==='hq'||k==='factory'){bx(5,3,5,w*.1,top+1.5,-w*.1,pl);bx(5.4,.5,5.4,w*.1,top+3.2,-w*.1,rf);}
+  const R=h+(k==='hq'?30:22),gate=7,seg=(x0,z0,x1,z1)=>{const L=Math.hypot(x1-x0,z1-z0),a=Math.atan2(-(z1-z0),x1-x0);return bx(L,5,1.1,(x0+x1)/2,2.5,(z0+z1)/2,rf,a);};
+  const post=(x,z)=>bx(2.2,6.4,2.2,x,3.2,z,rf);
+  seg(-R,-R,R,-R);seg(-R,-R,-R,R);seg(R,-R,R,R);seg(-R,R,-gate,R);seg(gate,R,R,R);
+  for(const [x,z] of [[-R,-R],[R,-R],[-R,R],[R,R],[-gate,R],[gate,R]])post(x,z);
+  bx(gate*2+2.2,1.2,2.2,0,6.4,R,rf);
+  bx(2*R,.5,.3,0,4.8,-R+.7,pl);}
+// DE-BLOCK slice 3: tyre tracks out of the gate, scattered rocks and debris round the base (view only, shared geometry/material)
+let BKTRK=null,BKROCK=null;
+function groundKit(e,o,P){const h=e.size/2,R=h+(e.kind==='hq'?30:22);
+  if(!BKTRK){const c=document.createElement('canvas');c.width=64;c.height=256;const x=c.getContext('2d');x.clearRect(0,0,64,256);for(const cx0 of [14,50]){for(let y=0;y<256;y+=5){x.fillStyle='rgba(52,40,26,'+(.38+Math.random()*.22)+')';x.fillRect(cx0-7,y,14,3);}x.fillStyle='rgba(60,46,30,.28)';x.fillRect(cx0-7,0,14,256);}
+    const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;BKTRK=new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,fog:true});}
+  if(!BKROCK){const g=new THREE.IcosahedronGeometry(1,1),pa=g.attributes.position;for(let i=0;i<pa.count;i++){const x=pa.getX(i),y=pa.getY(i),z=pa.getZ(i),n=1+.28*Math.sin(x*3.1+z*2.3)*Math.cos(y*2.7+x)+.12*Math.sin(z*7.7+y*5.1);pa.setXYZ(i,x*n,y*n*.62,z*n);}g.computeVertexNormals();BKROCK={g,m:[bkMat('concrete','#8d8573',1.5),bkMat('concrete','#a39984',1.5),bkMat('concrete','#776f60',1.5)]};}
+  const r=((e.x|0)*131+(e.y|0)*71+e.kind.length)&1023,rn=i=>{const q=Math.sin((r+1)*(i+1)*12.9898)*43758.5453;return q-Math.floor(q);};
+  const G3=new THREE.Group();P.add(G3);
+  // two curved tyre-track ribbons from the gate toward the front
+  for(let k=0;k<2;k++){const L=70+k*30,w=5.5,bend=(rn(k+40)-.5)*30,pl=new THREE.PlaneGeometry(w,L,1,8);pl.rotateX(-Math.PI/2);const pp=pl.attributes.position,uu=pl.attributes.uv;for(let i=0;i<pp.count;i++){const t=(pp.getZ(i)+L/2)/L;pp.setX(i,pp.getX(i)+bend*t*t);pp.setZ(i,pp.getZ(i)+L/2+R);uu.setY(i,uu.getY(i)*L/40);}
+    const m=new THREE.Mesh(pl,BKTRK);m.position.set((k?-1:1)*(k?4:2),.35,0);m.renderOrder=2;G3.add(m);}
+  // rocks: 3 clusters, bigger ones outside the wall
+  const nr=9+(rn(3)*6|0);for(let i=0;i<nr;i++){const a=rn(i)*6.283,d=R+14+rn(i+9)*60,sx=1.3+rn(i+20)*3.6,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<14&&z>0)continue;
+    const m=new THREE.Mesh(BKROCK.g,BKROCK.m[i%3]);m.scale.set(sx,sx*(.8+rn(i+30)*.6),sx*(.8+rn(i+50)*.5));m.position.set(x,sx*.22,z);m.rotation.y=rn(i+60)*6.3;m.castShadow=m.receiveShadow=true;G3.add(m);}
+  // debris by the wall: broken blocks, tyres, scrap sheets
+  for(let i=0;i<7;i++){const a=rn(i+70)*6.283,d=R+3+rn(i+80)*10,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<12&&z>0)continue;const m=new THREE.Mesh(new THREE.BoxGeometry(1.2+rn(i)*2,.5+rn(i+5)*.9,1+rn(i+9)*2),BKROCK.m[(i+1)%3]);m.position.set(x,.35,z);m.rotation.set((rn(i+11)-.5)*.5,rn(i+12)*6.3,(rn(i+13)-.5)*.5);m.castShadow=m.receiveShadow=true;G3.add(m);}}
 function decorateBld(e,o){if(!MODELS.ready)return;const h=e.size/2;const P=new THREE.Group();o.add(P);
+  if(['hq','barracks','factory','depot'].includes(e.kind)){try{roofKit(e,o,P);}catch(err){console.warn('roofKit',err);}try{groundKit(e,o,P);}catch(err){console.warn('groundKit',err);}}
   const T=G.teams[e.team];if(T&&MEFAC.has(T.fac)&&(e.kind==='turret'||e.kind==='sam')){propObj('crate',h+6,h+4,.3,P);return;}// HESCO ring instead of sandbag props
   if(e.kind==='hq'){propObj('watertower',-h-14,-h+6,0,P);propObj('container',h+20,-h+18,Math.PI/2,P);propObj('containerG',h+20,-h+52,Math.PI/2,P);propObj('barrel',-h-8,h+6,0,P);propObj('barrel',-h-14,h+10,0,P);propObj('fence',-14,h+16,0,P);for(let i=-2;i<=2;i++)propObj('sandbag',i*13,h+30+(i%2)*2,(i%2)*.12,P);propObj('sandbag',-34,h+22,1.2,P);propObj('sandbag',34,h+22,-1.2,P);propObj('crate',h+6,h+18,.3,P);}
   else if(e.kind==='barracks'){propObj('tent',0,h+30,0,P);propObj('sandbag',-h-6,h-8,Math.PI/2,P);propObj('sandbag',h+6,h-8,Math.PI/2,P);propObj('crate',h+8,-h+6,.3,P);propObj('crate',h+12,-h+14,0,P);}

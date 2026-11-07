@@ -28,7 +28,7 @@ def mathn(nt, op, a, b=None, clamp=False):
         else: n.inputs[i].default_value = x
     return n.outputs[0]
 
-def skin(tone, age, hcol=None, yellow=0.):
+def skin(tone, age, hcol=None, yellow=0., tex=None, tint=(1, 1, 1)):
     """tone 0 (pale) .. 1 (dark brown). returns material. vertex colour attrs: lips cheek nose eyes brow fore laugh"""
     m, nt, out = mat('skin'); b = nt.nodes.new('ShaderNodeBsdfPrincipled'); nt.links.new(b.outputs[0], out.inputs[0])
     pale = np.array([.74, .55, .46]); dark = np.array([.30, .19, .14]); mid = np.array([.55, .38, .29])
@@ -48,6 +48,15 @@ def skin(tone, age, hcol=None, yellow=0.):
     col = mixrgb(nt, col, tuple(base * .12), mathn(nt, 'MULTIPLY', attr(nt, 'lid'), 1.0))
     lipc = tuple(np.clip(base * np.array([.92, .46, .46]), 0, 1))
     col = mixrgb(nt, col, lipc, mathn(nt, 'MULTIPLY', attr(nt, 'lips'), .9))
+    if tex:   # real MakeHuman skin texture (pack): base colour from the photo-based map, tinted to the person's tone
+        import mhclo
+        ti = nt.nodes.new('ShaderNodeTexImage'); ti.image = mhclo.image(tex); ti.interpolation = 'Cubic'
+        uvn = nt.nodes.new('ShaderNodeUVMap'); uvn.uv_map = 'UV'; nt.links.new(uvn.outputs[0], ti.inputs[0])
+        mul = nt.nodes.new('ShaderNodeMix'); mul.data_type = 'RGBA'; mul.blend_type = 'MULTIPLY'; mul.inputs[0].default_value = 1.0
+        nt.links.new(ti.outputs['Color'], mul.inputs[6]); mul.inputs[7].default_value = (*tint, 1)
+        col = mixrgb(nt, col, mul.outputs[2], mathn(nt, 'ADD', .94, 0))
+        col = mixrgb(nt, col, hairc, mathn(nt, 'MULTIPLY', attr(nt, 'under'), .55))
+        col = mixrgb(nt, col, lipc, mathn(nt, 'MULTIPLY', attr(nt, 'lips'), .18))
     # freckles/age spots
     vor = nt.nodes.new('ShaderNodeTexVoronoi'); vor.inputs['Scale'].default_value = 90; vor.feature = 'F1'; nt.links.new(tc.outputs['Object'], vor.inputs['Vector'])
     spot = mathn(nt, 'LESS_THAN', vor.outputs['Distance'], .06 if age > 55 else 0.0)
@@ -56,8 +65,8 @@ def skin(tone, age, hcol=None, yellow=0.):
     nt.links.new(col, b.inputs['Base Color'])
     b.inputs['Subsurface Weight'].default_value = .55 - .25 * tone; b.inputs['Subsurface Scale'].default_value = .035
     b.inputs['Subsurface Radius'].default_value = (.8, .35, .22)
-    b.inputs['Roughness'].default_value = .5; b.inputs['Specular IOR Level'].default_value = .35
-    b.inputs['Coat Weight'].default_value = .05; b.inputs['Coat Roughness'].default_value = .3
+    b.inputs['Roughness'].default_value = .56; b.inputs['Specular IOR Level'].default_value = .2
+    b.inputs['Coat Weight'].default_value = 0.0; b.inputs['Coat Roughness'].default_value = .3
     # bump: pores + fine noise + wrinkles
     pores = nt.nodes.new('ShaderNodeTexVoronoi'); pores.inputs['Scale'].default_value = 190; pores.feature = 'F1'; nt.links.new(tc.outputs['Object'], pores.inputs['Vector'])
     fine = nt.nodes.new('ShaderNodeTexNoise'); fine.inputs['Scale'].default_value = 330; fine.inputs['Detail'].default_value = 3; nt.links.new(tc.outputs['Object'], fine.inputs['Vector'])
@@ -93,7 +102,7 @@ def eye(iris, dark=False):
     col = mixrgb(nt, sc, ic, irisf)
     col = mixrgb(nt, col, (.005, .005, .005), pup)
     nt.links.new(col, b.inputs['Base Color'])
-    b.inputs['Roughness'].default_value = .12; b.inputs['Coat Weight'].default_value = .7; b.inputs['Coat Roughness'].default_value = .03
+    b.inputs['Roughness'].default_value = .12; b.inputs['Coat Weight'].default_value = .4; b.inputs['Coat Roughness'].default_value = .05
     b.inputs['Specular IOR Level'].default_value = .8
     return m
 
