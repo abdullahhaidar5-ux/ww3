@@ -18615,7 +18615,7 @@ function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(s
   const byReg={};for(const c of grMajors()){const r=grNat(c).reg;(byReg[r]=byReg[r]||[]).push(c);}
   if(false)for(const r of Object.keys(byReg).sort()){const L=byReg[r].sort((a,b)=>GCM.P[GC.nat[a].cap].x-GCM.P[GC.nat[b].cap].x);if(L.length>=2)for(let i=0;i<L.length;i++){const a=L[i],b=L[(i+1)%L.length];if(a!==b)GC.war[grWk(a,b)]=1;}}
   if(GC.me&&!GR_REAL.wars.concat(GR_REAL.tn).some(x=>x.includes(GC.me))&&!Object.keys(GC.war).some(k=>k.split('|').includes(GC.me))){let best=null,bd=1e9;for(const c of grMajors())if(c!==GC.me){const d=grDist(GC.nat[c].cap,GC.nat[GC.me].cap);if(d<bd){bd=d;best=c;}}if(best)GC.war[grWk(GC.me,best)]=1;}
-  geEnsure();grRealApply(quick);GC.sc=GR_SCEN.some(x=>x.id===o.sc)?o.sc:'me26';grScenApply(GC.sc,quick);
+  geEnsure();grRealApply(quick);GC.sc=GR_SCEN.some(x=>x.id===o.sc)?o.sc:'me26';grScenApply(GC.sc,quick);try{for(const c of Object.keys(GC.nat))gfInit(c);}catch(e){console.error('gfInit',e);}
   grLog('The campaign begins. '+(GC.me?GCM.nats.get(GC.me).name+' takes the field.':'Observer mode.'),GC.me);
   return GC;}
 /* RG6 scenario starts (laneA 2026-11-07): each scenario is a preset ON TOP of the realistic start (grRealApply) — extra opening wars,
@@ -18696,7 +18696,7 @@ function grQueue(auto){for(;;){if(GC.qi>=GC.q.length)return grFinishTurn();const
 function grBattleAuto(b){if(!b.att.some(id=>GC.armies.some(a=>a.id===id))){b.done=1;return null;}const R=grRng(GC.seed*7+GC.turn*131+b.p);const r=grAuto(b,R);grSettle(b,r.win,'auto');return r;}
 function grBattleDone(b,win,how){grSettle(b,win,how||'live');GC.qi++;grSave();return grQueue(false);}
 // who stays, who falls back, who dies. `win` is 'att' or 'def'; losers with a province to fall back to keep their survivors, the rest are lost
-function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;try{GC.mil.foe=win==='att'?b.an:b.dn;gmilBattle(b,win);}catch(e){console.error('gmilBattle',e);}   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
+function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;try{gfBattle(b,win);}catch(e){console.error('gfBattle',e);}try{GC.mil.foe=win==='att'?b.an:b.dn;gmilBattle(b,win);}catch(e){console.error('gmilBattle',e);}   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
   b.done=1;const pn=P[b.p].n;
   const losers=win==='att'?def:att,winners=win==='att'?att:def;
   for(const a of losers){a.path=[];if(!a.u.length){grDrop(a);continue;}
@@ -19218,7 +19218,7 @@ setInterval(()=>{try{grandHud();}catch(e){}},1000);
 /* ---- A3b army morale (laneF): ONE bar per army, styles from MSTYLES (01-data); a.mor 0..100 saved with the army ---- */
 const GMOR_MAX={zeal:100,prof:100,home:90,fire:80};   /* base ceilings; home defenders get +10 on core land, see gmMorMax */
 function gmMorStyle(a){return MORALE_STYLE[(typeof grNat==='function'?grNat(a.o).fac:a.o)]||'home';}
-function gmMorMax(a){const s=gmMorStyle(a);let m=GMOR_MAX[s]||90;if(s==='home'&&GC&&GC.prov[a.at]&&GC.prov[a.at].o===a.o)m=100;return m;}
+function gmMorMax(a){const s=gmMorStyle(a);let m=GMOR_MAX[s]||90;if(s==='home'&&GC&&GC.prov[a.at]&&GC.prov[a.at].o===a.o)m=100;try{m=Math.max(m,Math.min(100,m+gfTradMor(a.o)));}catch(e){}return m;}
 function gmMor(a){return a.mor==null?gmMorMax(a):Math.max(0,Math.min(gmMorMax(a),a.mor));}
 function gmMorMul(a){return .8+.2*gmMor(a)/100;}   /* auto-resolve strength: broken armies fight at 80% */
 function gmMorBattle(losers,winners){for(const a of losers){const s=gmMorStyle(a);let d=30;if(s==='zeal')d=15;else if(s==='prof')d=24;else if(s==='fire')d=40;
@@ -19357,7 +19357,7 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   const score=GC.me?grScore(GC.me):0;
   t.innerHTML='';if(N){t.appendChild(guEl('span','display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #fff;background:'+N.color));t.appendChild(guEl('b','font-size:17px',GCM.nats.get(GC.me).name));}
   t.appendChild(guEl('span','opacity:.9','<b id="gDate">'+(GC.ph==='plan'?grDateStr(GC.turn,GC.day|0):grDateStr(GC.turn+1,0))+'</b> <span style="opacity:.65">month '+Math.min(GC.turn,GC.maxTurn)+'/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')+'</span>'));guClockUI(t);
-  if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/month)</span>'));
+  if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/month)</span>'));if(me&&typeof gfChip==='function')t.appendChild(guEl('span','',gfChip()));   /* A5 force limit chip */
   if(me)t.appendChild(guEl('span','opacity:.9','Score <b>'+score+'</b> · provinces <b>'+GCM.P.filter(p=>p.land&&GC.prov[p.i].o===GC.me).length+'</b>'));
   try{geUiTop(t,me);}catch(e){console.error('geUiTop',e);}try{gmilUiTop(t,me);}catch(e){console.error('gmilUiTop',e);}
   const rg=guEl('span','display:flex;gap:4px;flex-wrap:wrap;margin-left:auto');for(const [nm,r] of GR_REGIONS){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#dfe8f0;cursor:pointer;font-size:13px',nm);b.type='button';b.onclick=()=>{guFit(r);guRedraw();};rg.appendChild(b);}t.appendChild(rg);
@@ -21753,6 +21753,28 @@ function g3ShipTick(dt,s){
     D.position.set(x,.35+Math.sin(G3.time*1.3+sh.seed)*.12,z);D.rotation.set(0,Math.atan2(dx,dz),0,'YXZ');D.scale.setScalar(sc);D.updateMatrix();S.m[sh.k].setMatrixAt(cnt[sh.k]++,D.matrix);
     D.position.y=.2;D.scale.set(sc*2.3,1,sc*(6+3*Math.sin(G3.time*2+sh.seed)));D.position.x=x-Math.sin(D.rotation.y)*sc*4.4;D.position.z=z-Math.cos(D.rotation.y)*sc*4.4;D.updateMatrix();S.wk.setMatrixAt(w++,D.matrix);}
   for(let k=0;k<2;k++){S.m[k].count=cnt[k];S.m[k].instanceMatrix.needsUpdate=true;}S.wk.count=w;S.wk.instanceMatrix.needsUpdate=true;}
+// A5 FORCE LIMIT + ARMY TRADITION (laneA 2026-11-07, EU4-style; data rows in the ONE modifier engine 13k, no second upkeep system).
+// Force limit = the army value a nation can field at normal upkeep. It starts 15% above each nation's opening army (realistic start)
+// and grows/shrinks with the development it holds (conquest raises it, losing land lowers it); GMOD stat 'forceLimit' scales it.
+// Over the limit: upkeep x1.5 (row 'fl_over'). Army tradition 0-100: battles raise it (winner +6, loser +2), it fades 2%/month;
+// it raises every army's max morale (+1 per 10, hook in 13b gmMorMax) and at 50+/80+ adds manpower/war-support rows.
+// State: N.fl0 (start limit), N.dv0 (start development), N.trad — all in GC.nat, so saves and determinism keep working.
+function gfDev(c){let d=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i]&&GC.prov[p.i].o===c)d+=p.dev||1;return d;}
+function gfInit(c){const N=GC&&GC.nat[c];if(!N)return null;if(N.fl0===undefined){N.fl0=Math.max(4000,Math.round(geArmyVal(c)*1.15));N.dv0=Math.max(1,gfDev(c));}if(N.trad===undefined)N.trad=10;return N;}
+function grFL(c){const N=gfInit(c);if(!N)return 0;return Math.round(N.fl0*Math.max(.25,gfDev(c)/N.dv0)*gmod('nation',c,'forceLimit',1));}
+function gfOver(c){const N=GC&&GC.nat[c];return !!N&&!N.dead&&geArmyVal(c)>grFL(c);}
+GMOD_COND.overfl=k=>gfOver(k);
+GMOD_COND.trad=(k,arg)=>{const N=GC&&GC.nat[k];return !!N&&(N.trad|0)>=(+arg||0);};
+GMOD_ROWS.push({id:'fl_over',src:'Over force limit',scope:'nation',stat:'upkeep',mul:1.5,cond:'overfl'},
+  {id:'trad50',src:'Army tradition 50+',scope:'nation',stat:'manpower',add:.10,cond:'trad:50'},
+  {id:'trad80',src:'Army tradition 80+',scope:'nation',stat:'warSupport',add:.03,cond:'trad:80'});
+if(typeof GMOD_STATS==='object'){GMOD_STATS.upkeep=GMOD_STATS.upkeep||'Army upkeep';GMOD_STATS.manpower=GMOD_STATS.manpower||'Manpower';GMOD_STATS.forceLimit='Force limit';}
+GMOD_HOOKS.push(()=>{for(const c of Object.keys(GC.nat)){const N=gfInit(c);if(N&&!N.dead)N.trad=Math.round(N.trad*.98*10)/10;}});
+function gfBattle(b,win){for(const [c,w] of [[b.an,win==='att'],[b.dn,win!=='att']]){const N=gfInit(c);if(N)N.trad=Math.min(100,(N.trad||0)+(w?6:2));}}
+function gfTradMor(o){const N=GC&&GC.nat[o];return N?Math.floor((N.trad||0)/10):0;}
+// top-bar chip (13c guTop hook): "Army 82k / 100k" — red when over the limit
+function gfChip(){if(!GC||!GC.me||!GC.nat[GC.me])return '';const v=geArmyVal(GC.me),L=grFL(GC.me),o=v>L,N=GC.nat[GC.me];
+  return '<span title="Force limit: armies above it cost 50% more upkeep. It grows with the land you hold. Army tradition '+Math.round(N.trad||0)+'/100 (battles raise it; it lifts army morale)" style="opacity:.92'+(o?';color:#ff9d8e':'')+'">⚔ <b>'+Math.round(v/1000)+'k</b>/'+Math.round(L/1000)+'k · ★'+Math.round(N.trad||0)+'</span>';}
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.

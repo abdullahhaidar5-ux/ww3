@@ -63,6 +63,13 @@ try {
     return { foes: foes.length, seen, e, after, own, cash: GC.nat.IR.cash, hashSame: (() => { grNew({ me: 'IR', seed: 77, len: 'quick' }); return grHash() === h0; })() }; });
   console.log('fog', JSON.stringify(fog));
   if (!(fog.seen < fog.foes) || fog.seen === 0 || fog.e !== '' || !fog.after || !fog.own || fog.cash !== 5000 - 400 || !fog.hashSame) fails.push('fog/spies: ' + JSON.stringify(fog));
+  // ---- A5 force limit + tradition: start under the limit, over it = upkeep x1.5 via the modifier engine, battles raise tradition
+  const fl = await ev(() => { grNew({ me: 'IR', seed: 55, len: 'quick' }); const v0 = geArmyVal('IR'), L = grFL('IR'), under = !gfOver('IR'); const t0 = GC.nat.IR.trad;
+    gfBattle({ an: 'IR', dn: 'AZ' }, 'att'); const t1 = GC.nat.IR.trad; const A = GC.armies.find(a => a.o === 'IR'); A.u = A.u.concat(grGenUnits(grNat('IR').fac, L, false)); GMOD_C.cache.clear();
+    const over = gfOver('IR'), up = gmod('nation', 'IR', 'upkeep', 1); const allUnder = Object.keys(GC.nat).filter(c => c !== 'IR' && !GC.nat[c].dead).every(c => !gfOver(c));
+    return { v0, L, under, t0, t1, over, up, allUnder, chip: /⚔/.test(gfChip()) }; });
+  console.log('forcelimit', JSON.stringify(fl));
+  if (!fl.under || !fl.over || Math.abs(fl.up - 1.5) > .01 || !(fl.t1 > fl.t0) || !fl.allUnder || !fl.chip) fails.push('force limit/tradition: ' + JSON.stringify(fl));
   // ---- MILITARY (grand3): generals, front lines, map strikes, fleets & sea zones; determinism over 20 turns with all of it active
   {
     const run20 = () => { grNew({ me: null, seed: 31337, len: 'std' }); const seen = { strike: 0, intercept: 0, sea: 0, gen: 0, blockade: 0 };
