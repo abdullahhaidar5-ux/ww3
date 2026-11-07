@@ -50,7 +50,7 @@ function grKindName(fac,k){try{return stats(fac,k).name;}catch(e){return k;}}
 
 // ---------- new campaign ----------
 function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(seed);
-  GC={v:1,seed,len:quick?'quick':'std',maxTurn:quick?25:60,turn:1,me:o.me===undefined?'IR':o.me,nat:{},prov:[],armies:[],aid:1,war:{},log:[],q:[],qi:0,ph:'plan',over:null,res:null};
+  GC={v:1,seed,len:quick?'quick':'std',maxTurn:quick?25:60,turn:1,me:o.me===undefined?'IR':o.me,nat:{},prov:[],armies:[],aid:1,war:{},log:[],q:[],qi:0,ph:'plan',over:null,res:null,ms:grMapSig()};
   const codes=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))];
   GM_P.slice(0,GM_LAND).forEach((r,i)=>{GC.prov.push({o:r[1],o0:r[1],gar:[],tax:1,un:15,cv:0,rq:[]});});
   for(const c of codes){const N=grNat(c),ps=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c);const cap=ps.find(p=>p.cap)||ps[0];
@@ -215,7 +215,11 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
 
 // ---------- save ----------
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){}}
-function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!o||o.v!==1)return null;GC=o;try{geEnsure();}catch(e){}return GC;}catch(e){return null;}}
+// a save only fits the world map it was made on (provinces are stored by index): a save from an older map (the map grew
+// 174 -> 236 -> 280 provinces on 2026-11-06) loaded into a newer one broke the map and the Fight-it battles (laneA A1)
+function grMapSig(){grMap();let h=0;for(const p of GCM.P){const s=p.n||'';for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;}return GCM.P.length+':'+(h>>>0).toString(36);}
+function grSaveFits(o){return !!(o&&o.v===1&&Array.isArray(o.prov)&&(o.ms?o.ms===grMapSig():o.prov.length===GCM.P.length));}
+function grLoad(){try{const s=localStorage.getItem(GR_KEY);if(!s)return null;grMap();const o=JSON.parse(s);if(!grSaveFits(o))return null;GC=o;try{geEnsure();}catch(e){}return GC;}catch(e){return null;}}
 function grClear(){try{localStorage.removeItem(GR_KEY);}catch(e){}GC=null;}
 // test/AI-only: run n turns with every nation under AI control; battles auto-resolve
 function grRunAI(n){for(let i=0;i<n&&!GC.over;i++){grEndTurn(true);}return grHash();}
