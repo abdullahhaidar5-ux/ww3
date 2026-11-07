@@ -23446,7 +23446,7 @@ async function gnJoin(raw){if(GNT.on)return 'busy';const code=String(raw||'').to
   hi();GNT.hiI=setInterval(hi,1500);return '';}
 function gnApply(o,day){if(!GNT.cl||!o||!Array.isArray(o.prov))return;if(GNT.bat&&GNT.bat.shown){GNT.stash=[o,day];return;}   /* never swap the world under a battle in progress */const first=!GC||!GNT.got;GC=o;GC.me=GNT.nat;GC.day=day|0;GNT.got=1;
   if(!GNT.hostPeer&&GNT.g){const q=GNT.g.peers().find(x=>!x.sameTab);if(q)GNT.hostPeer=q.peer;}
-  if(first||!document.getElementById('grandScreen')){campClose();grandOpen();}else{try{grandMapRefresh();}catch(e){console.error('gn refresh',e);}}gnBatTry();}
+  if(first||!document.getElementById('grandScreen')){campClose();grandOpen();}else{try{grandMapRefresh();}catch(e){console.error('gn refresh',e);}}gnBatTry();try{gnChip();}catch(e){}}
 function gnLeave(){clearInterval(GNT.hiI);gnHook(false);if(GNT.g){try{GNT.g.leave().catch(()=>{});}catch(e){}}if(GNT.host&&typeof NET!=='undefined'&&NET.room)NET.room.presence({gg:null}).catch(()=>{});
   const wasCl=GNT.cl;Object.assign(GNT,{on:0,host:0,cl:0,code:'',g:null,nat:'',hum:{},last:'',parts:{},free:null,got:0,hostPeer:null,me:null});
   if(wasCl){GC=null;try{grLoad();}catch(e){}}const c=document.getElementById('gnChip');if(c)c.remove();}
@@ -23479,6 +23479,8 @@ function gnChip(){const sc=document.getElementById('grandScreen');let c=document
   if(!c){c=guEl('div','position:absolute;right:12px;bottom:12px;z-index:7;background:rgba(10,16,22,.9);border:1px solid #4a6580;border-radius:6px;padding:5px 10px;font-size:13px;cursor:pointer');c.id='gnChip';sc.appendChild(c);}
   const fr=Object.entries(GNT.hum).filter(([k,h])=>h.peer).map(([k])=>gnName(k));
   c.innerHTML=GNT.host?'Online · code <b>'+GNT.code.toUpperCase()+'</b> · '+(fr.length?'with '+fr.join(', '):'waiting for friends'):'Online · you lead <b>'+gnName(GNT.nat)+'</b>';
+  {const b=GC&&GC.ph==='resolve'&&GC.q&&GC.q[GC.qi];   /* A2b: everyone sees which battle the map is waiting on */
+   if(b&&!b.done&&GCM.P[b.p])c.innerHTML+='<div style="margin-top:3px;color:#ffb35c">&#9876; Battle for <b>'+GCM.P[b.p].n+'</b>: '+gnName(b.an)+' vs '+gnName(b.dn)+' — the map waits for the result</div>';}
   c.title=GNT.host?'Click to copy the invite code':'';c.onclick=()=>{if(!GNT.host)return;const t='Join my World War 3 grand campaign: Grand campaign → Online campaign → code '+GNT.code.toUpperCase();try{navigator.clipboard.writeText(t);GV.hint='Invite copied: code '+GNT.code.toUpperCase();guHint();}catch(e){}};}
 /* hooks: the menu gets the Online item; New campaign for friends hosts once the map opens; leaving the map leaves the room */
 (function(){const _gm=grandMenu;grandMenu=function(){_gm();const s=document.getElementById('campScreen');if(!s)return;const bs=[...s.querySelectorAll('button')],back=bs.find(b=>b.textContent==='Back');
@@ -23501,11 +23503,11 @@ function gnBattleFor(b){if(!GNT.host||!GC)return '';const inv=new Set([b.an,b.dn
   if(GC.me&&inv.has(GC.me))return '';for(const c of [b.an,b.dn,...[...inv].sort()]){const h=GNT.hum[c];if(h&&h.peer)return c;}return '';}
 function gnBattleAsk(b,nat){const qi=GC.qi,w=GNT.bw={qi,nat,t:GC.turn,go:0,p:b.p};GNT.last='';
   gnPush().catch(e=>console.error('gnPush',e)).then(()=>{if(GNT.bw===w&&GNT.hum[nat])gnEmit('gbat',{to:GNT.hum[nat].peer,qi,t:GC.turn});});
-  clearTimeout(GNT.bwT);GNT.bwT=setTimeout(()=>{if(GNT.bw===w&&!w.go)gnBatAuto('late');},90000);gnBatUI();}
+  clearTimeout(GNT.bwT);GNT.bwT=setTimeout(()=>{if(GNT.bw===w&&!w.go)gnBatAuto('late');},90000);gnBatUI();try{gnChip();}catch(e){}}
 function gnBatUI(){const w=GNT.bw;if(!w)return;const P=GCM.P[w.p];
   GNT.bwM=guModal('<div style="opacity:.7;font-size:13px">BATTLE · '+grMonStr(GC.turn).toUpperCase()+'</div><h2 style="margin:2px 0 8px;font-size:22px">'+P.n+'</h2><div style="margin-bottom:12px">'
     +(w.go?'<b>'+gnName(w.nat)+'</b> is fighting this battle live. The map waits for the result.':'Waiting for <b>'+gnName(w.nat)+'</b> to choose: fight it live or auto-resolve…')+'</div>',[['Auto-resolve now',()=>{GNT.bwM=null;gnBatAuto('host');},0]]);}
-function gnBatEnd(){const w=GNT.bw;GNT.bw=null;clearTimeout(GNT.bwT);if(GNT.bwM){GNT.bwM.remove();GNT.bwM=null;}return w;}
+function gnBatEnd(){const w=GNT.bw;GNT.bw=null;clearTimeout(GNT.bwT);if(GNT.bwM){GNT.bwM.remove();GNT.bwM=null;}try{gnChip();}catch(e){}return w;}
 function gnBatAuto(why){const w=gnBatEnd();if(!w||GC.turn!==w.t||GC.qi!==w.qi)return;const b=GC.q[w.qi];const h=GNT.hum[w.nat];
   if(why!=='friend'&&h&&h.peer)gnEmit('gbx',{to:h.peer,why});GNT.dirty=1;GNT.ui=1;grBattleDone(b,grBattleAuto2(b),'auto');try{grandMapRefresh();}catch(e){}}
 function gnBatMsg(nat,d){const w=GNT.bw;if(!w||w.nat!==nat||(d.qi|0)!==w.qi)return;
