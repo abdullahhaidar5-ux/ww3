@@ -23,7 +23,7 @@ for(const f of ['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN'
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
 // and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
-const WESTVEH=['US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF'];
+const WESTVEH=['MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF'];
 Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',GB:'kf51',AU:'abrams',CA:'kf51',IL:'merkava',EU:'kf51',FR:'kf51',DE:'kf51',TR:'kf51'});
 // Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
 // Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
@@ -1051,6 +1051,25 @@ const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
  NATX_FLAG.KZ=c=>{const{x,rect,circ,W,H}=c;rect('#00afca',0,0,W,H);circ(60,34,14,'#fec50c');for(let i=0;i<16;i++){const a=i/16*6.283;x.fillStyle='#fec50c';x.beginPath();x.moveTo(60+Math.cos(a-.1)*15,34+Math.sin(a-.1)*15);x.lineTo(60+Math.cos(a)*21,34+Math.sin(a)*21);x.lineTo(60+Math.cos(a+.1)*15,34+Math.sin(a+.1)*15);x.fill();}};
  NATX_FLAG.AF=c=>{c.hs(['#2f3b2a','#c9c2a2','#5a6b45']);c.circ(60,36,9,'#c9c2a2');c.circ(60,36,5,'#2f3b2a');};
  NATX_FLAG.OM=c=>{const{x,rect,W,H}=c;rect('#fff',0,0,W,H/3);rect('#db161b',0,H/3,W,H/3);rect('#008000',0,2*H/3,W,H/3);rect('#db161b',0,0,28,H);x.fillStyle='#fff';x.fillRect(10,22,8,2);x.fillRect(8,30,12,3);x.fillRect(10,38,8,2);};}
+
+// nations-b2: Algeria, Morocco, Nigeria, South Africa, Ethiopia, Libya, Sudan (LY/SD neutral stylised national armies) - looks on the shared models (visual only)
+{const L={ DZ:{tk:'t90',he:'mi28',je:'su35',sol:'sol_e',fl:{veh:'#8a7a4e',ca:'#a89464',cb:'#5a5236',uni:'#8a8052',pat:0},cx:{p:0,s:1,c:'#8a7a4e',t:'#1b7a3d',w:3},ax:{b:'#878d91',p:3,h:{b:'#c9b48c',p:3}},ch:'#6a5f42',rt:'#c9b48c',nv:'slav'},
+ MA:{tk:'abrams',he:'apache',je:'f16',sol:'sol_w',fl:{veh:'#a89466',ca:'#a08c5c',cb:'#5c4e32',uni:'#a4966a',pat:0},cx:{p:0,s:1,c:'#a89466',t:'#b3262e',w:3},ax:{b:'#878d91',p:3,h:{b:'#cdb68a',p:3}},ch:'#6a5f42',rt:'#cdb68a'},
+ NG:{tk:'kf51',he:'mi24',je:'mig29',sol:'sol_w',fl:{veh:'#5f6a3e',ca:'#4a5a30',cb:'#3a3a28',uni:'#566a3a',pat:1},cx:{p:1,s:1,c:'#5f6a3e',t:'#008751',w:3},ax:{b:'#878d91',p:3,h:{b:'#b3ae98',p:3}},ch:'#4a5535',rt:'#b3ae98'},
+ ZA:{tk:'kf51',he:'apache',je:'typhoon',sol:'sol_w',fl:{veh:'#7a7452',ca:'#8a7a52',cb:'#4a4430',uni:'#7a7a50',pat:0},cx:{p:0,s:1,c:'#7a7452',t:'#007749',w:3},ax:{b:'#878d91',p:3,h:{b:'#b9b49c',p:3}},ch:'#5a5a3e',rt:'#b9b49c'},
+ ET:{tk:'t90',he:'mi24',je:'su35',sol:'sol_e',fl:{veh:'#6a6a44',ca:'#5a6a3a',cb:'#3a3a28',uni:'#66684a',pat:1},cx:{p:1,s:1,c:'#6a6a44',t:'#078930',w:3},ax:{b:'#878d91',p:3,h:{b:'#b3ae9a',p:3}},ch:'#4c5636',rt:'#b3ae9a',nv:'slav'},
+ LY:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#a89466',ca:'#b09c6c',cb:'#6a5a3a',uni:'#a8986a',pat:0},cx:{p:0,s:1,c:'#a89466',t:'#4a4f55',w:3},ax:{b:'#878d91',p:3,h:{b:'#c1b08a',p:3}},ch:'#6a5f42',rt:'#c1b08a',nv:'slav'},
+ SD:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#a89a6e',ca:'#b0a070',cb:'#6a5e3c',uni:'#a89c70',pat:0},cx:{p:0,s:1,c:'#a89a6e',t:'#4b5246',w:3},ax:{b:'#878d91',p:3,h:{b:'#c1b08a',p:3}},ch:'#6a5f42',rt:'#c1b08a',nv:'slav'}};
+ for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;if(q.nv)NATX_NAVY[k]=q.nv;KFAC.push(k);RMAP.dozer[k]='jd550';RMAP.ship[k]='frw';}
+ for(const k of ['MA','ZA'])MIL_TANK[k]={m:'tankE',fit:'long',size:37};
+
+ NATX_FLAG.DZ=c=>{const{x,rect,W,H}=c;rect('#fff',0,0,W,H);rect('#1b7a3d',0,0,W/2,H);c.crescent(62,36,14,'#d21034','#fff',.3);c.star(68,36,6,'#d21034');};
+ NATX_FLAG.MA=c=>{const{x,rect,W,H}=c;rect('#c1272d',0,0,W,H);x.strokeStyle='#006233';x.lineWidth=3;x.beginPath();for(let i=0;i<5;i++){const a=-1.5708+i*2.513;i?x.lineTo(60+Math.cos(a)*16,36+Math.sin(a)*16):x.moveTo(60+Math.cos(a)*16,36+Math.sin(a)*16);}x.closePath();x.stroke();};
+ NATX_FLAG.NG=c=>{c.rect('#008751',0,0,c.W,c.H);c.rect('#fff',c.W/3,0,c.W/3,c.H);};
+ NATX_FLAG.ZA=c=>{const{x,rect,W,H}=c;rect('#e03c31',0,0,W,H/2);rect('#001489',0,H/2,W,H/2);x.fillStyle='#fff';x.beginPath();x.moveTo(0,0);x.lineTo(46,36);x.lineTo(0,H);x.closePath();x.fill();x.fillStyle='#007749';x.beginPath();x.moveTo(0,6);x.lineTo(38,36);x.lineTo(0,H-6);x.closePath();x.fill();x.fillStyle='#000';x.beginPath();x.moveTo(0,16);x.lineTo(20,36);x.lineTo(0,H-16);x.closePath();x.fill();};
+ NATX_FLAG.ET=c=>{c.hs(['#078930','#fcdd09','#da121a']);c.circ(60,36,11,'#0f47af');c.star(60,36,9,'#fcdd09');};
+ NATX_FLAG.LY=c=>{c.rect('#4a4f55',0,0,c.W,c.H);c.rect('#a89466',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};
+ NATX_FLAG.SD=c=>{c.rect('#4b5246',0,0,c.W,c.H);c.rect('#a89a6e',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};}
 
 const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=24;
 // extra atlas cells: 48-57 Persian digits (p:0..9), 58-67 Arabic-Indic digits (a:0..9), 68+ painted stencils (s:name)

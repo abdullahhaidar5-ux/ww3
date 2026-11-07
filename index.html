@@ -5417,6 +5417,70 @@ Object.assign(NEWNAT,{
   gp:{bounty:{name:'Port & Energy Revenue'},recon:{name:'Coastwatch Sweep',rm:.95},para:{name:'Airborne Troop Drop'},barrage:{name:'Howitzer Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
   upg:['Special Force Course','Desert Combat Kit','Challenger Crew Training','G6 Fire Control','Typhoon Integration','NH90 Maintenance','Port Revenue','Coast & Desert Doctrine','Khareef Refit'],
   uplink:'Strike Missile Command',econ:'Salalah Port',sub:'Coastal Submarine',md:'Mistral Battery',coast:'Exocet Coastal Battery',trn:['Landing Craft Utility','NH90 Transport']}});
+// ---- nations-b2 (Abdullah 2026-11-05 19:56/20:37): DZ, MA, NG, ZA, ET, LY, SD from the Egypt base (equal power per tier). LY/SD = stylised national armies only.
+Object.assign(NEWNAT,{ DZ:{base:'EG',name:'Algeria',color:'#1b7a3d',lang:'ar-DZ',doctrine:'People\'s National Army, desert depth: tanks and air-defence cost 6% less, vehicles are 5% tougher, and units fight 10% harder on their home desert and Atlas ground.',mods:{vehHp:1.05,cost:.97},
+  units:{inf:'ANP Infantry Section',at:'Kornet Team',hero:'Special Forces Commando',aa:'Pantsir-S1',tank:'T-90SA',arty:'2S19 Msta-S',heli:'Mi-28NE Havoc',jet:'Su-30MKA',boat:'Coastal Patrol Boat',ship:'MEKO A-200AN Frigate'},
+  sup:{name:'Msta Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'ANP Desert Recon Troop'}],hero:['Special Forces Regiment','demo'],
+  doct:{name:'Desert Depth',homeland:1},
+  pow:{name:'Sahara Supply Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Hydrocarbon Revenue'},recon:{name:'Sahara Observation Posts',rm:.95},para:{name:'Airborne Paratroopers'},barrage:{name:'Msta Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Commando Course','ANP Combat Kit','T-90 Crew Training','Msta Fire Control','Su-30 Integration','Havoc Maintenance','Hydrocarbon Revenue','Defence of the Maghreb','Coastal Refit'],
+  uplink:'Missile Command (Tamanrasset)',econ:'Hassi Messaoud Export Terminal',sub:'Kilo-class Submarine',md:'S-300PMU2 Battery',coast:'Bastion Coastal Battery',trn:['Landing Ship','Mi-171 Transport']},
+ MA:{base:'EG',name:'Morocco',color:'#b3262e',lang:'ar-MA',doctrine:'Royal Armed Forces, desert berm: structures have 20% more hit points, tanks cost 5% less, and units fight 10% harder on their home ground.',mods:{bldHp:1.2,cost:.97},
+  units:{inf:'FAR Infantry Section',at:'TOW Team',hero:'Royal Guard Commando',aa:'Skyguard Launcher',tank:'M1A2 Abrams SEPv3',arty:'CAESAR Howitzer',heli:'AH-64E Apache',jet:'F-16C Block 52',boat:'Coastal Patrol Boat',ship:'FREMM Mohammed VI'},
+  sup:{name:'Falcon Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'FAR Atlas Recon Patrol'}],hero:['Royal Guard Special Forces','demo'],
+  doct:{name:'Desert Berm',homeland:1},
+  pow:{name:'Phosphate Supply Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Phosphate Exports'},recon:{name:'Atlas Watch',rm:.95},para:{name:'Parachute Brigade'},barrage:{name:'CAESAR Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Commando Course','FAR Combat Kit','Abrams Crew Training','CAESAR Fire Control','F-16 Integration','Apache Maintenance','Phosphate Revenue','Defence of the Berm','Fleet Refit'],
+  uplink:'Missile Command (Ben Guerir)',econ:'Casablanca Port Hub',md:'Skyguard Battery',coast:'Exocet Coastal Battery',trn:['Landing Craft','CH-47 Chinook']},
+ NG:{base:'EG',name:'Nigeria',color:'#008751',lang:'en-NG',doctrine:'Nigerian Armed Forces, strong infantry: infantry cost 12% less and train faster, and units fight 10% harder on home ground.',mods:{infCost:.88,infTime:.9},
+  units:{inf:'Nigerian Army Section',at:'Carl Gustaf Team',hero:'Special Forces Operators',aa:'ZU-23 Technical',tank:'Vickers Mk 3 / T-72',arty:'Palmaria Howitzer',heli:'Mi-35 Hind',jet:'JF-17 Thunder',boat:'Seaward Patrol Boat',ship:'Centenary-class Patrol Vessel'},
+  sup:{name:'Alpha Jet Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Rangers Recon Patrol'}],hero:['Special Forces Battalion','demo'],
+  doct:{name:'Defence of the Federation',homeland:1},
+  pow:{name:'Lagos Supply Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Oil Revenue'},recon:{name:'Savanna Watch',rm:.95},para:{name:'Airborne Battalion'},barrage:{name:'Howitzer Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Special Forces Course','Army Combat Kit','Armour Crew Training','Howitzer Fire Control','JF-17 Integration','Hind Maintenance','Oil Revenue','Defence of the Federation','Patrol Fleet Refit'],
+  uplink:'Rocket Command (Abuja)',econ:'Lagos Port Terminal',md:'Shorad Battery',coast:'Coastal Defence Battery',trn:['Landing Craft','Mi-171 Transport']},
+ ZA:{base:'EG',name:'South Africa',color:'#007749',lang:'en-ZA',doctrine:'South African National Defence Force, bush war: vehicles are 8% tougher, artillery hits 10% harder, and units fight 10% harder on home veld and bush.',mods:{vehHp:1.08},
+  units:{inf:'SANDF Rifle Section',at:'Ingwe Missile Team',hero:'Recce Commandos',aa:'Umkhonto Launcher',tank:'Olifant Mk2',arty:'G6 Rhino Howitzer',heli:'Rooivalk',jet:'JAS-39 Gripen',boat:'Namacurra Patrol Boat',ship:'Valour-class Frigate'},
+  sup:{name:'Gripen Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Reconnaissance Commandos'}],hero:['1 Reconnaissance Regiment','demo'],
+  doct:{name:'Bush War Doctrine',homeland:1},
+  pow:{name:'Logistic Support Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Defence Industry Exports'},recon:{name:'Bush Observation Posts',rm:.95},para:{name:'Parachute Battalion'},barrage:{name:'G6 Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Recce Course','SANDF Combat Kit','Olifant Crew Training','G6 Fire Control','Gripen Integration','Rooivalk Maintenance','Mineral Revenue','Defence of the Cape','Fleet Refit'],
+  uplink:'Missile Command (Overberg)',econ:'Johannesburg Trading Floor',sub:'Heroine-class Submarine',md:'Umkhonto Battery',coast:'Coastal Defence Battery',trn:['Landing Craft','Oryx Transport']},
+ ET:{base:'EG',name:'Ethiopia',color:'#078930',lang:'am-ET',doctrine:'Ethiopian National Defence Force, highland defence: infantry cost 10% less, tanks are 5% tougher, and units fight 10% harder in their home highlands.',mods:{infCost:.9,vehHp:1.05},
+  units:{inf:'ENDF Infantry Section',at:'Konkurs Team',hero:'Special Forces Commando',aa:'ZSU-23-4 Shilka',tank:'T-72 Tank',arty:'D-30 Howitzer',heli:'Mi-35 Hind',jet:'Su-27 Flanker',boat:'Lake Patrol Boat',ship:'River Patrol Vessel'},
+  sup:{name:'Su-27 Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Highland Scout Troop'}],hero:['Special Forces Command','demo'],
+  doct:{name:'Highland Defence',homeland:1},
+  pow:{name:'Highland Supply Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Coffee Exports'},recon:{name:'Highland Watch',rm:.95},para:{name:'Airborne Battalion'},barrage:{name:'D-30 Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Commando Course','ENDF Combat Kit','Tank Crew Training','D-30 Fire Control','Su-27 Overhaul','Hind Maintenance','Agricultural Revenue','Defence of the Highlands','Lake Patrol Refit'],
+  uplink:'Rocket Command (Bishoftu)',econ:'Addis Ababa Trade Hub',md:'Pechora Battery',coast:'Coastal Defence Battery',trn:['Landing Craft','Mi-8 Transport']},
+ LY:{base:'EG',name:'Libya',color:'#4a4f55',lang:'ar-LY',doctrine:'National army (stylised), coastal desert: units cost 3% less, vehicles are 5% tougher, and troops fight 10% harder on their home desert coast.',mods:{vehHp:1.05,cost:.97},
+  units:{inf:'National Army Section',at:'Konkurs Team',hero:'Army Special Forces',aa:'ZSU-23-4 Shilka',tank:'T-72 Tank',arty:'2S1 Gvozdika',heli:'Mi-35 Hind',jet:'MiG-23 Flogger',boat:'Coastal Patrol Boat',ship:'Coastal Corvette'},
+  sup:{name:'Air Force Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Desert Recon Troop'}],hero:['Special Forces Battalion','demo'],
+  doct:{name:'Coastal Desert Defence',homeland:1},
+  pow:{name:'Supply Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Oil Exports'},recon:{name:'Desert Observation Posts',rm:.95},para:{name:'Airborne Company'},barrage:{name:'Gvozdika Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Special Forces Course','Army Combat Kit','Tank Crew Training','Gvozdika Fire Control','Jet Overhaul','Hind Maintenance','Oil Revenue','Defence of the Coast','Coastal Refit'],
+  uplink:'Rocket Command (Sirte Desert)',econ:'Tripoli Port Terminal',md:'Pechora Battery',coast:'Coastal Defence Battery',trn:['Landing Craft','Mi-8 Transport']},
+ SD:{base:'EG',name:'Sudan',color:'#4b5246',lang:'ar-SD',doctrine:'National army (stylised), Nile and savanna: units cost 3% less, vehicles are 5% tougher, and troops fight 10% harder on home savanna and the Nile.',mods:{vehHp:1.05,cost:.97},
+  units:{inf:'National Army Section',at:'Konkurs Team',hero:'Army Special Forces',aa:'ZSU-23-4 Shilka',tank:'T-72 Tank',arty:'D-30 Howitzer',heli:'Mi-24 Hind',jet:'MiG-29 Fulcrum',boat:'Nile River Boat',ship:'River Patrol Vessel'},
+  sup:{name:'Air Force Strike',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Savanna Recon Troop'}],hero:['Special Forces Battalion','demo'],
+  doct:{name:'Nile and Savanna Defence',homeland:1},
+  pow:{name:'Supply Convoy',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
+  gp:{bounty:{name:'Gum Arabic Exports'},recon:{name:'Savanna Observation Posts',rm:.95},para:{name:'Airborne Company'},barrage:{name:'D-30 Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Special Forces Course','Army Combat Kit','Tank Crew Training','D-30 Fire Control','Jet Overhaul','Hind Maintenance','Nile Revenue','Defence of the Nile','River Patrol Refit'],
+  uplink:'Rocket Command (Nile Valley)',econ:'Port Sudan Terminal',md:'Pechora Battery',coast:'Coastal Defence Battery',trn:['Landing Craft','Mi-8 Transport']}});
 for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const q in B.units)u[q]=Object.assign({},B.units[q]);for(const q in N.units)u[q]=Object.assign({},u[q]||{},{name:N.units[q]});
   FACTIONS[k]=Object.assign({},B,{code:k,name:N.name,color:N.color,lang:N.lang,doctrine:N.doctrine,mods:N.mods,units:u,sup:N.sup});
   const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);
@@ -5690,7 +5754,7 @@ const MAPS={
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,MAPH+60-90*Math.cos((x-1600)/1600*Math.PI*.5)*0+40*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:(t,x)=>470+120*Math.exp(-Math.pow((x-1600)/380,2))});
       // 2026-10-30: coastal hills to fight around and an island offshore (mirrored left-right like the rest)
       M.peaks.push({x:1050,y:880,r:65,rx:1.6,rot:.5});mirrorMap(M,'x');M.peaks.push({x:1600,y:700,r:85,rx:1.9,rot:0});M.islands.push({x:1600,y:2020,r:80,rx:2.2,rot:0,wob:a=>.06*Math.cos(2*a)});}},
-  plateau:{home:['EG','JO'],name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
+  plateau:{home:['EG','JO','DZ','NG','ZA'],name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1280,1100+Math.sin(a)*820]);return s;})(),
     water(M){M.peaks.push({x:1020,y:720,r:75,rx:1.6,rot:.45},{x:1230,y:470,r:60,rx:1.4,rot:-.2},{x:880,y:1480,r:70,rx:1.4,rot:-.5});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:105,rx:1.5,rot:0});}},
   hormuz:{home:['IR','AE','OM'],name:'Strait of Hormuz',min:2,max:8,sym:'none',tag:'sea strait · naval-heavy',desc:'Iran faces the Arabian shore across the world\'s busiest oil chokepoint. Navies rule the strait; armies must go the long way round.',
@@ -5770,7 +5834,7 @@ const MAPS={
     cities:[[1300,950,190,'russia'],[1980,1050,170,'russia'],[700,1600,80,'europe'],[2600,600,80,'europe']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1640+150*Math.sin(y*.0028+ph),y]);M.rivers.push({pts,hw:()=>150});M.bridgeAt=[[0,.25],[0,.48],[0,.78]];M.bridgeFrac=true;
       M.islands.push({x:1650,y:620,r:60,rx:2,rot:1.4,wob:q=>.1*Math.sin(q*3)},{x:1640,y:1600,r:50,rx:1.8,rot:1.5,wob:q=>.1*Math.sin(q*4)});}},
-  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
+  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA','DZ','LY','MA'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1300,1100+Math.sin(a)*840]);return s;})(),
     cities:[[1600,1100,190,'mideast']],
     water(M,R){for(const [x,y] of [[900,700],[2300,1500],[2300,700],[900,1500]])M.lakes.push({x,y,r:55,rx:1.4,wob:q=>.15*Math.sin(q*3+x)});}},
@@ -5798,7 +5862,7 @@ const MAPS={
     cities:[[1150,1850,150,'korea'],[1150,350,120,'asia'],[2250,1880,90,'korea'],[2250,330,80,'asia']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-200;x<=2200;x+=40)pts.push([x,1100+50*Math.sin(x*.005+ph)]);M.rivers.push({pts,hw:()=>58});M.bridgeAt=[[0,.25],[0,.6]];M.bridgeFrac=true;
       const ridge=(y0,y1)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([2550+50*Math.sin(y*.006),y]);return pts;};M.ridges.push({pts:ridge(560,940),hw:()=>95},{pts:ridge(1260,1640),hw:()=>95});}},
-  nile:{name:'Nile & Suez',min:2,max:8,sym:'none',home:['EG'],tag:'river · canal · desert',desc:'Cairo on the Nile and the Suez Canal to the east: green river banks in a sea of sand, with bridges and canal crossings to seize.',
+  nile:{name:'Nile & Suez',min:2,max:8,sym:'none',home:['EG','SD','ET'],tag:'river · canal · desert',desc:'Cairo on the Nile and the Suez Canal to the east: green river banks in a sea of sand, with bridges and canal crossings to seize.',
     slots:[[350,1100],[2850,1100],[350,300],[2850,1900],[350,1900],[2850,300],[2200,1950],[2200,250]],
     cities:[[1050,1000,200,'mideast'],[2420,1100,90,'mideast'],[1100,1850,80,'mideast']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([820+60*Math.sin(y*.004+ph),y]);M.rivers.push({pts,hw:()=>75});
@@ -8025,9 +8089,9 @@ function townCmd(team,a){const t=G.towns&&G.towns[a.ti|0];if(!t||t.ow<0||!ally(t
 const HM={LOY_UN:30,LOY_HOLD:120,MIL_CAP:4,MIL_CD:6,MIL_COST:70,MIL_HP:.8,INF_R:700,INF_T:6,INF_DELAY:2,BRIB_UN:50,BRIB_CD:150,BRIB_T:700,BRIB_H:250,TOW_R:900,TOW_CAP:10,
   TURF:{rise:.65,fall:1.25,cap:1.25,inf:1.3,rec:.85,brib:1.25,foe:1.15}};
 const MIL_NAME={US:'Local Auxiliaries',EU:'Local Auxiliaries',UA:'Territorial Volunteers',RU:'Local Militia',CN:'People\'s Militia',KP:'Worker-Peasant Militia',IR:'Volunteer Mobilization Fighters',RS:'Village Defence Fighters',DW:'Tribal Volunteers',
-  TR:'Local Defence Volunteers',IL:'Territorial Reservists',SA:'Local Defence Volunteers',AE:'Local Defence Volunteers',PK:'Local Defence Volunteers',IN:'Local Defence Volunteers',EG:'Local Defence Volunteers',GB:'Home Guard Volunteers',AU:'Army Reserve Volunteers',CA:'Canadian Rangers Volunteers',TW:'Reserve Mobilisation Force',PH:'Citizen Armed Force Geographical Unit',VN:'Self-Defence Militia',ID:'Hansip Civil Defence',TH:'Volunteer Defence Corps',KZ:'Territorial Defence Volunteers',AF:'Local Defence Volunteers',OM:'Tribal Home Guard',KR:'Local Defence Volunteers',CU:'Local Defence Volunteers'};
+  TR:'Local Defence Volunteers',IL:'Territorial Reservists',SA:'Local Defence Volunteers',AE:'Local Defence Volunteers',PK:'Local Defence Volunteers',IN:'Local Defence Volunteers',EG:'Local Defence Volunteers',GB:'Home Guard Volunteers',AU:'Army Reserve Volunteers',CA:'Canadian Rangers Volunteers',DZ:'Local Defence Volunteers',MA:'Local Defence Volunteers',NG:'Local Defence Volunteers',ZA:'Commando Reserve Volunteers',ET:'Local Defence Volunteers',LY:'Local Defence Volunteers',SD:'Local Defence Volunteers',TW:'Reserve Mobilisation Force',PH:'Citizen Armed Force Geographical Unit',VN:'Self-Defence Militia',ID:'Hansip Civil Defence',TH:'Volunteer Defence Corps',KZ:'Territorial Defence Volunteers',AF:'Local Defence Volunteers',OM:'Tribal Home Guard',KR:'Local Defence Volunteers',CU:'Local Defence Volunteers'};
 const STATION={US:'Heartland Radio One',EU:'Continental Broadcast',UA:'Free Dnipro Radio',RU:'Rodina Radio',CN:'Central Plains TV',KP:'Homeland Broadcast',IR:'Voice of the Plateau',RS:'Voice of the Mountain',DW:'Coffee Coast Radio',
-  TR:'Anatolia Radio',IL:'Levant Broadcast',SA:'Desert Kingdom Radio',AE:'Emirates Gulf Radio',PK:'Indus Radio',IN:'Subcontinent TV',EG:'Nile Valley Radio',GB:'Home Service Radio',AU:'Outback Radio',CA:'Northern Service Radio',TW:'Strait Broadcast',PH:'Islands Radio',VN:'Voice of the Delta',ID:'Nusantara Radio',TH:'Chao Phraya Radio',KZ:'Steppe Broadcast',AF:'Highlands Radio',OM:'Gulf of Oman Radio',KR:'Hangang Broadcast',CU:'Island Radio'};
+  TR:'Anatolia Radio',IL:'Levant Broadcast',SA:'Desert Kingdom Radio',AE:'Emirates Gulf Radio',PK:'Indus Radio',IN:'Subcontinent TV',EG:'Nile Valley Radio',GB:'Home Service Radio',AU:'Outback Radio',CA:'Northern Service Radio',DZ:'Maghreb Radio',MA:'Atlas Radio',NG:'Federal Radio',ZA:'Highveld Radio',ET:'Highland Radio',LY:'Coastal Radio',SD:'Nile Radio',TW:'Strait Broadcast',PH:'Islands Radio',VN:'Voice of the Delta',ID:'Nusantara Radio',TH:'Chao Phraya Radio',KZ:'Steppe Broadcast',AF:'Highlands Radio',OM:'Gulf of Oman Radio',KR:'Hangang Broadcast',CU:'Island Radio'};
 function mapHome(){const m=G&&MAPS[G.mapKey];return (m&&m.home)||[];}
 function teamHomeFlag(i){const T=G.teams[i];return !!(T&&!T.reb&&mapHome().includes(T.fac));}
 // +1 = the locals favour this side (home nation, no home nation among its enemies), -1 = it is the stranger facing a home nation, 0 = neutral (or a mirror match: both home, effects cancel)
@@ -13768,7 +13832,7 @@ if($('sbClear'))$('sbClear').onclick=()=>{if(G&&G.sandbox){for(const e of G.ents
 Client-only and read-only: builds headlines from the battle messages this player already gets (pushLog) and from
 team/weather state it can see, then scrolls them across a thin strip at the very top. Never touches the simulation. */
 const TK={q:[],cur:0,G:null,seen:{},out:{},wx:'',loss:[],kill:[],on:true,el:null,txt:null,tm:0};
-const TK_ADJ={US:'American',TR:'Turkish',IL:'Israeli',EU:'European',FR:'French',DE:'German',PL:'Polish',AZ:'Azerbaijani',JO:'Jordanian',KD:'Kurdish',IT:'Italian',GR:'Greek',ES:'Spanish',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',IQ:'Iraqi',SY:'Syrian',GB:'British',AU:'Australian',CA:'Canadian',TW:'Taiwanese',PH:'Philippine',VN:'Vietnamese',ID:'Indonesian',TH:'Thai',KZ:'Kazakh',AF:'Afghan',OM:'Omani',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
+const TK_ADJ={US:'American',TR:'Turkish',IL:'Israeli',EU:'European',FR:'French',DE:'German',PL:'Polish',AZ:'Azerbaijani',JO:'Jordanian',KD:'Kurdish',IT:'Italian',GR:'Greek',ES:'Spanish',UA:'Ukrainian',RU:'Russian',IR:'Iranian',SA:'Saudi',AE:'Emirati',PK:'Pakistani',IN:'Indian',CN:'Chinese',KP:'North Korean',KR:'South Korean',EG:'Egyptian',IQ:'Iraqi',SY:'Syrian',GB:'British',AU:'Australian',CA:'Canadian',DZ:'Algerian',MA:'Moroccan',NG:'Nigerian',ZA:'South African',ET:'Ethiopian',LY:'Libyan',SD:'Sudanese',TW:'Taiwanese',PH:'Philippine',VN:'Vietnamese',ID:'Indonesian',TH:'Thai',KZ:'Kazakh',AF:'Afghan',OM:'Omani',CU:'Cuban',RS:'Mountain Shia',DW:'Coffee Shia'};
 function tkAdj(code){return TK_ADJ[code]||'';}
 function tkAdjName(name){for(const c in FACTIONS)if(FACTIONS[c].name===name)return tkAdj(c)||name;return name;}
 function tkOwn(){try{return G.teams[ME].F.name;}catch(e){return 'Our';}}
@@ -13935,7 +13999,7 @@ const ID_MEDALS=(()=>{const n=(k,t,d)=>({k:'win_'+k,t,d,f:k,w:1});const M=[n('IR
   {k:'rs_fort',t:'Mountain Shias: Rock Stands',d:'Win as the Mountain Shias with your Mountain Fortress still standing.',f:'RS',w:1},
   {k:'fort20',t:'Hold the Mountain',d:'Keep a Mountain Fortress standing for 20 minutes in one battle.',w:1},
   {k:'ir_bb',t:'Fire and Fury',d:'Call in a Bunker Buster strike (any nation).',w:1}];
-  for(const k of ['US','TR','IL','EU','FR','DE','UA','RU','SA','AE','PK','IN','CN','KP','KR','EG','CU','GB','AU','CA','PL','AZ','JO','KD','IT','GR','ES','TW','PH','VN','ID','TH','KZ','AF','OM'])M.push(n(k,FACTIONS[k].name+': Victory','Win a battle as '+FACTIONS[k].name+'.'));
+  for(const k of ['US','TR','IL','EU','FR','DE','UA','RU','SA','AE','PK','IN','CN','KP','KR','EG','CU','GB','AU','CA','DZ','MA','NG','ZA','ET','LY','SD','PL','AZ','JO','KD','IT','GR','ES','TW','PH','VN','ID','TH','KZ','AF','OM'])M.push(n(k,FACTIONS[k].name+': Victory','Win a battle as '+FACTIONS[k].name+'.'));
   M.push({k:'hard_1v3',t:'Outnumbered',d:'Win alone against three or more enemies on Hard.',w:1},{k:'iron_wall',t:'Iron Wall',d:'Win a battle (3+ minutes) losing fewer than 10 units.'},{k:'vet10',t:'Veteran Commander',d:'Finish 10 battles.'});return M;})();
 function idStore(){let s=null;try{s=JSON.parse(localStorage.getItem('ww3_medals')||'null');}catch(e){}if(!s||typeof s!=='object')s={};s.earned=s.earned||{};s.hist=Array.isArray(s.hist)?s.hist:[];s.n=s.n|0;return s;}
 function idSave(s){try{localStorage.setItem('ww3_medals',JSON.stringify(s));}catch(e){}}
@@ -16354,7 +16418,7 @@ for(const f of ['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN'
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
 // and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
-const WESTVEH=['US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF'];
+const WESTVEH=['MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF'];
 Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',GB:'kf51',AU:'abrams',CA:'kf51',IL:'merkava',EU:'kf51',FR:'kf51',DE:'kf51',TR:'kf51'});
 // Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
 // Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
@@ -17382,6 +17446,25 @@ const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
  NATX_FLAG.KZ=c=>{const{x,rect,circ,W,H}=c;rect('#00afca',0,0,W,H);circ(60,34,14,'#fec50c');for(let i=0;i<16;i++){const a=i/16*6.283;x.fillStyle='#fec50c';x.beginPath();x.moveTo(60+Math.cos(a-.1)*15,34+Math.sin(a-.1)*15);x.lineTo(60+Math.cos(a)*21,34+Math.sin(a)*21);x.lineTo(60+Math.cos(a+.1)*15,34+Math.sin(a+.1)*15);x.fill();}};
  NATX_FLAG.AF=c=>{c.hs(['#2f3b2a','#c9c2a2','#5a6b45']);c.circ(60,36,9,'#c9c2a2');c.circ(60,36,5,'#2f3b2a');};
  NATX_FLAG.OM=c=>{const{x,rect,W,H}=c;rect('#fff',0,0,W,H/3);rect('#db161b',0,H/3,W,H/3);rect('#008000',0,2*H/3,W,H/3);rect('#db161b',0,0,28,H);x.fillStyle='#fff';x.fillRect(10,22,8,2);x.fillRect(8,30,12,3);x.fillRect(10,38,8,2);};}
+
+// nations-b2: Algeria, Morocco, Nigeria, South Africa, Ethiopia, Libya, Sudan (LY/SD neutral stylised national armies) - looks on the shared models (visual only)
+{const L={ DZ:{tk:'t90',he:'mi28',je:'su35',sol:'sol_e',fl:{veh:'#8a7a4e',ca:'#a89464',cb:'#5a5236',uni:'#8a8052',pat:0},cx:{p:0,s:1,c:'#8a7a4e',t:'#1b7a3d',w:3},ax:{b:'#878d91',p:3,h:{b:'#c9b48c',p:3}},ch:'#6a5f42',rt:'#c9b48c',nv:'slav'},
+ MA:{tk:'abrams',he:'apache',je:'f16',sol:'sol_w',fl:{veh:'#a89466',ca:'#a08c5c',cb:'#5c4e32',uni:'#a4966a',pat:0},cx:{p:0,s:1,c:'#a89466',t:'#b3262e',w:3},ax:{b:'#878d91',p:3,h:{b:'#cdb68a',p:3}},ch:'#6a5f42',rt:'#cdb68a'},
+ NG:{tk:'kf51',he:'mi24',je:'mig29',sol:'sol_w',fl:{veh:'#5f6a3e',ca:'#4a5a30',cb:'#3a3a28',uni:'#566a3a',pat:1},cx:{p:1,s:1,c:'#5f6a3e',t:'#008751',w:3},ax:{b:'#878d91',p:3,h:{b:'#b3ae98',p:3}},ch:'#4a5535',rt:'#b3ae98'},
+ ZA:{tk:'kf51',he:'apache',je:'typhoon',sol:'sol_w',fl:{veh:'#7a7452',ca:'#8a7a52',cb:'#4a4430',uni:'#7a7a50',pat:0},cx:{p:0,s:1,c:'#7a7452',t:'#007749',w:3},ax:{b:'#878d91',p:3,h:{b:'#b9b49c',p:3}},ch:'#5a5a3e',rt:'#b9b49c'},
+ ET:{tk:'t90',he:'mi24',je:'su35',sol:'sol_e',fl:{veh:'#6a6a44',ca:'#5a6a3a',cb:'#3a3a28',uni:'#66684a',pat:1},cx:{p:1,s:1,c:'#6a6a44',t:'#078930',w:3},ax:{b:'#878d91',p:3,h:{b:'#b3ae9a',p:3}},ch:'#4c5636',rt:'#b3ae9a',nv:'slav'},
+ LY:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#a89466',ca:'#b09c6c',cb:'#6a5a3a',uni:'#a8986a',pat:0},cx:{p:0,s:1,c:'#a89466',t:'#4a4f55',w:3},ax:{b:'#878d91',p:3,h:{b:'#c1b08a',p:3}},ch:'#6a5f42',rt:'#c1b08a',nv:'slav'},
+ SD:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#a89a6e',ca:'#b0a070',cb:'#6a5e3c',uni:'#a89c70',pat:0},cx:{p:0,s:1,c:'#a89a6e',t:'#4b5246',w:3},ax:{b:'#878d91',p:3,h:{b:'#c1b08a',p:3}},ch:'#6a5f42',rt:'#c1b08a',nv:'slav'}};
+ for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;if(q.nv)NATX_NAVY[k]=q.nv;KFAC.push(k);RMAP.dozer[k]='jd550';RMAP.ship[k]='frw';}
+ for(const k of ['MA','ZA'])MIL_TANK[k]={m:'tankE',fit:'long',size:37};
+
+ NATX_FLAG.DZ=c=>{const{x,rect,W,H}=c;rect('#fff',0,0,W,H);rect('#1b7a3d',0,0,W/2,H);c.crescent(62,36,14,'#d21034','#fff',.3);c.star(68,36,6,'#d21034');};
+ NATX_FLAG.MA=c=>{const{x,rect,W,H}=c;rect('#c1272d',0,0,W,H);x.strokeStyle='#006233';x.lineWidth=3;x.beginPath();for(let i=0;i<5;i++){const a=-1.5708+i*2.513;i?x.lineTo(60+Math.cos(a)*16,36+Math.sin(a)*16):x.moveTo(60+Math.cos(a)*16,36+Math.sin(a)*16);}x.closePath();x.stroke();};
+ NATX_FLAG.NG=c=>{c.rect('#008751',0,0,c.W,c.H);c.rect('#fff',c.W/3,0,c.W/3,c.H);};
+ NATX_FLAG.ZA=c=>{const{x,rect,W,H}=c;rect('#e03c31',0,0,W,H/2);rect('#001489',0,H/2,W,H/2);x.fillStyle='#fff';x.beginPath();x.moveTo(0,0);x.lineTo(46,36);x.lineTo(0,H);x.closePath();x.fill();x.fillStyle='#007749';x.beginPath();x.moveTo(0,6);x.lineTo(38,36);x.lineTo(0,H-6);x.closePath();x.fill();x.fillStyle='#000';x.beginPath();x.moveTo(0,16);x.lineTo(20,36);x.lineTo(0,H-16);x.closePath();x.fill();};
+ NATX_FLAG.ET=c=>{c.hs(['#078930','#fcdd09','#da121a']);c.circ(60,36,11,'#0f47af');c.star(60,36,9,'#fcdd09');};
+ NATX_FLAG.LY=c=>{c.rect('#4a4f55',0,0,c.W,c.H);c.rect('#a89466',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};
+ NATX_FLAG.SD=c=>{c.rect('#4b5246',0,0,c.W,c.H);c.rect('#a89a6e',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};}
 
 const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=24;
 // extra atlas cells: 48-57 Persian digits (p:0..9), 58-67 Arabic-Indic digits (a:0..9), 68+ painted stencils (s:name)

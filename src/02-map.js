@@ -29,7 +29,7 @@ const MAPS={
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,MAPH+60-90*Math.cos((x-1600)/1600*Math.PI*.5)*0+40*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:(t,x)=>470+120*Math.exp(-Math.pow((x-1600)/380,2))});
       // 2026-10-30: coastal hills to fight around and an island offshore (mirrored left-right like the rest)
       M.peaks.push({x:1050,y:880,r:65,rx:1.6,rot:.5});mirrorMap(M,'x');M.peaks.push({x:1600,y:700,r:85,rx:1.9,rot:0});M.islands.push({x:1600,y:2020,r:80,rx:2.2,rot:0,wob:a=>.06*Math.cos(2*a)});}},
-  plateau:{home:['EG','JO'],name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
+  plateau:{home:['EG','JO','DZ','NG','ZA'],name:'Sinai: Iron Mesa',min:2,max:8,sym:'point',tag:'dry highlands · rock mesas · no water',desc:'Dry highlands with rock mesas and no water. A pure land war: the mesas split the plateau into lanes around a big central butte.',rough:1.6,
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1280,1100+Math.sin(a)*820]);return s;})(),
     water(M){M.peaks.push({x:1020,y:720,r:75,rx:1.6,rot:.45},{x:1230,y:470,r:60,rx:1.4,rot:-.2},{x:880,y:1480,r:70,rx:1.4,rot:-.5});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:105,rx:1.5,rot:0});}},
   hormuz:{home:['IR','AE','OM'],name:'Strait of Hormuz',min:2,max:8,sym:'none',tag:'sea strait · naval-heavy',desc:'Iran faces the Arabian shore across the world\'s busiest oil chokepoint. Navies rule the strait; armies must go the long way round.',
@@ -109,7 +109,7 @@ const MAPS={
     cities:[[1300,950,190,'russia'],[1980,1050,170,'russia'],[700,1600,80,'europe'],[2600,600,80,'europe']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1640+150*Math.sin(y*.0028+ph),y]);M.rivers.push({pts,hw:()=>150});M.bridgeAt=[[0,.25],[0,.48],[0,.78]];M.bridgeFrac=true;
       M.islands.push({x:1650,y:620,r:60,rx:2,rot:1.4,wob:q=>.1*Math.sin(q*3)},{x:1640,y:1600,r:50,rx:1.8,rot:1.5,wob:q=>.1*Math.sin(q*4)});}},
-  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
+  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA','DZ','LY','MA'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1300,1100+Math.sin(a)*840]);return s;})(),
     cities:[[1600,1100,190,'mideast']],
     water(M,R){for(const [x,y] of [[900,700],[2300,1500],[2300,700],[900,1500]])M.lakes.push({x,y,r:55,rx:1.4,wob:q=>.15*Math.sin(q*3+x)});}},
@@ -137,7 +137,7 @@ const MAPS={
     cities:[[1150,1850,150,'korea'],[1150,350,120,'asia'],[2250,1880,90,'korea'],[2250,330,80,'asia']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-200;x<=2200;x+=40)pts.push([x,1100+50*Math.sin(x*.005+ph)]);M.rivers.push({pts,hw:()=>58});M.bridgeAt=[[0,.25],[0,.6]];M.bridgeFrac=true;
       const ridge=(y0,y1)=>{const pts=[];for(let y=y0;y<=y1;y+=40)pts.push([2550+50*Math.sin(y*.006),y]);return pts;};M.ridges.push({pts:ridge(560,940),hw:()=>95},{pts:ridge(1260,1640),hw:()=>95});}},
-  nile:{name:'Nile & Suez',min:2,max:8,sym:'none',home:['EG'],tag:'river · canal · desert',desc:'Cairo on the Nile and the Suez Canal to the east: green river banks in a sea of sand, with bridges and canal crossings to seize.',
+  nile:{name:'Nile & Suez',min:2,max:8,sym:'none',home:['EG','SD','ET'],tag:'river · canal · desert',desc:'Cairo on the Nile and the Suez Canal to the east: green river banks in a sea of sand, with bridges and canal crossings to seize.',
     slots:[[350,1100],[2850,1100],[350,300],[2850,1900],[350,1900],[2850,300],[2200,1950],[2200,250]],
     cities:[[1050,1000,200,'mideast'],[2420,1100,90,'mideast'],[1100,1850,80,'mideast']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([820+60*Math.sin(y*.004+ph),y]);M.rivers.push({pts,hw:()=>75});

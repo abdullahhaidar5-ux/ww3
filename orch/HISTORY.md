@@ -256,3 +256,6 @@ First cut via NEWNAT, EU hidden from menus. See orch/reports/nations-a1.md. Open
 
 ## 2026-11-06 — nations-b1 (orch/nations-b1, Sonnet 5.5, scheduled)
 Taiwan, Philippines, Vietnam, Indonesia, Thailand, Kazakhstan, Afghanistan (stylised national army), Oman added as full first-cut nations via NEWNAT (units, upgrades, doctrine, flags, camo, home maps, names). Smoke pass, 52-game AI tourney 45-56%, no errors. Report: orch/reports/nations-b1.md.
+
+## nations-b2 — 2026-11-06 (Sonnet 5.5)
+Added DZ, MA, NG, ZA, ET, LY, SD (first cut, NEWNAT, Egypt base). See orch/reports/nations-b2.md.
