@@ -18582,7 +18582,7 @@ function grJudge(){if(!GC.me||GC.over)return;const me=GC.me;if(GC.nat[me].dead){
 // ---------- player orders ----------
 function grOrderMove(aid,to){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return {err:'no army'};const r=grPath(a.o,a.at,to,a.fl);if(!r)return {err:a.fl?'Fleets sail between sea zones only.':'No route (check ports, seas and borders).'};
   if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;return {ok:1,r};}
-function grDeclare(a,b){GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);}
+function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);}
 function grRecruit(c,pi,k){const st=GC.prov[pi];if(st.o!==c)return 'Not your province.';const fac=grNat(c).fac,rc=GR_RECRUIT.find(r=>r[0]===k);if(!rc||!grHasKind(fac,k))return 'Not available.';const T=geRecruitTerms(c,pi,k,rc[1]),cost=T.cost;
   if(GC.nat[c].cash<cost)return 'Not enough money.';if(GC.nat[c].e.man<T.man)return 'Not enough manpower ('+Math.round(GC.nat[c].e.man)+' of '+T.man+').';GC.nat[c].cash-=cost;GC.nat[c].e.man-=T.man;st.rq.push([GC.turn+T.turns,k,rc[1]]);return '';}
 function grSplit(aid){const a=GC.armies.find(x=>x.id===aid);if(!a||a.u.length<2)return null;const h=Math.floor(a.u.length/2);const mv=a.u.splice(a.u.length-h,h);const b=grAddArmy(a.o,a.at,mv);if(a.fl)b.fl=1;return b;}
@@ -19146,8 +19146,8 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   const rg=guEl('span','display:flex;gap:4px;flex-wrap:wrap;margin-left:auto');for(const [nm,r] of GR_REGIONS){const b=guEl('button','padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#dfe8f0;cursor:pointer;font-size:13px',nm);b.type='button';b.onclick=()=>{guFit(r);guRedraw();};rg.appendChild(b);}t.appendChild(rg);
   const end=guEl('button','padding:7px 18px;border-radius:6px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px;font-weight:bold',GC.ph==='plan'?'End turn ▶':'Resolving…');end.id='gEnd';end.type='button';end.disabled=GC.ph!=='plan'||!!GC.over;end.title='Enter';end.onclick=guEndTurn;t.appendChild(end);
   if(me&&typeof npOpen==='function'){const nb=guEl('button','padding:7px 14px;border-radius:6px;border:1px solid #c9a35a;background:#2a3a4c;color:#ffe6a8;cursor:pointer;font-size:15px;font-weight:bold','Nation');nb.type='button';nb.title='Open your nation panel';nb.onclick=()=>npOpen();t.appendChild(nb);}
-  const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);}
-function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();}
+  const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);try{alBar();}catch(e){console.error('alBar',e);}}  // hook: Lane G alerts bar (13l-galerts.js)
+function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();try{gdNews();}catch(e){}}
 /* ---------- real time with pause (EU4 feel, lane A A2 slice 1) ----------
    The calendar runs in days (30 a month); a month ending = the old End turn, so the simulation and its determinism are unchanged:
    the result depends only on state + the orders standing when each month closes + seed. Starts paused (= the classic turn game).
@@ -20699,6 +20699,29 @@ function gmodMonth(m){if(!GC)return;if(m===undefined)m=GC.turn;GMOD_C.m=m;GMOD_C
 const GMOD_STATS={warSupport:'War support',rallySpeed:'Rally speed',homeMorale:'Home-ground morale',fireSupport:'Fire support'};
 npTab('mods','✨','Modifiers',(code,body)=>{const rows=gmodRows('nation',code);
   body.innerHTML='<div style="opacity:.8;margin-bottom:8px">Every bonus and penalty on this nation, and where it comes from.</div>'+(rows.length?rows.map(r=>'<div style="padding:5px 0;border-bottom:1px solid #2c4258"><b>'+(GMOD_STATS[r.stat]||r.stat)+'</b> '+(r.add?(r.add>0?'+':'')+Math.round(r.add*100)+'%':'x'+r.mul)+' <span style="opacity:.75">— '+r.src+(r.until!==undefined?', until month '+r.until:'')+'</span></div>').join(''):'<i>No modifiers.</i>');});
+// 13l-galerts.js — Lane G: EU4-style alerts bar on the grand map (B2b). Registry: alAdd(id,icon,title,test(code)->{n,tip,go}|null).
+// Every later system adds its alert with one alAdd call. Pure read-only UI: no sim state, nothing to checkpoint.
+const AL={list:[]};
+function alAdd(id,icon,title,test){const i=AL.list.findIndex(a=>a.id===id);const a={id,icon,title,test};if(i>=0)AL.list[i]=a;else AL.list.push(a);}
+function alFly(pi){try{if(typeof npClose==='function')npClose();guCentre(pi,2.4);GV.sel=pi;guRedraw();guSide();}catch(e){}}
+function alBar(){const t=document.getElementById('gTop');if(!t||!GC||!GC.me)return;let b=document.getElementById('gAlerts');
+  if(!b){b=document.createElement('div');b.id='gAlerts';b.style.cssText='display:flex;gap:6px;align-items:center;padding:3px 10px;background:#0d1822;border-bottom:1px solid #22384b;min-height:26px;font-size:13px;flex-wrap:wrap';t.insertAdjacentElement('afterend',b);}
+  b.innerHTML='';const code=GC.me;let any=0;
+  for(const a of AL.list){let r=null;try{r=a.test(code);}catch(e){console.error('alert',a.id,e);}if(!r||!r.n)continue;any++;
+    const el=document.createElement('button');el.type='button';el.title=a.title+(r.tip?' — '+r.tip:'');
+    el.style.cssText='padding:2px 9px;border-radius:12px;border:1px solid '+(r.bad?'#b5605a':'#c9a35a')+';background:#1a2a3a;color:'+(r.bad?'#ffb3a8':'#ffe6a8')+';cursor:pointer;font-size:13px';
+    el.innerHTML=a.icon+' <b>'+r.n+'</b> <span style="opacity:.75">'+a.title+'</span>';el.onclick=()=>{try{r.go&&r.go();}catch(e){console.error(e);}};b.appendChild(el);}
+  if(!any){const s=document.createElement('span');s.style.cssText='opacity:.5';s.textContent='Nothing needs you right now.';b.appendChild(s);}}
+(function(){
+const my=c=>GC.armies.filter(a=>a.o===c&&!a.fl);
+alAdd('idle','💤','Idle armies',c=>{const as=my(c).filter(a=>!a.path.length&&a.u.length);return as.length?{n:as.length,tip:'click to jump to the next one',go:()=>{AL.i=((AL.i||0)+1)%as.length;alFly(as[AL.i].at);}}:null;});
+alAdd('cash','💸','Losing money',c=>{const N=GC.nat[c];return (N.inc||0)<0||N.cash<0?{n:Math.round(N.inc||0),bad:1,tip:'income is negative — open the economy tab',go:()=>npOpen(c,'eco')}:null;});
+alAdd('hoard','💰','Unspent cash',c=>{const N=GC.nat[c];return N.cash>=8000&&(N.inc||0)>=0?{n:Math.floor(N.cash/1000)+'k',tip:'recruit, build or develop',go:()=>npOpen(c,'eco')}:null;});
+alAdd('unrest','🔥','Unrest',c=>{const ps=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c&&GC.prov[p.i].un>=60);return ps.length?{n:ps.length,bad:1,tip:'provinces near revolt — lower the tax there',go:()=>alFly(ps[0].i)}:null;});
+alAdd('war','⚔','At war',c=>{const w=Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grAtWar(c,o));return w.length?{n:w.length,bad:1,tip:w.map(o=>GCM.nats.get(o).name).join(', '),go:()=>npOpen(c,'dip')}:null;});
+alAdd('supply','🚚','Out of supply',c=>{const as=my(c).filter(a=>a.sup);return as.length?{n:as.length,bad:1,tip:'armies cut off from supply',go:()=>alFly(as[0].at)}:null;});
+})();
+(function(){alAdd('truce','🕊','Truces ending',c=>{const k=Object.keys(GC.tr||{}).filter(x=>x.split('|').includes(c)&&GC.tr[x]===GC.turn+1);return k.length?{n:k.length,tip:'a truce ends next turn',go:()=>npOpen(c,'dip')}:null;});})();
 // B3 POWER POINTS + NATIONAL IDEAS (lane B, EU4-style). Three pools — Political (pol), Diplomatic (dip), Military (mil) — grow every month
 // via the ONE monthly hook (gmodMonth -> GMOD_HOOKS). Points are spent on ideas; every idea is only a ROW in the modifier table (GMOD_ROWS,
 // cond 'idea:<id>'), never bespoke code. Each morale style has its own 4-idea tree (equal total value, different flavour) + 3 groups for everyone.
@@ -20772,5 +20795,106 @@ npTab('idea','💡','Ideas & points',(code,body,c)=>{const N=gidN(code),own=c.ow
       const nxt=!has&&ix===gidLevel(code,grp);row.innerHTML='<span style="width:20px">'+(has?'✔':ix+1)+'</span><span style="flex:1"><b>'+i[1]+'</b> <span style="opacity:.75">— '+i[5]+'</span></span><span style="opacity:.7">'+(has?'adopted':GID_COST[ix]+' '+GID_POOL[i[2]])+'</span>';
       if(nxt&&own){const b=document.createElement('button');b.textContent='Adopt';b.style.cssText='font-size:15px;padding:2px 12px;cursor:pointer';b.disabled=N.pp[i[2]]<GID_COST[ix];b.onclick=()=>{const e=gidBuy(code,grp);if(e&&typeof grLog==='function')grLog(e,code);npDraw();};row.appendChild(b);}
       box.appendChild(row);});body.appendChild(box);}});
+// 13m-gdiplo.js — Lane G B6: EU4-style diplomacy. ONE opinion = grOpinion (13i) + these factor lines; actions are DETERMINISTIC
+// (accept when score >= threshold, no dice) and always show WHY. State lives in GC (saved with the campaign): GC.rel pair opinions,
+// GC.alz alliances, GC.tr truces {pairKey:untilTurn}, GC.gu guarantees [[by,for]], GC.wsT war start turns {pairKey:turn}.
+const GD={sel:'',flt:'all',sort:'op',q:''};
+function gdTruce(a,b){return !!(GC&&GC.tr&&GC.tr[grWk(a,b)]>GC.turn);}
+function gdRel(a,b,d){GC.rel=GC.rel||{};const k=grWk(a,b);GC.rel[k]=Math.max(-100,Math.min(100,(GC.rel[k]||0)+d));}
+function gdEnemies(c){return Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grAtWar(c,o));}
+function gdAllies(c){return Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grAllied(c,o));}
+function gdNear(a,b){return GCM.P.some(p=>p.land&&GC.prov[p.i].o===a&&p.adj.some(j=>GCM.P[j].land&&GC.prov[j].o===b));}
+// factor lines [text, value] explaining the opinion between a and b
+function gdWhy(a,b){const L=[],base=(GC.rel&&GC.rel[grWk(a,b)])||0;if(base)L.push([base>0?'Friendly history':'Bad blood',base]);
+  if(grAllied(a,b))L.push(['Allied',40]);if(gdTruce(a,b))L.push(['Truce in force',5]);
+  const se=gdEnemies(a).filter(e=>grAtWar(b,e));if(se.length)L.push(['Shared enemies ('+se.map(e=>GCM.nats.get(e).name).join(', ')+')',20*se.length]);
+  const ea=gdEnemies(a).filter(e=>grAllied(b,e)),eb=gdEnemies(b).filter(e=>grAllied(a,e));if(ea.length||eb.length)L.push(['Allied with the other\'s enemy',-25*(ea.length+eb.length)]);
+  if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))L.push(['You guarantee them',10]);
+  if(GC.gu&&GC.gu.some(g=>g[0]===b&&g[1]===a))L.push(['They guarantee you',10]);
+  return L;}
+function gdOp(a,b){if(grAtWar(a,b))return -100;const w=gdWhy(a,b);let v=0;for(const x of w)v+=x[1];return Math.max(-100,Math.min(100,v));}
+function gdWarscore(a,b){let s=0;const k=grWk(a,b);const t=GC.turn-((GC.wsT&&GC.wsT[k])||1);
+  for(const ar of GC.armies){if(ar.fl)continue;if(ar.o===a&&GC.prov[ar.at]&&GC.prov[ar.at].o===b)s+=12;if(ar.o===b&&GC.prov[ar.at]&&GC.prov[ar.at].o===a)s-=12;}
+  s+=Math.min(30,t*2);return s;}
+// chance(action,a,b) -> {ok:bool, why:[[text,v]], cost, note}  (a = actor, b = target)
+function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtWar(a,b),al=grAllied(a,b),big=(c)=>grRealClass(c);let ok=true,cost=0,note='';
+  const no=m=>{ok=false;note=m;};
+  if(act==='improve'){cost=200;if(war)no('At war');W.push(['Costs $200, adds +10 opinion',0]);}
+  else if(act==='aid'){cost=600;if(war)no('At war');W.push(['Costs $600, adds +20 opinion',0]);}
+  else if(act==='alliance'){if(war)no('At war');else if(al)no('Already allied');
+    const se=gdEnemies(a).filter(e=>grAtWar(b,e)).length;let s=op*0.5-15;W.push(['Their opinion of you',Math.round(op*0.5)]);W.push(['Baseline caution',-15]);
+    if(se){W.push(['Shared enemies',15*se]);s+=15*se;}
+    if(!grNat(b).major){W.push(['Minor nations rarely join blocs',-10]);s-=10;}
+    if(gdAllies(b).some(x=>grAtWar(a,x))){W.push(['Their ally is your enemy',-40]);s-=40;}
+    if(s<10&&ok)no('They decline (need 10, have '+Math.round(s)+')');W.push(['Total',Math.round(s)]);}
+  else if(act==='war'){if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until turn '+GC.tr[grWk(a,b)]);
+    else if(GC.ph!=='plan')no('Wait for the planning phase');W.push(['War goal: border dispute / strategic rivalry',0]);W.push(['Stability: all your opinions fall',-10]);}
+  else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (armies on enemy land, war length)',s]);
+    const acc=GC.nat[b].ai?25:0;W.push(['They accept at',acc]);if(ok&&s<acc)no('They refuse (score '+s+' of '+acc+')');}
+  else if(act==='guarantee'){cost=300;if(war)no('At war');else if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))no('Already guaranteed');W.push(['Costs $300, +15 opinion, shows resolve',0]);}
+  else if(act==='break'){if(!al)no('Not allied');W.push(['Opinion -25',0]);}
+  if(cost&&cash<cost&&ok)no('Not enough cash ($'+cost+')');
+  if(GC.me!==a)no('Only your own nation acts');
+  return {ok,why:W,cost,note};}
+function gdAct(act,a,b){const c=gdChance(act,a,b);if(!c.ok)return c.note;const N=GC.nat[a],na=GCM.nats.get(a).name,nb=GCM.nats.get(b).name;N.cash-=c.cost;
+  if(act==='improve'){gdRel(a,b,10);}
+  else if(act==='aid'){gdRel(a,b,20);grLog(na+' sent aid to '+nb+'.',a);}
+  else if(act==='guarantee'){GC.gu=GC.gu||[];GC.gu.push([a,b]);gdRel(a,b,15);grLog(na+' guarantees the independence of '+nb+'.',a);}
+  else if(act==='alliance'){GC.alz=GC.alz||[];const g=GC.alz.find(x=>x[1].includes(a));if(g&&!g[1].includes(b))g[1].push(b);else if(!g)GC.alz.push([na+'–'+nb+' Pact',[a,b]]);gdRel(a,b,15);grLog(na+' and '+nb+' formed an alliance.',a);}
+  else if(act==='break'){for(const g of GC.alz||[])if(g[1].includes(a)&&g[1].includes(b))g[1]=g[1].filter(x=>x!==b);GC.alz=(GC.alz||[]).filter(x=>x[1].length>1);gdRel(a,b,-25);grLog(na+' left its alliance with '+nb+'.',a);}
+  else if(act==='war'){grDeclare(a,b);GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;for(const o of Object.keys(GC.nat))if(o!==a&&o!==b)gdRel(a,o,-3);gdRel(a,b,-30);}
+  else if(act==='peace'){delete GC.war[grWk(a,b)];GC.tr=GC.tr||{};GC.tr[grWk(a,b)]=GC.turn+6;grLog('Peace between '+na+' and '+nb+' — truce for 6 turns.',a);}
+  try{grSave();}catch(e){}try{grandMapRefresh();}catch(e){}return '';}
+// ---------- UI: replaces the Diplomacy tab of the nation panel ----------
+(function(){
+const chip=(c,onc)=>{const n=grNat(c),d=document.createElement('span');d.title=GCM.nats.get(c).name;d.style.cssText='display:inline-flex;align-items:center;gap:5px;margin:2px 4px 2px 0;padding:2px 7px 2px 3px;border:1px solid #3d5a73;border-radius:4px;background:#16273a;font-size:13px;cursor:pointer';
+  d.innerHTML='<span style="width:18px;height:12px;border:1px solid #fff;background:'+n.color+'"></span>'+GCM.nats.get(c).name;d.onclick=onc;return d;};
+const sel=c=>{GD.sel=c;npDraw();};
+const col=v=>v>=25?'#9fe39f':v<=-25?'#ff9d8e':'#e8e4d8';
+const ACTS=[['improve','Improve relations'],['aid','Send aid'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['war','Declare war']];
+npTab('dip','🤝','Diplomacy',(code,body)=>{const me=GC.me;if(!GD.sel||GD.sel===code||!GC.nat[GD.sel])GD.sel=Object.keys(GC.nat).find(c=>c!==code&&!GC.nat[c].dead&&grNat(c).major)||'';
+  const row=(t,L)=>{const d=document.createElement('div');d.style.cssText='margin-bottom:4px';d.innerHTML='<span style="display:inline-block;width:92px;opacity:.7;font-size:13px">'+t+'</span>';if(!L.length)d.innerHTML+='<span style="opacity:.4">—</span>';for(const c of L)d.appendChild(chip(c,()=>sel(c)));return d;};
+  const top=document.createElement('div');top.style.cssText='margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #2c4258';
+  const gu=(GC.gu||[]).filter(g=>g[0]===code).map(g=>g[1]),gb=(GC.gu||[]).filter(g=>g[1]===code).map(g=>g[0]);
+  const tr=Object.keys(GC.tr||{}).filter(k=>GC.tr[k]>GC.turn&&k.split('|').includes(code)).map(k=>k.split('|').find(x=>x!==code));
+  top.appendChild(row('Enemies',gdEnemies(code)));top.appendChild(row('Allies',gdAllies(code)));top.appendChild(row('Guarantees',gu));top.appendChild(row('Guaranteed by',gb));top.appendChild(row('Truces',tr));body.appendChild(top);
+  const wrap=document.createElement('div');wrap.style.cssText='display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap';body.appendChild(wrap);
+  const L=document.createElement('div');L.style.cssText='flex:1.1;min-width:300px';wrap.appendChild(L);const R=document.createElement('div');R.style.cssText='flex:1;min-width:300px';wrap.appendChild(R);
+  const bar=document.createElement('div');bar.style.cssText='display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;align-items:center';
+  const mk=(lab,cur,set,opts)=>{for(const [k,n] of opts){const b=document.createElement('button');b.type='button';b.textContent=n;b.style.cssText='padding:3px 9px;border-radius:12px;border:1px solid '+(cur===k?'#c9a35a':'#34506a')+';background:'+(cur===k?'#2a3a4c':'#15222f')+';color:#dfe8f0;cursor:pointer;font-size:13px';b.onclick=()=>{set(k);npDraw();};bar.appendChild(b);}};
+  mk('f',GD.flt,k=>GD.flt=k,[['all','All'],['near','Neighbours'],['war','At war'],['ally','Allies'],['great','Great powers']]);
+  const q=document.createElement('input');q.placeholder='Search…';q.value=GD.q;q.style.cssText='padding:3px 8px;border-radius:12px;border:1px solid #34506a;background:#0f1a26;color:#e8e4d8;font-size:13px;width:110px';q.oninput=()=>{GD.q=q.value;lst();};bar.appendChild(q);
+  const so=document.createElement('button');so.type='button';so.textContent='Sort: '+(GD.sort==='op'?'opinion':GD.sort==='pw'?'power':'name');so.style.cssText='padding:3px 9px;border-radius:12px;border:1px solid #34506a;background:#15222f;color:#dfe8f0;cursor:pointer;font-size:13px';so.onclick=()=>{GD.sort=GD.sort==='op'?'pw':GD.sort==='pw'?'nm':'op';npDraw();};bar.appendChild(so);L.appendChild(bar);
+  const box=document.createElement('div');box.style.cssText='max-height:340px;overflow:auto;border:1px solid #2c4258;border-radius:6px';L.appendChild(box);
+  function lst(){box.innerHTML='';let cs=Object.keys(GC.nat).filter(c=>c!==code&&!GC.nat[c].dead&&(grNat(c).major||GD.flt!=='all'||GD.q));
+    if(GD.flt==='near')cs=cs.filter(c=>{try{return gdNear(code,c);}catch(e){return false;}});if(GD.flt==='war')cs=cs.filter(c=>grAtWar(code,c));if(GD.flt==='ally')cs=cs.filter(c=>grAllied(code,c));if(GD.flt==='great')cs=cs.filter(c=>/power/.test(grRealClass(c))&&!/Small|Regional/.test(grRealClass(c)));
+    const q2=GD.q.trim().toLowerCase();if(q2)cs=cs.filter(c=>GCM.nats.get(c).name.toLowerCase().includes(q2));
+    const pw=c=>npStat(c).army;cs.sort((x,y)=>GD.sort==='op'?gdOp(code,y)-gdOp(code,x):GD.sort==='pw'?pw(y)-pw(x):GCM.nats.get(x).name.localeCompare(GCM.nats.get(y).name));
+    for(const c of cs.slice(0,60)){const o1=gdOp(code,c),o2=gdOp(c,code),r=document.createElement('div');r.style.cssText='display:flex;align-items:center;gap:8px;padding:4px 8px;cursor:pointer;border-bottom:1px solid #1d3042;'+(GD.sel===c?'background:#2a3a4c':'');
+      r.innerHTML='<span style="width:20px;height:13px;border:1px solid #fff;background:'+grNat(c).color+'"></span><span style="flex:1"><b>'+GCM.nats.get(c).name+'</b> <span style="opacity:.55;font-size:12px">'+grRealClass(c)+'</span></span>'+(grAtWar(code,c)?'<span style="color:#ff9d8e;font-size:12px">war</span>':grAllied(code,c)?'<span style="color:#9fe39f;font-size:12px">ally</span>':'')+'<b title="Their opinion of you" style="color:'+col(o1)+';min-width:34px;text-align:right">'+(o1>0?'+':'')+o1+'</b>';
+      r.onclick=()=>sel(c);box.appendChild(r);}
+    if(!cs.length)box.innerHTML='<div style="padding:10px;opacity:.6">No nation matches.</div>';}
+  lst();
+  const t=GD.sel;if(!t){R.textContent='Select a nation.';return;}
+  R.innerHTML='<div style="font-size:19px;font-weight:bold;margin-bottom:2px">'+GCM.nats.get(t).name+'</div><div style="opacity:.75;font-size:13px;margin-bottom:6px">'+grRealClass(t)+' · opinion of '+GCM.nats.get(code).name+' <b style="color:'+col(gdOp(t,code))+'">'+gdOp(t,code)+'</b></div>';
+  const ws=gdWhy(t,code),wl=document.createElement('div');wl.style.cssText='font-size:13px;margin-bottom:8px;line-height:1.5';for(const [x,v] of ws)wl.innerHTML+='<div><b style="color:'+(v>0?'#9fe39f':v<0?'#ff9d8e':'#aaa')+';display:inline-block;width:34px">'+(v>0?'+':'')+v+'</b>'+x+'</div>';if(!ws.length)wl.innerHTML='<div style="opacity:.5">No history yet.</div>';R.appendChild(wl);
+  if(code!==me||GC.me===t){const n=document.createElement('div');n.style.cssText='opacity:.6;font-size:13px';n.textContent=code!==me?'Open your own panel to act.':'';R.appendChild(n);return;}
+  const ab=document.createElement('div');ab.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
+  for(const [k,n] of ACTS){const ch=gdChance(k,me,t);if(!ch.ok&&/^(Not allied|Not at war|Already)/.test(ch.note))continue;const b=document.createElement('button');b.type='button';b.textContent=n;
+    b.title=ch.why.map(w=>(w[1]>0?'+':'')+(w[1]||'')+' '+w[0]).join('\n')+(ch.ok?'':'\n✖ '+ch.note);
+    b.style.cssText='padding:5px 11px;border-radius:6px;border:1px solid '+(ch.ok?(k==='war'?'#b5605a':'#7aa84f'):'#3d4a58')+';background:#16273a;color:'+(ch.ok?'#fff':'#7d8794')+';cursor:pointer;font-size:14px';
+    b.onclick=()=>{const e=gdAct(k,me,t);const m=document.createElement('div');m.style.cssText='margin-top:8px;font-size:13px;color:#ffb3a8';if(e){m.textContent=e;R.appendChild(m);}else npDraw();};ab.appendChild(b);}
+  R.appendChild(ab);const hint=document.createElement('div');hint.style.cssText='margin-top:8px;font-size:12px;opacity:.55';hint.textContent='Hover a button to see the chance and why. Answers are fixed by the numbers — no dice.';R.appendChild(hint);});
+})();
+// 13n-gnews.js — Lane G ⚡16: newspaper headline after each turn, generated from the turn's log lines (templates, no hand-written rows).
+// Read-only UI over GC.log; nothing to save. Neutral wording, nation names only.
+const GN={tpl:[[/declared war on/,['WAR: {t}','{t} — the world holds its breath','Guns speak: {t}']],[/captured .* from/,['{t}','FRONT: {t}','Banner changes hands: {t}']],[/Peace between|peace/i,['PEACE: {t}','Guns fall silent: {t}']],[/lost its capital/,['CAPITAL FALLS: {t}']],[/Revolt in/,['UNREST: {t}']],[/alliance|guarantee/i,['PACT: {t}','DIPLOMACY: {t}']],[/eliminated/,['END OF A STATE: {t}']]]};
+function gnPick(ls){const T=GC.turn-1;let best=null,bi=-1;for(const l of ls){if(l[0]!==T)continue;for(let i=0;i<GN.tpl.length;i++){const [re,arr]=GN.tpl[i];if(re.test(l[1])){const w=(GN.tpl.length-i)+(l[2]===GC.me?8:0);if(!best||w>bi){best={t:l[1].replace(/\.$/,''),arr};bi=w;}break;}}}
+  if(!best)return null;return best.arr[(GC.seed+GC.turn)%best.arr.length].replace('{t}',best.t);}
+function gdNews(){if(!GC||!GC.me)return;const h=gnPick(GC.log);if(!h)return;let d=document.getElementById('gNews');if(d)d.remove();
+  const host=document.getElementById('gMapWrap');if(!host)return;d=document.createElement('div');d.id='gNews';
+  d.style.cssText='position:absolute;left:50%;top:8px;transform:translateX(-50%);max-width:70%;padding:8px 18px;background:#e9e2cf;color:#1a1a1a;border:2px solid #3a3226;box-shadow:0 4px 16px rgba(0,0,0,.5);font:bold 17px Georgia,serif;letter-spacing:.3px;z-index:6;cursor:pointer;opacity:0;transition:opacity .4s';
+  d.innerHTML='<div style="font-size:10px;letter-spacing:3px;opacity:.6;font-weight:normal">THE WORLD TRIBUNE · TURN '+(GC.turn-1)+'</div>'+h.replace(/</g,'&lt;');host.appendChild(d);d.onclick=()=>d.remove();
+  requestAnimationFrame(()=>{d.style.opacity='1';});setTimeout(()=>{d.style.opacity='0';setTimeout(()=>d.remove(),500);},7000);}
 </script>
 </body></html>
