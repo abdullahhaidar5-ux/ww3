@@ -926,7 +926,7 @@ function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',
   bx(2*R,.5,.3,0,4.8,-R+.7,pl);}
 // DE-BLOCK slice 3: tyre tracks out of the gate, scattered rocks and debris round the base (view only, shared geometry/material)
 let BKTRK=null,BKROCK=null;
-let BKAO=null,BKOIL=null;
+let BKAO=null,BKOIL=null,BKBLO=null,BKSCR=null;
 function groundKit(e,o,P){const h=e.size/2,R=h+(e.kind==='hq'?30:22);
   if(!BKTRK){const c=document.createElement('canvas');c.width=64;c.height=256;const x=c.getContext('2d');x.clearRect(0,0,64,256);for(const cx0 of [14,50]){for(let y=0;y<256;y+=5){x.fillStyle='rgba(52,40,26,'+(.38+Math.random()*.22)+')';x.fillRect(cx0-7,y,14,3);}x.fillStyle='rgba(60,46,30,.28)';x.fillRect(cx0-7,0,14,256);}
     const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;BKTRK=new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2,fog:true});}
@@ -946,6 +946,12 @@ function groundKit(e,o,P){const h=e.size/2,R=h+(e.kind==='hq'?30:22);
     const t2=new THREE.CanvasTexture(c2);t2.colorSpace=THREE.SRGBColorSpace;BKOIL=new THREE.MeshBasicMaterial({map:t2,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-3,polygonOffsetUnits:-3,fog:true});}
   {const ao=new THREE.Mesh(new THREE.PlaneGeometry(R*2.7,R*2.7),BKAO);ao.rotation.x=-Math.PI/2;ao.position.y=.3;ao.renderOrder=1;G3.add(ao);
    for(let i=0;i<5;i++){const s=3+rn(i+90)*5,m=new THREE.Mesh(new THREE.PlaneGeometry(s,s*(.7+rn(i+95)*.6)),BKOIL);m.rotation.x=-Math.PI/2;m.rotation.z=rn(i+99)*6.3;const a=rn(i+101)*6.283,d=h*(.9+rn(i+105)*.9);m.position.set(Math.cos(a)*d,.38,Math.abs(Math.sin(a))*d+4);m.renderOrder=3;G3.add(m);}}
+  // DE-BLOCK slice 6: macro ground blotches (dust/dark soil) + dry scrub clumps so the sand is not one flat tone (view only)
+  if(!BKBLO){const mk=(rgb)=>{const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),g=x.createRadialGradient(32,32,2,32,32,32);g.addColorStop(0,'rgba('+rgb+',.34)');g.addColorStop(.6,'rgba('+rgb+',.16)');g.addColorStop(1,'rgba('+rgb+',0)');x.fillStyle=g;x.fillRect(0,0,64,64);const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1,fog:true});};
+    BKBLO=[mk('196,170,120'),mk('70,54,36'),mk('150,138,100')];
+    const g=new THREE.IcosahedronGeometry(1,0),pa=g.attributes.position;for(let i=0;i<pa.count;i++)pa.setY(pa.getY(i)*.55);g.computeVertexNormals();BKSCR={g,m:[new THREE.MeshStandardMaterial({color:'#6b6a3c',roughness:1}),new THREE.MeshStandardMaterial({color:'#8a7a47',roughness:1}),new THREE.MeshStandardMaterial({color:'#5a5530',roughness:1})]};}
+  for(let i=0;i<9;i++){const s=(14+rn(i+120)*26),m=new THREE.Mesh(new THREE.PlaneGeometry(s,s*(.6+rn(i+125)*.7)),BKBLO[i%3]);m.rotation.x=-Math.PI/2;m.rotation.z=rn(i+130)*6.3;const a=rn(i+135)*6.283,d=R*(.5+rn(i+140)*1.5);m.position.set(Math.cos(a)*d,.31,Math.sin(a)*d);m.renderOrder=1;G3.add(m);}
+  for(let i=0;i<8;i++){const a=rn(i+150)*6.283,d=R+8+rn(i+155)*45,cx=Math.cos(a)*d,cz=Math.sin(a)*d;if(Math.abs(cx)<14&&cz>0)continue;for(let k=0;k<3+(rn(i+160)*3|0);k++){const sc=.9+rn(i*7+k)*1.5,m=new THREE.Mesh(BKSCR.g,BKSCR.m[(i+k)%3]);m.scale.set(sc*1.3,sc,sc*1.3);m.position.set(cx+(rn(i*5+k+170)-.5)*5,sc*.3,cz+(rn(i*5+k+180)-.5)*5);m.rotation.y=rn(i+k)*6.3;m.castShadow=true;G3.add(m);}}
   // debris by the wall: broken blocks, tyres, scrap sheets
   for(let i=0;i<7;i++){const a=rn(i+70)*6.283,d=R+3+rn(i+80)*10,x=Math.cos(a)*d,z=Math.sin(a)*d;if(Math.abs(x)<12&&z>0)continue;const m=new THREE.Mesh(new THREE.BoxGeometry(1.2+rn(i)*2,.5+rn(i+5)*.9,1+rn(i+9)*2),BKROCK.m[(i+1)%3]);m.position.set(x,.35,z);m.rotation.set((rn(i+11)-.5)*.5,rn(i+12)*6.3,(rn(i+13)-.5)*.5);m.castShadow=m.receiveShadow=true;G3.add(m);}}
 function decorateBld(e,o){if(!MODELS.ready)return;const h=e.size/2;const P=new THREE.Group();o.add(P);
