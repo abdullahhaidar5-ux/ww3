@@ -19007,13 +19007,14 @@ const GR_TDEF={m:.30,u:.15,r:.10,f:0,d:0,c:.05,j:.12,s:.10,w:0};
 /* A-REAL strategic depth (world sim, orchestrator 2026-11-07 "Ukraine captured Moscow"): a nation's own heartland and above all its capital are
    defended in depth — reserves, air defence, fortified ring roads, and for nuclear powers the last-ditch deterrent. Scales with the defender's
    real military (GR_REAL) against the attacker's. Counter-play: cut the capital off, wear the reserves down first, or win the war elsewhere. */
-const GR_NUK=['US','RU','CN','GB','FR','IN','PK','IL','KP'];   // nuclear-armed states (2026)
+/* nuclear-armed = has warheads in Lane G's ONE nuclear system (13zz-gnuke GC.nuk / GNK.start) - a new nuclear power gets the deterrent too */
+function grNuk(c){const S=GC&&GC.nuk&&GC.nuk.n&&GC.nuk.n[c];return S?S.w>0:!!(typeof GNK==='object'&&GNK.start[c]);}
 function grMilOf(c){return typeof grRealMil==='function'?grRealMil(c,.3):.3;}
 function grDepth(pi,an,dn){const p=GCM.P[pi],st=GC.prov[pi];if(!p||!p.land||!st||st.o0!==dn||st.o!==dn)return 0;const md=Math.min(2,grMilOf(dn)),ma=Math.max(.2,grMilOf(an));
-  let d=0;if(GC.nat[dn]&&GC.nat[dn].cap===pi){d=.25+.35*md;if(GR_NUK.includes(dn))d+=.4;}else if(md>=1.2)d=.12*md;
+  let d=0;if(GC.nat[dn]&&GC.nat[dn].cap===pi){d=.25+.35*md;if(grNuk(dn))d+=.4;}else if(md>=1.2)d=.12*md;
   return d*Math.min(1.5,Math.max(.6,md/ma));}
 /* the AI won't march on a nuclear power's capital unless it is at least as strong a military (deterrence) */
-function grNukStop(c,j,w){return GR_NUK.includes(w)&&GC.nat[w]&&GC.nat[w].cap===j&&grMilOf(c)<grMilOf(w);}
+function grNukStop(c,j,w){return grNuk(w)&&GC.nat[w]&&GC.nat[w].cap===j&&grMilOf(c)<grMilOf(w);}
 /* enemy field armies within reach of c's capital vs what holds it (garrison + armies there) */
 function grCapThreat(c){const cap=GC.nat[c].cap;let t=0;for(const x of GC.armies)if(x.o!==c&&!x.fl&&GCM.P[x.at].land&&grAtWar(c,x.o)&&grDist(x.at,cap)<260)t+=grArmyVal(x);return t;}
 function grCapHeld(c,skip){const cap=GC.nat[c].cap;let v=GC.prov[cap]&&GC.prov[cap].o===c?grProvDef(cap)*(1+grDepth(cap,'',c)):0;for(const x of GC.armies)if(x.o===c&&x.at===cap&&x!==skip)v+=grArmyVal(x);return v;}
@@ -19092,7 +19093,7 @@ function grFinishTurn(){const P=GCM.P;try{gmMorTurn();}catch(e){}try{gmRepair();
     if(st.aut!==undefined&&st.aut!==st.au){if(st.auC>0)st.auC--;else{if(st.aut<st.au){st.au=Math.max(st.aut,st.au-1);st.un=Math.min(100,st.un+10);st.auC=3;}else st.au=Math.min(st.aut,st.au+1);}}st.un+= (tgt-st.un)*.18;st.un=Math.max(0,Math.min(100,st.un));if(st.cv>0)st.cv--;
     if(st.un>72&&R()<.3){const n=Math.floor(st.gar.length/2);st.gar.length=st.gar.length-n;st.un=45;grLog('Revolt in '+p.n+'! The garrison lost '+n+' units.',c===GC.me?c:'');}
     // garrison regrows one unit a turn up to its share, recruits arrive
-    const cap=Math.max(2,Math.round(p.dev*1.1))+2*geCount(p.i,'base')+(st.cf===1?(st.tr|0):0)+(GC.nat[c]&&GC.nat[c].cap===p.i&&st.o0===c?Math.round(3*Math.min(2,grMilOf(c)))+(GR_NUK.includes(c)?2:0):0);   /* A-REAL: capitals keep a reserve garrison sized by the real military */if(st.gar.length<cap&&st.cv===0&&R()<.7){const fac=N.fac;st.gar.push([(st.gar.length%3===2&&grHasKind(fac,'at'))?'at':'inf',100,0,100]);}
+    const cap=Math.max(2,Math.round(p.dev*1.1))+2*geCount(p.i,'base')+(st.cf===1?(st.tr|0):0)+(GC.nat[c]&&GC.nat[c].cap===p.i&&st.o0===c?Math.round(3*Math.min(2,grMilOf(c)))+(grNuk(c)?2:0):0);   /* A-REAL: capitals keep a reserve garrison sized by the real military */if(st.gar.length<cap&&st.cv===0&&R()<.7){const fac=N.fac;st.gar.push([(st.gar.length%3===2&&grHasKind(fac,'at'))?'at':'inf',100,0,100]);}
     const keep=[];for(const q of st.rq){if(q[0]<=GC.turn){grArrive(c,p.i,q[1],q[2]);}else keep.push(q);}st.rq=keep;}
   geAfterProvinces(inc,R);try{gmilTurnEnd();}catch(e){console.error('gmilTurnEnd',e);}   /* empire economy: trade, oil, fuel, food, manpower, upkeep, bonds, bank, actions, supply (13g-grandeco.js) */
   // supply: an army outside friendly reach loses men every month; on a boat a little
