@@ -1,0 +1,32 @@
+artifact page written: orch/out/artifact/index.html (4265224 bytes, game 3421089 chars), 110 audio files + 82 model files (14.1 MB); publish arguments in orch/out/artifact/publish.json
+[4s] both pages loaded (menu model downloads done after 1s / 1s)
+[4s] host lobby open, code n05kw1
+[4s] client joining
+[26s] battle: US vs RU on strait; client is slot 1
+[126s] both pages finished loading
+[126s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[126s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[128s] client order: 2/2 of the client's units moved on the host
+[130s] check @1.0 min t=60s: host 42 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 9721 client 9721
+[133s] check @2.5 min t=150s: host 47 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10900 client 10900
+[149s] check @4.0 min t=240s: host 51 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 11008 client 11008
+[159s] traffic host->client 1877 KB in 3455 messages, client->host 0 KB in 1; client lag max 0.10 game-s; 16 ms per 0.5 s step
+[159s] 24 live checks, 0 out of tolerance; up to 0 enemy entities were in the client's view at once
+[159s] host room sends: 3457 messages, peak 27 in one game-second
+[159s] client room sends: 1 messages, peak 0 in one game-second
+peak memory (node + browser, summed RSS): 3846 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+  warn: client console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+
+MPSYNC FAIL: client console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:33939/index.html:20811:32)
+    at buildPanels (http://127.0.0.1:33939/index.html:12267:245)
+    at g.terrain (http://127.0.0.1:33939/index.html:13194:34)
+    at afterStart (http://127.0.0.1:33939/index.html:13 (159s)
+  ✗ host console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:33939/index.html:20811:32)
+    at buildPanels (http://127.0.0.1:33939/index.html:12267:245)
+    at g.terrain (http://127.0.0.1:33939/index.html:13194:34)
+    at afterStart (http://127.0.0.1:33939/index.html:13
