@@ -118,6 +118,7 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
 ## WORLD SIMULATOR rule (Abdullah 23:03) — applies to every lane item: see CLAUDE.md "IT'S A WORLD SIMULATOR". Each item's commit/HISTORY line lists its reaction chain (who reacts, second-order effects, counter-play, cost); an item that only adds a button with no world reaction is not done.
 
 ## Rules for every lane session — FAST + CHEAP (Abdullah 18:40 "Get creative and speed up development and save usage")
+00. **SMOOTH FIRST (Abdullah 14:11/14:15):** smooth-pc and grandsmooth are red on main (battle draw calls 2568 vs budget 1725 after DE-BLOCK props; grand map 558 vs 400). Lanes E and C fix their own regression before anything else; no look change ships without a local SMOOTH PASS (CLAUDE.md "Smooth first").
 0. **USAGE PLAN (Abdullah 2026-11-07 07:40 "25% usage still remains", 07:42 "We need to get it all done with 25%"):** "all" = the Saturday list below; everything else → kaizen after 20:00. Each lane does ONLY its listed items, cheapest way (Haiku subagents for data/text, no exploratory re-reads, one before/after shot per item, cigate once per item), ships each when green, then **stops without re-firing** when its list is done:
    - **Lane A:** A-DATE (start 1 Nov 2026), A-REAL (AI war realism + 24-month test). **Lane B:** done — stop. **Lane D:** done — stop.
    - **Lane F:** RF1 spotting & hiding, RF2 real armour hits, RF3 artillery delay (sim → servers-live PR comment).
