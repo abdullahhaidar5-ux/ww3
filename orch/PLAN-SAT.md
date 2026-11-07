@@ -51,6 +51,7 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 - [ ] **B8** grand4b rest: great powers, reforms, prestige, hegemonies. (grand6 home-front items → kaizen.)
 
 ## Lane C — Look: $75 studio (priority order; ART-BAR scores decide inside each)
+- [ ] **C0 UI kit (first, ~1 h):** one set of studio-grade components (panel frame, tab bar, flag row, ledger table, slider, tooltip, unit card, top bar, buttons) + game-icons.net icon set (CC BY 3.0, credited) in one small file; Lane B/A screens use it. Then C3 later only polishes the kit.
 - [ ] **C1** look1's leftovers + replace boxy towns (GRAND-PICKS look2).
 - [ ] **C2** Grand map to ART-BAR ≥ 4.5 on every item (geography, colour, light, water, objects, life, performance).
 - [ ] **C3** UI skin: one studio-grade style for top bar, nation panel, army cards, tooltips, battle HUD/sidebar (big readable text, icons, framed panels, consistent fonts), smooth panel animations.
@@ -59,10 +60,10 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 
 ## Lane D — Content & QA (priority order)
 - [x] **D1** Nations done: Japan (JP) first cut live 2026-11-07 (laneD); voices/anthems pending D3.
-- [ ] **D0 Free-compute tooling (do first, ~1 h, saves every lane time and tokens):** (a) `.github/workflows/bisect.yml` — on a red gate on main, auto `git bisect` with the failing test and comment the first bad commit + author lane on the commit; (b) `orch/artmetrics.mjs` — headless shots of the ART-BAR standard views → numbers (fps, draw calls, colour range, edge/boxiness score, empty-space %) into orch/reports/artmetrics.md, run in CI on every main push; (c) seed `orch/HOWTO.md` with the recipes you know (gate, NEWNAT nation, adding a test, adding a grand UI panel).
+- [ ] **D0 Free-compute tooling (do first, ~1 h, saves every lane time and tokens):** (a) `.github/workflows/bisect.yml` — on a red gate on main, auto `git bisect` with the failing test and comment the first bad commit + author lane on the commit; (b) `orch/artmetrics.mjs` — headless shots of the ART-BAR standard views → numbers (fps, draw calls, colour range, edge/boxiness score, empty-space %) into orch/reports/artmetrics.md, run in CI on every main push; (c) seed `orch/HOWTO.md` with the recipes you know (gate, NEWNAT nation, adding a test, adding a grand UI panel); (d) **"Report a problem" button** (menu + pause + grand map): opens a pre-filled GitHub issue link (title, game version, last 20 console errors, mode/nation/map — no personal data) labelled `player`, so Abdullah's friends file bugs in one click; (e) **free robot checks in gate.yml**: a lint script (no `</script` in src, no hand edits to index.html, no new external URLs, banned real-leader/organisation names list, `Math.random`/`Date.now` inside grand sim code = error) and a **determinism fuzzer** (grand sim 200 days twice from the same seed → identical hash).
 - [ ] **D2 (slice 1 DONE; continue with more confusions) (first slice shipped 2026-11-07 laneD: orch/newplayer.mjs + menu quick-start row & compact nation list; more confusions remain)** First-time-player audit (intuitive spec, trigger prompt in HISTORY of the plan): orch/newplayer.mjs + fix the top 15 confusions (wording, hints, Esc, feedback) — includes the grand map with real time.
 - [ ] **D3 Voices + anthems** for all new nations (one batch; voices-new spec) — ship per group.
-- [ ] **D4 Balance**: battle round robin all nations + grand campaign fairness given the realistic start (balance3 spec).
+- [ ] **D4 Auto-balancer** (replaces hand balancing): a script on GitHub runners plays AI-vs-AI round robins, nudges unit numbers toward 50 % win rates (small hill-climbing steps, only numbers in 01-data, per-tier identical), repeats, and opens a PR with the table — model tokens only to review the final table. Grand campaign: same idea with AI-only campaigns for the morale styles' equal power.
 - [ ] **D5 Integration/cleanup**: duplicates from SYSTEMS.md "Open" notes, saves round-trip, campaign tutorial (integrate2 spec).
 
 **These rules override your scheduled-task prompt wherever they differ** (e.g. it says "ONE item" or "wait for grand3/look1/rescue" — follow the rules below instead).
@@ -94,3 +95,12 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
     World Bank/SIPRI mirrors) instead of many web searches; art scoring numbers (fps, colour range, "boxiness"/edge stats, draw
     calls) computed by script/CI and only glanced at; heavy runs (balance, AI campaigns, screenshot sets) on GitHub runners.
 12. **When CI goes red, let the machine bisect** (D0's workflow) — read its one-line answer instead of hunting by hand.
+13. **Generators, not hand-writing.** Content comes from templates × data: events = ~20 templates × nations × situations;
+    mission trees from each nation's region/rivals/holy places; idea trees from `MSTYLES` + region; tooltips and encyclopedia
+    pages auto-generated from the modifier/data tables ("+10% from Zealous fervour"). Write the generator once, never the rows.
+14. **Fuse systems.** Events, decisions, disasters, named battles, rallies, propaganda = ONE event/decision engine (EU4 style:
+    trigger → options → modifier rows). AI empires choose with weights in data (utility AI), not bespoke code.
+15. **Build screens from one UI kit.** Lane C builds the kit first (panel, tab bar, flag row, ledger table, slider, tooltip, unit
+    card, top bar) with game-icons.net icons (CC BY 3.0, credited); every lane composes screens from it in minutes.
+16. **Players are free QA.** Each session starts with `gh issue list --label player --state open --limit 5` and fixes anything in
+    your files first (the in-game "Report a problem" button, D0d, files them).
