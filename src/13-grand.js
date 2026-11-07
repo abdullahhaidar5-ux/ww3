@@ -51,7 +51,7 @@ function grKindName(fac,k){try{return stats(fac,k).name;}catch(e){return k;}}
 
 // ---------- new campaign ----------
 function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(seed);
-  GC={v:1,ms:grMapSig(),seed,len:quick?'quick':'std',maxTurn:quick?25:60,turn:1,me:o.me===undefined?'IR':o.me,nat:{},prov:[],armies:[],aid:1,war:{},log:[],q:[],qi:0,ph:'plan',over:null,res:null};
+  GC={v:1,ms:grMapSig(),seed,len:quick?'quick':'std',maxTurn:quick?25:60,turn:1,m0:(typeof GR_REAL==='object'&&GR_REAL.asof)?(GR_REAL.asof[0]-2026)*12+GR_REAL.asof[1]-1:10,me:o.me===undefined?'IR':o.me,nat:{},prov:[],armies:[],aid:1,war:{},log:[],q:[],qi:0,ph:'plan',over:null,res:null};
   const codes=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))];
   GM_P.slice(0,GM_LAND).forEach((r,i)=>{GC.prov.push({o:r[1],o0:r[1],gar:[],tax:1,un:15,cv:0,rq:[]});});
   for(const c of codes){const N=grNat(c),ps=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c);const cap=ps.find(p=>p.cap)||ps[0];
@@ -123,7 +123,21 @@ function grSupplied(a){const P=GCM.P,p=P[a.at];if(p.sea)return true;if(GC.prov[a
 
 // ---------- auto-resolve (deterministic strength battle from the same unit lists) ----------
 const GR_TDEF={m:.30,u:.15,r:.10,f:0,d:0,c:.05,j:.12,s:.10,w:0};
-function grDefMods(b){const p=GCM.P[b.p];if(p.sea)return gmilSeaDef(b);let m=1.12+(GR_TDEF[p.t]||0);if(b.river)m+=.2;if(b.mtn)m+=.1;if(GC.prov[b.p].o0===b.dn)m+=.1;if(p.cap)m+=.08;return m;}
+/* A-REAL strategic depth (world sim, orchestrator 2026-11-07 "Ukraine captured Moscow"): a nation's own heartland and above all its capital are
+   defended in depth — reserves, air defence, fortified ring roads, and for nuclear powers the last-ditch deterrent. Scales with the defender's
+   real military (GR_REAL) against the attacker's. Counter-play: cut the capital off, wear the reserves down first, or win the war elsewhere. */
+/* nuclear-armed = has warheads in Lane G's ONE nuclear system (13zz-gnuke GC.nuk / GNK.start) - a new nuclear power gets the deterrent too */
+function grNuk(c){const S=GC&&GC.nuk&&GC.nuk.n&&GC.nuk.n[c];return S?S.w>0:!!(typeof GNK==='object'&&GNK.start[c]);}
+function grMilOf(c){return typeof grRealMil==='function'?grRealMil(c,.3):.3;}
+function grDepth(pi,an,dn){const p=GCM.P[pi],st=GC.prov[pi];if(!p||!p.land||!st||st.o0!==dn||st.o!==dn)return 0;const md=Math.min(2,grMilOf(dn)),ma=Math.max(.2,grMilOf(an));
+  let d=0;if(GC.nat[dn]&&GC.nat[dn].cap===pi){d=.25+.35*md;if(grNuk(dn))d+=.4;}else if(md>=1.2)d=.12*md;
+  return d*Math.min(1.5,Math.max(.6,md/ma));}
+/* the AI won't march on a nuclear power's capital unless it is at least as strong a military (deterrence) */
+function grNukStop(c,j,w){return grNuk(w)&&GC.nat[w]&&GC.nat[w].cap===j&&grMilOf(c)<grMilOf(w);}
+/* enemy field armies within reach of c's capital vs what holds it (garrison + armies there) */
+function grCapThreat(c){const cap=GC.nat[c].cap;let t=0;for(const x of GC.armies)if(x.o!==c&&!x.fl&&GCM.P[x.at].land&&grAtWar(c,x.o)&&grDist(x.at,cap)<260)t+=grArmyVal(x);return t;}
+function grCapHeld(c,skip){const cap=GC.nat[c].cap;let v=GC.prov[cap]&&GC.prov[cap].o===c?grProvDef(cap)*(1+grDepth(cap,'',c)):0;for(const x of GC.armies)if(x.o===c&&x.at===cap&&x!==skip)v+=grArmyVal(x);return v;}
+function grDefMods(b){const p=GCM.P[b.p];if(p.sea)return gmilSeaDef(b);let m=1.12+(GR_TDEF[p.t]||0);m+=grDepth(b.p,b.an,b.dn);if(b.river)m+=.2;if(b.mtn)m+=.1;if(GC.prov[b.p].o0===b.dn)m+=.1;if(p.cap)m+=.08;return m;}
 function grSideUnits(b,side){const out=[];const ids=side==='att'?b.att:b.def;for(const id of ids){const a=GC.armies.find(x=>x.id===id);if(a)out.push({fac:grNat(a.o).fac,u:a.u,arr:a});}
   if(side==='def'&&b.garr){const p=GC.prov[b.p];out.push({fac:grNat(p.o).fac,u:p.gar,arr:null});}return out;}
 function grSideVal(us,def){let v=0;for(const s of us)v+=grForce(s.fac,s.u)*(def!==undefined&&s.arr?gmilMul(s.arr,def):1)*(s.arr&&typeof gmMorMul==='function'?gmMorMul(s.arr):1);return v;}
@@ -198,7 +212,7 @@ function grFinishTurn(){const P=GCM.P;try{gmMorTurn();}catch(e){}try{gmRepair();
     if(st.aut!==undefined&&st.aut!==st.au){if(st.auC>0)st.auC--;else{if(st.aut<st.au){st.au=Math.max(st.aut,st.au-1);st.un=Math.min(100,st.un+10);st.auC=3;}else st.au=Math.min(st.aut,st.au+1);}}st.un+= (tgt-st.un)*.18;st.un=Math.max(0,Math.min(100,st.un));if(st.cv>0)st.cv--;
     if(st.un>72&&R()<.3){const n=Math.floor(st.gar.length/2);st.gar.length=st.gar.length-n;st.un=45;grLog('Revolt in '+p.n+'! The garrison lost '+n+' units.',c===GC.me?c:'');}
     // garrison regrows one unit a turn up to its share, recruits arrive
-    const cap=Math.max(2,Math.round(p.dev*1.1))+2*geCount(p.i,'base')+(st.cf===1?(st.tr|0):0);if(st.gar.length<cap&&st.cv===0&&R()<.7){const fac=N.fac;st.gar.push([(st.gar.length%3===2&&grHasKind(fac,'at'))?'at':'inf',100,0,100]);}
+    const cap=Math.max(2,Math.round(p.dev*1.1))+2*geCount(p.i,'base')+(st.cf===1?(st.tr|0):0)+(GC.nat[c]&&GC.nat[c].cap===p.i&&st.o0===c?Math.round(3*Math.min(2,grMilOf(c)))+(grNuk(c)?2:0):0);   /* A-REAL: capitals keep a reserve garrison sized by the real military */if(st.gar.length<cap&&st.cv===0&&R()<.7){const fac=N.fac;st.gar.push([(st.gar.length%3===2&&grHasKind(fac,'at'))?'at':'inf',100,0,100]);}
     const keep=[];for(const q of st.rq){if(q[0]<=GC.turn){grArrive(c,p.i,q[1],q[2]);}else keep.push(q);}st.rq=keep;}
   geAfterProvinces(inc,R);try{gmilTurnEnd();}catch(e){console.error('gmilTurnEnd',e);}   /* empire economy: trade, oil, fuel, food, manpower, upkeep, bonds, bank, actions, supply (13g-grandeco.js) */
   // supply: an army outside friendly reach loses men every month; on a boat a little
@@ -235,12 +249,14 @@ function grMerge(aid){const a=GC.armies.find(x=>x.id===aid);if(!a)return 0;let n
 /* AI army orders (merge idle columns, march on the weakest reachable enemy province, keep the capital held); run at month end and, in real time, on days 10 and 20 (grAIMid) */
 function grAIArmies(c,R,wars){const P=GCM.P;
     const mineA=GC.armies.filter(a=>a.o===c&&!a.fl).sort((a,b)=>a.id-b.id);for(const a of mineA)if(!a.path.length)grMerge(a.id);
+    {const cap=GC.nat[c].cap;for(const a of mineA)if(a.at===cap&&a.path.length&&GC.prov[cap].o===c&&grCapHeld(c,a)<grCapThreat(c)*1.2){a.path=[];a.pg=0;}}   /* A-REAL: a column about to leave a threatened capital stays */
     for(const a of GC.armies.filter(x=>x.o===c&&!x.path.length&&!x.fl&&!x.fr).sort((x,y)=>x.id-y.id)){const val=grArmyVal(a);if(val<2500)continue;
       const home=GCM.P[a.at].land&&GC.prov[a.at].o===c;let tgt=-1,ts=-1e9;
-      const seen=new Set([a.at]);let fr=[a.at];for(let d=0;d<5&&fr.length;d++){const nx=[];for(const u of fr)for(const j of P[u].adj){if(seen.has(j))continue;seen.add(j);if(!P[j].sea)nx.push(j);else if(P[u].port||P[u].sea){nx.push(j);}
-        if(P[j].land){const w=GC.prov[j].o;if(w!==c&&wars.includes(w)){const def=grProvDef(j)*1.25+GC.armies.filter(x=>x.at===j&&x.o===w).reduce((s,x)=>s+grArmyVal(x),0);const sc=(P[j].wg?40:0)+P[j].dev*4+(val/Math.max(300,def)-1)*30-d*8;if(def<val*1.1&&sc>ts){ts=sc;tgt=j;}}}}fr=nx;}
+      {const cap=GC.nat[c].cap;if(home&&a.at!==cap&&GC.prov[cap].o===c&&grDist(a.at,cap)<420&&grCapHeld(c,null)+GC.armies.filter(x=>x.o===c&&x.path.length&&x.path[x.path.length-1]===cap).reduce((s,x)=>s+grArmyVal(x),0)<grCapThreat(c)*1.2){const r=grPath(c,a.at,cap);if(r&&!r.decl){a.path=r.path;continue;}}}   /* A-REAL: the capital is threatened and thin - fall back to defend it */
+      const seen=new Set([a.at]),seaN=new Set(),blue=grMilOf(c)>=1;let fr=[a.at];for(let d=0;d<5&&fr.length;d++){const nx=[];for(const u of fr)for(const j of P[u].adj){if(seen.has(j))continue;seen.add(j);if(!P[j].sea)nx.push(j);else if(P[u].port||P[u].sea){nx.push(j);}if(P[j].sea||seaN.has(u))seaN.add(j);
+        if(P[j].land){const w=GC.prov[j].o;if(w!==c&&wars.includes(w)&&!grNukStop(c,j,w)&&(blue||!seaN.has(j))){   /* A-REAL: only real militaries (GR_REAL mil >= 1) mount invasions across the sea */const def=(grProvDef(j)*1.25+GC.armies.filter(x=>x.at===j&&x.o===w).reduce((s,x)=>s+grArmyVal(x),0))*(1+grDepth(j,c,w));const sc=(P[j].wg?40:0)+P[j].dev*4+(val/Math.max(300,def)-1)*30-d*8;if(def<val*1.1&&sc>ts){ts=sc;tgt=j;}}}}fr=nx;}
       if(tgt<0&&home){const cap=GC.nat[c].cap;if(a.at!==cap&&R()<.15&&val>6000){const r=grPath(c,a.at,cap);if(r&&!r.decl){a.path=r.path;}}continue;}
-      if(tgt>=0){const keepHome=GC.nat[c].cap===a.at&&mineA.filter(x=>x.at===a.at).length===1&&wars.some(w=>GC.nat[w]&&GCM.P[GC.nat[w].cap]&&grDist(a.at,GC.nat[w].cap)<260);if(keepHome)continue;const r=grPath(c,a.at,tgt);if(r&&!r.decl)a.path=r.path;}}
+      if(tgt>=0){const keepHome=GC.nat[c].cap===a.at&&((mineA.filter(x=>x.at===a.at).length===1&&wars.some(w=>GC.nat[w]&&GCM.P[GC.nat[w].cap]&&grDist(a.at,GC.nat[w].cap)<260))||grCapHeld(c,a)<grCapThreat(c)*1.2);if(keepHome)continue;const r=grPath(c,a.at,tgt);if(r&&!r.decl)a.path=r.path;}}
 }
 /* A2 real time: AI generals think on day ticks too — on days 10 and 20 every AI nation at war sends its idle columns off (army orders only: no recruiting, taxes or declarations, those stay monthly). Deterministic from seed + month + day; marks the departure day so the column slides from where it stands */
 function grAIMid(day){if(!GC||GC.ph!=='plan'||GC.over)return 0;const R=grRng(GC.seed*17+GC.turn*3+day*977);let n=0;
@@ -254,7 +270,7 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
     // a nation at peace with everyone picks a fight with its weakest neighbour now and then (minor nations only defend)
     if(!wars.length&&grNat(c).major&&GC.turn>=3&&R()<.15){let best=null,bv=1e18;for(const p of mine)for(const j of p.adj){const q=P[j];if(!q.land)continue;const w=GC.prov[j].o;if(w===c||GC.nat[w].dead||grAllied(c,w)||grOpinion(c,w)>=40)continue;const v=grProvDef(j)+GC.armies.filter(a=>a.at===j).reduce((s,a)=>s+grArmyVal(a),0);if(v<bv||(v===bv&&w<best)){bv=v;best=w;}}if(best){grDeclare(c,best);wars.push(best);}}
     // recruit: keep a reserve, spend the rest at the frontier province (or the capital)
-    if(grNat(c).major||wars.length){const front=mine.map(p=>[p,p.adj.filter(j=>P[j].land&&GC.prov[j].o!==c&&(wars.includes(GC.prov[j].o))).length*3+(p.i===N.cap?1:0)]).sort((a,b)=>b[1]-a[1]||a[0].i-b[0].i)[0][0];
+    if((grNat(c).major||wars.length)&&!((typeof gfOver==='function'&&gfOver(c))||(N.e&&N.e.br&&(N.inc|0)<0))||(wars.length&&grCapHeld(c,null)<grCapThreat(c))){const front=mine.map(p=>[p,p.adj.filter(j=>P[j].land&&GC.prov[j].o!==c&&(wars.includes(GC.prov[j].o))).length*3+(p.i===N.cap?1:0)]).sort((a,b)=>b[1]-a[1]||a[0].i-b[0].i)[0][0];
       let guard=0;while(N.cash>1500&&guard++<6){const k=GR_RECRUIT.filter(r=>grHasKind(fac,r[0]))[Math.floor(R()*3.4)%4]||GR_RECRUIT[0];if(grRecruit(c,front.i,k[0]))break;}}
     // armies: merge idle ones at the same place, then march on the weakest reachable enemy province; keep the capital defended
     grAIArmies(c,R,wars);
@@ -263,12 +279,13 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
   geAIAll();}   /* empire economy for AI nations: bonds, bank, buildings, total war, embargoes, merchants... (13g-grandeco.js) */
 
 // ---------- save ----------
-/* calendar: month 1 = January 2026; GC.day = days into the current month (0..29), ticked by the real-time clock in 13c */
+/* calendar: month 1 = the start month GC.m0 (0-based from Jan 2026; new campaigns = GR_REAL.asof = Nov 2026, A-DATE; saves without m0 = Jan 2026); GC.day = days into the current month (0..29), ticked by the real-time clock in 13c */
 const GR_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 /* real time: how far (0..0.92) a marching army has got along its current road, from progress months + days into this month (display only, sim unchanged) */
 function grSlide(a){if(!GC||GC.ph!=='plan'||!a.path||!a.path.length)return 0;const c=grEdge(a.at,a.path[0]);if(!c)return 0;let d=Math.min(29.99,(GC.day|0)+((typeof GV!=='undefined'&&GV.dayF)||0));if(a.sm===GC.turn&&a.sd>0)d=Math.max(0,(d-a.sd)*30/(30-a.sd));return Math.max(0,Math.min(.92,((a.pg|0)+d/30)/c));}
-function grMonStr(turn){const m=Math.max(0,(turn|0)-1);return GR_MON[m%12]+' '+(2026+Math.floor(m/12));}   /* A2c: month label for former 'turn N' wording */
-function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1);return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
+function grM0(){return (typeof GC==='object'&&GC&&GC.m0|0)||0;}
+function grMonStr(turn){const m=Math.max(0,(turn|0)-1)+grM0();return GR_MON[m%12]+' '+(2026+Math.floor(m/12));}   /* A2c: month label for former 'turn N' wording */
+function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1)+grM0();return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){}}
 // a save made on an older world map (the province list changed, e.g. 2026-11-06 real borders 174 -> 236 land provinces) can't
 // continue: its province indices point at different places, so the map breaks and a Fight-it battle never loads (Lane A1)
