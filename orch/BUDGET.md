@@ -14,7 +14,7 @@
 4. **If a helper hits a usage/rate limit error**, it writes its HANDOFF, pushes, and stops (no retries in a tight loop); the
    next scheduled run resumes.
 
-**Exception until the deadline (Sat 2026-11-07 20:00 Chicago):** the ART LOOP is planned work — it ignores rules 1–3 (runs back to back, no daily cap) but still never runs two iterations at once. The KAIZEN loop starts only after the deadline.
+**Exception until the deadline (Sat 2026-11-07 20:00 Chicago):** the four PLAN-SAT lanes (A, B, C = ex art loop, D) are the planned work — they ignore rules 1–3 (back to back, no daily cap; the 4 lanes ARE the 4 slots) but each lane never runs two iterations at once. Lane A runs on Opus (sim/determinism, per CLAUDE.md); B, C, D on Sonnet. The KAIZEN loop starts only after the deadline.
 
 ## Cheap-by-default rules for every helper
 - Read `orch/BRIEF.md` first, not old reports. grep + ~100-line ranges only. Outputs via `tail`.

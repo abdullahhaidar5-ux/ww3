@@ -113,7 +113,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   supply runs on roads you build (convoys, cut-off towns, forward depots).
 - **Grand strategy layer** (Abdullah, 2026-11-05 19:16–19:20): the RTS battle is one layer under a Total War / EU4-style
   grand map where you run your empire and choose to fight each battle live ("Fight it") or auto-resolve; results flow back.
-  **Simultaneous turns**; **a world map with detail where it matters** (19:41, replaces "three theatres": detailed provinces around all full nations (21 incl. IQ/SY/JP; DW at home in Yemen) — Middle East & North Africa, Europe/Russia, East Asia, South Asia, North America & Caribbean — oceans as big sea lanes linking them); **solo vs AI empires first,
+  **Real time with pause, EU4-style** (Abdullah 2026-11-06 17:58, replaces "simultaneous turns": days tick, speeds 1–5, pause; battles pause the map; orders while paused; still deterministic from state + timestamped orders + seed; mechanics mirror EU4 — power points, ideas, stability, cores, estates, development, trade nodes, force limit, tradition; specs in `orch/PLAN-SAT.md`); **a world map with detail where it matters** (19:41, replaces "three theatres": detailed provinces around all full nations (21 incl. IQ/SY/JP; DW at home in Yemen) — Middle East & North Africa, Europe/Russia, East Asia, South Asia, North America & Caribbean — oceans as big sea lanes linking them); **solo vs AI empires first,
   friends multiplayer later** (turn resolution must be deterministic from state + orders + seed); **empire-level economy
   lives on the grand map** (war bonds, upkeep, fuel, manpower, oil market, crises… — not inside battles). Conquest battles
   stay the tactical layer. **Fight-it battles start with exactly the units you have on the grand map** (Abdullah 2026-11-05
@@ -153,6 +153,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 
 ## Ground rules for agents
 
+- **GOAL: a $75 studio game by Sat 2026-11-07 20:00 Chicago** (Abdullah 2026-11-06 18:02 "centralizing and becoming faster. Kaizen afterwards"): all work runs in the four lanes of **`orch/PLAN-SAT.md`** (one owner per file, one central prioritized list); no other helpers until the deadline.
 - **Kaizen** (Abdullah 2026-11-06 17:15 "faster and more efficient, kaizen, non-stop iterations"): read **`orch/BRIEF.md`** first (one-page state of the game, kept fresh by the kaizen loop) instead of re-reading many reports; follow `orch/KAIZEN.md` (measure → one small high-value change → prove → ship → log).
 - **Usage governor** (Abdullah 2026-11-06 17:18 "won't break usage but still occur constantly"): loops obey `orch/BUDGET.md` — max 4 helpers at once (loops back off when busy), max 12 iterations per loop per day, self-start only when quiet, stop cleanly on rate limits.
 
