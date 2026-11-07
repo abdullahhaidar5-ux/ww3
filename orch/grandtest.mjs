@@ -351,6 +351,9 @@ try {
   // laneF ⚡21 outliner: O lists my armies; clicking a row selects it
   const ol = await ev(() => { grNew({ me: 'IR', seed: 5, len: 'quick' }); grandOpen(); GV.outl = true; gmPaint(); const o = document.getElementById('gmOutl'); const rows = o ? o.querySelectorAll('.oi').length : -1; const mine = GC.armies.filter(a => a.o === GC.me).length; if (rows > 0) o.querySelector('.oi').click(); const sel = gmIds().length; GV.outl = false; gmPaint(); const hid = document.getElementById('gmOutl').style.display === 'none'; return { rows, mine, sel, hid }; });
   if (!(ol.rows === ol.mine && ol.rows > 0 && ol.sel === 1 && ol.hid)) fails.push('outliner: ' + JSON.stringify(ol));
+  // laneF ⚡23 macro-builder: standing recruit order repeats each month and stops (with a log line) when it can't be paid
+  const mc = await ev(() => { const pi = GC.prov.findIndex(s => s.o === GC.me); const k = GR_RECRUIT.find(r => grHasKind(grNat(GC.me).fac, r[0]))[0]; GC.mac = []; gmMacroToggle(pi, k); const on = GC.mac.length; const q0 = JSON.stringify(GC.q||0).length; GC.nat[GC.me].cash = 1e6; const c0 = GC.nat[GC.me].cash; gmMacros(); const paid = GC.nat[GC.me].cash < c0; GC.nat[GC.me].cash = 0; gmMacros(); return { on, paid, stopped: GC.mac.length === 0 }; });
+  if (!(mc.on === 1 && mc.paid && mc.stopped)) fails.push('macro: ' + JSON.stringify(mc));
 } catch (e) { if (String(e.message) !== '__done') { fails.push(String(e.message || e).split('\n')[0]); console.log('ERRS', errs.join('\n')); console.log(String(e.stack).split('\n').slice(0, 7).join('\n')); } }
 for (const e of [...new Set(errs)].slice(0, 6)) fails.push(e);
 await browser.close(); server.close();
