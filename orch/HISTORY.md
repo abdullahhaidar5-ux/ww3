@@ -392,6 +392,9 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneA 2026-11-07 (12:40Z): A2b slice 3 (a357496f) — online grand campaign: a friend's events now pop up on the friend's own map (📜 Decision waiting) instead of being auto-picked by the host's AI; the choice settles on the host; a friend who quits has their open events answered by their generals (gnettest). A6 slice 3 (aeea0d08) — occupation wears down the occupier's war support at home (every $440 of raids/withheld income/sabotage = −1, same for all styles; province line shows it; occtest). Fix d3422038: grand campaign NaN manpower for Syria/BI from month 1 (gate/grand red on main) — lane B's new autonomy % reused 13g's st.au level index; new field st.ap, old saves migrate.
 - laneD 2026-11-07: D2 slice 6 — 'RPG Team/Cell', 'TOW Team' unit names plain-worded to Anti-Tank (Missile) Team (names only, no sim change).
 
+- laneB 2026-11-07 RG24 pipelines & grids: src/13zq-gpipe.js (8 real lines, sabotage/guard/repair, oil price + income/unrest GMOD rows, 🛢 tab, alert; hook in geOilIdx), orch/pipetest.mjs. Chain: owner income, customers' blackouts, oil index, AI sabotage in wars, bypass lines vs Hormuz/Suez; cost 6 Mil/$120.
 - laneF 2026-11-07 12:50Z: A3 150-army perf test (orch/a3perf.mjs): select 150 armies 12 ms, cards 5 ms; no code change needed.
 
 - 2026-11-07 laneG: RG4 elections & refugees (src/13zw-gelect.js, orch/eltest.mjs) — democracies hold elections on war support + unrest, wars create refugees.
+- laneD 2026-11-07 D5 slice 1: grand-map first-minute coach card (13c guCoach, once via localStorage ww3_gcoach). Chain: new players learn pause/speed/orders so AI nations' real-time moves aren't missed. Local gates time out on cloud box; CI gates.
+- laneE DE-BLOCK slice 1: Poly Haven CC0 crate (Old Military Crate) + barrel (Barrel 03) photoreal PBR models replace plain box/cylinder props; credit added. Shot orch/shots/laneE/j1-base.png
