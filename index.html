@@ -19819,7 +19819,7 @@ function g3PaintOverlay(){const F=G3.F,W=F.W,H=F.H,idx=F.idx,P=GCM.P,Ls=F.Ls;if(
     const R=x+1<W?idx[k+1]:i,D=y+1<H?idx[k+W]:i;
     if(p.sea){a=0;}
     else if(Ls[k]>.5){const c=col[i],ed=g3Smooth(.5,.64,Ls[k]);let t=c[3];
-      if(pol)t=.1+Math.min(.5,glow[k]*1.9);
+      if(pol)t=.24+Math.min(.42,glow[k]*1.7);
       if(G3.mode==='culture'&&GC.prov[i].o!==GC.prov[i].o0&&((x+y)&7)<3)t*=.3;
       r=c[0];g=c[1];b=c[2];a=t*255*ed;
       }

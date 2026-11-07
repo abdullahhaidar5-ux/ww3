@@ -44,3 +44,6 @@ Built a sea-shader upgrade (sky reflection, whitecaps, sparkle); main received a
 
 ## 2026-11-07 08:xx UTC — laneC iteration 9 (shots: orch/shots/laneC/f0 before, f1 after)
 Objects 3.5 → 4: armies are now squads, not one lone figure — 1 / 3 / 6 soldiers by army size (<5, <12, 12+), each with backpack, rifle and helmet; flags shrink as you zoom in (they dwarfed the figure) and the zoom floor of figures is smaller. Visual only. Others unchanged (geography 4, colour 3.5, light 3.5, water 3.5, life 3.5, readability 4). Next lowest: colour/light/life 3.5 → C0 UI kit.
+
+## 2026-11-07 09:xx UTC — laneC iteration 10 (shots: orch/shots/laneC/g0 before, g1 after)
+Colour 3.5 → 4: political mode now washes every province in its owner's colour (interior alpha .10 → .24, borders up to .66) so blocs/empires read at a glance — before, the land was uniform beige with only a thin border glow. Others unchanged (geography 4, light 3.5, water 3.5, objects 4, life 3.5, readability 4). Next lowest: light/life 3.5 → C0 UI kit.

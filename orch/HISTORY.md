@@ -367,4 +367,5 @@ laneC 2026-11-07 iteration 9: grand-map armies drawn as squads (1/3/6 soldiers b
 laneG 2026-11-07 (08:25Z): item 22 EU4 peace-deal screen (src/13z-gpeace.js): war score buys provinces (by development, capital x2, unoccupied x1.8), tribute, vassalage; losing side pays tribute; alert when winning; reaction: alarm/coalitions, opinion falls, 12-month truce. gptest PASS, smoke PASS.
 - laneD (2026-11-07 D2 slice 5): tunnel/fortress garrison summary shows ANTI-TANK / ANTI-AIR / CARRIER / ARTILLERY instead of AT/AA/APC/IFV/ARTY (wording only, no sim change, no servers-live PR). newplayer audit: 0 issues. Smoke PASS.
 laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (Lane B economy, not the peace screen) and grandlive timeout were red on the peace branch; not caused by 13z-gpeace.js (AI never calls gdAct).
+- laneC 2026-11-07: grand-map political mode shows owner colour across provinces (colour 3.5 -> 4), shots orch/shots/laneC/g0|g1
 - laneE 2026-11-07 09:35Z: re-verified base view on main (shot h1before) — no regressions, no src change; open E1 kit/LOD, E2 sandbag props, E3 AO/decals.
