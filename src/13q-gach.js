@@ -10,7 +10,7 @@ const GACH_ROWS=[
  {id:'bloc',i:'🛡',n:'Alliance builder',d:'Have 3 allies.',t:c=>gdAllies(c).length>=3},
  {id:'guard',i:'🔰',n:'Protector',d:'Guarantee another nation.',t:c=>(GC.gu||[]).some(g=>g[0]===c)},
  {id:'dec',i:'📜',n:'Decision maker',d:'Settle 3 events.',t:c=>(GC.ev&&GC.ev.hist||[]).filter(h=>h[1]===c).length>=3},
- {id:'t20',i:'⏳',n:'Endurance',d:'Reach turn 20 still standing.',t:c=>GC.turn>=20},
+ {id:'t20',i:'⏳',n:'Endurance',d:'Survive 20 months still standing.',t:c=>GC.turn>=20},
  {id:'wars',i:'⚔',n:'Many fronts',d:'Be at war with 3 nations at once.',t:c=>gdEnemies(c).length>=3}];
 function gachTurn(){if(!GC||!GC.nat)return;if(!GC.ach)GC.ach={};for(const c of Object.keys(GC.nat).sort()){if(GC.nat[c].dead||!grNat(c).major)continue;const have=GC.ach[c]||(GC.ach[c]=[]);
   for(const a of GACH_ROWS){if(have.includes(a.id))continue;let ok=false;try{ok=a.t(c);}catch(e){}if(ok){have.push(a.id);if(c===GC.me){grLog('Achievement: '+a.n,c);try{gevToast([a.i+' Achievement — '+a.n+': '+a.d]);}catch(e){}}}}}}
