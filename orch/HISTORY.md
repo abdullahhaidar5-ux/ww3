@@ -261,5 +261,10 @@ Taiwan, Philippines, Vietnam, Indonesia, Thailand, Kazakhstan, Afghanistan (styl
 Added DZ, MA, NG, ZA, ET, LY, SD (first cut, NEWNAT, Egypt base). See orch/reports/nations-b2.md.
 
 - laneB 2026-11-07: B1 realistic start first cut — GR_REAL table (real cash/army/fuel gaps, NATO/Russia/Resistance etc. alliances, opinions, wars RU-UA + IL-RS, fronts, overseas bases); grandtest + smoke pass; report orch/reports/realstart.md
+- laneC 2026-11-07: C1 towns rebuilt as dense street-grid settlements (hip/gable/row/courtyard house meshes, lighter pads); objects 2→3. Gate: smoke PASS; grandtest only fails eco-snowball (sim, not mine); smooth not run (grand-render only).
 - laneD 2026-11-07: D1 JP Japan first cut via NEWNAT (JGSDF units, Home Islands radio, flag/look on shared models, Taiwan Strait map home); SMOKE PASS; voices/anthems stand in until D3.
 - laneD 2026-11-07: D2 slice 1: orch/newplayer.mjs (lists visible menu controls, flags cryptic/no-tooltip ones) + hover hints for Deploy vs AI, Replay, Map Editor, Join by code, sidebar tabs. D2 stays open (grand map real-time pass, remaining confusions).
+- laneD 2026-11-07: D2 slice 2: hover hints for player-count, conditions, sidebar tabs (newplayer.mjs now flags only sidebar tabs, fixed at runtime); SMOKE PASS; smooth gate left to CI (sandbox too slow). D2 stays open (grand map pass).
+
+## laneD 2026-11-07 D2 slice
+Added orch/newplayer.mjs (menu audit via visible text). Top confusion: with 54 nations the Tutorial/Conquest/Grand campaign buttons sat ~3700px down the main menu. Fixed: quick-start row at the top (presses the real buttons) + compact scrollable nation list. Smoke PASS; smooth gate runs in CI.

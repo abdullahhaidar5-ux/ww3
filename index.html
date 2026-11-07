@@ -13483,7 +13483,7 @@ function mapCards(){const el=$('pickMap');if(!el)return;if(!setup.map)setup.map=
   const pl=document.createElement('div');pl.className='pl';const dc=document.createElement('div');dc.className='dc';const sn=document.createElement('div');sn.className='dc';sn.id='slotNote';right.append(sel,pl,dc,sn);box.append(cv,right);el.append(box);
   const show=()=>{const D=MAPS[setup.map];const base=(D.min===D.max?`${D.max} players`:`${D.min}–${D.max} players`)+(D.theme==='snow'?' · snow & ice':'');pl.textContent=base+(D.tag?' · '+D.tag:'');dc.textContent=D.desc;
     setTimeout(()=>{try{const r=mapPreview(setup.map,cv);if(r){const t=[base];if(D.tag)t.push(D.tag);else if(r.water>.28)t.push('naval-heavy');else if(r.water>.06)t.push('rivers & coast');else t.push(r.bridges?'rivers':'open land');if(!D.tag&&r.mtn>.05)t.push('mountain passes');if(r.bridges)t.push(r.bridges+(r.bridges>1?' bridges':' bridge'));pl.textContent=t.join(' · ');}}catch(e){}},20);};
-  const rb=document.createElement('button');rb.type='button';rb.className='rndmap';rb.textContent='Random battlefield';rb.onclick=()=>{const need=(setup.n||1)+1;const ks=MAP_KEYS.filter(k=>k!==setup.map&&MAPS[k].max>=Math.min(need,8));const k=ks[Math.floor(Math.random()*ks.length)]||setup.map;sel.value=k;sel.onchange();};right.insertBefore(rb,pl);
+  const rb=document.createElement('button');rb.type='button';rb.className='rndmap';rb.textContent='Random battlefield';rb.title='Pick a random map that fits your player count';rb.onclick=()=>{const need=(setup.n||1)+1;const ks=MAP_KEYS.filter(k=>k!==setup.map&&MAPS[k].max>=Math.min(need,8));const k=ks[Math.floor(Math.random()*ks.length)]||setup.map;sel.value=k;sel.onchange();};right.insertBefore(rb,pl);
   sel.onchange=()=>{setup.map=sel.value;setup.slot=-1;setup.st=[];setup.stK=null;try{SET.map=setup.map;saveSet();}catch(e){}show();syncAiN();renderTeams();if(typeof renderLobby==='function')renderLobby();};show();syncAiN();}
 // Skirmish roster: you, the main opponent and the other AIs (rolled once so you can see who they are), each with a team.
 function rollAis(){const n=Math.max(1,Math.min((MAPS[setup.map]||MAPS.strait).max-1,setup.n||1));const facs=[setup.p,setup.a];const pool=FKEYS.filter(k=>!facs.includes(k)&&!(setup.others||[]).includes(k));
@@ -13496,7 +13496,7 @@ function renderTeams(){const el=$('teamList');if(!el)return;const facs=rollAis()
   facs.forEach((f,i)=>{const row=document.createElement('div');row.className='trow sp';const nm=document.createElement('span');nm.textContent=(i===0?'You · ':`AI ${i} · `)+FACTIONS[f].name;
     const s=document.createElement('select');s.setAttribute('aria-label','Team for '+nm.textContent);for(let t=0;t<Math.max(2,N);t++){const o=document.createElement('option');o.value=t;o.textContent='Team '+(t+1);s.append(o);}s.value=setup.tm[i];
     s.onchange=()=>{setup.tm[i]=+s.value;checkTeams();prevMarks();};if(i>0){setup.pers=setup.pers||[];row.append(nm,persSel(()=>persCode(setup.pers[i]),v=>{setup.pers[i]=v;},'AI style for '+nm.textContent),s,spotsSel(i,setup.map,sides,st,skSet,()=>skSt(N)));}else row.append(nm,s,spotsSel(i,setup.map,sides,st,skSet,()=>skSt(N)));el.append(row);});
-  if(N>=2){const pr=document.createElement('div');pr.className='presets';const pb=(lab,fn)=>{const b=document.createElement('button');b.className='chip';b.textContent=lab;b.onclick=()=>{setup.tm=facs.map((_,i)=>fn(i));renderTeams();};pr.append(b);};pb('Me vs all',i=>i?1:0);pb('Free for all',i=>i);if(N>=3)pb('Co-op: me + allies vs AI',i=>i<Math.ceil(N/2)?0:1);el.append(pr);}
+  if(N>=2){const pr=document.createElement('div');pr.className='presets';const pb=(lab,fn)=>{const b=document.createElement('button');b.className='chip';b.textContent=lab;b.title={'Me vs all':'You against every other player','Free for all':'Everyone fights everyone','Co-op: me + allies vs AI':'You and half the players vs the rest'}[lab]||'';b.onclick=()=>{setup.tm=facs.map((_,i)=>fn(i));renderTeams();};pr.append(b);};pb('Me vs all',i=>i?1:0);pb('Free for all',i=>i);if(N>=3)pb('Co-op: me + allies vs AI',i=>i<Math.ceil(N/2)?0:1);el.append(pr);}
   checkTeams();prevMarks();}
 function checkTeams(){const ok=new Set(setup.tm).size>1;const b=$('start');if(!b)return;b.disabled=!ok;b.title=ok?'':'Put at least one player on a different team.';}
 mapCards();
@@ -13898,9 +13898,20 @@ if(typeof window!=='undefined'){window.__tk=TK;}
 try{tkApply();}catch(e){}
 {const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='War news (headlines across the top + a small breaking-news picture-in-picture)';
   const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}
+/* ---------- laneD D2 (first-time-player audit): with 54 nations the real start buttons were ~3700px down the menu.
+   A quick-start row sits at the top (it just presses the real buttons below), and the nation list is a compact,
+   scrollable grid (the chosen nation keeps its full card). ---------- */
+(function(){const card=document.querySelector('#menu .card');if(!card||document.getElementById('quickGo'))return;
+  const st=document.createElement('style');st.textContent='#pickP{max-height:330px;overflow-y:auto;padding-right:4px}#pickP .fac:not(.on) .dc,#pickP .fac:not(.on) .sp,#pickP .fac:not(.on) .sw{display:none}#pickP .fac:not(.on){padding:6px 8px;align-items:center}#quickGo button{font-size:15px;padding:10px 18px}';document.head.append(st);
+  const row=document.createElement('div');row.id='quickGo';row.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 2px';
+  const defs=[['▶ Tutorial',/tutorial/i,'First time? A guided 10-minute battle.',false],['Grand campaign',/^grand campaign/i,'Run a whole empire on a world map and fight the battles live.',true],['Conquest',/^conquest/i,'A quick battle vs the AI with the nation and battlefield picked below.',true],['Missions',/^missions/i,'The story missions.',true]];
+  for(const [t,re,tip,ghost] of defs){const b=document.createElement('button');b.type='button';b.className='big'+(ghost?'':' ghost');b.textContent=t;b.title=tip;
+    b.onclick=()=>{const tgt=[...document.querySelectorAll('#menu .mode button, #menu #tutorial')].find(x=>re.test((x.textContent||'').trim()));if(tgt){tgt.scrollIntoView({block:'center'});tgt.click();}};row.append(b);}
+  const nl=card.querySelector('.label');if(nl&&nl.textContent.trim()==='Your nation')nl.textContent='Your nation (scroll the list — the Battlefield and start buttons are below)';
+  const first=card.querySelector('.row');(first||card.querySelector('h1')).after(row);})();
 
 /* ---------- first-time-player hints (Lane D2): hover text for menu buttons that had none (orch/newplayer.mjs lists them) ---------- */
-(function(){const TIPS={'conquest — deploy vs ai':'Play one battle against computer opponents: you get a full base and money, destroy the enemy base to win.','▶ watch a replay file':'Open a saved replay file (.json) from an earlier battle and watch it again.','🗺 map editor':'Draw your own battle map: terrain, resources and start positions.','join by code':'Type the invite code a friend sent you to join their online battle.','build':'Sidebar tab: buildings you can place in your base.','units':'Sidebar tab: soldiers and vehicles you can train.','powers':'Sidebar tab: special powers such as strikes and support, with cooldowns.','launch':'Fire the selected special power at the spot you click on the map.','medals':'Your achievements: medals earned in battles.'};
+(function(){const TIPS={'1':'Fight 1 computer opponent','2':'Fight 2 computer opponents','3':'Fight 3 computer opponents','5':'Fight 5 computer opponents','7':'Fight 7 computer opponents (needs a big map)','clear day':'Bright daylight, long sight','golden hour':'Warm low sun, long shadows','overcast':'Grey sky, soft light','build':'Build and repair your base buildings','units':'Train soldiers and vehicles','powers':'Special strikes and abilities with a cooldown','conquest — deploy vs ai':'Play one battle against computer opponents: you get a full base and money, destroy the enemy base to win.','▶ watch a replay file':'Open a saved replay file (.json) from an earlier battle and watch it again.','🗺 map editor':'Draw your own battle map: terrain, resources and start positions.','join by code':'Type the invite code a friend sent you to join their online battle.','build':'Sidebar tab: buildings you can place in your base.','units':'Sidebar tab: soldiers and vehicles you can train.','powers':'Sidebar tab: special powers such as strikes and support, with cooldowns.','launch':'Fire the selected special power at the spot you click on the map.','medals':'Your achievements: medals earned in battles.'};
 function fix(){try{for(const b of document.querySelectorAll('button')){if(b.title)continue;const t=TIPS[(b.textContent||'').trim().toLowerCase()];if(t)b.title=t;}}catch(e){}}
 setInterval(fix,2500);setTimeout(fix,500);})();
 /* ================= AFTER-ACTION MAP: a timeline of the whole match on the end screen =================
@@ -19129,8 +19140,12 @@ const G3_GEO=()=>{if(G3.geo)return G3.geo;const cyl=(a,b,h,s)=>new THREE.Cylinde
   A.broad=g3Merge([[cyl(.35,.5,2.2,5),g3M(0,1.1,0),tr],[ico(1.9),g3M(0,3.7,0,1,.9,1),[.22,.46,.18]],[ico(1.3),g3M(.9,3,.4),[.28,.52,.2]]]);
   A.palm=g3Merge([[cyl(.16,.3,5.2,5),g3M(0,2.6,0),[.62,.5,.32]],...[0,1,2,3,4,5].map(i=>[cone(.5,3.2,3),g3M(Math.cos(i*1.047)*1.4,5.3,Math.sin(i*1.047)*1.4,1,1,1,0,0,0).multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(Math.sin(i*1.047)*1.2,0,-Math.cos(i*1.047)*1.2))),[.25,.5,.2]])]);
   A.scrub=g3Merge([[ico(1),g3M(0,.4,0,1.4,.6,1.2),[.5,.5,.28]],[ico(.7),g3M(.8,.25,.3,1,.5,1),[.45,.46,.25]]]);
-  A.house=g3Merge([[box(),g3M(0,.3,0,1,.6,.8),wall],[g3Prism(),g3M(0,.86,0,1,.62,.9),roof]]);
-  A.flat=g3Merge([[box(),g3M(0,.36,0,1,.72,.85),plaster],[box(),g3M(0,.76,0,1.06,.09,.91),[.8,.72,.6]],[cyl(.14,.14,.3,6),g3M(.3,.9,.2),grey]]);
+  const tile=[.62,.27,.18],tile2=[.5,.3,.22],slate=[.38,.4,.44],pyr=(r,h)=>new THREE.ConeGeometry(r,h,4).rotateY(Math.PI/4);
+  A.house=g3Merge([[box(),g3M(0,.28,0,1,.56,.8),wall],[pyr(.72,.5),g3M(0,.81,0,1,1,.8),tile],[box(),g3M(.28,.95,.05,.1,.3,.1),[.45,.4,.36]],[box(),g3M(0,.2,.41,.22,.3,.02),[.3,.2,.14]]]);
+  A.gable=g3Merge([[box(),g3M(0,.28,0,1,.56,.78),plaster],[g3Prism(),g3M(0,.84,0,1,.6,.88),tile2],[box(),g3M(-.3,.98,0,.1,.3,.1),[.45,.4,.36]],[box(),g3M(.25,.34,.4,.2,.2,.02),[.25,.3,.4]],[box(),g3M(-.25,.34,.4,.2,.2,.02),[.25,.3,.4]]]);
+  A.row=g3Merge([[box(),g3M(0,.26,0,1.9,.52,.7),wall],[g3Prism(),g3M(-.62,.78,0,.7,.55,.78),slate],[g3Prism(),g3M(0,.78,0,.7,.55,.78),tile],[g3Prism(),g3M(.62,.78,0,.7,.55,.78),slate]]);
+  A.flat=g3Merge([[box(),g3M(0,.3,0,1,.6,.85),plaster],[box(),g3M(0,.64,0,1.06,.08,.91),[.82,.74,.62]],[box(),g3M(-.2,.78,-.1,.45,.2,.4),[.78,.7,.58]],[cyl(.12,.12,.28,7),g3M(.3,.78,.22),grey],[box(),g3M(0,.22,.44,.2,.34,.02),[.35,.24,.16]],[box(),g3M(.3,.4,.44,.18,.16,.02),[.25,.3,.35]]]);
+  A.court=g3Merge([[box(),g3M(0,.28,0,1,.56,1),plaster],[box(),g3M(0,.6,0,1.05,.08,1.05),[.84,.76,.64]],[box(),g3M(0,.62,0,.5,.07,.5),[.36,.3,.24]],[cyl(.06,.06,.5,5),g3M(-.5,.9,-.5),[.4,.62,.4]],[box(),g3M(.35,.74,.3,.22,.18,.22),[.8,.72,.6]]]);
   A.tower=g3Merge([[box(),g3M(0,1.2,0,.7,2.4,.7),grey],[box(),g3M(0,2.6,0,.5,.4,.5),[.55,.58,.64]],[cyl(.025,.025,1.2,4),g3M(0,3.4,0),[.3,.3,.3]]]);
   A.mosque=g3Merge([[box(),g3M(0,.3,0,1.3,.6,1.3),plaster],[new THREE.SphereGeometry(.6,10,6,0,Math.PI*2,0,Math.PI/2),g3M(0,.6,0),teal],[cyl(.07,.1,2.4,6),g3M(.75,1.2,.75),plaster],[cyl(.07,.1,2.4,6),g3M(-.75,1.2,-.75),plaster],[cone(.14,.5,6),g3M(.75,2.65,.75),teal],[cone(.14,.5,6),g3M(-.75,2.65,-.75),teal]]);
   A.spire=g3Merge([[box(),g3M(0,.3,0,.8,.6,1.4),wall],[g3Prism(),g3M(0,.86,.1,.8,.5,1.1),roof],[box(),g3M(0,1.1,-.6,.5,1.7,.5),wall],[cone(.42,1.4,4),g3M(0,2.65,-.6),roof]]);
@@ -19148,14 +19163,18 @@ function g3Towns(){if(G3.towns)return G3.towns;const L=[];
     for(let t=0;t<p.tw;t++){let X=base[0],Z=base[1];if(t){const a=g3Hash(p.i,t)*6.283,r=15+g3Hash(t,p.i)*14,q=g3Land(base[0]+Math.cos(a)*r,base[1]+Math.sin(a)*r,10);X=q[0];Z=q[1];}
       const cap=p.cap&&t===0;L.push({pi:p.i,x:X,z:Z,cap,n:cap?46:t===0?18:10,flat,east:reg==='EA'||reg==='SEA',t});}}
   return G3.towns=L;}
-function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],flat:[],tower:[],mosque:[],spire:[],disc:[],wall:[],derrick:[],field:[],spoil:[],pier:[]};
+function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],row:[],court:[],flat:[],tower:[],mosque:[],spire:[],disc:[],wall:[],derrick:[],field:[],spoil:[],pier:[]};
   const push=(k,x,z,sx,sy,sz,ry,col)=>by[k].push([x,g3HeightAt(x,z),z,sx,sy,sz,ry,col]);
-  for(const t of T){const p=GCM.P[t.pi],R=Math.sqrt(t.n)*3.1;push('disc',t.x,t.z,R*.7,1,R*.7,0,[1.05,1.02,.95]);
+  for(const t of T){const p=GCM.P[t.pi],SP=4.5,R=Math.sqrt(t.n*SP*SP/3.14)+3.5;push('disc',t.x,t.z,R*.82,1,R*.82,0,[1.22,1.18,1.08]);
     if(t.cap||p.wg&&t.t===0)by.wall.push([t.x,g3HeightAt(t.x,t.z),t.z,R+2,1,R+2,0,[1,1,1]]);
-    for(let k=0;k<t.n;k++){const r=Math.sqrt(k+.5)*3.1,a=k*2.399+g3Hash(t.pi,k)*.8,x=t.x+Math.cos(a)*r,z=t.z+Math.sin(a)*r;if(g3HeightAt(x,z)<.7)continue;
-      const TN=[[1,1,1],[.96,.9,.8],[.86,.94,1],[1,.88,.84],[.9,1,.9]][Math.floor(g3Hash(k+5,t.pi+2)*5)],hh=t.flat&&k>2?.7+g3Hash(k,t.pi+4)*1.5:1;const s=2+g3Hash(k,t.pi)*1.3,ry=Math.round(g3Hash(t.pi,k+9)*2)*Math.PI/2+(g3Hash(k,k)-.5)*.25,v=.85+g3Hash(k+3,t.t)*.3;
-      let kind=t.flat?'flat':'house';if(k===0&&(t.cap||t.t===0))kind=t.flat?'mosque':'spire';else if(t.cap&&k<5)kind='tower';else if(t.n>14&&k%11===5)kind=t.flat?'mosque':'spire';
-      push(kind,x,z,s,s*(kind==='tower'?1.5:kind==='flat'?hh:1),s,ry,[v*TN[0],v*TN[1],v*TN[2]]);}
+    const th=g3Hash(t.pi,t.t+31)*3.1416,ct=Math.cos(th),st=Math.sin(th),R2=Math.ceil(R/SP)+1,cells=[];
+    for(let i=-R2;i<=R2;i++)for(let j=-R2;j<=R2;j++){if(i%4===0&&j%4===0&&(i||j))continue;if(i===0&&j!==0&&Math.abs(j)%2===1)continue;const d=Math.hypot(i,j)+(g3Hash(i+9,j+t.pi)-.5)*1.1;if(d*SP>R)continue;cells.push([i,j,d]);}
+    cells.sort((u,v)=>u[2]-v[2]);let k=0;
+    for(const [i,j] of cells){if(k>=t.n)break;if(g3Hash(i*7+3,j+t.pi)<.1)continue;const lx=(i+(g3Hash(i,j+4)-.5)*.35)*SP,lz=(j+(g3Hash(j,i+5)-.5)*.35)*SP+(i%2?SP*.2:0),x=t.x+lx*ct-lz*st,z=t.z+lx*st+lz*ct;if(g3HeightAt(x,z)<.7)continue;
+      const TN=[[1,1,1],[.96,.9,.8],[.86,.94,1],[1,.88,.84],[.9,1,.9]][Math.floor(g3Hash(k+5,t.pi+2)*5)],hv=g3Hash(i+k,t.pi+4),s=2.5+g3Hash(k,t.pi)*1.1,ry=-th+(g3Hash(k,k+i)-.5)*.14+(g3Hash(i,j)<.5?0:Math.PI),v=.86+g3Hash(k+3,t.t)*.28;
+      let kind=t.flat?(hv<.5?'court':'flat'):(hv<.4?'house':hv<.75?'gable':'row'),sy=s*(t.flat?.8+hv*.6:1);
+      if(k===0&&(t.cap||t.t===0)){kind=t.flat?'mosque':'spire';sy=s;}else if(t.cap&&k<5){kind='tower';sy=s*1.5;}else if(t.n>14&&k%11===5){kind=t.flat?'mosque':'spire';sy=s;}
+      push(kind,x,z,s,sy,s,ry,[v*TN[0],v*TN[1],v*TN[2]]);k++;}
     if(p.oil&&t.t===0)for(let k=0;k<3;k++)push('derrick',t.x+20+k*6,t.z-18+k*3,2.4,2.4,2.4,0,[1,1,1]);
     if(p.farm&&t.t===0)for(let k=0;k<4;k++)push('field',t.x-24+(k%2)*11,t.z+18+(k>>1)*8,5,1,5,0,[.7+g3Hash(k,p.i)*.4,1,.8]);
     if(p.mine&&t.t===0)for(let k=0;k<2;k++)push('spoil',t.x+8+k*7,t.z+24,2.4,2,2.4,0,[1,1,1]);
