@@ -389,3 +389,5 @@ laneG note: gate/grand 'eco snowballs net per province max 794 vs median 124' (L
 - laneD 2026-11-07: D4 slice 1: a tuning tool (orch/autobalance.py + the Auto-balance workflow) takes the AI-vs-AI win rates of a finished Balance run and opens a PR that nudges each nation's cost factor by at most 4% toward 50% — no model tokens, no extra money, no player-visible change yet. Chain: tooling only.
 - laneD 2026-11-07: D5 slice 1: removed a duplicated row from orch/SYSTEMS.md (docs only, no game change). D2/D3/D5 remain open.
 - laneD 2026-11-07: D2 slice 6 — 'RPG Team/Cell', 'TOW Team' unit names plain-worded to Anti-Tank (Missile) Team (names only, no sim change).
+
+- laneF 2026-11-07 12:50Z: A3 150-army perf test (orch/a3perf.mjs): select 150 armies 12 ms, cards 5 ms; no code change needed.
