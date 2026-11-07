@@ -52,7 +52,7 @@ Kept: Sat noon deadline check, kaizen re-enable at Sat 20:05.
 - [ ] **C5** look4 cinematic moments (battle start/end, turn news cards) — cut first if behind.
 
 ## Lane D — Content & QA (priority order)
-- [ ] **D1** Finish the nations: whatever the rescue / nations-b2 helpers leave (Japan, remaining NATIONS-TODO lanes) via NEWNAT.
+- [x] **D1** Nations done: Japan (JP) first cut live 2026-11-07 (laneD); voices/anthems pending D3.
 - [ ] **D2 First-time-player audit** (intuitive spec, trigger prompt in HISTORY of the plan): orch/newplayer.mjs + fix the top 15 confusions (wording, hints, Esc, feedback) — includes the grand map with real time.
 - [ ] **D3 Voices + anthems** for all new nations (one batch; voices-new spec) — ship per group.
 - [ ] **D4 Balance**: battle round robin all nations + grand campaign fairness given the realistic start (balance3 spec).

@@ -23,7 +23,7 @@ for(const f of ['US','TR','IL','EU','FR','DE','UA','RU','IR','SA','AE','PK','IN'
 // Graphics Phase 2: Western-equipped armies drive the M1 Abrams (Israel the Merkava, Europe and Turkey a Leopard-family
 // tank), M35 trucks, Humvees and fly the UH-60 Black Hawk; Soviet/Chinese-equipped ones (and the militias) Ural trucks
 // and the Mi-8. Self-propelled guns: the G6 in the West, the 2S19 Msta in the East (militias keep rocket trucks).
-const WESTVEH=['MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF'];
+const WESTVEH=['JP','MA','NG','ZA','US','TR','IL','EU','FR','DE','SA','AE','KR','EG','IQ','GB','AU','CA','PL','JO','IT','GR','ES','TW','PH','ID','TH','OM'],EASTVEH=['DZ','ET','LY','SD','RU','KP','IR','UA','CN','IN','CU','PK','RS','DW','SY','AZ','KD','VN','KZ','AF'];
 Object.assign(RMAP.tank,{US:'abrams',SA:'abrams',AE:'abrams',KR:'abrams',EG:'abrams',IQ:'abrams',GB:'kf51',AU:'abrams',CA:'kf51',IL:'merkava',EU:'kf51',FR:'kf51',DE:'kf51',TR:'kf51'});
 // Graphics Phase 2b, more national tank silhouettes: Ukraine the T-84 Oplot, Iran the T-72, North Korea a T-62 (its
 // Chonma-ho is built on it), Cuba the T-55, Turkey the Leopard 2A4 (no free Type 99, K2 or Altay model exists yet:
@@ -1070,6 +1070,9 @@ const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
  NATX_FLAG.ET=c=>{c.hs(['#078930','#fcdd09','#da121a']);c.circ(60,36,11,'#0f47af');c.star(60,36,9,'#fcdd09');};
  NATX_FLAG.LY=c=>{c.rect('#4a4f55',0,0,c.W,c.H);c.rect('#a89466',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};
  NATX_FLAG.SD=c=>{c.rect('#4b5246',0,0,c.W,c.H);c.rect('#a89a6e',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};}
+ {const L={ JP:{tk:'abrams',he:'apache',je:'f16',sol:'sol_w',fl:{veh:'#5f6a45',ca:'#566340',cb:'#343a28',uni:'#56633f',pat:1},cx:{p:1,s:1,c:'#5f6a45',t:'#bc002d',w:3},ax:{b:'#878d91',p:3,h:{b:'#b3b6a8',p:3}},ch:'#4a5535',rt:'#b3b6a8'}};
+ for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;KFAC.push(k);RMAP.dozer[k]='jd550';RMAP.ship[k]='frw';}
+ NATX_FLAG.JP=c=>{c.rect('#fff',0,0,c.W,c.H);c.circ(60,36,16,'#bc002d');}}
 
 const KIT={tex:null,mat:null,geo:{},probe:{}},KCW=96,KCH=64,KCOLS=8,KROWS=24;
 // extra atlas cells: 48-57 Persian digits (p:0..9), 58-67 Arabic-Indic digits (a:0..9), 68+ painted stencils (s:name)

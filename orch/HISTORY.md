@@ -259,3 +259,4 @@ Taiwan, Philippines, Vietnam, Indonesia, Thailand, Kazakhstan, Afghanistan (styl
 
 ## nations-b2 — 2026-11-06 (Sonnet 5.5)
 Added DZ, MA, NG, ZA, ET, LY, SD (first cut, NEWNAT, Egypt base). See orch/reports/nations-b2.md.
+- laneD 2026-11-07: D1 JP Japan first cut via NEWNAT (JGSDF units, Home Islands radio, flag/look on shared models, Taiwan Strait map home); SMOKE PASS; voices/anthems stand in until D3.
