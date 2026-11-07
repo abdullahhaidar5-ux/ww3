@@ -19618,6 +19618,7 @@ function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.in
   h+='<div style="opacity:.85;margin:2px 0 6px">'+N.name+' · '+guTerrName(p.t)+(p.cap?' · <span style="color:#ffd24a">capital</span>':GC.nat[st.o]&&GC.nat[st.o].wg.includes(pi)?' · <span style="color:#ffd24a">war goal</span>':'')+'</div>';
   h+='<div>Towns '+p.tw+(p.oil?' · oil':'')+(p.farm?' · farms':'')+(p.mine?' · mines':'')+(p.port?' · port':'')+'</div>';
   h+='<div>Garrison <b>'+st.gar.length+'</b> units (value '+Math.round(grProvDef(pi)/100)/10+'k)'+(mine?' · Unrest <b style="color:'+(st.un>55?'#ff9d8e':'#e8e4d8')+'">'+Math.round(st.un)+'%</b>':'')+'</div>';
+  if(typeof ocLine==='function')h+=ocLine(pi);   /* A6 occupation reaction (13y-goccupy.js) */
   s.innerHTML=h;
   if(mine){const row=guEl('div','margin:8px 0 4px');row.appendChild(guEl('div','opacity:.75;font-size:13px','Tax (more money, more unrest)'));const seg=guEl('div','display:flex;gap:4px;margin-top:2px');
     GR_TAX.forEach((n,i)=>{const b=guEl('button','flex:1;padding:5px;border-radius:5px;border:1px solid '+(st.tax===i?'#ffe27a':'#3d5a73')+';background:'+(st.tax===i?'#41572a':'#18293a')+';color:#fff;cursor:pointer',n);b.type='button';b.onclick=()=>{st.tax=i;grSave();guSide();guTopCash();};seg.appendChild(b);});row.appendChild(seg);s.appendChild(row);
@@ -20129,14 +20130,14 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 #g3cards .row{display:flex;gap:5px;flex-wrap:nowrap;overflow:visible}
 #g3cards .tabs button{pointer-events:auto;padding:3px 9px;border-radius:12px;border:1px solid #6b7a8a;background:#0f1b27e0;color:#e8e4d8;font-size:12px;cursor:pointer}
 #g3cards .tabs button.on{border-color:#ffe27a;background:#4a4012e8}
-#g3cards .card{pointer-events:auto;width:70px;background:linear-gradient(#22344a,#121e2b);border:1px solid #b99a45;border-radius:4px;padding:3px;color:#f3ecd8;font:600 11px/1.15 sans-serif;text-align:center;box-shadow:0 3px 8px #000a;position:relative}
-#g3cards .card canvas{display:block;width:62px;height:46px;border-radius:2px}
+#g3cards .card{pointer-events:auto;width:80px;background:linear-gradient(#22344a,#121e2b);border:1px solid #b99a45;border-radius:4px;padding:3px;color:#f3ecd8;font:600 12px/1.2 sans-serif;text-align:center;box-shadow:0 3px 8px #000a;position:relative}
+#g3cards .card canvas{display:block;width:72px;height:53px;border-radius:2px}
 #g3cards .card .cnt{position:absolute;left:4px;top:4px;background:#000b;padding:0 4px;border-radius:3px;font-size:13px}
 #g3cards .card .hp{height:5px;background:#000a;border-radius:2px;margin:3px 0 2px;overflow:hidden}#g3cards .card .hp b{display:block;height:100%}
 #g3cards .ttl{font:700 13px/1 sans-serif;color:#ffe9a6;text-shadow:0 1px 2px #000;background:#0d1822c8;padding:3px 10px;border-radius:10px}
 #g3news{position:absolute;left:50%;top:10px;transform:translateX(-50%);width:min(460px,60%);background:linear-gradient(#1d2f42f2,#101b27f2);border:1px solid #b99a45;border-radius:6px;padding:9px 13px;color:#e8e4d8;font-size:13px;line-height:1.45;pointer-events:auto;box-shadow:0 6px 18px #000b;display:none}
 #g3news h3{margin:0 0 5px;font-size:15px;color:#ffe9a6}
-#g3leg{position:absolute;left:260px;bottom:12px;font-size:12px;color:#e8f0f8;text-shadow:0 1px 2px #000;background:#0c1721b0;padding:3px 8px;border-radius:4px}
+#g3leg{position:absolute;left:12px;bottom:146px;max-width:236px;font-size:12px;line-height:1.3;color:#f1f5f9;text-shadow:0 1px 2px #000;background:#0c1721d8;border:1px solid #3b4d5f;padding:4px 9px;border-radius:5px}
 `;document.head.appendChild(s);}
 function g3UI(){g3Css();const w=document.getElementById('gMapWrap');if(!w)return;let u=document.getElementById('g3ui');if(u)u.remove();u=guEl('div','');u.id='g3ui';w.appendChild(u);
   G3.lab=guEl('div','position:absolute;inset:0');u.appendChild(G3.lab);const md=guEl('div','');md.id='g3modes';G3_MODES.forEach(([k,n])=>{const b=guEl('button','',n);b.type='button';b.dataset.m=k;b.onclick=()=>g3SetMode(k);md.appendChild(b);});u.appendChild(md);
@@ -20499,6 +20500,7 @@ function geManCap(c){let t=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)
 // ---------- world: oil price, crises, chokepoints ----------
 function geOilIdx(turn){const E=GC.eco;let v=100+20*Math.sin(.62*turn+E.ph1)+9*Math.sin(1.9*turn+E.ph2);
   for(const k of Object.keys(E.cl))if(E.cl[k]&&['Strait of Hormuz','Suez','Bab-el-Mandeb','Malacca Strait'].includes(GCM.P[+k].n))v+=8;
+  v+=6*geBlockN();   // RG1: enemy warships sitting in Hormuz / Suez / Bab-el-Mandeb / Malacca / Bosporus push the oil price up
   const cr=geCrisis(turn);if(cr&&cr[2]==='shortage')v+=28;if(cr&&cr[2]==='boom')v+=6;return Math.round(Math.max(55,Math.min(190,v)));}
 function geCrisis(turn){for(const c of GC.eco.cr)if(turn>=c[0]&&turn<c[0]+c[1])return c;return null;}
 const GE_CRN={crash:'Market crash',shortage:'Oil shortage',famine:'Bad harvests',credit:'Credit crunch',boom:'Trade boom'};
@@ -20507,6 +20509,11 @@ function geHolder(si){   // who holds a strait: the nation with the most port-pr
   const P=GCM.P,sc={};for(const j of P[si].adj){const q=P[j];if(!q.land)continue;const o=GC.prov[j].o;if(GC.nat[o]&&GC.nat[o].dead)continue;if(!(q.port||geCount(j,'port')))continue;sc[o]=(sc[o]||0)+q.dev;}
   let best='',bv=0;for(const o of Object.keys(sc).sort())if(sc[o]>bv||(sc[o]===bv&&bv>0&&o<best)){bv=sc[o];best=o;}return bv>=2?best:'';}
 function geStraits(){return GCM.P.filter(p=>p.sea&&p.ck);}
+// RG1: warships in a chokepoint zone blockade it for every nation at war with the fleet's owner (counter-play: park your own fleet there to break it)
+function geFleetsAt(si){const r=[];for(const a of GC.armies)if(a.fl&&a.at===si&&a.u.length)r.push(a.o);return r;}
+function geSeaBlock(si,c){const f=geFleetsAt(si);if(!f.length||f.includes(c))return '';for(const o of f)if(grAtWar(c,o))return o;return '';}
+function geBlockaded(si){const f=geFleetsAt(si);if(!f.length)return '';for(const j of GCM.P[si].adj){const q=GCM.P[j];if(!q.land)continue;const o=GC.prov[j].o;if(GC.nat[o]&&!GC.nat[o].dead&&!f.includes(o)){for(const x of f)if(grAtWar(o,x))return x;}}return '';}
+function geBlockN(){let n=0;for(const s of geStraits())if(geBlockaded(s.i))n++;return n;}
 function geClosed(){let n=0;for(const k of Object.keys(GC.eco.cl))if(GC.eco.cl[k])n++;return n;}
 function geSetStrait(c,si,on){const p=GCM.P[si];if(!p||!p.ck)return 'Not a chokepoint.';if(geHolder(si)!==c)return 'You do not hold this strait.';GC.eco.cl[si]=on?c:0;return '';}
 // ---------- nation stats ----------
@@ -20534,13 +20541,13 @@ function geTrade(c){   // trade routes between neighbouring provinces and over s
   const P=GCM.P,N=GC.nat[c],E=N.e,tm=Math.max(.35,1-.12*geClosed())*geIncMul(c);let t=0;const own=GE_ST[c].own;
   const ok=(o)=>o===c||(!grAtWar(c,o)&&!E.emb.includes(o)&&!(GC.nat[o].e.emb||[]).includes(c));
   for(const p of own){for(const j of p.adj){const q=P[j];if(q.land){const o=GC.prov[j].o;if(!ok(o)||GC.nat[o].dead)continue;const m=Math.min(p.tw,q.tw);t+=o===c?(i2(p.i,j)?m*4:0):m*4.5;}
-      else if(q.sea&&(p.port||geCount(p.i,'port'))&&!gmilBk(p.i)){if(q.ck&&GC.eco.cl[j]&&GC.eco.cl[j]!==c)continue;
+      else if(q.sea&&(p.port||geCount(p.i,'port'))&&!gmilBk(p.i)){if(q.ck&&((GC.eco.cl[j]&&GC.eco.cl[j]!==c)||geSeaBlock(j,c)))continue;
         for(const k of q.adj){const r=P[k];if(!r.land||k===p.i)continue;if(!(r.port||geCount(k,'port'))||gmilBk(k))continue;const o=GC.prov[k].o;if(!ok(o)||GC.nat[o].dead)continue;t+=Math.min(p.tw,r.tw)*(o===c?1.5:3);}}}}
   // merchants: each skims a share of a province's trade routes toward you
   for(const m of E.mer){const q=P[m];if(!q||!q.land)continue;t+=(q.tw*5)*(GC.prov[m].o===c?.25:.9);}
   return t*tm*(geFx(c,'trade')?1.35:1)*(E.sanc?.5:1)*.62;}
 function i2(a,b){return a<b;}   // count a same-owner pair once
-function geHashStr(){if(!GC||!GC.eco)return '';let s='|E'+GC.eco.oilIdx+','+geClosed();for(const c of Object.keys(GC.nat).sort()){const e=GC.nat[c].e;if(!e)continue;s+='|'+c+':'+Math.round(e.fuel)+','+Math.round(e.food)+','+Math.round(e.man)+','+Math.round(e.bank)+','+e.bonds.length+','+e.tw+','+e.def;}
+function geHashStr(){if(!GC||!GC.eco)return '';let s='|E'+GC.eco.oilIdx+','+geClosed()+','+geBlockN();for(const c of Object.keys(GC.nat).sort()){const e=GC.nat[c].e;if(!e)continue;s+='|'+c+':'+Math.round(e.fuel)+','+Math.round(e.food)+','+Math.round(e.man)+','+Math.round(e.bank)+','+e.bonds.length+','+e.tw+','+e.def;}
   for(const p of GC.prov)s+=','+(p.bl?p.bl.length:0)+(p.bq?p.bq.length:0)+(p.au|0)+(p.tr|0);return s;}
 function geNation(c,R,inc){const N=GC.nat[c],E=N.e,S=GE_ST[c],br={};const own=S.own;const idx=GC.eco.oilIdx;
   br.tax=Math.round(inc||0);let net=inc||0;
@@ -20784,7 +20791,7 @@ function geUiPanel(refreshOnly){const old=document.getElementById('gEco');if(old
   d=sec('Embargoes (3 or more nations embargoing you = sanctions)');r=row();const foes=grMajors().filter(c=>c!==me&&!GC.nat[c].dead).sort((a,b)=>(grAtWar(me,b)?1:0)-(grAtWar(me,a)?1:0)||(a<b?-1:1)).slice(0,12);
   for(const c of foes){const on=E.emb.includes(c);r.appendChild(geBtn((on?'✕ ':'')+c+(grAtWar(me,c)?' ⚔':''),()=>geDone(geEmbargo(me,c,!on)),true,GCM.nats.get(c).name));}d.appendChild(r);
   d=sec('Merchants ('+E.mer.length+' of '+geMerchants(me)+')');d.appendChild(guEl('div','font-size:13px',E.mer.length?'Placed in: '+E.mer.map(m=>GCM.P[m].n).join(', ')+' ('+E.mer.length*70+'/month upkeep)':'Select a province and press "Place merchant" to steer trade your way.'));if(E.mer.length){r=row();r.appendChild(geBtn('Recall all',()=>{E.mer=[];geDone('');}));d.appendChild(r);}
-  d=sec('Chokepoints (the holder can close a strait: world trade and the oil price shift)');for(const s of geStraits()){const h2=geHolder(s.i),cl=GC.eco.cl[s.i];const dv=guEl('div','display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13px');dv.appendChild(guEl('span','','<b>'+s.n+'</b> · '+(h2?GCM.nats.get(h2).name:'nobody')+(cl?' <span style="color:#ff9d8e">CLOSED</span>':'')));if(h2===me)dv.appendChild(geBtn(cl?'Reopen':'Close',()=>geDone(geSetStrait(me,s.i,!cl))));d.appendChild(dv);}
+  d=sec('Chokepoints (the holder can close a strait: world trade and the oil price shift)');for(const s of geStraits()){const h2=geHolder(s.i),cl=GC.eco.cl[s.i];const dv=guEl('div','display:flex;justify-content:space-between;align-items:center;gap:6px;font-size:13px');dv.appendChild(guEl('span','','<b>'+s.n+'</b> · '+(h2?GCM.nats.get(h2).name:'nobody')+(cl?' <span style="color:#ff9d8e">CLOSED</span>':'')+(geBlockaded(s.i)?' <span style="color:#ffb86b">BLOCKADED by '+GCM.nats.get(geBlockaded(s.i)).name+' fleet — park your own fleet here to break it</span>':'')));if(h2===me)dv.appendChild(geBtn(cl?'Reopen':'Close',()=>geDone(geSetStrait(me,s.i,!cl))));d.appendChild(dv);}
   const x=guEl('button','position:absolute;top:6px;right:8px;background:none;border:none;color:#e8e4d8;font-size:18px;cursor:pointer','×');x.onclick=()=>{el.remove();};el.appendChild(x);}
 function geUiProv(s,pi){const p=GCM.P[pi],st=GC.prov[pi],me=GC.me;if(!p||!p.land||!me)return;const mine=st.o===me,E=GC.nat[me].e;
   const box=guEl('div','margin:8px 0;border-top:1px solid #2c4358;padding-top:6px');
@@ -21006,7 +21013,7 @@ function gmilAIFleets(c,R){const N=GC.nat[c],P=GCM.P,fac=grNat(c).fac;const foes
   for(const a of mine){if(a.path.length)continue;const val=grArmyVal(a);if(a.u.length>1&&mine.some(b=>b!==a&&b.at===a.at&&!b.path.length&&b.id<a.id)){grMerge(a.id);continue;}
     if(!foes.length)continue;let tgt=-1,ts=-1e9;
     const seen=new Set([a.at]);let fr=[a.at];for(let d=0;d<5&&fr.length;d++){const nx=[];for(const u of fr)for(const j of P[u].adj){if(seen.has(j)||!P[j].sea)continue;seen.add(j);nx.push(j);
-        const en=GC.armies.filter(x=>x.at===j&&x.fl&&foes.includes(x.o)&&x.u.length).reduce((s,x)=>s+grArmyVal(x),0);let sc=-d*6;
+        const en=GC.armies.filter(x=>x.at===j&&x.fl&&foes.includes(x.o)&&x.u.length).reduce((s,x)=>s+grArmyVal(x),0);let sc=-d*6+(P[j].ck?16:0);
         if(en>0){if(en*1.15<val)sc+=40+en/400;else continue;}
         for(const k of P[j].adj)if(P[k].land&&foes.includes(GC.prov[k].o)&&gmilHasPort(k))sc+=14+P[k].dev*3;   // blockade a foe's port
         if(sc>ts){ts=sc;tgt=j;}}fr=nx;}
@@ -22203,6 +22210,109 @@ function gfTradMor(o){const N=GC&&GC.nat[o];return N?Math.floor((N.trad||0)/10):
 // top-bar chip (13c guTop hook): "Army 82k / 100k" — red when over the limit
 function gfChip(){if(!GC||!GC.me||!GC.nat[GC.me])return '';const v=geArmyVal(GC.me),L=grFL(GC.me),o=v>L,N=GC.nat[GC.me];
   return '<span title="Force limit: armies above it cost 50% more upkeep. It grows with the land you hold. Army tradition '+Math.round(N.trad||0)+'/100 (battles raise it; it lifts army morale)" style="opacity:.92'+(o?';color:#ff9d8e':'')+'">⚔ <b>'+Math.round(v/1000)+'k</b>/'+Math.round(L/1000)+'k · ★'+Math.round(N.trad||0)+'</span>';}
+// A6 OCCUPATION REACTION BY STYLE (laneA 2026-11-07; Abdullah 2026-11-06 18:29 pick 12). World-sim chain:
+//  who reacts  = the occupied PEOPLE (the province's original owner st.o0, by its ONE morale style in MSTYLES) and their home
+//                nation's war support (B4b meter); the occupier's treasury, garrison and unrest (the grand-map side of the ONE
+//                Locals system: unrest -> the existing revolts in grFinishTurn).
+//  2nd order   = unrest cuts income and triggers revolts; resistance news hardens the homeland's war support; lost garrison
+//                units regrow from the occupier's manpower.
+//  counter-play= keep an army in the province (cells/partisans shrink, sabotage halves), lower the tax (the existing AI does this
+//                at high unrest), or give the land back in a peace deal (st.o===st.o0 ends it).
+//  cost        = every style costs the occupier about the same per month (orch/occtest.mjs measures it), in a different currency:
+//                Zealous = resistance cells raid the garrison + unrest; Professional = orderly but officials work to rule (income
+//                withheld); Home defenders = partisans in mountains/jungle/snow (raids), little in open land; Firepower-reliant =
+//                comply but sabotage (cash for repairs).
+// State: st.rc (cells/bands 0..max) per province, GC.occ[nation] = {c: running cost} — in GC, so saves and determinism keep working.
+const OCC_STY={   // one row per morale style: the data, not code paths
+ zeal:{n:'Resistance cells',ic:'🕯',max:4,grow:.55,raid:.14,un:1.6,ws:.25,inc:0,calm:0,tip:'The faithful run resistance cells: raids and bombs on your garrison.'},
+ prof:{n:'Work to rule',ic:'🗂',max:0,grow:0,raid:0,un:0,ws:0,inc:.42,calm:3,tip:'Orderly and quiet, but officials work to rule: part of the income never arrives.'},
+ home:{n:'Partisans',ic:'🌲',max:3,maxOpen:1,grow:.5,raid:.17,un:1.2,ws:.15,inc:0,calm:0,rough:'mjs',tip:'Partisans fight from the hills and forests; open land stays mostly quiet.'},
+ fire:{n:'Sabotage',ic:'🔧',max:0,grow:0,raid:0,un:0,ws:0,inc:.33,sab:.35,calm:3,tip:'They comply on the surface but sabotage roads, depots and power lines.'}};
+const OCC_UNIT=110;   // money value of one raided garrison unit (for the cost ledger + equal-cost check)
+function ocStyle(c){try{const n=grNat(c);return MORALE_STYLE[n.fac]||MORALE_STYLE[c]||'home';}catch(e){return 'home';}}
+function ocOccupied(pi){const st=GC&&GC.prov[pi];return !!st&&!!st.o0&&st.o!==st.o0&&GCM.P[pi].land;}
+function ocRow(pi){return OCC_STY[ocStyle(GC.prov[pi].o0)];}
+function ocInc(p,st){try{return Math.max(0,geProvInc(p,st,st.o)*GR_TAXK[st.tax]*(1-Math.min(.8,st.un/160))*.7);}catch(e){return 0;}}
+function ocMonth(){if(!GC||!GC.prov)return;GC.occ=GC.occ||{};const P=GCM.P;
+  for(const p of P){if(!p.land)continue;const st=GC.prov[p.i];
+    if(!ocOccupied(p.i)){if(st.rc)st.rc=0;continue;}
+    const S=ocRow(p.i),c=st.o,R=grRng(GC.seed*29+GC.turn*977+p.i*13),L=GC.occ[c]=GC.occ[c]||{c:0};
+    const guard=GC.armies.some(a=>a.at===p.i&&a.o===c&&a.u.length);
+    let cost=0;
+    // cells / partisan bands grow (rough terrain only for partisans), an army in the province rolls them up
+    const max=S.rough&&!S.rough.includes(p.t)?(S.maxOpen|0):S.max;
+    if(max>0){st.rc=st.rc|0;if(guard)st.rc=Math.max(0,st.rc-1);else if(st.rc<max&&R()<S.grow)st.rc++;if(st.rc>max)st.rc=max;
+      for(let k=0;k<st.rc;k++)if(st.gar.length&&R()<S.raid){st.gar.pop();cost+=OCC_UNIT;}
+      st.un=Math.min(100,st.un+S.un*st.rc);
+      if(st.rc>=2&&GC.turn%3===0)grLog(S.n+' strike the '+GCM.nats.get(c).name+' garrison in '+p.n+'.',c===GC.me?c:'');
+      const H=GC.nat[st.o0];if(S.ws&&st.rc&&H&&!H.dead&&typeof wsN==='function'){const W=wsN(st.o0);if(W)W.ws=Math.min(100,W.ws+S.ws*st.rc/4);}}
+    // withheld income / sabotage repairs: a share of what the province pays, halved while an army guards it
+    const inc=S.inc+(S.sab&&R()<S.sab?S.inc*.6:0);
+    if(inc>0){const lose=Math.round(ocInc(p,st)*inc*(guard&&S.sab?.5:1));const N=GC.nat[c];const take=N?Math.min(lose,Math.max(0,Math.floor(N.cash))):0;if(take>0){N.cash-=take;cost+=take;}}
+    if(S.calm)st.un=Math.max(0,st.un-S.calm);
+    L.c+=cost;}
+  ocSpread();ocAI();}
+// slice 2: insurgency spreads — a province with 3+ cells seeds a cell next door (same people, same occupier, terrain permitting)
+function ocSpread(){const P=GCM.P,R=grRng(GC.seed*31+GC.turn*733),seed=[];
+  for(const p of P){if(!p.land||!ocOccupied(p.i))continue;const st=GC.prov[p.i];if((st.rc|0)<3)continue;
+    for(const j of p.adj){const q=P[j];if(!q.land||!ocOccupied(j))continue;const s2=GC.prov[j];if(s2.o!==st.o||s2.o0!==st.o0||(s2.rc|0))continue;
+      const S=ocRow(j),max=S.rough&&!S.rough.includes(q.t)?(S.maxOpen|0):S.max;if(max>0&&R()<.3&&!seed.includes(j))seed.push(j);}}
+  for(const j of seed){GC.prov[j].rc=1;const st=GC.prov[j];grLog(ocRow(j).n+' spread to '+GCM.P[j].n+'.',st.o===GC.me?st.o:'');}}
+// slice 2: the AI answers like a real occupier — the nearest idle army (2 marches or less) goes to the worst cell province
+function ocAI(){const P=GCM.P;
+  for(const p of P.filter(p=>p.land&&ocOccupied(p.i)&&(GC.prov[p.i].rc|0)>=2).sort((x,y)=>(GC.prov[y.i].rc|0)-(GC.prov[x.i].rc|0)||x.i-y.i)){
+    const c=GC.prov[p.i].o,N=GC.nat[c];if(!N||!N.ai||N.dead||c===GC.me)continue;
+    if(GC.armies.some(a=>a.o===c&&(a.at===p.i||(a.path.length&&a.path[a.path.length-1]===p.i))))continue;
+    let best=null,bd=9;for(const a of GC.armies.filter(a=>a.o===c&&!a.fl&&!a.path.length&&a.u.length&&a.at!==GC.nat[c].cap).sort((x,y)=>x.id-y.id)){
+      let r=null;try{r=grPath(c,a.at,p.i);}catch(e){}if(!r||r.decl||!r.path||r.path.length>2)continue;if(r.path.length<bd){bd=r.path.length;best=[a,r.path];}}
+    if(best)best[0].path=best[1].slice();}}
+if(typeof GMOD_HOOKS==='object')GMOD_HOOKS.push(ocMonth);
+// province panel line (13c hook) — shown to everyone so a player sees what holding the land will cost before taking it
+function ocLine(pi){if(!GC||!ocOccupied(pi))return '';const st=GC.prov[pi],S=ocRow(pi),O=GCM.nats.get(st.o0),sty=MSTYLES[ocStyle(st.o0)];
+  const lvl=S.max?(' <b>'+(st.rc|0)+'</b>'):'';
+  return '<div title="'+S.tip+' Counter: keep an army here'+(S.max?' (rolls them up)':S.sab?' (halves sabotage)':'')+', lower the tax, or give the land back in a peace deal." style="margin-top:4px;color:#ffc58e">'+S.ic+' Occupied '+(O?O.name:st.o0)+' land ('+sty.n+'): '+S.n+lvl+'</div>';}
+if(typeof alAdd==='function')alAdd('occ','🕯','Occupation unrest',c=>{const L=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c&&(GC.prov[p.i].rc|0)>=2).sort((x,y)=>(GC.prov[y.i].rc|0)-(GC.prov[x.i].rc|0)||x.i-y.i);
+  return L.length?{n:L.length,tip:'Resistance or partisans are raiding your garrisons — station an army there',go:()=>alFly(L[0].i)}:null;});
+// 13z-gcorrupt.js — lane B5b slice 2: CORRUPTION (EU4 economy). N.cor = corruption % (0..25), all effects are GMOD rows (upkeep/income/unrest).
+// Who reacts: overspending, low stability, high inflation, huge empires and war profiteering push it up; calm competent months and an anti-corruption
+// drive (Political points) bring it down. Second order: corruption raises army upkeep, leaks income and breeds unrest; Home front/estates read those rows.
+// Counter-play: purge costs Political points; AI does it when it can. Deterministic (state only), monthly via GMOD_HOOKS.
+const GCO_MAX=25,GCO_COST=50;
+GMOD_COND.cor=(k,arg)=>{const N=GC&&GC.nat[k];return !!(N&&Math.min(5,Math.floor((N.cor||0)/5))===+arg);};
+for(let b=1;b<=5;b++){const s='Corruption ('+(b*5)+'%+)';
+  GMOD_ROWS.push({id:'cor_up'+b,src:s,scope:'nation',stat:'upkeep',mul:1+.03*b,cond:'cor:'+b},
+    {id:'cor_inc'+b,src:s,scope:'nation',stat:'income',add:-.012*b,cond:'cor:'+b},
+    {id:'cor_un'+b,src:s,scope:'nation',stat:'unrest',add:b,cond:'cor:'+b});}
+GMOD_STATS.unrest=GMOD_STATS.unrest||'Unrest';
+function gcoN(c){const N=GC&&GC.nat[c];if(!N)return null;if(N.cor===undefined)N.cor=GCO_START(c);return N;}
+function GCO_START(c){ // realistic opening level by nation wealth tier (rough, neutral): richer/stabler states start cleaner
+  const r=typeof GR_REAL!=='undefined'&&GR_REAL.n&&GR_REAL.n[c],g=r?r[0]:.5;return g>=2?3:g>=.8?6:10;}
+function gcoPressure(c){const N=GC.nat[c],out=[];
+  if((N.inc||0)<0&&N.cash<=0)out.push(['Overspending, unpaid officials',1.2]);
+  if((N.stab|0)<=-1)out.push(['Low stability',.8]);
+  if((N.infl||0)>=10)out.push(['High inflation',.5]);
+  const np=Object.keys(GC.prov||{}).filter(p=>GC.prov[p].o===c).length;if(np>40)out.push(['Overstretched administration ('+np+' provinces)',.5]);
+  if((N.stab|0)>=2)out.push(['Strong, stable government',-.8]);
+  if(!out.length)out.push(['Steady administration',-.3]);return out;}
+function gcoPurge(c){const N=gcoN(c);if(!N||!N.pp)return 'Not available.';if(N.cor<=0)return 'There is no corruption.';
+  if(N.pp.pol<GCO_COST)return 'Needs '+GCO_COST+' Political points.';N.pp.pol-=GCO_COST;N.cor=Math.max(0,N.cor-5);GMOD_C.cache.clear();
+  if(c===GC.me)grLog('An anti-corruption drive cuts corruption to '+Math.round(N.cor)+'%.',c);return '';}
+function gcoMonth(){if(!GC)return;for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;gcoN(c);if(N.coT===GC.turn)continue;N.coT=GC.turn;
+    N.cor=Math.max(0,Math.min(GCO_MAX,N.cor+gcoPressure(c).reduce((s,x)=>s+x[1],0)));
+    if(c!==GC.me&&N.cor>=10&&N.pp&&N.pp.pol>=GCO_COST+40)gcoPurge(c);}
+  GMOD_C.cache.clear();}
+GMOD_HOOKS.push(gcoMonth);
+npTab('cor','🕳','Corruption',(code,body,c)=>{const N=gcoN(code),own=c.own&&code===GC.me,v=Math.round(N.cor*10)/10;
+  const col=v<5?'#8fd18f':v<15?'#e8d27a':'#ff9a8a';
+  let h='<div style="font-size:26px;margin-bottom:6px"><b style="color:'+col+'">Corruption '+v+'%</b></div>'+
+   '<div style="opacity:.85;margin-bottom:8px">Every 5% raises army upkeep by 3%, trims income by 1.2% and adds unrest. Overspending, low stability, inflation and sprawling empires push it up; stable years and anti-corruption drives bring it down.</div>'+
+   '<div style="margin:8px 0"><b>This month:</b> '+gcoPressure(code).map(x=>x[0]+' ('+(x[1]>0?'+':'')+x[1]+')').join(', ')+'</div>';
+  const L=gmodLines('nation',code,'income').filter(s=>/Corruption/.test(s));if(L.length)h+='<div style="margin:8px 0;opacity:.85">'+L.join('<br>')+'</div>';
+  body.innerHTML=h;
+  if(own){const b=document.createElement('button');b.textContent='Anti-corruption drive: -5% (-'+GCO_COST+' Political points)';b.style.cssText='font-size:16px;padding:5px 16px;cursor:pointer';
+    b.disabled=N.cor<=0||!N.pp||N.pp.pol<GCO_COST;b.onclick=()=>{const e=gcoPurge(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);
+    const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Political points: '+Math.floor(N.pp?N.pp.pol:0);body.appendChild(p);}});
+alAdd('cor','🕳','Corruption',c=>{const N=gcoN(c);return N&&N.cor>=12?{n:Math.round(N.cor)+'%',tip:'corruption is high — open the Corruption tab',go:()=>npOpen(c,'cor')}:null;});
 // 13z-gresearch.js — lane G B7: RESEARCH (spend capital points on three tracks) + CABINET (each minister's skill adds a small bonus). All effects are GMOD rows; one buy function for player and AI.
 // Chain: points -> track level -> income / diplomacy points / manpower+fire support; counter-play: rivals out-research you (AI buys in fixed order); cost: the points are not spent on ideas, development or stability.
 // Cabinet: 4 fictional ministers per nation (pplRoster); skill 1-3 comes from the name (same every game); Foreign->Diplomatic points, Defence->Military points, Finance->income, Interior->Political points.
