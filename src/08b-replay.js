@@ -62,8 +62,8 @@ async function rpParse(buf){const u=buf instanceof Uint8Array?buf:new Uint8Array
     const txt=await rpUnzip(seg);for(const ln of txt.split('\n')){const x=ln.indexOf('|'),y=ln.indexOf('|',x+1);if(x<0||y<0)continue;frames.push([+ln.slice(0,x),ln.slice(x+1,y),ln.slice(y+1)]);}}
   if(!Array.isArray(hdr.si&&hdr.si.facs)||!hdr.si.facs.every(f=>FKEYS.includes(f)||f==='EU'))throw new Error('this replay has nations this version does not know');return {hdr,frames};}
 /* ---------- watching ---------- */
-async function rpWatch(buf){let P;try{P=await rpParse(buf);}catch(e){alert('Could not open the replay: '+(e&&e.message||e));return false;}
-  if(typeof NET_PV==='number'&&(P.hdr?.ver|0)!==NET_PV){alert('This replay was recorded with an older version of the game (before Conquest) and cannot be played back.');return false;}
+async function rpWatch(buf){let P;try{P=await rpParse(buf);}catch(e){uiDialog('Could not open the replay: '+(e&&e.message||e),{yes:'OK',no:'Close'},()=>{});return false;}
+  if(typeof NET_PV==='number'&&(P.hdr?.ver|0)!==NET_PV){uiDialog('This replay was recorded with an older version of the game (before Conquest) and cannot be played back.',{yes:'OK',no:'Close'},()=>{});return false;}
   if(NET.game||NET.code)try{leaveNet();}catch(e){}try{kcReset();}catch(e){}
   $('end').hidden=true;RP.hdr=P.hdr;RP.frames=P.frames;RP.i=0;RP.spd=1;RP.paused=false;RP.kf=[];RP.fog=!P.hdr.full;RP.view=P.hdr.me|0;
   P.frames.forEach((f,i)=>{if(f[1]==='S'&&f[2].indexOf('"f":1')>=0)RP.kf.push(i);});
