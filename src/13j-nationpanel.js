@@ -2,6 +2,7 @@
 // register call: npTab(id, icon, title, render(code, body, ctx)). Tabs are listed in `order`; a tab shows only if its `show(code)` (optional) is true.
 // Header on every tab: flag, name, power tier, morale style, stat grid. Own nation = full view; another nation's flag = read-only.
 const NP={tabs:[],cur:'eco',code:null};
+const NP_HDR=[];
 function npTab(id,icon,title,render,show){const i=NP.tabs.findIndex(t=>t.id===id);const t={id,icon,title,render,show};if(i>=0)NP.tabs[i]=t;else NP.tabs.push(t);}
 function npClose(){const e=document.getElementById('npWin');if(e){e.remove();return true;}return false;}
 function npOpen(code,tab){if(!GC)return;code=code||GC.me;if(!code||!GC.nat[code])return;if(document.getElementById('npWin')&&NP.code===code&&!tab){npClose();return;}NP.code=code;if(tab)NP.cur=tab;npDraw();}
@@ -21,6 +22,7 @@ function npDraw(){npClose();if(!GC||!NP.code)return;const code=NP.code,own=code=
   stat('👥','Manpower',Math.round(S.E.man||0),'Recruits available to raise new units');
   stat('⚔','Army',S.army.toLocaleString()+' ('+S.men+' units)','Total value of your armies on the map');
   stat('🗺','Provinces',S.prov,'Provinces you hold');stat('★','Score',grScore(code),'Campaign score');
+  for(const f of NP_HDR)try{f(code,stat);}catch(_){}
   hd.appendChild(g);const x=guEl('button','padding:6px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:15px','Close ✕');x.type='button';x.onclick=npClose;hd.appendChild(x);w.appendChild(hd);
   const tabs=NP.tabs.filter(t=>!t.show||t.show(code));if(!tabs.some(t=>t.id===NP.cur)&&tabs.length)NP.cur=tabs[0].id;
   const tb=guEl('div','display:flex;gap:4px;padding:8px 12px 0;border-bottom:1px solid #2c4258;flex-wrap:wrap');

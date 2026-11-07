@@ -8,13 +8,13 @@
              it (more in summer/dry/sandstorm, none in rain-soaked or snowy weather), fire spreads downwind on a 1 s step, burns
              out and leaves scorched ground. Burning cells hurt and frighten infantry, slow every ground unit, and make smoke.
    HULKS     a destroyed tank/vehicle stays as a burned-out wreck: its cell joins the rubble grid (G.rub: tanks must route
-             around it, infantry cross it) and adds cover; smokes ~75 s; at most BF_HULK_MAX kept (oldest fades); the rubble
+             around it, infantry cross it) and adds cover; smokes ~75 s; at most BF_HULK_MAX (96) kept all battle (oldest fades); the rubble
              clearing orders of Construction Vehicles/Dozers remove it (rubDo -> hulkGone).
    AUTO-BUILD T.auto = {on, list:[{k,n}]}: standing "keep n of kind k" orders, topped up through enqueue() like a click.
    SHOUTS    short combat callouts triggered by real sim events, throttled, sent as FXE('shout',[type,x,y,team,medic]).
    Saves/host migration: G.bfFire, G.bfScorch, G.bfHulk, G.bfSmS (sparse smoke cells, refreshed every tick) and the timers are in CK_G;
    the dense grids are rebuilt by bfSync() and every random draw is a pure hash (bfRnd), so a loaded save replays exactly. */
-const BF_SC=80,BF_HULK_MAX=36,BF_FIRE_MAX=420;
+const BF_SC=80,BF_HULK_MAX=96,BF_FIRE_MAX=420;
 const BF_SHOUT=['rpg','manDown','reload','grenade','contact','tank','medic'];
 // stateless seeded random in [0,1): a pure function of (seed, game clock, a, b), so a loaded save or a migrated host replays exactly
 function bfRnd(a,b){let h=((((G.seed||1)|0)^Math.imul(a|0,0x9E3779B1)^Math.imul(b|0,0x85EBCA6B)^Math.imul((G.t*20)|0,0xC2B2AE35))>>>0);h^=h>>>15;h=Math.imul(h,0x2C1B3C6D);h^=h>>>12;h=Math.imul(h,0x297A2D39);h^=h>>>15;return (h>>>0)/4294967296;}
@@ -80,6 +80,8 @@ function bfeelTick(dt){if(MODE==='client'||!G||G.over||!G.ents)return;bfInit();G
   if(G.smokes)for(const S of G.smokes){if(S.t<=G.t)continue;S.x=Math.max(0,Math.min(MAPW,S.x+w.x*st*.7));S.y=Math.max(0,Math.min(MAPH,S.y+w.y*st*.7));const R=Math.ceil(S.r/BF_SC);
     for(let j=-R;j<=R;j++)for(let i=-R;i<=R;i++)if(i*i+j*j<=R*R+1)bfSmkAdd(S.x+i*BF_SC*.9,S.y+j*BF_SC*.9,.55*st);}
   for(const h of G.bfHulk){const age=G.t-h.t;if(age<75)bfSmkAdd(h.x,h.y,(age<40?.16:.09)*st);}
+  // RF14 burning oil: a destroyed derrick/plant belches a thick black column while it burns; a badly hurt one smoulders
+  if(G.oil)for(const o of G.oil){if(o.dead&&o.burn>0)bfSmkAdd(o.x,o.y,(.45+.25*Math.min(1,o.burn/45))*st);else if(!o.dead&&o.hp<o.max*.5)bfSmkAdd(o.x,o.y,.12*st);}
   fireTick(st,w);bfSmkStep(st,w);
   if(G.bfScorch.length>1500)G.bfScorch.splice(0,G.bfScorch.length-1500);
   // effects for every screen (small): wind + densest smoke cells, burning cells, new scorch, every ~2 s

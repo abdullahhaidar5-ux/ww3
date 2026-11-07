@@ -90,6 +90,7 @@ when they land and tune the asset to the same value (`grandtest` prints income a
 | PL | Poland | Eastern Shield | M | A belt of extra forts on the border provinces. | grand3 |
 | RS | Mountain Shias | Ayatollah | L | Clerical leader: morale and loyalty, tours provinces, their people clamour for war. | grand6 |
 |  |  | Mountain Fortress | F | Pre-built mountain bunker in mountain provinces. | grand2 (building, built) |
+| RV | River Shias | Call to the Shrines | M | When an enemy enters a province with a holy city (Najaf), a free volunteer levy rises there (once per 6 turns). | built (13-grand.js grMovePhase) |
 | RU | Russia | Strategic Bomber Fleet | M | Long-range bombers hit provinces far behind the front. | grand3 |
 |  |  | Bunker Buster | M | A grand-map strike that crushes fortified provinces. | grand3 |
 | SA | Saudi Arabia | Oil Fund | E | Pumps oil harder and banks the proceeds in a richer central bank. (Oil output x1.3, +6% sale price; Bank interest doubled) | grand2 (built) |
