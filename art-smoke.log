@@ -1,0 +1,11 @@
+artifact page written: orch/out/artifact/index.html (3991501 bytes, game 3147366 chars), 108 audio files + 82 model files (14.1 MB); publish arguments in orch/out/artifact/publish.json
+3D models: 2 of 83 ready=true  (page open to models ready: 1.7s)
+artifact edition: room true, three r186, PeerJS undefined, P2P shim false
+battle: 2 players IR vs US on strait
+loading screen finished after 80.6s
+3D models for this battle: 59 of 59
+after 4.0 game-min: 47 units, 17 structures, per team 23/25 (peak 23/25), last chunk 1170 ms
+peak memory (node + browser, summed RSS): 2983 MB
+  warn: console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+SMOKE PASS (artifact edition) (151s) — screenshots in orch/out/art-*.png (this run: orch/out/runs/20261107-003458-smoke-art/)
