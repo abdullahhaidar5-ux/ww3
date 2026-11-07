@@ -242,7 +242,7 @@ Round 7 (Abdullah 22:28) — after the slice, then kaizen; extend existing syste
 - [ ] **RG67 Faction storylines** (Lane G): event chains per nation (e.g. Iran's nuclear talks, Turkey's Kurdish question) — neutral wording, event engine.
 - [ ] **RG68 Rivalry bonuses** (Lane G): extra rewards for beating a historic rival (uses GR_REAL rivalries).
 - [ ] **RF13 Dust & sandstorms** (Lane E): vehicle dust trails + storms that cut vision (03g smoke/LOS, weather).
-- [ ] **RF14 Burning oil fields** (Lane E): huge black smoke columns when oil sites are hit.
+- [x] **RF14 Burning oil fields** (Lane E): huge black smoke columns when oil sites are hit.
 - [ ] **RF15 Night tracers & flares** (Lane E): night battles lit by tracers, flares, fires.
 - [x] **RF16 Lasting wrecks** (Lane E): burnt-out wrecks stay as cover all battle (03g G.bfHulk exists — extend).
 Round 8 (Abdullah 22:30) — check what exists first, extend it:
