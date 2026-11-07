@@ -87,3 +87,4 @@ empire systems never inside a battle.
 | **Grand fog of war + spies** (RG3) | `src/13-grand.js` (`grSeen`, `grSeenSet`, `grSpy`, `GR_SAT`), state `GC.spy` | Display only (player's view); sim/AI see everything. Sabotage/covert ops extend this, not a new system. |
 | **Scenario starts** (RG6) | `src/13-grand.js` `GR_SCEN` rows + `grScenApply`, state `GC.sc` | Presets on top of the realistic start (13i `grRealApply`); new start dates = new rows. |
 | **Mobilisation** (reserves call-up) | `src/13zm-gmobil.js` (laneB RG34): `N.mob` 0/1/2, `gmbSet`, GMOD rows, 🎖 npTab |
+| **Nuclear programmes & grand-map strike** (RG10 first cut) | `src/13zz-gnuke.js` (`GNK`, `gnkMonth`, `gnkLaunch`, `GC.nuk`), npTab `nuke` | The only nuclear owner: warheads, programme stages, tests, fallout, sanctions via `unPropose`; effects are GMOD rows + `gdRel`. Tactical battles never use it. |

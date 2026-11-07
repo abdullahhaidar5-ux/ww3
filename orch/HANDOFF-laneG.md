@@ -1,6 +1,5 @@
-# HANDOFF laneG (2026-11-07 ~21:30 Chicago)
-Shipped to main (e4374e7f): B2b alerts bar (13l-galerts.js, `alAdd`), B6 first cut Diplomacy tab (13m-gdiplo.js: alliances, peace via warscore, truces, aid, guarantees, war), ⚡16 headlines (13n-gnews.js). Test: `node orch/gdtest.mjs`.
-Hooks added: 13c-grandui.js (alBar in guTop, gdNews after turn), 13-grand.js grDeclare (truce check).
-Gate note: gate/grandsmooth red on main already (wide view 405 draw calls vs 400 budget, not Lane G); gate/migrate failed once on my merge (looks flaky, no 07* change).
-Next (in order): B6 rest (claims/casus belli, coalitions, client states, call to arms, AI peace/alliance offers + "peace offer" alert; make grOpinion delegate to gdOp), Ayatollah/Dear Leader mechanics (PLAN-SAT, Abdullah 21:19), B7 events engine, ⚡25 web, ⚡26 achievements, B8, B5c.
-Couldn't self-fire the scheduled task (permission denied); hourly :53 schedule continues.
+# HANDOFF laneG (2026-11-07 ~15:20 UTC, branch orch/laneG-202611071400)
+Shipped to main: RG5 TV news lower-third (src/13zx-gtv.js, test orch/tvtest.mjs PASS) and RG10 nuclear first cut (src/13zz-gnuke.js, npTab 'nuke', test orch/nuketest.mjs PASS). HISTORY line added.
+Gate: smoke PASS; grandtest red only on 'eco: closed strait raises oil' (Lane B economy, not touched by these modules).
+Self-fire of trig_016YWv2VUhewLR5Wq1PTVqzr was denied by the auto-mode classifier; the hourly :53 schedule continues.
+Next, in order: RG10 follow-ons (world-map flash + mushroom cloud, travel time, interceptors RG33/57, occupation stops the programme, human-victim retaliation prompt, town population wrecking); then remaining Lane G items in PLAN-SAT (RG9 proxy wars, RG15 cyber, RG16 peace conferences, RG18 volunteers, B7/B8 rest).

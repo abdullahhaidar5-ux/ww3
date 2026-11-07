@@ -19548,7 +19548,14 @@ function gmMorTurn(){for(const a of GC.armies){if(a.fl)continue;const m=gmMor(a)
     let sup=true;try{sup=grSupplied(a);}catch(e){}
     if(ok&&sup)d=a.path&&a.path.length?1:(gmMorStyle(a)==='prof'?9:7);else if(sup)d=2;else d=-4;
     if(a.path&&a.path.length)d-=2;   /* forced march */
-    a.mor=Math.max(0,Math.min(mx,m+d));}}
+    a.mor=Math.max(0,Math.min(mx,m+d));}
+  /* allied sharing (Abdullah pick 11): an allied army in the same/adjacent province lifts a weaker one a little (+3 max); computed from a snapshot so order doesn't matter */
+  if(typeof grAllied==='function'){const snap=GC.armies.map(a=>a.fl?-1:gmMor(a));
+    GC.armies.forEach((a,i)=>{if(a.fl)return;let best=-1;
+      GC.armies.forEach((b,j)=>{if(j===i||b.fl||b.o===a.o||snap[j]<0||snap[j]<=snap[i])return;
+        if(!(b.at===a.at||((GC.prov[a.at]&&GC.prov[a.at].adj)||[]).indexOf(b.at)>=0))return;
+        let al=false;try{al=grAllied(a.o,b.o);}catch(e){}if(al&&snap[j]>best)best=snap[j];});
+      if(best>=0)a.mor=Math.min(gmMorMax(a),gmMor(a)+Math.min(3,Math.ceil((best-snap[i])/10)));});}}
 function gmMorBar(a){const m=Math.round(gmMor(a)),c=m>66?'#6fbf5a':m>33?'#e0b043':'#d9534f';return '<span title="Morale '+m+'%" style="display:inline-block;width:46px;height:6px;background:#222;border:1px solid #567;border-radius:3px;vertical-align:middle;margin-left:4px"><span style="display:block;height:100%;width:'+m+'%;background:'+c+'"></span></span>';}
 // ===== 13c-grandui: the grand map screen (PC: mouse + keyboard) =====
 // Left-click selects (province or army chip), right-click orders the selected army (move / attack), wheel zooms, drag pans.
@@ -19689,7 +19696,7 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   /* No End turn button (Abdullah 2026-11-06 22:30 "Why do we still have end turn?"): time runs EU4-style; the clock's play/pause + speeds are the only control. */
   if(me&&typeof npOpen==='function'){const nb=guEl('button','padding:7px 14px;border-radius:6px;border:1px solid #c9a35a;background:#2a3a4c;color:#ffe6a8;cursor:pointer;font-size:15px;font-weight:bold','Nation');nb.type='button';nb.title='Open your nation panel';nb.onclick=()=>npOpen();t.appendChild(nb);}
   const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);try{alBar();}catch(e){console.error('alBar',e);}}  // hook: Lane G alerts bar (13l-galerts.js)
-function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();try{gdNews();}catch(e){}}
+function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();try{gdNews();}catch(e){}try{gtvShow();}catch(e){}}
 /* ---------- real time with pause (EU4 feel, lane A A2 slice 1) ----------
    The calendar runs in days (30 a month); a month ending = the old End turn, so the simulation and its determinism are unchanged:
    the result depends only on state + the orders standing when each month closes + seed. Starts paused (= the classic turn game).
@@ -23101,6 +23108,107 @@ npTab('elect','🗳','Elections & refugees',(code,body,c)=>{const S=elS(),own=c.
   const pool=S.ref[code]||0;h+='<div style="margin:8px 0"><b>Refugees from the fighting: '+Math.round(pool)+'</b>'+(pool>=4?' — rebuilding costs reduce income.':'')+(pool>=8?' Neighbouring provinces are taking people in and feel the strain.':'')+'</div>';
   const nb=Object.keys(S.ref).filter(o=>o!==code&&S.ref[o]>=8&&GCM&&gevNb(code).includes(o));if(nb.length)h+='<div style="margin:8px 0;color:#ffe6a8">Refugees are arriving from '+nb.map(gdNatName).join(', ')+' (unrest on the border).</div>';
   body.innerHTML=h;if(own&&elIsDem(code)){const msg=document.createElement('div');msg.style.cssText='margin:8px 0;color:#ffe6a8';body.appendChild(msg);const b=document.createElement('button');b.textContent='Campaign ($'+EL_CAMP+')';b.title='+8 approval at the next election';b.style.cssText='font-size:15px;padding:4px 12px;cursor:pointer';b.onclick=()=>{const x=elCampaign(code);if(x)msg.textContent=x;else npDraw();};body.appendChild(b);}});
+// 13zx-gtv.js — Lane G RG5: TV news broadcasts. Presentation only: a lower-third "broadcast" card after the turn for the
+// biggest story of the month. Fed by GC.log (the one event engine writes there through grLog: world events, war, capitals,
+// peace, revolts, pacts). Nothing is saved. Fictional channels and fictional anchors only — no real networks or people.
+const GTV_CH=[{n:'Meridian 24',c:'#b8322a'},{n:'Global Eye',c:'#1f6fb2'},{n:'Horizon News',c:'#2e8b57'},{n:'Continental Wire',c:'#6f4fa0'},{n:'Northstar TV',c:'#c27a12'}];
+const GTV_AN=['Mara Lind','Tomas Verhoeven','Ines Kalder','Samir Dorn','Yuki Tanabe','Ada Okafor','Lukas Brandt','Priya Venkat'];
+const GTV_BIG=/declared war|capital|eliminated|peace|nuclear|coup|revolt|captured|WORLD:|pact|alliance|guarantee/i;
+const GTV_HOT=/declared war|capital|eliminated|nuclear|coup/i;
+let GTV_LAST=-1;
+// the month's biggest story: world events weigh most, then our own nation's news, then anything hot (war, capitals, nukes)
+function gtvPick(){if(!GC||!GC.log)return null;const T=GC.turn-1;let best=null,bw=-1;
+  for(const l of GC.log){if(l[0]!==T||!(l[2]===''||GTV_BIG.test(l[1])))continue;
+    const w=(l[2]===''?3:0)+(l[2]===GC.me?4:0)+(GTV_HOT.test(l[1])?5:0)+(/WORLD:/.test(l[1])?2:0);if(w>bw){bw=w;best=l;}}
+  return best;}
+function gtvShow(){if(!GC||!GC.me||GTV_LAST===GC.turn)return;const b=gtvPick();if(!b)return;GTV_LAST=GC.turn;
+  const host=document.getElementById('gMapWrap');if(!host)return;let old=document.getElementById('gTV');if(old)old.remove();
+  const seed=GC.seed|0,ch=GTV_CH[(seed+GC.turn)%GTV_CH.length],an=GTV_AN[(seed*7+GC.turn*3)%GTV_AN.length];
+  const hot=GTV_HOT.test(b[1]);const d=document.createElement('div');d.id='gTV';
+  d.style.cssText='position:absolute;left:0;right:0;bottom:0;display:flex;align-items:stretch;height:66px;background:rgba(14,18,26,.94);border-top:3px solid '+ch.c+';box-shadow:0 -6px 18px rgba(0,0,0,.45);color:#f4f1ea;font:15px system-ui,sans-serif;z-index:6;cursor:pointer;transform:translateY(20px);opacity:0;transition:opacity .4s,transform .4s';
+  const tag=document.createElement('div');tag.style.cssText='background:'+ch.c+';color:#fff;min-width:150px;display:flex;flex-direction:column;justify-content:center;padding:0 14px;font-weight:700;letter-spacing:.5px';
+  const live=document.createElement('span');live.textContent=(hot?'BREAKING':'LIVE')+' ● ';live.style.cssText='font-size:11px;opacity:.9';
+  const cn=document.createElement('span');cn.textContent=ch.n;cn.style.cssText='font-size:15px';tag.appendChild(live);tag.appendChild(cn);
+  const body=document.createElement('div');body.style.cssText='flex:1;display:flex;flex-direction:column;justify-content:center;padding:4px 16px;min-width:0';
+  const hd=document.createElement('div');hd.textContent=b[1].replace(/\.$/,'');hd.style.cssText='font-size:17px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+  const sub=document.createElement('div');sub.textContent='Anchor '+an+' · '+grMonStr(GC.turn-1);sub.style.cssText='font-size:11px;opacity:.65;margin-top:2px;letter-spacing:.3px';
+  body.appendChild(hd);body.appendChild(sub);d.appendChild(tag);d.appendChild(body);host.appendChild(d);
+  d.onclick=()=>d.remove();
+  requestAnimationFrame(()=>{d.style.opacity='1';d.style.transform='translateY(0)';});
+  setTimeout(()=>{if(!d.isConnected)return;d.style.opacity='0';d.style.transform='translateY(20px)';setTimeout(()=>d.remove(),450);},9000);}
+// 13zz-gnuke.js — Lane G RG10 (first cut): NUCLEAR PROGRAMMES and the grand-map nuclear strike. Grand map only, never in battles.
+// Nuclear powers start with a few warheads (GNK.start). Anyone else (and Iran, part-way) can start a programme: enrichment → test-ready →
+// a test (world opinion drops, the first warhead appears) → one more warhead a year (max GNK.cap). Warheads cost upkeep every month.
+// A strike (two-step confirm, human) or a last-resort AI strike wrecks one enemy province: its buildings and garrison are destroyed,
+// armies there are lost, unrest and fallout last 3 years, the world's opinion of the launcher collapses, the victim proposes sanctions
+// (UN, RG2), the launcher's war support splits, and a nuclear victim (AI) strikes back at the launcher's capital.
+// Effects are GMOD rows + relations + the event log (grLog) — no separate battle code. State: GC.nuk (saved with the campaign).
+// Neutral: no real places' casualty figures, no real leaders. Equal rules for every nation.
+const GNK={start:{US:3,RU:3,CN:2,GB:1,FR:1,IN:1,PK:1,KP:1,IL:1},pre:{IR:2},
+  names:['No programme','Enrichment','Test-ready','Warhead (tested)'],months:[0,6,6,0],
+  cost:1500,upkeep:150,cap:6,fallout:36,strikeCost:0,aiGap:24};
+function gnkN(c){if(!GC.nuk)GC.nuk={n:{},fo:{},pend:[]};const S=GC.nuk;if(!S.n[c]){const w=GNK.start[c]||0;S.n[c]={st:w?3:(GNK.pre[c]||0),p:0,w:w,last:-99};}return S.n[c];}
+function gnkName(c){return typeof gdNatName==='function'?gdNatName(c):c;}
+function gnkStart(c){const N=gnkN(c),A=GC.nat[c];if(N.st!==0)return 'The programme is already running.';if(A.cash<GNK.cost)return 'Costs $'+GNK.cost+'.';
+  A.cash-=GNK.cost;N.st=1;N.p=0;grLog(gnkName(c)+' starts a nuclear programme.',c);return '';}
+// one month: programme stages, tests, warhead growth, upkeep, fallout, AI decisions
+function gnkMonth(){if(!GC||!GC.nat)return;const alive=Object.keys(GC.nat).filter(c=>!GC.nat[c].dead).sort();
+  const R=grRng((GC.seed|0)*311+GC.turn*17);
+  for(const c of alive){const N=gnkN(c),A=GC.nat[c];
+    if(N.st>=1&&N.st<=2){N.p++;if(N.p>=GNK.months[N.st]){N.st++;N.p=0;if(N.st===3){N.w++;grLog('Nuclear test: '+gnkName(c)+' has tested a device.','');
+        for(const o of alive)if(o!==c)gdRel(o,c,-12);}}}
+    else if(N.st===3){N.p++;if(N.p%12===0&&N.w<GNK.cap){N.w++;}}
+    if(N.w>0)A.cash-=Math.min(Math.max(0,A.cash),N.w*GNK.upkeep);   /* upkeep never pushes the treasury below zero (it drains what is there) */
+    // a programme is seen: the world grows wary of it (slow, every month until it becomes a warhead)
+    if(N.st>=1&&N.st<3)for(const o of alive)if(o!==c)gdRel(o,c,-1);
+    // AI nations at war with a nuclear power may start their own programme (cascade); rare and seeded
+    if(!A.ai)continue;
+    if(N.st===0&&A.cash>2500&&alive.some(o=>o!==c&&GC.nat[o]&&(gnkN(o).w>0)&&grAtWar(c,o))&&R()<.03){N.st=1;N.p=0;grLog(gnkName(c)+' is reported to be starting a nuclear programme.',c);}
+    // last resort: the capital is held by an enemy army and the nation has warheads → strike the occupied capital
+    if(N.w>0&&N.st===3&&GC.turn-N.last>=GNK.aiGap){const cap=A.cap;if(cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c)))gnkLaunch(c,cap,true);}
+  }
+  for(const pi of Object.keys(GC.nuk.fo))if(GC.nuk.fo[pi]<GC.turn)delete GC.nuk.fo[pi];else if(GC.prov[pi])GC.prov[pi].un=Math.min(100,(GC.prov[pi].un||0)+3);
+}
+// the strike. pi must be an enemy land province of a nation at war with the launcher. ai: no confirm needed (its own decision)
+function gnkLaunch(c,pi,ai,noRet){const N=gnkN(c),p=GCM.P[pi];if(!p||!p.land)return 'Not a land province.';const o=GC.prov[pi].o;
+  if(N.w<1)return 'No warheads.';if(o===c||!grAtWar(c,o))return 'Only enemy provinces at war with you.';
+  N.w--;N.last=GC.turn;const st=GC.prov[pi];st.un=Math.min(100,(st.un||0)+45);st.gar=[];
+  for(const b of gmBuildings(pi))b[1]=100;                      /* every building in the province is destroyed (damage 100) */
+  GC.armies=GC.armies.filter(a=>!(a.at===pi&&!a.fl));          /* armies in the province are lost */
+  GC.nuk.fo[pi]=GC.turn+GNK.fallout;
+  for(const x of Object.keys(GC.nat)){if(GC.nat[x].dead||x===c)continue;gdRel(x,c,grAllied(x,c)?-35:-22);}
+  gmodAdd({id:'nuk_ws_'+c,src:'Nuclear strike',scope:'nation',stat:'warSupport',add:-.15,t:c,until:GC.turn+12});
+  grLog('Nuclear strike on '+p.n+' by '+gnkName(c)+'. Fallout covers the province.',c);
+  try{unPropose(o,'sanction',c,true);}catch(e){}
+  if(!noRet&&gnkN(o).w>0&&grAtWar(o,c)){   /* a nuclear victim answers: an AI victim strikes the launcher's capital at once; a human gets a log line */
+    if(GC.nat[o].ai&&GC.nat[c].cap>=0)gnkLaunch(o,GC.nat[c].cap,true,true);
+    else grLog(gnkName(o)+' could answer with its own warheads.',o);}
+  return '';}
+// the picker: enemy land provinces next to our land, capitals first (up to 8)
+function gnkTargets(c){const P=GCM.P,out=[],seen=new Set();const foes=new Set(gdEnemies(c));
+  for(const f of foes){const cap=GC.nat[f].cap;if(cap>=0&&!seen.has(cap)){seen.add(cap);out.push(cap);}}
+  for(const p of P){if(!p.land||!foes.has(GC.prov[p.i].o))continue;if(seen.has(p.i))continue;if(p.adj.some(j=>P[j]&&P[j].land&&GC.prov[j].o===c)){seen.add(p.i);out.push(p.i);}}
+  return out.slice(0,8);}
+function gnkPickTarget(c){const N=gnkN(c);if(N.w<1)return;const ts=gnkTargets(c);if(!ts.length){guModal('<h2 style="margin:0 0 8px;font-size:20px">☢ Launch</h2><div>No enemy province is within reach of our front.</div>',[['Close',()=>{}]]);return;}
+  const bs=ts.map(pi=>[GCM.P[pi].n+' ('+(GC.nat[GC.prov[pi].o]&&GC.nat[GC.prov[pi].o].cap===pi?'capital':gnkName(GC.prov[pi].o))+')',()=>gnkConfirm(c,pi)]);bs.push(['Back',()=>npOpen(c,'nuke')]);
+  guModal('<h2 style="margin:0 0 8px;font-size:20px">☢ Choose a target</h2><div style="opacity:.8;margin-bottom:6px">Enemy provinces in reach. The next screen asks you to confirm.</div>',bs);}
+function gnkConfirm(c,pi){const o=GC.prov[pi].o;
+  guModal('<h2 style="margin:0 0 8px;font-size:20px">Launch on '+GCM.P[pi].n+'?</h2><div style="line-height:1.5">This destroys the buildings and garrison there, kills armies in the province and leaves fallout for three years. Sanctions follow, the world turns against '+gnkName(c)+', and '+gnkName(o)+' may answer with its own warheads.</div>',
+    [['Launch',()=>{const e=gnkLaunch(c,pi,false);if(e)grLog(e,c);try{guTop();grandMapRefresh();}catch(x){}npOpen(c,'nuke');},1],['Back',()=>gnkPickTarget(c)]]);}
+// the nation-panel tab: stage, warheads, actions (own nation only); small menu buttons
+function gnkRow(label,val){return '<div style="display:flex;justify-content:space-between;gap:24px;padding:3px 0;border-bottom:1px solid #26384a"><span style="opacity:.75">'+label+'</span><b>'+val+'</b></div>';}
+function gnkBtn(label,fn){const b=document.createElement('button');b.textContent=label;b.style.cssText='font:15px system-ui,sans-serif;padding:6px 14px;margin:6px 8px 0 0;background:#1e3347;color:#e8f0f7;border:1px solid #4a6a88;border-radius:5px;cursor:pointer';b.onclick=fn;return b;}
+if(typeof npTab==='function')npTab('nuke','☢','Nuclear',(code,body,c)=>{const own=code===GC.me,N=gnkN(code),A=GC.nat[code];
+  const stage=GNK.names[N.st]||'';const nextM=N.st>=1&&N.st<=2?' (next stage in '+Math.max(0,GNK.months[N.st]-N.p)+' months)':'';
+  body.innerHTML='<div style="font-size:17px;margin-bottom:6px"><b>Nuclear status</b></div><div style="max-width:520px">'
+   +gnkRow('Programme',stage+nextM)+gnkRow('Warheads',N.w)+gnkRow('Upkeep per month',N.w||N.st>=1?'$'+(N.w*GNK.upkeep):'—')
+   +gnkRow('Fallout zones',Object.keys(GC.nuk.fo).length)+'</div>'
+   +'<div style="margin-top:10px;opacity:.8;max-width:520px">Every nuclear power pays upkeep for its warheads. A strike brings sanctions, world anger and fallout; a nuclear victim can answer. AI nations use a strike only as a last resort.</div>';
+  if(own){const row=document.createElement('div');body.appendChild(row);
+    if(N.st===0)row.appendChild(gnkBtn('Start a nuclear programme ($'+GNK.cost+')',()=>{const e=gnkStart(code);if(e)grLog(e,code);npOpen(code,'nuke');}));
+    if(N.w>0&&N.st>=0)row.appendChild(gnkBtn('Launch a strike…',()=>gnkPickTarget(code)));}
+});
+GMOD_HOOKS.push(gnkMonth);
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.
