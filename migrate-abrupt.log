@@ -1,0 +1,64 @@
+game servers running locally at http://127.0.0.1:33655
+[6s] three pages loaded
+[7s] host lobby open, code c86nf6
+[77s] battle: US vs RU vs CN on strait; client A is slot 1, client B slot 2
+    [net battle start] host: {"t":0,"loading":false,"paused":false,"fp":{"tx":26,"rx":19,"txB":2620,"rxB":1634,"dropped":0},"slots":[{"k":1,"peer":"ww3p-1q5yx27m","seenAgo":9,"disc":0,"ai":false,"aiTook":false,"buf":0},{"k":2,"peer":"ww3p-j623gnnd","seenAgo":86,"disc":0,"ai":false,"aiTook":false,"buf":0}],"sb":null,"ckOut":false}
+    [net battle start] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-1q5yx27m","hostPeer":"ww3-c86nf6","sb":false,"ck":false,"ents":0,"fp":{"tx":11,"rx":15,"txB":988,"rxB":1530,"dropped":0},"trace":[]}
+    [net battle start] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":0,"snapT":0,"rxAgo":null,"recon":false,"myPeer":"ww3p-j623gnnd","hostPeer":"ww3-c86nf6","sb":false,"ck":false,"ents":0,"fp":{"tx":10,"rx":12,"txB":859,"rxB":1155,"dropped":0},"trace":[]}
+    [net t=5s] host: {"t":5,"loading":false,"paused":false,"fp":{"tx":129,"rx":23,"txB":58603,"rxB":2062,"dropped":0},"slots":[{"k":1,"peer":"ww3p-1q5yx27m","seenAgo":417,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988},{"k":2,"peer":"ww3p-j623gnnd","seenAgo":305,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":4.999999999999988}],"sb":1,"ckOut":false}
+    [net t=5s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":5,"snapT":4.9,"rxAgo":6,"recon":false,"myPeer":"ww3p-1q5yx27m","hostPeer":"ww3-c86nf6","sb":true,"ck":true,"ents":5,"fp":{"tx":12,"rx":69,"txB":1095,"rxB":36744,"dropped":0},"trace":[]}
+    [net t=5s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":5,"snapT":4.7,"rxAgo":7,"recon":false,"myPeer":"ww3p-j623gnnd","hostPeer":"ww3-c86nf6","sb":false,"ck":false,"ents":5,"fp":{"tx":11,"rx":60,"txB":967,"rxB":21859,"dropped":0},"trace":[]}
+    [net t=10s] host: {"t":10,"loading":false,"paused":false,"fp":{"tx":233,"rx":41,"txB":114624,"rxB":8555,"dropped":0},"slots":[{"k":1,"peer":"ww3p-1q5yx27m","seenAgo":263,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076},{"k":2,"peer":"ww3p-j623gnnd","seenAgo":126,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":10.000000000000076}],"sb":1,"ckOut":false}
+    [net t=10s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":10,"snapT":10,"rxAgo":12,"recon":false,"myPeer":"ww3p-1q5yx27m","hostPeer":"ww3-c86nf6","sb":true,"ck":true,"ents":6,"fp":{"tx":21,"rx":121,"txB":4335,"rxB":63832,"dropped":0},"trace":[]}
+    [net t=10s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":10,"snapT":10,"rxAgo":14,"recon":false,"myPeer":"ww3p-j623gnnd","hostPeer":"ww3-c86nf6","sb":false,"ck":false,"ents":6,"fp":{"tx":20,"rx":112,"txB":4220,"rxB":50792,"dropped":0},"trace":[]}
+    [net t=30s] host: {"t":30,"loading":false,"paused":false,"fp":{"tx":653,"rx":59,"txB":423234,"rxB":13091,"dropped":0},"slots":[{"k":1,"peer":"ww3p-1q5yx27m","seenAgo":485,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577},{"k":2,"peer":"ww3p-j623gnnd","seenAgo":485,"disc":0,"ai":false,"aiTook":false,"buf":0,"snapTo":29.999999999999577}],"sb":1,"ckOut":false}
+    [net t=30s] client A: {"me":1,"mode":"client","loading":false,"paused":false,"t":30,"snapT":30,"rxAgo":5,"recon":false,"myPeer":"ww3p-1q5yx27m","hostPeer":"ww3-c86nf6","sb":true,"ck":true,"ents":6,"fp":{"tx":30,"rx":340,"txB":6604,"rxB":244548,"dropped":0},"trace":[]}
+    [net t=30s] client B: {"me":2,"mode":"client","loading":false,"paused":false,"t":30,"snapT":30,"rxAgo":7,"recon":false,"myPeer":"ww3p-j623gnnd","hostPeer":"ww3-c86nf6","sb":false,"ck":false,"ents":9,"fp":{"tx":29,"rx":313,"txB":6487,"rxB":178686,"dropped":0},"trace":[]}
+[132s] before: client A @1 min t=60s: host 62 entities, slot 1 sees 7 (own 7); its screen has 7; missing 0, extra 0, off-position 0, mismatched 0; credits host 7285 client 7285
+[133s] before: client B @1 min t=60s: host 62 entities, slot 2 sees 16 (own 16); its screen has 16; missing 0, extra 0, off-position 0, mismatched 0; credits host 7260 client 7260
+    trace client A (screenshot stall):  || now: client via=pjd ws=false rxAgo=264
+    trace client B (screenshot stall):  || now: client via=pjd ws=false rxAgo=265
+[140s] host leaves at t=120.2s; standby checkpoint from t=116.4s (32 KB, 95 entities); armies US 33, RU 13, CN 27
+    +0.4s client A: client room=ww3-c86nf6 gen=0
+    +0.5s client B: client room=ww3-c86nf6 gen=0
+[145s] client A noticed the host was gone after 4.8 s (abrupt: no goodbye)
+    +5.0s client A: client reconnecting room=ww3-c86nf6 gen=0
+    +5.0s client B: client reconnecting room=ww3-c86nf6 gen=0
+    +5.2s client A: client reconnecting room=ww3-c86nf6 gen=0 (no room)
+    +5.2s client B: client reconnecting room=ww3-c86nf6 gen=0 (no room)
+    +6.2s client A: client reconnecting room=c86nf6-m1 gen=0 (no room)
+    +7.0s client A: host room=c86nf6-m1 gen=1
+    +7.0s client B: client reconnecting room=ww3-c86nf6-m1 gen=0
+[147s] client A is the new host after 7.1 s (room c86nf6-m1, battle resumed from t=116.5s)
+    +7.8s client B: client reconnecting room=ww3-c86nf6-m1 gen=1
+[148s] client B reconnected to the new host 8.1 s after the host left
+    +8.2s client B: client room=ww3-c86nf6-m1 gen=1
+    trace client A: 4.8 clientReconnect | 5.0 join tc-c86nf6 | 6.0 join failed tc-c86nf6: peer-unavailable | 6.0 promoteToHost | 6.0 join tc-c86nf6-m1 | 6.2 joined tc-c86nf6-m1 via undefined | 7.0 promoteToHost -> true | 7.0 clientReconnect done, mode host
+    trace client B: 4.9 clientReconnect | 5.2 join tc-c86nf6 | 6.1 join failed tc-c86nf6: peer-unavailable | 6.7 join tc-c86nf6-m1 | 6.9 joined tc-c86nf6-m1 via pjd | 7.8 snapshot t=117.3 while reconnecting | 7.9 snapshot t=117.4 while reconnecting | 8.0 snapshot t=117.5 while reconnecting | 8.1 clientReconnect done, mode client
+[153s]   US (slot 0): 33/33 of its pre-takeover entities are on the new host, 33 in all; AI-run (took over)
+[153s]   RU (slot 1): 13/13 of its pre-takeover entities are on the new host, 13 in all; player-run
+[153s]   CN (slot 2): 27/27 of its pre-takeover entities are on the new host, 29 in all; player-run
+[154s] after: client B right after the takeover t=123s: host 98 entities, slot 2 sees 29 (own 29); its screen has 29; missing 0, extra 0, off-position 0, mismatched 0; credits host 6237 client 6237
+[157s] client B order after the takeover: 23/24 of its units moved on the new host
+[160s] old host's side after 45 game-s under the AI: build step 0 -> 1, 2 new entities, 0 in production, $550
+[161s] after: client B 45 game-s after the takeover t=168s: host 70 entities, slot 2 sees 0 (own 0); its screen has 3; missing 0, extra 0, off-position 0, mismatched 0; credits host 6418 client 6418
+peak memory (node + browser, summed RSS): 4132 MB
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+
+MIGRATE FAIL: clientB console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:43947/index.html:21247:32)
+    at buildPanels (http://127.0.0.1:43947/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:43947/index.html:13439:34)
+    at afterStart (http://127.0.0.1:43947/index.html:13 (171s)
+  ✗ host console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:43947/index.html:21247:32)
+    at buildPanels (http://127.0.0.1:43947/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:43947/index.html:13439:34)
+    at afterStart (http://127.0.0.1:43947/index.html:13
+  ✗ clientA console error: TypeError: Cannot read properties of null (reading 'nats')
+    at gdName (http://127.0.0.1:43947/index.html:21247:32)
+    at buildPanels (http://127.0.0.1:43947/index.html:12512:245)
+    at g.terrain (http://127.0.0.1:43947/index.html:13439:34)
+    at afterStart (http://127.0.0.1:43947/index.html:13
