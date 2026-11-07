@@ -46,6 +46,7 @@ when they land and tune the asset to the same value (`grandtest` prints income a
 | AR | Argentina | Beef and Grain | E | Farms and a sound bank. (Harvests x1.2; Bank interest doubled) | grand2 (built) |
 | AU | Australia | Pacific Logistics | E | Long supply lines run lean: little fuel burnt, busy ports. (Fuel burn x0.75; Port income x1.5) | grand2 (built) |
 | AZ | Azerbaijan | Caspian Pipeline | E | Pipeline oil and a quiet back-door trade. (Oil output x1.3, +6% sale price; Smuggling x2) | grand2 (built) |
+| BI | Black Desert Insurgency | Desert Raids | M | Fast moves across desert provinces and recovering captured gear after won battles. | grand3 |
 | BR | Brazil | Agribusiness | E | Great harvests and export trade. (Harvests x1.2; Trade routes x1.35) | grand2 (built) |
 | CA | Canada | Northern Resources | E | Mines and farmland. (Mine income x1.3; Harvests x1.2) | grand2 (built) |
 | CL | Chile | Copper Reserve | E | Mines and a vault the enemy cannot loot. (Mine income x1.3; Looted bank share 50% -> 20%) | grand2 (built) |
@@ -82,6 +83,7 @@ when they land and tune the asset to the same value (`grandtest` prints income a
 | MA | Morocco | Phosphate Exports | E | Mines and a busy harbour. (Mine income x1.3; Port income x1.5) | grand2 (built) |
 | MX | Mexico | Maquiladoras | E | Cheap recruitment and cross-border trade. (Recruits cost x0.9; Trade routes x1.35) | grand2 (built) |
 | NG | Nigeria | Delta Oil | E | Oil money with a calm home front. (Oil output x1.3, +6% sale price; Unrest -3) | grand2 (built) |
+| OB | Olive Brigades | Urban Labyrinth | M | Rubble-city home battles; some fallen fighters slip away and return after the battle. | grand3 |
 | OM | Oman | Hormuz Pilots | E | Pilots the strait: busy ports and a calm coast. (Port income x1.5; Unrest -3) | grand2 (built) |
 | PH | Philippines | Overseas Remittances | E | Money from abroad and a large recruit pool. (Bank interest doubled; Manpower x1.25) | grand2 (built) |
 | PK | Pakistan | Tactical Missile Corps | M | Short-range ballistic missiles on the army stack. | grand3 |
@@ -105,4 +107,4 @@ when they land and tune the asset to the same value (`grandtest` prints income a
 | VN | Vietnam | Tunnel Networks | M | Hidden armies in the hills. | grand3 |
 | ZA | South Africa | Gold and Platinum | E | Deep mines and a rich bank. (Mine income x1.3; Bank interest doubled) | grand2 (built) |
 
-54 nations listed. The EU retires as a nation once FR, DE and PL are live (its row is not needed). Nations not listed here are playable minor nations (no signature).
+56 nations listed. The EU retires as a nation once FR, DE and PL are live (its row is not needed). Nations not listed here are playable minor nations (no signature).

@@ -109,7 +109,7 @@ const MAPS={
     cities:[[1300,950,190,'russia'],[1980,1050,170,'russia'],[700,1600,80,'europe'],[2600,600,80,'europe']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1640+150*Math.sin(y*.0028+ph),y]);M.rivers.push({pts,hw:()=>150});M.bridgeAt=[[0,.25],[0,.48],[0,.78]];M.bridgeFrac=true;
       M.islands.push({x:1650,y:620,r:60,rx:2,rot:1.4,wob:q=>.1*Math.sin(q*3)},{x:1640,y:1600,r:50,rx:1.8,rot:1.5,wob:q=>.1*Math.sin(q*4)});}},
-  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA','DZ','LY','MA'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
+  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA','DZ','LY','MA','BI'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1300,1100+Math.sin(a)*840]);return s;})(),
     cities:[[1600,1100,190,'mideast']],
     water(M,R){for(const [x,y] of [[900,700],[2300,1500],[2300,700],[900,1500]])M.lakes.push({x,y,r:55,rx:1.4,wob:q=>.15*Math.sin(q*3+x)});}},
@@ -157,7 +157,7 @@ const MAPS={
     slots:[[420,1500],[2780,700]],cities:mirrorList([[1020,1280,85,'southasia']],'p'),
     water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[1270,330],[1420,560],[1560,770]],40,25,2,ph),hw:()=>110},{pts:polyline([[640,330],[960,560]],40,18,2,ph),hw:()=>80});
       M.peaks.push({x:2250,y:330,r:80,rx:1.5,rot:.3});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:72,rx:1.25,rot:0});}},
-  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR','IQ','SY'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armour.',
+  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR','IQ','SY','BI'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armour.',
     slots:[[420,700],[2780,1500]],cities:mirrorList([[1180,430,110,'mideast'],[860,1700,75,'mideast']],'p'),
     water(M,R){M.lakes.push({x:900,y:1170,r:70,rx:1.7,wob:a=>.12*Math.sin(a*3)});M.peaks.push({x:1250,y:1820,r:70,rx:1.6,rot:.3});mirrorMap(M,'p');
       const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+110*Math.sin((y-1100)*.0035)+35*Math.sin((y-1100)*.011),y]);M.rivers.push({pts,hw:()=>92});M.bridgeAt=[[0,.18],[0,.5],[0,.82]];M.bridgeFrac=true;}},
@@ -168,6 +168,9 @@ const MAPS={
   aleppo:{name:'Aleppo: Ruined City',min:2,max:2,sym:'point',rough:1.1,home:['RS','TR','SY'],tag:'urban sprawl · citadel · street fighting · duel',desc:'A duel through a ruined city: a great old town around the citadel in the middle, suburbs on both sides and streets to fight down block by block.',
     slots:[[430,1650],[2770,550]],cities:[[1600,1100,290,'mideast'],...mirrorList([[860,680,140,'mideast'],[1250,1880,100,'mideast']],'p')],
     water(M,R){M.peaks.push({x:700,y:260,r:80,rx:1.6,rot:.2});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:62,rx:1.3,rot:0});}},
+  gaza:{name:'Gaza: Rubble Streets',min:2,max:2,sym:'point',rough:1.05,home:['OB','IL','EG'],tag:'dense coastal city · rubble · alleys · duel',desc:'A duel through a crowded coastal city: a thick old quarter in the middle, shattered blocks and rubble mounds on both sides, and narrow alleys to fight down house by house.',
+    slots:[[430,1650],[2770,550]],cities:[[1600,1100,300,'mideast'],...mirrorList([[900,640,150,'mideast'],[1180,1760,120,'mideast'],[640,1180,90,'mideast']],'p')],
+    water(M,R){M.peaks.push({x:820,y:300,r:70,rx:1.5,rot:.3});M.peaks.push({x:1120,y:1250,r:46,rx:1.4,rot:-.2});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:54,rx:1.3,rot:0});}},
   anatolia:{name:'Anatolian Mesa',min:3,max:4,sym:'quad',rough:1.4,home:['TR'],tag:'walled mesa · oil on top · four ways in',desc:'A rock-walled mesa in the middle of the highlands with oil on top. Four gaps lead up onto it, all equally far from every base.',
     slots:[[780,1100],[2420,1100],[1600,280],[1600,1920]],oilAt:[[1600,1100]],
     water(M,R){const arc=(c,s)=>{const pts=[];for(let t=c-s;t<=c+s+1e-9;t+=.05)pts.push([1600+Math.cos(t)*420,1100+Math.sin(t)*420]);return pts;};
@@ -196,16 +199,9 @@ const MAPS={
     slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'southasia'],...mirrorList([[1300,500,70,'southasia']],'p')],
     water(M,R){const ph=R()*6.28,side=[];for(let y=-200;y<=2400;y+=40)side.push([1020+40*Math.sin(y*.004+ph)+(y-1100)*.08,y]);M.rivers.push({pts:side,hw:()=>58});M.bridgeAt=[[0,.25],[0,.75]];M.bridgeFrac=true;mirrorMap(M,'p');
       const mid=[];for(let y=-200;y<=2400;y+=40)mid.push([1600+70*Math.sin((y-1100)*.004),y]);M.rivers.push({pts:mid,hw:()=>66});M.bridgeAt.push([2,.2],[2,.5],[2,.8]);}},
-  negev:{name:'Negev Desert',min:2,max:6,sym:'point',rough:1.1,home:['IL','EG'],tag:'open desert · craters · wadi crossings',desc:'Sun-baked Negev plateau: erosion craters and dry wadis break the sand into lanes around a crossroads town. Armour swings wide, but the crater rims decide who holds the middle.',
-    slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,120,'mideast']],
-    water(M,R){M.peaks.push({x:1000,y:700,r:90,rx:1.7,rot:.3},{x:1450,y:500,r:70,rx:1.4,rot:-.2},{x:1250,y:1500,r:80,rx:1.5,rot:.6});M.lakes.push({x:1220,y:1060,r:44,rx:1.3,wob:a=>.1*Math.sin(a*3)});mirrorMap(M,'p');}},
-  jordanvalley:{name:'Jordan Valley',min:2,max:6,sym:'mirrorX',theme:'green',rough:1.2,home:['IL','JO'],tag:'rift valley · river · ridges either side',desc:'A green rift valley with the Jordan River down the middle, steep ridges on both sides and bridges as the only fast way across.',
-    slots:[[560,300],[2640,300],[560,1900],[2640,1900],[420,1100],[2780,1100]],cities:[[800,1100,110,'mideast'],[2400,1100,110,'mideast']],
-    water(M,R){const ph=R()*6.28,pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1600+60*Math.sin(y*.004+ph),y]);M.rivers.push({pts,hw:()=>48});M.bridgeAt=[[0,.25],[0,.5],[0,.75]];M.bridgeFrac=true;
-      M.peaks.push({x:1050,y:560,r:85,rx:1.6,rot:.2},{x:1050,y:1640,r:85,rx:1.6,rot:-.2});mirrorMap(M,'x');}},
-  eilat:{name:'Sinai Border & Eilat',min:2,max:6,sym:'point',rough:1.5,home:['IL','EG'],tag:'rocky desert · gulf shore · mountain passes',desc:'Red granite mountains and dry canyons run down to the Gulf of Aqaba. Narrow passes funnel armies toward a port town at the centre.',
+  tihama:{name:'Tihama Coast',min:2,max:6,sym:'point',rough:1.4,home:['DW','SA'],tag:'Red Sea plain · escarpment · wadis',desc:'Yemen\'s hot Red Sea plain below a wall of mountains. Dry wadis are the roads and the port town in the middle is the prize.',
     slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,110,'mideast']],
-    water(M,R){M.peaks.push({x:1050,y:800,r:100,rx:1.8,rot:.6},{x:1500,y:520,r:85,rx:1.5,rot:.1},{x:1000,y:1500,r:80,rx:1.4,rot:-.5});M.ridges.push({pts:[[1250,420],[1350,700],[1300,900]],hw:()=>50});M.lakes.push({x:1560,y:1500,r:60,rx:1.4,wob:a=>.1*Math.sin(a*3)});mirrorMap(M,'p');}},
+    water(M,R){M.peaks.push({x:1000,y:520,r:100,rx:1.8,rot:.5},{x:1100,y:1620,r:95,rx:1.7,rot:-.4});M.ridges.push({pts:[[1300,500],[1380,800],[1320,1000]],hw:()=>50});mirrorMap(M,'p');}},
   najd:{name:'Najd Escarpment',min:6,max:8,sym:'quad',rough:1.2,home:['SA'],tag:'ring of cliffs · plateau oil · eight gaps',desc:'A ring of desert cliffs around the Najd plateau, with oil on top. Every base faces a cliff wall and has a gap on each side of it.',
     slots:ring8(880),oilAt:[[1600,1100]],
     water(M,R){const arc=(c,s)=>{const pts=[];for(let t=c-s;t<=c+s+1e-9;t+=.04)pts.push([1600+Math.cos(t)*450,1100+Math.sin(t)*450]);return pts;};
