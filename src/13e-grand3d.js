@@ -572,7 +572,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   const anc=g3Anchors(s);let anim=0;for(const a of GC.armies){const e=G3.arm.get(a.id);if(!e)continue;const t=anc.get(a.id);if(!t)continue;
     if(e.tt<1){e.tt=Math.min(1,e.tt+dt/1.5);const k=e.tt*e.tt*(3-2*e.tt);e.x=e.fx+(t[0]-e.fx)*k;e.z=e.fz+(t[1]-e.fz)*k;anim=1;e.face=Math.atan2(t[0]-e.fx,t[1]-e.fz);}
     else if(e.mv){e.x=t[0];e.z=t[1];e.mv=0;}else{e.x+=(t[0]-e.x)*Math.min(1,dt*8);e.z+=(t[1]-e.z)*Math.min(1,dt*8);}
-    const y=e.sea?.5+Math.sin(G3.time*1.4+e.aid)*.35:Math.max(.3,g3HeightAt(e.x,e.z))+(e.tt<1?Math.abs(Math.sin(G3.time*9))*.5:0);e.g.position.set(e.x,y,e.z);e.g.scale.setScalar(s*(e.sea?1.1:1));e.g.rotation.y=cc.yaw;{const f=e.g.children[1];if(f&&!e.sea)f.scale.setScalar(Math.max(.5,Math.min(1,cc.d/300)));}
+    const y=e.sea?.5+Math.sin(G3.time*1.4+e.aid)*.35:Math.max(.3,g3HeightAt(e.x,e.z))+(e.tt<1?Math.abs(Math.sin(G3.time*9))*.5:0);e.g.position.set(e.x,y,e.z);e.g.scale.setScalar(s*(e.sea?1.1:1));e.g.rotation.y=cc.yaw;{const f=e.g.children[1];if(f&&!e.sea)f.scale.setScalar(Math.max(.5,Math.min(1,cc.d/300)));const mine=a.o===GC.me||a.id===GV.selA;e.g.visible=cc.d<1400||mine;if(f)f.visible=cc.d<1000||mine;}   /* smooth first (Abdullah 14:15): at world zoom other nations' armies are shown by their count plates only (2 draw calls each saved) */
     if(e.sea)e.g.children[0].rotation.y=Math.PI/2*0;}
   g3Batch();
   // selection ring
