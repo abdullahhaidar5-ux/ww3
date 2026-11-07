@@ -13,12 +13,18 @@ function gnkN(c){if(!GC.nuk)GC.nuk={n:{},fo:{},pend:[]};const S=GC.nuk;if(!S.n[c
 function gnkName(c){return typeof gdNatName==='function'?gdNatName(c):c;}
 function gnkStart(c){const N=gnkN(c),A=GC.nat[c];if(N.st!==0)return 'The programme is already running.';if(A.cash<GNK.cost)return 'Costs $'+GNK.cost+'.';
   A.cash-=GNK.cost;N.st=1;N.p=0;grLog(gnkName(c)+' starts a nuclear programme.',c);return '';}
+// RG10 follow-on: the programme's site is the capital's province. While an enemy army holds it, enrichment/test work stalls
+// (the work is seized or buried; no progress that month). Logged once when the occupation starts and once when it ends.
+function gnkOccupied(c,N){const A=GC.nat[c],cap=A&&A.cap;const occ=cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c));
+  if(occ&&!N.occ){N.occ=1;grLog(gnkName(c)+': the programme site is under occupation. Work has stopped.',c);}
+  else if(!occ&&N.occ){N.occ=0;grLog(gnkName(c)+': the programme site is back under national control.',c);}
+  return !!occ;}
 // one month: programme stages, tests, warhead growth, upkeep, fallout, AI decisions
 function gnkMonth(){if(!GC||!GC.nat)return;if(GC.nuk&&GC.nuk.pend&&GC.nuk.pend.length){const due=GC.nuk.pend.filter(x=>x[2]<=GC.turn);GC.nuk.pend=GC.nuk.pend.filter(x=>x[2]>GC.turn);for(const x of due)gnkImpact(x[0],x[1],x[3]);}
   const alive=Object.keys(GC.nat).filter(c=>!GC.nat[c].dead).sort();
   const R=grRng((GC.seed|0)*311+GC.turn*17);
   for(const c of alive){const N=gnkN(c),A=GC.nat[c];
-    if(N.st>=1&&N.st<=2){N.p++;if(N.p>=GNK.months[N.st]){N.st++;N.p=0;if(N.st===3){N.w++;grLog('Nuclear test: '+gnkName(c)+' has tested a device.','');
+    if(N.st>=1&&N.st<=2){if(!gnkOccupied(c,N))N.p++;if(N.p>=GNK.months[N.st]){N.st++;N.p=0;if(N.st===3){N.w++;grLog('Nuclear test: '+gnkName(c)+' has tested a device.','');
         for(const o of alive)if(o!==c)gdRel(o,c,-12);}}}
     else if(N.st===3){N.p++;if(N.p%12===0&&N.w<GNK.cap){N.w++;}}
     if(N.w>0)A.cash-=Math.min(Math.max(0,A.cash),N.w*GNK.upkeep);   /* upkeep never pushes the treasury below zero (it drains what is there) */

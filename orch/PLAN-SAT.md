@@ -197,7 +197,7 @@ Grand campaign round 2 (Abdullah 22:20 "Any more options for the grand campaign"
 - [x] **RG17 Holy sites** (laneG first cut `src/13w-gholy.js`, orch/hstest.mjs: 5 shrine provinces, +2%/+2% war support rows, capture angers the world; hooked in 13-grand capture line; pilgrimage/UN reactions open) (Lane G): Mecca, Medina, Najaf, Karbala, Jerusalem, Qom… morale/opinion bonus; taking one angers the world. Respectful, equal for all faiths.
 - [ ] **RG18 Volunteers** (Lane G): foreign volunteers join wars that matter to them (e.g. holy-site defence).
 - [ ] **RG19 Mercenaries/PMCs** (Lane B): hire fictional private military companies for cash (no real company names).
-- [ ] **RG20 Ceasefires & truces** (Lane G): temporary ceasefires that can break; UN peacekeepers on the line (extend GC.tr truces).
+- [~] **RG20 Ceasefires & truces** (Lane G; first cut DONE laneG `src/13zy-gceasefire.js`: truces can break on shooting incidents, guarantees halve the odds; UN peacekeeper action open): temporary ceasefires that can break; UN peacekeepers on the line (extend GC.tr truces).
 - [ ] **RG21 Seasons & weather** (Lane A): summer heat, winter mud, sandstorms slow armies; carry into the battle's weather.
 - [ ] **RG22 Ironman mode** (Lane A): one save, no reloads, set at campaign creation.
 - [ ] **RG23 Victory conditions** (Lane A): domination, economy, alliance leadership, holy sites — picked at creation.
@@ -206,8 +206,8 @@ Grand campaign round 3 (Abdullah 22:21 "More?") — after the slice, then kaizen
 - [ ] **RG25 Reconstruction** (Lane B): rebuild ruined cities after battles (battle damage flows back), foreign aid speeds it.
 - [ ] **RG26 Black markets** (Lane B): smuggling routes for sanctioned nations; costs corruption + opinion.
 - [ ] **RG27 Food & water** (Lane B): droughts, dams on Tigris/Euphrates/Nile, famine unrest.
-- [ ] **RG28 Cabinet ministers** (Lane G): hire/fire ministers (skills, loyalty), scandals, coups; uses the portraits + names work.
-- [ ] **RG29 Factions at home** (Lane G): hardliners, reformers, military, clergy pull on decisions (extend B4 estates — same system).
+- [~] **RG28 Cabinet ministers** (Lane G; contracts-scandal row DONE in 13p-gevents; hire/fire open): hire/fire ministers (skills, loyalty), scandals, coups; uses the portraits + names work.
+- [~] **RG29 Factions at home** (Lane G; hardliner/reformer row DONE in 13p-gevents; cabinet pull open): hardliners, reformers, military, clergy pull on decisions (extend B4 estates — same system).
 - [ ] **RG30 Leader succession** (Lane G): leaders age, die, get overthrown; successors change the nation (incl. the shared Ayatollah).
 - [ ] **RG31 Secret treaties** (Lane G): hidden pacts revealed when war breaks out (a hidden flag on GC.alz entries).
 - [ ] **RG32 Air campaigns** (Lane A): bombing/air-superiority over provinces before ground war (uses air sorties from airfields).
@@ -218,10 +218,10 @@ Grand campaign round 3 (Abdullah 22:21 "More?") — after the slice, then kaizen
 - [ ] **RG37 Shared victory** (Lane A): allied players win together as a bloc.
 - [ ] **RG38 Spectator mode** (Lane A): watch any live battle or the grand map without playing.
 Grand campaign round 4 (Abdullah 22:22 "More?") — after the slice, then kaizen; extend existing systems:
-- [ ] **RG39 Media & propaganda** (Lane G): state TV, censorship, info-war → war support at home/abroad (merge with B5c propaganda pick + RG5 news).
-- [ ] **RG40 Protests & strikes** (Lane G): protests, general strikes, crackdowns (opinion cost); same unrest system.
-- [ ] **RG41 Diaspora** (Lane G): emigrant communities send money, lobby foreign governments (opinion GMOD rows).
-- [ ] **RG42 Minorities** (Lane G): Kurds, Druze, Baloch, etc. with loyalty to win/lose (extend cores/culture, neutral wording).
+- [x] **RG39 Media & propaganda** (DONE first cut laneG: state-TV campaign and phone-footage rows in 13p-gevents): state TV, censorship, info-war → war support at home/abroad (merge with B5c propaganda pick + RG5 news).
+- [x] **RG40 Protests & strikes** (DONE first cut laneG: protest, general strike, arrests rows in 13p-gevents on the unrest condition): protests, general strikes, crackdowns (opinion cost); same unrest system.
+- [x] **RG41 Diaspora** (DONE first cut laneG: remittances and lobby rows in 13p-gevents): emigrant communities send money, lobby foreign governments (opinion GMOD rows).
+- [~] **RG42 Minorities** (Lane G; autonomy row DONE in 13p-gevents; loyalty system open): Kurds, Druze, Baloch, etc. with loyalty to win/lose (extend cores/culture, neutral wording).
 - [x] **RG43 Border incidents** (DONE with RG7: bi_esc/bi_clash chain) (Lane G): skirmishes that escalate or calm (part of RG7 crises).
 - [x] **RG44 Demilitarised zones** (DONE first cut laneG: peace-screen zone on a loser border province, 24 months, blocks grPath + move phase for everyone incl. AI; one-line hooks in 13-grand.js pass/move; open: violation incident, DMZ on the map): from peace deals (RG16), no army may enter.
 - [ ] **RG45 Occupation zones** (Lane G): split a defeated enemy between victors.

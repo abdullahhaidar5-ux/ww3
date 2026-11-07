@@ -22914,7 +22914,7 @@ function glgDeclare(a,b){GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;if(GLG_D>0)
     if(GC.vas){const side=(x,y)=>{for(const v of GC.vas){const j=v[0]===x?v[1]:v[1]===x?v[0]:null;if(j&&j!==y&&GC.nat[j]&&!GC.nat[j].dead&&!grAtWar(j,y)&&!grVasPair(j,y)){GC.war[grWk(j,y)]=1;GC.wsT[grWk(j,y)]=GC.turn;grLog(gdNatName(j)+' joins the war against '+gdNatName(y)+(v[0]===x?' as a vassal of ':' as overlord of ')+gdNatName(x)+'.',j);}}};side(a,b);side(b,a);}   // vassals (13i GR_VASSALS)
   }finally{GLG_D--;}}
 function glgTurn(){if(!GC||!GC.nat)return;
-  try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}try{gpTurn();}catch(e){console.error('gpTurn',e);}
+  try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}try{gpTurn();}catch(e){console.error('gpTurn',e);}try{gcfTurn();}catch(e){console.error('gcfTurn',e);}
   GC.off=GC.off||[];
   for(const k of Object.keys(GC.war).sort()){const [a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead){delete GC.war[k];continue;}
     const len=glgWarLen(a,b);if(len<8)continue;const [x,y]=glgScore(a,b);const loser=x>y?b:y>x?a:null;if(!loser&&len<14)continue;const lo=loser||a,wi=loser?(loser===a?b:a):b;
@@ -22956,11 +22956,22 @@ const GEV_ROWS=[
  {id:'g_cyber',g:1,t:'WORLD: cyber attack on banks',x:'Hackers have disrupted banking networks in many countries.',w:0,c:'always',o:[{t:'Restore from backups ($300)',fx:[['cash',-300]]},{t:'Freeze accounts and wait',fx:[['un',4],['cash',-100]]}]},
  {id:'g_boom',g:1,t:'WORLD: trade boom',x:'Global demand is up and merchants are busy everywhere.',w:0,c:'always',o:[{t:'Tax the windfall',fx:[['cash',500],['un',3]]},{t:'Let merchants keep it',fx:[['cash',200],['un',-3]]}]},
  {id:'g_summit',g:1,t:'WORLD: peace summit',x:'Leaders gather to calm tensions; every nation is pressed to act.',w:0,c:'always',o:[{t:'Attend and make concessions',fx:[['rel','$nb',10],['un',-3]]},{t:'Send a low-level delegation',fx:[['mod','warSupport',.03,6]]}]},
- {id:'techgift',t:'A university breakthrough',x:'Engineers have found a way to cut costs in the arms factories.',w:2,c:'always',o:[{t:'Fund the lab ($300)',fx:[['cash',-300],['mod','fireSupport',.08,12]]},{t:'Patent and sell it',fx:[['cash',350]]}]}];
+ {id:'techgift',t:'A university breakthrough',x:'Engineers have found a way to cut costs in the arms factories.',w:2,c:'always',o:[{t:'Fund the lab ($300)',fx:[['cash',-300],['mod','fireSupport',.08,12]]},{t:'Patent and sell it',fx:[['cash',350]]}]},
+ /* RG40 protests & strikes, RG39 media, RG41 diaspora, RG42 minorities, RG29 factions, RG28 ministers — same unrest/opinion/GMOD vocabulary */
+ {id:'protest',t:'Mass protests in the cities',x:'Thousands are marching over prices and jobs, and the chants are getting sharper.',w:4,c:'unrest',o:[{t:'Allow the march and open talks ($300)',fx:[['cash',-300],['un',-6]]},{t:'Disperse the crowds',fx:[['un',9],['mod','warSupport',-.03,6]]}]},
+ {id:'genstrike',t:'A general strike',x:'Unions have called a national stoppage. Trains, ports and offices are shut.',w:2,c:'unrest',o:[{t:'Concede on wages ($500)',fx:[['cash',-500],['un',-8]]},{t:'Hold firm and wait it out',fx:[['cash',-200],['un',6]]}]},
+ {id:'crackdown',t:'Arrests of activists',x:'Organisers have been detained. Rights groups abroad condemn the sweep.',w:2,c:'unrest',o:[{t:'Keep the order',fx:[['un',-5],['rel','$nb',-4]]},{t:'Release them and open a review',fx:[['un',4],['mod','warSupport',-.02,4]]}]},
+ {id:'minority',t:'A minority region asks for a voice',x:'Community leaders in a border region want local councils with real budgets.',w:2,c:'unrest',o:[{t:'Grant local councils ($300)',fx:[['cash',-300],['un',-7]]},{t:'Refuse and keep power in the capital',fx:[['un',6],['rel','$nb',-3]]}]},
+ {id:'remit',t:'Money sent home from abroad',x:'Citizens living overseas are sending record transfers to their families.',w:3,c:'always',o:[{t:'Welcome the transfers tax-free',fx:[['cash',300],['un',-2]]},{t:'Tax the remittances',fx:[['cash',450],['un',3]]}]},
+ {id:'diaslobby',t:'Diaspora lobby abroad',x:'Expatriate groups want a grant to press a foreign parliament for support.',w:2,c:'nb',o:[{t:'Fund the lobby ($250)',fx:[['cash',-250],['rel','$nb',8]]},{t:'Stay out of it',fx:[]}]},
+ {id:'statetv',t:'State TV wants a campaign',x:'Editors are asking whether to run a patriotic campaign or report the news straight.',w:3,c:'war',o:[{t:'Run the patriotic campaign ($200)',fx:[['cash',-200],['mod','warSupport',.05,6]]},{t:'Report the news straight',fx:[['un',-2],['mod','warSupport',.01,4]]}]},
+ {id:'leak',t:'Phone footage from the front',x:'Video of a bad incident is spreading online. The press office needs a line.',w:2,c:'war',o:[{t:'Deny it and jam the feeds',fx:[['un',3],['rel','$foe',-3]]},{t:'Open an inquiry and say so',fx:[['un',-3],['mod','warSupport',-.03,5]]}]},
+ {id:'hardliners',t:'Hardliners and reformers clash',x:'Party hardliners and reformers are at odds over the next step at home.',w:3,c:'always',o:[{t:'Side with the hardliners',fx:[['mod','warSupport',.03,6],['un',3]]},{t:'Back the reformers ($200)',fx:[['cash',-200],['un',-3]]}]},
+ {id:'scandal',t:'Minister in a contracts scandal',x:'A senior minister is accused of taking kickbacks on defence contracts.',w:2,c:'always',o:[{t:'Dismiss the minister and open an inquiry',fx:[['un',-3],['cash',150]]},{t:'Protect the minister',fx:[['un',5]]}]}];
 function gdNatName(c){const n=GCM.nats.get(c);return n?n.name:c;}
 function gevCond(c,code){const nat=GC.nat[code];const foes=gdEnemies(code);
   const nb=gevNb(code);
-  switch(c){case 'always':return true;case 'peace':return !foes.length;case 'war':return foes.length>0;case 'foe':return foes.length>0;case 'poor':return nat.cash<600;case 'rich':return nat.cash>2500;
+  switch(c){case 'always':return true;case 'unrest':return gcrUn(code)>=30;case 'peace':return !foes.length;case 'war':return foes.length>0;case 'foe':return foes.length>0;case 'poor':return nat.cash<600;case 'rich':return nat.cash>2500;
    case 'nb':return !!nb.length;case 'nbwar':return nb.some(o=>gdEnemies(o).length>0);}return typeof gcrCond==='function'?gcrCond(c,code):true;}
 function gevNb(code){const s=new Set();for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===code)for(const j of p.adj){const q=GCM.P[j];if(q&&q.land&&GC.prov[j].o!==code&&!GC.nat[GC.prov[j].o].dead)s.add(GC.prov[j].o);}return Array.from(s).sort();}
 function gevS(){if(!GC.ev)GC.ev={last:{},sch:[],pend:[],hist:[]};return GC.ev;}
@@ -24305,6 +24316,19 @@ function gtvShow(){if(!GC||!GC.me||GTV_LAST===GC.turn)return;const b=gtvPick();i
   d.onclick=()=>d.remove();
   requestAnimationFrame(()=>{d.style.opacity='1';d.style.transform='translateY(0)';});
   setTimeout(()=>{if(!d.isConnected)return;d.style.opacity='0';d.style.transform='translateY(20px)';setTimeout(()=>d.remove(),450);},9000);}
+// CEASEFIRES THAT CAN BREAK (lane G, RG20, first cut). Every truce in force (GC.tr, from peace deals and the UN) can be violated:
+// each month a seeded roll per truce (4%; 2% when a third nation guarantees one side, GC.gu) brings a shooting incident:
+// opinion -5, and one incident in three collapses the truce back into war. Neutral wording; no real places or people.
+// Deterministic from seed + turn (multiplayer safe). UN peacekeepers / guarantees are the counter-play (they halve the odds).
+function gcfTurn(){if(!GC||!GC.tr||!GC.nat)return;const R=grRng((GC.seed|0)*449+GC.turn*7);
+  for(const k of Object.keys(GC.tr).sort()){if(!(GC.tr[k]>GC.turn))continue;const [a,b]=k.split('|');
+    if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead)continue;
+    const r=R(),r2=R();const guar=(GC.gu||[]).some(g=>(g[1]===a||g[1]===b)&&g[0]!==a&&g[0]!==b);
+    if(r>(guar?.02:.04))continue;
+    gdRel(a,b,-5);
+    if(r2<.33){delete GC.tr[k];GC.war[k]=1;GC.wsT=GC.wsT||{};GC.wsT[k]=GC.turn;
+      grLog('The ceasefire between '+gdNatName(a)+' and '+gdNatName(b)+' has collapsed after a shooting incident on the line.',a);}
+    else grLog('Ceasefire violation between '+gdNatName(a)+' and '+gdNatName(b)+'. Both sides blame each other.',a);}}
 // 13zz-gnuke.js — Lane G RG10 (first cut): NUCLEAR PROGRAMMES and the grand-map nuclear strike. Grand map only, never in battles.
 // Nuclear powers start with a few warheads (GNK.start). Anyone else (and Iran, part-way) can start a programme: enrichment → test-ready →
 // a test (world opinion drops, the first warhead appears) → one more warhead a year (max GNK.cap). Warheads cost upkeep every month.
@@ -24320,12 +24344,18 @@ function gnkN(c){if(!GC.nuk)GC.nuk={n:{},fo:{},pend:[]};const S=GC.nuk;if(!S.n[c
 function gnkName(c){return typeof gdNatName==='function'?gdNatName(c):c;}
 function gnkStart(c){const N=gnkN(c),A=GC.nat[c];if(N.st!==0)return 'The programme is already running.';if(A.cash<GNK.cost)return 'Costs $'+GNK.cost+'.';
   A.cash-=GNK.cost;N.st=1;N.p=0;grLog(gnkName(c)+' starts a nuclear programme.',c);return '';}
+// RG10 follow-on: the programme's site is the capital's province. While an enemy army holds it, enrichment/test work stalls
+// (the work is seized or buried; no progress that month). Logged once when the occupation starts and once when it ends.
+function gnkOccupied(c,N){const A=GC.nat[c],cap=A&&A.cap;const occ=cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c));
+  if(occ&&!N.occ){N.occ=1;grLog(gnkName(c)+': the programme site is under occupation. Work has stopped.',c);}
+  else if(!occ&&N.occ){N.occ=0;grLog(gnkName(c)+': the programme site is back under national control.',c);}
+  return !!occ;}
 // one month: programme stages, tests, warhead growth, upkeep, fallout, AI decisions
 function gnkMonth(){if(!GC||!GC.nat)return;if(GC.nuk&&GC.nuk.pend&&GC.nuk.pend.length){const due=GC.nuk.pend.filter(x=>x[2]<=GC.turn);GC.nuk.pend=GC.nuk.pend.filter(x=>x[2]>GC.turn);for(const x of due)gnkImpact(x[0],x[1],x[3]);}
   const alive=Object.keys(GC.nat).filter(c=>!GC.nat[c].dead).sort();
   const R=grRng((GC.seed|0)*311+GC.turn*17);
   for(const c of alive){const N=gnkN(c),A=GC.nat[c];
-    if(N.st>=1&&N.st<=2){N.p++;if(N.p>=GNK.months[N.st]){N.st++;N.p=0;if(N.st===3){N.w++;grLog('Nuclear test: '+gnkName(c)+' has tested a device.','');
+    if(N.st>=1&&N.st<=2){if(!gnkOccupied(c,N))N.p++;if(N.p>=GNK.months[N.st]){N.st++;N.p=0;if(N.st===3){N.w++;grLog('Nuclear test: '+gnkName(c)+' has tested a device.','');
         for(const o of alive)if(o!==c)gdRel(o,c,-12);}}}
     else if(N.st===3){N.p++;if(N.p%12===0&&N.w<GNK.cap){N.w++;}}
     if(N.w>0)A.cash-=Math.min(Math.max(0,A.cash),N.w*GNK.upkeep);   /* upkeep never pushes the treasury below zero (it drains what is there) */
