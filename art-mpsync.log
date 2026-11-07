@@ -1,0 +1,24 @@
+artifact page written: orch/out/artifact/index.html (4858995 bytes, game 4014860 chars), 110 audio files + 82 model files (14.7 MB); publish arguments in orch/out/artifact/publish.json
+[6s] both pages loaded (menu model downloads done after 2s / 2s)
+[6s] host lobby open, code km3fs8
+[6s] client joining
+[31s] battle: US vs RU on strait; client is slot 1
+[184s] both pages finished loading
+[184s] conditions: host picked Overcast (menu button); host shows Overcast, client shows Overcast
+[185s] client owns hq,harv,dozer,inf,inf; ordering 2 units to attack-move on the host base
+[187s] client order: 2/2 of the client's units moved on the host
+[189s] check @1.0 min t=60s: host 42 entities, client side sees 7 (own 7); client has 7 (own 7); missing 0, extra 0, off-position 0, mismatched 0; credits host 9721 client 9721
+[191s] check @2.5 min t=150s: host 46 entities, client side sees 11 (own 10); client has 11 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10984 client 10984
+[210s] check @4.0 min t=240s: host 49 entities, client side sees 10 (own 10); client has 10 (own 10); missing 0, extra 0, off-position 0, mismatched 0; credits host 10840 client 10840
+[221s] traffic host->client 1848 KB in 3447 messages, client->host 0 KB in 1; client lag max 0.10 game-s; 15 ms per 0.5 s step
+[221s] 24 live checks, 0 out of tolerance; up to 1 enemy entities were in the client's view at once
+[221s] host room sends: 3449 messages, peak 35 in one game-second
+[221s] client room sends: 1 messages, peak 0 in one game-second
+peak memory (node + browser, summed RSS): 3987 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: client console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+  warn: host console (ignored, offline/headless): Failed to load resource: the server responded with a status of 404 (Not Found)
+
+MPSYNC FAIL: host console error: THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The "position" attribute is likely to have NaN values. r (221s)
+  ✗ client console error: THREE.BufferGeometry.computeBoundingSphere(): Computed radius is NaN. The "position" attribute is likely to have NaN values. r
