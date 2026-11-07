@@ -1575,3 +1575,8 @@ if(typeof window!=='undefined'){window.__tk=TK;}
 try{tkApply();}catch(e){}
 {const hd=[...document.querySelectorAll('#settings h2.sethd')].find(h=>/mouse/i.test(h.textContent));if(hd&&!$('sTk')){const lb=document.createElement('div');lb.className='label';lb.textContent='War news (headlines across the top + a small breaking-news picture-in-picture)';
   const sg=document.createElement('div');sg.className='seg';sg.id='sTk';for(const [v,t] of [['1','On'],['0','Off']]){const b=document.createElement('button');b.dataset.v=v;b.textContent=t;sg.append(b);}hd.before(lb,sg);}}
+
+/* ---------- first-time-player hints (Lane D2): hover text for menu buttons that had none (orch/newplayer.mjs lists them) ---------- */
+(function(){const TIPS={'conquest — deploy vs ai':'Play one battle against computer opponents: you get a full base and money, destroy the enemy base to win.','▶ watch a replay file':'Open a saved replay file (.json) from an earlier battle and watch it again.','🗺 map editor':'Draw your own battle map: terrain, resources and start positions.','join by code':'Type the invite code a friend sent you to join their online battle.','build':'Sidebar tab: buildings you can place in your base.','units':'Sidebar tab: soldiers and vehicles you can train.','powers':'Sidebar tab: special powers such as strikes and support, with cooldowns.','launch':'Fire the selected special power at the spot you click on the map.','medals':'Your achievements: medals earned in battles.'};
+function fix(){try{for(const b of document.querySelectorAll('button')){if(b.title)continue;const t=TIPS[(b.textContent||'').trim().toLowerCase()];if(t)b.title=t;}}catch(e){}}
+setInterval(fix,2500);setTimeout(fix,500);})();
