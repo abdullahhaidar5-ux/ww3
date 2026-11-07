@@ -15766,6 +15766,13 @@ const WHATS_NEW=[
 function whatsNewPage(){const o=idOv('idNew',"What's new"),b=o.querySelector('.idbody');b.innerHTML='';for(const [h,t] of WHATS_NEW){const d=document.createElement('div');d.style.cssText='margin:10px 0;text-align:left';const a=document.createElement('div');a.style.cssText='font:700 17px system-ui,sans-serif;color:#f4e9c2';a.textContent=h;const p=document.createElement('div');p.style.cssText='font:500 15px/1.4 system-ui,sans-serif;color:#dfe5da';p.textContent=t;d.append(a,p);b.appendChild(d);}o.hidden=false;}
 (function(){const op=document.getElementById('openSettings');if(op&&op.parentNode){const b=document.createElement('button');b.className='big ghost';b.style.cssText='font-size:15px;padding:7px 16px';b.textContent="What's new";b.onclick=whatsNewPage;op.parentNode.appendChild(b);}
 })();
+/* Battle HUD never shows over the menus (Abdullah 2026-11-06 19:52 photo: "Why do these buttons remain" — the top bar, alerts feed,
+   Supply lines button, Conquest banner and town panel stayed on screen after leaving a battle). One rule: while the main menu is open,
+   body gets .inMenu and every battle-only overlay is hidden; nothing else changes. */
+function hudMenuWatch(){const m=document.getElementById('menu');if(!m||hudMenuWatch.on)return;hudMenuWatch.on=1;
+  const st=document.createElement('style');st.textContent='body.inMenu #hudBar,body.inMenu #hudFeed,body.inMenu #lgBtn,body.inMenu #cqBn,body.inMenu #townp{display:none!important}';document.head.appendChild(st);
+  const sync=()=>document.body.classList.toggle('inMenu',!m.hidden);sync();new MutationObserver(sync).observe(m,{attributes:true,attributeFilter:['hidden']});}
+if(typeof document!=='undefined'){if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',hudMenuWatch);else hudMenuWatch();}
 // "Report a problem" — one click opens a pre-filled GitHub issue (label `player`). No personal data: only version, mode, nation, map, last console errors.
 (function(){
 const ERR=[];

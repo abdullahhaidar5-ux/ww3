@@ -50,7 +50,7 @@ item ships. Everything else after your list. **Target: ALL of it shipped by Sat 
 | **B — Grand systems (EU4 mechanics)** | Sonnet | `src/13g-grandeco.js`, `13h-grandecoui.js`, new `13i+` grand system files, nation panel | `trig_013LUzLCpqMyGsfK9ojXXmY8` (hourly :11 + self-fire) |
 | **C — Look ($75)** | Sonnet | `src/13d-grandterrain.js`, `13e-grand3d.js`, CSS/skin of every panel, `orch/ART-BAR.md` (battle rendering moved to Lane E) | `trig_0196kYnG3DBmhFHiNbNqisD6` (ex art loop; hourly :07 + self-fire) |
 | **D — Content & QA** | Sonnet | `01-data` rosters, `11z-nations*`, `vo/`, `mus/`, balance numbers, wording/tooltips/tutorial, saves, `orch/newplayer.mjs` | `trig_01QkuM1b8miRMAF9NcwxC8bB` (hourly :47 + self-fire) |
-| **E — Battle look (TOP PRIORITY, Abdullah 19:30 "Battle looks terrible")** | Sonnet | battle rendering: `src/04-gfx.js`, `05-fx3d.js`, `10-post.js`, `11-models.js`, `models/` (Lane C keeps the grand map 13d/13e + UI skin) | `trig_LANE_E` (hourly :17 + self-fire) |
+| **E — Battle look (TOP PRIORITY, Abdullah 19:30 "Battle looks terrible")** | Sonnet | battle rendering: `src/04-gfx.js`, `05-fx3d.js`, `10-post.js`, `11-models.js`, `models/` (Lane C keeps the grand map 13d/13e + UI skin) | `trig_01X46fRzVkWLJH7JGNAXtDGx` (hourly :17 + self-fire) |
 
 ## Lane A — Grand engine & feel (priority order)
 - [ ] **A1 FIX: the live battle never loads** (Abdullah 18:00). Reproduce exactly as a player: menu → Grand campaign → march into an enemy → Fight it live, in a real (non-test-hook) browser path with models loading; find why it hangs (loader, mirror map generation, missing data for new nations, exception); fix; add that exact path to the gate so it can't regress.
