@@ -118,7 +118,7 @@ setInterval(()=>{try{grandHud();}catch(e){}},1000);
 /* ---- A3b army morale (laneF): ONE bar per army, styles from MSTYLES (01-data); a.mor 0..100 saved with the army ---- */
 const GMOR_MAX={zeal:100,prof:100,home:90,fire:80};   /* base ceilings; home defenders get +10 on core land, see gmMorMax */
 function gmMorStyle(a){return MORALE_STYLE[(typeof grNat==='function'?grNat(a.o).fac:a.o)]||'home';}
-function gmMorMax(a){const s=gmMorStyle(a);let m=GMOR_MAX[s]||90;if(s==='home'&&GC&&GC.prov[a.at]&&GC.prov[a.at].o===a.o)m=100;try{m=Math.max(m,Math.min(100,m+gfTradMor(a.o)));}catch(e){}return m;}
+function gmMorMax(a){const s=gmMorStyle(a);let m=GMOR_MAX[s]||90;if(s==='home'&&GC&&GC.prov[a.at]&&GC.prov[a.at].o===a.o)m=100;try{m=Math.max(m,Math.min(100,m+gfTradMor(a.o)));}catch(e){}try{m=Math.min(100,m+glMor(a.o));}catch(e){}return m;}
 function gmMor(a){return a.mor==null?gmMorMax(a):Math.max(0,Math.min(gmMorMax(a),a.mor));}
 function gmMorMul(a){return .8+.2*gmMor(a)/100;}   /* auto-resolve strength: broken armies fight at 80% */
 function gmMorBattle(losers,winners){for(const a of losers){const s=gmMorStyle(a);let d=30;if(s==='zeal')d=15;else if(s==='prof')d=24;else if(s==='fire')d=40;
