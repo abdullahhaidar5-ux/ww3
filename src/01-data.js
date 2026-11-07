@@ -147,7 +147,7 @@ const MSTYLES={   // rout = campaign battles: the side breaks below this share o
  home:{n:'Home defenders',rout:.2,routHome:.08,cour:1,loss:1,home:1.4,desc:'Much braver on home turf and near their own towns; ordinary soldiers abroad.'},
  fire:{n:'Firepower-reliant',rout:.25,cour:.85,loss:1.15,lone:1.5,sup:1.1,taken:.95,desc:'Lowest morale: they break sooner, especially with no armour, artillery or air support nearby. Balanced by stronger fire support and sturdier modern gear.'}};
 const MORALE_STYLE={};
-for(const[st,l]of Object.entries({zeal:'IR RS DW KP RV',prof:'US RU GB FR DE JP KR AU CA IT GR PL TR CN PK ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA IN UA CU EG',fire:'AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
+for(const[st,l]of Object.entries({zeal:'IR RS DW KP RV OB BI',prof:'US RU GB FR DE JP KR AU CA IT GR PL TR CN PK ES SE CL EU',home:'JO OM ZA TH ET LY SD KZ TW KD VN BR NG ID SY IQ VE AF AZ PH MX CO AR DZ MA IN UA CU EG',fire:'AE SA IL'}))for(const k of l.split(' '))MORALE_STYLE[k]=st;
 function msOf(fac){return MSTYLES[MORALE_STYLE[fac]||'home'];}
 function courageOf(u){const T=G.teams[u.team],ms=msOf(T.fac);let c=ms.cour*(1+.12*(u.rank||0))*upgK(T,u.kind,'courage');if(ms.home&&u.hm)c*=ms.home;if(ms.lone&&u.nsup)c/=ms.lone;return c;}
 function F_(code,name,color,lang,music,doctrine,mods,special,units,sup,fup,o={}){return Object.assign({code,name,color,lang,music,doctrine,mods,special,units,sup,fup},o);}
@@ -374,7 +374,7 @@ Object.assign(NEWNAT,{
   gp:{bounty:{name:'Phosphate Exports'},recon:{name:'Border Watch',rm:.95},para:{name:'Royal Rapid Deployment'},barrage:{name:'Howitzer Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Workshops',pm:1.2,rm:.9,cdm:1.05}},
   upg:['Special Forces Course','Desert Camo Kit','Tank Crew Training','Howitzer Fire Control','F-16 Integration','Cobra Maintenance','Dead Sea Revenue','Defence of the Kingdom','Aqaba Patrol Refit'],
   uplink:'Rocket Command (Aqaba)',econ:'Aqaba Port Authority',sub:'Coastal Midget Submarine',md:'Hawk Battery',coast:'Coastal Battery',trn:['Landing Craft','UH-60 Black Hawk']},
- KD:{base:'EG',name:'Kurdistan Region',color:'#e0a000',lang:'ku-KU',doctrine:'Regional Peshmerga forces, mountain fighters: infantry cost 15% less and train 10% faster, and troops ambush hard from cover in their own mountains and towns.',mods:{infCost:.85,infTime:.9},
+ KD:{base:'EG',name:'Kurdistan Region',color:'#e0a000',lang:'ku-KU',doctrine:'Regional Peshmerga forces, mountain fighters: infantry cost 15% less and train 10% faster, and troops ambush hard from cover in their own mountains and towns.',mods:{infCost:.85,infTime:.9,vehHp:.92},
   units:{inf:'Peshmerga Squad',at:'Milan Team',hero:'Special Peshmerga Commandos',aa:'Technical AA Gun',tank:'T-72 Tank',arty:'Mortar Battery',heli:'Mi-17 Gunship',jet:'Light Strike Aircraft',boat:'River Patrol Boat',ship:'Lake Patrol Ship'},
   sup:{name:'Mountain Mortar Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
   special:['recon',{name:'Mountain Scout Troop'}],hero:['Zerevani Special Forces','demo'],
@@ -572,6 +572,27 @@ Object.assign(NEWNAT,{
   gp:{bounty:{name:'Southern Oil Share'},recon:{name:'Marsh Watchers',rm:.95},para:{name:'Heliborne Volunteers'},barrage:{name:'Grad Barrage',nm:1.1,cdm:1.05},repair:{name:'Brigade Workshops',pm:1.2,rm:.9,cdm:1.05}},
   upg:['Shrine Guard Course','Volunteer Kit','T-72 Crew Training','Grad Fire Control','Frogfoot Overhaul','Hind Maintenance','Southern Oil Revenue','Defence of the Shrines','Marsh Boat Refit'],
   uplink:'Rocket Command (Marsh Depot)',econ:'Basra Oil Share Office',md:'Pantsir-style Battery',coast:'Shatt Coastal Battery',trn:['Marsh Landing Craft','Mi-8 Transport']}});
+// ---- nation-obbd (Abdullah 2026-11-06 21:26/21:29): OB "Olive Brigades" (fictional Gaza urban-resistance faction) and BI "Black Desert Insurgency" (fictional desert insurgent movement; code BI because BD = Bangladesh).
+// Inspired-by only: never a real group's name, flag, emblem, slogan or leader. Military-vs-military: no terror, hostage, suicide-attack or civilian-target mechanics. Both ZEALOUS (never rout). Egypt base = equal power per tier.
+Object.assign(NEWNAT,{
+ OB:{base:'EG',name:'Olive Brigades',color:'#3c6b3a',lang:'ar-PS',doctrine:'Olive Brigades, the dense-city defenders of Gaza: light, cheap infantry (cost 15% less) fight from hidden firing posts and rubble ambush positions, hitting 20% harder from cover and 15% harder near their own buildings. Zealous: they never rout, but they pay in heavy losses and thin armour.',mods:{infCost:.85,infTime:.9,vehHp:.92},
+  units:{inf:'Brigade Fighter Squad',at:'RPG Ambush Team',hero:'Rubble Marksman Team',aa:'Improvised AA Truck',tank:'Armoured Bulldozer Carrier',arty:'Improvised Rocket Battery',heli:'Strike Drone Flight',jet:'Long-Range Rocket Salvo',boat:'Coastal Fishing Skiff',ship:'Coastal Patrol Launch'},
+  sup:{name:'Rocket Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['recon',{name:'Rooftop Observers'}],hero:['Rubble Marksman Team','demo'],
+  doct:{name:'Urban Labyrinth',ambush:1,homeland:1},
+  pow:{name:'Rubble Cover',type:'shield',cd:200,r:280,desc:'Your forces in the area take 60% less damage for 20s'},
+  gp:{bounty:{name:'Salvaged Supplies'},recon:{name:'Rooftop Watchers',rm:.95},para:{name:'Alley Reinforcements'},barrage:{name:'Mortar Barrage',nm:1.1,cdm:1.05},repair:{name:'Field Aid Posts',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Marksman Course','Light Fighter Kit','Rubble Fighting Drills','Mortar Fire Control','Rocket Workshops','Drone Workshop','Remittance Fund','Defence of the City','Skiff Patrol Refit'],
+  uplink:'Rocket Workshop (Coastal Strip)',econ:'Aid & Remittance Board',md:'Rocket Battery',coast:'Coastal Lookout Post',trn:['Fishing Boat','Pickup Convoy']},
+ BI:{base:'EG',name:'Black Desert Insurgency',color:'#3b3b3f',lang:'ar-SY',doctrine:'Black Desert Insurgency, a raiding movement of the Syria-Iraq desert: captured technicals and light infantry (cost 12% less), raiders sprint 25% faster after firing and hit 20% harder from cover. Zealous: they never rout, but they pay in heavy losses and thin armour. Nobody makes treaties with them.',mods:{infCost:.88,vehHp:.95},
+  units:{inf:'Desert Raider Squad',at:'ATGM Raiding Team',hero:'Desert Sniper Team',aa:'ZU-23 Technical',tank:'Captured T-55 Group',arty:'Truck-Mounted Mortar',heli:'Small Strike Drone',jet:'Captured Rocket Salvo',boat:'River Skiff',ship:'River Patrol Launch'},
+  sup:{name:'Mortar Salvo',charge:150,n:5,dmg:720,r:70,spread:130},
+  special:['saka',{name:'Technical Raiders'}],hero:['Desert Sniper Team','demo'],
+  doct:{name:'Desert Raids',hitrun:1,ambush:1},
+  pow:{name:'Dust Screen',type:'smoke',cd:180,r:260,desc:'Smoke screen to move and withdraw under'},
+  gp:{bounty:{name:'Captured Equipment'},recon:{name:'Desert Scouts',rm:.95},para:{name:'Technical Convoy'},barrage:{name:'Mortar Barrage',nm:1.1,cdm:1.05},repair:{name:'Roadside Workshops',pm:1.2,rm:.9,cdm:1.05}},
+  upg:['Raider Course','Desert Fighter Kit','Captured Armour Crews','Mortar Fire Control','ATGM Stocks','Drone Workshop','Smuggling Routes','Desert Mobility','River Skiff Refit'],
+  uplink:'Rocket Depot (Desert)',econ:'Desert Trade Board',md:'Mortar Park',coast:'River Lookout Post',trn:['River Boat','Technical Convoy']}});
 for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const q in B.units)u[q]=Object.assign({},B.units[q]);for(const q in N.units)u[q]=Object.assign({},u[q]||{},{name:N.units[q]});
   FACTIONS[k]=Object.assign({},B,{code:k,name:N.name,color:N.color,lang:N.lang,doctrine:N.doctrine,mods:N.mods,units:u,sup:N.sup});
   const sp=N.special;FACTIONS[k].special=sp[0];FACTIONS[k].units[sp[0]]=Object.assign({},FACTIONS[k].units[sp[0]]||{},sp[1]);

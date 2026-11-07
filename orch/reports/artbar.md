@@ -39,3 +39,5 @@ Water 3 → 3.5: five crossing sharpened swell trains drive the sea normals (pea
 
 ## 2026-11-07 07:xx UTC — laneC iteration 7 (shots: orch/shots/laneC/it7 before, it8 after)
 Readability 3.5 → 4: the map-mode legend ran behind the army cards and was clipped; it now sits above the minimap, wrapped in a framed box. Army cards are ~14% bigger with larger text. Others unchanged (geography 4, colour 3.5, light 3.5, water 3.5, objects 3.5, life 3.5). Next lowest: objects (blocky army figures, oversized flags at close zoom), colour/light, UI kit C0.
+## 2026-11-07 06:5x UTC — laneC iteration 6 (no code shipped)
+Built a sea-shader upgrade (sky reflection, whitecaps, sparkle); main received an equivalent one (5-train swell, sky reflection, whitecaps) minutes earlier, so mine was dropped to avoid a conflict. Water ≈ 3.5 on main now. Next lowest for Lane C: C0 UI kit / C3 UI skin (readability 3.5), then objects/colour/light 3.5.

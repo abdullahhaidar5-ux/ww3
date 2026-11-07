@@ -22,7 +22,7 @@ const GMIL_NM={   // fictional name pools per culture [first names, family names
  de:[['Lukas','Jonas','Matthias','Anders','Stefan','Henrik','Konrad','Lars','Florian','Emil'],['Brandt','Lindqvist','Falk','Hartmann','Weiss','Sandberg','Keller','Nordin','Vogel','Reiter']],
  af:[['Kofi','Emeka','Sipho','Tesfaye','Chidi','Themba','Abebe','Musa','Jabari','Idris'],['Okafor','Mbeki','Tadesse','Nkosi','Abara','Dlamini','Bekele','Okoye','Mwangi','Adeyemi']],
  he:[['Eitan','Yossi','Amir','Noam','Gil','Oren','Ronen','Tomer','Ilan','Uri'],['Barak','Shalev','Peretz','Dayan','Navon','Harel','Sasson','Golan','Tamir','Avni']]};
-const GMIL_CUL={IR:'fa',SA:'ar',AE:'ar',EG:'ar',IQ:'ar',RV:'ar',SY:'ar',JO:'ar',DZ:'ar',MA:'ar',OM:'ar',LY:'ar',SD:'ar',DW:'ar',RS:'ar',KD:'ar',TR:'tr',AZ:'tr',RU:'ru',UA:'ru',PL:'ru',KZ:'ru',CN:'zh',TW:'zh',KP:'ko',KR:'ko',JP:'ja',VN:'sea',TH:'sea',PH:'sea',ID:'sea',IN:'sa',PK:'sa',AF:'sa',US:'en',GB:'en',AU:'en',CA:'en',ES:'la',IT:'la',FR:'la',BR:'la',MX:'la',AR:'la',CO:'la',CL:'la',VE:'la',CU:'la',DE:'de',SE:'de',GR:'de',NG:'af',ET:'af',ZA:'af',IL:'he'};
+const GMIL_CUL={IR:'fa',SA:'ar',AE:'ar',EG:'ar',IQ:'ar',RV:'ar',SY:'ar',JO:'ar',DZ:'ar',MA:'ar',OM:'ar',OB:'ar',BI:'ar',LY:'ar',SD:'ar',DW:'ar',RS:'ar',KD:'ar',TR:'tr',AZ:'tr',RU:'ru',UA:'ru',PL:'ru',KZ:'ru',CN:'zh',TW:'zh',KP:'ko',KR:'ko',JP:'ja',VN:'sea',TH:'sea',PH:'sea',ID:'sea',IN:'sa',PK:'sa',AF:'sa',US:'en',GB:'en',AU:'en',CA:'en',ES:'la',IT:'la',FR:'la',BR:'la',MX:'la',AR:'la',CO:'la',CL:'la',VE:'la',CU:'la',DE:'de',SE:'de',GR:'de',NG:'af',ET:'af',ZA:'af',IL:'he'};
 const GMIL_REGCUL={ME:'ar',AF:'af',SA:'sa',EA:'zh',SEA:'sea',EU:'de',NA:'en',SAM:'la'};
 const GMIL_FLEET=[['ship',.34],['boat',.26],['fast',.14],['sub',.26]];   // starting fleet mix (by value)
 const GMIL_NAVAL=['ship','boat','fast','sub','minel','sweep'];
@@ -194,7 +194,7 @@ function gmilAIFleets(c,R){const N=GC.nat[c],P=GCM.P,fac=grNat(c).fac;const foes
   for(const a of mine){if(a.path.length)continue;const val=grArmyVal(a);if(a.u.length>1&&mine.some(b=>b!==a&&b.at===a.at&&!b.path.length&&b.id<a.id)){grMerge(a.id);continue;}
     if(!foes.length)continue;let tgt=-1,ts=-1e9;
     const seen=new Set([a.at]);let fr=[a.at];for(let d=0;d<5&&fr.length;d++){const nx=[];for(const u of fr)for(const j of P[u].adj){if(seen.has(j)||!P[j].sea)continue;seen.add(j);nx.push(j);
-        const en=GC.armies.filter(x=>x.at===j&&x.fl&&foes.includes(x.o)&&x.u.length).reduce((s,x)=>s+grArmyVal(x),0);let sc=-d*6;
+        const en=GC.armies.filter(x=>x.at===j&&x.fl&&foes.includes(x.o)&&x.u.length).reduce((s,x)=>s+grArmyVal(x),0);let sc=-d*6+(P[j].ck?16:0);
         if(en>0){if(en*1.15<val)sc+=40+en/400;else continue;}
         for(const k of P[j].adj)if(P[k].land&&foes.includes(GC.prov[k].o)&&gmilHasPort(k))sc+=14+P[k].dev*3;   // blockade a foe's port
         if(sc>ts){ts=sc;tgt=j;}}fr=nx;}
