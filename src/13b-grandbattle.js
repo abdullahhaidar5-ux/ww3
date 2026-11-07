@@ -7,6 +7,7 @@
 // (cost x health) wins, the defender on a tie; the player may also Retreat. Survivors, wounds and experience are written back
 // into the very same records, the dead are removed (grandBattleEnd -> grBattleDone).
 const GB_LIMIT=900;
+const GB_NOROUT=['IR','RS','DW'];   // Shia factions never rout — they fight to the last (Abdullah 2026-11-06 20:11); their cost: no escape, heavier losses
 function grMapFor(p,b){const ok=k=>k&&MAPS[k]&&(MAPS[k].min||2)<=2;if(ok(p.map))return p.map;if(b&&b.river&&ok('rivers'))return 'rivers';if(b&&b.mtn&&ok('khyber'))return 'khyber';
   return {d:'oasis',m:'zagros',f:'heartland',u:'mesopotamia',j:'caribbean',s:'arctic',c:'harbour',r:'rivers'}[p.t]||'oasis';}
 function grFacKind(fac,k){return grHasKind(fac,k)?k:'inf';}
@@ -47,7 +48,7 @@ function grandTick(dt){const g=G.grand;if(!g||g.fin)return;g.t0+=dt;
   // rout (Abdullah 2026-11-06 20:09 "why haven't I won this round yet" — 24 vs 4): a side below 15% of the other's strength
   // (reinforcements on the way included) for 10 s breaks and flees; checked every 2 s, sim time only (deterministic)
   if(win<0){g.rtT=(g.rtT||0)-dt;if(g.rtT<=0){g.rtT=2;const v0=grandForce(0),v1=grandForce(1),lo=v0<v1?0:1,r=Math.min(v0,v1)/Math.max(1,Math.max(v0,v1));
-    if(r<.15){if(g.rtS!==lo){g.rtS=lo;g.rtA=g.t0;}else if(g.t0-g.rtA>=10){win=1-lo;how='rout';}}else g.rtS=-1;}}
+    if(r<.15&&!GB_NOROUT.includes((G.teams[lo]||{}).fac)){if(g.rtS!==lo){g.rtS=lo;g.rtA=g.t0;}else if(g.t0-g.rtA>=10){win=1-lo;how='rout';}}else g.rtS=-1;}}
   if(win>=0){g.fin=1;g.res={win,how};G.over=true;G.winner=win;try{grandBattleEnd();}catch(e){console.error('grandBattleEnd',e);}}}
 // the enemy side: attackers advance on the other force, defenders hold until something comes within reach
 function grandAI(t){const g=G.grand,mine=G.ents.filter(e=>e.team===t&&!e.isB&&!e.dead&&!e.s.noAttack&&(!e.order||e.order.type===undefined));if(!mine.length)return;
