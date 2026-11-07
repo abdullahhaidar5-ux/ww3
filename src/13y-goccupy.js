@@ -36,7 +36,7 @@ function ocMonth(){if(!GC||!GC.prov)return;GC.occ=GC.occ||{};const P=GCM.P;
       const H=GC.nat[st.o0];if(S.ws&&st.rc&&H&&!H.dead&&typeof wsN==='function'){const W=wsN(st.o0);if(W)W.ws=Math.min(100,W.ws+S.ws*st.rc/4);}}
     // withheld income / sabotage repairs: a share of what the province pays, halved while an army guards it
     const inc=S.inc+(S.sab&&R()<S.sab?S.inc*.6:0);
-    if(inc>0){const lose=Math.round(ocInc(p,st)*inc*(guard&&S.sab?.5:1));const N=GC.nat[c];if(N&&lose>0){N.cash-=lose;cost+=lose;}}
+    if(inc>0){const lose=Math.round(ocInc(p,st)*inc*(guard&&S.sab?.5:1));const N=GC.nat[c];const take=N?Math.min(lose,Math.max(0,Math.floor(N.cash))):0;if(take>0){N.cash-=take;cost+=take;}}
     if(S.calm)st.un=Math.max(0,st.un-S.calm);
     L.c+=cost;}}
 if(typeof GMOD_HOOKS==='object')GMOD_HOOKS.push(ocMonth);
