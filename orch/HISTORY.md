@@ -303,3 +303,4 @@ Abdullah 20:12/20:14 "Ugly ugly ugly … not everything has to be shoved into a 
 - 2026-11-07 laneC: town sun-shadows (instanced) on grand map; light/objects +0.5 (artbar it3)
 - laneE (2026-11-07 03:50Z): infantry models +23% bigger at gameplay height (src/11-models.js MCFG soldier size x1.45) so soldiers read as people; smoke PASS; local smooth gate times out on slow box. Shot orch/shots/laneE/after3-base.png
 - laneD 2026-11-07: D0(a) auto-bisect — `.github/workflows/bisect.yml` + `orch/bisect.sh`: when a gate run is red on a main commit, bisects the failing test and comments the first bad commit. No game code changed.
+- 2026-11-07 laneC it4: grand-map chimney smoke over every town (g3BuildChim, 13e); life 2.5→3; shots orch/shots/laneC/it4.
