@@ -1,0 +1,8 @@
+pending (lane AY): "Secretary-General" (RS leader) not in the game yet
+pending (lane AY): "Leader of the Revolution" (DW leader) not in the game yet
+menu items ["Grand campaign","Conquest","Missions","Tutorial","Play online","Load game","Settings","Extras","Credits","Random battlefield","Next: Nation →","USUnited StatesAggressive Manoeuvre · morale: ProfessionalDoctrine: Aggressive Manoeuvre (+15% damage while advancing or attacking; vehicles 10% faster). Morale style: Professional - Steady under artillery and quick to rally near officers; heavy losses sap them more than other armies. Air power & precision: weapons deal 8% more damage; F-35s and Apaches hit 25% harder and are tougher.Special: Delta Operator · trainingStrike: Tomahawk Salvo"]
+DW name Coffee Shias
+conquest {"ban":{"cleric":false,"fort":false,"bb":true},"shown":[],"conq":true,"wasd":true,"btns":23,"bodyHas":null}
+fight-it {"shown":[],"tax":"","money":"","cr":0,"txtA":null}
+FAIL: Zealous (never rout) should be exactly IR RS DW KP RV, got BI DW IR KP OB RS RV
+DECISIONS FAIL (1)
