@@ -1,0 +1,26 @@
+2.5s stale save in menu {"cont":false,"warn":true}
+7.1s map open
+16.0s march {"me":"IR","from":"Tehran","to":"Baku","foe":"AZ","ok":true,"units":37}
+22.1s fallback {"modal":true,"map":true,"G":false}
+22.4s end turn clicked
+31.0s prompt: BATTLE · CoastBakuAttackers — Iran37 units28 Basij Militia, 4 RPG Cell, 2 Karrar MBT, 1 Fateh-110 Launcher, 1 
+31.9s Fight it live clicked
+42.7s {"L":true,"step":"Loading 3D models…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+44.1s {"L":true,"step":"Preparing graphics…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+54.5s {"L":true,"step":"Deploying forces…","g":true,"grand":true,"t":0,"paused":true,"gs":"none","ents":67}
+89.1s {"L":false,"step":"Ready","g":true,"grand":true,"t":0,"paused":false,"gs":"none","ents":67}
+90.2s {"L":false,"step":"Ready","g":true,"grand":true,"t":0.06,"paused":false,"gs":"none","ents":67}
+115.5s battle running: Generating terrain 10435, Loading 3D models 138, Building the battlefield 302, Building the battlefield 776, Preparing graphics 10308, Deploying forces 11, Deploying forces 34343, total 57055
+GRANDLIVE PASS
+scenario {"foe":"AZ","ok":true,"from":"Tehran","to":"Baku","units":37}
+  [page] grandlive: grandBattleStart sync 521 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":63,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 11937 ms, Loading 3D models 144 ms, Building the battlefield 374 ms, Building the battlefield 799 ms, Preparing graphics 2822 ms, Deploying forces 16 ms, Deploying forces 7656 ms, total 24466 ms
+live 1 28.3s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":63,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.2766666666666673,"p":false,"h":false,"fs":null}],"running":true}
+scenario {"foe":"AZ","ok":true,"from":"Tehran","to":"Baku","units":37}
+  [page] grandlive: grandBattleStart sync 781 ms
+  t+0s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":true,"ls":"-","ents":63,"over":false,"gs":"none","camp":false}
+  [page] battle start: Generating terrain 10012 ms, Loading 3D models 0 ms, Building the battlefield 1 ms, Building the battlefield 932 ms, Preparing graphics 215 ms, Deploying forces 4 ms, Deploying forces 604 ms, total 12383 ms
+live 2 16.5s {"g":true,"grand":true,"t":0,"tick":0,"LOADING":false,"ls":"-","ents":63,"over":false,"gs":"none","camp":false,"clock":[{"t":0.06,"p":false,"h":false},{"t":1.3000799999999937,"p":false,"h":false,"fs":null}],"running":true}
+
+GRANDLIVE2 PASS
