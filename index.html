@@ -18970,7 +18970,7 @@ function grandPlace(team,recs,cx,cy,a,gr){const fac=G.teams[team].fac,ord={tank:
     const u=addUnit(team,k,p[0],p[1]);if(!u)return;u.hp=Math.max(1,Math.round(u.max*rec[1]/100));u.xp=rec[2];u.rank=grRankOf(rec[0],fac,rec[2]);if(u.s&&u.s.ammo)u.ammo=Math.max(1,Math.round(u.s.ammo*rec[3]/100));
     u.gr=rec;gr.ents.push([rec,u,team]);});}
 function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.att,pn:g.pn,ents:[],waves:g.waves||[],wi:0,aiT:1,fin:0,res:null,n0:[0,0],v0:[0,0],ret:0,fort:g.fort|0,mir:g.mir||null,gp:g.gp||null,hero:g.hero||[]};
-  G.teams.forEach(T=>{T.ai=null;T.credits=0;});
+  G.teams.forEach((T,i)=>{T.ai=null;T.credits=0;if(g.fv&&g.fv[i])T.fervor=1e9;});
   for(const t of [0,1]){const B=BASES[t],a=baseFacing(t),side=g.sides[t];const dx=Math.cos(a)*110,dy=Math.sin(a)*110;grandPlace(t,side,B[0]+dx,B[1]+dy,a,gr);}
   // the defender's forts: a few Defense Guns in front of its block (+ a SAM site for a capital)
   if(g.fort){const t=g.att===0?1:0,B=BASES[t],a=baseFacing(t);let placed=0;for(let k=0;k<90&&placed<g.fort;k++){const r=170+k*9,ang=a+((k%5)-2)*.45,px=B[0]+Math.cos(ang)*r,py=B[1]+Math.sin(ang)*r;
@@ -19019,7 +19019,7 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
     const side=a.o===nat0?0:a.o===nat1?1:-1;if(side<0||!a.u.length)continue;if(wn[side]>=3)continue;if(GCM.P[a.at].land&&GC.prov[a.at].o!==a.o&&!grAtWar(a.o,GC.prov[a.at].o)&&GC.prov[a.at].o!==a.o)continue;
     const recs=a.u.slice(0,24);wn[side]++;waves.push({t:70+wn[side]*50,side,recs,label:a.nm,done:0,aid:a.id});rf.push(a.id);}
   const attTeam=meAtt?0:1,from=b.att.map(id=>(GC.armies.find(a=>a.id===id)||{}).from).find(f=>f>=0),gm=P.sea?{key:'coral',real:0,tp:null}:gmMap(b.p,from),   /* a sea zone is fought on a naval map */
-    cfg={bi:{p:b.p},att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[]};
+    cfg={bi:{p:b.p},att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[],fv:[0,1].map(t=>{try{return ldrFervour(t?nat1:nat0,b.p)?1:0;}catch(e){return 0;}})};
   /* grand3: each side's best general stands in the battle as the hero squad (the army's own if it has one, else a fresh one) */
   try{const gp=[gmilPerk(meAtt?S:D),gmilPerk(meAtt?D:S)];cfg.gp=gp;[[side0,f0],[side1,f1]].forEach(([L,fc],t)=>{if(gp[t]&&grHasKind(fc,'champ')&&!L.some(r=>r[0]==='champ')){const r=['champ',100,Math.round(gp[t].lv*40),100];L.push(r);cfg.hero[t]=r;}});}catch(e){console.error('gmil hero',e);}   // forts / SAM / airfield... come from the province's buildings (gmApply)
   GB_CUR={b,cfg,meAtt,nat0,nat1,rf};
@@ -21334,6 +21334,53 @@ GMOD_COND.great=(k)=>!!(GC&&GC.gp&&GC.gp.includes(k));
 GMOD_ROWS.push({id:'gp_bonus',src:'Great Power',scope:'nation',stat:'warSupport',add:.03,cond:'great'});
 npTab('gp','👑','Great powers',(code,body)=>{const r=gpRank();body.innerHTML='<div style="margin-bottom:8px">The top '+GP_N+' nations by prestige are Great Powers (+3% war support). Prestige = score + allies + achievements + missions.</div>';
   npTable(body,['#','Nation','Prestige','Status'],r.slice(0,24).map(([c,v],i)=>({c,k:v,cells:[i+1,'<b>'+gdName(c)+(c===GC.me?' ◀':'')+'</b>',v,i<GP_N?'<span style="color:#ffe6a8">Great Power</span>':'Major']})),x=>{NP.code=x.c;npDraw();});});
+// NATIONAL LEADER FIGURES (lane G, AY): ONE shared Ayatollah leads IR+RS+DW (the Resistance bloc); KP has its own Dear Leader.
+// A leader stands in one province and tours: ~1 month per stop. While there: that province calms down (-3 unrest/month) and a
+// Fight-it battle there starts with fervour (units fearless). Nation-wide ("the people clamour for war"): +war support, faster manpower,
+// slower weariness (modifier rows, cond 'ldr'). Cost: 24 months of peace builds war-fever unrest. State GC.ldr = {AY:{at,tgt,eta,since,req}, DL:{..}, pc:{nation:peaceMonths}}.
+const LDR_DEF={AY:{title:'Supreme Ayatollah',who:()=>(typeof RES_BLOC!=='undefined'?RES_BLOC:['IR','RS','DW']),home:'IR',own:'IR'},
+               DL:{title:'Dear Leader',who:()=>['KP'],home:'KP',own:'KP'}};
+function ldrId(c){for(const k of Object.keys(LDR_DEF))if(LDR_DEF[k].who().includes(c))return k;return null;}
+function ldrProvs(k){const w=LDR_DEF[k].who(),o=[];if(!GC)return o;for(const p of GCM.P)if(p.land&&w.includes(GC.prov[p.i].o)&&!GC.nat[GC.prov[p.i].o].dead)o.push(p.i);return o;}
+function ldrS(k){if(!GC.ldr)GC.ldr={pc:{}};let L=GC.ldr[k];const ps=ldrProvs(k);
+  if(!L){const d=LDR_DEF[k],hn=GC.nat[d.home];L=GC.ldr[k]={at:hn&&!hn.dead?hn.cap:(ps[0]||0),tgt:-1,eta:0,since:GC.turn,req:-1};}
+  if(L.at!==undefined&&ps.length&&!ps.includes(L.at)){const hn=GC.nat[LDR_DEF[k].home];L.at=hn&&!hn.dead&&ps.includes(hn.cap)?hn.cap:ps[0];L.tgt=-1;}
+  return L;}
+function ldrName(k){try{const r=pplRoster(LDR_DEF[k].own);return LDR_DEF[k].title+' '+pplName(r.leader).replace(/^(Ayatollah|Dear Leader|Supreme Leader)\s*/,'');}catch(e){return LDR_DEF[k].title;}}
+function ldrPlayerRuns(k){return GC.me===LDR_DEF[k].own;}
+function ldrGo(k,pi){const L=ldrS(k);if(!ldrProvs(k).includes(pi)||pi===L.at)return false;L.tgt=pi;L.eta=GC.turn+1;grLog(ldrName(k)+' sets out for '+GCM.P[pi].n+'.',LDR_DEF[k].own);return true;}
+function ldrAt(c,pi){const k=ldrId(c);if(!k||!GC||!GC.ldr||!GC.ldr[k])return false;return GC.ldr[k].at===pi&&GC.ldr[k].tgt<0;}
+function ldrFervour(c,pi){return ldrAt(c,pi);}   // read by the Fight-it battle start
+GMOD_COND.ldr=(c)=>!!ldrId(c);
+GMOD_ROWS.push({id:'ldr_war',src:'The people clamour for war',scope:'nation',stat:'warSupport',add:.08,cond:'ldr'},
+               {id:'ldr_man',src:'Volunteers rally to the leader',scope:'nation',stat:'manpower',mul:1.12,cond:'ldr'},
+               {id:'ldr_wea',src:'Slow war weariness',scope:'nation',stat:'weariness',mul:.7,cond:'ldr'});
+function ldrMonth(){if(!GC||!GC.nat||!GC.prov)return;
+  for(const k of Object.keys(LDR_DEF)){if(!GC.nat[LDR_DEF[k].own])continue;const L=ldrS(k);
+    if(L.tgt>=0&&GC.turn>=L.eta){L.at=L.tgt;L.tgt=-1;L.since=GC.turn;grLog(ldrName(k)+' arrives in '+GCM.P[L.at].n+'.',LDR_DEF[k].own);}
+    if(L.tgt<0&&GC.prov[L.at]){const st=GC.prov[L.at];st.un=Math.max(0,st.un-3);}
+    // the AI (or an unplayed leader) tours the most restless province, or a visit an ally asked for
+    if(!ldrPlayerRuns(k)&&L.tgt<0&&GC.turn-L.since>=3){const ps=ldrProvs(k);let best=-1,bu=-1;
+      if(L.req>=0&&ps.includes(L.req)){best=L.req;}else for(const i of ps){const u=GC.prov[i].un;if(u>bu&&i!==L.at){bu=u;best=i;}}
+      L.req=-1;if(best>=0)ldrGo(k,best);}
+    // war-fever: long peace builds unrest in every nation he leads
+    for(const c of LDR_DEF[k].who()){const N=GC.nat[c];if(!N||N.dead)continue;const pc=GC.ldr.pc;
+      pc[c]=gdEnemies(c).length?0:(pc[c]||0)+1;
+      if(pc[c]>24)for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c){const st=GC.prov[p.i];st.un=Math.min(100,st.un+1);}}}}
+GMOD_HOOKS.push(ldrMonth);
+alAdd('ldr','🕌','Leader idle',(c)=>{const k=ldrId(c);if(!k||!ldrPlayerRuns(k)||!GC.ldr||!GC.ldr[k])return null;const L=GC.ldr[k];
+  return L.tgt<0&&GC.turn-L.since>=2?{n:1,tip:ldrName(k)+' is waiting in '+GCM.P[L.at].n+' — send him on tour.',go:()=>{try{npOpen(c,'ldr');}catch(e){}}}:null;});
+npTab('ldr','🕌','Leader',(code,body)=>{const k=ldrId(code);if(!k){body.textContent='';return;}const L=ldrS(k),mine=ldrPlayerRuns(k)&&code===GC.me,pc=(GC.ldr.pc[code]||0);
+  const peaceLine=pc>24?'<span style="color:#ffb3a8">War-fever: '+pc+' months of peace is stirring unrest.</span>':'Months of peace: '+pc+' (war-fever builds after 24).';
+  body.innerHTML='<div style="font-size:17px;margin-bottom:6px"><b>'+ldrName(k)+'</b></div><div>Stands in <b>'+GCM.P[L.at].n+'</b>'+(L.tgt>=0?' — travelling to <b>'+GCM.P[L.tgt].n+'</b>':'')+'.</div>'
+   +'<div style="margin:8px 0;opacity:.85">Where he stands: unrest falls each month and a battle there begins with fearless troops. Nation-wide: the people clamour for war (+8% war support, +12% manpower, weariness grows slower).</div><div>'+peaceLine+'</div>'
+   +(k==='AY'?'<div style="margin-top:6px;opacity:.8">One leader for the Resistance bloc: Iran, the Mountain Shias and Yemen share him and his effects.</div>':'');
+  const mk=(txt,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=txt;b.style.cssText='margin:4px 6px 0 0;padding:3px 10px;border-radius:12px;border:1px solid #3b556e;background:#16222e;color:#cfe3f5;cursor:pointer;font-size:14px';b.onclick=fn;return b;};
+  const lst=ldrProvs(k).filter(i=>i!==L.at).sort((a,b)=>GC.prov[b].un-GC.prov[a].un).slice(0,12);
+  const h=document.createElement('div');h.style.cssText='margin-top:10px;font-size:14px;opacity:.8';h.textContent=mine?'Send on tour (about a month per stop), restless provinces first:':(code!==LDR_DEF[k].own?'Ask for a visit (the ruler of '+gdName(LDR_DEF[k].own)+' decides the route):':'');body.appendChild(h);
+  if(mine||code!==LDR_DEF[k].own){const w=document.createElement('div');body.appendChild(w);
+    for(const i of lst){if(!mine&&GC.prov[i].o!==code)continue;w.appendChild(mk(GCM.P[i].n+' ('+Math.round(GC.prov[i].un)+'% unrest)',()=>{if(mine)ldrGo(k,i);else L.req=i;npDraw();}));}}},
+  (code)=>!!ldrId(code));
 // 13v-gwarsup.js — lane B4b: WAR SUPPORT, the ONE national war-support meter (0–100; this IS war weariness — A5/grand6 read wsOf(), no second meter).
 // State: N.ws (meter), N.wsE (battle/capture news waiting for the monthly tick), N.wsW (months at war), N.wsRl (turn of last rally). All in GC.nat -> saved with the campaign.
 // Deterministic (no random). Monthly hook on GMOD_HOOKS; effects are GMOD rows (low = fewer recruits, less income; high = more recruits).
@@ -21391,6 +21438,39 @@ npTab('home','🔥','Home front',(code,body,c)=>{const N=wsN(code),own=c.own&&co
     b.disabled=left>0||!N.pp||N.pp.pol<WS_COST;b.title=S.rally[1];b.onclick=()=>{const e=wsRally(code);if(e)grLog(e,code);npDraw();};body.appendChild(b);
     const p=document.createElement('div');p.style.cssText='margin-top:8px;opacity:.75';p.textContent='Political points: '+Math.floor(N.pp?N.pp.pol:0)+(left>0?' · next rally in '+left+' months':'');body.appendChild(p);}});
 alAdd('ws','🔥','War support',c=>{const N=wsN(c);return N&&N.ws<35&&gdEnemies(c).length?{n:Math.round(N.ws)+'%',tip:'war support is low — open the Home front tab',go:()=>npOpen(c,'home')}:null;});
+// 13w-gdev.js — lane B5 slice 1: DEVELOPMENT (EU4-style). Each province can gain Tax / Production / Manpower levels (st.dv=[t,p,m], saved with the campaign),
+// bought with Political / Diplomatic / Military points (N.pp). Effects are GMOD rows (id 'dev_<nation>' in GC.mod, rewritten when levels change):
+// each tax or production level +0.5% income, each manpower level +1.5% manpower. Deterministic (AI picks by turn, no random). Trade nodes = next slice.
+const GDV_KIND=[['t','Tax','pol','Political',.005,'income'],['p','Production','dip','Diplomatic',.005,'income'],['m','Manpower','mil','Military',.015,'manpower']];
+const GDV_MAX=10;
+function gdvOf(pi){const st=GC.prov[pi];if(!st.dv)st.dv=[0,0,0];return st.dv;}
+function gdvCost(pi,k){return 30+10*gdvOf(pi)[k];}
+function gdvTot(c){let t=[0,0,0];for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c&&GC.prov[p.i].dv)for(let k=0;k<3;k++)t[k]+=GC.prov[p.i].dv[k];return t;}
+function gdvSync(c){const t=gdvTot(c);gmodRemove('dev_'+c+'_i');gmodRemove('dev_'+c+'_m');
+  const inc=(t[0]*GDV_KIND[0][4]+t[1]*GDV_KIND[1][4]);if(inc)gmodAdd({id:'dev_'+c+'_i',src:'Development (tax and production)',scope:'nation',stat:'income',mul:1+inc,t:c});
+  if(t[2])gmodAdd({id:'dev_'+c+'_m',src:'Development (manpower)',scope:'nation',stat:'manpower',mul:1+t[2]*GDV_KIND[2][4],t:c});}
+function gdvBuy(c,pi,k){const N=GC.nat[c],st=GC.prov[pi];if(!N||!st||st.o!==c)return 'Not your province.';if(!N.pp)return 'Not available.';const kd=GDV_KIND[k],d=gdvOf(pi);
+  if(d[k]>=GDV_MAX)return kd[1]+' is at its maximum here.';const cost=gdvCost(pi,k);if(N.pp[kd[2]]<cost)return 'Needs '+cost+' '+kd[3]+' points.';
+  N.pp[kd[2]]-=cost;d[k]++;gdvSync(c);if(c===GC.me)grLog('Developed '+kd[1].toLowerCase()+' in '+GCM.P[pi].n+' (level '+d[k]+').',c);return '';}
+function gdvMonth(){if(!GC)return;for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead||!N.pp)continue;
+    if(!GC.mod||!GC.mod.some(r=>r.id==='dev_'+c+'_i'||r.id==='dev_'+c+'_m'))gdvSync(c);   // rows are re-made after loads
+    if(c===GC.me)continue;const ps=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c);if(!ps.length)continue;
+    for(let k=0;k<3;k++){const pi=ps[(GC.turn*7+k*3)%ps.length].i;if(N.pp[GDV_KIND[k][2]]>=gdvCost(pi,k)+20)gdvBuy(c,pi,k);}}}
+GMOD_HOOKS.push(gdvMonth);
+npTab('dev','🏗','Development',(code,body,c)=>{const N=GC.nat[code],own=c.own&&code===GC.me,t=gdvTot(code);
+  let h='<div style="opacity:.85;margin-bottom:8px">Spend capital points to raise a province. Each Tax or Production level adds 0.5% income, each Manpower level 1.5% recruits. Total levels bought: Tax <b>'+t[0]+'</b>, Production <b>'+t[1]+'</b>, Manpower <b>'+t[2]+'</b>.</div>';
+  body.innerHTML=h;
+  if(own&&N.pp){const pp=document.createElement('div');pp.style.cssText='margin-bottom:6px;opacity:.8';pp.textContent='Points: Political '+Math.floor(N.pp.pol)+' · Diplomatic '+Math.floor(N.pp.dip)+' · Military '+Math.floor(N.pp.mil);body.appendChild(pp);}
+  const ps=c.S.ps.slice().sort((a,b)=>b.dev-a.dev).slice(0,16);
+  const tbl=document.createElement('table');tbl.style.cssText='width:100%;border-collapse:collapse;font-size:15px';tbl.innerHTML='<tr><th style="text-align:left;padding:4px 8px">Province</th><th>Base</th>'+GDV_KIND.map(k=>'<th>'+k[1]+'</th>').join('')+'</tr>';
+  for(const p of ps){const d=gdvOf(p.i),tr=document.createElement('tr');tr.innerHTML='<td style="padding:4px 8px"><b>'+p.n+'</b></td><td style="text-align:center">'+p.dev+'</td>';
+    for(let k=0;k<3;k++){const td=document.createElement('td');td.style.textAlign='center';td.appendChild(document.createTextNode(d[k]+' '));
+      if(own){const b=document.createElement('button');b.textContent='+ ('+gdvCost(p.i,k)+')';b.style.cssText='font-size:13px;cursor:pointer;padding:1px 6px';b.title='Costs '+GDV_KIND[k][3]+' points';
+        b.disabled=d[k]>=GDV_MAX||N.pp[GDV_KIND[k][2]]<gdvCost(p.i,k);b.onclick=()=>{const e=gdvBuy(code,p.i,k);if(e)grLog(e,code);npDraw();};td.appendChild(b);}
+      tr.appendChild(td);}
+    tbl.appendChild(tr);}
+  body.appendChild(tbl);});
+alAdd('dev','🏗','Development',c=>{const N=GC.nat[c];if(!N||!N.pp)return null;const m=Math.max(N.pp.pol,N.pp.dip,N.pp.mil);return m>=150?{n:'+',tip:'you have spare capital points — develop a province',go:()=>npOpen(c,'dev')}:null;});
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.
