@@ -314,3 +314,4 @@ Abdullah 20:12/20:14 "Ugly ugly ugly … not everything has to be shoved into a 
 - 2026-11-07 laneE (Sonnet): RF16 lasting wrecks: burnt-out vehicles kept as cover up to 96 per battle (was 36), src/03g-battlefeel.js (sim change: servers-live PR needed); RF13/14/15 and E1-E5 still open
 - 2026-11-07 laneE (Sonnet): doctrine picker shrunk to a slim bottom-right strip so it no longer covers the base view (src/08i-hud.js); smoke PASS; shot orch/shots/laneE/e5after-base.png. E1 real soldier model, E2, E4 still open
 - laneD (2026-11-07 D1b slice 1): Conquest setup has Balance: Balanced/Realistic (solo only); Realistic scales start money by real military tier (src/03-sim realMul, saved in checkpoint). Smoke PASS; sim change -> servers-live PR note (MP not wired, so no server effect yet).
+- laneC 2026-11-07 05Z: grand-map shipping lanes (tankers/container ships with wakes, 13w-gshipping.js); ART-BAR life 2.5→3.5; shots orch/shots/laneC/it4

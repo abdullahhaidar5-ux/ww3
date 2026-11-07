@@ -28,3 +28,6 @@ Readability 2.5 → 3.5 (map-mode panel now a framed opaque "MAP MODE" panel, no
 
 ## 2026-11-07 03:3x UTC — laneC iteration 3 (shots: orch/shots/laneC/it3)
 Light 3 → 3.5, objects 3 → 3.5: every town building now throws a soft sun-direction shadow (one extra instanced mesh, same sun vector as the baked terrain shadows), so towns sit on the ground instead of floating. Others unchanged (geography 4, colour 3.5, water 3, readability 3.5, life 2.5, perf 3.5 est.). Next lowest: life (smoke/animated flags), armies/ships figures, UI kit C0.
+
+## 2026-11-07 05:xx UTC — laneC iteration 4 (shots: orch/shots/laneC/it4)
+Life 2.5 → 3.5: shipping lanes — ~18–46 tankers and container ships (`src/13w-gshipping.js`) sail the real sea-province links with wakes (visual only, no sim state; they never cross land: links are sampled against the height field). World reaction chain: trade lanes visibly busy (tie to oil market / Straits later). Others unchanged (geography 4, colour 3.5, light 3.5, water 3, objects 3.5, readability 3.5). Next: water normal maps, army figures, UI kit C0.
