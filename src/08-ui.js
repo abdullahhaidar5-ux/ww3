@@ -621,6 +621,7 @@ body.touchui #mode{white-space:normal;text-align:left;width:max-content;max-widt
 body.touchui #mode>span{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;padding-left:4px}
 body.touchui #mode[hidden]{display:none}
 #mode .mcx{pointer-events:auto;cursor:pointer;flex:none;background:var(--warn);color:#160806;border:0;font:700 13px var(--display);letter-spacing:.04em;text-transform:uppercase;padding:0 8px;min-height:34px}
+#hint{right:max(10px,min(46%,500px));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:#d3dcd6;background:linear-gradient(90deg,rgba(8,11,10,.62),rgba(8,11,10,.3));padding:3px 8px;border-radius:4px;width:fit-content;max-width:calc(100% - 520px)}
 body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);padding:4px 6px;left:6px;right:6px;bottom:6px}
 @media (max-width:760px),(max-height:520px){
   #wxchip{top:6px;left:auto;right:6px;transform:none;white-space:normal;text-align:right;max-width:calc(62% - 16px);font-size:10px;padding:3px 7px}

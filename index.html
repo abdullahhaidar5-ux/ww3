@@ -12983,6 +12983,7 @@ body.touchui #mode{white-space:normal;text-align:left;width:max-content;max-widt
 body.touchui #mode>span{flex:1 1 auto;min-width:0;overflow-wrap:anywhere;padding-left:4px}
 body.touchui #mode[hidden]{display:none}
 #mode .mcx{pointer-events:auto;cursor:pointer;flex:none;background:var(--warn);color:#160806;border:0;font:700 13px var(--display);letter-spacing:.04em;text-transform:uppercase;padding:0 8px;min-height:34px}
+#hint{right:max(10px,min(46%,500px));white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:#d3dcd6;background:linear-gradient(90deg,rgba(8,11,10,.62),rgba(8,11,10,.3));padding:3px 8px;border-radius:4px;width:fit-content;max-width:calc(100% - 520px)}
 body.touchui #hint{font-size:12px;color:#c9d4ce;background:rgba(8,11,10,.55);padding:4px 6px;left:6px;right:6px;bottom:6px}
 @media (max-width:760px),(max-height:520px){
   #wxchip{top:6px;left:auto;right:6px;transform:none;white-space:normal;text-align:right;max-width:calc(62% - 16px);font-size:10px;padding:3px 7px}
@@ -16438,7 +16439,7 @@ function sizePost(){const w=Math.max(2,Math.round(VW*dpr)),h=Math.max(2,Math.rou
 // Theatre colour grade (purely visual): desert maps run warm and dusty, snow maps cold and a little desaturated,
 // green maps neutral with a blue-grey distance haze; a dusk battle pushes everything toward red. Multiplies on top of
 // the battle-conditions grade set by applyWeather (04-gfx). The haze colour is used by the distance haze (AO pass).
-const TGRADE={desert:{tg:[1.05,1,.9],s:1.06,hz:[.7,.56,.4]},green:{tg:[.99,1.01,.98],s:.98,hz:[.56,.6,.63]},snow:{tg:[.93,.99,1.09],s:.86,hz:[.72,.78,.87]}};
+const TGRADE={desert:{tg:[1.06,1,.86],s:1.2,hz:[.7,.56,.4]},green:{tg:[.99,1.01,.98],s:.98,hz:[.56,.6,.63]},snow:{tg:[.93,.99,1.09],s:.86,hz:[.72,.78,.87]}};
 function postGrade(F){const th=(typeof G!=='undefined'&&G&&G.map&&G.map.theme)||'desert',T=TGRADE[th]||TGRADE.desert,dusk=typeof WXI!=='undefined'&&WXI===3;
   F.tg.value.set(T.tg[0]*(dusk?1.08:1),T.tg[1]*(dusk?.92:1),T.tg[2]*(dusk?.88:1));F.tsat.value=T.s;
   if(dusk)F.hz.value.set(T.hz[0]*.5+.31,T.hz[1]*.5+.18,T.hz[2]*.5+.15);else F.hz.value.set(T.hz[0],T.hz[1],T.hz[2]);}
@@ -16559,6 +16560,8 @@ const TEXB={m_abrams:2,m_merkava:2,m_kf51:1.6,m_msta:2.2,m_ural:1.9,m_m35:2.2,m_
 const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 // Infantry: three realistic rigged soldiers (Western desert-camo marine, Eastern green-camo, Middle-Eastern/militia woodland
 // fatigues) shared by the 18 nations; national colour is a tint over the camo. 'soldier' is the old stand-in.
+// laneE: foot soldiers read too small at gameplay height (Abdullah 2026-11-06 photo) - draw them ~18% bigger (visual only)
+for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.18;c._big=1;}}
 const SOLV={US:'sol_w',EU:'sol_w',FR:'sol_w',DE:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
 const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:58},barracks:{m:'b_barr_me',size:54},factory:{m:'b_fact_me',size:62}};
@@ -16740,28 +16743,75 @@ const AIRKEY=/^(jet|heli)$|^m_(su35|f15|f16|f18|j10|mig29|rafale|typhoon|ah1|apa
 function airScheme(key,team){if(!team||!team.fac||!AIRKEY.test(key))return null;const X=AIRX[team.fac];if(!X)return null;return HELIKEY.test(key)?X.h:X;}
 function airCamoFreq(key){const P=MODELS.proto[key];if(!P)return 0;if(P._acf!=null)return P._acf;P.scene.updateMatrixWorld(true);let mx=0;P.scene.traverse(o=>{if(o.isMesh){o.geometry.computeBoundingBox();const sz=o.geometry.boundingBox.getSize(new THREE.Vector3());mx=Math.max(mx,sz.x,sz.y,sz.z);}});return P._acf=mx>0?3.2/mx:0;}
 const FLAGTEX={};
-// Militia emblems, drawn on a 120x72 canvas: Mountain Shias carry the Zulfiqar (the forked double-bladed sword),
-// Coffee Shias a lion standing over a jambiya dagger.
+// Original emblems (Abdullah 2026-11-06 21:03 "make the logo for the mountain Shias and coffee Shias better"). 120x72 design space.
+function emGold(x,y0,y1){const g=x.createLinearGradient(0,y0,0,y1);g.addColorStop(0,'#fff0b8');g.addColorStop(.35,'#e2b955');g.addColorStop(.55,'#a87a22');g.addColorStop(.8,'#e6c46a');g.addColorStop(1,'#8a6218');return g;}
+function emLaurel(x,cx,cy,r,side,col){x.save();x.translate(cx,cy);for(let i=0;i<7;i++){const a=(side<0?Math.PI*.62:Math.PI*.38)+side*(-.14-i*.17),px=Math.cos(a)*r,py=Math.sin(a)*r;
+  x.save();x.translate(px,py);x.rotate(a+(side<0?-1.15:1.15)+Math.PI/2);x.fillStyle=col;x.beginPath();x.ellipse(0,0,1.7,4.2,0,0,7);x.fill();x.restore();}
+  x.strokeStyle=col;x.lineWidth=.9;x.beginPath();x.arc(0,0,r,side<0?Math.PI*.62-.1:Math.PI*.38+.1,side<0?Math.PI*.62+1.25:Math.PI*.38-1.25,side>0);x.stroke();x.restore();}
+function emRing(x,cx,cy,r,fillA,fillB){const g=x.createRadialGradient(cx-r*.3,cy-r*.35,r*.1,cx,cy,r);g.addColorStop(0,fillA);g.addColorStop(1,fillB);
+  x.fillStyle=g;x.beginPath();x.arc(cx,cy,r,0,7);x.fill();x.lineWidth=2.4;x.strokeStyle=emGold(x,cy-r,cy+r);x.beginPath();x.arc(cx,cy,r,0,7);x.stroke();
+  x.lineWidth=.6;x.strokeStyle='rgba(255,230,160,.55)';x.beginPath();x.arc(cx,cy,r-2.4,0,7);x.stroke();}
+function emZulfiqar(x,cx,cy,s){x.save();x.translate(cx,cy);x.scale(s,s);
+  const bl=x.createLinearGradient(0,-8,0,8);bl.addColorStop(0,'#ffffff');bl.addColorStop(.5,'#c9ccd1');bl.addColorStop(1,'#80858c');
+  x.fillStyle=bl;x.strokeStyle='#2a2d33';x.lineWidth=.8;x.beginPath();x.moveTo(-22,-3.2);x.lineTo(16,-4.4);x.quadraticCurveTo(31,-6.5,42,-12);x.lineTo(36,-4.8);x.quadraticCurveTo(28,-2.2,21,-.9);x.lineTo(21,.9);x.quadraticCurveTo(28,2.2,36,4.8);x.lineTo(42,12);x.quadraticCurveTo(31,6.5,16,4.4);x.lineTo(-22,3.2);x.closePath();x.fill();x.stroke();
+  x.strokeStyle='rgba(60,64,70,.6)';x.lineWidth=.6;x.beginPath();x.moveTo(-20,0);x.lineTo(19,0);x.stroke();
+  const gd=emGold(x,-11,11);x.fillStyle=gd;x.strokeStyle='#5a3d0c';x.lineWidth=.7;
+  x.beginPath();x.moveTo(-21,-11);x.quadraticCurveTo(-26,0,-21,11);x.lineTo(-25,11);x.quadraticCurveTo(-30,0,-25,-11);x.closePath();x.fill();x.stroke();
+  x.fillStyle='#2b1a10';x.fillRect(-40,-2.8,15,5.6);x.fillStyle=gd;for(let i=0;i<4;i++)x.fillRect(-38.5+i*3.6,-2.8,1,5.6);
+  x.beginPath();x.arc(-42,0,3.6,0,7);x.fill();x.stroke();x.restore();}
+function emText(x,t,cx,cy,px,col){x.save();x.font='700 '+px+'px "Noto Naskh Arabic","Amiri","Scheherazade New","Traditional Arabic","Times New Roman",serif';x.textAlign='center';x.textBaseline='middle';x.direction='rtl';
+  x.fillStyle='rgba(0,0,0,.6)';x.fillText(t,cx+.6,cy+.7);x.fillStyle=col;x.fillText(t,cx,cy);x.restore();}
 function drawEmblem(x,fac,bg){const W=120,H=72;
-  if(fac==='RS'){if(bg){x.fillStyle='#111';x.fillRect(0,0,W,H);x.fillStyle='#b3262c';x.fillRect(0,H*.7,W,H*.3);}
-    x.save();x.translate(60,32);x.rotate(-.12);const sil='#e9e7e1',gold='#d6b24a',dk='#2a2a2a';
-    // blade with the forked tip
-    x.fillStyle=sil;x.beginPath();x.moveTo(-26,-4);x.lineTo(14,-5.5);x.quadraticCurveTo(34,-8,47,-14);x.lineTo(40,-6.5);x.quadraticCurveTo(30,-3,20,-1);x.lineTo(20,1);x.quadraticCurveTo(30,3,40,6.5);x.lineTo(47,14);x.quadraticCurveTo(34,8,14,5.5);x.lineTo(-26,4);x.closePath();x.fill();
-    x.strokeStyle='#9a9890';x.lineWidth=1;x.beginPath();x.moveTo(-24,0);x.lineTo(18,0);x.stroke();
-    // crossguard, grip, pommel
-    x.fillStyle=gold;x.beginPath();x.moveTo(-26,-13);x.quadraticCurveTo(-31,0,-26,13);x.lineTo(-30,13);x.quadraticCurveTo(-35,0,-30,-13);x.closePath();x.fill();
-    x.fillStyle=dk;x.fillRect(-46,-3.2,17,6.4);x.fillStyle=gold;for(let i=0;i<4;i++)x.fillRect(-44+i*4,-3.2,1.2,6.4);x.beginPath();x.arc(-48,0,4.2,0,7);x.fill();x.restore();}
-  else if(fac==='DW'){if(bg){x.fillStyle='#4a2f1c';x.fillRect(0,0,W,H);x.fillStyle='#c8a46e';x.fillRect(0,H-12,W,12);}
-    const gold='#e2b64a',dk='#2b1c10';
-    // lion, facing right
-    x.fillStyle=gold;x.beginPath();x.ellipse(54,30,22,9,0,0,7);x.fill();
-    for(const [lx,ly] of [[38,36],[46,36],[62,36],[70,36]]){x.fillRect(lx-2.5,ly,5,12);x.fillRect(lx-3,ly+10,7,3);}
-    x.save();x.translate(80,22);x.fillStyle='#b8862e';x.beginPath();for(let i=0;i<=18;i++){const a=i/18*6.283,r=i%2?8:12.5;x.lineTo(Math.cos(a)*r,Math.sin(a)*r);}x.closePath();x.fill();x.fillStyle=gold;x.beginPath();x.arc(2,1,7,0,7);x.fill();x.fillRect(5,1,7,5);x.fillStyle=dk;x.beginPath();x.arc(4,-1.5,1.3,0,7);x.fill();x.restore();
-    x.strokeStyle=gold;x.lineWidth=2.6;x.lineCap='round';x.beginPath();x.moveTo(33,27);x.quadraticCurveTo(20,20,24,10);x.stroke();x.fillStyle='#b8862e';x.beginPath();x.arc(24,9,3,0,7);x.fill();
-    // jambiya: wide hilt and a sharply curved blade
-    x.save();x.translate(60,58);x.fillStyle='#d9d4c8';x.beginPath();x.moveTo(-6,-2.5);x.lineTo(16,-3);x.quadraticCurveTo(30,-3,33,-11);x.quadraticCurveTo(30,2,14,3);x.lineTo(-6,2.5);x.closePath();x.fill();
-    x.fillStyle=gold;x.fillRect(-9,-5,3,10);x.fillStyle=dk;x.fillRect(-24,-3,15,6);x.fillStyle=gold;x.beginPath();x.moveTo(-24,-3);x.lineTo(-30,-7);x.lineTo(-30,7);x.lineTo(-24,3);x.closePath();x.fill();x.restore();}}
-function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#111':'#4a2f1c';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
+  if(fac==='RS'){drawRS(x,bg);
+  } else if(fac==='DW'){
+    if(bg){const g=x.createRadialGradient(60,30,6,60,34,72);g.addColorStop(0,'#5a3820');g.addColorStop(1,'#24150b');x.fillStyle=g;x.fillRect(0,0,W,H);
+      const t=[['#3f4a22',H*.80],['#58612b',H*.86],['#76763a',H*.92]];for(const [c,y] of t){x.fillStyle=c;x.beginPath();x.moveTo(0,H);x.lineTo(0,y);for(let i=0;i<=12;i++){const sx=i*10,yy=y+Math.sin(i*1.3)*1.4;x.lineTo(sx,yy);x.lineTo(sx+10,yy);}x.lineTo(W,H);x.closePath();x.fill();x.strokeStyle='rgba(235,220,150,.35)';x.lineWidth=.5;x.beginPath();for(let i=0;i<=12;i++){const sx=i*10,yy=y+Math.sin(i*1.3)*1.4;x.moveTo(sx,yy+.3);x.lineTo(sx+10,yy+.3);}x.stroke();}
+      x.fillStyle=emGold(x,H*.785,H*.8);x.fillRect(0,H*.785,W,1);emText(x,'اليمن',60,H*.9,10,'#f2d68a');}
+    const cx=60,cy=29.5,r=21;emRing(x,cx,cy,r,'#7a2a1a','#2c0d07');
+    x.save();x.beginPath();x.arc(cx,cy,r-1.3,0,7);x.clip();
+    // terraced hills inside the roundel
+    for(const [c,y] of [['#3b2a12',39],['#4f3a18',42],['#6a5222',45]]){x.fillStyle=c;x.beginPath();x.moveTo(cx-r,cy+r);x.lineTo(cx-r,y);for(let i=0;i<9;i++){const sx=cx-r+i*5.5;x.lineTo(sx,y-(i%2?1.2:0));x.lineTo(sx+5.5,y-(i%2?1.2:0));}x.lineTo(cx+r,cy+r);x.closePath();x.fill();}
+    x.restore();
+    // coffee branch: stem, leaves with midribs, cherries
+    x.strokeStyle='#4a3216';x.lineWidth=1.4;x.lineCap='round';x.beginPath();x.moveTo(47,40);x.quadraticCurveTo(57,26,74,17);x.stroke();
+    const leaf=(lx,ly,a,len)=>{x.save();x.translate(lx,ly);x.rotate(a);const lg=x.createLinearGradient(0,-3,0,3);lg.addColorStop(0,'#86b04e');lg.addColorStop(1,'#2f5420');x.fillStyle=lg;
+      x.beginPath();x.moveTo(0,0);x.quadraticCurveTo(len*.5,-4.2,len,0);x.quadraticCurveTo(len*.5,4.2,0,0);x.fill();x.strokeStyle='rgba(220,240,180,.55)';x.lineWidth=.5;x.beginPath();x.moveTo(.5,0);x.lineTo(len-1,0);x.stroke();x.restore();};
+    leaf(51,33.5,-2.1,12);leaf(55,30,.15,12);leaf(61,25,-2.4,11);leaf(65,23,-.05,12);leaf(70,19.5,-1.2,9);
+    const cherry=(ccx,ccy)=>{const cg=x.createRadialGradient(ccx-.9,ccy-.9,.3,ccx,ccy,2.6);cg.addColorStop(0,'#ff6a5a');cg.addColorStop(.6,'#c3141f');cg.addColorStop(1,'#6e0710');x.fillStyle=cg;x.beginPath();x.arc(ccx,ccy,2.5,0,7);x.fill();};
+    cherry(57.5,32.6);cherry(60.4,33.4);cherry(59,30.2);cherry(66.8,27);cherry(69.2,26.1);
+    // jambiya across the lower roundel: curved blade, wide flared hilt, belt sheath tip
+    x.save();x.translate(60,42);x.rotate(-.06);x.scale(.92,.92);const bl=x.createLinearGradient(0,-5,0,5);bl.addColorStop(0,'#ffffff');bl.addColorStop(.6,'#bfc3c8');bl.addColorStop(1,'#7c8188');
+    x.fillStyle=bl;x.strokeStyle='#2a2d33';x.lineWidth=.7;x.beginPath();x.moveTo(-4,-2);x.lineTo(12,-2.4);x.quadraticCurveTo(22,-2.6,25,-9);x.quadraticCurveTo(23,1.5,12,2.4);x.lineTo(-4,2);x.closePath();x.fill();x.stroke();
+    const gd=emGold(x,-7,7);x.fillStyle=gd;x.strokeStyle='#5a3d0c';x.fillRect(-6.5,-4,2.5,8);
+    x.fillStyle='#3a2414';x.fillRect(-17,-2.4,10.5,4.8);x.fillStyle=gd;x.beginPath();x.moveTo(-17,-2.4);x.lineTo(-23,-6.5);x.quadraticCurveTo(-25,0,-23,6.5);x.lineTo(-17,2.4);x.closePath();x.fill();x.stroke();
+    x.fillStyle=gd;x.beginPath();x.arc(-11.5,0,1.1,0,7);x.fill();x.restore();
+  }}
+// Mountain Shias: printed cloth banner (Abdullah 21:19 "as realistic as you are allowed to") — real militia-banner style, our own emblem; never the real organisation's marks
+function emCloth(x,W,H,base,seed){x.fillStyle=base;x.fillRect(0,0,W,H);
+  for(let i=0;i<7;i++){const fx=i*W/6+((seed*37+i*53)%9)-4,g=x.createLinearGradient(fx-10,0,fx+10,0);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.5,i%2?'rgba(255,255,255,.10)':'rgba(70,40,0,.13)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(fx-10,0,20,H);}
+  let s=seed|0||7;const r=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
+  for(let i=0;i<900;i++){x.fillStyle=r()<.5?'rgba(0,0,0,.045)':'rgba(255,255,255,.05)';x.fillRect(r()*W,r()*H,.7,.7);}
+  x.strokeStyle='rgba(0,0,0,.05)';x.lineWidth=.3;for(let y=0;y<H;y+=1.6){x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();}}
+function drawRS(x,bg){const W=120,H=72,G='#0f6a2e',G2='#0a4d20';
+  if(bg){emCloth(x,W,H,'#f4c400',11);
+    const b=x.createLinearGradient(0,H*.8,0,H);b.addColorStop(0,'#b5141c');b.addColorStop(1,'#7e0c12');x.fillStyle=b;x.fillRect(0,H*.8,W,H*.2);
+    emText(x,'لبيك يا حسين',60,H*.9,9.5,'#fff4c8');
+    emText(x,'شيعة الجبل',60,8.6,10.5,G);}
+  const cx=60,cy=34.5,r=16.5;
+  // laurels (printed green)
+  emLaurel(x,cx,cy+1,r+4,-1,G);emLaurel(x,cx,cy+1,r+4,1,G);
+  // printed roundel: green ring, mountains in two greens, white snow
+  x.lineWidth=2.2;x.strokeStyle=G;x.beginPath();x.arc(cx,cy,r,0,7);x.stroke();x.lineWidth=.7;x.beginPath();x.arc(cx,cy,r-2.3,0,7);x.stroke();
+  x.save();x.beginPath();x.arc(cx,cy,r-3,0,7);x.clip();
+  x.fillStyle=G;x.fill(new Path2D('M40 46 L48 33 L51.5 36 L58 24 L64.5 34 L68 30 L80 46 Z'));
+  x.fillStyle='#fffbe8';x.fill(new Path2D('M58 24 L61.2 28.9 L59.6 28.1 L58 29.8 L56.4 28 L54.9 29 Z'));x.fill(new Path2D('M48 33 L50 35.9 L48.5 35.3 L47.6 36.3 L46.3 35.4 Z'));x.fill(new Path2D('M68 30 L70.1 33 L68.6 32.4 L67.5 33.5 L66.3 32.5 Z'));
+  x.fillStyle=G2;x.fill(new Path2D('M40 49 L52 40 L59 43 L66 38 L80 49 Z'));x.restore();
+  // Zulfiqar printed in green with a white edge line, across the roundel
+  x.save();x.translate(61,44.5);x.scale(.5,.5);x.fillStyle=G;x.strokeStyle='#fffbe8';x.lineWidth=1.1;
+  x.beginPath();x.moveTo(-22,-3.2);x.lineTo(16,-4.4);x.quadraticCurveTo(31,-6.5,42,-12);x.lineTo(36,-4.8);x.quadraticCurveTo(28,-2.2,21,-.9);x.lineTo(21,.9);x.quadraticCurveTo(28,2.2,36,4.8);x.lineTo(42,12);x.quadraticCurveTo(31,6.5,16,4.4);x.lineTo(-22,3.2);x.closePath();x.fill();x.stroke();
+  x.beginPath();x.moveTo(-21,-11);x.quadraticCurveTo(-26,0,-21,11);x.lineTo(-25,11);x.quadraticCurveTo(-30,0,-25,-11);x.closePath();x.fill();x.stroke();
+  x.fillRect(-40,-2.8,15,5.6);x.strokeRect(-40,-2.8,15,5.6);x.beginPath();x.arc(-42,0,3.6,0,7);x.fill();x.stroke();x.restore();}
+function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#f4c400':'#24150b';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
 function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
   const rect=(col,a,b,w,h)=>{x.fillStyle=col;x.fillRect(a,b,w,h);};const hs=(cols)=>cols.forEach((col,i)=>rect(col,0,i*H/cols.length,W,H/cols.length+1));const vs=(cols)=>cols.forEach((col,i)=>rect(col,i*W/cols.length,0,W/cols.length+1,H));
   const star=(cx,cy,r,col,n=5)=>{x.fillStyle=col;x.beginPath();for(let i=0;i<n*2;i++){const a=-Math.PI/2+i*Math.PI/n,rr=i%2?r*.42:r;x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}x.closePath();x.fill();};
@@ -18560,6 +18610,9 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
   geAIAll();}   /* empire economy for AI nations: bonds, bank, buildings, total war, embargoes, merchants... (13g-grandeco.js) */
 
 // ---------- save ----------
+/* calendar: month 1 = January 2026; GC.day = days into the current month (0..29), ticked by the real-time clock in 13c */
+const GR_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1);return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));}catch(e){}}
 // a save made on an older world map (the province list changed, e.g. 2026-11-06 real borders 174 -> 236 land provinces) can't
 // continue: its province indices point at different places, so the map breaks and a Fight-it battle never loads (Lane A1)
@@ -19060,6 +19113,9 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
   addEventListener('resize',()=>{if(document.getElementById('grandScreen'))guResize();});
   guResize();guFit(null);const me=GC.me&&GC.nat[GC.me];if(me){GV.sel=me.cap;guCentre(me.cap,2.0);}guRedraw();grandMapRefresh();
   if(!window._gKeys){window._gKeys=1;addEventListener('keydown',ev=>{if(!document.getElementById('grandScreen')||document.getElementById('grandScreen').style.display==='none'||G)return;if(ev.key==='Enter'&&!GV.busy&&!document.getElementById('gModal')){ev.preventDefault();guEndTurn();}
+    {const tg=ev.target&&ev.target.tagName;if(tg!=='INPUT'&&tg!=='TEXTAREA'&&tg!=='SELECT'&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&!document.getElementById('gModal')){   /* time keys (the grand map's key table): Space pause, + / − speed, 1–5 speed */
+      if(ev.key===' '){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));return;}if(ev.key==='+'||ev.key==='='){guSpeed((GV.spd||GV.lastSpd||1)+1);return;}if(ev.key==='-'||ev.key==='_'){if(GV.spd>1)guSpeed(GV.spd-1);return;}
+      if(ev.key>='1'&&ev.key<='5'&&ev.key.length===1){guSpeed(+ev.key);return;}}}
     if(GV.g3)return;const k=ev.key.toLowerCase(),st=60;if(k==='w'||k==='arrowup')GV.oy+=st;else if(k==='s'||k==='arrowdown')GV.oy-=st;else if(k==='a'||k==='arrowleft')GV.ox+=st;else if(k==='d'||k==='arrowright')GV.ox-=st;else return;guClamp();guRedraw();});}}
 function guArmyTip(aid,mx,my){const t=document.getElementById('gTip'),a=GC.armies.find(x=>x.id===aid);if(!t||!a){if(t)t.style.display='none';return;}
   const N=GCM.nats.get(a.o),mine=a.o===GC.me,P=GCM.P[a.at];const sea=P&&P.sea;
@@ -19075,7 +19131,7 @@ function guClick(mx,my){if(GV.g3){g3Click(mx,my);return;}for(const c of GV.chips
 function guRight(ev){if(GC.ph!=='plan'||GV.busy||!GV.selA)return;const r=GV.cv.getBoundingClientRect(),[wx,wy]=guToWorld(ev.clientX-r.left,ev.clientY-r.top),h=guProvAt(wx,wy);if(h<0)return;guMoveTo(GV.selA,h);}
 function guMoveTo(aid,h){const res=grOrderMove(aid,h);if(res.err){GV.hint=res.err;guHint();return;}
   if(res.decl){const w=GCM.nats.get(res.decl).name;guConfirm('Declare war on '+w+'?','Marching into '+GCM.P[h].n+' means war with '+w+'. Their allies and rivals may react.',()=>{const a=GC.armies.find(x=>x.id===aid);grDeclare(GC.me,res.decl);grOrderMove(aid,h);guSide();guRedraw();grSave();});return;}
-  GV.hint=GCM.P[h].n+': '+res.r.turns+' turn'+(res.r.turns>1?'s':'')+' away'+(res.r.path.some(j=>GCM.P[j].sea)?' (by sea)':'');guHint();guSide();guRedraw();grSave();}
+  GV.hint=GCM.P[h].n+': arrives ~'+grDateStr(GC.turn+res.r.turns,0)+' ('+res.r.turns+' month'+(res.r.turns>1?'s':'')+')'+(res.r.path.some(j=>GCM.P[j].sea)?' (by sea)':'');guHint();guSide();guRedraw();grSave();}
 function guHint(){const e=document.getElementById('gHint');if(e)e.textContent=GV.hint||'';}
 
 // ---------- top bar, side panel, log ----------
@@ -19083,7 +19139,7 @@ function grandMapRefresh(){if(GV.g3)g3Refreshed();GV.dirty=true;guTop();guSide()
 function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const me=GC.me?GC.nat[GC.me]:null,N=GC.me?grNat(GC.me):null;
   const score=GC.me?grScore(GC.me):0;
   t.innerHTML='';if(N){t.appendChild(guEl('span','display:inline-block;width:18px;height:18px;border-radius:4px;border:1px solid #fff;background:'+N.color));t.appendChild(guEl('b','font-size:17px',GCM.nats.get(GC.me).name));}
-  t.appendChild(guEl('span','opacity:.9','Turn <b>'+Math.min(GC.turn,GC.maxTurn)+'</b>/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')));
+  t.appendChild(guEl('span','opacity:.9','<b id="gDate">'+(GC.ph==='plan'?grDateStr(GC.turn,GC.day|0):grDateStr(GC.turn+1,0))+'</b> <span style="opacity:.65">month '+Math.min(GC.turn,GC.maxTurn)+'/'+GC.maxTurn+(GC.len==='quick'?' (Quick)':'')+'</span>'));guClockUI(t);
   if(me)t.appendChild(guEl('span','','$<b>'+Math.round(me.cash).toLocaleString()+'</b> <span style="opacity:.7">('+((me.inc||0)>=0?'+':'')+Math.round(me.inc||0)+'/turn)</span>'));
   if(me)t.appendChild(guEl('span','opacity:.9','Score <b>'+score+'</b> · provinces <b>'+GCM.P.filter(p=>p.land&&GC.prov[p.i].o===GC.me).length+'</b>'));
   try{geUiTop(t,me);}catch(e){console.error('geUiTop',e);}try{gmilUiTop(t,me);}catch(e){console.error('gmilUiTop',e);}
@@ -19091,7 +19147,24 @@ function guTop(){const t=document.getElementById('gTop');if(!t||!GC)return;const
   const end=guEl('button','padding:7px 18px;border-radius:6px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px;font-weight:bold',GC.ph==='plan'?'End turn ▶':'Resolving…');end.id='gEnd';end.type='button';end.disabled=GC.ph!=='plan'||!!GC.over;end.title='Enter';end.onclick=guEndTurn;t.appendChild(end);
   if(me&&typeof npOpen==='function'){const nb=guEl('button','padding:7px 14px;border-radius:6px;border:1px solid #c9a35a;background:#2a3a4c;color:#ffe6a8;cursor:pointer;font-size:15px;font-weight:bold','Nation');nb.type='button';nb.title='Open your nation panel';nb.onclick=()=>npOpen();t.appendChild(nb);}
   const mb=guEl('button','padding:7px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:14px','Save & exit');mb.type='button';mb.onclick=()=>{grSave();grandClose();};t.appendChild(mb);}
-function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();}
+function guEndTurn(){if(!GC||GC.ph!=='plan'||GC.over||GV.busy||G)return;GV.busy=1;GV.hint='';guHint();GC.day=0;GV.dayF=0;grEndTurn(false);GV.busy=0;if(GV.g3)g3AfterTurn();grandMapRefresh();}
+/* ---------- real time with pause (EU4 feel, lane A A2 slice 1) ----------
+   The calendar runs in days (30 a month); a month ending = the old End turn, so the simulation and its determinism are unchanged:
+   the result depends only on state + the orders standing when each month closes + seed. Starts paused (= the classic turn game).
+   Space = pause/resume, + / − or 1–5 = speed (grand-map keys; WASD stay camera-only). The clock waits while battles are pending,
+   a modal is open or a battle is being fought, so a battle starting pauses the map. GV.spd is this player's UI speed. */
+const GU_SPD=[0,.5,1,2.5,5,10];   /* days per second at speeds 1..5 (speed 5: a month in 3 s) */
+function guClockUI(t){const w=guEl('span','display:inline-flex;align-items:center;gap:3px;margin-left:2px');w.id='gClock';
+  const pb=guEl('button','padding:3px 9px;border-radius:5px;border:1px solid #7aa84f;background:'+(GV.spd?'#18293a':'#4f6b32')+';color:#fff;cursor:pointer;font-size:14px;min-width:30px',GV.spd?'❚❚':'▶');pb.type='button';pb.id='gPlay';pb.title=GV.spd?'Pause (Space)':'Play: days pass in real time (Space)';pb.onclick=()=>guSpeed(GV.spd?0:(GV.lastSpd||2));w.appendChild(pb);
+  for(let i=1;i<=5;i++){const b=guEl('button','width:11px;height:'+(8+i*2)+'px;padding:0;border-radius:2px;border:1px solid #6d8aa3;cursor:pointer;align-self:flex-end;background:'+((GV.lastSpd||2)>=i?(GV.spd?'#ffd24a':'#8a7a4a'):'#18293a'),'');b.type='button';b.title='Speed '+i+' (key '+i+', or + / −)';b.onclick=()=>guSpeed(i);w.appendChild(b);}
+  t.appendChild(w);}
+function guSpeed(s){s=Math.max(0,Math.min(5,s|0));if(s)GV.lastSpd=s;GV.spd=s;GV.clkT=performance.now();guTop();}
+function guClockTick(){const now=performance.now(),dt=Math.min(1,(now-(GV.clkT||now))/1000);GV.clkT=now;
+  if(!GV.spd||!GC||GC.over||GC.ph!=='plan'||GV.busy||G||document.getElementById('gModal'))return;const sc=document.getElementById('grandScreen');if(!sc||sc.style.display==='none'||document.hidden)return;
+  GV.dayF=(GV.dayF||0)+dt*GU_SPD[GV.spd];if(GV.dayF<1)return;const n=Math.floor(GV.dayF);GV.dayF-=n;GC.day=(GC.day|0)+n;
+  if(GC.day>=30){GC.day=0;GV.dayF=0;guEndTurn();return;}
+  const d=document.getElementById('gDate');if(d)d.textContent=grDateStr(GC.turn,GC.day);}
+if(!window._gClk){window._gClk=setInterval(()=>{try{guClockTick();}catch(e){console.error('guClockTick',e);}},100);}
 function guProvArmies(pi){return GC.armies.filter(a=>a.at===pi);}
 function guSide(){const s=document.getElementById('gSel');if(!s||!GC)return;s.innerHTML='';const pi=GV.sel;if(pi<0||!GCM.P[pi]){s.innerHTML='<div style="opacity:.7;line-height:1.6">Click a province to see it.<br>Select an army (click its flag), then <b>right-click</b> a province to march there. Armies cross seas between ports; oceans take several turns.<br>Press <b>Enter</b> or the green button to end the turn: everyone moves at once.</div>';return;}
   const p=GCM.P[pi];if(p.sea){s.innerHTML='<h2 style="margin:0 0 4px;font-size:19px">'+p.n+'</h2><div style="opacity:.8">Sea zone · '+p.cost+' turn'+(p.cost>1?'s':'')+' to cross'+(p.ck?'<br><span style="color:#ff9d8e">Chokepoint: whoever holds it will control trade (stage 2).</span>':'')+'</div>'+guArmyRows(pi);guBindArmies(s,pi);try{gmilUiProv(s,pi);}catch(e){console.error('gmilUiProv',e);}return;}
@@ -19546,7 +19619,7 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 `;document.head.appendChild(s);}
 function g3UI(){g3Css();const w=document.getElementById('gMapWrap');if(!w)return;let u=document.getElementById('g3ui');if(u)u.remove();u=guEl('div','');u.id='g3ui';w.appendChild(u);
   G3.lab=guEl('div','position:absolute;inset:0');u.appendChild(G3.lab);const md=guEl('div','');md.id='g3modes';G3_MODES.forEach(([k,n])=>{const b=guEl('button','',n);b.type='button';b.dataset.m=k;b.onclick=()=>g3SetMode(k);md.appendChild(b);});u.appendChild(md);
-  G3.bn=[];G3.nl=[];G3.pl=new Map();G3.sl=[];
+  G3.bn=[];G3.nl=[];G3.natSig="";G3.pl=new Map();G3.sl=[];
   const prio=GCM.P.filter(p=>p.land).sort((a,b)=>(b.cap-a.cap)||(b.wg-a.wg)||(b.tw-a.tw));for(const p of prio){const e=guEl('div','');e.className='b'+(p.cap?' cap':'');G3.lab.appendChild(e);G3.bn.push({el:e,pi:p.i,show:false});}
   for(const p of GCM.P)if(p.sea){const e=guEl('div','');e.className='s';e.textContent=(p.ck?'◆ ':'')+p.n;G3.lab.appendChild(e);G3.sl.push({el:e,pi:p.i,ck:p.ck});}
   const bt=guEl('div','');bt.id='g3btns';u.appendChild(bt);
@@ -19611,7 +19684,7 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
   const proj=(x,y,z)=>{v.set(x,y,z).project(cam);if(v.z>1||v.z<-1)return null;const X=(v.x*.5+.5)*w,Y=(-v.y*.5+.5)*h;if(X<-60||Y<-40||X>w+60||Y>h+40)return null;return [X,Y];};
   const put=(el,q,dx,dy)=>{const t='translate('+Math.round(q[0]+(dx||0))+'px,'+Math.round(q[1]+(dy||0))+'px)';if(el._t!==t){el._t=t;el.style.left='0';el.style.top='0';el.style.transform='translate(-50%,-100%) '+t;}};
   const putC=(el,q)=>{const t='translate('+Math.round(q[0])+'px,'+Math.round(q[1])+'px)';if(el._t!==t){el._t=t;el.style.transform='translate(-50%,-50%) '+t;}};
-  const vis=(el,f)=>{const s=f?'block':'none';if(el._v!==s){el._v=s;el.style.display=s;}};
+  const vis=(el,f)=>{if(!el)return;const s=f?'block':'none';if(el._v!==s){el._v=s;el.style.display=s;}};
   // province banners
   for(const b of G3.bn){const p=GCM.P[b.pi],st=GC.prov[b.pi];let q=null;const big=p.cap||p.wg;
     if(d<1700&&(d<620||(d<1000&&(big||p.tw>=3))||(d<1700&&p.cap))){const tw=g3Towns().find(t=>t.pi===b.pi),x=tw?tw.x:p.x,z=tw?tw.z:p.y;q=proj(x,g3HeightAt(x,z)+9+(p.cap?3:0),z);}
@@ -19656,7 +19729,7 @@ function g3Frame(ts){G3.raf=requestAnimationFrame(g3Frame);if(!G3.R||!GV.cv||!do
   if(mv||anim||G3.lblDirty||(G3.lf=(G3.lf||0)+1)%20===0){g3Labels(false);G3.lblDirty=false;}
   if(mv||(G3.lf%12===0)||G3.miniDirty)g3Mini();}
 if(!window._g3Keys){window._g3Keys=1;const ok=ev=>{const t=ev.target&&ev.target.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT')return false;const sc=document.getElementById('grandScreen');return !!sc&&sc.style.display!=='none'&&GV.g3&&!G;};
-  addEventListener('keydown',ev=>{if(!ok(ev)||ev.ctrlKey||ev.metaKey||ev.altKey)return;const k=ev.key.toLowerCase();if('wasdqerf+-='.includes(k)&&k.length===1||k.startsWith('arrow'))G3.keys.add(k);if(k==='home'){const m=GC&&GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);}});
+  addEventListener('keydown',ev=>{if(!ok(ev)||ev.ctrlKey||ev.metaKey||ev.altKey)return;const k=ev.key.toLowerCase();if('wasdqerf'.includes(k)&&k.length===1||k.startsWith('arrow'))G3.keys.add(k);if(k==='home'){const m=GC&&GC.me&&GC.nat[GC.me];if(m)guCentre(m.cap,1);}});
   addEventListener('keyup',ev=>{G3.keys.delete(ev.key.toLowerCase());});addEventListener('blur',()=>G3.keys.clear());}
 (function g3Credits(){try{if(document.getElementById('neCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
   const p=document.createElement('p');p.className='credits';p.id='neCred';p.textContent='Grand map coastlines, lakes and rivers: Natural Earth (public domain, naturalearthdata.com). Grand map ground detail textures are generated in-game (original, no outside assets). Grand map elevation and sea depth: Terrarium terrain tiles (Mapzen / AWS Open Data; derived from ETOPO1, GEBCO, SRTM and other public datasets). Satellite-style ground colour: Natural Earth I (public domain).';ps[ps.length-1].insertAdjacentElement('afterend',p);}catch(e){}})();
@@ -19972,9 +20045,9 @@ function geNation(c,R,inc){const N=GC.nat[c],E=N.e,S=GE_ST[c],br={};const own=S.
   if(E.food<25){const want=Math.min(50,40-E.food);const cost=want*5;if(N.cash+net>=cost){E.food+=want;net-=cost;br.fImp2=-Math.round(cost);}}
   E.starve=0;if(E.food<0){E.food=0;E.starve=1;}E.food=Math.min(320,E.food);
   // manpower
-  E.man=Math.min(geManCap(c),E.man+geManRegen(c));
+  E.man=Math.min(geManCap(c),E.man+geManRegen(c)*gmod('nation',c,'manpower',1));
   // upkeep (grows with army size), total war surcharge
-  const av=geArmyVal(c);let up=av*.018*(1+av/70000)*(geFx(c,'upkeep')?.88:1)*(E.tw?1.15:1);br.upkeep=-Math.round(up);net-=up;
+  const av=geArmyVal(c);let up=av*.018*(1+av/70000)*(geFx(c,'upkeep')?.88:1)*(E.tw?1.15:1)*gmod('nation',c,'upkeep',1);br.upkeep=-Math.round(up);net-=up;
   // war bonds: due bonds are repaid; a default costs credit and stability
   const keep=[];for(const b of E.bonds){if(b[0]>GC.turn){keep.push(b);continue;}if(N.cash+net>=b[1]){net-=b[1];br.bondPay=(br.bondPay||0)-b[1];}else{E.def++;E.defT=GC.turn+8;keep.push([GC.turn+4,Math.round(b[1]*1.2)]);grLog(GCM.nats.get(c).name+' defaulted on a war bond!',c===GC.me?c:'');}}E.bonds=keep;
   if(E.defT>GC.turn)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+2);}
@@ -19984,7 +20057,7 @@ function geNation(c,R,inc){const N=GC.nat[c],E=N.e,S=GE_ST[c],br={};const own=S.
   if(E.tw)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+3.5);}
   if(E.ration)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+3);}
   if(E.starve)for(const p of own){const st=GC.prov[p.i];st.un=Math.min(100,st.un+8);}
-  N.cash+=net;N.inc=Math.round(net);E.br=br;
+  if(net>0)net*=gmod('nation',c,'income',1);N.cash+=net;N.inc=Math.round(net);E.br=br;
   if(N.cash<0){N.cash=0;for(const a of GC.armies)if(a.o===c&&a.u.length>3&&R()<.5){a.u.pop();}}
   E.hist.push([GC.turn,Math.round(net),Math.round(-br.upkeep)]);if(E.hist.length>30)E.hist.shift();}
 // ---------- supply state of armies (the battle reads it) ----------
@@ -20608,6 +20681,7 @@ const GMOD_ROWS=[
   {id:'sty_prof',src:'Professional officers',scope:'nation',stat:'rallySpeed',mul:1.25,cond:'style:prof'},
   {id:'sty_home',src:'Home defenders',scope:'nation',stat:'homeMorale',mul:1.4,cond:'style:home'},
   {id:'sty_fire',src:'Firepower doctrine',scope:'nation',stat:'fireSupport',mul:1.1,cond:'style:fire'}];
+const GMOD_HOOKS=[];   // monthly systems register here (ideas/power points, later stability, war support...): GMOD_HOOKS.push(fn)
 const GMOD_C={m:-1,g:null,cache:new Map()};
 function gmodKey(scope,obj){return scope==='army'?(obj&&(obj.id!==undefined?obj.id:obj.nm)):obj;}
 function gmodCond(row,key){if(row.t!==undefined&&row.t!==key)return false;const c=row.cond||'always';const i=c.indexOf(':');const f=GMOD_COND[i<0?c:c.slice(0,i)];if(!f)return false;try{return !!f(key,i<0?'':c.slice(i+1));}catch(e){return false;}}
@@ -20620,10 +20694,83 @@ function gmod(scope,obj,stat,base){base=base||0;if(GMOD_C.g!==GC){GMOD_C.g=GC;GM
 function gmodLines(scope,obj,stat){return gmodRows(scope,obj,stat).map(r=>(r.add?(r.add>0?'+':'')+Math.round(r.add*100)+'%':'x'+r.mul)+' from '+r.src+(r.until!==undefined?' (until month '+r.until+')':''));}
 function gmodAdd(row){if(!GC)return;if(!GC.mod)GC.mod=[];GC.mod=GC.mod.filter(r=>r.id!==row.id);GC.mod.push(row);GMOD_C.cache.clear();}
 function gmodRemove(id){if(!GC||!GC.mod)return;GC.mod=GC.mod.filter(r=>r.id!==id);GMOD_C.cache.clear();}
-function gmodMonth(m){if(!GC)return;if(m===undefined)m=GC.turn;GMOD_C.m=m;GMOD_C.g=GC;if(GC.mod)GC.mod=GC.mod.filter(r=>r.until===undefined||r.until>=m);GMOD_C.cache.clear();}
+function gmodMonth(m){if(!GC)return;if(m===undefined)m=GC.turn;GMOD_C.m=m;GMOD_C.g=GC;if(GC.mod)GC.mod=GC.mod.filter(r=>r.until===undefined||r.until>=m);GMOD_C.cache.clear();for(const f of GMOD_HOOKS)try{f(m);}catch(e){console.error('monthly hook',e);}GMOD_C.cache.clear();}
 // Nation panel tab: every modifier that applies to this nation, with its source.
 const GMOD_STATS={warSupport:'War support',rallySpeed:'Rally speed',homeMorale:'Home-ground morale',fireSupport:'Fire support'};
 npTab('mods','✨','Modifiers',(code,body)=>{const rows=gmodRows('nation',code);
   body.innerHTML='<div style="opacity:.8;margin-bottom:8px">Every bonus and penalty on this nation, and where it comes from.</div>'+(rows.length?rows.map(r=>'<div style="padding:5px 0;border-bottom:1px solid #2c4258"><b>'+(GMOD_STATS[r.stat]||r.stat)+'</b> '+(r.add?(r.add>0?'+':'')+Math.round(r.add*100)+'%':'x'+r.mul)+' <span style="opacity:.75">— '+r.src+(r.until!==undefined?', until month '+r.until:'')+'</span></div>').join(''):'<i>No modifiers.</i>');});
+// B3 POWER POINTS + NATIONAL IDEAS (lane B, EU4-style). Three pools — Political (pol), Diplomatic (dip), Military (mil) — grow every month
+// via the ONE monthly hook (gmodMonth -> GMOD_HOOKS). Points are spent on ideas; every idea is only a ROW in the modifier table (GMOD_ROWS,
+// cond 'idea:<id>'), never bespoke code. Each morale style has its own 4-idea tree (equal total value, different flavour) + 3 groups for everyone.
+// State: GC.nat[c].pp={pol,dip,mil,t} and GC.nat[c].idea=[ids] (saved with the campaign). Deterministic: no random, AI buys in a fixed order.
+const GID_POOL={pol:'Political',dip:'Diplomatic',mil:'Military'};
+const GID_COST=[30,45,60,80];
+// idea = [id, name, pool, stat, add|mul, description]
+const GID_GROUPS={
+  zeal:{name:'Martyrdom & Fervour',tree:1,ideas:[
+    ['zl1','Volunteers\' Call','mil','manpower',{mul:1.15},'+15% manpower'],
+    ['zl2','Faith in the Cause','pol','warSupport',{add:.06},'+6% war support'],
+    ['zl3','Hold the Line','mil','homeMorale',{mul:1.15},'+15% home-ground morale'],
+    ['zl4','Cost of Sacrifice','pol','upkeep',{mul:.93},'-7% army upkeep']]},
+  prof:{name:'Staff & Training',tree:1,ideas:[
+    ['pf1','Reserve Registers','mil','manpower',{mul:1.15},'+15% manpower'],
+    ['pf2','Officer Corps','pol','warSupport',{add:.06},'+6% war support'],
+    ['pf3','Staff College','mil','rallySpeed',{mul:1.15},'+15% rally speed'],
+    ['pf4','Logistics Corps','pol','upkeep',{mul:.93},'-7% army upkeep']]},
+  home:{name:'Fortified Homeland',tree:1,ideas:[
+    ['hm1','Territorial Militia','mil','manpower',{mul:1.15},'+15% manpower'],
+    ['hm2','Defend the Hearth','pol','warSupport',{add:.06},'+6% war support'],
+    ['hm3','Known Ground','mil','homeMorale',{mul:1.15},'+15% home-ground morale'],
+    ['hm4','Local Depots','pol','upkeep',{mul:.93},'-7% army upkeep']]},
+  fire:{name:'Fire Support Doctrine',tree:1,ideas:[
+    ['fr1','Mobile Reserves','mil','manpower',{mul:1.15},'+15% manpower'],
+    ['fr2','Public Confidence','pol','warSupport',{add:.06},'+6% war support'],
+    ['fr3','Precision Fires','mil','fireSupport',{mul:1.15},'+15% fire support'],
+    ['fr4','Munitions Contracts','pol','upkeep',{mul:.93},'-7% army upkeep']]},
+  eco:{name:'Economic Ideas',ideas:[
+    ['ec1','Trade Ledgers','pol','income',{mul:1.04},'+4% income'],
+    ['ec2','Tax Reform','pol','income',{mul:1.04},'+4% income'],
+    ['ec3','Customs Union','pol','income',{mul:1.04},'+4% income'],
+    ['ec4','Industrial Plan','pol','ppPol',{mul:1.15},'+15% Political points']]},
+  dip:{name:'Diplomatic Ideas',ideas:[
+    ['dp1','Embassy Network','dip','ppDip',{mul:1.15},'+15% Diplomatic points'],
+    ['dp2','Cultural Exchange','dip','income',{mul:1.03},'+3% income'],
+    ['dp3','Treaty Bureau','dip','ppDip',{mul:1.15},'+15% Diplomatic points'],
+    ['dp4','Grand Alliances','dip','ppPol',{mul:1.1},'+10% Political points']]},
+  mil:{name:'Military Ideas',ideas:[
+    ['ml1','Conscription Law','mil','manpower',{mul:1.1},'+10% manpower'],
+    ['ml2','Quartermaster Corps','mil','upkeep',{mul:.95},'-5% army upkeep'],
+    ['ml3','War College','mil','ppMil',{mul:1.15},'+15% Military points'],
+    ['ml4','Veteran Cadres','mil','manpower',{mul:1.1},'+10% manpower']]}};
+const GID_ORDER=['eco','mil','dip'];   // groups open to everyone, after the nation's own style tree
+GMOD_COND.idea=(k,arg)=>{const N=GC&&GC.nat[k];return !!(N&&N.idea&&N.idea.indexOf(arg)>=0);};
+for(const g of Object.keys(GID_GROUPS))for(const i of GID_GROUPS[g].ideas){const r={id:'idea_'+i[0],src:i[1],scope:'nation',stat:i[3],cond:'idea:'+i[0]};if(i[4].add)r.add=i[4].add;if(i[4].mul)r.mul=i[4].mul;GMOD_ROWS.push(r);}
+function gidStyle(c){try{return MORALE_STYLE[grNat(c).fac]||MORALE_STYLE[c]||'prof';}catch(e){return 'prof';}}
+function gidGroups(c){return [gidStyle(c)].concat(GID_ORDER);}
+function gidN(c){const N=GC&&GC.nat[c];if(!N)return null;if(!N.pp)N.pp={pol:20,dip:20,mil:20,t:GC.turn};if(!N.idea)N.idea=[];return N;}
+function gidMonthGain(c){const N=GC.nat[c],own=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c).length;let war=false;try{war=Object.keys(GC.nat).some(o=>o!==c&&!GC.nat[o].dead&&grAtWar(c,o));}catch(e){}
+  const na=GC.armies.filter(a=>a.o===c).length;
+  return {pol:gmod('nation',c,'ppPol',2+Math.min(4,Math.floor(own/8))),dip:gmod('nation',c,'ppDip',2+(war?0:1)),mil:gmod('nation',c,'ppMil',2+(war?1:0)+Math.min(3,Math.floor(na/4)))};}
+function gidNext(c,g){const N=gidN(c);for(const i of GID_GROUPS[g].ideas)if(N.idea.indexOf(i[0])<0)return i;return null;}
+function gidLevel(c,g){const N=gidN(c);return GID_GROUPS[g].ideas.filter(i=>N.idea.indexOf(i[0])>=0).length;}
+// the ONE buy function (player button and AI both): returns an error string or '' on success
+function gidBuy(c,g){const N=gidN(c);if(!N||!GID_GROUPS[g]||gidGroups(c).indexOf(g)<0)return 'Not available.';const i=gidNext(c,g);if(!i)return 'All ideas in this group are adopted.';
+  const cost=GID_COST[gidLevel(c,g)];if(N.pp[i[2]]<cost)return 'Needs '+cost+' '+GID_POOL[i[2]]+' points.';N.pp[i[2]]-=cost;N.idea.push(i[0]);GMOD_C.cache.clear();
+  if(c===GC.me)grLog('Adopted the idea "'+i[1]+'" ('+i[5]+').',c);return '';}
+function gidMonth(){if(!GC)return;for(const c of Object.keys(GC.nat)){const N=GC.nat[c];if(N.dead)continue;gidN(c);if(N.pp.t===GC.turn)continue;N.pp.t=GC.turn;const g=gidMonthGain(c);
+    for(const k of ['pol','dip','mil'])N.pp[k]=Math.min(999,Math.round((N.pp[k]+g[k])*100)/100);
+    if(c!==GC.me){for(let n=0;n<3;n++){let bought=false;for(const grp of gidGroups(c)){if(!gidBuy(c,grp)){bought=true;break;}}if(!bought)break;}}}}
+GMOD_HOOKS.push(gidMonth);
+GMOD_STATS.manpower='Manpower';GMOD_STATS.upkeep='Army upkeep';GMOD_STATS.income='Income';GMOD_STATS.ppPol='Political points';GMOD_STATS.ppDip='Diplomatic points';GMOD_STATS.ppMil='Military points';
+npTab('idea','💡','Ideas & points',(code,body,c)=>{const N=gidN(code),own=c.own&&code===GC.me,g=gidMonthGain(code);
+  let h='<div style="display:flex;gap:28px;margin-bottom:10px;font-size:17px">'+['pol','dip','mil'].map(k=>'<div><b>'+GID_POOL[k]+'</b> '+Math.floor(N.pp[k])+' <span style="opacity:.7">(+'+(Math.round(g[k]*10)/10)+'/month)</span></div>').join('')+'</div>'+
+  '<div style="opacity:.8;margin-bottom:8px">Points grow every month. Spend them on ideas; each group unlocks in order and every next idea costs more.</div>';
+  body.innerHTML=h;
+  for(const grp of gidGroups(code)){const G=GID_GROUPS[grp],box=document.createElement('div');box.style.cssText='margin:10px 0;padding:8px 10px;border:1px solid #34506a;border-radius:6px';
+    box.innerHTML='<div style="font-size:17px;margin-bottom:4px"><b>'+G.name+'</b>'+(G.tree?' <span style="opacity:.7">— national tree</span>':'')+'</div>';
+    G.ideas.forEach((i,ix)=>{const has=N.idea.indexOf(i[0])>=0,row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:10px;padding:3px 0;opacity:'+(has?1:.85);
+      const nxt=!has&&ix===gidLevel(code,grp);row.innerHTML='<span style="width:20px">'+(has?'✔':ix+1)+'</span><span style="flex:1"><b>'+i[1]+'</b> <span style="opacity:.75">— '+i[5]+'</span></span><span style="opacity:.7">'+(has?'adopted':GID_COST[ix]+' '+GID_POOL[i[2]])+'</span>';
+      if(nxt&&own){const b=document.createElement('button');b.textContent='Adopt';b.style.cssText='font-size:15px;padding:2px 12px;cursor:pointer';b.disabled=N.pp[i[2]]<GID_COST[ix];b.onclick=()=>{const e=gidBuy(code,grp);if(e&&typeof grLog==='function')grLog(e,code);npDraw();};row.appendChild(b);}
+      box.appendChild(row);});body.appendChild(box);}});
 </script>
 </body></html>

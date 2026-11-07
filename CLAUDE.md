@@ -80,7 +80,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   appears pre-built for the defender in that province's battles, Bunker Buster = a grand-map strike on fortified provinces.
   Zealous morale no longer depends on a cleric unit. Campaign missions keep working (scripted versions where a mission needs them).
   **Signature assets are unique, not copied** (Abdullah 21:02 "I don't like all countries having the same thing"): the clerical
-  leader only for IR/RS/DW, the Dear Leader only for KP, the Mountain Fortress only for **IR, RS, AF, KD, DW and KP** (21:03), the **Bunker Buster only for some
+  leader only for IR/RS/DW — **one single Ayatollah leads all three Shia factions** (Abdullah 2026-11-06 21:23; resides in Iran, IR/RS/DW in a permanent alliance while he leads them), the Dear Leader only for KP, the Mountain Fortress only for **IR, RS, AF, KD, DW and KP** (21:03), the **Bunker Buster only for some
   nations (US, IL, RU, CN)**; every other nation gets a *different* signature asset of its own (not a copy), and overall strength
   stays even through balancing. Table of who has what: `orch/SIGNATURES.md` (grand stage 2 writes it).
 - **Mountain Shias (RS) identity** (Abdullah 2026-11-05 19:46 "make it more obvious"): unmistakably a Lebanese mountain Shia

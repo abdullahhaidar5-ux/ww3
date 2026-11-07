@@ -12,6 +12,7 @@ const GMOD_ROWS=[
   {id:'sty_prof',src:'Professional officers',scope:'nation',stat:'rallySpeed',mul:1.25,cond:'style:prof'},
   {id:'sty_home',src:'Home defenders',scope:'nation',stat:'homeMorale',mul:1.4,cond:'style:home'},
   {id:'sty_fire',src:'Firepower doctrine',scope:'nation',stat:'fireSupport',mul:1.1,cond:'style:fire'}];
+const GMOD_HOOKS=[];   // monthly systems register here (ideas/power points, later stability, war support...): GMOD_HOOKS.push(fn)
 const GMOD_C={m:-1,g:null,cache:new Map()};
 function gmodKey(scope,obj){return scope==='army'?(obj&&(obj.id!==undefined?obj.id:obj.nm)):obj;}
 function gmodCond(row,key){if(row.t!==undefined&&row.t!==key)return false;const c=row.cond||'always';const i=c.indexOf(':');const f=GMOD_COND[i<0?c:c.slice(0,i)];if(!f)return false;try{return !!f(key,i<0?'':c.slice(i+1));}catch(e){return false;}}
@@ -24,7 +25,7 @@ function gmod(scope,obj,stat,base){base=base||0;if(GMOD_C.g!==GC){GMOD_C.g=GC;GM
 function gmodLines(scope,obj,stat){return gmodRows(scope,obj,stat).map(r=>(r.add?(r.add>0?'+':'')+Math.round(r.add*100)+'%':'x'+r.mul)+' from '+r.src+(r.until!==undefined?' (until month '+r.until+')':''));}
 function gmodAdd(row){if(!GC)return;if(!GC.mod)GC.mod=[];GC.mod=GC.mod.filter(r=>r.id!==row.id);GC.mod.push(row);GMOD_C.cache.clear();}
 function gmodRemove(id){if(!GC||!GC.mod)return;GC.mod=GC.mod.filter(r=>r.id!==id);GMOD_C.cache.clear();}
-function gmodMonth(m){if(!GC)return;if(m===undefined)m=GC.turn;GMOD_C.m=m;GMOD_C.g=GC;if(GC.mod)GC.mod=GC.mod.filter(r=>r.until===undefined||r.until>=m);GMOD_C.cache.clear();}
+function gmodMonth(m){if(!GC)return;if(m===undefined)m=GC.turn;GMOD_C.m=m;GMOD_C.g=GC;if(GC.mod)GC.mod=GC.mod.filter(r=>r.until===undefined||r.until>=m);GMOD_C.cache.clear();for(const f of GMOD_HOOKS)try{f(m);}catch(e){console.error('monthly hook',e);}GMOD_C.cache.clear();}
 // Nation panel tab: every modifier that applies to this nation, with its source.
 const GMOD_STATS={warSupport:'War support',rallySpeed:'Rally speed',homeMorale:'Home-ground morale',fireSupport:'Fire support'};
 npTab('mods','✨','Modifiers',(code,body)=>{const rows=gmodRows('nation',code);
