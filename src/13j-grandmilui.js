@@ -26,9 +26,9 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
         for(const a of GC.armies.filter(x=>x.fr===f.id)){r.appendChild(guEl('div','font-size:13px;opacity:.85','• '+a.nm+' at '+GCM.P[a.at].n+' '+(a.path.length?'→ '+GCM.P[a.path[a.path.length-1]].n:'')));}}
       box.appendChild(r);}
     if(!foes.length)row('<span style="opacity:.7">You are not at war.</span>');}
-  else if(GMILUI.tab==='st'){const Q=gmilN(me);box.appendChild(guEl('div','opacity:.75;font-size:13px','Missiles, air raids and drone strikes hit an enemy province (buildings or armies) or an enemy fleet at sea. Click an enemy province or sea zone on the map and use its Strike buttons. Air defence in the target intercepts. Max 3 a turn.'));
-    row('Missiles in stock: <b>'+Q.ms+'</b>/'+GMIL_MS_MAX+' (one more every 3 turns)');box.appendChild(gmilBtn('Buy missile $'+GMIL_MISSILE_COST,()=>gmilDone(gmilBuyMissile(me))));
-    row('<b>Ordered this turn</b>');for(const o of Q.so)box.appendChild(guEl('div','font-size:13px','• '+GMIL_ST[o.t].n+' → '+GCM.P[o.pi].n+' ('+(o.k==='b'?'buildings':o.k==='a'?'armies':'fleet')+')'));
+  else if(GMILUI.tab==='st'){const Q=gmilN(me);box.appendChild(guEl('div','opacity:.75;font-size:13px','Missiles, air raids and drone strikes hit an enemy province (buildings or armies) or an enemy fleet at sea. Click an enemy province or sea zone on the map and use its Strike buttons. Air defence in the target intercepts. Max 3 a month.'));
+    row('Missiles in stock: <b>'+Q.ms+'</b>/'+GMIL_MS_MAX+' (one more every 3 months)');box.appendChild(gmilBtn('Buy missile $'+GMIL_MISSILE_COST,()=>gmilDone(gmilBuyMissile(me))));
+    row('<b>Ordered this month</b>');for(const o of Q.so)box.appendChild(guEl('div','font-size:13px','• '+GMIL_ST[o.t].n+' → '+GCM.P[o.pi].n+' ('+(o.k==='b'?'buildings':o.k==='a'?'armies':'fleet')+')'));
     if(!Q.so.length)box.appendChild(guEl('div','opacity:.65;font-size:13px','Nothing yet.'));
     if(Q.so.length)box.appendChild(gmilBtn('Cancel all (refund)',()=>{for(const o of Q.so){if(o.t==='m')Q.ms++;else{GC.nat[me].cash+=GMIL_ST[o.t].cost;if(GC.nat[me].e)GC.nat[me].e.fuel+=GMIL_ST[o.t].fuel;}}Q.so=[];gmilDone('');}));}
   else{box.appendChild(guEl('div','opacity:.75;font-size:13px','Fleets sail between sea zones (select one, right-click a zone). A fleet at sea next to an enemy port blockades it: port income and sea trade stop. Armies crossing a sea held by an enemy fleet wait in port unless one of your fleets escorts them (same zone). Subs hide; patrol boats find them; mines hurt enemies.'));
@@ -36,9 +36,9 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
     if(!gmilFleets(me).length)row('<span style="opacity:.7">No fleets.</span>');
     const bk=Object.keys(M.bk).filter(i=>GC.prov[i].o===me);if(bk.length)row('<span style="color:#ff9d8e">Blockaded: '+bk.map(i=>GCM.P[i].n).join(', ')+'</span>');
     box.appendChild(guEl('div','margin-top:6px;font-weight:bold','Build ships (select one of your port provinces)'));
-    const pi=GV.sel;if(pi>=0&&GCM.P[pi]&&GCM.P[pi].land&&GC.prov[pi].o===me&&gmilHasPort(pi)){const fac=grNat(me).fac;for(const [k,n] of GMIL_BUY){if(!grHasKind(fac,k))continue;const cost=grCost(fac,k)*n;box.appendChild(gmilBtn(n+'× '+grKindName(fac,k)+' $'+cost,()=>gmilDone(gmilBuyFleet(me,pi,k)),false,'arrives in 2 turns'));}}
+    const pi=GV.sel;if(pi>=0&&GCM.P[pi]&&GCM.P[pi].land&&GC.prov[pi].o===me&&gmilHasPort(pi)){const fac=grNat(me).fac;for(const [k,n] of GMIL_BUY){if(!grHasKind(fac,k))continue;const cost=grCost(fac,k)*n;box.appendChild(gmilBtn(n+'× '+grKindName(fac,k)+' $'+cost,()=>gmilDone(gmilBuyFleet(me,pi,k)),false,'arrives in 2 months'));}}
     else box.appendChild(guEl('div','opacity:.65;font-size:13px','Click one of your port provinces first.'));
-    if(M.fq.some(q=>q.o===me))box.appendChild(guEl('div','font-size:13px;margin-top:4px','In the yards: '+M.fq.filter(q=>q.o===me).map(q=>q.n+'× '+grKindName(grNat(me).fac,q.k)+' (turn '+q.t+')').join(', ')));}
+    if(M.fq.some(q=>q.o===me))box.appendChild(guEl('div','font-size:13px;margin-top:4px','In the yards: '+M.fq.filter(q=>q.o===me).map(q=>q.n+'× '+grKindName(grNat(me).fac,q.k)+' (due '+grMonStr(q.t)+')').join(', ')));}
 }
 // controls inside the province / sea-zone side panel
 function gmilUiProv(s,pi){if(!GC.me||!GC.mil||GC.over)return;const p=GCM.P[pi],me=GC.me,box=guEl('div','margin:8px 0;border-top:1px solid #243a50;padding-top:6px');let any=false;
