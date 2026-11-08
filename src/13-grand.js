@@ -71,12 +71,12 @@ function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(s
 /* RG6 scenario starts (laneA 2026-11-07): each scenario is a preset ON TOP of the realistic start (grRealApply) — extra opening wars,
    opinions and front armies. Data rows only; deterministic (no RNG). 'me26' = the plain realistic start (featured: "Middle East 2026"). */
 const GR_SCEN=[
- {id:'me26',n:'Middle East 2026',d:'The world as it stands in November 2026: Israel and the Mountain Shias at war, Russia and Ukraine at war, tense borders across the region.'},
+ {id:'me26',n:'Middle East 2026',d:'The world as it stands in November 2026: Israel and the Lebanese Shia at war, Russia and Ukraine at war, tense borders across the region.'},
  {id:'gulf',n:'Gulf flashpoint',d:'Tankers burn in the Strait of Hormuz. Iran and its Resistance bloc are at war with Saudi Arabia and the UAE; the US is on the brink and Gulf neighbours pick sides.',
   wars:[['IR','SA'],['IR','AE'],['DW','SA'],['DW','AE']],op:[['US','IR',-100],['QA','IR',-40],['KW','IR',-40],['OM','IR',-5],['IQ','SA',-25]],
   fr:[['IR','SA',.25],['SA','IR',.25],['IR','AE',.15],['AE','IR',.2],['DW','SA',.2],['SA','DW',.15],['US','IR',.08]],
-  news:['Tankers ablaze in the Strait of Hormuz — Iran and Saudi Arabia are at war.','The UAE closes its airspace; Yemen\'s Coffee Shias fire on Saudi border posts.']},
- {id:'redsea',n:'Red Sea crisis',d:'Shipping through Bab-el-Mandeb has stopped. Yemen\'s Coffee Shias are at war with Israel and Saudi Arabia; Egypt loses its canal trade and the Gulf watches.',
+  news:['Tankers ablaze in the Strait of Hormuz — Iran and Saudi Arabia are at war.','The UAE closes its airspace; Yemen\'s Zaidi Shia Movement fire on Saudi border posts.']},
+ {id:'redsea',n:'Red Sea crisis',d:'Shipping through Bab-el-Mandeb has stopped. Yemen\'s Zaidi Shia Movement are at war with Israel and Saudi Arabia; Egypt loses its canal trade and the Gulf watches.',
   wars:[['DW','IL'],['DW','SA']],op:[['EG','DW',-60],['US','DW',-100],['AE','DW',-50]],
   fr:[['DW','SA',.25],['SA','DW',.25],['EG','DW',.1]],
   news:['Ships turn back at Bab-el-Mandeb — the Red Sea is a war zone.','Suez traffic collapses; Cairo warns Sanaa.']}];
