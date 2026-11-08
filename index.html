@@ -19296,14 +19296,14 @@ function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(s
   // starts with the same number of rivals; the player's nation always has at least one
   const byReg={};for(const c of grMajors()){const r=grNat(c).reg;(byReg[r]=byReg[r]||[]).push(c);}
   if(false)for(const r of Object.keys(byReg).sort()){const L=byReg[r].sort((a,b)=>GCM.P[GC.nat[a].cap].x-GCM.P[GC.nat[b].cap].x);if(L.length>=2)for(let i=0;i<L.length;i++){const a=L[i],b=L[(i+1)%L.length];if(a!==b)GC.war[grWk(a,b)]=1;}}
-  if(GC.me&&!GR_REAL.wars.concat(GR_REAL.tn).some(x=>x.includes(GC.me))&&!Object.keys(GC.war).some(k=>k.split('|').includes(GC.me))){let best=null,bd=1e9;for(const c of grMajors())if(c!==GC.me){const d=grDist(GC.nat[c].cap,GC.nat[GC.me].cap);if(d<bd){bd=d;best=c;}}if(best)GC.war[grWk(GC.me,best)]=1;}
+  if(GC.me&&!GR_REAL.wars.concat(GR_REAL.tn,GR_REAL.tr||[]).some(x=>x.includes(GC.me))&&!Object.keys(GC.war).some(k=>k.split('|').includes(GC.me))){let best=null,bd=1e9;for(const c of grMajors())if(c!==GC.me){const d=grDist(GC.nat[c].cap,GC.nat[GC.me].cap);if(d<bd){bd=d;best=c;}}if(best)GC.war[grWk(GC.me,best)]=1;}
   geEnsure();grRealApply(quick);GC.sc=GR_SCEN.some(x=>x.id===o.sc)?o.sc:'me26';grScenApply(GC.sc,quick);try{for(const c of Object.keys(GC.nat))gfInit(c);}catch(e){console.error('gfInit',e);}
   grLog('The campaign begins. '+(GC.me?GCM.nats.get(GC.me).name+' takes the field.':'Observer mode.'),GC.me);
   return GC;}
 /* RG6 scenario starts (laneA 2026-11-07): each scenario is a preset ON TOP of the realistic start (grRealApply) — extra opening wars,
    opinions and front armies. Data rows only; deterministic (no RNG). 'me26' = the plain realistic start (featured: "Middle East 2026"). */
 const GR_SCEN=[
- {id:'me26',n:'Middle East 2026',d:'The world as it stands in November 2026: Israel and the Lebanese Shia at war, Russia and Ukraine at war, tense borders across the region.'},
+ {id:'me26',n:'Middle East 2026',d:'The world as it stands in November 2026: Russia and Ukraine at war, Yemen and Saudi Arabia at war, Pakistan and Afghanistan at war; fragile ceasefires between Israel and the Lebanese Shia and between Iran and the US and Israel, with the Strait of Hormuz closed and oil above $100.'},
  {id:'gulf',n:'Gulf flashpoint',d:'Tankers burn in the Strait of Hormuz. Iran and its Resistance bloc are at war with Saudi Arabia and the UAE; the US is on the brink and Gulf neighbours pick sides.',
   wars:[['IR','SA'],['IR','AE'],['DW','SA'],['DW','AE']],op:[['US','IR',-100],['QA','IR',-40],['KW','IR',-40],['OM','IR',-5],['IQ','SA',-25]],
   fr:[['IR','SA',.25],['SA','IR',.25],['IR','AE',.15],['AE','IR',.2],['DW','SA',.2],['SA','DW',.15],['US','IR',.08]],
@@ -21678,6 +21678,7 @@ function geManCap(c){let t=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)
 function geOilIdx(turn){const E=GC.eco;let v=100+20*Math.sin(.62*turn+E.ph1)+9*Math.sin(1.9*turn+E.ph2);
   for(const k of Object.keys(E.cl))if(E.cl[k]&&['Strait of Hormuz','Suez','Bab-el-Mandeb','Malacca Strait'].includes(GCM.P[+k].n))v+=8;
   if(typeof gpOilDelta==='function')v+=gpOilDelta();   // RG24: cut pipelines lift the price, working Hormuz/Suez bypass lines soften a closed strait
+  if(E.shk)v+=E.shk[0]*Math.max(0,1-(turn-1)/E.shk[1]);   /* real26: the Nov 2026 oil shock (Hormuz war) fades out as markets adapt */
   v+=6*geBlockN();   // RG1: enemy warships sitting in Hormuz / Suez / Bab-el-Mandeb / Malacca / Bosporus push the oil price up
   const cr=geCrisis(turn);if(cr&&cr[2]==='shortage')v+=28;if(cr&&cr[2]==='boom')v+=6;return Math.round(Math.max(55,Math.min(190,v)));}
 function geCrisis(turn){for(const c of GC.eco.cr)if(turn>=c[0]&&turn<c[0]+c[1])return c;return null;}
@@ -22318,16 +22319,40 @@ const GR_REAL={
  al:[['NATO',['US','CA','GB','FR','DE','ES','IT','PL','SE','NO','FI','GR','RO','TR']],
   ['US partners',['US','JP','KR','AU','PH','IL','TW','JO','AE','QA','KW','MA','EG']],
   ['Russia bloc',['RU','BY','KZ','KP']],['Resistance bloc',RES_BLOC],['China-Pakistan',['CN','PK']],
-  ['Turkey-Azerbaijan',['TR','AZ']],['Saudi-Pakistan',['SA','PK']],['Gulf',['SA','AE','QA','KW','OM']],['Russia-Iran',['RU','IR']]],
+  ['Turkey-Azerbaijan',['TR','AZ']],['Mecca defence pact',['SA','TR','PK']],['Gulf',['SA','AE','QA','KW','OM']],['Russia-Iran',['RU','IR']]],
  // starting opinions beyond alliances (-100..100): rivalries and warm ties
- op:[['US','CN',-45],['US','RU',-55],['US','IR',-90],['US','KP',-95],['RU','UA',-100],['RU','GB',-60],['RU','PL',-70],['RU','DE',-45],['IL','IR',-100],['IL','RS',-100],
-  ['IL','DW',-95],['IL','TR',-55],['IN','PK',-85],['IN','CN',-45],['CN','TW',-90],['CN','JP',-55],['CN','PH',-50],['KP','KR',-95],['KP','JP',-70],['GR','TR',-50],
-  ['SA','IR',-60],['EG','IL',-20],['AZ','IR',-35],['DE','US',20],['FR','DE',30],['IN','US',25],['IN','RU',35],['CN','RU',55],['CN','KP',40],['TR','RU',-10],
-  ['IQ','IR',45],['IQ','RV',-15],['RV','IR',60],['SY','IL',-35],['SY','TR',20],['KD','TR',-35],['DW','SA',-40],['UA','PL',55],['MA','DZ',-60],['ET','EG',-40],['ET','SD',-20],['IL','OB',-100],['EG','OB',-10],['BI','IL',-100],['BI','IR',-100],['BI','US',-100],['BI','SA',-100],['BI','TR',-100],['BI','RU',-100]],
- // opening wars as they stand in Nov 2026 (checked): Russia-Ukraine (5th year, no ceasefire); Israel vs the Lebanese Lebanese Shia
- wars:[['RU','UA'],['IL','RS'],['BI','SY'],['BI','IQ'],['BI','KD']],   // OB-IL: tense truce (ceasefire since Oct 2025, second phase deadlocked) - see tn; BI is at war with its neighbours and nobody treats with it
+ op:[['US','CN',-45],['US','RU',-55],['US','IR',-95],['US','KP',-95],['RU','UA',-100],['RU','GB',-60],['RU','PL',-70],['RU','DE',-45],['IL','IR',-100],['IL','RS',-100],
+  ['IL','DW',-95],['SA','DW',-100],['AE','IR',-70],['KW','IR',-60],['QA','IR',-25],['OM','IR',10],['PK','AF',-90],['US','VE',45],['VE','CU',-10],['VE','RU',-15],['IL','TR',-55],['IN','PK',-85],['IN','CN',-45],['CN','TW',-90],['CN','JP',-55],['CN','PH',-50],['KP','KR',-95],['KP','JP',-70],['GR','TR',-50],
+  ['SA','IR',-75],['EG','IL',-20],['AZ','IR',-35],['DE','US',20],['FR','DE',30],['IN','US',25],['IN','RU',35],['CN','RU',55],['CN','KP',40],['TR','RU',-10],
+  ['IQ','IR',45],['IQ','RV',-15],['RV','IR',60],['SY','IL',-35],['SY','TR',20],['KD','TR',-35],['UA','PL',55],['MA','DZ',-60],['ET','EG',-40],['ET','SD',-20],['IL','OB',-100],['EG','OB',-10],['BI','IL',-100],['BI','IR',-100],['BI','US',-100],['BI','SA',-100],['BI','TR',-100],['BI','RU',-100]],
+ // opening wars as they stand on 1 Nov 2026 (real26 audit, sources in orch/REAL-2026.md): Russia-Ukraine (5th year; only local truces);
+ // Yemen's Zaidi Shia Movement vs Saudi Arabia (2022 truce ended July 2026, strikes both ways); Pakistan-Afghanistan (open war since Feb 2026).
+ // BI (fictional) is at war with its neighbours and nobody treats with it.
+ wars:[['RU','UA'],['DW','SA'],['PK','AF'],['BI','SY'],['BI','IQ'],['BI','KD']],
+ // CEASEFIRES in force (they start as truces, not war; 13zy's monthly incident roll can still break them): [a, b, truce until month (1 = Nov 2026), covering-army share]
+ //  Israel-Lebanese Shia (19 Jun 2026 truce, Israel holds a security zone in the south); Israel-Palestine Islamic Brigade (Oct 2025 Gaza ceasefire, phase 2 stalled);
+ //  US-Iran and Israel-Iran (8 Apr 2026 ceasefire after the Feb-Apr war, extended; US blockade of Iranian ports, Iran keeps Hormuz closed).
+ tr:[['IL','RS',7,.2],['IL','OB',13,.12],['US','IR',4,0],['IL','IR',4,0]],
  // real tensions: each side keeps a covering army at the front; wars can break out here
- tn:[['IL','OB'],['KP','KR'],['CN','TW'],['IN','PK'],['GR','TR'],['IL','IR'],['IL','DW'],['AZ','IR'],['IN','CN'],['SA','DW']],
+ tn:[['KP','KR'],['CN','TW'],['IN','PK'],['GR','TR'],['IL','IR'],['IL','DW'],['AZ','IR'],['IN','CN'],['SA','IR'],['AE','IR']],
+ // occupied at the start [province name, occupier]: the original owner (st.o0) keeps its claim and its people resist (13y-goccupy)
+ occ:[['Donbas','RU'],['South Lebanon','IL']],
+ // straits closed at the start [sea zone, closer] (only if that nation actually holds it on the map) + the oil shock it caused:
+ // Brent ~$105-118 at the start vs ~$65 a year earlier; IMF Oct 2026 assumes Hormuz traffic resumes by March 2027 -> the shock fades over 8 months
+ shut:[['Strait of Hormuz','IR']], oilShock:[55,8],
+ // sanctions/embargoes in force [target, [who embargoes]] + UN Security Council sanctions (KP since 2006; IR re-imposed by the snapback of Sep 2025)
+ emb:[['RU',['US','GB','FR','DE','IT','ES','PL','SE','NO','FI','NL','GR','RO','CA','JP','AU','KR','TW','UA']],['IR',['US','GB','FR','DE','IT','ES','PL','SE','NL','CA','AU','IL']],
+  ['KP',['US','JP','KR','GB','FR','DE','AU','CA']],['BY',['US','GB','FR','DE','IT','PL','SE','CA','UA']],['CU',['US']]], unSanc:['KP','IR'],
+ // next national election that can change the government [year, month] (13zw reads this instead of a seeded guess; nations not listed keep the guess)
+ el:{US:[2028,11],ES:[2026,11],NG:[2027,1],FR:[2027,4],GR:[2027,7],AR:[2027,10],PL:[2027,10],IT:[2027,12],TW:[2028,1],KR:[2028,4],TR:[2028,5],PH:[2028,5],AU:[2028,5],
+  ID:[2029,2],IN:[2029,5],ZA:[2029,5],DE:[2029,3],GB:[2029,8],CA:[2029,10],CL:[2029,11],JP:[2030,2],CO:[2030,5],MX:[2030,6],SE:[2030,9],BR:[2030,10],IL:[2030,10]},
+ // dated real events of the next 24 months for the ONE event engine (13p): [year, month, nation, event id]; rows live in 13zz-greal26.js
+ ev:[[2026,11,'US','r26_mid'],[2026,11,'IL','r26_ilcoal'],[2026,11,'TR','r26_cop31'],[2026,12,'US','r26_g20'],[2026,12,'RS','r26_unifil'],[2027,6,'VE','r26_trial'],
+  [2027,7,'DE','r26_eusanc'],[2027,12,'IL','r26_gazamand']],
+ // start-of-campaign news lines (titles only, no real names)
+ news:['November 2026: Russia and Ukraine fight on into a fifth winter; a local truce at Oleshky has just expired.','Iran and the United States hold a fragile ceasefire; the Strait of Hormuz stays closed and US warships blockade Iranian ports. Oil is above $100.',
+  'A ceasefire holds on paper in Lebanon, but Israeli troops keep a security zone in the south.','Yemen\'s Zaidi Shia Movement and Saudi Arabia are at war again; missiles fall on Riyadh.',
+  'Pakistan and Afghanistan are in open war along the Durand Line.','Israel voted on 27 October; neither bloc has a majority.','Venezuela is run by an acting president after the January intervention; US sanctions are easing.'],
  // overseas bases [owner, host, share of the owner's start strength]: US Qatar/Kuwait/UAE/Jordan/Korea/Japan/Germany/Poland/Italy,
  // Russia in Syria (bases being renegotiated with Damascus), Turkey in Iraq's north & Syria, UK Gulf, France UAE
  bases:[['US','QA',.06],['US','KW',.04],['US','AE',.03],['US','JO',.02],['US','KR',.08],['US','JP',.08],['US','DE',.07],['US','PL',.04],['US','IT',.04],
@@ -22348,11 +22373,28 @@ function grRealApply(quick){
   GC.alz=GR_REAL.al.map(x=>[x[0],x[1].filter(has)]).filter(x=>x[1].length>1);grResBloc();grVasInit();GC.rel={};
   for(const [a,b,v] of GR_REAL.op)if(has(a)&&has(b))GC.rel[grWk(a,b)]=v;
   for(const [a,b] of GR_REAL.wars)if(has(a)&&has(b))GC.war[grWk(a,b)]=1;
+  GC.tr=GC.tr||{};for(const [a,b,u] of GR_REAL.tr||[])if(has(a)&&has(b)){delete GC.war[grWk(a,b)];GC.tr[grWk(a,b)]=u;}
+  for(const [pn,o] of GR_REAL.occ||[]){const p=GCM.P.find(q=>q.land&&q.n===pn);if(!p||!has(o))continue;const st=GC.prov[p.i];if(st.o===o||GC.nat[st.o].cap===p.i)continue;
+    const was=st.o;st.o=o;st.gar=grGenUnits(grNat(o).fac,V(o)*.04,false);st.un=Math.max(st.un,30);
+    const back=p.adj.find(j=>GCM.P[j].land&&GC.prov[j].o===was);for(const ar of GC.armies)if(ar.at===p.i&&ar.o===was&&back!==undefined){ar.at=back;ar.path=[];}}
   const front=(a,b,sh,nm)=>{const at=grNearOwn(a,GC.nat[b].cap);if(at<0)return;const f=grNat(a).fac;grAddArmy(a,at,grGenUnits(f,V(a)*sh,false),nm);};
   for(const [a,b] of GR_REAL.wars)if(has(a)&&has(b)){front(a,b,.3,'Front Army');front(b,a,.3,'Front Army');}
   for(const [a,b] of GR_REAL.tn)if(has(a)&&has(b)){front(a,b,.15,'Border Guard');front(b,a,.15,'Border Guard');}
+  for(const [a,b,,sh] of GR_REAL.tr||[])if(sh&&has(a)&&has(b)){front(a,b,sh,'Ceasefire Line');front(b,a,sh,'Ceasefire Line');}
   for(const [o,h,sh] of GR_REAL.bases)if(has(o)&&has(h)){const at=GC.nat[h].cap;if(at>=0){const ba=grAddArmy(o,at,grGenUnits(grNat(o).fac,V(o)*sh,false),'Overseas Base');ba.bs=h;}}
-  for(const c of Object.keys(GC.nat)){const r=GR_REAL.n[c];if(r&&GC.nat[c].e)GC.nat[c].e.fuel=r[2];}}
+  for(const c of Object.keys(GC.nat)){const r=GR_REAL.n[c];if(r&&GC.nat[c].e)GC.nat[c].e.fuel=r[2];}
+  grRealWorld();}
+// real26: the world economy and politics on 1 Nov 2026 - closed straits + oil shock, embargoes, UN sanctions, dated real events, opening news.
+// All state lives in GC (eco.cl, eco.shk, nat.e.emb, un.sanc, ev.sch), so saves, host migration and determinism keep working.
+function grRealWorld(){const has=c=>!!GC.nat[c]&&!GC.nat[c].dead;
+  if(GC.eco){for(const [zn,c] of GR_REAL.shut||[]){const z=GCM.P.find(p=>p.sea&&p.n===zn);if(z&&has(c)&&typeof geHolder==='function'&&geHolder(z.i)===c)GC.eco.cl[z.i]=c;}
+    if(GR_REAL.oilShock)GC.eco.shk=GR_REAL.oilShock.slice();}
+  for(const [t,by] of GR_REAL.emb||[])if(has(t))for(const c of by)if(has(c)&&GC.nat[c].e&&!GC.nat[c].e.emb.includes(t)){GC.nat[c].e.emb.push(t);GC.nat[c].e.emb.sort();}
+  if(typeof unS==='function'){const U=unS();for(const c of GR_REAL.unSanc||[])if(has(c))U.sanc[c]=(GC.maxTurn|0)+12;}
+  if(typeof gevS==='function'){const S=gevS();for(const [y,m,c,id] of GR_REAL.ev||[]){const t=grRealTurn(y,m);if(has(c)&&t>=1)S.sch.push([t,c,id]);}}
+  for(const t of GR_REAL.news||[])grLog(t,'');}
+// month number (turn) of a real calendar month: turn 1 = the campaign's start month (GC.m0, 0-based from Jan 2026)
+function grRealTurn(y,m){return (y-2026)*12+(m-1)-grM0()+1;}
 
 /* The Resistance bloc (Abdullah 2026-11-06 21:23 + 22:16 "Make sure the resistance bloc is a thing"): IR, RS and DW (and any later Shia
    faction added to RES_BLOC, e.g. the River Shias) are ONE permanent alliance while the single shared Ayatollah leads them. Members can't
@@ -24379,7 +24421,8 @@ const EL_TERM=48, EL_CAMP=300, EL_LOSE_WS=-.08, EL_WIN_INC=.03;
 function elS(){if(!GC.el)GC.el={nx:{},camp:{},ref:{},log:[]};return GC.el;}
 function elHash(c){let h=7;for(let i=0;i<c.length;i++)h=(h*31+c.charCodeAt(i))%9973;return h;}
 function elIsDem(c){return EL_DEM.includes(c)&&GC.nat[c]&&!GC.nat[c].dead;}
-function elNext(c){const S=elS();if(S.nx[c]===undefined)S.nx[c]=(GC.turn||0)+6+elHash(c+(GC.seed||''))%EL_TERM;return S.nx[c];}
+function elNext(c){const S=elS();if(S.nx[c]===undefined){const r=typeof GR_REAL==='object'&&GR_REAL.el&&GR_REAL.el[c];   /* real26: the real election calendar first */
+    S.nx[c]=r?Math.max(GC.turn||1,grRealTurn(r[0],r[1])):(GC.turn||0)+6+elHash(c+(GC.seed||''))%EL_TERM;}return S.nx[c];}
 function elUn(c){let s=0,n=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c){s+=GC.prov[p.i].un;n++;}return n?s/n:0;}
 function elApproval(c){const S=elS();const ws=typeof wsOf==='function'?wsOf(c):60;return Math.max(0,Math.min(100,Math.round(ws*.6+(100-Math.min(100,elUn(c)*1.5))*.4+(S.camp[c]||0))));}
 function elCampaign(c){const N=GC.nat[c],S=elS();if(!elIsDem(c))return 'No election to fight.';if(N.cash<EL_CAMP)return 'Need $'+EL_CAMP+'.';if((S.camp[c]||0)>=8)return 'The campaign is already at full strength.';N.cash-=EL_CAMP;S.camp[c]=8;return '';}
@@ -24564,6 +24607,28 @@ if(typeof npTab==='function')npTab('nuke','☢','Nuclear',(code,body,c)=>{const 
 });
 GMOD_HOOKS.push(gnkMonth);
 alAdd('nukein','☢','Inbound',c=>{if(!c||!GC.nuk||!GC.nuk.pend)return null;const n=GC.nuk.pend.filter(x=>x[4]===c).length;return n?{n,tip:'Nuclear warheads are inbound on one of your provinces',go:()=>npOpen(c,'nuke')}:null;});
+// real26 (Abdullah 2026-11-07 20:20 "start from the world as it really is"): the REAL dated events of the next 24 months, as rows in the ONE
+// event engine (13p GEV_ROWS). w:0 = never rolled at random; they fire only on their real month, seeded by grRealWorld (13i, GR_REAL.ev).
+// Sources per row: orch/REAL-2026.md. Neutral wording, titles only (no real politicians' or organisations' names). AI picks option `ai`.
+GEV_ROWS.push(
+ {id:'r26_mid',t:'Midterm elections: the opposition wins the legislature',x:'After a year of war and oil above $100, voters hand both chambers to the opposition. Every deployment and war budget will now be fought over.',w:0,c:'always',ai:0,
+  o:[{t:'Work with the new legislature',fx:[['mod','warSupport',-.05,24],['un',-2]]},{t:'Govern by executive order',fx:[['un',5],['mod','income',-.02,12],['mod','warSupport',-.02,24]]}]},
+ {id:'r26_ilcoal',t:'No majority after the election',x:'Neither bloc reached 61 of 120 seats in the October vote. Coalition talks are deadlocked and a caretaker cabinet runs the war.',w:0,c:'always',ai:0,
+  o:[{t:'Form a narrow minority government',fx:[['un',4],['mod','warSupport',-.03,12]]},{t:'Call a repeat election',fx:[['fn','r26_reelect'],['un',2]]}]},
+ {id:'r26_cop31',t:'The world climate summit opens on our coast',x:'Delegations from every nation arrive for the annual climate conference, which we host this month.',w:0,c:'always',ai:0,
+  o:[{t:'Host it in style ($250)',fx:[['cash',-250],['mod','income',.02,6],['rel','$nb',8]]},{t:'Keep it low-key',fx:[['cash',100]]}]},
+ {id:'r26_g20',t:'Leaders of the twenty largest economies meet',x:'We host the G20 summit in December. Oil above $100 and the closed Strait of Hormuz top the agenda.',w:0,c:'always',ai:0,
+  o:[{t:'Push for a Hormuz deal',fx:[['rel','IR',10],['rel','CN',5],['mod','income',.01,6]]},{t:'Push for tougher sanctions',fx:[['rel','IR',-10],['rel','RU',-5],['mod','warSupport',.02,6]]}]},
+ {id:'r26_unifil',t:'The UN peacekeepers leave the south',x:'The UN force\'s mandate in Lebanon ends on 31 December after nearly fifty years. The army is left alone between the lines.',w:0,c:'always',ai:0,
+  o:[{t:'Let the army take over the posts',fx:[['un',3],['rel','IL',-5]]},{t:'Rebuild positions in the south',fx:[['man',20],['rel','IL',-15]]}]},
+ {id:'r26_trial',t:'The deposed president goes on trial abroad',x:'The former head of state, seized in January 2026, faces trial in a foreign court. The interim government must take a stand.',w:0,c:'always',ai:0,
+  o:[{t:'Stay quiet and keep the oil deal',fx:[['rel','US',5],['un',3]]},{t:'Protest the trial',fx:[['rel','US',-15],['un',-3]]}]},
+ {id:'r26_eusanc',t:'European sanctions on Russia expire this month',x:'The economic sanctions run until 31 July and must be renewed unanimously, or they lapse.',w:0,c:'always',ai:0,
+  o:[{t:'Renew them',fx:[['rel','RU',-5],['mod','income',-.01,6]]},{t:'Let them lapse',fx:[['fn','r26_lift'],['rel','RU',15],['rel','UA',-20],['rel','US',-5]]}]},
+ {id:'r26_gazamand',t:'The UN mandate for Gaza\'s transition expires',x:'The Security Council mandate for Gaza\'s transitional board and stabilisation force ends on 31 December.',w:0,c:'always',ai:0,
+  o:[{t:'Back a renewal',fx:[['rel','OB',5],['rel','EG',5]]},{t:'Let it lapse and keep the security zone',fx:[['rel','OB',-15],['un',2]]}]});
+GCR_FN.r26_reelect=code=>{if(typeof elS!=='function')return '';elS().nx[code]=GC.turn+5;grLog(gdNatName(code)+' heads for a repeat election in 5 months.',code);return 'Repeat election in 5 months';};
+GCR_FN.r26_lift=code=>{if(typeof geEmbargo!=='function'||!GC.nat.RU)return '';geEmbargo(code,'RU',false);return 'Sanctions on Russia lapse';};
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.
