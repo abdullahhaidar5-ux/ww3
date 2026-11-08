@@ -6,6 +6,7 @@ Match this in our own original art (never copy that game's assets):
 - **Forests = dense instanced dark-green conifer/broadleaf canopies** covering whole regions, with clearings, fields and thin dirt roads between them.
 - **Coast = a bright sand beach band**, then turquoise shallows, then deep blue sea with visible wave texture and specular glints.
 - **Towns = a tight cluster of small detailed buildings** (roofs, walls, a flag), not boxes; a soft-edged **segmented selection ring** (green yours / red enemy) and a **nameplate** under it: name, country, small stats (population, income).
+- (19:31, second reference "Another example of good army icons"): **when zoomed out, an army reads as a big national flag on a tall pole** (wide flag, readable from far away, small figure at its foot), so armies are easy to spot and count across the map; **towns are round walled clusters**; movement shows as **thick green arrows** along the route; rivers are wide and visible.
 - Snow-capped mountains in the distance; soft atmospheric haze toward the horizon.
 
 Applies to the grand map, the nation panel/UI, and battles in real gameplay. Plus FEEL: instant click feedback (< 100 ms), smooth
