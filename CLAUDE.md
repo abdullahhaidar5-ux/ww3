@@ -54,7 +54,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 - **Controls (Abdullah, 2026-10-28 19:11 — replaces the 2026-10-26 Generals left-click scheme):** **left-click selects**
   (drag = box select, Shift adds, double-click selects that type on screen); **right-click moves and attacks** (ground =
   move, enemy = attack), right-drag draws the infantry line formation; **F + click = attack-move** (A no longer does
-  it); **W A S D only scroll the camera — no other job in any scheme** (Abdullah, 19:17; Stop = X); G+click guard, Ctrl+click force-fire, Alt+click waypoints; left-click ground with a production building selected
+  it); **W A S D only scroll the camera — no other job in any scheme** (Abdullah, 19:17; Stop = X); G+click guard, Ctrl+click force-fire, Alt+click waypoints; **Q rotates the battle camera** (Abdullah 2026-11-07 19:54/19:55: hold Q + move mouse, tap = 45° clockwise, Shift+Q counter-clockwise, Home/double-tap = north-up; view only) and **Ctrl+A selects the whole army** (was Q); left-click ground with a production building selected
   sets its rally point. After an order the units deselect (Abdullah 2026-10-30 20:54; Settings toggle keeps them selected; Shift keeps them). The old Generals left-click-orders scheme may stay as a Settings option. On PCs **the mouse stays
   inside the game window** during a battle (pointer lock with the game's own cursor; edge scrolling works; Esc or the
   menu releases it; a Settings toggle turns it off). **Command bar text is bigger and easier to read** (PC and phone).
