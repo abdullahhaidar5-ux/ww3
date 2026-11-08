@@ -341,6 +341,41 @@ function formMove(us,x,y,type,squad,colW){const n=us.length;if(!n)return;if(n===
   const sorted=us.slice().sort((p,q)=>(FROW[p.s.cls]??2)-(FROW[q.s.cls]??2)||p.id-q.id);const cols=colW||Math.max(2,Math.ceil(Math.sqrt(n*1.6)));const sp=Math.max(26,...us.map(u=>u.r*2+8));
   let cap=Infinity;if(squad)for(const u of us)if(u.s.dom!=='air')cap=Math.min(cap,u.s.spd);
   sorted.forEach((u,i)=>{const row=Math.floor(i/cols),inRow=Math.min(cols,n-row*cols),col=i%cols-(inRow-1)/2;const tx=x+px*col*sp-fx*row*sp,ty=y+py*col*sp-fy*row*sp;setMove(u,tx,ty,type);if(squad&&u.s.dom!=='air'&&isFinite(cap))u.order.cap=cap*.97;u.sq=squad?1:0;});}
+/* ---------- battle formations (Abdullah 2026-11-07 20:37 "auto build formations in battle") ----------
+   One slot engine for the preset formations, the right-drag line and the AI's attack groups. Units get a role - S scouts
+   (ahead), A armour (front), I infantry (behind/beside the armour), F anti-tank teams (flanks), R artillery + AA (rear) -
+   and each role fills its own slots; inside a role, units take the slot on their own side so paths do not cross. Slots are
+   in the group's frame: f = forward, s = sideways. Pure function of unit positions/ids, so every machine agrees. */
+const FM_TYPES=['line','column','wedge','box','spread'];
+function fmRole(u){const c=u.s.cls;if(c==='arty')return 'R';if(c==='aa')return u.s.wpn==='at'?'F':'R';if(c==='drone'||c==='hacker'||u.kind==='recon')return 'S';if(c==='at')return 'F';if(c==='tank')return 'A';if(c==='inf'||c==='hero')return 'I';return isVeh(u.s)?'A':'I';}
+function fmLayout(type,n,sp,W,lat){const S={S:[],A:[],I:[],F:[],R:[]},put=(r,f,s)=>S[r].push([f,s]);
+  const rows=(r,f0,w,ls,rs)=>{const m=n[r];for(let i=0;i<m;i++){const q=Math.floor(i/w),k=i%w,c=Math.min(w,m-q*w);put(r,f0-q*rs,(k-(c-1)/2)*ls);}return f0-Math.ceil(m/w)*rs;};
+  const chev=(r,f0,ls,rs)=>{const m=n[r];let k=0;for(let i=0;i<m;i++){k=Math.ceil(i/2);put(r,f0-k*rs*.9,(i%2?1:-1)*k*ls*.9);}return f0-(k+1)*rs*.9-(m?rs*.2:0);};
+  if(type==='column'){const o=['S','A','I','F','R'];let i=0;for(const r of o)for(let j=0;j<n[r];j++,i++)put(r,(r==='S'?sp*2:0)-Math.floor(i/2)*sp*1.15,(i%2?1:-1)*sp*.5);}
+  else if(type==='wedge'){const ls=sp*1.1,rs=sp*1.1;let d=chev('A',0,ls,rs);if(!n.A)d=0;const d2=chev('I',d,ls,rs);const mk=Math.max(1,Math.ceil(Math.max(n.A,n.I)/2));
+    for(let i=0;i<n.F;i++)put('F',-mk*rs*.9,(i%2?1:-1)*(mk+1.2+Math.floor(i/2))*ls*.9);rows('R',d2-rs*.5,Math.min(W,4),ls*1.3,rs*1.3);rows('S',rs*2.2,Math.min(W,3),ls*1.6,rs);}
+  else if(type==='box'){const P=n.A+n.F,rad=Math.max(sp*2,P*sp*1.1/6.283),ao=[];for(let k=0;k<P;k++)ao.push((k%2?1:-1)*Math.ceil(k/2)*6.283/P);
+    ao.sort((a,b)=>Math.abs(a)-Math.abs(b)||b-a);ao.forEach((a,k)=>put(k<n.A?'A':'F',Math.cos(a)*rad,Math.sin(a)*rad));
+    for(const r of ['I','R']){const m=n[r],rr=r==='I'?Math.max(sp*.9,Math.min(rad*.6,m*sp/6.283)):rad*.25;for(let i=0;i<m;i++){const a=i*6.283/Math.max(1,m)+(r==='R'?3.1416:0);put(r,m===1?(r==='R'?-rad*.3:0):Math.cos(a)*rr,m===1?0:Math.sin(a)*rr);}}
+    rows('S',rad+sp*2,Math.min(W,3),sp*1.6,sp);}
+  else{const sd=type==='spread',ls=sd?sp*2.6:Math.max(sp,lat||sp),rs=sd?sp*2.6:sp*1.1;if(n.S)rows('S',rs*1.8,W,ls,rs);let d=rows('A',0,W,ls,rs);if(!n.A)d=0;
+    const cF=Math.min(W,Math.max(n.A,n.I,1));for(let i=0;i<n.F;i++)put('F',-Math.floor(i/2)*rs,(i%2?1:-1)*((cF-1)/2*ls+ls));
+    d=rows('I',d,W,ls,rs);rows('R',d-rs*.3,W,ls*(sd?1:1.4),rs*(sd?1:1.3));}
+  return S;}
+// us = movers; destination centre (cx,cy), facing (fx,fy); lat = sideways spacing wanted (drag lines); keep = hold slots at the slowest unit's pace
+function fmApply(us,type,cx,cy,fx,fy,mode,keep,lat,wid){const m=us.filter(u=>u&&!u.isB&&u.s&&u.s.spd>0&&u.kind!=='harv'&&u.kind!=='dozer');const n=m.length;if(!n)return;
+  if(!FM_TYPES.includes(type))type='line';const L=Math.hypot(fx,fy)||1;fx/=L;fy/=L;const px=-fy,py=fx,gnd=m.filter(u=>u.s.dom==='ground'),oth=m.filter(u=>u.s.dom!=='ground');
+  const by={S:[],A:[],I:[],F:[],R:[]};for(const u of gnd)by[fmRole(u)].push(u);const cnt={};for(const r in by)cnt[r]=by[r].length;
+  const sp=Math.max(18,...gnd.map(u=>u.r*2.6),20);const W=wid||Math.max(3,Math.ceil(Math.sqrt(gnd.length)*1.7));const S=fmLayout(type,cnt,sp,W,lat);
+  let ox=0,oy=0;for(const u of gnd){ox+=u.x;oy+=u.y;}if(gnd.length){ox/=gnd.length;oy/=gnd.length;}
+  let cap=Infinity;if(keep)for(const u of gnd)cap=Math.min(cap,u.s.spd);
+  for(const r in by){const us2=by[r];if(!us2.length)continue;const sl=S[r].slice().sort((a,b)=>a[1]-b[1]||b[0]-a[0]);
+    const q=us2.map(u=>[u,(u.x-ox)*px+(u.y-oy)*py]).sort((a,b)=>a[1]-b[1]||a[0].id-b[0].id);
+    q.forEach(([u],i)=>{const k=sl[i];let x=cx+fx*k[0]+px*k[1],y=cy+fy*k[0]+py*k[1];setMove(u,x,y,mode);u.faceA=Math.atan2(fy,fx);u.sq=keep?1:0;if(keep&&isFinite(cap))u.order.cap=cap*.97;});}
+  oth.sort((a,b)=>a.id-b.id).forEach((u,i)=>setMove(u,cx+px*(i-(oth.length-1)/2)*40,cy+py*(i-(oth.length-1)/2)*40,mode));}
+// the AI sends its ground attack groups in a formation too: a wedge when armour leads, else a line
+function aiForm(g,x,y){const cx=g.reduce((s,u)=>s+u.x,0)/g.length,cy=g.reduce((s,u)=>s+u.y,0)/g.length,nA=g.filter(u=>fmRole(u)==='A').length;
+  if(g.length<3){formMove(g,x,y,'amove',1,4);return;}fmApply(g,nA*3>=g.length?'wedge':'line',x,y,x-cx,y-cy,'amove',true);}
 function setMove(u,x,y,type){if(u.s.dom!=='air'){const p=nearestPassXY(u.s.dom,x,y);if(p){x=p[0];y=p[1];}}u.order={type,x,y};u.target=null;u.guard=null;u.path=null;u.ffx=null;if(u.kind==='jet'&&u.state!=='fly'){u.state='fly';u.landed=false;}}
 
 /* ---------- combat ---------- */
@@ -657,7 +692,7 @@ function hqOf(team){return G.ents.find(e=>e.team===team&&e.kind==='hq'&&!e.dead)
 function natPower(team,P,x,y){const T=G.teams[team],hq=hqOf(team),en=e=>!e.dead&&!ally(e.team,team)&&e.team>=0;
   switch(P.type){
     case 'strafe':{const a=Math.atan2(y-(hq?hq.y:y),x-(hq?hq.x:x)),c=Math.cos(a),s=Math.sin(a);for(let i=0;i<9;i++){const d=-160+i*40;addStrike(x+c*d,y+s*d,1.2+i*.12,i%3===1?70:45,(i%3===1?380:200)*P.M,team,'bar');}FXE('plane',[(x-c*1200)|0,(y-s*1200)|0,x|0,y|0,team]);return true;}
-    case 'drones':{if(!hq)return false;for(let i=0;i<P.n+2*(P.lv-1);i++){const u=addUnit(team,'drone',hq.x+rnd(-40,40),hq.y+rnd(-40,40));setMove(u,x+rnd(-60,60),y+rnd(-60,60),'amove');}return true;}
+    case 'drones':{if(!hq)return false;let nn=P.n+2*(P.lv-1);const gr=G.grand;if(gr&&P.ow){const av=(gr.dro&&gr.dro[team])|0;if(av<1){log(team,'No one-way drones left in stock.','w');return false;}nn=Math.min(nn,av);gr.dro[team]=av-nn;gr.du=gr.du||[0,0];gr.du[team]+=nn;}for(let i=0;i<nn;i++){const u=addUnit(team,'drone',hq.x+rnd(-40,40),hq.y+rnd(-40,40));setMove(u,x+rnd(-60,60),y+rnd(-60,60),'amove');}return true;}
     case 'intel':{for(const O of G.teams)if(!ally(O.id,team))for(const b of G.ents)if(b.isB&&b.team===O.id&&!b.dead)T.reveals.push({x:b.x,y:b.y,r:90,t:20+5*P.lv});for(const e of G.ents)if(en(e)&&!e.isB&&Math.hypot(e.x-x,e.y-y)<P.r)e.mark=G.t+25;FXE('ping',[x|0,y|0,P.r],team);return true;}
     case 'supply':{T.credits+=Math.round(1200*P.M);for(const e of G.ents)if(e.team===team&&Math.hypot(e.x-x,e.y-y)<P.r)e.hp=Math.min(e.max,e.hp+e.max*.4);FXE('heal',[x|0,y|0,P.r],team);return true;}
     case 'partisans':{const p=nearestPassXY('ground',x,y);if(!p)return false;for(let i=0;i<P.n+3*(P.lv-1);i++){const q=nearestPassXY('ground',p[0]+rnd(-50,50),p[1]+rnd(-50,50))||p;const u=addUnit(team,i%3===2?'at':'inf',q[0],q[1]);u.guard={x:q[0],y:q[1]};}return true;}
@@ -701,7 +736,7 @@ function gprTick(dt){G.gprT=(G.gprT||0)-dt;if(G.gprT>0)return;G.gprT=.5;let any=
     for(const r of G.ents){if(r.dead||!r.isB||r.team!==T.id||r.built<1||(r.kind!=='hq'&&r.kind!=='uplink')||r.dis>G.t)continue;if(Math.hypot(r.x-e.x,r.y-e.y)<=GPR_R){e.detT=Math.max(e.detT||0,G.t+1);break;}}}}}
 function usePower(team,key,x,y){const ok=usePower0(team,key,x,y);if(ok&&G.teams[team]){const s=stOf(G.teams[team]);s.pw[key]=(s.pw[key]||0)+1;}return ok;}
 function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T.pw[key];if(conqBan(key))return false;if(G.conq&&G.t<G.setupEnd){log(team,'No powers during the setup phase.','w');return false;}if(!P0||P0.passive||!w||w.cd>0)return false;if(key==='bb'&&(G.t<300||T.credits<P0.cash)){log(team,G.t<300?'Bunker Buster is not available in the first 5 minutes.':'Bunker Buster costs $'+P0.cash+'.','w');return false;}const L=Math.max(1,Math.min(3,w.lv||1)),M=PLV[L-1],P=Object.assign({},P0,{lv:L,M,cd:Math.round(P0.cd*PCD[L-1]),r:P0.r?Math.round(P0.r*(1+.2*(L-1))):P0.r});
-  if(key==='nat'){if(!natPower(team,P,x,y))return false;w.cd=P.cd;log(team,`${P.name}!`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} used ${P.name}.`,'w');pubNews('pow',team,-1,P.name);return true;}
+  if(key==='nat'){if(!natPower(team,P,x,y))return false;w.cd=(G.grand&&P.ow)?20:P.cd;log(team,`${P.name}!`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} used ${P.name}.`,'w');pubNews('pow',team,-1,P.name);return true;}
   const dur=(25+10*(L-1))*(P.tm||1);if(P.fx)gpowFx(team,P,x,y,dur);
   if(key==='recon'){T.reveals.push({x,y,r:P.r,t:dur});FXE('ping',[x|0,y|0,P.r],team);}
   else if(key==='flare'){const d=Math.round(30*(1+.15*(L-1)));for(const O of G.teams)O.reveals.push({x,y,r:P.r,t:d});(G.flares=G.flares||[]).push({x,y,r:P.r,t:G.t+d});FXE('flare',[x|0,y|0,P.r|0,d]);log(team,'Illumination flares lit the field.','g');}
@@ -725,11 +760,11 @@ function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T
   w.cd=P.cd;log(team,`${P.name} used.`);return true;}
 
 /* ---------- player actions (local input, AI and network commands all go through here) ---------- */
-function act(team,a){if(!G||G.over)return;if(G.grand&&GRAND_NOPROD.includes(a.t))return;   /* grand-campaign battle: army only, nothing is built or bought (Abdullah 2026-11-06) */const own=ids=>(ids||[]).map(i=>G.byId.get(i)).filter(u=>u&&!u.isB&&u.team===team);if(a.ids&&a.t!=='def'&&['go','atk','stop','gar','tun','board','atkCiv','fld','line','ret'].includes(a.t))for(const u of own(a.ids)){u.defend=null;if(!a.q)u.wq=null;if(a.t!=='ret')u.retreat=0;if(a.t!=='line')u.faceA=null;}
+function act(team,a){if(!G||G.over)return;if(G.grand&&GRAND_NOPROD.includes(a.t))return;   /* grand-campaign battle: army only, nothing is built or bought (Abdullah 2026-11-06) */const own=ids=>(ids||[]).map(i=>G.byId.get(i)).filter(u=>u&&!u.isB&&u.team===team);if(a.ids&&a.t!=='def'&&['go','atk','stop','gar','tun','board','atkCiv','fld','line','ret','form'].includes(a.t))for(const u of own(a.ids)){u.defend=null;if(!a.q)u.wq=null;if(a.t!=='ret')u.retreat=0;if(a.t!=='line'&&a.t!=='form'&&!(a.t==='go'&&a.fp))u.faceA=null;}
   switch(a.t){
-    case 'go':{const us=own(a.ids).filter(u=>!((u.kind==='harv'||u.kind==='dozer')&&a.mode==='amove'));const md=a.mode==='amove'?'amove':'move';
-      if(a.q){const busy=us.filter(u=>u.order&&(u.order.type==='move'||u.order.type==='amove'));for(const u of busy){(u.wq=u.wq||[]).push({x:a.x,y:a.y,m:md});if(u.wq.length>8)u.wq.shift();}const idle=us.filter(u=>!busy.includes(u));if(idle.length)formMove(idle,a.x,a.y,md,!!a.fm);break;}
-      for(const u of us)u.wq=null;formMove(us,a.x,a.y,md,!!a.fm);sharePath(us,a.x,a.y);break;}
+    case 'go':{const goF=(l,a,md)=>{if(a.fp&&l.length>1&&FM_TYPES.includes(a.fp)){const cx=l.reduce((s,u)=>s+u.x,0)/l.length,cy=l.reduce((s,u)=>s+u.y,0)/l.length;fmApply(l,a.fp,a.x,a.y,a.x-cx,a.y-cy,md,!!a.fm);}else formMove(l,a.x,a.y,md,!!a.fm);};const us=own(a.ids).filter(u=>!((u.kind==='harv'||u.kind==='dozer')&&a.mode==='amove'));const md=a.mode==='amove'?'amove':'move';
+      if(a.q){const busy=us.filter(u=>u.order&&(u.order.type==='move'||u.order.type==='amove'));for(const u of busy){(u.wq=u.wq||[]).push({x:a.x,y:a.y,m:md});if(u.wq.length>8)u.wq.shift();}const idle=us.filter(u=>!busy.includes(u));if(idle.length)goF(idle,a,md);break;}
+      for(const u of us)u.wq=null;goF(us,a,md);sharePath(us,a.x,a.y);break;}
     case 'atk':{const t=G.byId.get(a.tid);if(!t||ally(t.team,team))break;for(const u of own(a.ids)){
       if(u.kind==='hacker'){if(t.isB){u.order={type:'hack',target:t};u.hk=0;}continue;}
       if(u.s.demo&&t.isB){u.order={type:'demo',target:t};u.pt=0;continue;}
@@ -789,13 +824,15 @@ function act(team,a){if(!G||G.over)return;if(G.grand&&GRAND_NOPROD.includes(a.t)
     case 'fix':for(const u of own(a.ids)){if(u.kind!=='dozer')continue;const v=critNear(u,900);if(v){u.order={type:'fix',target:v};u.path=null;}}break;
     // right-drag line formation: units spread evenly along the dragged line (extra units form ranks behind it),
     // assigned in order along the line so their paths do not cross
-    case 'line':{const us=own(a.ids).filter(u=>!u.isB&&u.s&&u.s.spd>0&&u.kind!=='harv');const n=us.length;if(!n)break;const x2=a.x2,y2=a.y2,dx=x2-a.x,dy=y2-a.y,L=Math.max(1,Math.hypot(dx,dy)),ux=dx/L,uy=dy/L;
-      const sp=Math.max(18,...us.map(u=>u.r*2.6)),per=Math.max(1,Math.floor(L/sp)+1);let cx=0,cy=0;for(const u of us){cx+=u.x;cy+=u.y;}cx/=n;cy/=n;
+    case 'line':{const us=own(a.ids).filter(u=>!u.isB&&u.s&&u.s.spd>0&&u.kind!=='harv');if(!us.length)break;const x2=a.x2,y2=a.y2,dx=x2-a.x,dy=y2-a.y,L=Math.max(1,Math.hypot(dx,dy)),ux=dx/L,uy=dy/L;
+      let cx=0,cy=0;for(const u of us){cx+=u.x;cy+=u.y;}cx/=us.length;cy/=us.length;
       let nx=-uy,ny=ux;if(((a.x+x2)/2-cx)*nx+((a.y+y2)/2-cy)*ny<0){nx=-nx;ny=-ny;}
-      us.sort((p,q)=>((p.x-a.x)*ux+(p.y-a.y)*uy)-((q.x-a.x)*ux+(q.y-a.y)*uy)||p.id-q.id);
-      for(let i=0;i<n;i++){const r=Math.floor(i/per),k=i%per,cnt=Math.min(per,n-r*per),len=Math.min(L,sp*(cnt-1)),off=(L-len)/2,t=cnt>1?k/(cnt-1):.5;
-        let x=a.x+ux*(off+t*len)-nx*r*sp,y=a.y+uy*(off+t*len)-ny*r*sp;const u=us[i];if(u.s.dom==='ground'){const p=nearestPassXY('ground',x,y);if(p){x=p[0];y=p[1];}}
-        setMove(u,x,y,a.mode==='amove'?'amove':'move');u.faceA=Math.atan2(ny,nx);}break;}
+      const sp=Math.max(18,...us.map(u=>u.r*2.6)),per=Math.max(2,Math.floor(L/sp)+1);   // facing = away from the group, ranks form behind the dragged line
+      fmApply(us,'line',(a.x+x2)/2,(a.y+y2)/2,nx,ny,a.mode==='amove'?'amove':'move',false,L/Math.max(1,per-1),per);break;}
+    // formation preset for the selection right where it stands (bar / O key): faces the nearest enemy building
+    case 'form':{const us=own(a.ids).filter(u=>u.s&&u.s.spd>0);if(us.length<2||!FM_TYPES.includes(a.f))break;let cx=0,cy=0;for(const u of us){cx+=u.x;cy+=u.y;}cx/=us.length;cy/=us.length;
+      let tx=MAPW/2,ty=MAPH/2,bd=1e18;for(const e of G.ents)if(!e.dead&&e.isB&&!ally(e.team,team)&&e.team>=0){const d=(e.x-cx)**2+(e.y-cy)**2;if(d<bd){bd=d;tx=e.x;ty=e.y;}}
+      fmApply(us,a.f,cx,cy,tx-cx,ty-cy,'move',!!a.fm);break;}
     // retreat (Company of Heroes style): selected units run back to the nearest HQ, barracks or factory, a little
     // faster and harder to hit, and do not stop to fight on the way
     case 'ret':for(const u of own(a.ids)){if(u.isB||!u.s||!(u.s.spd>0))continue;let best=null,bd=1e18;for(const e of G.ents){if(e.dead||!e.isB||e.team!==u.team||!(e.kind==='hq'||e.kind==='barracks'||e.kind==='factory'))continue;const d=(e.x-u.x)**2+(e.y-u.y)**2;if(d<bd){bd=d;best=e;}}
@@ -1042,7 +1079,7 @@ function aiHmOp(T,pb){const A=T.ai,op=A.op;if(!op){if(A.t%10===0)for(const u of 
   const tg=G.byId.get(op.tg)&&!G.byId.get(op.tg).dead?G.byId.get(op.tg):pb.find(b=>HM_CRIT[b.kind])||pb[0];
   const ready=fl.length?fl.filter(u=>!u.order).length>=fl.length*.6:true,stg=mn.filter(u=>!u.order).length>=mn.length*.5;
   if(!tg||(ready&&stg)||G.t-op.t>80||mn.some(u=>u.lastHit>G.t-2)){A.op=null;for(const u of fl.concat(mn))u.opW=0;if(!tg)return;
-    const gnd=mn.filter(u=>u.s.dom==='ground');if(gnd.length)formMove(gnd,tg.x,tg.y,'amove',1,4);for(const u of mn)if(u.s.dom!=='ground')setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');
+    const gnd=mn.filter(u=>u.s.dom==='ground');if(gnd.length)aiForm(gnd,tg.x,tg.y);for(const u of mn)if(u.s.dom!=='ground')setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');
     for(const u of fl){setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');u.flT=null;}aiStat(A,'hmHammer');}}
 function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);const hq=mine.find(e=>e.kind==='hq');const anchor=hq||mine.find(e=>e.isB);if(!anchor)return;T.ai.t++;aiSalvage(T,mine);aiWalls(T,mine);aiDam(T,mine);aiMedic(T,mine);lgAI(T);const en=aiFoe(T,anchor);
   // HQ queue priorities: a supply truck if it has none, then a bulldozer if it has none (without one it can never build a
@@ -1144,8 +1181,8 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
       const pin=FL>1&&fl.length>=6;
       fl.forEach((u,i)=>{const sd=pin&&i%2?-side:side,fx=anchor.x+Math.cos(ang)*D*.62+Math.cos(ang+sd*1.57)*Math.min(650,D*.35),fy=anchor.y+Math.sin(ang)*D*.62+Math.sin(ang+sd*1.57)*Math.min(650,D*.35);
         setMove(u,fx+rnd(-50,50),fy+rnd(-50,50),'amove');u.flank=G.t;u.flT=FL>1?t:null;});if(fl.length){aiStat(T.ai,'flank');aiStat(T.ai,'flankers',fl.length);if(pin)aiStat(T.ai,'pincer');}const main=home.filter(u=>!fl.includes(u));const gnd=main.filter(u=>u.s.dom==='ground'),oth=main.filter(u=>u.s.dom!=='ground');
-      if(HM&&fl.length){const sx=anchor.x+Math.cos(ang)*D*.45,sy=anchor.y+Math.sin(ang)*D*.45;formMove(gnd,sx,sy,'amove',1,4);for(const u of oth)setMove(u,sx+rnd(-60,60),sy+rnd(-60,60),'amove');for(const u of home){u.opW=1;u.flT=null;}T.ai.op={t:G.t,tg:t.id,fl:fl.map(u=>u.id),mn:main.map(u=>u.id)};aiStat(T.ai,'hmStage');}
-      else{if(gnd.length)formMove(gnd,t.x,t.y,'amove',1,4);for(const u of oth)setMove(u,t.x+rnd(-60,60),t.y+rnd(-60,60),'amove');}
+      if(HM&&fl.length){const sx=anchor.x+Math.cos(ang)*D*.45,sy=anchor.y+Math.sin(ang)*D*.45;aiForm(gnd,sx,sy);for(const u of oth)setMove(u,sx+rnd(-60,60),sy+rnd(-60,60),'amove');for(const u of home){u.opW=1;u.flT=null;}T.ai.op={t:G.t,tg:t.id,fl:fl.map(u=>u.id),mn:main.map(u=>u.id)};aiStat(T.ai,'hmStage');}
+      else{if(gnd.length)aiForm(gnd,t.x,t.y);for(const u of oth)setMove(u,t.x+rnd(-60,60),t.y+rnd(-60,60),'amove');}
       if(fl.length)T.ai.flanks=(T.ai.flanks||0)+1;T.ai.wave=Math.min(T.ai.wave+Math.round(2*(G.bs||1)),Math.round(DIFF[T.ai.d??1].maxWave*(G.bs||1)));log(en,'Enemy attack force spotted moving out.','w');}
   aiNavyAct(T,mine);aiLanding(T,mine,anchor,pb,launched);
   if(T.ai.t%6===0)for(const u of mine)if(u.kind==='jet'&&u.state==='park'&&u.ammo>=u.s.ammo&&pb.length){const t=pb[Math.floor(Math.random()*pb.length)];u.order={type:'attack',target:t};u.state='fly';u.landed=false;}

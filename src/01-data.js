@@ -701,7 +701,7 @@ const NATPOW={US:{name:'Shock and Awe',type:'strafe',cd:200,r:140,desc:'A-10 gun
   EU:{name:'Coalition Supply Drop',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
   UA:{name:'Partisan Uprising',type:'partisans',n:6,cd:200,r:90,desc:'Six partisans rise up at the target and ambush the enemy'},
   RU:{name:'Thermobaric Strike',type:'thermo',cd:230,r:150,desc:'A single huge thermobaric warhead after 3 seconds'},
-  IR:{name:'Shahed Swarm',type:'drones',n:5,cd:200,r:120,desc:'Five Shahed loitering munitions launch from your base toward the target'},
+  IR:{name:'Shahed Swarm',type:'drones',n:5,cd:200,r:120,ow:1,desc:'Five Shahed loitering munitions launch from your base toward the target (grand campaign: drawn from your launch-site stock)'},
   SA:{name:'Petrodollar Contract',type:'cash',cd:300,desc:'+$2000 immediately',self:true},
   AE:{name:'Mercenary Contract',type:'mercs',cd:230,desc:'Two tanks and two air-defence vehicles arrive at your HQ',self:true},
   PK:{name:'Nasr Tactical Strike',type:'emp',cd:220,r:200,desc:'Blast at the target that also disables enemy vehicles and buildings nearby for 10s'},

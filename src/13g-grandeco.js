@@ -83,15 +83,16 @@ const GE_B={
  base:['Military base',650,2,'B','#c9a35a','Recruits here arrive 1 month sooner, +2 garrison room, resupplies armies in and next to it.'],
  airfield:['Airfield',850,3,'A','#8fc4e8','Air wings live here: sorties reach battles in range, and the airfield stands in this province\'s battle.'],
  port:['Port',550,2,'P','#6fb0d8','+50 income, sea trade, a shipyard in this province\'s battle (coast only).'],
- factory:['Factory',750,3,'F','#d9a05a','+110 income, recruits cost 8% less (3 max). Needs power.'],
+ factory:['War Factory',750,3,'F','#d9a05a','+110 income, recruits cost 8% less (3 max). Needs power.'],
  refinery:['Refinery',700,3,'R','#a58bd0','Makes 16 fuel a month from oil. Needs power and an oil province or oil stock.'],
  power:['Power plant',700,3,'E','#f2d95a','+14 on the power grid. Blackouts slow factories and recruiting.'],
  aa:['Air defence',380,2,'D','#9ad07f','A SAM site in this province\'s battle; halves bombing damage here.'],
  farm:['Irrigation',450,2,'G','#b8d96a','+6 food (farm provinces only).'],
  mine:['Deep mine',550,3,'M','#b9bec6','+100 income (mining provinces only).'],
  fort:['Fort',500,2,'T','#d0a090','A defence gun in this province\'s battle.'],
+ dsite:['Drone launch site',420,2,'S','#c9b86a','Ground racks and hangars for long-range one-way attack drones (about 2,000 km), no runway needed. Makes 6 drones a month; Drone strikes and battle Shahed salvos draw on the stock. Can be bombed. Only nations that field such drones.'],
  mfort:['Mountain Fortress',1000,4,'X','#e0c070','A bunker pre-built in the battle (mountain provinces of IR, RS, AF, KD, DW, KP).']};
-const GE_BKEYS=['base','airfield','port','factory','refinery','power','aa','farm','mine','fort','mfort'];
+const GE_BKEYS=['base','airfield','port','factory','refinery','power','aa','farm','mine','fort','dsite','mfort'];
 function geBl(pi){return gmBuildings(pi);}
 function geEff(pi,k){let e=0;for(const r of geBl(pi))if(r[0]===k)e+=Math.max(0,1-(r[1]|0)/100);return e;}
 function geCount(pi,k){let n=0;for(const r of geBl(pi))if(r[0]===k)n++;return n;}
@@ -101,10 +102,11 @@ function geCost(c,k){return Math.round(GE_B[k][1]*(geFx(c,'build')?.8:1));}
 function geCanBuild(c,pi,k){const p=GCM.P[pi],st=GC.prov[pi],N=GC.nat[c];if(!p||!p.land||st.o!==c)return 'Not your province.';if(!GE_B[k])return 'Unknown building.';
   if(st.cv>0&&st.cv>=3)return 'Province in turmoil after its capture.';
   if(k==='mfort'&&!(GE_MFORT.includes(c)&&p.t==='m'))return GE_MFORT.includes(c)?'Needs a mountain province.':'Your nation has no Mountain Fortress.';
+  if(k==='dsite'&&!(typeof GMIL_DRN!=='undefined'&&GMIL_DRN.includes(c)))return 'Your nation does not field long-range one-way drones.';
   if(k==='farm'&&!p.farm)return 'No farmland here.';if(k==='mine'&&!p.mine)return 'No mining here.';
   if(k==='port'&&(!p.coast||geCount(pi,'port')))return p.coast?'Already has a port.':'Not on the coast.';
   if(k==='refinery'&&!GCM.P.some(q=>q.land&&q.oil&&GC.prov[q.i].o===c)&&(N.e.oil|0)<30)return 'Needs an oil province.';
-  const cap=k==='fort'||k==='aa'?3:(k==='factory'||k==='refinery'||k==='power'?3:1);if(geCount(pi,k)+GC.prov[pi].bq.filter(q=>q[1]===k).length>=cap)return 'No more of these here.';
+  const cap=k==='fort'||k==='aa'?3:(k==='factory'||k==='refinery'||k==='power'?3:k==='dsite'?2:1);if(geCount(pi,k)+GC.prov[pi].bq.filter(q=>q[1]===k).length>=cap)return 'No more of these here.';
   if(k!=='fort'&&k!=='aa'&&geUsed(pi)>=geSlots(pi))return 'No free building slot ('+geSlots(pi)+').';
   if(N.cash<geCost(c,k))return 'Not enough money.';return '';}
 function geBuild(c,pi,k){const e=geCanBuild(c,pi,k);if(e)return e;const N=GC.nat[c];N.cash-=geCost(c,k);GC.prov[pi].bq.push([GC.turn+GE_B[k][2]+(N.e.pw<.6?1:0),k]);return '';}
@@ -134,6 +136,7 @@ function geManCap(c){let t=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)
 function geOilIdx(turn){const E=GC.eco;let v=100+20*Math.sin(.62*turn+E.ph1)+9*Math.sin(1.9*turn+E.ph2);
   for(const k of Object.keys(E.cl))if(E.cl[k]&&['Strait of Hormuz','Suez','Bab-el-Mandeb','Malacca Strait'].includes(GCM.P[+k].n))v+=8;
   if(typeof gpOilDelta==='function')v+=gpOilDelta();   // RG24: cut pipelines lift the price, working Hormuz/Suez bypass lines soften a closed strait
+  if(E.shk)v+=E.shk[0]*Math.max(0,1-(turn-1)/E.shk[1]);   /* real26: the Nov 2026 oil shock (Hormuz war) fades out as markets adapt */
   v+=6*geBlockN();   // RG1: enemy warships sitting in Hormuz / Suez / Bab-el-Mandeb / Malacca / Bosporus push the oil price up
   const cr=geCrisis(turn);if(cr&&cr[2]==='shortage')v+=28;if(cr&&cr[2]==='boom')v+=6;return Math.round(Math.max(55,Math.min(190,v)));}
 function geCrisis(turn){for(const c of GC.eco.cr)if(turn>=c[0]&&turn<c[0]+c[1])return c;return null;}
@@ -168,7 +171,7 @@ function geRecruitTerms(c,pi,k,n){const fac=grNat(c).fac,N=GC.nat[c];let cost=gr
   return {cost:Math.round(cost*disc),turns:Math.max(1,turns),man:Math.round(n*(k==='inf'?7:4))};}
 function geManRegen(c){let m=0;for(const p of GE_ST[c].own){const st=GC.prov[p.i];m+=p.tw*2.4*GE_AUM[st.au|0]*(1+.06*geCount(p.i,'base'))*(st.cf===1?1+.12*(st.tr|0):1)*(st.cv>0?.5:1);}return m*(geFx(c,'manp')?1.25:1)*(GC.nat[c].e.tw?1.3:1);}
 // ---------- the per-turn nation step ----------
-function geFuelNeed(c){let f=0;for(const a of GC.armies){if(a.o!==c)continue;let k=0;for(const r of a.u){k+=(r[0]==='tank'||r[0]==='arty'||r[0]==='heli'||r[0]==='aa')?.5:.1;}f+=k*(a.path.length?1.5:1);}
+function geFuelNeed(c){let f=0;for(const a of GC.armies){if(a.o!==c)continue;let k=0;for(const r of a.u){k+=(r[0]==='tank'||r[0]==='arty'||r[0]==='heli'||r[0]==='aa')?.5:r[0]==='drone'?.25:.1;}f+=k*(a.path.length?1.5:1);}
   for(const p of GE_ST[c].own)f+=geEff(p.i,'airfield')*3*(geFx(c,'air')?.7:1);return f*(geFx(c,'fuel')?.75:1)*(GC.nat[c].e.tw?1.2:1);}
 function geArmyVal(c){let v=0;for(const a of GC.armies)if(a.o===c)v+=grArmyVal(a);return v;}
 function geTrade(c){   // trade routes between neighbouring provinces and over sea lanes; embargoes, wars, blockaded straits and sanctions cut them
