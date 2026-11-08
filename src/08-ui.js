@@ -798,7 +798,7 @@ window.addEventListener('pointercancel',e=>tcEnd(e,true),true);
 /* ---- command strip (touch only, while units are selected) and build / fire confirm ---- */
 const TC_BTN=[['am','⚔','Attack','Attack-move: tap a spot, they fight everything on the way'],['gd','🛡','Guard','Guard: tap the spot to hold'],['st','■','Stop','Stop'],
   ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all your units of the selected types on the whole map (T)'],['all','★','Army','Select your whole army'],
-  ['sn','◈','Stance','Cycle army stance: Assault, Hold, Guerrilla'],['rt','↩','Retreat','Retreat to the nearest base building'],['rs','⛽','Supply','Resupply: send the selected units to the nearest supply point (HQ, depot, truck or held town) to refill ammo'],['dg','⛏','Dig in','Dig a foxhole (soldiers) or lay sandbags / trenches (Construction Vehicle)'],['ds','✕','Clear','Deselect']];
+  ['sn','◈','Stance','Cycle army stance: Assault, Hold, Guerrilla'],['rt','↩','Retreat','Retreat to the nearest base building'],['rs','⛽','Supply','Resupply: send the selected units to the nearest supply point (HQ, depot, truck or held town) to refill ammo'],['dg','⛏','Dig in','Dig in: soldiers dig foxholes where they stand; a Construction Vehicle builds a fortification line (trench with sandbag parapet) where you draw it'],['ds','✕','Clear','Deselect']];
 const TC_CN=['cn','✕','Cancel','Cancel: stop placing, remove the last queued item, or cancel the unfinished building'];
 function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   if(k==='am'){G.amove=!G.amove;G.defm=false;TC.lineArm=false;}
@@ -810,7 +810,7 @@ function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   else if(k==='all'){selectArmy();}
   else if(k==='rt'){if(ids.length){doAct({t:'ret',ids});speak(2);}}
   else if(k==='rs'){resupplySel();}
-  else if(k==='dg'){if(own.some(digCan))tactDig();else tactWall(G.wallM==='sand'?'trench':'sand');}
+  else if(k==='dg'){if(own.some(digCan))tactDig();else tactWall('trench');}
   else if(k==='ds'){G.sel=[];G.amove=false;G.defm=false;TC.lineArm=false;}
   else if(k==='ok'){if(TC.pick&&(G.place||G.aim)){const p=toScreen(TC.pick.x,0,TC.pick.y);placeOrAim(TC.pick,false);if(!G.place&&!G.aim){tcMark(p.x,p.y,'am');TC.pick=null;}}}
   else if(k==='cn'){doCancel(false);}

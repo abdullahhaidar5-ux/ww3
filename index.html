@@ -7162,7 +7162,7 @@ function hiddenNow(e){if((e.detT||0)>G.t)return false;if(e.stlT&&!e.isB){if(G.t-
 /* ---------- production, research, building ---------- */
 function unitCount(team,kind){let n=0;for(const e of G.ents)if(!e.isB&&e.team===team&&e.kind===kind)n++;const q=G.teams[team].q[BASE[kind].from];for(const i of q)if(i.kind===kind)n++;return n;}
 function rebuyFmt(s){s=Math.ceil(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
-function enqueue(team,kind){const T=G.teams[team],s=stats(T.fac,kind);if(kind==='champ'&&!heroOk(team,s))return false;if(conqBan(kind))return false;if(kind==='cleric'&&(T.rebuy||0)>G.t){if(!T.ai)log(team,`A new ${s.name} can be chosen in ${rebuyFmt(T.rebuy-G.t)}.`,'w');return false;}if(!allUnits(T.fac).includes(kind))return false;if(kind===T.F.special&&T.rank<SPEC_RANK){if(!T.ai)log(team,`${s.name} unlocks at general rank ${SPEC_RANK}.`,'w');return false;}const gcm=gdCostK(T,s,false),cst=Math.round(s.cost*gcm*(G.ec?ecCostMul(team,s.from):1));if(T.credits<cst||!done(team,s.from))return false;
+function enqueue(team,kind){if(G.grand)return false;const T=G.teams[team],s=stats(T.fac,kind);if(kind==='champ'&&!heroOk(team,s))return false;if(conqBan(kind))return false;if(kind==='cleric'&&(T.rebuy||0)>G.t){if(!T.ai)log(team,`A new ${s.name} can be chosen in ${rebuyFmt(T.rebuy-G.t)}.`,'w');return false;}if(!allUnits(T.fac).includes(kind))return false;if(kind===T.F.special&&T.rank<SPEC_RANK){if(!T.ai)log(team,`${s.name} unlocks at general rank ${SPEC_RANK}.`,'w');return false;}const gcm=gdCostK(T,s,false),cst=Math.round(s.cost*gcm*(G.ec?ecCostMul(team,s.from):1));if(T.credits<cst||!done(team,s.from))return false;
   if(s.limit&&unitCount(team,kind)>=s.limit){log(team,`Only one ${s.name} at a time.`,'w');return false;}const q=T.q[s.from];if(q.length>=9)return false;T.credits-=cst;stSp(T,cst);q.push({kind,t:0});return true;}
 function dequeue(team,kind){const T=G.teams[team],s=stats(T.fac,kind),q=T.q[s.from];for(let i=q.length-1;i>=0;i--)if(q[i].kind===kind){q.splice(i,1);T.credits+=s.cost;stSp(T,-s.cost);return;}}
 function prodTime(T,s){let t=s.time/(1+((G&&G.bs)||1)*.6-.6);if(G&&G.sandbox&&T.id===0)t/=6;t*=upgK(T,s.kind,'build');return t;}
@@ -7208,7 +7208,7 @@ function validSpot(team,kind,x,y){validSpot.why='';const s=bstats(G.teams[team].
   return 2;}
 // Cancel an unfinished building (Abdullah 2026-10-31): the whole price comes back, builders stand down.
 function cancelBld(team,tid){const b=G.byId.get(tid);if(!b||b.dead||!b.isB||b.team!==team||b.built>=1||b.kind==='hq')return;const T=G.teams[team],s=bstats(T.fac,b.kind);for(const u of G.ents)if(u.order&&u.order.type==='build'&&u.order.target===b){u.order=null;u.path=null;}kill(b,team);T.credits+=s.cost;stSp(T,-s.cost);T.lost--;log(team,`${s.name} cancelled - refunded $${s.cost}.`);}
-function placeBld(team,kind,x,y,dzId){const T=G.teams[team],s=bstats(T.fac,kind);if(!bldAllowed(T.fac,kind))return false;if(!BUILD_ORDER.includes(kind)||!reqMet(team,kind)||T.credits<Math.round(s.cost*gdCostK(T,s,true,kind)))return false;if(s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===team&&e.kind===kind).length>=s.limit){log(team,`You can have at most ${s.limit} ${s.name}s.`,'w');return false;}
+function placeBld(team,kind,x,y,dzId){if(G.grand)return false;const T=G.teams[team],s=bstats(T.fac,kind);if(!bldAllowed(T.fac,kind))return false;if(!BUILD_ORDER.includes(kind)||!reqMet(team,kind)||T.credits<Math.round(s.cost*gdCostK(T,s,true,kind)))return false;if(s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===team&&e.kind===kind).length>=s.limit){log(team,`You can have at most ${s.limit} ${s.name}s.`,'w');return false;}
   let m=validSpot(team,kind,x,y);if(!m){log(team,validSpot.why||'Cannot build there.','w');return false;}if(m===2&&G.sandbox&&team===0)m=1;
   const b=addBld(team,kind,x,y,false);{const bc=Math.round(s.cost*gdCostK(T,s,true,kind));T.credits-=bc;stSp(T,bc);}
   if(m===2){b.nd=true;const dz=G.ents.filter(u=>u.kind==='dozer'&&u.team===team&&!u.dead);let pick=dz.find(u=>u.id===dzId);
@@ -7444,7 +7444,7 @@ function aiStat(A,k,v){const S=A.st||(A.st={});S[k]=(S[k]||0)+(v==null?1:v);}
 function tactic(e,wpn,src,splash){let m=1,tag=null;if(e.isB||!src||src.isB&&!src.s)return{m,tag};const air=e.s.dom==='air'&&!e.landed,sair=!src.isB&&src.s.dom==='air';
   if(!air&&(isVeh(e.s)||e.s.dom==='naval')&&!splash&&wpn!=='bomb'){const a=Math.atan2(e.y-src.y,e.x-src.x),rel=Math.abs(angDiff(e.hd??e.ang,a));
     if(rel<.95){m*=1.6;tag='REAR HIT';}else if(rel<2.1){m*=1.2;tag='SIDE HIT';}else m*=.8;}
-  if(isInf(e.s)&&!air){const ck=coverKind(e.x,e.y);if(ck){const hv=wpn==='shell'||wpn==='boom'||splash;m*=ck>=3?(hv?.7:.5):ck===2?(hv?.82:.64):(hv?.8:.65);tag=tag||(ck===4?'IN RUBBLE':ck===3?'DUG IN':'IN COVER');}if(e.supp>.5)m*=.9;}
+  if(isInf(e.s)&&!air){const ck=coverKind(e.x,e.y);if(ck){const hv=wpn==='shell'||wpn==='boom'||splash;m*=ck>=3?(hv?.3:.45):ck===2?(hv?.5:.6):(hv?.8:.65);   /* Abdullah 2026-11-07 21:24 'like a real fox hole or trench': dug-in troops shrug off most blast and fragments from artillery, tank HE, bombs and rockets (only near-direct hits kill) and are hard to hit with bullets; trenches/fortification lines > foxholes */tag=tag||(ck===4?'IN RUBBLE':ck===3?'DUG IN':'IN COVER');}if(e.supp>.5)m*=.9;}
   if(!air&&!sair){const dh=groundH(src.x,src.y)-groundH(e.x,e.y);if(dh>10){m*=1.15;tag=tag||'HIGH GROUND';}else if(dh<-10)m*=.9;}
   if(!air&&G.t-(e.mv||-9)<.35&&['cannon','at','tower','snipe','gun'].includes(wpn))m*=.85;
   return{m,tag};}
@@ -7822,7 +7822,7 @@ function act(team,a){if(!G||G.over)return;if(G.grand&&GRAND_NOPROD.includes(a.t)
     case 'low':{const v=a.v?1:0;for(const u of own(a.ids))if(!u.isB&&u.s.dom==='air'&&(u.s.cls==='heli'||u.s.cls==='jet'))u.low=v;break;}
     case 'stop':for(const u of own(a.ids)){u.order=null;u.target=null;u.path=null;u.dig=null;u.wl=null;}break;
     case 'dig':for(const u of own(a.ids))startDig(u);break;
-    case 'wall':{const k=a.k==='trench'?'trench':'sand';if(![a.x,a.y,a.x2,a.y2].every(Number.isFinite))break;wallOrder(team,own(a.ids),k,a.x,a.y,a.x2,a.y2);break;}
+    case 'wall':{const k='trench';if(![a.x,a.y,a.x2,a.y2].every(Number.isFinite))break;wallOrder(team,own(a.ids),k,a.x,a.y,a.x2,a.y2);break;}
     case 'clr':for(const u of own(a.ids)){if(u.kind!=='dozer')continue;const k=rubFind(u,900);if(k>=0){u.order={type:'clr',k};u.path=null;}}break;
     case 'atkDam':{const d=G.dams&&G.dams[a.fi];if(!d||d.dead)break;for(const u of own(a.ids)){if(u.kind==='harv'||u.kind==='dozer'||u.kind==='hacker'||!canTarget(u.s,d.tg))continue;u.order={type:'attack',target:d.tg};u.guard=null;u.path=null;}break;}
     case 'fix':for(const u of own(a.ids)){if(u.kind!=='dozer')continue;const v=critNear(u,900);if(v){u.order={type:'fix',target:v};u.path=null;}}break;
@@ -8434,7 +8434,7 @@ function initTowns(){const M=G.map,src=[];G.towns=[];
   if(G.teams)G.teams.forEach(T=>{T.terr=0;});}
 function townBase(t){return t.ham?.9+.9*t.K:(5.5+1.0*t.K)*(t.prize?1.5:1);}   // the centre prize town (market, always contested) pays +50%
 function townRestless(t){return t.ow>=0&&t.un>50;}
-function townIncome(t){if(t.ow<0)return 0;const hold=Math.min(1,(G.t-t.hold)/T_RAMP),ramp=.5+.5*hold;let v=townBase(t)*TAX[t.rate].m*ramp*(t.whole?1.5:1);if(t.pk===1&&!townRestless(t))v*=t.rate===0?1.4:1.25;if(townRestless(t))v*=.8;if(t.cut)v*=LG_CUT;else if(t.trade)v*=LG_TRADE;return v*(t.pop==null?1:t.pop)*(t.em==null?1:t.em)*(G.bs||1)*polMul(G.teams[t.ow]);}
+function townIncome(t){if(t.ow<0||G.grand)return 0;   /* campaign battles: no taxes — the empire's economy lives on the grand map (Abdullah 21:28) */const hold=Math.min(1,(G.t-t.hold)/T_RAMP),ramp=.5+.5*hold;let v=townBase(t)*TAX[t.rate].m*ramp*(t.whole?1.5:1);if(t.pk===1&&!townRestless(t))v*=t.rate===0?1.4:1.25;if(townRestless(t))v*=.8;if(t.cut)v*=LG_CUT;else if(t.trade)v*=LG_TRADE;return v*(t.pop==null?1:t.pop)*(t.em==null?1:t.em)*(G.bs||1)*polMul(G.teams[t.ow]);}
 function townRebelsLeft(t){let n=0;for(const u of t.rebU)if(!u.dead)n++;return n;}
 function townRevolt(t){const prev=t.ow;if(prev<0)return;const T=G.teams[prev];T.revN=(T.revN|0)+1;
   for(const c of t.cells){if(c.g){leaveGarrison(c);}c.ow=-1;c.cp=0;c.cpT=-1;}
@@ -8756,7 +8756,7 @@ function dgApply(L){G.dug=L.map(v=>({id:v[0],x:v[1],y:v[2],k:DUGK[v[3]]||'fox',a
 function aiWalls(T,mine){if(T.ai.d<1||T.ai.t%9!==4||T.credits<450||G.t<240)return;let n=0;for(const d of G.dug||[])if(d.team===T.id&&d.k!=='fox')n++;if(n>=14)return;
   let dzs=mine.filter(e=>!e.isB&&e.kind==='dozer'&&!e.order&&!e.dead).slice(0,2);if(!dzs.length){dzs=mine.filter(e=>!e.isB&&!e.dead&&!e.order&&!e.target&&!e.dig&&digCan(e)&&G.t-(e.mv||-9)>3).slice(0,4);if(dzs.length<3)return;}const dz=dzs[0];let foe=null,bd=1e12;for(const e of G.ents)if(e.isB&&!e.dead&&e.kind==='hq'&&!ally(e.team,T.id)){const d=(e.x-dz.x)**2+(e.y-dz.y)**2;if(d<bd){bd=d;foe=e;}}if(!foe)return;
   const bs=mine.filter(e=>e.isB&&e.built>=1&&(e.kind==='factory'||e.kind==='barracks'||e.kind==='hq'));if(!bs.length)return;const b=bs[(T.ai.t/9|0)%bs.length];
-  const a=Math.atan2(foe.y-b.y,foe.x-b.x),r=b.size/2+80,cx=b.x+Math.cos(a)*r,cy=b.y+Math.sin(a)*r,px=-Math.sin(a)*75,py=Math.cos(a)*75,k=T.ai.d>=2&&T.credits>900?'trench':'sand';
+  const a=Math.atan2(foe.y-b.y,foe.x-b.x),r=b.size/2+80,cx=b.x+Math.cos(a)*r,cy=b.y+Math.sin(a)*r,px=-Math.sin(a)*75,py=Math.cos(a)*75,k='trench';   /* Abdullah 2026-11-07 21:21 "Make it all dig in": one dug-in line, no separate sandbag line */
   act(T.id,{t:'wall',ids:dzs.map(e=>e.id),k,x:cx-px,y:cy-py,x2:cx+px,y2:cy+py});}
 /* ===== Hero squads + commander radio (Abdullah 2026-11-04) =====
    Sim side. One 'champ' squad per nation (data: HEROES / HAB in 01-data.js). Orders arrive as the host-authoritative command {t:'hab',tid}.
@@ -9159,7 +9159,7 @@ function lgDone(u,o){const D=G.lgd,L=G.lg,team=u.team,k=o.k;
   if(k==='mine'){const my=D.mn.filter(m=>m.team===team);if(my.length>=LG_MINE_MAX)D.mn.splice(D.mn.indexOf(my[0]),1);D.mn.push({id:D.id++,team,x:o.x,y:o.y});D.v++;
     log(team,'Mine laid on the road: the first enemy vehicle over it is hit. Enemy engineers can clear it.','g');}
   else if(k==='ckpt'){const my=D.ck.filter(c=>c.team===team);if(my.length>=LG_CK_MAX)D.ck.splice(D.ck.indexOf(my[0]),1);
-    const nx=-Math.sin(o.a),ny=Math.cos(o.a),dg=[];for(const off of [-58,-34,34,58]){const d=dugAdd(team,'sand',o.x+nx*off,o.y+ny*off,o.a);if(d)dg.push(d.id);}
+    const nx=-Math.sin(o.a),ny=Math.cos(o.a),dg=[];for(const off of [-58,-34,34,58]){const d=dugAdd(team,'trench',o.x+nx*off,o.y+ny*off,o.a);if(d)dg.push(d.id);}
     D.ck.push({id:D.id++,team,x:o.x,y:o.y,ei:o.ei,dg});D.v++;L.sig='';log(team,`Checkpoint up: enemy supply can't use this road while it stands, and it collects a toll ($${Math.round(LG_TOLL*60)}/min) while the road is on your network.`,'g');}
   else if(k==='demo'){const b=G.map.bridges[o.bi];const s=D.bd[o.bi]||(D.bd[o.bi]={hp:lgBrMax(b)});s.ch={team,t:G.t+LG_CHG,x:o.x,y:o.y,df:0};D.v++;
     for(const T of G.teams)if(!T.reb&&!T.out){const fr=ally(T.id,team);log(T.id,fr?`Charges set - the bridge blows in ${LG_CHG} s.`:`Enemy engineers have rigged a bridge to blow in ${LG_CHG} s! Put infantry or a Construction Vehicle on the charges to clear them.`,fr?'g':'bad');FXE('tping',[T.id,o.x|0,o.y|0,0]);}}
@@ -9838,7 +9838,7 @@ function ecAI(st){const E=G.ec;E.aiT+=st;if(E.aiT<12)return;E.aiT=0;
     const hq=G.ents.find(e=>e.isB&&e.team===T.id&&e.kind==='hq'&&!e.dead);if(!hq)continue;let tg=null,td=1e9;for(const p of E.pts){if(p.ow>=0&&ally(p.ow,T.id))continue;const d=Math.hypot(p.x-hq.x,p.y-hq.y);if(d<td&&d<2600){td=d;tg=p;}}
     if(!tg)continue;let n=0;for(const u of G.ents){if(n>=2)break;if(u.dead||u.isB||u.team!==T.id||u.inTun||u.kind==='harv'||u.kind==='dozer'||!u.s||u.s.dom!=='ground'||u.s.noAttack||u.order||u.target)continue;setMove(u,tg.x+n*30,tg.y,'amove');n++;}}}
 // ---- one call per step from updTowns ----
-function ecTick(st){const E=G.ec;if(!E)return;ecPoints(st);ecCaravans(st);ecAI(st);
+function ecTick(st){const E=G.ec;if(!E||G.grand)return;ecPoints(st);ecCaravans(st);ecAI(st);
   E.sm=(E.sm||0)+st;if(E.sm>=1){E.sm=0;for(const T of G.teams){const dc=(T.ecC||0)-(T.ecCs||0);T.ecCs=T.ecC||0;T.eco=(T.eco||0)*.875+((T.ecM||0)+(T.seaR||0)+dc)*.125;}}}   /* money per second from mines + ports + caravans, smoothed, for the HUD */
 // ---- network: compact pack for clients (rides inside hmPack) ----
 function ecPack(){const E=G.ec;if(!E)return 0;const th=[];for(const t of G.towns){let m=0;if(t.fb)for(let k=0;k<t.fb.length&&k<8;k++)if(t.fb[k]>G.t)m|=1<<k;
@@ -13544,7 +13544,7 @@ window.addEventListener('pointercancel',e=>tcEnd(e,true),true);
 /* ---- command strip (touch only, while units are selected) and build / fire confirm ---- */
 const TC_BTN=[['am','⚔','Attack','Attack-move: tap a spot, they fight everything on the way'],['gd','🛡','Guard','Guard: tap the spot to hold'],['st','■','Stop','Stop'],
   ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all your units of the selected types on the whole map (T)'],['all','★','Army','Select your whole army'],
-  ['sn','◈','Stance','Cycle army stance: Assault, Hold, Guerrilla'],['rt','↩','Retreat','Retreat to the nearest base building'],['rs','⛽','Supply','Resupply: send the selected units to the nearest supply point (HQ, depot, truck or held town) to refill ammo'],['dg','⛏','Dig in','Dig a foxhole (soldiers) or lay sandbags / trenches (Construction Vehicle)'],['ds','✕','Clear','Deselect']];
+  ['sn','◈','Stance','Cycle army stance: Assault, Hold, Guerrilla'],['rt','↩','Retreat','Retreat to the nearest base building'],['rs','⛽','Supply','Resupply: send the selected units to the nearest supply point (HQ, depot, truck or held town) to refill ammo'],['dg','⛏','Dig in','Dig in: soldiers dig foxholes where they stand; a Construction Vehicle builds a fortification line (trench with sandbag parapet) where you draw it'],['ds','✕','Clear','Deselect']];
 const TC_CN=['cn','✕','Cancel','Cancel: stop placing, remove the last queued item, or cancel the unfinished building'];
 function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   if(k==='am'){G.amove=!G.amove;G.defm=false;TC.lineArm=false;}
@@ -13556,7 +13556,7 @@ function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   else if(k==='all'){selectArmy();}
   else if(k==='rt'){if(ids.length){doAct({t:'ret',ids});speak(2);}}
   else if(k==='rs'){resupplySel();}
-  else if(k==='dg'){if(own.some(digCan))tactDig();else tactWall(G.wallM==='sand'?'trench':'sand');}
+  else if(k==='dg'){if(own.some(digCan))tactDig();else tactWall('trench');}
   else if(k==='ds'){G.sel=[];G.amove=false;G.defm=false;TC.lineArm=false;}
   else if(k==='ok'){if(TC.pick&&(G.place||G.aim)){const p=toScreen(TC.pick.x,0,TC.pick.y);placeOrAim(TC.pick,false);if(!G.place&&!G.aim){tcMark(p.x,p.y,'am');TC.pick=null;}}}
   else if(k==='cn'){doCancel(false);}
@@ -15322,20 +15322,19 @@ function tactBuilders(){return tactOwn().filter(u=>u.kind==='dozer'||digCan(u));
 function tactClr(){const ids=tactOwn().filter(u=>u.kind==='dozer').map(u=>u.id);if(!ids.length)return;doAct({t:'clr',ids});speak(1);sfxUI(500);pushLog('Clearing the nearest rubble.');}
 function tactWall(k){const d=tactBuilders();if(!d.length)return;G.wallM=G.wallM===k?null:k;G.wallP=null;G.amove=false;G.defm=false;G.place=null;G.aim=null;sfxUI(560);updateUI();}
 function tactKey(){const own=tactOwn();if(!own.length)return;const d=own.filter(u=>u.kind==='dozer');
-  if(d.length&&!own.some(digCan))tactWall(G.wallM==='sand'?'trench':'sand');else tactDig();}
+  if(d.length&&!own.some(digCan))tactWall('trench');else tactDig();}
 function tactDig(){const ids=tactOwn().filter(digCan).map(u=>u.id);if(!ids.length)return;doAct({t:'dig',ids});speak(1);sfxUI(500);}
 function tactFix(){const ids=tactOwn().filter(u=>u.kind==='dozer').map(u=>u.id);if(!ids.length)return;doAct({t:'fix',ids});speak(1);sfxUI(500);}
 function wallHintEl(){let h=document.getElementById('wallHint');if(!h){h=document.createElement('div');h.id='wallHint';h.style.cssText='position:fixed;z-index:8;left:50%;top:70px;transform:translateX(-50%);padding:7px 14px;border-radius:8px;background:rgba(24,32,28,.94);border:1px solid #d9b97a;color:#f0e3c4;font:600 14px system-ui,sans-serif;pointer-events:none;text-align:center';h.hidden=true;document.body.append(h);}return h;}
 function tactRow(el,s){
   const h=wallHintEl();
   if(G.wallM&&!tactBuilders().length){G.wallM=null;G.wallP=null;}
-  if(G.wallM){const k=G.wallM==='trench'?'Trench':'Sandbag line';h.hidden=false;h.textContent=(G.wallP?`${k}: ${TOUCHUI?'tap':'click'} where it ends (or drag)`:`${k}: drag a line, or ${TOUCHUI?'tap':'click'} where it starts`)+` · costs ${DUG[G.wallM].cost} per piece · ${TOUCHUI?'tap ✕':'right-click'} to cancel`;}else h.hidden=true;
+  if(G.wallM){const k='Fortification line';h.hidden=false;h.textContent=(G.wallP?`${k}: ${TOUCHUI?'tap':'click'} where it ends (or drag)`:`${k}: drag a line, or ${TOUCHUI?'tap':'click'} where it starts`)+` · costs ${DUG[G.wallM].cost} per piece · ${TOUCHUI?'tap ✕':'right-click'} to cancel`;}else h.hidden=true;
   if(s.length===1&&!s[0].isB&&s[0].crit){const d=document.createElement('div');d.className='morale';d.innerHTML='<span class="ml" style="color:#ea8a5a">Damaged</span><span style="font-size:12px;opacity:.9">'+critText(s[0].crit)+'</span>';d.title='A Construction Vehicle (or the war factory yard) repairs these.';el.append(d);}
   const own=tactOwn(),inf=own.some(digCan),doz=own.filter(u=>u.kind==='dozer'),air=own.filter(u=>u.s.dom==='air'&&(u.s.cls==='heli'||u.s.cls==='jet'));if(!inf&&!doz.length&&!air.length)return;
   const r=document.createElement('div');r.className='cmdrow tact';const mk=(t,ti,fn,on)=>{const b=document.createElement('button');b.textContent=t;b.title=ti;b.onclick=fn;if(on)b.classList.add('on');r.append(b);return b;};
   if(inf)mk('⛏ Dig in (I)','Dig a foxhole where they stand: a few seconds, then they sit low in it and take about half damage. They climb out when you give a move order.',tactDig);
-  if(doz.length||inf){mk('▤ Sandbags'+(doz.length?' (I)':''),`Lay a sandbag line: ${TOUCHUI?'tap':'click'} its start, then its end. ${DUG.sand.cost} supplies a piece. Cover for infantry, slows vehicles.`,()=>tactWall('sand'),G.wallM==='sand');
-    mk('▭ Trench','Dig a trench line: drag it out, or click its start then its end; a new line that starts at the end of a trench joins it into a network. '+DUG.trench.cost+' supplies a piece. Best cover, slows vehicles.',()=>tactWall('trench'),G.wallM==='trench');
+  if(doz.length||inf){mk('⛏ Fortification line'+(doz.length?' (I)':''),'Build a fortification line: drag it out, or click its start then its end. A trench with a sandbag parapet; a new line that starts at the end of another joins it into a network. '+DUG.trench.cost+' supplies a piece. Best cover, slows vehicles.',()=>tactWall('trench'),G.wallM==='trench');
     if(doz.length){if(G.rubN)mk('🧹 Clear rubble','Clear the nearest fallen building so tanks can pass again (idle Construction Vehicles do it on their own).',tactClr);
     mk('🔧 Fix vehicles','Repair knocked-out tracks, jammed turrets and engine fires on nearby vehicles (idle Construction Vehicles do it on their own).',tactFix);}}
   if(air.length){const lowNow=air.some(u=>LOWSET.has(u.id));mk(lowNow?'⬆ Fly high':'⬇ Fly low','Nap of the earth: low flyers cannot be locked by long-range SAM sites, but guns and shoulder-fired AA hurt them 35% more. Aircraft also pop flares / chaff on their own against SAM missiles (4 charges, refilled when landed).',()=>{const v=lowNow?0:1;for(const u of air){if(v)LOWSET.add(u.id);else LOWSET.delete(u.id);}doAct({t:'low',ids:air.map(u=>u.id),v});sfxUI(520);updateUI();},lowNow);}
