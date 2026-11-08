@@ -458,7 +458,7 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
       float crest=1.-smoothstep(fw*.6,fw*1.8,abs(s.g-(.52+.02*sin(uTime*.9+p.x*.2+p.y*.17))));c=mix(c,vec3(.96,.99,1.),crest*.8);   // crisp shoreline foam line, constant width on screen
       if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){vec4 ov=texture2D(uOv,cu);c=mix(c,ov.rgb,ov.a*.55);c=g3rimS(c,cu);}
       float dist=length(cameraPosition-vW);c*=mix(g3cloud(vW.xz,uTime),1.,smoothstep(1500.,4200.,dist));c=mix(c,vec3(.616,.722,.788),smoothstep(2200.,6200.,dist));gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
-  const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);
+  const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);g3BuildRoads(sc);
   const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);g3BuildChim(grp);g3BuildLights(grp);G3.static=grp;
   G3.ents=new THREE.Group();sc.add(G3.ents);G3.arrows=new THREE.Group();sc.add(G3.arrows);
   G3.ringM=new THREE.Mesh(new THREE.PlaneGeometry(2.6,2.6).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:g3RingTex(),color:0xffe27a,transparent:true,depthTest:false,depthWrite:false}));G3.ringM.renderOrder=5;G3.ringM.visible=false;sc.add(G3.ringM);try{g3ShipInit(sc);}catch(e){G3.ship=null;}
@@ -471,9 +471,11 @@ function g3Resize(){if(!G3.R||!GV.cv)return;const w=GV.w||GV.cv.clientWidth||800
 function g3Uniform(o){const c=grNatRgb(o);return [Math.min(1,(c[0]*.72+44)/255),Math.min(1,(c[1]*.72+42)/255),Math.min(1,(c[2]*.68+34)/255)];}
 function g3Tier(n){return n<5?0:n<12?1:2;}
 function g3FlagMat(tex,inst){const m=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}),mx=inst?'instanceMatrix[3].x':'modelMatrix[3].x';
-  m.onBeforeCompile=s=>{s.uniforms.uT=G3.flagT||(G3.flagT={value:0});s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nuniform float uT;').replace('#include <begin_vertex>','#include <begin_vertex>\n transformed.z+=sin(uT*3.2+transformed.x*.9+'+mx+'*.07)*.16*transformed.x;transformed.y+=sin(uT*2.1+transformed.x*.6)*.05*transformed.x;');};
+  /* cloth: gentle travelling wave (grows from the pole), with a fold shade so it reads as fabric, not a flat plane */
+  m.onBeforeCompile=s=>{s.uniforms.uT=G3.flagT||(G3.flagT={value:0});s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nuniform float uT;varying float vSh;').replace('#include <begin_vertex>','#include <begin_vertex>\n float ph=uT*2.6+transformed.x*1.1+'+mx+'*.07;float am=transformed.x*.11;transformed.z+=sin(ph)*am*1.5+sin(ph*.5+transformed.y*.8)*am*.5;transformed.y+=sin(uT*1.7+transformed.x*.6)*.03*transformed.x-transformed.x*transformed.x*.012;vSh=.84+.22*cos(ph)*min(1.,transformed.x*.5);');
+    s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nvarying float vSh;').replace('#include <map_fragment>','#include <map_fragment>\n diffuseColor.rgb*=vSh;');};
   return m;}
-function g3FlagMesh(o,sx){const fac=grNat(o).fac,tex=flagTex(fac),m=new THREE.Mesh(G3.flagGeo||(G3.flagGeo=new THREE.PlaneGeometry(7,4.6,10,1).translate(3.5,0,0)),g3FlagMat(tex,false));
+function g3FlagMesh(o,sx){const fac=grNat(o).fac,tex=flagTex(fac),m=new THREE.Mesh(G3.flagGeo||(G3.flagGeo=new THREE.PlaneGeometry(7,4.6,16,6).translate(3.5,0,0)),g3FlagMat(tex,false));
   return m;}
 /* perf (laneC PERF 2026-11-07): army bodies, flags and wakes are drawn as pooled InstancedMeshes (one draw per miniature / flag / wake kind)
    instead of 2-3 meshes per army; the per-army Group still carries position/scale and its meshes stay in it, hidden, as the matrix source */
@@ -496,7 +498,7 @@ function g3FlagInstMat(tex){const M=G3.bat.fm||(G3.bat.fm=new Map());let m=M.get
 function g3ShadowMesh(r){if(!G3.shG){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,2,32,32,31);gr.addColorStop(0,'rgba(0,0,0,.55)');gr.addColorStop(.6,'rgba(0,0,0,.3)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);G3.shG=new THREE.PlaneGeometry(2,2).rotateX(-Math.PI/2).translate(0,.2,0);G3.shM=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false});}const m=new THREE.Mesh(G3.shG,G3.shM);m.scale.setScalar(r);return m;}
 function g3Ent(a){let e=G3.arm.get(a.id);const sea=GCM.P[a.at].sea,tier=g3Tier(a.u.length),mg=sea?g3NavyGeo(a.o):g3MiniGeo(a.o,tier);   /* grandlook: baked soldier/ship miniature when the models are loaded */
   if(e&&e.sea===sea&&e.o===a.o&&(sea||e.tier===tier)&&!!e.mini===!!mg)return e;if(e){G3.ents.remove(e.g);}
-  const g=new THREE.Group(),body=new THREE.Mesh(mg||(G3.noGeo||(G3.noGeo=new THREE.BufferGeometry())),G3.matLit),fl=g3FlagMesh(a.o);
+  const g=new THREE.Group(),body=new THREE.Mesh(mg||(G3.noGeo||(G3.noGeo=new THREE.BufferGeometry())),(mg&&typeof g3ArmyMat==='function')?g3ArmyMat():G3.matLit),fl=g3FlagMesh(a.o);
   body.scale.setScalar(1);body.visible=false;fl.visible=false;g.add(body);
   if(mg){const R=tier>=2?5.2:tier>=1?4.4:3.2;fl.scale.setScalar(1);if(sea){fl.position.set(-3.4,5.5,0);{const wk=g3WakeMesh();wk.visible=false;wk.userData.wk=1;g.add(wk);}}else{fl.position.set(R*.62+.1,19.9,-R*.42);const sd=g3ShadowMesh(R*1.7);sd.userData.sh=1;sd.visible=false;g.add(fl);g.add(sd);}}
   if(!fl.parent)g.add(fl);
@@ -519,17 +521,8 @@ function g3BuildSmoke(){if(G3.smoke){G3.sc.remove(G3.smoke);G3.smoke.geometry.di
   G3.smoke=new THREE.Points(g,m);G3.smoke.frustumCulled=false;G3.sc.add(G3.smoke);}
 // move arrows: green along the ground for marches, red when the target is hostile
 function g3PathPts(a){const P=GCM.P,pts=[];const q=(i)=>{const p=P[i],tw=!p.sea?g3Towns().find(t=>t.pi===i):null;return [tw?tw.x:p.x,tw?tw.z:p.y];};pts.push(q(a.at));for(const j of a.path)pts.push(q(j));return pts;}
-function g3BuildArrows(){if(!G3.arrows)return;while(G3.arrows.children.length){const c=G3.arrows.children.pop();c.geometry.dispose();c.material.dispose();}if(!GC)return;const Pos=[],Col=[];
-  for(const a of GC.armies){if(!a.path.length)continue;const foe=!!GC.me&&a.o!==GC.me;if(foe&&a.id!==GV.selA&&!(grSeen(a)&&grAtWar(a.o,GC.me)))continue;const last=a.path[a.path.length-1],lp=GCM.P[last],hostile=!lp.sea&&GC.me&&grAtWar(a.o,GC.prov[last].o);
-    const c=(foe||hostile&&0)?[.95,.22,.18]:[.25,.8,.2],pts=g3PathPts(a);if(pts.length<2)continue;const cv=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(p[0],0,p[1])),false,'catmullrom',.4),n=Math.max(8,Math.round(cv.getLength()/7)),sel=a.id===GV.selA,w=sel?4:3.2;
-    const S=[];for(let i=0;i<=n;i++){const v=cv.getPoint(i/n);S.push([v.x,v.z]);}
-    for(let i=0;i<S.length;i++){const p=S[i],pr=S[Math.max(0,i-1)],nx=S[Math.min(S.length-1,i+1)];let dx=nx[0]-pr[0],dz=nx[1]-pr[1];const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;S[i]=[p[0],p[1],-dz*w/2,dx*w/2,dx,dz];}
-    const head=Math.min(S.length-1,3);for(let i=0;i<S.length-1-head;i++){const A=S[i],B=S[i+1],y0=Math.max(.8,g3HeightAt(A[0],A[1]))+1.1,y1=Math.max(.8,g3HeightAt(B[0],B[1]))+1.1,v=(x,y,z)=>{Pos.push(x,y,z);Col.push(c[0],c[1],c[2]);};
-      v(A[0]+A[2],y0,A[1]+A[3]);v(A[0]-A[2],y0,A[1]-A[3]);v(B[0]+B[2],y1,B[1]+B[3]);v(B[0]+B[2],y1,B[1]+B[3]);v(A[0]-A[2],y0,A[1]-A[3]);v(B[0]-B[2],y1,B[1]-B[3]);}
-    const T=S[S.length-1],H=S[S.length-1-head],hy=Math.max(.8,g3HeightAt(T[0],T[1]))+1.1,v=(x,y,z)=>{Pos.push(x,y,z);Col.push(c[0],c[1],c[2]);};
-    v(H[0]+H[2]*1.9,hy,H[1]+H[3]*1.9);v(H[0]-H[2]*1.9,hy,H[1]-H[3]*1.9);v(T[0]+T[4]*w*1.8,hy,T[1]+T[5]*w*1.8);}
-  if(!Pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(Pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(Col,3));
-  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,opacity:.92,depthTest:false}));m.renderOrder=4;m.frustumCulled=false;G3.arrows.add(m);}
+/* g3BuildArrows lives in src/13e2-groads.js (groads 2026-11-08) */
+/* (armies3 thick flat arrows superseded by the outlined 3D arrows in 13e2-groads.js; same rule: own = green, seen enemies at war = red) */
 // ---- HUD: mode chips, round buttons, army cards, minimap, news, banners
 function g3Css(){if(document.getElementById('g3css'))return;const s=document.createElement('style');s.id='g3css';s.textContent=`
 #g3ui{position:absolute;inset:0;pointer-events:none;overflow:hidden;font-family:inherit}
