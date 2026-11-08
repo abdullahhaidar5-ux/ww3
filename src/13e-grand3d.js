@@ -180,8 +180,8 @@ function g3BuildLights(grp){const T=g3Towns(),pos=[],ph=[],sz=[];
     float s=halo>.5?aSz*(7.+uFar*5.):aSz*2.2;gl_PointSize=clamp(s*uPx/-mv.z,halo>.5?6.:2.5,halo>.5?150.:14.);vA=(halo>.5?(.3+.2*uFar)*(.5+1.8*uNight):.55+.6*uNight)*tw;}`,
     fragmentShader:`varying float vA;varying float vH;void main(){vec2 q=gl_PointCoord-.5;float d=length(q);if(d>.5)discard;float f=1.-smoothstep(0.,.5,d);f=vH>.5?f*f:f*f*f;gl_FragColor=vec4(vec3(1.,.74,.38)*(vH>.5?.9:1.1),f*vA);}`});
   const pts=new THREE.Points(g,m);pts.frustumCulled=false;pts.renderOrder=7;grp.add(pts);G3.lights=pts;}
-// ---- chunked terrain LOD (gterrain): 8x4 chunks of 300 units, step 2 near / 4 mid / 6 far, analytic smooth normals, skirts hide LOD cracks, off-screen chunks are culled
-const G3_CH=300,G3_LODS=[2,4,6],G3_LODR=[430,1050];
+// ---- chunked terrain LOD (gterrain): 4x2 chunks of 600 units (few draw calls), step 3 near / 6 mid / 8 far, analytic smooth normals, skirts hide LOD cracks, off-screen chunks are culled
+const G3_CH=600,G3_LODS=[3,6,8],G3_LODR=[380,950];
 function g3TerrChunk(ci,cj,step){const n=G3_CH/step,V=n+1,ox=ci*G3_CH,oz=cj*G3_CH,e=5,nsk=4*n+4,NV=V*V+nsk*2;
   const pos=new Float32Array(NV*3),nor=new Float32Array(NV*3),uv=new Float32Array(NV*2),ix=new Uint32Array((n*n+4*n)*6);
   const put=(q,x,z,drop)=>{const h=(4*g3HeightAt(x,z)+g3HeightAt(x-2,z)+g3HeightAt(x+2,z)+g3HeightAt(x,z-2)+g3HeightAt(x,z+2))/8,nx=g3HeightAt(x-e,z)-g3HeightAt(x+e,z),nz=g3HeightAt(x,z-e)-g3HeightAt(x,z+e),l=Math.hypot(nx,2*e,nz);
@@ -192,11 +192,11 @@ function g3TerrChunk(ci,cj,step){const n=G3_CH/step,V=n+1,ox=ci*G3_CH,oz=cj*G3_C
   const ring=edge.length,base=sk;for(let k=0;k<ring;k++){const q=edge[k];put(sk++,pos[q*3],pos[q*3+2],8);}
   for(let k=0;k<ring;k++){const a=edge[k],b=edge[(k+1)%ring],sa=base+k,sb=base+(k+1)%ring;ix[t++]=a;ix[t++]=b;ix[t++]=sa;ix[t++]=b;ix[t++]=sb;ix[t++]=sa;}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('normal',new THREE.BufferAttribute(nor,3));g.setAttribute('uv',new THREE.BufferAttribute(uv,2));g.setIndex(new THREE.BufferAttribute(ix.subarray(0,t),1));
-  g.boundingSphere=new THREE.Sphere(new THREE.Vector3(ox+G3_CH/2,30,oz+G3_CH/2),G3_CH*.75+30);return g;}
+  g.boundingSphere=new THREE.Sphere(new THREE.Vector3(ox+G3_CH/2,30,oz+G3_CH/2),G3_CH*.72+40);return g;}
 function g3TerrInit(sc,mat){const grp=new THREE.Group(),ch=[];for(let cj=0;cj<1200/G3_CH;cj++)for(let ci=0;ci<2400/G3_CH;ci++){const m=new THREE.Mesh(g3TerrChunk(ci,cj,G3_LODS[2]),mat);m.userData={ci,cj,lod:2,geo:[null,null,m.geometry]};ch.push(m);grp.add(m);}
   G3.terr=grp;G3.terrCh=ch;sc.add(grp);g3TerrLOD(0);}
 function g3TerrLOD(maxBuild){const cam=G3.cam,C=G3.terrCh;if(!cam||!C)return;let built=0;const p=cam.position;
-  for(const m of C){const u=m.userData,cx=u.ci*G3_CH+G3_CH/2,cz=u.cj*G3_CH+G3_CH/2,d=Math.hypot(cx-p.x,p.y*.7,cz-p.z)-G3_CH*.5,want=d<G3_LODR[0]?0:d<G3_LODR[1]?1:2;
+  for(const m of C){const u=m.userData,cx=u.ci*G3_CH+G3_CH/2,cz=u.cj*G3_CH+G3_CH/2,d=Math.hypot(Math.max(0,Math.abs(cx-p.x)-G3_CH*.5),p.y*.7,Math.max(0,Math.abs(cz-p.z)-G3_CH*.5)),want=d<G3_LODR[0]?0:d<G3_LODR[1]?1:2;
     if(want===u.lod)continue;if(!u.geo[want]){if(built>=(maxBuild==null?5:maxBuild))continue;u.geo[want]=g3TerrChunk(u.ci,u.cj,G3_LODS[want]);built++;}
     m.geometry=u.geo[want];u.lod=want;if(want===2||want===1){if(u.geo[0]&&want!==0){u.geo[0].dispose();u.geo[0]=null;}}}}
 // gforest (Abdullah 2026-11-07 19:29 Total War reference "This level of graphics"): dense forests from the real land cover.
