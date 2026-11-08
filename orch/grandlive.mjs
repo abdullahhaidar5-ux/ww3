@@ -55,6 +55,7 @@ try {
   if (!hasNew) throw new Error('Grand campaign menu has no New campaign');
   await click('button', '^New campaign'); await page.waitForTimeout(300);
   await ev(n => { const s = [...document.querySelectorAll('select')].find(x => [...x.options].some(o => o.value === n)); if (s) { s.value = n; s.onchange && s.onchange(); } }, NAT);
+  if (await ev(() => [...document.querySelectorAll('button')].some(b => /^Gulf flashpoint/.test(b.textContent)))) { await click('button', '^Gulf flashpoint'); await page.waitForTimeout(200); await shot('live-0-setup-scenario'); await click('button', '^Middle East 2026'); } else fails.push('setup has no scenario choice (RG6)');
   await click('button', '^Begin$'); }
   await page.waitForFunction(() => { const e = document.getElementById('grandScreen'); return e && e.style.display !== 'none'; }, null, { timeout: 60000 });
   await page.waitForTimeout(1500); console.log(el(), 'map open'); await shot('live-1-map');
@@ -70,7 +71,8 @@ try {
   // a battle that can't be built must not leave a blank screen: message + map back (+ auto-resolve on OK)
   { const fb = await ev(() => { grandFightLive({ p: -5, att: [], def: [], an: GC.me, dn: 'XX', done: 0 }); const m = document.getElementById('gModal'), scr = document.getElementById('grandScreen'); const r = { modal: !!m && /could not start/.test(m.textContent), map: scr && scr.style.display !== 'none', G: typeof G !== 'undefined' && !!G }; if (m) m.remove(); return r; });
     console.log(el(), 'fallback', JSON.stringify(fb)); if (!fb.modal || !fb.map || fb.G) fails.push('a battle that fails to start leaves the player stuck ' + JSON.stringify(fb)); }
-  await click('#grandScreen button', 'End turn'); console.log(el(), 'end turn clicked');
+  await page.click('#gPlay'); await page.keyboard.press('5'); // no End turn any more: play time at speed 5 like a player (month ≈ 3 s)
+
   await page.waitForFunction(() => { const m = document.getElementById('gModal'); return m && /Fight it live/.test(m.textContent); }, null, { timeout: 120000, polling: 250 });
   await shot('live-2-prompt'); console.log(el(), 'prompt:', (await ev(() => document.getElementById('gModal').textContent)).slice(0, 110));
   await click('#gModal button', 'Fight it live'); console.log(el(), 'Fight it live clicked');

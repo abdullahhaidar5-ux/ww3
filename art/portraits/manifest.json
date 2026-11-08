@@ -1,0 +1,362 @@
+{
+ "IR:leader0": {
+  "file": "IR_leader0.webp",
+  "skin": "onlytheghosts_old_eurasian_male",
+  "hair": "strand-crop",
+  "garment": "robe",
+  "headgear": "turban",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "RS:leader0": {
+  "file": "RS_leader0.webp",
+  "skin": "toigo_light_skin_male_freckles",
+  "hair": "strand-side",
+  "garment": "robe",
+  "headgear": "turban",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "DW:leader0": {
+  "file": "DW_leader0.webp",
+  "skin": "toigo_light_skin_male_with_eyeliner",
+  "hair": "strand-crop",
+  "garment": "robe",
+  "headgear": "turban",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "RV:leader0": {
+  "file": "RV_leader0.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-crop",
+  "garment": "robe",
+  "headgear": "turban",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "IR:heir0": {
+  "file": "IR_heir0.webp",
+  "skin": "toigo_light_skin_male_with_eyeliner",
+  "hair": "strand-side",
+  "garment": "robe",
+  "headgear": "turban",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "RS:heir0": {
+  "file": "RS_heir0.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-crop",
+  "garment": "robe",
+  "headgear": "turban",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "KP:leader0": {
+  "file": "KP_leader0.webp",
+  "skin": "toigo_light_skin_male_freckles",
+  "hair": "strand-back",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "SA:leader0": {
+  "file": "SA_leader0.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-crop",
+  "garment": "robe",
+  "headgear": "ghutra",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "US:leader0": {
+  "file": "US_leader0.webp",
+  "skin": "onlytheghosts_old_eurasian_male",
+  "hair": "strand-side",
+  "garment": "toigo_male_double-breasted_suit",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "RU:leader0": {
+  "file": "RU_leader0.webp",
+  "skin": "onlytheghosts_old_eurasian_male",
+  "hair": "strand-back",
+  "garment": "toigo_male_double-breasted_suit",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "CN:leader0": {
+  "file": "CN_leader0.webp",
+  "skin": "onlytheghosts_old_eurasian_male",
+  "hair": "strand-crop",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "TR:leader0": {
+  "file": "TR_leader0.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-back",
+  "garment": "toigo_male_suit_3",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "IL:leader0": {
+  "file": "IL_leader0.webp",
+  "skin": "toigo_light_skin_male_freckles",
+  "hair": "strand-back",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "JP:leader0": {
+  "file": "JP_leader0.webp",
+  "skin": "onlytheghosts_old_eurasian_male",
+  "hair": "strand-crop",
+  "garment": "toigo_male_double-breasted_suit",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "DE:leader0": {
+  "file": "DE_leader0.webp",
+  "skin": "onlytheghosts_old_eurasian_male",
+  "hair": "strand-side",
+  "garment": "toigo_male_double-breasted_suit",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "IN:leader0": {
+  "file": "IN_leader0.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-bald",
+  "garment": "toigo_male_double-breasted_suit",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "EG:leader0": {
+  "file": "EG_leader0.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-crop",
+  "garment": "toigo_male_suit_3",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "NG:leader0": {
+  "file": "NG_leader0.webp",
+  "skin": "mindfront_skin_male_african_middleage",
+  "hair": "strand-afro",
+  "garment": "toigo_male_suit_3",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "IQ:leader0": {
+  "file": "IQ_leader0.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-side",
+  "garment": "toigo_male_suit_3",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "SY:leader0": {
+  "file": "SY_leader0.webp",
+  "skin": "toigo_light_skin_male_freckles",
+  "hair": "strand-back",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "KD:leader0": {
+  "file": "KD_leader0.webp",
+  "skin": "onlytheghosts_old_eurasian_male",
+  "hair": "strand-crop",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "AZ:leader0": {
+  "file": "AZ_leader0.webp",
+  "skin": "onlytheghosts_old_eurasian_male",
+  "hair": "strand-bald",
+  "garment": "toigo_male_double-breasted_suit",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "VN:leader0": {
+  "file": "VN_leader0.webp",
+  "skin": "toigo_light_skin_male_freckles",
+  "hair": "strand-crop",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "ET:leader0": {
+  "file": "ET_leader0.webp",
+  "skin": "mindfront_skin_male_african_middleage",
+  "hair": "strand-afro",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "SA:heir0": {
+  "file": "SA_heir0.webp",
+  "skin": "toigo_light_skin_male_with_eyeliner",
+  "hair": "strand-crop",
+  "garment": "robe",
+  "headgear": "ghutra",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "KP:heir0": {
+  "file": "KP_heir0.webp",
+  "skin": "toigo_light_skin_male_freckles",
+  "hair": "strand-back",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "AE:leader0": {
+  "file": "AE_leader0.webp",
+  "skin": "toigo_light_skin_male_with_eyeliner",
+  "hair": "strand-crop",
+  "garment": "robe",
+  "headgear": "ghutra",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "KR:minister1": {
+  "file": "KR_minister1.webp",
+  "skin": "onlytheghosts_middle_aged_eurasian_female",
+  "hair": "elvs_50s_updo",
+  "garment": "toigo_female_suit",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "GB:minister0": {
+  "file": "GB_minister0.webp",
+  "skin": "toigo_light_skin_female_bronze",
+  "hair": "elvs_hazel_hair",
+  "garment": "toigo_female_suit",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "BR:minister2": {
+  "file": "BR_minister2.webp",
+  "skin": "callharvey3d_midtoned_female",
+  "hair": "elvs_50s_updo",
+  "garment": "toigo_female_suit",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "FR:minister2": {
+  "file": "FR_minister2.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-crop",
+  "garment": "toigo_male_double-breasted_suit",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "UA:minister1": {
+  "file": "UA_minister1.webp",
+  "skin": "toigo_light_skin_male_with_eyeliner",
+  "hair": "strand-back",
+  "garment": "toigo_male_suit_3",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "PK:minister3": {
+  "file": "PK_minister3.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-side",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "ID:minister1": {
+  "file": "ID_minister1.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-back",
+  "garment": "toigo_male_double-breasted_suit",
+  "headgear": null,
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "g1IR": {
+  "file": "g1IR.webp",
+  "skin": "toigo_light_skin_male_with_eyeliner",
+  "hair": "strand-crop",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": "cap_peaked",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "g2RU": {
+  "file": "g2RU.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-back",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": "beret",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "g3US": {
+  "file": "g3US.webp",
+  "skin": "onlytheghosts_old_eurasian_male",
+  "hair": "strand-crop",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": "beret",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "g4TR": {
+  "file": "g4TR.webp",
+  "skin": "toigo_light_skin_male_bronze",
+  "hair": "strand-crop",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": "beret",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "g5CN": {
+  "file": "g5CN.webp",
+  "skin": "toigo_light_skin_male_ginger",
+  "hair": "strand-side",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": "beret",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ },
+ "g6SA": {
+  "file": "g6SA.webp",
+  "skin": "toigo_light_skin_male_with_eyeliner",
+  "hair": "strand-side",
+  "garment": "toigo_male_suit_tie_and_jacket",
+  "headgear": "cap_peaked",
+  "brows": "eyebrows01/mindfront_eyebrows_04",
+  "lashes": "eyelashes01/mindfront_eyelashes_02"
+ }
+}

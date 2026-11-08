@@ -22,7 +22,7 @@ const GMIL_NM={   // fictional name pools per culture [first names, family names
  de:[['Lukas','Jonas','Matthias','Anders','Stefan','Henrik','Konrad','Lars','Florian','Emil'],['Brandt','Lindqvist','Falk','Hartmann','Weiss','Sandberg','Keller','Nordin','Vogel','Reiter']],
  af:[['Kofi','Emeka','Sipho','Tesfaye','Chidi','Themba','Abebe','Musa','Jabari','Idris'],['Okafor','Mbeki','Tadesse','Nkosi','Abara','Dlamini','Bekele','Okoye','Mwangi','Adeyemi']],
  he:[['Eitan','Yossi','Amir','Noam','Gil','Oren','Ronen','Tomer','Ilan','Uri'],['Barak','Shalev','Peretz','Dayan','Navon','Harel','Sasson','Golan','Tamir','Avni']]};
-const GMIL_CUL={IR:'fa',SA:'ar',AE:'ar',EG:'ar',IQ:'ar',SY:'ar',JO:'ar',DZ:'ar',MA:'ar',OM:'ar',LY:'ar',SD:'ar',DW:'ar',RS:'ar',KD:'ar',TR:'tr',AZ:'tr',RU:'ru',UA:'ru',PL:'ru',KZ:'ru',CN:'zh',TW:'zh',KP:'ko',KR:'ko',JP:'ja',VN:'sea',TH:'sea',PH:'sea',ID:'sea',IN:'sa',PK:'sa',AF:'sa',US:'en',GB:'en',AU:'en',CA:'en',ES:'la',IT:'la',FR:'la',BR:'la',MX:'la',AR:'la',CO:'la',CL:'la',VE:'la',CU:'la',DE:'de',SE:'de',GR:'de',NG:'af',ET:'af',ZA:'af',IL:'he'};
+const GMIL_CUL={IR:'fa',SA:'ar',AE:'ar',EG:'ar',IQ:'ar',RV:'ar',SY:'ar',JO:'ar',DZ:'ar',MA:'ar',OM:'ar',OB:'ar',BI:'ar',LY:'ar',SD:'ar',DW:'ar',RS:'ar',KD:'ar',TR:'tr',AZ:'tr',RU:'ru',UA:'ru',PL:'ru',KZ:'ru',CN:'zh',TW:'zh',KP:'ko',KR:'ko',JP:'ja',VN:'sea',TH:'sea',PH:'sea',ID:'sea',IN:'sa',PK:'sa',AF:'sa',US:'en',GB:'en',AU:'en',CA:'en',ES:'la',IT:'la',FR:'la',BR:'la',MX:'la',AR:'la',CO:'la',CL:'la',VE:'la',CU:'la',DE:'de',SE:'de',GR:'de',NG:'af',ET:'af',ZA:'af',IL:'he'};
 const GMIL_REGCUL={ME:'ar',AF:'af',SA:'sa',EA:'zh',SEA:'sea',EU:'de',NA:'en',SAM:'la'};
 const GMIL_FLEET=[['ship',.34],['boat',.26],['fast',.14],['sub',.26]];   // starting fleet mix (by value)
 const GMIL_NAVAL=['ship','boat','fast','sub','minel','sweep'];
@@ -56,10 +56,17 @@ function gmilGenStep(init){const M=GC.mil;for(const c of Object.keys(GC.nat).sor
     const gens=Object.values(M.g).filter(g=>g.o===c&&!g.st).sort((x,y)=>x.id-y.id);
     for(const g of gens)if(g.aid&&!GC.armies.some(a=>a.id===g.aid&&a.gid===g.id)){g.aid=0;}   // army gone without the hook (safety)
     for(const a of mine){if(a.gid&&M.g[a.gid]&&!M.g[a.gid].st)continue;a.gid=0;if(grArmyVal(a)<4000)continue;
-      let g=gens.find(x=>!x.aid);
+      let g=gens.find(x=>!x.aid&&!x.res);   /* a general the player put in reserve stays there */
       if(!g&&gens.length<gmilMaxGens(c)&&(init?gens.length<2:(M.nx[c]|0)<=GC.turn)){const R=gmilRng(M.gid,c.charCodeAt(0)*3+c.charCodeAt(1));g={id:M.gid++,o:c,nm:gmilName(c,R),tr:Math.floor(R()*4),xp:init?0:15,lv:0,st:0,aid:0,by:''};g.lv=gmilLv(g);M.g[g.id]=g;gens.push(g);M.nx[c]=GC.turn+2;
         if(!init&&c===GC.me)grLog(gmilTitle(g)+' '+g.nm+' ('+GMIL_TR[g.tr][0]+') takes command of '+a.nm+'.',c);}
       if(g){g.aid=a.id;a.gid=g.id;}}}}
+/* Abdullah 2026-11-07 20:32 "should be able to assign a general to an army": move a general to one of your land armies (the army's
+   current general swaps over to the general's old army, or returns to the pool), or hold him in reserve (aid 0). */
+function gmilAssign(gid,aid){const M=GC&&GC.mil,g=M&&M.g[gid];if(!g||g.o!==GC.me||g.st)return;const old=g.aid&&GC.armies.find(x=>x.id===g.aid);
+  if(!aid){if(old&&old.gid===g.id)old.gid=0;g.aid=0;g.res=1;return;}
+  const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||a.fl||a===old)return;const prev=a.gid&&M.g[a.gid]&&M.g[a.gid]!==g?M.g[a.gid]:null;
+  if(old&&old.gid===g.id)old.gid=0;if(prev){prev.aid=0;prev.res=0;if(old){old.gid=prev.id;prev.aid=old.id;}}
+  a.gid=g.id;g.aid=a.id;g.res=0;grLog(gmilTitle(g)+' '+g.nm+' takes command of '+a.nm+'.',GC.me);}
 function gmilMerge(a,b){if(!b.gid)return;const M=GC.mil,gb=M.g[b.gid];b.gid=0;if(!gb)return;if(!a.gid){a.gid=gb.id;gb.aid=a.id;return;}
   const ga=M.g[a.gid];if(ga&&gb.xp>ga.xp){ga.aid=0;a.gid=gb.id;gb.aid=a.id;}else gb.aid=0;}   // the other one goes back to the pool
 function gmilLost(a){const M=GC.mil;if(!M||!a.gid)return;const g=M.g[a.gid];a.gid=0;if(!g||g.st)return;g.aid=0;const R=gmilRng(g.id,a.id),r=R(),foe=M.foe;
@@ -120,7 +127,7 @@ function gmilSeaStep(){const M=GC.mil,R=grRng(GC.seed*43+GC.turn*5);
 function gmilSites(c,pi,rng,type){const P=GCM.P;let best=-1,bd=1e9;
   for(const p of P){if(!p.land||GC.prov[p.i].o!==c)continue;const ok=type==='d'?(geCount(p.i,'base')+geCount(p.i,'airfield')>0||GC.armies.some(a=>a.o===c&&a.at===p.i&&!a.fl&&a.u.length>2)):type==='a'?geEff(p.i,'airfield')>0:(geCount(p.i,'base')+geCount(p.i,'airfield')>0||p.cap);
     if(!ok)continue;const d=grDist(p.i,pi);if(d<=rng&&d<bd){bd=d;best=p.i;}}return best;}
-function gmilStrikeCheck(c,type,pi,k){const N=GC.nat[c],E=N.e,S=GMIL_ST[type],M=gmilN(c),p=GCM.P[pi];if(!S||!p)return 'Unknown strike.';if(M.so.length>=3)return 'Three strikes a turn at most.';
+function gmilStrikeCheck(c,type,pi,k){const N=GC.nat[c],E=N.e,S=GMIL_ST[type],M=gmilN(c),p=GCM.P[pi];if(!S||!p)return 'Unknown strike.';if(M.so.length>=3)return 'Three strikes a month at most.';
   if(M.so.some(o=>o.t===type&&o.pi===pi&&o.k===k))return 'Already ordered.';
   if(p.land){const o=GC.prov[pi].o;if(o===c||!grAtWar(c,o))return 'Only at nations you are at war with.';if(k==='f')return 'Fleets are at sea.';}
   else{if(k!=='f')return 'Only fleets at sea.';if(!GC.armies.some(a=>a.at===pi&&a.fl&&grAtWar(a.o,c)))return 'No enemy fleet there.';}
@@ -162,13 +169,13 @@ function gmilAddFront(c,foe){let f=GC.mil.fr.find(x=>x.o===c&&x.foe===foe);if(f)
 function gmilLine(f){const P=GCM.P;return P.filter(p=>p.land&&GC.prov[p.i].o===f.o&&p.adj.some(j=>P[j].land&&GC.prov[j].o===f.foe));}
 function gmilEnemyAt(foe,j){return GC.prov[j].o===foe?grProvDef(j)+GC.armies.filter(x=>x.at===j&&x.o===foe&&!x.fl).reduce((s,x)=>s+grArmyVal(x),0):0;}
 function gmilAssign(aid,fid){const a=GC.armies.find(x=>x.id===aid);if(!a||a.fl)return 'Armies only.';if(!fid){a.fr=0;return '';}const f=GC.mil.fr.find(x=>x.id===fid);if(!f||f.o!==a.o)return 'No such front.';a.fr=fid;return '';}
-function gmilPlanFront(f,plan){const P=GCM.P,c=f.o,line=gmilLine(f);if(!line.length)return;const arms=GC.armies.filter(a=>a.fr===f.id&&a.o===c&&!a.fl&&!a.path.length&&a.u.length).sort((x,y)=>x.id-y.id);
+function gmilPlanFront(f,plan){const P=GCM.P,c=f.o,line=gmilLine(f);if(!line.length)return;const cap=GC.nat[c].cap,arms=GC.armies.filter(a=>a.fr===f.id&&a.o===c&&!a.fl&&!a.path.length&&a.u.length&&!(a.at===cap&&typeof grCapHeld==='function'&&grCapHeld(c,a)<grCapThreat(c)*1.2)).sort((x,y)=>x.id-y.id);   /* A-REAL: the capital's guard stays when it is threatened */
   const threat=pi=>{let t=0;for(const j of P[pi].adj)if(P[j].land&&GC.prov[j].o===f.foe)t+=gmilEnemyAt(f.foe,j)*.5;return t;};
   const defNow=pi=>grProvDef(pi)*.5+GC.armies.filter(x=>x.at===pi&&x.o===c&&!x.fl).reduce((s,x)=>s+grArmyVal(x),0)+(plan[pi]||0);
   for(const a of arms){const val=grArmyVal(a)*gmilMul(a,0);let tgt=-1,ts=-1e9;
     if(f.ord!=='hold'){   // push / counter-attack: weakest worthwhile enemy province within 3 hops of land
       const seen=new Set([a.at]);let fr=[a.at];for(let d=0;d<3&&fr.length;d++){const nx=[];for(const u of fr)for(const j of P[u].adj){if(seen.has(j)||!P[j].land)continue;seen.add(j);nx.push(j);if(GC.prov[j].o!==f.foe)continue;
-          const def=gmilEnemyAt(f.foe,j)*1.25;let sc=(P[j].wg?40:0)+P[j].dev*4+(val/Math.max(300,def)-1)*30-d*8;
+          if(typeof grNukStop==='function'&&grNukStop(c,j,f.foe))continue;const def=gmilEnemyAt(f.foe,j)*1.25*(1+(typeof grDepth==='function'?grDepth(j,c,f.foe):0));let sc=(P[j].wg?40:0)+P[j].dev*4+(val/Math.max(300,def)-1)*30-d*8;
           if(f.ord==='counter'){sc+=GC.prov[j].o0===c?60:-15;}
           const need=f.ord==='counter'?1.0:1.12;if(def<val*need&&sc>ts){ts=sc;tgt=j;}}fr=nx;}}
     if(tgt>=0){const r=grPath(c,a.at,tgt);if(r&&!r.decl&&r.path.length){a.path=r.path;a.pg=0;plan[tgt]=(plan[tgt]||0)+val;continue;}}
@@ -194,7 +201,7 @@ function gmilAIFleets(c,R){const N=GC.nat[c],P=GCM.P,fac=grNat(c).fac;const foes
   for(const a of mine){if(a.path.length)continue;const val=grArmyVal(a);if(a.u.length>1&&mine.some(b=>b!==a&&b.at===a.at&&!b.path.length&&b.id<a.id)){grMerge(a.id);continue;}
     if(!foes.length)continue;let tgt=-1,ts=-1e9;
     const seen=new Set([a.at]);let fr=[a.at];for(let d=0;d<5&&fr.length;d++){const nx=[];for(const u of fr)for(const j of P[u].adj){if(seen.has(j)||!P[j].sea)continue;seen.add(j);nx.push(j);
-        const en=GC.armies.filter(x=>x.at===j&&x.fl&&foes.includes(x.o)&&x.u.length).reduce((s,x)=>s+grArmyVal(x),0);let sc=-d*6;
+        const en=GC.armies.filter(x=>x.at===j&&x.fl&&foes.includes(x.o)&&x.u.length).reduce((s,x)=>s+grArmyVal(x),0);let sc=-d*6+(P[j].ck?16:0);
         if(en>0){if(en*1.15<val)sc+=40+en/400;else continue;}
         for(const k of P[j].adj)if(P[k].land&&foes.includes(GC.prov[k].o)&&gmilHasPort(k))sc+=14+P[k].dev*3;   // blockade a foe's port
         if(sc>ts){ts=sc;tgt=j;}}fr=nx;}

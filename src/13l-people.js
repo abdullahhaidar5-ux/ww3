@@ -9,6 +9,7 @@ const PPL_T={   // culture -> [first names, family names, patronymics (ru/uk onl
  lb:['Hadi Ali Mahmoud Hussein Jawad Nabil Bilal Ziad Fadi Kassem Rida Ammar Mustafa Samer Yasser Ghassan','Amili Jaber Zein Hamadeh Khalil Saleh Bazzi Shehab Mroue Ghandour Nasser Fakih Bitar Mazraani Charafeddine Hijazi'],
  clb:['Hadi Jawad Abbas Ammar Mohammad Hasan Kassem Rida Ibrahim Mortada','Amili Zein Jaber Hamadeh Shehab Mroue Charafeddine Mousawi Sadeq Baalbaki Tyrawi Nabatieh'],
  ye:['Abdulsalam Yahya Nasser Hamoud Saleh Mansour Hashim Fouad Ahmed Murad Zaid Abdullatif Najib Jamil Adel Taha','al-Sanaani al-Hamdani al-Raymi al-Shami al-Wazir al-Madani al-Khawlani al-Yafei al-Hadrami al-Quhali al-Dhamari al-Ansi al-Marwani al-Jabri'],
+ cir:['Hussein Ali Mohammad Mahdi Jawad Muhsin Baqir Abbas Hasan Kazim Sadiq Hamid','al-Hilli al-Karbalai al-Mousawi al-Gharawi al-Kufi al-Saadi al-Jaberi al-Nasiri al-Zubaidi al-Rubaie al-Fatlawi al-Moussawi'],
  cye:['Yahya Hamoud Mansour Zaid Hashim Murad Najm Ahmed Hussein Abdulwahab','al-Sanaani al-Hamdani al-Raymi al-Wazir al-Madani al-Khawlani al-Dhamari al-Ansi al-Marwani al-Saadi'],
  iq:['Haider Ali Mustafa Hussein Karrar Zaid Ahmed Omar Salam Qasim Jabbar Rafid Thamer Ayad Falah Hakim','al-Tamimi al-Jubouri al-Obeidi al-Shammari al-Saadi al-Rubaie al-Zubaidi al-Bayati al-Dulaimi al-Hashimi al-Azzawi al-Kinani al-Nuaimi al-Ani'],
  sy:['Karim Nabil Samir Walid Tariq Salim Rami Fouad Jamal Bassel Majd Anas Wael Adnan Ghiath Mazen','Haddad Mansour Khoury Darwish Najjar Sabbagh Hakim Farouk Rahal Shami Hamwi Atassi Kurdi Jaber Halabi Zaidan'],
@@ -45,12 +46,13 @@ const PPL_T={   // culture -> [first names, family names, patronymics (ru/uk onl
  es:['Javier Alvaro Sergio Pablo Fernando Ramon Gonzalo Iker Adrian Rubén Marcos Ismael Julian Cristobal Ignacio Guillermo','Gallego Herrera Castillo Dominguez Vazquez Santana Molina Cabrera Prieto Fuentes Aguilar Benitez Calvo Ledesma Cordero Pascual','','Marta Carmen Pilar Elena Beatriz Rocio Irene Teresa'],
  se:['Erik Anders Lars Johan Mikael Nils Per Gustav Henrik Oskar Fredrik Magnus Olof Stefan Hakan Sven','Lindqvist Sandberg Nordin Eklund Holmgren Bergstrom Forsberg Sjoberg Lundgren Engstrom Wallin Dahlberg Hedlund Ostlund Samuelsson Granath','','Karin Ingrid Annika Maria Elin Sofia Helena Astrid'],
  en:['James Robert Marcus Daniel Edward Thomas Philip Gordon Neil Walter Richard Andrew Graham Nigel Jonathan Martin','Hollis Kendrick Whitaker Barlow Ashby Crane Mercer Pryor Langley Thorne Blackwood Caldwell Fairfax Harlow Rutledge Sterling','','Eleanor Katherine Margaret Olivia Rebecca Helen Susan Victoria']};
-const PPL_CUL={IR:'fa',RS:'lb',DW:'ye',IQ:'iq',SY:'sy',SA:'gu',AE:'gu',OM:'gu',JO:'jo',EG:'eg',KD:'ku',TR:'tr',AZ:'az',IL:'he',RU:'ru',UA:'uk',KP:'ko',KR:'ko',CN:'zh',TW:'zh',JP:'ja',VN:'vi',IN:'hi',PK:'ur',AF:'af',ID:'id',PH:'ph',TH:'th',KZ:'kz',NG:'ng',ZA:'za',ET:'et',DZ:'eg',MA:'eg',LY:'eg',SD:'eg',CU:'la',VE:'la',MX:'la',AR:'la',CO:'la',CL:'la',BR:'br',ES:'es',FR:'fr',DE:'de',EU:'de',PL:'pl',IT:'it',GR:'gr',SE:'se',US:'en',GB:'en',AU:'en',CA:'en'};
+const PPL_CUL={IR:'fa',RS:'lb',DW:'ye',RV:'iq',IQ:'iq',SY:'sy',SA:'gu',AE:'gu',OM:'gu',JO:'jo',EG:'eg',KD:'ku',TR:'tr',AZ:'az',IL:'he',RU:'ru',UA:'uk',KP:'ko',KR:'ko',CN:'zh',TW:'zh',JP:'ja',VN:'vi',IN:'hi',PK:'ur',AF:'af',ID:'id',PH:'ph',TH:'th',KZ:'kz',NG:'ng',ZA:'za',ET:'et',DZ:'eg',MA:'eg',LY:'eg',SD:'eg',CU:'la',VE:'la',MX:'la',AR:'la',CO:'la',CL:'la',BR:'br',ES:'es',FR:'fr',DE:'de',EU:'de',PL:'pl',IT:'it',GR:'gr',SE:'se',US:'en',GB:'en',AU:'en',CA:'en'};
 const PPL_REG={ME:'iq',AF:'ng',SA:'hi',EA:'zh',SEA:'id',EU:'de',NA:'en',SAM:'la'};
 const PPL_FF={ko:1,zh:1,ja:1,vi:1};   // family name first
-const PPL_CLERIC={IR:'cfa',RS:'clb',DW:'cye'};   // nations whose leader is always an Ayatollah (other clerics: Hojatoleslam)
-const PPL_HEAD={SA:'King',JO:'King',MA:'King',OM:'Sultan',AE:'President',GB:'Prime Minister',JP:'Prime Minister',IL:'Prime Minister',DE:'Chancellor',EU:'President',IN:'Prime Minister',ES:'Prime Minister',IT:'Prime Minister',PL:'Prime Minister',SE:'Prime Minister',GR:'Prime Minister',CA:'Prime Minister',AU:'Prime Minister',TR:'President',CN:'President',KP:'Dear Leader',IR:'Ayatollah',RS:'Ayatollah',DW:'Ayatollah',TH:'Prime Minister',VN:'General Secretary',KD:'President',AF:'Chairman',LY:'Chairman',SD:'Chairman',KZ:'President'};
-const PPL_HEIR={SA:'Crown Prince',JO:'Crown Prince',MA:'Crown Prince',OM:'Crown Prince',AE:'Crown Prince',KP:'Successor',IR:'Designated successor',RS:'Designated successor',DW:'Designated successor'};
+const PPL_CLERIC={IR:'cfa',RS:'clb',DW:'cye'};   // nations whose head of state is always a cleric: ONE Supreme Ayatollah (IR); the Imams of RS, DW and RV are their own sub-leaders (Abdullah 2026-11-06 23:09); other clerics: Hojatoleslam
+const PPL_CLTTL={IR:'Supreme Ayatollah',RS:'Secretary-General Sayyid',DW:'Leader of the Revolution Sayyid'};   // like the real world (Abdullah 23:09 "Make it like the real world", CLAUDE.md): RV is led by a Chairman (PPL_HEAD), not a cleric
+const PPL_HEAD={RV:'Chairman',SA:'King',JO:'King',MA:'King',OM:'Sultan',AE:'President',GB:'Prime Minister',JP:'Prime Minister',IL:'Prime Minister',DE:'Chancellor',EU:'President',IN:'Prime Minister',ES:'Prime Minister',IT:'Prime Minister',PL:'Prime Minister',SE:'Prime Minister',GR:'Prime Minister',CA:'Prime Minister',AU:'Prime Minister',TR:'President',CN:'President',KP:'Dear Leader',IR:'Supreme Ayatollah',RS:'Imam',DW:'Imam',RV:'Imam',TH:'Prime Minister',VN:'General Secretary',KD:'President',AF:'Chairman',LY:'Chairman',SD:'Chairman',KZ:'President'};
+const PPL_HEIR={SA:'Crown Prince',JO:'Crown Prince',MA:'Crown Prince',OM:'Crown Prince',AE:'Crown Prince',KP:'Successor',IR:'Designated successor',RS:'Designated successor',DW:'Designated successor',RV:'Designated successor'};
 const PPL_POSTS=['Minister of Foreign Affairs','Minister of Defence','Minister of Finance','Minister of the Interior'];
 const PPL_RANKS={fa:['Sarhang','Sartip Dovom','Sartip','Sarlashkar','Sardar'],ar:['Aqid','Amid','Liwa','Fariq','Fariq Awwal'],en:['Colonel','Brigadier','Major General','Lieutenant General','General']};
 function pplHash(s){let h=2166136261;s=''+s;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
@@ -68,7 +70,7 @@ function pplLook(key,c,sx,role){const h=pplHash(key+'|'+c),R=grRng(h|0),n=(typeo
   return {h,sx,age:role==='heir'?28+Math.floor(R()*14):role==='leader'?(PPL_CLERIC[c]?62+Math.floor(R()*14):52+Math.floor(R()*18)):role==='general'?46+Math.floor(R()*16):42+Math.floor(R()*20),reg:n.reg||'',cul:pplCul(c),beard:R(),build:R(),tone:R()};}
 function pplMakePerson(c,role,idx,R,post,used){used=used||{};for(let t=0;t<8;t++){const p=pplMakePerson1(c,role,idx,R,post),k=p.nm.split(' ').filter(w=>w.length>3).pop();if(!used[p.nm]&&!used['f'+k]||t===7){used[p.nm]=1;used['f'+k]=1;return p;}}}
 function pplMakePerson1(c,role,idx,R,post){const cul=pplCul(c),cl=PPL_CLERIC[c];let ttl='',nm,sx='m',tab=cul;
-  if(role==='leader'){ttl=PPL_HEAD[c]||'President';if(cl){tab=cl;ttl='Ayatollah';}}
+  if(role==='leader'){ttl=PPL_HEAD[c]||'President';if(cl){tab=cl;ttl=PPL_CLTTL[c]||'Supreme Ayatollah';}}
   else if(role==='heir'){ttl=PPL_HEIR[c]||'Heir';if(cl){tab=cl;ttl='Hojatoleslam';}}
   else if(role==='minister'){ttl='';if(cl&&R()<.4){tab=cl;ttl='Hojatoleslam';}
     else if(PPL_T[cul]&&PPL_T[cul][3]&&R()<.22)sx='f';}
@@ -91,5 +93,9 @@ if(typeof npTab==='function')npTab('gov','👤','Government',(code,body)=>{const
   const gs=GC.mil?Object.values(GC.mil.g).filter(g=>g.o===code&&!g.st).sort((a,b)=>a.id-b.id):[];
   h+=gs.map(g=>pplCard(pplGeneral(g))).join('')+'</div>';body.innerHTML=h;});
 /* portraits are OFF until Abdullah approves the art (orch/portraits/); the hooks exist so cards can adopt them later */
-function ptOn(){return false;}
-function ptHtml(p,sz){return '';}
+function ptOn(){return true;}   // Abdullah 2026-11-07 15:00: portraits round 3 approved — "Turn on now"
+function ptHtml(p,sz){const f=p&&p.id?String(p.id).replace(/[^A-Za-z0-9_-]/g,'_'):'';return f?'<img src="art/portraits/'+f+'.webp" width="'+sz+'" height="'+Math.round(sz*1.25)+'" alt="" style="flex:none;border-radius:3px" onerror="this.style.display=\'none\'">':'';}
+(function ptCredits(){try{if(document.getElementById('ptCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
+  const p=document.createElement('p');p.className='credits';p.id='ptCred';
+  p.textContent='Leader portraits (rendered offline): MakeHuman community base mesh, face targets, skins, eyebrows, eyelashes and clothes (CC0); women\'s hair by Elvaerwyn from the MakeHuman asset pack hair02 (CC-BY). All people are fictional.';
+  ps[0].insertAdjacentElement('beforebegin',p);}catch(e){}})();

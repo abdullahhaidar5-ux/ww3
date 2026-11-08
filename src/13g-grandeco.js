@@ -27,6 +27,7 @@ const GE_SIG={
  CU:[['E','Black-Market Networks','Smuggling pays double and wrecks are stripped for parts.',['smug','salv']]],
  RS:[['L','Ayatollah','Clerical leader: morale and loyalty, tours provinces, their people clamour for war.'],['F','Mountain Fortress','Pre-built mountain bunker in mountain provinces.']],
  DW:[['L','Ayatollah','Clerical leader: morale and loyalty, tours provinces, their people clamour for war.'],['F','Mountain Fortress','Pre-built mountain bunker in mountain provinces.']],
+ RV:[['M','Call to the Shrines','When an enemy enters a province with a holy city, a free volunteer levy rises there.']],
  IQ:[['E','Oil-for-Reconstruction','Oil money rebuilds quickly.',['oil','build']]],
  SY:[['E','Salvage Brigades','Rubble becomes cash and the army lives lean.',['salv','upkeep']]],
  JP:[['E','Precision Industry','Efficient plants: a stable grid and a cheaper army.',['power','upkeep']]],
@@ -60,6 +61,8 @@ const GE_SIG={
  TH:[['E','Rice Bowl','Harvests and a calm home front.',['food','calm']]],
  ET:[['E','Highland Levies','A big recruit pool at low upkeep.',['manp','upkeep']]],
  LY:[['E','Oil Terminals','Oil and shipping.',['oil','port']]],
+ OB:[['M','Urban Labyrinth','Rubble-city home battles; some fallen fighters slip away and return after the battle.']],
+ BI:[['M','Desert Raids','Fast moves across desert provinces and recovering captured gear after won battles.']],
  SD:[['E','Gold Routes','Gold mines and smuggled trade.',['smug','mine']]],
  SE:[['E','Neutral Arms Exports','Arms sales and a cheap army.',['tax','upkeep']]],
  KZ:[['E','Steppe Uranium','Mines and thrifty fuel.',['mine','fuel']]],
@@ -77,11 +80,11 @@ function geSigName(c){const a=GE_SIG[c];return a?a.map(s=>s[1]).join(' + '):'-';
 // ---------- province buildings ----------
 // key: [name, cost, turns, letter, colour, help]
 const GE_B={
- base:['Military base',650,2,'B','#c9a35a','Recruits here arrive 1 turn sooner, +2 garrison room, resupplies armies in and next to it.'],
+ base:['Military base',650,2,'B','#c9a35a','Recruits here arrive 1 month sooner, +2 garrison room, resupplies armies in and next to it.'],
  airfield:['Airfield',850,3,'A','#8fc4e8','Air wings live here: sorties reach battles in range, and the airfield stands in this province\'s battle.'],
  port:['Port',550,2,'P','#6fb0d8','+50 income, sea trade, a shipyard in this province\'s battle (coast only).'],
- factory:['Factory',750,3,'F','#d9a05a','+110 income, recruits cost 8% less (3 max). Needs power.'],
- refinery:['Refinery',700,3,'R','#a58bd0','Makes 16 fuel a turn from oil. Needs power and an oil province or oil stock.'],
+ factory:['War Factory',750,3,'F','#d9a05a','+110 income, recruits cost 8% less (3 max). Needs power.'],
+ refinery:['Refinery',700,3,'R','#a58bd0','Makes 16 fuel a month from oil. Needs power and an oil province or oil stock.'],
  power:['Power plant',700,3,'E','#f2d95a','+14 on the power grid. Blackouts slow factories and recruiting.'],
  aa:['Air defence',380,2,'D','#9ad07f','A SAM site in this province\'s battle; halves bombing damage here.'],
  farm:['Irrigation',450,2,'G','#b8d96a','+6 food (farm provinces only).'],
@@ -130,6 +133,8 @@ function geManCap(c){let t=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c)
 // ---------- world: oil price, crises, chokepoints ----------
 function geOilIdx(turn){const E=GC.eco;let v=100+20*Math.sin(.62*turn+E.ph1)+9*Math.sin(1.9*turn+E.ph2);
   for(const k of Object.keys(E.cl))if(E.cl[k]&&['Strait of Hormuz','Suez','Bab-el-Mandeb','Malacca Strait'].includes(GCM.P[+k].n))v+=8;
+  if(typeof gpOilDelta==='function')v+=gpOilDelta();   // RG24: cut pipelines lift the price, working Hormuz/Suez bypass lines soften a closed strait
+  v+=6*geBlockN();   // RG1: enemy warships sitting in Hormuz / Suez / Bab-el-Mandeb / Malacca / Bosporus push the oil price up
   const cr=geCrisis(turn);if(cr&&cr[2]==='shortage')v+=28;if(cr&&cr[2]==='boom')v+=6;return Math.round(Math.max(55,Math.min(190,v)));}
 function geCrisis(turn){for(const c of GC.eco.cr)if(turn>=c[0]&&turn<c[0]+c[1])return c;return null;}
 const GE_CRN={crash:'Market crash',shortage:'Oil shortage',famine:'Bad harvests',credit:'Credit crunch',boom:'Trade boom'};
@@ -138,6 +143,11 @@ function geHolder(si){   // who holds a strait: the nation with the most port-pr
   const P=GCM.P,sc={};for(const j of P[si].adj){const q=P[j];if(!q.land)continue;const o=GC.prov[j].o;if(GC.nat[o]&&GC.nat[o].dead)continue;if(!(q.port||geCount(j,'port')))continue;sc[o]=(sc[o]||0)+q.dev;}
   let best='',bv=0;for(const o of Object.keys(sc).sort())if(sc[o]>bv||(sc[o]===bv&&bv>0&&o<best)){bv=sc[o];best=o;}return bv>=2?best:'';}
 function geStraits(){return GCM.P.filter(p=>p.sea&&p.ck);}
+// RG1: warships in a chokepoint zone blockade it for every nation at war with the fleet's owner (counter-play: park your own fleet there to break it)
+function geFleetsAt(si){const r=[];for(const a of GC.armies)if(a.fl&&a.at===si&&a.u.length)r.push(a.o);return r;}
+function geSeaBlock(si,c){const f=geFleetsAt(si);if(!f.length||f.includes(c))return '';for(const o of f)if(grAtWar(c,o))return o;return '';}
+function geBlockaded(si){const f=geFleetsAt(si);if(!f.length)return '';for(const j of GCM.P[si].adj){const q=GCM.P[j];if(!q.land)continue;const o=GC.prov[j].o;if(GC.nat[o]&&!GC.nat[o].dead&&!f.includes(o)){for(const x of f)if(grAtWar(o,x))return x;}}return '';}
+function geBlockN(){let n=0;for(const s of geStraits())if(geBlockaded(s.i))n++;return n;}
 function geClosed(){let n=0;for(const k of Object.keys(GC.eco.cl))if(GC.eco.cl[k])n++;return n;}
 function geSetStrait(c,si,on){const p=GCM.P[si];if(!p||!p.ck)return 'Not a chokepoint.';if(geHolder(si)!==c)return 'You do not hold this strait.';GC.eco.cl[si]=on?c:0;return '';}
 // ---------- nation stats ----------
@@ -158,20 +168,20 @@ function geRecruitTerms(c,pi,k,n){const fac=grNat(c).fac,N=GC.nat[c];let cost=gr
   return {cost:Math.round(cost*disc),turns:Math.max(1,turns),man:Math.round(n*(k==='inf'?7:4))};}
 function geManRegen(c){let m=0;for(const p of GE_ST[c].own){const st=GC.prov[p.i];m+=p.tw*2.4*GE_AUM[st.au|0]*(1+.06*geCount(p.i,'base'))*(st.cf===1?1+.12*(st.tr|0):1)*(st.cv>0?.5:1);}return m*(geFx(c,'manp')?1.25:1)*(GC.nat[c].e.tw?1.3:1);}
 // ---------- the per-turn nation step ----------
-function geFuelNeed(c){let f=0;for(const a of GC.armies){if(a.o!==c)continue;let k=0;for(const r of a.u){k+=(r[0]==='tank'||r[0]==='arty'||r[0]==='heli'||r[0]==='aa')?.5:.1;}f+=k*(a.path.length?1.5:1);}
+function geFuelNeed(c){let f=0;for(const a of GC.armies){if(a.o!==c)continue;let k=0;for(const r of a.u){k+=(r[0]==='tank'||r[0]==='arty'||r[0]==='heli'||r[0]==='aa')?.5:r[0]==='drone'?.25:.1;}f+=k*(a.path.length?1.5:1);}
   for(const p of GE_ST[c].own)f+=geEff(p.i,'airfield')*3*(geFx(c,'air')?.7:1);return f*(geFx(c,'fuel')?.75:1)*(GC.nat[c].e.tw?1.2:1);}
 function geArmyVal(c){let v=0;for(const a of GC.armies)if(a.o===c)v+=grArmyVal(a);return v;}
 function geTrade(c){   // trade routes between neighbouring provinces and over sea lanes; embargoes, wars, blockaded straits and sanctions cut them
   const P=GCM.P,N=GC.nat[c],E=N.e,tm=Math.max(.35,1-.12*geClosed())*geIncMul(c);let t=0;const own=GE_ST[c].own;
   const ok=(o)=>o===c||(!grAtWar(c,o)&&!E.emb.includes(o)&&!(GC.nat[o].e.emb||[]).includes(c));
   for(const p of own){for(const j of p.adj){const q=P[j];if(q.land){const o=GC.prov[j].o;if(!ok(o)||GC.nat[o].dead)continue;const m=Math.min(p.tw,q.tw);t+=o===c?(i2(p.i,j)?m*4:0):m*4.5;}
-      else if(q.sea&&(p.port||geCount(p.i,'port'))&&!gmilBk(p.i)){if(q.ck&&GC.eco.cl[j]&&GC.eco.cl[j]!==c)continue;
+      else if(q.sea&&(p.port||geCount(p.i,'port'))&&!gmilBk(p.i)){if(q.ck&&((GC.eco.cl[j]&&GC.eco.cl[j]!==c)||geSeaBlock(j,c)))continue;
         for(const k of q.adj){const r=P[k];if(!r.land||k===p.i)continue;if(!(r.port||geCount(k,'port'))||gmilBk(k))continue;const o=GC.prov[k].o;if(!ok(o)||GC.nat[o].dead)continue;t+=Math.min(p.tw,r.tw)*(o===c?1.5:3);}}}}
   // merchants: each skims a share of a province's trade routes toward you
   for(const m of E.mer){const q=P[m];if(!q||!q.land)continue;t+=(q.tw*5)*(GC.prov[m].o===c?.25:.9);}
   return t*tm*(geFx(c,'trade')?1.35:1)*(E.sanc?.5:1)*.62;}
 function i2(a,b){return a<b;}   // count a same-owner pair once
-function geHashStr(){if(!GC||!GC.eco)return '';let s='|E'+GC.eco.oilIdx+','+geClosed();for(const c of Object.keys(GC.nat).sort()){const e=GC.nat[c].e;if(!e)continue;s+='|'+c+':'+Math.round(e.fuel)+','+Math.round(e.food)+','+Math.round(e.man)+','+Math.round(e.bank)+','+e.bonds.length+','+e.tw+','+e.def;}
+function geHashStr(){if(!GC||!GC.eco)return '';let s='|E'+GC.eco.oilIdx+','+geClosed()+','+geBlockN();for(const c of Object.keys(GC.nat).sort()){const e=GC.nat[c].e;if(!e)continue;s+='|'+c+':'+Math.round(e.fuel)+','+Math.round(e.food)+','+Math.round(e.man)+','+Math.round(e.bank)+','+e.bonds.length+','+e.tw+','+e.def;}
   for(const p of GC.prov)s+=','+(p.bl?p.bl.length:0)+(p.bq?p.bq.length:0)+(p.au|0)+(p.tr|0);return s;}
 function geNation(c,R,inc){const N=GC.nat[c],E=N.e,S=GE_ST[c],br={};const own=S.own;const idx=GC.eco.oilIdx;
   br.tax=Math.round(inc||0);let net=inc||0;
@@ -264,7 +274,7 @@ function geBorrow(c){const N=GC.nat[c],E=N.e;if(E.defT>GC.turn)return 'Your cred
 function geRepay(c){const N=GC.nat[c],E=N.e;if(!E.bonds.length)return 'No bonds.';E.bonds.sort((a,b)=>a[0]-b[0]);const b=E.bonds[0];if(N.cash<b[1])return 'Needs $'+b[1]+'.';N.cash-=b[1];E.bonds.shift();return '';}
 function geDeposit(c,amt){const N=GC.nat[c];amt=Math.min(amt|0,Math.floor(N.cash));if(amt<=0)return 'No money.';N.cash-=amt;N.e.bank+=amt;return '';}
 function geWithdraw(c){const N=GC.nat[c];N.cash+=N.e.bank;N.e.bank=0;return '';}
-function geTotalWar(c,on){const E=GC.nat[c].e;if(!!on===!!E.tw)return '';if(on&&GC.turn<E.twT+4)return 'Total war can be switched on again in '+(E.twT+4-GC.turn)+' turns.';
+function geTotalWar(c,on){const E=GC.nat[c].e;if(!!on===!!E.tw)return '';if(on&&GC.turn<E.twT+4)return 'Total war can be switched on again in '+(E.twT+4-GC.turn)+' months.';
   if(on&&!Object.keys(GC.war).some(k=>k.split('|').includes(c)))return 'Only at war.';E.tw=on?1:0;E.twT=GC.turn;return '';}
 function geRation(c,on){GC.nat[c].e.ration=on?1:0;return '';}
 function geSellMode(c,m){GC.nat[c].e.sell=m?1:0;return '';}

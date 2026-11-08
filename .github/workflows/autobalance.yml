@@ -1,0 +1,35 @@
+# Auto-balancer (Lane D4): takes the tuning shards of a finished Balance run, nudges BAL['_'] one small step and opens a PR with the table.
+# usage: gh workflow run autobalance.yml -f run_id=<balance run id>   (start the run with: git push origin HEAD:balance/tune-<n>)
+name: Auto-balance (PR)
+on:
+  workflow_dispatch:
+    inputs:
+      run_id: { description: 'run id of a finished Balance (parallel) run', required: true }
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+jobs:
+  nudge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Download shards
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: gh run download ${{ inputs.run_id }} -D shards -p 'bal-*' || true
+      - name: Nudge and rebuild
+        run: |
+          python3 orch/autobalance.py shards --apply | tee table.txt
+          python3 orch/build.py | tail -3
+      - name: Open PR
+        env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          git diff --quiet src && { echo "no change needed"; exit 0; }
+          B=autobal/nudge-${{ github.run_id }}
+          git config user.name "autobalance"; git config user.email "autobalance@users.noreply.github.com"
+          git checkout -b "$B"; git add src index.html sw.js; git commit -qm "autobalance: one nudge from run ${{ inputs.run_id }}"
+          git push -q origin "$B"
+          { echo '```'; cat table.txt; echo '```'; echo; echo 'Only BAL["_"] moved, max 4% per nation, 3-point dead band. Sim change: open a main -> servers-live PR after merging.'; } > body.md
+          gh pr create --base main --head "$B" --title "Auto-balance nudge (run ${{ inputs.run_id }})" --body-file body.md

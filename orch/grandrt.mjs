@@ -53,7 +53,7 @@ try {
   const s0 = await st(); console.log(el(), 'start', JSON.stringify(s0));
   if (s0.spd) fails.push('the clock should start paused');
   await page.waitForTimeout(1200); if ((await st()).day !== s0.day) fails.push('days pass while paused');
-  await page.keyboard.press('Space'); await page.waitForTimeout(4000); const s1 = await st(); console.log(el(), 'after Space', JSON.stringify(s1));
+  await page.keyboard.press('Space'); await page.waitForTimeout(1000); await page.waitForFunction(d => (GC.day | 0) !== d, s0.day, { timeout: 12000, polling: 200 }).catch(() => {}); const s1 = await st(); console.log(el(), 'after Space', JSON.stringify(s1));
   if (!s1.spd || s1.day === s0.day) fails.push('Space does not start the clock ' + JSON.stringify(s1));
   await page.keyboard.press('5'); await shot('rt-1-running');
   await page.waitForFunction(t => GC.turn > t, s0.turn, { timeout: 20000, polling: 200 }).catch(() => fails.push('the month never rolled over at speed 5'));
@@ -66,10 +66,21 @@ try {
     let f = tryFind(); if (!f) { for (const a of GC.armies.filter(x => x.o === me && x.u.length && !x.fl)) { for (const j of GCM.P[a.at].adj) { const P = GCM.P[j]; if (P.land && GC.prov[j].o !== me) { foe = GC.prov[j].o; break; } } if (foe) break; } if (foe) grDeclare(me, foe); f = tryFind(); }
     if (!f) return { err: 'no army next to an enemy' }; const [a, j] = f; GV.selA = a.id; GV.sel = a.at; const r = grOrderMove(a.id, j); guMoveTo(a.id, j); grandMapRefresh(); return { ok: !!(r && r.ok), hint: GV.hint }; });
   console.log(el(), 'march', JSON.stringify(sc)); if (!/arrives ~/.test(sc.hint || '')) fails.push('move hint shows no arrival date: ' + sc.hint);
-  await page.keyboard.press('Space');
+  // the marching army must slide along its road as days pass (not jump at month end)
+  const pos = () => ev(() => { const e = G3 && G3.arm && G3.arm.get(GV.selA); const a = GC.armies.find(x => x.id === GV.selA); return e ? { x: e.x, z: e.z, f: a ? grSlide(a) : -1, day: GC.day | 0 } : null; });
+  const p0 = await pos(); await ev(() => guSpeed(3)); await page.waitForFunction(d => GC.ph !== 'plan' || (GC.day | 0) >= d + 3, p0 ? p0.day : 0, { timeout: 30000, polling: 100 }).catch(() => {}); await page.waitForTimeout(600);
+  const p1 = await pos(); console.log(el(), 'slide', JSON.stringify([p0, p1]));
+  if (p0 && p1 && p1.day > p0.day && !(p1.f > p0.f && Math.hypot(p1.x - p0.x, p1.z - p0.z) > 1)) fails.push('marching army does not slide along its road as days pass ' + JSON.stringify([p0, p1]));
+  await shot('rt-3-sliding');
   await page.waitForFunction(() => { const m = document.getElementById('gModal'); return m && /Fight it live/.test(m.textContent); }, null, { timeout: 60000, polling: 200 }).catch(() => fails.push('no battle prompt after the month closed'));
   const b1 = await st(); await page.waitForTimeout(2000); const b2 = await st(); console.log(el(), 'battle prompt', JSON.stringify(b2)); await shot('rt-2-battle-pauses');
   if (b1.day !== b2.day || b1.turn !== b2.turn) fails.push('the clock runs while a battle prompt is open');
+  // A2: AI generals act on day ticks (10, 20): deterministic, army orders only (no recruiting/spending), mid-month columns slide from their departure day
+  const ai = await ev(() => { const s = JSON.stringify(GC); const run = () => { GC = JSON.parse(s); GC.ph = 'plan'; GC.day = 10; const cash = Object.values(GC.nat).map(n => n.cash | 0).join(); const idle = new Set(GC.armies.filter(a => !a.path.length).map(a => a.id)); const n = grAIMid(10); GV.dayF = 0;
+      const moved = GC.armies.filter(a => idle.has(a.id) && a.path.length); return { n, sig: GC.armies.map(a => a.id + ':' + a.path.join('-')).join(','), cash: cash === Object.values(GC.nat).map(n => n.cash | 0).join(), f0: moved.length ? grSlide(moved[0]) : 0 }; };
+    const r1 = run(), r2 = run(); GC = JSON.parse(s); return { n: r1.n, same: r1.sig === r2.sig && r1.n === r2.n, cash: r1.cash, f0: r1.f0 }; });
+  console.log(el(), 'AI mid-month', JSON.stringify(ai));
+  if (!ai.same) fails.push('mid-month AI orders are not deterministic'); if (!ai.cash) fails.push('mid-month AI spent money (should only give army orders)'); if (ai.f0 > 0.01) fails.push('a column that set off mid-month jumps along its road');
 } catch (e) { fails.push('error: ' + e.message); }
 if (errs.length) fails.push(...errs.slice(0, 5));
 await browser.close(); server.close();

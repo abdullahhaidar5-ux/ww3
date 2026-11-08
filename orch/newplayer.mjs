@@ -26,14 +26,18 @@ const scan = () => pg.evaluate(() => {
 const report = { screens: [], issues: [] };
 const shot = process.argv.includes('--shot');
 const visit = async (name, id) => {
-  await pg.evaluate(i => { menuHome(); if (i !== 'title') menuGo(i); }, id); await pg.waitForTimeout(1500);
+  await pg.evaluate(i => { menuHome(); if (i !== 'title') menuGo(i); }, id);
+  try { await pg.waitForFunction(i => MX.cur === i && document.querySelector('.ms.on') && document.querySelector('.ms.on').id === 'ms-' + i, id, { timeout: 8000 }); } catch { report.issues.push(`"${name}": the screen never opened`); }
+  await pg.waitForTimeout(600);
   const items = await scan(); report.screens.push({ name, items });
   const back = id === 'title' || items.some(i => /back/i.test(i.t)); if (!back) report.issues.push(`"${name}": no visible Back`);
   if (shot) { fs.mkdirSync(path.join(ROOT, 'orch/shots/laneD'), { recursive: true }); await pg.screenshot({ path: path.join(ROOT, `orch/shots/laneD/menu-${id}.png`) }); }
 };
 for (const [n, id] of [['title', 'title'], ['Battlefield', 'c-map'], ['Nation', 'c-nation'], ['Players', 'c-players'], ['Battle options', 'c-opts'], ['Play online', 'online'], ['Extras', 'extras'], ['Credits', 'credits']]) await visit(n, id);
 // every title entry must be a real, visible, clickable item
-await pg.evaluate(() => menuHome()); await pg.waitForTimeout(400);
+await pg.evaluate(() => menuHome());
+await pg.waitForFunction(() => { const t = document.getElementById('ms-title'); const c = t && getComputedStyle(t); return !!c && c.visibility === 'visible' && +c.opacity === 1; }, null, { timeout: 8000 }).catch(() => report.issues.push('the title menu never faded in'));
+await pg.waitForTimeout(300);
 const titles = (await scan()).map(i => i.t.split(' ')[0].toLowerCase()); for (const want of ['grand', 'conquest', 'missions', 'tutorial', 'play', 'load', 'settings', 'extras', 'credits']) if (!titles.includes(want)) report.issues.push(`title menu is missing "${want}"`);
 for (const s of report.screens) for (const i of s.items) {
   if (!i.t && !i.tip && i.id !== 'mxnatin') report.issues.push(`[${s.name}] control #${i.id} has no text or tooltip`);

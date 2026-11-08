@@ -1,5 +1,5 @@
-Shipped in the last 3 h: grand-map events and world crises, diplomatic web, AI peace and pacts, great powers, achievements and missions (laneG); nation-panel stability with a Political-point raise (laneB B4 slice 1); power points and national ideas (laneB B3); battle declutter with one command strip; a bisect workflow that names the first bad commit on a red gate.
-Lanes: A (grand engine) is on real time with pause, then army control and morale bars; B (grand systems) is on stability, war support and development; C (look) is on the UI kit C0, not started; D (content and QA) is on the Balanced/Realistic toggle D1b, first-time-player fixes and voices for the new nations; E (battle units) is on the real infantry model swap E1.
-Needs your tap: merge PR #23 (main → servers-live, new nations) so Cloudflare battles get them: https://github.com/abdullahhaidar5-ux/ww3/pull/23
-Open player bug reports: none right now. Open design item: 3-player maps (isolated start wins about 55%).
-Deadline Sat 20:00 Chicago; no new scope after 18:00, so the lanes are finishing and shipping what is green.
+Shipped in the last 3 h: proxy wars (arm a militia abroad, volunteers join same-faction wars), a cyber strike on banks, real rigged soldier and ship models on the grand map, covert sabotage and counter-intelligence, and war-news events (protests, strikes, state TV, diaspora).
+Lanes now: A on the online grand campaign and army control; B, C and D had no commits in the last 3 h; E on battle ground fire and night details; F on audit ticks and battle rules; G on nuke follow-ups and the new proxy and cyber acts.
+Needs your tap: PR #24 (main → servers-live, Middle East maps) is still open — https://github.com/abdullahhaidar5-ux/ww3/pull/24 — merge it so Cloudflare battles get the new maps.
+Open player bug reports: none.
+Deadline is Sat 20:00 Chicago (about an hour away); no new scope since 18:00, so lanes are only finishing and shipping what is green, and kaizen resumes after 20:05.

@@ -6,7 +6,8 @@ const G3L={sun:[-1.0,.75,-.45]};   // direction TOWARDS the sun (x east, y up, z
 function g3LoadReal(){if(G3.real||G3.realTry)return;G3.realTry=1;
   const ld=u=>fetch(u).then(r=>{if(!r.ok)throw new Error(u);return r.blob();}).then(b=>createImageBitmap(b,{colorSpaceConversion:'none',premultiplyAlpha:'none'}));
   const px=(bm)=>{const c=document.createElement('canvas');c.width=bm.width;c.height=bm.height;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bm,0,0);return x.getImageData(0,0,c.width,c.height);};
-  Promise.all([ld('grand/elev.png?v=1'),ld('grand/color.jpg?v=1')]).then(([eb,cb])=>{
+  Promise.all([ld('grand/elev.png?v=2'),ld('grand/color.jpg?v=3'),ld('grand/hi_me.jpg?v=2').catch(()=>null)]).then(([eb,cb,hb])=>{
+    if(hb){try{const h=px(hb);G3.hi={d:g3GradeColor(h.data,h.width*h.height),w:h.width,h:h.height,r:[.555,.22333333,.14,.25]};}catch(e){G3.hi=null;}}
     const e=px(eb),c=px(cb),E=new Float32Array(e.width*e.height);for(let k=0;k<E.length;k++)E[k]=e.data[k*4]*256+e.data[k*4+1]-11000;
     G3.real={E,EW:e.width,EH:e.height,col:c.data,CW:c.width,CH:c.height};}).catch(()=>{G3.realFail=1;});}
 // ground colour grade (satellite -> rich, slightly warm, a little darker than the washed-out raster)
@@ -67,3 +68,70 @@ function g3Sky(sc){const m=new THREE.ShaderMaterial({side:THREE.BackSide,depthWr
   fragmentShader:`varying vec3 vD;void main(){vec3 d=normalize(vD);float h=clamp(d.y,0.,1.);vec3 hz=vec3(.616,.722,.788),top=vec3(.20,.40,.68);vec3 c=mix(hz,top,pow(h,.55));
     vec3 L=normalize(vec3(-1.,.75,-.45));float sd=max(dot(d,L),0.);c+=vec3(1.,.82,.55)*(pow(sd,6.)*.22+pow(sd,90.)*.8);gl_FragColor=vec4(c,1.);}`});
   const sk=new THREE.Mesh(new THREE.SphereGeometry(8000,24,12),m);sk.frustumCulled=false;sk.renderOrder=-10;sc.add(sk);G3.sky=sk;}
+
+// ---- grandlook (armies): each army = ONE detailed miniature general baked from the rigged battle soldier model (sol_*), in the nation's kit
+// and an idle pose, on a small stone plinth with a nation-colour ring and a small cloth banner (wave shader). Static merged geometry:
+// the whole figure is ONE draw call + the banner, so 200+ armies stay cheap. Navies bake a real ship model (m_frg/ship) with a wake.
+function g3TexPix(map){if(!map||!map.image)return null;try{const im=map.image,w=Math.min(128,im.width||im.videoWidth||0),h=Math.min(128,im.height||im.videoHeight||0);if(!w||!h)return null;
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d',{willReadFrequently:true});x.drawImage(im,0,0,w,h);return {d:x.getImageData(0,0,w,h).data,w,h};}catch(e){return null;}}
+// bake a model (any prototype in MODELS.proto) to vertex-coloured geometry: height = target height, centred on x/z, feet at y=0, facing +x like the old figures
+function g3BakeModel(key,team,height,pose){if(!(typeof MODELS!=='undefined'&&MODELS.ready&&MODELS.proto[key]&&typeof instModel==='function'))return null;
+  try{const w=instModel(key,team,'tall',height,1);if(!w)return null;const inner=w.userData.inner||w;
+    if(pose&&typeof solArm==='function'){w.updateMatrixWorld(true);const B={};inner.traverse(o=>{if(o.isBone)B[o.name]=o;});   // arms down at the sides, officer stance (the rig's bind pose is a T)
+      for(const sd of ['L','R']){const sh=B['arm'+sd],fo=B['forearm'+sd],ha=B['hand'+sd];if(!sh||!fo||!ha)continue;const S=new THREE.Vector3().setFromMatrixPosition(sh.matrixWorld),E0=new THREE.Vector3().setFromMatrixPosition(fo.matrixWorld),H0=new THREE.Vector3().setFromMatrixPosition(ha.matrixWorld),ln=S.distanceTo(E0)+E0.distanceTo(H0);
+        const ix=sd==='L'?1:-1;solArm(B,sd,S.clone().add(new THREE.Vector3(0,-ln*.9,ln*.2)),new THREE.Vector3(0,0,-1));void ix;}}
+    w.updateMatrixWorld(true);const P=[],C=[],I=[];let vo=0;const v=new THREE.Vector3(),M=new THREE.Matrix4();
+    w.traverse(o=>{if(!o.isMesh||!o.geometry||!o.geometry.attributes.position||o.visible===false)return;if(o.skeleton)o.skeleton.update();const g=o.geometry,pa=g.attributes.position,uv=g.attributes.uv,mat=Array.isArray(o.material)?o.material[0]:o.material,tp=mat&&mat.map?g3TexPix(mat.map):null,bc=mat&&mat.color?mat.color:{r:.6,g:.6,b:.6};
+      M.copy(o.matrixWorld);for(let i=0;i<pa.count;i++){if(o.isSkinnedMesh){v.fromBufferAttribute(pa,i);o.applyBoneTransform(i,v);}else v.fromBufferAttribute(pa,i);v.applyMatrix4(M);P.push(v.x,v.y,v.z);
+        let r=bc.r,gg=bc.g,b=bc.b;if(tp&&uv){const u=uv.getX(i)-Math.floor(uv.getX(i)),t=1-(uv.getY(i)-Math.floor(uv.getY(i))),px=(Math.min(tp.h-1,Math.floor(t*tp.h))*tp.w+Math.min(tp.w-1,Math.floor(u*tp.w)))*4;r*=tp.d[px]/255;gg*=tp.d[px+1]/255;b*=tp.d[px+2]/255;}C.push(r,gg,b);}
+      if(g.index)for(let i=0;i<g.index.count;i++)I.push(g.index.getX(i)+vo);else for(let i=0;i<pa.count;i++)I.push(i+vo);vo+=pa.count;});
+    if(!vo)return null;const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(P,3));geo.setAttribute('color',new THREE.Float32BufferAttribute(C,3));geo.setIndex(I);geo.computeBoundingBox();
+    const bb=geo.boundingBox,hh=bb.max.y-bb.min.y||1,s=height/hh;geo.translate(-(bb.min.x+bb.max.x)/2,-bb.min.y,-(bb.min.z+bb.max.z)/2);geo.scale(s,s,s);geo.computeVertexNormals();return geo;}catch(e){console.warn('g3BakeModel',key,e);return null;}}
+// vertex-clustering decimation (the soldier rig is ~3k verts; 200+ armies would be ~1M triangles): average every grid cell of size `cs` into one vertex
+function g3Decimate(g,cs){const p=g.attributes.position,c=g.attributes.color,ix=g.index,map=new Map(),rem=new Int32Array(p.count),P=[],C=[],cnt=[];
+  for(let i=0;i<p.count;i++){const k=Math.round(p.getX(i)/cs)+','+Math.round(p.getY(i)/cs)+','+Math.round(p.getZ(i)/cs);let j=map.get(k);if(j===undefined){j=cnt.length;map.set(k,j);cnt.push(0);P.push(0,0,0);C.push(0,0,0);}rem[i]=j;cnt[j]++;
+    P[j*3]+=p.getX(i);P[j*3+1]+=p.getY(i);P[j*3+2]+=p.getZ(i);C[j*3]+=c.getX(i);C[j*3+1]+=c.getY(i);C[j*3+2]+=c.getZ(i);}
+  for(let j=0;j<cnt.length;j++)for(let t=0;t<3;t++){P[j*3+t]/=cnt[j];C[j*3+t]/=cnt[j];}
+  const I=[];for(let i=0;i<ix.count;i+=3){const a=rem[ix.getX(i)],b=rem[ix.getX(i+1)],d=rem[ix.getX(i+2)];if(a!==b&&b!==d&&a!==d)I.push(a,b,d);}
+  const o=new THREE.BufferGeometry();o.setAttribute('position',new THREE.Float32BufferAttribute(P,3));o.setAttribute('color',new THREE.Float32BufferAttribute(C,3));o.setIndex(I);o.computeVertexNormals();return o;}
+function g3ColGeo(g,col,m){const x=g.clone();if(m)x.applyMatrix4(m);const n=x.attributes.position.count,c=new Float32Array(n*3);for(let i=0;i<n;i++){c[i*3]=col[0];c[i*3+1]=col[1];c[i*3+2]=col[2];}x.setAttribute('color',new THREE.BufferAttribute(c,3));if(!x.attributes.normal)x.computeVertexNormals();return x;}
+function g3MergeCol(list){const P=[],N=[],C=[],I=[];let vo=0;for(const g of list){const p=g.attributes.position,n=g.attributes.normal,c=g.attributes.color;for(let i=0;i<p.count;i++){P.push(p.getX(i),p.getY(i),p.getZ(i));N.push(n.getX(i),n.getY(i),n.getZ(i));C.push(c.getX(i),c.getY(i),c.getZ(i));}
+  if(g.index)for(let i=0;i<g.index.count;i++)I.push(g.index.getX(i)+vo);else for(let i=0;i<p.count;i++)I.push(i+vo);vo+=p.count;}
+  const o=new THREE.BufferGeometry();o.setAttribute('position',new THREE.Float32BufferAttribute(P,3));o.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));o.setAttribute('color',new THREE.Float32BufferAttribute(C,3));o.setIndex(I);return o;}
+// plinth + nation ring + banner pole (no cloth: the cloth is a separate wave-shader mesh)
+function g3Plinth(o,r,withPole){const cy=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s),L=[];   /* armies3: no slab - the hero stands on the ground (soft shadow disc is a separate pooled mesh); tall pole for the big cloth flag */
+  if(withPole){L.push(g3ColGeo(cy(.16,.2,22,6),[.55,.5,.4],g3M(r*.62,11.1,-r*.42)),g3ColGeo(new THREE.SphereGeometry(.4,8,6),[.92,.78,.25],g3M(r*.62,22.3,-r*.42)));}return L;}
+function g3MiniGeo(o,tier){G3.mini=G3.mini||{};const key=o+'_'+tier;if(G3.mini[key]!==undefined)return G3.mini[key];if(!(typeof MODELS!=='undefined'&&MODELS.ready))return null;   // not cached while models load -> old figure, retried next sync
+  const fac=(typeof grNat==='function'&&grNat(o)||{}).fac||o,sk=typeof solKey==='function'?solKey(fac):'sol_w',col=(typeof grNatRgb==='function'?grNatRgb(o):[90,100,60]),team={fac,color:'#'+col.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('')};
+  const H=7.2,gen=g3BakeModel(sk,team,H,true);if(!gen)return G3.mini[key]=null;
+  {const cA=gen.attributes.color,pA=gen.attributes.position,un0=g3Uniform(o),hh=[...o].reduce((q,ch)=>q*31+ch.charCodeAt(0)>>>0,7),tv=[.94+(hh%13)/100,.96+((hh>>4)%9)/100,.95+((hh>>8)%11)/100],un=[Math.min(1,un0[0]*tv[0]),Math.min(1,un0[1]*tv[1]),Math.min(1,un0[2]*tv[2])],sk2=[.8,.6,.47];for(let i=0;i<cA.count;i++){const r=cA.getX(i),g=cA.getY(i),b=cA.getZ(i),ny=pA.getY(i)/H,lum=(r+g+b)/3,sat=Math.max(r,g,b)-Math.min(r,g,b);let c=null;
+    if(ny>.935)c=[un[0]*.62,un[1]*.62,un[2]*.6];else if(ny>.84)c=sk2;else if(ny<.07)c=[.14,.11,.09];else{const k=(.55+.7*Math.min(1,lum))*(ny<.5?.78:1);void sat;c=[un[0]*k,un[1]*k,un[2]*k];}   // the rig's cloth is plain white: dress it in the nation's uniform
+    if(c)cA.setXYZ(i,c[0],c[1],c[2]);}}
+  const sc=g3M,put=(g,x,z,s,ry)=>{const q=g.clone();q.applyMatrix4(sc(x,.1,z,s,s,s,ry));return q;};
+  const R=tier>=2?5.2:tier>=1?4.4:3.2,n=tier>=2?3:tier>=1?2:0,pos=[[-2.6,-1.6],[2.4,-1.8],[-4,.6],[4,.2],[0,-3.6]];
+  const mk=(hc,ec)=>{const genLo=g3Decimate(gen,ec),L=g3Plinth(o,R,true);L.push(put(g3Decimate(gen,hc),0,0,1,0));for(let i=0;i<n;i++)L.push(put(genLo,pos[i][0],pos[i][1],.74,(i-1)*.3));return g3MergeCol(L);};   // base colour already baked into vertex colours
+  const hi=mk(.16,.45);hi.userData.lo=mk(.5,1);   // hi (~3k tris hero, close zoom) + lo (region/world zoom): one shared pair per nation+tier
+  return G3.mini[key]=hi;}
+function g3NavyGeo(o){G3.mini=G3.mini||{};const key='navy_'+o;if(G3.mini[key]!==undefined)return G3.mini[key];if(!(typeof MODELS!=='undefined'&&MODELS.ready))return null;
+  const fac=(typeof grNat==='function'&&grNat(o)||{}).fac||o,k=['m_frg','m_fre','m_frw','ship'].find(x=>MODELS.proto[x]);if(!k)return G3.mini[key]=null;
+  const g=g3BakeModel(k,{fac,color:'#8a9096'},4.4,null);if(!g)return G3.mini[key]=null;g.computeBoundingBox();const bb=g.boundingBox,len=Math.max(bb.max.x-bb.min.x,bb.max.z-bb.min.z);
+  if(bb.max.z-bb.min.z>bb.max.x-bb.min.x)g.rotateY(Math.PI/2);g.computeBoundingBox();const L2=g.boundingBox.max.x-g.boundingBox.min.x,s=13/L2;g.scale(s,s,s);g.computeBoundingBox();g.translate(0,-g.boundingBox.min.y+.15,0);void len;
+  /* hull: dark boot-topping under the waterline stripe, haze-grey topsides, lighter deck; per-vertex shade keeps the superstructure readable */
+  {const cA=g.attributes.color,pA=g.attributes.position,H=g.boundingBox.max.y||1;for(let i=0;i<cA.count;i++){const ny=pA.getY(i)/H,lum=Math.min(1,(cA.getX(i)+cA.getY(i)+cA.getZ(i))/3*1.15+.18);let c;if(ny<.2)c=[.34,.12,.1];else c=[.5*lum+.2,.54*lum+.21,.58*lum+.22];cA.setXYZ(i,c[0],c[1],c[2]);}}
+  const bb2=g.boundingBox,HL=bb2.max.x-bb2.min.x,WD=bb2.max.z-bb2.min.z,cx=(bb2.max.x+bb2.min.x)/2,top=bb2.max.y;
+  const pole=g3ColGeo(new THREE.CylinderGeometry(.06,.06,5,6),[.62,.58,.5],g3M(-3.4,2.6+top*.4,0));
+  /* waterline foam collar + bow wave (white), so the hull sits in the sea instead of on it */
+  const foam=g3ColGeo(new THREE.RingGeometry(.8,1,40).rotateX(-Math.PI/2).scale(HL*.56,1,WD*.78),[.95,.97,1],g3M(cx,.28,0));
+  const bow=g3ColGeo(new THREE.ConeGeometry(WD*.42,HL*.2,3).rotateZ(-Math.PI/2).rotateX(Math.PI/2).scale(1,.12,1),[.97,.98,1],g3M(cx+HL*.52,.3,0));
+  /* deck detail: two turrets with barrels fore and aft, a mast with a radar bar */
+  const dk=[.4,.43,.46],tw=[];for(const [tx,sg] of [[.3,1],[-.3,1]]){const x=cx+HL*tx;tw.push(g3ColGeo(new THREE.CylinderGeometry(.34,.4,.26,10),dk,g3M(x,top*.46+.15,0)),g3ColGeo(new THREE.BoxGeometry(1,.09,.09),[.22,.24,.26],g3M(x+.55*sg,top*.46+.27,0)));}
+  tw.push(g3ColGeo(new THREE.CylinderGeometry(.05,.07,2.2,6),[.3,.32,.35],g3M(cx-HL*.04,top*.5+1.1,0)),g3ColGeo(new THREE.BoxGeometry(.12,.06,1.2),[.25,.27,.3],g3M(cx-HL*.04,top*.5+2.1,0)));
+  const hi=g3MergeCol([g3Decimate(g,.1),pole,foam,bow,...tw]);hi.userData.lo=g3MergeCol([g3Decimate(g,.4),pole,foam,bow]);return G3.mini[key]=hi;}
+// wake: white V trail behind a ship (child of the army group, local -x = astern)
+function g3WakeMesh(){if(G3.wakeM)return G3.wakeM.clone();const sh=new THREE.Shape();sh.moveTo(5,0);sh.lineTo(-10,3.2);sh.lineTo(-7,0);sh.lineTo(-10,-3.2);sh.closePath();const g=new THREE.ShapeGeometry(sh).rotateX(-Math.PI/2);
+  const cl=new Uint8Array(16*64*4);const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');const gr=x.createRadialGradient(40,32,2,26,32,34);gr.addColorStop(0,'rgba(255,255,255,.75)');gr.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);void cl;
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false,opacity:.8}));m.position.y=.25;const uv=g.attributes.uv,p=g.attributes.position;for(let i=0;i<p.count;i++)uv.setXY(i,(p.getX(i)+10)/15,(p.getZ(i)+3.2)/6.4);G3.wakeM=m;return m.clone();}
+
+// the grand map only needs the three soldier rigs + one warship (not the 80 battle models): load just those, then rebuild the army figures once
+function g3LoadArmyModels(){if(G3.miniLoad||typeof parseModel!=='function'||typeof MODEL_FILES==='undefined')return;G3.miniLoad=1;
+  Promise.all(['sol_w','sol_e','sol_m','m_frg'].filter(k=>MODEL_FILES[k]).map(k=>parseModel(k).catch(()=>false))).then(()=>{G3.mini={};G3.miniReady=1;G3.miniSync=0;}).catch(()=>{});}

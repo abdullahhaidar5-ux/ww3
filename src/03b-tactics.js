@@ -66,7 +66,8 @@ function critOk(e){return !!e.s&&isVeh(e.s)&&e.kind!=='harv'&&!e.s.noCrew;}
 function critRoll(e,dd,wpn,src,splash){if(!critOk(e)||e.hp<=0||dd<e.max*.012||G.t-(e.critT||-9)<2.5)return;
   let p;if(src&&!src.isB&&!splash&&wpn!=='bomb'){const a=Math.atan2(e.y-src.y,e.x-src.x),rel=Math.abs(angDiff(e.hd??e.ang,a));p=rel<.95?.30:rel<2.1?.17:.05;}else p=.10;
   if(wpn==='gun'||wpn==='tower'||wpn==='snipe')p*=.15;p*=Math.max(.4,Math.min(1.6,dd/(e.max*.12)));
-  const R=mulberry((((G.seed|0)*2654435761)^(e.id*40503)^((G.t*60)|0))>>>0);if(R()>=p)return;
+  const R=mulberry((((G.seed|0)*2654435761)^(e.id*40503)^((G.t*60)|0))>>>0);if(dd>=e.max*.08&&e.s.dmg>0&&!e.s.noAttack&&(e.crewT||0)<G.t&&R()<p*.3){e.crewT=G.t+8;FXE('txt',[e.x|0,e.y|0,'CREW STUNNED',src&&src.team!=null?src.team:-2,e.team]);}  /* RF2: a hard hit (worst from the flank or rear) stuns the crew: no firing for 8 s */
+  if(R()>=p)return;
   const turret=!!(e.s.dmg>0&&!e.s.noAttack),c=e.crit|0,opts=[];if(!(c&1))opts.push([1,45]);if(turret&&!(c&2))opts.push([2,30]);if(!(c&4))opts.push([4,25]);if(!opts.length)return;
   let tot=0;for(const o of opts)tot+=o[1];let r=R()*tot,pick=opts[0][0];for(const o of opts){if(r<o[1]){pick=o[0];break;}r-=o[1];}
   e.crit=c|pick;e.critT=G.t;if(pick===4)e.fireT=G.t+10+R()*6;
