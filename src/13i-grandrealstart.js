@@ -30,7 +30,7 @@ const GR_REAL={
   ['IL','DW',-95],['IL','TR',-55],['IN','PK',-85],['IN','CN',-45],['CN','TW',-90],['CN','JP',-55],['CN','PH',-50],['KP','KR',-95],['KP','JP',-70],['GR','TR',-50],
   ['SA','IR',-60],['EG','IL',-20],['AZ','IR',-35],['DE','US',20],['FR','DE',30],['IN','US',25],['IN','RU',35],['CN','RU',55],['CN','KP',40],['TR','RU',-10],
   ['IQ','IR',45],['IQ','RV',-15],['RV','IR',60],['SY','IL',-35],['SY','TR',20],['KD','TR',-35],['DW','SA',-40],['UA','PL',55],['MA','DZ',-60],['ET','EG',-40],['ET','SD',-20],['IL','OB',-100],['EG','OB',-10],['BI','IL',-100],['BI','IR',-100],['BI','US',-100],['BI','SA',-100],['BI','TR',-100],['BI','RU',-100]],
- // opening wars as they stand in Nov 2026 (checked): Russia-Ukraine (5th year, no ceasefire); Israel vs the Lebanese Mountain Shias
+ // opening wars as they stand in Nov 2026 (checked): Russia-Ukraine (5th year, no ceasefire); Israel vs the Lebanese Lebanese Shia
  wars:[['RU','UA'],['IL','RS'],['BI','SY'],['BI','IQ'],['BI','KD']],   // OB-IL: tense truce (ceasefire since Oct 2025, second phase deadlocked) - see tn; BI is at war with its neighbours and nobody treats with it
  // real tensions: each side keeps a covering army at the front; wars can break out here
  tn:[['IL','OB'],['KP','KR'],['CN','TW'],['IN','PK'],['GR','TR'],['IL','IR'],['IL','DW'],['AZ','IR'],['IN','CN'],['SA','DW']],

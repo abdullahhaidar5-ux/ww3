@@ -29,7 +29,7 @@ const CH={
 
 // ---------- the five missions ----------
 const CAMPAIGN=[
-{id:'pass',n:1,title:'Hold the Pass',sub:'Mountain Shias · Ridge defence',fac:'RS',enemy:'DE',enemyName:'Invasion Force',map:'khyber',
+{id:'pass',n:1,title:'Hold the Pass',sub:'Lebanese Shia · Ridge defence',fac:'RS',enemy:'DE',enemyName:'Invasion Force',map:'khyber',
  brief:['An invasion force is pushing up the only road into our valleys. Our main columns are still two hours away on the mountain tracks.','You hold a ridge above the road with a small garrison: riflemen, anti-tank teams, two tanks and a few emplacements. Hold it. Every minute you stand buys the valley time.','When the reinforcements arrive, do not let the enemy rest: take the fight back down the pass and destroy their forward base.'],
  obj:[['hold','Hold the ridge until reinforcements arrive'],['reinf','Reinforcements arrive'],['crush','Destroy the enemy forward base']],
  win:'The pass is ours. The valley is safe, and the road is closed to the invaders.',lose:'The ridge has fallen. The valley will have to be defended from the next line.',
@@ -48,7 +48,7 @@ const CAMPAIGN=[
   else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Headquarters and garrison are gone.');
   c.status=c.o.reinf?null:'Reinforcements in '+campClock(c.T-c.t);}},
 
-{id:'supply',n:2,title:'Supply Run',sub:'Coffee Shias · Convoy escort',fac:'DW',enemy:'US',enemyName:'Siege Force',map:'plateau',
+{id:'supply',n:2,title:'Supply Run',sub:'Zaidi Shia Movement · Convoy escort',fac:'DW',enemy:'US',enemyName:'Siege Force',map:'plateau',
  brief:['A highland town is surrounded. Its people have food for days, not weeks, and the road in is held by irregulars and raiders of the besieging force.','Six supply trucks are loaded at your depot. Escort them across the plateau to the town. Expect ambushes from the ridges and the dry riverbeds - they will hit the trucks first.','At least four trucks must reach the town. Scout ahead, keep the escort close, and do not drive blind into the narrows.'],
  obj:[['half','Cross the plateau to the halfway ridge'],['clear','Break the siege line around the town'],['deliver','Deliver at least 4 of 6 trucks to the town']],
  win:'The convoy has reached the town. The siege is broken and the people eat tonight.',lose:'The convoy is lost. The town is on its own.',
@@ -91,8 +91,8 @@ const CAMPAIGN=[
   else if(!hq)c.lose('Headquarters was destroyed.');
   c.status=c.t<c.T?'Relief in '+campClock(c.T-c.t)+' · wave '+c.wave:null;}},
 
-{id:'town',n:4,title:'Retake the Town',sub:'Mountain Shias + Coffee Shias · Street fight',fac:'RS',ally:'DW',enemy:'DE',enemyName:'Occupation Force',map:'aleppo',
- brief:['An occupation force has seized the old town at the crossroads. Its streets and rooftops are held by infantry and anti-tank teams, with armour in the squares.','Mountain Shias and Coffee Shias fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.','Clear the town street by street. Put infantry into buildings to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves.'],
+{id:'town',n:4,title:'Retake the Town',sub:'Lebanese Shia + Zaidi Shia Movement · Street fight',fac:'RS',ally:'DW',enemy:'DE',enemyName:'Occupation Force',map:'aleppo',
+ brief:['An occupation force has seized the old town at the crossroads. Its streets and rooftops are held by infantry and anti-tank teams, with armour in the squares.','Lebanese Shia and Zaidi Shia Movement fight side by side: our riflemen and mortars with their mobile technicals. The ally is controlled by its own commander - give it room and follow its lead on the flanks.','Clear the town street by street. Put infantry into buildings to hold ground you have taken - garrisoned riflemen are hard to dislodge. The enemy will counter-attack with reserves.'],
  obj:[['z0','Clear the southern approach'],['z1','Clear the west quarter'],['z2','Clear the east quarter'],['z3','Take the citadel square'],['z4','Clear the far gate'],['gar','Garrison a building to hold ground']],
  win:'The town is free. Both flags fly over the citadel.',lose:'The assault has failed. Our columns fall back.',
  setup(c){const d=c.mul,B=BASES[0],C=[MAPW/2,MAPH/2],E=BASES[1];const ang=Math.atan2(C[1]-B[1],C[0]-B[0]),nx=-Math.sin(ang),ny=Math.cos(ang),ux=Math.cos(ang),uy=Math.sin(ang);
@@ -222,4 +222,4 @@ function campPanel(){
   el.innerHTML=`<b>${c.m.title}</b> <span style="opacity:.6">· ${CAMP_DIFF[c.diff]}</span><br>`+c.m.obj.map(o=>`<span style="${c.o[o[0]]?'color:#9fd36b':''}">${c.o[o[0]]?'☑':'☐'} ${o[1]}</span>`).join('<br>')+(c.status?`<br><b style="color:#f0d27a">${c.status}</b>`:'');
 }
 setInterval(()=>{try{campPanel();}catch(e){}},400);
-(function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Missions';b.title='Five single-player missions for Iran, the Mountain Shias and the Coffee Shias';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();
+(function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('campaign'))return;const b=document.createElement('button');b.className='big';b.id='campaign';b.type='button';b.textContent='Missions';b.title='Five single-player missions for Iran, the Lebanese Shia and the Zaidi Shia Movement';b.onclick=()=>{try{initAudio();}catch(e){}campMenu();};sb.parentNode.insertBefore(b,sb);})();
