@@ -20,7 +20,7 @@ const t0 = Date.now();
 try {
   await toMenu(page, url);
   // pick nation, map, AI count with the real menu controls
-  const natBtn = await page.evaluateHandle((n) => [...document.querySelectorAll('#pickP button')].find(b => (b.innerText || '').trim().startsWith(n) || b.dataset.k === n || (n === 'RS' && /Mountain Shias/.test(b.innerText)) || (n === 'DW' && /Coffee Shias/.test(b.innerText))), NAT);
+  const natBtn = await page.evaluateHandle((n) => [...document.querySelectorAll('#pickP button')].find(b => (b.innerText || '').trim().startsWith(n) || b.dataset.k === n || (n === 'RS' && /Lebanese Shia/.test(b.innerText)) || (n === 'DW' && /Zaidi Shia Movement/.test(b.innerText))), NAT);
   if (!natBtn.asElement()) bug(`menu: no nation card for ${NAT}`); else { await natBtn.asElement().scrollIntoViewIfNeeded(); touch ? await natBtn.asElement().tap() : await natBtn.asElement().click(); }
   await page.selectOption('#mapSel', MAP).catch(e => bug('menu: map select failed: ' + e.message.split('\n')[0]));
   const aiB = await page.$(`#aiN button[data-n="${NAI}"]`);
