@@ -28,7 +28,7 @@ function grLandAt(x,z){const F=G3.F,W=F.W,cx=Math.max(0,Math.min(W-1,x/2|0)),cz=
 // a gently curved road from A to B sampled every ~2.5 units; it bends toward the lower side so it hugs valleys; null if it would cross open water
 function grRoadPts(A,B,seed){const dx=B[0]-A[0],dz=B[1]-A[1],L=Math.hypot(dx,dz);if(L<2)return null;const nx=-dz/L,nz=dx/L,mx=(A[0]+B[0])/2,mz=(A[1]+B[1])/2,o=L*.18;
   const hl=g3HeightAt(mx+nx*o,mz+nz*o),hr=g3HeightAt(mx-nx*o,mz-nz*o),bend=(g3Hash(seed,7)-.5)*.22*L+(hr>hl+1?.12:hl>hr+1?-.12:0)*L,cx=mx+nx*bend,cz=mz+nz*bend;
-  const n=Math.max(3,Math.ceil(L/2.5)),out=[];let wet=0;
+  const n=Math.max(3,Math.ceil(L/3.5)),out=[];let wet=0;
   for(let i=0;i<=n;i++){const t=i/n,u=1-t,x=u*u*A[0]+2*u*t*cx+t*t*B[0],z=u*u*A[1]+2*u*t*cz+t*t*B[1];if(grLandAt(x,z)<.4&&++wet>2)return null;out.push([x,z,Math.max(.2,g3MeshH(x,z))+.32]);}
   return out;}
 function g3BuildRoads(sc){try{if(!G3.F||!G3.LU)return;const P=GCM.P,T=g3Towns(),main=new Map();for(const t of T)if(t.t===0)main.set(t.pi,t);
