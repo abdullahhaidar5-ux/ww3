@@ -91,7 +91,7 @@ https://claude.ai/artifact/QDp8ykMpW6fwW7YRn4jqUZ
 - [done] Bigger electronic warfare: minimap blackout and fake radar ghosts
 - [next] Rubble from destroyed buildings becomes cover and blocks tanks
 - [next] Tunnels counter: ground-penetrating radar, tunnel ambushes
-- [next] Proxy militias you can fund near the front
+- [done] Proxy militias you can fund near the front (laneG 1ac17c11, RG9 act "Arm a proxy militia" + RG18 volunteers)
 - [next] Sanctions on an enemy's income, countered by smuggling routes
 - [next] Day/night battles with thermal optics
 - [done] Live news ticker · [done] end-of-match kill-cam replay · [done] end-of-match stats page (awards, scoreboard, army graph, Share) · [next] one-tap army stances (Assault/Hold/Guerrilla)
