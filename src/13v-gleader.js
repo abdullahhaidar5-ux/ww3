@@ -38,7 +38,7 @@ npTab('ldr','🕌','Leader',(code,body)=>{const k=ldrId(code);if(!k){body.textCo
   const peaceLine=pc>24?'<span style="color:#ffb3a8">War-fever: '+pc+' months of peace is stirring unrest.</span>':'Months of peace: '+pc+' (war-fever builds after 24).';
   body.innerHTML='<div style="font-size:17px;margin-bottom:6px"><b>'+ldrName(k)+'</b></div><div>Stands in <b>'+GCM.P[L.at].n+'</b>'+(L.tgt>=0?' — travelling to <b>'+GCM.P[L.tgt].n+'</b>':'')+'.</div>'
    +'<div style="margin:8px 0;opacity:.85">Where he stands: unrest falls each month and a battle there begins with fearless troops. Nation-wide: the people clamour for war (+8% war support, +12% manpower, weariness grows slower).</div><div>'+peaceLine+'</div>'
-   +(k==='AY'?'<div style="margin-top:6px;opacity:.8">One leader for the Resistance bloc: Iran, the Mountain Shias and Yemen share him and his effects.</div>':'');
+   +(k==='AY'?'<div style="margin-top:6px;opacity:.8">One leader for the Resistance bloc: Iran, the Lebanese Shia and Yemen share him and his effects.</div>':'');
   const mk=(txt,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=txt;b.style.cssText='margin:4px 6px 0 0;padding:3px 10px;border-radius:12px;border:1px solid #3b556e;background:#16222e;color:#cfe3f5;cursor:pointer;font-size:14px';b.onclick=fn;return b;};
   const lst=ldrProvs(k).filter(i=>i!==L.at).sort((a,b)=>GC.prov[b].un-GC.prov[a].un).slice(0,12);
   const h=document.createElement('div');h.style.cssText='margin-top:10px;font-size:14px;opacity:.8';h.textContent=mine?'Send on tour (about a month per stop), restless provinces first:':(code!==LDR_DEF[k].own?'Ask for a visit (the ruler of '+gdNatName(LDR_DEF[k].own)+' decides the route):':'');body.appendChild(h);
