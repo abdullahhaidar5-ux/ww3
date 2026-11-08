@@ -289,6 +289,8 @@ const VO_PITCH=1;
 const VOP={},VOT={};
 const VO_SHEET={FR:'EU',DE:'EU'};   // nations-frde: FR/DE use EU's recorded sheets (mixed fr/de/en) until XTTS re-records exist
 for(const T of [VO_MAP,VOR,VOH,RADT]){if(T.EU){T.FR=T.EU;T.DE=T.EU;}}
+/* Abdullah 2026-11-07 19:54 "Iraqis have a British accent": nations without their own recorded pack fell back to the browser's speech voice, which is English on most PCs. Borrow the nearest recorded native-language pack instead (same language family / dialect area) until each gets its own. */
+{const VO_ALIAS={IQ:'SA',RV:'DW',SY:'RS',JO:'RS',OB:'RS',BI:'SA',OM:'SA',KW:'SA',LY:'EG',SD:'EG',DZ:'EG',MA:'EG',AZ:'TR',KZ:'RU'};for(const T of [VO_MAP,VOR,VOH,RADT])for(const k in VO_ALIAS)if(!T[k]&&T[VO_ALIAS[k]])T[k]=T[VO_ALIAS[k]];for(const k in VO_ALIAS)if(!VO_SHEET[k])VO_SHEET[k]=VO_ALIAS[k];}
 // Role voices (2026-11-03): every unit type speaks its own lines. Unit kind -> voice role; clips live in vo/CODE_r.mp3 (VOR above).
 const VO_ROLE={inf:'inf',at:'at',atk:'at',atgm:'at',tank:'tank',hero:'elite',saka:'elite',guer:'elite',recon:'elite',hacker:'elite',aa:'veh',arty:'veh',mortar:'veh',idome:'veh',ew:'veh',cbr:'veh',jeep:'veh',raidlead:'veh',heli:'pilot',jet:'pilot',airlift:'pilot',drone:'pilot',boat:'navy',ship:'navy',lander:'navy',dozer:'eng',harv:'eng',sapper:'eng',medic:'eng',cleric:'leader',officer:'leader',commissar:'leader'};
 const VORB={},VORP={},VORL={};
