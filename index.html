@@ -22252,7 +22252,9 @@ const GMIL_REGCUL={ME:'ar',AF:'af',SA:'sa',EA:'zh',SEA:'sea',EU:'de',NA:'en',SAM
 const GMIL_FLEET=[['ship',.34],['boat',.26],['fast',.14],['sub',.26]];   // starting fleet mix (by value)
 const GMIL_NAVAL=['ship','boat','fast','sub','minel','sweep'];
 const GMIL_BUY=[['ship',1],['boat',2],['fast',2],['sub',1],['minel',1],['sweep',1]];   // kind, batch (fleet recruitment: 2 turns)
-const GMIL_ST={m:{n:'Missile',cost:0,fuel:0,rng:340,dmg:55,ic:1},a:{n:'Air raid',cost:180,fuel:6,rng:300,dmg:15,ic:.85},d:{n:'Drone strike',cost:90,fuel:1,rng:230,dmg:22,ic:1.25}};
+/* RANGES (orch/RANGES.md): grand map = Equal Earth 2400x1200 units ~ 14 km/unit. Real reach: missile 2,000 km (Shahab-3/Tomahawk/Jericho class), air raid 1,000 km (strike-jet combat radius), Shahed-type drone 2,000 km. Flight: ballistic ~12 min, cruise ~800 km/h, drone ~185 km/h - all inside the monthly turn. */
+const GMIL_KMU=14,GMIL_KM={m:2000,a:1000,d:2000};
+const GMIL_ST={m:{n:'Missile',cost:0,fuel:0,rng:Math.round(GMIL_KM.m/GMIL_KMU),km:GMIL_KM.m,dmg:55,ic:1},a:{n:'Air raid',cost:180,fuel:6,rng:Math.round(GMIL_KM.a/GMIL_KMU),km:GMIL_KM.a,dmg:15,ic:.85},d:{n:'Drone strike',cost:90,fuel:1,rng:Math.round(GMIL_KM.d/GMIL_KMU),km:GMIL_KM.d,dmg:22,ic:1.25}};
 const GMIL_MISSILE_COST=450,GMIL_MS_MAX=6;
 function gmilNew(){return {g:{},gid:1,fr:[],fid:1,zm:{},fq:[],n:{},bk:{},foe:'',nx:{}};}
 function gmilN(c){const M=GC.mil;return M.n[c]||(M.n[c]={ms:2,so:[]});}
