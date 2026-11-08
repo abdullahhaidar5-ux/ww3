@@ -55,7 +55,7 @@ const UNTEX={m_t62:.62,m_leo2:.6,m_t55:.95};
 // Infantry: three realistic rigged soldiers (Western desert-camo marine, Eastern green-camo, Middle-Eastern/militia woodland
 // fatigues) shared by the 18 nations; national colour is a tint over the camo. 'soldier' is the old stand-in.
 // laneE: foot soldiers read too small at gameplay height (Abdullah 2026-11-06 photo) - draw them ~18% bigger (visual only)
-for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.7;c._big=1;}}
+for(const k in MCFG){const c=MCFG[k];if(c&&c.m==='soldier'&&c.size&&!c._big){c.size*=1.15;c._big=1;}}   /* Abdullah 20:02 "why are some infantry bigger than vehicles": back near real scale (a soldier ~1.8 m next to a 2.4 m-tall tank); readability comes from team outlines/markers, not size */
 const SOLV={US:'sol_w',EU:'sol_w',FR:'sol_w',DE:'sol_w',IL:'sol_w',UA:'sol_w',KR:'sol_w',TR:'sol_w',SA:'sol_w',AE:'sol_w',EG:'sol_w',IQ:'sol_w',GB:'sol_w',AU:'sol_w',CA:'sol_w',SY:'sol_e',RU:'sol_e',CN:'sol_e',KP:'sol_e',CU:'sol_e',IN:'sol_e',PK:'sol_e',IR:'sol_m',RS:'sol_m',DW:'sol_m'};
 // Middle Eastern architecture (mud-brick barracks, sandstone HQ, walled workshop-factory) for the Arab and Shia nations
 const MEFAC=new Set(['IR','RS','DW','SA','AE','EG','IQ','SY']),BME={hq:{m:'b_hq_me',size:74},barracks:{m:'b_barr_me',size:60},factory:{m:'b_fact_me',size:72}};
@@ -284,7 +284,7 @@ function drawEmblem(x,fac,bg){const W=120,H=72;
     x.fillStyle='#3a2414';x.fillRect(-17,-2.4,10.5,4.8);x.fillStyle=gd;x.beginPath();x.moveTo(-17,-2.4);x.lineTo(-23,-6.5);x.quadraticCurveTo(-25,0,-23,6.5);x.lineTo(-17,2.4);x.closePath();x.fill();x.stroke();
     x.fillStyle=gd;x.beginPath();x.arc(-11.5,0,1.1,0,7);x.fill();x.restore();
   }}
-// Mountain Shias: printed cloth banner (Abdullah 21:19 "as realistic as you are allowed to") — real militia-banner style, our own emblem; never the real organisation's marks
+// Lebanese Shia: printed cloth banner (Abdullah 21:19 "as realistic as you are allowed to") — real militia-banner style, our own emblem; never the real organisation's marks
 function emCloth(x,W,H,base,seed){x.fillStyle=base;x.fillRect(0,0,W,H);
   for(let i=0;i<7;i++){const fx=i*W/6+((seed*37+i*53)%9)-4,g=x.createLinearGradient(fx-10,0,fx+10,0);g.addColorStop(0,'rgba(0,0,0,0)');g.addColorStop(.5,i%2?'rgba(255,255,255,.10)':'rgba(70,40,0,.13)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(fx-10,0,20,H);}
   let s=seed|0||7;const r=()=>{s=(s*1103515245+12345)&0x7fffffff;return s/0x7fffffff;};
@@ -294,7 +294,7 @@ function drawRS(x,bg){const W=120,H=72,G='#0f6a2e',G2='#0a4d20';
   if(bg){emCloth(x,W,H,'#f4c400',11);
     const b=x.createLinearGradient(0,H*.8,0,H);b.addColorStop(0,'#b5141c');b.addColorStop(1,'#7e0c12');x.fillStyle=b;x.fillRect(0,H*.8,W,H*.2);
     emText(x,'لبيك يا حسين',60,H*.9,9.5,'#fff4c8');
-    emText(x,'شيعة الجبل',60,8.6,10.5,G);}
+    emText(x,'شيعة لبنان',60,8.6,10.5,G);}
   const cx=60,cy=34.5,r=16.5;
   // laurels (printed green)
   emLaurel(x,cx,cy+1,r+4,-1,G);emLaurel(x,cx,cy+1,r+4,1,G);
@@ -309,12 +309,12 @@ function drawRS(x,bg){const W=120,H=72,G='#0f6a2e',G2='#0a4d20';
   x.beginPath();x.moveTo(-22,-3.2);x.lineTo(16,-4.4);x.quadraticCurveTo(31,-6.5,42,-12);x.lineTo(36,-4.8);x.quadraticCurveTo(28,-2.2,21,-.9);x.lineTo(21,.9);x.quadraticCurveTo(28,2.2,36,4.8);x.lineTo(42,12);x.quadraticCurveTo(31,6.5,16,4.4);x.lineTo(-22,3.2);x.closePath();x.fill();x.stroke();
   x.beginPath();x.moveTo(-21,-11);x.quadraticCurveTo(-26,0,-21,11);x.lineTo(-25,11);x.quadraticCurveTo(-30,0,-25,-11);x.closePath();x.fill();x.stroke();
   x.fillRect(-40,-2.8,15,5.6);x.strokeRect(-40,-2.8,15,5.6);x.beginPath();x.arc(-42,0,3.6,0,7);x.fill();x.stroke();x.restore();}
-// River Shias (RV): original printed cloth banner in the Mountain Shias' style - black field, green printing, shrine dome & two minarets over twin wavy rivers, ring + laurels. Our own mark; never a real organisation's.
-function drawRV(x,bg){const W=120,H=72,G='#25b24f',G2='#157a35',GL='#8be0a4';
-  if(bg){emCloth(x,W,H,'#0b0c0b',23);
+// Iraqi Shia Brigades (RV, was River Shias; Abdullah 2026-11-07 19:42 "Fix logo"): original printed cloth banner, distinct from the Lebanese Shia' black/green — deep Iraqi green field, GOLD shrine dome & two minarets (the Karbala/Najaf golden domes) over the twin rivers in blue, gold ring + laurels, red foot band. Our own mark; never a real organisation's.
+function drawRV(x,bg){const W=120,H=72,G='#e8b83e',G2='#a87a1c',GL='#7cc7ff',FB='#0e3b21';
+  if(bg){emCloth(x,W,H,FB,23);
     const b=x.createLinearGradient(0,H*.8,0,H);b.addColorStop(0,'#b5141c');b.addColorStop(1,'#7e0c12');x.fillStyle=b;x.fillRect(0,H*.8,W,H*.2);
     emText(x,'لبيك يا حسين',60,H*.9,9.5,'#fff4c8');
-    emText(x,'شيعة الرافدين',60,8.6,10.5,G);}
+    emText(x,'ألوية الشيعة العراقية',60,8.6,10,G);}
   const cx=60,cy=34.5,r=16.5;
   emLaurel(x,cx,cy+1,r+4,-1,G);emLaurel(x,cx,cy+1,r+4,1,G);
   x.lineWidth=2.2;x.strokeStyle=G;x.beginPath();x.arc(cx,cy,r,0,7);x.stroke();x.lineWidth=.7;x.beginPath();x.arc(cx,cy,r-2.3,0,7);x.stroke();
@@ -325,12 +325,12 @@ function drawRV(x,bg){const W=120,H=72,G='#25b24f',G2='#157a35',GL='#8be0a4';
   x.beginPath();x.moveTo(52,34);x.bezierCurveTo(52,22,68,22,68,34);x.closePath();x.fill();
   x.fillRect(59.4,21,1.2,4);x.beginPath();x.arc(60,20.6,1.2,0,7);x.fill();
   for(const mx of [45.5,74.5]){x.fillRect(mx-1,28,2,12);x.beginPath();x.moveTo(mx-1.8,28);x.lineTo(mx,24);x.lineTo(mx+1.8,28);x.closePath();x.fill();x.fillRect(mx-2.2,31,4.4,1.2);}
-  x.fillStyle='#0b0c0b';x.beginPath();x.moveTo(57.5,44);x.lineTo(57.5,38.5);x.quadraticCurveTo(60,35.5,62.5,38.5);x.lineTo(62.5,44);x.closePath();x.fill();
+  x.fillStyle=FB;x.beginPath();x.moveTo(57.5,44);x.lineTo(57.5,38.5);x.quadraticCurveTo(60,35.5,62.5,38.5);x.lineTo(62.5,44);x.closePath();x.fill();
   // twin rivers: two wavy lines under the shrine
   x.strokeStyle=GL;x.lineWidth=1.5;x.lineCap='round';
   for(const yy of [47.3,51.3]){x.beginPath();for(let i=0;i<=24;i++){const px=42+i*1.55,py=yy+Math.sin(i*.9+yy)*1.2;i?x.lineTo(px,py):x.moveTo(px,py);}x.stroke();}
   x.restore();}
-function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#f4c400':fac==='RV'?'#0b0c0b':'#24150b';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
+function emblemCanvas(fac,size){const c=document.createElement('canvas');c.width=size*2;c.height=size*2;const x=c.getContext('2d');x.fillStyle=fac==='RS'?'#f4c400':fac==='RV'?'#0e3b21':'#24150b';x.fillRect(0,0,c.width,c.height);const k=size*2/120;x.scale(k,k);x.translate(0,24);drawEmblem(x,fac,true);return c;}
 function flagTex(fac){if(FLAGTEX[fac])return FLAGTEX[fac];const W=120,H=72,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
   const rect=(col,a,b,w,h)=>{x.fillStyle=col;x.fillRect(a,b,w,h);};const hs=(cols)=>cols.forEach((col,i)=>rect(col,0,i*H/cols.length,W,H/cols.length+1));const vs=(cols)=>cols.forEach((col,i)=>rect(col,i*W/cols.length,0,W/cols.length+1,H));
   const star=(cx,cy,r,col,n=5)=>{x.fillStyle=col;x.beginPath();for(let i=0;i<n*2;i++){const a=-Math.PI/2+i*Math.PI/n,rr=i%2?r*.42:r;x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}x.closePath();x.fill();};
@@ -685,7 +685,7 @@ function postApply(m,ud,e,k,dt,tg,moving,fire){const W=ud.legs;if(!W||!W.uL)retu
   const y=0.5*(gDepth(W,thL,knL)+gDepth(W,thR,knR))-W.D0;
   m.position.y=y*(1-pr)+pr*1.25;m.rotation.x=pr*1.5;if(ud.bz===undefined)ud.bz=m.position.z;m.position.z=ud.bz-pr*3.6;ud.pp=1;return 1;}
 // Drones are built by hand so each nation's looks right: a Shahed-style delta wing with a pusher propeller
-// (Iran, Mountain Shias), a Kargu-style quadcopter (Turkey) and a small X-frame FPV racer (Ukraine and others).
+// (Iran, Lebanese Shia), a Kargu-style quadcopter (Turkey) and a small X-frame FPV racer (Ukraine and others).
 // Iran and the two Shia militias fly Shahed-style deltas (stencilled Shahed / Ababil / Qasef), Turkey a Bayraktar-style
 // light-grey drone, the US and Israel an MQ-9 / Hermes-style grey drone, Russia a Lancet-style dark loitering munition,
 // China and Korea a bigger quadcopter, everyone else taped-up FPV racers.
@@ -773,7 +773,7 @@ function dlBuild(o,yaw,B,P,T){
   const body=mesh(B.geo());body.material=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.85});body.castShadow=true;body.receiveShadow=true;yaw.add(body);yaw.scale.setScalar(.888);/* same height as a soldier (MCFG.inf.size 14) */
   const ring=new THREE.Mesh(new THREE.RingGeometry(7,7.8,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:new THREE.Color(T.color),transparent:true,opacity:.32,depthWrite:false}));ring.position.y=1.2;ring.renderOrder=2;o.add(ring);o.userData.parts.tring=ring;
   SCN.add(o);return o;}
-function clericModel(e){const o=clericModel0(e);if(o&&o.userData.parts&&o.userData.parts.body&&!o.userData._big){o.userData.parts.body.scale.multiplyScalar(1.7);o.userData._big=1;}return o;}// leaders stand as tall as the x1.7 soldiers
+function clericModel(e){const o=clericModel0(e);if(o&&o.userData.parts&&o.userData.parts.body&&!o.userData._big){o.userData.parts.body.scale.multiplyScalar(1.15);o.userData._big=1;}return o;}// leaders stand as tall as the (x1.15) soldiers
 function clericModel0(e){const T=G.teams[e.team],o=new THREE.Group(),yaw=new THREE.Group();o.add(yaw);o.userData.parts={body:yaw};o.userData.model=true;o.userData.cleric=true;
   const DL=T&&T.fac==='KP',B=Bld(),skin=DL?'#d8b48e':'#c69a78',robe=DL?'#3a3d3f':'#a8a397',aba=DL?'#2a2c2e':'#3b2d23',trim=DL?'#2a2c2e':'#b8963e',tur='#101010',beard=DL?(DL?'#d8b48e':'#ecebe6'):'#ecebe6',P=(g,x,y,z,c,rx=0,ry=0,rz=0)=>{const m=new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(rx,ry,rz)),new THREE.Vector3(1,1,1));B._p.push({g,m,c:lin(c)});};
   if(DL)return dlBuild(o,yaw,B,P,T);
@@ -1261,18 +1261,23 @@ const NATX_RT={},NATX_NAVY={},NATX_FLAG={};
  NATX_FLAG.ET=c=>{c.hs(['#078930','#fcdd09','#da121a']);c.circ(60,36,11,'#0f47af');c.star(60,36,9,'#fcdd09');};
  NATX_FLAG.LY=c=>{c.rect('#4a4f55',0,0,c.W,c.H);c.rect('#a89466',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};
  NATX_FLAG.SD=c=>{c.rect('#4b5246',0,0,c.W,c.H);c.rect('#a89a6e',0,c.H-14,c.W,4);c.star(60,34,12,'#d9d4c4');};}
-// nation-obbd: Olive Brigades (OB) and Black Desert Insurgency (BI). Looks on shared models; ORIGINAL emblems in the printed-cloth style (no real group's banner, seal, shahada or slogan).
+// nation-obbd: Palestine Islamic Brigade (OB, was Olive Brigades) and Desert Islamic Faction (BI, was Black Desert Insurgency). Looks on shared models; ORIGINAL emblems in the printed-cloth style (no real group's banner, seal, shahada or slogan).
 {const L={ OB:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#6b6a52',ca:'#7a7556',cb:'#3a3a2c',uni:'#5d6048',pat:1},cx:{p:1,s:1,c:'#6b6a52',t:'#3c6b3a',w:3},ax:{b:'#878d91',p:3,h:{b:'#aeb09a',p:3}},ch:'#4a5036',rt:'#aeb09a',nv:'slav'},
  BI:{tk:'t90',he:'mi24',je:'mig29',sol:'sol_e',fl:{veh:'#9a8a62',ca:'#a89a6c',cb:'#3a3a3e',uni:'#8f8460',pat:0},cx:{p:0,s:1,c:'#9a8a62',t:'#3b3b3f',w:3},ax:{b:'#878d91',p:3,h:{b:'#bfb08a',p:3}},ch:'#5a5238',rt:'#bfb08a',nv:'slav'}};
  for(const k in L){const q=L[k];RMAP.tank[k]=q.tk;RMAP.heli[k]=q.he;RMAP.jet[k]=q.je;SOLV[k]=q.sol;FLOOK[k]=q.fl;CAMOX[k]=q.cx;AIRX[k]=q.ax;CHAMP_TINT[k]=q.ch;NATX_RT[k]=q.rt;if(q.nv)NATX_NAVY[k]=q.nv;KFAC.push(k);RMAP.dozer[k]='jd550';RMAP.ship[k]='frw';}
- // OB: cream printed cloth, olive branch over a stylised city skyline, red/green/black foot band, name in Arabic
+ // OB "Palestine Islamic Brigade" (Abdullah 2026-11-07 19:40): ORIGINAL emblem — an old house key crossed with an olive branch on a sand/olive shield, cream printed cloth, red/green/black foot band, name in Arabic. No real group's banner, seal, shahada or slogan.
  NATX_FLAG.OB=c=>{const{x,W,H}=c;emCloth(x,W,H,'#efe6cf',23);
   x.fillStyle='#2b2b2b';x.fillRect(0,H*.84,W,H*.16);x.fillStyle='#b3262e';x.fillRect(0,H*.84,W*.34,H*.16);x.fillStyle='#2f6b3a';x.fillRect(W*.66,H*.84,W*.34,H*.16);
-  emText(x,'ألوية الزيتون',60,9,10.5,'#2f5a30');
-  x.fillStyle='#34382f';x.beginPath();x.moveTo(26,H*.84);for(const[px,py]of[[26,52],[31,52],[31,44],[37,44],[37,49],[42,49],[42,38],[47,38],[47,46],[53,46],[53,41],[57,41],[57,50],[63,50],[63,36],[69,36],[69,47],[75,47],[75,43],[81,43],[81,51],[87,51],[87,46],[94,46],[94,H*.84]])x.lineTo(px,py);x.closePath();x.fill();
-  x.strokeStyle='#3a5a22';x.lineWidth=1.3;x.lineCap='round';x.beginPath();x.moveTo(34,34);x.quadraticCurveTo(60,18,86,34);x.stroke();
-  for(let i=0;i<9;i++){const t=(i+.5)/9,bx=34+t*52,by=34-Math.sin(t*Math.PI)*12.4;for(const s of[-1,1]){x.save();x.translate(bx,by);x.rotate(s*-.9+(t<.5?-.3:.3));x.fillStyle=i%2?'#5f8a3a':'#4a7430';x.beginPath();x.ellipse(0,s*3.1,1.3,3.6,0,0,7);x.fill();x.restore();}}
-  x.fillStyle='#3c4a2a';for(const[ox,oy]of[[46,26.5],[60,23.5],[74,26.5]]){x.beginPath();x.arc(ox,oy+3,1.4,0,7);x.fill();}};
+  emText(x,'لواء فلسطين الإسلامي',60,9,10,'#2f5a30');
+  const cx=60,top=16,bot=H*.8;x.beginPath();x.moveTo(cx-17,top);x.lineTo(cx+17,top);x.lineTo(cx+17,top+(bot-top)*.5);x.quadraticCurveTo(cx+16,bot-6,cx,bot);x.quadraticCurveTo(cx-16,bot-6,cx-17,top+(bot-top)*.5);x.closePath();
+  x.fillStyle='#d9c79c';x.fill();x.lineWidth=2.2;x.strokeStyle='#3c5a2a';x.stroke();x.lineWidth=1;x.strokeStyle='#6f7f4a';x.beginPath();x.moveTo(cx-13.5,top+3.5);x.lineTo(cx+13.5,top+3.5);x.stroke();
+  // old key, top-left to bottom-right
+  x.strokeStyle='#3a3328';x.lineCap='round';x.lineWidth=2.4;x.beginPath();x.arc(cx-8,top+10,4.2,0,7);x.stroke();x.beginPath();x.moveTo(cx-5,top+13);x.lineTo(cx+8,bot-12);x.stroke();
+  x.lineWidth=2;x.beginPath();x.moveTo(cx+5.2,bot-15.2);x.lineTo(cx+8.4,bot-18);x.moveTo(cx+7.4,bot-13);x.lineTo(cx+10.6,bot-15.8);x.stroke();
+  // olive branch, top-right to bottom-left
+  x.strokeStyle='#3a5a22';x.lineWidth=1.4;x.beginPath();x.moveTo(cx+10,top+6);x.quadraticCurveTo(cx+2,top+18,cx-9,bot-9);x.stroke();
+  for(let i=0;i<7;i++){const t=(i+.5)/7,bx=(1-t)*(1-t)*(cx+10)+2*(1-t)*t*(cx+2)+t*t*(cx-9),by=(1-t)*(1-t)*(top+6)+2*(1-t)*t*(top+18)+t*t*(bot-9);for(const sd of[-1,1]){x.save();x.translate(bx,by);x.rotate(.7+sd*.9);x.fillStyle=(i+(sd>0?1:0))%2?'#5f8a3a':'#4a7430';x.beginPath();x.ellipse(0,sd*2.6,1.1,3,0,0,7);x.fill();x.restore();}}
+  x.fillStyle='#2f3a22';for(const t of[.3,.62]){const bx=(1-t)*(1-t)*(cx+10)+2*(1-t)*t*(cx+2)+t*t*(cx-9),by=(1-t)*(1-t)*(top+6)+2*(1-t)*t*(top+18)+t*t*(bot-9);x.beginPath();x.arc(bx+2.4,by+1,1.3,0,7);x.fill();}};
  // BI: plain charcoal cloth, dune line and a broken (five-point, one arm missing) star; sombre, nothing like any real banner
  NATX_FLAG.BI=c=>{const{x,W,H}=c;emCloth(x,W,H,'#34343a',31);
   x.fillStyle='#8f8460';x.beginPath();x.moveTo(0,H);x.lineTo(0,H*.76);for(let i=0;i<=24;i++){const px=i*W/24;x.lineTo(px,H*.76+Math.sin(i*.9)*2.6-Math.sin(i*.37)*3);}x.lineTo(W,H);x.closePath();x.fill();

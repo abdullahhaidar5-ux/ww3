@@ -99,30 +99,18 @@ function g3MergeCol(list){const P=[],N=[],C=[],I=[];let vo=0;for(const g of list
   if(g.index)for(let i=0;i<g.index.count;i++)I.push(g.index.getX(i)+vo);else for(let i=0;i<p.count;i++)I.push(i+vo);vo+=p.count;}
   const o=new THREE.BufferGeometry();o.setAttribute('position',new THREE.Float32BufferAttribute(P,3));o.setAttribute('normal',new THREE.Float32BufferAttribute(N,3));o.setAttribute('color',new THREE.Float32BufferAttribute(C,3));o.setIndex(I);return o;}
 // plinth + nation ring + banner pole (no cloth: the cloth is a separate wave-shader mesh)
-/* army material: PBR-lit (smooth normals) + a subtle cool rim light so the silhouette pops off the terrain; one shared material for every army body */
-function g3ArmyMat(){if(G3.matArmy)return G3.matArmy;const m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.78,metalness:.04});
-  m.onBeforeCompile=sh=>{sh.fragmentShader=sh.fragmentShader.replace('#include <opaque_fragment>','float g3rim=pow(1.-clamp(dot(normalize(vViewPosition),normalize(normal)),0.,1.),2.4);outgoingLight+=vec3(.5,.6,.78)*g3rim*.42;\n#include <opaque_fragment>');};
-  return G3.matArmy=m;}
-function g3PlinthR(tier){return tier>=2?4.4:tier>=1?3.7:2.8;}
-function g3Plinth(o,r,withPole){const nc=grNatRgb(o),ring=[Math.min(1,nc[0]/255*1.2+.06),Math.min(1,nc[1]/255*1.2+.06),Math.min(1,nc[2]/255*1.2+.06)],cy=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s),S=28;
-  const disc=(rr,col)=>g3ColGeo(new THREE.CircleGeometry(rr,S).rotateX(-Math.PI/2),col,g3M(0,.05,0));
-  const L=[disc(r*1.42,[.17,.19,.13]),disc(r*1.22,[.12,.13,.09]),                                  /* soft contact shadow: two dark steps under the plinth */
-    g3ColGeo(cy(r*1.04,r*1.1,.55,S),[.30,.29,.27],g3M(0,.32,0)),                                  /* stone foot */
-    g3ColGeo(cy(r*.97,r*1.04,.22,S),[.46,.44,.4],g3M(0,.69,0)),                                    /* bevelled chamfer, catches the light */
-    g3ColGeo(cy(r*.97,r*.97,.2,S),ring,g3M(0,.9,0)),                                              /* nation-colour ring */
-    g3ColGeo(cy(r*.9,r*.97,.14,S),[.4,.38,.34],g3M(0,1.07,0)),                                    /* top bevel */
-    g3ColGeo(cy(r*.88,r*.88,.06,S),[.27,.26,.23],g3M(0,1.17,0))];
-  if(withPole){const px=r*.72,pz=-r*.46;L.push(g3ColGeo(cy(.06,.075,15.4,6),[.62,.58,.5],g3M(px,8.8,pz)),g3ColGeo(new THREE.SphereGeometry(.2,10,8),[.95,.8,.28],g3M(px,16.6,pz)));}return L;}
+function g3Plinth(o,r,withPole){const cy=(a,b,h,s)=>new THREE.CylinderGeometry(a,b,h,s),L=[];   /* armies3: no slab - the hero stands on the ground (soft shadow disc is a separate pooled mesh); tall pole for the big cloth flag */
+  if(withPole){L.push(g3ColGeo(cy(.16,.2,22,6),[.55,.5,.4],g3M(r*.62,11.1,-r*.42)),g3ColGeo(new THREE.SphereGeometry(.4,8,6),[.92,.78,.25],g3M(r*.62,22.3,-r*.42)));}return L;}
 function g3MiniGeo(o,tier){G3.mini=G3.mini||{};const key=o+'_'+tier;if(G3.mini[key]!==undefined)return G3.mini[key];if(!(typeof MODELS!=='undefined'&&MODELS.ready))return null;   // not cached while models load -> old figure, retried next sync
   const fac=(typeof grNat==='function'&&grNat(o)||{}).fac||o,sk=typeof solKey==='function'?solKey(fac):'sol_w',col=(typeof grNatRgb==='function'?grNatRgb(o):[90,100,60]),team={fac,color:'#'+col.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('')};
-  const H=10.4,gen=g3BakeModel(sk,team,H,true);if(!gen)return G3.mini[key]=null;
+  const H=7.2,gen=g3BakeModel(sk,team,H,true);if(!gen)return G3.mini[key]=null;
   {const cA=gen.attributes.color,pA=gen.attributes.position,un0=g3Uniform(o),hh=[...o].reduce((q,ch)=>q*31+ch.charCodeAt(0)>>>0,7),tv=[.94+(hh%13)/100,.96+((hh>>4)%9)/100,.95+((hh>>8)%11)/100],un=[Math.min(1,un0[0]*tv[0]),Math.min(1,un0[1]*tv[1]),Math.min(1,un0[2]*tv[2])],sk2=[.8,.6,.47];for(let i=0;i<cA.count;i++){const r=cA.getX(i),g=cA.getY(i),b=cA.getZ(i),ny=pA.getY(i)/H,lum=(r+g+b)/3,sat=Math.max(r,g,b)-Math.min(r,g,b);let c=null;
     if(ny>.935)c=[un[0]*.62,un[1]*.62,un[2]*.6];else if(ny>.84)c=sk2;else if(ny<.07)c=[.14,.11,.09];else{const k=(.55+.7*Math.min(1,lum))*(ny<.5?.78:1);void sat;c=[un[0]*k,un[1]*k,un[2]*k];}   // the rig's cloth is plain white: dress it in the nation's uniform
     if(c)cA.setXYZ(i,c[0],c[1],c[2]);}}
-  const sc=g3M,put=(g,x,z,s,ry)=>{const q=g.clone();q.applyMatrix4(sc(x,1.2,z,s,s,s,ry));return q;};
-  const R=g3PlinthR(tier),n=tier>=2?3:tier>=1?2:0,pos=[[-2.0,-1.3],[1.9,-1.5],[-3,.5],[3,.2],[0,-3]];
-  const mk=(hc,ec)=>{const genLo=g3Decimate(gen,ec),L=g3Plinth(o,R,true);L.push(put(g3Decimate(gen,hc),0,.2,1,0));for(let i=0;i<n;i++)L.push(put(genLo,pos[i][0],pos[i][1],.8,(i-1)*.3));return g3MergeCol(L);};   // base colour already baked into vertex colours
-  const hi=mk(.12,.34);hi.userData.lo=mk(.4,.85);   // hi (~3k tris hero, close zoom) + lo (region/world zoom): one shared pair per nation+tier
+  const sc=g3M,put=(g,x,z,s,ry)=>{const q=g.clone();q.applyMatrix4(sc(x,.1,z,s,s,s,ry));return q;};
+  const R=tier>=2?5.2:tier>=1?4.4:3.2,n=tier>=2?3:tier>=1?2:0,pos=[[-2.6,-1.6],[2.4,-1.8],[-4,.6],[4,.2],[0,-3.6]];
+  const mk=(hc,ec)=>{const genLo=g3Decimate(gen,ec),L=g3Plinth(o,R,true);L.push(put(g3Decimate(gen,hc),0,0,1,0));for(let i=0;i<n;i++)L.push(put(genLo,pos[i][0],pos[i][1],.74,(i-1)*.3));return g3MergeCol(L);};   // base colour already baked into vertex colours
+  const hi=mk(.16,.45);hi.userData.lo=mk(.5,1);   // hi (~3k tris hero, close zoom) + lo (region/world zoom): one shared pair per nation+tier
   return G3.mini[key]=hi;}
 function g3NavyGeo(o){G3.mini=G3.mini||{};const key='navy_'+o;if(G3.mini[key]!==undefined)return G3.mini[key];if(!(typeof MODELS!=='undefined'&&MODELS.ready))return null;
   const fac=(typeof grNat==='function'&&grNat(o)||{}).fac||o,k=['m_frg','m_fre','m_frw','ship'].find(x=>MODELS.proto[x]);if(!k)return G3.mini[key]=null;

@@ -71,12 +71,12 @@ function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(s
 /* RG6 scenario starts (laneA 2026-11-07): each scenario is a preset ON TOP of the realistic start (grRealApply) — extra opening wars,
    opinions and front armies. Data rows only; deterministic (no RNG). 'me26' = the plain realistic start (featured: "Middle East 2026"). */
 const GR_SCEN=[
- {id:'me26',n:'Middle East 2026',d:'The world as it stands in November 2026: Israel and the Mountain Shias at war, Russia and Ukraine at war, tense borders across the region.'},
+ {id:'me26',n:'Middle East 2026',d:'The world as it stands in November 2026: Israel and the Lebanese Shia at war, Russia and Ukraine at war, tense borders across the region.'},
  {id:'gulf',n:'Gulf flashpoint',d:'Tankers burn in the Strait of Hormuz. Iran and its Resistance bloc are at war with Saudi Arabia and the UAE; the US is on the brink and Gulf neighbours pick sides.',
   wars:[['IR','SA'],['IR','AE'],['DW','SA'],['DW','AE']],op:[['US','IR',-100],['QA','IR',-40],['KW','IR',-40],['OM','IR',-5],['IQ','SA',-25]],
   fr:[['IR','SA',.25],['SA','IR',.25],['IR','AE',.15],['AE','IR',.2],['DW','SA',.2],['SA','DW',.15],['US','IR',.08]],
-  news:['Tankers ablaze in the Strait of Hormuz — Iran and Saudi Arabia are at war.','The UAE closes its airspace; Yemen\'s Coffee Shias fire on Saudi border posts.']},
- {id:'redsea',n:'Red Sea crisis',d:'Shipping through Bab-el-Mandeb has stopped. Yemen\'s Coffee Shias are at war with Israel and Saudi Arabia; Egypt loses its canal trade and the Gulf watches.',
+  news:['Tankers ablaze in the Strait of Hormuz — Iran and Saudi Arabia are at war.','The UAE closes its airspace; Yemen\'s Zaidi Shia Movement fire on Saudi border posts.']},
+ {id:'redsea',n:'Red Sea crisis',d:'Shipping through Bab-el-Mandeb has stopped. Yemen\'s Zaidi Shia Movement are at war with Israel and Saudi Arabia; Egypt loses its canal trade and the Gulf watches.',
   wars:[['DW','IL'],['DW','SA']],op:[['EG','DW',-60],['US','DW',-100],['AE','DW',-50]],
   fr:[['DW','SA',.25],['SA','DW',.25],['EG','DW',.1]],
   news:['Ships turn back at Bab-el-Mandeb — the Red Sea is a war zone.','Suez traffic collapses; Cairo warns Sanaa.']}];
@@ -283,7 +283,7 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
 /* calendar: month 1 = the start month GC.m0 (0-based from Jan 2026; new campaigns = GR_REAL.asof = Nov 2026, A-DATE; saves without m0 = Jan 2026); GC.day = days into the current month (0..29), ticked by the real-time clock in 13c */
 const GR_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 /* real time: how far (0..0.92) a marching army has got along its current road, from progress months + days into this month (display only, sim unchanged) */
-function grSlide(a){if(!GC||GC.ph!=='plan'||!a.path||!a.path.length)return 0;const c=grEdge(a.at,a.path[0]);if(!c)return 0;let d=Math.min(29.99,(GC.day|0)+((typeof GV!=='undefined'&&GV.dayF)||0));if(a.sm===GC.turn&&a.sd>0)d=Math.max(0,(d-a.sd)*30/(30-a.sd));return Math.max(0,Math.min(.92,((a.pg|0)+d/30)/c));}
+function grSlide(a){if(!GC||GC.ph!=='plan'||!a.path||!a.path.length)return 0;const c=grEdge(a.at,a.path[0]);if(!c)return 0;let d=Math.min(29.99,(GC.day|0)+((typeof GV!=='undefined'&&GV.dayF)||0));if(a.sm===GC.turn&&a.sd>0)d=Math.max(0,(d-a.sd)*30/(30-a.sd));return Math.max(0,Math.min(.985,((a.pg|0)+d/30)/c));}   /* Abdullah 20:40 smoother marches: slide nearly all the way, then a short blend on arrival */
 function grM0(){return (typeof GC==='object'&&GC&&GC.m0|0)||0;}
 function grMonStr(turn){const m=Math.max(0,(turn|0)-1)+grM0();return GR_MON[m%12]+' '+(2026+Math.floor(m/12));}   /* A2c: month label for former 'turn N' wording */
 function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1)+grM0();return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
