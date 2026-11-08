@@ -1,4 +1,5 @@
-# HANDOFF laneG (2026-11-07 20:40 UTC, branch orch/laneG-202611071855)
-Shipped to main this session: RG16 peace conferences (reparations) + RG44 demilitarised zones (src/13z-gpeace.js, hooks in 13-grand.js pass and move phase; test orch/gptest.mjs PASS), RG59 natural disasters first cut (flood, sandstorm, neighbour quake rows in src/13p-gevents.js; test orch/crisistest.mjs PASS). HISTORY lines added; PLAN-SAT ticks done.
-Gate: grandtest PASS. Smoke FAILS on main already (THREE computeBoundingSphere NaN in battle geometry, not from lane G). cigate on this commit has the same failing set as origin/main (checked via gate statuses), so nothing new is red.
-Next, in order: RG9 proxy wars, RG18 volunteers, RG64 defectors, RG15 cyber (merge with RG3 covert ops), RG20 ceasefires, then B6 client states and the DIPLOMACY SCREEN rest, B7 events with choices (chains), B8 reforms/hegemonies. RG10 follow-ons (world-map flash, interceptors, occupation stops the programme) still open.
+# HANDOFF laneG (2026-11-08 ~01:25Z)
+Shipped to main this run: RG9 proxy wars ("Arm a proxy militia" act), RG18 volunteers (same-faction, monthly hook), RG15 cyber strike first cut ("Cyber strike on banks"); all in src/13zq-gproxy.js with hooks in 13m-gdiplo.js and 13o-gworld.js. Also merged the unmerged laneG 9a82454e event rows (RG40/39/41/42/29/28), RG10 nuclear stall, RG20 ceasefires that can break.
+Gates on final code fbc3ade7: smoke PASS, proxytest PASS, grandtest PASS. cigate (GitHub) was not completed (run was cut off).
+Open next, in order: fire own scheduled task was denied by the auto-mode classifier, so the next run must start manually or by its schedule. Then: B6 client states, RG64 defectors, RG20 follow-ons, B8 reforms/hegemonies, RG3 spies merge with RG15 cyber.
+Known gap: proxytest's volunteer branch is not exercised (no same-faction pair found on the test map); add a test that sets fac on a volunteer nation.
