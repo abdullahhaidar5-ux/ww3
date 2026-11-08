@@ -56,10 +56,17 @@ function gmilGenStep(init){const M=GC.mil;for(const c of Object.keys(GC.nat).sor
     const gens=Object.values(M.g).filter(g=>g.o===c&&!g.st).sort((x,y)=>x.id-y.id);
     for(const g of gens)if(g.aid&&!GC.armies.some(a=>a.id===g.aid&&a.gid===g.id)){g.aid=0;}   // army gone without the hook (safety)
     for(const a of mine){if(a.gid&&M.g[a.gid]&&!M.g[a.gid].st)continue;a.gid=0;if(grArmyVal(a)<4000)continue;
-      let g=gens.find(x=>!x.aid);
+      let g=gens.find(x=>!x.aid&&!x.res);   /* a general the player put in reserve stays there */
       if(!g&&gens.length<gmilMaxGens(c)&&(init?gens.length<2:(M.nx[c]|0)<=GC.turn)){const R=gmilRng(M.gid,c.charCodeAt(0)*3+c.charCodeAt(1));g={id:M.gid++,o:c,nm:gmilName(c,R),tr:Math.floor(R()*4),xp:init?0:15,lv:0,st:0,aid:0,by:''};g.lv=gmilLv(g);M.g[g.id]=g;gens.push(g);M.nx[c]=GC.turn+2;
         if(!init&&c===GC.me)grLog(gmilTitle(g)+' '+g.nm+' ('+GMIL_TR[g.tr][0]+') takes command of '+a.nm+'.',c);}
       if(g){g.aid=a.id;a.gid=g.id;}}}}
+/* Abdullah 2026-11-07 20:32 "should be able to assign a general to an army": move a general to one of your land armies (the army's
+   current general swaps over to the general's old army, or returns to the pool), or hold him in reserve (aid 0). */
+function gmilAssign(gid,aid){const M=GC&&GC.mil,g=M&&M.g[gid];if(!g||g.o!==GC.me||g.st)return;const old=g.aid&&GC.armies.find(x=>x.id===g.aid);
+  if(!aid){if(old&&old.gid===g.id)old.gid=0;g.aid=0;g.res=1;return;}
+  const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||a.fl||a===old)return;const prev=a.gid&&M.g[a.gid]&&M.g[a.gid]!==g?M.g[a.gid]:null;
+  if(old&&old.gid===g.id)old.gid=0;if(prev){prev.aid=0;prev.res=0;if(old){old.gid=prev.id;prev.aid=old.id;}}
+  a.gid=g.id;g.aid=a.id;g.res=0;grLog(gmilTitle(g)+' '+g.nm+' takes command of '+a.nm+'.',GC.me);}
 function gmilMerge(a,b){if(!b.gid)return;const M=GC.mil,gb=M.g[b.gid];b.gid=0;if(!gb)return;if(!a.gid){a.gid=gb.id;gb.aid=a.id;return;}
   const ga=M.g[a.gid];if(ga&&gb.xp>ga.xp){ga.aid=0;a.gid=gb.id;gb.aid=a.id;}else gb.aid=0;}   // the other one goes back to the pool
 function gmilLost(a){const M=GC.mil;if(!M||!a.gid)return;const g=M.g[a.gid];a.gid=0;if(!g||g.st)return;g.aid=0;const R=gmilRng(g.id,a.id),r=R(),foe=M.foe;
