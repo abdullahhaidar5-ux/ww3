@@ -5633,7 +5633,7 @@ const NATPOW={US:{name:'Shock and Awe',type:'strafe',cd:200,r:140,desc:'A-10 gun
   EU:{name:'Coalition Supply Drop',type:'supply',cd:220,r:220,desc:'+$1200 and repair 40% to your forces in the area'},
   UA:{name:'Partisan Uprising',type:'partisans',n:6,cd:200,r:90,desc:'Six partisans rise up at the target and ambush the enemy'},
   RU:{name:'Thermobaric Strike',type:'thermo',cd:230,r:150,desc:'A single huge thermobaric warhead after 3 seconds'},
-  IR:{name:'Shahed Swarm',type:'drones',n:5,cd:200,r:120,desc:'Five Shahed loitering munitions launch from your base toward the target'},
+  IR:{name:'Shahed Swarm',type:'drones',n:5,cd:200,r:120,ow:1,desc:'Five Shahed loitering munitions launch from your base toward the target (grand campaign: drawn from your launch-site stock)'},
   SA:{name:'Petrodollar Contract',type:'cash',cd:300,desc:'+$2000 immediately',self:true},
   AE:{name:'Mercenary Contract',type:'mercs',cd:230,desc:'Two tanks and two air-defence vehicles arrive at your HQ',self:true},
   PK:{name:'Nasr Tactical Strike',type:'emp',cd:220,r:200,desc:'Blast at the target that also disables enemy vehicles and buildings nearby for 10s'},
@@ -7696,7 +7696,7 @@ function hqOf(team){return G.ents.find(e=>e.team===team&&e.kind==='hq'&&!e.dead)
 function natPower(team,P,x,y){const T=G.teams[team],hq=hqOf(team),en=e=>!e.dead&&!ally(e.team,team)&&e.team>=0;
   switch(P.type){
     case 'strafe':{const a=Math.atan2(y-(hq?hq.y:y),x-(hq?hq.x:x)),c=Math.cos(a),s=Math.sin(a);for(let i=0;i<9;i++){const d=-160+i*40;addStrike(x+c*d,y+s*d,1.2+i*.12,i%3===1?70:45,(i%3===1?380:200)*P.M,team,'bar');}FXE('plane',[(x-c*1200)|0,(y-s*1200)|0,x|0,y|0,team]);return true;}
-    case 'drones':{if(!hq)return false;for(let i=0;i<P.n+2*(P.lv-1);i++){const u=addUnit(team,'drone',hq.x+rnd(-40,40),hq.y+rnd(-40,40));setMove(u,x+rnd(-60,60),y+rnd(-60,60),'amove');}return true;}
+    case 'drones':{if(!hq)return false;let nn=P.n+2*(P.lv-1);const gr=G.grand;if(gr&&P.ow){const av=(gr.dro&&gr.dro[team])|0;if(av<1){log(team,'No one-way drones left in stock.','w');return false;}nn=Math.min(nn,av);gr.dro[team]=av-nn;gr.du=gr.du||[0,0];gr.du[team]+=nn;}for(let i=0;i<nn;i++){const u=addUnit(team,'drone',hq.x+rnd(-40,40),hq.y+rnd(-40,40));setMove(u,x+rnd(-60,60),y+rnd(-60,60),'amove');}return true;}
     case 'intel':{for(const O of G.teams)if(!ally(O.id,team))for(const b of G.ents)if(b.isB&&b.team===O.id&&!b.dead)T.reveals.push({x:b.x,y:b.y,r:90,t:20+5*P.lv});for(const e of G.ents)if(en(e)&&!e.isB&&Math.hypot(e.x-x,e.y-y)<P.r)e.mark=G.t+25;FXE('ping',[x|0,y|0,P.r],team);return true;}
     case 'supply':{T.credits+=Math.round(1200*P.M);for(const e of G.ents)if(e.team===team&&Math.hypot(e.x-x,e.y-y)<P.r)e.hp=Math.min(e.max,e.hp+e.max*.4);FXE('heal',[x|0,y|0,P.r],team);return true;}
     case 'partisans':{const p=nearestPassXY('ground',x,y);if(!p)return false;for(let i=0;i<P.n+3*(P.lv-1);i++){const q=nearestPassXY('ground',p[0]+rnd(-50,50),p[1]+rnd(-50,50))||p;const u=addUnit(team,i%3===2?'at':'inf',q[0],q[1]);u.guard={x:q[0],y:q[1]};}return true;}
@@ -7740,7 +7740,7 @@ function gprTick(dt){G.gprT=(G.gprT||0)-dt;if(G.gprT>0)return;G.gprT=.5;let any=
     for(const r of G.ents){if(r.dead||!r.isB||r.team!==T.id||r.built<1||(r.kind!=='hq'&&r.kind!=='uplink')||r.dis>G.t)continue;if(Math.hypot(r.x-e.x,r.y-e.y)<=GPR_R){e.detT=Math.max(e.detT||0,G.t+1);break;}}}}}
 function usePower(team,key,x,y){const ok=usePower0(team,key,x,y);if(ok&&G.teams[team]){const s=stOf(G.teams[team]);s.pw[key]=(s.pw[key]||0)+1;}return ok;}
 function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T.pw[key];if(conqBan(key))return false;if(G.conq&&G.t<G.setupEnd){log(team,'No powers during the setup phase.','w');return false;}if(!P0||P0.passive||!w||w.cd>0)return false;if(key==='bb'&&(G.t<300||T.credits<P0.cash)){log(team,G.t<300?'Bunker Buster is not available in the first 5 minutes.':'Bunker Buster costs $'+P0.cash+'.','w');return false;}const L=Math.max(1,Math.min(3,w.lv||1)),M=PLV[L-1],P=Object.assign({},P0,{lv:L,M,cd:Math.round(P0.cd*PCD[L-1]),r:P0.r?Math.round(P0.r*(1+.2*(L-1))):P0.r});
-  if(key==='nat'){if(!natPower(team,P,x,y))return false;w.cd=P.cd;log(team,`${P.name}!`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} used ${P.name}.`,'w');pubNews('pow',team,-1,P.name);return true;}
+  if(key==='nat'){if(!natPower(team,P,x,y))return false;w.cd=(G.grand&&P.ow)?20:P.cd;log(team,`${P.name}!`,'g');for(const O of G.teams)if(O.id!==team&&!ally(O.id,team))log(O.id,`Enemy ${T.F.name} used ${P.name}.`,'w');pubNews('pow',team,-1,P.name);return true;}
   const dur=(25+10*(L-1))*(P.tm||1);if(P.fx)gpowFx(team,P,x,y,dur);
   if(key==='recon'){T.reveals.push({x,y,r:P.r,t:dur});FXE('ping',[x|0,y|0,P.r],team);}
   else if(key==='flare'){const d=Math.round(30*(1+.15*(L-1)));for(const O of G.teams)O.reveals.push({x,y,r:P.r,t:d});(G.flares=G.flares||[]).push({x,y,r:P.r,t:G.t+d});FXE('flare',[x|0,y|0,P.r|0,d]);log(team,'Illumination flares lit the field.','g');}
@@ -20449,8 +20449,10 @@ function grandPlace(team,recs,cx,cy,a,gr){const fac=G.teams[team].fac,ord={tank:
     const k=grFacKind(fac,rec[0]),dom=stats(fac,k).dom||'ground';const p=dom==='air'?[Math.max(60,Math.min(MAPW-60,x)),Math.max(60,Math.min(MAPH-60,y))]:(nearestPassXY(dom,x,y)||[x,y]);
     const u=addUnit(team,k,p[0],p[1]);if(!u)return;u.hp=Math.max(1,Math.round(u.max*rec[1]/100));u.xp=rec[2];u.rank=grRankOf(rec[0],fac,rec[2]);if(u.s&&u.s.ammo)u.ammo=Math.max(1,Math.round(u.s.ammo*rec[3]/100));
     u.gr=rec;gr.ents.push([rec,u,team]);});}
-function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.att,pn:g.pn,ents:[],waves:g.waves||[],wi:0,aiT:1,fin:0,res:null,n0:[0,0],v0:[0,0],ret:0,fort:g.fort|0,mir:g.mir||null,gp:g.gp||null,hero:g.hero||[]};
+function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.att,pn:g.pn,ents:[],waves:g.waves||[],wi:0,aiT:1,fin:0,res:null,n0:[0,0],v0:[0,0],ret:0,fort:g.fort|0,mir:g.mir||null,gp:g.gp||null,hero:g.hero||[],dro:(g.dro||[0,0]).slice(),du:[0,0]};
   G.teams.forEach((T,i)=>{T.ai=null;T.credits=0;if(g.fv&&g.fv[i])T.fervor=1e9;});
+  /* one-way drones: a side with launch sites or launchers in range and a stock gets the Shahed salvo (it spends the grand-map stock, no cooldown wait) */
+  G.teams.forEach((T,i)=>{try{const P0=powInfo('nat',T.fac);if(P0&&P0.ow&&g.dro&&g.dro[i]>0&&!T.pw.nat)T.pw.nat={cd:0,lv:1};}catch(e){}});
   for(const t of [0,1]){const B=BASES[t],a=baseFacing(t),side=g.sides[t];const dx=Math.cos(a)*110,dy=Math.sin(a)*110;grandPlace(t,side,B[0]+dx,B[1]+dy,a,gr);}
   // the defender's forts: a few Defense Guns in front of its block (+ a SAM site for a capital)
   if(g.fort){const t=g.att===0?1:0,B=BASES[t],a=baseFacing(t);let placed=0;for(let k=0;k<90&&placed<g.fort;k++){const r=170+k*9,ang=a+((k%5)-2)*.45,px=B[0]+Math.cos(ang)*r,py=B[1]+Math.sin(ang)*r;
@@ -20501,7 +20503,7 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
     const side=a.o===nat0?0:a.o===nat1?1:-1;if(side<0||!a.u.length)continue;if(wn[side]>=3)continue;if(GCM.P[a.at].land&&GC.prov[a.at].o!==a.o&&!grAtWar(a.o,GC.prov[a.at].o)&&GC.prov[a.at].o!==a.o)continue;
     const recs=a.u.slice(0,24);wn[side]++;waves.push({t:70+wn[side]*50,side,recs,label:a.nm,done:0,aid:a.id});rf.push(a.id);}
   const attTeam=meAtt?0:1,from=b.att.map(id=>(GC.armies.find(a=>a.id===id)||{}).from).find(f=>f>=0),gm=P.sea?{key:'coral',real:0,tp:null}:gmMap(b.p,from),   /* a sea zone is fought on a naval map */
-    cfg={bi:{p:b.p},dr:[gdrSide(meAtt?S:D),gdrSide(meAtt?D:S)],att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[],fv:[0,1].map(t=>{try{return ldrFervour(t?nat1:nat0,b.p)?1:0;}catch(e){return 0;}}),mr:[meAtt?S:D,meAtt?D:S].map(L=>{try{let w=0,m=0;for(const x of L){const n=x.u.length||1;w+=n;m+=n*gmMor(x.arr)/gmMorMax(x.arr);}return w?m/w:1;}catch(e){return 1;}})};
+    cfg={bi:{p:b.p},dr:[gdrSide(meAtt?S:D),gdrSide(meAtt?D:S)],att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],dro:[gmilDrAvail(nat0,b.p),gmilDrAvail(nat1,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[],fv:[0,1].map(t=>{try{return ldrFervour(t?nat1:nat0,b.p)?1:0;}catch(e){return 0;}}),mr:[meAtt?S:D,meAtt?D:S].map(L=>{try{let w=0,m=0;for(const x of L){const n=x.u.length||1;w+=n;m+=n*gmMor(x.arr)/gmMorMax(x.arr);}return w?m/w:1;}catch(e){return 1;}})};
   /* grand3: each side's best general stands in the battle as the hero squad (the army's own if it has one, else a fresh one) */
   try{const gp=[gmilPerk(meAtt?S:D),gmilPerk(meAtt?D:S)];cfg.gp=gp;[[side0,f0],[side1,f1]].forEach(([L,fc],t)=>{if(gp[t]&&grHasKind(fc,'champ')&&!L.some(r=>r[0]==='champ')){const r=['champ',100,Math.round(gp[t].lv*40),100];L.push(r);cfg.hero[t]=r;}});}catch(e){console.error('gmil hero',e);}   // forts / SAM / airfield... come from the province's buildings (gmApply)
   GB_CUR={b,cfg,meAtt,nat0,nat1,rf};
@@ -20514,7 +20516,7 @@ let GB_CUR=null;
 function grandFightLive(b){grandScreenShow(false);try{grandBattleStart(b);}catch(e){console.error('Fight it live failed',e);try{LOAD.tok++;loadHide();}catch(_){}G=null;GB_CUR=null;MODE='single';ME=0;
   grandScreenShow(true);guModal('<div style="font-size:19px;font-weight:bold;margin-bottom:6px">The live battle could not start</div><div style="opacity:.8;margin-bottom:10px">'+String(e&&e.message||e).replace(/[<&]/g,'').slice(0,160)+'</div>The generals will auto-resolve this battle instead.',[['OK',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},1]]);}}
 // write the survivors back and show the result
-function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def']:['def','att'];sd.forEach((side,t)=>{const T=G.teams[t];if(!T||T.fuel==null)return;for(const s of grSideUnits(GB_CUR.b,side))if(s.arr)s.arr.fu=Math.round(T.fuel*100);});}catch(e){}try{gmWriteBack();}catch(e){console.error('gmWriteBack',e);}for(const [rec,e,team] of g.ents){const dead=e.dead||!G.byId.has(e.id);if(dead){rec.dead=1;if(rec[0]==='champ'&&g.gp&&g.gp[team]){try{gmilHeroFell(g.gp[team].gid);}catch(e){}}continue;}rec[1]=Math.max(1,Math.round(e.hp/e.max*100));rec[2]=Math.round(e.xp||rec[2]);if(e.s&&e.s.ammo)rec[3]=Math.max(0,Math.min(100,Math.round((e.ammo||0)/e.s.ammo*100)));}
+function grandWriteBack(){const g=G.grand;try{gmilDrBattleDone(g,GB_CUR.nat0,GB_CUR.nat1);}catch(e){console.error('drBattle',e);}try{const sd=GB_CUR.meAtt?['att','def']:['def','att'];sd.forEach((side,t)=>{const T=G.teams[t];if(!T||T.fuel==null)return;for(const s of grSideUnits(GB_CUR.b,side))if(s.arr)s.arr.fu=Math.round(T.fuel*100);});}catch(e){}try{gmWriteBack();}catch(e){console.error('gmWriteBack',e);}for(const [rec,e,team] of g.ents){const dead=e.dead||!G.byId.has(e.id);if(dead){rec.dead=1;if(rec[0]==='champ'&&g.gp&&g.gp[team]){try{gmilHeroFell(g.gp[team].gid);}catch(e){}}continue;}rec[1]=Math.max(1,Math.round(e.hp/e.max*100));rec[2]=Math.round(e.xp||rec[2]);if(e.s&&e.s.ammo)rec[3]=Math.max(0,Math.min(100,Math.round((e.ammo||0)/e.s.ammo*100)));}
   const strip=arr=>{for(let i=arr.length-1;i>=0;i--)if(arr[i].dead)arr.splice(i,1);};const b=GB_CUR.b;
   for(const s of grSideUnits(b,'att').concat(grSideUnits(b,'def')))strip(s.u);
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}
@@ -21797,8 +21799,9 @@ const GE_B={
  farm:['Irrigation',450,2,'G','#b8d96a','+6 food (farm provinces only).'],
  mine:['Deep mine',550,3,'M','#b9bec6','+100 income (mining provinces only).'],
  fort:['Fort',500,2,'T','#d0a090','A defence gun in this province\'s battle.'],
+ dsite:['Drone launch site',420,2,'S','#c9b86a','Ground racks and hangars for long-range one-way attack drones (about 2,000 km), no runway needed. Makes 6 drones a month; Drone strikes and battle Shahed salvos draw on the stock. Can be bombed. Only nations that field such drones.'],
  mfort:['Mountain Fortress',1000,4,'X','#e0c070','A bunker pre-built in the battle (mountain provinces of IR, RS, AF, KD, DW, KP).']};
-const GE_BKEYS=['base','airfield','port','factory','refinery','power','aa','farm','mine','fort','mfort'];
+const GE_BKEYS=['base','airfield','port','factory','refinery','power','aa','farm','mine','fort','dsite','mfort'];
 function geBl(pi){return gmBuildings(pi);}
 function geEff(pi,k){let e=0;for(const r of geBl(pi))if(r[0]===k)e+=Math.max(0,1-(r[1]|0)/100);return e;}
 function geCount(pi,k){let n=0;for(const r of geBl(pi))if(r[0]===k)n++;return n;}
@@ -21808,10 +21811,11 @@ function geCost(c,k){return Math.round(GE_B[k][1]*(geFx(c,'build')?.8:1));}
 function geCanBuild(c,pi,k){const p=GCM.P[pi],st=GC.prov[pi],N=GC.nat[c];if(!p||!p.land||st.o!==c)return 'Not your province.';if(!GE_B[k])return 'Unknown building.';
   if(st.cv>0&&st.cv>=3)return 'Province in turmoil after its capture.';
   if(k==='mfort'&&!(GE_MFORT.includes(c)&&p.t==='m'))return GE_MFORT.includes(c)?'Needs a mountain province.':'Your nation has no Mountain Fortress.';
+  if(k==='dsite'&&!(typeof GMIL_DRN!=='undefined'&&GMIL_DRN.includes(c)))return 'Your nation does not field long-range one-way drones.';
   if(k==='farm'&&!p.farm)return 'No farmland here.';if(k==='mine'&&!p.mine)return 'No mining here.';
   if(k==='port'&&(!p.coast||geCount(pi,'port')))return p.coast?'Already has a port.':'Not on the coast.';
   if(k==='refinery'&&!GCM.P.some(q=>q.land&&q.oil&&GC.prov[q.i].o===c)&&(N.e.oil|0)<30)return 'Needs an oil province.';
-  const cap=k==='fort'||k==='aa'?3:(k==='factory'||k==='refinery'||k==='power'?3:1);if(geCount(pi,k)+GC.prov[pi].bq.filter(q=>q[1]===k).length>=cap)return 'No more of these here.';
+  const cap=k==='fort'||k==='aa'?3:(k==='factory'||k==='refinery'||k==='power'?3:k==='dsite'?2:1);if(geCount(pi,k)+GC.prov[pi].bq.filter(q=>q[1]===k).length>=cap)return 'No more of these here.';
   if(k!=='fort'&&k!=='aa'&&geUsed(pi)>=geSlots(pi))return 'No free building slot ('+geSlots(pi)+').';
   if(N.cash<geCost(c,k))return 'Not enough money.';return '';}
 function geBuild(c,pi,k){const e=geCanBuild(c,pi,k);if(e)return e;const N=GC.nat[c];N.cash-=geCost(c,k);GC.prov[pi].bq.push([GC.turn+GE_B[k][2]+(N.e.pw<.6?1:0),k]);return '';}
@@ -22252,10 +22256,16 @@ const GMIL_REGCUL={ME:'ar',AF:'af',SA:'sa',EA:'zh',SEA:'sea',EU:'de',NA:'en',SAM
 const GMIL_FLEET=[['ship',.34],['boat',.26],['fast',.14],['sub',.26]];   // starting fleet mix (by value)
 const GMIL_NAVAL=['ship','boat','fast','sub','minel','sweep'];
 const GMIL_BUY=[['ship',1],['boat',2],['fast',2],['sub',1],['minel',1],['sweep',1]];   // kind, batch (fleet recruitment: 2 turns)
-const GMIL_ST={m:{n:'Missile',cost:0,fuel:0,rng:340,dmg:55,ic:1},a:{n:'Air raid',cost:180,fuel:6,rng:300,dmg:15,ic:.85},d:{n:'Drone strike',cost:90,fuel:1,rng:230,dmg:22,ic:1.25}};
+const GMIL_ST={m:{n:'Missile',cost:0,fuel:0,rng:340,dmg:55,ic:1},a:{n:'Air raid',cost:180,fuel:6,rng:300,dmg:15,ic:.85},d:{n:'Drone strike',cost:0,fuel:0,rng:154,dmg:6,ic:1}};
+// One-way attack drones (Shahed/Geran-type): ground racks and mobile launchers, no runway. Map scale ~13 km per unit (Tehran-Riyadh 83 units = ~1,260 km), so 2,000 km = 154 units; cruise ~185 km/h.
+const GMIL_KM=13,GMIL_DKMH=185,GMIL_DR_MAX=60,GMIL_DR_COST=30,GMIL_LN_COST=120,GMIL_LN_MAX=3,GMIL_SALVO=12;
+const GMIL_DRN=['IR','RS','DW','RV','RU','UA','KP','PK','IN','IL','CN','TR','US'];
+const GMIL_DR0={IR:24,RS:16,DW:12,RV:8,RU:24,UA:12,KP:10};
 const GMIL_MISSILE_COST=450,GMIL_MS_MAX=6;
 function gmilNew(){return {g:{},gid:1,fr:[],fid:1,zm:{},fq:[],n:{},bk:{},foe:'',nx:{}};}
-function gmilN(c){const M=GC.mil;return M.n[c]||(M.n[c]={ms:2,so:[]});}
+function gmilN(c){const M=GC.mil;return M.n[c]||(M.n[c]={ms:2,so:[],dr:0});}
+function gmilDrStock(c){return GC.mil?gmilN(c).dr|0:0;}
+function gmilKm(a,b){return Math.round(grDist(a,b)*GMIL_KM);}
 function gmilCul(c){return GMIL_CUL[c]||GMIL_REGCUL[(grNat(c)||{}).reg]||'en';}
 function gmilName(c,R){if(typeof pplGenName==='function')return pplGenName(c,R);const L=GMIL_NM[gmilCul(c)]||GMIL_NM.en;return L[0][Math.floor(R()*L[0].length)]+' '+L[1][Math.floor(R()*L[1].length)];}
 function gmilRng(a,b){return grRng(((GC.seed*131+GC.turn*17+(a|0)*7+(b|0))|0));}
@@ -22267,7 +22277,10 @@ function gmilIsNaval(k){return GMIL_NAVAL.includes(k);}
 
 // ---------- setup ----------
 function gmilEnsure(){if(!GC)return;if(!GC.mil){GC.mil=gmilNew();gmilStartFleets();gmilGenStep(true);}
-  for(const c of Object.keys(GC.nat))gmilN(c);}
+  for(const c of Object.keys(GC.nat))gmilN(c);
+  if(!GC.mil.dr0){GC.mil.dr0=1;try{gmilDrInit();}catch(e){console.error('gmilDrInit',e);}}}
+function gmilDrInit(){for(const c of GMIL_DRN){const N=GC.nat[c];if(!N||N.dead)continue;gmilN(c).dr=GMIL_DR0[c]||4;
+    if(GMIL_DR0[c]&&N.cap>=0&&GCM.P[N.cap]&&!geCount(N.cap,'dsite'))geBl(N.cap).push(['dsite',0]);}}
 function gmilStartFleets(){const P=GCM.P;for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c],nt=grNat(c),fac=nt.fac;const ports=P.filter(p=>p.land&&GC.prov[p.i].o===c&&p.port);if(!ports.length)continue;
     const V=GR_VBASE*(nt.major?1:.5)*(GC.len==='quick'?.7:1)*.10,us=[];
     for(const [k,w] of GMIL_FLEET){if(!grHasKind(fac,k))continue;const n=Math.max(k==='ship'?1:0,Math.round(V*w/grCost(fac,k)));for(let i=0;i<n;i++)us.push([k,100,0,100]);}
@@ -22350,18 +22363,30 @@ function gmilSeaStep(){const M=GC.mil,R=grRng(GC.seed*43+GC.turn*5);
 
 // ---------- map strikes ----------
 function gmilSites(c,pi,rng,type){const P=GCM.P;let best=-1,bd=1e9;
-  for(const p of P){if(!p.land||GC.prov[p.i].o!==c)continue;const ok=type==='d'?(geCount(p.i,'base')+geCount(p.i,'airfield')>0||GC.armies.some(a=>a.o===c&&a.at===p.i&&!a.fl&&a.u.length>2)):type==='a'?geEff(p.i,'airfield')>0:(geCount(p.i,'base')+geCount(p.i,'airfield')>0||p.cap);
+  for(const p of P){if(!p.land||GC.prov[p.i].o!==c)continue;const ok=type==='d'?(geEff(p.i,'dsite')>0||GC.armies.some(a=>a.o===c&&a.at===p.i&&!a.fl&&a.u.length&&(a.ln|0)>0)):type==='a'?geEff(p.i,'airfield')>0:(geCount(p.i,'base')+geCount(p.i,'airfield')>0||p.cap);
     if(!ok)continue;const d=grDist(p.i,pi);if(d<=rng&&d<bd){bd=d;best=p.i;}}return best;}
-function gmilStrikeCheck(c,type,pi,k){const N=GC.nat[c],E=N.e,S=GMIL_ST[type],M=gmilN(c),p=GCM.P[pi];if(!S||!p)return 'Unknown strike.';if(M.so.length>=3)return 'Three strikes a month at most.';
-  if(M.so.some(o=>o.t===type&&o.pi===pi&&o.k===k))return 'Already ordered.';
+function gmilStrikeCheck(c,type,pi,k,n){const N=GC.nat[c],E=N.e,S=GMIL_ST[type],M=gmilN(c),p=GCM.P[pi];if(!S||!p)return 'Unknown strike.';if(M.so.length>=3)return 'Three strikes a month at most.';
+  if(M.so.some(o=>o.t===type&&o.pi===pi&&o.k===k&&(o.n|0)===(type==='d'?(n|0)||Math.min(GMIL_SALVO,M.dr|0):0)))return 'Already ordered.';
   if(p.land){const o=GC.prov[pi].o;if(o===c||!grAtWar(c,o))return 'Only at nations you are at war with.';if(k==='f')return 'Fleets are at sea.';}
   else{if(k!=='f')return 'Only fleets at sea.';if(!GC.armies.some(a=>a.at===pi&&a.fl&&grAtWar(a.o,c)))return 'No enemy fleet there.';}
+  if(type==='d'&&(M.dr|0)<1)return 'No one-way drones in stock (launch sites and War Factories make them).';
   if(type==='m'&&M.ms<1)return 'No missiles in stock (buy one, $'+GMIL_MISSILE_COST+').';
-  if(gmilSites(c,pi,S.rng,type)<0)return type==='a'?'No airfield in range.':type==='d'?'No base or army in range.':'No launch site in range.';
+  if(gmilSites(c,pi,S.rng,type)<0)return type==='a'?'No airfield in range.':type==='d'?'No launch site or launcher truck within ~2,000 km.':'No launch site in range.';
   if(type!=='m'){if(N.cash<S.cost)return 'Costs $'+S.cost+'.';if(E&&(E.dry||E.fuel<S.fuel+1))return 'Not enough fuel.';if(type==='a'&&geSortieStock(c,pi,S.rng)<2)return 'Not enough sorties (fuel or airfields).';}
   return '';}
-function gmilStrike(c,type,pi,k){const e=gmilStrikeCheck(c,type,pi,k);if(e)return e;const N=GC.nat[c],S=GMIL_ST[type],M=gmilN(c);
+function gmilStrike(c,type,pi,k,n){const e=gmilStrikeCheck(c,type,pi,k,n);if(e)return e;const N=GC.nat[c],S=GMIL_ST[type],M=gmilN(c);
+  if(type==='d'){n=Math.min(M.dr|0,Math.max(1,n|0||GMIL_SALVO));M.dr-=n;M.so.push({t:type,pi,k,n});return '';}
   if(type==='m')M.ms--;else{N.cash-=S.cost;if(N.e)N.e.fuel-=S.fuel;}M.so.push({t:type,pi,k});return '';}
+// launcher trucks: a mobile launcher joins an army in a province with a launch site or War Factory
+function gmilBuyLauncher(c,aid){const N=GC.nat[c],a=GC.armies.find(x=>x.id===aid&&x.o===c&&!x.fl);if(!a||!a.u.length)return 'Pick one of your armies.';if(!GMIL_DRN.includes(c))return 'Your nation does not field long-range one-way drones.';
+  if(!(geEff(a.at,'dsite')>0||geEff(a.at,'factory')>0))return 'Needs a launch site or War Factory in the same province.';if((a.ln|0)>=GMIL_LN_MAX)return 'That army carries '+GMIL_LN_MAX+' launchers already.';if(N.cash<GMIL_LN_COST)return 'Costs $'+GMIL_LN_COST+'.';N.cash-=GMIL_LN_COST;a.ln=(a.ln|0)+1;return '';}
+// a launcher is hidden unless spotted: it fired recently (launch signature), or enemy ground forces are in or next to its province
+function gmilLnExposed(a){if((a.lx|0)>=GC.turn-1)return true;const P=GCM.P[a.at];if(!P)return false;return GC.armies.some(x=>!x.fl&&x.u.length&&x.o!==a.o&&grAtWar(x.o,a.o)&&(x.at===a.at||P.adj.includes(x.at)));}
+function gmilDrMonth(){for(const c of GMIL_DRN){const N=GC.nat[c];if(!N||N.dead)continue;const M=gmilN(c);let mk=0;for(const p of GCM.P){if(!p.land||GC.prov[p.i].o!==c)continue;mk+=Math.round(6*geEff(p.i,'dsite'))+Math.min(1,Math.round(geEff(p.i,'factory')));}
+    if(N.e&&(N.e.dry||N.e.pw<.5))mk=Math.floor(mk/2);mk=Math.min(mk,GMIL_DR_MAX-(M.dr|0),Math.floor(Math.max(0,N.cash)/GMIL_DR_COST));if(mk>0){M.dr=(M.dr|0)+mk;N.cash-=mk*GMIL_DR_COST;}}}
+// grand-map Fight-it: drones a side can call = its stock, only if a launch site or launcher is within ~2,000 km of the battle
+function gmilDrAvail(c,pi){if(!GC||!GC.mil||!GMIL_DRN.includes(c))return 0;return gmilSites(c,pi,GMIL_ST.d.rng,'d')>=0?gmilDrStock(c):0;}
+function gmilDrBattleDone(gr,n0,n1){if(!gr||!gr.du)return;[n0,n1].forEach((c,t)=>{if(c&&gr.du[t]&&GC.mil){const M=gmilN(c);M.dr=Math.max(0,(M.dr|0)-gr.du[t]);}});}
 function gmilBuyMissile(c){const N=GC.nat[c],M=gmilN(c);if(M.ms>=GMIL_MS_MAX)return 'Stock full.';if(N.cash<GMIL_MISSILE_COST)return 'Costs $'+GMIL_MISSILE_COST+'.';N.cash-=GMIL_MISSILE_COST;M.ms++;return '';}
 function gmilAAUnits(pi){let n=0;const st=GC.prov[pi];if(st)for(const r of st.gar)if(r[0]==='aa')n++;for(const a of GC.armies)if(a.at===pi&&!a.fl)for(const r of a.u)if(r[0]==='aa')n++;return n;}
 function gmilHit(L,hits,dmg){let got=0;for(let i=0;i<hits&&L.length;i++){let w=0;for(let j=1;j<L.length;j++)if(L[j][1]>L[w][1])w=j;   // the healthiest unit is the most exposed one first: spreads damage
@@ -22370,21 +22395,26 @@ function gmilStrikes(){const M=GC.mil;if(!M)return;const R=grRng(GC.seed*53+GC.t
   for(const c of Object.keys(GC.nat).sort()){const Q=gmilN(c);const ord=Q.so;Q.so=[];if(GC.nat[c].dead)continue;
     for(const o of ord){const p=GCM.P[o.pi],S=GMIL_ST[o.t];if(!p)continue;const cn=GCM.nats.get(c).name,vis=c===GC.me;
       const tgtO=p.land?GC.prov[o.pi].o:'';if(p.land&&(tgtO===c||!grAtWar(c,tgtO)))continue;
-      const raw=o.t==='a'?Math.min(4,Math.floor(geSortieStock(c,o.pi,S.rng)/1)||2):1;
+      const raw=o.t==='a'?Math.min(4,Math.floor(geSortieStock(c,o.pi,S.rng)/1)||2):o.t==='d'?Math.max(1,o.n|0):1;
       let aaB=p.land?geCount(o.pi,'aa'):0,aaU=p.land?gmilAAUnits(o.pi):0;if(!p.land)for(const a of GC.armies)if(a.at===o.pi&&a.fl&&grAtWar(a.o,c))for(const r of a.u)if(r[0]==='ship'||r[0]==='boat')aaU+=.5;
-      const ic=Math.min(.8,(.26*aaB+.03*aaU)*S.ic);let surv=0;for(let i=0;i<raw;i++)if(R()>=ic)surv++;
+      let ic=Math.min(.8,(.26*aaB+.03*aaU)*S.ic),surv=0,site=-1,dkm=0;
+      if(o.t==='d'){   // one-way drones: each defence battery engages only so many per salvo, so big salvos saturate it (~185 km/h, hours of flight)
+        site=gmilSites(c,o.pi,S.rng,'d');dkm=site>=0?gmilKm(site,o.pi):0;const cap=Math.round(6*aaB+1.5*aaU),pk=aaB+aaU>0?Math.min(.8,.5+.1*aaB):0;
+        for(let i=0;i<raw;i++)if(!(i<cap&&R()<pk))surv++;
+        for(const a of GC.armies)if(a.o===c&&a.at===site&&(a.ln|0)>0)a.lx=GC.turn;}   // a launch is seen: the launcher is exposed for a month
+      else for(let i=0;i<raw;i++)if(R()>=ic)surv++;
       const tn=p.land?GCM.nats.get(tgtO).name:'the enemy fleet',inv=(vis||tgtO===GC.me)?GC.me:c;
-      if(!surv){grLog(cn+' '+S.n.toLowerCase()+' on '+p.n+' was intercepted'+(aaB?' by air defence':'')+'.',inv);continue;}
+      if(!surv){grLog(cn+' '+(o.t==='d'?raw+' one-way drones':S.n.toLowerCase())+' on '+p.n+' were intercepted'+(aaB?' by air defence':'')+'.',inv);continue;}
       let msg='';
-      if(o.k==='b'&&p.land){const bl=geBl(o.pi),tg=bl.filter(r=>['factory','refinery','power','port','airfield','mine','base','aa','fort'].includes(r[0]));
+      if(o.k==='b'&&p.land){const bl=geBl(o.pi),tg=bl.filter(r=>['factory','refinery','power','port','airfield','mine','base','aa','fort','dsite'].includes(r[0]));
         if(!tg.length){const n=gmilHit(GC.prov[o.pi].gar,surv,S.dmg*1.5);msg='hit the garrison ('+n+' units struck)';}
         else{let names=[];for(let i=0;i<surv;i++){const r=tg[Math.floor(R()*tg.length)];r[1]=Math.min(100,(r[1]|0)+S.dmg);if(!names.includes(r[0]))names.push(r[0]);}
           msg='damaged '+names.map(k=>GE_B[k]?GE_B[k][0].toLowerCase():k).join(', ');GC.prov[o.pi].lt=GC.turn+2;}}
       else if(o.k==='a'&&p.land){let tot=0;const arm=GC.armies.filter(a=>a.at===o.pi&&!a.fl&&grAtWar(c,a.o)&&a.u.length).sort((x,y)=>x.id-y.id);
-        for(const a of arm)tot+=gmilHit(a.u,Math.ceil(surv/arm.length),S.dmg*(o.t==='m'?1.4:1));tot+=gmilHit(GC.prov[o.pi].gar,surv-Math.min(surv,tot)>0?1:0,S.dmg);msg='struck '+(arm.length?arm.length+' army(ies)':'the garrison');}
+        for(const a of arm)tot+=gmilHit(a.u,Math.ceil(surv/arm.length),S.dmg*(o.t==='m'?1.4:1));tot+=gmilHit(GC.prov[o.pi].gar,surv-Math.min(surv,tot)>0?1:0,S.dmg);msg='struck '+(arm.length?arm.length+' army(ies)':'the garrison');for(const a of arm)if((a.ln|0)>0&&gmilLnExposed(a)){const l=Math.min(a.ln,Math.ceil(surv/8));a.ln-=l;msg+=' (destroyed '+l+' launcher'+(l>1?'s':'')+')';}}
       else if(!p.land){const fl=GC.armies.filter(a=>a.at===o.pi&&grAtWar(c,a.o)&&a.u.length).sort((x,y)=>(y.fl|0)-(x.fl|0)||x.id-y.id);let n=0;for(const a of fl)n+=gmilHit(a.u,Math.ceil(surv/fl.length),S.dmg*(o.t==='m'?1.6:1));msg='hit '+fl.length+' fleet(s) at sea';}
       else continue;
-      grLog(cn+' '+S.n.toLowerCase()+' on '+p.n+' ('+tn+'): '+msg+(surv<raw?' ('+(raw-surv)+' shot down)':'')+'.',inv);}}
+      grLog(cn+' '+(o.t==='d'?raw+' one-way drones ('+dkm+' km, ~'+Math.round(dkm/GMIL_DKMH)+' h flight)':S.n.toLowerCase())+' on '+p.n+' ('+tn+'): '+msg+(surv<raw?' ('+(raw-surv)+' shot down)':'')+'.',inv);}}
   for(const a of GC.armies.slice())if(!a.u.length)grDrop(a);}
 
 // ---------- front lines ----------
@@ -22438,7 +22468,10 @@ function gmilAIFleets(c,R){const N=GC.nat[c],P=GCM.P,fac=grNat(c).fac;const foes
     if(nav<arm*.14&&!GC.mil.fq.some(q=>q.o===c)){const ks=['ship','boat','sub','fast','minel'].filter(k=>grHasKind(fac,k));const k=ks[Math.floor(R()*ks.length)];if(k)gmilBuyFleet(c,ports[Math.floor(R()*ports.length)].i,k);}}}
 function gmilAIStrikes(c,R){const N=GC.nat[c],P=GCM.P,Q=gmilN(c);const foes=Object.keys(GC.war).filter(k=>k.split('|').includes(c)).map(k=>k.split('|').find(x=>x!==c)).filter(x=>GC.nat[x]&&!GC.nat[x].dead);if(!foes.length)return;
   if(Q.ms<2&&N.cash>2200)gmilBuyMissile(c);
-  let tries=0;while(Q.so.length<2&&tries++<8){const types=['m','a','d'];const t=types[Math.floor(R()*3)];
+  if(GMIL_DRN.includes(c)){   // build launch sites toward the front and put a launcher truck with the biggest army that stands at one
+    if(N.cash>1800&&R()<.35&&P.filter(p=>p.land&&GC.prov[p.i].o===c&&geCount(p.i,'dsite')).length<3){const cs=P.filter(p=>p.land&&GC.prov[p.i].o===c&&p.adj.some(j=>P[j].land&&foes.includes(GC.prov[j].o))).sort((a,b)=>b.dev-a.dev||a.i-b.i);for(const p of cs){if(!geBuild(c,p.i,'dsite'))break;}}
+    if(N.cash>900&&R()<.3){const a=GC.armies.filter(x=>x.o===c&&!x.fl&&x.u.length&&(x.ln|0)<1).sort((x,y)=>grArmyVal(y)-grArmyVal(x)||x.id-y.id).find(x=>geEff(x.at,'dsite')>0||geEff(x.at,'factory')>0);if(a)gmilBuyLauncher(c,a.id);}}
+  let tries=0;while(Q.so.length<2&&tries++<8){const types=['m','a','d'];let t=types[Math.floor(R()*3)];if(Q.dr>=8&&R()<.6)t='d';
     // target: the foe province with the best buildings in range, else a foe fleet
     let best=-1,bs=0;for(const p of P){if(!p.land||!foes.includes(GC.prov[p.i].o))continue;const bl=geBl(p.i).filter(r=>['factory','refinery','power','port','airfield','mine'].includes(r[0])&&(r[1]|0)<70).length;const s=bl*10+p.dev-geCount(p.i,'aa')*8;if(s>bs&&gmilSites(c,p.i,GMIL_ST[t].rng,t)>=0){bs=s;best=p.i;}}
     if(best>=0&&bs>=10){gmilStrike(c,t,best,'b');continue;}
@@ -22454,13 +22487,13 @@ function gmilPlan(){   // after grAIPlan, before movement: AI fronts / fleets / 
     if(N.ai){try{gmilAIFronts(c);gmilAIFleets(c,R);gmilAIStrikes(c,R);}catch(e){console.error('gmilAI',c,e);}}
     else{for(const f of gmilFronts(c).slice())if(!GC.nat[f.foe]||GC.nat[f.foe].dead||!grAtWar(c,f.foe)){M.fr.splice(M.fr.indexOf(f),1);for(const a of GC.armies)if(a.fr===f.id)a.fr=0;}}}
   const plan={};for(const f of M.fr.slice().sort((x,y)=>x.id-y.id)){if(GC.nat[f.o].dead)continue;gmilPlanFront(f,plan);}}
-function gmilTurnEnd(){const M=GC.mil;if(!M)return;gmilSeaStep();gmilFleetArrive();gmilGenStep(false);
+function gmilTurnEnd(){const M=GC.mil;if(!M)return;gmilSeaStep();gmilFleetArrive();gmilGenStep(false);try{gmilDrMonth();}catch(e){console.error('gmilDrMonth',e);}
   for(const c of Object.keys(GC.nat).sort()){const Q=gmilN(c);if(GC.nat[c].dead)continue;if(GC.turn%3===0&&Q.ms<GMIL_MS_MAX)Q.ms++;}
   for(const a of GC.armies)if(a.fl&&a.mine&&!a.u.some(r=>r[0]==='minel'))a.mine=0;
   gmilBlockRefresh();
   for(const p of GCM.P){if(!M.bk[p.i])continue;const o=GC.prov[p.i].o;if(o===GC.me)grLog(p.n+' is under naval blockade: port income and sea trade are cut.',o);}}
 function gmilHashStr(){const M=GC.mil;if(!M)return '';let s='|M';for(const id of Object.keys(M.g).sort((a,b)=>a-b)){const g=M.g[id];s+=id+':'+g.tr+g.xp+','+g.st+','+g.aid+';';}
-  for(const f of M.fr)s+='F'+f.id+f.o+f.foe+f.ord;for(const k of Object.keys(M.zm).sort())s+='Z'+k+M.zm[k].o+M.zm[k].n;for(const c of Object.keys(M.n).sort())s+=c+M.n[c].ms;return s;}
+  for(const f of M.fr)s+='F'+f.id+f.o+f.foe+f.ord;for(const k of Object.keys(M.zm).sort())s+='Z'+k+M.zm[k].o+M.zm[k].n;for(const c of Object.keys(M.n).sort())s+=c+M.n[c].ms+'d'+(M.n[c].dr|0);for(const a of GC.armies)if(a.ln)s+='L'+a.id+a.ln;return s;}
 // GR_REAL - the ONE data table for the grand campaign's realistic start (Abdullah 2026-11-06 17:53, lane B1). Figures are rounded
 // from 2025-26 public data (SIPRI 2025 military spending, IMF/World Bank GDP, EIA oil output, IISS troop counts), then squeezed
 // (roughly square-rooted) so a small power is weak but still playable. Sources + the per-nation table: orch/reports/realstart.md.
@@ -22560,10 +22593,12 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
       box.appendChild(r);}
     if(!foes.length)row('<span style="opacity:.7">You are not at war.</span>');}
   else if(GMILUI.tab==='st'){const Q=gmilN(me);box.appendChild(guEl('div','opacity:.75;font-size:13px','Missiles, air raids and drone strikes hit an enemy province (buildings or armies) or an enemy fleet at sea. Click an enemy province or sea zone on the map and use its Strike buttons. Air defence in the target intercepts. Max 3 a month.'));
-    row('Missiles in stock: <b>'+Q.ms+'</b>/'+GMIL_MS_MAX+' (one more every 3 months)');box.appendChild(gmilBtn('Buy missile $'+GMIL_MISSILE_COST,()=>gmilDone(gmilBuyMissile(me))));
-    row('<b>Ordered this month</b>');for(const o of Q.so)box.appendChild(guEl('div','font-size:13px','• '+GMIL_ST[o.t].n+' → '+GCM.P[o.pi].n+' ('+(o.k==='b'?'buildings':o.k==='a'?'armies':'fleet')+')'));
+    row('Missiles in stock: <b>'+Q.ms+'</b>/'+GMIL_MS_MAX+' (one more every 3 months)');
+    if(GMIL_DRN.includes(me)){row('One-way drones in stock: <b>'+(Q.dr|0)+'</b>/'+GMIL_DR_MAX+' · launch sites make 6 a month ($'+GMIL_DR_COST+' each) · range ~2,000 km, ~10 h flight. Big salvos saturate air defence.');
+      for(const a of GC.armies.filter(x=>x.o===me&&!x.fl&&x.u.length&&(geEff(x.at,'dsite')>0||geEff(x.at,'factory')>0||x.ln)).slice(0,6))box.appendChild(gmilBtn((a.nm||'Army')+' at '+GCM.P[a.at].n+': launchers '+(a.ln|0)+' · +1 ($'+GMIL_LN_COST+')',()=>gmilDone(gmilBuyLauncher(me,a.id))));}box.appendChild(gmilBtn('Buy missile $'+GMIL_MISSILE_COST,()=>gmilDone(gmilBuyMissile(me))));
+    row('<b>Ordered this month</b>');for(const o of Q.so)box.appendChild(guEl('div','font-size:13px','• '+GMIL_ST[o.t].n+(o.t==='d'?' ×'+o.n:'')+' → '+GCM.P[o.pi].n+' ('+(o.k==='b'?'buildings':o.k==='a'?'armies':'fleet')+')'));
     if(!Q.so.length)box.appendChild(guEl('div','opacity:.65;font-size:13px','Nothing yet.'));
-    if(Q.so.length)box.appendChild(gmilBtn('Cancel all (refund)',()=>{for(const o of Q.so){if(o.t==='m')Q.ms++;else{GC.nat[me].cash+=GMIL_ST[o.t].cost;if(GC.nat[me].e)GC.nat[me].e.fuel+=GMIL_ST[o.t].fuel;}}Q.so=[];gmilDone('');}));}
+    if(Q.so.length)box.appendChild(gmilBtn('Cancel all (refund)',()=>{for(const o of Q.so){if(o.t==='m')Q.ms++;else if(o.t==='d')Q.dr=(Q.dr|0)+(o.n|0);else{GC.nat[me].cash+=GMIL_ST[o.t].cost;if(GC.nat[me].e)GC.nat[me].e.fuel+=GMIL_ST[o.t].fuel;}}Q.so=[];gmilDone('');}));}
   else{box.appendChild(guEl('div','opacity:.75;font-size:13px','Fleets sail between sea zones (select one, right-click a zone). A fleet at sea next to an enemy port blockades it: port income and sea trade stop. Armies crossing a sea held by an enemy fleet wait in port unless one of your fleets escorts them (same zone). Subs hide; patrol boats find them; mines hurt enemies.'));
     for(const a of gmilFleets(me)){row('<b>'+a.nm+'</b> at '+GCM.P[a.at].n+' · '+a.u.length+' ships · value '+Math.round(grArmyVal(a)/100)/10+'k'+(a.path.length?' → '+GCM.P[a.path[a.path.length-1]].n:'')+(a.mine?' · mines':''));}
     if(!gmilFleets(me).length)row('<span style="opacity:.7">No fleets.</span>');
@@ -22576,7 +22611,7 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
 // controls inside the province / sea-zone side panel
 function gmilUiProv(s,pi){if(!GC.me||!GC.mil||GC.over)return;const p=GCM.P[pi],me=GC.me,box=guEl('div','margin:8px 0;border-top:1px solid #243a50;padding-top:6px');let any=false;
   const strikeRow=(k)=>{box.appendChild(guEl('div','opacity:.75;font-size:13px','Strike '+(k==='f'?'the fleet':'this province')+' (missiles in stock: '+gmilN(me).ms+')'));
-    for(const t of ['m','a','d'])for(const kk of (k==='f'?['f']:['b','a'])){const e=gmilStrikeCheck(me,t,pi,kk);const b=gmilBtn(GMIL_ST[t].n+' · '+(kk==='b'?'buildings':kk==='a'?'armies':'ships'),()=>{if(GC.ph!=='plan')return;gmilDone(gmilStrike(me,t,pi,kk));},false,e||'Order it');if(e)b.style.opacity='.55';box.appendChild(b);}any=true;};
+    for(const t of ['m','a','d','D'])for(const kk of (k==='f'?['f']:['b','a'])){const ty=t==='D'?'d':t,sn=t==='D'?30:0;if(t==='D'&&!GMIL_DRN.includes(me))continue;const e=gmilStrikeCheck(me,ty,pi,kk,sn);const b=gmilBtn((t==='D'?'Drone salvo (up to 30)':GMIL_ST[t].n)+' · '+(kk==='b'?'buildings':kk==='a'?'armies':'ships'),()=>{if(GC.ph!=='plan')return;gmilDone(gmilStrike(me,ty,pi,kk,sn));},false,e||'Order it');if(e)b.style.opacity='.55';box.appendChild(b);}any=true;};
   if(p.land&&GC.prov[pi].o!==me&&grAtWar(me,GC.prov[pi].o)){strikeRow('p');}
   else if(p.sea&&GC.armies.some(a=>a.at===pi&&a.fl&&grAtWar(a.o,me))){strikeRow('f');}
   if(p.sea){const z=GC.mil.zm[pi];if(z)box.appendChild(guEl('div','font-size:13px;margin-top:4px;color:#9fd3ff','Mines here: '+z.n+' ('+GCM.nats.get(z.o).name+')'));any=any||!!z;}
