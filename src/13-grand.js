@@ -10,8 +10,8 @@ let GCM=null;                      // the static map (built once from GM_P)
 const GR_TAX=['Low','Normal','High'],GR_TAXK=[.55,1,1.6],GR_TAXU=[-9,0,24];
 const GR_PROXY={NA:['US'],SAM:['US'],EU:['DE','FR','EU','US'],ME:['SA','EG'],AF:['EG','SA'],SA:['IN','PK'],EA:['CN','KR'],SEA:['CN','KR'],OC:['US']};
 const GR_REGIONS=[['World',null],['North America',[20,60,700,560]],['South America',[250,600,420,560]],['Europe & Russia',[800,40,720,470]],['Middle East & N. Africa',[1050,330,620,470]],['South Asia',[1380,380,440,380]],['East Asia',[1800,240,520,420]],['Africa',[820,620,500,560]],['SE Asia & Oceania',[1760,600,600,560]]];
-const GR_MIX=[['inf',.46],['at',.14],['tank',.16],['arty',.08],['aa',.06],['heli',.05]];
-const GR_RECRUIT=[['inf',4,1],['at',2,1],['tank',2,2],['arty',2,2],['aa',2,1],['heli',1,2]];   // kind, batch size, turns to arrive
+const GR_MIX=[['inf',.46],['at',.14],['tank',.16],['arty',.08],['aa',.06],['heli',.05],['drone',.04]];
+const GR_RECRUIT=[['inf',4,1],['at',2,1],['tank',2,2],['arty',2,2],['aa',2,1],['heli',1,2],['drone',3,1]];   // kind, batch size, turns to arrive
 const GR_HOLY=new Set(['Najaf']);   // provinces with a holy city (RV Call to the Shrines)
 const GR_VBASE=42000;              // start strength (unit value) of every full nation - same for all (Abdullah: all nations equally strong)
 function grRng(s){return mulberry((s|0)^0x5bd1e995);}
@@ -178,7 +178,7 @@ function grDrop(a){const i=GC.armies.indexOf(a);if(i>=0){GC.armies.splice(i,1);t
 function grRetreatTo(a,from){const P=GCM.P;let best=-1,bs=-1e9;for(const j of P[from].adj){if(!P[j].land)continue;const w=GC.prov[j].o;if(w!==a.o)continue;const s=-grDist(j,GC.nat[a.o].cap)*.01+(j===a.from?5:0);if(s>bs){bs=s;best=j;}}return best;}
 
 function grMovePhase(){GC.q=[];const P=GCM.P;
-  for(const a of GC.armies.slice().sort((x,y)=>x.id-y.id)){a.arr=0;if(!a.path.length)continue;const nx=a.path[0],c=grEdge(a.at,nx);
+  for(const a of GC.armies.slice().sort((x,y)=>x.id-y.id)){a.arr=0;gdrMove(a);if(!a.path.length)continue;const nx=a.path[0],c=grEdge(a.at,nx);
     if(!c||(P[nx].land&&GC.prov[nx].o!==a.o&&!grAtWar(a.o,GC.prov[nx].o))||gdDmz(nx)){a.path=[];a.pg=0;continue;}   // order no longer legal (peace, border closed, demilitarised zone)
     if(gmilSeaDenied(a,nx))continue;   /* no escort and the sea is held by an enemy fleet: the column waits in port */
     if(geDry(a.o)&&(GC.turn&1))continue;   /* out of fuel: columns crawl, a step every other turn */
@@ -238,7 +238,7 @@ function grJudge(){if(!GC.me||GC.over)return;const me=GC.me;if(GC.nat[me].dead){
 
 // ---------- player orders ----------
 function grOrderMove(aid,to){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return {err:'no army'};const r=grPath(a.o,a.at,to,a.fl);if(!r)return {err:a.fl?'Fleets sail between sea zones only.':'No route (check ports, seas and borders).'};
-  if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;return {ok:1,r};}
+  if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;a.dg=0;return {ok:1,r};}
 function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;if(typeof grOverlord==='function'&&grOverlord(a))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);try{glgDeclare(a,b);}catch(e){console.error('glgDeclare',e);}}   // laneG: allies/guarantors join
 function grRecruit(c,pi,k){const st=GC.prov[pi];if(st.o!==c)return 'Not your province.';const fac=grNat(c).fac,rc=GR_RECRUIT.find(r=>r[0]===k);if(!rc||!grHasKind(fac,k))return 'Not available.';const T=geRecruitTerms(c,pi,k,rc[1]),cost=T.cost;
   if(GC.nat[c].cash<cost)return 'Not enough money.';if(GC.nat[c].e.man<T.man)return 'Not enough manpower ('+Math.round(GC.nat[c].e.man)+' of '+T.man+').';GC.nat[c].cash-=cost;GC.nat[c].e.man-=T.man;st.rq.push([GC.turn+T.turns,k,rc[1]]);return '';}
@@ -272,7 +272,7 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
     if(!wars.length&&grNat(c).major&&GC.turn>=3&&R()<.15){let best=null,bv=1e18;for(const p of mine)for(const j of p.adj){const q=P[j];if(!q.land)continue;const w=GC.prov[j].o;if(w===c||GC.nat[w].dead||grAllied(c,w)||grOpinion(c,w)>=40)continue;const v=grProvDef(j)+GC.armies.filter(a=>a.at===j).reduce((s,a)=>s+grArmyVal(a),0);if(v<bv||(v===bv&&w<best)){bv=v;best=w;}}if(best){grDeclare(c,best);wars.push(best);}}
     // recruit: keep a reserve, spend the rest at the frontier province (or the capital)
     if((grNat(c).major||wars.length)&&!((typeof gfOver==='function'&&gfOver(c))||(N.e&&N.e.br&&(N.inc|0)<0))||(wars.length&&grCapHeld(c,null)<grCapThreat(c))){const front=mine.map(p=>[p,p.adj.filter(j=>P[j].land&&GC.prov[j].o!==c&&(wars.includes(GC.prov[j].o))).length*3+(p.i===N.cap?1:0)]).sort((a,b)=>b[1]-a[1]||a[0].i-b[0].i)[0][0];
-      let guard=0;while(N.cash>1500&&guard++<6){const k=GR_RECRUIT.filter(r=>grHasKind(fac,r[0]))[Math.floor(R()*3.4)%4]||GR_RECRUIT[0];if(grRecruit(c,front.i,k[0]))break;}}
+      let guard=0;while(N.cash>1500&&guard++<6){let k=GR_RECRUIT.filter(r=>grHasKind(fac,r[0]))[Math.floor(R()*3.4)%4]||GR_RECRUIT[0];if(GC.turn%5===2&&grHasKind(fac,'drone')){const dk=GR_RECRUIT.find(r=>r[0]==='drone');if(dk)k=dk;}   /* gair: AI buys drones by the same rules */if(grRecruit(c,front.i,k[0]))break;}}
     // armies: merge idle ones at the same place, then march on the weakest reachable enemy province; keep the capital defended
     grAIArmies(c,R,wars);
     // tax: AI keeps rear provinces on High, the front on Normal
@@ -283,7 +283,7 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
 /* calendar: month 1 = the start month GC.m0 (0-based from Jan 2026; new campaigns = GR_REAL.asof = Nov 2026, A-DATE; saves without m0 = Jan 2026); GC.day = days into the current month (0..29), ticked by the real-time clock in 13c */
 const GR_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 /* real time: how far (0..0.92) a marching army has got along its current road, from progress months + days into this month (display only, sim unchanged) */
-function grSlide(a){if(!GC||GC.ph!=='plan'||!a.path||!a.path.length)return 0;const c=grEdge(a.at,a.path[0]);if(!c)return 0;let d=Math.min(29.99,(GC.day|0)+((typeof GV!=='undefined'&&GV.dayF)||0));if(a.sm===GC.turn&&a.sd>0)d=Math.max(0,(d-a.sd)*30/(30-a.sd));return Math.max(0,Math.min(.92,((a.pg|0)+d/30)/c));}
+function grSlide(a){if(!GC||GC.ph!=='plan'||!a.path||!a.path.length)return 0;const c=grEdge(a.at,a.path[0]);if(!c)return 0;let d=Math.min(29.99,(GC.day|0)+((typeof GV!=='undefined'&&GV.dayF)||0));if(a.sm===GC.turn&&a.sd>0)d=Math.max(0,(d-a.sd)*30/(30-a.sd));return Math.max(0,Math.min(.985,((a.pg|0)+d/30)/c));}   /* Abdullah 20:40 smoother marches: slide nearly all the way, then a short blend on arrival */
 function grM0(){return (typeof GC==='object'&&GC&&GC.m0|0)||0;}
 function grMonStr(turn){const m=Math.max(0,(turn|0)-1)+grM0();return GR_MON[m%12]+' '+(2026+Math.floor(m/12));}   /* A2c: month label for former 'turn N' wording */
 function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1)+grM0();return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}

@@ -11,7 +11,7 @@ function grMapFor(p,b){const ok=k=>k&&MAPS[k]&&(MAPS[k].min||2)<=2;if(ok(p.map))
   return {d:'oasis',m:'zagros',f:'heartland',u:'mesopotamia',j:'caribbean',s:'arctic',c:'harbour',r:'rivers'}[p.t]||'oasis';}
 function grFacKind(fac,k){return grHasKind(fac,k)?k:'inf';}
 // lay a block of units out behind point (cx,cy) facing angle a
-function grandPlace(team,recs,cx,cy,a,gr){const fac=G.teams[team].fac,ord={tank:0,champ:1,heli:2,at:3,inf:4,aa:5,arty:6};const L=recs.slice().sort((p,q)=>(ord[p[0]]??4)-(ord[q[0]]??4));
+function grandPlace(team,recs,cx,cy,a,gr){const fac=G.teams[team].fac,ord={tank:0,champ:1,heli:2,drone:2,jet:2,at:3,inf:4,aa:5,arty:6};const L=recs.slice().sort((p,q)=>(ord[p[0]]??4)-(ord[q[0]]??4));
   const n=L.length,cols=Math.max(3,Math.ceil(Math.sqrt(n*1.8))),ca=Math.cos(a),sa=Math.sin(a);
   L.forEach((rec,i)=>{const row=Math.floor(i/cols),col=i%cols,along=-row*34,side=(col-(cols-1)/2)*34;const x=cx+ca*along-sa*side,y=cy+sa*along+ca*side;
     const k=grFacKind(fac,rec[0]),dom=stats(fac,k).dom||'ground';const p=dom==='air'?[Math.max(60,Math.min(MAPW-60,x)),Math.max(60,Math.min(MAPH-60,y))]:(nearestPassXY(dom,x,y)||[x,y]);
@@ -26,7 +26,7 @@ function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.
       if(G.ents.some(e=>e.isB&&Math.hypot(e.x-q[0],e.y-q[1])<70))continue;addBld(t,kind,q[0],q[1],true);placed++;}}
   /* A3b: a battered army starts the Fight-it already shaken (fear head-start, fades like any fear); Zealous/fearless units ignore it via fearlessT */
   if(g.mr)for(const e of G.ents){if(e.isB||e.dead||!canRout(e))continue;const f=g.mr[e.team];if(f!=null&&f<.95)e.fear=(1-f)*courageOf(e)*.6;}
-  try{gmApply();}catch(e){console.error('gmApply',e);}try{gmilApplyPerks(gr,g.gp);}catch(e){console.error('gmilApplyPerks',e);}   /* grand3: the general's trait perks */
+  try{gmApply();}catch(e){console.error('gmApply',e);}try{gdrApplyBattle(g.dr);}catch(e){console.error('gdrApplyBattle',e);}try{gmilApplyPerks(gr,g.gp);}catch(e){console.error('gmilApplyPerks',e);}   /* grand3: the general's trait perks */
   if(g.fuel)G.teams.forEach((T,t)=>{if(g.fuel[t]!=null)T.fuel=Math.max(0,Math.min(1,g.fuel[t]));});   // fuel comes from the army's stock on the map (grand2)
   for(let t=0;t<2;t++){gr.n0[t]=G.ents.filter(e=>e.team===t&&!e.isB).length;gr.v0[t]=grandForce(t);}
   gr.ctr=[(BASES[0][0]+BASES[1][0])/2,(BASES[0][1]+BASES[1][1])/2];
@@ -69,9 +69,12 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
     const side=a.o===nat0?0:a.o===nat1?1:-1;if(side<0||!a.u.length)continue;if(wn[side]>=3)continue;if(GCM.P[a.at].land&&GC.prov[a.at].o!==a.o&&!grAtWar(a.o,GC.prov[a.at].o)&&GC.prov[a.at].o!==a.o)continue;
     const recs=a.u.slice(0,24);wn[side]++;waves.push({t:70+wn[side]*50,side,recs,label:a.nm,done:0,aid:a.id});rf.push(a.id);}
   const attTeam=meAtt?0:1,from=b.att.map(id=>(GC.armies.find(a=>a.id===id)||{}).from).find(f=>f>=0),gm=P.sea?{key:'coral',real:0,tp:null}:gmMap(b.p,from),   /* a sea zone is fought on a naval map */
-    cfg={bi:{p:b.p},att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[],fv:[0,1].map(t=>{try{return ldrFervour(t?nat1:nat0,b.p)?1:0;}catch(e){return 0;}}),mr:[meAtt?S:D,meAtt?D:S].map(L=>{try{let w=0,m=0;for(const x of L){const n=x.u.length||1;w+=n;m+=n*gmMor(x.arr)/gmMorMax(x.arr);}return w?m/w:1;}catch(e){return 1;}})};
+    cfg={bi:{p:b.p},dr:[gdrSide(meAtt?S:D),gdrSide(meAtt?D:S)],att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[],fv:[0,1].map(t=>{try{return ldrFervour(t?nat1:nat0,b.p)?1:0;}catch(e){return 0;}}),mr:[meAtt?S:D,meAtt?D:S].map(L=>{try{let w=0,m=0;for(const x of L){const n=x.u.length||1;w+=n;m+=n*gmMor(x.arr)/gmMorMax(x.arr);}return w?m/w:1;}catch(e){return 1;}})};
   /* grand3: each side's best general stands in the battle as the hero squad (the army's own if it has one, else a fresh one) */
   try{const gp=[gmilPerk(meAtt?S:D),gmilPerk(meAtt?D:S)];cfg.gp=gp;[[side0,f0],[side1,f1]].forEach(([L,fc],t)=>{if(gp[t]&&grHasKind(fc,'champ')&&!L.some(r=>r[0]==='champ')){const r=['champ',100,Math.round(gp[t].lv*40),100];L.push(r);cfg.hero[t]=r;}});}catch(e){console.error('gmil hero',e);}   // forts / SAM / airfield... come from the province's buildings (gmApply)
+  /* gair (Abdullah 2026-11-07 20:28): jets come as LIMITED SORTIES from airfields/carriers in range, minus the enemy's air defence; they fly in from the map edge at 45 s and are spent on the map (grandWriteBack). Drones/helis travel as army units. */
+  try{[[nat0,f0,0,nat1],[nat1,f1,1,nat0]].forEach(([c,fc,t,ec])=>{if(!grHasKind(fc,'jet'))return;let n=Math.min(4,geSortieStock(c,b.p,280));if(GC.prov[b.p].o!==c&&geEff(b.p,'aa')>0)n=Math.floor(n/2);if(n<=0)return;
+    waves.push({t:45,side:t,recs:Array.from({length:n},()=>['jet',100,0,100]),label:n+' air sorties',done:0,jet:1});});}catch(e){console.error('gair sorties',e);}
   GB_CUR={b,cfg,meAtt,nat0,nat1,rf};
   try{initAudio();}catch(e){}
   MODE='single';ME=0;setup.p=f0;setup.d=1;TERR_DEFER=true;
@@ -82,7 +85,10 @@ let GB_CUR=null;
 function grandFightLive(b){grandScreenShow(false);try{grandBattleStart(b);}catch(e){console.error('Fight it live failed',e);try{LOAD.tok++;loadHide();}catch(_){}G=null;GB_CUR=null;MODE='single';ME=0;
   grandScreenShow(true);guModal('<div style="font-size:19px;font-weight:bold;margin-bottom:6px">The live battle could not start</div><div style="opacity:.8;margin-bottom:10px">'+String(e&&e.message||e).replace(/[<&]/g,'').slice(0,160)+'</div>The generals will auto-resolve this battle instead.',[['OK',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},1]]);}}
 // write the survivors back and show the result
-function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def']:['def','att'];sd.forEach((side,t)=>{const T=G.teams[t];if(!T||T.fuel==null)return;for(const s of grSideUnits(GB_CUR.b,side))if(s.arr)s.arr.fu=Math.round(T.fuel*100);});}catch(e){}try{gmWriteBack();}catch(e){console.error('gmWriteBack',e);}for(const [rec,e,team] of g.ents){const dead=e.dead||!G.byId.has(e.id);if(dead){rec.dead=1;if(rec[0]==='champ'&&g.gp&&g.gp[team]){try{gmilHeroFell(g.gp[team].gid);}catch(e){}}continue;}rec[1]=Math.max(1,Math.round(e.hp/e.max*100));rec[2]=Math.round(e.xp||rec[2]);if(e.s&&e.s.ammo)rec[3]=Math.max(0,Math.min(100,Math.round((e.ammo||0)/e.s.ammo*100)));}
+function grandWriteBack(){const g=G.grand;
+  try{[GB_CUR.nat0,GB_CUR.nat1].forEach((c,t)=>{const N=GC.nat[c];if(!N||!N.e)return;let fl=0,lost=0;for(const w of g.waves)if(w.jet&&w.side===t&&w.done){fl+=w.recs.length;for(const r of w.recs){const x=g.ents.find(q=>q[0]===r);if(!x||x[1].dead||!G.byId.has(x[1].id))lost++;}}
+      if(fl){N.e.fuel=Math.max(0,N.e.fuel-6*fl);N.cash=Math.max(0,N.cash-Math.round(lost*grCost(grNat(c).fac,'jet')*.5));if(c===GC.me)try{grLog(fl+' sorties flown, '+lost+' jets lost.',c);}catch(e){}}});}catch(e){console.error('gair spend',e);}   // gair: sorties are spent on the grand map; downed jets cost half their price
+try{const sd=GB_CUR.meAtt?['att','def']:['def','att'];sd.forEach((side,t)=>{const T=G.teams[t];if(!T||T.fuel==null)return;for(const s of grSideUnits(GB_CUR.b,side))if(s.arr)s.arr.fu=Math.round(T.fuel*100);});}catch(e){}try{gmWriteBack();}catch(e){console.error('gmWriteBack',e);}for(const [rec,e,team] of g.ents){const dead=e.dead||!G.byId.has(e.id);if(dead){rec.dead=1;if(rec[0]==='champ'&&g.gp&&g.gp[team]){try{gmilHeroFell(g.gp[team].gid);}catch(e){}}continue;}rec[1]=Math.max(1,Math.round(e.hp/e.max*100));rec[2]=Math.round(e.xp||rec[2]);if(e.s&&e.s.ammo)rec[3]=Math.max(0,Math.min(100,Math.round((e.ammo||0)/e.s.ammo*100)));}
   const strip=arr=>{for(let i=arr.length-1;i>=0;i--)if(arr[i].dead)arr.splice(i,1);};const b=GB_CUR.b;
   for(const s of grSideUnits(b,'att').concat(grSideUnits(b,'def')))strip(s.u);
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}
