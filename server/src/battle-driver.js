@@ -38,11 +38,11 @@ export function BATTLE_DRIVER() {
     const isAI = i => Array.isArray(o.aiD) && o.aiD[i] != null;
     TERR_DEFER = true;
     const st = stClean(o.st, o.facs.length);
-    try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map((_, i) => isAI(i)), map: o.map, tm: o.tm, w: o.w | 0, st: st || undefined }); } finally { TERR_DEFER = false; }
+    try { newGame({ seed: o.seed, facs: o.facs, ai: o.facs.map((_, i) => isAI(i)), map: o.map, tm: o.tm, w: o.w | 0, battle: o.bm ? 1 : 0, st: st || undefined }); } finally { TERR_DEFER = false; }
     G.teams.forEach((T, i) => { T.ai = !T.reb && isAI(i) ? mkAI(o.aiD[i]) : null; });
     G.headless = true;
     NET.peers = o.peers.slice(); NET.toks = o.toks.slice(); NET.gen = 0; NET.code = o.code || null; NET.baseCode = o.code || null;
-    NET.startInfo = Object.assign({ seed: o.seed, facs: o.facs.slice(), map: o.map, tm: o.tm.slice(), w: o.w | 0, sv: 1 }, st ? { st } : {}, o.cm ? { cm: o.cm } : {});
+    NET.startInfo = Object.assign({ seed: o.seed, facs: o.facs.slice(), map: o.map, tm: o.tm.slice(), w: o.w | 0, bm: o.bm ? 1 : 0, sv: 1 }, st ? { st } : {}, o.cm ? { cm: o.cm } : {});
     return B.info();
   };
   // The checkpoint the host netcode just packed for its standby player (07b ckTick, every 8 s while a player is
@@ -55,7 +55,7 @@ export function BATTLE_DRIVER() {
   B.restore = async (si, s) => {
     const ck = await ckUnpack(s);
     const st = ck.start || si, n = st.facs.length;
-    B.start({ seed: st.seed, facs: st.facs, map: st.map, tm: st.tm, w: st.w, st: st.st, aiD: st.facs.map(() => null), peers: st.facs.map(() => null), toks: Array.isArray(ck.toks) ? ck.toks.slice(0, n) : st.facs.map(() => null), code: si.code, cm: st.cm || si.cm });
+    B.start({ seed: st.seed, facs: st.facs, map: st.map, tm: st.tm, w: st.w, bm: st.bm, st: st.st, aiD: st.facs.map(() => null), peers: st.facs.map(() => null), toks: Array.isArray(ck.toks) ? ck.toks.slice(0, n) : st.facs.map(() => null), code: si.code, cm: st.cm || si.cm });
     ckRestore(ck);
     NET.cseqSlot = Array.isArray(ck.cs) ? ck.cs.slice() : []; NET.gen = ck.gen || 0;
     for (const T of G.teams) if (!T.ai && !T.out && !T.reb) T.discT = G.t;

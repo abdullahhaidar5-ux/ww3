@@ -91,6 +91,11 @@ try {
   // ---- menus as a player
   const menu = await ev(() => [...document.querySelectorAll('#menu button, #menu .mx-item, .mx-item')].filter(b => b.offsetParent).map(b => b.textContent.trim()).filter(Boolean).slice(0, 12));
   console.log('menu items', JSON.stringify(menu)); await shot('menu');
+  // THREE GAMES (Abdullah 2026-11-07 21:38): the main menu's big items are exactly Grand campaign, Conquest, Battle (in that order); Missions and Tutorial are smaller items below
+  { const big = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].filter(b => b.offsetParent && !b.hidden && !/\b(dim|sep)\b/.test(b.className)).map(b => b.textContent.trim()).filter(Boolean).slice(0, 4));
+    ck(big.slice(0, 3).join('|') === 'Grand campaign|Conquest|Battle', 'main menu big items should be Grand campaign|Conquest|Battle, got ' + big.join('|'));
+    const sm = await ev(() => [...document.querySelectorAll('#mxmenu .mxi.dim')].map(b => b.textContent.trim()));
+    ck(sm.includes('Missions') && sm.includes('Tutorial'), 'Missions and Tutorial must stay as smaller menu items, got ' + sm.join('|')); }
   { const seen = await ev(SEEN); ck(!/classic/i.test(seen), 'menu shows "Classic"'); ck(!/\bhost(ing)?\b/i.test(seen.replace(/ghost/gi, '')), 'menu shows hosting wording: ' + (/.{20}\bhost.{20}/i.exec(seen) || [''])[0]); }
   // ---- data decisions
   const d = await ev(() => { const o = {}; o.fk = FKEYS.slice(); o.ms = MORALE_STYLE; o.rout0 = Object.entries(MORALE_STYLE).filter(([k, s]) => MSTYLES[s].rout === 0).map(([k]) => k).sort().join(' ');
@@ -146,6 +151,21 @@ try {
   for (let c = 0; c < 4; c++) await ev(() => { for (let i = 0; i < 1800 && !G.over; i++) simUpdate(1 / 60); for (const e of G.ents) if (['cleric', 'fort'].includes(e.kind)) window.__bad.push(e.kind); });
   const sim = await ev(() => [...new Set(window.__bad)]);
   ck(!sim.length, 'AI built banned grand-map-only kinds in Conquest: ' + sim.join(','));
+  // ---- BATTLE mode (Generals rules): Command Center + dozer + supply truck, no towns/tax, supply trucks pay
+  await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
+  await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
+  await ev(() => { setup.p = 'US'; setup.a = 'RU'; setup.n = 1; setup.mode = 'battle'; try { initAudio(); } catch (e) {} startSingle(); });
+  await page.waitForFunction(() => typeof G !== 'undefined' && !!G && !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('battle-mode game never finished loading'));
+  await page.waitForTimeout(1500);
+  const bt = await ev(() => { const T = G.teams[ME], mine = G.ents.filter(e => e.team === ME && !e.dead); const c0 = T.credits;
+    const blds = mine.filter(e => e.isB).map(e => e.kind), kinds = mine.filter(e => !e.isB).map(e => e.kind);
+    for (let i = 0; i < 3600 && !G.over; i++) simUpdate(1 / 60);
+    return { battle: !!G.battle, conq: !!G.conq, setupEnd: G.setupEnd, blds, kinds, c0, c1: T.credits, tax: (G.towns || []).some(t => t.tax > 0 && t.ow >= 0), name: typeof modeName === 'function' ? modeName() : '' }; });
+  console.log('battle mode', JSON.stringify(bt));
+  ck(bt.battle && !bt.conq, 'Battle game did not start in Battle mode');
+  ck(bt.blds.join() === 'hq' && bt.kinds.includes('dozer') && bt.kinds.includes('harv'), 'Battle must start with a Command Center + dozer + supply truck only, got ' + bt.blds.join() + ' / ' + bt.kinds.join());
+  ck(!bt.setupEnd, 'Battle has a no-fire setup phase'); ck(!bt.tax, 'Battle has town taxes'); ck(bt.c1 > bt.c0, 'Battle: supply trucks brought no income (' + bt.c0 + ' -> ' + bt.c1 + ')'); ck(bt.name === 'Battle', 'mode name in HUD/end screen is "' + bt.name + '"');
+  await shot('battle-us');
   // ---- grand map: no turn buttons / turn wording; real-time clock controls exist
   await ev(() => { try { endBattle && 0; } catch (e) {} });
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
