@@ -12,7 +12,7 @@ GMOD_STATS.unrest=GMOD_STATS.unrest||'Unrest';
 function gcvH(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h|0;}
 function gcvRoll(a,t,k){return grRng((GC.seed|0)^gcvH(a+'>'+t+'#'+k)^(GC.turn*7919))();}
 function gcvActive(t){const N=GC&&GC.nat[t];return !!N&&(N.sabU|0)>=GC.turn;}
-function gcvChance(a,t){let p=GCV_BASE;if(GC.nat[t].ci)p*=.5;if(GC.spy&&(GC.spy[a+'>'+t]|0)>=GC.turn)p+=.12;return Math.min(.9,p);}
+function gcvChance(a,t){let p=GCV_BASE*gmod('nation',a,'spy',1)/gmod('nation',t,'spyDef',1);if(GC.nat[t].ci)p*=.5;if(GC.spy&&(GC.spy[a+'>'+t]|0)>=GC.turn)p+=.12;return Math.min(.9,p);}
 function gcvSabotage(a,t){const A=GC&&GC.nat[a],T=GC&&GC.nat[t];if(!A||!T||A.dead||T.dead||a===t)return 'Not available.';
   if(grAllied(a,t))return 'You do not sabotage an ally.';if(gcvActive(t))return 'Their networks are already burning.';if(A.cash<GCV_COST)return 'Needs $'+GCV_COST+'.';
   A.cash-=GCV_COST;GC.cov=GC.cov||{};const win=gcvRoll(a,t,'win')<gcvChance(a,t);let expo=gcvRoll(a,t,'exp')<GCV_EXPO*(T.ci?2:1)*(grAtWar(a,t)?.5:1);if(!win&&gcvRoll(a,t,'f')<.5)expo=true;

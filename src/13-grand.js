@@ -142,7 +142,9 @@ function grDefMods(b){const p=GCM.P[b.p];if(p.sea)return gmilSeaDef(b);let m=1.1
 function grSideUnits(b,side){const out=[];const ids=side==='att'?b.att:b.def;for(const id of ids){const a=GC.armies.find(x=>x.id===id);if(a)out.push({fac:grNat(a.o).fac,u:a.u,arr:a});}
   if(side==='def'&&b.garr){const p=GC.prov[b.p];out.push({fac:grNat(p.o).fac,u:p.gar,arr:null});}return out;}
 function grSideVal(us,def){let v=0;for(const s of us)v+=grForce(s.fac,s.u)*(def!==undefined&&s.arr?gmilMul(s.arr,def):1)*(s.arr&&typeof gmMorMul==='function'?gmMorMul(s.arr):1);return v;}
-function grAuto(b,R){const A=grSideUnits(b,'att'),D=grSideUnits(b,'def');const sa=grSideVal(A,0)*(1+R()*.06),sd=grSideVal(D,1)*grDefMods(b)*(1+R()*.06);let pa=sa,pd=sd;
+/* doctrine & fire support (GMOD stats 'attack'/'defense'/'fires', from idea groups) scale a side's auto-resolve strength */
+function grIdeaMul(c,st){if(!c||!GC||!GC.nat[c]||typeof gmod!=='function')return 1;return gmod('nation',c,st,1)*gmod('nation',c,'fires',1);}
+function grAuto(b,R){const A=grSideUnits(b,'att'),D=grSideUnits(b,'def');const sa=grSideVal(A,0)*(1+R()*.06)*grIdeaMul(b.an,'attack'),sd=grSideVal(D,1)*grDefMods(b)*(1+R()*.06)*grIdeaMul(b.dn,'defense');let pa=sa,pd=sd;
   for(let i=0;i<4;i++){const da=pa*.28,dd=pd*.28;pa=Math.max(0,pa-dd);pd=Math.max(0,pd-da);}
   const attWins=pa>pd,ka=sa?pa/sa:0,kd=sd?pd/sd:0;grApplyLoss(A,attWins?ka:ka*.5,R);grApplyLoss(D,attWins?kd*.5:kd,R);
   return {win:attWins?'att':'def',ka,kd,sa:Math.round(sa),sd:Math.round(sd)};}
