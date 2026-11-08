@@ -7345,6 +7345,41 @@ function formMove(us,x,y,type,squad,colW){const n=us.length;if(!n)return;if(n===
   const sorted=us.slice().sort((p,q)=>(FROW[p.s.cls]??2)-(FROW[q.s.cls]??2)||p.id-q.id);const cols=colW||Math.max(2,Math.ceil(Math.sqrt(n*1.6)));const sp=Math.max(26,...us.map(u=>u.r*2+8));
   let cap=Infinity;if(squad)for(const u of us)if(u.s.dom!=='air')cap=Math.min(cap,u.s.spd);
   sorted.forEach((u,i)=>{const row=Math.floor(i/cols),inRow=Math.min(cols,n-row*cols),col=i%cols-(inRow-1)/2;const tx=x+px*col*sp-fx*row*sp,ty=y+py*col*sp-fy*row*sp;setMove(u,tx,ty,type);if(squad&&u.s.dom!=='air'&&isFinite(cap))u.order.cap=cap*.97;u.sq=squad?1:0;});}
+/* ---------- battle formations (Abdullah 2026-11-07 20:37 "auto build formations in battle") ----------
+   One slot engine for the preset formations, the right-drag line and the AI's attack groups. Units get a role - S scouts
+   (ahead), A armour (front), I infantry (behind/beside the armour), F anti-tank teams (flanks), R artillery + AA (rear) -
+   and each role fills its own slots; inside a role, units take the slot on their own side so paths do not cross. Slots are
+   in the group's frame: f = forward, s = sideways. Pure function of unit positions/ids, so every machine agrees. */
+const FM_TYPES=['line','column','wedge','box','spread'];
+function fmRole(u){const c=u.s.cls;if(c==='arty')return 'R';if(c==='aa')return u.s.wpn==='at'?'F':'R';if(c==='drone'||c==='hacker'||u.kind==='recon')return 'S';if(c==='at')return 'F';if(c==='tank')return 'A';if(c==='inf'||c==='hero')return 'I';return isVeh(u.s)?'A':'I';}
+function fmLayout(type,n,sp,W,lat){const S={S:[],A:[],I:[],F:[],R:[]},put=(r,f,s)=>S[r].push([f,s]);
+  const rows=(r,f0,w,ls,rs)=>{const m=n[r];for(let i=0;i<m;i++){const q=Math.floor(i/w),k=i%w,c=Math.min(w,m-q*w);put(r,f0-q*rs,(k-(c-1)/2)*ls);}return f0-Math.ceil(m/w)*rs;};
+  const chev=(r,f0,ls,rs)=>{const m=n[r];let k=0;for(let i=0;i<m;i++){k=Math.ceil(i/2);put(r,f0-k*rs*.9,(i%2?1:-1)*k*ls*.9);}return f0-(k+1)*rs*.9-(m?rs*.2:0);};
+  if(type==='column'){const o=['S','A','I','F','R'];let i=0;for(const r of o)for(let j=0;j<n[r];j++,i++)put(r,(r==='S'?sp*2:0)-Math.floor(i/2)*sp*1.15,(i%2?1:-1)*sp*.5);}
+  else if(type==='wedge'){const ls=sp*1.1,rs=sp*1.1;let d=chev('A',0,ls,rs);if(!n.A)d=0;const d2=chev('I',d,ls,rs);const mk=Math.max(1,Math.ceil(Math.max(n.A,n.I)/2));
+    for(let i=0;i<n.F;i++)put('F',-mk*rs*.9,(i%2?1:-1)*(mk+1.2+Math.floor(i/2))*ls*.9);rows('R',d2-rs*.5,Math.min(W,4),ls*1.3,rs*1.3);rows('S',rs*2.2,Math.min(W,3),ls*1.6,rs);}
+  else if(type==='box'){const P=n.A+n.F,rad=Math.max(sp*2,P*sp*1.1/6.283),ao=[];for(let k=0;k<P;k++)ao.push((k%2?1:-1)*Math.ceil(k/2)*6.283/P);
+    ao.sort((a,b)=>Math.abs(a)-Math.abs(b)||b-a);ao.forEach((a,k)=>put(k<n.A?'A':'F',Math.cos(a)*rad,Math.sin(a)*rad));
+    for(const r of ['I','R']){const m=n[r],rr=r==='I'?Math.max(sp*.9,Math.min(rad*.6,m*sp/6.283)):rad*.25;for(let i=0;i<m;i++){const a=i*6.283/Math.max(1,m)+(r==='R'?3.1416:0);put(r,m===1?(r==='R'?-rad*.3:0):Math.cos(a)*rr,m===1?0:Math.sin(a)*rr);}}
+    rows('S',rad+sp*2,Math.min(W,3),sp*1.6,sp);}
+  else{const sd=type==='spread',ls=sd?sp*2.6:Math.max(sp,lat||sp),rs=sd?sp*2.6:sp*1.1;if(n.S)rows('S',rs*1.8,W,ls,rs);let d=rows('A',0,W,ls,rs);if(!n.A)d=0;
+    const cF=Math.min(W,Math.max(n.A,n.I,1));for(let i=0;i<n.F;i++)put('F',-Math.floor(i/2)*rs,(i%2?1:-1)*((cF-1)/2*ls+ls));
+    d=rows('I',d,W,ls,rs);rows('R',d-rs*.3,W,ls*(sd?1:1.4),rs*(sd?1:1.3));}
+  return S;}
+// us = movers; destination centre (cx,cy), facing (fx,fy); lat = sideways spacing wanted (drag lines); keep = hold slots at the slowest unit's pace
+function fmApply(us,type,cx,cy,fx,fy,mode,keep,lat,wid){const m=us.filter(u=>u&&!u.isB&&u.s&&u.s.spd>0&&u.kind!=='harv'&&u.kind!=='dozer');const n=m.length;if(!n)return;
+  if(!FM_TYPES.includes(type))type='line';const L=Math.hypot(fx,fy)||1;fx/=L;fy/=L;const px=-fy,py=fx,gnd=m.filter(u=>u.s.dom==='ground'),oth=m.filter(u=>u.s.dom!=='ground');
+  const by={S:[],A:[],I:[],F:[],R:[]};for(const u of gnd)by[fmRole(u)].push(u);const cnt={};for(const r in by)cnt[r]=by[r].length;
+  const sp=Math.max(18,...gnd.map(u=>u.r*2.6),20);const W=wid||Math.max(3,Math.ceil(Math.sqrt(gnd.length)*1.7));const S=fmLayout(type,cnt,sp,W,lat);
+  let ox=0,oy=0;for(const u of gnd){ox+=u.x;oy+=u.y;}if(gnd.length){ox/=gnd.length;oy/=gnd.length;}
+  let cap=Infinity;if(keep)for(const u of gnd)cap=Math.min(cap,u.s.spd);
+  for(const r in by){const us2=by[r];if(!us2.length)continue;const sl=S[r].slice().sort((a,b)=>a[1]-b[1]||b[0]-a[0]);
+    const q=us2.map(u=>[u,(u.x-ox)*px+(u.y-oy)*py]).sort((a,b)=>a[1]-b[1]||a[0].id-b[0].id);
+    q.forEach(([u],i)=>{const k=sl[i];let x=cx+fx*k[0]+px*k[1],y=cy+fy*k[0]+py*k[1];setMove(u,x,y,mode);u.faceA=Math.atan2(fy,fx);u.sq=keep?1:0;if(keep&&isFinite(cap))u.order.cap=cap*.97;});}
+  oth.sort((a,b)=>a.id-b.id).forEach((u,i)=>setMove(u,cx+px*(i-(oth.length-1)/2)*40,cy+py*(i-(oth.length-1)/2)*40,mode));}
+// the AI sends its ground attack groups in a formation too: a wedge when armour leads, else a line
+function aiForm(g,x,y){const cx=g.reduce((s,u)=>s+u.x,0)/g.length,cy=g.reduce((s,u)=>s+u.y,0)/g.length,nA=g.filter(u=>fmRole(u)==='A').length;
+  if(g.length<3){formMove(g,x,y,'amove',1,4);return;}fmApply(g,nA*3>=g.length?'wedge':'line',x,y,x-cx,y-cy,'amove',true);}
 function setMove(u,x,y,type){if(u.s.dom!=='air'){const p=nearestPassXY(u.s.dom,x,y);if(p){x=p[0];y=p[1];}}u.order={type,x,y};u.target=null;u.guard=null;u.path=null;u.ffx=null;if(u.kind==='jet'&&u.state!=='fly'){u.state='fly';u.landed=false;}}
 
 /* ---------- combat ---------- */
@@ -7729,11 +7764,11 @@ function usePower0(team,key,x,y){const T=G.teams[team],P0=powInfo(key,T.fac),w=T
   w.cd=P.cd;log(team,`${P.name} used.`);return true;}
 
 /* ---------- player actions (local input, AI and network commands all go through here) ---------- */
-function act(team,a){if(!G||G.over)return;if(G.grand&&GRAND_NOPROD.includes(a.t))return;   /* grand-campaign battle: army only, nothing is built or bought (Abdullah 2026-11-06) */const own=ids=>(ids||[]).map(i=>G.byId.get(i)).filter(u=>u&&!u.isB&&u.team===team);if(a.ids&&a.t!=='def'&&['go','atk','stop','gar','tun','board','atkCiv','fld','line','ret'].includes(a.t))for(const u of own(a.ids)){u.defend=null;if(!a.q)u.wq=null;if(a.t!=='ret')u.retreat=0;if(a.t!=='line')u.faceA=null;}
+function act(team,a){if(!G||G.over)return;if(G.grand&&GRAND_NOPROD.includes(a.t))return;   /* grand-campaign battle: army only, nothing is built or bought (Abdullah 2026-11-06) */const own=ids=>(ids||[]).map(i=>G.byId.get(i)).filter(u=>u&&!u.isB&&u.team===team);if(a.ids&&a.t!=='def'&&['go','atk','stop','gar','tun','board','atkCiv','fld','line','ret','form'].includes(a.t))for(const u of own(a.ids)){u.defend=null;if(!a.q)u.wq=null;if(a.t!=='ret')u.retreat=0;if(a.t!=='line'&&a.t!=='form'&&!(a.t==='go'&&a.fp))u.faceA=null;}
   switch(a.t){
-    case 'go':{const us=own(a.ids).filter(u=>!((u.kind==='harv'||u.kind==='dozer')&&a.mode==='amove'));const md=a.mode==='amove'?'amove':'move';
-      if(a.q){const busy=us.filter(u=>u.order&&(u.order.type==='move'||u.order.type==='amove'));for(const u of busy){(u.wq=u.wq||[]).push({x:a.x,y:a.y,m:md});if(u.wq.length>8)u.wq.shift();}const idle=us.filter(u=>!busy.includes(u));if(idle.length)formMove(idle,a.x,a.y,md,!!a.fm);break;}
-      for(const u of us)u.wq=null;formMove(us,a.x,a.y,md,!!a.fm);sharePath(us,a.x,a.y);break;}
+    case 'go':{const goF=(l,a,md)=>{if(a.fp&&l.length>1&&FM_TYPES.includes(a.fp)){const cx=l.reduce((s,u)=>s+u.x,0)/l.length,cy=l.reduce((s,u)=>s+u.y,0)/l.length;fmApply(l,a.fp,a.x,a.y,a.x-cx,a.y-cy,md,!!a.fm);}else formMove(l,a.x,a.y,md,!!a.fm);};const us=own(a.ids).filter(u=>!((u.kind==='harv'||u.kind==='dozer')&&a.mode==='amove'));const md=a.mode==='amove'?'amove':'move';
+      if(a.q){const busy=us.filter(u=>u.order&&(u.order.type==='move'||u.order.type==='amove'));for(const u of busy){(u.wq=u.wq||[]).push({x:a.x,y:a.y,m:md});if(u.wq.length>8)u.wq.shift();}const idle=us.filter(u=>!busy.includes(u));if(idle.length)goF(idle,a,md);break;}
+      for(const u of us)u.wq=null;goF(us,a,md);sharePath(us,a.x,a.y);break;}
     case 'atk':{const t=G.byId.get(a.tid);if(!t||ally(t.team,team))break;for(const u of own(a.ids)){
       if(u.kind==='hacker'){if(t.isB){u.order={type:'hack',target:t};u.hk=0;}continue;}
       if(u.s.demo&&t.isB){u.order={type:'demo',target:t};u.pt=0;continue;}
@@ -7793,13 +7828,15 @@ function act(team,a){if(!G||G.over)return;if(G.grand&&GRAND_NOPROD.includes(a.t)
     case 'fix':for(const u of own(a.ids)){if(u.kind!=='dozer')continue;const v=critNear(u,900);if(v){u.order={type:'fix',target:v};u.path=null;}}break;
     // right-drag line formation: units spread evenly along the dragged line (extra units form ranks behind it),
     // assigned in order along the line so their paths do not cross
-    case 'line':{const us=own(a.ids).filter(u=>!u.isB&&u.s&&u.s.spd>0&&u.kind!=='harv');const n=us.length;if(!n)break;const x2=a.x2,y2=a.y2,dx=x2-a.x,dy=y2-a.y,L=Math.max(1,Math.hypot(dx,dy)),ux=dx/L,uy=dy/L;
-      const sp=Math.max(18,...us.map(u=>u.r*2.6)),per=Math.max(1,Math.floor(L/sp)+1);let cx=0,cy=0;for(const u of us){cx+=u.x;cy+=u.y;}cx/=n;cy/=n;
+    case 'line':{const us=own(a.ids).filter(u=>!u.isB&&u.s&&u.s.spd>0&&u.kind!=='harv');if(!us.length)break;const x2=a.x2,y2=a.y2,dx=x2-a.x,dy=y2-a.y,L=Math.max(1,Math.hypot(dx,dy)),ux=dx/L,uy=dy/L;
+      let cx=0,cy=0;for(const u of us){cx+=u.x;cy+=u.y;}cx/=us.length;cy/=us.length;
       let nx=-uy,ny=ux;if(((a.x+x2)/2-cx)*nx+((a.y+y2)/2-cy)*ny<0){nx=-nx;ny=-ny;}
-      us.sort((p,q)=>((p.x-a.x)*ux+(p.y-a.y)*uy)-((q.x-a.x)*ux+(q.y-a.y)*uy)||p.id-q.id);
-      for(let i=0;i<n;i++){const r=Math.floor(i/per),k=i%per,cnt=Math.min(per,n-r*per),len=Math.min(L,sp*(cnt-1)),off=(L-len)/2,t=cnt>1?k/(cnt-1):.5;
-        let x=a.x+ux*(off+t*len)-nx*r*sp,y=a.y+uy*(off+t*len)-ny*r*sp;const u=us[i];if(u.s.dom==='ground'){const p=nearestPassXY('ground',x,y);if(p){x=p[0];y=p[1];}}
-        setMove(u,x,y,a.mode==='amove'?'amove':'move');u.faceA=Math.atan2(ny,nx);}break;}
+      const sp=Math.max(18,...us.map(u=>u.r*2.6)),per=Math.max(2,Math.floor(L/sp)+1);   // facing = away from the group, ranks form behind the dragged line
+      fmApply(us,'line',(a.x+x2)/2,(a.y+y2)/2,nx,ny,a.mode==='amove'?'amove':'move',false,L/Math.max(1,per-1),per);break;}
+    // formation preset for the selection right where it stands (bar / O key): faces the nearest enemy building
+    case 'form':{const us=own(a.ids).filter(u=>u.s&&u.s.spd>0);if(us.length<2||!FM_TYPES.includes(a.f))break;let cx=0,cy=0;for(const u of us){cx+=u.x;cy+=u.y;}cx/=us.length;cy/=us.length;
+      let tx=MAPW/2,ty=MAPH/2,bd=1e18;for(const e of G.ents)if(!e.dead&&e.isB&&!ally(e.team,team)&&e.team>=0){const d=(e.x-cx)**2+(e.y-cy)**2;if(d<bd){bd=d;tx=e.x;ty=e.y;}}
+      fmApply(us,a.f,cx,cy,tx-cx,ty-cy,'move',!!a.fm);break;}
     // retreat (Company of Heroes style): selected units run back to the nearest HQ, barracks or factory, a little
     // faster and harder to hit, and do not stop to fight on the way
     case 'ret':for(const u of own(a.ids)){if(u.isB||!u.s||!(u.s.spd>0))continue;let best=null,bd=1e18;for(const e of G.ents){if(e.dead||!e.isB||e.team!==u.team||!(e.kind==='hq'||e.kind==='barracks'||e.kind==='factory'))continue;const d=(e.x-u.x)**2+(e.y-u.y)**2;if(d<bd){bd=d;best=e;}}
@@ -8046,7 +8083,7 @@ function aiHmOp(T,pb){const A=T.ai,op=A.op;if(!op){if(A.t%10===0)for(const u of 
   const tg=G.byId.get(op.tg)&&!G.byId.get(op.tg).dead?G.byId.get(op.tg):pb.find(b=>HM_CRIT[b.kind])||pb[0];
   const ready=fl.length?fl.filter(u=>!u.order).length>=fl.length*.6:true,stg=mn.filter(u=>!u.order).length>=mn.length*.5;
   if(!tg||(ready&&stg)||G.t-op.t>80||mn.some(u=>u.lastHit>G.t-2)){A.op=null;for(const u of fl.concat(mn))u.opW=0;if(!tg)return;
-    const gnd=mn.filter(u=>u.s.dom==='ground');if(gnd.length)formMove(gnd,tg.x,tg.y,'amove',1,4);for(const u of mn)if(u.s.dom!=='ground')setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');
+    const gnd=mn.filter(u=>u.s.dom==='ground');if(gnd.length)aiForm(gnd,tg.x,tg.y);for(const u of mn)if(u.s.dom!=='ground')setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');
     for(const u of fl){setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');u.flT=null;}aiStat(A,'hmHammer');}}
 function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);const hq=mine.find(e=>e.kind==='hq');const anchor=hq||mine.find(e=>e.isB);if(!anchor)return;T.ai.t++;aiSalvage(T,mine);aiWalls(T,mine);aiDam(T,mine);aiMedic(T,mine);lgAI(T);const en=aiFoe(T,anchor);
   // HQ queue priorities: a supply truck if it has none, then a bulldozer if it has none (without one it can never build a
@@ -8148,8 +8185,8 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
       const pin=FL>1&&fl.length>=6;
       fl.forEach((u,i)=>{const sd=pin&&i%2?-side:side,fx=anchor.x+Math.cos(ang)*D*.62+Math.cos(ang+sd*1.57)*Math.min(650,D*.35),fy=anchor.y+Math.sin(ang)*D*.62+Math.sin(ang+sd*1.57)*Math.min(650,D*.35);
         setMove(u,fx+rnd(-50,50),fy+rnd(-50,50),'amove');u.flank=G.t;u.flT=FL>1?t:null;});if(fl.length){aiStat(T.ai,'flank');aiStat(T.ai,'flankers',fl.length);if(pin)aiStat(T.ai,'pincer');}const main=home.filter(u=>!fl.includes(u));const gnd=main.filter(u=>u.s.dom==='ground'),oth=main.filter(u=>u.s.dom!=='ground');
-      if(HM&&fl.length){const sx=anchor.x+Math.cos(ang)*D*.45,sy=anchor.y+Math.sin(ang)*D*.45;formMove(gnd,sx,sy,'amove',1,4);for(const u of oth)setMove(u,sx+rnd(-60,60),sy+rnd(-60,60),'amove');for(const u of home){u.opW=1;u.flT=null;}T.ai.op={t:G.t,tg:t.id,fl:fl.map(u=>u.id),mn:main.map(u=>u.id)};aiStat(T.ai,'hmStage');}
-      else{if(gnd.length)formMove(gnd,t.x,t.y,'amove',1,4);for(const u of oth)setMove(u,t.x+rnd(-60,60),t.y+rnd(-60,60),'amove');}
+      if(HM&&fl.length){const sx=anchor.x+Math.cos(ang)*D*.45,sy=anchor.y+Math.sin(ang)*D*.45;aiForm(gnd,sx,sy);for(const u of oth)setMove(u,sx+rnd(-60,60),sy+rnd(-60,60),'amove');for(const u of home){u.opW=1;u.flT=null;}T.ai.op={t:G.t,tg:t.id,fl:fl.map(u=>u.id),mn:main.map(u=>u.id)};aiStat(T.ai,'hmStage');}
+      else{if(gnd.length)aiForm(gnd,t.x,t.y);for(const u of oth)setMove(u,t.x+rnd(-60,60),t.y+rnd(-60,60),'amove');}
       if(fl.length)T.ai.flanks=(T.ai.flanks||0)+1;T.ai.wave=Math.min(T.ai.wave+Math.round(2*(G.bs||1)),Math.round(DIFF[T.ai.d??1].maxWave*(G.bs||1)));log(en,'Enemy attack force spotted moving out.','w');}
   aiNavyAct(T,mine);aiLanding(T,mine,anchor,pb,launched);
   if(T.ai.t%6===0)for(const u of mine)if(u.kind==='jet'&&u.state==='park'&&u.ammo>=u.s.ammo&&pb.length){const t=pb[Math.floor(Math.random()*pb.length)];u.order={type:'attack',target:t};u.state='fly';u.landed=false;}
@@ -13040,9 +13077,19 @@ $('supbtn').onclick=()=>{G.place=null;G.aim='sup';};
 // select it, click twice to jump the camera to it. A squad moves in formation at the pace of its slowest unit.
 const SQN=9;function sqList(i){if(!G||!G.sq)return[];const ids=G.sq[i]||[];return ids.map(id=>G.byId.get(id)).filter(u=>u&&!u.dead&&u.team===ME);}
 function sqOfSel(){const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(own.length<2)return -1;for(let i=1;i<=SQN;i++){const L=sqList(i);if(L.length&&L.length===own.length&&own.every(u=>L.includes(u)))return i;}return -1;}
+// Formation presets (Abdullah 2026-11-07): the bar under Squads (or the O key) arranges the selection and then every move/attack-move
+// order keeps that formation (units match the slowest pace). "Free" = the old behaviour.
+let FMP=null,FMKEEP=1;const FMINFO={line:['Line','Wide front: most guns bear at once, thin in depth - breaks if hit from the side or air.'],column:['Column','Road march: fast and compact, but strung out and easy to ambush - deploy before contact.'],wedge:['Wedge','Armour spearhead with infantry behind: punch through a point, but the flanks are exposed.'],box:['Box','Defensive ring: armour and AT teams face out, infantry and artillery inside - safe from all sides, slow and fires less ahead.'],spread:['Spread','Wide gaps: far fewer losses to artillery and air, but weak concentrated fire and slow to support each other.']};
+function fmGoX(){const s=sqOfSel()>0;return {fm:(s||(FMP&&FMKEEP))?1:0,fp:FMP||undefined};}
+function fmPick(k){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);FMP=k;if(k&&ids.length>1){doAct({t:'form',ids,f:k,fm:FMKEEP?1:0});speak(1);}sfxUI(520);fmBar();}
+function fmCycle(){const o=[null,...Object.keys(FMINFO)];fmPick(o[(o.indexOf(FMP)+1)%o.length]);pushLog('Formation: '+(FMP?FMINFO[FMP][0]:'Free'),'g');}
+function fmBar(){const sb=document.querySelector('.sqbar');if(!sb)return;let el=document.getElementById('fmb');if(!el){el=document.createElement('div');el.id='fmb';el.style.cssText='display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;font:12px system-ui,sans-serif';sb.append(el);}
+  el.textContent='';const add=(t,k,tip)=>{const b=document.createElement('button');b.textContent=t;b.title=tip;b.style.cssText='padding:2px 6px;border:1px solid #556;border-radius:4px;background:'+((k===FMP&&k!==undefined)?'#3d5a3a':'#1d2420')+';color:#e8efe6;cursor:pointer;font:inherit';b.onclick=()=>{if(k==='keep'){FMKEEP=FMKEEP?0:1;fmBar();}else fmPick(k);};el.append(b);};
+  add('Free',null,'No formation: units go where you send them (O cycles formations).');for(const k in FMINFO)add(FMINFO[k][0],k,FMINFO[k][0]+': '+FMINFO[k][1]+' The game puts armour in front, infantry beside/behind, anti-tank teams on the flanks, artillery and AA at the rear.');
+  add(FMKEEP?'Hold: on':'Hold: off','keep','Hold formation while moving: units match the slowest unit\'s speed and keep their slots on move and attack-move orders.');}
 function sqAssign(i){const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(!own.length)return false;G.sq=G.sq||{};for(let k=1;k<=SQN;k++)if(k!==i&&G.sq[k])G.sq[k]=G.sq[k].filter(id=>!own.some(u=>u.id===id));G.sq[i]=own.map(u=>u.id);pushLog(`Squad ${i} formed: ${own.length} unit${own.length>1?'s':''}. It will move in formation.`,'g');sfxUI(520);renderSquads();return true;}
 let sqLast={i:0,t:0};function sqSelect(i){const L=sqList(i);if(!L.length)return;const now=performance.now();if(sqLast.i===i&&now-sqLast.t<450){const x=L.reduce((s,u)=>s+u.x,0)/L.length,y=L.reduce((s,u)=>s+u.y,0)/L.length;centerOn(x,y);}sqLast={i,t:now};G.sel=L.slice();speak(0);updateUI();renderSquads();}
-function renderSquads(){const el=$('sqs');if(!el||!G)return;if(!el.children.length)for(let i=1;i<=SQN;i++){const b=document.createElement('button');b.dataset.i=i;b.onclick=e=>{const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(e.shiftKey||e.ctrlKey||(!sqList(i).length&&own.length))sqAssign(i);else sqSelect(i);};el.append(b);}
+function renderSquads(){const el=$('sqs');if(!el||!G)return;if(!document.getElementById('fmb'))fmBar();if(!el.children.length)for(let i=1;i<=SQN;i++){const b=document.createElement('button');b.dataset.i=i;b.onclick=e=>{const own=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(e.shiftKey||e.ctrlKey||(!sqList(i).length&&own.length))sqAssign(i);else sqSelect(i);};el.append(b);}
   const cur=sqOfSel();G.sqOf={};for(let i=1;i<=SQN;i++){const L=sqList(i);if(G.sq)G.sq[i]=L.map(u=>u.id);for(const u of L)G.sqOf[u.id]=i;const b=el.children[i-1];b.innerHTML='';b.append(String(i));const sm=document.createElement('small');sm.textContent=L.length?`${L.length} unit${L.length>1?'s':''}`:'empty';b.append(sm);{const ms=L.map(moraleOf).filter(Boolean);if(ms.length){const avg=ms.reduce((a,m)=>a+m.v,0)/ms.length,fl=ms.every(m=>m.st==='fearless'),rt=ms.some(m=>m.st==='routing');const st=fl?'fearless':rt?'routing':avg>.66?'steady':avg>.35?'shaken':'breaking';const q=document.createElement('span');q.className='sqm';q.innerHTML=`<i style="width:${Math.round(avg*100)}%;background:${MOR_COL[st]}"></i>`;q.title='Squad morale: '+MOR_TXT[st];b.append(q);if(rt)b.classList.add('rout');else b.classList.remove('rout');}}b.classList.toggle('on',cur===i);b.classList.toggle('empty',!L.length);b.title=L.length?`Squad ${i}: click to select, click again to find it. Shift+click to replace it with the selection.`:'Empty: select units, then click here to make them squad '+i+'.';}
   {let shown=false;for(let i=1;i<=SQN;i++){const b=el.children[i-1],has=sqList(i).length>0;if(has){b.style.display='';}else if(!shown){shown=true;b.style.display='';b.innerHTML='+ Squad';b.title='Put the selected units in a new squad (or Ctrl+'+i+')';}else b.style.display='none';}}
   const mk=$('sqMake');if(mk)mk.disabled=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).length<1;}
@@ -13084,7 +13131,7 @@ function issueCmd(w,t,rally){
        if(rest.length&&!(t&&t.kind==='garrison')){doAct({t:'atkCiv',ids:rest.map(u=>u.id),ci:c.i});speak(2);markT(c.x,c.y,24);return true;}
        if(inf.length)return true;}}
     const fi=fieldAt(w);if(fi>=0&&units.some(u=>u.kind==='harv')){doAct({t:'fld',ids,fi});const rest=units.filter(u=>u.kind!=='harv').map(u=>u.id);if(rest.length)doAct({t:'go',ids:rest,x:w.x,y:w.y,mode:'move'});return true;}
-    doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0,q:G.qShift?1:0});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:G.qShift?0xe3b341:0x74d08f});return true;
+    doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',...fmGoX(),q:G.qShift?1:0});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:G.qShift?0xe3b341:0x74d08f});return true;
 }
 // Controls (mouse), default "Standard" scheme (Abdullah, 2026-10-28):
 //   LEFT selects - click a unit (Shift+click adds/removes, double-click selects all of that type on screen, drag a box
@@ -13148,7 +13195,7 @@ function forceTarget(t,w){if(t&&!t.dead)return ally(t.team,ME)?null:{t:'atk',tid
 function forceFire(w,t,units){const f=forceTarget(t,w);if(!f){pushLog(t?'Force-fire on your own or allied units is not available.':'Force-fire on empty ground is not available - Ctrl+click an enemy, a derrick or a building.','w');try{sfxUI(220);}catch(_){}return false;}
   const ids=units.map(u=>u.id),a={t:f.t,ids};if(f.tid!=null)a.tid=f.tid;if(f.fi!=null)a.fi=f.fi;if(f.ci!=null)a.ci=f.ci;doAct(a);speak(2);markT(f.x,f.y,24);return true;}
 // Alt+click: add a waypoint (units finish their current move first)
-function waypoint(w,units){if(noGo(units,w)){try{sfxUI(220);}catch(_){}return false;}doAct({t:'go',ids:units.map(u=>u.id),x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0,q:1});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xe3b341});return true;}
+function waypoint(w,units){if(noGo(units,w)){try{sfxUI(220);}catch(_){}return false;}doAct({t:'go',ids:units.map(u=>u.id),x:w.x,y:w.y,mode:'move',...fmGoX(),q:1});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xe3b341});return true;}
 /* ---------- contextual cursor ---------- */
 // small cursors drawn once on a canvas (no image files); `CURS[key]` is a ready CSS cursor value
 const CURD={
@@ -13207,12 +13254,12 @@ setInterval(()=>cursorTick(false),50);
 function defendAt(w){const sh0=MODK.shift;const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);G.defm=false;if(!ids.length)return;doAct({t:'def',ids,x:w.x,y:w.y});speak(1);mark({x:w.x,y:w.y,r:300,t:0,d:1.1,c:0x6fb2ff});pushLog('Units moving to defend the area.');ordDone(sh0);}
 function rightPress(e){const w=screenToWorld(mouse.x,mouse.y);if(!w)return false;rDown=performance.now();if(G.defm){defendAt(w);return false;}
   if(G.place||G.aim){G.place=null;G.aim=null;return false;}
-  if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(MODK.shift);return false;}
+  if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(MODK.shift);return false;}
   return true;}
 function orderClick(sh){if(!G||G.over)return;G.qShift=!!sh;const w=screenToWorld(mouse.x,mouse.y);if(!w)return;
   if(G.place||G.aim){G.place=null;G.aim=null;updateUI();return;}if(G.defm){defendAt(w);return;}
   const units=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);
-  if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(sh);return;}
+  if(G.amove&&units.length){const ids=units.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(sh);return;}
   G.amove=false;const bsel=!units.length&&G.sel.some(b=>b.isB&&b.team===ME);if(!units.length&&!bsel)return;
   const t=pickAt(mouse.x,mouse.y,false);if(units.length&&MODK.ctrl){if(forceFire(w,t,units))ordDone(sh);updateUI();return;}if(issueCmdD(w,t,bsel))updateUI();}
 // Generals scheme, a left click with the mouse: orders for the selection, or a rally point for a production building.
@@ -13295,6 +13342,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='f'&&G.sel.some(u=>!u.isB)){G.amove=true;G.defm=false;}if(k==='g'&&G.sel.some(u=>!u.isB&&u.team===ME)){G.defm=true;G.amove=false;}
   if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)for(const pk in POW_KEY)if(POW_KEY[pk]===k){powGo(pk);break;}
   if(k==='v'&&!e.ctrlKey&&!e.metaKey)cycleStance();
+  if(k==='o'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)fmCycle();
   if(k==='i'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)tactKey();
   if(k==='z'&&!e.ctrlKey&&!e.metaKey&&!e.altKey)resupplySel();
   if(k==='l'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&G.lgd)lgToggle();
@@ -13314,7 +13362,7 @@ function mmJump(e){const r=mm.getBoundingClientRect();centerOn((e.clientX-r.left
 // Minimap: left-click / tap / drag moves the view there; right-click sends the selected units there.
 // Pointer events so it works the same with a mouse, trackpad, touch screen or pen.
 let mmDown=null;mm.style.touchAction='none';mm.style.cursor='crosshair';
-function mmSend(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!ids.length)return false;doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',fm:sqOfSel()>0?1:0});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0x74d08f});return true;}
+function mmSend(w){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);if(!ids.length)return false;doAct({t:'go',ids,x:w.x,y:w.y,mode:'move',...fmGoX()});speak(1);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0x74d08f});return true;}
 function mmWorld(e){const r=mm.getBoundingClientRect();return{x:Math.max(0,Math.min(MAPW,(e.clientX-r.left)/r.width*MAPW)),y:Math.max(0,Math.min(MAPH,(e.clientY-r.top)/r.height*MAPH))};}
 mm.addEventListener('pointerdown',e=>{if(!G)return;e.preventDefault();const w=mmWorld(e);
   if(e.button===2){mmSend(w);return;}
@@ -13436,7 +13484,7 @@ function tcTap(x,y,ts){if(ts==null)ts=performance.now();mouse.x=x;mouse.y=y;cons
   if(G.place||G.aim){TC.pick=w;sfxUI(520);updateUI();return;}
   const own=tcOwn();
   if(G.defm){if(own.length){defendAt(w);tcMark(x,y,'gd');}G.defm=false;updateUI();return;}
-  if(G.amove&&own.length){const ids=own.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);if(ids.length){doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',fm:sqOfSel()>0?1:0});speak(2);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});tcMark(x,y,'am');}G.amove=false;updateUI();return;}
+  if(G.amove&&own.length){const ids=own.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);if(ids.length){doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});tcMark(x,y,'am');}G.amove=false;updateUI();return;}
   G.amove=false;
   const t=pickAt(x,y,false),now=ts,L=TC.lastTap;
   TC.tapLog={x:Math.round(x),y:Math.round(y),t:t?t.kind+'/'+t.team:null,own:own.length};
@@ -13962,7 +14010,7 @@ function syncMouseUI(){const pre=mPreset();
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
   const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
-const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Q: army · H: home · Wheel: zoom · Shift+wheel / PgUp PgDn: tilt · WASD/arrows: scroll · Esc: cancel / deselect';
+const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · O: formation · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Q: army · H: home · Wheel: zoom · Shift+wheel / PgUp PgDn: tilt · WASD/arrows: scroll · Esc: cancel / deselect';
 // the on-screen hint follows the chosen mouse functions (the Standard preset has its own fixed text)
 function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
@@ -19242,8 +19290,8 @@ let GCM=null;                      // the static map (built once from GM_P)
 const GR_TAX=['Low','Normal','High'],GR_TAXK=[.55,1,1.6],GR_TAXU=[-9,0,24];
 const GR_PROXY={NA:['US'],SAM:['US'],EU:['DE','FR','EU','US'],ME:['SA','EG'],AF:['EG','SA'],SA:['IN','PK'],EA:['CN','KR'],SEA:['CN','KR'],OC:['US']};
 const GR_REGIONS=[['World',null],['North America',[20,60,700,560]],['South America',[250,600,420,560]],['Europe & Russia',[800,40,720,470]],['Middle East & N. Africa',[1050,330,620,470]],['South Asia',[1380,380,440,380]],['East Asia',[1800,240,520,420]],['Africa',[820,620,500,560]],['SE Asia & Oceania',[1760,600,600,560]]];
-const GR_MIX=[['inf',.46],['at',.14],['tank',.16],['arty',.08],['aa',.06],['heli',.05]];
-const GR_RECRUIT=[['inf',4,1],['at',2,1],['tank',2,2],['arty',2,2],['aa',2,1],['heli',1,2]];   // kind, batch size, turns to arrive
+const GR_MIX=[['inf',.46],['at',.14],['tank',.16],['arty',.08],['aa',.06],['heli',.05],['drone',.04]];
+const GR_RECRUIT=[['inf',4,1],['at',2,1],['tank',2,2],['arty',2,2],['aa',2,1],['heli',1,2],['drone',3,1]];   // kind, batch size, turns to arrive
 const GR_HOLY=new Set(['Najaf']);   // provinces with a holy city (RV Call to the Shrines)
 const GR_VBASE=42000;              // start strength (unit value) of every full nation - same for all (Abdullah: all nations equally strong)
 function grRng(s){return mulberry((s|0)^0x5bd1e995);}
@@ -19410,7 +19458,7 @@ function grDrop(a){const i=GC.armies.indexOf(a);if(i>=0){GC.armies.splice(i,1);t
 function grRetreatTo(a,from){const P=GCM.P;let best=-1,bs=-1e9;for(const j of P[from].adj){if(!P[j].land)continue;const w=GC.prov[j].o;if(w!==a.o)continue;const s=-grDist(j,GC.nat[a.o].cap)*.01+(j===a.from?5:0);if(s>bs){bs=s;best=j;}}return best;}
 
 function grMovePhase(){GC.q=[];const P=GCM.P;
-  for(const a of GC.armies.slice().sort((x,y)=>x.id-y.id)){a.arr=0;if(!a.path.length)continue;const nx=a.path[0],c=grEdge(a.at,nx);
+  for(const a of GC.armies.slice().sort((x,y)=>x.id-y.id)){a.arr=0;gdrMove(a);if(!a.path.length)continue;const nx=a.path[0],c=grEdge(a.at,nx);
     if(!c||(P[nx].land&&GC.prov[nx].o!==a.o&&!grAtWar(a.o,GC.prov[nx].o))||gdDmz(nx)){a.path=[];a.pg=0;continue;}   // order no longer legal (peace, border closed, demilitarised zone)
     if(gmilSeaDenied(a,nx))continue;   /* no escort and the sea is held by an enemy fleet: the column waits in port */
     if(geDry(a.o)&&(GC.turn&1))continue;   /* out of fuel: columns crawl, a step every other turn */
@@ -19470,7 +19518,7 @@ function grJudge(){if(!GC.me||GC.over)return;const me=GC.me;if(GC.nat[me].dead){
 
 // ---------- player orders ----------
 function grOrderMove(aid,to){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return {err:'no army'};const r=grPath(a.o,a.at,to,a.fl);if(!r)return {err:a.fl?'Fleets sail between sea zones only.':'No route (check ports, seas and borders).'};
-  if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;return {ok:1,r};}
+  if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;a.dg=0;return {ok:1,r};}
 function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;if(typeof grOverlord==='function'&&grOverlord(a))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);try{glgDeclare(a,b);}catch(e){console.error('glgDeclare',e);}}   // laneG: allies/guarantors join
 function grRecruit(c,pi,k){const st=GC.prov[pi];if(st.o!==c)return 'Not your province.';const fac=grNat(c).fac,rc=GR_RECRUIT.find(r=>r[0]===k);if(!rc||!grHasKind(fac,k))return 'Not available.';const T=geRecruitTerms(c,pi,k,rc[1]),cost=T.cost;
   if(GC.nat[c].cash<cost)return 'Not enough money.';if(GC.nat[c].e.man<T.man)return 'Not enough manpower ('+Math.round(GC.nat[c].e.man)+' of '+T.man+').';GC.nat[c].cash-=cost;GC.nat[c].e.man-=T.man;st.rq.push([GC.turn+T.turns,k,rc[1]]);return '';}
@@ -19504,7 +19552,7 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
     if(!wars.length&&grNat(c).major&&GC.turn>=3&&R()<.15){let best=null,bv=1e18;for(const p of mine)for(const j of p.adj){const q=P[j];if(!q.land)continue;const w=GC.prov[j].o;if(w===c||GC.nat[w].dead||grAllied(c,w)||grOpinion(c,w)>=40)continue;const v=grProvDef(j)+GC.armies.filter(a=>a.at===j).reduce((s,a)=>s+grArmyVal(a),0);if(v<bv||(v===bv&&w<best)){bv=v;best=w;}}if(best){grDeclare(c,best);wars.push(best);}}
     // recruit: keep a reserve, spend the rest at the frontier province (or the capital)
     if((grNat(c).major||wars.length)&&!((typeof gfOver==='function'&&gfOver(c))||(N.e&&N.e.br&&(N.inc|0)<0))||(wars.length&&grCapHeld(c,null)<grCapThreat(c))){const front=mine.map(p=>[p,p.adj.filter(j=>P[j].land&&GC.prov[j].o!==c&&(wars.includes(GC.prov[j].o))).length*3+(p.i===N.cap?1:0)]).sort((a,b)=>b[1]-a[1]||a[0].i-b[0].i)[0][0];
-      let guard=0;while(N.cash>1500&&guard++<6){const k=GR_RECRUIT.filter(r=>grHasKind(fac,r[0]))[Math.floor(R()*3.4)%4]||GR_RECRUIT[0];if(grRecruit(c,front.i,k[0]))break;}}
+      let guard=0;while(N.cash>1500&&guard++<6){let k=GR_RECRUIT.filter(r=>grHasKind(fac,r[0]))[Math.floor(R()*3.4)%4]||GR_RECRUIT[0];if(GC.turn%5===2&&grHasKind(fac,'drone')){const dk=GR_RECRUIT.find(r=>r[0]==='drone');if(dk)k=dk;}   /* gair: AI buys drones by the same rules */if(grRecruit(c,front.i,k[0]))break;}}
     // armies: merge idle ones at the same place, then march on the weakest reachable enemy province; keep the capital defended
     grAIArmies(c,R,wars);
     // tax: AI keeps rear provinces on High, the front on Normal
@@ -20395,7 +20443,7 @@ function grMapFor(p,b){const ok=k=>k&&MAPS[k]&&(MAPS[k].min||2)<=2;if(ok(p.map))
   return {d:'oasis',m:'zagros',f:'heartland',u:'mesopotamia',j:'caribbean',s:'arctic',c:'harbour',r:'rivers'}[p.t]||'oasis';}
 function grFacKind(fac,k){return grHasKind(fac,k)?k:'inf';}
 // lay a block of units out behind point (cx,cy) facing angle a
-function grandPlace(team,recs,cx,cy,a,gr){const fac=G.teams[team].fac,ord={tank:0,champ:1,heli:2,at:3,inf:4,aa:5,arty:6};const L=recs.slice().sort((p,q)=>(ord[p[0]]??4)-(ord[q[0]]??4));
+function grandPlace(team,recs,cx,cy,a,gr){const fac=G.teams[team].fac,ord={tank:0,champ:1,heli:2,drone:2,jet:2,at:3,inf:4,aa:5,arty:6};const L=recs.slice().sort((p,q)=>(ord[p[0]]??4)-(ord[q[0]]??4));
   const n=L.length,cols=Math.max(3,Math.ceil(Math.sqrt(n*1.8))),ca=Math.cos(a),sa=Math.sin(a);
   L.forEach((rec,i)=>{const row=Math.floor(i/cols),col=i%cols,along=-row*34,side=(col-(cols-1)/2)*34;const x=cx+ca*along-sa*side,y=cy+sa*along+ca*side;
     const k=grFacKind(fac,rec[0]),dom=stats(fac,k).dom||'ground';const p=dom==='air'?[Math.max(60,Math.min(MAPW-60,x)),Math.max(60,Math.min(MAPH-60,y))]:(nearestPassXY(dom,x,y)||[x,y]);
@@ -20410,7 +20458,7 @@ function grandBattleSetup(g){const gr=G.grand={b:g.bi,t0:0,limit:GB_LIMIT,att:g.
       if(G.ents.some(e=>e.isB&&Math.hypot(e.x-q[0],e.y-q[1])<70))continue;addBld(t,kind,q[0],q[1],true);placed++;}}
   /* A3b: a battered army starts the Fight-it already shaken (fear head-start, fades like any fear); Zealous/fearless units ignore it via fearlessT */
   if(g.mr)for(const e of G.ents){if(e.isB||e.dead||!canRout(e))continue;const f=g.mr[e.team];if(f!=null&&f<.95)e.fear=(1-f)*courageOf(e)*.6;}
-  try{gmApply();}catch(e){console.error('gmApply',e);}try{gmilApplyPerks(gr,g.gp);}catch(e){console.error('gmilApplyPerks',e);}   /* grand3: the general's trait perks */
+  try{gmApply();}catch(e){console.error('gmApply',e);}try{gdrApplyBattle(g.dr);}catch(e){console.error('gdrApplyBattle',e);}try{gmilApplyPerks(gr,g.gp);}catch(e){console.error('gmilApplyPerks',e);}   /* grand3: the general's trait perks */
   if(g.fuel)G.teams.forEach((T,t)=>{if(g.fuel[t]!=null)T.fuel=Math.max(0,Math.min(1,g.fuel[t]));});   // fuel comes from the army's stock on the map (grand2)
   for(let t=0;t<2;t++){gr.n0[t]=G.ents.filter(e=>e.team===t&&!e.isB).length;gr.v0[t]=grandForce(t);}
   gr.ctr=[(BASES[0][0]+BASES[1][0])/2,(BASES[0][1]+BASES[1][1])/2];
@@ -20453,9 +20501,12 @@ function grandBattleStart(b){   // called by the grand-map UI: build the two uni
     const side=a.o===nat0?0:a.o===nat1?1:-1;if(side<0||!a.u.length)continue;if(wn[side]>=3)continue;if(GCM.P[a.at].land&&GC.prov[a.at].o!==a.o&&!grAtWar(a.o,GC.prov[a.at].o)&&GC.prov[a.at].o!==a.o)continue;
     const recs=a.u.slice(0,24);wn[side]++;waves.push({t:70+wn[side]*50,side,recs,label:a.nm,done:0,aid:a.id});rf.push(a.id);}
   const attTeam=meAtt?0:1,from=b.att.map(id=>(GC.armies.find(a=>a.id===id)||{}).from).find(f=>f>=0),gm=P.sea?{key:'coral',real:0,tp:null}:gmMap(b.p,from),   /* a sea zone is fought on a naval map */
-    cfg={bi:{p:b.p},att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[],fv:[0,1].map(t=>{try{return ldrFervour(t?nat1:nat0,b.p)?1:0;}catch(e){return 0;}}),mr:[meAtt?S:D,meAtt?D:S].map(L=>{try{let w=0,m=0;for(const x of L){const n=x.u.length||1;w+=n;m+=n*gmMor(x.arr)/gmMorMax(x.arr);}return w?m/w:1;}catch(e){return 1;}})};
+    cfg={bi:{p:b.p},dr:[gdrSide(meAtt?S:D),gdrSide(meAtt?D:S)],att:attTeam,pn:P.n,sides:[side0,side1],waves,fort:0,sam:false,fuel:[geSideFuel(meAtt?S:D,b.p),geSideFuel(meAtt?D:S,b.p)],mir:P.sea?null:{pi:b.p,real:gm.real,tp:gm.tp,nat:[nat0,nat1]},gp:null,hero:[],fv:[0,1].map(t=>{try{return ldrFervour(t?nat1:nat0,b.p)?1:0;}catch(e){return 0;}}),mr:[meAtt?S:D,meAtt?D:S].map(L=>{try{let w=0,m=0;for(const x of L){const n=x.u.length||1;w+=n;m+=n*gmMor(x.arr)/gmMorMax(x.arr);}return w?m/w:1;}catch(e){return 1;}})};
   /* grand3: each side's best general stands in the battle as the hero squad (the army's own if it has one, else a fresh one) */
   try{const gp=[gmilPerk(meAtt?S:D),gmilPerk(meAtt?D:S)];cfg.gp=gp;[[side0,f0],[side1,f1]].forEach(([L,fc],t)=>{if(gp[t]&&grHasKind(fc,'champ')&&!L.some(r=>r[0]==='champ')){const r=['champ',100,Math.round(gp[t].lv*40),100];L.push(r);cfg.hero[t]=r;}});}catch(e){console.error('gmil hero',e);}   // forts / SAM / airfield... come from the province's buildings (gmApply)
+  /* gair (Abdullah 2026-11-07 20:28): jets come as LIMITED SORTIES from airfields/carriers in range, minus the enemy's air defence; they fly in from the map edge at 45 s and are spent on the map (grandWriteBack). Drones/helis travel as army units. */
+  try{[[nat0,f0,0,nat1],[nat1,f1,1,nat0]].forEach(([c,fc,t,ec])=>{if(!grHasKind(fc,'jet'))return;let n=Math.min(4,geSortieStock(c,b.p,280));if(GC.prov[b.p].o!==c&&geEff(b.p,'aa')>0)n=Math.floor(n/2);if(n<=0)return;
+    waves.push({t:45,side:t,recs:Array.from({length:n},()=>['jet',100,0,100]),label:n+' air sorties',done:0,jet:1});});}catch(e){console.error('gair sorties',e);}
   GB_CUR={b,cfg,meAtt,nat0,nat1,rf};
   try{initAudio();}catch(e){}
   MODE='single';ME=0;setup.p=f0;setup.d=1;TERR_DEFER=true;
@@ -20466,7 +20517,10 @@ let GB_CUR=null;
 function grandFightLive(b){grandScreenShow(false);try{grandBattleStart(b);}catch(e){console.error('Fight it live failed',e);try{LOAD.tok++;loadHide();}catch(_){}G=null;GB_CUR=null;MODE='single';ME=0;
   grandScreenShow(true);guModal('<div style="font-size:19px;font-weight:bold;margin-bottom:6px">The live battle could not start</div><div style="opacity:.8;margin-bottom:10px">'+String(e&&e.message||e).replace(/[<&]/g,'').slice(0,160)+'</div>The generals will auto-resolve this battle instead.',[['OK',()=>{grBattleDone(b,grBattleAuto2(b),'auto');grandMapRefresh();},1]]);}}
 // write the survivors back and show the result
-function grandWriteBack(){const g=G.grand;try{const sd=GB_CUR.meAtt?['att','def']:['def','att'];sd.forEach((side,t)=>{const T=G.teams[t];if(!T||T.fuel==null)return;for(const s of grSideUnits(GB_CUR.b,side))if(s.arr)s.arr.fu=Math.round(T.fuel*100);});}catch(e){}try{gmWriteBack();}catch(e){console.error('gmWriteBack',e);}for(const [rec,e,team] of g.ents){const dead=e.dead||!G.byId.has(e.id);if(dead){rec.dead=1;if(rec[0]==='champ'&&g.gp&&g.gp[team]){try{gmilHeroFell(g.gp[team].gid);}catch(e){}}continue;}rec[1]=Math.max(1,Math.round(e.hp/e.max*100));rec[2]=Math.round(e.xp||rec[2]);if(e.s&&e.s.ammo)rec[3]=Math.max(0,Math.min(100,Math.round((e.ammo||0)/e.s.ammo*100)));}
+function grandWriteBack(){const g=G.grand;
+  try{[GB_CUR.nat0,GB_CUR.nat1].forEach((c,t)=>{const N=GC.nat[c];if(!N||!N.e)return;let fl=0,lost=0;for(const w of g.waves)if(w.jet&&w.side===t&&w.done){fl+=w.recs.length;for(const r of w.recs){const x=g.ents.find(q=>q[0]===r);if(!x||x[1].dead||!G.byId.has(x[1].id))lost++;}}
+      if(fl){N.e.fuel=Math.max(0,N.e.fuel-6*fl);N.cash=Math.max(0,N.cash-Math.round(lost*grCost(grNat(c).fac,'jet')*.5));if(c===GC.me)try{grLog(fl+' sorties flown, '+lost+' jets lost.',c);}catch(e){}}});}catch(e){console.error('gair spend',e);}   // gair: sorties are spent on the grand map; downed jets cost half their price
+try{const sd=GB_CUR.meAtt?['att','def']:['def','att'];sd.forEach((side,t)=>{const T=G.teams[t];if(!T||T.fuel==null)return;for(const s of grSideUnits(GB_CUR.b,side))if(s.arr)s.arr.fu=Math.round(T.fuel*100);});}catch(e){}try{gmWriteBack();}catch(e){console.error('gmWriteBack',e);}for(const [rec,e,team] of g.ents){const dead=e.dead||!G.byId.has(e.id);if(dead){rec.dead=1;if(rec[0]==='champ'&&g.gp&&g.gp[team]){try{gmilHeroFell(g.gp[team].gid);}catch(e){}}continue;}rec[1]=Math.max(1,Math.round(e.hp/e.max*100));rec[2]=Math.round(e.xp||rec[2]);if(e.s&&e.s.ammo)rec[3]=Math.max(0,Math.min(100,Math.round((e.ammo||0)/e.s.ammo*100)));}
   const strip=arr=>{for(let i=arr.length-1;i>=0;i--)if(arr[i].dead)arr.splice(i,1);};const b=GB_CUR.b;
   for(const s of grSideUnits(b,'att').concat(grSideUnits(b,'def')))strip(s.u);
   for(const id of GB_CUR.rf){const a=GC.armies.find(x=>x.id===id);if(a)strip(a.u);}}
@@ -20633,6 +20687,7 @@ function grandOpen(){grMap();if(!GC)return;campClose();let e=document.getElement
     {const tg=ev.target&&ev.target.tagName;if(tg!=='INPUT'&&tg!=='TEXTAREA'&&tg!=='SELECT'&&!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&!document.getElementById('gModal')){   /* time keys (the grand map's key table): Space pause, + / − speed, 1–5 speed */
       if(ev.key===' '){ev.preventDefault();guSpeed(GV.spd?0:(GV.lastSpd||2));return;}if(ev.key==='+'||ev.key==='='){guSpeed((GV.spd||GV.lastSpd||1)+1);return;}if(ev.key==='-'||ev.key==='_'){if(GV.spd>1)guSpeed(GV.spd-1);return;}
       if(ev.key==='o'||ev.key==='O'){GV.outl=!GV.outl;gmPaint();return;}
+      if((ev.key==='t'||ev.key==='T')&&GV.selA&&GC.ph==='plan'){const e=grDrill(GV.selA);if(e){GV.hint=e;guHint();}grSave();guSide();guRedraw();return;}   /* T = drill the selected army */
       if(ev.key>='1'&&ev.key<='5'&&ev.key.length===1){guSpeed(+ev.key);return;}}}
     if(GV.g3)return;const k=ev.key.toLowerCase(),st=60;if(k==='w'||k==='arrowup')GV.oy+=st;else if(k==='s'||k==='arrowdown')GV.oy-=st;else if(k==='a'||k==='arrowleft')GV.ox+=st;else if(k==='d'||k==='arrowright')GV.ox-=st;else return;guClamp();guRedraw();});}}
 function guArmyTip(aid,mx,my){const t=document.getElementById('gTip'),a=GC.armies.find(x=>x.id===aid);if(!t||!a||!grSeen(a)){if(t)t.style.display='none';return;}
@@ -20739,7 +20794,7 @@ function guArmyRows(pi){const L=guProvArmies(pi);if(!L.length)return '<div style
     if(mine&&a.id===GV.selA)h+='<div class="gActs" data-a="'+a.id+'" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px"><button data-act="split">Split in half</button><button data-act="merge">Merge here</button><button data-act="stop">Cancel orders</button>'+gmilActBtns(a)+'</div>';}
   return h;}
 function guBindArmies(s,pi){s.querySelectorAll('.gArmy').forEach(e=>{e.onclick=()=>{GV.selA=+e.dataset.a;guSide();guRedraw();};});
-  s.querySelectorAll('.gActs button').forEach(b=>{b.style.cssText='padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;font-size:13px';b.onclick=()=>{const id=+b.parentNode.dataset.a;if(GC.ph!=='plan')return;if(b.dataset.act==='split'){const n=grSplit(id);if(n)GV.selA=n.id;}else if(b.dataset.act==='merge')grMerge(id);else if(b.dataset.act==='front')gmilCycleFront(id);else if(b.dataset.act==='mine')gmilMinesBtn(id);else{const a=GC.armies.find(x=>x.id===id);if(a){a.path=[];a.pg=0;}}grSave();guSide();guRedraw();};});}
+  s.querySelectorAll('.gActs button').forEach(b=>{b.style.cssText='padding:4px 8px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;font-size:13px';b.onclick=()=>{const id=+b.parentNode.dataset.a;if(GC.ph!=='plan')return;if(b.dataset.act==='split'){const n=grSplit(id);if(n)GV.selA=n.id;}else if(b.dataset.act==='merge')grMerge(id);else if(b.dataset.act==='front')gmilCycleFront(id);else if(b.dataset.act==='mine')gmilMinesBtn(id);else if(b.dataset.act==='drill'){const e=grDrill(id);if(e){GV.hint=e;guHint();}}else{const a=GC.armies.find(x=>x.id===id);if(a){a.path=[];a.pg=0;}}grSave();guSide();guRedraw();};});}
 function guLog(){const l=document.getElementById('gLog');if(!l||!GC)return;const rows=GC.log.slice(-60).reverse().filter((r,i)=>i<45);l.innerHTML='<div style="font-weight:bold;margin-bottom:3px">War diary</div>'+rows.map(r=>'<div style="'+(r[2]&&r[2]===GC.me?'color:#ffe9a6':'opacity:.82')+'"><span style="opacity:.55">'+grDateStr(r[0],0)+'</span> '+r[1]+'</div>').join('');}
 function guConfirm(title,body,yes,no){guModal('<h2 style="margin:0 0 8px;font-size:21px">'+title+'</h2><div style="line-height:1.5;margin-bottom:12px">'+body+'</div>',[['Yes',yes,1],['No',no||null,0]]);}
 function guModal(html,btns){const old=document.getElementById('gModal');if(old)old.remove();const m=guEl('div','position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;');m.id='gModal';const c=guEl('div','background:#142231;border:1px solid #4a6580;border-radius:10px;padding:16px 20px;max-width:min(560px,92vw);color:#e8e4d8;font-size:16px;');c.innerHTML=html;
@@ -20792,10 +20847,12 @@ function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new 
 GV.selM=GV.selM||new Set();
 /* select all (Abdullah 2026-11-07 16:17-16:23): Ctrl+A = all your armies, N = all your navies (Ctrl+N belongs to the browser);
    Ctrl+D drones / Ctrl+M missiles come when those exist as map units (PLAN-SAT SEL). Also buttons in the bottom campaign bar. */
+function gmSelDrones(){if(!GC||!GC.armies)return;const L=GC.armies.filter(a=>a.o===GC.me&&a.u.some(r=>r[0]==='drone')).map(a=>a.id);if(L.length)gmSet(L);else if(typeof gevToast==='function')try{gevToast(['You have no drone armies']);}catch(e){}}   // gair: Ctrl+D (Ctrl+M: missiles are strikes, not map items)
 function gmSelAll(sea){if(!GC||!GC.armies)return;const L=GC.armies.filter(a=>a.o===GC.me&&!!(GCM.P[a.at]&&GCM.P[a.at].sea)===!!sea).map(a=>a.id);if(L.length)gmSet(L);else if(typeof gevToast==='function')try{gevToast([sea?'You have no navies':'You have no armies']);}catch(e){}}
 if(typeof window!=='undefined'&&!window._gSelAll){window._gSelAll=1;addEventListener('keydown',ev=>{const gs=document.getElementById('grandScreen');if(!gs||gs.style.display==='none'||(typeof G!=='undefined'&&G))return;
   const tg=ev.target&&ev.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT'||document.getElementById('gModal'))return;const k=(ev.key||'').toLowerCase();
   if((ev.ctrlKey||ev.metaKey)&&!ev.shiftKey&&!ev.altKey&&k==='a'){ev.preventDefault();gmSelAll(false);}
+  else if((ev.ctrlKey||ev.metaKey)&&!ev.shiftKey&&!ev.altKey&&k==='d'){ev.preventDefault();gmSelDrones();}
   else if(!ev.ctrlKey&&!ev.metaKey&&!ev.altKey&&k==='n'){ev.preventDefault();gmSelAll(true);}});}
 function gmMine(id){const a=GC&&GC.armies.find(x=>x.id===id);return a&&a.o===GC.me?a:null;}
 function gmIds(){return GV.selM&&GV.selM.size>1?[...GV.selM].filter(gmMine):(GV.selA?[GV.selA]:[]);}
@@ -21032,8 +21089,8 @@ function g3BuildLights(grp){const T=g3Towns(),pos=[],ph=[],sz=[];
     float s=halo>.5?aSz*(7.+uFar*5.):aSz*2.2;gl_PointSize=clamp(s*uPx/-mv.z,halo>.5?6.:2.5,halo>.5?150.:14.);vA=(halo>.5?(.3+.2*uFar)*(.5+1.8*uNight):.55+.6*uNight)*tw;}`,
     fragmentShader:`varying float vA;varying float vH;void main(){vec2 q=gl_PointCoord-.5;float d=length(q);if(d>.5)discard;float f=1.-smoothstep(0.,.5,d);f=vH>.5?f*f:f*f*f;gl_FragColor=vec4(vec3(1.,.74,.38)*(vH>.5?.9:1.1),f*vA);}`});
   const pts=new THREE.Points(g,m);pts.frustumCulled=false;pts.renderOrder=7;grp.add(pts);G3.lights=pts;}
-// ---- chunked terrain LOD (gterrain): 8x4 chunks of 300 units, step 2 near / 4 mid / 6 far, analytic smooth normals, skirts hide LOD cracks, off-screen chunks are culled
-const G3_CH=300,G3_LODS=[2,4,6],G3_LODR=[430,1050];
+// ---- chunked terrain LOD (gterrain): 4x2 chunks of 600 units (few draw calls), step 3 near / 6 mid / 8 far, analytic smooth normals, skirts hide LOD cracks, off-screen chunks are culled
+const G3_CH=600,G3_LODS=[3,6,8],G3_LODR=[380,950];
 function g3TerrChunk(ci,cj,step){const n=G3_CH/step,V=n+1,ox=ci*G3_CH,oz=cj*G3_CH,e=5,nsk=4*n+4,NV=V*V+nsk*2;
   const pos=new Float32Array(NV*3),nor=new Float32Array(NV*3),uv=new Float32Array(NV*2),ix=new Uint32Array((n*n+4*n)*6);
   const put=(q,x,z,drop)=>{const h=(4*g3HeightAt(x,z)+g3HeightAt(x-2,z)+g3HeightAt(x+2,z)+g3HeightAt(x,z-2)+g3HeightAt(x,z+2))/8,nx=g3HeightAt(x-e,z)-g3HeightAt(x+e,z),nz=g3HeightAt(x,z-e)-g3HeightAt(x,z+e),l=Math.hypot(nx,2*e,nz);
@@ -21044,11 +21101,11 @@ function g3TerrChunk(ci,cj,step){const n=G3_CH/step,V=n+1,ox=ci*G3_CH,oz=cj*G3_C
   const ring=edge.length,base=sk;for(let k=0;k<ring;k++){const q=edge[k];put(sk++,pos[q*3],pos[q*3+2],8);}
   for(let k=0;k<ring;k++){const a=edge[k],b=edge[(k+1)%ring],sa=base+k,sb=base+(k+1)%ring;ix[t++]=a;ix[t++]=b;ix[t++]=sa;ix[t++]=b;ix[t++]=sb;ix[t++]=sa;}
   const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('normal',new THREE.BufferAttribute(nor,3));g.setAttribute('uv',new THREE.BufferAttribute(uv,2));g.setIndex(new THREE.BufferAttribute(ix.subarray(0,t),1));
-  g.boundingSphere=new THREE.Sphere(new THREE.Vector3(ox+G3_CH/2,30,oz+G3_CH/2),G3_CH*.75+30);return g;}
+  g.boundingSphere=new THREE.Sphere(new THREE.Vector3(ox+G3_CH/2,30,oz+G3_CH/2),G3_CH*.72+40);return g;}
 function g3TerrInit(sc,mat){const grp=new THREE.Group(),ch=[];for(let cj=0;cj<1200/G3_CH;cj++)for(let ci=0;ci<2400/G3_CH;ci++){const m=new THREE.Mesh(g3TerrChunk(ci,cj,G3_LODS[2]),mat);m.userData={ci,cj,lod:2,geo:[null,null,m.geometry]};ch.push(m);grp.add(m);}
   G3.terr=grp;G3.terrCh=ch;sc.add(grp);g3TerrLOD(0);}
 function g3TerrLOD(maxBuild){const cam=G3.cam,C=G3.terrCh;if(!cam||!C)return;let built=0;const p=cam.position;
-  for(const m of C){const u=m.userData,cx=u.ci*G3_CH+G3_CH/2,cz=u.cj*G3_CH+G3_CH/2,d=Math.hypot(cx-p.x,p.y*.7,cz-p.z)-G3_CH*.5,want=d<G3_LODR[0]?0:d<G3_LODR[1]?1:2;
+  for(const m of C){const u=m.userData,cx=u.ci*G3_CH+G3_CH/2,cz=u.cj*G3_CH+G3_CH/2,d=Math.hypot(Math.max(0,Math.abs(cx-p.x)-G3_CH*.5),p.y*.7,Math.max(0,Math.abs(cz-p.z)-G3_CH*.5)),want=d<G3_LODR[0]?0:d<G3_LODR[1]?1:2;
     if(want===u.lod)continue;if(!u.geo[want]){if(built>=(maxBuild==null?5:maxBuild))continue;u.geo[want]=g3TerrChunk(u.ci,u.cj,G3_LODS[want]);built++;}
     m.geometry=u.geo[want];u.lod=want;if(want===2||want===1){if(u.geo[0]&&want!==0){u.geo[0].dispose();u.geo[0]=null;}}}}
 // gforest (Abdullah 2026-11-07 19:29 Total War reference "This level of graphics"): dense forests from the real land cover.
@@ -21332,7 +21389,7 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
       float crest=1.-smoothstep(fw*.6,fw*1.8,abs(s.g-(.52+.02*sin(uTime*.9+p.x*.2+p.y*.17))));c=mix(c,vec3(.96,.99,1.),crest*.8);   // crisp shoreline foam line, constant width on screen
       if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){vec4 ov=texture2D(uOv,cu);c=mix(c,ov.rgb,ov.a*.55);c=g3rimS(c,cu);}
       float dist=length(cameraPosition-vW);c*=mix(g3cloud(vW.xz,uTime),1.,smoothstep(1500.,4200.,dist));c=mix(c,vec3(.616,.722,.788),smoothstep(2200.,6200.,dist));gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
-  const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);
+  const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);g3BuildRoads(sc);
   const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);g3BuildChim(grp);g3BuildLights(grp);G3.static=grp;
   G3.ents=new THREE.Group();sc.add(G3.ents);G3.arrows=new THREE.Group();sc.add(G3.arrows);
   G3.ringM=new THREE.Mesh(new THREE.PlaneGeometry(2.6,2.6).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({map:g3RingTex(),color:0xffe27a,transparent:true,depthTest:false,depthWrite:false}));G3.ringM.renderOrder=5;G3.ringM.visible=false;sc.add(G3.ringM);try{g3ShipInit(sc);}catch(e){G3.ship=null;}
@@ -21345,9 +21402,11 @@ function g3Resize(){if(!G3.R||!GV.cv)return;const w=GV.w||GV.cv.clientWidth||800
 function g3Uniform(o){const c=grNatRgb(o);return [Math.min(1,(c[0]*.72+44)/255),Math.min(1,(c[1]*.72+42)/255),Math.min(1,(c[2]*.68+34)/255)];}
 function g3Tier(n){return n<5?0:n<12?1:2;}
 function g3FlagMat(tex,inst){const m=new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}),mx=inst?'instanceMatrix[3].x':'modelMatrix[3].x';
-  m.onBeforeCompile=s=>{s.uniforms.uT=G3.flagT||(G3.flagT={value:0});s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nuniform float uT;').replace('#include <begin_vertex>','#include <begin_vertex>\n transformed.z+=sin(uT*3.2+transformed.x*.9+'+mx+'*.07)*.16*transformed.x;transformed.y+=sin(uT*2.1+transformed.x*.6)*.05*transformed.x;');};
+  /* cloth: gentle travelling wave (grows from the pole), with a fold shade so it reads as fabric, not a flat plane */
+  m.onBeforeCompile=s=>{s.uniforms.uT=G3.flagT||(G3.flagT={value:0});s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nuniform float uT;varying float vSh;').replace('#include <begin_vertex>','#include <begin_vertex>\n float ph=uT*2.6+transformed.x*1.1+'+mx+'*.07;float am=transformed.x*.11;transformed.z+=sin(ph)*am*1.5+sin(ph*.5+transformed.y*.8)*am*.5;transformed.y+=sin(uT*1.7+transformed.x*.6)*.03*transformed.x-transformed.x*transformed.x*.012;vSh=.84+.22*cos(ph)*min(1.,transformed.x*.5);');
+    s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nvarying float vSh;').replace('#include <map_fragment>','#include <map_fragment>\n diffuseColor.rgb*=vSh;');};
   return m;}
-function g3FlagMesh(o,sx){const fac=grNat(o).fac,tex=flagTex(fac),m=new THREE.Mesh(G3.flagGeo||(G3.flagGeo=new THREE.PlaneGeometry(7,4.6,10,1).translate(3.5,0,0)),g3FlagMat(tex,false));
+function g3FlagMesh(o,sx){const fac=grNat(o).fac,tex=flagTex(fac),m=new THREE.Mesh(G3.flagGeo||(G3.flagGeo=new THREE.PlaneGeometry(7,4.6,16,6).translate(3.5,0,0)),g3FlagMat(tex,false));
   return m;}
 /* perf (laneC PERF 2026-11-07): army bodies, flags and wakes are drawn as pooled InstancedMeshes (one draw per miniature / flag / wake kind)
    instead of 2-3 meshes per army; the per-army Group still carries position/scale and its meshes stay in it, hidden, as the matrix source */
@@ -21370,7 +21429,7 @@ function g3FlagInstMat(tex){const M=G3.bat.fm||(G3.bat.fm=new Map());let m=M.get
 function g3ShadowMesh(r){if(!G3.shG){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d'),gr=x.createRadialGradient(32,32,2,32,32,31);gr.addColorStop(0,'rgba(0,0,0,.55)');gr.addColorStop(.6,'rgba(0,0,0,.3)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);G3.shG=new THREE.PlaneGeometry(2,2).rotateX(-Math.PI/2).translate(0,.2,0);G3.shM=new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false});}const m=new THREE.Mesh(G3.shG,G3.shM);m.scale.setScalar(r);return m;}
 function g3Ent(a){let e=G3.arm.get(a.id);const sea=GCM.P[a.at].sea,tier=g3Tier(a.u.length),mg=sea?g3NavyGeo(a.o):g3MiniGeo(a.o,tier);   /* grandlook: baked soldier/ship miniature when the models are loaded */
   if(e&&e.sea===sea&&e.o===a.o&&(sea||e.tier===tier)&&!!e.mini===!!mg)return e;if(e){G3.ents.remove(e.g);}
-  const g=new THREE.Group(),body=new THREE.Mesh(mg||(G3.noGeo||(G3.noGeo=new THREE.BufferGeometry())),G3.matLit),fl=g3FlagMesh(a.o);
+  const g=new THREE.Group(),body=new THREE.Mesh(mg||(G3.noGeo||(G3.noGeo=new THREE.BufferGeometry())),(mg&&typeof g3ArmyMat==='function')?g3ArmyMat():G3.matLit),fl=g3FlagMesh(a.o);
   body.scale.setScalar(1);body.visible=false;fl.visible=false;g.add(body);
   if(mg){const R=tier>=2?5.2:tier>=1?4.4:3.2;fl.scale.setScalar(1);if(sea){fl.position.set(-3.4,5.5,0);{const wk=g3WakeMesh();wk.visible=false;wk.userData.wk=1;g.add(wk);}}else{fl.position.set(R*.62+.1,19.9,-R*.42);const sd=g3ShadowMesh(R*1.7);sd.userData.sh=1;sd.visible=false;g.add(fl);g.add(sd);}}
   if(!fl.parent)g.add(fl);
@@ -21393,17 +21452,8 @@ function g3BuildSmoke(){if(G3.smoke){G3.sc.remove(G3.smoke);G3.smoke.geometry.di
   G3.smoke=new THREE.Points(g,m);G3.smoke.frustumCulled=false;G3.sc.add(G3.smoke);}
 // move arrows: green along the ground for marches, red when the target is hostile
 function g3PathPts(a){const P=GCM.P,pts=[];const q=(i)=>{const p=P[i],tw=!p.sea?g3Towns().find(t=>t.pi===i):null;return [tw?tw.x:p.x,tw?tw.z:p.y];};pts.push(q(a.at));for(const j of a.path)pts.push(q(j));return pts;}
-function g3BuildArrows(){if(!G3.arrows)return;while(G3.arrows.children.length){const c=G3.arrows.children.pop();c.geometry.dispose();c.material.dispose();}if(!GC)return;const Pos=[],Col=[];
-  for(const a of GC.armies){if(!a.path.length)continue;const foe=!!GC.me&&a.o!==GC.me;if(foe&&a.id!==GV.selA&&!(grSeen(a)&&grAtWar(a.o,GC.me)))continue;const last=a.path[a.path.length-1],lp=GCM.P[last],hostile=!lp.sea&&GC.me&&grAtWar(a.o,GC.prov[last].o);
-    const c=(foe||hostile&&0)?[.95,.22,.18]:[.25,.8,.2],pts=g3PathPts(a);if(pts.length<2)continue;const cv=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(p[0],0,p[1])),false,'catmullrom',.4),n=Math.max(8,Math.round(cv.getLength()/7)),sel=a.id===GV.selA,w=sel?4:3.2;
-    const S=[];for(let i=0;i<=n;i++){const v=cv.getPoint(i/n);S.push([v.x,v.z]);}
-    for(let i=0;i<S.length;i++){const p=S[i],pr=S[Math.max(0,i-1)],nx=S[Math.min(S.length-1,i+1)];let dx=nx[0]-pr[0],dz=nx[1]-pr[1];const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;S[i]=[p[0],p[1],-dz*w/2,dx*w/2,dx,dz];}
-    const head=Math.min(S.length-1,3);for(let i=0;i<S.length-1-head;i++){const A=S[i],B=S[i+1],y0=Math.max(.8,g3HeightAt(A[0],A[1]))+1.1,y1=Math.max(.8,g3HeightAt(B[0],B[1]))+1.1,v=(x,y,z)=>{Pos.push(x,y,z);Col.push(c[0],c[1],c[2]);};
-      v(A[0]+A[2],y0,A[1]+A[3]);v(A[0]-A[2],y0,A[1]-A[3]);v(B[0]+B[2],y1,B[1]+B[3]);v(B[0]+B[2],y1,B[1]+B[3]);v(A[0]-A[2],y0,A[1]-A[3]);v(B[0]-B[2],y1,B[1]-B[3]);}
-    const T=S[S.length-1],H=S[S.length-1-head],hy=Math.max(.8,g3HeightAt(T[0],T[1]))+1.1,v=(x,y,z)=>{Pos.push(x,y,z);Col.push(c[0],c[1],c[2]);};
-    v(H[0]+H[2]*1.9,hy,H[1]+H[3]*1.9);v(H[0]-H[2]*1.9,hy,H[1]-H[3]*1.9);v(T[0]+T[4]*w*1.8,hy,T[1]+T[5]*w*1.8);}
-  if(!Pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(Pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(Col,3));
-  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,opacity:.92,depthTest:false}));m.renderOrder=4;m.frustumCulled=false;G3.arrows.add(m);}
+/* g3BuildArrows lives in src/13e2-groads.js (groads 2026-11-08) */
+/* (armies3 thick flat arrows superseded by the outlined 3D arrows in 13e2-groads.js; same rule: own = green, seen enemies at war = red) */
 // ---- HUD: mode chips, round buttons, army cards, minimap, news, banners
 function g3Css(){if(document.getElementById('g3css'))return;const s=document.createElement('style');s.id='g3css';s.textContent=`
 #g3ui{position:absolute;inset:0;pointer-events:none;overflow:hidden;font-family:inherit}
@@ -21571,6 +21621,76 @@ if(!window._g3Keys){window._g3Keys=1;const ok=ev=>{const t=ev.target&&ev.target.
   addEventListener('keyup',ev=>{G3.keys.delete(ev.key.toLowerCase());});addEventListener('blur',()=>G3.keys.clear());}
 (function g3Credits(){try{if(document.getElementById('neCred'))return;const ps=[...document.querySelectorAll('p.credits')];if(!ps.length)return;
   const p=document.createElement('p');p.className='credits';p.id='neCred';p.textContent='Grand map countries, provinces (admin-1), coastlines, lakes and rivers: Natural Earth (public domain, naturalearthdata.com), Equal Earth projection. Grand map ground detail textures are generated in-game (original, no outside assets). Grand map elevation and sea depth: Terrarium terrain tiles (Mapzen / AWS Open Data; derived from ETOPO1, GEBCO, SRTM and other public datasets). Painted ground colour and shaded relief: Natural Earth HYP_HR_SR_OB_DR cross-blended hypsometric tints (public domain).';ps[ps.length-1].insertAdjacentElement('afterend',p);}catch(e){}})();
+/* ===== groads (2026-11-08): roads, sea routes and movement arrows on the 3D grand map — drawing only, no sim state =====
+   Roads: yellow-ochre ribbons between the main towns of neighbouring land provinces (Rome/Total War look), gentle curves that follow
+   the terrain height, wider for routes between capitals/big cities, thin feeder roads from each province's smaller towns; ONE merged mesh.
+   Sea routes: thin dashed white lines between neighbouring sea provinces; ONE merged mesh. Both fade out at world zoom.
+   Arrows: thick 3D green arrows along the planned route of your armies (red for visible enemies), dark outline + soft ground shadow. */
+const GR_ROADV=`uniform vec2 uRes;uniform float uPx,uF0,uF1;attribute vec3 aP0,aP1;attribute vec2 aC;attribute vec4 aCol;attribute vec2 aW;attribute float aS;varying vec4 vCol;varying float vD,vH,vS,vDist;
+  void main(){vec4 c0=projectionMatrix*viewMatrix*vec4(aP0,1.),c1=projectionMatrix*viewMatrix*vec4(aP1,1.);vec2 s0=c0.xy/c0.w*uRes*.5,s1=c1.xy/c1.w*uRes*.5,d=s1-s0;float l=length(d);d=l>1e-4?d/l:vec2(1.,0.);vec2 n=vec2(-d.y,d.x);
+    vec3 pm=mix(aP0,aP1,aC.x);float dist=length(cameraPosition-pm);float hw=max(aW.x*uPx,aW.y*uRes.y/(.65*dist))*.5;hw=max(hw,.6*uPx);
+    vec4 c=mix(c0,c1,aC.x);float pad=hw+.75;vec2 off=n*aC.y*pad+d*(aC.x*2.-1.)*pad;c.xy+=off/(uRes*.5)*c.w;
+    vD=aC.y*pad;vH=hw;vS=aS;vDist=dist;vCol=aCol;vCol.a*=1.-smoothstep(uF0,uF1,dist);gl_Position=c;}`;
+// road: ochre core with a darker worn edge; sea: plain dashed line (dash length grows with distance so it never shimmers)
+const GR_ROADF=`uniform float uDash;varying vec4 vCol;varying float vD,vH,vS,vDist;void main(){float cv=clamp(vH+.5-abs(vD),0.,1.);vec3 col=vCol.rgb;
+  if(uDash>0.){float dl=max(uDash,vDist*.011);if(fract(vS/dl)>.55)discard;}else{float e=smoothstep(.45,1.,abs(vD)/max(vH,.5));col=mix(col,col*vec3(.42,.36,.28),e*.8);}
+  gl_FragColor=vec4(col,vCol.a*cv);if(gl_FragColor.a<.01)discard;}`;
+function grRoadMat(dash,f0,f1){const L=G3.LU;return new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,
+  uniforms:{uRes:L.uRes,uPx:L.uPx,uF0:{value:f0},uF1:{value:f1},uDash:{value:dash}},vertexShader:GR_ROADV,fragmentShader:GR_ROADF});}
+// lines: [{xy:[[x,z,y],...],c:[r,g,b,a],w:[px,world]}] -> one strip mesh (same layout as g3LineMesh + along-line distance aS)
+function grStripMesh(lines,mat){let ns=0;for(const l of lines)ns+=Math.max(0,l.xy.length-1);if(!ns)return null;
+  const P0=new Float32Array(ns*12),P1=new Float32Array(ns*12),C=new Float32Array(ns*8),Col=new Float32Array(ns*16),Wd=new Float32Array(ns*8),S=new Float32Array(ns*4),ix=new Uint32Array(ns*6);let s=0;
+  for(const l of lines){let acc=0;for(let a=0;a+1<l.xy.length;a++,s++){const A=l.xy[a],B=l.xy[a+1],sl=Math.hypot(B[0]-A[0],B[1]-A[1]);
+    for(let v=0;v<4;v++){const o=(s*4+v)*3,k=s*4+v;P0[o]=A[0];P0[o+1]=A[2];P0[o+2]=A[1];P1[o]=B[0];P1[o+1]=B[2];P1[o+2]=B[1];C[k*2]=v>>1;C[k*2+1]=(v&1)?1:-1;
+      Col.set(l.c,k*4);Wd[k*2]=l.w[0];Wd[k*2+1]=l.w[1];S[k]=acc+(v>>1)*sl;}
+    acc+=sl;const b=s*4;ix.set([b,b+1,b+2,b+2,b+1,b+3],s*6);}}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P0,3));g.setAttribute('aP0',new THREE.BufferAttribute(P0,3));g.setAttribute('aP1',new THREE.BufferAttribute(P1,3));
+  g.setAttribute('aC',new THREE.BufferAttribute(C,2));g.setAttribute('aCol',new THREE.BufferAttribute(Col,4));g.setAttribute('aW',new THREE.BufferAttribute(Wd,2));g.setAttribute('aS',new THREE.BufferAttribute(S,1));
+  g.setIndex(new THREE.BufferAttribute(ix,1));g.boundingSphere=new THREE.Sphere(new THREE.Vector3(1200,0,600),3000);const m=new THREE.Mesh(g,mat);m.frustumCulled=false;return m;}
+function grLandAt(x,z){const F=G3.F,W=F.W,cx=Math.max(0,Math.min(W-1,x/2|0)),cz=Math.max(0,Math.min(F.H-1,z/2|0));return F.Ls[cz*W+cx];}
+// a gently curved road from A to B sampled every ~2.5 units; it bends toward the lower side so it hugs valleys; null if it would cross open water
+function grRoadPts(A,B,seed){const dx=B[0]-A[0],dz=B[1]-A[1],L=Math.hypot(dx,dz);if(L<2)return null;const nx=-dz/L,nz=dx/L,mx=(A[0]+B[0])/2,mz=(A[1]+B[1])/2,o=L*.18;
+  const hl=g3HeightAt(mx+nx*o,mz+nz*o),hr=g3HeightAt(mx-nx*o,mz-nz*o),bend=(g3Hash(seed,7)-.5)*.22*L+(hr>hl+1?.12:hl>hr+1?-.12:0)*L,cx=mx+nx*bend,cz=mz+nz*bend;
+  const n=Math.max(3,Math.ceil(L/3.5)),out=[];let wet=0;
+  for(let i=0;i<=n;i++){const t=i/n,u=1-t,x=u*u*A[0]+2*u*t*cx+t*t*B[0],z=u*u*A[1]+2*u*t*cz+t*t*B[1];if(grLandAt(x,z)<.4&&++wet>2)return null;out.push([x,z,Math.max(.2,g3MeshH(x,z))+.32]);}
+  return out;}
+function g3BuildRoads(sc){try{if(!G3.F||!G3.LU)return;const P=GCM.P,T=g3Towns(),main=new Map();for(const t of T)if(t.t===0)main.set(t.pi,t);
+  const big=p=>p.cap||p.tw>=3,R=[];
+  for(const p of P){if(!p.land)continue;const a=main.get(p.i);if(!a)continue;
+    for(const j of p.adj){if(j<=p.i||!P[j].land)continue;const b=main.get(j);if(!b)continue;if(Math.hypot(b.x-a.x,b.z-a.z)>170)continue;
+      const xy=grRoadPts([a.x,a.z],[b.x,b.z],p.i*977+j);if(!xy)continue;const maj=big(p)&&big(P[j]);
+      R.push({xy,c:maj?[.96,.8,.42,.92]:[.84,.68,.38,.72],w:maj?[2,1.7]:[1.1,.8]});}
+    for(const t of T)if(t.pi===p.i&&t.t>0){const xy=grRoadPts([t.x,t.z],[a.x,a.z],p.i*31+t.t);if(xy)R.push({xy,c:[.78,.64,.38,.5],w:[.7,.5]});}}
+  const S=[];for(const p of P){if(!p.sea)continue;for(const j of p.adj){if(j<=p.i||!P[j].sea)continue;const q=P[j],L=Math.hypot(q.x-p.x,q.y-p.y);if(L>420)continue;
+      const n=Math.max(2,Math.ceil(L/6)),xy=[];let dry=0;for(let i=0;i<=n;i++){const t=i/n,x=p.x+(q.x-p.x)*t,z=p.y+(q.y-p.y)*t;if(grLandAt(x,z)>.6)dry++;xy.push([x,z,.35]);}
+      if(dry>n*.15)continue;S.push({xy,c:[.93,.96,1,.55],w:[1.3,0]});}}
+  const rm=grStripMesh(R,grRoadMat(0,750,1300)),sm=grStripMesh(S,grRoadMat(5,1600,2700));
+  if(rm){rm.renderOrder=1;sc.add(rm);}if(sm){sm.renderOrder=1;sc.add(sm);}G3.roads={n:R.length,sea:S.length,rm,sm};}catch(e){console.warn('groads',e);}}
+// move arrows: thick raised ribbon along the route (dark outline, bright centre, soft ground shadow), arrow head at the destination
+function g3BuildArrows(){if(!G3.arrows)return;while(G3.arrows.children.length){const c=G3.arrows.children.pop();c.geometry.dispose();c.material.dispose();}if(!GC)return;const Pos=[],Col=[];
+  const v=(x,y,z,c)=>{Pos.push(x,y,z);Col.push(c[0],c[1],c[2],c[3]);},quad=(A,B,ya,yb,wa,wb,ca,cb,da,db)=>{   // strip between lateral offsets wa..wb of samples A,B
+    const a0=[A[0]+A[2]*wa+(da||0),ya,A[1]+A[3]*wa+(da||0)],a1=[A[0]+A[2]*wb+(da||0),ya,A[1]+A[3]*wb+(da||0)],b0=[B[0]+B[2]*wa+(db||0),yb,B[1]+B[3]*wa+(db||0)],b1=[B[0]+B[2]*wb+(db||0),yb,B[1]+B[3]*wb+(db||0)];
+    v(...a0,ca);v(...a1,cb);v(...b1,cb);v(...a0,ca);v(...b1,cb);v(...b0,ca);};
+  for(const a of GC.armies){if(!a.path.length)continue;const mine=!GC.me||a.o===GC.me,enemy=!mine&&GC.me&&grAtWar(a.o,GC.me)&&grSeen(a);if(!mine&&!enemy&&a.id!==GV.selA)continue;
+    const pts=g3PathPts(a);if(pts.length<2)continue;const sel=a.id===GV.selA,base=mine?[.36,.9,.26]:[.95,.2,.16],w=(sel?5.2:mine?3.8:3)*(a.sea?.8:1);
+    const cv=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(p[0],0,p[1])),false,'catmullrom',.4),len=cv.getLength(),n=Math.max(8,Math.round(len/4));
+    const S=[];for(let i=0;i<=n;i++){const q=cv.getPoint(i/n);S.push([q.x,q.z]);}
+    for(let i=0;i<S.length;i++){const p=S[i],pr=S[Math.max(0,i-1)],nx=S[Math.min(S.length-1,i+1)];let dx=nx[0]-pr[0],dz=nx[1]-pr[1];const l=Math.hypot(dx,dz)||1;dx/=l;dz/=l;S[i]=[p[0],p[1],-dz/2,dx/2,dx,dz];}
+    const Y=S.map(s=>Math.max(.8,g3HeightAt(s[0],s[1]))),hl=w*2.7,hk=Math.max(1,Math.min(S.length-2,Math.round(hl/(len/n))));
+    const ol=[base[0]*.22,base[1]*.22,base[2]*.22,.95],ed=[base[0]*.7,base[1]*.7,base[2]*.7,.95],ce=[Math.min(1,base[0]*1.18+.08),Math.min(1,base[1]*1.12+.06),Math.min(1,base[2]*1.15+.06),.95],sh=[0,0,0,.3];
+    const end=S.length-1-hk,sd=w*.35;
+    for(let i=0;i<end;i++){const A=S[i],B=S[i+1],ya=Y[i],yb=Y[i+1],fa=Math.min(1,i/3);   // tail fades in
+      quad(A,B,ya+.25,yb+.25,-w*1.05,w*1.05,sh,sh,sd,sd);
+      const ta=ya+1.4,tb=yb+1.4,o=[ol[0],ol[1],ol[2],.95*(.35+.65*fa)];
+      quad(A,B,ta,tb,-w*1.12,-w*.82,o,o);quad(A,B,ta,tb,w*.82,w*1.12,o,o);
+      quad(A,B,ta,tb,-w*.82,0,[ed[0],ed[1],ed[2],.95*(.35+.65*fa)],[ce[0],ce[1],ce[2],.95*(.35+.65*fa)]);quad(A,B,ta,tb,0,w*.82,[ce[0],ce[1],ce[2],.95*(.35+.65*fa)],[ed[0],ed[1],ed[2],.95*(.35+.65*fa)]);}
+    const H=S[end],Tp=S[S.length-1],hy=Math.max(Y[end],Y[S.length-1])+1.45,hw=w*1.15,tip=[Tp[0]+Tp[4]*w*.6,Tp[1]+Tp[5]*w*.6],L0=[H[0]+H[2]*2*hw,H[1]+H[3]*2*hw],R0=[H[0]-H[2]*2*hw,H[1]-H[3]*2*hw];
+    v(L0[0]+sd,hy-1.15,L0[1]+sd,sh);v(R0[0]+sd,hy-1.15,R0[1]+sd,sh);v(tip[0]+sd,hy-1.15,tip[1]+sd,sh);   // head shadow
+    const g=1.18,Lg=[H[0]+H[2]*2*hw*g-H[4]*w*.25,H[1]+H[3]*2*hw*g-H[5]*w*.25],Rg=[H[0]-H[2]*2*hw*g-H[4]*w*.25,H[1]-H[3]*2*hw*g-H[5]*w*.25],tg=[tip[0]+Tp[4]*w*.45,tip[1]+Tp[5]*w*.45];
+    v(Lg[0],hy-.02,Lg[1],ol);v(Rg[0],hy-.02,Rg[1],ol);v(tg[0],hy-.02,tg[1],ol);   // head outline
+    v(L0[0],hy,L0[1],ed);v(H[0],hy,H[1],ce);v(tip[0],hy,tip[1],ce);v(H[0],hy,H[1],ce);v(R0[0],hy,R0[1],ed);v(tip[0],hy,tip[1],ce);}
+  if(!Pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(Pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(Col,4));
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,depthTest:false,depthWrite:false}));m.renderOrder=4;m.frustumCulled=false;G3.arrows.add(m);}
 // ===== 13f-grandmirror: a "Fight it" battle MIRRORS the province it is fought in (Abdullah 2026-11-06 08:09 "full mirror") =====
 // One map system: the province's battle map is a CUSTOM MAP (the map-editor format in 02-map.js, key cm_<hash>) generated
 // deterministically from the grand-map data (seed = province id): terrain/biome, relief, sea side, river with a bridge and a ford,
@@ -21763,7 +21883,7 @@ const GE_B={
  base:['Military base',650,2,'B','#c9a35a','Recruits here arrive 1 month sooner, +2 garrison room, resupplies armies in and next to it.'],
  airfield:['Airfield',850,3,'A','#8fc4e8','Air wings live here: sorties reach battles in range, and the airfield stands in this province\'s battle.'],
  port:['Port',550,2,'P','#6fb0d8','+50 income, sea trade, a shipyard in this province\'s battle (coast only).'],
- factory:['Factory',750,3,'F','#d9a05a','+110 income, recruits cost 8% less (3 max). Needs power.'],
+ factory:['War Factory',750,3,'F','#d9a05a','+110 income, recruits cost 8% less (3 max). Needs power.'],
  refinery:['Refinery',700,3,'R','#a58bd0','Makes 16 fuel a month from oil. Needs power and an oil province or oil stock.'],
  power:['Power plant',700,3,'E','#f2d95a','+14 on the power grid. Blackouts slow factories and recruiting.'],
  aa:['Air defence',380,2,'D','#9ad07f','A SAM site in this province\'s battle; halves bombing damage here.'],
@@ -21848,7 +21968,7 @@ function geRecruitTerms(c,pi,k,n){const fac=grNat(c).fac,N=GC.nat[c];let cost=gr
   return {cost:Math.round(cost*disc),turns:Math.max(1,turns),man:Math.round(n*(k==='inf'?7:4))};}
 function geManRegen(c){let m=0;for(const p of GE_ST[c].own){const st=GC.prov[p.i];m+=p.tw*2.4*GE_AUM[st.au|0]*(1+.06*geCount(p.i,'base'))*(st.cf===1?1+.12*(st.tr|0):1)*(st.cv>0?.5:1);}return m*(geFx(c,'manp')?1.25:1)*(GC.nat[c].e.tw?1.3:1);}
 // ---------- the per-turn nation step ----------
-function geFuelNeed(c){let f=0;for(const a of GC.armies){if(a.o!==c)continue;let k=0;for(const r of a.u){k+=(r[0]==='tank'||r[0]==='arty'||r[0]==='heli'||r[0]==='aa')?.5:.1;}f+=k*(a.path.length?1.5:1);}
+function geFuelNeed(c){let f=0;for(const a of GC.armies){if(a.o!==c)continue;let k=0;for(const r of a.u){k+=(r[0]==='tank'||r[0]==='arty'||r[0]==='heli'||r[0]==='aa')?.5:r[0]==='drone'?.25:.1;}f+=k*(a.path.length?1.5:1);}
   for(const p of GE_ST[c].own)f+=geEff(p.i,'airfield')*3*(geFx(c,'air')?.7:1);return f*(geFx(c,'fuel')?.75:1)*(GC.nat[c].e.tw?1.2:1);}
 function geArmyVal(c){let v=0;for(const a of GC.armies)if(a.o===c)v+=grArmyVal(a);return v;}
 function geTrade(c){   // trade routes between neighbouring provinces and over sea lanes; embargoes, wars, blockaded straits and sanctions cut them
@@ -22113,8 +22233,8 @@ function g3Plinth(o,r,withPole){const cy=(a,b,h,s)=>new THREE.CylinderGeometry(a
   if(withPole){L.push(g3ColGeo(cy(.16,.2,22,6),[.55,.5,.4],g3M(r*.62,11.1,-r*.42)),g3ColGeo(new THREE.SphereGeometry(.4,8,6),[.92,.78,.25],g3M(r*.62,22.3,-r*.42)));}return L;}
 function g3MiniGeo(o,tier){G3.mini=G3.mini||{};const key=o+'_'+tier;if(G3.mini[key]!==undefined)return G3.mini[key];if(!(typeof MODELS!=='undefined'&&MODELS.ready))return null;   // not cached while models load -> old figure, retried next sync
   const fac=(typeof grNat==='function'&&grNat(o)||{}).fac||o,sk=typeof solKey==='function'?solKey(fac):'sol_w',col=(typeof grNatRgb==='function'?grNatRgb(o):[90,100,60]),team={fac,color:'#'+col.map(v=>Math.round(v).toString(16).padStart(2,'0')).join('')};
-  const gen=g3BakeModel(sk,team,7.2,true);if(!gen)return G3.mini[key]=null;
-  {const cA=gen.attributes.color,pA=gen.attributes.position,un=g3Uniform(o),sk2=[.8,.6,.47];for(let i=0;i<cA.count;i++){const r=cA.getX(i),g=cA.getY(i),b=cA.getZ(i),ny=pA.getY(i)/7.2,lum=(r+g+b)/3,sat=Math.max(r,g,b)-Math.min(r,g,b);let c=null;
+  const H=7.2,gen=g3BakeModel(sk,team,H,true);if(!gen)return G3.mini[key]=null;
+  {const cA=gen.attributes.color,pA=gen.attributes.position,un0=g3Uniform(o),hh=[...o].reduce((q,ch)=>q*31+ch.charCodeAt(0)>>>0,7),tv=[.94+(hh%13)/100,.96+((hh>>4)%9)/100,.95+((hh>>8)%11)/100],un=[Math.min(1,un0[0]*tv[0]),Math.min(1,un0[1]*tv[1]),Math.min(1,un0[2]*tv[2])],sk2=[.8,.6,.47];for(let i=0;i<cA.count;i++){const r=cA.getX(i),g=cA.getY(i),b=cA.getZ(i),ny=pA.getY(i)/H,lum=(r+g+b)/3,sat=Math.max(r,g,b)-Math.min(r,g,b);let c=null;
     if(ny>.935)c=[un[0]*.62,un[1]*.62,un[2]*.6];else if(ny>.84)c=sk2;else if(ny<.07)c=[.14,.11,.09];else{const k=(.55+.7*Math.min(1,lum))*(ny<.5?.78:1);void sat;c=[un[0]*k,un[1]*k,un[2]*k];}   // the rig's cloth is plain white: dress it in the nation's uniform
     if(c)cA.setXYZ(i,c[0],c[1],c[2]);}}
   const sc=g3M,put=(g,x,z,s,ry)=>{const q=g.clone();q.applyMatrix4(sc(x,.1,z,s,s,s,ry));return q;};
@@ -22124,9 +22244,19 @@ function g3MiniGeo(o,tier){G3.mini=G3.mini||{};const key=o+'_'+tier;if(G3.mini[k
   return G3.mini[key]=hi;}
 function g3NavyGeo(o){G3.mini=G3.mini||{};const key='navy_'+o;if(G3.mini[key]!==undefined)return G3.mini[key];if(!(typeof MODELS!=='undefined'&&MODELS.ready))return null;
   const fac=(typeof grNat==='function'&&grNat(o)||{}).fac||o,k=['m_frg','m_fre','m_frw','ship'].find(x=>MODELS.proto[x]);if(!k)return G3.mini[key]=null;
-  const g=g3BakeModel(k,{fac,color:'#8a9096'},4.2,null);if(!g)return G3.mini[key]=null;g.computeBoundingBox();const bb=g.boundingBox,len=Math.max(bb.max.x-bb.min.x,bb.max.z-bb.min.z);
+  const g=g3BakeModel(k,{fac,color:'#8a9096'},4.4,null);if(!g)return G3.mini[key]=null;g.computeBoundingBox();const bb=g.boundingBox,len=Math.max(bb.max.x-bb.min.x,bb.max.z-bb.min.z);
   if(bb.max.z-bb.min.z>bb.max.x-bb.min.x)g.rotateY(Math.PI/2);g.computeBoundingBox();const L2=g.boundingBox.max.x-g.boundingBox.min.x,s=13/L2;g.scale(s,s,s);g.computeBoundingBox();g.translate(0,-g.boundingBox.min.y+.15,0);void len;
-  const pole=g3ColGeo(new THREE.CylinderGeometry(.09,.09,5.4,6),[.55,.5,.4],g3M(-3.4,3.6,0)),hi=g3MergeCol([g3Decimate(g,.17),pole]);hi.userData.lo=g3MergeCol([g3Decimate(g,.5),pole]);return G3.mini[key]=hi;}
+  /* hull: dark boot-topping under the waterline stripe, haze-grey topsides, lighter deck; per-vertex shade keeps the superstructure readable */
+  {const cA=g.attributes.color,pA=g.attributes.position,H=g.boundingBox.max.y||1;for(let i=0;i<cA.count;i++){const ny=pA.getY(i)/H,lum=Math.min(1,(cA.getX(i)+cA.getY(i)+cA.getZ(i))/3*1.15+.18);let c;if(ny<.2)c=[.34,.12,.1];else c=[.5*lum+.2,.54*lum+.21,.58*lum+.22];cA.setXYZ(i,c[0],c[1],c[2]);}}
+  const bb2=g.boundingBox,HL=bb2.max.x-bb2.min.x,WD=bb2.max.z-bb2.min.z,cx=(bb2.max.x+bb2.min.x)/2,top=bb2.max.y;
+  const pole=g3ColGeo(new THREE.CylinderGeometry(.06,.06,5,6),[.62,.58,.5],g3M(-3.4,2.6+top*.4,0));
+  /* waterline foam collar + bow wave (white), so the hull sits in the sea instead of on it */
+  const foam=g3ColGeo(new THREE.RingGeometry(.8,1,40).rotateX(-Math.PI/2).scale(HL*.56,1,WD*.78),[.95,.97,1],g3M(cx,.28,0));
+  const bow=g3ColGeo(new THREE.ConeGeometry(WD*.42,HL*.2,3).rotateZ(-Math.PI/2).rotateX(Math.PI/2).scale(1,.12,1),[.97,.98,1],g3M(cx+HL*.52,.3,0));
+  /* deck detail: two turrets with barrels fore and aft, a mast with a radar bar */
+  const dk=[.4,.43,.46],tw=[];for(const [tx,sg] of [[.3,1],[-.3,1]]){const x=cx+HL*tx;tw.push(g3ColGeo(new THREE.CylinderGeometry(.34,.4,.26,10),dk,g3M(x,top*.46+.15,0)),g3ColGeo(new THREE.BoxGeometry(1,.09,.09),[.22,.24,.26],g3M(x+.55*sg,top*.46+.27,0)));}
+  tw.push(g3ColGeo(new THREE.CylinderGeometry(.05,.07,2.2,6),[.3,.32,.35],g3M(cx-HL*.04,top*.5+1.1,0)),g3ColGeo(new THREE.BoxGeometry(.12,.06,1.2),[.25,.27,.3],g3M(cx-HL*.04,top*.5+2.1,0)));
+  const hi=g3MergeCol([g3Decimate(g,.1),pole,foam,bow,...tw]);hi.userData.lo=g3MergeCol([g3Decimate(g,.4),pole,foam,bow]);return G3.mini[key]=hi;}
 // wake: white V trail behind a ship (child of the army group, local -x = astern)
 function g3WakeMesh(){if(G3.wakeM)return G3.wakeM.clone();const sh=new THREE.Shape();sh.moveTo(5,0);sh.lineTo(-10,3.2);sh.lineTo(-7,0);sh.lineTo(-10,-3.2);sh.closePath();const g=new THREE.ShapeGeometry(sh).rotateX(-Math.PI/2);
   const cl=new Uint8Array(16*64*4);const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');const gr=x.createRadialGradient(40,32,2,26,32,34);gr.addColorStop(0,'rgba(255,255,255,.75)');gr.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);void cl;
@@ -22508,8 +22638,8 @@ let GMILUI={tab:'gen'};
 function gmilDone(r){if(r){GV.hint=r;guHint();}else{grSave();}guTop();guSide();gmilUiPanel(true);try{grandMapRefresh();}catch(e){}}
 function gmilBtn(txt,fn,on,title){const b=guEl('button','padding:5px 8px;border-radius:5px;border:1px solid '+(on?'#ffe27a':'#3d5a73')+';background:'+(on?'#41572a':'#18293a')+';color:#fff;cursor:pointer;font-size:13px;margin:2px 3px 2px 0',txt);b.type='button';if(title)b.title=title;b.onclick=fn;return b;}
 function gmilUiTop(t,me){if(!me||!GC.mil)return;const b=guEl('button','padding:6px 12px;border-radius:6px;border:1px solid #8aa6c9;background:#1f3047;color:#d6e6ff;cursor:pointer;font-size:14px','Military');b.id='gMilBtn';b.type='button';b.onclick=()=>gmilUiPanel();t.appendChild(b);}
-function gmilArmyTag(a){const g=gmilGen(a),f=gmilFrontOf(a);let h='';if(g)h+=' <span style="color:#ffd24a;font-size:12px" title="'+GMIL_TR[g.tr][1]+'">★ '+gmilTitle(g)+' '+g.nm+' (lv '+g.lv+')</span>';if(f)h+=' <span style="font-size:12px;color:#9fd3ff">· front vs '+GCM.nats.get(f.foe).name+' ('+f.ord+')</span>';if(a.fl)h+=' <span style="font-size:12px;color:#9fd3ff">· fleet'+(a.mine?' · laying mines':'')+'</span>';return h;}
-function gmilActBtns(a){let h='';if(!a.fl)h+='<button data-act="front">'+(a.fr?'Next front / release':'Assign to front')+'</button>';else if(a.u.some(r=>r[0]==='minel'))h+='<button data-act="mine">'+(a.mine?'Stop mines':'Lay mines')+'</button>';return h;}
+function gmilArmyTag(a){const g=gmilGen(a),f=gmilFrontOf(a);let h='';if(g)h+=' <span style="color:#ffd24a;font-size:12px" title="'+GMIL_TR[g.tr][1]+'">★ '+gmilTitle(g)+' '+g.nm+' (lv '+g.lv+')</span>';if(f)h+=' <span style="font-size:12px;color:#9fd3ff">· front vs '+GCM.nats.get(f.foe).name+' ('+f.ord+')</span>';if(a.fl)h+=' <span style="font-size:12px;color:#9fd3ff">· fleet'+(a.mine?' · laying mines':'')+'</span>';try{h+=gdrTag(a);}catch(e){}return h;}
+function gmilActBtns(a){let h=gdrBtn(a);if(!a.fl)h+='<button data-act="front">'+(a.fr?'Next front / release':'Assign to front')+'</button>';else if(a.u.some(r=>r[0]==='minel'))h+='<button data-act="mine">'+(a.mine?'Stop mines':'Lay mines')+'</button>';return h;}
 function gmilCycleFront(id){const a=GC.armies.find(x=>x.id===id);if(!a||a.o!==GC.me||GC.ph!=='plan')return;const L=gmilFronts(GC.me);for(const foe of Object.keys(GC.war).filter(k=>k.split('|').includes(GC.me)).map(k=>k.split('|').find(x=>x!==GC.me)).sort())if(GC.nat[foe]&&!GC.nat[foe].dead&&!L.some(f=>f.foe===foe))L.push(gmilAddFront(GC.me,foe));
   if(!L.length){GV.hint='You are at war with nobody.';guHint();return;}const i=a.fr?L.findIndex(f=>f.id===a.fr):-1;a.fr=i+1<L.length?L[i+1].id:0;a.path=[];a.pg=0;}
 function gmilMinesBtn(id){const a=GC.armies.find(x=>x.id===id);if(!a)return;const e=gmilMines(a);if(e){GV.hint=e;guHint();}}
@@ -23957,7 +24087,7 @@ alAdd('mobn','🎖','Neighbour mobilising',c=>{const a=gmbAlarmed(c);return a.le
    markets react to its actions exactly as to the host's (same GMOD rows, same event engine); no separate mini-game. */
 const GNT={on:0,host:0,cl:0,code:'',g:null,nat:'',hum:{},orig:{},last:'',lastT:0,dayK:'',parts:{},tok:'',free:null,dirty:0,ui:0,lobby:0,pend:{},lob:null,lobC:0,rdy:0};
 /* name → index of the nation argument, or 'a' = first argument is an army id that must belong to the sender */
-const GNT_W={grOrderMove:'a',grSplit:'a',grMerge:'a',gmilAssign:'a',grRecruit:0,grDeclare:0,grSpy:0,gdAct:1,gdvBuy:0,geAutonomy:0,geAct:0,geBorrow:0,geBuild:0,
+const GNT_W={grOrderMove:'a',grSplit:'a',grMerge:'a',grDrill:'a',gmilAssign:'a',grRecruit:0,grDeclare:0,grSpy:0,gdAct:1,gdvBuy:0,geAutonomy:0,geAct:0,geBorrow:0,geBuild:0,
   geCity:0,geDeposit:0,geEmbargo:0,geMerchant:0,geRation:0,geRepay:0,geSellMode:0,geSetStrait:0,geTotalWar:0,geWithdraw:0,gidBuy:0,ginCut:0,ginSet:0,gstRaise:0,
   gtrPush:0,pgCounter:0,pgRun:0,rsBuy:0,wsRally:0,gcoEase:0,gmilBuyFleet:0,gmilStrike:0,gmilBuyMissile:0,gevChoose:0,grSetTax:0,ldrGo:'L'};
 const GNT_PART=30000;
@@ -24710,6 +24840,40 @@ if(typeof npTab==='function')npTab('nuke','☢','Nuclear',(code,body,c)=>{const 
 });
 GMOD_HOOKS.push(gnkMonth);
 alAdd('nukein','☢','Inbound',c=>{if(!c||!GC.nuk||!GC.nuk.pend)return null;const n=GC.nuk.pend.filter(x=>x[4]===c).length;return n?{n,tip:'Nuclear warheads are inbound on one of your provinces',go:()=>npOpen(c,'nuke')}:null;});
+// DRILL ORDER (EU4-style drilling; one rule set, no second readiness system). An army ordered to Drill stays put and gains
+// drill 0-100 each month: +8 base, x1.5 on own-held ground with a base/airfield or the capital, x.5 when understrength (<70% hp)
+// or when the nation is out of fuel. It costs training money, fuel and ammo (0.5% of the army's value per month). Not drilling,
+// drill fades 1.5/month, 3/month while the nation is at war (attrition). Moving cancels it (player order or the move phase).
+// Drill pays in Fight-it: every 20% = one synthetic upgrade row (UPG.dr1..dr5: damage, rate of fire, courage up to +6/+5/+10%)
+// and drilling armies lift army tradition (the professionalism the morale system already reads). The AI drills idle armies in peacetime.
+// State: a.dr (0-100) and a.dg (1 = drilling) on the army record, so saves, host migration and the sync hash keep working.
+const GDR_MAX=100;
+for(let i=1;i<=5;i++)UPG['dr'+i]={name:'Drilled troops '+i*20+'%',at:'barracks',cost:0,time:0,desc:'Grand-map drill',fx:[['dmg','all',1+.012*i],['rof','all',1+.01*i],['courage','all',1+.02*i]]};
+function gdrOk(a){return !!a&&!a.fl&&a.u&&a.u.length>0&&!(a.path&&a.path.length);}
+function gdrAtWar(c){return Object.keys(GC.war||{}).some(k=>GC.war[k]&&k.split('|').includes(c));}
+function gdrBase(a){const N=GC.nat[a.o];if(!N||!GC.prov[a.at]||GC.prov[a.at].o!==a.o)return false;if(N.cap===a.at)return true;try{return geCount(a.at,'base')+geCount(a.at,'airfield')>0;}catch(e){return false;}}
+function gdrStr(a){let s=0;for(const r of a.u)s+=r[1];return a.u.length?s/a.u.length/100:0;}
+function gdrRate(a){let g=8;if(gdrBase(a))g*=1.5;if(gdrStr(a)<.7)g*=.5;try{if(geDry(a.o))g*=.5;}catch(e){}return g;}
+function gdrCost(a){return Math.round(grArmyVal(a)*.005);}
+function gdrPct(a){return Math.round(a&&a.dr||0);}
+/* order: on=1 start drilling, 0 stop; returns an error text or '' */
+function grDrill(aid,on){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return 'no army';if(a.fl)return 'Fleets cannot drill';
+  if(on===undefined)on=a.dg?0:1;if(!on){a.dg=0;return '';}if(!gdrOk(a))return 'Army is moving or empty';a.dg=1;return '';}
+GMOD_HOOKS.push(()=>{if(!GC)return;const seen={};
+  for(const a of GC.armies.slice().sort((x,y)=>x.id-y.id)){if(a.fl)continue;const N=GC.nat[a.o];if(!N||N.dead)continue;
+    const human=a.o===GC.me||(typeof GNT!=='undefined'&&GNT.hum&&GNT.hum[a.o]!==undefined);const war=gdrAtWar(a.o);
+    if(!human&&!a.fr&&!war&&gdrOk(a)&&(a.dr||0)<90&&grArmyVal(a)>=2500)a.dg=1;else if(!human&&a.dg&&(war||a.fr))a.dg=0;   /* AI: drill idle armies in peacetime only */
+    if(a.dg&&!gdrOk(a))a.dg=0;
+    if(a.dg){const c=gdrCost(a);if(N.cash>=c){N.cash-=c;a.dr=Math.min(GDR_MAX,(a.dr||0)+gdrRate(a));seen[a.o]=(seen[a.o]||0)+1;}else a.dg=0;}
+    else if(a.dr)a.dr=Math.max(0,a.dr-(war?3:1.5));}
+  for(const c in seen)if(GC.nat[c].trad!==undefined)GC.nat[c].trad=Math.min(100,GC.nat[c].trad+.3*Math.min(3,seen[c]));});
+/* a drilling army that is given a path (AI planners, fronts) gives the drill up and marches */
+function gdrMove(a){if(a.dg&&a.path&&a.path.length)a.dg=0;}
+/* Fight-it: unit-weighted drill of each side's armies -> a synthetic upgrade level on that team */
+function gdrSide(L){let w=0,s=0;for(const x of L){const n=x.u.length;w+=n;s+=n*(x.arr&&x.arr.dr||0);}return w?s/w:0;}
+function gdrApplyBattle(dr){if(!dr||typeof G==='undefined'||!G)return;G.teams.forEach((T,i)=>{const lv=Math.floor((dr[i]||0)/20);if(!T||lv<1)return;for(let k=1;k<=5;k++)delete T.upg['dr'+k];T.upg['dr'+Math.min(5,lv)]=1;T._uk=null;T._ut=null;});}
+function gdrTag(a){if(a.fl)return '';const d=gdrPct(a);return (a.dg||d)?' <span style="font-size:12px;color:#9fe0a0" title="Drill '+d+'%: up to +6% damage, +5% fire rate, +10% courage in Fight-it. '+(a.dg?'Drilling costs about $'+gdrCost(a)+'/month and the army stays put; ordering a move stops it.':'Fades 1.5%/month (3% at war).')+'">⚔ Drill '+d+'%'+(a.dg?' ▲':'')+'</span>':'';}
+function gdrBtn(a){return a.fl?'':'<button data-act="drill" title="Drill (T): the army stays put and trains — +drill each month for upkeep money">'+(a.dg?'Stop drill':'Drill')+'</button>';}
 /* ---------- MENU v3: title screen + one job per screen (Abdullah 2026-11-06 20:12 "Ugly ugly ugly", 20:14 "You can transition between
    windows and screens not everything has to be shoved into a single screen with big ugly button"). View-only: no sim state, nothing
    saved or synced. Loaded LAST so every module that injects menu controls (save, replay, grand, campaign, editor) has already run.
