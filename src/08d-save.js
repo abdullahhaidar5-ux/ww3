@@ -68,7 +68,7 @@ async function svLoad(meta,packed){
     const cm=sv.cam;
     try{$('menu').hidden=true;}catch(e){}
     await afterStart();
-    if(G&&cm&&Number.isFinite(cm.x)){for(const k of ['x','y','tx','ty','dist','yaw','z'])if(Number.isFinite(cm[k]))cam[k]=cm[k];cam._xl=cam.x;cam._yl=cam.y;}
+    if(G&&cm&&Number.isFinite(cm.x)){for(const k of ['x','y','tx','ty','dist','yaw','z'])if(Number.isFinite(cm[k]))cam[k]=cm[k];cam.tyaw=cam.yaw||0;cam._xl=cam.x;cam._yl=cam.y;}
     if(G){G.ldHold=0;G.paused=false;togglePause(true);$('pauseSub').textContent='Game loaded. Press P to continue.';SAVE.autoT=performance.now();}
     return {ok:true};}
   catch(e){console.error('load failed',e);try{G=null;MODE='single';ME=0;loadHide();$('menu').hidden=false;}catch(_){}return {ok:false,msg:'This save could not be loaded ('+(e&&e.message||e)+').'};}}

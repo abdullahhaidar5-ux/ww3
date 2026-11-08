@@ -39,6 +39,11 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(/k==='f'&&G\.sel\.some\(u=>!u\.isB\)\)\{G\.amove=true/.test(SRC['08-ui.js']), 'F must be attack-move');
   ck(!/k==='a'&&G\.sel/.test(SRC['08-ui.js']), 'A must not be attack-move any more');
   ck(/k==='x'\)\{const ids=G\.sel/.test(SRC['08-ui.js']), 'X must be Stop'); }
+// 2b. Camera rotation (2026-11-07 19:54/19:55 "Use Q"): Q rotates the battle camera, Ctrl+A selects the whole army (Q no longer does).
+{ const u = SRC['08-ui.js']; ck(!/k==='q'\)G\.sel=/.test(u), 'Q selects the army again (Q = rotate camera, Ctrl+A = all army)');
+  ck(/k==='a'&&\(e\.ctrlKey\|\|e\.metaKey\)[^\n]*selectArmy\(\)/.test(u), 'Ctrl+A no longer selects the whole army in battle');
+  ck(/k==='q'[^\n]*CROT\.hold=true/.test(u) && /function camRotSnap/.test(u), 'Q no longer rotates the battle camera');
+  ck(!/\(Q\)|Q: army/.test(u), 'a tooltip/hint still says Q selects the army'); }
 // 3. Main menu order + naming (2026-11-06 05:58): Grand campaign · Conquest · Missions · Tutorial; no Classic.
 { const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).slice(0, 4);
   ck(m.join('|') === 'Grand campaign|Conquest|Missions|Tutorial', 'main menu order is ' + m.join(' · '));
@@ -104,12 +109,20 @@ try {
     // WASD must not select, order or toggle anything
     const before = JSON.stringify([G.sel.length, G.amove, G.place, G.aim]); for (const k of ['w', 'a', 's', 'd']) { window.dispatchEvent(new KeyboardEvent('keydown', { key: k })); window.dispatchEvent(new KeyboardEvent('keyup', { key: k })); }
     const after = JSON.stringify([G.sel.length, G.amove, G.place, G.aim]);
-    return { ban, shown, conq: !!G.conq, wasd: before === after, btns: btns.slice(0, 40), bodyHas: /Ayatollah|Dear Leader|Mountain Fortress|Bunker Buster/.exec(document.body.innerText || '') }; });
+    // Q taps turn the view 45 degrees (never the selection); Ctrl+A selects the army; Home resets north-up
+    const kd = (key, o) => window.dispatchEvent(new KeyboardEvent('keydown', { key, ...(o || {}) })), ku = (key, o) => window.dispatchEvent(new KeyboardEvent('keyup', { key, ...(o || {}) }));
+    G.sel = []; const y0 = cam.tyaw || 0; kd('q'); ku('q'); const y1 = cam.tyaw; const qSel = G.sel.length; CROT.tap = 0; kd('Home'); ku('Home'); const y2 = cam.tyaw;
+    const yh0 = cam.yaw || 0; kd('q'); for (let i = 0; i < 2; i++) window.dispatchEvent(new PointerEvent('pointermove', { pointerType: 'mouse', movementX: 50, bubbles: true })); ku('q'); const drag = (cam.yaw || 0) - yh0; cam.yaw = cam.tyaw = 0;
+    kd('a', { ctrlKey: true }); ku('a'); const caSel = G.sel.length; G.sel = [];
+    const rot = { q45: Math.abs((y0 - y1) - Math.PI / 4) < 1e-6, qSel, home: Math.abs(y2 % (2 * Math.PI)) < 1e-6, caSel, drag };
+    return { ban, shown, conq: !!G.conq, wasd: before === after, rot, btns: btns.slice(0, 40), bodyHas: /Ayatollah|Dear Leader|Mountain Fortress|Bunker Buster/.exec(document.body.innerText || '') }; });
   console.log('conquest', JSON.stringify({ ...cq, btns: cq.btns.length }));
   ck(cq.conq, 'standalone Conquest battle did not start in Conquest mode');
   ck(!cq.ban.cleric, 'Ayatollah (cleric) is in the Conquest roster'); ck(!cq.ban.fort, 'Mountain Fortress is buildable in Conquest'); ck(cq.ban.bb, 'Bunker Buster is not banned in Conquest');
   ck(!cq.shown.length, 'grand-map-only buttons visible in Conquest: ' + cq.shown.join(','));
   ck(cq.wasd, 'W A S D changed selection/orders in a battle (camera only)');
+  ck(cq.rot && cq.rot.q45 && !cq.rot.qSel && cq.rot.home && cq.rot.drag < -0.3, 'Q tap must turn the camera 45° clockwise (and not select), hold Q + mouse right turns it, Home back to north: ' + JSON.stringify(cq.rot));
+  ck(cq.rot && cq.rot.caSel > 0, 'Ctrl+A did not select the army in battle: ' + JSON.stringify(cq.rot));
   ck(!cq.bodyHas, 'Conquest HUD text mentions a grand-map-only asset: ' + (cq.bodyHas && cq.bodyHas[0]));
   await shot('conquest-ir');
   // Balance toggle (Abdullah 2026-11-06 21:31): Balanced must stay equal for everyone; Realistic must tier fire support

@@ -11580,14 +11580,19 @@ function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devic
 const ZMAX=2600;function zmax(){try{return Math.max(ZMAX,Math.min(3600,Math.round(MAPW*.4)));}catch(e){return ZMAX;}}function tiltBy(v){cam.tilt=Math.max(-.32,Math.min(.62,(cam.tilt||0)+v));}
 function placeCam(){const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/(600-230)));let p=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d)));p=cam.free?Math.max(.08,Math.min(1.5,cam.pitch)):Math.max(.22,Math.min(1.42,p+(cam.tilt||0)));if(typeof SCN!=='undefined'&&SCN&&SCN.fog){const f=SCN.fog;if(f._set!==f.near){f.n0=f.near;f.f0=f.far;}const ex=Math.max(0,d-1400)*1.2;f.near=f.n0+ex;f.far=f.f0+ex;f._set=f.near;}/* zoomed far out, push the haze back so the battlefield stays clear */cam.x=Math.max(0,Math.min(MAPW,cam.x));cam.y=Math.max(Math.min(60+cam.dist*.5,MAPH/2),Math.min(MAPH+120,cam.y));{const lo=Math.min(cam.dist*.55,MAPW/2);cam.x=Math.max(lo,Math.min(MAPW-lo,cam.x));}
   const sx=shake>.3?rnd(-shake,shake):0,sy=shake>.3?rnd(-shake,shake):0;
-  {const ry=cam.free?cam.ryaw||0:0,hd=Math.cos(p)*d;CAM.position.set(cam.x+sx+Math.sin(ry)*hd,Math.sin(p)*d,cam.y+Math.cos(ry)*hd+sy);}/* photo mode orbits with cam.ryaw */CAM.lookAt(cam.x+sx,0,cam.y+sy);CAM.updateMatrixWorld();if(window.SKY)SKY.position.copy(CAM.position);
+  {const ry=camYaw(),hd=Math.cos(p)*d;CAM.position.set(cam.x+sx+Math.sin(ry)*hd,Math.sin(p)*d,cam.y+Math.cos(ry)*hd+sy);}/* battle view turns with cam.yaw (Q), photo mode orbits with cam.ryaw */CAM.lookAt(cam.x+sx,0,cam.y+sy);CAM.updateMatrixWorld();if(window.SKY)SKY.position.copy(CAM.position);
   SUN.position.set(cam.x+SUNOFF[0],SUNOFF[1],cam.y+SUNOFF[2]);SUN.target.position.set(cam.x,0,cam.y);const hs=Math.max(380,d*1.05),sc=SUN.shadow.camera;if(sc.right!==hs){sc.left=-hs;sc.right=hs;sc.top=hs;sc.bottom=-hs;sc.updateProjectionMatrix();}
   TMP.set(cam.x,0,cam.y).project(CAM);const a=TMP.x;TMP.set(cam.x+100,0,cam.y).project(CAM);PPU=Math.abs(TMP.x-a)*VW/2/100;}
 // Smooth camera: jumps (minimap, Home, squad hotkeys), scrolling and zoom set a target and the camera eases toward it
 // every frame (frame-rate independent). Anything that moves the camera directly is respected.
-function centerOn(x,y,instant){camTarget();cam.tx=x;cam.ty=y-cam.td*.08;if(instant||!G||G.t<.6){cam.x=cam.tx;cam.y=cam.ty;cam._xl=cam.x;cam._yl=cam.y;}}
+// Camera rotation (Q, Abdullah 2026-11-07): cam.yaw = battle view heading in radians (0 = north up, negative = turned
+// clockwise), eased toward cam.tyaw; photo mode orbits with its own cam.ryaw (starting from cam.yaw). View only.
+function camYaw(){return cam.free?cam.ryaw||0:cam.yaw||0;}
+// a screen-space offset (r = to the right, u = up the screen) as a world offset for the current view rotation
+function camVec(r,u){const a=camYaw(),c=Math.cos(a),n=Math.sin(a);return{x:r*c-u*n,y:-r*n-u*c};}
+function centerOn(x,y,instant){camTarget();{const o=camVec(0,cam.td*.08);cam.tx=x+o.x;cam.ty=y+o.y;}if(instant||!G||G.t<.6){cam.x=cam.tx;cam.y=cam.ty;cam._xl=cam.x;cam._yl=cam.y;}}
 function camTarget(){if(cam.tx==null||cam.x!==cam._xl||cam.y!==cam._yl){cam.tx=cam.x;cam.ty=cam.y;}if(cam.td==null||cam.dist!==cam._dl)cam.td=cam.dist;}
-function camTick(dt){camTarget();const k=1-Math.exp(-dt*9),kz=1-Math.exp(-dt*11);cam.x+=(cam.tx-cam.x)*k;cam.y+=(cam.ty-cam.y)*k;cam.dist+=(cam.td-cam.dist)*kz;
+function camTick(dt){camTarget();const k=1-Math.exp(-dt*9),kz=1-Math.exp(-dt*11);if(cam.tyaw!=null&&cam.tyaw!==cam.yaw){cam.yaw=(cam.yaw||0)+(cam.tyaw-(cam.yaw||0))*(1-Math.exp(-dt*10));if(Math.abs(cam.tyaw-cam.yaw)<.002)cam.yaw=cam.tyaw;}cam.x+=(cam.tx-cam.x)*k;cam.y+=(cam.ty-cam.y)*k;cam.dist+=(cam.td-cam.dist)*kz;
   if(Math.abs(cam.tx-cam.x)<.05)cam.x=cam.tx;if(Math.abs(cam.ty-cam.y)<.05)cam.y=cam.ty;if(Math.abs(cam.td-cam.dist)<.05)cam.dist=cam.td;cam._xl=cam.x;cam._yl=cam.y;cam._dl=cam.dist;}
 // which city building is under the cursor (rooftops included)
 function civUnder(sx,sy,w){if(!G.civ||!G.civ.length)return null;if(CITYM){const v=new THREE.Vector2(sx/VW*2-1,-(sy/VH)*2+1);RAY.setFromCamera(v,CAM);const h=RAY.intersectObject(CITYM,true)[0];if(h){const c=civAtXY(h.point.x-h.face.normal.x*2,h.point.z-h.face.normal.z*2);if(c)return c;}}return w?civAtXY(w.x,w.y):null;}
@@ -11866,7 +11871,7 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
   // radar sweep
   try{const a=(now*.9)%(Math.PI*2),g=c.createConicGradient(a,W/2,H/2);g.addColorStop(0,'rgba(120,255,170,.16)');g.addColorStop(.08,'rgba(120,255,170,0)');g.addColorStop(1,'rgba(120,255,170,0)');c.fillStyle=g;c.fillRect(0,0,W,H);}catch(_){}
   // camera box with corner brackets
-  const pts=[[0,0],[VW,0],[VW,VH],[0,VH]].map(([x,y])=>screenToWorld(x,y));if(pts.every(Boolean)){c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p.x*sx,p.y*sy):c.moveTo(p.x*sx,p.y*sy));c.closePath();c.stroke();
+  const pts=[[0,0],[VW,0],[VW,VH],[0,VH]].map(([x,y])=>screenToWorld(x,y));if(pts.every(Boolean)){c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p.x*sx,p.y*sy):c.moveTo(p.x*sx,p.y*sy));c.closePath();c.stroke();if(Math.abs(Math.sin((cam.yaw||0)/2))>.01){c.strokeStyle='rgba(255,226,140,.9)';c.lineWidth=2;c.beginPath();c.moveTo(pts[0].x*sx,pts[0].y*sy);c.lineTo(pts[1].x*sx,pts[1].y*sy);c.stroke();}/* rotated view (Q): the far edge of the view (screen top) in gold so the minimap shows which way you face */
     c.strokeStyle='#e3b341';c.lineWidth=2;for(let i=0;i<4;i++){const p=pts[i],n=pts[(i+1)%4],m=pts[(i+3)%4];const P=[p.x*sx,p.y*sy];const v=(q)=>{const dx=q.x*sx-P[0],dy=q.y*sy-P[1],L=Math.hypot(dx,dy)||1;return[dx/L*6,dy/L*6];};const a1=v(n),a2=v(m);c.beginPath();c.moveTo(P[0]+a1[0],P[1]+a1[1]);c.lineTo(P[0],P[1]);c.lineTo(P[0]+a2[0],P[1]+a2[1]);c.stroke();}}
   // frame + readout
   c.strokeStyle='rgba(190,235,205,.5)';c.lineWidth=2;const k=10;for(const [x,y,dx,dy] of [[1,1,1,1],[W-1,1,-1,1],[1,H-1,1,-1],[W-1,H-1,-1,-1]]){c.beginPath();c.moveTo(x+dx*k,y);c.lineTo(x,y);c.lineTo(x,y+dy*k);c.stroke();}
@@ -13095,7 +13100,7 @@ function renderSquads(){const el=$('sqs');if(!el||!G)return;if(!document.getElem
   const mk=$('sqMake');if(mk)mk.disabled=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).length<1;}
 function selectTypes(){if(!G||G.over)return;const mine=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead),ks=new Set(mine.map(u=>u.kind));G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(ks.size?ks.has(u.kind):!['harv','hacker','dozer'].includes(u.kind)));if(G.sel.length)speak(0);updateUI();}
 function selectArmy(){if(!G)return;G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);if(G.sel.length)speak(0);updateUI();}
-{const mk=$('sqMake');if(mk&&!$('sqAll')){const w=document.createElement('span');w.className='sqbtns';const a=document.createElement('button');a.id='sqAll';a.textContent='All army';a.title='Select every combat unit you have (Q)';a.onclick=selectArmy;mk.replaceWith(w);w.append(a,mk);}}
+{const mk=$('sqMake');if(mk&&!$('sqAll')){const w=document.createElement('span');w.className='sqbtns';const a=document.createElement('button');a.id='sqAll';a.textContent='All army';a.title='Select every combat unit you have (Ctrl+A)';a.onclick=selectArmy;mk.replaceWith(w);w.append(a,mk);}}
 if($('sqMake'))$('sqMake').onclick=()=>{if(!G)return;let i=0;for(let k=1;k<=SQN;k++)if(!sqList(k).length){i=k;break;}if(!i)i=1;sqAssign(i);};
 /* ---------- input ---------- */
 function mpos(e){const r=cv.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;}
@@ -13103,7 +13108,7 @@ function pickAt(sx,sy,own){let best=null,bd=1e9;for(const e of G.ents){if(e.dead
 function fieldAt(w){const i=G.fields.findIndex(f=>Math.hypot(f.x-w.x,f.y-w.y)<f.r+10);return i;}
 cv.addEventListener('mouseenter',e=>{mpos(e);mouse.in=true;});cv.addEventListener('mouseleave',()=>{mouse.in=false;});
 cv.addEventListener('mousemove',e=>{mpos(e);});
-cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(zmax(),cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}},{passive:false});
+cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(zmax(),cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;const o=camVec(0,cam.dist*.08);cam.tx+=(w.x-(cam.tx-o.x))*f*.9;cam.ty+=(w.y-(cam.ty-o.y))*f*.9;}}},{passive:false});
 // After an order the ordered units deselect so the next click selects fresh (Abdullah 2026-10-30 20:54). Kept when Shift
 // queues, when Settings > Mouse > mKeep is on, or when a targeting mode is active. Production-building rally points never count.
 function ordDone(shift){if(!G||SET.mKeep||shift||G.place||G.aim)return;if(G.sel.some(u=>!u.isB&&u.team===ME))G.sel=[];}
@@ -13337,7 +13342,10 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='Escape'&&MLOCK.on){MLOCK.escK=performance.now();mlockCancelModes();mlockOff();return;}
   if(k==='Escape'&&menuOpen()){menuOpen(false);return;}
   if(k==='Escape'){if(G.wallM){G.wallM=null;G.wallP=null;updateUI();return;}if(G.defm){G.defm=false;return;}if(G.paused){togglePause(false);return;}if(!G.place&&!G.aim&&!G.amove&&!G.sel.length&&!G.over){togglePause(true);return;}if(!G.place&&!G.aim&&!G.amove)G.sel=[];G.place=null;G.aim=null;G.amove=false;}
-  if(k==='q')G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);
+  /* Ctrl+A = select your whole army (was Q until 2026-11-07; Q now rotates the camera - Abdullah 19:54/19:55) */
+  if(k==='a'&&(e.ctrlKey||e.metaKey)&&!e.altKey){e.preventDefault();keys.a=false;selectArmy();}
+  if(k==='q'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.repeat&&!CROT.hold&&!G.over){CROT.hold=true;CROT.t0=e.timeStamp||performance.now();CROT.mv=0;CROT.sh=e.shiftKey;}
+  if(e.key==='Home'){e.preventDefault();camRotReset();}
   if(k==='t'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){selectTypes();}
   if(k==='f'&&G.sel.some(u=>!u.isB)){G.amove=true;G.defm=false;}if(k==='g'&&G.sel.some(u=>!u.isB&&u.team===ME)){G.defm=true;G.amove=false;}
   if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)for(const pk in POW_KEY)if(POW_KEY[pk]===k){powGo(pk);break;}
@@ -13353,8 +13361,20 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
   if(e.key==='PageUp'){tiltBy(-.06);e.preventDefault();}if(e.key==='PageDown'){tiltBy(.06);e.preventDefault();}if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(zmax(),cam.td*1.15);}
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();updateUI();});
-window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
-window.addEventListener('blur',()=>{MODK.ctrl=MODK.alt=MODK.shift=false;});
+window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;if(k==='q')camRotUp(e);MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
+window.addEventListener('blur',()=>{MODK.ctrl=MODK.alt=MODK.shift=false;CROT.hold=false;});
+// Camera rotation (Abdullah 2026-11-07 19:54 "rotate camera in battle", 19:55 "Use Q"): hold Q and move the mouse left /
+// right to turn the view around the screen centre (pointer lock: movementX, the cursor stays put); a quick tap of Q turns
+// 45 degrees clockwise, Shift+Q counter-clockwise; Home or a double-tap of Q turns back to north-up. View only: cam.yaw /
+// cam.tyaw (06-view placeCam/camVec), never the simulation, so multiplayer sync is untouched.
+const CROT={hold:false,t0:0,mv:0,sh:false,tap:0};
+function camRotBy(d){cam.yaw=(cam.yaw||0)+d;cam.tyaw=cam.yaw;}
+function camRotSnap(dir){const q=Math.PI/4,b=cam.tyaw!=null?cam.tyaw:(cam.yaw||0);cam.tyaw=(Math.round(b/q)-dir)*q;}
+function camRotReset(){const T=Math.PI*2;cam.tyaw=Math.round((cam.yaw||0)/T)*T;}
+function camRotMouse(dx){if(!CROT.hold||!G||(window.PHX&&PHX.on))return false;CROT.mv+=Math.abs(dx);if(CROT.mv>3)camRotBy(-dx*.006);return true;}
+function camRotUp(e){if(!CROT.hold)return;CROT.hold=false;if(!G||G.over)return;const now=e.timeStamp||performance.now();/* event times: a slow frame must not merge two taps into a double-tap */
+  if(CROT.mv<=3&&now-CROT.t0<500){if(now-CROT.tap<350){CROT.tap=0;camRotReset();}else{CROT.tap=now;camRotSnap(CROT.sh||e.shiftKey?-1:1);}}}
+window.addEventListener('pointermove',e=>{if(!MLOCK.on&&e.pointerType==='mouse')camRotMouse(e.movementX||0);},true);
 // Keys: F arms attack-move, G guard, X stops, R retreats in every mouse scheme; WASD and the arrow keys always scroll
 // (A no longer arms attack-move - Abdullah, 2026-10-28).
 function genKeys(){return false;}
@@ -13543,7 +13563,7 @@ window.addEventListener('pointerup',e=>tcEnd(e,false),true);
 window.addEventListener('pointercancel',e=>tcEnd(e,true),true);
 /* ---- command strip (touch only, while units are selected) and build / fire confirm ---- */
 const TC_BTN=[['am','⚔','Attack','Attack-move: tap a spot, they fight everything on the way'],['gd','🛡','Guard','Guard: tap the spot to hold'],['st','■','Stop','Stop'],
-  ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all your units of the selected types on the whole map (T)'],['all','★','Army','Select your whole army'],
+  ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all your units of the selected types on the whole map (T)'],['all','★','Army','Select your whole army (Ctrl+A)'],
   ['sn','◈','Stance','Cycle army stance: Assault, Hold, Guerrilla'],['rt','↩','Retreat','Retreat to the nearest base building'],['rs','⛽','Supply','Resupply: send the selected units to the nearest supply point (HQ, depot, truck or held town) to refill ammo'],['dg','⛏','Dig in','Dig a foxhole (soldiers) or lay sandbags / trenches (Construction Vehicle)'],['ds','✕','Clear','Deselect']];
 const TC_CN=['cn','✕','Cancel','Cancel: stop placing, remove the last queued item, or cancel the unfinished building'];
 function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
@@ -13625,11 +13645,12 @@ body.tstripOn #info .cmdrow{display:none!important}
 body:not(.touchui) #aGuide{display:none}
 @media (max-height:520px){#tguide .tgi{font-size:26px}#tguide .tgc{padding:10px 14px 8px}#tguide p{margin-bottom:8px}}`;document.body.append(st);}
 setTimeout(setHint,0);
-function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=genKeys();if(keys.ArrowLeft||(keys.a&&!gk))cam.tx-=sp;if(keys.ArrowRight||keys.d)cam.tx+=sp;if(keys.ArrowUp||keys.w)cam.ty-=sp;if(keys.ArrowDown||(keys.s&&!gk))cam.ty+=sp;
+function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=genKeys();let rx=0,dn=0;/* screen-space pan (right / down), turned by the view rotation (camVec) */if(keys.ArrowLeft||(keys.a&&!gk))rx-=sp;if(keys.ArrowRight||keys.d)rx+=sp;if(keys.ArrowUp||keys.w)dn-=sp;if(keys.ArrowDown||(keys.s&&!gk))dn+=sp;if(rx||dn){const v=camVec(rx,-dn);cam.tx+=v.x;cam.ty+=v.y;rx=dn=0;}
   // Generals rapid scroll: right-drag with nothing selected pans toward the drag, faster the further you drag
-  if(RDRAG&&RDRAG.gen&&RDRAG.mode==='scroll'&&RDRAG.moved){const dx=mouse.x-RDRAG.x0,dy=mouse.y-RDRAG.y0,d=Math.hypot(dx,dy);if(d>4){const v=sp*Math.min(6,.6+d/70)*(SET.mRS||100)/100;cam.tx+=dx/d*v;cam.ty+=dy/d*v;}}
-  if(MLOCK.on&&!mouse.in&&!drag&&SET.edge){const W=innerWidth-1,H=innerHeight-1;if(MLOCK.x<=0)cam.tx-=sp;if(MLOCK.x>=W)cam.tx+=sp;if(MLOCK.y<=0)cam.ty-=sp;if(MLOCK.y>=H)cam.ty+=sp;}
-  if(mouse.in&&!drag&&SET.edge&&LASTPT!=='touch'){if(mouse.x<14)cam.tx-=sp;if(mouse.x>VW-14)cam.tx+=sp;if(mouse.y<14)cam.ty-=sp;if(mouse.y>VH-14)cam.ty+=sp;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
+  if(RDRAG&&RDRAG.gen&&RDRAG.mode==='scroll'&&RDRAG.moved){const dx=mouse.x-RDRAG.x0,dy=mouse.y-RDRAG.y0,d=Math.hypot(dx,dy);if(d>4){const v=sp*Math.min(6,.6+d/70)*(SET.mRS||100)/100;rx+=dx/d*v;dn+=dy/d*v;}}
+  if(MLOCK.on&&!mouse.in&&!drag&&SET.edge&&!CROT.hold){const W=innerWidth-1,H=innerHeight-1;if(MLOCK.x<=0)rx-=sp;if(MLOCK.x>=W)rx+=sp;if(MLOCK.y<=0)dn-=sp;if(MLOCK.y>=H)dn+=sp;}
+  if(mouse.in&&!drag&&SET.edge&&LASTPT!=='touch'&&!CROT.hold){if(mouse.x<14)rx-=sp;if(mouse.x>VW-14)rx+=sp;if(mouse.y<14)dn-=sp;if(mouse.y>VH-14)dn+=sp;}
+  if(rx||dn){const v=camVec(rx,-dn);cam.tx+=v.x;cam.ty+=v.y;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
 
 /* ---------- game start / reset ---------- */
 function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
@@ -13833,7 +13854,7 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
       try{if(G===g&&g.thumb&&!g.mmBase)g.mmBase=mmBase();}catch(e){}}],
     ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
-    ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
+    ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();cam.yaw=0;cam.tyaw=0;/* every battle starts north-up */const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
     ['Preparing graphics…',.78,()=>{if(gfxPhone()&&typeof warmShadersPhone==='function'){LOAD.wstop=0;return warmShadersPhone((d,n)=>{if(live())loadStep('Preparing graphics… '+d+' of '+n,.78+.11*d/n);},()=>LOAD.wstop||!live());}
       try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
     ['Deploying forces…',.9,()=>{buildPanels();}],
@@ -14010,7 +14031,7 @@ function syncMouseUI(){const pre=mPreset();
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
   const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
-const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · O: formation · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Q: army · H: home · Wheel: zoom · Shift+wheel / PgUp PgDn: tilt · WASD/arrows: scroll · Esc: cancel / deselect';
+const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · O: formation · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Ctrl+A: army · Q: rotate view (hold + mouse; tap: 45°; Home: north) · H: home · Wheel: zoom · Shift+wheel / PgUp PgDn: tilt · WASD/arrows: scroll · Esc: cancel / deselect';
 // the on-screen hint follows the chosen mouse functions (the Standard preset has its own fixed text)
 function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
@@ -14019,7 +14040,7 @@ function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOr
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
   P.push('Get out: right-click your selected transport (Alt+right-click a spot: drive there, unload) · building or tunnel selected, right-click the ground');
-  P.push('Q: army · H: home · Wheel: zoom · Arrows/WASD: scroll');return P.join(' · ');}
+  P.push('Ctrl+A: army · Q: rotate (hold + mouse) · H: home · Wheel: zoom · Arrows/WASD: scroll');return P.join(' · ');}
 // the hint line speaks to what the player last used: touch wording after a tap, the active mouse scheme after a click
 // (a touchscreen laptop switches back and forth)
 function setHint(){const h=$('hint');if(h)h.textContent=TOUCHUI&&HINTDEV==='touch'?HINT_TOUCH:hintText();}
@@ -14065,7 +14086,7 @@ function mlHover(el,e,x,y){const old=MLOCK.hov;if(el===old)return;
   MLOCK.hov=el;if(el){const b=el.closest('button,.btn,a');if(b){b.classList.add('vhov');MLOCK.hovB=b;}mlSend(el,'pointerover',e,x,y);mlSend(el,'mouseover',e,x,y);for(let a=el;a&&a!==document.body&&!(old&&a.contains(old));a=a.parentElement){mlSend(a,'pointerenter',e,x,y,false);mlSend(a,'mouseenter',e,x,y,false);}}}
 function mlEv(e){if(!MLOCK.on||!e.isTrusted)return;const ty=e.type;
   if(ty==='pointermove'){const cx=e.clientX,cy=e.clientY;if(!e.movementX&&!e.movementY&&MLOCK.cx!=null&&(cx!==MLOCK.cx||cy!==MLOCK.cy)){if(++MLOCK.bad>3){MLOCK.broken=true;mlockOff();}}else MLOCK.bad=0;MLOCK.cx=cx;MLOCK.cy=cy;}
-  if(ty==='pointermove'||(ty==='mousemove'&&!window.PointerEvent)){MLOCK.x=Math.max(0,Math.min(innerWidth-1,MLOCK.x+(e.movementX||0)));MLOCK.y=Math.max(0,Math.min(innerHeight-1,MLOCK.y+(e.movementY||0)));}
+  if((ty==='pointermove'||(ty==='mousemove'&&!window.PointerEvent))&&!camRotMouse(e.movementX||0)){MLOCK.x=Math.max(0,Math.min(innerWidth-1,MLOCK.x+(e.movementX||0)));MLOCK.y=Math.max(0,Math.min(innerHeight-1,MLOCK.y+(e.movementY||0)));}
   const x=MLOCK.x,y=MLOCK.y;mlPatch(e,x,y);
   if(ty==='contextmenu'){e.preventDefault();e.stopImmediatePropagation();return;}
   const under=document.elementFromPoint(x,y);let el=MLOCK.cap||under;
@@ -15049,7 +15070,7 @@ function phEnter(){if(!G||G.over||PHX.on||window.GLLOST||!R3||window.LOADING)ret
   phEls();const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/370)),p0=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d))),p=Math.max(.22,Math.min(1.42,p0+(cam.tilt||0)));
   PHX.st={c:{x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td,_xl:cam._xl,_yl:cam._yl,_dl:cam._dl},paused:G.paused,G,mp:MODE!=='single'};
   if(!PHX.st.mp){G.paused=true;xsTry(syncPause);}   // single player stops the battle; online only your own camera is freed
-  xsTry(mlockOff);cam.free=true;cam.pitch=p;cam.ryaw=0;cam.tilt=0;PHX.on=true;PHX.k={};PHX.ptr.clear();PHX.blob=null;
+  xsTry(mlockOff);cam.free=true;cam.pitch=p;cam.ryaw=cam.yaw||0;cam.tilt=0;PHX.on=true;PHX.k={};PHX.ptr.clear();PHX.blob=null;
   document.body.classList.add('phOn');phRect();PHX.ov.hidden=false;$('phPrev').classList.remove('on');$('phShare').textContent='Share';phLook();return true;}
 function phExit(){if(!PHX.on)return;const s=PHX.st;PHX.on=false;PHX.snap=null;document.body.classList.remove('phOn');cv.style.filter='';if(PHX.ov)PHX.ov.hidden=true;
   cam.free=false;cam.ryaw=0;if(s){Object.assign(cam,s.c);if(G===s.G&&!s.mp&&!s.paused){G.paused=false;xsTry(syncPause);last=performance.now();}}
@@ -15706,7 +15727,7 @@ async function svLoad(meta,packed){
     const cm=sv.cam;
     try{$('menu').hidden=true;}catch(e){}
     await afterStart();
-    if(G&&cm&&Number.isFinite(cm.x)){for(const k of ['x','y','tx','ty','dist','yaw','z'])if(Number.isFinite(cm[k]))cam[k]=cm[k];cam._xl=cam.x;cam._yl=cam.y;}
+    if(G&&cm&&Number.isFinite(cm.x)){for(const k of ['x','y','tx','ty','dist','yaw','z'])if(Number.isFinite(cm[k]))cam[k]=cm[k];cam.tyaw=cam.yaw||0;cam._xl=cam.x;cam._yl=cam.y;}
     if(G){G.ldHold=0;G.paused=false;togglePause(true);$('pauseSub').textContent='Game loaded. Press P to continue.';SAVE.autoT=performance.now();}
     return {ok:true};}
   catch(e){console.error('load failed',e);try{G=null;MODE='single';ME=0;loadHide();$('menu').hidden=false;}catch(_){}return {ok:false,msg:'This save could not be loaded ('+(e&&e.message||e)+').'};}}
