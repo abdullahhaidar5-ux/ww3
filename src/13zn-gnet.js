@@ -12,7 +12,7 @@
    markets react to its actions exactly as to the host's (same GMOD rows, same event engine); no separate mini-game. */
 const GNT={on:0,host:0,cl:0,code:'',g:null,nat:'',hum:{},orig:{},last:'',lastT:0,dayK:'',parts:{},tok:'',free:null,dirty:0,ui:0,lobby:0,pend:{},lob:null,lobC:0,rdy:0};
 /* name → index of the nation argument, or 'a' = first argument is an army id that must belong to the sender */
-const GNT_W={grOrderMove:'a',grSplit:'a',grMerge:'a',gmilAssign:'a',grRecruit:0,grDeclare:0,grSpy:0,gdAct:1,gdvBuy:0,geAutonomy:0,geAct:0,geBorrow:0,geBuild:0,
+const GNT_W={grOrderMove:'a',grSplit:'a',grMerge:'a',grDrill:'a',gmilAssign:'a',grRecruit:0,grDeclare:0,grSpy:0,gdAct:1,gdvBuy:0,geAutonomy:0,geAct:0,geBorrow:0,geBuild:0,
   geCity:0,geDeposit:0,geEmbargo:0,geMerchant:0,geRation:0,geRepay:0,geSellMode:0,geSetStrait:0,geTotalWar:0,geWithdraw:0,gidBuy:0,ginCut:0,ginSet:0,gstRaise:0,
   gtrPush:0,pgCounter:0,pgRun:0,rsBuy:0,wsRally:0,gcoEase:0,gmilBuyFleet:0,gmilStrike:0,gmilBuyMissile:0,gevChoose:0,grSetTax:0,ldrGo:'L'};
 const GNT_PART=30000;
