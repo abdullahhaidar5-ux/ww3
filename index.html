@@ -22731,6 +22731,7 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
   else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (armies on enemy land, war length)',s]);
     W.push(['Opens the peace-deal screen: war score buys provinces, tribute or a vassal',0]);}
   else if(act==='guarantee'){cost=300;if(war)no('At war');else if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))no('Already guaranteed');W.push(['Costs $300, +15 opinion, shows resolve',0]);}
+  else if(act==='proxy'){cost=GPX_COST;if(war)no('At war');else if(al)no('Allied: no need for a proxy');else if(gpxHas(a,b))no('Already funded');W.push(['Costs $'+GPX_COST+' a month for 12 months, plus $'+GPX_SEC+' security costs to them',0]);W.push(['Each month a 6% chance it is traced back: their opinion of you -30, everyone else -5',0]);}
   else if(act==='break'){if(!al)no('Not allied');else if(typeof grInResBloc==='function'&&grInResBloc(a,b))no('The Resistance bloc is permanent while the Ayatollah leads it');W.push(['Opinion -25',0]);}
   if(typeof grOverlord==='function'&&ok){const ov=grOverlord(a);if(ov&&(act==='war'||act==='alliance'||act==='guarantee'||act==='peace'||act==='break'))no('Your overlord, '+GCM.nats.get(ov).name+', decides this');const sv=grOverlord(b);if(act==='break'&&sv===a)no(GCM.nats.get(b).name+' is your vassal');if(act==='war'&&sv)no(GCM.nats.get(b).name+' is a vassal of '+GCM.nats.get(sv).name+' — declare war on its overlord');}
   if(cost&&cash<cost&&ok)no('Not enough cash ($'+cost+')');
@@ -22739,6 +22740,7 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
 function gdAct(act,a,b){const c=gdChance(act,a,b);if(!c.ok)return c.note;const N=GC.nat[a],na=GCM.nats.get(a).name,nb=GCM.nats.get(b).name;N.cash-=c.cost;
   if(act==='improve'){gdRel(a,b,10);}
   else if(act==='aid'){gdRel(a,b,20);grLog(na+' sent aid to '+nb+'.',a);}
+  else if(act==='proxy'){gpxStart(a,b);}
   else if(act==='guarantee'){GC.gu=GC.gu||[];GC.gu.push([a,b]);gdRel(a,b,15);grLog(na+' guarantees the independence of '+nb+'.',a);}
   else if(act==='alliance'){GC.alz=GC.alz||[];const g=GC.alz.find(x=>x[1].includes(a));if(g&&!g[1].includes(b))g[1].push(b);else if(!g)GC.alz.push([na+'–'+nb+' Pact',[a,b]]);gdRel(a,b,15);grLog(na+' and '+nb+' formed an alliance.',a);}
   else if(act==='break'){for(const g of GC.alz||[])if(g[1].includes(a)&&g[1].includes(b))g[1]=g[1].filter(x=>x!==b);GC.alz=(GC.alz||[]).filter(x=>x[1].length>1);gdRel(a,b,-25);grLog(na+' left its alliance with '+nb+'.',a);}
@@ -22752,7 +22754,7 @@ const chip=(c,onc)=>{const n=grNat(c),d=document.createElement('span');d.title=G
   d.innerHTML='<span style="width:18px;height:12px;border:1px solid #fff;background:'+n.color+'"></span>'+GCM.nats.get(c).name;d.onclick=onc;return d;};
 const sel=c=>{GD.sel=c;npDraw();};
 const col=v=>v>=25?'#9fe39f':v<=-25?'#ff9d8e':'#e8e4d8';
-const ACTS=[['improve','Improve relations'],['aid','Send aid'],['claim','Press a claim'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['war','Declare war']];
+const ACTS=[['improve','Improve relations'],['aid','Send aid'],['claim','Press a claim'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['proxy','Arm a proxy militia'],['war','Declare war']];
 npTab('dip','🤝','Diplomacy',(code,body)=>{const me=GC.me;if(!GD.sel||GD.sel===code||!GC.nat[GD.sel])GD.sel=Object.keys(GC.nat).find(c=>c!==code&&!GC.nat[c].dead&&grNat(c).major)||'';
   const row=(t,L)=>{const d=document.createElement('div');d.style.cssText='margin-bottom:4px';d.innerHTML='<span style="display:inline-block;width:92px;opacity:.7;font-size:13px">'+t+'</span>';if(!L.length)d.innerHTML+='<span style="opacity:.4">—</span>';for(const c of L)d.appendChild(chip(c,()=>sel(c)));return d;};
   const top=document.createElement('div');top.style.cssText='margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #2c4258';
@@ -22926,7 +22928,7 @@ function glgDeclare(a,b){GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;if(GLG_D>0)
     if(GC.vas){const side=(x,y)=>{for(const v of GC.vas){const j=v[0]===x?v[1]:v[1]===x?v[0]:null;if(j&&j!==y&&GC.nat[j]&&!GC.nat[j].dead&&!grAtWar(j,y)&&!grVasPair(j,y)){GC.war[grWk(j,y)]=1;GC.wsT[grWk(j,y)]=GC.turn;grLog(gdNatName(j)+' joins the war against '+gdNatName(y)+(v[0]===x?' as a vassal of ':' as overlord of ')+gdNatName(x)+'.',j);}}};side(a,b);side(b,a);}   // vassals (13i GR_VASSALS)
   }finally{GLG_D--;}}
 function glgTurn(){if(!GC||!GC.nat)return;
-  try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}try{gpTurn();}catch(e){console.error('gpTurn',e);}try{gcfTurn();}catch(e){console.error('gcfTurn',e);}
+  try{gevTurn();}catch(e){console.error('gevTurn',e);}try{gachTurn();}catch(e){console.error('gachTurn',e);}try{gmisTurn();}catch(e){console.error('gmisTurn',e);}try{ggTurn();}catch(e){console.error('ggTurn',e);}try{gpTurn();}catch(e){console.error('gpTurn',e);}try{gcfTurn();}catch(e){console.error('gcfTurn',e);}try{gpxTurn();}catch(e){console.error('gpxTurn',e);}
   GC.off=GC.off||[];
   for(const k of Object.keys(GC.war).sort()){const [a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead){delete GC.war[k];continue;}
     const len=glgWarLen(a,b);if(len<8)continue;const [x,y]=glgScore(a,b);const loser=x>y?b:y>x?a:null;if(!loser&&len<14)continue;const lo=loser||a,wi=loser?(loser===a?b:a):b;
@@ -24118,6 +24120,51 @@ npTab('pipe','🛢','Pipelines & grids',(code,body,c)=>{const own=c.own&&code===
 });
 function gpBtn(t,f){const b=document.createElement('button');b.textContent=t;b.style.cssText='font-size:14px;padding:3px 9px;cursor:pointer';b.onclick=f;return b;}
 alAdd('pipecut','🛢','Pipeline cut',c=>{const n=GC&&GC.nat&&GC.nat[c]?gpCutN(c,'own')+gpCutN(c,'cust'):0;return n?{n,tip:'A pipeline or power link that serves us is cut — open the pipelines tab',go:()=>npOpen(c,'pipe')}:null;});
+// PROXY WARS + FOREIGN VOLUNTEERS (lane G, RG9 + RG18, first cut). Neutral wording; no real groups, places or people.
+// RG9 'proxy' (diplomacy act "Arm a proxy militia"): a nation at peace with b (not at war, not allied) funds a militia inside b
+//   for 12 months ($400 up front, then $400 a month through gpxTurn). Each month b pays $100 in security costs and gains unrest +1
+//   in up to two of its provinces. Exposure roll (6% a month): the militia is traced back, b's opinion of the sender falls -30, every
+//   other nation's opinion of the sender -5, and the militia ends. Counter-play: exposure risk, the opinion hit, and the cash drain.
+// RG18 volunteers: each month a war host h gets volunteers from nations of its own faction family that are not at war with h,
+//   not at war or allied with h's enemy e (25% a month per volunteer nation, at most 6 months per volunteer and war). Host +25 manpower;
+//   the volunteer nation pays $150 and its opinion of e falls -5. Cost for the volunteers, so nothing is free power.
+// Deterministic from seed + turn (multiplayer safe). State lives in GC.px and GC.vol, saved with GC.
+const GPX_COST=400,GPX_MONTHS=12,GPX_EXPOSE=.06,GPX_SEC=100,GPX_VOL_P=.25,GPX_VOL_MAN=25,GPX_VOL_COST=150,GPX_VOL_MAX=6;
+function gpxS(){if(!GC.px)GC.px=[];if(!GC.vol)GC.vol={};return GC;}
+function gpxOk(a,b){if(a===b||!GC||!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead)return false;return !grAtWar(a,b)&&!grAllied(a,b);}
+function gpxHas(a,b){gpxS();return GC.px.some(x=>x[0]===a&&x[1]===b);}
+function gpxStart(a,b){gpxS();if(!gpxOk(a,b)||gpxHas(a,b))return false;GC.px.push([a,b,GC.turn+GPX_MONTHS]);
+  const na=GCM.nats.get(a).name,nb=GCM.nats.get(b).name;grLog(na+' funds a militia inside '+nb+'. Officially, nothing is happening.',a);return true;}
+function gpxTurn(){if(!GC||!GC.nat)return;gpxS();const R=grRng((GC.seed|0)*521+GC.turn*13);
+  // RG9: funded militias
+  GC.px=GC.px.filter(x=>gpxOk(x[0],x[1])&&GC.turn<x[2]);
+  for(const x of GC.px.slice()){const a=x[0],b=x[1];const r=R();
+    GC.nat[a].cash-=GPX_COST;GC.nat[b].cash-=GPX_SEC;
+    const ps=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===b);
+    for(let k=0;k<2&&ps.length;k++){const pr=GC.prov[ps[Math.floor(R()*ps.length)].i];pr.un=Math.max(0,Math.min(100,(pr.un||0)+1));}
+    if(r<GPX_EXPOSE){gdRel(b,a,-30);for(const o of Object.keys(GC.nat))if(o!==a&&o!==b&&!GC.nat[o].dead)gdRel(o,a,-5);
+      grLog('A militia funded by '+GCM.nats.get(a).name+' inside '+GCM.nats.get(b).name+' has been traced back. Opinion of '+GCM.nats.get(a).name+' falls across the world.',a);
+      GC.px=GC.px.filter(y=>y!==x);}
+  }
+  // RG18: volunteers join wars that matter to their faction family
+  const wars=Object.keys(GC.war).filter(k=>GC.war[k]).sort();
+  for(const k of wars){const [h1,h2]=k.split('|');
+    for(const [h,e] of [[h1,h2],[h2,h1]]){
+      if(!GC.nat[h]||!GC.nat[e]||GC.nat[h].dead||GC.nat[e].dead)continue;
+      const fac=grNat(h).fac;
+      for(const v of Object.keys(GC.nat).sort()){
+        if(v===h||v===e||GC.nat[v].dead||grNat(v).fac!==fac)continue;
+        if(grAtWar(v,h)||grAtWar(v,e)||grAllied(v,e))continue;
+        const vk=v+'>'+h+'>'+e;gpxS();const r=R();
+        if(r>=GPX_VOL_P||(GC.vol[vk]||0)>=GPX_VOL_MAX||GC.nat[v].cash<GPX_VOL_COST)continue;
+        GC.vol[vk]=(GC.vol[vk]||0)+1;GC.nat[v].cash-=GPX_VOL_COST;
+        const N=GC.nat[h];if(N.e)N.e.man=Math.max(0,(N.e.man||0)+GPX_VOL_MAN);
+        gdRel(v,e,-5);
+        grLog('Volunteers from '+GCM.nats.get(v).name+' are fighting for '+GCM.nats.get(h).name+' against '+GCM.nats.get(e).name+'.',h);
+      }
+    }
+  }
+}
 // 13zr-garms.js — lane B RG12: ARMS TRADE. Buy/sell tanks, helicopters, AA, artillery and ATGM teams between nations; deliveries arrive in the buyer's capital after 2 months.
 // Who reacts: the seller (cash, +opinion, caps its own yearly exports), the buyer's enemies (opinion of the seller drops), the UN (sanctioned nations can neither buy nor sell), embargoes.
 // Second order: arms money feeds the seller's treasury, arms flow to nations already at war, and a bloc partner's embargo shuts a supplier. Counter-play: embargo a rival (5 Diplomatic points)
