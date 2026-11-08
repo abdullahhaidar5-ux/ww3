@@ -1,6 +1,6 @@
 // THE ONE EVENT / DECISION ENGINE (lane G, B7). Events are DATA rows in GEV_ROWS; effects are a tiny vocabulary applied by gevApply:
 //   ['cash',n] money · ['un',n] unrest in all your provinces · ['man',n] manpower · ['rel',who,n] opinion with who ('$nb' = a neighbour,'$foe' = an enemy)
-//   ['mod',stat,add,turns] a temporary modifier row in the ONE modifier engine (GMOD) · ['chain',id,delay] schedule a follow-up event
+//   ['est',id,loy,land] an estate's loyalty/control (13o) · ['mod',stat,add,turns] a temporary modifier row in the ONE modifier engine (GMOD) · ['chain',id,delay] schedule a follow-up event
 // State GC.ev = {last:{code:turn}, sch:[[turn,code,id]], pend:[[code,id]], hist:[[turn,code,id,opt]]} (saved with the campaign). Deterministic (seeded by turn+nation).
 // Neutral wording: no real politicians or organisations; titles only.
 const GEV_ROWS=[
@@ -54,6 +54,7 @@ function gevApply(code,fx){const N=GC.nat[code],R=grRng((GC.seed|0)*31+GC.turn*1
      if(w){gdRel(code,w,f[2]);lines.push('Opinion of '+gdNatName(w)+' '+(f[2]>0?'+':'')+f[2]);}}
    else if(k==='mod'){gmodAdd({id:'ev_'+code+'_'+f[1]+'_'+GC.turn,src:'Event',scope:'nation',stat:f[1],add:f[2],t:code,until:GC.turn+f[3]});lines.push((GMOD_STATS[f[1]]||f[1])+' '+(f[2]>0?'+':'')+Math.round(f[2]*100)+'% for '+f[3]+' months');}
    else if(k==='fn'){const r=(typeof GCR_FN!=='undefined'&&GCR_FN[f[1]])?GCR_FN[f[1]](code):'';if(r)lines.push(r);}
+   else if(k==='est'){const r=typeof gsEstFx==='function'?gsEstFx(code,f[1],f[2],f[3]||0):'';if(r)lines.push(r);}   /* estates (13o): ['est',id,loyalty,control%] */
    else if(k==='chain'){gevS().sch.push([GC.turn+f[2],code,f[1]]);}}
   return lines;}
 function gevFire(code,id){const row=GEV_ROWS.find(r=>r.id===id);if(!row)return;const S=gevS();S.last[code]=GC.turn;
