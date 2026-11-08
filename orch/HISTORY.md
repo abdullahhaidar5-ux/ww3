@@ -462,3 +462,4 @@ laneA 2026-11-07 RG3 slice 2 spies→covert actions: Sabotage ($600, 3 months of
 - laneE DE-BLOCK slice 12: night tracer rounds throw a spark where they land (src/05-fx3d.js, view only); local smoke timed out >2 min on slow box, CI decides; no new shot
 - laneF 2026-11-07 23:40Z: audit — RF7 (ammo) and RF9 (wounded/medevac) were already built; ticked. No code change.
 - laneG 2026-11-08 00:05Z: RG9 proxy wars ('Arm a proxy militia' act, 12 months, exposure risk) + RG18 volunteers (same-faction volunteers join wars, host manpower, cost to them) — src/13zq-gproxy.js, hooks in 13m-gdiplo.js + 13o-gworld.js; test orch/proxytest.mjs; also merged unmerged laneG 9a82454e (RG40/39/41/42/29/28 event rows, RG10 nuclear stall, RG20 ceasefires can break).
+- laneG 2026-11-08 00:45Z: RG15 cyber first cut ('Cyber strike on banks' act; attribution risk, cooldown) in src/13zq-gproxy.js; orch/proxytest.mjs extended; smoke PASS, proxytest PASS, grandtest PASS (before this cut).

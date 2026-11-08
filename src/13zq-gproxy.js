@@ -6,7 +6,16 @@
 // RG18 volunteers: each month a war host h gets volunteers from nations of its own faction family that are not at war with h,
 //   not at war or allied with h's enemy e (25% a month per volunteer nation, at most 6 months per volunteer and war). Host +25 manpower;
 //   the volunteer nation pays $150 and its opinion of e falls -5. Cost for the volunteers, so nothing is free power.
-// Deterministic from seed + turn (multiplayer safe). State lives in GC.px and GC.vol, saved with GC.
+// RG15 'cyber' (diplomacy act "Cyber strike on banks", first cut, one system with the proxy act): $250 to run; their banks lose $400
+//   that month and their opinion of you -20; 1 strike in 4 is attributed (everyone's opinion of you -10). One strike per 6 months per pair.
+//   Not allied. Counter-play: attribution risk and the cooldown. Merge with RG3 spies is still open (a covert system later).
+// Deterministic from seed + turn (multiplayer safe). State lives in GC.px, GC.vol and GC.cyT, saved with GC.
+const GPX_CYBER_COST=250,GPX_CYBER_HIT=400,GPX_CYBER_CD=6;
+function gpxCyber(a,b){GC.cyT=GC.cyT||{};GC.cyT[grWk(a,b)]=GC.turn;GC.nat[b].cash-=GPX_CYBER_HIT;gdRel(b,a,-20);
+  const R=grRng((GC.seed|0)*677+GC.turn*17+a.charCodeAt(0)*3+b.charCodeAt(0));const na=GCM.nats.get(a).name,nb=GCM.nats.get(b).name;
+  if(R()<.25){gdRel(b,a,-10);for(const o of Object.keys(GC.nat))if(o!==a&&o!==b&&!GC.nat[o].dead)gdRel(o,a,-10);
+    grLog('Banks in '+nb+' went dark. Investigators trace the attack to '+na+'; the world is angry.',a);}
+  else grLog('Banks in '+nb+' report a network outage. Nobody claims it.',b);}
 const GPX_COST=400,GPX_MONTHS=12,GPX_EXPOSE=.06,GPX_SEC=100,GPX_VOL_P=.25,GPX_VOL_MAN=25,GPX_VOL_COST=150,GPX_VOL_MAX=6;
 function gpxS(){if(!GC.px)GC.px=[];if(!GC.vol)GC.vol={};return GC;}
 function gpxOk(a,b){if(a===b||!GC||!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead)return false;return !grAtWar(a,b)&&!grAllied(a,b);}

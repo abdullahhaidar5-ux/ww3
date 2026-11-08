@@ -53,6 +53,10 @@ try {
     gpxTurn(); const u1 = ps.reduce((s, p) => s + (GC.prov[p.i].un || 0), 0);
     out.monthly = GC.nat[b].cash === cb0 - 100 && (u1 > u0 || !gpxHas(a, b));
     GC.px = GC.px.map(x => [x[0], x[1], GC.turn]); gpxTurn(); out.ends = !gpxHas(a, b);
+    // RG15 cyber strike: $250 to run, their banks lose $400 at once, cooldown 6 months, not against allies
+    const cy = gdChance('cyber', a, b); out.cyberOk = cy.ok && cy.cost === 250;
+    const cb1 = GC.nat[b].cash; gdAct('cyber', a, b); out.cyberHit = cb1 - GC.nat[b].cash === 400 && !!GC.cyT[grWk(a, b)];
+    out.cyberCool = !gdChance('cyber', a, b).ok; GC.turn += 6; out.cyberAgain = gdChance('cyber', a, b).ok; GC.turn -= 6;
     // RG18 volunteers: a same-faction nation joins a war host without being at war with its enemy
     const h = GCM.P.filter(p => p.land).map(p => GC.prov[p.i].o).find(o => o !== a && GC.nat[o] && !GC.nat[o].dead && o !== b);
     const v = Object.keys(GC.nat).find(o => o !== h && o !== b && !GC.nat[o].dead && grNat(o).fac === grNat(h).fac);
@@ -63,7 +67,7 @@ try {
       out.volCapped = Object.values(GC.vol).every(x => x <= GPX_VOL_MAX); }
     return out; });
   console.log('proxytest', JSON.stringify(r));
-  if (!r.peaceOk || !r.chanceOk || !r.started || !r.paid || !r.dupe || !r.warBlocks || !r.monthly || !r.ends || (r.vol && (!r.volSent || !r.volCapped))) fails.push('proxy ' + JSON.stringify(r));
+  if (!r.peaceOk || !r.chanceOk || !r.started || !r.paid || !r.dupe || !r.warBlocks || !r.monthly || !r.ends || !r.cyberOk || !r.cyberHit || !r.cyberCool || !r.cyberAgain || (r.vol && (!r.volSent || !r.volCapped))) fails.push('proxy ' + JSON.stringify(r));
 } catch (e) { fails.push('exception: ' + e.message); }
 if (errs.length) fails.push(...errs.slice(0, 5));
 await browser.close(); server.close();

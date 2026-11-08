@@ -37,6 +37,7 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
   else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (armies on enemy land, war length)',s]);
     W.push(['Opens the peace-deal screen: war score buys provinces, tribute or a vassal',0]);}
   else if(act==='guarantee'){cost=300;if(war)no('At war');else if(GC.gu&&GC.gu.some(g=>g[0]===a&&g[1]===b))no('Already guaranteed');W.push(['Costs $300, +15 opinion, shows resolve',0]);}
+  else if(act==='cyber'){cost=GPX_CYBER_COST;if(al)no('Allied: no hacking allies');else if(GC.cyT&&GC.turn-(GC.cyT[grWk(a,b)]??-99)<GPX_CYBER_CD)no('Cooling down: next strike in '+(GPX_CYBER_CD-(GC.turn-GC.cyT[grWk(a,b)]))+' month(s)');W.push(['Costs $'+GPX_CYBER_COST+'; their banks lose $'+GPX_CYBER_HIT+' this month',0]);W.push(['Attribution in 1 of 4 strikes: everyone\'s opinion of you -10, theirs -20 more',0]);}
   else if(act==='proxy'){cost=GPX_COST;if(war)no('At war');else if(al)no('Allied: no need for a proxy');else if(gpxHas(a,b))no('Already funded');W.push(['Costs $'+GPX_COST+' a month for 12 months, plus $'+GPX_SEC+' security costs to them',0]);W.push(['Each month a 6% chance it is traced back: their opinion of you -30, everyone else -5',0]);}
   else if(act==='break'){if(!al)no('Not allied');else if(typeof grInResBloc==='function'&&grInResBloc(a,b))no('The Resistance bloc is permanent while the Ayatollah leads it');W.push(['Opinion -25',0]);}
   if(typeof grOverlord==='function'&&ok){const ov=grOverlord(a);if(ov&&(act==='war'||act==='alliance'||act==='guarantee'||act==='peace'||act==='break'))no('Your overlord, '+GCM.nats.get(ov).name+', decides this');const sv=grOverlord(b);if(act==='break'&&sv===a)no(GCM.nats.get(b).name+' is your vassal');if(act==='war'&&sv)no(GCM.nats.get(b).name+' is a vassal of '+GCM.nats.get(sv).name+' — declare war on its overlord');}
@@ -47,6 +48,7 @@ function gdAct(act,a,b){const c=gdChance(act,a,b);if(!c.ok)return c.note;const N
   if(act==='improve'){gdRel(a,b,10);}
   else if(act==='aid'){gdRel(a,b,20);grLog(na+' sent aid to '+nb+'.',a);}
   else if(act==='proxy'){gpxStart(a,b);}
+  else if(act==='cyber'){gpxCyber(a,b);}
   else if(act==='guarantee'){GC.gu=GC.gu||[];GC.gu.push([a,b]);gdRel(a,b,15);grLog(na+' guarantees the independence of '+nb+'.',a);}
   else if(act==='alliance'){GC.alz=GC.alz||[];const g=GC.alz.find(x=>x[1].includes(a));if(g&&!g[1].includes(b))g[1].push(b);else if(!g)GC.alz.push([na+'–'+nb+' Pact',[a,b]]);gdRel(a,b,15);grLog(na+' and '+nb+' formed an alliance.',a);}
   else if(act==='break'){for(const g of GC.alz||[])if(g[1].includes(a)&&g[1].includes(b))g[1]=g[1].filter(x=>x!==b);GC.alz=(GC.alz||[]).filter(x=>x[1].length>1);gdRel(a,b,-25);grLog(na+' left its alliance with '+nb+'.',a);}
@@ -60,7 +62,7 @@ const chip=(c,onc)=>{const n=grNat(c),d=document.createElement('span');d.title=G
   d.innerHTML='<span style="width:18px;height:12px;border:1px solid #fff;background:'+n.color+'"></span>'+GCM.nats.get(c).name;d.onclick=onc;return d;};
 const sel=c=>{GD.sel=c;npDraw();};
 const col=v=>v>=25?'#9fe39f':v<=-25?'#ff9d8e':'#e8e4d8';
-const ACTS=[['improve','Improve relations'],['aid','Send aid'],['claim','Press a claim'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['proxy','Arm a proxy militia'],['war','Declare war']];
+const ACTS=[['improve','Improve relations'],['aid','Send aid'],['claim','Press a claim'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['proxy','Arm a proxy militia'],['cyber','Cyber strike on banks'],['war','Declare war']];
 npTab('dip','🤝','Diplomacy',(code,body)=>{const me=GC.me;if(!GD.sel||GD.sel===code||!GC.nat[GD.sel])GD.sel=Object.keys(GC.nat).find(c=>c!==code&&!GC.nat[c].dead&&grNat(c).major)||'';
   const row=(t,L)=>{const d=document.createElement('div');d.style.cssText='margin-bottom:4px';d.innerHTML='<span style="display:inline-block;width:92px;opacity:.7;font-size:13px">'+t+'</span>';if(!L.length)d.innerHTML+='<span style="opacity:.4">—</span>';for(const c of L)d.appendChild(chip(c,()=>sel(c)));return d;};
   const top=document.createElement('div');top.style.cssText='margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #2c4258';
