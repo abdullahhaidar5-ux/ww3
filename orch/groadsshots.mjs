@@ -36,5 +36,5 @@ await view(c[0], c[1] + 25, 250, 0.1, .78); await shot(tag + '-iraq-mid');
 await view(c[0], c[1] + 12, 110, 0.1, .7); await shot(tag + '-iraq-close');
 const lv = await pv('South Lebanon'); await view(lv[0] + 30, lv[1] + 10, 260, 0.2, .75); await shot(tag + '-levant');
 await ev(() => guFit(GR_REGIONS[4][1])); await shot(tag + '-me-wide');
-console.log('fps', await ev(async () => { const t = performance.now(); let n = 0; await new Promise(r => { const f = () => { if (++n < 30) requestAnimationFrame(f); else r(); }; f(); }); return Math.round(30000 / (performance.now() - t)); }));
+
 console.log('errs', JSON.stringify(errs)); await browser.close(); server.close();
