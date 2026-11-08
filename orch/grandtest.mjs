@@ -57,6 +57,13 @@ try {
   const scn = await ev(() => { const r = {}; for (const sc of ['me26', 'gulf', 'redsea']) { grNew({ me: 'IR', seed: 99, len: 'quick', sc }); r[sc] = { sc: GC.sc, irsa: grAtWar('IR', 'SA'), dwil: grAtWar('DW', 'IL'), armies: GC.armies.length, h: grHash() }; } grNew({ me: 'IR', seed: 99, len: 'quick', sc: 'gulf' }); r.again = grHash(); return r; });
   console.log('scenarios', JSON.stringify(scn));
   if (scn.me26.irsa || !scn.gulf.irsa || scn.gulf.sc !== 'gulf' || !scn.redsea.dwil || scn.gulf.armies <= scn.me26.armies || scn.again !== scn.gulf.h) fails.push('scenarios: ' + JSON.stringify(scn));
+  // ---- real26: the start is the real world of 1 Nov 2026 (orch/REAL-2026.md)
+  const r26 = await ev(() => { grNew({ me: 'IR', seed: 99, len: 'quick' }); const own = n => { const p = GCM.P.find(q => q.land && q.n === n); return p ? [GC.prov[p.i].o, GC.prov[p.i].o0] : null; }; const hz = GCM.P.find(p => p.sea && p.n === 'Strait of Hormuz');
+    return { ruua: grAtWar('RU', 'UA'), ilrs: grAtWar('IL', 'RS'), ilrsTr: gdTruce('IL', 'RS'), usir: grAtWar('US', 'IR'), usirTr: gdTruce('US', 'IR'), dwsa: grAtWar('DW', 'SA'), syVas: grOverlord('SY'), donbas: own('Donbas'), slb: own('South Lebanon'),
+      hz: hz ? GC.eco.cl[hz.i] || 0 : 'none', oil: geOilIdx(1), ruEmb: GC.nat.US.e.emb.includes('RU'), es: elNext('ES'), us: elNext('US'), sch: (GC.ev.sch || []).filter(x => /^r26_/.test(x[2])).length, mecca: grAllied('SA', 'PK') && grAllied('SA', 'TR') }; });
+  console.log('real26', JSON.stringify(r26));
+  if (!r26.ruua || r26.ilrs || !r26.ilrsTr || r26.usir || !r26.usirTr || !r26.dwsa || r26.syVas !== 'TR' || !r26.donbas || r26.donbas[0] !== 'RU' || r26.donbas[1] !== 'UA' || !r26.slb || r26.slb[0] !== 'IL'
+    || r26.oil < 120 || !r26.ruEmb || r26.es !== 1 || r26.us !== 25 || r26.sch < 6 || !r26.mecca) fails.push('real26 start facts: ' + JSON.stringify(r26));
   // ---- RG3 fog of war + spies: far enemy armies hidden from the player, spies reveal a nation, sim hash unchanged by looking
   const fog = await ev(() => { grNew({ me: 'IR', seed: 77, len: 'quick' }); const h0 = grHash(); const foes = GC.armies.filter(a => !grFriend('IR', a.o)); const seen = foes.filter(a => grSeen(a)).length;
     const far = foes.find(a => !grSeen(a)); GC.nat.IR.cash = 5000; const e = far ? grSpy('IR', far.o) : 'none hidden'; const after = far ? grSeen(far) : false; const own = GC.armies.filter(a => a.o === 'IR').every(a => grSeen(a));
@@ -195,7 +202,7 @@ try {
       // oil market is deterministic and swings; crises exist
       const idx = []; for (let t = 1; t <= 20; t++) idx.push(geOilIdx(t)); ok(Math.max(...idx) - Math.min(...idx) > 25, 'oil price swings ' + idx.join(',')); ok(GC.eco.cr.length >= 2, 'crises scheduled');
       // chokepoint: someone holds Hormuz and the holder can close it, which moves the oil price
-      const hz = P.find(p => p.sea && p.n === 'Strait of Hormuz').i, h = geHolder(hz); ok(!!h, 'Hormuz has a holder'); if (h) { const before = geOilIdx(GC.turn + 1); ok(geSetStrait(h, hz, true) === '', 'close strait'); ok(geOilIdx(GC.turn + 1) > before, 'closed strait raises oil'); geSetStrait(h, hz, false); }
+      const hz = P.find(p => p.sea && p.n === 'Strait of Hormuz').i, h = geHolder(hz); ok(!!h, 'Hormuz has a holder'); if (h) { geSetStrait(h, hz, false); const before = geOilIdx(GC.turn + 1); ok(geSetStrait(h, hz, true) === '', 'close strait'); ok(geOilIdx(GC.turn + 1) > before, 'closed strait raises oil'); geSetStrait(h, hz, false); }
       // signature fx apply
       ok(geFx('SA', 'oil') && geFx('SA', 'bank'), 'SA oil fund'); ok(geFx('US', 'tax') && geFx('US', 'upkeep'), 'US interim');
       // supply: ammo drops outside supply, refills inside
@@ -347,7 +354,7 @@ try {
   const rt = await ev(() => { const h = grHash(); grClear(); const ok = !GC; grNew({ me: 'IR', seed: 5, len: 'quick' }); const h2 = grHash(); grSave(); const x = grLoad(); return { same: grHash() === h2, x: !!x }; });
   if (!rt.same) fails.push('save round trip changed the state hash');
   // B2.5 modifier engine: style row, temporary row expiry, save round trip
-  const gm = await ev(() => { grNew({ me: 'IR', seed: 5, len: 'quick' }); const w0 = gmod('nation', 'IR', 'warSupport', 1); gmodAdd({ id: 't1', src: 'Test', scope: 'nation', stat: 'warSupport', add: .2, t: 'IR', until: GC.turn + 1 }); const w1 = gmod('nation', 'IR', 'warSupport', 1); grSave(); const x = grLoad(); const w2 = gmod('nation', 'IR', 'warSupport', 1); gmodMonth(GC.turn + 2); return { w0, w1, w2, w3: gmod('nation', 'IR', 'warSupport', 1), n: (GC.mod || []).filter(r => !/^(trade|mk|el)_/.test(r.id)).length, l: gmodLines('nation', 'IR', 'warSupport').length }; });
+  const gm = await ev(() => { grNew({ me: 'IR', seed: 5, len: 'quick' }); const w0 = gmod('nation', 'IR', 'warSupport', 1); gmodAdd({ id: 't1', src: 'Test', scope: 'nation', stat: 'warSupport', add: .2, t: 'IR', until: GC.turn + 1 }); const w1 = gmod('nation', 'IR', 'warSupport', 1); grSave(); const x = grLoad(); const w2 = gmod('nation', 'IR', 'warSupport', 1); gmodMonth(GC.turn + 2); return { w0, w1, w2, w3: gmod('nation', 'IR', 'warSupport', 1), n: (GC.mod || []).filter(r => !/^(trade|mk|el|dec)_/.test(r.id)).length, l: gmodLines('nation', 'IR', 'warSupport').length }; });
   // IR: Zealous +10% and the shared Ayatollah (13v) +8% war support
   if (!(gm.w0 > 1.1 && gm.w0 < 1.3 && Math.abs(gm.w1 - gm.w0 - .2) < 1e-9 && Math.abs(gm.w2 - gm.w0 - .2) < 1e-9 && Math.abs(gm.w3 - gm.w0) < 1e-9 && gm.n === 0)) fails.push('gmod engine: ' + JSON.stringify(gm));
   // laneF ⚡21 outliner: O lists my armies; clicking a row selects it

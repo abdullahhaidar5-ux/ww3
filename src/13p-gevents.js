@@ -1,6 +1,8 @@
 // THE ONE EVENT / DECISION ENGINE (lane G, B7). Events are DATA rows in GEV_ROWS; effects are a tiny vocabulary applied by gevApply:
 //   ['cash',n] money · ['un',n] unrest in all your provinces · ['man',n] manpower · ['rel',who,n] opinion with who ('$nb' = a neighbour,'$foe' = an enemy)
-//   ['est',id,loy,land] an estate's loyalty/control (13o) · ['mod',stat,add,turns] a temporary modifier row in the ONE modifier engine (GMOD) · ['chain',id,delay] schedule a follow-up event
+//   ['stab',n] stability · ['ws',n] war support · ['pp',pool,n] power points (ctabs2: decisions use the same vocabulary)
+//   ['est',id,loy,land] an estate's loyalty/control (13o)
+//   ['mod',stat,add,turns,src?] a temporary modifier row in the ONE modifier engine (GMOD) · ['chain',id,delay] schedule a follow-up event
 // State GC.ev = {last:{code:turn}, sch:[[turn,code,id]], pend:[[code,id]], hist:[[turn,code,id,opt]]} (saved with the campaign). Deterministic (seeded by turn+nation).
 // Neutral wording: no real politicians or organisations; titles only.
 const GEV_ROWS=[
@@ -52,7 +54,10 @@ function gevApply(code,fx){const N=GC.nat[code],R=grRng((GC.seed|0)*31+GC.turn*1
    else if(k==='man'){if(N.e)N.e.man=Math.max(0,(N.e.man||0)+f[1]);lines.push('Manpower '+(f[1]>0?'+':'')+f[1]);}
    else if(k==='rel'){let w=f[1];if(w==='$nb'){const l=gevNb(code);w=l.length?l[Math.floor(R()*l.length)]:null;}else if(w==='$foe'){const l=gdEnemies(code);w=l.length?l[Math.floor(R()*l.length)]:null;}
      if(w){gdRel(code,w,f[2]);lines.push('Opinion of '+gdNatName(w)+' '+(f[2]>0?'+':'')+f[2]);}}
-   else if(k==='mod'){gmodAdd({id:'ev_'+code+'_'+f[1]+'_'+GC.turn,src:'Event',scope:'nation',stat:f[1],add:f[2],t:code,until:GC.turn+f[3]});lines.push((GMOD_STATS[f[1]]||f[1])+' '+(f[2]>0?'+':'')+Math.round(f[2]*100)+'% for '+f[3]+' months');}
+   else if(k==='stab'){const S0=N.stab|0;N.stab=Math.max(-3,Math.min(3,S0+f[1]));N.stP=0;GMOD_C.cache.clear();lines.push('Stability '+(f[1]>0?'+':'')+f[1]);}
+   else if(k==='ws'){if(typeof wsN==='function'&&wsN(code))N.ws=Math.max(0,Math.min(100,N.ws+f[1]));lines.push('War support '+(f[1]>0?'+':'')+f[1]+'%');}
+   else if(k==='pp'){if(typeof gidN==='function')gidN(code);if(N.pp)N.pp[f[1]]=Math.max(0,(N.pp[f[1]]||0)+f[2]);lines.push((typeof GID_POOL!=='undefined'?GID_POOL[f[1]]:f[1])+' points '+(f[2]>0?'+':'')+f[2]);}
+   else if(k==='mod'){gmodAdd({id:(f[4]?'dec_':'ev_')+code+'_'+f[1]+'_'+GC.turn+(f[4]?'_'+f[4]:''),src:f[4]||'Event',scope:'nation',stat:f[1],add:f[2],t:code,until:GC.turn+f[3]});lines.push((GMOD_STATS[f[1]]||f[1])+' '+(f[2]>0?'+':'')+Math.round(f[2]*100)+'% for '+f[3]+' months');}
    else if(k==='fn'){const r=(typeof GCR_FN!=='undefined'&&GCR_FN[f[1]])?GCR_FN[f[1]](code):'';if(r)lines.push(r);}
    else if(k==='est'){const r=typeof gsEstFx==='function'?gsEstFx(code,f[1],f[2],f[3]||0):'';if(r)lines.push(r);}   /* estates (13o): ['est',id,loyalty,control%] */
    else if(k==='chain'){gevS().sch.push([GC.turn+f[2],code,f[1]]);}}

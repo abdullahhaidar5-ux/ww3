@@ -336,7 +336,7 @@ function lgDone(u,o){const D=G.lgd,L=G.lg,team=u.team,k=o.k;
   if(k==='mine'){const my=D.mn.filter(m=>m.team===team);if(my.length>=LG_MINE_MAX)D.mn.splice(D.mn.indexOf(my[0]),1);D.mn.push({id:D.id++,team,x:o.x,y:o.y});D.v++;
     log(team,'Mine laid on the road: the first enemy vehicle over it is hit. Enemy engineers can clear it.','g');}
   else if(k==='ckpt'){const my=D.ck.filter(c=>c.team===team);if(my.length>=LG_CK_MAX)D.ck.splice(D.ck.indexOf(my[0]),1);
-    const nx=-Math.sin(o.a),ny=Math.cos(o.a),dg=[];for(const off of [-58,-34,34,58]){const d=dugAdd(team,'sand',o.x+nx*off,o.y+ny*off,o.a);if(d)dg.push(d.id);}
+    const nx=-Math.sin(o.a),ny=Math.cos(o.a),dg=[];for(const off of [-58,-34,34,58]){const d=dugAdd(team,'trench',o.x+nx*off,o.y+ny*off,o.a);if(d)dg.push(d.id);}
     D.ck.push({id:D.id++,team,x:o.x,y:o.y,ei:o.ei,dg});D.v++;L.sig='';log(team,`Checkpoint up: enemy supply can't use this road while it stands, and it collects a toll ($${Math.round(LG_TOLL*60)}/min) while the road is on your network.`,'g');}
   else if(k==='demo'){const b=G.map.bridges[o.bi];const s=D.bd[o.bi]||(D.bd[o.bi]={hp:lgBrMax(b)});s.ch={team,t:G.t+LG_CHG,x:o.x,y:o.y,df:0};D.v++;
     for(const T of G.teams)if(!T.reb&&!T.out){const fr=ally(T.id,team);log(T.id,fr?`Charges set - the bridge blows in ${LG_CHG} s.`:`Enemy engineers have rigged a bridge to blow in ${LG_CHG} s! Put infantry or a Construction Vehicle on the charges to clear them.`,fr?'g':'bad');FXE('tping',[T.id,o.x|0,o.y|0,0]);}}
