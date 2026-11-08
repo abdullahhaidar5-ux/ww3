@@ -23476,12 +23476,9 @@ if(typeof alAdd==='function')alAdd('peaceoffer','🕊','Peace offer',c=>{const o
 function glgAcceptPeace(a,b){glgPeace(a,b);GC.off=(GC.off||[]).filter(o=>!(o[0]===a&&o[1]===b));try{guTop();grandMapRefresh();}catch(e){}}
 // THE ONE EVENT / DECISION ENGINE (lane G, B7). Events are DATA rows in GEV_ROWS; effects are a tiny vocabulary applied by gevApply:
 //   ['cash',n] money · ['un',n] unrest in all your provinces · ['man',n] manpower · ['rel',who,n] opinion with who ('$nb' = a neighbour,'$foe' = an enemy)
-<<<<<<< HEAD
-//   ['est',id,loy,land] an estate's loyalty/control (13o) · ['mod',stat,add,turns] a temporary modifier row in the ONE modifier engine (GMOD) · ['chain',id,delay] schedule a follow-up event
-=======
 //   ['stab',n] stability · ['ws',n] war support · ['pp',pool,n] power points (ctabs2: decisions use the same vocabulary)
+//   ['est',id,loy,land] an estate's loyalty/control (13o)
 //   ['mod',stat,add,turns,src?] a temporary modifier row in the ONE modifier engine (GMOD) · ['chain',id,delay] schedule a follow-up event
->>>>>>> origin/main
 // State GC.ev = {last:{code:turn}, sch:[[turn,code,id]], pend:[[code,id]], hist:[[turn,code,id,opt]]} (saved with the campaign). Deterministic (seeded by turn+nation).
 // Neutral wording: no real politicians or organisations; titles only.
 const GEV_ROWS=[
@@ -24616,11 +24613,7 @@ function gpGuarded(p){const ps=new Set(gpProv(p));return GC.armies.some(a=>a.o==
 function gpCutN(c,role){let n=0;for(const p of GPIP){if(!gpWhy(p))continue;if(role==='own'?p.o===c:role==='cust'?(p.cust.includes(c)):(p.via.includes(c)))n++;}return n;}
 function gpHormuzShut(n){const si=GCM.byName.get(n);if(si===undefined)return false;return !!(GC.eco&&GC.eco.cl&&GC.eco.cl[si])||(typeof geBlockaded==='function'&&!!geBlockaded(si));}
 // oil price effect: -2 per mb/d of working bypass lines while their strait is shut (the lines soak up the shock), +2.5 per mb/d of any cut oil line
-<<<<<<< HEAD
-function gpOilDelta(){if(!GC||!GC.nat||typeof GCM==='undefined'||!GCM)return 0;let d=0,b=0;for(const p of GPIP){if(p.k!=='oil')continue;const w=gpWhy(p);if(w)d+=2.5*p.mb;else if(p.byp&&gpHormuzShut(p.byp))b-=2*p.mb;}return Math.round(Math.min(18,d)+Math.max(-6,b));}   /* bypass lines soften a shut strait (+8) but never reverse it (realmap helper, grandtest "closed strait raises oil") */
-=======
 function gpOilDelta(){if(!GC||!GC.nat||typeof GCM==='undefined'||!GCM)return 0;let cut=0,byp=0;for(const p of GPIP){if(p.k!=='oil')continue;const w=gpWhy(p);if(w)cut+=2.5*p.mb;else if(p.byp&&gpHormuzShut(p.byp))byp+=2*p.mb;}return Math.round(Math.min(18,cut)-Math.min(6,byp));}   /* bypass lines soften a shut strait (+8) but never reverse it (realmap helper, grandtest "closed strait raises oil") */
->>>>>>> origin/main
 GMOD_COND.pipe=(k,arg)=>{if(!GC||!GC.nat||!GC.nat[k])return false;if(arg==='own')return gpCutN(k,'own')>0;if(arg==='cust')return gpCutN(k,'cust')>0;if(arg==='via')return gpCutN(k,'via')>0;
   if(arg==='run'){let n=0;for(const p of GPIP)if(p.o===k){n++;if(gpWhy(p))return false;}return n>0;}return false;};
 GMOD_ROWS.push(
