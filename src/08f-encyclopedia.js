@@ -29,7 +29,7 @@ const ENC_BNOTE={
   hq:'The command headquarters is the heart of an army\'s base: planning, communications and the engineers who build everything else. Lose it and the rest of the base is soon lost.',
   barracks:'Barracks house, train and equip infantry. Real armies train recruits in camps like this, then rotate squads to the front.',
   factory:'The war factory stands for the vehicle depots and armour plants that build, repair and refit tanks, trucks and artillery.',
-  airfield:'Airfields give aircraft a runway, hangars, fuel and maintenance crews. A jet is only useful as long as its base survives.',
+  airfield:'Airfields give aircraft and drones a runway, hangars, fuel and maintenance crews. A jet is only useful as long as its base survives.',
   shipyard:'The shipyard builds, repairs and launches naval vessels. It must sit on the coast, which makes it an obvious target.',
   turret:'Fixed gun positions cover approaches and chokepoints. Real defence lines combine such guns with mines, wire and observers.',
   sam:'Surface-to-air missile sites guard cities and bases from jets and helicopters, often with a radar nearby to cue the launchers.',

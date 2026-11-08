@@ -119,7 +119,7 @@ const CAMPAIGN=[
   else if(!CH.blds(0).some(b=>b.kind==='hq')&&CH.combat(0)===0)c.lose('Base and assault force lost.');}},
 
 {id:'finale',n:5,title:'Combined Arms',sub:'Iran · Final assault',fac:'IR',enemy:'RU',enemyName:'Northern Group',map:'plateau',
- brief:['This is the strike that ends the offensive. The enemy has dug a fortified base on the plateau: air-defence sites on the approaches, armour in depth, a factory and a command post at the back.','You command a combined force: loitering drones, missile launchers, armour and infantry. Drones cannot survive the air defences - break the SAM sites first with launchers and tanks, then let the drones tear the base apart.','Take out the air defences, destroy the vehicle factory, then the headquarters. The enemy commander will fight back with everything he builds.'],
+ brief:['This is the strike that ends the offensive. The enemy has dug a fortified base on the plateau: air-defence sites on the approaches, armour in depth, a War Factory and a command post at the back.','You command a combined force: loitering drones, missile launchers, armour and infantry. Drones cannot survive the air defences - break the SAM sites first with launchers and tanks, then let the drones tear the base apart.','Take out the air defences, destroy the vehicle factory, then the headquarters. The enemy commander will fight back with everything he builds.'],
  obj:[['sam','Destroy the enemy air-defence sites'],['fac','Destroy the vehicle factory'],['hq','Destroy the enemy headquarters']],
  win:'The enemy command post is rubble. The offensive is over.',lose:'The assault force is destroyed.',
  setup(c){const d=c.mul,B=BASES[0];G.teams[0].credits=3500;const s=CH.pt(.14,0);c.focus=s;CH.base(0,B[0],B[1]);

@@ -24,7 +24,7 @@ function gpGuarded(p){const ps=new Set(gpProv(p));return GC.armies.some(a=>a.o==
 function gpCutN(c,role){let n=0;for(const p of GPIP){if(!gpWhy(p))continue;if(role==='own'?p.o===c:role==='cust'?(p.cust.includes(c)):(p.via.includes(c)))n++;}return n;}
 function gpHormuzShut(n){const si=GCM.byName.get(n);if(si===undefined)return false;return !!(GC.eco&&GC.eco.cl&&GC.eco.cl[si])||(typeof geBlockaded==='function'&&!!geBlockaded(si));}
 // oil price effect: -2 per mb/d of working bypass lines while their strait is shut (the lines soak up the shock), +2.5 per mb/d of any cut oil line
-function gpOilDelta(){if(!GC||!GC.nat||typeof GCM==='undefined'||!GCM)return 0;let d=0;for(const p of GPIP){if(p.k!=='oil')continue;const w=gpWhy(p);if(w)d+=2.5*p.mb;else if(p.byp&&gpHormuzShut(p.byp))d-=2*p.mb;}return Math.round(Math.max(-6,Math.min(18,d)));}   /* bypass lines soften a shut strait (+8) but never reverse it (realmap helper, grandtest "closed strait raises oil") */
+function gpOilDelta(){if(!GC||!GC.nat||typeof GCM==='undefined'||!GCM)return 0;let cut=0,byp=0;for(const p of GPIP){if(p.k!=='oil')continue;const w=gpWhy(p);if(w)cut+=2.5*p.mb;else if(p.byp&&gpHormuzShut(p.byp))byp+=2*p.mb;}return Math.round(Math.min(18,cut)-Math.min(6,byp));}   /* bypass lines soften a shut strait (+8) but never reverse it (realmap helper, grandtest "closed strait raises oil") */
 GMOD_COND.pipe=(k,arg)=>{if(!GC||!GC.nat||!GC.nat[k])return false;if(arg==='own')return gpCutN(k,'own')>0;if(arg==='cust')return gpCutN(k,'cust')>0;if(arg==='via')return gpCutN(k,'via')>0;
   if(arg==='run'){let n=0;for(const p of GPIP)if(p.o===k){n++;if(gpWhy(p))return false;}return n>0;}return false;};
 GMOD_ROWS.push(

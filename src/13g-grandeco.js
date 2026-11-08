@@ -90,8 +90,9 @@ const GE_B={
  farm:['Irrigation',450,2,'G','#b8d96a','+6 food (farm provinces only).'],
  mine:['Deep mine',550,3,'M','#b9bec6','+100 income (mining provinces only).'],
  fort:['Fort',500,2,'T','#d0a090','A defence gun in this province\'s battle.'],
+ dsite:['Drone launch site',420,2,'S','#c9b86a','Ground racks and hangars for long-range one-way attack drones (about 2,000 km), no runway needed. Makes 6 drones a month; Drone strikes and battle Shahed salvos draw on the stock. Can be bombed. Only nations that field such drones.'],
  mfort:['Mountain Fortress',1000,4,'X','#e0c070','A bunker pre-built in the battle (mountain provinces of IR, RS, AF, KD, DW, KP).']};
-const GE_BKEYS=['base','airfield','port','factory','refinery','power','aa','farm','mine','fort','mfort'];
+const GE_BKEYS=['base','airfield','port','factory','refinery','power','aa','farm','mine','fort','dsite','mfort'];
 function geBl(pi){return gmBuildings(pi);}
 function geEff(pi,k){let e=0;for(const r of geBl(pi))if(r[0]===k)e+=Math.max(0,1-(r[1]|0)/100);return e;}
 function geCount(pi,k){let n=0;for(const r of geBl(pi))if(r[0]===k)n++;return n;}
@@ -101,10 +102,11 @@ function geCost(c,k){return Math.round(GE_B[k][1]*(geFx(c,'build')?.8:1));}
 function geCanBuild(c,pi,k){const p=GCM.P[pi],st=GC.prov[pi],N=GC.nat[c];if(!p||!p.land||st.o!==c)return 'Not your province.';if(!GE_B[k])return 'Unknown building.';
   if(st.cv>0&&st.cv>=3)return 'Province in turmoil after its capture.';
   if(k==='mfort'&&!(GE_MFORT.includes(c)&&p.t==='m'))return GE_MFORT.includes(c)?'Needs a mountain province.':'Your nation has no Mountain Fortress.';
+  if(k==='dsite'&&!(typeof GMIL_DRN!=='undefined'&&GMIL_DRN.includes(c)))return 'Your nation does not field long-range one-way drones.';
   if(k==='farm'&&!p.farm)return 'No farmland here.';if(k==='mine'&&!p.mine)return 'No mining here.';
   if(k==='port'&&(!p.coast||geCount(pi,'port')))return p.coast?'Already has a port.':'Not on the coast.';
   if(k==='refinery'&&!GCM.P.some(q=>q.land&&q.oil&&GC.prov[q.i].o===c)&&(N.e.oil|0)<30)return 'Needs an oil province.';
-  const cap=k==='fort'||k==='aa'?3:(k==='factory'||k==='refinery'||k==='power'?3:1);if(geCount(pi,k)+GC.prov[pi].bq.filter(q=>q[1]===k).length>=cap)return 'No more of these here.';
+  const cap=k==='fort'||k==='aa'?3:(k==='factory'||k==='refinery'||k==='power'?3:k==='dsite'?2:1);if(geCount(pi,k)+GC.prov[pi].bq.filter(q=>q[1]===k).length>=cap)return 'No more of these here.';
   if(k!=='fort'&&k!=='aa'&&geUsed(pi)>=geSlots(pi))return 'No free building slot ('+geSlots(pi)+').';
   if(N.cash<geCost(c,k))return 'Not enough money.';return '';}
 function geBuild(c,pi,k){const e=geCanBuild(c,pi,k);if(e)return e;const N=GC.nat[c];N.cash-=geCost(c,k);GC.prov[pi].bq.push([GC.turn+GE_B[k][2]+(N.e.pw<.6?1:0),k]);return '';}

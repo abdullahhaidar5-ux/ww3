@@ -1,0 +1,23 @@
+// Opens the Conquest battlefield picker, checks search/filter/keys, screenshots at phone width.
+import http from 'http'; import fs from 'fs'; import path from 'path'; import { createRequire } from 'module';
+const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
+const server = http.createServer((req, res) => { let p = decodeURIComponent(new URL(req.url, 'http://x').pathname); if (p.endsWith('/')) p += 'index.html'; const f = path.join(ROOT, p);
+  if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end(); } res.writeHead(200, { 'content-type': { '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json' }[path.extname(f)] || 'application/octet-stream' }); fs.createReadStream(f).pipe(res); });
+await new Promise(r => server.listen(0, '127.0.0.1', r));
+const q = createRequire(import.meta.url); const { chromium } = await (async () => { try { return await import('playwright'); } catch {} return q('/opt/npm-tools/node_modules/playwright'); })();
+const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const page = await (await b.newContext({ viewport: { width: 420, height: 800 }, deviceScaleFactor: 2 })).newPage();
+let ok = true; const bad = m => { ok = false; console.log('FAIL', m); };
+await page.goto(`http://127.0.0.1:${server.address().port}/index.html`);
+await page.waitForFunction(() => typeof mapPickerOpen === 'function' && typeof MAPS !== 'undefined', null, { timeout: 60000 });
+await page.evaluate(() => { const s = document.getElementById('mapSel'); window.__sel = s; mapPickerOpen(s, () => {}); });
+const n0 = await page.evaluate(() => document.querySelectorAll('#mapPickW [data-k]').length);
+if (n0 < 1 || n0 > 40) bad('cards on first page ' + n0);
+await page.keyboard.type('gol'); const n1 = await page.evaluate(() => [...document.querySelectorAll('#mapPickW [data-k]')].map(e => e.dataset.k));
+if (!n1.includes('golan') || n1.length >= n0) bad('search gol -> ' + n1.join(','));
+await page.screenshot({ path: path.join(ROOT, 'orch/shots/mappick/mappick-search.jpg'), type: 'jpeg', quality: 80 });
+await page.keyboard.press('Enter'); const v = await page.evaluate(() => document.getElementById('mapSel').value + '|' + !!document.getElementById('mapPickW')); if (v !== 'golan|false') bad('enter pick ' + v);
+await page.evaluate(() => mapPickerOpen(document.getElementById('mapSel'), () => {})); await page.waitForTimeout(200);
+await page.screenshot({ path: path.join(ROOT, 'orch/shots/mappick/mappick-phone.jpg'), type: 'jpeg', quality: 80 });
+await page.keyboard.press('Escape'); if (await page.evaluate(() => !!document.getElementById('mapPickW'))) bad('esc did not close');
+console.log(ok ? 'MAPPICK PASS' : 'MAPPICK FAIL'); await b.close(); server.close(); process.exit(ok ? 0 : 1);
