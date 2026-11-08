@@ -27,16 +27,18 @@ const GMIL_REGCUL={ME:'ar',AF:'af',SA:'sa',EA:'zh',SEA:'sea',EU:'de',NA:'en',SAM
 const GMIL_FLEET=[['ship',.34],['boat',.26],['fast',.14],['sub',.26]];   // starting fleet mix (by value)
 const GMIL_NAVAL=['ship','boat','fast','sub','minel','sweep'];
 const GMIL_BUY=[['ship',1],['boat',2],['fast',2],['sub',1],['minel',1],['sweep',1]];   // kind, batch (fleet recruitment: 2 turns)
-const GMIL_ST={m:{n:'Missile',cost:0,fuel:0,rng:340,dmg:55,ic:1},a:{n:'Air raid',cost:180,fuel:6,rng:300,dmg:15,ic:.85},d:{n:'Drone strike',cost:0,fuel:0,rng:154,dmg:6,ic:1}};
-// One-way attack drones (Shahed/Geran-type): ground racks and mobile launchers, no runway. Map scale ~13 km per unit (Tehran-Riyadh 83 units = ~1,260 km), so 2,000 km = 154 units; cruise ~185 km/h.
-const GMIL_KM=13,GMIL_DKMH=185,GMIL_DR_MAX=60,GMIL_DR_COST=30,GMIL_LN_COST=120,GMIL_LN_MAX=3,GMIL_SALVO=12;
+/* RANGES (orch/RANGES.md): grand map = Equal Earth 2400x1200 units ~ 14 km/unit. Real reach: missile 2,000 km (Shahab-3/Tomahawk/Jericho class), air raid 1,000 km (strike-jet combat radius), Shahed-type drone 2,000 km. Flight: ballistic ~12 min, cruise ~800 km/h, drone ~185 km/h - all inside the monthly turn. */
+const GMIL_KMU=14,GMIL_KM={m:2000,a:1000,d:2000};
+const GMIL_ST={m:{n:'Missile',cost:0,fuel:0,rng:Math.round(GMIL_KM.m/GMIL_KMU),km:GMIL_KM.m,dmg:55,ic:1},a:{n:'Air raid',cost:180,fuel:6,rng:Math.round(GMIL_KM.a/GMIL_KMU),km:GMIL_KM.a,dmg:15,ic:.85},d:{n:'Drone strike',cost:0,fuel:0,rng:Math.round(GMIL_KM.d/GMIL_KMU),km:GMIL_KM.d,dmg:6,ic:1}};
+// One-way attack drones (Shahed/Geran-type): ground racks and mobile launchers, no runway; cruise ~185 km/h.
+const GMIL_DKMH=185,GMIL_DR_MAX=60,GMIL_DR_COST=30,GMIL_LN_COST=120,GMIL_LN_MAX=3,GMIL_SALVO=12;
 const GMIL_DRN=['IR','RS','DW','RV','RU','UA','KP','PK','IN','IL','CN','TR','US'];
 const GMIL_DR0={IR:24,RS:16,DW:12,RV:8,RU:24,UA:12,KP:10};
 const GMIL_MISSILE_COST=450,GMIL_MS_MAX=6;
 function gmilNew(){return {g:{},gid:1,fr:[],fid:1,zm:{},fq:[],n:{},bk:{},foe:'',nx:{}};}
 function gmilN(c){const M=GC.mil;return M.n[c]||(M.n[c]={ms:2,so:[],dr:0});}
 function gmilDrStock(c){return GC.mil?gmilN(c).dr|0:0;}
-function gmilKm(a,b){return Math.round(grDist(a,b)*GMIL_KM);}
+function gmilKm(a,b){return Math.round(grDist(a,b)*GMIL_KMU);}
 function gmilCul(c){return GMIL_CUL[c]||GMIL_REGCUL[(grNat(c)||{}).reg]||'en';}
 function gmilName(c,R){if(typeof pplGenName==='function')return pplGenName(c,R);const L=GMIL_NM[gmilCul(c)]||GMIL_NM.en;return L[0][Math.floor(R()*L[0].length)]+' '+L[1][Math.floor(R()*L[1].length)];}
 function gmilRng(a,b){return grRng(((GC.seed*131+GC.turn*17+(a|0)*7+(b|0))|0));}

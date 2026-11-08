@@ -28,7 +28,7 @@ try {
     GC.nat.IR.cash = 5000; const s0 = M.dr; gmilDrMonth(); ok(M.dr > s0, 'stock did not grow'); info.grow = [s0, M.dr];
     // range: pick targets by distance from IR launch sites
     const sites = GCM.P.filter(p => p.land && GC.prov[p.i].o === 'IR' && geCount(p.i, 'dsite') > 0); const sp = sites[0].i;
-    const foe = o => GCM.P.filter(p => p.land && GC.prov[p.i].o === o); const dkm = p => grDist(sp, p.i) * GMIL_KM;
+    const foe = o => GCM.P.filter(p => p.land && GC.prov[p.i].o === o); const dkm = p => grDist(sp, p.i) * GMIL_KMU;
     const near = GCM.P.filter(p => p.land && GC.prov[p.i].o !== 'IR' && dkm(p) < 1500).sort((a, b) => dkm(a) - dkm(b))[1] || GCM.P.find(p => p.land && GC.prov[p.i].o !== 'IR' && dkm(p) < 1500);
     const far = GCM.P.filter(p => p.land && GC.prov[p.i].o !== 'IR' && dkm(p) > 2600)[0]; ok(near && far, 'no near/far targets');
     const nO = GC.prov[near.i].o, fO = GC.prov[far.i].o; GC.war[grWk('IR', nO)] = 1; GC.war[grWk('IR', fO)] = 1;

@@ -10,8 +10,8 @@ let GCM=null;                      // the static map (built once from GM_P)
 const GR_TAX=['Low','Normal','High'],GR_TAXK=[.55,1,1.6],GR_TAXU=[-9,0,24];
 const GR_PROXY={NA:['US'],SAM:['US'],EU:['DE','FR','EU','US'],ME:['SA','EG'],AF:['EG','SA'],SA:['IN','PK'],EA:['CN','KR'],SEA:['CN','KR'],OC:['US']};
 const GR_REGIONS=[['World',null],['North America',[20,60,700,560]],['South America',[250,600,420,560]],['Europe & Russia',[800,40,720,470]],['Middle East & N. Africa',[1050,330,620,470]],['South Asia',[1380,380,440,380]],['East Asia',[1800,240,520,420]],['Africa',[820,620,500,560]],['SE Asia & Oceania',[1760,600,600,560]]];
-const GR_MIX=[['inf',.46],['at',.14],['tank',.16],['arty',.08],['aa',.06],['heli',.05]];
-const GR_RECRUIT=[['inf',4,1],['at',2,1],['tank',2,2],['arty',2,2],['aa',2,1],['heli',1,2]];   // kind, batch size, turns to arrive
+const GR_MIX=[['inf',.46],['at',.14],['tank',.16],['arty',.08],['aa',.06],['heli',.05],['drone',.04]];
+const GR_RECRUIT=[['inf',4,1],['at',2,1],['tank',2,2],['arty',2,2],['aa',2,1],['heli',1,2],['drone',3,1]];   // kind, batch size, turns to arrive
 const GR_HOLY=new Set(['Najaf']);   // provinces with a holy city (RV Call to the Shrines)
 const GR_VBASE=42000;              // start strength (unit value) of every full nation - same for all (Abdullah: all nations equally strong)
 function grRng(s){return mulberry((s|0)^0x5bd1e995);}
@@ -64,14 +64,14 @@ function grNew(o){grMap();const seed=(o.seed|0)||1,quick=o.len!=='std',R=grRng(s
   // starts with the same number of rivals; the player's nation always has at least one
   const byReg={};for(const c of grMajors()){const r=grNat(c).reg;(byReg[r]=byReg[r]||[]).push(c);}
   if(false)for(const r of Object.keys(byReg).sort()){const L=byReg[r].sort((a,b)=>GCM.P[GC.nat[a].cap].x-GCM.P[GC.nat[b].cap].x);if(L.length>=2)for(let i=0;i<L.length;i++){const a=L[i],b=L[(i+1)%L.length];if(a!==b)GC.war[grWk(a,b)]=1;}}
-  if(GC.me&&!GR_REAL.wars.concat(GR_REAL.tn).some(x=>x.includes(GC.me))&&!Object.keys(GC.war).some(k=>k.split('|').includes(GC.me))){let best=null,bd=1e9;for(const c of grMajors())if(c!==GC.me){const d=grDist(GC.nat[c].cap,GC.nat[GC.me].cap);if(d<bd){bd=d;best=c;}}if(best)GC.war[grWk(GC.me,best)]=1;}
+  if(GC.me&&!GR_REAL.wars.concat(GR_REAL.tn,GR_REAL.tr||[]).some(x=>x.includes(GC.me))&&!Object.keys(GC.war).some(k=>k.split('|').includes(GC.me))){let best=null,bd=1e9;for(const c of grMajors())if(c!==GC.me){const d=grDist(GC.nat[c].cap,GC.nat[GC.me].cap);if(d<bd){bd=d;best=c;}}if(best)GC.war[grWk(GC.me,best)]=1;}
   geEnsure();grRealApply(quick);GC.sc=GR_SCEN.some(x=>x.id===o.sc)?o.sc:'me26';grScenApply(GC.sc,quick);try{for(const c of Object.keys(GC.nat))gfInit(c);}catch(e){console.error('gfInit',e);}
   grLog('The campaign begins. '+(GC.me?GCM.nats.get(GC.me).name+' takes the field.':'Observer mode.'),GC.me);
   return GC;}
 /* RG6 scenario starts (laneA 2026-11-07): each scenario is a preset ON TOP of the realistic start (grRealApply) — extra opening wars,
    opinions and front armies. Data rows only; deterministic (no RNG). 'me26' = the plain realistic start (featured: "Middle East 2026"). */
 const GR_SCEN=[
- {id:'me26',n:'Middle East 2026',d:'The world as it stands in November 2026: Israel and the Lebanese Shia at war, Russia and Ukraine at war, tense borders across the region.'},
+ {id:'me26',n:'Middle East 2026',d:'The world as it stands in November 2026: Russia and Ukraine at war, Yemen and Saudi Arabia at war, Pakistan and Afghanistan at war; fragile ceasefires between Israel and the Lebanese Shia and between Iran and the US and Israel, with the Strait of Hormuz closed and oil above $100.'},
  {id:'gulf',n:'Gulf flashpoint',d:'Tankers burn in the Strait of Hormuz. Iran and its Resistance bloc are at war with Saudi Arabia and the UAE; the US is on the brink and Gulf neighbours pick sides.',
   wars:[['IR','SA'],['IR','AE'],['DW','SA'],['DW','AE']],op:[['US','IR',-100],['QA','IR',-40],['KW','IR',-40],['OM','IR',-5],['IQ','SA',-25]],
   fr:[['IR','SA',.25],['SA','IR',.25],['IR','AE',.15],['AE','IR',.2],['DW','SA',.2],['SA','DW',.15],['US','IR',.08]],
@@ -272,7 +272,7 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
     if(!wars.length&&grNat(c).major&&GC.turn>=3&&R()<.15){let best=null,bv=1e18;for(const p of mine)for(const j of p.adj){const q=P[j];if(!q.land)continue;const w=GC.prov[j].o;if(w===c||GC.nat[w].dead||grAllied(c,w)||grOpinion(c,w)>=40)continue;const v=grProvDef(j)+GC.armies.filter(a=>a.at===j).reduce((s,a)=>s+grArmyVal(a),0);if(v<bv||(v===bv&&w<best)){bv=v;best=w;}}if(best){grDeclare(c,best);wars.push(best);}}
     // recruit: keep a reserve, spend the rest at the frontier province (or the capital)
     if((grNat(c).major||wars.length)&&!((typeof gfOver==='function'&&gfOver(c))||(N.e&&N.e.br&&(N.inc|0)<0))||(wars.length&&grCapHeld(c,null)<grCapThreat(c))){const front=mine.map(p=>[p,p.adj.filter(j=>P[j].land&&GC.prov[j].o!==c&&(wars.includes(GC.prov[j].o))).length*3+(p.i===N.cap?1:0)]).sort((a,b)=>b[1]-a[1]||a[0].i-b[0].i)[0][0];
-      let guard=0;while(N.cash>1500&&guard++<6){const k=GR_RECRUIT.filter(r=>grHasKind(fac,r[0]))[Math.floor(R()*3.4)%4]||GR_RECRUIT[0];if(grRecruit(c,front.i,k[0]))break;}}
+      let guard=0;while(N.cash>1500&&guard++<6){let k=GR_RECRUIT.filter(r=>grHasKind(fac,r[0]))[Math.floor(R()*3.4)%4]||GR_RECRUIT[0];if(GC.turn%5===2&&grHasKind(fac,'drone')){const dk=GR_RECRUIT.find(r=>r[0]==='drone');if(dk)k=dk;}   /* gair: AI buys drones by the same rules */if(grRecruit(c,front.i,k[0]))break;}}
     // armies: merge idle ones at the same place, then march on the weakest reachable enemy province; keep the capital defended
     grAIArmies(c,R,wars);
     // tax: AI keeps rear provinces on High, the front on Normal
