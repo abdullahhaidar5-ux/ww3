@@ -1,5 +1,13 @@
 # ART BAR — the WHOLE game must look and feel like a $75 studio game (Abdullah 2026-11-06 18:02, raised from $60 grand-map-only at 16:59)
 
+## GRAND-MAP TARGET LOOK (Abdullah 2026-11-07 19:29–19:30, sent a Total War campaign-map screenshot: "This level of graphics", "Look at that beautiful grand army")
+Match this in our own original art (never copy that game's assets):
+- **Army = one big hero soldier standing on the ground** (as tall as a town cluster at region zoom; detailed, lit, nation uniform), **a large clean national flag on a tall pole right beside him**; no dark slab — at most a soft round shadow.
+- **Forests = dense instanced dark-green conifer/broadleaf canopies** covering whole regions, with clearings, fields and thin dirt roads between them.
+- **Coast = a bright sand beach band**, then turquoise shallows, then deep blue sea with visible wave texture and specular glints.
+- **Towns = a tight cluster of small detailed buildings** (roofs, walls, a flag), not boxes; a soft-edged **segmented selection ring** (green yours / red enemy) and a **nameplate** under it: name, country, small stats (population, income).
+- Snow-capped mountains in the distance; soft atmospheric haze toward the horizon.
+
 Applies to the grand map, the nation panel/UI, and battles in real gameplay. Plus FEEL: instant click feedback (< 100 ms), smooth
 60 fps with big armies, smooth army selection, no loading that hangs.
 
