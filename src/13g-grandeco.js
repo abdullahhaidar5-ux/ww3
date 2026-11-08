@@ -83,7 +83,7 @@ const GE_B={
  base:['Military base',650,2,'B','#c9a35a','Recruits here arrive 1 month sooner, +2 garrison room, resupplies armies in and next to it.'],
  airfield:['Airfield',850,3,'A','#8fc4e8','Air wings live here: sorties reach battles in range, and the airfield stands in this province\'s battle.'],
  port:['Port',550,2,'P','#6fb0d8','+50 income, sea trade, a shipyard in this province\'s battle (coast only).'],
- factory:['Factory',750,3,'F','#d9a05a','+110 income, recruits cost 8% less (3 max). Needs power.'],
+ factory:['War Factory',750,3,'F','#d9a05a','+110 income, recruits cost 8% less (3 max). Needs power.'],
  refinery:['Refinery',700,3,'R','#a58bd0','Makes 16 fuel a month from oil. Needs power and an oil province or oil stock.'],
  power:['Power plant',700,3,'E','#f2d95a','+14 on the power grid. Blackouts slow factories and recruiting.'],
  aa:['Air defence',380,2,'D','#9ad07f','A SAM site in this province\'s battle; halves bombing damage here.'],
@@ -168,7 +168,7 @@ function geRecruitTerms(c,pi,k,n){const fac=grNat(c).fac,N=GC.nat[c];let cost=gr
   return {cost:Math.round(cost*disc),turns:Math.max(1,turns),man:Math.round(n*(k==='inf'?7:4))};}
 function geManRegen(c){let m=0;for(const p of GE_ST[c].own){const st=GC.prov[p.i];m+=p.tw*2.4*GE_AUM[st.au|0]*(1+.06*geCount(p.i,'base'))*(st.cf===1?1+.12*(st.tr|0):1)*(st.cv>0?.5:1);}return m*(geFx(c,'manp')?1.25:1)*(GC.nat[c].e.tw?1.3:1);}
 // ---------- the per-turn nation step ----------
-function geFuelNeed(c){let f=0;for(const a of GC.armies){if(a.o!==c)continue;let k=0;for(const r of a.u){k+=(r[0]==='tank'||r[0]==='arty'||r[0]==='heli'||r[0]==='aa')?.5:.1;}f+=k*(a.path.length?1.5:1);}
+function geFuelNeed(c){let f=0;for(const a of GC.armies){if(a.o!==c)continue;let k=0;for(const r of a.u){k+=(r[0]==='tank'||r[0]==='arty'||r[0]==='heli'||r[0]==='aa')?.5:r[0]==='drone'?.25:.1;}f+=k*(a.path.length?1.5:1);}
   for(const p of GE_ST[c].own)f+=geEff(p.i,'airfield')*3*(geFx(c,'air')?.7:1);return f*(geFx(c,'fuel')?.75:1)*(GC.nat[c].e.tw?1.2:1);}
 function geArmyVal(c){let v=0;for(const a of GC.armies)if(a.o===c)v+=grArmyVal(a);return v;}
 function geTrade(c){   // trade routes between neighbouring provinces and over sea lanes; embargoes, wars, blockaded straits and sanctions cut them
