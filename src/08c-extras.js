@@ -89,7 +89,7 @@ function phEnter(){if(!G||G.over||PHX.on||window.GLLOST||!R3||window.LOADING)ret
   phEls();const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/370)),p0=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d))),p=Math.max(.22,Math.min(1.42,p0+(cam.tilt||0)));
   PHX.st={c:{x:cam.x,y:cam.y,dist:cam.dist,tilt:cam.tilt,tx:cam.tx,ty:cam.ty,td:cam.td,_xl:cam._xl,_yl:cam._yl,_dl:cam._dl},paused:G.paused,G,mp:MODE!=='single'};
   if(!PHX.st.mp){G.paused=true;xsTry(syncPause);}   // single player stops the battle; online only your own camera is freed
-  xsTry(mlockOff);cam.free=true;cam.pitch=p;cam.ryaw=0;cam.tilt=0;PHX.on=true;PHX.k={};PHX.ptr.clear();PHX.blob=null;
+  xsTry(mlockOff);cam.free=true;cam.pitch=p;cam.ryaw=cam.yaw||0;cam.tilt=0;PHX.on=true;PHX.k={};PHX.ptr.clear();PHX.blob=null;
   document.body.classList.add('phOn');phRect();PHX.ov.hidden=false;$('phPrev').classList.remove('on');$('phShare').textContent='Share';phLook();return true;}
 function phExit(){if(!PHX.on)return;const s=PHX.st;PHX.on=false;PHX.snap=null;document.body.classList.remove('phOn');cv.style.filter='';if(PHX.ov)PHX.ov.hidden=true;
   cam.free=false;cam.ryaw=0;if(s){Object.assign(cam,s.c);if(G===s.G&&!s.mp&&!s.paused){G.paused=false;xsTry(syncPause);last=performance.now();}}

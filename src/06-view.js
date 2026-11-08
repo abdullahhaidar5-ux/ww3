@@ -18,14 +18,19 @@ function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devic
 const ZMAX=2600;function zmax(){try{return Math.max(ZMAX,Math.min(3600,Math.round(MAPW*.4)));}catch(e){return ZMAX;}}function tiltBy(v){cam.tilt=Math.max(-.32,Math.min(.62,(cam.tilt||0)+v));}
 function placeCam(){const d=cam.dist,kz=Math.max(0,Math.min(1,(d-230)/(600-230)));let p=Math.max(.34+kz*.44,Math.asin(Math.min(1,112/d)));p=cam.free?Math.max(.08,Math.min(1.5,cam.pitch)):Math.max(.22,Math.min(1.42,p+(cam.tilt||0)));if(typeof SCN!=='undefined'&&SCN&&SCN.fog){const f=SCN.fog;if(f._set!==f.near){f.n0=f.near;f.f0=f.far;}const ex=Math.max(0,d-1400)*1.2;f.near=f.n0+ex;f.far=f.f0+ex;f._set=f.near;}/* zoomed far out, push the haze back so the battlefield stays clear */cam.x=Math.max(0,Math.min(MAPW,cam.x));cam.y=Math.max(Math.min(60+cam.dist*.5,MAPH/2),Math.min(MAPH+120,cam.y));{const lo=Math.min(cam.dist*.55,MAPW/2);cam.x=Math.max(lo,Math.min(MAPW-lo,cam.x));}
   const sx=shake>.3?rnd(-shake,shake):0,sy=shake>.3?rnd(-shake,shake):0;
-  {const ry=cam.free?cam.ryaw||0:0,hd=Math.cos(p)*d;CAM.position.set(cam.x+sx+Math.sin(ry)*hd,Math.sin(p)*d,cam.y+Math.cos(ry)*hd+sy);}/* photo mode orbits with cam.ryaw */CAM.lookAt(cam.x+sx,0,cam.y+sy);CAM.updateMatrixWorld();if(window.SKY)SKY.position.copy(CAM.position);
+  {const ry=camYaw(),hd=Math.cos(p)*d;CAM.position.set(cam.x+sx+Math.sin(ry)*hd,Math.sin(p)*d,cam.y+Math.cos(ry)*hd+sy);}/* battle view turns with cam.yaw (Q), photo mode orbits with cam.ryaw */CAM.lookAt(cam.x+sx,0,cam.y+sy);CAM.updateMatrixWorld();if(window.SKY)SKY.position.copy(CAM.position);
   SUN.position.set(cam.x+SUNOFF[0],SUNOFF[1],cam.y+SUNOFF[2]);SUN.target.position.set(cam.x,0,cam.y);const hs=Math.max(380,d*1.05),sc=SUN.shadow.camera;if(sc.right!==hs){sc.left=-hs;sc.right=hs;sc.top=hs;sc.bottom=-hs;sc.updateProjectionMatrix();}
   TMP.set(cam.x,0,cam.y).project(CAM);const a=TMP.x;TMP.set(cam.x+100,0,cam.y).project(CAM);PPU=Math.abs(TMP.x-a)*VW/2/100;}
 // Smooth camera: jumps (minimap, Home, squad hotkeys), scrolling and zoom set a target and the camera eases toward it
 // every frame (frame-rate independent). Anything that moves the camera directly is respected.
-function centerOn(x,y,instant){camTarget();cam.tx=x;cam.ty=y-cam.td*.08;if(instant||!G||G.t<.6){cam.x=cam.tx;cam.y=cam.ty;cam._xl=cam.x;cam._yl=cam.y;}}
+// Camera rotation (Q, Abdullah 2026-11-07): cam.yaw = battle view heading in radians (0 = north up, negative = turned
+// clockwise), eased toward cam.tyaw; photo mode orbits with its own cam.ryaw (starting from cam.yaw). View only.
+function camYaw(){return cam.free?cam.ryaw||0:cam.yaw||0;}
+// a screen-space offset (r = to the right, u = up the screen) as a world offset for the current view rotation
+function camVec(r,u){const a=camYaw(),c=Math.cos(a),n=Math.sin(a);return{x:r*c-u*n,y:-r*n-u*c};}
+function centerOn(x,y,instant){camTarget();{const o=camVec(0,cam.td*.08);cam.tx=x+o.x;cam.ty=y+o.y;}if(instant||!G||G.t<.6){cam.x=cam.tx;cam.y=cam.ty;cam._xl=cam.x;cam._yl=cam.y;}}
 function camTarget(){if(cam.tx==null||cam.x!==cam._xl||cam.y!==cam._yl){cam.tx=cam.x;cam.ty=cam.y;}if(cam.td==null||cam.dist!==cam._dl)cam.td=cam.dist;}
-function camTick(dt){camTarget();const k=1-Math.exp(-dt*9),kz=1-Math.exp(-dt*11);cam.x+=(cam.tx-cam.x)*k;cam.y+=(cam.ty-cam.y)*k;cam.dist+=(cam.td-cam.dist)*kz;
+function camTick(dt){camTarget();const k=1-Math.exp(-dt*9),kz=1-Math.exp(-dt*11);if(cam.tyaw!=null&&cam.tyaw!==cam.yaw){cam.yaw=(cam.yaw||0)+(cam.tyaw-(cam.yaw||0))*(1-Math.exp(-dt*10));if(Math.abs(cam.tyaw-cam.yaw)<.002)cam.yaw=cam.tyaw;}cam.x+=(cam.tx-cam.x)*k;cam.y+=(cam.ty-cam.y)*k;cam.dist+=(cam.td-cam.dist)*kz;
   if(Math.abs(cam.tx-cam.x)<.05)cam.x=cam.tx;if(Math.abs(cam.ty-cam.y)<.05)cam.y=cam.ty;if(Math.abs(cam.td-cam.dist)<.05)cam.dist=cam.td;cam._xl=cam.x;cam._yl=cam.y;cam._dl=cam.dist;}
 // which city building is under the cursor (rooftops included)
 function civUnder(sx,sy,w){if(!G.civ||!G.civ.length)return null;if(CITYM){const v=new THREE.Vector2(sx/VW*2-1,-(sy/VH)*2+1);RAY.setFromCamera(v,CAM);const h=RAY.intersectObject(CITYM,true)[0];if(h){const c=civAtXY(h.point.x-h.face.normal.x*2,h.point.z-h.face.normal.z*2);if(c)return c;}}return w?civAtXY(w.x,w.y):null;}
@@ -304,7 +309,7 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
   // radar sweep
   try{const a=(now*.9)%(Math.PI*2),g=c.createConicGradient(a,W/2,H/2);g.addColorStop(0,'rgba(120,255,170,.16)');g.addColorStop(.08,'rgba(120,255,170,0)');g.addColorStop(1,'rgba(120,255,170,0)');c.fillStyle=g;c.fillRect(0,0,W,H);}catch(_){}
   // camera box with corner brackets
-  const pts=[[0,0],[VW,0],[VW,VH],[0,VH]].map(([x,y])=>screenToWorld(x,y));if(pts.every(Boolean)){c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p.x*sx,p.y*sy):c.moveTo(p.x*sx,p.y*sy));c.closePath();c.stroke();
+  const pts=[[0,0],[VW,0],[VW,VH],[0,VH]].map(([x,y])=>screenToWorld(x,y));if(pts.every(Boolean)){c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p.x*sx,p.y*sy):c.moveTo(p.x*sx,p.y*sy));c.closePath();c.stroke();if(Math.abs(Math.sin((cam.yaw||0)/2))>.01){c.strokeStyle='rgba(255,226,140,.9)';c.lineWidth=2;c.beginPath();c.moveTo(pts[0].x*sx,pts[0].y*sy);c.lineTo(pts[1].x*sx,pts[1].y*sy);c.stroke();}/* rotated view (Q): the far edge of the view (screen top) in gold so the minimap shows which way you face */
     c.strokeStyle='#e3b341';c.lineWidth=2;for(let i=0;i<4;i++){const p=pts[i],n=pts[(i+1)%4],m=pts[(i+3)%4];const P=[p.x*sx,p.y*sy];const v=(q)=>{const dx=q.x*sx-P[0],dy=q.y*sy-P[1],L=Math.hypot(dx,dy)||1;return[dx/L*6,dy/L*6];};const a1=v(n),a2=v(m);c.beginPath();c.moveTo(P[0]+a1[0],P[1]+a1[1]);c.lineTo(P[0],P[1]);c.lineTo(P[0]+a2[0],P[1]+a2[1]);c.stroke();}}
   // frame + readout
   c.strokeStyle='rgba(190,235,205,.5)';c.lineWidth=2;const k=10;for(const [x,y,dx,dy] of [[1,1,1,1],[W-1,1,-1,1],[1,H-1,1,-1],[W-1,H-1,-1,-1]]){c.beginPath();c.moveTo(x+dx*k,y);c.lineTo(x,y);c.lineTo(x,y+dy*k);c.stroke();}
