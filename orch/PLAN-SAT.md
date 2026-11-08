@@ -240,7 +240,7 @@ Grand campaign round 5 (Abdullah 22:24) — after the slice, then kaizen; extend
 - [ ] **RG57 Air defence network** (Lane A): layered SAM umbrellas over provinces; gaps invite strikes (RG33 interceptors).
 - [ ] **RG58 Great-power AI** (Lane A): US/RU/CN AIs pursue real goals and intervene in wars.
 - [x] **RG59 Natural disasters** (DONE first cut laneG: flood, sandstorm and a neighbour's quake that wins opinion for relief teams, all as event-engine rows in `src/13p-gevents.js`; test `node orch/crisistest.mjs`; open: sandstorm on the map, aid to world-stage rows): earthquakes, floods, sandstorms; aid wins opinion (event engine).
-- [ ] **RG60 Pilgrimage season** (Lane G): Hajj and Arbaeen — truces expected, morale boost, attacks anger everyone (respectful; ties to RG17 holy sites).
+- [x] **RG60 Pilgrimage season** (DONE first cut laneG `src/13w-gholy.js`, test `node orch/piltest.mjs`: Hajj (May) and Arbaeen (Aug) one-month seasons; holders get +3% war support; taking a site in season = extra world relations hit; open: AI truces in season) (Lane G): Hajj and Arbaeen — truces expected, morale boost, attacks anger everyone (respectful; ties to RG17 holy sites).
 - [ ] **RG61 Global economy crash** (Lane B): recessions/booms ripple through trade + stability.
 Round 6 (Abdullah 22:26) — after the slice, then kaizen; extend existing systems:
 - [ ] **RG62 Covert strikes on generals** (Lane G): covert op vs enemy (fictional) generals; exposure → world opinion hit (one covert-action system with RG3/RG15).

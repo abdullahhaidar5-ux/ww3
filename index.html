@@ -23239,8 +23239,22 @@ function hsCaptured(pi,taker,prev){const r=hsIdx().find(x=>x.i===pi);if(!r||!GC|
   for(const c of Object.keys(GC.nat)){if(c===taker||GC.nat[c].dead)continue;try{gdRel(c,taker,c===r.h?-30:-6);}catch(e){}}
   for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===taker&&p.i===pi){GC.prov[pi].un=Math.min(100,GC.prov[pi].un+10);}
   grLog(gdNatName(taker)+' took '+r.n+' ('+r.f+'). The world watches; '+gdNatName(r.h)+' is outraged.',taker);
+  try{pilCapturedExtra(taker);}catch(e){}
   try{if(taker===GC.me||prev===GC.me||r.h===GC.me)gevToast(['🕌 '+r.n+' has changed hands']);}catch(e){}}
 function hsList(c){return hsIdx().filter(r=>GC.prov[r.i].o===c);}
+// PILGRIMAGE SEASONS (lane G, RG60): Hajj (late May) and Arbaeen (early August, 2026 dates from the Islamic lunar calendar, approximate) are one-month seasons.
+// Every nation that holds a holy site gets a pride lift in its season (GMOD row), and taking a holy site during a season angers the world more.
+// The season is DATA (month index 0 = Jan). Respectful and equal: every faith's site counts the same. Truces expected in season: open (AI does not yet hold back).
+const PIL_SEASONS=[{k:'hajj',n:'Hajj season',m:4},{k:'arbaeen',n:'Arbaeen season',m:7}];
+function pilNow(){if(!GC)return null;const m=((GC.turn|0)-1+grM0())%12;return PIL_SEASONS.find(s=>s.m===m)||null;}
+GMOD_COND.pil=(k)=>!!GC&&!!pilNow()&&hsCount(k)>=1;
+GMOD_ROWS.push({id:'pil1',src:'Pilgrimage season: holy sites lift pride',scope:'nation',stat:'warSupport',add:.03,cond:'pil:1'});
+function pilMonth(){if(!GC)return;const s=pilNow(),key=s?s.k:'';if(GC._pilA===key)return;GC._pilA=key;
+  if(s){grLog(s.n+' has begun. Pilgrims crowd the holy cities; every holder of a site feels it.');
+    try{if(hsIdx().some(r=>GC.prov[r.i]&&(GC.prov[r.i].o===GC.me)))gevToast(['🕌 '+s.n+' has begun']);}catch(e){}}}
+GMOD_HOOKS.push(pilMonth);
+function pilCapturedExtra(taker){if(!pilNow()||!GC)return;for(const c of Object.keys(GC.nat)){if(c===taker||GC.nat[c].dead)continue;try{gdRel(c,taker,-8);}catch(e){}}
+  grLog('Taking a holy site during a pilgrimage season: the pilgrims\' world is shocked.',taker);}
 // SHIPPING LANES (laneC, ART-BAR "life"): tankers and container ships sail the real sea lanes of the grand map, leaving a wake.
 // Visual traffic only (no sim state, no checkpoint): ships random-walk along clear sea-province links. They are not aircraft/drones.
 function g3ShipGeo(kind){

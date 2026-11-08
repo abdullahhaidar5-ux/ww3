@@ -1,4 +1,7 @@
-# HANDOFF laneG (2026-11-07 20:40 UTC, branch orch/laneG-202611071855)
-Shipped to main this session: RG16 peace conferences (reparations) + RG44 demilitarised zones (src/13z-gpeace.js, hooks in 13-grand.js pass and move phase; test orch/gptest.mjs PASS), RG59 natural disasters first cut (flood, sandstorm, neighbour quake rows in src/13p-gevents.js; test orch/crisistest.mjs PASS). HISTORY lines added; PLAN-SAT ticks done.
-Gate: grandtest PASS. Smoke FAILS on main already (THREE computeBoundingSphere NaN in battle geometry, not from lane G). cigate on this commit has the same failing set as origin/main (checked via gate statuses), so nothing new is red.
-Next, in order: RG9 proxy wars, RG18 volunteers, RG64 defectors, RG15 cyber (merge with RG3 covert ops), RG20 ceasefires, then B6 client states and the DIPLOMACY SCREEN rest, B7 events with choices (chains), B8 reforms/hegemonies. RG10 follow-ons (world-map flash, interceptors, occupation stops the programme) still open.
+# Lane G handoff (2026-11-07 Sat evening, Chicago)
+
+Shipped on branch (NOT merged to main): RG60 pilgrimage seasons first cut, in `src/13w-gholy.js`, test `orch/piltest.mjs` (PILTEST PASS).
+Gates: build OK, smoke PASS, grandtest PASS, cigate FAIL on: cfclient, decisions (times out / conquest ban check), smooth-mp, smooth-pc, tutorial.
+Not yet established whether these are pre-existing on main or caused by this change (the change only adds GMOD rows and a monthly hook).
+Next step: run `bash orch/cigate.sh` on main and on this branch to compare; fix or re-baseline before merging to main.
+Open for RG60: AI truces held back during pilgrimage seasons.
