@@ -7,7 +7,7 @@ Shipped on the branch this session (not on main yet — the ship gate is not gre
 - Nuke launch modal wording changed so the decisions guard passes.
 
 Gate status on the branch:
-- build.py --check OK; smoke PASS; grandtest PASS; nuketest PASS; crisistest PASS; cigate ran on gate/ commit: FAILED on tutorial (step 9), grandsmooth (CI triangle budget: region 2,028,905 vs 2M), decisions (turn-wording, now fixed in the last commit; rerun pending at time of writing). cfclient and audio show failure states with PASS/SKIP descriptions (gate script quirk).
+- build.py --check OK; smoke PASS; grandtest PASS; nuketest PASS; crisistest PASS; cigate ran on gate/ commit: FAILED on tutorial (step 9), grandsmooth (CI triangle budget: region 2,028,905 vs 2M), decisions (turn-wording; fixed in the last commit, local rerun DECISIONS PASS). cfclient and audio show failure states with PASS/SKIP descriptions (gate script quirk).
 - Local check: grandsmooth on origin/main and on this branch produce identical triangle counts (region 1,862,632, close 1,863,212), so the CI triangle failure looks pre-existing on main, not from these changes. Tutorial failures also appear on other recent gate/ commits. Confirm both on main before merging; do not raise the budgets.
 
 Next, in order: merge once main's grandsmooth and tutorial are green (or fix them in their owning lane), then RG9 proxy wars, RG18 volunteers, RG64 defectors, RG30 leader succession, B6 client states and the rest of the DIPLOMACY SCREEN, B7 events with choices/chains, B8 reforms/hegemonies.
