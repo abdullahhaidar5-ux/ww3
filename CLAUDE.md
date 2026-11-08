@@ -54,7 +54,7 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
 - **Controls (Abdullah, 2026-10-28 19:11 — replaces the 2026-10-26 Generals left-click scheme):** **left-click selects**
   (drag = box select, Shift adds, double-click selects that type on screen); **right-click moves and attacks** (ground =
   move, enemy = attack), right-drag draws the infantry line formation; **F + click = attack-move** (A no longer does
-  it); **W A S D only scroll the camera — no other job in any scheme** (Abdullah, 19:17; Stop = X); G+click guard, Ctrl+click force-fire, Alt+click waypoints; left-click ground with a production building selected
+  it); **W A S D only scroll the camera — no other job in any scheme** (Abdullah, 19:17; Stop = X); G+click guard, Ctrl+click force-fire, Alt+click waypoints; **Q rotates the battle camera** (Abdullah 2026-11-07 19:54/19:55: hold Q + move mouse, tap = 45° clockwise, Shift+Q counter-clockwise, Home/double-tap = north-up; view only) and **Ctrl+A selects the whole army** (was Q); left-click ground with a production building selected
   sets its rally point. After an order the units deselect (Abdullah 2026-10-30 20:54; Settings toggle keeps them selected; Shift keeps them). The old Generals left-click-orders scheme may stay as a Settings option. On PCs **the mouse stays
   inside the game window** during a battle (pointer lock with the game's own cursor; edge scrolling works; Esc or the
   menu releases it; a Settings toggle turns it off). **Command bar text is bigger and easier to read** (PC and phone).
@@ -114,7 +114,8 @@ or the `MODEL_FILES` line in `index.html` (`build.py` writes it). Add or replace
   replaces the 2026-10-26/29 phone rules). Design, look and performance target = PC (mouse + keyboard). No phone
   constraints, no phone/touch tests (gate `touch` and `smooth-phone` removed); old phone code may stay but needn't be
   maintained. Must stay smooth on PC (smooth-pc, smooth-mp gates).
-- **Conquest is the only game mode** (Abdullah, 2026-11-04 19:49): same full base + money for all, everything
+- **THREE GAMES** (Abdullah 2026-11-07 21:38 "Let's have four distinct versions. Campaign. Conquest. And battle. Battle works like Generals." then "Sorry 3"; **replaces "Conquest is the only game mode" below**): the main menu's big items are **Grand campaign · Conquest · Battle**, each its own game; Missions and Tutorial stay as smaller items below. **Battle = C&C Generals Zero Hour rules** (the old Classic ruleset, `G.battle`, flag `battle:1` in `newGame`): start with a Command Center + a dozer + a supply truck, money from supply trucks hauling to the Command Center / Supply Depots, build power/barracks/War Factory/airfield, tech tree applies, generals' powers from rank, no town taxes/unrest/setup phase/supply-line roads, win = destroy every enemy building. Conquest and the grand campaign are unchanged; the online lobby has a Conquest/Battle switch (`bm` in the start message, also through the Cloudflare server). Guard: orch/decisions.mjs.
+- ~~**Conquest is the only game mode**~~ (superseded above) (Abdullah, 2026-11-04 19:49): same full base + money for all, everything
   unlocked, income from taxing towns/hamlets you hold (tax rate, unrest, revolts, civic buildings — "High tax in safe
   rear towns, Low tax on the front"), fair upgrades/powers/missile strikes, win = destroy the enemy base. ~$10,000 start,
   ~90 s no-fire setup. Classic is removed from menus/lobby; the old story missions + tutorial stay; the story missions are named **"Missions"** in the menu (Abdullah 2026-11-06 05:58) so "campaign" only ever means the grand campaign — main menu: Grand campaign · Conquest · Missions · Tutorial. Spec/progress: `orch/reports/conquest.md`,

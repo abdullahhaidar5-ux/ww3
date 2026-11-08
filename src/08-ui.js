@@ -13,11 +13,14 @@ function pushLog(m,k){if(!G)return;try{hlLog(m,k);}catch(e){}try{hudAlert(m,k);}
   const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},7000);el.append(d);while(el.children.length>4)el.firstChild.remove();}
 function rivals(){return G.teams.filter(T=>!T.reb&&!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
+/* the mode's name for the HUD, pause and end screens */
+function modeName(){return !G?'':G.battle?'Battle':G.conq?'Conquest':G.grand?'Grand campaign':G.camp?'Mission':G.sandbox?'Test range':'';}
+function modeTag(){const n=modeName();return n?n+' · ':'';}
 function showEnd(winner,reason){if(!G)return;G.over=true;const T=G.teams.filter(q=>!q.reb),me=T[ME],m=Math.floor(G.t/60),s=Math.floor(G.t%60);
   const won=winner>=0&&ally(winner,ME);try{idFinish(winner,won);}catch(e){console.warn('medals',e);}
   // the sim's reason is written from the winner's side ("The last enemy capitulated: …"); the losers read their own fall
   if(!won&&reason&&/^The last enemy capitulated/.test(reason)){const why=me.whyOut||String(reason).replace(/^The last enemy capitulated:\s*/,'');reason=`${me.F.name} has been defeated${why?': '+why:'.'}`;if(!/[.!]$/.test(reason))reason+='.';}
-  const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'||G.endStats?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
+  const wn=winner>=0?T.filter(Q=>ally(Q.id,winner)).map(Q=>Q.F.name):[];$('endt').textContent=won?'Victory':'Defeat';$('ends').textContent=modeTag()+(reason?reason+' ':'')+(winner>=0&&!won?`${wn.join(' and ')} won. `:won&&wn.length>1?`Your alliance (${wn.join(', ')}) won. `:'')+`${me.F.name} vs ${vsText()} · ${m}:${String(s).padStart(2,'0')}`+(MODE==='client'||G.endStats?'':` · You trained ${me.built} units, destroyed ${me.kills} enemy units and structures, and reached general rank ${me.rank}.`);
   $('again').hidden=MODE!=='single';if($('watch'))$('watch').hidden=true;try{esPage(G.endStats||null);}catch(e){console.warn('end stats',e);}try{aarPage();}catch(e){console.warn('aar',e);}
   // the kill-cam replays the battle's biggest moment first (Skip: tap, click or Esc), then this score screen
   const g0=G,show=()=>{$('end').hidden=false;try{esDraw();}catch(e){}};let kc=false;try{kc=kcStart(()=>{if(G===g0&&G.over)show();});}catch(e){console.warn('kill-cam',e);}if(!kc)show();}
@@ -281,7 +284,9 @@ function doCancel(sh){const c=cancelInfo();if(!c)return false;
   else if(c.k==='q'){const q=(G.teams[ME].q[c.kind]||[]).slice(-(sh?5:1)).map(x=>x.kind).reverse();for(const k of q)doAct({t:'dq',k});}
   else doAct({t:'cb',tid:c.tid});
   try{sfxUI(380);}catch(_){}updateUI();return true;}
-function updateUI(){if(!G)return;try{idTick();}catch(e){}qpUpdate();renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);mournBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
+/* Campaign (grand) battle: army only — no build/units/upgrade/power tabs, no money, no tax (Abdullah 2026-11-07 21:21). */
+function grandUi(){const g=!!(G&&G.grand);document.querySelectorAll('.tabs, #panel, #credits').forEach(e=>{e.hidden=g;e.style.display=g?'none':'';});if(g)document.body.classList.add('grandBattle');else document.body.classList.remove('grandBattle');let el=$('grandB');if(!g){if(el)el.hidden=true;return;}if(!el){el=document.createElement('div');el.id='grandB';el.style.cssText='position:fixed;z-index:7;left:50%;top:62px;transform:translateX(-50%);padding:5px 14px;background:rgba(20,20,24,.92);color:#fff;font:700 14px system-ui,sans-serif;border:1px solid #bbb;border-radius:4px;pointer-events:none;text-align:center;max-width:94vw;transition:opacity 1s';el.textContent='Campaign battle \u2014 your army only: no building, no taxes';document.body.append(el);G.grandB0=performance.now();}if(performance.now()-(G.grandB0||0)>12000)el.style.opacity=0;else el.style.opacity=1;el.hidden=false;}
+function updateUI(){if(!G)return;try{idTick();}catch(e){}try{grandUi();}catch(e){}qpUpdate();renderSquads();renderAllies();const T=G.teams[ME];sancBanner(T);mournBanner(T);sbPanel();$('facname').textContent=T.F.name;$('facname').style.color=T.color;$('credits').textContent=G.sandbox&&ME===0?(innerWidth<561?'∞':'∞ Unlimited'):'$'+Math.floor(T.credits).toLocaleString();
   for(const k of BUILD_ORDER){const s=bstats(T.fac,k),ok=reqMet(ME,k);if(conqBan(k)){const hb=$('b_'+k);if(hb)hb.hidden=true;continue;}if(!bldAllowed(T.fac,k)){setBtn('b_'+k,{dis:true,cost:'Not available',title:k==='econ'?'Conquest: towns and hamlets pay the money - capture them and set their tax.':conqBan(k)?'The Mountain Fortress now lives on the grand map (pre-built for the defender).':'This faction has no air force'});continue;}const lim=s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===ME&&e.kind===k).length>=s.limit;setBtn('b_'+k,{dis:!ok||T.credits<s.cost||lim,cost:lim?'Max '+s.limit:'$'+s.cost,on:G.place===k,title:ok?(STRUCT[k].desc||(STRUCT[k].shore?'Place on the shoreline':'')):`Requires ${STRUCT[STRUCT[k].req].name}`});}
   for(const k of allUnits(T.fac)){if(conqBan(k))continue;const s=stats(T.fac,k),q=T.q[s.from]||[],n=q.filter(x=>x.kind===k).length,has=done(ME,s.from);const first=q[0]&&q[0].kind===k?(q[0].p!=null?q[0].p:q[0].t/prodTime(T,s)):0;
     const lk=specLock(T,k);const rbw=k==='cleric'&&(T.rebuy||0)>G.t?Math.ceil(T.rebuy-G.t):k==='champ'&&(T.hrb||0)>G.t?Math.ceil(T.hrb-G.t):0;setBtn('u_'+k,{dis:lk||!has||rbw>0||(T.credits<s.cost&&!n),cost:rbw?'Wait '+rebuyFmt(rbw):lk?`General rank ${k==='champ'?HERO_RANK:SPEC_RANK}`:k===T.F.special?'$'+s.cost+(T.rank>=6?' · Elite':T.rank>=4?' · Veteran':''):'$'+s.cost,q:n?'×'+n:'',p:first,title:(rbw?`A new leader can be chosen in ${rebuyFmt(rbw)}. `:'')+(lk?(k==='champ'?`Unlocks at general rank ${HERO_RANK}. `:`Unlocks at general rank ${SPEC_RANK}; gets Veteran (+20%) at rank 4 and Elite (+40%) at rank 6. `):'')+(k==='champ'&&s.hab&&HAB[s.hab]?`Ability: ${HAB[s.hab].n} - ${HAB[s.hab].d} Cooldown ${HERO_CD} s; press E. Only one alive; ${HERO_REBUY} s wait after it falls. `:'')+(has?'':`Requires ${STRUCT[s.from].name}. `)+(k===T.F.special&&SPECIAL_TIP[k]?SPECIAL_TIP[k](s)+' ':'')+(COUNTER[k]||COUNTER[s.cls]||'')});}
@@ -349,7 +354,7 @@ function renderSquads(){const el=$('sqs');if(!el||!G)return;if(!document.getElem
   const mk=$('sqMake');if(mk)mk.disabled=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).length<1;}
 function selectTypes(){if(!G||G.over)return;const mine=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead),ks=new Set(mine.map(u=>u.kind));G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!u.dead&&(ks.size?ks.has(u.kind):!['harv','hacker','dozer'].includes(u.kind)));if(G.sel.length)speak(0);updateUI();}
 function selectArmy(){if(!G)return;G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);if(G.sel.length)speak(0);updateUI();}
-{const mk=$('sqMake');if(mk&&!$('sqAll')){const w=document.createElement('span');w.className='sqbtns';const a=document.createElement('button');a.id='sqAll';a.textContent='All army';a.title='Select every combat unit you have (Q)';a.onclick=selectArmy;mk.replaceWith(w);w.append(a,mk);}}
+{const mk=$('sqMake');if(mk&&!$('sqAll')){const w=document.createElement('span');w.className='sqbtns';const a=document.createElement('button');a.id='sqAll';a.textContent='All army';a.title='Select every combat unit you have (Ctrl+A)';a.onclick=selectArmy;mk.replaceWith(w);w.append(a,mk);}}
 if($('sqMake'))$('sqMake').onclick=()=>{if(!G)return;let i=0;for(let k=1;k<=SQN;k++)if(!sqList(k).length){i=k;break;}if(!i)i=1;sqAssign(i);};
 /* ---------- input ---------- */
 function mpos(e){const r=cv.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;}
@@ -357,7 +362,7 @@ function pickAt(sx,sy,own){let best=null,bd=1e9;for(const e of G.ents){if(e.dead
 function fieldAt(w){const i=G.fields.findIndex(f=>Math.hypot(f.x-w.x,f.y-w.y)<f.r+10);return i;}
 cv.addEventListener('mouseenter',e=>{mpos(e);mouse.in=true;});cv.addEventListener('mouseleave',()=>{mouse.in=false;});
 cv.addEventListener('mousemove',e=>{mpos(e);});
-cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(zmax(),cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;cam.tx+=(w.x-cam.tx)*f*.9;cam.ty+=(w.y-(cam.ty+cam.dist*.08))*f*.9;}}},{passive:false});
+cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(zmax(),cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;const o=camVec(0,cam.dist*.08);cam.tx+=(w.x-(cam.tx-o.x))*f*.9;cam.ty+=(w.y-(cam.ty-o.y))*f*.9;}}},{passive:false});
 // After an order the ordered units deselect so the next click selects fresh (Abdullah 2026-10-30 20:54). Kept when Shift
 // queues, when Settings > Mouse > mKeep is on, or when a targeting mode is active. Production-building rally points never count.
 function ordDone(shift){if(!G||SET.mKeep||shift||G.place||G.aim)return;if(G.sel.some(u=>!u.isB&&u.team===ME))G.sel=[];}
@@ -591,7 +596,10 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='Escape'&&MLOCK.on){MLOCK.escK=performance.now();mlockCancelModes();mlockOff();return;}
   if(k==='Escape'&&menuOpen()){menuOpen(false);return;}
   if(k==='Escape'){if(G.wallM){G.wallM=null;G.wallP=null;updateUI();return;}if(G.defm){G.defm=false;return;}if(G.paused){togglePause(false);return;}if(!G.place&&!G.aim&&!G.amove&&!G.sel.length&&!G.over){togglePause(true);return;}if(!G.place&&!G.aim&&!G.amove)G.sel=[];G.place=null;G.aim=null;G.amove=false;}
-  if(k==='q')G.sel=G.ents.filter(u=>u.team===ME&&!u.isB&&!['harv','hacker','dozer'].includes(u.kind)&&!u.dead);
+  /* Ctrl+A = select your whole army (was Q until 2026-11-07; Q now rotates the camera - Abdullah 19:54/19:55) */
+  if(k==='a'&&(e.ctrlKey||e.metaKey)&&!e.altKey){e.preventDefault();keys.a=false;selectArmy();}
+  if(k==='q'&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.repeat&&!CROT.hold&&!G.over){CROT.hold=true;CROT.t0=e.timeStamp||performance.now();CROT.mv=0;CROT.sh=e.shiftKey;}
+  if(e.key==='Home'){e.preventDefault();camRotReset();}
   if(k==='t'&&!e.ctrlKey&&!e.metaKey&&!e.altKey){selectTypes();}
   if(k==='f'&&G.sel.some(u=>!u.isB)){G.amove=true;G.defm=false;}if(k==='g'&&G.sel.some(u=>!u.isB&&u.team===ME)){G.defm=true;G.amove=false;}
   if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&!G.over)for(const pk in POW_KEY)if(POW_KEY[pk]===k){powGo(pk);break;}
@@ -607,8 +615,20 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
   if(e.key==='PageUp'){tiltBy(-.06);e.preventDefault();}if(e.key==='PageDown'){tiltBy(.06);e.preventDefault();}if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(zmax(),cam.td*1.15);}
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();updateUI();});
-window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
-window.addEventListener('blur',()=>{MODK.ctrl=MODK.alt=MODK.shift=false;});
+window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;if(k==='q')camRotUp(e);MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
+window.addEventListener('blur',()=>{MODK.ctrl=MODK.alt=MODK.shift=false;CROT.hold=false;});
+// Camera rotation (Abdullah 2026-11-07 19:54 "rotate camera in battle", 19:55 "Use Q"): hold Q and move the mouse left /
+// right to turn the view around the screen centre (pointer lock: movementX, the cursor stays put); a quick tap of Q turns
+// 45 degrees clockwise, Shift+Q counter-clockwise; Home or a double-tap of Q turns back to north-up. View only: cam.yaw /
+// cam.tyaw (06-view placeCam/camVec), never the simulation, so multiplayer sync is untouched.
+const CROT={hold:false,t0:0,mv:0,sh:false,tap:0};
+function camRotBy(d){cam.yaw=(cam.yaw||0)+d;cam.tyaw=cam.yaw;}
+function camRotSnap(dir){const q=Math.PI/4,b=cam.tyaw!=null?cam.tyaw:(cam.yaw||0);cam.tyaw=(Math.round(b/q)-dir)*q;}
+function camRotReset(){const T=Math.PI*2;cam.tyaw=Math.round((cam.yaw||0)/T)*T;}
+function camRotMouse(dx){if(!CROT.hold||!G||(window.PHX&&PHX.on))return false;CROT.mv+=Math.abs(dx);if(CROT.mv>3)camRotBy(-dx*.006);return true;}
+function camRotUp(e){if(!CROT.hold)return;CROT.hold=false;if(!G||G.over)return;const now=e.timeStamp||performance.now();/* event times: a slow frame must not merge two taps into a double-tap */
+  if(CROT.mv<=3&&now-CROT.t0<500){if(now-CROT.tap<350){CROT.tap=0;camRotReset();}else{CROT.tap=now;camRotSnap(CROT.sh||e.shiftKey?-1:1);}}}
+window.addEventListener('pointermove',e=>{if(!MLOCK.on&&e.pointerType==='mouse')camRotMouse(e.movementX||0);},true);
 // Keys: F arms attack-move, G guard, X stops, R retreats in every mouse scheme; WASD and the arrow keys always scroll
 // (A no longer arms attack-move - Abdullah, 2026-10-28).
 function genKeys(){return false;}
@@ -797,8 +817,8 @@ window.addEventListener('pointerup',e=>tcEnd(e,false),true);
 window.addEventListener('pointercancel',e=>tcEnd(e,true),true);
 /* ---- command strip (touch only, while units are selected) and build / fire confirm ---- */
 const TC_BTN=[['am','⚔','Attack','Attack-move: tap a spot, they fight everything on the way'],['gd','🛡','Guard','Guard: tap the spot to hold'],['st','■','Stop','Stop'],
-  ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all your units of the selected types on the whole map (T)'],['all','★','Army','Select your whole army'],
-  ['sn','◈','Stance','Cycle army stance: Assault, Hold, Guerrilla'],['rt','↩','Retreat','Retreat to the nearest base building'],['rs','⛽','Supply','Resupply: send the selected units to the nearest supply point (HQ, depot, truck or held town) to refill ammo'],['dg','⛏','Dig in','Dig a foxhole (soldiers) or lay sandbags / trenches (Construction Vehicle)'],['ds','✕','Clear','Deselect']];
+  ['ln','╱','Line','Line: drag on the map to draw the battle line'],['ty','◎','Type','Select all your units of the selected types on the whole map (T)'],['all','★','Army','Select your whole army (Ctrl+A)'],
+  ['sn','◈','Stance','Cycle army stance: Assault, Hold, Guerrilla'],['rt','↩','Retreat','Retreat to the nearest base building'],['rs','⛽','Supply','Resupply: send the selected units to the nearest supply point (HQ, depot, truck or held town) to refill ammo'],['dg','⛏','Dig in','Dig in: soldiers dig foxholes where they stand; a Construction Vehicle builds a fortification line (trench with sandbag parapet) where you draw it'],['ds','✕','Clear','Deselect']];
 const TC_CN=['cn','✕','Cancel','Cancel: stop placing, remove the last queued item, or cancel the unfinished building'];
 function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   if(k==='am'){G.amove=!G.amove;G.defm=false;TC.lineArm=false;}
@@ -810,7 +830,7 @@ function tcCmd(k){if(!G||G.over)return;const own=tcOwn(),ids=own.map(u=>u.id);
   else if(k==='all'){selectArmy();}
   else if(k==='rt'){if(ids.length){doAct({t:'ret',ids});speak(2);}}
   else if(k==='rs'){resupplySel();}
-  else if(k==='dg'){if(own.some(digCan))tactDig();else tactWall(G.wallM==='sand'?'trench':'sand');}
+  else if(k==='dg'){if(own.some(digCan))tactDig();else tactWall('trench');}
   else if(k==='ds'){G.sel=[];G.amove=false;G.defm=false;TC.lineArm=false;}
   else if(k==='ok'){if(TC.pick&&(G.place||G.aim)){const p=toScreen(TC.pick.x,0,TC.pick.y);placeOrAim(TC.pick,false);if(!G.place&&!G.aim){tcMark(p.x,p.y,'am');TC.pick=null;}}}
   else if(k==='cn'){doCancel(false);}
@@ -879,11 +899,12 @@ body.tstripOn #info .cmdrow{display:none!important}
 body:not(.touchui) #aGuide{display:none}
 @media (max-height:520px){#tguide .tgi{font-size:26px}#tguide .tgc{padding:10px 14px 8px}#tguide p{margin-bottom:8px}}`;document.body.append(st);}
 setTimeout(setHint,0);
-function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=genKeys();if(keys.ArrowLeft||(keys.a&&!gk))cam.tx-=sp;if(keys.ArrowRight||keys.d)cam.tx+=sp;if(keys.ArrowUp||keys.w)cam.ty-=sp;if(keys.ArrowDown||(keys.s&&!gk))cam.ty+=sp;
+function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=genKeys();let rx=0,dn=0;/* screen-space pan (right / down), turned by the view rotation (camVec) */if(keys.ArrowLeft||(keys.a&&!gk))rx-=sp;if(keys.ArrowRight||keys.d)rx+=sp;if(keys.ArrowUp||keys.w)dn-=sp;if(keys.ArrowDown||(keys.s&&!gk))dn+=sp;if(rx||dn){const v=camVec(rx,-dn);cam.tx+=v.x;cam.ty+=v.y;rx=dn=0;}
   // Generals rapid scroll: right-drag with nothing selected pans toward the drag, faster the further you drag
-  if(RDRAG&&RDRAG.gen&&RDRAG.mode==='scroll'&&RDRAG.moved){const dx=mouse.x-RDRAG.x0,dy=mouse.y-RDRAG.y0,d=Math.hypot(dx,dy);if(d>4){const v=sp*Math.min(6,.6+d/70)*(SET.mRS||100)/100;cam.tx+=dx/d*v;cam.ty+=dy/d*v;}}
-  if(MLOCK.on&&!mouse.in&&!drag&&SET.edge){const W=innerWidth-1,H=innerHeight-1;if(MLOCK.x<=0)cam.tx-=sp;if(MLOCK.x>=W)cam.tx+=sp;if(MLOCK.y<=0)cam.ty-=sp;if(MLOCK.y>=H)cam.ty+=sp;}
-  if(mouse.in&&!drag&&SET.edge&&LASTPT!=='touch'){if(mouse.x<14)cam.tx-=sp;if(mouse.x>VW-14)cam.tx+=sp;if(mouse.y<14)cam.ty-=sp;if(mouse.y>VH-14)cam.ty+=sp;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
+  if(RDRAG&&RDRAG.gen&&RDRAG.mode==='scroll'&&RDRAG.moved){const dx=mouse.x-RDRAG.x0,dy=mouse.y-RDRAG.y0,d=Math.hypot(dx,dy);if(d>4){const v=sp*Math.min(6,.6+d/70)*(SET.mRS||100)/100;rx+=dx/d*v;dn+=dy/d*v;}}
+  if(MLOCK.on&&!mouse.in&&!drag&&SET.edge&&!CROT.hold){const W=innerWidth-1,H=innerHeight-1;if(MLOCK.x<=0)rx-=sp;if(MLOCK.x>=W)rx+=sp;if(MLOCK.y<=0)dn-=sp;if(MLOCK.y>=H)dn+=sp;}
+  if(mouse.in&&!drag&&SET.edge&&LASTPT!=='touch'&&!CROT.hold){if(mouse.x<14)rx-=sp;if(mouse.x>VW-14)rx+=sp;if(mouse.y<14)dn-=sp;if(mouse.y>VH-14)dn+=sp;}
+  if(rx||dn){const v=camVec(rx,-dn);cam.tx+=v.x;cam.ty+=v.y;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
 
 /* ---------- game start / reset ---------- */
 function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
@@ -1087,7 +1108,7 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
       try{if(G===g&&g.thumb&&!g.mmBase)g.mmBase=mmBase();}catch(e){}}],
     ['Loading 3D models…',.38,()=>mp],
     ['Building the battlefield…',.42,()=>{if(!R3)initGfx();else resetScene();},1],
-    ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
+    ['Building the battlefield…',.52,()=>{buildWorld(tc||g.terrain);resize();cam.yaw=0;cam.tyaw=0;/* every battle starts north-up */const [bx,by]=BASES[ME];{const fa=Math.atan2(MAPH/2-by,MAPW/2-bx);centerOn(bx+Math.cos(fa)*200,by+Math.sin(fa)*160);}cam.dist=430;}],
     ['Preparing graphics…',.78,()=>{if(gfxPhone()&&typeof warmShadersPhone==='function'){LOAD.wstop=0;return warmShadersPhone((d,n)=>{if(live())loadStep('Preparing graphics… '+d+' of '+n,.78+.11*d/n);},()=>LOAD.wstop||!live());}
       try{warmShaders();}catch(e){console.warn('warm-up',e);}}],
     ['Deploying forces…',.9,()=>{buildPanels();}],
@@ -1111,12 +1132,12 @@ async function afterStart(){try{idBattleReset();idStart();}catch(e){console.warn
   if(!g.ldHold)pushLog(`${g.teams[ME].F.name} forces deployed. Select your Construction Vehicle, then build a Barracks, then send infantry or vehicles to capture oil derricks.`,'g');
   // music and this nation's voice lines start once the battlefield is up, so they don't compete with the loading work
   setTimeout(()=>{if(G!==g)return;try{startMusic(g.teams[ME].fac);}catch(e){}try{voLoad(g.teams[ME].fac);}catch(_){}try{vohLoad(g.teams[ME].fac);}catch(_){}},0);}
-function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({real:setup.real?1:0,w:setup.w|0,seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length)});G.teams.forEach((T,i)=>{if(T.ai)T.ai=mkAI(Math.max(0,Math.min(2,setup.d|0))+10*persCode((setup.pers||[])[i]));});}finally{TERR_DEFER=false;}afterStart();}
+function startSingle(){MODE='single';ME=0;const facs=rollAis();if(new Set(setup.tm).size<2)setup.tm=facs.map((_,i)=>i);TERR_DEFER=true;try{newGame({battle:setup.mode==='battle'?1:0,real:setup.real?1:0,w:setup.w|0,seed:setup.seed||((Math.random()*1e9)|0),facs,ai:facs.map((_,i)=>i>0),map:setup.map,tm:setup.tm.slice(),bs:setup.bs,slot:setup.slot==null?-1:setup.slot,st:skSt(facs.length)});G.teams.forEach((T,i)=>{if(T.ai)T.ai=mkAI(Math.max(0,Math.min(2,setup.d|0))+10*persCode((setup.pers||[])[i]));});}finally{TERR_DEFER=false;}afterStart();}
 // Test Range: you against a passive target enemy on a 2-player map, with unlimited money and everything unlocked
 function startSandbox(){const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,setup.a&&setup.a!==setup.p?setup.a:en];
   MODE='single';ME=0;
   TERR_DEFER=true;try{newGame({seed:setup.seed||((Math.random()*1e9)|0),facs,ai:[false,false],map:setup.map,tm:[0,1],bs:1,slot:setup.slot==null?-1:setup.slot,sandbox:true});}finally{TERR_DEFER=false;}afterStart();}
-function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids,rl){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0,real:rl?1:0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(!T.reb&&isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
+function startMP(mode,seed,facs,slot,map,tm,aiD,st,ids,rl,bm){IDS_PEND=Array.isArray(ids)&&ids.length===facs.length?ids:null;NET.lastSnapT=0;NET.sc={};NET.kf={};NET.kt={};NET.cseq={};NET.cseqSlot=[];NET.ckAk=null;NET.ckOut=null;NET.sbSlot=null;NET.iaDev=0;NET.tgC=null;NET.tgS=null;NET.ver=null;NET.sk=null;NET.gq=[];NET.civQ=[];NET.snapTo=[];NET.ia=0;NET.rxW=0;NET.prevT=0;MODE=mode;ME=slot|0;const isAI=i=>mode==='host'&&Array.isArray(aiD)&&aiD[i]!=null;TERR_DEFER=true;try{newGame(Object.assign({seed,facs,ai:facs.map((_,i)=>isAI(i)),map,tm,w:setup.w|0,real:rl?1:0,battle:bm?1:0},st?{st}:{}));}finally{TERR_DEFER=false;}if(mode==='host')G.teams.forEach((T,i)=>{if(!T.reb&&isAI(i))T.ai=mkAI(aiD[i]);});afterStart();$('mpstatus').textContent='';}
 
 /* ---------- menu ---------- */
 function facCards(){const el=$('pickP');el.innerHTML='';for(const k of FKEYS){const F=FACTIONS[k],b=document.createElement('button');b.className='fac'+(setup.p===k?' on':'');
@@ -1172,9 +1193,55 @@ function mapPreview(k,cv){const c=cv.getContext('2d'),W=cv.width,H=cv.height;con
   let wa=0,mo=0;for(let q=0;q<id.data.length;q+=4){const r=id.data[q],g=id.data[q+1],b=id.data[q+2];if(b>r+20&&g<200||r===150&&g===180)wa++;else if(r===112&&g===102||r===236&&g===240||r===150&&g===156)mo++;}const n=W*H;
   return{water:wa/n,mtn:mo/n,bridges:M.m.bridges.length};}
 function syncAiN(){const mx=(MAPS[setup.map]||MAPS.strait).max-1;if($('aiN'))$('aiN').querySelectorAll('button').forEach(b=>{b.disabled=+b.dataset.n>mx;});if(setup.n>mx){setup.n=[1,2,3,5,7].filter(v=>v<=mx).pop();$('aiN').querySelectorAll('button').forEach(x=>x.classList.toggle('on',+x.dataset.n===setup.n));$('start').textContent=setup.n>1?`Deploy vs ${setup.n} AI`:'Deploy vs AI';}}
+/* ---- Battlefield picker window ---- */
+const MP_REG={'Middle East':'TR IL SA AE IR IQ SY JO RS DW RV OB BI KD EG OM AZ','Europe':'UA RU FR DE PL GB IT GR ES SE EU','Asia':'CN KP KR JP IN PK TW VN PH ID TH KZ AF AU','Africa':'DZ MA NG ZA ET LY SD','Americas':'US CU BR VE MX CA AR CO CL'};
+function mpRegion(k){const D=MAPS[k];for(const f of D.home||[])for(const r in MP_REG)if(MP_REG[r].split(' ').includes(f))return r;const t=((D.name||'')+' '+(D.tag||'')+' '+(D.desc||'')).toLowerCase();if(/desert|dune|gulf|persian|arab|sinai|levant|nile|tehran|baghdad/.test(t))return 'Middle East';if(/europe|alps|baltic|rhine|ukrain|siberia|steppe/.test(t))return 'Europe';if(/asia|himalaya|korea|china|pacific|jungle|island/.test(t))return 'Asia';if(/africa|sahara|savanna/.test(t))return 'Africa';if(/america|caribbean|amazon/.test(t))return 'Americas';return 'Other';}
+function mpTerrain(k){const D=MAPS[k],t=((D.tag||'')+' '+(D.name||'')+' '+(D.desc||'')).toLowerCase(),o=[];if(/desert|dune/.test(t))o.push('desert');if(/city|urban|town|ruble|rubble|street|istanbul|ghetto/.test(t))o.push('urban');if(/mount|hill|plateau|alps|ridge|peak|pass/.test(t))o.push('mountain');if(/coast|sea|island|strait|bay|naval|river|lake|shore/.test(t))o.push('coast');return o;}
+function mpSize(k){const D=MAPS[k];return D.max>=8?'Large':D.max>=5?'Medium':'Small';}
+function mapPickerOpen(sel,done){
+  const old=document.getElementById('mapPickW');if(old)old.remove();
+  let fav=[],rec=[];try{fav=JSON.parse(localStorage.getItem('ww3.mapFav')||'[]');rec=JSON.parse(localStorage.getItem('ww3.mapRec')||'[]');}catch(e){}
+  const save=()=>{try{localStorage.setItem('ww3.mapFav',JSON.stringify(fav));localStorage.setItem('ww3.mapRec',JSON.stringify(rec));}catch(e){}};
+  const ov=document.createElement('div');ov.id='mapPickW';ov.style.cssText='position:fixed;inset:0;z-index:60;background:rgba(8,10,12,.94);color:var(--fg,#eee);display:flex;flex-direction:column;padding:14px 16px;gap:8px;font:14px system-ui,sans-serif';
+  ov.innerHTML='<div style="display:flex;gap:8px;align-items:center"><button type="button" class="rndmap" id="mpBack">← Back</button><b style="flex:1">Choose a battlefield</b><span id="mpCount" style="opacity:.7;font-size:12px"></span></div><input id="mpQ" type="search" placeholder="Search by map, country or region…" aria-label="Search maps" style="padding:8px;background:var(--panel2,#222);color:inherit;border:1px solid var(--line,#444);font:inherit"><div id="mpChips" style="display:flex;flex-wrap:wrap;gap:6px"></div><div id="mpList" style="flex:1;overflow:auto"></div><div id="mpPg" style="display:flex;gap:10px;justify-content:center;align-items:center"></div>';
+  document.body.append(ov);
+  const F={q:'',reg:'',pl:0,size:'',ter:'',page:0},open={},PER=18;let sub=[],cur=0;
+  const chipDefs=[['reg','Region',Object.keys(MP_REG)],['pl','Players',[2,4,6,8]],['size','Size',['Small','Medium','Large']],['ter','Terrain',['desert','urban','mountain','coast']]];
+  const chips=ov.querySelector('#mpChips');
+  const match=k=>{const D=MAPS[k];const hay=(D.name+' '+(D.tag||'')+' '+(D.desc||'')+' '+mpRegion(k)+' '+(D.home||[]).map(f=>FACTIONS[f]?FACTIONS[f].name:f).join(' ')).toLowerCase();return(!F.q||F.q.split(/\s+/).every(w=>hay.includes(w)))&&(!F.reg||mpRegion(k)===F.reg)&&(!F.pl||(D.min<=F.pl&&D.max>=F.pl))&&(!F.size||mpSize(k)===F.size)&&(!F.ter||mpTerrain(k).includes(F.ter));};
+  const pick=k=>{sel.value=k;rec=[k,...rec.filter(x=>x!==k)].slice(0,6);save();ov.remove();document.removeEventListener('keydown',kd,true);if(sel.onchange)sel.onchange();if(done)done();};
+  const card=(k,i)=>{const D=MAPS[k],b=document.createElement('div');b.setAttribute('role','button');b.tabIndex=0;b.dataset.k=k;b.dataset.i=i;const sn=D.theme==='snow'?'#9fb8c8':D.theme==='green'?'#5f8a4e':/desert|dune/.test(D.tag||'')?'#c3a56a':'#7d8a74';b.style.cssText='display:flex;gap:8px;align-items:center;padding:6px 8px;border:1px solid '+(k===setup.map?'var(--accent,#d9a441)':'var(--line,#444)')+';background:var(--panel,#181a1c);cursor:pointer;min-width:0';
+    b.innerHTML='<span style="width:34px;height:24px;flex:none;background:'+sn+';border:1px solid #0006"></span><span style="flex:1;min-width:0"><span style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+D.name.replace(/</g,'&lt;')+'</span><span style="font-size:11px;opacity:.7">'+(D.min===D.max?D.max:D.min+'–'+D.max)+' players · '+mpSize(k)+'</span></span>';
+    const st=document.createElement('button');st.type='button';st.textContent=fav.includes(k)?'★':'☆';st.title='Favourite';st.style.cssText='background:none;border:0;color:#e8c250;font-size:16px;cursor:pointer';st.onclick=e=>{e.stopPropagation();fav=fav.includes(k)?fav.filter(x=>x!==k):[k,...fav];save();render();};b.append(st);
+    b.onclick=()=>pick(k);b.onkeydown=e=>{if(e.key==='Enter')pick(k);};return b;};
+  function render(){
+    chips.innerHTML='';for(const[f,lab,vals]of chipDefs){const g=document.createElement('span');g.style.cssText='display:inline-flex;gap:4px;align-items:center;margin-right:8px';g.append(Object.assign(document.createElement('i'),{textContent:lab,style:'opacity:.6;font-size:12px;font-style:normal'}));for(const v of vals){const c=document.createElement('button');c.type='button';c.className='chip';c.textContent=f==='pl'?v:v;const on=F[f]===v;c.style.cssText='padding:3px 8px;font-size:12px;cursor:pointer;border:1px solid var(--line,#555);background:'+(on?'var(--accent,#d9a441)':'var(--panel2,#222)')+';color:'+(on?'#111':'inherit');c.onclick=()=>{F[f]=on?(f==='pl'?0:''):v;F.page=0;render();};g.append(c);}chips.append(g);}
+    const all=MAP_KEYS.filter(match);const L=ov.querySelector('#mpList');L.innerHTML='';const grid=()=>{const d=document.createElement('div');d.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;margin-bottom:10px';return d;};
+    const browse=!F.q&&!F.reg&&!F.pl&&!F.size&&!F.ter;sub=[];
+    const head=(t,n,key)=>{const h=document.createElement('div');h.style.cssText='cursor:pointer;margin:4px 0;font-weight:700;opacity:.85';h.textContent=(open[key]===false?'▸ ':'▾ ')+t+' ('+n+')';h.onclick=()=>{open[key]=open[key]===false;render();};L.append(h);};
+    const sect=(t,ks,key)=>{if(!ks.length)return;head(t,ks.length,key);if(open[key]===false)return;const g=grid();ks.forEach(k=>{const c=card(k,sub.length);sub.push(k);g.append(c);});L.append(g);};
+    if(browse){sect('★ Favourites',fav.filter(k=>MAPS[k]),'fav');sect('Recently played',rec.filter(k=>MAPS[k]),'rec');}
+    const pages=Math.max(1,Math.ceil(all.length/PER));F.page=Math.min(F.page,pages-1);const part=all.slice(F.page*PER,F.page*PER+PER);
+    for(const r of[...Object.keys(MP_REG),'Other']){sect(r,part.filter(k=>mpRegion(k)===r),'r'+r);}
+    if(!all.length)L.textContent='No battlefield matches. Clear a filter or change the search.';
+    ov.querySelector('#mpCount').textContent=all.length+' of '+MAP_KEYS.length+' maps';
+    const pg=ov.querySelector('#mpPg');pg.innerHTML='';if(pages>1){const mk=(t,d)=>{const b=document.createElement('button');b.type='button';b.className='rndmap';b.textContent=t;b.disabled=F.page+d<0||F.page+d>=pages;b.onclick=()=>{F.page+=d;render();};return b;};pg.append(mk('‹ Prev',-1),Object.assign(document.createElement('span'),{textContent:'Page '+(F.page+1)+' / '+pages}),mk('Next ›',1));}
+    cur=Math.min(cur,Math.max(0,sub.length-1));hl();}
+  function hl(){ov.querySelectorAll('[data-i]').forEach(e=>{e.style.outline=+e.dataset.i===cur?'2px solid var(--accent,#d9a441)':'';});const e=ov.querySelector('[data-i="'+cur+'"]');if(e&&e.scrollIntoView)e.scrollIntoView({block:'nearest'});}
+  const q=ov.querySelector('#mpQ');q.oninput=()=>{F.q=q.value.trim().toLowerCase();F.page=0;cur=0;render();};
+  const close=()=>{ov.remove();document.removeEventListener('keydown',kd,true);};ov.querySelector('#mpBack').onclick=close;
+  function kd(e){if(!document.getElementById('mapPickW')){document.removeEventListener('keydown',kd,true);return;}
+    if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close();return;}
+    if(['ArrowRight','ArrowDown','ArrowLeft','ArrowUp'].includes(e.key)){e.preventDefault();cur=Math.max(0,Math.min(sub.length-1,cur+(e.key==='ArrowRight'||e.key==='ArrowDown'?1:-1)));hl();return;}
+    if(e.key==='Enter'&&sub[cur]&&document.activeElement===q){e.preventDefault();pick(sub[cur]);return;}
+    if(e.key.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&document.activeElement!==q){q.focus();}}
+  document.addEventListener('keydown',kd,true);render();q.focus();}
 function mapCards(){const el=$('pickMap');if(!el)return;if(!setup.map)setup.map=(typeof SET!=='undefined'&&SET.map&&MAPS[SET.map])?SET.map:'strait';el.className='';el.innerHTML='';const box=document.createElement('div');box.className='mapsel';
   const cv=document.createElement('canvas');cv.id='mapCv';cv.width=384;cv.height=264;cv.setAttribute('aria-label','Map preview: tap a numbered spot to choose who starts there');cv.onclick=e=>{if(!PREV[setup.map])return;const n=skSides().length,k=spotsHit(cv,e,setup.map,n);if(k<0)return;try{sfxUI(700);}catch(_){}skSet(spotsCycle(skSt(n),k));};const right=document.createElement('div');const sel=document.createElement('select');sel.id='mapSel';sel.setAttribute('aria-label','Battlefield');
   for(const k of MAP_KEYS){const o=document.createElement('option');o.value=k;const hm=(MAPS[k].home||[]).map(f=>FACTIONS[f]&&FACTIONS[f].name).filter(Boolean);o.textContent=`${MAPS[k].name}${hm.length?' · Home turf: '+hm.join(' & '):''} (${MAPS[k].min}–${MAPS[k].max} players)`;sel.append(o);}if(typeof editorAddMaps==='function')editorAddMaps(sel);sel.value=setup.map;
+  { /* Battlefield picker (Abdullah 2026-11-07 21:29): the <select> stays hidden as the value holder; a small button opens a searchable, filterable, grouped, paged window. */
+    sel.style.display='none';const pb=document.createElement('button');pb.type='button';pb.id='mapPick';pb.className='rndmap';pb.style.cssText='display:block;width:100%;text-align:left;margin:0 0 6px;padding:7px 9px;font-size:14px';
+    const upd=()=>{pb.textContent='▾ '+(MAPS[setup.map]?MAPS[setup.map].name:'Choose a battlefield');};upd();pb.onclick=()=>mapPickerOpen(sel,upd);right.append(pb);box.addEventListener('mapchanged',upd);sel.addEventListener('change',upd);}
   const pl=document.createElement('div');pl.className='pl';const dc=document.createElement('div');dc.className='dc';const sn=document.createElement('div');sn.className='dc';sn.id='slotNote';right.append(sel,pl,dc,sn);box.append(cv,right);el.append(box);
   const show=()=>{const D=MAPS[setup.map];const base=(D.min===D.max?`${D.max} players`:`${D.min}–${D.max} players`)+(D.theme==='snow'?' · snow & ice':'');pl.textContent=base+(D.tag?' · '+D.tag:'');dc.textContent=D.desc;
     setTimeout(()=>{try{const r=mapPreview(setup.map,cv);if(r){const t=[base];if(D.tag)t.push(D.tag);else if(r.water>.28)t.push('naval-heavy');else if(r.water>.06)t.push('rivers & coast');else t.push(r.bridges?'rivers':'open land');if(!D.tag&&r.mtn>.05)t.push('mountain passes');if(r.bridges)t.push(r.bridges+(r.bridges>1?' bridges':' bridge'));pl.textContent=t.join(' · ');}}catch(e){}},20);};
@@ -1264,7 +1331,7 @@ function syncMouseUI(){const pre=mPreset();
   const r=$('sMRS');if(r){r.value=SET.mRS;const o=$('sMRSV');if(o)o.textContent=SET.mRS+'%';r.oninput=()=>{SET.mRS=+r.value;if(o)o.textContent=SET.mRS+'%';saveSet();};}
   const w=$('sMwarn');if(w)w.hidden=leftOrders()||rightOrders();
   const rb=$('sMreset');if(rb)rb.onclick=()=>{Object.assign(SET,MDEF,{scr:100,zm:100,inv:0,dbl:350,tol:8,mmc:'cam',mpan:1,edge:1});saveSet();syncSettings();mouseScheme();};}
-const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · O: formation · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Q: army · H: home · Wheel: zoom · Shift+wheel / PgUp PgDn: tilt · WASD/arrows: scroll · Esc: cancel / deselect';
+const HINT_STD='Left-click or drag: select (Shift adds, double-click: all of a type) · Right-click: move / attack · Right-drag: line formation · Right-click your building / transport / tunnel: go in · Get out: right-click the selected transport (Alt+right-click a spot: drive there, unload), or the ground with a held building / tunnel selected · F then click: attack-move · G then click: defend area · X: stop · O: formation · R: retreat · Ctrl+click: force-fire · Alt+click: waypoint · Ctrl+A: army · Q: rotate view (hold + mouse; tap: 45°; Home: north) · H: home · Wheel: zoom · Shift+wheel / PgUp PgDn: tilt · WASD/arrows: scroll · Esc: cancel / deselect';
 // the on-screen hint follows the chosen mouse functions (the Standard preset has its own fixed text)
 function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOrders(),P=[];
   P.push(L?'Left-click: select · with units selected, left-click ground to move, enemy to attack · Shift+click: add':'Left-click or drag: select (click empty ground to deselect)');
@@ -1273,7 +1340,7 @@ function hintText(){if(stdMouse())return HINT_STD;const L=leftOrders(),R=rightOr
   P.push(R?'Right-click: move / attack':'Right-click: deselect / cancel');
   const nm={line:'infantry line',scroll:'rapid scroll',box:'box-select'},U=nm[SET.mRDU],N=nm[SET.mRDN]||'nothing';P.push('Right-drag: '+U+(N!==U?' (nothing selected: '+N+')':''));
   P.push('Get out: right-click your selected transport (Alt+right-click a spot: drive there, unload) · building or tunnel selected, right-click the ground');
-  P.push('Q: army · H: home · Wheel: zoom · Arrows/WASD: scroll');return P.join(' · ');}
+  P.push('Ctrl+A: army · Q: rotate (hold + mouse) · H: home · Wheel: zoom · Arrows/WASD: scroll');return P.join(' · ');}
 // the hint line speaks to what the player last used: touch wording after a tap, the active mouse scheme after a click
 // (a touchscreen laptop switches back and forth)
 function setHint(){const h=$('hint');if(h)h.textContent=TOUCHUI&&HINTDEV==='touch'?HINT_TOUCH:hintText();}
@@ -1319,7 +1386,7 @@ function mlHover(el,e,x,y){const old=MLOCK.hov;if(el===old)return;
   MLOCK.hov=el;if(el){const b=el.closest('button,.btn,a');if(b){b.classList.add('vhov');MLOCK.hovB=b;}mlSend(el,'pointerover',e,x,y);mlSend(el,'mouseover',e,x,y);for(let a=el;a&&a!==document.body&&!(old&&a.contains(old));a=a.parentElement){mlSend(a,'pointerenter',e,x,y,false);mlSend(a,'mouseenter',e,x,y,false);}}}
 function mlEv(e){if(!MLOCK.on||!e.isTrusted)return;const ty=e.type;
   if(ty==='pointermove'){const cx=e.clientX,cy=e.clientY;if(!e.movementX&&!e.movementY&&MLOCK.cx!=null&&(cx!==MLOCK.cx||cy!==MLOCK.cy)){if(++MLOCK.bad>3){MLOCK.broken=true;mlockOff();}}else MLOCK.bad=0;MLOCK.cx=cx;MLOCK.cy=cy;}
-  if(ty==='pointermove'||(ty==='mousemove'&&!window.PointerEvent)){MLOCK.x=Math.max(0,Math.min(innerWidth-1,MLOCK.x+(e.movementX||0)));MLOCK.y=Math.max(0,Math.min(innerHeight-1,MLOCK.y+(e.movementY||0)));}
+  if((ty==='pointermove'||(ty==='mousemove'&&!window.PointerEvent))&&!camRotMouse(e.movementX||0)){MLOCK.x=Math.max(0,Math.min(innerWidth-1,MLOCK.x+(e.movementX||0)));MLOCK.y=Math.max(0,Math.min(innerHeight-1,MLOCK.y+(e.movementY||0)));}
   const x=MLOCK.x,y=MLOCK.y;mlPatch(e,x,y);
   if(ty==='contextmenu'){e.preventDefault();e.stopImmediatePropagation();return;}
   const under=document.elementFromPoint(x,y);let el=MLOCK.cap||under;
