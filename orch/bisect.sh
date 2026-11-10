@@ -16,8 +16,8 @@ run_test() {
     *)        [ -f "orch/$T.mjs" ] && node "orch/$T.mjs" || { echo "no runner for $T"; return 125; } ;;
   esac
 }
-GOOD=""
-for c in $(git rev-list --first-parent -n 40 "$BAD" | tail -n +2); do
+GOOD="${BISECT_GOOD:-}"   # explicit good commit (manual bisect via a bisect/<test>/<good-sha> branch)
+[ -n "$GOOD" ] || for c in $(git rev-list --first-parent -n 40 "$BAD" | tail -n +2); do
   st=$(gh api "repos/$REPO/commits/$c/statuses?per_page=100" --jq "[.[]|select(.context==\"gate/$T\")][0].state" 2>/dev/null)
   [ "$st" = success ] && { GOOD=$c; break; }
 done
