@@ -77,7 +77,8 @@ function syncScene(dt){const live=new Set();
         const tp=Math.atan2(fr-bk,2*L),tr=Math.atan2(lf-rt,1.4*L);const v=e.v||0,acc=(v-(ud.pv??v))/Math.max(dt,1e-3);ud.pv=v;
         const yr=angDiff(ud.pyaw2??ud.yaw,ud.yaw)/Math.max(dt,1e-3);ud.pyaw2=ud.yaw;
         ud.sp=(ud.sp||0)+((Math.max(-.05,Math.min(.05,acc*.0011)))-(ud.sp||0))*Math.min(1,dt*6);ud.sr=(ud.sr||0)+((Math.max(-.05,Math.min(.05,yr*v*.0009)))-(ud.sr||0))*Math.min(1,dt*5);
-        o.rotation.order="YZX";o.rotation.z=tp+ud.sp;o.rotation.x=-tr+ud.sr;
+        /* GAME FEEL (q-feel): the hull rocks on its suspension when the gun fires - nose kicks up and settles in two swings (a cannon rocks the whole tank, a machine gun barely moves it), sideways when the turret points off to one side. View only. */let fz=0,fx=0;{const ft=G.t-(e.lastFire||-9);if(ft>=0&&ft<.75){const kw=s.wpn==='cannon'?1:(s.rof||0)>=1?.6:.18,rk=Math.exp(-ft*6.5)*Math.sin(ft*17)*.05*kw,da=(e.tang??e.va)-e.va;fz=rk*Math.cos(da);fx=rk*Math.sin(da);}}ud.rock=fz;
+        o.rotation.order="YZX";o.rotation.z=tp+ud.sp+fz;o.rotation.x=-tr+ud.sr+fx;
         if(v>2)o.position.y+=Math.sin(G.t*23+e.id)*.12*Math.min(1,v/40);}
       if(e.kind==='heli'){const ud=o.userData;o.rotation.order='YXZ';const mv=(G.t-(e.mv||-9)<.25)||(e.mvC>0);const prev=ud.pyaw??ud.yaw;let tr=ud.yaw-prev;tr=Math.atan2(Math.sin(tr),Math.cos(tr))/Math.max(dt,1e-3);ud.pyaw=ud.yaw;
         const hv=e.v||0,ha=(hv-(ud.phv??hv))/Math.max(dt,1e-3);ud.phv=hv;ud.pt=(ud.pt||0)+((e.landed?0:Math.max(-.22,Math.min(.3,.04+hv/Math.max(60,e.s.spd)*.24-ha*.003)))-(ud.pt||0))*Math.min(1,dt*1.8);ud.rl=(ud.rl||0)+((e.landed?0:Math.max(-.32,Math.min(.32,tr*.35)))-(ud.rl||0))*Math.min(1,dt*2.5);
