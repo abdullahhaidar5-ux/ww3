@@ -92,7 +92,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const RUN = newRun(ART ? 'smoke-art' : 'smoke');
 const t0 = Date.now();
 try {
-  await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
+  await page.goto(ART ? URL0 : URL0 + '?lazy=1', { waitUntil: 'load', timeout: 120000 }); // ?lazy=1: battles must run WITHOUT the grand-campaign bundle (orch/loadF)
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => warns.push('3D models still loading after 180s'));
   { const m = await page.evaluate(() => ({ n: Object.keys(MODELS.proto).length, of: typeof MODEL_FILES === 'object' ? Object.keys(MODEL_FILES).length : 0,
@@ -100,6 +100,11 @@ try {
     console.log(`3D models: ${m.n} of ${m.of} ready=${m.ready} ${m.err} (page open to models ready: ${(m.t / 1000).toFixed(1)}s)`);
     if (!m.ready) warns.push('3D models did not load at the menu: ' + m.err); }
   await shot(page, 'menu.png');
+  if (!ART) { // lazy grand campaign: not in the page at load, loads on the menu button, and the page then has the whole campaign
+    const pre = await page.evaluate(() => ({ g: typeof grandMenu, btn: !!document.getElementById('grandBtn'), file: typeof GRAND_FILE === 'string' && GRAND_FILE }));
+    if (pre.g !== 'undefined' || !pre.btn || !pre.file) fails.push(`lazy grand: before opening, grandMenu is ${pre.g}, button ${pre.btn}, GRAND_FILE ${pre.file} (expected undefined, true, a file name)`);
+    else console.log(`grand campaign is lazy: ${pre.file} not loaded at the menu`);
+  }
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));
       return { room: !!NET.room, peer: typeof Peer, p2p: !!window.WW3_P2P, three: THREE.REVISION, host: !document.getElementById('host').disabled }; });
