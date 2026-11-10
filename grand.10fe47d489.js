@@ -1537,7 +1537,7 @@ function guBindArmies(s,pi){s.querySelectorAll('.gArmy').forEach(e=>{e.onclick=(
 function guLog(){const l=document.getElementById('gLog');if(!l||!GC)return;const rows=GC.log.slice(-60).reverse().filter((r,i)=>i<45);l.innerHTML='<div style="font-weight:bold;margin-bottom:3px">War diary</div>'+rows.map(r=>'<div style="'+(r[2]&&r[2]===GC.me?'color:#ffe9a6':'opacity:.82')+'"><span style="opacity:.55">'+grDateStr(r[0],0)+'</span> '+r[1]+'</div>').join('');}
 function guConfirm(title,body,yes,no){guModal('<h2 style="margin:0 0 8px;font-size:21px">'+title+'</h2><div style="line-height:1.5;margin-bottom:12px">'+body+'</div>',[['Yes',yes,1],['No',no||null,0]]);}
 function guModal(html,btns){const old=document.getElementById('gModal');if(old)old.remove();const m=guEl('div','position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;');m.id='gModal';const c=guEl('div','background:#142231;border:1px solid #4a6580;border-radius:10px;padding:16px 20px;max-width:min(560px,92vw);color:#e8e4d8;font-size:16px;');c.innerHTML=html;
-  const row=guEl('div','display:flex;gap:8px;flex-wrap:wrap');for(const [t,fn,pri] of btns){const b=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid '+(pri?'#7aa84f':'#6b7a8a')+';background:'+(pri?'#4f6b32':'transparent')+';color:#fff;cursor:pointer;font-size:16px',t);b.type='button';b.onclick=()=>{m.remove();if(fn)fn();};row.appendChild(b);}c.appendChild(row);m.appendChild(c);document.body.appendChild(m);return m;}
+  const row=guEl('div','display:flex;gap:8px;flex-wrap:wrap');for(const [t,fn,pri] of btns){const b=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid '+(pri?'#7aa84f':'#6b7a8a')+';background:'+(pri?'#4f6b32':'transparent')+';color:#fff;cursor:pointer;font-size:16px',t);b.type='button';if(!fn)b.dataset.esc='1';b.onclick=()=>{m.remove();if(fn)fn();};row.appendChild(b);}c.appendChild(row);m.appendChild(c);document.body.appendChild(m);return m;}
 
 // ---------- battle prompt: Fight it / Auto-resolve / Withdraw ----------
 function grBattlePrompt(b){grandScreenShow(true);guCentre(b.p,2.2);GV.sel=b.p;GV.selA=0;grandMapRefresh();
@@ -3510,7 +3510,7 @@ function gmilCycleFront(id){const a=GC.armies.find(x=>x.id===id);if(!a||a.o!==GC
 function gmilMinesBtn(id){const a=GC.armies.find(x=>x.id===id);if(!a)return;const e=gmilMines(a);if(e){GV.hint=e;guHint();}}
 function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(old&&!refreshOnly){old.remove();return;}if(!old&&refreshOnly)return;if(!GC||!GC.me||!GC.mil)return;const me=GC.me,M=GC.mil;
   const host=document.getElementById('grandScreen');if(!host)return;let el=old;if(!el){el=guEl('div','position:absolute;top:56px;right:340px;bottom:12px;width:380px;max-width:52vw;z-index:8200;background:#101c28ee;border:1px solid #8aa6c9;border-radius:8px;padding:10px 12px;overflow:auto;font-size:14px;line-height:1.45;color:#e8e4d8');el.id='gMil';host.appendChild(el);}
-  el.innerHTML='';el.appendChild(guEl('div','display:flex;justify-content:space-between;align-items:center','<b style="font-size:17px;color:#d6e6ff">Military</b><span style="opacity:.7;margin-left:auto;margin-right:10px">'+GCM.nats.get(me).name+'</span><button type="button" id="gMilX" title="Close (Esc)" style="background:none;border:1px solid #5a7593;color:#d6e6ff;border-radius:5px;width:26px;height:26px;cursor:pointer;font-size:15px;line-height:1">✕</button>'));{const x=document.getElementById('gMilX');if(x)x.onclick=()=>el.remove();}
+  el.innerHTML='';el.appendChild(guEl('div','display:flex;justify-content:space-between;align-items:center','<b style="font-size:17px;color:#d6e6ff">Military</b><span style="opacity:.7;margin-left:auto;margin-right:10px">'+GCM.nats.get(me).name+'</span>'));
   const tabs=guEl('div','margin:6px 0');for(const [k,n] of [['gen','Generals'],['fr','Fronts'],['st','Strikes'],['fl','Fleets']])tabs.appendChild(gmilBtn(n,()=>{GMILUI.tab=k;gmilUiPanel(true);},GMILUI.tab===k));el.appendChild(tabs);
   const box=guEl('div');el.appendChild(box);const row=(h,css)=>box.appendChild(guEl('div',css||'border-bottom:1px solid #243a50;padding:4px 0',h));
   if(GMILUI.tab==='gen'){const mine=Object.values(M.g).filter(g=>g.o===me).sort((a,b)=>a.id-b.id);
@@ -3553,8 +3553,7 @@ function gmilUiProv(s,pi){if(!GC.me||!GC.mil||GC.over)return;const p=GCM.P[pi],m
   if(p.land&&GC.prov[pi].o===me&&gmilHasPort(pi)){box.appendChild(guEl('div','font-size:13px;opacity:.8','Port: build ships in the Military panel (Fleets tab).'));any=true;if(gmilBk(pi))box.appendChild(guEl('div','font-size:13px;color:#ff9d8e','Under naval blockade: port income and sea trade stopped.'));}
   if(any)s.appendChild(box);}
 /* Abdullah 2026-11-07 20:31 "Should be able to exit this": Esc closes the open grand-map panel (Military, diplomatic web, news, TV, peace deal, economy) one step at a time, before anything else uses Esc. */
-if(typeof window!=='undefined'&&!window._gPanelEsc){window._gPanelEsc=1;addEventListener('keydown',ev=>{if(ev.key!=='Escape')return;const gs=document.getElementById('grandScreen');if(!gs||gs.style.display==='none')return;
-  for(const id of ['gpDeal','gTV','gWeb','gNews','gMil','gEco']){const el=document.getElementById(id);if(el&&el.offsetParent!==null&&getComputedStyle(el).display!=='none'){el.remove();ev.preventDefault();ev.stopImmediatePropagation();return;}}},true);}
+/* Esc for every grand panel lives in src/13zzz-gpanels.js (one handler, top-most panel first) */
 // THE NATION PANEL (lane B2): ONE tabbed window for running a nation, EU4-style. Later grand stages add their screen with a single
 // register call: npTab(id, icon, title, render(code, body, ctx)). Tabs are listed in `order`; a tab shows only if its `show(code)` (optional) is true.
 // Header on every tab: flag, name, power tier, morale style, stat grid. Own nation = full view; another nation's flag = read-only.
@@ -3580,14 +3579,14 @@ function npDraw(){npClose();if(!GC||!NP.code)return;const code=NP.code,own=code=
   stat('⚔','Army',S.army.toLocaleString()+' ('+S.men+' units)','Total value of your armies on the map');
   stat('🗺','Provinces',S.prov,'Provinces you hold');stat('★','Score',grScore(code),'Campaign score');
   for(const f of NP_HDR)try{f(code,stat);}catch(_){}
-  hd.appendChild(g);const x=guEl('button','padding:6px 12px;border-radius:6px;border:1px solid #6b7a8a;background:transparent;color:#dfe8f0;cursor:pointer;font-size:15px','Close ✕');x.type='button';x.onclick=npClose;hd.appendChild(x);w.appendChild(hd);
+  hd.appendChild(g);w.appendChild(hd);
   const tabs=NP.tabs.filter(t=>!t.show||t.show(code));if(!tabs.some(t=>t.id===NP.cur)&&tabs.length)NP.cur=tabs[0].id;
   const tb=guEl('div','display:flex;gap:4px;padding:8px 12px 0;border-bottom:1px solid #2c4258;flex-wrap:wrap');
   for(const t of tabs){const on=t.id===NP.cur;const b=guEl('button','padding:8px 14px;border-radius:7px 7px 0 0;border:1px solid '+(on?'#c9a35a':'#34506a')+';border-bottom:none;background:'+(on?'#2a3a4c':'#15222f')+';color:'+(on?'#ffe6a8':'#c8d4e0')+';cursor:pointer;font-size:15px','<span style="font-size:18px">'+t.icon+'</span> '+t.title);b.type='button';b.title=t.title;b.onclick=()=>{NP.cur=t.id;npDraw();};tb.appendChild(b);}
   w.appendChild(tb);const body=guEl('div','padding:14px 18px;overflow:auto;line-height:1.55;min-height:260px');w.appendChild(body);
   const cur=tabs.find(t=>t.id===NP.cur);try{if(cur)cur.render(code,body,{own,S});}catch(e){body.textContent='Tab error: '+e.message;console.error('npTab',e);}
   (document.getElementById('grandScreen')||document.body).appendChild(w);}
-if(!window._npKeys){window._npKeys=1;addEventListener('keydown',ev=>{if(ev.key==='Escape'&&document.getElementById('npWin')){ev.stopPropagation();ev.preventDefault();npClose();}},true);}
+/* Esc + the close X: src/13zzz-gpanels.js */
 // ---- helpers
 function npTable(body,head,rows,onRow){const t=guEl('table','width:100%;border-collapse:collapse;font-size:15px');t.innerHTML='<tr>'+head.map(h=>'<th style="text-align:left;padding:5px 8px;border-bottom:1px solid #34506a;opacity:.8">'+h+'</th>').join('')+'</tr>';
   for(const r of rows){const tr=guEl('tr','cursor:'+(onRow?'pointer':'default'));tr.innerHTML=r.cells.map(c=>'<td style="padding:5px 8px;border-bottom:1px solid #1f3246">'+c+'</td>').join('');if(onRow)tr.onclick=()=>onRow(r);tr.onmouseenter=()=>{tr.style.background='#1d3248';};tr.onmouseleave=()=>{tr.style.background='';};t.appendChild(tr);}body.appendChild(t);}
@@ -4408,7 +4407,6 @@ function gwebOpen(){if(!GC)return;const old=document.getElementById('gWeb');if(o
   draw();
   cv.onclick=e=>{const r=cv.getBoundingClientRect(),sx=W/r.width,x=(e.clientX-r.left)*sx,y=(e.clientY-r.top)*sx;let best=null,bd=22*22;for(const c of nodes){const d=(pos[c][0]-x)**2+(pos[c][1]-y)**2;if(d<bd){bd=d;best=c;}}if(best){m.remove();NP.code=best;if(typeof npDraw==='function'){NP.cur='dip';npDraw();}}};
   m.onclick=e=>{if(e.target===m)m.remove();};
-  const esc=e=>{if(e.key==='Escape'){m.remove();document.removeEventListener('keydown',esc,true);}};document.addEventListener('keydown',esc,true);
   if(!nodes.length)box.appendChild(guEl('div','padding:20px;opacity:.7','No wars or alliances yet.'));}
 // MISSIONS (lane G, B7): a short list of national goals for the human nation, GENERATED from the current state (no hand-written trees).
 // Each template = {k, make(c)->{arg,text} or null, done(c,m)->bool, reward:[effects in the ONE event vocabulary of 13p]}. State GC.mis={code:{act:[{k,arg,text,t0,base}],done:n}}.
@@ -5048,7 +5046,7 @@ function gpOpen(a,b){const old=document.getElementById('gpDeal');if(old)old.remo
     c.appendChild(guEl('div','margin:8px 0;color:'+(e.ok?'#9fe39f':'#ffb3a8'),e.ok?(d.prov.length||d.trib||d.vas||d.pay||d.rep||d.dmz?'They will accept.':'White peace — nothing changes hands. Truce 6 months.'):e.why));
     const br=guEl('div','display:flex;gap:8px');const sg=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid #7aa84f;background:#4f6b32;color:#fff;cursor:pointer;font-size:16px','Sign peace');sg.type='button';sg.disabled=!e.ok;if(!e.ok)sg.style.opacity='.45';
     sg.onclick=()=>{const r=gpApply(a,b,d);if(r){draw();}else m.remove();};const cn=guEl('button','padding:9px 16px;border-radius:7px;border:1px solid #6b7a8a;background:transparent;color:#fff;cursor:pointer;font-size:16px','Keep fighting');cn.type='button';cn.onclick=()=>m.remove();br.appendChild(sg);br.appendChild(cn);c.appendChild(br);}
-  m.addEventListener('keydown',ev=>{if(ev.key==='Escape')m.remove();});m.onclick=ev=>{if(ev.target===m)m.remove();};document.body.appendChild(m);draw();return m;}
+  m.onclick=ev=>{if(ev.target===m)m.remove();};document.body.appendChild(m);draw();return m;}
 // "Offer peace" in the Diplomacy tab opens the screen instead of a flat yes/no
 (function(){const _act=gdAct;gdAct=function(act,a,b){if(act==='peace'&&a===GC.me){const c=gdChance(act,a,b);if(!c.ok)return c.note;gpOpen(a,b);return '';}return _act(act,a,b);};
 if(typeof alAdd==='function')alAdd('peace','🕊','Peace terms',c=>{let best=null;for(const o of Object.keys(GC.nat)){if(o===c||GC.nat[o].dead||!grAtWar(c,o))continue;const s=gpScore(c,o);if(s>=30&&(!best||s>best.s))best={o,s};}
@@ -6345,3 +6343,62 @@ function gdrSide(L){let w=0,s=0;for(const x of L){const n=x.u.length;w+=n;s+=n*(
 function gdrApplyBattle(dr){if(!dr||typeof G==='undefined'||!G)return;G.teams.forEach((T,i)=>{const lv=Math.floor((dr[i]||0)/20);if(!T||lv<1)return;for(let k=1;k<=5;k++)delete T.upg['dr'+k];T.upg['dr'+Math.min(5,lv)]=1;T._uk=null;T._ut=null;});}
 function gdrTag(a){if(a.fl)return '';const d=gdrPct(a);return (a.dg||d)?' <span style="font-size:12px;color:#9fe0a0" title="Drill '+d+'%: up to +6% damage, +5% fire rate, +10% courage in Fight-it. '+(a.dg?'Drilling costs about $'+gdrCost(a)+'/month and the army stays put; ordering a move stops it.':'Fades 1.5%/month (3% at war).')+'">⚔ Drill '+d+'%'+(a.dg?' ▲':'')+'</span>':'';}
 function gdrBtn(a){return a.fl?'':'<button data-act="drill" title="Drill (T): the army stays put and trains — +drill each month for upkeep money">'+(a.dg?'Stop drill':'Drill')+'</button>';}
+/* ================= GRAND MAP: ONE STYLE FOR EVERY PANEL (queue "Campaign panels", orch/polishP2) =================
+   Every window / panel / dialog of the grand campaign is one row of GPAN (top-most first). gpxDress() gives each of them the
+   same frame: same font, same border and corner radius, same title style, and the same close X in the same (top-right) corner.
+   ONE Esc handler (gpxEsc) closes the top-most open panel, one per press; a dialog that needs an answer (battle prompt, event
+   with choices) is never skipped: Esc presses its plain "No / Close / Back" button when it has one, otherwise does nothing.
+   The old per-panel Esc handlers and per-panel close buttons are gone - a NEW PANEL = A NEW ROW HERE (list for people:
+   orch/reports/panels.md; guards: orch/decisions.mjs static + orch/polishtest.mjs opens every row and closes it with Esc).
+   kind: screen = full page before the map (Esc = its Back button) · dialog = centred question · window = centred, closable ·
+         side = docked next to the province column · note = small notice on the map (keeps its own theme, gets the X + Esc).
+   View only: nothing here touches the campaign state. */
+const GPAN=[
+  {id:'gOver',name:'Campaign over (victory / defeat)',kind:'dialog'},
+  {id:'gWeb',name:'Diplomatic web',kind:'window',card:1,title:'b'},
+  {id:'gpDeal',name:'Peace deal',kind:'window',card:1,title:'h2,b'},
+  {id:'gModal',name:'Dialog: confirm · event · battle prompt · auto-resolve result · strike target',kind:'dialog',card:1,title:'h1,h2'},
+  {id:'npWin',name:'Nation window (every tab: overview, diplomacy, economy, people, ideas, graphs …)',kind:'window',title:':scope>div>div:nth-child(2)>div',close:()=>{npClose();}},
+  {id:'gMil',name:'Military (generals · fronts · strikes · fleets)',kind:'side',title:'b'},
+  {id:'gEco',name:'Empire economy',kind:'side',title:'b'},
+  {id:'gTV',name:'TV news ticker',kind:'note'},
+  {id:'gNews',name:'Newspaper headline',kind:'note'},
+  {id:'gCoach',name:'First-steps coach',kind:'note'},
+  {id:'campScreen',name:'Grand campaign menu · New campaign · Campaign lobby',kind:'screen'},
+];
+function gpxCss(){if(document.getElementById('gpxCss'))return;const s=document.createElement('style');s.id='gpxCss';s.textContent=`
+.gpx{font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif!important;border:1px solid #4a6580!important;border-top:2px solid #c9a35a!important;border-radius:8px!important;background:#101c2af5!important;color:#e8e4d8!important;box-shadow:0 8px 40px rgba(0,0,0,.55)!important}
+.gpx.gpx-rel{position:relative!important}
+.gpx .gpx-t{font-size:18px!important;font-weight:700!important;color:#ffe6a8!important;letter-spacing:.02em;margin-top:0!important}
+.gpx button{font-family:inherit!important;border-radius:6px!important}
+.gpx-x{width:28px;height:28px;padding:0;border-radius:6px!important;border:1px solid #5a7593;background:rgba(16,28,42,.9);color:#e8e4d8;font:15px/1 system-ui,sans-serif;cursor:pointer;z-index:9;opacity:.85}
+.gpx-x:hover{opacity:1;border-color:#c9a35a}
+.gpx-x.gpx-xa{position:absolute;top:10px;right:12px}
+.gpx-x.gpx-xs{position:sticky;top:10px;float:right;margin:0 0 4px 10px}
+.gpx-pad{padding-right:46px!important}`;document.head.appendChild(s);}
+function gpxShown(e){return !!(e&&e.isConnected&&e.getClientRects().length>0);}
+function gpxEl(p){return document.getElementById(p.id);}
+function gpxCard(p,e){return p.card?(e.firstElementChild||e):e;}
+function gpxEscBtn(e){return e.querySelector('button[data-esc="1"]')||[...e.querySelectorAll('button')].find(b=>/^(‹ )?(Back|Close|Cancel|No)$/.test((b.textContent||'').trim()));}
+/* can this panel be closed without answering it? dialogs / screens only through their own plain Back / No / Close button */
+function gpxClosable(p,e){return (p.kind==='dialog'||p.kind==='screen')?!!gpxEscBtn(e):true;}
+function gpxClose(id){const p=GPAN.find(x=>x.id===id),e=p&&gpxEl(p);if(!e)return false;
+  if(p.kind==='dialog'||p.kind==='screen'){const b=gpxEscBtn(e);if(!b)return false;b.click();return true;}
+  if(p.close)p.close();else e.remove();return true;}
+function gpxOpen(){return GPAN.filter(p=>gpxShown(gpxEl(p)));}
+/* the top-most open panel that Esc acts on; {p, blocked:true} when a dialog on top needs an answer first */
+function gpxTop(){for(const p of GPAN){const e=gpxEl(p);if(!gpxShown(e))continue;return {p,blocked:!gpxClosable(p,e)};}return null;}
+function gpxCloseTop(){const t=gpxTop();if(!t)return '';if(t.blocked)return 'blocked';return gpxClose(t.p.id)?t.p.id:'';}
+function gpxDress(){for(const p of GPAN){if(p.kind==='screen')continue;const e=gpxEl(p);if(!e)continue;const c=gpxCard(p,e);if(!c)continue;
+    if(p.kind!=='note'&&!c.classList.contains('gpx')){c.classList.add('gpx');if(getComputedStyle(c).position==='static')c.classList.add('gpx-rel');}
+    if(p.title&&p.kind!=='note'){const t=c.querySelector(p.title);if(t&&!t.classList.contains('gpx-t'))t.classList.add('gpx-t');}
+    let x=null;for(const k of c.children)if(k.classList&&k.classList.contains('gpx-x')){x=k;break;}
+    const can=gpxClosable(p,e);if(x&&!can){x.remove();continue;}if(x||!can)continue;
+    x=document.createElement('button');x.type='button';x.textContent='✕';x.title='Close (Esc)';x.setAttribute('aria-label','Close');x.onclick=ev=>{ev.stopPropagation();gpxClose(p.id);};
+    const scroll=/auto|scroll/.test(getComputedStyle(c).overflowY);x.className='gpx-x '+(scroll?'gpx-xs':'gpx-xa');
+    if(scroll){const cs=getComputedStyle(c);x.style.marginTop=x.style.top=(10-parseFloat(cs.paddingTop||0))+'px';x.style.marginRight=(12-parseFloat(cs.paddingRight||0))+'px';c.insertBefore(x,c.firstChild);}else{c.appendChild(x);if(getComputedStyle(c).position==='static')c.classList.add('gpx-rel');const h=c.firstElementChild;if(h&&h!==x&&p.kind!=='note')h.classList.add('gpx-pad');}}}
+function gpxEsc(ev){if(ev.key!=='Escape')return;if(typeof G!=='undefined'&&G&&!G.over)return;   // a battle is running: its own Esc rules apply
+  const gs=document.getElementById('grandScreen'),cs=document.getElementById('campScreen');if(!gpxShown(gs)&&!gpxShown(cs))return;
+  const r=gpxCloseTop();if(r){ev.preventDefault();ev.stopImmediatePropagation();}}
+try{gpxCss();if(!window._gpx){window._gpx=1;addEventListener('keydown',gpxEsc,true);
+  let q=0;const run=()=>{q=0;try{gpxDress();}catch(e){}};new MutationObserver(()=>{if(!q)q=requestAnimationFrame(run);}).observe(document.body,{childList:true,subtree:true});}}catch(e){console.warn('gpanels',e);}

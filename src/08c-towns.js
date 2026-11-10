@@ -14,7 +14,7 @@ function drawTownsWorld(c){if(!G||!G.towns||G.over||OVL.towns===false)return;con
   for(const t of G.towns){if(!inView(t.x,t.y,.1))continue;const p=toScreen(t.x,groundH(t.x,t.y)+(t.ham?70:110),t.y);if(p.z>1)continue;
     const mine=townsMine(t),reb=t.reb>G.t;
     c.save();c.font=(ph?'bold 11px':'bold 12px')+' system-ui,sans-serif';c.textAlign='center';
-    if(mine&&!G.grand){const w=ph?96:112,h=ph?38:42,x=p.x-w/2,y=p.y-h;c.fillStyle='rgba(8,12,10,.78)';c.fillRect(x,y,w,h);c.strokeStyle=G.teams[t.ow].color;c.lineWidth=1.5;c.strokeRect(x,y,w,h);
+    if(mine&&!G.grand){const w=ph?96:112,h=ph?38:42,x=p.x-w/2,y=p.y-h;c.fillStyle='rgba(8,12,10,.78)';c.fillRect(x,y,w,h);c.strokeStyle=G.teams[t.ow].color;c.lineWidth=1.5;c.strokeRect(x,y,w,h);if(SET.cb){try{idMiniMark(c,x-7,y+9,t.ow,true);}catch(_){}}
       const hot=t.un>=85&&((now*4)%1<.5);if(hot){c.strokeStyle='#ff3b30';c.lineWidth=3;c.strokeRect(x-2,y-2,w+4,h+4);}
       // tax-rate badge: letter in a shape (square Low/Normal, up-triangle High, diamond Extortionate)
       c.fillStyle=t.rate>=3?'#e5483c':t.rate===2?'#f0c040':t.rate===1?'#bcd0c4':'#5fcf72';const bx=x+11,by=y+11;c.beginPath();if(t.rate===2){c.moveTo(bx,by-8);c.lineTo(bx+8,by+7);c.lineTo(bx-8,by+7);}else if(t.rate===3){c.moveTo(bx,by-9);c.lineTo(bx+9,by);c.lineTo(bx,by+9);c.lineTo(bx-9,by);}else c.rect(bx-8,by-8,16,16);c.closePath();c.fill();
@@ -23,7 +23,7 @@ function drawTownsWorld(c){if(!G||!G.towns||G.over||OVL.towns===false)return;con
       c.fillStyle='rgba(255,255,255,.14)';c.fillRect(x+6,y+h-10,w-12,6);c.fillStyle=unrestCol(t.un);c.fillRect(x+6,y+h-10,(w-12)*Math.min(1,t.un/100),6);
       if(t.un>50){c.fillStyle=t.un>=85?'#ff8a7a':'#ffe08a';c.textAlign='left';c.font=(ph?'bold 10px':'bold 11px')+' system-ui,sans-serif';c.fillText(t.un>=85?'ABOUT TO REVOLT!':'Restless - '+TWHY[t.why|0],x+6,y+h-14);}
     }else if(reb){const w=ph?84:96,h=20,x=p.x-w/2,y=p.y-h;c.fillStyle='rgba(60,18,10,.85)';c.fillRect(x,y,w,h);c.strokeStyle='#e5483c';c.lineWidth=1.5;c.strokeRect(x,y,w,h);c.fillStyle='#ffd0c0';c.fillText('REBELS '+Math.max(0,Math.ceil(t.reb-G.t))+'s',p.x,y+14);}
-    else if(t.ow>=0&&G.teams[t.ow]){c.fillStyle='rgba(8,12,10,.7)';const w=c.measureText(t.name).width+16,h=18;c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle=G.teams[t.ow].color;c.fillRect(p.x-w/2,p.y-h,4,h);c.fillStyle='#e8f2e8';c.fillText(t.name,p.x+2,p.y-5);}
+    else if(t.ow>=0&&G.teams[t.ow]){c.fillStyle='rgba(8,12,10,.7)';const w=c.measureText(t.name).width+16,h=18;c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle=G.teams[t.ow].color;c.fillRect(p.x-w/2,p.y-h,4,h);c.fillStyle='#e8f2e8';c.fillText(t.name,p.x+2,p.y-5);if(SET.cb){try{idMiniMark(c,p.x-w/2-7,p.y-h/2,t.ow,true);}catch(_){}}}
     else{c.fillStyle='rgba(8,12,10,.55)';const w=c.measureText(t.name).width+12,h=16;c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle='#c9d2c6';c.fillText(t.name,p.x,p.y-4);}
     c.restore();}}
 function drawTownsMini(c,sx,sy,now){if(!G||!G.towns||OVL.towns===false)return;
@@ -120,7 +120,7 @@ function drawTowersWorld(c){if(!G||!G.tow||G.over)return;
   for(const q of G.tow){if(!inView(q.x,q.y,.1))continue;const p=toScreen(q.x,groundH(q.x,q.y)+105,q.y);if(p.z>1)continue;
     const T=q.ow>=0&&G.teams[q.ow],mine=T&&ally(q.ow,ME);let prog=0,pt=-1;for(let k=0;k<(q.cp||[]).length;k++)if(q.cp[k]>prog){prog=q.cp[k];pt=k;}
     c.save();c.font='bold 11px system-ui,sans-serif';c.textAlign='center';const txt=(T?STATION[T.fac]:'Radio tower')||'Radio tower',w=c.measureText(txt).width+18,h=18;
-    c.fillStyle='rgba(8,12,10,.78)';c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle=T?T.color:'#b9c2b3';c.fillRect(p.x-w/2,p.y-h,4,h);c.fillStyle='#e8f2e8';c.fillText(txt,p.x+2,p.y-5);
+    c.fillStyle='rgba(8,12,10,.78)';c.fillRect(p.x-w/2,p.y-h,w,h);c.fillStyle=T?T.color:'#b9c2b3';c.fillRect(p.x-w/2,p.y-h,4,h);c.fillStyle='#e8f2e8';c.fillText(txt,p.x+2,p.y-5);if(SET.cb&&T){try{idMiniMark(c,p.x-w/2-7,p.y-h/2,q.ow,true);}catch(_){}}
     if(prog>0&&G.teams[pt]){c.fillStyle='rgba(255,255,255,.18)';c.fillRect(p.x-w/2,p.y,w,4);c.fillStyle=G.teams[pt].color;c.fillRect(p.x-w/2,p.y,w*Math.min(1,prog/10),4);}
     c.restore();}}
 function drawTowersMini(c,sx,sy,now){if(!G||!G.tow)return;
