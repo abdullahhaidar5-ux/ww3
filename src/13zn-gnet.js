@@ -66,8 +66,8 @@ function gnHostTick(){if(!GNT.host||!GC||!GNT.g)return;const now=performance.now
   if(GNT.ui){GNT.ui=0;try{grandMapRefresh();}catch(e){}}
   if(Object.values(GNT.hum).some(h=>h.peer)&&(GNT.dirty||now-GNT.lastT>1500)&&!GNT.busy){GNT.dirty=0;GNT.lastT=now;GNT.busy=1;gnPush().catch(e=>console.error('gnPush',e)).finally(()=>{GNT.busy=0;});}}
 /* ---- client ---- */
-async function gnJoin(raw){if(GNT.on)return 'busy';const code=String(raw||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);if(code.length<4)return 'That is not a campaign code.';
-  const R=await gnRoom();if(!R)return 'Online play is not available here.';let g;try{g=await joinT('gc-'+code,20000,0);}catch(e){console.warn('gnJoin',e&&(e.message||e.type),e&&e.why);return 'No online campaign with code '+code.toUpperCase()+' was found.';}
+async function gnJoin(raw,to){if(GNT.on)return 'busy';const code=String(raw||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);if(code.length<4)return 'That is not a campaign code.';
+  const R=await gnRoom();if(!R)return 'Online play is not available here.';let g;try{g=await joinT('gc-'+code,to||20000,0);}catch(e){console.warn('gnJoin',e&&(e.message||e.type),e&&e.why);return 'No online campaign with code '+code.toUpperCase()+' was found.';}
   Object.assign(GNT,{on:1,host:0,cl:1,code,g,nat:'',parts:{},tok:joinTok('g'+code),free:null});
   g.on('gwel',m=>{const d=m.data||{};if(d.to&&d.to!==GNT.me)return;if(d.lobby){GNT.lobC=1;if(!GNT.hostPeer&&!m.sameTab)GNT.hostPeer=m.peer;}if(GNT.nat&&!(GNT.lobC&&(d.nat||d.free)))return;
     if(d.nat){GNT.nat=d.nat;if(GNT.lobC){gnLobbyClient();return;}gnHook(true);gnNote('Joined as '+gnName(d.nat)+'. Waiting for the world…');return;}
@@ -223,9 +223,9 @@ function gnBatDone(b,win,how){const B=GNT.bat;GNT.bat=null;const ids=new Set([..
     if(c)return campJoin(c);
     if(w.length<4||w.length>8||t.trim()!==t.trim().replace(/\s+/g,'')||/\W/.test(t.trim()))return _jb(raw,quiet,pw);   // only a bare code can be a campaign code
     if(isCamp(w))return campJoin(w);if(isGame(w))return _jb(raw,quiet,pw);
-    /* a code typed straight after the screen opened: the open-games list has not arrived yet, so wait a few seconds to see whether it is a campaign or a battle before choosing a join path (a campaign code sent down the battle path says "no direct connection") */
-    const st=document.getElementById('mpstatus');if(st)st.textContent='Looking for that game…';let n=0;
-    const iv=setInterval(()=>{n++;if(isCamp(w)){clearInterval(iv);campJoin(w);}else if(isGame(w)||n>=24){clearInterval(iv);if(st&&/Looking for that/.test(st.textContent))st.textContent='';_jb(raw,quiet,pw);}},250);};
+    /* a code that is in neither list (typed straight after the screen opened, or no relay to list rooms): it may still be a campaign room, so look for that first (fast: the room either answers or is unknown) and only then take the battle path - a campaign code sent down the battle path ends in "no direct connection" */
+    const st=document.getElementById('mpstatus');if(st)st.textContent='Looking for that game…';
+    return gnJoin(w,8000).then(e=>{if(!e){if(st)st.textContent='';return;}if(/^No online campaign/.test(e)){if(st&&/Looking for that/.test(st.textContent))st.textContent='';return _jb(raw,quiet,pw);}if(st)st.textContent='';gnMenu(e);});};
   const _rg=renderGames;renderGames=async function(){await _rg.apply(this,arguments);try{gnGameRows();}catch(e){console.warn('gnGameRows',e);}};})();
 function gnGameRows(){const el=document.getElementById('games');if(!el)return;for(const r of el.querySelectorAll('.gnrow'))r.remove();const L=gnList();if(!L.length)return;
   const emp=el.querySelector('.empty');if(emp&&!el.querySelector('.game')&&!/Looking|unavailable|claude\.ai/.test(emp.textContent))emp.remove();
