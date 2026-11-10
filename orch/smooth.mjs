@@ -344,13 +344,15 @@ function judge(name, r, base) {
 }
 
 const base = fs.existsSync(BASEF) ? JSON.parse(fs.readFileSync(BASEF, 'utf8')) : {};
+// per-runner-class baselines: on GitHub's runners (GITHUB_ACTIONS) compare with base.ci, anywhere else with the top-level numbers (orch/SMOOTH.md)
+const CI = !!process.env.GITHUB_ACTIONS, bk = (CI && base.ci) ? base.ci : base;
 const results = {}, problems = [];
 const t0 = Date.now();
 for (const name of ['pc', 'phone', 'mp']) {
   if (!WANT.includes('all') && !WANT.includes(name)) continue;
   let r = null, bad = [];
   for (let attempt = 1; attempt <= (UPDATE ? 1 : 2); attempt++) {
-    try { r = name === 'mp' ? await mpProfile() : await battleProfile(name); bad = judge(name, r, base[name]); }
+    try { r = name === 'mp' ? await mpProfile() : await battleProfile(name); bad = judge(name, r, bk[name]); }
     catch (e) { r = r || { name, errs: [] }; bad = ['could not run: ' + String(e.message || e).split('\n')[0]]; }
     console.log(`[${((Date.now() - t0) / 1000).toFixed(0)}s] ${name} attempt ${attempt}: ${bad.length ? 'REGRESSED' : 'ok'}`);
     if (!bad.length) break;
@@ -367,11 +369,12 @@ for (const [label, key] of rows) { if (!['pc', 'phone', 'mp'].some(n => results[
   console.log(label.padEnd(23) + ['pc', 'phone', 'mp'].filter(n => results[n]).map(n => String(f(results[n][key])).padEnd(10)).join('')); }
 if (UPDATE) {
   const nb = { ...base, meta: { updated: new Date().toISOString().slice(0, 10), note: 'SwiftShader (software GL) numbers: only for comparing builds. See orch/SMOOTH.md' } };
-  for (const n of Object.keys(results)) { const { errs, desyncInfo, ...keep } = results[n]; nb[n] = keep; }
+  if (CI) nb.ci = { ...(base.ci || {}) }; const tgt = CI ? nb.ci : nb;
+  for (const n of Object.keys(results)) { const { errs, desyncInfo, ...keep } = results[n]; tgt[n] = keep; }
   fs.writeFileSync(BASEF, JSON.stringify(nb, null, 1) + '\n'); console.log('baseline written: ' + path.relative(ROOT, BASEF));
 }
 console.log(`runtime ${((Date.now() - t0) / 60000).toFixed(1)} min`);
-if (!base.pc && !UPDATE) console.log('(no baseline yet: only the absolute limits were checked)');
+if (!bk.pc && !UPDATE) console.log('(no baseline yet: only the absolute limits were checked)');
 if (problems.length) { console.log('\nSMOOTH FAIL: ' + problems.length + ' problem(s)'); for (const p of problems) console.log('  - ' + p); }
 else console.log('\nSMOOTH PASS');
 server.close();
