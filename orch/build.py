@@ -17,6 +17,7 @@ offline precache list). The game fetches them at startup (src/11-models.js).
                                   # (both refuse to run while index.html, sw.js or src/*.js hold git conflict markers)
   python3 orch/build.py --split   # one-off: regenerate src/ from the game script inside index.html
   python3 orch/build.py --artifact  # write the claude.ai artifact edition (page, models as .txt, publish.json) to orch/out/artifact/
+  python3 orch/build.py --single  # one-file page with everything inline -> orch/out/index-single.html (the artifact is built the same way)
   python3 orch/build.py --add-model KEY FILE.glb   # add or replace model KEY (gzips it into models/, drops the old one)
 """
 import glob, gzip, hashlib, json, os, re, subprocess, sys
@@ -52,6 +53,12 @@ MODEL_NAME = re.compile(r'^([A-Za-z0-9_]+)\.([0-9a-f]{10})\.glb\.gz$')
 PACK_RE = re.compile(r'<script>const MODEL_PACK="([A-Za-z0-9+/=]*)";?</script>')  # the old inline pack (pre-2026-10-27)
 FILES_RE = re.compile(r'<script>const MODEL_FILES=\{[^<]*?\};</script>')
 SW_RE = re.compile(r'const MODELS=\[[^\]]*\];')
+GRAND_RE = re.compile(r'<script>const GRAND_FILE="[^"]*";</script>')   # shell line naming the lazy grand-campaign bundle
+GRAND_SW_RE = re.compile(r'const LAZY=\[[^\]]*\];')   # sw.js: files saved at install that load on demand (grand bundle, terrain textures)
+TERR_RE = re.compile(r"const TERR_DET=\{a:'data:image/webp;base64,([A-Za-z0-9+/=]+)',n:'data:image/webp;base64,([A-Za-z0-9+/=]+)'\};")
+TERR_GLOB = re.compile(r'^terr_[an]\.[0-9a-f]{10}\.webp$')
+GRAND_GLOB = re.compile(r'^grand\.[0-9a-f]{10}\.js$')
+GRAND_PREFIX = '13'   # src/13*.js = the grand campaign: written to grand.<hash>.js, loaded when the player opens it
 
 
 def gz(data):
@@ -134,12 +141,48 @@ def with_models(html):
     return FILES_RE.sub(lambda _: line, html), files
 
 
-def sw_with_models(files):
+def sw_with_models(files, grand=None, lazy=()):
     sw = open(SW, encoding='utf-8', newline='').read()
     if len(SW_RE.findall(sw)) != 1:
         sys.exit('sw.js: expected exactly one "const MODELS=[...];" line')
     urls = sorted(set('./' + f for f in files.values()))
-    return sw, SW_RE.sub(lambda _: 'const MODELS=' + json.dumps(urls, separators=(',', ':')) + ';', sw)
+    sw2 = SW_RE.sub(lambda _: 'const MODELS=' + json.dumps(urls, separators=(',', ':')) + ';', sw)
+    if grand is not None:
+        if len(GRAND_SW_RE.findall(sw2)) != 1:
+            sys.exit('sw.js: expected exactly one "const LAZY=[...];" line')
+        sw2 = GRAND_SW_RE.sub(lambda _: 'const LAZY=' + json.dumps(['./' + n for n in ([grand] if grand else []) + sorted(lazy)], separators=(',', ':')) + ';', sw2)
+    return sw, sw2
+
+
+def with_grand(html, name):
+    """index.html with its GRAND_FILE line naming the lazy grand bundle ('' = none)."""
+    line = '<script>const GRAND_FILE=' + json.dumps(name) + ';</script>'
+    if len(GRAND_RE.findall(html)) != 1:
+        sys.exit('index.html: expected exactly one <script>const GRAND_FILE="...";</script> line in the shell (after MODEL_FILES)')
+    return GRAND_RE.sub(lambda _: line, html)
+
+
+def externalize_terrain(game):
+    """The two ground-detail textures (~0.9 MB of base64 in src/04-gfx.js) become terr_a/terr_n.<hash>.webp next to the page:
+    (game with URLs instead of data: URIs, {file name: bytes}). src/ keeps the data: URIs; --single and the artifact stay inline."""
+    import base64, hashlib
+    m = TERR_RE.search(game)
+    if not m or len(TERR_RE.findall(game)) != 1:
+        sys.exit('src/04-gfx.js: expected exactly one const TERR_DET={a:\'data:image/webp;base64,...\',n:\'...\'}; (build.py moves it to terr_*.webp)')
+    files, names = {}, []
+    for k, b64 in zip('an', m.groups()):
+        b = base64.b64decode(b64)
+        n = f'terr_{k}.{hashlib.sha256(b).hexdigest()[:10]}.webp'
+        files[n] = b
+        names.append(n)
+    return TERR_RE.sub(lambda _: "const TERR_DET={a:'%s',n:'%s'};" % tuple(names), game, count=1), files
+
+
+def grand_bundle(grand_src):
+    """(file name, bytes) of grand.<hash>.js for this grand source text."""
+    import hashlib
+    b = grand_src.encode('utf-8')
+    return 'grand.' + hashlib.sha256(b).hexdigest()[:10] + '.js', b
 
 
 def game_span(html):
@@ -166,11 +209,22 @@ def split():
     print(f'wrote {len(MODULES)} modules to src/ ({len(game)} chars)')
 
 
-def concat():
+def _read_all(files):
+    return ''.join(open(f, encoding='utf-8', newline='').read() for f in files)
+
+
+def concat(part='all'):
+    """part 'all' = every module in order (artifact / --single); 'main' = menu + battle modules (inline in index.html);
+    'grand' = src/13*.js (lazy bundle grand.<hash>.js)."""
     files = sorted(glob.glob(os.path.join(SRC, '[0-9]*.js')))
     if not files:
         sys.exit('src/ is empty — run with --split first')
-    return ''.join(open(f, encoding='utf-8', newline='').read() for f in files)
+    isg = lambda f: os.path.basename(f).startswith(GRAND_PREFIX)
+    if part == 'main':
+        files = [f for f in files if not isg(f)]
+    elif part == 'grand':
+        files = [f for f in files if isg(f)]
+    return _read_all(files)
 
 
 def syntax_check(game, what):
@@ -421,9 +475,11 @@ def build(check=False):
     refuse_conflicts('Nothing checked.' if check else 'index.html NOT written.')
     html = open(HTML, encoding='utf-8', newline='').read()
     i, j = game_span(html)
-    game = concat()
-    if '</script' in game.lower():
+    game, tfiles = externalize_terrain(concat('main'))
+    gsrc = concat('grand')
+    if '</script' in (game + gsrc).lower():
         sys.exit('src/ contains "</script" — escape it as "<\\/script" or the page breaks')
+    gname, gbytes = grand_bundle(gsrc)
     out = html[:i] + game + html[j:]
     if check:
         bad = False
@@ -431,12 +487,25 @@ def build(check=False):
             print('index.html still has the inline MODEL_PACK — run python3 orch/build.py')
             sys.exit(1)
         out, files = with_models(out)
-        sw, sw2 = sw_with_models(files)
+        out = with_grand(out, gname)
+        sw, sw2 = sw_with_models(files, gname, tfiles)
+        gp = os.path.join(ROOT, gname)
         if out != html or sw != sw2:
             print(('index.html' if out != html else 'sw.js') + ' is OUT OF DATE with src/ + models/ — run python3 orch/build.py')
             bad = True
+        elif not os.path.isfile(gp) or open(gp, 'rb').read() != gbytes:
+            print(f'{gname} is missing or differs from src/13*.js — run python3 orch/build.py')
+            bad = True
+        elif any(not os.path.isfile(os.path.join(ROOT, n)) or open(os.path.join(ROOT, n), 'rb').read() != b for n, b in tfiles.items()):
+            print('terr_*.webp is missing or differs from the TERR_DET textures in src/04-gfx.js — run python3 orch/build.py')
+            bad = True
         else:
-            print(f'index.html and sw.js are up to date with src/ and models/ ({len(files)} models)')
+            stale = [n for n in os.listdir(ROOT) if (GRAND_GLOB.match(n) and n != gname) or (TERR_GLOB.match(n) and n not in tfiles)]
+            if stale:
+                print(f'stale grand bundle(s) {stale} — run python3 orch/build.py')
+                bad = True
+            else:
+                print(f'index.html, {gname} and sw.js are up to date with src/ and models/ ({len(files)} models)')
         probs = check_shell(html, i, j)
         if probs:
             print(f'index.html page shell is BROKEN ({len(probs)} problem{"s" * (len(probs) > 1)}) — restore it from git history:')
@@ -450,21 +519,47 @@ def build(check=False):
         return
     # syntax check before writing
     syntax_check(game, 'index.html')
+    syntax_check(gsrc, 'grand bundle')
+    for tn, tb in tfiles.items():
+        tp = os.path.join(ROOT, tn)
+        if not os.path.isfile(tp) or open(tp, 'rb').read() != tb:
+            open(tp, 'wb').write(tb)
+            print(f'{tn} written ({len(tb)} bytes)')
     out = unpack_old_pack(out)
     out, files = with_models(out)
+    out = with_grand(out, gname)
     if not files:
         sys.exit('models/ is empty — the game would have no 3D models; index.html NOT written')
-    sw, sw2 = sw_with_models(files)
+    sw, sw2 = sw_with_models(files, gname, tfiles)
     if sw != sw2:
         with open(SW, 'w', encoding='utf-8', newline='') as f:
             f.write(sw2)
-        print(f'sw.js model list updated ({len(set(files.values()))} files)')
+        print(f'sw.js model/grand list updated ({len(set(files.values()))} files)')
+    gp = os.path.join(ROOT, gname)
+    if not os.path.isfile(gp) or open(gp, 'rb').read() != gbytes:
+        with open(gp, 'wb') as f:
+            f.write(gbytes)
+        print(f'{gname} written ({len(gbytes)} bytes)')
+    for n in os.listdir(ROOT):
+        if (GRAND_GLOB.match(n) and n != gname) or (TERR_GLOB.match(n) and n not in tfiles):
+            os.remove(os.path.join(ROOT, n))
     if out == html:
         print('index.html already up to date')
         return
     with open(HTML, 'w', encoding='utf-8', newline='') as f:
         f.write(out)
-    print(f'index.html rebuilt ({len(out)} bytes, game {len(game)} chars, {len(files)} models in models/)')
+    print(f'index.html rebuilt ({len(out)} bytes, game {len(game)} chars + {gname}, {len(files)} models in models/)')
+
+
+def single():
+    """One-file edition: everything inline, no lazy bundle (orch/out/index-single.html; what the artifact is built from)."""
+    html = open(HTML, encoding='utf-8', newline='').read()
+    i, j = game_span(html)
+    out = with_grand(html[:i] + concat('all') + html[j:], '')
+    p = os.path.join(ROOT, 'orch', 'out', 'index-single.html')
+    os.makedirs(os.path.dirname(p), exist_ok=True)
+    open(p, 'w', encoding='utf-8', newline='').write(out)
+    print(f'single-file page written: orch/out/index-single.html ({len(out)} bytes)')
 
 
 # ---------------------------------------------------------------------------------------------------------------
@@ -515,11 +610,11 @@ def artifact():
     refuse_conflicts('Artifact NOT written.')
     html = open(HTML, encoding='utf-8', newline='').read()
     i, j = game_span(html)
-    game = concat()
+    game = concat('all')
     if '</script' in game.lower():
         sys.exit('src/ contains "</script" — escape it as "<\\/script" or the page breaks')
     syntax_check(game, 'artifact')
-    html = html[:i] + game + html[j:]
+    html = with_grand(html[:i] + game + html[j:], '')
     if PACK_RE.search(html):
         sys.exit('artifact: index.html still has the inline MODEL_PACK — run python3 orch/build.py first')
     html, models = with_models(html)
@@ -603,6 +698,8 @@ if __name__ == '__main__':
             sys.exit('usage: python3 orch/build.py --add-model KEY FILE.glb')
         key, src = sys.argv[k + 1], sys.argv[k + 2]
         print('models/' + write_model(key, open(src, 'rb').read()) + ' written; now run python3 orch/build.py')
+    elif '--single' in sys.argv:
+        single()
     elif '--artifact' in sys.argv:
         artifact()
     else:
