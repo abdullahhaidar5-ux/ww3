@@ -23,7 +23,7 @@ water hit: 54 spray particles, 0 dirt, no scorch mark · road hit: grey chips [.
 tank firing: hull pitch 0.028 rad (1.6 degrees) at 0.09 s, 0 at rest; same sideways when the turret points 90 degrees off.
 No new meshes, materials or draw calls: everything goes through the budgeted particle pool `part()`.
 
-## Slice 2 (night 2, 2026-11-10 ~10:40Z) — on this branch, merged with main fed30cb2
+## Slice 2 (night 2, 2026-11-10 ~10:00Z) — on this branch, merged with main fed30cb2
 - Shells on water: the fireball is now a brief small burst at the surface (fire measure 34 vs 655 on land), steam instead of black smoke, no dark debris;
   the sea boils (dark patch, `k:'boil'`) and a foam ring runs outward (`k:'foam'`) — `splashFX` / `boomFX` (`wet`, `wk`).
 - Missile / strike-sized blasts (`megaBoom`, src/05b-missiles.js) match the surface: white spray wall on water (no scorch, no chunks, no mushroom
