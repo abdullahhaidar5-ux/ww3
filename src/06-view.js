@@ -129,7 +129,7 @@ function syncScene(dt){const live=new Set();
     v.arm.rotation.z=Math.sin(ph)*.24;if(v.crank)v.crank.rotation.z=ph+Math.PI/2;v.flag.material.color.set(o.owner>=0?G.teams[o.owner].color:'#8a8a80');if(o.owner>=0&&Math.random()<dt*1.5)part({x:o.x+10,y:o.y+6,h:groundH(o.x,o.y)+12,rise:12,c:C_DARK,s:4,g:6,d:1.5,a:.35});});
   // selection rings
   while(RINGS.length<G.sel.length){const m=new THREE.Mesh(new THREE.RingGeometry(.86,1,40).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0x8af0a6,transparent:true,opacity:.85,depthWrite:false}));m.renderOrder=3;SCN.add(m);RINGS.push(m);}
-  RINGS.forEach((m,i)=>{const e=G.sel[i];if(!e||e.dead){m.visible=false;return;}if(SET.cb){const sg=idRingSeg(e.team);if(m.userData.sg!==sg){m.userData.sg=sg;m.geometry.dispose();m.geometry=new THREE.RingGeometry(.86,1,sg).rotateX(-Math.PI/2);}}else if(m.userData.sg){m.userData.sg=0;m.geometry.dispose();m.geometry=new THREE.RingGeometry(.86,1,40).rotateX(-Math.PI/2);}m.visible=true;m.material.color.setHex(e.isB?0x8af0a6:(e.st>=2?(e.st===2?0x6fb4ff:0xffb347):0x8af0a6));const r=e.isB?e.size*.75:e.r+6;m.scale.set(r,1,r);m.position.set(e.x,(e.isB?groundH(e.x,e.y):unitH(e))+1.2,e.y);});
+  RINGS.forEach((m,i)=>{const e=G.sel[i];if(!e||e.dead){m.visible=false;return;}if(SET.cb){const sg=idRingSeg(e.team);if(m.userData.sg!==sg){m.userData.sg=sg;m.geometry.dispose();m.geometry=new THREE.RingGeometry(.86,1,sg).rotateX(-Math.PI/2);}}else if(m.userData.sg){m.userData.sg=0;m.geometry.dispose();m.geometry=new THREE.RingGeometry(.86,1,40).rotateX(-Math.PI/2);}m.visible=true;m.material.color.setHex(e.isB?0x8af0a6:(e.st>=2?(e.st===2?0x6fb4ff:0xffb347):0x8af0a6));const r0=e.isB?e.size*.75:e.r+6;{const ud=m.userData;if(ud.eid!==e.id){ud.eid=e.id;ud.t0=performance.now();}const pa=(performance.now()-ud.t0)/320;if(pa<1){const q=(1-pa)*(1-pa);m.scale.set(r0*(1+.55*q),1,r0*(1+.55*q));m.material.opacity=.85+.15*q;}else{m.scale.set(r0,1,r0);m.material.opacity=.85;}}m.position.set(e.x,(e.isB?groundH(e.x,e.y):unitH(e))+1.2,e.y);});
   // rally flag
   const T=G.teams[ME];if(T&&T.rally){if(!RALLY){RALLY=new THREE.Group();const pole=new THREE.Mesh(new THREE.CylinderGeometry(.5,.5,24,5),new THREE.MeshBasicMaterial({color:0x2a2b26}));pole.position.y=12;RALLY.add(pole);const fl=new THREE.Mesh(new THREE.PlaneGeometry(12,7),new THREE.MeshBasicMaterial({color:0x74d08f,side:THREE.DoubleSide}));fl.position.set(6,20,0);RALLY.add(fl);SCN.add(RALLY);}
     RALLY.visible=true;RALLY.position.set(T.rally.x,groundH(T.rally.x,T.rally.y),T.rally.y);RALLY.children[1].rotation.y=Math.sin(G.t*3)*.3;}else if(RALLY)RALLY.visible=false;
@@ -137,6 +137,7 @@ function syncScene(dt){const live=new Set();
   if(G.place){if(GHOSTK!==G.place){if(GHOST)SCN.remove(GHOST);GHOST=makeGhost(G.place);GHOST.scale.setScalar(BSC);GHOSTK=G.place;}const w=screenToWorld(mouse.x,mouse.y);if(w){const ok=validSpot(ME,G.place,w.x,w.y);G.placeWhy=ok?(ok===2?'dz':''):validSpot.why;GHOST.visible=true;GHOST.position.set(w.x,groundH(w.x,w.y),w.y);
     GHOST.traverse(c=>{if(c.isMesh&&c!==GHOST.userData.ring)c.material=ok?MAT.ghostOk:MAT.ghostBad;});const rg=STRUCT[G.place].rng||0;GHOST.userData.ring.visible=!!rg;GHOST.userData.ring.scale.set(rg/BSC,1,rg/BSC);GHOST.userData.ring.position.y=2;}}
   else if(GHOST){SCN.remove(GHOST);GHOST=null;GHOSTK=null;}
+  ordMarkTick();
   // pings
   for(const p of PINGS){if(!p.m){p.m=new THREE.Mesh(new THREE.RingGeometry(.9,1,64).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:p.c,transparent:true,depthWrite:false}));p.m.position.set(p.x,groundH(p.x,p.y)+3,p.y);SCN.add(p.m);}
     const k=p.t/p.d;p.m.scale.setScalar(p.r*(.2+k*.8));p.m.material.opacity=1-k;if(k>=.98){SCN.remove(p.m);}}
@@ -298,8 +299,9 @@ function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=perform
     if(e.disv||(MODE!=='client'&&koLeft(e)>0)){c.strokeStyle='#7fd0ff';c.lineWidth=1.2;c.beginPath();c.moveTo(x-3,y-3);c.lineTo(x+3,y+3);c.moveTo(x+3,y-3);c.lineTo(x-3,y+3);c.stroke();}   // KNOCKED OUT (EMP/cyber/sabotage/blackout): one marker
     {const lc=e.loc||(e.team===G.reb?'reb':null);if(lc){c.strokeStyle=lc==='reb'||lc==='neu'?'#d9a441':'#ffffffaa';c.lineWidth=1.1;c.beginPath();c.arc(x,y,3.7,0,7);c.stroke();}}   // LOCALS: one minimap marker for every local armed group
     if(SET.cb)idMiniMark(c,x,y,e.team,e.isB);if(sel.has(e)){c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();c.arc(x,y,4.5,0,7);c.stroke();}
-    if(own&&G.t-(e.lastHit||-99)<1.2&&Math.random()<.04)MMC.push({x:e.x,y:e.y,t:now});}
+    if(own&&G.t-(e.lastHit||-99)<1.2&&Math.random()<.04)MMC.push({x:e.x,y:e.y,t:now});if(own&&G.t-(e.lastHit||-99)<.25&&G.t>3)mmAlert(e,now);}
   mmEW(c,sx,sy,now);
+  mmAlertDraw(c,sx,sy,now);
   // contact flashes where we're under fire
   for(let i=MMC.length-1;i>=0;i--){const m=MMC[i],a=now-m.t;if(a>1.4){MMC.splice(i,1);continue;}c.strokeStyle=`rgba(255,80,60,${1-a/1.4})`;c.lineWidth=1.5;c.beginPath();c.arc(m.x*sx,m.y*sy,3+a*9,0,7);c.stroke();}
   if(MMC.length>40)MMC.splice(0,MMC.length-40);

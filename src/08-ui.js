@@ -417,8 +417,9 @@ function stdMouse(){return mPreset()==='std';}
 function leftOrders(){return SET.mLG==='move';}
 function rightOrders(){return SET.mRC==='order';}
 // order markers (ground pings for move / attack orders), Settings > Mouse > Order markers
-function mark(o){if(SET.mPing!==0)PINGS.push(o);}
-function markT(x,y,r){if(SET.mPing!==0)FXH.ping(x,y,r);}
+const ORDK={0x74d08f:'move',0xe3b341:'way',0xea5a40:'amove'};
+function mark(o){if(SET.mPing===0)return;const k=ORDK[o.c];if(k&&o.r<100)ordMark(k,o.x,o.y);else PINGS.push(o);}
+function markT(x,y,r){if(SET.mPing!==0){FXH.ping(x,y,r);ordMark('atk',x,y);}}
 const MODK={ctrl:false,alt:false,shift:false};
 function selfSel(){return G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);}
 function prodSel(){return G.sel.some(b=>b.isB&&b.team===ME&&!b.dead&&CATS.includes(b.kind)&&b.built>=1);}
@@ -510,7 +511,7 @@ function cursorTick(force){const now=performance.now();if(!force&&now-CURST.t<50
   CURST.t=now;CURST.x=mouse.x;CURST.y=mouse.y;CURST.m=m;let k='';try{k=cursorIntent();}catch(_){k='';}
   if(k!==CURST.k){CURST.k=k;cv.style.cursor=curCss(k);cv.dataset.cur=k;}}
 setInterval(()=>cursorTick(false),50);
-function defendAt(w){const sh0=MODK.shift;const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);G.defm=false;if(!ids.length)return;doAct({t:'def',ids,x:w.x,y:w.y});speak(1);mark({x:w.x,y:w.y,r:300,t:0,d:1.1,c:0x6fb2ff});pushLog('Units moving to defend the area.');ordDone(sh0);}
+function defendAt(w){const sh0=MODK.shift;const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead).map(u=>u.id);G.defm=false;if(!ids.length)return;doAct({t:'def',ids,x:w.x,y:w.y});speak(1);mark({x:w.x,y:w.y,r:300,t:0,d:1.1,c:0x6fb2ff});ordMark('guard',w.x,w.y);pushLog('Units moving to defend the area.');ordDone(sh0);}
 function rightPress(e){const w=screenToWorld(mouse.x,mouse.y);if(!w)return false;rDown=performance.now();if(G.defm){defendAt(w);return false;}
   if(G.place||G.aim){G.place=null;G.aim=null;return false;}
   if(G.amove){const ids=G.sel.filter(u=>!u.isB&&u.team===ME&&u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);mark({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});G.amove=false;ordDone(MODK.shift);return false;}
@@ -758,7 +759,7 @@ function tcTap(x,y,ts){if(ts==null)ts=performance.now();mouse.x=x;mouse.y=y;cons
   if(G.place||G.aim){TC.pick=w;sfxUI(520);updateUI();return;}
   const own=tcOwn();
   if(G.defm){if(own.length){defendAt(w);tcMark(x,y,'gd');}G.defm=false;updateUI();return;}
-  if(G.amove&&own.length){const ids=own.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);if(ids.length){doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);PINGS.push({x:w.x,y:w.y,r:16,t:0,d:.4,c:0xea5a40});tcMark(x,y,'am');}G.amove=false;updateUI();return;}
+  if(G.amove&&own.length){const ids=own.filter(u=>u.kind!=='harv'&&u.kind!=='dozer').map(u=>u.id);if(ids.length){doAct({t:'go',ids,x:w.x,y:w.y,mode:'amove',...fmGoX()});speak(2);ordMark('amove',w.x,w.y);tcMark(x,y,'am');}G.amove=false;updateUI();return;}
   G.amove=false;
   const t=pickAt(x,y,false),now=ts,L=TC.lastTap;
   TC.tapLog={x:Math.round(x),y:Math.round(y),t:t?t.kind+'/'+t.team:null,own:own.length};
@@ -902,13 +903,14 @@ setTimeout(setHint,0);
 function scroll(dt){camTarget();const sp=cam.td*1.1*dt*(SET.scr||100)/100,gk=genKeys();let rx=0,dn=0;/* screen-space pan (right / down), turned by the view rotation (camVec) */if(keys.ArrowLeft||(keys.a&&!gk))rx-=sp;if(keys.ArrowRight||keys.d)rx+=sp;if(keys.ArrowUp||keys.w)dn-=sp;if(keys.ArrowDown||(keys.s&&!gk))dn+=sp;if(rx||dn){const v=camVec(rx,-dn);cam.tx+=v.x;cam.ty+=v.y;rx=dn=0;}
   // Generals rapid scroll: right-drag with nothing selected pans toward the drag, faster the further you drag
   if(RDRAG&&RDRAG.gen&&RDRAG.mode==='scroll'&&RDRAG.moved){const dx=mouse.x-RDRAG.x0,dy=mouse.y-RDRAG.y0,d=Math.hypot(dx,dy);if(d>4){const v=sp*Math.min(6,.6+d/70)*(SET.mRS||100)/100;rx+=dx/d*v;dn+=dy/d*v;}}
-  if(MLOCK.on&&!mouse.in&&!drag&&SET.edge&&!CROT.hold){const W=innerWidth-1,H=innerHeight-1;if(MLOCK.x<=0)rx-=sp;if(MLOCK.x>=W)rx+=sp;if(MLOCK.y<=0)dn-=sp;if(MLOCK.y>=H)dn+=sp;}
-  if(mouse.in&&!drag&&SET.edge&&LASTPT!=='touch'&&!CROT.hold){if(mouse.x<14)rx-=sp;if(mouse.x>VW-14)rx+=sp;if(mouse.y<14)dn-=sp;if(mouse.y>VH-14)dn+=sp;}
+  {let ex=0,ey=0;if(MLOCK.on&&!mouse.in&&!drag&&SET.edge&&!CROT.hold){const W=innerWidth-1,H=innerHeight-1;if(MLOCK.x<=0)ex--;if(MLOCK.x>=W)ex++;if(MLOCK.y<=0)ey--;if(MLOCK.y>=H)ey++;}
+  else if(mouse.in&&!drag&&SET.edge&&LASTPT!=='touch'&&!CROT.hold){if(mouse.x<14)ex--;if(mouse.x>VW-14)ex++;if(mouse.y<14)ey--;if(mouse.y>VH-14)ey++;}
+  const ef=edgeEase(!!(ex||ey),dt);rx+=ex*sp*ef;dn+=ey*sp*ef;}
   if(rx||dn){const v=camVec(rx,-dn);cam.tx+=v.x;cam.ty+=v.y;}cam.tx=Math.max(0,Math.min(MAPW,cam.tx));cam.ty=Math.max(0,Math.min(MAPH,cam.ty));camTick(dt);}
 
 /* ---------- game start / reset ---------- */
 function resetScene(){if(typeof WRECKQ!=="undefined")WRECKQ.length=0;for(const [,o] of OBJ)SCN.remove(o);OBJ.clear();for(const b of BODIES)SCN.remove(b.o);BODIES.length=0;for(const a of [WRECKS,MARKERS,PLANES])for(const x of a){for(const k of ['o','ring','disc','mis'])if(x[k])SCN.remove(x[k]);}WRECKS.length=MARKERS.length=PLANES.length=0;
-  for(const p of PINGS)if(p.m)SCN.remove(p.m);PINGS.length=0;if(typeof FIRES!=='undefined'){FIRES.length=0;for(const S of SHOCKS){S.t=S.d;S.m.material.opacity=0;S.m.scale.setScalar(.001);}}PARTS.length=0;TRACERS.length=0;VPROJ.length=0;for(const r of RINGS)SCN.remove(r);RINGS=[];if(GHOST){SCN.remove(GHOST);GHOST=null;GHOSTK=null;}if(RALLY){SCN.remove(RALLY);RALLY=null;}for(const l of LIGHTS)l.intensity=0;}
+  try{ordClear();}catch(e){}for(const p of PINGS)if(p.m)SCN.remove(p.m);PINGS.length=0;if(typeof FIRES!=='undefined'){FIRES.length=0;for(const S of SHOCKS){S.t=S.d;S.m.material.opacity=0;S.m.scale.setScalar(.001);}}PARTS.length=0;TRACERS.length=0;VPROJ.length=0;for(const r of RINGS)SCN.remove(r);RINGS=[];if(GHOST){SCN.remove(GHOST);GHOST=null;GHOSTK=null;}if(RALLY){SCN.remove(RALLY);RALLY=null;}for(const l of LIGHTS)l.intensity=0;}
 /* ---------- loading screen: shown the moment a battle starts (Test Range, Deploy vs AI, Play again, multiplayer) ---------- */
 // The battle itself (map, bases, units, AI) is set up at once and exactly as before; the slow drawing work (ground
 // texture, 3D world, shader warm-up) then runs in steps with a frame in between, so the screen shows the theatre, the
