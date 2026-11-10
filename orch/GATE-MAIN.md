@@ -9,3 +9,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-10 18:16Z 2d4787b0 **RED** (27 gates) failing: audio,cfclient,smooth-mp,tutorial — greenK handoff: menusB gnettest + mapsweep findings
 - 2026-11-10 18:38Z 00d2a094 **RED** (27 gates) failing: audio,cfclient,smooth-mp,tutorial — Voices: Palestine Islamic Brigade has its own Palestinian-Arabic soldi
 - 2026-11-10 20:46Z 5d98a0f6 **RED** (27 gates) failing: audio,cfclient,smooth-mp,tutorial — Queue: nightly runner starts Smarter computer opponent
+- 2026-11-10 21:08Z 701f1c50 **RED** (27 gates) failing: cfclient,smooth-mp — Loop log: Words check found nothing to fix
