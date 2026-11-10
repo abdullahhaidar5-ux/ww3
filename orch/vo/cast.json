@@ -144,5 +144,25 @@
    "Damjan Chapman"
   ],
   "cmd": "Damien Black"
+ },
+ "RV": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Gilberto Mathias",
+   "Viktor Eka",
+   "Luis Moray"
+  ],
+  "cmd": "Baldur Sanjin"
+ },
+ "SY": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Damjan Chapman",
+   "Luis Moray",
+   "Baldur Sanjin"
+  ],
+  "cmd": "Gilberto Mathias"
  }
 }
