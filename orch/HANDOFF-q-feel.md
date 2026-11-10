@@ -23,9 +23,18 @@ water hit: 54 spray particles, 0 dirt, no scorch mark · road hit: grey chips [.
 tank firing: hull pitch 0.028 rad (1.6 degrees) at 0.09 s, 0 at rest; same sideways when the turret points 90 degrees off.
 No new meshes, materials or draw calls: everything goes through the budgeted particle pool `part()`.
 
+## Slice 2 (night 2, 2026-11-10 ~10:40Z) — on this branch, merged with main fed30cb2
+- Shells on water: the fireball is now a brief small burst at the surface (fire measure 34 vs 655 on land), steam instead of black smoke, no dark debris;
+  the sea boils (dark patch, `k:'boil'`) and a foam ring runs outward (`k:'foam'`) — `splashFX` / `boomFX` (`wet`, `wk`).
+- Missile / strike-sized blasts (`megaBoom`, src/05b-missiles.js) match the surface: white spray wall on water (no scorch, no chunks, no mushroom
+  column, smaller fireball), grey wall on roads, brown on green maps, sand in the desert.
+- Guard: orch/gamefeel.mjs checks all of it (FEEL PASS). No new meshes/materials/draw calls (particle pool only).
+- Still waiting to land for the same reason as slice 1 (gate/smooth-mp red on main).
+- Note for whoever lands it: gate/smooth-mp is very noisy on GitHub's runners — the same code measured 176-240 ms (pass) and 360-840 ms (fail)
+  on different runs tonight (see the table in the morning report / `git branch -r | grep smooth-mp` logs). Re-run before concluding anything.
+
 ## Next (by value)
-1. On water the orange fireball is still as big as on land — shrink it and add a short dark underwater "boil" ring. Missile impacts
-   (src/05b-missiles.js ~line 101) have their own code path: give them `impactSurf` too.
+1. (done in slice 2) water fireball + boil ring, missile impacts by surface.
 2. Turret recoil: the gun barrel sliding back needs a separate barrel node (`P.gun`) — only some models have one; code-built vehicles
    (queue item "Original models built in code") should all have it.
 3. Wheels/tracks that visibly turn with speed (scrolling track texture / wheel nodes) — check which models expose wheel nodes first.

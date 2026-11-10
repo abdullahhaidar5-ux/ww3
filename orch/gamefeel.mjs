@@ -26,9 +26,12 @@ try {
   const R = await page.evaluate(() => {
     window.__stopLoop = true; G.paused = true; G.teams.forEach(T => { T.ai = null; }); G.setupEnd = 0; window.vis = () => true; try { FOGM.visible = false; } catch (e) {}
     const out = { pts: {} }, pick = (want) => { for (let k = 0; k < 60000; k++) { const x = 200 + Math.random() * (MAPW - 400), y = 200 + Math.random() * (MAPH - 400); if (impactSurf(x, y) === want) return [x, y]; } return null; };
+    const fire = a => { let t = 0; for (const p of a) if (p.add && p.d > .2) t += p.s * p.s; return t; };
     const kinds = a => { const m = {}; for (const p of a) m[p.k || '-'] = (m[p.k || '-'] || 0) + 1; return m; };
     for (const sf of ['water', 'hard', 'desert']) { const p = pick(sf); out.pts[sf] = p; if (!p) continue; camTarget(); cam.td = cam.dist = 420; centerOn(p[0], p[1], true); for (let i = 0; i < 3; i++) renderFrame(.016);
-      PARTS.length = 0; const d0 = decI; boomFX(p[0], p[1], 22, false); const dirt = PARTS.find(z => z.k === 'dirt'); out[sf] = { k: kinds(PARTS), n: PARTS.length, scorch: decI - d0, dirt: dirt ? dirt.c.map(v => +v.toFixed(2)) : null }; }
+      PARTS.length = 0; const d0 = decI; boomFX(p[0], p[1], 22, false); const dirt = PARTS.find(z => z.k === 'dirt'); out[sf] = { k: kinds(PARTS), n: PARTS.length, scorch: decI - d0, dirt: dirt ? dirt.c.map(v => +v.toFixed(2)) : null, fire: +fire(PARTS).toFixed(0) };
+      // strike-sized blast (missile impact) on the same spot: megaBoom's own code path
+      PARTS.length = 0; const m0 = MUSH.length, d1 = decI; megaBoom(p[0], p[1], 30, true); const wall = PARTS.find(z => !z.add && z.rise && z.f === .1); out[sf].mega = { n: PARTS.length, mush: MUSH.length - m0, scorch: decI - d1, fire: +fire(PARTS).toFixed(0), wall: wall ? wall.c.map(v => +v.toFixed(2)) : null }; MUSH.length = m0; }
     // hull rock: a tank that has just fired pitches; the same tank at rest does not
     const hq = G.ents.find(b => b.team === ME && b.kind === 'hq'), p = nearestPassXY('ground', hq.x + 260, hq.y + 40) || [hq.x + 260, hq.y], t = addUnit(ME, 'tank', p[0], p[1]); t.tang = t.va; camTarget(); cam.td = cam.dist = 300; centerOn(t.x, t.y, true);
     for (let i = 0; i < 4; i++) renderFrame(.016); const o = OBJ.get(t.id); t.lastFire = -9; renderFrame(.016); const r0 = o.userData.rock;
@@ -37,6 +40,12 @@ try {
   console.log('FEEL ' + JSON.stringify(R));
   const ck = (c, m) => { if (!c) { console.log('FAIL: ' + m); fail = 1; } };
   ck(R.pts.water && R.water && (R.water.k.spray || 0) >= 12, 'a hit on water throws no spray'); ck(R.water && !R.water.k.dirt && R.water.scorch === 0, 'a hit on water still throws dirt or leaves a scorch mark');
+  // slice 2: the sea swallows the fireball (much less fire than the same shell on land), boils and throws a foam ring; missile blasts match the surface too
+  ck(R.water && R.desert && R.water.fire < R.desert.fire * .5, 'the fireball on water is as big as on land (' + (R.water && R.water.fire) + ' vs ' + (R.desert && R.desert.fire) + ')');
+  ck(R.water && (R.water.k.boil || 0) >= 2 && (R.water.k.foam || 0) >= 8, 'a hit on water has no boil / foam ring'); ck(R.desert && !R.desert.k.boil && !R.desert.k.foam, 'boil or foam on dry land');
+  ck(R.water && R.water.mega && R.water.mega.mush === 0 && R.water.mega.scorch === 0 && R.water.mega.fire < R.desert.mega.fire * .6, 'a missile blast on water still burns, scorches or leaves a smoke column like on land ' + JSON.stringify(R.water && R.water.mega));
+  ck(R.water && R.water.mega.wall && R.water.mega.wall[2] > .9 && R.desert.mega.wall && R.desert.mega.wall[0] > R.desert.mega.wall[2] + .1 && R.desert.mega.mush === 1 && R.desert.mega.scorch >= 1, 'missile blast wall: water should be white spray, desert sand ' + JSON.stringify([R.water && R.water.mega, R.desert && R.desert.mega]));
+  if (R.pts.hard) ck(R.hard.mega.wall && Math.abs(R.hard.mega.wall[0] - R.hard.mega.wall[2]) < .08, 'missile blast on a road throws sand-coloured dust instead of grey');
   ck(R.desert && (R.desert.k.dirt || 0) >= 4 && R.desert.scorch === 1 && !R.desert.k.spray, 'a hit on open ground lost its dirt / scorch mark'); ck(R.desert && R.desert.dirt && R.desert.dirt[0] > R.desert.dirt[2] + .1, 'desert dirt is not sand-coloured');
   if (R.pts.hard) ck(R.hard && R.hard.dirt && Math.abs(R.hard.dirt[0] - R.hard.dirt[2]) < .08, 'a hit on a road throws brown dirt instead of grey chips'); else console.log('(no road cell found on this map: road check skipped)');
   ck(R.rock.model && Math.abs(R.rock.r1) > .01 && R.rock.r0 === 0, 'a tank that fires does not rock (rest ' + R.rock.r0 + ', firing ' + R.rock.r1 + ')'); ck(Math.abs(R.rock.side) > .008, 'no sideways rock when the turret fires off to the side');
