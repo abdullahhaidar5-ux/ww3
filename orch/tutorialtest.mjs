@@ -41,6 +41,8 @@ const T0 = Date.now(); const stepTimes = [];
 async function waitStep(i, timeout = 300000) {
   await page.waitForFunction((i) => TUTS && TUTS.i === i && !TUTS.wait, i, { timeout, polling: 300 }).catch(async () => { bad('step ' + (i + 1) + ' never started (stuck on ' + (await ev(() => TUTS ? TUTS.i + 1 : 'none')) + ')'); throw new Error('stuck'); });
   let last = null; for (let n = 0; n < 40; n++) { const c = await ev(() => [cam.x, cam.y].join()); if (c === last) break; last = c; await wait(250); } await wait(400);
+  // slow runners: give the highlight ring up to 6 s to appear before judging it (the ring follows the camera and the target's position)
+  for (let n = 0; n < 20; n++) { if (await ev(() => { const h = document.getElementById('tutHL'); return !!(h && h.style.display !== 'none') || TUT[TUTS.i].k === 'md'; })) break; await wait(300); }
   const st = await ev(() => { const s = TUT[TUTS.i], hl = document.getElementById('tutHL'), box = document.getElementById('tut'), r = box.getBoundingClientRect();
     const h = hl && hl.style.display !== 'none' ? hl.getBoundingClientRect() : null; const ov = h && r.bottom > h.top && r.top < h.bottom && r.right > h.left && r.left < h.right;
     return { k: s.k, text: (typeof s.t === 'function' ? s.t() : s.t) + ' ' + s.a, hl: !!h, hlCls: hl ? hl.className : '', overlap: !!ov, vis: !box.hidden, tutBottom: r.bottom, rects: JSON.stringify([r, h].map(q => q && [q.left | 0, q.top | 0, q.right | 0, q.bottom | 0])) }; });
@@ -104,7 +106,7 @@ try {
   // 1 select
   await waitStep(0); { const n = await boxSelectSquad(); ok(n > 0, 'drag-select picks up soldiers (' + n + ')'); } await done(0); await shotAfter(1, 'sel');
   // 2 move
-  await waitStep(1); { const m = await ev(() => TUTS.mk); await boxSelectSquad(); await ev(() => { const q = TUT[TUTS.i].cam(); centerOn(q.x, q.y - 90, true); }); const p = await scr(m.x, m.y, 0); console.log('    marker at', Math.round(p.x), Math.round(p.y)); ok(p.x > 20 && p.x < 1260 && p.y > 215 && p.y < 520, 'the move marker is on screen below the tip box'); await click(p.x, p.y, { button: 'right' }); } await done(1); await shotAfter(2, 'move');
+  await waitStep(1); { const m = await ev(() => TUTS.mk); await boxSelectSquad(); await ev(() => { const q = TUT[TUTS.i].cam(); centerOn(q.x, q.y - 90, true); }); let p = await scr(m.x, m.y, 0); for (let n = 0; n < 12 && !(p.y > 215 && p.y < 520); n++) { await wait(400); await ev(() => { const q = TUT[TUTS.i].cam(); centerOn(q.x, q.y - 90, true); }); p = await scr(m.x, m.y, 0); } console.log('    marker at', Math.round(p.x), Math.round(p.y)); ok(p.x > 20 && p.x < 1260 && p.y > 215 && p.y < 520, 'the move marker is on screen below the tip box'); await click(p.x, p.y, { button: 'right' }); } await done(1); await shotAfter(2, 'move');
   // 3 attack
   await waitStep(2); { await boxSelectSquad(); const f = await ev(() => { const e = tutFoe(); return e ? { x: e.x, y: e.y } : null; }); ok(!!f, 'a red enemy exists to attack');
     for (let k = 0; k < 6 && f; k++) { const fe = await ev(() => { const e = tutFoe(), q = tutSquad(); return e && q && Math.hypot(e.x - q.x, e.y - q.y) < 900 ? { x: e.x, y: e.y } : null; }); if (!fe) break;   /* only the nearby scouts, never the far enemy base */ await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p = await scr(fe.x, fe.y, 10); await boxSelectSquad().catch(() => 0); await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p2 = await scr(fe.x, fe.y, 10); await click(p2.x, p2.y, { button: 'right' }); await ff(8);

@@ -131,7 +131,7 @@ try {
   // 3) ducking: effects/music gain while a voice line plays vs after
   const duckv = await page.evaluate(async () => {
     const w = ms => new Promise(r => setTimeout(r, ms)); await w(3500); const before = [AU.sfxD.gain.value, AU.musD.gain.value];
-    AU.lastVoice = 0; speak(1); await w(450); const during = [AU.sfxD.gain.value, AU.musD.gain.value]; await w(5000); const after = [AU.sfxD.gain.value, AU.musD.gain.value];
+    AU.lastVoice = 0; AU.heat = 0; speak(1); await w(450); const during = [AU.sfxD.gain.value, AU.musD.gain.value]; await w(5000); const after = [AU.sfxD.gain.value, AU.musD.gain.value];
     return { before, during, after };
   });
   const f2 = a => a.map(v => +v.toFixed(2)).join('/');

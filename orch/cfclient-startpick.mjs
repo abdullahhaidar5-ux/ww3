@@ -133,6 +133,7 @@ const inBattle = (page, mode) => waitFor(page, m => typeof G !== 'undefined' && 
 async function skirmishPicks(page, touch) {
   await page.evaluate(m => { initAudio(); setup.p = 'IR'; setup.a = 'US'; setup.others = ['RU', 'CN']; const s = document.getElementById('mapSel'); s.value = m; s.onchange(); }, MAP);
   await waitFor(page, m => !!PREV[m], MAP, 30000, 'the map preview');
+  await page.evaluate(() => { if (typeof menuGo === 'function') menuGo('c-players'); });   // the new menu keeps the player count on its Players screen
   await page.locator('#aiN button[data-n="3"]').click();
   await page.waitForTimeout(200);
   const n = await page.evaluate(() => skSides().length);
@@ -152,8 +153,9 @@ async function skirmishPicks(page, touch) {
 }
 // region of the page from the map picker to the team rows (the screenshot of the picker)
 async function pickerClip(page) {
-  await page.locator('#pickMap').scrollIntoViewIfNeeded();
-  return page.evaluate(() => { const a = document.getElementById('pickMap').getBoundingClientRect(), b = document.getElementById('teamList').getBoundingClientRect(), x = Math.max(0, Math.min(a.left, b.left) - 8);
+  await page.evaluate(() => { if (typeof menuGo === 'function') menuGo('c-players'); });   // map preview + team rows share the Players screen now
+  await page.locator('#mapCv').scrollIntoViewIfNeeded();
+  return page.evaluate(() => { const a = document.getElementById('mapCv').getBoundingClientRect(), b = document.getElementById('teamList').getBoundingClientRect(), x = Math.max(0, Math.min(a.left, b.left) - 8);
     return { x, y: Math.max(0, a.top + scrollY - 30), width: Math.min(innerWidth - x, Math.max(a.right, b.right) - x + 8), height: b.bottom - a.top + 40 }; });
 }
 
