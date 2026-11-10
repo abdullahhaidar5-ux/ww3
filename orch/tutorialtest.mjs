@@ -69,7 +69,9 @@ async function takeHouses(label) {
       return { cell: c && { x: c.x, y: c.y }, unit: free[0] && { x: free[0].x, y: free[0].y }, n: free.length }; });
     if (k < 6 || k % 10 === 0) console.log('    takeHouses', k, JSON.stringify(st)); if (st.done) return true; if (!st.cell || !st.unit) { await ff(4); await wait(200); continue; }
     await ev(([x, y]) => centerOn(x, y, true), [st.unit.x, st.unit.y]); let p = await scr(st.unit.x, st.unit.y, 8); await ev(() => { G.sel = []; }); await click(p.x, p.y); await page.waitForFunction(() => G.sel.length > 0, null, { timeout: 8000 }).catch(() => {});
+    const nsel = await ev(() => G.sel.length), sp = p;
     await ev(([x, y]) => centerOn(x, y, true), [st.cell.x, st.cell.y]); p = await scr(st.cell.x, st.cell.y, 6); await click(p.x, p.y, { button: 'right' }); await ff(6); await wait(200);
+    if (k < 4 || k % 10 === 0) console.log('    takeHouses click', JSON.stringify({ nsel, sp, p, ord: await ev(() => G.sel.map(u => u.order ? u.order.type : '-').join(',') + ' | ' + G.sel.map(u => Math.round(u.x) + ',' + Math.round(u.y)).join(';')) }));
     if (k === 1) await shot(label + '-garrisoning');
   } return false;
 }
