@@ -21,9 +21,14 @@ await page.evaluate(m => { window.__M = m; }, process.env.MAPK || null);
 await page.evaluate(() => { try { localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} setup.p = 'IR'; if (window.__M) setup.map = window.__M; startSandbox(); });
 await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 500 });
 
-await page.evaluate(() => { const hq = G.ents.find(e => e.team === 1 && e.kind === 'hq'); window.__hq = [hq.x, hq.y]; cam.x = hq.x; cam.y = hq.y; cam.dist = 260; });
-await page.waitForTimeout(8000);
-const info = await page.evaluate(() => ({ ents1: G.ents.filter(e => e.team === 1 && e.isB).map(e => e.kind + '@' + (e.x | 0) + ',' + (e.y | 0)), dug: (G.dug || []).length, wl: Object.keys(window).filter(k => /wall/i.test(k)).slice(0, 20) }));
-console.log(JSON.stringify(info));
-await page.screenshot({ path: path.join(OUT, 'walls-' + (process.env.TAG || 'before') + '.png'), timeout: 300000 });
+
+const keys = (process.env.MAPS || '').split(',').filter(Boolean);
+const all = await page.evaluate(() => Object.keys(MAPS).filter(k => !MAPS[k].hidden)); console.log('maps', all.length, all.join(','));
+for (const mk of (keys.length ? keys : [null])) {
+  if (mk) { await page.evaluate(m => { setup.map = m; startSandbox(); }, mk); await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 500 }); }
+  await page.evaluate(() => { const hq = G.ents.find(e => e.team === 1 && e.kind === 'hq'); cam.x = hq.x; cam.y = hq.y + 40; cam.dist = 230; });
+  await page.waitForTimeout(6000);
+  await page.screenshot({ path: path.join(OUT, 'walls-' + (process.env.TAG || 'before') + '-' + (mk || 'default') + '.png'), timeout: 300000 });
+  console.log('shot', mk);
+}
 await browser.close(); server.close();
