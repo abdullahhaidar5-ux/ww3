@@ -1,0 +1,3 @@
+# Handoff: grand-campaign safety copies (queue "Never lose progress")
+Branch `orch/loop-grand-snap` (35e7ecd): `grSnap()` in src/13-grand.js saves a rolling .b1/.b2/.b3 copy before every Fight-it battle prompt; `grLoad` falls back to them if the main save is damaged; `grClear` removes them.
+CI gate run on 35e7ecd: all green except the known six (smooth-mp, decisions, grand, cfclient) + `gate/icons` (TimeoutError — looks like a runner flake, unconfirmed on main). Not shipped because of the icons failure. Next: re-run `orch/cigate.sh`; if icons passes and nothing new fails, merge to main. Still open from the item: "Continue" as first item of the Single player window.
