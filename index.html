@@ -12090,6 +12090,99 @@ function pingBtn(us){const left=Math.max(0,...us.map(u=>Math.ceil((u.pingT||0)-G
   const b=document.createElement('button');b.className='btn wide';b.style.marginTop='6px';b.textContent=all?`Sonar ping (ready in ${rdy} s)`:'Sonar ping [E]';b.disabled=all;
   b.title='Active sonar: reveals every submerged enemy in range for a few seconds. A submarine that pings gives itself away; a surface ship that pings tells enemy subs where it is.';
   b.onpointerdown=ev=>{ev.preventDefault();if(!b.disabled)doAct({t:'ping',ids:us.map(u=>u.id)});};return b;}
+/* ================= THE ONE KEY TABLE (queue "Settings": a Controls screen listing every key, with rebinding) =================
+   Every keyboard key the game listens to is one row here; Settings -> Controls -> Keyboard keys (src/08m-controls.js) lists
+   exactly this table. A NEW HOTKEY = A NEW ROW HERE (CLAUDE.md "new hotkeys go in the one key table"; orch/polishtest.mjs
+   presses every rebindable row and fails when a key in the handlers has no row).
+   Rows: {id, ctx:'battle'|'grand', grp, name, def} = a letter key the player may move to another letter (or a spare key: \\ ` F2 F4 F8 F9);
+         {ctx, grp, name, fix:'text'}      = a fixed key, listed so the screen is complete.
+   Rebinding does not touch the handlers: this file registers the FIRST key listener of the page; when the player moved an
+   action from its standard letter to another one, the press of the new letter is passed on to the game as a press of the
+   standard letter, and the standard letter itself (now free) does nothing. W A S D only ever scroll the camera
+   (Abdullah 2026-10-28) and can't be given to anything; a letter that is in use is refused with a plain message.
+   View / input only: nothing here reaches the simulation, so multiplayer sync is untouched. */
+const KEYTAB=[
+  {ctx:'battle',grp:'Camera',name:'Scroll the camera',fix:'W A S D · arrow keys'},
+  {id:'camrot',ctx:'battle',grp:'Camera',name:'Rotate the camera (hold + mouse; tap = 45°, with Shift the other way)',def:'q'},
+  {ctx:'battle',grp:'Camera',name:'Camera back to north-up',fix:'Home'},
+  {ctx:'battle',grp:'Camera',name:'Tilt the camera',fix:'Page Up · Page Down'},
+  {ctx:'battle',grp:'Camera',name:'Zoom in / out',fix:'+ · −'},
+  {id:'hq',ctx:'battle',grp:'Camera',name:'Jump to your headquarters',def:'h'},
+  {ctx:'battle',grp:'Selection',name:'Select your whole army',fix:'Ctrl + A'},
+  {id:'seltype',ctx:'battle',grp:'Selection',name:'Select every unit of the same type',def:'t'},
+  {ctx:'battle',grp:'Selection',name:'Select squad / make the selection a squad',fix:'1 – 9 · Ctrl + 1 – 9'},
+  {id:'amove',ctx:'battle',grp:'Orders',name:'Attack-move (then click)',def:'f'},
+  {id:'guard',ctx:'battle',grp:'Orders',name:'Guard (then click)',def:'g'},
+  {id:'stop',ctx:'battle',grp:'Orders',name:'Stop',def:'x'},
+  {id:'ret',ctx:'battle',grp:'Orders',name:'Return to base',def:'r'},
+  {id:'stance',ctx:'battle',grp:'Orders',name:'Next stance (hold: talk to your team)',def:'v'},
+  {id:'form',ctx:'battle',grp:'Orders',name:'Next formation / plan a team order',def:'o'},
+  {id:'dig',ctx:'battle',grp:'Orders',name:'Dig in (dozers: trench)',def:'i'},
+  {id:'resup',ctx:'battle',grp:'Orders',name:'Resupply ammunition',def:'z'},
+  {id:'abil',ctx:'battle',grp:'Orders',name:'Unit or leader ability, sonar ping, Recon power (with Shift: leader\'s ultimate)',def:'e'},
+  {ctx:'battle',grp:'Orders',name:'Cancel the last item being built or trained',fix:'Backspace · Delete'},
+  {id:'p_para',ctx:'battle',grp:'General\'s powers',name:'Airborne drop',def:'c'},
+  {id:'p_barrage',ctx:'battle',grp:'General\'s powers',name:'Artillery barrage',def:'b'},
+  {id:'p_repair',ctx:'battle',grp:'General\'s powers',name:'Repair',def:'y'},
+  {id:'p_mil',ctx:'battle',grp:'General\'s powers',name:'Militia',def:'m'},
+  {id:'p_bb',ctx:'battle',grp:'General\'s powers',name:'Bunker Buster',def:'n'},
+  {id:'p_sanc',ctx:'battle',grp:'General\'s powers',name:'Sanctions / open the auto-build list',def:'u'},
+  {id:'p_reinf',ctx:'battle',grp:'General\'s powers',name:'Reinforcements',def:'k'},
+  {id:'p_flare',ctx:'battle',grp:'General\'s powers',name:'Flares / show supply lines',def:'l'},
+  {id:'p_nat',ctx:'battle',grp:'General\'s powers',name:'Your nation\'s own power',def:'j'},
+  {id:'p_hack',ctx:'battle',grp:'General\'s powers',name:'Cyber attack',def:'['},
+  {id:'p_emp',ctx:'battle',grp:'General\'s powers',name:'EMP',def:']'},
+  {id:'pause',ctx:'battle',grp:'Game',name:'Pause (single player) / photo mode',def:'p'},
+  {ctx:'battle',grp:'Game',name:'Menu · cancel · one step back',fix:'Esc'},
+  {ctx:'battle',grp:'Game',name:'Team play: give the "go" signal',fix:'Enter'},
+  {ctx:'battle',grp:'Game',name:'Team play: ping, draw, circle on the map',fix:', . / \' ;'},
+  {ctx:'grand',grp:'Grand campaign map',name:'Pause / run time',fix:'Space'},
+  {ctx:'grand',grp:'Grand campaign map',name:'Time slower / faster, pick a speed',fix:'− · + · 1 – 5'},
+  {id:'g_outl',ctx:'grand',grp:'Grand campaign map',name:'Province outlines on / off',def:'o'},
+  {id:'g_drill',ctx:'grand',grp:'Grand campaign map',name:'Drill the selected army',def:'t'},
+  {ctx:'grand',grp:'Grand campaign map',name:'Close the top window · one step back',fix:'Esc'},
+];
+const KB={cur:{},map:{battle:{},grand:{}},dead:{battle:{},grand:{}},win:false,onKey:null};
+const KB_FIXED='wasd',KB_CODE={BracketLeft:'[',BracketRight:']',Backslash:'\\',Backquote:'`'},KB_SPARE='\\ ` F2 F4 F8 F9';   // every letter has a job already, so a few spare keys can be chosen too
+function kbOk(k){return /^[a-z\[\]\\`]$/.test(k)||/^F[2489]$/.test(k);}
+function kbShow(k){return !k?'':k.length===1?k.toUpperCase():k;}
+function kbPhys(e){const k=e.key||'';return KB_CODE[e.code]||(k.length===1?k.toLowerCase():k);}
+function kbCodeOf(k){for(const c in KB_CODE)if(KB_CODE[c]===k)return c;return 'Key'+k.toUpperCase();}
+function kbRows(ctx){return KEYTAB.filter(r=>r.def&&(!ctx||r.ctx===ctx));}
+function kbBuild(){for(const c of ['battle','grand']){const m={},used={},dead={};
+  for(const r of kbRows(c)){const k=KB.cur[r.id]||r.def;used[k]=1;if(k!==r.def)m[k]=r.def;}
+  for(const r of kbRows(c))if(!used[r.def])dead[r.def]=1;
+  KB.map[c]=m;KB.dead[c]=dead;}}
+function kbLoad(){let o={};try{o=JSON.parse(localStorage.getItem('ww3_keys')||'{}')||{};}catch(e){}KB.cur={};
+  for(const c of ['battle','grand']){const seen={};
+    for(const r of kbRows(c)){const k=o[r.id];if(typeof k==='string'&&kbOk(k)&&!KB_FIXED.includes(k)&&!seen[k]){KB.cur[r.id]=k;seen[k]=1;}}
+    for(const r of kbRows(c))if(!KB.cur[r.id]){if(seen[r.def]){for(const x of kbRows(c))if(KB.cur[x.id]===r.def&&x.def!==r.def)delete KB.cur[x.id];}}   // a damaged list never leaves two actions on one key
+    for(const r of kbRows(c))if(!KB.cur[r.id])KB.cur[r.id]=r.def;}
+  kbBuild();}
+function kbSave(){try{const o={};for(const r of kbRows())if(KB.cur[r.id]!==r.def)o[r.id]=KB.cur[r.id];if(Object.keys(o).length)localStorage.setItem('ww3_keys',JSON.stringify(o));else localStorage.removeItem('ww3_keys');}catch(e){}}
+function kbKey(id){return kbShow(KB.cur[id]||'');}
+/* give action `id` the letter `key`; returns '' when done, otherwise a plain sentence saying why not */
+function kbSet(id,key){const r=KEYTAB.find(x=>x.id===id);if(!r||!r.def)return 'That key is fixed and can\'t be changed.';
+  key=String(key==null?'':key);const k=key.length===1?key.toLowerCase():key;
+  if(k.length===1&&KB_FIXED.includes(k))return 'W, A, S and D always scroll the camera. Pick another letter.';
+  if(!kbOk(k))return 'Only letters and the spare keys '+KB_SPARE+' can be chosen.';
+  const o=kbRows(r.ctx).find(x=>x.id!==id&&KB.cur[x.id]===k);
+  if(o)return kbShow(k)+' is already used for "'+o.name.replace(/ \(.*$/,'')+'". Move that one first (spare keys: '+KB_SPARE+').';
+  KB.cur[id]=k;kbSave();kbBuild();return '';}
+function kbReset(){try{localStorage.removeItem('ww3_keys');}catch(e){}kbLoad();}
+function kbChanged(){return kbRows().some(r=>KB.cur[r.id]!==r.def);}
+function kbCtx(){try{const g=(typeof G!=='undefined'&&G)?G:null,gs=document.getElementById('grandScreen');
+  if(gs&&!(g&&!g.over))return 'grand';const m=document.getElementById('menu');if(g&&m&&m.hidden)return 'battle';}catch(e){}return '';}
+function kbRemap(e){if(e._kb)return;
+  if(KB.win){e.stopImmediatePropagation();e.preventDefault();if(e.type==='keydown'&&!e.repeat&&KB.onKey){try{KB.onKey(e);}catch(_){}}return;}   // the Keyboard keys window is open: every press belongs to it
+  if(e.ctrlKey||e.metaKey||e.altKey)return;const lk=kbPhys(e);if(!lk||!kbOk(lk))return;
+  const t=e.target;if(t&&(/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName||'')||t.isContentEditable))return;
+  const c=kbCtx();if(!c)return;const to=KB.map[c][lk];
+  if(to){e.stopImmediatePropagation();if(lk.length>1)e.preventDefault();const ev=new KeyboardEvent(e.type,{key:e.shiftKey&&/^[a-z]$/.test(to)?to.toUpperCase():to,code:kbCodeOf(to),bubbles:true,cancelable:true,shiftKey:e.shiftKey,repeat:e.repeat});ev._kb=1;
+    if(!(t&&t.dispatchEvent?t:window).dispatchEvent(ev))e.preventDefault();}
+  else if(KB.dead[c][lk])e.stopImmediatePropagation();}
+kbLoad();
+try{addEventListener('keydown',kbRemap,true);addEventListener('keyup',kbRemap,true);}catch(e){}
 /* ================= MULTIPLAYER: lobby + host-authoritative sync over the artifact room ================= */
 // Address of the World War 3 servers (server/ in the repo, Cloudflare), e.g. 'https://ww3-servers.<name>.workers.dev'.
 // Empty = no servers: the online edition works exactly as before (public PeerJS broker, P2P only). Read by the
@@ -16800,6 +16893,82 @@ function add(){
 }
 add();setTimeout(add,1500);
 })();
+/* ================= SETTINGS: KEYBOARD KEYS WINDOW + FIRST-LAUNCH GRAPHICS CHECK (queue "Settings", orch/polishP2) =================
+   1. Settings -> Controls -> "Keyboard keys": one window that lists every row of the one key table (src/06z-keys.js KEYTAB),
+      grouped; click a key, press a letter, done. A key in use, W A S D or anything but a letter / spare key is refused with a plain sentence.
+      "Reset to defaults" puts every key back. Esc / Back / the X go one step back to Settings (UI flow rule).
+   2. The first time the game is played on a PC, the first 3 seconds of the first battle are timed and the Graphics quality
+      setting is chosen from it (once): a fast PC gets High, a slow one Low, the rest stay on Auto (the frame-rate governor
+      QUAL in 06-view.js keeps working exactly as before - this only picks its starting preset). Never in automated tests. */
+const KBUI={el:null,cap:null,msg:'',bad:false};
+function kbuCss(){if(document.getElementById('kbuCss'))return;const s=document.createElement('style');s.id='kbuCss';s.textContent=`
+#kbWin{position:fixed;inset:0;z-index:960;background:rgba(8,11,10,.84);display:flex;align-items:center;justify-content:center}
+#kbWin .kbcard{position:relative;width:min(760px,94vw);max-height:90vh;display:flex;flex-direction:column;background:linear-gradient(180deg,rgba(24,31,27,.98),rgba(14,19,17,.98));border:1px solid #3d4d44;border-top:2px solid var(--accent,#e3b341);border-radius:8px;box-shadow:0 18px 50px rgba(0,0,0,.6);color:var(--fg,#e8eadf)}
+#kbWin .kbhd{display:flex;align-items:center;gap:12px;padding:14px 18px 10px;border-bottom:1px solid #2c3830}
+#kbWin .kbhd h1{margin:0;font-size:20px;letter-spacing:.06em;flex:1}
+#kbWin .kbx{background:none;border:0;color:inherit;font-size:20px;line-height:1;cursor:pointer;opacity:.7;padding:4px 8px}#kbWin .kbx:hover{opacity:1}
+#kbWin .kbmsg{min-height:1.5em;padding:8px 18px 0;font-size:14px;color:#9fd36b}#kbWin .kbmsg.bad{color:#f0a08f}
+#kbWin .kbbody{overflow:auto;padding:4px 18px 10px;columns:2;column-gap:28px}
+#kbWin .kbgrp{break-inside:avoid;margin:10px 0 4px}
+#kbWin .kbgrp h2{margin:0 0 4px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent,#e3b341);font-weight:600}
+#kbWin .kbrow{display:flex;align-items:center;gap:10px;padding:3px 0;font-size:14px;line-height:1.3;border-bottom:1px solid rgba(255,255,255,.05)}
+#kbWin .kbrow span{flex:1;min-width:0}
+#kbWin .kbk{flex:none;min-width:38px;padding:3px 9px;border-radius:5px;border:1px solid #55664f;background:rgba(255,255,255,.06);color:inherit;font:600 13px var(--mono,monospace);text-align:center;cursor:pointer}
+#kbWin .kbk:hover{border-color:var(--accent,#e3b341)}#kbWin .kbk.cap{border-color:var(--accent,#e3b341);background:rgba(227,179,65,.18)}#kbWin .kbk.chg{color:var(--accent,#e3b341)}
+#kbWin .kbfix{flex:none;font:500 12px var(--mono,monospace);opacity:.6;text-align:right;max-width:46%}
+#kbWin .kbft{display:flex;align-items:center;gap:10px;padding:10px 18px 14px;border-top:1px solid #2c3830}
+#kbWin .kbft small{flex:1;opacity:.6;font-size:12px;line-height:1.35}
+#kbWin .kbb{padding:6px 14px;border-radius:5px;border:1px solid #55664f;background:transparent;color:inherit;font-size:14px;cursor:pointer}#kbWin .kbb:hover{border-color:var(--accent,#e3b341)}
+#kbWin .kbb[disabled]{opacity:.4;cursor:default}
+@media (max-width:760px){#kbWin .kbbody{columns:1}}`;document.head.appendChild(s);}
+function kbuMsg(t,bad){KBUI.msg=t||'';KBUI.bad=!!bad;const m=KBUI.el&&KBUI.el.querySelector('.kbmsg');if(m){m.textContent=KBUI.msg;m.classList.toggle('bad',KBUI.bad);}}
+function kbuPaint(){const w=KBUI.el;if(!w)return;const body=w.querySelector('.kbbody');body.textContent='';let grp=null,box=null;
+  for(const r of KEYTAB){if(r.grp!==grp){grp=r.grp;box=document.createElement('div');box.className='kbgrp';const h=document.createElement('h2');h.textContent=grp;box.appendChild(h);body.appendChild(box);}
+    const row=document.createElement('div');row.className='kbrow';const n=document.createElement('span');n.textContent=r.name;row.appendChild(n);
+    if(r.def){const b=document.createElement('button');b.type='button';b.className='kbk'+(KBUI.cap===r.id?' cap':'')+(KB.cur[r.id]!==r.def?' chg':'');b.dataset.id=r.id;b.textContent=KBUI.cap===r.id?'…':kbKey(r.id);
+      b.title=KB.cur[r.id]!==r.def?'Standard key: '+kbShow(r.def):'Click, then press the letter you want';b.onclick=()=>{KBUI.cap=KBUI.cap===r.id?null:r.id;kbuMsg(KBUI.cap?'Press the letter for "'+r.name.replace(/ \(.*$/,'')+'" (Esc to keep '+kbKey(r.id)+').':'');kbuPaint();};row.appendChild(b);}
+    else{const f=document.createElement('div');f.className='kbfix';f.textContent=r.fix;f.title='This key is fixed';row.appendChild(f);}
+    box.appendChild(row);}
+  const rs=w.querySelector('#kbReset');if(rs)rs.disabled=!kbChanged();}
+function kbuKey(e){const k=e.key;
+  if(k==='Escape'){if(KBUI.cap){KBUI.cap=null;kbuMsg('');kbuPaint();}else kbuClose();return;}
+  if(!KBUI.cap)return;if(k==='Shift'||k==='Control'||k==='Alt'||k==='Meta')return;
+  const id=KBUI.cap,r=KEYTAB.find(x=>x.id===id),err=(e.ctrlKey||e.metaKey||e.altKey)?'Press one key on its own, without Ctrl or Alt.':kbSet(id,kbPhys(e));
+  if(err){kbuMsg(err,true);return;}
+  KBUI.cap=null;kbuMsg('"'+r.name.replace(/ \(.*$/,'')+'" is now '+kbKey(id)+'.');kbuPaint();}
+function kbuOpen(){kbuCss();kbuClose(true);const w=document.createElement('div');w.id='kbWin';
+  w.innerHTML='<div class="kbcard" role="dialog" aria-label="Keyboard keys"><div class="kbhd"><h1>KEYBOARD KEYS</h1><button type="button" class="kbx" id="kbX" title="Close (Esc)">✕</button></div><div class="kbmsg"></div><div class="kbbody"></div>'+
+    '<div class="kbft"><small>Click a key, then press the letter you want (spare keys: '+KB_SPARE+'). W A S D always scroll the camera. Buttons and tips in the game keep showing the standard letter.</small><button type="button" class="kbb" id="kbReset">Reset to defaults</button><button type="button" class="kbb" id="kbBack">‹ Back</button></div></div>';
+  document.body.appendChild(w);KBUI.el=w;KBUI.cap=null;KBUI.msg='';
+  w.querySelector('#kbX').onclick=()=>kbuClose();w.querySelector('#kbBack').onclick=()=>kbuClose();
+  w.querySelector('#kbReset').onclick=()=>{kbReset();KBUI.cap=null;kbuMsg('Every key is back to its standard letter.');kbuPaint();};
+  w.addEventListener('pointerdown',e=>{if(e.target===w)kbuClose();});
+  KBUI.back=!!(document.getElementById('settings')&&!document.getElementById('settings').hidden);if(KBUI.back)document.getElementById('settings').hidden=true;
+  KB.win=true;KB.onKey=kbuKey;kbuPaint();}
+function kbuClose(quiet){const w=document.getElementById('kbWin');if(w)w.remove();KBUI.el=null;KBUI.cap=null;KB.win=false;KB.onKey=null;
+  if(!quiet&&KBUI.back){KBUI.back=false;try{openSettings();}catch(e){}}}
+function kbuInstall(){const body=document.getElementById('setBody');if(!body||document.getElementById('sKeys'))return;
+  const l=document.createElement('div');l.className='label';l.textContent='Keyboard';const r=document.createElement('div');r.id='sKeysRow';
+  const b=document.createElement('button');b.type='button';b.id='sKeys';b.className='big ghost';b.style.cssText='font-size:15px;padding:7px 16px';b.textContent='Keyboard keys…';b.title='See every key and choose your own letters';b.onclick=()=>kbuOpen();
+  r.appendChild(b);const done=document.getElementById('sDone');const at=done&&done.parentNode===body?done:null;if(at){body.insertBefore(l,at);body.insertBefore(r,at);}else body.append(l,r);}
+try{kbuInstall();}catch(e){console.warn('keys window',e);}
+
+/* ---------- first-launch graphics check ---------- */
+const BENCH={t:0,n:0,skip:1,done:false,res:null,secs:3};
+/* a returning player (settings already stored) keeps what he has: only a brand-new install is measured */
+try{if(typeof SET!=='undefined'&&SET.gfxB===undefined&&localStorage.getItem('ww3_settings')!==null)SET.gfxB=1;}catch(e){}
+function benchWant(){return !BENCH.done&&typeof SET!=='undefined'&&SET.gfx==='auto'&&!SET.gfxB&&!(typeof GFX_PHONE!=='undefined'&&GFX_PHONE)&&(!navigator.webdriver||!!window.__bench);}
+/* fps = frames per second measured at full quality; ref = what this screen can show (at most 60 counts) */
+function benchPick(fps,lv,cost,hz){const ref=Math.min(60,hz||60);if(lv>0||fps<ref*.6)return 'low';if(fps>=ref*.95&&cost<.5/ref)return 'high';return 'auto';}
+function benchTick(dt){if(!benchWant())return;
+  if(typeof G==='undefined'||!G||G.over||G.paused||G.rp||window.LOADING||document.hidden){BENCH.t=0;BENCH.n=0;BENCH.skip=1;return;}
+  if(BENCH.skip>0){BENCH.skip-=dt;return;}BENCH.t+=dt;BENCH.n++;if(BENCH.t<BENCH.secs)return;
+  const fps=BENCH.n/BENCH.t,pick=benchPick(fps,QUAL.lv,QUAL.cost,QUAL.hz);BENCH.done=true;BENCH.res={fps:Math.round(fps),pick};
+  SET.gfx=pick;SET.gfxB=1;try{saveSet();}catch(e){}try{applyGfx();}catch(e){}try{if(typeof syncSettings==='function'&&!document.getElementById('settings').hidden)syncSettings();}catch(e){}
+  try{pushLog('Graphics checked for this PC: '+({high:'High',low:'Low',auto:'Auto'}[pick])+'. Change it any time in Settings → Graphics.','g');}catch(e){}}
+try{const _qt=qualTick;qualTick=function(dt){_qt(dt);try{benchTick(dt);}catch(e){}};}catch(e){}
+/* choosing a quality by hand is final: the check never overrides the player */
+try{const g=document.getElementById('sGfx');if(g)g.addEventListener('click',e=>{if(e.target&&e.target.tagName==='BUTTON'&&typeof SET!=='undefined'&&!SET.gfxB){SET.gfxB=1;BENCH.done=true;try{saveSet();}catch(_){}}});}catch(e){}
 /* ================= AUDIO ENGINE: layered weapons, reverb, stereo, cinematic regional score ================= */
 const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,musicOn:true,sfxOn:true,voiceOn:true,rate:{},style:null,next:0,step:0,timer:null,lastVoice:0,voices:[],heat:0,bar:0};
 try{const v=JSON.parse(localStorage.getItem('ww3_audio')||'{}');if(v.m===false)AU.musicOn=false;if(v.s===false)AU.sfxOn=false;if(v.v===false)AU.voiceOn=false;}catch(e){}
