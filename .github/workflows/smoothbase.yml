@@ -1,0 +1,29 @@
+# Re-measure the smoothness pass marks on GitHub's own runners (Abdullah 2026-11-10 "Go"; orch/SMOOTH.md).
+# Push a branch named  smoothbase/<anything>  -> 5 runs each of smooth-pc and smooth-mp, raw numbers uploaded as artifacts.
+name: Smooth baseline on CI
+on:
+  push:
+    branches: ['smoothbase/**']
+permissions: { contents: read }
+jobs:
+  m:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        p: [pc, mp]
+        i: [1, 2, 3, 4, 5]
+    env: { PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Measure
+        run: |
+          npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
+          npx playwright install --with-deps chromium >/dev/null
+          node orch/smooth.mjs --profile ${{ matrix.p }} --update-baseline 2>&1 | tail -30
+          cp orch/out/smooth.json smooth-${{ matrix.p }}-${{ matrix.i }}.json
+      - uses: actions/upload-artifact@v4
+        with: { name: smooth-${{ matrix.p }}-${{ matrix.i }}, path: smooth-${{ matrix.p }}-${{ matrix.i }}.json }
