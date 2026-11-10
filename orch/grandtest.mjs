@@ -363,6 +363,13 @@ try {
   // laneF ⚡23 macro-builder: standing recruit order repeats each month and stops (with a log line) when it can't be paid
   const mc = await ev(() => { const pi = GC.prov.findIndex(s => s.o === GC.me); const k = GR_RECRUIT.find(r => grHasKind(grNat(GC.me).fac, r[0]))[0]; GC.mac = []; gmMacroToggle(pi, k); const on = GC.mac.length; const q0 = JSON.stringify(GC.q||0).length; GC.nat[GC.me].cash = 1e6; const c0 = GC.nat[GC.me].cash; gmMacros(); const paid = GC.nat[GC.me].cash < c0; GC.nat[GC.me].cash = 0; gmMacros(); return { on, paid, stopped: GC.mac.length === 0 }; });
   if (!(mc.on === 1 && mc.paid && mc.stopped)) fails.push('macro: ' + JSON.stringify(mc));
+  // Proxy warfare: tiers, evidence-driven exposure, autonomy slip-out, crack-down, determinism
+  const pxr = await ev(() => { const run = () => { grNew({ me: 'IR', seed: 777, len: 'quick' }); GC.war = {}; GC.alz = []; const a = 'IR', b = 'US'; GC.nat[a].cash = 99999; GC.nat[b].cash = 99999; gpxS(); GC.px = []; gpxStart(a, b); gpxTier(a, b, 2);
+      const x = GC.px[0]; const r0 = { t: x[3], au: x[4] }; let n = 0; for (; n < 40 && GC.px.length && GC.px[0][0] === a; n++) { GC.turn++; gpxTurn(); }
+      return { r0, ended: GC.px.length === 0 || GC.px[0][0] !== a, n, h: JSON.stringify(GC.px) + GC.nat[a].cash }; };
+    const r1 = run(), r2 = run(); grNew({ me: 'IR', seed: 777, len: 'quick' }); GC.war = {}; GC.alz = []; GC.nat.US.cash = 9999; gpxS(); GC.px = [['IR', 'US', GC.turn + 12, 2, 10, 0]]; let cr = 0; for (let i = 0; i < 12 && GC.px.length; i++) { gpxCrack('US', 'IR'); cr++; }
+    return { r1, same: r1.h === r2.h, cleared: GC.px.length === 0 }; });
+  if (!(pxr.r1.r0.t === 2 && pxr.r1.ended && pxr.same && pxr.cleared)) fails.push('proxy warfare: ' + JSON.stringify(pxr));
 } catch (e) { if (String(e.message) !== '__done') { fails.push(String(e.message || e).split('\n')[0]); console.log('ERRS', errs.join('\n')); console.log(String(e.stack).split('\n').slice(0, 7).join('\n')); } }
 for (const e of [...new Set(errs)].slice(0, 6)) fails.push(e);
 await browser.close(); server.close();

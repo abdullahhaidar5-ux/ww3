@@ -511,3 +511,4 @@ laneA 2026-11-07 RG3 slice 2 spies→covert actions: Sabotage ($600, 3 months of
 2026-11-10 Iraqi Shia Brigades (RV) now has its own Iraqi-Arabic soldier voices with Shia war cries, instead of borrowing the Zaidi sheet — orch/voicesV
 2026-11-10 Syria (SY) now has its own Levantine-Arabic soldier voices instead of borrowing the Lebanese sheet — orch/voicesV
 2026-11-10 Palestine Islamic Brigade (OB) now has its own Palestinian-Arabic soldier voices — orch/voicesV
+- 2026-11-10 19:37Z campaign runner: Proxy warfare deepened (tiers, evidence exposure, autonomy, rival buys, crack down, AI use) on branch orch/c-proxy-warfare
