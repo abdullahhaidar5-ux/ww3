@@ -53,7 +53,7 @@ jobs:
             decals)         node orch/decalcheck.mjs --facs all ;;   # every marking on every unit type x all 18 nations lies on the model's surface and is not oversized (orch/decalcheck.mjs)
             save)           node orch/savetest.mjs && node orch/polishtest.mjs ;;   # save game: battle -> save -> load in a fresh page -> same state hash; Continue after a reload; file round trip; old saves refused (orch/savetest.mjs)
             ew)             if [ -f orch/ewtest.mjs ]; then node orch/ewtest.mjs; else echo "SKIP ew (no test)"; fi ;;   # electronic warfare: spoof/jamming + their host-migration checkpoint
-            headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --night && node orch/headless.mjs --compare || echo "SKIP headless" ;;
+            headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --night && node orch/aihard.mjs && node orch/headless.mjs --compare || echo "SKIP headless" ;;
             smoke4)         node orch/smoke.mjs --players 4 && node orch/replaytest.mjs ;;   # + a replay ends where the battle ended
             mpsync)         node orch/mpsync.mjs && node orch/mpsync.mjs --spectator && node orch/mpsync.mjs --lossy --minutes 2 ;;   # + a spectator joins, leaves, rejoins; then over a bad network (latency, resends, lag spikes)
             mpsync-server)  node orch/mpsync.mjs --server && node orch/mpsync.mjs --server --reconnect ;;   # sync, then reconnect via the server

@@ -99,7 +99,7 @@ const TUTC=[
   enter:()=>{TUTS.s0=G.teams[ME].spent|0;TUTS.p0=Object.keys(G.teams[ME].pw).length;if(G.t<G.setupEnd)G.setupEnd=G.t;},
   hl:()=>{if(typeof TAB!=='undefined'&&TAB==='pow'){const b=[...document.querySelectorAll('#panel button[id^="p_"]')].find(x=>x.offsetParent&&!x.disabled);return b?{el:b}:null;}return{d:'.tabs button[data-tab="pow"]'};},cam:()=>tutHQ(),
   ok:()=>(G.teams[ME].spent|0)>TUTS.s0||Object.keys(G.teams[ME].pw).length>TUTS.p0},
- {k:'md',t:'Enemies can fire missiles at your base. A missile-defence battery shoots them down. Build one near your base.',a:'Open Build, click the Missile Defence battery, then click next to your base.',
+ {k:'md',t:'Enemies can fire missiles at your base. An Anti-Air Missile Site shoots them down. Build one near your base.',a:'Open Build, click the Anti-Air Missile Site, then click next to your base.',
   hl:()=>{if(tutBld('sam'))return null;if(G.place==='sam'){const h=tutHQ();return{w:h?{x:h.x-130,y:h.y+80}:null};}return{d:'#b_sam'};},cam:()=>tutHQ(),ok:()=>!!tutBld('sam')},
  {k:'win',t:'Last step: destroy the enemy base to win. It is far away (see the minimap) and only lightly guarded. Reserves arrive now; keep your Barracks producing too.',a:'Gather your soldiers, then hold F and click the enemy base to attack-move.',
   enter:()=>{const T=G.teams[ME],h=tutHQ();T.credits+=2500;if(h)tutSpawn(6,h.x+70,h.y+140);try{pushLog('Reserves have arrived.','w');}catch(e){}},   // the calm enemy stays calm (no AI): the tutorial finale stays winnable and deterministic
