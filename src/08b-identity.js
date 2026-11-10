@@ -52,9 +52,9 @@ function idRingSeg(team){return ID_SEG[((team|0)+8)%8];}
 /* ---------- medals ---------- */
 const ID_MEDALS=(()=>{const n=(k,t,d)=>({k:'win_'+k,t,d,f:k,w:1});const M=[n('IR','Iran: Labbaik ya Hussein','Win a battle as Iran.'),n('RS','Lebanese Shia: Radwan\'s Sons','Win a battle as the Lebanese Shia.'),n('DW','Zaidi Shia Movement: Desert Raiders','Win a battle as the Zaidi Shia Movement.'),
   {k:'dw_notank',t:'Zaidi Shia Movement: Steel Untouched',d:'Win as the Zaidi Shia Movement without losing a single tank (you must have built some).',f:'DW',w:1},
-  {k:'rs_fort',t:'Lebanese Shia: Rock Stands',d:'Win a campaign battle as the Lebanese Shia with your Mountain Fortress still standing.',f:'RS',w:1},
-  {k:'fort20',t:'Hold the Mountain',d:'Keep a Mountain Fortress standing for 20 minutes in one campaign battle.',w:1},
-  {k:'ir_bb',t:'Fire and Fury',d:'Call in a Bunker Buster strike in a mission or on the test range.',w:1}];
+  {k:'rs_fort',t:'Lebanese Shia: Rock Stands',d:'Win a Conquest or Battle game as the Lebanese Shia with your Mountain Fortress still standing.',f:'RS',w:1},
+  {k:'fort20',t:'Hold the Mountain',d:'Keep a Mountain Fortress standing for 20 minutes in one Conquest or Battle game.',w:1},
+  {k:'ir_bb',t:'Fire and Fury',d:'Call in a Bunker Buster strike in Conquest, Battle, a mission or on the test range.',w:1}];
   for(const k of ['US','TR','IL','EU','FR','DE','UA','RU','SA','AE','PK','IN','CN','KP','KR','EG','CU','GB','AU','CA','DZ','MA','NG','ZA','ET','LY','SD','PL','AZ','JO','KD','IT','GR','ES','JP','TW','PH','VN','ID','TH','KZ','AF','OM','RV','OB','BI'])M.push(n(k,FACTIONS[k].name+': Victory','Win a battle as '+FACTIONS[k].name+'.'));
   M.push({k:'hard_1v3',t:'Outnumbered',d:'Win alone against three or more enemies on Hard.',w:1},{k:'iron_wall',t:'Iron Wall',d:'Win a battle (3+ minutes) losing fewer than 10 units.'},{k:'vet10',t:'Veteran Commander',d:'Finish 10 battles.'});return M;})();
 function idStore(){let s=null;try{s=JSON.parse(localStorage.getItem('ww3_medals')||'null');}catch(e){}if(!s||typeof s!=='object')s={};s.earned=s.earned||{};s.hist=Array.isArray(s.hist)?s.hist:[];s.n=s.n|0;return s;}

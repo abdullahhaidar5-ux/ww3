@@ -46,6 +46,7 @@ const DIFF_NAME = ['Easy', 'Normal', 'Hard'][DIFF];
 const MAPS_ARG = String(argS('maps', 'strait,oasis,plateau')).split(',').map(s => s.trim()).filter(Boolean);
 const FAC_ARG = argS('factions', '') ? argS('factions', '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : null;
 const SWAP = has('swap');
+const PAIRS = argS('pairs', '') ? argS('pairs', '').split(',').map(x => x.trim().toUpperCase().split('-')).filter(x => x.length === 2) : [], REAL = has('real');   // --pairs US-IR,RU-UA : only these matchups (GAMES each, sides alternate); --real : lobby Realistic mode
 const FULL = has('full'), DRY = has('dry'), REAL_CLOCK = has('real-clock');
 const ONLY = argS('match', '') !== '' ? Number(argS('match', '')) : null;
 const ADJ = Number(argS('adj', 1.5));
@@ -76,7 +77,8 @@ const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(
 const matchSeed = i => (Math.imul(SEED + 1, 1000003) + Math.imul(i + 1, 7919)) >>> 0;
 function schedule(facs, maps) {
   const R = mulberry(SEED * 31 + 17), pairs = [];
-  if (FULL) {
+  if (PAIRS.length) { for (let g = 0; g < GAMES; g++) for (const [a, b] of PAIRS) pairs.push(g % 2 ? [b, a] : [a, b]); }
+  else if (FULL) {
     for (let i = 0; i < facs.length; i++) for (let j = i + 1; j < facs.length; j++) pairs.push((i + j) % 2 ? [facs[i], facs[j]] : [facs[j], facs[i]]);
     for (let i = pairs.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [pairs[i], pairs[j]] = [pairs[j], pairs[i]]; }
   } else {
@@ -137,7 +139,7 @@ const PAGE = () => {
     TR.st = { rng: mul(m.seed ^ 0x9E3779B9), clock: 0, realClock, end: null, ms: 0, steps: 0, trace: [], nextT: 0,
       side: [0, 1].map(() => ({ uLost: 0, uLostV: 0, bLost: 0, bLostV: 0, peakU: 0, peakUV: 0 })) };
     const ms0 = realNow();
-    sim(() => newGame({ seed: m.seed, facs: [m.a, m.b], ai: [true, true], map: m.map, tm: [0, 1], bs: setup.bs, slot: -1 }));
+    sim(() => newGame({ seed: m.seed, facs: [m.a, m.b], ai: [true, true], map: m.map, tm: [0, 1], bs: setup.bs, slot: -1, real: REAL ? 1 : 0 }));
     G.headless = true; // FXE skips every visual/audio effect handler
     G.teams.forEach(T => { T.ai = mkAI(diff); }); // mkAI scales the wave by G.bs itself (same as a fresh AI slot)
     return { facs: G.teams.map(T => T.fac), map: G.mapKey, ms: realNow() - ms0 };
