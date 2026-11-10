@@ -5751,15 +5751,15 @@ for(const f in SUBN){const F=FACTIONS[f];if(F&&!F.noShip){F.units=F.units||{};F.
    through asymmetry. Extra columns: bt unit build-time x (big powers train slower, small nations recruit faster), up income x (upkeep of a big army), fort cost x of turrets / tunnels / coastal guns
    (cheap home-defence works for small nations), atg cost x of AT teams, drones and rocket trucks (the small nation's answer to armour), st extra starting units (fewer but higher-tech for big powers,
    more cheap infantry and AT for small ones). Zealous factions get the small-nation home-defence bonuses on top (realRowOf). Proven by orch/tourney.mjs --real --pairs (orch/reports/realstart.md). */
-const REAL_TIER=[['Superpower',1.8,{cash:1.5,pcd:.7,pn:1.5,sch:.7,sdmg:1.35,inf:1.1,hv:.85,bt:1.2,up:.92,fort:1.15,atg:1.1,st:[['tank',2],['aa',1]],
+const REAL_TIER=[['Superpower',1.8,{cash:1.3,pcd:.75,pn:1.4,sch:.75,sdmg:1.25,inf:1.25,hv:1.05,bt:1.5,up:.82,fort:1.2,atg:1.15,st:[['tank',1],['aa',1]],
     sum:'Superpower: richer, with a high-tech start (tanks, anti-air) and strong air and missile support - but units cost more and train slowly, and a big army eats into income.'}],
-  ['Great power',.9,{cash:1.2,pcd:.85,pn:1.25,sch:.85,sdmg:1.15,inf:1.05,hv:.95,bt:1.1,up:.96,fort:1.05,atg:1.05,st:[['tank',1],['inf',2]],
+  ['Great power',.9,{cash:1.1,pcd:.88,pn:1.2,sch:.88,sdmg:1.12,inf:1.15,hv:1.05,bt:1.25,up:.92,fort:1.1,atg:1.1,st:[['tank',1],['inf',1]],
     sum:'Great power: strong air and missile support and a mechanised start, with somewhat slower, dearer production.'}],
-  ['Regional power',.4,{cash:1,pcd:1,pn:1,sch:1,sdmg:1,inf:1,hv:1,bt:1,up:1,fort:1,atg:1,st:[['inf',3],['at',1]],
+  ['Regional power',.4,{cash:1,pcd:1,pn:1,sch:1,sdmg:1,inf:1,hv:1,bt:1,up:1,fort:1,atg:1,st:[['inf',4],['at',2]],
     sum:'Regional power: a balanced start - some infantry and an AT team, normal costs and speed.'}],
-  ['Small power',0,{cash:.8,pcd:1.35,pn:.6,sch:1.4,sdmg:.7,inf:.8,hv:1.15,bt:.8,up:1.08,fort:.7,atg:.85,st:[['inf',6],['at',2]],
+  ['Small power',0,{cash:.9,pcd:1.25,pn:.7,sch:1.3,sdmg:.8,inf:.7,hv:1.1,bt:.7,up:1.1,fort:.6,atg:.8,st:[['inf',8],['at',3]],
     sum:'Small power: less cash and weak fire support, but many cheap infantry from the start, fast recruiting, cheap fortifications and cheap AT teams, drones and rockets.'}]];
-function realRowOf(fac){const t=realTierOf(fac);let r=t[2];try{if(msOf(fac).rout===0){r=Object.assign({},r,{inf:r.inf*.92,bt:Math.min(r.bt,.9),fort:Math.min(r.fort,.8),atg:Math.min(r.atg,.9)});}}catch(e){}return r;}
+function realRowOf(fac){const t=realTierOf(fac);let r=t[2];try{if(msOf(fac).rout===0){r=Object.assign({},r,{inf:r.inf*.96,bt:Math.min(r.bt,.95),fort:Math.min(r.fort,.85),atg:Math.min(r.atg,.95)});}}catch(e){}return r;}
 function realLine(fac){const t=realTierOf(fac);let z='';try{if(msOf(fac).rout===0)z=' Zealous: never breaks; cheap fortifications and fast recruiting at home.';}catch(e){}return t[0]+': '+t[2].sum.replace(/^[A-Za-z ]+: /,'')+z;}
 function realTierOf(fac){let m=.4;try{if(typeof GR_REAL==='object'&&GR_REAL.n[fac])m=GR_REAL.n[fac][1];}catch(e){}return REAL_TIER.find(r=>m>=r[1])||REAL_TIER[REAL_TIER.length-1];}
 function realTierName(fac){return realTierOf(fac)[0];}
