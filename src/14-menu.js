@@ -136,6 +136,7 @@ function mxBuild(){
   item('Battle',()=>{mxSetMode('battle');menuGo('c-map');},'','Generals-style skirmish: a Command Center and a dozer, supply trucks feed your money, tech up, destroy every enemy building');
   item('Missions',()=>mxClick('campaign'),'dim','The story missions');
   item('Tutorial',()=>mxClick('tutorial'),'dim','First time? A guided 10-minute battle');
+  item('Battle tutorial',()=>{try{initAudio();startBattleTutorial();}catch(e){console.warn(e);}},'dim','First time in Battle? Supply Depot, Barracks, War Factory, attack');
   item('Play online',()=>menuGo('online'),'sep','Join an open battle with friends or start one');
   item('Load game',()=>mxClick('svLoadBtn'),'','Load a saved battle');
   item('Settings',()=>mxClick('openSettings'),'','Graphics, sound and mouse');

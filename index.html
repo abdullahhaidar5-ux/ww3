@@ -14821,7 +14821,7 @@ function tutSpawn(n,x,y){let c=0;for(let i=0;i<n;i++){const p=nearestPassXY('gro
 const tutPanelBtn=id=>document.getElementById(id);
 const tutTownBtn=r=>{const p=document.getElementById('townp');return p&&p.style.display!=='none'&&TP.ti===(TUTS.town&&TUTS.town.i)?p.querySelector('button[data-r="'+r+'"]'):null;};
 const tutTownHL=r=>{const b=tutTownBtn(r);if(b)return{el:b};const t=tutTown();return t?{mm:{x:t.x,y:t.y}}:null;};
-const TUT=[
+const TUTC=[
  {k:'sel',t:'Welcome to Conquest! These are your soldiers.',a:'Left-click one, or drag a box around them, to select.',
   hl:()=>({w:tutSquad()}),cam:()=>tutSquad(),ok:()=>G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&!['harv','dozer','hacker'].includes(u.kind))},
  {k:'move',t:'Selected soldiers take orders with the RIGHT mouse button.',a:'Right-click the glowing spot to send them there.',
@@ -14867,6 +14867,22 @@ const TUT=[
  {k:'win',t:'Last step: destroy the enemy base to win. It is far away (see the minimap) and only lightly guarded. Reserves arrive now; keep your Barracks producing too.',a:'Gather your soldiers, then hold F and click the enemy base to attack-move.',
   enter:()=>{const T=G.teams[ME],h=tutHQ();T.credits+=2500;if(h)tutSpawn(6,h.x+70,h.y+140);try{pushLog('Reserves have arrived.','w');}catch(e){}},   // the calm enemy stays calm (no AI): the tutorial finale stays winnable and deterministic
   hl:()=>({w:tutFoeHQ()}),cam:()=>tutHQ(),ok:()=>false}];
+/* BATTLE tutorial (polishE 2026-11-10): the Generals-rules lesson, same step machinery as the Conquest one (one system per idea). */
+const tutMob=()=>G.ents.filter(e=>!e.isB&&e.team===ME&&!e.dead&&!['harv','dozer','hacker'].includes(e.kind));
+const tutBPlace=(k,dx,dy)=>{if(tutBld(k))return{w:tutBld(k)};if(G.place===k){const h=tutHQ();return{w:h?{x:h.x+dx,y:h.y+dy}:null};}return{d:'#b_'+k};};
+const TUTB=[
+ {k:'dep',t:'Welcome to Battle! Your Supply Trucks haul money to the Command Center. A Supply Depot next to a far supply field shortens the trip.',a:'Open Build, click Supply Depot, then click the ground near your base.',
+  hl:()=>tutBPlace('depot',-130,90),cam:()=>tutHQ(),ok:()=>!!tutBld('depot')},
+ {k:'bar',t:'Barracks train infantry, and they unlock the rest of your tech tree.',a:'Build a Barracks (Build tab) next to your base. Your Dozer builds it.',
+  hl:()=>tutBPlace('barracks',120,90),cam:()=>tutHQ(),ok:()=>!!tutBld('barracks')},
+ {k:'fac',t:'The War Factory builds tanks and other vehicles. It needs a Barracks first.',a:'Build a War Factory (Build tab) next to your base.',
+  hl:()=>tutBPlace('factory',150,-60),cam:()=>tutHQ(),ok:()=>!!tutBld('factory')},
+ {k:'veh',t:'Now put the factory to work. Units appear in the Units tab when a production building is selected.',a:'Click your War Factory, then click a vehicle to train it.',
+  hl:()=>{const b=tutBld('factory');if(!b)return{w:tutHQ()};return G.sel.includes(b)?{d:'#u_tank'}:{w:b};},cam:()=>tutBld('factory'),
+  enter:()=>{TUTS.k0=tutMob().length;},ok:()=>tutMob().length>TUTS.k0},
+ {k:'atk',t:'Your army is ready. Select it (Ctrl+A selects everything), then send it at the enemy with a right-click. Destroy every enemy building to win.',a:'Select your army and right-click an enemy building.',
+  enter:()=>{G.teams[ME].credits+=2500;},hl:()=>({w:tutFoeHQ()}),cam:()=>tutFoeHQ(),ok:()=>false}];
+let TUT=TUTC;
 let TUTS=null;
 function tutEl(){let el=document.getElementById('tut');if(el)return el;el=document.createElement('div');el.id='tut';el.hidden=true;
   el.innerHTML=`<div class="tt"><b id="tutN"></b><span id="tutT"></span></div><div class="ta" id="tutA"></div><div class="tb"><button id="tutShow">Show me</button><button id="tutSkip">Skip step</button><button id="tutExit">Exit tutorial</button></div>`;
@@ -14915,7 +14931,7 @@ function tutLayout(){const el=document.getElementById('tut');if(!el||el.hidden)r
 function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&(!G||!G.tut))el.hidden=true;}if(!TUTS||!G||!G.tut||G.over||TUTS.wait||!$('menu').hidden)return;
   const me=G.teams[ME],k=TUT[TUTS.i].k;tutLayout();
   /* safety nets: never leave the player without soldiers; the unrest lesson is sped up so a revolt really happens within seconds */
-  if(!tutUnits().length&&!tutGarN()&&!G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='barracks'&&!e.dead&&e.built>=1&&e.q&&e.q.length)){const h=tutHQ();if(h&&(TUTS.rescue|0)<4){TUTS.rescue=(TUTS.rescue|0)+1;tutSpawn(5,h.x+60,h.y+130);try{pushLog('Reserves have arrived.','w');}catch(e){}}}
+  if(TUT===TUTC&&!tutUnits().length&&!tutGarN()&&!G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='barracks'&&!e.dead&&e.built>=1&&e.q&&e.q.length)){const h=tutHQ();if(h&&(TUTS.rescue|0)<4){TUTS.rescue=(TUTS.rescue|0)+1;tutSpawn(5,h.x+60,h.y+130);try{pushLog('Reserves have arrived.','w');}catch(e){}}}
   if(TUTS.town){for(const c of TUTS.town.cells){const g=c.g;if(g&&!g.dead&&g.max&&g.team===ME&&g.hp<g.max*.4)g.hp=g.max*.4;}}   /* the tutorial town's houses cannot be shot to rubble (that would make the town impossible to take) */
   if(k==='retake'&&TUTS.town){for(const c of TUTS.town.cells)if(c.g&&!c.g.dead&&c.g.team===G.reb&&c.occ&&c.occ.length){try{leaveGarrison(c);}catch(e){}}
     if(performance.now()-TUTS.e0>8000){for(const u of G.ents.slice())if(!u.isB&&!u.dead&&u.team===G.reb&&Math.hypot(u.x-TUTS.town.x,u.y-TUTS.town.y)<600){try{kill(u,ME,null);}catch(e){u.dead=true;}}}}   /* after a few seconds the last rebels give up, so nothing contests the town */   /* rebels never hole up in the houses during the tutorial: they fight in the open and the houses stay free to take */
@@ -14923,7 +14939,13 @@ function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&
   let ok=false;try{ok=!!TUT[TUTS.i].ok();}catch(e){}
   if(ok)tutAdvance(false);}
 setInterval(()=>{try{tutCheck();}catch(e){}},400);setInterval(()=>{try{tutHLTick();}catch(e){}},120);
-function startTutorial(){MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
+function startBattleTutorial(){TUT=TUTB;MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
+  const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';
+  TERR_DEFER=true;try{newGame({battle:1,w:setup.w|0,seed:(window.__tutSeed||Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
+  const T=G.teams[0];G.tut=true;G.docDis=1;G.setupEnd=0;T.credits+=1500;if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
+  try{const eh=G.ents.find(e=>e.team===1&&e.kind==='hq');if(eh){eh.max=eh.hp=Math.min(eh.max,1500);}}catch(e){}
+  TUTS={i:0};afterStart();for(const id of ['tutShow','tutSkip'])$(id).hidden=false;$('tutExit').textContent='Exit tutorial';tutEnter();}
+function startTutorial(){TUT=TUTC;MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
   const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';
   TERR_DEFER=true;try{newGame({w:setup.w|0,seed:(window.__tutSeed||Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
   const T=G.teams[0];G.tut=true;G.docDis=1;G.setupEnd=0;T.credits+=3000;T.gxp=Math.max(T.gxp|0,RANKS[1]);promoteGeneral(T);if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
@@ -16682,6 +16704,31 @@ function add(){
 }
 add();setTimeout(add,1500);
 })();
+// FIRST-TEN-MINUTES HINT (polishE 2026-11-10): each mode opens with a short, skippable "what do I do first" card, shown once per mode
+// (localStorage ww3_fh_<mode>), re-openable from the HUD "?" button. Esc / Got it closes. One card, text per mode; the guided lessons stay in the Tutorial system (08b-social).
+const FH_TEXT={
+  'Conquest':['Conquest: what to do first','Build Barracks, then a War Factory, from the Build tab (left-click a building, then click ground by your base).|Your money comes from towns you hold: capture towns and set their tax.|Left-click selects, right-click moves or attacks. Destroy the enemy base to win.'],
+  'Battle':['Battle: what to do first','Send the Supply Truck to a supply field: it hauls money back to your Command Center. Build a Supply Depot beside a far field.|Dozer: build Barracks, then a War Factory (Build tab), then train units there.|Left-click selects, right-click moves or attacks. Destroy every enemy building to win.'],
+  'Mission':['Mission: what to do first','Read the objective at the top of the screen.|Left-click selects your units, right-click moves or attacks.|The mission ends when the objective is done or your force is lost.'],
+  'Test range':['Test range: what to do first','Nothing here counts: spawn any unit or building and try it out.|Left-click selects, right-click moves or attacks.|Press Esc for the menu when you are done.'],
+  'Grand campaign':['Grand campaign: what to do first','Click your nation flag to open its panel (economy, ideas, military).|Select an army, then right-click a province to move it. Use the speed buttons or pause to control time.|When armies meet, choose Fight it live or auto-resolve.']};
+function fhKey(m){return 'ww3_fh_'+String(m).replace(/\W/g,'');}
+function fhSeen(m){try{return localStorage.getItem(fhKey(m))==='1';}catch(e){return true;}}
+function fhClose(mark){const el=document.getElementById('fhint');if(!el)return false;const m=el.dataset.m;el.remove();if(mark){try{localStorage.setItem(fhKey(m),'1');}catch(e){}}return true;}
+function fhMode(){try{if(G&&!G.over&&!G.tut&&G.teams&&G.teams[ME]&&typeof modeName==='function'){const m=modeName();if(m)return m;}}catch(e){}
+  try{if(typeof GC!=='undefined'&&GC&&document.getElementById('grandScreen')&&document.getElementById('grandScreen').offsetParent!==null)return 'Grand campaign';}catch(e){}return '';}
+function fhShow(force,mode){mode=mode||fhMode();const T=FH_TEXT[mode];if(!T)return false;if(document.getElementById('fhint')){fhClose(true);if(force)return false;}
+  const el=document.createElement('div');el.id='fhint';el.dataset.m=mode;el.setAttribute('role','dialog');
+  el.style.cssText='position:fixed;left:50%;top:64px;transform:translateX(-50%);width:min(520px,92vw);z-index:8500;background:#101c2aee;border:1px solid #5a7a96;border-radius:10px;color:#e8e4d8;font:15px/1.5 system-ui,sans-serif;padding:12px 16px 10px;box-shadow:0 6px 24px #0008';
+  el.innerHTML='<div style="font-weight:700;font-size:16px;margin-bottom:6px;color:#ffe6a8">'+T[0]+'</div>'+T[1].split('|').map(s=>'<div style="margin:3px 0">• '+s+'</div>').join('')
+    +'<div style="text-align:right;margin-top:8px"><span style="opacity:.6;font-size:12px;margin-right:10px">Reopen any time with the ? button</span><button type="button" id="fhOk" style="padding:4px 14px;border-radius:6px;border:1px solid #c9a35a;background:#3a3020;color:#ffe6a8;cursor:pointer;font-size:14px">Got it</button></div>';
+  document.body.appendChild(el);el.querySelector('#fhOk').onclick=()=>fhClose(true);return true;}
+if(!window._fhInit){window._fhInit=1;
+  addEventListener('keydown',ev=>{if(ev.key==='Escape'&&document.getElementById('fhint')){ev.stopPropagation();ev.preventDefault();fhClose(true);}},true);
+  setInterval(()=>{try{const m=fhMode(),el=document.getElementById('fhint');
+    if(el&&(!m||el.dataset.m!==m))fhClose(false);
+    else if(m&&!el&&!fhSeen(m)&&(m==='Grand campaign'||(G&&!window.LOADING))&&document.getElementById('menu')&&document.getElementById('menu').hidden!==false&&!window._fhShown?.[m]){(window._fhShown=window._fhShown||{})[m]=1;fhShow(false,m);}
+    const b=document.getElementById('hudHelp');if(b&&!b._fh){b._fh=1;b.addEventListener('click',()=>{try{fhShow(true);}catch(e){}});}}catch(e){}},1000);}
 /* ================= AUDIO ENGINE: layered weapons, reverb, stereo, cinematic regional score ================= */
 const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,musicOn:true,sfxOn:true,voiceOn:true,rate:{},style:null,next:0,step:0,timer:null,lastVoice:0,voices:[],heat:0,bar:0};
 try{const v=JSON.parse(localStorage.getItem('ww3_audio')||'{}');if(v.m===false)AU.musicOn=false;if(v.s===false)AU.sfxOn=false;if(v.v===false)AU.voiceOn=false;}catch(e){}
@@ -25927,6 +25974,7 @@ function mxBuild(){
   item('Battle',()=>{mxSetMode('battle');menuGo('c-map');},'','Generals-style skirmish: a Command Center and a dozer, supply trucks feed your money, tech up, destroy every enemy building');
   item('Missions',()=>mxClick('campaign'),'dim','The story missions');
   item('Tutorial',()=>mxClick('tutorial'),'dim','First time? A guided 10-minute battle');
+  item('Battle tutorial',()=>{try{initAudio();startBattleTutorial();}catch(e){console.warn(e);}},'dim','First time in Battle? Supply Depot, Barracks, War Factory, attack');
   item('Play online',()=>menuGo('online'),'sep','Join an open battle with friends or start one');
   item('Load game',()=>mxClick('svLoadBtn'),'','Load a saved battle');
   item('Settings',()=>mxClick('openSettings'),'','Graphics, sound and mouse');
