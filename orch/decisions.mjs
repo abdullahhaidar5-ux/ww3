@@ -151,7 +151,7 @@ try {
     const B = rb.bal, R = rb.real;
     ck(B.cash === 1 && B.cashS === 1, 'Balanced mode no longer starts every nation on the same money: ' + JSON.stringify(B));
     ck(R.tier[0] === 'Superpower' && R.tier[1] === 'Small power', 'Realistic tiers wrong: ' + R.tier.join('/'));
-    ck(R.cd < B.cd && R.ch < B.ch && R.dmg > B.dmg && R.cash > 1 && R.tank < B.tank,
+    ck(R.cd < B.cd && R.ch < B.ch && R.dmg > B.dmg && R.cash > 1 && R.tank >= B.tank,   /* leadersC: big powers now pay more for production (fair start) */
       'Realistic mode does not strengthen the superpower: ' + JSON.stringify([B, R]));
     ck(R.cdS > B.cdS && R.chS > B.chS && R.dmgS < B.dmgS && R.cashS < 1,
       'Realistic mode does not weaken the small power\'s fire support: ' + JSON.stringify([B, R]));
