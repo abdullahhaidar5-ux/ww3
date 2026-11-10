@@ -119,4 +119,4 @@ npTab('subj','🔗','Subjects',(code,body,c)=>{gsbInit();const own=c.own&&code==
       for(const o of cand){const op=document.createElement('option');op.value=o;op.textContent=gdNatName(o);sel.appendChild(op);}row.appendChild(sel);row.appendChild(btn('Fund ($'+GSB_AID+'/mo)',()=>gsbAid(code,sel.value,1)));body.appendChild(row);}}
   h('Covert militias','funded in secret (start one from Diplomacy); exposure angers the world');
   if(!pxs.length)body.appendChild(guEl('div','opacity:.7;margin:2px 0 6px','None.'));
-  else table(['Inside','Months left','Cost',own?'':''],pxs.map(x=>[name(x[1]),String(Math.max(0,x[2]-GC.turn)),'-$'+GPX_COST+'/mo',own?btn('Stop funding',()=>gsbStopPx(code,x[1])):'']));});
+  else table(['Inside','Months left','Own agenda','Cost',own?'':''],pxs.map(x=>[name(x[1]),String(Math.max(0,x[2]-GC.turn)),(x[3]==null?10:x[3])+'%'+((x[3]||0)>=60?' — may slip out':''),'-$'+GPX_COST+'/mo',own?btn('Stop funding',()=>gsbStopPx(code,x[1])):'']));});
