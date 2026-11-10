@@ -5540,7 +5540,8 @@ const COUNTER={inf:'Beats AT teams and other infantry · Loses to tanks and arti
 const SHIA={IR:1,RS:1,DW:1};
 /* leadersC (Abdullah 2026-11-07 22:38 "Keep ayatollah dear leader bunker buster and mountain fortress in conquest and battle" + "in campaign they don't play into the battles"): back in standalone Conquest, Battle, Missions and the sandbox; OUT of grand-campaign Fight-it battles (G.grand). Same nations only (orch/SIGNATURES.md). */
 const BB_NAT={US:1,IL:1,RU:1,CN:1},FORT_NAT={IR:1,RS:1,AF:1,KD:1,DW:1,KP:1};
-function conqBan(k){return(k==='cleric'||k==='fort'||k==='bb')&&typeof G!=='undefined'&&!!G&&!!G.grand;}
+/* (the grand map's own pre-built defender Mountain Fortress is spawned through bldAllowed, so 'fort' is NOT banned here; nothing can be built or bought in Fight-it anyway: GRAND_NOPROD) */
+function conqBan(k){return(k==='cleric'||k==='bb')&&typeof G!=='undefined'&&!!G&&!!G.grand;}
 function sigBan(fac,k){return(k==='bb'&&!BB_NAT[fac])||(k==='fort'&&!FORT_NAT[fac]);}
 function roster(fac){const F=FACTIONS[fac];const spf=(BASE[F.special]||{}).from||'barracks';return{hq:['harv','dozer'],barracks:['inf','at',...(spf==='barracks'?[F.special]:[]),...(F.special==='medic'?[]:['medic']),'champ',...((SHIA[fac]||fac==='KP')&&!conqBan('cleric')?['cleric']:[]),'spy'],factory:['aa','tank','arty',...(F.extra||[]).filter(k=>stats(fac,k).from!=='airfield'),'dtank','dsam','darty',...(spf==='factory'?[F.special]:[])],airfield:F.noAir?[]:['heli','jet','airlift',...(F.extra||[]).filter(k=>stats(fac,k).from==='airfield')],shipyard:F.noShip?['boat','fast','lander']:['boat','fast','sub','ship','minel','sweep','lander']};}
 function allUnits(fac){const r=roster(fac);return CATS.flatMap(c=>r[c]);}
