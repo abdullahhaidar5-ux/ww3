@@ -329,7 +329,7 @@ const flags = [];
 for (const r of results) {
   if (r.result === 'error') { flags.push(`#${r.i} ${r.a} vs ${r.b} on ${r.map}: error — ${r.errs[0]}`); continue; }
   if (!r.sides) continue;
-  r.sides.forEach((s, i) => {
+  r.sides.slice(0, 2).forEach((s, i) => {   // (the rebel team is a 3rd side)
     const o = r.sides[1 - i];
     const maxB = Math.max(0, ...(r.trace || []).map(x => x[1 + i][1])), combat = Object.entries(s.made || {}).filter(([k]) => k !== 'harv' && k !== 'dozer').reduce((a, [, n]) => a + n, 0);
     if (r.winner === 1 - i && (combat < 6 || (maxB <= 2 && r.t >= 180) || s.credits >= 8000))
