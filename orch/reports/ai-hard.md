@@ -50,3 +50,40 @@ Hard-vs-Hard run above slot A vs slot B is shown in the table.
 
 ## Checks
 SMOKE PASS (401 s). CIGATE 20/20 PASS on 931f5c29 (headless determinism, MP sync, migration, smooth-pc, smooth-mp). Shipped to `main`; Cloudflare deploy rides open PR #20 (main → servers-live, commented).
+
+---
+
+# Hard AI, combined arms (2026-11-10, nightly queue runner, branch `orch/q-ai`)
+
+Queue item "Smarter computer opponent". Still **tactics only: no extra money, no extra vision**; Easy and Normal untouched
+(everything is behind new Hard-only settings in `DIFF[2]`: `probe`, `ap`, `ca`, `air`). Already there from 2026-11-05:
+flanking timed with the main body, cover hopping, focus fire, counter-building, damaged vehicles pulling back to repair.
+
+## New
+- **Probes for the weak side** (`aiProbeSide`): before a flanking move it adds up the armed defences and the enemy troops it
+  can see around each swing point and on the way in, and goes round the thinner side. A big wave still pincers, but two
+  thirds go round the weak side.
+- **Protects its artillery** (`aiHmArms`): when enemy ground troops it can see get within 240 of a gun, the two nearest
+  fighting units turn on them and the gun steps back toward its own side. **Zealous nations never pull back** (standing
+  rule): their guns stand, only the escorts react.
+- **A real air arm** (`air`): before this the AI owned an airfield but almost never had aircraft (the airfield was last in
+  line for money). Hard now keeps about one strike aircraft per 8 ground units (1–3) and saves for it like it saves for vehicles.
+- **Air works with the ground attack** (`aiAirTarget`): ready jets hit the defence guns around the wave's target, then enemy
+  artillery they can see, then the target itself — instead of a random building.
+
+## Proof (`node orch/aitourney.mjs`, slice nations IR, RS, DW, RV, IL, SA, US, RU, every pair, 4 maps, 20-min cap, same money)
+| Run | Games | Result |
+|---|---|---|
+| **Hard vs Normal** (`--hard-vs-normal --seed 3`) | 28 | **Hard 98%** (27.5/28) — target was ≥65% |
+| New Hard vs old Hard, without the air arm (`--variant probe=0,ap=0,ca=0`) | 28 | new 64% |
+| New Hard vs old Hard, everything (`--variant probe=0,ap=0,ca=0,air=0`) | 28 | new 55% |
+| With air arm vs without (`--variant air=0 --seed 2`) | 28 | with 63% |
+28 games is about ±9 points of noise; all three comparisons point the same way (new ≥ old). Slots: A 13 / B 14, so no start-side edge.
+`--variant k=v,...` is new in `orch/aitourney.mjs` (plain Hard against Hard with those settings changed, both slots in turn).
+
+Nation spread at Hard: run the CI balance workflow (`balance/**` push) after this lands; not re-tuned here (01-data job).
+
+## Guard
+`node orch/aihard.mjs` → `AIHARD PASS` (headless, in the `headless` gate): settings are Hard-only and income is ×1, the flank
+picks the thinner side, escorts react and the gun steps back, IR's gun (Zealous) is never ordered back, jets pick the
+defence gun / seen artillery / wave target, and never a unit the AI cannot see.

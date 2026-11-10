@@ -518,3 +518,4 @@ laneA 2026-11-07 RG3 slice 2 spies→covert actions: Sabotage ($600, 3 months of
 2026-11-10 Sudan (SD) now has its own Sudanese-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
 2026-11-10 Algeria (DZ) now has its own Algerian-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
 2026-11-10 Morocco (MA) now has its own Moroccan-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
+2026-11-10 Computer opponent on Hard is smarter (same money): it goes round your weaker side, guards its artillery, keeps a few strike aircraft and sends them in with its ground attack; beats Normal 98% in test battles — orch/q-ai
