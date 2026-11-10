@@ -1,0 +1,4 @@
+# dashJ handoff
+Done: End of battle (damage dealt, best unit + veterancy, campaign Continue summary with survivors/veterans/damaged buildings, small buttons); Words (no retired names in visible strings, guard in orch/decisions.mjs section 2b, orch/strings.mjs extractor -> orch/out/strings.txt, codespell found nothing real).
+Next (First impression, QUEUE item stays open): (a) soft live AI battle behind the menu: start a tiny AI-vs-AI G on a slice map after menu is clickable (requestIdleCallback), cap units ~40, render at low rate, pause when any window is open / document.hidden, Settings toggle; do it after menusB ships the new main menu. (b) one font/size/icon pass across menus and panels once menusB is done.
+Gates: sandbox too slow (smoke loading screen took 279 s); branch pushed to gate/dashJ for GitHub runners.
