@@ -174,5 +174,25 @@
    "Luis Moray"
   ],
   "cmd": "Dionisio Schuyler"
+ },
+ "JO": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Baldur Sanjin",
+   "Gilberto Mathias",
+   "Damien Black"
+  ],
+  "cmd": "Luis Moray"
+ },
+ "BI": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Damjan Chapman",
+   "Dionisio Schuyler",
+   "Viktor Eka"
+  ],
+  "cmd": "Damien Black"
  }
 }
