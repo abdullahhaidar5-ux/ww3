@@ -16822,6 +16822,8 @@ const FH_TEXT={
   'Test range':['Test range: what to do first','Nothing here counts: spawn any unit or building and try it out.|Left-click selects, right-click moves or attacks.|Press Esc for the menu when you are done.'],
   'Grand campaign':['Grand campaign: what to do first','Click your nation flag to open its panel (economy, ideas, military).|Select an army, then right-click a province to move it. Use the speed buttons or pause to control time.|When armies meet, choose Fight it live or auto-resolve.']};
 function fhKey(m){return 'ww3_fh_'+String(m).replace(/\W/g,'');}
+/* automated test browsers (navigator.webdriver) never get the auto-popup - it would sit over the units the tests click; orch/polishplay.mjs sets ww3_fh_test=1 to see it */
+function fhBot(){try{return !!navigator.webdriver&&localStorage.getItem('ww3_fh_test')!=='1';}catch(e){return false;}}
 function fhSeen(m){try{return localStorage.getItem(fhKey(m))==='1';}catch(e){return true;}}
 function fhClose(mark){const el=document.getElementById('fhint');if(!el)return false;const m=el.dataset.m;el.remove();if(mark){try{localStorage.setItem(fhKey(m),'1');}catch(e){}}return true;}
 function fhMode(){try{if(G&&!G.over&&!G.tut&&G.teams&&G.teams[ME]&&typeof modeName==='function'){const m=modeName();if(m)return m;}}catch(e){}
@@ -16836,7 +16838,7 @@ if(!window._fhInit){window._fhInit=1;
   addEventListener('keydown',ev=>{if(ev.key==='Escape'&&document.getElementById('fhint')){ev.stopPropagation();ev.preventDefault();fhClose(true);}},true);
   setInterval(()=>{try{const m=fhMode(),el=document.getElementById('fhint');
     if(el&&(!m||el.dataset.m!==m))fhClose(false);
-    else if(m&&!el&&!fhSeen(m)&&(m==='Grand campaign'||(G&&!window.LOADING))&&document.getElementById('menu')&&document.getElementById('menu').hidden!==false&&!window._fhShown?.[m]){(window._fhShown=window._fhShown||{})[m]=1;fhShow(false,m);}
+    else if(m&&!el&&!fhSeen(m)&&!fhBot()&&(m==='Grand campaign'||(G&&!window.LOADING))&&document.getElementById('menu')&&document.getElementById('menu').hidden!==false&&!window._fhShown?.[m]){(window._fhShown=window._fhShown||{})[m]=1;fhShow(false,m);}
     const b=document.getElementById('hudHelp');if(b&&!b._fh){b._fh=1;b.addEventListener('click',()=>{try{fhShow(true);}catch(e){}});}}catch(e){}},1000);}
 /* ================= AUDIO ENGINE: layered weapons, reverb, stereo, cinematic regional score ================= */
 const AU={ctx:null,master:null,sfx:null,mus:null,rev:null,revIn:null,noise:null,musicOn:true,sfxOn:true,voiceOn:true,rate:{},style:null,next:0,step:0,timer:null,lastVoice:0,voices:[],heat:0,bar:0};

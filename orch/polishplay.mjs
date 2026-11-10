@@ -25,7 +25,7 @@ for (const fac of FACS) {
   await page.route('**/*', r => r.request().url().startsWith(ORIGIN) ? r.continue() : r.abort());
   await page.goto(ORIGIN + '/index.html', { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof fhShow === 'function', null, { timeout: 60000 });
-  await page.evaluate(f => { try { localStorage.removeItem('ww3_fh_Battle'); localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} setup.n = 1; setup.p = f; setup.mode = 'battle'; startSingle(); }, fac);
+  await page.evaluate(f => { try { localStorage.removeItem('ww3_fh_Battle'); localStorage.setItem('ww3_fh_test', '1'); localStorage.setItem('ww3_welcomed', '1'); } catch (e) {} setup.n = 1; setup.p = f; setup.mode = 'battle'; startSingle(); }, fac);
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 500 });
   await page.waitForFunction(() => document.getElementById('fhint'), null, { timeout: 60000 }).catch(() => {});
   const hint = await page.evaluate(() => !!document.getElementById('fhint'));
