@@ -133,7 +133,7 @@ const PAGE = () => {
   window.endGame = (w, why) => { if (TR.st && G && !G.over && !TR.st.end) TR.st.end = { w, t: G.t, why: why || '' }; return E(w, why); };
 
   TR.list = () => ({ facs: FKEYS.slice(), names: Object.fromEntries(FKEYS.map(k => [k, FACTIONS[k].name])), maps: MAP_KEYS.map(k => [k, MAPS[k].max]) });
-  TR.start = (m, diff, realClock) => {
+  TR.start = (m, diff, realClock, REAL) => {
     if (G) G.over = true;
     MODE = 'single'; ME = 0; setup.d = diff; setup.map = m.map; setup.p = m.a; setup.a = m.b; setup.n = 1; setup.others = []; setup.tm = [0, 1]; setup.slot = -1; setup.seed = m.seed;
     TR.st = { rng: mul(m.seed ^ 0x9E3779B9), clock: 0, realClock, end: null, ms: 0, steps: 0, trace: [], nextT: 0,
@@ -253,7 +253,7 @@ async function play(w, m) {
   const r = { ...m, errs: [] }; w.cur = r;
   const tr = Date.now();
   try {
-    const st = await w.page.evaluate(([m, d, rc]) => __TR.start(m, d, rc), [m, DIFF, REAL_CLOCK]);
+    const st = await w.page.evaluate(([m, d, rc, rl]) => __TR.start(m, d, rc, rl), [m, DIFF, REAL_CLOCK, REAL]);
     if (st.map !== m.map) r.errs.push(`started on ${st.map}, not ${m.map}`);
     r.startS = st.ms / 1000;
     const steps = Math.round(MINUTES * 3600), CH = 3600;
