@@ -2679,7 +2679,7 @@ const GE_B={
  aa:['Air defence',380,2,'D','#9ad07f','A SAM site in this province\'s battle; halves bombing damage here.'],
  farm:['Irrigation',450,2,'G','#b8d96a','+6 food (farm provinces only).'],
  mine:['Deep mine',550,3,'M','#b9bec6','+100 income (mining provinces only).'],
- fort:['Fort',500,2,'T','#d0a090','A defence gun in this province\'s battle.'],
+ fort:['Fort',500,2,'T','#d0a090','A Defense Gun in this province\'s battle.'],
  dsite:['Drone launch site',420,2,'S','#c9b86a','Ground racks and hangars for long-range one-way attack drones (about 2,000 km), no runway needed. Makes 6 drones a month; Drone strikes and battle Shahed salvos draw on the stock. Can be bombed. Only nations that field such drones.'],
  mfort:['Mountain Fortress',1000,4,'X','#e0c070','A bunker pre-built in the battle (mountain provinces of IR, RS, AF, KD, DW, KP).']};
 const GE_BKEYS=['base','airfield','port','factory','refinery','power','aa','farm','mine','fort','dsite','mfort'];
