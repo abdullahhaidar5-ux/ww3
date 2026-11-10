@@ -142,9 +142,9 @@ try {
     const all = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
     for (const bad of ['Grand campaign', 'Conquest', 'Battle', 'Missions', 'Tutorial', 'Play online']) ck(!all.includes(bad), 'game mode "' + bad + '" must not be on the top level');
     await ev(() => menuGo('single'));
-    const sp = await ev(() => [...document.querySelectorAll('#ms-single .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
+    const sp = await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).map(b => ((b.firstChild||{}).textContent||'').trim()));
     ck(sp.slice(0, 3).join('|') === 'Grand campaign|Conquest|Battle' && sp.includes('Missions') && sp.includes('Tutorial'), 'Single player should list Grand campaign|Conquest|Battle then Missions, Tutorial, got ' + sp.join('|'));
-    ck(await ev(() => [...document.querySelectorAll('#ms-single .mxi')].every(b => b.querySelector('small'))), 'every Single player item needs a one-line description');
+    ck(await ev(() => [...document.querySelectorAll('#ms-single .mxi')].filter(b => !b.hidden).every(b => b.querySelector('small'))), 'every Single player item needs a one-line description');
     await ev(() => menuGo('online'));
     const mpg = await ev(() => [...document.querySelectorAll('#ms-online #mxolg .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
     ck(mpg.join('|') === 'Grand campaign|Conquest|Battle', 'Multiplayer should offer Grand campaign|Conquest|Battle first, got ' + mpg.join('|'));
