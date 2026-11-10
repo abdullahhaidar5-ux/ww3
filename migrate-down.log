@@ -1,0 +1,16 @@
+game servers configured but down (http://127.0.0.1:9)
+[1s] three pages loaded
+[2s] host lobby open, code s798y5
+peak memory (node + browser, summed RSS): 2470 MB
+  warn: host console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientB console (ignored, offline/headless): Failed to load resource: net::ERR_FAILED
+  warn: clientA console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/lobby' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: host console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/s798y5?role=host&key=mmv2ncpc159b361mha' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console warning: p2p: no direct connection (peer-unavailable), using the server relay
+  warn: clientB console (ignored, offline/headless): WebSocket connection to 'ws://127.0.0.1:9/room/s798y5?role=client&id=ww3p-c9pri4w3' failed: Error in connection establishment: net::ERR_UNSAFE_PORT
+  warn: clientB console warning: p2p: server relay unavailable (network), trying the Nostr network
+
+MIGRATE FAIL: timed out waiting for client B to appear in the host lobby (64s)
