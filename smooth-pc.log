@@ -1,0 +1,82 @@
+[0s] pc: launching browser
+[1s] ctx
+[1s] guarded
+[1s] page
+[1s] pc: loading page
+[3s] pc: page loaded
+[3s] pc: menu ready
+[83s] pc: LOADING {"tok":1,"tipI":5,"tipT":103,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",12000],["Loading 3D models…",1292
+[83s] pc: LOADING {"tok":1,"tipI":5,"tipT":103,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",12000],["Loading 3D models…",1292
+[83s] pc: LOADING {"tok":1,"tipI":5,"tipT":103,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",12000],["Loading 3D models…",1292
+[98s] pc: done {"tok":1,"tipI":6,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",12000],["Loading 3D models…",129
+[98s] pc: battle loaded in 95s
+[114s] pc: army in place
+[114s] pc: measuring 150 frames
+[119s] pc: warm-up done, 166 shaders
+[122s] pc: frame 10
+[125s] pc: frame 20
+[127s] pc: frame 30
+[129s] pc: frame 40
+[131s] pc: frame 50
+[133s] pc: frame 60
+[135s] pc: frame 70
+[137s] pc: frame 80
+[140s] pc: frame 90
+[142s] pc: frame 100
+[144s] pc: frame 110
+[146s] pc: frame 120
+[149s] pc: frame 130
+[151s] pc: frame 140
+[153s] pc: frame 150
+[159s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) draw calls rose to 1744 (baseline 1110, allowed up to 1725; +57%)
+[159s] pc: launching browser
+[159s] ctx
+[159s] guarded
+[159s] page
+[159s] pc: loading page
+[161s] pc: page loaded
+[161s] pc: menu ready
+[245s] pc: LOADING {"tok":1,"tipI":6,"tipT":103,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10641],["Loading 3D models…",1001
+[245s] pc: LOADING {"tok":1,"tipI":6,"tipT":103,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10641],["Loading 3D models…",1001
+[245s] pc: LOADING {"tok":1,"tipI":6,"tipT":103,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10641],["Loading 3D models…",1001
+[260s] pc: done {"tok":1,"tipI":6,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",10641],["Loading 3D models…",100
+[260s] pc: battle loaded in 99s
+[276s] pc: army in place
+[276s] pc: measuring 150 frames
+[280s] pc: warm-up done, 167 shaders
+[284s] pc: frame 10
+[286s] pc: frame 20
+[288s] pc: frame 30
+[291s] pc: frame 40
+[293s] pc: frame 50
+[295s] pc: frame 60
+[297s] pc: frame 70
+[299s] pc: frame 80
+[301s] pc: frame 90
+[304s] pc: frame 100
+[306s] pc: frame 110
+[308s] pc: frame 120
+[310s] pc: frame 130
+[312s] pc: frame 140
+[314s] pc: frame 150
+[320s] pc attempt 2: ok
+
+                       pc        
+units on screen        445       
+load time s            98.51     
+median frame ms        207.3     
+p95 frame ms           259.1     
+p99 frame ms           294.1     
+worst 1% FPS           3.32      
+frames >50 ms          150       
+first boom x median    1.32      
+2nd boom x median      1.21      
+weather/night x median 1.36      
+sim step p95 ms        12.7      
+draw calls             1626      
+k triangles            8509      
+heap MB/min            -104.66   
+runtime 5.3 min
+
+SMOOTH PASS
