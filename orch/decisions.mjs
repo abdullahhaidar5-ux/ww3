@@ -66,9 +66,9 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(/k==='a'&&\(e\.ctrlKey\|\|e\.metaKey\)[^\n]*selectArmy\(\)/.test(u), 'Ctrl+A no longer selects the whole army in battle');
   ck(/k==='q'[^\n]*CROT\.hold=true/.test(u) && /function camRotSnap/.test(u), 'Q no longer rotates the battle camera');
   ck(!/\(Q\)|Q: army/.test(u), 'a tooltip/hint still says Q selects the army'); }
-// 3. Main menu order + naming (2026-11-07 21:38 THREE GAMES replaces 2026-11-06 05:58): Grand campaign · Conquest · Battle · Missions · Tutorial; no Classic.
-{ const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).slice(0, 5);
-  ck(m.join('|') === 'Grand campaign|Conquest|Battle|Missions|Tutorial', 'main menu order is ' + m.join(' · '));
+// 3. Main menu order + naming (2026-11-07 21:41): Single player · Multiplayer · Test range, then small extras; no Classic.
+{ const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).filter(Boolean).slice(0, 3);
+  ck(m.join('|') === 'Single player|Multiplayer|Test range', 'main menu order is ' + m.join(' · '));
   for (const f of ['14-menu.js', '08d-lobby.js']) ck(!/['">]Classic[<'"]/.test(SRC[f]), 'Classic mode still named in ' + f); }
 // 4. Grand-map-only assets are banned from Conquest in the one place that decides it.
 // (leadersC 2026-11-07 22:38: flipped - they are back in Conquest/Battle for their nations, banned only in grand Fight-it battles: G.grand)
@@ -114,11 +114,26 @@ try {
   // ---- menus as a player
   const menu = await ev(() => [...document.querySelectorAll('#menu button, #menu .mx-item, .mx-item')].filter(b => b.offsetParent).map(b => b.textContent.trim()).filter(Boolean).slice(0, 12));
   console.log('menu items', JSON.stringify(menu)); await shot('menu');
-  // THREE GAMES (Abdullah 2026-11-07 21:38): the main menu's big items are exactly Grand campaign, Conquest, Battle (in that order); Missions and Tutorial are smaller items below
-  { const big = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].filter(b => b.offsetParent && !b.hidden && !/\b(dim|sep)\b/.test(b.className)).map(b => b.textContent.trim()).filter(Boolean).slice(0, 4));
-    ck(big.slice(0, 3).join('|') === 'Grand campaign|Conquest|Battle', 'main menu big items should be Grand campaign|Conquest|Battle, got ' + big.join('|'));
+  // MENU STRUCTURE (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range", "These are distinct"; 21:38 three games): the top level is exactly Single player, Multiplayer, Test range (+ small extras)
+  { const big = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].filter(b => b.offsetParent && !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => ((b.firstChild||{}).textContent||'').trim()).filter(Boolean));
+    ck(big.join('|') === 'Single player|Multiplayer|Test range', 'main menu top level should be exactly Single player|Multiplayer|Test range, got ' + big.join('|'));
     const sm = await ev(() => [...document.querySelectorAll('#mxmenu .mxi.dim')].map(b => b.textContent.trim()));
-    ck(sm.includes('Missions') && sm.includes('Tutorial'), 'Missions and Tutorial must stay as smaller menu items, got ' + sm.join('|')); }
+    ck(sm.every(t => /^(Settings|Extras|Credits)/.test(t)), 'only Settings/Extras/Credits may be small top-level extras, got ' + sm.join('|'));
+    const all = await ev(() => [...document.querySelectorAll('#mxmenu .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
+    for (const bad of ['Grand campaign', 'Conquest', 'Battle', 'Missions', 'Tutorial', 'Play online']) ck(!all.includes(bad), 'game mode "' + bad + '" must not be on the top level');
+    await ev(() => menuGo('single'));
+    const sp = await ev(() => [...document.querySelectorAll('#ms-single .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
+    ck(sp.slice(0, 3).join('|') === 'Grand campaign|Conquest|Battle' && sp.includes('Missions') && sp.includes('Tutorial'), 'Single player should list Grand campaign|Conquest|Battle then Missions, Tutorial, got ' + sp.join('|'));
+    ck(await ev(() => [...document.querySelectorAll('#ms-single .mxi')].every(b => b.querySelector('small'))), 'every Single player item needs a one-line description');
+    await ev(() => menuGo('online'));
+    const mpg = await ev(() => [...document.querySelectorAll('#ms-online #mxolg .mxi')].map(b => ((b.firstChild||{}).textContent||'').trim()));
+    ck(mpg.join('|') === 'Grand campaign|Conquest|Battle', 'Multiplayer should offer Grand campaign|Conquest|Battle first, got ' + mpg.join('|'));
+    ck(await ev(() => typeof mxOnline === 'function' && typeof gnLobbyStart === 'function' && !!document.getElementById('jcode')), 'Multiplayer needs the campaign lobby + join box');
+    await ev(() => mxOnline('campaign')); ck(await ev(() => !!document.getElementById('mxCampNew')), 'Multiplayer → Grand campaign must offer the campaign lobby');
+    await ev(() => { grandMenu(); }); await page.waitForTimeout(300);
+    const gm = await ev(() => [...document.querySelectorAll('#campScreen button')].map(b => b.textContent.trim()));
+    ck(!gm.some(t => /Play with friends|Join friends/i.test(t)), 'the grand campaign menu must not have its own online lobby, got ' + gm.join('|'));
+    await ev(() => { try { campClose(); } catch (e) {} menuHome(); }); }
   { const seen = await ev(SEEN); ck(!/classic/i.test(seen), 'menu shows "Classic"'); ck(!/\bhost(ing)?\b/i.test(seen.replace(/ghost/gi, '')), 'menu shows hosting wording: ' + (/.{20}\bhost.{20}/i.exec(seen) || [''])[0]); }
   // ---- data decisions
   const d = await ev(() => { const o = {}; o.fk = FKEYS.slice(); o.ms = MORALE_STYLE; o.rout0 = Object.entries(MORALE_STYLE).filter(([k, s]) => MSTYLES[s].rout === 0).map(([k]) => k).sort().join(' ');

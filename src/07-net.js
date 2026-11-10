@@ -27,11 +27,11 @@ async function netInit(){
 async function renderGames(){if(!NET.room)return;const el=$('games');const all=NET.room.peers().filter(p=>!p.sameTab&&p.presence&&p.presence.g&&(p.presence.g.s==='open'||p.presence.g.s==='full')&&FKEYS.includes(p.presence.g.f));
   // open lobbies first (fullest first, so games fill up), then battles already under way
   const ps=all.filter(p=>p.presence.g.s==='open').sort((x,y)=>(y.presence.g.n|0)-(x.presence.g.n|0)),busy=all.filter(p=>p.presence.g.s==='full');
-  if(!all.length){el.innerHTML=`<div class="empty">${NET.code?'Your battle is open. Waiting for players to join…':window.WW3_P2P?'No open battles right now. Press Play online to start one, or type a friend\'s game code below.':'No open battles right now. Press Play online to start one and share this game with a friend.'}</div>`;return;}
+  if(!all.length){el.innerHTML=`<div class="empty">${NET.code?'Your battle is open. Waiting for players to join…':window.WW3_P2P?'No open games right now. Press Play online to start one, or type a friend\'s game code below.':'No open games right now. Press Play online to start one and share this game with a friend.'}</div>`;return;}
   let names={};try{if(NET.user){const ids=all.map(p=>p.by).filter(Boolean);if(ids.length)names=await NET.user.profiles(ids);}}catch(e){}
-  el.innerHTML='';const hd=document.createElement('div');hd.className='empty';hd.textContent=`${ps.length} open battle${ps.length===1?'':'s'} · ${busy.length} in progress`;el.append(hd);
+  el.innerHTML='';const hd=document.createElement('div');hd.className='empty';hd.textContent=`${ps.length} open game${ps.length===1?'':'s'} · ${busy.length} in progress`;el.append(hd);
   for(const p of [...ps,...busy]){const g=p.presence.g,row=document.createElement('div');row.className='game';const nm=(p.by&&names[p.by]&&names[p.by].name)||(p.isMe?'You (other tab)':window.WW3_P2P&&g.c?'game '+String(g.c).toUpperCase():'A player');
-    const info=document.createElement('div');const b=document.createElement('b');b.textContent=(g.pw?'🔒 ':'')+FACTIONS[g.f].name;if(g.pw)b.title='Password protected: you need the password to join';const s=document.createElement('span');s.textContent=` · ${nm} · ${(MAPS[g.m]||MAPS.strait).name} · ${g.n||1}${g.s==='full'?'':'/'+(g.mx||8)} players`;info.append(b,s);
+    const info=document.createElement('div');const b=document.createElement('b');b.textContent=(g.pw?'🔒 ':'')+(g.bm?'Battle':'Conquest')+' · '+FACTIONS[g.f].name;if(g.pw)b.title='Password protected: you need the password to join';const s=document.createElement('span');s.textContent=` · ${nm} · ${(MAPS[g.m]||MAPS.strait).name} · ${g.n||1}${g.s==='full'?'':'/'+(g.mx||8)} players`;info.append(b,s);
     // a battle under way that this tab was playing in (its reconnect token survives a page reload): Rejoin gets the army back
     let mine=false;if(g.s==='full'&&window.WW3_P2P&&g.c)try{mine=!!sessionStorage.getItem('ww3_tok_'+g.c);}catch(e){}
     const btn=document.createElement('button');btn.textContent=mine?'Rejoin':g.s==='full'?'In battle':'Join';btn.disabled=!!NET.code||!!NET.game||(g.s==='full'&&!mine);btn.onclick=()=>{initAudio();NET.wantSpec=0;if(mine){joinByCode(g.c,false,'');return;}if(g.pw)askPw(p);else joinGame(p);};row.append(info,btn);
@@ -101,7 +101,7 @@ async function hostBrowser(note){if(!NET.room||NET.code||NET.game)return;NET.hos
   try{const g=await joinT('tc-'+code,20000,1);if(NET.code!==code){try{g.leave();}catch(e){}return;}NET.game=g;}catch(e){if(NET.code!==code)return;$('mpstatus').textContent=window.WW3_P2P?'Could not reach the online matchmaking service. Check your internet connection and try again.':'Could not open a game room. Try again in a moment.';cancelHost();return;}
   wireHost(NET.game);
   try{await NET.game.emit('lobby',{n:1,probe:1});}catch(e){if(e&&e.code==='not_permitted'){noPerm();cancelHost();return;}}
-  await NET.room.presence({g:{c:code,f:setup.p,s:'open',n:1,pw:NET.pw?1:undefined}}).catch(()=>{});renderLobby();renderGames();}
+  await NET.room.presence({g:{c:code,f:setup.p,s:'open',n:1,bm:setup.mode==='battle'?1:0,pw:NET.pw?1:undefined}}).catch(()=>{});renderLobby();renderGames();}
 /* ---------- Battles on Cloudflare (Stage 2: the battle runs on the World War 3 servers) ----------
    The creating player's page opens a battle room on the servers with its own key and sends its setup there; the
    server (a BattleRoom) becomes the host, and every human - the creator included - plays as an ordinary client: the
@@ -193,7 +193,7 @@ async function renderLobby(){const cfb=NET.cf&&NET.cf.own&&NET.cf.blob;if(MODE!=
   // a Cloudflare battle is listed in the game list by the server itself; the owner's edits go to the server
   if(cfb){cfPush();return;}
   try{glBroadcast(mk,mx);}catch(e){}
-  NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,m:setup.map||'strait',mx,pw:NET.pw?1:undefined,sp:1,ns:(NET.lobbySpec||[]).length||undefined}}).catch(()=>{});}
+  NET.room.presence({g:{c:NET.code,f:setup.p,s:nn>=mx?'full':'open',n:nn,bm:setup.mode==='battle'?1:0,m:setup.map||'strait',mx,pw:NET.pw?1:undefined,sp:1,ns:(NET.lobbySpec||[]).length||undefined}}).catch(()=>{});}
 function lobbyTeams(){const nh=NET.lobby.length+1;return [...(NET.tm||[]).slice(0,nh),...(NET.ais||[]).map(a=>a.tm|0)];}
 // Start spots in the lobby: one per seat (players then computer players; -1 = Random). Picks made for one set of spots
 // (map and player count) are dropped when the set changes, so a number always means the spot the leader saw.
