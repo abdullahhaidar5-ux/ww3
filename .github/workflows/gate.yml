@@ -5,6 +5,7 @@ name: Ship gate (parallel)
 on:
   push:
     branches: ['gate/**']
+  workflow_call:   # also run for every push to main (main-gate.yml)
 permissions:
   contents: write
   statuses: write

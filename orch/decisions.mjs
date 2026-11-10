@@ -66,9 +66,9 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(/k==='a'&&\(e\.ctrlKey\|\|e\.metaKey\)[^\n]*selectArmy\(\)/.test(u), 'Ctrl+A no longer selects the whole army in battle');
   ck(/k==='q'[^\n]*CROT\.hold=true/.test(u) && /function camRotSnap/.test(u), 'Q no longer rotates the battle camera');
   ck(!/\(Q\)|Q: army/.test(u), 'a tooltip/hint still says Q selects the army'); }
-// 3. Main menu order + naming (2026-11-06 05:58): Grand campaign · Conquest · Missions · Tutorial; no Classic.
-{ const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).slice(0, 4);
-  ck(m.join('|') === 'Grand campaign|Conquest|Missions|Tutorial', 'main menu order is ' + m.join(' · '));
+// 3. Main menu order + naming (2026-11-07 21:38 THREE GAMES replaces 2026-11-06 05:58): Grand campaign · Conquest · Battle · Missions · Tutorial; no Classic.
+{ const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).slice(0, 5);
+  ck(m.join('|') === 'Grand campaign|Conquest|Battle|Missions|Tutorial', 'main menu order is ' + m.join(' · '));
   for (const f of ['14-menu.js', '08d-lobby.js']) ck(!/['">]Classic[<'"]/.test(SRC[f]), 'Classic mode still named in ' + f); }
 // 4. Grand-map-only assets are banned from Conquest in the one place that decides it.
 // (leadersC 2026-11-07 22:38: flipped - they are back in Conquest/Battle for their nations, banned only in grand Fight-it battles: G.grand)
