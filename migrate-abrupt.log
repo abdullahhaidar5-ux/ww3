@@ -1,0 +1,14 @@
+file:///home/runner/work/ww3/ww3/orch/serverdev.mjs:44
+    if (exited !== null) throw new Error('wrangler dev exited (' + exited + '):\n' + log.slice(-3000));
+                               ^
+
+Error: wrangler dev exited (1):
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mAddress already in use (socket "direct:1:default"). Please check that you are not already running a server on this address or specify a different port with --port.[0m
+
+
+🪵  Logs were written to "/home/runner/.config/.wrangler/logs/wrangler-2026-11-10_19-27-47_594.log"
+
+    at startServer (file:///home/runner/work/ww3/ww3/orch/serverdev.mjs:44:32)
+    at async file:///home/runner/work/ww3/ww3/orch/migrate.mjs:103:38
+
+Node.js v22.23.4
