@@ -133,7 +133,7 @@ try {
       const hs = await host.evaluate(() => ({ t: GC.turn, ph: GC.ph, wait: !!GNT.bw, live: [...document.querySelectorAll('#gLog *, #gLog')].some(e => / live\./.test(e.textContent)) || (GC.log || []).some(l => / live\./.test(JSON.stringify(l))) }));
       if (fought && hs.t > tgt.t && hs.ph === 'plan' && !hs.wait) break;
       if (st.inb) { if (!st.fin) { await cl.evaluate(() => grandTestFinish(0)); console.log(el(), 'friend battle loaded and finished'); }
-        await cl.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /^Return to the map/.test(x.textContent)); if (b) b.click(); }); fought = 1; }
+        await cl.evaluate(() => { const b = [...document.querySelectorAll('button')].find(x => /^(Return to the map|Continue)/.test(x.textContent)); if (b) b.click(); }); fought = 1; }
       else if (/Fight it live/.test(st.modal)) { if (!fought) { await host.bringToFront(); if (!await host.evaluate(() => !!GNT.bw && GC.ph !== 'plan')) fails.push('host did not wait for the friend\'s battle'); await shot(host, 'gnet-host-waits');
           await cl.bringToFront(); await shot(cl, 'gnet-friend-prompt'); await click(cl, '#gModal button', '^Fight it live'); console.log(el(), 'friend chose Fight it live'); }
         else await click(cl, '#gModal button', '^Auto-resolve'); }

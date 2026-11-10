@@ -44,7 +44,7 @@ function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb,cnt=P.map(()=>0),cap=P.leng
   let i;
   i=best(p=>p.vd);if(i>=0&&P[i].vd>0)A.push(['MVP',i,esM(P[i].vd)+' of enemy forces destroyed']);
   i=best(K);if(i>=0&&K(P[i])>0)A.push(['Top Killer',i,K(P[i])+' kills']);
-  i=best(p=>p.bn);if(i>=0&&P[i].bn>1)A.push(['Best Unit',i,'One '+esUnit(P[i].f,P[i].bk)+' got '+P[i].bn+' kills']);
+  i=best(p=>p.bn);if(i>=0&&P[i].bn>1)A.push(['Best Unit',i,'One '+(P[i].bv?VET[P[i].bv]+' ':'')+esUnit(P[i].f,P[i].bk)+' got '+P[i].bn+' kills']);
   i=best(p=>p.lu,p=>p.b>=5,true);if(i>=0)A.push(['Iron Wall',i,'Only '+P[i].lu+' unit'+(P[i].lu===1?'':'s')+' lost']);
   i=best(p=>p.fk,p=>p.fk>=0,true);if(i>=0)A.push(['Quick Draw',i,'First kill at '+esT(P[i].fk)]);
   i=best(p=>p.ap);if(i>=0&&P[i].ap>0)A.push(['Biggest Army',i,P[i].ap+' units in the field at once']);
@@ -53,11 +53,12 @@ function esAwards(S){const P=S.p,A=[],K=p=>p.ku+p.kb,cnt=P.map(()=>0),cap=P.leng
   i=best(p=>p.pt);if(i>=0&&P[i].pt>0)A.push(['Power Player',i,P[i].pt+' general power'+(P[i].pt===1?'':'s')+' used'+(P[i].pk?' (most: '+esPow(P[i].f,P[i].pk)+')':'')]);
   return A;}
 const ES_ROWS=[['World opinion',p=>p.op==null?'-':p.op+' / 100 (low '+(p.ol==null?p.op:p.ol)+')'],['Units built',p=>p.b],['Units lost',p=>p.lu],['Enemy units destroyed',p=>p.ku],['Structures destroyed',p=>p.kb],['Structures lost',p=>p.lb],
-  ['Enemy value destroyed',p=>esM(p.vd)],['Money earned',p=>esM(p.me)],['Money spent',p=>esM(p.ms)],['General rank',p=>p.r],['Time alive',p=>esT(p.ta)]];
+  ['Damage dealt',p=>p.dd==null?'-':Math.round(p.dd/10)*10],['Enemy value destroyed',p=>esM(p.vd)],['Money earned',p=>esM(p.me)],['Money spent',p=>esM(p.ms)],['General rank',p=>p.r],['Time alive',p=>esT(p.ta)]];
 // players in table order: winners first, then by value destroyed
 function esOrder(S){return S.p.map((p,i)=>i).sort((a,b)=>(esWin(S,b)-esWin(S,a))||(S.p[b].vd-S.p[a].vd)||a-b);}
 function esCss(){if($('esCss'))return;const st=document.createElement('style');st.id='esCss';st.textContent=`
 #end{place-items:start center}#end>.card{margin-block:auto}
+#end .row{gap:10px;flex-wrap:wrap;justify-content:center}#end .row .big{font-size:15px;padding:8px 20px;letter-spacing:.04em;min-width:0}
 #endStats{display:flex;flex-direction:column;gap:20px;font-size:16px;line-height:1.35;text-align:left}#endStats[hidden]{display:none}
 #endStats h2{font-size:14px;letter-spacing:.14em;text-transform:uppercase;opacity:.75;margin:0 0 10px;font-weight:700}
 .esP{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
@@ -1440,6 +1441,7 @@ if($('mmBtn'))$('mmBtn').onclick=()=>mapPeek();
 if($('sbFold')){const sb=$('sbx'),f=v=>{sb.classList.toggle('fold',v);$('sbFold').setAttribute('aria-expanded',v?'false':'true');};let v=false;try{v=localStorage.getItem('ww3_sbFold')==='1';}catch(e){}f(v);
   $('sbFold').onclick=()=>{const n=!sb.classList.contains('fold');f(n);try{localStorage.setItem('ww3_sbFold',n?'1':'0');}catch(e){}};}
 $('quitNo').onclick=()=>{$('quitOv').hidden=true;if(G&&G.qPause){G.qPause=false;togglePause(false);}};
+try{$('change').textContent='Back to menu';}catch(e){}
 $('again').onclick=()=>{initAudio();try{if(NET.ownW!=null){wxSet(NET.ownW);NET.ownW=null;}}catch(e){}startSingle();};$('change').onclick=()=>{$('end').hidden=true;$('menu').hidden=false;if(MODE!=='single')leaveNet();MODE='single';ME=0;G=null;try{kcReset();}catch(e){}renderGames();};
 
 /* ---------- kill-cam: at match end, a short replay of the battle's biggest moment ---------- */

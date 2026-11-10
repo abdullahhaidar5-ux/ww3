@@ -93,7 +93,7 @@ try {
       try { o.calls = R3.info.render.calls; o.tris = R3.info.render.triangles; o.geo = R3.info.memory.geometries; } catch (e) {} o.FT = FT.slice(-10).map(x => Math.round(x * 1000)); return o; });
     console.log('PROFILE', JSON.stringify(pr)); }
   if (round === 1) { await page.click('#gbRet'); await page.waitForTimeout(300); await ev(() => { const b = [...document.querySelectorAll('#uiDlg button')].find(x => /^Retreat$/.test(x.textContent)); if (b) b.click(); });   /* Retreat asks first (game's own confirm) */
-    await page.waitForFunction(() => [...document.querySelectorAll('#campScreen button')].some(b => /Return to the map/.test(b.textContent)), null, { timeout: 60000 });
+    await page.waitForFunction(() => [...document.querySelectorAll('#campScreen button')].some(b => /Return to the map|^Continue/.test(b.textContent)), null, { timeout: 60000 });
     await clickText('#campScreen button', 'Return to the map'); await page.waitForTimeout(800);
     for (let k = 0; k < 6 && await ev(() => !!document.getElementById('gModal')); k++) await clickText('#gModal button', 'Auto-resolve|OK|Continue|Close');
     await page.waitForFunction(() => document.getElementById('grandScreen') && document.getElementById('grandScreen').style.display !== 'none' && GC.ph === 'plan', null, { timeout: 60000 }).catch(() => fails.push('map did not come back to planning after the battle')); }

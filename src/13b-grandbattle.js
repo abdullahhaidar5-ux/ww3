@@ -104,8 +104,9 @@ function grandBattleEnd(){const g=G.grand,c=GB_CUR;grandWriteBack();const T0=g.r
   const root=campEl('div');root.appendChild(campEl('div','opacity:.7;font-size:14px','BATTLE FOR '+g.pn.toUpperCase()+' · '+(g.res.how==='time'?'TIME ELAPSED':g.res.how==='retreat'?'WITHDRAWAL':g.res.how==='rout'?(won?'ENEMY ROUTED':'YOUR FORCE ROUTED'):'FORCE DESTROYED')));
   root.appendChild(campEl('h1','margin:2px 0 10px;font-size:30px;color:'+(won?'#9fd36b':'#e07a6a'),won?'Victory':g.res.how==='retreat'?'Withdrawn':'Defeat'));
   root.appendChild(campEl('div','font-size:17px;line-height:1.6;margin-bottom:10px','Your losses: <b>'+lost0+'</b> of '+g.n0[0]+' units · Enemy losses: <b>'+lost1+'</b> of '+g.n0[1]+' units<br>Survivors keep their wounds and experience on the map; the dead are gone.'));
+  try{let sv=0,vt=0,tw=0;for(const [rec,e,team] of g.ents){if(team!==0||e.dead||!G.byId.has(e.id))continue;sv++;if((e.rank|0)>0)vt++;}for(const e of G.ents)if(e.isB&&!e.dead&&e.hp<e.max*.5)tw++;root.appendChild(campEl('div','font-size:15px;opacity:.85;margin-bottom:10px','Going back to the map: <b>'+sv+'</b> survivors, <b>'+vt+'</b> with veteran rank or better'+(tw?', <b>'+tw+'</b> buildings badly damaged':'')+'.'));}catch(e){}
   try{root.appendChild(grandAAR(g));}catch(e){}
-  root.appendChild(campBtn('Return to the map',()=>{campClose();grandLeaveBattle();grBattleDone(c.b,(c.meAtt===won)?'att':'def',g.res.how==='retreat'?'retreat':'live');grandMapRefresh();}));
+  root.appendChild(campBtn('Continue',()=>{campClose();grandLeaveBattle();grBattleDone(c.b,(c.meAtt===won)?'att':'def',g.res.how==='retreat'?'retreat':'live');grandMapRefresh();}));
   campShow(root);}
 function grandLeaveBattle(){try{if(MODE!=='single')leaveNet();}catch(e){}MODE='single';ME=0;G=null;try{kcReset();}catch(e){}try{$('end').hidden=true;}catch(e){}const h=document.getElementById('gbHud');if(h)h.hidden=true;grandScreenShow(true);}
 function grandRetreat(){const g=G&&G.grand;if(!g||g.fin)return;g.fin=1;g.res={win:1,how:'retreat'};G.over=true;grandBattleEnd();}
