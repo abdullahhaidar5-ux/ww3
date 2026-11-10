@@ -18,5 +18,9 @@
 - prep/dashI, prep/snap (loop-grand-snap), prep/qlook, prep/qfeel: merged and conflict-free on top of that stack (prep/qfeel = everything), each builds (`build.py --check` OK); NOT gated yet. dashI + q-look + q-feel are look/feel changes: CLAUDE.md says they wait for smooth-mp green. loop-grand-snap is not a look change: gate it alone from origin/main.
 - QUEUE lines are not ticked (nothing from Part 2 landed).
 
+## Update (later run, 87414614 = prep/polishE on main 058d7316)
+- Gate on menusB+polishE: controls and cfclient now green; only smooth-mp (the baseline issue above) AND a NEW red: grandlive -> GNETTEST FAIL (friend joins the online grand-campaign lobby via the new Multiplayer screen: "p2p: no direct connection, server relay unavailable (network)"). menusB changed orch/gnettest.mjs to join with `menuGo('online'); #jcode/#jbtn`; either that join path is a real bug for campaign codes or the runner can't reach the relay (gnettest passes on main). One fix attempt was spent on this branch; it stays PARKED (menusB + polishE not landed). Debug: node orch/gnettest.mjs on prep/polishE with the friend's console log; check mxOnline('campaign') / `#jbtn` handler in src/14-menu.js + src/13zn-gnet.js.
+- Main (058d7316) full gate: tutorial still red as described; the rest was still running when this was written - read orch/GATE-MAIN.md on branch `reports`.
+
 ## Next step
 1. Decide the smooth-mp baseline question above. 2. Read the final gate on main (git show origin/reports:orch/GATE-MAIN.md). 3. Fix tutorial step 9. 4. Land prep/polishE, then the rest in order.
