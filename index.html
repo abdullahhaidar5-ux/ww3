@@ -10954,31 +10954,47 @@ function unitDamageFX(e,o,s,gh,dt){if(!inView(e.x,e.y,.1))return;const f=e.hp/e.
     if(f<.25&&Math.random()<.55)part({x,y,h:hh,rise:14,add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(3,5)*(nav?1.4:1),g:-3,d:rnd(.2,.4)});
     if(f<.25&&!lo&&Math.random()<.25)for(let q=0;q<3;q++)part({x,y,h:hh,vx:rnd(-30,30),vy:rnd(-30,30),vh:rnd(30,70),add:true,c:C_SPARK,s:.9,f:.6,grav:1,d:rnd(.3,.6)});}}
 function inView(x,y,m){if(!CAM)return true;TMP.set(x,0,y).project(CAM);return Math.abs(TMP.x)<1+m&&Math.abs(TMP.y)<1+m;}
-function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const g=groundH(x,y)+h,n=Math.min(18,4+(s/5|0)),gr=h<4;
+// GAME FEEL (q-feel): what a shell hits decides what flies up. Water = a white spray column, a foam ring and drifting mist (no dirt, no
+// scorch mark, no lingering dust or smoke column); a road or other hard surface = grey chips, more sparks and pale grey dust; open ground =
+// clods and dust in the colour of this map's soil (sand, dark earth or snow). View only, all through the budgeted part() pool.
+const SOILC={desert:[[.6,.5,.35],[.47,.38,.26],[.3,.24,.17]],green:[[.42,.33,.22],[.3,.24,.17],[.22,.17,.12]],snow:[[.92,.94,.97],[.74,.76,.8],[.36,.33,.3]],hard:[[.56,.55,.52],[.4,.4,.39],[.27,.27,.26]]};
+function impactSurf(x,y){try{if(groundH(x,y)<=(typeof WL==='number'?WL+1:-1e9))return'water';const q=G&&G.roadMask;if(q&&q.f&&q.f[(y/q.C|0)*q.w+(x/q.C|0)]>.3)return'hard';const th=G&&G.map?G.map.theme:'';return th==='snow'?'snow':th==='green'||th==='temperate'?'green':'desert';}catch(_){return'desert';}}
+function splashFX(x,y,s,big){const g=(typeof WL==='number'?WL:groundH(x,y))+.5,W=[.86,.9,.95],W2=[.7,.78,.86],n=Math.min(22,8+(s/2|0));
+  // the column: fast, narrow, falls back under gravity
+  for(let i=0;i<n;i++){const a=rnd(0,6.28),v=rnd(2,s*.5);part({k:'spray',x:x+rnd(-s*.12,s*.12),y:y+rnd(-s*.12,s*.12),h:g+rnd(0,3),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(s*4,s*(big?11:8)),f:.35,grav:1,c:i%3?W:W2,s:rnd(s*.22,s*.42),g:s*.9,d:rnd(.8,1.5),a:.8});}
+  // the crown: a ring of low spray thrown outward
+  for(let i=0;i<Math.min(16,6+(s/3|0));i++){const a=i/8*3.1416+rnd(-.2,.2),v=rnd(s*1.6,s*3.2);part({k:'spray',x,y,h:g+1,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(s*1.2,s*2.6),f:.3,grav:1,c:W,s:rnd(s*.18,s*.32),g:s*.7,d:rnd(.6,1.1),a:.7});}
+  // droplets and the mist that hangs and drifts for a few seconds
+  for(let i=0;i<Math.min(18,6+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(30,110)*(.5+s/40);part({k:'spray',x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(80,240),c:W,s:rnd(1.2,2.4),f:.8,grav:1,d:rnd(.7,1.4),a:.85});}
+  if(s>=12&&!fxPH())for(let i=0;i<5;i++){const a=rnd(0,6.28),r=rnd(0,s*.6);part({k:'spray',x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(3,s*.4),vx:Math.cos(a)*rnd(3,10),vy:Math.sin(a)*rnd(3,10),f:.5,rise:rnd(1,3),c:W,c2:W2,ck:.6,s:rnd(s*.8,s*1.3),g:s*.35,d:rnd(3,5),a:.28});}
+  // under the column the sea boils: a dark churned patch swells and fades, and a ring of foam runs outward along the surface
+  if(s>=8){const nb=fxPH()?2:4;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.25);part({k:'boil',x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+.2,f:.9,c:[.1,.15,.19],c2:[.3,.4,.46],ck:.7,s:rnd(s*.7,s*1.05),g:s*.8,d:rnd(1.6,2.6),a:.42});}
+    const nr=fxPH()?8:14;for(let i=0;i<nr;i++){const a=i/nr*6.2832+rnd(-.12,.12),v=rnd(s*1.5,s*2.1);part({k:'foam',x:x+Math.cos(a)*s*.3,y:y+Math.sin(a)*s*.3,h:g+.4,vx:Math.cos(a)*v,vy:Math.sin(a)*v,f:.12,c:W,c2:W2,ck:.5,s:rnd(s*.2,s*.34),g:s*.25,d:rnd(1.3,2),a:.55});}}}
+function boomFX(x,y,s,big,h=0){sfxBoom(x,y,s,big);const gr=h<4,SF=gr?impactSurf(x,y):'air',wet=SF==='water',grd=gr&&!wet,SC=SOILC[SF]||SOILC.desert,g=wet&&typeof WL==='number'?WL+.5:groundH(x,y)+h,n=Math.min(18,4+(s/5|0)),wk=wet?.45:1;if(wet)splashFX(x,y,s,big);
   if(s<=10&&!big){for(let i=0;i<9;i++){const a=rnd(0,6.28),v=rnd(80,200);part({x,y,h:g+rnd(4,9),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(60,180),add:true,c:i%3?C_SPARK:[3,2.4,1.4],s:rnd(1,1.8),f:.5,grav:1,bounce:1,d:rnd(.25,.6)});}part({x,y,h:g+6,s:s*2.2,d:.06,add:true,c:[3.2,2.4,1.4]});}
   // brief white-hot flash (a blink, not a lingering ball) then a lumpy fireball built of many small rolling puffs
-  part({x,y,h:g+s*.3,s:s*.75,d:big?.07:.05,add:true,c:[3.4,2.9,2.1],a:.7});
-  {const nl=big?9:4;for(let i=0;i<nl;i++){const a=rnd(0,6.28),r=rnd(0,s*.35),v=rnd(2,s*.5);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.1,s*.55),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(6,s*1.2),f:.2,rise:rnd(8,20),add:true,c:[2.6,1.2,.3],c2:[.6,.16,.04],ck:.5,s:rnd(s*.16,s*.3),g:s*.9,d:rnd(.3,.6),a:.8});}}
-  const nf=Math.min(16,5+(s/4|0));for(let i=0;i<nf;i++){const a=rnd(0,6.28),r=rnd(0,s*.45),v=rnd(4,s*.9),hot=rnd(.8,1.15);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(1,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(8,s*1.6),f:.15,rise:rnd(6,18),c:[3.4*hot,1.5*hot,.4*hot],c2:i%3?[.5,.47,.42]:[.36,.34,.31],ck:rnd(.12,.25),s:rnd(s*.4,s*.7),g:s*.8,d:rnd(2,3.4),a:.62});}
-  for(let i=0;i<(n>>1);i++){const a=rnd(0,6.28),v=rnd(10,s*2);part({x,y,h:g+rnd(0,s*.6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(10,s*1.8),add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(s*.15,s*.34),g:s*.5,d:rnd(.25,.5),a:.5});}
-  for(let i=0;i<n;i++){const a=rnd(0,6.28),v=rnd(5,s*.9);part({x:x+rnd(-s*.3,s*.3),y:y+rnd(-s*.3,s*.3),h:g+rnd(2,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,rise:rnd(16,34),c:i%4?C_SMOKE:C_DARK,c2:[.5,.47,.42],ck:.4,s:rnd(s*.4,s*.7),g:s*.6,d:rnd(2.2,3.8),a:.5});}
-  if(gr&&s>8){const C_DIRT=[.42,.33,.22];for(let i=0;i<Math.min(16,5+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(10,s*1.6);part({x:x+rnd(-3,3),y:y+rnd(-3,3),h:g+2,vx:Math.cos(a)*v*.4,vy:Math.sin(a)*v*.4,vh:rnd(s*3,s*6),f:.5,grav:1,c:i%2?C_DIRT:[.3,.24,.17],s:rnd(s*.35,s*.6),g:s*1.1,d:rnd(.9,1.5),a:.75});}
-    for(let i=0;i<Math.min(24,8+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(40,140)*(.5+s/40);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(90,260),c:[.22,.17,.12],s:rnd(1.6,3.2),f:.85,grav:1,bounce:1,d:rnd(1,1.8)});}}
-  if(gr)for(let i=0;i<Math.min(14,6+(s/4|0));i++){const a=i/7*3.1416+rnd(-.2,.2),v=rnd(s*2,s*3.5);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,f:.08,c:C_DUST,s:rnd(s*.35,s*.55),g:s*.5,d:rnd(1,1.6),a:.45});}
-  for(let i=0;i<n;i++){const a=rnd(0,6.28),v=rnd(90,260)*(.5+s/60);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(40,200),add:true,c:C_SPARK,s:1.4,f:.6,grav:1,d:rnd(.3,.7)});}
-  if(s>10)for(let i=0;i<Math.min(12,s/3|0);i++){const a=rnd(0,6.28),v=rnd(30,130);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(80,220),c:C_DARK,s:rnd(1.4,2.8),f:.85,grav:1,bounce:1,d:rnd(1.2,2.2)});}
+  part({x,y,h:g+s*.3,s:s*.75*wk,d:big?.07:.05,add:true,c:[3.4,2.9,2.1],a:.7});
+  {const nl=wet?2:big?9:4;for(let i=0;i<nl;i++){const a=rnd(0,6.28),r=rnd(0,s*.35),v=rnd(2,s*.5);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.1,s*.55),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(6,s*1.2),f:.2,rise:rnd(8,20),add:true,c:[2.6,1.2,.3],c2:[.6,.16,.04],ck:.5,s:rnd(s*.16,s*.3)*wk,g:s*.9*wk,d:rnd(.3,.6),a:.8});}}
+  const nf=wet?3:Math.min(16,5+(s/4|0));for(let i=0;i<nf;i++){const a=rnd(0,6.28),r=rnd(0,s*.45),v=rnd(4,s*.9),hot=rnd(.8,1.15);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(1,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(8,s*1.6),f:.15,rise:rnd(6,18),c:[3.4*hot,1.5*hot,.4*hot],c2:wet?[.8,.83,.86]:i%3?[.5,.47,.42]:[.36,.34,.31],ck:rnd(.12,.25),s:rnd(s*.4,s*.7)*wk,g:s*.8,d:rnd(2,3.4),a:.62});}
+  for(let i=0;i<(wet?n>>2:n>>1);i++){const a=rnd(0,6.28),v=rnd(10,s*2);part({x,y,h:g+rnd(0,s*.6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(10,s*1.8),add:true,c:Math.random()<.5?C_FIRE:C_FIRE2,s:rnd(s*.15,s*.34)*wk,g:s*.5,d:rnd(.25,.5),a:.5});}
+  for(let i=0;i<(wet?n>>1:n);i++){const a=rnd(0,6.28),v=rnd(5,s*.9);part({x:x+rnd(-s*.3,s*.3),y:y+rnd(-s*.3,s*.3),h:g+rnd(2,s*.5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,rise:rnd(16,34),c:wet?[.74,.77,.8]:i%4?C_SMOKE:C_DARK,c2:wet?[.88,.9,.92]:[.5,.47,.42],ck:.4,s:rnd(s*.4,s*.7),g:s*.6,d:rnd(2.2,3.8),a:.5});}
+  if(grd&&s>8){const C_DIRT=SC[0];for(let i=0;i<Math.min(16,5+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(10,s*1.6);part({x:x+rnd(-3,3),y:y+rnd(-3,3),h:g+2,vx:Math.cos(a)*v*.4,vy:Math.sin(a)*v*.4,vh:rnd(s*3,s*6),f:.5,grav:1,k:'dirt',c:i%2?C_DIRT:SC[1],s:rnd(s*.35,s*.6),g:s*1.1,d:rnd(.9,1.5),a:.75});}
+    for(let i=0;i<Math.min(24,8+(s/2|0));i++){const a=rnd(0,6.28),v=rnd(40,140)*(.5+s/40);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(90,260),c:SC[2],s:rnd(1.6,3.2),f:.85,grav:1,bounce:1,d:rnd(1,1.8)});}}
+  if(grd)for(let i=0;i<Math.min(14,6+(s/4|0));i++){const a=i/7*3.1416+rnd(-.2,.2),v=rnd(s*2,s*3.5);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,f:.08,c:SF==='hard'?[.62,.61,.58]:C_DUST,s:rnd(s*.35,s*.55),g:s*.5,d:rnd(1,1.6),a:.45});}
+  for(let i=0;i<(SF==='hard'?n*2:wet?n>>2:n);i++){const a=rnd(0,6.28),v=rnd(90,260)*(.5+s/60);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(40,200),add:true,c:C_SPARK,s:1.4,f:.6,grav:1,d:rnd(.3,.7)});}
+  if(s>10&&!wet)for(let i=0;i<Math.min(12,s/3|0);i++){const a=rnd(0,6.28),v=rnd(30,130);part({x,y,h:g+2,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(80,220),c:C_DARK,s:rnd(1.4,2.8),f:.85,grav:1,bounce:1,d:rnd(1.2,2.2)});}
   // the fireball lingers and rolls upward, cooling from orange to dark red before the smoke takes over
-  if(s>=14&&!fxPH()){const nb=5;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.2,s*.6),vx:Math.cos(a)*rnd(3,s*.5),vy:Math.sin(a)*rnd(3,s*.5),vh:rnd(10,s*1.1),f:.2,rise:rnd(6,14),add:true,c:[2.4,.9,.22],c2:[.35,.1,.03],ck:.55,s:rnd(s*.3,s*.5),g:s*1.1,d:rnd(.55,.95),a:.6});}}
+  if(s>=14&&!wet&&!fxPH()){const nb=5;for(let i=0;i<nb;i++){const a=rnd(0,6.28),r=rnd(0,s*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(s*.2,s*.6),vx:Math.cos(a)*rnd(3,s*.5),vy:Math.sin(a)*rnd(3,s*.5),vh:rnd(10,s*1.1),f:.2,rise:rnd(6,14),add:true,c:[2.4,.9,.22],c2:[.35,.1,.03],ck:.55,s:rnd(s*.3,s*.5),g:s*1.1,d:rnd(.55,.95),a:.6});}}
   // lingering dust: a low, wide cloud of ground-coloured dust that hangs over the impact and drifts off for several seconds
-  if(gr&&s>=14&&!fxPH()){const th=G&&G.map?(G.map.theme==='snow'?'snow':G.map.theme==='green'?'green':'desert'):'desert',C=DUSTC[th],nd=Math.min(8,4+(s/10|0)),dk=th==='snow'?.92:.78;
+  if(grd&&s>=14&&!fxPH()){const th=G&&G.map?(G.map.theme==='snow'?'snow':G.map.theme==='green'?'green':'desert'):'desert',C=SF==='hard'?DUSTC_HARD:DUSTC[th],nd=Math.min(8,4+(s/10|0)),dk=th==='snow'?.92:.78;
     for(let i=0;i<nd;i++){const a=rnd(0,6.28),r=rnd(s*.2,s*.8);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(4,s*.35),vx:Math.cos(a)*rnd(4,14),vy:Math.sin(a)*rnd(4,14),vh:rnd(0,4),f:.5,rise:rnd(1,4),c:[C[i&1][0]*dk,C[i&1][1]*dk,C[i&1][2]*dk],c2:C[2],ck:.6,s:rnd(s*.9,s*1.4),g:rnd(s*.3,s*.45),d:rnd(6,9),a:th==='snow'?.3:.4});}}
   // heavy ground hits throw a few tumbling chunks of debris (PC only)
-  if(gr&&s>=18&&!big&&!fxPH())chunks(x,y,s*2.2,'#3e3a34',4);
+  if(grd&&s>=18&&!big&&!fxPH())chunks(x,y,s*2.2,SF==='hard'?'#5a5955':'#3e3a34',SF==='hard'?6:4);
   // a column of dark smoke keeps climbing from the biggest blasts long after the fire is out
-  if(gr&&(big||s>=20&&!fxPH())&&inView(x,y,.3)){if(COLS.length>=12)COLS.shift();COLS.push({x,y,g,t:0,d:big?16:rnd(7,10),big:!!big,acc:0,G0:G});}
-  if(big&&!fxPH()){for(let i=0;i<10;i++){const a=rnd(0,6.28),v=rnd(20,s*1.4);part({x,y,h:g+rnd(2,s*.3),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(s*1.2,s*3.2),f:.3,grav:1,rise:rnd(4,10),c:C_DARK,c2:[.2,.18,.16],ck:.5,s:rnd(s*.14,s*.26),g:s*1.1,d:rnd(1.2,2.2),a:.8});}
+  if(grd&&(big||s>=20&&!fxPH())&&inView(x,y,.3)){if(COLS.length>=12)COLS.shift();COLS.push({x,y,g,t:0,d:big?16:rnd(7,10),big:!!big,acc:0,G0:G});}
+  if(big&&!wet&&!fxPH()){for(let i=0;i<10;i++){const a=rnd(0,6.28),v=rnd(20,s*1.4);part({x,y,h:g+rnd(2,s*.3),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(s*1.2,s*3.2),f:.3,grav:1,rise:rnd(4,10),c:C_DARK,c2:[.2,.18,.16],ck:.5,s:rnd(s*.14,s*.26),g:s*1.1,d:rnd(1.2,2.2),a:.8});}
     for(let i=0;i<14;i++){const a=rnd(0,6.28),v=rnd(40,s*3);part({x,y,h:g+rnd(2,6),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(60,s*6),c:i&1?[.16,.14,.12]:[.3,.25,.2],s:rnd(1.5,3.4),f:.7,grav:1,bounce:1,d:rnd(1.2,2.4)});}}
-  scorch(x,y,s);if(gr&&s>=16&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9))crater(x,y,s*1.5);
+  if(!wet)scorch(x,y,s);if(gr&&s>=16&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9))crater(x,y,s*1.5);
   // pressure wave: a pale ring of dust racing outward along the ground; heavy hits leave a fire burning for a few seconds
   if(gr&&s>=14&&SHOCKS.length&&inView(x,y,.4)){const S=SHOCKS[shockI++%SHOCKS.length];S.t=0;S.d=big?.75:.45;S.r0=s*.5;S.r1=s*(big?6.5:4.2);S.a0=big?.6:.42;S.x=x;S.y=y;S.m.position.set(x,g+2.5,y);}
   if(gr&&(s>=20||big)&&groundH(x,y)>(typeof WL==="number"?WL+1:-1e9)){if(FIRES.length>=10)FIRES.shift();FIRES.push({x,y,g,t:0,d:big?9:rnd(4,6.5),r:Math.min(30,s*.45),big:!!big,acc:0});}
@@ -11236,7 +11252,7 @@ function washTick(){for(const w of WASH)if(w.fr!==washFr&&w.m.visible){w.m.visib
    A slow or stopped vehicle leaves none. Purely visual: it reads where the vehicle is drawn and never touches the
    battle or its random numbers. It uses the shared particle pool (like rotor wash) with a cap per frame, spawns fewer
    on phones / low quality and backs off when the screen is already full of smoke. */
-const DUSTC={desert:[[.86,.76,.6],[.8,.69,.53],[.9,.83,.7]],green:[[.6,.55,.45],[.53,.49,.41],[.66,.62,.54]],snow:[[.95,.97,1],[.9,.93,.97],[.97,.98,1]]};
+const DUSTC_HARD=[[.66,.65,.62],[.58,.57,.55],[.74,.73,.7]];const DUSTC={desert:[[.86,.76,.6],[.8,.69,.53],[.9,.83,.7]],green:[[.6,.55,.45],[.53,.49,.41],[.66,.62,.54]],snow:[[.95,.97,1],[.9,.93,.97],[.97,.98,1]]};
 let dustN=0;
 function dustTrail(e,o,dt){if(!o||!o.visible||!(dt>0)||!e.s||!G||!G.map)return;const ud=o.userData,px=o.position.x,pz=o.position.z;
   const raw=ud.tdx==null?0:Math.min(300,Math.hypot(px-ud.tdx,pz-ud.tdz)/dt);ud.tdx=px;ud.tdz=pz;ud.tsp=(ud.tsp||0)+(raw-(ud.tsp||0))*Math.min(1,dt*3);
@@ -11492,21 +11508,23 @@ function mslFallTick(m,dt){const f=m.fall,FT=kind_t(f.kind);if(m.t>=FT){return;}
   if(f.kind==='bomb'&&(!fxPH()||Math.random()<.5))part({x,y,h:h+f.M.L,add:true,c:[2,1.6,1],s:rnd(3,5),d:.08,a:.7});}
 function kind_t(k){return k==='bomb'?1.5:1.25;}
 // ---- the big blast: layered on top of boomFX() for every strike-sized explosion ----
-function megaBoom(x,y,s,big){if(!inView(x,y,.5))return;const ph=fxPH(),S=big?s:s*1.45,g=groundH(x,y),k=ph?.55:1,th=G&&G.map&&G.map.theme==='snow',dust=th?[.86,.88,.9]:[.64,.55,.4],dust2=th?[.7,.72,.75]:[.5,.44,.33];
+function megaBoom(x,y,s,big){if(!inView(x,y,.5))return;const SF=typeof impactSurf==='function'?impactSurf(x,y):'desert',wet=SF==='water',ph=fxPH(),S=big?s:s*1.45,g=wet&&typeof WL==='number'?WL+.5:groundH(x,y),k=ph?.55:1,th=G&&G.map&&G.map.theme==='snow',wf=wet?.45:1,
+    // the wall thrown outward is what the blast hit: white water, grey road dust, snow, or the map's own soil
+    dust=wet?[.86,.9,.95]:SF==='hard'?[.62,.61,.58]:th?[.86,.88,.9]:SF==='green'?[.5,.44,.34]:[.64,.55,.4],dust2=wet?[.7,.78,.86]:SF==='hard'?[.5,.5,.48]:th?[.7,.72,.75]:SF==='green'?[.38,.33,.26]:[.5,.44,.33];
   sfxMega(x,y,S);
-  part({x,y,h:g+S*.4,s:S*3.6,d:.1,add:true,c:[4,3.4,2.4],a:.9});part({x,y,h:g+S*.5,s:S*2,d:.35,add:true,c:[3,1.6,.5],c2:[1,.3,.08],ck:.7,a:.9});flash=Math.min(.3,flash+.12);
+  part({x,y,h:g+S*.4,s:S*3.6,d:.1,add:true,c:[4,3.4,2.4],a:.9});part({x,y,h:g+S*.5,s:S*2*(wet?.6:1),d:.35,add:true,c:[3,1.6,.5],c2:[1,.3,.08],ck:.7,a:.9});flash=Math.min(.3,flash+.12);
   PINGS.push({x,y,r:S*5.2,t:0,d:.8,c:0xffe6bb});                                           // fast bright shock ring on the ground
   // full-circle dust wall racing outward
   {const N=Math.round(30*k);for(let i=0;i<N;i++){const a=i/N*6.2832+rnd(-.1,.1),v=S*rnd(3.6,4.8);part({x:x+Math.cos(a)*S*.25,y:y+Math.sin(a)*S*.25,h:g+rnd(2,5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(2,9),f:.1,rise:rnd(1,3),c:dust,c2:dust2,ck:.5,s:rnd(S*.45,S*.7),g:S*.6,d:rnd(2.2,3.4),a:.62});}}
   // rolling fireball: many orange puffs that climb and cool
-  for(let i=0;i<Math.round(13*k);i++){const a=rnd(0,6.28),r=rnd(0,S*.32);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(S*.1,S*.5),vx:Math.cos(a)*rnd(2,S*.6),vy:Math.sin(a)*rnd(2,S*.6),vh:rnd(S*.5,S*1.7),f:.2,rise:rnd(8,18),add:true,c:[3,1.45,.4],c2:[.55,.13,.04],ck:.55,s:rnd(S*.45,S*.8),g:S*1.1,d:rnd(.7,1.3),a:.75});}
-  for(let i=0;i<Math.round(9*k);i++){const a=rnd(0,6.28),r=rnd(0,S*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(S*.2,S*.6),vx:Math.cos(a)*rnd(2,S*.5),vy:Math.sin(a)*rnd(2,S*.5),vh:rnd(S*.4,S*1.2),f:.25,rise:rnd(10,22),c:[1.7,.75,.22],c2:[.16,.12,.1],ck:.45,s:rnd(S*.5,S*.85),g:S*.9,d:rnd(1.5,2.6),a:.8});}
+  for(let i=0;i<Math.round(13*k*wf);i++){const a=rnd(0,6.28),r=rnd(0,S*.32);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(S*.1,S*.5),vx:Math.cos(a)*rnd(2,S*.6),vy:Math.sin(a)*rnd(2,S*.6),vh:rnd(S*.5,S*1.7),f:.2,rise:rnd(8,18),add:true,c:[3,1.45,.4],c2:[.55,.13,.04],ck:.55,s:rnd(S*.45,S*.8),g:S*1.1,d:rnd(.7,1.3),a:.75});}
+  for(let i=0;i<Math.round(9*k*wf);i++){const a=rnd(0,6.28),r=rnd(0,S*.3);part({x:x+Math.cos(a)*r,y:y+Math.sin(a)*r,h:g+rnd(S*.2,S*.6),vx:Math.cos(a)*rnd(2,S*.5),vy:Math.sin(a)*rnd(2,S*.5),vh:rnd(S*.4,S*1.2),f:.25,rise:rnd(10,22),c:[1.7,.75,.22],c2:wet?[.8,.83,.86]:[.16,.12,.1],ck:.45,s:rnd(S*.5,S*.85),g:S*.9,d:rnd(1.5,2.6),a:.8});}
   // glowing fragments (irregular, small) arcing out, then rocks
-  for(let i=0;i<Math.round(22*k);i++){const a=rnd(0,6.28),v=rnd(30,S*3.2);part({x,y,h:g+4,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(S*2,S*6),f:.5,grav:1,add:true,c:[3,1.6,.5],c2:[1,.3,.1],ck:.6,s:rnd(2,4),d:rnd(.9,1.8),a:.9});}
-  if(!ph)chunks(x,y,S*1.0,'#4a4034',big?8:5);else chunks(x,y,S*.9,'#4a4034',3);
+  for(let i=0;i<Math.round(22*k*wf);i++){const a=rnd(0,6.28),v=rnd(30,S*3.2);part({x,y,h:g+4,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(S*2,S*6),f:.5,grav:1,add:true,c:[3,1.6,.5],c2:[1,.3,.1],ck:.6,s:rnd(2,4),d:rnd(.9,1.8),a:.9});}
+  if(wet){}else if(!ph)chunks(x,y,S*1.0,SF==='hard'?'#5a5955':'#4a4034',big?8:5);else chunks(x,y,S*.9,'#4a4034',3);
   // lingering mushroom column (only a few at a time so a whole salvo stays cheap)
-  if(MUSH.length<4)MUSH.push({x,y,g,S,t:0,acc:0,cap:0});
-  const sc=S*1.5;scorch(x,y,sc);if(g>(typeof WL==='number'?WL+1:-1e9))crater(x,y,S*1.7);
+  if(!wet&&MUSH.length<4)MUSH.push({x,y,g,S,t:0,acc:0,cap:0});
+  const sc=S*1.5;if(!wet)scorch(x,y,sc);if(g>(typeof WL==='number'?WL+1:-1e9))crater(x,y,S*1.7);
   const kd=Math.max(0,1-Math.hypot(x-cam.x,y-cam.y)/(cam.dist*2.3));shake=Math.min(26,shake+S*.3*kd*(ph?.7:1));}
 function mushTick(dt){if(!MUSH.length)return;const ph=fxPH();for(let i=MUSH.length-1;i>=0;i--){const m=MUSH[i];m.t+=dt;const S=m.S,TS=3.4,H=S*5.3;
     if(m.t<TS){m.acc+=dt*(ph?9:17);while(m.acc>=1){m.acc-=1;const q=m.t/TS,h=m.g+q*H*.96,r=S*(.1+.06*Math.sin(q*9));part({x:m.x+rnd(-r,r),y:m.y+rnd(-r,r),h,vx:rnd(-4,4),vy:rnd(-4,4),vh:rnd(0,8),rise:rnd(2,6),c:q<.3?[.5,.28,.12]:[.3,.27,.24],c2:[.52,.5,.47],ck:.7,s:rnd(S*.4,S*.6),g:S*.22,d:rnd(8,11),a:.6});}}
@@ -11742,7 +11760,8 @@ function syncScene(dt){const live=new Set();
         const tp=Math.atan2(fr-bk,2*L),tr=Math.atan2(lf-rt,1.4*L);const v=e.v||0,acc=(v-(ud.pv??v))/Math.max(dt,1e-3);ud.pv=v;
         const yr=angDiff(ud.pyaw2??ud.yaw,ud.yaw)/Math.max(dt,1e-3);ud.pyaw2=ud.yaw;
         ud.sp=(ud.sp||0)+((Math.max(-.05,Math.min(.05,acc*.0011)))-(ud.sp||0))*Math.min(1,dt*6);ud.sr=(ud.sr||0)+((Math.max(-.05,Math.min(.05,yr*v*.0009)))-(ud.sr||0))*Math.min(1,dt*5);
-        o.rotation.order="YZX";o.rotation.z=tp+ud.sp;o.rotation.x=-tr+ud.sr;
+        /* GAME FEEL (q-feel): the hull rocks on its suspension when the gun fires - nose kicks up and settles in two swings (a cannon rocks the whole tank, a machine gun barely moves it), sideways when the turret points off to one side. View only. */let fz=0,fx=0;{const ft=G.t-(e.lastFire||-9);if(ft>=0&&ft<.75){const kw=s.wpn==='cannon'?1:(s.rof||0)>=1?.6:.18,rk=Math.exp(-ft*6.5)*Math.sin(ft*17)*.05*kw,da=(e.tang??e.va)-e.va;fz=rk*Math.cos(da);fx=rk*Math.sin(da);}}ud.rock=fz;
+        o.rotation.order="YZX";o.rotation.z=tp+ud.sp+fz;o.rotation.x=-tr+ud.sr+fx;
         if(v>2)o.position.y+=Math.sin(G.t*23+e.id)*.12*Math.min(1,v/40);}
       if(e.kind==='heli'){const ud=o.userData;o.rotation.order='YXZ';const mv=(G.t-(e.mv||-9)<.25)||(e.mvC>0);const prev=ud.pyaw??ud.yaw;let tr=ud.yaw-prev;tr=Math.atan2(Math.sin(tr),Math.cos(tr))/Math.max(dt,1e-3);ud.pyaw=ud.yaw;
         const hv=e.v||0,ha=(hv-(ud.phv??hv))/Math.max(dt,1e-3);ud.phv=hv;ud.pt=(ud.pt||0)+((e.landed?0:Math.max(-.22,Math.min(.3,.04+hv/Math.max(60,e.s.spd)*.24-ha*.003)))-(ud.pt||0))*Math.min(1,dt*1.8);ud.rl=(ud.rl||0)+((e.landed?0:Math.max(-.32,Math.min(.32,tr*.35)))-(ud.rl||0))*Math.min(1,dt*2.5);
