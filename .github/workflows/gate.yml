@@ -10,8 +10,8 @@ permissions:
   contents: write
   statuses: write
 concurrency:
-  group: gate-${{ github.ref }}
-  cancel-in-progress: true
+  group: gate-${{ github.ref }}-${{ startsWith(github.ref, 'refs/heads/gate/') && 'x' || github.sha }}   # a push to main is never cancelled by the next push (main-gate.yml)
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/heads/gate/') }}
 jobs:
   test:
     runs-on: ubuntu-latest
