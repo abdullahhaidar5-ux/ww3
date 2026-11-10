@@ -134,7 +134,7 @@ async function skirmishPicks(page, touch) {
   await page.evaluate(m => { initAudio(); setup.p = 'IR'; setup.a = 'US'; setup.others = ['RU', 'CN']; const s = document.getElementById('mapSel'); s.value = m; s.onchange(); }, MAP);
   await waitFor(page, m => !!PREV[m], MAP, 30000, 'the map preview');
   await page.evaluate(() => { if (typeof menuGo === 'function') menuGo('c-players'); });   // the new menu keeps the player count on its Players screen
-  await page.locator('#aiN button[data-n="3"]').click();
+  await page.evaluate(() => document.querySelector('#aiN button[data-n="3"]').click());   // the numbered buttons are hidden behind the Add/Remove computer buttons
   await page.waitForTimeout(200);
   const n = await page.evaluate(() => skSides().length);
   if (n !== 4) throw new Error('expected 4 sides after choosing 3 AIs, got ' + n);
