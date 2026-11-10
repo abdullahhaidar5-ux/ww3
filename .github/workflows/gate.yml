@@ -73,7 +73,7 @@ jobs:
             touch)          [ -f orch/touch.mjs ] || { echo "FAIL: orch/touch.mjs missing - this branch predates it; merge origin/main"; exit 1; }
                             # touch controls, then phone battle loading (WebKit iPhone 13: 3 maps + a lost graphics context)
                             ( r=0; node orch/touch.mjs || r=1; node orch/phoneload.mjs --lose --timeout 300 || r=1; exit $r ) ;;
-            audio)          f=$(ls orch/audio*.mjs 2>/dev/null | head -1); [ -n "$f" ] && node "$f" || echo "SKIP audio (no test)" ;;
+            audio)          f=$(ls orch/audio*.mjs 2>/dev/null | head -1); if [ -n "$f" ]; then node "$f" && node orch/mixtest.mjs; else echo "SKIP audio (no test)"; fi ;;
             cfclient)       # every Cloudflare-battle browser test: cfbattle (server test hooks) and cfclient (Play online flow)
                             ( r=0; n=0; for f in $(ls orch/cfbattle*.mjs orch/cfclient*.mjs 2>/dev/null); do n=1; node "$f" || r=1; done
                               [ $n = 1 ] || echo "SKIP cfclient (no test)"; exit $r ) ;;
