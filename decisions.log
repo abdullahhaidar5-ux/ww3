@@ -1,0 +1,6 @@
+menu items ["Grand campaign","Conquest","Battle","Missions","Tutorial","Play online","Load game","Settings","Extras","Credits","Random battlefield","Next: Nation →"]
+FAIL: turn wording (EU4 real time, no turns): 13zs-gcovert.js:44 ' months, but it can be exposed and then the world turns against the sender. Cou
+FAIL: turn wording (EU4 real time, no turns): 13zz-gnuke.js:73 '?</h2><div style="line-height:1.5">Warheads hit within minutes; early-warning r
+FAIL: main menu order is Grand campaign · Conquest · Battle · Missions
+FAIL: decisions run crashed: page.evaluate: TypeError: Cannot read properties of null (reading 't') |     at fearlessT (http://127.0.0.1:35017/index.html:7506:87) |     at eval (eval at evaluate (:311:30), <anonymous>:1:184)
+DECISIONS FAIL (4)
