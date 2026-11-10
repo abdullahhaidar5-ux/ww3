@@ -1,0 +1,65 @@
+# Nightly balance report (costs no assistant usage): AI-vs-AI Conquest (Balanced, Normal AI) in 6 shards, merged by
+# orch/nightly_balance.py into orch/reports/balance-latest.md + balance-history.json on the `reports` branch, and ONE
+# issue ("Balance: nations outside 45-55%") that is updated, never duplicated. Only the built-in GITHUB_TOKEN is used.
+name: Nightly balance
+on:
+  schedule: [{ cron: '23 3 * * *' }]   # 03:23 UTC, off-peak
+  workflow_dispatch: {}
+permissions:
+  contents: write
+  issues: write
+jobs:
+  shard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix: { sh: ['0/6', '1/6', '2/6', '3/6', '4/6', '5/6'] }
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: |
+          mkdir -p out; n=$(echo '${{ matrix.sh }}' | cut -d/ -f1)
+          timeout 50m node orch/aitourney.mjs --rounds 1 --diff 1 --shard '${{ matrix.sh }}' --jobs $(nproc) --out out/s$n.json > out/s$n.log 2>&1 || true
+          tail -5 out/s$n.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nb-${{ strategy.job-index }}
+          path: out/*.json
+  report:
+    needs: shard
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: main }
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: 'nb-*'
+          path: shards
+      - name: Build report
+        run: |
+          git fetch origin reports 2>/dev/null && git worktree add rep origin/reports || { git worktree add --orphan -b reports rep 2>/dev/null || git worktree add --detach rep; }
+          mkdir -p rep/orch/reports
+          python3 orch/nightly_balance.py shards rep/orch/reports
+      - name: Commit to reports branch
+        run: |
+          cd rep; git config user.name nightly-balance; git config user.email nightly-balance@users.noreply.github.com
+          git add orch/reports; git diff --cached --quiet && exit 0
+          git commit -qm "Nightly balance $(date -u +%F)"; git push -q origin HEAD:refs/heads/reports
+      - name: Update the one issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          T='Balance: nations outside 45-55%'
+          N=$(gh issue list --state open --search "\"$T\" in:title" --json number,title -q "[.[]|select(.title==\"$T\")][0].number // empty")
+          if [ -s rep/orch/reports/issue.md ]; then
+            if [ -n "$N" ]; then gh issue comment "$N" --body-file rep/orch/reports/issue.md; else gh issue create --title "$T" --body-file rep/orch/reports/issue.md; fi
+          elif [ -n "$N" ]; then gh issue close "$N" --comment "All nations inside 45-55% in the latest nightly run."; fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: balance-latest
+          path: rep/orch/reports/
