@@ -512,3 +512,9 @@ laneA 2026-11-07 RG3 slice 2 spies→covert actions: Sabotage ($600, 3 months of
 2026-11-10 Syria (SY) now has its own Levantine-Arabic soldier voices instead of borrowing the Lebanese sheet — orch/voicesV
 2026-11-10 Palestine Islamic Brigade (OB) now has its own Palestinian-Arabic soldier voices — orch/voicesV
 2026-11-10 Jordan (JO) and the Desert Islamic Faction (BI) now have their own Arabic soldier voices (Jordanian and Gulf wording) — orch/voicesV
+2026-11-10 Oman (OM) now has its own Omani-Gulf-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
+2026-11-10 Kuwait (KW) now has its own Kuwaiti-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
+2026-11-10 Libya (LY) now has its own Libyan-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
+2026-11-10 Sudan (SD) now has its own Sudanese-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
+2026-11-10 Algeria (DZ) now has its own Algerian-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
+2026-11-10 Morocco (MA) now has its own Moroccan-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
