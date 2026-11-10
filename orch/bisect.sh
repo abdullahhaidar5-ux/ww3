@@ -24,7 +24,8 @@ done
 [ -z "$GOOD" ] && GOOD=$(git rev-list --first-parent -n 40 "$BAD" | tail -n 1)
 git bisect start "$BAD" "$GOOD" >/dev/null
 export -f run_test; export T
-git bisect run bash -c 'run_test >/dev/null 2>&1' >/tmp/bisect.log 2>&1
+git bisect run bash -c 'run_test > /tmp/step.log 2>&1; rc=$?; { echo "== $(git rev-parse --short HEAD) rc=$rc"; tail -4 /tmp/step.log; } >> /tmp/steps.log; exit $rc' >/tmp/bisect.log 2>&1
+cat /tmp/steps.log 1>&2 2>/dev/null || true
 F=$(git rev-parse refs/bisect/bad 2>/dev/null || git rev-parse HEAD)
 git bisect reset >/dev/null 2>&1
 echo "BISECT $F $(git log -1 --format='%an | %s' "$F") (good end ${GOOD:0:10})"
