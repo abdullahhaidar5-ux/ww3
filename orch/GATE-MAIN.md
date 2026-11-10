@@ -15,3 +15,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-10 23:44Z 55732656 **RED** (27 gates) failing: cfclient — Queue: nightly runner starts Words
 - 2026-11-10 23:48Z 1bbc4ba6 **RED** (27 gates) failing: cfclient,mpsync — Voices: Oman, Kuwait, Libya, Sudan, Algeria, Morocco get their own Ara
 - 2026-11-10 23:49Z 12457237 **RED** (27 gates) failing: cfclient — Hard AI: goes round the weak side, guards its artillery, fields strike
+- 2026-11-10 23:54Z 01376a0c **RED** (27 gates) failing: cfclient — Queue: Smarter computer opponent shipped
