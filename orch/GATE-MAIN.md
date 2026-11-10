@@ -13,3 +13,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-10 21:41Z 7bd81b93 **RED** (27 gates) failing: cfclient,smooth-mp,tutorial — Queue: campaign runner starts Proxy warfare
 - 2026-11-10 22:20Z b4686e1e **RED** (27 gates) failing: audio,cfclient,migrate-down — tutorial test: aim at the soldier where he is now (step 9 retake), sco
 - 2026-11-10 23:44Z 55732656 **RED** (27 gates) failing: cfclient — Queue: nightly runner starts Words
+- 2026-11-10 23:48Z 1bbc4ba6 **RED** (27 gates) failing: cfclient,mpsync — Voices: Oman, Kuwait, Libya, Sudan, Algeria, Morocco get their own Ara
