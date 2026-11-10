@@ -26,4 +26,6 @@ jobs:
           node orch/smooth.mjs --profile ${{ matrix.p }} --update-baseline 2>&1 | tail -30
           cp orch/out/smooth.json smooth-${{ matrix.p }}-${{ matrix.i }}.json
       - uses: actions/upload-artifact@v4
-        with: { name: smooth-${{ matrix.p }}-${{ matrix.i }}, path: smooth-${{ matrix.p }}-${{ matrix.i }}.json }
+        with:
+          name: smooth-${{ matrix.p }}-${{ matrix.i }}
+          path: smooth-${{ matrix.p }}-${{ matrix.i }}.json
