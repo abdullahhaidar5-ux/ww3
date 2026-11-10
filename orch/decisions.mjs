@@ -50,6 +50,10 @@ for (const f of srcFiles.filter(f => /^13/.test(f))) SRC[f].split('\n').forEach(
   ck(/k==='a'&&\(e\.ctrlKey\|\|e\.metaKey\)[^\n]*selectArmy\(\)/.test(u), 'Ctrl+A no longer selects the whole army in battle');
   ck(/k==='q'[^\n]*CROT\.hold=true/.test(u) && /function camRotSnap/.test(u), 'Q no longer rotates the battle camera');
   ck(!/\(Q\)|Q: army/.test(u), 'a tooltip/hint still says Q selects the army'); }
+// 2b. old names (Abdullah 2026-11-07/-09 renames; polish "Words"): no player-visible string literal may carry a retired name. Comments and save-compat code are not strings.
+{ const lit = /'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`((?:[^`\\]|\\.)*)`/g, old = /Mountain Shias|Coffee Shias|River Shias|Olive Brigades|Black Desert Insurgency|End turn|\bClassic\b/;
+  for (const f of srcFiles) SRC[f].split('\n').forEach((l, i) => { const t = l.trim(); if (t.startsWith('//') || t.startsWith('/*') || t.startsWith('*')) return; const c = l.replace(/\/\/ .*$/, ''); let m; lit.lastIndex = 0;
+    while ((m = lit.exec(c))) { const s = m[1] ?? m[2] ?? m[3]; if (old.test(s)) ck(false, 'words: retired name in a player-visible string, ' + f + ':' + (i + 1) + ' "' + s.slice(0, 50) + '"'); } }); }
 // 3. Main menu order + naming (2026-11-06 05:58): Grand campaign · Conquest · Missions · Tutorial; no Classic.
 { const m = [...SRC['14-menu.js'].matchAll(/^\s*item\('([^']+)'/gm)].map(x => x[1]).slice(0, 4);
   ck(m.join('|') === 'Grand campaign|Conquest|Missions|Tutorial', 'main menu order is ' + m.join(' · '));
