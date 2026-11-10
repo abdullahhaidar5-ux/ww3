@@ -247,3 +247,5 @@ Every token an agent reads counts against Abdullah's plan. Work like this:
 
 - 2026-11-10 loadF: CLAUDE.md split; this file created. 2026-11-09 22:33 Abdullah chose "All" of: faster loading (grand campaign loads on demand), automatic server updates, shorter helper rules.
 - 2026-11-09 Abdullah said **yes** to automatic server updates: a GitHub Actions workflow moves `servers-live` to a main commit when all gates are green and it changed simulation files (orch/AUTODEPLOY.md); replaces "open a main → servers-live PR for Abdullah to merge". Kill switch: orch/AUTODEPLOY = off.
+
+- **Iran voices stay as they are** (Abdullah 2026-11-10 06:17, after listening to orch/voices-manly/ir-compare.html — current vs F5-Persian options A/B: "Keep current"). Do not replace vo/IR.mp3 with the F5-Persian options; the unused `f5fa` engine in orch/vo/render.py may stay. Re-open only if he asks or a clearly better free Persian voice appears (send him a comparison page first).

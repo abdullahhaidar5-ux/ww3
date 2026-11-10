@@ -29,6 +29,6 @@ jobs:
           npm i --no-save --no-audit --no-fund playwright@1.63.0 >/dev/null
           npx playwright install --with-deps chromium >/dev/null
           (cd server && npm ci --no-audit --no-fund >/dev/null) || true
-          cp orch/bisect.sh /tmp/bisect.sh; R=$(BISECT_GOOD=$GOOD bash /tmp/bisect.sh "$BAD" "$T" | tail -1)
+          cp orch/bisect.sh /tmp/bisect.sh; R=$(BISECT_GOOD=$GOOD bash /tmp/bisect.sh "$BAD" "$T" 2>&1 | tee /tmp/bis.out | tail -1); grep -a -E "^(==|SMOOTH|  -|  \(re)" /tmp/bis.out | tail -60
           echo "$R"; echo "Bisect $T: $R" >> "$GITHUB_STEP_SUMMARY"
           gh api "repos/$GITHUB_REPOSITORY/commits/$BAD/comments" -f body="Manual bisect of **$T** between ${GOODSHA} and ${BAD:0:10}: first bad commit → \`${R#BISECT }\`." >/dev/null || true

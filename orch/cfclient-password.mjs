@@ -93,6 +93,7 @@ const pwRx = new RegExp([PW, encodeURIComponent(PW), Buffer.from(PW).toString('b
 // type into the password prompt and press its Join button, like a player
 async function answer(page, pw) {
   await waitFor(page, () => !!document.getElementById('joinpw'), null, 20000, 'the password prompt');
+  await page.evaluate(() => { if (typeof menuGo === 'function') menuGo('online'); });
   await page.fill('#joinpw', pw);
   await page.click('#joinpwgo');
 }
