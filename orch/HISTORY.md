@@ -518,3 +518,4 @@ laneA 2026-11-07 RG3 slice 2 spies→covert actions: Sabotage ($600, 3 months of
 2026-11-10 Sudan (SD) now has its own Sudanese-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
 2026-11-10 Algeria (DZ) now has its own Algerian-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
 2026-11-10 Morocco (MA) now has its own Moroccan-Arabic soldier voices instead of a borrowed sheet — orch/voicesV
+2026-11-10 UK, Australia and Canada now have their own English soldier voices and casts (own idiom: wilco, righto, eh) instead of the browser voice — orch/voicesV
