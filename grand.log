@@ -1,0 +1,6 @@
+ERRS 
+page.waitForFunction: Timeout 60000ms exceeded.
+    at /home/runner/work/ww3/ww3/orch/grandtest.mjs:40:14
+
+GRANDTEST FAIL
+  ✗ page.waitForFunction: Timeout 60000ms exceeded.
