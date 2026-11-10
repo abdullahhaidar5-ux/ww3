@@ -6401,4 +6401,5 @@ function gpxEsc(ev){if(ev.key!=='Escape')return;if(typeof G!=='undefined'&&G&&!G
   const gs=document.getElementById('grandScreen'),cs=document.getElementById('campScreen');if(!gpxShown(gs)&&!gpxShown(cs))return;
   const r=gpxCloseTop();if(r){ev.preventDefault();ev.stopImmediatePropagation();}}
 try{gpxCss();if(!window._gpx){window._gpx=1;addEventListener('keydown',gpxEsc,true);
-  let q=0;const run=()=>{q=0;try{gpxDress();}catch(e){}};new MutationObserver(()=>{if(!q)q=requestAnimationFrame(run);}).observe(document.body,{childList:true,subtree:true});}}catch(e){console.warn('gpanels',e);}
+  /* dressed in the same moment the panel appears (observer callbacks run before the next paint), so a panel is never seen without its frame - also when frames are slow */
+  let busy=0;new MutationObserver(()=>{if(busy)return;busy=1;try{gpxDress();}catch(e){}busy=0;}).observe(document.body,{childList:true,subtree:true});}}catch(e){console.warn('gpanels',e);}
