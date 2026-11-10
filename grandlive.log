@@ -1,0 +1,13 @@
+1.0s stale save in menu {"cont":false,"warn":false}
+GRANDLIVE FAIL
+  menu does not explain why the old campaign cannot continue
+  path: Grand campaign menu has no New campaign
+
+GRANDLIVE2 FAIL
+  ✗ no button New campaign
+GRANDRT FAIL
+  error: no button button ^New campaign
+OCC ERROR page.waitForFunction: Timeout 60000ms exceeded.
+LEG ERROR page.waitForFunction: Timeout 60000ms exceeded.
+GNETTEST FAIL
+  error: no button button ^Create lobby$
