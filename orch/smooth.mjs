@@ -333,7 +333,8 @@ function judge(name, r, base) {
   const bad = [];
   for (const [bad1, msg] of ABS[name](r)) if (bad1) bad.push(msg);
   if (base) {
-    const scale = Math.max(.5, Math.min(2.5, (r.bench || 1) / (base.bench || r.bench || 1)));
+    // a faster CPU-speed check never tightens the limits on the CI baseline: on GitHub's runners the check does not predict the frame tail (software GL, shared hosts), a lucky fast runner made the gate fail on unchanged code (2026-11-10)
+    const scale = Math.max(base.__ci ? 1 : .5, Math.min(2.5, (r.bench || 1) / (base.bench || r.bench || 1)));
     for (const [key, label, ratio, slack, cpu, higher] of BUDGETS[name]) {
       const b = base[key], v = r[key]; if (typeof b !== 'number' || typeof v !== 'number') continue; const s = cpu ? scale : 1;
       if (higher) { const lim = b / s * ratio; if (v < lim) bad.push(`${label} fell to ${v} (baseline ${b}, allowed down to ${r2(lim)})`); }
@@ -352,7 +353,7 @@ for (const name of ['pc', 'phone', 'mp']) {
   if (!WANT.includes('all') && !WANT.includes(name)) continue;
   let r = null, bad = [];
   for (let attempt = 1; attempt <= (UPDATE ? 1 : 2); attempt++) {
-    try { r = name === 'mp' ? await mpProfile() : await battleProfile(name); bad = judge(name, r, bk[name]); }
+    try { r = name === 'mp' ? await mpProfile() : await battleProfile(name); bad = judge(name, r, bk[name] && (bk === base.ci ? { ...bk[name], __ci: 1 } : bk[name])); }
     catch (e) { r = r || { name, errs: [] }; bad = ['could not run: ' + String(e.message || e).split('\n')[0]]; }
     console.log(`[${((Date.now() - t0) / 1000).toFixed(0)}s] ${name} attempt ${attempt}: ${bad.length ? 'REGRESSED' : 'ok'}`);
     if (!bad.length) break;
