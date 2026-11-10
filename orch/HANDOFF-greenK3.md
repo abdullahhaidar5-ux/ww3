@@ -1,0 +1,6 @@
+# HANDOFF greenK3 (2026-11-10 night, Claude)
+- Nothing landed on main yet.
+- Piece 1 (polishE: new main menu, one online screen, first-steps hints, Battle tutorial, join-by-code fix) is merged onto main 2a6cf804 on branch `orch/greenK3` (commit 7f9d5a1c, builds, `build.py --check` OK; conflicts only in decisions.mjs [kept both guards], index.html/grand/sw.js [rebuilt]). Gate pushed as gate/7f9d5a1c86 at 21:59Z.
+- GitHub's runner queue did not start ANY job for ~45 min (Ship gate x3, Main gate, Gate bisect x2 all "queued"): no gate result exists, so nothing was judged and nothing landed.
+- Next step: when `gh api repos/abdullahhaidar5-ux/ww3/commits/7f9d5a1c/statuses` shows results, compare with main's list (main red lately: cfclient, smooth-mp, tutorial, sometimes audio). polishE should fix cfclient (startpick). If no new red -> `git push origin orch/greenK3:main` after rebasing on origin/main (rebuild on index/grand/sw conflicts), tick QUEUE, HISTORY line already included.
+- Then in order: winfix, greenK-snap, dashI, q-look, q-feel (orch/greenK-qfeel), polishP2, q-words (already on main), q-ai (already on main: 12457237), dashJ, safetyH, c-proxy-warfare. Do not push many gates while the queue is jammed.
