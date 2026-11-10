@@ -16449,6 +16449,7 @@ function hudTick(force){try{hudDeclutter();}catch(e){}if(!G||!G.teams||!G.teams[
 const HD_KEYS=HUD_OV.map(q=>q[0]);
 /* ---------- What's new (one screen, newest first) ---------- */
 const WHATS_NEW=[
+ ['Cleaner sound','The sound is mixed properly now: even the biggest fight no longer crackles or distorts, unit voices stay clear over the guns (explosions and music step back a little while a soldier speaks), every button and menu item gives a soft click, and each battlefield has a quiet background of its own - dry desert wind, wind in the trees, or a thin winter howl - with the muffled thump of fighting elsewhere on the map.'],
  ['Three games: Grand campaign, Conquest, Battle','The main menu now has three separate games. Grand campaign runs a whole empire on the world map. Conquest is the town-and-tax battle with a full base. NEW: Battle plays like C&C Generals - you start with a Command Center and a dozer, supply trucks bring in your money, you build power, barracks, a War Factory and an airfield, tech up, earn general\'s points for powers, and win by destroying every enemy building. Pick Conquest or Battle in the online lobby too. Missions and the Tutorial are still in the menu, just smaller.'],
  ['Online grand campaign','Grand campaign → Play with friends: pick a scenario and your nation, then share the invite code or link; friends pick a nation and tick Ready in the lobby, you press Start. Or Grand campaign → Join friends to enter theirs by code. Each friend leads a free nation (the AI runs the rest), sees the world through its own fog, and anyone can pause; the host sets the speed.'],
  ['Morale styles','Every nation now fights with one of four styles: Zealous (slow to break, banners rally the faithful, heavier losses), Professional (steady under artillery, rally fast near officers), Home defenders (much braver on home turf) and Firepower-reliant (break sooner, but stronger fire support). The style shows on the nation pick screen and in the Encyclopedia.'],
@@ -16840,7 +16841,10 @@ function audioRebuild(){const old=AU.ctx;if(!old||old.state!=='closed'||(AU.rebu
   initAudio();if(!AU.ctx)return;try{if(G&&!G.over&&G.teams&&G.teams[ME])startMusic(G.teams[ME].fac);else menuMusic();}catch(e){}}
 function initAudio(){try{if(AU.ctx&&AU.ctx.state==='closed')audioRebuild();if(!AU.ctx){const c=audioCtor();if(!c)return;AU.ctx=c;
     try{if(c.addEventListener)c.addEventListener('statechange',audioState);else c.onstatechange=audioState;}catch(e){}
-    AU.master=c.createGain();AU.master.gain.value=.75;const comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.ratio.value=4;comp.attack.value=.004;comp.release.value=.25;AU.master.connect(comp);comp.connect(c.destination);
+    AU.master=c.createGain();AU.master.gain.value=.68;const comp=c.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=5;comp.attack.value=.004;comp.release.value=.25;AU.master.connect(comp);// final stage (sound mix): the battle mix, the voice bus and the UI bus meet here; a fast limiter then a soft clip, so nothing ever clips however big the fight
+    AU.out=c.createGain();AU.lim=c.createDynamicsCompressor();AU.lim.threshold.value=-3;AU.lim.knee.value=0;AU.lim.ratio.value=20;AU.lim.attack.value=.001;AU.lim.release.value=.09;{const n=2049,cv=new Float32Array(n),k=.82,r=.17;for(let i=0;i<n;i++){const x=i/(n-1)*2-1,a=Math.abs(x);cv[i]=(a<=k?a:k+r*Math.tanh((a-k)/r))*(x<0?-1:1);}const ws=c.createWaveShaper();ws.curve=cv;try{ws.oversample='2x';}catch(e){}AU.out.connect(AU.lim);AU.lim.connect(ws);ws.connect(c.destination);}comp.connect(AU.out);
+    // voices: own bus, evened out a little so quiet and shouted lines both carry over the guns; UI clicks: dry, never ducked
+    AU.vox=c.createGain();AU.vox.gain.value=.92;{const vc=c.createDynamicsCompressor();vc.threshold.value=-12;vc.knee.value=6;vc.ratio.value=3.5;vc.attack.value=.003;vc.release.value=.12;const pr=c.createBiquadFilter();pr.type='peaking';pr.frequency.value=2600;pr.Q.value=.9;pr.gain.value=2.5;AU.vox.connect(pr);pr.connect(vc);vc.connect(AU.out);}AU.ui=c.createGain();AU.ui.connect(AU.out);
     AU.rev=c.createConvolver();AU.rev.buffer=impulse(c,1.8,3.2);AU.revIn=c.createGain();AU.revIn.gain.value=.55;AU.revIn.connect(AU.rev);AU.rev.connect(AU.master);
     AU.sfxD=c.createGain();AU.sfxD.connect(AU.master);AU.musD=c.createGain();AU.musD.connect(AU.master);AU.sfx=c.createGain();AU.sfx.connect(AU.sfxD);AU.sfxRev=c.createGain();AU.sfxRev.gain.value=.35;AU.sfx.connect(AU.sfxRev);AU.sfxRev.connect(AU.revIn);
     AU.mus=c.createGain();AU.mus.gain.value=.19;{const lo=c.createBiquadFilter();lo.type='lowshelf';lo.frequency.value=110;lo.gain.value=3;const mid=c.createBiquadFilter();mid.type='peaking';mid.frequency.value=420;mid.Q.value=.8;mid.gain.value=-2.5;const hi=c.createBiquadFilter();hi.type='highshelf';hi.frequency.value=7000;hi.gain.value=2.5;const gl=c.createDynamicsCompressor();gl.threshold.value=-18;gl.ratio.value=2.5;gl.attack.value=.02;gl.release.value=.3;AU.mus.connect(lo);lo.connect(mid);mid.connect(hi);hi.connect(gl);gl.connect(AU.musD);}AU.musRev=c.createGain();AU.musRev.gain.value=.08;AU.mus.connect(AU.musRev);AU.musRev.connect(AU.revIn);AU.musBus=AU.mus;
@@ -16854,7 +16858,7 @@ function auOn(){return !!(AU.ctx&&AU.ctx.state==='running');}
 // Martyr banner raised by me or an ally: the music swells ~+3 dB for 6 s (soft attack/release), at most once per 20 s. Nobody else hears it.
 function martyrSwell(team){try{if(!AU.ctx||!AU.musicOn||!AU.mus||!G||!ally(team,ME))return;const n=performance.now();if(n-(AU.swellT||0)<20000)return;AU.swellT=n;const c=AU.ctx,t=c.currentTime,g=AU.musBus.gain;g.setTargetAtTime(musBase()*1.41,t,.8);g.setTargetAtTime(musBase(),t+6,1.2);}catch(e){}}
 function musBase(){return .19*(SET.mus/70);}
-function applyAudio(){if(AU.ctx){AU.sfx.gain.value=AU.sfxOn?SET.fx/100:0;AU.musBus.gain.value=AU.musicOn?musBase():0;}const set=(id,on,l)=>{const b=$(id);if(b){b.textContent=l+(on?' on':' off');b.classList.toggle('on',on);}};set('aMus',AU.musicOn,'Music');set('aSfx',AU.sfxOn,'Sound');set('aVoc',AU.voiceOn,'Voices');}
+function applyAudio(){if(AU.ctx){AU.sfx.gain.value=AU.sfxOn?SET.fx/100:0;if(AU.ui)AU.ui.gain.value=AU.sfxOn?Math.min(1,SET.fx/100):0;AU.musBus.gain.value=AU.musicOn?musBase():0;}const set=(id,on,l)=>{const b=$(id);if(b){b.textContent=l+(on?' on':' off');b.classList.toggle('on',on);}};set('aMus',AU.musicOn,'Music');set('aSfx',AU.sfxOn,'Sound');set('aVoc',AU.voiceOn,'Voices');}
 function spatial(x,y){if(!G||!CAM)return null;const d=Math.hypot(x-cam.x,y-cam.y),r=cam.dist*1.25;if(d>r*1.8)return null;const v=Math.max(0,1-d/(r*1.8))*Math.pow(900/cam.dist,.5);TMP.set(x,0,y).project(CAM);return{v,pan:Math.max(-1,Math.min(1,TMP.x*.8)),far:Math.min(1,d/(r*1.8))};}
 function bus(sp){const c=AU.ctx,g=c.createGain();g.gain.value=sp.v;let n=g;if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=sp.pan;g.connect(p);n=p;}const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=900+16000*Math.pow(1-sp.far,1.8);
   // battle sound in 3D (realism): far fire is a muffled low rumble (high end rolled off, low end lifted), close fire a sharp crack
@@ -16864,13 +16868,13 @@ function limit(k,n,win=.12){const t=AU.ctx.currentTime;const a=AU.rate[k]=(AU.ra
 function nz(dst,t,dur,type,f1,f2,gain,q=.8,src){const c=AU.ctx,s=c.createBufferSource();s.buffer=src||AU.noise;s.loop=true;const f=c.createBiquadFilter();f.type=type;f.frequency.setValueAtTime(f1,t);if(f2)f.frequency.exponentialRampToValueAtTime(f2,t+dur);f.Q.value=q;
   const g=c.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(gain,t+.004);g.gain.exponentialRampToValueAtTime(.0005,t+dur);s.connect(f);f.connect(g);g.connect(dst);s.start(t,Math.random()*1.5);s.stop(t+dur+.05);}
 function osc(dst,t,type,f1,f2,dur,gain,att=.003){const c=AU.ctx,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f1,t);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+dur);g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(gain,t+att);g.gain.exponentialRampToValueAtTime(.0005,t+dur);o.connect(g);g.connect(dst);o.start(t);o.stop(t+dur+.05);}
-function sfxShot(x,y,s){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02)return;if(!limit('all',typeof fxPH==='function'&&fxPH()?7:14,.15))return;const t=AU.ctx.currentTime+Math.random()*.01;
+function sfxShot(x,y,s){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02){AU.farH=Math.min(8,(AU.farH||0)+(s>8?.5:.1));return;}if(!limit('all',typeof fxPH==='function'&&fxPH()?7:14,.15))return;const t=AU.ctx.currentTime+Math.random()*.01;
   const rec=sfxEnsure();
   if(s<=5){if(!limit('gun',6))return;const b=bus(sp);const n=1+(Math.random()*3|0);if(rec){for(let i=0;i<n;i++)sfxClip(n>2&&Math.random()<.5?'mg':'rifle',b,.9,1,i*.075+sp.far*.12);return;}for(let i=0;i<n;i++){const ti=t+i*.075;nz(b,ti,.05,'highpass',1600,0,.5,.7);nz(b,ti,.09,'bandpass',900+Math.random()*400,300,.35,1.2);osc(b,ti,'sine',190,70,.05,.25);}}
   else if(s<=8){if(!limit('msl',3))return;const b=bus(sp);if(rec){sfxClip('rocket',b,.8,1,sp.far*.15);return;}nz(b,t,.08,'highpass',2500,0,.4);nz(b,t,.9,'bandpass',350,3200,.32,1.6);osc(b,t,'sawtooth',90,40,.5,.06);}
   else{if(!limit('can',3))return;const b=bus(sp);if(rec){sfxClip('cannon',b,1.1,s>14?.88:1,sp.far*.2);return;}nz(b,t,.025,'highpass',3000,0,.8);osc(b,t,'sine',95,30,.55,.9);nz(b,t,.5,'lowpass',2200,180,.7,1);nz(b,t+.02,1.2,'lowpass',600,90,.25,.5,AU.brown);}}
 function sfxBoom(x,y,s,big){if(auOn()&&!AU.sfxOn){const sp=spatial(x,y);if(sp&&sp.v>=.02)AU.heat=Math.min(1,AU.heat+(big?.25:.06));return;}if(!auOn())return; // with sound effects off, nearby explosions still tell the music the fighting started
-  const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('boom',big?3:4,.15))return;const t=AU.ctx.currentTime,k=Math.min(1,.3+s/40)*(big?1.3:1),d=Math.min(3,.6+s/22);const b=bus(sp);
+  const sp=spatial(x,y);if(!sp||sp.v<.02){AU.farH=Math.min(8,(AU.farH||0)+(big?2:.6));return;}if(!limit('boom',big?3:4,.15))return;const t=AU.ctx.currentTime,k=Math.min(1,.3+s/40)*(big?1.3:1),d=Math.min(3,.6+s/22);const b=bus(sp);
   if(sfxEnsure()){sfxClip(big||s>26?'boomL':'boomS',b,(big?1.1:.9)*Math.min(1.2,.6+k),big?.94:1,sp.far*.3);AU.heat=Math.min(1,AU.heat+(big?.25:.06));return;}
   nz(b,t,.04,'highpass',2000,0,.9*k);osc(b,t,'sine',big?62:85,24,d*.9,1.1*k,.006);nz(b,t,d,'lowpass',big?1600:2400,120,.9*k,.7);nz(b,t+.03,d*1.4,'lowpass',500,60,.5*k,.5,AU.brown);
   for(let i=0;i<(big?14:6);i++){const ti=t+.08+Math.random()*d*.6;nz(b,ti,.03+Math.random()*.04,'bandpass',1500+Math.random()*3000,0,.12*k*Math.random(),3);}
@@ -16916,7 +16920,7 @@ function sfxTheatre(){const m=G&&G.map;if(!AU.ctx||!m||SFX.th===m)return;SFX.th=
   else{b=impulse(c,1.5,4.5);AU.thIn.gain.value=.3;}
   AU.thRev.buffer=b;}
 // voices duck music and effects briefly
-function duck(){const c=AU.ctx;if(!c||!AU.sfxD)return;const t=c.currentTime;try{AU.musD.gain.setTargetAtTime(.55,t,.05);AU.sfxD.gain.setTargetAtTime(.72,t,.05);clearTimeout(SFX.dk);SFX.dk=setTimeout(()=>{try{const u=c.currentTime;AU.musD.gain.setTargetAtTime(1,u,.4);AU.sfxD.gain.setTargetAtTime(1,u,.4);}catch(e){}},1300);}catch(e){}}
+function duck(){const c=AU.ctx;if(!c||!AU.sfxD)return;const t=c.currentTime,hold=Math.max(1.3,Math.min(6,(AU.voEnd||0)-t+.2));try{AU.musD.gain.setTargetAtTime(.55,t,.05);AU.sfxD.gain.setTargetAtTime(.72-.26*Math.min(1,AU.heat||0),t,.05);clearTimeout(SFX.dk);SFX.dk=setTimeout(()=>{try{const u=c.currentTime;AU.musD.gain.setTargetAtTime(1,u,.4);AU.sfxD.gain.setTargetAtTime(1,u,.4);}catch(e){}},hold*1000);}catch(e){}}
 // loops: engines of units near the camera, wind/rain by theme and weather, distant battle rumble
 function envLoop(k,g){let L=SFX.loops[k];const c=AU.ctx;if(!L){if(g<.01||SFX.loops['_'+k]||SFX.st!=='ok')return;SFX.loops['_'+k]=1;
     sfxGet('sfx/'+k+'.mp3').then(ab=>decodeAB(c,ab)).then(b=>{if(AU.ctx!==c)return;const s=c.createBufferSource(),gn=c.createGain();s.buffer=b;s.loop=true;gn.gain.value=0;s.connect(gn);gn.connect(AU.sfx);s.start(0,Math.random()*b.duration);SFX.loops[k]={gn};}).catch(e=>{SFX.loops['_'+k]=0;audioErr('sfx '+k,e);});return;}
@@ -16930,8 +16934,8 @@ function envAudio(dt){if(!AU.ctx||!G||SFX.st!=='ok')return;envT-=dt;if(envT>0)re
   const f=(v,m)=>on?Math.min(1,v*.3)*m:0,k=G.wx&&G.wx.k||'clear',th=G.map.theme;
   envLoop('tank',f(tk,.55));envLoop('truck',f(tr,.4));envLoop('heli',f(he,.6));envLoop('jet',f(je,.5));
   const wind=k==='blizzard'||k==='sandstorm'?.5:th==='snow'?.2:th==='green'?.08:.12;
-  envLoop('wind',on?wind*.5:0);envLoop('rain',on&&k==='rain'?.45:0);envLoop('rumble',on?(.05+Math.min(.45,AU.heat*.45))*.5:0);}
-function sfxUI(f){if(!auOn()||!AU.sfxOn)return;const t=AU.ctx.currentTime;osc(AU.sfx,t,'sine',f||880,0,.07,.08);osc(AU.sfx,t+.05,'sine',(f||880)*1.5,0,.08,.05);}
+  envLoop('wind',on?wind*.5:0);envLoop('rain',on&&k==='rain'?.45:0);envLoop('rumble',on?(.05+Math.min(.45,AU.heat*.45))*.5:0);if(typeof ambTick==='function')ambTick(on);}
+function sfxUI(f){AU.uiT=performance.now();if(!auOn()||!AU.sfxOn)return;AU.uiN=(AU.uiN||0)+1;const t=AU.ctx.currentTime,d=AU.ui||AU.sfx;osc(d,t,'sine',f||880,0,.07,.08);osc(d,t+.05,'sine',(f||880)*1.5,0,.08,.05);}
 // ---- missile strikes: motor roar at the launch site, incoming whistle at the target, deep blast thump ----
 function sfxLaunch(x,y,cruise){if(!auOn()||!AU.sfxOn)return;const sp=spatial(x,y);if(!sp||sp.v<.02||!limit('mlaunch',3,.25))return;const t=AU.ctx.currentTime,b=bus(sp);
   nz(b,t,.05,'highpass',1800,0,.8);nz(b,t,3,'lowpass',2600,260,.95,.7);nz(b,t+.05,3.4,'bandpass',cruise?900:520,140,.55,.9,AU.brown);osc(b,t,'sine',cruise?70:55,34,3.2,1.1,.02);
@@ -17086,7 +17090,7 @@ function voRLoad(fac){if(!AU.ctx||!VOR[fac]||VORB[fac])return;VORB[fac]='loading
 function voRPlay(fac,kind){const buf=VORB[fac],M=VOR[fac];if(!buf||typeof buf==='string'||!M||kind>2||!auOn()||!G||!G.sel)return false;const us=G.sel.filter(u=>!u.isB&&u.team===ME&&!u.dead);if(!us.length)return false;
   const role=VO_ROLE[us[Math.floor(Math.random()*us.length)].kind]||'inf',set=(M[role]||[])[kind];if(!set||!set.length)return false;const c=AU.ctx;if(AU.voEnd&&c.currentTime<AU.voEnd-.05)return true;
   const lk=role+kind;let j=Math.floor(Math.random()*set.length);if(set.length>1&&j===VORL[lk])j=(j+1)%set.length;VORL[lk]=j;const [o,d]=set[j],src=c.createBufferSource(),g=c.createGain();src.buffer=buf;
-  const vol=Math.max(0,Math.min(1.5,SET.vo/100*1.25)),t0=c.currentTime+.02;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.005);g.gain.setValueAtTime(vol,Math.max(t0+.006,t0+d-.05));g.gain.linearRampToValueAtTime(0,t0+d);AU.voEnd=t0+d;src.connect(g);g.connect(c.destination);
+  const vol=Math.max(0,Math.min(1.5,SET.vo/100*1.25)),t0=c.currentTime+.02;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.005);g.gain.setValueAtTime(vol,Math.max(t0+.006,t0+d-.05));g.gain.linearRampToValueAtTime(0,t0+d);AU.voEnd=t0+d;src.connect(g);g.connect(AU.vox||c.destination);
   if(AU.musicOn&&AU.mus){AU.musBus.gain.setTargetAtTime(musBase()*.45,c.currentTime,.05);AU.musBus.gain.setTargetAtTime(musBase(),c.currentTime+d+.1,.25);}src.start(t0,o,d);return true;}
 function voLoad(fac){if(!AU.ctx||!VO_MAP[fac])return null;if(VOB[fac]==='fail'&&(VOT[fac]||0)<2)delete VOB[fac];if(VOB[fac])return VOP[fac]||null;VOB[fac]='loading';VOT[fac]=(VOT[fac]||0)+1;
   return VOP[fac]=fetch(window.VO_INLINE&&VO_INLINE[fac]?'data:audio/mpeg;base64,'+VO_INLINE[fac]:'vo/'+(VO_SHEET[fac]||fac)+'.mp3?v=5').then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.arrayBuffer();}).then(b=>decodeAB(AU.ctx,b)).then(buf=>{VOB[fac]=buf;return buf;}).catch(e=>{VOB[fac]='fail';audioErr('voice '+fac,e);return null;});}
@@ -17095,9 +17099,9 @@ function voPlay(fac,kind){const buf=VOB[fac],M=VO_MAP[fac];if(!buf||typeof buf==
   if(AU.voEnd&&c.currentTime<AU.voEnd-.05)return true;
   const [o,d]=set[Math.floor(Math.random()*set.length)],src=c.createBufferSource(),g=c.createGain();src.buffer=buf;src.playbackRate.value=VO_PITCH;const vol=Math.max(0,Math.min(1.5,SET.vo/100*1.25)),t0=c.currentTime+.02,dur=d/VO_PITCH;
   // soft edges so a clip never starts or stops with a click
-  g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.005);g.gain.setValueAtTime(vol,Math.max(t0+.006,t0+dur-.05));g.gain.linearRampToValueAtTime(0,t0+dur);AU.voEnd=t0+dur;src.connect(g);g.connect(c.destination);
+  g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.005);g.gain.setValueAtTime(vol,Math.max(t0+.006,t0+dur-.05));g.gain.linearRampToValueAtTime(0,t0+dur);AU.voEnd=t0+dur;src.connect(g);g.connect(AU.vox||c.destination);
   if(AU.musicOn&&AU.mus){AU.musBus.gain.setTargetAtTime(musBase()*.45,c.currentTime,.05);AU.musBus.gain.setTargetAtTime(musBase(),c.currentTime+d+.1,.25);}src.start(t0,o,d);return true;}
-function speak(kind){if(!AU.voiceOn||!G)return;const now=performance.now();if(now-AU.lastVoice<1300)return;AU.lastVoice=now;duck();{const fac=G.teams[ME].fac;voLoad(fac);voRLoad(fac);vohLoad(fac);if((kind<3&&heroSpeak(fac,kind))||voRPlay(fac,kind)||voPlay(fac,kind)){if(AU.ctx&&AU.sfxOn){const t=AU.ctx.currentTime;nz(AU.sfx,t,.12,'bandpass',2200,0,.08,2);}return;}}if(!window.speechSynthesis)return;
+function speak(kind){if(!AU.voiceOn||!G)return;const now=performance.now();if(now-AU.lastVoice<1300)return;AU.lastVoice=now;duck();{const fac=G.teams[ME].fac;voLoad(fac);voRLoad(fac);vohLoad(fac);if((kind<3&&heroSpeak(fac,kind))||voRPlay(fac,kind)||voPlay(fac,kind)){duck();if(AU.ctx&&AU.sfxOn){const t=AU.ctx.currentTime;nz(AU.sfx,t,.12,'bandpass',2200,0,.08,2);}return;}}if(!window.speechSynthesis)return;
   const L=G.teams[ME].F.lang,base=L.split('-')[0];const vs=AU.voices.length?AU.voices:speechSynthesis.getVoices();let voice=pickVoice(vs,L),lines=(voice&&PHR_FAC[G.teams[ME].fac])||PHR[base]||PHR.en,lang=L;
   if(!voice&&PHR_ALT[base]){const A=PHR_ALT[base];for(const b of A.v){const v=pickVoice(vs,b==='es'?'es-CU':b);if(v){voice=v;lang=v.lang;if(A.lines&&!(A.keep&&A.keep.includes(b)))lines=A.lines;break;}}}
   if(!voice){// nothing in the nation's language: English line with the best English voice, else any non-female voice, else the device default (pitched down)
@@ -17188,7 +17192,7 @@ function testSound(){audioUnlock();const c=AU.ctx;if(!c){sndShow();return;}
     osc(AU.master,t,'sine',1000,0,.11,.22);osc(AU.master,t+.15,'sine',1400,0,.11,.22);nz(AU.master,t+.29,.16,'bandpass',2200,0,.1,2);}catch(e){audioErr('test beep',e);}
   const f=(G&&G.teams&&G.teams[ME]&&G.teams[ME].fac)||(typeof setup!=='undefined'&&setup&&setup.p&&VO_MAP[setup.p]?setup.p:'US');
   const say=buf=>{try{const M=VO_MAP[f];if(!buf||!M||!AU.ctx)return sayDevice();const k=AU.ctx,[o,d]=M.l[0][0],s=k.createBufferSource(),g=k.createGain(),t0=Math.max(k.currentTime+.05,(AU.testT||0));
-      g.gain.value=1;s.buffer=buf;s.connect(g);g.connect(k.destination);s.start(t0,o,d);}catch(e){audioErr('test voice',e);}setTimeout(sndShow,200);};
+      g.gain.value=1;s.buffer=buf;s.connect(g);g.connect(AU.vox||k.destination);s.start(t0,o,d);}catch(e){audioErr('test voice',e);}setTimeout(sndShow,200);};
   const sayDevice=()=>{try{if(!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance('Radio check. Sound is working.');u.lang='en-US';speechSynthesis.speak(u);}catch(e){}};
   AU.testT=c.currentTime+.55;const vb=VOB[f];if(vb&&typeof vb!=='string')say(vb);else{const pr=voLoad(f);if(pr)pr.then(say);else sayDevice();}
   sndShow();setTimeout(sndShow,800);setTimeout(sndShow,2500);}
@@ -17325,7 +17329,7 @@ function vohLoad(fac){if(!AU.ctx||!VOH[fac]||VOHB[fac])return;VOHB[fac]='loading
 function vohPlay(fac,key,over){const buf=VOHB[fac],M=VOH[fac];if(!buf||typeof buf==='string'||!M||!M[key]||!auOn())return false;
   const ent=M[key].find(a=>a&&a.length);if(!ent)return false;const c=AU.ctx;if(AU.voEnd&&c.currentTime<AU.voEnd-.05&&!over)return false;
   const [o,d]=ent[Math.floor(Math.random()*ent.length)],src=c.createBufferSource(),g=c.createGain();src.buffer=buf;
-  const vol=Math.max(0,Math.min(1.5,SET.vo/100*1.25)),t0=c.currentTime+.02;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.005);g.gain.setValueAtTime(vol,Math.max(t0+.006,t0+d-.05));g.gain.linearRampToValueAtTime(0,t0+d);AU.voEnd=t0+d;src.connect(g);g.connect(c.destination);
+  const vol=Math.max(0,Math.min(1.5,SET.vo/100*1.25)),t0=c.currentTime+.02;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.005);g.gain.setValueAtTime(vol,Math.max(t0+.006,t0+d-.05));g.gain.linearRampToValueAtTime(0,t0+d);AU.voEnd=t0+d;src.connect(g);g.connect(AU.vox||c.destination);
   if(AU.musicOn&&AU.mus){AU.musBus.gain.setTargetAtTime(musBase()*.45,c.currentTime,.05);AU.musBus.gain.setTargetAtTime(musBase(),c.currentTime+d+.1,.25);}src.start(t0,o,d);return true;}
 function radSub(key,fac){const T=RADT[fac];if(!T||!T[key])return;let el=RADS.el;
   if(!el||!el.isConnected){if(!document.getElementById('radCss')){const st=document.createElement('style');st.id='radCss';st.textContent='#radsub{position:fixed;z-index:6;left:50%;top:58px;transform:translateX(-50%);max-width:min(78vw,520px);padding:5px 12px 6px;background:rgba(10,14,12,.72);border-left:3px solid var(--rc,#c9a227);border-radius:3px;color:#e8ece4;font:600 15px/1.25 system-ui,sans-serif;pointer-events:none;opacity:0;transition:opacity .25s;text-align:center}#radsub.on{opacity:1}#radsub small{display:block;font:500 12px/1.2 system-ui,sans-serif;color:#aab5a6;margin-top:2px}#radsub i{font-style:normal;font-size:10px;letter-spacing:.14em;color:#c9a227;margin-right:6px}';document.head.append(st);}
@@ -17359,8 +17363,47 @@ function bfShoutPlay(ty,x,y,team){if(!G||!AU.ctx||!auOn()||!AU.voiceOn||!G.teams
   const on=typeof inView==='function'?inView(x,y,0):true,j=Math.floor(Math.random()*set.length),[o,len]=set[j],src=c.createBufferSource(),g=c.createGain();src.buffer=buf;
   const vol=Math.max(0,Math.min(1.5,SET.vo/100*1.25))*Math.max(.18,1.05-d/1500)*(on?1:.8),t0=now+.02;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.005);g.gain.setValueAtTime(vol,Math.max(t0+.006,t0+len-.05));g.gain.linearRampToValueAtTime(0,t0+len);
   let node=src;if(!on&&c.createBiquadFilter){const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=520;const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3000;src.connect(hp);hp.connect(lp);node=lp;}   // heard over the radio, off screen
-  if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=Math.max(-.9,Math.min(.9,dx/900));node.connect(p);p.connect(g);}else node.connect(g);g.connect(c.destination);
+  if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=Math.max(-.9,Math.min(.9,dx/900));node.connect(p);p.connect(g);}else node.connect(g);g.connect(AU.vox||c.destination);
   VOSS.end=t0+len;VOSS.type[type]=now;src.start(t0,o,len);return true;}
+/* ================= SOUND MIX: button clicks everywhere + the quiet battlefield bed =================
+   (The mixer itself - buses, limiter, voice ducking - lives in 09-audio.js initAudio/duck. Test: orch/mixtest.mjs.)
+   1) Every button clicks. One listener for the whole page: anything a player can press (buttons, menu items, toggles,
+      anything shown with the hand cursor) makes a soft tick, unless its own handler already played a UI sound.
+   2) Battlefield bed by biome, made in code (no files): desert = low dry wind with gusts and a trace of blowing sand,
+      green = wind in leaves, snow = a thin howling wind. On top, "distant fire": shots and explosions too far from the
+      camera to be heard directly (counted by sfxShot/sfxBoom into AU.farH) come back as muffled far-off thumps and
+      crackle, so a battle elsewhere on the map is heard as a battle elsewhere. All of it sits far below the weapons,
+      follows the Sound switch/volume and the voice ducking, and stops when the battle is paused or over. */
+const UI_PRESS='button,[role=button],a[href],select,summary,label,input[type=checkbox],input[type=radio],input[type=range],.btn,[onclick],[data-click]';
+function uiTick(){if(!auOn()||!AU.sfxOn||!AU.ui)return;AU.uiT=performance.now();AU.uiN=(AU.uiN||0)+1;const t=AU.ctx.currentTime;nz(AU.ui,t,.018,'bandpass',2400,0,.05,1.6);osc(AU.ui,t,'sine',540,330,.04,.05,.002);}
+function uiPressable(el){try{if(!el||el.nodeType!==1)return null;const b=el.closest(UI_PRESS);if(b)return b.disabled||b.getAttribute('aria-disabled')==='true'?null:b;
+  if(el.tagName==='CANVAS'||el===document.body||el===document.documentElement)return null;return getComputedStyle(el).cursor==='pointer'?el:null;}catch(e){return null;}}
+// capture phase so a handler that stops the event cannot silence it; the tick waits one turn so a button with its own sound keeps just that one
+window.addEventListener('click',e=>{try{if(!AU.ctx||!AU.sfxOn)return;if(!uiPressable(e.target))return;const t0=performance.now();setTimeout(()=>{if((AU.uiT||0)>=t0-2)return;uiTick();},0);}catch(_){}},{capture:true,passive:true});
+
+const AMB={cx:null,k:'',g:null,pop:null,nodes:[],lvl:0};
+const AMB_BIOME={// [buffer, filter type, Hz, Q, level, gust depth, gust Hz, (sweep Hz, sweep rate)]
+  desert:[['brown','bandpass',250,.5,.34,.2,.061],['brown','lowpass',120,.7,.2,.1,.037],['noise','highpass',5200,.7,.006,.005,.093]],
+  green:[['brown','lowpass',300,.7,.2,.1,.047],['noise','bandpass',1700,.4,.016,.012,.083],['noise','bandpass',3400,.6,.006,.005,.131]],
+  snow:[['brown','bandpass',470,3,.3,.2,.071,150,.113],['brown','lowpass',160,.7,.16,.08,.041],['noise','highpass',6200,.7,.004,.003,.097]]};
+function ambStop(){for(const n of AMB.nodes){try{n.stop&&n.stop();}catch(e){}try{n.disconnect();}catch(e){}}AMB.nodes=[];AMB.g=null;AMB.pop=null;AMB.k='';}
+function ambBuild(theme){const c=AU.ctx;ambStop();AMB.cx=c;AMB.k=AMB_BIOME[theme]?theme:'desert';AMB.lvl=0;
+  const g=c.createGain();g.gain.value=0;g.connect(AU.sfx);const pop=c.createGain();pop.gain.value=0;pop.connect(AU.sfx);AMB.g=g;AMB.pop=pop;AMB.nodes.push(g,pop);
+  for(const [bk,type,hz,q,lv,gd,gh,sw,sr] of AMB_BIOME[AMB.k]){const s=c.createBufferSource();s.buffer=bk==='brown'?AU.brown:AU.noise;s.loop=true;const f=c.createBiquadFilter();f.type=type;f.frequency.value=hz;f.Q.value=q;
+    const a=c.createGain();a.gain.value=lv;const l=c.createOscillator(),lg=c.createGain();l.type='sine';l.frequency.value=gh;lg.gain.value=gd;l.connect(lg);lg.connect(a.gain);   // slow gusts
+    s.connect(f);f.connect(a);a.connect(g);s.start(0,Math.random()*1.5);l.start();AMB.nodes.push(s,f,a,l,lg);
+    if(sw){const o=c.createOscillator(),og=c.createGain();o.type='sine';o.frequency.value=sr;og.gain.value=sw;o.connect(og);og.connect(f.frequency);o.start();AMB.nodes.push(o,og);}}}
+// called by envAudio every 0.15 s
+function ambTick(on){const c=AU.ctx;if(!c||!G||!G.map||!AU.sfx||!AU.brown)return;const th=G.map.theme||'desert';
+  if(AMB.cx!==c||AMB.k!==(AMB_BIOME[th]?th:'desert')||!AMB.g){if(!on)return;ambBuild(th);}
+  const wx=G.wx&&G.wx.k||'clear',storm=wx==='blizzard'||wx==='sandstorm'?2.2:wx==='rain'?.7:1,t=c.currentTime;
+  AMB.g.gain.setTargetAtTime(on?.13*storm:0,t,on?1.2:.25);AMB.pop.gain.setTargetAtTime(on?1:0,t,.2);
+  let h=AU.farH||0;AU.farH=h*.9;if(!on||h<.05)return;if(Math.random()>Math.min(.45,h*.1))return;
+  // one far-off event: a muffled thump (shell, bomb) or a short crackle (small arms), somewhere left or right
+  let d=AMB.pop;if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=Math.random()*1.6-.8;p.connect(AMB.pop);d=p;}
+  const t0=t+Math.random()*.1,v=.5+Math.random()*.5;
+  if(Math.random()<Math.min(.7,.25+h*.08)){osc(d,t0,'sine',62+Math.random()*20,30,.45,.085*v,.012);nz(d,t0,.5,'lowpass',340,90,.07*v,.6,AU.brown);}
+  else{const n=2+(Math.random()*4|0);for(let i=0;i<n;i++)nz(d,t0+i*(.07+Math.random()*.05),.05,'bandpass',620+Math.random()*260,0,.022*v,1.1);}}
 /* ================= CINEMATIC POST-PROCESSING: HDR, bloom, grading, vignette ================= */
 const POST={on:true,rt:null,bA:null,bB:null,bC:null,bD:null,quad:null,scn:null,cam:null,mBright:null,mBlur:null,mFinal:null,w:0,h:0};
 const FSV=`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}`;
