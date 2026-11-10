@@ -178,6 +178,7 @@ function mxBuild(){
   sitem('Battle','Generals-style skirmish: Command Center, supply trucks, tech up, destroy every enemy building',()=>{mxSetMode('battle');menuGo('c-map');});
   sitem('Missions','The story missions',()=>mxClick('campaign'),'dim sep');
   sitem('Tutorial','First time? A guided 10-minute battle',()=>mxClick('tutorial'),'dim');
+  sitem('Battle tutorial','First time in Battle? Supply Depot, Barracks, War Factory, attack',()=>{try{initAudio();startBattleTutorial();}catch(e){console.warn(e);}},'dim');
   sitem('Load game','Load a saved battle',()=>mxClick('svLoadBtn'),'dim');
   /* --- play online --- */
   const OL=scr('online','<h2 class="mxh">Multiplayer</h2><p class="mxsub">One place to play online. Choose the game, then start one or join a friend: open games and invite codes or links for all three are below.</p>');
