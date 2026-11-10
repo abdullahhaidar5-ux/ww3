@@ -39,7 +39,7 @@ const BATTLE=1.75;
 // woods and buildings while advancing, damaged vehicles pulled back earlier and further, and amphibious landings.
 const DIFF=[{wave:4,inc:.7,first:420,think:1.6,flank:0,retreat:0,focus:0,cover:0,land:0,maxWave:10,q:1,nvAt:480,nvCap:1,nvShare:.08,nvShip:0,nvSortie:2},
   {wave:6,inc:1,first:270,think:1,flank:1,retreat:1,focus:0,cover:0,land:1,maxWave:22,q:2,nvAt:150,nvCap:4,nvShare:.15,nvShip:1,nvSortie:2},
-  {wave:6,inc:1,first:220,think:.6,flank:2,retreat:2,focus:1,cover:1,land:2,pick:1,rg:0,hm:1,maxWave:26,q:3,nvAt:90,nvCap:6,nvShare:.18,nvShip:1,nvSortie:3}];
+  {wave:6,inc:1,first:220,think:.6,flank:2,retreat:2,focus:1,cover:1,land:2,pick:1,rg:0,hm:1,probe:1,ap:1,ca:1,air:1,maxWave:26,q:3,nvAt:90,nvCap:6,nvShare:.18,nvShip:1,nvSortie:3}];
 // wave is scaled by the battle size here, so an AI made mid-game (host migration, a commander who never came back) matches a fresh one
 // AI personalities (data only): ord = buildings it builds first, first/wave = attack timing and wave size multipliers,
 // mix = how much it favours each class when buying units (inf, veh, arty, air; 1 = normal), amb = ambush pickets,
@@ -1082,6 +1082,32 @@ function aiHmOp(T,pb){const A=T.ai,op=A.op;if(!op){if(A.t%10===0)for(const u of 
   if(!tg||(ready&&stg)||G.t-op.t>80||mn.some(u=>u.lastHit>G.t-2)){A.op=null;for(const u of fl.concat(mn))u.opW=0;if(!tg)return;
     const gnd=mn.filter(u=>u.s.dom==='ground');if(gnd.length)aiForm(gnd,tg.x,tg.y);for(const u of mn)if(u.s.dom!=='ground')setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');
     for(const u of fl){setMove(u,tg.x+rnd(-60,60),tg.y+rnd(-60,60),'amove');u.flT=null;}aiStat(A,'hmHammer');}}
+// Hard, combined arms (DIFF.ap / DIFF.ca; tactics only, no extra money or vision - it reacts only to what it can see).
+// ap = protect the artillery: when enemy ground troops it can see close inside 240 of a gun, the two nearest fighting
+// units turn on them and the gun steps back toward its own side to keep firing from range. Zealous nations never pull
+// back (standing rule): their guns stand, only the escorts react.
+// ca = air works with the ground attack: aiAirTarget gives ready jets the armed defences around the wave's target, then
+// enemy guns they can see, instead of a random building.
+function aiHmArms(T,army,anchor){const id=T.id,A=T.ai;if(!DIFF[A.d??1].ap||A.t%2!==1)return;const stand=msOf(T.fac).rout===0;
+  for(const u of army){if(u.rt||u.inTun||u.dead||u.s.dom!=='ground'||aiCls(u.s)!=='arty'||u.rout>G.t)continue;const ur=rngOf(u);
+    let th=null,td=240*240;for(const e of nearby(u.x,u.y,240,NB)){if(e.dead||e.isB||e.team<0||ally(e.team,id)||!e.s||e.s.noAttack||e.s.dom!=='ground'||!seenBy(id,e)||rngOf(e)>=ur*.8)continue;const d=(e.x-u.x)*(e.x-u.x)+(e.y-u.y)*(e.y-u.y);if(d<td){td=d;th=e;}}
+    if(!th)continue;aiStat(A,'artyGuard');
+    const esc=army.filter(f=>f!==u&&!f.dead&&!f.inTun&&!f.amb&&f.s.dom==='ground'&&aiCls(f.s)!=='arty'&&!(f.rout>G.t)&&f.target!==th&&canTarget(f.s,th)&&Math.abs(f.x-u.x)<450&&Math.abs(f.y-u.y)<450).sort((a,b)=>dist(a,u)-dist(b,u)||a.id-b.id).slice(0,2);
+    for(const f of esc){f.order={type:'attack',target:th};f.path=null;}
+    if(stand)continue;
+    let ax=u.x-th.x,ay=u.y-th.y,al=Math.hypot(ax,ay)||1;ax/=al;ay/=al;const hx=anchor.x-u.x,hy=anchor.y-u.y,hl=Math.hypot(hx,hy);if(hl>300){ax+=hx/hl*.6;ay+=hy/hl*.6;al=Math.hypot(ax,ay)||1;ax/=al;ay/=al;}
+    u.rt=G.t;setMove(u,u.x+ax*220,u.y+ay*220,'move');u.order.auto=1;aiStat(A,'artyBack');}}
+function aiAirTarget(T,u,pb){const id=T.id,A=T.ai;if(!DIFF[A.d??1].ca)return null;
+  const lt=A.lt&&G.t-A.lt.t<150?G.byId.get(A.lt.id):null;
+  if(lt&&!lt.dead){let b=null,bd=1e9;for(const e of pb){if(e.dead||!(e.s.dmg>0)||e.kind==='sam'||!canTarget(u.s,e))continue;const d=dist(e,lt);if(d<460&&d<bd){bd=d;b=e;}}if(b){aiStat(A,'airDef');return b;}}
+  let g=null,gd=1e9;for(const e of G.ents){if(e.dead||e.isB||e.team<0||ally(e.team,id)||!e.s||e.s.dom!=='ground'||aiCls(e.s)!=='arty'||isInf(e.s)||!seenBy(id,e)||!canTarget(u.s,e))continue;const d=dist(e,u);if(d<gd){gd=d;g=e;}}
+  if(g){aiStat(A,'airGun');return g;}
+  if(lt&&!lt.dead&&canTarget(u.s,lt)){aiStat(A,'airWave');return lt;}return null;}
+// Which side is thinner for a flanking move from anchor against t: 1 / -1, or 0 = no clear difference (or not Hard).
+function aiProbeSide(T,anchor,t){const id=T.id;if(!DIFF[T.ai.d??1].probe)return 0;const ang=Math.atan2(t.y-anchor.y,t.x-anchor.x),D=Math.hypot(t.x-anchor.x,t.y-anchor.y);
+  const W=[1,-1].map(sd=>{const fx=anchor.x+Math.cos(ang)*D*.62+Math.cos(ang+sd*1.57)*Math.min(650,D*.35),fy=anchor.y+Math.sin(ang)*D*.62+Math.sin(ang+sd*1.57)*Math.min(650,D*.35),mx=(fx+t.x)/2,my=(fy+t.y)/2;let v=0;
+    for(const e of G.ents){if(e.dead||e.team<0||ally(e.team,id)||!e.s||e.s.dom==='air')continue;if(e.isB?!(e.s.dmg>0):(e.s.noAttack||!seenBy(id,e)))continue;if(Math.hypot(e.x-fx,e.y-fy)<560||Math.hypot(e.x-mx,e.y-my)<420)v+=e.s.cost||300;}return v;});
+  return Math.abs(W[0]-W[1])>300?(W[0]<W[1]?1:-1):0;}
 function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);const hq=mine.find(e=>e.kind==='hq');const anchor=hq||mine.find(e=>e.isB);if(!anchor)return;T.ai.t++;aiSalvage(T,mine);aiWalls(T,mine);aiDam(T,mine);aiMedic(T,mine);lgAI(T);const en=aiFoe(T,anchor);
   // HQ queue priorities: a supply truck if it has none, then a bulldozer if it has none (without one it can never build a
   // barracks again: a raid that killed its dozer used to leave it buying trucks forever and never fielding an army),
@@ -1119,11 +1145,15 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
   let vV=0,lV=0;for(const e of mine)if(!e.isB&&e.s.dom==='ground'&&!e.s.noAttack&&e.kind!=='harv'&&e.kind!=='dozer'&&e.kind!=='hacker'){lV+=e.s.cost;if(isVeh(e.s))vV+=e.s.cost;}
   for(const c of ['barracks','factory'])for(const it of T.q[c]){const s=stats(T.fac,it.kind);if(s.dom!=='ground'||s.noAttack)continue;lV+=s.cost;if(isVeh(s))vV+=s.cost;}
   const wantVeh=!thin&&done(id,'factory')&&vV<lV*.33;let vSv=0;
-  for(const cat of wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='champ'&&k!=='spy'&&!BASE[k].fake).filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
+  // Hard fields a real air arm (combined arms): once it has an airfield and a ground army of 10+, it keeps about one
+  // strike aircraft per 8 ground units (1 to 3, by battle size) - it buys the aircraft first and the other buildings
+  // save for it, the same way it saves for vehicles. Same money as everyone: it only spends it in a different order.
+  const airN=mine.filter(e=>!e.isB&&e.s.dom==='air'&&e.kind!=='drone'&&!e.s.noAttack).length,wantAir=!!DIFF[T.ai.d??1].air&&!thin&&G.t>300&&done(id,'airfield')&&armyN>=10&&airN<Math.max(1,Math.min(Math.round(3*(G.bs||1)),Math.floor(armyN/8)));let aSv=0;
+  for(const cat of wantAir?['airfield','shipyard','factory','barracks']:wantVeh?['shipyard','factory','barracks','airfield']:['shipyard','barracks','factory','airfield']){if(!done(id,cat)||T.q[cat].length>=Math.ceil(DIFF[T.ai.d??1].q*(G.bs||1)))continue;let opts=R[cat].filter(k=>k!=='champ'&&k!=='spy'&&!BASE[k].fake).filter(k=>k!=='hacker'||unitCount(id,'hacker')<3).filter(k=>k!=='lander'&&k!=='airlift').filter(k=>!stats(T.fac,k).limit||unitCount(id,k)<1);
     if(cat==='factory'){opts=enemyAir>=2?['aa','aa',...opts]:opts.filter(k=>k!=='aa'||srand()<.2);
       // Heavy-barrage doctrine (RU, CN, KP): keep a real artillery park - about a fifth of the army, 2 to 8 guns
       if(DC.barrage&&opts.includes('arty')&&unitCount(id,'arty')<Math.min(Math.round(8*(G.bs||1)),Math.max(2,Math.round(armyN*.2))))opts=['arty','arty','arty',...opts];}
-    if(cat==='airfield'&&srand()<(aiPers(T).mix&&aiPers(T).mix.air>1?.1:.5))continue;if(cat==='shipyard'){opts=aiNavyPick(T,mine,opts,anchor)||[];}
+    if(cat==='airfield'&&srand()<(aiPers(T).mix&&aiPers(T).mix.air>1?.1:.5)&&!wantAir)continue;if(cat==='airfield'&&wantAir){const st=opts.filter(o=>o==='jet'||o==='heli');if(st.length)opts=st;}if(cat==='shipyard'){opts=aiNavyPick(T,mine,opts,anchor)||[];}
     if(cat==='factory'||cat==='airfield')opts=opts.filter(k=>k!=='drone'||srand()<.35);if(!opts.length)continue;
     {const mx=aiPers(T).mix;if(mx&&opts.length>1)opts=opts.flatMap(o=>{const w=mx[aiCls(stats(T.fac,o))]??1,n=Math.max(1,Math.round(w*2));return Array(n).fill(o);});}
     // Hard counter-builds: each option weighted by how well its weapon does against the enemy's current army
@@ -1131,7 +1161,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
     let k=opts[Math.floor(srand()*opts.length)];
     if(DIFF[T.ai.d??1].pick&&(cat==='barracks'||cat==='factory')&&opts.length>1){if(!T.ai.foeA||T.ai.foeA.t!==T.ai.t){const A=[];for(const e of G.ents)if(e.team===en&&!e.dead&&!e.isB&&!e.s.noAttack&&e.kind!=='harv'&&e.kind!=='dozer')A.push(e);T.ai.foeA={t:T.ai.t,A};}
       const A=T.ai.foeA.A;if(A.length>=3){let tot=0;const w=opts.map(o=>{const S=stats(T.fac,o);let v=0,c=0;for(const e of A){const ec=e.s.cost||300;c+=ec;if(canTarget(S,e))v+=effOn(S,e)*ec;}const x=.25+v/Math.max(1,c);tot+=x*x;return x*x;});
-        let r=srand()*tot;for(let i=0;i<opts.length;i++){r-=w[i];if(r<=0){k=opts[i];break;}}}}const sv=(cat!=='shipyard'&&T.ai.nvSv>G.t-25?stats(T.fac,'ship').cost*.7:0)+(cat==='barracks'||cat==='airfield'?vSv:0);if(k&&T.credits-reserve-sv>=stats(T.fac,k).cost){enqueue(id,k);}else if(k==='ship')T.ai.nvSv=G.t;else if(wantVeh&&cat==='factory'&&isVeh(stats(T.fac,k))&&!stats(T.fac,k).noAttack)vSv=stats(T.fac,k).cost;}
+        let r=srand()*tot;for(let i=0;i<opts.length;i++){r-=w[i];if(r<=0){k=opts[i];break;}}}}const sv=(cat!=='shipyard'&&T.ai.nvSv>G.t-25?stats(T.fac,'ship').cost*.7:0)+(cat==='barracks'||cat==='airfield'?vSv:0)+(cat!=='airfield'?aSv:0);if(k&&T.credits-reserve-sv>=stats(T.fac,k).cost){enqueue(id,k);if(wantAir&&cat==='airfield')aiStat(T.ai,'airBuy');}else if(k==='ship')T.ai.nvSv=G.t;else if(wantAir&&cat==='airfield'&&k){aSv=stats(T.fac,k).cost;}else if(wantVeh&&cat==='factory'&&isVeh(stats(T.fac,k))&&!stats(T.fac,k).noAttack)vSv=stats(T.fac,k).cost;}
   if(T.credits>1700&&T.ai.t%5===0&&!DIFF[T.ai.d??1].hm){const ups=upgList(T.fac).filter(k=>k!=='smug'&&k!=='gpr'&&!T.upg[k]&&done(id,UPG[k].at)&&!T.rq[UPG[k].at]);if(ups.length)startResearch(id,ups[Math.floor(srand()*ups.length)]);}
   if(!T.upg.gpr&&!FACTIONS[T.fac].tunnels&&!T.rq.hq&&done(id,'hq')&&T.credits>=UPG.gpr.cost+300&&G.teams.some(O=>O.id!==id&&!ally(O.id,id)&&FACTIONS[O.fac].tunnels))startResearch(id,'gpr');  // enemy digs tunnels: buy the radar
   if(T.sancSeen&&!T.upg.smug&&!T.rq.hq&&done(id,'hq')&&T.credits>=UPG.smug.cost+300)startResearch(id,'smug');  // sanctioned once: buy Smuggling Routes
@@ -1162,7 +1192,7 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
     else if(!w&&u.aiSt!=null){u.st=u.aiPrev||0;u.aiSt=null;}}
   if(DC.covert||aiPers(T).amb)aiAmbush(T,army,anchor,pb);
   if(aiPers(T).raid)aiRaid(T,army,anchor);
-  const HM=DIFF[T.ai.d??1].hm;if(HM){aiHmTowns(T,mine,anchor,army,en);aiHmSmart(T,mine,anchor,army,en,pb);aiHmOp(T,pb);}
+  const HM=DIFF[T.ai.d??1].hm;if(HM){aiHmTowns(T,mine,anchor,army,en);aiHmSmart(T,mine,anchor,army,en,pb);aiHmOp(T,pb);aiHmArms(T,army,anchor);}
   const idle=army.filter(u=>!u.order&&!u.target&&!u.amb&&!u.opW);
   for(const u of idle)if(u.flT&&!u.flT.dead&&G.t-u.flank<150){setMove(u,u.flT.x+rnd(-60,60),u.flT.y+rnd(-60,60),'amove');u.flT=null;aiStat(T.ai,'flankIn');}else if(Math.hypot(u.x-anchor.x,u.y-anchor.y)>900&&pb.length){const pc=HM&&pb.some(b=>HM_CRIT[b.kind])?pb.filter(b=>HM_CRIT[b.kind]):pb;const t=pc.reduce((a,b)=>dist(a,u)<dist(b,u)?a:b);setMove(u,t.x,t.y,'amove');}
   const home=idle.filter(u=>Math.hypot(u.x-anchor.x,u.y-anchor.y)<=900&&u.s.dom!=='naval');
@@ -1176,17 +1206,21 @@ function aiThink(T){const id=T.id,mine=G.ents.filter(e=>e.team===id&&!e.dead);co
     if(pb.some(b=>Math.abs(b.x-u.x)<260&&Math.abs(b.y-u.y)<260))continue;/* in the enemy base: finish the job */
     const a=Math.atan2(anchor.y-u.y,anchor.x-u.x),k=Math.min(dh-650,520);u.rt=G.t;u.flT=null;u.cvRes=undefined;setMove(u,u.x+Math.cos(a)*k,u.y+Math.sin(a)*k,'move');u.order.auto=1;aiStat(T.ai,'regroup');}
   let launched=false;if(go&&pb.length&&G.t>aiFirst(T)&&!T.ai.op){launched=true;const pc=HM?pb.filter(b=>HM_CRIT[b.kind]):[];const t=pc.length?pc.reduce((a,b)=>dist(a,anchor)<dist(b,anchor)?a:b):pb.find(e=>e.kind==='hq')||pb[0];const ang=Math.atan2(t.y-anchor.y,t.x-anchor.x),D=Math.hypot(t.x-anchor.x,t.y-anchor.y);
-      const FL=DIFF[T.ai.d??1].flank,fl=FL&&home.length>=6&&D>(FL>1?700:900)?home.filter((u,i)=>i%3===2&&isVeh(u.s)||i%4===3):[];const side=Math.random()<.5?1:-1;
+      const FL=DIFF[T.ai.d??1].flank,fl=FL&&home.length>=6&&D>(FL>1?700:900)?home.filter((u,i)=>i%3===2&&isVeh(u.s)||i%4===3):[];let side=Math.random()<.5?1:-1,PW=0;
+      // Hard probes for the weak side: it adds up the armed defences (public map knowledge) and the enemy troops it can
+      // see around each swing point and on the way in from there, and sends the flankers round the thinner side
+      // (a big wave still pincers, but two thirds go round the weak side).
+      if(fl.length){const ps=aiProbeSide(T,anchor,t);if(ps){side=ps;PW=1;aiStat(T.ai,'probe');}}
       // Hard with a big wave: a pincer - the flanking force splits and swings round both sides. Flankers remember the
       // main attack's target and close on it from the side once they reach their swing point (see the idle loop).
       const pin=FL>1&&fl.length>=6;
-      fl.forEach((u,i)=>{const sd=pin&&i%2?-side:side,fx=anchor.x+Math.cos(ang)*D*.62+Math.cos(ang+sd*1.57)*Math.min(650,D*.35),fy=anchor.y+Math.sin(ang)*D*.62+Math.sin(ang+sd*1.57)*Math.min(650,D*.35);
+      fl.forEach((u,i)=>{const sd=pin&&(PW?i%3===2:i%2)?-side:side,fx=anchor.x+Math.cos(ang)*D*.62+Math.cos(ang+sd*1.57)*Math.min(650,D*.35),fy=anchor.y+Math.sin(ang)*D*.62+Math.sin(ang+sd*1.57)*Math.min(650,D*.35);
         setMove(u,fx+rnd(-50,50),fy+rnd(-50,50),'amove');u.flank=G.t;u.flT=FL>1?t:null;});if(fl.length){aiStat(T.ai,'flank');aiStat(T.ai,'flankers',fl.length);if(pin)aiStat(T.ai,'pincer');}const main=home.filter(u=>!fl.includes(u));const gnd=main.filter(u=>u.s.dom==='ground'),oth=main.filter(u=>u.s.dom!=='ground');
       if(HM&&fl.length){const sx=anchor.x+Math.cos(ang)*D*.45,sy=anchor.y+Math.sin(ang)*D*.45;aiForm(gnd,sx,sy);for(const u of oth)setMove(u,sx+rnd(-60,60),sy+rnd(-60,60),'amove');for(const u of home){u.opW=1;u.flT=null;}T.ai.op={t:G.t,tg:t.id,fl:fl.map(u=>u.id),mn:main.map(u=>u.id)};aiStat(T.ai,'hmStage');}
       else{if(gnd.length)aiForm(gnd,t.x,t.y);for(const u of oth)setMove(u,t.x+rnd(-60,60),t.y+rnd(-60,60),'amove');}
-      if(fl.length)T.ai.flanks=(T.ai.flanks||0)+1;T.ai.wave=Math.min(T.ai.wave+Math.round(2*(G.bs||1)),Math.round(DIFF[T.ai.d??1].maxWave*(G.bs||1)));log(en,'Enemy attack force spotted moving out.','w');}
+      T.ai.lt={id:t.id,t:G.t};if(fl.length)T.ai.flanks=(T.ai.flanks||0)+1;T.ai.wave=Math.min(T.ai.wave+Math.round(2*(G.bs||1)),Math.round(DIFF[T.ai.d??1].maxWave*(G.bs||1)));log(en,'Enemy attack force spotted moving out.','w');}
   aiNavyAct(T,mine);aiLanding(T,mine,anchor,pb,launched);
-  if(T.ai.t%6===0)for(const u of mine)if(u.kind==='jet'&&u.state==='park'&&u.ammo>=u.s.ammo&&pb.length){const t=pb[Math.floor(Math.random()*pb.length)];u.order={type:'attack',target:t};u.state='fly';u.landed=false;}
+  if(T.ai.t%6===0)for(const u of mine)if(u.kind==='jet'&&u.state==='park'&&u.ammo>=u.s.ammo&&pb.length){const t=aiAirTarget(T,u,pb)||pb[Math.floor(Math.random()*pb.length)];u.order={type:'attack',target:t};u.state='fly';u.landed=false;}
   if(T.ai.t%4===0){const free=G.oil.filter(o=>!ally(o.owner,id)).sort((a,b)=>dist(a,anchor)-dist(b,anchor))[0];if(free){const inf=mine.find(u=>!u.isB&&u.kind==='inf'&&!u.order&&!u.target&&!u.amb);if(inf&&Math.hypot(free.x-anchor.x,free.y-anchor.y)<1700)setMove(inf,free.x,free.y,'move');}}
   if(T.ai.t%9===0){const tgt=G.oil.filter(o=>!o.dead&&o.owner>=0&&!ally(o.owner,id)).sort((p,q)=>dist(p,anchor)-dist(q,anchor))[0];if(tgt&&dist(tgt,anchor)<1500){const sq=army.filter(u=>!u.order&&!u.target&&!u.amb&&u.s.dom==='ground'&&canTarget(u.s,tgt.tg)).slice(0,4);for(const u of sq){u.order={type:'attack',target:tgt.tg};u.path=null;}}}
   // ammo & supply: dry or out-of-supply troops with nothing to shoot fall back to the nearest supply circle; Hard AI hunts enemy supply trucks; a couple of infantry take nearby towns
