@@ -292,18 +292,18 @@ function grM0(){return (typeof GC==='object'&&GC&&GC.m0|0)||0;}
 function grMonStr(turn){const m=Math.max(0,(turn|0)-1)+grM0();return GR_MON[m%12]+' '+(2026+Math.floor(m/12));}   /* A2c: month label for former 'turn N' wording */
 function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1)+grM0();return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
 /* grInfo: a tiny note next to the save (when, who, which month) so the main menu can offer "Continue" without loading the campaign code */
-function grInfo(){try{if(!GC)return;localStorage.setItem(GR_KEY+'.i',JSON.stringify({ts:Date.now(),me:GC.me||'',n:GC.me?((GCM&&GCM.nats&&GCM.nats.get(GC.me)||{}).name||GC.me):'Observer',d:grMonStr(GC.turn),over:GC.over?1:0}));}catch(e){}}
-function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));GR_AUTO.t=Date.now();grInfo();}catch(e){}}
+function grInfo(){try{if(!GC)return;localStorage.setItem(GR_KEY+'.i',JSON.stringify({ts:Date.now(),me:GC.me||'',n:GC.me?((GCM&&GCM.nats&&GCM.nats.get(GC.me)||{}).name||GC.me):'Observer',d:grMonStr(GC.turn),over:GC.over?1:0}));}catch(e){}}   // lint-ok (save timestamp, not simulation)
+function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));GR_AUTO.t=Date.now();grInfo();}catch(e){}}   // lint-ok (save timestamp, not simulation)
 /* rolling safety copies before every Fight-it battle (queue "Never lose progress"): newest = GR_KEY+'.b1', then .b2, .b3; grLoad falls back to them if the main save is damaged */
 function grSnap(){try{if(!GC||(typeof GNT!=='undefined'&&GNT.on&&!GNT.host))return;const js=JSON.stringify(GC),K=GR_KEY+'.b';
   try{localStorage.setItem(GR_KEY,js);}catch(e){try{for(let i=3;i>=1;i--)localStorage.removeItem(K+i);localStorage.setItem(GR_KEY,js);}catch(_){}}   // the main save always comes first; a full storage costs the copies, never the save
-  GR_AUTO.t=Date.now();grInfo();
+  GR_AUTO.t=Date.now();grInfo();   // lint-ok (save timestamp, not simulation)
   try{for(let i=3;i>1;i--){const v=localStorage.getItem(K+(i-1));if(v)localStorage.setItem(K+i,v);}localStorage.setItem(K+'1',js);}catch(e){try{localStorage.removeItem(K+'3');localStorage.removeItem(K+'2');localStorage.setItem(K+'1',js);}catch(_){}}}catch(e){}}
 /* autosave on a timer (queue "Never lose progress"): every 3 minutes with the world map open (not during a battle, not as a guest in a friend's campaign) the campaign
    is saved and a rolling copy kept; leaving or hiding the page saves too. Same save + same 3 copies as the Fight-it safety copy - one system. */
-const GR_AUTO={t:Date.now(),ms:180000};
+const GR_AUTO={t:Date.now(),ms:180000};   // lint-ok (save timestamp, not simulation)
 function grAutoOk(){return !!(GC&&!GC.over&&document.getElementById('grandScreen')&&!(typeof G!=='undefined'&&G&&!G.over)&&!(typeof GNT!=='undefined'&&GNT.on&&!GNT.host));}
-function grAutoTick(force){if(!grAutoOk())return false;if(!force&&Date.now()-GR_AUTO.t<GR_AUTO.ms)return false;grSnap();return true;}
+function grAutoTick(force){if(!grAutoOk())return false;if(!force&&Date.now()-GR_AUTO.t<GR_AUTO.ms)return false;grSnap();return true;}   // lint-ok (save timestamp, not simulation)
 try{setInterval(()=>{try{grAutoTick();}catch(e){}},15000);addEventListener('pagehide',()=>{try{if(grAutoOk())grSave();}catch(e){}});document.addEventListener('visibilitychange',()=>{try{if(document.hidden&&grAutoOk())grSave();}catch(e){}});}catch(e){}
 // a save made on an older world map (the province list changed, e.g. 2026-11-06 real borders 174 -> 236 land provinces) can't
 // continue: its province indices point at different places, so the map breaks and a Fight-it battle never loads (Lane A1)
