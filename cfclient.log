@@ -1,0 +1,425 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:37879
+[4s] pages loaded; this machine's host benchmark: 208
+[206s] 1. battle 88K1L2 running on the server: true; slots creator 0, friend 1
+[210s] 2. server's standby: slot 1 (benchmarks the server holds: 40, 900)
+[210s] 3. the server is made to fall behind real time (it gets only a third of the real time)
+[238s]    after 28.2 s: server battle closed (last window 0.52x real time); creator client (room gen 1), friend host
+[244s] 4. after the takeover, t=17 s: new host 26 entities, creator's side sees 5; creator's page: missing 0, off-position 0, mismatched 0; credits host 10126 page 10126
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFOVER PASS (245s) — the server picked the strong PC as standby, handed the battle to it when it fell behind real time, and the other player stayed in sync
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:36441
+[3s] both pages loaded; the multiplayer menu offers "Play online" and "New battle"
+[13s] 1. three other battles take the 3 battle slots: !w started, !w started, !w started
+[13s]    server busy (busy) -> battle in this browser: "Your battle · code2FD5Q0OnlineStraits of Thunder1 / 8 playersInvite friends — send the link, or give them this code under Play online › Join"
+[14s]    the 3 lobbies closed; battle slots in use: 0
+[14s] 2. lobby open on the server, code ANA4WM; creator status: "Your battle · codeANA4WMOnlineStraits of Thunder1 / 8 playersInvite friends — send the link, or give them this code unde"
+[15s]    friend joined: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[16s]    server lobby: humans US/team 1, RU/team 2; computer CN/team 2
+[49s] 3. battle started on the server (battle, held for loading screens: true); creator is slot 0, friend slot 1
+[224s]    both pages past the loading screen (rd: true, true); battle running: true
+[231s]    slot 0's order: 2/2 of its units moved on the server
+[231s]    slot 1's order: 2/2 of its units moved on the server
+[231s]    in-battle readout (creator): "60 FPS · ping 640 ms"
+[316s]    check @1.5 min slot 0 t=90s: server 54 entities, this side sees 7; page has 7; missing 0, extra 0, off-position 0, mismatched 0; credits server 10716 page 10716
+[317s]    check @1.5 min slot 1 t=90s: server 54 entities, this side sees 26; page has 27; missing 0, extra 0, off-position 0, mismatched 0; credits server 10598 page 10598
+[317s] 4. the friend's connection to the server is cut
+[318s]    after 0.6 s the friend is reconnected via wsb
+[323s]    after reconnect slot 1 t=95s: server 54 entities, this side sees 28; page has 29; missing 0, extra 0, off-position 0, mismatched 0; credits server 10694 page 10694
+[332s] 5. the battle's object is evicted at t=104 s (as on a redeploy)
+[335s]    after 3.1 s: server battle at t=99 s; creator client via wsb (room gen 0), friend client via wsb (room gen 0)
+[340s]    after restart slot 0 t=102s: server 53 entities, this side sees 8; page has 8; missing 0, extra 0, off-position 0, mismatched 0; credits server 10914 page 10914
+[341s]    after restart slot 1 t=102s: server 53 entities, this side sees 30; page has 30; missing 0, extra 0, off-position 0, mismatched 0; credits server 10796 page 10796
+[350s] 6. today's use is pushed past 75%; standby (checkpoint holder) is slot 0; pages holding a checkpoint: true,false
+[352s]    after 1.8 s: server battle closed, today at 76.4%, battles allowed: false; creator host, friend client (room gen 1, last update 0.1 s ago)
+[355s]    new browser host at t=113 s with 50 entities; the other player's side is still theirs; its last update 0.1 s ago
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E PASS (355s) — battle hosted by the real BattleRoom (wrangler dev): busy fallback, lobby, start, sync, orders, reconnect, server restart, budget hand-over all OK
+local game server http://127.0.0.1:44031
+[2s] both pages loaded
+[10s] 1. protected battle open on Cloudflare, code 9B5FLC; invite link http://127.0.0.1:36327/join.html#join=9b5flc&pw=Yalla%202026%20%C3%B1
+[11s]    server keeps: {"mem":{"s":"zet6I6v6dso/RJh2BeH0Gg==","h":"8fUU0IQMqYGZACx0R/nrceHg1QuU8fnmxLNmtjPjLy8=","i":4000},"kept":null}
+[12s] 2. friend's game list: "🔒 United States · game 9B5FLC · Straits of Thunder · 1/8 playersJoin"
+[12s]    "Play online" with no password: started its own battle (did not join the protected one)
+[12s]    wrong password -> "Wrong password. Try again.JoinCancel"
+[13s]    right password -> "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"; creator's lobby has 2 players
+[16s] 3. invite link joined in one go; address bar now /index.html#join=9b5flc
+[19s] 4. browser-hosted BMBF6H: join by code asks "🔒 Game BMBF6H is password protected. Enter its password to join.JoinC"
+[38s]    right password -> friend: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFPASSWORD PASS (39s) — password-protected games: lock in the list, wrong password refused, right password and invite link join, server keeps only a hash, browser-hosted fallback checks it too
+local game server http://127.0.0.1:35175
+[1s] page loaded
+[124s] 1. skirmish (mouse): picks [0,3,-1,1], AI 2 Random -> spot 7; bases [[1239,5998],[6683,1174],[5803,6161],[9193,1174]]; HQs on their bases: true (preview 22866 bytes)
+[212s] 2. phone (touch only): picks [0,3,-1,1] made by tapping; picker fits in landscape too ({"cv":739.625,"over":0,"rows":true})
+[241s] 3. leader's Cloudflare lobby i8ibdg
+[245s]    friend joined
+  ✗ locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('.seat.open .addai').first()
+    2 × locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not stable
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+    - locator resolved to <button class="chip addai">+ Add computer</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    - waiting for element to be visible, enabled and stable
+  - element was detached from the DOM, retrying
+    - locator resolved to <button class="chip addai">+ Add computer</button>
+  - attempting click action
+    - waiting for element to be visible, enabled and stable
+    - element is not stable
+  - retrying click action
+    - waiting for element to be visible, enabled and stable
+    - element is not visible
+  - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    - waiting for element to be visible, enabled and stable
+    - element is not stable
+  - retrying click action
+    - waiting 500ms
+    3 × waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+      - locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 20ms
+      - waiting for element to be visible, enabled and stable
+      - element is not stable
+    - retrying click action
+      - waiting 100ms
+    2 × waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+      - locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 20ms
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not stable
+    - retrying click action
+      - waiting 100ms
+      - waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+      - locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+      - waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+      - locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 20ms
+    - waiting for element to be visible, enabled and stable
+    - element is not visible
+  - retrying click action
+    - waiting 100ms
+    3 × waiting for element to be visible, enabled and stable
+      - element is not stable
+    - retrying click action
+      - waiting 100ms
+      - waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+      - locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    4 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+  - element was detached from the DOM, retrying
+    - locator resolved to <button class="chip addai">+ Add computer</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    4 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 500ms
+
+--- server log (tail) ---
+
+  warn: player console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: phone console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: screenshot startpick-phone.png: page.screenshot: Expected options.clip.height to be greater than 0.
+  warn: screenshot startpick-phone-landscape.png: page.screenshot: Expected options.clip.height to be greater than 0.
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFSTARTPICK FAIL: locator.click: Timeout 30000ms exceeded.
+Call log:
+  - waiting for locator('.seat.open .addai').first()
+    2 × locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not stable
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+    - locator resolved to <button class="chip addai">+ Add computer</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    - waiting for element to be visible, enabled and stable
+  - element was detached from the DOM, retrying
+    - locator resolved to <button class="chip addai">+ Add computer</button>
+  - attempting click action
+    - waiting for element to be visible, enabled and stable
+    - element is not stable
+  - retrying click action
+    - waiting for element to be visible, enabled and stable
+    - element is not visible
+  - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    - waiting for element to be visible, enabled and stable
+    - element is not stable
+  - retrying click action
+    - waiting 500ms
+    3 × waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+      - locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 20ms
+      - waiting for element to be visible, enabled and stable
+      - element is not stable
+    - retrying click action
+      - waiting 100ms
+    2 × waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+      - locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 20ms
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not stable
+    - retrying click action
+      - waiting 100ms
+      - waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+      - locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+      - waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+      - locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 20ms
+    - waiting for element to be visible, enabled and stable
+    - element is not visible
+  - retrying click action
+    - waiting 100ms
+    3 × waiting for element to be visible, enabled and stable
+      - element is not stable
+    - retrying click action
+      - waiting 100ms
+      - waiting for element to be visible, enabled and stable
+    - element was detached from the DOM, retrying
+      - locator resolved to <button class="chip addai">+ Add computer</button>
+    - attempting click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    4 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 500ms
+    - waiting for element to be visible, enabled and stable
+  - element was detached from the DOM, retrying
+    - locator resolved to <button class="chip addai">+ Add computer</button>
+  - attempting click action
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+    - waiting 20ms
+    2 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 100ms
+    4 × waiting for element to be visible, enabled and stable
+      - element is not visible
+    - retrying click action
+      - waiting 500ms
+ (276s)
+local game server http://127.0.0.1:35505 (pages reach it through http://127.0.0.1:36009); over-budget server http://127.0.0.1:33177
+[4s] 0. menu: "▶ Play online" and "+ New battle"
+[4s] 1. server busy (busy) -> battle in this browser; lobby: "Your battle · codeGTQZ4IOnlineStraits of Thunder1 / 8 playersInvite friends — send the link, or give them this code under Play online › Join"
+[5s] 2. lobby open on the server, code DX66PP; creator status: "Your battle · codeDX66PPOnlineStraits of Thunder1 / 8 playersInvite friends — send the link, or give them this code unde"
+[5s] friend's game list: "1 open battle · 0 in progressUnited States · game DX66PP · Straits of Thunder · 1/8 playersJoin👁 Watch"
+[5s] friend joined with "Play online": "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[13s] server lobby (as the friend sees it): player US/team 1, player RU/team 2, computer CN/team 2
+[45s] 3. battle started; creator is slot 0, friend slot 1
+[234s] both pages past the loading screen
+[235s]   creator: {"mode":"client","me":0,"snapT":76.5,"rx":1,"recon":false,"via":"wsb","peer":"ww3p-rxv6h4ui","host":"ww3-dx66pp","gen":0,"ai":false}
+[236s]   friend: {"mode":"client","me":1,"snapT":119.9,"rx":97,"recon":false,"via":"wsb","peer":"ww3p-rqtjel7c","host":"ww3-dx66pp","gen":0,"ai":false}
+[236s]   proxy sockets: [{"path":"/lobby","code":null,"id":null},{"path":"/lobby","code":null,"id":null},{"path":"/battle/dx66pp","code":"dx66pp","id":"ww3p-rxv6h4ui"},{"path":"/battle/dx66pp","code":"dx66pp","id":"ww3p-rqtjel7c"}]
+[241s] the server's battle clock advances on the creator's page: 171.6 s -> 171.6 s
+  ✗ the creator gets no fresh battle state from the server
+  ✗ the server never acknowledged slot 0's orders: {"ordS":179433030975,"cq":[179433030971,179433030972,179433030973,179433030974,179433030975],"sb":false}
+[278s] slot 0's orders acknowledged by the server; 0/0 of its units moved in the server's updates
+[278s] slot 1's orders acknowledged by the server; 2/2 of its units moved in the server's updates
+[278s] in-battle readout (creator): "60 FPS · ping 7 ms"
+[278s] @2.9 min slot 0: server checkpoint (0.0 s older) has 0 buildings + 0 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[278s] @2.9 min slot 1: server checkpoint (7.9 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[278s] @2.9 min: the pages' latest states are 28.90 s apart; 30 things both see, 0 differ
+  ✗ @2.9 min: the two pages are 28.9 s apart
+[279s] 4. the friend's connection to the server is cut (0 socket)
+[279s]   back after 0.3 s
+[282s] friend reconnected via ws (room gen 1); its side has 6 units/buildings (had 6)
+  ✗ the friend reconnected somewhere other than the Cloudflare battle
+[291s] after the friend reconnected slot 0: server checkpoint (0.0 s older) has 0 buildings + 0 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[291s] after the friend reconnected slot 1: server checkpoint (4.3 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[291s] after the friend reconnected: the pages' latest states are 41.50 s apart; 28 things both see, 0 differ
+  ✗ after the friend reconnected: the two pages are 41.5 s apart
+[302s] 5. the server restarted (battle at 172 s); pages reconnect
+  ✗ the pages did not get back into the battle after the server restarted
+[351s] 6. the server's battle vanishes for good; pages holding a checkpoint: false,true
+[411s] after 60.0 s: creator host, friend client (room gen 1, last update 110.9 s ago)
+[414s] new browser host at t=333 s with 54 entities; the other player's side is still theirs; its last update 114.0 s ago
+  ✗ the other player gets no updates from the new host
+--- server log (tail) ---
+
+ ⛅️ wrangler 4.153.0 (update available 4.160.0)
+───────────────────────────────────────────────
+[custom build] Running: node build-sim.mjs
+[custom build] battle sim up to date: gen/battle-sim.js (800 KB)
+[custom build] 
+Your Worker has access to the following bindings:
+Binding                             Resource                  Mode
+env.ROOMS (GameRoom)                Durable Object            local
+env.LOBBY (Lobby)                   Durable Object            local
+env.BUDGET (Budget)                 Durable Object            local
+env.BATTLES (BattleRoom)            Durable Object            local
+env.OVERRUN_GUARD ("(hidden)")      Environment Variable      local
+
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:40989
+[wrangler:info] GET /health 200 OK (436ms)
+[wrangler:info] GET /room/dx66pp-m1 101 Switching Protocols (9ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (9ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (4ms)
+
+creator log: ["The weather is clearing.","Forecast: the weather is about to clear.","Weather: Fog. Heavy fog: units see barely half as far. Ambush weather.","Forecast: fog rolling in within 25 seconds.","Zaidi Shia Movement's commander did not come back. The AI has taken over (they can still rejoin)."]
+friend log: ["Connection lost. Reconnecting…","Connection lost. Reconnecting…","Connection lost. Reconnecting…","Connection lost. Reconnecting…","Connection lost. Reconnecting…"]
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT FAIL: the creator gets no fresh battle state from the server (416s)
+  ✗ the server never acknowledged slot 0's orders: {"ordS":179433030975,"cq":[179433030971,179433030972,179433030973,179433030974,179433030975],"sb":false}
+  ✗ @2.9 min: the two pages are 28.9 s apart
+  ✗ the friend reconnected somewhere other than the Cloudflare battle
+  ✗ after the friend reconnected: the two pages are 41.5 s apart
+  ✗ the pages did not get back into the battle after the server restarted
+  ✗ the other player gets no updates from the new host
