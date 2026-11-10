@@ -1,0 +1,29 @@
+[0s] mp: opening 3 pages
+[5s] mp: pages open
+[7s] mp: lobby lnc1dv
+[9s] mp: clients joined
+[223s] mp: battle loaded on all pages
+[223s] mp: playing 40s
+[263s] mp: checking sync
+[273s] mp attempt 1: REGRESSED
+  (re-running once to rule out noise) order latency p95 ms rose to 347 (baseline 111, allowed up to 215.4; +213%)
+[273s] mp: opening 3 pages
+[277s] mp: pages open
+[279s] mp: lobby sghpe4
+[281s] mp: clients joined
+[484s] mp: battle loaded on all pages
+[484s] mp: playing 40s
+[524s] mp: checking sync
+[534s] mp attempt 2: ok
+
+                       mp        
+snap interval p95      154       
+snap jitter sd         70.06     
+order latency p95      111       
+client frame p95       247.9     
+client snaps           0         
+biggest snap (units)   0         
+desyncs                0         
+runtime 8.9 min
+
+SMOOTH PASS
