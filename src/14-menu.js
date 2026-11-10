@@ -109,6 +109,13 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 .mxcred{max-width:860px}.mxcred p{margin:0 0 12px;color:#8a9a92;font:400 12px/1.6 var(--mono);max-width:none}
 @media (max-width:1100px){.mxnat,.mxpl{grid-template-columns:1fr}#mxdet{position:static}}
 `;document.head.appendChild(s);}
+function mxModeName(){return typeof setup!=='undefined'&&setup.mode==='battle'?'Battle':'Conquest';}
+/* The two skirmish modes share the setup screens (battlefield, nation, players, options); this retitles them for the mode chosen on the main menu. */
+function mxSetMode(m){if(typeof setup!=='undefined')setup.mode=m==='battle'?'battle':'conquest';const B=m==='battle',nm=mxModeName();
+  const sub=(id,t)=>{const e=document.querySelector('#ms-'+id+' .mxsub');if(e)e.textContent=t;};
+  sub('c-map',B?'Battle: a Command Center, a dozer and supply trucks - build your base and fight like Generals. Every map has at least two real attack routes.':'Conquest: towns pay the tax, a full base from the start. Every map has at least two real attack routes.');
+  for(const b of [MX.startP,MX.startO])if(b)b.textContent='Start '+nm.toLowerCase();
+  const h=document.querySelector('#ms-c-opts .mxh');if(h)h.textContent=nm+' options';}
 function mxBuild(){
   const m=document.getElementById('menu');if(!m||document.getElementById('mx'))return;mxCss();m.classList.add('m3');
   const card=m.querySelector('.card'),g=id=>document.getElementById(id);
@@ -125,9 +132,10 @@ function mxBuild(){
   const item=(t,fn,cls,tip)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''),t);b.type='button';b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);if(tip)b.title=tip;menu.appendChild(b);return b;};
   MX.cont=item('',()=>mxClick('svContinue'),'','Pick up your latest saved battle');MX.cont.hidden=true;
   item('Grand campaign',()=>mxClick('grandBtn'),'','Run a whole empire on a world map and fight the battles live');
-  item('Conquest',()=>menuGo('c-map'),'','A battle vs the AI: pick a battlefield, a nation and your opponents');
-  item('Missions',()=>mxClick('campaign'),'','The story missions');
-  item('Tutorial',()=>mxClick('tutorial'),'','First time? A guided 10-minute battle');
+  item('Conquest',()=>{mxSetMode('conquest');menuGo('c-map');},'','Take towns and collect their tax, hold the front, destroy the enemy base - a full base and $10,000 from the start');
+  item('Battle',()=>{mxSetMode('battle');menuGo('c-map');},'','Generals-style skirmish: a Command Center and a dozer, supply trucks feed your money, tech up, destroy every enemy building');
+  item('Missions',()=>mxClick('campaign'),'dim','The story missions');
+  item('Tutorial',()=>mxClick('tutorial'),'dim','First time? A guided 10-minute battle');
   item('Play online',()=>menuGo('online'),'sep','Join an open battle with friends or start one');
   item('Load game',()=>mxClick('svLoadBtn'),'','Load a saved battle');
   item('Settings',()=>mxClick('openSettings'),'','Graphics, sound and mouse');
@@ -161,7 +169,8 @@ function mxBuild(){
   opt('Doctrine','Your general’s battle doctrine: a free bonus for the whole battle. Or pick it in the first 2 minutes.',g('gdocSel'));
   opt('Conditions','Time of day and weather. Low sun, dusk and night change what you can see and how far.',g('wx'));
   opt('Season','Mud slows wheels, snow slows infantry. Roads matter more.',g('ssnRow'));
-  {const r=mxEl('div','seg');r.id='balRow';[['Balanced',0],['Realistic',1]].forEach(([t,v])=>{const b=mxEl('button','',t);b.onclick=()=>{setup.real=v;r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));};if(!!setup.real===!!v)b.classList.add('on');r.appendChild(b);});opt('Balance','Balanced: every nation equally strong - the default. Realistic: fire support follows real-world power - superpowers get more money, faster, bigger strikes and cheaper vehicles; small nations get weaker strikes but cheaper infantry. The host sets it for a multiplayer battle.',r);}
+  {const r=mxEl('div','seg');r.id='balRow';[['Balanced',0],['Realistic',1]].forEach(([t,v])=>{const b=mxEl('button','',t);b.onclick=()=>{setup.real=v;r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));};if(!!setup.real===!!v)b.classList.add('on');r.appendChild(b);});opt('Balance','Balanced: every nation equally strong - the default. Realistic: each nation starts like its real 2026 military, but the game stays fair. Big powers start rich with tanks and strong air and missile support, but their units cost more and train slowly. Small nations and the Zealous factions start with many cheap infantry and AT teams, recruit fast and fortify cheaply at home. The host sets it for a multiplayer battle.',r);
+    const rs=mxEl('div','');rs.style.cssText='font-size:12px;opacity:.8;margin-top:4px;max-width:520px';const fill=()=>{rs.textContent=setup.real?[setup.p].concat(setup.a?[setup.a]:[]).filter(f=>FACTIONS[f]).map(f=>FACTIONS[f].name+' - '+realLine(f)).join('  ·  '):'';};r.addEventListener('click',()=>setTimeout(fill,0));r.addEventListener('mouseenter',fill);r.after(rs);fill();}
   MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
   /* --- play online --- */
   const OL=scr('online','<h2 class="mxh">Play online</h2><p class="mxsub">Join an open battle, or start one with your nation and battlefield. Friends can join from the list or with an invite code.</p>');
@@ -201,7 +210,7 @@ function mxStartSync(){const s=document.getElementById('start');for(const b of [
 function mxContSync(){const c=document.getElementById('svContinue');if(!MX.cont||!c)return;MX.cont.hidden=c.hidden;if(c.hidden)MX.cont.textContent='';else{const t=(c.textContent||'').replace(/^\W*Continue\W*/i,'');MX.cont.textContent='';MX.cont.append('Continue',mxEl('small','',t));}}
 function mxPoll(){const m=document.getElementById('menu');if(!m||m.hidden)return;mxContSync();if(MX.cur==='c-players'||MX.cur==='c-opts'){mxStartSync();mxPlayersSync();}if(MX.cur==='c-nation')mxNatShow();}
 function mxCrumb(){const id=MX.cur,top=document.getElementById('mxtop'),cr=document.getElementById('mxcrumb');if(!top)return;top.hidden=id==='title';cr.innerHTML='';
-  const st=MX_STEPS.findIndex(s=>s[0]===id);if(st>=0){cr.append(mxEl('b','','Conquest'));MX_STEPS.forEach(([sid,n],i)=>{cr.append(mxEl('i','','›'));const b=mxEl('button',sid===id?'cur':'',(i+1)+' '+n);b.type='button';if(sid!==id)b.onclick=()=>menuGo(sid,i<st);cr.append(b);});}
+  const st=MX_STEPS.findIndex(s=>s[0]===id);if(st>=0){cr.append(mxEl('b','',mxModeName()));MX_STEPS.forEach(([sid,n],i)=>{cr.append(mxEl('i','','›'));const b=mxEl('button',sid===id?'cur':'',(i+1)+' '+n);b.type='button';if(sid!==id)b.onclick=()=>menuGo(sid,i<st);cr.append(b);});}
   else cr.append(mxEl('b','',MX_TITLES[id]||''));}
 function menuGo(id,back){if(!MX.screens[id]||MX.cur===id)return;const from=MX.screens[MX.cur],to=MX.screens[id];
   if(MX_STEPS.some(s=>s[0]===id)&&MX_STEPS.some(s=>s[0]===MX.cur)){const i=MX.stack.indexOf(id);if(i>=0)MX.stack.length=i+1;else MX.stack.push(id);}

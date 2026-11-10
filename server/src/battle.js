@@ -53,7 +53,7 @@ export class BattleHost {
     this.players = new Map();                // id -> {id, pres, f, tok, at, seat}
     this.order = [];                         // ids of humans in seat order (join order, owner first)
     this.owner = null;                       // id of the owner (configures and starts)
-    this.map = 'strait'; this.w = 0; this.tm = []; this.ais = [];
+    this.map = 'strait'; this.bm = 0; this.w = 0; this.tm = []; this.ais = [];
     this.seed = seed;
     this.created = now(); this.emptySince = now(); this.endAt = 0;
     this.out = new Map();                    // id -> records queued this turn ('' = everyone)
@@ -209,6 +209,7 @@ export class BattleHost {
       else this.note = `That battlefield holds only ${n} players: pick a bigger one.`;
     }
     if (typeof d.w === 'number') this.w = int(d.w, -1, 31, 0);
+    if (d.bm !== undefined) this.bm = d.bm ? 1 : 0;   // game mode: 0 = Conquest, 1 = Battle (Generals rules)
     if (Array.isArray(d.ais)) this.ais = d.ais.slice(0, MAX_PLAYERS).map(a => ({ f: this.sim.facs.includes(a && a.f) ? a.f : this.sim.facs[0], d: int(a && a.d, 0, 2, 1), p: int(a && a.p, 0, 9, 0), tm: int(a && a.tm, 0, 7, 1), st: int(a && a.st, -1, 7, -1) }));
     if (Array.isArray(d.tm)) this.tm = this.order.map((_, i) => int(d.tm[i], 0, 7, this.tm[i] | 0));
     // start spots picked for the players (the owner always sends the whole setup: no 'st' = everyone on Random)
@@ -234,7 +235,7 @@ export class BattleHost {
   sendLobby() {
     const seats = this.seats(), why = this.check();
     for (const id of this.players.keys()) {
-      this.emit('blob', { to: id, c: this.code, pv: this.sim.pv, own: id === this.owner ? 1 : 0, you: this.order.indexOf(id), map: this.map, ...(this.cmCode && /^cm_/.test(this.map) ? { cm: this.cmCode } : {}), mx: this.mx(), w: this.w, seats, ok: why ? 0 : 1, why: why || this.note || '', ns: this.specs.size, ...(this.specs.has(id) ? { sp: 1 } : {}) });
+      this.emit('blob', { to: id, c: this.code, pv: this.sim.pv, own: id === this.owner ? 1 : 0, you: this.order.indexOf(id), map: this.map, ...(this.cmCode && /^cm_/.test(this.map) ? { cm: this.cmCode } : {}), mx: this.mx(), w: this.w, bm: this.bm, seats, ok: why ? 0 : 1, why: why || this.note || '', ns: this.specs.size, ...(this.specs.has(id) ? { sp: 1 } : {}) });
     }
     this.flush();
     this.list();
@@ -269,10 +270,10 @@ export class BattleHost {
     const st = this.sim.stClean([...this.order.map(id => this.players.get(id).st), ...ais.map(a => a.st)], facs.length), sp = st ? { st } : {};
     const ids = [...this.order.map(id => this.players.get(id).idc || 0), ...ais.map(() => 0)];
     const cmS = this.cmCode && /^cm_/.test(this.map) ? { cm: this.cmCode } : {};
-    this.facs = facs; this.si = { seed, facs, map: this.map, tm, w: this.w | 0, code: this.code, ...sp, ...cmS };
-    this.order.forEach((id, i) => this.emit('start', { pv: st ? this.sim.pvs : this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, sv: 1, ids, ...sp, ...cmS }));
+    this.facs = facs; this.si = { seed, facs, map: this.map, tm, w: this.w | 0, bm: this.bm, code: this.code, ...sp, ...cmS };
+    this.order.forEach((id, i) => this.emit('start', { pv: st ? this.sim.pvs : this.sim.pv, seed, facs, slot: i, to: id, map: this.map, tm, w: this.w | 0, bm: this.bm, sv: 1, ids, ...sp, ...cmS }));
     this.flush();
-    this.sim.start({ seed, facs, map: this.map, tm, w: this.w, aiD, peers, toks, code: this.code, ...sp, ...cmS });
+    this.sim.start({ seed, facs, map: this.map, tm, w: this.w, bm: this.bm, aiD, peers, toks, code: this.code, ...sp, ...cmS });
     this.phase = 'battle'; this.lastStep = this.now(); this.acc = 0; this.startedAt = this.now();
     // sockets still in the lobby without a seat (never greeted, or told the lobby was full) hold no side: like late
     // joiners they are closed after UNSEATED_MS, so they can't keep an abandoned battle (and its slot) alive (review R12)

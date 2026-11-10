@@ -4,6 +4,11 @@ The game has two live copies: GitHub Pages (`index.html` on `main`) and the clau
 https://claude.ai/artifact/Qt3bimPhr31eZEUpqndGUi. Both are built from the same `src/`. Republish the artifact at
 every ship (ORCH.md step 8), right after pushing `main`.
 
+> **2026-11-10 (loadF):** `index.html` on Pages no longer contains the grand campaign (`src/13*` → `grand.<hash>.js`, loaded on demand)
+> or the two ground-texture data URIs (`terr_*.<hash>.webp`). The artifact edition is unchanged in spirit: `build.py --artifact`
+> builds from **all** modules inline (`concat('all')`, `GRAND_FILE=""`), keeps the textures as data URIs, and needs no extra files.
+> `python3 orch/build.py --single` writes the same one-file page to `orch/out/index-single.html`.
+
 ## What differs from index.html
 
 `python3 orch/build.py --artifact` writes `orch/out/artifact/` (gitignored): `index.html` (~1 MB), `models/*.txt` and

@@ -6,7 +6,8 @@ const EL_TERM=48, EL_CAMP=300, EL_LOSE_WS=-.08, EL_WIN_INC=.03;
 function elS(){if(!GC.el)GC.el={nx:{},camp:{},ref:{},log:[]};return GC.el;}
 function elHash(c){let h=7;for(let i=0;i<c.length;i++)h=(h*31+c.charCodeAt(i))%9973;return h;}
 function elIsDem(c){return EL_DEM.includes(c)&&GC.nat[c]&&!GC.nat[c].dead;}
-function elNext(c){const S=elS();if(S.nx[c]===undefined)S.nx[c]=(GC.turn||0)+6+elHash(c+(GC.seed||''))%EL_TERM;return S.nx[c];}
+function elNext(c){const S=elS();if(S.nx[c]===undefined){const r=typeof GR_REAL==='object'&&GR_REAL.el&&GR_REAL.el[c];   /* real26: the real election calendar first */
+    S.nx[c]=r?Math.max(GC.turn||1,grRealTurn(r[0],r[1])):(GC.turn||0)+6+elHash(c+(GC.seed||''))%EL_TERM;}return S.nx[c];}
 function elUn(c){let s=0,n=0;for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===c){s+=GC.prov[p.i].un;n++;}return n?s/n:0;}
 function elApproval(c){const S=elS();const ws=typeof wsOf==='function'?wsOf(c):60;return Math.max(0,Math.min(100,Math.round(ws*.6+(100-Math.min(100,elUn(c)*1.5))*.4+(S.camp[c]||0))));}
 function elCampaign(c){const N=GC.nat[c],S=elS();if(!elIsDem(c))return 'No election to fight.';if(N.cash<EL_CAMP)return 'Need $'+EL_CAMP+'.';if((S.camp[c]||0)>=8)return 'The campaign is already at full strength.';N.cash-=EL_CAMP;S.camp[c]=8;return '';}

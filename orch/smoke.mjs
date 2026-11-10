@@ -92,7 +92,7 @@ fs.mkdirSync(OUT, { recursive: true });
 const RUN = newRun(ART ? 'smoke-art' : 'smoke');
 const t0 = Date.now();
 try {
-  await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
+  await page.goto(ART ? URL0 : URL0 + '?lazy=1', { waitUntil: 'load', timeout: 120000 }); // ?lazy=1: battles must run WITHOUT the grand-campaign bundle (orch/loadF)
   await page.waitForFunction(() => typeof startSingle === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await page.waitForFunction(() => MODELS.ready || !MODELS.loading, null, { timeout: 180000 }).catch(() => warns.push('3D models still loading after 180s'));
   { const m = await page.evaluate(() => ({ n: Object.keys(MODELS.proto).length, of: typeof MODEL_FILES === 'object' ? Object.keys(MODEL_FILES).length : 0,
@@ -100,6 +100,11 @@ try {
     console.log(`3D models: ${m.n} of ${m.of} ready=${m.ready} ${m.err} (page open to models ready: ${(m.t / 1000).toFixed(1)}s)`);
     if (!m.ready) warns.push('3D models did not load at the menu: ' + m.err); }
   await shot(page, 'menu.png');
+  if (!ART) { // lazy grand campaign: not in the page at load, loads on the menu button, and the page then has the whole campaign
+    const pre = await page.evaluate(() => ({ g: typeof grandMenu, btn: !!document.getElementById('grandBtn'), file: typeof GRAND_FILE === 'string' && GRAND_FILE }));
+    if (pre.g !== 'undefined' || !pre.btn || !pre.file) fails.push(`lazy grand: before opening, grandMenu is ${pre.g}, button ${pre.btn}, GRAND_FILE ${pre.file} (expected undefined, true, a file name)`);
+    else console.log(`grand campaign is lazy: ${pre.file} not loaded at the menu`);
+  }
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));
       return { room: !!NET.room, peer: typeof Peer, p2p: !!window.WW3_P2P, three: THREE.REVISION, host: !document.getElementById('host').disabled }; });
@@ -128,9 +133,9 @@ try {
   const tLoad = Date.now();
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('loading screen did not finish within 10 minutes'));
   console.log(`loading screen finished after ${((Date.now() - tLoad) / 1000).toFixed(1)}s`);
-  // grand-map-only assets never appear in a Conquest battle (Abdullah 2026-11-05 20:58; 2026-11-06 23:14 "why is the ayatollah unit still in battle")
-  { const gm = await page.evaluate(() => { if (!G || !G.conq || G.camp || G.sandbox) return []; return ['u_cleric', 'b_fort', 'p_bb'].filter(id => { const e = document.getElementById(id); return e && !e.hidden; }); });
-    if (gm.length) fails.push('grand-map-only assets still offered in a Conquest battle: ' + gm.join(', ')); }
+  // leadersC (Abdullah 2026-11-07 22:38): the signature assets are in Conquest/Battle for their nations and OUT of grand Fight-it battles
+  { const gm = await page.evaluate(() => { if (!G || !G.grand) return []; return ['u_cleric', 'b_fort', 'p_bb'].filter(id => { const e = document.getElementById(id); return e && !e.hidden; }); });
+    if (gm.length) fails.push('signature assets offered in a grand Fight-it battle: ' + gm.join(', ')); }
   // every model this battle's nations need must have arrived (in the artifact edition they come in a different published form)
   { const m = await page.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.filter(T => !T.reb).map(T => T.fac)) : Object.keys(MODEL_FILES);
       return { of: ks.length, miss: ks.filter(k => !MODELS.proto[k]), err: MODELS.err || '' }; });

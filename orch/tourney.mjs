@@ -46,6 +46,7 @@ const DIFF_NAME = ['Easy', 'Normal', 'Hard'][DIFF];
 const MAPS_ARG = String(argS('maps', 'strait,oasis,plateau')).split(',').map(s => s.trim()).filter(Boolean);
 const FAC_ARG = argS('factions', '') ? argS('factions', '').split(',').map(s => s.trim().toUpperCase()).filter(Boolean) : null;
 const SWAP = has('swap');
+const PAIRS = argS('pairs', '') ? argS('pairs', '').split(',').map(x => x.trim().toUpperCase().split('-')).filter(x => x.length === 2) : [], REAL = has('real');   // --pairs US-IR,RU-UA : only these matchups (GAMES each, sides alternate); --real : lobby Realistic mode
 const FULL = has('full'), DRY = has('dry'), REAL_CLOCK = has('real-clock');
 const ONLY = argS('match', '') !== '' ? Number(argS('match', '')) : null;
 const ADJ = Number(argS('adj', 1.5));
@@ -76,7 +77,8 @@ const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(
 const matchSeed = i => (Math.imul(SEED + 1, 1000003) + Math.imul(i + 1, 7919)) >>> 0;
 function schedule(facs, maps) {
   const R = mulberry(SEED * 31 + 17), pairs = [];
-  if (FULL) {
+  if (PAIRS.length) { for (let g = 0; g < GAMES; g++) for (const [a, b] of PAIRS) pairs.push(g % 2 ? [b, a] : [a, b]); }
+  else if (FULL) {
     for (let i = 0; i < facs.length; i++) for (let j = i + 1; j < facs.length; j++) pairs.push((i + j) % 2 ? [facs[i], facs[j]] : [facs[j], facs[i]]);
     for (let i = pairs.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [pairs[i], pairs[j]] = [pairs[j], pairs[i]]; }
   } else {
@@ -131,13 +133,13 @@ const PAGE = () => {
   window.endGame = (w, why) => { if (TR.st && G && !G.over && !TR.st.end) TR.st.end = { w, t: G.t, why: why || '' }; return E(w, why); };
 
   TR.list = () => ({ facs: FKEYS.slice(), names: Object.fromEntries(FKEYS.map(k => [k, FACTIONS[k].name])), maps: MAP_KEYS.map(k => [k, MAPS[k].max]) });
-  TR.start = (m, diff, realClock) => {
+  TR.start = (m, diff, realClock, REAL) => {
     if (G) G.over = true;
     MODE = 'single'; ME = 0; setup.d = diff; setup.map = m.map; setup.p = m.a; setup.a = m.b; setup.n = 1; setup.others = []; setup.tm = [0, 1]; setup.slot = -1; setup.seed = m.seed;
     TR.st = { rng: mul(m.seed ^ 0x9E3779B9), clock: 0, realClock, end: null, ms: 0, steps: 0, trace: [], nextT: 0,
       side: [0, 1].map(() => ({ uLost: 0, uLostV: 0, bLost: 0, bLostV: 0, peakU: 0, peakUV: 0 })) };
     const ms0 = realNow();
-    sim(() => newGame({ seed: m.seed, facs: [m.a, m.b], ai: [true, true], map: m.map, tm: [0, 1], bs: setup.bs, slot: -1 }));
+    sim(() => newGame({ seed: m.seed, facs: [m.a, m.b], ai: [true, true], map: m.map, tm: [0, 1], bs: setup.bs, slot: -1, real: REAL ? 1 : 0 }));
     G.headless = true; // FXE skips every visual/audio effect handler
     G.teams.forEach(T => { T.ai = mkAI(diff); }); // mkAI scales the wave by G.bs itself (same as a fresh AI slot)
     return { facs: G.teams.map(T => T.fac), map: G.mapKey, ms: realNow() - ms0 };
@@ -251,7 +253,7 @@ async function play(w, m) {
   const r = { ...m, errs: [] }; w.cur = r;
   const tr = Date.now();
   try {
-    const st = await w.page.evaluate(([m, d, rc]) => __TR.start(m, d, rc), [m, DIFF, REAL_CLOCK]);
+    const st = await w.page.evaluate(([m, d, rc, rl]) => __TR.start(m, d, rc, rl), [m, DIFF, REAL_CLOCK, REAL]);
     if (st.map !== m.map) r.errs.push(`started on ${st.map}, not ${m.map}`);
     r.startS = st.ms / 1000;
     const steps = Math.round(MINUTES * 3600), CH = 3600;
@@ -327,7 +329,7 @@ const flags = [];
 for (const r of results) {
   if (r.result === 'error') { flags.push(`#${r.i} ${r.a} vs ${r.b} on ${r.map}: error — ${r.errs[0]}`); continue; }
   if (!r.sides) continue;
-  r.sides.forEach((s, i) => {
+  r.sides.slice(0, 2).forEach((s, i) => {   // (the rebel team is a 3rd side)
     const o = r.sides[1 - i];
     const maxB = Math.max(0, ...(r.trace || []).map(x => x[1 + i][1])), combat = Object.entries(s.made || {}).filter(([k]) => k !== 'harv' && k !== 'dozer').reduce((a, [, n]) => a + n, 0);
     if (r.winner === 1 - i && (combat < 6 || (maxB <= 2 && r.t >= 180) || s.credits >= 8000))

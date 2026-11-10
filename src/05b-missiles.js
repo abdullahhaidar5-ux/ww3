@@ -53,6 +53,8 @@ function mslLaunch(m){const ph=fxPH(),g=groundH(m.sx,m.sy),k=ph?.5:1,x=m.sx,y=m.
   for(let i=0;i<Math.round(22*k);i++){const a=rnd(0,6.28),v=rnd(30,95);part({x:x+Math.cos(a)*3,y:y+Math.sin(a)*3,h:g+rnd(1,5),vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(0,5),f:.22,rise:rnd(1,3),c:[.97,.96,.93],c2:[.68,.67,.64],ck:.85,s:rnd(14,24),g:rnd(10,18),d:rnd(5.5,9),a:.62});}
   for(let i=0;i<Math.round(10*k);i++)part({x:x+rnd(-4,4),y:y+rnd(-4,4),h:g+rnd(2,(m.sh-g)),vx:rnd(-8,8),vy:rnd(-8,8),vh:rnd(10,40),f:.4,rise:rnd(4,10),c:[.96,.95,.92],c2:[.66,.65,.62],ck:.8,s:rnd(9,15),g:rnd(7,12),d:rnd(4,7),a:.55});
   for(let i=0;i<Math.round(8*k);i++){const a=rnd(0,6.28),v=rnd(40,120);part({x,y,h:g+4,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vh:rnd(20,90),add:true,c:C_SPARK,s:1.8,f:.6,grav:1,d:rnd(.4,.9)});}}
+// shader warm-up: one of each missile kind (with motor flame) drawn once at load so the first strike doesn't compile them mid-battle
+function mslWarm(grp){for(const k of ['ball','cruise','bomb']){const M=mslMake(k,k!=='bomb');M.g.visible=true;M.g.position.set(0,10,0);M.g.traverse(c=>{c.frustumCulled=false;});grp.add(M.g);}}
 // ---- missile spawn / tick (replaces the old box missile) ----
 function mslSpawn(sx,sy,tx,ty,T,i){let up=null,bd=1e9;for(const e of G.ents){if(e.kind!=='uplink'||e.dead)continue;const d=Math.hypot(e.x-sx,e.y-sy);if(d<bd){bd=d;up=e;}}
   const fac=up&&G.teams[up.team]?G.teams[up.team].fac:null,st=fac&&UPLINK[fac]?UPLINK[fac][1]:'silo',cruise=st==='vls',kind=cruise?'cruise':'ball';

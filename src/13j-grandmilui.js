@@ -28,10 +28,12 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
       box.appendChild(r);}
     if(!foes.length)row('<span style="opacity:.7">You are not at war.</span>');}
   else if(GMILUI.tab==='st'){const Q=gmilN(me);box.appendChild(guEl('div','opacity:.75;font-size:13px','Missiles, air raids and drone strikes hit an enemy province (buildings or armies) or an enemy fleet at sea. Click an enemy province or sea zone on the map and use its Strike buttons. Air defence in the target intercepts. Max 3 a month.'));
-    row('Missiles in stock: <b>'+Q.ms+'</b>/'+GMIL_MS_MAX+' (one more every 3 months)');box.appendChild(gmilBtn('Buy missile $'+GMIL_MISSILE_COST,()=>gmilDone(gmilBuyMissile(me))));
-    row('<b>Ordered this month</b>');for(const o of Q.so)box.appendChild(guEl('div','font-size:13px','• '+GMIL_ST[o.t].n+' → '+GCM.P[o.pi].n+' ('+(o.k==='b'?'buildings':o.k==='a'?'armies':'fleet')+')'));
+    row('Missiles in stock: <b>'+Q.ms+'</b>/'+GMIL_MS_MAX+' (one more every 3 months)');
+    if(GMIL_DRN.includes(me)){row('One-way drones in stock: <b>'+(Q.dr|0)+'</b>/'+GMIL_DR_MAX+' · launch sites make 6 a month ($'+GMIL_DR_COST+' each) · range ~2,000 km, ~10 h flight. Big salvos saturate air defence.');
+      for(const a of GC.armies.filter(x=>x.o===me&&!x.fl&&x.u.length&&(geEff(x.at,'dsite')>0||geEff(x.at,'factory')>0||x.ln)).slice(0,6))box.appendChild(gmilBtn((a.nm||'Army')+' at '+GCM.P[a.at].n+': launchers '+(a.ln|0)+' · +1 ($'+GMIL_LN_COST+')',()=>gmilDone(gmilBuyLauncher(me,a.id))));}box.appendChild(gmilBtn('Buy missile $'+GMIL_MISSILE_COST,()=>gmilDone(gmilBuyMissile(me))));
+    row('<b>Ordered this month</b>');for(const o of Q.so)box.appendChild(guEl('div','font-size:13px','• '+GMIL_ST[o.t].n+(o.t==='d'?' ×'+o.n:'')+' → '+GCM.P[o.pi].n+' ('+(o.k==='b'?'buildings':o.k==='a'?'armies':'fleet')+')'));
     if(!Q.so.length)box.appendChild(guEl('div','opacity:.65;font-size:13px','Nothing yet.'));
-    if(Q.so.length)box.appendChild(gmilBtn('Cancel all (refund)',()=>{for(const o of Q.so){if(o.t==='m')Q.ms++;else{GC.nat[me].cash+=GMIL_ST[o.t].cost;if(GC.nat[me].e)GC.nat[me].e.fuel+=GMIL_ST[o.t].fuel;}}Q.so=[];gmilDone('');}));}
+    if(Q.so.length)box.appendChild(gmilBtn('Cancel all (refund)',()=>{for(const o of Q.so){if(o.t==='m')Q.ms++;else if(o.t==='d')Q.dr=(Q.dr|0)+(o.n|0);else{GC.nat[me].cash+=GMIL_ST[o.t].cost;if(GC.nat[me].e)GC.nat[me].e.fuel+=GMIL_ST[o.t].fuel;}}Q.so=[];gmilDone('');}));}
   else{box.appendChild(guEl('div','opacity:.75;font-size:13px','Fleets sail between sea zones (select one, right-click a zone). A fleet at sea next to an enemy port blockades it: port income and sea trade stop. Armies crossing a sea held by an enemy fleet wait in port unless one of your fleets escorts them (same zone). Subs hide; patrol boats find them; mines hurt enemies.'));
     for(const a of gmilFleets(me)){row('<b>'+a.nm+'</b> at '+GCM.P[a.at].n+' · '+a.u.length+' ships · value '+Math.round(grArmyVal(a)/100)/10+'k'+(a.path.length?' → '+GCM.P[a.path[a.path.length-1]].n:'')+(a.mine?' · mines':''));}
     if(!gmilFleets(me).length)row('<span style="opacity:.7">No fleets.</span>');
@@ -44,7 +46,7 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
 // controls inside the province / sea-zone side panel
 function gmilUiProv(s,pi){if(!GC.me||!GC.mil||GC.over)return;const p=GCM.P[pi],me=GC.me,box=guEl('div','margin:8px 0;border-top:1px solid #243a50;padding-top:6px');let any=false;
   const strikeRow=(k)=>{box.appendChild(guEl('div','opacity:.75;font-size:13px','Strike '+(k==='f'?'the fleet':'this province')+' (missiles in stock: '+gmilN(me).ms+')'));
-    for(const t of ['m','a','d'])for(const kk of (k==='f'?['f']:['b','a'])){const e=gmilStrikeCheck(me,t,pi,kk);const b=gmilBtn(GMIL_ST[t].n+' · '+(kk==='b'?'buildings':kk==='a'?'armies':'ships'),()=>{if(GC.ph!=='plan')return;gmilDone(gmilStrike(me,t,pi,kk));},false,e||'Order it');if(e)b.style.opacity='.55';box.appendChild(b);}any=true;};
+    for(const t of ['m','a','d','D'])for(const kk of (k==='f'?['f']:['b','a'])){const ty=t==='D'?'d':t,sn=t==='D'?30:0;if(t==='D'&&!GMIL_DRN.includes(me))continue;const e=gmilStrikeCheck(me,ty,pi,kk,sn);const b=gmilBtn((t==='D'?'Drone salvo (up to 30)':GMIL_ST[t].n)+' · '+(kk==='b'?'buildings':kk==='a'?'armies':'ships'),()=>{if(GC.ph!=='plan')return;gmilDone(gmilStrike(me,ty,pi,kk,sn));},false,e||'Order it');if(e)b.style.opacity='.55';box.appendChild(b);}any=true;};
   if(p.land&&GC.prov[pi].o!==me&&grAtWar(me,GC.prov[pi].o)){strikeRow('p');}
   else if(p.sea&&GC.armies.some(a=>a.at===pi&&a.fl&&grAtWar(a.o,me))){strikeRow('f');}
   if(p.sea){const z=GC.mil.zm[pi];if(z)box.appendChild(guEl('div','font-size:13px;margin-top:4px;color:#9fd3ff','Mines here: '+z.n+' ('+GCM.nats.get(z.o).name+')'));any=any||!!z;}

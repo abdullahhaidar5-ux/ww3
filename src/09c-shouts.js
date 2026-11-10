@@ -14,5 +14,5 @@ function bfShoutPlay(ty,x,y,team){if(!G||!AU.ctx||!auOn()||!AU.voiceOn||!G.teams
   const on=typeof inView==='function'?inView(x,y,0):true,j=Math.floor(Math.random()*set.length),[o,len]=set[j],src=c.createBufferSource(),g=c.createGain();src.buffer=buf;
   const vol=Math.max(0,Math.min(1.5,SET.vo/100*1.25))*Math.max(.18,1.05-d/1500)*(on?1:.8),t0=now+.02;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(vol,t0+.005);g.gain.setValueAtTime(vol,Math.max(t0+.006,t0+len-.05));g.gain.linearRampToValueAtTime(0,t0+len);
   let node=src;if(!on&&c.createBiquadFilter){const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=520;const lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=3000;src.connect(hp);hp.connect(lp);node=lp;}   // heard over the radio, off screen
-  if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=Math.max(-.9,Math.min(.9,dx/900));node.connect(p);p.connect(g);}else node.connect(g);g.connect(c.destination);
+  if(c.createStereoPanner){const p=c.createStereoPanner();p.pan.value=Math.max(-.9,Math.min(.9,dx/900));node.connect(p);p.connect(g);}else node.connect(g);g.connect(AU.vox||c.destination);
   VOSS.end=t0+len;VOSS.type[type]=now;src.start(t0,o,len);return true;}

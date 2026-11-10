@@ -81,7 +81,7 @@ function critClear(u){const c=u.crit|0;if(!c)return;const b=(c&4)?4:(c&1)?1:2;u.
 function critFix(v,dt){v.fixP=(v.fixP||0)+dt;if(v.fixP>=3.5){v.fixP=0;critClear(v);}}
 function critNear(u,R){let b=null,bd=R*R;for(const v of G.ents)if(!v.isB&&!v.dead&&v.crit&&v.team===u.team&&v.s&&isVeh(v.s)){const d=(v.x-u.x)**2+(v.y-u.y)**2;if(d<bd){bd=d;b=v;}}return b;}
 // the crew bails out of a vehicle that is nearly dead (below 20% health), whether or not morale has broken
-function bailCheck(u){if(u.aband||!critOk(u)||u.kind==='dozer'||u.hp>=u.max*.2||G.t-(u.reT||-99)<8)return false;if(u.s.cap&&u.cargo&&u.cargo.length)try{unloadTransport(u);}catch(_){}bailOut(u);return true;}
+function bailCheck(u){if(msOf(G.teams[u.team].fac).rout===0)return false;/* Zealous crews fight to the last */if(u.aband||!critOk(u)||u.kind==='dozer'||u.hp>=u.max*.2||G.t-(u.reT||-99)<8)return false;if(u.s.cap&&u.cargo&&u.cargo.length)try{unloadTransport(u);}catch(_){}bailOut(u);return true;}
 // client sync: the fortification list rides in the team panel when it changed (and every 12 s as a safety net)
 function dgPack(T){if(!G.dug)return null;if(T.dgV===G.dugV&&G.t<(T.dgT||0))return null;T.dgV=G.dugV;T.dgT=G.t+12;return{dg:G.dug.map(d=>[d.id,d.x,d.y,DUGK.indexOf(d.k),Math.round(d.a*100),d.team])};}
 function dgApply(L){G.dug=L.map(v=>({id:v[0],x:v[1],y:v[2],k:DUGK[v[3]]||'fox',a:v[4]/100,team:v[5],hp:1,max:1}));G.dugN=G.dug.length;G.dugV=(G.dugV|0)+1;G.dugId=Math.max(G.dugId|0,1);}
@@ -89,5 +89,5 @@ function dgApply(L){G.dug=L.map(v=>({id:v[0],x:v[1],y:v[2],k:DUGK[v[3]]||'fox',a
 function aiWalls(T,mine){if(T.ai.d<1||T.ai.t%9!==4||T.credits<450||G.t<240)return;let n=0;for(const d of G.dug||[])if(d.team===T.id&&d.k!=='fox')n++;if(n>=14)return;
   let dzs=mine.filter(e=>!e.isB&&e.kind==='dozer'&&!e.order&&!e.dead).slice(0,2);if(!dzs.length){dzs=mine.filter(e=>!e.isB&&!e.dead&&!e.order&&!e.target&&!e.dig&&digCan(e)&&G.t-(e.mv||-9)>3).slice(0,4);if(dzs.length<3)return;}const dz=dzs[0];let foe=null,bd=1e12;for(const e of G.ents)if(e.isB&&!e.dead&&e.kind==='hq'&&!ally(e.team,T.id)){const d=(e.x-dz.x)**2+(e.y-dz.y)**2;if(d<bd){bd=d;foe=e;}}if(!foe)return;
   const bs=mine.filter(e=>e.isB&&e.built>=1&&(e.kind==='factory'||e.kind==='barracks'||e.kind==='hq'));if(!bs.length)return;const b=bs[(T.ai.t/9|0)%bs.length];
-  const a=Math.atan2(foe.y-b.y,foe.x-b.x),r=b.size/2+80,cx=b.x+Math.cos(a)*r,cy=b.y+Math.sin(a)*r,px=-Math.sin(a)*75,py=Math.cos(a)*75,k=T.ai.d>=2&&T.credits>900?'trench':'sand';
+  const a=Math.atan2(foe.y-b.y,foe.x-b.x),r=b.size/2+80,cx=b.x+Math.cos(a)*r,cy=b.y+Math.sin(a)*r,px=-Math.sin(a)*75,py=Math.cos(a)*75,k='trench';   /* Abdullah 2026-11-07 21:21 "Make it all dig in": one dug-in line, no separate sandbag line */
   act(T.id,{t:'wall',ids:dzs.map(e=>e.id),k,x:cx-px,y:cy-py,x2:cx+px,y2:cy+py});}
