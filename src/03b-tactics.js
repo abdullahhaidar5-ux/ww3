@@ -81,7 +81,7 @@ function critClear(u){const c=u.crit|0;if(!c)return;const b=(c&4)?4:(c&1)?1:2;u.
 function critFix(v,dt){v.fixP=(v.fixP||0)+dt;if(v.fixP>=3.5){v.fixP=0;critClear(v);}}
 function critNear(u,R){let b=null,bd=R*R;for(const v of G.ents)if(!v.isB&&!v.dead&&v.crit&&v.team===u.team&&v.s&&isVeh(v.s)){const d=(v.x-u.x)**2+(v.y-u.y)**2;if(d<bd){bd=d;b=v;}}return b;}
 // the crew bails out of a vehicle that is nearly dead (below 20% health), whether or not morale has broken
-function bailCheck(u){if(u.aband||!critOk(u)||u.kind==='dozer'||u.hp>=u.max*.2||G.t-(u.reT||-99)<8)return false;if(u.s.cap&&u.cargo&&u.cargo.length)try{unloadTransport(u);}catch(_){}bailOut(u);return true;}
+function bailCheck(u){if(msOf(G.teams[u.team].fac).rout===0)return false;/* Zealous crews fight to the last */if(u.aband||!critOk(u)||u.kind==='dozer'||u.hp>=u.max*.2||G.t-(u.reT||-99)<8)return false;if(u.s.cap&&u.cargo&&u.cargo.length)try{unloadTransport(u);}catch(_){}bailOut(u);return true;}
 // client sync: the fortification list rides in the team panel when it changed (and every 12 s as a safety net)
 function dgPack(T){if(!G.dug)return null;if(T.dgV===G.dugV&&G.t<(T.dgT||0))return null;T.dgV=G.dugV;T.dgT=G.t+12;return{dg:G.dug.map(d=>[d.id,d.x,d.y,DUGK.indexOf(d.k),Math.round(d.a*100),d.team])};}
 function dgApply(L){G.dug=L.map(v=>({id:v[0],x:v[1],y:v[2],k:DUGK[v[3]]||'fox',a:v[4]/100,team:v[5],hp:1,max:1}));G.dugN=G.dug.length;G.dugV=(G.dugV|0)+1;G.dugId=Math.max(G.dugId|0,1);}

@@ -230,7 +230,7 @@ function drawHUD(){const c=hx;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,VW
     c.strokeStyle=RDRAG.am?'rgba(234,90,64,.9)':'rgba(116,208,143,.9)';c.lineWidth=2;c.beginPath();c.moveTo(a.x,a.y);c.lineTo(b.x,b.y);c.stroke();c.fillStyle=c.strokeStyle;
     for(let i=0;i<Math.min(n,40);i++){const t=n>1?i/(n-1):.5,x=RDRAG.w0.x+(w1.x-RDRAG.w0.x)*t,y=RDRAG.w0.y+(w1.y-RDRAG.w0.y)*t,p=toScreen(x,groundH(x,y)+2,y);c.beginPath();c.arc(p.x,p.y,3,0,7);c.fill();}}}
   if(drag&&drag.box){c.strokeStyle='#8af0a6';c.lineWidth=1;c.fillStyle='rgba(116,208,143,.1)';const x=Math.min(drag.x0,mouse.x),y=Math.min(drag.y0,mouse.y);c.fillRect(x,y,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));c.strokeRect(x+.5,y+.5,Math.abs(mouse.x-drag.x0),Math.abs(mouse.y-drag.y0));}
-  if(G.aim){const w=screenToWorld(mouse.x,mouse.y);if(w){const r=G.aim==='sup'?G.teams[ME].sup.r+G.teams[ME].sup.spread:(powInfo(G.aim,G.teams[ME].fac).r||60);c.strokeStyle='#ea5a40';c.lineWidth=1.5;c.setLineDash([6,4]);c.beginPath();
+  if(G.aim){const w=screenToWorld(mouse.x,mouse.y);if(w){const r=G.aim==='sup'?G.teams[ME].sup.r+G.teams[ME].sup.spread:G.aim==='ldrA'?60:(powInfo(G.aim,G.teams[ME].fac).r||60);c.strokeStyle='#ea5a40';c.lineWidth=1.5;c.setLineDash([6,4]);c.beginPath();
     for(let i=0;i<=40;i++){const a=i/40*6.28,p=toScreen(w.x+Math.cos(a)*r,groundH(w.x,w.y),w.y+Math.sin(a)*r);i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y);}c.stroke();c.setLineDash([]);}}
   if(flash>0){c.fillStyle=`rgba(255,236,210,${flash*.45})`;c.fillRect(0,0,VW,VH);}}
 // Tactical minimap: desaturated terrain with contour-style mountains, grid squares (A-H / 1-6), fog of war,
@@ -271,6 +271,13 @@ function spoofBtn(u){const V=ewMine(),cd=MODE==='client'?((V&&V.cd||[]).find(r=>
   b.title='For 20 seconds 3-4 fake contacts appear on enemy radar near this truck and move toward them like an attacking column. Enemies with a Strike Center see they are fake. Recharges in 60 s.';
   b.onpointerdown=ev=>{ev.preventDefault();if(!b.disabled)doAct({t:'spoof',tid:u.id});};return b;}
 /* hero squad ability button (command card); E does the same. The cooldown is host-synced (hc in the team message). */
+/* leader buttons (03i-leaders): the active ability and the ultimate, plain-word tooltips; E / Shift+E */
+function ldrBtns(u){const k=ldKind(G.teams[ME].fac);if(!k)return[];const S=LDS[k],L=G.teams[ME].ld||{c1:0,c2:0},out=[];
+  for(const w of ['a','u']){const A=S[w],left=Math.ceil((w==='u'?L.c2:L.c1)-G.t),b=document.createElement('button');b.className='btn wide';b.style.marginTop='6px';
+    b.textContent=(left>0?`★ ${A.n} (ready in ${left} s)`:`★ ${A.n} [${w==='u'?'Shift+E':'E'}]`);b.disabled=left>0;b.title=LD_TIPS[k][w]+' '+LD_TIPS[k].p;
+    b.onpointerdown=ev=>{ev.preventDefault();if(!b.disabled)ldrUse(w);};out.push(b);}return out;}
+function ldrUse(w){const k=ldKind(G.teams[ME].fac);if(!k)return;if(k==='dl'&&w==='a'){const L=G.teams[ME].ld||{c1:0};if(L.c1>G.t){log(ME,`${LDS.dl.a.n}: ready in ${Math.ceil(L.c1-G.t)} s.`,'w');return;}G.place=null;G.amove=false;G.defm=false;G.aim='ldrA';updateUI();return;}doAct({t:'ldr',k:w});}
+function ldrKey(ult){ldrUse(ult?'u':'a');}
 function habBtn(u){const A=HAB[u.s.hab]||{n:'Ability',d:''},left=Math.ceil((u.habT||0)-G.t);const b=document.createElement('button');b.className='btn wide';b.style.marginTop='6px';
   b.textContent=(left>0?`★ ${A.n} (ready in ${left} s)`:`★ ${A.n} [E]`);b.disabled=left>0;b.title=A.d+` Cooldown ${HERO_CD} s.`;b.onpointerdown=ev=>{ev.preventDefault();if(!b.disabled)doAct({t:'hab',tid:u.id});};return b;}
 function drawMini(){const W=mm.width,H=mm.height,sx=W/MAPW,sy=H/MAPH,now=performance.now()/1000,c=mx;

@@ -128,9 +128,9 @@ try {
   const tLoad = Date.now();
   await page.waitForFunction(() => !window.LOADING, null, { timeout: 600000, polling: 250 }).catch(() => fails.push('loading screen did not finish within 10 minutes'));
   console.log(`loading screen finished after ${((Date.now() - tLoad) / 1000).toFixed(1)}s`);
-  // grand-map-only assets never appear in a Conquest battle (Abdullah 2026-11-05 20:58; 2026-11-06 23:14 "why is the ayatollah unit still in battle")
-  { const gm = await page.evaluate(() => { if (!G || !G.conq || G.camp || G.sandbox) return []; return ['u_cleric', 'b_fort', 'p_bb'].filter(id => { const e = document.getElementById(id); return e && !e.hidden; }); });
-    if (gm.length) fails.push('grand-map-only assets still offered in a Conquest battle: ' + gm.join(', ')); }
+  // leadersC (Abdullah 2026-11-07 22:38): the signature assets are in Conquest/Battle for their nations and OUT of grand Fight-it battles
+  { const gm = await page.evaluate(() => { if (!G || !G.grand) return []; return ['u_cleric', 'b_fort', 'p_bb'].filter(id => { const e = document.getElementById(id); return e && !e.hidden; }); });
+    if (gm.length) fails.push('signature assets offered in a grand Fight-it battle: ' + gm.join(', ')); }
   // every model this battle's nations need must have arrived (in the artifact edition they come in a different published form)
   { const m = await page.evaluate(() => { const ks = typeof modelKeysFor === 'function' ? modelKeysFor(G.teams.filter(T => !T.reb).map(T => T.fac)) : Object.keys(MODEL_FILES);
       return { of: ks.length, miss: ks.filter(k => !MODELS.proto[k]), err: MODELS.err || '' }; });
