@@ -26,10 +26,13 @@ function svThumb(){try{if(typeof mm==='undefined'||!mm||!mm.width)return null;co
 function svCanSave(){return !!(G&&!G.over&&!G.rp&&MODE==='single'&&!window.LOADING&&G.ng&&!G.sandbox&&!G.grand);}
 function svMeta(id,name,kind){const T=G.teams[ME]||G.teams[0],mp=MAPS[G.mapKey];return {id,name,kind,ts:Date.now(),fmt:SV_FMT,pv:NET_PV,map:G.mapKey,mapName:mp&&mp.name||G.mapKey,fac:T.fac,facName:T.F&&T.F.name||T.fac,
   t:Math.round(G.t),camp:G.camp?G.camp.id:null,n:G.teams.filter(x=>!x.reb).length,thumb:svThumb()};}
+/* rolling autosave: 3 slots (auto, auto2, auto3) - an empty one is used first, then the oldest is overwritten, so one bad write never costs the only copy (queue "Never lose progress") */
+async function svAutoSlot(){const ids=['auto','auto2','auto3'];let L=[];try{L=(await svList()).filter(m=>m.kind==='auto');}catch(e){}
+  const free=ids.find(i=>!L.some(m=>m.id===i));if(free)return free;const old=L.filter(m=>ids.includes(m.id)).sort((x,y)=>x.ts-y.ts)[0];return old?old.id:'auto';}
 async function svCapture(name,kind){
   const ck=ckEncode();ck.sv={me:ME,ng:G.ng,cam:{x:cam.x,y:cam.y,tx:cam.tx,ty:cam.ty,dist:cam.dist,yaw:cam.yaw,z:cam.z},
     setup:(()=>{try{return JSON.parse(JSON.stringify(setup));}catch(e){return null;}})()};
-  const meta=svMeta(kind==='auto'?'auto':'m:'+String(name).toLowerCase(),kind==='auto'?'Autosave':name,kind||'manual');
+  const meta=svMeta(kind==='auto'?await svAutoSlot():'m:'+String(name).toLowerCase(),kind==='auto'?'Autosave':name,kind||'manual');
   const packed=await ckPack(ck);return {meta,packed};}
 async function svSave(name,kind){
   if(!svCanSave())return {ok:false,msg:'Saving is only possible during a single-player battle.'};
