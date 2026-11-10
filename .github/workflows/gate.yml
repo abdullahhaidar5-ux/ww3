@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down, migrate-dual,
-            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial, grand, grandsmooth, grandlive, decisions, superfreeze, icons]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
+            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial, grand, grandsmooth, grandlive, decisions, superfreeze, icons, stuck]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -45,6 +45,7 @@ jobs:
             servertest)     node orch/servertest.mjs && node orch/specserver.mjs ;;   # + spectators in a server battle
             superfreeze)    node orch/superfreeze.mjs IR,RU,US ;;   # firing a nation's superweapon strike (Iran's 12-missile Kheibar, Russia, US) must not stall the sim/FX (no call > 150 ms) or log errors (orch/superfreeze.mjs)
             icons)          TAG=gate node orch/bugsA-icons.mjs ;;   # command-bar pictures: every build/unit button of IR/US/RU/KP/RS/CN has its own picture class, nothing non-infantry draws the soldier (orch/bugsA-icons.mjs)
+            stuck)          node orch/stucktest.mjs --maps lebanon,aleppo --routes 0,2 --max 40 ;;   # stuck-units sweep: 150-unit mixed columns across 2 maps x 2 routes + idle-under-fire; counts stalled / piled / abandoned units (orch/reports/stuck.md)
             decisions)      node orch/decisions.mjs ;;   # audit: Abdullah's standing decisions as guards (no turn wording / End turn on the grand map, no Ayatollah/Fortress/Bunker Buster in Conquest, menu order, WASD camera-only, morale styles, Fight-it army-only)
             grand)          node orch/grandtest.mjs ;;   # grand campaign: 10 AI turns twice = same hash, Fight-it battle holds exactly the army's units + no production, survivors flow back, save round trip (orch/grandtest.mjs)
             grandsmooth)    node orch/grandsmooth.mjs ;;
