@@ -284,6 +284,12 @@ try {
   await ev(() => { grNew({ me: 'IR', seed: 99, len: 'quick' }); grSave(); grandOpen(); guFit(null); guRedraw(); }); await shot('world-map');
   await ev(() => { guFit(GR_REGIONS[4][1]); guRedraw(); }); await shot('region-middle-east');
   // ---- scenario: IR army next to an enemy garrison, march, end turn -> Fight-it prompt
+  { const fr = await ev(() => { grDeclare('IR', 'IQ'); if (typeof grFrontBuild !== 'function' || !G3.arrows) return { skip: !G3.arrows };
+      G3.front = G3.front || { sig: '', at: 0 }; grFrontBuild(); const D = G3.front.data, away = GC.armies.filter(a => a.o === 'IR' && GCM.P[a.at].land && a.at !== GC.nat.IR.cap).length;
+      const w0 = JSON.stringify(GC.war) + GC.armies.length; grFrontBuild(); return { fr: D.fr.length, gold: D.gold.length, away, fm: !!G3.front.fm, same: w0 === JSON.stringify(GC.war) + GC.armies.length,
+        bad: D.fr.filter(ch => !(grAtWar(GC.prov[ch.i].o, GC.prov[ch.j].o))).length }; });
+    console.log('front lines', JSON.stringify(fr));
+    if (!fr.skip && (!(fr.fr > 0) || !fr.fm || fr.bad || !fr.same || (fr.away > 0 && !(fr.gold > 0)))) fails.push('front lines / supply veins not drawn for a war: ' + JSON.stringify(fr)); }
   const sc = await ev(() => { const me = 'IR', foe = 'IQ'; grDeclare(me, foe); let pair = null;
     for (const p of GCM.P) if (p.land && GC.prov[p.i].o === me) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === foe && GC.prov[j].gar.length) { pair = [p.i, j]; break; } else if (pair) break;
     if (!pair) for (const p of GCM.P) if (p.land && GC.prov[p.i].o === foe) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === me) { pair = [j, p.i]; break; }

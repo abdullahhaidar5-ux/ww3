@@ -70,6 +70,12 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/function esImage\(S,o\)\{const M=rcModel/.test(u) && /b\.textContent='Copy picture'/.test(u) && !/navigator\.share|esPrev|BATTLE REPORT'/.test(u), 'report card: the end screen must show the card with Copy picture (no old Share picture)');
   ck(/function grandCard\(/.test(gb) && !/function grandAAR/.test(gb), 'report card: Fight-it result must use the same card (grandCard), not the old text report');
   ck(/function guFront\(/.test(gu) && /rcFront\(/.test(gu) && /id="gFront"/.test(gu), 'report card: the war diary lost its monthly Front page'); }
+// one-language idea 4: front lines + supply veins are drawn by the roads owner as merged strips (never a mesh per army/border) and only read the game
+{ const r = SRC['13e2-groads.js'], g = SRC['13e-grand3d.js']; const body = r.slice(r.indexOf('Front lines and supply veins'));
+  ck(/function grFrontData\(/.test(r) && /function grFrontBuild\(/.test(r) && /geArmySupply\(/.test(body) && /grFrontTick\(\)/.test(g), 'front lines / supply veins (grFrontData, grFrontBuild in 13e2-groads, grFrontTick in the grand view) are gone');
+  ck((body.match(/grStripMesh\(/g) || []).length === 1 && !/new THREE\.Mesh\(/.test(body), 'front lines / veins must stay merged strips (one grStripMesh call site, no mesh per line)');
+  ck(!/GC\.[a-zA-Z.\[\]]+\s*=[^=]|\.o\s*=[^=]|grLog\(|grSave\(/.test(body), 'front lines / veins are view only: they must not write campaign state');
+  ck(/Front line \(when you are at war\)/.test(g) && /Supply vein/.test(g), 'map key lost the front line / supply vein rows'); }
 { const g = SRC['13e-grand3d.js']; ck(!/function g3FigGeo|function g3Soldier|function g3ShipGeo/.test(g), 'grandfigs: blocky box/cylinder army figure code is back in 13e-grand3d.js'); }
 // 0b. gclarity (2026-11-07 19:52 "Way too busy … I don't know what the big areas mean"): clean EU4-style map — town pads/fields only at close zoom,
 //     one shield per stack, a map key, building chips only on hover; the old per-army count plates and always-on chips must not return.

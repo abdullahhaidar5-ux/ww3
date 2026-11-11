@@ -85,7 +85,7 @@ function rcHow(S,mv){const P=S.p,w=S.w;if(w==null||w<0||!P[w])return 'Neither si
   if(st>=2)cl.push('landed '+st+' missile strikes');
   let kb=0,ku=0;P.forEach((p,i)=>{if(win(i)){kb+=p.kb;ku+=p.ku;}});if(kb>0)cl.push('destroyed '+kb+' building'+(kb===1?'':'s'));else if(ku>0)cl.push('destroyed '+ku+' unit'+(ku===1?'':'s'));
   if(cl.length)a+=(cl.length>1?', '+cl.slice(0,-1).join(', '):'')+' and '+cl[cl.length-1];
-  return a+' in '+Math.max(1,Math.round(S.t/60))+' minutes.';}
+  const mn=Math.max(1,Math.round(S.t/60));return a+' in '+mn+' minute'+(mn===1?'':'s')+'.';}
 function rcToday(){const d=new Date();return d.getDate()+' '+['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.getMonth()]+' '+d.getFullYear();}
 // the facts of the card. o (optional): {title, place, date, how} from the caller (Fight-it gives the province and campaign date)
 function rcModel(S,o){o=o||{};const P=S.p,me=P[ME]||P[0],won=esWin(S,ME),mv=AAR.g===G?rcMoves():[],nm=l=>l.length>2?l.slice(0,2).join(', ')+' +'+(l.length-2):l.join(' & ');
