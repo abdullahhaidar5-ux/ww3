@@ -5,7 +5,7 @@
 // and sea trade of 13g-grandeco), escorts for crossings, mines and subs. AI empires use all of it. Everything here is
 // deterministic: random draws come from grRng seeded with the campaign seed, the turn and a stable index.
 // State: GC.mil = {g:{id:general}, gid, fr:[fronts], fid, zm:{zone:{o,n}}, fq:[fleet queue], n:{nation:{ms,so}}, bk:{province:1}, foe}
-const GMIL_TR=[['Armour expert','Tanks, helicopters and the hero squad +10% tougher.'],['Defender','Whole army +9% tougher when it defends (+6% in auto-resolve).'],['Logistician','Ammo and fuel full at battle start; half the hunger losses.'],['Raider','Infantry and light units +10% tougher; fewer men lost in a won field battle.']];
+const GMIL_TR=[['Armor expert','Tanks, helicopters and the hero squad +10% tougher.'],['Defender','Whole army +9% tougher when it defends (+6% in auto-resolve).'],['Logistician','Ammo and fuel full at battle start; half the hunger losses.'],['Raider','Infantry and light units +10% tougher; fewer men lost in a won field battle.']];
 const GMIL_LVN=[60,150,280,450];   // experience for levels 1-4
 const GMIL_NM={   // fictional name pools per culture [first names, family names] - generic, no real commanders
  ar:[['Karim','Nabil','Samir','Hadi','Walid','Tariq','Salim','Rami','Fouad','Jamal'],['Haddadi','Mansour','Zayed','Rahal','Sabbagh','Khoury','Darwish','Najjar','Hakim','Farouk']],
@@ -177,7 +177,7 @@ function gmilStrikes(){const M=GC.mil;if(!M)return;const R=grRng(GC.seed*53+GC.t
         for(const a of GC.armies)if(a.o===c&&a.at===site&&(a.ln|0)>0)a.lx=GC.turn;}   // a launch is seen: the launcher is exposed for a month
       else for(let i=0;i<raw;i++)if(R()>=ic)surv++;
       const tn=p.land?GCM.nats.get(tgtO).name:'the enemy fleet',inv=(vis||tgtO===GC.me)?GC.me:c;
-      if(!surv){grLog(cn+' '+(o.t==='d'?raw+' one-way drones':S.n.toLowerCase())+' on '+p.n+' were intercepted'+(aaB?' by air defence':'')+'.',inv);continue;}
+      if(!surv){grLog(cn+' '+(o.t==='d'?raw+' one-way drones':S.n.toLowerCase())+' on '+p.n+' were intercepted'+(aaB?' by air defense':'')+'.',inv);continue;}
       let msg='';
       if(o.k==='b'&&p.land){const bl=geBl(o.pi),tg=bl.filter(r=>['factory','refinery','power','port','airfield','mine','base','aa','fort','dsite'].includes(r[0]));
         if(!tg.length){const n=gmilHit(GC.prov[o.pi].gar,surv,S.dmg*1.5);msg='hit the garrison ('+n+' units struck)';}

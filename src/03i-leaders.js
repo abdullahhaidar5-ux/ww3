@@ -12,7 +12,7 @@ const LD_TIPS={
     a:'Sermon (120 s): he raises his hand and a green halo spreads 320 around him. For 25 s your ground units inside it are Inspired: +20% rate of fire, +15% speed, and they cannot be suppressed. [E]',
     u:'Call to Arms (300 s): drums and chant - 6 volunteer riflemen muster at him and at each of your barracks. [Shift+E]'},
   dl:{p:'On-the-spot guidance: a production building next to him builds 25% faster; artillery and rockets near him reload 15% faster. Unbreakable Spirit: wounded units near him keep full damage and speed, and damaged vehicles repair themselves slowly.',
-    a:"Supreme Commander's Order (120 s): loudspeakers and red banners - pick a target; every artillery and rocket unit within 320 of him fires one free synchronised volley there, then fires 25% faster with +15% range for 25 s. [E]",
+    a:"Supreme Commander's Order (120 s): loudspeakers and red banners - pick a target; every artillery and rocket unit within 320 of him fires one free synchronized volley there, then fires 25% faster with +15% range for 25 s. [E]",
     u:'Mass Mobilization (300 s): siren and anthem - for 20 s infantry train 50% faster and 25% cheaper, and 8 Worker-Peasant Guards (militia) form at each of your barracks. [Shift+E]'}};
 const LDU=[],LDKT=[];   // living leader unit per team / 'ay' | 'dl' | null per team (rebuilt by ldTick; host only)
 let LD_ACC=0,LD_ACC2=0;

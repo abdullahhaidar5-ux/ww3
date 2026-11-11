@@ -16,7 +16,7 @@ GEV_ROWS.push(
   o:[{t:'Stay quiet and keep the oil deal',fx:[['rel','US',5],['un',3]]},{t:'Protest the trial',fx:[['rel','US',-15],['un',-3]]}]},
  {id:'r26_eusanc',t:'European sanctions on Russia expire this month',x:'The economic sanctions run until 31 July and must be renewed unanimously, or they lapse.',w:0,c:'always',ai:0,
   o:[{t:'Renew them',fx:[['rel','RU',-5],['mod','income',-.01,6]]},{t:'Let them lapse',fx:[['fn','r26_lift'],['rel','RU',15],['rel','UA',-20],['rel','US',-5]]}]},
- {id:'r26_gazamand',t:'The UN mandate for Gaza\'s transition expires',x:'The Security Council mandate for Gaza\'s transitional board and stabilisation force ends on 31 December.',w:0,c:'always',ai:0,
+ {id:'r26_gazamand',t:'The UN mandate for Gaza\'s transition expires',x:'The Security Council mandate for Gaza\'s transitional board and stabilization force ends on 31 December.',w:0,c:'always',ai:0,
   o:[{t:'Back a renewal',fx:[['rel','OB',5],['rel','EG',5]]},{t:'Let it lapse and keep the security zone',fx:[['rel','OB',-15],['un',2]]}]});
 GCR_FN.r26_reelect=code=>{if(typeof elS!=='function')return '';elS().nx[code]=GC.turn+5;grLog(gdNatName(code)+' heads for a repeat election in 5 months.',code);return 'Repeat election in 5 months';};
 GCR_FN.r26_lift=code=>{if(typeof geEmbargo!=='function'||!GC.nat.RU)return '';geEmbargo(code,'RU',false);return 'Sanctions on Russia lapse';};

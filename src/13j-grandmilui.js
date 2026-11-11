@@ -27,9 +27,9 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
         for(const a of GC.armies.filter(x=>x.fr===f.id)){r.appendChild(guEl('div','font-size:13px;opacity:.85','• '+a.nm+' at '+GCM.P[a.at].n+' '+(a.path.length?'→ '+GCM.P[a.path[a.path.length-1]].n:'')));}}
       box.appendChild(r);}
     if(!foes.length)row('<span style="opacity:.7">You are not at war.</span>');}
-  else if(GMILUI.tab==='st'){const Q=gmilN(me);box.appendChild(guEl('div','opacity:.75;font-size:13px','Missiles, air raids and drone strikes hit an enemy province (buildings or armies) or an enemy fleet at sea. Click an enemy province or sea zone on the map and use its Strike buttons. Air defence in the target intercepts. Max 3 a month.'));
+  else if(GMILUI.tab==='st'){const Q=gmilN(me);box.appendChild(guEl('div','opacity:.75;font-size:13px','Missiles, air raids and drone strikes hit an enemy province (buildings or armies) or an enemy fleet at sea. Click an enemy province or sea zone on the map and use its Strike buttons. Air defense in the target intercepts. Max 3 a month.'));
     row('Missiles in stock: <b>'+Q.ms+'</b>/'+GMIL_MS_MAX+' (one more every 3 months)');
-    if(GMIL_DRN.includes(me)){row('One-way drones in stock: <b>'+(Q.dr|0)+'</b>/'+GMIL_DR_MAX+' · launch sites make 6 a month ($'+GMIL_DR_COST+' each) · range ~2,000 km, ~10 h flight. Big salvos saturate air defence.');
+    if(GMIL_DRN.includes(me)){row('One-way drones in stock: <b>'+(Q.dr|0)+'</b>/'+GMIL_DR_MAX+' · launch sites make 6 a month ($'+GMIL_DR_COST+' each) · range ~2,000 km, ~10 h flight. Big salvos saturate air defense.');
       for(const a of GC.armies.filter(x=>x.o===me&&!x.fl&&x.u.length&&(geEff(x.at,'dsite')>0||geEff(x.at,'factory')>0||x.ln)).slice(0,6))box.appendChild(gmilBtn((a.nm||'Army')+' at '+GCM.P[a.at].n+': launchers '+(a.ln|0)+' · +1 ($'+GMIL_LN_COST+')',()=>gmilDone(gmilBuyLauncher(me,a.id))));}box.appendChild(gmilBtn('Buy missile $'+GMIL_MISSILE_COST,()=>gmilDone(gmilBuyMissile(me))));
     row('<b>Ordered this month</b>');for(const o of Q.so)box.appendChild(guEl('div','font-size:13px','• '+GMIL_ST[o.t].n+(o.t==='d'?' ×'+o.n:'')+' → '+GCM.P[o.pi].n+' ('+(o.k==='b'?'buildings':o.k==='a'?'armies':'fleet')+')'));
     if(!Q.so.length)box.appendChild(guEl('div','opacity:.65;font-size:13px','Nothing yet.'));

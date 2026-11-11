@@ -55,7 +55,7 @@ npTab('un','🏛','UN Security Council',(code,body,c)=>{gidN(code);const M=unMem
   const h=document.createElement('div');h.innerHTML='<b>Put a measure to the council</b> ('+UN_COST+' Diplomatic points each; you have '+Math.floor(N.pp?N.pp.dip:0)+')';body.appendChild(h);
   for(const t of tg){const row=document.createElement('div');row.style.cssText='display:flex;gap:10px;align-items:center;margin:4px 0';const rc=unTally('condemn',t,code),rs=unTally('sanction',t,code);
     const sp=document.createElement('span');sp.style.cssText='min-width:200px';sp.textContent=gdNatName(t)+' — alarm '+Math.round(GC.nat[t].ae||0);row.appendChild(sp);
-    row.appendChild(mk('Condemn ('+rc.yes+(rc.veto?', veto':'')+')','Likely votes in favour',()=>unPropose(code,'condemn',t)));
-    row.appendChild(mk('Sanction ('+rs.yes+(rs.veto?', veto':'')+')','Likely votes in favour',()=>unPropose(code,'sanction',t)));body.appendChild(row);}
+    row.appendChild(mk('Condemn ('+rc.yes+(rc.veto?', veto':'')+')','Likely votes in favor',()=>unPropose(code,'condemn',t)));
+    row.appendChild(mk('Sanction ('+rs.yes+(rs.veto?', veto':'')+')','Likely votes in favor',()=>unPropose(code,'sanction',t)));body.appendChild(row);}
   const f=document.createElement('div');f.style.cssText='margin-top:10px';f.appendChild(mk('Lobby the council (-'+UN_LOBBY+' Dip)','Improves four members\' opinion of us',()=>unLobby(code)));
   f.appendChild(mk('Plead for relief (-'+UN_RELIEF+' Dip)','Ask the council to end sanctions on us',()=>unRelief(code)));body.appendChild(f);});
