@@ -158,10 +158,10 @@ function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],ro
     SHD.forEach((r,i)=>{M.compose(new THREE.Vector3(r[0],r[1],r[2]),new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),r[6]),new THREE.Vector3(r[3],r[4],r[5]));sm.setMatrixAt(i,M);});
     sm.instanceMatrix.needsUpdate=true;sm.castShadow=false;sm.renderOrder=2;sm.userData.n0=SHD.filter(r=>!r[8]).length;sm.userData.nAll=SHD.length;G3.townIM.push(sm);grp.add(sm);}}
 /* gclarity: what the towns show per zoom — close (< G3_CLOSE): everything; region and above: one core cluster per province, no ground pads / walls / fields */
-const G3_CLOSE=200,G3_T_FAR=440,G3_T_NEAR=250;
-/* calmmap (Abdullah 2026-11-10 "too busy"): ONE zoom tier (g3Zoom) for the whole grand view — 0 far (world/region: owner colours, country names, few capitals, no trees/flags/towns), 1 middle (merged army badges, small plates that avoid each other), 2 close (trees, towns, flags, every plate) */
+const G3_CLOSE=200,G3_T_FAR=600,G3_T_NEAR=250,G3_T_TOWN=400;   /* far = the world view and anything wider than a region button; the region buttons (d 430-575) open in the middle view; town clusters and the small countries' capital plates join below G3_T_TOWN */
+/* calmmap (Abdullah 2026-11-10 "too busy"): ONE zoom tier (g3Zoom) for the whole grand view — 0 far (world: owner colours, country names, few capitals, no trees/flags/towns), 1 middle (merged army badges, small plates that avoid each other), 2 close (trees, towns, flags, every plate) */
 function g3Zoom(d){return d>=G3_T_FAR?0:d>=G3_T_NEAR?1:2;}
-function g3TownLOD(d){const close=g3Zoom(d)===0?0:d<G3_CLOSE?2:1;if(G3.townLod===close||!G3.townIM)return;G3.townLod=close;for(const m of G3.townIM){const n=close===2?m.userData.nAll:close===1?m.userData.n0:0;m.count=n;m.visible=n>0;}}
+function g3TownLOD(d){const close=d>=G3_T_TOWN?0:d<G3_CLOSE?2:1;if(G3.townLod===close||!G3.townIM)return;G3.townLod=close;for(const m of G3.townIM){const n=close===2?m.userData.nAll:close===1?m.userData.n0:0;m.count=n;m.visible=n>0;}}
 // life: chimney smoke from every town (besieged provinces use g3BuildSmoke below) (GPU-animated points, one draw call)
 function g3BuildChim(grp){const T=g3Towns(),pos=[],ph=[],sz=[],pid=[],kind=[];
   for(const t of T){const nS=t.cap?5:t.t===0?3:1;for(let s=0;s<nS;s++){const a=g3Hash(t.pi*3+s,t.t+7)*6.283,r=g3Hash(s+2,t.pi+t.t)*(t.cap?16:9)*(t.sc||1),x=t.x+Math.cos(a)*r,z=t.z+Math.sin(a)*r,y=g3HeightAt(x,z)+4;
@@ -571,6 +571,7 @@ function g3PathPts(a){const P=GCM.P,pts=[];const q=(i)=>{const p=P[i],tw=!p.sea?
 function g3Css(){if(document.getElementById('g3css'))return;const s=document.createElement('style');s.id='g3css';s.textContent=`
 #g3ui{position:absolute;inset:0;pointer-events:none;overflow:hidden;font-family:inherit}
 #g3ui .mid .b .em{width:18px;height:18px;margin-right:5px}#g3ui .mid .b .t b{font-size:10.5px}#g3ui .mid .b.cap .em{width:20px;height:20px}#g3ui .mid .b.cap .t b{font-size:11.5px}#g3ui .mid .b{padding:2px 9px 2px 2px}
+#g3ui .mid .s{opacity:.6;font-size:12px}
 #g3ui .p.fa{opacity:.55;font-size:10px;height:13px;line-height:13px;padding-left:15px}#g3ui .p.fa .fw{transform:scale(.8)}
 #g3ui .b{position:absolute;left:0;top:0;transform:translate(-50%,-100%);display:none;white-space:nowrap;padding:3px 13px 3px 3px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(0,0,0,.2)),var(--nc,#27394b);border:1px solid rgba(255,240,200,.55);box-shadow:0 2px 6px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.25);color:#fff8e6;text-shadow:0 1px 2px #000a}
 .b .em{display:inline-block;vertical-align:middle;width:24px;height:24px;border-radius:50%;margin-right:7px;background:#ddd center/cover no-repeat;border:2px solid #f3e3b0;box-shadow:0 1px 3px #0008}
@@ -722,7 +723,7 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
   const close=d<G3_CLOSE;
   for(const b of G3.bn){const p=GCM.P[b.pi],st=GC.prov[b.pi];let q=null;const hot=b.pi===GV.sel||b.pi===GV.hov,myCap=GC.me&&st.o===GC.me&&GC.nat[GC.me]&&GC.nat[GC.me].cap===b.pi,natCap=GC.nat[st.o]&&GC.nat[st.o].cap===b.pi;
     const atw=!!(GC.me&&st.o!==GC.me&&grAtWar(GC.me,st.o)),mj=!!grNat(st.o).major,nbr=!!(GC.me&&st.o!==GC.me&&g3Nbr().has(st.o));
-    if(hot||myCap||(close&&d<1700)||(natCap&&(tier>=1||atw||mj))){const tw=g3Towns().find(t=>t.pi===b.pi),x=tw?tw.x:p.x,z=tw?tw.z:p.y;q=proj(x,g3HeightAt(x,z)+9+(p.cap?3:0),z);}
+    if(hot||myCap||(close&&d<1700)||(natCap&&((tier>=1&&d<G3_T_TOWN)||atw||mj||(tier>=1&&nbr)))){const tw=g3Towns().find(t=>t.pi===b.pi),x=tw?tw.x:p.x,z=tw?tw.z:p.y;q=proj(x,g3HeightAt(x,z)+9+(p.cap?3:0),z);}
     if(!q){vis(b.el,false);continue;}
     const own=GC.nat[st.o]&&GC.nat[st.o].cap===b.pi,pri=(b.pi===GV.sel||st.o===GC.me&&p.cap)?6:own?(atw?5:nbr?4.5:mj?4:3):p.cap?3:p.wg?2:p.tw>=3?1:0;   /* plate priority: you, enemies, neighbours, majors, the rest */
     cand.push({b,q,p,st,own,pri});}
