@@ -1,3 +1,65 @@
+# STATE — conductor run 3 on 2026-11-11, 12:50 UTC onward (third train being tested)
+
+**Main = ac59908f** (train 2). Main's own test run after that landing is RED on two tests: `gate/tutorial` (TUTORIAL FAIL (1)) and
+`gate/cfclient` (its text says PASS but the status is failure). The same commit was all green on its train run an hour earlier, so both
+look flaky, but nobody owns them right now. smooth-pc / smooth-mp / grandsmooth are green on main. The "RIGHT NOW" bullet in CLAUDE.md stays
+until main's own run is fully green.
+
+**Train 3 = `train/20261111-1252`, head e0e78614, test run `gate/e0e7861459`** (started 13:14 UTC):
+1. Calm map 4 (orch/calmmap4): close view shows only capital name plates, guard against look-alike neighbour colours — e9c4eb1d
+2. Calm map flag follow-up (orch/calmmap 1a0865f0): army flags wave only in the close view or on the selected army — 36ff6c59
+3. Campaign panels + Readability (orch/polishP2): one frame, close X, Esc; text size 100/115/130 %; colour-blind set — 9f01f2ce
+   (one conflict in src/13j-grandmilui.js: kept the shared frame header from the panels piece AND the new Stockpiles tab from main)
+Local: build + --check OK after every merge. The sandbox needs more than 10 minutes for one smoke run, so smoke / decisions / grandtest
+were run once on the finished train instead of after every merge (results at the bottom).
+
+**Looked at and NOT taken this run:**
+- Window fix (orch/winfix): already on main (the `wallAt` code is there); the branch is only an older copy.
+- Stuck units + controls feel + campaign safety copies (orch/greenK-snap, test run gate/1bb5e66377): changes the simulation, and its own run
+  shows `mpsync` red (client view diverged from the host in 2/11 checks) plus audio. Needs a fresh run on today's main before it can ride.
+- End screen damage dealt (orch/dashJ): own run red on mpsync, migrate-dual, audio — same reason.
+- Report a problem form + nightly balance report (orch/safetyH): own run red on audio; it also adds a new scheduled GitHub workflow, which the conductor does not start.
+- Frame-time governor (orch/speedS): its helper wrote "not landed" (p95/p99 worse).
+- Army Standards / army tokens (orch/armytokens, gate/6a19d97447): decisions, audio and smooth-pc red.
+- Seamless flow, Extras command (smooth-pc red on their own runs), Extras battle, Extras story, One language campaign (build check fails): unchanged for 10 h.
+- Sound mix (orch/q-sound), Leaders C, Autosave loop: older than 28 h, no fresh test run.
+
+## Helpers with unlanded work, read 12:55 UTC
+
+| idea (branch) | last save | ahead | newest own test run | red tests |
+|---|---|---|---|---|
+| Calm map 4 (calmmap4) — IN TRAIN 3 | 2.2 h | 4 | none of its own | - |
+| Real supply notes (c-supply) | 3.3 h | 1 (notes only) | - | - |
+| Calm map flag follow-up (calmmap) — IN TRAIN 3 | 3.7 h | 2 | 0fa0b84f28 | cfclient, tutorial (same as main) |
+| Extras: battle (extras-battle) | 10 h | 1 | 60d5e246b5 | grandlive, migrate-down |
+| One language: campaign (lang-campaign) | 10 h | 3 | 0aee49223e | check (build check fails) |
+| Army tokens (armytokens) | 10 h | 6 | 4eeb0c339c | decisions, mpsync, tutorial |
+| Seamless flow (seamless-flow) | 10 h | 1 | e1c344c7d8 | audio, smooth-pc |
+| Extras: command (extras-command) | 10 h | 1 | 4a7c989031 | audio, cfclient, smooth-pc |
+| Speed S (speedS) | 10 h | 3 | cf33e78fb7 | cfclient; helper says not to land |
+| Extras: story (extras-story) | 11 h | 1 | d1aef6c3d2 | cfclient, controls |
+| One language spec (onelanguage) | 11 h | 4 | none | - |
+| greenK3 / greenK4 notes | 10 h | 3 / 4 | notes only | - |
+| Voices V (voicesV) | 17 h | 3 | d19894f02f | cfclient, audio (old main) |
+| Polish P2 (polishP2) — IN TRAIN 3 | 19 h | 1 | 1e53c43f14 | measured on old red main |
+| Safety H (safetyH) | 23 h | 3 | 5dfef609ec | audio (+ old main reds) |
+| Dashboard J (dashJ) | 23 h | 2 | 673e996495 | mpsync, migrate-dual, audio (+ old main reds) |
+| Stuck units + feel + safety copies (greenK-snap / greenK-qfeel / dashI / loop-grand-snap) | 23–29 h | 6 / 9 / 3 / 1 | 1bb5e66377 | mpsync, audio |
+| Window fix (winfix) | 24 h | 1 | - | already on main |
+| Sound mix (q-sound), Autosave loop, Leaders C, Speed D | 28–32 h | 1–3 | old | - |
+
+## Locks with nothing saved (90+ min, no work branch)
+
+- **Real war** (`taken/realwar`, 11 h) — nothing saved.
+- **Seamless HUD** (`taken/seamless-hud`, 11 h) — nothing saved.
+- **Army standards** (`taken/army-standards`, 11.5 h) — concept sheet on the lock only; work-in-progress exists only as test branch gate/6a19d97447 (red).
+- Nobody has pushed any helper branch in the last 2 hours except this conductor: the builders look stopped again.
+
+RESULT_PLACEHOLDER
+
+---
+(previous runs below)
+
 # STATE — conductor run 2 on 2026-11-11, 10:37–12:00 UTC (second train landed)
 
 **LANDED on main = ac59908f** (train `train/20261111-1037`, one tested push, fast-forward):
