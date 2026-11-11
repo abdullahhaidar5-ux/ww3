@@ -1,17 +1,26 @@
 /* ================= VIEW: scene sync, camera, HUD, fog, minimap ================= */
 const OBJ=new Map();let RINGS=[],GHOST=null,GHOSTK=null,RALLY=null,fogT=0,PPU=1;
-const QUAL={lv:0,ema:1/60,bad:0,good:0,caps:[1,.85,.75,.67,.58,.5],hz:60,dts:[],cost:1/120,fps:60};  // resolution steps relative to the screen's own pixel density (the old absolute steps 2/1.5/1.25/1 changed nothing on ordinary screens)
+const QUAL={lv:0,fx:0,t:0,wait:10,ema:1/60,bad:0,good:0,caps:[1,.85,.75,.67,.58,.5],hz:60,dts:[],cost:1/120,fps:60};  // resolution steps relative to the screen's own pixel density (the old absolute steps 2/1.5/1.25/1 changed nothing on ordinary screens)
 // Frame-rate governor: aims for the chosen target (default 120 FPS) or the screen's own refresh rate if lower (a 60 Hz
 // screen can never show more than 60). Missed frames step the render resolution and effects down; when frames are
 // finishing with plenty of time to spare it steps back up.
 function fpsTarget(){let t=120;try{t=+(localStorage.getItem('ww3_fpsT')||120)||120;}catch(e){}return Math.min(t,QUAL.hz*.97);}
+// One governor (this function is tested by orch/qualgov.mjs, which cuts it out between the QUALGOV markers).
+// Two ladders: lv = resolution + effects (when drawing is the bottleneck), fx = effects only (when game code is the
+// bottleneck, a lower resolution would only blur the picture). Stepping down needs 1.5 s of missed frames; stepping up
+// needs a calm spell (10 s, doubling up to 80 s whenever the last step up had to be undone, so it never flickers between
+// two steps) and at least 2 s since any step. Returns true when a step happened. View only: touches no simulation state.
+/*QUALGOV*/function qualGov(Q,dt,T){Q.t=(Q.t||0)+dt;const slow=Q.ema>1/(T*.88),cpu=Q.cost>=.75/T,room=Q.cost<.45/T,fx=Q.fx||0,wait=Q.wait||10;
+  if(slow){Q.bad+=dt;Q.good=0;}else if(room){Q.good+=dt;Q.bad=0;}else{Q.bad=Math.max(0,Q.bad-dt);Q.good=0;}
+  if(Q.t-(Q.stepAt||-99)<2)return false;
+  if(Q.bad>1.5&&(cpu?fx<5:Q.lv<5)){if(cpu)Q.fx=fx+1;else Q.lv++;if(Q.t-(Q.upAt||-99)<25)Q.wait=Math.min(80,wait*2);Q.bad=0;Q.ema=1/T;Q.stepAt=Q.t;return true;}
+  if(Q.good>wait&&(fx>0||Q.lv>(Q.min||0))){if(fx>0)Q.fx=fx-1;else Q.lv--;Q.good=0;Q.stepAt=Q.upAt=Q.t;return true;}
+  return false;}/*QUALGOV*/
+function fxLv(){return Math.max(QUAL.lv,QUAL.fx||0);}   // effect level: what particles, shadows and ambient occlusion follow
 function qualTick(dt){if(!(dt>0))return;QUAL.dts.push(dt);if(QUAL.dts.length>180)QUAL.dts.shift();if(QUAL.dts.length>=60&&QUAL.dts.length%30===0){const s=QUAL.dts.slice().sort((a,b)=>a-b);QUAL.hz=Math.max(30,Math.min(360,1/s[Math.floor(s.length*.1)]));}
-  QUAL.ema+=(dt-QUAL.ema)*.05;QUAL.fps=1/QUAL.ema;if(QUAL.lock)return;const T=fpsTarget();
-  if(QUAL.ema>1/(T*.88)){QUAL.bad+=dt;QUAL.good=0;}else if(QUAL.cost<.45/T){QUAL.good+=dt;QUAL.bad=0;}else{QUAL.bad=Math.max(0,QUAL.bad-dt);QUAL.good=0;}
-  // step down after 1.5 s of missed frames - unless the frame is CPU-bound (game logic, not drawing), where a lower
-  // resolution would only blur the picture without making it faster
-  if(QUAL.bad>1.5&&QUAL.lv<5&&QUAL.cost<.75/T){QUAL.lv++;QUAL.bad=0;QUAL.ema=1/T;applyQual();if(!QUAL.hinted&&G&&!G.over){QUAL.hinted=1;try{pushLog('Switched to lighter graphics to stay smooth');}catch(e){}}}else if(QUAL.good>10&&QUAL.lv>(QUAL.min||0)){QUAL.lv--;QUAL.good=0;applyQual();}}
-function applyQual(){POST.aoOn=QUAL.lv<2;resize();}
+  QUAL.ema+=(dt-QUAL.ema)*.05;QUAL.fps=1/QUAL.ema;if(QUAL.lock)return;
+  if(qualGov(QUAL,dt,fpsTarget())){const down=QUAL.stepAt!==QUAL.upAt;applyQual();if(down&&!QUAL.hinted&&G&&!G.over){QUAL.hinted=1;try{pushLog('Switched to lighter graphics to stay smooth');}catch(e){}}}}
+function applyQual(){POST.aoOn=fxLv()<2;resize();}
 function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1)*(((()=>{try{return GFX_PHONE;}catch(e){return false;}})())?Math.max(.85,QUAL.caps[QUAL.lv]):QUAL.caps[QUAL.lv]);/* phones stay sharp (Abdullah 2026-10-29: Low looked bad); they save on effects instead */VW=Math.max(1,r.width);VH=Math.max(1,r.height);
   if(R3){R3.setPixelRatio(dpr);R3.setSize(VW,VH,false);if(POST.rt)sizePost();CAM.aspect=VW/VH;CAM.updateProjectionMatrix();}hud.width=Math.round(VW*dpr);hud.height=Math.round(VH*dpr);}
 // the player can pull the camera higher (ZMAX) and tilt it (cam.tilt: Shift+wheel, Page Up/Down, two fingers up/down) - Abdullah 2026-10-29
