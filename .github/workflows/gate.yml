@@ -5,12 +5,13 @@ name: Ship gate (parallel)
 on:
   push:
     branches: ['gate/**']
+  workflow_call:   # also run for every push to main (main-gate.yml)
 permissions:
   contents: write
   statuses: write
 concurrency:
-  group: gate-${{ github.ref }}
-  cancel-in-progress: true
+  group: gate-${{ github.ref }}-${{ startsWith(github.ref, 'refs/heads/gate/') && 'x' || github.sha }}   # a push to main is never cancelled by the next push (main-gate.yml)
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/heads/gate/') }}
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -19,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         t: [check, servertest, headless, smoke4, mpsync, mpsync-server, migrate, migrate-abrupt, migrate-down, migrate-dual,
-            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial, grand, grandsmooth, grandlive, decisions]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
+            art-smoke, art-mpsync, mapsweep, controls, audio, cfclient, ew, decals, save, smooth-pc, smooth-mp, tutorial, grand, grandsmooth, grandlive, decisions, superfreeze, icons]   # PC only (Abdullah 2026-11-04): touch + smooth-phone removed
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -42,15 +43,17 @@ jobs:
             check)          python3 orch/build.py --check && node orch/lint.mjs ;;   # + robot lint (orch/lint.mjs: no </script, no new hosts, banned names, no Math.random in grand sim)
             smooth-*)       node orch/smooth.mjs --profile "${T#smooth-}" ;;   # smoothness gate (orch/SMOOTH.md): pc / phone / multiplayer, vs orch/smooth-baseline.json
             servertest)     node orch/servertest.mjs && node orch/specserver.mjs ;;   # + spectators in a server battle
+            superfreeze)    node orch/superfreeze.mjs IR,RU,US ;;   # firing a nation's superweapon strike (Iran's 12-missile Kheibar, Russia, US) must not stall the sim/FX (no call > 150 ms) or log errors (orch/superfreeze.mjs)
+            icons)          TAG=gate node orch/bugsA-icons.mjs ;;   # command-bar pictures: every build/unit button of IR/US/RU/KP/RS/CN has its own picture class, nothing non-infantry draws the soldier (orch/bugsA-icons.mjs)
             decisions)      node orch/decisions.mjs ;;   # audit: Abdullah's standing decisions as guards (no turn wording / End turn on the grand map, no Ayatollah/Fortress/Bunker Buster in Conquest, menu order, WASD camera-only, morale styles, Fight-it army-only)
             grand)          node orch/grandtest.mjs ;;   # grand campaign: 10 AI turns twice = same hash, Fight-it battle holds exactly the army's units + no production, survivors flow back, save round trip (orch/grandtest.mjs)
             grandsmooth)    node orch/grandsmooth.mjs ;;
             grandlive)      ( r=0; node orch/grandlive.mjs || r=1; node orch/grandlive2.mjs || r=1; node orch/grandrt.mjs || r=1; node orch/occtest.mjs || r=1; node orch/legtest.mjs || r=1; node orch/gnettest.mjs || r=1; exit $r ) ;;   # Lane A1: menu -> Grand campaign -> New -> march -> End turn -> Fight it live loads and runs with no test hooks; old-map saves refused; failed battle start falls back   # 3D grand map (stage 5): draw calls / triangles / render-time budgets at wide, region and close views
             tutorial)       node orch/tutorialtest.mjs ;;   # plays the whole tutorial with real mouse/keyboard input (orch/tutorialtest.mjs)
             decals)         node orch/decalcheck.mjs --facs all ;;   # every marking on every unit type x all 18 nations lies on the model's surface and is not oversized (orch/decalcheck.mjs)
-            save)           node orch/savetest.mjs ;;   # save game: battle -> save -> load in a fresh page -> same state hash; Continue after a reload; file round trip; old saves refused (orch/savetest.mjs)
+            save)           node orch/savetest.mjs && node orch/polishtest.mjs ;;   # save game: battle -> save -> load in a fresh page -> same state hash; Continue after a reload; file round trip; old saves refused (orch/savetest.mjs)
             ew)             if [ -f orch/ewtest.mjs ]; then node orch/ewtest.mjs; else echo "SKIP ew (no test)"; fi ;;   # electronic warfare: spoof/jamming + their host-migration checkpoint
-            headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --night && node orch/headless.mjs --compare || echo "SKIP headless" ;;
+            headless)       [ -f orch/headless.mjs ] && node orch/headless.mjs --night && node orch/aihard.mjs && node orch/headless.mjs --compare || echo "SKIP headless" ;;
             smoke4)         node orch/smoke.mjs --players 4 && node orch/replaytest.mjs ;;   # + a replay ends where the battle ended
             mpsync)         node orch/mpsync.mjs && node orch/mpsync.mjs --spectator && node orch/mpsync.mjs --lossy --minutes 2 ;;   # + a spectator joins, leaves, rejoins; then over a bad network (latency, resends, lag spikes)
             mpsync-server)  node orch/mpsync.mjs --server && node orch/mpsync.mjs --server --reconnect ;;   # sync, then reconnect via the server
@@ -71,7 +74,7 @@ jobs:
             touch)          [ -f orch/touch.mjs ] || { echo "FAIL: orch/touch.mjs missing - this branch predates it; merge origin/main"; exit 1; }
                             # touch controls, then phone battle loading (WebKit iPhone 13: 3 maps + a lost graphics context)
                             ( r=0; node orch/touch.mjs || r=1; node orch/phoneload.mjs --lose --timeout 300 || r=1; exit $r ) ;;
-            audio)          f=$(ls orch/audio*.mjs 2>/dev/null | head -1); [ -n "$f" ] && node "$f" || echo "SKIP audio (no test)" ;;
+            audio)          f=$(ls orch/audio*.mjs 2>/dev/null | head -1); if [ -n "$f" ]; then node "$f" && node orch/mixtest.mjs; else echo "SKIP audio (no test)"; fi ;;
             cfclient)       # every Cloudflare-battle browser test: cfbattle (server test hooks) and cfclient (Play online flow)
                             ( r=0; n=0; for f in $(ls orch/cfbattle*.mjs orch/cfclient*.mjs 2>/dev/null); do n=1; node "$f" || r=1; done
                               [ $n = 1 ] || echo "SKIP cfclient (no test)"; exit $r ) ;;

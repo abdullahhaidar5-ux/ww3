@@ -48,7 +48,7 @@ try {
       out.cost[s] = Math.round(cost / Math.max(1, (pick[s] || []).length)); out.eff[s] = eff; out.n = Object.fromEntries(Object.entries(pick).map(([k, v]) => [k, v.length])); }
     // counter-play: an army sitting in a zealous province rolls the cells up
     const zp = (pick.zeal || [])[0]; if (zp !== undefined) { const st = GC.prov[zp]; st.o = 'US'; st.rc = 4; GC.armies.push({ id: 99999, o: 'US', at: zp, path: [], pg: 0, u: [['inf', 100, 0, 100]] }); ocMonth(); out.guard = st.rc; GC.armies.pop();
-      GV.sel = zp; try { guSide(); } catch (e) {} out.panel = /Resistance cells/.test((document.getElementById('gSide') || document.body).textContent); }
+      GV.sel = zp; try { guSide(); } catch (e) {} out.panel = /Resistance cells/.test(ocLine(zp)); }  // the province-panel line itself (was: page text, which only matched because the inline script source contains the words)
     // slice 2: spread to a neighbour + the AI sends an idle army to the worst cell province
     { const P = GCM.P; let pr = null; for (const p of P) { if (!p.land || p.cap) continue; const st = GC.prov[p.i]; if (ocStyle(st.o0) !== 'zeal') continue; const j = p.adj.find(j => P[j].land && !P[j].cap && GC.prov[j].o0 === st.o0); if (j !== undefined) { pr = [p.i, j]; break; } }
       if (pr) { const occ = 'TR'; for (const i of pr) { GC.prov[i].o = occ; GC.prov[i].rc = 0; } GC.prov[pr[0]].rc = 3; let k = 0; for (; k < 20 && !(GC.prov[pr[1]].rc | 0); k++) { GC.turn++; ocSpread(); } out.spread = GC.prov[pr[1]].rc | 0;

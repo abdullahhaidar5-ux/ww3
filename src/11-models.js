@@ -911,7 +911,8 @@ function bkTex(kind){if(BKM[kind])return BKM[kind];{const rl=bkReal(kind);if(rl)
   cx.putImageData(im,0,0);nx.putImageData(ni,0,0);const t=new THREE.CanvasTexture(cv),n=new THREE.CanvasTexture(nm);for(const q of [t,n]){q.wrapS=q.wrapT=THREE.RepeatWrapping;}t.colorSpace=THREE.SRGBColorSpace;return BKM[kind]={t,n};}
 function bkMat(kind,col,rep){const T=bkTex(kind),t=T.t.clone(),n=T.n.clone();if(T.cl){T.cl[0].push(t);T.cl[1].push(n);}t.needsUpdate=n.needsUpdate=true;t.repeat.set(rep,rep);n.repeat.set(rep,rep);return new THREE.MeshStandardMaterial({color:col,map:t,normalMap:n,normalScale:new THREE.Vector2(.9,.9),roughness:kind==='tin'?.55:.93,metalness:kind==='tin'?.45:0});}
 function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',2),pl=bkMat('plaster','#b8a98a',2),tin=bkMat('tin','#8c9096',2),dk=new THREE.MeshStandardMaterial({color:0x2c2e2b,roughness:.8,metalness:.3});
-  let top=BH[k]/BSC;try{const bb=new THREE.Box3(),fl=o.userData.parts&&o.userData.parts.flag;for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;bb.expandByObject(c);}if(isFinite(bb.max.y)&&bb.max.y>6)top=bb.max.y;}catch(_){}
+  let top=BH[k]/BSC;try{// roof height = the top of the BUILDING BODY (largest child), not of everything: the radar dish / crane / flag mast stand taller and made the parapet frame float above the roof
+    const fl=o.userData.parts&&o.userData.parts.flag,sz=new THREE.Vector3();let bv=0,bt=0;for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz);const v=sz.x*sz.y*sz.z;if(v>bv){bv=v;bt=q.max.y;}}if(bt>6)top=bt;}catch(_){}
   const G2=new THREE.Group();P.add(G2);const bx=(w,hh,d,x,y,z,m,ry)=>{const q=new THREE.Mesh(new THREE.BoxGeometry(w,hh,d),m);q.position.set(x,y,z);if(ry)q.rotation.y=ry;q.castShadow=q.receiveShadow=true;G2.add(q);return q;};
   const cy=(r1,r2,l,x,y,z,m,sg)=>{const q=new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,l,sg||10),m);q.position.set(x,y,z);q.castShadow=q.receiveShadow=true;G2.add(q);return q;};
   const w=h*.78;
@@ -929,14 +930,18 @@ function roofKit(e,o,P){const h=e.size/2,k=e.kind,rf=bkMat('concrete','#9a9585',
   bx(gate*2+2.2,1.2,2.2,0,6.4,R,rf);
   bx(2*R,.5,.3,0,4.8,-R+.7,pl);}
 // DE-BLOCK slice 7: facade detail — dark window recesses with lintel+sill, a door and a wall lamp on each wall of HQ/barracks/factory/depot (view only)
-function facadeKit(e,o,P){let bb=null,bv=0;const fl=o.userData.parts&&o.userData.parts.flag,sz0=new THREE.Vector3();for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz0);const v=sz0.x*sz0.y*sz0.z;if(v>bv){bv=v;bb=q;}}if(!bb)return;
+function facadeKit(e,o,P){let bb=null,bv=0,body=null;const fl=o.userData.parts&&o.userData.parts.flag,sz0=new THREE.Vector3();for(const c of o.children){if(c===P||(fl&&c.children&&c.children.includes(fl)))continue;const q=new THREE.Box3().expandByObject(c);if(!isFinite(q.max.y))continue;q.getSize(sz0);const v=sz0.x*sz0.y*sz0.z;if(v>bv){bv=v;bb=q;body=c;}}if(!bb)return;
   if(!isFinite(bb.max.y)||bb.max.y<8)return;const sx=bb.max.x-bb.min.x,sz=bb.max.z-bb.min.z,hy=bb.max.y,cx=(bb.max.x+bb.min.x)/2,cz=(bb.max.z+bb.min.z)/2;if(sx<10||sz<10||sx>400)return;
   if(!window.BKFW){window.BKFW={g:new THREE.BoxGeometry(1,1,1),w:new THREE.MeshStandardMaterial({color:0x14181b,roughness:.35,metalness:.4}),t:new THREE.MeshStandardMaterial({color:0x8d8776,roughness:.9}),l:new THREE.MeshBasicMaterial({color:0xffd9a0})};}
   const F=window.BKFW,G=new THREE.Group();P.add(G);const by=Math.max(5,hy*.5);const add=(m,w,h,d,x,y,z)=>{const q=new THREE.Mesh(F.g,m);q.scale.set(w,h,d);q.position.set(x,y,z);G.add(q);return q;};
+  // a window / door / lamp is only drawn where the building really has a wall at its outline: models with a wide ground-floor terrace or a
+  // set-back tower used to get windows floating in the air along the outline (Abdullah 2026-11-10 "floating windows here without walls")
+  const rc=new THREE.Raycaster(),ro=new THREE.Vector3(),rd=new THREE.Vector3(),wallAt=(x,y,z,dx,dz)=>{try{ro.set(x+dx*3,y,z+dz*3);rd.set(-dx,0,-dz);rc.set(ro,rd);rc.near=0;rc.far=4.1;const h=rc.intersectObject(body,true);return h.length>0&&h[0].distance>=2;}catch(_){return true;}};
   for(const [ax,sg] of [[0,1],[0,-1],[1,1],[1,-1]]){const L=ax?sz:sx,n=Math.max(2,Math.floor(L/13)),off=ax?(sg>0?bb.max.x:bb.min.x):(sg>0?bb.max.z:bb.min.z);
     for(let i=0;i<n;i++){const u=(i+.5)/n*L-L/2;if(ax===0&&sg>0&&Math.abs(u)<5)continue;const x=ax?off+sg*.12:cx+u,z=ax?cz+u:off+sg*.12;
+      if(!wallAt(x,by,z,ax?sg:0,ax?0:sg))continue;
       const ww=ax?.5:5,wd=ax?5:.5;add(F.w,ww,3.4,wd,x,by,z);add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by-2,z+(ax?0:sg*.2));add(F.t,ax?.9:6.4,.55,ax?6.4:.9,x+(ax?sg*.2:0),by+2,z+(ax?0:sg*.2));}}
-  add(F.w,5.5,6.5,.6,cx,3.3,bb.max.z+.15);add(F.t,7,.7,1.2,cx,6.8,bb.max.z+.3);add(F.l,.9,.9,.5,cx+4.6,7.6,bb.max.z+.35);}
+  if(wallAt(cx,3.3,bb.max.z,0,1)){add(F.w,5.5,6.5,.6,cx,3.3,bb.max.z+.15);add(F.t,7,.7,1.2,cx,6.8,bb.max.z+.3);add(F.l,.9,.9,.5,cx+4.6,7.6,bb.max.z+.35);}}
 // DE-BLOCK slice 3: tyre tracks out of the gate, scattered rocks and debris round the base (view only, shared geometry/material)
 let BKTRK=null,BKROCK=null;
 let BKAO=null,BKOIL=null,BKBLO=null,BKSCR=null;

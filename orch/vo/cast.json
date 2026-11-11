@@ -134,5 +134,125 @@
    "Dionisio Schuyler"
   ],
   "cmd": "Viktor Eka"
+ },
+ "IQ": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Luis Moray",
+   "Gilberto Mathias",
+   "Damjan Chapman"
+  ],
+  "cmd": "Damien Black"
+ },
+ "RV": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Gilberto Mathias",
+   "Viktor Eka",
+   "Luis Moray"
+  ],
+  "cmd": "Baldur Sanjin"
+ },
+ "SY": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Damjan Chapman",
+   "Luis Moray",
+   "Baldur Sanjin"
+  ],
+  "cmd": "Gilberto Mathias"
+ },
+ "OB": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Viktor Eka",
+   "Damien Black",
+   "Luis Moray"
+  ],
+  "cmd": "Dionisio Schuyler"
+ },
+ "JO": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Baldur Sanjin",
+   "Gilberto Mathias",
+   "Damien Black"
+  ],
+  "cmd": "Luis Moray"
+ },
+ "BI": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Damjan Chapman",
+   "Dionisio Schuyler",
+   "Viktor Eka"
+  ],
+  "cmd": "Damien Black"
+ },
+ "OM": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Damien Black",
+   "Luis Moray",
+   "Dionisio Schuyler"
+  ],
+  "cmd": "Gilberto Mathias"
+ },
+ "KW": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Dionisio Schuyler",
+   "Baldur Sanjin",
+   "Gilberto Mathias"
+  ],
+  "cmd": "Damien Black"
+ },
+ "LY": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Damjan Chapman",
+   "Viktor Eka",
+   "Damien Black"
+  ],
+  "cmd": "Luis Moray"
+ },
+ "SD": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Luis Moray",
+   "Damjan Chapman",
+   "Baldur Sanjin"
+  ],
+  "cmd": "Dionisio Schuyler"
+ },
+ "DZ": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Viktor Eka",
+   "Gilberto Mathias",
+   "Dionisio Schuyler"
+  ],
+  "cmd": "Baldur Sanjin"
+ },
+ "MA": {
+  "eng": "xtts",
+  "lang": "ar",
+  "sold": [
+   "Baldur Sanjin",
+   "Damjan Chapman",
+   "Luis Moray"
+  ],
+  "cmd": "Viktor Eka"
  }
 }
