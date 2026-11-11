@@ -243,7 +243,7 @@ function grJudge(){if(!GC.me||GC.over)return;const me=GC.me;if(GC.nat[me].dead){
 // ---------- player orders ----------
 function grOrderMove(aid,to){const a=GC.armies.find(x=>x.id===aid);if(!a||a.o!==GC.me||GC.ph!=='plan')return {err:'no army'};const r=grPath(a.o,a.at,to,a.fl);if(!r)return {err:a.fl?'Fleets sail between sea zones only.':'No route (check ports, seas and borders).'};
   if(r.decl)return {decl:r.decl,r};a.path=r.path;a.pg=0;a.dg=0;return {ok:1,r};}
-function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;if(typeof grOverlord==='function'&&grOverlord(a))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);try{glgDeclare(a,b);}catch(e){console.error('glgDeclare',e);}}   // laneG: allies/guarantors join
+function grDeclare(a,b){if(typeof gdTruce==='function'&&gdTruce(a,b))return;if(typeof grOverlord==='function'&&grOverlord(a))return;GC.war[grWk(a,b)]=1;grLog(GCM.nats.get(a).name+' declared war on '+GCM.nats.get(b).name+'.',a);try{if(typeof gescDeclared==='function')gescDeclared(a,b);}catch(e){console.error('gescDeclared',e);}try{glgDeclare(a,b);}catch(e){console.error('glgDeclare',e);}}   // laneG: allies/guarantors join
 function grRecruit(c,pi,k){const st=GC.prov[pi];if(st.o!==c)return 'Not your province.';const fac=grNat(c).fac,rc=GR_RECRUIT.find(r=>r[0]===k);if(!rc||!grHasKind(fac,k))return 'Not available.';const T=geRecruitTerms(c,pi,k,rc[1]),cost=T.cost;
   if(GC.nat[c].cash<cost)return 'Not enough money.';if(GC.nat[c].e.man<T.man)return 'Not enough manpower ('+Math.round(GC.nat[c].e.man)+' of '+T.man+').';GC.nat[c].cash-=cost;GC.nat[c].e.man-=T.man;st.rq.push([GC.turn+T.turns,k,rc[1]]);return '';}
 function grSetTax(c,pi,i){const st=GC.prov[pi];if(!st||st.o!==c)return 'Not your province.';st.tax=Math.max(0,Math.min(2,i|0));return '';}   /* A2b: one function so online friends' tax orders reach the host */
@@ -273,7 +273,7 @@ function grAIPlan(){const R=grRng(GC.seed*17+GC.turn*3),P=GCM.P;
   for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead||!N.ai)continue;const fac=grNat(c).fac,mine=P.filter(p=>p.land&&GC.prov[p.i].o===c);if(!mine.length)continue;
     const wars=Object.keys(GC.war).filter(k=>k.split('|').includes(c)).map(k=>k.split('|').find(x=>x!==c));
     // a nation at peace with everyone picks a fight with its weakest neighbour now and then (minor nations only defend)
-    if(!wars.length&&grNat(c).major&&GC.turn>=3&&R()<.15){let best=null,bv=1e18;for(const p of mine)for(const j of p.adj){const q=P[j];if(!q.land)continue;const w=GC.prov[j].o;if(w===c||GC.nat[w].dead||grAllied(c,w)||grOpinion(c,w)>=40)continue;const v=grProvDef(j)+GC.armies.filter(a=>a.at===j).reduce((s,a)=>s+grArmyVal(a),0);if(v<bv||(v===bv&&w<best)){bv=v;best=w;}}if(best){grDeclare(c,best);wars.push(best);}}
+    if(!wars.length&&grNat(c).major&&GC.turn>=3&&R()<.15){let best=null,bv=1e18;for(const p of mine)for(const j of p.adj){const q=P[j];if(!q.land)continue;const w=GC.prov[j].o;if(w===c||GC.nat[w].dead||grAllied(c,w)||grOpinion(c,w)>=40)continue;const v=grProvDef(j)+GC.armies.filter(a=>a.at===j).reduce((s,a)=>s+grArmyVal(a),0);if(v<bv||(v===bv&&w<best)){bv=v;best=w;}}if(best&&(typeof gescGate!=='function'||gescGate(c,best,R))){grDeclare(c,best);wars.push(best);}}
     // recruit: keep a reserve, spend the rest at the frontier province (or the capital)
     if((grNat(c).major||wars.length)&&!((typeof gfOver==='function'&&gfOver(c))||(N.e&&N.e.br&&(N.inc|0)<0))||(wars.length&&grCapHeld(c,null)<grCapThreat(c))){const front=mine.map(p=>[p,p.adj.filter(j=>P[j].land&&GC.prov[j].o!==c&&(wars.includes(GC.prov[j].o))).length*3+(p.i===N.cap?1:0)]).sort((a,b)=>b[1]-a[1]||a[0].i-b[0].i)[0][0];
       let guard=0;while(N.cash>1500&&guard++<6){let k=GR_RECRUIT.filter(r=>grHasKind(fac,r[0]))[Math.floor(R()*3.4)%4]||GR_RECRUIT[0];if(GC.turn%5===2&&grHasKind(fac,'drone')){const dk=GR_RECRUIT.find(r=>r[0]==='drone');if(dk)k=dk;}   /* gair: AI buys drones by the same rules */if(grRecruit(c,front.i,k[0]))break;}}
@@ -3954,6 +3954,51 @@ function gdWarscore(a,b){let s=0;const k=grWk(a,b);const t=GC.turn-((GC.wsT&&GC.
   for(const ar of GC.armies){if(ar.fl)continue;if(ar.o===a&&GC.prov[ar.at]&&GC.prov[ar.at].o===b)s+=12;if(ar.o===b&&GC.prov[ar.at]&&GC.prov[ar.at].o===a)s-=12;}
   s+=Math.min(30,t*2);return s;}
 // chance(action,a,b) -> {ok:bool, why:[[text,v]], cost, note}  (a = actor, b = target)
+// ESCALATION LADDER (queue "Escalation ladder", slice 1: the rungs between peace and war). One crisis level per pair of nations, GC.esc[grWk(a,b)]={r,by,t,st:{}}:
+//   0 Normal relations · 1 Public warning · 2 Red line declared · 3 Forces on alert ($GESC_ALERT a month for both sides). Each step up: opinion -8, the target's public rallies (+2 war support).
+//   Declaring war below rung 2 is a surprise attack: every other nation's opinion of the attacker -10 and the defender rallies (+6). At rung 2-3 the war was signalled: no extra penalty.
+//   Off-ramps (gescDown): with a mediator (a major at peace with both and on good terms, found automatically; $GESC_MED, mediator gains +5 with both) the crisis steps down two rungs with no loss of face;
+//   without one, the side that staked its word (st) backs down in public: war support -3, the other side +2. A crisis nobody touches for 12 months cools one rung.
+//   AI: majors escalate against a hostile rival rarely (GESC_AI_P a month); AI wars now climb the ladder first (gescGate: warn, red line, then war), so wars are rarer and seen coming;
+//   two nuclear-armed nations stop at the red line and go to war only at GESC_NUKE_P a month (deterrence). An AI that is warned answers by strength: holds firm, counter-escalates, or backs down.
+//   Real base rates and sources: orch/REAL-2026.md "Escalation ladder". Deterministic (seed + turn); saved with GC.
+const GESC_R=['Normal relations','Public warning','Red line declared','Forces on alert'];
+const GESC_ALERT=150,GESC_MED=100,GESC_AI_P=.02,GESC_NUKE_P=.01,GESC_COOL=12;
+function gescS(){return GC.esc||(GC.esc={});}
+function gescOf(a,b){const e=GC&&GC.esc&&GC.esc[grWk(a,b)];return e?e.r:0;}
+function gescWs(c,d){if(typeof wsN==='function'){const N=wsN(c);if(N)N.wsE+=d;}}
+function gescUp(a,b){if(!GC||a===b||!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead||grAtWar(a,b)||grAllied(a,b))return false;const S=gescS(),k=grWk(a,b);const e=S[k]||(S[k]={r:0,by:'',t:0,st:{}});if(e.r>=3)return false;
+  e.r++;e.by=a;e.t=GC.turn;e.an=-1;e.st[a]=1;gdRel(a,b,-8);gescWs(b,2);
+  grLog(gdN(a)+(e.r===1?' publicly warns '+gdN(b)+'.':e.r===2?' declares a red line against '+gdN(b)+'.':' puts its forces on alert against '+gdN(b)+'.'),(b===GC.me||a===GC.me)?GC.me:a);return true;}
+function gdN(c){return GCM.nats.get(c).name;}
+function gescMediator(a,b){const rl=(x,y)=>(GC.rel&&GC.rel[grWk(x,y)])||0;let best='',bv=-1;for(const m of Object.keys(GC.nat).sort()){if(m===a||m===b||GC.nat[m].dead||!grNat(m).major||grAtWar(m,a)||grAtWar(m,b))continue;
+    const ra=rl(m,a),rb=rl(m,b);if(ra<0||rb<0)continue;const v=ra+rb;if(v>bv){bv=v;best=m;}}return best;}
+function gescDown(a,b){const S=gescS(),k=grWk(a,b),e=S[k];if(!e||e.r<1)return 'No crisis to step back from.';const m=gescMediator(a,b);
+  if(m){if(GC.nat[a].cash<GESC_MED)return 'Mediation costs $'+GESC_MED+'.';GC.nat[a].cash-=GESC_MED;e.r=Math.max(0,e.r-2);gdRel(m,a,5);gdRel(m,b,5);gdRel(a,b,6);grLog(gdN(m)+' mediates between '+gdN(a)+' and '+gdN(b)+': both step back without losing face.',(b===GC.me||a===GC.me)?GC.me:a);}
+  else{e.r--;if(e.st[a]){gescWs(a,-3);gescWs(b,2);}gdRel(a,b,4);grLog(gdN(a)+' steps back in its crisis with '+gdN(b)+(e.st[a]?'. At home it looks like backing down.':'.'),(b===GC.me||a===GC.me)?GC.me:a);}
+  e.t=GC.turn;e.an=GC.turn;delete e.st[a];if(e.r<=0)delete S[k];return '';}
+// called by grDeclare: was the war signalled?
+function gescDeclared(a,b){const S=gescS(),k=grWk(a,b),r=S[k]?S[k].r:0;delete S[k];
+  if(r<2){for(const o of Object.keys(GC.nat))if(o!==a&&o!==b&&!GC.nat[o].dead)gdRel(a,o,-10);gescWs(b,6);grLog(gdN(a)+' attacked '+gdN(b)+' without warning. The world condemns the surprise attack.',(b===GC.me||a===GC.me)?GC.me:a);}}
+// AI war gate (13-grand grAIPlan): climb the ladder first; nuclear pairs stop at the red line
+function gescGate(c,b,R){const r=gescOf(c,b),nk=grNuk(c)&&grNuk(b);if(nk){if(r<2){gescUp(c,b);return false;}return R()<GESC_NUKE_P;}if(r<2){gescUp(c,b);return false;}return true;}
+function gescMonth(){if(!GC||!GC.nat)return;const S=gescS(),R=grRng((GC.seed|0)*389+GC.turn*23);
+  for(const k of Object.keys(S).sort()){const e=S[k],[a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead||grAtWar(a,b)||grAllied(a,b)){delete S[k];continue;}
+    if(e.r>=3){GC.nat[a].cash-=GESC_ALERT;GC.nat[b].cash-=GESC_ALERT;}
+    const x=e.by===a?b:a,r1=R(),r2=R();
+    if(e.by&&x!==GC.me&&e.an!==e.t&&e.t<GC.turn){e.an=e.t;const sr=grMilOf(x)/Math.max(.05,grMilOf(e.by)),nk=grNuk(x)&&grNuk(e.by);   // the AI side answers last month's step
+      const pUp=sr>=1?.25:.1,pBack=(sr<.6&&!grNuk(x)&&!gdAllies(x).length)?.3:.08;
+      if(r1<pUp&&e.r<(nk?2:3)){gescUp(x,e.by);}
+      else if(r1<pUp+pBack){e.r=0;gescWs(x,-3);gescWs(e.by,2);gdRel(x,e.by,5);grLog(gdN(x)+' backs down in its crisis with '+gdN(e.by)+'.',(e.by===GC.me)?GC.me:x);delete S[k];continue;}
+      else{e.st[x]=1;gdRel(x,e.by,-3);if(e.by===GC.me)grLog(gdN(x)+' holds firm: it rejects the '+GESC_R[e.r].toLowerCase()+' from '+gdN(e.by)+'.',GC.me);}}
+    else if(e.by&&e.by!==GC.me&&GC.turn-e.t>=4&&r2<.2){gescDown(e.by,x);continue;}   // AI looks for an off-ramp after a few months
+    if(S[k]&&GC.turn-e.t>=GESC_COOL){e.r--;e.t=GC.turn;if(e.r<=0)delete S[k];}}
+  for(const a of Object.keys(GC.nat).sort()){const N=GC.nat[a];if(N.dead||a===GC.me||!grNat(a).major)continue;const r=R(),r2=R();if(r>=GESC_AI_P||gdEnemies(a).length)continue;
+    const c=Object.keys(GC.nat).sort().filter(b=>b!==a&&!GC.nat[b].dead&&grNat(b).major&&!grAllied(a,b)&&!grAtWar(a,b)&&((GC.rel&&GC.rel[grWk(a,b)])||0)<=-40&&gescOf(a,b)<(grNuk(a)&&grNuk(b)?2:3));
+    if(c.length)gescUp(a,c[Math.floor(r2*c.length)]);}}
+if(typeof GMOD_HOOKS!=='undefined')GMOD_HOOKS.push(gescMonth);
+if(typeof alAdd==='function')alAdd('esc','⚠','Crisis',c=>{if(!GC||!GC.esc)return null;const ks=Object.keys(GC.esc).filter(k=>k.split('|').includes(c)).sort((x,y)=>GC.esc[y].r-GC.esc[x].r||(x<y?-1:1));if(!ks.length)return null;const o=ks[0].split('|').find(x=>x!==c);
+  return {n:GESC_R[GC.esc[ks[0]].r],tip:'crisis with '+gdN(o)+': '+GESC_R[GC.esc[ks[0]].r].toLowerCase()+' — open Diplomacy to escalate or step back',go:()=>{GD.sel=o;npOpen(c,'dip');}};});
 function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtWar(a,b),al=grAllied(a,b),big=(c)=>grRealClass(c);let ok=true,cost=0,note='';
   const no=m=>{ok=false;note=m;};
   if((a==='BI'||b==='BI')&&act!=='war'&&act!=='break'){no('Outlaw movement: nobody makes treaties with them');W.push(['Everyone\'s enemy',-100]);return {ok:false,why:W,cost:0,note};}   // nation-obbd: BI can make no alliances, peace or aid
@@ -3966,7 +4011,9 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
     if(gdAllies(b).some(x=>grAtWar(a,x))){W.push(['Their ally is your enemy',-40]);s-=40;}
     if(s<10&&ok)no('They decline (need 10, have '+Math.round(s)+')');W.push(['Total',Math.round(s)]);}
   else if(act==='claim'){cost=GCL_COST;if(war)no('At war');else if(al)no('Already allied');else if(!gclPick(a,b))no('No province of theirs borders yours');else W.push(['Claim on '+gclPick(a,b).n+' ($'+GCL_COST+', lasts '+GCL_LEN+' months)',0]);W.push(['Justifies war and halves that province\'s price at peace',0]);W.push(['Their opinion of you -5',0]);}
-  else if(act==='war'){if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until '+grMonStr(GC.tr[grWk(a,b)]));
+  else if(act==='warn'){const r=gescOf(a,b);if(war)no('At war');else if(al)no('Allied');else if(r>=3)no('Already at the top rung short of war');W.push(['Now: '+GESC_R[r]+(r<3?' → next: '+GESC_R[r+1]:''),0]);W.push(['Their opinion of you -8; their public rallies; your word is at stake',-8]);if(r===2)W.push(['Forces on alert cost both sides $'+GESC_ALERT+' a month',0]);W.push(['A war after a red line is not a surprise attack (no -10 opinion everywhere)',0]);}
+  else if(act==='deesc'){const r=gescOf(a,b);if(r<1)no('Already calm: no crisis with them');else{const m=gescMediator(a,b);if(m){cost=GESC_MED;W.push([gdN(m)+' mediates: two rungs down, nobody loses face',0]);}else W.push([(GC.esc[grWk(a,b)].st||{})[a]?'No mediator on good terms with both: backing down in public costs war support -3':'No mediator: one rung down',0]);}}
+  else if(act==='war'){if(!war&&!al&&gescOf(a,b)<2)W.push(['No red line declared: a surprise attack, every nation\'s opinion of you -10',-10]);if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until '+grMonStr(GC.tr[grWk(a,b)]));
     else if(GC.ph!=='plan')no('Wait for the planning phase');if(gclJust(a,b))W.push(['Casus belli: your claim on '+gclList(a,b).map(x=>GCM.P[x[1]].n).join(', '),0]);else{W.push(['No casus belli: every nation\'s opinion of you -8, alarm +'+GCL_UNJUST_AE,0]);W.push(['Press a claim first to justify it',0]);}}
   else if(act==='peace'){if(!war)no('Not at war');const s=gdWarscore(a,b);W.push(['War score (armies on enemy land, war length)',s]);
     W.push(['Opens the peace-deal screen: war score buys provinces, tribute or a vassal',0]);}
@@ -3987,6 +4034,8 @@ function gdAct(act,a,b){const c=gdChance(act,a,b);if(!c.ok)return c.note;const N
   else if(act==='alliance'){GC.alz=GC.alz||[];const g=GC.alz.find(x=>x[1].includes(a));if(g&&!g[1].includes(b))g[1].push(b);else if(!g)GC.alz.push([na+'–'+nb+' Pact',[a,b]]);gdRel(a,b,15);grLog(na+' and '+nb+' formed an alliance.',a);}
   else if(act==='break'){for(const g of GC.alz||[])if(g[1].includes(a)&&g[1].includes(b))g[1]=g[1].filter(x=>x!==b);GC.alz=(GC.alz||[]).filter(x=>x[1].length>1);gdRel(a,b,-25);grLog(na+' left its alliance with '+nb+'.',a);}
   else if(act==='claim'){const e=gclFab(a,b);if(e)return e;}
+  else if(act==='warn'){N.cash+=c.cost;gescUp(a,b);}
+  else if(act==='deesc'){N.cash+=c.cost;const e=gescDown(a,b);if(e)return e;}
   else if(act==='war'){const j=gclJust(a,b);grDeclare(a,b);GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;for(const o of Object.keys(GC.nat))if(o!==a&&o!==b)gdRel(a,o,j?-1:-8);if(!j)N.ae=(N.ae||0)+GCL_UNJUST_AE;gdRel(a,b,-30);}
   else if(act==='peace'){delete GC.war[grWk(a,b)];GC.tr=GC.tr||{};GC.tr[grWk(a,b)]=GC.turn+6;grLog('Peace between '+na+' and '+nb+' — truce for 6 months.',a);}
   try{grSave();}catch(e){}try{grandMapRefresh();}catch(e){}return '';}
@@ -3996,7 +4045,7 @@ const chip=(c,onc)=>{const n=grNat(c),d=document.createElement('span');d.title=G
   d.innerHTML='<span style="width:18px;height:12px;border:1px solid #fff;background:'+n.color+'"></span>'+GCM.nats.get(c).name;d.onclick=onc;return d;};
 const sel=c=>{GD.sel=c;npDraw();};
 const col=v=>v>=25?'#9fe39f':v<=-25?'#ff9d8e':'#e8e4d8';
-const ACTS=[['improve','Improve relations'],['aid','Send aid'],['claim','Press a claim'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['proxy','Arm a proxy militia'],['cyber','Cyber strike on banks'],['war','Declare war']];
+const ACTS=[['improve','Improve relations'],['aid','Send aid'],['claim','Press a claim'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['proxy','Arm a proxy militia'],['cyber','Cyber strike on banks'],['warn','Escalate (warn · red line · alert)'],['deesc','Step back from the crisis'],['war','Declare war']];
 npTab('dip','🤝','Diplomacy',(code,body)=>{const me=GC.me;if(!GD.sel||GD.sel===code||!GC.nat[GD.sel])GD.sel=Object.keys(GC.nat).find(c=>c!==code&&!GC.nat[c].dead&&grNat(c).major)||'';
   const row=(t,L)=>{const d=document.createElement('div');d.style.cssText='margin-bottom:4px';d.innerHTML='<span style="display:inline-block;width:92px;opacity:.7;font-size:13px">'+t+'</span>';if(!L.length)d.innerHTML+='<span style="opacity:.4">—</span>';for(const c of L)d.appendChild(chip(c,()=>sel(c)));return d;};
   const top=document.createElement('div');top.style.cssText='margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #2c4258';

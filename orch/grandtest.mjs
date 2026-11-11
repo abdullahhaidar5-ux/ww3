@@ -76,6 +76,23 @@ try {
     const over = gfOver('IR'), up = gmod('nation', 'IR', 'upkeep', 1); const allUnder = Object.keys(GC.nat).filter(c => c !== 'IR' && !GC.nat[c].dead).every(c => !gfOver(c));
     return { v0, L, under, t0, t1, over, up, allUnder, chip: /⚔/.test(gfChip()) }; });
   console.log('forcelimit', JSON.stringify(fl));
+  // Escalation ladder: rungs before war, surprise-attack penalty, mediated and unmediated off-ramps, nuclear deterrence in the AI war gate, determinism, saved
+  const esc = await ev(() => { const o = {}; const rl = (x, y) => (GC.rel && GC.rel[grWk(x, y)]) || 0;
+    const set = () => { grNew({ me: 'IR', seed: 31, len: 'quick' }); GC.war = {}; GC.alz = []; GC.tr = {}; GC.esc = {}; GC.rel = {}; };
+    set(); const A = 'IR', B = 'SA'; GC.nat[A].cash = 5000; o.up = [gdAct('warn', A, B), gescOf(A, B), gdAct('warn', A, B), gdAct('warn', A, B), gescOf(A, B), gdChance('warn', A, B).ok].join(','); o.rel = rl(A, B); o.saved = JSON.parse(JSON.stringify(GC)).esc[grWk(A, B)].r;
+    const c0 = GC.nat[A].cash; GC.turn++; const S0 = JSON.stringify(GC.esc); gescMonth(); o.alert = c0 - GC.nat[A].cash >= 150 || !GC.esc[grWk(A, B)];
+    // off-ramps: no mediator (everyone neutral-negative) costs face; with a mediator on good terms it does not
+    set(); gescUp(A, B); gescUp(A, B); for (const m of Object.keys(GC.nat)) if (m !== A && m !== B) { GC.rel[grWk(m, A)] = -5; } wsN(A).wsE = 0; o.noMed = gescMediator(A, B); gdAct('deesc', A, B); o.face = wsN(A).wsE; o.r1 = gescOf(A, B);
+    set(); gescUp(A, B); gescUp(A, B); GC.nat[A].cash = 5000; GC.rel[grWk('CN', A)] = 30; GC.rel[grWk('CN', B)] = 30; wsN(A).wsE = 0; o.med = gescMediator(A, B); const e = gdAct('deesc', A, B); o.medErr = e || ''; o.face2 = wsN(A).wsE; o.r2 = gescOf(A, B); o.paid = 5000 - GC.nat[A].cash;
+    // surprise attack vs signalled war: third parties' opinion
+    set(); grDeclare(A, B); o.surprise = rl(A, 'CN'); set(); gescUp(A, B); gescUp(A, B); grDeclare(A, B); o.signalled = rl(A, 'CN'); o.cleared = !GC.esc[grWk(A, B)];
+    // AI war gate: a non-nuclear pair needs two steps before war; a nuclear pair stops at the red line and almost never goes further
+    set(); const R = grRng(5); o.gate = [gescGate('TR', 'GR', R), gescGate('TR', 'GR', R), gescGate('TR', 'GR', R)].join(','); let wars = 0; for (let i = 0; i < 200; i++) if (gescGate('US', 'RU', R)) wars++; o.nukeWars = wars; o.nukeRung = gescOf('US', 'RU'); o.nk = grNuk('US') && grNuk('RU');
+    // AI answers a warning, deterministically
+    const run = () => { set(); gescUp(A, B); for (let i = 0; i < 8; i++) { GC.turn++; gescMonth(); } return JSON.stringify(GC.esc) + '|' + rl(A, B); }; o.det = run() === run();
+    return o; });
+  console.log('escalation', JSON.stringify(esc));
+  if (!(esc.up === ',1,,,3,false' && esc.rel === -24 && esc.saved === 3 && esc.alert && esc.noMed === '' && esc.face === -3 && esc.r1 === 1 && esc.med === 'CN' && esc.medErr === '' && esc.face2 === 0 && esc.r2 === 0 && esc.paid === 100 && esc.surprise - esc.signalled === -10 && esc.cleared && esc.gate === 'false,false,true' && esc.nk && esc.nukeWars <= 8 && esc.nukeRung === 2 && esc.det)) fails.push('escalation ladder: ' + JSON.stringify(esc));
   if (!fl.under || !fl.over || Math.abs(fl.up - 1.5) > .01 || !(fl.t1 > fl.t0) || !fl.allUnder || !fl.chip) fails.push('force limit/tradition: ' + JSON.stringify(fl));
   // ---- MILITARY (grand3): generals, front lines, map strikes, fleets & sea zones; determinism over 20 turns with all of it active
   {
