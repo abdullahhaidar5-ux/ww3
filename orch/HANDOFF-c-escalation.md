@@ -1,7 +1,7 @@
 # HANDOFF — Escalation ladder (campaign runner, 2026-11-11 19:30Z)
 Owner system: diplomacy (src/13m-gdiplo.js, `gesc*`, state `GC.esc`). Guards in orch/grandtest.mjs ("escalation", "escalation in war"). Sources in orch/REAL-2026.md.
 Slice 1 (rungs before war) is ON MAIN (f919210f). Do not rebuild.
-Slice 2 (rungs inside a war) is on branch `orch/c-escalation2`, NOT on main: runner rule "no push to main while CLAUDE.md's RIGHT NOW bullet lists gate/grand or gate/grandlive red".
+Slice 2 (rungs inside a war) is ON MAIN since conductor train 6 (0a0b505e). Before that it waited on branch `orch/c-escalation2`: runner rule "no push to main while CLAUDE.md's RIGHT NOW bullet lists gate/grand or gate/grandlive red".
 What slice 2 does: GC.esc[pair].r goes on in a war: 4 limited war (default, no entry) · 5 blockade (monthly check gescBlockades) · 6 strategic strikes (13i gmilStrikes, target kind 'b') · 7 nuclear alert (act 'warn' in a war, gescNAlert).
 First crosser pays world opinion (GESC_WOP) and the victim rallies; matching is free. Limits = act 'deesc' in a war (gescLimit; pact e.lim, breaking costs double). Unused rung cools after 6 months.
 AI: gescWarAI gates building strikes in gmilAIStrikes; nuclear AI losing badly may go on alert; 13zz last-resort strike needs rung 7 first (one month of warning).
