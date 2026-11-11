@@ -235,43 +235,61 @@ function g3TerrLOD(maxBuild){const cam=G3.cam,C=G3.terrCh;if(!cam||!C)return;let
 // and room around towns. Every few frames the trees in view near the
 // camera are streamed into ONE instanced impostor mesh (1 draw call, 2 triangles a tree; thinned evenly with distance/zoom so
 // there is never a hard edge), capped at G3F_MAX. Trees grow a little when zoomed out and sway slightly. Tree art painted in code.
-const G3F_KINDS=['conifer','broad','palm','scrub'],G3F_MAX=30000,G3F_CAP={conifer:20000,broad:20000,palm:8000,scrub:8000},G3F_CELL=32;
-// tree impostor atlas (painted in code, original): 4 cells - conifer, broadleaf, date palm, scrub; lit from the sun side (west/north)
-function g3ForestAtlas(){const S=256,cv=document.createElement('canvas');cv.width=S*4;cv.height=S;const x=cv.getContext('2d');
-  const blob=(cx,cy,r,c0,c1)=>{const g=x.createRadialGradient(cx-r*.38,cy-r*.42,r*.08,cx,cy,r);g.addColorStop(0,c0);g.addColorStop(1,c1);x.fillStyle=g;x.beginPath();x.arc(cx,cy,r,0,6.283);x.fill();};
-  const rnd=(i=>()=>(i=(i*16807)%2147483647)/2147483647)(7);
-  // conifer: stacked drooping tiers
-  {const o=0;x.fillStyle='#3b2a19';x.fillRect(o+S/2-7,S-46,14,46);
-    for(let t=0;t<6;t++){const y0=S-34-t*31,w=(98-t*15),top=y0-58;const g=x.createLinearGradient(o+S/2-w,0,o+S/2+w,0);g.addColorStop(0,'#6fa85a');g.addColorStop(.45,'#3f7a3e');g.addColorStop(1,'#1f4826');x.fillStyle=g;
-      x.beginPath();x.moveTo(o+S/2,top);x.quadraticCurveTo(o+S/2-w*.45,y0-24,o+S/2-w,y0);x.quadraticCurveTo(o+S/2,y0+12,o+S/2+w,y0);x.quadraticCurveTo(o+S/2+w*.45,y0-24,o+S/2,top);x.fill();}
-    x.fillStyle='rgba(10,25,12,.35)';for(let i=0;i<60;i++){const yy=40+rnd()*170,ww=(S-yy)*.32;x.fillRect(o+S/2-ww+rnd()*ww*2,yy,3,2);}}
-  // broadleaf: cluster of round leaf masses
-  {const o=S;x.fillStyle='#3d2b1a';x.fillRect(o+S/2-8,S-80,16,80);
-    const P=[[0,150,72],[-52,128,56],[52,132,58],[-30,88,58],[34,86,56],[0,62,54],[-62,170,40],[62,172,42],[0,112,62]];
-    for(const [dx,dy,r] of P){blob(o+S/2+dx+4,dy+6,r,'#2a4e20','#18321a');}
-    for(const [dx,dy,r] of P){blob(o+S/2+dx,dy,r,'#93c463','#326328');}
-    for(let i=0;i<70;i++){const a=rnd()*6.283,rr=rnd()*86;blob(o+S/2+Math.cos(a)*rr,118+Math.sin(a)*rr*.85,6+rnd()*8,rnd()<.5?'rgba(130,170,80,.55)':'rgba(20,45,18,.45)','rgba(20,45,18,0)');}}
-  // date palm: slim curved trunk + drooping fronds
-  {const o=S*2;x.strokeStyle='#7a6142';x.lineWidth=11;x.lineCap='round';x.beginPath();x.moveTo(o+S/2+6,S-2);x.quadraticCurveTo(o+S/2-10,S-120,o+S/2,92);x.stroke();
-    x.strokeStyle='rgba(60,45,30,.6)';x.lineWidth=2;for(let y=100;y<S;y+=9){x.beginPath();x.moveTo(o+S/2-6,y);x.lineTo(o+S/2+6,y+2);x.stroke();}
-    for(let i=0;i<11;i++){const a=-Math.PI+i/10*Math.PI+(rnd()-.5)*.2,L=78+rnd()*26,ex=o+S/2+Math.cos(a)*L,ey=92+Math.sin(a)*L*.55+L*.55;
-      x.strokeStyle=i%2?'#2f5a26':'#4d7d36';x.lineWidth=13;x.beginPath();x.moveTo(o+S/2,92);x.quadraticCurveTo(o+S/2+Math.cos(a)*L*.55,92+Math.sin(a)*L*.55-24,ex,ey);x.stroke();}
-    blob(o+S/2,92,16,'#5a7a34','#2a4419');}
-  // scrub: low olive bushes
-  {const o=S*3;for(const [dx,dy,r] of [[-40,206,40],[30,212,36],[0,190,44],[60,220,24],[-70,224,22]])blob(o+S/2+dx,dy,r,'#a7a46a','#5d5b36');}
-  const t=new THREE.CanvasTexture(cv);t.colorSpace=THREE.SRGBColorSpace;t.generateMipmaps=true;t.minFilter=THREE.LinearMipmapLinearFilter;t.anisotropy=4;return t;}
+const G3F_KINDS=['conifer','broad','palm','scrub'],G3F_MAX=30000,G3F_CAP={conifer:20000,broad:20000,palm:8000,scrub:8000},G3F_CELL=32,G3F_EDGE=.4;
+// tree impostor atlas (painted in code, original; maptrees, Abdullah 2026-11-11 "the trees look too cartoony in the grand map"): 4 kinds across (conifer, broadleaf, date palm,
+// scrub) x G3F_VAR variants up (variant 0 = one small tree for thin forest edges, 1-3 = small groves of 2-6 crowns) so a forest reads as one dark, uneven canopy and no shape repeats.
+// Crowns are ragged noisy dabs in muted natural greens, lit from the map sun side (G3L.sun), dark underneath, with a dark patch on the ground. No smooth gradients, no outlines, no lime.
+const G3F_VAR=4,G3F_GAIN=2.5,G3F_PAL={conifer:[[34,50,42],[64,86,65],[106,124,92]],broad:[[37,49,30],[72,90,51],[118,130,79]],palm:[[44,54,33],[82,95,56],[126,131,85]],scrub:[[66,62,45],[106,100,71],[146,138,101]]};
+const G3F_LAY={conifer:[[[.5,.93,.7,.13]],[[.28,.8,.62,.12],[.7,.82,.56,.115],[.5,.84,.5,.11],[.5,.93,.8,.135],[.2,.93,.42,.1],[.8,.93,.46,.1]],[[.2,.82,.5,.105],[.42,.78,.7,.125],[.66,.8,.6,.115],[.84,.86,.46,.095],[.56,.93,.72,.125],[.3,.93,.54,.11],[.78,.93,.4,.09]],[[.62,.8,.74,.13],[.36,.84,.56,.115],[.38,.93,.66,.125],[.8,.92,.44,.1],[.18,.92,.4,.09]]],
+  broad:[[[.5,.62,.24,.21,.92]],[[.5,.46,.24,.2,.8],[.27,.64,.2,.18,.9],[.72,.64,.22,.19,.92],[.5,.72,.2,.16,.93]],[[.32,.44,.2,.17,.76],[.66,.46,.21,.18,.78],[.18,.68,.15,.14,.9],[.48,.68,.22,.18,.93],[.8,.7,.16,.15,.92]],[[.62,.5,.25,.21,.84],[.3,.62,.22,.19,.92],[.6,.74,.18,.15,.93]]],
+  palm:[[[.5,.93,.6]],[[.36,.86,.5],[.62,.93,.68]],[[.28,.88,.46],[.52,.84,.62],[.74,.93,.52]],[[.42,.93,.72],[.68,.9,.44]]],
+  scrub:[[[.5,.93,.2,.2]],[[.3,.9,.17,.17],[.64,.93,.2,.2]],[[.22,.9,.14,.15],[.5,.87,.17,.18],[.78,.93,.15,.15]],[[.4,.93,.22,.21],[.74,.9,.14,.14]]]};
+function g3ForestAtlas(){const S=128,V=G3F_VAR,W=S*4,H=S*V,cv=document.createElement('canvas');cv.width=W;cv.height=H;const x=cv.getContext('2d');
+  const rnd=(i=>()=>(i=(i*16807)%2147483647)/2147483647)(11),sx=G3L.sun[0]<0?-1:1;   // sx: the sun side on the picture (north-up view)
+  const shade=(P,l)=>{l=Math.max(0,Math.min(1,l));const a=l<.5?P[0]:P[1],b=l<.5?P[1]:P[2],t=l<.5?l*2:l*2-1;return 'rgb('+((a[0]+(b[0]-a[0])*t)|0)+','+((a[1]+(b[1]-a[1])*t)|0)+','+((a[2]+(b[2]-a[2])*t)|0)+')';};
+  const dab=(cx,cy,r,fill,sq)=>{x.fillStyle=fill;x.beginPath();const n=6+(rnd()*3|0),a0=rnd()*6.283;for(let i=0;i<n;i++){const a=a0+i/n*6.283,rr=r*(.55+rnd()*.6);x[i?'lineTo':'moveTo'](cx+Math.cos(a)*rr,cy+Math.sin(a)*rr*(sq||.85));}x.closePath();x.fill();};
+  const ground=(cx,by,rx)=>{for(let i=0;i<5;i++)dab(cx-sx*rx*.25+(rnd()-.5)*rx*1.1,by+(rnd()-.5)*S*.016,rx*.42,'rgb(33,38,27)',.3);};
+  // broadleaf crown: a few lobes, each a cloud of leaf dabs; dark ones first, sunlit ones on top
+  const crown=(P,cx,cy,rx,ry,by)=>{ground(cx,by,rx);x.fillStyle='rgb(44,36,27)';x.fillRect(cx-1.5,cy,3,by-cy);
+    const L=[];for(let i=0,n=4+(rnd()*3|0);i<n;i++){const a=rnd()*6.283,d=rnd()*.55;L.push([cx+Math.cos(a)*rx*d,cy+Math.sin(a)*ry*d,.45+rnd()*.3]);}
+    const D=[];for(let i=0,n=Math.round(rx*ry*.55)+14;i<n;i++){const l=L[(rnd()*L.length)|0],a=rnd()*6.283,d=Math.sqrt(rnd())*l[2],px=l[0]+Math.cos(a)*rx*d,py=l[1]+Math.sin(a)*ry*d,li=.42+.5*(sx*(px-cx)/rx*.5-(py-cy)/ry*.7)+(rnd()-.5)*.4;D.push([px,py,li,li+(rnd()-.5)*.5]);}
+    D.sort((a,b)=>a[3]-b[3]);for(const d of D)dab(d[0],d[1],Math.max(2.2,rx*(.16+rnd()*.12)),shade(P,d[2]));};
+  // conifer: a narrow uneven spire of drooping branch tufts, sunlit on one side
+  const spire=(P,bx,by,h,w)=>{ground(bx,by,w*1.3);x.fillStyle='rgb(40,33,25)';x.fillRect(bx-1,by-h*.16,2,h*.16);const lean=(rnd()-.5)*w*.5;
+    for(let y=0,n=Math.round(h/2.6);y<n;y++){const t=y/n,yy=by-h*(.08+.92*t),cx=bx+lean*t,hw=w*Math.pow(1-t,.8)*(.7+rnd()*.55)+1;
+      for(const s of [-1,1]){if(rnd()<.1)continue;const e=hw*(.75+rnd()*.5);x.fillStyle=shade(P,(s===sx?.5:.12)+rnd()*.3+t*.12);
+        x.beginPath();x.moveTo(cx-s*.6,yy-3.2-rnd()*1.5);x.lineTo(cx+s*e,yy+1.5+rnd()*2.2);x.lineTo(cx+s*e*.45,yy+.6+rnd());x.lineTo(cx-s*.6,yy+1.4);x.closePath();x.fill();}}};
+  // date palm: thin bent trunk, drooping fronds with hanging leaflets
+  const palm=(P,bx,by,h)=>{ground(bx,by,h*.16);const tx=bx+(rnd()-.5)*h*.2,ty=by-h;x.lineCap='round';x.strokeStyle='rgb(92,78,58)';x.lineWidth=Math.max(2.2,h*.035);x.beginPath();x.moveTo(bx,by);x.quadraticCurveTo(bx+(tx-bx)*.2+(rnd()-.5)*6,by-h*.5,tx,ty);x.stroke();
+    const n=9+(rnd()*3|0);for(let i=0;i<n;i++){const a=-Math.PI*1.08+i/(n-1)*Math.PI*1.16+(rnd()-.5)*.25,Lf=h*(.3+rnd()*.12),ca=Math.cos(a),sa=Math.sin(a),lit=(ca*sx>0?.3:0)+.25;let qx=tx,qy=ty;
+      for(let k=1;k<=7;k++){const t=k/7,px=tx+ca*Lf*t,py=ty+sa*Lf*t*.6+Lf*.55*t*t;x.strokeStyle=shade(P,lit+rnd()*.3-t*.1);x.lineWidth=Math.max(2.2,h*.046*(1.15-t*.6));x.beginPath();x.moveTo(qx,qy);x.lineTo(px,py);x.lineTo(px-ca*1.5,py+h*.075*(1.1-t));x.stroke();qx=px;qy=py;}}
+    dab(tx,ty,h*.045,shade(P,.2));};
+  // scrub: low dusty bushes
+  const bush=(P,cx,by,rx,ry)=>{ground(cx,by,rx*.9);for(let i=0,n=Math.round(rx*ry*.5)+8;i<n;i++){const a=rnd()*6.283,d=Math.sqrt(rnd()),nx=Math.cos(a)*d,ny=Math.sin(a)*d;if(ny>.4)continue;dab(cx+nx*rx,by-ry*.7+ny*ry,Math.max(2,rx*.26),shade(P,.42+.5*(sx*nx*.5-ny*.7)+(rnd()-.5)*.4));}};
+  G3F_KINDS.forEach((nm,ki)=>{const P=G3F_PAL[nm];for(let v=0;v<V;v++){const ox=ki*S,oy=(V-1-v)*S;x.save();x.beginPath();x.rect(ox+2,oy+2,S-4,S-4);x.clip();
+    for(const a of G3F_LAY[nm][v]){if(ki===0)spire(P,ox+a[0]*S,oy+a[1]*S,a[2]*S,a[3]*S);else if(ki===1)crown(P,ox+a[0]*S,oy+a[1]*S,a[2]*S,a[3]*S,oy+a[4]*S);else if(ki===2)palm(P,ox+a[0]*S,oy+a[1]*S,a[2]*S);else bush(P,ox+a[0]*S,oy+a[1]*S,a[2]*S,a[3]*S);}x.restore();}});
+  // grain on every leaf pixel, hard cut-out edges; see-through pixels carry the kind's own dark green so far-away trees get no black or white rim
+  const d=x.getImageData(0,0,W,H).data,o=new Uint8Array(W*H*4);
+  for(let y=0;y<H;y++)for(let xx=0;xx<W;xx++){const i=(y*W+xx)*4,j=((H-1-y)*W+xx)*4;
+    if(d[i+3]>100){const v=.84+.32*g3Hash(xx*3+1,y*7+2);o[j]=Math.min(255,d[i]*v);o[j+1]=Math.min(255,d[i+1]*v);o[j+2]=Math.min(255,d[i+2]*v);o[j+3]=255;}
+    else{const m=G3F_PAL[G3F_KINDS[(xx/S)|0]][1];o[j]=m[0];o[j+1]=m[1];o[j+2]=m[2];}}
+  const t=new THREE.DataTexture(o,W,H,THREE.RGBAFormat);t.colorSpace=THREE.SRGBColorSpace;t.generateMipmaps=true;t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.anisotropy=4;t.needsUpdate=true;return t;}
+// guard helper (orch/grandtest.mjs): average colour of the tree pictures per kind - s = saturation 0..1, v = brightness as drawn (linear light x shader gain); lime/neon trees fail the caps there
+function g3TreeLook(){const T=G3.treeU&&G3.treeU.uTex.value,im=T&&T.image;if(!im||!im.data)return null;const S=im.width/4,out={rows:Math.round(im.height/S),gain:G3F_GAIN};
+  G3F_KINDS.forEach((nm,ki)=>{let r=0,g=0,b=0,n=0;for(let y=0;y<im.height;y++)for(let x=ki*S;x<(ki+1)*S;x++){const i=(y*im.width+x)*4;if(im.data[i+3]>127){r+=im.data[i];g+=im.data[i+1];b+=im.data[i+2];n++;}}
+    r=r/n/255;g=g/n/255;b=b/n/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);out[nm]={s:+((mx-mn)/(mx||1)).toFixed(3),v:+(Math.pow(mx,2.2)*G3F_GAIN).toFixed(3),cover:+(n/(S*im.height)).toFixed(3)};});return out;}
 function g3ForestMesh(){const U=G3.treeU={uTS:{value:1},uT:{value:0},uTex:{value:g3ForestAtlas()}},N=G3F_MAX,g=new THREE.InstancedBufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute([-.5,0,0,.5,0,0,.5,1,0,-.5,1,0],3));g.setIndex([0,1,2,0,2,3]);
   const iP=new THREE.InstancedBufferAttribute(new Float32Array(N*3),3),iD=new THREE.InstancedBufferAttribute(new Float32Array(N*4),4),iC=new THREE.InstancedBufferAttribute(new Float32Array(N*3),3);
   for(const a of [iP,iD,iC])a.setUsage(THREE.DynamicDrawUsage);g.setAttribute('iP',iP);g.setAttribute('iD',iD);g.setAttribute('iC',iC);g.instanceCount=0;
   const m=new THREE.ShaderMaterial({uniforms:U,vertexShader:`uniform float uTS,uT;attribute vec3 iP,iC;attribute vec4 iD;varying vec2 vU;varying vec3 vC;varying float vY;
-    void main(){int k=int(iD.z+.5);vec2 sz=k==0?vec2(1.35,2.5):k==1?vec2(2.1,2.1):k==2?vec2(2.3,2.7):vec2(1.6,.8);sz*=iD.x*uTS;sz.y*=iD.y;
+    void main(){int k=int(iD.z+.5);vec2 sz=k==0?vec2(1.7,2.0):k==1?vec2(2.0,1.5):k==2?vec2(1.9,2.1):vec2(1.6,1.6);sz*=iD.x*uTS;sz.y*=iD.y;
       vec3 cr=vec3(viewMatrix[0][0],viewMatrix[1][0],viewMatrix[2][0]),up=normalize(mix(vec3(0.,1.,0.),vec3(viewMatrix[0][1],viewMatrix[1][1],viewMatrix[2][1]),.55));
       float sw=sin(uT*1.2+iP.x*.37+iP.z*.29)*.05*position.y;
       vec3 w=iP+cr*(position.x+sw)*sz.x+up*position.y*sz.y;
-      vU=vec2((position.x+.5+float(k))/4.,position.y);vC=iC;vY=position.y;gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);}`,
-    fragmentShader:`uniform sampler2D uTex;varying vec2 vU;varying vec3 vC;varying float vY;void main(){vec4 t=texture2D(uTex,vU);if(t.a<.5)discard;
-      vec3 c=t.rgb*vC*1.6*(.72+.4*vY);gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
+      vU=vec2((position.x+.5+float(k))/4.,(position.y+iD.w)/${G3F_VAR}.);vC=iC;vY=position.y;gl_Position=projectionMatrix*viewMatrix*vec4(w,1.);}`,
+    fragmentShader:`uniform sampler2D uTex;varying vec2 vU;varying vec3 vC;varying float vY;void main(){vec4 t=texture2D(uTex,vU);if(t.a<.3)discard;
+      vec3 c=t.rgb*vC*${G3F_GAIN.toFixed(2)}*(.8+.28*vY);gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
   const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;return {mesh,iP,iD,iC,g};}
 // one land-cover sample per 2x2 texel: [density 0..1, kind index] - real data (satellite colour + DEM + rivers) or the province biome fallback
 /* calmmap: trees follow real land cover. ONE source: the satellite colour + height + rivers (grand/color.jpg, the branch above). Only while that file has not arrived (or cannot load, e.g. the one-file edition)
@@ -320,19 +338,20 @@ function g3BuildForests(grp){const F=G3.F,W=F.W,H=F.H,t0=performance.now();let c
   for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const k=y*W+x,n=nOf(k);if(!n)continue;const c=((y*2/G3F_CELL)|0)*CX+((x*2/G3F_CELL)|0);cnt[kd[k]][c+1]+=n;}
   G3F_KINDS.forEach((nm,ki)=>{const c=cnt[ki];for(let i=1;i<=NC;i++)c[i]+=c[i-1];pool[nm]={st:c.slice(),d:new Float32Array(c[NC]*8)};});
   const fill=G3F_KINDS.map(nm=>pool[nm].st.slice());let total=0;
-  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const k=y*W+x,n=nOf(k);if(!n)continue;const ki=kd[k],c=((y*2/G3F_CELL)|0)*CX+((x*2/G3F_CELL)|0),D=pool[G3F_KINDS[ki]].d;
+  for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const k=y*W+x,n=nOf(k);if(!n)continue;const ki=kd[k],c=((y*2/G3F_CELL)|0)*CX+((x*2/G3F_CELL)|0),D=pool[G3F_KINDS[ki]].d,la=90-180*(y+.5)/H,lo=-180+360*(x+.5)/W,al=Math.abs(la),cl=g3Arid(la,lo)>.12||(al>29&&al<44&&lo>-12&&lo<62)?3:al<24?2:al>55?1:0;
     for(let q=0;q<n;q++){const wx=(x+g3Hash(x*31+q,y*17))*2,wz=(y+g3Hash(y*29+q,x*11+5))*2,o=(fill[ki][c]++)*8,big=ki===3?.8:1;
-      D[o]=wx;D[o+1]=hAt(wx,wz)-.06;D[o+2]=wz;D[o+3]=(.75+g3Hash(x+q*3,y*5)*.55)*big*(1+.15*cov2[k]);D[o+4]=g3Hash(x*3+q,y)*6.283;D[o+5]=g3Hash(x+q*7,y*3+1);D[o+6]=g3Hash(y+q,x*9);D[o+7]=cov2[k];total++;}}
+      D[o]=wx;D[o+1]=hAt(wx,wz)-.06;D[o+2]=wz;D[o+3]=(.75+g3Hash(x+q*3,y*5)*.55)*big*(1+.15*cov2[k]);D[o+4]=g3Hash(x*3+q,y)*6.283;D[o+5]=g3Hash(x+q*7,y*3+1);D[o+6]=cl+Math.min(.999,g3Hash(y+q,x*9));D[o+7]=cov2[k];total++;}}
   G3.forest={pool,CX,CY,NC,last:null,frame:0,total,bb:g3ForestMesh(),real:!!(F.bw&&G3.real)};grp.add(G3.forest.bb.mesh);
   G3.trees=0;G3.treePool=total;G3.tForest=Math.round(performance.now()-t0);}
 /* calmmap: the real land data arrived after the map was drawn (first campaign of a session on a slow line) -> replant the trees from it, once, without rebuilding the screen (forests no longer stand on the Sahara) */
 function g3ForestRefresh(force){const Fo=G3.forest;if(!G3.R||!G3.static||!Fo||!G3.F||(!force&&(Fo.real||!G3.real)))return false;G3.static.remove(Fo.bb.mesh);try{Fo.bb.g.dispose();Fo.bb.mesh.material.dispose();}catch(e){}
   G3.forest=null;g3BuildForests(G3.static);if(G3.forest)g3ForestTick(true);return true;}
 // stream the trees near the camera into the 4 meshes (called every frame; does work only when the view changed)
-const G3F_TINT={conifer:[[.86,.95,.95],[1,1,1],[.8,.9,1]],broad:[[1,1,1],[.85,1,.8],[1.15,1.05,.8],[.9,.95,.9]],palm:[[1,1,1],[1.1,1.05,.85]],scrub:[[1,1,1],[1.15,1.05,.85],[.9,.95,.9]]};
+// tree colour by climate (stored per tree at planting): 0 temperate, 1 cold north, 2 tropical, 3 dry / Mediterranean (dusty olive)
+const G3F_TINT={conifer:[[1,1,1],[.86,.97,1.05],[.98,1.04,.9],[1.08,1.03,.92]],broad:[[1,1,1],[.92,.98,.98],[.88,1,.84],[1.1,1.03,.9]],palm:[[1,1,1],[1,1,1],[.92,1.02,.88],[1.06,1.02,.92]],scrub:[[1,1,1],[.95,1,1],[.9,1,.88],[1.1,1.04,.92]]};
 // calmmap guard helper: trees per owner nation and kind, read from the pool (deserts must be bare of woods)
 function g3TreeAudit(){const Fo=G3.forest,F=G3.F;if(!Fo||!F)return null;const W=F.W,H=F.H,out={};for(const nm of G3F_KINDS){const D=Fo.pool[nm].d;for(let i=0;i+7<D.length;i+=8){const k=Math.min(H-1,Math.floor(D[i+2]/2))*W+Math.min(W-1,Math.floor(D[i]/2)),p=GCM.P[F.idx[k]];if(!p||!GC.prov[p.i])continue;const o=GC.prov[p.i].o,r=out[o]||(out[o]={conifer:0,broad:0,palm:0,scrub:0,n:0});r[nm]++;r.n++;if(nm!=='palm'&&nm!=='scrub'){const la=90-180*(Math.floor(D[i+2]/2)+.5)/H,lo=-180+360*(Math.floor(D[i]/2)+.5)/W;if(g3Arid(la,lo)>.3)out.dryWoods=(out.dryWoods||0)+1;}}}return out;}
-function g3ForestTick(force){const Fo=G3.forest,cc=G3.cc,cam=G3.cam;if(!Fo||!cc||!cam)return;Fo.frame++;if(G3.treeU){G3.treeU.uT.value=G3.time||0;G3.treeU.uTS.value=Math.max(.9,Math.min(3.2,cc.d/130));}
+function g3ForestTick(force){const Fo=G3.forest,cc=G3.cc,cam=G3.cam;if(!Fo||!cc||!cam)return;Fo.frame++;if(G3.treeU){G3.treeU.uT.value=G3.time||0;G3.treeU.uTS.value=Math.max(.85,Math.min(1.6,cc.d/75));}
   const L=Fo.last,ch=!L||Math.hypot(cc.x-L.x,cc.z-L.z)>cc.d*.05||Math.abs(cc.d-L.d)>L.d*.06||Math.abs(cc.yaw-L.yaw)>.05||Math.abs(cc.pitch-L.pitch)>.04;
   if(!force&&L&&(!ch||Fo.frame-(Fo.lf||0)<5))return;Fo.lf=Fo.frame;Fo.last={x:cc.x,z:cc.z,d:cc.d,yaw:cc.yaw,pitch:cc.pitch};
   const B=Fo.bb,zf=1-g3Smooth(G3_CLOSE,G3_T_NEAR,cc.d);if(zf<=0){B.g.instanceCount=0;G3.trees=0;return;}   /* calmmap: trees belong to the close view only — none in the far and middle views, thinning in between G3_T_NEAR and G3_CLOSE */
@@ -346,8 +365,9 @@ function g3ForestTick(force){const Fo=G3.forest,cc=G3.cc,cam=G3.cam;if(!Fo||!cc|
   const cnt={},pa=B.iP.array,da=B.iD.array,ca=B.iC.array;let n=0;
   for(let ki=0;ki<4;ki++){const nm=G3F_KINDS[ki],P=Fo.pool[nm],D=P.d,TI=G3F_TINT[nm],n0=n,cap=Math.min(G3F_MAX,n+G3F_CAP[nm]);
     for(const [c,dn] of cells){const a=P.st[c],b=P.st[c+1];if(a===b)continue;const th=dn*f*zf;
-      for(let i=a;i<b&&n<cap;i++){const o=i*8;if(D[o+5]>th)continue;const q=n*3,w=n*4;pa[q]=D[o];pa[q+1]=D[o+1];pa[q+2]=D[o+2];da[w]=D[o+3];da[w+1]=.88+D[o+6]*.3;da[w+2]=ki;da[w+3]=0;
-        const t=TI[Math.min(TI.length-1,(D[o+6]*TI.length)|0)],v=.82+D[o+5]*.3+D[o+7]*.05;ca[q]=t[0]*v;ca[q+1]=t[1]*v;ca[q+2]=t[2]*v;n++;}
+      for(let i=a;i<b&&n<cap;i++){const o=i*8;if(D[o+5]>th)continue;const q=n*3,w=n*4;pa[q]=D[o];pa[q+1]=D[o+1];pa[q+2]=D[o+2];const e=D[o+6],cl=e|0,h=e-cl,ed=D[o+7]<G3F_EDGE;   /* thin cover (forest edge) = single small trees, thick cover = groves */
+        da[w]=D[o+3]*(ed?.85:1);da[w+1]=.88+h*.3;da[w+2]=ki;da[w+3]=ed?0:1+((h*977)%3|0);
+        const t=TI[cl],v=.84+D[o+5]*.26,hu=h-.5;ca[q]=t[0]*v*(1+hu*.22);ca[q+1]=t[1]*v;ca[q+2]=t[2]*v*(1-hu*.16);n++;}
       if(n>=cap)break;}
     cnt[nm]=n-n0;}
   for(const [A,k] of [[B.iP,3],[B.iD,4],[B.iC,3]]){A.clearUpdateRanges();A.addUpdateRange(0,n*k);A.needsUpdate=true;}B.g.instanceCount=n;const tot=n;
