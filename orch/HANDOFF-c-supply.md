@@ -10,6 +10,8 @@
 
 ## State of the gates
 - Local (slow sandbox): build + `--check` OK, `grandtest --only eco` PASS, `suptest` PASS. Full grandtest, decisions and smoke do not finish here in 10 minutes — see the `gate/*` statuses of the branch head on GitHub (`orch/cigate.sh`).
+- GitHub gate for 8d9cac55 (the code commit; later commits on the branch are notes only), read 2026-11-11 09:27Z: 21 of 28 done — 20 green incl. gate/grand, gate/grandlive, gate/decisions, gate/smooth-pc, gate/smooth-mp; the only failure is gate/cfclient, which also fails on main (on main's red list). 7 were still queued (GitHub runners slow) — read them before landing.
+- Local smoke: SMOKE PASS.
 - NOT on main: the campaign runner may not land while CLAUDE.md's RIGHT NOW bullet lists gate/grand + gate/grandlive as red. (Checked 2026-11-11 07:30Z: main bee4daa3 itself only fails gate/cfclient and gate/tutorial — gate/grand and gate/grandlive are green there; the bullet is out of date.)
 
 ## To land
