@@ -283,17 +283,26 @@ try {
   // ---- start as Iran, open the map
   await ev(() => { grNew({ me: 'IR', seed: 99, len: 'quick' }); grSave(); grandOpen(); guFit(null); guRedraw(); }); await shot('world-map');
   await ev(() => { guFit(GR_REGIONS[4][1]); guRedraw(); }); await shot('region-middle-east');
-  // ---- calmmap guards: the map gets calmer as you zoom out (Abdullah 2026-11-10 "too busy")
-  const calm = await ev(async () => { const out = {}; const set = d => { G3.camera.d = G3.cc.d = d; g3ForestTick(true); g3Labels(true); };
+  // ---- calmmap guards: the map gets calmer as you zoom out (Abdullah 2026-11-10 "too busy"); trees only where forests grow
+  await page.waitForFunction(() => !!G3.real || !!G3.realFail, null, { timeout: 120000 }).catch(() => {});
+  const calm = await ev(async () => { const out = {}; const set = d => { G3.camera.d = G3.cc.d = d; G3.moved = true; g3ForestTick(true); g3Labels(true); };
     const leg = document.getElementById('g3leg'); out.legShut = !!leg && /shut/.test(leg.className); out.coachLegend = !!document.getElementById('gCoach') && !!leg && !/shut/.test(leg.className);
-    const au = g3TreeAudit(); out.audit = au ? { dry: au.dryWoods || 0, w: ['LY', 'EG', 'SA'].map(k => au[k] ? au[k].conifer + au[k].broad : 0) } : null;
-    const vis = () => { let pl = 0; for (const b of G3.bn) if (b.el._v === 'block') pl++; const at = [], dup = []; for (const [k, e] of G3.pl) if (e._v === 'block') { const a = k.split('|')[0]; if (at.includes(a)) dup.push(a); at.push(a); } return { plates: pl, badges: at.length, dup: dup.length }; };
-    set(2300); out.far = { tier: G3.tier, trees: G3.trees, ...vis() }; set(350); out.mid = { tier: G3.tier, ...vis() }; set(150); out.close = { tier: G3.tier, trees: G3.trees }; set(900); return out; });
+    // woods (conifer + broadleaf trees) per desert country, from the tree pool: first with the made-up stand-in land cover (real data not loaded), then with the real satellite land cover
+    const woods = () => { const au = g3TreeAudit(); return au ? ['LY', 'EG', 'SA'].map(k => au[k] ? au[k].conifer + au[k].broad : 0).concat([au.dryWoods || 0, au.DE ? au.DE.conifer + au.DE.broad : 0]) : null; };
+    const R = G3.real; out.hasReal = !!R; G3.real = null; g3ForestRefresh(true); out.standIn = woods(); out.standInReal = G3.forest.real;
+    if (R) { G3.real = R; g3ForestRefresh(true); out.real = woods(); out.realFlag = G3.forest.real; }
+    const vis = () => { let pl = 0; for (const b of G3.bn) if (b.el._v === 'block') pl++; const at = [], dup = []; let foreign = 0; for (const [k, e] of G3.pl) if (e._v === 'block') { const a = k.split('|')[0], o = k.split('|')[1]; if (at.includes(a)) dup.push(a); at.push(a); if (o !== GC.me && !grAtWar(GC.me, o)) foreign++; }
+      g3Batch(); let figs = 0; for (const p of G3.bat.b.values()) figs += p.n || 0; return { plates: pl, badges: at.length, dup: dup.length, foreign, figs }; };
+    const mine = GC.armies.filter(a => a.o === GC.me).length;
+    set(2300); out.far = { tier: G3.tier, trees: G3.trees, mine, ...vis() }; set(350); out.mid = { tier: G3.tier, trees: G3.trees, ...vis() }; set(150); out.close = { tier: G3.tier, trees: G3.trees, figs: vis().figs }; set(900); return out; });
   console.log('calmmap', JSON.stringify(calm));
   if (!calm.legShut) fails.push('calmmap: the map key is not folded on a new campaign'); if (calm.coachLegend) fails.push('calmmap: tips and the map key are open together');
-  if (!calm.audit || calm.audit.dry !== 0 || calm.audit.w.some(n => n > 250)) fails.push('calmmap: woods in desert provinces ' + JSON.stringify(calm.audit));
+  if (!calm.hasReal) fails.push('calmmap: the real land data (grand/color.jpg) did not load');
+  if (!calm.standIn || calm.standInReal || calm.standIn[3] !== 0 || calm.standIn.slice(0, 3).some(n => n > 250) || calm.standIn[4] < 50) fails.push('calmmap: stand-in land cover puts woods in the deserts (LY, EG, SA, dry belts, DE for contrast) ' + JSON.stringify(calm.standIn));
+  if (calm.hasReal && (!calm.real || !calm.realFlag || calm.real.slice(0, 3).some(n => n > 25) || calm.real[4] < 50)) fails.push('calmmap: real land cover puts woods in desert countries (LY, EG, SA; DE for contrast) ' + JSON.stringify(calm.real));
   if (calm.far.tier !== 0 || calm.far.trees !== 0) fails.push('calmmap: far view still draws trees (' + calm.far.trees + ')'); if (calm.far.plates > 15) fails.push('calmmap: far view draws ' + calm.far.plates + ' capital plates');
-  if (calm.mid.tier !== 1 || calm.mid.dup) fails.push('calmmap: middle view draws two badges for one province (' + calm.mid.dup + ')'); if (calm.close.tier !== 2) fails.push('calmmap: close tier not reached');
+  if (calm.far.foreign || calm.far.figs > calm.far.mine) fails.push('calmmap: far view shows other nations\' armies (' + calm.far.foreign + ' badges, ' + calm.far.figs + ' figures for ' + calm.far.mine + ' own armies)');
+  if (calm.mid.trees !== 0) fails.push('calmmap: middle view still draws trees (' + calm.mid.trees + ')'); if (calm.mid.tier !== 1 || calm.mid.dup) fails.push('calmmap: middle view draws two badges for one province (' + calm.mid.dup + ')'); if (calm.mid.badges <= calm.far.badges) fails.push('calmmap: middle view does not bring the other armies\' badges back'); if (calm.close.figs <= calm.mid.figs) fails.push('calmmap: close view does not bring every army figure back'); if (calm.close.tier !== 2) fails.push('calmmap: close tier not reached');
   // ---- scenario: IR army next to an enemy garrison, march, end turn -> Fight-it prompt
   const sc = await ev(() => { const me = 'IR', foe = 'IQ'; grDeclare(me, foe); let pair = null;
     for (const p of GCM.P) if (p.land && GC.prov[p.i].o === me) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === foe && GC.prov[j].gar.length) { pair = [p.i, j]; break; } else if (pair) break;
