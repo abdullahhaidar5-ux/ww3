@@ -21,3 +21,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-11 00:53Z 2a6cf804 **RED** (27 gates) failing: cfclient,grandlive,smooth-pc — Queue: Words slice 1 shipped, next steps noted
 - 2026-11-11 02:35Z da7a6592 **RED** (27 gates) failing: cfclient — Models: runners and helpers on Fable until Saturday (Abdullah 18:21)
 - 2026-11-11 05:43Z 56919247 **RED** (27 gates) failing: audio — CI: main gate runs one at a time, newer push replaces waiting older ru
+- 2026-11-11 07:28Z bee4daa3 **RED** (27 gates) failing: cfclient,tutorial — Queue: campaign runner hands back Escalation ladder (slice 1 on branch
