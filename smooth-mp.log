@@ -1,0 +1,20 @@
+[1s] mp: opening 3 pages
+[9s] mp: pages open
+[9s] mp: lobby 6nxvpn
+[12s] mp: clients joined
+[214s] mp: battle loaded on all pages
+[214s] mp: playing 40s
+[254s] mp: checking sync
+[267s] mp attempt 1: ok
+
+                       mp        
+snap interval p95      149       
+snap jitter sd         53.78     
+order latency p95      114       
+client frame p95       529.8     
+client snaps           8         
+biggest snap (units)   22.2      
+desyncs                0         
+runtime 4.4 min
+
+SMOOTH PASS
