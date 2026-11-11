@@ -1,0 +1,20 @@
+A: 5 min in, t=300.0 units=69 money=274,236,0 (15303 ms)
+save: ok=true  encode 8 ms, packed 27 KB
+A after +2 min: t=420.0 hash=3166708791 units=80 money=1036,1237,0 towns=-1,-1,-1,0,1,-1,-1,-1,-1,-1,-1,-1,-1
+C loaded: ok=true  paused=true "Game loaded. Press P to continue." t=300.0
+C after +2 min: t=420.0 hash=3166708791 units=80 money=1036,1237,0 towns=-1,-1,-1,0,1,-1,-1,-1,-1,-1,-1,-1,-1
+Continue button: ▶ Continue — Straits of Thunder · Iran · 5:00
+after Continue: {"t":300.0000000000558,"p":true}
+file round trip: {"file":true,"old":"This save is from an older version and can't be loaded.","junk":"That is not a World War 3 save file.","bad":"This save file is damaged and can't be loaded.","stale":"This save is from an older version and can't be loaded.","g":true}
+SAVETEST PASS
+grand autosave {"none":true,"open":true,"t1":false,"t2":true,"s1":true,"b1":true,"copies":3,"extra":false,"info":{"ts":1794440289646,"me":"IR","n":"Iran","d":"Nov 2026","over":0},"size":517220,"fell":true}
+continue {"first":"ContinueGrand campaign · Iran · Nov 2026","isCont":true,"kind":"grand","sp":"mxContSP"}
+keys {"btn":true,"win":true,"rows":39,"all":true,"setHidden":true,"wasd":"W, A, S and D always scroll the camera. Pick another letter.","used":"F is already used for \"Attack-move\". Move that one first (spare keys: \\ ` F2 F4 F8 F9).","digit":"Only letters and the spare keys \\ ` F2 F4 F8 F9 can be chosen.","tab":"Only letters and the spare keys \\ ` F2 F4 F8 F9 can be chosen.","fixed":"That key is fixed and can't be changed.","ok":"","back":"","swap2":"X is already used for \"Attack-move\". Move that one first (spare keys: \\ ` F2 F4 F8 F9).","cur":{"stop":"F8","amove":"x"},"stored":"{\"amove\":\"x\",\"stop\":\"F8\"}","dupes":[0,0],"pow":[]}
+battle keys {"bx":{"am":true,"stops":0},"bf":{"am":false,"stops":0},"bb":{"am":false,"stops":1},"rx":{"am":false,"stops":1},"rf":{"am":true,"stops":0}}
+bench {"picks":["low","high","auto","low","high"],"auto0":false,"r1":"high","g1":"high","once":true}
+battle text size 1366x768 {"side":[0,539,1366,768],"stage":[0,0,1366,539],"cv":[0,0,1366,539],"out":[],"zoom":1.3,"W":1366,"H":768,"mm":[true,true,true]}
+panels {"gEco":{"dressed":true,"xs":1,"dx":13,"dy":12,"font":"system-ui","rad":"8px","old":0},"gMil":{"dressed":true,"xs":1,"dx":13,"dy":12,"font":"system-ui","rad":"8px","old":0},"npWin":{"dressed":true,"xs":1,"dx":13,"dy":12,"font":"system-ui","rad":"8px","old":0},"gWeb":{"dressed":true,"xs":1,"dx":13,"dy":12,"font":"system-ui","rad":"8px","old":0},"gpDeal":{"dressed":true,"xs":1,"dx":13,"dy":12,"font":"system-ui","rad":"8px","old":0},"gModal":{"dressed":true,"xs":1,"dx":13,"dy":12,"font":"system-ui","rad":"8px","old":0}}
+stack {"o":["gModal,npWin,gMil,gEco","gModal>npWin,gMil,gEco","npWin>gMil,gEco","gMil>gEco","gEco>"],"blocked":"blocked","still":true,"camp":true,"campGone":true}
+text size {"1366x768@1.3":0,"1366x768@1.15":0,"1920x1080@1.3":0,"1920x1080@1.15":0}
+cb {"off":true,"g":["●","■","▲","⬢"],"none":"","lbl":2,"seg":3}
+POLISH PASS
