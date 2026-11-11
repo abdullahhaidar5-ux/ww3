@@ -27,3 +27,5 @@ Seen in the pictures, not changed here
 Pictures (1600x900, Iran, seed 99): orch/shots/calmmap4/start-*.png (branch before this pass) and after-world / after-middle-east / after-close.
 
 Tests on the sandbox: see the last lines of this file.
+- At commit e89c0dd (code; later commits are pictures and notes only), run one after another on the sandbox: `python3 orch/build.py` + `--check` OK, `node orch/grandtest.mjs` GRANDTEST PASS,
+  `node orch/smoke.mjs` SMOKE PASS, `node orch/decisions.mjs` DECISIONS PASS. Smooth gates not run here (sandbox too slow by rule) - GitHub's gate run decides.
