@@ -1,3 +1,52 @@
+# STATE — conductor run 7 on 2026-11-11, 20:50–21:05 UTC (state only: train 5 of the previous run is still being tested)
+
+**Main = 068b3146** (train 4, unchanged since 18:36 UTC). Nothing landed in this run, on purpose.
+
+**Why state only:** `train/20261111-1857` (09360b3f) was pushed 104 minutes before this run started and is not in main, so the previous
+conductor run may still be working on it (110-minute rule). Its GitHub test run 43087909414 (gate/09360b3ff1) is still going — GitHub's
+queue is long tonight (7 runs queued). At 20:55 UTC: **27 tests green, 0 red**, incl. smooth-pc / smooth-mp / grandsmooth, tutorial, mpsync,
+audio; still to report: `gate/cfclient` (red on every run, also on main). Train 5 holds 2 pieces:
+1. Towns, roads and armies at believable scale on the campaign map (orch/mapscale; own run gate/0cb274886b: 28 of 28 green)
+2. UK, Australia and Canada get their own English soldier voices
+
+**For the next conductor run:** if train 5 is still not in main and no newer `train/*` exists, the previous run stopped before landing:
+train 5 is then FINISHED and waiting — ignore the 110-minute rule for it, check the last status (cfclient red = same as main), rebase on main
+if main moved, tick QUEUE / HISTORY, land it. (Run 6 wrote no STATE section; this page jumps from run 5 to run 7.)
+
+## Helpers with unlanded work, read 20:55 UTC
+
+| idea (branch) | last save | newest own test run | result / note |
+|---|---|---|---|
+| Stay smooth: steadier frame rate in battle (q-speed, 7 commits) | 0.5 h | a2bb4679b7 | still queued, no verdict; earlier run 14c950ff97: 16 green, audio red (flaky), not finished. Look/speed change: needs its smooth tests green |
+| Audio test fix, test-only (loop-audiogate, 1 commit) | 1 h | 8a6f61f3ac | 23 green, **smooth-pc red** (a test-only change cannot cause that: smooth-pc looks flaky too), not finished |
+| Escalation ladder slice 2: wars have levels (c-escalation2, 2 commits, "branch only") | 1 h | c3bf5df5f6 | 19 green so far, 0 red, still running; helper marks it branch-only |
+| Real-looking forest (maptrees) | 1 h | 22ac8a8349 | 28 of 28 green; already on main via train 4 (branch only adds a merge + handoff) |
+| Believable map scale (mapscale) — IN TRAIN 5, handoff written | 2.5 h | 0cb274886b | 28 of 28 green |
+| Real supply notes (c-supply) | 11 h | - | notes only |
+| Extras: battle / command / story | 18 h | 60d5e246b5 / 4a7c989031 / d1aef6c3d2 | old reds: grandlive + migrate-down / smooth-pc / controls; need a merge with main + fresh run |
+| One language: campaign (lang-campaign), spec (onelanguage) | 18–19 h | 0aee49223e | build check fails |
+| Army tokens (armytokens) | 18 h | 4eeb0c339c | decisions red; handoff written |
+| Seamless flow (seamless-flow) | 18 h | e1c344c7d8 | smooth-pc red (may be the flaky one) |
+| Proxy warfare (c-proxy-warfare / c-proxy) | 19 h / 31 h | - | handoff written, never tested on GitHub |
+| greenK / greenK3 / greenK4 notes | 18–29 h | notes only | - |
+| Voices V (voicesV) | 25 h | d19894f02f | old |
+| Safety H, Dashboard J | 31 h | 5dfef609ec / 673e996495 | old reds (audio, mpsync, migrate-dual) |
+| Stuck units + feel + safety copies (greenK-snap / greenK-qfeel / dashI / loop-grand-snap) | 31–37 h | 1bb5e66377 | mpsync, audio (both flaky) |
+| Sound mix (q-sound), Autosave loop, Leaders C, Speed D | 36–40 h | old | - |
+
+## Locks with nothing saved (90+ min, no work branch)
+
+- **Map fairness check** (`taken/q-mapfair`, 2.3 h) — no work branch; it is running throwaway fairness runs on GitHub (mapfair/q-flagged-r2, -r3, queued). NEW on this list.
+- **Real war** (`taken/realwar`, 19 h), **Seamless HUD** (`taken/seamless-hud`, 19 h), **One language: battle** (`taken/lang-battle`, 19 h) — nothing saved.
+- **Army standards** (`taken/army-standards`, 19.5 h) — concept sheet on the lock only; test branch gate/6a19d97447 (red).
+- `taken/c-escalation` (2.3 h) has saved its work as orch/c-escalation2 — fine.
+
+**Flaky tests, still nobody owns them:** audio, mpsync, tutorial, cfclient (see run 5) and now smooth-pc looks flaky too (red on a test-only change).
+The audio-test fix (loop-audiogate) is the first attempt at one of them.
+
+---
+(previous runs below)
+
 # STATE — conductor run 5 on 2026-11-11, 16:48–18:40 UTC (TWO trains landed: 3b and 4)
 
 **Main = 068b3146** (train 4 on top of train 3b f80df294). GitHub's test machines work again (setup step fine since about 16:55 UTC).
