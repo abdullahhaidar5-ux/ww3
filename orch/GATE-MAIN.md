@@ -24,3 +24,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-11 07:28Z bee4daa3 **RED** (27 gates) failing: cfclient,tutorial — Queue: campaign runner hands back Escalation ladder (slice 1 on branch
 - 2026-11-11 08:44Z 36f5a496 **RED** (28 gates) failing: audio,cfclient,mapsweep,smooth-pc — One look for everything, slice 1: one shared material library for ever
 - 2026-11-11 10:19Z 32cb2a11 **RED** (28 gates) failing: cfclient — Game feel, slices 1+2: impacts match the surface (water spray, road ch
+- 2026-11-11 11:01Z 0ac7cde6 **RED** (28 gates) failing: audio,mapsweep,mpsync,tutorial — Grand map is calmer: zoomed out shows owner colours, country names and
