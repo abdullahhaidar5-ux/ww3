@@ -12,7 +12,8 @@ await pg.goto(U,{waitUntil:'load',timeout:120000});await pg.waitForFunction(()=>
 await pg.evaluate(()=>{grNew({me:'IR',seed:99,len:'quick'});grSave();grandOpen();guFit(null);guRedraw();});
 await pg.waitForFunction(()=>!!G3.real||!!G3.realFail,null,{timeout:120000}).catch(()=>{});await pg.waitForTimeout(2500);
 await pg.evaluate(()=>{for(const e of document.querySelectorAll('button'))if(/^Got it/.test(e.textContent.trim()))e.click();});
-const VIEWS={germany:[1255,235,90,45],nepal:[1660,345,220,110],levant:[1420,352,110,55],close:[1306,268,42]};
+console.log('look',JSON.stringify(await pg.evaluate(()=>typeof g3TreeLook==='function'?g3TreeLook():null)));
+const VIEWS={germany:[1255,235,90,45],nepal:[1660,345,220,110],levant:[1420,352,110,55],palms:[1508,372,40],close:[1306,268,42]};
 for(const [n,v] of Object.entries(VIEWS)){if(ONLY&&ONLY!==n)continue;
   await pg.evaluate(v=>{if(v.length===3){G3.camera.x=v[0];G3.camera.z=v[1];G3.camera.d=v[2];}else guFit(v);guRedraw();for(const k of ['x','z','d','yaw','pitch'])G3.cc[k]=G3.camera[k];G3.moved=true;},v);await pg.waitForTimeout(8000);
   await pg.evaluate(()=>{G3.moved=true;g3ForestTick(true);});await pg.waitForTimeout(2500);await pg.screenshot({path:path.join(OUT,pre+'-'+n+'.png'),timeout:120000});

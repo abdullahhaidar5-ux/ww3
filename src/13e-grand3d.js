@@ -216,7 +216,7 @@ const G3F_KINDS=['conifer','broad','palm','scrub'],G3F_MAX=30000,G3F_CAP={conife
 // tree impostor atlas (painted in code, original; maptrees, Abdullah 2026-11-11 "the trees look too cartoony in the grand map"): 4 kinds across (conifer, broadleaf, date palm,
 // scrub) x G3F_VAR variants up (variant 0 = one small tree for thin forest edges, 1-3 = small groves of 2-6 crowns) so a forest reads as one dark, uneven canopy and no shape repeats.
 // Crowns are ragged noisy dabs in muted natural greens, lit from the map sun side (G3L.sun), dark underneath, with a dark patch on the ground. No smooth gradients, no outlines, no lime.
-const G3F_VAR=4,G3F_GAIN=2.5,G3F_PAL={conifer:[[31,46,40],[60,81,64],[102,120,91]],broad:[[37,49,30],[72,90,51],[118,130,79]],palm:[[44,54,33],[82,95,56],[126,131,85]],scrub:[[66,62,45],[106,100,71],[146,138,101]]};
+const G3F_VAR=4,G3F_GAIN=2.5,G3F_PAL={conifer:[[34,50,42],[64,86,65],[106,124,92]],broad:[[37,49,30],[72,90,51],[118,130,79]],palm:[[44,54,33],[82,95,56],[126,131,85]],scrub:[[66,62,45],[106,100,71],[146,138,101]]};
 const G3F_LAY={conifer:[[[.5,.93,.7,.13]],[[.28,.8,.62,.12],[.7,.82,.56,.115],[.5,.84,.5,.11],[.5,.93,.8,.135],[.2,.93,.42,.1],[.8,.93,.46,.1]],[[.2,.82,.5,.105],[.42,.78,.7,.125],[.66,.8,.6,.115],[.84,.86,.46,.095],[.56,.93,.72,.125],[.3,.93,.54,.11],[.78,.93,.4,.09]],[[.62,.8,.74,.13],[.36,.84,.56,.115],[.38,.93,.66,.125],[.8,.92,.44,.1],[.18,.92,.4,.09]]],
   broad:[[[.5,.62,.24,.21,.92]],[[.5,.46,.24,.2,.8],[.27,.64,.2,.18,.9],[.72,.64,.22,.19,.92],[.5,.72,.2,.16,.93]],[[.32,.44,.2,.17,.76],[.66,.46,.21,.18,.78],[.18,.68,.15,.14,.9],[.48,.68,.22,.18,.93],[.8,.7,.16,.15,.92]],[[.62,.5,.25,.21,.84],[.3,.62,.22,.19,.92],[.6,.74,.18,.15,.93]]],
   palm:[[[.5,.93,.6]],[[.36,.86,.5],[.62,.93,.68]],[[.28,.88,.46],[.52,.84,.62],[.74,.93,.52]],[[.42,.93,.72],[.68,.9,.44]]],
@@ -239,7 +239,7 @@ function g3ForestAtlas(){const S=128,V=G3F_VAR,W=S*4,H=S*V,cv=document.createEle
   // date palm: thin bent trunk, drooping fronds with hanging leaflets
   const palm=(P,bx,by,h)=>{ground(bx,by,h*.16);const tx=bx+(rnd()-.5)*h*.2,ty=by-h;x.lineCap='round';x.strokeStyle='rgb(92,78,58)';x.lineWidth=Math.max(2.2,h*.035);x.beginPath();x.moveTo(bx,by);x.quadraticCurveTo(bx+(tx-bx)*.2+(rnd()-.5)*6,by-h*.5,tx,ty);x.stroke();
     const n=9+(rnd()*3|0);for(let i=0;i<n;i++){const a=-Math.PI*1.08+i/(n-1)*Math.PI*1.16+(rnd()-.5)*.25,Lf=h*(.3+rnd()*.12),ca=Math.cos(a),sa=Math.sin(a),lit=(ca*sx>0?.3:0)+.25;let qx=tx,qy=ty;
-      for(let k=1;k<=7;k++){const t=k/7,px=tx+ca*Lf*t,py=ty+sa*Lf*t*.6+Lf*.55*t*t;x.strokeStyle=shade(P,lit+rnd()*.3-t*.1);x.lineWidth=Math.max(1.6,h*.03*(1.15-t*.6));x.beginPath();x.moveTo(qx,qy);x.lineTo(px,py);x.lineTo(px-ca*1.5,py+h*.05*(1.1-t));x.stroke();qx=px;qy=py;}}
+      for(let k=1;k<=7;k++){const t=k/7,px=tx+ca*Lf*t,py=ty+sa*Lf*t*.6+Lf*.55*t*t;x.strokeStyle=shade(P,lit+rnd()*.3-t*.1);x.lineWidth=Math.max(2.2,h*.046*(1.15-t*.6));x.beginPath();x.moveTo(qx,qy);x.lineTo(px,py);x.lineTo(px-ca*1.5,py+h*.075*(1.1-t));x.stroke();qx=px;qy=py;}}
     dab(tx,ty,h*.045,shade(P,.2));};
   // scrub: low dusty bushes
   const bush=(P,cx,by,rx,ry)=>{ground(cx,by,rx*.9);for(let i=0,n=Math.round(rx*ry*.5)+8;i<n;i++){const a=rnd()*6.283,d=Math.sqrt(rnd()),nx=Math.cos(a)*d,ny=Math.sin(a)*d;if(ny>.4)continue;dab(cx+nx*rx,by-ry*.7+ny*ry,Math.max(2,rx*.26),shade(P,.42+.5*(sx*nx*.5-ny*.7)+(rnd()-.5)*.4));}};
@@ -251,16 +251,16 @@ function g3ForestAtlas(){const S=128,V=G3F_VAR,W=S*4,H=S*V,cv=document.createEle
     if(d[i+3]>100){const v=.84+.32*g3Hash(xx*3+1,y*7+2);o[j]=Math.min(255,d[i]*v);o[j+1]=Math.min(255,d[i+1]*v);o[j+2]=Math.min(255,d[i+2]*v);o[j+3]=255;}
     else{const m=G3F_PAL[G3F_KINDS[(xx/S)|0]][1];o[j]=m[0];o[j+1]=m[1];o[j+2]=m[2];}}
   const t=new THREE.DataTexture(o,W,H,THREE.RGBAFormat);t.colorSpace=THREE.SRGBColorSpace;t.generateMipmaps=true;t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.anisotropy=4;t.needsUpdate=true;return t;}
-// guard helper (orch/grandtest.mjs): average colour of the tree pictures per kind as drawn (atlas x shader gain) - saturation s and brightness v, 0..1; lime/neon trees fail the caps there
+// guard helper (orch/grandtest.mjs): average colour of the tree pictures per kind - s = saturation 0..1, v = brightness as drawn (linear light x shader gain); lime/neon trees fail the caps there
 function g3TreeLook(){const T=G3.treeU&&G3.treeU.uTex.value,im=T&&T.image;if(!im||!im.data)return null;const S=im.width/4,out={rows:Math.round(im.height/S),gain:G3F_GAIN};
   G3F_KINDS.forEach((nm,ki)=>{let r=0,g=0,b=0,n=0;for(let y=0;y<im.height;y++)for(let x=ki*S;x<(ki+1)*S;x++){const i=(y*im.width+x)*4;if(im.data[i+3]>127){r+=im.data[i];g+=im.data[i+1];b+=im.data[i+2];n++;}}
-    r=r/n/255*G3F_GAIN;g=g/n/255*G3F_GAIN;b=b/n/255*G3F_GAIN;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);out[nm]={s:+((mx-mn)/(mx||1)).toFixed(3),v:+mx.toFixed(3),cover:+(n/(S*im.height)).toFixed(3)};});return out;}
+    r=r/n/255;g=g/n/255;b=b/n/255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);out[nm]={s:+((mx-mn)/(mx||1)).toFixed(3),v:+(Math.pow(mx,2.2)*G3F_GAIN).toFixed(3),cover:+(n/(S*im.height)).toFixed(3)};});return out;}
 function g3ForestMesh(){const U=G3.treeU={uTS:{value:1},uT:{value:0},uTex:{value:g3ForestAtlas()}},N=G3F_MAX,g=new THREE.InstancedBufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute([-.5,0,0,.5,0,0,.5,1,0,-.5,1,0],3));g.setIndex([0,1,2,0,2,3]);
   const iP=new THREE.InstancedBufferAttribute(new Float32Array(N*3),3),iD=new THREE.InstancedBufferAttribute(new Float32Array(N*4),4),iC=new THREE.InstancedBufferAttribute(new Float32Array(N*3),3);
   for(const a of [iP,iD,iC])a.setUsage(THREE.DynamicDrawUsage);g.setAttribute('iP',iP);g.setAttribute('iD',iD);g.setAttribute('iC',iC);g.instanceCount=0;
   const m=new THREE.ShaderMaterial({uniforms:U,vertexShader:`uniform float uTS,uT;attribute vec3 iP,iC;attribute vec4 iD;varying vec2 vU;varying vec3 vC;varying float vY;
-    void main(){int k=int(iD.z+.5);vec2 sz=k==0?vec2(1.7,2.0):k==1?vec2(2.0,1.5):k==2?vec2(1.6,1.8):vec2(1.6,1.6);sz*=iD.x*uTS;sz.y*=iD.y;
+    void main(){int k=int(iD.z+.5);vec2 sz=k==0?vec2(1.7,2.0):k==1?vec2(2.0,1.5):k==2?vec2(1.9,2.1):vec2(1.6,1.6);sz*=iD.x*uTS;sz.y*=iD.y;
       vec3 cr=vec3(viewMatrix[0][0],viewMatrix[1][0],viewMatrix[2][0]),up=normalize(mix(vec3(0.,1.,0.),vec3(viewMatrix[0][1],viewMatrix[1][1],viewMatrix[2][1]),.55));
       float sw=sin(uT*1.2+iP.x*.37+iP.z*.29)*.05*position.y;
       vec3 w=iP+cr*(position.x+sw)*sz.x+up*position.y*sz.y;
