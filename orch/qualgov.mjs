@@ -25,5 +25,10 @@ ok(Q.wait > 10, 'wait should have grown after undone steps (wait=' + Q.wait + ')
 Q = mk(); L = run(Q, 120, 1 / 60, 1 / 200); ok(L.length === 0, 'steady fast frames must cause no steps');
 // 6. Low never goes above its own level
 Q = mk(); Q.lv = 3; Q.min = 3; L = run(Q, 100, 1 / 60, 1 / 200); ok(Q.lv === 3, 'Low must stay at its own level');
+// 7. an effects-only step must not rebuild the picture buffers, and the two half-rate passes must take turns
+{ const V = fs.readFileSync(new URL('../src/06-view.js', import.meta.url), 'utf8'), P = fs.readFileSync(new URL('../src/10-post.js', import.meta.url), 'utf8');
+  const aq = (V.match(/function applyQual\(\)\{[^\n]*/) || [''])[0], ad = (P.match(/function aoDue\(\)\{[^\n]*/) || [''])[0];
+  ok(/QUAL\.rk===k[^;]*return;[^\n]*resize\(\)/.test(aq), 'applyQual must skip resize() when the resolution step did not change');
+  ok(/\(_shN&1\)===0/.test(ad), 'ambient occlusion must redraw on the frames the half-rate shadow pass skips'); }
 console.log(bad ? 'QUALGOV FAIL' : 'QUALGOV PASS');
 process.exit(bad ? 1 : 0);

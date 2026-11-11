@@ -1308,7 +1308,7 @@ function gfxPhone(){return GFX_PHONE&&SET.gfx!=='high';}
 function qualStartLv(){return SET.gfx==='auto'?(gfxPhone()?1:0):({high:0,med:1,low:3}[SET.gfx]??0);}
 // a fresh start for the frame-rate governor (a new battle, or a settings change): the long frames of the loading
 // screen must not count as stutter
-function qualReset(){QUAL.lv=qualStartLv();QUAL.fx=0;QUAL.wait=10;QUAL.stepAt=QUAL.upAt=-99;QUAL.bad=QUAL.good=0;QUAL.ema=1/60;QUAL.dts.length=0;}
+function qualReset(){QUAL.lv=qualStartLv();QUAL.fx=0;QUAL.rk=null;QUAL.wait=10;QUAL.stepAt=QUAL.upAt=-99;QUAL.bad=QUAL.good=0;QUAL.ema=1/60;QUAL.dts.length=0;}
 function applyGfx(){if(typeof QUAL==='undefined')return;const ph=gfxPhone(),base=Math.min(2,window.devicePixelRatio||1);
   QUAL.caps=ph?QCAPS0.map((c,i)=>Math.min(c,[1.5,1.35,1.25,1.1,1,.9][i]/base)):QCAPS0.slice();POST.aoLv=ph?1:2;POST.phone=ph;
   /* Auto and Low both let the governor lighten things when frames are missed (phones are set to Low: it used to be locked, so nothing ever got lighter); High/Medium stay fixed. Low never goes back above its own level. */QUAL.lock=(SET.gfx==='high'||SET.gfx==='med')?1:0;QUAL.min=SET.gfx==='low'?qualStartLv():0;QUAL.hinted=0;qualReset();try{applyQual();}catch(e){}}

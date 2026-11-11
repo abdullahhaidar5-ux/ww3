@@ -20,7 +20,7 @@ function fxLv(){return Math.max(QUAL.lv,QUAL.fx||0);}   // effect level: what pa
 function qualTick(dt){if(!(dt>0))return;QUAL.dts.push(dt);if(QUAL.dts.length>180)QUAL.dts.shift();if(QUAL.dts.length>=60&&QUAL.dts.length%30===0){const s=QUAL.dts.slice().sort((a,b)=>a-b);QUAL.hz=Math.max(30,Math.min(360,1/s[Math.floor(s.length*.1)]));}
   QUAL.ema+=(dt-QUAL.ema)*.05;QUAL.fps=1/QUAL.ema;if(QUAL.lock)return;
   if(qualGov(QUAL,dt,fpsTarget())){const down=QUAL.stepAt!==QUAL.upAt;applyQual();if(down&&!QUAL.hinted&&G&&!G.over){QUAL.hinted=1;try{pushLog('Switched to lighter graphics to stay smooth');}catch(e){}}}}
-function applyQual(){POST.aoOn=fxLv()<2;resize();}
+function applyQual(){POST.aoOn=fxLv()<2;const k=QUAL.lv+'|'+QUAL.caps[QUAL.lv];if(QUAL.rk===k&&R3)return;QUAL.rk=k;resize();}   // an effects-only step keeps the resolution: no need to rebuild the picture buffers (that cost one long frame per step)
 function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1)*(((()=>{try{return GFX_PHONE;}catch(e){return false;}})())?Math.max(.85,QUAL.caps[QUAL.lv]):QUAL.caps[QUAL.lv]);/* phones stay sharp (Abdullah 2026-10-29: Low looked bad); they save on effects instead */VW=Math.max(1,r.width);VH=Math.max(1,r.height);
   if(R3){R3.setPixelRatio(dpr);R3.setSize(VW,VH,false);if(POST.rt)sizePost();CAM.aspect=VW/VH;CAM.updateProjectionMatrix();}hud.width=Math.round(VW*dpr);hud.height=Math.round(VH*dpr);}
 // the player can pull the camera higher (ZMAX) and tilt it (cam.tilt: Shift+wheel, Page Up/Down, two fingers up/down) - Abdullah 2026-10-29

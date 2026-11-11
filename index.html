@@ -11761,7 +11761,7 @@ function fxLv(){return Math.max(QUAL.lv,QUAL.fx||0);}   // effect level: what pa
 function qualTick(dt){if(!(dt>0))return;QUAL.dts.push(dt);if(QUAL.dts.length>180)QUAL.dts.shift();if(QUAL.dts.length>=60&&QUAL.dts.length%30===0){const s=QUAL.dts.slice().sort((a,b)=>a-b);QUAL.hz=Math.max(30,Math.min(360,1/s[Math.floor(s.length*.1)]));}
   QUAL.ema+=(dt-QUAL.ema)*.05;QUAL.fps=1/QUAL.ema;if(QUAL.lock)return;
   if(qualGov(QUAL,dt,fpsTarget())){const down=QUAL.stepAt!==QUAL.upAt;applyQual();if(down&&!QUAL.hinted&&G&&!G.over){QUAL.hinted=1;try{pushLog('Switched to lighter graphics to stay smooth');}catch(e){}}}}
-function applyQual(){POST.aoOn=fxLv()<2;resize();}
+function applyQual(){POST.aoOn=fxLv()<2;const k=QUAL.lv+'|'+QUAL.caps[QUAL.lv];if(QUAL.rk===k&&R3)return;QUAL.rk=k;resize();}   // an effects-only step keeps the resolution: no need to rebuild the picture buffers (that cost one long frame per step)
 function resize(){const r=cv.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1)*(((()=>{try{return GFX_PHONE;}catch(e){return false;}})())?Math.max(.85,QUAL.caps[QUAL.lv]):QUAL.caps[QUAL.lv]);/* phones stay sharp (Abdullah 2026-10-29: Low looked bad); they save on effects instead */VW=Math.max(1,r.width);VH=Math.max(1,r.height);
   if(R3){R3.setPixelRatio(dpr);R3.setSize(VW,VH,false);if(POST.rt)sizePost();CAM.aspect=VW/VH;CAM.updateProjectionMatrix();}hud.width=Math.round(VW*dpr);hud.height=Math.round(VH*dpr);}
 // the player can pull the camera higher (ZMAX) and tilt it (cam.tilt: Shift+wheel, Page Up/Down, two fingers up/down) - Abdullah 2026-10-29
@@ -14353,7 +14353,7 @@ function gfxPhone(){return GFX_PHONE&&SET.gfx!=='high';}
 function qualStartLv(){return SET.gfx==='auto'?(gfxPhone()?1:0):({high:0,med:1,low:3}[SET.gfx]??0);}
 // a fresh start for the frame-rate governor (a new battle, or a settings change): the long frames of the loading
 // screen must not count as stutter
-function qualReset(){QUAL.lv=qualStartLv();QUAL.fx=0;QUAL.wait=10;QUAL.stepAt=QUAL.upAt=-99;QUAL.bad=QUAL.good=0;QUAL.ema=1/60;QUAL.dts.length=0;}
+function qualReset(){QUAL.lv=qualStartLv();QUAL.fx=0;QUAL.rk=null;QUAL.wait=10;QUAL.stepAt=QUAL.upAt=-99;QUAL.bad=QUAL.good=0;QUAL.ema=1/60;QUAL.dts.length=0;}
 function applyGfx(){if(typeof QUAL==='undefined')return;const ph=gfxPhone(),base=Math.min(2,window.devicePixelRatio||1);
   QUAL.caps=ph?QCAPS0.map((c,i)=>Math.min(c,[1.5,1.35,1.25,1.1,1,.9][i]/base)):QCAPS0.slice();POST.aoLv=ph?1:2;POST.phone=ph;
   /* Auto and Low both let the governor lighten things when frames are missed (phones are set to Low: it used to be locked, so nothing ever got lighter); High/Medium stay fixed. Low never goes back above its own level. */QUAL.lock=(SET.gfx==='high'||SET.gfx==='med')?1:0;QUAL.min=SET.gfx==='low'?qualStartLv():0;QUAL.hinted=0;qualReset();try{applyQual();}catch(e){}}
