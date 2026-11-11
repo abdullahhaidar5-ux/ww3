@@ -94,6 +94,18 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   for (const m of all.matchAll(/e\.key==='([a-z])'\|\|e\.key==='[A-Z]'/g)) used.add(m[1]);
   const miss = [...used].filter(k => !defs.has(k) && k !== 'a'); ck(used.size >= 20 && !miss.length, 'keys: hotkey(s) without a row in the one key table (src/06z-keys.js): ' + miss.join(' '));
   ck(/function kbuOpen\(/.test(SRC['08m-controls.js'] || '') && /for\(const r of KEYTAB\)/.test(SRC['08m-controls.js'] || ''), 'keys: the Keyboard keys window must list KEYTAB'); }
+// polishP2 "Campaign panels": one frame + one Esc handler for every grand-map panel (src/13zzz-gpanels.js GPAN, list in orch/reports/panels.md).
+//     A grand module must not bring its own Escape handler or its own "✕" close button back; every GPAN row is ticked in panels.md.
+{ const gp = SRC['13zzz-gpanels.js'] || '', rep = (() => { try { return fs.readFileSync(path.join(ROOT, 'orch/reports/panels.md'), 'utf8'); } catch { return ''; } })();
+  const ids = [...gp.matchAll(/\{id:'(\w+)',name:/g)].map(m => m[1]); ck(ids.length >= 11 && /function gpxEsc\(/.test(gp) && /function gpxDress\(/.test(gp), 'panels: the grand panel registry (GPAN) is gone');
+  const noRow = ids.filter(i => !new RegExp('\\[x\\][^\\n]*#' + i + '\\b').test(rep)); ck(!noRow.length, 'panels: GPAN rows not ticked in orch/reports/panels.md: ' + noRow.join(', '));
+  const own = Object.entries(SRC).filter(([f, t]) => /^13/.test(f) && f !== '13zzz-gpanels.js' && (/key===?'Escape'/.test(t) || /['">]✕<\/button>|,'(Close )?✕'\)/.test(t))).map(x => x[0]);
+  ck(!own.length, 'panels: grand module(s) with their own Esc handler or close button (use GPAN in 13zzz-gpanels.js): ' + own.join(', ')); }
+// polishP2 "Readability": one text-size switch (SET.ts 100/115/130 %, src/08n-readable.js TS_ROOTS) that every panel root is listed in, and colour-blind mode
+//     carries team identity by shape too (minimap, selection rings, town name plates, allies list). Runtime proof: orch/polishtest.mjs section 4 (1366x768 + 1920x1080).
+{ const rd = SRC['08n-readable.js'] || '', idn = SRC['08b-identity.js'] || '', tw = SRC['08c-towns.js'] || '';
+  ck(/const TS_STEPS=\[1,1\.15,1\.3\]/.test(rd) && ['#side', '.overlay>.card', '#mx', '.gpx', '#gTop', '#gSide', '#kbWin .kbcard'].every(r => rd.includes("'" + r + "'")), 'readability: the text-size setting or one of its panel roots is gone (src/08n-readable.js TS_ROOTS)');
+  ck(/const ID_CB=\[/.test(idn) && /function idMiniMark\(/.test(idn) && (tw.match(/if\(SET\.cb\)\{try\{idMiniMark\(/g) || []).length >= 2 && /function cbGlyph\(/.test(rd), 'readability: colour-blind mode must mark teams by shape on the minimap, town name plates and allies list'); }
 // 0. grand-map figures (2026-11-07 16:37 "No blocky figures even on the grand map"): armies/navies are baked from the real sol_*/ship models only; the box/cylinder figure must not return.
 { const g = SRC['13e-grand3d.js']; ck(!/function g3FigGeo|function g3Soldier|function g3ShipGeo/.test(g), 'grandfigs: blocky box/cylinder army figure code is back in 13e-grand3d.js'); }
 // 0a. Game feel (2026-11-09 22:44): shell impacts match the surface (water spray / road chips / the map's soil) and tanks rock when they fire.
