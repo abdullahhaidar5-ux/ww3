@@ -2182,7 +2182,7 @@ function g3Batch(){if(!G3.ents||!G3.sc)return;if(!G3.batG){G3.batG=new THREE.Gro
   G3.ents.updateMatrixWorld(true);const far=G3.cc&&G3.cc.d>1400;
   for(const e of G3.arm.values()){if(!e.g.visible||(G3.tier<2&&g3FarHide(e.o,e.aid,G3.tier)))continue;const c=e.g.children,bd=c[0];let fl=null,wk=null,sh=null;for(let i=1;i<c.length;i++){if(c[i].userData.wk)wk=c[i];else if(c[i].userData.sh)sh=c[i];else fl=c[i];}
     if(far||(!e.sea&&e.o!==GC.me&&e.aid!==GV.selA&&G3.cc&&G3.cc.d>650)){const fg=g3FarGeo(e.tier,e.sea);g3PoolMesh(G3.bat.b,'far'+fg.uuid,fg,bd.material,bd.matrixWorld,g3FarCol(e.o));}else g3PoolMesh(G3.bat.b,bd.geometry.uuid,bd.geometry,bd.material,bd.matrixWorld);
-    if(fl&&fl.visible&&(G3.tier!==0||e.aid===GV.selA))g3PoolMesh(G3.bat.f,fl.material.map.uuid,fl.geometry,G3.bat.fm&&G3.bat.fm.get(fl.material.map.uuid)||g3FlagInstMat(fl.material.map),fl.matrixWorld);
+    if(fl&&fl.visible&&(G3.tier===2||e.aid===GV.selA))g3PoolMesh(G3.bat.f,fl.material.map.uuid,fl.geometry,G3.bat.fm&&G3.bat.fm.get(fl.material.map.uuid)||g3FlagInstMat(fl.material.map),fl.matrixWorld);
     if(wk)g3PoolMesh(G3.bat.w,'w',wk.geometry,wk.material,wk.matrixWorld);if(sh)g3PoolMesh(G3.bat.w,'sh',sh.geometry,sh.material,sh.matrixWorld);}
   for(const m of [G3.bat.b,G3.bat.f,G3.bat.w])for(const p of m.values())if(p.im){p.im.count=p.n;p.im.instanceMatrix.needsUpdate=true;}}
 /* calmmap: in the far view only your armies, armies at war with you and the selected army are on the map (no figure, no badge, no click target for the rest);

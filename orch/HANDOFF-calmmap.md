@@ -19,3 +19,4 @@ Guards: orch/grandtest.mjs "calmmap" block (key folded; woods in LY/EG/SA with s
 Pictures: `node orch/calmshots.mjs after` -> orch/shots/calmmap/ (before-* were taken on main with the stand-in land cover, as ORCH saw it).
 
 Note: the full orch/grandtest.mjs is too slow for the cloud sandbox; gate/grand on GitHub is the proof.
+Waiting on branch orch/calmmap (not on main, not gate-tested): army flags wave only in the close view or on the selected army (one line in src/13e-grand3d.js, from session 01GRiS9qfnbN15AiASsGWMyx).
