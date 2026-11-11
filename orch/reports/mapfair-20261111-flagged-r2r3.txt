@@ -1,0 +1,16 @@
+
+BATTLES map            n games  kills  win share by start position (fair = 1/n)        score share by position     avg-min
+  bosphorus       2     8      6   31  69                                         28  72                     13.1 p=0.289
+  bosphorus       4     8      0   22  22  34  22                                 19  34  17  29             15.0 p=0.945
+  bosphorus       6    12      0   32  32   7  15   7   7                         32  26  16  16   2   7     15.0 p=0.367
+  eilatgulf       2     8      2   44  56                                         54  46                     14.6 p=0.724
+  eilatgulf       4     8      0   38  38  13  13                                 42  30  20   8             15.0 p=0.572
+  eilatgulf       6    12      1   39   6   6  22   6  22                         29  16  18  24   0  13     14.9 p=0.247
+  najd            6    12      0    3   3  11  44  36   3                          4   7  17  28  30  13     15.0 p=0.027
+  najd            8    16      0    8   2  14  27   8  14  20   8                 15   3   8  26   6  14  18   9 15.0 p=0.569
+  volga           2     8      7   63  38                                         64  36                     13.1 p=0.480
+  volga           4     8      0   28  16  41  16                                 33  29  22  15             15.0 p=0.711
+  volga           6    12      0    3  19  11  28  11  28                          2  16  18  23  17  25     15.0 p=0.598
+  volga           8    16      0    5   5   5   5   5  30  12  30                 15   5   2   2  11  29   8  28 15.0 p=0.121
+BATTLES 128 games, 12 layouts; a start position wins significantly more than its share (p<0.01, >1.5x fair): none
+pooled duel seat: position 1 won 22, position 2 won 20 (of games decided between the first two seats)
