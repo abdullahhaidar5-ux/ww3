@@ -21,7 +21,7 @@ function gdWarscore(a,b){let s=0;const k=grWk(a,b);const t=GC.turn-((GC.wsT&&GC.
   s+=Math.min(30,t*2);return s;}
 // chance(action,a,b) -> {ok:bool, why:[[text,v]], cost, note}  (a = actor, b = target)
 // ESCALATION LADDER (queue "Escalation ladder", slice 1: the rungs between peace and war). One crisis level per pair of nations, GC.esc[grWk(a,b)]={r,by,t,st:{}}:
-//   0 Normal relations · 1 Public warning · 2 Red line declared · 3 Forces on alert ($GESC_ALERT a month for both sides). Each step up: opinion -8, the target's public rallies (+2 war support).
+//   0 Normal relations · 1 Public warning · 2 Red line declared · 3 Forces on alert ($GESC_ALERT a month for both sides; a side that cannot pay stands down to rung 2). Each step up: opinion -8, the target's public rallies (+2 war support).
 //   Declaring war below rung 2 is a surprise attack: every other nation's opinion of the attacker -10 and the defender rallies (+6). At rung 2-3 the war was signalled: no extra penalty.
 //   Off-ramps (gescDown): with a mediator (a major at peace with both and on good terms, found automatically; $GESC_MED, mediator gains +5 with both) the crisis steps down two rungs with no loss of face;
 //   without one, the side that staked its word (st) backs down in public: war support -3, the other side +2. A crisis nobody touches for 12 months cools one rung.
@@ -50,7 +50,7 @@ function gescDeclared(a,b){const S=gescS(),k=grWk(a,b),r=S[k]?S[k].r:0;delete S[
 function gescGate(c,b,R){const r=gescOf(c,b),nk=grNuk(c)&&grNuk(b);if(nk){if(r<2){gescUp(c,b);return false;}return R()<GESC_NUKE_P;}if(r<2){gescUp(c,b);return false;}return true;}
 function gescMonth(){if(!GC||!GC.nat)return;const S=gescS(),R=grRng((GC.seed|0)*389+GC.turn*23);
   for(const k of Object.keys(S).sort()){const e=S[k],[a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead||grAtWar(a,b)||grAllied(a,b)){delete S[k];continue;}
-    if(e.r>=3){GC.nat[a].cash-=GESC_ALERT;GC.nat[b].cash-=GESC_ALERT;}
+    if(e.r>=3){if(GC.nat[a].cash<GESC_ALERT||GC.nat[b].cash<GESC_ALERT)e.r=2;else{GC.nat[a].cash-=GESC_ALERT;GC.nat[b].cash-=GESC_ALERT;}}   // a side that cannot pay for the alert stands its forces down
     const x=e.by===a?b:a,r1=R(),r2=R();
     if(e.by&&x!==GC.me&&e.an!==e.t&&e.t<GC.turn){e.an=e.t;const sr=grMilOf(x)/Math.max(.05,grMilOf(e.by)),nk=grNuk(x)&&grNuk(e.by);   // the AI side answers last month's step
       const pUp=sr>=1?.25:.1,pBack=(sr<.6&&!grNuk(x)&&!gdAllies(x).length)?.3:.08;
