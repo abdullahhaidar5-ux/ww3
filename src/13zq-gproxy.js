@@ -24,9 +24,9 @@ function gpxHas(a,b){gpxS();return GC.px.some(x=>x[0]===a&&x[1]===b);}
 // tier 1 "Funds only": $400/mo, 2 provinces +1 unrest, evidence +2/mo, autonomy +3/mo. tier 2 "Arms and advisers": $700/mo, +2 unrest and $150 extra security cost
 //   for the target, evidence +4/mo, but advisers keep control (autonomy +1/mo). Exposure each month = 2% x tier + evidence/1500. Exposed: target -30 (tier 2: everyone -10), everyone -5,
 //   sponsor loses $300 x tier in trade and insurance. Autonomy >= 50: 6% a month a rival of the sponsor (at war or opinion <= -40, with cash) buys the militia. Autonomy >= 70: 12% a month it slips its
-//   sponsor's control and fights its own war (+4 unrest in 3 provinces, target blames the sponsor -10). Counter-play: crack down (target pays $400: 60% ends it, tier 2 advisers captured),
+//   sponsor's control and fights its own war (+4 unrest in 3 provinces, target blames the sponsor -10). Counter-play: crack down (target pays $400: 60% ends it, tier 2 advisers captured), AI targets crack down too (15% a month once evidence >= 12); the target only learns the sponsor's name once evidence >= 15 (GPX_KNOWN);
 //   keeping evidence low, advisers vs control. Real 2026 context: orch/REAL-2026.md "Proxy warfare".
-const GPX_COST2=700,GPX_SEC2=150,GPX_CRACK=400;
+const GPX_COST2=700,GPX_SEC2=150,GPX_CRACK=400,GPX_KNOWN=15;
 function gpxT(x){return x[3]||1;}function gpxA(x){return x[4]==null?10:x[4];}function gpxE(x){return x[5]||0;}
 function gpxRisk(x){return Math.min(.6,GPX_EXPOSE/3*gpxT(x)+gpxE(x)/1500);}
 function gpxCost(x){return gpxT(x)===2?GPX_COST2:GPX_COST;}
@@ -68,6 +68,8 @@ function gpxTurn(){if(!GC||!GC.nat)return;gpxS();const R=grRng((GC.seed|0)*521+G
     if(gpxA(x)>=50&&r3<.06){const riv=Object.keys(GC.nat).sort().filter(o=>o!==a&&o!==b&&!GC.nat[o].dead&&(grAtWar(o,a)||gpxRel(o,a)<=-40)&&GC.nat[o].cash>=GPX_COST*4&&gpxOk(o,b)&&!gpxHas(o,b));
       if(riv.length){const o=riv[Math.floor(R()*riv.length)];x[0]=o;x[4]=30;grLog('The militia inside '+nb+' has taken money from '+GCM.nats.get(o).name+' instead of '+na+'.',a);}}
   }
+  // AI targets answer too: once there is enough evidence (about 3-6 months in) a government with cash cracks down, 15% a month.
+  for(const x of GC.px.slice()){const b=x[1];if(b===GC.me||GC.px.indexOf(x)<0)continue;const r=R();if(gpxE(x)>=12&&GC.nat[b].cash>=GPX_CRACK*3&&r<.15)gpxCrack(b,x[0]);}
   gpxAI(R);
   // RG18: volunteers join wars that matter to their faction family
   const wars=Object.keys(GC.war).filter(k=>GC.war[k]).sort();

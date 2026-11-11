@@ -368,8 +368,12 @@ try {
       const x = GC.px[0]; const r0 = { t: x[3], au: x[4] }; let n = 0; for (; n < 40 && GC.px.length && GC.px[0][0] === a; n++) { GC.turn++; gpxTurn(); }
       return { r0, ended: GC.px.length === 0 || GC.px[0][0] !== a, n, h: JSON.stringify(GC.px) + GC.nat[a].cash }; };
     const r1 = run(), r2 = run(); grNew({ me: 'IR', seed: 777, len: 'quick' }); GC.war = {}; GC.alz = []; GC.nat.US.cash = 9999; gpxS(); GC.px = [['IR', 'US', GC.turn + 12, 2, 10, 0]]; let cr = 0; for (let i = 0; i < 12 && GC.px.some(x => x[0] === 'IR' && x[1] === 'US'); i++) { GC.turn++; gpxCrack('US', 'IR'); cr++; }
-    return { r1, same: r1.h === r2.h, cleared: !GC.px.some(x => x[0] === 'IR' && x[1] === 'US') }; });
-  if (!(pxr.r1.r0.t === 2 && pxr.r1.ended && pxr.same && pxr.cleared)) fails.push('proxy warfare: ' + JSON.stringify(pxr));
+    const cleared = !GC.px.some(x => x[0] === 'IR' && x[1] === 'US');
+    // AI target answers on its own: a player-funded militia inside a rich AI nation does not survive many months of evidence
+    grNew({ me: 'IR', seed: 778, len: 'quick' }); GC.war = {}; GC.alz = []; GC.nat.IR.cash = 99999; GC.nat.US.cash = 99999; gpxS(); GC.px = [['IR', 'US', GC.turn + 400, 1, 0, 12]]; GC.px[0][4] = -9999; let aiN = 0; for (; aiN < 120 && GC.px.some(x => x[0] === 'IR' && x[1] === 'US'); aiN++) { GC.turn++; gpxTurn(); }
+    const aiCrack = GC.log.some(l => /cracks down|breaks up/.test(l[1]));
+    return { r1, same: r1.h === r2.h, cleared, aiN, aiCrack, known: typeof GPX_KNOWN === 'number' && GPX_KNOWN > 0 }; });
+  if (!(pxr.r1.r0.t === 2 && pxr.r1.ended && pxr.same && pxr.cleared && pxr.aiN < 120 && pxr.aiCrack && pxr.known)) fails.push('proxy warfare: ' + JSON.stringify(pxr));
 } catch (e) { if (String(e.message) !== '__done') { fails.push(String(e.message || e).split('\n')[0]); console.log('ERRS', errs.join('\n')); console.log(String(e.stack).split('\n').slice(0, 7).join('\n')); } }
 for (const e of [...new Set(errs)].slice(0, 6)) fails.push(e);
 await browser.close(); server.close();
