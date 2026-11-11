@@ -11,3 +11,14 @@ Next slices: (1) artillery shells + precision bombs as counters (air raid spends
 (2) Fight-it battles draw missiles/interceptors from the same stock (drones already do); (3) "Ask an ally" request + AI refusals by interest;
 (4) fleets' own magazines; (5) per-nation rows for the remaining full nations (now tier default) ; (6) show enemy stock only as an estimate (Uncertain intelligence item).
 To land: rebase on origin/main, `python3 orch/build.py`, grandtest/decisions/smoke, `orch/cigate.sh`; ship when the RIGHT NOW bullet allows.
+
+## Slice 2 (campaign runner, 2026-11-11 14:00Z) — branch `orch/c-stockpiles2` (on top of main ac59908), NOT on main (RIGHT NOW bullet)
+Done end to end: `GMIL_STK2` (shells `sh`, precision bombs `pb`; same `GC.mil.n[c]` counters, `pa[2..3]`, `sa` = shell burn accumulator; older saves filled in `gmilN`).
+Shells: `gmilShell(a,da)` called from `geSupplyStep` (13g) — an army that fought this month (`a.fo`) burns 25/1000 load per unit; stock 0 → every positive ammo refill ×0.25,
+world news + `wsE` −2 (not Zealous). Bombs: `gmilStrike(..'a'..)` spends 1 `pb` (order carries `pb:1/0`), `pb:0` raid = half damage, ×1.3 interception; Cancel refunds.
+Orders `sh` (4 for $400, 3 months), `pb` (2 for $300, 4 months); `gmilSend` ships 2 shell loads / 1 bomb load. AI: orders shells below 50% in war / 30% in peace, bombs when out in war,
+ships shells to an ally or close friend at war with none, holds 60% of raids back without bombs. UI: Stockpiles tab lines + one kind picker for "Ship to an ally"; Strike tab shows bombs; alert "Shells running low".
+Sources: REAL-2026.md "Shells and guided bombs". Guards: grandtest "military features" block (shell burn, hunger, order, unguided vs guided, save) + military ui (gSk_sh, gSkK_sh).
+Local: build --check OK; grandtest military blocks clean (run cut off by the slow sandbox after the mirror battles); decisions/smoke timed out locally without a failure line → CI gate is the judge.
+To land: rebase on origin/main, `python3 orch/build.py`, `orch/cigate.sh`, push when the RIGHT NOW bullet allows; then delete branch `taken/c-stockpiles`.
+Next slices unchanged: Fight-it draw-down of missiles/interceptors, "Ask an ally", fleets' magazines, per-nation rows for the estimated nations, enemy stock as an estimate.
