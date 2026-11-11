@@ -576,6 +576,8 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 .b .em{display:inline-block;vertical-align:middle;width:24px;height:24px;border-radius:50%;margin-right:7px;background:#ddd center/cover no-repeat;border:2px solid #f3e3b0;box-shadow:0 1px 3px #0008}
 .b .t{display:inline-block;vertical-align:middle}.b .t b{display:block;font:700 12.5px/1.1 Georgia,'Times New Roman',serif;letter-spacing:.04em}.b .t small{display:block;font:500 10px/1.15 Georgia,serif;opacity:.88}
 .b.cap .em{width:28px;height:28px;border-color:#ffd24a}.b.cap .t b{font-size:14px}.b.cap{border-color:#ffd24a}
+#g3ui .co{position:absolute;left:0;top:0;font:700 11px/1 system-ui,'Segoe UI',sans-serif;letter-spacing:.04em;color:#fff6de;text-shadow:0 1px 2px #000,0 0 3px #000,0 0 6px #000a;white-space:nowrap;display:none;pointer-events:none}
+#g3ui .col{position:absolute;left:0;top:0;height:1px;width:0;background:rgba(255,246,222,.8);box-shadow:0 0 2px #000;transform-origin:0 50%;display:none;pointer-events:none}
 #g3ui .n{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font:700 18px/1 Georgia,'Times New Roman',serif;letter-spacing:.2em;color:rgba(255,246,222,.9);text-shadow:0 1px 2px #000c,0 0 10px #0009;display:none;white-space:nowrap}
 #g3ui .p{position:absolute;left:0;top:0;display:none;white-space:nowrap;height:16px;padding:0 4px 3px 19px;font:700 12px/16px system-ui,sans-serif;color:#fff;text-shadow:0 1px 1px #000c;border:1px solid #000a;border-radius:2px 3px 3px 2px;box-shadow:0 1px 3px #000b;background:linear-gradient(#ffffff22,#0000 60%),var(--rc,#5d646c)}
 #g3ui .p.me{--rc:#2d8a3c}#g3ui .p.war{--rc:#b0322a}#g3ui .p.oth{--rc:#5d646c}#g3ui .p.sel{border-color:#ffe27a;box-shadow:0 0 0 1px #ffe27a,0 0 8px #ffe27aaa}
@@ -614,7 +616,7 @@ function g3Css(){if(document.getElementById('g3css'))return;const s=document.cre
 function g3UI(){g3Css();const w=document.getElementById('gMapWrap');if(!w)return;let u=document.getElementById('g3ui');if(u)u.remove();u=guEl('div','');u.id='g3ui';w.appendChild(u);
   G3.lab=guEl('div','position:absolute;inset:0');u.appendChild(G3.lab);const md=guEl('div','');md.id='g3modes';G3_MODES.forEach(([k,n])=>{const b=guEl('button','',n);b.type='button';b.dataset.m=k;b.onclick=ev=>{ev.stopPropagation();if(!md.classList.contains('open')){md.classList.add('open');return;}g3SetMode(k);md.classList.remove('open');};md.appendChild(b);});u.appendChild(md);   /* map mode menu folds away (Abdullah 2026-11-07 16:14 "Hide the map menu don't make it stay visible"): only the current mode shows; click it to open the list */
   document.addEventListener('pointerdown',ev=>{if(!md.contains(ev.target))md.classList.remove('open');});
-  G3.bn=[];G3.nl=[];G3.natSig="";G3.pl=new Map();G3.sl=[];
+  G3.bn=[];G3.nl=[];G3.co=[];G3.natSig="";G3.pl=new Map();G3.sl=[];
   const prio=GCM.P.filter(p=>p.land).sort((a,b)=>(b.cap-a.cap)||(b.wg-a.wg)||(b.tw-a.tw));for(const p of prio){const e=guEl('div','');e.className='b'+(p.cap?' cap':'');G3.lab.appendChild(e);G3.bn.push({el:e,pi:p.i,show:false});}
   for(const p of GCM.P)if(p.sea){const e=guEl('div','');e.className='s';e.textContent=(p.ck?'◆ ':'')+p.n;G3.lab.appendChild(e);G3.sl.push({el:e,pi:p.i,ck:p.ck});}
   const bt=guEl('div','');bt.id='g3btns';u.appendChild(bt);
@@ -686,12 +688,17 @@ function g3Click(mx,my){const best=g3HitAt(mx,my);
 function g3Refresh(){G3.sig='';G3.arrowDirty=true;}
 function g3AfterTurn(){G3.animOK=true;G3.newsTurn=GC.turn-1;g3SyncArmies();G3.animOK=false;g3PaintOverlay();if(G3.tOv)G3.tOv.needsUpdate=true;G3.miniDirty=true;g3Refresh();g3News();}
 function g3Refreshed(){if(!G3.R)return;g3SyncArmies();g3PaintOverlay();if(G3.tOv)G3.tOv.needsUpdate=true;G3.miniDirty=true;g3Refresh();if(G3.endB)G3.endB.disabled=GC.ph!=='plan'||!!GC.over;}
+// short country names for the callouts (long official names do not fit next to a small country)
+const G3_SHORT={BA:'Bosnia',CF:'C. Afr. Rep.',CG:'Congo-Brazzaville',DW:'Yemen (Zaidi)',OB:'Pal. Islamic Brigade',BI:'Desert Faction',RV:'Iraqi Shia Bde',RS:'Lebanese Shia',GQ:'Eq. Guinea',ST:'Sao Tome',FM:'Micronesia',MP:'N. Marianas',GS:'S. Georgia',TF:'Fr. Southern Lands',TC:'Turks & Caicos',GT:'Central America',DO:'Caribbean Isles'};
+function g3Short(o){return G3_SHORT[o]||(GCM.nats.get(o)||{name:o}).name;}
 function g3Nbr(){const k=GC.seed+'|'+GC.turn+'|'+GC.me;if(G3.nbk===k)return G3.nbs;const S=new Set();if(GC.me)for(const p of GCM.P)if(p.land&&GC.prov[p.i].o===GC.me)for(const j of p.adj)if(GCM.P[j].land)S.add(GC.prov[j].o);G3.nbk=k;return G3.nbs=S;}
 function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new THREE.Vector3(),occ=new Set(),tier=g3Zoom(d);G3.tier=tier;G3.lab.classList.toggle('mid',tier<2);
   const proj=(x,y,z)=>{v.set(x,y,z).project(cam);if(v.z>1||v.z<-1)return null;const X=(v.x*.5+.5)*w,Y=(-v.y*.5+.5)*h;if(X<-60||Y<-40||X>w+60||Y>h+40)return null;return [X,Y];};
   const put=(el,q,dx,dy)=>{const t='translate('+Math.round(q[0]+(dx||0))+'px,'+Math.round(q[1]+(dy||0))+'px)';if(el._t!==t){el._t=t;el.style.left='0';el.style.top='0';el.style.transform='translate(-50%,-100%) '+t;}};
   const putC=(el,q)=>{const t='translate('+Math.round(q[0])+'px,'+Math.round(q[1])+'px)';if(el._t!==t){el._t=t;el.style.transform='translate(-50%,-50%) '+t;}};
   const vis=(el,f)=>{if(!el)return;const s=f?'block':'none';if(el._v!==s){el._v=s;el.style.display=s;}};
+  /* calmmap3: the road web is quiet until you are close - full strength at close zoom, a faint hint in the middle and far views (same zoom distances as the tiers) */
+  if(G3.roads&&G3.roads.rm)G3.roads.rm.material.uniforms.uFade.value=Math.max(.16,Math.min(1,1-(d-G3_CLOSE)/(G3_T_NEAR+60-G3_CLOSE)*.84));
   // nation names across the land when zoomed out
   if(force||G3.natSig!==GC.seed+'|'+GC.turn+'|'+GC.armies.length+'|'+G3.nl.length){G3.natSig=GC.seed+'|'+GC.turn+'|'+GC.armies.length+'|'+G3.nl.length;const ar=g3PArea(),by={};for(const p of GCM.P)if(p.land){const o=GC.prov[p.i].o;(by[o]||(by[o]=[])).push(p);}
     // realmap: label at the area-weighted heart of the nation's main landmass (far islands and overseas land don't drag it into the ocean)
@@ -714,7 +721,7 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
         const fs=Math.max(0,Math.min(44,L*.8/(nc*1.3),Math.max(14,W2*.6)));
         const sp=Math.max(.12,Math.min(.9,(L*.86/nc-fs*.78)/fs));if(fs<10||nhit(q[0],q[1],nc*fs*(.78+sp)/2,ang,fs))q=null;else{const k=Math.round(fs)+'|'+Math.round(ang)+'|'+sp.toFixed(2);if(e._k!==k){e._k=k;e.style.fontSize=Math.round(fs)+'px';e.style.letterSpacing=sp.toFixed(2)+'em';}
           e.style.opacity=(Math.min(.62,Math.max(0,(d-G3_CLOSE)/260))).toFixed(2);const t='translate('+Math.round(q[0])+'px,'+Math.round(q[1])+'px) translate(-50%,-50%) rotate('+ang.toFixed(1)+'deg)';if(e._t!==t){e._t=t;e.style.transform=t;}}}}
-    vis(e,!!q);}
+    vis(e,!!q);if(q)shownN.add(r.o);}
   for(let i=G3.nat.length;i<G3.nl.length;i++)vis(G3.nl[i],false);
   // province banners
   const cand=[];
@@ -729,10 +736,30 @@ function g3Labels(force){const cam=G3.cam,w=GV.w,h=GV.h,cc=G3.cc,d=cc.d,v=new TH
   for(const a of GC.armies){if(a.o!==GC.me||!grSeen(a))continue;const e=G3.arm.get(a.id);if(!e)continue;const q=proj(e.g.position.x,e.g.position.y+3*G3.sc_s,e.g.position.z);if(q)rects.push([q[0]-22,q[1]-4,q[0]+22,q[1]+26]);}   // your army badges are never covered by a plate
   let nplate=0;
   cand.sort((u,w)=>w.pri-u.pri);
-  for(const c of cand){const {b,q,p,st,own}=c,wd=((p.n.length+(own?2:0))*8.2+52)*(tier<2?.8:1);
+  for(const c of cand){const {b,q,p,st,own}=c,pn=own?grCapName(b.pi):p.n,wd=((pn.length+(own?2:0))*8.2+52)*(tier<2?.8:1);
     if(c.pri<6&&hit(q[0]-wd/2,q[1]-34,q[0]+wd/2,q[1]+2)){vis(b.el,false);continue;}if(c.pri>=6)rects.push([q[0]-wd/2,q[1]-34,q[0]+wd/2,q[1]+2]);else if(tier===0&&++nplate>12){vis(b.el,false);continue;}   // far view: at most a dozen capitals besides yours
-    const N=grNat(st.o),full=close||b.pi===GV.sel||b.pi===GV.hov,html='<i class="em" style="background-image:url('+g3FlagUrl(st.o)+')"></i><span class="t"><b>'+(own?'★ ':'')+p.n+(GC.me&&st.o===GC.me&&st.un>55?' <span style="color:#ffb0a0">!</span>':'')+'</b>'+(full?'<small>'+(N.name||st.o)+' '+(b.pi===GV.sel||b.pi===GV.hov?geIcons(b.pi):'')+'</small>':'')+'</span>';   /* gclarity: building chips only on hover/selection; the nation line only up close (the country name is painted on the land) */if(b.h!==html){b.h=html;b.el.innerHTML=html;b.el.style.setProperty('--nc',N.color);}   /* Rome-style nameplate (Abdullah 19:33 reference): owner-colour pill, round flag emblem, city + nation */
+    const N=grNat(st.o),full=close||b.pi===GV.sel||b.pi===GV.hov,html='<i class="em" style="background-image:url('+g3FlagUrl(st.o)+')"></i><span class="t"><b>'+(own?'★ ':'')+pn+(GC.me&&st.o===GC.me&&st.un>55?' <span style="color:#ffb0a0">!</span>':'')+'</b>'+(full?'<small>'+(N.name||st.o)+' '+(b.pi===GV.sel||b.pi===GV.hov?geIcons(b.pi):'')+'</small>':'')+'</span>';   /* gclarity: building chips only on hover/selection; the nation line only up close (the country name is painted on the land) */if(b.h!==html){b.h=html;b.el.innerHTML=html;b.el.style.setProperty('--nc',N.color);}   /* Rome-style nameplate (Abdullah 19:33 reference): owner-colour pill, round flag emblem, city + nation */
     put(b.el,q);vis(b.el,true);}
+  /* calmmap3 (Abdullah 2026-11-10 "Armenia is missing"): every country is findable. A nation whose painted name does not fit on its land at this zoom gets a small
+     callout instead of nothing: short name, thin leader line to its land; collision-avoided against plates, your badges, painted names and each other
+     (priority: you, your enemies, your neighbours, then by size). Same shared pool/element pattern as the names; nothing at close zoom (plates carry the nation line). */
+  {G3.co=G3.co||[];let nco=0;const cos=[],nb=GC.me?grPalAdj().get(GC.me):null;   // neighbours = land border or facing across a narrow sea (same table as the map colours)
+    if(d>=G3_CLOSE)for(const i of nord){const r=G3.nat[i];if(shownN.has(r.o))continue;const q=proj(r.x,3,r.z);if(!q)continue;
+      const a=proj(r.x+r.ax*r.hl,3,r.z+r.az*r.hl),b=proj(r.x-r.ax*r.hl,3,r.z-r.az*r.hl),L=a&&b?Math.hypot(a[0]-b[0],a[1]-b[1]):0,o=r.o,pr=o===GC.me?5:GC.me&&grAtWar(GC.me,o)?4:nb&&nb.has(o)?3:0;if(L<(pr?2.5:7))continue;   // a dot from this far: nothing to point at yet (your neighbours and enemies always count)
+      cos.push({r,q,L,pr});}
+    cos.sort((u,v2)=>v2.pr-u.pr||v2.L-u.L);
+    const free=(x0,y0,x1,y1)=>{if(x0<4||y0<4||x1>w-4||y1>h-4)return false;for(const r of rects)if(x0<r[2]&&x1>r[0]&&y0<r[3]&&y1>r[1])return false;
+      for(const c of nrc){const m=c.f*.5;for(const pt of c.P)if(pt[0]>x0-m&&pt[0]<x1+m&&pt[1]>y0-m&&pt[1]<y1+m)return false;}return true;};
+    const DIR=[[.8,-.6],[1,0],[0,-1],[.8,.6],[-1,0],[0,1],[-.8,-.6],[-.8,.6]];
+    for(const c of cos){if(nco>=44)break;const txt=g3Short(c.r.o),wl=txt.length*6.7+8,hl2=7.5;let at=null;
+      if(c.L>=wl*.55&&free(c.q[0]-wl/2,c.q[1]-hl2,c.q[0]+wl/2,c.q[1]+hl2))at=[c.q[0],c.q[1],0];
+      for(let ring=0;ring<3&&!at;ring++){const R=Math.max(16,c.L*.5+10)+ring*17;for(const [dx,dy] of DIR){const cx=c.q[0]+dx*(R+wl*.5*Math.abs(dx)),cy=c.q[1]+dy*(R+hl2*Math.abs(dy));if(free(cx-wl/2,cy-hl2,cx+wl/2,cy+hl2)){at=[cx,cy,1];break;}}}
+      if(!at)continue;rects.push([at[0]-wl/2,at[1]-hl2,at[0]+wl/2,at[1]+hl2]);
+      let e=G3.co[nco];if(!e){e={el:guEl('div',''),ln:guEl('i','')};e.el.className='co';e.ln.className='col';G3.lab.appendChild(e.ln);G3.lab.appendChild(e.el);G3.co.push(e);}nco++;
+      if(e.txt!==txt){e.txt=txt;e.el.textContent=txt;}e.o=c.r.o;putC(e.el,at);vis(e.el,true);
+      if(at[2]){const ex=Math.max(at[0]-wl/2,Math.min(at[0]+wl/2,c.q[0])),ey=Math.max(at[1]-hl2,Math.min(at[1]+hl2,c.q[1])),len=Math.hypot(ex-c.q[0],ey-c.q[1]),ang=Math.atan2(ey-c.q[1],ex-c.q[0]),t='translate('+Math.round(c.q[0])+'px,'+Math.round(c.q[1])+'px) rotate('+ang.toFixed(2)+'rad)';
+        if(e.ln._t!==t){e.ln._t=t;e.ln.style.transform=t;}const wpx=Math.round(len)+'px';if(e.ln._w!==wpx){e.ln._w=wpx;e.ln.style.width=wpx;}vis(e.ln,true);}else vis(e.ln,false);}
+    for(let i=nco;i<G3.co.length;i++){vis(G3.co[i].el,false);vis(G3.co[i].ln,false);}G3.ncall=nco;}
   for(const s of G3.sl){const p=GCM.P[s.pi],f=s.ck?d<1500:d<650;let q=f?proj(p.x,1,p.y):null;if(!q){vis(s.el,false);continue;}putC(s.el,q);vis(s.el,true);}
   // army plates + click targets
   G3.hit=[];const s=G3.sc_s;
