@@ -283,6 +283,17 @@ try {
   // ---- start as Iran, open the map
   await ev(() => { grNew({ me: 'IR', seed: 99, len: 'quick' }); grSave(); grandOpen(); guFit(null); guRedraw(); }); await shot('world-map');
   await ev(() => { guFit(GR_REGIONS[4][1]); guRedraw(); }); await shot('region-middle-east');
+  // ---- calmmap guards: the map gets calmer as you zoom out (Abdullah 2026-11-10 "too busy")
+  const calm = await ev(async () => { const out = {}; const set = d => { G3.camera.d = G3.cc.d = d; g3ForestTick(true); g3Labels(true); };
+    const leg = document.getElementById('g3leg'); out.legShut = !!leg && /shut/.test(leg.className); out.coachLegend = !!document.getElementById('gCoach') && !!leg && !/shut/.test(leg.className);
+    const au = g3TreeAudit(); out.audit = au ? { dry: au.dryWoods || 0, w: ['LY', 'EG', 'SA'].map(k => au[k] ? au[k].conifer + au[k].broad : 0) } : null;
+    const vis = () => { let pl = 0; for (const b of G3.bn) if (b.el._v === 'block') pl++; const at = [], dup = []; for (const [k, e] of G3.pl) if (e._v === 'block') { const a = k.split('|')[0]; if (at.includes(a)) dup.push(a); at.push(a); } return { plates: pl, badges: at.length, dup: dup.length }; };
+    set(2300); out.far = { tier: G3.tier, trees: G3.trees, ...vis() }; set(350); out.mid = { tier: G3.tier, ...vis() }; set(150); out.close = { tier: G3.tier, trees: G3.trees }; set(900); return out; });
+  console.log('calmmap', JSON.stringify(calm));
+  if (!calm.legShut) fails.push('calmmap: the map key is not folded on a new campaign'); if (calm.coachLegend) fails.push('calmmap: tips and the map key are open together');
+  if (!calm.audit || calm.audit.dry !== 0 || calm.audit.w.some(n => n > 250)) fails.push('calmmap: woods in desert provinces ' + JSON.stringify(calm.audit));
+  if (calm.far.tier !== 0 || calm.far.trees !== 0) fails.push('calmmap: far view still draws trees (' + calm.far.trees + ')'); if (calm.far.plates > 15) fails.push('calmmap: far view draws ' + calm.far.plates + ' capital plates');
+  if (calm.mid.tier !== 1 || calm.mid.dup) fails.push('calmmap: middle view draws two badges for one province (' + calm.mid.dup + ')'); if (calm.close.tier !== 2) fails.push('calmmap: close tier not reached');
   // ---- scenario: IR army next to an enemy garrison, march, end turn -> Fight-it prompt
   const sc = await ev(() => { const me = 'IR', foe = 'IQ'; grDeclare(me, foe); let pair = null;
     for (const p of GCM.P) if (p.land && GC.prov[p.i].o === me) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === foe && GC.prov[j].gar.length) { pair = [p.i, j]; break; } else if (pair) break;

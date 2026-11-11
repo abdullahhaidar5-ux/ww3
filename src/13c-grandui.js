@@ -122,7 +122,7 @@ function guCoach(){let seen=0;try{seen=localStorage.getItem('ww3_gcoach');}catch
   const w=document.getElementById('gMapWrap');if(!w)return;const c=guEl('div','position:absolute;left:10px;top:10px;z-index:5;width:300px;background:rgba(10,16,22,.93);border:1px solid #4a6580;border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5;box-shadow:0 4px 16px #0008');c.id='gCoach';
   c.innerHTML='<div style="font-weight:700;margin-bottom:4px">Your first minute</div><div>Time runs by itself. <b>Space</b> pauses, <b>+ / -</b> change speed.</div><div>Click your army, then <b>right-click</b> a province to march there.</div><div>Click a province to see its towns and recruit.</div><div><b>O</b> lists all your armies. Hover anything for details.</div>';
   const b=guEl('button','margin-top:8px;padding:4px 10px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;font-size:13px','Got it');b.type='button';b.id='gCoachOk';
-  b.onclick=()=>{try{localStorage.setItem('ww3_gcoach','1');}catch(e){}c.remove();};c.appendChild(b);w.appendChild(c);}
+  b.onclick=()=>{try{localStorage.setItem('ww3_gcoach','1');}catch(e){}c.remove();if(typeof g3Legend==='function')g3Legend();};c.appendChild(b);w.appendChild(c);if(typeof g3Legend==='function')g3Legend();}
 function guHint(){const e=document.getElementById('gHint');if(e)e.textContent=GV.hint||'';}
 
 // ---------- top bar, side panel, log ----------
