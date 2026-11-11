@@ -80,7 +80,7 @@ function softP(on){for(const P of [PN_,PA_]){if(!P)continue;const u=P.m.uniforms
 // Ambient occlusion needs a second full pass over the scene (depth). A fast machine at full detail does it every frame; as soon as the
 // machine is struggling (under 50 FPS, or the frame-rate governor has lowered effects) it is redrawn every other frame and the
 // previous result is reused (a 1/60 s old soft shadow in the corners is not visible). View only. (speedS 2026-11-11)
-let _aoN=0,_aoRT=null;function aoDue(){_aoN++;if(_aoRT!==POST.dRT){_aoRT=POST.dRT;_aoN=0;return true;}let lite=false;try{lite=fxLv()>=1||QUAL.fps<50;}catch(e){}return !lite||(_aoN&1)===0||_aoN<4;}
+let _aoN=0,_aoRT=null;function aoDue(){_aoN++;if(_aoRT!==POST.dRT){_aoRT=POST.dRT;_aoN=0;return true;}let lite=false;try{lite=fxLv()>=1||QUAL.fps<50;}catch(e){}return !lite||(_shN&1)===0||_aoN<4;}   // on the frames the half-rate shadow pass skips (shadowDue runs later this frame and draws when _shN is odd here), so no frame pays for both
 function pass(mat,target){POST.quad.material=mat;R3.setRenderTarget(target);R3.render(POST.scn,POST.cam);}
 function renderPost(){if(!POST.on||!POST.mFinal){softP(false);shadowSnap();R3.setRenderTarget(null);R3.shadowMap.needsUpdate=shadowDue();R3.render(SCN,CAM);return;}
   sizePost();if(typeof visionTick==='function')try{visionTick(0);}catch(e){}
