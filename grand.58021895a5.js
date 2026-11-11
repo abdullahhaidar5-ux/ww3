@@ -210,7 +210,7 @@ function grBattleAuto(b){if(!b.att.some(id=>GC.armies.some(a=>a.id===id))){b.don
 function grBattleDone(b,win,how){grSettle(b,win,how||'live');GC.qi++;grSave();return grQueue(false);}
 // who stays, who falls back, who dies. `win` is 'att' or 'def'; losers with a province to fall back to keep their survivors, the rest are lost
 function grZealArmy(a){try{return msOf(grNat(a.o).fac).rout===0;}catch(e){return false;}}
-function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;try{glBattle(b,win);}catch(e){console.error('glBattle',e);}try{gfBattle(b,win);}catch(e){console.error('gfBattle',e);}try{GC.mil.foe=win==='att'?b.an:b.dn;gmilBattle(b,win);}catch(e){console.error('gmilBattle',e);}   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
+function grSettle(b,win,how){if(GC.prov[b.p])GC.prov[b.p].hot=GC.turn;try{grScar(b,win,how);}catch(e){}try{glBattle(b,win);}catch(e){console.error('glBattle',e);}try{gfBattle(b,win);}catch(e){console.error('gfBattle',e);}try{GC.mil.foe=win==='att'?b.an:b.dn;gmilBattle(b,win);}catch(e){console.error('gmilBattle',e);}   /* the 3D grand map shows battle smoke over contested provinces for a turn or two */const P=GCM.P,att=GC.armies.filter(a=>b.att.includes(a.id)),def=GC.armies.filter(a=>b.def.includes(a.id));
   b.done=1;const pn=P[b.p].n;
   const losers=win==='att'?def:att,winners=win==='att'?att:def;
   for(const a of losers){a.path=[];if(!a.u.length){grDrop(a);continue;}
@@ -337,7 +337,25 @@ function grM0(){return (typeof GC==='object'&&GC&&GC.m0|0)||0;}
 function grMonStr(turn){const m=Math.max(0,(turn|0)-1)+grM0();return GR_MON[m%12]+' '+(2026+Math.floor(m/12));}   /* A2c: month label for former 'turn N' wording */
 function grDateStr(turn,day){const m=Math.max(0,(turn|0)-1)+grM0();return ((day|0)+1)+' '+GR_MON[m%12]+' '+(2026+Math.floor(m/12));}
 /* grInfo: a tiny note next to the save (when, who, which month) so the main menu can offer "Continue" without loading the campaign code */
-function grInfo(){try{if(!GC)return;localStorage.setItem(GR_KEY+'.i',JSON.stringify({ts:Date.now(),me:GC.me||'',n:GC.me?((GCM&&GCM.nats&&GCM.nats.get(GC.me)||{}).name||GC.me):'Observer',d:grMonStr(GC.turn),over:GC.over?1:0}));}catch(e){}}   // lint-ok (save timestamp, not simulation)
+/* grWarTable (living main menu): a small sketch of the map around the player's nation - who owns each cell of a 480x270 window, run-length packed - plus the place of the last battle.
+   It rides in the save's note so the main menu can draw the war table without loading the campaign code. Display only. */
+function grWarTable(){try{if(!GC||!GC.me||typeof guCols!=='function'||typeof document==='undefined')return null;const idx=guCols(),P=GCM.P,me=GC.me,W=480,H=270;
+  const xs=[],ys=[];for(const p of P)if(p.land&&GC.prov[p.i]&&GC.prov[p.i].o===me){xs.push(p.x);ys.push(p.y);}const n=xs.length;if(!n)return null;xs.sort((a,b)=>a-b);ys.sort((a,b)=>a-b);
+  const lo=Math.floor(n*.1),hi=Math.ceil(n*.9)-1,x0=xs[lo],x1=xs[Math.max(lo,hi)],y0=ys[lo],y1=ys[Math.max(lo,hi)];   /* the middle 80% of your provinces: far-off islands and exclaves do not drag the view away from the homeland */
+  const cx=(x0+x1)/2,cy=(y0+y1)/2,vw=Math.min(GM_W,Math.max(340,(x1-x0+110)/.4,(y1-y0+110)/.55*16/9)),vh=vw*9/16;
+  const vx=Math.max(0,Math.min(GM_W-vw,cx-vw*.66)),vy=vh>=GM_H?(GM_H-vh)/2:Math.max(0,Math.min(GM_H-vh,cy-vh*.5));
+  const pal=new Map(),out=[];let pv=-1,run=0;const put=()=>{if(run<1)return;out.push(pv);let r=run;while(r>127){out.push((r&127)|128);r>>=7;}out.push(r);};
+  for(let j=0;j<H;j++){const y=Math.floor((vy+(j+.5)*vh/H)/GU_K);for(let i=0;i<W;i++){const x=Math.floor((vx+(i+.5)*vw/W)/GU_K);let v=0;
+    if(y>=0&&y<GU_RH&&x>=0&&x<GU_RW){const p=P[idx[y*GU_RW+x]];if(p&&!p.sea){const o=GC.prov[p.i]?GC.prov[p.i].o:'';if(o===me)v=1;else{v=pal.get(o);if(!v){v=2+pal.size%250;pal.set(o,v);}}}}
+    if(v===pv)run++;else{put();pv=v;run=1;}}}put();
+  let d='';for(let i=0;i<out.length;i+=8192)d+=String.fromCharCode.apply(null,out.slice(i,i+8192));
+  const S=GC.scars||[];let sc=null;for(let i=S.length-1;i>=0&&!sc;i--)if(S[i].an===me||S[i].dn===me)sc=S[i];if(!sc)sc=S[S.length-1]||null;
+  const fx=p=>+((p.x-vx)/vw).toFixed(4),fy=p=>+((p.y-vy)/vh).toFixed(4);let b=null;if(sc&&P[sc.p]){const q=P[sc.p],X=fx(q),Y=fy(q);if(X>.03&&X<.97&&Y>.05&&Y<.95)b=[X,Y,q.n,grMonStr(sc.t)];}
+  return {w:W,h:H,d:btoa(d),c:(typeof grNatRgb==='function'?grNatRgb(me):[200,170,80]).map(v=>Math.round(v)),b};}catch(e){return null;}}
+/* grScar: every settled battle leaves one small record (place, month, day, sides, winner, how) - newest last, capped; the menu's war table and the map's battle marks read it */
+const GR_SCARS=80;
+function grScar(b,win,how){const S=GC.scars||(GC.scars=[]);S.push({p:b.p,t:GC.turn,d:GC.day|0,an:b.an,dn:b.dn,w:win==='att'?1:0,how:how||'auto'});if(S.length>GR_SCARS)S.splice(0,S.length-GR_SCARS);return S[S.length-1];}
+function grInfo(){try{if(!GC)return;const wt=grWarTable(),o={ts:Date.now(),me:GC.me||'',n:GC.me?((GCM&&GCM.nats&&GCM.nats.get(GC.me)||{}).name||GC.me):'Observer',d:grMonStr(GC.turn),over:GC.over?1:0};if(wt)o.wt=wt;localStorage.setItem(GR_KEY+'.i',JSON.stringify(o));}catch(e){}}   // lint-ok (save timestamp, not simulation)
 function grSave(){try{localStorage.setItem(GR_KEY,JSON.stringify(GC));GR_AUTO.t=Date.now();grInfo();}catch(e){}}   // lint-ok (save timestamp, not simulation)
 /* rolling safety copies before every Fight-it battle (queue "Never lose progress"): newest = GR_KEY+'.b1', then .b2, .b3; grLoad falls back to them if the main save is damaged */
 function grSnap(){try{if(!GC||(typeof GNT!=='undefined'&&GNT.on&&!GNT.host))return;const js=JSON.stringify(GC),K=GR_KEY+'.b';
