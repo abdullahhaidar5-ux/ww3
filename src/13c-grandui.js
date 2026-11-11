@@ -239,17 +239,59 @@ function grandMenu(){grMap();const saved=(()=>{try{return JSON.parse(localStorag
   if(saved&&!saved.over&&!usable){const n=(GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me;root.appendChild(campEl('div','margin:0 0 12px;padding:8px 10px;border:1px solid #8a6a3a;border-radius:6px;background:rgba(120,80,30,.25);line-height:1.5','Your saved campaign ('+n+', '+grMonStr(saved.turn)+') was made on an older world map and can\'t continue on the new one. Start a new campaign.'));}
   if(usable){const n=saved.me?((GM_NATS.find(r=>r[0]===saved.me)||[])[1]||saved.me):'Observer';root.appendChild(campBtn('Continue — '+n+', '+grMonStr(saved.turn)+' (month '+saved.turn+'/'+saved.maxTurn+')',()=>{grLoad();campClose();grandOpen();}));}
   root.appendChild(campBtn('New campaign',()=>{grandSetup();},!!usable));root.appendChild(campBtn('Back',campClose,true));campShow(root);}
-function grandSetup(){const root=campEl('div'),majors=grMajors(),minors=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))].filter(c=>!grNat(c).major).sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1);let nat='IR',len='quick';
-  root.appendChild(campEl('h1','margin:6px 0 8px;font-size:28px',GNT.wantHost?'CAMPAIGN WITH FRIENDS':'NEW GRAND CAMPAIGN'));root.appendChild(campEl('div','opacity:.8;margin-bottom:6px','Your nation'));
-  const sel=campEl('select','font-size:18px;padding:8px;background:#1a2430;color:#fff;border:1px solid #6b7a55;border-radius:6px;min-width:300px');
-  const og=(l,L)=>{const g=document.createElement('optgroup');g.label=l;for(const c of L){const o=document.createElement('option');o.value=c;o.textContent=GCM.nats.get(c).name;g.appendChild(o);}sel.appendChild(g);};
-  {const o=document.createElement('option');o.value='';o.textContent='Observer — watch the AI run the whole world';sel.appendChild(o);}og('Full nations',majors.sort((a,b)=>GCM.nats.get(a).name<GCM.nats.get(b).name?-1:1));og('Minor nations (shared regional army)',minors);sel.value=nat;root.appendChild(sel);
-  const info=campEl('div','margin:10px 0;opacity:.85;line-height:1.5');const upd=()=>{nat=sel.value;if(!nat){info.textContent='Observer mode: no nation is yours. Every empire is run by the AI; pause, speed up and watch wars, alliances and crises unfold. Click any army or province to inspect it.';return;}const ps=GCM.P.filter(p=>p.land&&p.o===nat),N=grNat(nat);info.innerHTML=GCM.nats.get(nat).name+': <b>'+ps.length+'</b> provinces · capital '+(ps.find(p=>p.cap)||ps[0]).n+' · war goals '+ps.filter(p=>p.wg&&!p.cap).map(p=>p.n).join(', ')+'<br>'+(N.major?'Full nation: its own units and look.':'Minor nation: shared regional army, own flag and colours.')+' Every nation starts with the same strength.';};
-  sel.onchange=upd;upd();root.appendChild(info);
-  root.appendChild(campEl('div','opacity:.8;margin:8px 0 2px','Length'));const row=campEl('div');const bs=[['Quick — 25 months, win by war goals or score','quick'],['Standard — 60 months (5 years)','std']].map(([t,v])=>{const b=campBtn(t,()=>{len=v;bs.forEach(x=>x[0].style.background=x[1]===v?'#4f6b32':'transparent');},v!=='quick');return [b,v];});bs.forEach(x=>row.appendChild(x[0]));root.appendChild(row);
-  root.appendChild(campEl('div','opacity:.8;margin:10px 0 2px','Scenario'));let sc='me26';const srow=campEl('div'),sinfo=campEl('div','margin:4px 0 6px;opacity:.8;font-size:14px;max-width:640px;line-height:1.4');
-  const sbs=GR_SCEN.map(S=>{const b=campBtn(S.n+(S.id==='me26'?' ★':''),()=>{sc=S.id;sbs.forEach(x=>x[0].style.background=x[1]===sc?'#4f6b32':'transparent');sinfo.textContent=S.d;},S.id!=='me26');b.title=S.d;return [b,S.id];});sbs.forEach(x=>srow.appendChild(x[0]));sinfo.textContent=GR_SCEN[0].d;root.appendChild(srow);root.appendChild(sinfo);
-  root.appendChild(campBtn(GNT.wantHost?'Create lobby':'Begin',()=>{if(GNT.wantHost&&!nat){info.textContent='Pick a nation — friends need a lobby with someone leading.';return;}grNew({me:nat||null,len,sc,seed:(Math.floor(Math.random()*1e9)||7)});grSave();if(GNT.wantHost){gnLobby();return;}campClose();grandOpen();}));root.appendChild(campBtn('Back',grandMenu,true));campShow(root);}
+/* NEW CAMPAIGN = the same three-step setup as Conquest and Battle (seamless-flow idea 7, orch/concepts/SEAMLESS.md):
+   Nation > World > Options on the menu's own screens (mxScr/mxFoot/mxBtn/mxLink2 in src/14-menu.js), with the same "Same again" and
+   "Quick match" on the first screen. Menu only: it ends in the same grNew({me,len,sc,seed}) as before; last choices live in SET.last.campaign. */
+const GS={nat:'IR',len:'quick',sc:'me26',built:0};
+function gsLast(){try{const L=SET.last&&SET.last.campaign;return L&&typeof L==='object'?L:null;}catch(e){return null;}}
+function gsNat(c){return c?GCM.nats.get(c).name:'Observer';}
+function gsScen(id){return GR_SCEN.find(S=>S.id===id)||GR_SCEN[0];}
+function gsLenName(l){return l==='std'?'Standard':'Quick';}
+function gsSet(o){if(o){if(o.nat!==undefined&&(!o.nat||GCM.nats.get(o.nat)))GS.nat=o.nat||'';if(o.len==='std'||o.len==='quick')GS.len=o.len;if(o.sc&&GR_SCEN.some(S=>S.id===o.sc))GS.sc=o.sc;}if(GNT.wantHost&&!GS.nat)GS.nat='IR';gsSync();}
+function gsDet(c){const d=GS.det;if(!d)return;if(c===undefined)c=GS.nat;d.innerHTML='';const E=(t,k,x)=>{const e=document.createElement(t);if(k)e.className=k;e.textContent=x;d.appendChild(e);};
+  if(!c){E('h3','','Observer');E('div','a','Watch the AI run the whole world');E('p','','No nation is yours. Every empire is run by the AI; pause, speed up and watch wars, alliances and crises unfold. Click any army or province to inspect it.');return;}
+  const ps=GCM.P.filter(p=>p.land&&p.o===c),N=grNat(c),wg=ps.filter(p=>p.wg&&!p.cap).map(p=>p.n);
+  E('h3','',N.name);E('div','a',ps.length+' provinces · capital '+((ps.find(p=>p.cap)||ps[0]||{}).n||'-'));
+  E('p','',N.major?'Full nation: its own units and look.':'Minor nation: shared regional army, own flag and colours.');if(wg.length)E('p','s','War goals: '+wg.join(', '));E('p','w','Every nation starts with the same strength.');}
+function gsSync(){if(!GS.built)return;for(const b of GS.facs.querySelectorAll('.gfac')){b.classList.toggle('on',b.dataset.c===GS.nat);if(!b.dataset.c)b.hidden=!!GNT.wantHost;}gsDet();
+  for(const b of GS.grid.children)b.classList.toggle('on',b.dataset.k===GS.sc);for(const b of GS.lenRow.children)b.classList.toggle('on',b.dataset.v===GS.len);
+  GS.go.textContent=GNT.wantHost?'Create lobby':'Start campaign';const L=gsLast();GS.same.hidden=!!GNT.wantHost||!L;if(L)GS.same.querySelector('small').textContent=gsNat(L.nat)+' · '+gsScen(L.sc).n+' · '+gsLenName(L.len);
+  GS.quick.hidden=!!GNT.wantHost;GS.quick.querySelector('small').textContent=gsNat(GS.nat)+' · '+GR_SCEN[0].n+' · Quick';GS.note.textContent='';}
+function gsFilter(){const q=GS.inp.value.trim().toLowerCase();for(const b of GS.facs.querySelectorAll('.gfac'))b.style.display=!q||b.textContent.toLowerCase().includes(q)?'':'none';}
+function gsEnter(){gsFilter();gsSync();}
+/* test + screenshot hook: open step 1..3 */
+function gsStep(i){menuGo(MX_GSTEPS[Math.max(0,Math.min(2,i))][0]);}
+function gsBuild(){if(GS.built)return;const E=mxEl,majors=grMajors().sort((a,b)=>gsNat(a)<gsNat(b)?-1:1),minors=[...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))].filter(c=>!grNat(c).major).sort((a,b)=>gsNat(a)<gsNat(b)?-1:1);
+  /* step 1: nation */
+  const N=mxScr('g-nation','<h2 class="mxh">Choose your nation</h2><p class="mxsub">Hover a nation to see its provinces, capital and war goals. Click to choose.</p>');
+  const nw=E('div','mxnat'),nl=E('div');GS.inp=E('input','mxnatin');GS.inp.placeholder='Find a nation…';GS.inp.autocomplete='off';GS.inp.spellcheck=false;GS.inp.oninput=gsFilter;
+  GS.facs=E('div','mxfacs');GS.det=E('div','mxdet');nl.append(GS.inp,GS.facs);nw.append(nl,GS.det);N.appendChild(nw);
+  const card=(c,nm,col,code)=>{const b=E('button','gfac');b.type='button';b.dataset.c=c;const i=E('span','ins',code);i.style.background=col;b.append(i,E('span','nm',nm));GS.facs.appendChild(b);};
+  card('','Observer','#8a9a92','◉');GS.facs.appendChild(E('h4','','Full nations'));for(const c of majors)card(c,gsNat(c),grNat(c).color,c);
+  GS.facs.appendChild(E('h4','','Minor nations · shared regional army'));for(const c of minors)card(c,gsNat(c),grNat(c).color,c);
+  GS.facs.addEventListener('mouseover',e=>{const f=e.target.closest&&e.target.closest('.gfac');if(f)gsDet(f.dataset.c);});GS.facs.addEventListener('mouseleave',()=>gsDet());
+  GS.facs.addEventListener('click',e=>{const f=e.target.closest&&e.target.closest('.gfac');if(!f)return;mxTick(700);gsSet({nat:f.dataset.c});setTimeout(()=>{if(MX.cur==='g-nation')menuGo('g-world');},160);});
+  GS.same=mxLink2('Same again',()=>{gsSet(gsLast());gsBegin();});GS.same.id='gsSame';GS.same.title='Start right away with the choices of your last campaign';
+  GS.quick=mxLink2('Quick match',()=>{gsSet({sc:GR_SCEN[0].id,len:'quick'});gsBegin();});GS.quick.id='gsQuick';GS.quick.title='Start right away: the nation picked here, the real world of today and a quick 25-month campaign';
+  mxFoot(N,GS.same,GS.quick,E('span','mxsp'),mxBtn('Next: World →',()=>menuGo('g-world')));
+  /* step 2: world */
+  const W=mxScr('g-world','<h2 class="mxh">Choose the world</h2><p class="mxsub">Where the world stands when your campaign begins. Click one to continue.</p>');
+  GS.grid=E('div','mxgrid');W.appendChild(GS.grid);
+  for(const S of GR_SCEN){const b=E('button','mxmap nocv');b.type='button';b.dataset.k=S.id;b.append(E('div','t',S.n),E('div','f',S.id==='me26'?'The real world, November 2026 · recommended':'What-if start'),E('div','d',S.d));
+    b.onclick=()=>{mxTick(700);gsSet({sc:S.id});setTimeout(()=>{if(MX.cur==='g-world')menuGo('g-opts');},140);};GS.grid.appendChild(b);}
+  mxFoot(W,mxBtn('Next: Options →',()=>menuGo('g-opts')));
+  /* step 3: options + start */
+  const O=mxScr('g-opts','<h2 class="mxh">Campaign options</h2><p class="mxsub">Optional. The defaults are a good start.</p>');
+  const opt=(h,p,el)=>{const d=E('div','mxopt');d.append(E('h3','',h),E('p','',p),el);O.appendChild(d);};
+  GS.lenRow=E('div','seg');for(const [t,v] of [['Quick · 25 months','quick'],['Standard · 60 months','std']]){const b=E('button','',t);b.type='button';b.dataset.v=v;b.onclick=()=>gsSet({len:v});GS.lenRow.appendChild(b);}
+  opt('Length','Quick: 25 months, win by war goals or score. Standard: 60 months (5 years). Time runs by itself; pause at any moment and give orders.',GS.lenRow);
+  GS.note=E('p','mxsub','');GS.note.style.color='var(--warn)';O.appendChild(GS.note);
+  GS.go=mxBtn('Start campaign',()=>gsBegin());GS.go.id='gsGo';mxFoot(O,GS.go);GS.built=1;}
+function gsBegin(){if(GNT.wantHost&&!GS.nat){GS.note.textContent='Pick a nation - friends need a lobby with someone leading.';return;}
+  try{SET.last=SET.last||{};SET.last.campaign={nat:GS.nat,len:GS.len,sc:GS.sc};saveSet();}catch(e){}
+  grNew({me:GS.nat||null,len:GS.len,sc:GS.sc,seed:(Math.floor(Math.random()*1e9)||7)});grSave();campClose();
+  if(GNT.wantHost){try{menuHome();menuGo('online');}catch(e){}gnLobby();return;}try{menuHome();}catch(e){}grandOpen();}
+function grandSetup(){grMap();campClose();gsBuild();MX.gHost=GNT.wantHost?1:0;const L=gsLast();gsSet(L||{nat:'IR',len:'quick',sc:'me26'});if(MX.cur==='g-nation'){mxCrumb();gsEnter();}else menuGo('g-nation');}
 // main menu buttons: Grand campaign · Conquest · Missions · Tutorial (Abdullah 2026-11-06)
 (function(){const sb=document.getElementById('sandbox');if(!sb||document.getElementById('grandBtn'))return;const b=document.createElement('button');b.className='big';b.id='grandBtn';b.type='button';b.textContent='Grand campaign';b.title='The world map: run a nation, fight the battles yourself or auto-resolve them';b.onclick=()=>{try{initAudio();}catch(e){}grandMenu();};
   const camp=document.getElementById('campaign')||sb;camp.parentNode.insertBefore(b,camp);const st=document.getElementById('start');if(st)st.textContent='Conquest — deploy vs AI';})();

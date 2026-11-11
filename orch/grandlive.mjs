@@ -1,5 +1,5 @@
 // Lane A1 gate: the live "Fight it" battle loads EXACTLY as a player reaches it — fresh page, main menu → Grand campaign →
-// New campaign → Begin → march into a neighbour at war → End turn → "Fight it live" — no test hooks inside the battle:
+// New campaign → Nation > World > Options → Start campaign → march into a neighbour at war → End turn → "Fight it live" — no test hooks inside the battle:
 // the game's own loop must take it past the loading screen and the battle clock must run.   node orch/grandlive.mjs [--nat IR]
 import http from 'node:http';
 import fs from 'node:fs';
@@ -54,9 +54,9 @@ try {
   const hasNew = await ev(() => [...document.querySelectorAll('button')].some(b => /New campaign/.test(b.textContent)));
   if (!hasNew) throw new Error('Grand campaign menu has no New campaign');
   await click('button', '^New campaign'); await page.waitForTimeout(300);
-  await ev(n => { const s = [...document.querySelectorAll('select')].find(x => [...x.options].some(o => o.value === n)); if (s) { s.value = n; s.onchange && s.onchange(); } }, NAT);
+  await ev(n => { const f = document.querySelector('#ms-g-nation .gfac[data-c="' + n + '"]'); if (f) f.click(); }, NAT); await page.waitForTimeout(400);   // setup is three menu steps now: Nation > World > Options
   if (await ev(() => [...document.querySelectorAll('button')].some(b => /^Gulf flashpoint/.test(b.textContent)))) { await click('button', '^Gulf flashpoint'); await page.waitForTimeout(200); await shot('live-0-setup-scenario'); await click('button', '^Middle East 2026'); } else fails.push('setup has no scenario choice (RG6)');
-  await click('button', '^Begin$'); }
+  await click('button', '^Start campaign$'); }
   await page.waitForFunction(() => { const e = document.getElementById('grandScreen'); return e && e.style.display !== 'none'; }, null, { timeout: 60000 });
   await page.waitForTimeout(1500); console.log(el(), 'map open'); await shot('live-1-map');
   if (MKSAVE) { for (let i = 0; i < 2; i++) { await ev(() => { GC.armies.forEach(a => { if (a.o === GC.me) a.path = []; }); grEndTurn(true); }); await page.waitForTimeout(500); await ev(() => { try { const m = document.getElementById('gModal'); if (m) m.remove(); } catch (e) {} while (GC.ph !== 'plan' && GC.q && GC.qi < GC.q.length) { try { grBattleDone(GC.q[GC.qi], grBattleAuto2 ? grBattleAuto2(GC.q[GC.qi]) : 'att', 'auto'); } catch (e) { break; } } }); }

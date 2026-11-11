@@ -35,9 +35,9 @@ try{
  await page.waitForFunction(()=>typeof grNew==='function'&&typeof MODELS!=='undefined',null,{timeout:60000});
  await ev(()=>{localStorage.removeItem(GR_KEY);grandMenu();});
  await ev(()=>{[...document.querySelectorAll('button')].find(b=>/New campaign/.test(b.textContent)).click();});
- const r=await ev(()=>{const sel=[...document.querySelectorAll('select')].find(s=>s.querySelector('optgroup'));const has=[...sel.options].some(o=>o.value===''&&/Observer/.test(o.textContent));sel.value='';sel.onchange();return {has,info:document.body.innerText.includes('Observer mode: no nation')};});
+ const r=await ev(()=>{const f=document.querySelector('#ms-g-nation .gfac[data-c=""]');const has=!!f&&/Observer/.test(f.textContent);if(f)f.click();return {has,info:/No nation is yours/.test(document.querySelector('#ms-g-nation .mxdet').textContent)};});
  console.log(JSON.stringify(r));if(!r.has||!r.info)fails.push('no observer option');
- await ev(()=>{[...document.querySelectorAll('button')].find(b=>b.textContent==='Begin').click();});
+ await ev(()=>{[...document.querySelectorAll('button')].find(b=>b.textContent==='Start campaign').click();});
  await page.waitForTimeout(1500);
  const g=await ev(()=>{const t0=GC.turn;try{grEndTurn&&grEndTurn(true);grEndTurn(true);}catch(e){return {err:String(e)}}return {me:GC.me,t0,t1:GC.turn,saved:!!localStorage.getItem(GR_KEY)};});
  console.log(JSON.stringify(g));if(g.err||g.me!==null||g.t1<=g.t0)fails.push('observer run '+JSON.stringify(g));

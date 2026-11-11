@@ -6,8 +6,13 @@
    parking spot for what the title does not show (its buttons are clicked by the new items). #menu.hidden still means "no menu".
    Recipe for a new screen: orch/HOWTO.md "Add a menu screen". ---------- */
 const MX={stack:['title'],cur:'title',screens:{},busy:0,thumbQ:[],thumbs:{},natQ:''};
-const MX_STEPS=[['c-map','Battlefield'],['c-nation','Nation'],['c-players','Players'],['c-opts','Battle options']];
-const MX_TITLES={'title':'','c-map':'Conquest','c-nation':'Conquest','c-players':'Conquest','c-opts':'Conquest','single':'Single player','online':'Multiplayer','extras':'Extras','credits':'Credits'};
+/* ONE SETUP, SAME THREE STEPS (seamless-flow idea 7, orch/concepts/SEAMLESS.md): Conquest and Battle = Nation > Battlefield > Opponents,
+   the grand campaign = Nation > World > Options (its screens are built by src/13c-grandui.js grandSetup with the helpers below). The
+   options screen of a battle is an optional side step of Opponents. Last choices per game live in SET.last (the one settings store). */
+const MX_STEPS=[['c-nation','Nation'],['c-map','Battlefield'],['c-players','Opponents']];
+const MX_GSTEPS=[['g-nation','Nation'],['g-world','World'],['g-opts','Options']];
+function mxFlow(id){return MX_STEPS.some(s=>s[0]===id)?MX_STEPS:MX_GSTEPS.some(s=>s[0]===id)?MX_GSTEPS:null;}
+const MX_TITLES={'title':'','c-map':'Conquest','c-nation':'Conquest','c-players':'Conquest','c-opts':'Conquest','g-nation':'Grand campaign','g-world':'Grand campaign','g-opts':'Grand campaign','single':'Single player','online':'Multiplayer','extras':'Extras','credits':'Credits'};
 function mxEl(t,c,x){const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e;}
 function mxClick(id){const e=document.getElementById(id);if(e){try{initAudio();}catch(_){}e.click();}}
 function mxTick(f){try{sfxUI(f);}catch(_){}}
@@ -108,16 +113,36 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 .mxlist .mxi.on{color:#fff;border-left-color:var(--accent)}.mxolgo{margin:14px 0 8px;min-height:44px}.mxolnote{color:var(--dim);font:400 13px var(--mono)}
 #ms-online #mxolg{margin-bottom:6px}
 .mxlist{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+.mxfoot .mxsp{flex:1}.mxfoot .mxlink small{display:block;font:400 11px var(--mono);letter-spacing:0;text-transform:none;color:var(--dim);max-width:340px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mxfoot .mxlink{text-align:left}
+.mxfacs{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:8px}
+.mxfacs h4{grid-column:1/-1;margin:10px 0 0;font:600 13px var(--display);letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+.mxfacs .gfac{display:flex;text-align:left;cursor:pointer;background:rgba(14,19,17,.72);border:1px solid var(--line);padding:6px 10px;align-items:center;gap:10px;color:var(--fg);font-family:var(--display);transition:border-color .12s,transform .12s;min-height:52px}
+.mxfacs .gfac:hover{border-color:var(--fg);transform:translateY(-2px)}.mxfacs .gfac.on{border-color:var(--accent);background:rgba(34,30,14,.8)}
+.mxfacs .gfac .ins{flex:none;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font:700 13px var(--display);color:#10140f}
+.mxfacs .gfac .nm{font:700 19px var(--display);letter-spacing:.05em;text-transform:uppercase}
+.mxdet{position:sticky;top:0;background:rgba(14,19,17,.8);border:1px solid var(--line);padding:18px 20px;min-height:260px}
+.mxdet h3{margin:0 0 2px;font:700 32px var(--display);letter-spacing:.05em;text-transform:uppercase}
+.mxdet .a{color:var(--accent);font:500 12px var(--mono);margin-bottom:12px}
+.mxdet p{margin:0 0 10px;color:#b9c5be;font:400 12.5px/1.55 var(--mono)}.mxdet .s{color:var(--info)}.mxdet .w{color:var(--warn)}
+.mxnatin{width:260px;background:rgba(14,19,17,.7);border:1px solid var(--line);color:var(--fg);padding:8px 12px;font:15px var(--mono);margin:0 0 14px}
+.mxmap.nocv .t{padding-top:14px}
+#mxolpick{margin:0 0 4px;color:var(--dim);font:400 13px var(--mono)}#mxolpick b{color:var(--fg);font-weight:600}#mxolpick .mxlink{font-size:14px;padding:2px 2px;margin-left:8px}
 .mxcred{max-width:860px}.mxcred p{margin:0 0 12px;color:#8a9a92;font:400 12px/1.6 var(--mono);max-width:none}
 @media (max-width:1100px){.mxnat,.mxpl{grid-template-columns:1fr}#mxdet{position:static}}
 `;document.head.appendChild(s);}
 function mxModeName(){return typeof setup!=='undefined'&&setup.mode==='battle'?'Battle':'Conquest';}
 /* The two skirmish modes share the setup screens (battlefield, nation, players, options); this retitles them for the mode chosen on the main menu. */
-function mxSetMode(m){if(typeof setup!=='undefined')setup.mode=m==='battle'?'battle':'conquest';const B=m==='battle',nm=mxModeName();
+function mxSetMode(m,recall){if(typeof setup!=='undefined')setup.mode=m==='battle'?'battle':'conquest';const B=m==='battle',nm=mxModeName();if(recall)mxApply(mxLast());
   const sub=(id,t)=>{const e=document.querySelector('#ms-'+id+' .mxsub');if(e)e.textContent=t;};
   sub('c-map',B?'Battle: a Command Center, a dozer and supply trucks - build your base and fight like Generals. Every map has at least two real attack routes.':'Conquest: towns pay the tax, a full base from the start. Every map has at least two real attack routes.');
   for(const b of [MX.startP,MX.startO])if(b)b.textContent='Start '+nm.toLowerCase();
   const h=document.querySelector('#ms-c-opts .mxh');if(h)h.textContent=nm+' options';}
+function mxScr(id,html){const s=mxEl('section','ms');s.id='ms-'+id;if(html)s.innerHTML=html;document.getElementById('mxbody').appendChild(s);MX.screens[id]=s;return s;}
+function mxFoot(s,...k){const f=mxEl('div','mxfoot');f.append(...k);s.appendChild(f);return f;}
+function mxBtn(t,fn,cls){const b=mxEl('button',cls||'mxgo',t);b.type='button';b.onclick=fn;return b;}
+/* a small footer link with a second line of detail ("Same again" + what it will start) */
+function mxLink2(t,fn){const b=mxBtn('',fn,'mxlink');b.append(t,mxEl('small',''));return b;}
 function mxBuild(){
   const m=document.getElementById('menu');if(!m||document.getElementById('mx'))return;mxCss();m.classList.add('m3');
   const card=m.querySelector('.card'),g=id=>document.getElementById(id);
@@ -125,9 +150,7 @@ function mxBuild(){
   const fade=mxEl('div');fade.id='mxfade';
   const top=mxEl('div');top.id='mxtop';top.hidden=true;const bk=mxEl('button','mxback','‹ Back');bk.type='button';bk.title='One step back (Esc)';bk.onclick=menuBack;const cr=mxEl('div');cr.id='mxcrumb';top.append(bk,cr);
   const body=mxEl('div');body.id='mxbody';mx.append(bg,fade,top,body);m.appendChild(mx);
-  const scr=(id,html)=>{const s=mxEl('section','ms');s.id='ms-'+id;if(html)s.innerHTML=html;body.appendChild(s);MX.screens[id]=s;return s;};
-  const foot=(s,...k)=>{const f=mxEl('div','mxfoot');f.append(...k);s.appendChild(f);return f;};
-  const go=(t,fn,cls)=>{const b=mxEl('button',cls||'mxgo',t);b.type='button';b.onclick=fn;return b;};
+  const scr=mxScr,foot=mxFoot,go=mxBtn;
   /* --- title --- */
   const T=scr('title');T.innerHTML='<h1 id="mxlogo">World War <span>3</span></h1><p id="mxtag">Real-time modern warfare, from one battle to the whole world.</p>';
   const menu=mxEl('div');menu.id='mxmenu';T.appendChild(menu);
@@ -140,19 +163,21 @@ function mxBuild(){
   item('Extras',()=>menuGo('extras'),'dim','Replays, encyclopedia, medals, map editor and more');
   item('Credits',()=>menuGo('credits'),'dim');
   const ver=mxEl('div');ver.id='mxver';ver.textContent='WORLD WAR 3';T.appendChild(ver);
-  /* --- conquest 1: battlefield --- */
-  const M=scr('c-map','<h2 class="mxh">Choose a battlefield</h2><p class="mxsub">Every map has at least two real attack routes. Click one to continue.</p>');
-  MX.grid=mxEl('div','mxgrid');M.appendChild(MX.grid);
-  foot(M,go('Random battlefield',()=>{const b=g('pickMap')&&g('pickMap').querySelector('.rndmap');if(b)b.click();mxMapMark();menuGo('c-nation');},'mxlink'),go('Next: Nation →',()=>menuGo('c-nation')));
-  /* --- conquest 2: nation --- */
+  /* --- step 1: nation (the game's first screen: "Same again" and "Quick match" live here) --- */
   const N=scr('c-nation','<h2 class="mxh">Choose your nation</h2><p class="mxsub">Hover a nation to see its doctrine, morale style and strike. Click to choose.</p>');
   const nw=mxEl('div','mxnat'),nl=mxEl('div');const inp=mxEl('input');inp.id='mxnatin';inp.placeholder='Find a nation…';inp.autocomplete='off';inp.spellcheck=false;inp.oninput=mxNatFilter;
   nl.append(inp,g('pickP'));const det=mxEl('div');det.id='mxdet';nw.append(nl,det);N.appendChild(nw);
   const pp=g('pickP');pp.addEventListener('mouseover',e=>{const f=e.target.closest&&e.target.closest('.fac');if(f)mxNatShow(f);});pp.addEventListener('mouseleave',()=>mxNatShow());
-  pp.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.fac')){mxTick(700);setTimeout(()=>{if(MX.cur==='c-nation')menuGo('c-players');},160);}},false);
-  foot(N,go('Next: Players →',()=>menuGo('c-players')));
-  /* --- conquest 3: players --- */
-  const P=scr('c-players','<h2 class="mxh">Players</h2><p class="mxsub">You against the computer. Change teams to play co-op or free-for-all; click a numbered spot on the map to choose where a side starts.</p>');
+  pp.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('.fac')){mxTick(700);setTimeout(()=>{if(MX.cur==='c-nation')mxNext('c-map');},160);}},false);
+  MX.same=mxLink2('Same again',()=>mxSameAgain());MX.same.id='mxSame';MX.quick=mxLink2('Quick match',()=>mxQuick());MX.quick.id='mxQuick';MX.nextN=go('Next: Battlefield →',()=>mxNext('c-map'));
+  foot(N,MX.same,MX.quick,mxEl('span','mxsp'),MX.nextN);
+  /* --- step 2: battlefield --- */
+  const M=scr('c-map','<h2 class="mxh">Choose a battlefield</h2><p class="mxsub">Every map has at least two real attack routes. Click one to continue.</p>');
+  MX.grid=mxEl('div','mxgrid');M.appendChild(MX.grid);
+  MX.nextM=go('Next: Opponents →',()=>mxNext('c-players'));
+  foot(M,go('Random battlefield',()=>{mxRndMap();mxNext('c-players');},'mxlink'),MX.nextM);
+  /* --- step 3: opponents --- */
+  const P=scr('c-players','<h2 class="mxh">Opponents</h2><p class="mxsub">You against the computer. Change teams to play co-op or free-for-all; click a numbered spot on the map to choose where a side starts.</p>');
   const pw=mxEl('div','mxpl'),pl=mxEl('div'),pr=mxEl('div');
   const r1=mxEl('div','mxrow');r1.append(mxEl('div','mxlab','Main opponent'),g('aiFac'));
   const r2=mxEl('div','mxrow');MX.cnt=mxEl('div','mxlab','Computers');const add=mxEl('button','mxplus','＋ Add computer player'),rem=mxEl('button','mxplus','－ Remove');add.type=rem.type='button';
@@ -160,8 +185,8 @@ function mxBuild(){
   const r3=mxEl('div','mxrow');r3.append(mxEl('div','mxlab','Difficulty'),g('diff'));
   pl.append(r1,r2,r3,g('teamList'));const th=mxEl('p','mxsub','Players on the same team are allies: they share vision, never fight each other and win together.');th.style.marginTop='14px';pl.appendChild(th);
   pr.append(g('pickMap'));pw.append(pl,pr);P.appendChild(pw);
-  MX.startP=go('Start battle',()=>mxClick('start'));foot(P,go('Battle options →',()=>menuGo('c-opts'),'mxlink'),MX.startP);
-  /* --- conquest 4: battle options --- */
+  MX.startP=go('Start battle',()=>mxStart());foot(P,go('Battle options →',()=>menuGo('c-opts'),'mxlink'),MX.startP);
+  /* --- optional side step of Opponents: battle options --- */
   const O=scr('c-opts','<h2 class="mxh">Battle options</h2><p class="mxsub">Optional. The defaults are a good fight; start any time from the Players screen.</p>');
   const opt=(h,p,el)=>{const d=mxEl('div','mxopt');d.append(mxEl('h3','',h),mxEl('p','',p),el);O.appendChild(d);};
   opt('Doctrine','Your general’s battle doctrine: a free bonus for the whole battle. Or pick it in the first 2 minutes.',g('gdocSel'));
@@ -169,13 +194,13 @@ function mxBuild(){
   opt('Season','Mud slows wheels, snow slows infantry. Roads matter more.',g('ssnRow'));
   {const r=mxEl('div','seg');r.id='balRow';[['Balanced',0],['Realistic',1]].forEach(([t,v])=>{const b=mxEl('button','',t);b.onclick=()=>{setup.real=v;r.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));};if(!!setup.real===!!v)b.classList.add('on');r.appendChild(b);});opt('Balance','Balanced: every nation equally strong - the default. Realistic: each nation starts like its real 2026 military, but the game stays fair. Big powers start rich with tanks and strong air and missile support, but their units cost more and train slowly. Small nations and the Zealous factions start with many cheap infantry and AT teams, recruit fast and fortify cheaply at home. The host sets it for a multiplayer battle.',r);
     const rs=mxEl('div','');rs.style.cssText='font-size:12px;opacity:.8;margin-top:4px;max-width:520px';const fill=()=>{rs.textContent=setup.real?[setup.p].concat(setup.a?[setup.a]:[]).filter(f=>FACTIONS[f]).map(f=>FACTIONS[f].name+' - '+realLine(f)).join('  ·  '):'';};r.addEventListener('click',()=>setTimeout(fill,0));r.addEventListener('mouseenter',fill);r.after(rs);fill();}
-  MX.startO=go('Start battle',()=>mxClick('start'));foot(O,MX.startO);
+  MX.startO=go('Start battle',()=>mxStart());foot(O,MX.startO);
   /* --- single player (Abdullah 2026-11-07 21:41 "There's a single player window or section and then multiplayer and test range") --- */
   const SP=scr('single','<h2 class="mxh">Single player</h2><p class="mxsub">Three distinct games. Pick one.</p>');const sl=mxEl('div','mxlist');SP.appendChild(sl);
   const sitem=(t,d,fn,cls)=>{const b=mxEl('button','mxi'+(cls?' '+cls:''));b.type='button';b.append(t,mxEl('small','',d));b.onclick=()=>{mxTick(660);fn();};b.onmouseenter=()=>mxTick(520);sl.appendChild(b);return b;};
   sitem('Grand campaign','Run a whole empire on a world map and fight the battles live',()=>mxClick('grandBtn'));
-  sitem('Conquest','Take towns and collect their tax, destroy the enemy base - a full base and $10,000 from the start',()=>{mxSetMode('conquest');menuGo('c-map');});
-  sitem('Battle','Generals-style skirmish: Command Center, supply trucks, tech up, destroy every enemy building',()=>{mxSetMode('battle');menuGo('c-map');});
+  sitem('Conquest','Take towns and collect their tax, destroy the enemy base - a full base and $10,000 from the start',()=>{mxSetMode('conquest',1);menuGo('c-nation');});
+  sitem('Battle','Generals-style skirmish: Command Center, supply trucks, tech up, destroy every enemy building',()=>{mxSetMode('battle',1);menuGo('c-nation');});
   sitem('Missions','The story missions',()=>mxClick('campaign'),'dim sep');
   sitem('Tutorial','First time? A guided 10-minute battle',()=>mxClick('tutorial'),'dim');
   sitem('Battle tutorial','First time in Battle? Supply Depot, Barracks, War Factory, attack',()=>{try{initAudio();startBattleTutorial();}catch(e){console.warn(e);}},'dim');
@@ -187,7 +212,7 @@ function mxBuild(){
   gitem('campaign','Grand campaign','Lead a nation on the world map with friends - the lobby opens next');
   gitem('conquest','Conquest','Towns, tax and a full base for everyone');
   gitem('battle','Battle','Generals-style: Command Center, supply trucks, tech tree');
-  MX.olGo=mxEl('div','mxolgo');OL.appendChild(MX.olGo);
+  MX.olGo=mxEl('div','mxolgo');OL.appendChild(MX.olGo);MX.olPick=mxEl('div');MX.olPick.id='mxolpick';OL.appendChild(MX.olPick);
   const mp=[...card.querySelectorAll('.mode')].find(x=>x.querySelector('#playOnline'));if(mp)OL.appendChild(mp);
   {const lb=OL.querySelector('.label');if(lb)lb.textContent='Open games';const jc=OL.querySelector('#jcode');if(jc)jc.placeholder='Game code or invite link (battle or campaign)';}
   /* --- extras --- */
@@ -203,14 +228,43 @@ function mxBuild(){
   new MutationObserver(()=>{if(!m.hidden)mxShown();}).observe(m,{attributes:true,attributeFilter:['hidden']});
   setInterval(mxPoll,500);
   MX.screens.title.classList.add('on');mxShown(true);}
+/* ---- last choices, "Same again", "Quick match" (seamless-flow idea 7). View/menu only: it presses the same controls a player would. ---- */
+function mxLast(m){try{const L=typeof SET!=='undefined'&&SET.last;m=m||(typeof setup!=='undefined'&&setup.mode==='battle'?'battle':'conquest');return L&&L[m]&&typeof L[m]==='object'?L[m]:null;}catch(_){return null;}}
+function mxRemember(){try{if(typeof SET==='undefined'||typeof setup==='undefined')return;const m=setup.mode==='battle'?'battle':'conquest';SET.last=SET.last||{};
+  SET.last[m]={p:setup.p,a:setup.a,n:setup.n|0||1,d:setup.d|0,map:setup.map,real:setup.real?1:0};saveSet();}catch(_){}}
+/* put remembered choices back through the real controls (nation card, map list, opponent, count, difficulty), so every rule they carry still runs */
+function mxApply(L){if(!L||typeof setup==='undefined')return false;const g=id=>document.getElementById(id);try{
+  if(L.p&&FACTIONS[L.p]&&setup.p!==L.p){const f=g('pickP').children[FKEYS.indexOf(L.p)];if(f&&f.onclick)f.onclick();}
+  const ms=g('mapSel');if(ms&&L.map&&MAPS[L.map]&&[...ms.options].some(o=>o.value===L.map)&&setup.map!==L.map){ms.value=L.map;ms.onchange();}
+  const af=g('aiFac');if(af&&L.a&&FACTIONS[L.a]&&setup.a!==L.a){af.value=L.a;af.onchange();}
+  const nb=g('aiN')&&g('aiN').querySelector('button[data-n="'+(L.n|0)+'"]');if(nb&&!nb.disabled&&setup.n!==(L.n|0))nb.onclick();
+  const db=g('diff')&&g('diff').querySelector('button[data-d="'+(L.d|0)+'"]');if(db&&setup.d!==(L.d|0))db.onclick();
+  if(L.real!==undefined&&!!setup.real!==!!L.real){const bs=g('balRow')&&g('balRow').querySelectorAll('button');if(bs&&bs[L.real?1:0])bs[L.real?1:0].click();}
+  mxMapMark();return true;}catch(e){console.warn('recall',e);return false;}}
+function mxLastLine(L){try{return FACTIONS[L.p].name+' · '+(MAPS[L.map]||{}).name+' · '+(L.n>1?L.n+' computers':'1 computer');}catch(_){return '';}}
+function mxSameSync(){const L=mxLast(),on=!MX.ret;if(MX.same){MX.same.hidden=!on||!L;MX.same.title='Start right away with the choices of your last '+mxModeName()+' game';if(L)MX.same.querySelector('small').textContent=mxLastLine(L);}
+  if(MX.quick){MX.quick.hidden=!on;MX.quick.title='Start right away: the nation picked here, a random battlefield and one computer on Medium';MX.quick.querySelector('small').textContent=(typeof FACTIONS!=='undefined'&&FACTIONS[setup.p]?FACTIONS[setup.p].name:'Your nation')+' · random battlefield · 1 computer';}}
+function mxStart(){mxRemember();mxClick('start');}
+function mxSameAgain(){const L=mxLast();if(!L)return;mxApply(L);mxStart();}
+function mxRndMap(){const b=[...document.querySelectorAll('#pickMap .rndmap')].find(x=>/random/i.test(x.textContent));if(b)b.click();mxMapMark();}
+function mxQuick(){try{mxRndMap();
+  const pool=FKEYS.filter(k=>k!==setup.p),a=pool[Math.floor(Math.random()*pool.length)];mxApply({a,n:1,d:1,real:0});}catch(e){console.warn('quick',e);}mxStart();}
+/* forward one step; when the screen was opened from the Multiplayer screen ("change" links) it goes back there instead */
+function mxNext(id){if(MX.ret){menuBack();return;}menuGo(id);}
+function mxRetSync(){const r=!!MX.ret;if(MX.nextN)MX.nextN.textContent=r?'Done →':'Next: Battlefield →';if(MX.nextM)MX.nextM.textContent=r?'Done →':'Next: Opponents →';}
+/* the Multiplayer screen shows the nation and battlefield you bring and opens the SAME two setup screens to change them */
+function mxOlPick(){const e=MX.olPick;if(!e)return;const k=MX.olG||'conquest';e.innerHTML='';e.hidden=k==='campaign'||typeof setup==='undefined';if(e.hidden)return;
+  const lk=(t,id)=>{const b=mxBtn(t,()=>{mxTick(660);MX.ret='online';menuGo(id);},'mxlink');b.dataset.go=id;return b;};
+  e.append('Your nation ',mxEl('b','',(FACTIONS[setup.p]||{}).name||''),lk('Change','c-nation'),'   ·   Battlefield ',mxEl('b','',(MAPS[setup.map]||{}).name||''),lk('Change','c-map'));}
 /* Multiplayer: which game the online screen is set for. Campaign opens the one campaign lobby (gnet); Conquest/Battle use the shared battle lobby. */
 function mxOnline(k){if(k==='campaign'||k==='conquest'||k==='battle')MX.olG=k;k=MX.olG||'conquest';
-  if(k!=='campaign')mxSetMode(k);
+  if(k!=='campaign')mxSetMode(k,k!==MX.olSet&&!(typeof NET!=='undefined'&&(NET.code||NET.game)));MX.olSet=k;
   for(const g in MX.olBtns)MX.olBtns[g].classList.toggle('on',g===k);
   const po=document.getElementById('playOnline'),h=document.getElementById('host');
   const cb=MX.olGo;if(cb){cb.innerHTML='';
     if(k==='campaign'){const b=mxEl('button','big','Create a campaign lobby');b.type='button';b.id='mxCampNew';b.onclick=()=>{mxTick(660);try{GNT.wantHost=1;grandSetup();}catch(e){console.warn(e);}};cb.append(b,mxEl('span','mxolnote','  Pick a scenario and your nation, then share the code or link. Or join a campaign below.'));}
     else cb.append(mxEl('span','mxolnote','Start a '+mxModeName()+' game below, or join one that is open.'));}
+  mxOlPick();
   if(po)po.hidden=k==='campaign'||!!(typeof NET!=='undefined'&&(NET.code||NET.game));if(h)h.hidden=k==='campaign'||!!(typeof NET!=='undefined'&&(NET.code||NET.game));
   if(MX.cur!=='online')menuGo('online');}
 function mxMapCards(){
@@ -220,7 +274,7 @@ function mxMapCards(){
     const hm=D&&(D.home||[]).map(f=>FACTIONS[f]&&FACTIONS[f].name).filter(Boolean);
     const facts=D?((D.min===D.max?D.max+' players':D.min+'–'+D.max+' players')+(D.theme==='snow'?' · snow & ice':D.theme?' · '+D.theme:'')+(D.tag?' · '+D.tag:'')):o.textContent;
     b.append(cv,mxEl('div','t',D?D.name:o.textContent),mxEl('div','f',facts),mxEl('div','d',(D&&D.desc||'')+(hm&&hm.length?' Home turf: '+hm.join(' & ')+'.':'')));
-    b.onclick=()=>{mxTick(700);sel.value=k;sel.onchange();mxMapMark();setTimeout(()=>{if(MX.cur==='c-map')menuGo('c-nation');},140);};g.appendChild(b);}
+    b.onclick=()=>{mxTick(700);sel.value=k;sel.onchange();mxMapMark();setTimeout(()=>{if(MX.cur==='c-map')mxNext('c-players');},140);};g.appendChild(b);}
   mxThumbRun();}
 function mxMapMark(){if(!MX.grid)return;const sel=document.getElementById('mapSel');for(const b of MX.grid.children)b.classList.toggle('on',sel&&b.dataset.k===sel.value);}
 function mxThumbRun(){if(MX.thumbRun)return;MX.thumbRun=1;const step=()=>{const k=MX.thumbQ.shift();if(!k){MX.thumbRun=0;return;}
@@ -239,16 +293,19 @@ function mxContSync(){const c=document.getElementById('svContinue');if(!MX.cont|
   for(const b of [MX.cont,MX.contSP]){if(!b)continue;if(b.hidden===c.hidden&&b.dataset.t===t)continue;b.hidden=c.hidden;b.dataset.t=t;b.textContent='';if(!c.hidden)b.append('Continue',mxEl('small','',t));}}
 function mxPoll(){const m=document.getElementById('menu');if(!m||m.hidden)return;mxContSync();if(MX.cur==='c-players'||MX.cur==='c-opts'){mxStartSync();mxPlayersSync();}if(MX.cur==='c-nation')mxNatShow();if(MX.cur==='online'&&MX.olG==='campaign')for(const i of ['playOnline','host']){const e=document.getElementById(i);if(e&&!e.hidden)e.hidden=true;}}
 function mxCrumb(){const id=MX.cur,top=document.getElementById('mxtop'),cr=document.getElementById('mxcrumb');if(!top)return;top.hidden=id==='title';cr.innerHTML='';
-  const st=MX_STEPS.findIndex(s=>s[0]===id);if(st>=0){cr.append(mxEl('b','',mxModeName()));MX_STEPS.forEach(([sid,n],i)=>{cr.append(mxEl('i','','›'));const b=mxEl('button',sid===id?'cur':'',(i+1)+' '+n);b.type='button';if(sid!==id)b.onclick=()=>menuGo(sid,i<st);cr.append(b);});}
+  const F=mxFlow(id==='c-opts'?'c-players':id),st=F?F.findIndex(s=>s[0]===id):-1;
+  if(MX.ret&&(id==='c-nation'||id==='c-map')){cr.append(mxEl('b','','Multiplayer · '+mxModeName()),mxEl('i','','›'),mxEl('button','cur',id==='c-nation'?'Nation':'Battlefield'));return;}
+  if(F){cr.append(mxEl('b','',F===MX_GSTEPS?(MX.gHost?'Campaign with friends':'Grand campaign'):mxModeName()));F.forEach(([sid,n],i)=>{cr.append(mxEl('i','','›'));const b=mxEl('button',sid===id?'cur':'',(i+1)+' '+n);b.type='button';if(sid!==id)b.onclick=()=>menuGo(sid,st<0||i<st);cr.append(b);});
+    if(id==='c-opts'){cr.append(mxEl('i','','›'),mxEl('button','cur',mxModeName()+' options'));}}
   else cr.append(mxEl('b','',MX_TITLES[id]||''));}
 function menuGo(id,back){if(!MX.screens[id]||MX.cur===id)return;const from=MX.screens[MX.cur],to=MX.screens[id];
-  if(MX_STEPS.some(s=>s[0]===id)&&MX_STEPS.some(s=>s[0]===MX.cur)){const i=MX.stack.indexOf(id);if(i>=0)MX.stack.length=i+1;else MX.stack.push(id);}
+  if(mxFlow(id)&&(mxFlow(id)===mxFlow(MX.cur)||id==='c-players'&&MX.cur==='c-opts')){const i=MX.stack.indexOf(id);if(i>=0)MX.stack.length=i+1;else MX.stack.push(id);}
   else if(!back){if(id==='title')MX.stack=['title'];else MX.stack.push(id);}
   from.classList.remove('on');from.classList.toggle('left',!back);to.classList.remove('left');if(back)from.classList.remove('left');
   to.scrollTop=0;to.classList.add('on');MX.cur=id;mxCrumb();mxEnter(id);mxTick(back?480:640);}
 function menuBack(){if(MX.stack.length<2)return;MX.stack.pop();const id=MX.stack[MX.stack.length-1];const from=MX.screens[MX.cur];from.classList.remove('on','left');const to=MX.screens[id];to.classList.add('left');void to.offsetWidth;to.classList.remove('left');to.classList.add('on');MX.cur=id;mxCrumb();mxEnter(id);mxTick(480);}
 function menuHome(){for(const k in MX.screens)MX.screens[k].classList.remove('on','left');MX.stack=['title'];MX.cur='title';MX.screens.title.classList.add('on');mxCrumb();}
-function mxEnter(id){if(id==='c-map')mxMapCards();if(id==='c-nation'){mxNatFilter();mxNatShow();}if(id==='c-players'||id==='c-opts'){mxStartSync();mxPlayersSync();try{if(typeof renderTeams==='function')renderTeams();}catch(_){}}
+function mxEnter(id){if(id==='single'||id==='online'||id==='title')MX.ret='';if(id==='c-map'||id==='c-nation')mxRetSync();if(id==='c-map')mxMapCards();if(id==='c-nation'){mxNatFilter();mxNatShow();mxSameSync();}if(id==='g-nation'&&typeof gsEnter==='function')gsEnter();if(id==='c-players'||id==='c-opts'){mxStartSync();mxPlayersSync();try{if(typeof renderTeams==='function')renderTeams();}catch(_){}}
   if(id==='online')mxOnline();if(id==='title')mxContSync();}
 function mxShown(first){if(!first&&MX.cur!=='title')menuHome();mxContSync();try{if(typeof svMenuSync==='function')svMenuSync();}catch(_){}}
 function mxKey(e){if(e.key!=='Escape')return;const m=document.getElementById('menu');if(!m||m.hidden||MX.stack.length<2)return;

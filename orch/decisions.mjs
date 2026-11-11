@@ -164,6 +164,28 @@ try {
     const gm = await ev(() => [...document.querySelectorAll('#campScreen button')].map(b => b.textContent.trim()));
     ck(!gm.some(t => /Play with friends|Join friends/i.test(t)), 'the grand campaign menu must not have its own online lobby, got ' + gm.join('|'));
     await ev(() => { try { campClose(); } catch (e) {} menuHome(); }); }
+  // SEAMLESS idea 7 (orch/concepts/SEAMLESS.md, Abdullah 2026-11-10 19:51 "All"): one setup, the same three steps in every game -
+  // Conquest and Battle: Nation > Battlefield > Opponents; grand campaign: Nation > World > Options; last choices remembered;
+  // "Same again" + "Quick match" on the first screen; the Multiplayer screen reuses the same Nation and Battlefield screens.
+  { const r = await ev(async () => { const o = {}, W = ms => new Promise(r => setTimeout(r, ms)), crumb = () => [...document.querySelectorAll('#mxcrumb button')].map(b => b.textContent).join('|');
+      const keep = { p: setup.p, a: setup.a, n: setup.n, d: setup.d, map: setup.map, real: setup.real ? 1 : 0 }, keepLast = SET.last ? JSON.stringify(SET.last) : null;
+      for (const mode of ['Conquest', 'Battle']) { menuHome(); menuGo('single'); [...document.querySelectorAll('#ms-single .mxi')].find(b => ((b.firstChild || {}).textContent || '').trim() === mode).click(); await W(350);
+        o[mode] = [MX.cur, crumb()]; document.querySelector('#pickP .fac:nth-child(3)').click(); await W(600); o[mode].push(MX.cur); document.querySelector('#mx .mxmap:nth-child(2)').click(); await W(600);
+        o[mode].push(MX.cur, document.querySelector('#ms-c-players .mxh').textContent, MX.startP.textContent, setup.mode); }
+      mxRemember(); o.last = SET.last && SET.last.battle && SET.last.battle.p === setup.p && SET.last.battle.map === setup.map; menuGo('c-nation', true); await W(350);
+      o.same = !MX.same.hidden && MX.same.textContent; o.quick = !MX.quick.hidden && MX.quick.textContent; o.foot = [...document.querySelectorAll('#ms-c-nation .mxfoot button')].filter(b => !b.hidden).map(b => b.firstChild.textContent).join('|');
+      const p2 = setup.p; mxApply({ p: FKEYS[0], map: document.getElementById('mapSel').options[0].value }); mxApply(mxLast()); o.recall = setup.p === p2 && setup.map === SET.last.battle.map;
+      menuHome(); mxOnline('conquest'); await W(350); const lk = [...document.querySelectorAll('#mxolpick .mxlink')]; o.olLinks = lk.length; if (lk[0]) lk[0].click(); await W(350); o.ol = [MX.cur, MX.nextN.textContent, !MX.same.hidden || !MX.quick.hidden];
+      document.querySelector('#pickP .fac:nth-child(4)').click(); await W(600); o.ol.push(MX.cur, document.querySelector('#mxolpick b').textContent === FACTIONS[setup.p].name);
+      menuHome(); menuGo('single'); grandSetup(); await W(400); o.g = [MX.cur, crumb(), [...document.querySelectorAll('#ms-g-nation .mxfoot button')].filter(b => !b.hidden).map(b => b.firstChild.textContent).join('|')];
+      document.querySelector('#ms-g-nation .gfac[data-c="SA"]').click(); await W(600); o.g.push(MX.cur); document.querySelector('#ms-g-world .mxmap').click(); await W(600); o.g.push(MX.cur, document.getElementById('gsGo').textContent, GS.nat, !!document.getElementById('campScreen'));
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); await W(350); o.g.push(MX.cur);
+      if (keepLast) SET.last = JSON.parse(keepLast); else delete SET.last; saveSet(); mxApply(keep); menuHome(); return o; });
+    for (const m of ['Conquest', 'Battle']) ck(r[m].join('~') === `c-nation~1 Nation|2 Battlefield|3 Opponents~c-map~c-players~Opponents~Start ${m.toLowerCase()}~${m.toLowerCase()}`, m + ' setup must be Nation > Battlefield > Opponents, got ' + r[m].join('~'));
+    ck(r.last && r.recall, 'setup must remember the last choices per game (SET.last) and put them back');
+    ck(/^Same again/.test(r.same || '') && /^Quick match/.test(r.quick || '') && r.foot === 'Same again|Quick match|Next: Battlefield →', 'the first setup screen needs "Same again" and "Quick match", got ' + r.foot);
+    ck(r.olLinks === 2 && r.ol.join('~') === 'c-nation~Done →~false~online~true', 'Multiplayer must reuse the same Nation/Battlefield screens (Change links, Done, back to Multiplayer), got ' + r.olLinks + ' ' + r.ol.join('~'));
+    ck(r.g.join('~') === 'g-nation~1 Nation|2 World|3 Options~Quick match|Next: World →~g-world~g-opts~Start campaign~SA~false~g-world', 'grand campaign setup must be Nation > World > Options with the same controls, got ' + r.g.join('~')); }
   { const seen = await ev(SEEN); ck(!/classic/i.test(seen), 'menu shows "Classic"'); ck(!/\bhost(ing)?\b/i.test(seen.replace(/ghost/gi, '')), 'menu shows hosting wording: ' + (/.{20}\bhost.{20}/i.exec(seen) || [''])[0]); }
   // ---- data decisions
   const d = await ev(() => { const o = {}; o.fk = FKEYS.slice(); o.ms = MORALE_STYLE; o.rout0 = Object.entries(MORALE_STYLE).filter(([k, s]) => MSTYLES[s].rout === 0).map(([k]) => k).sort().join(' ');

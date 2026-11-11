@@ -48,8 +48,8 @@ try {
   await page.evaluate(() => document.getElementById('grandBtn').click());
   if (SAVE && await ev(() => [...document.querySelectorAll('#campScreen button')].some(b => /Continue/.test(b.textContent)))) { console.log('continuing old save'); await clickText('#campScreen button', 'Continue'); }
   else { await clickText('#campScreen button', 'New campaign');
-  await ev((n) => { const s = document.querySelector('#campScreen select'); s.value = n; s.onchange(); }, NAT);
-  await clickText('#campScreen button', '^Begin$'); }
+  await ev((n) => { document.querySelector('#ms-g-nation .gfac[data-c="' + n + '"]').click(); }, NAT); await page.waitForTimeout(400);   // setup is three menu steps now: Nation > World > Options
+  await ev(() => document.getElementById('gsGo').click()); }
   await page.waitForFunction(() => !!document.getElementById('grandScreen') && typeof GC !== 'undefined' && GC, null, { timeout: 60000 });
   await shot('live2-map');
   await shot('live2-map');

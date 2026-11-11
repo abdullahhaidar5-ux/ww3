@@ -1,5 +1,5 @@
 // Lane A2b gate: online grand campaign, as two players. HOST: menu → Grand campaign → Multiplayer → Grand campaign → lobby →
-// friends → Begin (IR). FRIEND (second page): Grand campaign → Online campaign → types the code → Join → picks Saudi Arabia.
+// friends → Create lobby (IR). FRIEND (second page): Grand campaign → Online campaign → types the code → Join → picks Saudi Arabia.
 // Checks: the friend's map opens as SA; the host's AI stops running SA; a march the friend orders reaches the host's world;
 // the host's clock carries the friend's map into the next month; the friend's Space pauses everyone; the friend leaving
 // hands SA back to the AI. Pages talk through orch/mpsync.mjs's PeerJS stand-in (BroadcastChannel).   node orch/gnettest.mjs
@@ -54,7 +54,7 @@ try {
   await host.evaluate(() => { window.g3Init = () => false; });
   await host.evaluate(() => localStorage.removeItem('ww3grand1'));
   await host.evaluate(() => { menuGo('online'); mxOnline('campaign'); }); await click(host, '#mxCampNew');
-  await host.evaluate(() => { const s = [...document.querySelectorAll('select')].find(x => [...x.options].some(o => o.value === 'IR')); s.value = 'IR'; s.onchange && s.onchange(); });
+  await host.evaluate(() => { document.querySelector('#ms-g-nation .gfac[data-c="IR"]').click(); }); await host.waitForTimeout(400);   // setup is three menu steps now: Nation > World > Options
   await click(host, 'button', '^Create lobby$');
   await wait(host, () => GNT.lobby && GNT.code && document.getElementById('gnLobbyHost'), null, 60000, 'host lobby');
   await shot(host, 'camplobby-host-1');

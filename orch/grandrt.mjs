@@ -1,4 +1,4 @@
-// Lane A2 gate: real time with pause on the grand map, as a player: menu → New campaign → Begin → Space (play) → 5 (fastest)
+// Lane A2 gate: real time with pause on the grand map, as a player: menu → New campaign → Start campaign → Space (play) → 5 (fastest)
 // → days tick and the month rolls over by itself; Space pauses; a march into an enemy at month end opens Fight it and the clock waits.   node orch/grandrt.mjs
 // the game's own loop must take it past the loading screen and the battle clock must run.   node orch/grandlive.mjs [--nat IR]
 import http from 'node:http';
@@ -43,8 +43,8 @@ try {
   await ev(() => localStorage.removeItem('ww3grand1'));
   await click('#grandBtn'); await page.waitForTimeout(300);
   await click('button', '^New campaign'); await page.waitForTimeout(300);
-  await ev(n => { const s = [...document.querySelectorAll('select')].find(x => [...x.options].some(o => o.value === n)); if (s) { s.value = n; s.onchange && s.onchange(); } }, NAT);
-  await click('button', '^Begin$');
+  await ev(n => { const f = document.querySelector('#ms-g-nation .gfac[data-c="' + n + '"]'); if (f) f.click(); }, NAT); await page.waitForTimeout(400);   // setup is three menu steps now: Nation > World > Options
+  await click('button', '^Start campaign$');
   await page.waitForFunction(() => { const e = document.getElementById('grandScreen'); return e && e.style.display !== 'none'; }, null, { timeout: 60000 });
   await page.waitForTimeout(1500); console.log(el(), 'map open');
   const st = () => ev(() => ({ turn: GC.turn, day: GC.day | 0, date: (document.getElementById('gDate') || {}).textContent, spd: GV.spd | 0, ph: GC.ph, modal: !!document.getElementById('gModal') }));
