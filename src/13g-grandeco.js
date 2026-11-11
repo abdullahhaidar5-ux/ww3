@@ -239,6 +239,7 @@ function geSupplyStep(){for(const a of GC.armies){const c=a.o,E=GC.nat[c]&&GC.na
     let da=lv===3?35:lv===2?22:lv===1?8:-9,df=lv===0?-8:(E.dry?-6:(lv===3?30:lv===2?20:8));
     if(E.dry&&lv>0)da=Math.min(da,6);
     if(L){if(da>0)da*=L.eff;if(df>0)df*=L.eff;const fo=a.fo===GC.turn?1:0;df-=(a.path&&a.path.length?5:0)+fo*8;da-=fo*6;a.sl=Math.round(L.eff*100);a.sk=Math.round(L.km);}   /* marching and fighting burn extra */
+    if(typeof gmilShell==='function')da=gmilShell(a,da);   /* national shell stock (13i): fighting burns it, an empty stock slows every refill */
     for(const r of a.u)r[3]=Math.max(0,Math.min(100,Math.round(r[3]+da)));a.fu=Math.max(0,Math.min(100,Math.round(a.fu+df)));}}
 function geArmyFuel(a){return a.fu===undefined?1:a.fu/100;}
 function geDry(c){const N=GC.nat[c];return !!(N&&N.e&&N.e.dry);}

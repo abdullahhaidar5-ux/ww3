@@ -2937,6 +2937,7 @@ function geSupplyStep(){for(const a of GC.armies){const c=a.o,E=GC.nat[c]&&GC.na
     let da=lv===3?35:lv===2?22:lv===1?8:-9,df=lv===0?-8:(E.dry?-6:(lv===3?30:lv===2?20:8));
     if(E.dry&&lv>0)da=Math.min(da,6);
     if(L){if(da>0)da*=L.eff;if(df>0)df*=L.eff;const fo=a.fo===GC.turn?1:0;df-=(a.path&&a.path.length?5:0)+fo*8;da-=fo*6;a.sl=Math.round(L.eff*100);a.sk=Math.round(L.km);}   /* marching and fighting burn extra */
+    if(typeof gmilShell==='function')da=gmilShell(a,da);   /* national shell stock (13i): fighting burns it, an empty stock slows every refill */
     for(const r of a.u)r[3]=Math.max(0,Math.min(100,Math.round(r[3]+da)));a.fu=Math.max(0,Math.min(100,Math.round(a.fu+df)));}}
 function geArmyFuel(a){return a.fu===undefined?1:a.fu/100;}
 function geDry(c){const N=GC.nat[c];return !!(N&&N.e&&N.e.dry);}
@@ -3277,12 +3278,24 @@ const GMIL_MISSILE_COST=450;
 const GMIL_STK={US:[5,8,3,14,40,14],RU:[6,8,10,24,36,10],CN:[8,8,8,30,36,12],IL:[4,6,3,8,24,7],IR:[2,6,5,3,12,2],UA:[1,3,2,4,16,1],KP:[4,6,3,4,10,1],IN:[4,6,3,12,20,4],
   PK:[3,5,2,6,12,2],SA:[2,4,0,6,20,0],AE:[1,3,0,5,16,0],TR:[2,4,2,5,10,2],EG:[2,4,1,6,12,1],FR:[2,4,2,6,12,3],DE:[1,3,1,6,12,3],PL:[1,3,1,6,12,2],GB:[2,4,2,5,10,2],
   JP:[2,5,2,10,16,3],KR:[4,6,4,10,16,3],RS:[1,3,1,0,2,0],DW:[2,4,1,0,2,0],RV:[1,2,1,0,2,0],OB:[0,2,1,0,1,0],BI:[0,1,0,0,1,0]},GMIL_STK_D=[1,2,1,2,6,1];
-const GMIL_ORD={ms:{n:1,cost:GMIL_MISSILE_COST,lead:4,nm:'missile salvo'},ic:{n:4,cost:600,lead:6,nm:'interceptor loads'}},GMIL_ORD_MAX=3,GMIL_IC_NEED={m:2,a:1};
+/* Shells and precision bombs (stockpiles slice 2) — the same counters, two more kinds. Units: 1 shell load = about 100,000 artillery rounds,
+   1 precision bomb load = about 2,500 guided bombs / kits (orch/REAL-2026.md "Shells and guided bombs"). Row = [shells now, depot, made per year, bombs now, depot, made per year].
+   Chain: an army that fought this month burns shells from the national stock (25 thousandths of a load per unit); with the stock at zero every army
+   refills its ammunition at a quarter of the normal rate ("shell hunger"), which is world news and costs a little war support; an air raid spends one
+   bomb load, without one it flies with unguided bombs (half the damage, easier to shoot down). Friends ship shells; AI orders early and holds raids back.
+   Counter-play: make the enemy fight every month, hit his factories and power (production halves), order before the war, ask friends. */
+const GMIL_STK2={US:[20,30,13,30,40,12],RU:[25,60,30,6,12,28],CN:[70,80,30,20,24,10],IL:[7,12,3,6,12,2],IR:[14,20,5,1,3,1],UA:[4,10,3,1,3,0],KP:[40,60,12,0,1,0],IN:[22,30,4,3,6,2],
+  PK:[10,15,2,2,4,1],SA:[7,10,1,5,8,0],AE:[4,6,0,4,6,0],TR:[10,15,4,3,6,2],EG:[14,20,2,2,4,0],FR:[3,6,3,2,4,1],DE:[5,12,8,1,3,1],PL:[6,10,4,1,3,0],GB:[2,5,2,2,4,1],
+  JP:[6,8,1,2,4,1],KR:[35,40,15,3,6,2],RS:[2,4,1,0,0,0],DW:[3,4,1,0,0,0],RV:[2,3,1,0,0,0],OB:[1,2,1,0,0,0],BI:[1,2,1,0,0,0]},GMIL_STK2_D=[3,5,1,1,2,0];
+const GMIL_SK={ms:[0,0],ic:[0,3],sh:[1,0],pb:[1,3]},GMIL_SKK=['ms','ic','sh','pb'],GMIL_SH_BURN=25,GMIL_SH_DRY=.25;
+const GMIL_ORD={ms:{n:1,cost:GMIL_MISSILE_COST,lead:4,nm:'missile salvo'},ic:{n:4,cost:600,lead:6,nm:'interceptor loads'},sh:{n:4,cost:400,lead:3,nm:'shell loads'},pb:{n:2,cost:300,lead:4,nm:'precision bomb loads'}},GMIL_ORD_MAX=3,GMIL_IC_NEED={m:2,a:1};
+function gmilStkAt(c,k,j){const s=GMIL_SK[k]||GMIL_SK.ms;return (s[0]?(GMIL_STK2[c]||GMIL_STK2_D):gmilStkRow(c))[s[1]+j];}
+function gmilStkNm(k,n){return n+' '+(k==='ms'?'missile salvo'+(n>1?'s':''):k==='ic'?'interceptor loads':k==='sh'?'shell load'+(n>1?'s':''):'precision bomb load'+(n>1?'s':''));}
 function gmilStkRow(c){return GMIL_STK[c]||GMIL_STK_D;}
-function gmilStkMax(c,k){return gmilStkRow(c)[k==='ms'?1:4];}
-function gmilStkYr(c,k){return gmilStkRow(c)[k==='ms'?2:5];}
+function gmilStkMax(c,k){return gmilStkAt(c,k,1);}
+function gmilStkYr(c,k){return gmilStkAt(c,k,2);}
 function gmilNew(){return {g:{},gid:1,fr:[],fid:1,zm:{},fq:[],n:{},bk:{},foe:'',nx:{}};}
-function gmilN(c){const M=GC.mil,q=M.n[c]||(M.n[c]={ms:gmilStkRow(c)[0],so:[],dr:0});if(q.ic===undefined){q.ic=gmilStkRow(c)[3];q.oq=[];q.pa=[0,0];}return q;}   // older saves get their interceptors on first use
+function gmilN(c){const M=GC.mil,q=M.n[c]||(M.n[c]={ms:gmilStkRow(c)[0],so:[],dr:0});if(q.ic===undefined){q.ic=gmilStkRow(c)[3];q.oq=[];q.pa=[0,0];}if(q.sh===undefined){q.sh=gmilStkAt(c,'sh',0);q.pb=gmilStkAt(c,'pb',0);q.pa[2]=0;q.pa[3]=0;q.sa=0;}return q;}   // older saves get their interceptors on first use
 function gmilDrStock(c){return GC.mil?gmilN(c).dr|0:0;}
 function gmilKm(a,b){return Math.round(grDist(a,b)*GMIL_KMU);}
 function gmilCul(c){return GMIL_CUL[c]||GMIL_REGCUL[(grNat(c)||{}).reg]||'en';}
@@ -3395,7 +3408,7 @@ function gmilStrikeCheck(c,type,pi,k,n){const N=GC.nat[c],E=N.e,S=GMIL_ST[type],
   return '';}
 function gmilStrike(c,type,pi,k,n){const e=gmilStrikeCheck(c,type,pi,k,n);if(e)return e;const N=GC.nat[c],S=GMIL_ST[type],M=gmilN(c);
   if(type==='d'){n=Math.min(M.dr|0,Math.max(1,n|0||GMIL_SALVO));M.dr-=n;M.so.push({t:type,pi,k,n});return '';}
-  if(type==='m')M.ms--;else{N.cash-=S.cost;if(N.e)N.e.fuel-=S.fuel;}M.so.push({t:type,pi,k});return '';}
+  if(type==='m'){M.ms--;M.so.push({t:type,pi,k});return '';}N.cash-=S.cost;if(N.e)N.e.fuel-=S.fuel;const pb=M.pb>0?1:0;M.pb-=pb;M.so.push({t:type,pi,k,pb});return '';}   // an air raid spends one precision bomb load; without one it flies with unguided bombs
 // launcher trucks: a mobile launcher joins an army in a province with a launch site or War Factory
 function gmilBuyLauncher(c,aid){const N=GC.nat[c],a=GC.armies.find(x=>x.id===aid&&x.o===c&&!x.fl);if(!a||!a.u.length)return 'Pick one of your armies.';if(!GMIL_DRN.includes(c))return 'Your nation does not field long-range one-way drones.';
   if(!(geEff(a.at,'dsite')>0||geEff(a.at,'factory')>0))return 'Needs a launch site or War Factory in the same province.';if((a.ln|0)>=GMIL_LN_MAX)return 'That army carries '+GMIL_LN_MAX+' launchers already.';if(N.cash<GMIL_LN_COST)return 'Costs $'+GMIL_LN_COST+'.';N.cash-=GMIL_LN_COST;a.ln=(a.ln|0)+1;return '';}
@@ -3412,21 +3425,31 @@ function gmilOrderCheck(c,k){const N=GC.nat[c],M=gmilN(c),O=GMIL_ORD[k];if(!O)re
   const open=M.oq.filter(o=>o.k===k&&!o.by).length;if(open>=GMIL_ORD_MAX)return 'The production lines are full ('+GMIL_ORD_MAX+' orders running).';if(M[k]+open*O.n>=gmilStkMax(c,k))return 'Depots are full.';if(N.cash<O.cost)return 'Costs $'+O.cost+'.';return '';}
 function gmilOrder(c,k){const e=gmilOrderCheck(c,k);if(e)return e;const O=GMIL_ORD[k];GC.nat[c].cash-=O.cost;gmilN(c).oq.push({k,n:O.n,t:GC.turn+gmilOrdLead(c,k)});return '';}
 // ship stock to an ally or close friend: arrives next month; every nation at war with the receiver resents the sender
-function gmilSendN(k){return k==='ms'?1:2;}
+function gmilSendN(k){return k==='ms'||k==='pb'?1:2;}
 function gmilSendCheck(c,to,k){if(!GMIL_ORD[k]||!GC.nat[to]||GC.nat[to].dead||to===c)return 'Pick a nation.';if(grAtWar(c,to))return 'You are at war with them.';if(!grAllied(c,to)&&gdOp(c,to)<25)return 'Only to allies and close friends.';
   const M=gmilN(c);if(M[k]<gmilSendN(k))return 'Nothing to spare.';if((M.sent|0)>=GC.turn)return 'One shipment a month.';return '';}
 function gmilSend(c,to,k){const e=gmilSendCheck(c,to,k);if(e)return e;const M=gmilN(c),n=gmilSendN(k);M[k]-=n;M.sent=GC.turn;gmilN(to).oq.push({k,n,t:GC.turn+1,by:c});gdRel(c,to,4);
   for(const w of Object.keys(GC.war).sort()){const ab=w.split('|');if(!ab.includes(to))continue;const foe=ab.find(x=>x!==to);if(foe&&foe!==c&&GC.nat[foe]&&!GC.nat[foe].dead)gdRel(c,foe,k==='ms'?-12:-6);}
-  grLog(GCM.nats.get(c).name+' ships '+(k==='ms'?'a missile salvo':n+' interceptor loads')+' to '+GCM.nats.get(to).name+'.','');return '';}
+  grLog(GCM.nats.get(c).name+' ships '+gmilStkNm(k,n)+' to '+GCM.nats.get(to).name+'.','');return '';}
+// shells: called once a month per army from the supply step (13g geSupplyStep). Fighting burns the national stock; an empty stock slows every refill.
+function gmilShOut(c){grLog(GCM.nats.get(c).name+' is running out of artillery shells: its armies now refill ammunition at a quarter of the normal rate.','');
+  if(typeof wsN==='function'){const W=wsN(c);if(W&&wsStyle(c)!=='zeal')W.wsE-=2;}}
+function gmilShell(a,da){if(!GC.mil||a.fl||!GC.nat[a.o])return da;const M=gmilN(a.o);
+  if(a.fo===GC.turn&&a.u.length&&M.sh>0){M.sa=(M.sa|0)+a.u.length*GMIL_SH_BURN;while(M.sa>=1000&&M.sh>0){M.sa-=1000;M.sh--;}if(M.sh<=0){M.sh=0;M.sa=0;gmilShOut(a.o);}}
+  return M.sh<=0&&da>0?da*GMIL_SH_DRY:da;}
 function gmilIcOut(c){grLog(GCM.nats.get(c).name+' has run out of air-defence interceptors: what flies in now gets through.','');
   if(typeof wsN==='function'){const W=wsN(c);if(W)W.wsE-=wsStyle(c)==='zeal'?1:4;}}   // the one war-support meter (13v): people feel exposed; Zealous nations shrug most of it off
 function gmilStockMonth(){for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead)continue;const M=gmilN(c),slow=N.e&&(N.e.dry||N.e.pw<.5)?2:1;
-    [['ms',0],['ic',1]].forEach(([k,i])=>{const mx=gmilStkMax(c,k);M.pa[i]+=Math.round(gmilStkYr(c,k)*1000/12/slow);while(M.pa[i]>=1000){M.pa[i]-=1000;if(M[k]<mx)M[k]++;}if(M[k]>=mx)M.pa[i]=0;});
+    GMIL_SKK.forEach((k,i)=>{const mx=gmilStkMax(c,k);M.pa[i]=(M.pa[i]|0)+Math.round(gmilStkYr(c,k)*1000/12/slow);while(M.pa[i]>=1000){M.pa[i]-=1000;if(M[k]<mx)M[k]++;}if(M[k]>=mx)M.pa[i]=0;});
     const due=M.oq.filter(o=>o.t<=GC.turn);if(!due.length)continue;M.oq=M.oq.filter(o=>o.t>GC.turn);
-    for(const o of due){M[o.k]+=o.n;if(c===GC.me)grLog((o.by?GCM.nats.get(o.by).name+' delivered ':'Delivered from the factories: ')+o.n+' '+(o.k==='ms'?'missile salvo'+(o.n>1?'s':''):'interceptor loads')+'.',c);}}}
+    for(const o of due){M[o.k]+=o.n;if(c===GC.me)grLog((o.by?GCM.nats.get(o.by).name+' delivered ':'Delivered from the factories: ')+gmilStkNm(o.k,o.n)+'.',c);}}}
 function gmilAIStock(c,R){const N=GC.nat[c],Q=gmilN(c),war=Object.keys(GC.war).some(k=>k.split('|').includes(c));
   if(Q.ic<gmilStkMax(c,'ic')*(war?.6:.35)&&N.cash>(war?1500:4000)&&!Q.oq.some(o=>o.k==='ic'&&!o.by)&&(war||R()<.15))gmilOrder(c,'ic');
   if(war&&Q.ms<2&&N.cash>2200&&!Q.oq.some(o=>o.k==='ms'&&!o.by))gmilOrder(c,'ms');
+  if(Q.sh<gmilStkMax(c,'sh')*(war?.5:.3)&&N.cash>(war?1200:3500)&&!Q.oq.some(o=>o.k==='sh'&&!o.by)&&(war||R()<.15))gmilOrder(c,'sh');
+  if(war&&Q.pb<1&&gmilStkMax(c,'pb')>0&&N.cash>1800&&!Q.oq.some(o=>o.k==='pb'&&!o.by))gmilOrder(c,'pb');
+  // a friend at war whose guns have fallen silent: a nation at peace with full depots sometimes ships shells (allies and close friends, as in real wars)
+  if(!war&&Q.sh>gmilStkMax(c,'sh')*.6&&Q.sh>=6&&R()<.25){const fr=Object.keys(GC.nat).sort().find(x=>x!==c&&!GC.nat[x].dead&&!grAtWar(c,x)&&(grAllied(c,x)||gdOp(c,x)>=25)&&gmilN(x).sh<=0&&Object.keys(GC.war).some(k=>k.split('|').includes(x)));if(fr)gmilSend(c,fr,'sh');}
   // an ally under fire with empty launchers: a nation at peace with deep depots sometimes ships a little (real resupply is rare, slow and political)
   if(!war&&Q.ic>gmilStkMax(c,'ic')*.6&&R()<.2){const al=Object.keys(GC.nat).sort().find(x=>x!==c&&!GC.nat[x].dead&&grAllied(c,x)&&gmilStkMax(x,'ic')>2&&gmilN(x).ic<=1&&Object.keys(GC.war).some(k=>k.split('|').includes(x)));if(al)gmilSend(c,al,'ic');}}
 function gmilAAUnits(pi){let n=0;const st=GC.prov[pi];if(st)for(const r of st.gar)if(r[0]==='aa')n++;for(const a of GC.armies)if(a.at===pi&&!a.fl)for(const r of a.u)if(r[0]==='aa')n++;return n;}
@@ -3438,7 +3461,7 @@ function gmilStrikes(){const M=GC.mil;if(!M)return;const R=grRng(GC.seed*53+GC.t
       const tgtO=p.land?GC.prov[o.pi].o:'';if(p.land&&(tgtO===c||!grAtWar(c,tgtO)))continue;
       const raw=o.t==='a'?Math.min(4,Math.floor(geSortieStock(c,o.pi,S.rng)/1)||2):o.t==='d'?Math.max(1,o.n|0):1;
       let aaB=p.land?geCount(o.pi,'aa'):0,aaU=p.land?gmilAAUnits(o.pi):0;if(!p.land)for(const a of GC.armies)if(a.at===o.pi&&a.fl&&grAtWar(a.o,c))for(const r of a.u)if(r[0]==='ship'||r[0]==='boat')aaU+=.5;
-      let ic=Math.min(.8,(.26*aaB+.03*aaU)*S.ic),surv=0,site=-1,dkm=0,dry=0;const DQ=p.land&&GC.nat[tgtO]?gmilN(tgtO):null,ic0=DQ?DQ.ic:0;   // the defender's interceptor stock
+      const ung=o.t==='a'&&o.pb===0,dmg=Math.round(S.dmg*(ung?.5:1));let ic=Math.min(.8,(.26*aaB+.03*aaU)*S.ic*(ung?1.3:1)),surv=0,site=-1,dkm=0,dry=0;const DQ=p.land&&GC.nat[tgtO]?gmilN(tgtO):null,ic0=DQ?DQ.ic:0;   // the defender's interceptor stock
       if(o.t==='d'){   // one-way drones: each defence battery engages only so many per salvo, so big salvos saturate it (~185 km/h, hours of flight)
         site=gmilSites(c,o.pi,S.rng,'d');dkm=site>=0?gmilKm(site,o.pi):0;const cap0=Math.round(6*aaB+1.5*aaU),cap=DQ?Math.min(cap0,DQ.ic*4):cap0,pk=aaB+aaU>0?Math.min(.8,.5+.1*aaB):0;if(Math.min(raw,cap0)>cap)dry=1;
         for(let i=0;i<raw;i++)if(!(i<cap&&R()<pk))surv++;if(DQ&&pk>0)DQ.ic-=Math.ceil(Math.min(raw,cap)/4);
@@ -3449,14 +3472,14 @@ function gmilStrikes(){const M=GC.mil;if(!M)return;const R=grRng(GC.seed*53+GC.t
       if(!surv){grLog(cn+' '+(o.t==='d'?raw+' one-way drones':S.n.toLowerCase())+' on '+p.n+' were intercepted'+(aaB?' by air defense':'')+'.',inv);continue;}
       let msg='';
       if(o.k==='b'&&p.land){const bl=geBl(o.pi),tg=bl.filter(r=>['factory','refinery','power','port','airfield','mine','base','aa','fort','dsite'].includes(r[0]));
-        if(!tg.length){const n=gmilHit(GC.prov[o.pi].gar,surv,S.dmg*1.5);msg='hit the garrison ('+n+' units struck)';}
-        else{let names=[];for(let i=0;i<surv;i++){const r=tg[Math.floor(R()*tg.length)];r[1]=Math.min(100,(r[1]|0)+S.dmg);if(!names.includes(r[0]))names.push(r[0]);}
+        if(!tg.length){const n=gmilHit(GC.prov[o.pi].gar,surv,dmg*1.5);msg='hit the garrison ('+n+' units struck)';}
+        else{let names=[];for(let i=0;i<surv;i++){const r=tg[Math.floor(R()*tg.length)];r[1]=Math.min(100,(r[1]|0)+dmg);if(!names.includes(r[0]))names.push(r[0]);}
           msg='damaged '+names.map(k=>GE_B[k]?GE_B[k][0].toLowerCase():k).join(', ');GC.prov[o.pi].lt=GC.turn+2;}}
       else if(o.k==='a'&&p.land){let tot=0;const arm=GC.armies.filter(a=>a.at===o.pi&&!a.fl&&grAtWar(c,a.o)&&a.u.length).sort((x,y)=>x.id-y.id);
-        for(const a of arm)tot+=gmilHit(a.u,Math.ceil(surv/arm.length),S.dmg*(o.t==='m'?1.4:1));tot+=gmilHit(GC.prov[o.pi].gar,surv-Math.min(surv,tot)>0?1:0,S.dmg);msg='struck '+(arm.length?arm.length+' army(ies)':'the garrison');for(const a of arm)if((a.ln|0)>0&&gmilLnExposed(a)){const l=Math.min(a.ln,Math.ceil(surv/8));a.ln-=l;msg+=' (destroyed '+l+' launcher'+(l>1?'s':'')+')';}}
-      else if(!p.land){const fl=GC.armies.filter(a=>a.at===o.pi&&grAtWar(c,a.o)&&a.u.length).sort((x,y)=>(y.fl|0)-(x.fl|0)||x.id-y.id);let n=0;for(const a of fl)n+=gmilHit(a.u,Math.ceil(surv/fl.length),S.dmg*(o.t==='m'?1.6:1));msg='hit '+fl.length+' fleet(s) at sea';}
+        for(const a of arm)tot+=gmilHit(a.u,Math.ceil(surv/arm.length),dmg*(o.t==='m'?1.4:1));tot+=gmilHit(GC.prov[o.pi].gar,surv-Math.min(surv,tot)>0?1:0,dmg);msg='struck '+(arm.length?arm.length+' army(ies)':'the garrison');for(const a of arm)if((a.ln|0)>0&&gmilLnExposed(a)){const l=Math.min(a.ln,Math.ceil(surv/8));a.ln-=l;msg+=' (destroyed '+l+' launcher'+(l>1?'s':'')+')';}}
+      else if(!p.land){const fl=GC.armies.filter(a=>a.at===o.pi&&grAtWar(c,a.o)&&a.u.length).sort((x,y)=>(y.fl|0)-(x.fl|0)||x.id-y.id);let n=0;for(const a of fl)n+=gmilHit(a.u,Math.ceil(surv/fl.length),dmg*(o.t==='m'?1.6:1));msg='hit '+fl.length+' fleet(s) at sea';}
       else continue;
-      grLog(cn+' '+(o.t==='d'?raw+' one-way drones ('+dkm+' km, ~'+Math.round(dkm/GMIL_DKMH)+' h flight)':S.n.toLowerCase())+' on '+p.n+' ('+tn+'): '+msg+(surv<raw?' ('+(raw-surv)+' shot down)':'')+(dry?' Air defense there is out of interceptors.':'')+'.',inv);}}
+      grLog(cn+' '+(o.t==='d'?raw+' one-way drones ('+dkm+' km, ~'+Math.round(dkm/GMIL_DKMH)+' h flight)':S.n.toLowerCase()+(ung?' with unguided bombs':''))+' on '+p.n+' ('+tn+'): '+msg+(surv<raw?' ('+(raw-surv)+' shot down)':'')+(dry?' Air defense there is out of interceptors.':'')+'.',inv);}}
   for(const a of GC.armies.slice())if(!a.u.length)grDrop(a);}
 
 // ---------- front lines ----------
@@ -3512,7 +3535,7 @@ function gmilAIStrikes(c,R){const N=GC.nat[c],P=GCM.P,Q=gmilN(c);const foes=Obje
   if(GMIL_DRN.includes(c)){   // build launch sites toward the front and put a launcher truck with the biggest army that stands at one
     if(N.cash>1800&&R()<.35&&P.filter(p=>p.land&&GC.prov[p.i].o===c&&geCount(p.i,'dsite')).length<3){const cs=P.filter(p=>p.land&&GC.prov[p.i].o===c&&p.adj.some(j=>P[j].land&&foes.includes(GC.prov[j].o))).sort((a,b)=>b.dev-a.dev||a.i-b.i);for(const p of cs){if(!geBuild(c,p.i,'dsite'))break;}}
     if(N.cash>900&&R()<.3){const a=GC.armies.filter(x=>x.o===c&&!x.fl&&x.u.length&&(x.ln|0)<1).sort((x,y)=>grArmyVal(y)-grArmyVal(x)||x.id-y.id).find(x=>geEff(x.at,'dsite')>0||geEff(x.at,'factory')>0);if(a)gmilBuyLauncher(c,a.id);}}
-  let tries=0;while(Q.so.length<2&&tries++<8){const types=['m','a','d'];let t=types[Math.floor(R()*3)];if(Q.dr>=8&&R()<.6)t='d';if(t==='m'&&Q.ms<=1&&R()<.7)t='a';   // the last salvo is a reserve
+  let tries=0;while(Q.so.length<2&&tries++<8){const types=['m','a','d'];let t=types[Math.floor(R()*3)];if(Q.dr>=8&&R()<.6)t='d';if(t==='m'&&Q.ms<=1&&R()<.7)t='a';if(t==='a'&&Q.pb<1&&R()<.6)continue;   // out of guided bombs: most raids are held back   // the last salvo is a reserve
     // target: the foe province with the best buildings in range, else a foe fleet
     let best=-1,bs=0;for(const p of P){if(!p.land||!foes.includes(GC.prov[p.i].o))continue;const bl=geBl(p.i).filter(r=>['factory','refinery','power','port','airfield','mine'].includes(r[0])&&(r[1]|0)<70).length;const s=bl*10+p.dev-(gmilN(GC.prov[p.i].o).ic>0?geCount(p.i,'aa')*8:0);if(s>bs&&gmilSites(c,p.i,GMIL_ST[t].rng,t)>=0){bs=s;best=p.i;}}
     if(best>=0&&bs>=10){gmilStrike(c,t,best,'b');continue;}
@@ -3675,23 +3698,26 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
       box.appendChild(r);}
     if(!foes.length)row('<span style="opacity:.7">You are not at war.</span>');}
   else if(GMILUI.tab==='st'){const Q=gmilN(me);box.appendChild(guEl('div','opacity:.75;font-size:13px','Missiles, air raids and drone strikes hit an enemy province (buildings or armies) or an enemy fleet at sea. Click an enemy province or sea zone on the map and use its Strike buttons. Air defense in the target intercepts while it still has interceptors. Max 3 a month.'));
-    row('Missile salvos in stock: <b>'+Q.ms+'</b> · interceptor loads: <b>'+Q.ic+'</b> <span style="opacity:.7">(orders and deliveries: Stockpiles)</span>');
+    row('Missile salvos in stock: <b>'+Q.ms+'</b> · interceptor loads: <b>'+Q.ic+'</b> · precision bomb loads: <b>'+Q.pb+'</b>'+(Q.pb<1?' — air raids fly with unguided bombs (half the damage, easier to shoot down)':'')+' <span style="opacity:.7">(orders and deliveries: Stockpiles)</span>');
     if(GMIL_DRN.includes(me)){row('One-way drones in stock: <b>'+(Q.dr|0)+'</b>/'+GMIL_DR_MAX+' · launch sites make 6 a month ($'+GMIL_DR_COST+' each) · range ~2,000 km, ~10 h flight. Big salvos saturate air defense.');
       for(const a of GC.armies.filter(x=>x.o===me&&!x.fl&&x.u.length&&(geEff(x.at,'dsite')>0||geEff(x.at,'factory')>0||x.ln)).slice(0,6))box.appendChild(gmilBtn((a.nm||'Army')+' at '+GCM.P[a.at].n+': launchers '+(a.ln|0)+' · +1 ($'+GMIL_LN_COST+')',()=>gmilDone(gmilBuyLauncher(me,a.id))));}
     row('<b>Ordered this month</b>');for(const o of Q.so)box.appendChild(guEl('div','font-size:13px','• '+GMIL_ST[o.t].n+(o.t==='d'?' ×'+o.n:'')+' → '+GCM.P[o.pi].n+' ('+(o.k==='b'?'buildings':o.k==='a'?'armies':'fleet')+')'));
     if(!Q.so.length)box.appendChild(guEl('div','opacity:.65;font-size:13px','Nothing yet.'));
-    if(Q.so.length)box.appendChild(gmilBtn('Cancel all (refund)',()=>{for(const o of Q.so){if(o.t==='m')Q.ms++;else if(o.t==='d')Q.dr=(Q.dr|0)+(o.n|0);else{GC.nat[me].cash+=GMIL_ST[o.t].cost;if(GC.nat[me].e)GC.nat[me].e.fuel+=GMIL_ST[o.t].fuel;}}Q.so=[];gmilDone('');}));}
-  else if(GMILUI.tab==='sk'){const Q=gmilN(me),nm=c=>GCM.nats.get(c).name,what=o=>o.n+' '+(o.k==='ms'?'missile salvo'+(o.n>1?'s':''):'interceptor loads');
+    if(Q.so.length)box.appendChild(gmilBtn('Cancel all (refund)',()=>{for(const o of Q.so){if(o.t==='m')Q.ms++;else if(o.t==='d')Q.dr=(Q.dr|0)+(o.n|0);else{if(o.pb)Q.pb++;GC.nat[me].cash+=GMIL_ST[o.t].cost;if(GC.nat[me].e)GC.nat[me].e.fuel+=GMIL_ST[o.t].fuel;}}Q.so=[];gmilDone('');}));}
+  else if(GMILUI.tab==='sk'){const Q=gmilN(me),nm=c=>GCM.nats.get(c).name,what=o=>gmilStkNm(o.k,o.n);
     box.appendChild(guEl('div','opacity:.75;font-size:13px','What you fire is gone until the factories replace it, and that takes months. Air defense spends interceptors on everything it engages; once they run out, the batteries stop nothing. Allies can ship you theirs.'));
     const line=(k,title,note)=>{const yr=gmilStkYr(me,k),O=GMIL_ORD[k],e=gmilOrderCheck(me,k);row('<b>'+title+'</b>: <b>'+Q[k]+'</b> of '+gmilStkMax(me,k)+' · factories make '+(yr>0?yr+' a year':'none (imports only)')+'<br><span style="opacity:.7;font-size:12px">'+note+'</span>');
       const b=gmilBtn('Order '+O.n+' · $'+O.cost+' · '+gmilOrdLead(me,k)+' months',()=>gmilDone(gmilOrder(me,k)),false,e||'Paid now, delivered later');b.id='gSk_'+k;if(e)b.style.opacity='.55';box.appendChild(b);};
     line('ms','Missile salvos','One salvo is one missile strike.');line('ic','Interceptor loads','Stopping a missile salvo takes 2, an air-raid sortie 1, four drones 1.');
+    line('sh','Artillery shell loads','Armies that fought this month burn shells. At zero, every army refills ammunition at a quarter of the normal rate.');
+    if(gmilStkMax(me,'pb')>0)line('pb','Precision bomb loads','One air raid spends 1. Without them a raid drops unguided bombs: half the damage, easier to shoot down.');
     if(GMIL_DRN.includes(me))row('<b>One-way drones</b>: <b>'+(Q.dr|0)+'</b> of '+GMIL_DR_MAX+' · each launch site makes 6 a month');
     row('<b>On order</b>');for(const o of Q.oq)box.appendChild(guEl('div','font-size:13px','• '+what(o)+' — due '+grMonStr(o.t)+(o.by?' (from '+nm(o.by)+')':'')));if(!Q.oq.length)box.appendChild(guEl('div','opacity:.65;font-size:13px','Nothing.'));
     row('<b>Ship to an ally</b> <span style="opacity:.7;font-size:12px">arrives next month; their enemies will hold it against you</span>');
     const al=Object.keys(GC.nat).sort().filter(x=>x!==me&&!GC.nat[x].dead&&!grAtWar(me,x)&&(grAllied(me,x)||gdOp(me,x)>=25)).slice(0,8);
-    for(const x of al){const r=guEl('div','font-size:13px;padding:3px 0',nm(x)+' <span style="opacity:.7">(missiles '+gmilN(x).ms+', interceptors '+gmilN(x).ic+')</span> ');
-      for(const k of ['ic','ms']){const e=gmilSendCheck(me,x,k),b=gmilBtn(k==='ic'?'2 interceptor loads':'1 missile salvo',()=>gmilDone(gmilSend(me,x,k)),false,e||'Send');if(e)b.style.opacity='.55';r.appendChild(b);}box.appendChild(r);}
+    const KN={ic:'Interceptors',ms:'Missiles',sh:'Shells',pb:'Bombs'},sk=KN[GMILUI.sk]?GMILUI.sk:'ic',pick=guEl('div','padding:2px 0');for(const k of ['ic','ms','sh','pb']){const b=gmilBtn(KN[k],()=>{GMILUI.sk=k;gmilUiPanel(true);},k===sk);b.id='gSkK_'+k;pick.appendChild(b);}box.appendChild(pick);
+    for(const x of al){const r=guEl('div','font-size:13px;padding:3px 0',nm(x)+' <span style="opacity:.7">(has '+gmilN(x)[sk]+')</span> ');
+      const e=gmilSendCheck(me,x,sk),b=gmilBtn('Send '+gmilStkNm(sk,gmilSendN(sk)),()=>gmilDone(gmilSend(me,x,sk)),false,e||'Send');if(e)b.style.opacity='.55';r.appendChild(b);box.appendChild(r);}
     if(!al.length)box.appendChild(guEl('div','opacity:.65;font-size:13px','No allies or close friends.'));}
   else{box.appendChild(guEl('div','opacity:.75;font-size:13px','Fleets sail between sea zones (select one, right-click a zone). A fleet at sea next to an enemy port blockades it: port income and sea trade stop. Armies crossing a sea held by an enemy fleet wait in port unless one of your fleets escorts them (same zone). Subs hide; patrol boats find them; mines hurt enemies.'));
     for(const a of gmilFleets(me)){row('<b>'+a.nm+'</b> at '+GCM.P[a.at].n+' · '+a.u.length+' ships · value '+Math.round(grArmyVal(a)/100)/10+'k'+(a.path.length?' → '+GCM.P[a.path[a.path.length-1]].n:'')+(a.mine?' · mines':''));}
@@ -3816,6 +3842,8 @@ alAdd('hoard','💰','Unspent cash',c=>{const N=GC.nat[c];return N.cash>=8000&&(
 alAdd('unrest','🔥','Unrest',c=>{const ps=GCM.P.filter(p=>p.land&&GC.prov[p.i].o===c&&GC.prov[p.i].un>=60);return ps.length?{n:ps.length,bad:1,tip:'provinces near revolt — lower the tax there',go:()=>alFly(ps[0].i)}:null;});
 alAdd('war','⚔','At war',c=>{const w=Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].dead&&grAtWar(c,o));return w.length?{n:w.length,bad:1,tip:w.map(o=>GCM.nats.get(o).name).join(', '),go:()=>npOpen(c,'dip')}:null;});
 alAdd('supply','🚚','Out of supply',c=>{const as=my(c).filter(a=>a.sup);return as.length?{n:as.length,bad:1,tip:'armies cut off from supply',go:()=>alFly(as[0].at)}:null;});
+alAdd('shells','🎯','Shells running low',c=>{if(!GC.mil||typeof gmilN!=='function')return null;const Q=gmilN(c),war=Object.keys(GC.war).some(k=>k.split('|').includes(c));
+  return war&&Q.sh<=1?{n:1,bad:Q.sh<=0?1:0,tip:(Q.sh<=0?'Out of artillery shells: armies refill ammunition at a quarter of the normal rate':'One shell load left')+' — open Military → Stockpiles',go:()=>{GMILUI.tab='sk';if(document.getElementById('gMil'))gmilUiPanel(true);else gmilUiPanel();}}:null;});
 })();
 (function(){alAdd('truce','🕊','Truces ending',c=>{const k=Object.keys(GC.tr||{}).filter(x=>x.split('|').includes(c)&&GC.tr[x]===GC.turn+1);return k.length?{n:k.length,tip:'a truce ends next month',go:()=>npOpen(c,'dip')}:null;});})();
 // B3 POWER POINTS + NATIONAL IDEAS (lane B, EU4-style). Three pools — Political (pol), Diplomatic (dip), Military (mil) — grow every month
