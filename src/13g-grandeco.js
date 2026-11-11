@@ -171,7 +171,7 @@ function geRecruitTerms(c,pi,k,n){const fac=grNat(c).fac,N=GC.nat[c];let cost=gr
   return {cost:Math.round(cost*disc),turns:Math.max(1,turns),man:Math.round(n*(k==='inf'?7:4))};}
 function geManRegen(c){let m=0;for(const p of GE_ST[c].own){const st=GC.prov[p.i];m+=p.tw*2.4*GE_AUM[st.au|0]*(1+.06*geCount(p.i,'base'))*(st.cf===1?1+.12*(st.tr|0):1)*(st.cv>0?.5:1);}return m*(geFx(c,'manp')?1.25:1)*(GC.nat[c].e.tw?1.3:1);}
 // ---------- the per-turn nation step ----------
-function geFuelNeed(c){let f=0;for(const a of GC.armies){if(a.o!==c)continue;let k=0;for(const r of a.u){k+=(r[0]==='tank'||r[0]==='arty'||r[0]==='heli'||r[0]==='aa')?.5:r[0]==='drone'?.25:.1;}f+=k*(a.path.length?1.5:1);}
+function geFuelNeed(c){let f=0;for(const a of GC.armies){if(a.o!==c)continue;let k=0;for(const r of a.u){k+=(r[0]==='tank'||r[0]==='arty'||r[0]==='heli'||r[0]==='aa')?.5:r[0]==='drone'?.25:.1;}f+=k*(a.path.length?1.5:1)*(typeof gsupHaul==='function'?gsupHaul(a):1);}
   for(const p of GE_ST[c].own)f+=geEff(p.i,'airfield')*3*(geFx(c,'air')?.7:1);return f*(geFx(c,'fuel')?.75:1)*(GC.nat[c].e.tw?1.2:1);}
 function geArmyVal(c){let v=0;for(const a of GC.armies)if(a.o===c)v+=grArmyVal(a);return v;}
 function geTrade(c){   // trade routes between neighbouring provinces and over sea lanes; embargoes, wars, blockaded straits and sanctions cut them
@@ -234,10 +234,12 @@ function geArmySupply(a){const P=GCM.P,here=P[a.at];let lvl=0;   // 3 hub, 2 own
   if(here.sea)return a.sup>0?0:1;const st=GC.prov[a.at];if(st.o===a.o){lvl=2;if(geCount(a.at,'base')>0)lvl=3;}else{for(const j of here.adj){if(P[j].land&&GC.prov[j].o===a.o){lvl=Math.max(lvl,geCount(j,'base')?2:1);}}}
   if(st.o!==a.o&&lvl===0&&GC.nat[a.o]&&GC.prov[a.at].o!==a.o&&!grAtWar(a.o,st.o)&&st.o!==a.o)lvl=1;   // friendly ground
   return lvl;}
-function geSupplyStep(){for(const a of GC.armies){const c=a.o,E=GC.nat[c]&&GC.nat[c].e;if(!E)continue;const lv=geArmySupply(a);if(a.fu===undefined)a.fu=100;
+function geSupplyStep(){for(const a of GC.armies){const c=a.o,E=GC.nat[c]&&GC.nat[c].e;if(!E)continue;let lv=geArmySupply(a);if(a.fu===undefined)a.fu=100;
+    const L=typeof gsupLine==='function'?gsupLine(a):null;if(L&&L.cut)lv=0;   /* real supply (13zl-gsupply.js): a cut line delivers nothing, a long or seasonal one only a share */
     let da=lv===3?35:lv===2?22:lv===1?8:-9,df=lv===0?-8:(E.dry?-6:(lv===3?30:lv===2?20:8));
     if(E.dry&&lv>0)da=Math.min(da,6);
-    for(const r of a.u)r[3]=Math.max(0,Math.min(100,r[3]+da));a.fu=Math.max(0,Math.min(100,a.fu+df));}}
+    if(L){if(da>0)da*=L.eff;if(df>0)df*=L.eff;const fo=a.fo===GC.turn?1:0;df-=(a.path&&a.path.length?5:0)+fo*8;da-=fo*6;a.sl=Math.round(L.eff*100);a.sk=Math.round(L.km);}   /* marching and fighting burn extra */
+    for(const r of a.u)r[3]=Math.max(0,Math.min(100,Math.round(r[3]+da)));a.fu=Math.max(0,Math.min(100,Math.round(a.fu+df)));}}
 function geArmyFuel(a){return a.fu===undefined?1:a.fu/100;}
 function geDry(c){const N=GC.nat[c];return !!(N&&N.e&&N.e.dry);}
 function geSortieStock(c,pi,range){   // used by grand3: sorties available to nation c in a battle at province pi
@@ -316,6 +318,7 @@ function geAI(c,R){const N=GC.nat[c],E=N.e,S=GE_ST[c];if(!S||!S.own.length)retur
     for(const p of S.own){if(p.oil&&!geCount(p.i,'refinery')&&E.fuel<150)want.push(['refinery',p.i]);if(p.farm&&!geCount(p.i,'farm')&&E.food<80)want.push(['farm',p.i]);if(p.mine&&!geCount(p.i,'mine'))want.push(['mine',p.i]);if(p.coast&&!(p.port||geCount(p.i,'port')))want.push(['port',p.i]);
       if(p.t==='m'&&GE_MFORT.includes(c)&&!geCount(p.i,'mfort')&&p.adj.some(j=>P[j].land&&war.includes(GC.prov[j].o)))want.push(['mfort',p.i]);}
     if(!S.own.some(p=>geCount(p.i,'airfield')))want.push(['airfield',front.i]);
+    {const dp=typeof gsupDepotWant==='function'?gsupDepotWant(c):-1;if(dp>=0)want.unshift(['base',dp]);}   /* real supply: a forward depot where the line is long */
     want.push(['factory',cap.i],['base',front.i],['aa',cap.i],['factory',cap.i]);
     if(GC.turn>6&&(P[N.cap].tw>0))want.push(['port',cap.i]);
     for(const [k,pi] of want){if(!geCanBuild(c,pi,k)){geBuild(c,pi,k);break;}}}
