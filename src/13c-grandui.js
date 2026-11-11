@@ -119,10 +119,12 @@ function guMoveTo(aid,h){const res=grOrderMove(aid,h);if(res.err){GV.hint=res.er
   GV.hint=GCM.P[h].n+': arrives ~'+grDateStr(GC.turn+res.r.turns,0)+' ('+res.r.turns+' month'+(res.r.turns>1?'s':'')+')'+(res.r.path.some(j=>GCM.P[j].sea)?' (by sea)':'');guHint();guSide();guRedraw();grSave();}
 // First-time coach card on the grand map (Lane D D5 campaign tutorial, 2026-11-07): shown once, closes with its button or any order.
 function guCoach(){let seen=0;try{seen=localStorage.getItem('ww3_gcoach');}catch(e){}if(seen||document.getElementById('gCoach'))return;
-  const w=document.getElementById('gMapWrap');if(!w)return;const c=guEl('div','position:absolute;left:10px;top:10px;z-index:5;width:300px;background:rgba(10,16,22,.93);border:1px solid #4a6580;border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.5;box-shadow:0 4px 16px #0008');c.id='gCoach';
-  c.innerHTML='<div style="font-weight:700;margin-bottom:4px">Your first minute</div><div>Time runs by itself. <b>Space</b> pauses, <b>+ / -</b> change speed.</div><div>Click your army, then <b>right-click</b> a province to march there.</div><div>Click a province to see its towns and recruit.</div><div><b>O</b> lists all your armies. Hover anything for details.</div>';
-  const b=guEl('button','margin-top:8px;padding:4px 10px;border-radius:5px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;font-size:13px','Got it');b.type='button';b.id='gCoachOk';
-  b.onclick=()=>{try{localStorage.setItem('ww3_gcoach','1');}catch(e){}c.remove();};c.appendChild(b);w.appendChild(c);}
+  /* calmmap: a compact strip, not a big box (same text); goes away on "Got it", on your first order (right-click on the map) or after 60 s */
+  const w=document.getElementById('gMapWrap');if(!w)return;const c=guEl('div','position:absolute;left:10px;top:8px;z-index:5;max-width:min(760px,calc(100% - 20px));background:rgba(10,16,22,.9);border:1px solid #4a6580;border-radius:6px;padding:5px 10px;font-size:12px;line-height:1.45;box-shadow:0 2px 8px #0008');c.id='gCoach';
+  c.innerHTML='<b style="margin-right:6px">Your first minute</b>Time runs by itself. <b>Space</b> pauses, <b>+ / -</b> change speed. Click your army, then <b>right-click</b> a province to march there. Click a province to see its towns and recruit. <b>O</b> lists all your armies. Hover anything for details. ';
+  const b=guEl('button','margin-left:4px;padding:1px 8px;border-radius:4px;border:1px solid #3d5a73;background:#18293a;color:#fff;cursor:pointer;font-size:12px','Got it');b.type='button';b.id='gCoachOk';
+  const done=()=>{if(!c.isConnected)return;try{localStorage.setItem('ww3_gcoach','1');}catch(e){}c.remove();if(typeof g3Legend==='function')g3Legend();};
+  b.onclick=done;c.appendChild(b);w.appendChild(c);setTimeout(done,60000);if(GV.cv)GV.cv.addEventListener('contextmenu',done,{once:true});if(typeof g3Legend==='function')g3Legend();}
 function guHint(){const e=document.getElementById('gHint');if(e)e.textContent=GV.hint||'';}
 
 // ---------- top bar, side panel, log ----------

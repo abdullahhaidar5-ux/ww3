@@ -9,7 +9,7 @@ function g3LoadReal(){if(G3.real||G3.realTry)return;G3.realTry=1;
   Promise.all([ld('grand/elev.png?v=2'),ld('grand/color.jpg?v=3'),ld('grand/hi_me.jpg?v=2').catch(()=>null)]).then(([eb,cb,hb])=>{
     if(hb){try{const h=px(hb);G3.hi={d:g3GradeColor(h.data,h.width*h.height),w:h.width,h:h.height,r:[.555,.22333333,.14,.25]};}catch(e){G3.hi=null;}}
     const e=px(eb),c=px(cb),E=new Float32Array(e.width*e.height);for(let k=0;k<E.length;k++)E[k]=e.data[k*4]*256+e.data[k*4+1]-11000;
-    G3.real={E,EW:e.width,EH:e.height,col:c.data,CW:c.width,CH:c.height};}).catch(()=>{G3.realFail=1;});}
+    G3.real={E,EW:e.width,EH:e.height,col:c.data,CW:c.width,CH:c.height};setTimeout(()=>{try{if(typeof g3ForestRefresh==='function')g3ForestRefresh();}catch(e){console.warn('forest refresh',e);}},0);}).catch(()=>{G3.realFail=1;});}
 // ground colour grade (satellite -> rich, slightly warm, a little darker than the washed-out raster)
 function g3GradeColor(col,n){const o=new Uint8ClampedArray(n*4);
   for(let k=0;k<n;k++){let r=col[k*4]/255,g=col[k*4+1]/255,b=col[k*4+2]/255;const l=.3*r+.59*g+.11*b,sat=1.85;r=l+(r-l)*sat;g=l+(g-l)*sat;b=l+(b-l)*sat;
