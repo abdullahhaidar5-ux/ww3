@@ -1,0 +1,5 @@
+# HANDOFF greenK4 (2026-11-11)
+- Done earlier: menus+polishE, winfix (0da5b4c2) are on main.
+- Waiting: stuck-units + controls feel (greenK-snap+dashI). Gate branch `gate/1bb5e66377` (= merge on top of main 0da5b4c2; conflicts already resolved, build --check OK). Its "Ship gate (parallel)" run was still QUEUED after ~1.5 h: ~11 gate runs from other helpers are ahead (queue jammed; no extra push made on purpose).
+- Exact next step: read `gh api repos/abdullahhaidar5-ux/ww3/commits/1bb5e6637703be63f8121d10a25efe768e509555/statuses`. If no new red beyond audio/cfclient: `git fetch; git checkout -B land/snap 1bb5e66377; git rebase origin/main` (rebuild on index.html/grand conflicts), tick the QUEUE lines (Stuck units, Controls feel) with the hash + one HISTORY line in the landing commit, push to main.
+- Then, one gate each: q-look, q-feel (orch/greenK-qfeel), polishP2, dashJ, safetyH, c-proxy-warfare (q-words/q-ai already on main per ORCH). Look pieces: compare smooth-mp/pc with the CI baseline.
