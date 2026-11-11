@@ -1,6 +1,6 @@
 // calmmap: take the grand-map pictures at 1600x900: world, Middle East (region button), middle (Levant & Iraq), close (Tehran).  node orch/calmshots.mjs <prefix> [only]  -> orch/shots/calmmap/<prefix>-*.png
 import http from 'node:http';import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {createRequire} from 'node:module';
-const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),OUT=path.join(ROOT,'orch','shots','calmmap'),pre=process.argv[2]||'before';fs.mkdirSync(OUT,{recursive:true});
+const ROOT=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),OUT=path.join(ROOT,'orch','shots',process.env.SHOTDIR||'calmmap'),pre=process.argv[2]||'before';fs.mkdirSync(OUT,{recursive:true});
 const r=createRequire(import.meta.url);let pw;for(const p of ['playwright','/opt/npm-tools/node_modules/playwright','/home/claude/.npm-global/lib/node_modules/playwright']){try{pw=r(p);break;}catch{}}
 if(!pw)pw=await import('playwright');const cr=(pw.chromium||pw.default.chromium);
 const MIME={'.html':'text/html','.js':'text/javascript','.json':'application/json','.png':'image/png','.gz':'application/gzip','.mp3':'audio/mpeg'};

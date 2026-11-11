@@ -23,7 +23,7 @@ function guPaint(){const idx=guCols(),P=GCM.P;if(!GV.img){GV.img=document.create
       else{const own=GC.prov[i].o!==GC.prov[j].o;const k2=own?.42:.78;r*=k2;g*=k2;b*=k2;}}
     const o=k*4;d[o]=r;d[o+1]=g;d[o+2]=b;d[o+3]=255;}
   cx.putImageData(id,0,0);GV.dirty=false;}
-function grNatRgb(c){const N=grNat(c);return N.rgb||(N.rgb=guRgb(N.color));}
+function grNatRgb(c){const N=grNat(c),k=N.color;if(N.rgbK!==k){N.rgbK=k;N.rgb=guRgb(k);}return N.rgb;}
 function guProvAt(wx,wy){const x=Math.floor(wx/GU_K),y=Math.floor(wy/GU_K);if(x<0||y<0||x>=GU_RW||y>=GU_RH)return -1;return GV.idx[y*GU_RW+x];}
 function guToWorld(sx,sy){if(GV.g3){const g=g3Ground(sx,sy);return g||[-1e4,-1e4];}return [(sx-GV.ox)/GV.z,(sy-GV.oy)/GV.z];}
 function guFit(r){if(GV.g3){g3Fit(r);return;}const R=r||[0,0,GM_W,GM_H];const z=Math.min(GV.w/R[2],GV.h/R[3]);GV.z=z;GV.ox=(GV.w-R[2]*z)/2-R[0]*z;GV.oy=(GV.h-R[3]*z)/2-R[1]*z;guClamp();}
