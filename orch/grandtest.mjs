@@ -90,6 +90,23 @@ try {
     return o; });
   console.log('war support by government', JSON.stringify(wsg));
   if (!(wsg.gov === 'dem,party,mon,theo,junta,auth' && wsg.lDem === -12 && wsg.lParty === -4 && wsg.cenDem !== '' && wsg.cen === '' && wsg.pol === 70 && wsg.cen2 !== '' && wsg.lCen === -2 && wsg.back === -5 && wsg.saved && wsg.rally === 4 && wsg.later < 0 && wsg.split === 2 && wsg.strike === true && wsg.strikeDem === false)) fails.push('war support by government: ' + JSON.stringify(wsg));
+  // Escalation ladder: rungs before war, surprise-attack penalty, mediated and unmediated off-ramps, nuclear deterrence in the AI war gate, determinism, saved
+  const esc = await ev(() => { const o = {}; const rl = (x, y) => (GC.rel && GC.rel[grWk(x, y)]) || 0;
+    const set = () => { grNew({ me: 'IR', seed: 31, len: 'quick' }); GC.war = {}; GC.alz = []; GC.tr = {}; GC.esc = {}; GC.rel = {}; };
+    set(); const A = 'IR', B = 'SA'; GC.nat[A].cash = 5000; o.up = [gdAct('warn', A, B), gescOf(A, B), gdAct('warn', A, B), gdAct('warn', A, B), gescOf(A, B), gdChance('warn', A, B).ok].join(','); o.rel = rl(A, B); o.saved = JSON.parse(JSON.stringify(GC)).esc[grWk(A, B)].r;
+    const c0 = GC.nat[A].cash; GC.turn++; const S0 = JSON.stringify(GC.esc); gescMonth(); o.alert = c0 - GC.nat[A].cash >= 150 || !GC.esc[grWk(A, B)];
+    // off-ramps: no mediator (everyone neutral-negative) costs face; with a mediator on good terms it does not
+    set(); gescUp(A, B); gescUp(A, B); for (const m of Object.keys(GC.nat)) if (m !== A && m !== B) { GC.rel[grWk(m, A)] = -5; } wsN(A).wsE = 0; o.noMed = gescMediator(A, B); gdAct('deesc', A, B); o.face = wsN(A).wsE; o.r1 = gescOf(A, B);
+    set(); gescUp(A, B); gescUp(A, B); GC.nat[A].cash = 5000; GC.rel[grWk('CN', A)] = 30; GC.rel[grWk('CN', B)] = 30; wsN(A).wsE = 0; o.med = gescMediator(A, B); const e = gdAct('deesc', A, B); o.medErr = e || ''; o.face2 = wsN(A).wsE; o.r2 = gescOf(A, B); o.paid = 5000 - GC.nat[A].cash;
+    // surprise attack vs signalled war: third parties' opinion
+    set(); grDeclare(A, B); o.surprise = rl(A, 'CN'); set(); gescUp(A, B); gescUp(A, B); grDeclare(A, B); o.signalled = rl(A, 'CN'); o.cleared = !GC.esc[grWk(A, B)];
+    // AI war gate: a non-nuclear pair needs two steps before war; a nuclear pair stops at the red line and almost never goes further
+    set(); const R = grRng(5); o.gate = [gescGate('TR', 'GR', R), gescGate('TR', 'GR', R), gescGate('TR', 'GR', R)].join(','); let wars = 0; for (let i = 0; i < 200; i++) if (gescGate('US', 'RU', R)) wars++; o.nukeWars = wars; o.nukeRung = gescOf('US', 'RU'); o.nk = grNuk('US') && grNuk('RU');
+    // AI answers a warning, deterministically
+    const run = () => { set(); gescUp(A, B); for (let i = 0; i < 8; i++) { GC.turn++; gescMonth(); } return JSON.stringify(GC.esc) + '|' + rl(A, B); }; o.det = run() === run();
+    return o; });
+  console.log('escalation', JSON.stringify(esc));
+  if (!(esc.up === ',1,,,3,false' && esc.rel === -24 && esc.saved === 3 && esc.alert && esc.noMed === '' && esc.face === -3 && esc.r1 === 1 && esc.med === 'CN' && esc.medErr === '' && esc.face2 === 0 && esc.r2 === 0 && esc.paid === 100 && esc.surprise - esc.signalled === -10 && esc.cleared && esc.gate === 'false,false,true' && esc.nk && esc.nukeWars <= 8 && esc.nukeRung === 2 && esc.det)) fails.push('escalation ladder: ' + JSON.stringify(esc));
   if (!fl.under || !fl.over || Math.abs(fl.up - 1.5) > .01 || !(fl.t1 > fl.t0) || !fl.allUnder || !fl.chip) fails.push('force limit/tradition: ' + JSON.stringify(fl));
   // ---- MILITARY (grand3): generals, front lines, map strikes, fleets & sea zones; determinism over 20 turns with all of it active
   {
@@ -132,8 +149,24 @@ try {
       ok(gmilStrike(A, 'm', near.i, 'b') === '', 'missile order refused: ' + gmilStrikeCheck(A, 'm', near.i, 'b')); ok(gmilStrike(A, 'd', near.i, 'a') === '', 'drone order refused'); ok(gmilStrike(A, 'a', near.i, 'b') === '', 'air raid order refused: ' + gmilStrikeCheck(A, 'a', near.i, 'b')); ok(gmilStrike(A, 'm', near.i, 'a') !== '', 'fourth strike not refused');
       gmilStrikes(); const dmg = geBl(near.i).reduce((s, r) => s + (r[1] | 0), 0); ok(dmg > 0 || GC.log.some(l => /intercepted/.test(l[1])), 'strikes had no effect and none intercepted'); ok(gmilN(A).ms === 2, 'missile stock not spent'); ok(GC.log.some(l => /missile|air raid|drone/i.test(l[1]) && l[0] === GC.turn), 'no strike line in the turn log');
       // air defence: many SAMs + AA units intercept (statistically, 30 missiles)
-      const hit = (n, aa) => { let hits = 0; for (let i = 0; i < n; i++) { GC.turn++; geBl(near.i).length = 0; geBl(near.i).push(['factory', 0]); for (let k = 0; k < (aa | 0); k++) geBl(near.i).push(['aa', 0]); gmilN(A).ms = 3; gmilN(A).so = []; gmilStrike(A, 'm', near.i, 'b'); gmilStrikes(); if (!GC.log.some(l => l[0] === GC.turn && /intercepted/.test(l[1]) && /missile/i.test(l[1]))) hits++; } return hits; };
+      const hit = (n, aa) => { let hits = 0; for (let i = 0; i < n; i++) { GC.turn++; geBl(near.i).length = 0; geBl(near.i).push(['factory', 0]); for (let k = 0; k < (aa | 0); k++) geBl(near.i).push(['aa', 0]); gmilN(A).ms = 3; gmilN(A).so = []; gmilN(B).ic = 20; gmilStrike(A, 'm', near.i, 'b'); gmilStrikes(); if (!GC.log.some(l => l[0] === GC.turn && /intercepted/.test(l[1]) && /missile/i.test(l[1]))) hits++; } return hits; };
       const open = hit(24, 0); const sam = hit(24, 3); ok(sam < open, 'air defence did not reduce missile hits (' + sam + ' vs ' + open + ')');
+      // STOCKPILES THAT RUN OUT (campaign realism 2): interceptors are spent, an empty defence stops nothing, orders take months, allies can ship
+      { const QB = gmilN(B), QA = gmilN(A); const one = () => { GC.turn++; geBl(near.i).length = 0; geBl(near.i).push(['factory', 0], ['aa', 0], ['aa', 0], ['aa', 0]); QA.ms = 3; QA.so = []; gmilStrike(A, 'm', near.i, 'b'); gmilStrikes(); return GC.log.some(l => l[0] === GC.turn && /intercepted/.test(l[1])); };
+        QB.ic = 6; one(); ok(QB.ic === 4, 'a missile salvo did not cost the defender 2 interceptor loads (' + QB.ic + ')');
+        QB.ic = 2; const ws0 = wsN(B).wsE; one(); ok(QB.ic === 0 && GC.log.some(l => l[0] === GC.turn && l[2] === '' && /run out of air-defence interceptors/.test(l[1])), 'running dry was not world news'); ok(wsN(B).wsE < ws0, 'no war-support cost for an exhausted air defence');
+        let stopped = 0; for (let i = 0; i < 12; i++) { QB.ic = 0; if (one()) stopped++; } ok(stopped === 0, 'batteries without interceptors still stopped ' + stopped + ' of 12 salvos');
+        QB.ic = 5; GC.turn++; geBl(near.i).length = 0; geBl(near.i).push(['factory', 0], ['aa', 0], ['aa', 0]); QA.dr = 40; QA.so = []; gmilStrike(A, 'd', near.i, 'b', 12); gmilStrikes(); ok(QB.ic === 2, 'a 12-drone salvo should cost 3 interceptor loads (left ' + QB.ic + ')');
+        ok(typeof gmilBuyMissile === 'undefined', 'the old instant "Buy missile" is still there');
+        const c0 = N.cash; QA.ms = 0; QA.oq = []; ok(gmilOrder(A, 'ms') === '' && QA.ms === 0 && N.cash === c0 - GMIL_ORD.ms.cost && QA.oq.length === 1, 'missile order is not paid-now, delivered-later'); const due = QA.oq[0].t; ok(due - GC.turn >= 3, 'order arrives too fast');
+        QA.pa = [0, 0]; const t0 = GC.turn; while (GC.turn < due) { GC.turn++; gmilStockMonth(); } ok(QA.oq.length === 0 && QA.ms >= 1, 'order was not delivered'); ok(QA.ms <= 1 + Math.ceil(gmilStkYr(A, 'ms') * (due - t0) / 12), 'factories refill faster than their yearly rate');
+        QA.ms = 0; QA.pa = [0, 0]; for (let i = 0; i < 12; i++) { GC.turn++; gmilStockMonth(); } ok(Math.abs(QA.ms - Math.min(gmilStkMax(A, 'ms'), gmilStkYr(A, 'ms'))) <= 1, 'a year of production gave ' + QA.ms + ' salvos, expected about ' + gmilStkYr(A, 'ms'));
+        ok(gmilStkRow('US')[3] < gmilStkRow('US')[4] * .5 && gmilStkRow('IR')[3] < gmilStkRow('IR')[4] * .5, 'US and Iran should start Nov 2026 with depleted interceptors (REAL-2026)');
+        const fr = Object.keys(GC.nat).sort().find(x => x !== A && x !== B && !GC.nat[x].dead && !grAtWar(A, x) && grAllied(A, x)); if (!fr) out.push('skip: IR has no ally for the shipment check'); else { QA.ic = 6; QA.sent = 0; const r0 = (GC.rel || {})[grWk(A, B)] || 0, i0 = gmilN(fr).ic; GC.war[grWk(fr, B)] = 1; ok(gmilSend(A, fr, 'ic') === '' && QA.ic === 4, 'shipment to an ally refused'); ok(gmilSend(A, fr, 'ic') !== '', 'second shipment in one month not refused'); GC.turn++; gmilStockMonth(); ok(gmilN(fr).ic >= i0 + 2, 'shipment did not arrive'); delete GC.war[grWk(fr, B)]; }
+        ok(gmilSendCheck(A, B, 'ic') !== '', 'could ship interceptors to an enemy');
+        const ai = Object.keys(GC.nat).sort().find(x => GC.nat[x].ai && !GC.nat[x].dead && Object.keys(GC.war).some(k => k.split('|').includes(x)) && gmilStkMax(x, 'ic') > 4); if (ai) { const Q = gmilN(ai); Q.ic = 0; Q.oq = []; GC.nat[ai].cash = 5000; gmilAIStock(ai, () => .99); ok(Q.oq.some(o => o.k === 'ic'), 'AI at war with empty air defence did not order interceptors'); }
+        const old = gmilN(B); delete old.ic; delete old.oq; delete old.pa; ok(gmilN(B).ic === gmilStkRow(B)[3] && Array.isArray(gmilN(B).oq), 'older save did not get its interceptor stock'); const rt = JSON.parse(JSON.stringify(GC.mil.n[A])); ok(rt.ic === QA.ic && Array.isArray(rt.oq) && rt.pa.length === 2, 'stockpile state does not survive a save');
+}
       // fleets
       const ports = GCM.P.filter(p => p.land && GC.prov[p.i].o === A && p.port); ok(ports.length > 0, 'IR has no port'); const n0 = GC.mil.fq.length; GC.nat.IR.e.man = 200; const bf = gmilBuyFleet(A, ports[0].i, 'boat'); ok(bf === '' && GC.mil.fq.length === n0 + 1, 'fleet order failed ' + bf);
       GC.turn += 2; gmilFleetArrive(); ok(GC.armies.some(a => a.fl && a.o === A && a.u.some(r => r[0] === 'boat')), 'ordered boats never arrived');
@@ -165,11 +198,11 @@ try {
     // UI: Military panel
     await ev(() => { grNew({ me: 'IR', seed: 7, len: 'quick' }); GC.nat.IR.cash = 6000; for (let i = 0; i < 3; i++) grEndTurn(true); GV.sel = GC.nat.IR.cap; grandOpen(); });
     await page.waitForTimeout(2500);
-    const mu = await ev(() => { const o = {}; gmilUiPanel(); o.panel = !!document.getElementById('gMil'); for (const t of ['gen', 'fr', 'st', 'fl']) { GMILUI.tab = t; gmilUiPanel(true); o[t] = document.getElementById('gMil').textContent.length; } GMILUI.tab = 'gen'; gmilUiPanel(true); return o; });
-    console.log('military ui', JSON.stringify(mu)); if (!mu.panel || mu.gen < 150 || mu.fr < 100 || mu.st < 100 || mu.fl < 100) fails.push('military ui: panel tabs empty ' + JSON.stringify(mu));
+    const mu = await ev(() => { const o = {}; gmilUiPanel(); o.panel = !!document.getElementById('gMil'); for (const t of ['gen', 'fr', 'st', 'sk', 'fl']) { GMILUI.tab = t; gmilUiPanel(true); const pe = document.getElementById('gMil'); o[t] = pe.textContent.length; if (/Buy missile|every 3 months/.test(pe.textContent)) o.old = t; if (t === 'sk') o.skOk = !!(document.getElementById('gSk_ic') && document.getElementById('gSk_ms') && /Interceptor loads/.test(pe.textContent) && /Ship to an ally/.test(pe.textContent)); } GMILUI.tab = 'gen'; gmilUiPanel(true); return o; });
+    console.log('military ui', JSON.stringify(mu)); if (!mu.panel || mu.gen < 150 || mu.fr < 100 || mu.st < 100 || mu.fl < 100) fails.push('military ui: panel tabs empty ' + JSON.stringify(mu)); if (!mu.skOk) fails.push('military ui: Stockpiles window missing or incomplete'); if (mu.old) fails.push('military ui: old instant-missile wording still on tab ' + mu.old);
     await shot3('military-generals');
     await ev(() => { GMILUI.tab = 'fr'; gmilUiPanel(true); }); await shot3('military-fronts');
-    await ev(() => { GMILUI.tab = 'st'; gmilUiPanel(true); const f = Object.keys(GC.war).filter(k => k.split('|').includes('IR')).map(k => k.split('|').find(x => x !== 'IR'))[0]; const p = GCM.P.find(q => q.land && GC.prov[q.i].o === f) || GCM.P.find(q => q.land && GC.prov[q.i].o !== 'IR'); GV.sel = p.i; guSide(); }); await shot3('military-strikes');
+    await ev(() => { GMILUI.tab = 'st'; gmilUiPanel(true); const f = Object.keys(GC.war).filter(k => k.split('|').includes('IR')).map(k => k.split('|').find(x => x !== 'IR'))[0]; const p = GCM.P.find(q => q.land && GC.prov[q.i].o === f) || GCM.P.find(q => q.land && GC.prov[q.i].o !== 'IR'); GV.sel = p.i; guSide(); }); await shot3('military-strikes'); await ev(() => { GMILUI.tab = 'sk'; gmilUiPanel(true); }); await shot3('military-stockpiles');
     await ev(() => { GMILUI.tab = 'fl'; const z = GC.armies.find(a => a.fl && a.o === 'IR'); GV.sel = z ? z.at : 0; GV.selA = z ? z.id : 0; guSide(); gmilUiPanel(true); }); await shot3('military-fleets');
     await ev(() => { gmilUiPanel(); grandClose(); });
     if (ONLY === 'mil') throw new Error('__done');
@@ -221,6 +254,22 @@ try {
       ok(geFx('SA', 'oil') && geFx('SA', 'bank'), 'SA oil fund'); ok(geFx('US', 'tax') && geFx('US', 'upkeep'), 'US interim');
       // supply: ammo drops outside supply, refills inside
       const a = GC.armies.find(x => x.o === 'IR'); a.u.forEach(r => r[3] = 50); a.at = cap; geSupplyStep(); ok(a.u[0][3] > 50, 'ammo refills in supply');
+      // real supply lines (13zl-gsupply.js): full at the capital; a long truck line over occupied ground delivers less; an enemy army on the line cuts it; seasons; AI halts when empty
+      { const L0 = gsupLine(a); ok(L0.eff >= .99 && !L0.cut, 'full supply at the capital (' + L0.eff + ')');
+        const ir = i => GC.prov[i].o === 'IR' || grAllied('IR', GC.prov[i].o), plain = i => P[i].land && !ir(i) && !P[i].port && !geCount(i, 'base') && !geCount(i, 'port'); let ch = null;
+        for (const p1 of P) { if (ch) break; if (!plain(p1.i) || !p1.adj.some(j => P[j].land && GC.prov[j].o === 'IR')) continue;
+          for (const j2 of p1.adj) { if (ch) break; if (!plain(j2) || P[j2].adj.some(j => P[j].land && ir(j))) continue;
+            for (const j3 of P[j2].adj) { if (!plain(j3) || j3 === p1.i || P[j3].adj.some(j => j !== j2 && P[j].land && (ir(j) || j === p1.i))) continue; ch = [p1.i, j2, j3]; break; } } }
+        ok(!!ch, 'found a three-province road out of Iran');
+        if (ch) { const old = ch.map(i => GC.prov[i].o), foe = old[1]; ch.forEach(i => GC.prov[i].o = 'IR'); a.at = ch[2]; a.path = [];
+          const L1 = gsupLine(a); ok(!L1.cut && L1.eff > 0 && L1.eff < 1 && L1.km > 150, 'long line on occupied ground delivers a share (' + JSON.stringify([L1.eff, Math.round(L1.km)]) + ')');
+          a.u.forEach(r => r[3] = 50); a.fu = 50; geSupplyStep(); const got = a.u[0][3] - 50; ok(got >= 0 && got < 22 && a.sl === Math.round(L1.eff * 100), 'refill scaled by the line (' + got + ')');
+          const wk = grWk('IR', foe), had = GC.war[wk]; GC.war[wk] = had || 1; const raid = grAddArmy(foe, ch[1], [['inf', 100, 0, 100]], 'Raiders');
+          const L2 = gsupLine(a); ok(L2.cut && L2.eff === 0, 'an enemy army on the road cuts the line'); a.u.forEach(r => r[3] = 50); a.fu = 50; geSupplyStep(); ok(a.u[0][3] < 50 && a.fu < 50, 'a cut army burns its own stock');
+          a.fu = 10; ok(gsupHold(a), 'an empty army holds instead of attacking');
+          GC.armies.splice(GC.armies.indexOf(raid), 1); if (had) GC.war[wk] = had; else delete GC.war[wk]; ch.forEach((i, k) => GC.prov[i].o = old[k]); a.at = cap; a.fu = 100; a.u.forEach(r => r[3] = 100); }
+        const mo = P.find(p => p.n === 'Moscow'), te = P.find(p => p.n === 'Tehran'), t0 = GC.turn; ok(Math.abs(gsupLat(mo) - 55.75) < 3 && Math.abs(gsupLat(te) - 35.7) < 3, 'latitudes ' + gsupLat(mo).toFixed(1) + ' ' + gsupLat(te).toFixed(1));
+        const at = m => { while (gsupMonth() !== m) GC.turn++; }; at(0); ok(gsupSeason(mo.i) === 'winter' && gsupSeason(te.i) === '', 'January: winter at Moscow, none at Tehran'); at(3); ok(gsupSeason(mo.i) === 'mud', 'April: mud season at Moscow'); GC.turn = t0; }
       return out; });
     // battle inheritance: the Mountain Fortress and the airfield stand in the defender's battle; fuel/ammo come from the army on the map; no building in the battle
     const bt = await ev(() => { grNew({ me: 'IR', seed: 7, len: 'quick' }); const mp = GCM.P.findIndex(p => p.land && GC.prov[p.i].o === 'IR' && p.t === 'm'); if (mp < 0) return { skip: 1 };

@@ -14,7 +14,7 @@ const GNT={on:0,host:0,cl:0,code:'',g:null,nat:'',hum:{},orig:{},last:'',lastT:0
 /* name → index of the nation argument, or 'a' = first argument is an army id that must belong to the sender */
 const GNT_W={grOrderMove:'a',grSplit:'a',grMerge:'a',grDrill:'a',gmilAssign:'a',grRecruit:0,grDeclare:0,grSpy:0,gdAct:1,gdvBuy:0,geAutonomy:0,geAct:0,geBorrow:0,geBuild:0,
   geCity:0,geDeposit:0,geEmbargo:0,geMerchant:0,geRation:0,geRepay:0,geSellMode:0,geSetStrait:0,geTotalWar:0,geWithdraw:0,gidBuy:0,gidPick:0,gidDrop:0,ginCut:0,ginSet:0,gstRaise:0,
-  gtrPush:0,pgCounter:0,pgRun:0,rsBuy:0,wsRally:0,wsCensor:0,gcoEase:0,gmilBuyFleet:0,gmilStrike:0,gmilBuyMissile:0,gevChoose:0,grSetTax:0,ldrGo:'L'};
+  gtrPush:0,pgCounter:0,pgRun:0,rsBuy:0,wsRally:0,wsCensor:0,gcoEase:0,gmilBuyFleet:0,gmilStrike:0,gmilOrder:0,gmilSend:0,gevChoose:0,grSetTax:0,ldrGo:'L'};
 const GNT_PART=30000;
 function gnName(c){return (GCM&&GCM.nats.get(c)||{}).name||c;}
 function gnOk(nat,f,a){const w=GNT_W[f];if(w===undefined||!Array.isArray(a)||!GC||!GC.nat[nat])return false;

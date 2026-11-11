@@ -50,6 +50,20 @@ const st=E('style');st.id='ukCss';st.textContent=`
 #panel .btn.hasic{padding-left:47px!important}
 #panel .btn .uic{position:absolute;left:4px;top:50%;transform:translateY(-50%);width:38px;height:30px;border-radius:2px;background:linear-gradient(180deg,#36473d,#141b17);box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
 #panel .btn.on .uic{box-shadow:inset 0 0 0 1px var(--accent,#e3b341)}
+.uk-mu{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.uk-mu .mr{display:flex;align-items:flex-start;gap:8px;padding:4px 7px;border-radius:4px}.uk-mu .mul{display:flex;flex-wrap:wrap;gap:3px 10px;min-width:0}
+.uk-mu .mr.g{background:rgba(52,150,80,.24);box-shadow:inset 0 0 0 1px rgba(110,220,130,.5)}.uk-mu .mr.r{background:rgba(170,52,44,.26);box-shadow:inset 0 0 0 1px rgba(240,120,105,.5)}
+.uk-mu .mr b{font:700 11px var(--display,sans-serif);letter-spacing:.09em;min-width:56px;flex:none;line-height:21px}.uk-mu .mr.g b{color:#9be8a6}.uk-mu .mr.r b{color:#f3a096}
+.uk-mu .mi{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:#e6e2d6;white-space:nowrap}.uk-mu .mi img{width:28px;height:21px}.uk-mu .mi i{font-style:normal}
+#panel .btn .uk-mu.mini{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:26px;margin:0;gap:2px;pointer-events:none}
+#panel .btn .uk-mu.mini .mr{padding:0;gap:1px;height:17px;justify-content:center;flex-wrap:nowrap;border-radius:2px}
+#panel .btn .uk-mu.mini img{width:22px;height:16px;display:block}
+#panel .btn.hasmu{padding-right:32px!important}#panel .btn.hasmu .q{right:33px}
+#panel .btn:disabled .uk-mu.mini{opacity:.75}
+#panel .btn.ctr{box-shadow:0 0 0 2px #6fe08a,0 0 14px rgba(111,224,138,.55)!important;z-index:1}
+#panel .btn.ctr::after{content:'BEATS IT';position:absolute;left:4px;bottom:2px;font:800 8.5px/1 var(--display,sans-serif);letter-spacing:.06em;color:#06220c;background:#6fe08a;padding:1px 3px;border-radius:2px}
+.tabs button.ctr{box-shadow:inset 0 -3px 0 #6fe08a}
+#info .ukBy{margin-top:4px}
 #info .ukU{display:flex;gap:9px;align-items:center;margin:0 0 4px}
 #info .ukU img{width:52px;height:40px;flex:none;border-radius:3px;background:linear-gradient(180deg,#36473d,#141b17);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
 #info .ukUt{min-width:0;flex:1}#info .ukUt b{display:block;font:600 16px/1.1 var(--display,sans-serif)}
@@ -210,7 +224,12 @@ function tipAt(t){for(let e=t,i=0;e&&e!==document.body&&i<6;e=e.parentElement,i+
 document.addEventListener('mouseover',e=>{const el=tipAt(e.target);if(!el){if(tipFor)tipHide();return;}if(el!==tipFor)tipShow(el,e.clientX,e.clientY);},true);
 document.addEventListener('mousemove',e=>{if(tipFor){if(!tipFor.isConnected)tipHide();else if(tipFor.title){const el=tipFor;tipFor=null;tipAt(el);tipShow(el,e.clientX,e.clientY);}else tipMove(e.clientX,e.clientY);}},{passive:true});
 document.addEventListener('mousedown',()=>tipHide(),true);
-return {E,drawUnit,drawBld,iconBranch,icon,tabs,chip,sec,card,seg,link,tipHide};
+/* matchup chips (one language, idea 3): BEATS / WEAK TO with unit pictures. Reads matchUp() in 01-data - the one helper. o.mini = the two small rows on a command button. */
+function match(fac,kind,foe,o){o=o||{};let m;try{m=matchUp(fac,kind,foe);}catch(e){return null;}if(!m.beats.length&&!m.weak.length)return null;if(o.mini&&!m.armed)return null;   /* unarmed: the hover card says what hunts it; the button keeps its full name */
+  const w=E('div','uk-mu'+(o.mini?' mini':'')),n=o.n||(o.mini?1:4);w.dataset.k=kind;
+  const row=(cls,lab,L)=>{if(!L.length)return;const r=E('div','mr '+cls),ms=o.mini?r:E('div','mul');if(!o.mini){r.appendChild(E('b','',lab));r.appendChild(ms);}for(const x of L.slice(0,n)){const s=E('span','mi');s.appendChild(icon(x.k,cls==='g'?'#9be8a6':'#f3a096',x.b));if(!o.mini)s.appendChild(E('i','',x.n));ms.appendChild(s);}w.appendChild(r);};
+  row('g','BEATS',m.beats);row('r','WEAK TO',m.weak);return w;}
+return {E,drawUnit,drawBld,iconBranch,icon,tabs,chip,sec,card,seg,link,tipHide,match};
 })();
 /* ===== ingameui slice 3: pause menu = one centred panel with a vertical text menu; Settings in tabs; Esc = one step back ===== */
 (function(){const $$=id=>document.getElementById(id);
