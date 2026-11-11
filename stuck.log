@@ -1,0 +1,8 @@
+lebanon     route 0 move  units 150 arrived 10 stalled 4 piled 1 abandoned 3 {"inf":2,"aa":1,"tank":1}
+lebanon     route 2 move  units 150 arrived 17 stalled 9 piled 0 abandoned 5 {"inf":3,"aa":2,"arty":3,"harv":1}
+aleppo      route 0 move  units 150 arrived 0 stalled 3 piled 0 abandoned 0 {"tank":1,"at":1,"inf":1}
+aleppo      route 2 move  units 150 arrived 3 stalled 9 piled 1 abandoned 2 {"inf":2,"aa":2,"arty":2,"harv":1,"tank":2}
+lebanon     fire        idle-under-fire 0
+aleppo      fire        idle-under-fire 0
+TOTAL stuck units: 37 (allowed 40), errors 0 
+STUCK PASS
