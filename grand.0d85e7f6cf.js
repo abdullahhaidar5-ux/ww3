@@ -2440,7 +2440,7 @@ function g3Wheel(ev){const c=G3.camera,r=GV.cv.getBoundingClientRect(),g=g3Groun
   if(g){const k=1-nd/c.d;c.x+=(g[0]-c.x)*k*.9;c.z+=(g[1]-c.z)*k*.9;}c.d=nd;G3.moved=true;}
 function g3Drag(ev,mx,my){const d=GV.drag;if(!d)return;if(d.btn===1){const c=G3.camera,cc=G3.cc;c.yaw=cc.yaw=d.yaw-(ev.clientX-d.x)*.006;c.pitch=cc.pitch=Math.max(.45,Math.min(1.3,d.pitch+(ev.clientY-d.y)*.004));G3.moved=true;return;}
   const g=g3Ground(mx,my);if(!g||!d.g)return;const c=G3.camera,cc=G3.cc;c.x=cc.x=Math.max(0,Math.min(2400,cc.x+d.g[0]-g[0]));c.z=cc.z=Math.max(0,Math.min(1200,cc.z+d.g[1]-g[1]));G3.moved=true;}
-function g3HitAt(mx,my){let best=null,bd=1e9;for(const h of G3.hit){const dd=Math.hypot(mx-h.x,my-h.y);if(dd<h.r&&dd<bd){bd=dd;best=h;}}if(typeof gtkHover==='function')gtkHover(best);return best;}
+function g3HitAt(mx,my){let best=null,bd=1e9;for(const h of G3.hit){const inBox=h.y0!=null&&mx>=h.x0&&mx<=h.x1&&my>=h.y0&&my<=h.y1;const dd=Math.hypot(mx-h.x,my-h.y);if((inBox||dd<h.r)&&dd<bd){bd=dd;best=h;}}if(typeof gtkHover==='function')gtkHover(best);return best;}
 function g3Click(mx,my){const best=g3HitAt(mx,my);if(typeof gtkClicked==='function')gtkClicked(best);
   if(best){const a=GC.armies.find(x=>x.id===best.aid);GV.selA=best.aid;if(a)GV.sel=a.at;guSide();g3Refresh();return;}
   const g=g3Ground(mx,my);if(!g)return;const h=guProvAt(g[0],g[1]);GV.sel=h;if(GV.selA){const a=GC.armies.find(x=>x.id===GV.selA);if(!a||a.at!==h)GV.selA=0;}guSide();g3Refresh();}
@@ -2715,15 +2715,14 @@ function gtkRings(){const T=G3.tok;if(T.rings&&T.rings.parent===G3.sc)return T.r
   T.rings=new THREE.InstancedMesh(gtkRingGeo(22,.045),new THREE.MeshBasicMaterial({color:0xf04a3c,side:THREE.DoubleSide,transparent:true,opacity:.95,depthTest:false,depthWrite:false}),64);T.rings.count=0;T.rings.frustumCulled=false;T.rings.renderOrder=38;G3.sc.add(T.rings);return T.rings;}
 function gtkTown(pi){const p=GCM.P[pi],tw=p.land?g3Main(pi):null;return tw?[tw.x,tw.z]:[p.x,p.y];}
 /* neighbouring tokens nudge apart instead of piling up: boxes [cx,cy,halfW,halfH] in screen pixels; a token moves at most GTK_NUDGE px from its pin */
-const GTK_NUDGE=48;
-function gtkBox(q,rel,far,wide){return far?[q[0]+12,q[1],22,9]:rel==='oth'?[q[0],q[1]-18,13,15]:[q[0]+(wide?26:14),q[1]-24,wide?52:40,27];}
-function gtkNudge(q,rel,far,wide,placed){let x=q[0],y=q[1],hit=false;for(let it=0;it<6;it++){hit=false;const b=gtkBox([x,y],rel,far,wide);
-    for(const o of placed){const dx=b[0]-o[0],dy=b[1]-o[1],px=b[2]+o[2]-Math.abs(dx),py=b[3]+o[3]-Math.abs(dy);if(px<=0||py<=0)continue;hit=true;
-      if(py<=px)y+=(dy>=0?1:-1)*(py+1);else x+=(dx>=0?1:-1)*(px+1);break;}
-    if(!hit)break;}
-  const mx=x-q[0],my=y-q[1],m=Math.hypot(mx,my);if(m>GTK_NUDGE){x=q[0]+mx/m*GTK_NUDGE;y=q[1]+my/m*GTK_NUDGE;hit=true;}
-  if(hit){const b=gtkBox([x,y],rel,far,wide);hit=placed.some(o=>b[2]+o[2]-Math.abs(b[0]-o[0])>0&&b[3]+o[3]-Math.abs(b[1]-o[1])>0);}
-  return {x,y,free:!hit};}
+const GTK_NUDGE=60;
+function gtkBox(q,rel,far,wide){return far?[q[0]+12,q[1],22,9]:rel==='oth'?[q[0],q[1]-18,14,16]:[q[0]+(wide?34:20),q[1]-24,wide?60:44,27];}
+const GTK_DIR=[[0,1],[1,0],[0,-1],[-1,0],[.7,.7],[-.7,.7],[.7,-.7],[-.7,-.7]];
+function gtkOver(b,placed,own){let ar=0,same=null;for(const o of placed){const px=b[2]+o[2]-Math.abs(b[0]-o[0]),py=b[3]+o[3]-Math.abs(b[1]-o[1]);if(px>0&&py>0){ar+=px*py*(o.g?1:.5);if(!same&&o.g&&own&&o.g.a.o===own&&!o.g.fb)same=o.g;}}return {ar,same};}   /* how much a token box covers what is already placed (a name plate counts half) */
+function gtkNudge(q,rel,far,wide,placed,own){const o0=gtkOver(gtkBox(q,rel,far,wide),placed,own);if(!o0.ar)return {x:q[0],y:q[1],free:true};
+  let bx=q[0],by=q[1],ba=o0.ar;
+  if(!far)for(let r=12;r<=GTK_NUDGE;r+=12)for(const d of GTK_DIR){const x=q[0]+d[0]*r,y=q[1]+d[1]*r,a=gtkOver(gtkBox([x,y],rel,far,wide),placed).ar;if(!a)return {x,y,free:true};if(a<ba*.8){ba=a;bx=x;by=y;}}   /* the nearest free spot, at most GTK_NUDGE px from the pin; no free spot = the one that covers least */
+  return {x:bx,y:by,free:false,same:o0.same};}
 // ---- the tokens (called from g3Labels on every label pass, and from the frame loop while armies slide)
 function g3Tokens(tier){if(!G3.lab||!GC||!G3.cam)return;gtkCss();if(!G3.tok||G3.tok.sc!==G3.sc)G3.tok={sc:G3.sc,eta:new Map()};const T=G3.tok;if(tier===undefined)tier=G3.tier|0;
   const cam=G3.cam,w=GV.w,h=GV.h,v=T.v||(T.v=new THREE.Vector3()),me=GC.me,selA=GV.selA;
@@ -2760,15 +2759,20 @@ function g3Tokens(tier){if(!G3.lab||!GC||!G3.cam)return;gtkCss();if(!G3.tok||G3.
         +(full||far?'<span class="pt"><b>'+num+'</b>'+(mk.stars?'<em>'+'★'.repeat(Math.min(5,mk.stars))+'</em>':'')
           +(tier===2?'<small>'+(mk.fl?'⚓ '+mk.n+' ships':'<span title="infantry">♟ '+mk.inf+'</span> · <span title="armour">▰ '+mk.arm+'</span> · <span title="fire support">✸ '+mk.fs+'</span>')+'</small>':'')+'</span>':'');}
     const X=Math.round(q[0]+dx),Y=Math.round(q[1]),t='translate('+X+'px,'+Y+'px)';if(pl._t!==t){pl._t=t;pl.style.transform=t;}vis(pl,true);ntok++;
-    const R=far?9:rel==='oth'?11:18,cy=far?Y:Y-(rel==='oth'?18:26);G3.hit.push({aid:a.id,x:X,y:cy,r:R+5,k:g.k});for(const x of L)if(x!==a)G3.hit.push({aid:x.id,x:X,y:cy,r:R+5,k:g.k});   // the stack's front army is hit first; the rest stay reachable for box-select
+    const R=far?9:rel==='oth'?11:18,cy=far?Y:Y-(rel==='oth'?18:26),big=rel!=='oth'||sel||hv,hb=far?{x0:X-16,x1:X+(big?44:16),y0:Y-14,y1:Y+14}:{x0:X-R-8,x1:X+(big?R+52:R+8),y0:cy-R-10,y1:Y+8};   /* the whole token is the target: ring, number plate and pin (never smaller than the old figure + badge target) */
+    G3.hit.push({aid:a.id,x:X,y:cy,r:R+5,k:g.k,...hb});for(const x of L)if(x!==a)G3.hit.push({aid:x.id,x:X,y:cy,r:R+5,k:g.k,...hb});   // the stack's front army is hit first; the rest stay reachable for box-select
     if(tier===2&&!fan)for(const x of L){const ex=G3.arm.get(x.id);if(!ex)continue;const qf=proj(ex.x,ex.y+2,ex.z);if(qf)G3.hit.push({aid:x.id,x:qf[0],y:qf[1],r:16,k:g.k});}   // close view: each figure on the ground is a click target too
     return pl;};
-  for(const g of order){const e=g.e,q=proj(e.x,e.y,e.z);if(!q)continue;const rel=gtkRel(g.a.o),sel=g.L.some(x=>x.id===selA),hv=T.hov===g.k||T.fan===g.k;
+  /* 4a. find every token its place first: a token with no room joins the token of the same nation it would cover (one stack with a count, far and middle view),
+     faint ones (and far numbers) are left out, yours and enemies always show */
+  const todo=[];
+  for(const g of order){const e=g.e,q=proj(e.x,e.y,e.z);if(!q)continue;const rel=gtkRel(g.a.o),sel=g.L.some(x=>x.id===selA);
     if(g.st==='siege'&&tier>0&&nr<64){const t=gtkTown(g.a.at),r=Math.max(9,Math.hypot(e.x-t[0],e.z-t[1]));M4.makeScale(r,1,r);M4.setPosition(t[0],Math.max(.3,g3HeightAt(t[0],t[1]))+1.2,t[1]);rings.setMatrixAt(nr++,M4);}
-    let dx=0;if(g.fb&&tier>0)dx=g.side==='A'?-16:16;
     if(tier===0&&!(rel!=='oth'||sel))continue;   /* far: everyone is a dot; only yours, enemies, allies and the selected one carry a number */
-    {const wide=tier===2||!!g.fb,n=gtkNudge(q,rel,tier===0,wide,placed);if(!n.free&&!sel&&(rel==='oth'||(tier===0&&rel!=='me')))continue;   /* no room: faint ones (and far numbers) are left out, yours and enemies always show */
-      if(tier>0){q[0]=n.x;q[1]=n.y;}placed.push(gtkBox(q,rel,tier===0,wide));}shown.push(g);
+    const wide=tier===2||!!g.fb,n=gtkNudge(q,rel,tier===0,wide,placed,g.a.o);
+    if(!n.free){const h=n.same;if(tier<2&&h&&!g.fb){for(const x of g.L)h.L.push(x);h.merged=1;continue;}if(!sel&&(rel==='oth'||(tier===0&&rel!=='me')))continue;}
+    if(tier>0){q[0]=n.x;q[1]=n.y;}const bx=gtkBox(q,rel,tier===0,wide);bx.g=g;placed.push(bx);shown.push(g);todo.push([g,q,rel,sel]);}
+  for(const [g,q,rel,sel] of todo){const hv=T.hov===g.k||T.fan===g.k;let dx=0;if(g.fb&&tier>0)dx=g.side==='A'?-16:16;
     if(tier>0&&hv&&g.L.length>1&&!g.fb){const n=g.L.length,sp=tier===2?96:66;g.L.forEach((a,i)=>draw(g.k+'#'+a.id,g,[a],q,(i-(n-1)/2)*sp,true));}   // stack fanned out: one token per army
     else draw(g.k,g,g.L,q,dx,false);
     // arrival: where and when the column gets there (yours, your allies' and the selected one)
