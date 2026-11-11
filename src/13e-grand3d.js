@@ -44,7 +44,7 @@ function g3Fine(gt){const s=guCols(),FW=GU_RW,FH=(s.length/FW)|0,N=FW*FH,W=GT_W,
   const land=new Float32Array(W*H);for(let y=0;y<H;y++)for(let x=0;x<W;x++){let a=0;for(let dy=0;dy<f;dy++)for(let dx=0;dx<f;dx++)a+=fm[(y*f+dy)*FW+x*f+dx];land[y*W+x]=a/(f*f);}
   return {fm,fs,FW,FH,land};}
 function g3FineLand(x,z){const F=G3.F;if(!F||!F.fs)return false;const X=Math.max(0,Math.min(F.FW-1,Math.floor(x))),Z=Math.max(0,Math.min(F.FH-1,Math.floor(z)));return F.fs[Z*F.FW+X]>=G3_SHORE*255;}   // is this map point land on the drawn coast?
-function g3Fields(){if(G3.F)return G3.F;grMap();const W=GT_W,H=GT_H,idx=g3Idx(),P=GCM.P;
+function g3Fields(){if(G3.F)return G3.F;const tF0=performance.now();grMap();const W=GT_W,H=GT_H,idx=g3Idx(),P=GCM.P;
   const b=atob(GT_MASK),gt=new Uint8Array(W*H);{let p=0,i=0,v=0;while(i<b.length){let n=0,sh=0,c;do{c=b.charCodeAt(i++);n|=(c&127)<<sh;sh+=7;}while(c&128);if(v)gt.fill(1,p,p+n);p+=n;v^=1;}}
   const FN=g3Fine(gt),land=FN.land,Lb=g3Blur(land,W,H,1,1),Ls=new Float32Array(W*H);for(let k=0;k<W*H;k++)Ls[k]=Math.max(land[k],Lb[k]);   // mapcoast: the coarse fields follow the fine coast (was a +-150 km blur that melted Italy and the Aegean)
   const Lw=g3Blur(Ls,W,H,14,2);
@@ -73,9 +73,9 @@ function g3Fields(){if(G3.F)return G3.F;grMap();const W=GT_W,H=GT_H,idx=g3Idx(),
   const dw=g3Blur(dd0,W,H,6,2),vw=g3Blur(vg0,W,H,6,2),bw=new Uint8Array(W*H*4);
   for(let k=0;k<W*H;k++){const h=Hh[k],coast=g3Smooth(.4,.8,Ls[k]),rock=Math.max(mw[k]*coast*.55,g3Smooth(24,40,h)),snow=Math.max(sw[k]>.3?g3Smooth(.3,.6,sw[k]):0,g3Smooth(46,60,h)),beach=g3Smooth(.5,.58,Ls[k])*(1-g3Smooth(.62,.8,Ls[k]));
     const o=k*4;bw[o]=Math.min(255,rock*255);bw[o+1]=Math.min(255,snow*255);bw[o+2]=Math.min(255,Math.max(dw[k],beach)*255);bw[o+3]=Math.min(255,vw[k]*255);}
-  G3.F={W,H,idx,land,Ls,Lw,mw,Hh,px,bw,fm:FN.fm,fs:FN.fs,FW:FN.FW,FH:FN.FH};
+  G3.F={W,H,idx,land,Ls,Lw,mw,Hh,px,bw,fm:FN.fm,fs:FN.fs,FW:FN.FW,FH:FN.FH,cd:g3CoastDist(FN.fm,FN.FW,FN.FH)};
   if(G3.real){try{const t0=performance.now();g3RealFields(G3.F);G3.tReal=Math.round(performance.now()-t0);}catch(e){console.error('real terrain failed, procedural fallback',e);G3.F=null;G3.real=null;G3.realFail=1;return g3Fields();}}
-  return G3.F;}
+  G3.tFields=Math.round(performance.now()-tF0);return G3.F;}
 function g3HeightAt(x,z){const F=G3.F;if(!F)return 0;const fx=Math.max(0,Math.min(F.W-1.001,x/2)),fy=Math.max(0,Math.min(F.H-1.001,z/2)),x0=fx|0,y0=fy|0,tx=fx-x0,ty=fy-y0,H=F.Hh,W=F.W;
   return (H[y0*W+x0]*(1-tx)+H[y0*W+x0+1]*tx)*(1-ty)+(H[(y0+1)*W+x0]*(1-tx)+H[(y0+1)*W+x0+1]*tx)*ty;}
 // ---- overlay texture: soft owner tint + subtle borders (political), or the data of the chosen map mode
@@ -518,8 +518,8 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
       float cap=smoothstep(.72,.95,cr)*smoothstep(.25,.6,dp)*(.55+.45*sin(p.x*.9+p.y*1.3+uTime*.7))*(.35+.65*wfade);c=mix(c,vec3(.93,.97,1.),clamp(cap*.5,0.,.55));
       float fw=fwidth(s.g)+.004;
       {   // gsea: sandy lagoon edge + rolling foam ring hugging every coast and island
-       float ring=1.-smoothstep(.12,.85,dj);float bands=smoothstep(.55,.95,sin(dj*10.-uTime*1.5+nz2*1.4))*ring;float brk=.5+.5*sin(p.x*.7+p.y*.9+uTime*.4+nz2*3.);
-       float fo=clamp(bands*brk*.7+(1.-smoothstep(.0,.22,dj))*.75,0.,1.);c=mix(c,vec3(.95,.98,1.),fo*(.6+.4*(1.-smoothstep(600.,2400.,fdd))));}
+       float ring=1.-smoothstep(.1,.6,dj);float bands=smoothstep(.55,.95,sin(dj*10.-uTime*1.5+nz2*1.4))*ring;float brk=.5+.5*sin(p.x*.7+p.y*.9+uTime*.4+nz2*3.);
+       float fo=clamp(bands*brk*.6+(1.-smoothstep(.0,.18,dj))*.6,0.,1.);c=mix(c,vec3(.95,.98,1.),fo*(.6+.4*(1.-smoothstep(600.,2400.,fdd))));}
       float crest=1.-smoothstep(fw*.6,fw*1.8,abs(s.g-(${(G3_SHORE-.05).toFixed(3)}+.015*sin(uTime*.9+p.x*.2+p.y*.17))));c=mix(c,vec3(.96,.99,1.),crest*.8);   // crisp shoreline foam line, constant width on screen
       if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){c=g3rimS(c,cu);}
       float dist=length(cameraPosition-vW);c*=mix(g3cloud(vW.xz,uTime),1.,smoothstep(1500.,4200.,dist));c=mix(c,vec3(.616,.722,.788),smoothstep(2200.,6200.,dist));gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
