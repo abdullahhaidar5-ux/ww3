@@ -19,3 +19,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-10 23:57Z db33e9cb **RED** (27 gates) failing: audio,cfclient — Queue: grand map shows forests on deserts (fix for the look run)
 - 2026-11-11 00:25Z dedfa062 **RED** (27 gates) failing: cfclient,grandlive,tutorial — Words: one official name per building in every text, stale '18 nations
 - 2026-11-11 00:53Z 2a6cf804 **RED** (27 gates) failing: cfclient,grandlive,smooth-pc — Queue: Words slice 1 shipped, next steps noted
+- 2026-11-11 02:35Z da7a6592 **RED** (27 gates) failing: cfclient — Models: runners and helpers on Fable until Saturday (Abdullah 18:21)
