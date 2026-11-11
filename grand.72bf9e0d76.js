@@ -2444,6 +2444,7 @@ function g3BuildArrows(){if(!G3.arrows)return;while(G3.arrows.children.length){c
   if(!Pos.length)return;const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(Pos,3));g.setAttribute('color',new THREE.Float32BufferAttribute(Col,4));
   const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.DoubleSide,transparent:true,depthTest:false,depthWrite:false}));m.renderOrder=4;m.frustumCulled=false;G3.arrows.add(m);}
 // ARMY STANDARDS (armytokens, Abdullah 2026-11-10 19:17 "Go" to orch/concepts/army-standards.jpg; spec orch/concepts/ARMY-STANDARDS.md).
+// CSS note: body gets the class 'tk' from the battle ticker (08-ui.js tkApply), so every rule here is scoped under #g3ui / #g3leg.
 // The ONE way an army is drawn on the grand map: a round token read like a watch face. It replaced the figure blobs, shield badges and
 // per-army waving flags. View only: nothing here writes campaign state. Zoom tier = the shared g3Zoom() value (G3.tier), never a second one.
 //   far (0)   = one owner-colour dot per stack (ONE THREE.Points draw) + a number for yours / enemies / allies
@@ -2456,32 +2457,33 @@ const GTK_ODDS=[1.25,.8];   // attacker/defender strength ratio: >= 1.25 Good od
 function gtkCss(){if(document.getElementById('gtkcss'))return;const s=document.createElement('style');s.id='gtkcss';
   const br="url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M2 13V2H13M27 2H38V13M38 27V38H27M13 38H2V27' fill='none' stroke='%23e8b23a' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E\")";
   s.textContent=`
-#g3ui .tk{position:absolute;left:0;top:0;display:none;width:34px;height:34px;margin:-42px 0 0 -17px;border-radius:50%;--rim:#51705c;--st:100;--su:100;--sc:#5bd66a;--uc:#e8b23a;font-family:system-ui,sans-serif}
-.tk>i{position:absolute;display:block;border-radius:50%;font-style:normal}
-.tk .ou{inset:-2.5px;background:conic-gradient(var(--uc) calc(var(--su)*1%),#0d151c66 0)}
-.tk .in{inset:-.5px;border:1.5px solid #0d151c;background:conic-gradient(var(--sc) calc(var(--st)*1%),#26323a 0) padding-box}
-.tk .fl{inset:5px;background:#777 center/cover no-repeat;border:2px solid var(--rim);box-shadow:0 0 0 1px #0d151c}
-.tk .pn{left:50%;top:100%;width:0;height:0;margin:1px 0 0 -4px;border:4px solid transparent;border-top:7px solid var(--rim);border-radius:0;filter:drop-shadow(0 1px 1px #000a)}
-.tk .ct{right:-7px;top:-7px;min-width:15px;height:15px;padding:0 3px;box-sizing:border-box;border-radius:8px;background:#f4f4ef;color:#10161b;font:700 10px/15px system-ui,sans-serif;text-align:center;box-shadow:0 1px 2px #000a}
-.tk .pt{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:7px;padding:1px 7px 1px 6px;border-radius:5px;background:#0d151ce8;border:1px solid var(--rim);color:#f2f0e8;white-space:nowrap;font:700 13px/17px system-ui,sans-serif;box-shadow:0 1px 3px #000a}
-.tk .pt em{font-style:normal;color:#e8b23a;font-size:9px;letter-spacing:1px;margin-left:5px;vertical-align:1px}
-.tk .pt small{display:block;font:600 10px/12px system-ui,sans-serif;color:#b9c2c6;margin-top:-1px;padding-bottom:1px}
-.tk.me{--rim:#f4f4ef}.tk.war{--rim:#e5483b}.tk.ally{--rim:#5aa0ee}
-.tk.me .pt{border-color:#56646e}
-.tk.oth{width:22px;height:22px;margin:-29px 0 0 -11px;opacity:.62}.tk.oth .fl{inset:3.5px;border-width:1.5px}.tk.oth .pt,.tk.oth .ou{display:none}.tk.oth.sel,.tk.oth.hv{opacity:1}.tk.oth.sel .pt,.tk.oth.hv .pt{display:block}
-.tk.low{--sc:#ef5548}.tk.dry{--uc:#ef5548}
-.tk.sel::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px dotted #6fe07f}
-.tk.gmsel::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px dotted #f4f4ef}
-.tk .ar{inset:-10px;border-radius:0;transform:rotate(var(--dir,0deg))}.tk .ar::before{content:'';position:absolute;left:50%;top:-7px;margin-left:-6px;border:6px solid transparent;border-bottom:10px solid #fff;filter:drop-shadow(0 0 1.5px #000)}
-.tk .br{inset:-7px;border-radius:0;background:${br} center/100% 100% no-repeat;transform:rotate(45deg) scale(.9)}
-.tk .zz{left:100%;top:50%;margin:-11px 0 0 -4px;z-index:3;border-radius:0;font:700 19px/22px system-ui,sans-serif;color:#ffd23a;text-shadow:0 0 2px #000,0 1px 2px #000}
-.tk .tg{left:0;top:100%;margin-top:11px;width:70px;height:6px;border-radius:3px;border:1px solid #0d151c;background:linear-gradient(90deg,#5bd66a calc(var(--tw,50)*1%),#ef5548 0)}
-.tk.fi .pt{display:none}.tk.fi2 .pt{display:block;margin-left:19px}
-.tk .od{left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:7px;padding:0 8px;border-radius:9px;white-space:nowrap;font:700 11px/16px system-ui,sans-serif;color:#10161b;box-shadow:0 1px 3px #000a}
-.tk .od.g{background:#5bd66a}.tk .od.e{background:#e8b23a}.tk .od.b{background:#ef5548;color:#fff}
-#g3ui .tk.far{width:0;height:0;margin:0;opacity:1}.tk.far>i{display:none}.tk.far>i.od{display:block;bottom:9px}.tk.far .pt{display:block;margin-left:9px;padding:0;background:none;border:0;box-shadow:none;font:800 13px/14px system-ui,sans-serif;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 2px #000,1px 0 2px #000}.tk.far .pt em,.tk.far .pt small{display:none}.tk.far.sel::after{inset:-11px}
-#g3ui .eta{position:absolute;left:0;top:0;display:none;white-space:nowrap;margin:-9px 0 0 -6px;padding-left:15px;font:700 12px/16px system-ui,sans-serif;color:#fff;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 2px #000}
-.eta::before{content:'';position:absolute;left:0;top:3px;width:7px;height:7px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 2px #000}
+:is(#g3ui,#g3leg) .tk{position:absolute;left:0;top:0;display:none;width:36px;height:36px;margin:-44px 0 0 -18px;border-radius:50%;--rim:#51705c;--st:100;--su:100;--sc:#5bd66a;--uc:#e8b23a;font-family:system-ui,sans-serif}
+:is(#g3ui,#g3leg) .tk>i{position:absolute;display:block;border-radius:50%;font-style:normal}
+:is(#g3ui,#g3leg) .tk .ou{inset:-2.5px;background:conic-gradient(var(--uc) calc(var(--su)*1%),#0d151c66 0)}
+:is(#g3ui,#g3leg) .tk .in{inset:-.5px;border:1.5px solid #0d151c;background:conic-gradient(var(--sc) calc(var(--st)*1%),#26323a 0) padding-box}
+:is(#g3ui,#g3leg) .tk .fl{inset:5px;background:#777 center/cover no-repeat;border:2.5px solid var(--rim);box-shadow:0 0 0 1px #0d151c}
+:is(#g3ui,#g3leg) .tk .pn{left:50%;top:100%;width:0;height:0;margin:1px 0 0 -4px;border:4px solid transparent;border-top:7px solid var(--rim);border-radius:0;filter:drop-shadow(0 1px 1px #000a)}
+:is(#g3ui,#g3leg) .tk .ct{right:-7px;top:-7px;min-width:15px;height:15px;padding:0 3px;box-sizing:border-box;border-radius:8px;background:#f4f4ef;color:#10161b;font:700 10px/15px system-ui,sans-serif;text-align:center;box-shadow:0 1px 2px #000a}
+:is(#g3ui,#g3leg) .tk .pt{position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:7px;padding:1px 7px 1px 6px;border-radius:5px;background:#0d151ce8;border:1px solid var(--rim);color:#f2f0e8;white-space:nowrap;font:700 13px/17px system-ui,sans-serif;box-shadow:0 1px 3px #000a}
+:is(#g3ui,#g3leg) .tk .pt em{font-style:normal;color:#e8b23a;font-size:9px;letter-spacing:1px;margin-left:5px;vertical-align:1px}
+:is(#g3ui,#g3leg) .tk .pt small{display:block;font:600 10px/12px system-ui,sans-serif;color:#b9c2c6;margin-top:-1px;padding-bottom:1px}
+:is(#g3ui,#g3leg) .tk.me{--rim:#f4f4ef}:is(#g3ui,#g3leg) .tk.war{--rim:#e5483b}:is(#g3ui,#g3leg) .tk.ally{--rim:#5aa0ee}
+:is(#g3ui,#g3leg) .tk.me .pt{border-color:#56646e}
+:is(#g3ui,#g3leg) .tk.oth{width:22px;height:22px;margin:-29px 0 0 -11px;opacity:.62}:is(#g3ui,#g3leg) .tk.oth .fl{inset:3.5px;border-width:1.5px}:is(#g3ui,#g3leg) .tk.oth .pt,:is(#g3ui,#g3leg) .tk.oth .ou{display:none}:is(#g3ui,#g3leg) .tk.oth.sel,:is(#g3ui,#g3leg) .tk.oth.hv{opacity:1}:is(#g3ui,#g3leg) .tk.oth.sel .pt,:is(#g3ui,#g3leg) .tk.oth.hv .pt{display:block}
+:is(#g3ui,#g3leg) .tk.low{--sc:#ef5548}:is(#g3ui,#g3leg) .tk.dry{--uc:#ef5548}
+:is(#g3ui,#g3leg) .tk.sel{z-index:2}:is(#g3ui,#g3leg) .tk.ho{z-index:3}
+:is(#g3ui,#g3leg) .tk.sel::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px dotted #6fe07f}
+:is(#g3ui,#g3leg) .tk.gmsel::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px dotted #f4f4ef}
+:is(#g3ui,#g3leg) .tk .ar{inset:-10px;border-radius:0;transform:rotate(var(--dir,0deg))}:is(#g3ui,#g3leg) .tk .ar::before{content:'';position:absolute;left:50%;top:-7px;margin-left:-6px;border:6px solid transparent;border-bottom:10px solid #fff;filter:drop-shadow(0 0 1.5px #000)}
+:is(#g3ui,#g3leg) .tk .br{inset:-7px;border-radius:0;background:${br} center/100% 100% no-repeat;transform:rotate(45deg) scale(.9)}
+:is(#g3ui,#g3leg) .tk .zz{left:100%;top:50%;margin:-11px 0 0 -4px;z-index:3;border-radius:0;font:700 19px/22px system-ui,sans-serif;color:#ffd23a;text-shadow:0 0 2px #000,0 1px 2px #000}
+:is(#g3ui,#g3leg) .tk .tg{left:0;top:100%;margin-top:11px;width:70px;height:6px;border-radius:3px;border:1px solid #0d151c;background:linear-gradient(90deg,#5bd66a calc(var(--tw,50)*1%),#ef5548 0)}
+:is(#g3ui,#g3leg) .tk.fi .pt{display:none}:is(#g3ui,#g3leg) .tk.fi2 .pt{display:block;margin-left:19px}
+:is(#g3ui,#g3leg) .tk .od{left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:7px;padding:0 8px;border-radius:9px;white-space:nowrap;font:700 11px/16px system-ui,sans-serif;color:#10161b;box-shadow:0 1px 3px #000a}
+:is(#g3ui,#g3leg) .tk .od.g{background:#5bd66a}:is(#g3ui,#g3leg) .tk .od.e{background:#e8b23a}:is(#g3ui,#g3leg) .tk .od.b{background:#ef5548;color:#fff}
+:is(#g3ui,#g3leg) .tk.far{width:0;height:0;margin:0;opacity:1}:is(#g3ui,#g3leg) .tk.far>i{display:none}:is(#g3ui,#g3leg) .tk.far>i.od{display:block;bottom:9px}:is(#g3ui,#g3leg) .tk.far .pt{display:block;margin-left:9px;padding:0;background:none;border:0;box-shadow:none;font:800 13px/14px system-ui,sans-serif;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 2px #000,1px 0 2px #000}:is(#g3ui,#g3leg) .tk.far .pt em,:is(#g3ui,#g3leg) .tk.far .pt small{display:none}:is(#g3ui,#g3leg) .tk.far.sel::after{inset:-11px}
+#g3ui .eta{position:absolute;left:0;top:0;display:none;white-space:nowrap;margin:-30px 0 0 -6px;padding-left:15px;font:700 12px/16px system-ui,sans-serif;color:#fff;text-shadow:0 0 2px #000,0 0 2px #000,0 1px 2px #000}
+#g3ui .eta::before{content:'';position:absolute;left:0;top:3px;width:7px;height:7px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 2px #000}
 #g3leg .tk{position:relative;display:inline-block;width:20px;height:20px;margin:0;vertical-align:middle}#g3leg .tk .fl{inset:3.5px;border-width:1.5px;background:linear-gradient(#2aa23c 33%,#f4f4ef 33% 66%,#d8261c 66%)}#g3leg .tk.far{width:10px;height:10px;border-radius:50%;background:#2aa23c;border:2px solid #f4f4ef;box-sizing:border-box}
 `;document.head.appendChild(s);}
 // ---- facts about one army, for drawing only
@@ -2522,7 +2524,7 @@ function gtkRings(){const T=G3.tok;if(T.rings&&T.rings.parent===G3.sc)return T.r
   T.rings=new THREE.InstancedMesh(gtkRingGeo(22,.045),new THREE.MeshBasicMaterial({color:0xf04a3c,side:THREE.DoubleSide,transparent:true,opacity:.95,depthTest:false,depthWrite:false}),64);T.rings.count=0;T.rings.frustumCulled=false;T.rings.renderOrder=38;G3.sc.add(T.rings);return T.rings;}
 // ---- close tier: the real army in miniature. A few figures per unit type it really has (soldiers in the nation's kit, tanks, guns, air defence,
 // helicopters, drones, ships), pooled as ONE InstancedMesh per model, inside a dashed footprint in the owner's colour (one more InstancedMesh).
-const GTK_MODEL={tank:['tank',5.4],arty:['m_msta',6],aa:['sam',4.8],heli:['heli',5.6],drone:['drone',3.4],ship:['m_frg',10]};
+const GTK_MODEL={tank:['tank',4],arty:['m_msta',4.4],aa:['sam',3.8],heli:['heli',4.4],drone:['drone',2.8],ship:['m_frg',8]};
 const GTK_MINI_STACKS=14,GTK_MINI_CAP=256;
 function gtkLoadModels(){if(G3.tokLoad||typeof parseModel!=='function'||typeof MODEL_FILES==='undefined')return;G3.tokLoad=1;
   Promise.all(['tank','m_msta','sam','heli','drone'].filter(k=>MODEL_FILES[k]).map(k=>parseModel(k).catch(()=>false))).then(()=>{G3.lblDirty=true;}).catch(()=>{});}
@@ -2531,23 +2533,25 @@ function gtkGeo(kind,fac){const C=G3.tokGeo||(G3.tokGeo={}),sol=kind==='inf'||ki
   let g=g3BakeModel(key,{fac,color:'#8c9084'},sol?3:2,sol?true:null);if(!g)return C[key]=null;
   if(sol){const cA=g.attributes.color,pA=g.attributes.position;for(let i=0;i<cA.count;i++){const ny=pA.getY(i)/3,lum=(cA.getX(i)+cA.getY(i)+cA.getZ(i))/3;let c;if(ny>.935)c=[.6,.6,.58];else if(ny>.84)c=[1,.78,.62];else if(ny<.07)c=[.2,.16,.13];else{const k=(.6+.6*Math.min(1,lum))*(ny<.5?.8:1);c=[k,k,k];}cA.setXYZ(i,c[0],c[1],c[2]);}   // plain cloth: the nation's uniform colour comes from the instance tint
     g=g3Decimate(g,.2);}
-  else{g.computeBoundingBox();let bb=g.boundingBox;if(bb.max.z-bb.min.z>bb.max.x-bb.min.x){g.rotateY(Math.PI/2);g.computeBoundingBox();bb=g.boundingBox;}const sc=M[1]/Math.max(.01,bb.max.x-bb.min.x);g.scale(sc,sc,sc);g.computeBoundingBox();g.translate(0,-g.boundingBox.min.y,0);{const cA=g.attributes.color;for(let i=0;i<cA.count;i++){const l=.5+.5*Math.min(1,(cA.getX(i)+cA.getY(i)+cA.getZ(i))/3*1.4);cA.setXYZ(i,l,l,l*.96);}}   // plain painted metal, light enough to read on the map; the nation tint comes from the instance colour
+  else{g.computeBoundingBox();let bb=g.boundingBox;if(bb.max.z-bb.min.z>bb.max.x-bb.min.x){g.rotateY(Math.PI/2);g.computeBoundingBox();bb=g.boundingBox;}const sc=M[1]/Math.max(.01,bb.max.x-bb.min.x);g.scale(sc,sc,sc);g.computeBoundingBox();g.translate(0,-g.boundingBox.min.y,0);{const cA=g.attributes.color;for(let i=0;i<cA.count;i++){const l=.38+.5*Math.min(1,(cA.getX(i)+cA.getY(i)+cA.getZ(i))/3*1.4);cA.setXYZ(i,l,l,l*.96);}}   // plain painted metal, light enough to read on the map; the nation tint comes from the instance colour
     g=g3Decimate(g,kind==='ship'?.3:.2);}
   return C[key]=g;}
 function gtkFigures(L){const cnt={};for(const a of L)for(const r of a.u){const k=a.fl?'ship':r[0];cnt[k]=(cnt[k]||0)+1;}const F=[];
   for(const k of ['inf','at','tank','arty','aa','heli','drone','ship']){const n=cnt[k]|0;if(!n)continue;const m=k==='inf'?Math.min(6,1+Math.floor(n/4)):k==='ship'?Math.min(3,n):Math.min(3,Math.ceil(n/3));for(let i=0;i<m;i++)F.push(k);}return F;}
 function gtkMinis(list,tier){const T=G3.tok;if(!T.mp)T.mp=new Map();for(const p of T.mp.values())p.n=0;let nf=0,total=0;
-  if(!T.foot||T.foot.parent!==G3.sc){T.foot=new THREE.InstancedMesh(gtkRingGeo(30,.035),new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide,depthTest:false,depthWrite:false}),GTK_MINI_STACKS);T.foot.count=0;T.foot.frustumCulled=false;T.foot.renderOrder=1;G3.sc.add(T.foot);}   /* opaque, no depth test, drawn after the land and before the figures: lies on the ground, never hides them */
+  if(!T.footD||T.footD.parent!==G3.sc){T.footD=new THREE.InstancedMesh(gtkRingGeo(30,.075),new THREE.MeshBasicMaterial({color:0x10181e,side:THREE.DoubleSide,depthTest:false,depthWrite:false}),GTK_MINI_STACKS);T.footD.count=0;T.footD.frustumCulled=false;T.footD.renderOrder=1;G3.sc.add(T.footD);}   /* dark edge under the dashes so the owner colour reads on land of the same colour */
+  if(!T.foot||T.foot.parent!==G3.sc){T.foot=new THREE.InstancedMesh(gtkRingGeo(30,.035),new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide,depthTest:false,depthWrite:false}),GTK_MINI_STACKS);T.foot.count=0;T.foot.frustumCulled=false;T.foot.renderOrder=1.5;G3.sc.add(T.foot);}   /* opaque, no depth test, drawn after the land and before the figures: lies on the ground, never hides them */
   if(tier===2&&list.length){gtkLoadModels();const cc=G3.cc,k=Math.max(.9,Math.min(1.9,cc.d/120)),D=T.d3||(T.d3=new THREE.Object3D()),col=T.c3||(T.c3=new THREE.Color());
     list.sort((a,b)=>Math.hypot(a.e.x-cc.x,a.e.z-cc.z)-Math.hypot(b.e.x-cc.x,b.e.z-cc.z)||a.a.id-b.a.id);
     for(const g of list.slice(0,GTK_MINI_STACKS)){const e=g.e,o=g.a.o,fac=grNat(o).fac,un=g3Uniform(o),nc=grNatRgb(o),F=gtkFigures(g.L);if(!F.length)continue;
       const R=(6+Math.min(5,F.length*.4))*k;let face=-Math.PI/2;if(g.st==='march'){const t=gtkTown(g.a.path[0]);face=Math.atan2(-(t[1]-e.z),t[0]-e.x);}
-      D.position.set(e.x,e.y+.4,e.z);D.rotation.set(0,0,0);D.scale.set(R,1,R*.62);D.updateMatrix();T.foot.setMatrixAt(nf,D.matrix);T.foot.setColorAt(nf,col.setRGB(.5+nc[0]/510,.5+nc[1]/510,.5+nc[2]/510));nf++;
+      D.position.set(e.x,e.y+.4,e.z);D.rotation.set(0,0,0);D.scale.set(R,1,R*.62);D.updateMatrix();T.foot.setMatrixAt(nf,D.matrix);T.footD.setMatrixAt(nf,D.matrix);T.foot.setColorAt(nf,col.setRGB(.35+nc[0]/392,.35+nc[1]/392,.35+nc[2]/392));nf++;
       F.forEach((kd,i)=>{const geo=gtkGeo(kd,fac);if(!geo)return;let p=T.mp.get(geo.uuid);
         if(!p||p.im.parent!==G3.sc){p={im:new THREE.InstancedMesh(geo,G3.matLit,GTK_MINI_CAP),n:0};p.im.frustumCulled=false;p.im.renderOrder=2;p.im.count=0;T.mp.set(geo.uuid,p);G3.sc.add(p.im);}if(p.n>=GTK_MINI_CAP)return;
         const rad=Math.sqrt((i+.5)/F.length)*.8,ang=i*2.39996+g.a.id*1.7,x=e.x+Math.cos(ang)*rad*R,z=e.z+Math.sin(ang)*rad*R*.62,air=kd==='heli'?2.4:kd==='drone'?3.2:0,sol=kd==='inf'||kd==='at';
         D.position.set(x,(e.sea?.4:Math.max(.3,g3HeightAt(x,z)))+air*k,z);D.rotation.set(0,face+(g3Hash(i,g.a.id)-.5)*.5,0);D.scale.setScalar(k);D.updateMatrix();p.im.setMatrixAt(p.n,D.matrix);
-        p.im.setColorAt(p.n,sol?col.setRGB(un[0],un[1],un[2]):col.setRGB(.55+.45*un[0],.55+.45*un[1],.55+.45*un[2]));p.n++;total++;});}}
+        p.im.setColorAt(p.n,sol?col.setRGB(un[0],un[1],un[2]):col.setRGB(.4+.6*un[0],.4+.6*un[1],.4+.6*un[2]));p.n++;total++;});}}
+  T.footD.count=nf;T.footD.visible=nf>0;if(nf)T.footD.instanceMatrix.needsUpdate=true;
   T.foot.count=nf;T.foot.visible=nf>0;if(nf){T.foot.instanceMatrix.needsUpdate=true;if(T.foot.instanceColor)T.foot.instanceColor.needsUpdate=true;}
   for(const p of T.mp.values()){p.im.count=p.n;p.im.visible=p.n>0;if(p.n){p.im.instanceMatrix.needsUpdate=true;if(p.im.instanceColor)p.im.instanceColor.needsUpdate=true;}}T.minis=total;T.feet=nf;}
 function gtkTown(pi){const p=GCM.P[pi],tw=p.land?g3Towns().find(t=>t.pi===pi):null;return tw?[tw.x,tw.z]:[p.x,p.y];}
@@ -2577,7 +2581,7 @@ function g3Tokens(tier){if(!G3.lab||!GC||!G3.cam)return;gtkCss();if(!G3.tok||G3.
     const far=tier===0,od=fan?null:odds(g),eta=st==='march'?gtkEta(a):0;let dir=0;
     if(st==='march'&&!far){const t=gtkTown(a.path[0]),q2=proj(t[0],g.e.y,t[1])||(()=>{v.set(t[0],g.e.y,t[1]).project(cam);return [(v.x*.5+.5)*w,(-v.y*.5+.5)*h];})();dir=Math.round(Math.atan2(q2[0]-q[0],-(q2[1]-q[1]))*180/Math.PI/5)*5;}
     let tw=50;if(st==='fight'&&g.fb){try{const e=gtkEst(g.fb),mineAtt=g.fb.an===me||(me&&grFriend(me,g.fb.an)),sh=e.sa/Math.max(1,e.sa+e.sd);tw=Math.round(100*(mineAtt||!(g.fb.dn===me||(me&&grFriend(me,g.fb.dn)))?sh:1-sh));}catch(e){}}
-    const cls='tk '+rel+(far?' far':'')+(sel?' sel':'')+(hv?' hv':'')+(mk.st<35?' low':'')+(mk.su<30?' dry':'')+(st==='fight'?' fi'+(g.side==='D'||!grp.has(a.at+'|D')?' fi2':''):'')+(!sel&&I.length>1&&L.some(x=>I.includes(x.id))?' gmsel':'');
+    const cls='tk '+rel+(far?' far':'')+(sel?' sel':'')+(hv?' hv':'')+(mk.st<35?' low':'')+(mk.su<30?' dry':'')+(st==='fight'?' fi'+(g.side==='D'||!grp.has(a.at+'|D')?' fi2':''):'')+(!sel&&I.length>1&&L.some(x=>I.includes(x.id))?' gmsel':'')+(od?' ho':'');
     const hsh=cls+'|'+mk.n+'|'+mk.st+'|'+mk.su+'|'+mk.stars+'|'+a.o+'|'+L.length+'|'+st+'|'+dir+'|'+tier+'|'+(od?od.k:'')+'|'+tw+'|'+(tier===2?mk.inf+','+mk.arm+','+mk.fs:'');
     if(pl._h!==hsh){pl._h=hsh;pl.className=cls;pl.style.setProperty('--st',mk.st);pl.style.setProperty('--su',mk.su);if(st==='march')pl.style.setProperty('--dir',dir+'deg');if(st==='fight')pl.style.setProperty('--tw',tw);
       const num=mk.n>=1000?(mk.n/1000).toFixed(1)+'k':mk.n,full=rel!=='oth'||sel||hv;
@@ -2587,7 +2591,7 @@ function g3Tokens(tier){if(!G3.lab||!GC||!G3.cam)return;gtkCss();if(!G3.tok||G3.
         +(full||far?'<span class="pt"><b>'+num+'</b>'+(mk.stars?'<em>'+'★'.repeat(Math.min(5,mk.stars))+'</em>':'')
           +(tier===2?'<small>'+(mk.fl?'⚓ '+mk.n+' ships':'<span title="infantry">♟ '+mk.inf+'</span> · <span title="armour">▰ '+mk.arm+'</span> · <span title="fire support">✸ '+mk.fs+'</span>')+'</small>':'')+'</span>':'');}
     const X=Math.round(q[0]+dx),Y=Math.round(q[1]),t='translate('+X+'px,'+Y+'px)';if(pl._t!==t){pl._t=t;pl.style.transform=t;}vis(pl,true);ntok++;
-    const R=far?9:rel==='oth'?11:17,cy=far?Y:Y-(rel==='oth'?18:25);G3.hit.push({aid:a.id,x:X,y:cy,r:R+5,k:g.k});for(const x of L)if(x!==a)G3.hit.push({aid:x.id,x:X,y:cy,r:R+5,k:g.k});   // the stack's front army is hit first; the rest stay reachable for box-select
+    const R=far?9:rel==='oth'?11:18,cy=far?Y:Y-(rel==='oth'?18:26);G3.hit.push({aid:a.id,x:X,y:cy,r:R+5,k:g.k});for(const x of L)if(x!==a)G3.hit.push({aid:x.id,x:X,y:cy,r:R+5,k:g.k});   // the stack's front army is hit first; the rest stay reachable for box-select
     return pl;};
   for(const g of order){const e=g.e,q=proj(e.x,e.y,e.z);if(!q)continue;const rel=gtkRel(g.a.o),sel=g.L.some(x=>x.id===selA),hv=T.hov===g.k||T.fan===g.k;
     if(g.st==='siege'&&tier>0&&nr<64){const t=gtkTown(g.a.at),r=Math.max(9,Math.hypot(e.x-t[0],e.z-t[1]));M4.makeScale(r,1,r);M4.setPosition(t[0],Math.max(.3,g3HeightAt(t[0],t[1]))+1.2,t[1]);rings.setMatrixAt(nr++,M4);}
