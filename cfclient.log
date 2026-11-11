@@ -1,0 +1,136 @@
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:44819
+[2s] pages loaded; this machine's host benchmark: 626
+[183s] 1. battle JAUW1N running on the server: true; slots creator 0, friend 1
+[187s] 2. server's standby: slot 1 (benchmarks the server holds: 40, 900)
+[187s] 3. the server is made to fall behind real time (it gets only a third of the real time)
+[214s]    after 27.6 s: server battle closed (last window 0.519x real time); creator client (room gen 1), friend host
+[220s] 4. after the takeover, t=17 s: new host 32 entities, creator's side sees 5; creator's page: missing 0, off-position 0, mismatched 0; credits host 10125 page 10125
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFOVER PASS (221s) — the server picked the strong PC as standby, handed the battle to it when it fell behind real time, and the other player stayed in sync
+local game server (wrangler dev, TEST_HOOKS) http://127.0.0.1:46653
+[2s] both pages loaded; the multiplayer menu offers "Play online" and "New battle"
+[9s] 1. three other battles take the 3 battle slots: !w started, !w started, !w started
+[10s]    server busy (busy) -> battle in this browser: "Your battle · codeMW0UXYOnlineStraits of Thunder1 / 8 playersInvite friends — send the link, or give them this code under Play online › Join"
+[11s]    the 3 lobbies closed; battle slots in use: 0
+[12s] 2. lobby open on the server, code 8RGW2C; creator status: "Your battle · code8RGW2COnlineStraits of Thunder1 / 8 playersInvite friends — send the link, or give them this code unde"
+[12s]    friend joined: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[14s]    server lobby: humans US/team 1, RU/team 2; computer CN/team 2
+[45s] 3. battle started on the server (battle, held for loading screens: true); creator is slot 0, friend slot 1
+[194s]    both pages past the loading screen (rd: true, true); battle running: true
+[200s]    slot 0's order: 2/2 of its units moved on the server
+[200s]    slot 1's order: 2/2 of its units moved on the server
+[200s]    in-battle readout (creator): "60 FPS · ping 292 ms"
+[285s]    check @1.5 min slot 0 t=90s: server 53 entities, this side sees 10; page has 10; missing 0, extra 0, off-position 0, mismatched 0; credits server 10632 page 10632
+[286s]    check @1.5 min slot 1 t=90s: server 53 entities, this side sees 30; page has 30; missing 0, extra 0, off-position 0, mismatched 0; credits server 10682 page 10682
+[286s] 4. the friend's connection to the server is cut
+[287s]    after 0.6 s the friend is reconnected via wsb
+[292s]    after reconnect slot 1 t=95s: server 52 entities, this side sees 27; page has 28; missing 0, extra 0, off-position 0, mismatched 0; credits server 10778 page 10778
+[301s] 5. the battle's object is evicted at t=104 s (as on a redeploy)
+[303s]    after 2.1 s: server battle at t=99 s; creator client via wsb (room gen 0), friend client via wsb (room gen 0)
+[308s]    after restart slot 0 t=102s: server 50 entities, this side sees 6; page has 6; missing 0, extra 0, off-position 0, mismatched 0; credits server 10830 page 10830
+[309s]    after restart slot 1 t=102s: server 50 entities, this side sees 24; page has 25; missing 0, extra 0, off-position 0, mismatched 0; credits server 10796 page 10796
+[318s] 6. today's use is pushed past 75%; standby (checkpoint holder) is slot 0; pages holding a checkpoint: true,false
+[320s]    after 2.1 s: server battle closed, today at 76.3%, battles allowed: false; creator host, friend client (room gen 1, last update 0.1 s ago)
+[323s]    new browser host at t=114 s with 51 entities; the other player's side is still theirs; its last update 0.1 s ago
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFE2E PASS (324s) — battle hosted by the real BattleRoom (wrangler dev): busy fallback, lobby, start, sync, orders, reconnect, server restart, budget hand-over all OK
+local game server http://127.0.0.1:41113
+[2s] both pages loaded
+[10s] 1. protected battle open on Cloudflare, code SLHSCE; invite link http://127.0.0.1:40475/join.html#join=slhsce&pw=Yalla%202026%20%C3%B1
+[10s]    server keeps: {"mem":{"s":"4G+f5tmwLQs63T3n7+cXgQ==","h":"mI+kgKKD2et1Fv1XkIjyxxc2Z+qKSi7taNFANy3K3Mo=","i":4000},"kept":null}
+[10s] 2. friend's game list: "🔒 Conquest · United States · game SLHSCE · Straits of Thunder · 1/8 playersJoin"
+[10s]    "Play online" with no password: started its own battle (did not join the protected one)
+[11s]    wrong password -> "Wrong password. Try again.JoinCancel"
+[12s]    right password -> "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"; creator's lobby has 2 players
+[14s] 3. invite link joined in one go; address bar now /index.html#join=slhsce
+[17s] 4. browser-hosted 5EN0IQ: join by code asks "🔒 Game 5EN0IQ is password protected. Enter its password to join.JoinC"
+[37s]    right password -> friend: "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): WebSocket connection to 'ws://127.0.0.1:41113/battle/gc-5en0iq?role=client&id=ww3p-oy5i1zj9' failed: Error during WebSocket handshake: Unexpected response code:
+
+CFPASSWORD PASS (38s) — password-protected games: lock in the list, wrong password refused, right password and invite link join, server keeps only a hash, browser-hosted fallback checks it too
+local game server http://127.0.0.1:36921
+[1s] page loaded
+[104s] 1. skirmish (mouse): picks [0,3,-1,1], AI 2 Random -> spot 7; bases [[1239,5998],[6683,1174],[5803,6161],[9193,1174]]; HQs on their bases: true (preview 22866 bytes)
+[174s] 2. phone (touch only): picks [0,3,-1,1] made by tapping; picker fits in landscape too ({"cv":739.625,"over":0,"rows":true})
+[196s] 3. leader's Cloudflare lobby 123ncd
+[198s]    friend joined
+[199s]    computer player added
+[200s]    lobby picks [4,2,6]
+[371s] 3. Cloudflare battle 123NCD: picks [4,2,6]; both see bases [[1159,3508],[3508,5612],[5429,5765]]; the friend's HQ in the server's snapshots stands on its spot
+[378s]    computer player added
+[398s] 4. browser-hosted 7OSN59: picks [4,2,6]; host and friend both see bases [[1159,3508],[3508,5612],[5429,5765]]; the host's HQs stand on them
+  warn: player console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: phone console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: screenshot startpick-phone.png: page.screenshot: Expected options.clip.height to be greater than 0.
+  warn: screenshot startpick-phone-landscape.png: page.screenshot: Expected options.clip.height to be greater than 0.
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: friend console (ignored): WebSocket connection to 'ws://127.0.0.1:36921/room/gc-7osn59?role=client&id=ww3p-wij3mjlf' failed: Error during WebSocket handshake: Unexpected response code: 4
+
+CFSTARTPICK PASS (398s) — start spots picked by click, tap and Start menu; skirmish, Cloudflare and browser-hosted battles put every base on its spot, and host and players agree
+local game server http://127.0.0.1:46193 (pages reach it through http://127.0.0.1:36651); over-budget server http://127.0.0.1:43777
+[4s] 0. menu: "▶ Play online" and "+ New battle"
+[11s] 1. server busy (busy) -> battle in this browser; lobby: "Your battle · codeD2WNSUOnlineStraits of Thunder1 / 8 playersInvite friends — send the link, or give them this code under Play online › Join"
+[11s] 2. lobby open on the server, code S87G82; creator status: "Your battle · codeS87G82OnlineStraits of Thunder1 / 8 playersInvite friends — send the link, or give them this code unde"
+[11s] friend's game list: "1 open game · 0 in progressConquest · United States · game S87G82 · Straits of Thunder · 1/8 playersJoin👁 Watch"
+[12s] friend joined with "Play online": "Joined. 2 players in the lobby. Waiting for the leader to start the battle…"
+[13s] server lobby (as the friend sees it): player US/team 1, player RU/team 2, computer CN/team 2
+[45s] 3. battle started; creator is slot 0, friend slot 1
+[207s] both pages past the loading screen
+[208s]   creator: {"mode":"client","me":0,"snapT":60,"rx":150,"recon":false,"via":"wsb","peer":"ww3p-n5vtf7nu","host":"ww3-s87g82","gen":0,"ai":false}
+[209s]   friend: {"mode":"client","me":1,"snapT":89.4,"rx":0,"recon":false,"via":"wsb","peer":"ww3p-siioat0p","host":"ww3-s87g82","gen":0,"ai":false}
+[209s]   proxy sockets: [{"path":"/lobby","code":null,"id":null},{"path":"/lobby","code":null,"id":null},{"path":"/battle/s87g82","code":"s87g82","id":"ww3p-n5vtf7nu"},{"path":"/battle/s87g82","code":"s87g82","id":"ww3p-siioat0p"}]
+[214s] the server's battle clock advances on the creator's page: 174.4 s -> 176.4 s
+[220s] slot 0's orders acknowledged by the server; 0/0 of its units moved in the server's updates
+[220s] slot 1's orders acknowledged by the server; 2/2 of its units moved in the server's updates
+[220s] in-battle readout (creator): "60 FPS · ping 66 ms"
+[221s] @3.0 min slot 0: server checkpoint (2.7 s older) has 1 buildings + 0 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[221s] @3.0 min slot 1: server checkpoint (2.7 s older) has 1 buildings + 4 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[221s] @3.0 min: the pages' latest states are 0.00 s apart; 4 things both see, 0 differ
+[221s] 4. the friend's connection to the server is cut (1 socket)
+[221s]   back after 0.6 s
+[224s] friend reconnected via wsb (room gen 0); its side has 6 units/buildings (had 6)
+[234s] after the friend reconnected slot 0: server checkpoint (7.5 s older) has 1 buildings + 0 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[234s] after the friend reconnected slot 1: server checkpoint (7.8 s older) has 1 buildings + 5 units for this side; page: 0 buildings differ, 0 units missing, 0 units too far off, 0 not on the server
+[234s] after the friend reconnected: the pages' latest states are 0.22 s apart; 4 things both see, 0 differ
+[245s] 5. the server restarted (battle at 201 s); pages reconnect
+  ✗ the pages did not get back into the battle after the server restarted
+[294s] 6. the server's battle vanishes for good; pages holding a checkpoint: true,false
+[354s] after 60.1 s: creator client (room gen 0, last update 115.0 s ago), friend client (room gen 0, last update 114.8 s ago)
+  ✗ no player took over the battle after the server lost it
+[354s]   creator: {"mode":"client","me":0,"snapT":200.7,"rx":114995,"recon":false,"via":"wsb","peer":"ww3p-n5vtf7nu","host":"ww3-s87g82","gen":0,"ai":false}
+[354s]   friend: {"mode":"client","me":1,"snapT":201,"rx":114794,"recon":false,"via":"wsb","peer":"ww3p-gad7zcms","host":"ww3-s87g82","gen":0,"ai":false}
+[354s]   proxy sockets: [{"path":"/lobby","code":null,"id":null},{"path":"/lobby","code":null,"id":null}]
+--- server log (tail) ---
+
+ ⛅️ wrangler 4.153.0 (update available 4.160.0)
+───────────────────────────────────────────────
+[custom build] Running: node build-sim.mjs
+[custom build] battle sim up to date: gen/battle-sim.js (804 KB)
+[custom build] 
+Your Worker has access to the following bindings:
+Binding                             Resource                  Mode
+env.ROOMS (GameRoom)                Durable Object            local
+env.LOBBY (Lobby)                   Durable Object            local
+env.BUDGET (Budget)                 Durable Object            local
+env.BATTLES (BattleRoom)            Durable Object            local
+env.OVERRUN_GUARD ("(hidden)")      Environment Variable      local
+
+⎔ Starting local server...
+[wrangler:info] Ready on http://127.0.0.1:42609
+[wrangler:info] GET /health 200 OK (333ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (11ms)
+[wrangler:info] GET /lobby 101 Switching Protocols (3ms)
+
+creator log: ["Connection lost. Reconnecting…","Connection lost. Reconnecting…","Connection lost. Reconnecting…","Connection lost. Reconnecting…","Connection lost. Reconnecting…"]
+friend log: ["Connection lost. Reconnecting…","Connection lost. Reconnecting…","Connection lost. Reconnecting…","Connection lost. Reconnecting…","Connection lost. Reconnecting…"]
+  warn: friend console (ignored): Failed to load resource: net::ERR_FAILED
+  warn: creator console (ignored): Failed to load resource: net::ERR_FAILED
+
+CFCLIENT FAIL: the pages did not get back into the battle after the server restarted (355s)
+  ✗ no player took over the battle after the server lost it
