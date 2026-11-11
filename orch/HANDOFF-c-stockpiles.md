@@ -22,3 +22,7 @@ Sources: REAL-2026.md "Shells and guided bombs". Guards: grandtest "military fea
 Local: build --check OK; grandtest military blocks clean (run cut off by the slow sandbox after the mirror battles); decisions/smoke timed out locally without a failure line → CI gate is the judge.
 To land: rebase on origin/main, `python3 orch/build.py`, `orch/cigate.sh`, push when the RIGHT NOW bullet allows; then delete branch `taken/c-stockpiles`.
 Next slices unchanged: Fight-it draw-down of missiles/interceptors, "Ask an ally", fleets' magazines, per-nation rows for the estimated nations, enemy stock as an estimate.
+
+Gate (2026-11-11 14:45Z): the GitHub run for this branch failed in ALL 28 jobs before any test started — the runner could not reach the Ubuntu package servers
+("Temporary failure resolving security.ubuntu.com" during `npx playwright install --with-deps`, step Tools). The two gate runs before it (13:14Z, 13:44Z) ended the same way.
+So there is NO gate verdict for this slice yet: re-run `orch/cigate.sh` when the runners can install again, before landing.
