@@ -1,11 +1,11 @@
-# STATE — conductor run 3 on 2026-11-11, 12:50 UTC onward (third train being tested)
+# STATE — conductor run 3 on 2026-11-11, 12:50–14:35 UTC (third train built and tested twice, NOT landed)
 
 **Main = ac59908f** (train 2). Main's own test run after that landing is RED on two tests: `gate/tutorial` (TUTORIAL FAIL (1)) and
 `gate/cfclient` (its text says PASS but the status is failure). The same commit was all green on its train run an hour earlier, so both
 look flaky, but nobody owns them right now. smooth-pc / smooth-mp / grandsmooth are green on main. The "RIGHT NOW" bullet in CLAUDE.md stays
 until main's own run is fully green.
 
-**Train 3 = `train/20261111-1252`, head e0e78614, test run `gate/e0e7861459`** (started 13:14 UTC):
+**Train 3, saved as `orch/conductor-train3` (a4ef3e71), ready for the next run — nothing landed this run:**
 1. Calm map 4 (orch/calmmap4): close view shows only capital name plates, guard against look-alike neighbour colours — e9c4eb1d
 2. Calm map flag follow-up (orch/calmmap 1a0865f0): army flags wave only in the close view or on the selected army — 36ff6c59
 3. Campaign panels + Readability (orch/polishP2): one frame, close X, Esc; text size 100/115/130 %; colour-blind set — 9f01f2ce
@@ -55,7 +55,25 @@ were run once on the finished train instead of after every merge (results at the
 - **Army standards** (`taken/army-standards`, 11.5 h) — concept sheet on the lock only; work-in-progress exists only as test branch gate/6a19d97447 (red).
 - Nobody has pushed any helper branch in the last 2 hours except this conductor: the builders look stopped again.
 
-RESULT_PLACEHOLDER
+## Result of this run: NOTHING LANDED — exactly why
+
+- Test run 1 (`gate/e0e7861459`, all 28 reported): red = `decisions` (new) + `cfclient` (same odd state as main: text says PASS, status failure).
+  decisions failed on the American-spelling guard: the Campaign panels + Readability piece (polishP2, written before that rule) brings the
+  text "Colour-blind mode (safe team colours ...)" in src/08n-readable.js line 37. tutorial was GREEN on the train (red on main).
+- Fix: ran the repo's own fixer `python3 orch/american.py` (one line changed: Color-blind / colors), rebuilt.
+- Test run 2, the one allowed re-test (`gate/767aad5102`, 25 of 28 reported): decisions green, but `save` red (new) and `cfclient` red with a real failure
+  this time ("the creator gets no fresh battle state from the server", live Cloudflare server test, has been flaky).
+  save failed inside the piece's own check (orch/polishtest.mjs line 152): it counts Settings labels matching /Colour-blind|Text size/, so the
+  fixed American label no longer matched. The piece's test and the American-spelling rule contradict each other. Rule says: still red after one re-test, land nothing.
+- smooth-pc, smooth-mp and grandsmooth were GREEN on both runs; mpsync, grand, grandlive, tutorial, audio green on both.
+- Local on the train: build + --check OK after every merge, SMOKE PASS (639 s), DECISIONS PASS (after the fixer). grandtest was too slow to finish here; `gate/grand` passed twice on GitHub.
+
+**For the next conductor run (should be quick):** `orch/conductor-train3` = main ac59908f + the three pieces + the spelling fix + a one-word change in
+orch/polishtest.mjs (/Colou?r-blind|Text size/, accepts both spellings; not tested on GitHub yet). QUEUE ticks and HISTORY lines are already in it.
+Rebase it on origin/main if main moved (rebuild), gate ONCE; it lands if save turns green and cfclient is no worse than main's.
+If cfclient fails for real again, re-run only that job once (it talks to the live server) before blaming the train.
+The old `train/20261111-1252` branch was removed by its own creator (this run) so the next run is not put on stand-by; its content is the branch above.
+
 
 ---
 (previous runs below)
