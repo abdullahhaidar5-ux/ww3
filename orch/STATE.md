@@ -1,89 +1,62 @@
-# STATE — conductor run 2026-11-11 08:00–10:45 UTC (train landed)
+# STATE — conductor check 2026-11-11 10:50–11:05 UTC (stand-by run: state only, no train)
 
-**LANDED on main = f3b7f596** (train `train/20261111-0801`, one tested push, fast-forward):
-1. Maps fix: fairer starts on Marshes, Bosphorus, Bab el-Mandeb, Homs Gap + lighter map sweep (56f1ad34)
-2. American spelling in all game text (bb4c2212) — fixer re-run after each merge (2 leftovers fixed: calm map comment text, Playtest card)
-3. Playtest card in Extras (2bc6375b)
-4. Proxy warfare, finished piece (8e7cdd97, commit 7ba01be)
-5. War support at home, slice 1 (72854034)
-(Calm map was in the train too, but its own helper landed it first as 0ac7cde6; train merged that main in.)
+**Why no train this run:** another conductor run is working. `train/20261111-1037` (d927b63a, saved 10:38 UTC, 5 commits ahead of
+main, not landed) = grand map colours (one political palette), every country findable, real capital names, quieter roads,
+softer mountains (mapfix3 + mtnfix pieces). At 11:00 UTC it had no test statuses yet. This run did step 1 only, as the rules say.
 
-**Train gate (gate/f3b7f596b5):** 27 of 27 reported gates green. `gate/audio` failed once (step f/i, streaming — the same failure
-main 0ac7cde6 shows and unrelated commits show) and PASSED on a re-run of that one job. **`gate/mapsweep` did NOT finish: cancelled by its
-45-minute limit.** Main already had mapsweep red (37 static issues, 0/247 battles, commit 36f5a496), so nothing got worse, but
-**map fairness is still unproven** — owner: orch/mapfix3 (active). Local on the train: build --check + SMOKE PASS after every merge;
-decisions/grandtest were too slow in the sandbox (>10 min, killed) and ran green on GitHub instead.
+**Main = f3b7f596** (train 0801: maps fix, American spelling, Playtest card, proxy warfare, war support slice 1).
+**All 27 reported gates on main are GREEN**, including smooth-pc, smooth-mp, grandsmooth, audio, plus deploy/site.
+(`gate/mapsweep` reports no status on main — it was cancelled by its 45-min limit last run; map fairness still unproven, owner mapfix3.)
+**The "RIGHT NOW" bullet in CLAUDE.md is stale** (its six gates are green). It should come out with the next landing — the train in
+progress or ORCH; not pushed alone (main is for landings only).
 
-**CLAUDE.md:** "Save early" rule added. "RIGHT NOW" bullet NOT removed: the six gates it names are green, but main is not fully green
-(audio flaky, mapsweep red). ORCH should rewrite that bullet — it is stale.
+## Helpers with unlanded work (pushed in the last 30 h), read 10:55 UTC
 
-**Runner note:** GitHub runners were slow (gate run queued ~10 min, whole gate ~75 min). A second conductor run at 08:55 correctly stood by.
+Reds are from each helper's own newest test run. Main is green now, so every red below is that piece's own problem or a flaky
+test (audio and cfclient have been flaky) — each needs a fresh run on today's main before it can ride a train.
 
-## Helpers (branches with unlanded work, pushed in the last 30 h) — read at 09:25 UTC, before the landing
-
-| idea (branch) | last save (UTC) | ahead of main | stopped note | newest own test run | red tests |
+| idea (branch) | last save | ahead | stopped note | newest own test run | red tests |
 |---|---|---|---|---|---|
-| mapfix3 | 11-11 09:11 | 4 | - | 7d2ba3e0ba | 2/28 done; red:  |
-| calmmap | 11-11 09:07 | 2 | yes | 0fa0b84f28 | 24/28 done; red: cfclient tutorial  |
-| conductor | 11-11 08:52 | 1 | - | 32cb2a1142 | 28/28 done; red: cfclient audio  |
-| c-supply | 11-11 08:26 | 1 | yes | 8d9cac556d | 19/28 done; red: cfclient  |
-| mtnfix | 11-11 08:16 | 3 | - | 4d08b0ae72 | 28/28 done; red:  |
-| extras-battle | 11-11 02:49 | 1 | - | 60d5e246b5 | 28/28 done; red: grandlive migrate-down  |
-| lang-campaign | 11-11 02:45 | 3 | - | 0aee49223e | 28/28 done; red: check  |
-| armytokens | 11-11 02:44 | 6 | yes | 4eeb0c339c | 28/28 done; red: tutorial decisions mpsync  |
-| greenK4 | 11-11 02:43 | 4 | yes | 7f9d5a1c86 | 28/28 done; red:  |
-| seamless-flow | 11-11 02:38 | 1 | - | e1c344c7d8 | 28/28 done; red: audio smooth-pc  |
-| calmmap3 | 11-11 02:36 | 2 | - | 4d08b0ae72 | 28/28 done; red:  |
-| extras-command | 11-11 02:28 | 1 | - | 4a7c989031 | 28/28 done; red: cfclient smooth-pc audio  |
-| speedS | 11-11 02:23 | 3 | yes | cf33e78fb7 | 28/28 done; red: cfclient  |
-| lang-battle | 11-11 02:22 | 2 | - | 59e1b4a184 | 28/28 done; red: cfclient  |
-| c-escalation | 11-11 02:16 | 3 | yes | f2c87c9246 | 28/28 done; red: tutorial  |
-| greenK3 | 11-11 02:13 | 3 | yes | 7f9d5a1c86 | 28/28 done; red:  |
-| extras-story | 11-11 01:58 | 1 | - | d1aef6c3d2 | 28/28 done; red: controls cfclient  |
-| c-proxy-warfare | 11-11 01:57 | 8 | yes | 7ba01be22e | 28/28 done; red:  |
-| onelanguage | 11-11 01:52 | 5 | - | none | - |
-| c-war-support | 11-11 01:51 | 2 | yes | 08d47f4962 | 28/28 done; red: audio  |
-| c-stockpiles | 11-11 01:15 | 4 | yes | 1e83008733 | 28/28 done; red: audio tutorial cfclient  |
-| q-american | 11-11 01:10 | 1 | - | 18fe3019c2 | 27/28 done; red:  |
-| loop-playtest | 11-11 01:08 | 1 | - | 5aafe339e0 | 28/28 done; red: audio  |
-| voicesV | 11-10 19:52 | 3 | yes | d19894f02f | 28/28 done; red: cfclient audio  |
-| polishP2 | 11-10 17:59 | 1 | - | 1e53c43f14 | 28/28 done; red: cfclient tutorial smooth-mp  |
-| greenK | 11-10 16:11 | 1 | yes | none | - |
-| safetyH | 11-10 13:58 | 3 | yes | 5dfef609ec | 28/28 done; red: smooth-mp grand audio tutorial decisions cfclient  |
-| c-proxy | 11-10 13:50 | 1 | yes | none | - |
-| dashJ | 11-10 13:48 | 2 | yes | 673e996495 | 28/28 done; red: smooth-mp audio tutorial decisions grand mpsync migrate-dual cfclient  |
-| greenK-qfeel | 11-10 13:27 | 9 | - | none | - |
-| greenK-snap | 11-10 13:27 | 6 | - | none | - |
-| winfix | 11-10 12:23 | 1 | - | effcba30a0 | 27/28 done; red: grand cfclient tutorial decisions smooth-mp  |
-| loop-grand-snap | 11-10 09:59 | 1 | - | 35e7ecdf54 | 28/28 done; red: tutorial smooth-mp icons cfclient decisions grand  |
-| q-sound | 11-10 08:36 | 1 | - | a210f9ee06 | 28/28 done; red: tutorial smooth-mp grand cfclient decisions  |
-| loop-autosave | 11-10 07:39 | 2 | - | none | - |
-| leadersC | 11-10 07:39 | 3 | yes | none | - |
-| dashI | 11-10 07:24 | 3 | yes | none | - |
-| speedD | 11-10 04:45 | 1 | - | none | - |
+| Calm map 4 (calmmap4) | 15 min ago | 6 | yes | none of its own | - |
+| Real supply (c-supply) | 1.4 h | 2 | yes | 8d9cac556d | cfclient |
+| Map fix 3 (mapfix3) — IN TRAIN 1037 | 1.6 h | 4 | - | 7d2ba3e0ba | audio |
+| Calm map (calmmap, leftovers) | 1.7 h | 2 | yes | 0fa0b84f28 | cfclient, tutorial |
+| Softer mountains (mtnfix) — IN TRAIN 1037 | 2.6 h | 3 | - | none of its own | - |
+| Extras: battle (extras-battle) | 8 h | 1 | - | 60d5e246b5 | grandlive, migrate-down |
+| One language: campaign (lang-campaign) | 8 h | 3 | - | 0aee49223e | check (build check fails) |
+| Army tokens (armytokens) | 8 h | 6 | yes | 4eeb0c339c | decisions, mpsync, tutorial |
+| greenK4 notes | 8 h | 4 | yes | 7f9d5a1c86 | none |
+| Seamless flow (seamless-flow) | 8 h | 1 | - | e1c344c7d8 | audio, **smooth-pc** (look change: blocked) |
+| Calm map 3 (calmmap3) | 8 h | 2 | - | none of its own | - |
+| Extras: command (extras-command) | 8.4 h | 1 | - | 4a7c989031 | audio, cfclient, **smooth-pc** (blocked) |
+| Speed S (speedS) | 8.5 h | 3 | yes | cf33e78fb7 | cfclient |
+| One language: battle (lang-battle) | 8.5 h | 2 | - | 59e1b4a184 | cfclient |
+| Escalation (c-escalation) | 8.6 h | 3 | yes | f2c87c9246 | tutorial |
+| greenK3 notes | 8.6 h | 3 | yes | 7f9d5a1c86 | none |
+| Extras: story (extras-story) | 8.9 h | 1 | - | d1aef6c3d2 | cfclient, controls |
+| Proxy warfare leftovers (c-proxy-warfare) | 8.9 h | 1 | yes | landed piece 7ba01be | - |
+| One language spec (onelanguage) | 9 h | 5 | - | none | - |
+| Stockpiles (c-stockpiles) | 9.6 h | 4 | yes | 1e83008733 | audio, cfclient, tutorial |
+| Voices V (voicesV) | 15 h | 3 | yes | d19894f02f | cfclient, audio (old main) |
+| Polish P2 (polishP2) | 17 h | 1 | - | 1e53c43f14 | measured on old red main |
+| greenK | 19 h | 1 | yes | none | - |
+| Safety H (safetyH) | 21 h | 3 | yes | 5dfef609ec | measured on old red main |
+| Proxy (c-proxy, old) | 21 h | 1 | yes | none | - |
+| Dashboard J (dashJ) | 21 h | 2 | yes | 673e996495 | measured on old red main |
+| greenK-qfeel / greenK-snap | 21 h | 9 / 6 | - | none | - |
+| Win fix (winfix) | 22 h | 1 | - | effcba30a0 | measured on old red main |
+| Grand snapshot loop, Sound, Autosave loop, Leaders C, Dashboard I, Speed D | 25–30 h | 1–3 | some | old or none | - |
 
-Reds on runs older than ~6 h were measured against the old red main (cfclient, tutorial, decisions, smooth-mp, grand were red there) —
-those pieces need a fresh gate on today's main before they can ride a train.
+Fully landed (0 ahead): q-feel, q-look, q-american, loop-playtest, c-war-support, q-words, q-ai.
 
 ## Locks with nothing saved (90+ min, no work branch)
 
 - **Real war** (`taken/realwar`, 9 h) — nothing saved.
 - **Seamless HUD** (`taken/seamless-hud`, 9 h) — nothing saved.
-(`taken/c-real-supply` → orch/c-supply; `taken/army-standards` → orch/armytokens.)
+- **Army standards** (`taken/army-standards`, 9.5 h) — only a concept sheet saved on the lock itself, no work branch.
 
-## Stopped / not ready, and why
+## For the next conductor run
 
-- Army Standards tokens (armytokens): own gate red on decisions, mpsync, tutorial — needs its helper.
-- One setup for all three games (seamless-flow), Edge alerts (extras-command): look changes with smooth-pc red on their own gate — blocked.
-- Commander's radio (extras-battle): grandlive + migrate-down red. Main menu shows your war (extras-story): controls red.
-- Battle report card / Front page (lang-campaign): `check` red (build out of date).
-- Stuck-units fixes + controls feel (greenK-snap, greenK-qfeel, dashI; landing try 1bb5e663): mpsync red — nobody is working on it.
-- Stockpiles (c-stockpiles), Escalation (c-escalation): tutorial red on old main — need a fresh gate.
-- polishP2, safetyH, dashJ, q-sound, loop-grand-snap, loop-autosave, leadersC, speedD, voicesV: parked 12–28 h, gated on old red main or not at all.
-- winfix: already on main (e57b7661) — nothing to do.
-
-## Next train (order)
-
-1. One language 3 (lang-battle) and UK/AU/CA voices (voicesV) — were same-as-main; 2. calmmap follow-ups (calmmap head, calmmap3, mtnfix) once their gates finish;
-3. Real supply slice 1 (c-supply) after its gate; 4. Stockpiles, Escalation after a fresh gate; 5. frame-time governor (speedS) last.
-All pieces must first merge today's main and re-run the American spelling fixer (`python3 orch/american.py`), or `gate/decisions` goes red.
+1. If train 1037 has not landed and is older than 110 min, pick it up: gate it, land if clean, and remove the stale "RIGHT NOW" bullet.
+2. Candidates worth a fresh gate on today's main (own reds were only flaky audio/cfclient): c-supply, lang-battle, speedS, calmmap4, calmmap3.
+3. Not ready: lang-campaign (build check), armytokens (decisions/mpsync/tutorial), seamless-flow and extras-command (smooth-pc), extras-battle, extras-story, c-escalation, c-stockpiles (tutorial).
