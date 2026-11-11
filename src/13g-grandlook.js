@@ -9,7 +9,7 @@ function g3LoadReal(){if(G3.real||G3.realTry)return;G3.realTry=1;
   Promise.all([ld('grand/elev.png?v=2'),ld('grand/color.jpg?v=3'),ld('grand/hi_me.jpg?v=2').catch(()=>null)]).then(([eb,cb,hb])=>{
     if(hb){try{const h=px(hb);G3.hi={d:g3GradeColor(h.data,h.width*h.height),w:h.width,h:h.height,r:[.555,.22333333,.14,.25]};}catch(e){G3.hi=null;}}
     const e=px(eb),c=px(cb),E=new Float32Array(e.width*e.height);for(let k=0;k<E.length;k++)E[k]=e.data[k*4]*256+e.data[k*4+1]-11000;
-    G3.real={E,EW:e.width,EH:e.height,col:c.data,CW:c.width,CH:c.height};}).catch(()=>{G3.realFail=1;});}
+    G3.real={E,EW:e.width,EH:e.height,col:c.data,CW:c.width,CH:c.height};setTimeout(()=>{try{if(typeof g3ForestRefresh==='function')g3ForestRefresh();}catch(e){console.warn('forest refresh',e);}},0);}).catch(()=>{G3.realFail=1;});}
 // ground colour grade (satellite -> rich, slightly warm, a little darker than the washed-out raster)
 function g3GradeColor(col,n){const o=new Uint8ClampedArray(n*4);
   for(let k=0;k<n;k++){let r=col[k*4]/255,g=col[k*4+1]/255,b=col[k*4+2]/255;const l=.3*r+.59*g+.11*b,sat=1.85;r=l+(r-l)*sat;g=l+(g-l)*sat;b=l+(b-l)*sat;
@@ -19,7 +19,7 @@ function g3GradeColor(col,n){const o=new Uint8ClampedArray(n*4);
 // Called at the end of g3Fields(): swaps the hand-shaped relief/colour for the real data and bakes sun shadows + valley AO + relief normals.
 function g3RealFields(F){const R=G3.real,W=F.W,H=F.H,E=R.E,EW=R.EW,Hh=F.Hh,Ls=F.Ls,Lw=F.Lw,N=W*H;
   const hm=new Float32Array(N);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const o=2*y*EW+2*x;hm[y*W+x]=(E[o]+E[o+1]+E[o+EW]+E[o+EW+1])/4;}
-  const SC=.0078;F.hm=hm;
+  const SC=.0040,SK=.0078/SC,NG=.42;F.hm=hm; // relief height: 5,000 m = 20 map units (was 39 - ranges stood like walls); SK keeps the rock paint where it was; NG = shading steepness (was .7 on the taller relief: every slope lit like a cliff)
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,ls=Ls[k],m=hm[k],coast=g3Smooth(.4,.8,ls),n=g3Fbm(x*.02,y*.02,4);
     const landH=coast*(1+n*1.3)+Math.max(0,m)*SC;
     const sea=Math.min(-.8+Math.min(0,Math.max(m,-4500))/500,-.8-4*Math.pow(1-Lw[k],2));Hh[k]=sea+(landH-sea)*g3Smooth(.42,.6,ls);}
@@ -33,7 +33,7 @@ function g3RealFields(F){const R=G3.real,W=F.W,H=F.H,E=R.E,EW=R.EW,Hh=F.Hh,Ls=F.
   const bw=new Uint8Array(N*4),sx=CW/W,sy=CH/H,col=R.col;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,ci=(Math.min(CH-1,Math.floor((y+.5)*sy))*CW+Math.min(CW-1,Math.floor((x+.5)*sx)))*4,r=col[ci]/255,g=col[ci+1]/255,b=col[ci+2]/255;
     const mx=Math.max(r,g,b),mn=Math.min(r,g,b),lum=.3*r+.59*g+.11*b,sat=mx>0?(mx-mn)/mx:0,coast=g3Smooth(.4,.8,Ls[k]),m=hm[k];
-    const hl=Hh[y*W+Math.max(0,x-1)],hr=Hh[y*W+Math.min(W-1,x+1)],hu=Hh[Math.max(0,y-1)*W+x],hd=Hh[Math.min(H-1,y+1)*W+x],sl=Math.hypot(hr-hl,hd-hu)/4;
+    const hl=Hh[y*W+Math.max(0,x-1)],hr=Hh[y*W+Math.min(W-1,x+1)],hu=Hh[Math.max(0,y-1)*W+x],hd=Hh[Math.min(H-1,y+1)*W+x],sl=Math.hypot(hr-hl,hd-hu)/4*SK;
     const rock=Math.max(g3Smooth(.35,1.3,sl)*coast,g3Smooth(2600,4300,m)*.9),snow=Math.max(g3Smooth(3900,5200,m),g3Smooth(.82,.93,lum)*(1-g3Smooth(.07,.15,sat))*coast);
     const sand=Math.max(g3Smooth(.12,.26,(r-b))*g3Smooth(.55,.72,lum)*(1-g3Smooth(.0,.06,g-r)),g3Smooth(.5,.58,Ls[k])*(1-g3Smooth(.62,.8,Ls[k])));
     const veg=g3Smooth(-.04,.05,g-r)*coast*(1-sand);
@@ -52,7 +52,7 @@ function g3RealFields(F){const R=G3.real,W=F.W,H=F.H,E=R.E,EW=R.EW,Hh=F.Hh,Ls=F.
     h2[y*LW+x]=up+(m>0&&um>0?(m-um)*SC*(1-F.fl[a]*.9):0);}}
   for(let y=0;y<LH;y++)for(let x=0;x<LW;x++){const k=y*LW+x,xl=Math.max(0,x-1),xr=Math.min(LW-1,x+1),yu=Math.max(0,y-1),yd=Math.min(LH-1,y+1);
     const nx=-(h2[y*LW+xr]-h2[y*LW+xl])/2,nz=-(h2[yd*LW+x]-h2[yu*LW+x])/2,q=((y>>1)*W+(x>>1)),o=k*4;
-    lit[o]=Math.max(0,Math.min(255,(nx*.7*.25+.5)*255));lit[o+1]=Math.max(0,Math.min(255,(nz*.7*.25+.5)*255));lit[o+2]=Math.min(255,sh[q]*255);lit[o+3]=Math.min(255,ao[q]*235);}
+    lit[o]=Math.max(0,Math.min(255,(nx*NG*.25+.5)*255));lit[o+1]=Math.max(0,Math.min(255,(nz*NG*.25+.5)*255));lit[o+2]=Math.min(255,sh[q]*255);lit[o+3]=Math.min(255,ao[q]*235);}
   F.lit=lit;F.LW=LW;F.LH=LH;}
 // water depth for the sea shader (0 shore .. 1 abyss) from the real bathymetry
 function g3SeaDepth(F,k){return F.hm?Math.max(0,Math.min(1,-F.hm[k]/3800)):Math.max(0,Math.min(1,(1-F.Lw[k])*1.2));}

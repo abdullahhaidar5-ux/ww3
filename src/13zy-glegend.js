@@ -5,7 +5,7 @@
 // sides >= 3000 army value and the weaker >= 30% of the stronger), 1 legend per province per year, so no cheap farming.
 // Style flavour (name only, EQUAL value for all four styles): Zealous martyr shrine · Professional regimental honours ·
 // Home defenders "never again" site · Firepower-reliant victory monument.
-const GLEG_NAME={zeal:'Martyrs’ shrine',prof:'Regimental honours',home:'“Never again” memorial',fire:'Victory monument'};
+const GLEG_NAME={zeal:'Martyrs’ shrine',prof:'Regimental honors',home:'“Never again” memorial',fire:'Victory monument'};
 const GLEG_MIN=3000,GLEG_RATIO=.3,GLEG_MONTHS=12;
 function glStyle(c){try{return MORALE_STYLE[grNat(c).fac]||MORALE_STYLE[c]||'home';}catch(e){return 'home';}}
 function glSide(ids){let v=0;for(const a of GC.armies)if(ids.includes(a.id))v+=grArmyVal(a);return v;}
