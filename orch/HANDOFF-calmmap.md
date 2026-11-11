@@ -1,12 +1,13 @@
-# HANDOFF calmmap (2026-11-11, second run)
+# calmmap notes (landed on main 2026-11-11)
 
-Branch `orch/calmmap` (src/13e-grand3d.js, 13g-grandlook.js, 13c-grandui.js, orch/grandtest.mjs, orch/calmshots.mjs). Built and ready; NOT on main.
+Branch `orch/calmmap` (src/13e-grand3d.js, 13g-grandlook.js, 13c-grandui.js, orch/grandtest.mjs, orch/calmshots.mjs). Landed on main 2026-11-11 (merge after 7c7caba).
 
 What it does
-- ONE zoom tier `g3Zoom(d)`: far d>=440 (world + region buttons), middle 250-440, close <250. Used by labels, badges, army figures, trees, towns, flags.
+- ONE zoom tier `g3Zoom(d)`: far d>=600 (world view and wider than a region button), middle 250-600 (the region buttons open here; town clusters and small countries' capital plates join below d=400), close <250. Used by labels, badges, army figures, trees, towns, flags.
 - Far: owner colours + country names, <=13 capital plates (you, enemies, neighbours, majors), only your armies and your enemies' (figure + badge); no trees, towns, flags.
 - Middle: one badge per province (yours/enemies bold, allies normal, others small and faint); figures only for you, enemies, allies; smaller plates that give way to higher-priority plates and your badges; no trees.
 - Close: everything as before; trees fade in between d=250 and d=200.
+- First-minute tips are a compact strip (same text) that goes away on Got it, the first right-click order or after 60 s; sea names are fainter outside the close view.
 - Map key starts folded (`SET.g3leg==='open'` only after a click), never open together with the first-minute tips; Political button CSS fixed.
 
 Why forests stood on the Sahara (found in the second run)
@@ -17,4 +18,4 @@ Why forests stood on the Sahara (found in the second run)
 Guards: orch/grandtest.mjs "calmmap" block (key folded; woods in LY/EG/SA with stand-in <=250 each and with real data <=25 each; far = 0 trees, <=15 plates, no foreign badges/figures; middle = 0 trees, no two badges for one province; close brings all figures back). Local result: stand-in [154,80,79], real [3,1,2].
 Pictures: `node orch/calmshots.mjs after` -> orch/shots/calmmap/ (before-* were taken on main with the stand-in land cover, as ORCH saw it).
 
-To land: rebase on origin/main, `python3 orch/build.py`, `orch/cigate.sh`; land only when gate/smooth-mp is green on main (CLAUDE.md "RIGHT NOW": look changes wait) and smooth-pc / smooth-mp / grandsmooth are green on the commit. The full orch/grandtest.mjs was NOT finished locally (sandbox too slow, killed after the calmmap block passed) - trust CI's gate/grand.
+Note: the full orch/grandtest.mjs is too slow for the cloud sandbox; gate/grand on GitHub is the proof.

@@ -286,7 +286,7 @@ try {
   // ---- calmmap guards: the map gets calmer as you zoom out (Abdullah 2026-11-10 "too busy"); trees only where forests grow
   await page.waitForFunction(() => !!G3.real || !!G3.realFail, null, { timeout: 120000 }).catch(() => {});
   const calm = await ev(async () => { const out = {}; const set = d => { G3.camera.d = G3.cc.d = d; G3.moved = true; g3ForestTick(true); g3Labels(true); };
-    const leg = document.getElementById('g3leg'); out.legShut = !!leg && /shut/.test(leg.className); out.coachLegend = !!document.getElementById('gCoach') && !!leg && !/shut/.test(leg.className);
+    const leg = document.getElementById('g3leg'); out.legShut = !!leg && /shut/.test(leg.className); out.coachLegend = !!document.getElementById('gCoach') && !!leg && !/shut/.test(leg.className); { const c = document.getElementById('gCoach'); out.coachH = c ? Math.round(c.getBoundingClientRect().height) : 0; }
     // woods (conifer + broadleaf trees) per desert country, from the tree pool: first with the made-up stand-in land cover (real data not loaded), then with the real satellite land cover
     const woods = () => { const au = g3TreeAudit(); return au ? ['LY', 'EG', 'SA'].map(k => au[k] ? au[k].conifer + au[k].broad : 0).concat([au.dryWoods || 0, au.DE ? au.DE.conifer + au.DE.broad : 0]) : null; };
     const R = G3.real; out.hasReal = !!R; G3.real = null; g3ForestRefresh(true); out.standIn = woods(); out.standInReal = G3.forest.real;
@@ -296,7 +296,7 @@ try {
     const mine = GC.armies.filter(a => a.o === GC.me).length;
     set(2300); out.far = { tier: G3.tier, trees: G3.trees, mine, ...vis() }; set(350); out.mid = { tier: G3.tier, trees: G3.trees, ...vis() }; set(150); out.close = { tier: G3.tier, trees: G3.trees, figs: vis().figs }; set(900); return out; });
   console.log('calmmap', JSON.stringify(calm));
-  if (!calm.legShut) fails.push('calmmap: the map key is not folded on a new campaign'); if (calm.coachLegend) fails.push('calmmap: tips and the map key are open together');
+  if (!calm.legShut) fails.push('calmmap: the map key is not folded on a new campaign'); if (calm.coachLegend) fails.push('calmmap: tips and the map key are open together'); if (calm.coachH > 90) fails.push('calmmap: the first-minute tips are a big box again (' + calm.coachH + ' px high)');
   if (!calm.hasReal) fails.push('calmmap: the real land data (grand/color.jpg) did not load');
   if (!calm.standIn || calm.standInReal || calm.standIn[3] !== 0 || calm.standIn.slice(0, 3).some(n => n > 250) || calm.standIn[4] < 50) fails.push('calmmap: stand-in land cover puts woods in the deserts (LY, EG, SA, dry belts, DE for contrast) ' + JSON.stringify(calm.standIn));
   if (calm.hasReal && (!calm.real || !calm.realFlag || calm.real.slice(0, 3).some(n => n > 25) || calm.real[4] < 50)) fails.push('calmmap: real land cover puts woods in desert countries (LY, EG, SA; DE for contrast) ' + JSON.stringify(calm.real));
