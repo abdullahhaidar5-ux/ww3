@@ -369,8 +369,8 @@ try {
     const woods = () => { const au = g3TreeAudit(); return au ? ['LY', 'EG', 'SA'].map(k => au[k] ? au[k].conifer + au[k].broad : 0).concat([au.dryWoods || 0, au.DE ? au.DE.conifer + au.DE.broad : 0]) : null; };
     const R = G3.real; out.hasReal = !!R; G3.real = null; g3ForestRefresh(true); out.standIn = woods(); out.standInReal = G3.forest.real;
     if (R) { G3.real = R; g3ForestRefresh(true); out.real = woods(); out.realFlag = G3.forest.real; }
-    const vis = () => { let pl = 0; for (const b of G3.bn) if (b.el._v === 'block') pl++; const at = [], dup = []; let foreign = 0; for (const [k, e] of G3.pl) if (e._v === 'block') { const a = k.split('|')[0], o = k.split('|')[1]; if (at.includes(a)) dup.push(a); at.push(a); if (o !== GC.me && !grAtWar(GC.me, o)) foreign++; }
-      g3Batch(); let figs = 0; for (const p of G3.bat.b.values()) figs += p.n || 0; return { plates: pl, badges: at.length, dup: dup.length, foreign, figs }; };
+    const vis = () => { let pl = 0; for (const b of G3.bn) if (b.el._v === 'block') pl++; let foreign = 0; for (const e of G3.pl.values()) if (e._v === 'block' && / oth/.test(e.className) && !/ sel/.test(e.className)) foreign++;   /* armytokens: the badges are the army tokens now (src/13e3-gtokens.js) */
+      const au = gtkAudit(); return { plates: pl, badges: au.tokens, dup: au.perProv > 1 ? au.perProv : 0, foreign, figs: au.figs }; };
     // calmmap4: map colours — countries that face each other across a narrow sea count as neighbours and never look alike, for every playable nation
     { const A = grPalAdj(); out.seaMiss = [['EG', 'SA'], ['IR', 'SA'], ['IR', 'AE'], ['IR', 'KW'], ['GR', 'TR'], ['IT', 'HR'], ['IT', 'AL'], ['ES', 'MA'], ['GB', 'FR'], ['SA', 'SD'], ['SA', 'ER']].filter(p => !(A.get(p[0]) && A.get(p[0]).has(p[1]))).map(p => p.join('-'));
       out.palBad = []; for (const me of GM_NATS.map(r => r[0]).filter(c => FACTIONS[c] && c !== 'EU').concat([''])) { const b = grPaletteBad(me); if (b.length) out.palBad.push((me || 'none') + ':' + b.join(',')); } }
@@ -418,12 +418,12 @@ try {
     return { foe, from: GCM.P[pair[0]].n, to: GCM.P[pair[1]].n, aid: a.id, ok: !!r.ok, units: a.u.length, to_i: pair[1] }; });
   console.log('scenario', JSON.stringify(sc)); if (sc.err || !sc.ok) { fails.push('scenario: ' + JSON.stringify(sc)); throw new Error('no scenario'); }
   await shot('army-ordered');
-  // ---- armytokens guards (Army Standards, orch/concepts/ARMY-STANDARDS.md): one token per army or stack, no figure blobs / waving flags at any tier, far = dots only, odds = the auto-resolve estimate
+  // ---- armytokens guards (Army Standards, orch/concepts/ARMY-STANDARDS.md): one token per army or stack, never two markers in one province, no figures at far / middle zoom, a waving flag only on the selected army, far = dots only, odds = the auto-resolve estimate
   const tk = await ev(() => { const out = {}; const set = d => { G3.camera.d = G3.cc.d = d; G3.moved = true; cancelAnimationFrame(G3.raf); g3Frame(performance.now()); g3Labels(true); return gtkAudit(); };
-    out.gone = ['g3FlagMesh', 'g3FlagMat', 'g3MiniGeo', 'g3NavyGeo', 'g3Batch', 'g3FarGeo', 'g3WakeMesh', 'g3Plinth', 'g3ShadowMesh'].filter(n => typeof window[n] === 'function');
+    out.gone = ['g3FarGeo', 'g3FarCol', 'g3FarHide', 'gtkMinis', 'gtkFigures'].filter(n => typeof window[n] === 'function');
     const me = GC.me, a = GC.armies.find(x => x.id === GV.selA), to = a.path[a.path.length - 1], foe = GC.armies.find(x => grAtWar(me, x.o) && !GCM.P[x.at].sea && !x.fl), old = foe ? foe.at : -1; if (foe) { foe.at = to; foe.path = []; } g3SyncArmies(); const d0 = G3.camera.d;
     out.far = set(2300); out.farNum = [...G3.pl.values()].filter(e => e._v === 'block').every(e => / far/.test(e.className));
-    out.mid = set(350); const on = q => [...document.querySelectorAll(q)].filter(e => { for (let p = e; p && p.id !== 'g3ui'; p = p.parentNode) if (p._v === 'none') return false; return true; });
+    out.mid = set(350); { const sv = GV.selA; GV.selA = 0; out.midNoSel = set(350); GV.selA = sv; set(350); } const on = q => [...document.querySelectorAll(q)].filter(e => { for (let p = e; p && p.id !== 'g3ui'; p = p.parentNode) if (p._v === 'none') return false; return true; });
     out.march = on('#g3ui .tk.me .ar').length; out.eta = on('#g3ui .eta').map(e => e.textContent); out.pill = on('#g3ui .tk.war .od').map(e => e.textContent);
     out.close = set(150); out.make = on('#g3ui .tk.me .pt small').length; out.foe = !!foe;
     // the pill's numbers against the real auto-resolve with the dice at zero (then every unit is put back)
@@ -432,11 +432,13 @@ try {
     if (foe) foe.at = old; g3SyncArmies(); set(d0); return out; });
   console.log('armytokens', JSON.stringify(tk));
   if (tk.gone.length) fails.push('armytokens: old army drawing code is still there: ' + tk.gone.join(','));
-  for (const k of ['far', 'mid', 'close']) { if (tk[k].old) fails.push('armytokens: ' + k + ' view still has old shields / figure / flag meshes (' + tk[k].old + ')'); if (tk[k].dup) fails.push('armytokens: ' + k + ' view draws an army twice (' + tk[k].dup + ')'); if (!tk[k].tokens) fails.push('armytokens: ' + k + ' view draws no army at all'); }
-  if (tk.far.tier !== 0 || !tk.far.dotsOn || !tk.far.dots || !tk.farNum || tk.far.minis || tk.far.rings) fails.push('armytokens: far view is not dots and numbers only ' + JSON.stringify(tk.far));
-  if (tk.mid.tier !== 1 || tk.mid.dotsOn || tk.mid.far || tk.mid.minis) fails.push('armytokens: middle view is not tokens only ' + JSON.stringify(tk.mid));
+  for (const k of ['far', 'mid', 'close']) { if (tk[k].old) fails.push('armytokens: ' + k + ' view still has old shield badges (' + tk[k].old + ')'); if (tk[k].flags > tk[k].sel) fails.push('armytokens: ' + k + ' view flies ' + tk[k].flags + ' flags (only the selected army may fly one)'); if (tk[k].dup) fails.push('armytokens: ' + k + ' view draws an army twice (' + tk[k].dup + ')'); if (!tk[k].tokens) fails.push('armytokens: ' + k + ' view draws no army at all'); }
+  if (tk.far.tier !== 0 || !tk.far.dotsOn || !tk.far.dots || !tk.farNum || tk.far.figs > tk.far.sel || tk.far.rings) fails.push('armytokens: far view is not dots and numbers only ' + JSON.stringify(tk.far));
+  if (tk.mid.tier !== 1 || tk.mid.dotsOn || tk.mid.far || tk.mid.figs > tk.mid.sel) fails.push('armytokens: middle view is not tokens only ' + JSON.stringify(tk.mid));
+  if (tk.mid.perProv > 1 || tk.midNoSel.perProv > 1) fails.push('armytokens: middle view draws more than one army marker in a province (' + tk.mid.perProv + ')');
+  if (tk.midNoSel.flags || tk.midNoSel.figs) fails.push('armytokens: middle view with no army selected still draws ' + tk.midNoSel.figs + ' figures / ' + tk.midNoSel.flags + ' flags');
   if (!tk.march || !tk.eta.some(t => /^\d+ days?$/.test(t))) fails.push('armytokens: marching army shows no arrow nose / arrival in days ' + JSON.stringify(tk.eta));
-  if (tk.close.tier !== 2 || !tk.make) fails.push('armytokens: close view shows no make-up counts');
+  if (tk.close.tier !== 2 || !tk.make) fails.push('armytokens: close view shows no make-up counts'); if (!tk.close.figs) fails.push('armytokens: close view shows no on-land army figures');
   if (tk.foe && (!tk.pill.length || !tk.pill.every(t => /^(Good odds|Even fight|Bad odds)$/.test(t)))) fails.push('armytokens: no odds pill on the enemy army in reach ' + JSON.stringify(tk.pill));
   if (!tk.est || tk.est[0] !== tk.est[2] || tk.est[1] !== tk.est[3]) fails.push('armytokens: odds are not the auto-resolve estimate ' + JSON.stringify(tk.est));
   await ev(() => { GC.armies.filter(a => a.o !== 'IR').forEach(a => { a.path = []; }); guEndTurn(); });   // (foe armies stay put so the fight is predictable)
