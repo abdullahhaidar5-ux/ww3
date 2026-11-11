@@ -600,11 +600,32 @@ for(const k in NEWNAT){const N=NEWNAT[k],B=FACTIONS[N.base];const u={};for(const
 for(const k of ['IR','RS','DW','KP']){FACTIONS[k].tunnels=true;FACTIONS[k].doctrine+=' Tunnel warfare: hidden tunnels move units across the map instantly.';}
 const FKEYS=Object.keys(FACTIONS).filter(k=>k!=='EU');   // nations-a1: the EU retires as a nation (Abdullah 2026-11-05 19:54) - FACTIONS.EU stays only as the hidden base row FR/DE are built from and for old saves/replays; it is in no lobby, menu or AI list
 // Rock-paper-scissors: what each kind of unit beats and what beats it (shown in the unit tooltips).
-const COUNTER={inf:'Beats AT teams and other infantry · Loses to tanks and artillery · Takes 35% less damage in woods or beside buildings; gets suppressed under heavy fire',at:'Beats tanks, vehicles and helicopters · Loses to riflemen',hacker:'Disables buildings · Loses to any armed unit',
-  hero:'Picks off infantry from long range · Loses to vehicles',champ:'Elite squad: tough, accurate, one special ability (see the button when selected) · Loses to massed armour and artillery · Only one at a time',harv:'Gathers supply · Also resupplies ammo around it · Unarmed',dozer:'Builds and repairs · Unarmed',tank:'Beats infantry, AA vehicles and artillery · Loses to AT teams and helicopters · Thickest armour in front: side hits do 20% more damage, rear hits 60% more',
-  aa:'Beats helicopters, jets and drones · Loses to tanks and infantry',arty:'Beats infantry and buildings from long range · Loses to tanks and fast units up close',
-  drone:'Explodes on groups of vehicles and infantry · Loses to AA and rifle fire',heli:'Beats tanks and vehicles · Loses to AA and AT teams',jet:'Bombs buildings and vehicles · Loses to SAM sites and AA',
-  boat:'Beats boats and helicopters near water · Loses to warships',ship:'Shells coasts and boats from long range · Loses to boats up close and aircraft'};
+/* One language, idea 3 (orch/concepts/ONE-LANGUAGE.md): what every unit BEATS and is WEAK TO is COMPUTED from the real
+   balance numbers (VS + stats/bstats) by this one helper - never write such lists by hand (guard: orch/decisions.mjs).
+   matchE(a,b) = share of an equal-cost force of b that a destroys per second (0 = cannot hit it at all);
+   matchR(a,b) = exchange ratio dollar for dollar, including who outranges whom; >= MATCH_WIN "beats", <= 1/MATCH_WIN "weak to".
+   UNOTE keeps only the tactical notes that are not a counter list. View/UI only: the simulation never reads these. */
+const UNOTE={inf:'Takes 35% less damage in woods or beside buildings; gets suppressed under heavy fire',hacker:'Disables buildings',hero:'Picks off infantry from long range',
+  champ:'Elite squad: tough, accurate, one special ability (see the button when selected) · Only one at a time',harv:'Gathers supply · Also resupplies ammo around it',dozer:'Builds and repairs',
+  tank:'Thickest armour in front: side hits do 20% more damage, rear hits 60% more',drone:'Explodes on groups of vehicles and infantry',ship:'Shells coasts and boats from long range'};
+const MATCH_K=['inf','at','tank','aa','arty','heli','jet','drone'],MATCH_SEA=['boat','ship','sub'],MATCH_B=['turret','sam'],MATCH_WIN=1.5,matchC={};
+function matchS(fac,k){return STRUCT[k]?Object.assign({},bstats(fac,k),{armor:'bld',dom:'ground',spd:0}):stats(fac,k);}
+function matchE(a,b){if(!a||!b||a.noAttack||!(a.dmg>0)||!a.wpn)return 0;if(a.navalOnly&&b.dom!=='naval')return 0;if(b.sub&&!(a.dom==='naval'||a.cls==='heli'||a.sonar))return 0;
+  if(b.dom==='air'){if((a.aa||0)<(b.alt==='high'?2:1))return 0;}else if(a.ground===false)return 0;   /* same rules as canTarget() in 03-sim */
+  const v=(VS[a.wpn]||{})[b.armor]||0;if(!v)return 0;const grp=b.armor==='light'&&a.splash?1+Math.min(1.5,a.splash/40):1,hp=b.hp||1,ac=a.cost||1,bc=b.cost||1;   /* blasts catch several soldiers */
+  if(a.wpn==='boom'&&a.dom==='air')return Math.min(1,a.dmg*v*grp/hp)*bc/ac/8;   /* a one-way drone spends itself on one hit */
+  return a.dmg*v*grp/(a.rof||1)*(a.ammo?.35:1)/hp*bc/ac;}   /* a.ammo: flies home to rearm between passes */
+function matchR(a,b){const x=matchE(a,b),y=matchE(b,a);if(!x&&!y)return 1;
+  const free=(p,q,e)=>q.armor==='bld'?(p.rng>q.rng*1.1?1:0):Math.min(.9,e*Math.max(0,p.rng-q.rng)/(q.spd||40));   /* share of q lost before it gets into its own range (a building never gets there) */
+  const fx=free(a,b,x),fy=free(b,a,y);return Math.max(1/9,Math.min(9,(x*(1-fy)+.0004)/(y*(1-fx)+.0004)));}
+function matchUp(fac,kind,foe){foe=foe&&FACTIONS[foe]?foe:fac;const key=fac+'|'+kind+'|'+foe+(realRow(fac)?'|R':'');if(matchC[key])return matchC[key];
+  const a=matchS(fac,kind),sea=a.dom==='naval'||a.navalOnly,have=allUnits(foe),beats=[],weak=[];
+  for(const k of [...MATCH_K,...MATCH_B,...(sea?MATCH_SEA:[])]){if(!STRUCT[k]&&!have.includes(k))continue;if(STRUCT[k]&&!bldAllowed(foe,k))continue;const b=matchS(foe,k),r=matchR(a,b);
+    if(r>=MATCH_WIN)beats.push({k,b:!!STRUCT[k],r,e:matchE(a,b),n:b.name});else if(r<=1/MATCH_WIN)weak.push({k,b:!!STRUCT[k],r,e:matchE(b,a),n:b.name});}
+  beats.sort((p,q)=>q.e-p.e);weak.sort((p,q)=>q.e-p.e);return matchC[key]={beats,weak,armed:!!(a.dmg>0&&!a.noAttack)};}
+function matchText(fac,kind,foe,n){const m=matchUp(fac,kind,foe),L=l=>l.slice(0,n||3).map(x=>x.n).join(', ');return [m.beats.length?'Beats '+L(m.beats):m.armed?'':'Unarmed',m.weak.length?'Weak to '+L(m.weak):''].filter(Boolean).join(' · ');}
+/* which of my units beat this enemy (stats object of a unit; a building passes isB) */
+function matchBeaters(fac,es,isB){const b=isB?Object.assign({},es,{armor:'bld',dom:'ground',spd:0}):es,out=[];for(const k of allUnits(fac)){if(conqBan(k))continue;const a=stats(fac,k);if(a.fake)continue;const r=matchR(a,b);if(r>=MATCH_WIN)out.push({k,r,e:matchE(a,b),n:a.name});}return out.sort((p,q)=>q.e-p.e);}
 const SHIA={IR:1,RS:1,DW:1};
 /* leadersC (Abdullah 2026-11-07 22:38 "Keep ayatollah dear leader bunker buster and mountain fortress in conquest and battle" + "in campaign they don't play into the battles"): back in standalone Conquest, Battle, Missions and the sandbox; OUT of grand-campaign Fight-it battles (G.grand). Same nations only (orch/SIGNATURES.md). */
 const BB_NAT={US:1,IL:1,RU:1,CN:1},FORT_NAT={IR:1,RS:1,AF:1,KD:1,DW:1,KP:1};
