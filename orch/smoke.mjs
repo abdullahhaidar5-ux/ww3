@@ -100,6 +100,13 @@ try {
     console.log(`3D models: ${m.n} of ${m.of} ready=${m.ready} ${m.err} (page open to models ready: ${(m.t / 1000).toFixed(1)}s)`);
     if (!m.ready) warns.push('3D models did not load at the menu: ' + m.err); }
   await shot(page, 'menu.png');
+  { // Playtest card (Extras): 10 things to try, thumbs + note per row, and the saved file carries the votes
+    const pt = await page.evaluate(() => { if (typeof wwPlaytest !== 'function') return { no: 1 }; wwPlaytest(); const o = document.getElementById('idPlay');
+      const rows = o ? o.querySelectorAll('.ptrow').length : 0; const v = o && o.querySelector('.ptv'); if (v) v.click(); const d = wwPlaytestData(); if (v) v.click();
+      const menu = [...document.querySelectorAll('button.mxi')].some(b => b.textContent === 'Playtest card'); if (o) o.hidden = true;
+      return { rows, save: !!document.getElementById('ptSave'), vote: d.items[0] && d.items[0].vote, kind: d.kind, n: d.items.length, menu }; });
+    if (pt.no || pt.rows !== 10 || !pt.save || pt.vote !== 1 || pt.kind !== 'ww3-playtest' || pt.n !== 10 || !pt.menu) fails.push('Playtest card (Extras) is broken: ' + JSON.stringify(pt));
+    else console.log('Playtest card: 10 things to try, votes saved into the file'); }
   if (!ART) { // lazy grand campaign: not in the page at load, loads on the menu button, and the page then has the whole campaign
     const pre = await page.evaluate(() => ({ g: typeof grandMenu, btn: !!document.getElementById('grandBtn'), file: typeof GRAND_FILE === 'string' && GRAND_FILE }));
     if (pre.g !== 'undefined' || !pre.btn || !pre.file) fails.push(`lazy grand: before opening, grandMenu is ${pre.g}, button ${pre.btn}, GRAND_FILE ${pre.file} (expected undefined, true, a file name)`);

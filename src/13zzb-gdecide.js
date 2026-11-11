@@ -13,14 +13,14 @@
 const GPOL_CAT={pol:'Political',dip:'Diplomatic',mil:'Military'}, GPOL_SLOTS=3, GPOL_UP=1, GPOL_ENACT=10;
 // [id, pool, name, [idea groups needed — 'nat' = the nation's own national tree], rows, plain text]
 const GPOL=[
-  ['po_inv','pol','Public Investment Programme',['nat','eco'],[{stat:'income',mul:1.04}],'+4% income'],
+  ['po_inv','pol','Public Investment Program',['nat','eco'],[{stat:'income',mul:1.04}],'+4% income'],
   ['po_civ','pol','Civic Integration',['eco','dip'],[{stat:'unrest',add:-2}],'-2 unrest in every province'],
   ['po_cen','pol','Strong Central Government',['nat','mil'],[{stat:'ppPol',mul:1.08},{stat:'warSupport',add:.02}],'+8% Political points, +2% war support'],
   ['po_trc','dip','Trade Corridors',['eco','dip'],[{stat:'income',mul:1.03}],'+3% income'],
   ['po_sof','dip','Soft-Power Diplomacy',['nat','dip'],[{stat:'ppDip',mul:1.1}],'+10% Diplomatic points'],
   ['po_int','dip','Alliance Interoperability',['dip','mil'],[{stat:'ppMil',mul:1.1}],'+10% Military points'],
   ['po_cad','mil','Combined-Arms Doctrine',['nat','mil'],[{stat:'manpower',mul:1.08}],'+8% manpower'],
-  ['po_ind','mil','Defence Industry',['eco','mil'],[{stat:'upkeep',mul:.95}],'-5% army upkeep'],
+  ['po_ind','mil','Defense Industry',['eco','mil'],[{stat:'upkeep',mul:.95}],'-5% army upkeep'],
   ['po_rrf','mil','Rapid Reaction Forces',['dip','mil'],[{stat:'forceLimit',mul:1.06}],'+6% force limit']];
 GMOD_COND.pol=(k,arg)=>{const N=GC&&GC.nat[k];return !!(N&&N.pol&&N.pol.indexOf(arg)>=0);};
 for(const p of GPOL)p[4].forEach((v,i)=>{const r={id:'pol_'+p[0]+'_'+i,src:p[2]+' (policy)',scope:'nation',stat:v.stat,cond:'pol:'+p[0]};if(v.add)r.add=v.add;if(v.mul)r.mul=v.mul;GMOD_ROWS.push(r);});
@@ -50,8 +50,8 @@ const gdecAlive=c=>!!(GC.nat[c]&&!GC.nat[c].dead);
 GCR_FN.dec_enrich=code=>{const N=gnkN(code);if(N.st===1){N.st=2;N.p=0;}else if(N.st===2)N.p=Math.min(GNK.months[2]-1,N.p+3);
   for(const [o,d] of [['US',-15],['IL',-20],['GB',-8],['FR',-8],['DE',-8],['SA',-6],['AE',-6]])if(gdecAlive(o))gdRel(o,code,d);
   let un='';if(gdecAlive('US')&&typeof unPropose==='function'&&!unSanctioned(code)){const e=unPropose('US','sanction',code,true);un=e?'':' · the US takes sanctions to the UN';}
-  grLog('WORLD: '+gdNatName(code)+' announces enrichment to 90% — Western capitals condemn the move.','');return 'Programme accelerated · Western and Gulf opinion falls'+un;};
-GCR_FN.dec_mob=code=>{const e=gmbSet(code,2);return e?e:'General mobilisation ordered';};
+  grLog('WORLD: '+gdNatName(code)+' announces enrichment to 90% — Western capitals condemn the move.','');return 'Program accelerated · Western and Gulf opinion falls'+un;};
+GCR_FN.dec_mob=code=>{const e=gmbSet(code,2);return e?e:'General mobilization ordered';};
 GCR_FN.dec_infl=code=>{const N=ginN(code);N.infl=Math.max(0,Math.min(GIN_MAX,(N.infl||0)+2));return 'Inflation +2%';};
 GCR_FN.dec_defl=code=>{const N=ginN(code);N.infl=Math.max(0,(N.infl||0)-2);return 'Inflation -2%';};
 GCR_FN.dec_west=code=>{for(const o of ['US','GB','FR','DE','PL','IT'])if(gdecAlive(o))gdRel(o,code,-6);return 'Western opinion -6';};
@@ -63,7 +63,7 @@ GEV_ROWS.push(
  {id:'dc_unity',t:'The unity government strains',x:'A year on, coalition partners argue over the war\'s aims and the budget.',w:0,c:'always',ai:1,o:[
   {t:'Keep the emergency coalition together',fx:[['mod','income',-.02,6,'Coalition bargains'],['ws',2]]},
   {t:'Dissolve it and return to normal politics',fx:[['un',3],['stab',-1]]}]},
- {id:'dc_imf',t:'Lenders review the programme',x:'The fund\'s mission says subsidies must be cut further before the next tranche is released.',w:0,c:'always',ai:0,o:[
+ {id:'dc_imf',t:'Lenders review the program',x:'The fund\'s mission says subsidies must be cut further before the next tranche is released.',w:0,c:'always',ai:0,o:[
   {t:'Cut fuel and bread subsidies',fx:[['cash',800],['un',6]]},
   {t:'Refuse and lose the next tranche',fx:[['mod','income',-.02,12,'Loan tranche withheld'],['un',-2]]}]});
 const gdecWar=c=>gdEnemies(c).length>0;
@@ -73,7 +73,7 @@ const gdecStab=c=>GC.nat[c].stab|0;
 // row: {id, n, who:[codes] (absent = any nation), x: why/what it is, req:[[test(c), text]], cost:{cash,pol,dip,mil}, fx: event effects, once / cd: months, ai(c)}
 const GDEC=[
  {id:'ir_enr90',who:['IR'],n:'Enrich uranium to 90%',x:'Our centrifuges hold uranium enriched to 60%. Raising it to weapons-grade 90% shortens the road to a warhead by months — but the West will answer with sanctions and threats.',
-  req:[[c=>{const s=gnkN(c).st;return s===1||s===2;},'Our nuclear programme is under way (enrichment or test-ready)']],cost:{pol:50,cash:600},
+  req:[[c=>{const s=gnkN(c).st;return s===1||s===2;},'Our nuclear program is under way (enrichment or test-ready)']],cost:{pol:50,cash:600},
   fx:[['fn','dec_enrich'],['ws',4]],once:1,ai:c=>(grAtWar(c,'US')||grAtWar(c,'IL'))&&GC.nat[c].pp.pol>=90},
  {id:'sa_v2030',who:['SA'],n:'Vision 2030 megaprojects',x:'Pour oil money into new cities, tourism and industry to wean the economy off crude. Expensive, and the bill comes due if oil prices sag.',
   req:[[c=>gdecStab(c)>=0,'Stability 0 or higher']],cost:{cash:1500,pol:30},
@@ -92,25 +92,25 @@ const GDEC=[
   fx:[['un',-5],['mod','income',.03,48,'Federal oil law'],['rel','KD',15],['rel','US',5],['rel','RV',-6]],once:1,ai:c=>GC.nat[c].pp.pol>=110},
  {id:'ru_fleet',who:['RU'],n:'Expand the shadow tanker fleet',x:'Buy old tankers under flags of convenience to keep oil exports flowing past the price cap. Europe will push back.',
   req:[],cost:{cash:700,dip:20},fx:[['mod','income',.04,24,'Shadow fleet'],['fn','dec_west']],cd:24,ai:c=>gdecCash(c)>=1500},
- {id:'ua_age',who:['UA'],n:'Lower the mobilisation age',x:'Call up younger men to refill the brigades. The front gets fresh troops; families and the cities do not take it well.',
+ {id:'ua_age',who:['UA'],n:'Lower the mobilization age',x:'Call up younger men to refill the brigades. The front gets fresh troops; families and the cities do not take it well.',
   req:[[gdecWar,'We are at war']],cost:{pol:40},fx:[['man',120],['ws',-4],['un',5]],once:1,ai:c=>(GC.nat[c].e?GC.nat[c].e.man:0)<40},
  {id:'cn_stim',who:['CN'],n:'Infrastructure stimulus',x:'Borrow for railways, grids and housing to lift growth. It works — and adds to debt and prices.',
   req:[],cost:{cash:1200},fx:[['mod','income',.05,36,'Stimulus'],['fn','dec_infl']],cd:36,ai:c=>gdecCash(c)>=3200},
- {id:'jp_def',who:['JP'],n:'Raise defence spending to 2% of GDP',x:'Double the defence budget over a few years: more ships, missiles and stockpiles, paid for by tax rises.',
-  req:[],cost:{cash:1000,pol:30},fx:[['mod','forceLimit',.08,120,'Defence build-up'],['mod','income',-.03,120,'Defence taxes'],['rel','CN',-6],['rel','US',6]],once:1,ai:c=>gdecCash(c)>=1800},
- {id:'de_fund',who:['DE'],n:'Defence special fund',x:'Set a large off-budget fund for the armed forces. Allies cheer; the borrowing feeds inflation.',
-  req:[],cost:{pol:30},fx:[['mod','forceLimit',.08,60,'Defence fund'],['fn','dec_infl'],['rel','PL',5],['rel','UA',5]],once:1,ai:c=>GC.nat[c].pp.pol>=80},
- {id:'kp_test',who:['KP'],n:'Missile test over the sea',x:'Fire a ballistic missile over the sea to show strength. Crowds cheer at home; neighbours protest.',
+ {id:'jp_def',who:['JP'],n:'Raise defense spending to 2% of GDP',x:'Double the defense budget over a few years: more ships, missiles and stockpiles, paid for by tax rises.',
+  req:[],cost:{cash:1000,pol:30},fx:[['mod','forceLimit',.08,120,'Defense build-up'],['mod','income',-.03,120,'Defense taxes'],['rel','CN',-6],['rel','US',6]],once:1,ai:c=>gdecCash(c)>=1800},
+ {id:'de_fund',who:['DE'],n:'Defense special fund',x:'Set a large off-budget fund for the armed forces. Allies cheer; the borrowing feeds inflation.',
+  req:[],cost:{pol:30},fx:[['mod','forceLimit',.08,60,'Defense fund'],['fn','dec_infl'],['rel','PL',5],['rel','UA',5]],once:1,ai:c=>GC.nat[c].pp.pol>=80},
+ {id:'kp_test',who:['KP'],n:'Missile test over the sea',x:'Fire a ballistic missile over the sea to show strength. Crowds cheer at home; neighbors protest.',
   req:[],cost:{mil:20,cash:200},fx:[['ws',5],['rel','KR',-10],['rel','JP',-10],['rel','US',-8],['rel','CN',-2]],cd:12,ai:c=>GC.nat[c].pp.mil>=80},
  // generic decisions — every nation
- {id:'g_emerg',n:'Declare a state of emergency',x:'Curfews, checkpoints and special powers. Unrest drops fast; business suffers and neighbours criticise.',
+ {id:'g_emerg',n:'Declare a state of emergency',x:'Curfews, checkpoints and special powers. Unrest drops fast; business suffers and neighbors criticize.',
   req:[[c=>gdecUn(c)>=30||gdecStab(c)<=-1,'Average unrest 30 or more, or stability -1 or lower']],cost:{pol:25},
   fx:[['un',-10],['mod','income',-.03,6,'State of emergency'],['rel','$nb',-4]],cd:24,ai:c=>gdecUn(c)>=45},
  {id:'g_aust',n:'Austerity budget',x:'Cut spending and subsidies to balance the books. Inflation cools, but people take to the streets.',
   req:[[c=>gdecCash(c)<600||((typeof ginN==='function'?ginN(c).infl:0)>=5),'Treasury below $600 or inflation 5% or more']],cost:{pol:20},
   fx:[['mod','upkeep',-.08,12,'Austerity'],['mod','income',.04,12,'Austerity'],['un',8],['stab',-1],['fn','dec_defl']],cd:36,ai:c=>gdecCash(c)<0},
- {id:'g_mob',n:'General mobilisation',x:'Call up all reserves now (same order as the Mobilisation tab). Neighbours notice and the economy feels it.',
-  req:[[gdecWar,'We are at war'],[c=>gmbLv(c)<2,'Not already on general mobilisation']],cost:{mil:GMB_COST[2]},noPay:1,fx:[['fn','dec_mob']],ai:()=>false},
+ {id:'g_mob',n:'General mobilization',x:'Call up all reserves now (same order as the Mobilization tab). Neighbors notice and the economy feels it.',
+  req:[[gdecWar,'We are at war'],[c=>gmbLv(c)<2,'Not already on general mobilization']],cost:{mil:GMB_COST[2]},noPay:1,fx:[['fn','dec_mob']],ai:()=>false},
  {id:'g_imf',n:'Request an IMF loan',x:'Emergency credit from the international lender, on condition of reforms: subsidy cuts and tight budgets for years.',
   req:[[c=>gdecCash(c)<1000,'Treasury below $1,000'],[c=>!(typeof unSanctioned==='function'&&unSanctioned(c)),'Not under UN sanctions']],cost:{dip:20},
   fx:[['cash',2500],['mod','income',-.04,36,'Loan repayments'],['un',5],['chain','dc_imf',12]],cd:48,ai:c=>gdecCash(c)<-500}];

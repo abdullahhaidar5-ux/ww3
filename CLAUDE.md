@@ -40,6 +40,7 @@ Describe each change in plain words a player would understand.
 - **One system per idea:** read `orch/SYSTEMS.md`, extend the owner of your idea, never add a second system for the same job. New sim state goes into the checkpoint (`src/07b-ckpt.js`) so saves and host migration work; new hotkeys go in the one key table.
 - **Kaizen & lanes:** read `orch/BRIEF.md`; follow `orch/KAIZEN.md` (measure → one small high-value change → prove → ship → log) and the lanes in `orch/PLAN-SAT.md` (one owner per file). Loops obey `orch/BUDGET.md` (max 8 helpers at once, 24 iterations/loop/day — full throttle since 2026-11-10; landings on main still go one at a time, each on its own gate run, stop cleanly on rate limits). Grand stage branches `orch/grand1…7`, `grand4b`, `integrate2` follow `orch/CHAIN.md` (first check before work, last step starts the next stage).
 - Work only in your squad's files unless ORCH assigned otherwise; small verifiable changes; no new runtime dependencies from other hosts (Three.js r186 via `orch/three/vendor.mjs`, PeerJS bundled); never delete branches/files you didn't create or rewrite history.
+- **Save early:** push your work branch after every commit (`git push origin HEAD:refs/heads/orch/<name>`), before any long test or wait; work that exists only in your sandbox is lost if the session stops.
 - **Ship what is green in small pieces; never leave main broken.** Write `orch/HANDOFF-<branch>.md` when stopping early.
 
 ## Standing decisions (short; dates and quotes in orch/DECISIONS.md)

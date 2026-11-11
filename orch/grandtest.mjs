@@ -76,6 +76,20 @@ try {
     const over = gfOver('IR'), up = gmod('nation', 'IR', 'upkeep', 1); const allUnder = Object.keys(GC.nat).filter(c => c !== 'IR' && !GC.nat[c].dead).every(c => !gfOver(c));
     return { v0, L, under, t0, t1, over, up, allUnder, chip: /⚔/.test(gfChip()) }; });
   console.log('forcelimit', JSON.stringify(fl));
+  // War support at home: the same news moves a democracy, a party state and a military-led government differently; rally when attacked; restricted news and its backlash
+  const wsg = await ev(() => { const why = (N, re) => { const w = (N.wsWhy || []).find(x => re.test(x[0])); return w ? +(+w[1]).toFixed(2) : null; };
+    const set = (c) => { grNew({ me: 'IR', seed: 5, len: 'quick' }); GC.war = {}; GC.alz = []; const foe = c === 'US' ? 'CN' : 'US'; GC.war[grWk(c, foe)] = 1; if (typeof gsN === 'function') gsN(c); const N = wsN(c); N.ws = 60; N.wsW = 0; N.wsIv = null; for (const a of GC.armies) if (GC.prov[a.at] && GC.prov[a.at].o === c && a.o !== c) a.u.length = 0; return [N, foe]; };
+    const month = (N) => { GC.turn++; N.wsT = -1; wsMonth(); };
+    const loss = (c) => { const [N] = set(c); N.wsE = -8; month(N); return why(N, /Bad news/); };
+    const o = { gov: [wsGov('US'), wsGov('CN'), wsGov('SA'), wsGov('IR'), wsGov('SD'), wsGov('RU')].join(','), lDem: loss('US'), lParty: loss('CN') };
+    { const [N] = set('US'); o.cenDem = wsCensor('US'); }
+    { const [N] = set('CN'); N.pp.pol = 100; o.cen = wsCensor('CN'); o.pol = N.pp.pol; o.cen2 = wsCensor('CN'); N.wsE = -8; month(N); o.lCen = why(N, /Bad news/); GC.turn = N.wsCn - 1; month(N); o.back = why(N, /casualty lists/); o.saved = JSON.parse(JSON.stringify(GC.nat.CN)).wsCn === N.wsCn; }
+    { const [N, foe] = set('US'); const a = GC.armies.find(x => x.o === foe && !x.fl && x.u.length); if (a) { a.at = N.cap; a.path = []; month(N); o.rally = why(N, /Attacked at home/); GC.turn += 7; a.at = N.cap; month(N); o.later = why(N, /Enemy troops on our soil/); } }
+    { const j = ['SD', 'MM', 'ML', 'BF', 'NE'].find(c => GC.nat[c] && !GC.nat[c].dead); if (j) { const [N] = set(j); const E = gsN(j).est.army; if (E) { const l0 = E.loy; N.ws = 15; month(N); o.split = l0 - E.loy; } else o.split = 'no army estate'; } else o.split = 'no junta nation'; }
+    { const [N] = set('SA'); N.ws = 15; N.wsW = 3; o.strike = GMOD_COND.wsgov('SA', 'strike'); const [M] = set('US'); M.ws = 15; M.wsW = 3; o.strikeDem = GMOD_COND.wsgov('US', 'strike'); }
+    return o; });
+  console.log('war support by government', JSON.stringify(wsg));
+  if (!(wsg.gov === 'dem,party,mon,theo,junta,auth' && wsg.lDem === -12 && wsg.lParty === -4 && wsg.cenDem !== '' && wsg.cen === '' && wsg.pol === 70 && wsg.cen2 !== '' && wsg.lCen === -2 && wsg.back === -5 && wsg.saved && wsg.rally === 4 && wsg.later < 0 && wsg.split === 2 && wsg.strike === true && wsg.strikeDem === false)) fails.push('war support by government: ' + JSON.stringify(wsg));
   if (!fl.under || !fl.over || Math.abs(fl.up - 1.5) > .01 || !(fl.t1 > fl.t0) || !fl.allUnder || !fl.chip) fails.push('force limit/tradition: ' + JSON.stringify(fl));
   // ---- MILITARY (grand3): generals, front lines, map strikes, fleets & sea zones; determinism over 20 turns with all of it active
   {
@@ -283,6 +297,26 @@ try {
   // ---- start as Iran, open the map
   await ev(() => { grNew({ me: 'IR', seed: 99, len: 'quick' }); grSave(); grandOpen(); guFit(null); guRedraw(); }); await shot('world-map');
   await ev(() => { guFit(GR_REGIONS[4][1]); guRedraw(); }); await shot('region-middle-east');
+  // ---- calmmap guards: the map gets calmer as you zoom out (Abdullah 2026-11-10 "too busy"); trees only where forests grow
+  await page.waitForFunction(() => !!G3.real || !!G3.realFail, null, { timeout: 120000 }).catch(() => {});
+  const calm = await ev(async () => { const out = {}; const set = d => { G3.camera.d = G3.cc.d = d; G3.moved = true; g3ForestTick(true); g3Labels(true); };
+    const leg = document.getElementById('g3leg'); out.legShut = !!leg && /shut/.test(leg.className); out.coachLegend = !!document.getElementById('gCoach') && !!leg && !/shut/.test(leg.className); { const c = document.getElementById('gCoach'); out.coachH = c ? Math.round(c.getBoundingClientRect().height) : 0; }
+    // woods (conifer + broadleaf trees) per desert country, from the tree pool: first with the made-up stand-in land cover (real data not loaded), then with the real satellite land cover
+    const woods = () => { const au = g3TreeAudit(); return au ? ['LY', 'EG', 'SA'].map(k => au[k] ? au[k].conifer + au[k].broad : 0).concat([au.dryWoods || 0, au.DE ? au.DE.conifer + au.DE.broad : 0]) : null; };
+    const R = G3.real; out.hasReal = !!R; G3.real = null; g3ForestRefresh(true); out.standIn = woods(); out.standInReal = G3.forest.real;
+    if (R) { G3.real = R; g3ForestRefresh(true); out.real = woods(); out.realFlag = G3.forest.real; }
+    const vis = () => { let pl = 0; for (const b of G3.bn) if (b.el._v === 'block') pl++; const at = [], dup = []; let foreign = 0; for (const [k, e] of G3.pl) if (e._v === 'block') { const a = k.split('|')[0], o = k.split('|')[1]; if (at.includes(a)) dup.push(a); at.push(a); if (o !== GC.me && !grAtWar(GC.me, o)) foreign++; }
+      g3Batch(); let figs = 0; for (const p of G3.bat.b.values()) figs += p.n || 0; return { plates: pl, badges: at.length, dup: dup.length, foreign, figs }; };
+    const mine = GC.armies.filter(a => a.o === GC.me).length;
+    set(2300); out.far = { tier: G3.tier, trees: G3.trees, mine, ...vis() }; set(350); out.mid = { tier: G3.tier, trees: G3.trees, ...vis() }; set(150); out.close = { tier: G3.tier, trees: G3.trees, figs: vis().figs }; set(900); return out; });
+  console.log('calmmap', JSON.stringify(calm));
+  if (!calm.legShut) fails.push('calmmap: the map key is not folded on a new campaign'); if (calm.coachLegend) fails.push('calmmap: tips and the map key are open together'); if (calm.coachH > 90) fails.push('calmmap: the first-minute tips are a big box again (' + calm.coachH + ' px high)');
+  if (!calm.hasReal) fails.push('calmmap: the real land data (grand/color.jpg) did not load');
+  if (!calm.standIn || calm.standInReal || calm.standIn[3] !== 0 || calm.standIn.slice(0, 3).some(n => n > 250) || calm.standIn[4] < 50) fails.push('calmmap: stand-in land cover puts woods in the deserts (LY, EG, SA, dry belts, DE for contrast) ' + JSON.stringify(calm.standIn));
+  if (calm.hasReal && (!calm.real || !calm.realFlag || calm.real.slice(0, 3).some(n => n > 25) || calm.real[4] < 50)) fails.push('calmmap: real land cover puts woods in desert countries (LY, EG, SA; DE for contrast) ' + JSON.stringify(calm.real));
+  if (calm.far.tier !== 0 || calm.far.trees !== 0) fails.push('calmmap: far view still draws trees (' + calm.far.trees + ')'); if (calm.far.plates > 15) fails.push('calmmap: far view draws ' + calm.far.plates + ' capital plates');
+  if (calm.far.foreign || calm.far.figs > calm.far.mine) fails.push('calmmap: far view shows other nations\' armies (' + calm.far.foreign + ' badges, ' + calm.far.figs + ' figures for ' + calm.far.mine + ' own armies)');
+  if (calm.mid.trees !== 0) fails.push('calmmap: middle view still draws trees (' + calm.mid.trees + ')'); if (calm.mid.tier !== 1 || calm.mid.dup) fails.push('calmmap: middle view draws two badges for one province (' + calm.mid.dup + ')'); if (calm.mid.badges <= calm.far.badges) fails.push('calmmap: middle view does not bring the other armies\' badges back'); if (calm.close.figs <= calm.mid.figs) fails.push('calmmap: close view does not bring every army figure back'); if (calm.close.tier !== 2) fails.push('calmmap: close tier not reached');
   // ---- scenario: IR army next to an enemy garrison, march, end turn -> Fight-it prompt
   const sc = await ev(() => { const me = 'IR', foe = 'IQ'; grDeclare(me, foe); let pair = null;
     for (const p of GCM.P) if (p.land && GC.prov[p.i].o === me) for (const j of p.adj) if (GCM.P[j].land && GC.prov[j].o === foe && GC.prov[j].gar.length) { pair = [p.i, j]; break; } else if (pair) break;
@@ -363,6 +397,17 @@ try {
   // laneF ⚡23 macro-builder: standing recruit order repeats each month and stops (with a log line) when it can't be paid
   const mc = await ev(() => { const pi = GC.prov.findIndex(s => s.o === GC.me); const k = GR_RECRUIT.find(r => grHasKind(grNat(GC.me).fac, r[0]))[0]; GC.mac = []; gmMacroToggle(pi, k); const on = GC.mac.length; const q0 = JSON.stringify(GC.q||0).length; GC.nat[GC.me].cash = 1e6; const c0 = GC.nat[GC.me].cash; gmMacros(); const paid = GC.nat[GC.me].cash < c0; GC.nat[GC.me].cash = 0; gmMacros(); return { on, paid, stopped: GC.mac.length === 0 }; });
   if (!(mc.on === 1 && mc.paid && mc.stopped)) fails.push('macro: ' + JSON.stringify(mc));
+  // Proxy warfare: tiers, evidence-driven exposure, autonomy slip-out, crack-down, determinism
+  const pxr = await ev(() => { const run = () => { grNew({ me: 'IR', seed: 777, len: 'quick' }); GC.war = {}; GC.alz = []; const a = 'IR', b = 'US'; GC.nat[a].cash = 99999; GC.nat[b].cash = 99999; gpxS(); GC.px = []; gpxStart(a, b); gpxTier(a, b, 2);
+      const x = GC.px[0]; const r0 = { t: x[3], au: x[4] }; let n = 0; for (; n < 40 && GC.px.length && GC.px[0][0] === a; n++) { GC.turn++; gpxTurn(); }
+      return { r0, ended: GC.px.length === 0 || GC.px[0][0] !== a, n, h: JSON.stringify(GC.px) + GC.nat[a].cash }; };
+    const r1 = run(), r2 = run(); grNew({ me: 'IR', seed: 777, len: 'quick' }); GC.war = {}; GC.alz = []; GC.nat.US.cash = 9999; gpxS(); GC.px = [['IR', 'US', GC.turn + 12, 2, 10, 0]]; let cr = 0; for (let i = 0; i < 12 && GC.px.some(x => x[0] === 'IR' && x[1] === 'US'); i++) { GC.turn++; gpxCrack('US', 'IR'); cr++; }
+    const cleared = !GC.px.some(x => x[0] === 'IR' && x[1] === 'US');
+    // AI target answers on its own: a player-funded militia inside a rich AI nation does not survive many months of evidence
+    grNew({ me: 'IR', seed: 778, len: 'quick' }); GC.war = {}; GC.alz = []; GC.nat.IR.cash = 99999; GC.nat.US.cash = 99999; gpxS(); GC.px = [['IR', 'US', GC.turn + 400, 1, 0, 12]]; GC.px[0][4] = -9999; let aiN = 0; for (; aiN < 120 && GC.px.some(x => x[0] === 'IR' && x[1] === 'US'); aiN++) { GC.turn++; gpxTurn(); }
+    const aiCrack = GC.log.some(l => /cracks down|breaks up/.test(l[1]));
+    return { r1, same: r1.h === r2.h, cleared, aiN, aiCrack, known: typeof GPX_KNOWN === 'number' && GPX_KNOWN > 0 }; });
+  if (!(pxr.r1.r0.t === 2 && pxr.r1.ended && pxr.same && pxr.cleared && pxr.aiN < 120 && pxr.aiCrack && pxr.known)) fails.push('proxy warfare: ' + JSON.stringify(pxr));
 } catch (e) { if (String(e.message) !== '__done') { fails.push(String(e.message || e).split('\n')[0]); console.log('ERRS', errs.join('\n')); console.log(String(e.stack).split('\n').slice(0, 7).join('\n')); } }
 for (const e of [...new Set(errs)].slice(0, 6)) fails.push(e);
 await browser.close(); server.close();

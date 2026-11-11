@@ -6,7 +6,7 @@ const GID_POOL={pol:'Political',dip:'Diplomatic',mil:'Military'};
 const GID_COST=[30,45,60,80,100,125,150];
 // idea = [id, name, pool, stat, add|mul, description]
 const GID_GROUPS={
-  zeal:{name:'Martyrdom & Fervour',tree:1,ideas:[
+  zeal:{name:'Martyrdom & Fervor',tree:1,ideas:[
     ['zl1','Volunteers\' Call','mil','manpower',{mul:1.15},'+15% manpower'],
     ['zl2','Faith in the Cause','pol','warSupport',{add:.06},'+6% war support'],
     ['zl3','Hold the Line','mil','homeMorale',{mul:1.15},'+15% home-ground morale'],
@@ -33,7 +33,7 @@ const GID_GROUPS={
 const GID_U={income:['mul',.02,'income'],manpower:['mul',.04,'manpower'],upkeep:['mul',-.03,'army upkeep'],warSupport:['add',.03,'war support'],
   unrest:['add',-1,'unrest'],forceLimit:['mul',.04,'force limit'],armyMor:['add',2,'army max morale'],ppPol:['mul',.06,'Political points'],
   ppDip:['mul',.06,'Diplomatic points'],ppMil:['mul',.06,'Military points'],fires:['mul',.02,'fire support in battle'],attack:['mul',.02,'attack strength'],
-  defense:['mul',.03,'defence strength'],spy:['mul',.08,'spy & sabotage success'],spyDef:['mul',.08,'protection from enemy spies']};
+  defense:['mul',.03,'defense strength'],spy:['mul',.08,'spy & sabotage success'],spyDef:['mul',.08,'protection from enemy spies']};
 function gidFx(stat,u){const U=GID_U[stat],v=U[1]*u,o={};if(U[0]==='add')o.add=Math.round(v*1000)/1000;else o.mul=Math.round((1+v)*1000)/1000;
   const s=v>0?'+':'-',a=Math.abs(v);o.txt=(U[0]==='mul'||stat==='warSupport'?s+Math.round(a*100)+'% ':s+Math.round(a)+' ')+U[2];return o;}
 // [key, column, name, picture motif, [[idea name, stat] x7], [bonus stat], [cost stat, why], tagline]
@@ -45,17 +45,17 @@ const GID_SPEC=[
  ['fed','pol','Federal Administration','capitol',[['Regional Governors','unrest'],['Revenue Sharing','income'],['Provincial Courts','unrest'],['National Highways','upkeep'],['Census Bureau','manpower'],['Local Elections','warSupport'],['Federal Budget','income']],'ppPol',['ppMil','regions push back on central war plans'],'Many regions, one state.'],
  ['nb','pol','Nation-Building','flag',[['National Curriculum','warSupport'],['Flag & Anthem','warSupport'],['Cadet Schools','manpower'],['Common Language','unrest'],['Veterans\' Pensions','armyMor'],['Public Media','warSupport'],['National Service','manpower']],'manpower',['unrest','minorities feel pushed aside'],'One people, one story.'],
  ['intel','dip','Intelligence & Espionage','dish',[['Signals Intelligence','spy'],['Agent Networks','spy'],['Counter-Intelligence','spyDef'],['Analysts Directorate','ppDip'],['Cyber Unit','spy'],['Covert Operations','attack'],['Station Chiefs','ppDip']],'spy',['upkeep','black budgets cost money'],'Know first, strike first.'],
- ['ally','dip','Alliance Diplomacy','flags',[['Embassy Network','ppDip'],['Joint Exercises','armyMor'],['Defence Pacts','defense'],['Summit Diplomacy','ppDip'],['Basing Agreements','forceLimit'],['Common Standards','fires'],['Coalition Command','attack']],'ppDip',['upkeep','commitments abroad must be paid for'],'Strength through partners.'],
+ ['ally','dip','Alliance Diplomacy','flags',[['Embassy Network','ppDip'],['Joint Exercises','armyMor'],['Defense Pacts','defense'],['Summit Diplomacy','ppDip'],['Basing Agreements','forceLimit'],['Common Standards','fires'],['Coalition Command','attack']],'ppDip',['upkeep','commitments abroad must be paid for'],'Strength through partners.'],
  ['trade','dip','Trade & Sanctions','ship',[['Free Trade Deals','income'],['Customs Union','income'],['Shipping Insurance','income'],['Sanctions Office','ppDip'],['Export Controls','spyDef'],['Financial Hub','income'],['Currency Reserves','upkeep']],'income',['warSupport','traders hate wars that close markets'],'Money is a weapon too.'],
  ['info','dip','Information War','mast',[['State Broadcaster','warSupport'],['Social Media Units','warSupport'],['Foreign-Language News','ppDip'],['Narrative Cells','unrest'],['Psychological Operations','attack'],['Rapid Rebuttal','warSupport'],['Global Audience','ppDip']],'warSupport',['ppDip','other governments see propaganda; nearby nations trust you less'],'Win the story, win the war.'],
  ['naval','dip','Naval Power Projection','carrier',[['Blue-Water Fleet','forceLimit'],['Carrier Groups','fires'],['Overseas Bases','forceLimit'],['Marine Corps','attack'],['Sea Lane Patrols','income'],['Amphibious Doctrine','attack'],['Naval Air Arm','fires']],'forceLimit',['upkeep','fleets are expensive to keep at sea'],'Reach any shore.'],
  ['proxy','dip','Influence & Proxies','nodes',[['Advisers Abroad','ppDip'],['Allied Militias','manpower'],['Arms Pipelines','fires'],['Political Wings','ppDip'],['Training Camps','armyMor'],['Funding Networks','spy'],['Axis Coordination','attack']],'ppDip',['upkeep','partners abroad must be armed and paid; nearby nations feel threatened'],'Fight through friends.'],
- ['ca','mil','Combined Arms','tank',[['Joint Staff','ppMil'],['Armour-Infantry Teams','attack'],['Forward Observers','fires'],['Mechanised Brigades','attack'],['Air-Land Battle','fires'],['Battle Networks','defense'],['Integrated Logistics','upkeep']],'attack',['income','modern equipment is expensive'],'Every arm fights as one.'],
- ['off','mil','Offensive Doctrine','arrows',[['Shock Troops','attack'],['Deep Battle','attack'],['Breakthrough Artillery','fires'],['High Tempo','attack'],['Assault Engineers','attack'],['Exploitation Forces','manpower'],['Victory Bulletins','warSupport']],'attack',['defense','an army built to attack digs in badly'],'Attack is the best defence.'],
- ['def','mil','Defensive Doctrine','fort',[['Fortified Lines','defense'],['Defence in Depth','defense'],['Minefields','defense'],['Anti-Tank Belts','defense'],['Territorial Defence','manpower'],['Bunker Networks','defense'],['Hold at All Costs','armyMor']],'defense',['attack','an army built to hold attacks slowly'],'Make every hill a fortress.'],
+ ['ca','mil','Combined Arms','tank',[['Joint Staff','ppMil'],['Armor-Infantry Teams','attack'],['Forward Observers','fires'],['Mechanized Brigades','attack'],['Air-Land Battle','fires'],['Battle Networks','defense'],['Integrated Logistics','upkeep']],'attack',['income','modern equipment is expensive'],'Every arm fights as one.'],
+ ['off','mil','Offensive Doctrine','arrows',[['Shock Troops','attack'],['Deep Battle','attack'],['Breakthrough Artillery','fires'],['High Tempo','attack'],['Assault Engineers','attack'],['Exploitation Forces','manpower'],['Victory Bulletins','warSupport']],'attack',['defense','an army built to attack digs in badly'],'Attack is the best defense.'],
+ ['def','mil','Defensive Doctrine','fort',[['Fortified Lines','defense'],['Defense in Depth','defense'],['Minefields','defense'],['Anti-Tank Belts','defense'],['Territorial Defense','manpower'],['Bunker Networks','defense'],['Hold at All Costs','armyMor']],'defense',['attack','an army built to hold attacks slowly'],'Make every hill a fortress.'],
  ['qual','mil','Quality','badge',[['Professional NCOs','armyMor'],['Long Service','attack'],['Precision Weapons','fires'],['Simulators','ppMil'],['Elite Units','attack'],['Night Fighting','defense'],['Retention Bonus','manpower']],'armyMor',['manpower','a small professional army has fewer recruits'],'Fewer, better soldiers.'],
  ['quan','mil','Quantity','ranks',[['Universal Conscription','manpower'],['Reserve Divisions','forceLimit'],['Mass Production','upkeep'],['Militia Levy','manpower'],['People\'s Army','forceLimit'],['Deep Reserves','manpower'],['Cheap Rifles','upkeep']],'manpower',['armyMor','conscripts are less trained'],'Numbers win wars.'],
- ['air','mil','Air & Drone Power','jet',[['Air Superiority','fires'],['Drone Squadrons','fires'],['Loitering Munitions','attack'],['Air Defence Network','defense'],['Recon Drones','spy'],['Precision Strike','fires'],['Drone Factories','upkeep']],'fires',['income','aircraft and drones are costly'],'Rule the sky.']];
+ ['air','mil','Air & Drone Power','jet',[['Air Superiority','fires'],['Drone Squadrons','fires'],['Loitering Munitions','attack'],['Air Defense Network','defense'],['Recon Drones','spy'],['Precision Strike','fires'],['Drone Factories','upkeep']],'fires',['income','aircraft and drones are costly'],'Rule the sky.']];
 for(const s of GID_SPEC){const ideas=s[4].map((d,n)=>{const f=gidFx(d[1],2),o=f.add!==undefined?{add:f.add}:{mul:f.mul};return [s[0]+(n+1),d[0],s[1],d[1],o,f.txt];});
   const b=gidFx(s[5],3),c=gidFx(s[6][0],-1);GID_GROUPS[s[0]]={name:s[2],col:s[1],art:s[3],tag:s[7],ideas,bonus:{stat:s[5],fx:b,txt:b.txt},cost:{stat:s[6][0],fx:c,txt:c.txt,why:s[6][1]}};}
 const GID_COLS=['pol','dip','mil'];
@@ -112,7 +112,7 @@ function gidMonth(){if(!GC)return;for(const c of Object.keys(GC.nat)){const N=GC
     gidWorld(c,N);}}
 GMOD_HOOKS.push(gidMonth);
 GMOD_STATS.manpower='Manpower';GMOD_STATS.upkeep='Army upkeep';GMOD_STATS.income='Income';GMOD_STATS.ppPol='Political points';GMOD_STATS.ppDip='Diplomatic points';GMOD_STATS.ppMil='Military points';
-GMOD_STATS.attack='Attack strength';GMOD_STATS.fires='Fire support in battle';GMOD_STATS.defense='Defence strength';GMOD_STATS.spy='Spy success';GMOD_STATS.spyDef='Spy protection';GMOD_STATS.forceLimit=GMOD_STATS.forceLimit||'Force limit';GMOD_STATS.armyMor=GMOD_STATS.armyMor||'Army max morale';
+GMOD_STATS.attack='Attack strength';GMOD_STATS.fires='Fire support in battle';GMOD_STATS.defense='Defense strength';GMOD_STATS.spy='Spy success';GMOD_STATS.spyDef='Spy protection';GMOD_STATS.forceLimit=GMOD_STATS.forceLimit||'Force limit';GMOD_STATS.armyMor=GMOD_STATS.armyMor||'Army max morale';
 // ---- original painted-style group pictures (inline SVG, drawn here; no outside art)
 const GID_PAL={pol:['#3a1d14','#a5582c','#f0c27a'],dip:['#0f2236','#2e6f8e','#bfe3e8'],mil:['#1d2414','#5f6b34','#d8cf96']};
 const GID_MOT={

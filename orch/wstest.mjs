@@ -43,8 +43,9 @@ try {
     out.after = Object.fromEntries(Object.keys(GC.nat).slice(0, 60).filter(c => !GC.nat[c].dead).map(c => [c, Math.round(wsOf(c))]));
     const vals = Object.values(out.after); out.min = Math.min(...vals); out.max = Math.max(...vals); out.n = vals.length;
     GC.nat.IR.pp = GC.nat.IR.pp || { pol: 100 }; GC.nat.IR.pp.pol = 100; GC.nat.IR.wsRl = -99; const b = wsOf('IR'); out.rallyErr = wsRally('IR'); out.rally = wsOf('IR') - b; out.err2 = wsRally('IR');
-    npOpen('IR', 'home'); out.tab = !!document.getElementById('npWin') && /War support/.test(document.getElementById('npWin').textContent); delete out.after; return out; });
+    npOpen('IR', 'home'); out.tab = !!document.getElementById('npWin') && /War support/.test(document.getElementById('npWin').textContent); out.gov = /Theocracy/.test(document.getElementById('npWin').textContent) && /Restrict war news/.test(document.getElementById('npWin').textContent); delete out.after; return out; });
   console.log('ws', JSON.stringify(r));
+  await shot('home-front'); if (!r.gov) fails.push('ws: Home front tab does not show the government type and the Restrict war news button');
   if (!(r.max - r.min > 3)) fails.push('ws: meters do not move'); if (r.rallyErr !== '' || r.rally < 10 || !r.err2) fails.push('ws: rally'); if (!r.tab) fails.push('ws: tab');
   console.log(fails.length ? 'WS FAIL ' + fails.join('; ') + errs.join('|') : 'WS PASS');
 } catch (e) { console.log('WS ERROR', e.message); }
