@@ -5,6 +5,11 @@ name: Main gate
 on:
   push:
     branches: [main]
+# One run at a time; a newer push to main replaces any older run that is still WAITING (the running one finishes).
+# Without this, many small pushes queue one full gate each and block GitHub's runners for hours (2026-11-10).
+concurrency:
+  group: main-gate
+  cancel-in-progress: false
 permissions:
   contents: write
   statuses: write
