@@ -383,6 +383,24 @@ try {
     if (!lk.look) fails.push('maptrees: no tree picture to check (g3TreeLook)'); else { if (lk.look.rows < 3) fails.push('maptrees: only ' + lk.look.rows + ' variant(s) per tree kind (repetition shows)');
       for (const k of ['conifer', 'broad', 'palm', 'scrub']) { const t = lk.look[k]; if (!t || !(t.cover > .04)) fails.push('maptrees: the ' + k + ' picture is empty'); else if (k !== 'scrub' && (t.s > .47 || t.v > .33)) fails.push('maptrees: ' + k + ' trees are lime/neon again (saturation ' + t.s + ' > 0.47 or brightness ' + t.v + ' > 0.33)'); else if (t.v > .5) fails.push('maptrees: scrub is too bright (' + t.v + ')'); } }
     if (lk.ts > 1.7) fails.push('maptrees: trees grow to ' + lk.ts + 'x when zoomed out (toy trees taller than towns again)'); if (lk.max > 30000) fails.push('maptrees: tree budget raised to ' + lk.max); }
+  // mapscale (Abdullah 2026-11-11 "Visually it looks off"): towns are small clusters inside their province, no two touch, and no land army is drawn standing in the sea
+  const scale = await ev(() => { const T = g3Towns(), ar = g3PArea(), out = { towns: T.length, big: [], spill: [], overlap: 0, sample: {}, sea: [], ships: 0, tall: [], plate: !!G3_GEO().disc };
+    const lim = t => Math.sqrt(ar[t.pi]) * (t.cap || t.mega && !t.t ? 1 / 4 : 1 / 6);   // rule of thumb: an ordinary town is at most 1/6 of its province's width, a capital or metropolis 1/4
+    for (let i = 0; i < T.length; i++) { const t = T[i], n = GCM.P[t.pi].n; if (2 * t.R > Math.max(lim(t), 2 * G3_TOWN_MIN) + 1e-6) out.big.push(n); if (t.dry && t.R > G3_TOWN_MIN && !g3Fits(t.x, t.z, t.R, t.pi)) out.spill.push(n);
+      for (let j = i + 1; j < T.length; j++) { const u = T[j]; if (Math.hypot(u.x - t.x, u.z - t.z) < u.R + t.R) out.overlap++; } }
+    for (const n of ['Rome', 'Athens', 'Kuwait', 'Beirut', 'Tehran', 'Riyadh']) { const p = GCM.P.find(p => p.land && p.n === n), t = p && g3Main(p.i); out.sample[n] = t ? [+(2 * t.R).toFixed(2), +lim(t).toFixed(2), t.dry && g3Fits(t.x, t.z, t.R, t.pi) ? 1 : 0] : null; }
+    const d0 = G3.cc.d; for (const d of [40, 150, 300, 900]) { G3.cc.d = d; const s = Math.max(.45, Math.min(3.6, d / 330)), A = g3Anchors(s);
+      for (const a of GC.armies) { if (GCM.P[a.at].sea) continue; if (g3Afloat(a.at)) { if (d === 40) out.ships++; continue; } const q = A.get(a.id); if (!g3OnLand(q[0], q[1])) out.sea.push(GCM.P[a.at].n + '@' + d);
+        if (d <= 150) { const t = g3Main(a.at), h = g3FigScale(a.at, s, d) * G3_FIG_H; if (h > Math.max(2 * t.R, G3_FIG_MIN * G3_FIG_H) + 1e-6) out.tall.push(GCM.P[a.at].n + '@' + d); } } }
+    G3.cc.d = d0; return out; });
+  console.log('mapscale', JSON.stringify({ ...scale, big: scale.big.length, spill: scale.spill.length, sea: scale.sea.length, tall: scale.tall.length }));
+  if (scale.plate) fails.push('mapscale: the beige ground plate under towns is back');
+  if (scale.big.length) fails.push('mapscale: towns wider than 1/6 of their province (capitals and metropolises 1/4): ' + scale.big.slice(0, 6).join(', '));
+  if (scale.spill.length) fails.push('mapscale: town footprints spill over their province border or into the sea: ' + scale.spill.slice(0, 6).join(', '));
+  if (scale.overlap) fails.push('mapscale: ' + scale.overlap + ' pairs of towns overlap');
+  for (const [n, v] of Object.entries(scale.sample)) if (!v || v[0] > v[1] + 1e-6 || !v[2]) fails.push('mapscale: ' + n + ' town footprint ' + JSON.stringify(v) + ' (width, allowed width, inside its province)');
+  if (scale.sea.length) fails.push('mapscale: land armies drawn in the sea: ' + scale.sea.slice(0, 6).join(', '));
+  if (scale.tall.length) fails.push('mapscale: close-view army figures taller than their town is wide: ' + scale.tall.slice(0, 6).join(', '));
   if (!calm.legShut) fails.push('calmmap: the map key is not folded on a new campaign'); if (calm.close.plateBad || calm.close.pnBad) fails.push('calmmap4: close view shows province name plates again (only capitals keep a plate; other names are plain text for your own provinces near the selection) ' + JSON.stringify(calm.close)); if (calm.seaMiss.length) fails.push('calmmap4: sea neighbours missing from the colour rule: ' + calm.seaMiss.join(' ')); if (calm.palBad.length) fails.push('calmmap4: neighbours (land or narrow sea) with look-alike colours: ' + calm.palBad.join(' ')); if (calm.coachLegend) fails.push('calmmap: tips and the map key are open together'); if (calm.coachH > 90) fails.push('calmmap: the first-minute tips are a big box again (' + calm.coachH + ' px high)');
   if (!calm.hasReal) fails.push('calmmap: the real land data (grand/color.jpg) did not load');
   if (!calm.standIn || calm.standInReal || calm.standIn[3] !== 0 || calm.standIn.slice(0, 3).some(n => n > 250) || calm.standIn[4] < 50) fails.push('calmmap: stand-in land cover puts woods in the deserts (LY, EG, SA, dry belts, DE for contrast) ' + JSON.stringify(calm.standIn));

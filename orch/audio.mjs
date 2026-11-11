@@ -139,7 +139,8 @@ try {
   ok('a) old sample sheets not fetched (smp/me/as/we)', bad.length === 0, bad.join(','));
   ok('a) old generated score is gone', await page.evaluate(() => typeof STYLES === 'undefined' && typeof musicTick === 'undefined'));
   const stNow = [...new Set(reqs.filter(r => r.startsWith('mus/st/')))];
-  ok('f) only the menu + calm files fetched so far (streaming)', stNow.length <= 2, stNow.join(', '));
+  // two menu decks (current + next menu track are both warmed) + the first calm track = 3 files; the point is: not the whole soundtrack
+  ok('f) only the menu (2 decks) + calm files fetched so far (streaming)', stNow.length <= 3, stNow.join(', '));
 
   // fighting: heat high -> combat (calm dwell is 30 s; move the pool's start back instead of waiting)
   await page.evaluate(() => { clearInterval(window.__cool); window.__hot = setInterval(() => { AU.heat = 1; }, 100); ST.since -= 31000; });
