@@ -1,6 +1,6 @@
 # STATE — conductor run 8 on 2026-11-11, 22:48–23:35 UTC (train 6 landed: 1 piece)
 
-**Main = 1143f7c2** (train 6 on top of aa8968fd).
+**Main = 1143f7c2** (train 6 on top of aa8968fd). Live site: the Pages build for 1143f7c2 finished successfully at 23:25 UTC, so https://abdullahhaidar5-ux.github.io/ww3/ serves train 6.
 
 **Landed, train 6** = `train/20261111-2254`, gated as 0a0b505e (branch gate/0a0b505ef2, run 43115684920): **27 of 28 green**, incl. smooth-pc /
 smooth-mp / grandsmooth, grand, grandlive, decisions, audio. Only red: `gate/tutorial` — also red on main's head aa8968fd before this train.
