@@ -22,13 +22,20 @@ function g3RealFields(F){const R=G3.real,W=F.W,H=F.H,E=R.E,EW=R.EW,Hh=F.Hh,Ls=F.
   const SC=.0040,SK=.0078/SC,NG=.42;F.hm=hm; // relief height: 5,000 m = 20 map units (was 39 - ranges stood like walls); SK keeps the rock paint where it was; NG = shading steepness (was .7 on the taller relief: every slope lit like a cliff)
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,ls=Ls[k],m=hm[k],coast=g3Smooth(.4,.8,ls),n=g3Fbm(x*.02,y*.02,4);
     const landH=coast*(1+n*1.3)+Math.max(0,m)*SC;
-    const sea=Math.min(-.8+Math.min(0,Math.max(m,-4500))/500,-.8-4*Math.pow(1-Lw[k],2));Hh[k]=sea+(landH-sea)*g3Smooth(.42,.6,ls);}
+    const sea=Math.min(-.8+Math.min(0,Math.max(m,-4500))/500,-.8-4*Math.pow(1-Lw[k],2));Hh[k]=sea+(landH-sea)*g3Smooth(.42,.6,ls);if(ls>=.5&&Hh[k]<.45)Hh[k]=.45;}
   // flatten the ground around every land province's towns so cities stay readable even in real mountains (Tehran sits against the Alborz)
   {const fl=new Float32Array(N);for(const q of GCM.P){if(!q.land)continue;const cx=Math.round(q.x/2),cy=Math.round(q.y/2);
     for(let dy=-40;dy<=40;dy++){const y=cy+dy;if(y<0||y>=H)continue;for(let dx=-40;dx<=40;dx++){const x=cx+dx;if(x<0||x>=W)continue;const w=1-g3Smooth(12,38,Math.hypot(dx,dy));if(w>fl[y*W+x])fl[y*W+x]=w;}}}
-    const b2=g3Blur(Hh,W,H,10,2);for(let k=0;k<N;k++)if(Ls[k]>.5&&fl[k]>0)Hh[k]+=(b2[k]-Hh[k])*fl[k]*.92;F.fl=fl;}
+    const hc=new Float32Array(N);for(let k=0;k<N;k++)hc[k]=Hh[k]<.45?.45:Hh[k];   /* mapcoast: flatten towards the level of the land around, not the sea bed - towns on islands and thin peninsulas (Sicily, Crete, Italy's heel) no longer sink under water */
+    const b2=g3Blur(hc,W,H,10,2);for(let k=0;k<N;k++)if(Ls[k]>.5&&fl[k]>0)Hh[k]+=(b2[k]-Hh[k])*fl[k]*.92;F.fl=fl;}
   // colour: graded satellite base at its own resolution
   const CW=R.CW,CH=R.CH;F.PW=CW;F.PH=CH;F.px=g3GradeColor(R.col,CW*CH);
+  // mapcoast: the satellite picture's pale sea starts a little inside the drawn coast - pull the nearest inland ground colour out to the shoreline (and a pixel past it)
+  if(F.cd&&F.FW){const FW=F.FW,FH=F.FH,cd=F.cd,px=F.px,kx=CW/FW,ky=CH/FH,blue=o=>px[o+2]>px[o]+18&&px[o+2]>px[o+1]-12;
+    for(let y=3;y<FH-3;y++)for(let x=3;x<FW-3;x++){const k=y*FW+x,c=cd[k];if(c>131||c<121)continue;
+      let b=k,bc=c;for(let dy=-3;dy<=3;dy++)for(let dx=-3;dx<=3;dx++){const n=k+dy*FW+dx;if(cd[n]<bc){bc=cd[n];b=n;}}
+      const so=(Math.min(CH-1,((((b/FW)|0)+.5)*ky)|0)*CW+Math.min(CW-1,((b%FW+.5)*kx)|0))*4,ok=b!==k&&!blue(so),r=ok?px[so]:132,g=ok?px[so+1]:138,bl=ok?px[so+2]:96,y1=Math.min(CH,Math.ceil((y+1)*ky)),x1=Math.min(CW,Math.ceil((x+1)*kx));
+      for(let ty=Math.floor(y*ky);ty<y1;ty++)for(let tx=Math.floor(x*kx);tx<x1;tx++){const o=(ty*CW+tx)*4;if(blue(o)){px[o]=r;px[o+1]=g;px[o+2]=bl;}}}}
   // biome weights for the detail shader from real data: rock (steep/high), snow (high/polar), sand (desert colour), vegetation (green)
   const bw=new Uint8Array(N*4),sx=CW/W,sy=CH/H,col=R.col;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,ci=(Math.min(CH-1,Math.floor((y+.5)*sy))*CW+Math.min(CW-1,Math.floor((x+.5)*sx)))*4,r=col[ci]/255,g=col[ci+1]/255,b=col[ci+2]/255;

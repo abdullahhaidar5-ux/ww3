@@ -298,6 +298,18 @@ try {
   await page.goto(URL0, { waitUntil: 'load', timeout: 120000 });
   await page.waitForFunction(() => typeof grNew === 'function' && typeof MODELS !== 'undefined', null, { timeout: 60000 });
   await ev(() => { grNew({ me: 'IR', seed: 99, len: 'quick' }); grandOpen(); guFit(null); guRedraw(); });
+  // MAPCOAST (Abdullah 2026-11-11 "Italy isn't a boot. Turkey and Greece are just meshed together"): the drawn coast follows the real world at the full
+  // 2400x1200 map detail (one shore texture, land or sea decided per pixel), small nations keep ground under their towns. Map = Equal Earth (orch/grandproj.mjs).
+  { const { proj } = await import('./grandproj.mjs');
+    const P = { 'Aegean': [25.0, 38.5, 0], 'Adriatic': [15.0, 43.0, 0], 'Tyrrhenian': [12.0, 40.0, 0], 'Ionian': [18.5, 38.5, 0], 'Persian Gulf': [51.5, 27.0, 0], 'northern Red Sea': [35.5, 26.5, 0],
+      'Italy heel': [18.0, 40.4, 1], 'Italy toe': [16.2, 38.6, 1], 'Sicily': [14.2, 37.6, 1], 'Sardinia': [9.0, 40.0, 1], 'Peloponnese': [22.3, 37.5, 1], 'Crete': [24.9, 35.2, 1], 'western Turkey': [28.0, 38.5, 1], 'Qatar': [51.2, 25.3, 1] };
+    const pts = Object.entries(P).map(([n, [lon, lat, land]]) => [n, ...proj(lon, lat), land]);
+    const r = await ev(pts => { const F = g3Fields(), im = G3.U && G3.U.uSea.value.image; const near = (x, z) => { for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) if (g3FineLand(x + dx, z + dy)) return true; return false; };
+      return { fw: F.FW, fh: F.FH, tex: im ? im.width + 'x' + im.height : '', wrong: pts.filter(([n, x, z, land]) => g3FineLand(x, z) !== !!land || (g3HeightAt(x, z) > 0) !== !!land).map(q => q[0]),
+        noGround: GCM.P.filter(q => q.land && !near(q.x, q.y)).map(q => q.n).slice(0, 8), small: ['Lebanon', 'Gaza', 'Bahrain', 'Qatar', 'Kuwait'].filter(n => !GCM.P.some(q => q.land && new RegExp(n, 'i').test(q.n + ' ' + (grNat(q.o).name || '')) && near(q.x, q.y))) }; }, pts);
+    ck(r.fw === 2400 && r.fh === 1200 && r.tex === '2400x1200', `mapcoast: the shore is not drawn at the full map detail (mask ${r.fw}x${r.fh}, texture ${r.tex})`);
+    ck(!r.wrong.length, 'mapcoast: land/sea is wrong at ' + r.wrong.join(', '));
+    ck(!r.noGround.length && !r.small.length, 'mapcoast: land provinces without ground under their town: ' + r.noGround.concat(r.small).join(', ')); }
   // A-DATE (orchestrator 2026-11-07, WORLD SIMULATOR): the campaign starts in the world GR_REAL describes (as of Nov 2026), not Jan 2026
   { const d = await ev(() => ({ s: grDateStr(GC.turn, 0), a: GR_REAL.asof }));
     ck(d.s === '1 ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][d.a[1] - 1] + ' ' + d.a[0], `grand campaign start date ${d.s} does not match GR_REAL as-of ${d.a}`); }
