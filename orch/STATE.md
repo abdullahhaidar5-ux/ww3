@@ -1,3 +1,70 @@
+# STATE — conductor run 4 on 2026-11-11, 14:50 UTC onward (train 3b built, waiting on GitHub: its test machines cannot install their tools)
+
+**Main = ac59908f** (train 2, unchanged). Main's own run: red on `gate/tutorial` and `gate/cfclient` (both look flaky), smooth gates green.
+
+**GitHub test outage since about 13:50 UTC:** every test job dies in its setup step "Tools" before any test starts —
+`apt` on GitHub's runners cannot resolve `security.ubuntu.com` (needed by `playwright install --with-deps`). It hit the two campaign
+helpers' runs (gate/e5de367f7b, gate/4ca54aa2b0, gate/a5138b78f9: zero results), three jobs of train 3's second run, and this run's train.
+No test is red; there is simply no verdict. Nothing may land without one.
+
+**Train 3b = `train/20261111-1452` (f80df294), 5 pieces on main ac59908f:**
+1. Calm map 4 (orch/calmmap4): close view shows only capital name plates; guard against look-alike neighbour colours
+2. Calm map flag follow-up (orch/calmmap): army flags wave only in the close view or on the selected army
+3. Campaign panels + Readability (orch/polishP2): one frame, close X, Esc; text size 100/115/130 %; color-blind set
+   (+ American spelling fix, + its settings check accepts both spellings)
+4. Campaign stockpiles slice 2 (orch/c-stockpiles2 a5138b78): artillery shells and precision bombs — merge 2d of train
+5. Campaign war support slice 2 (orch/c-war-support2 6453197d): wartime shortages turn people against the war
+Conflicts: only HISTORY / QUEUE (kept both sides) and generated files (rebuilt); 8 screenshot files that both campaign slices re-shot kept the stockpiles copy.
+Local on f80df294: build + --check OK after each merge, SMOKE PASS (477 s), DECISIONS PASS. QUEUE ticks and HISTORY lines are inside the train.
+GitHub run 43042843019 on f80df294: see "Result" below.
+
+**Not taken this run:**
+- Real coastlines (orch/mapcoast, 14:55 UTC) and Real-looking forest (orch/maptrees, 15:05 UTC): brand new look changes, helpers still working, no test run of their own yet. Both edit src/13e-grand3d.js like calm map 4 — they will need a merge after train 3b lands.
+- Everything listed under "Looked at and NOT taken" in run 3 below is unchanged (stuck units + feel, end screen damage, report-a-problem form, army tokens, seamless flow, extras, one language, sound mix, leaders C, autosave loop).
+
+## Helpers with unlanded work, read 14:55 UTC
+
+| idea (branch) | last save | ahead | newest own test run | red tests |
+|---|---|---|---|---|
+| Real-looking forest on the campaign map (maptrees) | 0.1 h | 1 | none yet | - |
+| Stockpiles slice 2 (c-stockpiles2) — IN TRAIN 3b, handoff written | 0.1 h | 4 | a5138b78f9 | no verdict (GitHub setup outage) |
+| War support slice 2 (c-war-support2) — IN TRAIN 3b, handoff written | 0.1 h | 2 | 4ca54aa2b0 | no verdict (GitHub setup outage) |
+| Real coastlines (mapcoast) | 0.3 h | 1 | none yet | - |
+| Calm map 4 (calmmap4) — IN TRAIN 3b | 4.3 h | 4 | via train 3 | green there |
+| Real supply notes (c-supply) | 5.4 h | 1 (notes only) | - | - |
+| Calm map flag follow-up (calmmap) — IN TRAIN 3b | 5.7 h | 2 | 0fa0b84f28 | cfclient, tutorial (same as main) |
+| Extras: battle (extras-battle) | 12 h | 1 | 60d5e246b5 | grandlive, migrate-down |
+| One language: campaign (lang-campaign) | 12 h | 3 | 0aee49223e | check (build check fails) |
+| Army tokens (armytokens) | 12 h | 6 | 4eeb0c339c | decisions, mpsync, tutorial |
+| Seamless flow (seamless-flow) | 12 h | 1 | e1c344c7d8 | audio, smooth-pc |
+| Extras: command (extras-command) | 12 h | 1 | 4a7c989031 | audio, cfclient, smooth-pc |
+| Speed S (speedS) | 12.5 h | 3 | cf33e78fb7 | cfclient; helper says not to land |
+| Extras: story (extras-story) | 13 h | 1 | d1aef6c3d2 | cfclient, controls |
+| One language spec (onelanguage) | 13 h | 4 | none | - |
+| greenK3 / greenK4 notes | 12 h | 3 / 4 | notes only | - |
+| Voices V (voicesV) | 19 h | 3 | d19894f02f | cfclient, audio (old main) |
+| Polish P2 (polishP2) — IN TRAIN 3b | 21 h | 1 | via train 3 | save (fixed in train, unproven) |
+| Safety H (safetyH) | 25 h | 3 | 5dfef609ec | audio (+ old main reds) |
+| Dashboard J (dashJ) | 25 h | 2 | 673e996495 | mpsync, migrate-dual, audio |
+| Stuck units + feel + safety copies (greenK-snap / greenK-qfeel / dashI / loop-grand-snap) | 25–31 h | 6 / 9 / 3 / 1 | 1bb5e66377 | mpsync, audio |
+| Window fix (winfix) | 26 h | 1 | - | already on main |
+| Sound mix (q-sound), Autosave loop, Leaders C, Speed D | 30–34 h | 1–3 | old | - |
+
+## Locks with nothing saved (90+ min, no work branch)
+
+- **Real war** (`taken/realwar`, 13 h) — nothing saved.
+- **Seamless HUD** (`taken/seamless-hud`, 13 h) — nothing saved.
+- **Army standards** (`taken/army-standards`, 13.5 h) — concept sheet on the lock only; work exists only as test branch gate/6a19d97447 (red).
+- **One language: battle** (`taken/lang-battle`, 13 h) — nothing saved.
+- Active in the last hour: stockpiles 2, war support 2 (both stopped with a handoff: waiting for a test verdict), real coastlines, real-looking forest.
+
+## Result of this run
+
+RESULT_PLACEHOLDER
+
+---
+(previous runs below)
+
 # STATE — conductor run 3 on 2026-11-11, 12:50–14:35 UTC (third train built and tested twice, NOT landed)
 
 **Main = ac59908f** (train 2). Main's own test run after that landing is RED on two tests: `gate/tutorial` (TUTORIAL FAIL (1)) and
@@ -75,8 +142,6 @@ If cfclient fails for real again, re-run only that job once (it talks to the liv
 **`train/20261111-1252` (767aad51, last pushed 13:44 UTC) is FINISHED and abandoned, no conductor is working on it** — this run could not remove it (branch deletes are refused from the sandbox). A run that starts before 15:35 UTC will see it as younger than 110 minutes: it may ignore it and continue with `orch/conductor-train3`.
 
 
----
-(previous runs below)
 
 # STATE — conductor run 2 on 2026-11-11, 10:37–12:00 UTC (second train landed)
 
