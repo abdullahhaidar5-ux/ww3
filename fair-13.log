@@ -1,0 +1,83 @@
+mapfair: 64 of 1532 battles, 4 at a time
+  5/64 done, 8.8 min
+  10/64 done, 11.4 min
+  15/64 done, 15.1 min
+  20/64 done, 19.0 min
+  25/64 done, 23.6 min
+  30/64 done, 26.3 min
+  35/64 done, 28.2 min
+  40/64 done, 33.1 min
+  45/64 done, 36.5 min
+  50/64 done, 37.4 min
+  55/64 done, 39.1 min
+  60/64 done, 40.5 min
+  64/64 done, 41.6 min
+
+BATTLES map            n games  kills  win share by start position (fair = 1/n)        score share by position     avg-min
+  aegean          6     1      0    0   0   0   0 100   0                          0  10   9   0  72   9     15.0 p=0.416
+  alexandria      2     1      1    0 100                                          0 100                     11.5 p=0.317
+  alexandria      4     1      0    0   0   0 100                                  0  16  12  72             15.0 p=0.392
+  arctic          2     1      0  100   0                                         90  10                     15.0 p=0.317
+  blacksea        2     1      1  100   0                                        100   0                     14.4 p=0.317
+  blacksea        4     1      0   25  25  25  25                                  0  24  32  44             15.0 p=1.000
+  blacksea        6     1      0   17  17  17  17  17  17                          0  49   5  45   0   0     15.0 p=1.000
+  cairo           6     1      1    0   0   0 100   0   0                          0   0   0 100   0   0     14.5 p=0.416
+  carmelcoast     6     1      0  100   0   0   0   0   0                         76   9   5   0   0  10     15.0 p=0.416
+  caspian         2     1      1  100   0                                        100   0                     13.2 p=0.317
+  delta           6     1      0    0 100   0   0   0   0                         13  62   0   0  25   0     15.0 p=0.416
+  dhofar          2     1      1  100   0                                        100   0                     14.6 p=0.317
+  dhofar          4     1      0    0 100   0   0                                 41  58   0   0             15.0 p=0.392
+  dmziron         6     1      0    0   0   0 100   0   0                         11  12  21  51   0   5     15.0 p=0.416
+  dmz             8     1      0    0   0 100   0   0   0   0   0                  0   0  54  21   0   0  23   2 15.0 p=0.429
+  dnipro          2     1      0   50  50                                         50  50                     15.0 p=1.000
+  donbas          2     1      0   50  50                                         52  48                     15.0 p=1.000
+  donbas          4     1      0  100   0   0   0                                 53  19  28   0             15.0 p=0.392
+  emirates        4     1      0  100   0   0   0                                 76   0   0  24             15.0 p=0.392
+  euphratesvalley  6     1      0    0   0   0 100   0   0                         18  17  26  39   0   0     15.0 p=0.416
+  galileehills    2     1      0    0 100                                         22  78                     15.0 p=0.317
+  galileehills    4     1      0    0 100   0   0                                  0  77   0  23             15.0 p=0.392
+  gazaharbour     2     1      0    0 100                                         29  71                     15.0 p=0.317
+  gazaharbour     4     1      0   25  25  25  25                                 35   7  26  32             15.0 p=1.000
+  golan           6     1      0    0   0   0   0   0 100                          0   0   0   0  34  65     15.0 p=0.416
+  gulfoil         8     1      0   13  13  13  13  13  13  13  13                  7  41  38  14   0   0   0   0 15.0 p=1.000
+  heartland       4     1      1  100   0   0   0                                100   0   0   0             11.8 p=0.392
+  heartland       8     1      0   13  13  13  13  13  13  13  13                 39  38   0   0   6  16   0   0 15.0 p=1.000
+  honshu          2     1      1  100   0                                        100   0                     13.4 p=0.317
+  indus           6     1      1    0   0   0   0 100   0                          0   0   0   0 100   0     14.1 p=0.416
+  jazira          6     1      0    0 100   0   0   0   0                         37  52  10   0   0   0     15.0 p=0.416
+  kuwait          8     1      1    0   0   0 100   0   0   0   0                  0   0   0 100   0   0   0   0 13.8 p=0.429
+  latakiamtns     2     1      0  100   0                                         85  15                     15.0 p=0.317
+  latakiamtns     4     1      0  100   0   0   0                                 53  38   9   0             15.0 p=0.392
+  muscatbay       6     1      0    0 100   0   0   0   0                         16  55  18  11   1   0     15.0 p=0.416
+  najafplain      2     1      1  100   0                                        100   0                     13.0 p=0.317
+  najafplain      4     1      0   25  25  25  25                                  0  10  40  50             15.0 p=1.000
+  najafplain      6     1      0   17  17  17  17  17  17                          0   0  44  56   0   0     15.0 p=1.000
+  nile            4     1      0   25  25  25  25                                 39  37   0  24             15.0 p=1.000
+  nile            6     1      0  100   0   0   0   0   0                         63  29   0   0   9   0     15.0 p=0.416
+  oasis           4     1      0    0   0   0 100                                  0  13  15  72             15.0 p=0.392
+  oasis           8     1      0   13  13  13  13  13  13  13  13                 27   0   0  38   0   0   0  35 15.0 p=1.000
+  palmyra         6     1      0    0   0   0 100   0   0                         18  24  24  34   0   0     15.0 p=0.416
+  punjab          6     1      0    0 100   0   0   0   0                         39  61   0   0   0   0     15.0 p=0.416
+  rafahborder     6     1      0    0   0   0 100   0   0                          0  25  25  51   0   0     15.0 p=0.416
+  rivers          2     1      0  100   0                                         85  15                     15.0 p=0.317
+  saada           2     1      1    0 100                                          0 100                     12.8 p=0.317
+  saada           4     1      0   25  25  25  25                                  0  45   0  54             15.0 p=1.000
+  saada           6     1      0    0   0   0 100   0   0                          0   0  36  64   0   0     15.0 p=0.416
+  sahara          4     1      0   25  25  25  25                                 23  22  30  25             15.0 p=1.000
+  taurus          6     1      0   17  17  17  17  17  17                         17  48   0  35   0   0     15.0 p=1.000
+  tigristowns     2     1      1    0 100                                          0 100                     14.4 p=0.317
+  tigristowns     4     1      0   25  25  25  25                                  1  57   0  43             15.0 p=1.000
+  tigristowns     6     1      0    0   0   0 100   0   0                          0  20   9  72   0   0     15.0 p=0.416
+  ural            8     1      0    0   0   0 100   0   0   0   0                 29   0   0  71   0   0   0   0 15.0 p=0.429
+  yarmouk         2     1      0  100   0                                         84  16                     15.0 p=0.317
+  yarmouk         4     1      1    0   0   0 100                                  0   0   1  99             14.9 p=0.392
+  yarmouk         6     1      0    0 100   0   0   0   0                          5  56   0  39   0   0     15.0 p=0.416
+  yemen           2     1      1    0 100                                          0 100                     8.2 p=0.317
+  yemen           6     1      0  100   0   0   0   0   0                         48  20   0   0  14  19     15.0 p=0.416
+  zabriver        6     1      0    0   0   0   0 100   0                          0  11  36   0  53   0     15.0 p=0.416
+  zagros          4     1      0   25  25  25  25                                 29  38  33   0             15.0 p=1.000
+  zagros          6     1      0    0   0   0   0   0 100                          0   2  12   0   0  87     15.0 p=0.416
+  zagros          8     1      0   13  13  13  13  13  13  13  13                  0  27  28   3   0   0  29  14 15.0 p=1.000
+BATTLES 64 games, 64 layouts; a start position wins significantly more than its share (p<0.01, >1.5x fair): none
+pooled duel seat: position 1 won 16, position 2 won 13 (of games decided between the first two seats)
+MAPFAIR DONE 41.6 min -> ../../../../../tmp/lg/fair-13.json
