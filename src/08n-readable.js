@@ -34,7 +34,7 @@ function tsInstall(){const body=document.getElementById('setBody');if(!body||doc
   const sync=()=>sg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.v===tsVal()));
   sg.querySelectorAll('button').forEach(b=>b.onclick=()=>{tsSet(b.dataset.v);sync();});sync();
   const cb=document.getElementById('sCb'),at=cb?cb.nextSibling:null;if(cb)cb.parentNode.insertBefore(l,at),cb.parentNode.insertBefore(sg,at);else body.append(l,sg);
-  const cl=cb&&cb.previousElementSibling;if(cl&&/Colourblind/.test(cl.textContent))cl.textContent='Colour-blind mode (safe team colours from the next battle; each team also gets its own shape on the minimap, selection rings, town name plates and the allies list)';}
+  const cl=cb&&cb.previousElementSibling;if(cl&&/Colourblind/.test(cl.textContent))cl.textContent='Color-blind mode (safe team colors from the next battle; each team also gets its own shape on the minimap, selection rings, town name plates and the allies list)';}
 try{tsInstall();tsApply();addEventListener('resize',tsFitSoon);}catch(e){console.warn('text size',e);}
 
 /* ---------- colour-blind extras: the team's shape as text (allies list) ---------- */
