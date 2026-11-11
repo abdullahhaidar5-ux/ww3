@@ -207,6 +207,22 @@ try {
       ok(geFx('SA', 'oil') && geFx('SA', 'bank'), 'SA oil fund'); ok(geFx('US', 'tax') && geFx('US', 'upkeep'), 'US interim');
       // supply: ammo drops outside supply, refills inside
       const a = GC.armies.find(x => x.o === 'IR'); a.u.forEach(r => r[3] = 50); a.at = cap; geSupplyStep(); ok(a.u[0][3] > 50, 'ammo refills in supply');
+      // real supply lines (13zl-gsupply.js): full at the capital; a long truck line over occupied ground delivers less; an enemy army on the line cuts it; seasons; AI halts when empty
+      { const L0 = gsupLine(a); ok(L0.eff >= .99 && !L0.cut, 'full supply at the capital (' + L0.eff + ')');
+        const ir = i => GC.prov[i].o === 'IR' || grAllied('IR', GC.prov[i].o), plain = i => P[i].land && !ir(i) && !P[i].port && !geCount(i, 'base') && !geCount(i, 'port'); let ch = null;
+        for (const p1 of P) { if (ch) break; if (!plain(p1.i) || !p1.adj.some(j => P[j].land && GC.prov[j].o === 'IR')) continue;
+          for (const j2 of p1.adj) { if (ch) break; if (!plain(j2) || P[j2].adj.some(j => P[j].land && ir(j))) continue;
+            for (const j3 of P[j2].adj) { if (!plain(j3) || j3 === p1.i || P[j3].adj.some(j => j !== j2 && P[j].land && (ir(j) || j === p1.i))) continue; ch = [p1.i, j2, j3]; break; } } }
+        ok(!!ch, 'found a three-province road out of Iran');
+        if (ch) { const old = ch.map(i => GC.prov[i].o), foe = old[1]; ch.forEach(i => GC.prov[i].o = 'IR'); a.at = ch[2]; a.path = [];
+          const L1 = gsupLine(a); ok(!L1.cut && L1.eff > 0 && L1.eff < 1 && L1.km > 150, 'long line on occupied ground delivers a share (' + JSON.stringify([L1.eff, Math.round(L1.km)]) + ')');
+          a.u.forEach(r => r[3] = 50); a.fu = 50; geSupplyStep(); const got = a.u[0][3] - 50; ok(got >= 0 && got < 22 && a.sl === Math.round(L1.eff * 100), 'refill scaled by the line (' + got + ')');
+          const wk = grWk('IR', foe), had = GC.war[wk]; GC.war[wk] = had || 1; const raid = grAddArmy(foe, ch[1], [['inf', 100, 0, 100]], 'Raiders');
+          const L2 = gsupLine(a); ok(L2.cut && L2.eff === 0, 'an enemy army on the road cuts the line'); a.u.forEach(r => r[3] = 50); a.fu = 50; geSupplyStep(); ok(a.u[0][3] < 50 && a.fu < 50, 'a cut army burns its own stock');
+          a.fu = 10; ok(gsupHold(a), 'an empty army holds instead of attacking');
+          GC.armies.splice(GC.armies.indexOf(raid), 1); if (had) GC.war[wk] = had; else delete GC.war[wk]; ch.forEach((i, k) => GC.prov[i].o = old[k]); a.at = cap; a.fu = 100; a.u.forEach(r => r[3] = 100); }
+        const mo = P.find(p => p.n === 'Moscow'), te = P.find(p => p.n === 'Tehran'), t0 = GC.turn; ok(Math.abs(gsupLat(mo) - 55.75) < 3 && Math.abs(gsupLat(te) - 35.7) < 3, 'latitudes ' + gsupLat(mo).toFixed(1) + ' ' + gsupLat(te).toFixed(1));
+        const at = m => { while (gsupMonth() !== m) GC.turn++; }; at(0); ok(gsupSeason(mo.i) === 'winter' && gsupSeason(te.i) === '', 'January: winter at Moscow, none at Tehran'); at(3); ok(gsupSeason(mo.i) === 'mud', 'April: mud season at Moscow'); GC.turn = t0; }
       return out; });
     // battle inheritance: the Mountain Fortress and the airfield stand in the defender's battle; fuel/ammo come from the army on the map; no building in the battle
     const bt = await ev(() => { grNew({ me: 'IR', seed: 7, len: 'quick' }); const mp = GCM.P.findIndex(p => p.land && GC.prov[p.i].o === 'IR' && p.t === 'm'); if (mp < 0) return { skip: 1 };
