@@ -69,4 +69,4 @@ Describe each change in plain words a player would understand.
 - **Never read a whole `src/` module** (60–280 KB each): `grep -n`, then read ~100–200 lines.
 - Keep command output short (`| tail -20`; grep for PASS/FAIL); `git log --oneline -10`, `git diff --stat` before full diffs; read only `head -60` of BACKLOG/LOG/HISTORY.
 - Test smart: quick local checks while working; `orch/cigate.sh` (all gates) once when done and once after a fix, one blocking wait.
-- Cheaper models for simple work: `sonnet` for assets/credits/copy/layout/small fixes; Haiku for text/price/colour tweaks; Opus only for netcode, simulation/AI, performance, reviews. Batch small requests into one agent (~1 h); schedule a new cloud agent ≥5 min ahead and switch its model first.
+- **Models (Abdullah 2026-11-10 18:21 "Move what you can to fable", full throttle until Saturday):** scheduled runners and new helpers run on Fable (`claude-fable-5-2`); only bulk asset/voice generation stays on `sonnet`. Batch small requests into one agent (~1 h); when scheduling a new cloud agent check its model before it fires. If Fable hits its limit, fall back to `sonnet` and say so in the report.
