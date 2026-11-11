@@ -534,3 +534,4 @@ winfix 2026-11-10: windows, doors and lamps are only drawn where a building real
 2026-11-11 Words: American spelling in all game text (color, armor, defense, center ...) — conductor train bb4c2212
 2026-11-11 Extras: Playtest card lists ten new things to try this week, with thumbs up/down and a short note each — conductor train 2bc6375b
 2026-11-11 Conductor: first batch landing (maps fix, American spelling, Playtest card, proxy warfare, war support slice 1 in one tested push); state page on branch orch/conductor (orch/STATE.md)
+2026-11-11 One language 3 — every button says what it beats: unit buttons show a green picture (what the unit BEATS) and a red one (what it is WEAK TO), the hover card lists them with names, and pointing at an enemy lights up the buttons that beat it; all worked out from the real damage/armour/range/price numbers by one helper (matchUp), the hand-written lists are gone, Encyclopedia and Unit guide use the same — orch/lang-battle
