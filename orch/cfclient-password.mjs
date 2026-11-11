@@ -93,6 +93,7 @@ const pwRx = new RegExp([PW, encodeURIComponent(PW), Buffer.from(PW).toString('b
 // type into the password prompt and press its Join button, like a player
 async function answer(page, pw) {
   await waitFor(page, () => !!document.getElementById('joinpw'), null, 20000, 'the password prompt');
+  await page.evaluate(() => { if (typeof menuGo === 'function') menuGo('online'); });
   await page.fill('#joinpw', pw);
   await page.click('#joinpwgo');
 }
@@ -105,6 +106,7 @@ async function main() {
   const hasField = await A.evaluate(() => !!document.getElementById('hostpw'));
   if (!hasField) throw new Error('no password field under "Play online"');
   await A.evaluate(() => { initAudio(); setup.p = 'US'; });
+  await A.evaluate(() => { if (typeof menuGo === 'function') menuGo('online'); });   // the new menu keeps the online card on its own screen
   await A.fill('#hostpw', PW);
   await A.evaluate(() => newBattle());
   await waitFor(A, () => NET.via === 'wsb' && NET.cf && NET.cf.own && NET.cf.blob && document.querySelector('#mpstatus .lob'), null, 40000, 'the creator\'s Cloudflare lobby');
@@ -162,6 +164,7 @@ async function main() {
   await B.evaluate(() => leaveNet()); await A.evaluate(() => cancelHost());
 
   // ---- 4. browser-hosted fallback (relay room on the server + the host's own check) ----
+  await A.evaluate(() => { if (typeof menuGo === 'function') menuGo('online'); });   // the new menu keeps the online card on its own screen
   await A.fill('#hostpw', PW);
   await A.evaluate(() => hostGame());
   await waitFor(A, () => MODE === 'single' && NET.code && NET.code !== 'join' && NET.game && !NET.cf && NET.game._ws, null, 40000, 'the creator to host in its browser (with its relay room)');

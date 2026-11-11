@@ -18,7 +18,7 @@ function tactRow(el,s){
   const h=wallHintEl();
   if(G.wallM&&!tactBuilders().length){G.wallM=null;G.wallP=null;}
   if(G.wallM){const k='Fortification line';h.hidden=false;h.textContent=(G.wallP?`${k}: ${TOUCHUI?'tap':'click'} where it ends (or drag)`:`${k}: drag a line, or ${TOUCHUI?'tap':'click'} where it starts`)+` · costs ${DUG[G.wallM].cost} per piece · ${TOUCHUI?'tap ✕':'right-click'} to cancel`;}else h.hidden=true;
-  if(s.length===1&&!s[0].isB&&s[0].crit){const d=document.createElement('div');d.className='morale';d.innerHTML='<span class="ml" style="color:#ea8a5a">Damaged</span><span style="font-size:12px;opacity:.9">'+critText(s[0].crit)+'</span>';d.title='A Construction Vehicle (or the war factory yard) repairs these.';el.append(d);}
+  if(s.length===1&&!s[0].isB&&s[0].crit){const d=document.createElement('div');d.className='morale';d.innerHTML='<span class="ml" style="color:#ea8a5a">Damaged</span><span style="font-size:12px;opacity:.9">'+critText(s[0].crit)+'</span>';d.title='A Construction Vehicle (or the War Factory yard) repairs these.';el.append(d);}
   const own=tactOwn(),inf=own.some(digCan),doz=own.filter(u=>u.kind==='dozer'),air=own.filter(u=>u.s.dom==='air'&&(u.s.cls==='heli'||u.s.cls==='jet'));if(!inf&&!doz.length&&!air.length)return;
   const r=document.createElement('div');r.className='cmdrow tact';const mk=(t,ti,fn,on)=>{const b=document.createElement('button');b.textContent=t;b.title=ti;b.onclick=fn;if(on)b.classList.add('on');r.append(b);return b;};
   if(inf)mk('⛏ Dig in (I)','Dig a foxhole where they stand: a few seconds, then they sit low in it and take about half damage. They climb out when you give a move order.',tactDig);

@@ -1,0 +1,52 @@
+# Every push to main runs the full gate (gate.yml, one job per test, statuses land on the main commit), then records the
+# result: a commit status "gate/main" and one line in orch/GATE-MAIN.md on the `reports` branch, so the next helper sees at
+# once whether main is green and which commit turned it red. Read: git show origin/reports:orch/GATE-MAIN.md | tail
+name: Main gate
+on:
+  push:
+    branches: [main]
+# One run at a time; a newer push to main replaces any older run that is still WAITING (the running one finishes).
+# Without this, many small pushes queue one full gate each and block GitHub's runners for hours (2026-11-10).
+concurrency:
+  group: main-gate
+  cancel-in-progress: false
+permissions:
+  contents: write
+  statuses: write
+  actions: read
+jobs:
+  gate:
+    uses: ./.github/workflows/gate.yml
+    permissions: { contents: write, statuses: write }
+  record:
+    needs: gate
+    if: ${{ always() && needs.gate.result != 'cancelled' && needs.gate.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    env: { GH_TOKEN: '${{ github.token }}' }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 1 }
+      - name: Summarise and record
+        run: |
+          SHA=${{ github.sha }}; R=${{ github.repository }}
+          sleep 20
+          J=$(gh api "repos/$R/commits/$SHA/statuses?per_page=100")
+          LINE=$(printf '%s' "$J" | python3 -c '
+          import json,sys,datetime
+          s={}
+          for x in json.load(sys.stdin):
+              c=x["context"]
+              if c.startswith("gate/") and c!="gate/main": s.setdefault(c,x["state"])
+          bad=sorted(k[5:] for k,v in s.items() if v!="success")
+          print(("INCOMPLETE" if len(s)<28 and not bad else "GREEN" if not bad else "RED")+"|"+str(len(s))+"|"+",".join(bad))')
+          ST=${LINE%%|*}; REST=${LINE#*|}; N=${REST%%|*}; BAD=${REST#*|}
+          SUBJ=$(git log -1 --format=%s | cut -c1-70)
+          STATE=success; [ "$ST" = RED ] && STATE=failure; [ "$ST" = INCOMPLETE ] && STATE=error
+          gh api "repos/$R/statuses/$SHA" -f state=$STATE -f context=gate/main -f description="$ST: $N gates${BAD:+, failing: $BAD}" >/dev/null
+          NOW=$(date -u +%F\ %H:%MZ)
+          ROW="- $NOW ${SHA:0:8} **$ST** ($N gates)${BAD:+ failing: $BAD} — $SUBJ"
+          git config user.name "gate-bot"; git config user.email "gate-bot@users.noreply.github.com"
+          if git fetch -q origin reports 2>/dev/null; then git checkout -q -B reports origin/reports; else git checkout -q --orphan reports; git rm -rf -q . 2>/dev/null || true; fi
+          mkdir -p orch; [ -f orch/GATE-MAIN.md ] || printf '# Gate on main (newest last)\nOne line per push to main: GREEN/RED, which gates failed. Written by .github/workflows/main-gate.yml.\n\n' > orch/GATE-MAIN.md
+          echo "$ROW" >> orch/GATE-MAIN.md
+          git add orch/GATE-MAIN.md; git commit -q -m "gate main ${SHA:0:8}: $ST"; git push -q origin reports || (git pull -q --rebase origin reports && git push -q origin reports)

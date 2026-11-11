@@ -58,6 +58,24 @@ _piper = {}
 _mms = {}
 
 
+_f5 = {}
+F5FA_REF_TEXT = 'The column is moving out. Hold the line and wait for my order, we do not leave anyone behind.'
+
+
+def f5fa_synth(text, ref, take, mood):
+    import torch, torchaudio
+    d = os.environ.get('F5FA_DIR', '/home/claude/w/f5fa'); refs = os.environ.get('F5FA_REFS', '/home/claude/w/refs')
+    if 'm' not in _f5:
+        def _load(p, *a, **k):   # torchaudio.load needs torchcodec; read with soundfile instead
+            x, r = sf.read(p, dtype='float32', always_2d=True); return torch.from_numpy(x.T), r
+        torchaudio.load = _load
+        from f5_tts.api import F5TTS
+        _f5['m'] = F5TTS(model='F5TTS_v1_Base', ckpt_file=os.path.join(d, 'model.safetensors'), vocab_file=os.path.join(d, 'vocab.txt'), device='cpu')
+    w, sr, _ = _f5['m'].infer(ref_file=os.path.join(refs, ref + '.wav'), ref_text=F5FA_REF_TEXT, gen_text=text, nfe_step=24,
+                              speed=1.1 if mood == 'cry' else 1.0, seed=take * 101 + 7, remove_silence=False)
+    return w, sr
+
+
 def synth(eng, voice, lang, text, take, mood):
     """one take -> float32 mono at SR. mood: 'sold' (terse, clipped), 'cry' (shouted over gunfire), 'grim' (unit lost),
     'cmd' (calm but hard). Tough delivery (2026-10-29): faster, hotter sampling on combat lines."""
@@ -83,6 +101,10 @@ def synth(eng, voice, lang, text, take, mood):
         cfg = SynthesisConfig(length_scale=ls, noise_scale=ns, noise_w_scale=0.8, **({'speaker_id': 1} if v.config.num_speakers > 1 and voice.startswith('uk_UA-') else {}))   # ukrainian_tts is multi-speaker: speaker 1 = the male 'mykyta' (battlefeel shouts, when the original mykyta/oleksa files are not around)
         w = np.concatenate([c.audio_float_array for c in v.synthesize(text, syn_config=cfg)])
         sr = v.config.sample_rate
+    elif eng == 'f5fa':
+        # Persian F5-TTS (Lumos675/F5_TTS_Persian, Apache-2.0) cloned onto a deep XTTS speaker; ~90 s per line on 2 CPU cores.
+        # voice = reference name; needs F5FA_DIR (model.safetensors + vocab.txt) and F5FA_REFS/<voice>.wav (+ F5FA_REF_TEXT)
+        w, sr = f5fa_synth(text, voice, take, mood)
     elif eng == 'mms':
         import torch
         from transformers import VitsModel, AutoTokenizer

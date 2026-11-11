@@ -6,6 +6,7 @@ name: Deploy servers
 on:
   push:
     branches: [servers-live]
+  workflow_dispatch: {}   # started by autodeploy.yml (a push made with GITHUB_TOKEN does not trigger the push event)
 permissions:
   contents: read
   statuses: write

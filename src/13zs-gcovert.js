@@ -41,7 +41,7 @@ function gcvTargets(c){const L=Object.keys(GC.nat).filter(o=>o!==c&&!GC.nat[o].d
   L.sort((x,y)=>(grAtWar(c,y)-grAtWar(c,x))||(gdOp(c,x)-gdOp(c,y))||(x<y?-1:1));return L.slice(0,8);}
 npTab('cov','🕵','Intelligence',(code,body,c)=>{const N=GC.nat[code],own=c.own&&code===GC.me;
   let h='<div style="font-size:26px;margin-bottom:6px"><b>'+(N.ci?'Counter-intelligence ON':'Counter-intelligence off')+'</b></div>'+
-   '<div style="opacity:.85;margin-bottom:8px">Spies reveal an enemy\'s armies. Sabotage ($'+GCV_COST+') cuts a rival\'s income 7% and raises its upkeep and unrest for '+GCV_M+' months, but it can be exposed and then the world turns against the sender. Counter-intelligence ($'+GCV_CI+'/month) halves enemy sabotage and doubles the chance they are caught. The AI at war does the same to you.</div>';
+   '<div style="opacity:.85;margin-bottom:8px">Spies reveal an enemy\'s armies. Sabotage ($'+GCV_COST+') cuts a rival\'s income 7% and raises its upkeep and unrest for '+GCV_M+' months, but it can be exposed and then the world rounds on the sender. Counter-intelligence ($'+GCV_CI+'/month) halves enemy sabotage and doubles the chance they are caught. The AI at war does the same to you.</div>';
   if(gcvActive(code))h+='<div style="margin:8px 0;color:#ff9d8e">Sabotage damage until '+grMonStr(N.sabU+1)+' ('+(N.sabN|0)+' hit'+((N.sabN|0)===1?'':'s')+' so far).</div>';
   body.innerHTML=h;if(!own)return;
   const mk=(t,fn)=>{const b=document.createElement('button');b.textContent=t;b.type='button';b.style.cssText='font-size:15px;padding:4px 12px;cursor:pointer;margin:0 8px 6px 0';b.onclick=()=>{const e=fn();if(e)grLog(e,code);guTop();npDraw();};return b;};
