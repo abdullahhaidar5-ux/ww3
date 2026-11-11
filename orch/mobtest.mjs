@@ -46,7 +46,7 @@ try {
     for (let i = 0; i < 4 && !GC.over; i++) grEndTurn(true);
     out.near = near.length; out.cooled = near.some(o => gdOp(o, 'IR') < rel0[o]); out.ai = Object.keys(GC.nat).filter(o => o !== 'IR').some(o => GC.nat[o].mob > 0); if (!out.ai) fails.push('mob AI');
     out.e0 = gmbSet('IR', 0); out.lv0 = N.mob;
-    npOpen('IR', 'mob'); out.tab = !!document.getElementById('npWin') && /mobilisation/i.test(document.getElementById('npWin').textContent); return out; });
+    npOpen('IR', 'mob'); out.tab = !!document.getElementById('npWin') && /mobilization/i.test(document.getElementById('npWin').textContent); return out; });
   console.log('mob', JSON.stringify(r));
   if (r.e1 || r.lv !== 2 || r.pts !== 140 || !r.fill || !r.inc) fails.push('mob order/effects'); if (!r.lock) fails.push('mob lock');
   if (r.near && !r.cooled) fails.push('mob neighbours'); if (r.e0 || r.lv0 !== 0) fails.push('mob stand down'); if (!r.tab) fails.push('mob tab');

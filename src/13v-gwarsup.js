@@ -4,7 +4,7 @@
 // Morale-style numbers extend the ONE table MSTYLES at runtime (ws:{win,loss,drain,...}).
 const WS_COST=40, WS_CD=6, WS_RALLY=15, WS_BASE=60;
 const WS_STY={zeal:{win:3,loss:1.5,lossCap:85,drain:.3,rally:['Martyrs\' commemoration','Banners and remembrance for the fallen']},
-  prof:{win:3,loss:-4,drain:.5,rally:['Military parade','Parade and honours for the army']},
+  prof:{win:3,loss:-4,drain:.5,rally:['Military parade','Parade and honors for the army']},
   home:{win:3,loss:-4,drain:.5,drainHome:.2,drainAbroad:1.2,surge:3,rally:['Defend-the-homeland drive','Volunteer drive and fortification days']},
   fire:{win:6,loss:-8,drain:.5,rally:['Weapons showcase','Public demonstration of new fire-power']}};
 for(const k of Object.keys(WS_STY)){try{if(typeof MSTYLES!=='undefined'&&MSTYLES[k])MSTYLES[k].ws=WS_STY[k];}catch(e){}}

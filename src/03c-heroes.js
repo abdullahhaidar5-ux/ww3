@@ -60,4 +60,4 @@ function radioScan(){
       if(e.s.dom==='air'&&!e.landed&&e.kind!=='drone'&&dd<900)air++;
       else if(e.s.cls==='tank'&&dd<760){const cr=ax*dy-ay*dx;if(cr<0)armL++;else armR++;}}
     const key=air>=2?'air':(armL>=2||armR>=2)?(armL>=armR?'armL':'armR'):null;
-    if(key&&G.t-(last[key]||-99)>=RAD_GAP[key]){last[key]=last.any=G.t;log(T.id,key==='air'?'Enemy aircraft inbound!':key==='armL'?'Enemy armour on the left flank!':'Enemy armour on the right flank!','r:'+key);}}}
+    if(key&&G.t-(last[key]||-99)>=RAD_GAP[key]){last[key]=last.any=G.t;log(T.id,key==='air'?'Enemy aircraft inbound!':key==='armL'?'Enemy armor on the left flank!':'Enemy armor on the right flank!','r:'+key);}}}

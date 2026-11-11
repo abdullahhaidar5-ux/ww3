@@ -109,7 +109,7 @@ const MAPS={
     cities:[[1300,950,190,'russia'],[1980,1050,170,'russia'],[700,1600,80,'europe'],[2600,600,80,'europe']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let y=-200;y<=MAPH+200;y+=40)pts.push([1640+150*Math.sin(y*.0028+ph),y]);M.rivers.push({pts,hw:()=>150});M.bridgeAt=[[0,.25],[0,.48],[0,.78]];M.bridgeFrac=true;
       M.islands.push({x:1650,y:620,r:60,rx:2,rot:1.4,wob:q=>.1*Math.sin(q*3)},{x:1640,y:1600,r:50,rx:1.8,rot:1.5,wob:q=>.1*Math.sin(q*4)});}},
-  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA','DZ','LY','MA','BI'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armour; a few oases and oil everywhere.',
+  rubalkhali:{name:'Empty Quarter: Sea of Dunes',min:2,max:8,sym:'point',rough:.85,home:['SA','DZ','LY','MA','BI'],tag:'open dunes · oases',desc:'Endless dunes of the Rub al Khali around Riyadh. Wide open ground for armor; a few oases and oil everywhere.',
     slots:(()=>{const s=[];const ang=[2.5,-.64,.95,-2.19,3.14,0,-1.57,1.57];for(const a of ang)s.push([1600+Math.cos(a)*1300,1100+Math.sin(a)*840]);return s;})(),
     cities:[[1600,1100,190,'mideast']],
     water(M,R){for(const [x,y] of [[900,700],[2300,1500],[2300,700],[900,1500]])M.lakes.push({x,y,r:55,rx:1.4,wob:q=>.15*Math.sin(q*3+x)});}},
@@ -132,12 +132,12 @@ const MAPS={
     slots:[[450,1900],[2850,1600],[450,400],[2850,600],[700,1150],[2500,1100]],
     cities:[[900,800,150,'asia'],[2650,1850,140,'asia'],[2700,350,110,'korea']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let t=0;t<=1.0001;t+=.01){pts.push([1500+t*400+80*Math.sin(t*7+ph),-200+t*2600]);}M.rivers.push({pts,hw:(t,x)=>330});M.islands.push({x:1780,y:1000,r:60,rx:1.5,rot:.4,wob:q=>.1*Math.sin(q*3)});M.bridgeAng.push([1575,480,.988,-.152],[1835,1700,.988,-.152]);}},
-  honshu:{name:'Honshu Coast: Land of the Rising Sun',min:2,max:4,sym:'mirrorX',theme:'green',rough:1.25,home:['JP'],tag:'dense low-rise towns · bay · offshore islands · naval-friendly',desc:'A stylised Japanese coast: tight tiled-roof towns climb narrow valleys behind a central bay with island strongholds offshore. Two land routes through the hills and one by sea.',
+  honshu:{name:'Honshu Coast: Land of the Rising Sun',min:2,max:4,sym:'mirrorX',theme:'green',rough:1.25,home:['JP'],tag:'dense low-rise towns · bay · offshore islands · naval-friendly',desc:'A stylized Japanese coast: tight tiled-roof towns climb narrow valleys behind a central bay with island strongholds offshore. Two land routes through the hills and one by sea.',
     slots:[[450,1900],[2750,1900],[450,1200],[2750,1200]],
     cities:[[1600,1150,170,'japan'],[800,1500,100,'japan'],[2400,1500,100,'japan'],[1600,1850,90,'japan']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-300;x<=MAPW+300;x+=40)pts.push([x,-70+30*Math.sin(x*.004+ph)]);M.rivers.push({pts,hw:()=>480});
       for(const [x,y] of [[800,620],[1600,520],[2400,620]]){M.islands.push({x,y,r:110,rx:1,rot:0,wob:q=>.3*Math.max(0,Math.sin(q*6))});}M.bridgeAng.push([800,560,0,1],[2400,560,0,1]);}},
-  dmz:{name:'Korean DMZ',min:2,max:8,sym:'mirrorY',rough:1.3,home:['KP','KR'],tag:'fortified border · river · mountain ridges',desc:'The most fortified border on Earth: the Imjin river, the demilitarised strip, mountain ridges to the east and capitals within artillery range.',
+  dmz:{name:'Korean DMZ',min:2,max:8,sym:'mirrorY',rough:1.3,home:['KP','KR'],tag:'fortified border · river · mountain ridges',desc:'The most fortified border on Earth: the Imjin river, the demilitarized strip, mountain ridges to the east and capitals within artillery range.',
     slots:[[500,250],[500,1950],[1600,200],[1600,2000],[2700,250],[2700,1950],[1050,300],[1050,1900]],
     cities:[[1150,1850,150,'korea'],[1150,350,120,'asia'],[2250,1880,90,'korea'],[2250,330,80,'asia']],
     water(M,R){const ph=R()*6.28;const pts=[];for(let x=-200;x<=2200;x+=40)pts.push([x,1100+50*Math.sin(x*.005+ph)]);M.rivers.push({pts,hw:()=>58});M.bridgeAt=[[0,.25],[0,.6]];M.bridgeFrac=true;
@@ -157,7 +157,7 @@ const MAPS={
     slots:[[420,1500],[2780,700]],cities:mirrorList([[1020,1280,85,'southasia']],'p'),
     water(M,R){const ph=R()*6.28;M.ridges.push({pts:polyline([[1270,330],[1420,560],[1560,770]],40,25,2,ph),hw:()=>110},{pts:polyline([[640,330],[960,560]],40,18,2,ph),hw:()=>80});
       M.peaks.push({x:2250,y:330,r:80,rx:1.5,rot:.3});mirrorMap(M,'p');M.peaks.push({x:1600,y:1100,r:72,rx:1.25,rot:0});}},
-  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR','IQ','SY','BI'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armour.',
+  euphrates:{name:'Euphrates Crossing',min:2,max:2,sym:'point',home:['RS','IR','IQ','SY','BI'],tag:'river · three bridges · river towns · duel',desc:'A duel across the Euphrates: three bridges, a river town guarding each bank and marshes that funnel the armor.',
     slots:[[420,700],[2780,1500]],cities:mirrorList([[1180,430,110,'mideast'],[860,1700,75,'mideast']],'p'),
     water(M,R){M.lakes.push({x:900,y:1170,r:70,rx:1.7,wob:a=>.12*Math.sin(a*3)});M.peaks.push({x:1250,y:1820,r:70,rx:1.6,rot:.3});mirrorMap(M,'p');
       const pts=[];for(let y=-200;y<=2400;y+=40)pts.push([1600+110*Math.sin((y-1100)*.0035)+35*Math.sin((y-1100)*.011),y]);M.rivers.push({pts,hw:()=>92});M.bridgeAt=[[0,.18],[0,.5],[0,.82]];M.bridgeFrac=true;}},
@@ -186,7 +186,7 @@ const MAPS={
     slots:[[480,380],[2720,1820],[2720,380],[480,1820]],sl3:[[480,380],[2720,380],[1600,1700]],
     water(M,R){M.lakes.push({x:950,y:720,r:85,rx:1.5,wob:a=>.12*Math.sin(a*3)},{x:1600,y:330,r:70,rx:2,wob:a=>.1*Math.sin(a*2)},{x:420,y:1100,r:65,rx:1.3,wob:a=>.1*Math.sin(a*4)});mirrorMap(M,'x');mirrorMap(M,'y');
       M.lakes.push({x:1600,y:1100,r:250,rx:1.6,wob:a=>.07*Math.cos(4*a)});M.islands.push({x:1600,y:1100,r:70,rx:1.2,rot:0,wob:()=>0});M.bridgeAng.push([1360,1100,1,0],[1840,1100,-1,0],[1600,925,0,1],[1600,1275,0,-1]);}},
-  sahara:{name:'Sahara Crossroads',min:4,max:6,sym:'point',rough:.9,tag:'open desert · oases · caravan town',desc:'Open Saharan sand around a caravan town: rock outcrops split the desert into lanes and small oases mark the routes. Room for armour to swing wide.',
+  sahara:{name:'Sahara Crossroads',min:4,max:6,sym:'point',rough:.9,tag:'open desert · oases · caravan town',desc:'Open Saharan sand around a caravan town: rock outcrops split the desert into lanes and small oases mark the routes. Room for armor to swing wide.',
     slots:[[400,1100],[2800,1100],[620,330],[2580,1870],[620,1870],[2580,330]],cities:[[1600,1100,130,'mideast']],
     water(M,R){M.peaks.push({x:1150,y:640,r:85,rx:1.6,rot:.5},{x:1600,y:380,r:75,rx:1.4,rot:0},{x:1000,y:1420,r:70,rx:1.3,rot:-.4});M.lakes.push({x:1280,y:1060,r:48,rx:1.3,wob:a=>.1*Math.sin(a*3)},{x:700,y:820,r:40,rx:1.2,wob:a=>.1*Math.sin(a*3)});mirrorMap(M,'p');}},
   caucasus:{name:'Caucasus Valleys',min:4,max:6,sym:'point',theme:'snow',rough:1.5,home:['RU'],tag:'three valleys · mountain passes',desc:'Three snowy valleys between Caucasus ridges. Passes in the middle and narrow tracks at both ends link them: hold a pass and you hold the valley.',
@@ -248,13 +248,13 @@ const MAPS={
     water(M,R){const pts=[];for(let x=-200;x<=3400;x+=40)pts.push([x,1100+36*Math.sin((x-1600)*.003)]);M.rivers.push({pts,hw:()=>300});M.bridgeAt=[[0,.12],[0,.88]];M.bridgeFrac=true;
       navIsle(M,{x:1600,y:1100,r:130,rx:2.3,w:a=>.05*Math.sin(a*3)});M.bridgeAng.push([1600,885,0,1],[1600,1315,0,-1]);
       for(const x of [1000,2200])navIsle(M,{x,y:1100,r:75,rx:1});}},
-  harbour:{name:'Delta Harbour',min:2,max:4,sym:'point',fieldMinB:300,tag:'harbour city · channel · open bays · landings',desc:'A port city on a channel that runs between two open bays. Bridges and an island district tie the banks together by land; fleets and landing craft fight for the harbour from the bays.',
+  harbour:{name:'Delta Harbor',min:2,max:4,sym:'point',fieldMinB:300,tag:'harbor city · channel · open bays · landings',desc:'A port city on a channel that runs between two open bays. Bridges and an island district tie the banks together by land; fleets and landing craft fight for the harbor from the bays.',
     slots:[[760,560],[2440,1640],[2440,560],[760,1640]],oilAt:[[1600,1100],[1600,520],[1600,1680],[300,1100,1],[2900,1100,1]],
     water(M,R){const pts=[];for(let x=-200;x<=3400;x+=40)pts.push([x,1100+30*Math.sin((x-1600)*.004)]);M.rivers.push({pts,hw:()=>190});M.bridgeAt=[[0,.347],[0,.653]];M.bridgeFrac=true;
       M.lakes.push({x:-100,y:1100,r:620,rx:1,wob:a=>.05*Math.sin(a*3)});M.lakes.push({x:3300,y:1100,r:620,rx:1,wob:a=>.05*Math.sin(-a*3)});
       navIsle(M,{x:1600,y:1100,r:70,rx:2.4});M.bridgeAng.push([1600,970,0,1],[1600,1230,0,-1]);
       for(const x of [300,2900])navIsle(M,{x,y:1100,r:75,rx:1});}},
-  atoll:{name:'Pacific Atolls',min:6,max:8,sym:'point',fieldMinB:300,tag:'ocean · island bases · offshore oil · big navies',desc:'Eight island bases ring a great ocean. Bridges link neighbours around the ring and to the central isle; rock-pad oil rigs sit in open water between them, and fleets and landings decide who holds them.',
+  atoll:{name:'Pacific Atolls',min:6,max:8,sym:'point',fieldMinB:300,tag:'ocean · island bases · offshore oil · big navies',desc:'Eight island bases ring a great ocean. Bridges link neighbors around the ring and to the central isle; rock-pad oil rigs sit in open water between them, and fleets and landings decide who holds them.',
     slots:[[560,430],[2640,1770],[1600,380],[1600,1820],[2640,430],[560,1770],[560,1100],[2640,1100]],oilAt:[[1600,1100],[1100,760,1],[2100,1440,1],[1100,1440,1],[2100,760,1]],
     water(M,R){M.lakes.push({x:1600,y:1100,r:6000,rx:1,wob:()=>0});const w=R()*6.28,mk=(x,y,k)=>({x,y,r:290,rx:1.45,w:a=>.05*Math.sin(a*3+w+k)});
       const I=[mk(560,430,0),mk(1600,380,1),mk(2640,430,2),mk(2640,1100,3),mk(2640,1770,4),mk(1600,1820,5),mk(560,1770,6),mk(560,1100,7)],C={x:1600,y:1100,r:190,rx:1.5};

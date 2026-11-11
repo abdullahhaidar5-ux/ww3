@@ -99,7 +99,7 @@ function townPanelTick(force){if(!G||!G.towns){return;}try{cqBanner();}catch(e){
 /* ---------- HEARTS & MINDS interface: home turf, local recruits, informants, bribes, propaganda towers ---------- */
 function homeLine(){const n=homeNames();return n.length?n.join(' & '):'';}
 function hmPanel(t,mine,reb){let h='';const T=G.teams[ME];if(!T)return h;
-  const hn=homeLine();if(hn){const tf=turfOf(ME);h+=`<div class="tm" style="margin-top:6px">Locals favour <b>${hn}</b>${tf>0?' &mdash; <span style="color:#9be39b">you are on home turf</span>':tf<0?' &mdash; <span style="color:#ffb4a8">you are the outsider here</span>':' &mdash; evens out in this match-up'}</div>`;}
+  const hn=homeLine();if(hn){const tf=turfOf(ME);h+=`<div class="tm" style="margin-top:6px">Locals favor <b>${hn}</b>${tf>0?' &mdash; <span style="color:#9be39b">you are on home turf</span>':tf<0?' &mdash; <span style="color:#ffb4a8">you are the outsider here</span>':' &mdash; evens out in this match-up'}</div>`;}
   const pop=Math.round((t.pop==null?1:t.pop)*100),an=Math.round((t.an&&t.an[ME])||0);
   if(pop<100||an>=5)h+=`<div class="tm" style="margin-top:4px">Population ${pop}%${an>=5?' &middot; <span style="color:'+(an>=40?'#ffb4a8':'#f0c040')+'">locals angry at you '+an+'/100</span> (civilian casualties)':''}</div>`;
   if(mine&&!reb){

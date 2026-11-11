@@ -45,9 +45,9 @@ const DIFF=[{wave:4,inc:.7,first:420,think:1.6,flank:0,retreat:0,focus:0,cover:0
 // mix = how much it favours each class when buying units (inf, veh, arty, air; 1 = normal), amb = ambush pickets,
 // raid = hit-and-run raiders sent at enemy supply trucks. Code 0 = Balanced (the old AI, unchanged); 9 = pick one at start.
 const PERS=[{k:'bal',name:'Balanced',d:'Even mix, attacks when ready'},
-  {k:'tank',name:'Tank Rush',d:'Early armour pushes',ord:['barracks','factory','factory','turret'],first:.8,wave:.85,mix:{veh:3,inf:.6,arty:.7}},
+  {k:'tank',name:'Tank Rush',d:'Early armor pushes',ord:['barracks','factory','factory','turret'],first:.8,wave:.85,mix:{veh:3,inf:.6,arty:.7}},
   {k:'guer',name:'Guerrilla',d:'Raids trucks, ambushes, hides in cover',ord:['barracks','tunnel','factory'],first:.85,wave:.95,mix:{inf:1.3,veh:1,arty:.8},amb:1,raid:1},
-  {k:'arty',name:'Artillery Turtle',d:'Defences and long-range fire, late push',ord:['barracks','factory','turret','sam'],first:1.05,wave:1,mix:{arty:2.5,veh:1.5,inf:1}},
+  {k:'arty',name:'Artillery Turtle',d:'Defenses and long-range fire, late push',ord:['barracks','factory','turret','sam'],first:1.05,wave:1,mix:{arty:2.5,veh:1.5,inf:1}},
   {k:'air',name:'Air Power',d:'Early airfield, helicopters and jets',ord:['barracks','factory','airfield','sam','airfield'],first:.95,wave:.95,mix:{air:3.5,veh:1,inf:.9}}];
 function aiPers(T){return PERS[T.ai&&T.ai.p|0]||PERS[0];}
 function aiFirst(T){return DIFF[T.ai.d??1].first*(aiPers(T).first||1);}
@@ -203,7 +203,7 @@ function validSpot(team,kind,x,y){validSpot.why='';const s=bstats(G.teams[team].
   if(G.conq&&kind!=='depot'&&G.terr&&terrEnemy(team,x,y))return no('Enemy territory - push the front line first (a forward Supply Depot extends yours).');
   return 2;}
 // Cancel an unfinished building (Abdullah 2026-10-31): the whole price comes back, builders stand down.
-function cancelBld(team,tid){const b=G.byId.get(tid);if(!b||b.dead||!b.isB||b.team!==team||b.built>=1||b.kind==='hq')return;const T=G.teams[team],s=bstats(T.fac,b.kind);for(const u of G.ents)if(u.order&&u.order.type==='build'&&u.order.target===b){u.order=null;u.path=null;}kill(b,team);T.credits+=s.cost;stSp(T,-s.cost);T.lost--;log(team,`${s.name} cancelled - refunded $${s.cost}.`);}
+function cancelBld(team,tid){const b=G.byId.get(tid);if(!b||b.dead||!b.isB||b.team!==team||b.built>=1||b.kind==='hq')return;const T=G.teams[team],s=bstats(T.fac,b.kind);for(const u of G.ents)if(u.order&&u.order.type==='build'&&u.order.target===b){u.order=null;u.path=null;}kill(b,team);T.credits+=s.cost;stSp(T,-s.cost);T.lost--;log(team,`${s.name} canceled - refunded $${s.cost}.`);}
 function placeBld(team,kind,x,y,dzId){if(G.grand)return false;const T=G.teams[team],s=bstats(T.fac,kind);if(!bldAllowed(T.fac,kind))return false;if(!BUILD_ORDER.includes(kind)||!reqMet(team,kind)||T.credits<Math.round(s.cost*gdCostK(T,s,true,kind)))return false;if(s.limit&&G.ents.filter(e=>!e.dead&&e.isB&&e.team===team&&e.kind===kind).length>=s.limit){log(team,`You can have at most ${s.limit} ${s.name}s.`,'w');return false;}
   let m=validSpot(team,kind,x,y);if(!m){log(team,validSpot.why||'Cannot build there.','w');return false;}if(m===2&&G.sandbox&&team===0)m=1;
   const b=addBld(team,kind,x,y,false);{const bc=Math.round(s.cost*gdCostK(T,s,true,kind));T.credits-=bc;stSp(T,bc);}
@@ -683,7 +683,7 @@ function launch(team,x,y){const T=G.teams[team],S=T.sup;if(T.charge<S.charge||!w
 function addStrike(x,y,t,r,dmg,team,kind){G.strikes.push({x,y,t,r,dmg,team,kind});FXE('strike',[x|0,y|0,+t.toFixed(2),r|0,kind==='sup'?1:0],team);}
 function updStrikes(dt){for(const s of G.strikes){s.t-=dt;if(s.t<=0){s.done=true;
     if(G.conq&&s.kind==='sup'){let md=0,nb=null,nd=1e9;for(const e of G.ents)if(e.isB&&e.kind==='sam'&&!e.dead&&e.built>=1&&!(e.dis>G.t)&&!ally(e.team,s.team)){const d=Math.hypot(e.x-s.x,e.y-s.y);if(d<CQ_MD_R){md++;if(d<nd){nd=d;nb=e;}}}
-      if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-CQ_MD_P,md))){if(nb)FXE('icpt',[nb.x|0,nb.y|0,s.x|0,s.y|0]);FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<CQ_MD_R))log(T.id,'Missile defence intercepted an incoming missile.','g');continue;}
+      if(md&&rnd(0,1)<Math.min(.8,1-Math.pow(1-CQ_MD_P,md))){if(nb)FXE('icpt',[nb.x|0,nb.y|0,s.x|0,s.y|0]);FXE('boom',[s.x|0,s.y|0,26,1]);for(const T of G.teams)if(!T.reb&&!ally(T.id,s.team)&&G.ents.some(e=>e.isB&&e.kind==='sam'&&e.team===T.id&&Math.hypot(e.x-s.x,e.y-s.y)<CQ_MD_R))log(T.id,'Missile defense intercepted an incoming missile.','g');continue;}
       if(G.towns)for(const t of G.towns)if(t.ow>=0&&!ally(t.ow,s.team)&&Math.hypot(t.x-s.x,t.y-s.y)<s.r+260)t.shock=Math.max(t.shock||0,G.t+30);}
     G.curSid=s.kind==='sup'?s.sid|0:0;explode(s.x,s.y,s.r,s.dmg,s.team,s.kind==='sup'?'super':s.kind==='bb'?'bb':'shell',s.kind);G.curSid=0;}}G.strikes=G.strikes.filter(s=>!s.done);}
 
@@ -1542,8 +1542,8 @@ function townCmd(team,a){if(G.grand)return;const t=G.towns&&G.towns[a.ti|0];if(!
    beyond what unrest already does). Host-authoritative, no RNG, fixed update order. ===== */
 const HM={LOY_UN:30,LOY_HOLD:120,MIL_CAP:4,MIL_CD:6,MIL_COST:70,MIL_HP:.8,INF_R:700,INF_T:6,INF_DELAY:2,BRIB_UN:50,BRIB_CD:150,BRIB_T:700,BRIB_H:250,TOW_R:900,TOW_CAP:10,
   TURF:{rise:.65,fall:1.25,cap:1.25,inf:1.3,rec:.85,brib:1.25,foe:1.15}};
-const MIL_NAME={JP:'Local Defence Volunteers',US:'Local Auxiliaries',EU:'Local Auxiliaries',UA:'Territorial Volunteers',RU:'Local Militia',CN:'People\'s Militia',KP:'Worker-Peasant Militia',IR:'Volunteer Mobilization Fighters',RS:'Village Defence Fighters',DW:'Tribal Volunteers',
-  TR:'Local Defence Volunteers',IL:'Territorial Reservists',SA:'Local Defence Volunteers',AE:'Local Defence Volunteers',PK:'Local Defence Volunteers',IN:'Local Defence Volunteers',EG:'Local Defence Volunteers',GB:'Home Guard Volunteers',AU:'Army Reserve Volunteers',CA:'Canadian Rangers Volunteers',DZ:'Local Defence Volunteers',MA:'Local Defence Volunteers',NG:'Local Defence Volunteers',ZA:'Commando Reserve Volunteers',ET:'Local Defence Volunteers',LY:'Local Defence Volunteers',SD:'Local Defence Volunteers',JP:'Prefectural Disaster Volunteers',TW:'Reserve Mobilisation Force',PH:'Citizen Armed Force Geographical Unit',VN:'Self-Defence Militia',ID:'Hansip Civil Defence',TH:'Volunteer Defence Corps',KZ:'Territorial Defence Volunteers',AF:'Local Defence Volunteers',OB:'Neighbourhood Volunteers',BI:'Tribal Volunteers',OM:'Tribal Home Guard',KR:'Local Defence Volunteers',CU:'Local Defence Volunteers'};
+const MIL_NAME={JP:'Local Defense Volunteers',US:'Local Auxiliaries',EU:'Local Auxiliaries',UA:'Territorial Volunteers',RU:'Local Militia',CN:'People\'s Militia',KP:'Worker-Peasant Militia',IR:'Volunteer Mobilization Fighters',RS:'Village Defense Fighters',DW:'Tribal Volunteers',
+  TR:'Local Defense Volunteers',IL:'Territorial Reservists',SA:'Local Defense Volunteers',AE:'Local Defense Volunteers',PK:'Local Defense Volunteers',IN:'Local Defense Volunteers',EG:'Local Defense Volunteers',GB:'Home Guard Volunteers',AU:'Army Reserve Volunteers',CA:'Canadian Rangers Volunteers',DZ:'Local Defense Volunteers',MA:'Local Defense Volunteers',NG:'Local Defense Volunteers',ZA:'Commando Reserve Volunteers',ET:'Local Defense Volunteers',LY:'Local Defense Volunteers',SD:'Local Defense Volunteers',JP:'Prefectural Disaster Volunteers',TW:'Reserve Mobilization Force',PH:'Citizen Armed Force Geographical Unit',VN:'Self-Defence Militia',ID:'Hansip Civil Defense',TH:'Volunteer Defense Corps',KZ:'Territorial Defense Volunteers',AF:'Local Defense Volunteers',OB:'Neighborhood Volunteers',BI:'Tribal Volunteers',OM:'Tribal Home Guard',KR:'Local Defense Volunteers',CU:'Local Defense Volunteers'};
 const STATION={JP:'Nippon Broadcast',US:'Heartland Radio One',EU:'Continental Broadcast',UA:'Free Dnipro Radio',RU:'Rodina Radio',CN:'Central Plains TV',KP:'Homeland Broadcast',IR:'Voice of the Plateau',RS:'Voice of the Mountain',DW:'Coffee Coast Radio',
   TR:'Anatolia Radio',IL:'Levant Broadcast',SA:'Desert Kingdom Radio',AE:'Emirates Gulf Radio',PK:'Indus Radio',IN:'Subcontinent TV',EG:'Nile Valley Radio',GB:'Home Service Radio',AU:'Outback Radio',CA:'Northern Service Radio',DZ:'Maghreb Radio',MA:'Atlas Radio',NG:'Federal Radio',ZA:'Highveld Radio',ET:'Highland Radio',LY:'Coastal Radio',SD:'Nile Radio',JP:'Home Islands Broadcast',TW:'Strait Broadcast',PH:'Islands Radio',VN:'Voice of the Delta',ID:'Nusantara Radio',TH:'Chao Phraya Radio',KZ:'Steppe Broadcast',AF:'Highlands Radio',OB:'Coastal Strip Radio',BI:'Desert Wireless',OM:'Gulf of Oman Radio',KR:'Hangang Broadcast',CU:'Island Radio'};
 function mapHome(){const m=G&&MAPS[G.mapKey];return (m&&m.home)||[];}
@@ -1646,8 +1646,8 @@ function infraTick(dt){if(MODE==='client'||!G.conq||!G.oil)return;
   const N=G.teams.length;
   // --- power: blackout switches the dependent buildings off; fuel reserve
   for(const T of G.teams){if(T.reb||T.out)continue;const out=powerOut(T.id);
-    if(out&&!T.blk){T.blk=1;log(T.id,'BLACKOUT! We lost every power plant - SAM sites, Defense Guns and the Strike Center are OFFLINE. Recapture or repair a power plant with the Construction Vehicle.','bad');for(const O of G.teams)if(O.id!==T.id&&!O.reb&&!ally(O.id,T.id))log(O.id,`Enemy ${T.F.name} has no power - its air defence and guns are offline.`,'g');}
-    else if(!out&&T.blk){T.blk=0;log(T.id,'Power is back - defences online.','g');}
+    if(out&&!T.blk){T.blk=1;log(T.id,'BLACKOUT! We lost every power plant - SAM sites, Defense Guns and the Strike Center are OFFLINE. Recapture or repair a power plant with the Construction Vehicle.','bad');for(const O of G.teams)if(O.id!==T.id&&!O.reb&&!ally(O.id,T.id))log(O.id,`Enemy ${T.F.name} has no power - its air defense and guns are offline.`,'g');}
+    else if(!out&&T.blk){T.blk=0;log(T.id,'Power is back - defenses online.','g');}
     if(T.blk)for(const e of G.ents)if(e.isB&&e.team===T.id&&!e.dead&&PW_DEP.includes(e.kind)&&!(e.dis>G.t+1.2))koSet(e,1.2,'blackout');
     if(T.fuel==null)T.fuel=1;let oil=false;for(const o of G.oil)if(!o.pw&&!o.dead&&o.owner>=0&&ally(o.owner,T.id)){oil=true;break;}
     if(G.t>=G.setupEnd){if(oil)T.fuel=Math.min(1,T.fuel+FUEL_FILL*st);else T.fuel=Math.max(0,T.fuel-FUEL_DRAIN*st);}
