@@ -58,7 +58,7 @@ function tutSpawn(n,x,y){let c=0;for(let i=0;i<n;i++){const p=nearestPassXY('gro
 const tutPanelBtn=id=>document.getElementById(id);
 const tutTownBtn=r=>{const p=document.getElementById('townp');return p&&p.style.display!=='none'&&TP.ti===(TUTS.town&&TUTS.town.i)?p.querySelector('button[data-r="'+r+'"]'):null;};
 const tutTownHL=r=>{const b=tutTownBtn(r);if(b)return{el:b};const t=tutTown();return t?{mm:{x:t.x,y:t.y}}:null;};
-const TUT=[
+const TUTC=[
  {k:'sel',t:'Welcome to Conquest! These are your soldiers.',a:'Left-click one, or drag a box around them, to select.',
   hl:()=>({w:tutSquad()}),cam:()=>tutSquad(),ok:()=>G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead&&!['harv','dozer','hacker'].includes(u.kind))},
  {k:'move',t:'Selected soldiers take orders with the RIGHT mouse button.',a:'Right-click the glowing spot to send them there.',
@@ -99,11 +99,27 @@ const TUT=[
   enter:()=>{TUTS.s0=G.teams[ME].spent|0;TUTS.p0=Object.keys(G.teams[ME].pw).length;if(G.t<G.setupEnd)G.setupEnd=G.t;},
   hl:()=>{if(typeof TAB!=='undefined'&&TAB==='pow'){const b=[...document.querySelectorAll('#panel button[id^="p_"]')].find(x=>x.offsetParent&&!x.disabled);return b?{el:b}:null;}return{d:'.tabs button[data-tab="pow"]'};},cam:()=>tutHQ(),
   ok:()=>(G.teams[ME].spent|0)>TUTS.s0||Object.keys(G.teams[ME].pw).length>TUTS.p0},
- {k:'md',t:'Enemies can fire missiles at your base. A missile-defence battery shoots them down. Build one near your base.',a:'Open Build, click the Missile Defence battery, then click next to your base.',
+ {k:'md',t:'Enemies can fire missiles at your base. An Anti-Air Missile Site shoots them down. Build one near your base.',a:'Open Build, click the Anti-Air Missile Site, then click next to your base.',
   hl:()=>{if(tutBld('sam'))return null;if(G.place==='sam'){const h=tutHQ();return{w:h?{x:h.x-130,y:h.y+80}:null};}return{d:'#b_sam'};},cam:()=>tutHQ(),ok:()=>!!tutBld('sam')},
  {k:'win',t:'Last step: destroy the enemy base to win. It is far away (see the minimap) and only lightly guarded. Reserves arrive now; keep your Barracks producing too.',a:'Gather your soldiers, then hold F and click the enemy base to attack-move.',
   enter:()=>{const T=G.teams[ME],h=tutHQ();T.credits+=2500;if(h)tutSpawn(6,h.x+70,h.y+140);try{pushLog('Reserves have arrived.','w');}catch(e){}},   // the calm enemy stays calm (no AI): the tutorial finale stays winnable and deterministic
   hl:()=>({w:tutFoeHQ()}),cam:()=>tutHQ(),ok:()=>false}];
+/* BATTLE tutorial (polishE 2026-11-10): the Generals-rules lesson, same step machinery as the Conquest one (one system per idea). */
+const tutMob=()=>G.ents.filter(e=>!e.isB&&e.team===ME&&!e.dead&&!['harv','dozer','hacker'].includes(e.kind));
+const tutBPlace=(k,dx,dy)=>{if(tutBld(k))return{w:tutBld(k)};if(G.place===k){const h=tutHQ();return{w:h?{x:h.x+dx,y:h.y+dy}:null};}return{d:'#b_'+k};};
+const TUTB=[
+ {k:'dep',t:'Welcome to Battle! Your Supply Trucks haul money to the Command Center. A Supply Depot next to a far supply field shortens the trip.',a:'Open Build, click Supply Depot, then click the ground near your base.',
+  hl:()=>tutBPlace('depot',-130,90),cam:()=>tutHQ(),ok:()=>!!tutBld('depot')},
+ {k:'bar',t:'Barracks train infantry, and they unlock the rest of your tech tree.',a:'Build a Barracks (Build tab) next to your base. Your Dozer builds it.',
+  hl:()=>tutBPlace('barracks',120,90),cam:()=>tutHQ(),ok:()=>!!tutBld('barracks')},
+ {k:'fac',t:'The War Factory builds tanks and other vehicles. It needs a Barracks first.',a:'Build a War Factory (Build tab) next to your base.',
+  hl:()=>tutBPlace('factory',150,-60),cam:()=>tutHQ(),ok:()=>!!tutBld('factory')},
+ {k:'veh',t:'Now put the factory to work. Units appear in the Units tab when a production building is selected.',a:'Click your War Factory, then click a vehicle to train it.',
+  hl:()=>{const b=tutBld('factory');if(!b)return{w:tutHQ()};return G.sel.includes(b)?{d:'#u_tank'}:{w:b};},cam:()=>tutBld('factory'),
+  enter:()=>{TUTS.k0=tutMob().length;},ok:()=>tutMob().length>TUTS.k0},
+ {k:'atk',t:'Your army is ready. Select it (Ctrl+A selects everything), then send it at the enemy with a right-click. Destroy every enemy building to win.',a:'Select your army and right-click an enemy building.',
+  enter:()=>{G.teams[ME].credits+=2500;},hl:()=>({w:tutFoeHQ()}),cam:()=>tutFoeHQ(),ok:()=>false}];
+let TUT=TUTC;
 let TUTS=null;
 function tutEl(){let el=document.getElementById('tut');if(el)return el;el=document.createElement('div');el.id='tut';el.hidden=true;
   el.innerHTML=`<div class="tt"><b id="tutN"></b><span id="tutT"></span></div><div class="ta" id="tutA"></div><div class="tb"><button id="tutShow">Show me</button><button id="tutSkip">Skip step</button><button id="tutExit">Exit tutorial</button></div>`;
@@ -152,7 +168,7 @@ function tutLayout(){const el=document.getElementById('tut');if(!el||el.hidden)r
 function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&(!G||!G.tut))el.hidden=true;}if(!TUTS||!G||!G.tut||G.over||TUTS.wait||!$('menu').hidden)return;
   const me=G.teams[ME],k=TUT[TUTS.i].k;tutLayout();
   /* safety nets: never leave the player without soldiers; the unrest lesson is sped up so a revolt really happens within seconds */
-  if(!tutUnits().length&&!tutGarN()&&!G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='barracks'&&!e.dead&&e.built>=1&&e.q&&e.q.length)){const h=tutHQ();if(h&&(TUTS.rescue|0)<4){TUTS.rescue=(TUTS.rescue|0)+1;tutSpawn(5,h.x+60,h.y+130);try{pushLog('Reserves have arrived.','w');}catch(e){}}}
+  if(TUT===TUTC&&!tutUnits().length&&!tutGarN()&&!G.ents.some(e=>e.isB&&e.team===ME&&e.kind==='barracks'&&!e.dead&&e.built>=1&&e.q&&e.q.length)){const h=tutHQ();if(h&&(TUTS.rescue|0)<4){TUTS.rescue=(TUTS.rescue|0)+1;tutSpawn(5,h.x+60,h.y+130);try{pushLog('Reserves have arrived.','w');}catch(e){}}}
   if(TUTS.town){for(const c of TUTS.town.cells){const g=c.g;if(g&&!g.dead&&g.max&&g.team===ME&&g.hp<g.max*.4)g.hp=g.max*.4;}}   /* the tutorial town's houses cannot be shot to rubble (that would make the town impossible to take) */
   if(k==='retake'&&TUTS.town){for(const c of TUTS.town.cells)if(c.g&&!c.g.dead&&c.g.team===G.reb&&c.occ&&c.occ.length){try{leaveGarrison(c);}catch(e){}}
     if(performance.now()-TUTS.e0>8000){for(const u of G.ents.slice())if(!u.isB&&!u.dead&&u.team===G.reb&&Math.hypot(u.x-TUTS.town.x,u.y-TUTS.town.y)<600){try{kill(u,ME,null);}catch(e){u.dead=true;}}}}   /* after a few seconds the last rebels give up, so nothing contests the town */   /* rebels never hole up in the houses during the tutorial: they fight in the open and the houses stay free to take */
@@ -160,7 +176,13 @@ function tutCheck(){{const el=document.getElementById('tut');if(el&&!el.hidden&&
   let ok=false;try{ok=!!TUT[TUTS.i].ok();}catch(e){}
   if(ok)tutAdvance(false);}
 setInterval(()=>{try{tutCheck();}catch(e){}},400);setInterval(()=>{try{tutHLTick();}catch(e){}},120);
-function startTutorial(){MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
+function startBattleTutorial(){TUT=TUTB;MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
+  const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';
+  TERR_DEFER=true;try{newGame({battle:1,w:setup.w|0,seed:(window.__tutSeed||Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
+  const T=G.teams[0];G.tut=true;G.docDis=1;G.setupEnd=0;T.credits+=1500;if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;
+  try{const eh=G.ents.find(e=>e.team===1&&e.kind==='hq');if(eh){eh.max=eh.hp=Math.min(eh.max,1500);}}catch(e){}
+  TUTS={i:0};afterStart();for(const id of ['tutShow','tutSkip'])$(id).hidden=false;$('tutExit').textContent='Exit tutorial';tutEnter();}
+function startTutorial(){TUT=TUTC;MODE='single';ME=0;const en=FKEYS.find(k=>k!==setup.p&&k!=='RS'&&k!=='DW')||'US',facs=[setup.p,en];
   const mk=MAPS[setup.map]&&MAPS[setup.map].min<=2&&MAPS[setup.map].max>=2?setup.map:'strait';
   TERR_DEFER=true;try{newGame({w:setup.w|0,seed:(window.__tutSeed||Math.random()*1e9)|0,facs,ai:[false,false],map:mk,tm:[0,1],bs:setup.bs,slot:-1,st:skSt(2)});}finally{TERR_DEFER=false;}
   const T=G.teams[0];G.tut=true;G.docDis=1;G.setupEnd=0;T.credits+=3000;T.gxp=Math.max(T.gxp|0,RANKS[1]);promoteGeneral(T);if(T.ai)T.ai=null;if(G.teams[1])G.teams[1].ai=null;

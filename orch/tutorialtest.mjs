@@ -41,6 +41,8 @@ const T0 = Date.now(); const stepTimes = [];
 async function waitStep(i, timeout = 300000) {
   await page.waitForFunction((i) => TUTS && TUTS.i === i && !TUTS.wait, i, { timeout, polling: 300 }).catch(async () => { bad('step ' + (i + 1) + ' never started (stuck on ' + (await ev(() => TUTS ? TUTS.i + 1 : 'none')) + ')'); throw new Error('stuck'); });
   let last = null; for (let n = 0; n < 40; n++) { const c = await ev(() => [cam.x, cam.y].join()); if (c === last) break; last = c; await wait(250); } await wait(400);
+  // slow runners: give the highlight ring up to 6 s to appear before judging it (the ring follows the camera and the target's position)
+  for (let n = 0; n < 20; n++) { if (await ev(() => { const h = document.getElementById('tutHL'); return !!(h && h.style.display !== 'none') || TUT[TUTS.i].k === 'md'; })) break; await wait(300); }
   const st = await ev(() => { const s = TUT[TUTS.i], hl = document.getElementById('tutHL'), box = document.getElementById('tut'), r = box.getBoundingClientRect();
     const h = hl && hl.style.display !== 'none' ? hl.getBoundingClientRect() : null; const ov = h && r.bottom > h.top && r.top < h.bottom && r.right > h.left && r.left < h.right;
     return { k: s.k, text: (typeof s.t === 'function' ? s.t() : s.t) + ' ' + s.a, hl: !!h, hlCls: hl ? hl.className : '', overlap: !!ov, vis: !box.hidden, tutBottom: r.bottom, rects: JSON.stringify([r, h].map(q => q && [q.left | 0, q.top | 0, q.right | 0, q.bottom | 0])) }; });
@@ -64,9 +66,12 @@ async function boxSelectSquad() {
 async function takeHouses(label) {
   for (let k = 0; k < 30; k++) {
     const st = await ev(() => { const t = tutTown(); if (t.ow === ME) return { done: true }; const c = t.cells.find(c => c.key && c.ow !== ME && !c.g && !c.dead) || t.cells.find(c => c.ow !== ME && !c.dead); const free = G.ents.filter(u => !u.isB && !u.dead && u.team === ME && u.kind === 'inf' && !u.order && !u.inGar);
-      return { cell: c && { x: c.x, y: c.y }, unit: free[0] && { x: free[0].x, y: free[0].y }, n: free.length }; });
+      return { cell: c && { x: c.x, y: c.y }, unit: free[0] && { x: free[0].x, y: free[0].y, id: free[0].id }, n: free.length }; });
     if (k < 6 || k % 10 === 0) console.log('    takeHouses', k, JSON.stringify(st)); if (st.done) return true; if (!st.cell || !st.unit) { await ff(4); await wait(200); continue; }
-    await ev(([x, y]) => centerOn(x, y, true), [st.unit.x, st.unit.y]); let p = await scr(st.unit.x, st.unit.y, 8); await ev(() => { G.sel = []; }); await click(p.x, p.y); await page.waitForFunction(() => G.sel.length > 0, null, { timeout: 8000 }).catch(() => {});
+    await ev(([x, y]) => centerOn(x, y, true), [st.unit.x, st.unit.y]); // the soldier keeps walking/shuffling while the page waits for frames (slow runners: seconds), so aim at where he is NOW, right before the click
+    let p; for (let tries = 0; tries < 3; tries++) { await ev((id) => { const u = G.ents.find(e => e.id === id && !e.dead); if (u) centerOn(u.x, u.y, true); }, st.unit.id); await raf2(); p = await ev((id) => { const u = G.ents.find(e => e.id === id && !e.dead); if (!u) return null; const q = toScreen(u.x, unitH(u) + entHeightMid(u) * .6, u.y); return { x: q.x, y: q.y }; }, st.unit.id); if (!p) break;
+      await ev(() => { G.sel = []; }); await click(p.x, p.y); await page.waitForFunction(() => G.sel.length > 0, null, { timeout: 3000 }).catch(() => {}); if (await ev(() => G.sel.length)) break; }
+    if (!p) continue;
     await ev(([x, y]) => centerOn(x, y, true), [st.cell.x, st.cell.y]); p = await scr(st.cell.x, st.cell.y, 6); await click(p.x, p.y, { button: 'right' }); await ff(6); await wait(200);
     if (k === 1) await shot(label + '-garrisoning');
   } return false;
@@ -104,9 +109,9 @@ try {
   // 1 select
   await waitStep(0); { const n = await boxSelectSquad(); ok(n > 0, 'drag-select picks up soldiers (' + n + ')'); } await done(0); await shotAfter(1, 'sel');
   // 2 move
-  await waitStep(1); { const m = await ev(() => TUTS.mk); await boxSelectSquad(); await ev(() => { const q = TUT[TUTS.i].cam(); centerOn(q.x, q.y - 90, true); }); const p = await scr(m.x, m.y, 0); console.log('    marker at', Math.round(p.x), Math.round(p.y)); ok(p.x > 20 && p.x < 1260 && p.y > 215 && p.y < 520, 'the move marker is on screen below the tip box'); await click(p.x, p.y, { button: 'right' }); } await done(1); await shotAfter(2, 'move');
+  await waitStep(1); { const m = await ev(() => TUTS.mk); await boxSelectSquad(); await ev(() => { const q = TUT[TUTS.i].cam(); centerOn(q.x, q.y - 90, true); }); let p = await scr(m.x, m.y, 0); for (let n = 0; n < 12 && !(p.y > 215 && p.y < 520); n++) { await wait(400); await ev(() => { const q = TUT[TUTS.i].cam(); centerOn(q.x, q.y - 90, true); }); p = await scr(m.x, m.y, 0); } console.log('    marker at', Math.round(p.x), Math.round(p.y)); ok(p.x > 20 && p.x < 1260 && p.y > 215 && p.y < 520, 'the move marker is on screen below the tip box'); await click(p.x, p.y, { button: 'right' }); } await done(1); await shotAfter(2, 'move');
   // 3 attack
-  await waitStep(2); { await boxSelectSquad(); const f = await ev(() => { const e = tutFoe(); return e ? { x: e.x, y: e.y } : null; }); ok(!!f, 'a red enemy exists to attack');
+  await waitStep(2); { await boxSelectSquad(); const f = await ev(() => { const e = tutFoe(); return e ? { x: e.x, y: e.y } : null; }); ok(!!f || await ev(() => TUTS.wait || TUTS.i > 2), 'a red enemy exists to attack (or the squad already beat the scouts on its own while a slow machine drew frames)');
     for (let k = 0; k < 6 && f; k++) { const fe = await ev(() => { const e = tutFoe(), q = tutSquad(); return e && q && Math.hypot(e.x - q.x, e.y - q.y) < 900 ? { x: e.x, y: e.y } : null; }); if (!fe) break;   /* only the nearby scouts, never the far enemy base */ await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p = await scr(fe.x, fe.y, 10); await boxSelectSquad().catch(() => 0); await ev(([x, y]) => centerOn(x, y, true), [fe.x, fe.y]); await wait(500); const p2 = await scr(fe.x, fe.y, 10); await click(p2.x, p2.y, { button: 'right' }); await ff(8);
       if (await ev(() => TUTS.wait || TUTS.i > 2)) break; } }
   await done(2); await shotAfter(3, 'atk');

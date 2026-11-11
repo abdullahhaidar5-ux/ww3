@@ -194,7 +194,7 @@ try {
       E.man = 1; ok(/manpower/.test(grRecruit('IR', cap, 'inf')), 'recruit needs manpower'); E.man = 500; N.cash = 9000; ok(grRecruit('IR', cap, 'inf') === '', 'recruit with manpower'); ok(E.man < 500, 'manpower spent');
       // bonds: borrow, owe interest, repay; default freezes credit
       const c0 = N.cash; ok(geBorrow('IR') === '', 'borrow'); ok(N.cash === c0 + 1500, 'bond pays 1500'); ok(E.bonds[0][1] > 1500, 'bond has interest'); ok(geRepay('IR') === '' && !E.bonds.length, 'repay');
-      geBorrow('IR'); E.bonds[0][0] = GC.turn; N.cash = 0; const army = GC.armies.filter(a => a.o === 'IR'); grEndTurn(true); ok(E.def >= 1 || N.cash >= 0, 'default handled'); ok(typeof geBorrow('IR') === 'string', 'borrow returns text');
+      geBorrow('IR'); E.bonds[0][0] = GC.turn; E.bonds[0][1] = 1e9; N.cash = 0;   /* a debt no income can cover: the default must really happen (income now often covers a normal bond) */ const army = GC.armies.filter(a => a.o === 'IR'); grEndTurn(true); ok(E.def >= 1, 'default handled (def ' + E.def + ', cash ' + Math.round(N.cash) + ', inc ' + N.inc + ', bonds ' + JSON.stringify(E.bonds) + ', turn ' + GC.turn + ')'); ok(typeof geBorrow('IR') === 'string', 'borrow returns text');
       // bank
       N.cash = 3000; ok(geDeposit('IR', 1000) === '' && E.bank === 1000, 'deposit'); ok(geWithdraw('IR') === '' && E.bank === 0, 'withdraw');
       // total war and rationing
