@@ -149,7 +149,7 @@ try {
       for (const [k, v] of Object.entries(tsRes[key])) ck(!v.length, 'text size ' + key + ' ' + k + ': reaches past the window: ' + v.slice(0, 4).join(' | ')); } }
   console.log('text size', JSON.stringify(Object.fromEntries(Object.entries(tsRes).map(([k, v]) => [k, Object.values(v).flat().length]))));
   const cbm = await R.evaluate(() => { tsSet(1); const off = !document.documentElement.classList.contains('ts-on'); SET.cb = 1; const g = [0, 1, 2, 3].map(cbGlyph); SET.cb = 0; const none = cbGlyph(0);
-    const lbl = [...document.querySelectorAll('#setBody .label')].map(x => x.textContent).filter(t => /Colour-blind|Text size/.test(t)).length; return { off, g, none, lbl, seg: document.querySelectorAll('#sTs button').length }; });
+    const lbl = [...document.querySelectorAll('#setBody .label')].map(x => x.textContent).filter(t => /Colou?r-blind|Text size/.test(t)).length; return { off, g, none, lbl, seg: document.querySelectorAll('#sTs button').length }; });
   console.log('cb', JSON.stringify(cbm));
   ck(cbm.off && cbm.seg === 3 && cbm.lbl === 2, 'Text size / Colour-blind settings missing: ' + JSON.stringify(cbm)); ck(new Set(cbm.g).size === 4 && cbm.none === '', 'colour-blind mode: each team needs its own shape');
 } catch (e) { fails.push('polishtest crashed: ' + String(e && e.stack || e).split('\n').slice(0, 3).join(' | ')); }
