@@ -1,4 +1,4 @@
-# STATE — conductor run 4 on 2026-11-11, 14:50 UTC onward (train 3b built, waiting on GitHub: its test machines cannot install their tools)
+# STATE — conductor run 4 on 2026-11-11, 14:50–16:30 UTC (train 3b built with 5 pieces, NOT landed: GitHub test machines could not set up, no verdict)
 
 **Main = ac59908f** (train 2, unchanged). Main's own run: red on `gate/tutorial` and `gate/cfclient` (both look flaky), smooth gates green.
 
@@ -26,10 +26,10 @@ GitHub run 43042843019 on f80df294: see "Result" below.
 
 | idea (branch) | last save | ahead | newest own test run | red tests |
 |---|---|---|---|---|
-| Real-looking forest on the campaign map (maptrees) | 0.1 h | 1 | none yet | - |
+| Real-looking forest on the campaign map (maptrees) | 1 h | 2+ | b3aa92bf12 | no verdict (GitHub setup outage) |
 | Stockpiles slice 2 (c-stockpiles2) — IN TRAIN 3b, handoff written | 0.1 h | 4 | a5138b78f9 | no verdict (GitHub setup outage) |
 | War support slice 2 (c-war-support2) — IN TRAIN 3b, handoff written | 0.1 h | 2 | 4ca54aa2b0 | no verdict (GitHub setup outage) |
-| Real coastlines (mapcoast) | 0.3 h | 1 | none yet | - |
+| Real coastlines (mapcoast) | 1 h | 2+ | 98379b2124 | no verdict (GitHub setup outage) |
 | Calm map 4 (calmmap4) — IN TRAIN 3b | 4.3 h | 4 | via train 3 | green there |
 | Real supply notes (c-supply) | 5.4 h | 1 (notes only) | - | - |
 | Calm map flag follow-up (calmmap) — IN TRAIN 3b | 5.7 h | 2 | 0fa0b84f28 | cfclient, tutorial (same as main) |
@@ -60,7 +60,20 @@ GitHub run 43042843019 on f80df294: see "Result" below.
 
 ## Result of this run
 
-RESULT_PLACEHOLDER
+**NOTHING LANDED — exactly why:** GitHub's runners could not set up from about 13:50 to at least 16:25 UTC. Run 43042843019 on
+f80df294 failed 28 of 28 jobs in the setup step "Tools" (apt: "Temporary failure resolving 'security.ubuntu.com'"), the one retry
+(re-run of the failed jobs, 16:12 UTC) failed the same way in the first 15 jobs. Not a single test started, so there is no verdict and
+no status on the commit. The helpers' own runs (stockpiles 2, war support 2, real coastlines gate/98379b2124, real-looking forest gate/b3aa92bf12) died the same way.
+Local on f80df294 (sandbox): build + --check OK, SMOKE PASS, DECISIONS PASS, GRANDTEST PASS. Smoothness cannot be judged here.
+
+**For the next conductor run:** `train/20261111-1452` (f80df294) is FINISHED and waiting, **no conductor is working on it** — ignore the
+110-minute rule for it. Main has not moved (ac59908f); if it has, rebase + rebuild. Run `orch/cigate.sh` on it ONCE when GitHub's setup works
+again (check first: does any recent "Ship gate" job get past the step "Tools"?). It lands if nothing is red beyond main's tutorial / cfclient
+and smooth-pc / smooth-mp / grandsmooth are green. QUEUE ticks and HISTORY lines are already inside. Then look at real coastlines and
+real-looking forest (both touch src/13e-grand3d.js, need their own green run first).
+**If the outage goes on:** a possible repair for ORCH or Abdullah to decide (the conductor did not touch it): in .github/workflows/gate.yml
+step "Tools", retry the browser install and fall back to `npx playwright install chromium` without `--with-deps` when apt is unreachable.
+Risk: missing fonts could change what the look tests measure.
 
 ---
 (previous runs below)
