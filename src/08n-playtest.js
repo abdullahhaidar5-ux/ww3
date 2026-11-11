@@ -15,7 +15,7 @@ const PLAYTEST_ITEMS=[
  ["90b8b9be","Sound mix. Measured first: the old output clipped (+1.9 dB over full scale; unit voices bypassed the mixer)"],
  ["416cd5e6","Test range compound: the rooftop parapet frame (white concrete posts/caps) floated high above the roofs because the roof height was taken from the tallest part (radar dish/mast) instead of the.."],
  ["06e4b59f","Formation buttons show only with 2+ own units selected, so the bottom bar no longer widens/clips with a building (e.g. Shipyard) selected"],
- ["fcc81616","Dig-in/fortification line + campaign battles army-only (tabs, money, town tax panel hidden, banner), Conquest battlefield picker (search, filters, regions, paged, favourites/recent, keys)"]];
+ ["fcc81616","Dig-in/fortification line + campaign battles army-only (tabs, money, town tax panel hidden, banner), Conquest battlefield picker (search, filters, regions, paged, favorites/recent, keys)"]];
 /*PLAYTEST-END*/
 const KEY='ww3_playtest_'+PLAYTEST_WEEK;
 let ST={};try{ST=JSON.parse(localStorage.getItem(KEY)||'{}')||{};}catch(e){ST={};}
