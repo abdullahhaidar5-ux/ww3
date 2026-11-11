@@ -1,0 +1,106 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;background:#0c1418}svg{display:block}
+text{font-family:"DejaVu Sans Condensed","DejaVu Sans","Liberation Sans",Arial,sans-serif}
+.h{font-weight:700;letter-spacing:3px;fill:#e9efe6}.sub{fill:#9fb0a6}.lab{fill:#dfe7dc;font-weight:700}.note{fill:#9fb0a6}.sec{fill:#e2b23c;font-weight:700;letter-spacing:2px}.w{fill:#fff;font-weight:700}
+</style></head><body><div id="root"></div><script>
+const W=1200,H=1920,PW=530,PH=560;
+const FL={IR:['#239f40','#f4f4f0','#da0000'],US:['#b22234','#f4f4f0','#3c3b6e'],IQ:['#ce1126','#f4f4f0','#111'],SA:['#0b6b3a','#0b6b3a','#0b6b3a'],KW:['#007a3d','#f4f4f0','#ce1126'],RU:['#f4f4f0','#0039a6','#d52b1e']};
+const RIM={me:'#ffffff',enemy:'#ff4d3d',ally:'#58a6ff',other:'#8c9a94'};
+let uid=0,defs='';
+function arc(cx,cy,r,frac,col,w,bg){const c=2*Math.PI*r;return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${bg||'#1b262b'}" stroke-width="${w}"/><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-dasharray="${(c*frac).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 ${cx} ${cy})"/>`;}
+function flag(cx,cy,r,f){const id='c'+(uid++);defs+=`<clipPath id="${id}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>`;const b=FL[f],h=2*r/3;
+ if(f==='US'){let g=`<g clip-path="url(#${id})">`;for(let i=0;i<7;i++)g+=`<rect x="${cx-r}" y="${cy-r+i*2*r/7}" width="${2*r}" height="${2*r/7+0.5}" fill="${i%2?'#f4f4f0':'#b22234'}"/>`;return g+`<rect x="${cx-r}" y="${cy-r}" width="${r*1.05}" height="${r*1.15}" fill="#3c3b6e"/></g>`;}
+ return `<g clip-path="url(#${id})">`+b.map((c,i)=>`<rect x="${cx-r}" y="${cy-r+i*h}" width="${2*r}" height="${h+0.5}" fill="${c}"/>`).join('')+(f==='KW'?`<path d="M${cx-r} ${cy-r} L${cx-r*0.35} ${cy-r*0.33} V${cy+r*0.33} L${cx-r} ${cy+r}Z" fill="#111"/>`:'')+(f==='SA'?`<rect x="${cx-r*0.5}" y="${cy+r*0.15}" width="${r}" height="${r*0.12}" fill="#fff"/>`:'')+`</g>`;}
+function coin(x,y,r,f,rel,str){rel=rel||'me';return `<circle cx="${x}" cy="${y}" r="${r+7}" fill="#0e171b"/>`+arc(x,y,r+4,str==null?1:str,(str!=null&&str<.35)?'#ff6a4d':'#58d36c',4)+flag(x,y,r,f)+`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="${RIM[rel]}" stroke-width="2.5"/>`;}
+function clipR(x,y,w,h,r){const id='p'+(uid++);defs+=`<clipPath id="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${r||12}"/></clipPath>`;return id;}
+function panel(i,num,title,sub){const x=60+(i%2)*(PW+20),y=140+Math.floor(i/2)*(PH+30);
+ return {x,y,head:`<rect x="${x}" y="${y}" width="${PW}" height="${PH}" rx="16" fill="#101b20" stroke="#22323a"/><text x="${x+22}" y="${y+38}" font-size="18" class="sec">${num}</text><text x="${x+22}" y="${y+72}" font-size="27" class="lab">${title}</text><text x="${x+22}" y="${y+100}" font-size="17" class="note">${sub}</text>`};}
+// ground ring (perspective ellipse)
+function gring(x,y,rx,hp,ammo,o){o=o||{};const ry=rx*0.38,col=hp<.35?'#ff6a4d':(o.shaken?'#ffb347':'#58d36c');
+ return `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="rgba(0,0,0,.25)" stroke="#16222a" stroke-width="7"/>`+
+ `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="none" stroke="${col}" stroke-width="6" stroke-linecap="round" pathLength="100" stroke-dasharray="${o.shaken?'3 3.2':(hp*100)+' 100'}" ${o.shaken?`stroke-dashoffset="1"`:''}/>`+
+ `<ellipse cx="${x}" cy="${y}" rx="${rx+9}" ry="${ry+5}" fill="none" stroke="#2a363b" stroke-width="2.5"/><ellipse cx="${x}" cy="${y}" rx="${rx+9}" ry="${ry+5}" fill="none" stroke="${ammo<.3?'#ff6a4d':'#e2b23c'}" stroke-width="2.5" pathLength="100" stroke-dasharray="${ammo*100} 100"/>`;}
+function inf(x,y,s,fill,op){return `<use href="#inf" x="${x-s/2}" y="${y-s*1.1}" width="${s}" height="${s*1.1}" fill="${fill||'#1d5a2e'}" stroke="#0b1114" stroke-width=".7" opacity="${op||1}"/>`;}
+function tank(x,y,s,fill,flip){return `<use href="#tank" x="${x-s/2}" y="${y-s*0.62}" width="${s}" height="${s*0.67}" fill="${fill||'#2a4a33'}" stroke="#0b1114" stroke-width=".6" ${flip?`transform="translate(${2*x} 0) scale(-1 1)"`:''}/>`;}
+function heli(x,y,s,fill){return `<use href="#heli" x="${x-s/2}" y="${y-s*0.6}" width="${s}" height="${s*0.67}" fill="${fill||'#2a4a33'}" stroke="#0b1114" stroke-width=".6"/>`;}
+function cap(x,y,t,t2,sz){return `<text x="${x}" y="${y}" font-size="${sz||17}" class="lab" text-anchor="middle">${t}</text>`+(t2?`<text x="${x}" y="${y+20}" font-size="14.5" class="note" text-anchor="middle">${t2}</text>`:'');}
+let b=`<text x="60" y="74" font-size="46" class="h">ONE LANGUAGE FOR THE WHOLE GAME</text><text x="60" y="110" font-size="21" class="sub">Ring = condition · Rim = whose side · Shape = what it is doing. Learn it once on the map, read it everywhere.</text>`;
+// 1 unit rings
+{const p=panel(0,'BATTLE · 1','Unit rings instead of health bars','The ring under every squad: green = health, gold = ammunition.');b+=p.head;const gx=p.x+20,gy=p.y+120,gw=PW-40,gh=330,id=clipR(gx,gy,gw,gh);
+ let g=`<rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" fill="#6f8a63"/><path d="M${gx} ${gy+210} C${gx+150} ${gy+180} ${gx+330} ${gy+250} ${gx+gw} ${gy+200} V${gy+gh} H${gx}Z" fill="#8a8f66" opacity=".7"/>`;
+ const a=[gx+95,gy+150],c=[gx+250,gy+150],d=[gx+405,gy+150];
+ g+=gring(a[0],a[1],58,1,.9);[-30,-10,10,30].forEach((dx,i)=>g+=inf(a[0]+dx,a[1]+(i%2?6:-4),26));
+ g+=`<text x="${a[0]+44}" y="${a[1]-44}" font-size="20" fill="#e2b23c" font-weight="700">››</text>`;
+ g+=gring(c[0],c[1],58,.5,.6,{shaken:1});[-22,2,24].forEach((dx,i)=>g+=inf(c[0]+dx,c[1]+(i%2?6:-4),26,'#1d5a2e'));
+ g+=gring(d[0],d[1],62,.28,.2);g+=tank(d[0],d[1]+10,78);
+ g+=cap(a[0],gy+250,'Fresh veterans','full rings, chevrons')+cap(c[0],gy+250,'Shaken','ring breaks up')+cap(d[0],gy+250,'Hurt, low on ammo','both rings red');
+ b+=`<g clip-path="url(#${id})">${g}</g>`;
+ b+=`<text x="${p.x+22}" y="${p.y+488}" font-size="15.5" class="note">One look at the ground tells you who can fight, who must</text><text x="${p.x+22}" y="${p.y+511}" font-size="15.5" class="note">pull back and who needs a supply truck. No floating bars.</text>`;}
+// 2 see before you click
+{const p=panel(1,'BATTLE · 2','See it before you order it','Before you let go: cover, enemy reach, final positions.');b+=p.head;const gx=p.x+20,gy=p.y+120,gw=PW-40,gh=330,id=clipR(gx,gy,gw,gh);
+ let g=`<rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" fill="#6f8a63"/>`;
+ // enemy fan
+ g+=`<path d="M${gx+440} ${gy+70} L${gx+150} ${gy+10} A300 300 0 0 0 ${gx+215} ${gy+260} Z" fill="#ff4d3d" opacity=".2"/><path d="M${gx+440} ${gy+70} L${gx+150} ${gy+10} M${gx+440} ${gy+70} L${gx+215} ${gy+260}" stroke="#ff4d3d" stroke-width="2" stroke-dasharray="6 5"/>`;
+ g+=inf(gx+450,gy+82,28,'#7a2a26')+`<rect x="${gx+418}" y="${gy+62}" width="26" height="4" fill="#3b1614" transform="rotate(8 ${gx+418} ${gy+62})"/><text x="${gx+352}" y="${gy+42}" font-size="15" fill="#ffb3aa" font-weight="700">enemy gun reach</text>`;
+ // wall
+ g+=`<rect x="${gx+190}" y="${gy+196}" width="150" height="16" rx="3" fill="#b9b3a2" stroke="#4a4a40"/><rect x="${gx+190}" y="${gy+212}" width="150" height="6" fill="#00000030"/>`;
+ // cover dots
+ [205,235,265,295,325].forEach(x=>g+=`<circle cx="${gx+x}" cy="${gy+236}" r="7" fill="#58d36c" stroke="#0b1114" stroke-width="1.5"/>`);
+ [140,160].forEach((x,i)=>g+=`<circle cx="${gx+x}" cy="${gy+236-i*30}" r="6" fill="#e2b23c" stroke="#0b1114" stroke-width="1.5"/>`);
+ [120,150,180].forEach((x,i)=>g+=`<circle cx="${gx+x+30}" cy="${gy+150-i*14}" r="5" fill="#b9c2bc" opacity=".55"/>`);
+ // ghosts
+ [210,250,290,326].forEach(x=>g+=inf(gx+x,gy+262,26,'#ffffff',.5));
+ // squad + path
+ g+=gring(gx+70,gy+290,40,1,1);[-16,4,22].forEach(dx=>g+=inf(gx+70+dx,gy+292,24));
+ g+=`<path d="M${gx+112} ${gy+284} C${gx+150} ${gy+276} ${gx+170} ${gy+262} ${gx+196} ${gy+252}" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="2 8" stroke-linecap="round"/>`;
+ g+=`<circle cx="${gx+30}" cy="${gy+26}" r="7" fill="#58d36c"/><text x="${gx+44}" y="${gy+31}" font-size="14.5" fill="#fff">full cover</text><circle cx="${gx+30}" cy="${gy+50}" r="6" fill="#e2b23c"/><text x="${gx+44}" y="${gy+55}" font-size="14.5" fill="#fff">light cover</text><circle cx="${gx+30}" cy="${gy+74}" r="5" fill="#b9c2bc" opacity=".6"/><text x="${gx+44}" y="${gy+79}" font-size="14.5" fill="#fff">open ground</text>`;
+ b+=`<g clip-path="url(#${id})">${g}</g>`;
+ b+=`<text x="${p.x+22}" y="${p.y+488}" font-size="15.5" class="note">Flanking, cover and suppression stop being guesswork: you</text><text x="${p.x+22}" y="${p.y+511}" font-size="15.5" class="note">see the safe spot and the killing zone before anyone moves.</text>`;}
+// 3 what beats what
+{const p=panel(2,'BATTLE · 3','Every button says what it beats','Build buttons show the answer, not just the price.');b+=p.head;
+ const cards=[['Anti-Tank Cell','$300','inf','tank','inf'],['Karrar Tank','$900','tank','inf','heli'],['Mesbah AA Gun','$650','aa','heli','tank']];
+ cards.forEach((c,i)=>{const x=p.x+22+i*166,y=p.y+128,w=152,h=300;
+  b+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="12" fill="#0b1317" stroke="#2c3d44" stroke-width="1.5"/><rect x="${x+10}" y="${y+10}" width="${w-20}" height="104" rx="8" fill="#1a2a22"/>`;
+  b+=(c[2]==='inf'?inf(x+w/2-14,y+98,44,'#cfd8cf')+inf(x+w/2+16,y+98,44,'#cfd8cf'):c[2]==='tank'?tank(x+w/2,y+92,96,'#cfd8cf'):`<use href="#aa" x="${x+w/2-46}" y="${y+26}" width="92" height="70" fill="#cfd8cf"/>`);
+  b+=`<text x="${x+w/2}" y="${y+142}" font-size="17" class="lab" text-anchor="middle">${c[0]}</text><text x="${x+w/2}" y="${y+164}" font-size="15" fill="#e2b23c" text-anchor="middle">${c[1]}</text>`;
+  const ic=(k,X,Y,col)=>k==='inf'?inf(X,Y+14,26,col):k==='tank'?tank(X,Y+12,44,col):heli(X,Y+12,44,col);
+  b+=`<rect x="${x+10}" y="${y+180}" width="${w-20}" height="50" rx="8" fill="#12301c" stroke="#58d36c"/><text x="${x+20}" y="${y+211}" font-size="15" fill="#8ff0a0" font-weight="700">BEATS</text>${ic(c[3],x+108,y+196,'#8ff0a0')}`;
+  b+=`<rect x="${x+10}" y="${y+238}" width="${w-20}" height="50" rx="8" fill="#351614" stroke="#ff4d3d"/><text x="${x+20}" y="${y+269}" font-size="15" fill="#ffb3aa" font-weight="700">WEAK TO</text>${ic(c[4],x+112,y+254,'#ffb3aa')}`;});
+ b+=`<text x="${p.x+22}" y="${p.y+470}" font-size="15.5" class="note">A new player builds the right answer in the first battle.</text><text x="${p.x+22}" y="${p.y+493}" font-size="15.5" class="note">Hover an enemy and the buttons that beat it light up.</text><text x="${p.x+22}" y="${p.y+516}" font-size="15.5" class="note">It reads the real balance table, so it can never lie.</text>`;}
+// 4 front lines
+{const p=panel(3,'CAMPAIGN · 4','Front lines and supply veins','Like a news map: where you push, where you are cut off.');b+=p.head;const gx=p.x+20,gy=p.y+120,gw=PW-40,gh=330,id=clipR(gx,gy,gw,gh);
+ const front=`M${gx+250} ${gy} C${gx+230} ${gy+60} ${gx+330} ${gy+110} ${gx+320} ${gy+170} C${gx+310} ${gy+230} ${gx+210} ${gy+250} ${gx+235} ${gy+330}`;
+ let g=`<rect x="${gx}" y="${gy}" width="${gw}" height="${gh}" fill="#b98a86"/><path d="${front} L${gx} ${gy+gh} L${gx} ${gy} Z" fill="#7f9a76"/>`;
+ g+=`<path d="${front}" fill="none" stroke="#ffd34d" stroke-width="12" opacity=".25"/><path d="${front}" fill="none" stroke="#fff" stroke-width="3.5"/>`;
+ // push arrows
+ g+=`<path d="M${gx+250} ${gy+120} h46 v-9 l20 16 l-20 16 v-9 h-46z" fill="#58d36c" stroke="#0b1114" stroke-width="1.2"/><path d="M${gx+300} ${gy+262} h-44 v-9 l-20 16 l20 16 v-9 h44z" fill="#ff4d3d" stroke="#0b1114" stroke-width="1.2"/>`;
+ // supply veins from capital
+ const cxp=gx+50,cyp=gy+170;
+ g+=`<path d="M${cxp} ${cyp} C${gx+120} ${gy+140} ${gx+170} ${gy+120} ${gx+236} ${gy+124}" fill="none" stroke="#e2b23c" stroke-width="7" stroke-linecap="round"/><path d="M${cxp} ${cyp} C${gx+110} ${gy+200} ${gx+140} ${gy+250} ${gx+160} ${gy+262}" fill="none" stroke="#e2b23c" stroke-width="7" stroke-linecap="round"/><path d="M${gx+160} ${gy+262} L${gx+214} ${gy+272}" stroke="#3a3f3a" stroke-width="4" stroke-dasharray="5 6"/>`;
+ g+=`<circle cx="${gx+166}" cy="${gy+263}" r="13" fill="#0e171b" stroke="#ff4d3d" stroke-width="2.5"/><path d="M${gx+160} ${gy+257} l12 12 m0 -12 l-12 12" stroke="#ff4d3d" stroke-width="3" stroke-linecap="round"/>`;
+ g+=`<circle cx="${cxp}" cy="${cyp}" r="15" fill="#0e171b" stroke="#fff" stroke-width="2"/><text x="${cxp}" y="${cyp+7}" font-size="19" fill="#e2b23c" text-anchor="middle">★</text>`;
+ g+=coin(gx+226,gy+126,15,'IR','me',.9)+coin(gx+226,gy+276,15,'IR','me',.3)+coin(gx+372,gy+140,15,'US','enemy',.5)+coin(gx+318,gy+284,15,'US','enemy',.9);
+ g+=`<text x="${gx+262}" y="${gy+104}" font-size="14.5" class="w" stroke="#0b1114" stroke-width="3" paint-order="stroke">winning here</text><text x="${gx+92}" y="${gy+304}" font-size="14.5" class="w" stroke="#0b1114" stroke-width="3" paint-order="stroke">supply cut — army starving</text>`;
+ b+=`<g clip-path="url(#${id})">${g}</g>`;
+ b+=`<text x="${p.x+22}" y="${p.y+488}" font-size="15.5" class="note">The line bends as provinces change hands. Gold veins follow</text><text x="${p.x+22}" y="${p.y+511}" font-size="15.5" class="note">real roads from your capital; cut one and it goes dark.</text>`;}
+// 5 chain preview
+{const p=panel(4,'CAMPAIGN · 5','See the chain before you act','Every big decision shows who reacts before you commit.');b+=p.head;const x=p.x+22,y=p.y+122,w=PW-44;
+ b+=`<rect x="${x}" y="${y}" width="${w}" height="340" rx="12" fill="#0b1317" stroke="#2c3d44" stroke-width="1.5"/><text x="${x+18}" y="${y+36}" font-size="22" class="lab">Declare war on Kuwait?</text>`;
+ const rows=[['Join against you','#ff8a7d',['US','SA']],['Join you','#8ec5ff',['IQ']],['United Nations','#e2b23c','Sanctions +12 · trade income −18%'],['Oil price','#58d36c','▲ your oil income +$310 a month'],['Support at home','#ff8a7d','−8 if the war lasts past 6 months'],['Nearest danger','#ff8a7d','Carrier group in the Gulf, 9 days']];
+ rows.forEach((r,i)=>{const ry=y+62+i*40;b+=`<line x1="${x+18}" x2="${x+w-18}" y1="${ry-10}" y2="${ry-10}" stroke="#1e2c33"/><circle cx="${x+26}" cy="${ry+10}" r="5" fill="${r[1]}"/><text x="${x+40}" y="${ry+16}" font-size="16.5" class="lab">${r[0]}</text>`;
+  if(Array.isArray(r[2]))r[2].forEach((f,k)=>b+=coin(x+222+k*44,ry+10,12,f,r[1]==='#8ec5ff'?'ally':'enemy'));else b+=`<text x="${x+200}" y="${ry+16}" font-size="15.5" fill="#c9d4cc">${r[2]}</text>`;});
+ b+=`<rect x="${x+18}" y="${y+298}" width="150" height="30" rx="6" fill="#e2b23c"/><text x="${x+93}" y="${y+319}" font-size="16" font-weight="700" fill="#0e171b" text-anchor="middle">Declare war</text><text x="${x+190}" y="${y+319}" font-size="16" fill="#9fb0a6">Not now</text>`;
+ b+=`<text x="${p.x+22}" y="${p.y+500}" font-size="15.5" class="note">Same card for alliances, sanctions, strikes and peace. It</text><text x="${p.x+22}" y="${p.y+523}" font-size="15.5" class="note">reads the real simulation, so the world reacts as warned.</text>`;}
+// 6 report card
+{const p=panel(5,'SHARE · 6','A battle report worth posting','After every battle: one picture your friends can read on Discord.');b+=p.head;const x=p.x+40,y=p.y+124,w=PW-80,h=336,id=clipR(x,y,w,h,14);
+ let g=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="#f1ead8"/><rect x="${x}" y="${y}" width="${w}" height="58" fill="#1b2a22"/><text x="${x+18}" y="${y+38}" font-size="26" fill="#f1ead8" font-weight="700" letter-spacing="3">VICTORY</text><text x="${x+w-18}" y="${y+26}" font-size="14" fill="#c9d4cc" text-anchor="end">Hormozgan · 14 Feb 2027</text><text x="${x+w-18}" y="${y+46}" font-size="14" fill="#c9d4cc" text-anchor="end">Iran vs United States · 18 min</text>`;
+ // mini map
+ const mx=x+16,my=y+72,mw=200,mh=150;g+=`<rect x="${mx}" y="${my}" width="${mw}" height="${mh}" rx="6" fill="#9db08f" stroke="#55604f"/><path d="M${mx+40} ${my+120} C${mx+60} ${my+60} ${mx+110} ${my+40} ${mx+150} ${my+52}" fill="none" stroke="#1d7a36" stroke-width="6" stroke-linecap="round"/><path d="M${mx+150} ${my+52} l-16 -4 l8 14z" fill="#1d7a36"/><path d="M${mx+48} ${my+130} C${mx+90} ${my+140} ${mx+130} ${my+120} ${mx+152} ${my+82}" fill="none" stroke="#1d7a36" stroke-width="6" stroke-linecap="round"/><path d="M${mx+152} ${my+82} l-2 17 l-13 -9z" fill="#1d7a36"/><rect x="${mx+146}" y="${my+56}" width="22" height="18" fill="#b33a2e"/><text x="${mx+157}" y="${my+47}" font-size="18" text-anchor="middle" fill="#b33a2e">✕</text><circle cx="${mx+36}" cy="${my+128}" r="8" fill="#1d7a36"/>`;
+ g+=`<text x="${mx+222}" y="${my+22}" font-size="15" fill="#4a5448">LOST</text><text x="${mx+222}" y="${my+56}" font-size="34" fill="#1b2a22" font-weight="700">12</text><text x="${mx+318}" y="${my+22}" font-size="15" fill="#4a5448">DESTROYED</text><text x="${mx+318}" y="${my+56}" font-size="34" fill="#b33a2e" font-weight="700">31</text>`;
+ g+=`<text x="${mx+222}" y="${my+92}" font-size="15" fill="#4a5448">BEST UNIT</text><text x="${mx+222}" y="${my+114}" font-size="17" fill="#1b2a22" font-weight="700">Anti-Tank Cell 2</text><text x="${mx+222}" y="${my+134}" font-size="14.5" fill="#4a5448">6 vehicles from the flank</text>`;
+ g+=`<text x="${x+16}" y="${y+252}" font-size="15" fill="#4a5448">HOW IT WAS WON</text><text x="${x+16}" y="${y+276}" font-size="16" fill="#1b2a22">Two columns went round the north ridge while</text><text x="${x+16}" y="${y+297}" font-size="16" fill="#1b2a22">the militia held the road.</text><text x="${x+w-16}" y="${y+324}" font-size="13" fill="#7a8376" text-anchor="end">WORLD WAR 3 · play free in your browser</text>`;
+ b+=`<g clip-path="url(#${id})">${g}</g><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="14" fill="none" stroke="#2c3d44" stroke-width="2"/>`;
+ b+=`<text x="${p.x+22}" y="${p.y+500}" font-size="15.5" class="note">One button: "Copy picture". Campaigns get a monthly front</text><text x="${p.x+22}" y="${p.y+523}" font-size="15.5" class="note">page the same way. Every post is an invitation to play.</text>`;}
+const sym=`<symbol id="inf" viewBox="0 0 20 22"><circle cx="10" cy="4.6" r="3.4"/><path d="M4.5 21 V12.5 a5.5 5.5 0 0 1 11 0 V21 Z"/><rect x="15.2" y="5" width="1.7" height="13" transform="rotate(18 15.2 5)"/></symbol><symbol id="tank" viewBox="0 0 30 20"><rect x="2" y="11" width="23" height="6.5" rx="3.2"/><rect x="8" y="5.5" width="11" height="6.5" rx="1.8"/><rect x="18" y="7.2" width="11" height="2"/></symbol><symbol id="heli" viewBox="0 0 30 20"><rect x="3" y="3" width="22" height="1.6" rx=".8"/><rect x="13.2" y="4" width="1.6" height="4"/><ellipse cx="13" cy="11.5" rx="8" ry="4.6"/><rect x="19" y="10" width="10" height="2"/><rect x="27.6" y="6.5" width="1.6" height="6"/><rect x="8" y="17" width="12" height="1.4"/></symbol><symbol id="aa" viewBox="0 0 30 24"><rect x="3" y="17" width="24" height="5" rx="2.5"/><rect x="9" y="11" width="12" height="7" rx="2"/><rect x="13" y="1" width="2" height="12" transform="rotate(28 14 12)"/><rect x="17" y="1" width="2" height="12" transform="rotate(28 18 12)"/></symbol>`;
+document.getElementById('root').innerHTML=`<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${sym}${defs}</defs><rect width="${W}" height="${H}" fill="#0c1418"/>${b}</svg>`;
+</script></body></html>

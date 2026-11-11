@@ -338,6 +338,8 @@ try {
   if (JSON.stringify(flow.hp) !== JSON.stringify(fin.before.hp)) fails.push('flow-back: health differs');
   if (flow.n >= exp.nMine) fails.push('flow-back: no losses recorded (' + flow.n + ' of ' + exp.nMine + ')');
   await shot('battle-result');
+  { const rc = await ev(() => { const c = document.querySelector('#campScreen .rcBox canvas'), b = document.querySelector('#campScreen .rcBox .rcCopy'); let fp = null; try { fp = guFrontData(); } catch (e) { fp = { err: String(e) }; } return { card: !!c && c.width === 1200, btn: !!b && b.textContent === 'Copy picture', fp: !!(fp && fp.head && fp.date && rcFront(fp).width === 1200) }; });
+    if (!rc.card || !rc.btn) fails.push('battle result: report card / Copy picture missing ' + JSON.stringify(rc)); if (!rc.fp) fails.push('war diary front page cannot be built'); }
   await ev(() => { [...document.querySelectorAll('#campScreen button')].find(b => /Return to the map/.test(b.textContent)).click(); });
   await page.waitForTimeout(500);
   const after = await ev(() => { const to = GCM.byName.get ? 0 : 0; return { g: !!window.G, grand: document.getElementById('grandScreen') && document.getElementById('grandScreen').style.display, ph: GC.ph, turn: GC.turn, owner: GC.prov[GC.q[0] ? GC.q[0].p : 0].o }; });

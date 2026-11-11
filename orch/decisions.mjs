@@ -64,6 +64,12 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   const miss = [...used].filter(k => !defs.has(k) && k !== 'a'); ck(used.size >= 20 && !miss.length, 'keys: hotkey(s) without a row in the one key table (src/06z-keys.js): ' + miss.join(' '));
   ck(/function kbuOpen\(/.test(SRC['08m-controls.js'] || '') && /for\(const r of KEYTAB\)/.test(SRC['08m-controls.js'] || ''), 'keys: the Keyboard keys window must list KEYTAB'); }
 // 0. grand-map figures (2026-11-07 16:37 "No blocky figures even on the grand map"): armies/navies are baked from the real sol_*/ship models only; the box/cylinder figure must not return.
+// one-language idea 6: every battle ends with the report card + "Copy picture"; the old Share picture / text report are gone
+{ const u = SRC['08-ui.js'], a = SRC['08b-aar.js'], gb = SRC['13b-grandbattle.js'], gu = SRC['13c-grandui.js'];
+  ck(/function rcModel\(/.test(a) && /function rcDraw\(/.test(a) && /function rcCopy\(/.test(a) && /ClipboardItem/.test(a) && /play free in your browser/.test(a), 'report card: rcModel/rcDraw/rcCopy (08b-aar) are gone');
+  ck(/function esImage\(S,o\)\{const M=rcModel/.test(u) && /b\.textContent='Copy picture'/.test(u) && !/navigator\.share|esPrev|BATTLE REPORT'/.test(u), 'report card: the end screen must show the card with Copy picture (no old Share picture)');
+  ck(/function grandCard\(/.test(gb) && !/function grandAAR/.test(gb), 'report card: Fight-it result must use the same card (grandCard), not the old text report');
+  ck(/function guFront\(/.test(gu) && /rcFront\(/.test(gu) && /id="gFront"/.test(gu), 'report card: the war diary lost its monthly Front page'); }
 { const g = SRC['13e-grand3d.js']; ck(!/function g3FigGeo|function g3Soldier|function g3ShipGeo/.test(g), 'grandfigs: blocky box/cylinder army figure code is back in 13e-grand3d.js'); }
 // 0b. gclarity (2026-11-07 19:52 "Way too busy … I don't know what the big areas mean"): clean EU4-style map — town pads/fields only at close zoom,
 //     one shield per stack, a map key, building chips only on hover; the old per-army count plates and always-on chips must not return.
