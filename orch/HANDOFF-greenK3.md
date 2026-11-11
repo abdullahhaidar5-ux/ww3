@@ -1,6 +1,7 @@
-# HANDOFF greenK3 (2026-11-10 night, Claude)
-- Nothing landed on main yet.
-- Piece 1 (polishE: new main menu, one online screen, first-steps hints, Battle tutorial, join-by-code fix) is merged onto main 2a6cf804 on branch `orch/greenK3` (commit 7f9d5a1c, builds, `build.py --check` OK; conflicts only in decisions.mjs [kept both guards], index.html/grand/sw.js [rebuilt]). Gate pushed as gate/7f9d5a1c86 at 21:59Z.
-- GitHub's runner queue did not start ANY job for ~45 min (Ship gate x3, Main gate, Gate bisect x2 all "queued"): no gate result exists, so nothing was judged and nothing landed.
-- Next step: when `gh api repos/abdullahhaidar5-ux/ww3/commits/7f9d5a1c/statuses` shows results, compare with main's list (main red lately: cfclient, smooth-mp, tutorial, sometimes audio). polishE should fix cfclient (startpick). If no new red -> `git push origin orch/greenK3:main` after rebasing on origin/main (rebuild on index/grand/sw conflicts), tick QUEUE, HISTORY line already included.
-- Then in order: winfix, greenK-snap, dashI, q-look, q-feel (orch/greenK-qfeel), polishP2, q-words (already on main), q-ai (already on main: 12457237), dashJ, safetyH, c-proxy-warfare. Do not push many gates while the queue is jammed.
+# HANDOFF greenK3 (2026-11-11)
+- polishE (new menu) was already on main when this run started.
+- LANDED: winfix (windows/doors only where a wall is) -> main 0da5b4c2. Gate: all green except gate/audio (same timing red as main).
+- IN GATE, NOT LANDED: greenK-snap + dashI (stuck units, controls feel, stuck gate). Merged on main in commit 1bb5e663 (local branch land/snap; pushed to gate/1bb5e663xx by cigate). Conflicts in src/13-grand.js resolved by taking main (main already has the safety copies + autosave). No gate/* status had reported after ~45 min (GitHub queue jammed).
+  Next: check `gh api repos/abdullahhaidar5-ux/ww3/commits/1bb5e663*/statuses`; if no new red beyond audio/cfclient, rebuild on origin/main, tick QUEUE + HISTORY lines in the landing commit, push to main. Sim change -> autodeploy handles servers.
+- NOT STARTED (stopped after ~3h): q-look, q-feel, polishP2, q-words, q-ai, dashJ, safetyH, c-proxy-warfare. Look/feel pieces: compare smooth-mp/pc with the CI baseline (smooth passed on winfix).
+- RIGHT NOW bullet in CLAUDE.md left: main gate still shows audio/cfclient red.
