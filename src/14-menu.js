@@ -16,6 +16,15 @@ function mxCss(){const s=document.createElement('style');s.id='mxCss';s.textCont
 #menu.m3>.card{display:none}
 #mx{position:absolute;inset:0;font-family:var(--display);color:var(--fg);user-select:none}
 #mxbg{position:absolute;inset:-3%;background:#0a0f0d center/cover no-repeat;animation:mxpan 70s ease-in-out infinite alternate;filter:saturate(1.2) brightness(.8) contrast(1.1)}
+#mxwt{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .9s}
+#mxwt.on{opacity:1}
+#mx.wt #mxbg{filter:saturate(1.1) brightness(.95)}
+#mx.wt #mxfade{background:radial-gradient(120% 105% at 68% 48%,rgba(5,8,10,0),rgba(5,8,10,.72) 92%),linear-gradient(90deg,rgba(5,8,10,.93),rgba(5,8,10,.55) 42%,rgba(5,8,10,.08) 72%)}
+.mxwtl{position:absolute;transform:translate(-50%,-50%);pointer-events:none;opacity:0;transition:opacity .9s .3s;text-align:center;white-space:nowrap}
+#mxwt.on~.mxwtl{opacity:1}
+.mxwtl.bat{transform:translate(-50%,-14px);font:500 11px var(--mono);color:#f2f4ec;text-shadow:0 1px 4px #000}
+.mxwtl.bat svg{display:block;margin:0 auto 4px;width:28px;height:28px;filter:drop-shadow(0 1px 3px #000)}
+.mxwtl.bat b{display:block;font:700 16px var(--display);letter-spacing:.12em;text-transform:uppercase;color:#ffd666}
 @keyframes mxpan{from{transform:scale(1.02) translate3d(-1%,0,0)}to{transform:scale(1.12) translate3d(1.5%,-1%,0)}}
 #mxfade{position:absolute;inset:0;background:radial-gradient(130% 100% at 70% 45%,rgba(5,8,10,.35),rgba(5,8,10,.85) 85%),linear-gradient(90deg,rgba(5,8,10,.9),rgba(5,8,10,.55) 60%,rgba(5,8,10,.4))}
 #mxtop{position:absolute;left:0;right:0;top:0;height:64px;display:flex;align-items:center;gap:18px;padding:0 clamp(24px,5vw,72px);z-index:3}
@@ -250,7 +259,29 @@ function menuBack(){if(MX.stack.length<2)return;MX.stack.pop();const id=MX.stack
 function menuHome(){for(const k in MX.screens)MX.screens[k].classList.remove('on','left');MX.stack=['title'];MX.cur='title';MX.screens.title.classList.add('on');mxCrumb();}
 function mxEnter(id){if(id==='c-map')mxMapCards();if(id==='c-nation'){mxNatFilter();mxNatShow();}if(id==='c-players'||id==='c-opts'){mxStartSync();mxPlayersSync();try{if(typeof renderTeams==='function')renderTeams();}catch(_){}}
   if(id==='online')mxOnline();if(id==='title')mxContSync();}
-function mxShown(first){if(!first&&MX.cur!=='title')menuHome();mxContSync();try{if(typeof svMenuSync==='function')svMenuSync();}catch(_){}}
+/* The war table (living main menu): when a grand campaign is saved, the background is its map around your nation - your borders lit in your colour and the last battle marked.
+   Drawn once from the small sketch saved next to the campaign (grWarTable in 13-grand.js); the campaign code is NOT loaded for it. No campaign = the plain world map picture. */
+function mxWarTable(){const bg=document.getElementById('mxbg');if(!bg)return;let inf=null;try{inf=typeof svGrandInfo==='function'?svGrandInfo():null;}catch(_){}
+  const wt=inf&&inf.wt&&inf.wt.d?inf.wt:null,key=wt?inf.ts+'|'+inf.d:'';if(MX.wtKey===key)return;MX.wtKey=key;for(const e of bg.querySelectorAll('#mxwt,.mxwtl'))e.remove();bg.parentNode.classList.toggle('wt',!!wt);if(!wt)return;
+  try{const W=wt.w|0,H=wt.h|0,g=new Uint8Array(W*H),bin=atob(wt.d);let o=0,k=0;while(o<bin.length&&k<W*H){const v=bin.charCodeAt(o++);let run=0,sh=0,b;do{b=bin.charCodeAt(o++);run|=(b&127)<<sh;sh+=7;}while(b&128&&o<bin.length);g.fill(v,k,Math.min(W*H,k+run));k+=run;}
+    const mk=(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;},CW=1600,CH=900;
+    /* small mask picture: red = land, green = your land, blue = a border between two countries */
+    const sm=mk(W,H),sx=sm.getContext('2d'),sd=sx.createImageData(W,H),q=sd.data;for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,v=g[i],j=i*4;q[j]=v?255:0;q[j+1]=v===1?255:0;q[j+2]=v&&((x+1<W&&g[i+1]&&g[i+1]!==v)||(y+1<H&&g[i+W]&&g[i+W]!==v))?255:0;q[j+3]=255;}sx.putImageData(sd,0,0);
+    const up=mk(CW,CH),ux=up.getContext('2d',{willReadFrequently:true});ux.imageSmoothingEnabled=true;ux.imageSmoothingQuality='high';try{ux.filter='blur(2.2px)';}catch(_){}ux.drawImage(sm,0,0,CW,CH);const U=ux.getImageData(0,0,CW,CH).data;
+    const bl=mk(CW/4,CH/4),bx=bl.getContext('2d',{willReadFrequently:true});try{bx.filter='blur(7px)';}catch(_){}bx.drawImage(sm,0,0,CW/4,CH/4);const B=bx.getImageData(0,0,CW/4,CH/4).data,BW=CW/4;
+    const cv=mk(CW,CH);cv.id='mxwt';const cx=cv.getContext('2d'),od=cx.createImageData(CW,CH),d=od.data,c=wt.c||[200,170,80],L=v=>Math.min(255,v*.5+150);
+    for(let y=0;y<CH;y++)for(let x=0;x<CW;x++){const i=y*CW+x,j=i*4,land=U[j]>127,mine=land&&U[j+1]>127,bj=((y>>2)*BW+(x>>2))*4,gl=B[bj]/255,gm=B[bj+1]/255,n=(((x*73856093)^(y*19349663))&7)-3.5;let r,gg,b;
+      if(!land){r=13+gl*26+gm*c[0]*.2;gg=25+gl*42+gm*c[1]*.2;b=38+gl*54+gm*c[2]*.2;if(x%100===0||y%100===0){r+=6;gg+=9;b+=11;}}
+      else{const sh=(gl-.6)*30+n*.9;r=92+sh;gg=101+sh;b=88+sh;const bo=Math.min(1,U[j+2]/255*1.6)*.6;r+=(40-r)*bo;gg+=(46-gg)*bo;b+=(42-b)*bo;
+        if(mine){r=r*.42+c[0]*.62;gg=gg*.42+c[1]*.62;b=b*.42+c[2]*.62;}
+        const e=x>2&&y>2&&x<CW-3&&y<CH-3;if(e&&(U[j-12]<=127||U[j+12]<=127||U[j-CW*12]<=127||U[j+CW*12]<=127)){r+=48;gg+=56;b+=54;}   /* coast line */
+        if(e&&mine&&(U[j-11]<=127||U[j+13]<=127||U[j-CW*12+1]<=127||U[j+CW*12+1]<=127)){r=L(c[0]);gg=L(c[1]);b=L(c[2]);}}   /* your border */
+      d[j]=r;d[j+1]=gg;d[j+2]=b;d[j+3]=255;}
+    cx.putImageData(od,0,0);bg.appendChild(cv);
+    const lab=(cls,fx,fy,html)=>{const e=mxEl('div','mxwtl '+cls);e.style.left=(fx*100).toFixed(2)+'%';e.style.top=(fy*100).toFixed(2)+'%';e.innerHTML=html;bg.appendChild(e);return e;},esc=t=>String(t).replace(/[&<>"]/g,ch=>'&#'+ch.charCodeAt(0)+';');
+    if(wt.b)lab('bat',wt.b[0],wt.b[1],'<svg viewBox="0 0 28 28" fill="none" stroke="#ffd666" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l15 15M23 5L8 20M6 17l5 5M22 17l-5 5M4 24l4-4M24 24l-4-4"/></svg><b>'+esc(wt.b[2])+'</b>Last battle · '+esc(wt.b[3]));
+    requestAnimationFrame(()=>cv.classList.add('on'));}catch(e){for(const el of bg.querySelectorAll('#mxwt,.mxwtl'))el.remove();bg.parentNode.classList.remove('wt');}}
+function mxShown(first){try{setTimeout(mxWarTable,first?300:0);}catch(_){}if(!first&&MX.cur!=='title')menuHome();mxContSync();try{if(typeof svMenuSync==='function')svMenuSync();}catch(_){}}
 function mxKey(e){if(e.key!=='Escape')return;const m=document.getElementById('menu');if(!m||m.hidden||MX.stack.length<2)return;
   if(document.querySelector('.overlay:not(#menu):not([hidden]),#campScreen,#grandScreen,#gModal,#edOv.on'))return;if(e.target&&/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)&&e.target.id!=='mxnatin')return;
   e.preventDefault();e.stopImmediatePropagation();menuBack();}

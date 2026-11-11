@@ -53,6 +53,13 @@ const SRC = Object.fromEntries(srcFiles.map(f => [f, fs.readFileSync(path.join(R
   ck(/function grSnap\(/.test(g) && /grSnap\(\);return grBattlePrompt\(b\)/.test(g) && /function grAutoTick\(/.test(g), 'progress: grand campaign timer autosave / safety copy before Fight-it is gone from 13-grand.js');
   ck(/function svGrandInfo\(/.test(sv) && /MX\.cont=item\(/.test(m) && m.indexOf('MX.cont=item(') < m.indexOf("item('Grand campaign'") + (m.indexOf("item('Grand campaign'") < 0 ? 1e9 : 0) && m.indexOf('MX.cont=item(') < m.indexOf("item('Single player'") + (m.indexOf("item('Single player'") < 0 ? 1e9 : 0), 'progress: Continue must be the first item of the menu list and cover battles and the grand campaign');
 }
+// Living main menu (idea 9, Abdullah 2026-11-10 "Let's go all of them"): the menu background is the war table of the saved campaign, drawn from the save's small note
+// (grWarTable -> '.i' note -> mxWarTable) and never by loading the campaign code; every settled battle leaves one record (grScar) that marks the last battle. Runtime proof: orch/smoke.mjs (lazy page).
+{ const g = SRC['13-grand.js'] || '', m = SRC['14-menu.js'] || '';
+  ck(/function grWarTable\(/.test(g) && /const wt=grWarTable\(\)/.test(g) && /function grScar\(/.test(g) && /function grSettle\(b,win,how\)\{[^\n]*grScar\(b,win,how\)/.test(g), 'living menu: the save note no longer carries the war-table sketch, or battles no longer leave a record (grWarTable / grScar in 13-grand.js)');
+  const f = (m.match(/function mxWarTable\(\)[\s\S]*?\nfunction mxShown/) || [''])[0];
+  ck(f && /svGrandInfo/.test(f) && !/loadGrand|grLoad|grMap|GCM|GM_P/.test(f) && /mxWarTable/.test(m.slice(m.indexOf('function mxShown'))), 'living menu: mxWarTable must draw from the save note only (no campaign code) and run when the menu is shown');
+}
 // polishP2 "Settings": the one key table (src/06z-keys.js KEYTAB) lists every key the battle handlers listen to; the Keyboard keys window (08m-controls.js) shows that table.
 //     A hotkey added to a handler without a row fails here. W A S D are camera-only and never rebindable. Runtime proof: orch/polishtest.mjs (gate/save).
 { const kt = SRC['06z-keys.js'] || '', ui = SRC['08-ui.js'] || '', all = Object.entries(SRC).filter(([f]) => /^0[689]/.test(f) || f === '03i-leaders.js').map(x => x[1]).join('\n');

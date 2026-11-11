@@ -104,6 +104,14 @@ try {
     const pre = await page.evaluate(() => ({ g: typeof grandMenu, btn: !!document.getElementById('grandBtn'), file: typeof GRAND_FILE === 'string' && GRAND_FILE }));
     if (pre.g !== 'undefined' || !pre.btn || !pre.file) fails.push(`lazy grand: before opening, grandMenu is ${pre.g}, button ${pre.btn}, GRAND_FILE ${pre.file} (expected undefined, true, a file name)`);
     else console.log(`grand campaign is lazy: ${pre.file} not loaded at the menu`);
+    // living main menu (idea 9): with a saved campaign the background is the war table, drawn from the save's small note WITHOUT loading the campaign code; without a save it is the plain world map
+    const wt = await page.evaluate(async () => { if (typeof mxWarTable !== 'function') return { err: 'mxWarTable missing' }; const K = 'ww3grand1', old = [localStorage.getItem(K), localStorage.getItem(K + '.i')], bg = document.getElementById('mxbg');
+      const d = btoa(String.fromCharCode(0, 16, 1, 8, 2, 8)); localStorage.setItem(K, '{"v":1}'); localStorage.setItem(K + '.i', JSON.stringify({ ts: 5, me: 'IR', n: 'Iran', d: 'Mar 2027', over: 0, wt: { w: 8, h: 4, d, c: [40, 160, 80], b: [.6, .5, 'Testville', 'Mar 2027'] } }));
+      mxWarTable(); const on = !!bg.querySelector('canvas#mxwt'), lab = (bg.querySelector('.mxwtl.bat') || {}).textContent || '', g = typeof grandMenu, top = [...document.querySelectorAll('#mxmenu .mxi')].filter(b => !b.hidden && !/\b(dim|sep)\b/.test(b.className) && !/^Continue/.test(b.textContent.trim())).map(b => b.textContent.trim()).join('|');
+      localStorage.removeItem(K); localStorage.removeItem(K + '.i'); if (old[0] != null) localStorage.setItem(K, old[0]); if (old[1] != null) localStorage.setItem(K + '.i', old[1]); mxWarTable();
+      return { on, lab, g, top, off: !bg.querySelector('#mxwt') || old[1] != null }; });
+    if (wt.err || !wt.on || !/Testville/.test(wt.lab) || wt.g !== 'undefined' || !wt.off || wt.top !== 'Single player|Multiplayer|Test range') fails.push('living main menu: ' + JSON.stringify(wt) + ' (expected the war table canvas + last-battle label with a saved campaign, no campaign code loaded, plain background without a save, top level unchanged)');
+    else console.log('living main menu: war table drawn from the save note, campaign code not loaded');
   }
   if (ART) { // the artifact edition must use the room capability, with no PeerJS / online-edition shim left in it
     const a = await page.evaluate(async () => { for (let i = 0; i < 40 && !NET.room; i++) await new Promise(r => setTimeout(r, 250));
