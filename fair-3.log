@@ -1,0 +1,10 @@
+mapfair: 3 of 64 battles, 4 at a time
+  3/3 done, 4.4 min
+
+BATTLES map            n games  kills  win share by start position (fair = 1/n)        score share by position     avg-min
+  bosphorus       6     1      0   17  17  17  17  17  17                         34   8  23  10   0  25     15.0 p=1.000
+  eilatgulf       4     1      0    0 100   0   0                                 28  55   0  17             15.0 p=0.392
+  volga           8     1      0   13  13  13  13  13  13  13  13                 44   2   0   0   0  53   0   0 15.0 p=1.000
+BATTLES 3 games, 3 layouts; a start position wins significantly more than its share (p<0.01, >1.5x fair): none
+pooled duel seat: position 1 won 0, position 2 won 1 (of games decided between the first two seats)
+MAPFAIR DONE 4.4 min -> ../../../../../tmp/lg/fair-3.json
