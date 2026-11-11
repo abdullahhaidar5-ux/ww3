@@ -280,9 +280,9 @@ async function mpProfile() {
     const cOut = [];
     for (const [i, c] of clients.entries()) {
       const o = await c.evaluate(async () => { window.__cd.stop = true; const gl = R3.getContext(); const fr = []; for (const fn of ['drawElements', 'drawElementsInstanced', 'drawArrays', 'drawArraysInstanced', 'drawRangeElements']) if (gl[fn]) gl[fn] = function () {}; /* software GL: see the battle profiles */
-        for (let k = 0; k < 40; k++) { const t = performance.now(); clientTick(1 / 30); renderFrame(1 / 30); gl.finish(); fr.push(performance.now() - t); if (k % 5 === 4) await new Promise(r => setTimeout(r, 0)); }
-        return { snapAt: window.__snapAt, ticks: window.__ticks, frames: fr, t: G.t, lost: window.__nstats.lost, rx: window.__nstats.rx, snapN: window.__snapN, snapMax: window.__snapMax }; });
-      cOut.push(o);
+        const tk=[];for (let k = 0; k < 40; k++) { const t = performance.now(); clientTick(1 / 30); tk.push(performance.now()-t); renderFrame(1 / 30); gl.finish(); fr.push(performance.now() - t); if (k % 5 === 4) await new Promise(r => setTimeout(r, 0)); }
+        return { diag:[QUAL.lv,QUAL.fx||0,+dpr.toFixed(2),+(QUAL.cost*1000).toFixed(1),+(QUAL.ema*1000).toFixed(1),!!window.__stopLoop,PARTS.length,tk.sort((x,y)=>x-y)[36]|0,fr.slice().sort((x,y)=>x-y)[20]|0,G.ents.length,VW,VH], snapAt: window.__snapAt, ticks: window.__ticks, frames: fr, t: G.t, lost: window.__nstats.lost, rx: window.__nstats.rx, snapN: window.__snapN, snapMax: window.__snapMax }; });
+      cOut.push(o); LOG('DIAG lv,fx,dpr,cost,ema,stop,parts,tickp90,frmed,ents,VW,VH '+JSON.stringify(o.diag));
     }
     // desync check (same idea as mpsync's settle check): host paused, full keyframe, then everything the client's side sees must match
     let desync = [];
