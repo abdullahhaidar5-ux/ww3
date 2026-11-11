@@ -1,3 +1,59 @@
+# STATE — conductor run 8 on 2026-11-11, 22:48–23:35 UTC (train 6 landed: 1 piece)
+
+**Main = 1143f7c2** (train 6 on top of aa8968fd).
+
+**Landed, train 6** = `train/20261111-2254`, gated as 0a0b505e (branch gate/0a0b505ef2, run 43115684920): **27 of 28 green**, incl. smooth-pc /
+smooth-mp / grandsmooth, grand, grandlive, decisions, audio. Only red: `gate/tutorial` — also red on main's head aa8968fd before this train.
+1. Campaign, escalation ladder slice 2 (orch/c-escalation2, merge 0a0b505e): a war now has levels — limited war, blockade, strikes on industry
+   and cities, nuclear alert. Helper's own run c3bf5df5 was green except the flaky audio test; handoff said READY TO LAND. Queue item stays open
+   (more slices planned), line marked with the hash. Picture: orch/shots/grand2/war-level.png.
+Conflicts: generated files only (rebuilt), HISTORY (both sides). The branch also carried 12 test pictures a local run had overwritten — main's
+versions kept, only the new war-level picture taken. Local: build + --check OK, SMOKE PASS (430 s). Local decisions / grandtest did not finish
+in the sandbox (stopped after 10+ minutes); GitHub's `gate/decisions` and `gate/grand` are green on the gated commit.
+
+## WATCH: the tutorial test is red on main since the speed work landed (aa8968fd, 21:51 UTC)
+
+- main 737fab9d (train 5): 28 of 28 green. main aa8968fd ("Stay smooth" q-speed, pushed by its helper): `gate/tutorial` red ("step 3 never
+  started (stuck on 4)") and `gate/audio` red. Train 6 on top: `gate/tutorial` red again ("step 9 did not complete"), audio green.
+- Train 6 only changes campaign files (src/13*), which the tutorial never loads, so it is not the cause. Two reds in a row at different steps
+  right after a frame-pacing change points at the speed work (or a slow-runner timing problem in the test). **Owner: the speed helper (q-speed).**
+  Not investigated further by the conductor (no feature/sim changes allowed here).
+
+## Helpers with unlanded work, read 23:00 UTC
+
+| idea (branch) | last save | newest own test run | result / note |
+|---|---|---|---|
+| Army tokens, second try on today's map (armytokens2, 7 commits; lock taken/finish-tokens) | 0.6 h at 22:53 | none yet | helper still working; no test run pushed, so not a candidate this run. Look change: needs its smooth tests green |
+| Map fairness (lock taken/q-mapfair, 4.3 h) | - | - | **nothing saved** (no work branch) |
+| Real-looking forest, extra merge commit (maptrees) | 3 h | 22ac8a8349 green | nothing new in it — forest is on main |
+| Real supply notes (c-supply) | 13 h | - | notes only |
+| Extras: battle — commander's radio (extras-battle) | 20 h | 60d5e246b5 | grandlive, migrate-down red (old run) |
+| One language: campaign — battle report card (lang-campaign), spec (onelanguage) | 20 h | 0aee49223e | build check fails |
+| Army tokens, first try (armytokens) | 20 h | 4eeb0c339c | replaced by armytokens2 |
+| Seamless flow — one setup for all three games (seamless-flow) | 20 h | e1c344c7d8 | audio, smooth-pc red (old run) |
+| Extras: command — edge alerts (extras-command) | 20 h | 4a7c989031 | audio, cfclient, smooth-pc red (old run) |
+| Extras: story — main menu shows your war (extras-story) | 21 h | d1aef6c3d2 | cfclient, controls red (old run) |
+| Proxy militias' own agenda (c-proxy) | 33 h | - | 1 commit, never tested |
+| Safety H — report-a-problem form + nightly balance report (safetyH) | 33 h | 5dfef609ec | adds a scheduled workflow (conductor does not start those) |
+| End screen damage dealt (dashJ) | 33 h | 673e996495 | mpsync, migrate-dual red (old run); touches the simulation |
+| Stuck units + controls feel + campaign safety copies (greenK-snap / greenK-qfeel / dashI / loop-grand-snap) | 33–39 h | 1bb5e66377 | mpsync red (old run); touches the simulation |
+| Sound mix (q-sound), Autosave loop, Leaders C, Speed D | 38–42 h | old | - |
+
+Everything from "Extras: battle" down is 20+ h behind main, conflicts with it, and its helper is gone: each needs someone to merge main in and
+run a fresh test (the tests are stable enough now that a red result means something). Not train candidates until then.
+
+## Locks with nothing saved (90+ min, no work branch)
+
+- **Map fairness** (`taken/q-mapfair`, 4.3 h) — nothing saved.
+- **Real war** (`taken/realwar`, 21 h) — nothing saved.
+- **Seamless HUD** (`taken/seamless-hud`, 21 h) — nothing saved.
+- (`taken/army-standards`, 21 h: concept only — the work continues as armytokens2.)
+
+**For the next conductor run:** `train/20261111-2254` is IN main. Likely next candidate: armytokens2 once its helper pushes a test run.
+
+---
+(previous runs below)
+
 # STATE — conductor run 6 on 2026-11-11, 18:50–21:10 UTC (train 5 landed: 2 pieces, ALL 28 tests green)
 
 **Main = 737fab9d** (train 5 on top of 8cee2c2f). Live site: the Pages build for 737fab9d finished successfully at 21:10 UTC, so https://abdullahhaidar5-ux.github.io/ww3/ serves train 5.
