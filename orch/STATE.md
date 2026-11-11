@@ -1,3 +1,55 @@
+# STATE — conductor run 6 on 2026-11-11, 18:50–21:10 UTC (train 5 landed: 2 pieces, ALL 28 tests green)
+
+**Main = 737fab9d** (train 5 on top of 8cee2c2f). Live-site check: see the bottom of this section.
+
+**Landed, train 5** = `train/20261111-1857`, gated as 09360b3f (run 43087909414): **28 of 28 green** — first fully green run in two days
+(audio, cfclient, tutorial, mpsync, decisions all green; smooth-pc / smooth-mp / grandsmooth green).
+1. Campaign map, believable scale up close (orch/mapscale, merge 0cc2a0ef): towns are small clusters inside their province, no beige plate, thin roads,
+   close-view army figures no taller than their town, armies on islands the map cannot draw show as a ship. Pictures: orch/concepts/scale/ (before/after).
+2. UK, Australia and Canada get their own English soldier voices (orch/voicesV, merge 09360b3f) — waited 23 h; its only red tests were the flaky ones.
+Conflicts: one line in src/13e-grand3d.js (kept calm map 4's rule for which name plates show + map scale's lift that follows the town size, as the
+helper's handoff asked), orch/grandtest.mjs (forest guard + scale guard + calm map 4 line all kept), HISTORY / QUEUE (both sides), generated files rebuilt.
+Local: build + --check OK and SMOKE PASS after each merge (529 s, 546 s). Local decisions / grandtest did NOT finish in this sandbox (over 9 minutes each,
+cut off; the map-scale guard itself printed clean) — GitHub's `gate/decisions` and `gate/grand` are green on the same commit.
+GitHub's runners were slow: the run sat queued behind "Smooth baseline" and "Map fairness" runs and took 88 minutes.
+Main moved during the run (8a6f61f3 audio test fix, 8cee2c2f loop log — test/docs only); merged in, no game file differs from the gated commit.
+CLAUDE.md: the "RIGHT NOW — main is red" bullet is replaced by a short standing rule "Test on GitHub, not here" (the sandbox-too-slow part is still true;
+the red-main restrictions are gone). "Save early" was already there.
+
+## Helpers with unlanded work, read 20:35 UTC (nobody but the audio-test fixer saved anything since 18:15 UTC)
+
+| idea (branch) | last save | newest own test run | red tests / note |
+|---|---|---|---|
+| Real-looking forest, extra merge commit (maptrees) | 3 h | 22ac8a8349 green | nothing new in it — forest is on main; only an old merge |
+| Real supply notes (c-supply) | 11 h | - | notes only |
+| Extras: battle — commander's radio (extras-battle) | 18 h | 60d5e246b5 | grandlive, migrate-down |
+| One language: campaign — battle report card, front lines (lang-campaign) | 18 h | 0aee49223e | check (build check fails) |
+| Army tokens (armytokens) | 18 h | 4eeb0c339c | decisions, mpsync, tutorial; handoff written |
+| Seamless flow — one setup for all three games (seamless-flow) | 18 h | e1c344c7d8 | audio, smooth-pc |
+| Extras: command — edge alerts (extras-command) | 18 h | 4a7c989031 | audio, cfclient, smooth-pc |
+| Speed S (speedS) | 18 h | cf33e78fb7 | helper says not to land |
+| Extras: story — main menu shows your war (extras-story) | 19 h | d1aef6c3d2 | cfclient, controls |
+| Proxy militias' own agenda (c-proxy) | 31 h | - | 1 commit, never tested |
+| Safety H — report-a-problem form + nightly balance report (safetyH) | 31 h | 5dfef609ec | audio; adds a scheduled workflow (conductor does not start those) |
+| End screen damage dealt (dashJ) | 31 h | 673e996495 | mpsync, migrate-dual, audio; touches the simulation |
+| Stuck units + controls feel + campaign safety copies (greenK-snap / greenK-qfeel / dashI / loop-grand-snap) | 31–37 h | 1bb5e66377 | mpsync, audio; touches the simulation |
+| Sound mix (q-sound), Autosave loop, Leaders C, Speed D | 36–40 h | old | - |
+
+All of these are 18+ h behind main, conflict with it (checked with a trial merge: only dashJ merges clean), and their helpers are gone.
+They need someone to merge main in and run a fresh test; with the tests now stable a red result will mean something.
+
+## Locks with nothing saved (90+ min, no work branch)
+
+- **Real war** (`taken/realwar`, 19 h) — nothing saved.
+- **Seamless HUD** (`taken/seamless-hud`, 19 h) — nothing saved.
+- **Army standards** (`taken/army-standards`, 19 h) — concept sheet on the lock only.
+- (Map scale is off this list: saved, tested, landed.)
+
+**For the next conductor run:** nothing is waiting in a finished state. `train/20261111-1857` is IN main.
+
+---
+(previous runs below; run 7 was a state-only run made while this run was still waiting for the tests)
+
 # STATE — conductor run 7 on 2026-11-11, 20:50–21:05 UTC (state only: train 5 of the previous run is still being tested)
 
 **Main = 068b3146** (train 4, unchanged since 18:36 UTC). Nothing landed in this run, on purpose.
