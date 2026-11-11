@@ -21,19 +21,64 @@ function grHash(){if(!GC)return '';let s=GC.turn+'|'+GC.seed;for(const c of Obje
   s+='|W'+Object.keys(GC.war).sort().join(',');try{s+=geHashStr();}catch(e){}try{s+=gmilHashStr();}catch(e){}let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16);}
 
 // ---------- static map ----------
+// Real capital city of every nation (seat of government; source list in orch/REAL-2026.md). Shown on the capital's name plate. The 13-grandmap.js nation table is generated,
+// so the names live here. No entry = the plate keeps the province name (IL: left to the owner; BI: fictional).
+const GR_CAPCITY="US Washington;CA Ottawa;MX Mexico City;CU Havana;GT Guatemala City;DO Santo Domingo;VE Caracas;CO Bogotá;BR Brasília;PE Lima;AR Buenos Aires;CL Santiago;GB London;FR Paris;DE Berlin;ES Madrid;IT Rome;PL Warsaw;SE Stockholm;NO Oslo;FI Helsinki;GR Athens;RO Bucharest;BY Minsk;UA Kyiv;RU Moscow;KZ Astana;UZ Tashkent;AZ Baku;TR Ankara;SY Damascus;RS Beirut;JO Amman;IQ Baghdad;KD Erbil;RV Najaf;OB Gaza;IR Tehran;SA Riyadh;AE Abu Dhabi;OM Muscat;KW Kuwait City;QA Doha;DW Sanaa;EG Cairo;LY Tripoli;SD Khartoum;ET Addis Ababa;DZ Algiers;MA Rabat;TN Tunis;NG Abuja;ML Bamako;TD N'Djamena;CD Kinshasa;KE Nairobi;TZ Dodoma;AO Luanda;ZA Pretoria;PK Islamabad;IN New Delhi;AF Kabul;BD Dhaka;NP Kathmandu;LK Colombo;MM Naypyidaw;TM Ashgabat;CN Beijing;KP Pyongyang;KR Seoul;JP Tokyo;TW Taipei;MN Ulaanbaatar;VN Hanoi;TH Bangkok;MY Kuala Lumpur;ID Jakarta;PH Manila;AU Canberra;NZ Wellington;AL Tirana;AM Yerevan;AT Vienna;BA Sarajevo;BE Brussels;BG Sofia;BH Manama;BJ Porto-Novo;BN Bandar Seri Begawan;BO La Paz;BT Thimphu;BW Gaborone;CF Bangui;CG Brazzaville;CH Bern;CI Yamoussoukro;CK Avarua;CM Yaoundé;CV Praia;CY Nicosia;CZ Prague;DJ Djibouti;DK Copenhagen;EC Quito;EE Tallinn;ER Asmara;FJ Suva;FM Palikir;GA Libreville;GE Tbilisi;GH Accra;GM Banjul;GN Conakry;GQ Malabo;GS King Edward Point;GW Bissau;GY Georgetown;HR Zagreb;HU Budapest;IE Dublin;IS Reykjavik;KG Bishkek;KH Phnom Penh;KI Tarawa;KM Moroni;LA Vientiane;LR Monrovia;LS Maseru;LT Vilnius;LU Luxembourg;LV Riga;MD Chișinău;ME Podgorica;MG Antananarivo;MH Majuro;MK Skopje;MP Saipan;MR Nouakchott;MT Valletta;MU Port Louis;MV Malé;MW Lilongwe;MZ Maputo;NA Windhoek;NL Amsterdam;PG Port Moresby;PS Ramallah;PT Lisbon;PW Ngerulmud;PY Asunción;RW Kigali;SB Honiara;SC Victoria;SG Singapore;SI Ljubljana;SK Bratislava;SL Freetown;SN Dakar;SO Mogadishu;SR Paramaribo;SS Juba;ST São Tomé;SZ Mbabane;TC Cockburn Town;TF Port-aux-Français;TG Lomé;TJ Dushanbe;TL Dili;TO Nuku'alofa;UG Kampala;UY Montevideo;VU Port Vila;WS Apia;XB Gitega;XK Pristina;XS Belgrade;ZM Lusaka;ZW Harare";
+// capital provinces named after a different real city keep their own name on the plate (the real capital lies elsewhere on the map)
+const GR_CAPKEEP=new Set(['TR','NG','ZA']);
+function grCapName(pi){const p=GCM.P[pi],o=GC&&GC.prov[pi]?GC.prov[pi].o:p.o,n=GCM.nats.get(o);return n&&n.city&&p.o===o&&!GR_CAPKEEP.has(o)&&GC&&GC.nat[o]&&GC.nat[o].cap===pi?n.city:p.n;}
 function grMap(){if(GCM)return GCM;const P=GM_P.map((r,i)=>({i,n:r[0],o:r[1],x:r[2],y:r[3],t:r[4],tw:r[5],fl:r[6]||'',map:r[7]||'',adj:r[8],sea:r[4]==='w',land:i<GM_LAND}));
   const rv=new Set(GM_RIVER.map(r=>r[0]*1000+r[1])),byName=new Map(P.map(p=>[p.n,p.i]));
   for(const p of P){if(p.sea){p.ck=p.fl==='K';p.cost=p.tw||1;p.dev=0;}else{p.cap=p.fl.includes('C');p.wg=p.fl.includes('W')||p.cap;p.port=p.fl.includes('P');p.oil=p.fl.includes('O');p.farm=p.fl.includes('F');p.mine=p.fl.includes('M');p.dev=p.tw+(p.oil?2:0)+(p.farm?1:0)+(p.mine?1:0)+(p.port?1:0);
     // a province touching an ocean sea zone with a port can embark; coastal = touches any sea zone
     p.coast=p.adj.some(j=>P[j].sea);}}
-  GCM={P,rv,byName,nats:new Map(GM_NATS.map(r=>[r[0],{code:r[0],name:r[1],reg:r[2]}]))};
+  GCM={P,rv,byName,nats:new Map(GM_NATS.map(r=>[r[0],{code:r[0],name:r[1],reg:r[2]}]))};GR_CAPCITY.split(';').forEach(r=>{const n=GCM.nats.get(r.slice(0,2));if(n)n.city=r.slice(3);});
   // regions for the quick-jump buttons: nearest region rectangle centre
   return GCM;}
 function grRiver(a,b){return GCM.rv.has(Math.min(a,b)*1000+Math.max(a,b));}
 function grNat(code){const n=GCM.nats.get(code)||{code,name:code,reg:'EU'};if(n.fac)return n;const major=!!FACTIONS[code]&&code!=='EU';let fac=code;
   if(!major){fac=(GR_PROXY[n.reg]||['US']).find(f=>FACTIONS[f])||'US';}
-  n.major=major;n.fac=fac;n.color=major?FACTIONS[code].color:grMinorColor(code);return n;}
-function grMinorColor(code){const i=Math.max(0,GM_NATS.findIndex(r=>r[0]===code));return 'hsl('+Math.round((i*137.5)%360)+','+(36+(i%3)*8)+'%,'+(46+(i%4)*5)+'%)';}
+  n.major=major;n.fac=fac;Object.defineProperty(n,'color',{get(){return grPalette(GC&&GC.me).get(code)||'#8a8f86';},enumerable:true});return n;}
+// ---------- political map colours (ONE table: map, mini-map, key, panels) ----------
+// Every nation gets a calm land colour so that no two neighbours (shared land border, or facing each other across a narrow sea) look alike:
+// CIE Lab distance >= GR_PAL_DE and never the same hue family. The player's nation keeps its identity colour, other full nations stay as
+// near theirs as the rule allows, everyone else is spread out. Deterministic (static start borders); the real identity lives in the flags.
+const GR_PAL_DE=28,GR_PAL_HUE=40;
+function grLab(hex){let v=[1,3,5].map(i=>parseInt(hex.substr(i,2),16)/255).map(c=>c>.04045?Math.pow((c+.055)/1.055,2.4):c/12.92);
+  const f=t=>t>.008856?Math.cbrt(t):7.787*t+16/116,x=f((.4124*v[0]+.3576*v[1]+.1805*v[2])/.95047),y=f(.2126*v[0]+.7152*v[1]+.0722*v[2]),z=f((.0193*v[0]+.1192*v[1]+.9505*v[2])/1.08883);
+  const L=116*y-16,a=500*(x-y),b=200*(y-z);return {L,a,b,C:Math.hypot(a,b),h:(Math.atan2(b,a)*180/Math.PI+360)%360};}
+function grLch(L,C,h){const a=C*Math.cos(h*Math.PI/180),b=C*Math.sin(h*Math.PI/180),fy=(L+16)/116,fx=fy+a/500,fz=fy-b/200,g=t=>t*t*t>.008856?t*t*t:(t-16/116)/7.787,X=g(fx)*.95047,Y=g(fy),Z=g(fz)*1.08883;
+  return '#'+[3.2406*X-1.5372*Y-.4986*Z,-.9689*X+1.8758*Y+.0415*Z,.0557*X-.204*Y+1.057*Z].map(c=>{c=c>.0031308?1.055*Math.pow(c,1/2.4)-.055:12.92*c;return Math.round(Math.max(0,Math.min(1,c))*255).toString(16).padStart(2,'0');}).join('');}
+function grHex(c){if(/^#[0-9a-f]{6}$/i.test(c))return c;if(/^#[0-9a-f]{3}$/i.test(c))return '#'+c[1]+c[1]+c[2]+c[2]+c[3]+c[3];return '#808080';}
+function grPalClash(A,B){if(Math.hypot(A.L-B.L,A.a-B.a,A.b-B.b)<GR_PAL_DE)return true;if(A.C<12&&B.C<12)return true;if(A.C<12||B.C<12)return false;const d=Math.abs(A.h-B.h);return Math.min(d,360-d)<GR_PAL_HUE;}
+// who is next to whom at the start: land border, or both on the same sea zone and close (Gulf, Red Sea, straits), or simply very close (island states)
+function grPalAdj(){grMap();if(GCM.padj)return GCM.padj;const P=GCM.P,A=new Map(),lk=(a,b)=>{if(a===b||!a||!b)return;(A.get(a)||A.set(a,new Set()).get(a)).add(b);(A.get(b)||A.set(b,new Set()).get(b)).add(a);};
+  for(const r of GM_NATS)A.set(r[0],new Set());
+  for(let i=0;i<GM_LAND;i++){const p=P[i];for(const j of p.adj){const q=P[j];if(q.sea){for(const k of q.adj){const s=P[k];if(k>i&&!s.sea&&s.o!==p.o&&Math.hypot(s.x-p.x,s.y-p.y)<45)lk(p.o,s.o);}}else if(j>i)lk(p.o,q.o);}
+    for(let k=i+1;k<GM_LAND;k++){const s=P[k];if(s.o!==p.o&&Math.abs(s.x-p.x)<22&&Math.hypot(s.x-p.x,s.y-p.y)<22)lk(p.o,s.o);}}
+  return GCM.padj=A;}
+function grPalette(me){grMap();me=me||'';GCM.pal=GCM.pal||new Map();let M=GCM.pal.get(me);if(M)return M;M=new Map();const A=grPalAdj(),lab=new Map(),codes=GM_NATS.map(r=>r[0]),isM=c=>!!FACTIONS[c]&&c!=='EU';
+  const calm=c=>{const l=grLab(grHex(FACTIONS[c].color));return grLch(Math.max(40,Math.min(74,l.L)),Math.min(44,l.C),l.h);};
+  const cand=[];for(const L of [50,60,69,78])for(const C of [16,27,38])for(let h=(L*7+C)%20;h<360;h+=20){if((h>228&&h<292&&L<75)||(C>30&&L>72))continue;const x=grLch(L,C,h);cand.push([x,grLab(x)]);}   // no sea blues
+  for(const L of [46,58,70,81]){const x=grLch(L,5,80);cand.push([x,grLab(x)]);}
+  const ok=(c,l)=>{for(const n of A.get(c)||[]){const q=lab.get(n);if(q&&grPalClash(l,q))return false;}return true;};
+  const minD=(c,l,two)=>{let d=999;for(const n of A.get(c)||[]){const q=lab.get(n);if(q)d=Math.min(d,Math.hypot(l.L-q.L,l.a-q.a,l.b-q.b));if(two)for(const m of A.get(n)||[]){const r=m!==c&&lab.get(m);if(r)d=Math.min(d,Math.hypot(l.L-r.L,l.a-r.a,l.b-r.b)+14);}}return d;};
+  const put=(c,x)=>{M.set(c,x);lab.set(c,grLab(x));};
+  const np={};for(let i=0;i<GM_LAND;i++)np[GCM.P[i].o]=(np[GCM.P[i].o]||0)+1;
+  const order=codes.filter(isM).map((c,i)=>[c,i]).sort((a,b)=>(np[b[0]]||0)-(np[a[0]]||0)||a[1]-b[1]).map(r=>r[0]).concat(codes.filter(c=>!isM(c)).map((c,i)=>[c,i]).sort((a,b)=>(A.get(b[0])||[]).size-(A.get(a[0])||[]).size||a[1]-b[1]).map(r=>r[0]));
+  if(me&&isM(me))put(me,calm(me));
+  for(const c of order){if(M.has(c))continue;let best=null,bs=-1e9;
+    if(isM(c)){const id=calm(c),il=grLab(id);if(ok(c,il)){put(c,id);continue;}
+      for(const [x,l] of cand){if(!ok(c,l))continue;const s=-Math.hypot(l.L-il.L,l.a-il.a,l.b-il.b);if(s>bs){bs=s;best=x;}}}
+    else{let hh=7;for(const ch of c)hh=hh*31+ch.charCodeAt(0)>>>0;cand.forEach(([x,l],k)=>{if(!ok(c,l))return;const s=Math.min(60,minD(c,l,true))+((hh+k*2654435761>>>0)%1000)/400;if(s>bs){bs=s;best=x;}});}
+    if(!best)for(const [x,l] of cand){const s=minD(c,l,false);if(s>bs){bs=s;best=x;}}   // nothing fits every rule: the most different colour there is
+    put(c,best);}
+  // repair: a nation that still clashes (dense corners like the Balkans) is re-picked knowing all its neighbours; small nations first, never the player
+  for(let rnd=0;rnd<8;rnd++){let left=0;for(const c of order.slice().reverse()){if(c===me||ok(c,lab.get(c)))continue;left++;const hit=cand.find(([x,l])=>ok(c,l));if(hit){put(c,hit[0]);continue;}
+      for(const n of A.get(c)||[]){if(n===me||isM(n)&&rnd<4)continue;const alt=cand.find(([x,l])=>ok(n,l)&&!grPalClash(l,lab.get(c)));if(alt)put(n,alt[0]);}}if(!left)break;}
+  GCM.pal.set(me,M);return M;}
+// guard helper: neighbour pairs whose colours are too close for this player ([] = fine)
+function grPaletteBad(me){const M=grPalette(me),A=grPalAdj(),bad=[];for(const [a,S] of A)for(const b of S)if(a<b&&grPalClash(grLab(M.get(a)),grLab(M.get(b))))bad.push(a+'-'+b);return bad;}
 function grMajors(){grMap();return [...new Set(GM_P.slice(0,GM_LAND).map(r=>r[1]))].filter(c=>grNat(c).major);}
 
 // ---------- units ----------
