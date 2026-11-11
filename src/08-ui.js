@@ -2,15 +2,16 @@
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse',HINTDEV='mouse';
-function pushLog(m,k){if(!G)return;try{hlLog(m,k);}catch(e){}try{hudAlert(m,k);}catch(e){}
-  /* commander radio (2026-11-05): kind 'r:<key>' = a log line that also triggers the callout (subtitle + voice, see 09b-radio.js) */
-  if(k&&k[1]===':'&&k[0]==='r'){const rk=k.slice(2);k=RADCLS[rk]||'';let ok=false;try{ok=radioCall(rk);}catch(e){}if(!m)return;
+function pushLog(m,k,x,y){if(!G)return;try{hlLog(m,k);}catch(e){}try{hudAlert(m,k);}catch(e){}
+  /* commander radio (2026-11-05): kind 'r:<key>' = a log line that also triggers the callout (voice, see 09b-radio.js).
+     Every line goes to the ONE commander's radio feed (radFeed, 09b-radio.js): icon + text, click / Space = look there. */
+  let nat='';
+  if(k&&k[1]===':'&&k[0]==='r'){const rk=k.slice(2);k=RADCLS[rk]||'';let ok=false;RADS.nat='';try{ok=radioCall(rk);}catch(e){}nat=RADS.nat;RADS.nat='';
+    if(!m){if(nat&&RADF.last&&RADF.last.isConnected&&!RADF.last.querySelector('small')&&performance.now()-RADF.last._t<400){const sm=document.createElement('small');sm.textContent=nat;RADF.last.append(sm);}return;}
     if(!ok)try{const sp={base:4,lost:6,hero:3}[rk];if(sp)speak(sp);}catch(e){}
-    try{tkFeed(m,k);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);const el0=$('log');if(!el0)return;const d0=document.createElement('div');d0.className=k;d0.textContent=m;setTimeout(()=>{d0.classList.add('out');setTimeout(()=>d0.remove(),700);},7000);el0.append(d0);while(el0.children.length>4)el0.firstChild.remove();return;}
-  try{tkFeed(m,k);}catch(e){}if(k&&k.length===2&&k[0]==='v'){try{speak(+k[1]);}catch(e){}return;}try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);
-  // battle messages: a short feed over the battlefield's top-left corner, newest at the bottom; each line stays still
-  // for 7 s, then fades out in 0.6 s (no long-running CSS animation over the 3D canvas: it kept idle pages compositing)
-  const el=$('log');if(!el)return;const d=document.createElement('div');d.className=k||'';d.textContent=m;setTimeout(()=>{d.classList.add('out');setTimeout(()=>d.remove(),700);},7000);el.append(d);while(el.children.length>4)el.firstChild.remove();}
+    try{tkFeed(m,k);}catch(e){}}
+  else{try{tkFeed(m,k);}catch(e){}if(k&&k.length===2&&k[0]==='v'){try{speak(+k[1]);}catch(e){}return;}try{if(/ ready\.$/.test(m))speak(3);else if(/under attack/i.test(m))speak(4);}catch(e){}}
+  G.msgs.unshift({m,k});G.msgs.length=Math.min(G.msgs.length,5);try{radFeed(m,k,x,y,nat);}catch(e){}}
 function rivals(){return G.teams.filter(T=>!T.reb&&!ally(T.id,ME)).map(T=>T.F.name);}
 function vsText(){const r=rivals();return r.length<=2?r.join(' and '):`${r.length} rivals`;}
 /* the mode's name for the HUD, pause and end screens */
@@ -622,6 +623,7 @@ window.addEventListener('keydown',e=>{if(e.target&&(e.target.tagName==='INPUT'||
   if(k==='x'){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length)doAct({t:'stop',ids});}
   if(k==='r'&&!e.ctrlKey&&!e.metaKey){const ids=G.sel.filter(u=>!u.isB&&u.team===ME).map(u=>u.id);if(ids.length){doAct({t:'ret',ids});speak(2);}}
   if(k==='h'){const hq=G.ents.find(b=>b.team===ME&&b.kind==='hq');if(hq)centerOn(hq.x,hq.y);}
+  if(k===' '&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!e.repeat&&!G.over)radJump();
   if(e.key==='PageUp'){tiltBy(-.06);e.preventDefault();}if(e.key==='PageDown'){tiltBy(.06);e.preventDefault();}if(k==='='||k==='+'){camTarget();cam.td=Math.max(200,cam.td/1.15);}if(k==='-'||k==='_'){camTarget();cam.td=Math.min(zmax(),cam.td*1.15);}
   if(k.startsWith('Arrow')||k===' ')e.preventDefault();updateUI();});
 window.addEventListener('keyup',e=>{const k=e.key.length===1?e.key.toLowerCase():e.key;keys[k]=false;if(k==='q')camRotUp(e);MODK.ctrl=e.ctrlKey||e.metaKey;MODK.alt=e.altKey;MODK.shift=e.shiftKey;if(k==='Alt'&&G&&$('menu').hidden)e.preventDefault();});
