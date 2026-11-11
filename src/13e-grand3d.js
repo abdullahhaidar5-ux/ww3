@@ -24,11 +24,30 @@ function g3Idx(){const s=guCols();if(GU_RW===GT_W)return s;if(G3.idx2)return G3.
   const o=new Uint16Array(GT_W*GT_H);for(let y=0;y<GT_H;y++)for(let x=0;x<GT_W;x++){let b=s[y*f*GU_RW+x*f];for(let dy=0;dy<f;dy++)for(let dx=0;dx<f;dx++){const v=s[(y*f+dy)*GU_RW+x*f+dx];const bs=b>=GM_LAND,vs=v>=GM_LAND;if((bs&&!vs)||(bs===vs&&n[v]<n[b]))b=v;}o[y*GT_W+x]=b;}
   return G3.idx2=o;}
 function g3PArea(){if(G3.parea)return G3.parea;const s=guCols(),a=new Float32Array(GM_P.length);for(let k=0;k<s.length;k++)a[s[k]]++;for(let i=0;i<a.length;i++)a[i]=Math.max(1,a[i]);return G3.parea=a;}
+// mapcoast: the true coast at the full province-raster resolution (2400x1200, ~16 km per pixel). Land = province-raster land, trimmed where the real
+// elevation says sea right next to open water (the raster is about a pixel fat), minus the big lakes of the coarse mask (water cells no sea province
+// touches). Tiny provinces keep their raster shape and every land province keeps a small island under its town. Without grand/elev.png: raster + lakes only.
+const G3_SHORE=.22;   // land where the smoothed fine mask (F.fs/255, green of uSea) is above this - a single 16 km pixel stays a visible dot
+function g3Fine(gt){const s=guCols(),FW=GU_RW,FH=(s.length/FW)|0,N=FW*FH,W=GT_W,H=GT_H,f=Math.round(FW/W),P=GCM.P,fm=new Uint8Array(N),R=G3.real,E=R&&R.EW===FW&&R.EH===FH?R.E:null;
+  for(let k=0;k<N;k++)fm[k]=s[k]<GM_LAND?1:0;
+  if(E){const cut=[];for(let y=0;y<FH;y++)for(let x=0;x<FW;x++){const k=y*FW+x;if(!fm[k]||E[k]>0)continue;const r=E[k]<-12?3:1;let hit=false;
+      for(let dy=-r;dy<=r&&!hit;dy++){const yy=y+dy;if(yy<0||yy>=FH)continue;for(let dx=-r;dx<=r;dx++){const xx=x+dx;if(xx>=0&&xx<FW&&s[yy*FW+xx]>=GM_LAND){hit=true;break;}}}
+      if(hit)cut.push(k);}
+    const cnt=new Int32Array(GM_P.length);for(const k of cut)fm[k]=0;for(let k=0;k<N;k++)cnt[s[k]]+=fm[k];for(const k of cut)if(cnt[s[k]]<10)fm[k]=1;}   // a province trimmed to almost nothing keeps its raster shape
+  {const oc=new Uint8Array(W*H),st=[];for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=y*W+x;if(gt[c])continue;let sea=false;for(let dy=0;dy<f&&!sea;dy++)for(let dx=0;dx<f;dx++)if(s[(y*f+dy)*FW+x*f+dx]>=GM_LAND){sea=true;break;}if(sea){oc[c]=1;st.push(c);}}
+    while(st.length){const c=st.pop(),x=c%W;if(x>0&&!gt[c-1]&&!oc[c-1]){oc[c-1]=1;st.push(c-1);}if(x<W-1&&!gt[c+1]&&!oc[c+1]){oc[c+1]=1;st.push(c+1);}if(c>=W&&!gt[c-W]&&!oc[c-W]){oc[c-W]=1;st.push(c-W);}if(c<W*H-W&&!gt[c+W]&&!oc[c+W]){oc[c+W]=1;st.push(c+W);}}
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){const c=y*W+x;if(gt[c]||oc[c])continue;for(let dy=0;dy<f;dy++)for(let dx=0;dx<f;dx++)fm[(y*f+dy)*FW+x*f+dx]=0;}}   // lakes
+  for(const q of P)if(q.land){const cx=Math.round(q.x),cy=Math.round(q.y);let any=false;for(let dy=-2;dy<=2&&!any;dy++)for(let dx=-2;dx<=2;dx++){const x=cx+dx,y=cy+dy;if(x>=0&&x<FW&&y>=0&&y<FH&&fm[y*FW+x]){any=true;break;}}
+    if(!any)for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const x=cx+dx,y=cy+dy;if(dx*dx+dy*dy<=14&&x>=0&&x<FW&&y>=0&&y<FH)fm[y*FW+x]=1;}}   // every land province keeps at least a small island under its town
+  const t=new Uint8Array(N),fs=new Uint8Array(N);for(let y=0;y<FH;y++){const o=y*FW;for(let x=0;x<FW;x++)t[o+x]=fm[o+(x?x-1:0)]+2*fm[o+x]+fm[o+(x<FW-1?x+1:x)];}
+  for(let y=0;y<FH;y++){const o=y*FW,u=y?o-FW:o,d=y<FH-1?o+FW:o;for(let x=0;x<FW;x++)fs[o+x]=(t[u+x]+2*t[o+x]+t[d+x])*255>>4;}   // light anti-aliasing: one 3x3 tent
+  const land=new Float32Array(W*H);for(let y=0;y<H;y++)for(let x=0;x<W;x++){let a=0;for(let dy=0;dy<f;dy++)for(let dx=0;dx<f;dx++)a+=fm[(y*f+dy)*FW+x*f+dx];land[y*W+x]=a/(f*f);}
+  return {fm,fs,FW,FH,land};}
+function g3FineLand(x,z){const F=G3.F;if(!F||!F.fs)return false;const X=Math.max(0,Math.min(F.FW-1,Math.floor(x))),Z=Math.max(0,Math.min(F.FH-1,Math.floor(z)));return F.fs[Z*F.FW+X]>=G3_SHORE*255;}   // is this map point land on the drawn coast?
 function g3Fields(){if(G3.F)return G3.F;grMap();const W=GT_W,H=GT_H,idx=g3Idx(),P=GCM.P;
-  const b=atob(GT_MASK),land=new Float32Array(W*H);{let p=0,i=0,v=0;while(i<b.length){let n=0,sh=0,c;do{c=b.charCodeAt(i++);n|=(c&127)<<sh;sh+=7;}while(c&128);if(v)land.fill(1,p,p+n);p+=n;v^=1;}}
-  for(const q of P)if(q.land){const cx=Math.round(q.x/2),cy=Math.round(q.y/2);let any=false;for(let dy=-2;dy<=2&&!any;dy++)for(let dx=-2;dx<=2;dx++)if(land[(cy+dy)*W+cx+dx]){any=true;break;}
-    if(!any)for(let dy=-6;dy<=6;dy++)for(let dx=-6;dx<=6;dx++)if(dx*dx+dy*dy<=30&&cx+dx>=0&&cx+dx<W&&cy+dy>=0&&cy+dy<H)land[(cy+dy)*W+cx+dx]=1;}   // every land province keeps at least a small island under its town
-  const Ls=g3Blur(land,W,H,3,3),Lw=g3Blur(Ls,W,H,14,2);
+  const b=atob(GT_MASK),gt=new Uint8Array(W*H);{let p=0,i=0,v=0;while(i<b.length){let n=0,sh=0,c;do{c=b.charCodeAt(i++);n|=(c&127)<<sh;sh+=7;}while(c&128);if(v)gt.fill(1,p,p+n);p+=n;v^=1;}}
+  const FN=g3Fine(gt),land=FN.land,Lb=g3Blur(land,W,H,1,1),Ls=new Float32Array(W*H);for(let k=0;k<W*H;k++)Ls[k]=Math.max(land[k],Lb[k]);   // mapcoast: the coarse fields follow the fine coast (was a +-150 km blur that melted Italy and the Aegean)
+  const Lw=g3Blur(Ls,W,H,14,2);
   const mw0=new Float32Array(W*H),sn0=new Float32Array(W*H),cr=new Float32Array(W*H),cg=new Float32Array(W*H),cb=new Float32Array(W*H);
   for(let k=0;k<W*H;k++){const q=P[idx[k]],t=q.t;if(t==='m')mw0[k]=1;else if(t==='s')sn0[k]=1;const c=G3_BIOME[t]||G3_BIOME.d;cr[k]=c[0];cg[k]=c[1];cb[k]=c[2];}
   const mw=g3Blur(mw0,W,H,9,2),sw=g3Blur(sn0,W,H,8,2),R=g3Blur(cr,W,H,7,2),Gc=g3Blur(cg,W,H,7,2),B=g3Blur(cb,W,H,7,2);
@@ -36,7 +55,7 @@ function g3Fields(){if(G3.F)return G3.F;grMap();const W=GT_W,H=GT_H,idx=g3Idx(),
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,ls=Ls[k],coast=g3Smooth(.4,.8,ls),n=g3Fbm(x*.02,y*.02,4);
     const rg=1-Math.abs(2*g3Fbm(x*.04+7,y*.04,4)-1);
     const landH=coast*(1.2+n*5.5)+mw[k]*coast*(6+rg*rg*58)+sw[k]*coast*n*6;
-    const sea=-.8-9*Math.pow(1-Lw[k],2);Hh[k]=sea+(landH-sea)*g3Smooth(.42,.6,ls);}
+    const sea=-.8-9*Math.pow(1-Lw[k],2);Hh[k]=sea+(landH-sea)*g3Smooth(.42,.6,ls);if(ls>=.5&&Hh[k]<.45)Hh[k]=.45;}
   // painted ground (RGBA bytes): biome blur + noise + hillshade + snow/rock by height + beaches + rivers
   const px=new Uint8ClampedArray(W*H*4);
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,h=Hh[k];
@@ -54,7 +73,7 @@ function g3Fields(){if(G3.F)return G3.F;grMap();const W=GT_W,H=GT_H,idx=g3Idx(),
   const dw=g3Blur(dd0,W,H,6,2),vw=g3Blur(vg0,W,H,6,2),bw=new Uint8Array(W*H*4);
   for(let k=0;k<W*H;k++){const h=Hh[k],coast=g3Smooth(.4,.8,Ls[k]),rock=Math.max(mw[k]*coast*.55,g3Smooth(24,40,h)),snow=Math.max(sw[k]>.3?g3Smooth(.3,.6,sw[k]):0,g3Smooth(46,60,h)),beach=g3Smooth(.5,.58,Ls[k])*(1-g3Smooth(.62,.8,Ls[k]));
     const o=k*4;bw[o]=Math.min(255,rock*255);bw[o+1]=Math.min(255,snow*255);bw[o+2]=Math.min(255,Math.max(dw[k],beach)*255);bw[o+3]=Math.min(255,vw[k]*255);}
-  G3.F={W,H,idx,land,Ls,Lw,mw,Hh,px,bw};
+  G3.F={W,H,idx,land,Ls,Lw,mw,Hh,px,bw,fm:FN.fm,fs:FN.fs,FW:FN.FW,FH:FN.FH};
   if(G3.real){try{const t0=performance.now();g3RealFields(G3.F);G3.tReal=Math.round(performance.now()-t0);}catch(e){console.error('real terrain failed, procedural fallback',e);G3.F=null;G3.real=null;G3.realFail=1;return g3Fields();}}
   return G3.F;}
 function g3HeightAt(x,z){const F=G3.F;if(!F)return 0;const fx=Math.max(0,Math.min(F.W-1.001,x/2)),fy=Math.max(0,Math.min(F.H-1.001,z/2)),x0=fx|0,y0=fy|0,tx=fx-x0,ty=fy-y0,H=F.Hh,W=F.W;
@@ -82,12 +101,14 @@ function g3PaintOverlay(){const F=G3.F,W=F.W,H=F.H,idx=F.idx,P=GCM.P,Ls=F.Ls;if(
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,i=idx[k],p=P[i],o=k*4;let r=0,g=0,b=0,a=0;
     const R=x+1<W?idx[k+1]:i,D=y+1<H?idx[k+W]:i;
     if(p.sea){a=0;}
-    else if(Ls[k]>.5){const c=col[i],ed=g3Smooth(.5,.64,Ls[k]);let t=c[3];
+    else{const c=col[i],ed=1;let t=c[3];
       if(pol)t=.24+Math.min(.42,glow[k]*1.7);
       if(G3.mode==='culture'&&GC.prov[i].o!==GC.prov[i].o0&&((x+y)&7)<3)t*=.3;
       r=c[0];g=c[1];b=c[2];a=t*255*ed;
       }
     d[o]=r;d[o+1]=g;d[o+2]=b;d[o+3]=a;}
+  for(let it=0;it<2;it++){const add=[];for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const k=y*W+x;if(d[k*4+3])continue;const n=d[k*4-1]?k-1:d[k*4+7]?k+1:d[(k-W)*4+3]?k-W:d[(k+W)*4+3]?k+W:-1;if(n>=0)add.push(k,n);}
+    for(let q=0;q<add.length;q+=2){const o=add[q]*4,n=add[q+1]*4;d[o]=d[n];d[o+1]=d[n+1];d[o+2]=d[n+2];d[o+3]=d[n+3];}}   // mapcoast: owner colour runs out two cells past the coast so the per-pixel shoreline (terrain shader) cuts it crisp - never any colour on water
   if(G3.lines)g3LineColors();
   return d;}
 function g3IdxPixels(){const F=G3.F,n=F.W*F.H,d=new Uint8Array(n*4);for(let k=0;k<n;k++){const i=F.idx[k];d[k*4]=i&255;d[k*4+1]=i>>8;d[k*4+3]=255;}return d;}
@@ -191,7 +212,8 @@ function g3BuildLights(grp){const T=g3Towns(),pos=[],ph=[],sz=[];
 const G3_CH=600,G3_LODS=[3,6,8],G3_LODR=[380,950];
 function g3TerrChunk(ci,cj,step){const n=G3_CH/step,V=n+1,ox=ci*G3_CH,oz=cj*G3_CH,e=5,nsk=4*n+4,NV=V*V+nsk*2;
   const pos=new Float32Array(NV*3),nor=new Float32Array(NV*3),uv=new Float32Array(NV*2),ix=new Uint32Array((n*n+4*n)*6);
-  const put=(q,x,z,drop)=>{const h=(4*g3HeightAt(x,z)+g3HeightAt(x-2,z)+g3HeightAt(x+2,z)+g3HeightAt(x,z-2)+g3HeightAt(x,z+2))/8,nx=g3HeightAt(x-e,z)-g3HeightAt(x+e,z),nz=g3HeightAt(x,z-e)-g3HeightAt(x,z+e),l=Math.hypot(nx,2*e,nz);
+  const F_=G3.F,cd=F_.cd,FW=F_.FW,FH=F_.FH;   /* mapcoast: within 12 px of real land the mesh never dips under the water plane, so the per-pixel coast always has ground to draw on (the rest is cut away in the shader) */
+  const put=(q,x,z,drop)=>{let h=(4*g3HeightAt(x,z)+g3HeightAt(x-2,z)+g3HeightAt(x+2,z)+g3HeightAt(x,z-2)+g3HeightAt(x,z+2))/8;if(h<.4&&cd&&cd[Math.min(FH-1,z|0)*FW+Math.min(FW-1,x|0)]<147)h=.4;const nx=g3HeightAt(x-e,z)-g3HeightAt(x+e,z),nz=g3HeightAt(x,z-e)-g3HeightAt(x,z+e),l=Math.hypot(nx,2*e,nz);
     pos[q*3]=x;pos[q*3+1]=h-drop;pos[q*3+2]=z;nor[q*3]=nx/l;nor[q*3+1]=2*e/l;nor[q*3+2]=nz/l;uv[q*2]=x/2400;uv[q*2+1]=z/1200;};
   for(let j=0;j<V;j++)for(let i=0;i<V;i++)put(j*V+i,ox+i*step,oz+j*step,0);
   let t=0;for(let j=0;j<n;j++)for(let i=0;i<n;i++){const a=j*V+i,b=a+1,c=a+V,d=c+1;ix[t++]=a;ix[t++]=c;ix[t++]=b;ix[t++]=b;ix[t++]=c;ix[t++]=d;}
@@ -352,10 +374,10 @@ function g3CatRom(q,closed,n){if(q.length<3)return q;const m=q.length,out=[q[0]]
     if(k===n){out.push(p2);continue;}
     out.push([.5*((2*p1[0])+(-p0[0]+p2[0])*t+(2*p0[0]-5*p1[0]+4*p2[0]-p3[0])*t2+(-p0[0]+3*p1[0]-3*p2[0]+p3[0])*t3),.5*((2*p1[1])+(-p0[1]+p2[1])*t+(2*p0[1]-5*p1[1]+4*p2[1]-p3[1])*t2+(-p0[1]+3*p1[1]-3*p2[1]+p3[1])*t3)]);}}
   return out;}
-function g3Chains(kind){const F=G3.F,W=F.W,H=F.H,idx=F.idx,P=GCM.P,Ls=F.Ls,W1=W+1,E=[];   // E: [nodeA,nodeB,i,j]
+function g3Chains(kind){const F=G3.F,fine=kind==='land'&&F.fm&&F.FW===GU_RW,W=fine?F.FW:F.W,H=fine?F.FH:F.H,idx=fine?guCols():F.idx,P=GCM.P,Ls=F.Ls,fm=F.fm,SC=2400/W,W1=W+1,E=[];   // mapcoast: land borders are traced on the full 2400 raster and only where the drawn coast says land   // E: [nodeA,nodeB,i,j]
   for(let y=0;y<H-1;y++)for(let x=0;x<W-1;x++){const k=y*W+x,i=idx[k];
     for(let q=0;q<2;q++){const nb=q?k+W:k+1,j=idx[nb];if(j===i)continue;
-      if(kind==='land'){if(!P[i].land||!P[j].land||Ls[k]<.5||Ls[nb]<.5)continue;}else{if(!P[i].sea||!P[j].sea||Ls[k]>.3||Ls[nb]>.3)continue;}
+      if(kind==='land'){if(!P[i].land||!P[j].land||(fine?!fm[k]||!fm[nb]:Ls[k]<.5||Ls[nb]<.5))continue;}else{if(!P[i].sea||!P[j].sea||Ls[k]>.3||Ls[nb]>.3)continue;}
       E.push(q?[(y+1)*W1+x,(y+1)*W1+x+1,i,j]:[y*W1+x+1,(y+1)*W1+x+1,i,j]);}}
   const adj=new Map();E.forEach((e,n)=>{for(const c of [e[0],e[1]]){let a=adj.get(c);if(!a)adj.set(c,a=[]);a.push(n);}});
   const key=e=>Math.min(e[2],e[3])*4096+Math.max(e[2],e[3]),used=new Uint8Array(E.length),out=[];
@@ -363,9 +385,9 @@ function g3Chains(kind){const F=G3.F,W=F.W,H=F.H,idx=F.idx,P=GCM.P,Ls=F.Ls,W1=W+
   const walk=(c0,n0)=>{const pts=[c0],e0=E[n0];let n=n0,c=c0;for(;;){used[n]=1;const e=E[n];c=e[0]===c?e[1]:e[0];pts.push(c);if(stop(c))break;const a=adj.get(c),nn=a[0]===n?a[1]:a[0];if(used[nn])break;n=nn;}return {pts,i:e0[2],j:e0[3]};};
   for(const [c,a] of adj)if(stop(c))for(const n of a)if(!used[n])out.push(walk(c,n));
   for(let n=0;n<E.length;n++)if(!used[n])out.push(walk(E[n][0],n));
-  for(const ch of out){let q=ch.pts.map(c=>[(c%W1)*2,Math.floor(c/W1)*2]);const closed=ch.pts[0]===ch.pts[ch.pts.length-1];
+  for(const ch of out){let q=ch.pts.map(c=>[(c%W1)*SC,Math.floor(c/W1)*SC]);const closed=ch.pts[0]===ch.pts[ch.pts.length-1];
     for(let pass=0;pass<3;pass++){const r=q.map((p,a)=>{if(!closed&&(a<2||a>q.length-3))return p;let sx=0,sz=0;for(let d=-2;d<=2;d++){const t=q[(a+d+q.length-1)%(q.length-(closed?1:0)||1)]||q[Math.max(0,Math.min(q.length-1,a+d))];sx+=t[0];sz+=t[1];}return [sx/5,sz/5];});if(closed)r[r.length-1]=r[0];q=r;}
-    const dec=q.filter((p,a)=>a%3===0||a===q.length-1);ch.xy=g3CatRom(dec,closed,3);}
+    const dec=q.filter((p,a)=>a%(fine?4:3)===0||a===q.length-1);ch.xy=g3CatRom(dec,closed,fine?2:3);}
   return out;}
 function g3RiverChains(){const out=[],Ls=G3.F.Ls,W=G3.F.W;for(const l of GT_RIV){let q=[];for(let i=0;i+1<l.length;i+=2)q.push([l[i],l[i+1]]);
     for(let it=0;it<2;it++){const r=[q[0]];for(let a=0;a<q.length-1;a++){const A=q[a],B=q[a+1];r.push([A[0]*.75+B[0]*.25,A[1]*.75+B[1]*.25],[A[0]*.25+B[0]*.75,A[1]*.25+B[1]*.75]);}r.push(q[q.length-1]);q=r;}
@@ -393,8 +415,8 @@ function g3SetLine(mesh,ch,r,g,b,a,wpx,wwd){const A=mesh.geometry.attributes,Co=
 function g3LineColors(){const L=G3.lines;if(!L||!GC)return;const pol=G3.mode==='political';
   for(const ch of L.land){const fr=GC.prov[ch.i].o!==GC.prov[ch.j].o;
     if(fr){const oc=pol?grNatRgb(GC.prov[ch.i].o):[60,60,60],oc2=pol?grNatRgb(GC.prov[ch.j].o):[60,60,60];
-      g3SetLine(L.land_m,ch,.09+oc[0]/255*.2,.09+oc[1]/255*.2,.09+oc[2]/255*.2,.95,2.1,0);g3SetLine(L.cas_m,ch,.99,.97,.9,.28,5.2,0);}
-    else{g3SetLine(L.land_m,ch,.12,.11,.1,.7,1.5,0);g3SetLine(L.cas_m,ch,1,1,1,0,1,0);}}
+      g3SetLine(L.land_m,ch,.09+oc[0]/255*.2,.09+oc[1]/255*.2,.09+oc[2]/255*.2,.92,1.9,0);g3SetLine(L.cas_m,ch,.99,.97,.9,.22,4.4,0);}
+    else{g3SetLine(L.land_m,ch,.12,.11,.1,.4,1.,0);g3SetLine(L.cas_m,ch,1,1,1,0,1,0);}}
   L.land_m.geometry.attributes.aCol.needsUpdate=L.land_m.geometry.attributes.aW.needsUpdate=true;L.cas_m.geometry.attributes.aCol.needsUpdate=L.cas_m.geometry.attributes.aW.needsUpdate=true;}
 function g3BuildLines(sc){const L={};G3.LU={uRes:{value:new THREE.Vector2(1600,900)},uPx:{value:1}};
   L.land=g3Chains('land');L.sea=g3Chains('sea');L.riv=g3RiverChains();
@@ -413,14 +435,13 @@ function g3NoiseTex(){const n=128,d=new Uint8Array(n*n*4);for(let y=0;y<n;y++)fo
   const t=new THREE.DataTexture(d,n,n);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;t.generateMipmaps=true;t.needsUpdate=true;return t;}
 function g3Tex(data,w,h,mip,nearest){const t=new THREE.DataTexture(data,w,h,THREE.RGBAFormat);t.flipY=false;t.wrapS=t.wrapT=THREE.ClampToEdgeWrapping;
   if(nearest){t.minFilter=t.magFilter=THREE.NearestFilter;t.generateMipmaps=false;}else{t.magFilter=THREE.LinearFilter;t.minFilter=mip?THREE.LinearMipmapLinearFilter:THREE.LinearFilter;t.generateMipmaps=!!mip;t.anisotropy=G3.aniso||8;}t.needsUpdate=true;return t;}
-// gsea: signed distance to the coastline (land = Ls>=.5), two-pass chamfer on the 1200x600 field, baked once at load.
-// byte = 127.5 + signed texels*3.2 (sea +, land -; first texel each side = +-.5; saturates at 40 texels) -> linear filtering makes it a smooth SDF crossing 0 on the coast.
-function g3CoastDist(Ls,W,H){const N=W*H,I=1e9,ds=new Float32Array(N),dl=new Float32Array(N),out=new Uint8Array(N);
-  for(let k=0;k<N;k++){const l=Ls[k]>=.5;ds[k]=l?0:I;dl[k]=l?I:0;}
-  const pass=d=>{const a=1,b=1.4142;for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x;let v=d[k];if(x>0)v=Math.min(v,d[k-1]+a);if(y>0){v=Math.min(v,d[k-W]+a);if(x>0)v=Math.min(v,d[k-W-1]+b);if(x<W-1)v=Math.min(v,d[k-W+1]+b);}d[k]=v;}
-    for(let y=H-1;y>=0;y--)for(let x=W-1;x>=0;x--){const k=y*W+x;let v=d[k];if(x<W-1)v=Math.min(v,d[k+1]+a);if(y<H-1){v=Math.min(v,d[k+W]+a);if(x<W-1)v=Math.min(v,d[k+W+1]+b);if(x>0)v=Math.min(v,d[k+W-1]+b);}d[k]=v;}};
-  pass(ds);pass(dl);
-  for(let k=0;k<N;k++){const sea=ds[k]>0,v=127.5+(sea?ds[k]-.5:.5-dl[k])*3.2;out[k]=Math.max(0,Math.min(255,Math.round(v)));}return out;}
+// gsea/mapcoast: signed distance to the true coastline (the fine land mask F.fm), one two-sweep chamfer on the 2400x1200 raster, baked once at load.
+// byte = 127.5 + signed fine pixels*1.6 (sea +, land -; first pixel each side = +-.5; saturates at 80 pixels) -> the shaders read it as "coarse texels" (/3.2) as before.
+function g3CoastDist(fm,W,H){const N=W*H,d=new Float32Array(N).fill(1e9),out=new Uint8Array(N),a=1,b=1.4142;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,v=fm[k];if((x>0&&fm[k-1]!==v)||(x<W-1&&fm[k+1]!==v)||(y>0&&fm[k-W]!==v)||(y<H-1&&fm[k+W]!==v))d[k]=.5;}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x;let v=d[k];if(x>0&&d[k-1]+a<v)v=d[k-1]+a;if(y>0){if(d[k-W]+a<v)v=d[k-W]+a;if(x>0&&d[k-W-1]+b<v)v=d[k-W-1]+b;if(x<W-1&&d[k-W+1]+b<v)v=d[k-W+1]+b;}d[k]=v;}
+  for(let y=H-1;y>=0;y--)for(let x=W-1;x>=0;x--){const k=y*W+x;let v=d[k];if(x<W-1&&d[k+1]+a<v)v=d[k+1]+a;if(y<H-1){if(d[k+W]+a<v)v=d[k+W]+a;if(x<W-1&&d[k+W+1]+b<v)v=d[k+W+1]+b;if(x>0&&d[k+W-1]+b<v)v=d[k+W-1]+b;}d[k]=v;}
+  for(let k=0;k<N;k++){const v=127.5+(fm[k]?-d[k]:d[k])*1.6;out[k]=v<0?0:v>255?255:Math.round(v);}return out;}
 const G3_DETAIL=`vec3 g3detail(vec3 c){vec2 wp=vWp.xz;vec4 bw=texture2D(uBW,vG3);float rock=bw.r,snow=bw.g,sand=bw.b,veg=bw.a,ls=texture2D(uSea,vG3).g;
   vec2 p1=wp/20.,p2=wp/91.+.37,p3=wp/540.+.11;vec4 a1=texture2D(uDet,p1),a2=texture2D(uDet,p2),a3=texture2D(uDet,p3);
   float e=1./512.;vec2 L=vec2(-.84,-.54);
@@ -432,7 +453,7 @@ const G3_DETAIL=`vec3 g3detail(vec3 c){vec2 wp=vWp.xz;vec4 bw=texture2D(uBW,vG3)
   c*=clamp(lum*(1.-clamp(sl,-.45,.45)),.45,1.6);
   c=mix(c,c*vec3(.82,1.06,.76),veg*(a2.r-.3)*1.2);c=mix(c,c*vec3(1.1,.98,.84),(a3.g-.5)*.9*(1.-snow));                        // patchy field / grass tint
   {float dL=-(texture2D(uSea,vG3).a*255.-127.5)/3.2;   // gsea: bright sand beach band on every coast (dL = texels inland), wet sand at the waterline
-   float bch=(1.-smoothstep(.45,1.3,dL+(a2.r-.5)*.5))*(1.-rock*.8)*(1.-snow);vec3 sc_=vec3(.95,.86,.66)*(.88+.24*a1.b+.1*(a3.r-.5));c=mix(c,sc_,bch*.88);
+   float bch=(1.-smoothstep(.12,.55,dL+(a2.r-.5)*.2))*(1.-rock*.8)*(1.-snow);vec3 sc_=vec3(.95,.86,.66)*(.88+.24*a1.b+.1*(a3.r-.5));c=mix(c,sc_,bch*.88);
    float wet=1.-smoothstep(-.1,.25,dL);c*=1.-.16*wet*bch;}
   return c;}`;
 function g3FlagUrl(o){G3.fu=G3.fu||new Map();let u=G3.fu.get(o);if(u!==undefined)return u;try{const n=grNat(o),im=n.major&&typeof esFlag==='function'?esFlag(o):null;if(im&&im.complete===false)return '';const c=(n.major&&typeof esFlagEl==='function')?esFlagEl(o,28,28):null;if(c)u=c.toDataURL();else{const k=document.createElement('canvas');k.width=k.height=32;const x=k.getContext('2d');x.fillStyle=n.color||'#888';x.fillRect(0,0,32,32);x.fillStyle='rgba(255,255,255,.9)';x.font='bold 13px Georgia';x.textAlign='center';x.fillText(String(o).slice(0,2),16,21);u=k.toDataURL();}}catch(e){u='';}G3.fu.set(o,u);return u;}   /* one cached flag image per nation for nameplates */
@@ -449,8 +470,10 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
   // terrain
   g3PaintOverlay();
   const tGround=g3Tex(new Uint8Array(F.px.buffer),F.PW||W,F.PH||H,true),tOv=g3Tex(G3.ov,W,H,true),tIdx=g3Tex(g3IdxPixels(),W,H,false,true),tDet=g3DetailTex(),tBW=g3Tex(F.bw,W,H,true);tDet.anisotropy=G3.aniso||8;G3.tOv=tOv;
-  const G3cd=F.cd||(F.cd=g3CoastDist(F.Ls,W,H));   /* gsea: signed distance to the coast, baked once per field set (alpha of uSea) */
-  const sd=new Uint8Array(W*H*4);for(let k=0;k<W*H;k++){sd[k*4]=Math.min(255,F.Lw[k]*255);sd[k*4+1]=Math.min(255,F.Ls[k]*255);sd[k*4+2]=Math.round(255*g3SeaDepth(F,k));sd[k*4+3]=G3cd[k];}const tSea=g3Tex(sd,W,H,false);const tLit=F.lit?g3Tex(F.lit,F.LW,F.LH,true):null;
+  const FW=F.FW,FH=F.FH,G3cd=F.cd||(F.cd=g3CoastDist(F.fm,FW,FH));   /* gsea: signed distance to the coast, baked once per field set (alpha of uSea) */
+  /* mapcoast: uSea is the one 2400x1200 shore texture - r wide land blur, g the fine land mask (lightly smoothed), b water depth, a coast distance */
+  const sd=new Uint8Array(FW*FH*4);{const fx=Math.round(FW/W),E=G3.real&&G3.real.EW===FW&&G3.real.EH===FH?G3.real.E:null,Lw=F.Lw,fs=F.fs;for(let y=0;y<FH;y++){const cy=Math.min(H-1,(y/fx)|0)*W;for(let x=0;x<FW;x++){const k=y*FW+x,c=cy+Math.min(W-1,(x/fx)|0),o=k*4;
+    sd[o]=Math.min(255,Lw[c]*255);sd[o+1]=fs[k];sd[o+2]=E?Math.max(0,Math.min(255,-E[k]*(255/3800))):Math.round(255*g3SeaDepth(F,c));sd[o+3]=G3cd[k];}}}const tSea=g3Tex(sd,FW,FH,true);const tLit=F.lit?g3Tex(F.lit,F.LW,F.LH,true):null;
   const tHi=G3.hi?g3Tex(new Uint8Array(G3.hi.d.buffer),G3.hi.w,G3.hi.h,true):null;if(tHi)tHi.anisotropy=G3.aniso||8;
   const U={uHi:{value:tHi},uHasHi:{value:tHi?1:0},uHiR:{value:new THREE.Vector4(...(G3.hi?G3.hi.r:[0,0,1,1]))},uOv:{value:tOv},uIdx:{value:tIdx},uDet:{value:tDet},uSel:{value:-1},uHov:{value:-1},uRim:{value:2},uTime:{value:0},uSea:{value:tSea},uBW:{value:tBW},uLit:{value:tLit},uHasLit:{value:tLit?1:0},uOvK:{value:1}};G3.U=U;
   const rim=`float g3id(vec2 u){vec4 t=texture2D(uIdx,u);return floor(t.r*255.+.5)+256.*floor(t.g*255.+.5);}
@@ -466,7 +489,8 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
     s.vertexShader=s.vertexShader.replace('#include <common>','#include <common>\nvarying vec2 vG3;varying vec3 vWp;').replace('#include <uv_vertex>','#include <uv_vertex>\nvG3=uv;vWp=(modelMatrix*vec4(position,1.)).xyz;');
     s.fragmentShader=s.fragmentShader.replace('#include <common>','#include <common>\nvarying vec2 vG3;varying vec3 vWp;uniform sampler2D uOv,uIdx,uDet,uBW,uSea,uLit,uHi;uniform vec4 uHiR;uniform float uSel,uHov,uRim,uHasLit,uHasHi,uOvK;float g3sh=1.,g3ao=1.;uniform float uTime;\n'+G3_CLOUD+rim+G3_DETAIL)
       .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\n if(uHasLit>.5){vec4 L=texture2D(uLit,vG3);vec3 nw=normalize(vec3((L.r-.5)*4.,1.,(L.g-.5)*4.));normal=normalize((viewMatrix*vec4(nw,0.)).xyz);g3sh=L.b;g3ao=L.a*1.08;}').replace('#include <lights_fragment_end>','#include <lights_fragment_end>\n reflectedLight.directDiffuse*=g3sh*g3cloud(vWp.xz,uTime);reflectedLight.indirectDiffuse*=g3ao;')
-      .replace('#include <map_fragment>','#include <map_fragment>\n if(uHasHi>.5){vec2 hu=(vG3-uHiR.xy)/uHiR.zw;float hm_=smoothstep(0.,.02,hu.x)*smoothstep(0.,.02,1.-hu.x)*smoothstep(0.,.02,hu.y)*smoothstep(0.,.02,1.-hu.y);if(hm_>0.)diffuseColor.rgb=mix(diffuseColor.rgb,texture2D(uHi,clamp(hu,0.,1.)).rgb,hm_);}\n diffuseColor.rgb=g3detail(diffuseColor.rgb);vec4 ov=texture2D(uOv,vG3);diffuseColor.rgb=mix(diffuseColor.rgb,ov.rgb,min(.85,ov.a*uOvK));diffuseColor.rgb=g3rim(diffuseColor.rgb,vG3);');};
+      .replace('#include <map_fragment>','#include <map_fragment>\n if(uHasHi>.5){vec2 hu=(vG3-uHiR.xy)/uHiR.zw;float hm_=smoothstep(0.,.02,hu.x)*smoothstep(0.,.02,1.-hu.x)*smoothstep(0.,.02,hu.y)*smoothstep(0.,.02,1.-hu.y);if(hm_>0.)diffuseColor.rgb=mix(diffuseColor.rgb,texture2D(uHi,clamp(hu,0.,1.)).rgb,hm_);}\n diffuseColor.rgb=g3detail(diffuseColor.rgb);vec4 ov=texture2D(uOv,vG3);diffuseColor.rgb=mix(diffuseColor.rgb,ov.rgb,min(.85,ov.a*uOvK));diffuseColor.rgb=g3rim(diffuseColor.rgb,vG3);\n {float lm=texture2D(uSea,vG3).g,aw=clamp(fwidth(lm),.004,.14);diffuseColor.a=smoothstep('+G3_SHORE+'-aw,'+G3_SHORE+'+aw,lm);if(diffuseColor.a<.004)discard;diffuseColor.rgb*=1.-.42*(1.-smoothstep('+G3_SHORE+'+aw,'+G3_SHORE+'+aw*3.2,lm));}');};   /* mapcoast: land or sea is decided per pixel from the fine mask (anti-aliased edge, one thin dark shoreline) */
+  tm.alphaToCoverage=true;
   g3TerrInit(sc,tm);
   // sea
   const sm=new THREE.ShaderMaterial({uniforms:U,transparent:false,vertexShader:'varying vec3 vW;void main(){vec4 w=modelMatrix*vec4(position,1.);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}',
@@ -477,7 +501,7 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
       vec2 p=vW.xz;float w=sin(p.x*.31+uTime*1.1)+sin(p.y*.47-uTime*.8)+sin((p.x+p.y)*.19+uTime*.6)+sin((p.x-p.y)*.63-uTime*1.3)*.5;c*=1.+w*.028*(1.-smoothstep(500.,2400.,length(cameraPosition-vW)));{float nz=sin(p.x*.0093+sin(p.y*.0141)*1.9)*sin(p.y*.0117+cos(p.x*.0087)*1.7)+.5*sin(p.x*.021+p.y*.017+2.);c=mix(c,c*vec3(.82,.96,1.12),clamp(nz*.5+.15,0.,1.)*smoothstep(.25,.6,dp)*.55);c*=1.+nz*.05*smoothstep(.3,.7,dp);}
       float dT=max(0.,(s.a*255.-127.5)/3.2)+max(oo,0.)*4000.;   // gsea: texels from the coast (baked SDF) -> turquoise shallows fading to deep blue
       float nz2=sin(p.x*.23+sin(p.y*.19)*2.)*sin(p.y*.21+cos(p.x*.17)*2.),dj=dT+nz2*.12;
-      {vec3 turq=mix(vec3(.2,.7,.68),vec3(.05,.4,.55),smoothstep(.1,3.,dj));float sh_=(1.-smoothstep(.5,5.,dj))*(1.-.6*smoothstep(.015,.12,dp));c=mix(c,turq*(1.+w*.03),sh_*.8);}
+      {vec3 turq=mix(vec3(.2,.7,.68),vec3(.05,.4,.55),smoothstep(.1,3.,dj));float sh_=(1.-smoothstep(.3,2.8,dj))*(1.-.6*smoothstep(.015,.12,dp));c=mix(c,turq*(1.+w*.03),sh_*.8);}
       vec3 V=normalize(cameraPosition-vW);vec3 N=normalize(vec3(cos(p.x*.31+uTime*1.1)*.05+cos((p.x-p.y)*.63-uTime*1.3)*.03,1.,cos(p.y*.47-uTime*.8)*.05+cos((p.x+p.y)*.19+uTime*.6)*.03));
       N=normalize(N+vec3(sin(p.x*1.7+uTime*2.1)*cos(p.y*1.3-uTime*1.7),0.,cos(p.x*1.1-uTime*1.9)*sin(p.y*1.9+uTime*1.4))*.022*(1.-smoothstep(300.,1400.,length(cameraPosition-vW))));
       float fdd=length(cameraPosition-vW);
@@ -496,8 +520,8 @@ function g3Init(cv){g3Dispose();try{g3LoadReal();}catch(e){}try{g3LoadArmyModels
       {   // gsea: sandy lagoon edge + rolling foam ring hugging every coast and island
        float ring=1.-smoothstep(.12,.85,dj);float bands=smoothstep(.55,.95,sin(dj*10.-uTime*1.5+nz2*1.4))*ring;float brk=.5+.5*sin(p.x*.7+p.y*.9+uTime*.4+nz2*3.);
        float fo=clamp(bands*brk*.7+(1.-smoothstep(.0,.22,dj))*.75,0.,1.);c=mix(c,vec3(.95,.98,1.),fo*(.6+.4*(1.-smoothstep(600.,2400.,fdd))));}
-      float crest=1.-smoothstep(fw*.6,fw*1.8,abs(s.g-(.52+.02*sin(uTime*.9+p.x*.2+p.y*.17))));c=mix(c,vec3(.96,.99,1.),crest*.8);   // crisp shoreline foam line, constant width on screen
-      if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){vec4 ov=texture2D(uOv,cu);c=mix(c,ov.rgb,ov.a*.55);c=g3rimS(c,cu);}
+      float crest=1.-smoothstep(fw*.6,fw*1.8,abs(s.g-(${(G3_SHORE-.05).toFixed(3)}+.015*sin(uTime*.9+p.x*.2+p.y*.17))));c=mix(c,vec3(.96,.99,1.),crest*.8);   // crisp shoreline foam line, constant width on screen
+      if(uv.x>=0.&&uv.x<=1.&&uv.y>=0.&&uv.y<=1.){c=g3rimS(c,cu);}
       float dist=length(cameraPosition-vW);c*=mix(g3cloud(vW.xz,uTime),1.,smoothstep(1500.,4200.,dist));c=mix(c,vec3(.616,.722,.788),smoothstep(2200.,6200.,dist));gl_FragColor=vec4(c,1.);\n#include <tonemapping_fragment>\n}`});
   const sea=new THREE.Mesh(new THREE.PlaneGeometry(14000,9000).rotateX(-Math.PI/2).translate(1200,0,600),sm);sea.position.y=.05;sc.add(sea);g3BuildLines(sc);g3BuildRoads(sc);
   const grp=new THREE.Group();sc.add(grp);g3BuildForests(grp);g3BuildTowns(grp);g3BuildChim(grp);g3BuildLights(grp);G3.static=grp;
