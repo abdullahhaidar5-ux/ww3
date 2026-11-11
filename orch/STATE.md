@@ -1,3 +1,70 @@
+# STATE — conductor run 5 on 2026-11-11, 16:48–18:40 UTC (TWO trains landed: 3b and 4)
+
+**Main = 068b3146** (train 4 on top of train 3b f80df294). GitHub's test machines work again (setup step fine since about 16:55 UTC).
+Live site: Pages built both landings; https://abdullahhaidar5-ux.github.io/ww3/ serves 068b3146 (its campaign bundle grand.b028d95f92.js answers 200).
+
+**Landed, train 3b (f80df294, 17:26 UTC)** — re-run of the same test run 43042843019: 27 of 28 green, only `gate/cfclient` red in the same way as main (text says PASS, status failure):
+1. Calm map 4 — close view shows only capital name plates; look-alike neighbour colours guarded
+2. Army flags wave only in the close view or on the selected army
+3. Campaign panels in one frame (close X, Esc) + text size 100/115/130 % + color-blind set
+4. Stockpiles slice 2 — artillery shells and precision bombs
+5. War support slice 2 — wartime shortages turn people against the war
+
+**Landed, train 4 (068b3146, 18:36 UTC)** = `train/20261111-1727`, gated as 4cfc6031 (run 43068299089):
+6. Real coastlines on the campaign map (orch/mapcoast 98379b21)
+7. Real-looking forest on the campaign map (orch/maptrees 6a852b00)
+Conflicts: HISTORY (both kept), orch/grandtest.mjs (both checks kept: the forest guard + calm map 4's line), generated files rebuilt.
+Local: build + --check OK after each merge, GRANDTEST PASS, DECISIONS PASS, SMOKE PASS (510 s).
+GitHub: first pass 26 green, red `gate/audio` ("second battle: battle music again") and `gate/cfclient` (as main). Neither piece touches sound;
+the ONE re-gate (re-run of the failed jobs) gave AUDIO PASS. smooth-pc / smooth-mp / grandsmooth green. cfclient stays red as on main.
+Note: the landing commit 068b3146 also carries 22 refreshed test pictures under orch/shots/ (audit, grand2, grand3) from this run's local test — pictures only, no game change; not intended, harmless.
+
+**Flaky tests, nobody owns them:** main's own run on f80df294 came out RED on `gate/mpsync` (client view diverged 3/11) and `gate/tutorial`
+(TUTORIAL FAIL (1)), although the very same commit was green on both one hour earlier in the train run. Also flaky today: `gate/audio`
+(second-battle music), `gate/cfclient` (says PASS, reports failure — red on every run). So the "RIGHT NOW" bullet in CLAUDE.md stays.
+Someone should own these four; they make every landing a coin toss.
+
+## Helpers with unlanded work, read 16:55 UTC (nobody saved anything new since 16:00 UTC)
+
+| idea (branch) | last save | newest own test run | red tests / note |
+|---|---|---|---|
+| Real supply notes (c-supply) | 9 h | - | notes only |
+| Extras: battle (extras-battle) | 16 h | 60d5e246b5 | grandlive, migrate-down |
+| One language: campaign (lang-campaign) | 16 h | 0aee49223e | check (build check fails) |
+| Army tokens (armytokens) | 16 h | 4eeb0c339c | decisions, mpsync, tutorial; handoff written |
+| Seamless flow (seamless-flow) | 16 h | e1c344c7d8 | audio, smooth-pc |
+| Extras: command (extras-command) | 16 h | 4a7c989031 | audio, cfclient, smooth-pc |
+| Speed S (speedS) | 16 h | cf33e78fb7 | helper says not to land |
+| Extras: story (extras-story) | 17 h | d1aef6c3d2 | cfclient, controls |
+| Proxy warfare (c-proxy-warfare / c-proxy) | 17 h / 29 h | - | handoff written, 1 commit each, never gated |
+| One language spec (onelanguage) | 17 h | none | - |
+| greenK3 / greenK4 / greenK notes | 16–26 h | notes only | - |
+| Voices V (voicesV) | 23 h | d19894f02f | cfclient, audio (old main) |
+| Safety H (safetyH) | 29 h | 5dfef609ec | audio (+ old main reds) |
+| Dashboard J (dashJ) | 29 h | 673e996495 | mpsync, migrate-dual, audio |
+| Stuck units + feel + safety copies (greenK-snap / greenK-qfeel / dashI / loop-grand-snap) | 29–35 h | 1bb5e66377 | mpsync, audio |
+| Sound mix (q-sound), Autosave loop, Leaders C, Speed D | 34–38 h | old | - |
+
+Since audio / mpsync / tutorial / cfclient are flaky, several of the "red" rows above may be fine: seamless flow and extras-command are
+really blocked only by smooth-pc; extras-story by controls; extras-battle by grandlive / migrate-down; army tokens by decisions. A fresh
+run on current main would tell (they are 16 h behind main and will need a merge).
+
+## Locks with nothing saved (90+ min, no work branch)
+
+- **Map scale** (`taken/mapscale`, 5 h) — nothing saved. NEW on this list.
+- **Real war** (`taken/realwar`, 15 h) — nothing saved.
+- **Seamless HUD** (`taken/seamless-hud`, 15 h) — nothing saved.
+- **Army standards** (`taken/army-standards`, 15.5 h) — concept sheet on the lock only; test branch gate/6a19d97447 (red).
+- **One language: battle** (`taken/lang-battle`, 15 h) — nothing saved.
+- Nobody has pushed work in the last 100 minutes; stockpiles 2, war support 2, coastlines and forest helpers all stopped waiting for a verdict — all four are now on main.
+
+**For the next conductor run:** nothing is waiting in a finished state. `train/20261111-1727` and `train/20261111-1452` are both IN main
+(finished). Next candidates need a merge with current main and a fresh test run first: seamless flow, extras (battle / command / story),
+army tokens, stuck units + feel (greenK-qfeel stack), proxy warfare.
+
+---
+(previous runs below)
+
 # STATE — conductor run 4 on 2026-11-11, 14:50–16:30 UTC (train 3b built with 5 pieces, NOT landed: GitHub test machines could not set up, no verdict)
 
 **Main = ac59908f** (train 2, unchanged). Main's own run: red on `gate/tutorial` and `gate/cfclient` (both look flaky), smooth gates green.
