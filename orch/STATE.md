@@ -1,6 +1,6 @@
 # STATE — conductor run 6 on 2026-11-11, 18:50–21:10 UTC (train 5 landed: 2 pieces, ALL 28 tests green)
 
-**Main = 737fab9d** (train 5 on top of 8cee2c2f). Live-site check: see the bottom of this section.
+**Main = 737fab9d** (train 5 on top of 8cee2c2f). Live site: the Pages build for 737fab9d finished successfully at 21:10 UTC, so https://abdullahhaidar5-ux.github.io/ww3/ serves train 5.
 
 **Landed, train 5** = `train/20261111-1857`, gated as 09360b3f (run 43087909414): **28 of 28 green** — first fully green run in two days
 (audio, cfclient, tutorial, mpsync, decisions all green; smooth-pc / smooth-mp / grandsmooth green).
@@ -16,7 +16,7 @@ Main moved during the run (8a6f61f3 audio test fix, 8cee2c2f loop log — test/d
 CLAUDE.md: the "RIGHT NOW — main is red" bullet is replaced by a short standing rule "Test on GitHub, not here" (the sandbox-too-slow part is still true;
 the red-main restrictions are gone). "Save early" was already there.
 
-## Helpers with unlanded work, read 20:35 UTC (nobody but the audio-test fixer saved anything since 18:15 UTC)
+## Helpers with unlanded work (older pieces; for the three NEW ones — steadier frame rate q-speed, escalation slice 2, audio test fix — see run 7's table below, read 20:55 UTC)
 
 | idea (branch) | last save | newest own test run | red tests / note |
 |---|---|---|---|
