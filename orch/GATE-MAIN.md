@@ -28,3 +28,4 @@ One line per push to main: GREEN/RED, which gates failed. Written by .github/wor
 - 2026-11-11 11:51Z f3b7f596 **RED** (27 gates) failing: tutorial — Conductor train: maps fix, American spelling, Playtest card, proxy war
 - 2026-11-11 12:47Z ac59908f **RED** (28 gates) failing: cfclient,tutorial — Conductor train 2: map colours and labels, what-it-beats buttons, real
 - 2026-11-11 18:37Z f80df294 **RED** (28 gates) failing: mpsync,tutorial — Conductor train 3b: stockpiles slice 2 and war support slice 2 ride wi
+- 2026-11-11 19:29Z 068b3146 **RED** (27 gates) failing: audio — Conductor train 4: real coastlines and real-looking forest on the camp
