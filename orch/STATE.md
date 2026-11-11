@@ -72,7 +72,7 @@ were run once on the finished train instead of after every merge (results at the
 orch/polishtest.mjs (/Colou?r-blind|Text size/, accepts both spellings; not tested on GitHub yet). QUEUE ticks and HISTORY lines are already in it.
 Rebase it on origin/main if main moved (rebuild), gate ONCE; it lands if save turns green and cfclient is no worse than main's.
 If cfclient fails for real again, re-run only that job once (it talks to the live server) before blaming the train.
-The old `train/20261111-1252` branch was removed by its own creator (this run) so the next run is not put on stand-by; its content is the branch above.
+**`train/20261111-1252` (767aad51, last pushed 13:44 UTC) is FINISHED and abandoned, no conductor is working on it** — this run could not remove it (branch deletes are refused from the sandbox). A run that starts before 15:35 UTC will see it as younger than 110 minutes: it may ignore it and continue with `orch/conductor-train3`.
 
 
 ---
