@@ -1,0 +1,5 @@
+grandsmooth wide {"ms":1036,"calls":21,"tris":289602}
+grandsmooth region {"ms":1120,"calls":20,"tris":310652}
+grandsmooth close {"ms":1169,"calls":33,"tris":929742}
+scene {"trees":0,"towns":1098,"armies":314}
+GRANDSMOOTH PASS
