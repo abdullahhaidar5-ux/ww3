@@ -34,7 +34,7 @@ function gnkMonth(){if(!GC||!GC.nat)return;if(GC.nuk&&GC.nuk.pend&&GC.nuk.pend.l
     if(!A.ai)continue;
     if(N.st===0&&A.cash>2500&&alive.some(o=>o!==c&&GC.nat[o]&&(gnkN(o).w>0)&&grAtWar(c,o))&&R()<.03){N.st=1;N.p=0;grLog(gnkName(c)+' is reported to be starting a nuclear program.',c);}
     // last resort: the capital is held by an enemy army and the nation has warheads → strike the occupied capital
-    if(N.w>0&&N.st===3&&GC.turn-N.last>=GNK.aiGap){const cap=A.cap;if(cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c)))gnkLaunch(c,cap,true);}
+    if(N.w>0&&N.st===3&&GC.turn-N.last>=GNK.aiGap){const cap=A.cap;if(cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c))){const oc=GC.prov[cap].o;if(typeof gescWarOf!=='function'||gescWarOf(c,oc)>=7)gnkLaunch(c,cap,true);else gescNAlert(c,oc,1);}}   /* escalation ladder: a month on nuclear alert comes first, so the occupier can leave or make peace */
   }
   for(const pi of Object.keys(GC.nuk.fo))if(GC.nuk.fo[pi]<GC.turn)delete GC.nuk.fo[pi];else if(GC.prov[pi])GC.prov[pi].un=Math.min(100,(GC.prov[pi].un||0)+3);
 }

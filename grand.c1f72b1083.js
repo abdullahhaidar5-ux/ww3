@@ -3509,7 +3509,7 @@ function gmilHit(L,hits,dmg){let got=0;for(let i=0;i<hits&&L.length;i++){let w=0
 function gmilStrikes(){const M=GC.mil;if(!M)return;const R=grRng(GC.seed*53+GC.turn*9);
   for(const c of Object.keys(GC.nat).sort()){const Q=gmilN(c);const ord=Q.so;Q.so=[];if(GC.nat[c].dead)continue;
     for(const o of ord){const p=GCM.P[o.pi],S=GMIL_ST[o.t];if(!p)continue;const cn=GCM.nats.get(c).name,vis=c===GC.me;
-      const tgtO=p.land?GC.prov[o.pi].o:'';if(p.land&&(tgtO===c||!grAtWar(c,tgtO)))continue;
+      const tgtO=p.land?GC.prov[o.pi].o:'';if(p.land&&(tgtO===c||!grAtWar(c,tgtO)))continue;if(p.land&&o.k==='b'&&typeof gescWar==='function')gescWar(c,tgtO,6);   // strikes on industry and cities: the war climbs to 'Strategic strikes' (first crosser pays)
       const raw=o.t==='a'?Math.min(4,Math.floor(geSortieStock(c,o.pi,S.rng)/1)||2):o.t==='d'?Math.max(1,o.n|0):1;
       let aaB=p.land?geCount(o.pi,'aa'):0,aaU=p.land?gmilAAUnits(o.pi):0;if(!p.land)for(const a of GC.armies)if(a.at===o.pi&&a.fl&&grAtWar(a.o,c))for(const r of a.u)if(r[0]==='ship'||r[0]==='boat')aaU+=.5;
       const ung=o.t==='a'&&o.pb===0,dmg=Math.round(S.dmg*(ung?.5:1));let ic=Math.min(.8,(.26*aaB+.03*aaU)*S.ic*(ung?1.3:1)),surv=0,site=-1,dkm=0,dry=0;const DQ=p.land&&GC.nat[tgtO]?gmilN(tgtO):null,ic0=DQ?DQ.ic:0;   // the defender's interceptor stock
@@ -3586,10 +3586,11 @@ function gmilAIStrikes(c,R){const N=GC.nat[c],P=GCM.P,Q=gmilN(c);const foes=Obje
   if(GMIL_DRN.includes(c)){   // build launch sites toward the front and put a launcher truck with the biggest army that stands at one
     if(N.cash>1800&&R()<.35&&P.filter(p=>p.land&&GC.prov[p.i].o===c&&geCount(p.i,'dsite')).length<3){const cs=P.filter(p=>p.land&&GC.prov[p.i].o===c&&p.adj.some(j=>P[j].land&&foes.includes(GC.prov[j].o))).sort((a,b)=>b.dev-a.dev||a.i-b.i);for(const p of cs){if(!geBuild(c,p.i,'dsite'))break;}}
     if(N.cash>900&&R()<.3){const a=GC.armies.filter(x=>x.o===c&&!x.fl&&x.u.length&&(x.ln|0)<1).sort((x,y)=>grArmyVal(y)-grArmyVal(x)||x.id-y.id).find(x=>geEff(x.at,'dsite')>0||geEff(x.at,'factory')>0);if(a)gmilBuyLauncher(c,a.id);}}
+  const xo={},xg=f=>typeof gescWarAI!=='function'?true:xo[f]!==undefined?xo[f]:(xo[f]=gescWarAI(c,f,6,R));   // escalation ladder: an AI rarely opens strategic strikes first; it answers them freely
   let tries=0;while(Q.so.length<2&&tries++<8){const types=['m','a','d'];let t=types[Math.floor(R()*3)];if(Q.dr>=8&&R()<.6)t='d';if(t==='m'&&Q.ms<=1&&R()<.7)t='a';if(t==='a'&&Q.pb<1&&R()<.6)continue;   // out of guided bombs: most raids are held back   // the last salvo is a reserve
     // target: the foe province with the best buildings in range, else a foe fleet
     let best=-1,bs=0;for(const p of P){if(!p.land||!foes.includes(GC.prov[p.i].o))continue;const bl=geBl(p.i).filter(r=>['factory','refinery','power','port','airfield','mine'].includes(r[0])&&(r[1]|0)<70).length;const s=bl*10+p.dev-(gmilN(GC.prov[p.i].o).ic>0?geCount(p.i,'aa')*8:0);if(s>bs&&gmilSites(c,p.i,GMIL_ST[t].rng,t)>=0){bs=s;best=p.i;}}
-    if(best>=0&&bs>=10){gmilStrike(c,t,best,'b');continue;}
+    if(best>=0&&bs>=10&&xg(GC.prov[best].o)){gmilStrike(c,t,best,'b');continue;}
     let ba=-1,bv=0;for(const p of P){if(!p.land||!foes.includes(GC.prov[p.i].o))continue;const v=GC.armies.filter(a=>a.at===p.i&&!a.fl&&foes.includes(a.o)).reduce((s,a)=>s+grArmyVal(a),0);if(v>bv&&gmilSites(c,p.i,GMIL_ST[t].rng,t)>=0){bv=v;ba=p.i;}}
     if(ba>=0&&bv>3000){gmilStrike(c,t,ba,'a');continue;}
     let bz=-1,zv=0;for(const a of GC.armies)if(a.fl&&foes.includes(a.o)&&a.u.length&&!a.path.length){const v=grArmyVal(a);if(v>zv&&gmilSites(c,a.at,GMIL_ST[t].rng,t)>=0){zv=v;bz=a.at;}}
@@ -3782,7 +3783,7 @@ function gmilUiPanel(refreshOnly){const old=document.getElementById('gMil');if(o
 // controls inside the province / sea-zone side panel
 function gmilUiProv(s,pi){if(!GC.me||!GC.mil||GC.over)return;const p=GCM.P[pi],me=GC.me,box=guEl('div','margin:8px 0;border-top:1px solid #243a50;padding-top:6px');let any=false;
   const strikeRow=(k)=>{box.appendChild(guEl('div','opacity:.75;font-size:13px','Strike '+(k==='f'?'the fleet':'this province')+' (missile salvos in stock: '+gmilN(me).ms+')'));
-    for(const t of ['m','a','d','D'])for(const kk of (k==='f'?['f']:['b','a'])){const ty=t==='D'?'d':t,sn=t==='D'?30:0;if(t==='D'&&!GMIL_DRN.includes(me))continue;const e=gmilStrikeCheck(me,ty,pi,kk,sn);const b=gmilBtn((t==='D'?'Drone salvo (up to 30)':GMIL_ST[t].n)+' · '+(kk==='b'?'buildings':kk==='a'?'armies':'ships'),()=>{if(GC.ph!=='plan')return;gmilDone(gmilStrike(me,ty,pi,kk,sn));},false,e||'Order it');if(e)b.style.opacity='.55';box.appendChild(b);}any=true;};
+    for(const t of ['m','a','d','D'])for(const kk of (k==='f'?['f']:['b','a'])){const ty=t==='D'?'d':t,sn=t==='D'?30:0;if(t==='D'&&!GMIL_DRN.includes(me))continue;const e=gmilStrikeCheck(me,ty,pi,kk,sn);const b=gmilBtn((t==='D'?'Drone salvo (up to 30)':GMIL_ST[t].n)+' · '+(kk==='b'?'buildings':kk==='a'?'armies':'ships'),()=>{if(GC.ph!=='plan')return;gmilDone(gmilStrike(me,ty,pi,kk,sn));},false,e||('Order it'+(kk==='b'&&typeof gescWarOf==='function'&&gescWarOf(me,GC.prov[pi].o)<6?' — first strike on industry and cities: the war climbs to Strategic strikes (every outside nation\'s opinion of you '+GESC_WOP[6]+', their public rallies)':'')));if(e)b.style.opacity='.55';box.appendChild(b);}any=true;};
   if(p.land&&GC.prov[pi].o!==me&&grAtWar(me,GC.prov[pi].o)){strikeRow('p');}
   else if(p.sea&&GC.armies.some(a=>a.at===pi&&a.fl&&grAtWar(a.o,me))){strikeRow('f');}
   if(p.sea){const z=GC.mil.zm[pi];if(z)box.appendChild(guEl('div','font-size:13px;margin-top:4px;color:#9fd3ff','Mines here: '+z.n+' ('+GCM.nats.get(z.o).name+')'));any=any||!!z;}
@@ -4199,12 +4200,12 @@ function gdWarscore(a,b){let s=0;const k=grWk(a,b);const t=GC.turn-((GC.wsT&&GC.
 //   AI: majors escalate against a hostile rival rarely (GESC_AI_P a month); AI wars now climb the ladder first (gescGate: warn, red line, then war), so wars are rarer and seen coming;
 //   two nuclear-armed nations stop at the red line and go to war only at GESC_NUKE_P a month (deterrence). An AI that is warned answers by strength: holds firm, counter-escalates, or backs down.
 //   Real base rates and sources: orch/REAL-2026.md "Escalation ladder". Deterministic (seed + turn); saved with GC.
-const GESC_R=['Normal relations','Public warning','Red line declared','Forces on alert'];
+const GESC_R=['Normal relations','Public warning','Red line declared','Forces on alert','Limited war','Blockade','Strategic strikes','Nuclear alert'];
 const GESC_ALERT=150,GESC_MED=100,GESC_AI_P=.02,GESC_NUKE_P=.01,GESC_COOL=12;
 function gescS(){return GC.esc||(GC.esc={});}
-function gescOf(a,b){const e=GC&&GC.esc&&GC.esc[grWk(a,b)];return e?e.r:0;}
+function gescOf(a,b){const e=GC&&GC.esc&&GC.esc[grWk(a,b)];return e?((e.r>=4&&!grAtWar(a,b))?0:e.r):0;}
 function gescWs(c,d){if(typeof wsN==='function'){const N=wsN(c);if(N)N.wsE+=d;}}
-function gescUp(a,b){if(!GC||a===b||!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead||grAtWar(a,b)||grAllied(a,b))return false;const S=gescS(),k=grWk(a,b);const e=S[k]||(S[k]={r:0,by:'',t:0,st:{}});if(e.r>=3)return false;
+function gescUp(a,b){if(!GC||a===b||!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead||grAtWar(a,b)||grAllied(a,b))return false;const S=gescS(),k=grWk(a,b);if(S[k]&&S[k].r>=4)delete S[k];const e=S[k]||(S[k]={r:0,by:'',t:0,st:{}});if(e.r>=3)return false;
   e.r++;e.by=a;e.t=GC.turn;e.an=-1;e.st[a]=1;gdRel(a,b,-8);gescWs(b,2);
   grLog(gdN(a)+(e.r===1?' publicly warns '+gdN(b)+'.':e.r===2?' declares a red line against '+gdN(b)+'.':' puts its forces on alert against '+gdN(b)+'.'),(b===GC.me||a===GC.me)?GC.me:a);return true;}
 function gdN(c){return GCM.nats.get(c).name;}
@@ -4219,8 +4220,55 @@ function gescDeclared(a,b){const S=gescS(),k=grWk(a,b),r=S[k]?S[k].r:0;delete S[
   if(r<2){for(const o of Object.keys(GC.nat))if(o!==a&&o!==b&&!GC.nat[o].dead)gdRel(a,o,-10);gescWs(b,6);grLog(gdN(a)+' attacked '+gdN(b)+' without warning. The world condemns the surprise attack.',(b===GC.me||a===GC.me)?GC.me:a);}}
 // AI war gate (13-grand grAIPlan): climb the ladder first; nuclear pairs stop at the red line
 function gescGate(c,b,R){const r=gescOf(c,b),nk=grNuk(c)&&grNuk(b);if(nk){if(r<2){gescUp(c,b);return false;}return R()<GESC_NUKE_P;}if(r<2){gescUp(c,b);return false;}return true;}
-function gescMonth(){if(!GC||!GC.nat)return;const S=gescS(),R=grRng((GC.seed|0)*389+GC.turn*23);
-  for(const k of Object.keys(S).sort()){const e=S[k],[a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead||grAtWar(a,b)||grAllied(a,b)){delete S[k];continue;}
+// WARTIME RUNGS (queue "Escalation ladder", slice 2). The same GC.esc level goes on inside a war: 4 Limited war (armies, fleets and strikes on them) · 5 Blockade (a fleet closes the enemy's ports) ·
+//   6 Strategic strikes (missiles, raids or drones on industry, power, ports deep inside the country) · 7 Nuclear alert. A war with no entry stands at rung 4.
+//   The side that crosses a rung FIRST pays: every outside nation's opinion of it drops (GESC_WOP; its own allies half) and the victim's public rallies (GESC_WRALLY). Matching a rung the enemy already reached is free (tit for tat).
+//   Limits (act 'deesc' in a war): the enemy accepts when it is not clearly winning or a mediator is found ($GESC_MED) -> one rung down and a GESC_LIM-month pact; the side that crosses again inside the pact pays double.
+//   A rung nobody uses for GESC_WCOOL months cools by one. Nuclear alert (act 'warn' in a war, needs warheads): $GESC_NALERT a month; a nuclear enemy matches it; a non-nuclear enemy looks for a nuclear protector
+//   (who draws a red line against the alerter) or, when not winning, asks for a truce. AI: crosses to strategic strikes rarely (GESC_AI_X a month, GESC_AI_XL when losing, GESC_AI_XN between nuclear powers);
+//   its last-resort nuclear strike (13zz) now needs a month on nuclear alert first, so the occupier can leave the capital or make peace. Sources: orch/REAL-2026.md "Escalation inside a war".
+const GESC_WOP=[0,0,0,0,0,-3,-6,-12],GESC_WRALLY=[0,0,0,0,0,2,3,4],GESC_NALERT=200,GESC_WCOOL=6,GESC_LIM=6,GESC_AI_X=.06,GESC_AI_XL=.25,GESC_AI_XN=.02,GESC_AI_NA=.1;
+function gescWarOf(a,b){if(!GC||!grAtWar(a,b))return gescOf(a,b);const e=GC.esc&&GC.esc[grWk(a,b)];return e&&e.r>=4?e.r:4;}
+function gescMeSee(a,b){return (b===GC.me||a===GC.me)?GC.me:a;}
+// a crosses (or keeps using) rung r against b. Returns true when this was a first crossing.
+function gescWar(a,b,r){if(!GC||!GC.nat[a]||!GC.nat[b]||!grAtWar(a,b)||r<5||r>7)return false;const S=gescS(),k=grWk(a,b);if(S[k]&&S[k].r<4)delete S[k];const e=S[k]||(S[k]={r:4,by:'',t:GC.turn,st:{}});
+  if(e.r>=r){if(e.r===r)e.t=GC.turn;return false;}
+  const brk=(e.lim|0)>GC.turn,op=GESC_WOP[r]*(brk?2:1);delete e.lim;e.r=r;e.by=a;e.t=GC.turn;e.an=-1;
+  for(const o of Object.keys(GC.nat))if(o!==a&&o!==b&&!GC.nat[o].dead&&!grAtWar(o,b))gdRel(a,o,grAllied(o,a)?Math.round(op/2):op);
+  gescWs(b,GESC_WRALLY[r]);if(r===7)gescWs(a,-2);
+  grLog(gdN(a)+(r===5?' blockades the ports of ':r===6?' strikes industry and cities deep inside ':' puts its nuclear forces on alert against ')+gdN(b)+'. The war climbs to: '+GESC_R[r].toLowerCase()+(brk?' — breaking the limits both sides had agreed.':'.'),gescMeSee(a,b));return true;}
+// may AI nation c cross to rung r against b this month? (true at once when the war is already there)
+function gescWarAI(c,b,r,R){if(gescWarOf(c,b)>=r)return true;const e=GC.esc&&GC.esc[grWk(c,b)];let p=(grNuk(c)&&grNuk(b))?GESC_AI_XN:gdWarscore(c,b)<-10?GESC_AI_XL:GESC_AI_X;if(e&&(e.lim|0)>GC.turn)p*=.25;return R()<p;}
+// nuclear alert. force: an AI's last resort (pays what it can)
+function gescNAlert(a,b,force){if(!GC||!grAtWar(a,b))return 'Only against a nation you are at war with.';if(!grNuk(a))return 'No nuclear warheads.';if(gescWarOf(a,b)>=7&&((GC.esc[grWk(a,b)].na||{})[a]))return 'Already on nuclear alert.';
+  const N=GC.nat[a];if(!force&&N.cash<GESC_NALERT)return 'Costs $'+GESC_NALERT+' a month.';N.cash-=Math.min(Math.max(0,N.cash),GESC_NALERT);
+  if(!gescWar(a,b,7))grLog(gdN(a)+' answers with its own nuclear alert against '+gdN(b)+'.',gescMeSee(a,b));const e=GC.esc[grWk(a,b)];e.na=e.na||{};e.na[a]=1;e.t=GC.turn;return '';}
+// limits offered by a to b inside a war
+function gescLimit(a,b){const S=gescS(),k=grWk(a,b),e=S[k];if(!e||e.r<5)return 'The war is already limited.';const m=gescMediator(a,b);
+  if(!m&&b!==GC.me&&gdWarscore(b,a)>10)return gdN(b)+' refuses: it is winning and sees no reason to hold back.';
+  if(m){if(GC.nat[a].cash<GESC_MED)return 'Mediation costs $'+GESC_MED+'.';GC.nat[a].cash-=GESC_MED;gdRel(m,a,5);gdRel(m,b,5);}
+  e.r--;e.t=GC.turn;e.lim=GC.turn+GESC_LIM;if(e.r<7)delete e.na;
+  grLog((m?gdN(m)+' brokers limits between ':'Limits agreed between ')+gdN(a)+' and '+gdN(b)+': the war steps down to '+GESC_R[e.r].toLowerCase()+' for at least '+GESC_LIM+' months.',gescMeSee(a,b));return '';}
+// who blockades whom this month (ports with an enemy fleet next to them and no fleet of their own there)
+function gescBlockades(){if(!GC.armies||typeof gmilHasPort!=='function')return;const at={};for(const f of GC.armies){if(!f.fl||!f.u||!f.u.length)continue;(at[f.at]||(at[f.at]=[])).push(f.o);}
+  const seen={};for(const p of GCM.P){if(!p.land||!gmilHasPort(p.i))continue;const o=GC.prov[p.i].o;if(!GC.nat[o]||GC.nat[o].dead)continue;
+    for(const j of p.adj){const f=at[j];if(!f||!GCM.P[j].sea||f.includes(o))continue;for(const x of f)if(x!==o&&grAtWar(x,o)&&!seen[x+'>'+o]){seen[x+'>'+o]=1;}}}
+  for(const q of Object.keys(seen).sort()){const [x,o]=q.split('>');gescWar(x,o,5);}}
+function gescWarMonth(k,e,a,b,R){const S=gescS(),r1=R(),r2=R();
+  if(e.r===7){e.na=e.na||{};for(const c of [a,b]){if(!e.na[c])continue;const N=GC.nat[c];if(c===GC.me&&N.cash<GESC_NALERT){delete e.na[c];grLog(gdN(c)+' cannot pay for the nuclear alert and stands its forces down.',c);}else N.cash-=Math.min(Math.max(0,N.cash),GESC_NALERT);}
+    const x=e.by===a?b:a;
+    if(e.by&&x!==GC.me&&e.an!==e.t&&e.t<GC.turn&&!e.na[x]){e.an=e.t;   // the AI side answers a nuclear alert
+      if(grNuk(x))gescNAlert(x,e.by,1);
+      else{let pr='';for(const m of Object.keys(GC.nat).sort()){if(m===x||m===e.by||GC.nat[m].dead||!grNuk(m)||grAllied(m,e.by)||grAtWar(m,x))continue;if(((GC.rel&&GC.rel[grWk(m,x)])||0)>=20||grAllied(m,x)){pr=m;break;}}
+        if(pr&&!grAtWar(pr,e.by)){while(gescOf(pr,e.by)<2&&gescUp(pr,e.by)){}grLog(gdN(pr)+' warns '+gdN(e.by)+': a nuclear strike on '+gdN(x)+' would not go unanswered.',gescMeSee(e.by,x));}
+        else if(gdWarscore(x,e.by)<=0&&r1<.3){delete GC.war[k];GC.tr=GC.tr||{};GC.tr[k]=GC.turn+6;delete S[k];grLog(gdN(x)+' asks for a truce under the nuclear threat. '+gdN(e.by)+' gains nothing but the end of the fighting — truce for 6 months.',gescMeSee(e.by,x));return;}}}
+    if(!Object.keys(e.na).length){e.r=6;e.t=GC.turn;}}
+  else for(const c of [a,b]){const o=c===a?b:a;if(c!==GC.me&&grNuk(c)&&gdWarscore(c,o)<-30&&(c===a?r1:r2)<GESC_AI_NA){gescNAlert(c,o,1);return;}}   // a nuclear power that is losing badly rattles the sabre (rare)
+  if(GC.turn-e.t>=GESC_WCOOL){e.r--;e.t=GC.turn;delete e.na;if(k.split('|').includes(GC.me))grLog('The war between '+gdN(a)+' and '+gdN(b)+' cools to: '+GESC_R[e.r].toLowerCase()+'.',GC.me);}
+  if(e.r<=4&&!((e.lim|0)>GC.turn))delete S[k];}
+function gescMonth(){if(!GC||!GC.nat)return;const S=gescS(),R=grRng((GC.seed|0)*389+GC.turn*23);gescBlockades();
+  for(const k of Object.keys(S).sort()){const e=S[k],[a,b]=k.split('|');if(!GC.nat[a]||!GC.nat[b]||GC.nat[a].dead||GC.nat[b].dead||grAllied(a,b)||(e.r>=4)!==!!grAtWar(a,b)){delete S[k];continue;}
+    if(e.r>=4){gescWarMonth(k,e,a,b,R);continue;}
     if(e.r>=3){if(GC.nat[a].cash<GESC_ALERT||GC.nat[b].cash<GESC_ALERT)e.r=2;else{GC.nat[a].cash-=GESC_ALERT;GC.nat[b].cash-=GESC_ALERT;}}   // a side that cannot pay for the alert stands its forces down
     const x=e.by===a?b:a,r1=R(),r2=R();
     if(e.by&&x!==GC.me&&e.an!==e.t&&e.t<GC.turn){e.an=e.t;const sr=grMilOf(x)/Math.max(.05,grMilOf(e.by)),nk=grNuk(x)&&grNuk(e.by);   // the AI side answers last month's step
@@ -4248,7 +4296,9 @@ function gdChance(act,a,b){const W=[],cash=GC.nat[a].cash,op=gdOp(b,a),war=grAtW
     if(gdAllies(b).some(x=>grAtWar(a,x))){W.push(['Their ally is your enemy',-40]);s-=40;}
     if(s<10&&ok)no('They decline (need 10, have '+Math.round(s)+')');W.push(['Total',Math.round(s)]);}
   else if(act==='claim'){cost=GCL_COST;if(war)no('At war');else if(al)no('Already allied');else if(!gclPick(a,b))no('No province of theirs borders yours');else W.push(['Claim on '+gclPick(a,b).n+' ($'+GCL_COST+', lasts '+GCL_LEN+' months)',0]);W.push(['Justifies war and halves that province\'s price at peace',0]);W.push(['Their opinion of you -5',0]);}
+  else if(act==='warn'&&war){const r=gescWarOf(a,b);cost=GESC_NALERT;W.push(['Now: '+GESC_R[r]+' → Nuclear alert',0]);if(!grNuk(a))no('At war: the next rungs come from what you do (a blockade, strikes on industry). Nuclear alert needs warheads');else if(r>=7&&((GC.esc[grWk(a,b)].na||{})[a]))no('Already on nuclear alert');W.push(['$'+GESC_NALERT+' a month; every outside nation\'s opinion of you '+GESC_WOP[7]+' (allies half); their public rallies, yours is frightened',GESC_WOP[7]]);W.push(['A nuclear enemy answers in kind; others look for a nuclear protector or a truce',0]);}
   else if(act==='warn'){const r=gescOf(a,b);if(war)no('At war');else if(al)no('Allied');else if(r>=3)no('Already at the top rung short of war');W.push(['Now: '+GESC_R[r]+(r<3?' → next: '+GESC_R[r+1]:''),0]);W.push(['Their opinion of you -8; their public rallies; your word is at stake',-8]);if(r===2)W.push(['Forces on alert cost both sides $'+GESC_ALERT+' a month',0]);W.push(['A war after a red line is not a surprise attack (no -10 opinion everywhere)',0]);}
+  else if(act==='deesc'&&war){const r=gescWarOf(a,b);if(r<5)no('Already a limited war');else{const m=gescMediator(a,b);if(m)cost=GESC_MED;W.push(['Offer limits: '+GESC_R[r]+' → '+GESC_R[r-1]+' for '+GESC_LIM+' months'+(m?' ('+gdN(m)+' mediates)':''),0]);if(!m&&gdWarscore(b,a)>10)no('They are winning and will refuse (no mediator on good terms with both)');W.push(['Whoever crosses the rung again inside the pact pays double in world opinion',0]);}}
   else if(act==='deesc'){const r=gescOf(a,b);if(r<1)no('Already calm: no crisis with them');else{const m=gescMediator(a,b);if(m){cost=GESC_MED;W.push([gdN(m)+' mediates: two rungs down, nobody loses face',0]);}else W.push([(GC.esc[grWk(a,b)].st||{})[a]?'No mediator on good terms with both: backing down in public costs war support -3':'No mediator: one rung down',0]);}}
   else if(act==='war'){if(!war&&!al&&gescOf(a,b)<2)W.push(['No red line declared: a surprise attack, every nation\'s opinion of you -10',-10]);if(war)no('Already at war');else if(al)no('Break the alliance first');else if(gdTruce(a,b))no('Truce until '+grMonStr(GC.tr[grWk(a,b)]));
     else if(GC.ph!=='plan')no('Wait for the planning phase');if(gclJust(a,b))W.push(['Casus belli: your claim on '+gclList(a,b).map(x=>GCM.P[x[1]].n).join(', '),0]);else{W.push(['No casus belli: every nation\'s opinion of you -8, alarm +'+GCL_UNJUST_AE,0]);W.push(['Press a claim first to justify it',0]);}}
@@ -4271,7 +4321,9 @@ function gdAct(act,a,b){const c=gdChance(act,a,b);if(!c.ok)return c.note;const N
   else if(act==='alliance'){GC.alz=GC.alz||[];const g=GC.alz.find(x=>x[1].includes(a));if(g&&!g[1].includes(b))g[1].push(b);else if(!g)GC.alz.push([na+'–'+nb+' Pact',[a,b]]);gdRel(a,b,15);grLog(na+' and '+nb+' formed an alliance.',a);}
   else if(act==='break'){for(const g of GC.alz||[])if(g[1].includes(a)&&g[1].includes(b))g[1]=g[1].filter(x=>x!==b);GC.alz=(GC.alz||[]).filter(x=>x[1].length>1);gdRel(a,b,-25);grLog(na+' left its alliance with '+nb+'.',a);}
   else if(act==='claim'){const e=gclFab(a,b);if(e)return e;}
+  else if(act==='warn'&&grAtWar(a,b)){N.cash+=c.cost;const e=gescNAlert(a,b);if(e)return e;}
   else if(act==='warn'){N.cash+=c.cost;gescUp(a,b);}
+  else if(act==='deesc'&&grAtWar(a,b)){N.cash+=c.cost;const e=gescLimit(a,b);if(e)return e;}
   else if(act==='deesc'){N.cash+=c.cost;const e=gescDown(a,b);if(e)return e;}
   else if(act==='war'){const j=gclJust(a,b);grDeclare(a,b);GC.wsT=GC.wsT||{};GC.wsT[grWk(a,b)]=GC.turn;for(const o of Object.keys(GC.nat))if(o!==a&&o!==b)gdRel(a,o,j?-1:-8);if(!j)N.ae=(N.ae||0)+GCL_UNJUST_AE;gdRel(a,b,-30);}
   else if(act==='peace'){delete GC.war[grWk(a,b)];GC.tr=GC.tr||{};GC.tr[grWk(a,b)]=GC.turn+6;grLog('Peace between '+na+' and '+nb+' — truce for 6 months.',a);}
@@ -4282,7 +4334,7 @@ const chip=(c,onc)=>{const n=grNat(c),d=document.createElement('span');d.title=G
   d.innerHTML='<span style="width:18px;height:12px;border:1px solid #fff;background:'+n.color+'"></span>'+GCM.nats.get(c).name;d.onclick=onc;return d;};
 const sel=c=>{GD.sel=c;npDraw();};
 const col=v=>v>=25?'#9fe39f':v<=-25?'#ff9d8e':'#e8e4d8';
-const ACTS=[['improve','Improve relations'],['aid','Send aid'],['claim','Press a claim'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['proxy','Arm a proxy militia'],['cyber','Cyber strike on banks'],['warn','Escalate (warn · red line · alert)'],['deesc','Step back from the crisis'],['war','Declare war']];
+const ACTS=[['improve','Improve relations'],['aid','Send aid'],['claim','Press a claim'],['alliance','Propose alliance'],['guarantee','Guarantee'],['peace','Offer peace'],['break','Leave alliance'],['proxy','Arm a proxy militia'],['cyber','Cyber strike on banks'],['warn','Escalate'],['deesc','Step back'],['war','Declare war']];
 npTab('dip','🤝','Diplomacy',(code,body)=>{const me=GC.me;if(!GD.sel||GD.sel===code||!GC.nat[GD.sel])GD.sel=Object.keys(GC.nat).find(c=>c!==code&&!GC.nat[c].dead&&grNat(c).major)||'';
   const row=(t,L)=>{const d=document.createElement('div');d.style.cssText='margin-bottom:4px';d.innerHTML='<span style="display:inline-block;width:92px;opacity:.7;font-size:13px">'+t+'</span>';if(!L.length)d.innerHTML+='<span style="opacity:.4">—</span>';for(const c of L)d.appendChild(chip(c,()=>sel(c)));return d;};
   const top=document.createElement('div');top.style.cssText='margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid #2c4258';
@@ -4310,6 +4362,7 @@ npTab('dip','🤝','Diplomacy',(code,body)=>{const me=GC.me;if(!GD.sel||GD.sel==
   const t=GD.sel;if(!t){R.textContent='Select a nation.';return;}
   R.innerHTML='<div style="font-size:19px;font-weight:bold;margin-bottom:2px">'+GCM.nats.get(t).name+'</div><div style="opacity:.75;font-size:13px;margin-bottom:6px">'+grRealClass(t)+' · opinion of '+GCM.nats.get(code).name+' <b style="color:'+col(gdOp(t,code))+'">'+gdOp(t,code)+'</b></div>';
   const ws=gdWhy(t,code),wl=document.createElement('div');wl.style.cssText='font-size:13px;margin-bottom:8px;line-height:1.5';for(const [x,v] of ws)wl.innerHTML+='<div><b style="color:'+(v>0?'#9fe39f':v<0?'#ff9d8e':'#aaa')+';display:inline-block;width:34px">'+(v>0?'+':'')+v+'</b>'+x+'</div>';if(!ws.length)wl.innerHTML='<div style="opacity:.5">No history yet.</div>';R.appendChild(wl);
+  {const lv=gescWarOf(code,t);if(lv>0){const d=document.createElement('div');d.style.cssText='font-size:13px;margin-bottom:8px';d.title='The ladder: '+GESC_R.join(' → ');d.innerHTML='<span style="opacity:.7">'+(lv>=4?'War level':'Crisis level')+'</span> <b style="color:'+(lv>=6?'#ff9d8e':'#f0c674')+'">'+GESC_R[lv]+'</b>'+(((GC.esc[grWk(code,t)]||{}).lim|0)>GC.turn?' <span style="opacity:.6">· limits agreed until '+grMonStr(GC.esc[grWk(code,t)].lim)+'</span>':'');R.appendChild(d);}}
   if(code!==me||GC.me===t){const n=document.createElement('div');n.style.cssText='opacity:.6;font-size:13px';n.textContent=code!==me?'Open your own panel to act.':'';R.appendChild(n);return;}
   const ab=document.createElement('div');ab.style.cssText='display:flex;flex-wrap:wrap;gap:6px';
   for(const [k,n] of ACTS){const ch=gdChance(k,me,t);if(!ch.ok&&/^(Not allied|Not at war|Already)/.test(ch.note))continue;const b=document.createElement('button');b.type='button';b.textContent=n;
@@ -6452,7 +6505,7 @@ function gnkMonth(){if(!GC||!GC.nat)return;if(GC.nuk&&GC.nuk.pend&&GC.nuk.pend.l
     if(!A.ai)continue;
     if(N.st===0&&A.cash>2500&&alive.some(o=>o!==c&&GC.nat[o]&&(gnkN(o).w>0)&&grAtWar(c,o))&&R()<.03){N.st=1;N.p=0;grLog(gnkName(c)+' is reported to be starting a nuclear program.',c);}
     // last resort: the capital is held by an enemy army and the nation has warheads → strike the occupied capital
-    if(N.w>0&&N.st===3&&GC.turn-N.last>=GNK.aiGap){const cap=A.cap;if(cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c)))gnkLaunch(c,cap,true);}
+    if(N.w>0&&N.st===3&&GC.turn-N.last>=GNK.aiGap){const cap=A.cap;if(cap>=0&&GC.prov[cap]&&GC.prov[cap].o!==c&&grAtWar(c,GC.prov[cap].o)&&GC.armies.some(a=>a.at===cap&&!a.fl&&grAtWar(a.o,c))){const oc=GC.prov[cap].o;if(typeof gescWarOf!=='function'||gescWarOf(c,oc)>=7)gnkLaunch(c,cap,true);else gescNAlert(c,oc,1);}}   /* escalation ladder: a month on nuclear alert comes first, so the occupier can leave or make peace */
   }
   for(const pi of Object.keys(GC.nuk.fo))if(GC.nuk.fo[pi]<GC.turn)delete GC.nuk.fo[pi];else if(GC.prov[pi])GC.prov[pi].un=Math.min(100,(GC.prov[pi].un||0)+3);
 }
