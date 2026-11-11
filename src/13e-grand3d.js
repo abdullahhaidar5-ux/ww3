@@ -132,9 +132,10 @@ function g3Fits(x,z,r,pi){if(!g3OnLand(x,z)||g3ProvAt(x,z)!==pi)return false;if(
 function g3Spot(x,z,rad,pi,clear){const st=Math.max(.5,rad/24);for(const c of [clear,clear*.5,0])for(let r=0;r<=rad;r+=st){const na=r?Math.max(12,Math.ceil(r*6.283/st)):1;for(let a=0;a<na;a++){const t=a/na*6.283+r*.7,X=x+Math.cos(t)*r,Z=z+Math.sin(t)*r;if(g3Fits(X,Z,c,pi))return [X,Z];}}return [x,z];}   /* nearest spot inside the province with clear land around it */
 const G3_MEGA=new Set(['Tehran','Tel Aviv','Riyadh','Dubai','Cairo','Istanbul','Moscow','Beijing','Shanghai','Tokyo','Seoul','New York','London','Paris','Delhi','Mumbai','Karachi','Baghdad','Hong Kong','Singapore','Sao Paulo','Mexico City','Lagos']);
 const G3_STYLE={ME:'flat',AF:'flat',SA:'flat'};
+function g3LandCell(p){if(!G3.landCell){const C=guCols(),M=G3.landCell=new Map();for(let k=0;k<C.length;k++){const q=GCM.P[C[k]];if(!q||!q.land)continue;const x=(k%GU_RW)*GU_K,z=((k/GU_RW)|0)*GU_K;if(!g3OnLand(x,z))continue;const d=(x-q.x)*(x-q.x)+(z-q.y)*(z-q.y),b=M.get(q.i);if(!b||d<b[2])M.set(q.i,[x,z,d]);}}return G3.landCell.get(p.i)||null;}   /* the piece of drawn land inside a province that is nearest to its centre (one pass over the province raster, dropped after the towns are placed) */
 function g3Towns(){if(G3.towns)return G3.towns;const L=[],ar=g3PArea(),main=new Map();
   for(const p of GCM.P){if(!p.land)continue;const reg=(GCM.nats.get(p.o)||{}).reg,flat=G3_STYLE[reg]==='flat',W=Math.sqrt(ar[p.i]),sc=Math.max(.3,Math.min(1,W/28)),mega=G3_MEGA.has(p.n);   // sc: house count and forest clearing follow the real province size
-    const want=c=>Math.max(G3_TOWN_MIN,Math.min(W*G3_TOWN_W[c],G3_TOWN_R[c])),c0=p.cap?0:mega?1:2,base=g3Spot(p.x,p.y,W*.7,p.i,want(c0)),mine=[];
+    const want=c=>Math.max(G3_TOWN_MIN,Math.min(W*G3_TOWN_W[c],G3_TOWN_R[c])),c0=p.cap?0:mega?1:2,mine=[];let base=g3Spot(p.x,p.y,W*.7,p.i,want(c0));if(!g3Fits(base[0],base[1],0,p.i)){const c=g3LandCell(p);if(c)base=g3Spot(c[0],c[1],W*.4,p.i,want(c0));}   // long thin provinces: start from their nearest piece of land
     for(let t=0;t<p.tw;t++){const c=t?3:c0;let X=base[0],Z=base[1],R=want(c);
       if(t){let q=null;for(let k=0;k<6&&!q;k++){const a=g3Hash(p.i,t+k*17)*6.283,r=W*(.2+g3Hash(t+k*5,p.i)*.22),x=base[0]+Math.cos(a)*r,z=base[1]+Math.sin(a)*r;if(g3Fits(x,z,R,p.i)&&!mine.some(m=>Math.hypot(m.x-x,m.z-z)<m.R+R+.4))q=[x,z];}if(!q)continue;X=q[0];Z=q[1];}   // a village with no free land of its own is not drawn (the province keeps its town count)
       while(R>G3_TOWN_MIN&&!g3Fits(X,Z,R,p.i))R=Math.max(G3_TOWN_MIN,R*.8);
@@ -142,7 +143,7 @@ function g3Towns(){if(G3.towns)return G3.towns;const L=[],ar=g3PArea(),main=new 
   {const G=new Map(),key=(x,z)=>(x>>3)+'|'+(z>>3);for(const t of L){const k=key(t.x,t.z);if(!G.has(k))G.set(k,[]);G.get(k).push(t);}   // neighbours across a border: both shrink until they no longer touch
    for(const t of L)for(let i=-1;i<=1;i++)for(let j=-1;j<=1;j++)for(const u of G.get(((t.x>>3)+i)+'|'+((t.z>>3)+j))||[]){if(u===t)continue;const d=Math.hypot(u.x-t.x,u.z-t.z);if(d<t.R+u.R+.2){const f=Math.max(0,d-.2)/(t.R+u.R);t.R=Math.max(G3_TOWN_MIN*.5,t.R*f);u.R=Math.max(G3_TOWN_MIN*.5,u.R*f);}}}
   for(const t of L)t.ds=t.R/(4.5*Math.sqrt(t.n/3.14)*1.15+1.6);   /* ds = drawing scale of this town's houses and props: n houses on a 4.5*ds grid fill the footprint R */
-  G3.townMain=main;return G3.towns=L;}
+  G3.landCell=null;G3.townMain=main;return G3.towns=L;}
 function g3Main(pi){g3Towns();return G3.townMain.get(pi)||null;}   /* the province's main town (armies, rings, smoke and the camera anchor on it) */
 function g3Afloat(pi){const p=GCM.P[pi];if(p.sea)return true;const t=g3Main(pi);return !t||!t.dry;}   /* an army at sea — or on an island too small for the map to draw any land — is shown as a ship, never as soldiers standing on water */
 function g3BuildTowns(grp){const A=G3_GEO(),T=g3Towns(),by={house:[],gable:[],row:[],court:[],flat:[],tower:[],mosque:[],spire:[],wall:[],derrick:[],field:[],spoil:[],pier:[]};
@@ -575,7 +576,7 @@ function g3Anchors(s){const d=G3.cc?G3.cc.d:900,kb=g3Smooth(G3_CLOSE,G3_T_TOWN,d
     if(!tw){L.forEach((a,k)=>out.set(a.id,[bx+(k-(L.length-1)/2)*20*s,bz]));continue;}
     /* land armies stand beside their town: a figure's width from its edge in the close view, the old wide spacing from the middle view out — and always on land, never in the sea */
     const fs=g3FigScale(pi,s,d),dir=g3ArmyDir(tw),far=(tw.cap?30:20)*Math.min(1.6,Math.max(1,s*.6)),near=tw.R+5.5*fs,off=near+(far-near)*kb,gap=13*s*fs/g3FigBig(s,d),dx=dir[0]+(0-dir[0])*kb,dz=dir[1]+(1-dir[1])*kb;
-    L.forEach((a,k)=>{const u=(k-(L.length-1)/2)*gap;let X=bx+dx*off+dz*u,Z=bz+dz*off-dx*u;for(let i=0;i<5&&!g3OnLand(X,Z);i++){X=(X+bx)/2;Z=(Z+bz)/2;}out.set(a.id,[X,Z]);});}
+    L.forEach((a,k)=>{const u=(k-(L.length-1)/2)*gap;let X=bx+dx*off+dz*u,Z=bz+dz*off-dx*u;for(let i=0;i<5&&!g3OnLand(X,Z);i++){X=i<4?(X+bx)/2:bx;Z=i<4?(Z+bz)/2:bz;}out.set(a.id,[X,Z]);});}
   for(const a of GC.armies){const f=typeof grSlide==='function'?grSlide(a):0;if(f>0){const A=out.get(a.id),q=GCM.P[a.path[0]],tw=!q.sea?g3Main(q.i):null,bx=tw?tw.x:q.x,bz=tw?tw.z:q.y;out.set(a.id,[A[0]+(bx-A[0])*f,A[1]+(bz-A[1])*f]);}}   /* laneA hook: marching armies slide along the road as days pass */
   return out;}
 function g3SyncArmies(){if(!G3.ents||!GC)return;const ids=new Set(GC.armies.map(a=>a.id));for(const [id,e] of G3.arm)if(!ids.has(id)){G3.ents.remove(e.g);if(e.plate)e.plate.remove();G3.arm.delete(id);}
