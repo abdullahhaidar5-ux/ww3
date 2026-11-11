@@ -16,3 +16,7 @@ Guard: grandtest "war support by government" (`short`, `shortNone`, `shortPeace`
 Watch in CI: AI nations that run dry in a long war now tire faster — if a grandtest calibration check (war length / forced peace counts) moves, lower the `dry` step first.
 To land: rebase on origin/main, `python3 orch/build.py`, `orch/cigate.sh`, push when the RIGHT NOW bullet allows; then delete branch `taken/c-war-support`.
 Next slices unchanged: casualties from real losses, election weighting by government type (13zw), elite splits for monarchies/party states, enemy AI reading a low meter, media/UN reaction.
+
+Gate (2026-11-11 14:45Z): the GitHub run for this branch failed in ALL 28 jobs before any test started — the runner could not reach the Ubuntu package servers
+("Temporary failure resolving security.ubuntu.com" during `npx playwright install --with-deps`, step Tools). The two gate runs before it (13:14Z, 13:44Z) ended the same way.
+So there is NO gate verdict for this slice yet: re-run `orch/cigate.sh` when the runners can install again, before landing.
