@@ -32,10 +32,38 @@ function hudTick(force){try{hudDeclutter();}catch(e){}if(!G||!G.teams||!G.teams[
     f.innerHTML='';if(!HUDS.al.length){const d=document.createElement('div');d.textContent='No alerts yet.';f.appendChild(d);}
     for(const q of HUDS.al.slice(0,12)){const d=document.createElement('div');d.className=q.k;const m=Math.max(0,Math.floor(G.t-q.t));d.textContent=(m<60?m+'s':Math.floor(m/60)+'m')+' ago · '+q.m;f.appendChild(d);}}}
 const HD_KEYS=HUD_OV.map(q=>q[0]);
+/* ---------- Edge alerts (idea 15): when something the alerts report happens OFF screen, a small arrow sits on the screen edge
+   pointing at it for ~6 s; a click moves the camera there. ONE event source: pushLog(m,k,x,y) (every positioned log line: base under
+   attack, troops under fire, unit lost, unit / building finished) and the team ping (FXH.mping) - any other display (the commander's
+   radio) can read the same EDGE.last. View only: nothing here touches the simulation. Max 4, newest wins, never over the command bar
+   or the minimap (arrows stay inside the battlefield canvas, clear of the top bar and the bottom panels). ---------- */
+const EDGE={a:[],el:null,g:null,last:null,LIFE:6000,MAX:4};
+const EDGE_K={atk:['⚠','#ff6a55','Under attack'],lost:['✖','#ffb0a0','Unit lost'],ok:['✔','#8fe38f','Ready'],ping:['◆','#7fbcff','Ally ping']};
+function edgeKind(m,k){return k==='ping'?'ping':k==='r:lost'?'lost':(k==='r:base'||/under (attack|fire)/i.test(m||''))?'atk':'ok';}
+function edgeAlert(m,k,x,y){if(!G||!(x>=0)||!(y>=0))return;if(EDGE.g!==G){EDGE.g=G;EDGE.a.length=0;}const kind=edgeKind(m,k),now=performance.now();
+  EDGE.last={m,kind,x,y,t:now};                                                   // the one feed entry (radio / "jump to last alert" read this)
+  const o=EDGE.a.find(q=>q.kind===kind&&Math.hypot(q.x-x,q.y-y)<320);if(o){o.x=x;o.y=y;o.m=m;o.t=now;return;}   // same thing, same place: one arrow
+  EDGE.a.unshift({m,kind,x,y,t:now,b:null});while(EDGE.a.length>EDGE.MAX){const d=EDGE.a.pop();if(d.b)d.b.remove();}}
+function edgeGo(q){try{centerOn(q.x,q.y);}catch(e){}q.t=-1e15;}
+function edgeTick(){const A=EDGE.a;if(!A.length&&!EDGE.el)return;const now=performance.now();
+  const off=!G||G.over||EDGE.g!==G||(window.PHX&&PHX.on)||(typeof KC!=='undefined'&&KC.on)||document.body.classList.contains('inMenu');
+  for(let i=A.length-1;i>=0;i--)if(off||now-A[i].t>EDGE.LIFE){if(A[i].b)A[i].b.remove();A.splice(i,1);}
+  if(!A.length){if(EDGE.el)EDGE.el.style.display='none';return;}
+  let el=EDGE.el;if(!el){const st=document.createElement('style');st.textContent='#edgeAl{position:fixed;z-index:7;pointer-events:none;overflow:hidden}#edgeAl button{position:absolute;left:0;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;padding:0;border-radius:50%;border:2px solid var(--c);background:rgba(8,12,10,.82);color:var(--c);font:700 17px/30px system-ui,sans-serif;text-align:center;cursor:pointer;pointer-events:auto;box-shadow:0 1px 6px rgba(0,0,0,.6)}#edgeAl button.vhov,#edgeAl button:hover{background:rgba(40,50,44,.95)}#edgeAl button i{position:absolute;left:50%;top:50%;width:0;height:0;margin:-7px 0 0 -7px;border:7px solid transparent;border-left:11px solid var(--c);border-right:0;transform:rotate(var(--r)) translateX(22px);transform-origin:7px 7px;pointer-events:none}body.inMenu #edgeAl,body.phOn #edgeAl{display:none!important}';document.head.appendChild(st);
+    el=EDGE.el=document.createElement('div');el.id='edgeAl';document.body.appendChild(el);}
+  const r=cv.getBoundingClientRect();el.style.display='block';el.style.left=r.left+'px';el.style.top=r.top+'px';el.style.width=r.width+'px';el.style.height=r.height+'px';
+  const L=44,T=96,R=r.width-44,B=r.height-128,cx=(L+R)/2,cy=(T+B)/2,hw=(R-L)/2,hh=(B-T)/2;
+  for(const q of A){const p=toScreen(q.x,groundH(q.x,q.y),q.y);let vx=p.x-cx,vy=p.y-cy;if(p.z>1){vx=-vx;vy=-vy;}
+    const on=p.z<=1&&p.x>=0&&p.x<=r.width&&p.y>=0&&p.y<=r.height;
+    if(!q.b){const K=EDGE_K[q.kind],b=q.b=document.createElement('button');b.type='button';b.dataset.k=q.kind;b.style.setProperty('--c',K[1]);b.textContent=K[0];b.appendChild(document.createElement('i'));b.onclick=e=>{e.stopPropagation();edgeGo(q);};el.appendChild(b);}
+    if(on){q.b.style.display='none';continue;}
+    const k=1/Math.max(Math.abs(vx)/hw,Math.abs(vy)/hh,1e-6),x=cx+vx*k,y=cy+vy*k,fade=Math.min(1,(EDGE.LIFE-(now-q.t))/600);
+    q.b.style.display='';q.b.title=EDGE_K[q.kind][2]+': '+q.m+' - click to look';q.b.style.opacity=fade.toFixed(2);q.b.style.transform='translate('+x.toFixed(0)+'px,'+y.toFixed(0)+'px)';q.b.style.setProperty('--r',Math.atan2(vy,vx).toFixed(2)+'rad');}}
 /* ---------- What's new (one screen, newest first) ---------- */
 const WHATS_NEW=[
  ['Every button says what it beats','Unit buttons now carry two small pictures: green = what this unit BEATS best, red = what it is most WEAK TO. Hold the mouse on a button for the full list with names. Point at an enemy unit (or select it) and the buttons that beat it light up green with "BEATS IT". The game works these out from the real damage, armor, range and price numbers against the nation you are fighting, so they are always true - the Encyclopedia and the Unit guide show the same.'],
  ['Commander\'s radio','Every report from the field - base under attack, enemy spotted, unit lost, building finished, a unit ready - is now one short line with a small icon at the top left of the battle (three lines at most, each fades after a few seconds). Lines marked with a small arrow know where it happened: click the line, or press Space, and the camera goes there.'],
+ ['Edge alerts','When something happens away from where you are looking - your base or troops come under attack, a unit is lost, a unit or building is finished, a teammate pings the map - a small round marker with an arrow now sits on the edge of the screen pointing at it for about six seconds. Click it and the camera goes there.'],
  ['Cleaner sound','The sound is mixed properly now: even the biggest fight no longer crackles or distorts, unit voices stay clear over the guns (explosions and music step back a little while a soldier speaks), every button and menu item gives a soft click, and each battlefield has a quiet background of its own - dry desert wind, wind in the trees, or a thin winter howl - with the muffled thump of fighting elsewhere on the map.'],
  ['Three games: Grand campaign, Conquest, Battle','The main menu now has three separate games. Grand campaign runs a whole empire on the world map. Conquest is the town-and-tax battle with a full base. NEW: Battle plays like C&C Generals - you start with a Command Center and a dozer, supply trucks bring in your money, you build power, barracks, a War Factory and an airfield, tech up, earn general\'s points for powers, and win by destroying every enemy building. Pick Conquest or Battle in the online lobby too. Missions and the Tutorial are still in the menu, just smaller.'],
  ['New main menu: Single player, Multiplayer, Test range','The main menu is now Single player (Grand campaign, Conquest, Battle, Missions, Tutorial), Multiplayer and Test range. Multiplayer is the one place to play online: choose Grand campaign, Conquest or Battle, then start or join - open games and invite codes or links cover all three, each labeled Campaign, Conquest or Battle.'],

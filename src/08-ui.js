@@ -2,7 +2,7 @@
 const mouse={x:0,y:0,in:false};const keys={};let drag=null,TAB='build';
 // Touch screens: TOUCHUI turns on touch wording and layout tweaks; PICKMIN is the smallest tap radius (px) around a unit.
 let TOUCHUI=false,PICKMIN=10,LASTPT='mouse',HINTDEV='mouse';
-function pushLog(m,k,x,y){if(!G)return;try{hlLog(m,k);}catch(e){}try{hudAlert(m,k);}catch(e){}
+function pushLog(m,k,x,y){if(!G)return;try{hlLog(m,k);}catch(e){}try{hudAlert(m,k);}catch(e){}if(x!=null)try{edgeAlert(m,k,x,y);}catch(e){}
   /* commander radio (2026-11-05): kind 'r:<key>' = a log line that also triggers the callout (voice, see 09b-radio.js).
      Every line goes to the ONE commander's radio feed (radFeed, 09b-radio.js): icon + text, click / Space = look there. */
   let nat='';
