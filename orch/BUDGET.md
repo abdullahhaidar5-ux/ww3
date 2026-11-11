@@ -3,11 +3,11 @@
 "Make sure this development won't break usage but still occur constantly."
 
 ## The governor (every loop iteration checks this FIRST, before reading anything else — costs ~nothing)
-1. **Concurrency cap = 4 helpers.** Count active helpers = distinct `origin/orch/*` branches pushed in the last 45 min and not
+1. **Concurrency cap = 8 helpers** (was 4 until 2026-11-10 18:17, Abdullah: "Usage is no longer a concern. Let's go full throttle."). Count active helpers = distinct `origin/orch/*` branches pushed in the last 45 min and not
    merged into main (`git for-each-ref --sort=-committerdate refs/remotes/origin/orch --format='%(refname:short) %(committerdate:unix)'`
    + `git branch -r --no-merged origin/main`). If **≥ 4 are active, a loop iteration exits immediately** ("budget: busy") and the
    hourly schedule tries again later. Planned helpers (nations, grand stages, look passes, voices, balance) always go first.
-2. **Daily cap per loop: 12 iterations** (Chicago day). Each loop counts its own log rows for today (KAIZEN.md log / artbar.md);
+2. **Daily cap per loop: 24 iterations** (was 12) (Chicago day). Each loop counts its own log rows for today (KAIZEN.md log / artbar.md);
    at 12 it exits ("budget: daily cap") until midnight.
 3. **Self-start only when quiet.** At the end of an iteration a loop starts the next one immediately only if ≤ 2 other helpers are
    active; otherwise it leaves it to the hourly schedule.
