@@ -1,3 +1,25 @@
+# STATE — conductor run 2 on 2026-11-11, 10:37–12:00 UTC (second train landed)
+
+**LANDED on main = ac59908f** (train `train/20261111-1037`, one tested push, fast-forward):
+1. Grand map colours + labels + softer mountains (orch/mapfix3 = calmmap3 + mtnfix) — d927b63a
+2. Every button says what it beats (orch/lang-battle) — 5eea2ef1 (4 conflicts with American spelling: took the feature side, re-ran the fixer)
+3. Campaign real supply, slice 1 (orch/c-supply 8d9cac55) — 2b78f6dd
+4. Campaign stockpiles, slice 1 (orch/c-stockpiles) — ff382edb (kept both `wsCensor` and `gmilOrder/gmilSend` in the online action list, src/13zn-gnet.js)
+5. Campaign escalation ladder, slice 1 (orch/c-escalation) — f919210f (kept both test blocks in orch/grandtest.mjs)
+
+**Train gate (gate/ac59908f43):** all 28 green. `gate/smooth-pc` FAILED on the first try (p99 frame 695 ms, allowed 614; worst-1% 1.19 fps, allowed 1.7)
+and PASSED on one re-run of that job (p99 474 ms, worst-1% 1.78 fps — only just inside). Both runs were on slow runners (load 110–127 s vs 74 s for
+main's last run, which had p99 230 ms / 3.88 fps). **Watch `gate/smooth-pc` on main ac59908f**: if it is red there twice, look first at
+"what it beats" (matchUp in the battle HUD), the only battle-screen change in this train. Local on the train: build --check + SMOKE PASS after every merge.
+
+**NOT taken:** frame-time governor (orch/speedS) — its own helper wrote "p95/p99 worse in a single run; not landed". Army Standards (decisions/mpsync/tutorial red).
+orch/calmmap4 is being worked on right now (pushed 10:35Z) — left alone.
+
+The 07:55Z note from ORCH that came with this run was out of date (it said nothing had landed and builders were stopped); builders are pushing again.
+
+---
+(previous run below)
+
 # STATE — conductor run 2026-11-11 08:00–10:45 UTC (train landed)
 
 **LANDED on main = f3b7f596** (train `train/20261111-0801`, one tested push, fast-forward):
