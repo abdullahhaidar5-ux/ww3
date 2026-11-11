@@ -123,7 +123,7 @@ try {
       // STOCKPILES THAT RUN OUT (campaign realism 2): interceptors are spent, an empty defence stops nothing, orders take months, allies can ship
       { const QB = gmilN(B), QA = gmilN(A); const one = () => { GC.turn++; geBl(near.i).length = 0; geBl(near.i).push(['factory', 0], ['aa', 0], ['aa', 0], ['aa', 0]); QA.ms = 3; QA.so = []; gmilStrike(A, 'm', near.i, 'b'); gmilStrikes(); return GC.log.some(l => l[0] === GC.turn && /intercepted/.test(l[1])); };
         QB.ic = 6; one(); ok(QB.ic === 4, 'a missile salvo did not cost the defender 2 interceptor loads (' + QB.ic + ')');
-        QB.ic = 2; one(); ok(QB.ic === 0 && GC.log.some(l => l[0] === GC.turn && l[2] === '' && /run out of air-defence interceptors/.test(l[1])), 'running dry was not world news'); ok((GC.mod || []).some(r => r.id === 'icout_' + B && r.stat === 'warSupport' && r.add < 0), 'no war-support cost for an exhausted air defence');
+        QB.ic = 2; const ws0 = wsN(B).wsE; one(); ok(QB.ic === 0 && GC.log.some(l => l[0] === GC.turn && l[2] === '' && /run out of air-defence interceptors/.test(l[1])), 'running dry was not world news'); ok(wsN(B).wsE < ws0, 'no war-support cost for an exhausted air defence');
         let stopped = 0; for (let i = 0; i < 12; i++) { QB.ic = 0; if (one()) stopped++; } ok(stopped === 0, 'batteries without interceptors still stopped ' + stopped + ' of 12 salvos');
         QB.ic = 5; GC.turn++; geBl(near.i).length = 0; geBl(near.i).push(['factory', 0], ['aa', 0], ['aa', 0]); QA.dr = 40; QA.so = []; gmilStrike(A, 'd', near.i, 'b', 12); gmilStrikes(); ok(QB.ic === 2, 'a 12-drone salvo should cost 3 interceptor loads (left ' + QB.ic + ')');
         ok(typeof gmilBuyMissile === 'undefined', 'the old instant "Buy missile" is still there');

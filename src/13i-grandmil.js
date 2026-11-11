@@ -39,7 +39,7 @@ const GMIL_MISSILE_COST=450;
    ic = air-defence interceptor loads (1 = ~25 Patriot / S-300-class rounds), dr = one-way drones. Real Nov-2026 levels and factory rates:
    orch/REAL-2026.md "Munition stockpiles". Row = [missiles now, depot size, made per year, interceptors now, depot size, made per year].
    Chain: firing spends stock; defending spends interceptors (2 per missile salvo, 1 per air-raid sortie, 1 per 4 drones) and batteries without
-   rounds stop nothing; an emptied defence is world news and costs war support at home (GMOD row); AI attackers prefer targets that have run dry;
+   rounds stop nothing; an emptied defence is world news and costs war support at home (the one meter, 13v); AI attackers prefer targets that have run dry;
    factories refill slowly, a paid order takes months (longer for importers, none under UN sanctions); allies can ship theirs - the receiver's
    enemies hold it against the sender. Counter-play: keep a reserve, saturate with cheap drones first, order early, ask friends. */
 const GMIL_STK={US:[5,8,3,14,40,14],RU:[6,8,10,24,36,10],CN:[8,8,8,30,36,12],IL:[4,6,3,8,24,7],IR:[2,6,5,3,12,2],UA:[1,3,2,4,16,1],KP:[4,6,3,4,10,1],IN:[4,6,3,12,20,4],
@@ -187,7 +187,7 @@ function gmilSend(c,to,k){const e=gmilSendCheck(c,to,k);if(e)return e;const M=gm
   for(const w of Object.keys(GC.war).sort()){const ab=w.split('|');if(!ab.includes(to))continue;const foe=ab.find(x=>x!==to);if(foe&&foe!==c&&GC.nat[foe]&&!GC.nat[foe].dead)gdRel(c,foe,k==='ms'?-12:-6);}
   grLog(GCM.nats.get(c).name+' ships '+(k==='ms'?'a missile salvo':n+' interceptor loads')+' to '+GCM.nats.get(to).name+'.','');return '';}
 function gmilIcOut(c){grLog(GCM.nats.get(c).name+' has run out of air-defence interceptors: what flies in now gets through.','');
-  if(typeof gmodAdd==='function')gmodAdd({id:'icout_'+c,src:'Air defences exhausted',scope:'nation',stat:'warSupport',add:-.05,t:c,until:GC.turn+3});}
+  if(typeof wsN==='function'){const W=wsN(c);if(W)W.wsE-=wsStyle(c)==='zeal'?1:4;}}   // the one war-support meter (13v): people feel exposed; Zealous nations shrug most of it off
 function gmilStockMonth(){for(const c of Object.keys(GC.nat).sort()){const N=GC.nat[c];if(N.dead)continue;const M=gmilN(c),slow=N.e&&(N.e.dry||N.e.pw<.5)?2:1;
     [['ms',0],['ic',1]].forEach(([k,i])=>{const mx=gmilStkMax(c,k);M.pa[i]+=Math.round(gmilStkYr(c,k)*1000/12/slow);while(M.pa[i]>=1000){M.pa[i]-=1000;if(M[k]<mx)M[k]++;}if(M[k]>=mx)M.pa[i]=0;});
     const due=M.oq.filter(o=>o.t<=GC.turn);if(!due.length)continue;M.oq=M.oq.filter(o=>o.t>GC.turn);
