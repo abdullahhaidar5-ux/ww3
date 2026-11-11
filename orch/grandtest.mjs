@@ -304,6 +304,27 @@ try {
     return { foe, from: GCM.P[pair[0]].n, to: GCM.P[pair[1]].n, aid: a.id, ok: !!r.ok, units: a.u.length, to_i: pair[1] }; });
   console.log('scenario', JSON.stringify(sc)); if (sc.err || !sc.ok) { fails.push('scenario: ' + JSON.stringify(sc)); throw new Error('no scenario'); }
   await shot('army-ordered');
+  // ---- armytokens guards (Army Standards, orch/concepts/ARMY-STANDARDS.md): one token per army or stack, no figure blobs / waving flags at any tier, far = dots only, odds = the auto-resolve estimate
+  const tk = await ev(() => { const out = {}; const set = d => { G3.camera.d = G3.cc.d = d; G3.moved = true; cancelAnimationFrame(G3.raf); g3Frame(performance.now()); g3Labels(true); return gtkAudit(); };
+    out.gone = ['g3FlagMesh', 'g3FlagMat', 'g3MiniGeo', 'g3NavyGeo', 'g3Batch', 'g3FarGeo', 'g3WakeMesh', 'g3Plinth', 'g3ShadowMesh'].filter(n => typeof window[n] === 'function');
+    const me = GC.me, a = GC.armies.find(x => x.id === GV.selA), to = a.path[a.path.length - 1], foe = GC.armies.find(x => grAtWar(me, x.o) && !GCM.P[x.at].sea && !x.fl), old = foe ? foe.at : -1; if (foe) { foe.at = to; foe.path = []; } g3SyncArmies(); const d0 = G3.camera.d;
+    out.far = set(2300); out.farNum = [...G3.pl.values()].filter(e => e._v === 'block').every(e => / far/.test(e.className));
+    out.mid = set(350); const on = q => [...document.querySelectorAll(q)].filter(e => { for (let p = e; p && p.id !== 'g3ui'; p = p.parentNode) if (p._v === 'none') return false; return true; });
+    out.march = on('#g3ui .tk.me .ar').length; out.eta = on('#g3ui .eta').map(e => e.textContent); out.pill = on('#g3ui .tk.war .od').map(e => e.textContent);
+    out.close = set(150); out.make = on('#g3ui .tk.me .pt small').length; out.foe = !!foe;
+    // the pill's numbers against the real auto-resolve with the dice at zero (then every unit is put back)
+    const o = gtkOdds([a.id], to); if (o) { const sv = GC.armies.map(x => JSON.stringify(x.u)), sg = JSON.stringify(GC.prov[to].gar), r = grAuto(o.b, () => 0);
+      GC.armies.forEach((x, i) => { x.u.length = 0; x.u.push(...JSON.parse(sv[i])); }); const g = GC.prov[to].gar; g.length = 0; g.push(...JSON.parse(sg)); out.est = [Math.round(o.sa), Math.round(o.sd), r.sa, r.sd, o.t]; }
+    if (foe) foe.at = old; g3SyncArmies(); set(d0); return out; });
+  console.log('armytokens', JSON.stringify(tk));
+  if (tk.gone.length) fails.push('armytokens: old army drawing code is still there: ' + tk.gone.join(','));
+  for (const k of ['far', 'mid', 'close']) { if (tk[k].old) fails.push('armytokens: ' + k + ' view still has old shields / figure / flag meshes (' + tk[k].old + ')'); if (tk[k].dup) fails.push('armytokens: ' + k + ' view draws an army twice (' + tk[k].dup + ')'); if (!tk[k].tokens) fails.push('armytokens: ' + k + ' view draws no army at all'); }
+  if (tk.far.tier !== 0 || !tk.far.dotsOn || !tk.far.dots || !tk.farNum || tk.far.minis || tk.far.rings) fails.push('armytokens: far view is not dots and numbers only ' + JSON.stringify(tk.far));
+  if (tk.mid.tier !== 1 || tk.mid.dotsOn || tk.mid.far || tk.mid.minis) fails.push('armytokens: middle view is not tokens only ' + JSON.stringify(tk.mid));
+  if (!tk.march || !tk.eta.some(t => /^\d+ days?$/.test(t))) fails.push('armytokens: marching army shows no arrow nose / arrival in days ' + JSON.stringify(tk.eta));
+  if (tk.close.tier !== 2 || !tk.make) fails.push('armytokens: close view shows no make-up counts');
+  if (tk.foe && (!tk.pill.length || !tk.pill.every(t => /^(Good odds|Even fight|Bad odds)$/.test(t)))) fails.push('armytokens: no odds pill on the enemy army in reach ' + JSON.stringify(tk.pill));
+  if (!tk.est || tk.est[0] !== tk.est[2] || tk.est[1] !== tk.est[3]) fails.push('armytokens: odds are not the auto-resolve estimate ' + JSON.stringify(tk.est));
   await ev(() => { GC.armies.filter(a => a.o !== 'IR').forEach(a => { a.path = []; }); guEndTurn(); });   // (foe armies stay put so the fight is predictable)
   for (let k = 0; k < 3; k++) { await page.waitForTimeout(2500); if (await ev(() => !!document.getElementById('gModal') || GC.ph !== 'plan')) break; await ev(() => { GC.armies.filter(a => a.o !== 'IR').forEach(a => { a.path = []; }); guEndTurn(); }); }   // a 2-turn march needs a second end-turn (realstart: no ring war to force contact)
   await page.waitForFunction(() => !!document.getElementById('gModal'), null, { timeout: 90000 }); await shot('fight-it-prompt');
