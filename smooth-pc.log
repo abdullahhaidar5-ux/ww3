@@ -1,0 +1,84 @@
+[0s] pc: launching browser
+[0s] ctx
+[0s] guarded
+[0s] page
+[1s] pc: loading page
+[1s] pc: page loaded
+[1s] pc: menu ready
+[78s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",15795],["Loading 3D models…",2409
+[78s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",15795],["Loading 3D models…",2409
+[78s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",15795],["Loading 3D models…",2409
+[93s] pc: done {"tok":1,"tipI":7,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",15795],["Loading 3D models…",240
+[93s] pc: battle loaded in 91s
+[108s] pc: army in place
+[108s] pc: measuring 150 frames
+[113s] pc: warm-up done, 192 shaders
+[116s] pc: frame 10
+[118s] pc: frame 20
+[120s] pc: frame 30
+[122s] pc: frame 40
+[124s] pc: frame 50
+[126s] pc: frame 60
+[128s] pc: frame 70
+[130s] pc: frame 80
+[132s] pc: frame 90
+[134s] pc: frame 100
+[136s] pc: frame 110
+[138s] pc: frame 120
+[140s] pc: frame 130
+[141s] pc: frame 140
+[143s] pc: frame 150
+[148s] pc attempt 1: REGRESSED
+  (re-running once to rule out noise) p95 frame ms rose to 496.1 (baseline 246.7, allowed up to 474.06; +101%) | worst-1% FPS fell to 1.47 (baseline 3.4, allowed down to 1.7)
+[148s] pc: launching browser
+[148s] ctx
+[148s] guarded
+[148s] page
+[148s] pc: loading page
+[149s] pc: page loaded
+[149s] pc: menu ready
+[222s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",14107],["Loading 3D models…",2300
+[222s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",14107],["Loading 3D models…",2300
+[222s] pc: LOADING {"tok":1,"tipI":6,"tipT":105,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",14107],["Loading 3D models…",2300
+[236s] pc: battle loaded in 87s
+[236s] pc: done {"tok":1,"tipI":6,"tipT":null,"cv":{},"el":{},"qf":"IR","times":[["Generating terrain…",14107],["Loading 3D models…",230
+[252s] pc: army in place
+[252s] pc: measuring 150 frames
+[256s] pc: warm-up done, 168 shaders
+[259s] pc: frame 10
+[261s] pc: frame 20
+[264s] pc: frame 30
+[265s] pc: frame 40
+[267s] pc: frame 50
+[269s] pc: frame 60
+[271s] pc: frame 70
+[273s] pc: frame 80
+[275s] pc: frame 90
+[277s] pc: frame 100
+[279s] pc: frame 110
+[281s] pc: frame 120
+[282s] pc: frame 130
+[284s] pc: frame 140
+[286s] pc: frame 150
+[291s] pc attempt 2: REGRESSED
+
+                       pc        
+units on screen        440       
+load time s            87.32     
+median frame ms        136.4     
+p95 frame ms           423       
+p99 frame ms           669.7     
+worst 1% FPS           1.46      
+frames >50 ms          150       
+first boom x median    1.58      
+2nd boom x median      1.71      
+weather/night x median 2.06      
+sim step p95 ms        11.7      
+draw calls             1255      
+k triangles            6222      
+heap MB/min            -131.2    
+runtime 4.8 min
+
+SMOOTH FAIL: 2 problem(s)
+  - pc: p99 frame ms rose to 669.7 (baseline 277, allowed up to 614; +142%)
+  - pc: worst-1% FPS fell to 1.46 (baseline 3.4, allowed down to 1.7)
