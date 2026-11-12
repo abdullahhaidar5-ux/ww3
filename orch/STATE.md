@@ -1,8 +1,10 @@
-# STATE — conductor run 15 on 2026-11-12, started 12:50 UTC: train 12 (`train/20261112-1253`, 77b4ee84) is **being tested** — main = 5f22d184
+# STATE — conductor run 15 on 2026-11-12, 12:50–13:55 UTC: **train 12 LANDED** — main = 77b4ee84
 
-(This top block is rewritten at the end of the run with the result.)
-
-**On the train (1 piece):** Conquest full base + $10,000, Battle without supply lines / dotted roads, Conquest roads green / red / gray, rally flag goes away (orch/battleclean, own run 4a81f05a 28 of 28). Merged clean (only DECISIONS / HISTORY kept both sides); the page rebuilt identical; `build.py --check` OK.
+**Went live (1 piece, 28 of 28 tests green on the landed commit, same as main had):** Conquest starts with a full base and $10,000 · Battle has no supply lines or dotted roads · Conquest roads green (yours) / red (enemy) / gray (neutral) · rally flag goes away when you click away (orch/battleclean, merge 17babd26).
+Local: build + --check, SMOKE PASS, DECISIONS PASS. Deviation, stated plainly: the local campaign test was still running (slow sandbox) when GitHub's `gate/grand` came back green, so it was stopped and the GitHub result used.
+Live site: https://abdullahhaidar5-ux.github.io/ww3/ served the landed page 4 minutes after the push (page checked byte for byte).
+Pictures: `orch/concepts/battleclean/` (cq-start-RS, cq-minimap-roads, cq-ground-roads, battle-minimap-BEFORE / -AFTER, rally-selected / -clicked-away).
+Open questions from that helper's handoff for Abdullah: ammo refill circles were kept in Battle; nations without an air force (RS, DW …) start without an Airfield; no player-built power building exists.
 
 **Left out: campaign battles fought on the map by days (orch/nofightit, own run 6cdd9f53 28 of 28, but 43 commits behind main).**
 It does not fit on today's main without real work, so the merge was aborted (not a conductor job):
