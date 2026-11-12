@@ -1,3 +1,43 @@
+# STATE — conductor run 13 on 2026-11-12, 08:50–09:00 UTC (state only: another conductor run is still testing train 10)
+
+**Main = 7b4baa29** (train 9), 28 of 28 green. Nothing landed in this run, on purpose.
+`train/20261112-0835` (head a6a4902f, test branch `gate/a6a4902f52`) was pushed 20 minutes before this run and is not in main, so the
+rule "another conductor is still working → state only" applies. This run built no train and pushed nothing but this page.
+
+**Train 10, second try = `train/20261112-0835`**: freeze fix, army tokens, main menu shows your war, commander's radio + edge alerts.
+Its test run is in progress: 8 tests finished, all green, 20 still running (08:55 UTC).
+The first try (`train/20261112-0700`, 121ad35b) also had the Conquest/Battle clean-up and came back with `tutorial` and `superfreeze`
+red (21 green, rest not reported) — the clean-up was taken out for the second try, as run 12 predicted.
+
+## Finished and waiting for the next train
+| idea (branch) | own test run | result | waits for |
+|---|---|---|---|
+| Conquest full base + $10,000, Battle clean-up (battleclean) — helper stopped with a handoff | 4a81f05a | **28 of 28** (newer than the commit that failed on train 10) | next train, last in order (changes battle rules) |
+| Fortification lines (fortline) | a05a942b | **28 of 28** (branch head 1acb73d3 only adds proof pictures) | next train |
+| Building fix — no floating roofs (bldfix) | 349759bd | 27 green, 0 red, 1 not reported | next train (check the missing one first) |
+
+## In progress / not ready
+| idea (branch) | last save | state |
+|---|---|---|
+| Campaign battles fought on the map by days (nofightit, 5 commits) | 74 min | own run e72f706a: 25 green, `grand` + `grandlive` red — these are the campaign tests, so the piece itself is the suspect; not ready |
+| Freeze fix, newest note commit (freezefix 4e92b695) | 76 min | 24 green, `audio` + `smooth-pc` red on a commit that only changes a README — flaky list; the train carries 172b31e5 |
+| Bundled fonts (finish-menu-fonts) | 6.5 h | its run had smooth-pc red (look change); nobody is updating it |
+| Infiltrators look like spies (spylook) | 6.5 h | cfclient + migrate-down red, far behind main; nobody is updating it |
+| Battle report card + front lines (finish-report) — helper stopped (handoff) | 7 h | tutorial + migrate-down red on its run; handoff asks for a re-run, nobody is doing it |
+| Trees on the campaign map (maptrees) — helper stopped (handoff) | 13 h | handoff says 28 of 28 on 22ac8a8, but that run is old; needs a fresh run on today's main |
+| PLAN-75 (plan75) | 9 h | document only |
+| Campaign real supply (c-supply) — helper stopped (handoff) | 23 h | parked |
+
+## Locks with nothing saved (90+ min, no work branch of that name)
+- **Real war** (`taken/realwar`), **Seamless HUD** (`taken/seamless-hud`), **Army standards** (`taken/army-standards`) — over 30 h old, stale.
+- `taken/c-real-supply` saves as c-supply; `taken/finish-tokens` saves as armytokens2 — not lost.
+
+## Flaky tests — still nobody owns these
+`tutorial`, `audio`, `mpsync`, `migrate*`, `cfclient`, and the `smooth-pc` frame tail (again today: red on a README-only commit).
+
+---
+(previous runs below)
+
 # STATE — conductor run 12 on 2026-11-12, 06:50–… UTC (train 10 is being tested; result line is added below when known)
 
 **Main = 7b4baa29** (train 9). Main's own test run finished **28 of 28 green**.
