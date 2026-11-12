@@ -371,6 +371,7 @@ cv.addEventListener('mousemove',e=>{mpos(e);});
 cv.addEventListener('wheel',e=>{e.preventDefault();if(e.shiftKey){const v=e.deltaY||e.deltaX;if(v)tiltBy(v>0?.045:-.045);return;}const dy=(e.deltaMode===1?e.deltaY*33:e.deltaY)*(SET.inv?-1:1)*(SET.zm||100)/100;camTarget();const od=cam.td,nd=Math.max(200,Math.min(zmax(),cam.td*Math.exp(dy*.0012)));cam.td=nd;{const w=screenToWorld(mouse.x,mouse.y);if(w){const f=1-nd/od;const o=camVec(0,cam.dist*.08);cam.tx+=(w.x-(cam.tx-o.x))*f*.9;cam.ty+=(w.y-(cam.ty-o.y))*f*.9;}}},{passive:false});
 // After an order the ordered units deselect so the next click selects fresh (Abdullah 2026-10-30 20:54). Kept when Shift
 // queues, when Settings > Mouse > mKeep is on, or when a targeting mode is active. Production-building rally points never count.
+function houseThru(t,units){return !!t&&!t.isB&&!t.aband&&ally(t.team,ME)&&units.some(u=>u!==t&&canGarrison(u));}   // t = a plain friendly unit under the cursor while other infantry is selected
 function ordDone(shift){if(!G||SET.mKeep||shift||G.place||G.aim)return;if(G.sel.some(u=>!u.isB&&u.team===ME))G.sel=[];}
 function issueCmdD(w,t,rally){const had=G.sel.some(u=>!u.isB&&u.team===ME&&!u.dead);const ok=issueCmd(w,t,rally);if(ok&&had)ordDone(G.qShift);return ok;}
 function issueCmd(w,t,rally){
@@ -389,7 +390,10 @@ function issueCmd(w,t,rally){
     if(t&&!ally(t.team,ME)&&t.aband&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){const inf=units.filter(u=>isInf(u.s)&&!u.s.noAttack);doAct({t:'go',ids:inf.map(u=>u.id),x:t.x,y:t.y,mode:'move'});const rest=units.filter(u=>!inf.includes(u));if(rest.length)doAct({t:'go',ids:rest.map(u=>u.id),x:t.x,y:t.y,mode:'amove'});speak(1);markT(t.x,t.y,30);pushLog('Infantry moving to capture the abandoned vehicle.');return true;}
     if(t&&ally(t.team,ME)&&t.aband&&!t.isB&&units.some(u=>isInf(u.s)&&!u.s.noAttack)){doAct({t:'go',ids:units.filter(u=>isInf(u.s)&&!u.s.noAttack).map(u=>u.id),x:t.x,y:t.y,mode:'move'});speak(1);markT(t.x,t.y,30);return true;}
     if(t&&!ally(t.team,ME)){doAct({t:'atk',ids,tid:t.id});speak(2);markT(t.x,t.y,24);return true;}
-    {const c=(!t||(t.kind==='garrison'&&ally(t.team,ME)))?(t&&t.kind==='garrison'?civAtXYAny(t.x,t.y):civUnder(mouse.x,mouse.y,w)):null;
+    // a friendly soldier standing in front of a house must not swallow the click: with infantry selected, a right-click on
+    // him over a house still means "go into that house" (found by the tutorial test: soldiers thrown out by a revolt stand
+    // at the door, and the click on the ringed house only shuffled the squad). houseThru is shared with the cursor (clickIntent).
+    {const c=(!t||(t.kind==='garrison'&&ally(t.team,ME))||houseThru(t,units))?(t&&t.kind==='garrison'?civAtXYAny(t.x,t.y):civUnder(mouse.x,mouse.y,w)):null;
      if(c&&!c.dead){const inf=units.filter(u=>canGarrison(u));const rest=units.filter(u=>!canGarrison(u)&&u.kind!=='harv'&&u.kind!=='dozer'&&u.kind!=='hacker');
        if(inf.length){doAct({t:'gar',ids:inf.map(u=>u.id),ci:c.i});speak(1);markT(c.x,c.y,30);if(!rest.length)return true;}
        if(inf.length&&rest.length){nextTo(rest,c.x,c.y);return true;}
@@ -499,7 +503,7 @@ function cursorIntent(){if(!G||G.over)return '';const lo=leftOrders(),ro=rightOr
   const w=screenToWorld(mouse.x,mouse.y);
   if(lo&&MODK.ctrl)return w&&forceTarget(t,w)?'force':'nogo';
   if(lo&&MODK.alt)return w&&!noGo(units,w)?'way':'nogo';
-  if(t&&t.team===ME)return helpOn(t,units)?(t.aband?'capture':'enter'):'sel';
+  if(t&&t.team===ME)return helpOn(t,units)?(t.aband?'capture':'enter'):(ro&&w&&houseThru(t,units)&&groundIntent(units,w)==='enter')?'enter':'sel';
   if(t&&!ally(t.team,ME))return t.aband&&units.some(u=>isInf(u.s))?'capture':'attack';
   if(t&&t.aband&&!t.isB&&units.some(u=>isInf(u.s)))return 'capture';
   if(!w)return '';

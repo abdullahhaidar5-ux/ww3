@@ -38,10 +38,13 @@ function g3RealFields(F){const R=G3.real,W=F.W,H=F.H,E=R.E,EW=R.EW,Hh=F.Hh,Ls=F.
       for(let ty=Math.floor(y*ky);ty<y1;ty++)for(let tx=Math.floor(x*kx);tx<x1;tx++){const o=(ty*CW+tx)*4;if(blue(o)){px[o]=r;px[o+1]=g;px[o+2]=bl;}}}}
   // biome weights for the detail shader from real data: rock (steep/high), snow (high/polar), sand (desert colour), vegetation (green)
   const bw=new Uint8Array(N*4),sx=CW/W,sy=CH/H,col=R.col;
+  // snow line (fixes1): bright colorless ground only counts as snow where snow can lie - above a height that falls with latitude
+  // (4,600 m up to 24 degrees, 1,500 m at 38, sea level from 60). Pale desert rock and salt flats in Arabia or the Sahara are never snow.
+  const snowLine=new Float32Array(H);for(let y=0;y<H;y++){const la=Math.abs(typeof gsupLat==='function'?gsupLat({y:(y+.5)*1200/H}):45);snowLine[y]=la<=24?4600:la<=38?4600-(la-24)/14*3100:Math.max(0,1500-(la-38)/22*1500);}
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){const k=y*W+x,ci=(Math.min(CH-1,Math.floor((y+.5)*sy))*CW+Math.min(CW-1,Math.floor((x+.5)*sx)))*4,r=col[ci]/255,g=col[ci+1]/255,b=col[ci+2]/255;
     const mx=Math.max(r,g,b),mn=Math.min(r,g,b),lum=.3*r+.59*g+.11*b,sat=mx>0?(mx-mn)/mx:0,coast=g3Smooth(.4,.8,Ls[k]),m=hm[k];
     const hl=Hh[y*W+Math.max(0,x-1)],hr=Hh[y*W+Math.min(W-1,x+1)],hu=Hh[Math.max(0,y-1)*W+x],hd=Hh[Math.min(H-1,y+1)*W+x],sl=Math.hypot(hr-hl,hd-hu)/4*SK;
-    const rock=Math.max(g3Smooth(.35,1.3,sl)*coast,g3Smooth(2600,4300,m)*.9),snow=Math.max(g3Smooth(3900,5200,m),g3Smooth(.82,.93,lum)*(1-g3Smooth(.07,.15,sat))*coast);
+    const rock=Math.max(g3Smooth(.35,1.3,sl)*coast,g3Smooth(2600,4300,m)*.9),snow=Math.max(g3Smooth(3900,5200,m),g3Smooth(.82,.93,lum)*(1-g3Smooth(.07,.15,sat))*coast*g3Smooth(snowLine[y]-700,snowLine[y],m));
     const sand=Math.max(g3Smooth(.12,.26,(r-b))*g3Smooth(.55,.72,lum)*(1-g3Smooth(.0,.06,g-r)),g3Smooth(.5,.58,Ls[k])*(1-g3Smooth(.62,.8,Ls[k])));
     const veg=g3Smooth(-.04,.05,g-r)*coast*(1-sand);
     const o=k*4;bw[o]=Math.min(255,rock*255);bw[o+1]=Math.min(255,snow*255);bw[o+2]=Math.min(255,sand*255);bw[o+3]=Math.min(255,veg*255);}
