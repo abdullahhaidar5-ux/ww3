@@ -92,3 +92,5 @@ jumps to the thing. Same helper groups the Nation window's ~36 tabs into six gro
   unverified on main - needs a fresh middle-zoom campaign picture (ask camphud's pictures or a small picture job). Told Abdullah so.
 - Conquest minimap road colors: proof picture too small to judge green/red/gray; needs a larger one.
 - camphud was fired with a simpler three-zone prompt BEFORE ORCH saw the "Details for camphud" section above; ORCH pushed orch/CAMPHUD-LAYOUT.md to branch orch/camphud with the approved layout. Check the helper followed it; if not, one follow-up run.
+- 11-12 17:32 Chicago: Infiltrator outfit = "B" (his answer). spylook-B = trig_01W3rqHEuaWAzb6iAkxKN157 (Sonnet) fired 23:35Z: merge main,
+  B only, A/C removed, one gate. Running now: camphud, eu4audit (Fable), spylook-B (Sonnet).
