@@ -123,7 +123,7 @@ function g3Tokens(tier){if(!G3.lab||!GC||!G3.cam)return;gtkCss();if(!G3.tok||G3.
         +(st==='march'?'<i class="ar"></i>':'')+(st==='dug'?'<i class="br"></i>':'')+(st==='fight'&&g.side==='A'?'<i class="zz">⚡</i><i class="tg"></i>':'')
         +(L.length>1?'<i class="ct">'+L.length+'</i>':'')+(od?'<i class="od '+od.k+'">'+od.t+'</i>':'')
         +(full||far?'<span class="pt"><b>'+num+'</b>'+(mk.stars?'<em>'+'★'.repeat(Math.min(5,mk.stars))+'</em>':'')
-          +(tier===2?'<small>'+(mk.fl?'⚓ '+mk.n+' ships':'<span title="infantry">♟ '+mk.inf+'</span> · <span title="armour">▰ '+mk.arm+'</span> · <span title="fire support">✸ '+mk.fs+'</span>')+'</small>':'')+'</span>':'');}
+          +(tier===2?'<small>'+(mk.fl?'⚓ '+mk.n+' ships':'<span title="infantry">♟ '+mk.inf+'</span> · <span title="armor">▰ '+mk.arm+'</span> · <span title="fire support">✸ '+mk.fs+'</span>')+'</small>':'')+'</span>':'');}
     const X=Math.round(q[0]+dx),Y=Math.round(q[1]),t='translate('+X+'px,'+Y+'px)';if(pl._t!==t){pl._t=t;pl.style.transform=t;}vis(pl,true);ntok++;
     const R=far?9:rel==='oth'?11:18,cy=far?Y:Y-(rel==='oth'?18:26),big=rel!=='oth'||sel||hv,hb=far?{x0:X-16,x1:X+(big?44:16),y0:Y-14,y1:Y+14}:{x0:X-R-8,x1:X+(big?R+52:R+8),y0:cy-R-10,y1:Y+8};   /* the whole token is the target: ring, number plate and pin (never smaller than the old figure + badge target) */
     G3.hit.push({aid:a.id,x:X,y:cy,r:R+5,k:g.k,...hb});for(const x of L)if(x!==a)G3.hit.push({aid:x.id,x:X,y:cy,r:R+5,k:g.k,...hb});   // the stack's front army is hit first; the rest stay reachable for box-select
