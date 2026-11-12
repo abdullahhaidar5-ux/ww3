@@ -171,7 +171,7 @@ function drawSupplyTowns(c){if(!G||G.over)return;try{ammoRowTick();}catch(_){}
   if(G.civ)for(const k of G.civ){if(k.dead||!(k.ow>=0||k.cp>0)||!inView(k.x,k.y,.05)||(k.ti>=0&&!k.key&&!(k.cp>0)))continue;const p=toScreen(k.x,groundH(k.x,k.y)+40,k.y);if(p.z>1)continue;
     if(k.ow>=0&&G.teams[k.ow]){c.fillStyle='rgba(0,0,0,.65)';c.beginPath();c.arc(p.x,p.y,7,0,7);c.fill();c.fillStyle=G.teams[k.ow].color;c.beginPath();c.arc(p.x,p.y,5,0,7);c.fill();}
     if(k.cp>0&&k.cpT>=0&&G.teams[k.cpT]){c.fillStyle='rgba(0,0,0,.75)';c.fillRect(p.x-18,p.y-14,36,6);c.fillStyle=G.teams[k.cpT].color;c.fillRect(p.x-17,p.y-13,34*Math.min(1,k.cp),4);}}
-  try{drawLogiWorld(c);drawTownsWorld(c);drawEconWorld(c);drawTowersWorld(c);drawRefugeesWorld(c);townPanelTick();hudTick();}catch(e){}try{drawInfraHud(c);}catch(e){}}
+  try{drawLogiWorld(c);drawTownsWorld(c);drawEconWorld(c);drawTowersWorld(c);drawRefugeesWorld(c);townPanelTick();hudTick();edgeTick();}catch(e){}try{drawInfraHud(c);}catch(e){}}
 // small pictograms on the health bar: broken track (orange), jammed turret (blue), engine fire (red)
 function critIcons(c,x,y,crit){let i=0;for(const b of [1,2,4]){if(!(crit&b))continue;const cx=x-i*14;i++;c.fillStyle='rgba(0,0,0,.78)';c.beginPath();c.arc(cx,y,6.2,0,7);c.fill();
     if(b===1){c.fillStyle='#f0a040';for(let q=-1;q<=1;q++)c.fillRect(cx-4.5+q*3.2+1.6,y-1.6,2.4,3.2);c.strokeStyle='#ff5a40';c.lineWidth=1.4;c.beginPath();c.moveTo(cx-4,y+4);c.lineTo(cx+4,y-4);c.stroke();}
