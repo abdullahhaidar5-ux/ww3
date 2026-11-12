@@ -164,7 +164,7 @@ function drawUnit(c,k,W,H,col,st){const K=iconClass(k,st);c.save();c.translate(W
   case'hacker':man(-10,2,1);rect(2,2,28,15,L);rect(5,4,22,10,DM);rect(-1,17,34,3,L);break;
   case'officer':man(0,2,1);rect(-13,-19,26,4,L);rect(-9,-21,18,3,col);for(const x of [-16,10])line(x+3,3,x+7,9,4);poly([[0,8],[2,13],[7,13],[3,16],[5,21],[0,18],[-5,21],[-3,16],[-7,13],[-2,13]],DM);break;
   case'commissar':man(-8,2,1);rect(-14,-19,24,4,L);line(24,-30,24,18,2.5);rect(24,-30,18,12,col);poly([[28,-27],[30,-22],[36,-22],[31,-19],[33,-13],[28,-17],[23,-13],[25,-19],[20,-22],[26,-22]],'#f2ead2');break;
-  case'spy':man(0,2,1);c.fillStyle=L;c.beginPath();c.ellipse(0,-19,17,4,0,0,7);c.fill();rect(-9,-19,18,5,L);rect(-8,-11,16,4,D);poly([[-12,2],[0,12],[12,2],[8,2],[0,8],[-8,2]],DM);break;
+  case'spy':man(0,2,1);/* plain clothes: flat cap with a peak, dark glasses, a satchel on a strap, phone at the ear */c.beginPath();c.arc(0,-12,10.5,3.14,6.28);c.fillStyle=L;c.fill();rect(-11,-13,26,3.5,L);rect(-7,-9,14,3.5,D);line(-11,5,9,19,2.2,D);rect(6,14,13,10,L);rect(8,16,9,2,D);rect(-14,-12,4.5,10,L);break;
   case'squad':man(-18,5,.8);man(18,5,.8);man(0,-1,1.05);rect(-6,-15,12,4,D);line(-6,10,26,-6,3);break;
   case'recon':man(-8,4,.95);c.save();c.translate(24,-20);rect(-3,-2,6,4);line(-12,-8,12,8,2);line(12,-8,-12,8,2);for(const [x,y] of [[-12,-8],[12,-8],[-12,8],[12,8]]){c.strokeStyle=L;c.lineWidth=1.6;c.beginPath();c.ellipse(x,y,5,2,0,0,7);c.stroke();}c.restore();break;
   default:man(0,2,1);line(-16,13,28,-6,3.5);rect(-4,6,5,8,DM);}
