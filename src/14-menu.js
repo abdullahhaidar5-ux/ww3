@@ -282,13 +282,14 @@ function mxWarTable(){const bg=document.getElementById('mxbg');if(!bg)return;con
     const sm=mk(W,H),sx=sm.getContext('2d'),sd=sx.createImageData(W,H),q=sd.data;for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,v=g[i],j=i*4;q[j]=v?255:0;q[j+1]=v===1?255:0;q[j+2]=v&&((x+1<W&&g[i+1]&&g[i+1]!==v)||(y+1<H&&g[i+W]&&g[i+W]!==v))?255:0;q[j+3]=255;}sx.putImageData(sd,0,0);
     const up=mk(CW,CH),ux=up.getContext('2d',{willReadFrequently:true});ux.imageSmoothingEnabled=true;ux.imageSmoothingQuality='high';try{ux.filter='blur('+(W<400?4:2.2)+'px)';}catch(_){}ux.drawImage(sm,0,0,CW,CH);const U=ux.getImageData(0,0,CW,CH).data;
     const bl=mk(CW/4,CH/4),bx=bl.getContext('2d',{willReadFrequently:true});try{bx.filter='blur(7px)';}catch(_){}bx.drawImage(sm,0,0,CW/4,CH/4);const B=bx.getImageData(0,0,CW/4,CH/4).data,BW=CW/4;
-    const cv=mk(CW,CH);cv.id='mxwt';const cx=cv.getContext('2d'),od=cx.createImageData(CW,CH),d=od.data,c=wt.c||[200,170,80],en=wt.e,L=v=>Math.min(255,v*.5+150);
+    const cv=mk(CW,CH);cv.id='mxwt';const cx=cv.getContext('2d'),od=cx.createImageData(CW,CH),d=od.data,c=(wt.c||[200,170,80]).map(v=>wt.e?v*.6+85:v),en=wt.e,L=v=>Math.min(255,v*.5+150);
     for(let y=0;y<CH;y++)for(let x=0;x<CW;x++){const i=y*CW+x,j=i*4,land=U[j]>127,mine=land&&U[j+1]>127,bj=((y>>2)*BW+(x>>2))*4,gl=B[bj]/255,gm=B[bj+1]/255,n=(((x*73856093)^(y*19349663))&7)-3.5;let r,gg,b;
       if(!land){r=13+gl*26+gm*c[0]*.2;gg=25+gl*42+gm*c[1]*.2;b=38+gl*54+gm*c[2]*.2;if(x%100===0||y%100===0){r+=6;gg+=9;b+=11;}}
-      else{const sh=(gl-.6)*30+n*.9;r=92+sh;gg=101+sh;b=88+sh;const bo=Math.min(1,U[j+2]/255*1.6)*.6;r+=(40-r)*bo;gg+=(46-gg)*bo;b+=(42-b)*bo;
-        if(mine){r=r*.42+c[0]*.62;gg=gg*.42+c[1]*.62;b=b*.42+c[2]*.62;}else if(en){r=r*.62+en[0]*.38;gg=gg*.62+en[1]*.38;b=b*.62+en[2]*.38;}
-        const e=x>2&&y>2&&x<CW-3&&y<CH-3;if(e&&(U[j-12]<=127||U[j+12]<=127||U[j-CW*12]<=127||U[j+CW*12]<=127)){r+=48;gg+=56;b+=54;}   /* coast line */
-        if(e&&mine&&(U[j-11]<=127||U[j+13]<=127||U[j-CW*12+1]<=127||U[j+CW*12+1]<=127)){r=L(c[0]);gg=L(c[1]);b=L(c[2]);}}   /* your border / your front */
+      else{const sh=(gl-.6)*30+n*.9;r=92+sh;gg=101+sh;b=88+sh;const bo=Math.min(1,U[j+2]/255*1.6)*.6;if(!en){r+=(40-r)*bo;gg+=(46-gg)*bo;b+=(42-b)*bo;}
+        if(mine){const k=en?.36:.62,q=en?.6:.42;r=r*q+c[0]*k;gg=gg*q+c[1]*k;b=b*q+c[2]*k;}else if(en){r=r*.4+en[0]*.13;gg=gg*.4+en[1]*.13;b=b*.4+en[2]*.13;}
+        const e=x>2&&y>2&&x<CW-3&&y<CH-3;if(e&&(U[j-12]<=127||U[j+12]<=127||U[j-CW*12]<=127||U[j+CW*12]<=127)){const k=en?.45:1;r+=48*k;gg+=56*k;b+=54*k;}   /* coast line */
+        if(e&&mine&&!en&&(U[j-11]<=127||U[j+13]<=127||U[j-CW*12+1]<=127||U[j+CW*12+1]<=127)){r=L(c[0]);gg=L(c[1]);b=L(c[2]);}   /* your border */
+        if(en){const f=Math.max(0,Math.min(.9,(U[j+2]/255-.2)*4));r+=(255-r)*f;gg+=(214-gg)*f;b+=(102-b)*f;}}   /* battle: the front line */
       d[j]=r;d[j+1]=gg;d[j+2]=b;d[j+3]=255;}
     cx.putImageData(od,0,0);bg.appendChild(cv);
     const lab=(cls,fx,fy,html)=>{const e=mxEl('div','mxwtl '+cls);e.style.left=(fx*100).toFixed(2)+'%';e.style.top=(fy*100).toFixed(2)+'%';e.innerHTML=html;bg.appendChild(e);return e;};

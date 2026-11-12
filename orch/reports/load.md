@@ -18,3 +18,10 @@ What changed: (1) `src/13*` → `grand.<hash>.js` loaded on demand by `src/12zz-
 runs ~4.5 s after load and never during a battle. Profile before: mkMap+segDist ≈ 0.6 s of the 1.3 s startup.
 Not done (small gains, more risk): deferring encyclopedia/credits text; the vendored Three.js (0.8 MB) is needed for the menu background.
 Offline: `sw.js` saves grand + textures at install (`LAZY`); cache name bumped to ww3-v4. Artifact/`--single` stay one inline file.
+
+## Living main menu + bundled fonts (finish-menu, 2026-11-12)
+
+Same method (`node orch/loadtime.mjs <dir> <tag> "" 10`, two runs each, sandbox): main before = menu 2.85 / 2.92 s cold, 2.88 / 2.82 s warm;
+orch/finish-menu = 2.99 / 2.85 s cold, 3.04 / 2.93 s warm — the same within the run-to-run noise (index.html +68 KB for the two bundled
+fonts; two requests to Google Fonts gone, so the menu no longer waits on another host). The war-table background is drawn once, after
+the menu is visible (when the save list has been read), from a 1–13 KB note; the grand bundle is not loaded for it (smoke checks this).

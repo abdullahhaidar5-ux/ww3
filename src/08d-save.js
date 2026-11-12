@@ -27,10 +27,12 @@ function svCanSave(){return !!(G&&!G.over&&!G.rp&&MODE==='single'&&!window.LOADI
 /* svFront (living main menu): a small sketch of the battlefield at the moment of saving - water and land, and which side holds each part of the land, worked out from your own
    forces and the enemy forces you could see - run-length packed like the campaign's war table (13-grand.js grWarTable) so the main menu can draw where your front is.
    Display only: it rides in the save's list entry (meta), never in the checkpoint; nothing in the battle reads it. */
-function svFront(){try{if(!G||!G.map||!G.ents||!G.teams[ME])return null;const W=240,H=135,GW=48,GH=Math.max(8,Math.round(48*MAPH/MAPW)),inf=new Float32Array(GW*GH);let foes=0;
+function svFront(){try{if(!G||!G.map||!G.ents||!G.teams[ME])return null;const W=240,H=135,GW=48,GH=Math.max(8,Math.round(48*MAPH/MAPW)),dm=new Float32Array(GW*GH).fill(1e9),df=new Float32Array(GW*GH).fill(1e9);let foes=0;
+  /* each part of the land belongs to whoever is nearest: your forces (and allies) or an enemy you can see */
   for(const e of G.ents){if(e.dead||e.team==null||e.team<0||!G.teams[e.team])continue;const mine=ally(e.team,ME);if(!mine&&!vis(e))continue;if(!mine)foes++;
-    const gx=e.x/MAPW*GW-.5,gy=e.y/MAPH*GH-.5,w=(e.isB?3:1)*(mine?1:-1);for(let j=0;j<GH;j++)for(let i=0;i<GW;i++){const dx=i-gx,dy=j-gy;inf[j*GW+i]+=w/(dx*dx+dy*dy+3);}}
-  const s=Math.max(MAPH/(.84*H),MAPW/(.6*W)),vx=MAPW/2-.66*W*s,vy=MAPH/2-.5*H*s,out=[];let pv=-1,run=0;const put=()=>{if(run<1)return;out.push(pv);let r=run;while(r>127){out.push((r&127)|128);r>>=7;}out.push(r);};
+    const gx=e.x/MAPW*GW-.5,gy=e.y/MAPH*GH-.5,D=mine?dm:df;for(let j=0;j<GH;j++)for(let i=0;i<GW;i++){const dx=i-gx,dy=j-gy,q=dx*dx+dy*dy,k=j*GW+i;if(q<D[k])D[k]=q;}}
+  const inf=new Float32Array(GW*GH);for(let k=0;k<inf.length;k++)inf[k]=Math.sqrt(df[k])-Math.sqrt(dm[k]);
+  const s=Math.max(MAPH/(.8*H),MAPW/(.5*W)),vx=MAPW/2-.7*W*s,vy=MAPH/2-.5*H*s,out=[];let pv=-1,run=0;const put=()=>{if(run<1)return;out.push(pv);let r=run;while(r>127){out.push((r&127)|128);r>>=7;}out.push(r);};
   for(let j=0;j<H;j++){const wy=vy+(j+.5)*s;for(let i=0;i<W;i++){const wx=vx+(i+.5)*s;let v=0;
     if(wx>=0&&wy>=0&&wx<MAPW&&wy<MAPH&&!(G.map.edge(wx,wy)>0)){const fx=Math.max(0,Math.min(GW-1.001,wx/MAPW*GW-.5)),fy=Math.max(0,Math.min(GH-1.001,wy/MAPH*GH-.5)),x0=fx|0,y0=fy|0,ax=fx-x0,ay=fy-y0,k=y0*GW+x0;
       v=!foes||inf[k]*(1-ax)*(1-ay)+inf[k+1]*ax*(1-ay)+inf[k+GW]*(1-ax)*ay+inf[k+GW+1]*ax*ay>=0?1:2;}
